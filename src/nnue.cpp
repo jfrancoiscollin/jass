@@ -8,6 +8,8 @@
 #include "eval.hpp"
 #include "nnue_default_data.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <fstream>
 #include <string>
@@ -212,11 +214,13 @@ int MLPNetwork::evaluate(const Position& pos) const noexcept {
 
 namespace {
 
-constexpr char          MLP_MAGIC[4] = {'J', 'N', 'N', 'M'};
+constexpr char          MLP_MAGIC[4]  = {'J', 'N', 'N', 'M'};
+constexpr char          MLPQ_MAGIC[4] = {'J', 'N', 'N', 'Q'};
 // Bumped to 2 when the input encoding switched to STM-relative with
 // board mirroring + colour swap. v1 weights interpreted under the new
 // encoding would silently miscompute, so we reject them at load time.
-constexpr std::uint32_t MLP_VERSION  = 2;
+constexpr std::uint32_t MLP_VERSION   = 2;
+constexpr std::uint32_t MLPQ_VERSION  = 1;
 
 bool read_u32(std::istream& f, std::uint32_t& out) {
     f.read(reinterpret_cast<char*>(&out), 4);
@@ -356,6 +360,271 @@ bool MLPNetwork::save(std::string_view path) const {
     return f.good();
 }
 
+// ---------------------------------------------------------------------------
+// MLPNetworkQ — int8 quantised forward pass.
+// ---------------------------------------------------------------------------
+//
+// Scale convention (see tools/quantize_mlp.py for derivation):
+//   * Layer-1 accumulator units = sw1 (only weights are scaled; input
+//     is a unitless one-hot).  Bias `b1_` is stored at this scale.
+//   * Quantising acc1 to int8 h1 with magnitude ≤ 127 requires the
+//     factor `mul1 = sw1 / sh1`.
+//   * Layer-2 accumulator units = sw2 × sh1.  Bias `b2_` at that scale.
+//   * `mul2 = (sw2 × sh1) / sh2`.
+//   * Layer-3 accumulator units = sw3 × sh2.  Bias `b3_` at that scale.
+//   * `mul_out = sw3 × sh2` directly converts acc3 to centipawn.
+
+namespace {
+
+inline std::int32_t saturate_to_int8(float x) noexcept {
+    // Round-to-nearest via truncation of (x + 0.5) for positive values.
+    // ReLU clips negatives to 0 immediately so we don't need to handle
+    // the negative-rounding case. std::lround is a function call with
+    // rounding-mode semantics — way slower than a static_cast in the
+    // hot path.
+    if (x <= 0.0f)   return 0;
+    if (x >= 126.5f) return 127;
+    return static_cast<int>(x + 0.5f);
+}
+
+inline void accumulate_q_kind(
+        const std::array<std::int8_t,
+                         MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM>& w1,
+        std::int32_t* acc1,
+        Bitboard      bb,
+        std::size_t   kind,
+        bool          mirror) noexcept {
+    while (bb) {
+        const int         bit = square_to_bit(pop_lsb(bb));
+        const std::size_t b   = mirror
+            ? static_cast<std::size_t>(49 - bit)
+            : static_cast<std::size_t>(bit);
+        const std::size_t feat = b * 4 + kind;
+        for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j) {
+            acc1[j] += static_cast<std::int32_t>(w1[j * MLPNetworkQ::INPUT_DIM + feat]);
+        }
+    }
+}
+
+}  // namespace
+
+int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
+    // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
+    std::int32_t acc1[HIDDEN1];
+    for (std::size_t j = 0; j < HIDDEN1; ++j) acc1[j] = b1_[j];
+
+    if (pos.side_to_move() == Color::White) {
+        accumulate_q_kind(w1_, acc1, pos.white_men(),    0, false);
+        accumulate_q_kind(w1_, acc1, pos.white_kings(),  1, false);
+        accumulate_q_kind(w1_, acc1, pos.black_men(),    2, false);
+        accumulate_q_kind(w1_, acc1, pos.black_kings(),  3, false);
+    } else {
+        accumulate_q_kind(w1_, acc1, pos.black_men(),    0, true);
+        accumulate_q_kind(w1_, acc1, pos.black_kings(),  1, true);
+        accumulate_q_kind(w1_, acc1, pos.white_men(),    2, true);
+        accumulate_q_kind(w1_, acc1, pos.white_kings(),  3, true);
+    }
+
+    // ReLU + quantise to int8 ([0, 127]).
+    std::int8_t h1[HIDDEN1];
+    for (std::size_t j = 0; j < HIDDEN1; ++j) {
+        h1[j] = static_cast<std::int8_t>(
+            saturate_to_int8(static_cast<float>(acc1[j]) * mul1_));
+    }
+
+    // Layer 2 — int8 × int8 → int32 (hot MAC loop).
+    std::int32_t acc2[HIDDEN2];
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        std::int32_t s = b2_[k];
+        for (std::size_t j = 0; j < HIDDEN1; ++j) {
+            s += static_cast<std::int32_t>(w2_[k * HIDDEN1 + j])
+               * static_cast<std::int32_t>(h1[j]);
+        }
+        acc2[k] = s;
+    }
+
+    std::int8_t h2[HIDDEN2];
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        h2[k] = static_cast<std::int8_t>(
+            saturate_to_int8(static_cast<float>(acc2[k]) * mul2_));
+    }
+
+    // Layer 3 — int8 × int8 → int32 → centipawn.
+    std::int32_t acc3 = b3_;
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        acc3 += static_cast<std::int32_t>(w3_[k])
+              * static_cast<std::int32_t>(h2[k]);
+    }
+
+    float out = static_cast<float>(acc3) * mul_out_;
+    constexpr float kClamp = 29000.0f;
+    if (out >  kClamp) out =  kClamp;
+    if (out < -kClamp) out = -kClamp;
+    return static_cast<int>(out);
+}
+
+namespace {
+
+template <typename T, std::size_t N>
+bool read_typed(std::istream& f, std::array<T, N>& a) {
+    f.read(reinterpret_cast<char*>(a.data()),
+           static_cast<std::streamsize>(N * sizeof(T)));
+    return static_cast<std::size_t>(f.gcount()) == N * sizeof(T);
+}
+
+template <typename T, std::size_t N>
+bool write_typed(std::ostream& f, const std::array<T, N>& a) {
+    f.write(reinterpret_cast<const char*>(a.data()),
+            static_cast<std::streamsize>(N * sizeof(T)));
+    return f.good();
+}
+
+bool read_f32(std::istream& f, float& out) {
+    f.read(reinterpret_cast<char*>(&out), sizeof(float));
+    return f.gcount() == sizeof(float);
+}
+
+bool write_f32(std::ostream& f, float v) {
+    f.write(reinterpret_cast<const char*>(&v), sizeof(float));
+    return f.good();
+}
+
+}  // namespace
+
+bool MLPNetworkQ::load(std::string_view path) {
+    std::ifstream f(std::string{path}, std::ios::binary);
+    if (!f) return false;
+
+    char magic[4]{};
+    f.read(magic, 4);
+    if (!f || std::memcmp(magic, MLPQ_MAGIC, 4) != 0) return false;
+
+    std::uint32_t version{}, in_dim{}, h1d{}, h2d{}, out_dim{};
+    if (!read_u32(f, version)) return false;
+    if (!read_u32(f, in_dim))  return false;
+    if (!read_u32(f, h1d))     return false;
+    if (!read_u32(f, h2d))     return false;
+    if (!read_u32(f, out_dim)) return false;
+    if (version != MLPQ_VERSION ||
+        in_dim  != INPUT_DIM    ||
+        h1d     != HIDDEN1      ||
+        h2d     != HIDDEN2      ||
+        out_dim != 1) {
+        return false;
+    }
+
+    float t_mul1{}, t_mul2{}, t_mul_out{};
+    if (!read_f32(f, t_mul1))    return false;
+    if (!read_f32(f, t_mul2))    return false;
+    if (!read_f32(f, t_mul_out)) return false;
+
+    decltype(w1_) tw1{};
+    decltype(b1_) tb1{};
+    decltype(w2_) tw2{};
+    decltype(b2_) tb2{};
+    decltype(w3_) tw3{};
+    std::int32_t  tb3{0};
+
+    if (!read_typed(f, tw1))                                 return false;
+    if (!read_typed(f, tb1))                                 return false;
+    if (!read_typed(f, tw2))                                 return false;
+    if (!read_typed(f, tb2))                                 return false;
+    if (!read_typed(f, tw3))                                 return false;
+    f.read(reinterpret_cast<char*>(&tb3), sizeof(std::int32_t));
+    if (static_cast<std::size_t>(f.gcount()) != sizeof(std::int32_t)) return false;
+
+    w1_ = tw1; b1_ = tb1;
+    w2_ = tw2; b2_ = tb2;
+    w3_ = tw3; b3_ = tb3;
+    mul1_    = t_mul1;
+    mul2_    = t_mul2;
+    mul_out_ = t_mul_out;
+    return true;
+}
+
+bool MLPNetworkQ::save(std::string_view path) const {
+    std::ofstream f(std::string{path}, std::ios::binary);
+    if (!f) return false;
+    f.write(MLPQ_MAGIC, 4);
+    if (!write_u32(f, MLPQ_VERSION))                                 return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))        return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN1)))          return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN2)))          return false;
+    if (!write_u32(f, 1u))                                            return false;
+    if (!write_f32(f, mul1_))                                         return false;
+    if (!write_f32(f, mul2_))                                         return false;
+    if (!write_f32(f, mul_out_))                                      return false;
+    if (!write_typed(f, w1_))                                         return false;
+    if (!write_typed(f, b1_))                                         return false;
+    if (!write_typed(f, w2_))                                         return false;
+    if (!write_typed(f, b2_))                                         return false;
+    if (!write_typed(f, w3_))                                         return false;
+    f.write(reinterpret_cast<const char*>(&b3_), sizeof(std::int32_t));
+    return f.good();
+}
+
+bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
+    constexpr std::size_t kHeader = 6 * sizeof(std::uint32_t)
+                                  + 3 * sizeof(float);
+    constexpr std::size_t kWeights =
+          HIDDEN1 * INPUT_DIM                        // w1
+        + HIDDEN1 * sizeof(std::int32_t)              // b1
+        + HIDDEN2 * HIDDEN1                           // w2
+        + HIDDEN2 * sizeof(std::int32_t)              // b2
+        + HIDDEN2                                     // w3
+        + sizeof(std::int32_t);                       // b3
+    if (data == nullptr || n != kHeader + kWeights) return false;
+    if (std::memcmp(data, MLPQ_MAGIC, 4) != 0)        return false;
+
+    auto read_u32_at = [&](std::size_t off) {
+        std::uint32_t v;
+        std::memcpy(&v, data + off, sizeof(v));
+        return v;
+    };
+    auto read_f32_at = [&](std::size_t off) {
+        float v;
+        std::memcpy(&v, data + off, sizeof(v));
+        return v;
+    };
+
+    if (read_u32_at(4)  != MLPQ_VERSION)                              return false;
+    if (read_u32_at(8)  != static_cast<std::uint32_t>(INPUT_DIM))     return false;
+    if (read_u32_at(12) != static_cast<std::uint32_t>(HIDDEN1))       return false;
+    if (read_u32_at(16) != static_cast<std::uint32_t>(HIDDEN2))       return false;
+    if (read_u32_at(20) != 1u)                                        return false;
+
+    const float t_mul1    = read_f32_at(24);
+    const float t_mul2    = read_f32_at(28);
+    const float t_mul_out = read_f32_at(32);
+
+    decltype(w1_) tw1{};
+    decltype(b1_) tb1{};
+    decltype(w2_) tw2{};
+    decltype(b2_) tb2{};
+    decltype(w3_) tw3{};
+    std::int32_t  tb3{0};
+
+    const unsigned char* p = data + kHeader;
+    auto take = [&](void* dst, std::size_t bytes) {
+        std::memcpy(dst, p, bytes);
+        p += bytes;
+    };
+    take(tw1.data(), tw1.size() * sizeof(std::int8_t));
+    take(tb1.data(), tb1.size() * sizeof(std::int32_t));
+    take(tw2.data(), tw2.size() * sizeof(std::int8_t));
+    take(tb2.data(), tb2.size() * sizeof(std::int32_t));
+    take(tw3.data(), tw3.size() * sizeof(std::int8_t));
+    take(&tb3,       sizeof(std::int32_t));
+
+    w1_ = tw1; b1_ = tb1;
+    w2_ = tw2; b2_ = tb2;
+    w3_ = tw3; b3_ = tb3;
+    mul1_    = t_mul1;
+    mul2_    = t_mul2;
+    mul_out_ = t_mul_out;
+    return true;
+}
+
 std::unique_ptr<INetwork> load_network(std::string_view path) {
     std::ifstream f(std::string{path}, std::ios::binary);
     if (!f) return nullptr;
@@ -370,6 +639,11 @@ std::unique_ptr<INetwork> load_network(std::string_view path) {
         if (!n->load(path)) return nullptr;
         return n;
     }
+    if (std::memcmp(magic, MLPQ_MAGIC, 4) == 0) {
+        auto n = std::make_unique<MLPNetworkQ>();
+        if (!n->load(path)) return nullptr;
+        return n;
+    }
     auto n = std::make_unique<LinearNetwork>();
     if (!n->load(path)) return nullptr;
     return n;
@@ -380,6 +654,11 @@ std::unique_ptr<INetwork> load_network_from_bytes(const unsigned char* data,
     if (data == nullptr || n < 4) return nullptr;
     if (std::memcmp(data, MLP_MAGIC, 4) == 0) {
         auto net = std::make_unique<MLPNetwork>();
+        if (!net->load_from_bytes(data, n)) return nullptr;
+        return net;
+    }
+    if (std::memcmp(data, MLPQ_MAGIC, 4) == 0) {
+        auto net = std::make_unique<MLPNetworkQ>();
         if (!net->load_from_bytes(data, n)) return nullptr;
         return net;
     }

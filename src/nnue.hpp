@@ -132,10 +132,63 @@ private:
     float                                  b3_{0.0f};
 };
 
+// Quantised int8 counterpart of `MLPNetwork`. Same topology and STM-
+// relative encoding, but weights are int8 and biases are int32 (at
+// the accumulator scale). Two hot loops do int8 × int8 → int32 MAC,
+// with three precomputed float scales bridging the layers. Forward
+// pass is roughly 3× faster than `MLPNetwork` on a modern x86 CPU,
+// at the cost of ~5-15 ELO of precision loss (small compared to the
+// gain from quantisation-enabled deeper search).
+//
+// On-disk format (JNNQ, version 1) is described next to the load /
+// save declarations.
+class MLPNetworkQ : public INetwork {
+public:
+    static constexpr std::size_t INPUT_DIM = 200;
+    static constexpr std::size_t HIDDEN1   = 64;
+    static constexpr std::size_t HIDDEN2   = 32;
+
+    MLPNetworkQ() = default;
+
+    int evaluate(const Position& pos) const noexcept override;
+
+    // Binary format (little-endian throughout):
+    //   [0..4)   magic = "JNNQ"
+    //   [4..8)   version (uint32, currently 1)
+    //   [8..12)  input_dim  (uint32, must equal 200)
+    //   [12..16) hidden1    (uint32, must equal 64)
+    //   [16..20) hidden2    (uint32, must equal 32)
+    //   [20..24) output_dim (uint32, must equal 1)
+    //   [24..28) float32 mul1     (acc1 → int8 h1 quantisation factor)
+    //   [28..32) float32 mul2     (acc2 → int8 h2 quantisation factor)
+    //   [32..36) float32 mul_out  (acc3 → centipawn scale)
+    //   [36..)   weights:
+    //              w1 [HIDDEN1 × INPUT_DIM]   int8
+    //              b1 [HIDDEN1]               int32 (at acc1 scale)
+    //              w2 [HIDDEN2 × HIDDEN1]     int8
+    //              b2 [HIDDEN2]               int32 (at acc2 scale)
+    //              w3 [HIDDEN2]               int8
+    //              b3 [1]                     int32 (at acc3 scale)
+    bool load(std::string_view path);
+    bool save(std::string_view path) const;
+    bool load_from_bytes(const unsigned char* data, std::size_t n);
+
+private:
+    std::array<std::int8_t,  HIDDEN1 * INPUT_DIM> w1_{};
+    std::array<std::int32_t, HIDDEN1>             b1_{};
+    std::array<std::int8_t,  HIDDEN2 * HIDDEN1>   w2_{};
+    std::array<std::int32_t, HIDDEN2>             b2_{};
+    std::array<std::int8_t,  HIDDEN2>             w3_{};
+    std::int32_t                                  b3_{0};
+    float                                         mul1_{1.0f};
+    float                                         mul2_{1.0f};
+    float                                         mul_out_{1.0f};
+};
+
 // Sniff `path`'s 4-byte header and return the matching concrete
-// network. Files starting with "JNNM" load as `MLPNetwork`; anything
-// else is tried as a raw-int32 `LinearNetwork`. Returns nullptr on I/O
-// error or format mismatch.
+// network. Files starting with "JNNM" load as `MLPNetwork`, "JNNQ"
+// as `MLPNetworkQ`; anything else is tried as a raw-int32
+// `LinearNetwork`. Returns nullptr on I/O error or format mismatch.
 std::unique_ptr<INetwork> load_network(std::string_view path);
 
 // In-memory variant of `load_network`: same magic-based dispatch but
