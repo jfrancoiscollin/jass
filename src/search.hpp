@@ -13,6 +13,7 @@
 #include "position.hpp"
 #include "zobrist.hpp"
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -33,8 +34,13 @@ constexpr bool is_mate_score(int s) noexcept {
 }
 
 struct SearchLimits {
-    int         max_depth = 6;
-    std::size_t tt_mb     = 1;  // transposition table size in megabytes
+    int         max_depth   = 6;
+    std::size_t tt_mb       = 1;     // transposition table size in megabytes
+    int         movetime_ms = 0;     // wall-clock cap; 0 = unlimited
+    // External stop signal. If non-null and set to true while the search is
+    // running, the current iteration is abandoned and the result of the
+    // last completed iteration is returned.
+    const std::atomic<bool>* stop_flag = nullptr;
 };
 
 struct SearchResult {

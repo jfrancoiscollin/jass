@@ -97,14 +97,26 @@ std::string format_move(const Move& m) {
 HubFrontEnd::HubFrontEnd(std::istream& in, std::ostream& out)
     : in_(in), out_(out) {}
 
+HubFrontEnd::~HubFrontEnd() {
+    stop_flag_.store(true, std::memory_order_relaxed);
+    wait_for_worker();
+}
+
 int HubFrontEnd::run() {
     std::string line;
     while (std::getline(in_, line)) {
         const auto trimmed = trim(line);
         if (trimmed.empty()) continue;
-        if (trimmed == "quit") break;
+        if (trimmed == "quit") {
+            cmd_stop();  // interrupt and join any running search
+            break;
+        }
         dispatch(trimmed);
     }
+    // EOF (or `quit`) reached: signal any background search to abandon and
+    // wait for its thread to drain so we don't leak a still-running worker.
+    stop_flag_.store(true, std::memory_order_relaxed);
+    wait_for_worker();
     return 0;
 }
 
@@ -116,22 +128,36 @@ void HubFrontEnd::dispatch(std::string_view line) {
     else if (cmd == "position") cmd_position(args);
     else if (cmd == "apply")    cmd_apply(args);
     else if (cmd == "go")       cmd_go(args);
+    else if (cmd == "stop")     cmd_stop();
     else if (cmd == "eval")     cmd_eval();
     else if (cmd == "fen")      cmd_fen();
     else                        emit_error("unknown command");
 }
 
 void HubFrontEnd::emit_ok() {
+    std::lock_guard lk{out_mutex_};
     out_ << "ok\n";
     out_.flush();
 }
 
 void HubFrontEnd::emit_error(std::string_view reason) {
+    std::lock_guard lk{out_mutex_};
     out_ << "error " << reason << '\n';
     out_.flush();
 }
 
+void HubFrontEnd::emit_bestmove(const SearchResult& r) {
+    std::lock_guard lk{out_mutex_};
+    out_ << "bestmove " << format_move(r.best_move)
+         << " score="   << r.score
+         << " depth="   << r.depth
+         << " nodes="   << r.nodes
+         << '\n';
+    out_.flush();
+}
+
 void HubFrontEnd::cmd_hello() {
+    std::lock_guard lk{out_mutex_};
     out_ << "id name=" << ENGINE_NAME
          << " version="           << ENGINE_VERSION
          << " author=\""          << ENGINE_AUTHOR << "\"\n"
@@ -140,11 +166,13 @@ void HubFrontEnd::cmd_hello() {
 }
 
 void HubFrontEnd::cmd_newgame() {
+    wait_for_worker();
     engine_.new_game();
     emit_ok();
 }
 
 void HubFrontEnd::cmd_position(std::string_view args) {
+    wait_for_worker();
     const auto [head, rest] = split_first_word(args);
     if (head == "startpos") {
         engine_.new_game();
@@ -160,6 +188,7 @@ void HubFrontEnd::cmd_position(std::string_view args) {
 }
 
 void HubFrontEnd::cmd_apply(std::string_view args) {
+    wait_for_worker();
     auto m = parse_move(engine_.position(), args);
     if (!m) {
         emit_error("apply: not a legal move");
@@ -173,37 +202,79 @@ void HubFrontEnd::cmd_apply(std::string_view args) {
 }
 
 void HubFrontEnd::cmd_go(std::string_view args) {
+    wait_for_worker();
     const auto [head, rest] = split_first_word(args);
-    int depth = 6;  // default
-    if (head == "depth") {
+
+    SearchLimits lim;
+    bool         async = false;
+
+    if (head.empty() || head == "depth") {
+        if (head == "depth") {
+            const auto n = parse_int(rest);
+            if (!n || *n < 1) {
+                emit_error("go: depth must be a positive integer");
+                return;
+            }
+            lim.max_depth = *n;
+        } else {
+            lim.max_depth = 6;
+        }
+    } else if (head == "movetime") {
         const auto n = parse_int(rest);
         if (!n || *n < 1) {
-            emit_error("go: depth must be a positive integer");
+            emit_error("go: movetime must be a positive integer (ms)");
             return;
         }
-        depth = *n;
-    } else if (!head.empty()) {
-        emit_error("go: only `depth <N>` is supported for now");
+        lim.max_depth   = MAX_PLY;
+        lim.movetime_ms = *n;
+    } else if (head == "infinite") {
+        lim.max_depth = MAX_PLY;
+        async         = true;
+    } else {
+        emit_error("go: expected `depth N`, `movetime N`, or `infinite`");
         return;
     }
 
-    const SearchResult r = engine_.search(depth);
-    out_ << "bestmove " << format_move(r.best_move)
-         << " score=" << r.score
-         << " depth=" << r.depth
-         << " nodes=" << r.nodes
-         << '\n';
-    out_.flush();
+    stop_flag_.store(false, std::memory_order_relaxed);
+    lim.stop_flag = &stop_flag_;
+
+    if (async) run_search_async(lim);
+    else       run_search_sync(lim);
+}
+
+void HubFrontEnd::cmd_stop() {
+    stop_flag_.store(true, std::memory_order_relaxed);
+    wait_for_worker();
 }
 
 void HubFrontEnd::cmd_eval() {
+    wait_for_worker();
+    std::lock_guard lk{out_mutex_};
     out_ << "eval " << evaluate(engine_.position()) << '\n';
     out_.flush();
 }
 
 void HubFrontEnd::cmd_fen() {
+    wait_for_worker();
+    std::lock_guard lk{out_mutex_};
     out_ << "fen " << engine_.position().to_fen() << '\n';
     out_.flush();
+}
+
+void HubFrontEnd::run_search_sync(const SearchLimits& limits) {
+    const SearchResult r = engine_.search(limits);
+    emit_bestmove(r);
+}
+
+void HubFrontEnd::run_search_async(SearchLimits limits) {
+    worker_ = std::thread([this, limits]() {
+        const SearchResult r = engine_.search(limits);
+        emit_bestmove(r);
+    });
+}
+
+void HubFrontEnd::wait_for_worker() {
+    if (worker_.joinable()) worker_.join();
 }
 
 }  // namespace jass

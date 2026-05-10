@@ -11,6 +11,7 @@
 #include "position.hpp"
 #include "types.hpp"
 
+#include <chrono>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -132,6 +133,29 @@ void test_hub_quit_terminates_loop() {
     JASS_CHECK(!contains(out, "ok"));
 }
 
+// -----------------------------------------------------------------------------
+// Time control & external stop
+// -----------------------------------------------------------------------------
+void test_hub_movetime_returns_within_budget() {
+    using namespace std::chrono;
+    const auto t0 = steady_clock::now();
+    const std::string out = drive_session("go movetime 50\n");
+    const auto elapsed = duration_cast<milliseconds>(steady_clock::now() - t0).count();
+    JASS_CHECK(contains(out, "bestmove"));
+    // Generous upper bound so the test stays robust under load: budget +
+    // a healthy slack for the ~1024-node poll granularity.
+    JASS_CHECK(elapsed < 500);
+}
+
+void test_hub_infinite_then_stop() {
+    // `go infinite` spawns a worker that searches until the stop flag is
+    // set. `stop` sets the flag and joins the worker; only then does it
+    // return, so the `bestmove` line is guaranteed to be in the output by
+    // the time `drive_session` returns.
+    const std::string out = drive_session("go infinite\nstop\n");
+    JASS_CHECK(contains(out, "bestmove"));
+}
+
 }  // namespace
 
 void run_hub_tests() {
@@ -146,4 +170,7 @@ void run_hub_tests() {
     test_hub_apply_then_go_yields_bestmove();
     test_hub_unknown_command_reports_error();
     test_hub_quit_terminates_loop();
+
+    test_hub_movetime_returns_within_budget();
+    test_hub_infinite_then_stop();
 }
