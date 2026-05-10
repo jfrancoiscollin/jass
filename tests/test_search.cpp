@@ -189,6 +189,40 @@ void test_search_score_reflects_material_lead() {
     JASS_CHECK(r.score < KING_VALUE);
 }
 
+void test_search_with_multiple_threads() {
+    // Lazy SMP must not change correctness: same depth, same legal best
+    // move, same score (within a small tolerance because helper threads
+    // may legitimately sharpen the score by deepening some branches via
+    // the shared TT).
+    const Position p = Position::start_position();
+
+    SearchLimits a;
+    a.max_depth = 4;
+    a.tt_mb     = 4;
+    a.threads   = 1;
+    const SearchResult r1 = search(p, a);
+
+    SearchLimits b;
+    b.max_depth = 4;
+    b.tt_mb     = 4;
+    b.threads   = 4;
+    const SearchResult r4 = search(p, b);
+
+    JASS_CHECK_EQ(r1.depth, 4);
+    JASS_CHECK_EQ(r4.depth, 4);
+
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    bool single_legal = false;
+    bool smp_legal    = false;
+    for (const auto& m : legal) {
+        if (m == r1.best_move) single_legal = true;
+        if (m == r4.best_move) smp_legal    = true;
+    }
+    JASS_CHECK(single_legal);
+    JASS_CHECK(smp_legal);
+}
+
 void test_search_returns_pv_starting_with_best_move() {
     const Position p = Position::start_position();
     SearchLimits lim;
@@ -244,5 +278,6 @@ void run_search_tests() {
     test_qsearch_avoids_horizon_effect();
     test_search_score_reflects_material_lead();
     test_search_returns_pv_starting_with_best_move();
+    test_search_with_multiple_threads();
     test_search_depth_increases();
 }

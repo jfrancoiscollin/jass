@@ -30,8 +30,11 @@ contains:
   table (Zobrist-keyed, depth-preferred replacement, mate-score adjusted),
   killer-move + history move ordering, aspiration windows around the
   iterative-deepening root, FMJD draw handling (25-move rule and 2-fold
-  repetition) and a quiescence search that plays mandatory capture
-  chains out at the leaves.
+  repetition), an endgame-knowledge probe (KvK = draw), a principal-
+  variation extraction via the TT, time control (`go movetime`, `go
+  infinite` + `stop`), lazy SMP for multi-thread scaling and a
+  quiescence search that plays mandatory capture chains out at the
+  leaves.
 - A long-lived `Engine` facade that owns the TT and the game's hash
   history so successive moves of the same game share their lookup
   data and detect repetitions naturally.
@@ -97,8 +100,11 @@ quit
 ```
 
 Supported commands: `hello`, `newgame`, `position startpos | fen <FEN>`,
-`apply <move>`, `go depth <N>`, `eval`, `fen`, `quit`. Move format on
-input/output is `from-to` (quiet) or `fromxto` (capture).
+`apply <move>`, `go depth <N> | movetime <ms> | infinite`, `stop`,
+`setoption threads <N>`, `eval`, `fen`, `quit`. Move format on
+input/output is `from-to` (quiet) or `fromxto` (capture). The
+`bestmove` line carries `score=`, `depth=`, `nodes=` and `pv=` (the
+principal variation as a comma-separated list of moves).
 
 ### WebAssembly (for Draught Master)
 
