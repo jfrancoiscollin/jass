@@ -74,10 +74,12 @@ void test_clock_increments_on_king_quiet_move() {
 // 25-move rule (50-ply) detected by the search
 // -----------------------------------------------------------------------------
 void test_search_returns_draw_when_clock_at_threshold() {
-    // Two-king-vs-one-king material: the side ahead would normally see a
-    // clearly positive score. With the clock pinned at 50 plies the search
-    // must report a draw at the root.
-    Position p = parse("W:WK28,K33:BK1");
+    // 2 kings + 1 man vs 1 king — material lead worth ≈ 500 cp via the
+    // normal eval (we deliberately put a man on the board so the
+    // position does not fall into the kings-only bitbase). With the
+    // 25-move clock at the threshold the search must report a draw at
+    // the root.
+    Position p = parse("W:WK28,K33,41:BK1");
     p.set_halfmove_clock(FIFTY_MOVE_PLIES);
 
     SearchLimits lim;
@@ -90,7 +92,7 @@ void test_search_returns_draw_when_clock_at_threshold() {
 }
 
 void test_search_normal_when_clock_below_threshold() {
-    Position p = parse("W:WK28,K33:BK1");
+    Position p = parse("W:WK28,K33,41:BK1");
     p.set_halfmove_clock(10);
 
     SearchLimits lim;
@@ -106,7 +108,7 @@ void test_search_normal_when_clock_below_threshold() {
 // Repetition detected by the search
 // -----------------------------------------------------------------------------
 void test_search_returns_draw_on_repetition_in_history() {
-    const Position p = parse("W:WK28,K33:BK1");
+    const Position p = parse("W:WK28,K33,41:BK1");
     const ZobristHash h = zobrist_hash(p);
 
     SearchLimits lim;
