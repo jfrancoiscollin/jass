@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # Build the Jass engine as a WebAssembly module via Emscripten.
 #
 # Requires the Emscripten SDK to be activated: `emcmake` and `emmake` must be

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Jean-François Collin
 //
 // Native entry point.
@@ -18,7 +18,10 @@
 #include "tournament.hpp"
 
 #include <charconv>
+#include <cstdint>
+#include <fstream>
 #include <iostream>
+#include <random>
 #include <string>
 #include <string_view>
 
@@ -100,6 +103,106 @@ int parse_int_or(std::string_view s, int fallback) {
     return (ec == std::errc{}) ? v : fallback;
 }
 
+// -----------------------------------------------------------------------------
+// --gen-data: write a binary dataset of (position, target-score) records for
+// offline NNUE training.  See `tools/README.md` for the format.
+// -----------------------------------------------------------------------------
+int run_gen_data_mode(int argc, char** argv) {
+    int          n         = 10000;
+    const char*  out_path  = "selfplay.bin";
+    int          play_depth = 4;       // depth used to advance games
+    int          eval_depth = 8;       // depth used to label sampled positions
+    int          random_open_plies = 4;
+
+    if (argc > 2) {
+        int parsed = parse_int_or(argv[2], -1);
+        if (parsed > 0) n = parsed;
+    }
+    if (argc > 3) out_path = argv[3];
+
+    std::ofstream f(out_path, std::ios::binary);
+    if (!f) {
+        std::cerr << "error: cannot open " << out_path << " for writing\n";
+        return 1;
+    }
+
+    // Header: 4 bytes magic + 4 bytes record-count.  We backpatch the count
+    // at the end of the run so the file is self-describing even if the
+    // requested count is reduced (e.g. all reachable positions were sampled).
+    const char magic[4] = {'J', 'N', 'N', 'T'};
+    f.write(magic, 4);
+    std::uint32_t count_placeholder = 0;
+    f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
+
+    std::mt19937_64 rng(0x5eed5eed5eed5eedULL);
+    Engine          e;
+    e.use_book(false);
+
+    int generated  = 0;
+    int game_count = 0;
+
+    while (generated < n) {
+        ++game_count;
+        e.new_game();
+
+        // Random opening plies for diversity.  Pick uniformly among the legal
+        // moves of the current position; this is enough to avoid identical
+        // games across runs.
+        for (int i = 0; i < random_open_plies; ++i) {
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) break;
+            e.apply_move(ml[rng() % ml.size()]);
+        }
+
+        for (int ply = 0; ply < 100 && generated < n; ++ply) {
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) break;
+
+            // Sample roughly every fourth ply.
+            if ((rng() & 3) == 0) {
+                SearchLimits lim;
+                lim.max_depth = eval_depth;
+                const SearchResult r = e.search(lim);
+                const int score = r.score;
+
+                const Position& pos = e.position();
+                const std::uint64_t bbs[4] = {
+                    pos.white_men(),   pos.white_kings(),
+                    pos.black_men(),   pos.black_kings()};
+                f.write(reinterpret_cast<const char*>(bbs), 32);
+                const std::uint8_t stm = (pos.side_to_move() == Color::White) ? 0 : 1;
+                f.write(reinterpret_cast<const char*>(&stm), 1);
+                const std::int32_t s32 = static_cast<std::int32_t>(score);
+                f.write(reinterpret_cast<const char*>(&s32), 4);
+
+                ++generated;
+            }
+
+            // Advance the game with a low-depth move so positions stay diverse.
+            SearchLimits lim;
+            lim.max_depth = play_depth;
+            const SearchResult r = e.search(lim);
+            if (!e.apply_move(r.best_move)) break;
+        }
+
+        if ((game_count % 50) == 0) {
+            std::cout << "  played " << game_count << " games, "
+                      << generated << " / " << n << " positions\n";
+        }
+    }
+
+    // Backpatch the count.
+    f.seekp(4, std::ios::beg);
+    const std::uint32_t count32 = static_cast<std::uint32_t>(generated);
+    f.write(reinterpret_cast<const char*>(&count32), 4);
+    f.close();
+
+    std::cout << "wrote " << generated << " records to " << out_path << "\n";
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -111,14 +214,19 @@ int run_tournament_mode(int argc, char** argv) {
     EngineConfig a; a.max_depth = depth_a;
     EngineConfig b; b.max_depth = depth_b;
 
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
     std::cout << "Tournament: A(depth=" << depth_a
               << ") vs B(depth=" << depth_b
-              << "), " << (pairs * 2) << " games\n";
+              << "), " << total_games << " games "
+              << "(" << pool.size() << " openings × " << pairs
+              << " pairs × 2 colours)\n";
 
     const TournamentResult r = run_tournament(a, b, pairs);
     std::cout << "Result: A=" << r.a_wins
               << " B="        << r.b_wins
-              << " Draws="    << r.draws << '\n';
+              << " Draws="    << r.draws
+              << " (total "   << r.games << ")\n";
     return 0;
 }
 
@@ -127,15 +235,20 @@ int main(int argc, char** argv) {
         const std::string_view a{argv[i]};
         if      (a == "--smoke")      return run_smoke();
         else if (a == "--tournament") return run_tournament_mode(argc, argv);
+        else if (a == "--gen-data")   return run_gen_data_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
-                "Usage: jass [--smoke|--tournament [a b pairs]|--version|--help]\n"
+                "Usage: jass [--smoke|--tournament [a b pairs]|"
+                            "--gen-data [N path]|--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
                 "  --tournament [da db pairs]       play a colour-swap match\n"
                 "                                   between depth-da and depth-db\n"
                 "                                   engines (default 4 vs 6, 2 games)\n"
+                "  --gen-data [N path]              write N self-play training\n"
+                "                                   records to <path> (default\n"
+                "                                   10000 to selfplay.bin)\n"
                 "  --version                        print the engine version\n";
             return 0;
         }
