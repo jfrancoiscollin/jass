@@ -102,7 +102,7 @@ bool write_mlp_file(
     auto wu32 = [&](std::uint32_t v) {
         f.write(reinterpret_cast<const char*>(&v), 4);
     };
-    wu32(1);  // version
+    wu32(2);  // version (STM-relative encoding)
     wu32(static_cast<std::uint32_t>(MLPNetwork::INPUT_DIM));
     wu32(static_cast<std::uint32_t>(MLPNetwork::HIDDEN1));
     wu32(static_cast<std::uint32_t>(MLPNetwork::HIDDEN2));
@@ -140,7 +140,7 @@ void test_mlp_default_returns_zero() {
 void test_mlp_forward_pass_matches_hand_computed() {
     // Configure a single non-zero path through the network so we can
     // predict the output bit by bit:
-    //   feature 4 (square_idx=1, kind=0) → "white man on FMJD square 2"
+    //   feature 4 (b=1, kind=0) = "STM has man on bit 1 (FMJD square 2)"
     //   w1[0 * INPUT_DIM + 4] = 1   → only neuron 0 of layer 1 fires
     //   w2[0 * HIDDEN1 + 0]   = 2   → only neuron 0 of layer 2 fires (= 2)
     //   w3[0]                 = 100 → output = 100 * 2 = 200
@@ -159,16 +159,62 @@ void test_mlp_forward_pass_matches_hand_computed() {
     MLPNetwork net;
     JASS_CHECK(net.load(path));
 
-    const Position p = parse("W:W2:B1");
-    JASS_CHECK_EQ(net.evaluate(p), 200);
+    // White-to-move, white man on FMJD square 2 (bit 1). Encoding does
+    // NOT mirror, so feature index = 1 * 4 + 0 (stm-man) = 4. Active.
+    const Position p_w = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p_w), 200);
 
-    // Same board, black to move — STM flip should negate the output.
-    const Position pb = parse("B:W2:B1");
-    JASS_CHECK_EQ(net.evaluate(pb), -200);
+    // STM-symmetric counterpart: black to move with a black man on the
+    // mirrored square (49 -> bit 48 -> mirrored bit 1 -> feature 4),
+    // white man on the mirrored other square (1 -> bit 0 -> mirrored
+    // bit 49 -> feature 49*4+2=198, weight zero). Same input vector,
+    // therefore same output 200 (no sign flip in v2 encoding).
+    const Position p_b = parse("B:W1:B49");
+    JASS_CHECK_EQ(net.evaluate(p_b), 200);
 
-    // White man elsewhere → feature 4 inactive → no contribution.
+    // White-to-move with the man on a different square → feature 4
+    // inactive → no contribution.
     const Position other = parse("W:W3:B1");
     JASS_CHECK_EQ(net.evaluate(other), 0);
+
+    std::remove(path.c_str());
+}
+
+void test_mlp_position_level_symmetry() {
+    // Same hand-crafted single-path network. Any position P (white to
+    // move) and its mirror+colour-swap P' (black to move) must
+    // evaluate to the same number under the v2 STM-relative encoding.
+    std::array<float, MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM> w1{};
+    std::array<float, MLPNetwork::HIDDEN1>                         b1{};
+    std::array<float, MLPNetwork::HIDDEN2 * MLPNetwork::HIDDEN1>   w2{};
+    std::array<float, MLPNetwork::HIDDEN2>                         b2{};
+    std::array<float, MLPNetwork::HIDDEN2>                         w3{};
+    // A handful of arbitrary live weights so the network actually
+    // discriminates between positions instead of returning a constant.
+    w1[0 * MLPNetwork::INPUT_DIM +   4] =  1.0f;
+    w1[1 * MLPNetwork::INPUT_DIM +  60] = -2.0f;
+    w1[2 * MLPNetwork::INPUT_DIM + 158] =  3.0f;
+    w2[0 * MLPNetwork::HIDDEN1 + 0]     =  2.0f;
+    w2[1 * MLPNetwork::HIDDEN1 + 0]     = -1.5f;
+    w2[2 * MLPNetwork::HIDDEN1 + 2]     =  4.0f;
+    w3[0] = 100.0f;
+    w3[1] =  50.0f;
+    w3[2] =  25.0f;
+
+    const std::string path = make_tmp_path("/tmp/jass-mlp-sym-XXXXXX");
+    JASS_CHECK(write_mlp_file(path, w1, b1, w2, b2, w3, 7.0f));
+
+    MLPNetwork net;
+    JASS_CHECK(net.load(path));
+
+    // P : white men on {2, 15}, black men on {40, 49}. White to move.
+    // Mirror white squares 2 -> 49, 15 -> 36. Mirror black squares
+    // 40 -> 11, 49 -> 2. Swap colours: white now has men on the
+    // mirrored black squares {11, 2}, black on the mirrored white
+    // squares {49, 36}. Black to move.
+    const Position p_w = parse("W:W2,15:B40,49");
+    const Position p_b = parse("B:W2,11:B36,49");
+    JASS_CHECK_EQ(net.evaluate(p_w), net.evaluate(p_b));
 
     std::remove(path.c_str());
 }
@@ -222,11 +268,23 @@ void test_mlp_load_rejects_missing_or_bad_file() {
     {
         std::ofstream f(bad_dims, std::ios::binary);
         f.write("JNNM", 4);
-        const std::uint32_t v[5] = {1, 999u, 64u, 32u, 1u};  // input_dim wrong
+        const std::uint32_t v[5] = {2, 999u, 64u, 32u, 1u};  // input_dim wrong
         f.write(reinterpret_cast<const char*>(v), sizeof(v));
     }
     JASS_CHECK(!net.load(bad_dims));
     std::remove(bad_dims.c_str());
+
+    // Right magic + dimensions but old (v1) version — must be rejected
+    // explicitly because the input encoding changed in v2.
+    const std::string old_version = make_tmp_path("/tmp/jass-mlp-v1-XXXXXX");
+    {
+        std::ofstream f(old_version, std::ios::binary);
+        f.write("JNNM", 4);
+        const std::uint32_t v[5] = {1, 200u, 64u, 32u, 1u};
+        f.write(reinterpret_cast<const char*>(v), sizeof(v));
+    }
+    JASS_CHECK(!net.load(old_version));
+    std::remove(old_version.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -303,6 +361,7 @@ void run_nnue_tests() {
     test_network_load_rejects_missing_file();
     test_mlp_default_returns_zero();
     test_mlp_forward_pass_matches_hand_computed();
+    test_mlp_position_level_symmetry();
     test_mlp_save_load_roundtrip();
     test_mlp_load_rejects_missing_or_bad_file();
     test_default_nnue_is_non_null_and_returns_finite_score();
