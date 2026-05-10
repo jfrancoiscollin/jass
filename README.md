@@ -28,15 +28,18 @@ contains:
   the FMJD majority-capture rule (longest chain wins).
 - A negamax alpha-beta search with iterative deepening, plus a flat
   material evaluation (man = 100, king = 300, side-to-move relative).
+- WebAssembly bindings via Emscripten/Embind exposing a small `Game`
+  class to JavaScript (`fen`, `legalMoves`, `applyIndex`, `bestMove`,
+  …) for the Draught Master web app.
 - A smoke-test binary that runs a full engine-vs-engine self-play game in
   a few milliseconds end-to-end, and a unit-test runner with 350+
   assertions covering geometry, FEN, movegen edge cases, perft (up to
   depth 5: 9 / 81 / 658 / 4 265 / 27 117) and the search contract
   (legality, mate detection, forced captures, material scoring).
 
-Coming next: WASM bindings for Draught Master, then a richer evaluation
-(piece-square tables, mobility, advancement, tempo), transposition
-tables, and the HUB protocol front-end.
+Coming next: a richer evaluation (piece-square tables, mobility,
+advancement, tempo), transposition tables, and the HUB protocol
+front-end for desktop GUIs.
 
 ## Licence and provenance
 
@@ -74,10 +77,26 @@ Requires the [Emscripten](https://emscripten.org) SDK to be installed and
 
 ```sh
 ./wasm/build.sh
+python3 -m http.server --directory build-wasm 8080
+# then open http://localhost:8080/example.html
 ```
 
-The produced `build-wasm/jass.{js,wasm}` can be loaded directly from a
-browser.
+The produced `build-wasm/jass.js` is an **ES6 module** that loads
+`build-wasm/jass.wasm` next to it. Sketch of the JS API:
+
+```js
+import createJass from './jass.js';
+
+const Module = await createJass();
+const g = new Module.Game();        // start position, white to move
+g.fen();                            // → "W:W31-50:B1-20" (Hub-style)
+g.legalMoves();                     // → [{from, to, captures, promotes}, …]
+g.applyIndex(0);                    // play the first legal move
+const best = g.bestMove(6);         // → {from, to, …, score, depth, nodes}
+g.delete();                         // free the wrapped C++ object
+```
+
+`wasm/example.html` ships a runnable demo using exactly this API.
 
 ## Repository layout
 
@@ -91,10 +110,18 @@ jass/
 │   ├── board.hpp/.cpp     10×10 geometry, neighbour tables
 │   ├── bitboard.hpp       50-bit Bitboard helpers
 │   ├── position.hpp/.cpp  Position + Hub-style FEN
-│   ├── movegen.hpp/.cpp   move generation (skeleton)
-│   └── main.cpp           smoke-test entry point
+│   ├── movegen.hpp/.cpp   move generation
+│   ├── eval.hpp/.cpp      static evaluation
+│   ├── search.hpp/.cpp    negamax alpha-beta with iterative deepening
+│   ├── main.cpp           native smoke-test entry point
+│   └── wasm_api.cpp       Embind bindings (Emscripten builds only)
 ├── tests/
-│   └── test_position.cpp  unit tests
+│   ├── test_framework.hpp test scaffolding
+│   ├── test_main.cpp      test runner entry point
+│   ├── test_position.cpp  geometry, bitboards, FEN
+│   ├── test_movegen.cpp   movegen edge cases + perft
+│   └── test_search.cpp    search contract tests
 └── wasm/
-    └── build.sh           Emscripten build script
+    ├── build.sh           Emscripten build wrapper
+    └── example.html       browser demo loading the ES6 module
 ```

@@ -45,9 +45,16 @@ target_include_directories(jass_lib PUBLIC src)
 target_link_libraries(jass_lib PRIVATE jass_warnings)
 
 # -----------------------------------------------------------------------------
-# Native executable (smoke test / future HUB front-end)
+# Front-end executable
 # -----------------------------------------------------------------------------
-add_executable(jass src/main.cpp)
+# Native build: a smoke-test/CLI binary using src/main.cpp.
+# Emscripten build: an ES-module exposing the engine to JavaScript via Embind
+# (src/wasm_api.cpp). The two entry points are mutually exclusive.
+if(EMSCRIPTEN)
+    add_executable(jass src/wasm_api.cpp)
+else()
+    add_executable(jass src/main.cpp)
+endif()
 target_link_libraries(jass PRIVATE jass_lib jass_warnings)
 
 # -----------------------------------------------------------------------------
@@ -68,18 +75,21 @@ add_test(NAME jass_tests COMMAND jass_tests)
 # Emscripten / WASM specifics
 # -----------------------------------------------------------------------------
 if(EMSCRIPTEN)
-    # The native executable is repurposed as the WASM module entry point.
-    # We export it as an ES module producing jass.js + jass.wasm.
+    # Produce jass.js + jass.wasm as an ES6 module.
     set_target_properties(jass PROPERTIES
         OUTPUT_NAME "jass"
         SUFFIX      ".js"
     )
+    target_compile_options(jass PRIVATE -O3)
     target_link_options(jass PRIVATE
+        "-O3"
+        "-lembind"
         "-sMODULARIZE=1"
         "-sEXPORT_ES6=1"
         "-sENVIRONMENT=web,worker"
         "-sALLOW_MEMORY_GROWTH=1"
         "-sEXPORT_NAME=createJass"
         "-sFILESYSTEM=0"
+        "-sASSERTIONS=0"
     )
 endif()
