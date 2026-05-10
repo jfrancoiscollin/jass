@@ -4,6 +4,7 @@
 #include "engine.hpp"
 
 #include "movegen.hpp"
+#include "zobrist.hpp"
 
 namespace jass {
 
@@ -22,16 +23,19 @@ Engine::Engine(std::size_t tt_mb) : pos_(Position::start_position()) {
 void Engine::new_game() {
     pos_ = Position::start_position();
     tt_.clear();
+    hash_history_.clear();
 }
 
 void Engine::set_position(const Position& pos) noexcept {
     pos_ = pos;
+    hash_history_.clear();
 }
 
 bool Engine::set_position_fen(std::string_view fen) {
     auto p = Position::from_fen(fen);
     if (!p) return false;
     pos_ = *p;
+    hash_history_.clear();
     return true;
 }
 
@@ -40,6 +44,9 @@ bool Engine::apply_move(const Move& m) {
     generate_legal_moves(pos_, ml);
     for (const auto& legal : ml) {
         if (legal == m) {
+            // Record the *predecessor* before the move so search() can spot
+            // repetitions of any earlier game position.
+            hash_history_.push_back(zobrist_hash(pos_));
             pos_ = pos_.after(m);
             return true;
         }
@@ -50,7 +57,7 @@ bool Engine::apply_move(const Move& m) {
 SearchResult Engine::search(int max_depth) {
     SearchLimits lim;
     lim.max_depth = max_depth;
-    return ::jass::search(pos_, lim, tt_);
+    return ::jass::search(pos_, lim, tt_, hash_history_);
 }
 
 void Engine::clear_tt() noexcept {

@@ -11,9 +11,11 @@
 
 #include "movegen.hpp"
 #include "position.hpp"
+#include "zobrist.hpp"
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 namespace jass { class TranspositionTable; }
 
@@ -51,8 +53,23 @@ struct SearchResult {
 // according to `limits.tt_mb` for each call; callers that drive several
 // searches in sequence (a game, a HUB session, …) should instead pass an
 // explicit, reused table to the three-argument overload.
+// `game_history` holds the Zobrist hashes of every position the game has
+// already visited *before* `pos` (predecessors only — `pos` itself must not
+// be in there). It is consulted for 3-fold-repetition detection together
+// with the search-tree path the recursion builds itself.
 SearchResult search(const Position& pos, const SearchLimits& limits);
 SearchResult search(const Position& pos, const SearchLimits& limits,
                     TranspositionTable& tt);
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt,
+                    const std::vector<ZobristHash>& game_history);
+
+// FMJD draws checked by the search (besides the no-legal-move case which
+// is a loss for the side to move):
+//   - 25-move rule: 50 plies without an irreversible move → draw 0
+//   - 2-fold repetition (we treat the first repeat as drawish, an accepted
+//     simplification): the current hash is in `game_history` or the search
+//     path → draw 0.
+inline constexpr int FIFTY_MOVE_PLIES = 50;
 
 }  // namespace jass

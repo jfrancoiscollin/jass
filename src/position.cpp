@@ -76,6 +76,7 @@ Position Position::after(const Move& m) const noexcept {
     const Color us       = stm_;
     const Piece moving   = piece_at(m.from);
     const bool  was_king = is_king(moving);
+    const bool  was_man  = is_man(moving);
 
     next.remove_piece(m.from, moving);
     for (std::uint8_t i = 0; i < m.num_captures; ++i) {
@@ -91,6 +92,14 @@ Position Position::after(const Move& m) const noexcept {
     }
     next.add_piece(m.to, final_piece);
     next.stm_ = opposite(us);
+
+    // FMJD 25-move (50-ply) rule: a capture or a man-move is "irreversible"
+    // and resets the counter; everything else (king quiet) increments it.
+    if (m.is_capture() || was_man) {
+        next.halfmove_clock_ = 0;
+    } else {
+        next.halfmove_clock_ = halfmove_clock_ + 1;
+    }
     return next;
 }
 
