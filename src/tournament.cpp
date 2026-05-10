@@ -29,20 +29,40 @@ int repetition_count(const std::vector<ZobristHash>& history,
 
 }  // namespace
 
+std::vector<Position> default_opening_pool() {
+    const Position start = Position::start_position();
+    MoveList ml;
+    generate_legal_moves(start, ml);
+    std::vector<Position> pool;
+    pool.reserve(ml.size());
+    for (const auto& m : ml) pool.push_back(start.after(m));
+    return pool;
+}
+
 GameRecord play_game(const EngineConfig& white_cfg,
                      const EngineConfig& black_cfg,
-                     int                 max_plies) {
+                     int                 max_plies,
+                     const Position*     start) {
     Engine w_engine;
     Engine b_engine;
     w_engine.use_book(white_cfg.use_book);
     b_engine.use_book(black_cfg.use_book);
+
+    // Both engines need to share the *same* starting state. `new_game`
+    // resets to the standard initial position and clears the TT and
+    // hash history; `set_position` then replaces the position when an
+    // opening was specified, leaving the TT clear and the history
+    // empty so the search starts from a clean slate.
     w_engine.new_game();
     b_engine.new_game();
+    if (start) {
+        w_engine.set_position(*start);
+        b_engine.set_position(*start);
+    }
 
     for (int ply = 0; ply < max_plies; ++ply) {
         const Position& pos = w_engine.position();
 
-        // Terminal: no legal move → side to move loses.
         MoveList ml;
         generate_legal_moves(pos, ml);
         if (ml.empty()) {
@@ -50,13 +70,9 @@ GameRecord play_game(const EngineConfig& white_cfg,
                                                       : GameOutcome::WhiteWin,
                     ply, "no legal moves"};
         }
-
-        // 25-move rule.
         if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
             return {GameOutcome::Draw, ply, "25-move rule"};
         }
-
-        // 3-fold repetition over the actual game history.
         const ZobristHash h = zobrist_hash(pos);
         if (repetition_count(w_engine.hash_history(), h) >= 2) {
             return {GameOutcome::Draw, ply, "3-fold repetition"};
@@ -66,12 +82,9 @@ GameRecord play_game(const EngineConfig& white_cfg,
         const EngineConfig& cfg = (pos.side_to_move() == Color::White) ? white_cfg : black_cfg;
         const SearchResult  r   = cur.search(make_limits(cfg));
 
-        // Both engines must stay in lock-step to keep their game history
-        // (used by the search for repetition detection) accurate.
         const bool ok_w = w_engine.apply_move(r.best_move);
         const bool ok_b = b_engine.apply_move(r.best_move);
         if (!ok_w || !ok_b) {
-            // Should never happen — the search returns legal moves.
             return {pos.side_to_move() == Color::White ? GameOutcome::BlackWin
                                                       : GameOutcome::WhiteWin,
                     ply, "illegal engine move"};
@@ -80,23 +93,45 @@ GameRecord play_game(const EngineConfig& white_cfg,
     return {GameOutcome::Draw, max_plies, "ply cap"};
 }
 
-TournamentResult run_tournament(const EngineConfig& a,
-                                const EngineConfig& b,
-                                int                 pairs,
-                                int                 max_plies) {
+TournamentResult run_tournament(const EngineConfig&          a,
+                                const EngineConfig&          b,
+                                int                          pairs,
+                                int                          max_plies,
+                                const std::vector<Position>* openings) {
     TournamentResult tr;
-    for (int i = 0; i < pairs; ++i) {
-        // A as white, B as black.
-        const GameRecord g1 = play_game(a, b, max_plies);
-        if      (g1.outcome == GameOutcome::WhiteWin) ++tr.a_wins;
-        else if (g1.outcome == GameOutcome::BlackWin) ++tr.b_wins;
-        else                                          ++tr.draws;
 
-        // B as white, A as black.
-        const GameRecord g2 = play_game(b, a, max_plies);
-        if      (g2.outcome == GameOutcome::BlackWin) ++tr.a_wins;
-        else if (g2.outcome == GameOutcome::WhiteWin) ++tr.b_wins;
-        else                                          ++tr.draws;
+    // If the caller didn't supply an opening pool, build the default one.
+    // We materialise it locally so the rest of the loop has a single
+    // pointer to iterate against.
+    const std::vector<Position> default_pool = openings ? std::vector<Position>{}
+                                                       : default_opening_pool();
+    const std::vector<Position>& pool = openings ? *openings : default_pool;
+
+    auto record = [&](const GameRecord& g, bool a_is_white) {
+        ++tr.games;
+        const bool a_won = (g.outcome == GameOutcome::WhiteWin &&  a_is_white)
+                       ||  (g.outcome == GameOutcome::BlackWin && !a_is_white);
+        const bool b_won = (g.outcome == GameOutcome::WhiteWin && !a_is_white)
+                       ||  (g.outcome == GameOutcome::BlackWin &&  a_is_white);
+        if      (a_won) ++tr.a_wins;
+        else if (b_won) ++tr.b_wins;
+        else            ++tr.draws;
+    };
+
+    if (pool.empty()) {
+        // Nothing to iterate; play from the start position only.
+        for (int i = 0; i < pairs; ++i) {
+            record(play_game(a, b, max_plies, /*start=*/nullptr), /*a_is_white=*/true);
+            record(play_game(b, a, max_plies, /*start=*/nullptr), /*a_is_white=*/false);
+        }
+        return tr;
+    }
+
+    for (int i = 0; i < pairs; ++i) {
+        for (const Position& opening : pool) {
+            record(play_game(a, b, max_plies, &opening), /*a_is_white=*/true);
+            record(play_game(b, a, max_plies, &opening), /*a_is_white=*/false);
+        }
     }
     return tr;
 }
