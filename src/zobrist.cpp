@@ -3,10 +3,7 @@
 
 #include "zobrist.hpp"
 
-#include "bitboard.hpp"
-
-#include <array>
-#include <cstdint>
+#include "zobrist_keys.hpp"
 
 namespace jass {
 
@@ -25,15 +22,8 @@ constexpr std::uint64_t splitmix64(std::uint64_t z) noexcept {
     return z;
 }
 
-struct Tables {
-    // Indexed by [piece-kind 0..3][bit 0..49]. Piece-kind: 0 = white man,
-    // 1 = white king, 2 = black man, 3 = black king.
-    std::array<std::array<std::uint64_t, NUM_SQUARES>, 4> piece{};
-    std::uint64_t side_to_move{0};
-};
-
-constexpr Tables build_tables() {
-    Tables t{};
+constexpr ZobristKeys build_keys() {
+    ZobristKeys t{};
     std::uint64_t seed = 0x0123456789ABCDEFULL;
     auto next = [&seed]() {
         seed = splitmix64(seed);
@@ -49,26 +39,12 @@ constexpr Tables build_tables() {
     return t;
 }
 
-constinit const Tables ZOB = build_tables();
-
-inline ZobristHash xor_bb(Bitboard b, std::size_t kind) noexcept {
-    ZobristHash h = 0;
-    while (b) {
-        h ^= ZOB.piece[kind][static_cast<std::size_t>(square_to_bit(pop_lsb(b)))];
-    }
-    return h;
-}
-
 }  // namespace
 
+constinit const ZobristKeys ZOBRIST = build_keys();
+
 ZobristHash zobrist_hash(const Position& pos) noexcept {
-    ZobristHash h = 0;
-    h ^= xor_bb(pos.white_men(),   0);
-    h ^= xor_bb(pos.white_kings(), 1);
-    h ^= xor_bb(pos.black_men(),   2);
-    h ^= xor_bb(pos.black_kings(), 3);
-    if (pos.side_to_move() == Color::Black) h ^= ZOB.side_to_move;
-    return h;
+    return pos.hash();
 }
 
 }  // namespace jass

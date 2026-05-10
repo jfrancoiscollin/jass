@@ -11,6 +11,7 @@
 
 #include "bitboard.hpp"
 #include "types.hpp"
+#include "zobrist_keys.hpp"
 
 #include <optional>
 #include <string>
@@ -79,13 +80,22 @@ public:
     int  halfmove_clock() const noexcept { return halfmove_clock_; }
     void set_halfmove_clock(int c) noexcept { halfmove_clock_ = c; }
 
+    // Cached Zobrist hash of the position. Maintained incrementally by
+    // `add_piece` / `remove_piece` / `set_side_to_move` and by
+    // `Position::after`. Returns 0 only for a fully empty default-
+    // constructed Position with white to move.
+    ZobristHash hash() const noexcept { return hash_; }
+
     Piece piece_at(Square s) const noexcept;
 
     // -------------------------------------------------------------------------
     // Mutators (low-level — `Position` does not yet implement make/unmake)
     // -------------------------------------------------------------------------
     void clear() noexcept;
-    void set_side_to_move(Color c) noexcept { stm_ = c; }
+    void set_side_to_move(Color c) noexcept {
+        if (c != stm_) hash_ ^= key_for_side_to_move();
+        stm_ = c;
+    }
 
     // Place / remove a piece on a square. The square must be empty before
     // `add_piece`; `remove_piece` requires that the matching piece is there.
@@ -124,12 +134,13 @@ public:
     }
 
 private:
-    Bitboard white_men_{0};
-    Bitboard white_kings_{0};
-    Bitboard black_men_{0};
-    Bitboard black_kings_{0};
-    Color    stm_{Color::White};
-    int      halfmove_clock_{0};
+    Bitboard    white_men_{0};
+    Bitboard    white_kings_{0};
+    Bitboard    black_men_{0};
+    Bitboard    black_kings_{0};
+    Color       stm_{Color::White};
+    int         halfmove_clock_{0};
+    ZobristHash hash_{0};  // 0 matches the bulk hash of an empty white-to-move
 };
 
 }  // namespace jass

@@ -17,21 +17,24 @@ namespace jass {
 Position Position::start_position() noexcept {
     Position p;
     for (int s = 1; s <= 20; ++s) {
-        set(p.black_men_, static_cast<Square>(s));
+        p.add_piece(static_cast<Square>(s), Piece::BlackMan);
     }
     for (int s = 31; s <= 50; ++s) {
-        set(p.white_men_, static_cast<Square>(s));
+        p.add_piece(static_cast<Square>(s), Piece::WhiteMan);
     }
-    p.stm_ = Color::White;
+    // White to move: set_side_to_move would be a no-op because stm_
+    // already starts as White, so no hash update is needed here.
     return p;
 }
 
 void Position::clear() noexcept {
-    white_men_   = 0;
-    white_kings_ = 0;
-    black_men_   = 0;
-    black_kings_ = 0;
-    stm_         = Color::White;
+    white_men_      = 0;
+    white_kings_    = 0;
+    black_men_      = 0;
+    black_kings_    = 0;
+    stm_            = Color::White;
+    halfmove_clock_ = 0;
+    hash_           = 0;
 }
 
 Piece Position::piece_at(Square s) const noexcept {
@@ -53,6 +56,7 @@ void Position::add_piece(Square s, Piece p) noexcept {
         case Piece::BlackKing: set(black_kings_, s); break;
         case Piece::None:      assert(false);        break;
     }
+    hash_ ^= key_for_piece(p, s);
 }
 
 void Position::remove_piece(Square s, Piece p) noexcept {
@@ -66,6 +70,7 @@ void Position::remove_piece(Square s, Piece p) noexcept {
         case Piece::BlackKing: jass::clear(black_kings_, s); break;
         case Piece::None:      assert(false);                break;
     }
+    hash_ ^= key_for_piece(p, s);
 }
 
 // =============================================================================
@@ -91,7 +96,7 @@ Position Position::after(const Move& m) const noexcept {
         final_piece = (us == Color::White) ? Piece::WhiteMan  : Piece::BlackMan;
     }
     next.add_piece(m.to, final_piece);
-    next.stm_ = opposite(us);
+    next.set_side_to_move(opposite(us));
 
     // FMJD 25-move (50-ply) rule: a capture or a man-move is "irreversible"
     // and resets the counter; everything else (king quiet) increments it.
@@ -216,7 +221,7 @@ std::optional<Position> Position::from_fen(std::string_view fen) {
     else return std::nullopt;
 
     Position pos;
-    pos.stm_ = stm;
+    pos.set_side_to_move(stm);
 
     bool failed = false;
     auto emit = [&](Square s, Piece p) {
