@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 Jean-François Collin
 """
-Train a Jass `MLPNetwork` (topology 200 → 64 → 32 → 1, ReLU activations
-on the two hidden layers) from a self-play dataset.
+Train a Jass `MLPNetwork` (topology 200 → 128 → 64 → 1, ReLU
+activations on the two hidden layers) from a self-play dataset.
 
 Pipeline
 --------
@@ -14,10 +14,10 @@ The output `nnue.bin` follows the JNNM binary format consumed by
 `MLPNetwork::load()` in src/nnue.cpp:
 
     [0..4)   magic = "JNNM"
-    [4..8)   uint32 version (currently 1)
+    [4..8)   uint32 version (currently 2)
     [8..12)  uint32 input_dim   (must equal 200)
-    [12..16) uint32 hidden1     (must equal 64)
-    [16..20) uint32 hidden2     (must equal 32)
+    [12..16) uint32 hidden1     (must equal 128)
+    [16..20) uint32 hidden2     (must equal 64)
     [20..24) uint32 output_dim  (must equal 1)
     [24..)   little-endian float32 weights:
               w1 [HIDDEN1 × INPUT_DIM]   (row-major, neuron-major)
@@ -80,8 +80,8 @@ except ImportError:
 NUM_SQUARES = 50
 NUM_KINDS   = 4
 NUM_FEATS   = NUM_SQUARES * NUM_KINDS  # 200
-HIDDEN1     = 64
-HIDDEN2     = 32
+HIDDEN1     = 128
+HIDDEN2     = 64
 
 DATASET_MAGIC      = b"JNNT"
 DATASET_RECORD_SZ  = 37
@@ -301,7 +301,7 @@ def main(argv: list[str]) -> int:
     print(f"  {X.shape[0]} records, {X.shape[1]} features  "
           f"({time.time() - t0:.1f}s)")
 
-    print("training MLP (200 → 64 → 32 → 1, ReLU) …")
+    print("training MLP (200 → 128 → 64 → 1, ReLU) …")
     model = train(X, y,
                   epochs=args.epochs, batch_size=args.batch_size,
                   lr=args.lr, weight_decay=args.weight_decay,

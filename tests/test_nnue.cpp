@@ -83,7 +83,7 @@ void test_network_load_rejects_missing_file() {
 }
 
 // ---------------------------------------------------------------------------
-// MLPNetwork — float32 perceptron 200 → 64 → 32 → 1.
+// MLPNetwork — float32 perceptron 200 → 128 → 64 → 1.
 // ---------------------------------------------------------------------------
 
 // Hand-write a JNNM file with the supplied weights so the tests can
@@ -263,24 +263,36 @@ void test_mlp_load_rejects_missing_or_bad_file() {
     JASS_CHECK(!net.load(bad_magic));
     std::remove(bad_magic.c_str());
 
-    // Right magic but wrong dimensions in the header.
+    // Right magic but wrong dimensions in the header (input_dim).
     const std::string bad_dims = make_tmp_path("/tmp/jass-mlp-dim-XXXXXX");
     {
         std::ofstream f(bad_dims, std::ios::binary);
         f.write("JNNM", 4);
-        const std::uint32_t v[5] = {2, 999u, 64u, 32u, 1u};  // input_dim wrong
+        const std::uint32_t v[5] = {
+            2,
+            999u,  // input_dim — wrong
+            static_cast<std::uint32_t>(MLPNetwork::HIDDEN1),
+            static_cast<std::uint32_t>(MLPNetwork::HIDDEN2),
+            1u,
+        };
         f.write(reinterpret_cast<const char*>(v), sizeof(v));
     }
     JASS_CHECK(!net.load(bad_dims));
     std::remove(bad_dims.c_str());
 
-    // Right magic + dimensions but old (v1) version — must be rejected
+    // Right dimensions but old (v1) version — must be rejected
     // explicitly because the input encoding changed in v2.
     const std::string old_version = make_tmp_path("/tmp/jass-mlp-v1-XXXXXX");
     {
         std::ofstream f(old_version, std::ios::binary);
         f.write("JNNM", 4);
-        const std::uint32_t v[5] = {1, 200u, 64u, 32u, 1u};
+        const std::uint32_t v[5] = {
+            1,  // version — wrong (must be 2)
+            static_cast<std::uint32_t>(MLPNetwork::INPUT_DIM),
+            static_cast<std::uint32_t>(MLPNetwork::HIDDEN1),
+            static_cast<std::uint32_t>(MLPNetwork::HIDDEN2),
+            1u,
+        };
         f.write(reinterpret_cast<const char*>(v), sizeof(v));
     }
     JASS_CHECK(!net.load(old_version));
