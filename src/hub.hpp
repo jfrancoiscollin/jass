@@ -17,6 +17,9 @@
 //   position fen <Hub-style FEN>   set position to a FEN string
 //   apply <move>                   play one move, e.g. "31-26" or "28x17"
 //   go depth <N>                   search to depth N, emit `bestmove`
+//   go movetime <ms>               search up to <ms> milliseconds
+//   go infinite                    search until `stop` (runs in a thread)
+//   stop                           interrupt the current search
 //   eval                           emit the static eval (white POV)
 //   fen                            emit the current FEN
 //   quit                           exit
@@ -32,17 +35,25 @@
 #include "engine.hpp"
 #include "movegen.hpp"
 #include "position.hpp"
+#include "search.hpp"
 
+#include <atomic>
 #include <iosfwd>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 
 namespace jass {
 
 class HubFrontEnd {
 public:
     HubFrontEnd(std::istream& in, std::ostream& out);
+    ~HubFrontEnd();
+
+    HubFrontEnd(const HubFrontEnd&)            = delete;
+    HubFrontEnd& operator=(const HubFrontEnd&) = delete;
 
     // Run the command loop until either `quit` is received or `in` reaches
     // EOF. Returns 0 (a placeholder for richer exit semantics).
@@ -53,6 +64,13 @@ private:
     std::istream& in_;
     std::ostream& out_;
 
+    // Output mutex: the worker thread emits `bestmove` while the main
+    // thread may still be writing other replies; serialise them line-by-
+    // line so they never interleave mid-character.
+    std::mutex        out_mutex_;
+    std::atomic<bool> stop_flag_{false};
+    std::thread       worker_;
+
     void dispatch(std::string_view line);
 
     void cmd_hello();
@@ -60,11 +78,21 @@ private:
     void cmd_position(std::string_view args);
     void cmd_apply   (std::string_view args);
     void cmd_go      (std::string_view args);
+    void cmd_stop    ();
     void cmd_eval    ();
     void cmd_fen     ();
 
     void emit_ok();
     void emit_error(std::string_view reason);
+    void emit_bestmove(const SearchResult& r);
+
+    // Run a search synchronously and emit the result on the main thread.
+    void run_search_sync(const SearchLimits& limits);
+    // Spawn a worker that runs the search and emits the result; the main
+    // thread continues reading commands.
+    void run_search_async(SearchLimits limits);
+    // Wait for any active worker to complete (joining the thread).
+    void wait_for_worker();
 };
 
 // Parse a move string (`from-to` / `fromxto`) and return the matching

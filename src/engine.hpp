@@ -47,6 +47,11 @@ public:
     // depth. The persistent TT is reused.
     SearchResult search(int max_depth);
 
+    // Search the current position with full SearchLimits — depth, time
+    // budget, external stop signal — using the persistent TT and game
+    // history.
+    SearchResult search(const SearchLimits& limits);
+
     // Direct TT control for callers that want fine-grained behaviour.
     void clear_tt() noexcept;
     void resize_tt_mb(std::size_t mb);

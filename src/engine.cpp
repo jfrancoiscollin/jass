@@ -57,7 +57,11 @@ bool Engine::apply_move(const Move& m) {
 SearchResult Engine::search(int max_depth) {
     SearchLimits lim;
     lim.max_depth = max_depth;
-    return ::jass::search(pos_, lim, tt_, hash_history_);
+    return search(lim);
+}
+
+SearchResult Engine::search(const SearchLimits& limits) {
+    return ::jass::search(pos_, limits, tt_, hash_history_);
 }
 
 void Engine::clear_tt() noexcept {

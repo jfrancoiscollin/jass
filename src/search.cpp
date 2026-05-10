@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <tuple>
 #include <utility>
 
@@ -70,12 +71,35 @@ struct Searcher {
     // hash of each node as it descends and ascends.
     std::vector<ZobristHash> hash_path;
 
+    // Time / external-stop control. `deadline` is meaningful only when
+    // `has_deadline` is true; `stop_flag` may be null. Once `stopped` is
+    // set, every subsequent search node short-circuits with a sentinel
+    // value so the call stack unwinds quickly.
+    std::chrono::steady_clock::time_point deadline{};
+    bool                                  has_deadline{false};
+    const std::atomic<bool>*              stop_flag{nullptr};
+    bool                                  stopped{false};
+
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
 
     // Returns true if `h` already appears anywhere in `hash_path`.
     bool path_contains(ZobristHash h) const noexcept {
         for (auto x : hash_path) if (x == h) return true;
+        return false;
+    }
+
+    // Polled at the start of every node; `stopped` becomes sticky.
+    bool check_stop() noexcept {
+        if (stopped) return true;
+        if (stop_flag && stop_flag->load(std::memory_order_relaxed)) {
+            stopped = true;
+            return true;
+        }
+        if (has_deadline && std::chrono::steady_clock::now() >= deadline) {
+            stopped = true;
+            return true;
+        }
         return false;
     }
 };
@@ -118,7 +142,9 @@ inline void order_moves(MoveList& moves, const Searcher& s, int ply,
 // are captures we must play one; otherwise the position is calm and we
 // return the static eval.
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
+    if (stopped) return 0;
     ++nodes;
+    if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
     MoveList moves;
     generate_legal_moves(pos, moves);
@@ -142,7 +168,12 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
 
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
+    if (stopped) return 0;
     ++nodes;
+    // Polling time / external-stop is not free; throttle to once every
+    // 1024 nodes. The first probe of every iteration also runs through
+    // here because `nodes` was just bumped from 0 → 1 the very first time.
+    if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
     const ZobristHash hash = zobrist_hash(pos);
 
@@ -212,13 +243,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 
     hash_path.pop_back();
 
-    // 5. Store back into the TT with the appropriate bound flag.
-    Bound bound;
-    if      (best >= beta)      bound = Bound::Lower;
-    else if (best > alpha_orig) bound = Bound::Exact;
-    else                        bound = Bound::Upper;
+    // 5. Store back into the TT — but only if the result is real. An
+    //    aborted search produced a placeholder score that would poison
+    //    the table.
+    if (!stopped) {
+        Bound bound;
+        if      (best >= beta)      bound = Bound::Lower;
+        else if (best > alpha_orig) bound = Bound::Exact;
+        else                        bound = Bound::Upper;
 
-    tt->store(hash, best_move, score_to_tt(best, ply), depth, bound);
+        tt->store(hash, best_move, score_to_tt(best, ply), depth, bound);
+    }
     return best;
 }
 
@@ -277,6 +312,12 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.tt        = &tt;
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
+    s.stop_flag = limits.stop_flag;
+    if (limits.movetime_ms > 0) {
+        s.has_deadline = true;
+        s.deadline = std::chrono::steady_clock::now()
+                   + std::chrono::milliseconds(limits.movetime_ms);
+    }
 
     Move best_overall = root_moves[0];
     int  best_score   = -INF_SCORE;
@@ -290,6 +331,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         int  cur_alpha  = alpha;
 
         for (const auto& m : root_moves) {
+            if (s.stopped) break;
             const Position next  = pos.after(m);
             const int      score = -s.negamax(next, depth - 1, 1,
                                               -beta, -cur_alpha);
@@ -304,6 +346,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     };
 
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        // Honour an early stop request before spending any work on this
+        // iteration. The previous iteration's `best_overall` is returned.
+        if (depth > 1 && s.check_stop()) break;
+
         if (depth > 1) hoist_move(root_moves, best_overall);
 
         // Pick the initial [alpha, beta] window. Shallow depths and any
@@ -324,6 +370,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         int  iter_score = 0;
         while (true) {
             std::tie(iter_best, iter_score) = run_root_window(depth, alpha, beta);
+            if (s.stopped) break;  // discard incomplete window
 
             if (iter_score <= alpha && alpha > -INF_SCORE) {
                 alpha = std::max(alpha - delta, -INF_SCORE);
@@ -337,6 +384,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
             }
             break;
         }
+
+        // Discard any iteration that didn't finish; the previous
+        // `best_overall` / `best_score` / `res.depth` remain in effect.
+        if (s.stopped && depth > 1) break;
 
         best_overall = iter_best;
         best_score   = iter_score;
