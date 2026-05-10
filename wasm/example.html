@@ -1,0 +1,67 @@
+<!doctype html>
+<!--
+  SPDX-License-Identifier: MIT
+  Copyright (c) 2026 Jean-François Collin
+
+  Tiny demo page for the Jass WASM module. After running ./wasm/build.sh
+  serve this file over HTTP from the repo root (or copy jass.js / jass.wasm
+  next to it) and open it in a browser. The page loads the module, prints
+  the start position and asks the engine for a move at depth 6.
+
+  A plain `file://` open will NOT work — browsers refuse to fetch the
+  .wasm sibling over file URLs. Use any static server, e.g.:
+      python3 -m http.server  --directory build-wasm  8080
+  and visit http://localhost:8080/example.html (after copying example.html
+  into build-wasm/), or adjust the import path below.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jass — WASM demo</title>
+    <style>
+      body { font-family: ui-monospace, monospace; padding: 1rem; }
+      pre  { background: #f3f3f3; padding: 0.75rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Jass — WASM demo</h1>
+    <p>Status: <span id="status">loading…</span></p>
+    <h2>Start position</h2>
+    <pre id="ascii"></pre>
+    <h2>Engine pick (depth 6)</h2>
+    <pre id="best"></pre>
+
+    <script type="module">
+      import createJass from './jass.js';
+
+      const status = document.getElementById('status');
+      const asciiOut = document.getElementById('ascii');
+      const bestOut  = document.getElementById('best');
+
+      try {
+        const Module = await createJass();
+        status.textContent = 'module loaded';
+
+        const g = new Module.Game();
+        asciiOut.textContent = g.ascii();
+
+        const t0 = performance.now();
+        const move = g.bestMove(6);
+        const ms  = (performance.now() - t0).toFixed(1);
+
+        bestOut.textContent =
+          `${move.from} -> ${move.to}` +
+          (move.captures.length ? ` (captures ${move.captures.join(',')})` : '') +
+          `\nscore=${move.score}  depth=${move.depth}  nodes=${move.nodes}` +
+          `\nelapsed=${ms} ms`;
+
+        // Free the wrapped C++ object explicitly — Embind wrappers are not
+        // garbage collected.
+        g.delete();
+      } catch (err) {
+        status.textContent = 'failed: ' + err;
+        console.error(err);
+      }
+    </script>
+  </body>
+</html>
