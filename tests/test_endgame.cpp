@@ -41,8 +41,8 @@ void test_probe_unknown_when_men_present() {
 }
 
 void test_probe_unknown_when_outside_tablebase() {
-    // 3 kings vs 1 king is not in the bitbase (yet).
-    JASS_CHECK(probe_endgame(parse("W:WK28,K33,K38:BK1"))
+    // 4 kings vs 1 king is not in the bitbase (yet).
+    JASS_CHECK(probe_endgame(parse("W:WK28,K33,K38,K42:BK1"))
                == EndgameResult::Unknown);
     // 2 kings vs 2 kings is not in the bitbase either.
     JASS_CHECK(probe_endgame(parse("W:WK28,K33:BK1,K6"))
@@ -93,6 +93,29 @@ void test_search_kkvk_returns_winning_score() {
     JASS_CHECK(r.score >= MATE_SCORE - MAX_PLY - 5);
 }
 
+// -----------------------------------------------------------------------------
+// 3-vs-1 bitbase
+// -----------------------------------------------------------------------------
+// Like KKvK, most KKKvK positions are technical draws under pure FMJD
+// rules; we test on a position that is a forced WhiteWin (white's king
+// at 12 captures black's king at 7 in one move, landing at 1 — black
+// has no pieces left).
+void test_probe_kkkvk_immediate_capture_is_white_win() {
+    const Position p = parse("W:WK12,K28,K33:BK7");
+    JASS_CHECK(probe_endgame(p) == EndgameResult::WhiteWin);
+}
+
+void test_probe_kvkkk_immediate_capture_is_black_win() {
+    const Position p = parse("B:WK7:BK12,K28,K33");
+    JASS_CHECK(probe_endgame(p) == EndgameResult::BlackWin);
+}
+
+void test_probe_3v1_unknown_when_men_present() {
+    // A man on the board takes the position out of the kings-only tables.
+    const Position p = parse("W:W31,K28,K33,K38:BK1");
+    JASS_CHECK(probe_endgame(p) == EndgameResult::Unknown);
+}
+
 }  // namespace
 
 void run_endgame_tests() {
@@ -103,4 +126,7 @@ void run_endgame_tests() {
     test_probe_kkvk_immediate_capture_is_white_win();
     test_probe_kvkk_immediate_capture_is_black_win();
     test_search_kkvk_returns_winning_score();
+    test_probe_kkkvk_immediate_capture_is_white_win();
+    test_probe_kvkkk_immediate_capture_is_black_win();
+    test_probe_3v1_unknown_when_men_present();
 }
