@@ -135,6 +135,24 @@ void test_search_finds_forced_capture() {
     JASS_CHECK(is_mate_score(r.score));
 }
 
+void test_qsearch_avoids_horizon_effect() {
+    // White man at 33 vs black man at 22. White's two quiet moves are
+    //   - 33-28 (NW): leaves white *en prise* — black 22 must capture 28
+    //                 (mandatory) and lands at 33, leaving white with no
+    //                 pieces and therefore mated.
+    //   - 33-29 (NE): perfectly safe, no capture available for black.
+    // Without quiescence the depth-1 leaf eval scores both moves equally
+    // and the engine picks 33-28 because of move-ordering. Quiescence
+    // plays the forced black capture out at the horizon and exposes the
+    // true value of 33-28, so the engine must pick 33-29.
+    const Position p = parse("W:W33:B22");
+    SearchLimits lim;
+    lim.max_depth = 1;
+    const SearchResult r = search(p, lim);
+    JASS_CHECK_EQ(r.best_move.from, static_cast<Square>(33));
+    JASS_CHECK_EQ(r.best_move.to,   static_cast<Square>(29));
+}
+
 void test_search_score_reflects_material_lead() {
     // White has a king + a man, black has only a king: white is ahead by
     // roughly one man. The score from white's POV must be clearly positive
@@ -181,6 +199,7 @@ void run_search_tests() {
     test_search_returns_legal_move_from_start();
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
+    test_qsearch_avoids_horizon_effect();
     test_search_score_reflects_material_lead();
     test_search_depth_increases();
 }
