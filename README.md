@@ -15,17 +15,25 @@ from scratch in modern C++.
 
 ## Status
 
-Early-stage skeleton. The repository currently contains:
+Early-stage but the rules engine is in place. The repository currently
+contains:
 
 - Project layout, build system (CMake) for native and Emscripten/WASM builds.
 - Core types (`Color`, `Piece`, `Square`, `Move`) and the 10×10 board
   geometry with the FMJD square numbering 1–50.
-- A `Position` type with Hub-style FEN parsing and serialisation.
-- A movegen skeleton (interface only), to be filled in next.
-- A smoke-test executable and a tiny unit-test runner.
+- A `Position` type with Hub-style FEN parsing/serialisation, an immutable
+  `Position::after(Move)` apply, and an ASCII diagram for debugging.
+- A complete legal-move generator: quiet moves for men and kings, capture
+  chains in all four directions for men, full ray captures for kings, and
+  the FMJD majority-capture rule (longest chain wins).
+- A smoke-test executable and a unit-test runner with 330+ assertions,
+  including handcrafted scenarios for the trickiest FMJD edge cases and a
+  perft validator matching the reference values from the start position
+  (9, 81, 658, 4 265, 27 117 at depths 1–5).
 
-Coming next: full move generation (men + kings, mandatory maximum capture),
-perft validation, search, evaluation, HUB protocol, then the WASM API.
+Coming next: search (alpha-beta with iterative deepening, transposition
+tables), an evaluation function, the HUB protocol front-end, and finally
+the WASM bindings for Draught Master.
 
 ## Licence and provenance
 
