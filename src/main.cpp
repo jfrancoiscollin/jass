@@ -214,14 +214,19 @@ int run_tournament_mode(int argc, char** argv) {
     EngineConfig a; a.max_depth = depth_a;
     EngineConfig b; b.max_depth = depth_b;
 
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
     std::cout << "Tournament: A(depth=" << depth_a
               << ") vs B(depth=" << depth_b
-              << "), " << (pairs * 2) << " games\n";
+              << "), " << total_games << " games "
+              << "(" << pool.size() << " openings × " << pairs
+              << " pairs × 2 colours)\n";
 
     const TournamentResult r = run_tournament(a, b, pairs);
     std::cout << "Result: A=" << r.a_wins
               << " B="        << r.b_wins
-              << " Draws="    << r.draws << '\n';
+              << " Draws="    << r.draws
+              << " (total "   << r.games << ")\n";
     return 0;
 }
 
