@@ -39,23 +39,53 @@ bool list_contains(const MoveList& ml, const Move& m) {
 // -----------------------------------------------------------------------------
 // Evaluation
 // -----------------------------------------------------------------------------
-void test_eval_balanced_start() {
+// The exact PSQT values are implementation details, so the tests below check
+// invariants (sign, ordering, dominance of material over positional terms)
+// instead of pinning specific numbers.
+void test_eval_start_is_near_zero() {
     const Position p = Position::start_position();
-    JASS_CHECK_EQ(evaluate(p), 0);
+    // Material is identical and the PSQT is mirrored between the colours,
+    // so the start-position eval is dominated by the small tempo bonus.
+    const int e = evaluate(p);
+    JASS_CHECK(e > -2 * MAN_VALUE / 5);  // |e| < 40
+    JASS_CHECK(e <  2 * MAN_VALUE / 5);
 }
 
-void test_eval_material_advantage() {
-    const Position p = parse("W:W31:B1");      // 1 vs 1, white to move
-    JASS_CHECK_EQ(evaluate(p), 0);
+void test_eval_material_dominates_positional() {
+    // Removing one black man from the start position must improve white's
+    // eval by clearly more than any positional swing in the PSQT.
+    const Position p_full   = Position::start_position();
+    const Position p_minus  = parse("W:W31-50:B1-19");  // black is missing 20
 
-    const Position q = parse("W:W31,32:B1");   // 2 vs 1, white to move
-    JASS_CHECK_EQ(evaluate(q), MAN_VALUE);
+    const int e_full  = evaluate(p_full);
+    const int e_minus = evaluate(p_minus);
+    JASS_CHECK(e_minus - e_full > MAN_VALUE / 2);
+    // And the magnitude shouldn't blow up to a king's value either.
+    JASS_CHECK(e_minus - e_full < KING_VALUE);
+}
 
-    const Position r = parse("B:W31,32:B1");   // 2 vs 1, black to move
-    JASS_CHECK_EQ(evaluate(r), -MAN_VALUE);
+void test_eval_stm_flips_sign() {
+    // Identical board, only side-to-move differs: signs flip.
+    const Position w = parse("W:W31-50:B1-15");
+    const Position b = parse("B:W31-50:B1-15");
+    JASS_CHECK(evaluate(w) > MAN_VALUE);
+    JASS_CHECK(evaluate(b) < -MAN_VALUE);
+}
 
-    const Position k = parse("W:WK31:B1");     // 1 king vs 1 man, white to move
-    JASS_CHECK_EQ(evaluate(k), KING_VALUE - MAN_VALUE);
+void test_eval_king_more_valuable_than_man() {
+    const Position pm = parse("W:W31:B1");
+    const Position pk = parse("W:WK31:B1");
+    // Replacing white's man with a king strictly improves white's eval by
+    // at least KING_VALUE - MAN_VALUE minus a small PSQT slack.
+    JASS_CHECK(evaluate(pk) - evaluate(pm) >= KING_VALUE - MAN_VALUE - 50);
+}
+
+void test_eval_advancement_bonus() {
+    // Pushing a single white man one rank toward promotion should never
+    // decrease its eval (in an otherwise identical context).
+    const Position back = parse("W:W31:B1");   // row 6
+    const Position fwd  = parse("W:W26:B1");   // row 5 — closer to promotion
+    JASS_CHECK(evaluate(fwd) > evaluate(back));
 }
 
 // -----------------------------------------------------------------------------
@@ -105,12 +135,10 @@ void test_search_finds_forced_capture() {
     JASS_CHECK(is_mate_score(r.score));
 }
 
-void test_search_chooses_better_of_two_options() {
-    // White has a king at 28 and a stranded man at 31. Black has a king
-    // at 1 (far away). Material is equal in the static sense but the
-    // search at depth 3+ should still return *some* legal move (we just
-    // assert legality + score sanity here, since the eval is purely
-    // material).
+void test_search_score_reflects_material_lead() {
+    // White has a king + a man, black has only a king: white is ahead by
+    // roughly one man. The score from white's POV must be clearly positive
+    // and not absurdly larger than a man's value at this depth.
     const Position p = parse("W:WK28,31:BK1");
 
     SearchLimits lim;
@@ -120,11 +148,8 @@ void test_search_chooses_better_of_two_options() {
     MoveList legal;
     generate_legal_moves(p, legal);
     JASS_CHECK(list_contains(legal, r.best_move));
-    // Material is +100 for White (man + king vs king) → STM-relative
-    // score should be at least the material advantage minus a small
-    // search noise budget.
-    JASS_CHECK(r.score >= MAN_VALUE - 50);
-    JASS_CHECK(r.score <= MAN_VALUE + 50);
+    JASS_CHECK(r.score > MAN_VALUE / 2);
+    JASS_CHECK(r.score < KING_VALUE);
 }
 
 void test_search_depth_increases() {
@@ -148,11 +173,14 @@ void test_search_depth_increases() {
 }  // namespace
 
 void run_search_tests() {
-    test_eval_balanced_start();
-    test_eval_material_advantage();
+    test_eval_start_is_near_zero();
+    test_eval_material_dominates_positional();
+    test_eval_stm_flips_sign();
+    test_eval_king_more_valuable_than_man();
+    test_eval_advancement_bonus();
     test_search_returns_legal_move_from_start();
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
-    test_search_chooses_better_of_two_options();
+    test_search_score_reflects_material_lead();
     test_search_depth_increases();
 }

@@ -26,8 +26,10 @@ contains:
 - A complete legal-move generator: quiet moves for men and kings, capture
   chains in all four directions for men, full ray captures for kings, and
   the FMJD majority-capture rule (longest chain wins).
-- A negamax alpha-beta search with iterative deepening, plus a flat
-  material evaluation (man = 100, king = 300, side-to-move relative).
+- A negamax alpha-beta search with iterative deepening.
+- A static evaluation combining material (man = 100, king = 300),
+  per-piece positional terms (advancement PSQT for men, centralisation
+  PSQT for kings) and a small tempo bonus for the side to move.
 - WebAssembly bindings via Emscripten/Embind exposing a small `Game`
   class to JavaScript (`fen`, `legalMoves`, `applyIndex`, `bestMove`,
   …) for the Draught Master web app.
