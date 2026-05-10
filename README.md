@@ -28,9 +28,15 @@ contains:
   the FMJD majority-capture rule (longest chain wins).
 - A negamax alpha-beta search with iterative deepening, transposition
   table (Zobrist-keyed, depth-preferred replacement, mate-score adjusted),
-  TT-move ordering inside the recursion and a quiescence search that
-  plays mandatory capture chains out at the leaves so the static eval is
-  never asked about a position with a forced capture pending.
+  killer-move + history move ordering, aspiration windows around the
+  iterative-deepening root, FMJD draw handling (25-move rule and 2-fold
+  repetition) and a quiescence search that plays mandatory capture
+  chains out at the leaves.
+- A long-lived `Engine` facade that owns the TT and the game's hash
+  history so successive moves of the same game share their lookup
+  data and detect repetitions naturally.
+- A small HUB-flavoured CLI front-end (`./build/jass`) for shell or
+  GUI use.
 - A static evaluation combining material (man = 100, king = 300),
   per-piece positional terms (advancement PSQT for men, centralisation
   PSQT for kings) and a small tempo bonus for the side to move.
@@ -70,11 +76,29 @@ projects without the contamination that a GPL dependency would impose.
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
-./build/jass        # smoke-test entry point
-./build/jass_tests  # unit tests
+./build/jass            # HUB-flavoured CLI (default mode)
+./build/jass --smoke    # self-contained demo (start position, depth-6
+                        # search, 40-ply self-play game)
+./build/jass_tests      # unit tests
 ```
 
 Requires a C++20 compiler (GCC ≥ 11, Clang ≥ 13, MSVC ≥ 19.30).
+
+The default mode reads HUB-style commands from stdin. A short interactive
+session looks like:
+
+```
+hello
+position startpos
+go depth 6
+apply 31-26
+fen
+quit
+```
+
+Supported commands: `hello`, `newgame`, `position startpos | fen <FEN>`,
+`apply <move>`, `go depth <N>`, `eval`, `fen`, `quit`. Move format on
+input/output is `from-to` (quiet) or `fromxto` (capture).
 
 ### WebAssembly (for Draught Master)
 
