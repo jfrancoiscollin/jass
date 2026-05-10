@@ -191,7 +191,20 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // 0bis. Endgame tablebase: positions with a known theoretical result
     //       skip the rest of the work. Like the path-dependent draws this
     //       answer is independent of the alpha-beta window.
-    if (probe_endgame(pos) == EndgameResult::Draw)  return 0;
+    {
+        const EndgameResult eg = probe_endgame(pos);
+        if (eg == EndgameResult::Draw) return 0;
+        if (eg == EndgameResult::WhiteWin) {
+            return (pos.side_to_move() == Color::White)
+                ?  (MATE_SCORE - MAX_PLY - 1)
+                : -(MATE_SCORE - MAX_PLY - 1);
+        }
+        if (eg == EndgameResult::BlackWin) {
+            return (pos.side_to_move() == Color::Black)
+                ?  (MATE_SCORE - MAX_PLY - 1)
+                : -(MATE_SCORE - MAX_PLY - 1);
+        }
+    }
 
     // 1. Probe TT.  A hit lets us cut the subtree if its stored bound is
     //    compatible with the current alpha-beta window; otherwise we still
@@ -345,9 +358,15 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         res.score = 0;
         return res;
     }
-    if (probe_endgame(pos) == EndgameResult::Draw) {
-        res.score = 0;
-        return res;
+    {
+        const EndgameResult eg = probe_endgame(pos);
+        if (eg == EndgameResult::Draw) {
+            res.score = 0;
+            return res;
+        }
+        // For WIN/LOSS at the root we still need to actually pick a move,
+        // so we don't short-circuit; the search will propagate the
+        // bitbase value up from the children at depth >= 1.
     }
 
     MoveList root_moves;
