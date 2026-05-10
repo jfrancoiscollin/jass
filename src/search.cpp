@@ -174,6 +174,9 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
     if (stopped) return 0;
+    // Hard ply cap so single-move extensions can't run off the end of the
+    // killers / hash_path arrays.
+    if (ply >= MAX_PLY) return evaluate(pos);
     ++nodes;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
@@ -419,6 +422,11 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     Move best_overall = root_moves[0];
     int  best_score   = -INF_SCORE;
 
+    // Recent score history (max 4 last iterations), used for *adaptive*
+    // aspiration: the next iteration's initial window width adapts to
+    // the volatility of the last few iteration scores.
+    std::vector<int> score_history;
+
     // One iteration of the root loop, run inside the aspiration retry loop
     // below. Returns (best move, best score) found within [alpha, beta].
     auto run_root_window = [&](int depth, int alpha, int beta)
@@ -451,14 +459,23 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
         // Pick the initial [alpha, beta] window. Shallow depths and any
         // iteration following a mate score fall back to the full window
-        // because narrow aspiration is unhelpful there.
+        // because narrow aspiration is unhelpful there.  When we do use a
+        // narrow window, its half-width adapts to the largest absolute
+        // score swing across the recent iterations: if scores have been
+        // stable, we open a tight window; if they've been jumpy, we
+        // pre-emptively widen it.
         int alpha, beta, delta;
         if (depth < 3 || is_mate_score(best_score)) {
             alpha = -INF_SCORE;
             beta  =  INF_SCORE;
             delta =  INF_SCORE;
         } else {
-            delta = ASPIRATION_INITIAL;
+            int volatility = 0;
+            for (std::size_t i = 1; i < score_history.size(); ++i) {
+                const int diff = std::abs(score_history[i] - score_history[i - 1]);
+                if (diff > volatility) volatility = diff;
+            }
+            delta = std::max(ASPIRATION_INITIAL, 2 * volatility);
             alpha = best_score - delta;
             beta  = best_score + delta;
         }
@@ -493,6 +510,13 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         tt.store(root_hash, iter_best,
                  score_to_tt(iter_score, /*ply=*/0),
                  depth, Bound::Exact);
+
+        // Track recent scores for the adaptive-aspiration heuristic above.
+        score_history.push_back(iter_score);
+        constexpr std::size_t HISTORY_LEN = 4;
+        if (score_history.size() > HISTORY_LEN) {
+            score_history.erase(score_history.begin());
+        }
     }
 
     stop_helpers();
