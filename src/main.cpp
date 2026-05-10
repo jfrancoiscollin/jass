@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <string>
 #include <string_view>
@@ -205,10 +206,11 @@ int run_gen_data_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
-// --benchmark-nnue: pit the trained `LinearNetwork` (loaded from a binary
-// weights file) against the handcrafted eval. Both engines are otherwise
-// identical (same depth, same threads). Plays a colour-swap match across
-// the default opening pool so we get diverse games.
+// --benchmark-nnue: pit a trained network (loaded from a binary weights
+// file — either the raw LinearNetwork int32 layout or the JNNM-tagged
+// MLPNetwork format) against the handcrafted eval. Both engines are
+// otherwise identical (same depth, same threads). Plays a colour-swap
+// match across the default opening pool so we get diverse games.
 // -----------------------------------------------------------------------------
 int run_benchmark_nnue_mode(int argc, char** argv) {
     if (argc < 3) {
@@ -220,8 +222,8 @@ int run_benchmark_nnue_mode(int argc, char** argv) {
     const int   depth = (argc > 3) ? parse_int_or(argv[3], 6) : 6;
     const int   pairs = (argc > 4) ? parse_int_or(argv[4], 1) : 1;
 
-    LinearNetwork trained;
-    if (!trained.load(weights_path)) {
+    std::unique_ptr<INetwork> trained = load_network(weights_path);
+    if (!trained) {
         std::cerr << "error: cannot load weights from " << weights_path << "\n";
         return 1;
     }
@@ -232,7 +234,7 @@ int run_benchmark_nnue_mode(int argc, char** argv) {
 
     EngineConfig nnue_cfg;
     nnue_cfg.max_depth = depth;
-    nnue_cfg.nnue      = &trained;
+    nnue_cfg.nnue      = trained.get();
 
     const auto pool = default_opening_pool();
     const int  total_games = pairs * 2 * static_cast<int>(pool.size());

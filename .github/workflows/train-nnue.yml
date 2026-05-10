@@ -1,16 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Trigger-on-demand workflow that generates a self-play dataset, trains
-# the linear NNUE-lite weights and uploads `nnue.bin` as a downloadable
+# an NNUE-lite network and uploads `nnue.bin` as a downloadable
 # artefact.
+#
+# Two model architectures are supported:
+#   * linear — 200 weights, NumPy closed-form least squares (~30 s
+#              regardless of dataset size). Mirrors the handcrafted eval.
+#   * mlp    — 200 → 64 → 32 → 1 ReLU MLP, PyTorch + Adam (~30 epochs,
+#              minutes on 100k records). Output is the JNNM binary
+#              consumed by `MLPNetwork::load(...)` from C++.
 #
 # How to use it from the GitHub mobile app or website:
 #   1. Open the repository → Actions → "Train NNUE weights".
-#   2. Tap "Run workflow", pick the dataset size in the menu and run.
-#   3. Wait — the runtime depends on the size you chose (see the
-#      `records` input below).
+#   2. Tap "Run workflow", pick the dataset size and the model.
+#   3. Wait — runtime is dominated by `--gen-data` (depth 4 self-play).
 #   4. When the run finishes, scroll to the bottom of its summary and
 #      download the `nnue-weights` artefact: it's a `nnue.bin` file
-#      consumable by `LinearNetwork::load(...)` from C++.
+#      consumable by the engine. Both formats are auto-detected by
+#      `--benchmark-nnue` and by the runtime via `load_network()`.
 
 name: train-nnue
 
@@ -26,6 +33,14 @@ on:
           - "10k"
           - "100k"
           - "1M"
+      model:
+        description: "Network architecture (linear = 200 weights, mlp = 200→64→32→1 ReLU)"
+        required: true
+        default: "linear"
+        type: choice
+        options:
+          - "linear"
+          - "mlp"
 
 # Free runners cap workflow runtime at 6 h.  1M records can exceed that
 # in pathological situations (slow runner, contention) — the artefact
@@ -48,10 +63,14 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install NumPy
+      - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install numpy
+          if [ "${{ inputs.model }}" = "mlp" ]; then
+            python3 -m pip install torch \
+              --index-url https://download.pytorch.org/whl/cpu
+          fi
 
       - name: Build the native engine (Release)
         run: |
@@ -73,9 +92,19 @@ jobs:
           ./build/jass --gen-data ${{ steps.size.outputs.n }} selfplay.bin
           ls -la selfplay.bin
 
-      - name: Train linear weights
+      - name: Train ${{ inputs.model }} weights
         run: |
-          python3 tools/train.py --data selfplay.bin --out nnue.bin
+          case "${{ inputs.model }}" in
+            linear)
+              python3 tools/train.py     --data selfplay.bin --out nnue.bin
+              ;;
+            mlp)
+              python3 tools/train_mlp.py --data selfplay.bin --out nnue.bin
+              ;;
+            *)
+              echo "unknown model '${{ inputs.model }}'"; exit 1
+              ;;
+          esac
           ls -la nnue.bin
 
       - name: Upload weights artefact

@@ -97,6 +97,190 @@ bool LinearNetwork::save(std::string_view path) const {
     return f.good();
 }
 
+// ---------------------------------------------------------------------------
+// MLPNetwork
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Add column `feat` of W1 (row-major, HIDDEN1 × INPUT_DIM) to `h1`.
+// Equivalent to one sparse multiply-add per active input feature.
+inline void add_w1_column(const std::array<float,
+                              MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM>& w1,
+                          float*       h1,
+                          std::size_t  feat) noexcept {
+    for (std::size_t j = 0; j < MLPNetwork::HIDDEN1; ++j) {
+        h1[j] += w1[j * MLPNetwork::INPUT_DIM + feat];
+    }
+}
+
+inline void accumulate_kind(const std::array<float,
+                                MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM>& w1,
+                            float*       h1,
+                            Bitboard     bb,
+                            std::size_t  kind) noexcept {
+    while (bb) {
+        const int         bit  = square_to_bit(pop_lsb(bb));
+        const std::size_t feat = static_cast<std::size_t>(bit) * 4 + kind;
+        add_w1_column(w1, h1, feat);
+    }
+}
+
+}  // namespace
+
+int MLPNetwork::evaluate(const Position& pos) const noexcept {
+    // Layer 1: h1 = ReLU(b1 + W1 @ input).
+    // Input is sparse one-hot over (square × kind); we only add the
+    // columns of W1 that correspond to pieces actually present.
+    float h1[HIDDEN1];
+    for (std::size_t j = 0; j < HIDDEN1; ++j) h1[j] = b1_[j];
+    accumulate_kind(w1_, h1, pos.white_men(),    0);
+    accumulate_kind(w1_, h1, pos.white_kings(),  1);
+    accumulate_kind(w1_, h1, pos.black_men(),    2);
+    accumulate_kind(w1_, h1, pos.black_kings(),  3);
+    for (std::size_t j = 0; j < HIDDEN1; ++j) {
+        if (h1[j] < 0.0f) h1[j] = 0.0f;
+    }
+
+    // Layer 2: h2 = ReLU(b2 + W2 @ h1).
+    float h2[HIDDEN2];
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        float s = b2_[k];
+        for (std::size_t j = 0; j < HIDDEN1; ++j) {
+            s += w2_[k * HIDDEN1 + j] * h1[j];
+        }
+        h2[k] = s > 0.0f ? s : 0.0f;
+    }
+
+    // Output layer: out = b3 + w3 @ h2 (no activation).
+    float out = b3_;
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        out += w3_[k] * h2[k];
+    }
+
+    // Clamp into the non-mate range so a noisy network can never
+    // shadow a real mate score from the search.
+    constexpr float kClamp = 29000.0f;
+    if (out >  kClamp) out =  kClamp;
+    if (out < -kClamp) out = -kClamp;
+
+    const int score_white = static_cast<int>(out);
+    return (pos.side_to_move() == Color::White) ? score_white : -score_white;
+}
+
+namespace {
+
+constexpr char     MLP_MAGIC[4]    = {'J', 'N', 'N', 'M'};
+constexpr std::uint32_t MLP_VERSION = 1;
+
+bool read_u32(std::istream& f, std::uint32_t& out) {
+    f.read(reinterpret_cast<char*>(&out), 4);
+    return f.gcount() == 4;
+}
+
+bool write_u32(std::ostream& f, std::uint32_t v) {
+    f.write(reinterpret_cast<const char*>(&v), 4);
+    return f.good();
+}
+
+template <std::size_t N>
+bool read_floats(std::istream& f, std::array<float, N>& a) {
+    f.read(reinterpret_cast<char*>(a.data()),
+           static_cast<std::streamsize>(N * sizeof(float)));
+    return static_cast<std::size_t>(f.gcount()) == N * sizeof(float);
+}
+
+template <std::size_t N>
+bool write_floats(std::ostream& f, const std::array<float, N>& a) {
+    f.write(reinterpret_cast<const char*>(a.data()),
+            static_cast<std::streamsize>(N * sizeof(float)));
+    return f.good();
+}
+
+}  // namespace
+
+bool MLPNetwork::load(std::string_view path) {
+    std::ifstream f(std::string{path}, std::ios::binary);
+    if (!f) return false;
+
+    char magic[4]{};
+    f.read(magic, 4);
+    if (!f || std::memcmp(magic, MLP_MAGIC, 4) != 0) return false;
+
+    std::uint32_t version{}, in_dim{}, h1{}, h2{}, out_dim{};
+    if (!read_u32(f, version)) return false;
+    if (!read_u32(f, in_dim))  return false;
+    if (!read_u32(f, h1))      return false;
+    if (!read_u32(f, h2))      return false;
+    if (!read_u32(f, out_dim)) return false;
+    if (version != MLP_VERSION ||
+        in_dim  != INPUT_DIM   ||
+        h1      != HIDDEN1     ||
+        h2      != HIDDEN2     ||
+        out_dim != 1) {
+        return false;
+    }
+
+    // Read into temporaries first so a partial/corrupt file never
+    // mutates the live weights.
+    decltype(w1_) tw1{};
+    decltype(b1_) tb1{};
+    decltype(w2_) tw2{};
+    decltype(b2_) tb2{};
+    decltype(w3_) tw3{};
+    float         tb3{0.0f};
+
+    if (!read_floats(f, tw1))                                 return false;
+    if (!read_floats(f, tb1))                                 return false;
+    if (!read_floats(f, tw2))                                 return false;
+    if (!read_floats(f, tb2))                                 return false;
+    if (!read_floats(f, tw3))                                 return false;
+    f.read(reinterpret_cast<char*>(&tb3), sizeof(float));
+    if (static_cast<std::size_t>(f.gcount()) != sizeof(float)) return false;
+
+    w1_ = tw1; b1_ = tb1;
+    w2_ = tw2; b2_ = tb2;
+    w3_ = tw3; b3_ = tb3;
+    return true;
+}
+
+bool MLPNetwork::save(std::string_view path) const {
+    std::ofstream f(std::string{path}, std::ios::binary);
+    if (!f) return false;
+    f.write(MLP_MAGIC, 4);
+    if (!write_u32(f, MLP_VERSION))                                  return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))        return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN1)))          return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN2)))          return false;
+    if (!write_u32(f, 1u))                                            return false;
+    if (!write_floats(f, w1_))                                        return false;
+    if (!write_floats(f, b1_))                                        return false;
+    if (!write_floats(f, w2_))                                        return false;
+    if (!write_floats(f, b2_))                                        return false;
+    if (!write_floats(f, w3_))                                        return false;
+    f.write(reinterpret_cast<const char*>(&b3_), sizeof(float));
+    return f.good();
+}
+
+std::unique_ptr<INetwork> load_network(std::string_view path) {
+    std::ifstream f(std::string{path}, std::ios::binary);
+    if (!f) return nullptr;
+    char magic[4]{};
+    f.read(magic, 4);
+    const bool got_header = (f.gcount() == 4);
+    f.close();
+    if (!got_header) return nullptr;
+
+    if (std::memcmp(magic, MLP_MAGIC, 4) == 0) {
+        auto n = std::make_unique<MLPNetwork>();
+        if (!n->load(path)) return nullptr;
+        return n;
+    }
+    auto n = std::make_unique<LinearNetwork>();
+    if (!n->load(path)) return nullptr;
+    return n;
+}
+
 int evaluate_nnue(const Position& pos) {
     static const LinearNetwork net;
     return net.evaluate(pos);
