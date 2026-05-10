@@ -8,6 +8,7 @@
 #include "zobrist.hpp"
 
 #include <algorithm>
+#include <array>
 
 namespace jass {
 
@@ -46,13 +47,57 @@ inline void hoist_move(MoveList& moves, const Move& priority) {
     }
 }
 
+// Move-ordering aids reset between top-level searches.
+//
+// Killer moves: at each ply we remember up to two *quiet* moves that
+// recently caused a beta cutoff. They are tried right after the TT-suggested
+// move because they tend to refute many sibling positions too.
+//
+// History heuristic: a flat from/to table accumulates a depth^2 bonus every
+// time a quiet move causes a beta cutoff. Quiet moves with the highest
+// history are tried first among the rest.
 struct Searcher {
     TranspositionTable* tt{nullptr};
     std::uint64_t       nodes{0};
 
+    std::array<std::array<Move, 2>, MAX_PLY + 1>                       killers{};
+    std::array<std::array<int,  NUM_SQUARES + 1>, NUM_SQUARES + 1>     history{};
+
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
 };
+
+// Score used to sort the move list. Larger = tried first.
+inline int order_score(const Searcher& s, const Move& m, int ply,
+                       const Move& tt_move, bool tt_hit) noexcept {
+    if (tt_hit && m == tt_move) return 1'000'000;
+    if (m.is_capture())          return 0;            // captures: keep generation order
+    if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
+    if (m == s.killers[static_cast<std::size_t>(ply)][1])  return   700'000;
+    return s.history[m.from][m.to];
+}
+
+// Sort moves in place, descending by `order_score`. Selection sort: the move
+// list is small (~30 in the worst case) and an in-place ordering keeps the
+// hot loop cache-friendly.
+inline void order_moves(MoveList& moves, const Searcher& s, int ply,
+                        const Move& tt_move, bool tt_hit) {
+    std::array<int, 256> scores;  // populated for [0, n) before any read
+    const std::size_t n = moves.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        scores[i] = order_score(s, moves[i], ply, tt_move, tt_hit);
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        std::size_t best = i;
+        for (std::size_t j = i + 1; j < n; ++j) {
+            if (scores[j] > scores[best]) best = j;
+        }
+        if (best != i) {
+            std::swap(moves[i],  moves[best]);
+            std::swap(scores[i], scores[best]);
+        }
+    }
+}
 
 // Quiescence: at the search horizon, only mandatory capture chains are
 // played out. International draughts forbids "stand pat with a capture
@@ -111,8 +156,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (moves.empty()) return -MATE_SCORE + ply;
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
-    // 3. Move ordering: TT-suggested move first when available.
-    if (tt_hit) hoist_move(moves, tt_move);
+    // 3. Move ordering: TT-suggested move first, then killers, then a
+    //    history-driven order on the remaining quiet moves.
+    order_moves(moves, *this, ply, tt_move, tt_hit);
 
     // 4. Search.
     const int alpha_orig = alpha;
@@ -127,7 +173,20 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             best_move = m;
         }
         if (best > alpha) alpha = best;
-        if (alpha >= beta) break;  // beta cut-off
+        if (alpha >= beta) {
+            // Beta cutoff: reward the move that produced it. Captures aren't
+            // tracked because the legal-move generator already orders them
+            // implicitly (every legal move at a capture node has the same
+            // length under the FMJD majority rule).
+            if (!m.is_capture() && ply <= MAX_PLY) {
+                if (!(m == killers[static_cast<std::size_t>(ply)][0])) {
+                    killers[static_cast<std::size_t>(ply)][1] = killers[static_cast<std::size_t>(ply)][0];
+                    killers[static_cast<std::size_t>(ply)][0] = m;
+                }
+                history[m.from][m.to] += depth * depth;
+            }
+            break;
+        }
     }
 
     // 5. Store back into the TT with the appropriate bound flag.
