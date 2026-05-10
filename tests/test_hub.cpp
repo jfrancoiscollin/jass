@@ -119,6 +119,7 @@ void test_hub_apply_then_go_yields_bestmove() {
         "apply 31-26\n"
         "go depth 2\n");
     JASS_CHECK(contains(out, "bestmove"));
+    JASS_CHECK(contains(out, "pv="));
 }
 
 void test_hub_unknown_command_reports_error() {

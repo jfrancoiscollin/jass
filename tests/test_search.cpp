@@ -170,6 +170,27 @@ void test_search_score_reflects_material_lead() {
     JASS_CHECK(r.score < KING_VALUE);
 }
 
+void test_search_returns_pv_starting_with_best_move() {
+    const Position p = Position::start_position();
+    SearchLimits lim;
+    lim.max_depth = 4;
+    const SearchResult r = search(p, lim);
+    JASS_CHECK(!r.pv.empty());
+    JASS_CHECK(r.pv.front() == r.best_move);
+
+    // Each pv move must be legal in the position obtained by replaying the
+    // earlier ones.
+    Position cur = p;
+    for (const auto& m : r.pv) {
+        MoveList legal;
+        generate_legal_moves(cur, legal);
+        bool ok = false;
+        for (const auto& lm : legal) if (lm == m) { ok = true; break; }
+        JASS_CHECK(ok);
+        cur = cur.after(m);
+    }
+}
+
 void test_search_depth_increases() {
     // Sanity: deeper iterative deepening visits strictly more nodes than a
     // shallow one (in a non-mate position) and still returns a legal move.
@@ -201,5 +222,6 @@ void run_search_tests() {
     test_search_finds_forced_capture();
     test_qsearch_avoids_horizon_effect();
     test_search_score_reflects_material_lead();
+    test_search_returns_pv_starting_with_best_move();
     test_search_depth_increases();
 }

@@ -11,6 +11,7 @@
 #include <array>
 #include <chrono>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 
 namespace jass {
@@ -259,6 +260,41 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 
 }  // namespace
 
+std::vector<Move> extract_pv(const Position& start,
+                             const TranspositionTable& tt,
+                             int max_len) {
+    std::vector<Move> pv;
+    pv.reserve(static_cast<std::size_t>(max_len));
+
+    Position pos = start;
+    std::unordered_set<ZobristHash> seen;
+    seen.reserve(static_cast<std::size_t>(max_len));
+
+    while (static_cast<int>(pv.size()) < max_len) {
+        const ZobristHash h = zobrist_hash(pos);
+        if (!seen.insert(h).second) break;  // cycle
+
+        TTEntry e;
+        if (!tt.probe(h, e))            break;
+        if (e.bound != Bound::Exact)    break;
+
+        // Defensive: confirm the stored move is still legal in the current
+        // position (a hash collision on a stale entry could otherwise have
+        // us emit nonsense).
+        MoveList legal;
+        generate_legal_moves(pos, legal);
+        bool ok = false;
+        for (const auto& m : legal) {
+            if (m == e.best_move) { ok = true; break; }
+        }
+        if (!ok) break;
+
+        pv.push_back(e.best_move);
+        pos = pos.after(e.best_move);
+    }
+    return pv;
+}
+
 SearchResult search(const Position& pos, const SearchLimits& limits) {
     TranspositionTable tt;
     tt.resize_mb(limits.tt_mb);
@@ -401,6 +437,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.best_move = best_overall;
     res.score     = best_score;
     res.nodes     = s.nodes;
+    res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
     return res;
 }
 

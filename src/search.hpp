@@ -44,10 +44,15 @@ struct SearchLimits {
 };
 
 struct SearchResult {
-    Move          best_move{};
-    int           score{0};
-    int           depth{0};
-    std::uint64_t nodes{0};
+    Move              best_move{};
+    int               score{0};
+    int               depth{0};
+    std::uint64_t     nodes{0};
+    // Principal variation: the line of play the engine expects from this
+    // point. `pv[0] == best_move`. Length is bounded by `MAX_PLY` and may
+    // be shorter than the search depth if the TT walk terminates early
+    // (TT miss, illegal move from a hash collision, or cycle).
+    std::vector<Move> pv;
 };
 
 // Search the given position. Iterative deepening from 1 up to
@@ -77,5 +82,12 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 //     simplification): the current hash is in `game_history` or the search
 //     path → draw 0.
 inline constexpr int FIFTY_MOVE_PLIES = 50;
+
+// Walk the principal variation by repeated TT probes from `start`. Stops
+// at a TT miss, a non-Exact entry, an illegal stored move (hash collision)
+// or a position cycle. The returned vector is bounded by `max_len`.
+std::vector<Move> extract_pv(const Position&            start,
+                             const TranspositionTable&  tt,
+                             int                        max_len = MAX_PLY);
 
 }  // namespace jass
