@@ -63,8 +63,8 @@ public:
     bool save(std::string_view path) const;
 
     // In-memory variant of `load`: read `n` bytes (must equal the
-    // weights footprint) from `data`. Used by `default_nnue()` to
-    // initialise the binary-embedded default network.
+    // weights footprint) from `data`. Used by `default_nnue()` when
+    // the binary-embedded default network is a raw LinearNetwork file.
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
@@ -74,17 +74,23 @@ private:
     std::array<std::array<std::int32_t, 4>, NUM_SQUARES> weights_{};
 };
 
-// Float32 MLP with topology 200 → 128 → 64 → 1, ReLU activations on
+// Float32 MLP with topology 200 → 64 → 32 → 1, ReLU activations on
 // the two hidden layers, identity on the output. Input features are
 // sparse one-hot indicators in STM-POV encoding (see the file header
 // in src/nnue.cpp for the exact convention). The output is a
 // centipawn-scale score from the side-to-move's perspective — no
 // final sign flip is needed.
+//
+// History: a wider archi (128/64) was tried in PR #8 and lost at depth
+// 5 by score rate 0.444 vs the linear baseline on 90 games — likely
+// over-parameterised for 100k records of noisy depth-8 targets. We
+// reverted to 64/32 here because the v2 weights at that size won the
+// championship at 0.639 vs linear.
 class MLPNetwork : public INetwork {
 public:
     static constexpr std::size_t INPUT_DIM = 200;  // 50 squares × 4 kinds
-    static constexpr std::size_t HIDDEN1   = 128;
-    static constexpr std::size_t HIDDEN2   = 64;
+    static constexpr std::size_t HIDDEN1   = 64;
+    static constexpr std::size_t HIDDEN2   = 32;
 
     // Default-construct with zero weights and biases. The network
     // returns ~0 in that state; call `load()` to install a trained model.
@@ -96,8 +102,8 @@ public:
     //   [0..4)   magic = "JNNM"
     //   [4..8)   version (uint32, currently 2)
     //   [8..12)  input_dim  (uint32, must equal 200)
-    //   [12..16) hidden1    (uint32, must equal 128)
-    //   [16..20) hidden2    (uint32, must equal 64)
+    //   [12..16) hidden1    (uint32, must equal 64)
+    //   [16..20) hidden2    (uint32, must equal 32)
     //   [20..24) output_dim (uint32, must equal 1)
     //   [24..)   float32 weights in this order:
     //              w1 [HIDDEN1 × INPUT_DIM]   (row-major, neuron-major)
@@ -108,6 +114,12 @@ public:
     //              b3 [1]
     bool load(std::string_view path);
     bool save(std::string_view path) const;
+
+    // In-memory variant of `load`. The byte buffer must start with the
+    // JNNM magic and match the dimensions baked into the class
+    // constants; otherwise the network state is left unchanged and
+    // false is returned.
+    bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
     // Row-major storage. `w1_[j * INPUT_DIM + i]` is the weight from
@@ -126,13 +138,24 @@ private:
 // error or format mismatch.
 std::unique_ptr<INetwork> load_network(std::string_view path);
 
-// Returns a pointer to the lazily-initialised `LinearNetwork` loaded
-// from the embedded default weights (CMake compiles `nnue.bin` from
-// the repo root into the binary). The pointer is owned by static
-// storage and remains valid for the lifetime of the process. Callers
-// that want to opt out of NNUE entirely should pass `nullptr` to the
-// relevant `set_nnue(...)` instead.
-const LinearNetwork* default_nnue();
+// In-memory variant of `load_network`: same magic-based dispatch but
+// reading from a byte buffer rather than the filesystem. Used by
+// `default_nnue()` to instantiate the right concrete class from the
+// embedded weights regardless of whether they describe a Linear or
+// an MLP network.
+std::unique_ptr<INetwork> load_network_from_bytes(const unsigned char* data,
+                                                  std::size_t          n);
+
+// Returns a pointer to the lazily-initialised network loaded from the
+// embedded default weights (CMake compiles `nnue.bin` from the repo
+// root into the binary). Today that file ships the v2 MLP weights
+// (200 → 64 → 32 → 1, STM-relative encoding, score rate 0.639 vs the
+// linear baseline at depth 5), but the return type is the abstract
+// `INetwork*` so the embedded model can be swapped without touching
+// callers. The pointer is owned by static storage and remains valid
+// for the lifetime of the process; callers that want to opt out of
+// NNUE entirely should pass `nullptr` to the relevant `set_nnue(...)`.
+const INetwork* default_nnue();
 
 // Switchable façade: `evaluate_nnue(pos)` mirrors `evaluate(pos)` but
 // queries the internal default-constructed `LinearNetwork`. Useful as

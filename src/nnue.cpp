@@ -289,6 +289,55 @@ bool MLPNetwork::load(std::string_view path) {
     return true;
 }
 
+bool MLPNetwork::load_from_bytes(const unsigned char* data, std::size_t n) {
+    // Smallest valid file: 6 × uint32 header + the float arrays.
+    constexpr std::size_t kHeader = 6 * sizeof(std::uint32_t);
+    constexpr std::size_t kFloats =
+        (HIDDEN1 * INPUT_DIM + HIDDEN1
+       + HIDDEN2 * HIDDEN1   + HIDDEN2
+       + HIDDEN2             + 1) * sizeof(float);
+    if (data == nullptr || n != kHeader + kFloats) return false;
+
+    if (std::memcmp(data, MLP_MAGIC, 4) != 0) return false;
+
+    auto read_u32_at = [&](std::size_t off) {
+        std::uint32_t v;
+        std::memcpy(&v, data + off, sizeof(v));
+        return v;
+    };
+    if (read_u32_at(4)  != MLP_VERSION)                               return false;
+    if (read_u32_at(8)  != static_cast<std::uint32_t>(INPUT_DIM))     return false;
+    if (read_u32_at(12) != static_cast<std::uint32_t>(HIDDEN1))       return false;
+    if (read_u32_at(16) != static_cast<std::uint32_t>(HIDDEN2))       return false;
+    if (read_u32_at(20) != 1u)                                        return false;
+
+    // Memcpy each region. Streaming into temporaries first so a
+    // partial overlap mid-load can't corrupt live weights.
+    decltype(w1_) tw1{};
+    decltype(b1_) tb1{};
+    decltype(w2_) tw2{};
+    decltype(b2_) tb2{};
+    decltype(w3_) tw3{};
+    float         tb3{0.0f};
+
+    const unsigned char* p = data + kHeader;
+    auto take = [&](void* dst, std::size_t bytes) {
+        std::memcpy(dst, p, bytes);
+        p += bytes;
+    };
+    take(tw1.data(), tw1.size() * sizeof(float));
+    take(tb1.data(), tb1.size() * sizeof(float));
+    take(tw2.data(), tw2.size() * sizeof(float));
+    take(tb2.data(), tb2.size() * sizeof(float));
+    take(tw3.data(), tw3.size() * sizeof(float));
+    take(&tb3,       sizeof(float));
+
+    w1_ = tw1; b1_ = tb1;
+    w2_ = tw2; b2_ = tb2;
+    w3_ = tw3; b3_ = tb3;
+    return true;
+}
+
 bool MLPNetwork::save(std::string_view path) const {
     std::ofstream f(std::string{path}, std::ios::binary);
     if (!f) return false;
@@ -326,17 +375,33 @@ std::unique_ptr<INetwork> load_network(std::string_view path) {
     return n;
 }
 
-const LinearNetwork* default_nnue() {
+std::unique_ptr<INetwork> load_network_from_bytes(const unsigned char* data,
+                                                  std::size_t          n) {
+    if (data == nullptr || n < 4) return nullptr;
+    if (std::memcmp(data, MLP_MAGIC, 4) == 0) {
+        auto net = std::make_unique<MLPNetwork>();
+        if (!net->load_from_bytes(data, n)) return nullptr;
+        return net;
+    }
+    auto net = std::make_unique<LinearNetwork>();
+    if (!net->load_from_bytes(data, n)) return nullptr;
+    return net;
+}
+
+const INetwork* default_nnue() {
     // Lazy initialisation: the embedded weights are decoded once on the
-    // first call and reused for the lifetime of the process. If the
-    // embedded byte count doesn't match `LinearNetwork`'s footprint
-    // (e.g. the engine was compiled against a stale `nnue.bin`), we
-    // fall back to a default-constructed network so the runtime keeps
-    // working on top of the handcrafted-equivalent weights.
-    static const LinearNetwork* net = []() {
-        auto* n = new LinearNetwork();
-        n->load_from_bytes(NNUE_DEFAULT_BYTES, NNUE_DEFAULT_LEN);
-        return n;
+    // first call and reused for the lifetime of the process. The
+    // concrete type (LinearNetwork or MLPNetwork) is determined by
+    // sniffing the JNNM magic at the start of the byte buffer. If
+    // decoding fails — e.g. the engine was compiled against a stale
+    // `nnue.bin` with mismatched dimensions — we fall back to a
+    // default-constructed LinearNetwork so the runtime keeps working
+    // on top of the handcrafted-equivalent weights.
+    static const INetwork* net = []() -> const INetwork* {
+        auto loaded = load_network_from_bytes(NNUE_DEFAULT_BYTES,
+                                              NNUE_DEFAULT_LEN);
+        if (loaded) return loaded.release();
+        return new LinearNetwork();
     }();
     return net;
 }
