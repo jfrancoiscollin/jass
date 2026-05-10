@@ -83,7 +83,7 @@ void test_network_load_rejects_missing_file() {
 }
 
 // ---------------------------------------------------------------------------
-// MLPNetwork — float32 perceptron 200 → 128 → 64 → 1.
+// MLPNetwork — float32 perceptron 200 → 64 → 32 → 1.
 // ---------------------------------------------------------------------------
 
 // Hand-write a JNNM file with the supplied weights so the tests can
@@ -300,10 +300,10 @@ void test_mlp_load_rejects_missing_or_bad_file() {
 }
 
 // ---------------------------------------------------------------------------
-// default_nnue() — pointer to the binary-embedded LinearNetwork.
+// default_nnue() — pointer to the binary-embedded network (Linear or MLP).
 // ---------------------------------------------------------------------------
 void test_default_nnue_is_non_null_and_returns_finite_score() {
-    const LinearNetwork* net = default_nnue();
+    const INetwork* net = default_nnue();
     JASS_CHECK(net != nullptr);
     if (!net) return;
 
@@ -320,8 +320,8 @@ void test_default_nnue_is_stable_across_calls() {
     // The lazy initialiser must hand out the same instance every call,
     // not allocate a fresh one (otherwise an Engine that pinned the
     // pointer at startup would be holding a dangling reference).
-    const LinearNetwork* a = default_nnue();
-    const LinearNetwork* b = default_nnue();
+    const INetwork* a = default_nnue();
+    const INetwork* b = default_nnue();
     JASS_CHECK_EQ(a, b);
 }
 

@@ -85,9 +85,9 @@ void test_engine_nnue_pointer_round_trips() {
     Engine e;
     JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(nullptr));
 
-    const LinearNetwork* def = default_nnue();
+    const INetwork* def = default_nnue();
     e.set_nnue(def);
-    JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(def));
+    JASS_CHECK_EQ(e.nnue(), def);
 
     e.set_nnue(nullptr);
     JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(nullptr));

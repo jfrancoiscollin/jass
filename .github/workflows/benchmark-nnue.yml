@@ -126,7 +126,14 @@ jobs:
           echo "b=$B" >> "$GITHUB_OUTPUT"
 
       - name: Run benchmark
+        # pipefail so a failing `./build/jass ...` (e.g. weights file
+        # rejected at load time) propagates through `tee` and rouge
+        # the step. Without it, the engine's stderr "error: cannot
+        # load weights" was hidden behind tee's exit 0 and the
+        # workflow looked green with an empty result file.
+        shell: bash
         run: |
+          set -euo pipefail
           A="${{ steps.resolve.outputs.a }}"
           B="${{ steps.resolve.outputs.b }}"
           if [ -n "$B" ]; then
