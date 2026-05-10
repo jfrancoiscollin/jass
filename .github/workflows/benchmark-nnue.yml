@@ -22,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       weights_path:
-        description: "Path to the weights file inside the repo"
+        description: "Path inside the repo to the weights — either a raw .bin or the .zip artefact downloaded from the train-nnue workflow"
         required: true
-        default: "data/nnue.bin"
+        default: "data/nnue-weights.zip"
         type: string
       depth:
         description: "Search depth for both engines"
@@ -64,20 +64,41 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j
 
-      - name: Validate weights file
+      - name: Resolve weights file (extract if zip)
+        id: resolve
         run: |
-          if [ ! -f "${{ inputs.weights_path }}" ]; then
-            echo "::error::weights file '${{ inputs.weights_path }}' not found in the repo"
-            echo "Hint: upload nnue.bin to that path first (commit it directly,"
-            echo "or use Add file → Upload files in the GitHub web UI)."
+          SRC="${{ inputs.weights_path }}"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::weights file '$SRC' not found in the repo"
+            echo "Hint: use Add file → Upload files in the GitHub web UI to"
+            echo "       commit either a raw nnue.bin or the zip artefact"
+            echo "       downloaded from the train-nnue workflow."
             exit 1
           fi
-          ls -la "${{ inputs.weights_path }}"
+          ls -la "$SRC"
+
+          case "$SRC" in
+            *.zip)
+              mkdir -p _weights
+              unzip -o "$SRC" -d _weights
+              BIN=$(find _weights -type f -name '*.bin' | head -1)
+              if [ -z "$BIN" ]; then
+                echo "::error::no .bin file found inside '$SRC'"
+                exit 1
+              fi
+              echo "Extracted weights: $BIN"
+              ls -la "$BIN"
+              echo "resolved=$BIN" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "resolved=$SRC" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Run benchmark
         run: |
           ./build/jass --benchmark-nnue \
-              "${{ inputs.weights_path }}" \
+              "${{ steps.resolve.outputs.resolved }}" \
               "${{ inputs.depth }}" \
               "${{ inputs.pairs }}" | tee benchmark-result.txt
           echo
