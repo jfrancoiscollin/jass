@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: MIT
+# Build, test and publish Jass on every push.
+#
+# Three jobs:
+#   1. native        — Linux build + unit tests (the contract gate).
+#   2. wasm          — Emscripten build, uploads `jass.js` / `jass.wasm` /
+#                      `example.html` as a workflow artifact and stages a
+#                      Pages bundle.
+#   3. deploy-pages  — Publishes the staged bundle to GitHub Pages on
+#                      pushes to `main` only. Requires Settings → Pages →
+#                      "Source: GitHub Actions" to be enabled once.
+
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Protect the Pages deploy from concurrent runs of itself; let other CI
+# jobs run side by side.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Native build: must always pass — the rest of the pipeline trusts it.
+  # ---------------------------------------------------------------------------
+  native:
+    name: Build & test (native)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Run tests
+        run: ./build/jass_tests
+
+  # ---------------------------------------------------------------------------
+  # WASM build: install emsdk, run the project's own wasm/build.sh, package
+  # the artefacts.
+  # ---------------------------------------------------------------------------
+  wasm:
+    name: Build WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # First-run installs are slow (~3 min); subsequent runs hit the cache.
+      - name: Cache Emscripten SDK
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: ~/emsdk
+          key: emsdk-${{ runner.os }}-latest
+
+      - name: Install Emscripten SDK
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git ~/emsdk
+          ~/emsdk/emsdk install latest
+          ~/emsdk/emsdk activate latest
+
+      - name: Build WASM module
+        run: |
+          source ~/emsdk/emsdk_env.sh
+          ./wasm/build.sh
+
+      - name: List build artefacts
+        run: ls -la build-wasm
+
+      - name: Upload WASM artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jass-wasm
+          path: |
+            build-wasm/jass.js
+            build-wasm/jass.wasm
+            build-wasm/example.html
+          if-no-files-found: error
+
+      # Stage a Pages-ready bundle: the demo page acts as index.html so the
+      # site is usable straight out of the root URL.
+      - name: Stage Pages bundle
+        run: |
+          mkdir -p _site
+          cp build-wasm/jass.js          _site/
+          cp build-wasm/jass.wasm        _site/
+          cp build-wasm/example.html     _site/
+          cp build-wasm/example.html     _site/index.html
+
+      - name: Upload Pages bundle
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  # ---------------------------------------------------------------------------
+  # GitHub Pages deploy: only on `main` pushes. The demo URL is then
+  # printed at the end of the run and shown in the Environments panel.
+  # ---------------------------------------------------------------------------
+  deploy-pages:
+    name: Deploy demo to GitHub Pages
+    needs: wasm
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

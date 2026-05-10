@@ -1,0 +1,55 @@
+# Build outputs
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Emscripten
+*.wasm
+*.wasm.map
+*.mem
+emscripten_temp/
+
+# Object/binary artefacts
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.exp
+*.pdb
+*.idb
+*.ilk
+*.gcda
+*.gcno
+*.gcov
+
+# Editor / IDE
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local logs / scratch
+*.log
+/tmp/
+/scratch/

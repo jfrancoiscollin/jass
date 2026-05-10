@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Jean-François Collin
+//
+// `Engine` — a long-lived facade around `Position`, the move generator and
+// the search. It owns a transposition table that survives across `search()`
+// calls so iterative deepening reuses prior work and successive moves of a
+// game share their lookup data.
+//
+// This is the type intended to back the HUB front-end and the WASM bindings.
+
+#pragma once
+
+#include "book.hpp"
+#include "position.hpp"
+#include "search.hpp"
+#include "tt.hpp"
+#include "types.hpp"
+#include "zobrist.hpp"
+
+#include <cstddef>
+#include <string_view>
+#include <vector>
+
+namespace jass {
+
+class Engine {
+public:
+    Engine();
+    explicit Engine(std::size_t tt_mb);
+
+    // Reset to the standard initial position and clear the TT. Use at the
+    // start of a new game.
+    void new_game();
+
+    // Replace the current position. The TT is *not* cleared — entries
+    // produced by previous searches remain available if their hash keys
+    // happen to apply to the new tree.
+    void set_position(const Position& pos) noexcept;
+    bool set_position_fen(std::string_view fen);
+
+    const Position& position() const noexcept { return pos_; }
+
+    // Apply a move to the current position. Returns false (and leaves the
+    // position unchanged) if `m` is not in the current legal-move list.
+    bool apply_move(const Move& m);
+
+    // Search the current position with iterative deepening up to the given
+    // depth. The persistent TT is reused.
+    SearchResult search(int max_depth);
+
+    // Search the current position with full SearchLimits — depth, time
+    // budget, external stop signal — using the persistent TT and game
+    // history.
+    SearchResult search(const SearchLimits& limits);
+
+    // Direct TT control for callers that want fine-grained behaviour.
+    void clear_tt() noexcept;
+    void resize_tt_mb(std::size_t mb);
+
+    std::size_t tt_size() const noexcept { return tt_.size(); }
+
+    // Predecessors-only Zobrist history of the current game (does NOT
+    // include the current position). Used by `search()` for repetition
+    // detection.
+    const std::vector<ZobristHash>& hash_history() const noexcept {
+        return hash_history_;
+    }
+
+    // Toggle the opening-book consultation. Enabled by default.
+    void use_book(bool yes) noexcept { use_book_ = yes; }
+    bool book_enabled()      const noexcept { return use_book_; }
+
+private:
+    Position                 pos_;
+    TranspositionTable       tt_;
+    std::vector<ZobristHash> hash_history_;
+    Book                     book_;
+    bool                     use_book_{true};
+};
+
+}  // namespace jass
