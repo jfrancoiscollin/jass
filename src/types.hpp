@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Jean-François Collin
 //
 // Core scalar types of the Jass engine: colours, pieces, squares and moves.

@@ -201,10 +201,10 @@ expression; the runner returns 1 if any assertion fails.
 
 ## Things you should NOT do
 
-- **Read GPLed engine source.** Jass's clean-room policy is its
-  whole point — it's what lets it ship under MIT. If you want to
-  borrow an idea, derive it from a paper, blog post, or your own
-  thinking, not from another engine's source.
+- **Read GPLed engine source.** Jass's clean-room policy is what
+  enables its dual-licence model (AGPL v3 + commercial). If you
+  want to borrow an idea, derive it from a paper, blog post, or
+  your own thinking, not from another engine's source.
 - **Disable `-Wall -Wextra -Wpedantic`.** Warnings are escalations
   to errors in CI for good reason.
 - **Skip the test suite.** A green test suite is the contract the
