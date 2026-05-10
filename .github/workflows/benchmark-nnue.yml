@@ -66,6 +66,12 @@ concurrency:
   group: benchmark-nnue-${{ github.ref }}
   cancel-in-progress: true
 
+# Opt every JavaScript-based action into the Node.js 24 runtime ahead of
+# the June 2026 forced default, silencing the deprecation warning the
+# runner emits otherwise.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   bench:
     name: NNUE tournament
