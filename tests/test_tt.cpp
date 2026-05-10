@@ -102,14 +102,14 @@ void test_tt_store_then_probe() {
     m.from = 31;
     m.to   = 26;
 
-    tt.store(0xCAFEBABEULL, m, /*score=*/42, /*depth=*/4, Bound::Exact);
+    tt.store(0xCAFEBABEULL, pack_move(m), /*score=*/42, /*depth=*/4, Bound::Exact);
 
     TTEntry out;
     JASS_CHECK(tt.probe(0xCAFEBABEULL, out));
     JASS_CHECK_EQ(out.score, 42);
     JASS_CHECK_EQ(out.depth, 4);
     JASS_CHECK(out.bound == Bound::Exact);
-    JASS_CHECK(out.best_move == m);
+    JASS_CHECK(same_packed_move(m, out.best_move));
 }
 
 void test_tt_depth_preferred_replacement() {
@@ -120,9 +120,9 @@ void test_tt_depth_preferred_replacement() {
     Move mb; mb.from = 32; mb.to = 28;
 
     // Deeper entry stored first.
-    tt.store(0x1234ULL, ma, 100, /*depth=*/8, Bound::Exact);
-    // Shallower entry must NOT overwrite.
-    tt.store(0x1234ULL, mb, 200, /*depth=*/3, Bound::Exact);
+    tt.store(0x1234ULL, pack_move(ma), 100, /*depth=*/8, Bound::Exact);
+    // Shallower entry must NOT overwrite the same-key slot.
+    tt.store(0x1234ULL, pack_move(mb), 200, /*depth=*/3, Bound::Exact);
 
     TTEntry out;
     JASS_CHECK(tt.probe(0x1234ULL, out));
@@ -130,7 +130,7 @@ void test_tt_depth_preferred_replacement() {
     JASS_CHECK_EQ(out.depth, 8);
 
     // Same-depth or deeper entry overwrites.
-    tt.store(0x1234ULL, mb, 200, /*depth=*/8, Bound::Exact);
+    tt.store(0x1234ULL, pack_move(mb), 200, /*depth=*/8, Bound::Exact);
     JASS_CHECK(tt.probe(0x1234ULL, out));
     JASS_CHECK_EQ(out.score, 200);
 }

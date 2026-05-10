@@ -214,15 +214,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //    keep the suggested move for ordering.
     TTEntry tt_entry;
     bool    tt_hit  = tt->probe(hash, tt_entry);
-    Move    tt_move{};
-    if (tt_hit) {
-        tt_move = tt_entry.best_move;
-        if (tt_entry.depth >= depth) {
-            const int s = score_from_tt(tt_entry.score, ply);
-            if (tt_entry.bound == Bound::Exact)                    return s;
-            if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
-            if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
-        }
+    if (tt_hit && tt_entry.depth >= depth) {
+        const int s = score_from_tt(tt_entry.score, ply);
+        if (tt_entry.bound == Bound::Exact)                    return s;
+        if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
+        if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
     }
 
     // 2. Mate / leaf detection. At the horizon we hand off to quiescence
@@ -233,8 +229,21 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
     // 3. Move ordering: TT-suggested move first, then killers, then a
-    //    history-driven order on the remaining quiet moves.
-    order_moves(moves, *this, ply, tt_move, tt_hit);
+    //    history-driven order on the remaining quiet moves. The TT only
+    //    stores a `PackedMove`, so we resolve it against the actual
+    //    legal-move list to recover the full move with its capture path.
+    Move tt_move{};
+    bool tt_move_valid = false;
+    if (tt_hit) {
+        for (const auto& m : moves) {
+            if (same_packed_move(m, tt_entry.best_move)) {
+                tt_move       = m;
+                tt_move_valid = true;
+                break;
+            }
+        }
+    }
+    order_moves(moves, *this, ply, tt_move, tt_move_valid);
 
     // 4. Search.
     const int alpha_orig = alpha;
@@ -278,7 +287,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         else if (best > alpha_orig) bound = Bound::Exact;
         else                        bound = Bound::Upper;
 
-        tt->store(hash, best_move, score_to_tt(best, ply), depth, bound);
+        tt->store(hash, pack_move(best_move),
+                  score_to_tt(best, ply), depth, bound);
     }
     return best;
 }
@@ -305,17 +315,18 @@ std::vector<Move> extract_pv(const Position& start,
 
         // Defensive: confirm the stored move is still legal in the current
         // position (a hash collision on a stale entry could otherwise have
-        // us emit nonsense).
+        // us emit nonsense). The TT only carries a `PackedMove`, so we
+        // also recover the full Move with its capture path here.
         MoveList legal;
         generate_legal_moves(pos, legal);
-        bool ok = false;
+        const Move* found = nullptr;
         for (const auto& m : legal) {
-            if (m == e.best_move) { ok = true; break; }
+            if (same_packed_move(m, e.best_move)) { found = &m; break; }
         }
-        if (!ok) break;
+        if (!found) break;
 
-        pv.push_back(e.best_move);
-        pos = pos.after(e.best_move);
+        pv.push_back(*found);
+        pos = pos.after(*found);
     }
     return pv;
 }
@@ -507,7 +518,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         best_score   = iter_score;
         res.depth    = depth;
 
-        tt.store(root_hash, iter_best,
+        tt.store(root_hash, pack_move(iter_best),
                  score_to_tt(iter_score, /*ply=*/0),
                  depth, Bound::Exact);
 
