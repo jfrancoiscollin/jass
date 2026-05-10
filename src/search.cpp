@@ -50,8 +50,37 @@ struct Searcher {
     TranspositionTable* tt{nullptr};
     std::uint64_t       nodes{0};
 
-    int negamax(const Position& pos, int depth, int ply, int alpha, int beta);
+    int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
+    int quiescence (const Position& pos,            int ply, int alpha, int beta);
 };
+
+// Quiescence: at the search horizon, only mandatory capture chains are
+// played out. International draughts forbids "stand pat with a capture
+// available" by rule, so the implementation is unusually direct: if there
+// are captures we must play one; otherwise the position is calm and we
+// return the static eval.
+int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
+    ++nodes;
+
+    MoveList moves;
+    generate_legal_moves(pos, moves);
+    if (moves.empty()) return -MATE_SCORE + ply;
+
+    // generate_legal_moves either returns *all* maximum-length captures or
+    // *all* quiet moves — never a mix. So a single check on the first move
+    // tells us whether the position is calm.
+    if (!moves[0].is_capture()) return evaluate(pos);
+
+    int best = -INF_SCORE;
+    for (const auto& m : moves) {
+        const Position next  = pos.after(m);
+        const int      score = -quiescence(next, ply + 1, -beta, -alpha);
+        if (score > best) best = score;
+        if (best > alpha) alpha = best;
+        if (alpha >= beta) break;  // beta cut-off
+    }
+    return best;
+}
 
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
@@ -75,11 +104,12 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
-    // 2. Mate / leaf detection.
+    // 2. Mate / leaf detection. At the horizon we hand off to quiescence
+    //    so a forced capture pending at the leaf is not silently misvalued.
     MoveList moves;
     generate_legal_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
-    if (depth <= 0)    return evaluate(pos);
+    if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
     // 3. Move ordering: TT-suggested move first when available.
     if (tt_hit) hoist_move(moves, tt_move);

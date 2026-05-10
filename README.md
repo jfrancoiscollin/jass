@@ -27,8 +27,10 @@ contains:
   chains in all four directions for men, full ray captures for kings, and
   the FMJD majority-capture rule (longest chain wins).
 - A negamax alpha-beta search with iterative deepening, transposition
-  table (Zobrist-keyed, depth-preferred replacement, mate-score adjusted)
-  and TT-move ordering inside the recursion.
+  table (Zobrist-keyed, depth-preferred replacement, mate-score adjusted),
+  TT-move ordering inside the recursion and a quiescence search that
+  plays mandatory capture chains out at the leaves so the static eval is
+  never asked about a position with a forced capture pending.
 - A static evaluation combining material (man = 100, king = 300),
   per-piece positional terms (advancement PSQT for men, centralisation
   PSQT for kings) and a small tempo bonus for the side to move.
