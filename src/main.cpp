@@ -13,6 +13,7 @@
 #include "engine.hpp"
 #include "hub.hpp"
 #include "movegen.hpp"
+#include "nnue.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
@@ -203,6 +204,61 @@ int run_gen_data_mode(int argc, char** argv) {
     return 0;
 }
 
+// -----------------------------------------------------------------------------
+// --benchmark-nnue: pit the trained `LinearNetwork` (loaded from a binary
+// weights file) against the handcrafted eval. Both engines are otherwise
+// identical (same depth, same threads). Plays a colour-swap match across
+// the default opening pool so we get diverse games.
+// -----------------------------------------------------------------------------
+int run_benchmark_nnue_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --benchmark-nnue <weights.bin> [depth=6] "
+                     "[pairs=1]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const int   depth = (argc > 3) ? parse_int_or(argv[3], 6) : 6;
+    const int   pairs = (argc > 4) ? parse_int_or(argv[4], 1) : 1;
+
+    LinearNetwork trained;
+    if (!trained.load(weights_path)) {
+        std::cerr << "error: cannot load weights from " << weights_path << "\n";
+        return 1;
+    }
+
+    EngineConfig handcrafted;
+    handcrafted.max_depth = depth;
+    handcrafted.nnue      = nullptr;
+
+    EngineConfig nnue_cfg;
+    nnue_cfg.max_depth = depth;
+    nnue_cfg.nnue      = &trained;
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+
+    std::cout << "Benchmark: NNUE (" << weights_path
+              << ") vs handcrafted, depth " << depth
+              << ", " << total_games << " games "
+              << "(" << pool.size() << " openings × " << pairs
+              << " pairs × 2 colours)\n";
+
+    // A = NNUE, B = handcrafted
+    const TournamentResult r = run_tournament(nnue_cfg, handcrafted, pairs);
+
+    std::cout << "Result: NNUE=" << r.a_wins
+              << " Handcrafted=" << r.b_wins
+              << " Draws="       << r.draws
+              << " (total "      << r.games << ")\n";
+
+    // A simple verdict line.  Wins are worth 1 point, draws 0.5.
+    const double nnue_score = r.a_wins + 0.5 * r.draws;
+    const double rate       = nnue_score / r.games;
+    std::cout << "NNUE score rate: " << rate
+              << " (" << nnue_score << " / " << r.games << ")\n";
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -233,14 +289,16 @@ int run_tournament_mode(int argc, char** argv) {
 int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         const std::string_view a{argv[i]};
-        if      (a == "--smoke")      return run_smoke();
-        else if (a == "--tournament") return run_tournament_mode(argc, argv);
-        else if (a == "--gen-data")   return run_gen_data_mode(argc, argv);
+        if      (a == "--smoke")           return run_smoke();
+        else if (a == "--tournament")      return run_tournament_mode(argc, argv);
+        else if (a == "--gen-data")        return run_gen_data_mode(argc, argv);
+        else if (a == "--benchmark-nnue")  return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
                 "Usage: jass [--smoke|--tournament [a b pairs]|"
-                            "--gen-data [N path]|--version|--help]\n"
+                            "--gen-data [N path]|--benchmark-nnue weights [d p]|"
+                            "--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
                 "  --tournament [da db pairs]       play a colour-swap match\n"
@@ -249,6 +307,12 @@ int main(int argc, char** argv) {
                 "  --gen-data [N path]              write N self-play training\n"
                 "                                   records to <path> (default\n"
                 "                                   10000 to selfplay.bin)\n"
+                "  --benchmark-nnue <weights.bin> [depth=6] [pairs=1]\n"
+                "                                   pit a trained NNUE (loaded\n"
+                "                                   from <weights.bin>) against\n"
+                "                                   the handcrafted eval. Plays\n"
+                "                                   2*pairs games per opening\n"
+                "                                   from the default opening pool.\n"
                 "  --version                        print the engine version\n";
             return 0;
         }
