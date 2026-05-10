@@ -14,6 +14,13 @@ The pipeline has three steps, all standalone:
 A single dependency on the Python side: NumPy.  PyTorch is optional —
 useful only if you extend the trainer to a non-linear model.
 
+> **Phone-friendly shortcut.** The repository ships a one-click
+> GitHub Actions workflow that runs steps 1 and 2 on a hosted
+> runner and publishes `nnue.bin` as a downloadable artefact —
+> see [Triggering training from the GitHub UI](#triggering-training-from-the-github-ui)
+> below.  The local CLI flow described in steps 1-3 is for users
+> who want to run the pipeline on their own machine.
+
 ---
 
 ## Step 1 — Generate training data
@@ -143,6 +150,39 @@ each other on the start position.  If `trained.evaluate(p)` is wildly
 off (hundreds of centipawns), check that the dataset was generated
 with `use_book(false)` — book moves return score 0 and skew the
 average.
+
+---
+
+## Triggering training from the GitHub UI
+
+If you'd rather not install anything locally, push a commit and use
+the **`Train NNUE weights`** workflow at
+`.github/workflows/train-nnue.yml`.  It bundles steps 1 and 2 into a
+single click on a hosted Ubuntu runner.
+
+1. Open the repository on GitHub (web or mobile app).
+2. Go to **Actions → Train NNUE weights**.
+3. Tap **Run workflow** in the top-right of the run list.
+4. Pick the dataset size from the dropdown:
+
+   | Records | Approx. runner time | Notes |
+   |---------|---------------------|-------|
+   | `10k`   | ~3 min              | smoke test of the format |
+   | `100k`  | ~30 min             | recommended default for a useful baseline |
+   | `1M`    | ~6 h                | borderline of the free-runner 6 h cap |
+
+5. Confirm and wait.  The run will appear in the list with a yellow
+   spinner; refresh the page until it turns green.
+6. Open the finished run, scroll to the **Artifacts** section and
+   download `nnue-weights`.  Inside the zip is a single `nnue.bin`
+   file — the same format the local trainer produces.
+7. Drop `nnue.bin` next to your engine binary (or wherever your code
+   passes its path to `LinearNetwork::load()`).
+
+The workflow is gated on `workflow_dispatch`, so it never runs
+automatically on a push.  Intermediate artefacts (the generated
+dataset) are uploaded only for the `10k` and `100k` presets — the
+`1M` dataset is too large to keep around as a CI artefact.
 
 ---
 
