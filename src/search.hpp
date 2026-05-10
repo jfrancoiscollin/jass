@@ -19,6 +19,7 @@
 #include <vector>
 
 namespace jass { class TranspositionTable; }
+namespace jass { class LinearNetwork; }
 
 namespace jass {
 
@@ -46,6 +47,9 @@ struct SearchLimits {
     // populate transposition entries for the main search to reuse. The
     // returned `SearchResult` is the main thread's only.
     int         threads     = 1;
+    // Optional NNUE-style network used at every leaf instead of the
+    // handcrafted `evaluate(pos)`. Default null = use handcrafted.
+    const LinearNetwork* nnue = nullptr;
 };
 
 struct SearchResult {

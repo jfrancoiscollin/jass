@@ -17,6 +17,7 @@ SearchLimits make_limits(const EngineConfig& cfg) {
     l.max_depth   = cfg.max_depth;
     l.threads     = cfg.threads;
     l.movetime_ms = cfg.movetime_ms;
+    l.nnue        = cfg.nnue;
     return l;
 }
 
