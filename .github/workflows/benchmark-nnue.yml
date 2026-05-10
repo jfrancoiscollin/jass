@@ -24,7 +24,7 @@ on:
       weights_path:
         description: "Path inside the repo to the weights — either a raw .bin or the .zip artefact downloaded from the train-nnue workflow"
         required: true
-        default: "nnue-weights.zip"
+        default: "nnue-weights 2.zip"
         type: string
       depth:
         description: "Search depth for both engines"
