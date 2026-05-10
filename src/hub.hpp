@@ -19,6 +19,9 @@
 //   go depth <N>                   search to depth N, emit `bestmove`
 //   go movetime <ms>               search up to <ms> milliseconds
 //   go infinite                    search until `stop` (runs in a thread)
+//   go wtime <ms> btime <ms>       tournament-style time budget. The
+//      [winc <ms>] [binc <ms>]     engine derives a per-move cap from
+//      [movestogo <N>]             the side-to-move's remaining time.
 //   stop                           interrupt the current search
 //   setoption threads <N>          set the number of search threads (>=1)
 //   eval                           emit the static eval (white POV)

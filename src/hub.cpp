@@ -4,6 +4,7 @@
 #include "hub.hpp"
 
 #include "eval.hpp"
+#include "timemgr.hpp"
 
 #include <cctype>
 #include <charconv>
@@ -212,36 +213,69 @@ void HubFrontEnd::cmd_apply(std::string_view args) {
 
 void HubFrontEnd::cmd_go(std::string_view args) {
     wait_for_worker();
-    const auto [head, rest] = split_first_word(args);
 
     SearchLimits lim;
-    bool         async = false;
+    TimeBudget   tb;
+    bool async      = false;
+    bool depth_set  = false;
 
-    if (head.empty() || head == "depth") {
-        if (head == "depth") {
-            const auto n = parse_int(rest);
-            if (!n || *n < 1) {
-                emit_error("go: depth must be a positive integer");
+    // Generic key/value tokenizer: every option after `go` is either a
+    // bare token (`infinite`) or a key followed by a value. Unknown
+    // tokens are silently skipped so a future protocol extension is
+    // forward-compatible.
+    std::string_view rest = args;
+    while (true) {
+        const auto [tok, after] = split_first_word(rest);
+        if (tok.empty()) break;
+        rest = after;
+
+        auto take_int = [&](int& out) -> bool {
+            const auto [v, after2] = split_first_word(rest);
+            rest = after2;
+            const auto n = parse_int(v);
+            if (!n) return false;
+            out = *n;
+            return true;
+        };
+
+        if (tok == "infinite") {
+            async = true;
+        } else if (tok == "depth") {
+            int v = 0;
+            if (!take_int(v) || v < 1) {
+                emit_error("go depth: positive integer required");
                 return;
             }
-            lim.max_depth = *n;
-        } else {
-            lim.max_depth = 6;
-        }
-    } else if (head == "movetime") {
-        const auto n = parse_int(rest);
-        if (!n || *n < 1) {
-            emit_error("go: movetime must be a positive integer (ms)");
-            return;
-        }
-        lim.max_depth   = MAX_PLY;
-        lim.movetime_ms = *n;
-    } else if (head == "infinite") {
-        lim.max_depth = MAX_PLY;
-        async         = true;
-    } else {
-        emit_error("go: expected `depth N`, `movetime N`, or `infinite`");
-        return;
+            lim.max_depth = v;
+            depth_set     = true;
+        } else if (tok == "movetime") {
+            int v = 0;
+            if (!take_int(v) || v < 1) {
+                emit_error("go movetime: positive integer required");
+                return;
+            }
+            lim.movetime_ms = v;
+        } else if (tok == "wtime")     { int v = 0; take_int(v); tb.wtime_ms  = v; }
+          else if (tok == "btime")     { int v = 0; take_int(v); tb.btime_ms  = v; }
+          else if (tok == "winc")      { int v = 0; take_int(v); tb.winc_ms   = v; }
+          else if (tok == "binc")      { int v = 0; take_int(v); tb.binc_ms   = v; }
+          else if (tok == "movestogo") { int v = 0; take_int(v); tb.movestogo = v; }
+        // else: unknown token, ignore (forward-compat).
+    }
+
+    // Derive a movetime from the tournament-style time budget when none
+    // was given explicitly.
+    if (lim.movetime_ms == 0
+        && (tb.wtime_ms > 0 || tb.btime_ms > 0
+         || tb.winc_ms  > 0 || tb.binc_ms  > 0)) {
+        lim.movetime_ms = compute_movetime_ms(tb, engine_.position().side_to_move());
+    }
+
+    // Pick the right depth ceiling based on what was actually specified.
+    if (!depth_set) {
+        // `infinite` and time-bounded searches go as deep as possible.
+        // Default `go` (no args) uses depth 6.
+        lim.max_depth = (async || lim.movetime_ms > 0) ? MAX_PLY : 6;
     }
 
     stop_flag_.store(false, std::memory_order_relaxed);
