@@ -43,6 +43,7 @@ add_library(jass_lib STATIC
     src/zobrist.cpp
     src/tt.cpp
     src/engine.cpp
+    src/endgame.cpp
     src/hub.cpp
 )
 target_include_directories(jass_lib PUBLIC src)
@@ -73,6 +74,7 @@ add_executable(jass_tests
     tests/test_tt.cpp
     tests/test_engine.cpp
     tests/test_draws.cpp
+    tests/test_endgame.cpp
     tests/test_hub.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
