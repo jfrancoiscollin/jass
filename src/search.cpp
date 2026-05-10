@@ -5,6 +5,7 @@
 
 #include "endgame.hpp"
 #include "eval.hpp"
+#include "nnue.hpp"
 #include "tt.hpp"
 #include "zobrist.hpp"
 
@@ -85,8 +86,17 @@ struct Searcher {
     const std::atomic<bool>*              stop_flag{nullptr};
     bool                                  stopped{false};
 
+    // Optional NNUE-style replacement for the handcrafted leaf evaluation.
+    // Null means "use the static `evaluate()` function in eval.cpp".
+    const LinearNetwork*                  nnue{nullptr};
+
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
+
+    // Wrap the leaf eval so the rest of the code doesn't have to branch.
+    int eval_leaf(const Position& pos) const noexcept {
+        return nnue ? nnue->evaluate(pos) : evaluate(pos);
+    }
 
     // Returns true if `h` already appears anywhere in `hash_path`.
     bool path_contains(ZobristHash h) const noexcept {
@@ -158,7 +168,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
     // generate_legal_moves either returns *all* maximum-length captures or
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
-    if (!moves[0].is_capture()) return evaluate(pos);
+    if (!moves[0].is_capture()) return eval_leaf(pos);
 
     int best = -INF_SCORE;
     for (const auto& m : moves) {
@@ -176,7 +186,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (stopped) return 0;
     // Hard ply cap so single-move extensions can't run off the end of the
     // killers / hash_path arrays.
-    if (ply >= MAX_PLY) return evaluate(pos);
+    if (ply >= MAX_PLY) return eval_leaf(pos);
     ++nodes;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
@@ -395,6 +405,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
+    s.nnue      = limits.nnue;
     if (limits.movetime_ms > 0) {
         s.has_deadline = true;
         s.deadline = std::chrono::steady_clock::now()
@@ -414,13 +425,16 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     std::vector<std::thread>   helpers;
     if (limits.threads > 1) {
         helpers.reserve(static_cast<std::size_t>(limits.threads - 1));
+        const LinearNetwork* nnue_for_helpers = limits.nnue;
         for (int i = 1; i < limits.threads; ++i) {
             helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
-                                  max_depth = limits.max_depth]() {
+                                  max_depth = limits.max_depth,
+                                  nnue_for_helpers]() {
                 SearchLimits hlim;
                 hlim.max_depth = max_depth;
                 hlim.stop_flag = &helper_stop;
                 hlim.threads   = 1;  // critical: helpers must not fork further
+                hlim.nnue      = nnue_for_helpers;
                 (void)::jass::search(pos, hlim, tt, game_history);
             });
         }

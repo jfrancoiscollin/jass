@@ -17,11 +17,19 @@
 
 namespace jass {
 
+// Forward declaration so an NNUE pointer can travel through tournament
+// configs without dragging in nnue.hpp.
+class LinearNetwork;
+
 struct EngineConfig {
-    int  max_depth = 6;
-    int  threads   = 1;
-    int  movetime_ms = 0;   // 0 → use depth only
-    bool use_book   = false;
+    int                  max_depth   = 6;
+    int                  threads     = 1;
+    int                  movetime_ms = 0;       // 0 → use depth only
+    bool                 use_book    = false;
+    // Optional NNUE-style network — when non-null, the engine uses
+    // `LinearNetwork::evaluate()` instead of the handcrafted eval at
+    // every leaf in the search.
+    const LinearNetwork* nnue        = nullptr;
 };
 
 enum class GameOutcome : std::uint8_t {

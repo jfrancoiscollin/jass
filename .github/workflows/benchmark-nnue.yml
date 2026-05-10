@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Trigger-on-demand workflow that pits a trained NNUE network against the
+# handcrafted evaluation, on a hosted runner. Reports WLD and a score
+# rate.
+#
+# Prerequisite: a `data/nnue.bin` file must exist in the repository
+# (either committed directly or fetched from a previous train-nnue run's
+# artefact and uploaded to the repo). The default path can be overridden
+# with the `weights_path` input.
+#
+# How to use it from the GitHub mobile app:
+#   1. Repo → Actions → "Benchmark NNUE".
+#   2. Tap "Run workflow", pick the depth and the number of pairs.
+#   3. Wait — runtime is dominated by depth × pairs (see the dropdown
+#      hints).
+#   4. When the run finishes, scroll to the Summary, the WLD verdict is
+#      both in the log and uploaded as `benchmark-result` artefact.
+
+name: benchmark-nnue
+
+on:
+  workflow_dispatch:
+    inputs:
+      weights_path:
+        description: "Path to the weights file inside the repo"
+        required: true
+        default: "data/nnue.bin"
+        type: string
+      depth:
+        description: "Search depth for both engines"
+        required: true
+        default: "4"
+        type: choice
+        options:
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+      pairs:
+        description: "Colour-swap pairs per opening (total games = 18 × pairs)"
+        required: true
+        default: "1"
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "5"
+
+concurrency:
+  group: benchmark-nnue-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    name: NNUE vs handcrafted tournament
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the native engine (Release)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Validate weights file
+        run: |
+          if [ ! -f "${{ inputs.weights_path }}" ]; then
+            echo "::error::weights file '${{ inputs.weights_path }}' not found in the repo"
+            echo "Hint: upload nnue.bin to that path first (commit it directly,"
+            echo "or use Add file → Upload files in the GitHub web UI)."
+            exit 1
+          fi
+          ls -la "${{ inputs.weights_path }}"
+
+      - name: Run benchmark
+        run: |
+          ./build/jass --benchmark-nnue \
+              "${{ inputs.weights_path }}" \
+              "${{ inputs.depth }}" \
+              "${{ inputs.pairs }}" | tee benchmark-result.txt
+          echo
+          echo "=== Summary ==="
+          tail -3 benchmark-result.txt
+
+      - name: Upload result artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-result
+          path: benchmark-result.txt
+          if-no-files-found: error
+
+      - name: Add summary to job page
+        run: |
+          {
+            echo "## Benchmark result"
+            echo
+            echo '```'
+            cat benchmark-result.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
