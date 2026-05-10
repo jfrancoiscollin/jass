@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Trigger-on-demand workflow that generates a self-play dataset, trains
+# the linear NNUE-lite weights and uploads `nnue.bin` as a downloadable
+# artefact.
+#
+# How to use it from the GitHub mobile app or website:
+#   1. Open the repository → Actions → "Train NNUE weights".
+#   2. Tap "Run workflow", pick the dataset size in the menu and run.
+#   3. Wait — the runtime depends on the size you chose (see the
+#      `records` input below).
+#   4. When the run finishes, scroll to the bottom of its summary and
+#      download the `nnue-weights` artefact: it's a `nnue.bin` file
+#      consumable by `LinearNetwork::load(...)` from C++.
+
+name: train-nnue
+
+on:
+  workflow_dispatch:
+    inputs:
+      records:
+        description: "Training-set size (10k = ~3 min, 100k = ~30 min, 1M = ~6 h, may time out on free runners)"
+        required: true
+        default: "10k"
+        type: choice
+        options:
+          - "10k"
+          - "100k"
+          - "1M"
+
+# Free runners cap workflow runtime at 6 h.  1M records can exceed that
+# in pathological situations (slow runner, contention) — the artefact
+# upload then never happens.  100k is the safest "real" preset.
+concurrency:
+  group: train-nnue-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  train:
+    name: Generate self-play data and train weights
+    runs-on: ubuntu-latest
+    timeout-minutes: 350     # 5 h 50 — leaves a margin under the 6 h cap
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install NumPy
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install numpy
+
+      - name: Build the native engine (Release)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Resolve the dataset size
+        id: size
+        run: |
+          case "${{ inputs.records }}" in
+            10k)  echo "n=10000"   >> "$GITHUB_OUTPUT" ;;
+            100k) echo "n=100000"  >> "$GITHUB_OUTPUT" ;;
+            1M)   echo "n=1000000" >> "$GITHUB_OUTPUT" ;;
+            *)    echo "unknown size '${{ inputs.records }}'"; exit 1 ;;
+          esac
+
+      - name: Generate self-play data (${{ steps.size.outputs.n }} records)
+        run: |
+          ./build/jass --gen-data ${{ steps.size.outputs.n }} selfplay.bin
+          ls -la selfplay.bin
+
+      - name: Train linear weights
+        run: |
+          python3 tools/train.py --data selfplay.bin --out nnue.bin
+          ls -la nnue.bin
+
+      - name: Upload weights artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nnue-weights
+          path: nnue.bin
+          if-no-files-found: error
+
+      - name: Upload dataset (small sizes only)
+        if: ${{ inputs.records != '1M' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nnue-dataset
+          path: selfplay.bin
+          if-no-files-found: error

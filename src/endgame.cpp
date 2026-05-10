@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Jean-François Collin
 
 #include "endgame.hpp"
@@ -26,8 +26,10 @@ EndgameResult probe_endgame(const Position& pos) noexcept {
     // draughts.
     if (wk == 1 && bk == 1) return EndgameResult::Draw;
 
-    // 2-vs-1 endgames are resolved by the retrograde-built bitbase.
-    if ((wk == 2 && bk == 1) || (wk == 1 && bk == 2)) {
+    // 2-vs-1 and 3-vs-1 endgames are resolved by the retrograde-built
+    // bitbases (and their colour-mirrored counterparts).
+    if ((wk == 2 && bk == 1) || (wk == 1 && bk == 2)
+     || (wk == 3 && bk == 1) || (wk == 1 && bk == 3)) {
         return probe_kings_endgame(pos);
     }
 

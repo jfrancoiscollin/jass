@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Jean-François Collin
 //
 // A small command-line front-end for Jass, line-based and HUB-flavoured.

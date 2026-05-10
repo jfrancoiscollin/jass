@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (c) 2026 Jean-François Collin
 
 #include "search.hpp"
@@ -174,6 +174,9 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
     if (stopped) return 0;
+    // Hard ply cap so single-move extensions can't run off the end of the
+    // killers / hash_path arrays.
+    if (ply >= MAX_PLY) return evaluate(pos);
     ++nodes;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
@@ -211,15 +214,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //    keep the suggested move for ordering.
     TTEntry tt_entry;
     bool    tt_hit  = tt->probe(hash, tt_entry);
-    Move    tt_move{};
-    if (tt_hit) {
-        tt_move = tt_entry.best_move;
-        if (tt_entry.depth >= depth) {
-            const int s = score_from_tt(tt_entry.score, ply);
-            if (tt_entry.bound == Bound::Exact)                    return s;
-            if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
-            if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
-        }
+    if (tt_hit && tt_entry.depth >= depth) {
+        const int s = score_from_tt(tt_entry.score, ply);
+        if (tt_entry.bound == Bound::Exact)                    return s;
+        if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
+        if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
     }
 
     // 2. Mate / leaf detection. At the horizon we hand off to quiescence
@@ -230,8 +229,21 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
     // 3. Move ordering: TT-suggested move first, then killers, then a
-    //    history-driven order on the remaining quiet moves.
-    order_moves(moves, *this, ply, tt_move, tt_hit);
+    //    history-driven order on the remaining quiet moves. The TT only
+    //    stores a `PackedMove`, so we resolve it against the actual
+    //    legal-move list to recover the full move with its capture path.
+    Move tt_move{};
+    bool tt_move_valid = false;
+    if (tt_hit) {
+        for (const auto& m : moves) {
+            if (same_packed_move(m, tt_entry.best_move)) {
+                tt_move       = m;
+                tt_move_valid = true;
+                break;
+            }
+        }
+    }
+    order_moves(moves, *this, ply, tt_move, tt_move_valid);
 
     // 4. Search.
     const int alpha_orig = alpha;
@@ -275,7 +287,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         else if (best > alpha_orig) bound = Bound::Exact;
         else                        bound = Bound::Upper;
 
-        tt->store(hash, best_move, score_to_tt(best, ply), depth, bound);
+        tt->store(hash, pack_move(best_move),
+                  score_to_tt(best, ply), depth, bound);
     }
     return best;
 }
@@ -302,17 +315,18 @@ std::vector<Move> extract_pv(const Position& start,
 
         // Defensive: confirm the stored move is still legal in the current
         // position (a hash collision on a stale entry could otherwise have
-        // us emit nonsense).
+        // us emit nonsense). The TT only carries a `PackedMove`, so we
+        // also recover the full Move with its capture path here.
         MoveList legal;
         generate_legal_moves(pos, legal);
-        bool ok = false;
+        const Move* found = nullptr;
         for (const auto& m : legal) {
-            if (m == e.best_move) { ok = true; break; }
+            if (same_packed_move(m, e.best_move)) { found = &m; break; }
         }
-        if (!ok) break;
+        if (!found) break;
 
-        pv.push_back(e.best_move);
-        pos = pos.after(e.best_move);
+        pv.push_back(*found);
+        pos = pos.after(*found);
     }
     return pv;
 }
@@ -419,6 +433,11 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     Move best_overall = root_moves[0];
     int  best_score   = -INF_SCORE;
 
+    // Recent score history (max 4 last iterations), used for *adaptive*
+    // aspiration: the next iteration's initial window width adapts to
+    // the volatility of the last few iteration scores.
+    std::vector<int> score_history;
+
     // One iteration of the root loop, run inside the aspiration retry loop
     // below. Returns (best move, best score) found within [alpha, beta].
     auto run_root_window = [&](int depth, int alpha, int beta)
@@ -451,14 +470,23 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
         // Pick the initial [alpha, beta] window. Shallow depths and any
         // iteration following a mate score fall back to the full window
-        // because narrow aspiration is unhelpful there.
+        // because narrow aspiration is unhelpful there.  When we do use a
+        // narrow window, its half-width adapts to the largest absolute
+        // score swing across the recent iterations: if scores have been
+        // stable, we open a tight window; if they've been jumpy, we
+        // pre-emptively widen it.
         int alpha, beta, delta;
         if (depth < 3 || is_mate_score(best_score)) {
             alpha = -INF_SCORE;
             beta  =  INF_SCORE;
             delta =  INF_SCORE;
         } else {
-            delta = ASPIRATION_INITIAL;
+            int volatility = 0;
+            for (std::size_t i = 1; i < score_history.size(); ++i) {
+                const int diff = std::abs(score_history[i] - score_history[i - 1]);
+                if (diff > volatility) volatility = diff;
+            }
+            delta = std::max(ASPIRATION_INITIAL, 2 * volatility);
             alpha = best_score - delta;
             beta  = best_score + delta;
         }
@@ -490,9 +518,16 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         best_score   = iter_score;
         res.depth    = depth;
 
-        tt.store(root_hash, iter_best,
+        tt.store(root_hash, pack_move(iter_best),
                  score_to_tt(iter_score, /*ply=*/0),
                  depth, Bound::Exact);
+
+        // Track recent scores for the adaptive-aspiration heuristic above.
+        score_history.push_back(iter_score);
+        constexpr std::size_t HISTORY_LEN = 4;
+        if (score_history.size() > HISTORY_LEN) {
+            score_history.erase(score_history.begin());
+        }
     }
 
     stop_helpers();

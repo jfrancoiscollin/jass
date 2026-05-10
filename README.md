@@ -1,7 +1,8 @@
 # Jass
 
 **Just Another Scan System** — an international (FMJD 10×10) draughts engine
-written from scratch in modern C++ and distributed under the MIT licence.
+written from scratch in modern C++ and **dual-licensed** (AGPL v3 +
+commercial — see [LICENSING.md](LICENSING.md)).
 
 ---
 
@@ -53,20 +54,29 @@ consumer).
 
 ## Licence and provenance
 
-Jass is **MIT** (see [LICENSE](LICENSE)).
+Jass is **dual-licensed**:
 
-It is not a fork or translation of any existing engine. In particular **no
-code from Fabien Letouzey's *Scan*** (which is GPLv3) has been read or
-copied. Jass is a clean-room implementation written from public sources
-only:
+- **GNU Affero General Public License v3.0 or later** for OSS use —
+  full text in [LICENSE](LICENSE).
+- A **commercial licence** is available for embedders who can't (or
+  won't) comply with the AGPL share-alike + network-use clauses. See
+  [LICENSING.md](LICENSING.md) for the contact path.
+
+Jass is **not** a fork or translation of any existing engine. In
+particular **no code from Fabien Letouzey's *Scan*** (which is GPLv3)
+has been read or copied. Jass is a clean-room implementation written
+from public sources only:
 
 - the FMJD rules of international draughts,
 - general public-domain knowledge of game-tree search (alpha-beta,
   iterative deepening, transposition tables, …) and bitboard techniques,
 - a small subset of the HUB-flavoured protocol described as needed.
 
-This means Jass can be embedded in proprietary or differently-licensed
-projects without the contamination a GPL dependency would impose.
+That clean-room provenance is what makes the dual-licensing model
+possible: the copyright is wholly owned by the author and can be
+relicensed to any party that requests a commercial grant.
+Contributors are expected to sign the small CLA in
+[CONTRIBUTING.md](CONTRIBUTING.md) for the same reason.
 
 ## Quick start
 
@@ -152,7 +162,9 @@ If you only want the artefacts (no Pages), no setup is needed.
 
 ```
 jass/
-├── LICENSE                MIT licence
+├── LICENSE                full AGPL v3 text (the OSS half of dual licence)
+├── LICENSING.md           dual-licensing explanation + commercial contact
+├── CONTRIBUTING.md        contribution rules + CLA
 ├── README.md              this file
 ├── CMakeLists.txt         build configuration (native + WASM)
 ├── .github/workflows/     CI: native build, WASM build, Pages deploy
