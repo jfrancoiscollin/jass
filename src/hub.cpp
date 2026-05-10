@@ -153,6 +153,7 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
          << " score="   << r.score
          << " depth="   << r.depth
          << " nodes="   << r.nodes;
+    if (r.from_book) out_ << " book=1";
     if (!r.pv.empty()) {
         out_ << " pv=";
         for (std::size_t i = 0; i < r.pv.size(); ++i) {
