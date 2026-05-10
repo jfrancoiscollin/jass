@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "book.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "tt.hpp"
@@ -65,10 +66,16 @@ public:
         return hash_history_;
     }
 
+    // Toggle the opening-book consultation. Enabled by default.
+    void use_book(bool yes) noexcept { use_book_ = yes; }
+    bool book_enabled()      const noexcept { return use_book_; }
+
 private:
     Position                 pos_;
     TranspositionTable       tt_;
     std::vector<ZobristHash> hash_history_;
+    Book                     book_;
+    bool                     use_book_{true};
 };
 
 }  // namespace jass

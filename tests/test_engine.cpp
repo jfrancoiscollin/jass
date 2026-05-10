@@ -54,6 +54,7 @@ void test_engine_apply_illegal_move() {
 
 void test_engine_search_returns_legal_move() {
     Engine e;
+    e.use_book(false);  // exercise the search itself, not the book lookup
     const SearchResult r = e.search(/*max_depth=*/4);
     JASS_CHECK_EQ(r.depth, 4);
     MoveList ml;
@@ -65,6 +66,7 @@ void test_engine_search_returns_legal_move() {
 
 void test_engine_tt_persistence_speeds_up_repeated_search() {
     Engine e;
+    e.use_book(false);
     e.resize_tt_mb(4);
 
     const SearchResult first  = e.search(5);
@@ -80,6 +82,7 @@ void test_engine_tt_persistence_speeds_up_repeated_search() {
 
 void test_engine_clear_tt_undoes_warm_up() {
     Engine e;
+    e.use_book(false);
     e.resize_tt_mb(4);
 
     const SearchResult warm = e.search(4);

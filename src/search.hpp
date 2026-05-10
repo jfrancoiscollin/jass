@@ -58,6 +58,9 @@ struct SearchResult {
     // be shorter than the search depth if the TT walk terminates early
     // (TT miss, illegal move from a hash collision, or cycle).
     std::vector<Move> pv;
+    // True when `best_move` came from the opening book, in which case
+    // `depth` and `nodes` are 0 and `pv` only contains the book move.
+    bool              from_book{false};
 };
 
 // Search the given position. Iterative deepening from 1 up to

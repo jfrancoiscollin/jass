@@ -61,6 +61,18 @@ SearchResult Engine::search(int max_depth) {
 }
 
 SearchResult Engine::search(const SearchLimits& limits) {
+    if (use_book_) {
+        if (auto bm = book_.probe(pos_); bm) {
+            SearchResult r;
+            r.best_move = *bm;
+            r.score     = 0;
+            r.depth     = 0;
+            r.nodes     = 0;
+            r.from_book = true;
+            r.pv.push_back(*bm);
+            return r;
+        }
+    }
     return ::jass::search(pos_, limits, tt_, hash_history_);
 }
 
