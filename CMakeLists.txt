@@ -32,6 +32,34 @@ else()
 endif()
 
 # -----------------------------------------------------------------------------
+# Embedded NNUE weights
+# -----------------------------------------------------------------------------
+# `nnue.bin` at the repo root is the default LinearNetwork shipped with
+# the engine (raw little-endian int32 layout). At configure time we read
+# the file, format it as a comma-separated `0xHH` byte sequence and
+# expand it into the auto-generated source `nnue_default_data.cpp`.
+# That file defines `jass::NNUE_DEFAULT_BYTES[]` and `NNUE_DEFAULT_LEN`,
+# which `default_nnue()` consumes via `LinearNetwork::load_from_bytes`.
+set(NNUE_BIN_PATH "${CMAKE_SOURCE_DIR}/nnue.bin")
+if(NOT EXISTS "${NNUE_BIN_PATH}")
+    message(FATAL_ERROR
+        "default NNUE weights not found at ${NNUE_BIN_PATH} — "
+        "expected the raw 800-byte LinearNetwork file at the repo root")
+endif()
+file(READ "${NNUE_BIN_PATH}" NNUE_HEX HEX)
+string(LENGTH "${NNUE_HEX}" NNUE_HEX_LEN)
+math(EXPR NNUE_BYTE_COUNT "${NNUE_HEX_LEN} / 2")
+string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," NNUE_BYTES "${NNUE_HEX}")
+string(REGEX REPLACE ",$" "" NNUE_BYTES "${NNUE_BYTES}")
+
+set(NNUE_DEFAULT_DATA_CPP "${CMAKE_BINARY_DIR}/generated/nnue_default_data.cpp")
+configure_file(
+    "${CMAKE_SOURCE_DIR}/cmake/nnue_default_data.cpp.in"
+    "${NNUE_DEFAULT_DATA_CPP}"
+    @ONLY
+)
+
+# -----------------------------------------------------------------------------
 # Engine library
 # -----------------------------------------------------------------------------
 add_library(jass_lib STATIC
@@ -40,6 +68,7 @@ add_library(jass_lib STATIC
     src/movegen.cpp
     src/eval.cpp
     src/nnue.cpp
+    "${NNUE_DEFAULT_DATA_CPP}"
     src/search.cpp
     src/zobrist.cpp
     src/tt.cpp

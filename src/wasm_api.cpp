@@ -23,6 +23,7 @@
 
 #include "engine.hpp"
 #include "movegen.hpp"
+#include "nnue.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "types.hpp"
@@ -50,7 +51,12 @@ emscripten::val move_to_js(const jass::Move& m) {
 
 class Game {
 public:
-    Game() = default;
+    Game() {
+        // Browser players get the trained NNUE eval out of the box; the
+        // weights are baked into the wasm at compile time so there is
+        // no extra fetch.
+        engine_.set_nnue(jass::default_nnue());
+    }
 
     static Game from_fen(const std::string& fen) {
         Game g;
