@@ -28,7 +28,8 @@ constexpr bool is_mate_score(int s) noexcept {
 }
 
 struct SearchLimits {
-    int max_depth = 6;
+    int         max_depth = 6;
+    std::size_t tt_mb     = 1;  // transposition table size in megabytes
 };
 
 struct SearchResult {

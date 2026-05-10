@@ -4,13 +4,51 @@
 #include "search.hpp"
 
 #include "eval.hpp"
+#include "tt.hpp"
+#include "zobrist.hpp"
+
+#include <algorithm>
 
 namespace jass {
 
 namespace {
 
+// Mate-score handling for the transposition table.
+//
+// Inside the search a "mate-loss for STM at distance d" is encoded as
+// `-MATE_SCORE + ply + d` and "mate-win in d plies" as
+// `MATE_SCORE - (ply + d)`. The `ply` term is search-tree relative and would
+// poison cross-iteration reuse, so before storing we strip it and add it
+// back on probe.
+inline constexpr int MATE_BOUND = MATE_SCORE - MAX_PLY;
+
+inline int score_to_tt(int score, int ply) noexcept {
+    if (score >  MATE_BOUND) return score + ply;
+    if (score < -MATE_BOUND) return score - ply;
+    return score;
+}
+
+inline int score_from_tt(int score, int ply) noexcept {
+    if (score >  MATE_BOUND) return score - ply;
+    if (score < -MATE_BOUND) return score + ply;
+    return score;
+}
+
+// Hoist `priority` to the front of `moves` if present, so it is searched
+// first. Used both at the root (previous-iteration best) and inside the
+// recursion (TT-suggested move).
+inline void hoist_move(MoveList& moves, const Move& priority) {
+    for (std::size_t i = 0; i < moves.size(); ++i) {
+        if (moves[i] == priority) {
+            if (i != 0) std::swap(moves[0], moves[i]);
+            return;
+        }
+    }
+}
+
 struct Searcher {
-    std::uint64_t nodes{0};
+    TranspositionTable* tt{nullptr};
+    std::uint64_t       nodes{0};
 
     int negamax(const Position& pos, int depth, int ply, int alpha, int beta);
 };
@@ -19,25 +57,56 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
     ++nodes;
 
-    MoveList moves;
-    generate_legal_moves(pos, moves);
-    if (moves.empty()) {
-        // No legal moves: the side to move has lost. Prefer longer survival
-        // / shorter wins by encoding distance-to-mate via the ply offset.
-        return -MATE_SCORE + ply;
-    }
-    if (depth <= 0) {
-        return evaluate(pos);
+    const ZobristHash hash = zobrist_hash(pos);
+
+    // 1. Probe TT.  A hit lets us cut the subtree if its stored bound is
+    //    compatible with the current alpha-beta window; otherwise we still
+    //    keep the suggested move for ordering.
+    TTEntry tt_entry;
+    bool    tt_hit  = tt->probe(hash, tt_entry);
+    Move    tt_move{};
+    if (tt_hit) {
+        tt_move = tt_entry.best_move;
+        if (tt_entry.depth >= depth) {
+            const int s = score_from_tt(tt_entry.score, ply);
+            if (tt_entry.bound == Bound::Exact)                    return s;
+            if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
+            if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
+        }
     }
 
-    int best = -INF_SCORE;
+    // 2. Mate / leaf detection.
+    MoveList moves;
+    generate_legal_moves(pos, moves);
+    if (moves.empty()) return -MATE_SCORE + ply;
+    if (depth <= 0)    return evaluate(pos);
+
+    // 3. Move ordering: TT-suggested move first when available.
+    if (tt_hit) hoist_move(moves, tt_move);
+
+    // 4. Search.
+    const int alpha_orig = alpha;
+    int       best       = -INF_SCORE;
+    Move      best_move  = moves[0];
+
     for (const auto& m : moves) {
         const Position next  = pos.after(m);
         const int      score = -negamax(next, depth - 1, ply + 1, -beta, -alpha);
-        if (score > best) best = score;
+        if (score > best) {
+            best      = score;
+            best_move = m;
+        }
         if (best > alpha) alpha = best;
         if (alpha >= beta) break;  // beta cut-off
     }
+
+    // 5. Store back into the TT with the appropriate bound flag.
+    Bound bound;
+    if      (best >= beta)      bound = Bound::Lower;
+    else if (best > alpha_orig) bound = Bound::Exact;
+    else                        bound = Bound::Upper;
+
+    tt->store(hash, best_move, score_to_tt(best, ply), depth, bound);
     return best;
 }
 
@@ -53,24 +122,24 @@ SearchResult search(const Position& pos, const SearchLimits& limits) {
         return res;
     }
 
+    TranspositionTable tt;
+    tt.resize_mb(limits.tt_mb);
+
     Searcher s;
-    Move     best_overall = root_moves[0];
-    int      best_score   = -INF_SCORE;
+    s.tt = &tt;
+
+    Move best_overall = root_moves[0];
+    int  best_score   = -INF_SCORE;
+
+    const ZobristHash root_hash = zobrist_hash(pos);
 
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
-        Move iter_best  = root_moves[0];
-        int  iter_score = -INF_SCORE;
-        int  alpha      = -INF_SCORE;
-        const int beta  =  INF_SCORE;
+        if (depth > 1) hoist_move(root_moves, best_overall);
 
-        // Try the previous-iteration best move first, when present in the
-        // legal-move list, so the alpha-beta window tightens early.
-        for (std::size_t i = 0; i < root_moves.size(); ++i) {
-            if (depth > 1 && root_moves[i] == best_overall && i != 0) {
-                std::swap(root_moves[0], root_moves[i]);
-                break;
-            }
-        }
+        Move      iter_best  = root_moves[0];
+        int       iter_score = -INF_SCORE;
+        int       alpha      = -INF_SCORE;
+        const int beta       =  INF_SCORE;
 
         for (const auto& m : root_moves) {
             const Position next  = pos.after(m);
@@ -85,6 +154,13 @@ SearchResult search(const Position& pos, const SearchLimits& limits) {
         best_overall = iter_best;
         best_score   = iter_score;
         res.depth    = depth;
+
+        // The root window is full so the iteration result is exact; this
+        // primes the TT so the next iteration starts with the prior best
+        // move directly via the standard probe path.
+        tt.store(root_hash, iter_best,
+                 score_to_tt(iter_score, /*ply=*/0),
+                 depth, Bound::Exact);
     }
 
     res.best_move = best_overall;
