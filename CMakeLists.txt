@@ -46,6 +46,7 @@ add_library(jass_lib STATIC
     src/endgame.cpp
     src/bitbase.cpp
     src/book.cpp
+    src/timemgr.cpp
     src/hub.cpp
 )
 target_include_directories(jass_lib PUBLIC src)

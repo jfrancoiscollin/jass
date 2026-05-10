@@ -9,6 +9,7 @@
 #include "hub.hpp"
 #include "movegen.hpp"
 #include "position.hpp"
+#include "timemgr.hpp"
 #include "types.hpp"
 
 #include <chrono>
@@ -157,6 +158,48 @@ void test_hub_infinite_then_stop() {
     JASS_CHECK(contains(out, "bestmove"));
 }
 
+void test_compute_movetime_basic() {
+    TimeBudget tb;
+    tb.wtime_ms = 60000;  // 1 minute remaining for white
+    const int budget = compute_movetime_ms(tb, Color::White);
+    // Default 30 moves left → ~2000 ms; capped at 60000/4 = 15000.
+    JASS_CHECK(budget >= 1500);
+    JASS_CHECK(budget <= 15000);
+}
+
+void test_compute_movetime_uses_increment() {
+    TimeBudget tb;
+    tb.wtime_ms = 10000;
+    tb.winc_ms  = 1000;
+    const int with_inc    = compute_movetime_ms(tb, Color::White);
+    tb.winc_ms = 0;
+    const int without_inc = compute_movetime_ms(tb, Color::White);
+    JASS_CHECK(with_inc > without_inc);
+}
+
+void test_compute_movetime_per_color() {
+    TimeBudget tb;
+    tb.wtime_ms = 60000;
+    tb.btime_ms = 10000;
+    JASS_CHECK(compute_movetime_ms(tb, Color::White)
+             > compute_movetime_ms(tb, Color::Black));
+}
+
+void test_hub_go_with_wtime_completes() {
+    // We use a tournament-style budget: ~1 second of clock for each side
+    // means the engine should derive a small movetime and return promptly.
+    using namespace std::chrono;
+    const auto t0 = steady_clock::now();
+    const std::string out = drive_session(
+        "setoption threads 1\n"
+        "position startpos\n"
+        "go wtime 1000 btime 1000\n");
+    const auto elapsed = duration_cast<milliseconds>(
+        steady_clock::now() - t0).count();
+    JASS_CHECK(contains(out, "bestmove"));
+    JASS_CHECK(elapsed < 2000);
+}
+
 void test_hub_setoption_threads() {
     // `setoption threads 4` then a depth-3 search must still return a
     // bestmove. The threads option applies to subsequent `go` commands.
@@ -185,5 +228,9 @@ void run_hub_tests() {
 
     test_hub_movetime_returns_within_budget();
     test_hub_infinite_then_stop();
+    test_compute_movetime_basic();
+    test_compute_movetime_uses_increment();
+    test_compute_movetime_per_color();
+    test_hub_go_with_wtime_completes();
     test_hub_setoption_threads();
 }
