@@ -40,4 +40,5 @@ void run_search_tests();
 void run_tt_tests();
 void run_engine_tests();
 void run_draw_tests();
+void run_endgame_tests();
 void run_hub_tests();

@@ -15,6 +15,7 @@ int main() {
     run_tt_tests();
     run_engine_tests();
     run_draw_tests();
+    run_endgame_tests();
     run_hub_tests();
 
     if (g_failures == 0) {

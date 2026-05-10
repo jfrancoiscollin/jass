@@ -3,6 +3,7 @@
 
 #include "search.hpp"
 
+#include "endgame.hpp"
 #include "eval.hpp"
 #include "tt.hpp"
 #include "zobrist.hpp"
@@ -184,6 +185,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (path_contains(hash))                        return 0;
     if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES)   return 0;
 
+    // 0bis. Endgame tablebase: positions with a known theoretical result
+    //       skip the rest of the work. Like the path-dependent draws this
+    //       answer is independent of the alpha-beta window.
+    if (probe_endgame(pos) == EndgameResult::Draw)  return 0;
+
     // 1. Probe TT.  A hit lets us cut the subtree if its stored bound is
     //    compatible with the current alpha-beta window; otherwise we still
     //    keep the suggested move for ordering.
@@ -333,6 +339,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         }
     }
     if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
+        res.score = 0;
+        return res;
+    }
+    if (probe_endgame(pos) == EndgameResult::Draw) {
         res.score = 0;
         return res;
     }
