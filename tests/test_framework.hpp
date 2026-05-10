@@ -42,4 +42,5 @@ void run_engine_tests();
 void run_draw_tests();
 void run_endgame_tests();
 void run_book_tests();
+void run_tournament_tests();
 void run_hub_tests();
