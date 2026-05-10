@@ -37,3 +37,4 @@ extern int g_assertions;
 void run_position_tests();
 void run_movegen_tests();
 void run_search_tests();
+void run_tt_tests();

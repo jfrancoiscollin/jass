@@ -40,6 +40,8 @@ add_library(jass_lib STATIC
     src/movegen.cpp
     src/eval.cpp
     src/search.cpp
+    src/zobrist.cpp
+    src/tt.cpp
 )
 target_include_directories(jass_lib PUBLIC src)
 target_link_libraries(jass_lib PRIVATE jass_warnings)
@@ -66,6 +68,7 @@ add_executable(jass_tests
     tests/test_position.cpp
     tests/test_movegen.cpp
     tests/test_search.cpp
+    tests/test_tt.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)
