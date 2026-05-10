@@ -261,6 +261,65 @@ int run_benchmark_nnue_mode(int argc, char** argv) {
     return 0;
 }
 
+// -----------------------------------------------------------------------------
+// --benchmark-nnue-vs-nnue: same colour-swap match as `--benchmark-nnue`,
+// but A and B are both NNUE networks (any combination of LinearNetwork
+// and MLPNetwork, auto-detected by `load_network`). Used to measure the
+// gain of a candidate model against the current shipped default.
+// -----------------------------------------------------------------------------
+int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --benchmark-nnue-vs-nnue "
+                     "<weights_a.bin> <weights_b.bin> [depth=6] [pairs=1]\n";
+        return 1;
+    }
+    const char* path_a = argv[2];
+    const char* path_b = argv[3];
+    const int   depth  = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
+    const int   pairs  = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+
+    std::unique_ptr<INetwork> net_a = load_network(path_a);
+    if (!net_a) {
+        std::cerr << "error: cannot load weights from " << path_a << "\n";
+        return 1;
+    }
+    std::unique_ptr<INetwork> net_b = load_network(path_b);
+    if (!net_b) {
+        std::cerr << "error: cannot load weights from " << path_b << "\n";
+        return 1;
+    }
+
+    EngineConfig cfg_a;
+    cfg_a.max_depth = depth;
+    cfg_a.nnue      = net_a.get();
+
+    EngineConfig cfg_b;
+    cfg_b.max_depth = depth;
+    cfg_b.nnue      = net_b.get();
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: A=NNUE(" << path_a
+              << ") vs B=NNUE(" << path_b
+              << "), depth " << depth
+              << ", " << total_games << " games "
+              << "(" << pool.size() << " openings × " << pairs
+              << " pairs × 2 colours)\n";
+
+    const TournamentResult r = run_tournament(cfg_a, cfg_b, pairs);
+
+    std::cout << "Result: A=" << r.a_wins
+              << " B="        << r.b_wins
+              << " Draws="    << r.draws
+              << " (total "   << r.games << ")\n";
+
+    const double a_score = r.a_wins + 0.5 * r.draws;
+    const double rate    = a_score / r.games;
+    std::cout << "A score rate: " << rate
+              << " (" << a_score << " / " << r.games << ")\n";
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -289,18 +348,22 @@ int run_tournament_mode(int argc, char** argv) {
 }
 
 int main(int argc, char** argv) {
+    // First pass: one-shot subcommands. These short-circuit before the
+    // HUB loop is ever started.
     for (int i = 1; i < argc; ++i) {
         const std::string_view a{argv[i]};
-        if      (a == "--smoke")           return run_smoke();
-        else if (a == "--tournament")      return run_tournament_mode(argc, argv);
-        else if (a == "--gen-data")        return run_gen_data_mode(argc, argv);
-        else if (a == "--benchmark-nnue")  return run_benchmark_nnue_mode(argc, argv);
+        if      (a == "--smoke")                    return run_smoke();
+        else if (a == "--tournament")               return run_tournament_mode(argc, argv);
+        else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
+        else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
+        else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
                 "Usage: jass [--smoke|--tournament [a b pairs]|"
                             "--gen-data [N path]|--benchmark-nnue weights [d p]|"
-                            "--version|--help]\n"
+                            "--benchmark-nnue-vs-nnue a.bin b.bin [d p]|"
+                            "--no-nnue|--nnue path|--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
                 "  --tournament [da db pairs]       play a colour-swap match\n"
@@ -315,11 +378,41 @@ int main(int argc, char** argv) {
                 "                                   the handcrafted eval. Plays\n"
                 "                                   2*pairs games per opening\n"
                 "                                   from the default opening pool.\n"
+                "  --benchmark-nnue-vs-nnue <a.bin> <b.bin> [depth=6] [pairs=1]\n"
+                "                                   same colour-swap match but\n"
+                "                                   between two NNUE networks\n"
+                "                                   (any combination of Linear /\n"
+                "                                   MLP, auto-detected by magic).\n"
+                "  --no-nnue                        HUB mode only — disable the\n"
+                "                                   embedded default NNUE and use\n"
+                "                                   the handcrafted eval instead.\n"
+                "  --nnue <weights.bin>             HUB mode only — load and use\n"
+                "                                   <weights.bin> in place of the\n"
+                "                                   embedded default NNUE.\n"
                 "  --version                        print the engine version\n";
             return 0;
         }
     }
 
+    // Second pass: HUB-mode flags.
+    std::unique_ptr<INetwork> nnue_owned;
+    const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
+    for (int i = 1; i < argc; ++i) {
+        const std::string_view a{argv[i]};
+        if (a == "--no-nnue") {
+            nnue_ptr = nullptr;
+        } else if (a == "--nnue" && i + 1 < argc) {
+            nnue_owned = load_network(argv[++i]);
+            if (!nnue_owned) {
+                std::cerr << "error: cannot load NNUE weights from "
+                          << argv[i] << "\n";
+                return 2;
+            }
+            nnue_ptr = nnue_owned.get();
+        }
+    }
+
     HubFrontEnd hub(std::cin, std::cout);
+    hub.set_nnue(nnue_ptr);
     return hub.run();
 }

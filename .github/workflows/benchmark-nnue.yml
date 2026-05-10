@@ -1,20 +1,31 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# Trigger-on-demand workflow that pits a trained NNUE network against the
-# handcrafted evaluation, on a hosted runner. Reports WLD and a score
-# rate.
+# Trigger-on-demand workflow that pits a trained NNUE network against
+# either the handcrafted evaluation (single-weights mode) or another
+# NNUE network (dual-weights mode), on a hosted runner. Reports WLD and
+# a score rate.
 #
-# Prerequisite: a `data/nnue.bin` file must exist in the repository
-# (either committed directly or fetched from a previous train-nnue run's
-# artefact and uploaded to the repo). The default path can be overridden
-# with the `weights_path` input.
+# Single-weights mode (default):
+#   weights_path  = path to the network we want to evaluate.
+#   weights_b_path is left empty.
+#   The chosen network plays as A (white in odd games, black in even
+#   games), the handcrafted eval plays as B.
+#
+# Dual-weights mode:
+#   weights_path   = network A.
+#   weights_b_path = network B (any combination of Linear / MLP works,
+#                    the engine sniffs the magic at load time).
+#   Used to measure a candidate model against the current shipped
+#   default (`nnue.bin` at the repo root).
 #
 # How to use it from the GitHub mobile app:
 #   1. Repo → Actions → "Benchmark NNUE".
 #   2. Tap "Run workflow", pick the depth and the number of pairs.
-#   3. Wait — runtime is dominated by depth × pairs (see the dropdown
-#      hints).
-#   4. When the run finishes, scroll to the Summary, the WLD verdict is
-#      both in the log and uploaded as `benchmark-result` artefact.
+#      Leave `weights_b_path` empty for the legacy "vs handcrafted"
+#      run, or set it to a second weights file (e.g. `nnue.bin`) to
+#      compare two networks head-to-head.
+#   3. Wait — runtime is dominated by depth × pairs.
+#   4. When the run finishes, scroll to the Summary; the WLD verdict
+#      is in the log and uploaded as the `benchmark-result` artefact.
 
 name: benchmark-nnue
 
@@ -22,9 +33,14 @@ on:
   workflow_dispatch:
     inputs:
       weights_path:
-        description: "Path inside the repo to the weights — either a raw .bin or the .zip artefact downloaded from the train-nnue workflow"
+        description: "Path inside the repo to the A-side weights — either a raw .bin or the .zip artefact downloaded from the train-nnue workflow"
         required: true
         default: "nnue-weights 2.zip"
+        type: string
+      weights_b_path:
+        description: "Optional B-side weights — leave empty to benchmark against the handcrafted eval; set it to compare two NNUE networks (e.g. 'nnue.bin' for the shipped default)"
+        required: false
+        default: ""
         type: string
       depth:
         description: "Search depth for both engines"
@@ -52,7 +68,7 @@ concurrency:
 
 jobs:
   bench:
-    name: NNUE vs handcrafted tournament
+    name: NNUE tournament
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -64,43 +80,60 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j
 
-      - name: Resolve weights file (extract if zip)
+      - name: Resolve weights files (extract zips)
         id: resolve
         run: |
-          SRC="${{ inputs.weights_path }}"
-          if [ ! -f "$SRC" ]; then
-            echo "::error::weights file '$SRC' not found in the repo"
-            echo "Hint: use Add file → Upload files in the GitHub web UI to"
-            echo "       commit either a raw nnue.bin or the zip artefact"
-            echo "       downloaded from the train-nnue workflow."
-            exit 1
-          fi
-          ls -la "$SRC"
-
-          case "$SRC" in
-            *.zip)
-              mkdir -p _weights
-              unzip -o "$SRC" -d _weights
-              BIN=$(find _weights -type f -name '*.bin' | head -1)
-              if [ -z "$BIN" ]; then
-                echo "::error::no .bin file found inside '$SRC'"
-                exit 1
+          # Generic resolver: takes a repo path, validates it, extracts
+          # any inner *.bin if the path ends in .zip, prints the final
+          # absolute path of the .bin to be passed to the engine.
+          resolve() {
+              local label="$1" src="$2" outdir="$3"
+              if [ -z "$src" ]; then echo ""; return 0; fi
+              if [ ! -f "$src" ]; then
+                  echo "::error::weights file '$src' (input: $label) not found"
+                  return 1
               fi
-              echo "Extracted weights: $BIN"
-              ls -la "$BIN"
-              echo "resolved=$BIN" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "resolved=$SRC" >> "$GITHUB_OUTPUT"
-              ;;
-          esac
+              ls -la "$src" >&2
+              case "$src" in
+                  *.zip)
+                      mkdir -p "$outdir"
+                      unzip -o "$src" -d "$outdir" >&2
+                      local bin
+                      bin=$(find "$outdir" -type f -name '*.bin' | head -1)
+                      if [ -z "$bin" ]; then
+                          echo "::error::no .bin file found inside '$src'"
+                          return 1
+                      fi
+                      echo "$bin"
+                      ;;
+                  *)
+                      echo "$src"
+                      ;;
+              esac
+          }
+
+          A=$(resolve "weights_path"   "${{ inputs.weights_path }}"   "_a")
+          B=$(resolve "weights_b_path" "${{ inputs.weights_b_path }}" "_b")
+          echo "Resolved A: $A"
+          echo "Resolved B: ${B:-<handcrafted>}"
+          echo "a=$A" >> "$GITHUB_OUTPUT"
+          echo "b=$B" >> "$GITHUB_OUTPUT"
 
       - name: Run benchmark
         run: |
-          ./build/jass --benchmark-nnue \
-              "${{ steps.resolve.outputs.resolved }}" \
-              "${{ inputs.depth }}" \
-              "${{ inputs.pairs }}" | tee benchmark-result.txt
+          A="${{ steps.resolve.outputs.a }}"
+          B="${{ steps.resolve.outputs.b }}"
+          if [ -n "$B" ]; then
+              ./build/jass --benchmark-nnue-vs-nnue \
+                  "$A" "$B" \
+                  "${{ inputs.depth }}" \
+                  "${{ inputs.pairs }}" | tee benchmark-result.txt
+          else
+              ./build/jass --benchmark-nnue \
+                  "$A" \
+                  "${{ inputs.depth }}" \
+                  "${{ inputs.pairs }}" | tee benchmark-result.txt
+          fi
           echo
           echo "=== Summary ==="
           tail -3 benchmark-result.txt

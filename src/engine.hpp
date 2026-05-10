@@ -23,6 +23,8 @@
 
 namespace jass {
 
+class INetwork;
+
 class Engine {
 public:
     Engine();
@@ -70,12 +72,21 @@ public:
     void use_book(bool yes) noexcept { use_book_ = yes; }
     bool book_enabled()      const noexcept { return use_book_; }
 
+    // Per-engine NNUE-style network used at every leaf when the caller
+    // doesn't already pin one in `SearchLimits.nnue`. Default null =
+    // handcrafted eval; tests rely on this default. Front-ends (HUB,
+    // WASM) explicitly install `default_nnue()` at construction so end
+    // users get the trained eval out of the box.
+    void              set_nnue(const INetwork* n) noexcept { nnue_ = n; }
+    const INetwork*   nnue() const noexcept { return nnue_; }
+
 private:
     Position                 pos_;
     TranspositionTable       tt_;
     std::vector<ZobristHash> hash_history_;
     Book                     book_;
     bool                     use_book_{true};
+    const INetwork*          nnue_{nullptr};
 };
 
 }  // namespace jass
