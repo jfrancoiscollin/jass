@@ -50,6 +50,24 @@ void test_zobrist_distinguishes_men_and_kings() {
     JASS_CHECK(zobrist_hash(*man) != zobrist_hash(*king));
 }
 
+void test_zobrist_incremental_matches_fen_roundtrip() {
+    // Two construction paths must yield the same hash: building the
+    // start position directly vs round-tripping it through FEN.
+    const Position direct  = Position::start_position();
+    const auto     parsed  = Position::from_fen(direct.to_fen());
+    JASS_CHECK(parsed.has_value());
+    JASS_CHECK_EQ(direct.hash(), parsed->hash());
+
+    // Same after one applied move.
+    MoveList ml;
+    generate_legal_moves(direct, ml);
+    JASS_CHECK(!ml.empty());
+    const Position after = direct.after(ml[0]);
+    const auto     after_parsed = Position::from_fen(after.to_fen());
+    JASS_CHECK(after_parsed.has_value());
+    JASS_CHECK_EQ(after.hash(), after_parsed->hash());
+}
+
 void test_zobrist_unique_across_first_ply() {
     // The 9 legal moves from the initial position should all yield distinct
     // hashes — sanity check that the hash actually depends on piece placement.
@@ -156,6 +174,7 @@ void run_tt_tests() {
     test_zobrist_deterministic();
     test_zobrist_distinguishes_side_to_move();
     test_zobrist_distinguishes_men_and_kings();
+    test_zobrist_incremental_matches_fen_roundtrip();
     test_zobrist_unique_across_first_ply();
 
     test_tt_probe_miss_on_empty();
