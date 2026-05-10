@@ -143,6 +143,13 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 }  // namespace
 
 SearchResult search(const Position& pos, const SearchLimits& limits) {
+    TranspositionTable tt;
+    tt.resize_mb(limits.tt_mb);
+    return search(pos, limits, tt);
+}
+
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt) {
     SearchResult res;
 
     MoveList root_moves;
@@ -151,9 +158,6 @@ SearchResult search(const Position& pos, const SearchLimits& limits) {
         res.score = -MATE_SCORE;
         return res;
     }
-
-    TranspositionTable tt;
-    tt.resize_mb(limits.tt_mb);
 
     Searcher s;
     s.tt = &tt;

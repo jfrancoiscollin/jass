@@ -5,7 +5,7 @@
 //
 // Built only when the project is compiled with Emscripten (`emcmake`). The
 // public surface is a single JavaScript class, `Game`, that wraps a
-// `jass::Position` and exposes the few operations that a UI needs:
+// `jass::Engine` and exposes the few operations that a UI needs:
 //
 //   const Module = await createJass();
 //   const g = new Module.Game();              // start position, white to move
@@ -21,6 +21,7 @@
 
 #ifdef __EMSCRIPTEN__
 
+#include "engine.hpp"
 #include "movegen.hpp"
 #include "position.hpp"
 #include "search.hpp"
@@ -49,26 +50,25 @@ emscripten::val move_to_js(const jass::Move& m) {
 
 class Game {
 public:
-    Game() : pos_(jass::Position::start_position()) {}
+    Game() = default;
 
     static Game from_fen(const std::string& fen) {
         Game g;
-        if (auto p = jass::Position::from_fen(fen); p) g.pos_ = *p;
+        g.engine_.set_position_fen(fen);
         return g;
     }
 
-    std::string fen()   const { return pos_.to_fen();   }
-    std::string ascii() const { return pos_.to_ascii(); }
+    std::string fen()   const { return engine_.position().to_fen();   }
+    std::string ascii() const { return engine_.position().to_ascii(); }
 
-    // 0 = white to move, 1 = black to move (matches `jass::Color` ordering).
     int side_to_move() const {
-        return static_cast<int>(pos_.side_to_move());
+        return static_cast<int>(engine_.position().side_to_move());
     }
 
     emscripten::val legal_moves() const {
         using emscripten::val;
         jass::MoveList ml;
-        jass::generate_legal_moves(pos_, ml);
+        jass::generate_legal_moves(engine_.position(), ml);
         val arr = val::array();
         for (std::size_t i = 0; i < ml.size(); ++i) {
             arr.set(i, move_to_js(ml[i]));
@@ -78,20 +78,18 @@ public:
 
     bool apply_index(int idx) {
         jass::MoveList ml;
-        jass::generate_legal_moves(pos_, ml);
+        jass::generate_legal_moves(engine_.position(), ml);
         if (idx < 0 || static_cast<std::size_t>(idx) >= ml.size()) {
             return false;
         }
-        pos_ = pos_.after(ml[static_cast<std::size_t>(idx)]);
-        return true;
+        return engine_.apply_move(ml[static_cast<std::size_t>(idx)]);
     }
 
-    emscripten::val best_move(int depth) const {
-        using emscripten::val;
-        jass::SearchLimits lim;
-        lim.max_depth = depth;
-        const jass::SearchResult r = jass::search(pos_, lim);
+    void new_game() { engine_.new_game(); }
 
+    emscripten::val best_move(int depth) {
+        using emscripten::val;
+        const jass::SearchResult r = engine_.search(depth);
         val obj = move_to_js(r.best_move);
         obj.set("score", r.score);
         obj.set("depth", r.depth);
@@ -100,7 +98,7 @@ public:
     }
 
 private:
-    jass::Position pos_;
+    jass::Engine engine_;
 };
 
 }  // namespace
@@ -116,11 +114,10 @@ EMSCRIPTEN_BINDINGS(jass_module) {
         .function("sideToMove",  &Game::side_to_move)
         .function("legalMoves",  &Game::legal_moves)
         .function("applyIndex",  &Game::apply_index)
+        .function("newGame",     &Game::new_game)
         .function("bestMove",    &Game::best_move);
 }
 
-// Embind requires a translation unit with a `main` for some Emscripten
-// configurations. We provide a no-op so the module loads cleanly.
 int main() { return 0; }
 
 #endif  // __EMSCRIPTEN__

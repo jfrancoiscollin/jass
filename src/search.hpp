@@ -12,7 +12,10 @@
 #include "movegen.hpp"
 #include "position.hpp"
 
+#include <cstddef>
 #include <cstdint>
+
+namespace jass { class TranspositionTable; }
 
 namespace jass {
 
@@ -43,6 +46,13 @@ struct SearchResult {
 // `limits.max_depth`; the result holds the best move and score from the
 // final iteration. If the side to move has no legal moves, `best_move`
 // stays default-constructed and the score is `-MATE_SCORE`.
+//
+// The two-argument overload allocates a fresh transposition table sized
+// according to `limits.tt_mb` for each call; callers that drive several
+// searches in sequence (a game, a HUB session, …) should instead pass an
+// explicit, reused table to the three-argument overload.
 SearchResult search(const Position& pos, const SearchLimits& limits);
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt);
 
 }  // namespace jass
