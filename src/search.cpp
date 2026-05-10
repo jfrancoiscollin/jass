@@ -65,8 +65,19 @@ struct Searcher {
     std::array<std::array<Move, 2>, MAX_PLY + 1>                       killers{};
     std::array<std::array<int,  NUM_SQUARES + 1>, NUM_SQUARES + 1>     history{};
 
+    // Stack of Zobrist hashes representing the current path: the game
+    // history prefix is loaded by `search()`, then negamax pushes/pops the
+    // hash of each node as it descends and ascends.
+    std::vector<ZobristHash> hash_path;
+
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
+
+    // Returns true if `h` already appears anywhere in `hash_path`.
+    bool path_contains(ZobristHash h) const noexcept {
+        for (auto x : hash_path) if (x == h) return true;
+        return false;
+    }
 };
 
 // Score used to sort the move list. Larger = tried first.
@@ -135,6 +146,12 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 
     const ZobristHash hash = zobrist_hash(pos);
 
+    // 0. Path-dependent draw detection. Path-dependent because it depends
+    //    on which prior positions the search has visited, so we must not
+    //    consult the TT for these answers.
+    if (path_contains(hash))                        return 0;
+    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES)   return 0;
+
     // 1. Probe TT.  A hit lets us cut the subtree if its stored bound is
     //    compatible with the current alpha-beta window; otherwise we still
     //    keep the suggested move for ordering.
@@ -167,6 +184,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     int       best       = -INF_SCORE;
     Move      best_move  = moves[0];
 
+    hash_path.push_back(hash);
+
     for (const auto& m : moves) {
         const Position next  = pos.after(m);
         const int      score = -negamax(next, depth - 1, ply + 1, -beta, -alpha);
@@ -191,6 +210,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    hash_path.pop_back();
+
     // 5. Store back into the TT with the appropriate bound flag.
     Bound bound;
     if      (best >= beta)      bound = Bound::Lower;
@@ -206,7 +227,12 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 SearchResult search(const Position& pos, const SearchLimits& limits) {
     TranspositionTable tt;
     tt.resize_mb(limits.tt_mb);
-    return search(pos, limits, tt);
+    return search(pos, limits, tt, {});
+}
+
+SearchResult search(const Position& pos, const SearchLimits& limits,
+                    TranspositionTable& tt) {
+    return search(pos, limits, tt, {});
 }
 
 namespace {
@@ -221,8 +247,24 @@ inline constexpr int ASPIRATION_INITIAL = 50;
 }  // namespace
 
 SearchResult search(const Position& pos, const SearchLimits& limits,
-                    TranspositionTable& tt) {
+                    TranspositionTable& tt,
+                    const std::vector<ZobristHash>& game_history) {
     SearchResult res;
+
+    // Top-level draw checks: they short-circuit the entire iterative
+    // deepening because the same draw would otherwise be re-derived inside
+    // negamax for every depth.
+    const ZobristHash root_hash = zobrist_hash(pos);
+    for (auto h : game_history) {
+        if (h == root_hash) {
+            res.score = 0;
+            return res;
+        }
+    }
+    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
+        res.score = 0;
+        return res;
+    }
 
     MoveList root_moves;
     generate_legal_moves(pos, root_moves);
@@ -232,12 +274,12 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     }
 
     Searcher s;
-    s.tt = &tt;
+    s.tt        = &tt;
+    s.hash_path = game_history;
+    s.hash_path.push_back(root_hash);  // root is an ancestor for its children
 
     Move best_overall = root_moves[0];
     int  best_score   = -INF_SCORE;
-
-    const ZobristHash root_hash = zobrist_hash(pos);
 
     // One iteration of the root loop, run inside the aspiration retry loop
     // below. Returns (best move, best score) found within [alpha, beta].

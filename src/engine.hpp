@@ -14,9 +14,11 @@
 #include "search.hpp"
 #include "tt.hpp"
 #include "types.hpp"
+#include "zobrist.hpp"
 
 #include <cstddef>
 #include <string_view>
+#include <vector>
 
 namespace jass {
 
@@ -51,9 +53,17 @@ public:
 
     std::size_t tt_size() const noexcept { return tt_.size(); }
 
+    // Predecessors-only Zobrist history of the current game (does NOT
+    // include the current position). Used by `search()` for repetition
+    // detection.
+    const std::vector<ZobristHash>& hash_history() const noexcept {
+        return hash_history_;
+    }
+
 private:
-    Position           pos_;
-    TranspositionTable tt_;
+    Position                 pos_;
+    TranspositionTable       tt_;
+    std::vector<ZobristHash> hash_history_;
 };
 
 }  // namespace jass

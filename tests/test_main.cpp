@@ -14,6 +14,7 @@ int main() {
     run_search_tests();
     run_tt_tests();
     run_engine_tests();
+    run_draw_tests();
 
     if (g_failures == 0) {
         std::printf("All %d assertions passed.\n", g_assertions);

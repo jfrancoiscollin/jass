@@ -72,6 +72,13 @@ public:
 
     Color side_to_move() const noexcept { return stm_; }
 
+    // Half-move counter for the FMJD 25-move rule: incremented on a
+    // reversible move (king quiet), reset on captures or man moves. A
+    // game where the counter reaches 50 plies (i.e. 25 full moves) is
+    // declared drawn.
+    int  halfmove_clock() const noexcept { return halfmove_clock_; }
+    void set_halfmove_clock(int c) noexcept { halfmove_clock_ = c; }
+
     Piece piece_at(Square s) const noexcept;
 
     // -------------------------------------------------------------------------
@@ -122,6 +129,7 @@ private:
     Bitboard black_men_{0};
     Bitboard black_kings_{0};
     Color    stm_{Color::White};
+    int      halfmove_clock_{0};
 };
 
 }  // namespace jass
