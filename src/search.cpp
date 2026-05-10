@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <array>
+#include <tuple>
+#include <utility>
 
 namespace jass {
 
@@ -207,6 +209,17 @@ SearchResult search(const Position& pos, const SearchLimits& limits) {
     return search(pos, limits, tt);
 }
 
+namespace {
+
+// Aspiration windows: from depth 3 onward we frame the next search with a
+// narrow window centred on the previous iteration's score, then widen
+// progressively on every fail-high or fail-low until the search returns a
+// score inside the window. Saves nodes when iteration-to-iteration scores
+// barely move, which is the common case in quiet positions.
+inline constexpr int ASPIRATION_INITIAL = 50;
+
+}  // namespace
+
 SearchResult search(const Position& pos, const SearchLimits& limits,
                     TranspositionTable& tt) {
     SearchResult res;
@@ -226,31 +239,67 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
     const ZobristHash root_hash = zobrist_hash(pos);
 
-    for (int depth = 1; depth <= limits.max_depth; ++depth) {
-        if (depth > 1) hoist_move(root_moves, best_overall);
-
-        Move      iter_best  = root_moves[0];
-        int       iter_score = -INF_SCORE;
-        int       alpha      = -INF_SCORE;
-        const int beta       =  INF_SCORE;
+    // One iteration of the root loop, run inside the aspiration retry loop
+    // below. Returns (best move, best score) found within [alpha, beta].
+    auto run_root_window = [&](int depth, int alpha, int beta)
+        -> std::pair<Move, int> {
+        Move iter_best  = root_moves[0];
+        int  iter_score = -INF_SCORE;
+        int  cur_alpha  = alpha;
 
         for (const auto& m : root_moves) {
             const Position next  = pos.after(m);
-            const int      score = -s.negamax(next, depth - 1, 1, -beta, -alpha);
+            const int      score = -s.negamax(next, depth - 1, 1,
+                                              -beta, -cur_alpha);
             if (score > iter_score) {
                 iter_score = score;
                 iter_best  = m;
             }
-            if (iter_score > alpha) alpha = iter_score;
+            if (iter_score > cur_alpha) cur_alpha = iter_score;
+            if (cur_alpha >= beta) break;  // beta cut-off (narrow window)
+        }
+        return {iter_best, iter_score};
+    };
+
+    for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        if (depth > 1) hoist_move(root_moves, best_overall);
+
+        // Pick the initial [alpha, beta] window. Shallow depths and any
+        // iteration following a mate score fall back to the full window
+        // because narrow aspiration is unhelpful there.
+        int alpha, beta, delta;
+        if (depth < 3 || is_mate_score(best_score)) {
+            alpha = -INF_SCORE;
+            beta  =  INF_SCORE;
+            delta =  INF_SCORE;
+        } else {
+            delta = ASPIRATION_INITIAL;
+            alpha = best_score - delta;
+            beta  = best_score + delta;
+        }
+
+        Move iter_best;
+        int  iter_score = 0;
+        while (true) {
+            std::tie(iter_best, iter_score) = run_root_window(depth, alpha, beta);
+
+            if (iter_score <= alpha && alpha > -INF_SCORE) {
+                alpha = std::max(alpha - delta, -INF_SCORE);
+                if (delta < INF_SCORE / 2) delta *= 2;
+                continue;
+            }
+            if (iter_score >= beta && beta < INF_SCORE) {
+                beta = std::min(beta + delta, INF_SCORE);
+                if (delta < INF_SCORE / 2) delta *= 2;
+                continue;
+            }
+            break;
         }
 
         best_overall = iter_best;
         best_score   = iter_score;
         res.depth    = depth;
 
-        // The root window is full so the iteration result is exact; this
-        // primes the TT so the next iteration starts with the prior best
-        // move directly via the standard probe path.
         tt.store(root_hash, iter_best,
                  score_to_tt(iter_score, /*ply=*/0),
                  depth, Bound::Exact);
