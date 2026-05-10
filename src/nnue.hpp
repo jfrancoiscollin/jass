@@ -74,17 +74,17 @@ private:
     std::array<std::array<std::int32_t, 4>, NUM_SQUARES> weights_{};
 };
 
-// Float32 MLP with topology 200 → 64 → 32 → 1, ReLU activations on the
-// two hidden layers, identity on the output. Input features are sparse
-// one-hot indicators of (square × piece-kind) using the same ordering
-// as `LinearNetwork`. The output is a centipawn-scale score from
-// white's point of view; `evaluate(pos)` flips the sign for black-to-move
-// so the result matches the engine's STM convention.
+// Float32 MLP with topology 200 → 128 → 64 → 1, ReLU activations on
+// the two hidden layers, identity on the output. Input features are
+// sparse one-hot indicators in STM-POV encoding (see the file header
+// in src/nnue.cpp for the exact convention). The output is a
+// centipawn-scale score from the side-to-move's perspective — no
+// final sign flip is needed.
 class MLPNetwork : public INetwork {
 public:
     static constexpr std::size_t INPUT_DIM = 200;  // 50 squares × 4 kinds
-    static constexpr std::size_t HIDDEN1   = 64;
-    static constexpr std::size_t HIDDEN2   = 32;
+    static constexpr std::size_t HIDDEN1   = 128;
+    static constexpr std::size_t HIDDEN2   = 64;
 
     // Default-construct with zero weights and biases. The network
     // returns ~0 in that state; call `load()` to install a trained model.
@@ -94,10 +94,10 @@ public:
 
     // Binary format (little-endian throughout):
     //   [0..4)   magic = "JNNM"
-    //   [4..8)   version (uint32, currently 1)
+    //   [4..8)   version (uint32, currently 2)
     //   [8..12)  input_dim  (uint32, must equal 200)
-    //   [12..16) hidden1    (uint32, must equal 64)
-    //   [16..20) hidden2    (uint32, must equal 32)
+    //   [12..16) hidden1    (uint32, must equal 128)
+    //   [16..20) hidden2    (uint32, must equal 64)
     //   [20..24) output_dim (uint32, must equal 1)
     //   [24..)   float32 weights in this order:
     //              w1 [HIDDEN1 × INPUT_DIM]   (row-major, neuron-major)
