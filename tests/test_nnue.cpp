@@ -229,6 +229,32 @@ void test_mlp_load_rejects_missing_or_bad_file() {
     std::remove(bad_dims.c_str());
 }
 
+// ---------------------------------------------------------------------------
+// default_nnue() — pointer to the binary-embedded LinearNetwork.
+// ---------------------------------------------------------------------------
+void test_default_nnue_is_non_null_and_returns_finite_score() {
+    const LinearNetwork* net = default_nnue();
+    JASS_CHECK(net != nullptr);
+    if (!net) return;
+
+    const Position p = Position::start_position();
+    const int score = net->evaluate(p);
+    // The trained weights tend to call the start position close to even
+    // (small magnitude of a few centipawns); 1000 is a generous bound
+    // that catches any catastrophic deserialization bug.
+    JASS_CHECK(score >  -1000);
+    JASS_CHECK(score <   1000);
+}
+
+void test_default_nnue_is_stable_across_calls() {
+    // The lazy initialiser must hand out the same instance every call,
+    // not allocate a fresh one (otherwise an Engine that pinned the
+    // pointer at startup would be holding a dangling reference).
+    const LinearNetwork* a = default_nnue();
+    const LinearNetwork* b = default_nnue();
+    JASS_CHECK_EQ(a, b);
+}
+
 void test_load_network_dispatches_on_magic() {
     // A JNNM file should come back as something whose evaluate() matches
     // a freshly loaded MLPNetwork.
@@ -279,5 +305,7 @@ void run_nnue_tests() {
     test_mlp_forward_pass_matches_hand_computed();
     test_mlp_save_load_roundtrip();
     test_mlp_load_rejects_missing_or_bad_file();
+    test_default_nnue_is_non_null_and_returns_finite_score();
+    test_default_nnue_is_stable_across_calls();
     test_load_network_dispatches_on_magic();
 }

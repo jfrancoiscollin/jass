@@ -62,6 +62,11 @@ public:
     // expects. Useful for snapshotting a hand-tuned network.
     bool save(std::string_view path) const;
 
+    // In-memory variant of `load`: read `n` bytes (must equal the
+    // weights footprint) from `data`. Used by `default_nnue()` to
+    // initialise the binary-embedded default network.
+    bool load_from_bytes(const unsigned char* data, std::size_t n);
+
 private:
     // weights_[square-bit 0..49][piece-kind 0..3], where the piece
     // ordering is: 0 = white man, 1 = white king, 2 = black man,
@@ -120,6 +125,14 @@ private:
 // else is tried as a raw-int32 `LinearNetwork`. Returns nullptr on I/O
 // error or format mismatch.
 std::unique_ptr<INetwork> load_network(std::string_view path);
+
+// Returns a pointer to the lazily-initialised `LinearNetwork` loaded
+// from the embedded default weights (CMake compiles `nnue.bin` from
+// the repo root into the binary). The pointer is owned by static
+// storage and remains valid for the lifetime of the process. Callers
+// that want to opt out of NNUE entirely should pass `nullptr` to the
+// relevant `set_nnue(...)` instead.
+const LinearNetwork* default_nnue();
 
 // Switchable façade: `evaluate_nnue(pos)` mirrors `evaluate(pos)` but
 // queries the internal default-constructed `LinearNetwork`. Useful as

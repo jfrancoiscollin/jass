@@ -4,6 +4,7 @@
 #include "hub.hpp"
 
 #include "eval.hpp"
+#include "nnue.hpp"
 #include "timemgr.hpp"
 
 #include <cctype>
@@ -96,11 +97,19 @@ std::string format_move(const Move& m) {
 // HubFrontEnd
 // ---------------------------------------------------------------------------
 HubFrontEnd::HubFrontEnd(std::istream& in, std::ostream& out)
-    : in_(in), out_(out) {}
+    : in_(in), out_(out) {
+    // End users get the trained NNUE eval out of the box; main.cpp can
+    // override or disable it via --nnue / --no-nnue.
+    engine_.set_nnue(default_nnue());
+}
 
 HubFrontEnd::~HubFrontEnd() {
     stop_flag_.store(true, std::memory_order_relaxed);
     wait_for_worker();
+}
+
+void HubFrontEnd::set_nnue(const INetwork* n) noexcept {
+    engine_.set_nnue(n);
 }
 
 int HubFrontEnd::run() {

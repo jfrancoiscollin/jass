@@ -73,6 +73,15 @@ SearchResult Engine::search(const SearchLimits& limits) {
             return r;
         }
     }
+    // Propagate the engine-level NNUE pointer when the caller didn't
+    // pin one explicitly. An explicit `limits.nnue` (including null on
+    // purpose) always wins, which lets tournaments override the
+    // default per game.
+    if (limits.nnue == nullptr && nnue_ != nullptr) {
+        SearchLimits effective = limits;
+        effective.nnue = nnue_;
+        return ::jass::search(pos_, effective, tt_, hash_history_);
+    }
     return ::jass::search(pos_, limits, tt_, hash_history_);
 }
 

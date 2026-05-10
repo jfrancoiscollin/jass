@@ -12,6 +12,7 @@
 
 #include "engine.hpp"
 #include "movegen.hpp"
+#include "nnue.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "types.hpp"
@@ -80,6 +81,38 @@ void test_engine_tt_persistence_speeds_up_repeated_search() {
     JASS_CHECK(second.nodes <= first.nodes / 2);
 }
 
+void test_engine_nnue_pointer_round_trips() {
+    Engine e;
+    JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(nullptr));
+
+    const LinearNetwork* def = default_nnue();
+    e.set_nnue(def);
+    JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(def));
+
+    e.set_nnue(nullptr);
+    JASS_CHECK_EQ(e.nnue(), static_cast<const INetwork*>(nullptr));
+}
+
+void test_engine_default_nnue_changes_search_score() {
+    // The shipped default NNUE was trained against the handcrafted eval
+    // and tends to score slightly differently on most positions. We
+    // don't bind a specific number — just check that switching the
+    // pointer changes the score returned by search() for a position
+    // unbalanced enough to expose the eval.
+    Engine handcrafted;
+    handcrafted.use_book(false);
+    Engine nn;
+    nn.use_book(false);
+    nn.set_nnue(default_nnue());
+
+    JASS_CHECK(handcrafted.set_position_fen("W:W31-50:B1-15"));
+    JASS_CHECK(nn.set_position_fen("W:W31-50:B1-15"));
+
+    const SearchResult rh = handcrafted.search(2);
+    const SearchResult rn = nn.search(2);
+    JASS_CHECK(rh.score != rn.score);
+}
+
 void test_engine_clear_tt_undoes_warm_up() {
     Engine e;
     e.use_book(false);
@@ -102,4 +135,6 @@ void run_engine_tests() {
     test_engine_search_returns_legal_move();
     test_engine_tt_persistence_speeds_up_repeated_search();
     test_engine_clear_tt_undoes_warm_up();
+    test_engine_nnue_pointer_round_trips();
+    test_engine_default_nnue_changes_search_score();
 }

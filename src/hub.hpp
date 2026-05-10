@@ -63,6 +63,12 @@ public:
     // EOF. Returns 0 (a placeholder for richer exit semantics).
     int run();
 
+    // Override the engine-side NNUE network used at every leaf. By
+    // default the constructor installs `default_nnue()`; pass `nullptr`
+    // to fall back to the handcrafted eval, or any other `INetwork`
+    // (e.g. a freshly loaded MLP) to swap models without recompiling.
+    void set_nnue(const INetwork* n) noexcept;
+
 private:
     Engine        engine_;
     std::istream& in_;

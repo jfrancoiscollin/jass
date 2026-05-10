@@ -6,6 +6,7 @@
 #include "bitboard.hpp"
 #include "board.hpp"
 #include "eval.hpp"
+#include "nnue_default_data.hpp"
 
 #include <cstring>
 #include <fstream>
@@ -95,6 +96,13 @@ bool LinearNetwork::save(std::string_view path) const {
     f.write(reinterpret_cast<const char*>(weights_.data()),
             static_cast<std::streamsize>(sizeof(weights_)));
     return f.good();
+}
+
+bool LinearNetwork::load_from_bytes(const unsigned char* data,
+                                    std::size_t          n) {
+    if (data == nullptr || n != sizeof(weights_)) return false;
+    std::memcpy(weights_.data(), data, n);
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -279,6 +287,21 @@ std::unique_ptr<INetwork> load_network(std::string_view path) {
     auto n = std::make_unique<LinearNetwork>();
     if (!n->load(path)) return nullptr;
     return n;
+}
+
+const LinearNetwork* default_nnue() {
+    // Lazy initialisation: the embedded weights are decoded once on the
+    // first call and reused for the lifetime of the process. If the
+    // embedded byte count doesn't match `LinearNetwork`'s footprint
+    // (e.g. the engine was compiled against a stale `nnue.bin`), we
+    // fall back to a default-constructed network so the runtime keeps
+    // working on top of the handcrafted-equivalent weights.
+    static const LinearNetwork* net = []() {
+        auto* n = new LinearNetwork();
+        n->load_from_bytes(NNUE_DEFAULT_BYTES, NNUE_DEFAULT_LEN);
+        return n;
+    }();
+    return net;
 }
 
 int evaluate_nnue(const Position& pos) {
