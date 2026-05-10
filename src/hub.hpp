@@ -20,6 +20,7 @@
 //   go movetime <ms>               search up to <ms> milliseconds
 //   go infinite                    search until `stop` (runs in a thread)
 //   stop                           interrupt the current search
+//   setoption threads <N>          set the number of search threads (>=1)
 //   eval                           emit the static eval (white POV)
 //   fen                            emit the current FEN
 //   quit                           exit
@@ -70,6 +71,7 @@ private:
     std::mutex        out_mutex_;
     std::atomic<bool> stop_flag_{false};
     std::thread       worker_;
+    int               threads_{1};
 
     void dispatch(std::string_view line);
 
@@ -77,10 +79,11 @@ private:
     void cmd_newgame();
     void cmd_position(std::string_view args);
     void cmd_apply   (std::string_view args);
-    void cmd_go      (std::string_view args);
-    void cmd_stop    ();
-    void cmd_eval    ();
-    void cmd_fen     ();
+    void cmd_go        (std::string_view args);
+    void cmd_stop      ();
+    void cmd_setoption (std::string_view args);
+    void cmd_eval      ();
+    void cmd_fen       ();
 
     void emit_ok();
     void emit_error(std::string_view reason);

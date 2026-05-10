@@ -41,6 +41,11 @@ struct SearchLimits {
     // running, the current iteration is abandoned and the result of the
     // last completed iteration is returned.
     const std::atomic<bool>* stop_flag = nullptr;
+    // Lazy SMP fan-out. `threads = N` spawns N-1 helper threads that run
+    // independent iterative deepenings sharing the same TT — they
+    // populate transposition entries for the main search to reuse. The
+    // returned `SearchResult` is the main thread's only.
+    int         threads     = 1;
 };
 
 struct SearchResult {

@@ -10,10 +10,13 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <chrono>
+#include <thread>
 #include <tuple>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace jass {
 
@@ -365,6 +368,35 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                    + std::chrono::milliseconds(limits.movetime_ms);
     }
 
+    // ---------------------------------------------------------------------
+    // Lazy SMP fan-out
+    // ---------------------------------------------------------------------
+    // Helper threads run an independent single-threaded `search` against
+    // the same shared `tt`. They never report a result; their job is to
+    // keep transposition entries flowing in for the main search. The TT
+    // is accessed without locks: races may yield the occasional stale
+    // entry but the search is self-correcting (move-legality is verified
+    // on use, scores are merely hints).
+    std::atomic<bool>          helper_stop{false};
+    std::vector<std::thread>   helpers;
+    if (limits.threads > 1) {
+        helpers.reserve(static_cast<std::size_t>(limits.threads - 1));
+        for (int i = 1; i < limits.threads; ++i) {
+            helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
+                                  max_depth = limits.max_depth]() {
+                SearchLimits hlim;
+                hlim.max_depth = max_depth;
+                hlim.stop_flag = &helper_stop;
+                hlim.threads   = 1;  // critical: helpers must not fork further
+                (void)::jass::search(pos, hlim, tt, game_history);
+            });
+        }
+    }
+    auto stop_helpers = [&]() {
+        helper_stop.store(true, std::memory_order_relaxed);
+        for (auto& t : helpers) if (t.joinable()) t.join();
+    };
+
     Move best_overall = root_moves[0];
     int  best_score   = -INF_SCORE;
 
@@ -443,6 +475,8 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                  score_to_tt(iter_score, /*ply=*/0),
                  depth, Bound::Exact);
     }
+
+    stop_helpers();
 
     res.best_move = best_overall;
     res.score     = best_score;

@@ -157,6 +157,17 @@ void test_hub_infinite_then_stop() {
     JASS_CHECK(contains(out, "bestmove"));
 }
 
+void test_hub_setoption_threads() {
+    // `setoption threads 4` then a depth-3 search must still return a
+    // bestmove. The threads option applies to subsequent `go` commands.
+    const std::string out = drive_session(
+        "setoption threads 4\n"
+        "position startpos\n"
+        "go depth 3\n");
+    JASS_CHECK(contains(out, "ok"));
+    JASS_CHECK(contains(out, "bestmove"));
+}
+
 }  // namespace
 
 void run_hub_tests() {
@@ -174,4 +185,5 @@ void run_hub_tests() {
 
     test_hub_movetime_returns_within_budget();
     test_hub_infinite_then_stop();
+    test_hub_setoption_threads();
 }

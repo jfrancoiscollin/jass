@@ -123,15 +123,16 @@ int HubFrontEnd::run() {
 void HubFrontEnd::dispatch(std::string_view line) {
     const auto [cmd, args] = split_first_word(line);
 
-    if      (cmd == "hello")    cmd_hello();
-    else if (cmd == "newgame")  cmd_newgame();
-    else if (cmd == "position") cmd_position(args);
-    else if (cmd == "apply")    cmd_apply(args);
-    else if (cmd == "go")       cmd_go(args);
-    else if (cmd == "stop")     cmd_stop();
-    else if (cmd == "eval")     cmd_eval();
-    else if (cmd == "fen")      cmd_fen();
-    else                        emit_error("unknown command");
+    if      (cmd == "hello")     cmd_hello();
+    else if (cmd == "newgame")   cmd_newgame();
+    else if (cmd == "position")  cmd_position(args);
+    else if (cmd == "apply")     cmd_apply(args);
+    else if (cmd == "go")        cmd_go(args);
+    else if (cmd == "stop")      cmd_stop();
+    else if (cmd == "setoption") cmd_setoption(args);
+    else if (cmd == "eval")      cmd_eval();
+    else if (cmd == "fen")       cmd_fen();
+    else                         emit_error("unknown command");
 }
 
 void HubFrontEnd::emit_ok() {
@@ -244,9 +245,26 @@ void HubFrontEnd::cmd_go(std::string_view args) {
 
     stop_flag_.store(false, std::memory_order_relaxed);
     lim.stop_flag = &stop_flag_;
+    lim.threads   = threads_;
 
     if (async) run_search_async(lim);
     else       run_search_sync(lim);
+}
+
+void HubFrontEnd::cmd_setoption(std::string_view args) {
+    wait_for_worker();
+    const auto [name, rest] = split_first_word(args);
+    if (name == "threads") {
+        const auto n = parse_int(rest);
+        if (!n || *n < 1) {
+            emit_error("setoption threads: must be a positive integer");
+            return;
+        }
+        threads_ = *n;
+        emit_ok();
+        return;
+    }
+    emit_error("setoption: unknown option");
 }
 
 void HubFrontEnd::cmd_stop() {
