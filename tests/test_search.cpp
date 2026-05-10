@@ -88,6 +88,25 @@ void test_eval_advancement_bonus() {
     JASS_CHECK(evaluate(fwd) > evaluate(back));
 }
 
+void test_eval_edge_file_penalty() {
+    // A white man on the edge column should score less than the same
+    // material configuration with the man on a central column. We compare
+    // square 26 (col 0, edge) with square 28 (col 4, central) — both on
+    // the same row 5 so advancement is identical.
+    const Position edge   = parse("W:W26:B1");
+    const Position centre = parse("W:W28:B1");
+    JASS_CHECK(evaluate(centre) > evaluate(edge));
+}
+
+void test_eval_supports_score_higher_than_isolated() {
+    // Two white men supporting each other diagonally vs two isolated men
+    // on the same row. Material is identical; the supported pair must
+    // score strictly higher.
+    const Position supported = parse("W:W37,42:B1");   // 42 is SE of 37
+    const Position isolated  = parse("W:W36,40:B1");   // no diagonal link
+    JASS_CHECK(evaluate(supported) > evaluate(isolated));
+}
+
 // -----------------------------------------------------------------------------
 // Search
 // -----------------------------------------------------------------------------
@@ -217,6 +236,8 @@ void run_search_tests() {
     test_eval_stm_flips_sign();
     test_eval_king_more_valuable_than_man();
     test_eval_advancement_bonus();
+    test_eval_edge_file_penalty();
+    test_eval_supports_score_higher_than_isolated();
     test_search_returns_legal_move_from_start();
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
