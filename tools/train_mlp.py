@@ -29,12 +29,23 @@ The output `nnue.bin` follows the JNNM binary format consumed by
 
 Convention
 ----------
-The network output is interpreted as a centipawn-scale score *from
-white's point of view*. `MLPNetwork::evaluate(pos)` flips the sign for
-black-to-move so the result matches the engine-wide STM convention.
-We therefore train against `score` (stm=0) or `-score` (stm=1) as read
-from the dataset, with no tempo bookkeeping — the network has plenty
-of capacity to absorb the tempo term implicitly.
+The network sees the board from the side-to-move's perspective:
+
+    feat[b * 4 + 0] = STM has man  on bit b   (b in 0..49)
+    feat[b * 4 + 1] = STM has king on bit b
+    feat[b * 4 + 2] = OPP has man  on bit b
+    feat[b * 4 + 3] = OPP has king on bit b
+
+For black-to-move records we mirror the bit (b -> 49 - b, the bit
+equivalent of FMJD square s -> 51 - s) and swap the colour role
+before populating the features. The network output is therefore
+already in STM-POV and the dataset's `score` field can be used as the
+target verbatim — no tempo bookkeeping, no sign flip.
+
+This bakes the rotation-by-180° + colour-swap symmetry of draughts
+into the model: the same "position from my POV" maps to the same
+network input regardless of which physical colour is to move,
+effectively doubling the dataset.
 
 Targets are clipped to ±2000 cp so a single decisive game cannot
 dominate the loss; this matches what `tools/train.py` does for the
@@ -76,7 +87,10 @@ DATASET_MAGIC      = b"JNNT"
 DATASET_RECORD_SZ  = 37
 
 MLP_MAGIC   = b"JNNM"
-MLP_VERSION = 1
+# Bumped to 2 when the input encoding switched to STM-relative with
+# board mirroring + colour swap. Must stay in lockstep with the
+# constant of the same name in src/nnue.cpp.
+MLP_VERSION = 2
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +102,10 @@ def load_dataset(path: Path) -> tuple[np.ndarray, np.ndarray]:
     Returns
     -------
     X : (N, 200) float32 — one-hot indicators for (square × piece-kind)
-    y : (N,)    float32 — target score in white's POV (centipawns)
+                           in *STM-POV* encoding (mirror + colour swap
+                           applied to black-to-move rows).
+    y : (N,)    float32 — target score in STM-POV (centipawns,
+                           dataset's `score` field used verbatim).
     """
     raw = path.read_bytes()
     if len(raw) < 8 or raw[:4] != DATASET_MAGIC:
@@ -106,16 +123,39 @@ def load_dataset(path: Path) -> tuple[np.ndarray, np.ndarray]:
     stm   = body[:, 32]
     score = body[:, 33:37].view(np.int32).reshape(count)
 
-    # Build the (N, 200) feature matrix in 200 vectorised passes.
-    X = np.zeros((count, NUM_FEATS), dtype=np.float32)
-    for sq in range(NUM_SQUARES):
-        bit = np.uint64(1) << np.uint64(sq)
-        for k in range(NUM_KINDS):
-            X[:, sq * NUM_KINDS + k] = ((bbs[:, k] & bit) > 0).astype(np.float32)
+    # Bitboard slot ordering in `bbs`: 0=white-man, 1=white-king,
+    # 2=black-man, 3=black-king. For STM-relative encoding we swap the
+    # colour role for black-to-move rows so kind 0/1 always means the
+    # STM's pieces.
+    is_w = (stm == 0)
+    is_b = ~is_w
 
-    # STM-POV → white-POV. The MLP learns the white-POV value directly;
-    # the C++ side flips the sign for black-to-move.
-    y = np.where(stm == 0, score, -score).astype(np.float32)
+    X = np.zeros((count, NUM_FEATS), dtype=np.float32)
+
+    # White-to-move rows: identity mapping (no mirror, no swap).
+    if is_w.any():
+        idx_w  = np.where(is_w)[0]
+        sub_w  = bbs[is_w]
+        for kind, src in enumerate((0, 1, 2, 3)):
+            for sq in range(NUM_SQUARES):
+                bit = np.uint64(1) << np.uint64(sq)
+                col = sq * NUM_KINDS + kind
+                X[idx_w, col] = ((sub_w[:, src] & bit) > 0).astype(np.float32)
+
+    # Black-to-move rows: mirror bit (49 - bit) and swap the colour
+    # role so kind 0/1 = STM = black, kind 2/3 = OPP = white.
+    if is_b.any():
+        idx_b = np.where(is_b)[0]
+        sub_b = bbs[is_b]
+        for kind, src in enumerate((2, 3, 0, 1)):  # stm=black, opp=white
+            for sq in range(NUM_SQUARES):
+                bit = np.uint64(1) << np.uint64(sq)
+                col = (NUM_SQUARES - 1 - sq) * NUM_KINDS + kind
+                X[idx_b, col] = ((sub_b[:, src] & bit) > 0).astype(np.float32)
+
+    # Targets are already in STM-POV in the dataset, so use them
+    # verbatim — no sign flip, no tempo bookkeeping.
+    y = score.astype(np.float32)
     return X, y
 
 

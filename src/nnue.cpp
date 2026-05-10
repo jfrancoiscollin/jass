@@ -108,6 +108,27 @@ bool LinearNetwork::load_from_bytes(const unsigned char* data,
 // ---------------------------------------------------------------------------
 // MLPNetwork
 // ---------------------------------------------------------------------------
+//
+// Input encoding (v2): the network sees the board from the side-to-
+// move's perspective.
+//
+//   feat[b * 4 + 0] = STM has man  on b   (b in 0..49)
+//   feat[b * 4 + 1] = STM has king on b
+//   feat[b * 4 + 2] = OPP has man  on b
+//   feat[b * 4 + 3] = OPP has king on b
+//
+// For black-to-move positions we mirror the bit (b -> 49 - b, the bit
+// equivalent of FMJD square s -> 51 - s) and swap the colour role
+// before populating the features. The output is therefore already in
+// STM-POV; no final sign flip is needed.
+//
+// This bakes the rotation-by-180° + colour-swap symmetry of draughts
+// into the model: the same "position from my POV" maps to the same
+// network input regardless of which physical colour is to move,
+// effectively doubling the dataset and aligning the MLP with the
+// inductive bias the LinearNetwork gets for free (per-colour weights
+// and a final sign flip).
+// ---------------------------------------------------------------------------
 
 namespace {
 
@@ -122,30 +143,43 @@ inline void add_w1_column(const std::array<float,
     }
 }
 
+// Walk the set bits of `bb` and add the corresponding W1 column for
+// every piece, indexing the feature space as
+// `(mirror ? 49 - bit : bit) * 4 + kind`.
 inline void accumulate_kind(const std::array<float,
                                 MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM>& w1,
                             float*       h1,
                             Bitboard     bb,
-                            std::size_t  kind) noexcept {
+                            std::size_t  kind,
+                            bool         mirror) noexcept {
     while (bb) {
-        const int         bit  = square_to_bit(pop_lsb(bb));
-        const std::size_t feat = static_cast<std::size_t>(bit) * 4 + kind;
-        add_w1_column(w1, h1, feat);
+        const int         bit = square_to_bit(pop_lsb(bb));
+        const std::size_t b   = mirror
+            ? static_cast<std::size_t>(49 - bit)
+            : static_cast<std::size_t>(bit);
+        add_w1_column(w1, h1, b * 4 + kind);
     }
 }
 
 }  // namespace
 
 int MLPNetwork::evaluate(const Position& pos) const noexcept {
-    // Layer 1: h1 = ReLU(b1 + W1 @ input).
-    // Input is sparse one-hot over (square × kind); we only add the
-    // columns of W1 that correspond to pieces actually present.
+    // Layer 1: h1 = ReLU(b1 + W1 @ input). Build the sparse input from
+    // STM's perspective — see the file header for the encoding spec.
     float h1[HIDDEN1];
     for (std::size_t j = 0; j < HIDDEN1; ++j) h1[j] = b1_[j];
-    accumulate_kind(w1_, h1, pos.white_men(),    0);
-    accumulate_kind(w1_, h1, pos.white_kings(),  1);
-    accumulate_kind(w1_, h1, pos.black_men(),    2);
-    accumulate_kind(w1_, h1, pos.black_kings(),  3);
+
+    if (pos.side_to_move() == Color::White) {
+        accumulate_kind(w1_, h1, pos.white_men(),    0, /*mirror=*/false);
+        accumulate_kind(w1_, h1, pos.white_kings(),  1, /*mirror=*/false);
+        accumulate_kind(w1_, h1, pos.black_men(),    2, /*mirror=*/false);
+        accumulate_kind(w1_, h1, pos.black_kings(),  3, /*mirror=*/false);
+    } else {
+        accumulate_kind(w1_, h1, pos.black_men(),    0, /*mirror=*/true);
+        accumulate_kind(w1_, h1, pos.black_kings(),  1, /*mirror=*/true);
+        accumulate_kind(w1_, h1, pos.white_men(),    2, /*mirror=*/true);
+        accumulate_kind(w1_, h1, pos.white_kings(),  3, /*mirror=*/true);
+    }
     for (std::size_t j = 0; j < HIDDEN1; ++j) {
         if (h1[j] < 0.0f) h1[j] = 0.0f;
     }
@@ -160,7 +194,8 @@ int MLPNetwork::evaluate(const Position& pos) const noexcept {
         h2[k] = s > 0.0f ? s : 0.0f;
     }
 
-    // Output layer: out = b3 + w3 @ h2 (no activation).
+    // Output layer: out = b3 + w3 @ h2 (no activation). Already in
+    // STM-POV by construction of the input encoding above.
     float out = b3_;
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         out += w3_[k] * h2[k];
@@ -172,14 +207,16 @@ int MLPNetwork::evaluate(const Position& pos) const noexcept {
     if (out >  kClamp) out =  kClamp;
     if (out < -kClamp) out = -kClamp;
 
-    const int score_white = static_cast<int>(out);
-    return (pos.side_to_move() == Color::White) ? score_white : -score_white;
+    return static_cast<int>(out);
 }
 
 namespace {
 
-constexpr char     MLP_MAGIC[4]    = {'J', 'N', 'N', 'M'};
-constexpr std::uint32_t MLP_VERSION = 1;
+constexpr char          MLP_MAGIC[4] = {'J', 'N', 'N', 'M'};
+// Bumped to 2 when the input encoding switched to STM-relative with
+// board mirroring + colour swap. v1 weights interpreted under the new
+// encoding would silently miscompute, so we reject them at load time.
+constexpr std::uint32_t MLP_VERSION  = 2;
 
 bool read_u32(std::istream& f, std::uint32_t& out) {
     f.read(reinterpret_cast<char*>(&out), 4);
