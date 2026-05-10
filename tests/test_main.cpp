@@ -11,6 +11,7 @@ int g_assertions = 0;
 int main() {
     run_position_tests();
     run_movegen_tests();
+    run_search_tests();
 
     if (g_failures == 0) {
         std::printf("All %d assertions passed.\n", g_assertions);

@@ -26,14 +26,17 @@ contains:
 - A complete legal-move generator: quiet moves for men and kings, capture
   chains in all four directions for men, full ray captures for kings, and
   the FMJD majority-capture rule (longest chain wins).
-- A smoke-test executable and a unit-test runner with 330+ assertions,
-  including handcrafted scenarios for the trickiest FMJD edge cases and a
-  perft validator matching the reference values from the start position
-  (9, 81, 658, 4 265, 27 117 at depths 1–5).
+- A negamax alpha-beta search with iterative deepening, plus a flat
+  material evaluation (man = 100, king = 300, side-to-move relative).
+- A smoke-test binary that runs a full engine-vs-engine self-play game in
+  a few milliseconds end-to-end, and a unit-test runner with 350+
+  assertions covering geometry, FEN, movegen edge cases, perft (up to
+  depth 5: 9 / 81 / 658 / 4 265 / 27 117) and the search contract
+  (legality, mate detection, forced captures, material scoring).
 
-Coming next: search (alpha-beta with iterative deepening, transposition
-tables), an evaluation function, the HUB protocol front-end, and finally
-the WASM bindings for Draught Master.
+Coming next: WASM bindings for Draught Master, then a richer evaluation
+(piece-square tables, mobility, advancement, tempo), transposition
+tables, and the HUB protocol front-end.
 
 ## Licence and provenance
 
