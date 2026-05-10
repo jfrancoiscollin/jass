@@ -151,8 +151,15 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
     out_ << "bestmove " << format_move(r.best_move)
          << " score="   << r.score
          << " depth="   << r.depth
-         << " nodes="   << r.nodes
-         << '\n';
+         << " nodes="   << r.nodes;
+    if (!r.pv.empty()) {
+        out_ << " pv=";
+        for (std::size_t i = 0; i < r.pv.size(); ++i) {
+            if (i) out_ << ',';
+            out_ << format_move(r.pv[i]);
+        }
+    }
+    out_ << '\n';
     out_.flush();
 }
 

@@ -94,6 +94,11 @@ public:
         obj.set("score", r.score);
         obj.set("depth", r.depth);
         obj.set("nodes", static_cast<double>(r.nodes));
+        val pv = val::array();
+        for (std::size_t i = 0; i < r.pv.size(); ++i) {
+            pv.set(i, move_to_js(r.pv[i]));
+        }
+        obj.set("pv", pv);
         return obj;
     }
 
