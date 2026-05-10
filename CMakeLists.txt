@@ -39,6 +39,7 @@ add_library(jass_lib STATIC
     src/position.cpp
     src/movegen.cpp
     src/eval.cpp
+    src/nnue.cpp
     src/search.cpp
     src/zobrist.cpp
     src/tt.cpp
@@ -81,6 +82,7 @@ add_executable(jass_tests
     tests/test_endgame.cpp
     tests/test_book.cpp
     tests/test_tournament.cpp
+    tests/test_nnue.cpp
     tests/test_hub.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
