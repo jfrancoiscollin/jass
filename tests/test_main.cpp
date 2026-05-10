@@ -18,6 +18,7 @@ int main() {
     run_endgame_tests();
     run_book_tests();
     run_tournament_tests();
+    run_nnue_tests();
     run_hub_tests();
 
     if (g_failures == 0) {
