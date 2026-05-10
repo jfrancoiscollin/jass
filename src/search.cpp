@@ -88,7 +88,7 @@ struct Searcher {
 
     // Optional NNUE-style replacement for the handcrafted leaf evaluation.
     // Null means "use the static `evaluate()` function in eval.cpp".
-    const LinearNetwork*                  nnue{nullptr};
+    const INetwork*                       nnue{nullptr};
 
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
@@ -425,7 +425,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     std::vector<std::thread>   helpers;
     if (limits.threads > 1) {
         helpers.reserve(static_cast<std::size_t>(limits.threads - 1));
-        const LinearNetwork* nnue_for_helpers = limits.nnue;
+        const INetwork* nnue_for_helpers = limits.nnue;
         for (int i = 1; i < limits.threads; ++i) {
             helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
                                   max_depth = limits.max_depth,
