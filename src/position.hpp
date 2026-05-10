@@ -86,6 +86,17 @@ public:
     void remove_piece(Square s, Piece p) noexcept;
 
     // -------------------------------------------------------------------------
+    // Move application
+    // -------------------------------------------------------------------------
+    // Return a new Position obtained by playing `m` in `*this`. Side to move
+    // is flipped, captured pieces are removed and a man that ends on the
+    // promotion row is upgraded to a king.
+    //
+    // Behaviour is undefined if `m` was not produced by `generate_legal_moves`
+    // for `*this` (or an equivalent legal-move source).
+    Position after(const Move& m) const noexcept;
+
+    // -------------------------------------------------------------------------
     // Serialisation
     // -------------------------------------------------------------------------
     std::string to_fen() const;

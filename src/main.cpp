@@ -60,8 +60,11 @@ int main() {
     MoveList moves;
     generate_legal_moves(start, moves);
     std::cout << "Legal moves from the starting position: "
-              << moves.size()
-              << " (movegen is still a skeleton — expect 0)\n";
+              << moves.size() << " (expected 9)\n";
+    for (const auto& m : moves) {
+        std::cout << "  " << static_cast<int>(m.from) << '-'
+                  << static_cast<int>(m.to) << '\n';
+    }
 
     return 0;
 }

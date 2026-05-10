@@ -52,8 +52,13 @@ target_link_libraries(jass PRIVATE jass_lib jass_warnings)
 # Tests
 # -----------------------------------------------------------------------------
 enable_testing()
-add_executable(jass_tests tests/test_position.cpp)
+add_executable(jass_tests
+    tests/test_main.cpp
+    tests/test_position.cpp
+    tests/test_movegen.cpp
+)
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
+target_include_directories(jass_tests PRIVATE tests)
 add_test(NAME jass_tests COMMAND jass_tests)
 
 # -----------------------------------------------------------------------------

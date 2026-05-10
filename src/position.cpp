@@ -69,6 +69,32 @@ void Position::remove_piece(Square s, Piece p) noexcept {
 }
 
 // =============================================================================
+// Move application
+// =============================================================================
+Position Position::after(const Move& m) const noexcept {
+    Position next = *this;
+    const Color us       = stm_;
+    const Piece moving   = piece_at(m.from);
+    const bool  was_king = is_king(moving);
+
+    next.remove_piece(m.from, moving);
+    for (std::uint8_t i = 0; i < m.num_captures; ++i) {
+        const Square c = m.captures[i];
+        next.remove_piece(c, next.piece_at(c));
+    }
+
+    Piece final_piece;
+    if (was_king || m.promotes) {
+        final_piece = (us == Color::White) ? Piece::WhiteKing : Piece::BlackKing;
+    } else {
+        final_piece = (us == Color::White) ? Piece::WhiteMan  : Piece::BlackMan;
+    }
+    next.add_piece(m.to, final_piece);
+    next.stm_ = opposite(us);
+    return next;
+}
+
+// =============================================================================
 // FEN parsing
 // =============================================================================
 namespace {
