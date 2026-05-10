@@ -72,6 +72,30 @@ Jass is a clean-room implementation written from public sources only:
 This means Jass can be embedded in proprietary or differently-licensed
 projects without the contamination that a GPL dependency would impose.
 
+## Continuous integration & WASM hosting
+
+A GitHub Actions workflow at `.github/workflows/build.yml` runs on every
+push and PR. It does three things:
+
+1. **Native build & test** on Ubuntu — must always be green.
+2. **WASM build** via Emscripten (the SDK is installed and cached on
+   the runner). The artefacts `jass.js`, `jass.wasm` and `example.html`
+   are uploaded to the workflow run, downloadable from the Actions tab
+   under the name `jass-wasm`.
+3. **GitHub Pages deploy** on pushes to `main` only — `example.html`
+   becomes the site index, so the demo is reachable at
+   `https://<your-user>.github.io/jass/`.
+
+### One-time GitHub Pages setup
+
+In the repository settings, go to **Settings → Pages** and pick
+**Source: GitHub Actions**. After the next push to `main` the workflow
+will publish the demo automatically; the URL is shown in the workflow
+log and on the repository's Environments page.
+
+If you only want the artefacts (no Pages), no setup is needed: every
+push uploads them and they're downloadable from the run page.
+
 ## Building
 
 ### Native
