@@ -320,6 +320,85 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     return 0;
 }
 
+// -----------------------------------------------------------------------------
+// --build-book: read a list of FENs (one per line, `#` comments OK), evaluate
+// each one with the current default NNUE at the requested depth and write a
+// JBOK file mapping (zobrist → best move). Used to pre-compute an opening
+// book over a curated position set; the resulting file is then loaded by the
+// HUB front-end via `--book <path>`.
+// -----------------------------------------------------------------------------
+int run_build_book_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --build-book <fens.txt> <out.bok> [depth=12]\n";
+        return 1;
+    }
+    const char* fens_path = argv[2];
+    const char* out_path  = argv[3];
+    const int   depth     = (argc > 4) ? parse_int_or(argv[4], 12) : 12;
+
+    std::ifstream in(fens_path);
+    if (!in) {
+        std::cerr << "error: cannot open " << fens_path << "\n";
+        return 1;
+    }
+
+    Engine e;
+    e.use_book(false);                       // don't consult what we're building
+    e.set_nnue(default_nnue());
+
+    Book out_book;
+    std::string line;
+    int line_no    = 0;
+    int processed  = 0;
+    int skipped    = 0;
+    while (std::getline(in, line)) {
+        ++line_no;
+        // Trim trailing CR (Windows line endings) + leading/trailing space.
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\r'
+                              || line.back() == '\t'))
+            line.pop_back();
+        std::size_t start = 0;
+        while (start < line.size() && (line[start] == ' '
+                                    || line[start] == '\t'))
+            ++start;
+        if (start > 0) line.erase(0, start);
+
+        if (line.empty() || line[0] == '#') continue;
+
+        // Allow `FEN<TAB>extra,columns` — we keep only the first whitespace
+        // token as the FEN string.
+        std::size_t ws = line.find_first_of(" \t");
+        const std::string fen = (ws == std::string::npos) ? line
+                                                          : line.substr(0, ws);
+
+        const auto pos_opt = Position::from_fen(fen);
+        if (!pos_opt) {
+            std::cerr << "warn: line " << line_no
+                      << ": invalid FEN, skipping: " << fen << "\n";
+            ++skipped;
+            continue;
+        }
+        e.set_position(*pos_opt);
+        SearchLimits lim;
+        lim.max_depth = depth;
+        const SearchResult r = e.search(lim);
+        out_book.put(zobrist_hash(*pos_opt), r.best_move, r.score, depth);
+        ++processed;
+        if (processed % 100 == 0) {
+            std::cout << "  processed " << processed << " positions"
+                      << " (skipped " << skipped << ")\n";
+        }
+    }
+
+    if (!out_book.save(out_path)) {
+        std::cerr << "error: cannot write " << out_path << "\n";
+        return 1;
+    }
+    std::cout << "wrote " << out_book.size() << " entries to "
+              << out_path << " (skipped " << skipped << " invalid lines)\n";
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -357,13 +436,15 @@ int main(int argc, char** argv) {
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
+        else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
                 "Usage: jass [--smoke|--tournament [a b pairs]|"
                             "--gen-data [N path]|--benchmark-nnue weights [d p]|"
                             "--benchmark-nnue-vs-nnue a.bin b.bin [d p]|"
-                            "--no-nnue|--nnue path|--version|--help]\n"
+                            "--build-book fens.txt out.bok [depth]|"
+                            "--no-nnue|--nnue path|--book path|--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
                 "  --tournament [da db pairs]       play a colour-swap match\n"
@@ -386,6 +467,15 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
+                "  --build-book <fens.txt> <out.bok> [depth=12]\n"
+                "                                   read FENs (one per line, #\n"
+                "                                   comments OK) and write a JBOK\n"
+                "                                   book with the engine's best\n"
+                "                                   move at each position.\n"
+                "  --book <path.bok>                HUB mode only — load an\n"
+                "                                   opening book from <path.bok>\n"
+                "                                   (replaces the hard-coded\n"
+                "                                   default lines).\n"
                 "  --nnue <weights.bin>             HUB mode only — load and use\n"
                 "                                   <weights.bin> in place of the\n"
                 "                                   embedded default NNUE.\n"
@@ -397,6 +487,7 @@ int main(int argc, char** argv) {
     // Second pass: HUB-mode flags.
     std::unique_ptr<INetwork> nnue_owned;
     const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
+    const char*     book_path = nullptr;
     for (int i = 1; i < argc; ++i) {
         const std::string_view a{argv[i]};
         if (a == "--no-nnue") {
@@ -409,10 +500,18 @@ int main(int argc, char** argv) {
                 return 2;
             }
             nnue_ptr = nnue_owned.get();
+        } else if (a == "--book" && i + 1 < argc) {
+            book_path = argv[++i];
         }
     }
 
     HubFrontEnd hub(std::cin, std::cout);
     hub.set_nnue(nnue_ptr);
+    if (book_path) {
+        if (!hub.load_book(book_path)) {
+            std::cerr << "error: cannot load book from " << book_path << "\n";
+            return 2;
+        }
+    }
     return hub.run();
 }

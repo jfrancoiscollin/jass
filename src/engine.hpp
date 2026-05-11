@@ -72,6 +72,14 @@ public:
     void use_book(bool yes) noexcept { use_book_ = yes; }
     bool book_enabled()      const noexcept { return use_book_; }
 
+    // Replace the in-memory book with the contents of a JBOK file.
+    // Returns false on I/O error or bad format; in that case the
+    // existing book is preserved.
+    bool load_book(std::string_view path);
+
+    // Book size (number of stored positions).
+    std::size_t book_size() const noexcept;
+
     // Per-engine NNUE-style network used at every leaf when the caller
     // doesn't already pin one in `SearchLimits.nnue`. Default null =
     // handcrafted eval; tests rely on this default. Front-ends (HUB,
