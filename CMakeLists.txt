@@ -32,6 +32,34 @@ else()
 endif()
 
 # -----------------------------------------------------------------------------
+# SIMD (AVX2) opt-in
+# -----------------------------------------------------------------------------
+# When the host compiler supports AVX2 we enable `-mavx2` so the hot
+# int8 forward pass in MLPNetworkQ can use `_mm256_maddubs_epi16` and
+# friends. The runtime forward pass automatically picks the AVX2 path
+# via `#if defined(__AVX2__)`; without AVX2 the scalar fallback runs.
+#
+# Skipped under Emscripten (WASM has its own SIMD path that we'll
+# layer on later). Can be turned off with `-DJASS_ENABLE_AVX2=OFF`
+# to keep the binary portable across non-AVX2 x86 chips.
+option(JASS_ENABLE_AVX2 "Enable AVX2 intrinsics for the int8 NNUE forward pass" ON)
+add_library(jass_simd INTERFACE)
+if(JASS_ENABLE_AVX2 AND NOT EMSCRIPTEN AND NOT MSVC)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-mavx2 JASS_COMPILER_SUPPORTS_AVX2)
+    if(JASS_COMPILER_SUPPORTS_AVX2)
+        target_compile_options(jass_simd INTERFACE -mavx2)
+        message(STATUS "Jass: AVX2 enabled (-mavx2)")
+    else()
+        message(STATUS "Jass: compiler does not support -mavx2; scalar fallback only")
+    endif()
+elseif(JASS_ENABLE_AVX2 AND MSVC)
+    # /arch:AVX2 turns on AVX2 codegen + defines __AVX2__.
+    target_compile_options(jass_simd INTERFACE /arch:AVX2)
+    message(STATUS "Jass: AVX2 enabled (/arch:AVX2)")
+endif()
+
+# -----------------------------------------------------------------------------
 # Embedded NNUE weights
 # -----------------------------------------------------------------------------
 # `nnue.bin` at the repo root is the default LinearNetwork shipped with
@@ -81,7 +109,7 @@ add_library(jass_lib STATIC
     src/hub.cpp
 )
 target_include_directories(jass_lib PUBLIC src)
-target_link_libraries(jass_lib PRIVATE jass_warnings)
+target_link_libraries(jass_lib PRIVATE jass_warnings jass_simd)
 
 # -----------------------------------------------------------------------------
 # Front-end executable
