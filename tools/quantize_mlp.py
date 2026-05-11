@@ -6,31 +6,35 @@ Post-training int8 quantisation of a Jass MLP.
 
 Pipeline
 --------
-    # 1) Train float32 weights as usual.
-    python3 tools/train_mlp.py --data selfplay.bin --out mlp.bin
+    # 1) Train float32 weights (any of 64-32, 128-64, 256-128, 512-256 etc.).
+    python3 tools/train_v3.py --data selfplay-wdl.bin \
+        --archs 256-128 --epochs 30 --out-dir trained_v3
 
     # 2) Quantise to int8 using the same dataset for calibration.
     python3 tools/quantize_mlp.py \
-        --in mlp.bin --data selfplay.bin --out mlp-q.bin
+        --in trained_v3/nnue-256-128.bin \
+        --data selfplay-wdl.bin \
+        --out nnue-256-128-q.bin
 
 `mlp-q.bin` follows the JNNQ format consumed by `MLPNetworkQ::load()`
-in src/nnue.cpp:
+in src/nnue.cpp. The header now carries the runtime hidden dims (any
+multiple of 32) since Cycle 4a:
 
     [0..4)   magic = "JNNQ"
     [4..8)   uint32 version (currently 1)
     [8..12)  uint32 input_dim   (must equal 200)
-    [12..16) uint32 hidden1     (must equal 64)
-    [16..20) uint32 hidden2     (must equal 32)
+    [12..16) uint32 hidden1     (multiple of 32, ≤ 1024)
+    [16..20) uint32 hidden2     (multiple of 32, ≤ 1024)
     [20..24) uint32 output_dim  (must equal 1)
     [24..28) float32 mul1     (acc1 → int8 h1 factor)
     [28..32) float32 mul2     (acc2 → int8 h2 factor)
     [32..36) float32 mul_out  (acc3 → centipawn)
     [36..)   weights:
-              w1 [HIDDEN1 × INPUT_DIM]   int8
-              b1 [HIDDEN1]               int32 (at acc1 scale = sw1)
-              w2 [HIDDEN2 × HIDDEN1]     int8
-              b2 [HIDDEN2]               int32 (at acc2 scale = sw2 · sh1)
-              w3 [HIDDEN2]               int8
+              w1 [hidden1 × INPUT_DIM]   int8
+              b1 [hidden1]               int32 (at acc1 scale = sw1)
+              w2 [hidden2 × hidden1]     int8
+              b2 [hidden2]               int32 (at acc2 scale = sw2 · sh1)
+              w3 [hidden2]               int8
               b3                         int32 (at acc3 scale = sw3 · sh2)
 
 Quantisation scheme
@@ -45,12 +49,19 @@ Three "passes" between layers carry the inter-quantum scale:
 
 Activation scales `sh1` and `sh2` are calibrated by running the
 float32 network on a small slice of the training set and taking the
-max ReLU output per layer (with a 99.9th-percentile fallback in case
-a single huge activation drags the scale).
+99.9th percentile of ReLU outputs per layer (robust to outliers).
 
 The output magnitude can exceed int8 range (we want centipawn scores
 up to ~29000), so the final `mul_out` returns a float directly that
 gets cast to int.
+
+Calibration data
+----------------
+The script auto-detects the dataset magic:
+  * JNNW (38 bytes/record, post-Cycle-1 self-play) — preferred
+  * JNNT (37 bytes/record, legacy) — still supported
+Only the 32-byte bitboard + 1-byte STM prefix is needed for
+calibration; the score/WDL tail is ignored.
 """
 from __future__ import annotations
 
@@ -65,8 +76,8 @@ import numpy as np
 NUM_SQUARES = 50
 NUM_KINDS   = 4
 NUM_FEATS   = NUM_SQUARES * NUM_KINDS  # 200
-HIDDEN1     = 64
-HIDDEN2     = 32
+MAX_HIDDEN  = 1024
+SIMD_TILE   = 32
 
 JNNM_MAGIC   = b"JNNM"
 JNNM_VERSION = 2
@@ -74,25 +85,36 @@ JNNM_VERSION = 2
 JNNQ_MAGIC   = b"JNNQ"
 JNNQ_VERSION = 1
 
-DATASET_MAGIC     = b"JNNT"
-DATASET_RECORD_SZ = 37
+# Calibration dataset formats. Only the 32-byte bitboard + 1-byte STM
+# prefix matters here; the rest of the record is ignored.
+DATASET_JNNT_MAGIC     = b"JNNT"
+DATASET_JNNT_RECORD_SZ = 37
+DATASET_JNNW_MAGIC     = b"JNNW"
+DATASET_JNNW_RECORD_SZ = 38
 
 
 # ---------------------------------------------------------------------------
-# Load the float32 JNNM file produced by train_mlp.py
+# Load the float32 JNNM file produced by train_v3.py / train_mlp.py
 # ---------------------------------------------------------------------------
-def load_jnnm(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray,
-                                   np.ndarray, np.ndarray, float]:
+def load_jnnm(path: Path):
+    """Returns (w1, b1, w2, b2, w3, b3, hidden1, hidden2) with shapes
+    sized from the file header — hidden1 and hidden2 are runtime."""
     raw = path.read_bytes()
     if len(raw) < 24 or raw[:4] != JNNM_MAGIC:
         raise ValueError(f"{path}: bad magic — not a JNNM file?")
     version, in_dim, h1, h2, out_dim = struct.unpack_from("<IIIII", raw, 4)
     if version != JNNM_VERSION:
         raise ValueError(f"{path}: version {version}, expected {JNNM_VERSION}")
-    if (in_dim, h1, h2, out_dim) != (NUM_FEATS, HIDDEN1, HIDDEN2, 1):
+    if in_dim != NUM_FEATS or out_dim != 1:
         raise ValueError(
-            f"{path}: dims ({in_dim},{h1},{h2},{out_dim}) "
-            f"do not match the engine's ({NUM_FEATS},{HIDDEN1},{HIDDEN2},1)")
+            f"{path}: input_dim={in_dim} output_dim={out_dim} "
+            f"(expected {NUM_FEATS} and 1)")
+    if h1 == 0 or h1 > MAX_HIDDEN or h2 == 0 or h2 > MAX_HIDDEN:
+        raise ValueError(f"{path}: hidden dims out of range: {h1}, {h2}")
+    if h1 % SIMD_TILE != 0 or h2 % SIMD_TILE != 0:
+        raise ValueError(
+            f"{path}: hidden dims ({h1}, {h2}) must be multiples of "
+            f"{SIMD_TILE} so the JNNQ output is loadable by the C++ side")
 
     off = 24
     def take(n: int) -> np.ndarray:
@@ -101,13 +123,13 @@ def load_jnnm(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray,
         off += n * 4
         return arr
 
-    w1 = take(HIDDEN1 * NUM_FEATS).reshape(HIDDEN1, NUM_FEATS)
-    b1 = take(HIDDEN1)
-    w2 = take(HIDDEN2 * HIDDEN1).reshape(HIDDEN2, HIDDEN1)
-    b2 = take(HIDDEN2)
-    w3 = take(HIDDEN2)
+    w1 = take(h1 * NUM_FEATS).reshape(h1, NUM_FEATS)
+    b1 = take(h1)
+    w2 = take(h2 * h1).reshape(h2, h1)
+    b2 = take(h2)
+    w3 = take(h2)
     b3 = float(np.frombuffer(raw, dtype=np.float32, count=1, offset=off)[0])
-    return w1, b1, w2, b2, w3, b3
+    return w1, b1, w2, b2, w3, b3, h1, h2
 
 
 # ---------------------------------------------------------------------------
@@ -115,14 +137,24 @@ def load_jnnm(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray,
 # ---------------------------------------------------------------------------
 def load_calibration(path: Path, n_calib: int) -> np.ndarray:
     raw = path.read_bytes()
-    if len(raw) < 8 or raw[:4] != DATASET_MAGIC:
-        raise ValueError(f"{path}: bad magic — not a JNNT dataset?")
+    if len(raw) < 8:
+        raise ValueError(f"{path}: file too short")
+    magic = raw[:4]
+    if magic == DATASET_JNNW_MAGIC:
+        record_sz = DATASET_JNNW_RECORD_SZ
+    elif magic == DATASET_JNNT_MAGIC:
+        record_sz = DATASET_JNNT_RECORD_SZ
+    else:
+        raise ValueError(f"{path}: unknown dataset magic {magic!r}")
+
     count = struct.unpack_from("<I", raw, 4)[0]
-    if 8 + count * DATASET_RECORD_SZ != len(raw):
-        raise ValueError(f"{path}: corrupt dataset")
+    if 8 + count * record_sz != len(raw):
+        raise ValueError(
+            f"{path}: size {len(raw)} != header-implied "
+            f"{8 + count * record_sz}")
     n_use = min(n_calib, count)
-    body  = np.frombuffer(raw[8:8 + n_use * DATASET_RECORD_SZ],
-                          dtype=np.uint8).reshape(n_use, DATASET_RECORD_SZ)
+    body  = np.frombuffer(raw[8:8 + n_use * record_sz],
+                          dtype=np.uint8).reshape(n_use, record_sz)
     bbs   = body[:, :32].view(np.uint64).reshape(n_use, 4)
     stm   = body[:, 32]
 
@@ -160,9 +192,9 @@ def quantise(w1, b1, w2, b2, w3, b3, X_calib):
     sw3 = max(np.abs(w3).max(), 1e-8) / 127.0
 
     # Run the float reference on the calibration slice to size sh1/sh2.
-    h1_pre = X_calib @ w1.T + b1            # (N, HIDDEN1)
+    h1_pre = X_calib @ w1.T + b1            # (N, hidden1)
     h1     = np.maximum(0.0, h1_pre)
-    h2_pre = h1 @ w2.T + b2                  # (N, HIDDEN2)
+    h2_pre = h1 @ w2.T + b2                  # (N, hidden2)
     h2     = np.maximum(0.0, h2_pre)
 
     # 99.9-percentile to be robust to a single outlier.
@@ -211,15 +243,17 @@ def float_eval(X: np.ndarray, w1, b1, w2, b2, w3, b3) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-def save_jnnq(path: Path, q: tuple) -> None:
+def save_jnnq(path: Path, q: tuple, hidden1: int, hidden2: int) -> None:
     (w1_q, b1_q, w2_q, b2_q, w3_q, b3_q,
      mul1, mul2, mul_out, _) = q
-    if w1_q.shape != (HIDDEN1, NUM_FEATS): raise ValueError("w1 shape")
-    if w2_q.shape != (HIDDEN2, HIDDEN1):   raise ValueError("w2 shape")
+    if w1_q.shape != (hidden1, NUM_FEATS):
+        raise ValueError(f"w1 shape {w1_q.shape} != ({hidden1}, {NUM_FEATS})")
+    if w2_q.shape != (hidden2, hidden1):
+        raise ValueError(f"w2 shape {w2_q.shape} != ({hidden2}, {hidden1})")
     with path.open("wb") as f:
         f.write(JNNQ_MAGIC)
         f.write(struct.pack("<IIIII",
-                            JNNQ_VERSION, NUM_FEATS, HIDDEN1, HIDDEN2, 1))
+                            JNNQ_VERSION, NUM_FEATS, hidden1, hidden2, 1))
         f.write(struct.pack("<fff", mul1, mul2, mul_out))
         f.write(w1_q.tobytes())
         f.write(b1_q.tobytes())
@@ -236,9 +270,10 @@ def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(
         description="Post-training int8 quantisation of a Jass MLP.")
     p.add_argument("--in",     dest="in_path",  type=Path, required=True,
-                   help="float32 JNNM file from train_mlp.py")
+                   help="float32 JNNM file from train_v3.py / train_mlp.py")
     p.add_argument("--data",   type=Path,       required=True,
-                   help="self-play dataset for activation calibration")
+                   help="self-play dataset for activation calibration "
+                        "(JNNW or legacy JNNT)")
     p.add_argument("--out",    type=Path,       default=Path("nnue-q.bin"),
                    help="output JNNQ file (default: nnue-q.bin)")
     p.add_argument("--n-calib", type=int,       default=2000,
@@ -246,7 +281,8 @@ def main(argv: list[str]) -> int:
     args = p.parse_args(argv)
 
     print(f"loading float reference {args.in_path} …")
-    w1, b1, w2, b2, w3, b3 = load_jnnm(args.in_path)
+    w1, b1, w2, b2, w3, b3, hidden1, hidden2 = load_jnnm(args.in_path)
+    print(f"  topology: {NUM_FEATS} → {hidden1} → {hidden2} → 1")
 
     print(f"loading {args.n_calib} calibration positions from {args.data} …")
     X_calib = load_calibration(args.data, args.n_calib)
@@ -269,7 +305,7 @@ def main(argv: list[str]) -> int:
     print(f"  diff: mean={diff.mean():+.2f}  std={diff.std():.2f}  "
           f"|max|={np.abs(diff).max():.2f}  RMSE={np.sqrt((diff**2).mean()):.2f}")
 
-    save_jnnq(args.out, q)
+    save_jnnq(args.out, q, hidden1, hidden2)
     print(f"wrote {args.out} ({args.out.stat().st_size} bytes)")
     return 0
 
