@@ -363,6 +363,177 @@ void test_load_network_dispatches_on_magic() {
     std::remove(lin_path.c_str());
 }
 
+// ---------------------------------------------------------------------------
+// MLPNetworkQ — int8 quantised perceptron.
+// ---------------------------------------------------------------------------
+
+bool write_mlpq_file(
+        const std::string& path,
+        const std::array<std::int8_t,
+                         MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM>& w1,
+        const std::array<std::int32_t, MLPNetworkQ::HIDDEN1>&            b1,
+        const std::array<std::int8_t,
+                         MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>&   w2,
+        const std::array<std::int32_t, MLPNetworkQ::HIDDEN2>&            b2,
+        const std::array<std::int8_t, MLPNetworkQ::HIDDEN2>&             w3,
+        std::int32_t b3,
+        float mul1, float mul2, float mul_out) {
+    std::ofstream f(path, std::ios::binary);
+    if (!f) return false;
+    f.write("JNNQ", 4);
+    auto wu32 = [&](std::uint32_t v) {
+        f.write(reinterpret_cast<const char*>(&v), 4);
+    };
+    wu32(1);  // version
+    wu32(static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM));
+    wu32(static_cast<std::uint32_t>(MLPNetworkQ::HIDDEN1));
+    wu32(static_cast<std::uint32_t>(MLPNetworkQ::HIDDEN2));
+    wu32(1u);
+    auto wf = [&](float v) {
+        f.write(reinterpret_cast<const char*>(&v), 4);
+    };
+    wf(mul1); wf(mul2); wf(mul_out);
+    auto wbytes = [&](const void* p, std::size_t n) {
+        f.write(reinterpret_cast<const char*>(p), static_cast<std::streamsize>(n));
+    };
+    wbytes(w1.data(), w1.size() * sizeof(std::int8_t));
+    wbytes(b1.data(), b1.size() * sizeof(std::int32_t));
+    wbytes(w2.data(), w2.size() * sizeof(std::int8_t));
+    wbytes(b2.data(), b2.size() * sizeof(std::int32_t));
+    wbytes(w3.data(), w3.size() * sizeof(std::int8_t));
+    f.write(reinterpret_cast<const char*>(&b3), sizeof(std::int32_t));
+    return f.good();
+}
+
+void test_mlpq_forward_pass_matches_hand_computed() {
+    // Build the smallest deterministic path that yields a non-trivial
+    // output, mirroring the float MLP test.
+    //   feature 4 (b=1, kind=0) = "STM has man on bit 1 (FMJD square 2)"
+    //   w1[0 * INPUT_DIM + 4] = 100  → acc1[0] = 100 (only neuron firing)
+    //   mul1 = 0.5                    → h1[0] = round(50) = 50
+    //   w2[0 * HIDDEN1 + 0]   = 4     → acc2[0] = 4 * 50 = 200
+    //   mul2 = 1.0                    → h2[0] = 200 → clipped to 127
+    //   w3[0]                 = 1     → acc3 = 127
+    //   mul_out = 2.0                 → out = 254
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    w1[0 * MLPNetworkQ::INPUT_DIM + 4]   = 100;
+    w2[0 * MLPNetworkQ::HIDDEN1   + 0]   = 4;
+    w3[0]                                 = 1;
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-fwd-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.5f, /*mul2=*/1.0f, /*mul_out=*/2.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    const Position p_w = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p_w), 254);
+
+    // STM symmetry: mirrored black-to-move position must light up the
+    // same feature index.
+    const Position p_b = parse("B:W1:B49");
+    JASS_CHECK_EQ(net.evaluate(p_b), 254);
+
+    // Different square → feature inactive → 0 contribution at every layer.
+    const Position other = parse("W:W3:B1");
+    JASS_CHECK_EQ(net.evaluate(other), 0);
+
+    std::remove(path.c_str());
+}
+
+void test_mlpq_save_load_roundtrip() {
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    w1[0 * MLPNetworkQ::INPUT_DIM + 4] = 100;
+    w2[0 * MLPNetworkQ::HIDDEN1   + 0] = 4;
+    w3[0]                              = 1;
+
+    const std::string in_path  = make_tmp_path("/tmp/jass-mlpq-in-XXXXXX");
+    const std::string out_path = make_tmp_path("/tmp/jass-mlpq-out-XXXXXX");
+    JASS_CHECK(write_mlpq_file(in_path, w1, b1, w2, b2, w3, 0,
+                               0.5f, 1.0f, 2.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(in_path));
+    JASS_CHECK(net.save(out_path));
+
+    MLPNetworkQ reloaded;
+    JASS_CHECK(reloaded.load(out_path));
+
+    const Position p = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p), reloaded.evaluate(p));
+    JASS_CHECK_EQ(reloaded.evaluate(p), 254);
+
+    std::remove(in_path.c_str());
+    std::remove(out_path.c_str());
+}
+
+void test_mlpq_load_rejects_missing_or_bad_file() {
+    MLPNetworkQ net;
+    JASS_CHECK(!net.load("/no/such/path/jass-mlpq.bin"));
+
+    // Wrong magic.
+    const std::string bad_magic = make_tmp_path("/tmp/jass-mlpq-bad-XXXXXX");
+    {
+        std::ofstream f(bad_magic, std::ios::binary);
+        f.write("ZZZZ", 4);
+        const std::uint32_t zero = 0;
+        for (int i = 0; i < 5; ++i)
+            f.write(reinterpret_cast<const char*>(&zero), 4);
+    }
+    JASS_CHECK(!net.load(bad_magic));
+    std::remove(bad_magic.c_str());
+
+    // Right magic but wrong version.
+    const std::string bad_ver = make_tmp_path("/tmp/jass-mlpq-ver-XXXXXX");
+    {
+        std::ofstream f(bad_ver, std::ios::binary);
+        f.write("JNNQ", 4);
+        const std::uint32_t v[5] = {
+            999u,  // version — wrong
+            static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM),
+            static_cast<std::uint32_t>(MLPNetworkQ::HIDDEN1),
+            static_cast<std::uint32_t>(MLPNetworkQ::HIDDEN2),
+            1u,
+        };
+        f.write(reinterpret_cast<const char*>(v), sizeof(v));
+    }
+    JASS_CHECK(!net.load(bad_ver));
+    std::remove(bad_ver.c_str());
+}
+
+void test_load_network_dispatches_to_mlpq() {
+    // A JNNQ file should come back as something whose evaluate()
+    // matches a freshly loaded MLPNetworkQ.
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    w1[0 * MLPNetworkQ::INPUT_DIM + 4] = 100;
+    w2[0 * MLPNetworkQ::HIDDEN1   + 0] = 4;
+    w3[0]                              = 1;
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-disp-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               0.5f, 1.0f, 2.0f));
+
+    std::unique_ptr<INetwork> net = load_network(path);
+    JASS_CHECK(net != nullptr);
+    if (net) {
+        JASS_CHECK_EQ(net->evaluate(parse("W:W2:B1")), 254);
+    }
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -379,4 +550,8 @@ void run_nnue_tests() {
     test_default_nnue_is_non_null_and_returns_finite_score();
     test_default_nnue_is_stable_across_calls();
     test_load_network_dispatches_on_magic();
+    test_mlpq_forward_pass_matches_hand_computed();
+    test_mlpq_save_load_roundtrip();
+    test_mlpq_load_rejects_missing_or_bad_file();
+    test_load_network_dispatches_to_mlpq();
 }
