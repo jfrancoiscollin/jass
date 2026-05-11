@@ -247,10 +247,19 @@ class JassEngine(EngineProc):
         self._send(f"position fen {fen}")
         self._read_until(lambda l: l == "ok" or l.startswith("error"))
 
-    def go(self, depth: int) -> Move | None:
-        self._send(f"go depth {depth}")
+    def go(self, depth: int | None = None,
+                 movetime: float | None = None) -> Move | None:
+        """Either depth (plies) or movetime (seconds) — exactly one.
+        Jass's HUB takes ms internally, we convert from seconds here."""
+        if movetime is not None:
+            self._send(f"go movetime {int(round(movetime * 1000))}")
+            timeout_s = movetime * 3.0 + 5.0
+        else:
+            self._send(f"go depth {depth}")
+            timeout_s = 60.0
         lines = self._read_until(lambda l: l.startswith("bestmove")
-                                          or l.startswith("error"))
+                                          or l.startswith("error"),
+                                 timeout_s=timeout_s)
         last = lines[-1]
         if last.startswith("error"):
             return None
@@ -276,18 +285,25 @@ class ScanEngine(EngineProc):
         self._send("new-game")
 
     def go_from(self, starting_scan_pos: str, scan_moves: list[str],
-                depth: int) -> Move | None:
+                depth: int | None = None,
+                movetime: float | None = None) -> Move | None:
+        """Either depth or movetime (seconds) — exactly one."""
         if scan_moves:
             moves_str = " ".join(scan_moves)
             self._send(f'pos pos={starting_scan_pos} moves="{moves_str}"')
         else:
             self._send(f"pos pos={starting_scan_pos}")
-        self._send(f"level depth={depth}")
+        if movetime is not None:
+            self._send(f"level move-time={movetime}")
+            timeout_s = movetime * 3.0 + 5.0
+        else:
+            self._send(f"level depth={depth}")
+            timeout_s = 120.0
         self._send("go think")
         try:
             lines = self._read_until(lambda l: l.startswith("done")
                                               or l.startswith("error"),
-                                     timeout_s=120.0)
+                                     timeout_s=timeout_s)
         except TimeoutError:
             return None
         last = lines[-1]
@@ -391,7 +407,9 @@ class GameResult:
 
 def play_game(white: object, black: object,
               referee: Referee,
-              opening_fen: str, depth: int,
+              opening_fen: str,
+              depth: int | None = None,
+              movetime: float | None = None,
               max_plies: int = 200) -> GameResult:
     """Both engines must already be ready. They are addressed via
     duck-typed helpers (`go_jass(engine, depth)` for JassEngine,
@@ -413,10 +431,11 @@ def play_game(white: object, black: object,
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
         if isinstance(current, JassEngine):
-            mv = current.go(depth)
+            mv = current.go(depth=depth, movetime=movetime)
         else:
             scan_pos, scan_moves = referee.scan_pos()
-            mv = current.go_from(scan_pos, scan_moves, depth)
+            mv = current.go_from(scan_pos, scan_moves,
+                                 depth=depth, movetime=movetime)
         if mv is None or (mv.frm == 0 and mv.to == 0):
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
@@ -466,11 +485,19 @@ def main(argv):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     p.add_argument("--jass",  required=True, help="path to the Jass binary")
     p.add_argument("--scan",  required=True, help="path to the Scan binary")
-    p.add_argument("--depth", type=int, default=8)
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--depth",    type=int,
+                   help="fixed search depth (plies)")
+    g.add_argument("--movetime", type=float,
+                   help="per-move time budget in seconds (real number)")
     p.add_argument("--pairs", type=int, default=2,
                    help="colour-swap pairs per opening (total games = 18 × pairs)")
     p.add_argument("--max-plies", type=int, default=200)
     args = p.parse_args(argv)
+    if args.depth is None and args.movetime is None:
+        args.depth = 8  # back-compat default
+    budget_str = (f"depth {args.depth}" if args.depth is not None
+                  else f"movetime {args.movetime}s")
 
     openings = opening_pool_via_jass(args.jass)
     print(f"opening pool: {len(openings)} positions")
@@ -488,9 +515,13 @@ def main(argv):
                 # Pair: Jass white vs Scan black, then Scan white vs Jass black.
                 for jass_is_white in (True, False):
                     if jass_is_white:
-                        r = play_game(jass, scan, referee, opening, args.depth, args.max_plies)
+                        r = play_game(jass, scan, referee, opening,
+                                      depth=args.depth, movetime=args.movetime,
+                                      max_plies=args.max_plies)
                     else:
-                        r = play_game(scan, jass, referee, opening, args.depth, args.max_plies)
+                        r = play_game(scan, jass, referee, opening,
+                                      depth=args.depth, movetime=args.movetime,
+                                      max_plies=args.max_plies)
                     games += 1
                     # Map "W"/"L" outcome to Jass's POV.
                     if r.outcome == "D":
@@ -516,7 +547,7 @@ def main(argv):
     rate = jass_score / games if games else 0.0
     elo  = estimate_elo(rate)
     print()
-    print(f"=== Jass vs Scan, depth {args.depth}, {games} games ===")
+    print(f"=== Jass vs Scan, {budget_str}, {games} games ===")
     print(f"  Jass={a_wins}  Scan={b_wins}  Draws={draws}")
     print(f"  Jass score rate: {rate:.3f} ({jass_score:.1f} / {games})")
     print(f"  ELO estimate:    {elo:+.0f} (95% CI ≈ ±{800/(games**0.5):.0f})")
