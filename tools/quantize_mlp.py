@@ -73,17 +73,22 @@ from pathlib import Path
 import numpy as np
 
 # Must stay in lockstep with src/nnue.hpp (MLPNetwork + MLPNetworkQ).
-NUM_SQUARES = 50
-NUM_KINDS   = 4
-NUM_FEATS   = NUM_SQUARES * NUM_KINDS  # 200
-MAX_HIDDEN  = 1024
-SIMD_TILE   = 32
+NUM_SQUARES        = 50
+NUM_KINDS          = 4
+NUM_FEATS_V2       = NUM_SQUARES * NUM_KINDS       # 200, V2 dense
+NUM_FEATS_HALFMEN  = 200 + 200 + 50                # 450, HalfMen lite
+NUM_FEATS          = NUM_FEATS_V2  # legacy alias
+MAX_HIDDEN         = 1024
+SIMD_TILE          = 32
 
-JNNM_MAGIC   = b"JNNM"
-JNNM_VERSION = 2
+JNNM_MAGIC      = b"JNNM"
+JNNM_VERSION_V2 = 2
+JNNM_VERSION_V3 = 3  # adds HalfMen input encoding
 
-JNNQ_MAGIC   = b"JNNQ"
-JNNQ_VERSION = 1
+JNNQ_MAGIC      = b"JNNQ"
+JNNQ_VERSION_V1 = 1
+JNNQ_VERSION_V2 = 2  # adds HalfMen input encoding
+JNNQ_VERSION    = JNNQ_VERSION_V2  # version emitted by save_jnnq
 
 # Calibration dataset formats. Only the 32-byte bitboard + 1-byte STM
 # prefix matters here; the rest of the record is ignored.
@@ -97,18 +102,30 @@ DATASET_JNNW_RECORD_SZ = 38
 # Load the float32 JNNM file produced by train_v3.py / train_mlp.py
 # ---------------------------------------------------------------------------
 def load_jnnm(path: Path):
-    """Returns (w1, b1, w2, b2, w3, b3, hidden1, hidden2) with shapes
-    sized from the file header — hidden1 and hidden2 are runtime."""
+    """Returns (w1, b1, w2, b2, w3, b3, input_dim, hidden1, hidden2).
+
+    Accepts JNNM v2 (input_dim must be 200) and JNNM v3 (input_dim in
+    {200, 450}). v2 is kept for backward compat with files written
+    before Cycle 6c; new outputs from train_v3.py are v3."""
     raw = path.read_bytes()
     if len(raw) < 24 or raw[:4] != JNNM_MAGIC:
         raise ValueError(f"{path}: bad magic — not a JNNM file?")
     version, in_dim, h1, h2, out_dim = struct.unpack_from("<IIIII", raw, 4)
-    if version != JNNM_VERSION:
-        raise ValueError(f"{path}: version {version}, expected {JNNM_VERSION}")
-    if in_dim != NUM_FEATS or out_dim != 1:
-        raise ValueError(
-            f"{path}: input_dim={in_dim} output_dim={out_dim} "
-            f"(expected {NUM_FEATS} and 1)")
+
+    if version == JNNM_VERSION_V2:
+        if in_dim != NUM_FEATS_V2:
+            raise ValueError(
+                f"{path}: v2 must have input_dim={NUM_FEATS_V2}, got {in_dim}")
+    elif version == JNNM_VERSION_V3:
+        if in_dim not in (NUM_FEATS_V2, NUM_FEATS_HALFMEN):
+            raise ValueError(
+                f"{path}: v3 input_dim must be {NUM_FEATS_V2} or "
+                f"{NUM_FEATS_HALFMEN}, got {in_dim}")
+    else:
+        raise ValueError(f"{path}: unsupported JNNM version {version}")
+
+    if out_dim != 1:
+        raise ValueError(f"{path}: output_dim={out_dim} (expected 1)")
     if h1 == 0 or h1 > MAX_HIDDEN or h2 == 0 or h2 > MAX_HIDDEN:
         raise ValueError(f"{path}: hidden dims out of range: {h1}, {h2}")
     if h1 % SIMD_TILE != 0 or h2 % SIMD_TILE != 0:
@@ -123,19 +140,85 @@ def load_jnnm(path: Path):
         off += n * 4
         return arr
 
-    w1 = take(h1 * NUM_FEATS).reshape(h1, NUM_FEATS)
+    w1 = take(h1 * in_dim).reshape(h1, in_dim)
     b1 = take(h1)
     w2 = take(h2 * h1).reshape(h2, h1)
     b2 = take(h2)
     w3 = take(h2)
     b3 = float(np.frombuffer(raw, dtype=np.float32, count=1, offset=off)[0])
-    return w1, b1, w2, b2, w3, b3, h1, h2
+    return w1, b1, w2, b2, w3, b3, in_dim, h1, h2
 
 
 # ---------------------------------------------------------------------------
 # Build the STM-relative feature matrix for a calibration slice.
 # ---------------------------------------------------------------------------
-def load_calibration(path: Path, n_calib: int) -> np.ndarray:
+def _encode_v2(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """Dense 200-feature STM-POV encoding, identical to
+    train_v3.py::_encode_v2 and src/nnue.cpp accumulate_kind."""
+    n = len(stm)
+    X = np.zeros((n, NUM_FEATS_V2), dtype=np.float32)
+    is_w = (stm == 0)
+    is_b = ~is_w
+    if is_w.any():
+        idx = np.where(is_w)[0]
+        sub = bbs[is_w]
+        for kind, src in enumerate((0, 1, 2, 3)):
+            for sq in range(NUM_SQUARES):
+                bit = np.uint64(1) << np.uint64(sq)
+                X[idx, sq * NUM_KINDS + kind] = (
+                    (sub[:, src] & bit) > 0).astype(np.float32)
+    if is_b.any():
+        idx = np.where(is_b)[0]
+        sub = bbs[is_b]
+        for kind, src in enumerate((2, 3, 0, 1)):
+            for sq in range(NUM_SQUARES):
+                bit = np.uint64(1) << np.uint64(sq)
+                X[idx, (NUM_SQUARES - 1 - sq) * NUM_KINDS + kind] = (
+                    (sub[:, src] & bit) > 0).astype(np.float32)
+    return X
+
+
+def _find_anchors(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """Same anchor definition as train_v3.py / src/nnue.cpp."""
+    n = len(stm)
+    anchors = np.empty(n, dtype=np.int32)
+    for i in range(n):
+        if stm[i] == 0:
+            bb = int(bbs[i, 0]) | int(bbs[i, 1])
+            anchors[i] = (bb.bit_length() - 1) if bb else 49
+        else:
+            bb = int(bbs[i, 2]) | int(bbs[i, 3])
+            if bb == 0:
+                anchors[i] = 49
+            else:
+                lsb = (bb & -bb).bit_length() - 1
+                anchors[i] = 49 - lsb
+    return anchors
+
+
+def _encode_halfmen(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """HalfMen lite 450-feature encoding."""
+    n = len(stm)
+    X = np.zeros((n, NUM_FEATS_HALFMEN), dtype=np.float32)
+    X_v2 = _encode_v2(bbs, stm)
+    X[:, :200] = X_v2
+    anchors = _find_anchors(bbs, stm)
+    X[np.arange(n), 400 + anchors] = 1.0
+    for kind in range(NUM_KINDS):
+        col_idx = np.arange(NUM_SQUARES) * NUM_KINDS + kind
+        sub = X_v2[:, col_idx]
+        for sq in range(NUM_SQUARES):
+            mask = sub[:, sq] > 0
+            if not mask.any():
+                continue
+            rel = (sq - anchors[mask]) % NUM_SQUARES
+            X[np.where(mask)[0], 200 + rel * NUM_KINDS + kind] = 1.0
+    return X
+
+
+def load_calibration(path: Path, n_calib: int, input_dim: int) -> np.ndarray:
+    """Build the calibration feature matrix with the encoding implied
+    by `input_dim` (200 → V2 dense, 450 → HalfMen lite)."""
     raw = path.read_bytes()
     if len(raw) < 8:
         raise ValueError(f"{path}: file too short")
@@ -158,26 +241,11 @@ def load_calibration(path: Path, n_calib: int) -> np.ndarray:
     bbs   = body[:, :32].view(np.uint64).reshape(n_use, 4)
     stm   = body[:, 32]
 
-    X = np.zeros((n_use, NUM_FEATS), dtype=np.float32)
-    is_w = (stm == 0)
-    is_b = ~is_w
-    if is_w.any():
-        idx = np.where(is_w)[0]
-        sub = bbs[is_w]
-        for kind, src in enumerate((0, 1, 2, 3)):
-            for sq in range(NUM_SQUARES):
-                bit = np.uint64(1) << np.uint64(sq)
-                col = sq * NUM_KINDS + kind
-                X[idx, col] = ((sub[:, src] & bit) > 0).astype(np.float32)
-    if is_b.any():
-        idx = np.where(is_b)[0]
-        sub = bbs[is_b]
-        for kind, src in enumerate((2, 3, 0, 1)):
-            for sq in range(NUM_SQUARES):
-                bit = np.uint64(1) << np.uint64(sq)
-                col = (NUM_SQUARES - 1 - sq) * NUM_KINDS + kind
-                X[idx, col] = ((sub[:, src] & bit) > 0).astype(np.float32)
-    return X
+    if input_dim == NUM_FEATS_V2:
+        return _encode_v2(bbs, stm)
+    if input_dim == NUM_FEATS_HALFMEN:
+        return _encode_halfmen(bbs, stm)
+    raise ValueError(f"unsupported input_dim {input_dim}")
 
 
 # ---------------------------------------------------------------------------
@@ -243,17 +311,18 @@ def float_eval(X: np.ndarray, w1, b1, w2, b2, w3, b3) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
-def save_jnnq(path: Path, q: tuple, hidden1: int, hidden2: int) -> None:
+def save_jnnq(path: Path, q: tuple,
+              input_dim: int, hidden1: int, hidden2: int) -> None:
     (w1_q, b1_q, w2_q, b2_q, w3_q, b3_q,
      mul1, mul2, mul_out, _) = q
-    if w1_q.shape != (hidden1, NUM_FEATS):
-        raise ValueError(f"w1 shape {w1_q.shape} != ({hidden1}, {NUM_FEATS})")
+    if w1_q.shape != (hidden1, input_dim):
+        raise ValueError(f"w1 shape {w1_q.shape} != ({hidden1}, {input_dim})")
     if w2_q.shape != (hidden2, hidden1):
         raise ValueError(f"w2 shape {w2_q.shape} != ({hidden2}, {hidden1})")
     with path.open("wb") as f:
         f.write(JNNQ_MAGIC)
         f.write(struct.pack("<IIIII",
-                            JNNQ_VERSION, NUM_FEATS, hidden1, hidden2, 1))
+                            JNNQ_VERSION, input_dim, hidden1, hidden2, 1))
         f.write(struct.pack("<fff", mul1, mul2, mul_out))
         f.write(w1_q.tobytes())
         f.write(b1_q.tobytes())
@@ -281,12 +350,14 @@ def main(argv: list[str]) -> int:
     args = p.parse_args(argv)
 
     print(f"loading float reference {args.in_path} …")
-    w1, b1, w2, b2, w3, b3, hidden1, hidden2 = load_jnnm(args.in_path)
-    print(f"  topology: {NUM_FEATS} → {hidden1} → {hidden2} → 1")
+    w1, b1, w2, b2, w3, b3, input_dim, hidden1, hidden2 = load_jnnm(args.in_path)
+    encoding = "halfmen" if input_dim == NUM_FEATS_HALFMEN else "v2"
+    print(f"  topology: {input_dim} → {hidden1} → {hidden2} → 1  "
+          f"(encoding={encoding})")
 
     print(f"loading {args.n_calib} calibration positions from {args.data} …")
-    X_calib = load_calibration(args.data, args.n_calib)
-    print(f"  {X_calib.shape[0]} positions")
+    X_calib = load_calibration(args.data, args.n_calib, input_dim=input_dim)
+    print(f"  {X_calib.shape[0]} positions, feature dim {X_calib.shape[1]}")
 
     print("quantising …")
     q = quantise(w1, b1, w2, b2, w3, b3, X_calib)
@@ -305,7 +376,7 @@ def main(argv: list[str]) -> int:
     print(f"  diff: mean={diff.mean():+.2f}  std={diff.std():.2f}  "
           f"|max|={np.abs(diff).max():.2f}  RMSE={np.sqrt((diff**2).mean()):.2f}")
 
-    save_jnnq(args.out, q, hidden1, hidden2)
+    save_jnnq(args.out, q, input_dim, hidden1, hidden2)
     print(f"wrote {args.out} ({args.out.stat().st_size} bytes)")
     return 0
 

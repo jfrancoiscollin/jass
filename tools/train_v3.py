@@ -67,36 +67,37 @@ from torch.utils.data import DataLoader, TensorDataset
 # ---------------------------------------------------------------------------
 NUM_SQUARES        = 50
 NUM_KINDS          = 4
-NUM_FEATS          = NUM_SQUARES * NUM_KINDS
+NUM_FEATS_V2       = NUM_SQUARES * NUM_KINDS       # 200
+NUM_FEATS_HALFMEN  = 200 + 200 + 50                # 450 (abs + rel + anchor)
+NUM_FEATS          = NUM_FEATS_V2  # kept as alias for legacy callers
 DATASET_MAGIC_WDL  = b"JNNW"
 DATASET_RECORD_SZ  = 38
 
-# Match the JNNM v2 binary format used by tools/train_mlp.py.
+# JNNM binary format. v3 adds runtime input_dim (200 or 450) so HalfMen
+# weights can be loaded by the C++ MLPNetwork. v2 files (input_dim=200,
+# implicit V2 encoding) are still accepted by the loader.
 JNNM_MAGIC   = b"JNNM"
-JNNM_VERSION = 2
+JNNM_VERSION = 3
 
 # Stockfish-style pseudo-score for a known win/loss outcome.
 WDL_PSEUDO_SCALE = 800.0
 
+# Supported input encodings.
+ENCODING_V2      = "v2"
+ENCODING_HALFMEN = "halfmen"
 
-def load_records(path: Path):
-    raw = path.read_bytes()
-    if len(raw) < 8 or raw[:4] != DATASET_MAGIC_WDL:
-        raise ValueError(f"{path}: bad magic — expected JNNW")
-    count = struct.unpack_from("<I", raw, 4)[0]
-    expected = 8 + count * DATASET_RECORD_SZ
-    if len(raw) != expected:
-        raise ValueError(f"{path}: expected {expected} bytes, got {len(raw)}")
 
-    body  = np.frombuffer(raw[8:], dtype=np.uint8).reshape(count, DATASET_RECORD_SZ)
-    bbs   = body[:, :32].view(np.uint64).reshape(count, 4)
-    stm   = body[:, 32]
-    score = body[:, 33:37].view(np.int32).reshape(count)
-    wdl   = body[:, 37].view(np.int8).reshape(count)
+def input_dim_for(encoding: str) -> int:
+    if encoding == ENCODING_V2:      return NUM_FEATS_V2
+    if encoding == ENCODING_HALFMEN: return NUM_FEATS_HALFMEN
+    raise ValueError(f"unknown encoding {encoding!r}")
 
-    # STM-POV one-hot encoding (mirror + colour swap on black-to-move),
-    # identical to tools/train_mlp.py.
-    X = np.zeros((count, NUM_FEATS), dtype=np.float32)
+
+def _encode_v2(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """STM-POV dense 200-feature encoding (mirror+colour-swap on
+    black-to-move). Returns float32 (N, 200)."""
+    count = len(stm)
+    X = np.zeros((count, NUM_FEATS_V2), dtype=np.float32)
     is_w = (stm == 0)
     is_b = ~is_w
     if is_w.any():
@@ -115,6 +116,81 @@ def load_records(path: Path):
                 bit = np.uint64(1) << np.uint64(sq)
                 X[idx, (NUM_SQUARES - 1 - sq) * NUM_KINDS + kind] = (
                     (sub[:, src] & bit) > 0).astype(np.float32)
+    return X
+
+
+def _find_anchors_halfmen(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """Anchor per record in STM-POV (0..49). Same definition as
+    scout_halfmen.find_anchors and src/nnue.cpp::compute_anchor:
+      * white-to-move (no mirror): anchor = MSB of (white_men | white_kings)
+      * black-to-move (mirror): anchor = 49 - LSB of (black_men | black_kings)
+    Falls back to 49 when STM has no pieces (should never happen
+    during search but defensive)."""
+    n = len(stm)
+    anchors = np.empty(n, dtype=np.int32)
+    for i in range(n):
+        if stm[i] == 0:
+            bb = int(bbs[i, 0]) | int(bbs[i, 1])
+            anchors[i] = (bb.bit_length() - 1) if bb else 49
+        else:
+            bb = int(bbs[i, 2]) | int(bbs[i, 3])
+            if bb == 0:
+                anchors[i] = 49
+            else:
+                lsb = (bb & -bb).bit_length() - 1
+                anchors[i] = 49 - lsb
+    return anchors
+
+
+def _encode_halfmen(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
+    """HalfMen lite 450-feature encoding: 200 absolute + 200 anchor-
+    relative + 50 anchor one-hot. Same layout as the scout and the
+    C++ MLPNetwork HalfMen path."""
+    count = len(stm)
+    X = np.zeros((count, NUM_FEATS_HALFMEN), dtype=np.float32)
+
+    # Slot the v2 absolute features into the first 200 columns.
+    X_v2 = _encode_v2(bbs, stm)
+    X[:, :200] = X_v2
+
+    anchors = _find_anchors_halfmen(bbs, stm)
+    # Anchor one-hot at offset 400.
+    X[np.arange(count), 400 + anchors] = 1.0
+
+    # Anchor-relative columns derived from the v2 absolute features.
+    for kind in range(NUM_KINDS):
+        col_idx = np.arange(NUM_SQUARES) * NUM_KINDS + kind
+        sub = X_v2[:, col_idx]  # (N, 50)
+        for sq in range(NUM_SQUARES):
+            mask = sub[:, sq] > 0
+            if not mask.any():
+                continue
+            rel = (sq - anchors[mask]) % NUM_SQUARES
+            X[np.where(mask)[0], 200 + rel * NUM_KINDS + kind] = 1.0
+    return X
+
+
+def load_records(path: Path, encoding: str = ENCODING_V2):
+    raw = path.read_bytes()
+    if len(raw) < 8 or raw[:4] != DATASET_MAGIC_WDL:
+        raise ValueError(f"{path}: bad magic — expected JNNW")
+    count = struct.unpack_from("<I", raw, 4)[0]
+    expected = 8 + count * DATASET_RECORD_SZ
+    if len(raw) != expected:
+        raise ValueError(f"{path}: expected {expected} bytes, got {len(raw)}")
+
+    body  = np.frombuffer(raw[8:], dtype=np.uint8).reshape(count, DATASET_RECORD_SZ)
+    bbs   = body[:, :32].view(np.uint64).reshape(count, 4)
+    stm   = body[:, 32]
+    score = body[:, 33:37].view(np.int32).reshape(count)
+    wdl   = body[:, 37].view(np.int8).reshape(count)
+
+    if encoding == ENCODING_V2:
+        X = _encode_v2(bbs, stm)
+    elif encoding == ENCODING_HALFMEN:
+        X = _encode_halfmen(bbs, stm)
+    else:
+        raise ValueError(f"unknown encoding {encoding!r}")
 
     y_score = np.where(stm == 0, score, -score).astype(np.float32)
     y_wdl   = np.where(stm == 0, wdl,   -wdl  ).astype(np.float32)
@@ -125,10 +201,11 @@ def load_records(path: Path):
 # Model
 # ---------------------------------------------------------------------------
 class MLP(nn.Module):
-    def __init__(self, hidden_sizes: list[int]):
+    def __init__(self, input_dim: int, hidden_sizes: list[int]):
         super().__init__()
+        self.input_dim = input_dim
         layers: list[nn.Module] = []
-        prev = NUM_FEATS
+        prev = input_dim
         for h in hidden_sizes:
             layers.append(nn.Linear(prev, h))
             layers.append(nn.ReLU())
@@ -231,19 +308,15 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
 # Export
 # ---------------------------------------------------------------------------
 def save_jnnm(model: MLP, hidden_sizes: list[int], path: Path) -> None:
-    """Serialize an MLP to the JNNM v2 binary format.
+    """Serialize an MLP to the JNNM v3 binary format. Carries the
+    actual input_dim (200 for V2 dense, 450 for HalfMen) and hidden
+    dims, so the runtime-dimensioned C++ MLPNetwork can load any
+    2-hidden-layer arch produced by this trainer.
 
-    Note: the production C++ MLPNetwork class still hard-codes
-    HIDDEN1=64, HIDDEN2=32 and rejects other dimensions at load
-    time. This export is forward-compatible — when the C++ loader is
-    runtime-dimensioned in Cycle 3, the same files will become
-    directly consumable.
-
-    Only flat 2-hidden-layer architectures are supported by JNNM v2
+    Only flat 2-hidden-layer architectures are supported by JNNM
     (the format has hidden1 / hidden2 fields). Deeper architectures
     are skipped silently here; the trainer still reports their val
-    MSE for selection.
-    """
+    MSE for selection."""
     if len(hidden_sizes) != 2:
         print(f"  (skipping JNNM export for {len(hidden_sizes)}-hidden-layer arch)")
         return
@@ -259,7 +332,8 @@ def save_jnnm(model: MLP, hidden_sizes: list[int], path: Path) -> None:
 
     with path.open("wb") as f:
         f.write(JNNM_MAGIC)
-        f.write(struct.pack("<IIIII", JNNM_VERSION, NUM_FEATS, h1, h2, 1))
+        f.write(struct.pack("<IIIII",
+                            JNNM_VERSION, model.input_dim, h1, h2, 1))
         f.write(w1.tobytes())
         f.write(b1.tobytes())
         f.write(w2.tobytes())
@@ -290,11 +364,18 @@ def main(argv):
     p.add_argument("--patience", type=int,   default=8)
     p.add_argument("--out-dir",  type=Path,  default=Path("trained_v3"),
                    help="directory to write JNNM exports for 2-hidden-layer archs")
+    p.add_argument("--encoding", choices=[ENCODING_V2, ENCODING_HALFMEN],
+                   default=ENCODING_V2,
+                   help="input feature encoding (default: v2 dense 200; "
+                        "halfmen adds 200 anchor-relative + 50 anchor one-hot "
+                        "for a 450-feature input, beats v2 by ~25%% val MSE "
+                        "at equal parameter count on 1M JNNW)")
     args = p.parse_args(argv)
 
-    print(f"loading {args.data} …")
+    input_dim = input_dim_for(args.encoding)
+    print(f"loading {args.data} (encoding={args.encoding}, input_dim={input_dim}) …")
     t0 = time.time()
-    X, y_score, y_wdl = load_records(args.data)
+    X, y_score, y_wdl = load_records(args.data, encoding=args.encoding)
     n = len(X)
     print(f"  {n} records  ({time.time() - t0:.1f}s to encode)")
     win  = (y_wdl > 0).sum() / n
@@ -310,7 +391,7 @@ def main(argv):
     for arch_str in args.archs:
         hidden = parse_arch(arch_str)
         print(f"\n=== arch {arch_str} ===")
-        model    = MLP(hidden)
+        model    = MLP(input_dim, hidden)
         n_params = sum(p.numel() for p in model.parameters())
         print(f"  params: {n_params:,}")
 

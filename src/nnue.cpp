@@ -338,7 +338,13 @@ constexpr char          MLPQ_MAGIC[4] = {'J', 'N', 'N', 'Q'};
 constexpr std::uint32_t MLP_VERSION_V2 = 2;
 constexpr std::uint32_t MLP_VERSION_V3 = 3;
 constexpr std::uint32_t MLP_VERSION    = MLP_VERSION_V3;  // version emitted by save()
-constexpr std::uint32_t MLPQ_VERSION   = 1;
+// JNNQ version history:
+//   v1: V2 dense encoding only, input_dim fixed at 200.
+//   v2: Cycle-6c. Adds HalfMen lite (input_dim = 450). Loader still
+//       accepts v1 for backward compat; writer always emits v2.
+constexpr std::uint32_t MLPQ_VERSION_V1 = 1;
+constexpr std::uint32_t MLPQ_VERSION_V2 = 2;
+constexpr std::uint32_t MLPQ_VERSION    = MLPQ_VERSION_V2;
 
 // Returns true iff `input_dim` is one of the two encodings the loader
 // is willing to accept. Used by both `load()` and `load_from_bytes()`
@@ -532,8 +538,23 @@ inline std::int32_t saturate_to_int8(float x) noexcept {
     return static_cast<int>(x + 0.5f);
 }
 
+// Add the W1 column for input feature `feat` to the int32
+// accumulator `acc1`. `input_dim` is the row stride of W1.
+inline void add_w1_column_q(const std::int8_t* w1,
+                            std::size_t        hidden1,
+                            std::size_t        input_dim,
+                            std::int32_t*      acc1,
+                            std::size_t        feat) noexcept {
+    for (std::size_t j = 0; j < hidden1; ++j) {
+        acc1[j] += static_cast<std::int32_t>(w1[j * input_dim + feat]);
+    }
+}
+
+// V2 dense: walk the set bits of `bb` and add the column at
+// `(mirror ? 49 - bit : bit) * 4 + kind`.
 inline void accumulate_q_kind(const std::int8_t* w1,
                               std::size_t        hidden1,
+                              std::size_t        input_dim,
                               std::int32_t*      acc1,
                               Bitboard           bb,
                               std::size_t        kind,
@@ -543,10 +564,43 @@ inline void accumulate_q_kind(const std::int8_t* w1,
         const std::size_t b   = mirror
             ? static_cast<std::size_t>(49 - bit)
             : static_cast<std::size_t>(bit);
-        const std::size_t feat = b * 4 + kind;
-        for (std::size_t j = 0; j < hidden1; ++j) {
-            acc1[j] += static_cast<std::int32_t>(w1[j * MLPNetworkQ::INPUT_DIM + feat]);
-        }
+        add_w1_column_q(w1, hidden1, input_dim, acc1, b * 4 + kind);
+    }
+}
+
+// HalfMen: V2 absolute column + anchor-relative column for every
+// active piece (anchor one-hot is added once outside this helper).
+inline void accumulate_q_kind_halfmen(const std::int8_t* w1,
+                                      std::size_t        hidden1,
+                                      std::size_t        input_dim,
+                                      std::int32_t*      acc1,
+                                      Bitboard           bb,
+                                      std::size_t        kind,
+                                      bool               mirror,
+                                      std::size_t        anchor) noexcept {
+    while (bb) {
+        const int         bit = square_to_bit(pop_lsb(bb));
+        const std::size_t b   = mirror
+            ? static_cast<std::size_t>(49 - bit)
+            : static_cast<std::size_t>(bit);
+        add_w1_column_q(w1, hidden1, input_dim, acc1, b * 4 + kind);
+        const std::size_t rel = (b + 50 - anchor) % 50;
+        add_w1_column_q(w1, hidden1, input_dim, acc1, 200 + rel * 4 + kind);
+    }
+}
+
+// STM-POV anchor (same definition as MLPNetwork side; see compute_anchor
+// in the float section).
+inline std::size_t compute_anchor_q(const Position& pos) noexcept {
+    if (pos.side_to_move() == Color::White) {
+        const Bitboard bb = pos.white_men() | pos.white_kings();
+        if (bb == 0) return 49;
+        return static_cast<std::size_t>(std::bit_width(bb)) - 1;
+    } else {
+        const Bitboard bb = pos.black_men() | pos.black_kings();
+        if (bb == 0) return 49;
+        const int lsb = std::countr_zero(bb);
+        return static_cast<std::size_t>(49 - lsb);
     }
 }
 
@@ -702,17 +756,25 @@ inline std::int32_t dot_int8_int8_wasm(const std::int8_t* h,
 }  // namespace
 
 MLPNetworkQ::MLPNetworkQ() {
-    resize_for(HIDDEN1, HIDDEN2);
+    resize_for(INPUT_DIM, HIDDEN1, HIDDEN2);
 }
 
 MLPNetworkQ::MLPNetworkQ(std::size_t hidden1, std::size_t hidden2) {
-    resize_for(hidden1, hidden2);
+    resize_for(INPUT_DIM, hidden1, hidden2);
 }
 
-void MLPNetworkQ::resize_for(std::size_t h1, std::size_t h2) {
-    hidden1_ = h1;
-    hidden2_ = h2;
-    w1_.assign(h1 * INPUT_DIM, 0);
+MLPNetworkQ::MLPNetworkQ(std::size_t input_dim,
+                         std::size_t hidden1,
+                         std::size_t hidden2) {
+    resize_for(input_dim, hidden1, hidden2);
+}
+
+void MLPNetworkQ::resize_for(std::size_t input_dim,
+                             std::size_t h1, std::size_t h2) {
+    input_dim_ = input_dim;
+    hidden1_   = h1;
+    hidden2_   = h2;
+    w1_.assign(h1 * input_dim, 0);
     b1_.assign(h1,             0);
     w2_.assign(h2 * h1,        0);
     b2_.assign(h2,             0);
@@ -721,30 +783,47 @@ void MLPNetworkQ::resize_for(std::size_t h1, std::size_t h2) {
 }
 
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
-    const std::size_t h1n = hidden1_;
-    const std::size_t h2n = hidden2_;
+    const std::size_t h1n  = hidden1_;
+    const std::size_t h2n  = hidden2_;
+    const std::size_t ind  = input_dim_;
+    const bool        halfmen = (ind == HALFMEN_INPUT_DIM);
     const std::int8_t* const w1 = w1_.data();
     const std::int8_t* const w2 = w2_.data();
     const std::int8_t* const w3 = w3_.data();
 
     // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
-    // The active-feature loop is naturally efficient (≈20 pieces per
-    // position, each adds an `hidden1`-int8 column) so it stays scalar
-    // even when AVX2 is available; auto-vectorisation handles the
-    // inner add adequately at -O3.
+    // Active-feature loop stays scalar even when AVX2 is available;
+    // auto-vectorisation handles the inner add adequately at -O3.
     std::int32_t acc1[MAX_HIDDEN];
     for (std::size_t j = 0; j < h1n; ++j) acc1[j] = b1_[j];
 
-    if (pos.side_to_move() == Color::White) {
-        accumulate_q_kind(w1, h1n, acc1, pos.white_men(),    0, false);
-        accumulate_q_kind(w1, h1n, acc1, pos.white_kings(),  1, false);
-        accumulate_q_kind(w1, h1n, acc1, pos.black_men(),    2, false);
-        accumulate_q_kind(w1, h1n, acc1, pos.black_kings(),  3, false);
+    if (halfmen) {
+        const std::size_t anchor = compute_anchor_q(pos);
+        if (pos.side_to_move() == Color::White) {
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_men(),    0, false, anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_kings(),  1, false, anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_men(),    2, false, anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_kings(),  3, false, anchor);
+        } else {
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_men(),    0, true,  anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_kings(),  1, true,  anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_men(),    2, true,  anchor);
+            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_kings(),  3, true,  anchor);
+        }
+        // Anchor one-hot at `400 + anchor`.
+        add_w1_column_q(w1, h1n, ind, acc1, 400 + anchor);
     } else {
-        accumulate_q_kind(w1, h1n, acc1, pos.black_men(),    0, true);
-        accumulate_q_kind(w1, h1n, acc1, pos.black_kings(),  1, true);
-        accumulate_q_kind(w1, h1n, acc1, pos.white_men(),    2, true);
-        accumulate_q_kind(w1, h1n, acc1, pos.white_kings(),  3, true);
+        if (pos.side_to_move() == Color::White) {
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_men(),    0, false);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_kings(),  1, false);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_men(),    2, false);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_kings(),  3, false);
+        } else {
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_men(),    0, true);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_kings(),  1, true);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_men(),    2, true);
+            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_kings(),  3, true);
+        }
     }
 
     // ReLU + quantise to int8 ([0, 127]).
@@ -849,6 +928,21 @@ bool mlpq_dims_ok(std::uint32_t h1, std::uint32_t h2) noexcept {
         && h2 % MLPNetworkQ::SIMD_TILE == 0;
 }
 
+// JNNQ (version, input_dim) compatibility. v1 only V2 dense (200);
+// v2 also HalfMen lite (450).
+bool mlpq_version_input_dim_ok(std::uint32_t version,
+                               std::uint32_t in_dim) noexcept {
+    const bool v2_ok = (in_dim == static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM)
+                     || in_dim == static_cast<std::uint32_t>(MLPNetworkQ::HALFMEN_INPUT_DIM));
+    if (version == MLPQ_VERSION_V1) {
+        return in_dim == static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM);
+    }
+    if (version == MLPQ_VERSION_V2) {
+        return v2_ok;
+    }
+    return false;
+}
+
 }  // namespace
 
 bool MLPNetworkQ::load(std::string_view path) {
@@ -865,8 +959,7 @@ bool MLPNetworkQ::load(std::string_view path) {
     if (!read_u32(f, h1d))     return false;
     if (!read_u32(f, h2d))     return false;
     if (!read_u32(f, out_dim)) return false;
-    if (version != MLPQ_VERSION ||
-        in_dim  != INPUT_DIM    ||
+    if (!mlpq_version_input_dim_ok(version, in_dim) ||
         out_dim != 1            ||
         !mlpq_dims_ok(h1d, h2d)) {
         return false;
@@ -877,7 +970,7 @@ bool MLPNetworkQ::load(std::string_view path) {
     if (!read_f32(f, t_mul2))    return false;
     if (!read_f32(f, t_mul_out)) return false;
 
-    std::vector<std::int8_t>  tw1(std::size_t{h1d} * INPUT_DIM);
+    std::vector<std::int8_t>  tw1(std::size_t{h1d} * in_dim);
     std::vector<std::int32_t> tb1(h1d);
     std::vector<std::int8_t>  tw2(std::size_t{h2d} * h1d);
     std::vector<std::int32_t> tb2(h2d);
@@ -892,8 +985,9 @@ bool MLPNetworkQ::load(std::string_view path) {
     f.read(reinterpret_cast<char*>(&tb3), sizeof(std::int32_t));
     if (static_cast<std::size_t>(f.gcount()) != sizeof(std::int32_t)) return false;
 
-    hidden1_ = h1d;
-    hidden2_ = h2d;
+    input_dim_ = in_dim;
+    hidden1_   = h1d;
+    hidden2_   = h2d;
     w1_ = std::move(tw1); b1_ = std::move(tb1);
     w2_ = std::move(tw2); b2_ = std::move(tb2);
     w3_ = std::move(tw3); b3_ = tb3;
@@ -908,7 +1002,7 @@ bool MLPNetworkQ::save(std::string_view path) const {
     if (!f) return false;
     f.write(MLPQ_MAGIC, 4);
     if (!write_u32(f, MLPQ_VERSION))                                 return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))        return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(input_dim_)))       return false;
     if (!write_u32(f, static_cast<std::uint32_t>(hidden1_)))         return false;
     if (!write_u32(f, static_cast<std::uint32_t>(hidden2_)))         return false;
     if (!write_u32(f, 1u))                                            return false;
@@ -941,15 +1035,16 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
         return v;
     };
 
-    if (read_u32_at(4) != MLPQ_VERSION)                              return false;
-    if (read_u32_at(8) != static_cast<std::uint32_t>(INPUT_DIM))     return false;
+    const std::uint32_t version = read_u32_at(4);
+    const std::uint32_t in_dim  = read_u32_at(8);
+    if (!mlpq_version_input_dim_ok(version, in_dim))                 return false;
     const std::uint32_t h1d = read_u32_at(12);
     const std::uint32_t h2d = read_u32_at(16);
     if (read_u32_at(20) != 1u)                                       return false;
     if (!mlpq_dims_ok(h1d, h2d))                                     return false;
 
     const std::size_t kWeights =
-          std::size_t{h1d} * INPUT_DIM                          // w1
+          std::size_t{h1d} * in_dim                             // w1
         + std::size_t{h1d} * sizeof(std::int32_t)               // b1
         + std::size_t{h2d} * h1d                                // w2
         + std::size_t{h2d} * sizeof(std::int32_t)               // b2
@@ -961,7 +1056,7 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
     const float t_mul2    = read_f32_at(28);
     const float t_mul_out = read_f32_at(32);
 
-    std::vector<std::int8_t>  tw1(std::size_t{h1d} * INPUT_DIM);
+    std::vector<std::int8_t>  tw1(std::size_t{h1d} * in_dim);
     std::vector<std::int32_t> tb1(h1d);
     std::vector<std::int8_t>  tw2(std::size_t{h2d} * h1d);
     std::vector<std::int32_t> tb2(h2d);
@@ -980,8 +1075,9 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
     take(tw3.data(), tw3.size() * sizeof(std::int8_t));
     take(&tb3,       sizeof(std::int32_t));
 
-    hidden1_ = h1d;
-    hidden2_ = h2d;
+    input_dim_ = in_dim;
+    hidden1_   = h1d;
+    hidden2_   = h2d;
     w1_ = std::move(tw1); b1_ = std::move(tb1);
     w2_ = std::move(tw2); b2_ = std::move(tb2);
     w3_ = std::move(tw3); b3_ = tb3;
