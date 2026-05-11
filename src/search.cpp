@@ -226,9 +226,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     bool    tt_hit  = tt->probe(hash, tt_entry);
     if (tt_hit && tt_entry.depth >= depth) {
         const int s = score_from_tt(tt_entry.score, ply);
-        if (tt_entry.bound == Bound::Exact)                    return s;
-        if (tt_entry.bound == Bound::Lower && s >= beta)       return s;
-        if (tt_entry.bound == Bound::Upper && s <= alpha)      return s;
+        if (tt_entry.bound() == Bound::Exact)                    return s;
+        if (tt_entry.bound() == Bound::Lower && s >= beta)       return s;
+        if (tt_entry.bound() == Bound::Upper && s <= alpha)      return s;
     }
 
     // 2. Mate / leaf detection. At the horizon we hand off to quiescence
@@ -262,9 +262,57 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 
     hash_path.push_back(hash);
 
+    // 4bis. Singular extension. If the TT entry says one move scores at
+    //     least `tt_entry.score`, a quick verification search at half
+    //     depth confirms whether the other moves can match it. When
+    //     they all fall short by a margin, the TT move is "singular" —
+    //     we extend its depth by one ply so the main loop spends more
+    //     effort on what is likely the only good continuation.
+    //
+    // Constants chosen conservatively for draughts (tuned for chess
+    // first, retuned by ear here):
+    //   - Min depth 8 — extending shallow searches just bloats nodes
+    //     without finding new tactics.
+    //   - TT entry must be at least `depth - 3` so its score is
+    //     trustworthy.
+    //   - Margin scales with depth so cuts near mate scores still
+    //     make sense.
+    //   - Reduced depth = (depth - 1) / 2.
+    constexpr int SINGULAR_MIN_DEPTH = 8;
+    constexpr int SINGULAR_MARGIN    = 2;  // centipawns per ply of depth
+    int  singular_ext = 0;
+    if (tt_hit && tt_move_valid
+        && depth >= SINGULAR_MIN_DEPTH
+        && tt_entry.depth >= depth - 3
+        && tt_entry.bound() != Bound::Upper
+        && !is_mate_score(score_from_tt(tt_entry.score, ply))) {
+        const int singular_beta  = score_from_tt(tt_entry.score, ply)
+                                 - SINGULAR_MARGIN * depth;
+        const int singular_depth = (depth - 1) / 2;
+
+        int verify_best  = -INF_SCORE;
+        int verify_alpha = singular_beta - 1;
+        for (const auto& m : moves) {
+            if (same_packed_move(m, tt_entry.best_move)) continue;  // exclude TT move
+            const Position next = pos.after(m);
+            const int      s    = -negamax(next, singular_depth - 1, ply + 1,
+                                           -singular_beta, -verify_alpha);
+            if (s > verify_best) verify_best = s;
+            if (verify_best >= singular_beta) break;
+            if (verify_best > verify_alpha)   verify_alpha = verify_best;
+            if (stopped) break;
+        }
+        if (!stopped && verify_best < singular_beta) {
+            singular_ext = 1;
+        }
+    }
+
     for (const auto& m : moves) {
-        const Position next  = pos.after(m);
-        const int      score = -negamax(next, depth - 1, ply + 1, -beta, -alpha);
+        const Position next      = pos.after(m);
+        const bool     is_tt     = tt_move_valid
+                                 && same_packed_move(m, tt_entry.best_move);
+        const int      new_depth = depth - 1 + (singular_ext && is_tt ? 1 : 0);
+        const int      score     = -negamax(next, new_depth, ply + 1, -beta, -alpha);
         if (score > best) {
             best      = score;
             best_move = m;
@@ -321,7 +369,7 @@ std::vector<Move> extract_pv(const Position& start,
 
         TTEntry e;
         if (!tt.probe(h, e))            break;
-        if (e.bound != Bound::Exact)    break;
+        if (e.bound() != Bound::Exact)  break;
 
         // Defensive: confirm the stored move is still legal in the current
         // position (a hash collision on a stale entry could otherwise have
@@ -367,6 +415,13 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     TranspositionTable& tt,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
+
+    // Bump the TT generation so entries written during this search are
+    // protected from being clobbered by stale data left over from
+    // previous moves of the same game (the engine keeps the TT alive
+    // across `apply_move`). Old-generation entries become preferred
+    // replacement targets without losing their probe usefulness.
+    tt.new_search();
 
     // Top-level draw checks: they short-circuit the entire iterative
     // deepening because the same draw would otherwise be re-derived inside
