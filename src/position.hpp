@@ -113,6 +113,13 @@ public:
     // for `*this` (or an equivalent legal-move source).
     Position after(const Move& m) const noexcept;
 
+    // Apply a *null* move — same board, opposite side to move, hash
+    // updated via the side-to-move Zobrist key. Not a legal game move;
+    // used purely by Null-Move Pruning in the search to probe whether
+    // the current position is so strong that giving the opponent a
+    // free tempo still fails high.
+    Position after_null() const noexcept;
+
     // -------------------------------------------------------------------------
     // Serialisation
     // -------------------------------------------------------------------------

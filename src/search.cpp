@@ -90,6 +90,11 @@ struct Searcher {
     // Null means "use the static `evaluate()` function in eval.cpp".
     const INetwork*                       nnue{nullptr};
 
+    // Set to true while a Null-Move Pruning probe is in progress, so
+    // the recursive negamax doesn't try another null move on top
+    // (which would converge to nonsense at deep enough chains).
+    bool                                  was_null{false};
+
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
 
@@ -237,6 +242,48 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     generate_legal_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
+
+    // 2bis. Null-Move Pruning. If we can give the opponent a free
+    //     move (no rule actually permits passing in draughts — this
+    //     is purely a search technique) and the resulting reduced-
+    //     depth search still beats beta, the current position is
+    //     strong enough that we can cut without playing out its own
+    //     subtree. Skipped in conditions where the technique is
+    //     unsound or wasteful:
+    //       - depth < 4: the saving is too small
+    //       - already inside a null-move probe (no infinite chains)
+    //       - beta is in the mate band (mate scores are absolute,
+    //         not relative to the position's strength)
+    //       - low material (<6 pieces): real zugzwang-like positions
+    //         appear in king-and-pawn endgames where giving up a
+    //         tempo legitimately loses
+    //       - static eval already below beta: NMP can't possibly help
+    {
+        constexpr int NMP_MIN_DEPTH  = 4;
+        constexpr int NMP_MIN_PIECES = 6;
+        if (depth >= NMP_MIN_DEPTH
+            && !was_null
+            && !is_mate_score(beta)) {
+            const Bitboard all = pos.white_men() | pos.white_kings()
+                               | pos.black_men() | pos.black_kings();
+            if (popcount(all) >= NMP_MIN_PIECES) {
+                const int eval = eval_leaf(pos);
+                if (eval >= beta) {
+                    const int R          = 2 + depth / 4;
+                    const int reduced    = depth - 1 - R;
+                    const int safe_depth = reduced < 1 ? 1 : reduced;
+                    const Position null_pos = pos.after_null();
+                    was_null = true;
+                    const int null_score = -negamax(null_pos, safe_depth, ply + 1,
+                                                    -beta, -beta + 1);
+                    was_null = false;
+                    if (!stopped && null_score >= beta) {
+                        return beta;
+                    }
+                }
+            }
+        }
+    }
 
     // 3. Move ordering: TT-suggested move first, then killers, then a
     //    history-driven order on the remaining quiet moves. The TT only
