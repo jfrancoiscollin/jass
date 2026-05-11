@@ -82,80 +82,106 @@ private:
 // is a centipawn-scale score from the side-to-move's perspective —
 // no final sign flip is needed.
 //
-// The two hidden dimensions are runtime parameters (resolved at
-// load() / construction time), so the same class can host the legacy
-// 64-32 default network as well as the wider 128-64 / 256-128 /
-// 512-256 candidates explored by the Cycle-2 trainer.
+// The hidden dimensions are runtime parameters (resolved at load() /
+// construction time), so the same class hosts the 64-32 default and
+// the wider 128-64 / 256-128 / 512-256 candidates explored by the
+// Cycle-2 trainer.
+//
+// Two input encodings are supported, selected by `input_dim_`:
+//
+//   * V2 dense (200 features) — `feat[piece_sq * 4 + kind]`, STM-POV
+//     with mirror+colour-swap on black-to-move. The legacy default.
+//
+//   * HalfMen lite (450 features) — Cycle-6c. 200 absolute (same as
+//     V2) + 200 anchor-relative + 50 anchor one-hot, where the anchor
+//     is the rear-most STM piece in STM-POV. Beats V2 by ~25% val MSE
+//     at equal parameter count on the 1M JNNW dataset.
 //
 // History: a wider archi (128/64) was tried in PR #8 and lost at depth
-// 5 by score rate 0.444 vs the linear baseline on 90 games — likely
-// over-parameterised for 100k records of noisy depth-8 targets. We
+// 5 by score rate 0.444 vs the linear baseline on 90 games. We
 // reverted to 64/32 there because the v2 weights at that size won the
 // championship at 0.639 vs linear. With the WDL-labeled 1M dataset
-// the trade-off is being re-evaluated and the class no longer hard-
-// codes the choice.
+// plus the HalfMen encoding, that trade-off is being re-evaluated.
 class MLPNetwork : public INetwork {
 public:
-    static constexpr std::size_t INPUT_DIM = 200;  // 50 squares × 4 kinds
+    // Default V2 input dim (50 squares × 4 kinds). Kept as a constant
+    // for tests and the default constructor.
+    static constexpr std::size_t INPUT_DIM = 200;
+
+    // HalfMen-lite input dim: 200 absolute + 200 anchor-relative + 50
+    // anchor one-hot. See `evaluate()` in nnue.cpp for the exact
+    // accumulator path.
+    static constexpr std::size_t HALFMEN_INPUT_DIM = 450;
+
+    // Upper bound used to allocate stack scratch in evaluate(). Big
+    // enough for any planned encoding (current max = HalfMen 450).
+    static constexpr std::size_t MAX_INPUT_DIM = 1024;
 
     // Default hidden dimensions — these are what the embedded weights
     // file ships with and what a default-constructed instance allocates.
-    // They are kept as constants so older callers (and a few tests)
-    // that size their buffers around the v2 archi keep working.
     static constexpr std::size_t HIDDEN1 = 64;
     static constexpr std::size_t HIDDEN2 = 32;
 
     // Upper bound used by `evaluate()` to allocate hidden-layer scratch
-    // on the stack. Any arch trained by the Cycle-2 trainer stays well
-    // below this; raise it if you ever load a wider model.
+    // on the stack.
     static constexpr std::size_t MAX_HIDDEN = 1024;
 
-    // Default-construct with the legacy 64-32 dims and zero weights.
-    // The network returns ~0 in that state; call `load()` to install
-    // a trained model (which may have different hidden dims).
+    // Default-construct with the legacy V2 dense 200 → 64 → 32 → 1
+    // topology and zero weights.
     MLPNetwork();
 
-    // Explicit-dims constructor. Allocates zero-initialised storage
-    // for the requested topology.
+    // Explicit hidden-dims constructor, V2 dense encoding.
     MLPNetwork(std::size_t hidden1, std::size_t hidden2);
 
-    std::size_t hidden1() const noexcept { return hidden1_; }
-    std::size_t hidden2() const noexcept { return hidden2_; }
+    // Full-topology constructor. `input_dim` must be either
+    // `INPUT_DIM` (V2) or `HALFMEN_INPUT_DIM` (HalfMen).
+    MLPNetwork(std::size_t input_dim,
+               std::size_t hidden1,
+               std::size_t hidden2);
+
+    std::size_t input_dim() const noexcept { return input_dim_; }
+    std::size_t hidden1()   const noexcept { return hidden1_;   }
+    std::size_t hidden2()   const noexcept { return hidden2_;   }
 
     int evaluate(const Position& pos) const noexcept override;
 
     // Binary format (little-endian throughout):
     //   [0..4)   magic = "JNNM"
-    //   [4..8)   version (uint32, currently 2)
-    //   [8..12)  input_dim  (uint32, must equal 200)
+    //   [4..8)   version (uint32: 2 = V2 only, 3 = adds HalfMen support)
+    //   [8..12)  input_dim  (uint32, 200 = V2, 450 = HalfMen)
     //   [12..16) hidden1    (uint32)
     //   [16..20) hidden2    (uint32)
     //   [20..24) output_dim (uint32, must equal 1)
     //   [24..)   float32 weights in this order:
-    //              w1 [hidden1 × INPUT_DIM]   (row-major, neuron-major)
+    //              w1 [hidden1 × input_dim]   (row-major, neuron-major)
     //              b1 [hidden1]
     //              w2 [hidden2 × hidden1]
     //              b2 [hidden2]
     //              w3 [hidden2]                (single output row)
     //              b3 [1]
+    //
+    // The loader accepts both v2 and v3 files for backward
+    // compatibility (v2 files implicitly carry input_dim=200, V2
+    // encoding). The writer always emits v3.
     bool load(std::string_view path);
     bool save(std::string_view path) const;
 
     // In-memory variant of `load`. The byte buffer must start with the
-    // JNNM magic; the hidden dims are read from the header and the
-    // storage is reshaped accordingly. On failure the network state
-    // is left unchanged and false is returned.
+    // JNNM magic; the dims are read from the header and the storage is
+    // reshaped accordingly. On failure the network state is left
+    // unchanged and false is returned.
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
-    void resize_for(std::size_t h1, std::size_t h2);
+    void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 
+    std::size_t        input_dim_{INPUT_DIM};
     std::size_t        hidden1_{HIDDEN1};
     std::size_t        hidden2_{HIDDEN2};
 
-    // Row-major storage. `w1_[j * INPUT_DIM + i]` is the weight from
+    // Row-major storage. `w1_[j * input_dim_ + i]` is the weight from
     // input feature `i` to layer-1 neuron `j`.
-    std::vector<float> w1_;   // hidden1_ × INPUT_DIM
+    std::vector<float> w1_;   // hidden1_ × input_dim_
     std::vector<float> b1_;   // hidden1_
     std::vector<float> w2_;   // hidden2_ × hidden1_
     std::vector<float> b2_;   // hidden2_
