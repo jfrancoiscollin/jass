@@ -85,6 +85,14 @@ SearchResult Engine::search(const SearchLimits& limits) {
     return ::jass::search(pos_, limits, tt_, hash_history_);
 }
 
+bool Engine::load_book(std::string_view path) {
+    return book_.load(path);
+}
+
+std::size_t Engine::book_size() const noexcept {
+    return book_.size();
+}
+
 void Engine::clear_tt() noexcept {
     tt_.clear();
 }

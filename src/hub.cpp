@@ -112,6 +112,10 @@ void HubFrontEnd::set_nnue(const INetwork* n) noexcept {
     engine_.set_nnue(n);
 }
 
+bool HubFrontEnd::load_book(std::string_view path) {
+    return engine_.load_book(path);
+}
+
 int HubFrontEnd::run() {
     std::string line;
     while (std::getline(in_, line)) {

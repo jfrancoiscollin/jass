@@ -69,6 +69,10 @@ public:
     // (e.g. a freshly loaded MLP) to swap models without recompiling.
     void set_nnue(const INetwork* n) noexcept;
 
+    // Replace the engine's opening book with the contents of a JBOK
+    // file at `path`. Returns false on I/O error or bad format.
+    bool load_book(std::string_view path);
+
 private:
     Engine        engine_;
     std::istream& in_;
