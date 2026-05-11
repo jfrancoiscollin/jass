@@ -60,7 +60,25 @@ struct TTEntry {
     PackedMove   best_move{};    // 4 bytes
     std::int16_t score{0};       // 2 bytes
     std::int8_t  depth{-1};      // 1 byte
-    Bound        bound{Bound::None};  // 1 byte
+    // Packed byte:
+    //   bits [0..1]  Bound  (2 bits — 4 values, 2 actually used + None)
+    //   bits [2..7]  generation (6 bits — wraps every 64 top-level searches)
+    // Generation lets the replacement policy de-prioritise entries left
+    // over from earlier searches: a current-generation deep entry is
+    // protected from being overwritten by a shallow one, but an old-
+    // generation entry of any depth is fair game.
+    std::uint8_t bound_gen{0};
+
+    Bound bound() const noexcept {
+        return static_cast<Bound>(bound_gen & 0x03);
+    }
+    std::uint8_t gen() const noexcept {
+        return static_cast<std::uint8_t>((bound_gen >> 2) & 0x3F);
+    }
+    void set_bound_gen(Bound b, std::uint8_t g) noexcept {
+        bound_gen = static_cast<std::uint8_t>(
+            ((g & 0x3F) << 2) | (static_cast<std::uint8_t>(b) & 0x03));
+    }
 };
 static_assert(sizeof(TTEntry) == 16);
 
@@ -84,14 +102,22 @@ public:
     // Reset every entry to "empty".
     void clear();
 
+    // Bump the generation counter — call once at the start of every
+    // top-level search. Entries written by older searches become
+    // preferred replacement targets even if they sit at deeper
+    // residual depths. The counter is 6 bits and wraps benignly.
+    void new_search() noexcept;
+    std::uint8_t current_generation() const noexcept { return current_gen_; }
+
     // Look up a key.  Returns true if a valid entry with this exact key
     // is present, in which case `out` is filled.
     bool probe(ZobristHash key, TTEntry& out) const noexcept;
 
     // Store an entry. The cluster's four entries are scanned: an empty
     // slot or the slot already holding this key wins, otherwise the
-    // shallowest-depth slot is replaced. New stores never overwrite a
-    // strictly deeper entry of the same key.
+    // replacement targets the entry with the highest (old-gen, low-depth)
+    // priority. New stores never overwrite a strictly deeper entry of
+    // the same key.
     void store(ZobristHash key, PackedMove best_move,
                int score, int depth, Bound bound) noexcept;
 
@@ -101,6 +127,7 @@ public:
 private:
     std::vector<TTCluster> cluster_table_;
     std::size_t            mask_{0};                  // cluster mask
+    std::uint8_t           current_gen_{0};
 };
 
 }  // namespace jass
