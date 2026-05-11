@@ -14,6 +14,10 @@
 #include <fstream>
 #include <string>
 
+#if defined(__AVX2__)
+#include <immintrin.h>
+#endif
+
 namespace jass {
 
 namespace {
@@ -408,8 +412,56 @@ inline void accumulate_q_kind(
 
 }  // namespace
 
+namespace {
+
+#if defined(__AVX2__)
+
+// Horizontal sum of an AVX2 int32 vector → single int32.
+inline std::int32_t hsum_epi32_avx2(__m256i v) noexcept {
+    const __m128i hi = _mm256_extracti128_si256(v, 1);
+    const __m128i lo = _mm256_castsi256_si128(v);
+    const __m128i s4 = _mm_add_epi32(hi, lo);              // 4 int32
+    const __m128i s2 = _mm_hadd_epi32(s4, s4);              // 2 int32 in low half
+    const __m128i s1 = _mm_hadd_epi32(s2, s2);              // 1 int32 in lowest lane
+    return _mm_cvtsi128_si32(s1);
+}
+
+// Dot product over `n_bytes` of `(h: uint8, w: int8)` pairs using
+// AVX2 maddubs + madd. Returns the int32 sum. `n_bytes` must be a
+// multiple of 32 (one AVX2 register).
+inline std::int32_t dot_uint8_int8_avx2(const std::int8_t* h,
+                                        const std::int8_t* w,
+                                        std::size_t        n_bytes) noexcept {
+    const __m256i ones16 = _mm256_set1_epi16(1);
+    __m256i acc = _mm256_setzero_si256();
+    for (std::size_t off = 0; off < n_bytes; off += 32) {
+        // Bytes in h are guaranteed to be in [0, 127] (post-ReLU
+        // saturate_to_int8), so reinterpreting them as unsigned for
+        // maddubs is safe — same bit pattern.
+        const __m256i hv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(h + off));
+        const __m256i wv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(w + off));
+        // maddubs: 16 int16, each = h[2i]*w[2i] + h[2i+1]*w[2i+1].
+        // Max magnitude per pair = 2 * 127 * 127 = 32258, fits in int16.
+        const __m256i p16 = _mm256_maddubs_epi16(hv, wv);
+        // madd with ones16: 8 int32, each = sum of two adjacent int16.
+        const __m256i p32 = _mm256_madd_epi16(p16, ones16);
+        acc = _mm256_add_epi32(acc, p32);
+    }
+    return hsum_epi32_avx2(acc);
+}
+
+#endif  // __AVX2__
+
+}  // namespace
+
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
     // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
+    // The active-feature loop is naturally efficient (≈20 pieces per
+    // position, each adds a 64-int8 column) so it stays scalar even
+    // when AVX2 is available; auto-vectorisation handles the inner
+    // 64-element add adequately at -O3.
     std::int32_t acc1[HIDDEN1];
     for (std::size_t j = 0; j < HIDDEN1; ++j) acc1[j] = b1_[j];
 
@@ -432,8 +484,17 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
             saturate_to_int8(static_cast<float>(acc1[j]) * mul1_));
     }
 
-    // Layer 2 — int8 × int8 → int32 (hot MAC loop).
+    // Layer 2 — int8 × int8 → int32 dense matmul. HIDDEN2 outputs,
+    // HIDDEN1 inputs. AVX2 path uses maddubs/madd; otherwise scalar.
     std::int32_t acc2[HIDDEN2];
+#if defined(__AVX2__)
+    static_assert(HIDDEN1 % 32 == 0,
+                  "AVX2 layer 2 expects HIDDEN1 to be a multiple of 32");
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        acc2[k] = b2_[k]
+                + dot_uint8_int8_avx2(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
+    }
+#else
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         std::int32_t s = b2_[k];
         for (std::size_t j = 0; j < HIDDEN1; ++j) {
@@ -442,6 +503,7 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
         }
         acc2[k] = s;
     }
+#endif
 
     std::int8_t h2[HIDDEN2];
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
@@ -449,12 +511,28 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
             saturate_to_int8(static_cast<float>(acc2[k]) * mul2_));
     }
 
-    // Layer 3 — int8 × int8 → int32 → centipawn.
+    // Layer 3 — single output, HIDDEN2 inputs. With HIDDEN2 = 32 this
+    // is exactly one AVX2 register; the scalar fallback covers other
+    // dimensions.
     std::int32_t acc3 = b3_;
+#if defined(__AVX2__)
+    static_assert(HIDDEN2 % 32 == 0 || HIDDEN2 < 32,
+                  "AVX2 layer 3 expects HIDDEN2 to fit a single register "
+                  "or be a multiple of 32");
+    if constexpr (HIDDEN2 % 32 == 0) {
+        acc3 += dot_uint8_int8_avx2(h2, w3_.data(), HIDDEN2);
+    } else {
+        for (std::size_t k = 0; k < HIDDEN2; ++k) {
+            acc3 += static_cast<std::int32_t>(w3_[k])
+                  * static_cast<std::int32_t>(h2[k]);
+        }
+    }
+#else
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         acc3 += static_cast<std::int32_t>(w3_[k])
               * static_cast<std::int32_t>(h2[k]);
     }
+#endif
 
     float out = static_cast<float>(acc3) * mul_out_;
     constexpr float kClamp = 29000.0f;
