@@ -227,14 +227,44 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          n         = 10000;
     const char*  out_path  = "selfplay-wdl.bin";
     int          play_depth = 4;
-    int          eval_depth = 8;
+    int          eval_depth = 12;        // bumped from 8 for the WDL pipeline:
+                                          // ~3-5× more compute per label but
+                                          // far less noise in the targets,
+                                          // which is the bottleneck for any
+                                          // future architecture work
     int          random_open_plies = 4;
+    int          max_plies        = 200;
+    int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
 
     if (argc > 2) {
         int parsed = parse_int_or(argv[2], -1);
         if (parsed > 0) n = parsed;
     }
     if (argc > 3) out_path = argv[3];
+    if (argc > 4) {
+        int v = parse_int_or(argv[4], -1);
+        if (v > 0) eval_depth = v;
+    }
+    if (argc > 5) {
+        int v = parse_int_or(argv[5], -1);
+        if (v > 0) play_depth = v;
+    }
+    if (argc > 6) {
+        int v = parse_int_or(argv[6], -1);
+        if (v > 0) max_plies = v;
+    }
+    if (argc > 7) {
+        int v = parse_int_or(argv[7], -1);
+        if (v > 0) random_seed = v;
+    }
+
+    std::cout << "gen-data-wdl: n=" << n
+              << " out=" << out_path
+              << " eval_depth=" << eval_depth
+              << " play_depth=" << play_depth
+              << " max_plies=" << max_plies
+              << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
+              << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
     if (!f) {
@@ -247,7 +277,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     std::uint32_t count_placeholder = 0;
     f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
 
-    std::mt19937_64 rng(0x5eed5eed5eed5eedULL);
+    // Splitmix-style scrambling of the user-provided seed so two
+    // shards launched with seeds 1 and 2 yield trajectories that are
+    // statistically independent (close seeds + linear PRNG → barely
+    // correlated streams which would waste compute).
+    const std::uint64_t seed_value = (random_seed > 0)
+        ? static_cast<std::uint64_t>(static_cast<std::uint32_t>(random_seed))
+              * std::uint64_t{0x9E3779B97F4A7C15}
+        : std::uint64_t{0x5eed5eed5eed5eed};
+    std::mt19937_64 rng(seed_value);
     Engine          e;
     e.use_book(false);
 
@@ -282,7 +320,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int outcome_white = 0;
         bool game_ended_by_loss = false;
 
-        for (int ply = 0; ply < 200; ++ply) {
+        for (int ply = 0; ply < max_plies; ++ply) {
             MoveList ml;
             generate_legal_moves(e.position(), ml);
             if (ml.empty()) {
@@ -617,6 +655,14 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0]\n"
+                "                                   write N records with the\n"
+                "                                   game outcome label (WDL).\n"
+                "                                   Higher eval_depth = cleaner\n"
+                "                                   training signal; non-zero\n"
+                "                                   `seed` shifts the RNG state\n"
+                "                                   so parallel shards generate\n"
+                "                                   independent games.\n"
                 "  --build-book <fens.txt> <out.bok> [depth=12]\n"
                 "                                   read FENs (one per line, #\n"
                 "                                   comments OK) and write a JBOK\n"
