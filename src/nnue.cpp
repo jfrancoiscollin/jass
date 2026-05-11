@@ -138,15 +138,34 @@ bool LinearNetwork::load_from_bytes(const unsigned char* data,
 // and a final sign flip).
 // ---------------------------------------------------------------------------
 
+MLPNetwork::MLPNetwork() {
+    resize_for(HIDDEN1, HIDDEN2);
+}
+
+MLPNetwork::MLPNetwork(std::size_t hidden1, std::size_t hidden2) {
+    resize_for(hidden1, hidden2);
+}
+
+void MLPNetwork::resize_for(std::size_t h1, std::size_t h2) {
+    hidden1_ = h1;
+    hidden2_ = h2;
+    w1_.assign(h1 * INPUT_DIM, 0.0f);
+    b1_.assign(h1,             0.0f);
+    w2_.assign(h2 * h1,        0.0f);
+    b2_.assign(h2,             0.0f);
+    w3_.assign(h2,             0.0f);
+    b3_ = 0.0f;
+}
+
 namespace {
 
-// Add column `feat` of W1 (row-major, HIDDEN1 × INPUT_DIM) to `h1`.
+// Add column `feat` of W1 (row-major, hidden1 × INPUT_DIM) to `h1`.
 // Equivalent to one sparse multiply-add per active input feature.
-inline void add_w1_column(const std::array<float,
-                              MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM>& w1,
+inline void add_w1_column(const float* w1,
+                          std::size_t  hidden1,
                           float*       h1,
                           std::size_t  feat) noexcept {
-    for (std::size_t j = 0; j < MLPNetwork::HIDDEN1; ++j) {
+    for (std::size_t j = 0; j < hidden1; ++j) {
         h1[j] += w1[j * MLPNetwork::INPUT_DIM + feat];
     }
 }
@@ -154,8 +173,8 @@ inline void add_w1_column(const std::array<float,
 // Walk the set bits of `bb` and add the corresponding W1 column for
 // every piece, indexing the feature space as
 // `(mirror ? 49 - bit : bit) * 4 + kind`.
-inline void accumulate_kind(const std::array<float,
-                                MLPNetwork::HIDDEN1 * MLPNetwork::INPUT_DIM>& w1,
+inline void accumulate_kind(const float* w1,
+                            std::size_t  hidden1,
                             float*       h1,
                             Bitboard     bb,
                             std::size_t  kind,
@@ -165,39 +184,48 @@ inline void accumulate_kind(const std::array<float,
         const std::size_t b   = mirror
             ? static_cast<std::size_t>(49 - bit)
             : static_cast<std::size_t>(bit);
-        add_w1_column(w1, h1, b * 4 + kind);
+        add_w1_column(w1, hidden1, h1, b * 4 + kind);
     }
 }
 
 }  // namespace
 
 int MLPNetwork::evaluate(const Position& pos) const noexcept {
+    // Stack scratch sized for the largest arch we accept. The runtime
+    // loops only touch the first `hidden1_` / `hidden2_` slots.
+    float h1[MAX_HIDDEN];
+    float h2[MAX_HIDDEN];
+
+    const float* const w1 = w1_.data();
+    const float* const w2 = w2_.data();
+    const float* const w3 = w3_.data();
+    const std::size_t  h1n = hidden1_;
+    const std::size_t  h2n = hidden2_;
+
     // Layer 1: h1 = ReLU(b1 + W1 @ input). Build the sparse input from
     // STM's perspective — see the file header for the encoding spec.
-    float h1[HIDDEN1];
-    for (std::size_t j = 0; j < HIDDEN1; ++j) h1[j] = b1_[j];
+    for (std::size_t j = 0; j < h1n; ++j) h1[j] = b1_[j];
 
     if (pos.side_to_move() == Color::White) {
-        accumulate_kind(w1_, h1, pos.white_men(),    0, /*mirror=*/false);
-        accumulate_kind(w1_, h1, pos.white_kings(),  1, /*mirror=*/false);
-        accumulate_kind(w1_, h1, pos.black_men(),    2, /*mirror=*/false);
-        accumulate_kind(w1_, h1, pos.black_kings(),  3, /*mirror=*/false);
+        accumulate_kind(w1, h1n, h1, pos.white_men(),    0, /*mirror=*/false);
+        accumulate_kind(w1, h1n, h1, pos.white_kings(),  1, /*mirror=*/false);
+        accumulate_kind(w1, h1n, h1, pos.black_men(),    2, /*mirror=*/false);
+        accumulate_kind(w1, h1n, h1, pos.black_kings(),  3, /*mirror=*/false);
     } else {
-        accumulate_kind(w1_, h1, pos.black_men(),    0, /*mirror=*/true);
-        accumulate_kind(w1_, h1, pos.black_kings(),  1, /*mirror=*/true);
-        accumulate_kind(w1_, h1, pos.white_men(),    2, /*mirror=*/true);
-        accumulate_kind(w1_, h1, pos.white_kings(),  3, /*mirror=*/true);
+        accumulate_kind(w1, h1n, h1, pos.black_men(),    0, /*mirror=*/true);
+        accumulate_kind(w1, h1n, h1, pos.black_kings(),  1, /*mirror=*/true);
+        accumulate_kind(w1, h1n, h1, pos.white_men(),    2, /*mirror=*/true);
+        accumulate_kind(w1, h1n, h1, pos.white_kings(),  3, /*mirror=*/true);
     }
-    for (std::size_t j = 0; j < HIDDEN1; ++j) {
+    for (std::size_t j = 0; j < h1n; ++j) {
         if (h1[j] < 0.0f) h1[j] = 0.0f;
     }
 
     // Layer 2: h2 = ReLU(b2 + W2 @ h1).
-    float h2[HIDDEN2];
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+    for (std::size_t k = 0; k < h2n; ++k) {
         float s = b2_[k];
-        for (std::size_t j = 0; j < HIDDEN1; ++j) {
-            s += w2_[k * HIDDEN1 + j] * h1[j];
+        for (std::size_t j = 0; j < h1n; ++j) {
+            s += w2[k * h1n + j] * h1[j];
         }
         h2[k] = s > 0.0f ? s : 0.0f;
     }
@@ -205,8 +233,8 @@ int MLPNetwork::evaluate(const Position& pos) const noexcept {
     // Output layer: out = b3 + w3 @ h2 (no activation). Already in
     // STM-POV by construction of the input encoding above.
     float out = b3_;
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
-        out += w3_[k] * h2[k];
+    for (std::size_t k = 0; k < h2n; ++k) {
+        out += w3[k] * h2[k];
     }
 
     // Clamp into the non-mate range so a noisy network can never
@@ -238,17 +266,15 @@ bool write_u32(std::ostream& f, std::uint32_t v) {
     return f.good();
 }
 
-template <std::size_t N>
-bool read_floats(std::istream& f, std::array<float, N>& a) {
-    f.read(reinterpret_cast<char*>(a.data()),
-           static_cast<std::streamsize>(N * sizeof(float)));
-    return static_cast<std::size_t>(f.gcount()) == N * sizeof(float);
+bool read_floats(std::istream& f, float* dst, std::size_t n) {
+    f.read(reinterpret_cast<char*>(dst),
+           static_cast<std::streamsize>(n * sizeof(float)));
+    return static_cast<std::size_t>(f.gcount()) == n * sizeof(float);
 }
 
-template <std::size_t N>
-bool write_floats(std::ostream& f, const std::array<float, N>& a) {
-    f.write(reinterpret_cast<const char*>(a.data()),
-            static_cast<std::streamsize>(N * sizeof(float)));
+bool write_floats(std::ostream& f, const float* src, std::size_t n) {
+    f.write(reinterpret_cast<const char*>(src),
+            static_cast<std::streamsize>(n * sizeof(float)));
     return f.good();
 }
 
@@ -270,43 +296,40 @@ bool MLPNetwork::load(std::string_view path) {
     if (!read_u32(f, out_dim)) return false;
     if (version != MLP_VERSION ||
         in_dim  != INPUT_DIM   ||
-        h1      != HIDDEN1     ||
-        h2      != HIDDEN2     ||
-        out_dim != 1) {
+        out_dim != 1           ||
+        h1 == 0 || h1 > MAX_HIDDEN ||
+        h2 == 0 || h2 > MAX_HIDDEN) {
         return false;
     }
 
     // Read into temporaries first so a partial/corrupt file never
     // mutates the live weights.
-    decltype(w1_) tw1{};
-    decltype(b1_) tb1{};
-    decltype(w2_) tw2{};
-    decltype(b2_) tb2{};
-    decltype(w3_) tw3{};
-    float         tb3{0.0f};
+    std::vector<float> tw1(h1 * INPUT_DIM);
+    std::vector<float> tb1(h1);
+    std::vector<float> tw2(h2 * h1);
+    std::vector<float> tb2(h2);
+    std::vector<float> tw3(h2);
+    float              tb3{0.0f};
 
-    if (!read_floats(f, tw1))                                 return false;
-    if (!read_floats(f, tb1))                                 return false;
-    if (!read_floats(f, tw2))                                 return false;
-    if (!read_floats(f, tb2))                                 return false;
-    if (!read_floats(f, tw3))                                 return false;
+    if (!read_floats(f, tw1.data(), tw1.size())) return false;
+    if (!read_floats(f, tb1.data(), tb1.size())) return false;
+    if (!read_floats(f, tw2.data(), tw2.size())) return false;
+    if (!read_floats(f, tb2.data(), tb2.size())) return false;
+    if (!read_floats(f, tw3.data(), tw3.size())) return false;
     f.read(reinterpret_cast<char*>(&tb3), sizeof(float));
     if (static_cast<std::size_t>(f.gcount()) != sizeof(float)) return false;
 
-    w1_ = tw1; b1_ = tb1;
-    w2_ = tw2; b2_ = tb2;
-    w3_ = tw3; b3_ = tb3;
+    hidden1_ = h1;
+    hidden2_ = h2;
+    w1_ = std::move(tw1); b1_ = std::move(tb1);
+    w2_ = std::move(tw2); b2_ = std::move(tb2);
+    w3_ = std::move(tw3); b3_ = tb3;
     return true;
 }
 
 bool MLPNetwork::load_from_bytes(const unsigned char* data, std::size_t n) {
-    // Smallest valid file: 6 × uint32 header + the float arrays.
     constexpr std::size_t kHeader = 6 * sizeof(std::uint32_t);
-    constexpr std::size_t kFloats =
-        (HIDDEN1 * INPUT_DIM + HIDDEN1
-       + HIDDEN2 * HIDDEN1   + HIDDEN2
-       + HIDDEN2             + 1) * sizeof(float);
-    if (data == nullptr || n != kHeader + kFloats) return false;
+    if (data == nullptr || n < kHeader) return false;
 
     if (std::memcmp(data, MLP_MAGIC, 4) != 0) return false;
 
@@ -317,18 +340,25 @@ bool MLPNetwork::load_from_bytes(const unsigned char* data, std::size_t n) {
     };
     if (read_u32_at(4)  != MLP_VERSION)                               return false;
     if (read_u32_at(8)  != static_cast<std::uint32_t>(INPUT_DIM))     return false;
-    if (read_u32_at(12) != static_cast<std::uint32_t>(HIDDEN1))       return false;
-    if (read_u32_at(16) != static_cast<std::uint32_t>(HIDDEN2))       return false;
+    const std::uint32_t h1 = read_u32_at(12);
+    const std::uint32_t h2 = read_u32_at(16);
     if (read_u32_at(20) != 1u)                                        return false;
+    if (h1 == 0 || h1 > MAX_HIDDEN || h2 == 0 || h2 > MAX_HIDDEN)     return false;
+
+    const std::size_t floats =
+        std::size_t{h1} * INPUT_DIM + h1
+      + std::size_t{h2} * h1        + h2
+      +                  h2         + 1;
+    if (n != kHeader + floats * sizeof(float)) return false;
 
     // Memcpy each region. Streaming into temporaries first so a
     // partial overlap mid-load can't corrupt live weights.
-    decltype(w1_) tw1{};
-    decltype(b1_) tb1{};
-    decltype(w2_) tw2{};
-    decltype(b2_) tb2{};
-    decltype(w3_) tw3{};
-    float         tb3{0.0f};
+    std::vector<float> tw1(std::size_t{h1} * INPUT_DIM);
+    std::vector<float> tb1(h1);
+    std::vector<float> tw2(std::size_t{h2} * h1);
+    std::vector<float> tb2(h2);
+    std::vector<float> tw3(h2);
+    float              tb3{0.0f};
 
     const unsigned char* p = data + kHeader;
     auto take = [&](void* dst, std::size_t bytes) {
@@ -342,9 +372,11 @@ bool MLPNetwork::load_from_bytes(const unsigned char* data, std::size_t n) {
     take(tw3.data(), tw3.size() * sizeof(float));
     take(&tb3,       sizeof(float));
 
-    w1_ = tw1; b1_ = tb1;
-    w2_ = tw2; b2_ = tb2;
-    w3_ = tw3; b3_ = tb3;
+    hidden1_ = h1;
+    hidden2_ = h2;
+    w1_ = std::move(tw1); b1_ = std::move(tb1);
+    w2_ = std::move(tw2); b2_ = std::move(tb2);
+    w3_ = std::move(tw3); b3_ = tb3;
     return true;
 }
 
@@ -352,16 +384,16 @@ bool MLPNetwork::save(std::string_view path) const {
     std::ofstream f(std::string{path}, std::ios::binary);
     if (!f) return false;
     f.write(MLP_MAGIC, 4);
-    if (!write_u32(f, MLP_VERSION))                                  return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))        return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN1)))          return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN2)))          return false;
+    if (!write_u32(f, MLP_VERSION))                                   return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))         return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(hidden1_)))          return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(hidden2_)))          return false;
     if (!write_u32(f, 1u))                                            return false;
-    if (!write_floats(f, w1_))                                        return false;
-    if (!write_floats(f, b1_))                                        return false;
-    if (!write_floats(f, w2_))                                        return false;
-    if (!write_floats(f, b2_))                                        return false;
-    if (!write_floats(f, w3_))                                        return false;
+    if (!write_floats(f, w1_.data(), w1_.size()))                     return false;
+    if (!write_floats(f, b1_.data(), b1_.size()))                     return false;
+    if (!write_floats(f, w2_.data(), w2_.size()))                     return false;
+    if (!write_floats(f, b2_.data(), b2_.size()))                     return false;
+    if (!write_floats(f, w3_.data(), w3_.size()))                     return false;
     f.write(reinterpret_cast<const char*>(&b3_), sizeof(float));
     return f.good();
 }
