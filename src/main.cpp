@@ -25,6 +25,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <vector>
 #include <string_view>
 
 using namespace jass;
@@ -202,6 +203,192 @@ int run_gen_data_mode(int argc, char** argv) {
     f.close();
 
     std::cout << "wrote " << generated << " records to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+// --gen-data-wdl: same as --gen-data but each sample also carries the
+// outcome of the game it was sampled from. The outcome is computed at
+// the end of the game (no-legal-move = STM loss, 25-move rule /
+// repetition / ply cap = draw) and propagated back to every sample as
+// +1 (sample's STM eventually won), 0 (draw), or -1 (sample's STM lost).
+//
+// Per-record format (38 bytes, magic "JNNW"):
+//   32 B  uint64×4 bitboards   (white_men, white_kings, black_men, black_kings)
+//    1 B  uint8    stm         (0 = white to move, 1 = black to move)
+//    4 B  int32    score       (centipawn, STM-POV, depth-eval search)
+//    1 B  int8     wdl         (+1 / 0 / -1, STM-POV at sample time)
+//
+// Used by the WDL training pipeline (`tools/scout_wdl.py` and
+// downstream variants of `train_mlp.py`) to mix score-MSE and
+// outcome-BCE losses.
+// -----------------------------------------------------------------------------
+int run_gen_data_wdl_mode(int argc, char** argv) {
+    int          n         = 10000;
+    const char*  out_path  = "selfplay-wdl.bin";
+    int          play_depth = 4;
+    int          eval_depth = 12;        // bumped from 8 for the WDL pipeline:
+                                          // ~3-5× more compute per label but
+                                          // far less noise in the targets,
+                                          // which is the bottleneck for any
+                                          // future architecture work
+    int          random_open_plies = 4;
+    int          max_plies        = 200;
+    int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
+
+    if (argc > 2) {
+        int parsed = parse_int_or(argv[2], -1);
+        if (parsed > 0) n = parsed;
+    }
+    if (argc > 3) out_path = argv[3];
+    if (argc > 4) {
+        int v = parse_int_or(argv[4], -1);
+        if (v > 0) eval_depth = v;
+    }
+    if (argc > 5) {
+        int v = parse_int_or(argv[5], -1);
+        if (v > 0) play_depth = v;
+    }
+    if (argc > 6) {
+        int v = parse_int_or(argv[6], -1);
+        if (v > 0) max_plies = v;
+    }
+    if (argc > 7) {
+        int v = parse_int_or(argv[7], -1);
+        if (v > 0) random_seed = v;
+    }
+
+    std::cout << "gen-data-wdl: n=" << n
+              << " out=" << out_path
+              << " eval_depth=" << eval_depth
+              << " play_depth=" << play_depth
+              << " max_plies=" << max_plies
+              << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
+              << '\n';
+
+    std::ofstream f(out_path, std::ios::binary);
+    if (!f) {
+        std::cerr << "error: cannot open " << out_path << " for writing\n";
+        return 1;
+    }
+
+    const char magic[4] = {'J', 'N', 'N', 'W'};
+    f.write(magic, 4);
+    std::uint32_t count_placeholder = 0;
+    f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
+
+    // Splitmix-style scrambling of the user-provided seed so two
+    // shards launched with seeds 1 and 2 yield trajectories that are
+    // statistically independent (close seeds + linear PRNG → barely
+    // correlated streams which would waste compute).
+    const std::uint64_t seed_value = (random_seed > 0)
+        ? static_cast<std::uint64_t>(static_cast<std::uint32_t>(random_seed))
+              * std::uint64_t{0x9E3779B97F4A7C15}
+        : std::uint64_t{0x5eed5eed5eed5eed};
+    std::mt19937_64 rng(seed_value);
+    Engine          e;
+    e.use_book(false);
+
+    // Sample buffer for the current game. Flushed with the resolved
+    // WDL label once the game ends.
+    struct Sample {
+        std::uint64_t bbs[4];
+        std::uint8_t  stm;
+        std::int32_t  score;
+    };
+    std::vector<Sample> game_samples;
+    game_samples.reserve(64);
+
+    int generated  = 0;
+    int game_count = 0;
+
+    while (generated < n) {
+        ++game_count;
+        e.new_game();
+        game_samples.clear();
+
+        for (int i = 0; i < random_open_plies; ++i) {
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) break;
+            e.apply_move(ml[rng() % ml.size()]);
+        }
+
+        // Game outcome from the final position: +1 = white won, -1 = black
+        // won, 0 = draw. Initialised to "draw" because the ply-cap exit
+        // path treats unresolved games as drawn.
+        int outcome_white = 0;
+        bool game_ended_by_loss = false;
+
+        for (int ply = 0; ply < max_plies; ++ply) {
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) {
+                // STM has no moves → STM loses.
+                outcome_white = (e.position().side_to_move() == Color::White)
+                              ? -1 : +1;
+                game_ended_by_loss = true;
+                break;
+            }
+            if (e.position().halfmove_clock() >= FIFTY_MOVE_PLIES) {
+                // 25-move rule: declare a draw.
+                break;
+            }
+
+            // Sample roughly every fourth ply, while we still have budget
+            // and the buffer isn't huge.
+            if ((rng() & 3) == 0 && generated + static_cast<int>(game_samples.size()) < n) {
+                SearchLimits lim;
+                lim.max_depth = eval_depth;
+                const SearchResult r = e.search(lim);
+                const Position&    pos = e.position();
+                Sample s;
+                s.bbs[0] = pos.white_men();
+                s.bbs[1] = pos.white_kings();
+                s.bbs[2] = pos.black_men();
+                s.bbs[3] = pos.black_kings();
+                s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
+                s.score  = static_cast<std::int32_t>(r.score);
+                game_samples.push_back(s);
+            }
+
+            SearchLimits lim;
+            lim.max_depth = play_depth;
+            const SearchResult r = e.search(lim);
+            if (!e.apply_move(r.best_move)) break;
+        }
+
+        // Flush this game's samples with the resolved WDL label. WDL is
+        // computed from each sample's STM perspective: +1 means "the side
+        // to move at sample time eventually won".
+        for (const Sample& s : game_samples) {
+            int wdl = 0;
+            if (game_ended_by_loss) {
+                const int sample_stm_sign = (s.stm == 0) ? +1 : -1;
+                wdl = outcome_white * sample_stm_sign;
+            }
+            const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
+
+            f.write(reinterpret_cast<const char*>(s.bbs), 32);
+            f.write(reinterpret_cast<const char*>(&s.stm), 1);
+            f.write(reinterpret_cast<const char*>(&s.score), 4);
+            f.write(reinterpret_cast<const char*>(&wdl_byte), 1);
+            ++generated;
+            if (generated >= n) break;
+        }
+
+        if ((game_count % 50) == 0) {
+            std::cout << "  played " << game_count << " games, "
+                      << generated << " / " << n << " positions\n";
+        }
+    }
+
+    f.seekp(4, std::ios::beg);
+    const std::uint32_t count32 = static_cast<std::uint32_t>(generated);
+    f.write(reinterpret_cast<const char*>(&count32), 4);
+    f.close();
+
+    std::cout << "wrote " << generated << " WDL records to " << out_path << "\n";
     return 0;
 }
 
@@ -434,6 +621,7 @@ int main(int argc, char** argv) {
         if      (a == "--smoke")                    return run_smoke();
         else if (a == "--tournament")               return run_tournament_mode(argc, argv);
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
+        else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
@@ -467,6 +655,14 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0]\n"
+                "                                   write N records with the\n"
+                "                                   game outcome label (WDL).\n"
+                "                                   Higher eval_depth = cleaner\n"
+                "                                   training signal; non-zero\n"
+                "                                   `seed` shifts the RNG state\n"
+                "                                   so parallel shards generate\n"
+                "                                   independent games.\n"
                 "  --build-book <fens.txt> <out.bok> [depth=12]\n"
                 "                                   read FENs (one per line, #\n"
                 "                                   comments OK) and write a JBOK\n"

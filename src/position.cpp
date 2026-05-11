@@ -76,6 +76,12 @@ void Position::remove_piece(Square s, Piece p) noexcept {
 // =============================================================================
 // Move application
 // =============================================================================
+Position Position::after_null() const noexcept {
+    Position next = *this;
+    next.set_side_to_move(stm_ == Color::White ? Color::Black : Color::White);
+    return next;
+}
+
 Position Position::after(const Move& m) const noexcept {
     Position next = *this;
     const Color us       = stm_;

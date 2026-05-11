@@ -248,6 +248,78 @@ void test_mlp_save_load_roundtrip() {
     std::remove(out_path.c_str());
 }
 
+// Cycle-3 regression: a JNNM file with non-default hidden dims must
+// round-trip cleanly. We build a 128×64 network with a single non-zero
+// path (input 4 → h1[0] → h2[0] → out), save, reload, and check the
+// forward pass.
+void test_mlp_load_supports_non_default_hidden_dims() {
+    constexpr std::size_t kH1 = 128;
+    constexpr std::size_t kH2 = 64;
+
+    MLPNetwork net(kH1, kH2);
+    JASS_CHECK_EQ(net.hidden1(), kH1);
+    JASS_CHECK_EQ(net.hidden2(), kH2);
+
+    // Build a JNNM file by hand for the 128-64 topology. Single wired
+    // path: feature 4 (white man on bit 1) → h1[0] (weight 1) →
+    // h2[0] (weight 2) → out (weight 100). Expected score = 200 when a
+    // white man stands on FMJD square 2 (bit 1).
+    const std::string in_path  = make_tmp_path("/tmp/jass-mlp-wide-in-XXXXXX");
+    const std::string out_path = make_tmp_path("/tmp/jass-mlp-wide-out-XXXXXX");
+    {
+        std::ofstream f(in_path, std::ios::binary);
+        JASS_CHECK(static_cast<bool>(f));
+        f.write("JNNM", 4);
+        auto wu32 = [&](std::uint32_t v) {
+            f.write(reinterpret_cast<const char*>(&v), 4);
+        };
+        wu32(2u);
+        wu32(static_cast<std::uint32_t>(MLPNetwork::INPUT_DIM));
+        wu32(static_cast<std::uint32_t>(kH1));
+        wu32(static_cast<std::uint32_t>(kH2));
+        wu32(1u);
+
+        std::vector<float> w1(kH1 * MLPNetwork::INPUT_DIM, 0.0f);
+        std::vector<float> b1(kH1, 0.0f);
+        std::vector<float> w2(kH2 * kH1, 0.0f);
+        std::vector<float> b2(kH2, 0.0f);
+        std::vector<float> w3(kH2, 0.0f);
+        w1[0 * MLPNetwork::INPUT_DIM + 4] = 1.0f;
+        w2[0 * kH1 + 0]                   = 2.0f;
+        w3[0]                             = 100.0f;
+        auto wbytes = [&](const void* p, std::size_t n) {
+            f.write(reinterpret_cast<const char*>(p),
+                    static_cast<std::streamsize>(n));
+        };
+        wbytes(w1.data(), w1.size() * sizeof(float));
+        wbytes(b1.data(), b1.size() * sizeof(float));
+        wbytes(w2.data(), w2.size() * sizeof(float));
+        wbytes(b2.data(), b2.size() * sizeof(float));
+        wbytes(w3.data(), w3.size() * sizeof(float));
+        const float b3 = 0.0f;
+        f.write(reinterpret_cast<const char*>(&b3), sizeof(float));
+    }
+
+    JASS_CHECK(net.load(in_path));
+    JASS_CHECK_EQ(net.hidden1(), kH1);
+    JASS_CHECK_EQ(net.hidden2(), kH2);
+
+    // Re-save through MLPNetwork::save, reload, and check both
+    // instances return the same score on the trigger position.
+    JASS_CHECK(net.save(out_path));
+    MLPNetwork reloaded;
+    JASS_CHECK(reloaded.load(out_path));
+    JASS_CHECK_EQ(reloaded.hidden1(), kH1);
+    JASS_CHECK_EQ(reloaded.hidden2(), kH2);
+
+    const Position p = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p),      200);
+    JASS_CHECK_EQ(reloaded.evaluate(p), 200);
+
+    std::remove(in_path.c_str());
+    std::remove(out_path.c_str());
+}
+
 void test_mlp_load_rejects_missing_or_bad_file() {
     MLPNetwork net;
     JASS_CHECK(!net.load("/no/such/path/jass-mlp.bin"));
@@ -546,6 +618,7 @@ void run_nnue_tests() {
     test_mlp_forward_pass_matches_hand_computed();
     test_mlp_position_level_symmetry();
     test_mlp_save_load_roundtrip();
+    test_mlp_load_supports_non_default_hidden_dims();
     test_mlp_load_rejects_missing_or_bad_file();
     test_default_nnue_is_non_null_and_returns_finite_score();
     test_default_nnue_is_stable_across_calls();

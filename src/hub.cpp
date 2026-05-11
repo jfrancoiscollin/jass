@@ -167,6 +167,18 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
          << " score="   << r.score
          << " depth="   << r.depth
          << " nodes="   << r.nodes;
+    // External orchestrators (e.g. the Jass-vs-Scan harness) need the
+    // captured-square list to translate the move into other engines'
+    // notation. `format_move` only emits the (from, to) endpoints, so
+    // we surface the captured squares here. Empty when the move is
+    // quiet.
+    if (r.best_move.num_captures > 0) {
+        out_ << " captures=";
+        for (std::uint8_t i = 0; i < r.best_move.num_captures; ++i) {
+            if (i) out_ << ',';
+            out_ << static_cast<int>(r.best_move.captures[i]);
+        }
+    }
     if (r.from_book) out_ << " book=1";
     if (!r.pv.empty()) {
         out_ << " pv=";
