@@ -255,6 +255,20 @@ def main(argv):
                    help="weight of the deep-search score in the blended "
                         "target (rest goes to WDL × 800). Only used on "
                         "JNNW datasets; ignored for JNNT.")
+    # Per-variant topology, defaulting to the historic 64-32. Use these
+    # to run an equal-parameter control between the two encodings — e.g.
+    # `--v2-hidden1 64 --v2-hidden2 32 --hm-hidden1 32 --hm-hidden2 16`
+    # gives both networks exactly 14,977 params, isolating the encoding
+    # signal from raw capacity.
+    p.add_argument("--v2-hidden1", type=int, default=64)
+    p.add_argument("--v2-hidden2", type=int, default=32)
+    p.add_argument("--hm-hidden1", type=int, default=64)
+    p.add_argument("--hm-hidden2", type=int, default=32)
+    p.add_argument("--skip-v2", action="store_true",
+                   help="skip the v2 baseline (useful if you already "
+                        "have its number from a previous run)")
+    p.add_argument("--skip-halfmen", action="store_true",
+                   help="skip the HalfMen variant")
     args = p.parse_args(argv)
 
     print(f"loading {args.data} …")
@@ -279,35 +293,47 @@ def main(argv):
         # for backward compat.
         y = np.where(stm == 0, score, -score).astype(np.float32)
 
-    print("\n=== v2 baseline (200 features, no dropout) ===")
-    X_v2 = encode_v2(bbs, stm)
-    print(f"  X shape: {X_v2.shape}")
-    print(f"  active features per row (mean): {(X_v2 > 0).sum() / n:.1f}")
-    m_v2 = make_mlp(NUM_ABS_FEATS, dropout=0.0)
-    n_params = sum(p.numel() for p in m_v2.parameters())
-    print(f"  params: {n_params}")
-    bv = train(m_v2, X_v2, y, epochs=args.epochs)
+    bv = bh = None
+    if not args.skip_v2:
+        print(f"\n=== v2 baseline (200 features, hidden {args.v2_hidden1}-"
+              f"{args.v2_hidden2}, no dropout) ===")
+        X_v2 = encode_v2(bbs, stm)
+        print(f"  X shape: {X_v2.shape}")
+        print(f"  active features per row (mean): {(X_v2 > 0).sum() / n:.1f}")
+        m_v2 = make_mlp(NUM_ABS_FEATS,
+                        hidden1=args.v2_hidden1, hidden2=args.v2_hidden2,
+                        dropout=0.0)
+        n_params = sum(p.numel() for p in m_v2.parameters())
+        print(f"  params: {n_params}")
+        bv = train(m_v2, X_v2, y, epochs=args.epochs)
 
-    print("\n=== HalfMen lite (450 features, dropout 0.1) ===")
-    X_h = encode_halfmen(bbs, stm)
-    print(f"  X shape: {X_h.shape}")
-    print(f"  active features per row (mean): {(X_h > 0).sum() / n:.1f}")
-    m_h = make_mlp(NUM_HALFMEN_FEATS, dropout=0.1)
-    n_params = sum(p.numel() for p in m_h.parameters())
-    print(f"  params: {n_params}")
-    bh = train(m_h, X_h, y, epochs=args.epochs)
+    if not args.skip_halfmen:
+        print(f"\n=== HalfMen lite (450 features, hidden {args.hm_hidden1}-"
+              f"{args.hm_hidden2}, dropout 0.1) ===")
+        X_h = encode_halfmen(bbs, stm)
+        print(f"  X shape: {X_h.shape}")
+        print(f"  active features per row (mean): {(X_h > 0).sum() / n:.1f}")
+        m_h = make_mlp(NUM_HALFMEN_FEATS,
+                       hidden1=args.hm_hidden1, hidden2=args.hm_hidden2,
+                       dropout=0.1)
+        n_params = sum(p.numel() for p in m_h.parameters())
+        print(f"  params: {n_params}")
+        bh = train(m_h, X_h, y, epochs=args.epochs)
 
     print("\n=== Verdict ===")
-    print(f"  v2 baseline best val MSE:  {bv:9.1f}  (RMSE {bv**0.5:6.1f})")
-    print(f"  HalfMen lite best val MSE: {bh:9.1f}  (RMSE {bh**0.5:6.1f})")
-    delta_pct = (bh - bv) / bv * 100
-    print(f"  delta: {delta_pct:+.1f}%")
-    if delta_pct < -3:
-        print("  → ENCOURAGING: HalfMen captures more signal. Worth implementing in C++.")
-    elif delta_pct < 3:
-        print("  → INCONCLUSIVE: within noise. Needs more data or different anchor.")
-    else:
-        print("  → NOT WORTH IT: HalfMen worse. Anchor / encoding probably wrong.")
+    if bv is not None:
+        print(f"  v2 baseline best val MSE:  {bv:9.1f}  (RMSE {bv**0.5:6.1f})")
+    if bh is not None:
+        print(f"  HalfMen lite best val MSE: {bh:9.1f}  (RMSE {bh**0.5:6.1f})")
+    if bv is not None and bh is not None:
+        delta_pct = (bh - bv) / bv * 100
+        print(f"  delta: {delta_pct:+.1f}%")
+        if delta_pct < -3:
+            print("  → ENCOURAGING: HalfMen captures more signal. Worth implementing in C++.")
+        elif delta_pct < 3:
+            print("  → INCONCLUSIVE: within noise. Needs more data or different anchor.")
+        else:
+            print("  → NOT WORTH IT: HalfMen worse. Anchor / encoding probably wrong.")
     return 0
 
 
