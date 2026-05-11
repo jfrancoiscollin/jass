@@ -16,6 +16,8 @@
 
 #if defined(__AVX2__)
 #include <immintrin.h>
+#elif defined(__wasm_simd128__)
+#include <wasm_simd128.h>
 #endif
 
 namespace jass {
@@ -452,7 +454,39 @@ inline std::int32_t dot_uint8_int8_avx2(const std::int8_t* h,
     return hsum_epi32_avx2(acc);
 }
 
-#endif  // __AVX2__
+#elif defined(__wasm_simd128__)
+
+// WASM SIMD128 has signed-signed extmul for int8 only; our `h` values
+// live in [0, 127] so their bit pattern is valid as both signed and
+// unsigned int8 — using the signed variant on them yields the same
+// numerical result. The per-pair int16 product range is ±127×127 =
+// ±16129, well below the signed int16 limit.
+inline std::int32_t hsum_i32x4_wasm(v128_t v) noexcept {
+    return wasm_i32x4_extract_lane(v, 0)
+         + wasm_i32x4_extract_lane(v, 1)
+         + wasm_i32x4_extract_lane(v, 2)
+         + wasm_i32x4_extract_lane(v, 3);
+}
+
+inline std::int32_t dot_int8_int8_wasm(const std::int8_t* h,
+                                       const std::int8_t* w,
+                                       std::size_t        n_bytes) noexcept {
+    v128_t acc = wasm_i32x4_const(0, 0, 0, 0);
+    for (std::size_t off = 0; off < n_bytes; off += 16) {
+        const v128_t hv  = wasm_v128_load(h + off);
+        const v128_t wv  = wasm_v128_load(w + off);
+        // 16 int8 × 16 int8 → 8+8 int16 (low + high halves).
+        const v128_t plo = wasm_i16x8_extmul_low_i8x16 (hv, wv);
+        const v128_t phi = wasm_i16x8_extmul_high_i8x16(hv, wv);
+        // 8 int16 → 4 int32 by summing adjacent pairs.
+        const v128_t slo = wasm_i32x4_extadd_pairwise_i16x8(plo);
+        const v128_t shi = wasm_i32x4_extadd_pairwise_i16x8(phi);
+        acc = wasm_i32x4_add(acc, wasm_i32x4_add(slo, shi));
+    }
+    return hsum_i32x4_wasm(acc);
+}
+
+#endif  // SIMD
 
 }  // namespace
 
@@ -485,7 +519,9 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
     }
 
     // Layer 2 — int8 × int8 → int32 dense matmul. HIDDEN2 outputs,
-    // HIDDEN1 inputs. AVX2 path uses maddubs/madd; otherwise scalar.
+    // HIDDEN1 inputs. AVX2 / WASM SIMD paths share the same shape via
+    // their respective dot-product helpers; the scalar fallback runs
+    // on plain builds.
     std::int32_t acc2[HIDDEN2];
 #if defined(__AVX2__)
     static_assert(HIDDEN1 % 32 == 0,
@@ -493,6 +529,13 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         acc2[k] = b2_[k]
                 + dot_uint8_int8_avx2(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
+    }
+#elif defined(__wasm_simd128__)
+    static_assert(HIDDEN1 % 16 == 0,
+                  "WASM SIMD layer 2 expects HIDDEN1 to be a multiple of 16");
+    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+        acc2[k] = b2_[k]
+                + dot_int8_int8_wasm(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
     }
 #else
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
@@ -511,9 +554,7 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
             saturate_to_int8(static_cast<float>(acc2[k]) * mul2_));
     }
 
-    // Layer 3 — single output, HIDDEN2 inputs. With HIDDEN2 = 32 this
-    // is exactly one AVX2 register; the scalar fallback covers other
-    // dimensions.
+    // Layer 3 — single output, HIDDEN2 inputs.
     std::int32_t acc3 = b3_;
 #if defined(__AVX2__)
     static_assert(HIDDEN2 % 32 == 0 || HIDDEN2 < 32,
@@ -527,6 +568,10 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
                   * static_cast<std::int32_t>(h2[k]);
         }
     }
+#elif defined(__wasm_simd128__)
+    static_assert(HIDDEN2 % 16 == 0,
+                  "WASM SIMD layer 3 expects HIDDEN2 to be a multiple of 16");
+    acc3 += dot_int8_int8_wasm(h2, w3_.data(), HIDDEN2);
 #else
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         acc3 += static_cast<std::int32_t>(w3_[k])

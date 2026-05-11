@@ -32,31 +32,35 @@ else()
 endif()
 
 # -----------------------------------------------------------------------------
-# SIMD (AVX2) opt-in
+# SIMD opt-in (AVX2 on native, WASM SIMD128 on Emscripten)
 # -----------------------------------------------------------------------------
-# When the host compiler supports AVX2 we enable `-mavx2` so the hot
-# int8 forward pass in MLPNetworkQ can use `_mm256_maddubs_epi16` and
-# friends. The runtime forward pass automatically picks the AVX2 path
-# via `#if defined(__AVX2__)`; without AVX2 the scalar fallback runs.
+# Two architecture-specific code paths live in `MLPNetworkQ::evaluate`:
+#   * `__AVX2__`           — Intel / AMD desktops since ~2013.
+#   * `__wasm_simd128__`   — browsers since Chrome 91 / Firefox 89 / Safari 16.4.
+# When neither macro is defined the scalar fallback runs (matches what
+# CI would produce on a non-AVX2 host or a stock Emscripten build).
 #
-# Skipped under Emscripten (WASM has its own SIMD path that we'll
-# layer on later). Can be turned off with `-DJASS_ENABLE_AVX2=OFF`
-# to keep the binary portable across non-AVX2 x86 chips.
-option(JASS_ENABLE_AVX2 "Enable AVX2 intrinsics for the int8 NNUE forward pass" ON)
+# Turn the whole thing off with `-DJASS_ENABLE_SIMD=OFF` to ship a
+# portable binary that doesn't require any specific ISA feature.
+option(JASS_ENABLE_SIMD "Enable architecture-specific SIMD intrinsics for the int8 NNUE forward pass" ON)
 add_library(jass_simd INTERFACE)
-if(JASS_ENABLE_AVX2 AND NOT EMSCRIPTEN AND NOT MSVC)
-    include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag(-mavx2 JASS_COMPILER_SUPPORTS_AVX2)
-    if(JASS_COMPILER_SUPPORTS_AVX2)
-        target_compile_options(jass_simd INTERFACE -mavx2)
-        message(STATUS "Jass: AVX2 enabled (-mavx2)")
+if(JASS_ENABLE_SIMD)
+    if(EMSCRIPTEN)
+        target_compile_options(jass_simd INTERFACE -msimd128)
+        message(STATUS "Jass: WASM SIMD128 enabled (-msimd128)")
+    elseif(MSVC)
+        target_compile_options(jass_simd INTERFACE /arch:AVX2)
+        message(STATUS "Jass: AVX2 enabled (/arch:AVX2)")
     else()
-        message(STATUS "Jass: compiler does not support -mavx2; scalar fallback only")
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag(-mavx2 JASS_COMPILER_SUPPORTS_AVX2)
+        if(JASS_COMPILER_SUPPORTS_AVX2)
+            target_compile_options(jass_simd INTERFACE -mavx2)
+            message(STATUS "Jass: AVX2 enabled (-mavx2)")
+        else()
+            message(STATUS "Jass: compiler does not support -mavx2; scalar fallback only")
+        endif()
     endif()
-elseif(JASS_ENABLE_AVX2 AND MSVC)
-    # /arch:AVX2 turns on AVX2 codegen + defines __AVX2__.
-    target_compile_options(jass_simd INTERFACE /arch:AVX2)
-    message(STATUS "Jass: AVX2 enabled (/arch:AVX2)")
 endif()
 
 # -----------------------------------------------------------------------------
