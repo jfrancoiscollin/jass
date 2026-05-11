@@ -108,7 +108,7 @@ void test_tt_store_then_probe() {
     JASS_CHECK(tt.probe(0xCAFEBABEULL, out));
     JASS_CHECK_EQ(out.score, 42);
     JASS_CHECK_EQ(out.depth, 4);
-    JASS_CHECK(out.bound == Bound::Exact);
+    JASS_CHECK(out.bound() == Bound::Exact);
     JASS_CHECK(same_packed_move(m, out.best_move));
 }
 
