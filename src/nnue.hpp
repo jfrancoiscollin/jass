@@ -189,43 +189,51 @@ private:
     float              b3_{0.0f};
 };
 
-// Quantised int8 counterpart of `MLPNetwork`. Same topology and STM-
-// relative encoding, but weights are int8 and biases are int32 (at
-// the accumulator scale). Two hot loops do int8 × int8 → int32 MAC,
-// with three precomputed float scales bridging the layers. Forward
-// pass is roughly 3× faster than `MLPNetwork` on a modern x86 CPU,
-// at the cost of ~5-15 ELO of precision loss (small compared to the
-// gain from quantisation-enabled deeper search).
+// Quantised int8 counterpart of `MLPNetwork`. Same topologies and
+// encodings, weights are int8 and biases are int32 (at the
+// accumulator scale). Two hot loops do int8 × int8 → int32 MAC, with
+// three precomputed float scales bridging the layers. Forward pass is
+// roughly 3× faster than `MLPNetwork` on a modern x86 CPU, at the
+// cost of ~5-15 ELO of precision loss.
 //
 // As of Cycle 4a the hidden dims are runtime parameters; the AVX2 /
 // WASM SIMD dot-product helpers require their inner length to be a
-// multiple of 32 (16 on WASM), so `load()` rejects any topology that
-// would break them. The Cycle-2 trainer only produces multiples of
-// 32 today (64-32, 128-64, 256-128, 512-256), so the constraint is
-// not user-visible.
+// multiple of `SIMD_TILE` (32 on AVX2, 16 on WASM), so `load()`
+// rejects any topology that would break them.
 //
-// On-disk format (JNNQ, version 1) is described next to the load /
-// save declarations.
+// Cycle 6c part 2: the input encoding (V2 dense 200 or HalfMen lite
+// 450) is also runtime, mirroring `MLPNetwork`. Selected via
+// `input_dim_` exactly the same way (200 → V2, 450 → HalfMen).
+//
+// On-disk format (JNNQ): v1 was V2-only (input_dim fixed at 200).
+// v2 adds runtime input_dim. The loader accepts both for backward
+// compat with the embedded default network; the writer always emits v2.
 class MLPNetworkQ : public INetwork {
 public:
-    static constexpr std::size_t INPUT_DIM  = 200;
-    static constexpr std::size_t HIDDEN1    = 64;
-    static constexpr std::size_t HIDDEN2    = 32;
-    static constexpr std::size_t MAX_HIDDEN = 1024;
-    static constexpr std::size_t SIMD_TILE  = 32;
+    static constexpr std::size_t INPUT_DIM          = 200;  // V2 default
+    static constexpr std::size_t HALFMEN_INPUT_DIM  = 450;
+    static constexpr std::size_t MAX_INPUT_DIM      = 1024;
+    static constexpr std::size_t HIDDEN1            = 64;
+    static constexpr std::size_t HIDDEN2            = 32;
+    static constexpr std::size_t MAX_HIDDEN         = 1024;
+    static constexpr std::size_t SIMD_TILE          = 32;
 
     MLPNetworkQ();
     MLPNetworkQ(std::size_t hidden1, std::size_t hidden2);
+    MLPNetworkQ(std::size_t input_dim,
+                std::size_t hidden1,
+                std::size_t hidden2);
 
-    std::size_t hidden1() const noexcept { return hidden1_; }
-    std::size_t hidden2() const noexcept { return hidden2_; }
+    std::size_t input_dim() const noexcept { return input_dim_; }
+    std::size_t hidden1()   const noexcept { return hidden1_;   }
+    std::size_t hidden2()   const noexcept { return hidden2_;   }
 
     int evaluate(const Position& pos) const noexcept override;
 
     // Binary format (little-endian throughout):
     //   [0..4)   magic = "JNNQ"
-    //   [4..8)   version (uint32, currently 1)
-    //   [8..12)  input_dim  (uint32, must equal 200)
+    //   [4..8)   version (uint32: 1 = V2 only, 2 = adds HalfMen support)
+    //   [8..12)  input_dim  (uint32, 200 = V2, 450 = HalfMen)
     //   [12..16) hidden1    (uint32, multiple of SIMD_TILE)
     //   [16..20) hidden2    (uint32, multiple of SIMD_TILE)
     //   [20..24) output_dim (uint32, must equal 1)
@@ -233,7 +241,7 @@ public:
     //   [28..32) float32 mul2     (acc2 → int8 h2 quantisation factor)
     //   [32..36) float32 mul_out  (acc3 → centipawn scale)
     //   [36..)   weights:
-    //              w1 [hidden1 × INPUT_DIM]   int8
+    //              w1 [hidden1 × input_dim]   int8
     //              b1 [hidden1]               int32 (at acc1 scale)
     //              w2 [hidden2 × hidden1]     int8
     //              b2 [hidden2]               int32 (at acc2 scale)
@@ -244,11 +252,12 @@ public:
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
-    void resize_for(std::size_t h1, std::size_t h2);
+    void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 
+    std::size_t                input_dim_{INPUT_DIM};
     std::size_t                hidden1_{HIDDEN1};
     std::size_t                hidden2_{HIDDEN2};
-    std::vector<std::int8_t>   w1_;   // hidden1_ × INPUT_DIM
+    std::vector<std::int8_t>   w1_;   // hidden1_ × input_dim_
     std::vector<std::int32_t>  b1_;   // hidden1_
     std::vector<std::int8_t>   w2_;   // hidden2_ × hidden1_
     std::vector<std::int32_t>  b2_;   // hidden2_
