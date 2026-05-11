@@ -12,19 +12,24 @@ that records, per sampled position:
     back to that sample's STM perspective (+1 = STM eventually won,
     0 = draw, -1 = STM lost).
 
-Both trainings share the same network topology and the same blended-
-BCE loss formulation (Stockfish-NNUE-pytorch style), so the only
-moving piece is `lambda`:
+Both trainings share the same network topology (200 → 64 → 32 → 1,
+ReLU) and the same MSE-on-blended-target loss formulation, so the
+only moving piece is `lambda`. We treat the WDL outcome as a
+saturated pseudo-score (`wdl × WDL_SCALE` cp) and blend it with the
+real depth-eval score:
 
-    p_pred   = sigmoid(network_output / scale)
-    p_score  = sigmoid(target_score   / scale)
-    p_wdl    = (wdl + 1) / 2                   # -1→0, 0→0.5, +1→1
-    p_target = λ * p_score + (1 - λ) * p_wdl
-    loss     = binary_cross_entropy(p_pred, p_target)
+    target_blended = λ × score_target + (1 - λ) × (wdl × WDL_SCALE)
+    loss           = MSE(network_output, target_blended)
+
+The Stockfish-style sigmoid+BCE formulation was tried first but its
+gradient saturates near zero (where most early/mid-game positions
+sit), leaving the network stuck at "predict 0" with our 30k-sample
+budget. Plain MSE has steep gradients everywhere; comparable to the
+production train_mlp.py and scout_halfmen.py baselines.
 
 Configurations:
-  - Baseline: λ = 1.0 (pure score signal, blended-BCE formulation)
-  - Mixed:    λ = 0.7 (70% score, 30% WDL outcome)
+  - Baseline:   λ = 1.0 (pure-score MSE, ignores WDL)
+  - Mixed:      λ = 0.7 (30% pull toward the game-outcome's pseudo-score)
 
 Verdict is printed on the val set's MSE-on-score (the metric that
 actually drives play strength at inference time, since the engine
@@ -121,23 +126,19 @@ def make_mlp(input_dim: int = 200, hidden1: int = 64, hidden2: int = 32) -> nn.M
     )
 
 
-SIGMOID_SCALE = 400.0  # cp → probability conversion scale (Stockfish ≈ 410)
+WDL_PSEUDO_SCALE = 800.0  # cp value assigned to a known win (+1) / loss (-1)
 
 
-def blended_bce_loss(pred_score: torch.Tensor,
+def blended_mse_loss(pred_score: torch.Tensor,
                      target_score: torch.Tensor,
                      target_wdl: torch.Tensor,
                      lam: float) -> torch.Tensor:
-    """λ = 1 → pure-score BCE, λ = 0 → pure-WDL BCE, in-between blends
-    the two target probabilities. Same formulation as Stockfish-NNUE
-    pytorch, with our centipawn scale."""
-    p_pred  = torch.sigmoid(pred_score   / SIGMOID_SCALE)
-    p_score = torch.sigmoid(target_score / SIGMOID_SCALE)
-    p_wdl   = (target_wdl + 1.0) / 2.0
-    p_target = lam * p_score + (1.0 - lam) * p_wdl
-    eps = 1e-9
-    return -(p_target * torch.log(p_pred + eps)
-           + (1.0 - p_target) * torch.log(1.0 - p_pred + eps)).mean()
+    """λ = 1 → pure-score MSE; λ < 1 mixes in a pull toward the game
+    outcome's pseudo-score (±WDL_PSEUDO_SCALE cp). Plain MSE keeps a
+    steep gradient everywhere, which the sigmoid+BCE formulation
+    famously doesn't on small datasets near score = 0."""
+    target_blended = lam * target_score + (1.0 - lam) * (target_wdl * WDL_PSEUDO_SCALE)
+    return ((pred_score - target_blended) ** 2).mean()
 
 
 def mse_on_score(pred_score: torch.Tensor,
@@ -180,7 +181,7 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
         for xb, sb, wb in loader:
             opt.zero_grad()
             pred = model(xb).squeeze(-1)
-            loss = blended_bce_loss(pred, sb, wb, lam)
+            loss = blended_mse_loss(pred, sb, wb, lam)
             loss.backward()
             opt.step()
             running_loss += loss.item() * len(xb)
@@ -192,7 +193,7 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
         marker = " *" if val_mse < best_val_mse else ""
         if val_mse < best_val_mse:
             best_val_mse = val_mse
-        print(f"  epoch {ep:3d}: train BCE={running_loss / running_n:7.4f}  "
+        print(f"  epoch {ep:3d}: train MSE={running_loss / running_n:8.1f}  "
               f"val MSE={val_mse:9.1f}{marker}")
     return best_val_mse
 
