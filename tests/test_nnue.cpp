@@ -320,6 +320,94 @@ void test_mlp_load_supports_non_default_hidden_dims() {
     std::remove(out_path.c_str());
 }
 
+// Cycle-6c: HalfMen-lite encoding (450 features = 200 abs + 200
+// anchor-relative + 50 anchor one-hot). Builds a 450 → 32 → 16 → 1
+// network with a single hand-wired path covering one example of each
+// of the three feature groups, hand-computes the expected output, and
+// verifies save+load round-trip preserves both dims and behaviour.
+void test_mlp_halfmen_encoding_end_to_end() {
+    constexpr std::size_t kInD = MLPNetwork::HALFMEN_INPUT_DIM;  // 450
+    constexpr std::size_t kH1  = 32;
+    constexpr std::size_t kH2  = 16;
+
+    // Test position W:W2:B1 — white-to-move, white man at FMJD 2
+    // (bit 1), black man at FMJD 1 (bit 0). Hand-computed encoding:
+    //   * white pieces ⇒ anchor = MSB of white bb = bit 1, so anchor=1.
+    //   * abs[1*4+0] = abs[4]   (white man on FMJD 2, kind 0)
+    //   * abs[0*4+2] = abs[2]   (black man on FMJD 1, kind 2 in STM-POV)
+    //   * rel for white: (1-1) mod 50 = 0 → 200 + 0*4 + 0 = 200
+    //   * rel for black: (0-1) mod 50 = 49 → 200 + 49*4 + 2 = 398
+    //   * anchor one-hot at 400 + 1 = 401
+    // Wire each of those features into neuron 0 of layer 1, plumb
+    // through h2[0] then out. Total h1[0] = 4.0, evaluate() = 4.
+    MLPNetwork net(kInD, kH1, kH2);
+    JASS_CHECK_EQ(net.input_dim(), kInD);
+    JASS_CHECK_EQ(net.hidden1(),   kH1);
+    JASS_CHECK_EQ(net.hidden2(),   kH2);
+
+    const std::string in_path  = make_tmp_path("/tmp/jass-mlp-hm-in-XXXXXX");
+    const std::string out_path = make_tmp_path("/tmp/jass-mlp-hm-out-XXXXXX");
+    {
+        std::ofstream f(in_path, std::ios::binary);
+        JASS_CHECK(static_cast<bool>(f));
+        f.write("JNNM", 4);
+        auto wu32 = [&](std::uint32_t v) {
+            f.write(reinterpret_cast<const char*>(&v), 4);
+        };
+        wu32(3u);  // version 3 — HalfMen support
+        wu32(static_cast<std::uint32_t>(kInD));
+        wu32(static_cast<std::uint32_t>(kH1));
+        wu32(static_cast<std::uint32_t>(kH2));
+        wu32(1u);
+
+        std::vector<float> w1(kH1 * kInD, 0.0f);
+        std::vector<float> b1(kH1, 0.0f);
+        std::vector<float> w2(kH2 * kH1, 0.0f);
+        std::vector<float> b2(kH2, 0.0f);
+        std::vector<float> w3(kH2, 0.0f);
+        // Single-neuron path through layer 1:
+        w1[0 * kInD +   4] = 1.0f;  // abs white
+        w1[0 * kInD +   2] = 1.0f;  // abs black
+        w1[0 * kInD + 200] = 1.0f;  // rel white (rel = 0)
+        w1[0 * kInD + 398] = 1.0f;  // rel black (rel = 49)
+        w1[0 * kInD + 401] = 1.0f;  // anchor one-hot (anchor = 1)
+        w2[0 * kH1  +   0] = 1.0f;  // h1[0] → h2[0]
+        w3[0]              = 1.0f;  // h2[0] → out
+
+        auto wbytes = [&](const void* p, std::size_t n) {
+            f.write(reinterpret_cast<const char*>(p),
+                    static_cast<std::streamsize>(n));
+        };
+        wbytes(w1.data(), w1.size() * sizeof(float));
+        wbytes(b1.data(), b1.size() * sizeof(float));
+        wbytes(w2.data(), w2.size() * sizeof(float));
+        wbytes(b2.data(), b2.size() * sizeof(float));
+        wbytes(w3.data(), w3.size() * sizeof(float));
+        const float b3 = 0.0f;
+        f.write(reinterpret_cast<const char*>(&b3), sizeof(float));
+    }
+
+    JASS_CHECK(net.load(in_path));
+    JASS_CHECK_EQ(net.input_dim(), kInD);
+    JASS_CHECK_EQ(net.hidden1(),   kH1);
+    JASS_CHECK_EQ(net.hidden2(),   kH2);
+
+    const Position p = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p), 5);  // abs+abs+rel+rel+anchor = 5
+
+    // Save round-trip preserves input_dim and behaviour.
+    JASS_CHECK(net.save(out_path));
+    MLPNetwork reloaded;
+    JASS_CHECK(reloaded.load(out_path));
+    JASS_CHECK_EQ(reloaded.input_dim(), kInD);
+    JASS_CHECK_EQ(reloaded.hidden1(),   kH1);
+    JASS_CHECK_EQ(reloaded.hidden2(),   kH2);
+    JASS_CHECK_EQ(reloaded.evaluate(p), 5);
+
+    std::remove(in_path.c_str());
+    std::remove(out_path.c_str());
+}
+
 void test_mlp_load_rejects_missing_or_bad_file() {
     MLPNetwork net;
     JASS_CHECK(!net.load("/no/such/path/jass-mlp.bin"));
@@ -717,6 +805,7 @@ void run_nnue_tests() {
     test_mlp_position_level_symmetry();
     test_mlp_save_load_roundtrip();
     test_mlp_load_supports_non_default_hidden_dims();
+    test_mlp_halfmen_encoding_end_to_end();
     test_mlp_load_rejects_missing_or_bad_file();
     test_default_nnue_is_non_null_and_returns_finite_score();
     test_default_nnue_is_stable_across_calls();
