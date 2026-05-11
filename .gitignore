@@ -53,3 +53,7 @@ emscripten_temp/
 *.log
 /tmp/
 /scratch/
+
+# Python
+__pycache__/
+*.pyc
