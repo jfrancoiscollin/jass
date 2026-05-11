@@ -454,6 +454,79 @@ inline std::int32_t dot_uint8_int8_avx2(const std::int8_t* h,
     return hsum_epi32_avx2(acc);
 }
 
+// AVX-VNNI variant — VEX-encoded `_mm256_dpbusd_epi32` fuses
+// maddubs+madd+add into one instruction. Available on Intel Alder
+// Lake (12th gen) and newer, AMD Zen 4 and newer. The function
+// attribute lets the body call `_mm256_dpbusd_epi32` even when the
+// translation unit was not compiled with -mavxvnni; the dispatcher
+// only routes traffic here when the CPU actually supports it.
+#if defined(__GNUC__) && (__GNUC__ >= 11 || defined(__clang__))
+#define JASS_HAS_VNNI_DISPATCH 1
+__attribute__((target("avxvnni")))
+inline std::int32_t dot_uint8_int8_avxvnni(const std::int8_t* h,
+                                           const std::int8_t* w,
+                                           std::size_t        n_bytes) noexcept {
+    __m256i acc = _mm256_setzero_si256();
+    for (std::size_t off = 0; off < n_bytes; off += 32) {
+        const __m256i hv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(h + off));
+        const __m256i wv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(w + off));
+        // dpbusd: acc[k] += sum of 4 (uint8 × int8) products per int32 lane.
+        acc = _mm256_dpbusd_epi32(acc, hv, wv);
+    }
+    return hsum_epi32_avx2(acc);
+}
+
+// AVX-512-VNNI 256-bit variant — same intrinsic, EVEX-encoded under
+// AVX-512 + AVX-512-VL. Targets Intel Skylake-X / Cascade Lake / Ice
+// Lake server, AMD Zen 4 (which also has AVX-512). Distinct from the
+// AVX-VNNI path because the instruction byte sequences differ; a
+// CPU only ever supports one of the two encodings.
+__attribute__((target("avx512vnni,avx512vl")))
+inline std::int32_t dot_uint8_int8_avx512vnni(const std::int8_t* h,
+                                              const std::int8_t* w,
+                                              std::size_t        n_bytes) noexcept {
+    __m256i acc = _mm256_setzero_si256();
+    for (std::size_t off = 0; off < n_bytes; off += 32) {
+        const __m256i hv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(h + off));
+        const __m256i wv = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(w + off));
+        acc = _mm256_dpbusd_epi32(acc, hv, wv);
+    }
+    return hsum_epi32_avx2(acc);
+}
+#endif  // GNUC >= 11 || clang
+
+// Function-pointer dispatcher. Set on the first call from any thread
+// (C++17 magic statics → thread-safe + once-only) and reused for the
+// rest of the process. The cost is one indirect call per dot product
+// (≈ 1-3 cycles on a warm BTB); negligible against the body's
+// 5-15 cycles of int8 MAC.
+using DotFn = std::int32_t (*)(const std::int8_t*, const std::int8_t*,
+                               std::size_t) noexcept;
+
+inline DotFn select_dot_impl() noexcept {
+#if defined(JASS_HAS_VNNI_DISPATCH)
+    if (__builtin_cpu_supports("avxvnni")) {
+        return &dot_uint8_int8_avxvnni;
+    }
+    if (__builtin_cpu_supports("avx512vnni")
+     && __builtin_cpu_supports("avx512vl")) {
+        return &dot_uint8_int8_avx512vnni;
+    }
+#endif
+    return &dot_uint8_int8_avx2;
+}
+
+inline std::int32_t dot_uint8_int8_dispatched(const std::int8_t* h,
+                                              const std::int8_t* w,
+                                              std::size_t        n_bytes) noexcept {
+    static const DotFn fn = select_dot_impl();
+    return fn(h, w, n_bytes);
+}
+
 #elif defined(__wasm_simd128__)
 
 // WASM SIMD128 has signed-signed extmul for int8 only; our `h` values
@@ -528,7 +601,7 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
                   "AVX2 layer 2 expects HIDDEN1 to be a multiple of 32");
     for (std::size_t k = 0; k < HIDDEN2; ++k) {
         acc2[k] = b2_[k]
-                + dot_uint8_int8_avx2(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
+                + dot_uint8_int8_dispatched(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
     }
 #elif defined(__wasm_simd128__)
     static_assert(HIDDEN1 % 16 == 0,
@@ -561,7 +634,7 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
                   "AVX2 layer 3 expects HIDDEN2 to fit a single register "
                   "or be a multiple of 32");
     if constexpr (HIDDEN2 % 32 == 0) {
-        acc3 += dot_uint8_int8_avx2(h2, w3_.data(), HIDDEN2);
+        acc3 += dot_uint8_int8_dispatched(h2, w3_.data(), HIDDEN2);
     } else {
         for (std::size_t k = 0; k < HIDDEN2; ++k) {
             acc3 += static_cast<std::int32_t>(w3_[k])
