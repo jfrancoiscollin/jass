@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Trigger-on-demand workflow that builds a JBOK opening book from a
+# FEN list committed to the repo. Each FEN is evaluated with the
+# embedded NNUE at the requested depth; the resulting `book.bok` is
+# uploaded as an artefact.
+#
+# Typical recipe (curating an external position DB):
+#   1. Export your positions to a text file (one FEN per line; `#`
+#      comments and blank lines OK) — e.g.
+#         sqlite3 db.sqlite "SELECT fen FROM positions" > fens.txt
+#   2. Upload the file at the repo root via Add file → Upload files.
+#   3. Open the repo → Actions → "Build book".
+#   4. Tap Run workflow, point `fens_path` at your file and pick a depth.
+#   5. Wait — runtime ~= positions × per-position search time at the
+#      chosen depth (see the dropdown hints below).
+#   6. Download the `opening-book` artefact and upload `book.bok` to
+#      the repo. The engine can then be launched with
+#      `./build/jass --book book.bok`.
+
+name: build-book
+
+on:
+  workflow_dispatch:
+    inputs:
+      fens_path:
+        description: "Path inside the repo to the FEN list (one per line, # comments OK)"
+        required: true
+        default: "fens.txt"
+        type: string
+      depth:
+        description: "Search depth per position (8 ≈ fast / 10 ≈ medium / 12 ≈ tournament / 15 ≈ deep)"
+        required: true
+        default: "12"
+        type: choice
+        options:
+          - "8"
+          - "10"
+          - "12"
+          - "15"
+
+concurrency:
+  group: build-book-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build:
+    name: Evaluate FENs and write JBOK
+    runs-on: ubuntu-latest
+    timeout-minutes: 350     # 5 h 50 — leaves a margin under the 6 h cap
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the native engine (Release)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Sanity-check the FEN file
+        id: check
+        run: |
+          SRC="${{ inputs.fens_path }}"
+          if [ ! -f "$SRC" ]; then
+            echo "::error::FEN file '$SRC' not found in the repo"
+            echo "Hint: use Add file → Upload files in the GitHub web UI to"
+            echo "      commit a text file with one FEN per line."
+            exit 1
+          fi
+          ls -la "$SRC"
+          # Quick stats: non-empty / non-comment lines = position count.
+          POSITIONS=$(grep -cE '^[[:space:]]*[^#[:space:]]' "$SRC" || true)
+          echo "positions=$POSITIONS" >> "$GITHUB_OUTPUT"
+          echo "Counted $POSITIONS candidate FEN lines (blank/comment lines ignored)."
+
+      - name: Run --build-book
+        # pipefail so a crashing engine doesn't hide behind tee.
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/jass --build-book \
+              "${{ inputs.fens_path }}" \
+              book.bok \
+              "${{ inputs.depth }}" | tee build-book.log
+          ls -la book.bok
+
+      - name: Upload book artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: opening-book
+          path: book.bok
+          if-no-files-found: error
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-book-log
+          path: build-book.log
+          if-no-files-found: warn
+
+      - name: Add summary to job page
+        run: |
+          {
+            echo "## Build book"
+            echo
+            echo "- Input file: \`${{ inputs.fens_path }}\`"
+            echo "- Depth: \`${{ inputs.depth }}\`"
+            echo "- Candidate positions: ${{ steps.check.outputs.positions }}"
+            echo
+            echo "### Tail of build log"
+            echo
+            echo '```'
+            tail -20 build-book.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
