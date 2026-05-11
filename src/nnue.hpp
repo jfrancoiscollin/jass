@@ -171,15 +171,28 @@ private:
 // at the cost of ~5-15 ELO of precision loss (small compared to the
 // gain from quantisation-enabled deeper search).
 //
+// As of Cycle 4a the hidden dims are runtime parameters; the AVX2 /
+// WASM SIMD dot-product helpers require their inner length to be a
+// multiple of 32 (16 on WASM), so `load()` rejects any topology that
+// would break them. The Cycle-2 trainer only produces multiples of
+// 32 today (64-32, 128-64, 256-128, 512-256), so the constraint is
+// not user-visible.
+//
 // On-disk format (JNNQ, version 1) is described next to the load /
 // save declarations.
 class MLPNetworkQ : public INetwork {
 public:
-    static constexpr std::size_t INPUT_DIM = 200;
-    static constexpr std::size_t HIDDEN1   = 64;
-    static constexpr std::size_t HIDDEN2   = 32;
+    static constexpr std::size_t INPUT_DIM  = 200;
+    static constexpr std::size_t HIDDEN1    = 64;
+    static constexpr std::size_t HIDDEN2    = 32;
+    static constexpr std::size_t MAX_HIDDEN = 1024;
+    static constexpr std::size_t SIMD_TILE  = 32;
 
-    MLPNetworkQ() = default;
+    MLPNetworkQ();
+    MLPNetworkQ(std::size_t hidden1, std::size_t hidden2);
+
+    std::size_t hidden1() const noexcept { return hidden1_; }
+    std::size_t hidden2() const noexcept { return hidden2_; }
 
     int evaluate(const Position& pos) const noexcept override;
 
@@ -187,33 +200,37 @@ public:
     //   [0..4)   magic = "JNNQ"
     //   [4..8)   version (uint32, currently 1)
     //   [8..12)  input_dim  (uint32, must equal 200)
-    //   [12..16) hidden1    (uint32, must equal 64)
-    //   [16..20) hidden2    (uint32, must equal 32)
+    //   [12..16) hidden1    (uint32, multiple of SIMD_TILE)
+    //   [16..20) hidden2    (uint32, multiple of SIMD_TILE)
     //   [20..24) output_dim (uint32, must equal 1)
     //   [24..28) float32 mul1     (acc1 → int8 h1 quantisation factor)
     //   [28..32) float32 mul2     (acc2 → int8 h2 quantisation factor)
     //   [32..36) float32 mul_out  (acc3 → centipawn scale)
     //   [36..)   weights:
-    //              w1 [HIDDEN1 × INPUT_DIM]   int8
-    //              b1 [HIDDEN1]               int32 (at acc1 scale)
-    //              w2 [HIDDEN2 × HIDDEN1]     int8
-    //              b2 [HIDDEN2]               int32 (at acc2 scale)
-    //              w3 [HIDDEN2]               int8
+    //              w1 [hidden1 × INPUT_DIM]   int8
+    //              b1 [hidden1]               int32 (at acc1 scale)
+    //              w2 [hidden2 × hidden1]     int8
+    //              b2 [hidden2]               int32 (at acc2 scale)
+    //              w3 [hidden2]               int8
     //              b3 [1]                     int32 (at acc3 scale)
     bool load(std::string_view path);
     bool save(std::string_view path) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
-    std::array<std::int8_t,  HIDDEN1 * INPUT_DIM> w1_{};
-    std::array<std::int32_t, HIDDEN1>             b1_{};
-    std::array<std::int8_t,  HIDDEN2 * HIDDEN1>   w2_{};
-    std::array<std::int32_t, HIDDEN2>             b2_{};
-    std::array<std::int8_t,  HIDDEN2>             w3_{};
-    std::int32_t                                  b3_{0};
-    float                                         mul1_{1.0f};
-    float                                         mul2_{1.0f};
-    float                                         mul_out_{1.0f};
+    void resize_for(std::size_t h1, std::size_t h2);
+
+    std::size_t                hidden1_{HIDDEN1};
+    std::size_t                hidden2_{HIDDEN2};
+    std::vector<std::int8_t>   w1_;   // hidden1_ × INPUT_DIM
+    std::vector<std::int32_t>  b1_;   // hidden1_
+    std::vector<std::int8_t>   w2_;   // hidden2_ × hidden1_
+    std::vector<std::int32_t>  b2_;   // hidden2_
+    std::vector<std::int8_t>   w3_;   // hidden2_
+    std::int32_t               b3_{0};
+    float                      mul1_{1.0f};
+    float                      mul2_{1.0f};
+    float                      mul_out_{1.0f};
 };
 
 // Sniff `path`'s 4-byte header and return the matching concrete

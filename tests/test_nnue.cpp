@@ -548,6 +548,104 @@ void test_mlpq_save_load_roundtrip() {
     std::remove(out_path.c_str());
 }
 
+// Cycle-4a regression: a JNNQ file with non-default hidden dims must
+// round-trip cleanly through the load+save path and produce the same
+// evaluation. We replicate the trigger-path setup from
+// test_mlpq_forward_pass_matches_hand_computed but on a 128×64
+// topology, which exercises the runtime SIMD-tile loop bounds.
+void test_mlpq_load_supports_non_default_hidden_dims() {
+    constexpr std::size_t kH1 = 128;
+    constexpr std::size_t kH2 = 64;
+
+    MLPNetworkQ net(kH1, kH2);
+    JASS_CHECK_EQ(net.hidden1(), kH1);
+    JASS_CHECK_EQ(net.hidden2(), kH2);
+
+    const std::string in_path  = make_tmp_path("/tmp/jass-mlpq-wide-in-XXXXXX");
+    const std::string out_path = make_tmp_path("/tmp/jass-mlpq-wide-out-XXXXXX");
+    {
+        std::ofstream f(in_path, std::ios::binary);
+        JASS_CHECK(static_cast<bool>(f));
+        f.write("JNNQ", 4);
+        auto wu32 = [&](std::uint32_t v) {
+            f.write(reinterpret_cast<const char*>(&v), 4);
+        };
+        auto wf32 = [&](float v) {
+            f.write(reinterpret_cast<const char*>(&v), sizeof(float));
+        };
+        wu32(1u);  // version
+        wu32(static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM));
+        wu32(static_cast<std::uint32_t>(kH1));
+        wu32(static_cast<std::uint32_t>(kH2));
+        wu32(1u);
+        wf32(0.5f);   // mul1
+        wf32(1.0f);   // mul2
+        wf32(2.0f);   // mul_out
+
+        std::vector<std::int8_t>  w1(kH1 * MLPNetworkQ::INPUT_DIM, 0);
+        std::vector<std::int32_t> b1(kH1, 0);
+        std::vector<std::int8_t>  w2(kH2 * kH1, 0);
+        std::vector<std::int32_t> b2(kH2, 0);
+        std::vector<std::int8_t>  w3(kH2, 0);
+        w1[0 * MLPNetworkQ::INPUT_DIM + 4] = 100;  // feat 4 → h1[0]
+        w2[0 * kH1 + 0]                    = 4;    // h1[0]  → h2[0]
+        w3[0]                              = 1;    // h2[0]  → out
+        auto wbytes = [&](const void* p, std::size_t n) {
+            f.write(reinterpret_cast<const char*>(p),
+                    static_cast<std::streamsize>(n));
+        };
+        wbytes(w1.data(), w1.size() * sizeof(std::int8_t));
+        wbytes(b1.data(), b1.size() * sizeof(std::int32_t));
+        wbytes(w2.data(), w2.size() * sizeof(std::int8_t));
+        wbytes(b2.data(), b2.size() * sizeof(std::int32_t));
+        wbytes(w3.data(), w3.size() * sizeof(std::int8_t));
+        const std::int32_t b3 = 0;
+        f.write(reinterpret_cast<const char*>(&b3), sizeof(std::int32_t));
+    }
+
+    JASS_CHECK(net.load(in_path));
+    JASS_CHECK_EQ(net.hidden1(), kH1);
+    JASS_CHECK_EQ(net.hidden2(), kH2);
+
+    JASS_CHECK(net.save(out_path));
+    MLPNetworkQ reloaded;
+    JASS_CHECK(reloaded.load(out_path));
+    JASS_CHECK_EQ(reloaded.hidden1(), kH1);
+    JASS_CHECK_EQ(reloaded.hidden2(), kH2);
+
+    // Trigger path: feat 4 = white man on bit 1 (FMJD square 2).
+    // acc1[0] = 100 → mul1*100 = 50 → h1[0] = 50.
+    // acc2[0] = 4 * 50 = 200 → mul2*200 = 200 → saturates to 127 → h2[0] = 127.
+    // acc3 = 1 * 127 = 127 → mul_out * 127 = 254.
+    const Position p = parse("W:W2:B1");
+    JASS_CHECK_EQ(net.evaluate(p),      254);
+    JASS_CHECK_EQ(reloaded.evaluate(p), 254);
+
+    std::remove(in_path.c_str());
+    std::remove(out_path.c_str());
+}
+
+// Cycle-4a: dims that would break the SIMD dot-product (not a
+// multiple of SIMD_TILE) must be rejected at load time.
+void test_mlpq_load_rejects_simd_incompatible_dims() {
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-odd-XXXXXX");
+    {
+        std::ofstream f(path, std::ios::binary);
+        f.write("JNNQ", 4);
+        const std::uint32_t v[5] = {
+            1u,                                                 // version
+            static_cast<std::uint32_t>(MLPNetworkQ::INPUT_DIM),
+            48u,  // hidden1 — not a multiple of 32, must be rejected
+            32u,
+            1u,
+        };
+        f.write(reinterpret_cast<const char*>(v), sizeof(v));
+    }
+    MLPNetworkQ net;
+    JASS_CHECK(!net.load(path));
+    std::remove(path.c_str());
+}
+
 void test_mlpq_load_rejects_missing_or_bad_file() {
     MLPNetworkQ net;
     JASS_CHECK(!net.load("/no/such/path/jass-mlpq.bin"));
@@ -625,6 +723,8 @@ void run_nnue_tests() {
     test_load_network_dispatches_on_magic();
     test_mlpq_forward_pass_matches_hand_computed();
     test_mlpq_save_load_roundtrip();
+    test_mlpq_load_supports_non_default_hidden_dims();
+    test_mlpq_load_rejects_simd_incompatible_dims();
     test_mlpq_load_rejects_missing_or_bad_file();
     test_load_network_dispatches_to_mlpq();
 }
