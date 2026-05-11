@@ -1,0 +1,172 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Parallel WDL self-play data generation.
+#
+# Spawns 10 shards in parallel (each a fresh ubuntu-latest runner with
+# independent RNG seed), then merges the per-shard JNNW files into one
+# `selfplay-wdl.bin` artefact ready to be fed into the NNUE trainer.
+#
+# Total wall time ≈ time per shard (they run in parallel), so 1 M
+# positions at depth-12 labels finishes in ~2-4 h instead of ~24 h
+# single-threaded.
+#
+# Trigger from the GitHub mobile app or web UI:
+#   Actions → "gen-data-wdl" → Run workflow.
+
+name: gen-data-wdl
+
+on:
+  workflow_dispatch:
+    inputs:
+      total_records:
+        description: "Total positions across all shards (e.g. 100000, 500000, 1000000)"
+        required: true
+        default: "500000"
+        type: string
+      eval_depth:
+        description: "Search depth used to label each sampled position (higher = cleaner targets, slower)"
+        required: true
+        default: "12"
+        type: choice
+        options:
+          - "8"
+          - "10"
+          - "12"
+          - "14"
+      play_depth:
+        description: "Search depth used to advance the self-play games"
+        required: true
+        default: "4"
+        type: choice
+        options:
+          - "2"
+          - "4"
+          - "6"
+      max_plies:
+        description: "Hard cap on plies per game; games above this are recorded as draws"
+        required: true
+        default: "200"
+        type: string
+
+concurrency:
+  group: gen-data-wdl-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350     # 5 h 50 — leaves a margin under the 6 h free-tier cap
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the native engine (Release)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Compute shard size
+        id: size
+        run: |
+          PER_SHARD=$(( ${{ inputs.total_records }} / 10 ))
+          if [ "$PER_SHARD" -lt 1 ]; then
+              echo "::error::total_records must be at least 10 (got ${{ inputs.total_records }})"
+              exit 1
+          fi
+          echo "per_shard=$PER_SHARD" >> "$GITHUB_OUTPUT"
+          echo "Will generate $PER_SHARD records on this shard."
+
+      - name: Generate shard ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          ./build/jass --gen-data-wdl \
+              ${{ steps.size.outputs.per_shard }} \
+              shard.bin \
+              ${{ inputs.eval_depth }} \
+              ${{ inputs.play_depth }} \
+              ${{ inputs.max_plies }} \
+              ${{ matrix.shard }}
+          ls -la shard.bin
+
+      - name: Upload shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: shard-${{ matrix.shard }}
+          path: shard.bin
+          if-no-files-found: error
+
+  merge:
+    name: Merge shards
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download every shard artefact
+        uses: actions/download-artifact@v4
+        with:
+          path: shards
+          pattern: shard-*
+          merge-multiple: false      # keep each shard in its own subdirectory
+
+      - name: Concatenate JNNW shards
+        run: |
+          python3 - <<'PY'
+          import glob, os, struct, sys
+
+          paths = sorted(glob.glob("shards/shard-*/shard.bin"))
+          if not paths:
+              sys.exit("no shard files found under shards/")
+          print(f"merging {len(paths)} shards")
+
+          with open("selfplay-wdl.bin", "wb") as out:
+              out.write(b"JNNW")
+              out.write(struct.pack("<I", 0))    # placeholder for the count
+
+              total = 0
+              for p in paths:
+                  raw = open(p, "rb").read()
+                  if len(raw) < 8 or raw[:4] != b"JNNW":
+                      sys.exit(f"{p}: bad magic")
+                  count = struct.unpack_from("<I", raw, 4)[0]
+                  expected = 8 + count * 38
+                  if len(raw) != expected:
+                      sys.exit(f"{p}: size {len(raw)} != header-implied {expected}")
+                  out.write(raw[8:])
+                  total += count
+                  print(f"  {p}: +{count} records → {total} total")
+
+              # Back-patch the total count.
+              out.seek(4)
+              out.write(struct.pack("<I", total))
+
+          size = os.path.getsize("selfplay-wdl.bin")
+          print(f"wrote selfplay-wdl.bin: {total} records, {size} bytes")
+          PY
+
+      - name: Upload merged dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: selfplay-wdl
+          path: selfplay-wdl.bin
+          if-no-files-found: error
+
+      - name: Job summary
+        run: |
+          {
+            echo "## gen-data-wdl run"
+            echo
+            echo "- Total records requested: ${{ inputs.total_records }}"
+            echo "- Per-shard records: $(( ${{ inputs.total_records }} / 10 ))"
+            echo "- Shards: 10 (matrix-parallel)"
+            echo "- Eval depth: ${{ inputs.eval_depth }}"
+            echo "- Play depth: ${{ inputs.play_depth }}"
+            echo "- Max plies: ${{ inputs.max_plies }}"
+            echo
+            echo "Download the \`selfplay-wdl\` artefact from the run summary."
+          } >> "$GITHUB_STEP_SUMMARY"
