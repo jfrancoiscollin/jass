@@ -425,20 +425,19 @@ inline std::int32_t saturate_to_int8(float x) noexcept {
     return static_cast<int>(x + 0.5f);
 }
 
-inline void accumulate_q_kind(
-        const std::array<std::int8_t,
-                         MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM>& w1,
-        std::int32_t* acc1,
-        Bitboard      bb,
-        std::size_t   kind,
-        bool          mirror) noexcept {
+inline void accumulate_q_kind(const std::int8_t* w1,
+                              std::size_t        hidden1,
+                              std::int32_t*      acc1,
+                              Bitboard           bb,
+                              std::size_t        kind,
+                              bool               mirror) noexcept {
     while (bb) {
         const int         bit = square_to_bit(pop_lsb(bb));
         const std::size_t b   = mirror
             ? static_cast<std::size_t>(49 - bit)
             : static_cast<std::size_t>(bit);
         const std::size_t feat = b * 4 + kind;
-        for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j) {
+        for (std::size_t j = 0; j < hidden1; ++j) {
             acc1[j] += static_cast<std::int32_t>(w1[j * MLPNetworkQ::INPUT_DIM + feat]);
         }
     }
@@ -595,91 +594,101 @@ inline std::int32_t dot_int8_int8_wasm(const std::int8_t* h,
 
 }  // namespace
 
+MLPNetworkQ::MLPNetworkQ() {
+    resize_for(HIDDEN1, HIDDEN2);
+}
+
+MLPNetworkQ::MLPNetworkQ(std::size_t hidden1, std::size_t hidden2) {
+    resize_for(hidden1, hidden2);
+}
+
+void MLPNetworkQ::resize_for(std::size_t h1, std::size_t h2) {
+    hidden1_ = h1;
+    hidden2_ = h2;
+    w1_.assign(h1 * INPUT_DIM, 0);
+    b1_.assign(h1,             0);
+    w2_.assign(h2 * h1,        0);
+    b2_.assign(h2,             0);
+    w3_.assign(h2,             0);
+    b3_ = 0;
+}
+
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
+    const std::size_t h1n = hidden1_;
+    const std::size_t h2n = hidden2_;
+    const std::int8_t* const w1 = w1_.data();
+    const std::int8_t* const w2 = w2_.data();
+    const std::int8_t* const w3 = w3_.data();
+
     // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
     // The active-feature loop is naturally efficient (≈20 pieces per
-    // position, each adds a 64-int8 column) so it stays scalar even
-    // when AVX2 is available; auto-vectorisation handles the inner
-    // 64-element add adequately at -O3.
-    std::int32_t acc1[HIDDEN1];
-    for (std::size_t j = 0; j < HIDDEN1; ++j) acc1[j] = b1_[j];
+    // position, each adds an `hidden1`-int8 column) so it stays scalar
+    // even when AVX2 is available; auto-vectorisation handles the
+    // inner add adequately at -O3.
+    std::int32_t acc1[MAX_HIDDEN];
+    for (std::size_t j = 0; j < h1n; ++j) acc1[j] = b1_[j];
 
     if (pos.side_to_move() == Color::White) {
-        accumulate_q_kind(w1_, acc1, pos.white_men(),    0, false);
-        accumulate_q_kind(w1_, acc1, pos.white_kings(),  1, false);
-        accumulate_q_kind(w1_, acc1, pos.black_men(),    2, false);
-        accumulate_q_kind(w1_, acc1, pos.black_kings(),  3, false);
+        accumulate_q_kind(w1, h1n, acc1, pos.white_men(),    0, false);
+        accumulate_q_kind(w1, h1n, acc1, pos.white_kings(),  1, false);
+        accumulate_q_kind(w1, h1n, acc1, pos.black_men(),    2, false);
+        accumulate_q_kind(w1, h1n, acc1, pos.black_kings(),  3, false);
     } else {
-        accumulate_q_kind(w1_, acc1, pos.black_men(),    0, true);
-        accumulate_q_kind(w1_, acc1, pos.black_kings(),  1, true);
-        accumulate_q_kind(w1_, acc1, pos.white_men(),    2, true);
-        accumulate_q_kind(w1_, acc1, pos.white_kings(),  3, true);
+        accumulate_q_kind(w1, h1n, acc1, pos.black_men(),    0, true);
+        accumulate_q_kind(w1, h1n, acc1, pos.black_kings(),  1, true);
+        accumulate_q_kind(w1, h1n, acc1, pos.white_men(),    2, true);
+        accumulate_q_kind(w1, h1n, acc1, pos.white_kings(),  3, true);
     }
 
     // ReLU + quantise to int8 ([0, 127]).
-    std::int8_t h1[HIDDEN1];
-    for (std::size_t j = 0; j < HIDDEN1; ++j) {
+    std::int8_t h1[MAX_HIDDEN];
+    for (std::size_t j = 0; j < h1n; ++j) {
         h1[j] = static_cast<std::int8_t>(
             saturate_to_int8(static_cast<float>(acc1[j]) * mul1_));
     }
 
-    // Layer 2 — int8 × int8 → int32 dense matmul. HIDDEN2 outputs,
-    // HIDDEN1 inputs. AVX2 / WASM SIMD paths share the same shape via
+    // Layer 2 — int8 × int8 → int32 dense matmul. hidden2 outputs,
+    // hidden1 inputs. AVX2 / WASM SIMD paths share the same shape via
     // their respective dot-product helpers; the scalar fallback runs
-    // on plain builds.
-    std::int32_t acc2[HIDDEN2];
+    // on plain builds. `load()` rejects any topology whose hidden1
+    // would break the SIMD tile size.
+    std::int32_t acc2[MAX_HIDDEN];
 #if defined(__AVX2__)
-    static_assert(HIDDEN1 % 32 == 0,
-                  "AVX2 layer 2 expects HIDDEN1 to be a multiple of 32");
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+    for (std::size_t k = 0; k < h2n; ++k) {
         acc2[k] = b2_[k]
-                + dot_uint8_int8_dispatched(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
+                + dot_uint8_int8_dispatched(h1, w2 + k * h1n, h1n);
     }
 #elif defined(__wasm_simd128__)
-    static_assert(HIDDEN1 % 16 == 0,
-                  "WASM SIMD layer 2 expects HIDDEN1 to be a multiple of 16");
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+    for (std::size_t k = 0; k < h2n; ++k) {
         acc2[k] = b2_[k]
-                + dot_int8_int8_wasm(h1, w2_.data() + k * HIDDEN1, HIDDEN1);
+                + dot_int8_int8_wasm(h1, w2 + k * h1n, h1n);
     }
 #else
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+    for (std::size_t k = 0; k < h2n; ++k) {
         std::int32_t s = b2_[k];
-        for (std::size_t j = 0; j < HIDDEN1; ++j) {
-            s += static_cast<std::int32_t>(w2_[k * HIDDEN1 + j])
+        for (std::size_t j = 0; j < h1n; ++j) {
+            s += static_cast<std::int32_t>(w2[k * h1n + j])
                * static_cast<std::int32_t>(h1[j]);
         }
         acc2[k] = s;
     }
 #endif
 
-    std::int8_t h2[HIDDEN2];
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
+    std::int8_t h2[MAX_HIDDEN];
+    for (std::size_t k = 0; k < h2n; ++k) {
         h2[k] = static_cast<std::int8_t>(
             saturate_to_int8(static_cast<float>(acc2[k]) * mul2_));
     }
 
-    // Layer 3 — single output, HIDDEN2 inputs.
+    // Layer 3 — single output, hidden2 inputs.
     std::int32_t acc3 = b3_;
 #if defined(__AVX2__)
-    static_assert(HIDDEN2 % 32 == 0 || HIDDEN2 < 32,
-                  "AVX2 layer 3 expects HIDDEN2 to fit a single register "
-                  "or be a multiple of 32");
-    if constexpr (HIDDEN2 % 32 == 0) {
-        acc3 += dot_uint8_int8_dispatched(h2, w3_.data(), HIDDEN2);
-    } else {
-        for (std::size_t k = 0; k < HIDDEN2; ++k) {
-            acc3 += static_cast<std::int32_t>(w3_[k])
-                  * static_cast<std::int32_t>(h2[k]);
-        }
-    }
+    acc3 += dot_uint8_int8_dispatched(h2, w3, h2n);
 #elif defined(__wasm_simd128__)
-    static_assert(HIDDEN2 % 16 == 0,
-                  "WASM SIMD layer 3 expects HIDDEN2 to be a multiple of 16");
-    acc3 += dot_int8_int8_wasm(h2, w3_.data(), HIDDEN2);
+    acc3 += dot_int8_int8_wasm(h2, w3, h2n);
 #else
-    for (std::size_t k = 0; k < HIDDEN2; ++k) {
-        acc3 += static_cast<std::int32_t>(w3_[k])
+    for (std::size_t k = 0; k < h2n; ++k) {
+        acc3 += static_cast<std::int32_t>(w3[k])
               * static_cast<std::int32_t>(h2[k]);
     }
 #endif
@@ -693,17 +702,17 @@ int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
 
 namespace {
 
-template <typename T, std::size_t N>
-bool read_typed(std::istream& f, std::array<T, N>& a) {
-    f.read(reinterpret_cast<char*>(a.data()),
-           static_cast<std::streamsize>(N * sizeof(T)));
-    return static_cast<std::size_t>(f.gcount()) == N * sizeof(T);
+template <typename T>
+bool read_typed(std::istream& f, T* dst, std::size_t n) {
+    f.read(reinterpret_cast<char*>(dst),
+           static_cast<std::streamsize>(n * sizeof(T)));
+    return static_cast<std::size_t>(f.gcount()) == n * sizeof(T);
 }
 
-template <typename T, std::size_t N>
-bool write_typed(std::ostream& f, const std::array<T, N>& a) {
-    f.write(reinterpret_cast<const char*>(a.data()),
-            static_cast<std::streamsize>(N * sizeof(T)));
+template <typename T>
+bool write_typed(std::ostream& f, const T* src, std::size_t n) {
+    f.write(reinterpret_cast<const char*>(src),
+            static_cast<std::streamsize>(n * sizeof(T)));
     return f.good();
 }
 
@@ -715,6 +724,22 @@ bool read_f32(std::istream& f, float& out) {
 bool write_f32(std::ostream& f, float v) {
     f.write(reinterpret_cast<const char*>(&v), sizeof(float));
     return f.good();
+}
+
+}  // namespace
+
+namespace {
+
+// Reject dims that would break the SIMD dot-product helpers in
+// `evaluate()`. The AVX2 path needs a multiple of 32; the WASM path
+// needs a multiple of 16; the scalar fallback has no constraint but
+// we still gate on 32 so a binary produced for AVX2 stays portable
+// to WASM and back.
+bool mlpq_dims_ok(std::uint32_t h1, std::uint32_t h2) noexcept {
+    return h1 > 0 && h1 <= MLPNetworkQ::MAX_HIDDEN
+        && h2 > 0 && h2 <= MLPNetworkQ::MAX_HIDDEN
+        && h1 % MLPNetworkQ::SIMD_TILE == 0
+        && h2 % MLPNetworkQ::SIMD_TILE == 0;
 }
 
 }  // namespace
@@ -735,9 +760,8 @@ bool MLPNetworkQ::load(std::string_view path) {
     if (!read_u32(f, out_dim)) return false;
     if (version != MLPQ_VERSION ||
         in_dim  != INPUT_DIM    ||
-        h1d     != HIDDEN1      ||
-        h2d     != HIDDEN2      ||
-        out_dim != 1) {
+        out_dim != 1            ||
+        !mlpq_dims_ok(h1d, h2d)) {
         return false;
     }
 
@@ -746,24 +770,26 @@ bool MLPNetworkQ::load(std::string_view path) {
     if (!read_f32(f, t_mul2))    return false;
     if (!read_f32(f, t_mul_out)) return false;
 
-    decltype(w1_) tw1{};
-    decltype(b1_) tb1{};
-    decltype(w2_) tw2{};
-    decltype(b2_) tb2{};
-    decltype(w3_) tw3{};
-    std::int32_t  tb3{0};
+    std::vector<std::int8_t>  tw1(std::size_t{h1d} * INPUT_DIM);
+    std::vector<std::int32_t> tb1(h1d);
+    std::vector<std::int8_t>  tw2(std::size_t{h2d} * h1d);
+    std::vector<std::int32_t> tb2(h2d);
+    std::vector<std::int8_t>  tw3(h2d);
+    std::int32_t              tb3{0};
 
-    if (!read_typed(f, tw1))                                 return false;
-    if (!read_typed(f, tb1))                                 return false;
-    if (!read_typed(f, tw2))                                 return false;
-    if (!read_typed(f, tb2))                                 return false;
-    if (!read_typed(f, tw3))                                 return false;
+    if (!read_typed(f, tw1.data(), tw1.size())) return false;
+    if (!read_typed(f, tb1.data(), tb1.size())) return false;
+    if (!read_typed(f, tw2.data(), tw2.size())) return false;
+    if (!read_typed(f, tb2.data(), tb2.size())) return false;
+    if (!read_typed(f, tw3.data(), tw3.size())) return false;
     f.read(reinterpret_cast<char*>(&tb3), sizeof(std::int32_t));
     if (static_cast<std::size_t>(f.gcount()) != sizeof(std::int32_t)) return false;
 
-    w1_ = tw1; b1_ = tb1;
-    w2_ = tw2; b2_ = tb2;
-    w3_ = tw3; b3_ = tb3;
+    hidden1_ = h1d;
+    hidden2_ = h2d;
+    w1_ = std::move(tw1); b1_ = std::move(tb1);
+    w2_ = std::move(tw2); b2_ = std::move(tb2);
+    w3_ = std::move(tw3); b3_ = tb3;
     mul1_    = t_mul1;
     mul2_    = t_mul2;
     mul_out_ = t_mul_out;
@@ -776,17 +802,17 @@ bool MLPNetworkQ::save(std::string_view path) const {
     f.write(MLPQ_MAGIC, 4);
     if (!write_u32(f, MLPQ_VERSION))                                 return false;
     if (!write_u32(f, static_cast<std::uint32_t>(INPUT_DIM)))        return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN1)))          return false;
-    if (!write_u32(f, static_cast<std::uint32_t>(HIDDEN2)))          return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(hidden1_)))         return false;
+    if (!write_u32(f, static_cast<std::uint32_t>(hidden2_)))         return false;
     if (!write_u32(f, 1u))                                            return false;
     if (!write_f32(f, mul1_))                                         return false;
     if (!write_f32(f, mul2_))                                         return false;
     if (!write_f32(f, mul_out_))                                      return false;
-    if (!write_typed(f, w1_))                                         return false;
-    if (!write_typed(f, b1_))                                         return false;
-    if (!write_typed(f, w2_))                                         return false;
-    if (!write_typed(f, b2_))                                         return false;
-    if (!write_typed(f, w3_))                                         return false;
+    if (!write_typed(f, w1_.data(), w1_.size()))                      return false;
+    if (!write_typed(f, b1_.data(), b1_.size()))                      return false;
+    if (!write_typed(f, w2_.data(), w2_.size()))                      return false;
+    if (!write_typed(f, b2_.data(), b2_.size()))                      return false;
+    if (!write_typed(f, w3_.data(), w3_.size()))                      return false;
     f.write(reinterpret_cast<const char*>(&b3_), sizeof(std::int32_t));
     return f.good();
 }
@@ -794,15 +820,8 @@ bool MLPNetworkQ::save(std::string_view path) const {
 bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
     constexpr std::size_t kHeader = 6 * sizeof(std::uint32_t)
                                   + 3 * sizeof(float);
-    constexpr std::size_t kWeights =
-          HIDDEN1 * INPUT_DIM                        // w1
-        + HIDDEN1 * sizeof(std::int32_t)              // b1
-        + HIDDEN2 * HIDDEN1                           // w2
-        + HIDDEN2 * sizeof(std::int32_t)              // b2
-        + HIDDEN2                                     // w3
-        + sizeof(std::int32_t);                       // b3
-    if (data == nullptr || n != kHeader + kWeights) return false;
-    if (std::memcmp(data, MLPQ_MAGIC, 4) != 0)        return false;
+    if (data == nullptr || n < kHeader) return false;
+    if (std::memcmp(data, MLPQ_MAGIC, 4) != 0) return false;
 
     auto read_u32_at = [&](std::size_t off) {
         std::uint32_t v;
@@ -815,22 +834,32 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
         return v;
     };
 
-    if (read_u32_at(4)  != MLPQ_VERSION)                              return false;
-    if (read_u32_at(8)  != static_cast<std::uint32_t>(INPUT_DIM))     return false;
-    if (read_u32_at(12) != static_cast<std::uint32_t>(HIDDEN1))       return false;
-    if (read_u32_at(16) != static_cast<std::uint32_t>(HIDDEN2))       return false;
-    if (read_u32_at(20) != 1u)                                        return false;
+    if (read_u32_at(4) != MLPQ_VERSION)                              return false;
+    if (read_u32_at(8) != static_cast<std::uint32_t>(INPUT_DIM))     return false;
+    const std::uint32_t h1d = read_u32_at(12);
+    const std::uint32_t h2d = read_u32_at(16);
+    if (read_u32_at(20) != 1u)                                       return false;
+    if (!mlpq_dims_ok(h1d, h2d))                                     return false;
+
+    const std::size_t kWeights =
+          std::size_t{h1d} * INPUT_DIM                          // w1
+        + std::size_t{h1d} * sizeof(std::int32_t)               // b1
+        + std::size_t{h2d} * h1d                                // w2
+        + std::size_t{h2d} * sizeof(std::int32_t)               // b2
+        + std::size_t{h2d}                                      // w3
+        + sizeof(std::int32_t);                                 // b3
+    if (n != kHeader + kWeights) return false;
 
     const float t_mul1    = read_f32_at(24);
     const float t_mul2    = read_f32_at(28);
     const float t_mul_out = read_f32_at(32);
 
-    decltype(w1_) tw1{};
-    decltype(b1_) tb1{};
-    decltype(w2_) tw2{};
-    decltype(b2_) tb2{};
-    decltype(w3_) tw3{};
-    std::int32_t  tb3{0};
+    std::vector<std::int8_t>  tw1(std::size_t{h1d} * INPUT_DIM);
+    std::vector<std::int32_t> tb1(h1d);
+    std::vector<std::int8_t>  tw2(std::size_t{h2d} * h1d);
+    std::vector<std::int32_t> tb2(h2d);
+    std::vector<std::int8_t>  tw3(h2d);
+    std::int32_t              tb3{0};
 
     const unsigned char* p = data + kHeader;
     auto take = [&](void* dst, std::size_t bytes) {
@@ -844,9 +873,11 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
     take(tw3.data(), tw3.size() * sizeof(std::int8_t));
     take(&tb3,       sizeof(std::int32_t));
 
-    w1_ = tw1; b1_ = tb1;
-    w2_ = tw2; b2_ = tb2;
-    w3_ = tw3; b3_ = tb3;
+    hidden1_ = h1d;
+    hidden2_ = h2d;
+    w1_ = std::move(tw1); b1_ = std::move(tb1);
+    w2_ = std::move(tw2); b2_ = std::move(tb2);
+    w3_ = std::move(tw3); b3_ = tb3;
     mul1_    = t_mul1;
     mul2_    = t_mul2;
     mul_out_ = t_mul_out;
