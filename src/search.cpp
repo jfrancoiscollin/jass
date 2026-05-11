@@ -307,12 +307,57 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    // 4bis. Late Move Reductions. After the first few moves (TT-move,
+    //     killers, and the head of the history-sorted tail), search the
+    //     remaining quiet moves at a reduced depth first. If the reduced
+    //     search unexpectedly returns above alpha, re-search at full
+    //     depth — same tree as without LMR but the reduction pre-empts
+    //     unnecessary deep searches on uninteresting moves.
+    //
+    //     Skipped for:
+    //       - the TT-move (always full depth — it's the best guess)
+    //       - captures (in FMJD draughts the majority-capture rule
+    //         already forces them when present; they are tactically
+    //         decisive)
+    //       - shallow nodes (depth < 3 — LMR overhead exceeds saving)
+    //       - the first few moves of the ordering (i < 4)
+    constexpr int LMR_MIN_DEPTH       = 3;
+    constexpr int LMR_FIRST_FULL_MOVES = 4;
+    auto lmr_reduction = [](int d, int move_idx) noexcept -> int {
+        // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
+        // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
+        // stays ≥ 1.
+        if (d < LMR_MIN_DEPTH || move_idx < LMR_FIRST_FULL_MOVES) return 0;
+        int r = 1 + d / 6 + move_idx / 8;
+        return r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
+    };
+
+    int move_idx = 0;
     for (const auto& m : moves) {
         const Position next      = pos.after(m);
         const bool     is_tt     = tt_move_valid
                                  && same_packed_move(m, tt_entry.best_move);
         const int      new_depth = depth - 1 + (singular_ext && is_tt ? 1 : 0);
-        const int      score     = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+
+        int score;
+        const bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
+                         && depth >= LMR_MIN_DEPTH
+                         && !is_tt
+                         && !m.is_capture()
+                         && !singular_ext;  // don't reduce when we just extended a singular line
+        if (do_lmr) {
+            const int r = lmr_reduction(depth, move_idx);
+            const int reduced = new_depth - r;
+            score = -negamax(next, reduced, ply + 1, -beta, -alpha);
+            if (score > alpha && score < beta) {
+                // Tail move surprised — re-search at full depth so its
+                // exact score is established before we accept it.
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else {
+            score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+        }
+
         if (score > best) {
             best      = score;
             best_move = m;
@@ -332,6 +377,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
             break;
         }
+        ++move_idx;
     }
 
     hash_path.pop_back();
