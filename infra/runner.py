@@ -334,12 +334,21 @@ def main() -> int:
         print(f"missing {REPO_DIR}", file=sys.stderr)
         return 1
     git_pull()
-    # Always check whether a previous job finished while we were away.
+    # Always reap a finished job and heartbeat a still-running one,
+    # even if the runner is paused — we want in-flight work to
+    # complete cleanly and stay visible via progress.json.
     reap_finished_job()
     info = read_in_flight()
     if info:
         heartbeat(info)
         return 0  # still busy, drop out
+    # Pause flag: when `jobs/state/runner-paused` is present in the
+    # repo, the runner finishes any reap/heartbeat but does NOT pick
+    # new work from the queue. To pause, commit the file; to resume,
+    # `git rm` it. This is the GitOps equivalent of `systemctl disable`
+    # but doesn't require SSH to flip back — a single PR is enough.
+    if (STATE_DIR / "runner-paused").exists():
+        return 0
     job = pick_next_job()
     if not job:
         return 0
