@@ -1,0 +1,441 @@
+{
+  "job_id": "0009-rate-test-bigbox",
+  "snapshot_at": "2026-05-12T15:03:04+00:00",
+  "started_at": "2026-05-12T10:08:18+00:00",
+  "elapsed_seconds": 17686,
+  "artefacts": [
+    {
+      "name": "shard-1.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-10.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-11.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-12.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-13.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-14.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-15.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-16.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-17.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-17.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-18.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-18.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-19.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-19.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-2.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-20.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-20.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-21.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-21.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-22.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-22.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-23.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-23.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-24.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-24.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-25.bin",
+      "size_bytes": 32834,
+      "records": 863
+    },
+    {
+      "name": "shard-25.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-26.bin",
+      "size_bytes": 8210,
+      "records": 215
+    },
+    {
+      "name": "shard-26.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-27.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-27.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-28.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-28.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-29.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-29.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-3.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-30.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-30.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-31.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-31.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-32.bin",
+      "size_bytes": 32834,
+      "records": 863
+    },
+    {
+      "name": "shard-32.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-33.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-33.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-34.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-34.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-35.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-35.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-36.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-36.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-37.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-37.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-38.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-38.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-39.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-39.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-4.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-40.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-40.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-41.bin",
+      "size_bytes": 32834,
+      "records": 863
+    },
+    {
+      "name": "shard-41.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-42.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-42.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-43.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-43.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-44.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-44.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-45.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-45.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-46.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-46.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-47.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-47.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-48.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-48.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-5.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-6.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-7.bin",
+      "size_bytes": 32834,
+      "records": 863
+    },
+    {
+      "name": "shard-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-8.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-9.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-9.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  41240       1    04:54:46  0.0  0.0 bash\n  41242   41240    04:54:46  0.0  0.0 bash\n  41266   41242    04:54:46  0.0  0.0 bash\n  41267   41242    04:54:46  0.0  0.0 bash\n  41268   41242    04:54:46  0.0  0.0 bash\n  41269   41242    04:54:46  0.0  0.0 bash\n  41271   41242    04:54:46  0.0  0.0 bash\n  41273   41242    04:54:46  0.0  0.0 bash\n  41274   41242    04:54:46  0.0  0.0 bash\n  41275   41242    04:54:46  0.0  0.0 bash\n  41276   41242    04:54:46  0.0  0.0 bash\n  41277   41242    04:54:46  0.0  0.0 bash\n  41279   41242    04:54:46  0.0  0.0 bash\n  41280   41242    04:54:46  0.0  0.0 bash\n  41281   41242    04:54:46  0.0  0.0 bash\n  41285   41242    04:54:46  0.0  0.0 bash\n  41286   41242    04:54:46  0.0  0.0 bash\n  41288   41242    04:54:46  0.0  0.0 bash\n  41290   41242    04:54:46  0.0  0.0 bash\n  41292   41242    04:54:46  0.0  0.0 bash\n  41293   41242    04:54:46  0.0  0.0 bash\n  41294   41274    04:54:46  8.3  0.2 jass\n  41295   41242    04:54:46  0.0  0.0 bash\n  41298   41242    04:54:46  0.0  0.0 bash\n  41299   41242    04:54:46  0.0  0.0 bash\n  41300   41242    04:54:46  0.0  0.0 bash\n  41303   41242    04:54:46  0.0  0.0 bash\n  41304   41242    04:54:46  0.0  0.0 bash\n  41305   41242    04:54:46  0.0  0.0 bash\n  41306   41242    04:54:46  0.0  0.0 bash\n  41308   41242    04:54:46  0.0  0.0 bash\n  41309   41242    04:54:46  0.0  0.0 bash\n  41310   41242    04:54:46  0.0  0.0 bash\n  41311   41242    04:54:46  0.0  0.0 bash\n  41312   41242    04:54:46  0.0  0.0 bash\n  41313   41242    04:54:46  0.0  0.0 bash\n  41314   41242    04:54:46  0.0  0.0 bash\n  41315   41242    04:54:46  0.0  0.0 bash\n  41317   41242    04:54:46  0.0  0.0 bash\n  41318   41242    04:54:46  0.0  0.0 bash\n  41320   41242    04:54:46  0.0  0.0 bash\n  41322   41242    04:54:46  0.0  0.0 bash\n  41323   41242    04:54:46  0.0  0.0 bash\n  41328   41242    04:54:46  0.0  0.0 bash\n  41330   41242    04:54:46  0.0  0.0 bash\n  41332   41242    04:54:46  0.0  0.0 bash\n  41333   41242    04:54:46  0.0  0.0 bash\n  41334   41242    04:54:46  0.0  0.0 bash\n  41335   41242    04:54:46  0.0  0.0 bash\n  41336   41242    04:54:46  0.0  0.0 bash\n  41338   41242    04:54:46  0.0  0.0 bash\n  41340   41312    04:54:46  8.3  0.2 jass\n  41342   41314    04:54:46  8.3  0.2 jass\n  41344   41299    04:54:46  8.2  0.2 jass\n  41346   41285    04:54:46  8.2  0.2 jass\n  41349   41280    04:54:46  8.2  0.2 jass\n  41355   41266    04:54:46  8.2  0.2 jass\n  41361   41315    04:54:46  8.3  0.2 jass\n  41362   41303    04:54:46  8.3  0.2 jass\n  41369   41318    04:54:46  8.3  0.2 jass\n  41370   41300    04:54:46  8.3  0.2 jass\n  41372   41295    04:54:46  8.2  0.2 jass\n  41373   41273    04:54:46  8.3  0.2 jass\n  41374   41335    04:54:46  8.3  0.2 jass\n  41376   41269    04:54:46  8.2  0.2 jass\n  41377   41333    04:54:46  8.3  0.2 jass\n  41378   41330    04:54:46  8.3  0.2 jass\n  41379   41275    04:54:46  8.3  0.2 jass\n  41380   41271    04:54:46  8.2  0.2 jass\n  41381   41276    04:54:46  8.3  0.2 jass\n  41382   41292    04:54:46  8.3  0.2 jass\n  41383   41281    04:54:46  8.3  0.2 jass\n  41384   41288    04:54:46  8.3  0.2 jass\n  41385   41286    04:54:46  8.2  0.2 jass\n  41386   41317    04:54:46  8.3  0.2 jass\n  41387   41305    04:54:46  8.3  0.2 jass\n  41388   41290    04:54:46  8.2  0.2 jass\n  41389   41320    04:54:46  8.2  0.2 jass\n  41390   41293    04:54:46  8.3  0.2 jass\n  41391   41267    04:54:46  8.3  0.2 jass\n  41392   41323    04:54:46  8.3  0.2 jass\n  41393   41308    04:54:46  8.3  0.2 jass\n  41394   41310    04:54:46  8.3  0.2 jass\n  41395   41338    04:54:46  8.3  0.2 jass\n  41396   41332    04:54:46  8.3  0.2 jass\n  41397   41298    04:54:46  8.3  0.2 jass\n  41398   41279    04:54:46  8.3  0.2 jass\n  41399   41334    04:54:46  8.2  0.2 jass\n  41400   41322    04:54:46  8.2  0.2 jass\n  41401   41313    04:54:46  8.3  0.2 jass\n  41402   41328    04:54:46  8.2  0.2 jass\n  41403   41268    04:54:46  8.3  0.2 jass\n  41404   41306    04:54:46  8.3  0.2 jass\n  41405   41311    04:54:46  8.3  0.2 jass\n  41406   41309    04:54:46  8.3  0.2 jass\n  41407   41277    04:54:46  8.3  0.2 jass\n  41408   41336    04:54:46  8.2  0.2 jass\n  41409   41304    04:54:46  8.3  0.2 jass\n"
+}
