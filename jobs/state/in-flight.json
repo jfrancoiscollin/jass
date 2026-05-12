@@ -1,7 +1,0 @@
-{
-  "job_id": "0003-diag-after-0002",
-  "script": "jobs/queue/0003-diag-after-0002.sh",
-  "pid": 10557,
-  "started_at": "2026-05-12T05:49:32+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
