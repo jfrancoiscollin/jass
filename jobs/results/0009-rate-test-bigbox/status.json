@@ -1,7 +1,9 @@
 {
   "job_id": "0009-rate-test-bigbox",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -2,
   "started_at": "2026-05-12T10:08:18+00:00",
+  "ended_at": "2026-05-12T10:30:00+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 41240
+  "note": "manually marked failed: this script targeted CCX63 (48 vCPU) but CCX23 (4 vCPU) picked it up before its disable timer fired. Orphan processes will be cleaned by 0010-gen-data-depth20-1M-smallbox.sh at startup."
 }
