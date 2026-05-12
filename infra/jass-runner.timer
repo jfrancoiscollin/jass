@@ -1,0 +1,14 @@
+[Unit]
+Description=Tick the Jass GitOps runner every 5 minutes
+Requires=jass-runner.service
+
+[Timer]
+# First tick 30s after boot, then every 5 minutes. Persistent=true
+# means a missed tick (e.g. server was off) fires once on next boot.
+OnBootSec=30s
+OnUnitActiveSec=5min
+Unit=jass-runner.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

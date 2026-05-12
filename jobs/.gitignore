@@ -1,0 +1,6 @@
+# Per-job internals — not committed.
+# Only status.json, output.log (truncated tail) and artefacts/ get
+# committed by the runner. Everything else stays on the server.
+results/*/output.log.raw
+results/*/exit_code
+results/*/artefacts.src/
