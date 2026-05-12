@@ -143,11 +143,26 @@ def reap_finished_job() -> None:
     info = read_in_flight()
     if not info:
         return
-    if alive(info.get("pid", -1)):
+    # The wrapper writes its own PID into out_dir/wrapper.pid at startup
+    # (echo $$). That file is the source of truth: it's immune to the
+    # caller-side surprises that affect Popen.pid (e.g. an old in-memory
+    # copy of runner.py wrapping bash with an extra `setsid` command,
+    # which double-forks and leaves p.pid pointing at a process that
+    # dies in milliseconds). Fall back to info["pid"] only if the file
+    # is missing — that means the wrapper never even got to its first
+    # line, which is a genuine launch failure.
+    job_id  = info["job_id"]
+    out_dir = RESULTS_DIR / job_id
+    wrapper_pid_file = out_dir / "wrapper.pid"
+    wrapper_pid = info.get("pid", -1)
+    if wrapper_pid_file.exists():
+        try:
+            wrapper_pid = int(wrapper_pid_file.read_text().strip())
+        except ValueError:
+            pass
+    if alive(wrapper_pid):
         return  # still running, no-op
     # Process is gone. Read its tail log + exit code from the result dir.
-    job_id = info["job_id"]
-    out_dir = RESULTS_DIR / job_id
     exit_file = out_dir / "exit_code"
     if exit_file.exists():
         try:
@@ -204,10 +219,18 @@ def start_job(script: Path) -> None:
 
     # Wrapper that runs the script, writes its exit code, and stays
     # alive across systemd-runner ticks (setsid → new session).
-    raw_log = out_dir / "output.log.raw"
-    exit_code = out_dir / "exit_code"
+    # IMPORTANT: the very first thing the wrapper does is record its
+    # own PID into wrapper.pid. The reaper uses that file as the
+    # source of truth, instead of Popen.pid, so the alive-check is
+    # robust even if a stale in-memory copy of this very file wraps
+    # bash with an extra `setsid` (which double-forks and leaves
+    # Popen.pid pointing at a process that exits in milliseconds).
+    raw_log     = out_dir / "output.log.raw"
+    exit_code   = out_dir / "exit_code"
+    wrapper_pid = out_dir / "wrapper.pid"
     wrapper = (
         f'exec >{raw_log} 2>&1; '
+        f'echo $$ > {wrapper_pid}; '
         f'bash {script}; echo $? > {exit_code}'
     )
 
