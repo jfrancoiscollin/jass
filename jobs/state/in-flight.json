@@ -1,0 +1,7 @@
+{
+  "job_id": "0001-smoke",
+  "script": "jobs/queue/0001-smoke.sh",
+  "pid": 10161,
+  "started_at": "2026-05-12T05:23:11+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
