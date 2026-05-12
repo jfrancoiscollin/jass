@@ -1,0 +1,5 @@
+gen-data-wdl: n=5000 out=/root/jass/jobs/results/0007-rate-test-depth20-v3/artefacts.src/shard-4.bin eval_depth=20 play_depth=4 max_plies=200 seed=4
+  played 50 games, 1389 / 5000 positions
+  played 100 games, 2719 / 5000 positions
+  played 150 games, 4105 / 5000 positions
+wrote 5000 WDL records to /root/jass/jobs/results/0007-rate-test-depth20-v3/artefacts.src/shard-4.bin
