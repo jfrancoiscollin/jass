@@ -1,0 +1,14 @@
+=== host facts ===
+host:   ubuntu-16gb-hel1-2
+nproc:  4
+cpu:    AMD EPYC-Milan Processor
+mem:    15Gi
+jass:   Jass 0.0.1
+
+=== launching 4 parallel shards (per_shard=5000 depth=20) ===
+  shard 1 launched as pid 11039
+  shard 2 launched as pid 11040
+  shard 3 launched as pid 11042
+  shard 4 launched as pid 11044
+
+=== waiting on all shards (no errexit, capture per-shard rc) ===
