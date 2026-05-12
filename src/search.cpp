@@ -248,7 +248,34 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (moves.empty()) return -MATE_SCORE + ply;
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
-    // 2bis. Null-Move Pruning. If we can give the opponent a free
+    // 2bis. Reverse Futility Pruning (a.k.a. static null move). When the
+    //   position is quiet (no forced captures — recall draughts mandates
+    //   the longest capture chain, so `moves[0].is_capture()` is reliable
+    //   as a "tactical position" signal), shallow, not in the mate band,
+    //   and the static eval beats beta by a margin that scales with the
+    //   remaining depth, the subtree almost certainly fails high.
+    //
+    //   Cheaper than the recursive NMP probe below and covers the depth
+    //   1-5 range where NMP doesn't fire (NMP_MIN_DEPTH=4) or its overhead
+    //   isn't amortised by the saving.
+    //
+    //   Margin = 100 cp * depth is conservative; over-aggressive RFP
+    //   loses ELO by pruning critical lines whose static eval looks safe
+    //   but where the opponent has a deep tactical resource.
+    {
+        constexpr int RFP_MAX_DEPTH = 5;
+        constexpr int RFP_MARGIN    = 100;  // cp per remaining ply
+        if (depth <= RFP_MAX_DEPTH
+            && !was_null
+            && !is_mate_score(beta)
+            && !moves[0].is_capture()) {
+            const int eval   = eval_leaf(pos);
+            const int margin = RFP_MARGIN * depth;
+            if (eval - margin >= beta) return eval - margin;
+        }
+    }
+
+    // 2ter. Null-Move Pruning. If we can give the opponent a free
     //     move (no rule actually permits passing in draughts — this
     //     is purely a search technique) and the resulting reduced-
     //     depth search still beats beta, the current position is
