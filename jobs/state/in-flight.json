@@ -1,0 +1,7 @@
+{
+  "job_id": "0010-gen-data-depth20-1M-smallbox",
+  "script": "jobs/queue/0010-gen-data-depth20-1M-smallbox.sh",
+  "pid": 53908,
+  "started_at": "2026-05-12T15:33:12+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
