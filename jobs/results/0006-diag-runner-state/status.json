@@ -1,7 +1,9 @@
 {
   "job_id": "0006-diag-runner-state",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-12T06:41:56+00:00",
+  "ended_at": "2026-05-12T06:47:00+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 11221
+  "artefacts_server_path": "/root/jass/jobs/results/0006-diag-runner-state/artefacts.src"
 }

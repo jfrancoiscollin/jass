@@ -1,0 +1,238 @@
+=== current commit on /root/jass ===
+bb398d7 queue 0006-diag-runner-state: verify runner.py on disk + cgroup state (#24)
+d48a349835cb662b9c14e0f9ee6183a5dd72b02a
+
+=== infra/runner.py: setsid usage on disk ===
+206:    # alive across systemd-runner ticks (setsid → new session).
+214:    # Detach via Python's start_new_session=True (calls os.setsid() in
+215:    # the child before exec). Do NOT also invoke the external `setsid`
+216:    # command: when the child is already a session leader, setsid(1)
+217:    # double-forks and Popen's p.pid points at the short-lived setsid
+221:    p = subprocess.Popen(
+227:        start_new_session=True,
+
+=== full start_job() body on disk ===
+def start_job(script: Path) -> None:
+    """Launch the script in a detached process, record state."""
+    job_id  = script.stem
+    out_dir = RESULTS_DIR / job_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Wrapper that runs the script, writes its exit code, and stays
+    # alive across systemd-runner ticks (setsid → new session).
+    raw_log = out_dir / "output.log.raw"
+    exit_code = out_dir / "exit_code"
+    wrapper = (
+        f'exec >{raw_log} 2>&1; '
+        f'bash {script}; echo $? > {exit_code}'
+    )
+
+    # Detach via Python's start_new_session=True (calls os.setsid() in
+    # the child before exec). Do NOT also invoke the external `setsid`
+    # command: when the child is already a session leader, setsid(1)
+    # double-forks and Popen's p.pid points at the short-lived setsid
+    # process instead of the real wrapper bash — so the next tick sees
+    # `alive(p.pid) == False` and reaps the job as failed while the
+    # actual wrapper is still chugging happily in the background.
+    p = subprocess.Popen(
+        ["bash", "-c", wrapper],
+        cwd=REPO_DIR,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+    started = utcnow()
+    info = {
+        "job_id":     job_id,
+        "script":     str(script.relative_to(REPO_DIR)),
+        "pid":        p.pid,
+        "started_at": started,
+        "host":       socket.gethostname(),
+    }
+    IN_FLIGHT.write_text(json.dumps(info, indent=2) + "\n")
+
+    status = {
+        "job_id":     job_id,
+        "state":      "running",
+        "started_at": started,
+        "host":       socket.gethostname(),
+        "pid":        p.pid,
+    }
+    (out_dir / "status.json").write_text(json.dumps(status, indent=2) + "\n")
+
+    commit_and_push(
+        f"runner: start {job_id}",
+        [out_dir, STATE_DIR])
+
+
+def main() -> int:
+
+=== jobs/state/in-flight.json (if any) ===
+{
+  "job_id": "0006-diag-runner-state",
+  "script": "jobs/queue/0006-diag-runner-state.sh",
+  "pid": 11221,
+  "started_at": "2026-05-12T06:41:56+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
+
+=== current jass+bash processes ===
+root       11016       1  0 06:31 ?        00:00:00 bash -c exec >/root/jass/jobs/results/0005-rate-test-depth20-v2/output.log.raw 2>&1; bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh; echo $? > /root/jass/jobs/results/0005-rate-test-depth20-v2/exit_code
+root       11018   11016  0 06:31 ?        00:00:00  \_ bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+root       11039   11018  0 06:31 ?        00:00:00      \_ bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+root       11047   11039 99 06:31 ?        00:10:05      |   \_ ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test-depth20-v2/artefacts.src/shard-1.bin 20 4 200 1
+root       11040   11018  0 06:31 ?        00:00:00      \_ bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+root       11050   11040 99 06:31 ?        00:10:06      |   \_ ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test-depth20-v2/artefacts.src/shard-2.bin 20 4 200 2
+root       11042   11018  0 06:31 ?        00:00:00      \_ bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+root       11048   11042 99 06:31 ?        00:10:05      |   \_ ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test-depth20-v2/artefacts.src/shard-3.bin 20 4 200 3
+root       11044   11018  0 06:31 ?        00:00:00      \_ bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+root       11049   11044 99 06:31 ?        00:10:06          \_ ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test-depth20-v2/artefacts.src/shard-4.bin 20 4 200 4
+root       11213       1  2 06:41 ?        00:00:00 /usr/bin/python3 /root/jass/infra/runner.py
+root       11221   11213  0 06:41 ?        00:00:00  \_ bash -c exec >/root/jass/jobs/results/0006-diag-runner-state/output.log.raw 2>&1; bash /root/jass/jobs/queue/0006-diag-runner-state.sh; echo $? > /root/jass/jobs/results/0006-diag-runner-state/exit_code
+root       11223   11221  0 06:41 ?        00:00:00  |   \_ bash /root/jass/jobs/queue/0006-diag-runner-state.sh
+root       11241   11236  0 06:41 ?        00:00:00          \_ /usr/bin/ssh -o SendEnv=GIT_PROTOCOL git@github.com git-upload-pack 'jfrancoiscollin/jass.git'
+
+=== full process tree under PID 1 (depth 2) ===
+message+     926       1  0 May11 ?        00:00:00 @dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+root         944       1  0 May11 ?        00:00:00 /usr/lib/systemd/systemd-logind
+root         979       1  0 May11 ?        00:00:00 /usr/bin/python3 /usr/share/unattended-upgrades/unattended-upgrade-shutdown --wait-for-signal
+root         990       1  0 May11 ttyS0    00:00:00 /sbin/agetty -o -p -- \u --keep-baud 115200,57600,38400,9600 - vt220
+root        1006       1  0 May11 tty1     00:00:00 /sbin/agetty -o -p -- \u --noclear - linux
+root        9390       1  0 05:01 ?        00:00:00 /usr/sbin/cron -f -P
+daemon      9391       1  0 05:01 ?        00:00:00 /usr/sbin/atd -f
+polkitd     9402       1  0 05:01 ?        00:00:00 /usr/lib/polkit-1/polkitd --no-debug
+root        9414       1  0 05:01 ?        00:00:00 /usr/lib/systemd/systemd-journald
+root        9417       1  0 05:01 ?        00:00:04 /usr/sbin/qemu-ga
+systemd+    9418       1  0 05:01 ?        00:00:00 /usr/lib/systemd/systemd-resolved
+root        9424       1  0 05:01 ?        00:00:00 /sbin/multipathd -d -s
+systemd+    9426       1  0 05:01 ?        00:00:00 /usr/lib/systemd/systemd-timesyncd
+root        9430       1  0 05:01 ?        00:00:00 /usr/lib/systemd/systemd-udevd
+syslog      9450       1  0 05:01 ?        00:00:00 /usr/sbin/rsyslogd -n -iNONE
+systemd+    9451       1  0 05:01 ?        00:00:00 /usr/lib/systemd/systemd-networkd
+root        9912       1  0 05:02 ?        00:00:00 sshd: /usr/sbin/sshd -D [listener] 1 of 10-100 startups
+root       11016       1  0 06:31 ?        00:00:00 bash -c exec >/root/jass/jobs/results/0005-rate-test-depth20-v2/output.log.raw 2>&1; bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh; echo $? > /root/jass/jobs/results/0005-rate-test-depth20-v2/exit_code
+root       11213       1  2 06:41 ?        00:00:00 /usr/bin/python3 /root/jass/infra/runner.py
+
+=== systemd cgroup contents for jass-runner ===
+CGroup /system.slice/jass-runner.service:
+├─11016 bash -c exec >/root/jass/jobs/results/0005-rate-test-depth20-v2/output.…
+├─11018 bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+├─11039 bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+├─11040 bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+├─11042 bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+├─11044 bash /root/jass/jobs/queue/0005-rate-test-depth20-v2.sh
+├─11047 ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test…
+├─11048 ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test…
+├─11049 ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test…
+├─11050 ./build/jass --gen-data-wdl 5000 /root/jass/jobs/results/0005-rate-test…
+├─11213 /usr/bin/python3 /root/jass/infra/runner.py
+├─11221 bash -c exec >/root/jass/jobs/results/0006-diag-runner-state/output.log…
+├─11223 bash /root/jass/jobs/queue/0006-diag-runner-state.sh
+├─11234 git pull --rebase --autostash origin main
+├─11236 /usr/lib/git-core/git fetch --update-head-ok origin main
+├─11241 /usr/bin/ssh -o SendEnv=GIT_PROTOCOL git@github.com git-upload-pack 'jf…
+└─11245 systemd-cgls --no-pager /system.slice/jass-runner.service
+-rw-r--r-- 1 root root 0 May 12 06:31 /sys/fs/cgroup/system.slice/jass-runner.service/cgroup.procs
+--- pids in cgroup ---
+11016
+11018
+11039
+11040
+11042
+11044
+11047
+11048
+11049
+11050
+11213
+11221
+11223
+11234
+11236
+11241
+11247
+
+=== last 60 journal lines for jass-runner.service ===
+May 12 06:31:52 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11048 (jass) remains running after unit stopped.
+May 12 06:31:52 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11049 (jass) remains running after unit stopped.
+May 12 06:31:52 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11050 (jass) remains running after unit stopped.
+May 12 06:31:52 ubuntu-16gb-hel1-2 systemd[1]: Finished jass-runner.service - Jass GitOps runner (data gen / training / bench).
+May 12 06:31:52 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Consumed 14.907s CPU time, 77.8M memory peak, 0B memory swap peak.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11016 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11018 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11039 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11040 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11042 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11044 (bash) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11047 (jass) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11048 (jass) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11049 (jass) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11050 (jass) in control group while starting unit. Ignoring.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:36:49 ubuntu-16gb-hel1-2 systemd[1]: Starting jass-runner.service - Jass GitOps runner (data gen / training / bench)...
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Deactivated successfully.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11016 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11018 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11039 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11040 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11042 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11044 (bash) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11047 (jass) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11048 (jass) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11049 (jass) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 11050 (jass) remains running after unit stopped.
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: Finished jass-runner.service - Jass GitOps runner (data gen / training / bench).
+May 12 06:36:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Consumed 20.546s CPU time, 126.6M memory peak, 0B memory swap peak.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11016 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11018 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11039 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11040 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11042 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11044 (bash) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11047 (jass) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11048 (jass) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11049 (jass) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 11050 (jass) in control group while starting unit. Ignoring.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 06:41:54 ubuntu-16gb-hel1-2 systemd[1]: Starting jass-runner.service - Jass GitOps runner (data gen / training / bench)...
+
+=== 0005 raw output.log.raw ===
+size: 378 bytes
+mtime: 2026-05-12 06:31:49.071396939 +0000
+=== host facts ===
+host:   ubuntu-16gb-hel1-2
+nproc:  4
+cpu:    AMD EPYC-Milan Processor
+mem:    15Gi
+jass:   Jass 0.0.1
+
+=== launching 4 parallel shards (per_shard=5000 depth=20) ===
+  shard 1 launched as pid 11039
+  shard 2 launched as pid 11040
+  shard 3 launched as pid 11042
+  shard 4 launched as pid 11044
+
+=== waiting on all shards (no errexit, capture per-shard rc) ===
+
+=== done ===

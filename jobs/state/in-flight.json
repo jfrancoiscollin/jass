@@ -1,7 +1,0 @@
-{
-  "job_id": "0006-diag-runner-state",
-  "script": "jobs/queue/0006-diag-runner-state.sh",
-  "pid": 11221,
-  "started_at": "2026-05-12T06:41:56+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
