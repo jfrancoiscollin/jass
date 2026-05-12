@@ -76,20 +76,35 @@ caller
        └─ jass::search(pos, lim, tt, history)  [search.cpp]
             ├─ probe_endgame(pos)              [endgame.cpp]   (root)
             ├─ for depth = 1 .. max_depth:
+            │    ├─ time-aware iteration skip               (E, search.cpp)
+            │    │   (don't start iter N+1 when last_iter*2 > remaining)
             │    ├─ run_root_window(α, β)
             │    │    └─ for each root move m:
             │    │         └─ negamax(pos.after(m), d-1, ply, -β, -α)
-            │    │              ├─ stop polling                [search.cpp]
-            │    │              ├─ path-dependent draws        [search.cpp]
-            │    │              ├─ probe_endgame(pos)          [endgame.cpp]
-            │    │              ├─ tt.probe(hash)              [tt.cpp]
-            │    │              ├─ generate_legal_moves(pos)   [movegen.cpp]
+            │    │              ├─ stop / deadline polling   [search.cpp]
+            │    │              ├─ path-dependent draws      [search.cpp]
+            │    │              ├─ probe_endgame(pos)        [endgame.cpp]
+            │    │              ├─ tt.probe(hash) (+ cutoff) [tt.cpp]
+            │    │              ├─ generate_legal_moves(pos) [movegen.cpp]
             │    │              ├─ if depth ≤ 0: quiescence(...)
-            │    │              ├─ order_moves(...)            [search.cpp]
-            │    │              ├─ for each m: -negamax(pos.after(m), …)
+            │    │              ├─ Reverse Futility Pruning  (D, shallow)
+            │    │              │   (quiet position + eval ≫ β → fail high)
+            │    │              ├─ Null Move Pruning         (search.cpp)
+            │    │              │   (eval ≥ β → reduced-depth probe of
+            │    │              │    pos.after_null(); guarded vs zugzwang)
+            │    │              ├─ Singular extension        (search.cpp)
+            │    │              │   (half-depth verification of TT move)
+            │    │              ├─ order_moves(...)          [search.cpp]
+            │    │              │   (TT, killers, history)
+            │    │              ├─ for each m:
+            │    │              │   ├─ LMR reduction on late quiet moves
+            │    │              │   ├─ score = -negamax(pos.after(m), …)
+            │    │              │   └─ re-search at full depth if LMR'd
+            │    │              │       score > α
             │    │              ├─ on cutoff: update killers + history
             │    │              └─ tt.store(hash, …)
             │    └─ aspiration retry on fail-low / fail-high
+            │      (window half-width adapts to recent score volatility)
             └─ extract_pv(pos, tt)              [search.cpp]   (after last iter)
 ```
 
@@ -193,7 +208,74 @@ table that fits inside a constexpr-built array.
 
 `evaluate_nnue(pos)` ([nnue.cpp](../src/nnue.cpp)) is the same shape
 but expressed as a (square × piece-kind) weight matrix that can be
-loaded from disk for a future trained network.
+loaded from disk for a trained network.
+
+### NNUE forms and encodings
+
+Three `INetwork` implementations live side by side in
+[nnue.hpp](../src/nnue.hpp):
+
+| Class            | Format | Where it's used                          |
+|------------------|--------|------------------------------------------|
+| `LinearNetwork`  | JNNL   | 200-weight linear baseline, NumPy lstsq  |
+| `MLPNetwork`     | JNNM   | float MLP, runtime hidden dims (Cycle-4a) |
+| `MLPNetworkQ`    | JNNQ   | int8 quantised MLP — AVX2 (x86) +        |
+|                  |        | WASM-SIMD128 (browser) shipped paths      |
+
+Two **input encodings** are supported by both `MLPNetwork` and
+`MLPNetworkQ`:
+
+- **V2 dense** (input_dim = 200, JNNM v2 / JNNQ v1) — STM-relative
+  piece bitmaps, the default since Cycle-1.
+- **HalfMen-lite** (input_dim = 450, JNNM v3 / JNNQ v2) — Cycle-6c.
+  Symmetric per-piece indicator features designed to give the MLP
+  more capacity to learn piece-relative patterns.
+
+The loaders auto-detect both magic and input_dim from the header
+so a trained `nnue.bin` from either encoding can be dropped in
+without recompiling.
+
+## Training & calibration pipeline (Cycles 1–6c)
+
+The training side lives in [`tools/`](../tools) and is driven by:
+
+```
+                ┌──────────────────────────────┐
+                │  --gen-data-wdl (Cycle-1)    │  WDL-labelled self-play
+                │  JNNW: bitboards + STM       │  (each record carries
+                │  + score + game outcome      │   both deep-search score
+                └─────────────┬────────────────┘   and final result)
+                              │
+                              ▼
+                ┌──────────────────────────────┐
+                │  train_v3.py (Cycle-2)       │  Multi-arch sweep,
+                │  --archs 64-32 … 1024-512    │  blended score+WDL
+                │  --encoding {v2,halfmen}     │  MSE loss, val-MSE
+                └─────────────┬────────────────┘   ranking, JNNM out
+                              │
+                              ▼
+                ┌──────────────────────────────┐
+                │  quantize_mlp.py (Cycle-4b)  │  Post-training int8
+                │  per-tensor scales + 99.9-pct│  quantisation, runtime
+                │  activation calibration      │  hidden dims, JNNQ out
+                └─────────────┬────────────────┘
+                              │
+              ┌───────────────┼─────────────────┐
+              ▼               ▼                 ▼
+   ┌────────────────┐ ┌──────────────┐ ┌────────────────────┐
+   │ --benchmark-   │ │ bench_arch.py│ │ calibrate_vs_scan  │
+   │  nnue (vs      │ │ (Cycle-5     │ │ (vs Scan, HUB      │
+   │  handcrafted,  │ │  pipeline    │ │  protocol, ELO     │
+   │  sanity-check) │ │  wrapper)    │ │  estimate — the    │
+   └────────────────┘ └──────────────┘ │  real KPI)         │
+                                       └────────────────────┘
+```
+
+The Hetzner GitOps runner in [`infra/`](../infra/README.md) ties all
+of these together: long-running gen-data / training / calibration
+jobs are committed as scripts under `jobs/queue/`, the runner picks
+them up, runs them on a Hetzner CCX host, and commits results back
+to `jobs/results/<id>/`.
 
 ## Front-ends
 
