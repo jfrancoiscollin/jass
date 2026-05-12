@@ -1,7 +1,9 @@
 {
   "job_id": "0003-diag-after-0002",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-12T05:49:32+00:00",
+  "ended_at": "2026-05-12T05:54:44+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 10557
+  "artefacts_server_path": "/root/jass/jobs/results/0003-diag-after-0002/artefacts.src"
 }
