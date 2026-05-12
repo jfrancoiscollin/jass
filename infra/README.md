@@ -70,6 +70,37 @@ cat /root/jass/jobs/state/in-flight.json  # currently running job (if any)
 tail -f /root/jass/jobs/results/<id>/output.log.raw  # raw job output
 ```
 
+## Pausing the runner (GitOps, no SSH)
+
+To stop the runner from picking new work — for example before adding
+a second machine, to avoid races on a single-host runner — commit a
+`jobs/state/runner-paused` flag and push:
+
+```bash
+mkdir -p jobs/state
+echo "paused on $(date -u)" > jobs/state/runner-paused
+git add jobs/state/runner-paused
+git commit -m "pause runner"
+git push
+```
+
+Within 5 min the runner picks up the change and starts no-op'ing
+ticks. In-flight work, if any, keeps running and is still reaped /
+heartbeated normally — pause only affects new pickups.
+
+To resume:
+
+```bash
+git rm jobs/state/runner-paused
+git commit -m "resume runner"
+git push
+```
+
+This replaces the previous "schedule a `systemctl disable` via a
+detached `at`/`systemd-run`" hack: the flag is fully version-
+controlled and reversible by anyone with write access to the repo,
+no SSH required.
+
 ## Conventions
 
 - One job runs at a time (the runner reserves itself via
