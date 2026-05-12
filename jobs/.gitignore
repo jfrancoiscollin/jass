@@ -3,6 +3,7 @@
 # committed by the runner. Everything else stays on the server.
 results/*/output.log.raw
 results/*/exit_code
+results/*/wrapper.pid
 results/*/artefacts.src/
 
 # The repo-root .gitignore has `*.log`, which would also swallow the
