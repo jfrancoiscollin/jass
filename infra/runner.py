@@ -211,8 +211,15 @@ def start_job(script: Path) -> None:
         f'bash {script}; echo $? > {exit_code}'
     )
 
+    # Detach via Python's start_new_session=True (calls os.setsid() in
+    # the child before exec). Do NOT also invoke the external `setsid`
+    # command: when the child is already a session leader, setsid(1)
+    # double-forks and Popen's p.pid points at the short-lived setsid
+    # process instead of the real wrapper bash — so the next tick sees
+    # `alive(p.pid) == False` and reaps the job as failed while the
+    # actual wrapper is still chugging happily in the background.
     p = subprocess.Popen(
-        ["setsid", "bash", "-c", wrapper],
+        ["bash", "-c", wrapper],
         cwd=REPO_DIR,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
