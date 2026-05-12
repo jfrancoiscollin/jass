@@ -1,13 +1,13 @@
 {
   "job_id": "0007-rate-test-depth20-v3",
-  "snapshot_at": "2026-05-12T09:17:54+00:00",
+  "snapshot_at": "2026-05-12T09:22:55+00:00",
   "started_at": "2026-05-12T06:57:05+00:00",
-  "elapsed_seconds": 8449,
+  "elapsed_seconds": 8750,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 164162,
-      "records": 4319
+      "size_bytes": 172370,
+      "records": 4535
     },
     {
       "name": "shard-1.log",
@@ -15,17 +15,21 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 180578,
-      "records": 4751
+      "size_bytes": 190008,
+      "records": 5000
     },
     {
       "name": "shard-2.log",
-      "size_bytes": 0
+      "size_bytes": 376
+    },
+    {
+      "name": "shard-2.result",
+      "size_bytes": 7
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 164162,
-      "records": 4319
+      "size_bytes": 172370,
+      "records": 4535
     },
     {
       "name": "shard-3.log",
@@ -33,8 +37,8 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 155954,
-      "records": 4103
+      "size_bytes": 164162,
+      "records": 4319
     },
     {
       "name": "shard-4.log",
