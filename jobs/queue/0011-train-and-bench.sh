@@ -42,6 +42,11 @@ echo "load:    $(cut -d' ' -f1-3 /proc/loadavg)"
 echo "jass:    $(./build/jass --version 2>/dev/null || echo '(no --version)')"
 echo "dataset: $(ls -lh \"$DATASET\" | awk '{print $5\"  \"$9}')"
 
+echo
+echo "=== rebuilding jass (no-op if src/ unchanged since last build) ==="
+cmake --build build -j"$(nproc)" 2>&1 | tail -5
+echo "jass after rebuild: $(./build/jass --version 2>/dev/null || echo '(no --version)')"
+
 if [ "$(df -BG --output=avail / | tail -1 | tr -dc '0-9')" -lt 5 ]; then
     echo "ABORT: less than 5 GB free on /, refusing to start (torch wheel ~700 MB + scratch)"
     exit 3
