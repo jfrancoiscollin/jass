@@ -274,6 +274,61 @@ def start_job(script: Path) -> None:
         [out_dir, STATE_DIR])
 
 
+def heartbeat(info: dict) -> None:
+    """Snapshot in-flight job progress into out_dir/progress.json and push.
+
+    Lets you watch a long-running job's progress via `git pull` without
+    SSH'ing into the host. Called on every tick where a job is still
+    running (i.e. reap_finished_job kept it).
+    """
+    job_id  = info["job_id"]
+    out_dir = RESULTS_DIR / job_id
+    started = info.get("started_at")
+    now     = utcnow()
+    try:
+        elapsed = int(
+            (dt.datetime.fromisoformat(now)
+             - dt.datetime.fromisoformat(started)).total_seconds()
+        )
+    except (TypeError, ValueError):
+        elapsed = None
+
+    snapshot: dict = {
+        "job_id":          job_id,
+        "snapshot_at":     now,
+        "started_at":      started,
+        "elapsed_seconds": elapsed,
+        "artefacts":       [],
+    }
+    art_src = out_dir / "artefacts.src"
+    if art_src.exists():
+        for f in sorted(art_src.iterdir()):
+            if not f.is_file():
+                continue
+            sz = f.stat().st_size
+            entry = {"name": f.name, "size_bytes": sz}
+            # JNNW records are 38 bytes after an 8-byte header.
+            if f.suffix == ".bin" and sz >= 8:
+                entry["records"] = (sz - 8) // 38
+            snapshot["artefacts"].append(entry)
+
+    wrapper_pid_file = out_dir / "wrapper.pid"
+    if wrapper_pid_file.exists():
+        try:
+            wpid = int(wrapper_pid_file.read_text().strip())
+            ps = subprocess.run(
+                ["ps", "-o", "pid,ppid,etime,pcpu,pmem,comm", "-g", str(wpid)],
+                capture_output=True, text=True, check=False)
+            snapshot["ps_session"] = ps.stdout
+        except (ValueError, FileNotFoundError):
+            pass
+
+    (out_dir / "progress.json").write_text(
+        json.dumps(snapshot, indent=2) + "\n")
+
+    commit_and_push(f"runner: heartbeat {job_id}", [out_dir])
+
+
 def main() -> int:
     if not REPO_DIR.exists():
         print(f"missing {REPO_DIR}", file=sys.stderr)
@@ -281,7 +336,9 @@ def main() -> int:
     git_pull()
     # Always check whether a previous job finished while we were away.
     reap_finished_job()
-    if read_in_flight():
+    info = read_in_flight()
+    if info:
+        heartbeat(info)
         return 0  # still busy, drop out
     job = pick_next_job()
     if not job:
