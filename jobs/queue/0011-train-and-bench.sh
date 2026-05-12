@@ -2,10 +2,11 @@
 # id: 0011-train-and-bench
 # description: NNUE training pipeline on the 1M depth-20 dataset
 #              produced by 0010. Trains the 4 MLP archs (64-32,
-#              128-64, 256-128, 512-256) via train_v3.py, picks the
-#              best by val MSE, quantises it to int8, then runs the
-#              built-in NNUE-vs-handcrafted benchmark to estimate
-#              strength.
+#              128-64, 256-128, 512-256) under the HalfMen-lite
+#              encoding (input_dim=450, Cycle-6c, the target arch)
+#              via train_v3.py, picks the best by val MSE, quantises
+#              it to int8, then runs the built-in NNUE-vs-handcrafted
+#              benchmark to estimate strength.
 #
 #              Self-installs torch+numpy if the CCX23 didn't get them
 #              from bootstrap (INSTALL_TORCH is opt-in there).
@@ -51,16 +52,18 @@ fi
 python3 -c "import torch, numpy; print(f'  torch {torch.__version__}'); print(f'  numpy {numpy.__version__}')"
 
 echo
-echo "=== step 1/4: training 4 archs on 1M records ==="
-echo "  archs:  64-32, 128-64, 256-128, 512-256"
-echo "  epochs: 30, batch: 512, lambda: 0.7 (default)"
+echo "=== step 1/4: training 4 archs on 1M records (HalfMen encoding) ==="
+echo "  archs:    64-32, 128-64, 256-128, 512-256"
+echo "  encoding: halfmen (input_dim=450)"
+echo "  epochs:   30, batch: 512, lambda: 0.7 (default)"
 START_TRAIN=$(date +%s)
 python3 tools/train_v3.py \
-    --data    "$DATASET" \
-    --archs   64-32 128-64 256-128 512-256 \
-    --epochs  30 \
-    --batch   512 \
-    --out-dir "$ART" \
+    --data     "$DATASET" \
+    --archs    64-32 128-64 256-128 512-256 \
+    --encoding halfmen \
+    --epochs   30 \
+    --batch    512 \
+    --out-dir  "$ART" \
     2>&1 | tee "$ART/train.log"
 TRAIN_RC=${PIPESTATUS[0]}
 TRAIN_SEC=$(( $(date +%s) - START_TRAIN ))
@@ -104,6 +107,7 @@ echo "=========================================================="
 echo "                0011 TRAIN+BENCH SUMMARY"
 echo "=========================================================="
 echo "  dataset records:  1 000 000 @ depth 20 (from 0010)"
+echo "  encoding:         halfmen (input_dim=450, Cycle-6c)"
 echo "  best arch:        $BEST_ARCH"
 echo "  train wall:       ${TRAIN_SEC}s ($(python3 -c "print(round($TRAIN_SEC/3600,2))")h)"
 echo "  bench result:     $(grep 'NNUE score rate' "$ART/bench.log" | tail -1)"
