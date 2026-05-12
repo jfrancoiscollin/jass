@@ -33,25 +33,46 @@ consumer).
   table (Zobrist-keyed, 4-way clusters, 6-bit generation counter for
   cross-move ageing, mate-score adjusted, PackedMove storage),
   TT-move + killer-move + history move ordering, **singular
-  extension** with a half-depth verification search, adaptive
-  aspiration windows, lazy SMP for multi-thread scaling, FMJD draw
-  handling (25-move rule + 2-fold repetition), endgame bitbase
-  (KvK and KKvK via retrograde analysis), Zobrist-keyed opening book,
-  principal variation extracted from the TT, and a quiescence search
-  that plays mandatory capture chains out at the leaves.
+  extension** with a half-depth verification search, **Late-Move
+  Reduction (LMR)** on quiet moves beyond the first few, **Null
+  Move Pruning (NMP)** with depth-scaled reduction guarded against
+  zugzwang-like low-piece endgames, **Reverse Futility Pruning (RFP)**
+  at shallow depths in quiet positions (draughts mandates the longest
+  capture chain so the "quiet position" test is exact), adaptive
+  aspiration windows, **time-aware iteration skipping** (don't start
+  the next ID iteration when it would obviously not finish before the
+  deadline), lazy SMP for multi-thread scaling, FMJD draw handling
+  (25-move rule + 2-fold repetition), endgame bitbase (KvK and KKvK
+  via retrograde analysis), Zobrist-keyed opening book, principal
+  variation extracted from the TT, and a quiescence search that plays
+  mandatory capture chains out at the leaves.
 - **Evaluation — trained NNUE shipped by default**:
-  - The native + WASM binaries embed a small **MLP** (200 → 64 → 32 → 1,
-    ReLU, STM-relative input encoding) trained on ~100 k self-play
-    positions labelled by a depth-8 search. Score rate **0.639** vs
-    the original handcrafted eval at depth 5 (≈ +99 ELO), itself
-    +120 ELO above the hand-tuned constants → cumulative ≈ **+220 ELO**
-    over the historic baseline.
+  - The native + WASM binaries embed a **JNNM v2** MLP (200 → 64 → 32 → 1,
+    ReLU, STM-relative *V2 dense* input encoding) trained on ~100 k
+    self-play positions labelled by a depth-8 search. Score rate
+    **0.639** vs the handcrafted eval at depth 5 (≈ +99 ELO) at the
+    time it was trained.
+  - The runtime supports **two input encodings**: V2 dense (200 feat)
+    and **HalfMen-lite** (450 feat, Cycle-6c — symmetric per-piece
+    indicator features designed to give the MLP more capacity to
+    learn piece-relative patterns).
+  - The C++ MLP loader is **runtime-dimensioned** (Cycle-4a): any
+    `H1 × H2` topology (any multiple of the SIMD tile size) loads
+    without recompiling. Quantised `MLPNetworkQ` (JNNQ format) and
+    its AVX2 + WASM-SIMD128 paths inherit this.
   - The handcrafted eval (material + PSQT + king centralisation +
     rear-diagonal support + tempo) and a `LinearNetwork` are still
-    available; the engine picks via the new `INetwork*` interface.
+    available; the engine picks via the `INetwork*` interface.
   - **Int8 quantisation** (`MLPNetworkQ`, JNNQ format) is opt-in via
-    `--nnue path.bin` and is **at strict parity** with the float32
-    reference (16-16-4 / 36 games at depth 5).
+    `--nnue path.bin` and was measured **at strict parity** with the
+    float32 reference (16-16-4 / 36 games at depth 5) on the shipped
+    64-32 MLP.
+  - The **calibration target** is Scan (Fabien Letouzey, GPL3,
+    ~2500 FMJD-equivalent). `tools/calibrate_vs_scan.py` plays Jass
+    against Scan via the HUB protocol and reports the ELO delta. The
+    NNUE pipeline (gen-data-wdl → train_v3 → quantize_mlp → calibrate)
+    is wired end-to-end and driven by the Hetzner GitOps runner — see
+    [`infra/README.md`](infra/README.md).
 - **SIMD acceleration of the int8 forward pass**:
   - Native x86 → AVX2 (`_mm256_maddubs_epi16` + `_mm256_madd_epi16`):
     +20 % per node vs the float32 MLP.
@@ -61,17 +82,39 @@ consumer).
   - Both paths share the same dot-product shape; CMake gates each
     with a CheckCXXCompilerFlag + `-msimd128` for Emscripten.
 - **Training & book pipelines**:
-  - `--gen-data` generates labelled self-play datasets;
-    `tools/train.py` (NumPy lstsq) fits the `LinearNetwork` and
-    `tools/train_mlp.py` (PyTorch + Adam, early-stop) fits the MLP.
-    `tools/quantize_mlp.py` does post-training int8 quantisation with
-    99.9-pct activation calibration.
+  - `--gen-data` produces a self-play dataset with labels from a
+    depth-8 search; **`--gen-data-wdl`** (Cycle-1) adds the game's
+    win-draw-loss outcome to each record (38 B JNNW format), used by
+    the blended-target trainer below.
+  - `tools/train.py` (NumPy lstsq) fits the `LinearNetwork`,
+    `tools/train_mlp.py` (PyTorch + Adam, early-stop) fits a single
+    fixed-arch MLP, and **`tools/train_v3.py`** (Cycle-2) compares
+    several MLP architectures on a JNNW dataset with a blended
+    score-and-WDL MSE loss and reports which one generalises best.
+    Supports both V2 and HalfMen-lite input encodings via
+    `--encoding {v2,halfmen}`.
+  - `tools/quantize_mlp.py` does post-training int8 quantisation
+    with 99.9-pct activation calibration; the JNNQ header carries
+    the runtime hidden dims so any trained topology loads back.
+  - `tools/calibrate_vs_scan.py` plays Jass vs Scan over the HUB
+    protocol and reports a Jass-side ELO estimate — the absolute
+    strength yardstick the project is tuning against.
   - `--build-book` consumes a FEN list and writes a **JBOK** binary
     book (`PackedMove`-keyed, 16 B per entry); `--book path.bok`
-    loads it at startup.
+    loads it at startup. **`tools/merge_jbok.py`** merges several
+    partial JBOKs into one (used to parallelise `--build-book` at
+    the shell level since the C++ side is single-threaded).
   - Mobile-friendly GitHub Actions workflows (`train-nnue`,
-    `benchmark-nnue`, `benchmark-nnue-vs-nnue`, `build-book`) trigger
-    the whole pipeline from a tap.
+    `benchmark-nnue`, `benchmark-nnue-vs-nnue`, `build-book`,
+    `gen-data-wdl`) trigger the whole pipeline from a tap.
+- **Hetzner GitOps runner** (see [`infra/README.md`](infra/README.md)):
+  a single Hetzner cloud machine (CCX-class) bootstrapped from
+  `infra/bootstrap.sh` polls the repo every 5 min, runs the scripts
+  in `jobs/queue/`, and commits results back to `jobs/results/<id>/`.
+  Pause/resume via a committed flag file (`jobs/state/runner-paused`),
+  no SSH required for normal operation. The full
+  gen-data → train → quantise → calibrate cycle has been driven this
+  way end to end.
 - **Front-ends**:
   - native CLI speaking a small HUB-flavoured protocol
     (`./build/jass`) — supports `--nnue`, `--no-nnue`, `--book`,
@@ -126,7 +169,7 @@ cmake --build build -j
 ./build/jass --no-nnue          # fall back to the handcrafted eval
 ./build/jass --book book.bok    # load an external opening book
 
-./build/jass_tests              # unit tests (672 assertions)
+./build/jass_tests              # unit tests (722 assertions)
 ```
 
 Requires a C++20 compiler (GCC ≥ 11, Clang ≥ 13, MSVC ≥ 19.30). On
@@ -137,31 +180,55 @@ binary portable to older CPUs.
 ### Training & book pipelines
 
 ```sh
-# Generate self-play data labelled by depth-8 search.
-./build/jass --gen-data 100000 selfplay.bin
+# --- Cycle-1 onwards: WDL-labelled data (recommended for new training) ---
+# Generate a self-play dataset, each record carrying both a deep-search
+# score and the eventual win/draw/loss outcome of the game.
+./build/jass --gen-data-wdl 100000 selfplay.bin 20 4 200 1
+#                            n      out         eval_d play_d max_plies seed
 
-# Train a linear NNUE (NumPy closed-form lstsq, ~30 s).
+# Multi-arch trainer with blended score+WDL MSE loss (Cycle-2). Picks
+# whichever architecture generalises best on a held-out split.
+python3 tools/train_v3.py --data selfplay.bin \
+    --archs 64-32 128-64 256-128 512-256 --encoding halfmen \
+    --epochs 30 --out-dir trained_v3
+
+# Post-training int8 quantisation (4× smaller, AVX2/WASM-SIMD path).
+python3 tools/quantize_mlp.py --in trained_v3/nnue-256-128.bin \
+    --data selfplay.bin --out nnue-256-128-q.bin
+
+# Benchmark against the handcrafted eval (sanity, depth-controlled).
+./build/jass --benchmark-nnue nnue-256-128-q.bin 5 2
+
+# Calibrate vs Scan (Fabien Letouzey) — the real strength yardstick.
+# Scan ships pre-built at github.com/rhalbersma/scan; clone, then:
+python3 tools/calibrate_vs_scan.py \
+    --jass ./build/jass --scan /tmp/scan/scan_linux \
+    --nnue nnue-256-128-q.bin --movetime 1.0 --pairs 3
+
+# --- Legacy single-arch path (kept for the embedded LinearNetwork / MLP) ---
+./build/jass --gen-data 100000 selfplay.bin           # score-only, no WDL
 python3 tools/train.py     --data selfplay.bin --out linear.bin
-
-# Train the MLP (PyTorch + Adam, ~3-5 min on 100k records).
 python3 tools/train_mlp.py --data selfplay.bin --out mlp.bin
 
-# Post-training int8 quantisation (4× smaller on disk, AVX2/WASM SIMD).
-python3 tools/quantize_mlp.py --in mlp.bin --data selfplay.bin --out mlp-q.bin
-
-# Build a JBOK opening book from a FEN list at depth 12.
+# --- Opening books (JBOK) ---
+# Build directly (single-threaded C++):
 ./build/jass --build-book fens.txt book.bok 12
+# Or shell-parallelise across N cores then merge:
+split -n l/4 fens.txt chunk-
+for f in chunk-*; do
+    ./build/jass --build-book "$f" "partial-$f.bok" 12 &
+done; wait
+python3 tools/merge_jbok.py --out book.bok partial-*.bok
 
-# Benchmark a network against the handcrafted eval.
-./build/jass --benchmark-nnue mlp.bin 5 2
-
-# Benchmark two networks head-to-head.
-./build/jass --benchmark-nnue-vs-nnue mlp.bin linear.bin 5 5
+# --- Head-to-head comparison of two networks ---
+./build/jass --benchmark-nnue-vs-nnue netA.bin netB.bin 5 5
 ```
 
 All of the above are also wired as one-tap GitHub Actions workflows
-(`train-nnue`, `benchmark-nnue`, `build-book`) — see "Continuous
-integration" below.
+(`train-nnue`, `benchmark-nnue`, `build-book`, `gen-data-wdl`) — see
+"Continuous integration" below. For long-running multi-day datasets the
+**Hetzner GitOps runner** in [`infra/`](infra/README.md) is what
+actually drives the pipeline in practice.
 
 ### A short HUB session
 
@@ -268,7 +335,8 @@ jass/
 │   ├── build.yml          native + WASM build, GitHub Pages deploy
 │   ├── train-nnue.yml     workflow_dispatch: --gen-data + trainer
 │   ├── benchmark-nnue.yml workflow_dispatch: --benchmark-nnue[-vs-nnue]
-│   └── build-book.yml     workflow_dispatch: --build-book from FEN list
+│   ├── build-book.yml     workflow_dispatch: --build-book from FEN list
+│   └── gen-data-wdl.yml   workflow_dispatch: matrix-sharded WDL self-play
 ├── docs/                  reference documentation
 │   ├── ARCHITECTURE.md    module map and data-flow
 │   ├── HUB.md             CLI command reference
@@ -276,10 +344,35 @@ jass/
 │   ├── API.md             C++ header reference
 │   ├── EXTENDING.md       recipes (new bitbase, eval term, book line, …)
 │   └── GLOSSARY.md        draughts and engine terms
+├── positions (2).fen      77 560-position FEN list (Hub-style) staged at
+│                          repo root for an opening-book build via
+│                          `--build-book` / `jobs/queue/0013-build-book.sh`
+├── infra/                 Hetzner GitOps runner (see infra/README.md)
+│   ├── bootstrap.sh       one-shot installer for a fresh Ubuntu 24.04
+│   ├── runner.py          tick body — git pull, reap, heartbeat, pick
+│   ├── jass-runner.{service,timer}   systemd unit + 5-min timer
+│   └── README.md          runner usage + pause/resume via flag file
+├── jobs/                  GitOps job queue (written to by maintainers,
+│   │                      executed by the runner on a Hetzner host)
+│   ├── queue/             one shell script per job; runner picks the
+│   │                      oldest numeric prefix that has no status.json
+│   ├── results/<id>/      output.log, status.json, artefacts/ per job
+│   └── state/             in-flight.json (current job), runner-paused
+│                          (pause flag), _runner/progress.json (heartbeat)
 ├── tools/                 Python tooling for the training pipeline
 │   ├── train.py           LinearNetwork trainer (NumPy lstsq)
 │   ├── train_mlp.py       MLPNetwork trainer (PyTorch + Adam)
-│   └── quantize_mlp.py    post-training int8 quantisation (writes JNNQ)
+│   ├── train_v3.py        Cycle-2 multi-arch MLP trainer over a JNNW
+│   │                      dataset; blended score+WDL MSE loss
+│   ├── scout_wdl.py       experimental WDL-only scout (precursor to v3)
+│   ├── scout_halfmen.py   HalfMen-encoding scout for arch search
+│   ├── bench_arch.py      Cycle-5 end-to-end pipeline (train → quantise
+│   │                      → jass) for a single arch — convenience wrapper
+│   ├── quantize_mlp.py    post-training int8 quantisation (writes JNNQ)
+│   ├── calibrate_vs_scan.py  HUB-protocol Jass-vs-Scan match runner
+│   │                      with ELO estimate
+│   └── merge_jbok.py      merge partial JBOK files (parallelised
+│                          --build-book at the shell level)
 ├── src/                   engine sources
 │   ├── types.hpp                   Color, Piece, Square, Move
 │   ├── bitboard.hpp                50-bit Bitboard helpers
@@ -305,7 +398,7 @@ jass/
 │   ├── hub.hpp / .cpp              HUB-flavoured CLI front-end
 │   ├── main.cpp                    native entry point
 │   └── wasm_api.cpp                Embind bindings (Emscripten only)
-├── tests/                 unit tests (single executable, 672 assertions)
+├── tests/                 unit tests (single executable, 722 assertions)
 │   ├── test_framework.hpp test scaffolding (JASS_CHECK macros)
 │   ├── test_main.cpp      runs every per-topic group
 │   ├── test_position.cpp  geometry, bitboards, FEN
