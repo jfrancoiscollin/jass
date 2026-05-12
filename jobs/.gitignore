@@ -4,3 +4,9 @@
 results/*/output.log.raw
 results/*/exit_code
 results/*/artefacts.src/
+
+# The repo-root .gitignore has `*.log`, which would also swallow the
+# runner's output.log and any *.log files the job places in artefacts/.
+# Re-include them here so reap commits actually carry the logs.
+!results/*/output.log
+!results/*/artefacts/*.log
