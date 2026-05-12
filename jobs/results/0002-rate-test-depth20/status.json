@@ -1,7 +1,9 @@
 {
   "job_id": "0002-rate-test-depth20",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-05-12T05:28:44+00:00",
+  "ended_at": "2026-05-12T05:33:41+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 10262
+  "artefacts_server_path": "/root/jass/jobs/results/0002-rate-test-depth20/artefacts.src"
 }

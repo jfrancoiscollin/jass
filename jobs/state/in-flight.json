@@ -1,7 +1,0 @@
-{
-  "job_id": "0002-rate-test-depth20",
-  "script": "jobs/queue/0002-rate-test-depth20.sh",
-  "pid": 10262,
-  "started_at": "2026-05-12T05:28:44+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
