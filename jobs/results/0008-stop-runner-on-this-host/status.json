@@ -1,0 +1,7 @@
+{
+  "job_id": "0008-stop-runner-on-this-host",
+  "state": "running",
+  "started_at": "2026-05-12T10:03:11+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 41021
+}
