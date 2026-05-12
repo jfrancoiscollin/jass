@@ -1,0 +1,7 @@
+{
+  "job_id": "0009-rate-test-bigbox",
+  "state": "running",
+  "started_at": "2026-05-12T10:08:18+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 41240
+}

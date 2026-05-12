@@ -1,0 +1,7 @@
+{
+  "job_id": "0009-rate-test-bigbox",
+  "script": "jobs/queue/0009-rate-test-bigbox.sh",
+  "pid": 41240,
+  "started_at": "2026-05-12T10:08:18+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
