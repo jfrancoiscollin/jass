@@ -1,7 +1,0 @@
-{
-  "job_id": "0008-stop-runner-on-this-host",
-  "script": "jobs/queue/0008-stop-runner-on-this-host.sh",
-  "pid": 41021,
-  "started_at": "2026-05-12T10:03:11+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

@@ -1,7 +1,9 @@
 {
   "job_id": "0008-stop-runner-on-this-host",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-12T10:03:11+00:00",
+  "ended_at": "2026-05-12T10:08:14+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 41021
+  "artefacts_server_path": "/root/jass/jobs/results/0008-stop-runner-on-this-host/artefacts.src"
 }

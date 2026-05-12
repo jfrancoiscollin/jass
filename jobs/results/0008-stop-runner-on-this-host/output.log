@@ -1,0 +1,34 @@
+=== host facts (which box is taking itself out) ===
+ubuntu-16gb-hel1-2
+eth0 204.168.225.225/32
+
+=== current jass-runner.timer state ===
+● jass-runner.timer - Tick the Jass GitOps runner every 5 minutes
+     Loaded: loaded (/etc/systemd/system/jass-runner.timer; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-12 05:01:56 UTC; 5h 1min ago
+    Trigger: n/a
+   Triggers: ● jass-runner.service
+
+May 12 05:01:56 ubuntu-16gb-hel1-2 systemd[1]: Started jass-runner.timer - Tick the Jass GitOps runner every 5 minutes.
+NEXT LEFT LAST                        PASSED UNIT              ACTIVATES
+-       - Tue 2026-05-12 10:03:09 UTC 1s ago jass-runner.timer jass-runner.service
+
+1 timers listed.
+Pass --all to see loaded but inactive timers, too.
+
+=== scheduling delayed disable (T+8min, gives 1-2 ticks to reap me) ===
+scheduled. detached pid: 41040
+
+=== why this is safe ===
+* the next runner tick (~5 min) will reap this job normally
+  (status -> completed, in-flight.json cleared)
+* ~3 min after that, the detached task runs systemctl disable --now
+* from that point on, no more ticks fire on this host
+* this host stays SSH-reachable for ad-hoc manual use during the
+  24h overlap; it just won't auto-pick anything from jobs/queue/
+* tomorrow the user can simply delete the box in Hetzner Console
+
+=== to re-enable later (if needed) ===
+  systemctl enable --now jass-runner.timer
+
+=== done ===

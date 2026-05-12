@@ -1,0 +1,12 @@
+● jass-runner.timer - Tick the Jass GitOps runner every 5 minutes
+     Loaded: loaded (/etc/systemd/system/jass-runner.timer; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-12 05:01:56 UTC; 5h 1min ago
+    Trigger: n/a
+   Triggers: ● jass-runner.service
+
+May 12 05:01:56 ubuntu-16gb-hel1-2 systemd[1]: Started jass-runner.timer - Tick the Jass GitOps runner every 5 minutes.
+NEXT LEFT LAST                        PASSED UNIT              ACTIVATES
+-       - Tue 2026-05-12 10:03:09 UTC 1s ago jass-runner.timer jass-runner.service
+
+1 timers listed.
+Pass --all to see loaded but inactive timers, too.
