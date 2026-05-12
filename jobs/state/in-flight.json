@@ -1,7 +1,0 @@
-{
-  "job_id": "0004-salvage-logs",
-  "script": "jobs/queue/0004-salvage-logs.sh",
-  "pid": 10713,
-  "started_at": "2026-05-12T06:00:11+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

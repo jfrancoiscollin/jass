@@ -1,0 +1,6 @@
+### source: /root/jass/jobs/results/0003-diag-after-0002/artefacts.src/dmesg-oom.log
+### size:   0 bytes
+### mtime:  2026-05-12 05:49:34.976645662 +0000
+### -------- BEGIN CONTENT --------
+
+### --------- END CONTENT ---------
