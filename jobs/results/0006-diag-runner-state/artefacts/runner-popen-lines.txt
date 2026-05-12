@@ -1,0 +1,7 @@
+206:    # alive across systemd-runner ticks (setsid → new session).
+214:    # Detach via Python's start_new_session=True (calls os.setsid() in
+215:    # the child before exec). Do NOT also invoke the external `setsid`
+216:    # command: when the child is already a session leader, setsid(1)
+217:    # double-forks and Popen's p.pid points at the short-lived setsid
+221:    p = subprocess.Popen(
+227:        start_new_session=True,
