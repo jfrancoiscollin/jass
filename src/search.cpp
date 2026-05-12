@@ -86,6 +86,11 @@ struct Searcher {
     const std::atomic<bool>*              stop_flag{nullptr};
     bool                                  stopped{false};
 
+    // Wall time at which the current root iteration started, used by the
+    // iterative-deepening loop to decide whether to skip the next iteration
+    // when it would obviously not finish before the deadline.
+    std::chrono::steady_clock::time_point iter_started_at{};
+
     // Optional NNUE-style replacement for the handcrafted leaf evaluation.
     // Null means "use the static `evaluate()` function in eval.cpp".
     const INetwork*                       nnue{nullptr};
@@ -627,6 +632,31 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         // Honour an early stop request before spending any work on this
         // iteration. The previous iteration's `best_overall` is returned.
         if (depth > 1 && s.check_stop()) break;
+
+        // Time-management iteration skip: when running under a deadline,
+        // estimate whether the next iteration has any chance of finishing
+        // before we'd be stopped mid-search. Iteration times in iterative
+        // deepening with TT typically grow ~1.5-3x per ply for draughts;
+        // we use 2x as a conservative midpoint. If the previous iteration
+        // already consumed more than half the remaining budget, skip the
+        // next one and keep the deeper-than-required result we have.
+        //
+        // Threshold tuned to fire only at depth >= 4 because shallow
+        // iterations are too noisy to extrapolate from (single-ply timing
+        // is dominated by overhead, not real work).
+        if (s.has_deadline && depth >= 5) {
+            const auto now      = std::chrono::steady_clock::now();
+            if (now >= s.deadline) break;
+            const auto remaining = std::chrono::duration_cast<
+                std::chrono::milliseconds>(s.deadline - now).count();
+            const auto last_iter = std::chrono::duration_cast<
+                std::chrono::milliseconds>(now - s.iter_started_at).count();
+            // last_iter*2 is the projected next-iteration cost. If even
+            // half of that exceeds the remaining time, the next iteration
+            // would be aborted mid-flight (wasted work).
+            if (last_iter > 0 && last_iter * 2 > remaining) break;
+        }
+        s.iter_started_at = std::chrono::steady_clock::now();
 
         if (depth > 1) hoist_move(root_moves, best_overall);
 
