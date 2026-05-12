@@ -1,0 +1,6 @@
+### source: /root/jass/jobs/results/0002-rate-test-depth20/artefacts.src/shard-3.log
+### size:   0 bytes
+### mtime:  2026-05-12 05:28:44.913819697 +0000
+### -------- BEGIN CONTENT --------
+
+### --------- END CONTENT ---------

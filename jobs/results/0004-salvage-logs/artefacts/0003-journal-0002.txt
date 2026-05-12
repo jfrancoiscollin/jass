@@ -1,0 +1,88 @@
+### source: /root/jass/jobs/results/0003-diag-after-0002/artefacts.src/journal-0002.log
+### size:   11822 bytes
+### mtime:  2026-05-12 05:49:34.995645720 +0000
+### -------- BEGIN CONTENT --------
+May 12 05:28:39 ubuntu-16gb-hel1-2 systemd[1]: Starting jass-runner.service - Jass GitOps runner (data gen / training / bench)...
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Deactivated successfully.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10264 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10265 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10270 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10271 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10273 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10275 (bash) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10278 (jass) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10279 (jass) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10280 (jass) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10281 (jass) remains running after unit stopped.
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: Finished jass-runner.service - Jass GitOps runner (data gen / training / bench).
+May 12 05:28:48 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Consumed 14.801s CPU time, 77.7M memory peak, 0B memory swap peak.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10264 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10265 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10270 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10271 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10273 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10275 (bash) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10278 (jass) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10279 (jass) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10280 (jass) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10281 (jass) in control group while starting unit. Ignoring.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:33:39 ubuntu-16gb-hel1-2 systemd[1]: Starting jass-runner.service - Jass GitOps runner (data gen / training / bench)...
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Deactivated successfully.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10264 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10265 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10270 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10271 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10273 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10275 (bash) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10278 (jass) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10279 (jass) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10280 (jass) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10281 (jass) remains running after unit stopped.
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: Finished jass-runner.service - Jass GitOps runner (data gen / training / bench).
+May 12 05:33:45 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Consumed 21.710s CPU time, 126.7M memory peak, 0B memory swap peak.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10264 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10265 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10270 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10271 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10273 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10275 (bash) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10278 (jass) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10279 (jass) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10280 (jass) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Found left-over process 10281 (jass) in control group while starting unit. Ignoring.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+May 12 05:39:08 ubuntu-16gb-hel1-2 systemd[1]: Starting jass-runner.service - Jass GitOps runner (data gen / training / bench)...
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Deactivated successfully.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10264 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10265 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10270 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10271 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10273 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10275 (bash) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10278 (jass) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10279 (jass) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10280 (jass) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Unit process 10281 (jass) remains running after unit stopped.
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: Finished jass-runner.service - Jass GitOps runner (data gen / training / bench).
+May 12 05:39:10 ubuntu-16gb-hel1-2 systemd[1]: jass-runner.service: Consumed 6.984s CPU time, 126.7M memory peak, 0B memory swap peak.
+
+### --------- END CONTENT ---------

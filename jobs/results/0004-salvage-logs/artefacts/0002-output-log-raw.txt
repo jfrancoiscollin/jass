@@ -1,0 +1,11 @@
+### source: /root/jass/jobs/results/0002-rate-test-depth20/output.log.raw
+### size:   106 bytes
+### mtime:  2026-05-12 05:49:32.944639471 +0000
+### -------- BEGIN CONTENT --------
+=== launching 4 parallel shards (per_shard=5000 depth=20) ===
+Terminated
+Terminated
+Terminated
+Terminated
+
+### --------- END CONTENT ---------

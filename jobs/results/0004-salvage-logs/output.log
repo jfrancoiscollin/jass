@@ -1,0 +1,56 @@
+=== 0002 server-side artefacts ===
+total 32
+drwxr-xr-x 4 root root 4096 May 12 05:49 .
+drwxr-xr-x 6 root root 4096 May 12 06:00 ..
+drwxr-xr-x 2 root root 4096 May 12 05:33 artefacts
+drwxr-xr-x 2 root root 4096 May 12 05:28 artefacts.src
+-rw-r--r-- 1 root root    4 May 12 05:49 exit_code
+-rw-r--r-- 1 root root   62 May 12 05:33 output.log
+-rw-r--r-- 1 root root  106 May 12 05:49 output.log.raw
+-rw-r--r-- 1 root root  292 May 12 05:33 status.json
+total 104
+drwxr-xr-x 2 root root  4096 May 12 05:28 .
+drwxr-xr-x 4 root root  4096 May 12 05:49 ..
+-rw-r--r-- 1 root root 24626 May 12 05:48 shard-1.bin
+-rw-r--r-- 1 root root     0 May 12 05:28 shard-1.log
+-rw-r--r-- 1 root root 24626 May 12 05:48 shard-2.bin
+-rw-r--r-- 1 root root     0 May 12 05:28 shard-2.log
+-rw-r--r-- 1 root root 16418 May 12 05:43 shard-3.bin
+-rw-r--r-- 1 root root     0 May 12 05:28 shard-3.log
+-rw-r--r-- 1 root root 16418 May 12 05:45 shard-4.bin
+-rw-r--r-- 1 root root     0 May 12 05:28 shard-4.log
+
+=== 0003 server-side artefacts ===
+total 64
+drwxr-xr-x 4 root root  4096 May 12 05:54 .
+drwxr-xr-x 6 root root  4096 May 12 06:00 ..
+drwxr-xr-x 2 root root  4096 May 12 05:54 artefacts
+drwxr-xr-x 2 root root  4096 May 12 05:49 artefacts.src
+-rw-r--r-- 1 root root     2 May 12 05:49 exit_code
+-rw-r--r-- 1 root root 16687 May 12 05:54 output.log
+-rw-r--r-- 1 root root 16687 May 12 05:49 output.log.raw
+-rw-r--r-- 1 root root   290 May 12 05:54 status.json
+total 20
+drwxr-xr-x 2 root root  4096 May 12 05:49 .
+drwxr-xr-x 4 root root  4096 May 12 05:54 ..
+-rw-r--r-- 1 root root     0 May 12 05:49 dmesg-oom.log
+-rw-r--r-- 1 root root 11822 May 12 05:49 journal-0002.log
+
+=== salvaging 0002 logs ===
+=== salvaging 0003 logs ===
+
+=== fresh diag re-run (in case 0003 logs were partial) ===
+=== bytes salvaged ===
+total 84
+drwxr-xr-x 2 root root  4096 May 12 06:00 .
+drwxr-xr-x 3 root root  4096 May 12 06:00 ..
+-rw-r--r-- 1 root root   323 May 12 06:00 0002-output-log-raw.txt
+-rw-r--r-- 1 root root   226 May 12 06:00 0002-shard-1.txt
+-rw-r--r-- 1 root root   226 May 12 06:00 0002-shard-2.txt
+-rw-r--r-- 1 root root   226 May 12 06:00 0002-shard-3.txt
+-rw-r--r-- 1 root root   226 May 12 06:00 0002-shard-4.txt
+-rw-r--r-- 1 root root   226 May 12 06:00 0003-dmesg-oom.txt
+-rw-r--r-- 1 root root 12055 May 12 06:00 0003-journal-0002.txt
+-rw-r--r-- 1 root root 16904 May 12 06:00 0003-output-log-raw.txt
+-rw-r--r-- 1 root root 18287 May 12 06:00 0004-fresh-diag.txt
+=== done ===
