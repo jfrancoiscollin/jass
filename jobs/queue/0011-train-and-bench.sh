@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
 # id: 0011-train-and-bench
 # description: NNUE training pipeline on the 1M depth-20 dataset
-#              produced by 0010. Trains the 4 MLP archs (64-32,
-#              128-64, 256-128, 512-256) under the HalfMen-lite
+#              produced by 0010. Trains 5 MLP archs (64-32, 128-64,
+#              256-128, 512-256, 1024-512) under the HalfMen-lite
 #              encoding (input_dim=450, Cycle-6c, the target arch)
 #              via train_v3.py, picks the best by val MSE, quantises
 #              it to int8, then runs the built-in NNUE-vs-handcrafted
 #              benchmark to estimate strength.
 #
+#              1024-512 (~720K params, ratio 1.4 records/param at 1M)
+#              is included as an overfit canary: its val_mse vs
+#              512-256 is the gate for the 10M decision — if it
+#              regresses, 10M is justified; if it wins, 1M is already
+#              under-parameterised.
+#
 #              Self-installs torch+numpy if the CCX23 didn't get them
 #              from bootstrap (INSTALL_TORCH is opt-in there).
-# expected_duration: ~2-8 h on 4 vCPU CCX23 (training dominated by
-#                    512-256; smaller archs finish in minutes)
+# expected_duration: ~5-14 h on 4 vCPU CCX23 (1024-512 dominates;
+#                    other archs finish in minutes to ~2 h each)
 set -uo pipefail
 cd /root/jass
 
@@ -52,14 +58,17 @@ fi
 python3 -c "import torch, numpy; print(f'  torch {torch.__version__}'); print(f'  numpy {numpy.__version__}')"
 
 echo
-echo "=== step 1/4: training 4 archs on 1M records (HalfMen encoding) ==="
-echo "  archs:    64-32, 128-64, 256-128, 512-256"
+echo "=== step 1/4: training 5 archs on 1M records (HalfMen encoding) ==="
+echo "  archs:    64-32, 128-64, 256-128, 512-256, 1024-512"
+echo "            (1024-512 is a deliberate overfit canary for the"
+echo "             10M decision: its val_mse vs 512-256 tells us"
+echo "             whether more data would help or hurt)"
 echo "  encoding: halfmen (input_dim=450)"
 echo "  epochs:   30, batch: 512, lambda: 0.7 (default)"
 START_TRAIN=$(date +%s)
 python3 tools/train_v3.py \
     --data     "$DATASET" \
-    --archs    64-32 128-64 256-128 512-256 \
+    --archs    64-32 128-64 256-128 512-256 1024-512 \
     --encoding halfmen \
     --epochs   30 \
     --batch    512 \
