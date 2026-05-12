@@ -9,7 +9,7 @@ Trains two MLPs back-to-back on the same dataset:
 
   v2 baseline   (200 features)
     feat[piece_sq * 4 + kind]                   absolute square × kind
-    Same as production tools/train_mlp.py.
+    Same as production tools/train_v3.py.
 
   HalfMen lite  (450 features)
     feat[piece_sq * 4 + kind]                   absolute (kept)
@@ -28,6 +28,15 @@ Decision rule (printed at the end):
     val MSE delta >  +3% → HalfMen worse. Stop.
     val MSE delta in (-3%, +3%) → noise. Need more data to decide.
     val MSE delta <  -3% → encouraging. Worth porting to C++.
+
+Datasets
+--------
+Auto-detects the magic of `--data`:
+  * JNNW (38 bytes/record, post-Cycle-1) — uses blended score+WDL loss
+    `target = λ × score + (1-λ) × wdl × WDL_PSEUDO_SCALE` matching
+    tools/train_v3.py. WDL_PSEUDO_SCALE = 800, λ default 0.7.
+  * JNNT (37 bytes/record, legacy)        — falls back to MSE on the
+    raw STM-POV score (no WDL signal in the file).
 """
 from __future__ import annotations
 
@@ -45,24 +54,50 @@ NUM_SQUARES        = 50
 NUM_KINDS          = 4
 NUM_ABS_FEATS      = NUM_SQUARES * NUM_KINDS  # 200
 NUM_HALFMEN_FEATS  = 200 + 200 + 50            # 450
-DATASET_MAGIC      = b"JNNT"
-DATASET_RECORD_SZ  = 37
+
+DATASET_JNNT_MAGIC     = b"JNNT"
+DATASET_JNNT_RECORD_SZ = 37
+DATASET_JNNW_MAGIC     = b"JNNW"
+DATASET_JNNW_RECORD_SZ = 38
+
+WDL_PSEUDO_SCALE = 800.0  # match tools/train_v3.py
 
 
 # ---------------------------------------------------------------------------
 # Dataset
 # ---------------------------------------------------------------------------
 def load_records(path: Path):
+    """Return (bbs[N,4], stm[N], score[N], wdl[N] or None)."""
     raw = path.read_bytes()
-    if len(raw) < 8 or raw[:4] != DATASET_MAGIC:
-        raise ValueError(f"{path}: bad magic")
+    if len(raw) < 8:
+        raise ValueError(f"{path}: file too short")
+    magic = raw[:4]
+    if magic == DATASET_JNNW_MAGIC:
+        record_sz = DATASET_JNNW_RECORD_SZ
+        has_wdl   = True
+    elif magic == DATASET_JNNT_MAGIC:
+        record_sz = DATASET_JNNT_RECORD_SZ
+        has_wdl   = False
+    else:
+        raise ValueError(f"{path}: unknown magic {magic!r}")
+
     count = struct.unpack_from("<I", raw, 4)[0]
-    body  = np.frombuffer(raw[8:8 + count * DATASET_RECORD_SZ],
-                          dtype=np.uint8).reshape(count, DATASET_RECORD_SZ)
+    if 8 + count * record_sz != len(raw):
+        raise ValueError(
+            f"{path}: size {len(raw)} != header-implied "
+            f"{8 + count * record_sz}")
+
+    body  = np.frombuffer(raw[8:8 + count * record_sz],
+                          dtype=np.uint8).reshape(count, record_sz)
     bbs   = body[:, :32].view(np.uint64).reshape(count, 4)
     stm   = body[:, 32]
-    score = body[:, 33:37].view(np.int32).reshape(count)
-    return bbs, stm, score
+    score = body[:, 33:37].view(np.int32).reshape(count).copy()
+    if has_wdl:
+        # WDL byte is signed int8: +1 = win, 0 = draw, -1 = loss (STM-POV).
+        wdl = body[:, 37].view(np.int8).reshape(count).astype(np.float32)
+    else:
+        wdl = None
+    return bbs, stm, score, wdl
 
 
 def encode_v2(bbs, stm):
@@ -169,6 +204,8 @@ def train(model: nn.Module, X: np.ndarray, y: np.ndarray, *,
           epochs: int = 30, batch: int = 512, lr: float = 1e-3,
           wd: float = 1e-5, seed: int = 42, val_frac: float = 0.1,
           clip: float = 2000.0):
+    """y must be the *blended* target (score + WDL) for an apples-to-
+    apples comparison with train_v3.py. The loss is plain MSE on it."""
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
     perm = rng.permutation(len(X))
@@ -212,48 +249,91 @@ def train(model: nn.Module, X: np.ndarray, y: np.ndarray, *,
 # ---------------------------------------------------------------------------
 def main(argv):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[1])
-    p.add_argument("--data", type=Path, required=True)
-    p.add_argument("--epochs", type=int, default=20)
+    p.add_argument("--data",   type=Path, required=True)
+    p.add_argument("--epochs", type=int,   default=20)
+    p.add_argument("--lambda", dest="lam", type=float, default=0.7,
+                   help="weight of the deep-search score in the blended "
+                        "target (rest goes to WDL × 800). Only used on "
+                        "JNNW datasets; ignored for JNNT.")
+    # Per-variant topology, defaulting to the historic 64-32. Use these
+    # to run an equal-parameter control between the two encodings — e.g.
+    # `--v2-hidden1 64 --v2-hidden2 32 --hm-hidden1 32 --hm-hidden2 16`
+    # gives both networks exactly 14,977 params, isolating the encoding
+    # signal from raw capacity.
+    p.add_argument("--v2-hidden1", type=int, default=64)
+    p.add_argument("--v2-hidden2", type=int, default=32)
+    p.add_argument("--hm-hidden1", type=int, default=64)
+    p.add_argument("--hm-hidden2", type=int, default=32)
+    p.add_argument("--skip-v2", action="store_true",
+                   help="skip the v2 baseline (useful if you already "
+                        "have its number from a previous run)")
+    p.add_argument("--skip-halfmen", action="store_true",
+                   help="skip the HalfMen variant")
     args = p.parse_args(argv)
 
     print(f"loading {args.data} …")
-    bbs, stm, score = load_records(args.data)
+    bbs, stm, score, wdl = load_records(args.data)
     n = len(stm)
-    print(f"  {n} records")
+    print(f"  {n} records  (magic={'JNNW' if wdl is not None else 'JNNT'})")
+    if wdl is not None:
+        # JNNW already stores WDL in STM-POV from the sample; same convention
+        # for the score field. No sign flip needed in either case.
+        wf = wdl.astype(np.float32)
+        sf = score.astype(np.float32)
+        y = (args.lam * sf + (1.0 - args.lam) * wf * WDL_PSEUDO_SCALE)
+        print(f"  blended target: λ={args.lam}, WDL pseudo-scale={WDL_PSEUDO_SCALE}")
+        print(f"  WDL distribution: "
+              f"W={(wdl > 0).mean()*100:.1f}% "
+              f"D={(wdl == 0).mean()*100:.1f}% "
+              f"L={(wdl < 0).mean()*100:.1f}%")
+    else:
+        # JNNT: legacy score-only target. Need a sign flip because old
+        # gen-data wrote scores from white's POV; the new gen-data-wdl
+        # writes them in STM-POV directly. Keep the legacy behaviour
+        # for backward compat.
+        y = np.where(stm == 0, score, -score).astype(np.float32)
 
-    # STM-POV target: dataset score is already from STM's perspective
-    # (engine returns scores from STM POV via search()).
-    y = np.where(stm == 0, score, -score).astype(np.float32)
+    bv = bh = None
+    if not args.skip_v2:
+        print(f"\n=== v2 baseline (200 features, hidden {args.v2_hidden1}-"
+              f"{args.v2_hidden2}, no dropout) ===")
+        X_v2 = encode_v2(bbs, stm)
+        print(f"  X shape: {X_v2.shape}")
+        print(f"  active features per row (mean): {(X_v2 > 0).sum() / n:.1f}")
+        m_v2 = make_mlp(NUM_ABS_FEATS,
+                        hidden1=args.v2_hidden1, hidden2=args.v2_hidden2,
+                        dropout=0.0)
+        n_params = sum(p.numel() for p in m_v2.parameters())
+        print(f"  params: {n_params}")
+        bv = train(m_v2, X_v2, y, epochs=args.epochs)
 
-    print("\n=== v2 baseline (200 features, no dropout) ===")
-    X_v2 = encode_v2(bbs, stm)
-    print(f"  X shape: {X_v2.shape}")
-    print(f"  active features per row (mean): {(X_v2 > 0).sum() / n:.1f}")
-    m_v2 = make_mlp(NUM_ABS_FEATS, dropout=0.0)
-    n_params = sum(p.numel() for p in m_v2.parameters())
-    print(f"  params: {n_params}")
-    bv = train(m_v2, X_v2, y, epochs=args.epochs)
-
-    print("\n=== HalfMen lite (450 features, dropout 0.1) ===")
-    X_h = encode_halfmen(bbs, stm)
-    print(f"  X shape: {X_h.shape}")
-    print(f"  active features per row (mean): {(X_h > 0).sum() / n:.1f}")
-    m_h = make_mlp(NUM_HALFMEN_FEATS, dropout=0.1)
-    n_params = sum(p.numel() for p in m_h.parameters())
-    print(f"  params: {n_params}")
-    bh = train(m_h, X_h, y, epochs=args.epochs)
+    if not args.skip_halfmen:
+        print(f"\n=== HalfMen lite (450 features, hidden {args.hm_hidden1}-"
+              f"{args.hm_hidden2}, dropout 0.1) ===")
+        X_h = encode_halfmen(bbs, stm)
+        print(f"  X shape: {X_h.shape}")
+        print(f"  active features per row (mean): {(X_h > 0).sum() / n:.1f}")
+        m_h = make_mlp(NUM_HALFMEN_FEATS,
+                       hidden1=args.hm_hidden1, hidden2=args.hm_hidden2,
+                       dropout=0.1)
+        n_params = sum(p.numel() for p in m_h.parameters())
+        print(f"  params: {n_params}")
+        bh = train(m_h, X_h, y, epochs=args.epochs)
 
     print("\n=== Verdict ===")
-    print(f"  v2 baseline best val MSE: {bv:9.1f}  (RMSE {bv**0.5:6.1f})")
-    print(f"  HalfMen lite best val MSE: {bh:9.1f}  (RMSE {bh**0.5:6.1f})")
-    delta_pct = (bh - bv) / bv * 100
-    print(f"  delta: {delta_pct:+.1f}%")
-    if delta_pct < -3:
-        print("  → ENCOURAGING: HalfMen captures more signal. Worth implementing in C++.")
-    elif delta_pct < 3:
-        print("  → INCONCLUSIVE: within noise. Needs more data or different anchor.")
-    else:
-        print("  → NOT WORTH IT: HalfMen worse. Anchor / encoding probably wrong.")
+    if bv is not None:
+        print(f"  v2 baseline best val MSE:  {bv:9.1f}  (RMSE {bv**0.5:6.1f})")
+    if bh is not None:
+        print(f"  HalfMen lite best val MSE: {bh:9.1f}  (RMSE {bh**0.5:6.1f})")
+    if bv is not None and bh is not None:
+        delta_pct = (bh - bv) / bv * 100
+        print(f"  delta: {delta_pct:+.1f}%")
+        if delta_pct < -3:
+            print("  → ENCOURAGING: HalfMen captures more signal. Worth implementing in C++.")
+        elif delta_pct < 3:
+            print("  → INCONCLUSIVE: within noise. Needs more data or different anchor.")
+        else:
+            print("  → NOT WORTH IT: HalfMen worse. Anchor / encoding probably wrong.")
     return 0
 
 

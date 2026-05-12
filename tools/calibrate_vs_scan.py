@@ -493,6 +493,13 @@ def main(argv):
     p.add_argument("--pairs", type=int, default=2,
                    help="colour-swap pairs per opening (total games = 18 × pairs)")
     p.add_argument("--max-plies", type=int, default=200)
+    g_nnue = p.add_mutually_exclusive_group()
+    g_nnue.add_argument("--nnue", metavar="PATH",
+                        help="weights file passed to Jass via --nnue "
+                             "(JNNM/JNNQ/Linear). Only the player; the "
+                             "referee keeps the default network.")
+    g_nnue.add_argument("--no-nnue", action="store_true",
+                        help="force Jass to fall back to the handcrafted eval")
     args = p.parse_args(argv)
     if args.depth is None and args.movetime is None:
         args.depth = 8  # back-compat default
@@ -502,7 +509,8 @@ def main(argv):
     openings = opening_pool_via_jass(args.jass)
     print(f"opening pool: {len(openings)} positions")
 
-    jass = JassEngine(args.jass, label="Jass-player")
+    jass = JassEngine(args.jass, label="Jass-player",
+                      no_nnue=args.no_nnue, nnue_path=args.nnue)
     scan = ScanEngine(args.scan, label="Scan-player")
     referee = Referee(args.jass)
 

@@ -1,0 +1,29 @@
+[Unit]
+Description=Jass GitOps runner (data gen / training / bench)
+After=network-online.target
+Wants=network-online.target
+# A single instance at a time — if a long-running job is in flight,
+# subsequent timer ticks are no-ops.
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/jass
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/bin/python3 /root/jass/infra/runner.py
+# Don't kill long-running jobs when the unit is "stopped" — they
+# detach themselves and the next tick reaps them via state files.
+KillMode=process
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=5
+
+# Tight-ish hardening; runner needs network (git push) and write
+# access to /root/jass.
+ProtectSystem=full
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
