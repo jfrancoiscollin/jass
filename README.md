@@ -475,6 +475,88 @@ This roadmap is intentionally *pull*-based: jass does not depend on dilf to
 reach competitive strength via the existing NNUE + α-β path. dilf material
 is an accelerator on top, available when ready.
 
+## Roadmap — extraction de master games (Cycle 8 data source)
+
+Cycle 8 of the dilf roadmap above blends master-game labels with self-play
+records into the `train_v3` training corpus. The *source* of those master
+games doesn't have to be dilf's PDF→fixture extraction — there are direct,
+already-structured sources of FMJD-level games that bypass the entire CV
+pipeline. This section enumerates them so we can pick the right one when
+the cycle is triggered.
+
+### Candidate sources
+
+| Source                                | Format             | Volume (est.)                       | Effort           |
+|---------------------------------------|--------------------|-------------------------------------|------------------|
+| **Lidraughts.org** ⭐                  | Public API + monthly PDN database dumps (Lichess-style; Lidraughts is its draughts sibling, also AGPL) | Millions of games/month, filterable by rating | Very low — API calls, no scraping |
+| Toernooibase Dammen (KNDB, NL)        | HTML pages with PDN downloads per tournament | Decades of WC / European / KNDB tournaments | Moderate — HTML scraping + PDN parsing |
+| FMJD.org direct                        | Tournament results pages, occasional PDN | Variable per event; many PDFs, few structured PDN | High — no API, inconsistent format, lots of PDF |
+| Curated GitHub PDN collections         | `git clone` ready  | A few thousand well-curated WC games | Very low — but limited size |
+
+**Recommended default: Lidraughts.** Same reasoning as benching against Scan
+rather than Athénan — pick the source whose data is open, structured, and
+scriptable. Filter `rating ≥ 2200` to approximate FMJD-strong play.
+
+### Time estimate
+
+Concrete numbers for **200 000 games**, assuming Lidraughts mirrors Lichess's
+well-documented patterns (this is the part to verify on first contact, not
+inferred from a current spec):
+
+| Phase                                          | Wall time on a normal connection |
+|------------------------------------------------|----------------------------------|
+| Discovery (build candidate user/event list, identify the right monthly dump) | 30–60 min |
+| Download (monthly DB dump path: a few-GB `.pdn.zst`; API path: a few hundred batched requests) | 30 min – 2 h |
+| Parse + filter to (FEN, side-to-move, game-outcome) records | 30–60 min CPU |
+| **Total (first run, end-to-end)**              | **~2–4 h wall time**             |
+| Subsequent incremental fetches                 | Minutes (only new months) |
+
+At ~80 plies/game, 200 000 games → **~16 M positions** with WDL labels — far
+beyond the 1 M we generate by self-play, and at a quality level that
+self-play cannot reach by construction.
+
+### Caveats — what I do not know with certainty
+
+- The exact current Lidraughts API endpoints and rate limits — Lichess
+  changes its API over time and Lidraughts likely tracks it; first task of
+  the implementation is to *read its docs*, not assume.
+- Whether Toernooibase's terms of service permit automated download — to
+  read in their footer before scraping. Public-tournament game scores are
+  generally not copyrightable as facts, but a database compilation may be.
+- The exact PDN dialect served by each source (FMJD / Dutch / HUB variants
+  differ in coordinate encoding and capture notation). Our `--gen-data-wdl`
+  output uses the Hub-style FEN, so the converter will need to normalise.
+
+### Plan (when triggered)
+
+1. **Cycle 8-pre — `tools/fetch_lidraughts_games.py`**
+   - Hit Lidraughts API (or download the monthly DB dump and filter).
+   - Apply `--min-rating` filter (default 2200).
+   - Parse each PDN into `(FEN, stm, ply, game_result)` tuples.
+   - Emit one JNNW-format file at the same on-disk layout as `--gen-data-wdl`
+     produces (38 B per record, magic header, sortable). One Python script,
+     no C++ changes.
+2. **Cycle 8 — `train_v3.py` blended source**
+   - Add a `--master-data PATH` argument that consumes the JNNW from 8-pre
+     alongside the existing self-play data.
+   - Add a `--master-weight FLOAT` to control the relative importance of
+     master labels vs self-play in the MSE loss (e.g. 5× more weight per
+     master record).
+   - Empirical sweep to find the right ratio.
+3. **Cycle 8-bis (optional) — `tools/scrape_toernooibase.py`**
+   - Same output format, different source.
+   - Use to add explicit FMJD-pedigree provenance on top of Lidraughts
+     rating-filtered data. ~3–5× less data but higher provenance.
+
+### Independence from dilf
+
+This path is **fully independent** of dilf's CV pipeline. The dilf roadmap
+above remains useful for **tactics test fixtures (Cycle 7-A)** and
+**curated openings (Cycle 7-B)**, but for Cycle 8 the master-game label
+source via Lidraughts is strictly easier and arrives sooner. If dilf later
+exposes annotated master games (with motif tags), they can be folded in as
+a *third* source with higher weight — not a precondition.
+
 ## Contributing & extending
 
 If you want to add a new opening line, plug a new endgame into the
