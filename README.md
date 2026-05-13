@@ -417,6 +417,64 @@ jass/
     └── example.html       browser demo loading the ES6 module
 ```
 
+## Roadmap — extraction depuis le framework `dilf`
+
+The sister repository [`jfrancoiscollin/dilf`](https://github.com/jfrancoiscollin/dilf)
+(MIT-licensed, Python) builds a deterministic pedagogy framework on top of a
+~6 100-page corpus of international-draughts reference books (Dubois and
+others). It targets a *human* user via Draught Master, not the engine — its
+motif detectors, feature extractors, and verdict classifier encode heuristics
+that humans use to compensate for shallow calculation, which a depth-20+
+search already sees through.
+
+What dilf produces *as a side effect* is highly valuable to jass, however:
+the extraction pipeline turns book PDFs into structured Python fixtures
+(annotated FENs, best-move labels, motif tags). Three artefacts will be
+folded back into jass once dilf has produced enough material — none of them
+require importing dilf itself; we only consume its data exports.
+
+| Artefact (dilf side)                                | jass entry point                          | Cycle  | Expected ELO |
+|-----------------------------------------------------|-------------------------------------------|--------|---|
+| `dubois_diagrams.py` (FEN + best-move + motif tag)  | new `--bench-tactics` mode + a fixture    | **7-A** | indirect — KPI that reveals where jass weakens, then guides training |
+| Opening positions extracted from `dubois_ouvertures.pdf` | append to `positions (2).fen`, requeue 0013 to rebuild book | **7-B** | +30 to +80 (curated theory > self-search depth-12) |
+| `MoveVerdict` records from analysing master games   | new label source for `train_v3.py`, blended with `--gen-data-wdl` | **8** | +30 to +100 (cleaner training signal than self-play) |
+
+**What we explicitly will *not* import from dilf**:
+
+- The `MotifDetector` chain (coup royal, coup turc, …) — the engine sees the
+  result of the combination at the leaf; naming the pattern adds nothing.
+- The `Features` dataclass as additional NNUE inputs — modern NNUE learns
+  these implicitly; hard-coding them typically *degrades* generalisation.
+- The `Verdict` classifier — jass already classifies move quality via
+  depth-N score deltas inside `--benchmark-nnue`.
+- The `BookRAG` / `claude_writer` / `UserProfile` layers — pure user-facing
+  pedagogy, irrelevant to engine strength.
+
+**Blocker**: dilf's CV pipeline (`scripts/extract_diagrams.py`) needs to have
+produced enough hand-verified fixtures from the corpus before Cycle 7-A is
+worth scaffolding. As of this commit, only `pedagogy/tests/fixtures/dubois_diagrams.py`
+exists as a starter sample. We track that progress externally; this section
+exists so the path is documented and the constraints are explicit.
+
+**Sequencing**:
+
+1. **Today**: Cycle 1–6c done, Cycle 7-pre (calibrate-vs-Scan, opening book
+   from existing 77 K positions) running on the Hetzner runner.
+2. **When dilf has ≥ 1 000 verified fixtures**: Cycle 7-A — add
+   `--bench-tactics`, a one-shot job `0014-bench-tactics.sh`, and a parser
+   in `tools/dilf_to_tactics.py` that converts `dubois_diagrams.py` into a
+   jass-friendly FEN+expected-move fixture. ~1 h dev.
+3. **When dilf's opening section is extracted**: Cycle 7-B — a parser
+   `tools/dilf_to_book_fens.py` that appends curated openings to the
+   existing FEN list, requeue 0013 to rebuild. ~30 min dev.
+4. **Cycle 8** — pipeline `dilf-master-game-PDN → MoveVerdict → JNNW
+   custom records → blend with --gen-data-wdl in train_v3`. ~3–5 h dev,
+   gates on having enough analysed master games.
+
+This roadmap is intentionally *pull*-based: jass does not depend on dilf to
+reach competitive strength via the existing NNUE + α-β path. dilf material
+is an accelerator on top, available when ready.
+
 ## Contributing & extending
 
 If you want to add a new opening line, plug a new endgame into the
