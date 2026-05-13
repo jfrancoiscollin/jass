@@ -1,13 +1,13 @@
 {
   "job_id": "0010-gen-data-depth20-1M-smallbox",
-  "snapshot_at": "2026-05-13T17:01:50+00:00",
+  "snapshot_at": "2026-05-13T17:07:04+00:00",
   "started_at": "2026-05-12T15:33:12+00:00",
-  "elapsed_seconds": 91718,
+  "elapsed_seconds": 92032,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 1838594,
-      "records": 48383
+      "size_bytes": 1846802,
+      "records": 48599
     },
     {
       "name": "shard-1.log",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 1855010,
-      "records": 48815
+      "size_bytes": 1863218,
+      "records": 49031
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 1772930,
-      "records": 46655
+      "size_bytes": 1781138,
+      "records": 46871
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 1838594,
-      "records": 48383
+      "size_bytes": 1846802,
+      "records": 48599
     },
     {
       "name": "shard-4.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  53908       1  1-01:28:38  0.0  0.0 bash\n  53909   53908  1-01:28:38  0.0  0.0 bash\n  53958   53909  1-01:28:34  0.0  0.0 bash\n  53960   53909  1-01:28:34  0.0  0.0 bash\n  53961   53909  1-01:28:34  0.0  0.0 bash\n  53964   53909  1-01:28:34  0.0  0.0 bash\n  53965   53958  1-01:28:34 99.7  0.2 jass\n  53967   53961  1-01:28:34 99.7  0.2 jass\n  53968   53960  1-01:28:34 99.7  0.2 jass\n  53969   53964  1-01:28:34 99.7  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  53908       1  1-01:33:52  0.0  0.0 bash\n  53909   53908  1-01:33:52  0.0  0.0 bash\n  53958   53909  1-01:33:48  0.0  0.0 bash\n  53960   53909  1-01:33:48  0.0  0.0 bash\n  53961   53909  1-01:33:48  0.0  0.0 bash\n  53964   53909  1-01:33:48  0.0  0.0 bash\n  53965   53958  1-01:33:48 99.7  0.2 jass\n  53967   53961  1-01:33:48 99.7  0.2 jass\n  53968   53960  1-01:33:48 99.7  0.2 jass\n  53969   53964  1-01:33:48 99.7  0.2 jass\n"
 }
