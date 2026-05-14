@@ -356,9 +356,16 @@ jass/
 │   │                      executed by the runner on a Hetzner host)
 │   ├── queue/             one shell script per job; runner picks the
 │   │                      oldest numeric prefix that has no status.json
+│   ├── templates/         dormant ready-to-deploy jobs (e.g.
+│   │                      0014-fetch-master-games.sh); `git mv` to
+│   │                      `queue/` to activate
 │   ├── results/<id>/      output.log, status.json, artefacts/ per job
 │   └── state/             in-flight.json (current job), runner-paused
 │                          (pause flag), _runner/progress.json (heartbeat)
+├── data/                  Persistent on-runner data files (not committed
+│   │                      to git — schema and small fixtures are)
+│   └── expert_games.schema.sql   SQLite schema for the master-games
+│                                  store consumed by Cycle 8
 ├── tools/                 Python tooling for the training pipeline
 │   ├── train.py           LinearNetwork trainer (NumPy lstsq)
 │   ├── train_mlp.py       MLPNetwork trainer (PyTorch + Adam)
@@ -371,6 +378,10 @@ jass/
 │   ├── quantize_mlp.py    post-training int8 quantisation (writes JNNQ)
 │   ├── calibrate_vs_scan.py  HUB-protocol Jass-vs-Scan match runner
 │   │                      with ELO estimate
+│   ├── fetch_lidraughts_games.py  Cycle 8-pre: stream master games
+│   │                              from Lidraughts into the SQLite store
+│   ├── pdn_to_jnnw.py     Cycle 8-pre: PDN → JNNW converter using
+│   │                      jass HUB as the position oracle
 │   └── merge_jbok.py      merge partial JBOK files (parallelised
 │                          --build-book at the shell level)
 ├── src/                   engine sources
@@ -481,8 +492,14 @@ Cycle 8 of the dilf roadmap above blends master-game labels with self-play
 records into the `train_v3` training corpus. The *source* of those master
 games doesn't have to be dilf's PDF→fixture extraction — there are direct,
 already-structured sources of FMJD-level games that bypass the entire CV
-pipeline. This section enumerates them so we can pick the right one when
-the cycle is triggered.
+pipeline.
+
+**Implementation status: Cycle 8-pre is fully coded and dormant.** Schema,
+fetcher, converter, and a one-shot GitOps job are all committed (see file
+list below). The job is parked under `jobs/templates/` so the runner won't
+pick it up automatically; activation is a one-line `git mv` when ready.
+Cycle 8 proper (the `train_v3 --master-data` flag) is still pending and
+gets triggered after the first 0014 produces a `master.jnnw` artefact.
 
 ### Candidate sources
 
@@ -493,69 +510,118 @@ the cycle is triggered.
 | FMJD.org direct                        | Tournament results pages, occasional PDN | Variable per event; many PDFs, few structured PDN | High — no API, inconsistent format, lots of PDF |
 | Curated GitHub PDN collections         | `git clone` ready  | A few thousand well-curated WC games | Very low — but limited size |
 
-**Recommended default: Lidraughts.** Same reasoning as benching against Scan
-rather than Athénan — pick the source whose data is open, structured, and
-scriptable. Filter `rating ≥ 2200` to approximate FMJD-strong play.
+**Default**: Lidraughts, rating filter 1600–2300 (a wider net than I
+originally suggested — Lidraughts is a much smaller community than
+Lichess so pure `≥ 2200` would starve the pool; the 1600–2300 band
+matches what the sister project Draught Master already uses for its
+opening-book pipeline). The label signal-to-noise still beats self-play
+even at the lower end of that band — what matters is the *outcome* of
+the game, not the per-move quality.
 
-### Time estimate
+### Direct-on-CCX architecture
 
-Concrete numbers for **200 000 games**, assuming Lidraughts mirrors Lichess's
-well-documented patterns (this is the part to verify on first contact, not
-inferred from a current spec):
+`Lidraughts → CCX23 → SQLite → JNNW → train_v3` — no local download
+step, no laptop in the critical path. Everything runs on the Hetzner
+runner via a single GitOps job:
 
-| Phase                                          | Wall time on a normal connection |
-|------------------------------------------------|----------------------------------|
-| Discovery (build candidate user/event list, identify the right monthly dump) | 30–60 min |
-| Download (monthly DB dump path: a few-GB `.pdn.zst`; API path: a few hundred batched requests) | 30 min – 2 h |
-| Parse + filter to (FEN, side-to-move, game-outcome) records | 30–60 min CPU |
-| **Total (first run, end-to-end)**              | **~2–4 h wall time**             |
-| Subsequent incremental fetches                 | Minutes (only new months) |
+```
+[Lidraughts API]
+    │  HTTPS over Hetzner public IP
+    ▼
+[/root/jass/data/expert_games.db]              ← SQLite, WAL, dedup'd
+    │
+    │  tools/pdn_to_jnnw.py (jass HUB subprocess as position oracle)
+    ▼
+[/root/jass/jobs/results/0014-…/artefacts.src/master-{1600,2000}.jnnw]
+    │
+    │  (Cycle 8 proper, future job)
+    ▼
+train_v3.py --master-data master-2000.jnnw …
+```
 
-At ~80 plies/game, 200 000 games → **~16 M positions** with WDL labels — far
-beyond the 1 M we generate by self-play, and at a quality level that
-self-play cannot reach by construction.
+Implemented files (all committed, dormant):
 
-### Caveats — what I do not know with certainty
+| File                                       | Role                                                                 |
+|--------------------------------------------|----------------------------------------------------------------------|
+| `data/expert_games.schema.sql`             | SQLite schema for the games store + `fetcher_state` checkpoint table |
+| `tools/fetch_lidraughts_games.py`          | Port of `Ai-draught/backend/lidraughts_fetcher.py` with SQLite sink and idempotent resume |
+| `tools/pdn_to_jnnw.py`                     | PDN → JNNW converter using a long-lived `./build/jass` HUB subprocess as position oracle |
+| `jobs/templates/0014-fetch-master-games.sh`| The GitOps job that orchestrates fetch + convert. Parked in `templates/` so the runner doesn't pick it up until you move it to `jobs/queue/`. |
 
-- The exact current Lidraughts API endpoints and rate limits — Lichess
-  changes its API over time and Lidraughts likely tracks it; first task of
-  the implementation is to *read its docs*, not assume.
-- Whether Toernooibase's terms of service permit automated download — to
-  read in their footer before scraping. Public-tournament game scores are
-  generally not copyrightable as facts, but a database compilation may be.
-- The exact PDN dialect served by each source (FMJD / Dutch / HUB variants
-  differ in coordinate encoding and capture notation). Our `--gen-data-wdl`
-  output uses the Hub-style FEN, so the converter will need to normalise.
+### How to activate
 
-### Plan (when triggered)
+When 0010–0013 are done and you want to start populating the master-games DB:
 
-1. **Cycle 8-pre — `tools/fetch_lidraughts_games.py`**
-   - Hit Lidraughts API (or download the monthly DB dump and filter).
-   - Apply `--min-rating` filter (default 2200).
-   - Parse each PDN into `(FEN, stm, ply, game_result)` tuples.
-   - Emit one JNNW-format file at the same on-disk layout as `--gen-data-wdl`
-     produces (38 B per record, magic header, sortable). One Python script,
-     no C++ changes.
-2. **Cycle 8 — `train_v3.py` blended source**
-   - Add a `--master-data PATH` argument that consumes the JNNW from 8-pre
-     alongside the existing self-play data.
-   - Add a `--master-weight FLOAT` to control the relative importance of
-     master labels vs self-play in the MSE loss (e.g. 5× more weight per
-     master record).
-   - Empirical sweep to find the right ratio.
-3. **Cycle 8-bis (optional) — `tools/scrape_toernooibase.py`**
-   - Same output format, different source.
-   - Use to add explicit FMJD-pedigree provenance on top of Lidraughts
-     rating-filtered data. ~3–5× less data but higher provenance.
+```bash
+git mv jobs/templates/0014-fetch-master-games.sh jobs/queue/0014-fetch-master-games.sh
+git commit -m "queue 0014-fetch-master-games (Cycle 8-pre)"
+git push origin main
+```
+
+Within 5 min the Hetzner runner picks it up. The job is **idempotent**:
+every Lidraughts game id seen is recorded in
+`expert_games (source='lidraughts', source_id=…)` with a `UNIQUE`
+constraint, and the per-user "drained" set is checkpointed in the
+`fetcher_state` table. Interrupting it (runner crash, `runner-paused`
+flag, manual stop) and re-running picks up exactly where it left off.
+
+### Time and volume estimates
+
+Concrete numbers depend on Lidraughts's actual API rate limits and the
+population in the 1600–2300 rating band; both of these have to be
+empirically verified on first run rather than guessed.
+
+| Phase                                | Estimate                            |
+|--------------------------------------|-------------------------------------|
+| Fetch 100 000 games at `--rate-sleep 0.5` | ~6–14 h wall (network-bound, mostly Lidraughts API latency) |
+| Convert to JNNW (8 M positions)      | ~1–3 h wall (jass HUB round-trip dominates) |
+| Resulting `master-2000.jnnw` size    | ~150–300 MB (38 B × N_records)      |
+| Resulting `master-1600.jnnw` size    | ~300–600 MB                          |
+
+The two output files (`master-1600.jnnw` and `master-2000.jnnw`) give
+`train_v3` an A/B knob: more volume vs cleaner signal, decided
+empirically by the calibrate-vs-Scan delta on the resulting NNUE.
+
+### Caveats — what to verify on first contact
+
+- **Lidraughts API endpoints**: the fetcher uses
+  `/api/games/user/{username}`, `/api/player/top/200/<perf>`,
+  `/api/team/<team>/users`, `/api/tournament` — confirmed in the
+  sister project. If any have moved, the per-endpoint fallback chain in
+  the leaderboard discovery should fail gracefully and the static
+  fallback list of curated usernames kicks in.
+- **Per-user volume in the 1600–2300 band**: an open question. Draught
+  Master saw only 11 players in 2200–2300; widening to 1600 should
+  reach several hundred players, but the actual game pool depends on
+  how active they are.
+- **PDN dialect served**: the fetcher requests
+  `Accept: application/x-draughts-pdn` first; if Lidraughts ignores
+  that header and emits NDJSON, the fallback path reconstructs PDN
+  from the JSON `moves` / `pgn` / `pdn` field. Game-result tokens are
+  normalised (`2-0`/`0-2`/`1-1` → `1-0`/`0-1`/`1/2-1/2`) at the
+  per-game extraction step before INSERT.
+
+### Plan after Cycle 8-pre
+
+1. **Cycle 8 proper — `train_v3.py --master-data`**: ~3–5 h Python.
+   Loads a separate JNNW stream alongside the existing self-play
+   data; the score-MSE loss term is masked on master records (since
+   the converter writes `score = 0` — there's no per-position search),
+   and the WDL-BCE term gets a higher weight (`--master-weight 3` or
+   similar, swept empirically).
+2. **Cycle 8-bis (optional) — `tools/scrape_toernooibase.py`**: same
+   schema, different source, adds FMJD-pedigree provenance on top of
+   Lidraughts rating-filtered data. Smaller volume, higher provenance.
 
 ### Independence from dilf
 
-This path is **fully independent** of dilf's CV pipeline. The dilf roadmap
-above remains useful for **tactics test fixtures (Cycle 7-A)** and
-**curated openings (Cycle 7-B)**, but for Cycle 8 the master-game label
-source via Lidraughts is strictly easier and arrives sooner. If dilf later
-exposes annotated master games (with motif tags), they can be folded in as
-a *third* source with higher weight — not a precondition.
+This path is **fully independent** of dilf's CV pipeline. The dilf
+roadmap above remains useful for **tactics test fixtures (Cycle 7-A)**
+and **curated openings (Cycle 7-B)**, but for Cycle 8 the master-game
+label source via Lidraughts is strictly easier and arrives sooner. If
+dilf later exposes annotated master games (with motif tags), they can
+be folded in as a *third* source with higher weight — not a
+precondition.
 
 ## Contributing & extending
 
