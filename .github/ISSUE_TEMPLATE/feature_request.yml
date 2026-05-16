@@ -1,0 +1,46 @@
+name: Feature request
+description: Propose a new feature or user-visible enhancement.
+title: "[Feature]: "
+labels: ["type:feature", "status:needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What user problem does this solve? Why now?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would it work? Sketch the UX / API if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "p2 -- medium (default)"
+        - "p0 -- critical / drop everything"
+        - "p1 -- high"
+        - "p3 -- low / nice-to-have"
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue (cross-repo)
+      description: "If this is part of a global initiative, link the parent issue."
+      placeholder: "jfrancoiscollin/draught-master#123"
+  - type: input
+    id: blocked-by
+    attributes:
+      label: Blocked by (cross-repo)
+      description: "If blocked by work in another repo, link it and add the matching `blocked-by:<repo>` label."
+      placeholder: "jfrancoiscollin/<repo>#123"

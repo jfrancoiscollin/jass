@@ -1,0 +1,40 @@
+name: Tech debt
+description: Refactor, cleanup, or internal improvement (no user-facing change).
+title: "[Tech debt]: "
+labels: ["type:tech-debt", "status:needs-triage"]
+body:
+  - type: textarea
+    id: current
+    attributes:
+      label: Current state
+      description: What is the code/system doing today? Link the relevant files.
+    validations:
+      required: true
+  - type: textarea
+    id: target
+    attributes:
+      label: Target state
+      description: What should it look like after the work?
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk if we don't do this
+      description: Performance, maintainability, future blockers, ...
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "p3 -- low / nice-to-have (default for tech debt)"
+        - "p0 -- critical / drop everything"
+        - "p1 -- high"
+        - "p2 -- medium"
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue (cross-repo)
+      placeholder: "jfrancoiscollin/draught-master#123"
