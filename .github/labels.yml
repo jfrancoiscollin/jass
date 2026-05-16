@@ -1,0 +1,74 @@
+# Shared label taxonomy for the Draught Master global Project.
+# Mirrored in jass, dilf and draught-master so the Project can filter
+# across the three repos with the same vocabulary.
+#
+# Synced automatically by .github/workflows/sync-labels.yml on push to main.
+# To add a repo-specific area:* label, append it at the bottom and merge to main.
+
+# --- Type -------------------------------------------------------------------
+- name: "type:feature"
+  color: "0E8A16"
+  description: "New feature or user-visible enhancement"
+- name: "type:bug"
+  color: "D73A4A"
+  description: "Something is broken or behaves incorrectly"
+- name: "type:tech-debt"
+  color: "FBCA04"
+  description: "Refactor, cleanup, or internal improvement (no user impact)"
+- name: "type:doc"
+  color: "0075CA"
+  description: "Documentation only"
+- name: "type:question"
+  color: "D876E3"
+  description: "Open question or investigation"
+
+# --- Priority ---------------------------------------------------------------
+- name: "priority:p0"
+  color: "B60205"
+  description: "Critical -- drop everything"
+- name: "priority:p1"
+  color: "D93F0B"
+  description: "High -- planned for the current iteration"
+- name: "priority:p2"
+  color: "FBCA04"
+  description: "Medium -- default"
+- name: "priority:p3"
+  color: "C5DEF5"
+  description: "Low / nice-to-have"
+
+# --- Status -----------------------------------------------------------------
+- name: "status:needs-triage"
+  color: "BFDADC"
+  description: "Newly opened, awaiting triage"
+- name: "status:in-discussion"
+  color: "5319E7"
+  description: "Design/scope being discussed"
+- name: "status:blocked"
+  color: "000000"
+  description: "Blocked -- see body for blocker"
+
+# --- Cross-repo dependency --------------------------------------------------
+# Use these when the blocker lives in another repo of the project.
+- name: "blocked-by:jass"
+  color: "5319E7"
+  description: "Blocked by work in jfrancoiscollin/jass"
+- name: "blocked-by:dilf"
+  color: "5319E7"
+  description: "Blocked by work in jfrancoiscollin/dilf"
+- name: "blocked-by:draught-master"
+  color: "5319E7"
+  description: "Blocked by work in jfrancoiscollin/draught-master"
+
+# --- Area (generic seeds; add repo-specific area:* labels below) ------------
+- name: "area:ci"
+  color: "C5DEF5"
+  description: "CI / build pipeline"
+- name: "area:tests"
+  color: "C5DEF5"
+  description: "Test suite"
+- name: "area:docs"
+  color: "C5DEF5"
+  description: "Repo documentation"
+- name: "area:infra"
+  color: "C5DEF5"
+  description: "Infra / tooling / dev environment"

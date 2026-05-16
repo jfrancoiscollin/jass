@@ -1,0 +1,26 @@
+name: Sync labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/labels.yml
+      - .github/workflows/sync-labels.yml
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply labels from labels.yml
+        uses: crazy-max/ghaction-github-labeler@v5
+        with:
+          yaml-file: .github/labels.yml
+          # Never delete labels that exist on the repo but not in labels.yml --
+          # this protects manually-created area:* labels and any third-party
+          # bot labels (dependabot, etc.).
+          skip-delete: true
+          dry-run: false
