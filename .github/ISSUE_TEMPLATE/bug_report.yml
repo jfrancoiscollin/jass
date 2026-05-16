@@ -1,0 +1,49 @@
+name: Bug report
+description: Something is broken or behaves incorrectly.
+title: "[Bug]: "
+labels: ["type:bug", "status:needs-triage"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal repro -- commands, inputs, environment.
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: |
+        Pick one. A maintainer may re-rank during triage.
+        Add the matching `priority:pX` label after submitting.
+      options:
+        - "p2 -- medium (default)"
+        - "p0 -- critical / drop everything"
+        - "p1 -- high"
+        - "p3 -- low / nice-to-have"
+    validations:
+      required: true
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue (cross-repo)
+      description: "If this work belongs to a global initiative, link the parent issue."
+      placeholder: "jfrancoiscollin/draught-master#123"
+  - type: input
+    id: blocked-by
+    attributes:
+      label: Blocked by (cross-repo)
+      description: "If blocked by work in another repo of the project, link it here and add the matching `blocked-by:<repo>` label."
+      placeholder: "jfrancoiscollin/<repo>#123"
