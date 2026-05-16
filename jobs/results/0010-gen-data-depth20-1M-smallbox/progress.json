@@ -1,8 +1,8 @@
 {
   "job_id": "0010-gen-data-depth20-1M-smallbox",
-  "snapshot_at": "2026-05-16T21:43:50+00:00",
+  "snapshot_at": "2026-05-16T21:48:54+00:00",
   "started_at": "2026-05-12T15:33:12+00:00",
-  "elapsed_seconds": 367838,
+  "elapsed_seconds": 368142,
   "artefacts": [
     {
       "name": "shard-1.bin",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 6960386,
-      "records": 183167
+      "size_bytes": 6968594,
+      "records": 183383
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 7337954,
-      "records": 193103
+      "size_bytes": 7346162,
+      "records": 193319
     },
     {
       "name": "shard-4.log",
       "size_bytes": 4096
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  53908       1  4-06:10:37  0.0  0.0 bash\n  53909   53908  4-06:10:37  0.0  0.0 bash\n  53958   53909  4-06:10:34  0.0  0.0 bash\n  53960   53909  4-06:10:34  0.0  0.0 bash\n  53961   53909  4-06:10:34  0.0  0.0 bash\n  53964   53909  4-06:10:34  0.0  0.0 bash\n  53965   53958  4-06:10:34 99.8  0.2 jass\n  53967   53961  4-06:10:34 99.8  0.2 jass\n  53968   53960  4-06:10:34 99.8  0.2 jass\n  53969   53964  4-06:10:34 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  53908       1  4-06:15:42  0.0  0.0 bash\n  53909   53908  4-06:15:42  0.0  0.0 bash\n  53958   53909  4-06:15:38  0.0  0.0 bash\n  53960   53909  4-06:15:38  0.0  0.0 bash\n  53961   53909  4-06:15:38  0.0  0.0 bash\n  53964   53909  4-06:15:38  0.0  0.0 bash\n  53965   53958  4-06:15:38 99.8  0.2 jass\n  53967   53961  4-06:15:38 99.8  0.2 jass\n  53968   53960  4-06:15:38 99.8  0.2 jass\n  53969   53964  4-06:15:38 99.8  0.2 jass\n"
 }
