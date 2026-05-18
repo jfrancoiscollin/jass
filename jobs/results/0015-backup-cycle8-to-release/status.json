@@ -1,7 +1,9 @@
 {
   "job_id": "0015-backup-cycle8-to-release",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-18T22:13:32+00:00",
+  "ended_at": "2026-05-18T22:18:39+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 273258
+  "artefacts_server_path": "/root/jass/jobs/results/0015-backup-cycle8-to-release/artefacts.src"
 }
