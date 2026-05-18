@@ -623,6 +623,74 @@ dilf later exposes annotated master games (with motif tags), they can
 be folded in as a *third* source with higher weight — not a
 precondition.
 
+### Securing the artefacts — `GITHUB_TOKEN` setup (one-time)
+
+The runner auto-commits artefacts up to 95 MB per file
+(`MAX_ARTEFACT_BYTES` in `infra/runner.py`). Cycle-8 outputs above
+that cap (typically `master-1600.jnnw` at 300-600 MB and the
+`expert_games.db` SQLite at 1-5 GB) stay server-only by default and
+would be lost if CCX23 dies.
+
+The job `jobs/queue/0015-backup-cycle8-to-release.sh` uploads them to
+a **GitHub Release** (tag `cycle8-data`) so they survive a host
+disaster. The job needs a `GITHUB_TOKEN` with `Contents: Read and
+write` on the repo; without one, it skips with a warning instead of
+failing.
+
+**One-time setup on a fresh CCX23 (SSH required for this single step):**
+
+```bash
+ssh root@<ccx23-ip>
+
+# 1. Generate a fine-grained PAT at
+#    https://github.com/settings/personal-access-tokens/new
+#    - Repository access: only "jfrancoiscollin/jass"
+#    - Permissions → Repository → Contents: Read and write
+# Copy the token (starts with `github_pat_…` or `ghp_…`).
+
+# 2. Write it to a root-only env file:
+mkdir -p /etc/jass-runner
+cat > /etc/jass-runner/secrets.env <<EOF
+GITHUB_TOKEN=<paste-token-here>
+EOF
+chmod 0600 /etc/jass-runner/secrets.env
+
+# 3. Wire it into the systemd unit. Open the override file:
+systemctl edit jass-runner.service
+# In the editor that opens, paste:
+#   [Service]
+#   EnvironmentFile=/etc/jass-runner/secrets.env
+# Save and exit; systemd re-reads automatically.
+
+# 4. Restart the timer so the next tick picks up the new env:
+systemctl restart jass-runner.timer
+
+exit
+```
+
+Subsequent runs of 0015 (re-queueable by deleting
+`jobs/results/0015-backup-cycle8-to-release/`) will upload to the
+release. Re-uploads replace existing assets of the same name in
+place — the tag is overwritten, so the release always reflects the
+latest fetch.
+
+**Recovery procedure** if CCX23 dies after a successful 0015 run:
+
+```bash
+# On any new machine (after running infra/bootstrap.sh):
+mkdir -p data
+wget -O data/expert_games.db.zst \
+    https://github.com/jfrancoiscollin/jass/releases/download/cycle8-data/expert_games.db.zst
+zstd -d data/expert_games.db.zst -o data/expert_games.db
+
+mkdir -p jobs/results/0014-fetch-master-games/artefacts.src
+wget -O jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw \
+    https://github.com/jfrancoiscollin/jass/releases/download/cycle8-data/master-2000.jnnw
+wget -O jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw \
+    https://github.com/jfrancoiscollin/jass/releases/download/cycle8-data/master-1600.jnnw
+# 0016 (train-with-master-blend) can now run.
+```
+
 ## Contributing & extending
 
 If you want to add a new opening line, plug a new endgame into the
