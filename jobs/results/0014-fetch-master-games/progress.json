@@ -1,8 +1,8 @@
 {
   "job_id": "0014-fetch-master-games",
-  "snapshot_at": "2026-05-18T22:03:15+00:00",
+  "snapshot_at": "2026-05-18T22:08:20+00:00",
   "started_at": "2026-05-18T21:17:15+00:00",
-  "elapsed_seconds": 2760,
+  "elapsed_seconds": 3065,
   "artefacts": [
     {
       "name": "convert.log",
@@ -10,7 +10,7 @@
     },
     {
       "name": "fetch.log",
-      "size_bytes": 16157
+      "size_bytes": 17824
     },
     {
       "name": "master-1600.jnnw",
@@ -21,5 +21,5 @@
       "size_bytes": 8
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 272448       1       46:00  0.0  0.0 bash\n 272450  272448       46:00  0.0  0.0 bash\n 272501  272450       45:59  0.8  0.3 python3\n 272502  272450       45:59  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 272448       1       51:05  0.0  0.0 bash\n 272450  272448       51:05  0.0  0.0 bash\n 272501  272450       51:05  0.8  0.3 python3\n 272502  272450       51:05  0.0  0.0 tee\n"
 }
