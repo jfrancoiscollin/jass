@@ -244,8 +244,28 @@ def blended_mse(pred: torch.Tensor,
                 target_score: torch.Tensor,
                 target_wdl: torch.Tensor,
                 lam: float) -> torch.Tensor:
+    """Original scalar-lambda blended MSE — kept for clarity and back-compat
+    tests, no longer used in the training loop (replaced by the per-record
+    weighted form below)."""
     target = lam * target_score + (1.0 - lam) * target_wdl * WDL_PSEUDO_SCALE
     return ((pred - target) ** 2).mean()
+
+
+def blended_mse_weighted(pred: torch.Tensor,
+                         target_score: torch.Tensor,
+                         target_wdl: torch.Tensor,
+                         lam_per: torch.Tensor,
+                         weight_per: torch.Tensor) -> torch.Tensor:
+    """Per-record blended MSE used when training on a mix of self-play
+    and master-game records (Cycle 8). Each record carries its own
+    `lam` (so master records with `score=0` can be pure WDL via
+    `lam=0.0`) and its own scalar weight (so master records can be
+    up- or down-weighted relative to self-play). Reduces to the
+    scalar-lambda form when both arrays are uniform."""
+    target = lam_per * target_score \
+           + (1.0 - lam_per) * target_wdl * WDL_PSEUDO_SCALE
+    per_record_sq_err = weight_per * (pred - target) ** 2
+    return per_record_sq_err.mean()
 
 
 def mse_score(pred: torch.Tensor, target_score: torch.Tensor) -> float:
@@ -257,23 +277,59 @@ def mse_score(pred: torch.Tensor, target_score: torch.Tensor) -> float:
 # ---------------------------------------------------------------------------
 def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarray,
           *, epochs: int, batch: int, lr: float, wd: float, lam: float,
-          clip: float, val_frac: float, seed: int, patience: int) -> tuple[float, dict]:
+          clip: float, val_frac: float, seed: int, patience: int,
+          lam_per: np.ndarray | None = None,
+          weight_per: np.ndarray | None = None,
+          n_selfplay: int | None = None) -> tuple[float, dict]:
+    """Train a model on a (possibly blended) JNNW dataset.
+
+    The optional `lam_per` and `weight_per` arrays carry per-record
+    lambda and weight values, used when blending self-play and master
+    records (Cycle 8). When both are `None`, the function falls back
+    to the scalar-lambda behaviour with uniform weights.
+
+    `n_selfplay`, when given, is the count of self-play records in the
+    first `n_selfplay` rows of X (master records, if any, follow).
+    The validation split is taken EXCLUSIVELY from those first
+    `n_selfplay` rows so the reported val MSE remains comparable
+    across runs regardless of master-data presence.
+    """
     torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
-    perm = rng.permutation(len(X))
-    X = X[perm]
-    y_score = np.clip(y_score[perm], -clip, clip).astype(np.float32, copy=False)
-    y_wdl   = y_wdl[perm].astype(np.float32, copy=False)
 
-    n_val = max(1, int(len(X) * val_frac))
-    X_val = torch.from_numpy(X[:n_val])
-    s_val = torch.from_numpy(y_score[:n_val])
-    w_val = torch.from_numpy(y_wdl[:n_val])
-    X_tr  = torch.from_numpy(X[n_val:])
-    s_tr  = torch.from_numpy(y_score[n_val:])
-    w_tr  = torch.from_numpy(y_wdl[n_val:])
+    # Build the per-record lam / weight arrays if the caller didn't pass
+    # them. From this point onward the training loop assumes both exist.
+    if lam_per is None:
+        lam_per = np.full(len(X), lam, dtype=np.float32)
+    if weight_per is None:
+        weight_per = np.ones(len(X), dtype=np.float32)
+    if n_selfplay is None:
+        n_selfplay = len(X)
 
-    loader = DataLoader(TensorDataset(X_tr, s_tr, w_tr),
+    # Validation set is sampled BEFORE shuffling and ONLY from self-play
+    # rows (the first n_selfplay rows). Master records never enter the
+    # validation set so val MSE stays comparable.
+    n_val = max(1, int(n_selfplay * val_frac))
+    val_perm = rng.permutation(n_selfplay)
+    val_idx  = val_perm[:n_val]
+    tr_idx_self = val_perm[n_val:]
+    # Append master rows (if any) to the train set unshuffled-here;
+    # they'll be shuffled by the DataLoader together with self-play.
+    tr_idx_master = np.arange(n_selfplay, len(X))
+    tr_idx = np.concatenate([tr_idx_self, tr_idx_master])
+
+    y_score_clipped = np.clip(y_score, -clip, clip).astype(np.float32, copy=False)
+    y_wdl_f         = y_wdl.astype(np.float32, copy=False)
+
+    X_val = torch.from_numpy(X[val_idx])
+    s_val = torch.from_numpy(y_score_clipped[val_idx])
+    X_tr  = torch.from_numpy(X[tr_idx])
+    s_tr  = torch.from_numpy(y_score_clipped[tr_idx])
+    w_tr  = torch.from_numpy(y_wdl_f[tr_idx])
+    lam_tr    = torch.from_numpy(lam_per[tr_idx])
+    weight_tr = torch.from_numpy(weight_per[tr_idx])
+
+    loader = DataLoader(TensorDataset(X_tr, s_tr, w_tr, lam_tr, weight_tr),
                         batch_size=batch, shuffle=True)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
 
@@ -284,10 +340,10 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
     for ep in range(1, epochs + 1):
         model.train()
         running, n = 0.0, 0
-        for xb, sb, wb in loader:
+        for xb, sb, wb, lam_b, w_rec_b in loader:
             opt.zero_grad()
             pred = model(xb)
-            loss = blended_mse(pred, sb, wb, lam)
+            loss = blended_mse_weighted(pred, sb, wb, lam_b, w_rec_b)
             loss.backward()
             opt.step()
             running += loss.item() * len(xb)
@@ -385,20 +441,72 @@ def main(argv):
                         "halfmen adds 200 anchor-relative + 50 anchor one-hot "
                         "for a 450-feature input, beats v2 by ~25%% val MSE "
                         "at equal parameter count on 1M JNNW)")
+    p.add_argument("--master-data", type=Path, default=None,
+                   help="Optional second JNNW file blended into training "
+                        "(Cycle 8: master games from Lidraughts via "
+                        "tools/pdn_to_jnnw.py). Records here are typically "
+                        "score=0 with WDL-only labels — see --master-lam.")
+    p.add_argument("--master-weight", type=float, default=1.0,
+                   help="Per-record weight for master records (default 1.0 "
+                        "= same as self-play). >1 up-weights master records "
+                        "in the loss, useful when the master corpus is small "
+                        "relative to self-play.")
+    p.add_argument("--master-lam", type=float, default=0.0,
+                   help="Lambda for master records (0.0 = pure WDL target, "
+                        "recommended since pdn_to_jnnw.py emits score=0). "
+                        "Setting this higher would weight a usually-zero "
+                        "score field into the master loss, which is rarely "
+                        "what you want.")
     args = p.parse_args(argv)
 
     input_dim = input_dim_for(args.encoding)
     print(f"loading {args.data} (encoding={args.encoding}, input_dim={input_dim}) …")
     t0 = time.time()
     X, y_score, y_wdl = load_records(args.data, encoding=args.encoding)
-    n = len(X)
-    print(f"  {n} records  ({time.time() - t0:.1f}s to encode)")
-    win  = (y_wdl > 0).sum() / n
-    draw = (y_wdl == 0).sum() / n
-    loss = (y_wdl < 0).sum() / n
+    n_self = len(X)
+    print(f"  {n_self} self-play records  ({time.time() - t0:.1f}s to encode)")
+    win  = (y_wdl > 0).sum() / n_self
+    draw = (y_wdl == 0).sum() / n_self
+    loss = (y_wdl < 0).sum() / n_self
     print(f"  WDL distribution: W={win:.1%} D={draw:.1%} L={loss:.1%}")
     print(f"  score range: [{y_score.min():.0f}, {y_score.max():.0f}]  "
           f"mean={y_score.mean():+.1f}  std={y_score.std():.1f}")
+
+    # Cycle 8: optional blend with master-game records.
+    lam_per    = np.full(n_self, args.lam,            dtype=np.float32)
+    weight_per = np.ones (n_self,                      dtype=np.float32)
+    n_master   = 0
+
+    if args.master_data is not None:
+        print(f"loading master {args.master_data} (encoding={args.encoding}) …")
+        t0 = time.time()
+        Xm, ym_score, ym_wdl = load_records(args.master_data,
+                                            encoding=args.encoding)
+        n_master = len(Xm)
+        if Xm.shape[1] != X.shape[1]:
+            raise SystemExit(
+                f"input_dim mismatch: data={X.shape[1]} "
+                f"master_data={Xm.shape[1]} — both must use the same encoding")
+        print(f"  {n_master} master records  ({time.time() - t0:.1f}s to encode)")
+        mwin  = (ym_wdl > 0).sum() / max(n_master, 1)
+        mdraw = (ym_wdl == 0).sum() / max(n_master, 1)
+        mloss = (ym_wdl < 0).sum() / max(n_master, 1)
+        print(f"  master WDL: W={mwin:.1%} D={mdraw:.1%} L={mloss:.1%}")
+        print(f"  master blend: weight={args.master_weight}  "
+              f"lam={args.master_lam}  (pure-WDL when lam=0)")
+
+        lam_master    = np.full(n_master, args.master_lam,    dtype=np.float32)
+        weight_master = np.full(n_master, args.master_weight, dtype=np.float32)
+
+        # IMPORTANT: self-play rows first, master rows after. The
+        # `n_selfplay` parameter passed to train() relies on this.
+        X        = np.concatenate([X,        Xm])
+        y_score  = np.concatenate([y_score,  ym_score])
+        y_wdl    = np.concatenate([y_wdl,    ym_wdl])
+        lam_per  = np.concatenate([lam_per,  lam_master])
+        weight_per = np.concatenate([weight_per, weight_master])
+        print(f"  blended total: {len(X)} records "
+              f"({n_self} self-play + {n_master} master)")
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     results: dict[str, dict] = {}
@@ -415,7 +523,8 @@ def main(argv):
             model, X, y_score, y_wdl,
             epochs=args.epochs, batch=args.batch, lr=args.lr, wd=args.wd,
             lam=args.lam, clip=args.clip, val_frac=args.val_frac,
-            seed=args.seed, patience=args.patience)
+            seed=args.seed, patience=args.patience,
+            lam_per=lam_per, weight_per=weight_per, n_selfplay=n_self)
         elapsed = time.time() - t
 
         results[arch_str] = {
