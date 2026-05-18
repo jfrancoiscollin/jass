@@ -1,0 +1,7 @@
+{
+  "job_id": "0013-build-book",
+  "script": "jobs/queue/0013-build-book.sh",
+  "pid": 259155,
+  "started_at": "2026-05-18T10:02:16+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
