@@ -1,0 +1,41 @@
+{
+  "job_id": "0013-build-book",
+  "snapshot_at": "2026-05-18T10:07:21+00:00",
+  "started_at": "2026-05-18T10:02:16+00:00",
+  "elapsed_seconds": 305,
+  "artefacts": [
+    {
+      "name": "shard-00",
+      "size_bytes": 2130942
+    },
+    {
+      "name": "shard-00.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-01",
+      "size_bytes": 2131014
+    },
+    {
+      "name": "shard-01.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-02",
+      "size_bytes": 2130926
+    },
+    {
+      "name": "shard-02.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-03",
+      "size_bytes": 2130858
+    },
+    {
+      "name": "shard-03.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 259155       1       05:04  0.0  0.0 bash\n 259157  259155       05:04  0.0  0.0 bash\n 259206  259157       05:04  0.0  0.0 bash\n 259211  259206       05:04 99.8  0.1 jass\n 259212  259157       05:04  0.0  0.0 bash\n 259217  259212       05:04 99.8  0.1 jass\n 259218  259157       05:04  0.0  0.0 bash\n 259223  259218       05:04 99.9  0.1 jass\n 259224  259157       05:04  0.0  0.0 bash\n 259226  259224       05:04 99.9  0.1 jass\n"
+}
