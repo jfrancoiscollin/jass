@@ -192,8 +192,23 @@ def load_records(path: Path, encoding: str = ENCODING_V2):
     else:
         raise ValueError(f"unknown encoding {encoding!r}")
 
-    y_score = np.where(stm == 0, score, -score).astype(np.float32)
-    y_wdl   = np.where(stm == 0, wdl,   -wdl  ).astype(np.float32)
+    # The dataset stores both `score` and `wdl` in STM-POV at sample
+    # time (see src/main.cpp:219-220). Our feature encoding (_encode_v2
+    # and _encode_halfmen) is *also* STM-POV (mirror+colour-swap for
+    # black-to-move) so the right thing is to keep the labels in
+    # STM-POV verbatim, matching the input convention and matching what
+    # the C++ MLPNetwork::evaluate path expects (STM-POV output by
+    # construction; see comment at src/nnue.cpp:313).
+    #
+    # A previous version of this file applied `np.where(stm==0, x, -x)`
+    # which silently re-projected the labels to white-POV, leaving the
+    # input STM-POV and the label white-POV — the trained network then
+    # produced white-POV outputs, which the C++ runtime consumed as if
+    # they were STM-POV. Net effect: every black-to-move evaluation
+    # was sign-flipped, and benchmarks against the handcrafted eval
+    # collapsed to 0/18 (see PR following the diagnosis on 2026-05-18).
+    y_score = score.astype(np.float32)
+    y_wdl   = wdl.astype(np.float32)
     return X, y_score, y_wdl
 
 
