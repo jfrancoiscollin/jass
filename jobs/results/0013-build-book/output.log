@@ -1,0 +1,55 @@
+=== host facts ===
+host:     ubuntu-16gb-hel1-2
+nproc:    4
+fens:     /root/jass/positions (2).fen (77564 lines)
+depth:    12
+shards:   4
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 93%] Built target jass_tests
+[100%] Built target jass
+jass:     Jass 0.0.1
+
+=== sharding FEN list across 4 chunks ===
+-rw-r--r-- 1 root root 2130942 May 18 10:02 /root/jass/jobs/results/0013-build-book/artefacts.src/shard-00
+-rw-r--r-- 1 root root 2131014 May 18 10:02 /root/jass/jobs/results/0013-build-book/artefacts.src/shard-01
+-rw-r--r-- 1 root root 2130926 May 18 10:02 /root/jass/jobs/results/0013-build-book/artefacts.src/shard-02
+-rw-r--r-- 1 root root 2130858 May 18 10:02 /root/jass/jobs/results/0013-build-book/artefacts.src/shard-03
+
+=== launching 4 parallel --build-book workers ===
+  shard 00 launched as pid 259206
+  shard 01 launched as pid 259212
+  shard 02 launched as pid 259218
+  shard 03 launched as pid 259224
+
+=== waiting on all shards ===
+  pid 259206: OK
+  pid 259212: OK
+  pid 259218: OK
+  pid 259224: OK
+
+=== per-shard rc / seconds ===
+  shard-00.result: 0 4402
+  shard-01.result: 0 4562
+  shard-02.result: 0 4390
+  shard-03.result: 0 4649
+
+=== merging partial .bok files ===
+merged 77630 input entries from 4 files → 77573 unique → /root/jass/jobs/results/0013-build-book/artefacts.src/openings-77k-depth12.bok (1241180 bytes)
+
+=== sanity-load merged book in Jass ===
+ok
+
+==========================================================
+                   0013 BUILD-BOOK SUMMARY
+==========================================================
+  fens input:        /root/jass/positions (2).fen (77564 lines)
+  depth:             12
+  shards:            4
+  wall:              4649s (77.5 min)
+  merged book:       /root/jass/jobs/results/0013-build-book/artefacts.src/openings-77k-depth12.bok
+ls: cannot access '"/root/jass/jobs/results/0013-build-book/artefacts.src/openings-77k-depth12.bok"': No such file or directory
+  size:              
+  failed shards:     0 / 4
+==========================================================
