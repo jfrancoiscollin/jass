@@ -1,13 +1,23 @@
 {
   "job_id": "0011-train-and-bench",
-  "snapshot_at": "2026-05-18T11:49:56+00:00",
+  "snapshot_at": "2026-05-18T11:55:03+00:00",
   "started_at": "2026-05-18T11:39:46+00:00",
-  "elapsed_seconds": 610,
+  "elapsed_seconds": 917,
   "artefacts": [
     {
       "name": "nnue-128-64.bin",
       "size_bytes": 264220,
       "records": 6952
+    },
+    {
+      "name": "nnue-256-128.bin",
+      "size_bytes": 593948,
+      "records": 15630
+    },
+    {
+      "name": "nnue-512-256.bin",
+      "size_bytes": 1450012,
+      "records": 38158
     },
     {
       "name": "nnue-64-32.bin",
@@ -19,5 +29,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 260564       1       10:10  0.0  0.0 bash\n 260566  260564       10:10  0.0  0.0 bash\n 260670  260566       09:46  190 24.3 python3\n 260671  260566       09:46  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 260564       1       15:17  0.0  0.0 bash\n 260566  260564       15:17  0.0  0.0 bash\n 260670  260566       14:52  191 24.5 python3\n 260671  260566       14:52  0.0  0.0 tee\n"
 }
