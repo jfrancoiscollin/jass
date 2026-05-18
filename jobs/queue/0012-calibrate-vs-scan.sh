@@ -43,7 +43,7 @@ echo "=== rebuilding jass (no-op if src/ unchanged) ==="
 cmake --build build -j"$(nproc)" 2>&1 | tail -5
 echo "jass:   $(./build/jass --version)"
 
-SCAN_DIR=/tmp/scan
+SCAN_DIR=/root/jass/.scan
 if [ ! -x "$SCAN_DIR/scan_linux" ]; then
     echo
     echo "=== installing Scan (rhalbersma/scan, includes pre-built scan_linux + data/) ==="
