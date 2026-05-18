@@ -1,7 +1,0 @@
-{
-  "job_id": "0011-train-and-bench",
-  "script": "jobs/queue/0011-train-and-bench.sh",
-  "pid": 260564,
-  "started_at": "2026-05-18T11:39:46+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
