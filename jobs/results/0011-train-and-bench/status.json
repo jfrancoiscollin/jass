@@ -1,7 +1,9 @@
 {
   "job_id": "0011-train-and-bench",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-18T14:28:14+00:00",
+  "ended_at": "2026-05-18T15:03:47+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 264385
+  "artefacts_server_path": "/root/jass/jobs/results/0011-train-and-bench/artefacts.src"
 }
