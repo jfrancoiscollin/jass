@@ -1,0 +1,18 @@
+opening pool: 9 positions
+Traceback (most recent call last):
+  File "/root/jass/tools/calibrate_vs_scan.py", line 566, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 514, in main
+    scan = ScanEngine(args.scan, label="Scan-player")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 275, in __init__
+    super().__init__([path, "hub"], label, cwd=scan_dir)
+  File "/root/jass/tools/calibrate_vs_scan.py", line 179, in __init__
+    self.proc = subprocess.Popen(
+                ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/scan'
