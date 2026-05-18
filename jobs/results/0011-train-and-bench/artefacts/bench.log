@@ -1,0 +1,3 @@
+Benchmark: NNUE (/root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-1024-512-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
