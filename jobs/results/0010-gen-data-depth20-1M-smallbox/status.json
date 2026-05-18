@@ -1,7 +1,9 @@
 {
   "job_id": "0010-gen-data-depth20-1M-smallbox",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-12T15:33:12+00:00",
+  "ended_at": "2026-05-18T09:52:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 53908
+  "artefacts_server_path": "/root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src"
 }

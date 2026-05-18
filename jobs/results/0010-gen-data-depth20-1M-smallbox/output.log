@@ -1,0 +1,174 @@
+=== killing any 0009-rate-test-bigbox orphans (48 shards launched on 4 vCPU = thrashing) ===
+--- pre-kill matches ---
+41240 bash -c exec >/root/jass/jobs/results/0009-rate-test-bigbox/output.log.raw 2>&1; echo $$ > /root/jass/jobs/results/0009-rate-test-bigbox/wrapper.pid; bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh; echo $? > /root/jass/jobs/results/0009-rate-test-bigbox/exit_code
+41242 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41266 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41267 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41268 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41269 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41271 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41273 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41275 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41276 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41277 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41279 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41280 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41281 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41285 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41286 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41288 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41290 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41292 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41293 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41295 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41298 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41299 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41300 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41303 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41304 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41305 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41306 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41308 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41309 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41310 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41311 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41312 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41313 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41314 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41315 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41317 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41318 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41320 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41322 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41323 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41330 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41332 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41333 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41334 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41335 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41336 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41338 bash /root/jass/jobs/queue/0009-rate-test-bigbox.sh
+41340 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-32.bin 20 4 200 32
+41342 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-34.bin 20 4 200 34
+41344 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-22.bin 20 4 200 22
+41346 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-14.bin 20 4 200 14
+41349 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-12.bin 20 4 200 12
+41355 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-1.bin 20 4 200 1
+41361 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-35.bin 20 4 200 35
+41362 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-24.bin 20 4 200 24
+41369 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-37.bin 20 4 200 37
+41370 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-23.bin 20 4 200 23
+41372 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-20.bin 20 4 200 20
+41373 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-6.bin 20 4 200 6
+41374 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-46.bin 20 4 200 46
+41376 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-4.bin 20 4 200 4
+41377 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-44.bin 20 4 200 44
+41378 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-42.bin 20 4 200 42
+41379 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-8.bin 20 4 200 8
+41380 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-5.bin 20 4 200 5
+41381 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-9.bin 20 4 200 9
+41382 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-18.bin 20 4 200 18
+41383 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-13.bin 20 4 200 13
+41384 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-16.bin 20 4 200 16
+41385 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-15.bin 20 4 200 15
+41386 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-36.bin 20 4 200 36
+41387 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-26.bin 20 4 200 26
+41388 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-17.bin 20 4 200 17
+41389 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-38.bin 20 4 200 38
+41390 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-19.bin 20 4 200 19
+41391 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-2.bin 20 4 200 2
+41392 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-40.bin 20 4 200 40
+41393 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-28.bin 20 4 200 28
+41394 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-30.bin 20 4 200 30
+41395 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-48.bin 20 4 200 48
+41396 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-43.bin 20 4 200 43
+41397 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-21.bin 20 4 200 21
+41398 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-11.bin 20 4 200 11
+41399 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-45.bin 20 4 200 45
+41400 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-39.bin 20 4 200 39
+41401 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-33.bin 20 4 200 33
+41403 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-3.bin 20 4 200 3
+41404 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-27.bin 20 4 200 27
+41405 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-31.bin 20 4 200 31
+41406 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-29.bin 20 4 200 29
+41407 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-10.bin 20 4 200 10
+41408 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-47.bin 20 4 200 47
+41409 ./build/jass --gen-data-wdl 1000 /root/jass/jobs/results/0009-rate-test-bigbox/artefacts.src/shard-25.bin 20 4 200 25
+sent SIGTERM
+(nothing to KILL)
+--- post-kill matches ---
+(clear)
+
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+nproc:   4
+cpu:     AMD EPYC-Milan Processor
+mem:     15Gi
+disk:    142G free of 150G
+load:    42.46 45.39 46.46
+jass:    Jass 0.0.1
+
+=== plan ===
+shards:           4
+records/shard:    250000
+total records:    1000000
+expected size:    ~36 MB raw across 4 .bin files
+eval depth:       20
+play depth:       4
+max plies/game:   200
+rate ref:         0.547 records/sec/CPU on this CCX23 (from 0007)
+ETA:              ~5.29 days at the reference rate
+
+=== launching 4 parallel shards ===
+  shard 1 launched as pid 53958
+  shard 2 launched as pid 53960
+  shard 3 launched as pid 53961
+  shard 4 launched as pid 53964
+
+=== waiting on all shards (no errexit, capture per-shard rc) ===
+  shard 1: OK
+  shard 2: OK
+  shard 3: OK
+  shard 4: OK
+
+=== shard sizes ===
+total 37208
+drwxr-xr-x 2 root root    4096 May 18 09:50 .
+drwxr-xr-x 3 root root    4096 May 16 15:19 ..
+-rw-r--r-- 1 root root 9500008 May 18 00:59 shard-1.bin
+-rw-r--r-- 1 root root    8492 May 18 00:59 shard-1.log
+-rw-r--r-- 1 root root       9 May 18 00:59 shard-1.result
+-rw-r--r-- 1 root root 9500008 May 18 00:52 shard-2.bin
+-rw-r--r-- 1 root root    8493 May 18 00:52 shard-2.log
+-rw-r--r-- 1 root root       9 May 18 00:52 shard-2.result
+-rw-r--r-- 1 root root 9500008 May 18 05:35 shard-3.bin
+-rw-r--r-- 1 root root    8539 May 18 05:35 shard-3.log
+-rw-r--r-- 1 root root       9 May 18 05:35 shard-3.result
+-rw-r--r-- 1 root root 9500008 May 18 09:50 shard-4.bin
+-rw-r--r-- 1 root root    8446 May 18 09:50 shard-4.log
+-rw-r--r-- 1 root root       9 May 18 09:50 shard-4.result
+
+=== per-shard result lines (rc / seconds) ===
+  /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/shard-1.result: 0 465962
+  /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/shard-2.result: 0 465580
+  /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/shard-3.result: 0 482549
+  /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/shard-4.result: 0 497849
+
+=== merging shards into one JNNW file ===
+merged 1000000 records to depth20-1M.bin (38000008 bytes)
+
+==========================================================
+                  1M GEN-DATA SUMMARY
+==========================================================
+  total records       1000000
+  wall seconds        497849
+  wall hours          138.29
+  wall days           5.76
+  records/sec total   2.009
+  records/sec/CPU     0.5022
+  failed shards       0 / 4
+==========================================================
+
+Merged dataset:        artefacts/depth20-1M.bin (~37 MB)
+Individual shards:     artefacts/shard-{1..4}.bin
+Next:                  train HalfMen-v1 on depth20-1M.bin
