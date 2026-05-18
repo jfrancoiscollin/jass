@@ -1,0 +1,18 @@
+{
+  "job_id": "0011-train-and-bench",
+  "snapshot_at": "2026-05-18T11:44:53+00:00",
+  "started_at": "2026-05-18T11:39:46+00:00",
+  "elapsed_seconds": 307,
+  "artefacts": [
+    {
+      "name": "nnue-64-32.bin",
+      "size_bytes": 123932,
+      "records": 3261
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 260564       1       05:07  0.0  0.0 bash\n 260566  260564       05:07  0.0  0.0 bash\n 260670  260566       04:42  188 24.5 python3\n 260671  260566       04:42  0.0  0.0 tee\n"
+}
