@@ -1,7 +1,0 @@
-{
-  "job_id": "0014-fetch-master-games",
-  "script": "jobs/queue/0014-fetch-master-games.sh",
-  "pid": 272448,
-  "started_at": "2026-05-18T21:17:15+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
