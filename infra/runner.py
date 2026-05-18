@@ -51,7 +51,23 @@ STATE_DIR   = REPO_DIR / "jobs" / "state"
 IN_FLIGHT   = STATE_DIR / "in-flight.json"
 
 MAX_LOG_BYTES       = 1_000_000   # tail kept in jobs/results/<id>/output.log
-MAX_ARTEFACT_BYTES  = 50_000_000  # > 50 MB → not committed, noted in status
+
+# Per-file cap for auto-committing artefacts to git. Files above this
+# stay on the server (artefacts.src/) and are noted in status.json
+# under "artefacts_server_path" — recoverable only if the host survives.
+#
+# GitHub blocks pushes containing any file > 100 MB (hard limit). We set
+# the cap below that with a 5 MB safety margin so a slightly oversized
+# JNNW or NNUE artefact doesn't break the runner's commit step.
+#
+# History:
+#   50 MB until 2026-05-18: fit the depth-20 1M dataset (38 MB) but not
+#                           Cycle 8 master-game JNNW outputs (~50-300 MB
+#                           depending on the rating filter and game pool).
+#   95 MB from 2026-05-18:  fits master-2000.jnnw (rated >=2000, a few
+#                           tens of thousands of games) in most cases.
+#                           Larger master-1600 files stay server-only.
+MAX_ARTEFACT_BYTES  = 95_000_000
 
 
 def utcnow() -> str:
