@@ -43,7 +43,7 @@ RATE_SLEEP=0.5   # seconds between per-user requests, polite to Lidraughts
 echo "=== host facts ==="
 echo "host:   $(hostname)"
 echo "nproc:  $(nproc)"
-echo "disk:   $(df -h /root | awk 'NR==2{print $4\" free of \"$2}')"
+echo "disk:   $(df -h /root | awk 'NR==2 {print $4" free of "$2}')"
 echo "python: $(python3 --version)"
 
 echo
@@ -59,8 +59,18 @@ python3 -c "import requests; print('requests', requests.__version__)"
 echo
 if [ -f "$DB" ]; then
     echo "=== existing DB found ==="
-    sqlite3 "$DB" "SELECT 'rows: ' || COUNT(*) FROM expert_games;" || true
-    sqlite3 "$DB" "SELECT 'distinct sources: ' || GROUP_CONCAT(DISTINCT source) FROM expert_games;" || true
+    # Use python3 (sqlite3 module is in stdlib, no extra package needed);
+    # the sqlite3 CLI isn't installed on the default Hetzner cloud image
+    # and we don't want to apt-get inside a job script.
+    python3 - "$DB" <<'PY'
+import sqlite3, sys
+conn = sqlite3.connect(sys.argv[1])
+n_rows = conn.execute("SELECT COUNT(*) FROM expert_games").fetchone()[0]
+sources = [r[0] for r in conn.execute(
+    "SELECT DISTINCT source FROM expert_games").fetchall()]
+print(f"  rows: {n_rows}")
+print(f"  distinct sources: {', '.join(sources) or '(none)'}")
+PY
 else
     echo "=== fresh DB will be created at $DB ==="
 fi
@@ -82,11 +92,20 @@ FETCH_WALL=$(( $(date +%s) - START ))
 
 echo
 echo "=== DB state after fetch ==="
-sqlite3 "$DB" "SELECT 'total rows: ' || COUNT(*) FROM expert_games;" | tee -a "$ART/fetch.log"
-sqlite3 "$DB" "SELECT 'lidraughts rows: ' || COUNT(*) FROM expert_games WHERE source='lidraughts';" | tee -a "$ART/fetch.log"
-sqlite3 "$DB" "SELECT 'rating ≥1600: ' || COUNT(*) FROM expert_games WHERE MIN(white_rating, black_rating) >= 1600;" | tee -a "$ART/fetch.log"
-sqlite3 "$DB" "SELECT 'rating ≥2000: ' || COUNT(*) FROM expert_games WHERE MIN(white_rating, black_rating) >= 2000;" | tee -a "$ART/fetch.log"
-sqlite3 "$DB" "SELECT 'std variant: ' || COUNT(*) FROM expert_games WHERE variant='standard';" | tee -a "$ART/fetch.log"
+python3 - "$DB" <<'PY' | tee -a "$ART/fetch.log"
+import sqlite3, sys
+conn = sqlite3.connect(sys.argv[1])
+
+def count(where: str = "1=1") -> int:
+    return conn.execute(
+        f"SELECT COUNT(*) FROM expert_games WHERE {where}").fetchone()[0]
+
+print(f"  total rows:        {count()}")
+print(f"  lidraughts rows:   {count(\"source='lidraughts'\")}")
+print(f"  rating >= 1600:    {count('white_rating >= 1600 AND black_rating >= 1600')}")
+print(f"  rating >= 2000:    {count('white_rating >= 2000 AND black_rating >= 2000')}")
+print(f"  std variant:       {count(\"variant='standard'\")}")
+PY
 
 if [ "$FETCH_RC" -ne 0 ]; then
     echo "ABORT: fetcher returned rc=$FETCH_RC, skipping conversion"
