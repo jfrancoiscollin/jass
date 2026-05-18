@@ -107,9 +107,14 @@ def load_records(path: Path):
 
     # Targets in STM-POV. Score is already STM-POV (engine returns it
     # via search()). For WDL we propagated it that way in --gen-data-wdl
-    # too, so use both directly.
-    y_score = np.where(stm == 0, score, -score).astype(np.float32)
-    y_wdl   = np.where(stm == 0, wdl,   -wdl  ).astype(np.float32)
+    # too (src/main.cpp:220), so use both directly — DO NOT re-project
+    # to white-POV via np.where(stm==0, x, -x): the encoding above is
+    # STM-POV (mirror+colour-swap) and the C++ runtime consumes the
+    # network output as STM-POV (src/nnue.cpp:313). Mixing STM-POV
+    # input + white-POV label + STM-POV runtime interpretation sign-
+    # flips every black-to-move evaluation. Diagnosed 2026-05-18.
+    y_score = score.astype(np.float32)
+    y_wdl   = wdl.astype(np.float32)
     return X, y_score, y_wdl
 
 
