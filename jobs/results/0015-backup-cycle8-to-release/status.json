@@ -1,0 +1,7 @@
+{
+  "job_id": "0015-backup-cycle8-to-release",
+  "state": "running",
+  "started_at": "2026-05-18T18:57:52+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 269808
+}
