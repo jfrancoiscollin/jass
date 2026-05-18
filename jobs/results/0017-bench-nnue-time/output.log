@@ -1,0 +1,93 @@
+=== host facts ===
+host:     ubuntu-16gb-hel1-2
+nproc:    4
+mem:      15Gi
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass:     Jass 0.0.1
+
+=== NNUE under test ===
+  source:   0011 (pre-master-blend baseline)
+  path:     /root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-1024-512-q.bin
+  size:     969K
+
+=== running bench (NNUE vs Handcrafted, 1.0 s/move, 54 games) ===
+opening pool: 9 positions
+NNUE under test: /root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-1024-512-q.bin
+  game   1: NNUE=W Hand=B → L (no legal move from NNUE, 149 plies)  NNUE +0.0  [116s]
+  game   2: Hand=W NNUE=B → D (25-move rule, 189 plies)  NNUE +0.5  [255s]
+  game   3: NNUE=W Hand=B → W (no legal move from Handcrafted, 128 plies)  NNUE +1.0  [347s]
+  game   4: Hand=W NNUE=B → L (no legal move from Handcrafted, 125 plies)  NNUE +1.0  [439s]
+  game   5: NNUE=W Hand=B → W (no legal move from Handcrafted, 116 plies)  NNUE +1.0  [524s]
+  game   6: Hand=W NNUE=B → W (no legal move from NNUE, 150 plies)  NNUE +0.0  [642s]
+  game   7: NNUE=W Hand=B → L (no legal move from NNUE, 135 plies)  NNUE +0.0  [742s]
+  game   8: Hand=W NNUE=B → L (no legal move from Handcrafted, 113 plies)  NNUE +1.0  [826s]
+  game   9: NNUE=W Hand=B → D (25-move rule, 192 plies)  NNUE +0.5  [971s]
+  game  10: Hand=W NNUE=B → L (no legal move from Handcrafted, 147 plies)  NNUE +1.0  [1081s]
+  game  11: NNUE=W Hand=B → L (no legal move from NNUE, 113 plies)  NNUE +0.0  [1164s]
+  game  12: Hand=W NNUE=B → W (no legal move from NNUE, 152 plies)  NNUE +0.0  [1277s]
+  game  13: NNUE=W Hand=B → W (no legal move from Handcrafted, 130 plies)  NNUE +1.0  [1372s]
+  game  14: Hand=W NNUE=B → L (no legal move from Handcrafted, 137 plies)  NNUE +1.0  [1478s]
+  game  15: NNUE=W Hand=B → L (no legal move from NNUE, 107 plies)  NNUE +0.0  [1554s]
+  game  16: Hand=W NNUE=B → L (no legal move from Handcrafted, 103 plies)  NNUE +1.0  [1633s]
+  game  17: NNUE=W Hand=B → D (ply cap, 200 plies)  NNUE +0.5  [1785s]
+  game  18: Hand=W NNUE=B → W (no legal move from NNUE, 154 plies)  NNUE +0.0  [1905s]
+  game  19: NNUE=W Hand=B → W (no legal move from Handcrafted, 132 plies)  NNUE +1.0  [2002s]
+  game  20: Hand=W NNUE=B → L (no legal move from Handcrafted, 93 plies)  NNUE +1.0  [2069s]
+  game  21: NNUE=W Hand=B → L (no legal move from NNUE, 119 plies)  NNUE +0.0  [2157s]
+  game  22: Hand=W NNUE=B → L (no legal move from Handcrafted, 123 plies)  NNUE +1.0  [2246s]
+  game  23: NNUE=W Hand=B → L (no legal move from NNUE, 137 plies)  NNUE +0.0  [2345s]
+  game  24: Hand=W NNUE=B → L (no legal move from Handcrafted, 119 plies)  NNUE +1.0  [2433s]
+  game  25: NNUE=W Hand=B → W (no legal move from Handcrafted, 128 plies)  NNUE +1.0  [2527s]
+  game  26: Hand=W NNUE=B → L (no legal move from Handcrafted, 115 plies)  NNUE +1.0  [2609s]
+  game  27: NNUE=W Hand=B → L (no legal move from NNUE, 123 plies)  NNUE +0.0  [2698s]
+  game  28: Hand=W NNUE=B → L (no legal move from Handcrafted, 109 plies)  NNUE +1.0  [2776s]
+  game  29: NNUE=W Hand=B → L (no legal move from NNUE, 101 plies)  NNUE +0.0  [2852s]
+  game  30: Hand=W NNUE=B → L (no legal move from Handcrafted, 103 plies)  NNUE +1.0  [2924s]
+  game  31: NNUE=W Hand=B → W (no legal move from Handcrafted, 144 plies)  NNUE +1.0  [3030s]
+  game  32: Hand=W NNUE=B → L (no legal move from Handcrafted, 107 plies)  NNUE +1.0  [3107s]
+  game  33: NNUE=W Hand=B → W (no legal move from Handcrafted, 128 plies)  NNUE +1.0  [3201s]
+  game  34: Hand=W NNUE=B → L (no legal move from Handcrafted, 135 plies)  NNUE +1.0  [3303s]
+  game  35: NNUE=W Hand=B → L (no legal move from NNUE, 141 plies)  NNUE +0.0  [3407s]
+  game  36: Hand=W NNUE=B → L (no legal move from Handcrafted, 127 plies)  NNUE +1.0  [3500s]
+  game  37: NNUE=W Hand=B → W (no legal move from Handcrafted, 130 plies)  NNUE +1.0  [3595s]
+  game  38: Hand=W NNUE=B → L (no legal move from Handcrafted, 125 plies)  NNUE +1.0  [3691s]
+  game  39: NNUE=W Hand=B → W (no legal move from Handcrafted, 118 plies)  NNUE +1.0  [3774s]
+  game  40: Hand=W NNUE=B → W (no legal move from NNUE, 110 plies)  NNUE +0.0  [3855s]
+  game  41: NNUE=W Hand=B → D (ply cap, 200 plies)  NNUE +0.5  [4012s]
+  game  42: Hand=W NNUE=B → D (25-move rule, 177 plies)  NNUE +0.5  [4144s]
+  game  43: NNUE=W Hand=B → D (25-move rule, 197 plies)  NNUE +0.5  [4293s]
+  game  44: Hand=W NNUE=B → L (no legal move from Handcrafted, 131 plies)  NNUE +1.0  [4390s]
+  game  45: NNUE=W Hand=B → L (no legal move from NNUE, 159 plies)  NNUE +0.0  [4509s]
+  game  46: Hand=W NNUE=B → D (25-move rule, 198 plies)  NNUE +0.5  [4657s]
+  game  47: NNUE=W Hand=B → W (no legal move from Handcrafted, 116 plies)  NNUE +1.0  [4741s]
+  game  48: Hand=W NNUE=B → W (no legal move from NNUE, 106 plies)  NNUE +0.0  [4815s]
+  game  49: NNUE=W Hand=B → D (25-move rule, 168 plies)  NNUE +0.5  [4941s]
+  game  50: Hand=W NNUE=B → W (no legal move from NNUE, 128 plies)  NNUE +0.0  [5036s]
+  game  51: NNUE=W Hand=B → D (ply cap, 200 plies)  NNUE +0.5  [5182s]
+  game  52: Hand=W NNUE=B → D (25-move rule, 167 plies)  NNUE +0.5  [5310s]
+  game  53: NNUE=W Hand=B → W (no legal move from Handcrafted, 120 plies)  NNUE +1.0  [5396s]
+  game  54: Hand=W NNUE=B → W (no legal move from NNUE, 106 plies)  NNUE +0.0  [5476s]
+
+=== NNUE vs Handcrafted, movetime 1.0s, 54 games ===
+  NNUE=27  Handcrafted=17  Draws=10
+  NNUE score rate: 0.593 (32.0 / 54)
+  ELO estimate:    +65 (95% CI ≈ ±109)
+
+==========================================================
+             0017 BENCH-NNUE-TIME SUMMARY
+==========================================================
+  NNUE source:      0011 (pre-master-blend baseline)
+  NNUE file:        nnue-1024-512-q.bin
+  budget:           1.0 s/move
+  games:            54 (9 openings × 3 pairs × 2 colours)
+  wall:             5476s (91.3 min)
+  rc:               0
+  result line:
+      NNUE=27  Handcrafted=17  Draws=10
+      NNUE score rate: 0.593 (32.0 / 54)
+      ELO estimate:    +65 (95% CI ≈ ±109)
+==========================================================
