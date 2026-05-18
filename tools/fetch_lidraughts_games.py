@@ -396,16 +396,61 @@ _TAG_RE = re.compile(r'^\[\s*(\w+)\s+"([^"]*)"\s*\]\s*$', re.MULTILINE)
 
 
 def split_pdn(text: str) -> list[str]:
-    """Split a multi-game PDN blob into one string per game."""
-    # Each game starts with a [Tag "..."] block. Split on the *start* of
-    # such a tag, keeping the tag with the rest of the game.
-    parts = re.split(r'(?=\[\s*\w+\s+")', text)
-    out: list[str] = []
-    for part in parts:
-        p = part.strip()
-        if p and "[" in p:
-            out.append(p)
-    return out
+    """Split a multi-game PDN blob into one string per game.
+
+    PDN game shape:
+
+        [Tag1 "val"]
+        [Tag2 "val"]
+        [Result "..."]
+
+        1. move move 2. move move ... 1-0
+
+        [Tag1 "val"]   ← next game starts here
+        ...
+
+    The boundary between two games is "a `[Tag …]` line appearing
+    AFTER a move-text line". A naive split on `(?=\[Tag)` would
+    cut at every tag (each game has 7+ tags), reducing a 200-game
+    PDN to ~1400 fragments, none of which has a complete tag set.
+
+    Bug diagnosed 2026-05-18: the runner's first 0014 run fetched
+    228 users × ~3000 PDN games each but kept 0 — extract_row()
+    returned None on every fragment because each fragment held a
+    single tag with no [Result …].
+
+    This implementation walks line by line, tracks whether we're
+    in the tag block or the moves, and flushes the current game
+    whenever we see a tag line transition back from moves.
+    """
+    games: list[str] = []
+    current: list[str] = []
+    in_moves = False
+    for line in text.splitlines(keepends=True):
+        stripped = line.strip()
+        if not stripped:
+            # Blank line: belongs to the current game (separator
+            # between tag block and moves, or trailing whitespace).
+            if current:
+                current.append(line)
+            continue
+        is_tag = stripped.startswith('[')
+        if is_tag and in_moves:
+            # New game starts: flush the previous one.
+            flushed = ''.join(current).strip()
+            if flushed and '[' in flushed:
+                games.append(flushed)
+            current = [line]
+            in_moves = False
+        else:
+            current.append(line)
+            if not is_tag:
+                in_moves = True
+    # Trailing game.
+    flushed = ''.join(current).strip()
+    if flushed and '[' in flushed:
+        games.append(flushed)
+    return games
 
 
 def parse_pdn_tags(game_pdn: str) -> dict[str, str]:
