@@ -1,8 +1,8 @@
 {
   "job_id": "0011-train-and-bench",
-  "snapshot_at": "2026-05-18T14:48:37+00:00",
+  "snapshot_at": "2026-05-18T14:53:40+00:00",
   "started_at": "2026-05-18T14:28:14+00:00",
-  "elapsed_seconds": 1223,
+  "elapsed_seconds": 1526,
   "artefacts": [
     {
       "name": "bench.log",
@@ -51,5 +51,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 264385       1       20:22  0.0  0.0 bash\n 264387  264385       20:22  0.0  0.0 bash\n 264458  264387       20:19  192 24.5 python3\n 264459  264387       20:19  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 264385       1       25:26  0.0  0.0 bash\n 264387  264385       25:26  0.0  0.0 bash\n 264458  264387       25:23  193 28.7 python3\n 264459  264387       25:23  0.0  0.0 tee\n"
 }
