@@ -1,7 +1,8 @@
 {
   "job_id": "0016-train-with-master-blend",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-18T22:18:43+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 273357
+  "ended_at": "2026-05-18T23:00:11+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
