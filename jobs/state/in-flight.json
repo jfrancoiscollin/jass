@@ -1,7 +1,0 @@
-{
-  "job_id": "0012-calibrate-vs-scan",
-  "script": "jobs/queue/0012-calibrate-vs-scan.sh",
-  "pid": 265155,
-  "started_at": "2026-05-18T15:03:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
