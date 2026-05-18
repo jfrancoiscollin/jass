@@ -37,10 +37,10 @@ echo "=== host facts ==="
 echo "host:    $(hostname)"
 echo "nproc:   $(nproc)"
 echo "mem:     $(free -h | awk '/^Mem:/ {print $2}')"
-echo "disk:    $(df -h / | awk 'NR==2{print $4 \" free of \" $2}')"
+echo "disk:    $(df -h / | awk 'NR==2 {print $4" free of "$2}')"
 echo "load:    $(cut -d' ' -f1-3 /proc/loadavg)"
 echo "jass:    $(./build/jass --version 2>/dev/null || echo '(no --version)')"
-echo "dataset: $(ls -lh \"$DATASET\" | awk '{print $5\"  \"$9}')"
+echo "dataset: $(ls -lh "$DATASET" | awk '{print $5"  "$9}')"
 
 echo
 echo "=== rebuilding jass (no-op if src/ unchanged since last build) ==="
@@ -55,10 +55,32 @@ fi
 echo
 echo "=== verifying Python deps ==="
 if ! python3 -c "import torch, numpy" 2>/dev/null; then
+    # First attempt failed in 0011's earlier run on "[Errno 2] No such file
+    # or directory: '/tmp/pip-unpack-…'". Root cause: pip uses /tmp by
+    # default for unpacking, and /tmp on this host is small/transient.
+    # Move pip's scratch space to a dedicated dir on the persistent root
+    # filesystem and bypass the wheel cache (one-shot install, never reuse).
     echo "torch/numpy missing — installing CPU wheels (~700 MB, one-shot)"
-    pip3 install --break-system-packages --quiet \
-        numpy torch --index-url https://download.pytorch.org/whl/cpu \
-        || { echo "ABORT: pip install failed"; exit 3; }
+    PIP_SCRATCH="/root/jass/.pip-scratch"
+    mkdir -p "$PIP_SCRATCH"
+    # Retry up to 3 times for transient network / mirror glitches.
+    pip_ok=0
+    for attempt in 1 2 3; do
+        echo "  pip attempt $attempt/3 (TMPDIR=$PIP_SCRATCH, --no-cache-dir)"
+        if TMPDIR="$PIP_SCRATCH" pip3 install \
+                --break-system-packages --no-cache-dir --quiet \
+                numpy torch --index-url https://download.pytorch.org/whl/cpu; then
+            pip_ok=1
+            break
+        fi
+        echo "  attempt $attempt failed, retrying after 10s"
+        sleep 10
+    done
+    rm -rf "$PIP_SCRATCH"
+    if [ "$pip_ok" -ne 1 ]; then
+        echo "ABORT: pip install failed after 3 attempts"
+        exit 3
+    fi
 fi
 python3 -c "import torch, numpy; print(f'  torch {torch.__version__}'); print(f'  numpy {numpy.__version__}')"
 
