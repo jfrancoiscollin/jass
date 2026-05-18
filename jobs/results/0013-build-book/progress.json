@@ -1,8 +1,8 @@
 {
   "job_id": "0013-build-book",
-  "snapshot_at": "2026-05-18T10:43:51+00:00",
+  "snapshot_at": "2026-05-18T10:48:52+00:00",
   "started_at": "2026-05-18T10:02:16+00:00",
-  "elapsed_seconds": 2495,
+  "elapsed_seconds": 2796,
   "artefacts": [
     {
       "name": "shard-00",
@@ -18,7 +18,7 @@
     },
     {
       "name": "shard-01.log",
-      "size_bytes": 0
+      "size_bytes": 4096
     },
     {
       "name": "shard-02",
@@ -34,8 +34,8 @@
     },
     {
       "name": "shard-03.log",
-      "size_bytes": 0
+      "size_bytes": 4096
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 259155       1       41:34  0.0  0.0 bash\n 259157  259155       41:34  0.0  0.0 bash\n 259206  259157       41:34  0.0  0.0 bash\n 259211  259206       41:34 99.8  0.1 jass\n 259212  259157       41:34  0.0  0.0 bash\n 259217  259212       41:34 99.8  0.1 jass\n 259218  259157       41:34  0.0  0.0 bash\n 259223  259218       41:34 99.9  0.1 jass\n 259224  259157       41:34  0.0  0.0 bash\n 259226  259224       41:34 99.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 259155       1       46:35  0.0  0.0 bash\n 259157  259155       46:35  0.0  0.0 bash\n 259206  259157       46:35  0.0  0.0 bash\n 259211  259206       46:35 99.8  0.1 jass\n 259212  259157       46:35  0.0  0.0 bash\n 259217  259212       46:35 99.8  0.1 jass\n 259218  259157       46:35  0.0  0.0 bash\n 259223  259218       46:35 99.9  0.1 jass\n 259224  259157       46:35  0.0  0.0 bash\n 259226  259224       46:35 99.9  0.1 jass\n"
 }
