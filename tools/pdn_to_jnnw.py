@@ -344,17 +344,36 @@ def _strip_tags_and_comments(pdn: str) -> str:
 # ---------------------------------------------------------------------------
 
 def select_games(conn: sqlite3.Connection, min_rating: int,
-                 variant: str, min_plies: int):
-    """Yield (id, pdn, result) for each game matching the filters."""
+                 variant: str, min_plies: int,
+                 rating_mode: str = "min"):
+    """Yield (id, pdn, result) for each game matching the filters.
+
+    rating_mode controls how the floor applies when the two players
+    have different ratings:
+      * "min" (strict): both white_rating AND black_rating must be
+                        >= min_rating. Used for "pure" subsets where
+                        both sides played at the target level.
+      * "max" (loose):  it's enough that EITHER player has rating
+                        >= min_rating. Used for volume — every game
+                        where at least one master-class player took
+                        part still carries useful signal.
+    """
+    if rating_mode not in ("min", "max"):
+        raise ValueError(f"rating_mode must be 'min' or 'max', got {rating_mode!r}")
+    rating_clause = (
+        "MIN(white_rating, black_rating) >= ?"
+        if rating_mode == "min"
+        else "MAX(white_rating, black_rating) >= ?"
+    )
     cur = conn.execute(
-        """
+        f"""
         SELECT id, pdn, result
         FROM expert_games
         WHERE variant = ?
           AND num_plies >= ?
           AND white_rating IS NOT NULL
           AND black_rating IS NOT NULL
-          AND MIN(white_rating, black_rating) >= ?
+          AND {rating_clause}
           AND result IN ('1-0', '0-1', '1/2-1/2')
         ORDER BY id
         """,
@@ -377,7 +396,15 @@ def main(argv: list[str]) -> int:
     p.add_argument("--jass", type=Path, default=Path("./build/jass"),
                    help="Path to the jass binary (used as position oracle).")
     p.add_argument("--min-rating", type=int, default=1600,
-                   help="MIN(white_rating, black_rating) cutoff.")
+                   help="Rating cutoff (see --rating-mode for how it's applied).")
+    p.add_argument("--rating-mode", choices=("min", "max"), default="min",
+                   help="How the --min-rating cutoff is applied: "
+                        "'min' (strict) requires BOTH players >= cutoff; "
+                        "'max' (loose) requires at least one to. The strict "
+                        "mode produces a smaller 'pure' subset; the loose "
+                        "mode matches Draught Master's no-per-game-filter "
+                        "behaviour and yields ~5x more records on a typical "
+                        "Lidraughts pool.")
     p.add_argument("--variant", default="standard",
                    help="PDN variant tag to keep (others skipped).")
     p.add_argument("--min-plies", type=int, default=20,
@@ -415,7 +442,7 @@ def main(argv: list[str]) -> int:
     try:
         for game_idx, (gid, pdn, result) in enumerate(
                 select_games(conn, args.min_rating, args.variant,
-                             args.min_plies)):
+                             args.min_plies, rating_mode=args.rating_mode)):
             if args.max_games and game_idx >= args.max_games:
                 break
             nrec, ok = convert_one_game(oracle, out_file, pdn, result,

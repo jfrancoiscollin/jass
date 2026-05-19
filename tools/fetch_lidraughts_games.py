@@ -714,7 +714,15 @@ def main(argv: list[str]) -> int:
                 wr, br = row["white_rating"], row["black_rating"]
                 if wr is None or br is None:
                     continue
-                if min(wr, br) < args.min_rating:
+                # Loose filter: keep the game if AT LEAST ONE player meets
+                # the rating floor. This matches the sister-project Draught
+                # Master's behaviour (which doesn't filter per-game by
+                # opponent rating) and dramatically widens the corpus —
+                # the strict `min(wr, br) < min_rating` filter was rejecting
+                # ~80% of games where a 1700-rated user played a 1400-rated
+                # opponent, even though every such game still has a 1700-
+                # rated player's eval signal we want to learn from.
+                if max(wr, br) < args.min_rating:
                     continue
                 rows.append(row)
             inserted = insert_rows(conn, rows)

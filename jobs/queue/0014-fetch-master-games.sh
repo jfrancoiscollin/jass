@@ -37,7 +37,11 @@ SCHEMA="/root/jass/data/expert_games.schema.sql"
 TARGET_GAMES=100000
 MIN_RATING=1600
 MAX_RATING=2300
-PER_USER_CAP=200
+# Lidraughts hard caps `?max=` at 500 per request; we go to the cap.
+# Earlier 200 was the Draught Master default but on a 228-candidate
+# discovery pool it left too much on the table — 228 × 200 = 45.6K
+# downloads, vs 228 × 500 = 114K we can actually fetch.
+PER_USER_CAP=500
 RATE_SLEEP=0.5   # seconds between per-user requests, polite to Lidraughts
 
 echo "=== host facts ==="
@@ -117,17 +121,22 @@ echo "=== Phase 2: convert to JNNW (master.jnnw for train_v3 --master-data) ==="
 START2=$(date +%s)
 # Two exports: "wide" (rating ≥1600, max volume) and "strict" (rating ≥2000,
 # cleaner signal). train_v3 can A/B them.
+# Loose mode ("max"): keep games where AT LEAST ONE player meets the
+# rating floor. Matches Draught Master semantics, produces the high-
+# volume training corpora we actually want to blend into train_v3.
 python3 tools/pdn_to_jnnw.py \
     --db "$DB" --out "$ART/master-1600.jnnw" \
     --jass ./build/jass \
-    --min-rating 1600 --variant standard --min-plies 20 \
+    --min-rating 1600 --rating-mode max \
+    --variant standard --min-plies 20 \
     2>&1 | tee -a "$ART/convert.log"
 CONV_RC1=${PIPESTATUS[0]}
 
 python3 tools/pdn_to_jnnw.py \
     --db "$DB" --out "$ART/master-2000.jnnw" \
     --jass ./build/jass \
-    --min-rating 2000 --variant standard --min-plies 20 \
+    --min-rating 2000 --rating-mode max \
+    --variant standard --min-plies 20 \
     2>&1 | tee -a "$ART/convert.log"
 CONV_RC2=${PIPESTATUS[0]}
 
