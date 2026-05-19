@@ -122,15 +122,16 @@ echo "  encoding: halfmen (input_dim=450)"
 echo "  epochs:   30, batch: 512, lambda: 0.7 (self-play)"
 START_TRAIN=$(date +%s)
 python3 tools/train_v3.py \
-    --data          "$DATASET" \
-    --master-data   "$MASTER" \
-    --master-weight "$MASTER_WEIGHT" \
-    --master-lam    "$MASTER_LAM" \
-    --archs         64-32 128-64 256-128 512-256 1024-512 \
-    --encoding      halfmen \
-    --epochs        30 \
-    --batch         512 \
-    --out-dir       "$ART" \
+    --data                "$DATASET" \
+    --master-data         "$MASTER" \
+    --master-weight       "$MASTER_WEIGHT" \
+    --master-lam          "$MASTER_LAM" \
+    --max-master-records  2000000 \
+    --archs               64-32 128-64 256-128 512-256 1024-512 \
+    --encoding            halfmen \
+    --epochs              30 \
+    --batch               512 \
+    --out-dir             "$ART" \
     2>&1 | tee "$ART/train.log"
 TRAIN_RC=${PIPESTATUS[0]}
 TRAIN_SEC=$(( $(date +%s) - START_TRAIN ))
