@@ -1,13 +1,13 @@
 {
   "job_id": "0018-train-with-master-bce",
-  "snapshot_at": "2026-05-19T22:57:01+00:00",
+  "snapshot_at": "2026-05-19T23:02:01+00:00",
   "started_at": "2026-05-19T22:52:01+00:00",
-  "elapsed_seconds": 300,
+  "elapsed_seconds": 600,
   "artefacts": [
     {
       "name": "train.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300533       1       05:00  0.0  0.0 bash\n 300535  300533       05:00  0.0  0.0 bash\n 300609  300535       04:56  174 92.0 python3\n 300610  300535       04:56  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300533       1       10:00  0.0  0.0 bash\n 300535  300533       10:00  0.0  0.0 bash\n 300609  300535       09:57  177 92.0 python3\n 300610  300535       09:57  0.0  0.0 tee\n"
 }
