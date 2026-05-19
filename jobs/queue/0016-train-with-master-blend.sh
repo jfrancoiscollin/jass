@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: 0015-train-with-master-blend
+# id: 0016-train-with-master-blend
 # description: Cycle 8 proper — train NNUE on a *blend* of self-play
 #              data (0010's depth20-1M.bin) and master-game labels from
 #              0014 (master-2000.jnnw). The blend lets the network
@@ -8,7 +8,7 @@
 #              had access to in 0011.
 #
 #              Prerequisite chain: 0010 → 0011 (validate baseline) →
-#              0014 (fetch + convert master) → 0015 (this job).
+#              0014 (fetch + convert master) → 0016 (this job).
 #
 #              When the runner picks this in FIFO order it will only
 #              succeed if 0014 already produced master-2000.jnnw on the
@@ -24,7 +24,7 @@
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0015-train-with-master-blend"
+OUT_BASE="/root/jass/jobs/results/0016-train-with-master-blend"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
@@ -47,7 +47,7 @@ fi
 if [ ! -f "$MASTER" ]; then
     echo "ABORT: master JNNW $MASTER not found — did 0014 finish?"
     ls -la "$(dirname "$MASTER")" 2>/dev/null || echo "  (0014 dir missing)"
-    echo "Re-queue this job (delete jobs/results/0015-…/) once 0014 completes."
+    echo "Re-queue this job (delete jobs/results/0016-…/) once 0014 completes."
     exit 3
 fi
 
@@ -172,7 +172,7 @@ echo "=== step 4/4: benchmark NNUE($BEST_ARCH int8) vs handcrafted ==="
 
 echo
 echo "=========================================================="
-echo "             0015 TRAIN-WITH-MASTER-BLEND SUMMARY"
+echo "             0016 TRAIN-WITH-MASTER-BLEND SUMMARY"
 echo "=========================================================="
 echo "  self-play records:  $(stat -c%s "$DATASET" | awk '{print int(($1-8)/38)}' 2>/dev/null) (depth 20, from 0010)"
 echo "  master records:     $(stat -c%s "$MASTER"  | awk '{print int(($1-8)/38)}' 2>/dev/null) (master games, from 0014)"
