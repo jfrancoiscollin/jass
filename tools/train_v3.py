@@ -59,6 +59,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 
@@ -295,6 +296,66 @@ def blended_mse_weighted(pred: torch.Tensor,
     return per_record_sq_err.mean()
 
 
+def hybrid_loss_weighted(pred: torch.Tensor,
+                         target_score: torch.Tensor,
+                         target_wdl: torch.Tensor,
+                         lam_per: torch.Tensor,
+                         weight_per: torch.Tensor,
+                         is_master_per: torch.Tensor,
+                         wdl_scale: float,
+                         bce_scale: float) -> torch.Tensor:
+    """Per-record hybrid loss for Cycle 8 v5 (loss separation).
+
+    Self-play records (`is_master_per == 0`) contribute a blended MSE
+    on the engine-scale cp prediction — exactly the existing
+    `blended_mse_weighted` formula.
+
+    Master records (`is_master_per == 1`) contribute a binary
+    cross-entropy on `sigmoid(pred / wdl_scale)` against the
+    normalised WDL outcome `(wdl + 1) / 2 ∈ {0, 0.5, 1}`. This
+    decouples the master signal from the cp scale: the network is
+    asked only to get the SIGN (and approximate CONFIDENCE) of master
+    positions right, not to match a hardcoded `wdl × 800` cp target.
+
+    Why the BCE arm matters
+    -----------------------
+    Cycle 8 v1–v4 used pure MSE on master, with target = `wdl × 800`.
+    That dragged the network's cp scale toward a bimodal distribution
+    (peaks at +800/-800) and corrupted the continuous score signal
+    self-play was teaching at the same time. Result was a 0.917 →
+    0.444 regression on the depth-6 self-bench across three v1–v4
+    runs (depth-6) and a 0.58 → 0.47 regression on the 1.0 s/move
+    bench. The hybrid form lets master records polarise the eval
+    without dictating its magnitude.
+
+    bce_scale is the BCE → cp²-equivalent magnitude bridge so the
+    sum-of-terms is in the same ballpark as MSE for the optimiser.
+    A reasonable default is 50_000 (≈ √MSE-typical × ε), tunable.
+
+    wdl_scale is the cp-to-logit conversion. 400 cp matches the
+    standard Stockfish/Lc0 WDL-from-cp curve: a 400 cp advantage
+    corresponds to ~73% win probability via sigmoid.
+
+    `weight_per` keeps the same role it had in the MSE form — it
+    scales each record's contribution before subset-masking.
+    """
+    is_self = 1.0 - is_master_per
+
+    # Self-play MSE term (zeroed where is_master_per == 1).
+    target_self = lam_per * target_score \
+                + (1.0 - lam_per) * target_wdl * WDL_PSEUDO_SCALE
+    self_sq_err = weight_per * is_self * (pred - target_self) ** 2
+
+    # Master BCE term (zeroed where is_master_per == 0).
+    logits = pred / wdl_scale
+    target_prob = (target_wdl + 1.0) * 0.5                 # {-1,0,+1}→{0,0.5,1}
+    bce = F.binary_cross_entropy_with_logits(
+        logits, target_prob, reduction='none')
+    master_err = weight_per * is_master_per * bce * bce_scale
+
+    return (self_sq_err + master_err).mean()
+
+
 def mse_score(pred: torch.Tensor, target_score: torch.Tensor) -> float:
     return float(((pred - target_score) ** 2).mean().item())
 
@@ -307,7 +368,10 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
           clip: float, val_frac: float, seed: int, patience: int,
           lam_per: np.ndarray | None = None,
           weight_per: np.ndarray | None = None,
-          n_selfplay: int | None = None) -> tuple[float, dict]:
+          n_selfplay: int | None = None,
+          master_loss: str = "mse",
+          wdl_scale: float = 400.0,
+          bce_scale: float = 50000.0) -> tuple[float, dict]:
     """Train a model on a (possibly blended) JNNW dataset.
 
     The optional `lam_per` and `weight_per` arrays carry per-record
@@ -348,17 +412,28 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
     y_score_clipped = np.clip(y_score, -clip, clip).astype(np.float32, copy=False)
     y_wdl_f         = y_wdl.astype(np.float32, copy=False)
 
+    # `is_master` flag per record: 0.0 for self-play (rows < n_selfplay),
+    # 1.0 for master. Used by hybrid_loss_weighted to mask each subset
+    # against the other.
+    is_master_per = np.zeros(len(X), dtype=np.float32)
+    is_master_per[n_selfplay:] = 1.0
+
     X_val = torch.from_numpy(X[val_idx])
     s_val = torch.from_numpy(y_score_clipped[val_idx])
     X_tr  = torch.from_numpy(X[tr_idx])
     s_tr  = torch.from_numpy(y_score_clipped[tr_idx])
     w_tr  = torch.from_numpy(y_wdl_f[tr_idx])
-    lam_tr    = torch.from_numpy(lam_per[tr_idx])
-    weight_tr = torch.from_numpy(weight_per[tr_idx])
+    lam_tr        = torch.from_numpy(lam_per[tr_idx])
+    weight_tr     = torch.from_numpy(weight_per[tr_idx])
+    is_master_tr  = torch.from_numpy(is_master_per[tr_idx])
 
-    loader = DataLoader(TensorDataset(X_tr, s_tr, w_tr, lam_tr, weight_tr),
-                        batch_size=batch, shuffle=True)
+    loader = DataLoader(
+        TensorDataset(X_tr, s_tr, w_tr, lam_tr, weight_tr, is_master_tr),
+        batch_size=batch, shuffle=True)
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+
+    if master_loss not in ("mse", "bce"):
+        raise ValueError(f"master_loss must be 'mse' or 'bce', got {master_loss!r}")
 
     best_val   = float("inf")
     best_state = None
@@ -367,10 +442,15 @@ def train(model: nn.Module, X: np.ndarray, y_score: np.ndarray, y_wdl: np.ndarra
     for ep in range(1, epochs + 1):
         model.train()
         running, n = 0.0, 0
-        for xb, sb, wb, lam_b, w_rec_b in loader:
+        for xb, sb, wb, lam_b, w_rec_b, is_master_b in loader:
             opt.zero_grad()
             pred = model(xb)
-            loss = blended_mse_weighted(pred, sb, wb, lam_b, w_rec_b)
+            if master_loss == "bce":
+                loss = hybrid_loss_weighted(
+                    pred, sb, wb, lam_b, w_rec_b, is_master_b,
+                    wdl_scale=wdl_scale, bce_scale=bce_scale)
+            else:
+                loss = blended_mse_weighted(pred, sb, wb, lam_b, w_rec_b)
             loss.backward()
             opt.step()
             running += loss.item() * len(xb)
@@ -493,6 +573,29 @@ def main(argv):
                         "15 GB host (CCX23) ~2-2.5M total records is the safe "
                         "upper bound; default 0 only works when the master "
                         "file is naturally small.")
+    p.add_argument("--master-loss", choices=("mse", "bce"), default="mse",
+                   help="Loss form applied to master records. 'mse' (default, "
+                        "back-compat) reuses the blended-MSE target with "
+                        "score=0 — known to drag the network's cp distribution "
+                        "into a bimodal regime when master volume dominates. "
+                        "'bce' computes binary cross-entropy on "
+                        "sigmoid(pred/wdl-scale) against the normalised WDL "
+                        "outcome — decouples the master signal from the cp "
+                        "scale (the network is only asked to get the SIGN "
+                        "right on master positions, not to match a hardcoded "
+                        "wdl × 800 cp target).")
+    p.add_argument("--wdl-scale", type=float, default=400.0,
+                   help="cp-to-logit conversion factor for the BCE master arm. "
+                        "Default 400 cp matches the standard Stockfish/Lc0 "
+                        "WDL curve (a 400 cp advantage → ~73%% win prob).")
+    p.add_argument("--bce-scale", type=float, default=50000.0,
+                   help="BCE → MSE-equivalent magnitude bridge. Sets how "
+                        "much the master records pull on the optimiser "
+                        "relative to self-play MSE. ~50K matches typical "
+                        "per-record MSE magnitudes (RMSE ≈ 250 cp → MSE ≈ "
+                        "62500). Reduce to ~10K to make master signal a "
+                        "polishing nudge; increase to ~200K to make it "
+                        "dominate.")
     args = p.parse_args(argv)
 
     input_dim = input_dim_for(args.encoding)
@@ -563,7 +666,9 @@ def main(argv):
             epochs=args.epochs, batch=args.batch, lr=args.lr, wd=args.wd,
             lam=args.lam, clip=args.clip, val_frac=args.val_frac,
             seed=args.seed, patience=args.patience,
-            lam_per=lam_per, weight_per=weight_per, n_selfplay=n_self)
+            lam_per=lam_per, weight_per=weight_per, n_selfplay=n_self,
+            master_loss=args.master_loss,
+            wdl_scale=args.wdl_scale, bce_scale=args.bce_scale)
         elapsed = time.time() - t
 
         results[arch_str] = {
