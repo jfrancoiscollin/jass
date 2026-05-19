@@ -1,0 +1,232 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+nproc:   4
+mem:     15Gi
+disk:    140G free of 150G
+load:    0.08 0.12 0.17
+jass:    Jass 0.0.1
+self-play dataset: 37M  /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin
+master dataset:    14M  /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw
+
+=== rebuilding jass (no-op if src/ unchanged since last build) ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass after rebuild: Jass 0.0.1
+
+=== verifying Python deps ===
+  torch 2.12.0+cpu
+  numpy 2.4.4
+
+=== step 1/4: training 5 archs on blended dataset ===
+  self-play: /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin
+  master:    /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw (weight=3.0 lam=0.0)
+  archs:    64-32, 128-64, 256-128, 512-256, 1024-512
+  encoding: halfmen (input_dim=450)
+  epochs:   30, batch: 512, lambda: 0.7 (self-play)
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.3s to encode)
+  WDL distribution: W=41.5% D=18.3% L=40.2%
+  score range: [-29998, 29999]  mean=+224.5  std=9650.0
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw (encoding=halfmen) …
+  371449 master records  (1.3s to encode)
+  master WDL: W=41.2% D=17.2% L=41.6%
+  master blend: weight=3.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 1371449 records (1000000 self-play + 371449 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train= 534733.3  val= 138956.1 *
+  epoch   2: train= 495841.8  val= 135483.0 *
+  epoch   3: train= 494383.2  val= 134902.5 *
+  epoch   4: train= 493826.9  val= 133793.1 *
+  epoch   5: train= 493139.3  val= 135410.0
+  epoch   6: train= 491749.5  val= 134742.5
+  epoch   7: train= 487270.9  val= 124844.1 *
+  epoch   8: train= 480762.2  val= 118031.8 *
+  epoch   9: train= 474579.2  val= 113514.7 *
+  epoch  10: train= 469118.5  val= 110366.6 *
+  epoch  11: train= 464870.6  val= 107959.5 *
+  epoch  12: train= 461309.3  val= 106889.8 *
+  epoch  13: train= 458149.6  val= 107825.5
+  epoch  14: train= 455026.7  val= 107024.4
+  epoch  15: train= 451761.2  val= 104904.8 *
+  epoch  16: train= 448930.1  val= 104603.6 *
+  epoch  17: train= 446571.9  val= 106270.3
+  epoch  18: train= 444179.5  val= 101635.3 *
+  epoch  19: train= 442054.7  val= 102475.0
+  epoch  20: train= 440134.5  val= 100501.8 *
+  epoch  21: train= 438436.0  val= 101136.3
+  epoch  22: train= 436957.2  val= 101239.9
+  epoch  23: train= 435855.7  val= 102007.2
+  epoch  24: train= 434529.8  val= 100241.8 *
+  epoch  25: train= 433535.1  val= 100559.3
+  epoch  26: train= 432647.1  val= 100949.8
+  epoch  27: train= 431606.8  val= 101375.3
+  epoch  28: train= 430686.0  val= 101199.2
+  epoch  29: train= 430004.3  val= 100569.0
+  epoch  30: train= 428933.2  val= 103224.9
+  wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train= 523609.7  val= 136382.1 *
+  epoch   2: train= 495800.6  val= 134629.9 *
+  epoch   3: train= 494450.6  val= 135362.1
+  epoch   4: train= 493525.3  val= 131832.5 *
+  epoch   5: train= 487387.3  val= 122368.8 *
+  epoch   6: train= 476407.0  val= 115452.5 *
+  epoch   7: train= 467134.4  val= 105495.0 *
+  epoch   8: train= 459115.3  val= 103763.7 *
+  epoch   9: train= 451827.1  val= 103374.6 *
+  epoch  10: train= 446031.6  val= 104729.5
+  epoch  11: train= 441175.4  val= 101155.4 *
+  epoch  12: train= 437021.0  val= 100563.8 *
+  epoch  13: train= 433501.6  val= 103064.1
+  epoch  14: train= 430653.7  val= 103277.4
+  epoch  15: train= 427972.8  val= 102052.3
+  epoch  16: train= 425274.1  val= 100863.5
+  epoch  17: train= 423162.0  val= 104866.7
+  epoch  18: train= 420744.1  val= 100019.2 *
+  epoch  19: train= 418501.2  val= 101855.5
+  epoch  20: train= 416409.8  val= 100122.7
+  epoch  21: train= 414188.1  val= 100682.6
+  epoch  22: train= 412073.9  val= 100111.0
+  epoch  23: train= 409839.9  val= 102182.4
+  epoch  24: train= 407613.5  val=  99884.7 *
+  epoch  25: train= 405321.5  val= 100438.6
+  epoch  26: train= 403490.8  val= 102543.3
+  epoch  27: train= 401136.2  val= 100807.0
+  epoch  28: train= 399088.2  val= 101304.7
+  epoch  29: train= 397229.1  val= 100248.2
+  epoch  30: train= 395046.9  val= 103112.0
+  wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train= 515052.4  val= 135729.7 *
+  epoch   2: train= 495718.7  val= 132836.1 *
+  epoch   3: train= 489228.2  val= 123189.0 *
+  epoch   4: train= 475669.3  val= 108899.6 *
+  epoch   5: train= 462016.3  val= 106729.8 *
+  epoch   6: train= 449816.7  val= 111003.6
+  epoch   7: train= 439660.3  val= 101554.8 *
+  epoch   8: train= 431930.7  val= 102139.9
+  epoch   9: train= 425330.8  val= 100248.2 *
+  epoch  10: train= 418953.5  val= 103518.8
+  epoch  11: train= 412557.2  val= 100254.8
+  epoch  12: train= 406082.2  val= 100919.6
+  epoch  13: train= 399499.0  val= 103138.7
+  epoch  14: train= 393082.4  val= 102155.2
+  epoch  15: train= 387304.1  val= 101079.7
+  epoch  16: train= 381200.5  val=  99570.2 *
+  epoch  17: train= 376227.9  val= 102821.4
+  epoch  18: train= 371052.0  val= 102122.8
+  epoch  19: train= 366639.0  val=  98001.8 *
+  epoch  20: train= 362533.9  val=  98725.0
+  epoch  21: train= 358449.8  val=  99875.4
+  epoch  22: train= 355251.5  val=  98236.7
+  epoch  23: train= 351991.8  val= 101956.3
+  epoch  24: train= 348828.8  val=  99520.3
+  epoch  25: train= 346068.5  val=  99304.1
+  epoch  26: train= 343905.4  val=  99420.2
+  epoch  27: train= 341326.5  val= 100129.5
+  early-stop at epoch 27
+  wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train= 511097.8  val= 136250.5 *
+  epoch   2: train= 488984.4  val= 118786.4 *
+  epoch   3: train= 471528.6  val= 108293.1 *
+  epoch   4: train= 453232.2  val= 105056.0 *
+  epoch   5: train= 437560.2  val= 102139.1 *
+  epoch   6: train= 425349.0  val= 107658.1
+  epoch   7: train= 413602.9  val=  99210.0 *
+  epoch   8: train= 401928.3  val=  99689.7
+  epoch   9: train= 390032.1  val=  98684.5 *
+  epoch  10: train= 378249.1  val= 100223.3
+  epoch  11: train= 366812.5  val=  95618.6 *
+  epoch  12: train= 356273.5  val=  99657.1
+  epoch  13: train= 346824.5  val= 100725.3
+  epoch  14: train= 338305.6  val= 100934.4
+  epoch  15: train= 330915.8  val= 100320.0
+  epoch  16: train= 324072.4  val=  97563.6
+  epoch  17: train= 317841.8  val=  99846.3
+  epoch  18: train= 311967.2  val= 101306.8
+  epoch  19: train= 307057.8  val=  97521.7
+  early-stop at epoch 19
+  wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train= 502923.7  val= 124015.4 *
+  epoch   2: train= 471430.0  val= 105602.8 *
+  epoch   3: train= 448697.6  val= 105873.1
+  epoch   4: train= 429837.1  val= 101411.4 *
+  epoch   5: train= 411257.1  val=  98500.0 *
+  epoch   6: train= 392880.7  val=  99351.3
+  epoch   7: train= 374049.8  val=  96151.7 *
+  epoch   8: train= 355839.5  val=  97206.8
+  epoch   9: train= 338906.2  val=  95538.4 *
+  epoch  10: train= 323974.3  val=  96197.9
+  epoch  11: train= 310488.8  val=  92544.4 *
+  epoch  12: train= 298560.0  val=  97324.7
+  epoch  13: train= 288329.5  val=  95871.2
+  epoch  14: train= 278950.0  val= 101385.6
+  epoch  15: train= 270872.3  val= 100461.8
+  epoch  16: train= 263382.0  val=  98865.2
+  epoch  17: train= 256930.4  val=  97700.9
+  epoch  18: train= 250524.7  val=  97879.9
+  epoch  19: train= 244944.2  val=  96827.7
+  early-stop at epoch 19
+  wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     92544.4      304.2     997s
+  512-256            362,497     95618.6      309.2     504s
+  256-128            148,481     98001.8      313.1     492s
+  128-64              66,049     99884.7      316.0     458s
+  64-32               30,977    100241.8      316.6     422s
+
+summary → /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/summary.json
+train rc=0 wall=2880s (0.8h)
+
+=== step 2/4: best arch by val MSE = 1024-512 ===
+-rw-r--r-- 1 root root 3.8M May 19 08:36 /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512.bin
+
+=== step 3/4: quantising 1024-512 to int8 ===
+loading float reference /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.011823 sw2=0.019238 sw3=0.040076 sh1=0.022809 sh2=0.34157
+  multipliers: mul1=0.51833 mul2=0.0012847 mul_out=0.013689
+  reference range: float [-1953.8, 2078.9], quantised [-1915.2, 2817.5]
+  diff: mean=-11.68  std=63.07  |max|=874.23  RMSE=64.14
+wrote /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512-q.bin (991784 bytes)
+-rw-r--r-- 1 root root 969K May 19 08:36 /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512-q.bin
+
+=== step 4/4: benchmark NNUE(1024-512 int8) vs handcrafted ===
+Benchmark: NNUE (/root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-1024-512-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=7 Handcrafted=11 Draws=0 (total 18)
+NNUE score rate: 0.388889 (7 / 18)
+
+==========================================================
+             0015 TRAIN-WITH-MASTER-BLEND SUMMARY
+==========================================================
+  self-play records:  1000000 (depth 20, from 0010)
+  master records:     371449 (master games, from 0014)
+  master weight:      3.0
+  master lam:         0.0
+  encoding:           halfmen (input_dim=450)
+  best arch:          1024-512
+  train wall:         2880s (0.8h)
+  bench result:       NNUE score rate: 0.388889 (7 / 18)
+  artefacts:          10 files, 7.1M total
+==========================================================
+
+Next step: re-queue 0012 (calibrate vs Scan) with the new NNUE
+  to measure the cycle-8 ELO delta vs the 0011 baseline.
