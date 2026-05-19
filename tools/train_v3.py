@@ -170,7 +170,22 @@ def _encode_halfmen(bbs: np.ndarray, stm: np.ndarray) -> np.ndarray:
     return X
 
 
-def load_records(path: Path, encoding: str = ENCODING_V2):
+def load_records(path: Path, encoding: str = ENCODING_V2,
+                 max_records: int = 0, seed: int = 42):
+    """Load a JNNW dataset and encode it to a (N, input_dim) feature
+    matrix + score/wdl label arrays.
+
+    `max_records` caps the number of records loaded BEFORE encoding —
+    important for memory on big master corpora: HalfMen encoding
+    materialises a (N, 450) float32 matrix, which is 1.7 GB per 1M
+    records. On a 15 GB host like CCX23 a 4.74M-record master corpus
+    OOMs the encoder before training starts (rc=137 = SIGKILL).
+
+    When `max_records > 0` and the file has more records, a random
+    subset of size `max_records` is selected (stable across runs via
+    `seed`) so we get the rating-spread of the full corpus rather
+    than just the chronologically-first slice.
+    """
     raw = path.read_bytes()
     if len(raw) < 8 or raw[:4] != DATASET_MAGIC_WDL:
         raise ValueError(f"{path}: bad magic — expected JNNW")
@@ -184,6 +199,18 @@ def load_records(path: Path, encoding: str = ENCODING_V2):
     stm   = body[:, 32]
     score = body[:, 33:37].view(np.int32).reshape(count)
     wdl   = body[:, 37].view(np.int8).reshape(count)
+
+    # Pre-encoding subsample. Important: the slicing here is on the
+    # raw bitboard / stm / score / wdl arrays, BEFORE the expensive
+    # HalfMen encoding. That's what saves the memory.
+    if max_records > 0 and count > max_records:
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(count, max_records, replace=False)
+        bbs   = bbs[idx]
+        stm   = stm[idx]
+        score = score[idx]
+        wdl   = wdl[idx]
+        count = max_records
 
     if encoding == ENCODING_V2:
         X = _encode_v2(bbs, stm)
@@ -457,6 +484,15 @@ def main(argv):
                         "Setting this higher would weight a usually-zero "
                         "score field into the master loss, which is rarely "
                         "what you want.")
+    p.add_argument("--max-master-records", type=int, default=0,
+                   help="Cap on the number of master records loaded. 0 = no "
+                        "cap. Cap kicks in BEFORE the HalfMen encoding "
+                        "materialises a (N, 450) float32 matrix, so this is "
+                        "the right knob to keep memory bounded on big master "
+                        "corpora (~1.7 GB per 1M records under HalfMen). On a "
+                        "15 GB host (CCX23) ~2-2.5M total records is the safe "
+                        "upper bound; default 0 only works when the master "
+                        "file is naturally small.")
     args = p.parse_args(argv)
 
     input_dim = input_dim_for(args.encoding)
@@ -480,8 +516,11 @@ def main(argv):
     if args.master_data is not None:
         print(f"loading master {args.master_data} (encoding={args.encoding}) …")
         t0 = time.time()
-        Xm, ym_score, ym_wdl = load_records(args.master_data,
-                                            encoding=args.encoding)
+        Xm, ym_score, ym_wdl = load_records(
+            args.master_data,
+            encoding=args.encoding,
+            max_records=args.max_master_records,
+            seed=args.seed)
         n_master = len(Xm)
         if Xm.shape[1] != X.shape[1]:
             raise SystemExit(
