@@ -1,7 +1,9 @@
 {
   "job_id": "0017-bench-nnue-time",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-19T19:09:41+00:00",
+  "ended_at": "2026-05-19T20:37:26+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 297353
+  "artefacts_server_path": "/root/jass/jobs/results/0017-bench-nnue-time/artefacts.src"
 }
