@@ -29,7 +29,15 @@ ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
 DATASET="/root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin"
-MASTER="/root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw"
+# Cycle 8 v3 (2026-05-19): switched from master-2000.jnnw (~3.4K games,
+# 371K positions) to master-1600.jnnw (43K games, 4.74M positions). The
+# v2 run with master-2000 + master_weight=3.0 regressed the depth-6
+# bench from 0.917 → 0.389 because the small master corpus, amplified
+# 3×, dominated the loss with a bimodal ±800 WDL target that pulled
+# the network away from the continuous score targets self-play provides.
+# master-1600 is 12× larger by volume, so we can drop master_weight to
+# 1.0 and let the natural ratio do the work.
+MASTER="/root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw"
 
 if [ ! -f "$DATASET" ]; then
     echo "ABORT: self-play dataset $DATASET not found — did 0010 finish?"
@@ -97,7 +105,12 @@ python3 -c "import torch, numpy; print(f'  torch {torch.__version__}'); print(f'
 #   --master-lam 0.0     → master records' target is pure WDL × 800
 #                          (their score field is always 0 from the
 #                          PDN converter, no Scan annotation per move).
-MASTER_WEIGHT=3.0
+# Cycle 8 v3: dropped to 1.0 (no amplification). With master-1600.jnnw
+# at 4.74M positions vs 1M self-play, the natural volume ratio already
+# gives master ~82% of the training weight. Amplifying further (the v2
+# 3.0 default) made the loss bimodal-WDL-dominated and corrupted
+# quantization (|max diff|=874 cp vs the v1 baseline's 327 cp).
+MASTER_WEIGHT=1.0
 MASTER_LAM=0.0
 
 echo
