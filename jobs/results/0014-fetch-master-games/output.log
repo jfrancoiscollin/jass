@@ -1,0 +1,198 @@
+=== host facts ===
+host:   ubuntu-16gb-hel1-2
+nproc:  4
+disk:   140G free of 150G
+python: Python 3.12.3
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass:   Jass 0.0.1
+
+=== ensuring python deps (requests, numpy) ===
+requests 2.31.0
+
+=== existing DB found ===
+  rows: 13454
+  distinct sources: lidraughts
+
+=== Phase 1: fetch Lidraughts games (target 100000 at rating 1600-2300) ===
+/root/jass/tools/fetch_lidraughts_games.py:399: SyntaxWarning: invalid escape sequence '\['
+  """Split a multi-game PDN blob into one string per game.
+06:05:31 INFO fetch_lidraughts | opened /root/jass/data/expert_games.db — already holds 13454 lidraughts games
+06:05:31 INFO fetch_lidraughts | discovering players in [1600, 2300] …
+06:05:31 WARNING fetch_lidraughts | leaderboard failed (https://lidraughts.org/api/player/top/200/standard): 404 Client Error: Not Found for url: https://lidraughts.org/api/player/top/200/standard
+06:05:31 WARNING fetch_lidraughts | leaderboard failed (https://lidraughts.org/api/player/top/200/standard): 404 Client Error: Not Found for url: https://lidraughts.org/api/player/top/200/standard
+06:05:32 WARNING fetch_lidraughts | leaderboard failed (https://lidraughts.org/api/player/top/200): 404 Client Error: Not Found for url: https://lidraughts.org/api/player/top/200
+06:05:32 WARNING fetch_lidraughts | leaderboard failed (https://lidraughts.org/api/player): 404 Client Error: Not Found for url: https://lidraughts.org/api/player
+06:05:34 INFO fetch_lidraughts | team 'draughts': 4 players
+06:05:47 INFO fetch_lidraughts | tournaments: 156 unique players
+06:05:47 INFO fetch_lidraughts | discover_players: 146 candidates in [1600,2300] (total seen 198)
+06:05:47 INFO fetch_lidraughts | skipping 359 already-drained users from previous runs
+06:06:42 INFO fetch_lidraughts | 'icemon' (rating 1840): 500 PDN games -> 15 kept, 15 new inserts. DB total = 13469/100000.
+06:07:17 INFO fetch_lidraughts | 'SlimShady' (rating 2014): 308 PDN games -> 287 kept, 287 new inserts. DB total = 13756/100000.
+06:08:13 INFO fetch_lidraughts | 'rhiad' (rating 1622): 500 PDN games -> 495 kept, 495 new inserts. DB total = 14251/100000.
+06:09:10 INFO fetch_lidraughts | 'nmcrsznm' (rating 1879): 500 PDN games -> 4 kept, 4 new inserts. DB total = 14255/100000.
+06:09:36 INFO fetch_lidraughts | 'driss' (rating 1685): 229 PDN games -> 186 kept, 186 new inserts. DB total = 14441/100000.
+06:10:32 INFO fetch_lidraughts | 'Nivaquin7' (rating 1964): 500 PDN games -> 499 kept, 499 new inserts. DB total = 14940/100000.
+06:11:28 INFO fetch_lidraughts | 'corvandusseldorp' (rating 1975): 500 PDN games -> 493 kept, 493 new inserts. DB total = 15433/100000.
+06:12:24 INFO fetch_lidraughts | 'Hernandez' (rating 1794): 500 PDN games -> 500 kept, 500 new inserts. DB total = 15933/100000.
+06:13:20 INFO fetch_lidraughts | 'LOGOS' (rating 1888): 500 PDN games -> 498 kept, 498 new inserts. DB total = 16431/100000.
+06:13:47 INFO fetch_lidraughts | 'Margaderdene0521' (rating 1619): 245 PDN games -> 228 kept, 228 new inserts. DB total = 16659/100000.
+06:14:44 INFO fetch_lidraughts | 'musepa' (rating 1930): 500 PDN games -> 0 kept, 0 new inserts. DB total = 16659/100000.
+06:15:40 INFO fetch_lidraughts | 'supernayrd02' (rating 1748): 500 PDN games -> 497 kept, 497 new inserts. DB total = 17156/100000.
+06:16:36 INFO fetch_lidraughts | 'iori' (rating 1634): 500 PDN games -> 437 kept, 437 new inserts. DB total = 17593/100000.
+06:17:31 INFO fetch_lidraughts | 'AsNkodo' (rating 1751): 500 PDN games -> 489 kept, 489 new inserts. DB total = 18082/100000.
+06:18:27 INFO fetch_lidraughts | 'Roberto74' (rating 1972): 500 PDN games -> 496 kept, 496 new inserts. DB total = 18578/100000.
+06:19:23 INFO fetch_lidraughts | 'Koffi' (rating 1638): 500 PDN games -> 398 kept, 398 new inserts. DB total = 18976/100000.
+06:20:19 INFO fetch_lidraughts | 'DEIVI_1313' (rating 1894): 500 PDN games -> 500 kept, 500 new inserts. DB total = 19476/100000.
+06:21:15 INFO fetch_lidraughts | 'juniorpaula' (rating 1803): 500 PDN games -> 494 kept, 494 new inserts. DB total = 19970/100000.
+06:22:11 INFO fetch_lidraughts | 'TadahaStephen237' (rating 1761): 500 PDN games -> 480 kept, 480 new inserts. DB total = 20450/100000.
+06:23:09 INFO fetch_lidraughts | 'lysiukrostislav' (rating 1826): 500 PDN games -> 5 kept, 5 new inserts. DB total = 20455/100000.
+06:24:05 INFO fetch_lidraughts | 'Drmondestin' (rating 1942): 500 PDN games -> 494 kept, 494 new inserts. DB total = 20949/100000.
+06:25:01 INFO fetch_lidraughts | 'herlenmurun' (rating 1933): 500 PDN games -> 500 kept, 500 new inserts. DB total = 21449/100000.
+06:25:57 INFO fetch_lidraughts | 'Jeroen_Sterel' (rating 1967): 500 PDN games -> 494 kept, 494 new inserts. DB total = 21943/100000.
+06:26:53 INFO fetch_lidraughts | 'ArGentum2023' (rating 1723): 500 PDN games -> 0 kept, 0 new inserts. DB total = 21943/100000.
+06:27:49 INFO fetch_lidraughts | 'bathil' (rating 1654): 500 PDN games -> 321 kept, 321 new inserts. DB total = 22264/100000.
+06:28:45 INFO fetch_lidraughts | 'girlinred' (rating 1613): 500 PDN games -> 407 kept, 407 new inserts. DB total = 22671/100000.
+06:29:41 INFO fetch_lidraughts | 'tymoteusze' (rating 1667): 500 PDN games -> 465 kept, 465 new inserts. DB total = 23136/100000.
+06:30:37 INFO fetch_lidraughts | 'Melman' (rating 1897): 500 PDN games -> 498 kept, 498 new inserts. DB total = 23634/100000.
+06:31:33 INFO fetch_lidraughts | 'Tolargo_RD' (rating 1673): 500 PDN games -> 487 kept, 487 new inserts. DB total = 24121/100000.
+06:32:29 INFO fetch_lidraughts | 'LEBOUBOUDEGUIGLO' (rating 1719): 500 PDN games -> 484 kept, 484 new inserts. DB total = 24605/100000.
+06:33:25 INFO fetch_lidraughts | 'Fredde' (rating 1627): 500 PDN games -> 473 kept, 473 new inserts. DB total = 25078/100000.
+06:34:21 INFO fetch_lidraughts | 'Grus' (rating 1683): 500 PDN games -> 199 kept, 199 new inserts. DB total = 25277/100000.
+06:35:17 INFO fetch_lidraughts | 'MIBO' (rating 1666): 500 PDN games -> 497 kept, 497 new inserts. DB total = 25774/100000.
+06:36:13 INFO fetch_lidraughts | 'Iwandza' (rating 1864): 500 PDN games -> 493 kept, 493 new inserts. DB total = 26267/100000.
+06:37:09 INFO fetch_lidraughts | 'tikreten' (rating 1709): 500 PDN games -> 419 kept, 419 new inserts. DB total = 26686/100000.
+06:38:05 INFO fetch_lidraughts | 'dakia' (rating 1841): 500 PDN games -> 492 kept, 492 new inserts. DB total = 27178/100000.
+06:39:01 INFO fetch_lidraughts | 'CARLOSGO' (rating 1660): 500 PDN games -> 0 kept, 0 new inserts. DB total = 27178/100000.
+06:39:57 INFO fetch_lidraughts | 'Kazachok' (rating 1743): 500 PDN games -> 492 kept, 492 new inserts. DB total = 27670/100000.
+06:40:53 INFO fetch_lidraughts | 'joer1971' (rating 1740): 500 PDN games -> 493 kept, 493 new inserts. DB total = 28163/100000.
+06:41:17 INFO fetch_lidraughts | 'SpaceUnit-Ai' (rating 1656): 202 PDN games -> 0 kept, 0 new inserts. DB total = 28163/100000.
+06:42:13 INFO fetch_lidraughts | 'Abogado' (rating 1737): 500 PDN games -> 499 kept, 499 new inserts. DB total = 28662/100000.
+06:43:09 INFO fetch_lidraughts | 'Bazarhul' (rating 1729): 500 PDN games -> 493 kept, 493 new inserts. DB total = 29155/100000.
+06:44:06 INFO fetch_lidraughts | 'Tsukuyomi' (rating 1866): 500 PDN games -> 0 kept, 0 new inserts. DB total = 29155/100000.
+06:45:02 INFO fetch_lidraughts | 'Richard4' (rating 1864): 500 PDN games -> 451 kept, 451 new inserts. DB total = 29606/100000.
+06:45:58 INFO fetch_lidraughts | 'ManQ' (rating 1999): 500 PDN games -> 0 kept, 0 new inserts. DB total = 29606/100000.
+06:46:55 INFO fetch_lidraughts | 'MAHEJANAVIL' (rating 1795): 500 PDN games -> 0 kept, 0 new inserts. DB total = 29606/100000.
+06:47:51 INFO fetch_lidraughts | 'msandie' (rating 1646): 500 PDN games -> 0 kept, 0 new inserts. DB total = 29606/100000.
+06:48:47 INFO fetch_lidraughts | 'Mr_Kreeft' (rating 2061): 500 PDN games -> 456 kept, 456 new inserts. DB total = 30062/100000.
+06:49:41 INFO fetch_lidraughts | 'Pa_Mata_Saga' (rating 1852): 484 PDN games -> 476 kept, 476 new inserts. DB total = 30538/100000.
+06:50:37 INFO fetch_lidraughts | 'Antoniopan' (rating 1702): 500 PDN games -> 500 kept, 500 new inserts. DB total = 31038/100000.
+06:51:33 INFO fetch_lidraughts | 'Leerdammer' (rating 1852): 500 PDN games -> 497 kept, 497 new inserts. DB total = 31535/100000.
+06:51:37 INFO fetch_lidraughts | 'Jombaa' (rating 1791): 27 PDN games -> 0 kept, 0 new inserts. DB total = 31535/100000.
+06:52:32 INFO fetch_lidraughts | 'Losseni' (rating 1894): 500 PDN games -> 495 kept, 495 new inserts. DB total = 32030/100000.
+06:53:29 INFO fetch_lidraughts | 'Malverns' (rating 1833): 500 PDN games -> 0 kept, 0 new inserts. DB total = 32030/100000.
+06:54:25 INFO fetch_lidraughts | 'milton3' (rating 1658): 500 PDN games -> 0 kept, 0 new inserts. DB total = 32030/100000.
+06:55:21 INFO fetch_lidraughts | 'faigaff' (rating 1866): 500 PDN games -> 499 kept, 499 new inserts. DB total = 32529/100000.
+06:56:18 INFO fetch_lidraughts | 'Kostya_Krasnoyarsk' (rating 1660): 500 PDN games -> 0 kept, 0 new inserts. DB total = 32529/100000.
+06:57:13 INFO fetch_lidraughts | 'AmpyAmporio' (rating 1641): 500 PDN games -> 486 kept, 486 new inserts. DB total = 33015/100000.
+06:58:09 INFO fetch_lidraughts | 'Tchamson' (rating 1719): 500 PDN games -> 487 kept, 487 new inserts. DB total = 33502/100000.
+06:59:06 INFO fetch_lidraughts | 'Clarinette' (rating 1801): 500 PDN games -> 499 kept, 499 new inserts. DB total = 34001/100000.
+07:00:02 INFO fetch_lidraughts | 'Komil24' (rating 1604): 500 PDN games -> 0 kept, 0 new inserts. DB total = 34001/100000.
+07:00:58 INFO fetch_lidraughts | 'Master_lee' (rating 1785): 500 PDN games -> 190 kept, 190 new inserts. DB total = 34191/100000.
+07:01:54 INFO fetch_lidraughts | 'Mass' (rating 1745): 500 PDN games -> 493 kept, 493 new inserts. DB total = 34684/100000.
+07:02:50 INFO fetch_lidraughts | 'Mekok1' (rating 1624): 500 PDN games -> 321 kept, 321 new inserts. DB total = 35005/100000.
+07:03:47 INFO fetch_lidraughts | 'lUcYpAn' (rating 1672): 500 PDN games -> 52 kept, 52 new inserts. DB total = 35057/100000.
+07:04:43 INFO fetch_lidraughts | 'Konathanharper' (rating 2050): 500 PDN games -> 500 kept, 500 new inserts. DB total = 35557/100000.
+07:05:39 INFO fetch_lidraughts | 'LorisAlesMilanese' (rating 1903): 500 PDN games -> 490 kept, 490 new inserts. DB total = 36047/100000.
+07:06:35 INFO fetch_lidraughts | 'Moptica' (rating 1643): 500 PDN games -> 493 kept, 493 new inserts. DB total = 36540/100000.
+07:07:31 INFO fetch_lidraughts | 'siebek11' (rating 1924): 500 PDN games -> 498 kept, 498 new inserts. DB total = 37038/100000.
+07:08:28 INFO fetch_lidraughts | 'MIGUEL13' (rating 1766): 500 PDN games -> 0 kept, 0 new inserts. DB total = 37038/100000.
+07:09:25 INFO fetch_lidraughts | 'Magaya' (rating 1732): 500 PDN games -> 0 kept, 0 new inserts. DB total = 37038/100000.
+07:10:21 INFO fetch_lidraughts | 'doriaalan' (rating 1938): 500 PDN games -> 495 kept, 495 new inserts. DB total = 37533/100000.
+07:11:17 INFO fetch_lidraughts | 'Holy' (rating 2005): 500 PDN games -> 497 kept, 497 new inserts. DB total = 38030/100000.
+07:12:14 INFO fetch_lidraughts | 'Alvarado24' (rating 1809): 500 PDN games -> 481 kept, 481 new inserts. DB total = 38511/100000.
+07:13:10 INFO fetch_lidraughts | 'HenryB' (rating 1907): 500 PDN games -> 491 kept, 491 new inserts. DB total = 39002/100000.
+07:14:08 INFO fetch_lidraughts | 'ODESSA_MAMA_UKR_DZTE' (rating 1783): 500 PDN games -> 1 kept, 1 new inserts. DB total = 39003/100000.
+07:15:04 INFO fetch_lidraughts | 'markiel' (rating 1940): 500 PDN games -> 492 kept, 492 new inserts. DB total = 39495/100000.
+07:15:39 INFO fetch_lidraughts | 'Jogofraco01' (rating 1652): 281 PDN games -> 14 kept, 14 new inserts. DB total = 39509/100000.
+07:16:44 INFO fetch_lidraughts | 'mmbiza8130' (rating 1759): 500 PDN games -> 0 kept, 0 new inserts. DB total = 39509/100000.
+07:17:40 INFO fetch_lidraughts | 'landryne' (rating 1648): 500 PDN games -> 495 kept, 495 new inserts. DB total = 40004/100000.
+07:18:36 INFO fetch_lidraughts | 'gersonmeukaro01' (rating 1764): 500 PDN games -> 497 kept, 497 new inserts. DB total = 40501/100000.
+07:19:33 INFO fetch_lidraughts | 'Mentzer' (rating 1773): 500 PDN games -> 5 kept, 5 new inserts. DB total = 40506/100000.
+07:20:36 INFO fetch_lidraughts | 'SHAVAT' (rating 1914): 500 PDN games -> 0 kept, 0 new inserts. DB total = 40506/100000.
+07:21:33 INFO fetch_lidraughts | 'NikoJ' (rating 1782): 500 PDN games -> 0 kept, 0 new inserts. DB total = 40506/100000.
+07:22:28 INFO fetch_lidraughts | 'Unmaster' (rating 1929): 500 PDN games -> 493 kept, 493 new inserts. DB total = 40999/100000.
+07:23:24 INFO fetch_lidraughts | 'WILFRIED' (rating 1808): 500 PDN games -> 496 kept, 496 new inserts. DB total = 41495/100000.
+07:24:20 INFO fetch_lidraughts | 'Zzh123' (rating 1641): 500 PDN games -> 119 kept, 119 new inserts. DB total = 41614/100000.
+07:25:16 INFO fetch_lidraughts | 'Ramoxlz' (rating 1883): 500 PDN games -> 493 kept, 493 new inserts. DB total = 42107/100000.
+07:26:13 INFO fetch_lidraughts | 'elisaul03' (rating 1788): 500 PDN games -> 499 kept, 499 new inserts. DB total = 42606/100000.
+07:27:08 INFO fetch_lidraughts | 'Josephine' (rating 1672): 500 PDN games -> 489 kept, 489 new inserts. DB total = 43095/100000.
+07:28:05 INFO fetch_lidraughts | 'Bouba099' (rating 1669): 500 PDN games -> 496 kept, 496 new inserts. DB total = 43591/100000.
+07:29:03 INFO fetch_lidraughts | 'Gcumi' (rating 1767): 500 PDN games -> 0 kept, 0 new inserts. DB total = 43591/100000.
+07:30:00 INFO fetch_lidraughts | 'Valmirjf' (rating 1623): 500 PDN games -> 0 kept, 0 new inserts. DB total = 43591/100000.
+07:30:57 INFO fetch_lidraughts | 'ThehunterKiller' (rating 1641): 500 PDN games -> 0 kept, 0 new inserts. DB total = 43591/100000.
+07:31:53 INFO fetch_lidraughts | 'WAYNEREID1972' (rating 1779): 500 PDN games -> 405 kept, 405 new inserts. DB total = 43996/100000.
+07:31:53 INFO fetch_lidraughts | done. 43996 lidraughts games in DB (added 30542 this run).
+
+=== DB state after fetch ===
+  File "<stdin>", line 9
+    print(f"  lidraughts rows:   {count(\"source='lidraughts'\")}")
+                                         ^
+SyntaxError: unexpected character after line continuation character
+
+=== Phase 2: convert to JNNW (master.jnnw for train_v3 --master-data) ===
+07:32:05 INFO | processed 1000 games | 1000 ok, 0 skipped | 111992 records so far
+07:32:15 INFO | processed 2000 games | 1999 ok, 1 skipped | 222425 records so far
+07:32:25 INFO | processed 3000 games | 2994 ok, 6 skipped | 330749 records so far
+07:32:36 INFO | processed 4000 games | 3994 ok, 6 skipped | 440882 records so far
+07:32:46 INFO | processed 5000 games | 4994 ok, 6 skipped | 551374 records so far
+07:32:56 INFO | processed 6000 games | 5993 ok, 7 skipped | 662851 records so far
+07:33:07 INFO | processed 7000 games | 6991 ok, 9 skipped | 775634 records so far
+07:33:17 INFO | processed 8000 games | 7988 ok, 12 skipped | 883630 records so far
+07:33:28 INFO | processed 9000 games | 8987 ok, 13 skipped | 995802 records so far
+07:33:38 INFO | processed 10000 games | 9987 ok, 13 skipped | 1103617 records so far
+07:33:48 INFO | processed 11000 games | 10987 ok, 13 skipped | 1206897 records so far
+07:33:57 INFO | processed 12000 games | 11987 ok, 13 skipped | 1312864 records so far
+07:34:08 INFO | processed 13000 games | 12985 ok, 15 skipped | 1425570 records so far
+07:34:18 INFO | processed 14000 games | 13985 ok, 15 skipped | 1534466 records so far
+07:34:28 INFO | processed 15000 games | 14983 ok, 17 skipped | 1645260 records so far
+07:34:38 INFO | processed 16000 games | 15982 ok, 18 skipped | 1754220 records so far
+07:34:48 INFO | processed 17000 games | 16980 ok, 20 skipped | 1863829 records so far
+07:34:57 INFO | processed 18000 games | 17779 ok, 221 skipped | 1950329 records so far
+07:35:07 INFO | processed 19000 games | 18776 ok, 224 skipped | 2064275 records so far
+07:35:18 INFO | processed 20000 games | 19773 ok, 227 skipped | 2176963 records so far
+07:35:28 INFO | processed 21000 games | 20773 ok, 227 skipped | 2286017 records so far
+07:35:37 INFO | processed 22000 games | 21773 ok, 227 skipped | 2392968 records so far
+07:35:46 INFO | processed 23000 games | 22758 ok, 242 skipped | 2489742 records so far
+07:35:56 INFO | processed 24000 games | 23755 ok, 245 skipped | 2597006 records so far
+07:36:07 INFO | processed 25000 games | 24752 ok, 248 skipped | 2703373 records so far
+07:36:18 INFO | processed 26000 games | 25751 ok, 249 skipped | 2813190 records so far
+07:36:29 INFO | processed 27000 games | 26750 ok, 250 skipped | 2928007 records so far
+07:36:39 INFO | processed 28000 games | 27748 ok, 252 skipped | 3044180 records so far
+07:36:50 INFO | processed 29000 games | 28746 ok, 254 skipped | 3156930 records so far
+07:37:00 INFO | processed 30000 games | 29746 ok, 254 skipped | 3264384 records so far
+07:37:10 INFO | processed 31000 games | 30745 ok, 255 skipped | 3376809 records so far
+07:37:21 INFO | processed 32000 games | 31745 ok, 255 skipped | 3486047 records so far
+07:37:31 INFO | processed 33000 games | 32742 ok, 258 skipped | 3593671 records so far
+07:37:42 INFO | processed 34000 games | 33742 ok, 258 skipped | 3710501 records so far
+07:37:53 INFO | processed 35000 games | 34738 ok, 262 skipped | 3821332 records so far
+07:38:03 INFO | processed 36000 games | 35737 ok, 263 skipped | 3932125 records so far
+07:38:14 INFO | processed 37000 games | 36736 ok, 264 skipped | 4042569 records so far
+07:38:25 INFO | processed 38000 games | 37735 ok, 265 skipped | 4155087 records so far
+07:38:35 INFO | processed 39000 games | 38731 ok, 269 skipped | 4263079 records so far
+07:38:44 INFO | processed 40000 games | 39729 ok, 271 skipped | 4363548 records so far
+07:38:54 INFO | processed 41000 games | 40726 ok, 274 skipped | 4470740 records so far
+07:39:04 INFO | processed 42000 games | 41725 ok, 275 skipped | 4580038 records so far
+07:39:14 INFO | processed 43000 games | 42725 ok, 275 skipped | 4690936 records so far
+07:39:19 INFO | done. 43127 games OK, 275 skipped. 4738008 JNNW records written to /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (180044312 bytes).
+07:39:29 INFO | processed 1000 games | 998 ok, 2 skipped | 106774 records so far
+07:39:39 INFO | processed 2000 games | 1951 ok, 49 skipped | 210712 records so far
+07:39:49 INFO | processed 3000 games | 2951 ok, 49 skipped | 320224 records so far
+07:39:54 INFO | done. 3418 games OK, 49 skipped. 371449 JNNW records written to /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-2000.jnnw (14115070 bytes).
+
+==========================================================
+             0014 FETCH-MASTER-GAMES SUMMARY
+==========================================================
+  DB path:        /root/jass/data/expert_games.db
+ls: cannot access '"/root/jass/data/expert_games.db"': No such file or directory
+  DB size:        
+  fetch wall:     5182s (1.4h)
+  convert wall:   480s
+  master-1600:    MISSING
+  master-2000:    MISSING
+  fetch rc:       0
+  convert rc:     0 / 0
+==========================================================
