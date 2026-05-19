@@ -1,0 +1,7 @@
+{
+  "job_id": "0017-bench-nnue-time",
+  "script": "jobs/queue/0017-bench-nnue-time.sh",
+  "pid": 299097,
+  "started_at": "2026-05-19T21:29:51+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
