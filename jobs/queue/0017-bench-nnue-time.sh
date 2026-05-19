@@ -34,19 +34,30 @@ mkdir -p "$ART"
 # usable bench number — and running the same script against both
 # in sequence (manual re-queue between) lets us measure the
 # Cycle 8 delta directly.
+#
+# Path note: 0016's script was renamed from 0015 → 0016 in PR #47 but
+# its internal OUT_BASE still says 0015 (a stale literal). Until that
+# is fixed in a follow-up PR, the Cycle-8 master-blend NNUE actually
+# lands under the 0015-* path on disk. We probe both locations and use
+# whichever has the freshest *-q.bin.
 NNUE_0016=$(ls -t /root/jass/jobs/results/0016-train-with-master-blend/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+NNUE_0015=$(ls -t /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 NNUE_0011=$(ls -t /root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 
 if [ -n "$NNUE_0016" ] && [ -f "$NNUE_0016" ]; then
     NNUE="$NNUE_0016"
-    SOURCE="0016 (Cycle 8 master-blend)"
+    SOURCE="0016 (Cycle 8 master-blend, post-rename path)"
+elif [ -n "$NNUE_0015" ] && [ -f "$NNUE_0015" ]; then
+    NNUE="$NNUE_0015"
+    SOURCE="0016 (Cycle 8 master-blend, stale-0015 path)"
 elif [ -n "$NNUE_0011" ] && [ -f "$NNUE_0011" ]; then
     NNUE="$NNUE_0011"
     SOURCE="0011 (pre-master-blend baseline)"
 else
-    echo "ABORT: no quantised NNUE found from 0016 or 0011."
+    echo "ABORT: no quantised NNUE found from 0016/0015/0011."
     echo "       Looked at:"
     echo "         /root/jass/jobs/results/0016-…/artefacts.src/nnue-*-q.bin"
+    echo "         /root/jass/jobs/results/0015-…/artefacts.src/nnue-*-q.bin"
     echo "         /root/jass/jobs/results/0011-…/artefacts.src/nnue-*-q.bin"
     echo "Re-queue this job once at least one training run has finished."
     exit 3
