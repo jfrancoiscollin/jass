@@ -1,8 +1,8 @@
 {
   "job_id": "0016-train-with-master-blend",
-  "snapshot_at": "2026-05-19T15:32:01+00:00",
+  "snapshot_at": "2026-05-19T15:37:11+00:00",
   "started_at": "2026-05-19T15:16:59+00:00",
-  "elapsed_seconds": 902,
+  "elapsed_seconds": 1212,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 290253       1       15:02  0.0  0.0 bash\n 290255  290253       15:02  0.0  0.0 bash\n 290335  290255       14:58  176 91.9 python3\n 290336  290255       14:58  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 290253       1       20:12  0.0  0.0 bash\n 290255  290253       20:12  0.0  0.0 bash\n 290335  290255       20:08  176 92.0 python3\n 290336  290255       20:08  0.0  0.0 tee\n"
 }
