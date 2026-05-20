@@ -219,24 +219,28 @@ class JassEngine(EngineProc):
     """Adapter for Jass's HUB-flavoured protocol."""
     def __init__(self, path: str, label: str = "Jass",
                  no_book: bool = True, no_nnue: bool = False,
-                 nnue_path: str | None = None):
+                 nnue_path: str | None = None,
+                 book_path: str | None = None):
         argv = [path]
         if no_nnue: argv.append("--no-nnue")
         elif nnue_path:
             argv += ["--nnue", nnue_path]
+        if book_path:
+            # Load a custom JBOK book (e.g. the 77K-position book from 0013).
+            # When set, no_book is ignored — the user explicitly opted in to a
+            # book, presumably for a "fair-comparison" calibration where Scan
+            # also has its book enabled.
+            argv += ["--book", book_path]
         super().__init__(argv, label)
         # Handshake
         self._send("hello")
         self._read_until(lambda l: l.startswith("ready"))
-        if no_book:
+        if no_book and not book_path:
             # Cleaner test of the eval — engines play their own moves
             # from the very first ply rather than parroting opening lines.
-            # Jass exposes book toggling via setoption.
-            pass  # we use Jass's `setoption use_book false` if available
-        # We just disable book by ignoring the opening; the orchestrator
-        # always feeds a FEN, and the book matters only at fixed
-        # positions. The default Jass build has a tiny hard-coded book
-        # but it doesn't bias scout-class results materially.
+            # The default Jass build has a tiny hard-coded book but it
+            # doesn't bias scout-class results materially.
+            pass
 
     def new_game(self) -> None:
         # Reset state — `position startpos` does that.
@@ -268,7 +272,8 @@ class JassEngine(EngineProc):
 
 class ScanEngine(EngineProc):
     """Adapter for Scan's HUB v2 protocol."""
-    def __init__(self, path: str, label: str = "Scan", no_book: bool = True):
+    def __init__(self, path: str, label: str = "Scan",
+                 no_book: bool = True, bb_size: int = 0):
         # Scan loads `scan.ini` and `data/` from its working directory,
         # so we cd into its install dir before launching.
         scan_dir = str(Path(path).resolve().parent)
@@ -278,6 +283,15 @@ class ScanEngine(EngineProc):
         self._read_until(lambda l: l.startswith("wait"))
         if no_book:
             self._send("set-param name=book value=false")
+        if bb_size > 0:
+            # Enable Scan's endgame bitbases. value=6 covers up to 6 pieces,
+            # value=7 covers up to 7. Scan ships the bitbase data in the
+            # `data/` directory of the rhalbersma/scan repo so no extra
+            # download is needed. Used for the "fair-comparison" calibrate
+            # — without this flag, Scan plays endgames without any
+            # tablebase help, which is asymmetric vs jass's built-in
+            # KvK/KKvK retrograde-analysis bitbase.
+            self._send(f"set-param name=bb-size value={bb_size}")
         self._send("init")
         self._read_until(lambda l: l.startswith("ready"))
 
@@ -500,6 +514,24 @@ def main(argv):
                              "referee keeps the default network.")
     g_nnue.add_argument("--no-nnue", action="store_true",
                         help="force Jass to fall back to the handcrafted eval")
+    # Fair-comparison knobs. Disabled by default so the eval-vs-eval
+    # measurement stays clean; the new 0019 job opts them in.
+    p.add_argument("--jass-book", metavar="PATH", default=None,
+                   help="optional JBOK file loaded by Jass via --book. "
+                        "Pair with --scan-book on for a fair-comparison "
+                        "calibrate where both engines have access to their "
+                        "opening book.")
+    p.add_argument("--scan-book", choices=("on", "off"), default="off",
+                   help="when 'off' (default) the script tells Scan "
+                        "`set-param name=book value=false` to disable its "
+                        "own opening book — the apples-to-apples eval test. "
+                        "'on' leaves Scan's book at its native value (true).")
+    p.add_argument("--scan-bb-size", type=int, default=0,
+                   help="Scan endgame-bitbase coverage. 0 (default) = "
+                        "disabled, matches the 'no tablebase' eval test. "
+                        "6 enables the up-to-6-pieces bitbase shipped in "
+                        "rhalbersma/scan's data/ directory; 7 the full "
+                        "bitbase. Used in the fair-comparison calibrate.")
     args = p.parse_args(argv)
     if args.depth is None and args.movetime is None:
         args.depth = 8  # back-compat default
@@ -508,10 +540,16 @@ def main(argv):
 
     openings = opening_pool_via_jass(args.jass)
     print(f"opening pool: {len(openings)} positions")
+    print(f"jass setup:   nnue={args.nnue or ('(handcrafted)' if args.no_nnue else '(default)')}"
+          f"  book={args.jass_book or '(default/none)'}")
+    print(f"scan setup:   book={args.scan_book}  bb-size={args.scan_bb_size}")
 
     jass = JassEngine(args.jass, label="Jass-player",
-                      no_nnue=args.no_nnue, nnue_path=args.nnue)
-    scan = ScanEngine(args.scan, label="Scan-player")
+                      no_nnue=args.no_nnue, nnue_path=args.nnue,
+                      book_path=args.jass_book)
+    scan = ScanEngine(args.scan, label="Scan-player",
+                      no_book=(args.scan_book == "off"),
+                      bb_size=args.scan_bb_size)
     referee = Referee(args.jass)
 
     a_wins = b_wins = draws = 0
