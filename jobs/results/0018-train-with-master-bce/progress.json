@@ -1,8 +1,8 @@
 {
   "job_id": "0018-train-with-master-bce",
-  "snapshot_at": "2026-05-20T00:10:11+00:00",
+  "snapshot_at": "2026-05-20T00:15:16+00:00",
   "started_at": "2026-05-19T22:52:01+00:00",
-  "elapsed_seconds": 4690,
+  "elapsed_seconds": 4995,
   "artefacts": [
     {
       "name": "nnue-128-64.bin",
@@ -29,5 +29,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300533       1    01:18:09  0.0  0.0 bash\n 300535  300533    01:18:09  0.0  0.0 bash\n 300609  300535    01:18:06  183 92.0 python3\n 300610  300535    01:18:06  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300533       1    01:23:14  0.0  0.0 bash\n 300535  300533    01:23:14  0.0  0.0 bash\n 300609  300535    01:23:11  184 91.8 python3\n 300610  300535    01:23:11  0.0  0.0 tee\n"
 }
