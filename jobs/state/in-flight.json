@@ -1,7 +1,0 @@
-{
-  "job_id": "0018-train-with-master-bce",
-  "script": "jobs/queue/0018-train-with-master-bce.sh",
-  "pid": 300533,
-  "started_at": "2026-05-19T22:52:01+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
