@@ -1,13 +1,13 @@
 {
   "job_id": "0017-bench-nnue-time",
-  "snapshot_at": "2026-05-20T05:21:06+00:00",
+  "snapshot_at": "2026-05-20T05:26:11+00:00",
   "started_at": "2026-05-20T05:05:12+00:00",
-  "elapsed_seconds": 954,
+  "elapsed_seconds": 1259,
   "artefacts": [
     {
       "name": "bench.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 304975       1       15:53  0.0  0.0 bash\n 304977  304975       15:53  0.0  0.0 bash\n 305036  304977       15:53  0.0  0.0 python3\n 305037  304977       15:53  0.0  0.0 tee\n 305039  305036       15:53 50.8  0.2 jass\n 305040  305036       15:53 49.1  0.2 jass\n 305041  305036       15:53  0.0  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 304975       1       20:59  0.0  0.0 bash\n 304977  304975       20:59  0.0  0.0 bash\n 305036  304977       20:58  0.0  0.0 python3\n 305037  304977       20:58  0.0  0.0 tee\n 305039  305036       20:58 50.4  0.2 jass\n 305040  305036       20:58 49.4  0.2 jass\n 305041  305036       20:58  0.0  0.1 jass\n"
 }
