@@ -1,0 +1,35 @@
+=== fair-comparison calibrate setup ===
+  NNUE under test:  /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+    source:         0018 (Cycle 8 v5, hybrid loss BCE)
+  opening book:     /root/jass/jobs/results/0013-build-book/artefacts/openings-77k-depth12.bok
+-rw-r--r-- 1 root root 1.2M May 18 11:19 /root/jass/jobs/results/0013-build-book/artefacts/openings-77k-depth12.bok
+-rw-r--r-- 1 root root 147K May 20 00:39 /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+
+=== host facts ===
+host:   ubuntu-16gb-hel1-2
+nproc:  4
+mem:    15Gi
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass:   Jass 0.0.1
+scan: /root/jass/.scan/scan_linux (229K)
+scan data files: 10 entries
+
+=== Scan HUB handshake sanity ===
+id name=Scan version=3.1 author="Fabien Letouzey" country=France
+param name=variant value=normal type=enum values="normal killer bt frisian losing"
+param name=book value=true type=bool
+param name=book-ply value=4 type=int min=0 max=20
+param name=book-margin value=4 type=int min=0 max=100
+param name=ponder value=false type=bool
+param name=threads value=1 type=int min=1 max=16
+param name=tt-size value=24 type=int min=16 max=30
+param name=bb-size value=0 type=int min=0 max=7
+wait
+
+=== running calibrate_vs_scan.py (54 games, 1.0 s/move, fair) ===
+  flags: --jass-book openings-77k-depth12.bok
+         --scan-book on  --scan-bb-size 6
