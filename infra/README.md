@@ -101,6 +101,26 @@ detached `at`/`systemd-run`" hack: the flag is fully version-
 controlled and reversible by anyone with write access to the repo,
 no SSH required.
 
+## Killing a stuck in-flight job (GitOps, no SSH)
+
+If a job hangs (e.g. an engine wedged on a bad command), commit an
+empty `jobs/state/kill-in-flight` flag and push:
+
+```bash
+mkdir -p jobs/state
+touch jobs/state/kill-in-flight
+git add jobs/state/kill-in-flight
+git commit -m "kill stuck job"
+git push
+```
+
+On the next tick the runner SIGTERMs the wrapper's whole process
+group, waits 2 s, SIGKILLs survivors, then deletes the flag (so a
+future job isn't killed by a leftover flag). The tick after that
+reaps the dead job and marks it `failed` in `status.json` with the
+normal exit-code path. To re-queue with a fix: edit the script, then
+`rm -r jobs/results/<id>/` and push.
+
 ## Conventions
 
 - One job runs at a time (the runner reserves itself via
