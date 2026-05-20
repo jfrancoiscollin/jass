@@ -10,12 +10,17 @@
 #              and bitbases off — pure eval contest. 0019 enables:
 #                * jass: --book openings-77k-depth12.bok from 0013
 #                * scan: native book (set-param book=true)
-#                * scan: 6-piece bitbase (set-param bb-size=6, data
-#                        shipped in rhalbersma/scan's data/ dir)
 #                * jass: native KvK / KKvK bitbase (always on, no flag)
-#              Still asymmetric in the endgame (Scan: up to 6 pieces,
-#              jass: 3 kings max via retrograde) — extending jass's
-#              bitbase is a Cycle 9+ project.
+#                * scan: NO bitbase (bb-size=0 default). The earlier
+#                        attempt with bb-size=6 hung Scan for 6.5h —
+#                        rhalbersma/scan's data/ dir doesn't actually
+#                        ship the 6-piece bitbase data (readme.txt
+#                        warns "bitbases require a separate copy or
+#                        download"). So we keep Scan's bitbase off
+#                        and accept the residual endgame asymmetry
+#                        (jass: KvK/KKvK, Scan: nothing in 0019).
+#              Reading the delta as "ELO contribution from book
+#              alone" (vs 0012 which had both books AND bitbases off).
 #
 #              Read the delta (0019 score rate − 0012 score rate) as
 #              "how much do book + endgame add to the engine on top
@@ -105,7 +110,7 @@ echo "=== Scan HUB handshake sanity ==="
 echo
 echo "=== running calibrate_vs_scan.py (54 games, 1.0 s/move, fair) ==="
 echo "  flags: --jass-book $(basename "$BOOK_FILE")"
-echo "         --scan-book on  --scan-bb-size 6"
+echo "         --scan-book on  (no --scan-bb-size — bitbase data not shipped)"
 START=$(date +%s)
 python3 tools/calibrate_vs_scan.py \
     --jass         /root/jass/build/jass \
@@ -115,7 +120,6 @@ python3 tools/calibrate_vs_scan.py \
     --nnue         "$NNUE_FILE" \
     --jass-book    "$BOOK_FILE" \
     --scan-book    on \
-    --scan-bb-size 6 \
     2>&1 | tee "$ART/calibrate.log"
 RC=${PIPESTATUS[0]}
 WALL=$(( $(date +%s) - START ))
@@ -128,7 +132,7 @@ echo "  NNUE under test:    $(basename "$NNUE_FILE")"
 echo "  NNUE source:        $NNUE_SOURCE"
 echo "  jass book:          $(basename "$BOOK_FILE") ($(stat -c%s "$BOOK_FILE") B)"
 echo "  scan book:          on  (native)"
-echo "  scan bb-size:       6  (6-piece bitbase)"
+echo "  scan bb-size:       0  (bitbase data not shipped in rhalbersma/scan)"
 echo "  budget:             1.0 s/move"
 echo "  wall:               ${WALL}s ($(python3 -c "print(round($WALL/60,1))") min)"
 echo "  rc:                 $RC"

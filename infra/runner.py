@@ -42,6 +42,7 @@ import signal
 import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO_DIR    = Path("/root/jass")
@@ -49,6 +50,7 @@ QUEUE_DIR   = REPO_DIR / "jobs" / "queue"
 RESULTS_DIR = REPO_DIR / "jobs" / "results"
 STATE_DIR   = REPO_DIR / "jobs" / "state"
 IN_FLIGHT   = STATE_DIR / "in-flight.json"
+KILL_FLAG   = STATE_DIR / "kill-in-flight"
 
 MAX_LOG_BYTES       = 1_000_000   # tail kept in jobs/results/<id>/output.log
 
@@ -168,6 +170,58 @@ def pick_next_job() -> Path | None:
                 continue
         return c
     return None
+
+
+def kill_in_flight_if_requested() -> None:
+    """GitOps kill: if `jobs/state/kill-in-flight` is committed, SIGTERM
+    then SIGKILL the wrapper's process group, delete the flag, and let
+    the next reap finalize the job as failed normally.
+
+    Lets us stop a stuck or runaway job (e.g. a Scan engine hanging on a
+    bad set-param) without SSH'ing into the host. Commit the flag file,
+    push, wait one tick (~5 min); the runner kills the wrapper, removes
+    the flag (so we don't kill the next job too), and the tick after
+    that picks the next queued script normally.
+    """
+    if not KILL_FLAG.exists():
+        return
+    info = read_in_flight()
+    if not info:
+        # No job to kill — still clean up the flag so it doesn't sit
+        # around and slay an unrelated future job.
+        KILL_FLAG.unlink()
+        commit_and_push("runner: drop stale kill-in-flight (no job running)",
+                        [STATE_DIR])
+        return
+    job_id = info["job_id"]
+    out_dir = RESULTS_DIR / job_id
+    wrapper_pid_file = out_dir / "wrapper.pid"
+    wrapper_pid = info.get("pid", -1)
+    if wrapper_pid_file.exists():
+        try:
+            wrapper_pid = int(wrapper_pid_file.read_text().strip())
+        except ValueError:
+            pass
+    if wrapper_pid > 0 and alive(wrapper_pid):
+        try:
+            pgid = os.getpgid(wrapper_pid)
+        except ProcessLookupError:
+            pgid = wrapper_pid
+        try:
+            os.killpg(pgid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        # Give the process group a moment to clean up, then SIGKILL.
+        time.sleep(2)
+        if alive(wrapper_pid):
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+    KILL_FLAG.unlink()
+    commit_and_push(
+        f"runner: killed {job_id} via kill-in-flight flag",
+        [STATE_DIR])
 
 
 def reap_finished_job() -> None:
@@ -366,6 +420,10 @@ def main() -> int:
         print(f"missing {REPO_DIR}", file=sys.stderr)
         return 1
     git_pull()
+    # GitOps kill: honour the kill-in-flight flag before reaping, so
+    # the wrapper is killed first and the reap sees a dead PID and
+    # finalizes the job as failed normally.
+    kill_in_flight_if_requested()
     # Always reap a finished job and heartbeat a still-running one,
     # even if the runner is paused — we want in-flight work to
     # complete cleanly and stay visible via progress.json.
