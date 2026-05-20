@@ -1,13 +1,13 @@
 {
   "job_id": "0019-calibrate-vs-scan-fair",
-  "snapshot_at": "2026-05-20T21:28:43+00:00",
+  "snapshot_at": "2026-05-20T21:33:47+00:00",
   "started_at": "2026-05-20T11:02:04+00:00",
-  "elapsed_seconds": 37599,
+  "elapsed_seconds": 37903,
   "artefacts": [
     {
       "name": "calibrate.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 309429       1    10:26:38  0.0  0.0 bash\n 309431  309429    10:26:38  0.0  0.0 bash\n 309500  309431    10:26:37  0.0  0.1 python3\n 309501  309431    10:26:37  0.0  0.0 tee\n 309503  309500    10:26:37  0.0  0.1 jass\n 309504  309500    10:26:37  0.0  0.1 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 309429       1    10:31:42  0.0  0.0 bash\n 309431  309429    10:31:42  0.0  0.0 bash\n 309500  309431    10:31:41  0.0  0.1 python3\n 309501  309431    10:31:41  0.0  0.0 tee\n 309503  309500    10:31:40  0.0  0.1 jass\n 309504  309500    10:31:40  0.0  0.1 scan_linux\n"
 }
