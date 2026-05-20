@@ -138,6 +138,22 @@ def pick_next_job() -> Path | None:
         return None
     # Sorted by filename so 0001-* runs before 0002-*.
     candidates = sorted(p for p in QUEUE_DIR.glob("*.sh") if p.is_file())
+
+    # Multi-host scope filter. When set, each host only picks scripts
+    # whose stem starts with the given prefix — that's how we keep two
+    # CCX23 hosts in a single GitOps repo from racing for the same job.
+    #
+    # Set on the host via the systemd unit's EnvironmentFile (typically
+    # `/etc/jass-runner/host.env` containing a line like
+    # `JASS_HOST_FILTER=0020a-`). When unset (default), every host picks
+    # every job — the single-host behaviour we've had since day one.
+    host_filter = os.environ.get("JASS_HOST_FILTER", "").strip()
+    if host_filter:
+        before = len(candidates)
+        candidates = [c for c in candidates if c.stem.startswith(host_filter)]
+        print(f"runner: JASS_HOST_FILTER={host_filter!r} keeps "
+              f"{len(candidates)}/{before} candidate jobs", flush=True)
+
     for c in candidates:
         # A job is "already processed" if jobs/results/<id>/status.json
         # exists with state in {completed, failed}.
