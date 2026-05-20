@@ -1,0 +1,7 @@
+{
+  "job_id": "0017-bench-nnue-time",
+  "state": "running",
+  "started_at": "2026-05-20T05:05:12+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 304975
+}
