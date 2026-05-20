@@ -19,16 +19,44 @@ OUT_BASE="/root/jass/jobs/results/0012-calibrate-vs-scan"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
-# Prerequisite: 0011 produced a quantized JNNQ network.
-NNUE_FILE=$(ls -t /root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
-if [ -z "$NNUE_FILE" ] || [ ! -f "$NNUE_FILE" ]; then
-    echo "ABORT: no nnue-*-q.bin found from 0011. Did 0011 finish successfully?"
-    ls -la /root/jass/jobs/results/0011-train-and-bench/artefacts.src/ 2>/dev/null \
-        || echo "  (0011 results directory missing entirely)"
+# Prerequisite: a quantised NNUE from any of our training jobs.
+# Lookup order (newest cycle wins):
+#   1. 0018 — Cycle 8 v5 (hybrid loss BCE) — current best by ~250 ELO
+#             vs baseline at 1.0 s/move (PR #59 result: +304 ELO vs
+#             handcrafted, vs 0011's +55 ELO).
+#   2. 0016 (post-rename) / 0015 (stale path) — Cycle 8 v1-v4 (pure MSE).
+#             Regressed vs baseline; included only as a fallback if 0018
+#             somehow isn't there.
+#   3. 0011 — pre-master-blend baseline.
+NNUE_0018=$(ls -t /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+NNUE_0016=$(ls -t /root/jass/jobs/results/0016-train-with-master-blend/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+NNUE_0015=$(ls -t /root/jass/jobs/results/0015-train-with-master-blend/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+NNUE_0011=$(ls -t /root/jass/jobs/results/0011-train-and-bench/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+
+if [ -n "$NNUE_0018" ] && [ -f "$NNUE_0018" ]; then
+    NNUE_FILE="$NNUE_0018"
+    NNUE_SOURCE="0018 (Cycle 8 v5, hybrid loss BCE)"
+elif [ -n "$NNUE_0016" ] && [ -f "$NNUE_0016" ]; then
+    NNUE_FILE="$NNUE_0016"
+    NNUE_SOURCE="0016 (Cycle 8 v1-v4, MSE)"
+elif [ -n "$NNUE_0015" ] && [ -f "$NNUE_0015" ]; then
+    NNUE_FILE="$NNUE_0015"
+    NNUE_SOURCE="0016 (Cycle 8 v1-v4, MSE, stale-0015 path)"
+elif [ -n "$NNUE_0011" ] && [ -f "$NNUE_0011" ]; then
+    NNUE_FILE="$NNUE_0011"
+    NNUE_SOURCE="0011 (pre-master-blend baseline)"
+else
+    echo "ABORT: no quantised NNUE found from 0018/0016/0015/0011."
+    echo "       Looked at:"
+    echo "         /root/jass/jobs/results/0018-…/artefacts.src/nnue-*-q.bin"
+    echo "         /root/jass/jobs/results/0016-…/artefacts.src/nnue-*-q.bin"
+    echo "         /root/jass/jobs/results/0015-…/artefacts.src/nnue-*-q.bin"
+    echo "         /root/jass/jobs/results/0011-…/artefacts.src/nnue-*-q.bin"
     exit 3
 fi
 BEST_NNUE_NAME=$(basename "$NNUE_FILE")
 echo "=== NNUE under test: $NNUE_FILE ==="
+echo "  source: $NNUE_SOURCE"
 ls -lh "$NNUE_FILE"
 
 echo
@@ -80,6 +108,7 @@ echo "=========================================================="
 echo "             0012 CALIBRATE-VS-SCAN SUMMARY"
 echo "=========================================================="
 echo "  NNUE under test:  $BEST_NNUE_NAME"
+echo "  NNUE source:      $NNUE_SOURCE"
 echo "  scan source:      rhalbersma/scan@master (pre-built scan_linux)"
 echo "  budget:           1.0 s/move (no bitbases)"
 echo "  wall:             ${WALL}s ($(python3 -c "print(round($WALL/60,1))") min)"

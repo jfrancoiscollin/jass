@@ -1,9 +1,0 @@
-{
-  "job_id": "0012-calibrate-vs-scan",
-  "state": "completed",
-  "exit_code": 0,
-  "started_at": "2026-05-18T15:03:52+00:00",
-  "ended_at": "2026-05-18T16:24:48+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "artefacts_server_path": "/root/jass/jobs/results/0012-calibrate-vs-scan/artefacts.src"
-}
