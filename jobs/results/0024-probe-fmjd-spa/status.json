@@ -1,7 +1,9 @@
 {
   "job_id": "0024-probe-fmjd-spa",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-21T19:59:15+00:00",
+  "ended_at": "2026-05-21T20:04:17+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 335888
+  "artefacts_server_path": "/root/jass/jobs/results/0024-probe-fmjd-spa/artefacts.src"
 }

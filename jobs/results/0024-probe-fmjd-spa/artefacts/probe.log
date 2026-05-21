@@ -1,0 +1,66 @@
+=== Phase 1: SPA HTML ===
+OK (583 B)
+
+=== Phase 2: linked JS bundles ===
+found 1 scripts referenced
+  [1] https://results.fmjd.org/games/static/js/main.0250e009.js
+      -> 476965 B
+
+=== Phase 3: grep JS for endpoints ===
+--- pattern: "/[a-zA-Z0-9_/?&=.-]*api[a-zA-Z0-9_/?&=.-]*" ---
+--- pattern: "/[a-zA-Z0-9_/?&=.-]*pdn[a-zA-Z0-9_/?&=.-]*" ---
+--- pattern: "/[a-zA-Z0-9_/?&=.-]*download[a-zA-Z0-9_/?&=.-]*" ---
+--- pattern: "https?://[a-zA-Z0-9_/?&=.-]+\.(json|pdn|php)[^"]*" ---
+"https://fmjd.space/game_open.php"
+
+=== Phase 4: blind probe of likely PDN URLs ===
+  404   1423 B  https://results.fmjd.org/games/api/games?key=2026/fd_2333
+     1423 B  https://results.fmjd.org/games/api/games?key=2026[@SL]fd_2333
+  404   1423 B  https://results.fmjd.org/games/api/tournament?key=2026/fd_2333
+  404   1423 B  https://results.fmjd.org/games/api/pdn?key=2026/fd_2333
+  404   1423 B  https://results.fmjd.org/games/data/2026/fd_2333/all.pdn
+  404   1423 B  https://results.fmjd.org/games/data/2026/fd_2333/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/fd_2333/tournament.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/fd_2333/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/fd_2333/all_games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/fd_2333/games/all.pdn
+  404   1423 B  https://results.fmjd.org/games/api/games?key=2026/f_2786
+     1423 B  https://results.fmjd.org/games/api/games?key=2026[@SL]f_2786
+  404   1423 B  https://results.fmjd.org/games/api/tournament?key=2026/f_2786
+  404   1423 B  https://results.fmjd.org/games/api/pdn?key=2026/f_2786
+  404   1423 B  https://results.fmjd.org/games/data/2026/f_2786/all.pdn
+  404   1423 B  https://results.fmjd.org/games/data/2026/f_2786/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_2786/tournament.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_2786/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_2786/all_games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_2786/games/all.pdn
+  404   1423 B  https://results.fmjd.org/games/api/games?key=2026/f_1926
+     1423 B  https://results.fmjd.org/games/api/games?key=2026[@SL]f_1926
+  404   1423 B  https://results.fmjd.org/games/api/tournament?key=2026/f_1926
+  404   1423 B  https://results.fmjd.org/games/api/pdn?key=2026/f_1926
+  404   1423 B  https://results.fmjd.org/games/data/2026/f_1926/all.pdn
+  404   1423 B  https://results.fmjd.org/games/data/2026/f_1926/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_1926/tournament.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_1926/games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_1926/all_games.pdn
+  404   1423 B  https://results.fmjd.org/tournaments/2026/f_1926/games/all.pdn
+  404   1423 B  https://results.fmjd.org/games/api/games?id=4993
+  404   1423 B  https://results.fmjd.org/games/api/tournament/4993
+  404   1423 B  https://results.fmjd.org/games/api/tournament/4993/pdn
+  404   1423 B  https://results.fmjd.org/games/api/pdn?id=4993
+  404   1423 B  https://results.fmjd.org/games/pdn/4993
+  404   1423 B  https://results.fmjd.org/games/pdn/4993.pdn
+  404   1423 B  https://results.fmjd.org/pdn/4993.pdn
+  404   1423 B  https://results.fmjd.org/download/pdn/4993
+
+==========================================================
+       0024 FMJD-SPA-PROBE SUMMARY
+==========================================================
+  scripts downloaded:  1
+  endpoint patterns:   see Phase 3 above
+  URL probes:          38 (see Phase 4 above)
+==========================================================
+
+Next: identify the working URL in Phase 4 (HTTP 200 + non-trivial
+body), confirm it returns PDN/JSON, and code the proper scraper
+as 0025.
