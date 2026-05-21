@@ -1,7 +1,9 @@
 {
   "job_id": "0029-diag-book-jass-vs-jass",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-21T21:10:11+00:00",
+  "ended_at": "2026-05-21T21:45:59+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 337265
+  "artefacts_server_path": "/root/jass/jobs/results/0029-diag-book-jass-vs-jass/artefacts.src"
 }
