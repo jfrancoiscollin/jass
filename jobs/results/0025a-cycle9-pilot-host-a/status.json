@@ -1,0 +1,7 @@
+{
+  "job_id": "0025a-cycle9-pilot-host-a",
+  "state": "running",
+  "started_at": "2026-05-21T22:26:41+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 338277
+}
