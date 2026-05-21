@@ -1,7 +1,0 @@
-{
-  "job_id": "0024-probe-fmjd-spa",
-  "script": "jobs/queue/0024-probe-fmjd-spa.sh",
-  "pid": 335888,
-  "started_at": "2026-05-21T19:59:15+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
