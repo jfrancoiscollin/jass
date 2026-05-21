@@ -1,8 +1,8 @@
 {
   "job_id": "0022-build-master-book-and-calibrate",
-  "snapshot_at": "2026-05-21T15:10:11+00:00",
+  "snapshot_at": "2026-05-21T15:15:33+00:00",
   "started_at": "2026-05-21T14:16:11+00:00",
-  "elapsed_seconds": 3240,
+  "elapsed_seconds": 3562,
   "artefacts": [
     {
       "name": "build.log",
@@ -21,5 +21,5 @@
       "size_bytes": 325114
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 332657       1       53:59  0.0  0.0 bash\n 332659  332657       53:59  0.0  0.0 bash\n 332745  332659       53:47  0.0  0.1 python3\n 332746  332659       53:47  0.0  0.0 tee\n 332748  332745       53:46 50.0  0.2 jass\n 332749  332745       53:46 49.8  2.1 scan_linux\n 332751  332745       53:46  0.0  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 332657       1       59:21  0.0  0.0 bash\n 332659  332657       59:21  0.0  0.0 bash\n 332745  332659       59:08  0.0  0.1 python3\n 332746  332659       59:08  0.0  0.0 tee\n 332748  332745       59:08 50.0  0.2 jass\n 332749  332745       59:08 49.8  2.1 scan_linux\n 332751  332745       59:08  0.0  0.1 jass\n"
 }
