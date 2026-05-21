@@ -1,0 +1,13 @@
+2026-05-21 14:16:13,648 INFO build_master_book | db=/root/jass/data/expert_games.db selected 3504 games (rating>=2000, variant=standard)
+2026-05-21 14:16:15,197 INFO build_master_book |   processed 500/3504 games, unique positions=4188, ok=500 rejected=0
+2026-05-21 14:16:16,826 INFO build_master_book |   processed 1000/3504 games, unique positions=7636, ok=999 rejected=0
+2026-05-21 14:16:18,322 INFO build_master_book |   processed 1500/3504 games, unique positions=10762, ok=1499 rejected=0
+2026-05-21 14:16:19,833 INFO build_master_book |   processed 2000/3504 games, unique positions=13383, ok=1953 rejected=0
+2026-05-21 14:16:21,311 INFO build_master_book |   processed 2500/3504 games, unique positions=16151, ok=2453 rejected=0
+2026-05-21 14:16:22,826 INFO build_master_book |   processed 3000/3504 games, unique positions=18635, ok=2953 rejected=0
+2026-05-21 14:16:24,366 INFO build_master_book |   processed 3500/3504 games, unique positions=21000, ok=3453 rejected=0
+2026-05-21 14:16:24,378 INFO build_master_book | replay done: 3457 ok, 0 rejected, 21040 unique positions
+2026-05-21 14:16:24,388 INFO build_master_book | wrote 2770 entries to /root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts.src/master-pairs.tsv (filtered 18270 below min_count=3)
+  added 1000 entries
+  added 2000 entries
+wrote 2771 entries to /root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts.src/master-book.bok (added=2770, skipped=0)

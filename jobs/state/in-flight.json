@@ -1,7 +1,0 @@
-{
-  "job_id": "0022-build-master-book-and-calibrate",
-  "script": "jobs/queue/0022-build-master-book-and-calibrate.sh",
-  "pid": 332657,
-  "started_at": "2026-05-21T14:16:11+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

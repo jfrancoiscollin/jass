@@ -1,7 +1,9 @@
 {
   "job_id": "0022-build-master-book-and-calibrate",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-21T14:16:11+00:00",
+  "ended_at": "2026-05-21T15:36:11+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 332657
+  "artefacts_server_path": "/root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts.src"
 }
