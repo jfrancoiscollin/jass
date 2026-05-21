@@ -1,0 +1,7 @@
+{
+  "job_id": "0029-diag-book-jass-vs-jass",
+  "script": "jobs/queue/0029-diag-book-jass-vs-jass.sh",
+  "pid": 337265,
+  "started_at": "2026-05-21T21:10:11+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
