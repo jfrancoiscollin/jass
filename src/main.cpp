@@ -235,26 +235,45 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          random_open_plies = 4;
     int          max_plies        = 200;
     int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
+    const char*  nnue_path        = nullptr;
 
-    if (argc > 2) {
-        int parsed = parse_int_or(argv[2], -1);
+    // Scan for `--nnue PATH` anywhere in the args; consume the pair and
+    // keep the rest as the historical positional slots so existing
+    // invocations stay backward-compatible. Without --nnue we fall back
+    // to the embedded default network — that's the Cycle 8 / pre-v5
+    // behaviour the depth-20 1M dataset (0010) was labelled with.
+    std::vector<char*> positional;
+    positional.reserve(static_cast<std::size_t>(argc));
+    for (int i = 0; i < argc; ++i) {
+        const std::string_view a{argv[i]};
+        if (a == "--nnue" && i + 1 < argc) {
+            nnue_path = argv[++i];
+        } else {
+            positional.push_back(argv[i]);
+        }
+    }
+    const int p_argc = static_cast<int>(positional.size());
+    char** const p_argv = positional.data();
+
+    if (p_argc > 2) {
+        int parsed = parse_int_or(p_argv[2], -1);
         if (parsed > 0) n = parsed;
     }
-    if (argc > 3) out_path = argv[3];
-    if (argc > 4) {
-        int v = parse_int_or(argv[4], -1);
+    if (p_argc > 3) out_path = p_argv[3];
+    if (p_argc > 4) {
+        int v = parse_int_or(p_argv[4], -1);
         if (v > 0) eval_depth = v;
     }
-    if (argc > 5) {
-        int v = parse_int_or(argv[5], -1);
+    if (p_argc > 5) {
+        int v = parse_int_or(p_argv[5], -1);
         if (v > 0) play_depth = v;
     }
-    if (argc > 6) {
-        int v = parse_int_or(argv[6], -1);
+    if (p_argc > 6) {
+        int v = parse_int_or(p_argv[6], -1);
         if (v > 0) max_plies = v;
     }
-    if (argc > 7) {
-        int v = parse_int_or(argv[7], -1);
+    if (p_argc > 7) {
+        int v = parse_int_or(p_argv[7], -1);
         if (v > 0) random_seed = v;
     }
 
@@ -264,6 +283,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " play_depth=" << play_depth
               << " max_plies=" << max_plies
               << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
+              << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
@@ -286,8 +306,22 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               * std::uint64_t{0x9E3779B97F4A7C15}
         : std::uint64_t{0x5eed5eed5eed5eed};
     std::mt19937_64 rng(seed_value);
+    // Load the user-supplied NNUE if any; keep the unique_ptr alive
+    // across the whole function so the Engine can borrow the pointer.
+    std::unique_ptr<INetwork> custom_nnue;
+    if (nnue_path) {
+        custom_nnue = load_network(nnue_path);
+        if (!custom_nnue) {
+            std::cerr << "error: cannot load NNUE weights from "
+                      << nnue_path << "\n";
+            return 1;
+        }
+    }
     Engine          e;
     e.use_book(false);
+    if (custom_nnue) {
+        e.set_nnue(custom_nnue.get());
+    }
 
     // Sample buffer for the current game. Flushed with the resolved
     // WDL label once the game ends.
@@ -725,14 +759,19 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   Higher eval_depth = cleaner\n"
                 "                                   training signal; non-zero\n"
                 "                                   `seed` shifts the RNG state\n"
                 "                                   so parallel shards generate\n"
-                "                                   independent games.\n"
+                "                                   independent games. Passing\n"
+                "                                   `--nnue PATH` labels with that\n"
+                "                                   custom network instead of the\n"
+                "                                   embedded default (used to relabel\n"
+                "                                   self-play data with the latest\n"
+                "                                   NNUE for a Cycle N+1 retraining).\n"
                 "  --build-book <fens.txt> <out.bok> [depth=12]\n"
                 "                                   read FENs (one per line, #\n"
                 "                                   comments OK) and write a JBOK\n"
