@@ -2,7 +2,7 @@
 # id: 0028-bench-cycle9-vs-v5
 # description: Cycle 9 pilot verdict — direct head-to-head between the
 #              Cycle 9 candidate NNUE (trained on the v5-labelled 1M
-#              corpus produced by 0025+0026+0027) and v5 itself (0018).
+#              corpus produced by 0025a+0027 single-host pilot) and v5 (0018).
 #              Same recipe, same hyper-params, same handcrafted opening
 #              pool — the only variable is the self-play dataset, so
 #              the score rate measures the corpus quality directly.

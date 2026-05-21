@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0025a-cycle9-pilot-host-a
-# description: Cycle 9 pilot, host A's half. Generates 500K WDL records
+# description: Cycle 9 pilot, single-host 500K. Generates 500K WDL records
 #              labelled by the v5 NNUE (0018) — this is the whole point
 #              of Cycle 9: the 0010 1M dataset was labelled by the
 #              pre-Cycle-8 NNUE, so training a new model on it can't
@@ -9,14 +9,19 @@
 #              get a strictly better training corpus and, after retraining,
 #              a "v6" NNUE that exceeds v5.
 #
-#              Total target: 1M records over 2× CCX23 (this script does
-#              500K on host A; 0025b does 500K on host B). At ~5 CPU-sec
-#              per record on 4 vCPU CCX23, 500K = ~175 hours total CPU
-#              time = ~44 hours wall on 4 cores ÷ 4 shards = ~67-72h.
-#              Call it 3 days per host.
+#              Originally designed as 500K-on-host-A of a 1M 2-host pilot
+#              (with 0025b, 0026 doing host B + merge). The 2nd CCX23 isn't
+#              available yet, so we de-risk by running the 500K alone on the
+#              existing host and skipping the merge — 0027 trains directly
+#              on this output. If a 2nd host comes online later, queue an
+#              0025c that mirrors this one with seeds 4001-4004 and a fresh
+#              merge job, retrain.
 #
-#              Requires: JASS_HOST_FILTER='0025a-' on host A's systemd
-#              env so host B doesn't pick this job.
+#              At ~5 CPU-sec per record on 4 vCPU CCX23, 500K = ~175 CPU-hours
+#              / 4 cores ÷ 4 shards ≈ ~67-72 hours wall (~3 days).
+#
+#              No JASS_HOST_FILTER required for single-host mode — the
+#              existing runner picks this job at the next tick.
 #
 #              Reads:
 #                /root/jass/jobs/results/0018-train-with-master-bce/
@@ -27,9 +32,7 @@
 #                $ART/host-a.bin                  (500K records, merged)
 #
 #              Pipeline continues at:
-#                0025b — host B counterpart (500K, seeds 4001-4004)
-#                0026  — merge host-a.bin + host-b.bin → cycle9-pilot-1M.bin
-#                0027  — train Cycle 9 NNUE on the 1M
+#                0027  — train Cycle 9 NNUE on the 500K (directly)
 #                0028  — bench Cycle 9 vs v5 → verdict
 #
 # expected_duration: ~67-72 hours on 4 vCPU CCX23 (~3 days).
@@ -60,7 +63,7 @@ fi
 
 echo "=== host facts ==="
 echo "host:    $(hostname)"
-echo "filter:  ${JASS_HOST_FILTER:-(unset, expected '0025a-')}"
+echo "filter:  ${JASS_HOST_FILTER:-(unset, OK for single-host pilot)}"
 echo "nproc:   $(nproc)"
 echo "mem:     $(free -h | awk '/^Mem:/ {print $2}')"
 echo "disk:    $(df -h /root | awk 'NR==2 {print $4" free of "$2}')"
@@ -170,6 +173,6 @@ done
 echo "  output:         host-a.bin ($(ls -lh "$ART/host-a.bin" | awk '{print $5}'))"
 echo "=========================================================="
 echo
-echo "Next: wait for 0025b (host B) to finish on its host, then queue"
-echo "0026-merge-cycle9-pilot to combine the two 500K halves into a"
-echo "single 1M training blob."
+echo "Next: 0027 trains directly on host-a.bin (500K v5-labelled records);"
+echo "no merge needed in single-host pilot mode. Queue 0027 — already there,"
+echo "runner picks it next."

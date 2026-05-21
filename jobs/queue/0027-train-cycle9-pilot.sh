@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # id: 0027-train-cycle9-pilot
-# description: Train a Cycle 9 candidate NNUE on the 1M self-play
-#              dataset produced by 0025a + 0025b and merged by 0026.
-#              The whole purpose of this pilot is to test whether
-#              relabelling self-play data with v5 (instead of the
-#              pre-Cycle-8 NNUE that labelled the 0010 1M corpus)
-#              yields a strictly better corpus and therefore a better
-#              trained NNUE ("v6").
+# description: Train a Cycle 9 candidate NNUE on the 500K single-host
+#              pilot dataset produced by 0025a. The whole purpose of
+#              Cycle 9 is to test whether relabelling self-play data
+#              with v5 (instead of the pre-Cycle-8 NNUE that labelled
+#              the 0010 1M corpus) yields a strictly better corpus
+#              and therefore a better trained NNUE ("v6").
 #
 #              Recipe is EXACTLY the same as 0018 (Cycle 8 BCE hybrid
 #              loss) except the self-play dataset is swapped — that
@@ -14,12 +13,20 @@
 #              measured by 0028 is attributable to the corpus, not
 #              the training recipe.
 #
+#              Originally designed to consume a merged 1M (0026 = 0025a
+#              + 0025b 500K each). Since the 2nd host wasn't available
+#              when we kicked off the pilot, we run on 500K only. The
+#              signal will be noisier than a 1M would have given but
+#              still informative (Cycle 8 v5 was trained on 1M with
+#              clear +249 ELO; 500K should reveal at least a +100 ELO
+#              shift if the v5-labelling premise holds).
+#
 #              Reads:
-#                /root/jass/jobs/results/0026-merge-cycle9-pilot/
-#                  artefacts.src/cycle9-pilot-1M.bin   (1M, v5-labelled)
+#                /root/jass/jobs/results/0025a-cycle9-pilot-host-a/
+#                  artefacts.src/host-a.bin            (500K, v5-labelled)
 #                /root/jass/jobs/results/0014-fetch-master-games/
-#                  artefacts.src/master-1600.jnnw      (master blend)
-# expected_duration: ~30-60 min on 4 vCPU CCX23 (same shape as 0018).
+#                  artefacts.src/master-1600.jnnw     (master blend)
+# expected_duration: ~25-50 min on 4 vCPU CCX23 (smaller than 0018 → faster).
 set -uo pipefail
 cd /root/jass
 
@@ -27,11 +34,11 @@ OUT_BASE="/root/jass/jobs/results/0027-train-cycle9-pilot"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
-DATASET="/root/jass/jobs/results/0026-merge-cycle9-pilot/artefacts.src/cycle9-pilot-1M.bin"
+DATASET="/root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin"
 MASTER="/root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw"
 
 if [ ! -f "$DATASET" ]; then
-    echo "ABORT: Cycle 9 pilot dataset $DATASET not found — did 0026 finish?"
+    echo "ABORT: Cycle 9 pilot dataset $DATASET not found — did 0025a finish?"
     exit 3
 fi
 if [ ! -f "$MASTER" ]; then
@@ -140,7 +147,7 @@ echo
 echo "=========================================================="
 echo "             0027 TRAIN CYCLE-9 PILOT SUMMARY"
 echo "=========================================================="
-echo "  self-play corpus:   $(stat -c%s "$DATASET" | awk '{print int(($1-8)/38)}') records (v5-labelled, 0026)"
+echo "  self-play corpus:   $(stat -c%s "$DATASET" | awk '{print int(($1-8)/38)}') records (v5-labelled, 0025a single-host pilot)"
 echo "  master corpus:      $(stat -c%s "$MASTER"  | awk '{print int(($1-8)/38)}') records (0014, blended)"
 echo "  recipe:             same as 0018 (Cycle 8 v5 BCE hybrid)"
 echo "  best arch:          $BEST_ARCH"
