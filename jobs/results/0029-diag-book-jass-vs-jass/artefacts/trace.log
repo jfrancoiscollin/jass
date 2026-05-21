@@ -1,0 +1,2832 @@
+=== diag_book_jass_vs_jass ===
+  jass=/root/jass/build/jass
+  book=/root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts/master-book.bok
+  nnue=/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+  movetime=1.0s  pairs=1
+  opening pool: 9 positions
+
+=== game 1 (opening=B:W26,32,33,34,35,36,37,38,39,..., book=W) ===
+  opening B:W26,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 17-22
+  ply   2: book(W) plays 37-31
+  ply   3: nobook(B) plays 11-17
+  ply   4: book(W) plays 31-27
+  ply   5: nobook(B) plays 22x31 (capture, xTrue)
+  ply   6: book(W) plays 26x37 (capture, xTrue)
+  ply   7: nobook(B) plays 17-21
+  ply   8: book(W) plays 36-31
+  ply   9: nobook(B) plays 21-26
+  ply  10: book(W) plays 34-30
+  ply  11: nobook(B) plays 20-25
+  ply  12: book(W) plays 31-27
+  ply  13: nobook(B) plays 25x34 (capture, xTrue)
+  ply  14: book(W) plays 39x30 (capture, xTrue)
+  ply  15: nobook(B) plays 6-11
+  ply  16: book(W) plays 44-39
+  ply  17: nobook(B) plays 14-20
+  ply  18: book(W) plays 50-44
+  ply  19: nobook(B) plays 20-25
+  ply  20: book(W) plays 32-28
+  ply  21: nobook(B) plays 25x34 (capture, xTrue)
+  ply  22: book(W) plays 39x30 (capture, xTrue)
+  ply  23: nobook(B) plays 18-23
+  ply  24: book(W) plays 37-32
+  ply  25: nobook(B) plays 15-20
+  ply  26: book(W) plays 30-25
+  ply  27: nobook(B) plays 20-24
+  ply  28: book(W) plays 41-37
+  ply  29: nobook(B) plays 10-14
+  ply  30: book(W) plays 44-39
+  ply  31: nobook(B) plays 12-18
+  ply  32: book(W) plays 37-31
+  ply  33: nobook(B) plays 26x37 (capture, xTrue)
+  ply  34: book(W) plays 42x31 (capture, xTrue)
+  ply  35: nobook(B) plays 7-12
+  ply  36: book(W) plays 46-41
+  ply  37: nobook(B) plays 5-10
+  ply  38: book(W) plays 40-34
+  ply  39: nobook(B) plays 10-15
+  ply  40: book(W) plays 34-30
+  ply  41: nobook(B) plays 12-17
+  ply  42: book(W) plays 39-34
+  ply  43: nobook(B) plays 14-20
+  ply  44: book(W) plays 25x14 (capture, xTrue)
+  ply  45: nobook(B) plays 9x20 (capture, xTrue)
+  ply  46: book(W) plays 41-36
+  ply  47: nobook(B) plays 8-12
+  ply  48: book(W) plays 31-26
+  ply  49: nobook(B) plays 4-9
+  ply  50: book(W) plays 36-31
+  ply  51: nobook(B) plays 2-8
+  ply  52: book(W) plays 30-25
+  ply  53: nobook(B) plays 1-6
+  ply  54: book(W) plays 25x14 (capture, xTrue)
+  ply  55: nobook(B) plays 9x20 (capture, xTrue)
+  ply  56: book(W) plays 43-39
+  ply  57: nobook(B) plays 17-22
+  ply  58: book(W) plays 28x17 (capture, xTrue)
+  ply  59: nobook(B) plays 11x22 (capture, xTrue)
+  ply  60: book(W) plays 34-30
+  ply  61: nobook(B) plays 20-25
+  ply  62: book(W) plays 39-34
+  ply  63: nobook(B) plays 6-11
+  ply  64: book(W) plays 48-42
+  ply  65: nobook(B) plays 11-17
+  ply  66: book(W) plays 34-29
+  ply  67: nobook(B) plays 23x34 (capture, xTrue)
+  ply  68: book(W) plays 30x39 (capture, xTrue)
+  ply  69: nobook(B) plays 17-21
+  ply  70: book(W) plays 26x28 (capture, xTrue)
+  ply  71: nobook(B) plays 19-23
+  ply  72: book(W) plays 28x30 (capture, xTrue)
+  ply  73: nobook(B) plays 25x43 (capture, xTrue)
+  ply  74: book(W) plays 32-28
+  ply  75: nobook(B) plays 43x23 (capture, xTrue)
+  ply  76: book(W) plays 42-38
+  ply  77: nobook(B) plays 15-20
+  ply  78: book(W) plays 45-40
+  ply  79: nobook(B) plays 12-17
+  ply  80: book(W) plays 31-26
+  ply  81: nobook(B) plays 8-12
+  ply  82: book(W) plays 38-32
+  ply  83: nobook(B) plays 20-24
+  ply  84: book(W) plays 33-28
+  ply  85: nobook(B) plays 13-19
+  ply  86: book(W) plays 40-34
+  ply  87: nobook(B) plays 24-29
+  ply  88: book(W) plays 34-30
+  ply  89: nobook(B) plays 19-24
+  ply  90: book(W) plays 30x19 (capture, xTrue)
+  ply  91: nobook(B) plays 23x14 (capture, xTrue)
+  ply  92: book(W) plays 35-30
+  ply  93: nobook(B) plays 14-19
+  ply  94: book(W) plays 47-41
+  ply  95: nobook(B) plays 3-9
+  ply  96: book(W) plays 49-44
+  ply  97: nobook(B) plays 9-14
+  ply  98: book(W) plays 41-37
+  ply  99: nobook(B) plays 18-23
+  ply 100: book(W) plays 27-22
+  ply 101: nobook(B) plays 14-20
+  ply 102: book(W) plays 22x11 (capture, xTrue)
+  ply 103: nobook(B) plays 16x7 (capture, xTrue)
+  ply 104: book(W) plays 30-25
+  ply 105: nobook(B) plays 20-24
+  ply 106: book(W) plays 44-40
+  ply 107: nobook(B) plays 12-18
+  ply 108: book(W) plays 37-31
+  ply 109: nobook(B) plays 18-22
+  ply 110: book(W) plays 28x17 (capture, xTrue)
+  ply 111: nobook(B) plays 29-33
+  ply 112: book(W) plays 31-27
+  ply 113: nobook(B) plays 23-29
+  ply 114: book(W) plays 26-21
+  ply 115: nobook(B) plays 33-39
+  ply 116: book(W) plays 21-16
+  ply 117: nobook(B) plays 39-43
+  ply 118: book(W) plays 17-11
+  ply 119: nobook(B) plays 7-12
+  ply 120: book(W) plays 11-6
+  ply 121: nobook(B) plays 43-48
+  ply 122: book(W) plays 27-21
+  ply 123: nobook(B) plays 19-23
+  ply 124: book(W) plays 16-11
+  ply 125: nobook(B) plays 48-34
+  ply 126: book(W) plays 32-28
+  ply 127: nobook(B) plays 23x32 (capture, xTrue)
+  ply 128: book(W) plays 25-20
+  ply 129: nobook(B) plays 24x15 (capture, xTrue)
+  ply 130: book(W) plays 6-1
+  ply 131: nobook(B) plays 34x45 (capture, xTrue)
+  ply 132: book(W) plays 1x37 (capture, xTrue)
+  ply 133: nobook(B) plays 29-34
+  ply 134: book(W) plays 11-6
+  ply 135: nobook(B) plays 34-39
+  ply 136: book(W) plays 37-32
+  ply 137: nobook(B) plays 39-44
+  ply 138: book(W) plays 32-49
+  ply 139: nobook(B) plays 44-50
+  ply 140: book(W) plays 21-17
+  ply 141: nobook(B) plays 50x11 (capture, xTrue)
+  ply 142: book(W) plays 6x17 (capture, xTrue)
+  ply 143: nobook(B) plays 45-7
+  ply 144: book(W) plays 49-44
+  ply 145: nobook(B) plays 15-20
+  ply 146: book(W) plays 44-49
+  ply 147: nobook(B) plays 20-24
+  ply 148: book(W) plays 49-16
+  ply 149: nobook(B) plays 7-1
+  ply 150: book(W) plays 16-21
+  ply 151: nobook(B) plays 24-29
+  ply 152: book(W) plays 17-11
+  ply 153: nobook(B) plays 1-6
+  ply 154: book(W) plays 11-7
+  ply 155: nobook(B) plays 29-33
+  ply 156: book(W) plays 7-1
+  ply 157: nobook(B) plays 33-38
+  ply 158: book(W) plays 21x43 (capture, xTrue)
+  ply 159: nobook(B) has no legal move → B loses (W for book-side)
+  game 1: W (no legal move from nobook(B), 159 plies)  running W=1 L=0 D=0
+
+=== game 2 (opening=B:W26,32,33,34,35,36,37,38,39,..., book=B) ===
+  opening B:W26,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 19-23
+  ply   2: nobook(W) plays 37-31
+  ply   3: book(B) plays 14-19
+  ply   4: nobook(W) plays 41-37
+  ply   5: book(B) plays 10-14
+  ply   6: nobook(W) plays 46-41
+  ply   7: book(B) plays 5-10
+  ply   8: nobook(W) plays 31-27
+  ply   9: book(B) plays 20-24
+  ply  10: nobook(W) plays 34-29
+  ply  11: book(B) plays 23x34 (capture, xTrue)
+  ply  12: nobook(W) plays 40x20 (capture, xTrue)
+  ply  13: book(B) plays 15x24 (capture, xTrue)
+  ply  14: nobook(W) plays 45-40
+  ply  15: book(B) plays 10-15
+  ply  16: nobook(W) plays 40-34
+  ply  17: book(B) plays 18-23
+  ply  18: nobook(W) plays 34-29
+  ply  19: book(B) plays 23x34 (capture, xTrue)
+  ply  20: nobook(W) plays 39x30 (capture, xTrue)
+  ply  21: book(B) plays 13-18
+  ply  22: nobook(W) plays 36-31
+  ply  23: book(B) plays 18-23
+  ply  24: nobook(W) plays 41-36
+  ply  25: book(B) plays 12-18
+  ply  26: nobook(W) plays 27-21
+  ply  27: book(B) plays 16x27 (capture, xTrue)
+  ply  28: nobook(W) plays 31x13 (capture, xTrue)
+  ply  29: book(B) plays 9x18 (capture, xTrue)
+  ply  30: nobook(W) plays 36-31
+  ply  31: book(B) plays 7-12
+  ply  32: nobook(W) plays 31-27
+  ply  33: book(B) plays 8-13
+  ply  34: nobook(W) plays 37-31
+  ply  35: book(B) plays 14-20
+  ply  36: nobook(W) plays 30-25
+  ply  37: book(B) plays 4-9
+  ply  38: nobook(W) plays 25x14 (capture, xTrue)
+  ply  39: book(B) plays 9x20 (capture, xTrue)
+  ply  40: nobook(W) plays 33-28
+  ply  41: book(B) plays 3-8
+  ply  42: nobook(W) plays 44-40
+  ply  43: book(B) plays 17-22
+  ply  44: nobook(W) plays 28x17 (capture, xTrue)
+  ply  45: book(B) plays 11x22 (capture, xTrue)
+  ply  46: nobook(W) plays 26-21
+  ply  47: book(B) plays 22-28
+  ply  48: nobook(W) plays 31-26
+  ply  49: book(B) plays 28x37 (capture, xTrue)
+  ply  50: nobook(W) plays 42x31 (capture, xTrue)
+  ply  51: book(B) plays 6-11
+  ply  52: nobook(W) plays 21-16
+  ply  53: book(B) plays 11-17
+  ply  54: nobook(W) plays 27-21
+  ply  55: book(B) plays 24-29
+  ply  56: nobook(W) plays 38-32
+  ply  57: book(B) plays 29-34
+  ply  58: nobook(W) plays 40x29 (capture, xTrue)
+  ply  59: book(B) plays 23x34 (capture, xTrue)
+  ply  60: nobook(W) plays 32-28
+  ply  61: book(B) plays 20-25
+  ply  62: nobook(W) plays 47-42
+  ply  63: book(B) plays 25-30
+  ply  64: nobook(W) plays 35x24 (capture, xTrue)
+  ply  65: book(B) plays 19x30 (capture, xTrue)
+  ply  66: nobook(W) plays 42-38
+  ply  67: book(B) plays 30-35
+  ply  68: nobook(W) plays 31-27
+  ply  69: book(B) plays 15-20
+  ply  70: nobook(W) plays 38-33
+  ply  71: book(B) plays 34-40
+  ply  72: nobook(W) plays 28-22
+  ply  73: book(B) plays 17x39 (capture, xTrue)
+  ply  74: nobook(W) plays 43x45 (capture, xTrue)
+  ply  75: book(B) plays 13-19
+  ply  76: nobook(W) plays 48-42
+  ply  77: book(B) plays 19-23
+  ply  78: nobook(W) plays 42-37
+  ply  79: book(B) plays 23-28
+  ply  80: nobook(W) plays 49-44
+  ply  81: book(B) plays 20-24
+  ply  82: nobook(W) plays 44-40
+  ply  83: book(B) plays 35x44 (capture, xTrue)
+  ply  84: nobook(W) plays 50x39 (capture, xTrue)
+  ply  85: book(B) plays 1-7
+  ply  86: nobook(W) plays 39-34
+  ply  87: book(B) plays 18-23
+  ply  88: nobook(W) plays 37-31
+  ply  89: book(B) plays 8-13
+  ply  90: nobook(W) plays 45-40
+  ply  91: book(B) plays 24-29
+  ply  92: nobook(W) plays 34-30
+  ply  93: book(B) plays 29-33
+  ply  94: nobook(W) plays 40-35
+  ply  95: book(B) plays 13-19
+  ply  96: nobook(W) plays 30-25
+  ply  97: book(B) plays 33-38
+  ply  98: nobook(W) plays 25-20
+  ply  99: book(B) plays 38-42
+  ply 100: nobook(W) plays 21-17
+  ply 101: book(B) plays 12x32 (capture, xTrue)
+  ply 102: nobook(W) plays 31-27
+  ply 103: book(B) plays 32x21 (capture, xTrue)
+  ply 104: nobook(W) plays 26x17 (capture, xTrue)
+  ply 105: book(B) plays 42-47
+  ply 106: nobook(W) plays 20-15
+  ply 107: book(B) plays 19-24
+  ply 108: nobook(W) plays 17-11
+  ply 109: book(B) plays 47-36
+  ply 110: nobook(W) plays 11-6
+  ply 111: book(B) plays 36-4
+  ply 112: nobook(W) plays 6-1
+  ply 113: book(B) plays 4-18
+  ply 114: nobook(W) plays 1x12 (capture, xTrue)
+  ply 115: book(B) plays 18x1 (capture, xTrue)
+  ply 116: nobook(W) plays 15-10
+  ply 117: book(B) plays 28-33
+  ply 118: nobook(W) plays 10-4
+  ply 119: book(B) plays 23-29
+  ply 120: nobook(W) plays 4-15
+  ply 121: book(B) plays 2-7
+  ply 122: nobook(W) plays 15-4
+  ply 123: book(B) plays 33-38
+  ply 124: nobook(W) plays 16-11
+  ply 125: book(B) plays 7x16 (capture, xTrue)
+  ply 126: nobook(W) plays 4-13
+  ply 127: book(B) plays 29-33
+  ply 128: nobook(W) plays 13x30 (capture, xTrue)
+  ply 129: book(B) plays 38-42
+  ply 130: nobook(W) plays 30-13
+  ply 131: book(B) plays 42-47
+  ply 132: nobook(W) plays 13-31
+  ply 133: book(B) plays 33-39
+  ply 134: nobook(W) plays 31-37
+  ply 135: book(B) plays 39-44
+  ply 136: nobook(W) plays 35-30
+  ply 137: book(B) plays 1-45
+  ply 138: nobook(W) plays 37-31
+  ply 139: book(B) plays 44-50
+  ply 140: nobook(W) plays 31-36
+  ply 141: book(B) plays 45-23
+  ply 142: nobook(W) plays 30-25
+  ply 143: book(B) plays 23-5
+  ply 144: nobook(W) plays 25-20
+  ply 145: book(B) plays 47x15 (capture, xTrue)
+  ply 146: nobook(W) plays 36-31
+  ply 147: book(B) plays 15-4
+  ply 148: nobook(W) plays 31-48
+  ply 149: book(B) plays 4-27
+  ply 150: nobook(W) plays 48-26
+  ply 151: book(B) plays 5-23
+  ply 152: nobook(W) plays 26-21
+  ply 153: book(B) plays 23-18
+  ply 154: nobook(W) plays 21x32 (capture, xTrue)
+  ply 155: book(B) plays 18-27
+  ply 156: nobook(W) plays 32x21 (capture, xTrue)
+  ply 157: book(B) plays 16x27 (capture, xTrue)
+  ply 158: nobook(W) has no legal move → W loses (W for book-side)
+  game 2: W (no legal move from nobook(W), 158 plies)  running W=2 L=0 D=0
+
+=== game 3 (opening=B:W27,32,33,34,35,36,37,38,39,..., book=W) ===
+  opening B:W27,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 17-21
+  ply   2: book(W) plays 33-28
+  ply   3: nobook(B) plays 21-26
+  ply   4: book(W) plays 39-33
+  ply   5: nobook(B) plays 11-17
+  ply   6: book(W) plays 44-39
+  ply   7: nobook(B) plays 19-23
+  ply   8: book(W) plays 28x19 (capture, xTrue)
+  ply   9: nobook(B) plays 14x23 (capture, xTrue)
+  ply  10: book(W) plays 34-30
+  ply  11: nobook(B) plays 6-11
+  ply  12: book(W) plays 30-25
+  ply  13: nobook(B) plays 10-14
+  ply  14: book(W) plays 50-44
+  ply  15: nobook(B) plays 14-19
+  ply  16: book(W) plays 25x14 (capture, xTrue)
+  ply  17: nobook(B) plays 9x20 (capture, xTrue)
+  ply  18: book(W) plays 40-34
+  ply  19: nobook(B) plays 5-10
+  ply  20: book(W) plays 33-28
+  ply  21: nobook(B) plays 10-14
+  ply  22: book(W) plays 38-33
+  ply  23: nobook(B) plays 23-29
+  ply  24: book(W) plays 33x24 (capture, xTrue)
+  ply  25: nobook(B) plays 20x40 (capture, xTrue)
+  ply  26: book(W) plays 45x34 (capture, xTrue)
+  ply  27: nobook(B) plays 1-6
+  ply  28: book(W) plays 43-38
+  ply  29: nobook(B) plays 15-20
+  ply  30: book(W) plays 38-33
+  ply  31: nobook(B) plays 17-22
+  ply  32: book(W) plays 28x17 (capture, xTrue)
+  ply  33: nobook(B) plays 11x31 (capture, xTrue)
+  ply  34: book(W) plays 36x27 (capture, xTrue)
+  ply  35: nobook(B) plays 18-23
+  ply  36: book(W) plays 33-29
+  ply  37: nobook(B) plays 3-9
+  ply  38: book(W) plays 29x18 (capture, xTrue)
+  ply  39: nobook(B) plays 13x31 (capture, xTrue)
+  ply  40: book(W) plays 41-36
+  ply  41: nobook(B) plays 12-18
+  ply  42: book(W) plays 36x27 (capture, xTrue)
+  ply  43: nobook(B) plays 18-23
+  ply  44: book(W) plays 39-33
+  ply  45: nobook(B) plays 20-24
+  ply  46: book(W) plays 34-30
+  ply  47: nobook(B) plays 14-20
+  ply  48: book(W) plays 42-38
+  ply  49: nobook(B) plays 20-25
+  ply  50: book(W) plays 48-42
+  ply  51: nobook(B) plays 25x34 (capture, xTrue)
+  ply  52: book(W) plays 33-29
+  ply  53: nobook(B) plays 24x33 (capture, xTrue)
+  ply  54: book(W) plays 38x40 (capture, xTrue)
+  ply  55: nobook(B) plays 19-24
+  ply  56: book(W) plays 40-34
+  ply  57: nobook(B) plays 8-13
+  ply  58: book(W) plays 42-38
+  ply  59: nobook(B) plays 13-19
+  ply  60: book(W) plays 44-39
+  ply  61: nobook(B) plays 7-12
+  ply  62: book(W) plays 46-41
+  ply  63: nobook(B) plays 9-14
+  ply  64: book(W) plays 34-30
+  ply  65: nobook(B) plays 2-8
+  ply  66: book(W) plays 38-33
+  ply  67: nobook(B) plays 8-13
+  ply  68: book(W) plays 33-28
+  ply  69: nobook(B) plays 24-29
+  ply  70: book(W) plays 30-25
+  ply  71: nobook(B) plays 29-33
+  ply  72: book(W) plays 25-20
+  ply  73: nobook(B) plays 33x42 (capture, xTrue)
+  ply  74: book(W) plays 20x7 (capture, xTrue)
+  ply  75: nobook(B) plays 42-48
+  ply  76: book(W) plays 7-1
+  ply  77: nobook(B) plays 48x25 (capture, xTrue)
+  ply  78: book(W) plays 1x29 (capture, xTrue)
+  ply  79: nobook(B) plays 25-39
+  ply  80: book(W) plays 29-42
+  ply  81: nobook(B) plays 39-48
+  ply  82: book(W) plays 42-33
+  ply  83: nobook(B) plays 48-31
+  ply  84: book(W) plays 32-28
+  ply  85: nobook(B) plays 31-18
+  ply  86: book(W) plays 33-42
+  ply  87: nobook(B) plays 18-45
+  ply  88: book(W) plays 42-48
+  ply  89: nobook(B) plays 45-50
+  ply  90: book(W) plays 48-37
+  ply  91: nobook(B) plays 50x17 (capture, xTrue)
+  ply  92: book(W) plays 37x5 (capture, xTrue)
+  ply  93: nobook(B) plays 17-8
+  ply  94: book(W) plays 41-36
+  ply  95: nobook(B) plays 8-21
+  ply  96: book(W) plays 36-31
+  ply  97: nobook(B) plays 26x37 (capture, xTrue)
+  ply  98: book(W) plays 5x41 (capture, xTrue)
+  ply  99: nobook(B) plays 21-8
+  ply 100: book(W) plays 41-37
+  ply 101: nobook(B) plays 8-2
+  ply 102: book(W) plays 37-23
+  ply 103: nobook(B) plays 2-24
+  ply 104: book(W) plays 23-32
+  ply 105: nobook(B) plays 24-2
+  ply 106: book(W) plays 32-5
+  ply 107: nobook(B) plays 2-8
+  ply 108: book(W) plays 5-28
+  ply 109: nobook(B) plays 8-17
+  ply 110: book(W) plays 28x11 (capture, xTrue)
+  ply 111: nobook(B) plays 6x17 (capture, xTrue)
+  ply 112: book(W) plays 35-30
+  ply 113: nobook(B) plays 16-21
+  ply 114: book(W) plays 49-43
+  ply 115: nobook(B) plays 17-22
+  ply 116: book(W) plays 30-24
+  ply 117: nobook(B) plays 4-9
+  ply 118: book(W) plays 24-19
+  ply 119: nobook(B) plays 22-28
+  ply 120: book(W) plays 43-39
+  ply 121: nobook(B) plays 21-27
+  ply 122: book(W) plays 39-34
+  ply 123: nobook(B) plays 28-33
+  ply 124: book(W) plays 34-30
+  ply 125: nobook(B) plays 27-32
+  ply 126: book(W) plays 30-24
+  ply 127: nobook(B) plays 33-39
+  ply 128: book(W) plays 24-20
+  ply 129: nobook(B) plays 32-38
+  ply 130: book(W) plays 19-14
+  ply 131: nobook(B) plays 9-13
+  ply 132: book(W) plays 14-10
+  ply 133: nobook(B) plays 39-43
+  ply 134: book(W) plays 47-42
+  ply 135: nobook(B) plays 38x47 (capture, xTrue)
+  ply 136: book(W) plays 10-4
+  ply 137: nobook(B) plays 47x15 (capture, xTrue)
+  ply 138: book(W) plays 4x49 (capture, xTrue)
+  ply 139: nobook(B) has no legal move → B loses (W for book-side)
+  game 3: W (no legal move from nobook(B), 139 plies)  running W=3 L=0 D=0
+
+=== game 4 (opening=B:W27,32,33,34,35,36,37,38,39,..., book=B) ===
+  opening B:W27,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 17-21
+  ply   2: nobook(W) plays 34-30
+  ply   3: book(B) plays 21-26
+  ply   4: nobook(W) plays 30-25
+  ply   5: book(B) plays 19-23
+  ply   6: nobook(W) plays 35-30
+  ply   7: book(B) plays 11-17
+  ply   8: nobook(W) plays 40-34
+  ply   9: book(B) plays 17-21
+  ply  10: nobook(W) plays 45-40
+  ply  11: book(B) plays 6-11
+  ply  12: nobook(W) plays 33-29
+  ply  13: book(B) plays 11-17
+  ply  14: nobook(W) plays 38-33
+  ply  15: book(B) plays 17-22
+  ply  16: nobook(W) plays 40-35
+  ply  17: book(B) plays 22x31 (capture, xTrue)
+  ply  18: nobook(W) plays 36x27 (capture, xTrue)
+  ply  19: book(B) plays 12-17
+  ply  20: nobook(W) plays 41-36
+  ply  21: book(B) plays 13-19
+  ply  22: nobook(W) plays 43-38
+  ply  23: book(B) plays 20-24
+  ply  24: nobook(W) plays 29x20 (capture, xTrue)
+  ply  25: book(B) plays 15x24 (capture, xTrue)
+  ply  26: nobook(W) plays 33-29
+  ply  27: book(B) plays 24x33 (capture, xTrue)
+  ply  28: nobook(W) plays 39x28 (capture, xTrue)
+  ply  29: book(B) plays 17-22
+  ply  30: nobook(W) plays 28x17 (capture, xTrue)
+  ply  31: book(B) plays 21x12 (capture, xTrue)
+  ply  32: nobook(W) plays 34-29
+  ply  33: book(B) plays 23x34 (capture, xTrue)
+  ply  34: nobook(W) plays 30x39 (capture, xTrue)
+  ply  35: book(B) plays 19-23
+  ply  36: nobook(W) plays 38-33
+  ply  37: book(B) plays 7-11
+  ply  38: nobook(W) plays 39-34
+  ply  39: book(B) plays 8-13
+  ply  40: nobook(W) plays 42-38
+  ply  41: book(B) plays 2-8
+  ply  42: nobook(W) plays 47-42
+  ply  43: book(B) plays 14-19
+  ply  44: nobook(W) plays 33-28
+  ply  45: book(B) plays 10-14
+  ply  46: nobook(W) plays 44-39
+  ply  47: book(B) plays 14-20
+  ply  48: nobook(W) plays 25x14 (capture, xTrue)
+  ply  49: book(B) plays 9x20 (capture, xTrue)
+  ply  50: nobook(W) plays 37-31
+  ply  51: book(B) plays 26x37 (capture, xTrue)
+  ply  52: nobook(W) plays 42x31 (capture, xTrue)
+  ply  53: book(B) plays 5-10
+  ply  54: nobook(W) plays 39-33
+  ply  55: book(B) plays 20-24
+  ply  56: nobook(W) plays 46-41
+  ply  57: book(B) plays 10-14
+  ply  58: nobook(W) plays 34-30
+  ply  59: book(B) plays 11-17
+  ply  60: nobook(W) plays 41-37
+  ply  61: book(B) plays 17-21
+  ply  62: nobook(W) plays 31-26
+  ply  63: book(B) plays 12-17
+  ply  64: nobook(W) plays 37-31
+  ply  65: book(B) plays 17-22
+  ply  66: nobook(W) plays 26x17 (capture, xTrue)
+  ply  67: book(B) plays 22x11 (capture, xTrue)
+  ply  68: nobook(W) plays 49-43
+  ply  69: book(B) plays 8-12
+  ply  70: nobook(W) plays 43-39
+  ply  71: book(B) plays 11-17
+  ply  72: nobook(W) plays 30-25
+  ply  73: book(B) plays 17-21
+  ply  74: nobook(W) plays 31-26
+  ply  75: book(B) plays 3-8
+  ply  76: nobook(W) plays 26x17 (capture, xTrue)
+  ply  77: book(B) plays 12x21 (capture, xTrue)
+  ply  78: nobook(W) plays 48-43
+  ply  79: book(B) plays 21-26
+  ply  80: nobook(W) plays 50-44
+  ply  81: book(B) plays 8-12
+  ply  82: nobook(W) plays 44-40
+  ply  83: book(B) plays 1-7
+  ply  84: nobook(W) plays 40-34
+  ply  85: book(B) plays 7-11
+  ply  86: nobook(W) plays 35-30
+  ply  87: book(B) plays 24x35 (capture, xTrue)
+  ply  88: nobook(W) plays 33-29
+  ply  89: book(B) plays 35-40
+  ply  90: nobook(W) plays 34x45 (capture, xTrue)
+  ply  91: book(B) plays 23x34 (capture, xTrue)
+  ply  92: nobook(W) plays 39x30 (capture, xTrue)
+  ply  93: book(B) plays 11-17
+  ply  94: nobook(W) plays 36-31
+  ply  95: book(B) plays 26x37 (capture, xTrue)
+  ply  96: nobook(W) plays 32x41 (capture, xTrue)
+  ply  97: book(B) plays 4-9
+  ply  98: nobook(W) plays 30-24
+  ply  99: book(B) plays 19x30 (capture, xTrue)
+  ply 100: nobook(W) plays 25x34 (capture, xTrue)
+  ply 101: book(B) plays 17-21
+  ply 102: nobook(W) plays 28-22
+  ply 103: book(B) plays 21x32 (capture, xTrue)
+  ply 104: nobook(W) plays 38x27 (capture, xTrue)
+  ply 105: book(B) plays 12-17
+  ply 106: nobook(W) plays 22x11 (capture, xTrue)
+  ply 107: book(B) plays 16x7 (capture, xTrue)
+  ply 108: nobook(W) plays 27-21
+  ply 109: book(B) plays 14-19
+  ply 110: nobook(W) plays 41-37
+  ply 111: book(B) plays 9-14
+  ply 112: nobook(W) plays 45-40
+  ply 113: book(B) plays 18-22
+  ply 114: nobook(W) plays 34-29
+  ply 115: book(B) plays 14-20
+  ply 116: nobook(W) plays 37-31
+  ply 117: book(B) plays 13-18
+  ply 118: nobook(W) plays 43-39
+  ply 119: book(B) plays 7-12
+  ply 120: nobook(W) plays 39-33
+  ply 121: book(B) plays 19-23
+  ply 122: nobook(W) plays 40-34
+  ply 123: book(B) plays 20-25
+  ply 124: nobook(W) plays 31-26
+  ply 125: book(B) plays 25-30
+  ply 126: nobook(W) plays 34x25 (capture, xTrue)
+  ply 127: book(B) plays 23x34 (capture, xTrue)
+  ply 128: nobook(W) plays 33-29
+  ply 129: book(B) plays 34x23 (capture, xTrue)
+  ply 130: nobook(W) plays 21-16
+  ply 131: book(B) plays 23-29
+  ply 132: nobook(W) plays 25-20
+  ply 133: book(B) plays 29-33
+  ply 134: nobook(W) plays 16-11
+  ply 135: book(B) plays 33-39
+  ply 136: nobook(W) plays 11-6
+  ply 137: book(B) plays 22-28
+  ply 138: nobook(W) plays 20-14
+  ply 139: book(B) plays 39-44
+  ply 140: nobook(W) plays 6-1
+  ply 141: book(B) plays 44-50
+  ply 142: nobook(W) plays 14-9
+  ply 143: book(B) plays 28-32
+  ply 144: nobook(W) plays 9-3
+  ply 145: book(B) plays 32-37
+  ply 146: nobook(W) plays 3x17 (capture, xTrue)
+  ply 147: book(B) plays 50x11 (capture, xTrue)
+  ply 148: nobook(W) plays 1x46 (capture, xTrue)
+  ply 149: book(B) plays 11-16
+  ply 150: nobook(W) plays 46-14
+  ply 151: book(B) plays 16-43
+  ply 152: nobook(W) plays 14-5
+  ply 153: book(B) plays 43-49
+  ply 154: nobook(W) plays 5-10
+  ply 155: book(B) plays 49-38
+  ply 156: nobook(W) plays 10-37
+  ply 157: book(B) plays 38-27
+  ply 158: nobook(W) plays 37-23
+  ply 159: book(B) plays 27-38
+  ply 160: nobook(W) plays 23-1
+  ply 161: book(B) plays 38-16
+  ply 162: nobook(W) plays 1-34
+  ply 163: book(B) plays 16-38
+  ply 164: nobook(W) plays 34-39
+  ply 165: book(B) plays 38-27
+  ply 166: nobook(W) plays 39-33
+  ply 167: book(B) plays 27-16
+  ply 168: nobook(W) plays 33-44
+  ply 169: book(B) plays 16-27
+  ply 170: nobook(W) plays 44-39
+  ply 171: book(B) plays 27-16
+  ply 172: nobook(W) plays 39-33
+  ply 173: book(B) plays 16-27
+  ply 174: nobook(W) plays 33-24
+  ply 175: book(B) plays 27-16
+  ply 176: nobook(W) plays 24-20
+  ply 177: book(B) plays 16-32
+  ply 178: nobook(W) plays 20-15
+  ply 179: book(B) plays 32-16
+  ply 180: nobook(W) plays 15-47
+  ply 181: book(B) plays 16-49
+  ply 182: nobook(W) plays 47-41
+  ply 183: book(B) plays 49-27
+  ply 184: nobook(W) plays 41-36
+  ply 185: book(B) plays 27-38
+  ply 186: nobook(W) plays 36-22
+  ply 187: book(B) plays 38-32
+  ply 188: nobook(W) plays 22-17
+  ply 189: book(B) plays 32-27
+  ply 190: nobook(W) plays 17-11
+  ply 191: book(B) plays 27-43
+  ply 192: nobook(W) plays 11-50
+  ply 193: book(B) plays 43-16
+  ply 194: nobook(W) plays 50-6
+  ply 195: book(B) plays 16-27
+  ply 196: nobook(W) plays 26-21
+  ply 197: book(B) plays 27x16 (capture, xTrue)
+  ply 198: nobook(W) has no legal move → W loses (W for book-side)
+  game 4: W (no legal move from nobook(W), 198 plies)  running W=4 L=0 D=0
+
+=== game 5 (opening=B:W27,31,33,34,35,36,37,38,39,..., book=W) ===
+  opening B:W27,31,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 17-21
+  ply   2: book(W) plays 31-26
+  ply   3: nobook(B) plays 21x32 (capture, xTrue)
+  ply   4: book(W) plays 38x27 (capture, xTrue)
+  ply   5: nobook(B) plays 20-24
+  ply   6: book(W) plays 37-32
+  ply   7: nobook(B) plays 11-17
+  ply   8: book(W) plays 41-37
+  ply   9: nobook(B) plays 19-23
+  ply  10: book(W) plays 34-29
+  ply  11: nobook(B) plays 23x34 (capture, xTrue)
+  ply  12: book(W) plays 39x19 (capture, xTrue)
+  ply  13: nobook(B) plays 13x24 (capture, xTrue)
+  ply  14: book(W) plays 46-41
+  ply  15: nobook(B) plays 9-13
+  ply  16: book(W) plays 37-31
+  ply  17: nobook(B) plays 14-19
+  ply  18: book(W) plays 42-38
+  ply  19: nobook(B) plays 10-14
+  ply  20: book(W) plays 44-39
+  ply  21: nobook(B) plays 5-10
+  ply  22: book(W) plays 40-34
+  ply  23: nobook(B) plays 14-20
+  ply  24: book(W) plays 41-37
+  ply  25: nobook(B) plays 10-14
+  ply  26: book(W) plays 45-40
+  ply  27: nobook(B) plays 17-21
+  ply  28: book(W) plays 26x17 (capture, xTrue)
+  ply  29: nobook(B) plays 12x21 (capture, xTrue)
+  ply  30: book(W) plays 47-42
+  ply  31: nobook(B) plays 18-23
+  ply  32: book(W) plays 31-26
+  ply  33: nobook(B) plays 7-11
+  ply  34: book(W) plays 26x17 (capture, xTrue)
+  ply  35: nobook(B) plays 11x31 (capture, xTrue)
+  ply  36: book(W) plays 36x27 (capture, xTrue)
+  ply  37: nobook(B) plays 4-9
+  ply  38: book(W) plays 34-30
+  ply  39: nobook(B) plays 20-25
+  ply  40: book(W) plays 50-45
+  ply  41: nobook(B) plays 25x34 (capture, xTrue)
+  ply  42: book(W) plays 40x20 (capture, xTrue)
+  ply  43: nobook(B) plays 15x24 (capture, xTrue)
+  ply  44: book(W) plays 49-44
+  ply  45: nobook(B) plays 8-12
+  ply  46: book(W) plays 33-29
+  ply  47: nobook(B) plays 23x34 (capture, xTrue)
+  ply  48: book(W) plays 39x30 (capture, xTrue)
+  ply  49: nobook(B) plays 12-18
+  ply  50: book(W) plays 44-39
+  ply  51: nobook(B) plays 6-11
+  ply  52: book(W) plays 37-31
+  ply  53: nobook(B) plays 2-8
+  ply  54: book(W) plays 32-28
+  ply  55: nobook(B) plays 11-17
+  ply  56: book(W) plays 39-33
+  ply  57: nobook(B) plays 14-20
+  ply  58: book(W) plays 30-25
+  ply  59: nobook(B) plays 18-23
+  ply  60: book(W) plays 25x14 (capture, xTrue)
+  ply  61: nobook(B) plays 23x21 (capture, xTrue)
+  ply  62: book(W) plays 14x23 (capture, xTrue)
+  ply  63: nobook(B) plays 9-14
+  ply  64: book(W) plays 31-26
+  ply  65: nobook(B) plays 8-12
+  ply  66: book(W) plays 45-40
+  ply  67: nobook(B) plays 13-18
+  ply  68: book(W) plays 43-39
+  ply  69: nobook(B) plays 18x29 (capture, xTrue)
+  ply  70: book(W) plays 39-34
+  ply  71: nobook(B) plays 14-20
+  ply  72: book(W) plays 34x23 (capture, xTrue)
+  ply  73: nobook(B) plays 20-25
+  ply  74: book(W) plays 40-34
+  ply  75: nobook(B) plays 21-27
+  ply  76: book(W) plays 34-29
+  ply  77: nobook(B) plays 17-22
+  ply  78: book(W) plays 29x20 (capture, xTrue)
+  ply  79: nobook(B) plays 25x14 (capture, xTrue)
+  ply  80: book(W) plays 35-30
+  ply  81: nobook(B) plays 1-7
+  ply  82: book(W) plays 33-29
+  ply  83: nobook(B) plays 3-9
+  ply  84: book(W) plays 30-24
+  ply  85: nobook(B) plays 9-13
+  ply  86: book(W) plays 38-33
+  ply  87: nobook(B) plays 13-18
+  ply  88: book(W) plays 42-38
+  ply  89: nobook(B) plays 7-11
+  ply  90: book(W) plays 26-21
+  ply  91: nobook(B) plays 27-32
+  ply  92: book(W) plays 38x27 (capture, xTrue)
+  ply  93: nobook(B) plays 22x31 (capture, xTrue)
+  ply  94: book(W) plays 24-19
+  ply  95: nobook(B) plays 16x27 (capture, xTrue)
+  ply  96: book(W) plays 19x10 (capture, xTrue)
+  ply  97: nobook(B) plays 18-22
+  ply  98: book(W) plays 10-5
+  ply  99: nobook(B) plays 31-36
+  ply 100: book(W) plays 23-19
+  ply 101: nobook(B) plays 12-18
+  ply 102: book(W) plays 5-10
+  ply 103: nobook(B) plays 27-31
+  ply 104: book(W) plays 29-24
+  ply 105: nobook(B) plays 11-16
+  ply 106: book(W) plays 10-5
+  ply 107: nobook(B) plays 16-21
+  ply 108: book(W) plays 24-20
+  ply 109: nobook(B) plays 21-27
+  ply 110: book(W) plays 20-15
+  ply 111: nobook(B) plays 22-28
+  ply 112: book(W) plays 33x13 (capture, xTrue)
+  ply 113: nobook(B) plays 36-41
+  ply 114: book(W) plays 13-8
+  ply 115: nobook(B) plays 27-32
+  ply 116: book(W) plays 8-2
+  ply 117: nobook(B) plays 32-38
+  ply 118: book(W) plays 2-16
+  ply 119: nobook(B) plays 41-47
+  ply 120: book(W) plays 16x43 (capture, xTrue)
+  ply 121: nobook(B) plays 47-33
+  ply 122: book(W) plays 19-13
+  ply 123: nobook(B) plays 33-44
+  ply 124: book(W) plays 13-9
+  ply 125: nobook(B) plays 31-36
+  ply 126: book(W) plays 9-4
+  ply 127: nobook(B) plays 44-40
+  ply 128: book(W) plays 5-14
+  ply 129: nobook(B) plays 40-29
+  ply 130: book(W) plays 43-16
+  ply 131: nobook(B) plays 29-1
+  ply 132: book(W) plays 15-10
+  ply 133: nobook(B) plays 1-6
+  ply 134: book(W) plays 16-21
+  ply 135: nobook(B) plays 6-1
+  ply 136: book(W) plays 10-5
+  ply 137: nobook(B) plays 36-41
+  ply 138: book(W) plays 14x46 (capture, xTrue)
+  ply 139: nobook(B) plays 1-6
+  ply 140: book(W) plays 5-37
+  ply 141: nobook(B) plays 6-1
+  ply 142: book(W) plays 4-18
+  ply 143: nobook(B) plays 1x41 (capture, xTrue)
+  ply 144: book(W) plays 46x37 (capture, xTrue)
+  ply 145: nobook(B) has no legal move → B loses (W for book-side)
+  game 5: W (no legal move from nobook(B), 145 plies)  running W=5 L=0 D=0
+
+=== game 6 (opening=B:W27,31,33,34,35,36,37,38,39,..., book=B) ===
+  opening B:W27,31,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 18-23
+  ply   2: nobook(W) plays 34-30
+  ply   3: book(B) plays 17-21
+  ply   4: nobook(W) plays 37-32
+  ply   5: book(B) plays 21-26
+  ply   6: nobook(W) plays 33-28
+  ply   7: book(B) plays 26x37 (capture, xTrue)
+  ply   8: nobook(W) plays 42x31 (capture, xTrue)
+  ply   9: book(B) plays 20-24
+  ply  10: nobook(W) plays 39-33
+  ply  11: book(B) plays 11-17
+  ply  12: nobook(W) plays 30-25
+  ply  13: book(B) plays 14-20
+  ply  14: nobook(W) plays 25x14 (capture, xTrue)
+  ply  15: book(B) plays 9x20 (capture, xTrue)
+  ply  16: nobook(W) plays 40-34
+  ply  17: book(B) plays 24-29
+  ply  18: nobook(W) plays 33x24 (capture, xTrue)
+  ply  19: book(B) plays 20x40 (capture, xTrue)
+  ply  20: nobook(W) plays 45x34 (capture, xTrue)
+  ply  21: book(B) plays 15-20
+  ply  22: nobook(W) plays 38-33
+  ply  23: book(B) plays 12-18
+  ply  24: nobook(W) plays 47-42
+  ply  25: book(B) plays 10-15
+  ply  26: nobook(W) plays 41-37
+  ply  27: book(B) plays 17-21
+  ply  28: nobook(W) plays 31-26
+  ply  29: book(B) plays 5-10
+  ply  30: nobook(W) plays 26x17 (capture, xTrue)
+  ply  31: book(B) plays 20-24
+  ply  32: nobook(W) plays 37-31
+  ply  33: book(B) plays 7-12
+  ply  34: nobook(W) plays 44-40
+  ply  35: book(B) plays 12x21 (capture, xTrue)
+  ply  36: nobook(W) plays 27-22
+  ply  37: book(B) plays 18x47 (capture, xTrue)
+  ply  38: nobook(W) plays 31-26
+  ply  39: book(B) plays 23x32 (capture, xTrue)
+  ply  40: nobook(W) plays 26x17 (capture, xTrue)
+  ply  41: book(B) plays 47x29 (capture, xTrue)
+  ply  42: nobook(W) plays 34x5 (capture, xTrue)
+  ply  43: book(B) plays 32-37
+  ply  44: nobook(W) plays 5x41 (capture, xTrue)
+  ply  45: book(B) plays 13-18
+  ply  46: nobook(W) plays 43-38
+  ply  47: book(B) plays 18-23
+  ply  48: nobook(W) plays 41x30 (capture, xTrue)
+  ply  49: book(B) plays 8-13
+  ply  50: nobook(W) plays 30x8 (capture, xTrue)
+  ply  51: book(B) plays 3x21 (capture, xTrue)
+  ply  52: nobook(W) plays 40-34
+  ply  53: book(B) plays 6-11
+  ply  54: nobook(W) plays 38-33
+  ply  55: book(B) plays 11-17
+  ply  56: nobook(W) plays 35-30
+  ply  57: book(B) plays 2-8
+  ply  58: nobook(W) plays 49-43
+  ply  59: book(B) plays 8-13
+  ply  60: nobook(W) plays 30-25
+  ply  61: book(B) plays 1-7
+  ply  62: nobook(W) plays 43-38
+  ply  63: book(B) plays 17-22
+  ply  64: nobook(W) plays 46-41
+  ply  65: book(B) plays 7-12
+  ply  66: nobook(W) plays 34-29
+  ply  67: book(B) plays 21-27
+  ply  68: nobook(W) plays 41-37
+  ply  69: book(B) plays 16-21
+  ply  70: nobook(W) plays 29-24
+  ply  71: book(B) plays 13-18
+  ply  72: nobook(W) plays 33-29
+  ply  73: book(B) plays 21-26
+  ply  74: nobook(W) plays 38-33
+  ply  75: book(B) plays 12-17
+  ply  76: nobook(W) plays 24-19
+  ply  77: book(B) plays 27-32
+  ply  78: nobook(W) plays 37x28 (capture, xTrue)
+  ply  79: book(B) plays 26-31
+  ply  80: nobook(W) plays 36x27 (capture, xTrue)
+  ply  81: book(B) plays 22x31 (capture, xTrue)
+  ply  82: nobook(W) plays 28-23
+  ply  83: book(B) plays 18-22
+  ply  84: nobook(W) plays 19-13
+  ply  85: book(B) plays 31-36
+  ply  86: nobook(W) plays 13-8
+  ply  87: book(B) plays 36-41
+  ply  88: nobook(W) plays 8-2
+  ply  89: book(B) plays 22-27
+  ply  90: nobook(W) plays 2-35
+  ply  91: book(B) plays 15-20
+  ply  92: nobook(W) plays 25x14 (capture, xTrue)
+  ply  93: book(B) plays 17-21
+  ply  94: nobook(W) plays 14-9
+  ply  95: book(B) plays 4x13 (capture, xTrue)
+  ply  96: nobook(W) plays 35x26 (capture, xTrue)
+  ply  97: book(B) plays 41-46
+  ply  98: nobook(W) plays 23-18
+  ply  99: book(B) plays 46-19
+  ply 100: nobook(W) plays 18-12
+  ply 101: book(B) plays 19-2
+  ply 102: nobook(W) plays 29-23
+  ply 103: book(B) plays 2-24
+  ply 104: nobook(W) plays 12-7
+  ply 105: book(B) plays 24x47 (capture, xTrue)
+  ply 106: nobook(W) plays 7-1
+  ply 107: book(B) plays 47-41
+  ply 108: nobook(W) plays 1-7
+  ply 109: book(B) plays 41x5 (capture, xTrue)
+  ply 110: nobook(W) plays 7-16
+  ply 111: book(B) plays 27-31
+  ply 112: nobook(W) plays 26x42 (capture, xTrue)
+  ply 113: book(B) plays 5-10
+  ply 114: nobook(W) plays 16-43
+  ply 115: book(B) plays 10-5
+  ply 116: nobook(W) plays 42-38
+  ply 117: book(B) plays 5-41
+  ply 118: nobook(W) plays 43-39
+  ply 119: book(B) plays 41-10
+  ply 120: nobook(W) plays 38-16
+  ply 121: book(B) plays 10-23
+  ply 122: nobook(W) plays 16-21
+  ply 123: book(B) plays 23-19
+  ply 124: nobook(W) plays 21-43
+  ply 125: book(B) plays 19-23
+  ply 126: nobook(W) plays 39-33
+  ply 127: book(B) plays 23-18
+  ply 128: nobook(W) plays 33-28
+  ply 129: book(B) plays 18-45
+  ply 130: nobook(W) plays 43-39
+  ply 131: book(B) plays 45-40
+  ply 132: nobook(W) plays 28-19
+  ply 133: book(B) plays 40-29
+  ply 134: nobook(W) plays 39-43
+  ply 135: book(B) plays 29-18
+  ply 136: nobook(W) plays 19-5
+  ply 137: book(B) plays 18-13
+  ply 138: nobook(W) plays 5-23
+  ply 139: book(B) plays 13-24
+  ply 140: nobook(W) plays 23-37
+  ply 141: book(B) plays 24-35
+  ply 142: nobook(W) plays 37-10
+  ply 143: book(B) plays 35-13
+  ply 144: nobook(W) plays 43-39
+  ply 145: book(B) plays 13-27
+  ply 146: nobook(W) plays 10-5
+  ply 147: book(B) plays 27-16
+  ply 148: nobook(W) plays 5-19
+  ply 149: book(B) plays 16-21
+  ply 150: nobook(W) plays 19-28
+  ply 151: book(B) plays 21-27
+  ply 152: nobook(W) plays 28-14
+  ply 153: book(B) plays 27-21
+  ply 154: nobook(W) plays 14-19
+  ply 155: book(B) plays 21-38
+  ply 156: nobook(W) plays 39-44
+  ply 157: book(B) plays 38-47
+  ply 158: nobook(W) plays 19-32
+  ply 159: book(B) plays 47-36
+  ply 160: nobook(W) plays 44-39
+  ply 161: book(B) plays 36-9
+  ply 162: nobook(W) plays 48-42
+  ply 162: 25-move rule, declaring draw
+  game 6: D (25-move rule, 162 plies)  running W=5 L=0 D=1
+
+=== game 7 (opening=B:W28,31,33,34,35,36,37,38,39,..., book=W) ===
+  opening B:W28,31,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 19-23
+  ply   2: book(W) plays 28x19 (capture, xTrue)
+  ply   3: nobook(B) plays 14x23 (capture, xTrue)
+  ply   4: book(W) plays 37-32
+  ply   5: nobook(B) plays 17-21
+  ply   6: book(W) plays 41-37
+  ply   7: nobook(B) plays 11-17
+  ply   8: book(W) plays 31-26
+  ply   9: nobook(B) plays 10-14
+  ply  10: book(W) plays 46-41
+  ply  11: nobook(B) plays 14-19
+  ply  12: book(W) plays 36-31
+  ply  13: nobook(B) plays 6-11
+  ply  14: book(W) plays 34-29
+  ply  15: nobook(B) plays 23x34 (capture, xTrue)
+  ply  16: book(W) plays 40x29 (capture, xTrue)
+  ply  17: nobook(B) plays 18-22
+  ply  18: book(W) plays 41-36
+  ply  19: nobook(B) plays 12-18
+  ply  20: book(W) plays 45-40
+  ply  21: nobook(B) plays 7-12
+  ply  22: book(W) plays 40-34
+  ply  23: nobook(B) plays 1-6
+  ply  24: book(W) plays 32-28
+  ply  25: nobook(B) plays 21-27
+  ply  26: book(W) plays 37-32
+  ply  27: nobook(B) plays 5-10
+  ply  28: book(W) plays 32x21 (capture, xTrue)
+  ply  29: nobook(B) plays 16x27 (capture, xTrue)
+  ply  30: book(W) plays 34-30
+  ply  31: nobook(B) plays 20-25
+  ply  32: book(W) plays 30-24
+  ply  33: nobook(B) plays 19x30 (capture, xTrue)
+  ply  34: book(W) plays 35x24 (capture, xTrue)
+  ply  35: nobook(B) plays 10-14
+  ply  36: book(W) plays 44-40
+  ply  37: nobook(B) plays 14-19
+  ply  38: book(W) plays 40-35
+  ply  39: nobook(B) plays 19x30 (capture, xTrue)
+  ply  40: book(W) plays 35x24 (capture, xTrue)
+  ply  41: nobook(B) plays 9-14
+  ply  42: book(W) plays 24-20
+  ply  43: nobook(B) plays 15x24 (capture, xTrue)
+  ply  44: book(W) plays 29x9 (capture, xTrue)
+  ply  45: nobook(B) plays 3x14 (capture, xTrue)
+  ply  46: book(W) plays 42-37
+  ply  47: nobook(B) plays 14-19
+  ply  48: book(W) plays 39-34
+  ply  49: nobook(B) plays 18-23
+  ply  50: book(W) plays 47-41
+  ply  51: nobook(B) plays 23x32 (capture, xTrue)
+  ply  52: book(W) plays 37x28 (capture, xTrue)
+  ply  53: nobook(B) plays 13-18
+  ply  54: book(W) plays 34-29
+  ply  55: nobook(B) plays 19-24
+  ply  56: book(W) plays 29x20 (capture, xTrue)
+  ply  57: nobook(B) plays 25x14 (capture, xTrue)
+  ply  58: book(W) plays 28-23
+  ply  59: nobook(B) plays 18x29 (capture, xTrue)
+  ply  60: book(W) plays 33x24 (capture, xTrue)
+  ply  61: nobook(B) plays 8-13
+  ply  62: book(W) plays 43-39
+  ply  63: nobook(B) plays 11-16
+  ply  64: book(W) plays 41-37
+  ply  65: nobook(B) plays 16-21
+  ply  66: book(W) plays 37-32
+  ply  67: nobook(B) plays 12-18
+  ply  68: book(W) plays 39-33
+  ply  69: nobook(B) plays 6-11
+  ply  70: book(W) plays 48-42
+  ply  71: nobook(B) plays 2-8
+  ply  72: book(W) plays 33-29
+  ply  73: nobook(B) plays 11-16
+  ply  74: book(W) plays 32-28
+  ply  75: nobook(B) plays 22x33 (capture, xTrue)
+  ply  76: book(W) plays 31x11 (capture, xTrue)
+  ply  77: nobook(B) plays 16x7 (capture, xTrue)
+  ply  78: book(W) plays 26x17 (capture, xTrue)
+  ply  79: nobook(B) plays 4-9
+  ply  80: book(W) plays 49-44
+  ply  81: nobook(B) plays 14-19
+  ply  82: book(W) plays 38-32
+  ply  83: nobook(B) plays 19x30 (capture, xTrue)
+  ply  84: book(W) plays 29x38 (capture, xTrue)
+  ply  85: nobook(B) plays 9-14
+  ply  86: book(W) plays 36-31
+  ply  87: nobook(B) plays 14-19
+  ply  88: book(W) plays 44-40
+  ply  89: nobook(B) plays 18-23
+  ply  90: book(W) plays 38-33
+  ply  91: nobook(B) plays 8-12
+  ply  92: book(W) plays 17x8 (capture, xTrue)
+  ply  93: nobook(B) plays 13x2 (capture, xTrue)
+  ply  94: book(W) plays 31-27
+  ply  95: nobook(B) plays 19-24
+  ply  96: book(W) plays 42-38
+  ply  97: nobook(B) plays 2-8
+  ply  98: book(W) plays 27-22
+  ply  99: nobook(B) plays 7-11
+  ply 100: book(W) plays 33-28
+  ply 101: nobook(B) plays 8-12
+  ply 102: book(W) plays 28x19 (capture, xTrue)
+  ply 103: nobook(B) plays 24x13 (capture, xTrue)
+  ply 104: book(W) plays 50-44
+  ply 105: nobook(B) plays 12-17
+  ply 106: book(W) plays 32-28
+  ply 107: nobook(B) plays 17-21
+  ply 108: book(W) plays 38-32
+  ply 109: nobook(B) plays 13-19
+  ply 110: book(W) plays 22-18
+  ply 111: nobook(B) plays 11-17
+  ply 112: book(W) plays 44-39
+  ply 113: nobook(B) plays 30-35
+  ply 114: book(W) plays 40-34
+  ply 115: nobook(B) plays 21-26
+  ply 116: book(W) plays 32-27
+  ply 117: nobook(B) plays 19-24
+  ply 118: book(W) plays 39-33
+  ply 119: nobook(B) plays 17-21
+  ply 120: book(W) plays 27x16 (capture, xTrue)
+  ply 121: nobook(B) plays 26-31
+  ply 122: book(W) plays 18-12
+  ply 123: nobook(B) plays 31-37
+  ply 124: book(W) plays 12-7
+  ply 125: nobook(B) plays 24-30
+  ply 126: book(W) plays 34x25 (capture, xTrue)
+  ply 127: nobook(B) plays 35-40
+  ply 128: book(W) plays 7-2
+  ply 129: nobook(B) plays 37-42
+  ply 130: book(W) plays 2-30
+  ply 131: nobook(B) plays 40-45
+  ply 132: book(W) plays 28-22
+  ply 133: nobook(B) plays 42-48
+  ply 134: book(W) plays 30-34
+  ply 135: nobook(B) plays 48x30 (capture, xTrue)
+  ply 136: book(W) plays 25x34 (capture, xTrue)
+  ply 137: nobook(B) plays 45-50
+  ply 138: book(W) plays 33-28
+  ply 139: nobook(B) plays 50-44
+  ply 140: book(W) plays 16-11
+  ply 141: nobook(B) plays 44-35
+  ply 142: book(W) plays 28-23
+  ply 143: nobook(B) plays 35-49
+  ply 144: book(W) plays 34-30
+  ply 145: nobook(B) plays 49-32
+  ply 146: book(W) plays 23-18
+  ply 147: nobook(B) plays 32-43
+  ply 148: book(W) plays 30-25
+  ply 149: nobook(B) plays 43-34
+  ply 150: book(W) plays 18-13
+  ply 151: nobook(B) plays 34-18
+  ply 152: book(W) plays 13-8
+  ply 153: nobook(B) plays 18x27 (capture, xTrue)
+  ply 154: book(W) plays 8-3
+  ply 155: nobook(B) plays 27-32
+  ply 156: book(W) plays 11-6
+  ply 157: nobook(B) plays 32-23
+  ply 158: book(W) plays 3-8
+  ply 159: nobook(B) plays 23-10
+  ply 160: book(W) plays 6-1
+  ply 161: nobook(B) plays 10-5
+  ply 162: book(W) plays 8-12
+  ply 163: nobook(B) plays 5-41
+  ply 164: book(W) plays 12-3
+  ply 165: nobook(B) plays 41-32
+  ply 166: book(W) plays 3-9
+  ply 167: nobook(B) plays 32-41
+  ply 168: book(W) plays 9-22
+  ply 169: nobook(B) plays 41-37
+  ply 170: book(W) plays 1-18
+  ply 171: nobook(B) plays 37-41
+  ply 172: book(W) plays 18-29
+  ply 173: nobook(B) plays 41-14
+  ply 174: book(W) plays 29-34
+  ply 175: nobook(B) plays 14-10
+  ply 176: book(W) plays 22-18
+  ply 177: nobook(B) plays 10-41
+  ply 178: book(W) plays 18-1
+  ply 179: nobook(B) plays 41-14
+  ply 180: book(W) plays 1-6
+  ply 181: nobook(B) plays 14-10
+  ply 182: book(W) plays 6-22
+  ply 183: nobook(B) plays 10-14
+  ply 184: book(W) plays 22-33
+  ply 185: nobook(B) plays 14-5
+  ply 186: book(W) plays 34-18
+  ply 187: nobook(B) plays 5-10
+  ply 188: book(W) plays 18-40
+  ply 189: nobook(B) plays 10-14
+  ply 190: book(W) plays 33-6
+  ply 191: nobook(B) plays 14-41
+  ply 192: book(W) plays 6-44
+  ply 193: nobook(B) plays 41-37
+  ply 194: book(W) plays 40-1
+  ply 195: nobook(B) plays 37-41
+  ply 196: book(W) plays 44-50
+  ply 197: nobook(B) plays 41-10
+  ply 198: book(W) plays 1-29
+  ply 199: nobook(B) plays 10-5
+  ply 200: book(W) plays 50-39
+  ply 200: ply cap reached, declaring draw
+  game 7: D (ply cap, 200 plies)  running W=5 L=0 D=2
+
+=== game 8 (opening=B:W28,31,33,34,35,36,37,38,39,..., book=B) ===
+  opening B:W28,31,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 19-23
+  ply   2: nobook(W) plays 28x19 (capture, xTrue)
+  ply   3: book(B) plays 14x23 (capture, xTrue)
+  ply   4: nobook(W) plays 35-30
+  ply   5: book(B) plays 20-25
+  ply   6: nobook(W) plays 40-35
+  ply   7: book(B) plays 13-19
+  ply   8: nobook(W) plays 37-32
+  ply   9: book(B) plays 8-13
+  ply  10: nobook(W) plays 44-40
+  ply  11: book(B) plays 2-8
+  ply  12: nobook(W) plays 50-44
+  ply  13: book(B) plays 10-14
+  ply  14: nobook(W) plays 41-37
+  ply  15: book(B) plays 17-22
+  ply  16: nobook(W) plays 46-41
+  ply  17: book(B) plays 5-10
+  ply  18: nobook(W) plays 32-28
+  ply  19: book(B) plays 23x32 (capture, xTrue)
+  ply  20: nobook(W) plays 37x17 (capture, xTrue)
+  ply  21: book(B) plays 11x22 (capture, xTrue)
+  ply  22: nobook(W) plays 30-24
+  ply  23: book(B) plays 19x30 (capture, xTrue)
+  ply  24: nobook(W) plays 35x24 (capture, xTrue)
+  ply  25: book(B) plays 14-20
+  ply  26: nobook(W) plays 41-37
+  ply  27: book(B) plays 20x29 (capture, xTrue)
+  ply  28: nobook(W) plays 34x23 (capture, xTrue)
+  ply  29: book(B) plays 18x29 (capture, xTrue)
+  ply  30: nobook(W) plays 33x24 (capture, xTrue)
+  ply  31: book(B) plays 10-14
+  ply  32: nobook(W) plays 39-33
+  ply  33: book(B) plays 12-18
+  ply  34: nobook(W) plays 43-39
+  ply  35: book(B) plays 14-19
+  ply  36: nobook(W) plays 40-35
+  ply  37: book(B) plays 19x30 (capture, xTrue)
+  ply  38: nobook(W) plays 35x24 (capture, xTrue)
+  ply  39: book(B) plays 9-14
+  ply  40: nobook(W) plays 37-32
+  ply  41: book(B) plays 14-19
+  ply  42: nobook(W) plays 44-40
+  ply  43: book(B) plays 19x30 (capture, xTrue)
+  ply  44: nobook(W) plays 40-35
+  ply  45: book(B) plays 7-12
+  ply  46: nobook(W) plays 35x24 (capture, xTrue)
+  ply  47: book(B) plays 6-11
+  ply  48: nobook(W) plays 32-28
+  ply  49: book(B) plays 1-6
+  ply  50: nobook(W) plays 28x17 (capture, xTrue)
+  ply  51: book(B) plays 11x22 (capture, xTrue)
+  ply  52: nobook(W) plays 38-32
+  ply  53: book(B) plays 22-28
+  ply  54: nobook(W) plays 33x22 (capture, xTrue)
+  ply  55: book(B) plays 18x38 (capture, xTrue)
+  ply  56: nobook(W) plays 42x33 (capture, xTrue)
+  ply  57: book(B) plays 6-11
+  ply  58: nobook(W) plays 45-40
+  ply  59: book(B) plays 3-9
+  ply  60: nobook(W) plays 47-42
+  ply  61: book(B) plays 9-14
+  ply  62: nobook(W) plays 42-38
+  ply  63: book(B) plays 11-17
+  ply  64: nobook(W) plays 33-28
+  ply  65: book(B) plays 4-9
+  ply  66: nobook(W) plays 38-33
+  ply  67: book(B) plays 12-18
+  ply  68: nobook(W) plays 49-43
+  ply  69: book(B) plays 14-19
+  ply  70: nobook(W) plays 43-38
+  ply  71: book(B) plays 19x30 (capture, xTrue)
+  ply  72: nobook(W) plays 28-23
+  ply  73: book(B) plays 18x29 (capture, xTrue)
+  ply  74: nobook(W) plays 33x35 (capture, xTrue)
+  ply  75: book(B) plays 15-20
+  ply  76: nobook(W) plays 40-34
+  ply  77: book(B) plays 8-12
+  ply  78: nobook(W) plays 38-33
+  ply  79: book(B) plays 13-19
+  ply  80: nobook(W) plays 48-43
+  ply  81: book(B) plays 20-24
+  ply  82: nobook(W) plays 34-29
+  ply  83: book(B) plays 9-13
+  ply  84: nobook(W) plays 29x20 (capture, xTrue)
+  ply  85: book(B) plays 25x14 (capture, xTrue)
+  ply  86: nobook(W) plays 39-34
+  ply  87: book(B) plays 14-20
+  ply  88: nobook(W) plays 34-29
+  ply  89: book(B) plays 19-24
+  ply  90: nobook(W) plays 43-39
+  ply  91: book(B) plays 17-22
+  ply  92: nobook(W) plays 29-23
+  ply  93: book(B) plays 20-25
+  ply  94: nobook(W) plays 39-34
+  ply  95: book(B) plays 13-18
+  ply  96: nobook(W) plays 31-27
+  ply  97: book(B) plays 18x40 (capture, xTrue)
+  ply  98: nobook(W) plays 27x7 (capture, xTrue)
+  ply  99: book(B) plays 40-44
+  ply 100: nobook(W) plays 7-1
+  ply 101: book(B) plays 44-49
+  ply 102: nobook(W) plays 1-12
+  ply 103: book(B) plays 49-27
+  ply 104: nobook(W) plays 12-29
+  ply 105: book(B) plays 27-22
+  ply 106: nobook(W) plays 29x15 (capture, xTrue)
+  ply 107: book(B) plays 22x44 (capture, xTrue)
+  ply 108: nobook(W) plays 36-31
+  ply 109: book(B) plays 44-22
+  ply 110: nobook(W) plays 31-26
+  ply 111: book(B) plays 22-6
+  ply 112: nobook(W) plays 15-4
+  ply 113: book(B) plays 6-1
+  ply 114: nobook(W) plays 4-15
+  ply 115: book(B) plays 1-6
+  ply 116: nobook(W) has no legal move → W loses (W for book-side)
+  game 8: W (no legal move from nobook(W), 116 plies)  running W=6 L=0 D=2
+
+=== game 9 (opening=B:W28,31,32,34,35,36,37,38,39,..., book=W) ===
+  opening B:W28,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 18-22
+  ply   2: book(W) plays 38-33
+  ply   3: nobook(B) plays 12-18
+  ply   4: book(W) plays 42-38
+  ply   5: nobook(B) plays 16-21
+  ply   6: book(W) plays 31-26
+  ply   7: nobook(B) plays 11-16
+  ply   8: book(W) plays 37-31
+  ply   9: nobook(B) plays 7-12
+  ply  10: book(W) plays 41-37
+  ply  11: nobook(B) plays 1-7
+  ply  12: book(W) plays 48-42
+  ply  13: nobook(B) plays 19-23
+  ply  14: book(W) plays 28x19 (capture, xTrue)
+  ply  15: nobook(B) plays 13x24 (capture, xTrue)
+  ply  16: book(W) plays 33-28
+  ply  17: nobook(B) plays 22x33 (capture, xTrue)
+  ply  18: book(W) plays 39x28 (capture, xTrue)
+  ply  19: nobook(B) plays 18-22
+  ply  20: book(W) plays 38-33
+  ply  21: nobook(B) plays 14-19
+  ply  22: book(W) plays 46-41
+  ply  23: nobook(B) plays 12-18
+  ply  24: book(W) plays 44-39
+  ply  25: nobook(B) plays 10-14
+  ply  26: book(W) plays 34-29
+  ply  27: nobook(B) plays 20-25
+  ply  28: book(W) plays 29x20 (capture, xTrue)
+  ply  29: nobook(B) plays 15x24 (capture, xTrue)
+  ply  30: book(W) plays 40-34
+  ply  31: nobook(B) plays 5-10
+  ply  32: book(W) plays 43-38
+  ply  33: nobook(B) plays 14-20
+  ply  34: book(W) plays 49-43
+  ply  35: nobook(B) plays 9-13
+  ply  36: book(W) plays 34-29
+  ply  37: nobook(B) plays 7-12
+  ply  38: book(W) plays 31-27
+  ply  39: nobook(B) plays 22x31 (capture, xTrue)
+  ply  40: book(W) plays 36x27 (capture, xTrue)
+  ply  41: nobook(B) plays 19-23
+  ply  42: book(W) plays 28x30 (capture, xTrue)
+  ply  43: nobook(B) plays 25x23 (capture, xTrue)
+  ply  44: book(W) plays 45-40
+  ply  45: nobook(B) plays 10-15
+  ply  46: book(W) plays 40-34
+  ply  47: nobook(B) plays 20-24
+  ply  48: book(W) plays 34-29
+  ply  49: nobook(B) plays 23x34 (capture, xTrue)
+  ply  50: book(W) plays 39x19 (capture, xTrue)
+  ply  51: nobook(B) plays 13x24 (capture, xTrue)
+  ply  52: book(W) plays 33-28
+  ply  53: nobook(B) plays 15-20
+  ply  54: book(W) plays 38-33
+  ply  55: nobook(B) plays 20-25
+  ply  56: book(W) plays 42-38
+  ply  57: nobook(B) plays 8-13
+  ply  58: book(W) plays 43-39
+  ply  59: nobook(B) plays 2-8
+  ply  60: book(W) plays 41-36
+  ply  61: nobook(B) plays 4-9
+  ply  62: book(W) plays 37-31
+  ply  63: nobook(B) plays 13-19
+  ply  64: book(W) plays 27-22
+  ply  65: nobook(B) plays 18x27 (capture, xTrue)
+  ply  66: book(W) plays 31x11 (capture, xTrue)
+  ply  67: nobook(B) plays 6x17 (capture, xTrue)
+  ply  68: book(W) plays 36-31
+  ply  69: nobook(B) plays 12-18
+  ply  70: book(W) plays 31-27
+  ply  71: nobook(B) plays 9-13
+  ply  72: book(W) plays 47-42
+  ply  73: nobook(B) plays 3-9
+  ply  74: book(W) plays 50-44
+  ply  75: nobook(B) plays 18-22
+  ply  76: book(W) plays 27x18 (capture, xTrue)
+  ply  77: nobook(B) plays 13x22 (capture, xTrue)
+  ply  78: book(W) plays 39-34
+  ply  79: nobook(B) plays 8-12
+  ply  80: book(W) plays 33-29
+  ply  81: nobook(B) plays 24x33 (capture, xTrue)
+  ply  82: book(W) plays 28x39 (capture, xTrue)
+  ply  83: nobook(B) plays 21-27
+  ply  84: book(W) plays 32x21 (capture, xTrue)
+  ply  85: nobook(B) plays 16x27 (capture, xTrue)
+  ply  86: book(W) plays 39-33
+  ply  87: nobook(B) plays 12-18
+  ply  88: book(W) plays 42-37
+  ply  89: nobook(B) plays 27-31
+  ply  90: book(W) plays 44-39
+  ply  91: nobook(B) plays 31x42 (capture, xTrue)
+  ply  92: book(W) plays 38x47 (capture, xTrue)
+  ply  93: nobook(B) plays 22-27
+  ply  94: book(W) plays 33-29
+  ply  95: nobook(B) plays 17-22
+  ply  96: book(W) plays 35-30
+  ply  97: nobook(B) plays 9-13
+  ply  98: book(W) plays 29-24
+  ply  99: nobook(B) plays 19-23
+  ply 100: book(W) plays 47-42
+  ply 101: nobook(B) plays 22-28
+  ply 102: book(W) plays 39-33
+  ply 103: nobook(B) plays 28x39 (capture, xTrue)
+  ply 104: book(W) plays 34x43 (capture, xTrue)
+  ply 105: nobook(B) plays 25x34 (capture, xTrue)
+  ply 106: book(W) plays 24-20
+  ply 107: nobook(B) plays 34-40
+  ply 108: book(W) plays 20-15
+  ply 109: nobook(B) plays 23-29
+  ply 110: book(W) plays 15-10
+  ply 111: nobook(B) plays 40-45
+  ply 112: book(W) plays 10-5
+  ply 113: nobook(B) plays 45-50
+  ply 114: book(W) plays 42-38
+  ply 115: nobook(B) plays 29-34
+  ply 116: book(W) plays 5-32
+  ply 117: nobook(B) plays 50-33
+  ply 118: book(W) plays 38x40 (capture, xTrue)
+  ply 119: nobook(B) plays 27x49 (capture, xTrue)
+  ply 120: book(W) plays 40-34
+  ply 121: nobook(B) plays 13-19
+  ply 122: book(W) plays 26-21
+  ply 123: nobook(B) plays 49x16 (capture, xTrue)
+  ply 124: book(W) plays 34-30
+  ply 125: nobook(B) plays 19-24
+  ply 126: book(W) plays 30x19 (capture, xTrue)
+  ply 127: nobook(B) plays 16-32
+  ply 128: book(W) plays 19-13
+  ply 129: nobook(B) plays 18x9 (capture, xTrue)
+  ply 130: book(W) has no legal move → W loses (L for book-side)
+  game 9: L (no legal move from book(W), 130 plies)  running W=6 L=1 D=2
+
+=== game 10 (opening=B:W28,31,32,34,35,36,37,38,39,..., book=B) ===
+  opening B:W28,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 18-23
+  ply   2: nobook(W) plays 31-27
+  ply   3: book(B) plays 17-21
+  ply   4: nobook(W) plays 34-30
+  ply   5: book(B) plays 21-26
+  ply   6: nobook(W) plays 39-33
+  ply   7: book(B) plays 12-18
+  ply   8: nobook(W) plays 30-25
+  ply   9: book(B) plays 20-24
+  ply  10: nobook(W) plays 37-31
+  ply  11: book(B) plays 26x37 (capture, xTrue)
+  ply  12: nobook(W) plays 42x31 (capture, xTrue)
+  ply  13: book(B) plays 14-20
+  ply  14: nobook(W) plays 25x14 (capture, xTrue)
+  ply  15: book(B) plays 9x20 (capture, xTrue)
+  ply  16: nobook(W) plays 44-39
+  ply  17: book(B) plays 10-14
+  ply  18: nobook(W) plays 39-34
+  ply  19: book(B) plays 7-12
+  ply  20: nobook(W) plays 41-37
+  ply  21: book(B) plays 12-17
+  ply  22: nobook(W) plays 34-30
+  ply  23: book(B) plays 17-21
+  ply  24: nobook(W) plays 30-25
+  ply  25: book(B) plays 21-26
+  ply  26: nobook(W) plays 43-39
+  ply  27: book(B) plays 5-10
+  ply  28: nobook(W) plays 49-43
+  ply  29: book(B) plays 1-7
+  ply  30: nobook(W) plays 27-22
+  ply  31: book(B) plays 18x27 (capture, xTrue)
+  ply  32: nobook(W) plays 31x22 (capture, xTrue)
+  ply  33: book(B) plays 7-12
+  ply  34: nobook(W) plays 36-31
+  ply  35: book(B) plays 24-29
+  ply  36: nobook(W) plays 33x24 (capture, xTrue)
+  ply  37: book(B) plays 20x29 (capture, xTrue)
+  ply  38: nobook(W) plays 46-41
+  ply  39: book(B) plays 15-20
+  ply  40: nobook(W) plays 35-30
+  ply  41: book(B) plays 20-24
+  ply  42: nobook(W) plays 40-35
+  ply  43: book(B) plays 16-21
+  ply  44: nobook(W) plays 31-27
+  ply  45: book(B) plays 11-16
+  ply  46: nobook(W) plays 45-40
+  ply  47: book(B) plays 12-18
+  ply  48: nobook(W) plays 41-36
+  ply  49: book(B) plays 2-7
+  ply  50: nobook(W) plays 39-33
+  ply  51: book(B) plays 6-11
+  ply  52: nobook(W) plays 36-31
+  ply  53: book(B) plays 8-12
+  ply  54: nobook(W) plays 50-45
+  ply  55: book(B) plays 10-15
+  ply  56: nobook(W) plays 40-34
+  ply  57: book(B) plays 29x40 (capture, xTrue)
+  ply  58: nobook(W) plays 45x34 (capture, xTrue)
+  ply  59: book(B) plays 4-9
+  ply  60: nobook(W) plays 34-29
+  ply  61: book(B) plays 23x34 (capture, xTrue)
+  ply  62: nobook(W) plays 30x39 (capture, xTrue)
+  ply  63: book(B) plays 12-17
+  ply  64: nobook(W) plays 47-41
+  ply  65: book(B) plays 18-23
+  ply  66: nobook(W) plays 39-34
+  ply  67: book(B) plays 14-20
+  ply  68: nobook(W) plays 25x14 (capture, xTrue)
+  ply  69: book(B) plays 9x20 (capture, xTrue)
+  ply  70: nobook(W) plays 43-39
+  ply  71: book(B) plays 24-29
+  ply  72: nobook(W) plays 33x24 (capture, xTrue)
+  ply  73: book(B) plays 20x40 (capture, xTrue)
+  ply  74: nobook(W) plays 35x44 (capture, xTrue)
+  ply  75: book(B) plays 23-29
+  ply  76: nobook(W) plays 44-40
+  ply  77: book(B) plays 3-8
+  ply  78: nobook(W) plays 40-35
+  ply  79: book(B) plays 19-24
+  ply  80: nobook(W) plays 39-33
+  ply  81: book(B) plays 24-30
+  ply  82: nobook(W) plays 35x24 (capture, xTrue)
+  ply  83: book(B) plays 29x20 (capture, xTrue)
+  ply  84: nobook(W) plays 22-18
+  ply  85: book(B) plays 13x22 (capture, xTrue)
+  ply  86: nobook(W) plays 27x18 (capture, xTrue)
+  ply  87: book(B) plays 7-12
+  ply  88: nobook(W) plays 18x7 (capture, xTrue)
+  ply  89: book(B) plays 11x2 (capture, xTrue)
+  ply  90: nobook(W) plays 31-27
+  ply  91: book(B) plays 8-13
+  ply  92: nobook(W) plays 33-29
+  ply  93: book(B) plays 20-24
+  ply  94: nobook(W) plays 29x20 (capture, xTrue)
+  ply  95: book(B) plays 15x24 (capture, xTrue)
+  ply  96: nobook(W) plays 48-43
+  ply  97: book(B) plays 2-8
+  ply  98: nobook(W) plays 43-39
+  ply  99: book(B) plays 24-29
+  ply 100: nobook(W) plays 28-22
+  ply 101: book(B) plays 17x28 (capture, xTrue)
+  ply 102: nobook(W) plays 32x34 (capture, xTrue)
+  ply 103: book(B) plays 21x43 (capture, xTrue)
+  ply 104: nobook(W) plays 39x48 (capture, xTrue)
+  ply 105: book(B) plays 16-21
+  ply 106: nobook(W) plays 34-29
+  ply 107: book(B) plays 13-19
+  ply 108: nobook(W) plays 37-32
+  ply 109: book(B) plays 21-27
+  ply 110: nobook(W) plays 32x21 (capture, xTrue)
+  ply 111: book(B) plays 26x17 (capture, xTrue)
+  ply 112: nobook(W) plays 41-37
+  ply 113: book(B) plays 8-12
+  ply 114: nobook(W) plays 48-43
+  ply 115: book(B) plays 17-22
+  ply 116: nobook(W) plays 43-39
+  ply 117: book(B) plays 12-17
+  ply 118: nobook(W) plays 39-34
+  ply 119: book(B) plays 22-27
+  ply 120: nobook(W) plays 34-30
+  ply 121: book(B) plays 17-22
+  ply 122: nobook(W) plays 29-24
+  ply 123: book(B) plays 19-23
+  ply 124: nobook(W) plays 24-20
+  ply 125: book(B) plays 22-28
+  ply 126: nobook(W) plays 20-14
+  ply 127: book(B) plays 27-32
+  ply 128: nobook(W) plays 37-31
+  ply 129: book(B) plays 32-38
+  ply 130: nobook(W) plays 14-10
+  ply 131: book(B) plays 38-43
+  ply 132: nobook(W) plays 10-5
+  ply 133: book(B) plays 43-48
+  ply 134: nobook(W) plays 31-27
+  ply 135: book(B) plays 48x25 (capture, xTrue)
+  ply 136: nobook(W) plays 27-22
+  ply 137: book(B) plays 28x17 (capture, xTrue)
+  ply 138: nobook(W) plays 5x11 (capture, xTrue)
+  ply 139: book(B) has no legal move → B loses (L for book-side)
+  game 10: L (no legal move from book(B), 139 plies)  running W=6 L=2 D=2
+
+=== game 11 (opening=B:W29,31,32,34,35,36,37,38,39,..., book=W) ===
+  opening B:W29,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 19-23
+  ply   2: book(W) plays 35-30
+  ply   3: nobook(B) plays 20-25
+  ply   4: book(W) plays 40-35
+  ply   5: nobook(B) plays 13-19
+  ply   6: book(W) plays 44-40
+  ply   7: nobook(B) plays 8-13
+  ply   8: book(W) plays 32-28
+  ply   9: nobook(B) plays 23x32 (capture, xTrue)
+  ply  10: book(W) plays 38x27 (capture, xTrue)
+  ply  11: nobook(B) plays 17-21
+  ply  12: book(W) plays 50-44
+  ply  13: nobook(B) plays 21x32 (capture, xTrue)
+  ply  14: book(W) plays 37x28 (capture, xTrue)
+  ply  15: nobook(B) plays 11-17
+  ply  16: book(W) plays 28-22
+  ply  17: nobook(B) plays 18x27 (capture, xTrue)
+  ply  18: book(W) plays 31x11 (capture, xTrue)
+  ply  19: nobook(B) plays 6x17 (capture, xTrue)
+  ply  20: book(W) plays 41-37
+  ply  21: nobook(B) plays 12-18
+  ply  22: book(W) plays 43-38
+  ply  23: nobook(B) plays 7-12
+  ply  24: book(W) plays 37-32
+  ply  25: nobook(B) plays 14-20
+  ply  26: book(W) plays 30-24
+  ply  27: nobook(B) plays 19x30 (capture, xTrue)
+  ply  28: book(W) plays 35x24 (capture, xTrue)
+  ply  29: nobook(B) plays 3-8
+  ply  30: book(W) plays 39-33
+  ply  31: nobook(B) plays 10-14
+  ply  32: book(W) plays 44-39
+  ply  33: nobook(B) plays 16-21
+  ply  34: book(W) plays 32-28
+  ply  35: nobook(B) plays 5-10
+  ply  36: book(W) plays 46-41
+  ply  37: nobook(B) plays 18-22
+  ply  38: book(W) plays 38-32
+  ply  39: nobook(B) plays 14-19
+  ply  40: book(W) plays 40-35
+  ply  41: nobook(B) plays 19x30 (capture, xTrue)
+  ply  42: book(W) plays 35x24 (capture, xTrue)
+  ply  43: nobook(B) plays 10-14
+  ply  44: book(W) plays 41-37
+  ply  45: nobook(B) plays 21-27
+  ply  46: book(W) plays 32x21 (capture, xTrue)
+  ply  47: nobook(B) plays 17x26 (capture, xTrue)
+  ply  48: book(W) plays 28x17 (capture, xTrue)
+  ply  49: nobook(B) plays 12x21 (capture, xTrue)
+  ply  50: book(W) plays 45-40
+  ply  51: nobook(B) plays 14-19
+  ply  52: book(W) plays 37-32
+  ply  53: nobook(B) plays 19x30 (capture, xTrue)
+  ply  54: book(W) plays 42-37
+  ply  55: nobook(B) plays 21-27
+  ply  56: book(W) plays 32x21 (capture, xTrue)
+  ply  57: nobook(B) plays 26x17 (capture, xTrue)
+  ply  58: book(W) plays 37-31
+  ply  59: nobook(B) plays 30-35
+  ply  60: book(W) plays 47-42
+  ply  61: nobook(B) plays 35x44 (capture, xTrue)
+  ply  62: book(W) plays 49x40 (capture, xTrue)
+  ply  63: nobook(B) plays 8-12
+  ply  64: book(W) plays 31-27
+  ply  65: nobook(B) plays 2-7
+  ply  66: book(W) plays 36-31
+  ply  67: nobook(B) plays 7-11
+  ply  68: book(W) plays 42-38
+  ply  69: nobook(B) plays 20-24
+  ply  70: book(W) plays 29x20 (capture, xTrue)
+  ply  71: nobook(B) plays 15x24 (capture, xTrue)
+  ply  72: book(W) plays 38-32
+  ply  73: nobook(B) plays 12-18
+  ply  74: book(W) plays 31-26
+  ply  75: nobook(B) plays 17-22
+  ply  76: book(W) plays 34-29
+  ply  77: nobook(B) plays 22x31 (capture, xTrue)
+  ply  78: book(W) plays 26x37 (capture, xTrue)
+  ply  79: nobook(B) plays 11-16
+  ply  80: book(W) plays 29x20 (capture, xTrue)
+  ply  81: nobook(B) plays 25x14 (capture, xTrue)
+  ply  82: book(W) plays 37-31
+  ply  83: nobook(B) plays 14-19
+  ply  84: book(W) plays 40-34
+  ply  85: nobook(B) plays 9-14
+  ply  86: book(W) plays 34-29
+  ply  87: nobook(B) plays 14-20
+  ply  88: book(W) plays 32-28
+  ply  89: nobook(B) plays 20-25
+  ply  90: book(W) plays 48-42
+  ply  91: nobook(B) plays 25-30
+  ply  92: book(W) plays 42-37
+  ply  93: nobook(B) plays 4-10
+  ply  94: book(W) plays 39-34
+  ply  95: nobook(B) plays 30x39 (capture, xTrue)
+  ply  96: book(W) plays 33x44 (capture, xTrue)
+  ply  97: nobook(B) plays 10-15
+  ply  98: book(W) plays 31-26
+  ply  99: nobook(B) plays 1-7
+  ply 100: book(W) plays 44-39
+  ply 101: nobook(B) plays 7-12
+  ply 102: book(W) plays 37-32
+  ply 103: nobook(B) plays 15-20
+  ply 104: book(W) plays 39-33
+  ply 105: nobook(B) plays 19-24
+  ply 106: book(W) plays 32-27
+  ply 107: nobook(B) plays 24-30
+  ply 108: book(W) plays 28-22
+  ply 109: nobook(B) plays 30-35
+  ply 110: book(W) plays 33-28
+  ply 111: nobook(B) plays 35-40
+  ply 112: book(W) plays 28-23
+  ply 113: nobook(B) plays 40-45
+  ply 114: book(W) plays 23-19
+  ply 115: nobook(B) plays 13x33 (capture, xTrue)
+  ply 116: book(W) plays 22x13 (capture, xTrue)
+  ply 117: nobook(B) plays 20-25
+  ply 118: book(W) plays 13-9
+  ply 119: nobook(B) plays 45-50
+  ply 120: book(W) plays 27-21
+  ply 121: nobook(B) plays 16x27 (capture, xTrue)
+  ply 122: book(W) plays 9-4
+  ply 123: nobook(B) plays 33-38
+  ply 124: book(W) plays 4x36 (capture, xTrue)
+  ply 125: nobook(B) plays 38-42
+  ply 126: book(W) plays 36-47
+  ply 127: nobook(B) plays 42-48
+  ply 128: book(W) plays 26-21
+  ply 129: nobook(B) plays 50-45
+  ply 130: book(W) plays 47-41
+  ply 131: nobook(B) plays 48-39
+  ply 132: book(W) plays 41-19
+  ply 133: nobook(B) plays 39-22
+  ply 134: book(W) plays 21-16
+  ply 135: nobook(B) plays 12-18
+  ply 136: book(W) plays 19-2
+  ply 137: nobook(B) plays 22-28
+  ply 138: book(W) plays 2-24
+  ply 139: nobook(B) plays 18-23
+  ply 140: book(W) plays 24-15
+  ply 141: nobook(B) plays 28-6
+  ply 142: book(W) plays 15-24
+  ply 143: nobook(B) plays 23-28
+  ply 144: book(W) plays 24-47
+  ply 145: nobook(B) plays 25-30
+  ply 146: book(W) plays 47-36
+  ply 147: nobook(B) plays 28-33
+  ply 148: book(W) plays 36-41
+  ply 149: nobook(B) plays 45-1
+  ply 150: book(W) plays 41-46
+  ply 151: nobook(B) plays 33-39
+  ply 152: book(W) plays 16-11
+  ply 153: nobook(B) plays 6x33 (capture, xTrue)
+  ply 154: book(W) plays 46-32
+  ply 155: nobook(B) plays 39-44
+  ply 156: book(W) plays 32-43
+  ply 157: nobook(B) plays 30-35
+  ply 158: book(W) plays 43-25
+  ply 159: nobook(B) plays 33-24
+  ply 160: book(W) plays 25-43
+  ply 161: nobook(B) plays 1-29
+  ply 162: book(W) plays 43-48
+  ply 163: nobook(B) plays 44-50
+  ply 164: book(W) plays 48-25
+  ply 165: nobook(B) plays 50-45
+  ply 166: book(W) plays 25-43
+  ply 167: nobook(B) plays 29-38
+  ply 168: book(W) plays 43x16 (capture, xTrue)
+  ply 169: nobook(B) plays 45-7
+  ply 170: book(W) plays 16x30 (capture, xTrue)
+  ply 171: nobook(B) plays 35x24 (capture, xTrue)
+  ply 172: book(W) has no legal move → W loses (L for book-side)
+  game 11: L (no legal move from book(W), 172 plies)  running W=6 L=3 D=2
+
+=== game 12 (opening=B:W29,31,32,34,35,36,37,38,39,..., book=B) ===
+  opening B:W29,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 19-23
+  ply   2: nobook(W) plays 35-30
+  ply   3: book(B) plays 14-19
+  ply   4: nobook(W) plays 30-25
+  ply   5: book(B) plays 10-14
+  ply   6: nobook(W) plays 39-33
+  ply   7: book(B) plays 4-10
+  ply   8: nobook(W) plays 44-39
+  ply   9: book(B) plays 17-22
+  ply  10: nobook(W) plays 40-35
+  ply  11: book(B) plays 11-17
+  ply  12: nobook(W) plays 45-40
+  ply  13: book(B) plays 6-11
+  ply  14: nobook(W) plays 50-45
+  ply  15: book(B) plays 22-28
+  ply  16: nobook(W) plays 33x22 (capture, xTrue)
+  ply  17: book(B) plays 17x28 (capture, xTrue)
+  ply  18: nobook(W) plays 34-30
+  ply  19: book(B) plays 23x34 (capture, xTrue)
+  ply  20: nobook(W) plays 32x23 (capture, xTrue)
+  ply  21: book(B) plays 19x28 (capture, xTrue)
+  ply  22: nobook(W) plays 40x29 (capture, xTrue)
+  ply  23: book(B) plays 16-21
+  ply  24: nobook(W) plays 38-32
+  ply  25: book(B) plays 13-19
+  ply  26: nobook(W) plays 32x23 (capture, xTrue)
+  ply  27: book(B) plays 19x28 (capture, xTrue)
+  ply  28: nobook(W) plays 42-38
+  ply  29: book(B) plays 8-13
+  ply  30: nobook(W) plays 31-26
+  ply  31: book(B) plays 28-33
+  ply  32: nobook(W) plays 26x19 (capture, xTrue)
+  ply  33: book(B) plays 33x31 (capture, xTrue)
+  ply  34: nobook(W) plays 36x27 (capture, xTrue)
+  ply  35: book(B) plays 14x34 (capture, xTrue)
+  ply  36: nobook(W) plays 25x14 (capture, xTrue)
+  ply  37: book(B) plays 34x25 (capture, xTrue)
+  ply  38: nobook(W) plays 41-37
+  ply  39: book(B) plays 10x19 (capture, xTrue)
+  ply  40: nobook(W) plays 37-32
+  ply  41: book(B) plays 9-13
+  ply  42: nobook(W) plays 46-41
+  ply  43: book(B) plays 5-10
+  ply  44: nobook(W) plays 47-42
+  ply  45: book(B) plays 7-12
+  ply  46: nobook(W) plays 42-38
+  ply  47: book(B) plays 25-30
+  ply  48: nobook(W) plays 35x24 (capture, xTrue)
+  ply  49: book(B) plays 19x30 (capture, xTrue)
+  ply  50: nobook(W) plays 39-33
+  ply  51: book(B) plays 10-14
+  ply  52: nobook(W) plays 41-36
+  ply  53: book(B) plays 14-19
+  ply  54: nobook(W) plays 43-39
+  ply  55: book(B) plays 2-8
+  ply  56: nobook(W) plays 36-31
+  ply  57: book(B) plays 30-35
+  ply  58: nobook(W) plays 49-44
+  ply  59: book(B) plays 19-24
+  ply  60: nobook(W) plays 45-40
+  ply  61: book(B) plays 13-19
+  ply  62: nobook(W) plays 31-26
+  ply  63: book(B) plays 8-13
+  ply  64: nobook(W) plays 48-43
+  ply  65: book(B) plays 18-23
+  ply  66: nobook(W) plays 40-34
+  ply  67: book(B) plays 11-17
+  ply  68: nobook(W) plays 27-21
+  ply  69: book(B) plays 3-8
+  ply  70: nobook(W) plays 32-27
+  ply  71: book(B) plays 13-18
+  ply  72: nobook(W) plays 38-32
+  ply  73: book(B) plays 15-20
+  ply  74: nobook(W) plays 21-16
+  ply  75: book(B) plays 1-7
+  ply  76: nobook(W) plays 44-40
+  ply  77: book(B) plays 35x44 (capture, xTrue)
+  ply  78: nobook(W) plays 39x50 (capture, xTrue)
+  ply  79: book(B) plays 7-11
+  ply  80: nobook(W) plays 16x7 (capture, xTrue)
+  ply  81: book(B) plays 12x1 (capture, xTrue)
+  ply  82: nobook(W) plays 43-39
+  ply  83: book(B) plays 1-7
+  ply  84: nobook(W) plays 27-21
+  ply  85: book(B) plays 8-12
+  ply  86: nobook(W) plays 50-44
+  ply  87: book(B) plays 20-25
+  ply  88: nobook(W) plays 21-16
+  ply  89: book(B) plays 24-30
+  ply  90: nobook(W) plays 44-40
+  ply  91: book(B) plays 18-22
+  ply  92: nobook(W) plays 32-27
+  ply  93: book(B) plays 22x31 (capture, xTrue)
+  ply  94: nobook(W) plays 26x37 (capture, xTrue)
+  ply  95: book(B) plays 19-24
+  ply  96: nobook(W) plays 40-35
+  ply  97: book(B) plays 12-18
+  ply  98: nobook(W) plays 37-32
+  ply  99: book(B) plays 17-22
+  ply 100: nobook(W) plays 32-28
+  ply 101: book(B) plays 23x32 (capture, xTrue)
+  ply 102: nobook(W) plays 34-29
+  ply 103: book(B) plays 32-37
+  ply 104: nobook(W) plays 29x20 (capture, xTrue)
+  ply 105: book(B) plays 25x14 (capture, xTrue)
+  ply 106: nobook(W) plays 35x24 (capture, xTrue)
+  ply 107: book(B) plays 37-42
+  ply 108: nobook(W) plays 39-34
+  ply 109: book(B) plays 14-19
+  ply 110: nobook(W) plays 24x13 (capture, xTrue)
+  ply 111: book(B) plays 18x9 (capture, xTrue)
+  ply 112: nobook(W) plays 16-11
+  ply 113: book(B) plays 7x16 (capture, xTrue)
+  ply 114: nobook(W) plays 33-28
+  ply 115: book(B) plays 22x33 (capture, xTrue)
+  ply 116: nobook(W) plays 34-30
+  ply 117: book(B) plays 42-47
+  ply 118: nobook(W) plays 30-24
+  ply 119: book(B) plays 9-14
+  ply 120: nobook(W) plays 24-19
+  ply 121: book(B) plays 14x23 (capture, xTrue)
+  ply 122: nobook(W) has no legal move → W loses (W for book-side)
+  game 12: W (no legal move from nobook(W), 122 plies)  running W=7 L=3 D=2
+
+=== game 13 (opening=B:W29,31,32,33,35,36,37,38,39,..., book=W) ===
+  opening B:W29,31,32,33,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 19-23
+  ply   2: book(W) plays 40-34
+  ply   3: nobook(B) plays 14-19
+  ply   4: book(W) plays 45-40
+  ply   5: nobook(B) plays 19-24
+  ply   6: book(W) plays 32-28
+  ply   7: nobook(B) plays 23x32 (capture, xTrue)
+  ply   8: book(W) plays 37x28 (capture, xTrue)
+  ply   9: nobook(B) plays 10-14
+  ply  10: book(W) plays 50-45
+  ply  11: nobook(B) plays 17-21
+  ply  12: book(W) plays 42-37
+  ply  13: nobook(B) plays 21-26
+  ply  14: book(W) plays 34-30
+  ply  15: nobook(B) plays 5-10
+  ply  16: book(W) plays 30x19 (capture, xTrue)
+  ply  17: nobook(B) plays 14x34 (capture, xTrue)
+  ply  18: book(W) plays 40x29 (capture, xTrue)
+  ply  19: nobook(B) plays 10-14
+  ply  20: book(W) plays 35-30
+  ply  21: nobook(B) plays 12-17
+  ply  22: book(W) plays 47-42
+  ply  23: nobook(B) plays 7-12
+  ply  24: book(W) plays 30-25
+  ply  25: nobook(B) plays 1-7
+  ply  26: book(W) plays 45-40
+  ply  27: nobook(B) plays 17-22
+  ply  28: book(W) plays 28x17 (capture, xTrue)
+  ply  29: nobook(B) plays 11x22 (capture, xTrue)
+  ply  30: book(W) plays 31-27
+  ply  31: nobook(B) plays 22x31 (capture, xTrue)
+  ply  32: book(W) plays 36x27 (capture, xTrue)
+  ply  33: nobook(B) plays 18-22
+  ply  34: book(W) plays 27x18 (capture, xTrue)
+  ply  35: nobook(B) plays 12x45 (capture, xTrue)
+  ply  36: book(W) plays 33-28
+  ply  37: nobook(B) plays 13-19
+  ply  38: book(W) plays 28-23
+  ply  39: nobook(B) plays 19x28 (capture, xTrue)
+  ply  40: book(W) plays 44-40
+  ply  41: nobook(B) plays 45x34 (capture, xTrue)
+  ply  42: book(W) plays 39x30 (capture, xTrue)
+  ply  43: nobook(B) plays 8-13
+  ply  44: book(W) plays 30-24
+  ply  45: nobook(B) plays 20x29 (capture, xTrue)
+  ply  46: book(W) plays 37-31
+  ply  47: nobook(B) plays 26x37 (capture, xTrue)
+  ply  48: book(W) plays 41x34 (capture, xTrue)
+  ply  49: nobook(B) plays 7-12
+  ply  50: book(W) plays 43-39
+  ply  51: nobook(B) plays 12-18
+  ply  52: book(W) plays 46-41
+  ply  53: nobook(B) plays 14-19
+  ply  54: book(W) plays 34-30
+  ply  55: nobook(B) plays 19-23
+  ply  56: book(W) plays 41-37
+  ply  57: nobook(B) plays 2-8
+  ply  58: book(W) plays 39-33
+  ply  59: nobook(B) plays 6-11
+  ply  60: book(W) plays 33-29
+  ply  61: nobook(B) plays 23x34 (capture, xTrue)
+  ply  62: book(W) plays 30x39 (capture, xTrue)
+  ply  63: nobook(B) plays 11-17
+  ply  64: book(W) plays 37-32
+  ply  65: nobook(B) plays 13-19
+  ply  66: book(W) plays 42-37
+  ply  67: nobook(B) plays 19-23
+  ply  68: book(W) plays 39-33
+  ply  69: nobook(B) plays 9-13
+  ply  70: book(W) plays 49-43
+  ply  71: nobook(B) plays 17-22
+  ply  72: book(W) plays 48-42
+  ply  73: nobook(B) plays 4-9
+  ply  74: book(W) plays 33-29
+  ply  75: nobook(B) plays 23x34 (capture, xTrue)
+  ply  76: book(W) plays 32-28
+  ply  77: nobook(B) plays 22x33 (capture, xTrue)
+  ply  78: book(W) plays 38x40 (capture, xTrue)
+  ply  79: nobook(B) plays 15-20
+  ply  80: book(W) plays 25x14 (capture, xTrue)
+  ply  81: nobook(B) plays 9x20 (capture, xTrue)
+  ply  82: book(W) plays 37-31
+  ply  83: nobook(B) plays 20-24
+  ply  84: book(W) plays 42-38
+  ply  85: nobook(B) plays 18-22
+  ply  86: book(W) plays 38-33
+  ply  87: nobook(B) plays 13-19
+  ply  88: book(W) plays 43-38
+  ply  89: nobook(B) plays 19-23
+  ply  90: book(W) plays 38-32
+  ply  91: nobook(B) plays 23-29
+  ply  92: book(W) plays 32-27
+  ply  93: nobook(B) plays 29x38 (capture, xTrue)
+  ply  94: book(W) plays 27x18 (capture, xTrue)
+  ply  95: nobook(B) plays 3-9
+  ply  96: book(W) plays 31-26
+  ply  97: nobook(B) plays 38-42
+  ply  98: book(W) plays 18-12
+  ply  99: nobook(B) plays 8x17 (capture, xTrue)
+  ply 100: book(W) plays 26-21
+  ply 101: nobook(B) plays 16x27 (capture, xTrue)
+  ply 102: book(W) plays 40-34
+  ply 103: nobook(B) plays 17-22
+  ply 104: book(W) plays 34-29
+  ply 105: nobook(B) plays 24x33 (capture, xTrue)
+  ply 106: book(W) has no legal move → W loses (L for book-side)
+  game 13: L (no legal move from book(W), 106 plies)  running W=7 L=4 D=2
+
+=== game 14 (opening=B:W29,31,32,33,35,36,37,38,39,..., book=B) ===
+  opening B:W29,31,32,33,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 19-23
+  ply   2: nobook(W) plays 31-27
+  ply   3: book(B) plays 23x34 (capture, xTrue)
+  ply   4: nobook(W) plays 39x30 (capture, xTrue)
+  ply   5: book(B) plays 20-25
+  ply   6: nobook(W) plays 44-39
+  ply   7: book(B) plays 25x34 (capture, xTrue)
+  ply   8: nobook(W) plays 39x30 (capture, xTrue)
+  ply   9: book(B) plays 14-19
+  ply  10: nobook(W) plays 30-25
+  ply  11: book(B) plays 17-21
+  ply  12: nobook(W) plays 50-44
+  ply  13: book(B) plays 21-26
+  ply  14: nobook(W) plays 44-39
+  ply  15: book(B) plays 11-17
+  ply  16: nobook(W) plays 27-22
+  ply  17: book(B) plays 18x27 (capture, xTrue)
+  ply  18: nobook(W) plays 32x21 (capture, xTrue)
+  ply  19: book(B) plays 16x27 (capture, xTrue)
+  ply  20: nobook(W) plays 37-31
+  ply  21: book(B) plays 26x37 (capture, xTrue)
+  ply  22: nobook(W) plays 42x11 (capture, xTrue)
+  ply  23: book(B) plays 6x17 (capture, xTrue)
+  ply  24: nobook(W) plays 35-30
+  ply  25: book(B) plays 7-11
+  ply  26: nobook(W) plays 36-31
+  ply  27: book(B) plays 19-23
+  ply  28: nobook(W) plays 39-34
+  ply  29: book(B) plays 12-18
+  ply  30: nobook(W) plays 34-29
+  ply  31: book(B) plays 23x34 (capture, xTrue)
+  ply  32: nobook(W) plays 30x39 (capture, xTrue)
+  ply  33: book(B) plays 8-12
+  ply  34: nobook(W) plays 41-37
+  ply  35: book(B) plays 15-20
+  ply  36: nobook(W) plays 25x14 (capture, xTrue)
+  ply  37: book(B) plays 9x20 (capture, xTrue)
+  ply  38: nobook(W) plays 47-42
+  ply  39: book(B) plays 10-14
+  ply  40: nobook(W) plays 46-41
+  ply  41: book(B) plays 11-16
+  ply  42: nobook(W) plays 33-28
+  ply  43: book(B) plays 5-10
+  ply  44: nobook(W) plays 38-32
+  ply  45: book(B) plays 14-19
+  ply  46: nobook(W) plays 42-38
+  ply  47: book(B) plays 2-8
+  ply  48: nobook(W) plays 39-33
+  ply  49: book(B) plays 10-14
+  ply  50: nobook(W) plays 43-39
+  ply  51: book(B) plays 4-10
+  ply  52: nobook(W) plays 41-36
+  ply  53: book(B) plays 19-23
+  ply  54: nobook(W) plays 28x19 (capture, xTrue)
+  ply  55: book(B) plays 14x23 (capture, xTrue)
+  ply  56: nobook(W) plays 33-28
+  ply  57: book(B) plays 13-19
+  ply  58: nobook(W) plays 31-27
+  ply  59: book(B) plays 10-14
+  ply  60: nobook(W) plays 38-33
+  ply  61: book(B) plays 17-21
+  ply  62: nobook(W) plays 28-22
+  ply  63: book(B) plays 8-13
+  ply  64: nobook(W) plays 22-17
+  ply  65: book(B) plays 21-26
+  ply  66: nobook(W) plays 17x8 (capture, xTrue)
+  ply  67: book(B) plays 3x12 (capture, xTrue)
+  ply  68: nobook(W) plays 33-28
+  ply  69: book(B) plays 12-17
+  ply  70: nobook(W) plays 39-34
+  ply  71: book(B) plays 20-24
+  ply  72: nobook(W) plays 49-43
+  ply  73: book(B) plays 1-7
+  ply  74: nobook(W) plays 48-42
+  ply  75: book(B) plays 17-21
+  ply  76: nobook(W) plays 42-38
+  ply  77: book(B) plays 7-11
+  ply  78: nobook(W) plays 43-39
+  ply  79: book(B) plays 11-17
+  ply  80: nobook(W) plays 38-33
+  ply  81: book(B) plays 17-22
+  ply  82: nobook(W) plays 28x17 (capture, xTrue)
+  ply  83: book(B) plays 21x12 (capture, xTrue)
+  ply  84: nobook(W) plays 40-35
+  ply  85: book(B) plays 23-29
+  ply  86: nobook(W) plays 34x23 (capture, xTrue)
+  ply  87: book(B) plays 18x38 (capture, xTrue)
+  ply  88: nobook(W) plays 32x43 (capture, xTrue)
+  ply  89: book(B) plays 19-23
+  ply  90: nobook(W) plays 43-38
+  ply  91: book(B) plays 13-18
+  ply  92: nobook(W) plays 45-40
+  ply  93: book(B) plays 14-20
+  ply  94: nobook(W) plays 40-34
+  ply  95: book(B) plays 20-25
+  ply  96: nobook(W) plays 36-31
+  ply  97: book(B) plays 12-17
+  ply  98: nobook(W) plays 39-33
+  ply  99: book(B) plays 17-21
+  ply 100: nobook(W) plays 38-32
+  ply 101: book(B) plays 25-30
+  ply 102: nobook(W) plays 34x25 (capture, xTrue)
+  ply 103: book(B) plays 23-29
+  ply 104: nobook(W) plays 27-22
+  ply 105: book(B) plays 29x36 (capture, xTrue)
+  ply 106: nobook(W) plays 22x13 (capture, xTrue)
+  ply 107: book(B) plays 21-27
+  ply 108: nobook(W) plays 13-9
+  ply 109: book(B) plays 16-21
+  ply 110: nobook(W) plays 9-3
+  ply 111: book(B) plays 27-31
+  ply 112: nobook(W) plays 35-30
+  ply 113: book(B) plays 31x42 (capture, xTrue)
+  ply 114: nobook(W) plays 30x19 (capture, xTrue)
+  ply 115: book(B) plays 42-48
+  ply 116: nobook(W) plays 3-14
+  ply 117: book(B) plays 36-41
+  ply 118: nobook(W) plays 19-13
+  ply 119: book(B) plays 41-46
+  ply 120: nobook(W) plays 14-9
+  ply 121: book(B) plays 26-31
+  ply 122: nobook(W) plays 13-8
+  ply 123: book(B) plays 46-19
+  ply 124: nobook(W) plays 9x36 (capture, xTrue)
+  ply 125: book(B) plays 19x2 (capture, xTrue)
+  ply 126: nobook(W) plays 36-41
+  ply 127: book(B) plays 48-42
+  ply 128: nobook(W) plays 41-47
+  ply 129: book(B) plays 42-31
+  ply 130: nobook(W) plays 47-41
+  ply 131: book(B) plays 31-36
+  ply 132: nobook(W) plays 41-37
+  ply 133: book(B) plays 36-47
+  ply 134: nobook(W) plays 37-26
+  ply 135: book(B) plays 21-27
+  ply 136: nobook(W) plays 26-37
+  ply 137: book(B) plays 2-13
+  ply 138: nobook(W) plays 37-28
+  ply 139: book(B) plays 47-15
+  ply 140: nobook(W) plays 28-14
+  ply 141: book(B) plays 27-31
+  ply 142: nobook(W) plays 14-5
+  ply 143: book(B) plays 13-22
+  ply 144: nobook(W) plays 5-23
+  ply 145: book(B) plays 15-42
+  ply 146: nobook(W) plays 23-10
+  ply 147: book(B) plays 42-29
+  ply 148: nobook(W) plays 10-19
+  ply 149: book(B) plays 22-27
+  ply 150: nobook(W) plays 19-14
+  ply 151: book(B) plays 27-13
+  ply 152: nobook(W) plays 14-28
+  ply 153: book(B) plays 13-4
+  ply 154: nobook(W) plays 28-14
+  ply 155: book(B) plays 29-24
+  ply 156: nobook(W) plays 14-23
+  ply 157: book(B) plays 4-27
+  ply 158: nobook(W) plays 23-10
+  ply 159: book(B) plays 24-47
+  ply 160: nobook(W) plays 10-19
+  ply 161: book(B) plays 27-22
+  ply 162: nobook(W) plays 19-14
+  ply 163: book(B) plays 47-38
+  ply 164: nobook(W) plays 14-19
+  ply 165: book(B) plays 38-29
+  ply 166: nobook(W) plays 19-14
+  ply 167: book(B) plays 29-47
+  ply 168: nobook(W) plays 14-10
+  ply 169: book(B) plays 47-24
+  ply 170: nobook(W) plays 10-4
+  ply 171: book(B) plays 22-39
+  ply 172: nobook(W) plays 4x36 (capture, xTrue)
+  ply 173: book(B) plays 24-8
+  ply 174: nobook(W) plays 25-20
+  ply 175: book(B) plays 39-11
+  ply 176: nobook(W) plays 20-15
+  ply 177: book(B) plays 8-26
+  ply 178: nobook(W) plays 15-10
+  ply 179: book(B) plays 11-2
+  ply 180: nobook(W) plays 10-5
+  ply 181: book(B) plays 26-37
+  ply 182: nobook(W) plays 5x41 (capture, xTrue)
+  ply 183: book(B) has no legal move → B loses (L for book-side)
+  game 14: L (no legal move from book(B), 183 plies)  running W=7 L=5 D=2
+
+=== game 15 (opening=B:W30,31,32,33,35,36,37,38,39,..., book=W) ===
+  opening B:W30,31,32,33,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 20-25
+  ply   2: book(W) plays 32-28
+  ply   3: nobook(B) plays 25x34 (capture, xTrue)
+  ply   4: book(W) plays 39x30 (capture, xTrue)
+  ply   5: nobook(B) plays 16-21
+  ply   6: book(W) plays 44-39
+  ply   7: nobook(B) plays 21-26
+  ply   8: book(W) plays 50-44
+  ply   9: nobook(B) plays 15-20
+  ply  10: book(W) plays 37-32
+  ply  11: nobook(B) plays 26x37 (capture, xTrue)
+  ply  12: book(W) plays 42x31 (capture, xTrue)
+  ply  13: nobook(B) plays 17-21
+  ply  14: book(W) plays 40-34
+  ply  15: nobook(B) plays 11-17
+  ply  16: book(W) plays 31-26
+  ply  17: nobook(B) plays 7-11
+  ply  18: book(W) plays 36-31
+  ply  19: nobook(B) plays 18-22
+  ply  20: book(W) plays 30-25
+  ply  21: nobook(B) plays 1-7
+  ply  22: book(W) plays 45-40
+  ply  23: nobook(B) plays 11-16
+  ply  24: book(W) plays 31-27
+  ply  25: nobook(B) plays 22x31 (capture, xTrue)
+  ply  26: book(W) plays 26x37 (capture, xTrue)
+  ply  27: nobook(B) plays 20-24
+  ply  28: book(W) plays 34-29
+  ply  29: nobook(B) plays 12-18
+  ply  30: book(W) plays 29x20 (capture, xTrue)
+  ply  31: nobook(B) plays 19-23
+  ply  32: book(W) plays 28x19 (capture, xTrue)
+  ply  33: nobook(B) plays 13x15 (capture, xTrue)
+  ply  34: book(W) plays 35-30
+  ply  35: nobook(B) plays 8-13
+  ply  36: book(W) plays 39-34
+  ply  37: nobook(B) plays 7-12
+  ply  38: book(W) plays 44-39
+  ply  39: nobook(B) plays 14-20
+  ply  40: book(W) plays 25x14 (capture, xTrue)
+  ply  41: nobook(B) plays 10x19 (capture, xTrue)
+  ply  42: book(W) plays 30-25
+  ply  43: nobook(B) plays 2-8
+  ply  44: book(W) plays 32-28
+  ply  45: nobook(B) plays 19-23
+  ply  46: book(W) plays 28x19 (capture, xTrue)
+  ply  47: nobook(B) plays 13x24 (capture, xTrue)
+  ply  48: book(W) plays 40-35
+  ply  49: nobook(B) plays 9-14
+  ply  50: book(W) plays 37-31
+  ply  51: nobook(B) plays 4-9
+  ply  52: book(W) plays 34-30
+  ply  53: nobook(B) plays 5-10
+  ply  54: book(W) plays 30x19 (capture, xTrue)
+  ply  55: nobook(B) plays 14x23 (capture, xTrue)
+  ply  56: book(W) plays 35-30
+  ply  57: nobook(B) plays 10-14
+  ply  58: book(W) plays 41-37
+  ply  59: nobook(B) plays 15-20
+  ply  60: book(W) plays 31-26
+  ply  61: nobook(B) plays 14-19
+  ply  62: book(W) plays 25x14 (capture, xTrue)
+  ply  63: nobook(B) plays 9x20 (capture, xTrue)
+  ply  64: book(W) plays 46-41
+  ply  65: nobook(B) plays 18-22
+  ply  66: book(W) plays 30-25
+  ply  67: nobook(B) plays 8-13
+  ply  68: book(W) plays 25x14 (capture, xTrue)
+  ply  69: nobook(B) plays 19x10 (capture, xTrue)
+  ply  70: book(W) plays 48-42
+  ply  71: nobook(B) plays 10-15
+  ply  72: book(W) plays 39-34
+  ply  73: nobook(B) plays 12-18
+  ply  74: book(W) plays 37-32
+  ply  75: nobook(B) plays 13-19
+  ply  76: book(W) plays 34-30
+  ply  77: nobook(B) plays 3-9
+  ply  78: book(W) plays 30-25
+  ply  79: nobook(B) plays 9-13
+  ply  80: book(W) plays 43-39
+  ply  81: nobook(B) plays 15-20
+  ply  82: book(W) plays 25x14 (capture, xTrue)
+  ply  83: nobook(B) plays 19x10 (capture, xTrue)
+  ply  84: book(W) plays 39-34
+  ply  85: nobook(B) plays 13-19
+  ply  86: book(W) plays 33-28
+  ply  87: nobook(B) plays 22x33 (capture, xTrue)
+  ply  88: book(W) plays 38x29 (capture, xTrue)
+  ply  89: nobook(B) plays 10-14
+  ply  90: book(W) plays 42-38
+  ply  91: nobook(B) plays 14-20
+  ply  92: book(W) plays 49-44
+  ply  93: nobook(B) plays 6-11
+  ply  94: book(W) plays 41-37
+  ply  95: nobook(B) plays 20-25
+  ply  96: book(W) plays 37-31
+  ply  97: nobook(B) plays 19-24
+  ply  98: book(W) plays 29x20 (capture, xTrue)
+  ply  99: nobook(B) plays 25x14 (capture, xTrue)
+  ply 100: book(W) plays 38-33
+  ply 101: nobook(B) plays 18-22
+  ply 102: book(W) plays 33-29
+  ply 103: nobook(B) plays 23-28
+  ply 104: book(W) plays 32x23 (capture, xTrue)
+  ply 105: nobook(B) plays 14-20
+  ply 106: book(W) plays 44-40
+  ply 107: nobook(B) plays 21-27
+  ply 108: book(W) plays 23-18
+  ply 109: nobook(B) plays 22x13 (capture, xTrue)
+  ply 110: book(W) plays 31x22 (capture, xTrue)
+  ply 111: nobook(B) plays 17x28 (capture, xTrue)
+  ply 112: book(W) plays 29-24
+  ply 113: nobook(B) plays 20x29 (capture, xTrue)
+  ply 114: book(W) plays 34x32 (capture, xTrue)
+  ply 115: nobook(B) plays 11-17
+  ply 116: book(W) plays 32-27
+  ply 117: nobook(B) plays 13-18
+  ply 118: book(W) plays 40-34
+  ply 119: nobook(B) plays 17-22
+  ply 120: book(W) plays 34-29
+  ply 121: nobook(B) plays 22x31 (capture, xTrue)
+  ply 122: book(W) plays 26x37 (capture, xTrue)
+  ply 123: nobook(B) plays 16-21
+  ply 124: book(W) plays 47-42
+  ply 125: nobook(B) plays 18-22
+  ply 126: book(W) plays 29-23
+  ply 127: nobook(B) plays 21-26
+  ply 128: book(W) plays 23-19
+  ply 129: nobook(B) plays 22-27
+  ply 130: book(W) plays 19-13
+  ply 131: nobook(B) plays 27-31
+  ply 132: book(W) plays 13-9
+  ply 133: nobook(B) plays 31-36
+  ply 134: book(W) plays 9-4
+  ply 135: nobook(B) plays 26-31
+  ply 136: book(W) plays 37x26 (capture, xTrue)
+  ply 137: nobook(B) plays 36-41
+  ply 138: book(W) plays 42-37
+  ply 139: nobook(B) plays 41x32 (capture, xTrue)
+  ply 140: book(W) plays 4-27
+  ply 141: nobook(B) plays 32x21 (capture, xTrue)
+  ply 142: book(W) plays 26x17 (capture, xTrue)
+  ply 143: nobook(B) has no legal move → B loses (W for book-side)
+  game 15: W (no legal move from nobook(B), 143 plies)  running W=8 L=5 D=2
+
+=== game 16 (opening=B:W30,31,32,33,35,36,37,38,39,..., book=B) ===
+  opening B:W30,31,32,33,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 20-25
+  ply   2: nobook(W) plays 30-24
+  ply   3: book(B) plays 19x30 (capture, xTrue)
+  ply   4: nobook(W) plays 35x24 (capture, xTrue)
+  ply   5: book(B) plays 18-22
+  ply   6: nobook(W) plays 32-28
+  ply   7: book(B) plays 14-20
+  ply   8: nobook(W) plays 39-34
+  ply   9: book(B) plays 20x29 (capture, xTrue)
+  ply  10: nobook(W) plays 34x23 (capture, xTrue)
+  ply  11: book(B) plays 13-18
+  ply  12: nobook(W) plays 37-32
+  ply  13: book(B) plays 18x29 (capture, xTrue)
+  ply  14: nobook(W) plays 33x24 (capture, xTrue)
+  ply  15: book(B) plays 22x33 (capture, xTrue)
+  ply  16: nobook(W) plays 38x29 (capture, xTrue)
+  ply  17: book(B) plays 12-18
+  ply  18: nobook(W) plays 42-38
+  ply  19: book(B) plays 7-12
+  ply  20: nobook(W) plays 41-37
+  ply  21: book(B) plays 10-14
+  ply  22: nobook(W) plays 44-39
+  ply  23: book(B) plays 8-13
+  ply  24: nobook(W) plays 38-33
+  ply  25: book(B) plays 5-10
+  ply  26: nobook(W) plays 50-44
+  ply  27: book(B) plays 3-8
+  ply  28: nobook(W) plays 32-28
+  ply  29: book(B) plays 1-7
+  ply  30: nobook(W) plays 37-32
+  ply  31: book(B) plays 16-21
+  ply  32: nobook(W) plays 31-26
+  ply  33: book(B) plays 18-23
+  ply  34: nobook(W) plays 29x18 (capture, xTrue)
+  ply  35: book(B) plays 12x23 (capture, xTrue)
+  ply  36: nobook(W) plays 28x19 (capture, xTrue)
+  ply  37: book(B) plays 14x23 (capture, xTrue)
+  ply  38: nobook(W) plays 43-38
+  ply  39: book(B) plays 10-14
+  ply  40: nobook(W) plays 46-41
+  ply  41: book(B) plays 23-29
+  ply  42: nobook(W) plays 24-19
+  ply  43: book(B) plays 14x23 (capture, xTrue)
+  ply  44: nobook(W) plays 33x24 (capture, xTrue)
+  ply  45: book(B) plays 11-16
+  ply  46: nobook(W) plays 41-37
+  ply  47: book(B) plays 7-12
+  ply  48: nobook(W) plays 39-33
+  ply  49: book(B) plays 23-29
+  ply  50: nobook(W) plays 24-19
+  ply  51: book(B) plays 13x24 (capture, xTrue)
+  ply  52: nobook(W) plays 49-43
+  ply  53: book(B) plays 12-18
+  ply  54: nobook(W) plays 32-28
+  ply  55: book(B) plays 18-22
+  ply  56: nobook(W) plays 37-32
+  ply  57: book(B) plays 8-12
+  ply  58: nobook(W) plays 43-39
+  ply  59: book(B) plays 25-30
+  ply  60: nobook(W) plays 40-35
+  ply  61: book(B) plays 21-27
+  ply  62: nobook(W) plays 32x21 (capture, xTrue)
+  ply  63: book(B) plays 16x27 (capture, xTrue)
+  ply  64: nobook(W) plays 44-40
+  ply  65: book(B) plays 2-7
+  ply  66: nobook(W) plays 36-31
+  ply  67: book(B) plays 27x36 (capture, xTrue)
+  ply  68: nobook(W) plays 26-21
+  ply  69: book(B) plays 17x26 (capture, xTrue)
+  ply  70: nobook(W) plays 28x8 (capture, xTrue)
+  ply  71: book(B) plays 9-13
+  ply  72: nobook(W) plays 8x19 (capture, xTrue)
+  ply  73: book(B) plays 24x13 (capture, xTrue)
+  ply  74: nobook(W) plays 35x24 (capture, xTrue)
+  ply  75: book(B) plays 29x20 (capture, xTrue)
+  ply  76: nobook(W) plays 40-35
+  ply  77: book(B) plays 6-11
+  ply  78: nobook(W) plays 45-40
+  ply  79: book(B) plays 20-25
+  ply  80: nobook(W) plays 40-34
+  ply  81: book(B) plays 7-12
+  ply  82: nobook(W) plays 38-32
+  ply  83: book(B) plays 26-31
+  ply  84: nobook(W) plays 33-29
+  ply  85: book(B) plays 15-20
+  ply  86: nobook(W) plays 29-23
+  ply  87: book(B) plays 11-16
+  ply  88: nobook(W) plays 39-33
+  ply  89: book(B) plays 20-24
+  ply  90: nobook(W) plays 33-28
+  ply  91: book(B) plays 25-30
+  ply  92: nobook(W) plays 34x25 (capture, xTrue)
+  ply  93: book(B) plays 13-18
+  ply  94: nobook(W) plays 23-19
+  ply  95: book(B) plays 24x13 (capture, xTrue)
+  ply  96: nobook(W) plays 35-30
+  ply  97: book(B) plays 12-17
+  ply  98: nobook(W) plays 30-24
+  ply  99: book(B) plays 18-22
+  ply 100: nobook(W) plays 28-23
+  ply 101: book(B) plays 13-18
+  ply 102: nobook(W) plays 23x21 (capture, xTrue)
+  ply 103: book(B) plays 16x38 (capture, xTrue)
+  ply 104: nobook(W) plays 24-19
+  ply 105: book(B) plays 31-37
+  ply 106: nobook(W) plays 19-13
+  ply 107: book(B) plays 38-42
+  ply 108: nobook(W) plays 47x38 (capture, xTrue)
+  ply 109: book(B) plays 37-41
+  ply 110: nobook(W) plays 13-8
+  ply 111: book(B) plays 41-46
+  ply 112: nobook(W) plays 8-2
+  ply 113: book(B) plays 46-5
+  ply 114: nobook(W) plays 48-42
+  ply 115: book(B) plays 22-27
+  ply 116: nobook(W) plays 25-20
+  ply 117: book(B) plays 27-31
+  ply 118: nobook(W) plays 2-13
+  ply 119: book(B) plays 5-28
+  ply 120: nobook(W) plays 13-35
+  ply 121: book(B) plays 36-41
+  ply 122: nobook(W) plays 38-33
+  ply 123: book(B) plays 28x39 (capture, xTrue)
+  ply 124: nobook(W) plays 20-14
+  ply 125: book(B) plays 41-46
+  ply 126: nobook(W) plays 14-9
+  ply 127: book(B) plays 4x13 (capture, xTrue)
+  ply 128: nobook(W) plays 35x2 (capture, xTrue)
+  ply 129: book(B) plays 31-36
+  ply 130: nobook(W) plays 42-38
+  ply 131: book(B) plays 39-44
+  ply 132: nobook(W) plays 2-8
+  ply 133: book(B) plays 44-49
+  ply 134: nobook(W) plays 38-33
+  ply 135: book(B) plays 49-35
+  ply 136: nobook(W) plays 8-21
+  ply 137: book(B) plays 35-24
+  ply 138: nobook(W) plays 21-16
+  ply 139: book(B) plays 24x42 (capture, xTrue)
+  ply 140: nobook(W) plays 16-2
+  ply 141: book(B) plays 42-33
+  ply 142: nobook(W) plays 2-7
+  ply 143: book(B) plays 33-50
+  ply 144: nobook(W) plays 7-12
+  ply 145: book(B) plays 46-14
+  ply 146: nobook(W) plays 12-3
+  ply 147: book(B) plays 14-23
+  ply 148: nobook(W) plays 3-8
+  ply 149: book(B) plays 23-5
+  ply 150: nobook(W) plays 8-2
+  ply 151: book(B) plays 50-17
+  ply 152: nobook(W) plays 2-16
+  ply 153: book(B) plays 5-19
+  ply 154: nobook(W) plays 16-38
+  ply 155: book(B) plays 17-6
+  ply 156: nobook(W) plays 38-27
+  ply 157: book(B) plays 6-50
+  ply 158: nobook(W) plays 27-21
+  ply 159: book(B) plays 50-44
+  ply 160: nobook(W) plays 21-16
+  ply 161: book(B) plays 19-46
+  ply 162: nobook(W) plays 16-2
+  ply 163: book(B) plays 46-23
+  ply 164: nobook(W) plays 2-24
+  ply 165: book(B) plays 23-37
+  ply 166: nobook(W) plays 24-15
+  ply 167: book(B) plays 44-17
+  ply 168: nobook(W) plays 15-24
+  ply 169: book(B) plays 37-14
+  ply 170: nobook(W) plays 24-15
+  ply 171: book(B) plays 14-23
+  ply 172: nobook(W) plays 15-20
+  ply 173: book(B) plays 23-32
+  ply 174: nobook(W) plays 20-42
+  ply 175: book(B) plays 17-6
+  ply 176: nobook(W) plays 42-26
+  ply 177: book(B) plays 6-11
+  ply 178: nobook(W) plays 26-8
+  ply 179: book(B) plays 32-28
+  ply 180: nobook(W) plays 8-3
+  ply 181: book(B) plays 28-46
+  ply 182: nobook(W) plays 3-12
+  ply 183: book(B) plays 11-50
+  ply 184: nobook(W) plays 12-7
+  ply 185: book(B) plays 46-19
+  ply 186: nobook(W) plays 7-2
+  ply 187: book(B) plays 19-14
+  ply 188: nobook(W) plays 2-24
+  ply 189: book(B) plays 36-41
+  ply 189: 25-move rule, declaring draw
+  game 16: D (25-move rule, 189 plies)  running W=8 L=5 D=3
+
+=== game 17 (opening=B:W30,31,32,33,34,36,37,38,39,..., book=W) ===
+  opening B:W30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(W), nobook_side=nobook(B)
+  ply   1: nobook(B) plays 20-25
+  ply   2: book(W) plays 40-35
+  ply   3: nobook(B) plays 15-20
+  ply   4: book(W) plays 44-40
+  ply   5: nobook(B) plays 20-24
+  ply   6: book(W) plays 50-44
+  ply   7: nobook(B) plays 10-15
+  ply   8: book(W) plays 33-29
+  ply   9: nobook(B) plays 24x33 (capture, xTrue)
+  ply  10: book(W) plays 38x29 (capture, xTrue)
+  ply  11: nobook(B) plays 17-21
+  ply  12: book(W) plays 31-26
+  ply  13: nobook(B) plays 5-10
+  ply  14: book(W) plays 26x17 (capture, xTrue)
+  ply  15: nobook(B) plays 11x22 (capture, xTrue)
+  ply  16: book(W) plays 37-31
+  ply  17: nobook(B) plays 6-11
+  ply  18: book(W) plays 41-37
+  ply  19: nobook(B) plays 11-17
+  ply  20: book(W) plays 43-38
+  ply  21: nobook(B) plays 7-11
+  ply  22: book(W) plays 46-41
+  ply  23: nobook(B) plays 22-27
+  ply  24: book(W) plays 31x22 (capture, xTrue)
+  ply  25: nobook(B) plays 18x27 (capture, xTrue)
+  ply  26: book(W) plays 32x21 (capture, xTrue)
+  ply  27: nobook(B) plays 17x26 (capture, xTrue)
+  ply  28: book(W) plays 38-33
+  ply  29: nobook(B) plays 14-20
+  ply  30: book(W) plays 30-24
+  ply  31: nobook(B) plays 19x30 (capture, xTrue)
+  ply  32: book(W) plays 35x24 (capture, xTrue)
+  ply  33: nobook(B) plays 10-14
+  ply  34: book(W) plays 42-38
+  ply  35: nobook(B) plays 16-21
+  ply  36: book(W) plays 37-32
+  ply  37: nobook(B) plays 11-17
+  ply  38: book(W) plays 33-28
+  ply  39: nobook(B) plays 12-18
+  ply  40: book(W) plays 41-37
+  ply  41: nobook(B) plays 18-22
+  ply  42: book(W) plays 28-23
+  ply  43: nobook(B) plays 13-18
+  ply  44: book(W) plays 23x12 (capture, xTrue)
+  ply  45: nobook(B) plays 8-13
+  ply  46: book(W) plays 38-33
+  ply  47: nobook(B) plays 17x8 (capture, xTrue)
+  ply  48: book(W) plays 33-28
+  ply  49: nobook(B) plays 22x33 (capture, xTrue)
+  ply  50: book(W) plays 29x38 (capture, xTrue)
+  ply  51: nobook(B) plays 20x29 (capture, xTrue)
+  ply  52: book(W) plays 34x23 (capture, xTrue)
+  ply  53: nobook(B) plays 21-27
+  ply  54: book(W) plays 32x21 (capture, xTrue)
+  ply  55: nobook(B) plays 26x17 (capture, xTrue)
+  ply  56: book(W) plays 40-34
+  ply  57: nobook(B) plays 8-12
+  ply  58: book(W) plays 47-42
+  ply  59: nobook(B) plays 3-8
+  ply  60: book(W) plays 49-43
+  ply  61: nobook(B) plays 13-18
+  ply  62: book(W) plays 44-40
+  ply  63: nobook(B) plays 18x29 (capture, xTrue)
+  ply  64: book(W) plays 34x23 (capture, xTrue)
+  ply  65: nobook(B) plays 25-30
+  ply  66: book(W) plays 38-33
+  ply  67: nobook(B) plays 8-13
+  ply  68: book(W) plays 37-32
+  ply  69: nobook(B) plays 14-20
+  ply  70: book(W) plays 42-37
+  ply  71: nobook(B) plays 9-14
+  ply  72: book(W) plays 43-38
+  ply  73: nobook(B) plays 30-35
+  ply  74: book(W) plays 48-43
+  ply  75: nobook(B) plays 35x44 (capture, xTrue)
+  ply  76: book(W) plays 39x50 (capture, xTrue)
+  ply  77: nobook(B) plays 13-18
+  ply  78: book(W) plays 33-28
+  ply  79: nobook(B) plays 18x29 (capture, xTrue)
+  ply  80: book(W) plays 28-22
+  ply  81: nobook(B) plays 17x28 (capture, xTrue)
+  ply  82: book(W) plays 32x34 (capture, xTrue)
+  ply  83: nobook(B) plays 4-9
+  ply  84: book(W) plays 36-31
+  ply  85: nobook(B) plays 9-13
+  ply  86: book(W) plays 45-40
+  ply  87: nobook(B) plays 14-19
+  ply  88: book(W) plays 37-32
+  ply  89: nobook(B) plays 13-18
+  ply  90: book(W) plays 50-44
+  ply  91: nobook(B) plays 2-8
+  ply  92: book(W) plays 44-39
+  ply  93: nobook(B) plays 19-23
+  ply  94: book(W) plays 39-33
+  ply  95: nobook(B) plays 20-24
+  ply  96: book(W) plays 33-28
+  ply  97: nobook(B) plays 23-29
+  ply  98: book(W) plays 34x23 (capture, xTrue)
+  ply  99: nobook(B) plays 18x29 (capture, xTrue)
+  ply 100: book(W) plays 43-39
+  ply 101: nobook(B) plays 15-20
+  ply 102: book(W) plays 39-34
+  ply 103: nobook(B) plays 8-13
+  ply 104: book(W) plays 34x23 (capture, xTrue)
+  ply 105: nobook(B) plays 13-18
+  ply 106: book(W) plays 23-19
+  ply 107: nobook(B) plays 24x13 (capture, xTrue)
+  ply 108: book(W) plays 31-27
+  ply 109: nobook(B) plays 13-19
+  ply 110: book(W) plays 27-21
+  ply 111: nobook(B) plays 19-24
+  ply 112: book(W) plays 38-33
+  ply 113: nobook(B) plays 20-25
+  ply 114: book(W) plays 40-34
+  ply 115: nobook(B) plays 1-7
+  ply 116: book(W) plays 32-27
+  ply 117: nobook(B) plays 7-11
+  ply 118: book(W) plays 34-29
+  ply 119: nobook(B) plays 24-30
+  ply 120: book(W) plays 28-22
+  ply 121: nobook(B) plays 30-35
+  ply 122: book(W) plays 22x13 (capture, xTrue)
+  ply 123: nobook(B) plays 35-40
+  ply 124: book(W) plays 13-9
+  ply 125: nobook(B) plays 40-44
+  ply 126: book(W) plays 9-3
+  ply 127: nobook(B) plays 11-17
+  ply 128: book(W) plays 29-23
+  ply 129: nobook(B) plays 17x26 (capture, xTrue)
+  ply 130: book(W) plays 3x17 (capture, xTrue)
+  ply 131: nobook(B) plays 44-49
+  ply 132: book(W) plays 17-22
+  ply 133: nobook(B) plays 49x16 (capture, xTrue)
+  ply 134: book(W) plays 23-19
+  ply 135: nobook(B) plays 25-30
+  ply 136: book(W) plays 19-13
+  ply 137: nobook(B) plays 30-35
+  ply 138: book(W) plays 13-9
+  ply 139: nobook(B) plays 35-40
+  ply 140: book(W) plays 33-29
+  ply 141: nobook(B) plays 40-45
+  ply 142: book(W) plays 22-50
+  ply 143: nobook(B) plays 26-31
+  ply 144: book(W) plays 9-4
+  ply 145: nobook(B) plays 31-37
+  ply 146: book(W) plays 29-24
+  ply 147: nobook(B) plays 37-42
+  ply 148: book(W) plays 24-19
+  ply 149: nobook(B) plays 42-48
+  ply 150: book(W) plays 19-13
+  ply 151: nobook(B) plays 16-27
+  ply 152: book(W) plays 13-8
+  ply 153: nobook(B) plays 27-21
+  ply 154: book(W) plays 8-2
+  ply 155: nobook(B) plays 48-39
+  ply 156: book(W) plays 50x26 (capture, xTrue)
+  ply 157: nobook(B) plays 45-50
+  ply 158: book(W) has no legal move → W loses (L for book-side)
+  game 17: L (no legal move from book(W), 158 plies)  running W=8 L=6 D=3
+
+=== game 18 (opening=B:W30,31,32,33,34,36,37,38,39,..., book=B) ===
+  opening B:W30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50:B1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20, book_side=book(B), nobook_side=nobook(W)
+  ply   1: book(B) plays 20-25
+  ply   2: nobook(W) plays 40-35
+  ply   3: book(B) plays 15-20
+  ply   4: nobook(W) plays 44-40
+  ply   5: book(B) plays 20-24
+  ply   6: nobook(W) plays 50-44
+  ply   7: book(B) plays 10-15
+  ply   8: nobook(W) plays 33-29
+  ply   9: book(B) plays 24x33 (capture, xTrue)
+  ply  10: nobook(W) plays 38x29 (capture, xTrue)
+  ply  11: book(B) plays 5-10
+  ply  12: nobook(W) plays 43-38
+  ply  13: book(B) plays 16-21
+  ply  14: nobook(W) plays 31-26
+  ply  15: book(B) plays 11-16
+  ply  16: nobook(W) plays 36-31
+  ply  17: book(B) plays 6-11
+  ply  18: nobook(W) plays 48-43
+  ply  19: book(B) plays 1-6
+  ply  20: nobook(W) plays 30-24
+  ply  21: book(B) plays 19x30 (capture, xTrue)
+  ply  22: nobook(W) plays 35x24 (capture, xTrue)
+  ply  23: book(B) plays 14-19
+  ply  24: nobook(W) plays 40-35
+  ply  25: book(B) plays 19x30 (capture, xTrue)
+  ply  26: nobook(W) plays 35x24 (capture, xTrue)
+  ply  27: book(B) plays 18-22
+  ply  28: nobook(W) plays 32-27
+  ply  29: book(B) plays 21x32 (capture, xTrue)
+  ply  30: nobook(W) plays 38x18 (capture, xTrue)
+  ply  31: book(B) plays 12x23 (capture, xTrue)
+  ply  32: nobook(W) plays 29x18 (capture, xTrue)
+  ply  33: book(B) plays 13x22 (capture, xTrue)
+  ply  34: nobook(W) plays 37-32
+  ply  35: book(B) plays 10-14
+  ply  36: nobook(W) plays 31-27
+  ply  37: book(B) plays 22x31 (capture, xTrue)
+  ply  38: nobook(W) plays 26x37 (capture, xTrue)
+  ply  39: book(B) plays 7-12
+  ply  40: nobook(W) plays 42-38
+  ply  41: book(B) plays 8-13
+  ply  42: nobook(W) plays 38-33
+  ply  43: book(B) plays 17-22
+  ply  44: nobook(W) plays 24-20
+  ply  45: book(B) plays 15x24 (capture, xTrue)
+  ply  46: nobook(W) plays 33-29
+  ply  47: book(B) plays 24x33 (capture, xTrue)
+  ply  48: nobook(W) plays 39x10 (capture, xTrue)
+  ply  49: book(B) plays 4x15 (capture, xTrue)
+  ply  50: nobook(W) plays 41-36
+  ply  51: book(B) plays 2-8
+  ply  52: nobook(W) plays 37-31
+  ply  53: book(B) plays 9-13
+  ply  54: nobook(W) plays 44-39
+  ply  55: book(B) plays 11-17
+  ply  56: nobook(W) plays 43-38
+  ply  57: book(B) plays 15-20
+  ply  58: nobook(W) plays 32-28
+  ply  59: book(B) plays 8-12
+  ply  60: nobook(W) plays 46-41
+  ply  61: book(B) plays 13-18
+  ply  62: nobook(W) plays 41-37
+  ply  63: book(B) plays 3-8
+  ply  64: nobook(W) plays 39-33
+  ply  65: book(B) plays 20-24
+  ply  66: nobook(W) plays 37-32
+  ply  67: book(B) plays 17-22
+  ply  68: nobook(W) plays 28x17 (capture, xTrue)
+  ply  69: book(B) plays 12x21 (capture, xTrue)
+  ply  70: nobook(W) plays 49-43
+  ply  71: book(B) plays 8-13
+  ply  72: nobook(W) plays 31-27
+  ply  73: book(B) plays 6-11
+  ply  74: nobook(W) plays 33-28
+  ply  75: book(B) plays 24-30
+  ply  76: nobook(W) plays 43-39
+  ply  77: book(B) plays 30-35
+  ply  78: nobook(W) plays 47-42
+  ply  79: book(B) plays 21-26
+  ply  80: nobook(W) plays 42-37
+  ply  81: book(B) plays 13-19
+  ply  82: nobook(W) plays 38-33
+  ply  83: book(B) plays 19-24
+  ply  84: nobook(W) plays 45-40
+  ply  85: book(B) plays 35x44 (capture, xTrue)
+  ply  86: nobook(W) plays 39x50 (capture, xTrue)
+  ply  87: book(B) plays 11-17
+  ply  88: nobook(W) plays 50-44
+  ply  89: book(B) plays 17-22
+  ply  90: nobook(W) plays 28x17 (capture, xTrue)
+  ply  91: book(B) plays 16-21
+  ply  92: nobook(W) plays 27x16 (capture, xTrue)
+  ply  93: book(B) plays 18-23
+  ply  94: nobook(W) plays 17-12
+  ply  95: book(B) plays 24-30
+  ply  96: nobook(W) plays 34-29
+  ply  97: book(B) plays 23x34 (capture, xTrue)
+  ply  98: nobook(W) plays 33-29
+  ply  99: book(B) plays 34x23 (capture, xTrue)
+  ply 100: nobook(W) plays 36-31
+  ply 101: book(B) plays 23-29
+  ply 102: nobook(W) plays 12-7
+  ply 103: book(B) plays 29-33
+  ply 104: nobook(W) plays 7-1
+  ply 105: book(B) plays 30-34
+  ply 106: nobook(W) plays 1x40 (capture, xTrue)
+  ply 107: book(B) plays 25-30
+  ply 108: nobook(W) plays 16-11
+  ply 109: book(B) plays 30-35
+  ply 110: nobook(W) plays 40-45
+  ply 111: book(B) plays 33-38
+  ply 112: nobook(W) plays 32x43 (capture, xTrue)
+  ply 113: book(B) plays 35-40
+  ply 114: nobook(W) plays 44x35 (capture, xTrue)
+  ply 115: book(B) has no legal move → B loses (L for book-side)
+  game 18: L (no legal move from book(B), 115 plies)  running W=8 L=7 D=3
+
+=========================================================
+  Book-side: W=8  L=7  D=3  (total 18)
+  Book-side score rate: 0.528 (9.5/18)
+  Book-side ELO estimate: +19
+=========================================================
+
+Interpretation:
+  rate ≈ 0.50  →  book is neutral vs no-book (expected).
+                  Bug must be elsewhere (NNUE+search alone
+                  always loses to Scan, not a book issue).
+  rate < 0.30  →  CONFIRMS book bug. Loading --book hurts
+                  jass even against itself. Trace shows the
+                  failure plies — debug from there.
+  rate > 0.70  →  book is HELPFUL vs no-book. Then the Scan
+                  regression must come from Scan-specific
+                  interaction (e.g. timing, protocol drift).

@@ -1,0 +1,107 @@
+=== host facts ===
+host:  ubuntu-16gb-hel1-2
+nproc: 4
+NNUE:  /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+book:  /root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts/master-book.bok (44348 B)
+
+=== rebuilding jass ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass: Jass 0.0.1
+
+=== diag: jass+book vs jass-no-book (same binary, same NNUE) ===
+
+==========================================================
+       0029 DIAG BOOK JASS-VS-JASS SUMMARY
+==========================================================
+  budget:     1.0 s/move (matches calibrate_vs_scan)
+  games:      18 (9 openings × 2 colours × 1 pair)
+  wall:       1983s (33.0 min)
+  trace tail (last 80 lines of move-by-move):
+      ply  54: nobook(W) plays 44-39
+      ply  55: book(B) plays 11-17
+      ply  56: nobook(W) plays 43-38
+      ply  57: book(B) plays 15-20
+      ply  58: nobook(W) plays 32-28
+      ply  59: book(B) plays 8-12
+      ply  60: nobook(W) plays 46-41
+      ply  61: book(B) plays 13-18
+      ply  62: nobook(W) plays 41-37
+      ply  63: book(B) plays 3-8
+      ply  64: nobook(W) plays 39-33
+      ply  65: book(B) plays 20-24
+      ply  66: nobook(W) plays 37-32
+      ply  67: book(B) plays 17-22
+      ply  68: nobook(W) plays 28x17 (capture, xTrue)
+      ply  69: book(B) plays 12x21 (capture, xTrue)
+      ply  70: nobook(W) plays 49-43
+      ply  71: book(B) plays 8-13
+      ply  72: nobook(W) plays 31-27
+      ply  73: book(B) plays 6-11
+      ply  74: nobook(W) plays 33-28
+      ply  75: book(B) plays 24-30
+      ply  76: nobook(W) plays 43-39
+      ply  77: book(B) plays 30-35
+      ply  78: nobook(W) plays 47-42
+      ply  79: book(B) plays 21-26
+      ply  80: nobook(W) plays 42-37
+      ply  81: book(B) plays 13-19
+      ply  82: nobook(W) plays 38-33
+      ply  83: book(B) plays 19-24
+      ply  84: nobook(W) plays 45-40
+      ply  85: book(B) plays 35x44 (capture, xTrue)
+      ply  86: nobook(W) plays 39x50 (capture, xTrue)
+      ply  87: book(B) plays 11-17
+      ply  88: nobook(W) plays 50-44
+      ply  89: book(B) plays 17-22
+      ply  90: nobook(W) plays 28x17 (capture, xTrue)
+      ply  91: book(B) plays 16-21
+      ply  92: nobook(W) plays 27x16 (capture, xTrue)
+      ply  93: book(B) plays 18-23
+      ply  94: nobook(W) plays 17-12
+      ply  95: book(B) plays 24-30
+      ply  96: nobook(W) plays 34-29
+      ply  97: book(B) plays 23x34 (capture, xTrue)
+      ply  98: nobook(W) plays 33-29
+      ply  99: book(B) plays 34x23 (capture, xTrue)
+      ply 100: nobook(W) plays 36-31
+      ply 101: book(B) plays 23-29
+      ply 102: nobook(W) plays 12-7
+      ply 103: book(B) plays 29-33
+      ply 104: nobook(W) plays 7-1
+      ply 105: book(B) plays 30-34
+      ply 106: nobook(W) plays 1x40 (capture, xTrue)
+      ply 107: book(B) plays 25-30
+      ply 108: nobook(W) plays 16-11
+      ply 109: book(B) plays 30-35
+      ply 110: nobook(W) plays 40-45
+      ply 111: book(B) plays 33-38
+      ply 112: nobook(W) plays 32x43 (capture, xTrue)
+      ply 113: book(B) plays 35-40
+      ply 114: nobook(W) plays 44x35 (capture, xTrue)
+      ply 115: book(B) has no legal move → B loses (L for book-side)
+      game 18: L (no legal move from book(B), 115 plies)  running W=8 L=7 D=3
+    
+    =========================================================
+      Book-side: W=8  L=7  D=3  (total 18)
+      Book-side score rate: 0.528 (9.5/18)
+      Book-side ELO estimate: +19
+    =========================================================
+    
+    Interpretation:
+      rate ≈ 0.50  →  book is neutral vs no-book (expected).
+                      Bug must be elsewhere (NNUE+search alone
+                      always loses to Scan, not a book issue).
+      rate < 0.30  →  CONFIRMS book bug. Loading --book hurts
+                      jass even against itself. Trace shows the
+                      failure plies — debug from there.
+      rate > 0.70  →  book is HELPFUL vs no-book. Then the Scan
+                      regression must come from Scan-specific
+                      interaction (e.g. timing, protocol drift).
+==========================================================
+
+Look in /root/jass/jobs/results/0029-diag-book-jass-vs-jass/artefacts.src/trace.log for the per-game move sequences. If
+book-side rate is much below 0.50, the book corrupts jass.
+The first plies of any losing game show whether the book is
+returning bad moves or if the loss happens post-book.
