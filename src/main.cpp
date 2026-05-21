@@ -586,6 +586,74 @@ int run_build_book_mode(int argc, char** argv) {
     return 0;
 }
 
+// -----------------------------------------------------------------------------
+// --build-book-from-moves: read a TSV of (FEN<TAB>move) pairs and write a
+// JBOK file mapping (zobrist → move). Unlike --build-book it does not run a
+// search; each row is taken as-is. Used to assemble a master-game-frequency
+// book (the upstream Python tool picks the most-played master move per
+// position and feeds the result here).
+// -----------------------------------------------------------------------------
+int run_build_book_from_moves_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --build-book-from-moves <pairs.txt> <out.bok>\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+
+    std::ifstream in(in_path);
+    if (!in) {
+        std::cerr << "error: cannot open " << in_path << "\n";
+        return 1;
+    }
+
+    Book out_book;
+    std::string line;
+    int line_no = 0;
+    int added   = 0;
+    int skipped = 0;
+    while (std::getline(in, line)) {
+        ++line_no;
+        while (!line.empty() && (line.back() == ' ' || line.back() == '\r'
+                              || line.back() == '\t'))
+            line.pop_back();
+        if (line.empty() || line[0] == '#') continue;
+
+        const std::size_t tab = line.find('\t');
+        if (tab == std::string::npos) {
+            std::cerr << "warn: line " << line_no << ": no TAB, skipping\n";
+            ++skipped; continue;
+        }
+        const std::string fen  = line.substr(0, tab);
+        const std::string mv_s = line.substr(tab + 1);
+
+        const auto pos_opt = Position::from_fen(fen);
+        if (!pos_opt) {
+            std::cerr << "warn: line " << line_no
+                      << ": invalid FEN, skipping\n";
+            ++skipped; continue;
+        }
+        const auto mv_opt = parse_move(*pos_opt, mv_s);
+        if (!mv_opt) {
+            std::cerr << "warn: line " << line_no
+                      << ": cannot parse move '" << mv_s << "', skipping\n";
+            ++skipped; continue;
+        }
+        out_book.put(zobrist_hash(*pos_opt), *mv_opt, 0, 0);
+        ++added;
+        if (added % 1000 == 0)
+            std::cout << "  added " << added << " entries\n";
+    }
+    if (!out_book.save(out_path)) {
+        std::cerr << "error: cannot write " << out_path << "\n";
+        return 1;
+    }
+    std::cout << "wrote " << out_book.size() << " entries to "
+              << out_path << " (added=" << added
+              << ", skipped=" << skipped << ")\n";
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -625,6 +693,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
+        else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
@@ -632,6 +701,7 @@ int main(int argc, char** argv) {
                             "--gen-data [N path]|--benchmark-nnue weights [d p]|"
                             "--benchmark-nnue-vs-nnue a.bin b.bin [d p]|"
                             "--build-book fens.txt out.bok [depth]|"
+                            "--build-book-from-moves pairs.txt out.bok|"
                             "--no-nnue|--nnue path|--book path|--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
@@ -668,6 +738,11 @@ int main(int argc, char** argv) {
                 "                                   comments OK) and write a JBOK\n"
                 "                                   book with the engine's best\n"
                 "                                   move at each position.\n"
+                "  --build-book-from-moves <pairs.txt> <out.bok>\n"
+                "                                   read FEN<TAB>move pairs and\n"
+                "                                   write a JBOK book with the\n"
+                "                                   given move at each position\n"
+                "                                   (no search, takes rows as-is).\n"
                 "  --book <path.bok>                HUB mode only — load an\n"
                 "                                   opening book from <path.bok>\n"
                 "                                   (replaces the hard-coded\n"
