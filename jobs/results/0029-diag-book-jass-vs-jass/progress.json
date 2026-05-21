@@ -1,8 +1,8 @@
 {
   "job_id": "0029-diag-book-jass-vs-jass",
-  "snapshot_at": "2026-05-21T21:15:25+00:00",
+  "snapshot_at": "2026-05-21T21:20:25+00:00",
   "started_at": "2026-05-21T21:10:11+00:00",
-  "elapsed_seconds": 314,
+  "elapsed_seconds": 614,
   "artefacts": [
     {
       "name": "diag.log",
@@ -10,8 +10,8 @@
     },
     {
       "name": "trace.log",
-      "size_bytes": 16214
+      "size_bytes": 31363
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 337265       1       05:13  0.0  0.0 bash\n 337267  337265       05:13  0.0  0.0 bash\n 337311  337267       05:13  0.0  0.1 python3\n 337312  337267       05:13  0.0  0.0 tee\n 337314  337311       05:13 49.0  0.2 jass\n 337315  337311       05:13 50.8  0.2 jass\n 337316  337311       05:13  0.0  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 337265       1       10:14  0.0  0.0 bash\n 337267  337265       10:14  0.0  0.0 bash\n 337311  337267       10:14  0.0  0.1 python3\n 337312  337267       10:14  0.0  0.0 tee\n 337314  337311       10:14 49.3  0.2 jass\n 337315  337311       10:13 50.6  0.2 jass\n 337316  337311       10:13  0.0  0.1 jass\n"
 }
