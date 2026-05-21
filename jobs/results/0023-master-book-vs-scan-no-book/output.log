@@ -1,0 +1,101 @@
+=== host facts ===
+host:   ubuntu-16gb-hel1-2
+nproc:  4
+NNUE:   /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+        source: 0018 (Cycle 8 v5, hybrid BCE)
+book:   /root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts/master-book.bok (44348 B)
+
+=== rebuilding jass ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass:   Jass 0.0.1
+
+=== calibrate (54 games, 1.0 s/move): master-book on, scan-book OFF ===
+opening pool: 9 positions
+jass setup:   nnue=/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin  book=/root/jass/jobs/results/0022-build-master-book-and-calibrate/artefacts/master-book.bok
+scan setup:   book=off  bb-size=0
+  game   1: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [88s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 134 plies)  Jass +0.0  [190s]
+  game   3: Jass=W Scan=B → L (no legal move from Jass-player, 119 plies)  Jass +0.0  [275s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [357s]
+  game   5: Jass=W Scan=B → L (no legal move from Jass-player, 117 plies)  Jass +0.0  [441s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [527s]
+  game   7: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [621s]
+  game   8: Scan=W Jass=B → W (no legal move from Jass-player, 190 plies)  Jass +0.0  [772s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [853s]
+  game  10: Scan=W Jass=B → W (no legal move from Jass-player, 134 plies)  Jass +0.0  [958s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 129 plies)  Jass +0.0  [1048s]
+  game  12: Scan=W Jass=B → W (no legal move from Jass-player, 142 plies)  Jass +0.0  [1158s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [1233s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [1328s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 125 plies)  Jass +0.0  [1422s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 132 plies)  Jass +0.0  [1518s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [1593s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [1684s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [1762s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [1838s]
+  game  21: Jass=W Scan=B → L (no legal move from Jass-player, 127 plies)  Jass +0.0  [1933s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 148 plies)  Jass +0.0  [2047s]
+  game  23: Jass=W Scan=B → L (no legal move from Jass-player, 135 plies)  Jass +0.0  [2143s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [2218s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 99 plies)  Jass +0.0  [2287s]
+  game  26: Scan=W Jass=B → W (no legal move from Jass-player, 136 plies)  Jass +0.0  [2395s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [2473s]
+  game  28: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [2559s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 129 plies)  Jass +0.0  [2647s]
+  game  30: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [2722s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 139 plies)  Jass +0.0  [2822s]
+  game  32: Scan=W Jass=B → W (no legal move from Jass-player, 130 plies)  Jass +0.0  [2915s]
+  game  33: Jass=W Scan=B → L (no legal move from Jass-player, 123 plies)  Jass +0.0  [3007s]
+  game  34: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [3082s]
+  game  35: Jass=W Scan=B → L (no legal move from Jass-player, 123 plies)  Jass +0.0  [3177s]
+  game  36: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [3252s]
+  game  37: Jass=W Scan=B → L (no legal move from Jass-player, 123 plies)  Jass +0.0  [3339s]
+  game  38: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [3418s]
+  game  39: Jass=W Scan=B → L (no legal move from Jass-player, 137 plies)  Jass +0.0  [3519s]
+  game  40: Scan=W Jass=B → W (no legal move from Jass-player, 122 plies)  Jass +0.0  [3607s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 119 plies)  Jass +0.0  [3693s]
+  game  42: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [3786s]
+  game  43: Jass=W Scan=B → L (no legal move from Jass-player, 101 plies)  Jass +0.0  [3857s]
+  game  44: Scan=W Jass=B → D (25-move rule, 190 plies)  Jass +0.5  [4011s]
+  game  45: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [4083s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [4157s]
+  game  47: Jass=W Scan=B → L (no legal move from Jass-player, 145 plies)  Jass +0.0  [4267s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 100 plies)  Jass +0.0  [4336s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [4411s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 110 plies)  Jass +0.0  [4481s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [4562s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [4650s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [4725s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 142 plies)  Jass +0.0  [4831s]
+
+=== Jass vs Scan, movetime 1.0s, 54 games ===
+  Jass=0  Scan=53  Draws=1
+  Jass score rate: 0.009 (0.5 / 54)
+  ELO estimate:    -812 (95% CI ≈ ±109)
+
+==========================================================
+       0023 MASTER-BOOK vs NAKED-SCAN SUMMARY
+==========================================================
+  NNUE:           nnue-256-128-q.bin  (0018 (Cycle 8 v5, hybrid BCE))
+  jass book:      master-book.bok  (44 KB, 2772 entries)
+  scan book:      OFF
+  budget:         1.0 s/move
+  wall:           4836s (80.6 min)
+  result line:
+      game  54: Scan=W Jass=B → W (no legal move from Jass-player, 142 plies)  Jass +0.0  [4831s]
+      Jass=0  Scan=53  Draws=1
+      Jass score rate: 0.009 (0.5 / 54)
+      ELO estimate:    -812 (95% CI ≈ ±109)
+==========================================================
+
+Comparison points:
+  0012 baseline (no books either side): 0.07-0.13 score, ~-618 ELO
+  0019 (depth-12 book, scan-book on):   0.009, -812 ELO
+  0022 (master-book, scan-book on):     0.009, -812 ELO
+
+Interpret 0023:
+  > 0.13 → master-book HELPS vs naked Scan. Go v2 (hybrid).
+  ≈ 0.10 → master-book is neutral. Marginal v2 gain expected.
+  < 0.05 → master-book HURTS even vs naked Scan. Bug elsewhere.
