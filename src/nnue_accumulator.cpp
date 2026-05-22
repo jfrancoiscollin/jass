@@ -125,6 +125,56 @@ struct PieceChange {
     int   sign;
 };
 
+// Anchor shift: when one side's anchor changes between pos_before and
+// pos_after, every anchor-relative feature for that side's accumulator
+// needs to be moved from the old-anchor frame to the new-anchor frame.
+// Walks the post-move pieces in `side`'s POV: for each piece, subtract
+// its old-anchor rel contribution and add its new-anchor rel
+// contribution. Finally swap the anchor one-hot (400 + old) → (400 + new).
+//
+// Cost: ~30 piece × (1 sub + 1 add) = ~60 column ops, plus 2 ops for
+// the one-hot swap. Comparable to a full refresh for one side, but
+// the OTHER side's accumulator (which didn't shift) is preserved →
+// net ~½ refresh-equivalent cost across both sides for moves that
+// shift one anchor only.
+inline void shift_anchor(Accumulator&       acc,
+                         const Position&    pos_after,
+                         Color              side,
+                         std::size_t        old_anchor,
+                         std::size_t        new_anchor,
+                         const MLPNetworkQ& net) noexcept {
+    auto walk_bb = [&](Bitboard bb, std::size_t kind_pov) {
+        while (bb) {
+            const int bit = square_to_bit(pop_lsb(bb));
+            const std::size_t b_pov = bit_in_pov(bit, side);
+            const std::size_t rel_old = (b_pov + 50 - old_anchor) % 50;
+            const std::size_t rel_new = (b_pov + 50 - new_anchor) % 50;
+            if (rel_old != rel_new) {
+                const std::size_t feat_old = 200 + rel_old * 4 + kind_pov;
+                const std::size_t feat_new = 200 + rel_new * 4 + kind_pov;
+                net.apply_column(acc.data.data(), feat_old, -1);
+                net.apply_column(acc.data.data(), feat_new, +1);
+            }
+        }
+    };
+
+    if (side == Color::White) {
+        walk_bb(pos_after.white_men(),   /*kind_pov=*/0);
+        walk_bb(pos_after.white_kings(), /*kind_pov=*/1);
+        walk_bb(pos_after.black_men(),   /*kind_pov=*/2);
+        walk_bb(pos_after.black_kings(), /*kind_pov=*/3);
+    } else {
+        walk_bb(pos_after.black_men(),   /*kind_pov=*/0);
+        walk_bb(pos_after.black_kings(), /*kind_pov=*/1);
+        walk_bb(pos_after.white_men(),   /*kind_pov=*/2);
+        walk_bb(pos_after.white_kings(), /*kind_pov=*/3);
+    }
+    // Anchor one-hot swap.
+    net.apply_column(acc.data.data(), 400 + old_anchor, -1);
+    net.apply_column(acc.data.data(), 400 + new_anchor, +1);
+    acc.anchor = new_anchor;
+}
+
 inline void apply_changes(AccumulatorPair&        pair,
                           const PieceChange*      changes,
                           std::size_t             n_changes,
@@ -141,10 +191,11 @@ inline void apply_changes(AccumulatorPair&        pair,
     }
 }
 
-// v2 incremental update. Handles quiet, capture, and promotion moves
-// (any combination) as long as no anchor shifts. Anchor invalidation
-// still triggers a refresh fallback (the per-anchor-shift delta path
-// is meaningful future work but not implemented yet).
+// v3 incremental update. Handles every move shape (quiet, capture,
+// promotion, combinations) including anchor shifts. The only remaining
+// fallback case is an unsupported encoding (e.g. neither V2 nor
+// HalfMen) — currently impossible because mlpq_dims_ok rejects any
+// other input_dim at load time.
 bool AccumulatorPair::apply_move(const Position&    pos_before,
                                  const Move&        m,
                                  const MLPNetworkQ& net) noexcept {
@@ -155,15 +206,7 @@ bool AccumulatorPair::apply_move(const Position&    pos_before,
 
     if (m.from == NO_SQUARE || m.to == NO_SQUARE) return false;
 
-    // Compute pos_after so we can check anchor invariance (HalfMen
-    // only). Cheap relative to a full Layer-1 refresh.
     const Position pos_after = pos_before.after(m);
-    if (halfmen) {
-        if (anchor_for(pos_after, Color::White) != white.anchor ||
-            anchor_for(pos_after, Color::Black) != black.anchor) {
-            return false;
-        }
-    }
 
     // Build the change list. Worst case: from + to + 20 captures = 22.
     const Color    mover    = pos_before.side_to_move();
@@ -193,13 +236,33 @@ bool AccumulatorPair::apply_move(const Position&    pos_before,
         changes[n++] = PieceChange{cap_bit, opponent, cap_was_king, -1};
     }
 
+    // Apply move-induced changes using the OLD anchor (acc.anchor
+    // still holds the pre-move value).
     apply_changes(*this, changes.data(), n, halfmen, net);
 
-    // Keep the anchor cache in sync with the position even in V2 mode
-    // (where the anchor doesn't affect features but the contract that
-    // `acc.anchor` reflects the current position still applies).
-    white.anchor = anchor_for(pos_after, Color::White);
-    black.anchor = anchor_for(pos_after, Color::Black);
+    // Anchor handling. In HalfMen, if either side's anchor shifted as
+    // a result of the move, shift the rel features + one-hot in that
+    // accumulator now (the move-induced rel features added above were
+    // computed against the OLD anchor; shift_anchor moves them to the
+    // new frame and updates acc.anchor). In V2 we have no anchor-
+    // relative features but still keep `acc.anchor` in sync so the
+    // contract holds.
+    const std::size_t new_w_anchor = anchor_for(pos_after, Color::White);
+    const std::size_t new_b_anchor = anchor_for(pos_after, Color::Black);
+
+    if (halfmen) {
+        if (new_w_anchor != white.anchor) {
+            shift_anchor(white, pos_after, Color::White,
+                         white.anchor, new_w_anchor, net);
+        }
+        if (new_b_anchor != black.anchor) {
+            shift_anchor(black, pos_after, Color::Black,
+                         black.anchor, new_b_anchor, net);
+        }
+    } else {
+        white.anchor = new_w_anchor;
+        black.anchor = new_b_anchor;
+    }
 
     return true;
 }

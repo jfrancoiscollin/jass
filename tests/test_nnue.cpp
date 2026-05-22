@@ -937,6 +937,57 @@ void test_accumulator_apply_move_matches_refresh_for_legal_moves() {
     std::remove(path.c_str());
 }
 
+// Parity: `evaluate_with_accumulator(pos, build_layer1(pos))` must
+// equal `evaluate(pos)`. Verifies the post-Layer-1 path is functionally
+// identical, so once the engine starts maintaining an accumulator it
+// can skip the rebuild without changing the score.
+void test_evaluate_with_accumulator_matches_evaluate() {
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    // Fill enough weights at every layer to get a non-trivial score.
+    for (std::size_t f = 0; f < 64; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f]
+            = static_cast<std::int8_t>(3 + (f % 11));
+    }
+    for (std::size_t k = 0; k < MLPNetworkQ::HIDDEN2; ++k) {
+        for (std::size_t j = 0; j < 8; ++j) {
+            w2[k * MLPNetworkQ::HIDDEN1 + j] = static_cast<std::int8_t>(j + 1);
+        }
+        w3[k] = static_cast<std::int8_t>(k % 7 + 1);
+    }
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j) b1[j] = j - 50;
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN2; ++j) b2[j] = 10;
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-evalacc-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/0.5f, /*mul_out=*/1.5f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    const std::vector<std::string> fens = {
+        "W:W31-50:B1-20",                          // start position
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
+        "W:W5,32,33:B16,17,46",                    // sparse position
+    };
+
+    for (const std::string& fen : fens) {
+        const Position p = parse(fen);
+        const int score_ref = net.evaluate(p);
+
+        std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> acc1{};
+        net.build_layer1(p, p.side_to_move(), acc1.data());
+        const int score_inc = net.evaluate_with_accumulator(p, acc1.data());
+
+        JASS_CHECK_EQ(score_ref, score_inc);
+    }
+
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -963,4 +1014,5 @@ void run_nnue_tests() {
     test_load_network_dispatches_to_mlpq();
     test_accumulator_refresh_matches_build_layer1();
     test_accumulator_apply_move_matches_refresh_for_legal_moves();
+    test_evaluate_with_accumulator_matches_evaluate();
 }
