@@ -101,6 +101,7 @@ add_library(jass_lib STATIC
     src/eval.cpp
     src/nnue.cpp
     src/nnue_accumulator.cpp
+    src/nnue_server_client.cpp
     "${NNUE_DEFAULT_DATA_CPP}"
     src/search.cpp
     src/zobrist.cpp
