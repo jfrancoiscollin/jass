@@ -845,12 +845,95 @@ void test_accumulator_refresh_matches_build_layer1() {
         JASS_CHECK_EQ(pair.black.data[j], ref_b[j]);
     }
 
-    // Slow path contract: apply_move returns false (no incremental
-    // logic yet); callers are expected to refresh_from on the post-
-    // move position. The flag below documents the contract so the
-    // future fast-path implementation flips it without ambiguity.
-    Move dummy{};
-    JASS_CHECK(!pair.apply_move(p, dummy, net));
+    // apply_move guard: a null-Move (from==to==NO_SQUARE) must fall
+    // back to refresh (return false).
+    {
+        Move dummy{};
+        JASS_CHECK(!pair.apply_move(p, dummy, net));
+    }
+
+    std::remove(path.c_str());
+}
+
+// Parity: apply_move on a quiet, non-promoting move that doesn't shift
+// the anchor must produce the same accumulator as a fresh refresh of
+// the post-move position.
+void test_accumulator_apply_move_quiet_matches_refresh() {
+    // Same fixture as the refresh test — small deterministic weights.
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    for (std::size_t f = 0; f < 32; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f]
+            = static_cast<std::int8_t>(5 + (f % 17));
+    }
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j)
+        b1[j] = static_cast<std::int32_t>(j * 3 - 100);
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-apply-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/1.0f, /*mul_out=*/1.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    // A midgame position with many pieces — picks a non-anchor white
+    // piece to move so the anchor is preserved (white's anchor is the
+    // MSB of its pieces; we move a low-square piece).
+    const Position p_before = parse(
+        "W:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+
+    // Construct a quiet move by hand: 31-26 isn't legal (26 is taken),
+    // try 32-28 (28 is empty, 32 is a white man, no capture available).
+    // To be safe and avoid having to enumerate legal moves, we move
+    // 29 -> 24: 29 is white man, 24 is empty, no captures here.
+    Move m{};
+    m.from = static_cast<Square>(29);
+    m.to   = static_cast<Square>(24);
+    m.num_captures = 0;
+    m.promotes     = false;
+
+    // Reference: refresh on pos_after.
+    const Position p_after = p_before.after(m);
+    AccumulatorPair pair_ref;
+    pair_ref.refresh_from(p_after, net);
+
+    // Under test: refresh on pos_before, then apply_move incrementally.
+    AccumulatorPair pair_inc;
+    pair_inc.refresh_from(p_before, net);
+    JASS_CHECK(pair_inc.apply_move(p_before, m, net));
+
+    // Byte-by-byte equality of both accumulators (both POVs).
+    for (std::size_t j = 0; j < net.hidden1(); ++j) {
+        JASS_CHECK_EQ(pair_inc.white.data[j], pair_ref.white.data[j]);
+        JASS_CHECK_EQ(pair_inc.black.data[j], pair_ref.black.data[j]);
+    }
+    // Anchors should match too — quiet non-anchor move doesn't shift them.
+    JASS_CHECK_EQ(pair_inc.white.anchor, pair_ref.white.anchor);
+    JASS_CHECK_EQ(pair_inc.black.anchor, pair_ref.black.anchor);
+
+    // Capture and promotion variants must still bail (v1 limitation).
+    {
+        AccumulatorPair pair_cap;
+        pair_cap.refresh_from(p_before, net);
+        Move cap{};
+        cap.from = static_cast<Square>(29);
+        cap.to   = static_cast<Square>(20);
+        cap.num_captures = 1;
+        cap.captures[0]  = static_cast<Square>(25);  // hypothetical
+        JASS_CHECK(!pair_cap.apply_move(p_before, cap, net));
+    }
+    {
+        AccumulatorPair pair_pr;
+        pair_pr.refresh_from(p_before, net);
+        Move pr{};
+        pr.from = static_cast<Square>(5);
+        pr.to   = static_cast<Square>(1);
+        pr.promotes = true;
+        JASS_CHECK(!pair_pr.apply_move(p_before, pr, net));
+    }
 
     std::remove(path.c_str());
 }
@@ -880,4 +963,5 @@ void run_nnue_tests() {
     test_mlpq_load_rejects_missing_or_bad_file();
     test_load_network_dispatches_to_mlpq();
     test_accumulator_refresh_matches_build_layer1();
+    test_accumulator_apply_move_quiet_matches_refresh();
 }

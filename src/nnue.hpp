@@ -266,6 +266,17 @@ public:
     void build_layer1(const Position& pos, Color side,
                       std::int32_t*   out) const noexcept;
 
+    // Add or subtract the W1 column for input feature `feat` to/from
+    // `acc` (length `hidden1()`). `sign` must be +1 or -1. Used by
+    // the incremental accumulator path (nnue_accumulator.hpp) to
+    // apply move deltas without re-running the full Layer-1 sum.
+    //
+    // O(hidden1) per call — AVX2-vectorised on x86_64 (same hot loop
+    // as the refresh path; the SIMD intrinsics live in nnue.cpp).
+    void apply_column(std::int32_t* acc,
+                      std::size_t   feat,
+                      int           sign) const noexcept;
+
 private:
     void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 
