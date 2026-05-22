@@ -1,8 +1,8 @@
 {
   "job_id": "0025a-cycle9-pilot-host-a",
-  "snapshot_at": "2026-05-22T12:32:51+00:00",
+  "snapshot_at": "2026-05-22T12:37:51+00:00",
   "started_at": "2026-05-22T12:22:39+00:00",
-  "elapsed_seconds": 612,
+  "elapsed_seconds": 912,
   "artefacts": [
     {
       "name": "shard-1.bin",
@@ -22,7 +22,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 0
+      "size_bytes": 8210,
+      "records": 215
     },
     {
       "name": "shard-3.log",
@@ -37,5 +38,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 351207       1       10:11  0.0  0.0 bash\n 351209  351207       10:11  0.0  0.0 bash\n 351261  351209       10:11  0.0  0.0 bash\n 351262  351209       10:11  0.0  0.0 bash\n 351264  351209       10:11  0.0  0.0 bash\n 351266  351209       10:11  0.0  0.0 bash\n 351269  351261       10:11 99.8  0.2 jass\n 351270  351262       10:11 99.8  0.2 jass\n 351271  351264       10:11 99.8  0.2 jass\n 351272  351266       10:11 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 351207       1       15:11  0.0  0.0 bash\n 351209  351207       15:11  0.0  0.0 bash\n 351261  351209       15:11  0.0  0.0 bash\n 351262  351209       15:11  0.0  0.0 bash\n 351264  351209       15:11  0.0  0.0 bash\n 351266  351209       15:11  0.0  0.0 bash\n 351269  351261       15:11 99.8  0.2 jass\n 351270  351262       15:11 99.8  0.2 jass\n 351271  351264       15:11 99.8  0.2 jass\n 351272  351266       15:11 99.8  0.2 jass\n"
 }
