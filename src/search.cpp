@@ -6,6 +6,7 @@
 #include "endgame.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
+#include "nnue_accumulator.hpp"
 #include "tt.hpp"
 #include "zobrist.hpp"
 
@@ -95,6 +96,18 @@ struct Searcher {
     // Null means "use the static `evaluate()` function in eval.cpp".
     const INetwork*                       nnue{nullptr};
 
+    // Fast-path accumulator support. When `nnue` is an `MLPNetworkQ`,
+    // we cache the concrete pointer here and maintain a per-ply
+    // `AccumulatorPair` so each leaf eval skips the Layer-1 rebuild.
+    // Otherwise `mlpq_nnue` is null and `eval_leaf` falls back to the
+    // generic `nnue->evaluate(pos)` path, which any concrete INetwork
+    // supports.
+    //
+    // The +1 covers the case ply == MAX_PLY (the hard cap branch in
+    // negamax still calls eval_leaf at that level).
+    const MLPNetworkQ*                    mlpq_nnue{nullptr};
+    std::array<AccumulatorPair, MAX_PLY + 2> accumulators{};
+
     // Set to true while a Null-Move Pruning probe is in progress, so
     // the recursive negamax doesn't try another null move on top
     // (which would converge to nonsense at deep enough chains).
@@ -104,8 +117,49 @@ struct Searcher {
     int quiescence (const Position& pos,            int ply, int alpha, int beta);
 
     // Wrap the leaf eval so the rest of the code doesn't have to branch.
-    int eval_leaf(const Position& pos) const noexcept {
+    // When `mlpq_nnue` is set, the per-ply accumulator is up-to-date
+    // for `pos` (the caller maintains the invariant via
+    // `push_accumulator` at every recursion) and we can skip the
+    // Layer-1 rebuild via `evaluate_with_accumulator`. Otherwise we
+    // dispatch to whatever INetwork was provided (or to the static
+    // handcrafted eval if none).
+    int eval_leaf(const Position& pos, int ply) const noexcept {
+        if (mlpq_nnue) {
+            const auto& acc = (pos.side_to_move() == Color::White)
+                ? accumulators[ply].white
+                : accumulators[ply].black;
+            return mlpq_nnue->evaluate_with_accumulator(pos, acc.data.data());
+        }
         return nnue ? nnue->evaluate(pos) : evaluate(pos);
+    }
+
+    // Populate `accumulators[ply+1]` to reflect `pos_after` given that
+    // `accumulators[ply]` already reflects `pos_before` and `m` was
+    // played from pos_before. Fast path: copy + `apply_move`. Slow
+    // fallback: full `refresh_from`. No-op when the accumulator path
+    // is inactive (mlpq_nnue == nullptr).
+    void push_accumulator(int ply,
+                          const Position& pos_before,
+                          const Move& m,
+                          const Position& pos_after) noexcept {
+        if (!mlpq_nnue) return;
+        const std::size_t pi  = static_cast<std::size_t>(ply);
+        const std::size_t pi1 = pi + 1;
+        if (pi1 >= accumulators.size()) return;  // ply cap, no descent
+        accumulators[pi1] = accumulators[pi];
+        if (!accumulators[pi1].apply_move(pos_before, m, pos_after, *mlpq_nnue)) {
+            accumulators[pi1].refresh_from(pos_after, *mlpq_nnue);
+        }
+    }
+
+    // Null move: piece positions unchanged → both accumulators are
+    // bit-identical to the previous ply's. Just copy.
+    void push_accumulator_null(int ply) noexcept {
+        if (!mlpq_nnue) return;
+        const std::size_t pi  = static_cast<std::size_t>(ply);
+        const std::size_t pi1 = pi + 1;
+        if (pi1 >= accumulators.size()) return;
+        accumulators[pi1] = accumulators[pi];
     }
 
     // Returns true if `h` already appears anywhere in `hash_path`.
@@ -178,11 +232,12 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
     // generate_legal_moves either returns *all* maximum-length captures or
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
-    if (!moves[0].is_capture()) return eval_leaf(pos);
+    if (!moves[0].is_capture()) return eval_leaf(pos, ply);
 
     int best = -INF_SCORE;
     for (const auto& m : moves) {
         const Position next  = pos.after(m);
+        push_accumulator(ply, pos, m, next);
         const int      score = -quiescence(next, ply + 1, -beta, -alpha);
         if (score > best) best = score;
         if (best > alpha) alpha = best;
@@ -196,7 +251,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (stopped) return 0;
     // Hard ply cap so single-move extensions can't run off the end of the
     // killers / hash_path arrays.
-    if (ply >= MAX_PLY) return eval_leaf(pos);
+    if (ply >= MAX_PLY) return eval_leaf(pos, ply);
     ++nodes;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
@@ -269,7 +324,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             && !was_null
             && !is_mate_score(beta)
             && !moves[0].is_capture()) {
-            const int eval   = eval_leaf(pos);
+            const int eval   = eval_leaf(pos, ply);
             const int margin = RFP_MARGIN * depth;
             if (eval - margin >= beta) return eval - margin;
         }
@@ -299,12 +354,13 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
             if (popcount(all) >= NMP_MIN_PIECES) {
-                const int eval = eval_leaf(pos);
+                const int eval = eval_leaf(pos, ply);
                 if (eval >= beta) {
                     const int R          = 2 + depth / 4;
                     const int reduced    = depth - 1 - R;
                     const int safe_depth = reduced < 1 ? 1 : reduced;
                     const Position null_pos = pos.after_null();
+                    push_accumulator_null(ply);
                     was_null = true;
                     const int null_score = -negamax(null_pos, safe_depth, ply + 1,
                                                     -beta, -beta + 1);
@@ -374,6 +430,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         for (const auto& m : moves) {
             if (same_packed_move(m, tt_entry.best_move)) continue;  // exclude TT move
             const Position next = pos.after(m);
+            push_accumulator(ply, pos, m, next);
             const int      s    = -negamax(next, singular_depth - 1, ply + 1,
                                            -singular_beta, -verify_alpha);
             if (s > verify_best) verify_best = s;
@@ -414,6 +471,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     int move_idx = 0;
     for (const auto& m : moves) {
         const Position next      = pos.after(m);
+        push_accumulator(ply, pos, m, next);
         const bool     is_tt     = tt_move_valid
                                  && same_packed_move(m, tt_entry.best_move);
         const int      new_depth = depth - 1 + (singular_ext && is_tt ? 1 : 0);
@@ -586,6 +644,14 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
     s.nnue      = limits.nnue;
+    // Activate the accumulator fast path when the supplied INetwork is
+    // the quantised MLP. Other concrete types (LinearNetwork, the
+    // float MLPNetwork) fall through to the generic
+    // `nnue->evaluate(pos)` slow path.
+    s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(limits.nnue);
+    if (s.mlpq_nnue) {
+        s.accumulators[0].refresh_from(pos, *s.mlpq_nnue);
+    }
     if (limits.movetime_ms > 0) {
         s.has_deadline = true;
         s.deadline = std::chrono::steady_clock::now()
@@ -643,6 +709,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         for (const auto& m : root_moves) {
             if (s.stopped) break;
             const Position next  = pos.after(m);
+            s.push_accumulator(0, pos, m, next);
             const int      score = -s.negamax(next, depth - 1, 1,
                                               -beta, -cur_alpha);
             if (score > iter_score) {

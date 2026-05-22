@@ -204,18 +204,20 @@ struct AccumulatorPair {
     // apply_move() reports it couldn't update incrementally.
     void refresh_from(const Position& pos, const MLPNetworkQ& net) noexcept;
 
-    // Incremental update: `pos_before` and `m` together describe one
-    // move; the function mutates *this from "matching pos_before" to
-    // "matching pos_before.after(m)". Returns true on incremental
-    // success; false if it bailed out (caller must then refresh_from
-    // on the new position).
+    // Incremental update: applies the delta of `m` to *this. Caller
+    // is expected to have called `refresh_from(pos_before, ...)`
+    // beforehand (or to have produced this state via a previous
+    // apply_move chain). `pos_after` MUST equal `pos_before.after(m)`
+    // — it's passed in rather than recomputed so the caller can reuse
+    // it (the search uses the same pos_after to recurse).
     //
-    // STATUS: returns false unconditionally (stub). The actual
-    // incremental logic — per-affected-square column subtract/add +
-    // anchor-invalidation handling — is the larger remaining piece
-    // of work.
+    // Returns true on incremental success; false if the encoding is
+    // unsupported (never happens with V2 or HalfMen networks that
+    // pass mlpq_dims_ok at load time). False callers must
+    // refresh_from(pos_after).
     bool apply_move(const Position&    pos_before,
                     const Move&        m,
+                    const Position&    pos_after,
                     const MLPNetworkQ& net) noexcept;
 };
 
