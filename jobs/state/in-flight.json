@@ -1,7 +1,0 @@
-{
-  "job_id": "0025a-cycle9-pilot-host-a",
-  "script": "jobs/queue/0025a-cycle9-pilot-host-a.sh",
-  "pid": 338277,
-  "started_at": "2026-05-21T22:26:41+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
