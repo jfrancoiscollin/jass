@@ -277,6 +277,18 @@ public:
                       std::size_t   feat,
                       int           sign) const noexcept;
 
+    // Fast eval path: skip the Layer-1 rebuild and use a pre-built
+    // accumulator. `acc1` must point at `hidden1()` int32 slots
+    // representing the bias + active-feature sum for `pos`'s side-to-
+    // move POV — i.e. what `build_layer1(pos, pos.side_to_move(), ·)`
+    // would produce, or what an up-to-date `Accumulator::data` holds.
+    //
+    // Behaviour is identical to `evaluate(pos)` when `acc1` is the
+    // correct Layer-1 accumulator for `pos` (verified by the
+    // accumulator parity tests).
+    int evaluate_with_accumulator(const Position&     pos,
+                                  const std::int32_t* acc1) const noexcept;
+
 private:
     void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 

@@ -919,15 +919,23 @@ void MLPNetworkQ::apply_column(std::int32_t* acc,
 }
 
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
+    // Build Layer 1 from scratch, then delegate to the shared
+    // post-Layer-1 path. Callers that already maintain a Layer-1
+    // accumulator (see nnue_accumulator.hpp) can skip the rebuild by
+    // calling `evaluate_with_accumulator(pos, acc1)` directly.
+    std::int32_t acc1[MAX_HIDDEN];
+    build_layer1(pos, pos.side_to_move(), acc1);
+    return evaluate_with_accumulator(pos, acc1);
+}
+
+int MLPNetworkQ::evaluate_with_accumulator(const Position&     pos,
+                                           const std::int32_t* acc1)
+    const noexcept {
+    (void)pos;  // unused; the accumulator already encodes the position.
     const std::size_t h1n = hidden1_;
     const std::size_t h2n = hidden2_;
     const std::int8_t* const w2 = w2_.data();
     const std::int8_t* const w3 = w3_.data();
-
-    // Layer 1 — delegate to the public builder so the incremental
-    // accumulator path can call it directly (refresh_from() below).
-    std::int32_t acc1[MAX_HIDDEN];
-    build_layer1(pos, pos.side_to_move(), acc1);
 
     // ReLU + quantise to int8 ([0, 127]).
     std::int8_t h1[MAX_HIDDEN];
