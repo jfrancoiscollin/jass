@@ -109,41 +109,55 @@ void AccumulatorPair::refresh_from(const Position&    pos,
     black.refresh_from(pos, Color::Black, net);
 }
 
-// v1 incremental update. Conservative: handles only the simple shape
-// (quiet move, no promotion, no anchor change). Captures, promotions,
-// or anchor invalidation cause an early return so the caller falls
-// back to refresh_from.
-//
-// On the supported shape, the delta is:
-//   * remove the moving piece at `from` (sub abs + rel columns) in both
-//     accumulators (white-POV and black-POV)
-//   * add the moving piece at `to` (add abs + rel columns) in both
-//     accumulators
-// V2 (input_dim=200) is NOT supported yet — return false so the slow
-// path handles it. HalfMen is the only encoding we ship trained
-// networks for in practice.
+// One piece change in the canonical (Position-level) frame:
+//   * `bit` is the bitboard bit (0..49, same as square - 1).
+//   * `colour` is the piece's colour.
+//   * `is_king` is the piece's type (king vs man).
+//   * `sign` is +1 (piece appears here in the post-move position)
+//     or -1 (piece disappears from here).
+// The accumulator-side mapping (POV bit + POV kind) happens later
+// in apply_changes() — once per POV — so the same change is reused
+// for both white-POV and black-POV updates.
+struct PieceChange {
+    int   bit;
+    Color colour;
+    bool  is_king;
+    int   sign;
+};
+
+inline void apply_changes(AccumulatorPair&        pair,
+                          const PieceChange*      changes,
+                          std::size_t             n_changes,
+                          bool                    halfmen,
+                          const MLPNetworkQ&      net) noexcept {
+    for (Color side : {Color::White, Color::Black}) {
+        Accumulator& acc = (side == Color::White) ? pair.white : pair.black;
+        for (std::size_t i = 0; i < n_changes; ++i) {
+            const PieceChange& ch = changes[i];
+            const std::size_t b_pov    = bit_in_pov(ch.bit, side);
+            const std::size_t kind_pov = kind_in_pov(ch.colour, ch.is_king, side);
+            apply_piece_delta(acc, b_pov, kind_pov, ch.sign, halfmen, net);
+        }
+    }
+}
+
+// v2 incremental update. Handles quiet, capture, and promotion moves
+// (any combination) as long as no anchor shifts. Anchor invalidation
+// still triggers a refresh fallback (the per-anchor-shift delta path
+// is meaningful future work but not implemented yet).
 bool AccumulatorPair::apply_move(const Position&    pos_before,
                                  const Move&        m,
                                  const MLPNetworkQ& net) noexcept {
-    // Pre-conditions: both accumulators must already be valid (i.e.
-    // refresh_from has been called for pos_before).
     if (!white.valid || !black.valid) return false;
-    const bool halfmen = (net.input_dim() == MLPNetworkQ::HALFMEN_INPUT_DIM);
+    const bool halfmen  = (net.input_dim() == MLPNetworkQ::HALFMEN_INPUT_DIM);
     const bool v2_dense = (net.input_dim() == MLPNetworkQ::INPUT_DIM);
-    if (!halfmen && !v2_dense) return false;  // unsupported encoding
+    if (!halfmen && !v2_dense) return false;
 
-    // Bail on captures and promotions (handled by refresh in v1).
-    if (m.num_captures != 0) return false;
-    if (m.promotes)          return false;
-    // Bail if either endpoint is invalid (shouldn't happen on legal
-    // moves but guards against null/sentinel Move values).
     if (m.from == NO_SQUARE || m.to == NO_SQUARE) return false;
 
     // Compute pos_after so we can check anchor invariance (HalfMen
-    // only — V2 has no anchor). For V2 the call to pos.after() is
-    // still useful as a defensive correctness check.
+    // only). Cheap relative to a full Layer-1 refresh.
     const Position pos_after = pos_before.after(m);
-
     if (halfmen) {
         if (anchor_for(pos_after, Color::White) != white.anchor ||
             anchor_for(pos_after, Color::Black) != black.anchor) {
@@ -151,28 +165,41 @@ bool AccumulatorPair::apply_move(const Position&    pos_before,
         }
     }
 
-    // Identify the mover. For a quiet, non-promoting move:
-    //   * `from` had the mover's piece (man or king); now empty.
-    //   * `to`   was empty;                            now has the mover's piece.
-    // Determine the kind from the bitboards at `from` in pos_before.
-    const Color mover_colour = pos_before.side_to_move();
-    const int   from_bit     = static_cast<int>(m.from) - 1;
-    const int   to_bit       = static_cast<int>(m.to)   - 1;
-    const Bitboard from_mask = Bitboard{1} << from_bit;
-    const bool is_king = (mover_colour == Color::White)
-        ? ((pos_before.white_kings() & from_mask) != 0)
-        : ((pos_before.black_kings() & from_mask) != 0);
+    // Build the change list. Worst case: from + to + 20 captures = 22.
+    const Color    mover    = pos_before.side_to_move();
+    const Color    opponent = (mover == Color::White) ? Color::Black : Color::White;
+    const int      from_bit = static_cast<int>(m.from) - 1;
+    const int      to_bit   = static_cast<int>(m.to)   - 1;
+    const Bitboard from_msk = Bitboard{1} << from_bit;
+    const bool mover_was_king = (mover == Color::White)
+        ? ((pos_before.white_kings() & from_msk) != 0)
+        : ((pos_before.black_kings() & from_msk) != 0);
+    const bool mover_is_king_after = mover_was_king || m.promotes;
 
-    // Apply the delta to both accumulators.
-    for (Color side : {Color::White, Color::Black}) {
-        Accumulator& acc      = (side == Color::White) ? white : black;
-        const std::size_t b_from = bit_in_pov(from_bit, side);
-        const std::size_t b_to   = bit_in_pov(to_bit,   side);
-        const std::size_t kind   = kind_in_pov(mover_colour, is_king, side);
-        // Remove from `b_from`, add at `b_to`.
-        apply_piece_delta(acc, b_from, kind, -1, halfmen, net);
-        apply_piece_delta(acc, b_to,   kind, +1, halfmen, net);
+    std::array<PieceChange, 22> changes{};
+    std::size_t n = 0;
+
+    // Remove mover from `from` (its pre-move kind).
+    changes[n++] = PieceChange{from_bit, mover, mover_was_king, -1};
+    // Add mover at `to` (its post-move kind — same as pre unless promotes).
+    changes[n++] = PieceChange{to_bit,   mover, mover_is_king_after, +1};
+    // Remove each captured opponent piece.
+    for (std::uint8_t i = 0; i < m.num_captures; ++i) {
+        const int cap_bit = static_cast<int>(m.captures[i]) - 1;
+        const Bitboard cap_msk = Bitboard{1} << cap_bit;
+        const bool cap_was_king = (opponent == Color::White)
+            ? ((pos_before.white_kings() & cap_msk) != 0)
+            : ((pos_before.black_kings() & cap_msk) != 0);
+        changes[n++] = PieceChange{cap_bit, opponent, cap_was_king, -1};
     }
+
+    apply_changes(*this, changes.data(), n, halfmen, net);
+
+    // Keep the anchor cache in sync with the position even in V2 mode
+    // (where the anchor doesn't affect features but the contract that
+    // `acc.anchor` reflects the current position still applies).
+    white.anchor = anchor_for(pos_after, Color::White);
+    black.anchor = anchor_for(pos_after, Color::Black);
 
     return true;
 }
