@@ -1,0 +1,25 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+filter:  (unset, OK for single-host pilot)
+nproc:   4
+mem:     15Gi
+disk:    140G free of 150G
+shards:  4 × 125000 records (seeds 3001-3004)
+NNUE:    /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+-rw-r--r-- 1 root root 147K May 20 00:39 /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 56%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+[ 96%] Built target jass_tests
+[100%] Linking CXX executable jass
+[100%] Built target jass
+jass:    Jass 0.0.1
+
+=== launching 4 parallel shards (NNUE=v5) ===
+  shard 1 launched as pid 338343 (seed 3001)
+  shard 2 launched as pid 338345 (seed 3002)
+  shard 3 launched as pid 338346 (seed 3003)
+  shard 4 launched as pid 338349 (seed 3004)
+
+=== waiting on all shards ===
