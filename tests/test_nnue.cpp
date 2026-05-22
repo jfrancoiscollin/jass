@@ -11,6 +11,7 @@
 
 #include "eval.hpp"
 #include "nnue.hpp"
+#include "nnue_accumulator.hpp"
 #include "position.hpp"
 
 #include <cstdio>
@@ -792,6 +793,68 @@ void test_load_network_dispatches_to_mlpq() {
     std::remove(path.c_str());
 }
 
+// =============================================================================
+// AccumulatorPair — slow-path correctness (the fast incremental path is
+// not yet implemented; apply_move returns false and the caller is
+// expected to refresh_from on the new position).
+// =============================================================================
+
+void test_accumulator_refresh_matches_build_layer1() {
+    // Build a small deterministic net so the assertion exercises real
+    // (non-zero) weights without depending on an external file.
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    // Sprinkle a few non-zero weights and biases so each accumulator
+    // slot has a chance to differ from zero. Values picked to stay in
+    // int8 / int32 range.
+    for (std::size_t f = 0; f < 16; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f] = static_cast<std::int8_t>(7 + f);
+    }
+    for (std::size_t j = 0; j < 8; ++j) b1[j] = static_cast<std::int32_t>(100 + j);
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-acc-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/1.0f, /*mul_out=*/1.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    const Position p = parse(
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+
+    // Reference: ask the network directly for both sides' Layer-1.
+    std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> ref_w{};
+    std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> ref_b{};
+    net.build_layer1(p, Color::White, ref_w.data());
+    net.build_layer1(p, Color::Black, ref_b.data());
+
+    // Under test: refresh the accumulator pair from the same position.
+    AccumulatorPair pair;
+    pair.refresh_from(p, net);
+
+    JASS_CHECK(pair.white.valid);
+    JASS_CHECK(pair.black.valid);
+    JASS_CHECK_EQ(pair.white.hidden1, net.hidden1());
+    JASS_CHECK_EQ(pair.black.hidden1, net.hidden1());
+
+    for (std::size_t j = 0; j < net.hidden1(); ++j) {
+        JASS_CHECK_EQ(pair.white.data[j], ref_w[j]);
+        JASS_CHECK_EQ(pair.black.data[j], ref_b[j]);
+    }
+
+    // Slow path contract: apply_move returns false (no incremental
+    // logic yet); callers are expected to refresh_from on the post-
+    // move position. The flag below documents the contract so the
+    // future fast-path implementation flips it without ambiguity.
+    Move dummy{};
+    JASS_CHECK(!pair.apply_move(p, dummy, net));
+
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -816,4 +879,5 @@ void run_nnue_tests() {
     test_mlpq_load_rejects_simd_incompatible_dims();
     test_mlpq_load_rejects_missing_or_bad_file();
     test_load_network_dispatches_to_mlpq();
+    test_accumulator_refresh_matches_build_layer1();
 }
