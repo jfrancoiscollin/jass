@@ -254,10 +254,21 @@ public:
 private:
     void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 
+    // Rebuild the column-major mirror `w1_col_` from the canonical
+    // row-major `w1_`. Called after any operation that writes `w1_`
+    // (load(), load_from_bytes(), resize_for()). `evaluate()` reads
+    // only `w1_col_` in its hot Layer-1 loop because the column-major
+    // layout turns each sparse feature add into a contiguous int8
+    // read, which the AVX2 path can sign-extend + accumulate in 4
+    // _mm256_add_epi32 ops per 32 hidden neurons (vs. 256 strided
+    // scalar reads in the old layout).
+    void rebuild_w1_col();
+
     std::size_t                input_dim_{INPUT_DIM};
     std::size_t                hidden1_{HIDDEN1};
     std::size_t                hidden2_{HIDDEN2};
-    std::vector<std::int8_t>   w1_;   // hidden1_ × input_dim_
+    std::vector<std::int8_t>   w1_;   // hidden1_ × input_dim_ (row-major, matches on-disk format)
+    std::vector<std::int8_t>   w1_col_;  // input_dim_ × hidden1_ (column-major, runtime hot path)
     std::vector<std::int32_t>  b1_;   // hidden1_
     std::vector<std::int8_t>   w2_;   // hidden2_ × hidden1_
     std::vector<std::int32_t>  b2_;   // hidden2_

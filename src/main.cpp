@@ -18,7 +18,9 @@
 #include "search.hpp"
 #include "tournament.hpp"
 
+#include <algorithm>
 #include <charconv>
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -688,6 +690,56 @@ int run_build_book_from_moves_mode(int argc, char** argv) {
     return 0;
 }
 
+// Micro-benchmark for raw NNUE evaluate() throughput. Loads `weights`,
+// picks a midgame position, calls evaluate() in a tight loop, reports
+// ns/call and evals/sec. Used to validate the SIMD Layer-1 refactor —
+// scalar vs AVX2 column add — without paying for search overhead.
+int run_bench_eval_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --bench-eval <weights.bin> [iters=1000000]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const long long iters = (argc > 3) ? std::max<long long>(1,
+        parse_int_or(argv[3], 1000000)) : 1000000;
+
+    std::unique_ptr<INetwork> net = load_network(weights_path);
+    if (!net) {
+        std::cerr << "error: cannot load weights from " << weights_path << "\n";
+        return 1;
+    }
+
+    // A midgame-ish position with both colours having men + kings.
+    const auto pos_opt = Position::from_fen(
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+    if (!pos_opt) {
+        std::cerr << "error: built-in benchmark FEN failed to parse\n";
+        return 1;
+    }
+    const Position pos = *pos_opt;
+
+    // Warmup so any first-call cost (TLB, branch predictor) doesn't bias
+    // the measurement.
+    int sink = 0;
+    for (int i = 0; i < 10000; ++i) sink ^= net->evaluate(pos);
+
+    using clock = std::chrono::steady_clock;
+    const auto t0 = clock::now();
+    for (long long i = 0; i < iters; ++i) sink ^= net->evaluate(pos);
+    const auto t1 = clock::now();
+    const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+
+    const double ns_per_call  = static_cast<double>(ns) / static_cast<double>(iters);
+    const double evals_per_s  = 1e9 / ns_per_call;
+    std::cout << "bench-eval: weights=" << weights_path
+              << " iters=" << iters
+              << " total_ns=" << ns
+              << " ns/call=" << ns_per_call
+              << " evals/s=" << evals_per_s
+              << " sink=" << sink << '\n';
+    return 0;
+}
+
 int run_tournament_mode(int argc, char** argv) {
     // Usage: --tournament [depth_a] [depth_b] [pairs]
     // Defaults: depth_a=4, depth_b=6, pairs=1 (so 2 games total).
@@ -722,6 +774,7 @@ int main(int argc, char** argv) {
         const std::string_view a{argv[i]};
         if      (a == "--smoke")                    return run_smoke();
         else if (a == "--tournament")               return run_tournament_mode(argc, argv);
+        else if (a == "--bench-eval")               return run_bench_eval_mode(argc, argv);
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
