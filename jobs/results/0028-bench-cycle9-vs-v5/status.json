@@ -1,7 +1,9 @@
 {
   "job_id": "0028-bench-cycle9-vs-v5",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 3,
   "started_at": "2026-05-22T12:02:28+00:00",
+  "ended_at": "2026-05-22T12:07:26+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 350888
+  "artefacts_server_path": "/root/jass/jobs/results/0028-bench-cycle9-vs-v5/artefacts.src"
 }
