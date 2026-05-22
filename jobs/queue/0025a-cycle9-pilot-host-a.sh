@@ -1,24 +1,22 @@
 #!/usr/bin/env bash
 # id: 0025a-cycle9-pilot-host-a
-# description: Cycle 9 pilot, single-host 500K. Generates 500K WDL records
-#              labelled by the v5 NNUE (0018) — this is the whole point
-#              of Cycle 9: the 0010 1M dataset was labelled by the
-#              pre-Cycle-8 NNUE, so training a new model on it can't
-#              improve beyond the limits of that labeller. By labelling
-#              with v5 (Cycle 8 BCE, +304 ELO vs handcrafted), we should
-#              get a strictly better training corpus and, after retraining,
-#              a "v6" NNUE that exceeds v5.
+# description: Cycle 9 pilot, single-host 100K @ depth 16. Generates 100K
+#              WDL records labelled by the v5 NNUE (0018) — the whole point
+#              of Cycle 9 is to test whether relabelling self-play data
+#              with v5 (instead of the pre-Cycle-8 Linear NNUE that
+#              labelled the 0010 1M) gives a strictly better training
+#              corpus and therefore a better "v6" NNUE.
 #
-#              Originally designed as 500K-on-host-A of a 1M 2-host pilot
-#              (with 0025b, 0026 doing host B + merge). The 2nd CCX23 isn't
-#              available yet, so we de-risk by running the 500K alone on the
-#              existing host and skipping the merge — 0027 trains directly
-#              on this output. If a 2nd host comes online later, queue an
-#              0025c that mirrors this one with seeds 4001-4004 and a fresh
-#              merge job, retrain.
-#
-#              At ~5 CPU-sec per record on 4 vCPU CCX23, 500K = ~175 CPU-hours
-#              / 4 cores ÷ 4 shards ≈ ~67-72 hours wall (~3 days).
+#              History: first attempt with 500K @ depth 20 measured at
+#              ~150 records/h/shard, projecting 36 days for the run. That's
+#              because v5 is an MLP (256-128, ~148K weights, int8 quant)
+#              vs the embedded Linear NNUE (~450 weights) used in 0010, so
+#              per-eval cost is ~13× higher. We kill that run and re-scope
+#              this pilot:
+#                * 100K records (5× smaller) at depth 16 (~4-8× faster than
+#                  depth 20) → ~2 days wall.
+#                * Enough signal to know if v5-labelling moves the needle;
+#                  if positive, full 10M run on multi-host CPX62 cluster.
 #
 #              No JASS_HOST_FILTER required for single-host mode — the
 #              existing runner picks this job at the next tick.
@@ -28,14 +26,14 @@
 #                  artefacts.src/nnue-*-q.bin     (v5, quantised)
 #
 #              Writes:
-#                $ART/shard-N.bin                 (4 × 125K JNNW records)
-#                $ART/host-a.bin                  (500K records, merged)
+#                $ART/shard-N.bin                 (4 × 25K JNNW records)
+#                $ART/host-a.bin                  (100K records, merged)
 #
 #              Pipeline continues at:
-#                0027  — train Cycle 9 NNUE on the 500K (directly)
+#                0027  — train Cycle 9 NNUE on the 100K (directly)
 #                0028  — bench Cycle 9 vs v5 → verdict
 #
-# expected_duration: ~67-72 hours on 4 vCPU CCX23 (~3 days).
+# expected_duration: ~48 hours on 4 vCPU CCX23 (~2 days).
 set -uo pipefail
 cd /root/jass
 
@@ -44,14 +42,22 @@ ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
 NSHARDS=4
-PER_SHARD=125000          # 4 × 125 000 = 500 000 records, half of the 1M pilot
-EVAL_DEPTH=20             # same as 0010 / 0020; depth-20 labels
+PER_SHARD=25000           # 4 × 25 000 = 100 000 records (down from 500K).
+                          # First attempt at 500K + depth 20 was throughput-
+                          # limited: at ~150 rec/h/shard with v5 MLP NNUE
+                          # labelling (~13× slower than the embedded Linear
+                          # used in 0010), 500K would take ~36 days. 100K
+                          # at depth 16 ≈ 2 days — small but enough to
+                          # see whether v5-labelling moves the needle.
+EVAL_DEPTH=16             # down from 20; ~4-8× faster per label with
+                          # marginal quality loss vs depth-20 (the eval
+                          # gain from depth-20 was modest in 0010 too).
 PLAY_DEPTH=4
 MAX_PLIES=200
-# Seed range distinct from 0020a/b (1001-1004 / 2001-2004): 3001-3004
-# guarantees no overlap with the existing depth-20 corpus or with
-# 0025b's seeds (4001-4004), so the 1M dataset is fully independent.
-SEED_BASE=3000
+# Seed range distinct from 0020a/b (1001-1004 / 2001-2004) and from
+# this job's first throughput-limited attempt (3001-3004, killed):
+# 5001-5004 so the corpus is identifiable.
+SEED_BASE=5000
 
 # v5 NNUE — same labeller chain as 0019/0022/0023 so we're always using
 # the best available network rather than the pre-Cycle-8 embedded default.
