@@ -10,7 +10,9 @@
 #include "test_framework.hpp"
 
 #include "eval.hpp"
+#include "movegen.hpp"
 #include "nnue.hpp"
+#include "nnue_accumulator.hpp"
 #include "position.hpp"
 
 #include <cstdio>
@@ -20,6 +22,7 @@
 #include <string>
 #include <string_view>
 #include <unistd.h>
+#include <vector>
 
 using namespace jass;
 
@@ -792,6 +795,199 @@ void test_load_network_dispatches_to_mlpq() {
     std::remove(path.c_str());
 }
 
+// =============================================================================
+// AccumulatorPair — slow-path correctness (the fast incremental path is
+// not yet implemented; apply_move returns false and the caller is
+// expected to refresh_from on the new position).
+// =============================================================================
+
+void test_accumulator_refresh_matches_build_layer1() {
+    // Build a small deterministic net so the assertion exercises real
+    // (non-zero) weights without depending on an external file.
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    // Sprinkle a few non-zero weights and biases so each accumulator
+    // slot has a chance to differ from zero. Values picked to stay in
+    // int8 / int32 range.
+    for (std::size_t f = 0; f < 16; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f] = static_cast<std::int8_t>(7 + f);
+    }
+    for (std::size_t j = 0; j < 8; ++j) b1[j] = static_cast<std::int32_t>(100 + j);
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-acc-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/1.0f, /*mul_out=*/1.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    const Position p = parse(
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+
+    // Reference: ask the network directly for both sides' Layer-1.
+    std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> ref_w{};
+    std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> ref_b{};
+    net.build_layer1(p, Color::White, ref_w.data());
+    net.build_layer1(p, Color::Black, ref_b.data());
+
+    // Under test: refresh the accumulator pair from the same position.
+    AccumulatorPair pair;
+    pair.refresh_from(p, net);
+
+    JASS_CHECK(pair.white.valid);
+    JASS_CHECK(pair.black.valid);
+    JASS_CHECK_EQ(pair.white.hidden1, net.hidden1());
+    JASS_CHECK_EQ(pair.black.hidden1, net.hidden1());
+
+    for (std::size_t j = 0; j < net.hidden1(); ++j) {
+        JASS_CHECK_EQ(pair.white.data[j], ref_w[j]);
+        JASS_CHECK_EQ(pair.black.data[j], ref_b[j]);
+    }
+
+    // apply_move guard: a null-Move (from==to==NO_SQUARE) must fall
+    // back to refresh (return false).
+    {
+        Move dummy{};
+        JASS_CHECK(!pair.apply_move(p, dummy, p, net));
+    }
+
+    std::remove(path.c_str());
+}
+
+// Parity: for every legal move from a panel of positions, apply_move
+// must either return true with byte-identical accumulators vs a fresh
+// refresh, OR return false (caller falls back to refresh). Both are
+// correct contracts.
+void test_accumulator_apply_move_matches_refresh_for_legal_moves() {
+    // Small deterministic V2 fixture — same shape as the refresh test.
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    for (std::size_t f = 0; f < 64; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f]
+            = static_cast<std::int8_t>(5 + (f % 17));
+    }
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j)
+        b1[j] = static_cast<std::int32_t>(j * 3 - 100);
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-apply-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/1.0f, /*mul_out=*/1.0f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    // Panel of positions covering quiet moves, captures (white-to-move
+    // and black-to-move), and a promotion candidate.
+    const std::vector<std::string> fens = {
+        // Mid-game with quiet + capture options.
+        "W:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
+        // Same position, black to move — black has captures available too.
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
+        // White man one ply from promotion.
+        "W:W5,32,33:B16,17,46",
+    };
+
+    int total_moves    = 0;
+    int incremental_ok = 0;
+    int fell_back      = 0;
+
+    for (const std::string& fen : fens) {
+        const Position p_before = parse(fen);
+        MoveList legal;
+        generate_legal_moves(p_before, legal);
+
+        for (const Move& m : legal) {
+            ++total_moves;
+            const Position p_after = p_before.after(m);
+
+            AccumulatorPair ref;
+            ref.refresh_from(p_after, net);
+
+            AccumulatorPair inc;
+            inc.refresh_from(p_before, net);
+            const bool ok = inc.apply_move(p_before, m, p_after, net);
+
+            if (ok) {
+                ++incremental_ok;
+                // Bit-identical match required.
+                for (std::size_t j = 0; j < net.hidden1(); ++j) {
+                    JASS_CHECK_EQ(inc.white.data[j], ref.white.data[j]);
+                    JASS_CHECK_EQ(inc.black.data[j], ref.black.data[j]);
+                }
+                JASS_CHECK_EQ(inc.white.anchor, ref.white.anchor);
+                JASS_CHECK_EQ(inc.black.anchor, ref.black.anchor);
+            } else {
+                ++fell_back;
+            }
+        }
+    }
+
+    // Sanity: we should have exercised the incremental path on at
+    // least some moves across the panel (not 0% — would indicate the
+    // bail conditions are catching everything by mistake).
+    JASS_CHECK(incremental_ok > 0);
+    JASS_CHECK(total_moves == incremental_ok + fell_back);
+
+    std::remove(path.c_str());
+}
+
+// Parity: `evaluate_with_accumulator(pos, build_layer1(pos))` must
+// equal `evaluate(pos)`. Verifies the post-Layer-1 path is functionally
+// identical, so once the engine starts maintaining an accumulator it
+// can skip the rebuild without changing the score.
+void test_evaluate_with_accumulator_matches_evaluate() {
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN1 * MLPNetworkQ::INPUT_DIM> w1{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN1>                          b1{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2 * MLPNetworkQ::HIDDEN1>   w2{};
+    std::array<std::int32_t, MLPNetworkQ::HIDDEN2>                          b2{};
+    std::array<std::int8_t,  MLPNetworkQ::HIDDEN2>                          w3{};
+    // Fill enough weights at every layer to get a non-trivial score.
+    for (std::size_t f = 0; f < 64; ++f) {
+        w1[(f % MLPNetworkQ::HIDDEN1) * MLPNetworkQ::INPUT_DIM + f]
+            = static_cast<std::int8_t>(3 + (f % 11));
+    }
+    for (std::size_t k = 0; k < MLPNetworkQ::HIDDEN2; ++k) {
+        for (std::size_t j = 0; j < 8; ++j) {
+            w2[k * MLPNetworkQ::HIDDEN1 + j] = static_cast<std::int8_t>(j + 1);
+        }
+        w3[k] = static_cast<std::int8_t>(k % 7 + 1);
+    }
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j) b1[j] = j - 50;
+    for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN2; ++j) b2[j] = 10;
+
+    const std::string path = make_tmp_path("/tmp/jass-mlpq-evalacc-XXXXXX");
+    JASS_CHECK(write_mlpq_file(path, w1, b1, w2, b2, w3, 0,
+                               /*mul1=*/0.25f, /*mul2=*/0.5f, /*mul_out=*/1.5f));
+
+    MLPNetworkQ net;
+    JASS_CHECK(net.load(path));
+
+    const std::vector<std::string> fens = {
+        "W:W31-50:B1-20",                          // start position
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
+        "W:W5,32,33:B16,17,46",                    // sparse position
+    };
+
+    for (const std::string& fen : fens) {
+        const Position p = parse(fen);
+        const int score_ref = net.evaluate(p);
+
+        std::array<std::int32_t, MLPNetworkQ::MAX_HIDDEN> acc1{};
+        net.build_layer1(p, p.side_to_move(), acc1.data());
+        const int score_inc = net.evaluate_with_accumulator(p, acc1.data());
+
+        JASS_CHECK_EQ(score_ref, score_inc);
+    }
+
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -816,4 +1012,7 @@ void run_nnue_tests() {
     test_mlpq_load_rejects_simd_incompatible_dims();
     test_mlpq_load_rejects_missing_or_bad_file();
     test_load_network_dispatches_to_mlpq();
+    test_accumulator_refresh_matches_build_layer1();
+    test_accumulator_apply_move_matches_refresh_for_legal_moves();
+    test_evaluate_with_accumulator_matches_evaluate();
 }

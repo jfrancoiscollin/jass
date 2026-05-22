@@ -538,61 +538,129 @@ inline std::int32_t saturate_to_int8(float x) noexcept {
     return static_cast<int>(x + 0.5f);
 }
 
-// Add the W1 column for input feature `feat` to the int32
-// accumulator `acc1`. `input_dim` is the row stride of W1.
-inline void add_w1_column_q(const std::int8_t* w1,
-                            std::size_t        hidden1,
-                            std::size_t        input_dim,
-                            std::int32_t*      acc1,
-                            std::size_t        feat) noexcept {
+// Hot-path column subtract — mirror of `add_col_q` for incremental
+// accumulator deltas. Same AVX2 layout, just `_mm256_sub_epi32`.
+inline void sub_col_q(const std::int8_t* col,
+                      std::int32_t*      acc1,
+                      std::size_t        hidden1) noexcept {
+#if defined(__AVX2__)
+    for (std::size_t j = 0; j < hidden1; j += 32) {
+        const __m256i w =
+            _mm256_loadu_si256(reinterpret_cast<const __m256i*>(col + j));
+        const __m128i wlo = _mm256_castsi256_si128(w);
+        const __m128i whi = _mm256_extracti128_si256(w, 1);
+        const __m256i e0 = _mm256_cvtepi8_epi32(wlo);
+        const __m256i e1 = _mm256_cvtepi8_epi32(_mm_srli_si128(wlo, 8));
+        const __m256i e2 = _mm256_cvtepi8_epi32(whi);
+        const __m256i e3 = _mm256_cvtepi8_epi32(_mm_srli_si128(whi, 8));
+        std::int32_t* p = acc1 + j;
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  0),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  0)), e0));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  8),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  8)), e1));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 16),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 16)), e2));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 24),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 24)), e3));
+    }
+#else
     for (std::size_t j = 0; j < hidden1; ++j) {
-        acc1[j] += static_cast<std::int32_t>(w1[j * input_dim + feat]);
+        acc1[j] -= static_cast<std::int32_t>(col[j]);
     }
+#endif
 }
 
-// V2 dense: walk the set bits of `bb` and add the column at
-// `(mirror ? 49 - bit : bit) * 4 + kind`.
-inline void accumulate_q_kind(const std::int8_t* w1,
-                              std::size_t        hidden1,
-                              std::size_t        input_dim,
-                              std::int32_t*      acc1,
-                              Bitboard           bb,
-                              std::size_t        kind,
-                              bool               mirror) noexcept {
+// Hot-path column add. `col` points at a contiguous run of `hidden1`
+// int8 weights — the W1 column for some active input feature, laid
+// out by MLPNetworkQ::rebuild_w1_col(). `hidden1` is always a
+// multiple of SIMD_TILE=32 (enforced by mlpq_dims_ok), so the AVX2
+// path can tile without remainder handling.
+//
+// AVX2: load 32 int8 weights, sign-extend in four 8-lane chunks to
+// int32, add to acc1. ~4 stores per tile of 32 hidden neurons.
+// Scalar fallback for non-AVX2 builds (WASM, ARM): unchanged byte-
+// by-byte add.
+inline void add_col_q(const std::int8_t* col,
+                      std::int32_t*      acc1,
+                      std::size_t        hidden1) noexcept {
+#if defined(__AVX2__)
+    for (std::size_t j = 0; j < hidden1; j += 32) {
+        const __m256i w =
+            _mm256_loadu_si256(reinterpret_cast<const __m256i*>(col + j));
+        const __m128i wlo = _mm256_castsi256_si128(w);          // bytes 0..15
+        const __m128i whi = _mm256_extracti128_si256(w, 1);     // bytes 16..31
+        const __m256i e0 = _mm256_cvtepi8_epi32(wlo);                          //  0..7
+        const __m256i e1 = _mm256_cvtepi8_epi32(_mm_srli_si128(wlo, 8));       //  8..15
+        const __m256i e2 = _mm256_cvtepi8_epi32(whi);                          // 16..23
+        const __m256i e3 = _mm256_cvtepi8_epi32(_mm_srli_si128(whi, 8));       // 24..31
+        std::int32_t* p = acc1 + j;
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  0),
+            _mm256_add_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  0)), e0));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  8),
+            _mm256_add_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  8)), e1));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 16),
+            _mm256_add_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 16)), e2));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 24),
+            _mm256_add_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 24)), e3));
+    }
+#else
+    for (std::size_t j = 0; j < hidden1; ++j) {
+        acc1[j] += static_cast<std::int32_t>(col[j]);
+    }
+#endif
+}
+
+// Column-major variant of accumulate_q_kind (V2 dense encoding).
+inline void accumulate_q_kind_col(const std::int8_t* w1_col,
+                                  std::size_t        hidden1,
+                                  std::int32_t*      acc1,
+                                  Bitboard           bb,
+                                  std::size_t        kind,
+                                  bool               mirror) noexcept {
     while (bb) {
         const int         bit = square_to_bit(pop_lsb(bb));
         const std::size_t b   = mirror
             ? static_cast<std::size_t>(49 - bit)
             : static_cast<std::size_t>(bit);
-        add_w1_column_q(w1, hidden1, input_dim, acc1, b * 4 + kind);
+        const std::size_t feat = b * 4 + kind;
+        add_col_q(w1_col + feat * hidden1, acc1, hidden1);
     }
 }
 
-// HalfMen: V2 absolute column + anchor-relative column for every
-// active piece (anchor one-hot is added once outside this helper).
-inline void accumulate_q_kind_halfmen(const std::int8_t* w1,
-                                      std::size_t        hidden1,
-                                      std::size_t        input_dim,
-                                      std::int32_t*      acc1,
-                                      Bitboard           bb,
-                                      std::size_t        kind,
-                                      bool               mirror,
-                                      std::size_t        anchor) noexcept {
+// Column-major variant of accumulate_q_kind_halfmen.
+inline void accumulate_q_kind_halfmen_col(const std::int8_t* w1_col,
+                                          std::size_t        hidden1,
+                                          std::int32_t*      acc1,
+                                          Bitboard           bb,
+                                          std::size_t        kind,
+                                          bool               mirror,
+                                          std::size_t        anchor) noexcept {
     while (bb) {
         const int         bit = square_to_bit(pop_lsb(bb));
         const std::size_t b   = mirror
             ? static_cast<std::size_t>(49 - bit)
             : static_cast<std::size_t>(bit);
-        add_w1_column_q(w1, hidden1, input_dim, acc1, b * 4 + kind);
+        const std::size_t feat_abs = b * 4 + kind;
+        add_col_q(w1_col + feat_abs * hidden1, acc1, hidden1);
         const std::size_t rel = (b + 50 - anchor) % 50;
-        add_w1_column_q(w1, hidden1, input_dim, acc1, 200 + rel * 4 + kind);
+        const std::size_t feat_rel = 200 + rel * 4 + kind;
+        add_col_q(w1_col + feat_rel * hidden1, acc1, hidden1);
     }
 }
 
-// STM-POV anchor (same definition as MLPNetwork side; see compute_anchor
-// in the float section).
-inline std::size_t compute_anchor_q(const Position& pos) noexcept {
-    if (pos.side_to_move() == Color::White) {
+// (Legacy row-major helpers `add_w1_column_q` / `accumulate_q_kind` /
+// `accumulate_q_kind_halfmen` removed: the eval path now uses the
+// column-major `*_col` variants above, which read `w1_col_` rather
+// than `w1_`. The row-major `w1_` is still the canonical form on disk
+// and in memory — `w1_col_` is just a transpose maintained alongside.)
+
+// HalfMen anchor in `side`'s POV. Same definition as MLPNetwork's
+// compute_anchor (float section), but parameterised so the incremental
+// accumulator code can query each side's anchor independently of who
+// is actually to move.
+inline std::size_t compute_anchor_q_for(const Position& pos,
+                                        Color           side) noexcept {
+    if (side == Color::White) {
         const Bitboard bb = pos.white_men() | pos.white_kings();
         if (bb == 0) return 49;
         return static_cast<std::size_t>(std::bit_width(bb)) - 1;
@@ -602,6 +670,11 @@ inline std::size_t compute_anchor_q(const Position& pos) noexcept {
         const int lsb = std::countr_zero(bb);
         return static_cast<std::size_t>(49 - lsb);
     }
+}
+
+// Back-compat wrapper for callers that just want STM's anchor.
+inline std::size_t compute_anchor_q(const Position& pos) noexcept {
+    return compute_anchor_q_for(pos, pos.side_to_move());
 }
 
 }  // namespace
@@ -780,51 +853,89 @@ void MLPNetworkQ::resize_for(std::size_t input_dim,
     b2_.assign(h2,             0);
     w3_.assign(h2,             0);
     b3_ = 0;
+    rebuild_w1_col();
+}
+
+// Re-derive `w1_col_` (input_dim × hidden1, column-major) from the
+// canonical `w1_` (hidden1 × input_dim, row-major). One-time cost
+// at load (~tens of microseconds for a 256×450 net); the runtime
+// payoff is dramatic — Layer 1's sparse column add becomes a
+// contiguous int8 read instead of a 256-stride gather.
+void MLPNetworkQ::rebuild_w1_col() {
+    w1_col_.assign(input_dim_ * hidden1_, 0);
+    for (std::size_t j = 0; j < hidden1_; ++j) {
+        for (std::size_t i = 0; i < input_dim_; ++i) {
+            w1_col_[i * hidden1_ + j] = w1_[j * input_dim_ + i];
+        }
+    }
+}
+
+// Layer-1 accumulator builder. Public so the incremental accumulator
+// (nnue_accumulator.hpp) can refresh either side's accumulator from
+// scratch independently of the current STM. `out` must point at a
+// buffer with at least `hidden1_` int32 slots (MAX_HIDDEN works).
+void MLPNetworkQ::build_layer1(const Position& pos, Color side,
+                               std::int32_t*   out) const noexcept {
+    const std::size_t        h1n     = hidden1_;
+    const std::size_t        ind     = input_dim_;
+    const bool               halfmen = (ind == HALFMEN_INPUT_DIM);
+    const std::int8_t* const w1c     = w1_col_.data();
+
+    // Initialise with biases.
+    for (std::size_t j = 0; j < h1n; ++j) out[j] = b1_[j];
+
+    // The side-relative feature layout: "own" pieces become kinds 0/1
+    // (man/king), "opponent" pieces become kinds 2/3. Black's POV
+    // additionally mirrors the bit index (b → 49 - b) so the network
+    // sees a colour-canonicalised view.
+    const bool       mirror = (side == Color::Black);
+    const Bitboard   own_men    = (side == Color::White) ? pos.white_men()    : pos.black_men();
+    const Bitboard   own_kings  = (side == Color::White) ? pos.white_kings()  : pos.black_kings();
+    const Bitboard   opp_men    = (side == Color::White) ? pos.black_men()    : pos.white_men();
+    const Bitboard   opp_kings  = (side == Color::White) ? pos.black_kings()  : pos.white_kings();
+
+    if (halfmen) {
+        const std::size_t anchor = compute_anchor_q_for(pos, side);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, own_men,   0, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, own_kings, 1, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, opp_men,   2, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, opp_kings, 3, mirror, anchor);
+        // Anchor one-hot at `400 + anchor`.
+        add_col_q(w1c + (400 + anchor) * h1n, out, h1n);
+    } else {
+        accumulate_q_kind_col(w1c, h1n, out, own_men,   0, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, own_kings, 1, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, opp_men,   2, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, opp_kings, 3, mirror);
+    }
+}
+
+void MLPNetworkQ::apply_column(std::int32_t* acc,
+                               std::size_t   feat,
+                               int           sign) const noexcept {
+    const std::int8_t* const col = w1_col_.data() + feat * hidden1_;
+    if (sign >= 0) add_col_q(col, acc, hidden1_);
+    else           sub_col_q(col, acc, hidden1_);
 }
 
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
-    const std::size_t h1n  = hidden1_;
-    const std::size_t h2n  = hidden2_;
-    const std::size_t ind  = input_dim_;
-    const bool        halfmen = (ind == HALFMEN_INPUT_DIM);
-    const std::int8_t* const w1 = w1_.data();
+    // Build Layer 1 from scratch, then delegate to the shared
+    // post-Layer-1 path. Callers that already maintain a Layer-1
+    // accumulator (see nnue_accumulator.hpp) can skip the rebuild by
+    // calling `evaluate_with_accumulator(pos, acc1)` directly.
+    std::int32_t acc1[MAX_HIDDEN];
+    build_layer1(pos, pos.side_to_move(), acc1);
+    return evaluate_with_accumulator(pos, acc1);
+}
+
+int MLPNetworkQ::evaluate_with_accumulator(const Position&     pos,
+                                           const std::int32_t* acc1)
+    const noexcept {
+    (void)pos;  // unused; the accumulator already encodes the position.
+    const std::size_t h1n = hidden1_;
+    const std::size_t h2n = hidden2_;
     const std::int8_t* const w2 = w2_.data();
     const std::int8_t* const w3 = w3_.data();
-
-    // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
-    // Active-feature loop stays scalar even when AVX2 is available;
-    // auto-vectorisation handles the inner add adequately at -O3.
-    std::int32_t acc1[MAX_HIDDEN];
-    for (std::size_t j = 0; j < h1n; ++j) acc1[j] = b1_[j];
-
-    if (halfmen) {
-        const std::size_t anchor = compute_anchor_q(pos);
-        if (pos.side_to_move() == Color::White) {
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_men(),    0, false, anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_kings(),  1, false, anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_men(),    2, false, anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_kings(),  3, false, anchor);
-        } else {
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_men(),    0, true,  anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.black_kings(),  1, true,  anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_men(),    2, true,  anchor);
-            accumulate_q_kind_halfmen(w1, h1n, ind, acc1, pos.white_kings(),  3, true,  anchor);
-        }
-        // Anchor one-hot at `400 + anchor`.
-        add_w1_column_q(w1, h1n, ind, acc1, 400 + anchor);
-    } else {
-        if (pos.side_to_move() == Color::White) {
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_men(),    0, false);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_kings(),  1, false);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_men(),    2, false);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_kings(),  3, false);
-        } else {
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_men(),    0, true);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.black_kings(),  1, true);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_men(),    2, true);
-            accumulate_q_kind(w1, h1n, ind, acc1, pos.white_kings(),  3, true);
-        }
-    }
 
     // ReLU + quantise to int8 ([0, 127]).
     std::int8_t h1[MAX_HIDDEN];
@@ -994,6 +1105,7 @@ bool MLPNetworkQ::load(std::string_view path) {
     mul1_    = t_mul1;
     mul2_    = t_mul2;
     mul_out_ = t_mul_out;
+    rebuild_w1_col();
     return true;
 }
 
@@ -1084,6 +1196,7 @@ bool MLPNetworkQ::load_from_bytes(const unsigned char* data, std::size_t n) {
     mul1_    = t_mul1;
     mul2_    = t_mul2;
     mul_out_ = t_mul_out;
+    rebuild_w1_col();
     return true;
 }
 

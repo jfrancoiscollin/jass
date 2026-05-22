@@ -251,13 +251,62 @@ public:
     bool save(std::string_view path) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
+    // Build the Layer-1 int32 accumulator from `pos` as seen from
+    // `side`'s POV (which may differ from `pos.side_to_move()`).
+    // Fills the first `hidden1()` slots of `out` with bias + active
+    // features (absolute + anchor-relative + anchor one-hot for
+    // HalfMen, plain absolute for V2). The caller is responsible for
+    // sizing `out` to at least `hidden1()`; `MAX_HIDDEN` is a safe
+    // upper bound.
+    //
+    // Used by `evaluate()` (with side = pos.side_to_move()) and by
+    // the incremental accumulator path in nnue_accumulator.hpp
+    // (which needs to refresh either side's accumulator from scratch
+    // independently of the current STM).
+    void build_layer1(const Position& pos, Color side,
+                      std::int32_t*   out) const noexcept;
+
+    // Add or subtract the W1 column for input feature `feat` to/from
+    // `acc` (length `hidden1()`). `sign` must be +1 or -1. Used by
+    // the incremental accumulator path (nnue_accumulator.hpp) to
+    // apply move deltas without re-running the full Layer-1 sum.
+    //
+    // O(hidden1) per call — AVX2-vectorised on x86_64 (same hot loop
+    // as the refresh path; the SIMD intrinsics live in nnue.cpp).
+    void apply_column(std::int32_t* acc,
+                      std::size_t   feat,
+                      int           sign) const noexcept;
+
+    // Fast eval path: skip the Layer-1 rebuild and use a pre-built
+    // accumulator. `acc1` must point at `hidden1()` int32 slots
+    // representing the bias + active-feature sum for `pos`'s side-to-
+    // move POV — i.e. what `build_layer1(pos, pos.side_to_move(), ·)`
+    // would produce, or what an up-to-date `Accumulator::data` holds.
+    //
+    // Behaviour is identical to `evaluate(pos)` when `acc1` is the
+    // correct Layer-1 accumulator for `pos` (verified by the
+    // accumulator parity tests).
+    int evaluate_with_accumulator(const Position&     pos,
+                                  const std::int32_t* acc1) const noexcept;
+
 private:
     void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
+
+    // Rebuild the column-major mirror `w1_col_` from the canonical
+    // row-major `w1_`. Called after any operation that writes `w1_`
+    // (load(), load_from_bytes(), resize_for()). `evaluate()` reads
+    // only `w1_col_` in its hot Layer-1 loop because the column-major
+    // layout turns each sparse feature add into a contiguous int8
+    // read, which the AVX2 path can sign-extend + accumulate in 4
+    // _mm256_add_epi32 ops per 32 hidden neurons (vs. 256 strided
+    // scalar reads in the old layout).
+    void rebuild_w1_col();
 
     std::size_t                input_dim_{INPUT_DIM};
     std::size_t                hidden1_{HIDDEN1};
     std::size_t                hidden2_{HIDDEN2};
-    std::vector<std::int8_t>   w1_;   // hidden1_ × input_dim_
+    std::vector<std::int8_t>   w1_;   // hidden1_ × input_dim_ (row-major, matches on-disk format)
+    std::vector<std::int8_t>   w1_col_;  // input_dim_ × hidden1_ (column-major, runtime hot path)
     std::vector<std::int32_t>  b1_;   // hidden1_
     std::vector<std::int8_t>   w2_;   // hidden2_ × hidden1_
     std::vector<std::int32_t>  b2_;   // hidden2_
