@@ -538,6 +538,38 @@ inline std::int32_t saturate_to_int8(float x) noexcept {
     return static_cast<int>(x + 0.5f);
 }
 
+// Hot-path column subtract — mirror of `add_col_q` for incremental
+// accumulator deltas. Same AVX2 layout, just `_mm256_sub_epi32`.
+inline void sub_col_q(const std::int8_t* col,
+                      std::int32_t*      acc1,
+                      std::size_t        hidden1) noexcept {
+#if defined(__AVX2__)
+    for (std::size_t j = 0; j < hidden1; j += 32) {
+        const __m256i w =
+            _mm256_loadu_si256(reinterpret_cast<const __m256i*>(col + j));
+        const __m128i wlo = _mm256_castsi256_si128(w);
+        const __m128i whi = _mm256_extracti128_si256(w, 1);
+        const __m256i e0 = _mm256_cvtepi8_epi32(wlo);
+        const __m256i e1 = _mm256_cvtepi8_epi32(_mm_srli_si128(wlo, 8));
+        const __m256i e2 = _mm256_cvtepi8_epi32(whi);
+        const __m256i e3 = _mm256_cvtepi8_epi32(_mm_srli_si128(whi, 8));
+        std::int32_t* p = acc1 + j;
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  0),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  0)), e0));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p +  8),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p +  8)), e1));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 16),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 16)), e2));
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 24),
+            _mm256_sub_epi32(_mm256_loadu_si256(reinterpret_cast<const __m256i*>(p + 24)), e3));
+    }
+#else
+    for (std::size_t j = 0; j < hidden1; ++j) {
+        acc1[j] -= static_cast<std::int32_t>(col[j]);
+    }
+#endif
+}
+
 // Hot-path column add. `col` points at a contiguous run of `hidden1`
 // int8 weights — the W1 column for some active input feature, laid
 // out by MLPNetworkQ::rebuild_w1_col(). `hidden1` is always a
@@ -876,6 +908,14 @@ void MLPNetworkQ::build_layer1(const Position& pos, Color side,
         accumulate_q_kind_col(w1c, h1n, out, opp_men,   2, mirror);
         accumulate_q_kind_col(w1c, h1n, out, opp_kings, 3, mirror);
     }
+}
+
+void MLPNetworkQ::apply_column(std::int32_t* acc,
+                               std::size_t   feat,
+                               int           sign) const noexcept {
+    const std::int8_t* const col = w1_col_.data() + feat * hidden1_;
+    if (sign >= 0) add_col_q(col, acc, hidden1_);
+    else           sub_col_q(col, acc, hidden1_);
 }
 
 int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
