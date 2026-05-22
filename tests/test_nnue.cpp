@@ -851,7 +851,7 @@ void test_accumulator_refresh_matches_build_layer1() {
     // back to refresh (return false).
     {
         Move dummy{};
-        JASS_CHECK(!pair.apply_move(p, dummy, net));
+        JASS_CHECK(!pair.apply_move(p, dummy, p, net));
     }
 
     std::remove(path.c_str());
@@ -911,7 +911,7 @@ void test_accumulator_apply_move_matches_refresh_for_legal_moves() {
 
             AccumulatorPair inc;
             inc.refresh_from(p_before, net);
-            const bool ok = inc.apply_move(p_before, m, net);
+            const bool ok = inc.apply_move(p_before, m, p_after, net);
 
             if (ok) {
                 ++incremental_ok;

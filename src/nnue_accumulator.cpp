@@ -198,6 +198,7 @@ inline void apply_changes(AccumulatorPair&        pair,
 // other input_dim at load time.
 bool AccumulatorPair::apply_move(const Position&    pos_before,
                                  const Move&        m,
+                                 const Position&    pos_after,
                                  const MLPNetworkQ& net) noexcept {
     if (!white.valid || !black.valid) return false;
     const bool halfmen  = (net.input_dim() == MLPNetworkQ::HALFMEN_INPUT_DIM);
@@ -205,8 +206,6 @@ bool AccumulatorPair::apply_move(const Position&    pos_before,
     if (!halfmen && !v2_dense) return false;
 
     if (m.from == NO_SQUARE || m.to == NO_SQUARE) return false;
-
-    const Position pos_after = pos_before.after(m);
 
     // Build the change list. Worst case: from + to + 20 captures = 22.
     const Color    mover    = pos_before.side_to_move();
