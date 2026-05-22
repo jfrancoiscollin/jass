@@ -622,10 +622,13 @@ inline void accumulate_q_kind_halfmen_col(const std::int8_t* w1_col,
 // than `w1_`. The row-major `w1_` is still the canonical form on disk
 // and in memory — `w1_col_` is just a transpose maintained alongside.)
 
-// STM-POV anchor (same definition as MLPNetwork side; see compute_anchor
-// in the float section).
-inline std::size_t compute_anchor_q(const Position& pos) noexcept {
-    if (pos.side_to_move() == Color::White) {
+// HalfMen anchor in `side`'s POV. Same definition as MLPNetwork's
+// compute_anchor (float section), but parameterised so the incremental
+// accumulator code can query each side's anchor independently of who
+// is actually to move.
+inline std::size_t compute_anchor_q_for(const Position& pos,
+                                        Color           side) noexcept {
+    if (side == Color::White) {
         const Bitboard bb = pos.white_men() | pos.white_kings();
         if (bb == 0) return 49;
         return static_cast<std::size_t>(std::bit_width(bb)) - 1;
@@ -635,6 +638,11 @@ inline std::size_t compute_anchor_q(const Position& pos) noexcept {
         const int lsb = std::countr_zero(bb);
         return static_cast<std::size_t>(49 - lsb);
     }
+}
+
+// Back-compat wrapper for callers that just want STM's anchor.
+inline std::size_t compute_anchor_q(const Position& pos) noexcept {
+    return compute_anchor_q_for(pos, pos.side_to_move());
 }
 
 }  // namespace
@@ -830,51 +838,56 @@ void MLPNetworkQ::rebuild_w1_col() {
     }
 }
 
-int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
-    const std::size_t h1n  = hidden1_;
-    const std::size_t h2n  = hidden2_;
-    const std::size_t ind  = input_dim_;
-    const bool        halfmen = (ind == HALFMEN_INPUT_DIM);
-    const std::int8_t* const w1c = w1_col_.data();   // input_dim_ × hidden1_, column-major
-    const std::int8_t* const w2  = w2_.data();
-    const std::int8_t* const w3  = w3_.data();
+// Layer-1 accumulator builder. Public so the incremental accumulator
+// (nnue_accumulator.hpp) can refresh either side's accumulator from
+// scratch independently of the current STM. `out` must point at a
+// buffer with at least `hidden1_` int32 slots (MAX_HIDDEN works).
+void MLPNetworkQ::build_layer1(const Position& pos, Color side,
+                               std::int32_t*   out) const noexcept {
+    const std::size_t        h1n     = hidden1_;
+    const std::size_t        ind     = input_dim_;
+    const bool               halfmen = (ind == HALFMEN_INPUT_DIM);
+    const std::int8_t* const w1c     = w1_col_.data();
 
-    // Layer 1 — sparse input → int32 accumulator (biases pre-scaled).
-    // The column-major `w1_col_` turns each feature add into a
-    // contiguous int8 read (`hidden1` bytes, 4 AVX2 stores per tile of
-    // 32 hidden neurons). See `add_col_q` for the AVX2 / scalar paths.
-    std::int32_t acc1[MAX_HIDDEN];
-    for (std::size_t j = 0; j < h1n; ++j) acc1[j] = b1_[j];
+    // Initialise with biases.
+    for (std::size_t j = 0; j < h1n; ++j) out[j] = b1_[j];
+
+    // The side-relative feature layout: "own" pieces become kinds 0/1
+    // (man/king), "opponent" pieces become kinds 2/3. Black's POV
+    // additionally mirrors the bit index (b → 49 - b) so the network
+    // sees a colour-canonicalised view.
+    const bool       mirror = (side == Color::Black);
+    const Bitboard   own_men    = (side == Color::White) ? pos.white_men()    : pos.black_men();
+    const Bitboard   own_kings  = (side == Color::White) ? pos.white_kings()  : pos.black_kings();
+    const Bitboard   opp_men    = (side == Color::White) ? pos.black_men()    : pos.white_men();
+    const Bitboard   opp_kings  = (side == Color::White) ? pos.black_kings()  : pos.white_kings();
 
     if (halfmen) {
-        const std::size_t anchor = compute_anchor_q(pos);
-        if (pos.side_to_move() == Color::White) {
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.white_men(),    0, false, anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.white_kings(),  1, false, anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.black_men(),    2, false, anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.black_kings(),  3, false, anchor);
-        } else {
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.black_men(),    0, true,  anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.black_kings(),  1, true,  anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.white_men(),    2, true,  anchor);
-            accumulate_q_kind_halfmen_col(w1c, h1n, acc1, pos.white_kings(),  3, true,  anchor);
-        }
+        const std::size_t anchor = compute_anchor_q_for(pos, side);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, own_men,   0, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, own_kings, 1, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, opp_men,   2, mirror, anchor);
+        accumulate_q_kind_halfmen_col(w1c, h1n, out, opp_kings, 3, mirror, anchor);
         // Anchor one-hot at `400 + anchor`.
-        const std::size_t feat = 400 + anchor;
-        add_col_q(w1c + feat * h1n, acc1, h1n);
+        add_col_q(w1c + (400 + anchor) * h1n, out, h1n);
     } else {
-        if (pos.side_to_move() == Color::White) {
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.white_men(),    0, false);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.white_kings(),  1, false);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.black_men(),    2, false);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.black_kings(),  3, false);
-        } else {
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.black_men(),    0, true);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.black_kings(),  1, true);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.white_men(),    2, true);
-            accumulate_q_kind_col(w1c, h1n, acc1, pos.white_kings(),  3, true);
-        }
+        accumulate_q_kind_col(w1c, h1n, out, own_men,   0, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, own_kings, 1, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, opp_men,   2, mirror);
+        accumulate_q_kind_col(w1c, h1n, out, opp_kings, 3, mirror);
     }
+}
+
+int MLPNetworkQ::evaluate(const Position& pos) const noexcept {
+    const std::size_t h1n = hidden1_;
+    const std::size_t h2n = hidden2_;
+    const std::int8_t* const w2 = w2_.data();
+    const std::int8_t* const w3 = w3_.data();
+
+    // Layer 1 — delegate to the public builder so the incremental
+    // accumulator path can call it directly (refresh_from() below).
+    std::int32_t acc1[MAX_HIDDEN];
+    build_layer1(pos, pos.side_to_move(), acc1);
 
     // ReLU + quantise to int8 ([0, 127]).
     std::int8_t h1[MAX_HIDDEN];

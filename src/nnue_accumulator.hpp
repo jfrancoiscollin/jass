@@ -14,12 +14,19 @@
 // Layer-1 sums per move. Incremental update reduces that to a small
 // delta (1-2 piece moves + maybe an anchor change) per node.
 //
-// This file is intentionally a SCAFFOLD: types, intended API, and the
-// design notes that follow. None of the methods are implemented yet.
-// The plan is to fill them in once the Cycle-9 pilot validates the
-// underlying training direction (no point optimising eval if the
-// architecture or labelling is wrong); a working implementation should
-// fit in ~500 lines of careful C++ with the design below as a contract.
+// STATUS (this commit):
+//   * Slow path (refresh_from) is IMPLEMENTED — Accumulator and
+//     AccumulatorPair fully refresh from a Position by delegating to
+//     MLPNetworkQ::build_layer1 (new public method). Covered by a
+//     parity test against build_layer1 output.
+//   * Fast path (apply_move) is a stub returning false: callers must
+//     refresh_from on the post-move position. Wiring in Engine is
+//     deferred until the Cycle-9 pilot validates the training
+//     direction (no point optimising eval if the architecture or
+//     labelling is wrong).
+//   * Estimated remaining work: ~1-2 weeks of careful C++ for the
+//     incremental update + Engine integration + extensive parity
+//     testing against the refresh-each-time path.
 //
 //
 // DESIGN — TWO ACCUMULATORS, ONE PER COLOUR
@@ -170,11 +177,11 @@ struct alignas(32) Accumulator {
     std::size_t                                       anchor  = 0;
     bool                                              valid   = false;
 
-    // Slow path: rebuild from scratch. Walks active pieces in `pos`
-    // from `side`'s POV, sums absolute + anchor-relative columns +
+    // Slow path: rebuild from scratch. Delegates to
+    // MLPNetworkQ::build_layer1, which walks active pieces in `pos`
+    // from `side`'s POV and sums absolute + anchor-relative columns +
     // anchor one-hot. O(active_pieces × hidden1) — same cost as the
-    // current MLPNetworkQ::evaluate Layer 1.
-    // TODO: implement once the incremental hot path is wired.
+    // current MLPNetworkQ::evaluate Layer 1. Sets `valid = true`.
     void refresh_from(const Position&    pos,
                       Color              side,
                       const MLPNetworkQ& net) noexcept;
@@ -193,17 +200,20 @@ struct AccumulatorPair {
     }
 
     // Rebuild both from scratch from `pos` + `net`. Slow path; used at
-    // Engine::new_game and Engine::set_position.
-    // TODO: implement.
+    // Engine::new_game / set_position, and as the fallback whenever
+    // apply_move() reports it couldn't update incrementally.
     void refresh_from(const Position& pos, const MLPNetworkQ& net) noexcept;
 
     // Incremental update: `pos_before` and `m` together describe one
     // move; the function mutates *this from "matching pos_before" to
-    // "matching pos_before.after(m)". Returns true if it succeeded
-    // incrementally; false if it bailed out (e.g. anchor changed and
-    // we haven't implemented that delta yet) — caller must then
-    // refresh_from on the new position.
-    // TODO: implement.
+    // "matching pos_before.after(m)". Returns true on incremental
+    // success; false if it bailed out (caller must then refresh_from
+    // on the new position).
+    //
+    // STATUS: returns false unconditionally (stub). The actual
+    // incremental logic — per-affected-square column subtract/add +
+    // anchor-invalidation handling — is the larger remaining piece
+    // of work.
     bool apply_move(const Position&    pos_before,
                     const Move&        m,
                     const MLPNetworkQ& net) noexcept;

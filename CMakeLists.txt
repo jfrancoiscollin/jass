@@ -100,6 +100,7 @@ add_library(jass_lib STATIC
     src/movegen.cpp
     src/eval.cpp
     src/nnue.cpp
+    src/nnue_accumulator.cpp
     "${NNUE_DEFAULT_DATA_CPP}"
     src/search.cpp
     src/zobrist.cpp

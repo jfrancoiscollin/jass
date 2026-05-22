@@ -251,6 +251,21 @@ public:
     bool save(std::string_view path) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
+    // Build the Layer-1 int32 accumulator from `pos` as seen from
+    // `side`'s POV (which may differ from `pos.side_to_move()`).
+    // Fills the first `hidden1()` slots of `out` with bias + active
+    // features (absolute + anchor-relative + anchor one-hot for
+    // HalfMen, plain absolute for V2). The caller is responsible for
+    // sizing `out` to at least `hidden1()`; `MAX_HIDDEN` is a safe
+    // upper bound.
+    //
+    // Used by `evaluate()` (with side = pos.side_to_move()) and by
+    // the incremental accumulator path in nnue_accumulator.hpp
+    // (which needs to refresh either side's accumulator from scratch
+    // independently of the current STM).
+    void build_layer1(const Position& pos, Color side,
+                      std::int32_t*   out) const noexcept;
+
 private:
     void resize_for(std::size_t input_dim, std::size_t h1, std::size_t h2);
 
