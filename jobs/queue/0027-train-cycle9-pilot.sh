@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # id: 0027-train-cycle9-pilot
-# description: Train a Cycle 9 candidate NNUE on the 500K single-host
-#              pilot dataset produced by 0025a. The whole purpose of
-#              Cycle 9 is to test whether relabelling self-play data
-#              with v5 (instead of the pre-Cycle-8 NNUE that labelled
-#              the 0010 1M corpus) yields a strictly better corpus
-#              and therefore a better trained NNUE ("v6").
+# description: Train a Cycle 9 candidate NNUE on the 100K single-host
+#              pilot dataset produced by 0025a (down from 500K after we
+#              discovered the v5 MLP labeller is ~13× slower than the
+#              embedded Linear used in 0010 — 500K @ depth 20 would have
+#              taken 36 days). The whole purpose of Cycle 9 is to test
+#              whether relabelling self-play data with v5 yields a
+#              strictly better corpus and therefore a better "v6" NNUE.
 #
 #              Recipe is EXACTLY the same as 0018 (Cycle 8 BCE hybrid
 #              loss) except the self-play dataset is swapped — that
@@ -13,20 +14,18 @@
 #              measured by 0028 is attributable to the corpus, not
 #              the training recipe.
 #
-#              Originally designed to consume a merged 1M (0026 = 0025a
-#              + 0025b 500K each). Since the 2nd host wasn't available
-#              when we kicked off the pilot, we run on 500K only. The
-#              signal will be noisier than a 1M would have given but
-#              still informative (Cycle 8 v5 was trained on 1M with
-#              clear +249 ELO; 500K should reveal at least a +100 ELO
-#              shift if the v5-labelling premise holds).
+#              100K + depth 16 will give a noisy signal: Cycle 8 v5 trained
+#              on 1M @ depth 20 for +249 ELO; the pilot here at 10× less
+#              data + lower depth labels should show at least a +30-50 ELO
+#              shift if the v5-labelling premise holds. A clearly positive
+#              signal here is the go/no-go for the full 10M run.
 #
 #              Reads:
 #                /root/jass/jobs/results/0025a-cycle9-pilot-host-a/
-#                  artefacts.src/host-a.bin            (500K, v5-labelled)
+#                  artefacts.src/host-a.bin            (100K, v5-labelled, depth 16)
 #                /root/jass/jobs/results/0014-fetch-master-games/
 #                  artefacts.src/master-1600.jnnw     (master blend)
-# expected_duration: ~25-50 min on 4 vCPU CCX23 (smaller than 0018 → faster).
+# expected_duration: ~15-30 min on 4 vCPU CCX23 (small dataset, fast train).
 set -uo pipefail
 cd /root/jass
 
