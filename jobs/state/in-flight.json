@@ -1,7 +1,0 @@
-{
-  "job_id": "0025a-1-train-cycle9-pilot",
-  "script": "jobs/queue/0025a-1-train-cycle9-pilot.sh",
-  "pid": 383928,
-  "started_at": "2026-05-23T18:05:55+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

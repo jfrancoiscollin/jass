@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.016979 sw2=0.021489 sw3=0.021813 sh1=0.033961 sh2=0.60314
+  multipliers: mul1=0.49995 mul2=0.00121 mul_out=0.013156
+  reference range: float [-1926.6, 1900.8], quantised [-2468.3, 1900.8]
+  diff: mean=+2.25  std=43.47  |max|=699.96  RMSE=43.53
+wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin (364840 bytes)
