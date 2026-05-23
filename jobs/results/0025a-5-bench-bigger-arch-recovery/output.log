@@ -1,0 +1,63 @@
+=== inputs ===
+-rw-r--r-- 1 root root 3.8M May 23 21:10 /root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts/nnue-1024-512.bin
+-rw-r--r-- 1 root root 1.4M May 23 20:38 /root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts/nnue-512-256.bin
+v5: /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+dataset for quant calibration: /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin
+=== rebuilding jass ===
+[ 55%] Built target jass_lib
+[ 61%] Built target jass
+[100%] Built target jass_tests
+
+=== quantising 512-256 ===
+loading float reference /root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.018679 sw2=0.038842 sw3=0.033619 sh1=0.060392 sh2=0.33473
+  multipliers: mul1=0.3093 mul2=0.0070078 mul_out=0.011253
+  reference range: float [-1815.6, 1881.3], quantised [-2228.1, 1895.6]
+  diff: mean=+0.12  std=41.55  |max|=479.38  RMSE=41.55
+wrote /root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-512-256-q.bin (364840 bytes)
+=== bench 512-256 vs v5, depth 6, 3 pairs ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+=== bench 512-256 vs v5, depth 10, 3 pairs ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=21 B=30 Draws=3 (total 54)
+A score rate: 0.416667 (22.5 / 54)
+
+=== quantising 1024-512 ===
+loading float reference /root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.015817 sw2=0.03984 sw3=0.0449 sh1=0.046438 sh2=0.24568
+  multipliers: mul1=0.34059 mul2=0.0075303 mul_out=0.011031
+  reference range: float [-1876.6, 1836.8], quantised [-1898.4, 1794.4]
+  diff: mean=+1.67  std=16.75  |max|=344.42  RMSE=16.83
+wrote /root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-1024-512-q.bin (991784 bytes)
+=== bench 1024-512 vs v5, depth 6, 3 pairs ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=21 Draws=9 (total 54)
+A score rate: 0.527778 (28.5 / 54)
+=== bench 1024-512 vs v5, depth 10, 3 pairs ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=30 Draws=0 (total 54)
+A score rate: 0.444444 (24 / 54)
+
+==========================================================
+       0025a-5 BIGGER ARCH RECOVERY VERDICT
+==========================================================
+  (score rate from bigger-arch's POV, depth 10 is the signal)
+  512-256  vs v5 :  d6=0.5  d10=0.416667
+  1024-512  vs v5 :  d6=0.527778  d10=0.444444
+
+  References :
+    Cycle 9 (512-256 on v5-labelled 100K) vs v5 : d10 = 0.500
+    Reading: rate >0.55 → archi est le bottleneck
+             rate ≈0.50 → archi neutre, autre cause
+             rate <0.45 → overfit sur 1M
+==========================================================
