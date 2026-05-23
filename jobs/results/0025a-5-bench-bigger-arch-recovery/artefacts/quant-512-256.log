@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.018679 sw2=0.038842 sw3=0.033619 sh1=0.060392 sh2=0.33473
+  multipliers: mul1=0.3093 mul2=0.0070078 mul_out=0.011253
+  reference range: float [-1815.6, 1881.3], quantised [-2228.1, 1895.6]
+  diff: mean=+0.12  std=41.55  |max|=479.38  RMSE=41.55
+wrote /root/jass/jobs/results/0025a-5-bench-bigger-arch-recovery/artefacts.src/nnue-512-256-q.bin (364840 bytes)
