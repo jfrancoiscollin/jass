@@ -1,7 +1,9 @@
 {
   "job_id": "0025a-4-train-bigger-arch",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 4,
   "started_at": "2026-05-23T20:19:30+00:00",
+  "ended_at": "2026-05-23T21:16:51+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 386289
+  "artefacts_server_path": "/root/jass/jobs/results/0025a-4-train-bigger-arch/artefacts.src"
 }

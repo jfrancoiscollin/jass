@@ -1,7 +1,0 @@
-{
-  "job_id": "0025a-4-train-bigger-arch",
-  "script": "jobs/queue/0025a-4-train-bigger-arch.sh",
-  "pid": 386289,
-  "started_at": "2026-05-23T20:19:30+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
