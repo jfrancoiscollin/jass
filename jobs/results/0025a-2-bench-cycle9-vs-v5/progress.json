@@ -1,8 +1,8 @@
 {
   "job_id": "0025a-2-bench-cycle9-vs-v5",
-  "snapshot_at": "2026-05-23T19:33:03+00:00",
+  "snapshot_at": "2026-05-23T19:38:11+00:00",
   "started_at": "2026-05-23T19:17:45+00:00",
-  "elapsed_seconds": 918,
+  "elapsed_seconds": 1226,
   "artefacts": [
     {
       "name": "bench-depth10.log",
@@ -13,5 +13,5 @@
       "size_bytes": 326
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 385245       1       15:17  0.0  0.0 bash\n 385247  385245       15:17  0.0  0.0 bash\n 385359  385247       12:57 99.9  0.3 jass\n 385360  385247       12:57  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 385245       1       20:25  0.0  0.0 bash\n 385247  385245       20:25  0.0  0.0 bash\n 385359  385247       18:06 99.9  0.3 jass\n 385360  385247       18:06  0.0  0.0 tee\n"
 }
