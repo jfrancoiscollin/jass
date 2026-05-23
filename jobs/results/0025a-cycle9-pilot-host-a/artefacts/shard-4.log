@@ -1,0 +1,18 @@
+gen-data-wdl: n=25000 out=/root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/shard-4.bin eval_depth=16 play_depth=4 max_plies=200 seed=5004 nnue=/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+  played 50 games, 1401 / 25000 positions
+  played 100 games, 2878 / 25000 positions
+  played 150 games, 4393 / 25000 positions
+  played 200 games, 5923 / 25000 positions
+  played 250 games, 7470 / 25000 positions
+  played 300 games, 8894 / 25000 positions
+  played 350 games, 10434 / 25000 positions
+  played 400 games, 11925 / 25000 positions
+  played 450 games, 13289 / 25000 positions
+  played 500 games, 14742 / 25000 positions
+  played 550 games, 16119 / 25000 positions
+  played 600 games, 17489 / 25000 positions
+  played 650 games, 18981 / 25000 positions
+  played 700 games, 20501 / 25000 positions
+  played 750 games, 21940 / 25000 positions
+  played 800 games, 23523 / 25000 positions
+wrote 25000 WDL records to /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/shard-4.bin
