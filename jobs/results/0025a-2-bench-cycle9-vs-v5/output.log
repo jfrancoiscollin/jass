@@ -1,0 +1,36 @@
+=== host facts ===
+host:  ubuntu-16gb-hel1-2
+nproc: 4
+Cycle 9 NNUE: /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin (364840 B)
+v5 NNUE:      /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin (149672 B)
+
+=== rebuilding jass ===
+Assembler messages:
+Error: can't open /tmp/ccBMcsjp.s for reading: No such file or directory
+gmake[2]: *** [CMakeFiles/jass.dir/build.make:76: CMakeFiles/jass.dir/src/main.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:113: CMakeFiles/jass.dir/all] Error 2
+gmake: *** [Makefile:101: all] Error 2
+
+=== NNUE-vs-NNUE: Cycle 9 (A) vs v5 (B), depth 6, 3 pairs ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=33 B=18 Draws=3 (total 54)
+A score rate: 0.638889 (34.5 / 54)
+
+=== NNUE-vs-NNUE: Cycle 9 (A) vs v5 (B), depth 10, 3 pairs (slower, more accurate) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=18 B=18 Draws=18 (total 54)
+A score rate: 0.5 (27 / 54)
+
+==========================================================
+       0028 CYCLE-9 vs V5 PILOT VERDICT
+==========================================================
+  Cycle 9:           nnue-512-256-q.bin
+  v5:                nnue-256-128-q.bin
+  depth 6:           rate=0.638889  wall=136s
+  depth 10:          rate=0.5 wall=1653s
+
+  Decision:
+    NO GAIN — v5 may already be at the labeller-quality ceiling.
+    RECOMMENDATION: don't pay €188+ for the 10M. Investigate
+    other bottlenecks (architecture, training recipe, book).
+==========================================================

@@ -1,7 +1,0 @@
-{
-  "job_id": "0025a-2-bench-cycle9-vs-v5",
-  "script": "jobs/queue/0025a-2-bench-cycle9-vs-v5.sh",
-  "pid": 385245,
-  "started_at": "2026-05-23T19:17:45+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
