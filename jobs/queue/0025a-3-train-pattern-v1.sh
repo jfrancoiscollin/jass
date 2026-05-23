@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: 0042-train-pattern-v1
+# id: 0025a-3-train-pattern-v1
 # description: First-principles pattern-based eval prototype (Scan/
 #              Kingsrow-inspired). Trains the v1 PatternNetwork (8
 #              patterns × 4 squares = 5000 weights) on the 0010 1M
@@ -24,7 +24,7 @@
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0042-train-pattern-v1"
+OUT_BASE="/root/jass/jobs/results/0025a-3-train-pattern-v1"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
