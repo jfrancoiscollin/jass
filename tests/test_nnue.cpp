@@ -13,6 +13,7 @@
 #include "movegen.hpp"
 #include "nnue.hpp"
 #include "nnue_accumulator.hpp"
+#include "pattern_network.hpp"
 #include "position.hpp"
 
 #include <cstdio>
@@ -988,6 +989,96 @@ void test_evaluate_with_accumulator_matches_evaluate() {
     std::remove(path.c_str());
 }
 
+// =============================================================================
+// PatternNetwork (Scan/Kingsrow-inspired) — v1 prototype tests.
+// =============================================================================
+
+void test_pattern_network_default_v1_layout() {
+    PatternNetwork net = PatternNetwork::default_v1();
+    JASS_CHECK_EQ(net.num_patterns(), std::size_t{8});
+    for (std::size_t i = 0; i < net.num_patterns(); ++i) {
+        const auto& p = net.pattern(i);
+        JASS_CHECK_EQ(p.squares.size(), std::size_t{4});
+        JASS_CHECK_EQ(p.weights.size(), std::size_t{625});  // 5^4
+        // Default-constructed weights are zero so an evaluate() on the
+        // start position returns just the bias (0 by default), STM-POV.
+    }
+    JASS_CHECK_EQ(net.bias(), 0);
+
+    // Zero weights → 0 score on any position. Start position is white-
+    // to-move; with bias 0 and all weights 0 the score is 0.
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(net.evaluate(start), 0);
+}
+
+void test_pattern_network_evaluate_known_weights() {
+    PatternNetwork net = PatternNetwork::default_v1();
+    // Hand-poke a single weight: pattern 0 is squares {1, 2, 6, 7}.
+    // From the start position W31-50:B1-20 — squares 1, 2, 6, 7 all
+    // hold black men (state value 3). Base-5 index =
+    //   3 + 3*5 + 3*25 + 3*125 = 3 + 15 + 75 + 375 = 468.
+    net.pattern_mut(0).weights[468] = 100;
+    net.set_bias(7);
+
+    const Position start = Position::start_position();
+    // White-POV sum = 7 (bias) + 100 (pattern 0 bucket 468) = 107.
+    // STM is white → no sign flip.
+    JASS_CHECK_EQ(net.evaluate(start), 107);
+
+    // Same FEN but black to move → sign flip to -107.
+    const Position black_to_move = parse("B:W31-50:B1-20");
+    JASS_CHECK_EQ(net.evaluate(black_to_move), -107);
+}
+
+void test_pattern_network_save_load_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v1();
+    // Set some non-trivial state so the round-trip is meaningful.
+    net.set_bias(42);
+    net.pattern_mut(0).weights[100] =  500;
+    net.pattern_mut(3).weights[400] = -250;
+    net.pattern_mut(7).weights[ 50] = 17;
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-XXXXXX");
+    JASS_CHECK(net.save(path));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.num_patterns(), net.num_patterns());
+    JASS_CHECK_EQ(loaded.bias(), 42);
+    JASS_CHECK_EQ(loaded.pattern(0).weights[100],  500);
+    JASS_CHECK_EQ(loaded.pattern(3).weights[400], -250);
+    JASS_CHECK_EQ(loaded.pattern(7).weights[ 50],   17);
+
+    // Behavioural parity: identical evaluate() output on the start
+    // position and a mid-game position.
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(loaded.evaluate(start), net.evaluate(start));
+    const Position mid = parse(
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+    JASS_CHECK_EQ(loaded.evaluate(mid), net.evaluate(mid));
+
+    std::remove(path.c_str());
+}
+
+void test_pattern_network_load_dispatch() {
+    // load_network() should auto-detect JPAT magic and return a
+    // PatternNetwork (typed as INetwork via dynamic dispatch).
+    PatternNetwork net = PatternNetwork::default_v1();
+    net.pattern_mut(0).weights[0] = 99;  // ensure non-trivial state
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-disp-XXXXXX");
+    JASS_CHECK(net.save(path));
+
+    std::unique_ptr<INetwork> loaded = load_network(path);
+    JASS_CHECK(loaded != nullptr);
+    // We can't dynamic_cast in a freestanding test without RTTI being
+    // disabled, so verify behaviourally: evaluate() matches.
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(loaded->evaluate(start), net.evaluate(start));
+
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -1015,4 +1106,8 @@ void run_nnue_tests() {
     test_accumulator_refresh_matches_build_layer1();
     test_accumulator_apply_move_matches_refresh_for_legal_moves();
     test_evaluate_with_accumulator_matches_evaluate();
+    test_pattern_network_default_v1_layout();
+    test_pattern_network_evaluate_known_weights();
+    test_pattern_network_save_load_roundtrip();
+    test_pattern_network_load_dispatch();
 }
