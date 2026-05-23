@@ -1,13 +1,13 @@
 {
   "job_id": "0025a-4-train-bigger-arch",
-  "snapshot_at": "2026-05-23T20:29:52+00:00",
+  "snapshot_at": "2026-05-23T20:35:11+00:00",
   "started_at": "2026-05-23T20:19:30+00:00",
-  "elapsed_seconds": 622,
+  "elapsed_seconds": 941,
   "artefacts": [
     {
       "name": "train.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386289       1       10:21  0.0  0.0 bash\n 386291  386289       10:21  0.0  0.0 bash\n 386341  386291       10:20  186 92.0 python3\n 386342  386291       10:20  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386289       1       15:40  0.0  0.0 bash\n 386291  386289       15:40  0.0  0.0 bash\n 386341  386291       15:39  187 92.0 python3\n 386342  386291       15:39  0.0  0.0 tee\n"
 }
