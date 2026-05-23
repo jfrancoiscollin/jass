@@ -7,6 +7,7 @@
 #include "board.hpp"
 #include "eval.hpp"
 #include "nnue_default_data.hpp"
+#include "pattern_network.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -1219,6 +1220,11 @@ std::unique_ptr<INetwork> load_network(std::string_view path) {
         if (!n->load(path)) return nullptr;
         return n;
     }
+    if (std::memcmp(magic, "JPAT", 4) == 0) {
+        auto n = std::make_unique<PatternNetwork>();
+        if (!n->load(path)) return nullptr;
+        return n;
+    }
     auto n = std::make_unique<LinearNetwork>();
     if (!n->load(path)) return nullptr;
     return n;
@@ -1234,6 +1240,11 @@ std::unique_ptr<INetwork> load_network_from_bytes(const unsigned char* data,
     }
     if (std::memcmp(data, MLPQ_MAGIC, 4) == 0) {
         auto net = std::make_unique<MLPNetworkQ>();
+        if (!net->load_from_bytes(data, n)) return nullptr;
+        return net;
+    }
+    if (std::memcmp(data, "JPAT", 4) == 0) {
+        auto net = std::make_unique<PatternNetwork>();
         if (!net->load_from_bytes(data, n)) return nullptr;
         return net;
     }
