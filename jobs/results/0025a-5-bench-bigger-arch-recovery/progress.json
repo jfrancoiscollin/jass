@@ -1,16 +1,29 @@
 {
   "job_id": "0025a-5-bench-bigger-arch-recovery",
-  "snapshot_at": "2026-05-23T21:32:25+00:00",
+  "snapshot_at": "2026-05-23T21:37:51+00:00",
   "started_at": "2026-05-23T21:22:11+00:00",
-  "elapsed_seconds": 614,
+  "elapsed_seconds": 940,
   "artefacts": [
     {
-      "name": "bench-512-256-d10.log",
+      "name": "bench-1024-512-d10.log",
       "size_bytes": 0
+    },
+    {
+      "name": "bench-1024-512-d6.log",
+      "size_bytes": 335
+    },
+    {
+      "name": "bench-512-256-d10.log",
+      "size_bytes": 335
     },
     {
       "name": "bench-512-256-d6.log",
       "size_bytes": 327
+    },
+    {
+      "name": "nnue-1024-512-q.bin",
+      "size_bytes": 991784,
+      "records": 26099
     },
     {
       "name": "nnue-512-256-q.bin",
@@ -18,9 +31,13 @@
       "records": 9600
     },
     {
+      "name": "quant-1024-512.log",
+      "size_bytes": 718
+    },
+    {
       "name": "quant-512-256.log",
       "size_bytes": 717
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386987       1       10:14  0.0  0.0 bash\n 386989  386987       10:14  0.0  0.0 bash\n 387056  386989       09:28 99.9  0.3 jass\n 387057  386989       09:28  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386987       1       15:39  0.0  0.0 bash\n 386989  386987       15:39  0.0  0.0 bash\n 387191  386989       02:47 99.9  0.3 jass\n 387192  386989       02:47  0.0  0.0 tee\n"
 }
