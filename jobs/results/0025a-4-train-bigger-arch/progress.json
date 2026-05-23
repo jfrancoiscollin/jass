@@ -1,8 +1,8 @@
 {
   "job_id": "0025a-4-train-bigger-arch",
-  "snapshot_at": "2026-05-23T20:55:54+00:00",
+  "snapshot_at": "2026-05-23T21:01:11+00:00",
   "started_at": "2026-05-23T20:19:30+00:00",
-  "elapsed_seconds": 2184,
+  "elapsed_seconds": 2501,
   "artefacts": [
     {
       "name": "nnue-512-256.bin",
@@ -14,5 +14,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386289       1       36:23  0.0  0.0 bash\n 386291  386289       36:23  0.0  0.0 bash\n 386341  386291       36:22  190 91.8 python3\n 386342  386291       36:22  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386289       1       41:40  0.0  0.0 bash\n 386291  386289       41:40  0.0  0.0 bash\n 386341  386291       41:39  191 91.8 python3\n 386342  386291       41:39  0.0  0.0 tee\n"
 }
