@@ -1,0 +1,51 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+filter:  (unset, OK for single-host pilot)
+nproc:   4
+mem:     15Gi
+disk:    140G free of 150G
+shards:  4 × 25000 records (seeds 5001-5004)
+NNUE:    /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+-rw-r--r-- 1 root root 147K May 20 00:39 /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+
+=== rebuilding jass (no-op if src/ unchanged) ===
+[ 53%] Built target jass_lib
+[ 59%] Built target jass
+[100%] Built target jass_tests
+jass:    Jass 0.0.1
+
+=== launching 4 parallel shards (NNUE=v5) ===
+  shard 1 launched as pid 351261 (seed 5001)
+  shard 2 launched as pid 351262 (seed 5002)
+  shard 3 launched as pid 351264 (seed 5003)
+  shard 4 launched as pid 351266 (seed 5004)
+
+=== waiting on all shards ===
+  pid 351261: OK
+  pid 351262: OK
+  pid 351264: OK
+  pid 351266: OK
+
+=== merging this host's 4 shards into host-a.bin ===
+  inputs: ['shard-1.bin', 'shard-2.bin', 'shard-3.bin', 'shard-4.bin']
+  merged 100000 records into /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin
+
+==========================================================
+       0025a CYCLE-9 PILOT (host A) SUMMARY
+==========================================================
+  host:           ubuntu-16gb-hel1-2
+  filter env:     UNSET
+  NNUE labeller:  nnue-256-128-q.bin  (v5, Cycle 8 BCE)
+  shards:         4 × 25000 = 100000 records
+  wall:           93268s (25.9 h)
+  per-shard rcs:
+    shard-1.result: 0 91875
+    shard-2.result: 0 92385
+    shard-3.result: 0 93218
+    shard-4.result: 0 93268
+  output:         host-a.bin (3.7M)
+==========================================================
+
+Next: 0027 trains directly on host-a.bin (500K v5-labelled records);
+no merge needed in single-host pilot mode. Queue 0027 — already there,
+runner picks it next.
