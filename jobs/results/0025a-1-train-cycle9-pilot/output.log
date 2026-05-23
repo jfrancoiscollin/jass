@@ -1,0 +1,211 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+nproc:   4
+mem:     15Gi
+disk:    140G free of 150G
+self-play dataset: 3.7M  /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin
+master dataset:    172M  /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+
+=== rebuilding jass ===
+Assembler messages:
+Error: can't open /tmp/ccy3JNwo.s for reading: No such file or directory
+gmake[2]: *** [CMakeFiles/jass.dir/build.make:76: CMakeFiles/jass.dir/src/main.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:113: CMakeFiles/jass.dir/all] Error 2
+gmake: *** [Makefile:101: all] Error 2
+jass: Jass 0.0.1
+
+=== verifying Python deps ===
+  torch 2.12.0+cpu
+  numpy 2.4.4
+
+=== step 1/4: training Cycle 9 candidate (5 archs, hybrid loss) ===
+  self-play: /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin (1M, v5-labelled — Cycle 9 corpus)
+  master:    /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+  loss form: self-play MSE + master BCE
+loading /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=36.9% D=27.6% L=35.5%
+  score range: [-29998, 29999]  mean=+225.0  std=8480.6
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.3s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 2100000 records (100000 self-play + 2000000 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train=  38652.1  val= 144805.6 *
+  epoch   2: train=  36217.5  val= 133300.4 *
+  epoch   3: train=  35935.9  val= 127725.6 *
+  epoch   4: train=  35583.0  val= 114706.5 *
+  epoch   5: train=  35250.0  val= 107325.8 *
+  epoch   6: train=  34937.4  val= 100178.4 *
+  epoch   7: train=  34658.1  val=  95910.9 *
+  epoch   8: train=  34433.8  val=  94188.0 *
+  epoch   9: train=  34266.2  val=  88995.9 *
+  epoch  10: train=  34139.9  val=  92297.6
+  epoch  11: train=  34042.5  val=  90990.4
+  epoch  12: train=  33955.9  val=  90388.8
+  epoch  13: train=  33890.6  val=  87748.1 *
+  epoch  14: train=  33829.6  val=  90016.7
+  epoch  15: train=  33787.6  val=  88004.1
+  epoch  16: train=  33744.7  val=  88431.3
+  epoch  17: train=  33704.7  val=  86821.9 *
+  epoch  18: train=  33661.5  val=  86827.7
+  epoch  19: train=  33626.9  val=  87498.4
+  epoch  20: train=  33592.1  val=  85844.0 *
+  epoch  21: train=  33554.2  val=  87726.2
+  epoch  22: train=  33524.4  val=  86871.7
+  epoch  23: train=  33489.9  val=  85550.5 *
+  epoch  24: train=  33467.3  val=  85000.0 *
+  epoch  25: train=  33434.4  val=  86964.7
+  epoch  26: train=  33402.9  val=  87529.7
+  epoch  27: train=  33376.2  val=  85538.0
+  epoch  28: train=  33355.0  val=  83448.2 *
+  epoch  29: train=  33331.3  val=  84810.4
+  epoch  30: train=  33306.3  val=  85691.9
+  wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  38047.7  val= 146215.4 *
+  epoch   2: train=  36353.9  val= 136571.2 *
+  epoch   3: train=  35841.4  val= 117127.4 *
+  epoch   4: train=  35135.8  val= 100108.7 *
+  epoch   5: train=  34698.3  val=  95121.6 *
+  epoch   6: train=  34408.2  val=  90755.9 *
+  epoch   7: train=  34190.2  val=  88390.0 *
+  epoch   8: train=  34007.9  val=  88204.4 *
+  epoch   9: train=  33861.2  val=  83185.6 *
+  epoch  10: train=  33744.8  val=  87372.1
+  epoch  11: train=  33647.2  val=  84825.7
+  epoch  12: train=  33550.2  val=  85759.8
+  epoch  13: train=  33465.2  val=  82968.9 *
+  epoch  14: train=  33384.6  val=  85088.9
+  epoch  15: train=  33313.3  val=  83231.2
+  epoch  16: train=  33244.6  val=  83630.3
+  epoch  17: train=  33177.8  val=  83710.5
+  epoch  18: train=  33109.8  val=  82902.2 *
+  epoch  19: train=  33051.8  val=  83389.9
+  epoch  20: train=  32996.6  val=  84042.4
+  epoch  21: train=  32937.0  val=  83862.0
+  epoch  22: train=  32891.0  val=  82779.3 *
+  epoch  23: train=  32834.1  val=  82927.8
+  epoch  24: train=  32795.4  val=  82407.0 *
+  epoch  25: train=  32744.2  val=  83840.6
+  epoch  26: train=  32695.6  val=  86027.4
+  epoch  27: train=  32652.2  val=  86261.1
+  epoch  28: train=  32621.7  val=  83147.4
+  epoch  29: train=  32578.6  val=  83994.2
+  epoch  30: train=  32541.8  val=  84850.7
+  wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  37668.9  val= 146938.0 *
+  epoch   2: train=  36219.8  val= 121895.3 *
+  epoch   3: train=  35351.8  val= 107153.8 *
+  epoch   4: train=  34745.5  val=  94598.3 *
+  epoch   5: train=  34288.7  val=  91598.2 *
+  epoch   6: train=  33978.5  val=  86847.2 *
+  epoch   7: train=  33766.7  val=  84518.5 *
+  epoch   8: train=  33578.7  val=  86953.0
+  epoch   9: train=  33409.0  val=  80495.4 *
+  epoch  10: train=  33261.3  val=  86409.5
+  epoch  11: train=  33119.5  val=  82059.1
+  epoch  12: train=  32980.8  val=  83453.9
+  epoch  13: train=  32850.4  val=  82638.4
+  epoch  14: train=  32732.1  val=  86547.3
+  epoch  15: train=  32622.4  val=  82083.8
+  epoch  16: train=  32521.3  val=  85460.8
+  epoch  17: train=  32422.6  val=  84496.4
+  early-stop at epoch 17
+  wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  37339.3  val= 138143.6 *
+  epoch   2: train=  35553.1  val=  99567.6 *
+  epoch   3: train=  34744.0  val=  95997.8 *
+  epoch   4: train=  34252.5  val=  89652.9 *
+  epoch   5: train=  33906.7  val=  88354.9 *
+  epoch   6: train=  33612.2  val=  82962.9 *
+  epoch   7: train=  33353.5  val=  83166.4
+  epoch   8: train=  33086.1  val=  85713.5
+  epoch   9: train=  32839.8  val=  78927.4 *
+  epoch  10: train=  32609.8  val=  87881.4
+  epoch  11: train=  32394.1  val=  80909.5
+  epoch  12: train=  32184.0  val=  82986.0
+  epoch  13: train=  31998.1  val=  86330.6
+  epoch  14: train=  31818.4  val=  91230.9
+  epoch  15: train=  31660.8  val=  85791.7
+  epoch  16: train=  31520.5  val=  89427.9
+  epoch  17: train=  31378.8  val=  91287.6
+  early-stop at epoch 17
+  wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  36845.3  val= 118782.3 *
+  epoch   2: train=  35011.2  val=  93382.5 *
+  epoch   3: train=  34281.4  val=  90539.5 *
+  epoch   4: train=  33835.7  val=  86609.6 *
+  epoch   5: train=  33459.7  val=  84425.8 *
+  epoch   6: train=  33107.7  val=  79864.3 *
+  epoch   7: train=  32772.0  val=  82904.2
+  epoch   8: train=  32414.1  val=  85941.6
+  epoch   9: train=  32093.9  val=  81843.5
+  epoch  10: train=  31793.9  val=  89689.2
+  epoch  11: train=  31518.7  val=  85691.3
+  epoch  12: train=  31253.3  val=  92921.9
+  epoch  13: train=  31025.3  val=  89836.3
+  epoch  14: train=  30805.2  val=  92581.2
+  early-stop at epoch 14
+  wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     78927.4      280.9     761s
+  1024-512           987,137     79864.3      282.6    1195s
+  256-128            148,481     80495.4      283.7     546s
+  128-64              66,049     82407.0      287.1     826s
+  64-32               30,977     83448.2      288.9     770s
+
+summary → /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/summary.json
+
+=== step 2/4: best arch by val MSE = 512-256 ===
+-rw-r--r-- 1 root root 1.4M May 23 18:54 /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256.bin
+
+=== step 3/4: quantising 512-256 to int8 ===
+loading float reference /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0025a-cycle9-pilot-host-a/artefacts.src/host-a.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.016979 sw2=0.021489 sw3=0.021813 sh1=0.033961 sh2=0.60314
+  multipliers: mul1=0.49995 mul2=0.00121 mul_out=0.013156
+  reference range: float [-1926.6, 1900.8], quantised [-2468.3, 1900.8]
+  diff: mean=+2.25  std=43.47  |max|=699.96  RMSE=43.53
+wrote /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin (364840 bytes)
+-rw-r--r-- 1 root root 357K May 23 19:14 /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin
+
+=== step 4/4: smoke benchmark cycle9 vs handcrafted (depth 6) ===
+Benchmark: NNUE (/root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=16 Handcrafted=1 Draws=1 (total 18)
+NNUE score rate: 0.916667 (16.5 / 18)
+
+==========================================================
+             0027 TRAIN CYCLE-9 PILOT SUMMARY
+==========================================================
+  self-play corpus:   100000 records (v5-labelled, 0025a single-host pilot)
+  master corpus:      4738008 records (0014, blended)
+  recipe:             same as 0018 (Cycle 8 v5 BCE hybrid)
+  best arch:          512-256
+  train wall:         4109s
+  vs handcrafted:     NNUE score rate: 0.916667 (16.5 / 18)
+  v5 vs handcrafted:  0.852 / +304 ELO (reference, 0018)
+==========================================================
+
+Next: 0028 — direct nnue-vs-nnue match (Cycle 9 vs v5) to compute
+the corpus-relabelling delta. >0.52 score rate ⇒ Cycle 9 corpus
+strictly improves over the pre-v5-labelled 0010 corpus.
