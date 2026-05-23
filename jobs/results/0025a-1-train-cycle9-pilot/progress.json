@@ -1,13 +1,13 @@
 {
   "job_id": "0025a-1-train-cycle9-pilot",
-  "snapshot_at": "2026-05-23T18:11:11+00:00",
+  "snapshot_at": "2026-05-23T18:16:24+00:00",
   "started_at": "2026-05-23T18:05:55+00:00",
-  "elapsed_seconds": 316,
+  "elapsed_seconds": 629,
   "artefacts": [
     {
       "name": "train.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383928       1       05:15  0.0  0.0 bash\n 383930  383928       05:15  0.0  0.0 bash\n 384044  383930       05:08  178 71.6 python3\n 384045  383930       05:08  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383928       1       10:28  0.0  0.0 bash\n 383930  383928       10:28  0.0  0.0 bash\n 384044  383930       10:21  180 71.6 python3\n 384045  383930       10:21  0.0  0.0 tee\n"
 }
