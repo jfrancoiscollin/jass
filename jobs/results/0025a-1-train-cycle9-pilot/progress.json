@@ -1,13 +1,18 @@
 {
   "job_id": "0025a-1-train-cycle9-pilot",
-  "snapshot_at": "2026-05-23T18:41:30+00:00",
+  "snapshot_at": "2026-05-23T18:46:41+00:00",
   "started_at": "2026-05-23T18:05:55+00:00",
-  "elapsed_seconds": 2135,
+  "elapsed_seconds": 2446,
   "artefacts": [
     {
       "name": "nnue-128-64.bin",
       "size_bytes": 264220,
       "records": 6952
+    },
+    {
+      "name": "nnue-256-128.bin",
+      "size_bytes": 593948,
+      "records": 15630
     },
     {
       "name": "nnue-64-32.bin",
@@ -19,5 +24,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383928       1       35:34  0.0  0.0 bash\n 383930  383928       35:34  0.0  0.0 bash\n 384044  383930       35:27  182 71.7 python3\n 384045  383930       35:27  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383928       1       40:45  0.0  0.0 bash\n 383930  383928       40:45  0.0  0.0 bash\n 384044  383930       40:38  183 71.9 python3\n 384045  383930       40:38  0.0  0.0 tee\n"
 }
