@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: 0028-bench-cycle9-vs-v5
+# id: 0025a-2-bench-cycle9-vs-v5
 # description: Cycle 9 pilot verdict — direct head-to-head between the
 #              Cycle 9 candidate NNUE (trained on the v5-labelled 1M
 #              corpus produced by 0025a+0027 single-host pilot) and v5 (0018).
@@ -8,7 +8,7 @@
 #              the score rate measures the corpus quality directly.
 #
 #              Reads:
-#                /root/jass/jobs/results/0027-train-cycle9-pilot/
+#                /root/jass/jobs/results/0025a-1-train-cycle9-pilot/
 #                  artefacts.src/nnue-*-q.bin           (Cycle 9 quantised)
 #                /root/jass/jobs/results/0018-train-with-master-bce/
 #                  artefacts.src/nnue-*-q.bin           (v5 quantised)
@@ -28,11 +28,11 @@
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0028-bench-cycle9-vs-v5"
+OUT_BASE="/root/jass/jobs/results/0025a-2-bench-cycle9-vs-v5"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
-CYCLE9=$(ls -t /root/jass/jobs/results/0027-train-cycle9-pilot/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
+CYCLE9=$(ls -t /root/jass/jobs/results/0025a-1-train-cycle9-pilot/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 V5=$(    ls -t /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 
 if [ -z "$CYCLE9" ] || [ ! -f "$CYCLE9" ]; then

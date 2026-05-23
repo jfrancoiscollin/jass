@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: 0027-train-cycle9-pilot
+# id: 0025a-1-train-cycle9-pilot
 # description: Train a Cycle 9 candidate NNUE on the 100K single-host
 #              pilot dataset produced by 0025a (down from 500K after we
 #              discovered the v5 MLP labeller is ~13× slower than the
@@ -29,7 +29,7 @@
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0027-train-cycle9-pilot"
+OUT_BASE="/root/jass/jobs/results/0025a-1-train-cycle9-pilot"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
