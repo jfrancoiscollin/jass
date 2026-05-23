@@ -1,7 +1,0 @@
-{
-  "job_id": "0025a-3-train-pattern-v1",
-  "script": "jobs/queue/0025a-3-train-pattern-v1.sh",
-  "pid": 386132,
-  "started_at": "2026-05-23T20:14:21+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

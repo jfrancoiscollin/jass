@@ -1,0 +1,77 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 4  mem: 15Gi
+=== rebuilding jass ===
+[ 97%] Built target jass_tests
+[100%] Linking CXX executable jass
+[100%] Built target jass
+=== pip ===
+=== train v1 pattern net ===
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin...
+  1000000 records loaded
+encoding pattern indices (8 patterns)...
+  done, shape=(8, 1000000)
+epoch  0: train_loss=65299886.95  val_mse=91039112.00
+epoch  1: train_loss=65277687.40  val_mse=91011088.00
+epoch  2: train_loss=65258616.03  val_mse=90983192.00
+epoch  3: train_loss=65237086.52  val_mse=90955328.00
+epoch  4: train_loss=65218223.00  val_mse=90927496.00
+epoch  5: train_loss=65198070.66  val_mse=90899712.00
+epoch  6: train_loss=65178012.50  val_mse=90872008.00
+epoch  7: train_loss=65157760.88  val_mse=90844344.00
+epoch  8: train_loss=65137911.79  val_mse=90816720.00
+epoch  9: train_loss=65118185.60  val_mse=90789128.00
+epoch 10: train_loss=65099700.31  val_mse=90761592.00
+epoch 11: train_loss=65078785.79  val_mse=90734120.00
+epoch 12: train_loss=65058294.98  val_mse=90706712.00
+epoch 13: train_loss=65037261.53  val_mse=90679280.00
+epoch 14: train_loss=65020595.67  val_mse=90651968.00
+epoch 15: train_loss=64998335.66  val_mse=90624624.00
+epoch 16: train_loss=64980177.17  val_mse=90597320.00
+epoch 17: train_loss=64958291.97  val_mse=90570120.00
+epoch 18: train_loss=64939959.43  val_mse=90542952.00
+epoch 19: train_loss=64920865.12  val_mse=90515848.00
+epoch 20: train_loss=64902551.60  val_mse=90488736.00
+epoch 21: train_loss=64880630.59  val_mse=90461616.00
+epoch 22: train_loss=64861059.33  val_mse=90434664.00
+epoch 23: train_loss=64841481.83  val_mse=90407696.00
+epoch 24: train_loss=64824110.72  val_mse=90380792.00
+epoch 25: train_loss=64802141.76  val_mse=90353888.00
+epoch 26: train_loss=64785159.67  val_mse=90327024.00
+epoch 27: train_loss=64764966.66  val_mse=90300176.00
+epoch 28: train_loss=64747419.33  val_mse=90273416.00
+epoch 29: train_loss=64725019.55  val_mse=90246704.00
+wrote /root/jass/jobs/results/0025a-3-train-pattern-v1/artefacts.src/pattern-v1.jpat (20056 bytes)
+=== bench v1 pattern vs handcrafted (depth 6) ===
+Benchmark: NNUE (/root/jass/jobs/results/0025a-3-train-pattern-v1/artefacts.src/pattern-v1.jpat) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+=== bench v1 pattern vs v5 NNUE (depth 6, 3 pairs) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-3-train-pattern-v1/artefacts.src/pattern-v1.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+=== bench v1 pattern vs v5 NNUE (depth 10, 3 pairs) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0025a-3-train-pattern-v1/artefacts.src/pattern-v1.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0042 PATTERN v1 (8×4) VERDICT
+==========================================================
+  train wall:           22s
+  weights:              5000 (vs ~150K for MLPNetworkQ 256-128)
+  vs handcrafted:       rate=0
+  vs v5 (depth 6):      rate=0
+  vs v5 (depth 10):     rate=0
+
+  Reference v5 (256-128 MLP) vs handcrafted: 0.852 / +304 ELO
+
+  Reading:
+    rate_v5_d10 > 0.40  → pattern archi prometteur malgré 5×
+                         moins de params; scale-up v2 (16×8)
+                         devient prioritaire.
+    rate_v5_d10 ∈ [0.20, 0.40] → match attendu pour v1 minimal.
+                         v2 vaut le coup d'essayer.
+    rate_v5_d10 < 0.20  → patterns 4-square ne capturent rien.
+                         Soit le pattern set est trop petit, soit
+                         le training est cassé. Debug avant v2.
+==========================================================
