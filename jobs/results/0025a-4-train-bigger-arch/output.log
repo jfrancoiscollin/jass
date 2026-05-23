@@ -1,0 +1,11 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2  nproc: 4  mem: 15Gi
+=== rebuilding jass ===
+[ 55%] Built target jass_lib
+[ 61%] Built target jass
+[100%] Built target jass_tests
+=== pip ===
+=== training bigger archs (512-256, 1024-512, 2048-1024) ===
+/root/jass/jobs/queue/0025a-4-train-bigger-arch.sh: line 82: 386341 Killed                  python3 tools/train_v3.py --data "$DATASET" --master-data "$MASTER" --master-weight "$MASTER_WEIGHT" --master-lam "$MASTER_LAM" --master-loss "$MASTER_LOSS" --wdl-scale "$WDL_SCALE" --bce-scale "$BCE_SCALE" --max-master-records 2000000 --archs 512-256 1024-512 2048-1024 --encoding halfmen --epochs 30 --batch 512 --out-dir "$ART" 2>&1
+     386342 Done                    | tee "$ART/train.log"
+ABORT: train failed
