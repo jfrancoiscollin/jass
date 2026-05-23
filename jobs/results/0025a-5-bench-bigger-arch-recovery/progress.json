@@ -1,8 +1,8 @@
 {
   "job_id": "0025a-5-bench-bigger-arch-recovery",
-  "snapshot_at": "2026-05-23T21:43:11+00:00",
+  "snapshot_at": "2026-05-23T21:48:13+00:00",
   "started_at": "2026-05-23T21:22:11+00:00",
-  "elapsed_seconds": 1260,
+  "elapsed_seconds": 1562,
   "artefacts": [
     {
       "name": "bench-1024-512-d10.log",
@@ -39,5 +39,5 @@
       "size_bytes": 717
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386987       1       20:59  0.0  0.0 bash\n 386989  386987       20:59  0.0  0.0 bash\n 387191  386989       08:07 99.9  0.3 jass\n 387192  386989       08:07  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 386987       1       26:01  0.0  0.0 bash\n 386989  386987       26:01  0.0  0.0 bash\n 387191  386989       13:09 99.9  0.3 jass\n 387192  386989       13:09  0.0  0.0 tee\n"
 }
