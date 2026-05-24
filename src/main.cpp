@@ -14,6 +14,7 @@
 #include "hub.hpp"
 #include "movegen.hpp"
 #include "nnue.hpp"
+#include "nnue_server_client.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
@@ -690,6 +691,50 @@ int run_build_book_from_moves_mode(int argc, char** argv) {
     return 0;
 }
 
+// Sister of --bench-eval that calls a NetworkServerClient instead of
+// an in-process INetwork. Measures the round-trip IPC overhead of the
+// Phase-0 eval-server prototype (see tools/nnue_eval_server.py +
+// src/nnue_server_client.cpp).
+int run_bench_eval_server_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --bench-eval-server <socket_path> [iters=100000]\n";
+        return 1;
+    }
+    const char* sock_path = argv[2];
+    const long long iters = (argc > 3) ? std::max<long long>(1,
+        parse_int_or(argv[3], 100000)) : 100000;
+
+    NetworkServerClient client;
+    if (!client.connect(sock_path)) {
+        std::cerr << "error: cannot connect to " << sock_path << "\n";
+        return 1;
+    }
+
+    const auto pos_opt = Position::from_fen(
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25");
+    if (!pos_opt) return 1;
+    const Position pos = *pos_opt;
+
+    int sink = 0;
+    for (int i = 0; i < 1000; ++i) sink ^= client.evaluate(pos);  // warmup
+
+    using clock = std::chrono::steady_clock;
+    const auto t0 = clock::now();
+    for (long long i = 0; i < iters; ++i) sink ^= client.evaluate(pos);
+    const auto t1 = clock::now();
+    const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+
+    const double ns_per_call = static_cast<double>(ns) / static_cast<double>(iters);
+    const double evals_per_s = 1e9 / ns_per_call;
+    std::cout << "bench-eval-server: socket=" << sock_path
+              << " iters=" << iters
+              << " total_ns=" << ns
+              << " ns/call=" << ns_per_call
+              << " evals/s=" << evals_per_s
+              << " sink=" << sink << '\n';
+    return 0;
+}
+
 // Micro-benchmark for raw NNUE evaluate() throughput. Loads `weights`,
 // picks a midgame position, calls evaluate() in a tight loop, reports
 // ns/call and evals/sec. Used to validate the SIMD Layer-1 refactor —
@@ -775,6 +820,7 @@ int main(int argc, char** argv) {
         if      (a == "--smoke")                    return run_smoke();
         else if (a == "--tournament")               return run_tournament_mode(argc, argv);
         else if (a == "--bench-eval")               return run_bench_eval_mode(argc, argv);
+        else if (a == "--bench-eval-server")        return run_bench_eval_server_mode(argc, argv);
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
@@ -849,6 +895,7 @@ int main(int argc, char** argv) {
 
     // Second pass: HUB-mode flags.
     std::unique_ptr<INetwork> nnue_owned;
+    std::unique_ptr<NetworkServerClient> nnue_server;
     const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
     const char*     book_path = nullptr;
     for (int i = 1; i < argc; ++i) {
@@ -863,6 +910,14 @@ int main(int argc, char** argv) {
                 return 2;
             }
             nnue_ptr = nnue_owned.get();
+        } else if (a == "--nnue-server" && i + 1 < argc) {
+            nnue_server = std::make_unique<NetworkServerClient>();
+            if (!nnue_server->connect(argv[++i])) {
+                std::cerr << "error: cannot connect to NNUE server at "
+                          << argv[i] << "\n";
+                return 2;
+            }
+            nnue_ptr = nnue_server.get();
         } else if (a == "--book" && i + 1 < argc) {
             book_path = argv[++i];
         }
