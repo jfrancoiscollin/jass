@@ -234,20 +234,27 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                           // ~3-5× more compute per label but
                                           // far less noise in the targets,
                                           // which is the bottleneck for any
-                                          // future architecture work
+                                          // future architecture work.
+                                          // NB: the reference 1M dataset
+                                          // (job 0010, master-1M.jnnw) was
+                                          // labelled at depth-20 — set via
+                                          // the positional `eval_depth`
+                                          // arg, not this default.
     int          random_open_plies = 4;
     int          max_plies        = 200;
     int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
     const char*  nnue_path        = nullptr;
     bool         quiet_only       = false;  // skip positions with mandatory captures
+    int          pv_extract       = 0;      // additional samples to harvest along the PV
 
-    // Scan for `--nnue PATH` and `--quiet-only` anywhere in the args;
-    // consume them and keep the rest as the historical positional slots
-    // so existing invocations stay backward-compatible. Without --nnue
-    // we fall back to the embedded default network — that's the Cycle 8
-    // / pre-v5 behaviour the depth-20 1M dataset (0010) was labelled
-    // with. Without --quiet-only the sampler keeps the historical
-    // 1-ply-in-4 unfiltered behaviour.
+    // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
+    // in the args; consume them and keep the rest as the historical
+    // positional slots so existing invocations stay backward-compatible.
+    // Without --nnue we fall back to the embedded default network — that's
+    // the Cycle 8 / pre-v5 behaviour the depth-20 1M dataset (0010) was
+    // labelled with. Without --quiet-only the sampler keeps the historical
+    // 1-ply-in-4 unfiltered behaviour. Without --pv-extract the labelling
+    // search yields a single (position, score) record (legacy behaviour).
     std::vector<char*> positional;
     positional.reserve(static_cast<std::size_t>(argc));
     for (int i = 0; i < argc; ++i) {
@@ -256,6 +263,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             nnue_path = argv[++i];
         } else if (a == "--quiet-only") {
             quiet_only = true;
+        } else if (a == "--pv-extract" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) pv_extract = v;
         } else {
             positional.push_back(argv[i]);
         }
@@ -293,6 +303,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
+              << " pv_extract=" << pv_extract
               << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
@@ -407,6 +418,64 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
                 s.score  = static_cast<std::int32_t>(r.score);
                 game_samples.push_back(s);
+
+                // L1 multi-extraction (Stockfish `gensfen`-style). Amortize
+                // the depth-`eval_depth` search over multiple labels by
+                // harvesting positions along the principal variation. By
+                // negamax definition, the score at PV ply k from THAT
+                // position's STM POV is (-1)^k * r.score, so we can attach
+                // exact labels to extracted positions without re-searching.
+                //
+                // Caveats applied here:
+                //   * stride 2 — adjacent PV positions are highly
+                //     correlated (one ply apart), so we only harvest at
+                //     even depths from the root.
+                //   * min effective depth 8 — the position at PV ply k was
+                //     effectively searched at depth (eval_depth - k); we
+                //     stop harvesting once that drops below 8 to keep
+                //     label quality comparable to the root sample.
+                //   * quiet filter applied per-position (same as the root
+                //     sample).
+                //   * WDL is propagated from the eventual game outcome,
+                //     same as the root sample. Stockfish gensfen does the
+                //     same; the position itself isn't on the played
+                //     trajectory but it's on the engine's best line, so
+                //     WDL is a reasonable proxy. Documented limitation.
+                if (pv_extract > 0 && !r.pv.empty()) {
+                    constexpr int PV_STRIDE        = 2;
+                    constexpr int PV_MIN_EFF_DEPTH = 8;
+                    Position pv_pos = pos;
+                    int      taken  = 0;
+                    for (std::size_t k = 0;
+                         k < r.pv.size() && taken < pv_extract;
+                         ++k) {
+                        pv_pos = pv_pos.after(r.pv[k]);
+                        const int depth_from_root = static_cast<int>(k) + 1;
+                        const int eff_depth = eval_depth - depth_from_root;
+                        if (eff_depth < PV_MIN_EFF_DEPTH) break;
+                        if (depth_from_root % PV_STRIDE != 0) continue;
+                        if (generated +
+                            static_cast<int>(game_samples.size()) >= n) break;
+
+                        MoveList pv_ml;
+                        generate_legal_moves(pv_pos, pv_ml);
+                        if (pv_ml.empty()) break;  // terminal — no label
+                        const bool pv_quiet = !pv_ml[0].is_capture();
+                        if (quiet_only && !pv_quiet) continue;
+
+                        Sample ps;
+                        ps.bbs[0] = pv_pos.white_men();
+                        ps.bbs[1] = pv_pos.white_kings();
+                        ps.bbs[2] = pv_pos.black_men();
+                        ps.bbs[3] = pv_pos.black_kings();
+                        ps.stm    = (pv_pos.side_to_move() == Color::White) ? 0 : 1;
+                        ps.score  = (depth_from_root & 1)
+                                      ? -static_cast<std::int32_t>(r.score)
+                                      :  static_cast<std::int32_t>(r.score);
+                        game_samples.push_back(ps);
+                        ++taken;
+                    }
+                }
             }
 
             SearchLimits lim;
