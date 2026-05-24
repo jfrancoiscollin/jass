@@ -45,6 +45,30 @@ constexpr std::array<std::array<std::uint8_t, 4>, 8> V1_PATTERNS = {{
     {{44, 45, 49, 50}},  // SE
 }};
 
+// V2 default pattern set: 16 patterns × 8 squares each. Built from
+// 4×4 board regions at row/col offsets ∈ {0,2,4,6}² (16 regions, each
+// covering 8 playable squares). Full coverage of the 50 playable
+// squares with overlap (every square is in 1-4 patterns). Total
+// weight count: 16 × 5^8 = 6 250 000 int32 = 25 MB on disk.
+constexpr std::array<std::array<std::uint8_t, 8>, 16> V2_PATTERNS = {{
+    {{ 1,  2,  6,  7, 11, 12, 16, 17}},  // (r=0, c=0)  NW corner
+    {{ 2,  3,  7,  8, 12, 13, 17, 18}},  // (r=0, c=2)
+    {{ 3,  4,  8,  9, 13, 14, 18, 19}},  // (r=0, c=4)
+    {{ 4,  5,  9, 10, 14, 15, 19, 20}},  // (r=0, c=6)  NE corner
+    {{11, 12, 16, 17, 21, 22, 26, 27}},  // (r=2, c=0)
+    {{12, 13, 17, 18, 22, 23, 27, 28}},  // (r=2, c=2)
+    {{13, 14, 18, 19, 23, 24, 28, 29}},  // (r=2, c=4)  centre
+    {{14, 15, 19, 20, 24, 25, 29, 30}},  // (r=2, c=6)
+    {{21, 22, 26, 27, 31, 32, 36, 37}},  // (r=4, c=0)
+    {{22, 23, 27, 28, 32, 33, 37, 38}},  // (r=4, c=2)
+    {{23, 24, 28, 29, 33, 34, 38, 39}},  // (r=4, c=4)
+    {{24, 25, 29, 30, 34, 35, 39, 40}},  // (r=4, c=6)
+    {{31, 32, 36, 37, 41, 42, 46, 47}},  // (r=6, c=0)  SW corner
+    {{32, 33, 37, 38, 42, 43, 47, 48}},  // (r=6, c=2)
+    {{33, 34, 38, 39, 43, 44, 48, 49}},  // (r=6, c=4)
+    {{34, 35, 39, 40, 44, 45, 49, 50}},  // (r=6, c=6)  SE corner
+}};
+
 constexpr char     JPAT_MAGIC[4]  = {'J', 'P', 'A', 'T'};
 constexpr std::uint32_t JPAT_VERSION = 1;
 
@@ -61,6 +85,14 @@ PatternNetwork::PatternNetwork() = default;
 PatternNetwork PatternNetwork::default_v1() {
     PatternNetwork net;
     for (const auto& p : V1_PATTERNS) {
+        net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
+    }
+    return net;
+}
+
+PatternNetwork PatternNetwork::default_v2() {
+    PatternNetwork net;
+    for (const auto& p : V2_PATTERNS) {
         net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
     }
     return net;
