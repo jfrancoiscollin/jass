@@ -2,31 +2,31 @@
 // Copyright (c) 2026 Jean-François Collin
 //
 // =============================================================================
-// HalfMen incremental NNUE accumulator — SCAFFOLD ONLY (not yet wired up)
+// HalfMen incremental NNUE accumulator — WIRED END-TO-END
 // =============================================================================
 //
 // PURPOSE
 // -------
 // Companion to MLPNetworkQ (src/nnue.hpp). Targets the Layer-1 input sum
-// that, even after the column-major + AVX2 refactor (PR #72), is still
-// the bulk of evaluate() cost — and is rebuilt from scratch on every
-// search node. With ~150K nodes per depth-20 search, that's ~150K full
-// Layer-1 sums per move. Incremental update reduces that to a small
-// delta (1-2 piece moves + maybe an anchor change) per node.
+// that, even after the column-major + AVX2 refactor (PR #72), was the
+// bulk of evaluate() cost — and was rebuilt from scratch on every
+// search node. Incremental update reduces that to a small delta (1-2
+// piece moves + maybe an anchor change) per node.
 //
-// STATUS (this commit):
-//   * Slow path (refresh_from) is IMPLEMENTED — Accumulator and
+// STATUS (current):
+//   * Slow path (refresh_from) — IMPLEMENTED. Accumulator and
 //     AccumulatorPair fully refresh from a Position by delegating to
-//     MLPNetworkQ::build_layer1 (new public method). Covered by a
-//     parity test against build_layer1 output.
-//   * Fast path (apply_move) is a stub returning false: callers must
-//     refresh_from on the post-move position. Wiring in Engine is
-//     deferred until the Cycle-9 pilot validates the training
-//     direction (no point optimising eval if the architecture or
-//     labelling is wrong).
-//   * Estimated remaining work: ~1-2 weeks of careful C++ for the
-//     incremental update + Engine integration + extensive parity
-//     testing against the refresh-each-time path.
+//     MLPNetworkQ::build_layer1. Covered by a parity test against
+//     build_layer1 output.
+//   * Fast path (apply_move) — IMPLEMENTED (HalfMen + V2 dense). On
+//     unsupported encodings or anchor changes the function returns
+//     false and the caller falls back to refresh_from on pos_after.
+//   * Engine wiring — DONE in `src/search.cpp`. Search holds an
+//     `std::array<AccumulatorPair, MAX_PLY + 2>` and maintains it
+//     per-ply via push_accumulator (apply_move with refresh_from
+//     fallback). Leaves call `MLPNetworkQ::evaluate_with_accumulator`
+//     which skips the Layer-1 rebuild. Measured ~1.57× search speedup
+//     bit-identical to the refresh-each-time path.
 //
 //
 // DESIGN — TWO ACCUMULATORS, ONE PER COLOUR
@@ -127,26 +127,21 @@
 // at ~128 entries (1 MB) without trouble.
 //
 //
-// WIRING-UP PLAN (when this gets implemented)
-// -------------------------------------------
-//   1. Position exposes "delta info" from `pos.after(m)`: which squares
-//      changed and how. Either compute by diffing pos / pos.after(m)
-//      bitboards or extend Move with the info. The latter is cleaner.
-//   2. Engine owns an `AccumulatorPair` and an undo stack.
-//   3. Engine::new_game / set_position refreshes the pair from scratch.
-//   4. Engine::apply_move pushes undo + applies delta to the pair.
-//   5. Engine::undo_move pops undo.
-//   6. MLPNetworkQ::evaluate_with_accumulator(pos, acc_pair) is the
-//      fast path; the existing evaluate(pos) becomes a wrapper that
-//      builds a fresh AccumulatorPair from pos for callers that don't
-//      have one (tests, one-off positions).
-//
-// Estimated effort once we commit: 1-2 weeks of focused C++, including
-// extensive parity testing against the current refresh-each-time path
-// (the test should run a full search, log every evaluate() output, and
-// compare against a search of the same position with incremental
-// disabled — they must match bit-for-bit modulo accumulator round-off,
-// which there isn't any here since everything is integer-stable).
+// ACTUAL WIRING (see src/search.cpp)
+// ----------------------------------
+//   1. `SearchState` owns `std::array<AccumulatorPair, MAX_PLY + 2>`
+//      indexed by ply. No undo stack — the array slot at ply+1 is
+//      written from the slot at ply, so popping is implicit on return.
+//   2. Search root refreshes accumulators[0] from the root position.
+//   3. Recursion calls push_accumulator(ply, pos_before, m, pos_after):
+//      copy accumulators[ply] → accumulators[ply+1], then attempt
+//      apply_move; on failure, refresh_from(pos_after).
+//   4. eval_leaf reads accumulators[ply].{white|black}.data and feeds
+//      it directly to MLPNetworkQ::evaluate_with_accumulator (Layer-2
+//      onward only).
+//   5. Non-MLPNetworkQ networks (pattern, handcrafted) skip the
+//      accumulator path entirely — eval_leaf falls back to
+//      nnue->evaluate(pos).
 //
 // =============================================================================
 
@@ -211,10 +206,9 @@ struct AccumulatorPair {
     // — it's passed in rather than recomputed so the caller can reuse
     // it (the search uses the same pos_after to recurse).
     //
-    // Returns true on incremental success; false if the encoding is
-    // unsupported (never happens with V2 or HalfMen networks that
-    // pass mlpq_dims_ok at load time). False callers must
-    // refresh_from(pos_after).
+    // Returns true on incremental success; false on unsupported
+    // encoding, anchor change, or any case the fast path doesn't
+    // cover. False callers must refresh_from(pos_after).
     bool apply_move(const Position&    pos_before,
                     const Move&        m,
                     const Position&    pos_after,
