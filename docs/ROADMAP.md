@@ -1,0 +1,172 @@
+# jass — feuille de route post-bibliographie
+
+> Rédigé le 2026-05-24. Supersede l'ordering de `PATTERN_ROADMAP.md` à la
+> lumière de la bibliographie annotée `docs/REFERENCES_BIBLIOGRAPHIE.md`.
+> À lire en complément de `ANALYSE_VEILLE_NNUE.md` (motivation) et
+> `SESSION_LOG_2026_05.md` (ce qui a été testé jusqu'ici).
+
+---
+
+## Point de départ — ce que la biblio recadre
+
+`ANALYSE_VEILLE_NNUE.md` posait la thèse : l'archi MLP dense plafonne, il faut
+basculer sur du pattern-based Scan-style. La biblio annotée confirme cette
+thèse à long terme MAIS introduit deux directions cheap-and-fast à essayer
+**avant** la bascule architecturale :
+
+1. **[9] TalkChess** : précédent direct du syndrome jass (Stockfish a vu
+   -700 ELO sur un dataset équivalent, fixé sans changer d'archi).
+2. **[5] arXiv 2412.17948** + **[8] Stockfish nnue-pytorch wiki** : le fix
+   en question est **filtrer les positions non-quiètes** au moment du
+   sampling — quasi-gratuit à coder, validé empiriquement.
+3. **[4] Wiering et al.** : pour les dames spécifiquement, master games
+   battent self-play seul. Notre v5 les utilise déjà via BCE hybride mais
+   le ratio est peut-être sous-optimal.
+
+La conclusion révisée : avant d'investir dans l'axe pattern (Phase 1+ de
+`PATTERN_ROADMAP.md`), épuiser deux quick-wins sur l'axe données.
+
+---
+
+## Plan d'actions — ordering révisé
+
+### Phase 0 — Quiet filter dans gen-data-wdl  (LE plus haut ROI attendu)
+
+**Hypothèse** : un échantillon ~1-ply-sur-4 sans filtre attrape beaucoup de
+positions tactiques (capture obligatoire au trait), dont le label `score` est
+trompeur (vrai score = après la rafle, pas celui que l'eval voit). Filtrer
+ces positions = signal training plus propre = NNUE plus forte sans changer
+ni l'archi ni le volume.
+
+**Précédent biblio** : Stockfish nnue-pytorch est passé de **-700 ELO**
+(« 10M parties d5 ») à compétitif essentiellement avec ce filtre + volume
+[9]. arXiv 2412.17948 [5] décrit la méthodo. Smart fen skipping de Stockfish
+[8] = même idée.
+
+**Concrètement pour jass** :
+
+1. Modifier `run_gen_data_wdl_mode` (`src/main.cpp`) : avant d'ajouter un
+   sample, vérifier si `generate_legal_moves(pos)` retourne au moins une
+   capture. Si oui (position tactique), **skip ce sample** et passe au
+   prochain ply. Si non (position calme), record normalement.
+2. Régénérer un corpus 100K-500K avec ce filtre (~5h-1 jour sur 1× CCX23).
+3. Retrain `train_v3.py` avec le même recipe que 0018/v5.
+4. Bench vs v5.
+
+**Decision gate** :
+- rate vs v5 d10 > 0.55 → quiet filter est LA réponse, généraliser et
+  retrain sur volume complet.
+- rate vs v5 d10 ∈ [0.50, 0.55] → léger gain, vaut le coup combiné avec
+  Phase 0b (volume).
+- rate vs v5 d10 ≈ 0.50 → quiet filter neutre, passer à Phase 0b.
+- rate vs v5 d10 < 0.45 → régression inattendue, debug.
+
+**Coût** : ~€1-2 (1 jour gen-data + retrain + bench).
+
+**Code à écrire** :
+- `src/main.cpp` : ~15-30 lignes (filtre de quiétude dans la boucle de
+  sampling).
+- `jobs/templates/0043-quiet-filter-experiment.sh` : pipeline complet.
+
+### Phase 0b — Volume master games × 2-3
+
+**Hypothèse** : Wiering et al. [4] valide pour les dames que les master
+games portent un signal training fort. Notre `master-1600.jnnw` actuel a
+~4.7M positions issues de 43K games Lidraughts ≥1600 ELO. Lidraughts produit
+~30-150K nouvelles parties ≥1600/mois ; en re-fetch incrémental on peut
+doubler ou tripler le corpus sur quelques semaines.
+
+**Le cap `--max-master-records 2000000`** actuel limite l'utilisation à
+2M même si on a plus. **MAIS** plus de records bruts = plus de diversité
+dans le sampling de 2M, ce qui devrait améliorer la qualité du subset
+échantillonné à chaque epoch.
+
+**Concrètement** :
+
+1. **Refresh hebdomadaire master games** : nouveau job
+   `0044-refresh-master-data.sh` qui appelle `fetch_lidraughts_games.py`
+   en incrémental + `pdn_to_jnnw.py` pour produire `master-1600-vN.jnnw`
+   à jour.
+2. **Activer le scraper FMJD** : compléter le probe 0024 (l'endpoint
+   `fmjd.space/game_open.php` est identifié) pour ajouter ~5-10K games
+   FMJD top-niveau au corpus. Effort ~1-2 jours code.
+3. Quand `master-*.jnnw` a doublé : retrain jass v5 recipe, bench vs v5
+   actuel. Si gain, le ratio master/self-play actuel est sous-optimal.
+
+**Decision gate** :
+- rate vs v5 d10 > 0.55 → volume master compte, continuer le refresh.
+- rate vs v5 d10 ≈ 0.50 → le cap 2M est le vrai bottleneck (ou rien à
+  gagner sur le ratio actuel). Passer à Phase 1.
+
+**Coût** : ~€2-3 (training + bench). Scraping FMJD : 1-2 jours dev,
+0 € compute si on est respectueux du serveur.
+
+### Phase 1 — Pattern training fixes (anciennement Phase 1 de PATTERN_ROADMAP)
+
+Si Phase 0 et 0b n'ont pas cassé le plafond, on passe à l'axe architecture.
+Le détail est dans `PATTERN_ROADMAP.md` — résumé : améliorer `train_pattern.py`
+avec warmup, lr schedule, L2 weight decay, augmentation par symétrie,
+normalisation des scores. Re-train v2 et voir si rate vs v5 d10 dépasse 0.20.
+
+### Phase 2 — Pattern self-play iteration (anciennement Phase 2)
+
+Co-évolution façon Scan : auto-jeu, données générées, retrain, itérer. Voir
+`PATTERN_ROADMAP.md` pour détail.
+
+### Phase 3 — Scale up pattern set (anciennement Phase 3)
+
+32-64 patterns ou patterns plus longs (12-16 squares). Voir `PATTERN_ROADMAP.md`.
+
+---
+
+## Pourquoi cet ordering est plus rationnel
+
+Le doc de veille `ANALYSE_VEILLE_NNUE.md` arguait que l'archi était le plafond
+probable. La biblio confirme cette thèse théorique MAIS introduit un précédent
+empirique critique :
+
+> Stockfish nnue-pytorch dev a cru à un problème d'archi (≈-700 ELO), a en
+> fait diagnostiqué un problème de data preparation, l'a fixé avec un
+> filtrage quiet, et est devenu compétitif.
+
+C'est exactement le genre de piège dans lequel on pourrait tomber : passer
+des semaines à reconstruire un pattern engine alors qu'une vingtaine de
+lignes de C++ dans `--gen-data-wdl` font le job.
+
+**L'ordering Phase 0 → 0b → 1 → 2 → 3** maximise le ratio gain/risque :
+on dépense d'abord les fixes triviaux qui ont un précédent empirique,
+on remonte vers les changements d'architecture seulement si nécessaire.
+
+---
+
+## Effort sequencing
+
+| Phase | Effort code | Effort training | Effort wall total | Coût | Decision si succès |
+|---|---|---|---|---|---|
+| **0** quiet filter | 30 min C++ | ~1 jour gen + 1h train + bench | ~1-2 jours | ~€2 | Généraliser, retrain full volume |
+| **0b** master volume | ~2 jours (fetch refresh + FMJD scraper) | 1h train + bench | ~3-7 jours wall (api rate-limited fetch) | ~€3 | Setup refresh continu |
+| **1** pattern tuning | ~3-5h Python | 1h train + bench | ~1 semaine wall | ~€5 | Phase 2 |
+| **2** self-play loop | ~5-10h C++/Python | 24-48h × 10 iter ~ 2-3 sem wall | 3-4 sem | ~€20-40 | Phase 3 |
+| **3** scale up | ~5-15h | weeks | 1-2 mois | ~€50-100 | Ship as new default |
+
+---
+
+## Quick-wins indépendants (toujours activables en parallèle)
+
+Inchangés depuis `PATTERN_ROADMAP.md` :
+
+- Refresh continu master Lidraughts (Phase 0b couvre)
+- Scraping FMJD (Phase 0b couvre)
+- Améliorations du runner (cleanup branches obsolètes, etc.)
+
+---
+
+## Notes méthodo
+
+1. Tous les benchs vs v5 doivent utiliser **depth 10** comme signal principal
+   (depth 6 est trop bruyant per nos verdicts antérieurs).
+2. La référence absolue reste `calibrate_vs_scan` — quand un cycle franchit
+   un decision gate, vérifier qu'il bouge aussi le score vs Scan, pas
+   seulement vs v5.
+3. Documenter chaque verdict dans un nouveau bloc de `SESSION_LOG_*.md` au
+   fur et à mesure.
