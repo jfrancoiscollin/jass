@@ -108,15 +108,22 @@ net.load("weights.bin");
 const int score = net.evaluate(pos);
 ```
 
-4. To make the *search* use the network, swap the `evaluate(pos)` call
-   in [`src/search.cpp`](../src/search.cpp) for
-   `evaluate_nnue(pos)` (and update the leaf-only `quiescence`
-   accordingly). Re-run the test suite.
+4. To make the *search* use the network, set it on a `SearchLimits`
+   via `limits.nnue = &net` (or `Engine::set_nnue(...)` for the HUB
+   front-end). The leaf eval is dispatched via the `INetwork` virtual
+   call; no source edit in `search.cpp` is required.
 
-A real NNUE pipeline (sparse incremental updates, hidden layers,
-clipped-ReLU) requires more substantial framework changes — the
-single-layer `LinearNetwork` is the proof-of-concept that the loader
-format works.
+The `LinearNetwork` shown above is the smallest concrete `INetwork`
+(historical PoC for the loader format). The real production eval is
+`MLPNetworkQ` — a quantized multi-layer network (HalfMen 450-feature
+input, hidden layers, clipped-ReLU, int8/int16 weights) with an
+incremental Layer-1 accumulator implemented in
+[`src/nnue_accumulator.{hpp,cpp}`](../src/nnue_accumulator.hpp) and
+wired into the search via `SearchState::accumulators`. A
+`PatternNetwork` (Scan-style sum of local pattern scores) also
+implements `INetwork`; the search picks the right path at runtime via
+a `dynamic_cast<const MLPNetworkQ*>` (only MLPNetworkQ uses the
+accumulator fast path).
 
 ---
 
