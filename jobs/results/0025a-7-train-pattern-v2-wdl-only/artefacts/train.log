@@ -1,0 +1,35 @@
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin...
+  1000000 records loaded
+encoding pattern indices (16 patterns)...
+  done, shape=(16, 1000000)
+epoch  0: train_loss=  31701.04  val_mse=88089808.00
+epoch  1: train_loss=  29489.17  val_mse=86914632.00
+epoch  2: train_loss=  28560.37  val_mse=86166240.00
+epoch  3: train_loss=  27960.50  val_mse=85606184.00
+epoch  4: train_loss=  27521.82  val_mse=85154744.00
+epoch  5: train_loss=  27176.98  val_mse=84779856.00
+epoch  6: train_loss=  26895.11  val_mse=84451408.00
+epoch  7: train_loss=  26659.98  val_mse=84171984.00
+epoch  8: train_loss=  26458.13  val_mse=83913528.00
+epoch  9: train_loss=  26283.97  val_mse=83686528.00
+epoch 10: train_loss=  26132.35  val_mse=83463720.00
+epoch 11: train_loss=  25998.67  val_mse=83265568.00
+epoch 12: train_loss=  25881.42  val_mse=83101920.00
+epoch 13: train_loss=  25776.00  val_mse=82915864.00
+epoch 14: train_loss=  25681.68  val_mse=82749128.00
+epoch 15: train_loss=  25596.14  val_mse=82603616.00
+epoch 16: train_loss=  25519.40  val_mse=82465896.00
+epoch 17: train_loss=  25449.93  val_mse=82331328.00
+epoch 18: train_loss=  25387.19  val_mse=82197712.00
+epoch 19: train_loss=  25329.69  val_mse=82074904.00
+epoch 20: train_loss=  25277.08  val_mse=81962344.00
+epoch 21: train_loss=  25228.81  val_mse=81861008.00
+epoch 22: train_loss=  25184.11  val_mse=81745960.00
+epoch 23: train_loss=  25143.28  val_mse=81656056.00
+epoch 24: train_loss=  25105.03  val_mse=81562208.00
+epoch 25: train_loss=  25070.65  val_mse=81464720.00
+epoch 26: train_loss=  25037.52  val_mse=81376584.00
+epoch 27: train_loss=  25007.38  val_mse=81280040.00
+epoch 28: train_loss=  24979.07  val_mse=81205440.00
+epoch 29: train_loss=  24952.67  val_mse=81115416.00
+wrote /root/jass/jobs/results/0025a-7-train-pattern-v2-wdl-only/artefacts.src/pattern-v2-wdl.jpat (25000160 bytes)
