@@ -68,6 +68,37 @@ V2_PATTERNS: list[list[int]] = [
 
 PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS}
 
+# International draughts board is symmetric under horizontal flip. With
+# squares numbered 1..50, 5 per row, 10 rows, the mirror swaps positions
+# within each row of 5: 1↔5, 2↔4, 3↔3, 6↔10, 7↔9, 8↔8, … This doubles
+# the effective training set when applied as augmentation, and is the
+# cheapest data-side fix listed in PATTERN_ROADMAP.md Phase 1.
+def _mirror_square(s: int) -> int:
+    row = (s - 1) // 5
+    col = (s - 1) % 5
+    return row * 5 + (4 - col) + 1
+
+
+# Bit-level mirror map: original bit b (0..49) → mirrored bit. Used to
+# rewrite the four bitboards in one O(50) pass per record. Built once.
+SQUARE_MIRROR = np.array(
+    [_mirror_square(s + 1) - 1 for s in range(50)], dtype=np.uint64
+)
+
+
+def mirror_bitboards(bbs: np.ndarray) -> np.ndarray:
+    """Apply horizontal mirror to a (4, N) array of uint64 bitboards.
+    Returns a new array of the same shape with each set bit relocated
+    to its mirror square."""
+    out = np.zeros_like(bbs)
+    for b in range(50):
+        mask = np.uint64(1) << np.uint64(b)
+        dst  = np.uint64(1) << np.uint64(SQUARE_MIRROR[b])
+        set_in_src = (bbs & mask) != 0
+        out |= dst * set_in_src.astype(np.uint64)
+    return out
+
+
 # JNNW: 4×u64 bitboards (32 B) + 1 B stm + 4 B score + 1 B wdl = 38 B/record.
 JNNW_RECORD = struct.Struct("<QQQQBiB")
 JNNW_RECORD_SIZE = 38
@@ -167,6 +198,125 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
             f.write(quantised.tobytes())
 
 
+def train_one(
+    *,
+    patterns: list[list[int]],
+    pidx_t: torch.Tensor,
+    score_t: torch.Tensor,
+    wdl_t:   torch.Tensor,
+    train_idx: np.ndarray,
+    val_idx:   np.ndarray,
+    seed: int,
+    epochs: int,
+    batch: int,
+    lr: float,
+    lam: float,
+    score_scale: float,
+    weight_decay: float,
+    grad_clip: float,
+    warmup_frac: float,
+    cosine_schedule: bool,
+    tag: str = "",
+) -> PatternModel:
+    """Train one PatternModel and return it. Factored out of `main`
+    so the multi-seed wrapper can call it N times and average."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
+    model = PatternModel(patterns)
+    opt = torch.optim.Adam(model.parameters(), lr=lr,
+                           weight_decay=weight_decay)
+
+    # LR schedule. By default (warmup_frac=0 and cosine_schedule=False)
+    # the LR is constant — matches the legacy behaviour. Otherwise we
+    # combine a linear warmup over `warmup_frac` of total steps, then
+    # either cosine decay to ~zero (cosine_schedule) or hold flat.
+    steps_per_epoch = (len(train_idx) + batch - 1) // batch
+    total_steps     = steps_per_epoch * epochs
+    warmup_steps    = max(1, int(total_steps * warmup_frac)) if warmup_frac > 0 else 0
+    decay_steps     = max(1, total_steps - warmup_steps)
+    use_schedule    = warmup_steps > 0 or cosine_schedule
+
+    def lr_factor(step: int) -> float:
+        if step < warmup_steps:
+            return (step + 1) / warmup_steps
+        if not cosine_schedule:
+            return 1.0
+        # Cosine decay from 1.0 to ~0 over decay_steps.
+        progress = (step - warmup_steps) / decay_steps
+        progress = min(max(progress, 0.0), 1.0)
+        return 0.5 * (1.0 + np.cos(np.pi * progress))
+
+    scheduler = (torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_factor)
+                 if use_schedule else None)
+
+    # `score_scale` divides scores before the MSE so the loss isn't
+    # dominated by raw centipawn² magnitudes. With scale=1 the loss is
+    # identical to the legacy formulation (preserves backward compat).
+    score_scale_sq = score_scale * score_scale
+
+    global_step = 0
+    for epoch in range(epochs):
+        model.train()
+        np.random.shuffle(train_idx)
+        total_loss = 0.0
+        nb = 0
+        for off in range(0, len(train_idx), batch):
+            batch_idx = train_idx[off:off + batch]
+            idx_batch = pidx_t[:, batch_idx]
+            score_batch = score_t[batch_idx]
+            wdl_batch = wdl_t[batch_idx]
+
+            pred = model(idx_batch)
+            # Score MSE — `score_scale` shrinks centipawn² magnitudes so
+            # the BCE term isn't drowned out (default scale=1 → identical
+            # to the legacy formulation).
+            score_mse = F.mse_loss(pred, score_batch) * score_scale_sq
+            # WDL BCE: sigmoid(pred/400) vs (wdl+1)/2.
+            wdl_prob = (wdl_batch + 1.0) * 0.5
+            wdl_bce = F.binary_cross_entropy_with_logits(pred / 400.0, wdl_prob)
+            loss = lam * score_mse + (1.0 - lam) * wdl_bce * 50000.0
+
+            opt.zero_grad()
+            loss.backward()
+            if grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+            opt.step()
+            if scheduler is not None:
+                scheduler.step()
+            total_loss += loss.item()
+            nb += 1
+            global_step += 1
+
+        # Validation.
+        model.eval()
+        with torch.no_grad():
+            val_pred = model(pidx_t[:, val_idx])
+            val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
+        lr_now = opt.param_groups[0]["lr"]
+        print(f"{tag}epoch {epoch:2d}: train_loss={total_loss/nb:10.2f}  "
+              f"val_mse={val_mse:10.2f}  lr={lr_now:.2e}", flush=True)
+
+    return model
+
+
+def average_models(models: list[PatternModel]) -> PatternModel:
+    """Return a new PatternModel whose weights are the per-tensor mean
+    across `models`. Multi-seed averaging is the cheapest variance
+    reduction trick for sparse pattern weights (cf. PATTERN_ROADMAP §1)."""
+    if len(models) == 1:
+        return models[0]
+    import copy
+    avg = copy.deepcopy(models[0])
+    with torch.no_grad():
+        for ti, table in enumerate(avg.tables):
+            stack = torch.stack([m.tables[ti].weight for m in models], dim=0)
+            table.weight.copy_(stack.mean(dim=0))
+        bias_stack = torch.stack([m.bias for m in models], dim=0)
+        avg.bias.copy_(bias_stack.mean(dim=0))
+    return avg
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--data", required=True, type=Path,
@@ -184,6 +334,26 @@ def main(argv: list[str]) -> int:
     p.add_argument("--seed",        type=int, default=42)
     p.add_argument("--patterns", choices=list(PATTERN_SETS.keys()), default="v1",
                    help="which pattern set (v1=8×4, v2=16×8 full-coverage)")
+
+    # Phase 1 (cf. PATTERN_ROADMAP §1 / Phase 1 ROADMAP) — all default
+    # to off / 1.0 so legacy callers keep identical behaviour.
+    p.add_argument("--symmetry", action="store_true",
+                   help="augment dataset by horizontal mirror (free ×2 data, "
+                        "draughts board is L-R symmetric)")
+    p.add_argument("--score-scale", type=float, default=1.0,
+                   help="divide score-MSE by this scale² so it doesn't drown "
+                        "the BCE term (try 0.01 for v2 sparse patterns)")
+    p.add_argument("--weight-decay", type=float, default=0.0,
+                   help="L2 weight decay passed to Adam")
+    p.add_argument("--grad-clip", type=float, default=0.0,
+                   help="clip gradient norm to this value (0 = off)")
+    p.add_argument("--warmup-frac", type=float, default=0.0,
+                   help="fraction of total steps used for linear LR warmup")
+    p.add_argument("--cosine-schedule", action="store_true",
+                   help="apply cosine LR decay after warmup")
+    p.add_argument("--num-seeds", type=int, default=1,
+                   help="train N independent runs and average their weights "
+                        "(seeds = --seed, --seed+1, …)")
     args = p.parse_args(argv)
 
     patterns = PATTERN_SETS[args.patterns]
@@ -195,6 +365,18 @@ def main(argv: list[str]) -> int:
     bbs, stm, score, wdl = load_jnnw(args.data, args.max_records)
     n = bbs.shape[1]
     print(f"  {n} records loaded", flush=True)
+
+    if args.symmetry:
+        print("augmenting with horizontal mirror (×2)...", flush=True)
+        bbs_m = mirror_bitboards(bbs)
+        # Mirror preserves STM, score and wdl (L-R is a pure spatial
+        # symmetry that doesn't change colour-to-move or outcome).
+        bbs   = np.concatenate([bbs, bbs_m],   axis=1)
+        stm   = np.concatenate([stm, stm.copy()])
+        score = np.concatenate([score, score.copy()])
+        wdl   = np.concatenate([wdl, wdl.copy()])
+        n = bbs.shape[1]
+        print(f"  augmented dataset: {n} records", flush=True)
 
     print(f"encoding pattern indices ({len(patterns)} patterns)...", flush=True)
     pidx = pattern_indices(bbs, patterns)
@@ -218,41 +400,34 @@ def main(argv: list[str]) -> int:
     score_t = torch.from_numpy(score_w)
     wdl_t   = torch.from_numpy(wdl_w)
 
-    model = PatternModel(patterns)
-    opt = torch.optim.Adam(model.parameters(), lr=args.lr)
+    common_kwargs = dict(
+        patterns=patterns, pidx_t=pidx_t, score_t=score_t, wdl_t=wdl_t,
+        train_idx=train_idx, val_idx=val_idx,
+        epochs=args.epochs, batch=args.batch, lr=args.lr, lam=args.lam,
+        score_scale=args.score_scale, weight_decay=args.weight_decay,
+        grad_clip=args.grad_clip, warmup_frac=args.warmup_frac,
+        cosine_schedule=args.cosine_schedule,
+    )
 
-    for epoch in range(args.epochs):
-        model.train()
-        np.random.shuffle(train_idx)
-        total_loss = 0.0
-        nb = 0
-        for off in range(0, len(train_idx), args.batch):
-            batch_idx = train_idx[off:off + args.batch]
-            idx_batch = pidx_t[:, batch_idx]
-            score_batch = score_t[batch_idx]
-            wdl_batch = wdl_t[batch_idx]
+    models: list[PatternModel] = []
+    for s in range(args.num_seeds):
+        seed = args.seed + s
+        tag = f"[seed {seed}] " if args.num_seeds > 1 else ""
+        if args.num_seeds > 1:
+            print(f"=== run {s+1}/{args.num_seeds} (seed {seed}) ===", flush=True)
+        models.append(train_one(seed=seed, tag=tag, **common_kwargs))
 
-            pred = model(idx_batch)
-            # Score MSE in centipawn space.
-            score_mse = F.mse_loss(pred, score_batch)
-            # WDL BCE: sigmoid(pred/400) vs (wdl+1)/2.
-            wdl_prob = (wdl_batch + 1.0) * 0.5
-            wdl_bce = F.binary_cross_entropy_with_logits(pred / 400.0, wdl_prob)
-            loss = args.lam * score_mse + (1.0 - args.lam) * wdl_bce * 50000.0
+    if args.num_seeds > 1:
+        print(f"averaging {args.num_seeds} models...", flush=True)
+    model = average_models(models)
 
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
-            total_loss += loss.item()
-            nb += 1
-
-        # Validation.
-        model.eval()
-        with torch.no_grad():
-            val_pred = model(pidx_t[:, val_idx])
-            val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
-        print(f"epoch {epoch:2d}: train_loss={total_loss/nb:10.2f}  val_mse={val_mse:10.2f}",
-              flush=True)
+    # Final validation on the averaged model so we report a number
+    # that matches what gets saved to disk.
+    model.eval()
+    with torch.no_grad():
+        val_pred = model(pidx_t[:, val_idx])
+        val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
+    print(f"final (saved) val_mse={val_mse:10.2f}", flush=True)
 
     save_jpat(model, patterns, args.out)
     sz = args.out.stat().st_size
