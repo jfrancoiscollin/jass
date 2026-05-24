@@ -1,7 +1,9 @@
 {
   "job_id": "0025a-6-train-pattern-v2",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-24T06:07:31+00:00",
+  "ended_at": "2026-05-24T06:12:41+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 391718
+  "artefacts_server_path": "/root/jass/jobs/results/0025a-6-train-pattern-v2/artefacts.src"
 }
