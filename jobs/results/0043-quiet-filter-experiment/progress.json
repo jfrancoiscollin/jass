@@ -1,13 +1,13 @@
 {
   "job_id": "0043-quiet-filter-experiment",
-  "snapshot_at": "2026-05-24T22:38:11+00:00",
+  "snapshot_at": "2026-05-24T22:43:20+00:00",
   "started_at": "2026-05-24T10:47:59+00:00",
-  "elapsed_seconds": 42612,
+  "elapsed_seconds": 42921,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 902882,
-      "records": 23759
+      "size_bytes": 911090,
+      "records": 23975
     },
     {
       "name": "shard-1.log",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 894674,
-      "records": 23543
+      "size_bytes": 902882,
+      "records": 23759
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 911090,
-      "records": 23975
+      "size_bytes": 919298,
+      "records": 24191
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 902882,
-      "records": 23759
+      "size_bytes": 911090,
+      "records": 23975
     },
     {
       "name": "shard-4.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1    11:50:12  0.0  0.0 bash\n 400957  400955    11:50:12  0.0  0.0 bash\n 401039  400957    11:50:09  0.0  0.0 bash\n 401040  400957    11:50:09  0.0  0.0 bash\n 401041  400957    11:50:09  0.0  0.0 bash\n 401044  400957    11:50:09  0.0  0.0 bash\n 401047  401040    11:50:09 99.8  0.2 jass\n 401048  401044    11:50:09 99.8  0.2 jass\n 401049  401039    11:50:09 99.8  0.2 jass\n 401050  401041    11:50:09 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1    11:55:21  0.0  0.0 bash\n 400957  400955    11:55:21  0.0  0.0 bash\n 401039  400957    11:55:18  0.0  0.0 bash\n 401040  400957    11:55:18  0.0  0.0 bash\n 401041  400957    11:55:18  0.0  0.0 bash\n 401044  400957    11:55:18  0.0  0.0 bash\n 401047  401040    11:55:18 99.8  0.2 jass\n 401048  401044    11:55:18 99.8  0.2 jass\n 401049  401039    11:55:18 99.8  0.2 jass\n 401050  401041    11:55:18 99.8  0.2 jass\n"
 }
