@@ -239,18 +239,23 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          max_plies        = 200;
     int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
     const char*  nnue_path        = nullptr;
+    bool         quiet_only       = false;  // skip positions with mandatory captures
 
-    // Scan for `--nnue PATH` anywhere in the args; consume the pair and
-    // keep the rest as the historical positional slots so existing
-    // invocations stay backward-compatible. Without --nnue we fall back
-    // to the embedded default network — that's the Cycle 8 / pre-v5
-    // behaviour the depth-20 1M dataset (0010) was labelled with.
+    // Scan for `--nnue PATH` and `--quiet-only` anywhere in the args;
+    // consume them and keep the rest as the historical positional slots
+    // so existing invocations stay backward-compatible. Without --nnue
+    // we fall back to the embedded default network — that's the Cycle 8
+    // / pre-v5 behaviour the depth-20 1M dataset (0010) was labelled
+    // with. Without --quiet-only the sampler keeps the historical
+    // 1-ply-in-4 unfiltered behaviour.
     std::vector<char*> positional;
     positional.reserve(static_cast<std::size_t>(argc));
     for (int i = 0; i < argc; ++i) {
         const std::string_view a{argv[i]};
         if (a == "--nnue" && i + 1 < argc) {
             nnue_path = argv[++i];
+        } else if (a == "--quiet-only") {
+            quiet_only = true;
         } else {
             positional.push_back(argv[i]);
         }
@@ -287,6 +292,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " max_plies=" << max_plies
               << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
+              << " quiet_only=" << (quiet_only ? "true" : "false")
               << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
@@ -373,8 +379,22 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             }
 
             // Sample roughly every fourth ply, while we still have budget
-            // and the buffer isn't huge.
-            if ((rng() & 3) == 0 && generated + static_cast<int>(game_samples.size()) < n) {
+            // and the buffer isn't huge. When `quiet_only` is set, skip
+            // tactical positions (where the side to move must capture) —
+            // their `score` label is the eval of THIS position but the
+            // search will immediately play out the forced capture chain,
+            // so the label is systematically wrong by the value of the
+            // pending tactics. Filtering these is the analog of
+            // Stockfish nnue-pytorch's `ensure_quiet` flag, which fixed
+            // their -700 ELO syndrome on the 10M d5 dataset.
+            // generate_legal_moves returns ALL captures OR all quiet
+            // moves (never a mix), so `ml[0].is_capture()` is the
+            // single-check tactical-position signal.
+            const bool position_quiet = !ml[0].is_capture();
+            const bool sample_now     = (rng() & 3) == 0
+                                     && generated + static_cast<int>(game_samples.size()) < n
+                                     && (!quiet_only || position_quiet);
+            if (sample_now) {
                 SearchLimits lim;
                 lim.max_depth = eval_depth;
                 const SearchResult r = e.search(lim);
