@@ -1,0 +1,7 @@
+{
+  "job_id": "0043-quiet-filter-experiment",
+  "script": "jobs/queue/0043-quiet-filter-experiment.sh",
+  "pid": 400955,
+  "started_at": "2026-05-24T10:47:59+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
