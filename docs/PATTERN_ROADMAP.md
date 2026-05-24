@@ -1,8 +1,17 @@
 # Pattern eval roadmap — feuille de route axe architecture
 
+> **Note 2026-05-24 — ordering révisé** : ce doc reste valide pour les
+> phases pattern elles-mêmes, mais l'**ordering global** des prochaines
+> expériences est désormais piloté par `docs/ROADMAP.md` (post-bibliographie).
+> L'axe pattern y est repositionné en **Phase 1+ après** deux phases data
+> (quiet filter + volume master) qui ont un précédent empirique fort
+> [TalkChess, arXiv 2412.17948]. À lire dans l'ordre : ROADMAP.md →
+> PATTERN_ROADMAP.md (ce doc) pour le détail des phases pattern.
+
 > Rédigé fin de session 2026-05. Décrit où on en est sur l'axe pattern
 > et comment continuer. À lire en complément de `docs/ANALYSE_VEILLE_NNUE.md`
-> (qui pose la motivation) et `docs/SESSION_LOG_2026_05.md` (qui
+> (qui pose la motivation), `docs/REFERENCES_BIBLIOGRAPHIE.md` (qui
+> recadre l'ordering des phases) et `docs/SESSION_LOG_2026_05.md` (qui
 > documente les expériences déjà tentées).
 
 ---
