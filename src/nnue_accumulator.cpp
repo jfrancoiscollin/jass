@@ -2,11 +2,15 @@
 // Copyright (c) 2026 Jean-François Collin
 //
 // See nnue_accumulator.hpp for the full design notes (dual-accumulator
-// HalfMen / Stockfish-HalfKP pattern). This file implements the slow
-// path (`refresh_from`) for both `Accumulator` and `AccumulatorPair`.
-// The fast incremental update (`AccumulatorPair::apply_move`) is still
-// a TODO — it's the larger piece of work and depends on `Position`
-// exposing per-move delta information (which squares changed and how).
+// HalfMen / Stockfish-HalfKP pattern). This file implements:
+//   * the slow path (`refresh_from`) for `Accumulator` and
+//     `AccumulatorPair`,
+//   * the fast incremental update (`AccumulatorPair::apply_move`) for
+//     HalfMen and V2 dense encodings. Returns false on anchor change
+//     or unsupported encodings so the caller can fall back to
+//     refresh_from.
+// Both paths are wired into search via `SearchState::accumulators`
+// (see src/search.cpp).
 
 #include "nnue_accumulator.hpp"
 
