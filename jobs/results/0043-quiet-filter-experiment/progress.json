@@ -1,8 +1,8 @@
 {
   "job_id": "0043-quiet-filter-experiment",
-  "snapshot_at": "2026-05-24T15:29:34+00:00",
+  "snapshot_at": "2026-05-24T15:34:35+00:00",
   "started_at": "2026-05-24T10:47:59+00:00",
-  "elapsed_seconds": 16895,
+  "elapsed_seconds": 17196,
   "artefacts": [
     {
       "name": "shard-1.bin",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 344738,
-      "records": 9071
+      "size_bytes": 352946,
+      "records": 9287
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 377570,
-      "records": 9935
+      "size_bytes": 385778,
+      "records": 10151
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 361154,
-      "records": 9503
+      "size_bytes": 369362,
+      "records": 9719
     },
     {
       "name": "shard-4.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1    04:41:35  0.0  0.0 bash\n 400957  400955    04:41:35  0.0  0.0 bash\n 401039  400957    04:41:32  0.0  0.0 bash\n 401040  400957    04:41:32  0.0  0.0 bash\n 401041  400957    04:41:32  0.0  0.0 bash\n 401044  400957    04:41:32  0.0  0.0 bash\n 401047  401040    04:41:32 99.9  0.2 jass\n 401048  401044    04:41:32 99.8  0.2 jass\n 401049  401039    04:41:32 99.8  0.2 jass\n 401050  401041    04:41:32 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1    04:46:36  0.0  0.0 bash\n 400957  400955    04:46:36  0.0  0.0 bash\n 401039  400957    04:46:33  0.0  0.0 bash\n 401040  400957    04:46:33  0.0  0.0 bash\n 401041  400957    04:46:33  0.0  0.0 bash\n 401044  400957    04:46:33  0.0  0.0 bash\n 401047  401040    04:46:33 99.9  0.2 jass\n 401048  401044    04:46:33 99.8  0.2 jass\n 401049  401039    04:46:33 99.8  0.2 jass\n 401050  401041    04:46:33 99.8  0.2 jass\n"
 }
