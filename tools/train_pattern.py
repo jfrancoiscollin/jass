@@ -45,6 +45,29 @@ V1_PATTERNS: list[list[int]] = [
     [44, 45, 49, 50],   # SE
 ]
 
+# v2 pattern set — 16 patterns × 8 squares, full coverage with overlap.
+# Keep in sync with V2_PATTERNS in pattern_network.cpp.
+V2_PATTERNS: list[list[int]] = [
+    [ 1,  2,  6,  7, 11, 12, 16, 17],
+    [ 2,  3,  7,  8, 12, 13, 17, 18],
+    [ 3,  4,  8,  9, 13, 14, 18, 19],
+    [ 4,  5,  9, 10, 14, 15, 19, 20],
+    [11, 12, 16, 17, 21, 22, 26, 27],
+    [12, 13, 17, 18, 22, 23, 27, 28],
+    [13, 14, 18, 19, 23, 24, 28, 29],
+    [14, 15, 19, 20, 24, 25, 29, 30],
+    [21, 22, 26, 27, 31, 32, 36, 37],
+    [22, 23, 27, 28, 32, 33, 37, 38],
+    [23, 24, 28, 29, 33, 34, 38, 39],
+    [24, 25, 29, 30, 34, 35, 39, 40],
+    [31, 32, 36, 37, 41, 42, 46, 47],
+    [32, 33, 37, 38, 42, 43, 47, 48],
+    [33, 34, 38, 39, 43, 44, 48, 49],
+    [34, 35, 39, 40, 44, 45, 49, 50],
+]
+
+PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS}
+
 # JNNW: 4×u64 bitboards (32 B) + 1 B stm + 4 B score + 1 B wdl = 38 B/record.
 JNNW_RECORD = struct.Struct("<QQQQBiB")
 JNNW_RECORD_SIZE = 38
@@ -159,7 +182,11 @@ def main(argv: list[str]) -> int:
                    help="cap on loaded records (0 = full dataset)")
     p.add_argument("--val-frac",    type=float, default=0.05)
     p.add_argument("--seed",        type=int, default=42)
+    p.add_argument("--patterns", choices=list(PATTERN_SETS.keys()), default="v1",
+                   help="which pattern set (v1=8×4, v2=16×8 full-coverage)")
     args = p.parse_args(argv)
+
+    patterns = PATTERN_SETS[args.patterns]
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -169,8 +196,8 @@ def main(argv: list[str]) -> int:
     n = bbs.shape[1]
     print(f"  {n} records loaded", flush=True)
 
-    print(f"encoding pattern indices ({len(V1_PATTERNS)} patterns)...", flush=True)
-    pidx = pattern_indices(bbs, V1_PATTERNS)
+    print(f"encoding pattern indices ({len(patterns)} patterns)...", flush=True)
+    pidx = pattern_indices(bbs, patterns)
     print(f"  done, shape={pidx.shape}", flush=True)
 
     # Sign-flip the score for STM=Black so the network always sees
@@ -191,7 +218,7 @@ def main(argv: list[str]) -> int:
     score_t = torch.from_numpy(score_w)
     wdl_t   = torch.from_numpy(wdl_w)
 
-    model = PatternModel(V1_PATTERNS)
+    model = PatternModel(patterns)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     for epoch in range(args.epochs):
@@ -227,7 +254,7 @@ def main(argv: list[str]) -> int:
         print(f"epoch {epoch:2d}: train_loss={total_loss/nb:10.2f}  val_mse={val_mse:10.2f}",
               flush=True)
 
-    save_jpat(model, V1_PATTERNS, args.out)
+    save_jpat(model, patterns, args.out)
     sz = args.out.stat().st_size
     print(f"wrote {args.out} ({sz} bytes)", flush=True)
     return 0
