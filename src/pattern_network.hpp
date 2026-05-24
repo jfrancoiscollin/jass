@@ -72,6 +72,13 @@ public:
     // Useful for tests; production callers should load() trained weights.
     static PatternNetwork default_v1();
 
+    // V2 default pattern set: 16 patterns × 8 squares each, full
+    // coverage of the 50 playable squares with overlap (each square is
+    // in 1-4 patterns). Scan-class scale — ~6.25M weights total
+    // (25 MB JPAT on disk). The architectural test the literature
+    // points at for 10×10 draughts.
+    static PatternNetwork default_v2();
+
     int evaluate(const Position& pos) const noexcept override;
 
     // Add a pattern (squares). Weights are initialised to zero. The
