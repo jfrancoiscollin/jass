@@ -1,9 +1,14 @@
 {
   "job_id": "0043-quiet-filter-experiment",
-  "snapshot_at": "2026-05-25T12:06:01+00:00",
+  "snapshot_at": "2026-05-25T12:11:02+00:00",
   "started_at": "2026-05-24T10:47:59+00:00",
-  "elapsed_seconds": 91082,
+  "elapsed_seconds": 91383,
   "artefacts": [
+    {
+      "name": "nnue-128-64.bin",
+      "size_bytes": 264220,
+      "records": 6952
+    },
     {
       "name": "nnue-64-32.bin",
       "size_bytes": 123932,
@@ -71,5 +76,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1  1-01:18:01  0.0  0.0 bash\n 400957  400955  1-01:18:01  0.0  0.0 bash\n 420834  400957       24:43  181 73.9 python3\n 420835  400957       24:43  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400955       1  1-01:23:03  0.0  0.0 bash\n 400957  400955  1-01:23:03  0.0  0.0 bash\n 420834  400957       29:44  181 74.0 python3\n 420835  400957       29:44  0.0  0.0 tee\n"
 }
