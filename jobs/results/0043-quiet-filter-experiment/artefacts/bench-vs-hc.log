@@ -1,0 +1,3 @@
+Benchmark: NNUE (/root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-256-128-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=18 Handcrafted=0 Draws=0 (total 18)
+NNUE score rate: 1 (18 / 18)

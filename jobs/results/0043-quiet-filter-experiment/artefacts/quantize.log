@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-256-128.bin …
+  topology: 450 → 256 → 128 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/quiet-only-200K.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.023094 sw2=0.038588 sw3=0.053251 sh1=0.055956 sh2=0.46175
+  multipliers: mul1=0.41272 mul2=0.0046762 mul_out=0.024589
+  reference range: float [-1877.8, 1727.1], quantised [-2333.9, 1776.9]
+  diff: mean=+9.54  std=43.98  |max|=528.28  RMSE=45.00
+wrote /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-256-128-q.bin (149672 bytes)

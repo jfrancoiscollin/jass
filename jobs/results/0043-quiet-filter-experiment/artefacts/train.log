@@ -1,0 +1,131 @@
+loading /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/quiet-only-200K.bin (encoding=halfmen, input_dim=450) …
+  200000 self-play records  (0.6s to encode)
+  WDL distribution: W=34.6% D=28.8% L=36.6%
+  score range: [-29998, 29999]  mean=-310.8  std=8129.7
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.3s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 2200000 records (200000 self-play + 2000000 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train=  41802.6  val= 122116.4 *
+  epoch   2: train=  38115.4  val= 115550.1 *
+  epoch   3: train=  37466.5  val=  94218.6 *
+  epoch   4: train=  36228.0  val=  79512.7 *
+  epoch   5: train=  35353.3  val=  71428.2 *
+  epoch   6: train=  34846.3  val=  66696.2 *
+  epoch   7: train=  34500.0  val=  64333.0 *
+  epoch   8: train=  34259.1  val=  61915.2 *
+  epoch   9: train=  34090.2  val=  62225.2
+  epoch  10: train=  33953.8  val=  58972.9 *
+  epoch  11: train=  33848.5  val=  60936.0
+  epoch  12: train=  33759.3  val=  59684.0
+  epoch  13: train=  33689.0  val=  56760.8 *
+  epoch  14: train=  33616.7  val=  57844.1
+  epoch  15: train=  33561.3  val=  58564.7
+  epoch  16: train=  33509.5  val=  57663.8
+  epoch  17: train=  33464.2  val=  56452.6 *
+  epoch  18: train=  33414.9  val=  57444.9
+  epoch  19: train=  33375.2  val=  56938.0
+  epoch  20: train=  33336.2  val=  56591.8
+  epoch  21: train=  33301.7  val=  56042.1 *
+  epoch  22: train=  33269.4  val=  56584.9
+  epoch  23: train=  33236.9  val=  58085.4
+  epoch  24: train=  33201.3  val=  57111.9
+  epoch  25: train=  33170.7  val=  56937.7
+  epoch  26: train=  33138.3  val=  56613.3
+  epoch  27: train=  33113.6  val=  57151.9
+  epoch  28: train=  33091.3  val=  56927.5
+  epoch  29: train=  33062.4  val=  55399.6 *
+  epoch  30: train=  33043.3  val=  56699.6
+  wrote /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  40618.4  val= 116598.8 *
+  epoch   2: train=  37545.3  val=  90679.4 *
+  epoch   3: train=  35806.0  val=  70988.1 *
+  epoch   4: train=  34927.2  val=  66010.6 *
+  epoch   5: train=  34415.8  val=  64171.3 *
+  epoch   6: train=  34106.8  val=  59850.6 *
+  epoch   7: train=  33881.6  val=  60177.5
+  epoch   8: train=  33714.6  val=  57451.1 *
+  epoch   9: train=  33591.0  val=  59220.9
+  epoch  10: train=  33479.7  val=  57584.1
+  epoch  11: train=  33378.0  val=  58498.0
+  epoch  12: train=  33291.4  val=  58877.6
+  epoch  13: train=  33216.5  val=  55403.5 *
+  epoch  14: train=  33132.7  val=  56649.9
+  epoch  15: train=  33069.8  val=  55957.7
+  epoch  16: train=  33002.6  val=  56456.8
+  epoch  17: train=  32941.1  val=  55367.6 *
+  epoch  18: train=  32881.8  val=  56407.4
+  epoch  19: train=  32826.5  val=  56257.5
+  epoch  20: train=  32773.5  val=  55912.1
+  epoch  21: train=  32725.3  val=  57935.0
+  epoch  22: train=  32683.0  val=  56953.7
+  epoch  23: train=  32639.5  val=  58003.8
+  epoch  24: train=  32594.8  val=  58494.3
+  epoch  25: train=  32555.5  val=  59396.8
+  early-stop at epoch 25
+  wrote /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  39909.8  val= 112634.4 *
+  epoch   2: train=  36636.9  val=  79107.9 *
+  epoch   3: train=  35077.3  val=  64959.1 *
+  epoch   4: train=  34343.2  val=  61246.9 *
+  epoch   5: train=  33960.1  val=  61266.0
+  epoch   6: train=  33712.0  val=  56988.5 *
+  epoch   7: train=  33492.8  val=  58340.9
+  epoch   8: train=  33294.9  val=  55085.9 *
+  epoch   9: train=  33135.4  val=  58072.6
+  epoch  10: train=  32991.2  val=  55441.1
+  epoch  11: train=  32856.7  val=  56296.5
+  epoch  12: train=  32736.8  val=  58283.6
+  epoch  13: train=  32637.2  val=  54140.4 *
+  epoch  14: train=  32525.1  val=  56634.6
+  epoch  15: train=  32433.0  val=  55157.2
+  epoch  16: train=  32343.1  val=  55679.8
+  epoch  17: train=  32253.9  val=  56804.4
+  epoch  18: train=  32186.0  val=  56419.3
+  epoch  19: train=  32100.5  val=  57936.6
+  epoch  20: train=  32033.0  val=  57425.0
+  epoch  21: train=  31964.2  val=  59431.5
+  early-stop at epoch 21
+  wrote /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  39132.8  val=  87929.3 *
+  epoch   2: train=  35442.8  val=  66663.2 *
+  epoch   3: train=  34379.9  val=  59879.9 *
+  epoch   4: train=  33896.6  val=  58515.3 *
+  epoch   5: train=  33550.8  val=  58199.9 *
+  epoch   6: train=  33269.5  val=  55443.4 *
+  epoch   7: train=  32996.9  val=  58112.5
+  epoch   8: train=  32754.5  val=  54785.1 *
+  epoch   9: train=  32548.5  val=  57522.0
+  epoch  10: train=  32347.8  val=  54677.8 *
+  epoch  11: train=  32158.1  val=  57115.9
+  epoch  12: train=  31994.1  val=  59208.9
+  epoch  13: train=  31844.5  val=  55916.3
+  epoch  14: train=  31690.5  val=  58071.6
+  epoch  15: train=  31558.2  val=  58542.1
+  epoch  16: train=  31425.4  val=  57512.1
+  epoch  17: train=  31302.9  val=  61518.5
+  epoch  18: train=  31202.6  val=  60123.4
+  early-stop at epoch 18
+  wrote /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  256-128            148,481     54140.4      232.7     718s
+  512-256            362,497     54677.8      233.8     840s
+  128-64              66,049     55367.6      235.3     712s
+  64-32               30,977     55399.6      235.4     792s
+
+summary → /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/summary.json
