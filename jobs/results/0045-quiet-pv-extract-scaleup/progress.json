@@ -1,0 +1,45 @@
+{
+  "job_id": "0045-quiet-pv-extract-scaleup",
+  "snapshot_at": "2026-05-25T15:03:05+00:00",
+  "started_at": "2026-05-25T14:58:04+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": "shard-1.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "shard-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-2.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-3.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "shard-4.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "shard-4.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1       05:00  0.0  0.0 bash\n 422468  422466       05:00  0.0  0.0 bash\n 422520  422468       05:00  0.0  0.0 bash\n 422522  422468       05:00  0.0  0.0 bash\n 422523  422468       05:00  0.0  0.0 bash\n 422526  422468       05:00  0.0  0.0 bash\n 422527  422520       05:00 99.8  0.2 jass\n 422529  422523       05:00 99.8  0.1 jass\n 422530  422522       05:00 99.8  0.2 jass\n 422531  422526       05:00 99.8  0.2 jass\n"
+}
