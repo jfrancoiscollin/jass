@@ -1,0 +1,7 @@
+{
+  "job_id": "0045-quiet-pv-extract-scaleup",
+  "state": "running",
+  "started_at": "2026-05-25T14:58:04+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 422466
+}
