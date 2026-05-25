@@ -1,7 +1,0 @@
-{
-  "job_id": "0046-train-pattern-v2-phase1-tuned",
-  "script": "jobs/queue/0046-train-pattern-v2-phase1-tuned.sh",
-  "pid": 421385,
-  "started_at": "2026-05-25T12:42:16+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
