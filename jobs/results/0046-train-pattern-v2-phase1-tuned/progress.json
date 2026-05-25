@@ -1,0 +1,13 @@
+{
+  "job_id": "0046-train-pattern-v2-phase1-tuned",
+  "snapshot_at": "2026-05-25T12:47:31+00:00",
+  "started_at": "2026-05-25T12:42:16+00:00",
+  "elapsed_seconds": 315,
+  "artefacts": [
+    {
+      "name": "train.log",
+      "size_bytes": 2757
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 421385       1       05:14  0.0  0.0 bash\n 421387  421385       05:14  0.0  0.0 bash\n 421491  421387       05:09  198  5.5 python3\n 421492  421387       05:09  0.0  0.0 tee\n"
+}
