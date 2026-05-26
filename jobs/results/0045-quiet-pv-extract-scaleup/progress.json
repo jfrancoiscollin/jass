@@ -1,17 +1,26 @@
 {
   "job_id": "0045-quiet-pv-extract-scaleup",
-  "snapshot_at": "2026-05-26T08:45:51+00:00",
+  "snapshot_at": "2026-05-26T08:51:11+00:00",
   "started_at": "2026-05-25T14:58:04+00:00",
-  "elapsed_seconds": 64067,
+  "elapsed_seconds": 64387,
   "artefacts": [
     {
+      "name": "quiet-pv-500K.bin",
+      "size_bytes": 19000008,
+      "records": 500000
+    },
+    {
       "name": "shard-1.bin",
-      "size_bytes": 4727810,
-      "records": 124415
+      "size_bytes": 4750008,
+      "records": 125000
     },
     {
       "name": "shard-1.log",
-      "size_bytes": 0
+      "size_bytes": 1795
+    },
+    {
+      "name": "shard-1.result",
+      "size_bytes": 8
     },
     {
       "name": "shard-2.bin",
@@ -51,7 +60,11 @@
     {
       "name": "shard-4.result",
       "size_bytes": 8
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    17:47:46  0.0  0.0 bash\n 422468  422466    17:47:46  0.0  0.0 bash\n 422520  422468    17:47:46  0.0  0.0 bash\n 422527  422520    17:47:46 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    17:53:06  0.0  0.0 bash\n 422468  422466    17:53:06  0.0  0.0 bash\n 434657  422468       02:46  172 80.8 python3\n 434658  422468       02:46  0.0  0.0 tee\n"
 }
