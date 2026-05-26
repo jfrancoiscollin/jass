@@ -1,0 +1,7 @@
+{
+  "job_id": "0048-d1-hybrid-pattern-v2",
+  "script": "jobs/queue/0048-d1-hybrid-pattern-v2.sh",
+  "pid": 436059,
+  "started_at": "2026-05-26T11:30:11+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
