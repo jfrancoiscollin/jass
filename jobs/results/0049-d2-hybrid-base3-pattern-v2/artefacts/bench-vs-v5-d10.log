@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0049-d2-hybrid-base3-pattern-v2/artefacts.src/pattern-v2-d2-hybrid-base3.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
