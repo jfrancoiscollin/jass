@@ -299,6 +299,108 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
             f.write(quantised.tobytes())
 
 
+def _train_lbfgs(
+    *,
+    model: PatternModel,
+    train_idx: np.ndarray,
+    val_idx:   np.ndarray,
+    epochs: int,
+    lr: float,
+    grad_clip: float,
+    l2: float,
+    lbfgs_max_iter: int,
+    lbfgs_history: int,
+    early_stop_patience: int,
+    score_t: torch.Tensor,
+    pidx_t: torch.Tensor,
+    hybrid: bool,
+    mat_diff_t,
+    king_diff_t,
+    forward,
+    loss,
+    tag: str,
+) -> "PatternModel":
+    """G1 path: full-batch L-BFGS on the convex pattern loss.
+
+    Rationale (cf. docs/SCAN_METHODOLOGY_GAP.md §G1): the loss
+    `λ·MSE + (1-λ)·BCE` is globally convex in pattern weights (linear
+    embedding lookups + scalar bias/skeleton params). Adam on minibatches
+    oscillates around the minimum on this kind of objective; L-BFGS with
+    strong-Wolfe line search converges in dozens of full-batch iterations.
+    Each `opt.step(closure)` call performs up to `lbfgs_max_iter` inner
+    line-search iterations, so `epochs` here is the OUTER iteration count.
+
+    Manual L2 regularisation: PyTorch LBFGS doesn't support weight_decay,
+    but the convex objective combined with no regularisation can overfit
+    sharply on small / WDL-only datasets (smoke test on master games:
+    train loss ↘, val MSE ↗ x20 across 10 iters). L2 is added inside the
+    closure when l2 > 0.
+
+    Early stopping: if val MSE doesn't improve over `early_stop_patience`
+    consecutive outer iterations, training halts and the best-val
+    checkpoint is restored.
+    """
+    opt = torch.optim.LBFGS(
+        model.parameters(),
+        lr=lr,
+        max_iter=lbfgs_max_iter,
+        history_size=lbfgs_history,
+        line_search_fn="strong_wolfe",
+    )
+
+    import copy
+    best_val   = float("inf")
+    best_state = copy.deepcopy(model.state_dict())
+    stale      = 0
+
+    for epoch in range(epochs):
+        model.train()
+
+        def closure():
+            opt.zero_grad()
+            pred = forward(train_idx)
+            l    = loss(pred, train_idx)
+            if l2 > 0:
+                reg = sum((p * p).sum() for p in model.parameters())
+                l = l + 0.5 * l2 * reg
+            l.backward()
+            if grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+            return l
+
+        train_loss = opt.step(closure).item()
+
+        # Validation
+        model.eval()
+        with torch.no_grad():
+            val_pred = forward(val_idx)
+            val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
+        extra = ""
+        if hybrid:
+            extra = (f"  man={model.man_value.item():6.1f}"
+                     f"  king={model.king_value.item():6.1f}")
+        marker = ""
+        if val_mse < best_val:
+            best_val   = val_mse
+            best_state = copy.deepcopy(model.state_dict())
+            stale      = 0
+            marker     = " *"
+        else:
+            stale += 1
+        print(f"{tag}iter {epoch:2d}: train_loss={train_loss:10.2f}  "
+              f"val_mse={val_mse:10.2f}{extra}{marker}", flush=True)
+        if stale >= early_stop_patience > 0:
+            print(f"{tag}early stop: no val improvement for "
+                  f"{early_stop_patience} iters (best val_mse={best_val:.2f})",
+                  flush=True)
+            break
+
+    # Restore best-val checkpoint so the saved JPAT reflects the
+    # generalising model rather than the last (potentially overfit) one.
+    model.load_state_dict(best_state)
+    return model
+
+
 def train_one(
     *,
     patterns: list[list[int]],
@@ -323,6 +425,10 @@ def train_one(
     init_man:  float = 100.0,
     init_king: float = 300.0,
     base: int = 5,
+    optimizer_kind: str = "adam",
+    lbfgs_max_iter: int = 20,
+    lbfgs_history: int = 10,
+    lbfgs_early_stop_patience: int = 5,
     tag: str = "",
 ) -> PatternModel:
     """Train one PatternModel and return it. Factored out of `main`
@@ -336,13 +442,45 @@ def train_one(
                                    init_man=init_man, init_king=init_king)
     else:
         model = PatternModel(patterns, base=base)
+
+    # `score_scale` divides scores before the MSE so the loss isn't
+    # dominated by raw centipawn² magnitudes. With scale=1 the loss is
+    # identical to the legacy formulation (preserves backward compat).
+    score_scale_sq = score_scale * score_scale
+
+    def _forward(idx_slice: np.ndarray) -> torch.Tensor:
+        if hybrid:
+            return model(pidx_t[:, idx_slice],
+                         mat_diff_t[idx_slice],
+                         king_diff_t[idx_slice])
+        return model(pidx_t[:, idx_slice])
+
+    def _loss(pred: torch.Tensor, idx_slice: np.ndarray) -> torch.Tensor:
+        score_batch = score_t[idx_slice]
+        wdl_batch   = wdl_t[idx_slice]
+        score_mse = F.mse_loss(pred, score_batch) * score_scale_sq
+        wdl_prob  = (wdl_batch + 1.0) * 0.5
+        wdl_bce   = F.binary_cross_entropy_with_logits(pred / 400.0, wdl_prob)
+        return lam * score_mse + (1.0 - lam) * wdl_bce * 50000.0
+
+    if optimizer_kind == "lbfgs":
+        return _train_lbfgs(
+            model=model, train_idx=train_idx, val_idx=val_idx,
+            epochs=epochs, lr=lr, grad_clip=grad_clip,
+            l2=weight_decay,
+            lbfgs_max_iter=lbfgs_max_iter, lbfgs_history=lbfgs_history,
+            early_stop_patience=lbfgs_early_stop_patience,
+            score_t=score_t, pidx_t=pidx_t, hybrid=hybrid,
+            mat_diff_t=mat_diff_t, king_diff_t=king_diff_t,
+            forward=_forward, loss=_loss, tag=tag,
+        )
+
+    # ---- Adam path (legacy minibatch) ----
     opt = torch.optim.Adam(model.parameters(), lr=lr,
                            weight_decay=weight_decay)
 
     # LR schedule. By default (warmup_frac=0 and cosine_schedule=False)
-    # the LR is constant — matches the legacy behaviour. Otherwise we
-    # combine a linear warmup over `warmup_frac` of total steps, then
-    # either cosine decay to ~zero (cosine_schedule) or hold flat.
+    # the LR is constant — matches the legacy behaviour.
     steps_per_epoch = (len(train_idx) + batch - 1) // batch
     total_steps     = steps_per_epoch * epochs
     warmup_steps    = max(1, int(total_steps * warmup_frac)) if warmup_frac > 0 else 0
@@ -354,7 +492,6 @@ def train_one(
             return (step + 1) / warmup_steps
         if not cosine_schedule:
             return 1.0
-        # Cosine decay from 1.0 to ~0 over decay_steps.
         progress = (step - warmup_steps) / decay_steps
         progress = min(max(progress, 0.0), 1.0)
         return 0.5 * (1.0 + np.cos(np.pi * progress))
@@ -362,12 +499,6 @@ def train_one(
     scheduler = (torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lr_factor)
                  if use_schedule else None)
 
-    # `score_scale` divides scores before the MSE so the loss isn't
-    # dominated by raw centipawn² magnitudes. With scale=1 the loss is
-    # identical to the legacy formulation (preserves backward compat).
-    score_scale_sq = score_scale * score_scale
-
-    global_step = 0
     for epoch in range(epochs):
         model.train()
         np.random.shuffle(train_idx)
@@ -375,25 +506,8 @@ def train_one(
         nb = 0
         for off in range(0, len(train_idx), batch):
             batch_idx = train_idx[off:off + batch]
-            idx_batch = pidx_t[:, batch_idx]
-            score_batch = score_t[batch_idx]
-            wdl_batch = wdl_t[batch_idx]
-
-            if hybrid:
-                pred = model(idx_batch,
-                             mat_diff_t[batch_idx],
-                             king_diff_t[batch_idx])
-            else:
-                pred = model(idx_batch)
-            # Score MSE — `score_scale` shrinks centipawn² magnitudes so
-            # the BCE term isn't drowned out (default scale=1 → identical
-            # to the legacy formulation).
-            score_mse = F.mse_loss(pred, score_batch) * score_scale_sq
-            # WDL BCE: sigmoid(pred/400) vs (wdl+1)/2.
-            wdl_prob = (wdl_batch + 1.0) * 0.5
-            wdl_bce = F.binary_cross_entropy_with_logits(pred / 400.0, wdl_prob)
-            loss = lam * score_mse + (1.0 - lam) * wdl_bce * 50000.0
-
+            pred = _forward(batch_idx)
+            loss = _loss(pred, batch_idx)
             opt.zero_grad()
             loss.backward()
             if grad_clip > 0:
@@ -403,17 +517,11 @@ def train_one(
                 scheduler.step()
             total_loss += loss.item()
             nb += 1
-            global_step += 1
 
         # Validation.
         model.eval()
         with torch.no_grad():
-            if hybrid:
-                val_pred = model(pidx_t[:, val_idx],
-                                 mat_diff_t[val_idx],
-                                 king_diff_t[val_idx])
-            else:
-                val_pred = model(pidx_t[:, val_idx])
+            val_pred = _forward(val_idx)
             val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
         lr_now = opt.param_groups[0]["lr"]
         extra = ""
@@ -499,10 +607,30 @@ def main(argv: list[str]) -> int:
                         "(empty/white/black; kings folded with men in "
                         "patterns, handled by king_value skeleton). base=3 "
                         "requires --hybrid (otherwise kings are lost).")
+    p.add_argument("--optimizer", choices=["adam", "lbfgs"], default="adam",
+                   help="G1 of docs/SCAN_METHODOLOGY_GAP.md. lbfgs runs "
+                        "full-batch L-BFGS on the convex loss (much better "
+                        "fit than Adam for linear pattern models). "
+                        "Ignores --weight-decay (LBFGS doesn't support it) "
+                        "and --warmup-frac / --cosine-schedule.")
+    p.add_argument("--lbfgs-max-iter",  type=int, default=20,
+                   help="LBFGS inner line-search iterations per outer step")
+    p.add_argument("--lbfgs-history",   type=int, default=10,
+                   help="LBFGS history size (memory of past gradients)")
+    p.add_argument("--lbfgs-early-stop-patience", type=int, default=5,
+                   help="stop LBFGS if val MSE hasn't improved for N "
+                        "outer iters (0 = disabled). Restores best-val "
+                        "checkpoint on exit. Critical because LBFGS without "
+                        "regularisation can overfit aggressively on small "
+                        "or WDL-only datasets.")
     args = p.parse_args(argv)
     if args.pattern_base == 3 and not args.hybrid:
         p.error("--pattern-base 3 requires --hybrid (king info would "
                 "otherwise be lost; cf. docs/SCAN_ARCHITECTURE_NOTES.md §1)")
+    if args.optimizer == "lbfgs" and args.weight_decay > 0:
+        print(f"note: --weight-decay={args.weight_decay} applied as manual "
+              "L2 inside the LBFGS closure (PyTorch LBFGS doesn't support "
+              "weight_decay natively)", flush=True)
 
     patterns = PATTERN_SETS[args.patterns]
 
@@ -572,6 +700,10 @@ def main(argv: list[str]) -> int:
         cosine_schedule=args.cosine_schedule,
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
         base=args.pattern_base,
+        optimizer_kind=args.optimizer,
+        lbfgs_max_iter=args.lbfgs_max_iter,
+        lbfgs_history=args.lbfgs_history,
+        lbfgs_early_stop_patience=args.lbfgs_early_stop_patience,
     )
 
     models: list[PatternModel] = []
