@@ -1,13 +1,13 @@
 {
   "job_id": "0045-quiet-pv-extract-scaleup",
-  "snapshot_at": "2026-05-26T08:35:21+00:00",
+  "snapshot_at": "2026-05-26T08:40:28+00:00",
   "started_at": "2026-05-25T14:58:04+00:00",
-  "elapsed_seconds": 63437,
+  "elapsed_seconds": 63744,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 4645730,
-      "records": 122255
+      "size_bytes": 4686770,
+      "records": 123335
     },
     {
       "name": "shard-1.log",
@@ -53,5 +53,5 @@
       "size_bytes": 8
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    17:37:16  0.0  0.0 bash\n 422468  422466    17:37:16  0.0  0.0 bash\n 422520  422468    17:37:16  0.0  0.0 bash\n 422527  422520    17:37:16 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    17:42:24  0.0  0.0 bash\n 422468  422466    17:42:24  0.0  0.0 bash\n 422520  422468    17:42:24  0.0  0.0 bash\n 422527  422520    17:42:24 99.8  0.2 jass\n"
 }
