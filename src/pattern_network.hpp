@@ -53,7 +53,21 @@
 //   [20..24) int32  king_value (centipawns per (Wkings - Bkings) diff)
 //   For each pattern: (same as v1)
 //
-// `load()` accepts both versions transparently (v1 → man/king=0).
+// Version 3 (D2 base-3 encoding — Scan-aligned, drops king distinction
+// in patterns so kings are handled solely by king_value skeleton):
+//   [0..4)   magic         = "JPAT"
+//   [4..8)   uint32 version = 3
+//   [8..12)  uint32 num_patterns
+//   [12..16) int32  bias
+//   [16..20) int32  man_value
+//   [20..24) int32  king_value
+//   [24..25) uint8  encoding_base (3 or 5; applies to ALL patterns)
+//   For each pattern:
+//     uint8  num_squares (K)
+//     uint8[K] squares
+//     int32[encoding_base^K] weights
+//
+// `load()` accepts v1, v2, v3 transparently. v1/v2 imply base=5.
 //
 // Single-file, self-describing. The pattern set is part of the file
 // (not hard-coded at load time), so different pattern sets can be
@@ -115,9 +129,21 @@ public:
     void set_man_value (std::int32_t v) noexcept { man_value_  = v; }
     void set_king_value(std::int32_t v) noexcept { king_value_ = v; }
 
+    // D2 base-3 encoding — Scan-aligned. When `encoding_base() == 3`,
+    // each square contributes (empty=0, white=1, black=2) to the
+    // bucket index (kings indistinguishable from men in patterns;
+    // handled by king_value skeleton instead). When base == 5, the
+    // legacy 0..4 encoding (empty/W-man/W-king/B-man/B-king) applies.
+    // The base is enforced uniform across all patterns of a network.
+    std::uint8_t encoding_base() const noexcept { return encoding_base_; }
+    // Set the encoding base. Resizes existing pattern weight tables to
+    // base^K. Use BEFORE training; mostly a constructor helper.
+    void set_encoding_base(std::uint8_t b) noexcept;
+
     // Save format: pass `version = 2` to write the hybrid header (even
-    // if man/king are 0); default `version = 1` matches the legacy
-    // pure-pattern layout for backward compat with existing JPAT files.
+    // if man/king are 0); `version = 3` writes the v3 header that
+    // additionally records the encoding_base. Default `version = 1`
+    // matches the legacy pure-pattern layout.
     bool load(std::string_view path);
     bool save(std::string_view path, std::uint32_t version = 1) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
@@ -125,8 +151,9 @@ public:
 private:
     std::vector<Pattern>  patterns_;
     std::int32_t          bias_{0};
-    std::int32_t          man_value_{0};   // JPAT v2 only
-    std::int32_t          king_value_{0};  // JPAT v2 only
+    std::int32_t          man_value_{0};      // JPAT v2+ only
+    std::int32_t          king_value_{0};     // JPAT v2+ only
+    std::uint8_t          encoding_base_{5};  // JPAT v3 only; 5 = legacy
 };
 
 }  // namespace jass

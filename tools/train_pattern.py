@@ -158,15 +158,23 @@ def material_diffs(bbs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return (wm - bm).astype(np.float32), (wk - bk).astype(np.float32)
 
 
-def pattern_indices(bbs: np.ndarray, patterns: list[list[int]]) -> np.ndarray:
-    """For each position N × each pattern P, compute the base-5 bucket
-    index. Returns int64 array of shape (P, N)."""
+def pattern_indices(bbs: np.ndarray, patterns: list[list[int]],
+                    base: int = 5) -> np.ndarray:
+    """For each position N × each pattern P, compute the base bucket
+    index. Returns int64 array of shape (P, N).
+
+    `base = 5` (legacy / JPAT v1/v2): empty/W-man/W-king/B-man/B-king
+                                      mapped to 0/1/2/3/4.
+    `base = 3` (D2 / JPAT v3, Scan-aligned): empty/white/black mapped
+                                             to 0/1/2 (king ≡ man here;
+                                             handled by king_value
+                                             skeleton instead)."""
+    if base not in (3, 5):
+        raise ValueError(f"unsupported base {base}; must be 3 or 5")
     n_patterns = len(patterns)
     n_positions = bbs.shape[1]
     out = np.zeros((n_patterns, n_positions), dtype=np.int64)
     for pi, sqs in enumerate(patterns):
-        # For each square in the pattern, derive its 0..4 state in [N].
-        # State: 0 = empty, 1 = W-man, 2 = W-king, 3 = B-man, 4 = B-king.
         mult = 1
         for sq in sqs:
             bit = sq - 1
@@ -176,25 +184,35 @@ def pattern_indices(bbs: np.ndarray, patterns: list[list[int]]) -> np.ndarray:
             bm = (bbs[2] & mask) != 0
             bk = (bbs[3] & mask) != 0
             state = np.zeros(n_positions, dtype=np.int64)
-            state[wm] = 1
-            state[wk] = 2
-            state[bm] = 3
-            state[bk] = 4
+            if base == 5:
+                state[wm] = 1
+                state[wk] = 2
+                state[bm] = 3
+                state[bk] = 4
+            else:  # base == 3
+                state[wm | wk] = 1
+                state[bm | bk] = 2
             out[pi] += state * mult
-            mult *= 5
+            mult *= base
     return out
 
 
 class PatternModel(nn.Module):
-    """Pure-pattern model (legacy, JPAT v1).
+    """Pure-pattern model (legacy, JPAT v1 if base=5).
 
     For the D1 hybrid model that adds material/king skeleton features,
     see `HybridPatternModel` below.
+
+    `base` selects the per-square encoding (5 = legacy, 3 = Scan-aligned
+    D2). Embedding tables are sized `base ** K` per pattern.
     """
-    def __init__(self, patterns: list[list[int]]):
+    def __init__(self, patterns: list[list[int]], base: int = 5):
         super().__init__()
+        if base not in (3, 5):
+            raise ValueError(f"unsupported base {base}; must be 3 or 5")
+        self.base = base
         self.tables = nn.ModuleList([
-            nn.Embedding(5 ** len(p), 1) for p in patterns
+            nn.Embedding(base ** len(p), 1) for p in patterns
         ])
         for t in self.tables:
             nn.init.zeros_(t.weight)
@@ -210,7 +228,8 @@ class PatternModel(nn.Module):
 
 
 class HybridPatternModel(PatternModel):
-    """D1 hybrid (JPAT v2): patterns + material/king count skeleton.
+    """D1 hybrid (JPAT v2 if base=5, v3 if base=3): patterns + material/king
+    count skeleton.
 
     The eval is `bias + man_value * (Wmen - Bmen)
               + king_value * (Wkings - Bkings)
@@ -223,9 +242,10 @@ class HybridPatternModel(PatternModel):
     docs/SCAN_ARCHITECTURE_NOTES.md §6).
     """
     def __init__(self, patterns: list[list[int]],
+                 base: int = 5,
                  init_man:  float = 100.0,
                  init_king: float = 300.0):
-        super().__init__(patterns)
+        super().__init__(patterns, base=base)
         self.man_value  = nn.Parameter(torch.tensor(init_man))
         self.king_value = nn.Parameter(torch.tensor(init_king))
 
@@ -243,21 +263,33 @@ class HybridPatternModel(PatternModel):
 def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) -> None:
     """Quantise float32 weights to int32 centipawn and write JPAT.
 
-    HybridPatternModel writes JPAT v2 (with man/king skeleton); plain
-    PatternModel writes JPAT v1 (legacy, no skeleton)."""
+    Version is auto-selected:
+      * base != 5             → v3 (always, since base must be recorded)
+      * HybridPatternModel    → v2 (or v3 if base != 5)
+      * else                  → v1 (legacy, pure-pattern, base=5 implicit)
+    """
     is_hybrid = isinstance(model, HybridPatternModel)
-    version   = 2 if is_hybrid else 1
+    base      = model.base
+    if base != 5:
+        version = 3
+    elif is_hybrid:
+        version = 2
+    else:
+        version = 1
     with out_path.open("wb") as f:
         f.write(b"JPAT")
         f.write(struct.pack("<I", version))                  # version
         f.write(struct.pack("<I", len(patterns)))            # num_patterns
         bias_int = int(round(model.bias.item()))
         f.write(struct.pack("<i", bias_int))                 # bias
-        if is_hybrid:
-            man_int  = int(round(model.man_value.item()))
-            king_int = int(round(model.king_value.item()))
+        if version >= 2:
+            # v1 has no skeleton; v2/v3 always write it (0/0 if not hybrid).
+            man_int  = int(round(model.man_value.item()))  if is_hybrid else 0
+            king_int = int(round(model.king_value.item())) if is_hybrid else 0
             f.write(struct.pack("<i", man_int))              # man_value
             f.write(struct.pack("<i", king_int))             # king_value
+        if version >= 3:
+            f.write(struct.pack("<B", base))                 # encoding_base
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -290,6 +322,7 @@ def train_one(
     hybrid: bool = False,
     init_man:  float = 100.0,
     init_king: float = 300.0,
+    base: int = 5,
     tag: str = "",
 ) -> PatternModel:
     """Train one PatternModel and return it. Factored out of `main`
@@ -299,9 +332,10 @@ def train_one(
 
     if hybrid:
         assert mat_diff_t is not None and king_diff_t is not None
-        model = HybridPatternModel(patterns, init_man=init_man, init_king=init_king)
+        model = HybridPatternModel(patterns, base=base,
+                                   init_man=init_man, init_king=init_king)
     else:
-        model = PatternModel(patterns)
+        model = PatternModel(patterns, base=base)
     opt = torch.optim.Adam(model.parameters(), lr=lr,
                            weight_decay=weight_decay)
 
@@ -459,7 +493,16 @@ def main(argv: list[str]) -> int:
                    help="initial man_value (cp per (Wmen - Bmen) diff)")
     p.add_argument("--init-king", type=float, default=300.0,
                    help="initial king_value (cp per (Wkings - Bkings) diff)")
+    p.add_argument("--pattern-base", type=int, default=5, choices=[3, 5],
+                   help="per-square encoding base. 5 = legacy (empty/"
+                        "W-man/W-king/B-man/B-king). 3 = D2 Scan-aligned "
+                        "(empty/white/black; kings folded with men in "
+                        "patterns, handled by king_value skeleton). base=3 "
+                        "requires --hybrid (otherwise kings are lost).")
     args = p.parse_args(argv)
+    if args.pattern_base == 3 and not args.hybrid:
+        p.error("--pattern-base 3 requires --hybrid (king info would "
+                "otherwise be lost; cf. docs/SCAN_ARCHITECTURE_NOTES.md §1)")
 
     patterns = PATTERN_SETS[args.patterns]
 
@@ -483,8 +526,9 @@ def main(argv: list[str]) -> int:
         n = bbs.shape[1]
         print(f"  augmented dataset: {n} records", flush=True)
 
-    print(f"encoding pattern indices ({len(patterns)} patterns)...", flush=True)
-    pidx = pattern_indices(bbs, patterns)
+    print(f"encoding pattern indices ({len(patterns)} patterns, "
+          f"base={args.pattern_base})...", flush=True)
+    pidx = pattern_indices(bbs, patterns, base=args.pattern_base)
     print(f"  done, shape={pidx.shape}", flush=True)
 
     # D1 hybrid: extract material / king count diffs from bitboards.
@@ -527,6 +571,7 @@ def main(argv: list[str]) -> int:
         grad_clip=args.grad_clip, warmup_frac=args.warmup_frac,
         cosine_schedule=args.cosine_schedule,
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
+        base=args.pattern_base,
     )
 
     models: list[PatternModel] = []
