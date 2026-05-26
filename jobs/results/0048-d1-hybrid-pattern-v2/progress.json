@@ -1,13 +1,29 @@
 {
   "job_id": "0048-d1-hybrid-pattern-v2",
-  "snapshot_at": "2026-05-26T11:41:11+00:00",
+  "snapshot_at": "2026-05-26T11:47:11+00:00",
   "started_at": "2026-05-26T11:30:11+00:00",
-  "elapsed_seconds": 660,
+  "elapsed_seconds": 1020,
   "artefacts": [
     {
+      "name": "bench-vs-hc.log",
+      "size_bytes": 256
+    },
+    {
+      "name": "bench-vs-v5-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "bench-vs-v5-d6.log",
+      "size_bytes": 328
+    },
+    {
+      "name": "pattern-v2-d1-hybrid.jpat",
+      "size_bytes": 25000168
+    },
+    {
       "name": "train.log",
-      "size_bytes": 7219
+      "size_bytes": 9632
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 436059       1       10:59  0.0  0.0 bash\n 436061  436059       10:59  0.0  0.0 bash\n 436157  436061       10:55  199  5.9 python3\n 436158  436061       10:55  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 436059       1       16:59  0.0  0.0 bash\n 436061  436059       16:59  0.0  0.0 bash\n 436239  436061       02:09 99.9  0.3 jass\n 436240  436061       02:09  0.0  0.0 tee\n"
 }
