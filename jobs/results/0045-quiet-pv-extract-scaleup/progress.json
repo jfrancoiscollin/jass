@@ -1,13 +1,13 @@
 {
   "job_id": "0045-quiet-pv-extract-scaleup",
-  "snapshot_at": "2026-05-26T02:30:01+00:00",
+  "snapshot_at": "2026-05-26T02:35:03+00:00",
   "started_at": "2026-05-25T14:58:04+00:00",
-  "elapsed_seconds": 41517,
+  "elapsed_seconds": 41819,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 3020546,
-      "records": 79487
+      "size_bytes": 3045170,
+      "records": 80135
     },
     {
       "name": "shard-1.log",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 3135458,
-      "records": 82511
+      "size_bytes": 3160082,
+      "records": 83159
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 3135458,
-      "records": 82511
+      "size_bytes": 3143666,
+      "records": 82727
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 3110834,
-      "records": 81863
+      "size_bytes": 3127250,
+      "records": 82295
     },
     {
       "name": "shard-4.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    11:31:57  0.0  0.0 bash\n 422468  422466    11:31:57  0.0  0.0 bash\n 422520  422468    11:31:56  0.0  0.0 bash\n 422522  422468    11:31:56  0.0  0.0 bash\n 422523  422468    11:31:56  0.0  0.0 bash\n 422526  422468    11:31:56  0.0  0.0 bash\n 422527  422520    11:31:56 99.8  0.2 jass\n 422529  422523    11:31:56 99.8  0.2 jass\n 422530  422522    11:31:56 99.8  0.2 jass\n 422531  422526    11:31:56 99.9  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    11:36:59  0.0  0.0 bash\n 422468  422466    11:36:59  0.0  0.0 bash\n 422520  422468    11:36:59  0.0  0.0 bash\n 422522  422468    11:36:59  0.0  0.0 bash\n 422523  422468    11:36:59  0.0  0.0 bash\n 422526  422468    11:36:59  0.0  0.0 bash\n 422527  422520    11:36:59 99.8  0.2 jass\n 422529  422523    11:36:59 99.8  0.2 jass\n 422530  422522    11:36:59 99.8  0.2 jass\n 422531  422526    11:36:59 99.9  0.2 jass\n"
 }
