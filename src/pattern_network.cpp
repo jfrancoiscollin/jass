@@ -13,15 +13,25 @@ namespace jass {
 
 namespace {
 
-// 5-state encoding per square (matches the JPAT format spec):
-//   0 = empty
-//   1 = white man
-//   2 = white king
-//   3 = black man
-//   4 = black king
-inline std::uint8_t encode_state(const Position& pos, std::uint8_t fmjd_sq) noexcept {
+// Per-square state encoding. Two bases are supported:
+//   base=5 (legacy JPAT v1/v2): 0=empty, 1=W-man, 2=W-king, 3=B-man, 4=B-king
+//   base=3 (D2 / Scan-aligned, JPAT v3): 0=empty, 1=white(*), 2=black(*)
+// Kings are amalgamated with men in base=3; their separate value is
+// captured by the king_value structural skeleton (cf. JPAT v2 / v3).
+inline std::uint8_t encode_state(const Position& pos, std::uint8_t fmjd_sq,
+                                 std::uint8_t base) noexcept {
     const Square s = static_cast<Square>(fmjd_sq);
     const Piece  p = pos.piece_at(s);
+    if (base == 3) {
+        switch (p) {
+            case Piece::None:      return 0;
+            case Piece::WhiteMan:
+            case Piece::WhiteKing: return 1;
+            case Piece::BlackMan:
+            case Piece::BlackKing: return 2;
+        }
+        return 0;
+    }
     switch (p) {
         case Piece::None:      return 0;
         case Piece::WhiteMan:  return 1;
@@ -74,12 +84,14 @@ constexpr std::array<std::array<std::uint8_t, 8>, 16> V2_PATTERNS = {{
 constexpr char          JPAT_MAGIC[4]     = {'J', 'P', 'A', 'T'};
 constexpr std::uint32_t JPAT_VERSION_V1   = 1;
 constexpr std::uint32_t JPAT_VERSION_V2   = 2;
+constexpr std::uint32_t JPAT_VERSION_V3   = 3;
 
-inline std::size_t pow5(std::size_t k) noexcept {
+inline std::size_t pow_n(std::size_t base, std::size_t k) noexcept {
     std::size_t r = 1;
-    for (std::size_t i = 0; i < k; ++i) r *= 5;
+    for (std::size_t i = 0; i < k; ++i) r *= base;
     return r;
 }
+inline std::size_t pow5(std::size_t k) noexcept { return pow_n(5, k); }
 
 }  // namespace
 
@@ -104,8 +116,16 @@ PatternNetwork PatternNetwork::default_v2() {
 void PatternNetwork::add_pattern(const std::vector<std::uint8_t>& squares) {
     Pattern p;
     p.squares = squares;
-    p.weights.assign(pow5(squares.size()), 0);
+    p.weights.assign(pow_n(encoding_base_, squares.size()), 0);
     patterns_.push_back(std::move(p));
+}
+
+void PatternNetwork::set_encoding_base(std::uint8_t b) noexcept {
+    if (b != 3 && b != 5) return;  // ignore invalid
+    encoding_base_ = b;
+    for (Pattern& p : patterns_) {
+        p.weights.assign(pow_n(encoding_base_, p.squares.size()), 0);
+    }
 }
 
 int PatternNetwork::evaluate(const Position& pos) const noexcept {
@@ -126,12 +146,13 @@ int PatternNetwork::evaluate(const Position& pos) const noexcept {
         acc += king_value_ * (wk - bk);
     }
 
+    const std::uint8_t base = encoding_base_;
     for (const Pattern& p : patterns_) {
         std::size_t idx = 0;
         std::size_t mult = 1;
         for (std::uint8_t sq : p.squares) {
-            idx += static_cast<std::size_t>(encode_state(pos, sq)) * mult;
-            mult *= 5;
+            idx += static_cast<std::size_t>(encode_state(pos, sq, base)) * mult;
+            mult *= base;
         }
         // Defensive: out-of-range index falls through to weight 0.
         if (idx < p.weights.size()) {
@@ -163,7 +184,9 @@ bool PatternNetwork::load(std::string_view path) {
     std::uint32_t version{}, num_patterns{};
     std::int32_t  bias{};
     if (!read_u32(version))                            return false;
-    if (version != JPAT_VERSION_V1 && version != JPAT_VERSION_V2) {
+    if (version != JPAT_VERSION_V1
+     && version != JPAT_VERSION_V2
+     && version != JPAT_VERSION_V3) {
         return false;
     }
     if (!read_u32(num_patterns))                       return false;
@@ -171,9 +194,14 @@ bool PatternNetwork::load(std::string_view path) {
 
     std::int32_t man_value  = 0;
     std::int32_t king_value = 0;
-    if (version == JPAT_VERSION_V2) {
+    std::uint8_t base       = 5;  // v1/v2 imply base=5
+    if (version >= JPAT_VERSION_V2) {
         if (!read_i32(man_value))  return false;
         if (!read_i32(king_value)) return false;
+    }
+    if (version >= JPAT_VERSION_V3) {
+        f.read(reinterpret_cast<char*>(&base), 1);
+        if (!f || (base != 3 && base != 5)) return false;
     }
 
     std::vector<Pattern> tmp;
@@ -185,7 +213,7 @@ bool PatternNetwork::load(std::string_view path) {
         std::vector<std::uint8_t> sqs(k);
         f.read(reinterpret_cast<char*>(sqs.data()), k);
         if (!f) return false;
-        const std::size_t nbuckets = pow5(k);
+        const std::size_t nbuckets = pow_n(base, k);
         std::vector<std::int32_t> w(nbuckets);
         f.read(reinterpret_cast<char*>(w.data()),
                static_cast<std::streamsize>(nbuckets * sizeof(std::int32_t)));
@@ -193,15 +221,23 @@ bool PatternNetwork::load(std::string_view path) {
         tmp.push_back({std::move(sqs), std::move(w)});
     }
 
-    patterns_   = std::move(tmp);
-    bias_       = bias;
-    man_value_  = man_value;
-    king_value_ = king_value;
+    patterns_      = std::move(tmp);
+    bias_          = bias;
+    man_value_     = man_value;
+    king_value_    = king_value;
+    encoding_base_ = base;
     return true;
 }
 
 bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
-    if (version != JPAT_VERSION_V1 && version != JPAT_VERSION_V2) {
+    if (version != JPAT_VERSION_V1
+     && version != JPAT_VERSION_V2
+     && version != JPAT_VERSION_V3) {
+        return false;
+    }
+    // base=3 networks can only be saved as v3; refusing v1/v2 prevents
+    // silent loss of the encoding info.
+    if (encoding_base_ != 5 && version != JPAT_VERSION_V3) {
         return false;
     }
     std::ofstream f(std::string{path}, std::ios::binary);
@@ -211,9 +247,12 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     f.write(reinterpret_cast<const char*>(&version), 4);
     f.write(reinterpret_cast<const char*>(&n),       4);
     f.write(reinterpret_cast<const char*>(&bias_),   4);
-    if (version == JPAT_VERSION_V2) {
+    if (version >= JPAT_VERSION_V2) {
         f.write(reinterpret_cast<const char*>(&man_value_),  4);
         f.write(reinterpret_cast<const char*>(&king_value_), 4);
+    }
+    if (version >= JPAT_VERSION_V3) {
+        f.write(reinterpret_cast<const char*>(&encoding_base_), 1);
     }
     for (const Pattern& p : patterns_) {
         const std::uint8_t k = static_cast<std::uint8_t>(p.squares.size());
