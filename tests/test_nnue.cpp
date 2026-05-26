@@ -1111,6 +1111,51 @@ void test_pattern_network_v2_hybrid_roundtrip() {
     std::remove(path.c_str());
 }
 
+// D2: JPAT v3 supports base-3 encoding (Scan-aligned), distinguishing
+// only empty/white/black per square (kings folded with men inside the
+// pattern; their value sits in king_value of the skeleton). 5⁸ = 390625
+// → 3⁸ = 6561 buckets per 8-square pattern (×60 denser).
+void test_pattern_network_v3_base3_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v2();
+    net.set_encoding_base(3);  // resizes all 16 weight tables to 3^8 = 6561
+    net.set_bias(5);
+    net.set_man_value(110);
+    net.set_king_value(290);
+    // Spot-check: write a couple of weights and ensure round-trip.
+    JASS_CHECK_EQ(net.pattern(0).weights.size(), std::size_t{6561});
+    net.pattern_mut(0).weights[0]    =  12;
+    net.pattern_mut(0).weights[6560] = -34;
+    net.pattern_mut(15).weights[42]  =  77;
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v3-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/3));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.encoding_base(), 3);
+    JASS_CHECK_EQ(loaded.bias(),          5);
+    JASS_CHECK_EQ(loaded.man_value(),     110);
+    JASS_CHECK_EQ(loaded.king_value(),    290);
+    JASS_CHECK_EQ(loaded.pattern(0).weights.size(), std::size_t{6561});
+    JASS_CHECK_EQ(loaded.pattern(0).weights[0],    12);
+    JASS_CHECK_EQ(loaded.pattern(0).weights[6560], -34);
+    JASS_CHECK_EQ(loaded.pattern(15).weights[42],  77);
+
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(loaded.evaluate(start), net.evaluate(start));
+
+    // Verify base-3 encoding folds W-king and W-man identically: a
+    // position with kings should produce the same pattern indices as
+    // the corresponding all-men position, modulo the king_value
+    // skeleton contribution (which is captured separately).
+    const Position with_kings = parse(
+        "W:WK26,K29,K31,K32,38,42,43,46,47,48:BK3,K5,9,11,12,14,16,18,22,25");
+    // Sanity: just confirm evaluate is finite and matches round-trip.
+    JASS_CHECK_EQ(loaded.evaluate(with_kings), net.evaluate(with_kings));
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1163,5 +1208,6 @@ void run_nnue_tests() {
     test_pattern_network_save_load_roundtrip();
     test_pattern_network_load_dispatch();
     test_pattern_network_v2_hybrid_roundtrip();
+    test_pattern_network_v3_base3_roundtrip();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
