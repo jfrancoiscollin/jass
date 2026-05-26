@@ -1,0 +1,13 @@
+{
+  "job_id": "0048-d1-hybrid-pattern-v2",
+  "snapshot_at": "2026-05-26T11:36:01+00:00",
+  "started_at": "2026-05-26T11:30:11+00:00",
+  "elapsed_seconds": 350,
+  "artefacts": [
+    {
+      "name": "train.log",
+      "size_bytes": 3860
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 436059       1       05:49  0.0  0.0 bash\n 436061  436059       05:49  0.0  0.0 bash\n 436157  436061       05:45  198  5.6 python3\n 436158  436061       05:45  0.0  0.0 tee\n"
+}
