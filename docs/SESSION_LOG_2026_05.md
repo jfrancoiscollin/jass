@@ -113,3 +113,73 @@ Ces branches contiennent du travail soit déjà mergé soit superseded :
 - Les `claude/resume-*` et `claude/setup-github-project-*` → fragments historiques
 
 À nettoyer dans une session de housekeeping ultérieure (pas critique).
+
+---
+
+# Annexe — 2026-05-24 → 2026-05-26 : post-biblio + diagnostic pattern
+
+> Suite de la session précédente après réception de la bibliographie
+> annotée (`docs/REFERENCES_BIBLIOGRAPHIE.md`). Recadrage de l'ordering
+> via `docs/ROADMAP.md` : phases data-side AVANT bascule archi pattern.
+
+## Axe data — succès franc
+
+| Run | Recipe | vs handcrafted | vs v5 d6 | vs v5 d10 | ELO Δ vs v5 |
+|---|---|---|---|---|---|
+| **0043** | quiet filter 200K (Phase 0) | **1.000** | 0.472 | **0.639** | **+99** |
+| **0045** | quiet + pv-extract 500K (v6) | 0.861 | **0.722** | 0.556 | +39 d10, +165 d6 |
+
+**Verdict consolidé** : la biblio avait raison sur le précédent TalkChess. Le quiet filter est LA réponse à la suspicion d'archi plafond. v6 est shippé (PR #89, `docs/RELEASE_NOTES.md`) comme référence pour tous les futurs gen-data et benchs.
+
+PRs cette phase : #81 (`--quiet-only`), #82 (activate 0043), #84 (`--pv-extract`),
+#85 (0045 standby), #87 (activate 0045), #89 (ship v6 + D1).
+
+## Axe pattern — diagnostic blitz exhaustif, conclusion honnête
+
+Plan diagnostic D1/D2/D3 issu de la lecture de `rhalbersma/scan/src/eval.cpp`
+(`docs/SCAN_ARCHITECTURE_NOTES.md`). 4 expériences supervised sur
+l'archi pattern v2 (16 × 8 squares) :
+
+| Run | Recipe | vs hc | vs v5 d6 | vs v5 d10 |
+|---|---|---|---|---|
+| 0046 | Phase 1 pure pattern | 0/18 | 0/54 | 0/54 |
+| 0047 | Phase 1 + quiet data (D3) | 0/18 | 0/54 | 0/54 |
+| 0048 | D1 hybrid (skeleton material+king) | 0/18 | **6/54** | 0/54 |
+| 0049 | D2 hybrid + base-3 (Scan-aligned) | 0/18 | 1.5/54 | 0/54 |
+
+**Conclusion factuelle** : aucune des 4 expériences supervised n'atteint
+le decision gate Phase 2 (rate vs v5 d10 ≥ 0.30). Le meilleur, D1 hybrid
+base-5, plafonne à 6/54 à d6 et 0/54 à d10. Les paramètres structurels
+trainables (man_value, king_value) convergent vers EXACTEMENT les mêmes
+valeurs entre D1 et D2 (30.7 / 228.2), preuve que le trainer trouve le
+même minimum local : *minimiser MSE en réduisant le skeleton vers des
+valeurs qui collent au bruit des labels*.
+
+**Pattern axis frozen** pour cette session. Le gap méthodologique vs
+Scan (TD-leaf + RL + décennies de feature engineering) est trop large
+pour être franchi par du supervised cheap. Voir
+`docs/SCAN_METHODOLOGY_GAP.md` pour le plan itératif de fermeture du
+gap si on décide d'investir Phase 2+ ultérieurement.
+
+PRs cette phase : #83 (doc accumulator), #86 (Phase 1), #88 (SCAN notes
++ D3), #89 (D1 hybrid), #90 (D2 base-3).
+
+## Suite décidée
+
+1. **0050 v7** = 1M complet quiet+pv-extract (extrapolation v5/v6, gain
+   attendu +20-50 ELO vs v6).
+2. **Phase 0b master volume** (Lidraughts refresh, FMJD scrape) en
+   parallèle quand budget dev.
+3. **Pattern axis re-tenté** seulement avec un leverage nouveau (TD-leaf,
+   knowledge distillation depuis v7, ou pattern geometry alignée Scan).
+   Détail dans `docs/SCAN_METHODOLOGY_GAP.md`.
+
+## Coût compute cumulé annexe
+
+- 0043 gen 200K : ~24h × 4 vCPU CCX23
+- 0045 gen 500K : ~18h × 4 vCPU
+- 0046/0047/0048/0049 train+bench : ~1.5h chacun = 6h × 4 vCPU
+- **Total annexe : ~€5-6**
+
+Cumulé session 2026-05 entière : **~€15-16**. Référence : 10M @ depth-20
+seul aurait coûté €700-1000.
