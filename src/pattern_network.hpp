@@ -32,14 +32,28 @@
 //
 // ON-DISK FORMAT (JPAT, little-endian)
 // ------------------------------------
+//
+// Version 1 (legacy, pure-pattern):
 //   [0..4)   magic        = "JPAT"
-//   [4..8)   uint32 version (currently 1)
+//   [4..8)   uint32 version = 1
 //   [8..12)  uint32 num_patterns
 //   [12..16) int32  bias
 //   For each pattern (in order):
 //     uint8  num_squares (K)
 //     uint8[K] squares (FMJD numbering 1..50)
 //     int32[5^K] weights (row-major over the base-5 state index)
+//
+// Version 2 (D1 hybrid, pattern + material/king skeleton — cf.
+// docs/SCAN_ARCHITECTURE_NOTES.md §6):
+//   [0..4)   magic         = "JPAT"
+//   [4..8)   uint32 version = 2
+//   [8..12)  uint32 num_patterns
+//   [12..16) int32  bias
+//   [16..20) int32  man_value  (centipawns per (Wmen  - Bmen)  diff)
+//   [20..24) int32  king_value (centipawns per (Wkings - Bkings) diff)
+//   For each pattern: (same as v1)
+//
+// `load()` accepts both versions transparently (v1 → man/king=0).
 //
 // Single-file, self-describing. The pattern set is part of the file
 // (not hard-coded at load time), so different pattern sets can be
@@ -92,13 +106,27 @@ public:
     std::int32_t bias() const noexcept { return bias_; }
     void set_bias(std::int32_t b) noexcept { bias_ = b; }
 
+    // D1 hybrid (JPAT v2) — structural skeleton weights. man_value is
+    // added to the white-POV sum as `man_value * (Wmen - Bmen)`,
+    // king_value similarly for kings. Both default to 0, which makes
+    // the network behave identically to a pure-pattern v1 net.
+    std::int32_t man_value()  const noexcept { return man_value_;  }
+    std::int32_t king_value() const noexcept { return king_value_; }
+    void set_man_value (std::int32_t v) noexcept { man_value_  = v; }
+    void set_king_value(std::int32_t v) noexcept { king_value_ = v; }
+
+    // Save format: pass `version = 2` to write the hybrid header (even
+    // if man/king are 0); default `version = 1` matches the legacy
+    // pure-pattern layout for backward compat with existing JPAT files.
     bool load(std::string_view path);
-    bool save(std::string_view path) const;
+    bool save(std::string_view path, std::uint32_t version = 1) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
 
 private:
     std::vector<Pattern>  patterns_;
     std::int32_t          bias_{0};
+    std::int32_t          man_value_{0};   // JPAT v2 only
+    std::int32_t          king_value_{0};  // JPAT v2 only
 };
 
 }  // namespace jass
