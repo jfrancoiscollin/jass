@@ -1079,6 +1079,58 @@ void test_pattern_network_load_dispatch() {
     std::remove(path.c_str());
 }
 
+// D1 hybrid (JPAT v2): structural man/king skeleton added to the
+// pattern sum. Verifies the format round-trips and that evaluate()
+// honours the new skeleton.
+void test_pattern_network_v2_hybrid_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v1();
+    net.set_bias(10);
+    net.set_man_value(100);    // 100 cp per (Wmen - Bmen) diff
+    net.set_king_value(300);   // 300 cp per (Wkings - Bkings) diff
+    net.pattern_mut(0).weights[7] = 50;
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v2-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/2));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.bias(),        10);
+    JASS_CHECK_EQ(loaded.man_value(),  100);
+    JASS_CHECK_EQ(loaded.king_value(), 300);
+    JASS_CHECK_EQ(loaded.pattern(0).weights[7], 50);
+
+    // Behavioural parity on a position with known material imbalance.
+    // start_position has Wmen=20, Bmen=20, Wkings=0, Bkings=0 → material
+    // contribution = 0. Use a mid-position with an imbalance.
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(loaded.evaluate(start), net.evaluate(start));
+    const Position mid = parse(
+        "W:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22");
+    JASS_CHECK_EQ(loaded.evaluate(mid), net.evaluate(mid));
+
+    std::remove(path.c_str());
+}
+
+// v1 files must still load and report man/king = 0 (i.e. pure pattern
+// behaviour, identical to legacy).
+void test_pattern_network_v1_load_sets_skeleton_to_zero() {
+    PatternNetwork net = PatternNetwork::default_v1();
+    net.set_bias(7);
+    net.pattern_mut(2).weights[3] = -42;
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v1-XXXXXX");
+    JASS_CHECK(net.save(path));  // default version = 1
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.man_value(),  0);
+    JASS_CHECK_EQ(loaded.king_value(), 0);
+    JASS_CHECK_EQ(loaded.bias(),       7);
+    JASS_CHECK_EQ(loaded.pattern(2).weights[3], -42);
+
+    std::remove(path.c_str());
+}
+
 }  // namespace
 
 void run_nnue_tests() {
@@ -1110,4 +1162,6 @@ void run_nnue_tests() {
     test_pattern_network_evaluate_known_weights();
     test_pattern_network_save_load_roundtrip();
     test_pattern_network_load_dispatch();
+    test_pattern_network_v2_hybrid_roundtrip();
+    test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
