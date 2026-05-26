@@ -1,5 +1,20 @@
 # Pattern eval roadmap — feuille de route axe architecture
 
+> **Note 2026-05-26 — Phase 1 frozen** : 4 expériences supervised ont
+> exhausté Phase 1 (cf. `docs/SESSION_LOG_2026_05.md` annexe et
+> `docs/SCAN_METHODOLOGY_GAP.md`). Le meilleur résultat (D1 hybrid
+> base-5, job 0048) plafonne à 6/54 vs v5 d6 et 0/54 d10. Aucun setup
+> supervised ne franchit le gate Phase 2 (rate ≥ 0.30 vs v5 d10).
+>
+> **Conclusion empirique** : le supervised cheap ne mène pas notre
+> archi pattern à un niveau compétitif. Pattern axis frozen jusqu'à
+> ce qu'on décide d'investir un nouveau leverage (TD-leaf, knowledge
+> distillation depuis v6/v7, pattern geometry alignée Scan). Voir
+> `docs/SCAN_METHODOLOGY_GAP.md` pour le plan itératif.
+>
+> Le reste de ce document reste valide comme plan **historique** des
+> phases si on relance l'axe ultérieurement.
+
 > **Note 2026-05-24 — ordering révisé** : ce doc reste valide pour les
 > phases pattern elles-mêmes, mais l'**ordering global** des prochaines
 > expériences est désormais piloté par `docs/ROADMAP.md` (post-bibliographie).
