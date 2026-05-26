@@ -135,6 +135,29 @@ def load_jnnw(path: Path, max_records: int = 0) -> tuple[np.ndarray, np.ndarray,
     return bbs, stm, score, wdl
 
 
+def material_diffs(bbs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return (mat_diff, king_diff) float32 arrays of length N, where
+    mat_diff[i]  = popcount(Wmen[i])   - popcount(Bmen[i])
+    king_diff[i] = popcount(Wkings[i]) - popcount(Bkings[i]).
+
+    These are the D1 structural skeleton features (cf. JPAT v2 spec)."""
+    def popcnt(bb: np.ndarray) -> np.ndarray:
+        # numpy >=2.0 ships np.bitwise_count; older versions need a fallback.
+        if hasattr(np, "bitwise_count"):
+            return np.bitwise_count(bb).astype(np.int32)
+        # Manual SWAR popcount over uint64.
+        b = bb.copy()
+        b = b - ((b >> np.uint64(1)) & np.uint64(0x5555555555555555))
+        b = (b & np.uint64(0x3333333333333333)) + ((b >> np.uint64(2)) & np.uint64(0x3333333333333333))
+        b = (b + (b >> np.uint64(4))) & np.uint64(0x0F0F0F0F0F0F0F0F)
+        return ((b * np.uint64(0x0101010101010101)) >> np.uint64(56)).astype(np.int32)
+    wm = popcnt(bbs[0])
+    wk = popcnt(bbs[1])
+    bm = popcnt(bbs[2])
+    bk = popcnt(bbs[3])
+    return (wm - bm).astype(np.float32), (wk - bk).astype(np.float32)
+
+
 def pattern_indices(bbs: np.ndarray, patterns: list[list[int]]) -> np.ndarray:
     """For each position N × each pattern P, compute the base-5 bucket
     index. Returns int64 array of shape (P, N)."""
@@ -163,6 +186,11 @@ def pattern_indices(bbs: np.ndarray, patterns: list[list[int]]) -> np.ndarray:
 
 
 class PatternModel(nn.Module):
+    """Pure-pattern model (legacy, JPAT v1).
+
+    For the D1 hybrid model that adds material/king skeleton features,
+    see `HybridPatternModel` below.
+    """
     def __init__(self, patterns: list[list[int]]):
         super().__init__()
         self.tables = nn.ModuleList([
@@ -181,14 +209,55 @@ class PatternModel(nn.Module):
         return s
 
 
+class HybridPatternModel(PatternModel):
+    """D1 hybrid (JPAT v2): patterns + material/king count skeleton.
+
+    The eval is `bias + man_value * (Wmen - Bmen)
+              + king_value * (Wkings - Bkings)
+              + sum_p pattern_p[idx_p(pos)]`
+
+    in white-POV. Initialising man/king to handcrafted-eval-like values
+    (~100 / ~300) gives the trainer a reasonable starting point: the
+    patterns only have to learn the residual positional corrections
+    rather than the absolute piece values from scratch (cf.
+    docs/SCAN_ARCHITECTURE_NOTES.md §6).
+    """
+    def __init__(self, patterns: list[list[int]],
+                 init_man:  float = 100.0,
+                 init_king: float = 300.0):
+        super().__init__(patterns)
+        self.man_value  = nn.Parameter(torch.tensor(init_man))
+        self.king_value = nn.Parameter(torch.tensor(init_king))
+
+    def forward(self, indices: torch.Tensor,
+                mat_diff: torch.Tensor,
+                king_diff: torch.Tensor) -> torch.Tensor:
+        s = (self.bias.expand(indices.shape[1]).clone()
+             + self.man_value  * mat_diff
+             + self.king_value * king_diff)
+        for pi, table in enumerate(self.tables):
+            s = s + table(indices[pi]).squeeze(-1)
+        return s
+
+
 def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) -> None:
-    """Quantise float32 weights to int32 centipawn and write JPAT."""
+    """Quantise float32 weights to int32 centipawn and write JPAT.
+
+    HybridPatternModel writes JPAT v2 (with man/king skeleton); plain
+    PatternModel writes JPAT v1 (legacy, no skeleton)."""
+    is_hybrid = isinstance(model, HybridPatternModel)
+    version   = 2 if is_hybrid else 1
     with out_path.open("wb") as f:
         f.write(b"JPAT")
-        f.write(struct.pack("<I", 1))                        # version
+        f.write(struct.pack("<I", version))                  # version
         f.write(struct.pack("<I", len(patterns)))            # num_patterns
         bias_int = int(round(model.bias.item()))
         f.write(struct.pack("<i", bias_int))                 # bias
+        if is_hybrid:
+            man_int  = int(round(model.man_value.item()))
+            king_int = int(round(model.king_value.item()))
+            f.write(struct.pack("<i", man_int))              # man_value
+            f.write(struct.pack("<i", king_int))             # king_value
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -204,6 +273,8 @@ def train_one(
     pidx_t: torch.Tensor,
     score_t: torch.Tensor,
     wdl_t:   torch.Tensor,
+    mat_diff_t:  torch.Tensor | None,   # D1 hybrid: required when hybrid=True
+    king_diff_t: torch.Tensor | None,
     train_idx: np.ndarray,
     val_idx:   np.ndarray,
     seed: int,
@@ -216,6 +287,9 @@ def train_one(
     grad_clip: float,
     warmup_frac: float,
     cosine_schedule: bool,
+    hybrid: bool = False,
+    init_man:  float = 100.0,
+    init_king: float = 300.0,
     tag: str = "",
 ) -> PatternModel:
     """Train one PatternModel and return it. Factored out of `main`
@@ -223,7 +297,11 @@ def train_one(
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    model = PatternModel(patterns)
+    if hybrid:
+        assert mat_diff_t is not None and king_diff_t is not None
+        model = HybridPatternModel(patterns, init_man=init_man, init_king=init_king)
+    else:
+        model = PatternModel(patterns)
     opt = torch.optim.Adam(model.parameters(), lr=lr,
                            weight_decay=weight_decay)
 
@@ -267,7 +345,12 @@ def train_one(
             score_batch = score_t[batch_idx]
             wdl_batch = wdl_t[batch_idx]
 
-            pred = model(idx_batch)
+            if hybrid:
+                pred = model(idx_batch,
+                             mat_diff_t[batch_idx],
+                             king_diff_t[batch_idx])
+            else:
+                pred = model(idx_batch)
             # Score MSE — `score_scale` shrinks centipawn² magnitudes so
             # the BCE term isn't drowned out (default scale=1 → identical
             # to the legacy formulation).
@@ -291,11 +374,20 @@ def train_one(
         # Validation.
         model.eval()
         with torch.no_grad():
-            val_pred = model(pidx_t[:, val_idx])
+            if hybrid:
+                val_pred = model(pidx_t[:, val_idx],
+                                 mat_diff_t[val_idx],
+                                 king_diff_t[val_idx])
+            else:
+                val_pred = model(pidx_t[:, val_idx])
             val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
         lr_now = opt.param_groups[0]["lr"]
+        extra = ""
+        if hybrid:
+            extra = (f"  man={model.man_value.item():6.1f}"
+                     f"  king={model.king_value.item():6.1f}")
         print(f"{tag}epoch {epoch:2d}: train_loss={total_loss/nb:10.2f}  "
-              f"val_mse={val_mse:10.2f}  lr={lr_now:.2e}", flush=True)
+              f"val_mse={val_mse:10.2f}  lr={lr_now:.2e}{extra}", flush=True)
 
     return model
 
@@ -314,6 +406,11 @@ def average_models(models: list[PatternModel]) -> PatternModel:
             table.weight.copy_(stack.mean(dim=0))
         bias_stack = torch.stack([m.bias for m in models], dim=0)
         avg.bias.copy_(bias_stack.mean(dim=0))
+        if isinstance(avg, HybridPatternModel):
+            man_stack  = torch.stack([m.man_value  for m in models], dim=0)
+            king_stack = torch.stack([m.king_value for m in models], dim=0)
+            avg.man_value.copy_(man_stack.mean(dim=0))
+            avg.king_value.copy_(king_stack.mean(dim=0))
     return avg
 
 
@@ -354,6 +451,14 @@ def main(argv: list[str]) -> int:
     p.add_argument("--num-seeds", type=int, default=1,
                    help="train N independent runs and average their weights "
                         "(seeds = --seed, --seed+1, …)")
+    p.add_argument("--hybrid", action="store_true",
+                   help="D1 hybrid model (JPAT v2): patterns + material/king "
+                        "skeleton. Trainable man_value/king_value scalars "
+                        "added to the white-POV sum.")
+    p.add_argument("--init-man",  type=float, default=100.0,
+                   help="initial man_value (cp per (Wmen - Bmen) diff)")
+    p.add_argument("--init-king", type=float, default=300.0,
+                   help="initial king_value (cp per (Wkings - Bkings) diff)")
     args = p.parse_args(argv)
 
     patterns = PATTERN_SETS[args.patterns]
@@ -382,6 +487,19 @@ def main(argv: list[str]) -> int:
     pidx = pattern_indices(bbs, patterns)
     print(f"  done, shape={pidx.shape}", flush=True)
 
+    # D1 hybrid: extract material / king count diffs from bitboards.
+    # These are the structural skeleton features added to the patterns
+    # (JPAT v2, cf. docs/SCAN_ARCHITECTURE_NOTES.md §6). Sign-flip for
+    # STM=Black so they match the white-POV target sign.
+    mat_diff_t  = None
+    king_diff_t = None
+    if args.hybrid:
+        mat_diff, king_diff = material_diffs(bbs)
+        mat_diff[stm  == 1] *= -1
+        king_diff[stm == 1] *= -1
+        mat_diff_t  = torch.from_numpy(mat_diff)
+        king_diff_t = torch.from_numpy(king_diff)
+
     # Sign-flip the score for STM=Black so the network always sees
     # white-POV (matches the eval convention of MLPNetworkQ and the
     # C++ PatternNetwork: stored weights are white-POV, evaluate()
@@ -402,11 +520,13 @@ def main(argv: list[str]) -> int:
 
     common_kwargs = dict(
         patterns=patterns, pidx_t=pidx_t, score_t=score_t, wdl_t=wdl_t,
+        mat_diff_t=mat_diff_t, king_diff_t=king_diff_t,
         train_idx=train_idx, val_idx=val_idx,
         epochs=args.epochs, batch=args.batch, lr=args.lr, lam=args.lam,
         score_scale=args.score_scale, weight_decay=args.weight_decay,
         grad_clip=args.grad_clip, warmup_frac=args.warmup_frac,
         cosine_schedule=args.cosine_schedule,
+        hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
     )
 
     models: list[PatternModel] = []
@@ -425,9 +545,18 @@ def main(argv: list[str]) -> int:
     # that matches what gets saved to disk.
     model.eval()
     with torch.no_grad():
-        val_pred = model(pidx_t[:, val_idx])
+        if args.hybrid:
+            val_pred = model(pidx_t[:, val_idx],
+                             mat_diff_t[val_idx],
+                             king_diff_t[val_idx])
+        else:
+            val_pred = model(pidx_t[:, val_idx])
         val_mse  = F.mse_loss(val_pred, score_t[val_idx]).item()
-    print(f"final (saved) val_mse={val_mse:10.2f}", flush=True)
+    extra = ""
+    if args.hybrid:
+        extra = (f"  man={model.man_value.item():.1f}"
+                 f"  king={model.king_value.item():.1f}")
+    print(f"final (saved) val_mse={val_mse:10.2f}{extra}", flush=True)
 
     save_jpat(model, patterns, args.out)
     sz = args.out.stat().st_size
