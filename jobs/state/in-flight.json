@@ -1,0 +1,7 @@
+{
+  "job_id": "0050-v7-quiet-pv-extract-1M",
+  "script": "jobs/queue/0050-v7-quiet-pv-extract-1M.sh",
+  "pid": 439127,
+  "started_at": "2026-05-26T17:39:08+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
