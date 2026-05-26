@@ -1,0 +1,193 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 4  mem: 15Gi
+shards: 4 × 125000 = 500000 records @ depth 16
+filters: --quiet-only --pv-extract 3
+[ 60%] Linking CXX executable jass
+[ 97%] Built target jass_tests
+[100%] Built target jass
+
+=== Phase 0a : gen-data 500K WITH --quiet-only --pv-extract 3, v5 labeller ===
+  shard 1 launched as pid 422520 (seed 21001)
+  shard 2 launched as pid 422522 (seed 21002)
+  shard 3 launched as pid 422523 (seed 21003)
+  shard 4 launched as pid 422526 (seed 21004)
+
+=== merging into quiet-pv-500K.bin ===
+merged 500000 records into /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/quiet-pv-500K.bin
+
+=== Phase 0b : train v5-recipe sur dataset quiet+pv-extract ===
+loading /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/quiet-pv-500K.bin (encoding=halfmen, input_dim=450) …
+  500000 self-play records  (2.2s to encode)
+  WDL distribution: W=34.1% D=29.1% L=36.8%
+  score range: [-29998, 29999]  mean=-370.4  std=6807.4
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.7s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 2500000 records (500000 self-play + 2000000 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train=  47105.9  val=  93018.8 *
+  epoch   2: train=  40646.1  val=  76941.9 *
+  epoch   3: train=  38334.0  val=  62485.1 *
+  epoch   4: train=  36693.8  val=  55688.5 *
+  epoch   5: train=  35726.6  val=  49028.8 *
+  epoch   6: train=  34985.2  val=  46881.7 *
+  epoch   7: train=  34520.1  val=  44842.5 *
+  epoch   8: train=  34191.3  val=  43900.3 *
+  epoch   9: train=  33951.7  val=  41245.2 *
+  epoch  10: train=  33760.5  val=  41006.9 *
+  epoch  11: train=  33614.1  val=  41604.6
+  epoch  12: train=  33489.4  val=  41311.5
+  epoch  13: train=  33385.1  val=  39699.7 *
+  epoch  14: train=  33294.9  val=  40706.9
+  epoch  15: train=  33215.1  val=  40648.1
+  epoch  16: train=  33152.0  val=  41332.7
+  epoch  17: train=  33084.1  val=  40150.4
+  epoch  18: train=  33029.1  val=  39268.4 *
+  epoch  19: train=  32986.1  val=  39997.1
+  epoch  20: train=  32935.5  val=  40746.4
+  epoch  21: train=  32899.3  val=  38585.4 *
+  epoch  22: train=  32857.0  val=  40419.8
+  epoch  23: train=  32822.8  val=  40017.9
+  epoch  24: train=  32788.9  val=  39688.4
+  epoch  25: train=  32758.3  val=  39413.1
+  epoch  26: train=  32725.8  val=  39920.5
+  epoch  27: train=  32697.1  val=  40111.3
+  epoch  28: train=  32667.4  val=  39216.3
+  epoch  29: train=  32638.7  val=  38810.6
+  early-stop at epoch 29
+  wrote /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  45073.1  val=  84467.5 *
+  epoch   2: train=  38728.3  val=  59141.6 *
+  epoch   3: train=  36117.8  val=  50284.7 *
+  epoch   4: train=  34873.0  val=  46956.5 *
+  epoch   5: train=  34121.7  val=  41637.5 *
+  epoch   6: train=  33640.8  val=  40838.2 *
+  epoch   7: train=  33319.3  val=  40845.3
+  epoch   8: train=  33078.9  val=  39645.2 *
+  epoch   9: train=  32888.3  val=  38346.3 *
+  epoch  10: train=  32726.2  val=  38078.8 *
+  epoch  11: train=  32596.8  val=  38733.1
+  epoch  12: train=  32485.1  val=  38030.8 *
+  epoch  13: train=  32387.6  val=  37414.7 *
+  epoch  14: train=  32291.0  val=  38690.4
+  epoch  15: train=  32216.2  val=  38484.6
+  epoch  16: train=  32138.4  val=  39208.0
+  epoch  17: train=  32061.1  val=  39738.5
+  epoch  18: train=  32000.8  val=  37308.6 *
+  epoch  19: train=  31945.6  val=  38898.8
+  epoch  20: train=  31888.8  val=  39311.2
+  epoch  21: train=  31838.1  val=  37105.0 *
+  epoch  22: train=  31787.7  val=  39273.1
+  epoch  23: train=  31744.2  val=  38169.7
+  epoch  24: train=  31704.1  val=  39319.1
+  epoch  25: train=  31661.6  val=  37633.6
+  epoch  26: train=  31630.2  val=  38818.7
+  epoch  27: train=  31597.1  val=  38777.6
+  epoch  28: train=  31561.7  val=  37773.7
+  epoch  29: train=  31530.3  val=  37793.2
+  early-stop at epoch 29
+  wrote /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  43737.0  val=  73468.2 *
+  epoch   2: train=  37379.2  val=  53725.0 *
+  epoch   3: train=  35183.5  val=  46309.7 *
+  epoch   4: train=  34106.7  val=  45601.2 *
+  epoch   5: train=  33553.6  val=  41397.7 *
+  epoch   6: train=  33158.9  val=  39546.6 *
+  epoch   7: train=  32864.6  val=  39825.6
+  epoch   8: train=  32613.5  val=  39517.7 *
+  epoch   9: train=  32411.3  val=  37844.6 *
+  epoch  10: train=  32223.3  val=  39227.6
+  epoch  11: train=  32062.6  val=  37629.9 *
+  epoch  12: train=  31924.7  val=  37602.4 *
+  epoch  13: train=  31801.5  val=  36432.3 *
+  epoch  14: train=  31683.4  val=  38820.1
+  epoch  15: train=  31568.1  val=  38016.5
+  epoch  16: train=  31478.4  val=  39084.9
+  epoch  17: train=  31377.7  val=  38102.7
+  epoch  18: train=  31298.5  val=  37651.5
+  epoch  19: train=  31225.9  val=  38219.7
+  epoch  20: train=  31151.8  val=  37735.0
+  epoch  21: train=  31091.0  val=  37662.1
+  early-stop at epoch 21
+  wrote /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  42138.6  val=  61091.4 *
+  epoch   2: train=  35751.3  val=  47427.0 *
+  epoch   3: train=  34168.2  val=  42545.2 *
+  epoch   4: train=  33437.0  val=  42600.0
+  epoch   5: train=  32894.6  val=  40464.7 *
+  epoch   6: train=  32452.6  val=  38527.5 *
+  epoch   7: train=  32086.9  val=  38559.1
+  epoch   8: train=  31776.2  val=  37915.2 *
+  epoch   9: train=  31520.0  val=  37015.6 *
+  epoch  10: train=  31280.6  val=  37558.0
+  epoch  11: train=  31072.4  val=  37859.9
+  epoch  12: train=  30888.2  val=  37746.0
+  epoch  13: train=  30724.2  val=  38113.4
+  epoch  14: train=  30567.7  val=  38894.9
+  epoch  15: train=  30424.2  val=  38364.5
+  epoch  16: train=  30292.1  val=  38545.5
+  epoch  17: train=  30167.1  val=  38890.8
+  early-stop at epoch 17
+  wrote /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  256-128            148,481     36432.3      190.9     843s
+  512-256            362,497     37015.6      192.4     966s
+  128-64              66,049     37105.0      192.6     978s
+  64-32               30,977     38585.4      196.4     927s
+
+summary → /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/summary.json
+loading float reference /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128.bin …
+  topology: 450 → 256 → 128 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/quiet-pv-500K.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.023892 sw2=0.053617 sw3=0.065275 sh1=0.049929 sh2=0.42448
+  multipliers: mul1=0.47852 mul2=0.0063066 mul_out=0.027708
+  reference range: float [-1800.4, 1709.6], quantised [-1738.5, 1754.3]
+  diff: mean=-2.09  std=26.41  |max|=286.92  RMSE=26.49
+wrote /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin (149672 bytes)
+
+=== Phase 0c : bench quiet+pv-trained vs v5 ===
+Benchmark: NNUE (/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=15 Handcrafted=2 Draws=1 (total 18)
+NNUE score rate: 0.861111 (15.5 / 18)
+Benchmark: A=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=39 B=15 Draws=0 (total 54)
+A score rate: 0.722222 (39 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
+
+==========================================================
+       0045 QUIET + PV-EXTRACT SCALEUP VERDICT
+==========================================================
+  gen wall:        64219s (17.8h)
+  train wall:      3728s
+  best arch:       256-128
+  records:         500000 (quiet + pv-extract 3)
+
+  vs handcrafted:    rate=0.861111
+  vs v5 (depth 6):   rate=0.722222
+  vs v5 (depth 10):  rate=0.555556
+
+  References :
+    v5 reference vs handcrafted: 0.852
+    0043 200K quiet-only vs v5 d10: <CF VERDICT 0043>
+
+  Decision :
+    SOLID WIN — gain net du combo + volume. Ship comme v6.
+==========================================================

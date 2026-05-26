@@ -1,7 +1,9 @@
 {
   "job_id": "0045-quiet-pv-extract-scaleup",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-25T14:58:04+00:00",
+  "ended_at": "2026-05-26T10:02:11+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 422466
+  "artefacts_server_path": "/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src"
 }

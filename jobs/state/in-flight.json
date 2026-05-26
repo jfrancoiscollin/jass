@@ -1,7 +1,0 @@
-{
-  "job_id": "0045-quiet-pv-extract-scaleup",
-  "script": "jobs/queue/0045-quiet-pv-extract-scaleup.sh",
-  "pid": 422466,
-  "started_at": "2026-05-25T14:58:04+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

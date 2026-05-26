@@ -1,0 +1,33 @@
+gen-data-wdl: n=125000 out=/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/shard-3.bin eval_depth=16 play_depth=4 max_plies=200 seed=21003 nnue=/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin quiet_only=true pv_extract=3
+  played 50 games, 4037 / 125000 positions
+  played 100 games, 8163 / 125000 positions
+  played 150 games, 12044 / 125000 positions
+  played 200 games, 16265 / 125000 positions
+  played 250 games, 20382 / 125000 positions
+  played 300 games, 24632 / 125000 positions
+  played 350 games, 28234 / 125000 positions
+  played 400 games, 32412 / 125000 positions
+  played 450 games, 36380 / 125000 positions
+  played 500 games, 40190 / 125000 positions
+  played 550 games, 44263 / 125000 positions
+  played 600 games, 48021 / 125000 positions
+  played 650 games, 52098 / 125000 positions
+  played 700 games, 55903 / 125000 positions
+  played 750 games, 59706 / 125000 positions
+  played 800 games, 63844 / 125000 positions
+  played 850 games, 67894 / 125000 positions
+  played 900 games, 71564 / 125000 positions
+  played 950 games, 75636 / 125000 positions
+  played 1000 games, 79620 / 125000 positions
+  played 1050 games, 83648 / 125000 positions
+  played 1100 games, 87615 / 125000 positions
+  played 1150 games, 91876 / 125000 positions
+  played 1200 games, 95721 / 125000 positions
+  played 1250 games, 99911 / 125000 positions
+  played 1300 games, 103853 / 125000 positions
+  played 1350 games, 107756 / 125000 positions
+  played 1400 games, 111572 / 125000 positions
+  played 1450 games, 115535 / 125000 positions
+  played 1500 games, 119470 / 125000 positions
+  played 1550 games, 123118 / 125000 positions
+wrote 125000 WDL records to /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/shard-3.bin
