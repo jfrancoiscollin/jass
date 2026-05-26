@@ -3,6 +3,8 @@
 
 #include "pattern_network.hpp"
 
+#include "bitboard.hpp"
+
 #include <cstring>
 #include <fstream>
 #include <string>
@@ -69,8 +71,9 @@ constexpr std::array<std::array<std::uint8_t, 8>, 16> V2_PATTERNS = {{
     {{34, 35, 39, 40, 44, 45, 49, 50}},  // (r=6, c=6)  SE corner
 }};
 
-constexpr char     JPAT_MAGIC[4]  = {'J', 'P', 'A', 'T'};
-constexpr std::uint32_t JPAT_VERSION = 1;
+constexpr char          JPAT_MAGIC[4]     = {'J', 'P', 'A', 'T'};
+constexpr std::uint32_t JPAT_VERSION_V1   = 1;
+constexpr std::uint32_t JPAT_VERSION_V2   = 2;
 
 inline std::size_t pow5(std::size_t k) noexcept {
     std::size_t r = 1;
@@ -106,8 +109,23 @@ void PatternNetwork::add_pattern(const std::vector<std::uint8_t>& squares) {
 }
 
 int PatternNetwork::evaluate(const Position& pos) const noexcept {
-    // White-POV sum: each pattern contributes its bucket weight.
+    // White-POV sum.
     std::int32_t acc = bias_;
+
+    // D1 hybrid skeleton (no-op when man_value_ == king_value_ == 0,
+    // i.e. pure-pattern v1 networks). Material + king count diffs are
+    // the cheapest structural features and give the patterns something
+    // to correct around rather than having to learn piece values from
+    // raw labels (cf. docs/SCAN_ARCHITECTURE_NOTES.md §6).
+    if (man_value_ != 0 || king_value_ != 0) {
+        const int wm = popcount(pos.white_men());
+        const int bm = popcount(pos.black_men());
+        const int wk = popcount(pos.white_kings());
+        const int bk = popcount(pos.black_kings());
+        acc += man_value_  * (wm - bm);
+        acc += king_value_ * (wk - bk);
+    }
+
     for (const Pattern& p : patterns_) {
         std::size_t idx = 0;
         std::size_t mult = 1;
@@ -144,9 +162,19 @@ bool PatternNetwork::load(std::string_view path) {
 
     std::uint32_t version{}, num_patterns{};
     std::int32_t  bias{};
-    if (!read_u32(version) || version != JPAT_VERSION) return false;
+    if (!read_u32(version))                            return false;
+    if (version != JPAT_VERSION_V1 && version != JPAT_VERSION_V2) {
+        return false;
+    }
     if (!read_u32(num_patterns))                       return false;
     if (!read_i32(bias))                               return false;
+
+    std::int32_t man_value  = 0;
+    std::int32_t king_value = 0;
+    if (version == JPAT_VERSION_V2) {
+        if (!read_i32(man_value))  return false;
+        if (!read_i32(king_value)) return false;
+    }
 
     std::vector<Pattern> tmp;
     tmp.reserve(num_patterns);
@@ -165,20 +193,28 @@ bool PatternNetwork::load(std::string_view path) {
         tmp.push_back({std::move(sqs), std::move(w)});
     }
 
-    patterns_ = std::move(tmp);
-    bias_     = bias;
+    patterns_   = std::move(tmp);
+    bias_       = bias;
+    man_value_  = man_value;
+    king_value_ = king_value;
     return true;
 }
 
-bool PatternNetwork::save(std::string_view path) const {
+bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
+    if (version != JPAT_VERSION_V1 && version != JPAT_VERSION_V2) {
+        return false;
+    }
     std::ofstream f(std::string{path}, std::ios::binary);
     if (!f) return false;
     f.write(JPAT_MAGIC, 4);
-    const std::uint32_t version = JPAT_VERSION;
-    const std::uint32_t n       = static_cast<std::uint32_t>(patterns_.size());
+    const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
     f.write(reinterpret_cast<const char*>(&version), 4);
     f.write(reinterpret_cast<const char*>(&n),       4);
     f.write(reinterpret_cast<const char*>(&bias_),   4);
+    if (version == JPAT_VERSION_V2) {
+        f.write(reinterpret_cast<const char*>(&man_value_),  4);
+        f.write(reinterpret_cast<const char*>(&king_value_), 4);
+    }
     for (const Pattern& p : patterns_) {
         const std::uint8_t k = static_cast<std::uint8_t>(p.squares.size());
         f.write(reinterpret_cast<const char*>(&k), 1);
