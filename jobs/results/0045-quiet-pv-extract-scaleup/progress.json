@@ -1,13 +1,18 @@
 {
   "job_id": "0045-quiet-pv-extract-scaleup",
-  "snapshot_at": "2026-05-26T09:29:11+00:00",
+  "snapshot_at": "2026-05-26T09:35:11+00:00",
   "started_at": "2026-05-25T14:58:04+00:00",
-  "elapsed_seconds": 66667,
+  "elapsed_seconds": 67027,
   "artefacts": [
     {
       "name": "nnue-128-64.bin",
       "size_bytes": 264220,
       "records": 6952
+    },
+    {
+      "name": "nnue-256-128.bin",
+      "size_bytes": 593948,
+      "records": 15630
     },
     {
       "name": "nnue-64-32.bin",
@@ -76,5 +81,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    18:31:07  0.0  0.0 bash\n 422468  422466    18:31:07  0.0  0.0 bash\n 434657  422468       40:46  179 80.8 python3\n 434658  422468       40:46  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422466       1    18:37:06  0.0  0.0 bash\n 422468  422466    18:37:06  0.0  0.0 bash\n 434657  422468       46:46  180 80.8 python3\n 434658  422468       46:46  0.0  0.0 tee\n"
 }
