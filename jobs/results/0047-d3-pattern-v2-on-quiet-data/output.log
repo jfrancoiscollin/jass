@@ -1,0 +1,144 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 4  mem: 15Gi
+dataset: /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/quiet-only-200K.bin (7600008 bytes)
+v5 ref:  /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+=== train pattern v2 — D3 (Phase 1 recipe, quiet-only 200K data) ===
+loading /root/jass/jobs/results/0043-quiet-filter-experiment/artefacts.src/quiet-only-200K.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (16 patterns)...
+  done, shape=(16, 400000)
+=== run 1/3 (seed 42) ===
+[seed 42] epoch  0: train_loss=  20630.17  val_mse=67068204.00  lr=6.76e-03
+[seed 42] epoch  1: train_loss=  20599.07  val_mse=67047916.00  lr=9.99e-03
+[seed 42] epoch  2: train_loss=  20551.86  val_mse=67025640.00  lr=9.93e-03
+[seed 42] epoch  3: train_loss=  20506.14  val_mse=67003416.00  lr=9.81e-03
+[seed 42] epoch  4: train_loss=  20462.56  val_mse=66981508.00  lr=9.63e-03
+[seed 42] epoch  5: train_loss=  20420.16  val_mse=66959880.00  lr=9.40e-03
+[seed 42] epoch  6: train_loss=  20380.88  val_mse=66938836.00  lr=9.11e-03
+[seed 42] epoch  7: train_loss=  20342.97  val_mse=66918404.00  lr=8.77e-03
+[seed 42] epoch  8: train_loss=  20307.36  val_mse=66898828.00  lr=8.38e-03
+[seed 42] epoch  9: train_loss=  20273.85  val_mse=66880288.00  lr=7.96e-03
+[seed 42] epoch 10: train_loss=  20243.36  val_mse=66862764.00  lr=7.50e-03
+[seed 42] epoch 11: train_loss=  20214.73  val_mse=66846380.00  lr=7.01e-03
+[seed 42] epoch 12: train_loss=  20189.43  val_mse=66831292.00  lr=6.49e-03
+[seed 42] epoch 13: train_loss=  20164.87  val_mse=66817532.00  lr=5.96e-03
+[seed 42] epoch 14: train_loss=  20144.11  val_mse=66804968.00  lr=5.41e-03
+[seed 42] epoch 15: train_loss=  20124.81  val_mse=66793728.00  lr=4.86e-03
+[seed 42] epoch 16: train_loss=  20108.41  val_mse=66783768.00  lr=4.31e-03
+[seed 42] epoch 17: train_loss=  20094.08  val_mse=66775048.00  lr=3.77e-03
+[seed 42] epoch 18: train_loss=  20079.88  val_mse=66767552.00  lr=3.25e-03
+[seed 42] epoch 19: train_loss=  20070.15  val_mse=66761188.00  lr=2.74e-03
+[seed 42] epoch 20: train_loss=  20061.44  val_mse=66755908.00  lr=2.26e-03
+[seed 42] epoch 21: train_loss=  20053.48  val_mse=66751628.00  lr=1.82e-03
+[seed 42] epoch 22: train_loss=  20047.47  val_mse=66748232.00  lr=1.42e-03
+[seed 42] epoch 23: train_loss=  20042.67  val_mse=66745688.00  lr=1.05e-03
+[seed 42] epoch 24: train_loss=  20038.48  val_mse=66743828.00  lr=7.40e-04
+[seed 42] epoch 25: train_loss=  20036.79  val_mse=66742584.00  lr=4.78e-04
+[seed 42] epoch 26: train_loss=  20035.52  val_mse=66741816.00  lr=2.71e-04
+[seed 42] epoch 27: train_loss=  20035.29  val_mse=66741428.00  lr=1.21e-04
+[seed 42] epoch 28: train_loss=  20034.02  val_mse=66741280.00  lr=3.03e-05
+[seed 42] epoch 29: train_loss=  20035.00  val_mse=66741260.00  lr=0.00e+00
+=== run 2/3 (seed 43) ===
+[seed 43] epoch  0: train_loss=  20630.82  val_mse=67068224.00  lr=6.76e-03
+[seed 43] epoch  1: train_loss=  20599.55  val_mse=67048060.00  lr=9.99e-03
+[seed 43] epoch  2: train_loss=  20552.03  val_mse=67025900.00  lr=9.93e-03
+[seed 43] epoch  3: train_loss=  20507.16  val_mse=67003652.00  lr=9.81e-03
+[seed 43] epoch  4: train_loss=  20461.83  val_mse=66981612.00  lr=9.63e-03
+[seed 43] epoch  5: train_loss=  20420.34  val_mse=66959932.00  lr=9.40e-03
+[seed 43] epoch  6: train_loss=  20379.74  val_mse=66938836.00  lr=9.11e-03
+[seed 43] epoch  7: train_loss=  20343.30  val_mse=66918468.00  lr=8.77e-03
+[seed 43] epoch  8: train_loss=  20307.84  val_mse=66898888.00  lr=8.38e-03
+[seed 43] epoch  9: train_loss=  20273.87  val_mse=66880320.00  lr=7.96e-03
+[seed 43] epoch 10: train_loss=  20242.58  val_mse=66862816.00  lr=7.50e-03
+[seed 43] epoch 11: train_loss=  20214.92  val_mse=66846452.00  lr=7.01e-03
+[seed 43] epoch 12: train_loss=  20189.21  val_mse=66831412.00  lr=6.49e-03
+[seed 43] epoch 13: train_loss=  20165.79  val_mse=66817564.00  lr=5.96e-03
+[seed 43] epoch 14: train_loss=  20143.24  val_mse=66805040.00  lr=5.41e-03
+[seed 43] epoch 15: train_loss=  20125.37  val_mse=66793780.00  lr=4.86e-03
+[seed 43] epoch 16: train_loss=  20108.53  val_mse=66783844.00  lr=4.31e-03
+[seed 43] epoch 17: train_loss=  20092.82  val_mse=66775120.00  lr=3.77e-03
+[seed 43] epoch 18: train_loss=  20080.67  val_mse=66767604.00  lr=3.25e-03
+[seed 43] epoch 19: train_loss=  20070.09  val_mse=66761204.00  lr=2.74e-03
+[seed 43] epoch 20: train_loss=  20060.72  val_mse=66755932.00  lr=2.26e-03
+[seed 43] epoch 21: train_loss=  20053.69  val_mse=66751648.00  lr=1.82e-03
+[seed 43] epoch 22: train_loss=  20047.79  val_mse=66748264.00  lr=1.42e-03
+[seed 43] epoch 23: train_loss=  20043.56  val_mse=66745704.00  lr=1.05e-03
+[seed 43] epoch 24: train_loss=  20039.59  val_mse=66743848.00  lr=7.40e-04
+[seed 43] epoch 25: train_loss=  20036.93  val_mse=66742588.00  lr=4.78e-04
+[seed 43] epoch 26: train_loss=  20036.25  val_mse=66741836.00  lr=2.71e-04
+[seed 43] epoch 27: train_loss=  20034.35  val_mse=66741444.00  lr=1.21e-04
+[seed 43] epoch 28: train_loss=  20034.37  val_mse=66741300.00  lr=3.03e-05
+[seed 43] epoch 29: train_loss=  20034.65  val_mse=66741284.00  lr=0.00e+00
+=== run 3/3 (seed 44) ===
+[seed 44] epoch  0: train_loss=  20630.88  val_mse=67068256.00  lr=6.76e-03
+[seed 44] epoch  1: train_loss=  20598.98  val_mse=67048060.00  lr=9.99e-03
+[seed 44] epoch  2: train_loss=  20552.54  val_mse=67025900.00  lr=9.93e-03
+[seed 44] epoch  3: train_loss=  20507.05  val_mse=67003652.00  lr=9.81e-03
+[seed 44] epoch  4: train_loss=  20463.62  val_mse=66981640.00  lr=9.63e-03
+[seed 44] epoch  5: train_loss=  20421.17  val_mse=66960024.00  lr=9.40e-03
+[seed 44] epoch  6: train_loss=  20380.96  val_mse=66938968.00  lr=9.11e-03
+[seed 44] epoch  7: train_loss=  20342.90  val_mse=66918476.00  lr=8.77e-03
+[seed 44] epoch  8: train_loss=  20308.50  val_mse=66899000.00  lr=8.38e-03
+[seed 44] epoch  9: train_loss=  20273.92  val_mse=66880476.00  lr=7.96e-03
+[seed 44] epoch 10: train_loss=  20243.89  val_mse=66862932.00  lr=7.50e-03
+[seed 44] epoch 11: train_loss=  20215.74  val_mse=66846628.00  lr=7.01e-03
+[seed 44] epoch 12: train_loss=  20188.85  val_mse=66831536.00  lr=6.49e-03
+[seed 44] epoch 13: train_loss=  20165.05  val_mse=66817680.00  lr=5.96e-03
+[seed 44] epoch 14: train_loss=  20144.50  val_mse=66805204.00  lr=5.41e-03
+[seed 44] epoch 15: train_loss=  20125.19  val_mse=66793964.00  lr=4.86e-03
+[seed 44] epoch 16: train_loss=  20109.02  val_mse=66784008.00  lr=4.31e-03
+[seed 44] epoch 17: train_loss=  20094.24  val_mse=66775300.00  lr=3.77e-03
+[seed 44] epoch 18: train_loss=  20080.87  val_mse=66767800.00  lr=3.25e-03
+[seed 44] epoch 19: train_loss=  20070.48  val_mse=66761432.00  lr=2.74e-03
+[seed 44] epoch 20: train_loss=  20061.00  val_mse=66756124.00  lr=2.26e-03
+[seed 44] epoch 21: train_loss=  20053.93  val_mse=66751844.00  lr=1.82e-03
+[seed 44] epoch 22: train_loss=  20048.90  val_mse=66748480.00  lr=1.42e-03
+[seed 44] epoch 23: train_loss=  20043.98  val_mse=66745924.00  lr=1.05e-03
+[seed 44] epoch 24: train_loss=  20041.23  val_mse=66744072.00  lr=7.40e-04
+[seed 44] epoch 25: train_loss=  20037.94  val_mse=66742820.00  lr=4.78e-04
+[seed 44] epoch 26: train_loss=  20036.04  val_mse=66742060.00  lr=2.71e-04
+[seed 44] epoch 27: train_loss=  20034.89  val_mse=66741672.00  lr=1.21e-04
+[seed 44] epoch 28: train_loss=  20034.71  val_mse=66741520.00  lr=3.03e-05
+[seed 44] epoch 29: train_loss=  20034.17  val_mse=66741500.00  lr=0.00e+00
+averaging 3 models...
+final (saved) val_mse=66741344.00
+wrote /root/jass/jobs/results/0047-d3-pattern-v2-on-quiet-data/artefacts.src/pattern-v2-d3.jpat (25000160 bytes)
+-rw-r--r-- 1 root root 24M May 26 10:05 /root/jass/jobs/results/0047-d3-pattern-v2-on-quiet-data/artefacts.src/pattern-v2-d3.jpat
+
+=== bench vs handcrafted (depth 6) ===
+Benchmark: NNUE (/root/jass/jobs/results/0047-d3-pattern-v2-on-quiet-data/artefacts.src/pattern-v2-d3.jpat) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+=== bench vs v5 (depth 6) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0047-d3-pattern-v2-on-quiet-data/artefacts.src/pattern-v2-d3.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+=== bench vs v5 (depth 10) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0047-d3-pattern-v2-on-quiet-data/artefacts.src/pattern-v2-d3.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0047 D3 PATTERN v2 ON QUIET-ONLY DATA VERDICT
+==========================================================
+  train wall:           187s (3.1 min)
+  vs handcrafted:       rate=0
+  vs v5 (depth 6):      rate=0
+  vs v5 (depth 10):     rate=0
+
+  References :
+    0046 (Phase 1, sale 1M)              : 0/54 vs v5 d6, 0/54 vs v5 d10
+    0025a-7 (no Phase 1, sale 1M)        : 3/54 vs v5 d6, 0/54 vs v5 d10
+    0043 MLPNetworkQ (quiet 200K)        : 0.472 vs v5 d6, 0.639 vs v5 d10
+
+  Decision (per docs/SCAN_ARCHITECTURE_NOTES.md §D3) :
+    FLAT-LINE confirmé — data n'était PAS la racine.
+    Direct vers D1 (hybrid pattern+material) — c'est probablement
+    le squelette structurel qui manque, pas la qualité des labels.
+==========================================================
