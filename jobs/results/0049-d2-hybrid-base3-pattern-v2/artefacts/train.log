@@ -1,0 +1,102 @@
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 2000000)
+=== run 1/3 (seed 42) ===
+[seed 42] epoch  0: train_loss=  23021.91  val_mse=93232792.00  lr=6.68e-03  man=  98.4  king= 298.5
+[seed 42] epoch  1: train_loss=  22891.81  val_mse=93123192.00  lr=9.99e-03  man=  94.2  king= 294.2
+[seed 42] epoch  2: train_loss=  22706.88  val_mse=93006968.00  lr=9.93e-03  man=  89.6  king= 289.5
+[seed 42] epoch  3: train_loss=  22532.05  val_mse=92894752.00  lr=9.81e-03  man=  85.0  king= 284.8
+[seed 42] epoch  4: train_loss=  22368.34  val_mse=92786752.00  lr=9.63e-03  man=  80.5  king= 280.2
+[seed 42] epoch  5: train_loss=  22216.76  val_mse=92683128.00  lr=9.40e-03  man=  76.1  king= 275.7
+[seed 42] epoch  6: train_loss=  22075.32  val_mse=92584728.00  lr=9.11e-03  man=  71.8  king= 271.2
+[seed 42] epoch  7: train_loss=  21945.20  val_mse=92491536.00  lr=8.77e-03  man=  67.7  king= 266.9
+[seed 42] epoch  8: train_loss=  21825.91  val_mse=92403984.00  lr=8.39e-03  man=  63.7  king= 262.8
+[seed 42] epoch  9: train_loss=  21717.08  val_mse=92322144.00  lr=7.96e-03  man=  59.9  king= 258.8
+[seed 42] epoch 10: train_loss=  21618.46  val_mse=92246208.00  lr=7.50e-03  man=  56.4  king= 255.1
+[seed 42] epoch 11: train_loss=  21529.34  val_mse=92176312.00  lr=7.01e-03  man=  53.0  king= 251.6
+[seed 42] epoch 12: train_loss=  21449.83  val_mse=92112240.00  lr=6.49e-03  man=  49.9  king= 248.3
+[seed 42] epoch 13: train_loss=  21378.93  val_mse=92054248.00  lr=5.96e-03  man=  47.0  king= 245.3
+[seed 42] epoch 14: train_loss=  21316.17  val_mse=92002160.00  lr=5.41e-03  man=  44.4  king= 242.5
+[seed 42] epoch 15: train_loss=  21261.22  val_mse=91955848.00  lr=4.86e-03  man=  42.1  king= 240.0
+[seed 42] epoch 16: train_loss=  21213.60  val_mse=91915072.00  lr=4.31e-03  man=  40.0  king= 237.8
+[seed 42] epoch 17: train_loss=  21172.57  val_mse=91879536.00  lr=3.77e-03  man=  38.1  king= 235.9
+[seed 42] epoch 18: train_loss=  21137.57  val_mse=91849104.00  lr=3.25e-03  man=  36.5  king= 234.2
+[seed 42] epoch 19: train_loss=  21107.99  val_mse=91823464.00  lr=2.74e-03  man=  35.1  king= 232.7
+[seed 42] epoch 20: train_loss=  21083.81  val_mse=91802296.00  lr=2.27e-03  man=  34.0  king= 231.6
+[seed 42] epoch 21: train_loss=  21064.09  val_mse=91785224.00  lr=1.82e-03  man=  33.0  king= 230.6
+[seed 42] epoch 22: train_loss=  21048.53  val_mse=91771808.00  lr=1.42e-03  man=  32.3  king= 229.8
+[seed 42] epoch 23: train_loss=  21036.53  val_mse=91761648.00  lr=1.05e-03  man=  31.7  king= 229.2
+[seed 42] epoch 24: train_loss=  21027.73  val_mse=91754384.00  lr=7.40e-04  man=  31.3  king= 228.8
+[seed 42] epoch 25: train_loss=  21021.66  val_mse=91749480.00  lr=4.78e-04  man=  31.0  king= 228.5
+[seed 42] epoch 26: train_loss=  21017.74  val_mse=91746496.00  lr=2.71e-04  man=  30.9  king= 228.4
+[seed 42] epoch 27: train_loss=  21015.43  val_mse=91744968.00  lr=1.21e-04  man=  30.8  king= 228.3
+[seed 42] epoch 28: train_loss=  21014.26  val_mse=91744400.00  lr=3.03e-05  man=  30.7  king= 228.2
+[seed 42] epoch 29: train_loss=  21014.05  val_mse=91744320.00  lr=0.00e+00  man=  30.7  king= 228.2
+=== run 2/3 (seed 43) ===
+[seed 43] epoch  0: train_loss=  23021.81  val_mse=93232752.00  lr=6.68e-03  man=  98.4  king= 298.5
+[seed 43] epoch  1: train_loss=  22892.21  val_mse=93123112.00  lr=9.99e-03  man=  94.2  king= 294.2
+[seed 43] epoch  2: train_loss=  22707.06  val_mse=93006984.00  lr=9.93e-03  man=  89.6  king= 289.5
+[seed 43] epoch  3: train_loss=  22531.85  val_mse=92894728.00  lr=9.81e-03  man=  85.0  king= 284.8
+[seed 43] epoch  4: train_loss=  22368.77  val_mse=92786792.00  lr=9.63e-03  man=  80.5  king= 280.2
+[seed 43] epoch  5: train_loss=  22216.51  val_mse=92683384.00  lr=9.40e-03  man=  76.1  king= 275.7
+[seed 43] epoch  6: train_loss=  22075.38  val_mse=92585152.00  lr=9.11e-03  man=  71.8  king= 271.2
+[seed 43] epoch  7: train_loss=  21945.54  val_mse=92491912.00  lr=8.77e-03  man=  67.7  king= 266.9
+[seed 43] epoch  8: train_loss=  21826.20  val_mse=92404232.00  lr=8.39e-03  man=  63.7  king= 262.8
+[seed 43] epoch  9: train_loss=  21716.92  val_mse=92322528.00  lr=7.96e-03  man=  59.9  king= 258.8
+[seed 43] epoch 10: train_loss=  21618.50  val_mse=92246632.00  lr=7.50e-03  man=  56.4  king= 255.1
+[seed 43] epoch 11: train_loss=  21529.75  val_mse=92176648.00  lr=7.01e-03  man=  53.0  king= 251.6
+[seed 43] epoch 12: train_loss=  21449.84  val_mse=92112600.00  lr=6.49e-03  man=  49.9  king= 248.3
+[seed 43] epoch 13: train_loss=  21379.23  val_mse=92054632.00  lr=5.96e-03  man=  47.0  king= 245.3
+[seed 43] epoch 14: train_loss=  21316.41  val_mse=92002520.00  lr=5.41e-03  man=  44.4  king= 242.5
+[seed 43] epoch 15: train_loss=  21261.56  val_mse=91956088.00  lr=4.86e-03  man=  42.1  king= 240.0
+[seed 43] epoch 16: train_loss=  21213.66  val_mse=91915344.00  lr=4.31e-03  man=  40.0  king= 237.8
+[seed 43] epoch 17: train_loss=  21172.66  val_mse=91879840.00  lr=3.77e-03  man=  38.1  king= 235.9
+[seed 43] epoch 18: train_loss=  21137.61  val_mse=91849400.00  lr=3.25e-03  man=  36.5  king= 234.2
+[seed 43] epoch 19: train_loss=  21108.19  val_mse=91823840.00  lr=2.74e-03  man=  35.1  king= 232.7
+[seed 43] epoch 20: train_loss=  21084.10  val_mse=91802704.00  lr=2.27e-03  man=  34.0  king= 231.5
+[seed 43] epoch 21: train_loss=  21064.22  val_mse=91785624.00  lr=1.82e-03  man=  33.0  king= 230.6
+[seed 43] epoch 22: train_loss=  21048.82  val_mse=91772232.00  lr=1.42e-03  man=  32.3  king= 229.8
+[seed 43] epoch 23: train_loss=  21036.59  val_mse=91762104.00  lr=1.05e-03  man=  31.7  king= 229.2
+[seed 43] epoch 24: train_loss=  21027.90  val_mse=91754808.00  lr=7.40e-04  man=  31.3  king= 228.8
+[seed 43] epoch 25: train_loss=  21021.78  val_mse=91749896.00  lr=4.78e-04  man=  31.0  king= 228.5
+[seed 43] epoch 26: train_loss=  21017.60  val_mse=91746920.00  lr=2.71e-04  man=  30.9  king= 228.4
+[seed 43] epoch 27: train_loss=  21015.48  val_mse=91745368.00  lr=1.21e-04  man=  30.8  king= 228.3
+[seed 43] epoch 28: train_loss=  21014.44  val_mse=91744800.00  lr=3.03e-05  man=  30.7  king= 228.2
+[seed 43] epoch 29: train_loss=  21014.24  val_mse=91744728.00  lr=0.00e+00  man=  30.7  king= 228.2
+=== run 3/3 (seed 44) ===
+[seed 44] epoch  0: train_loss=  23021.83  val_mse=93233048.00  lr=6.68e-03  man=  98.4  king= 298.5
+[seed 44] epoch  1: train_loss=  22892.26  val_mse=93123576.00  lr=9.99e-03  man=  94.2  king= 294.2
+[seed 44] epoch  2: train_loss=  22707.51  val_mse=93007352.00  lr=9.93e-03  man=  89.6  king= 289.5
+[seed 44] epoch  3: train_loss=  22532.21  val_mse=92895128.00  lr=9.81e-03  man=  85.0  king= 284.8
+[seed 44] epoch  4: train_loss=  22369.26  val_mse=92787088.00  lr=9.63e-03  man=  80.5  king= 280.2
+[seed 44] epoch  5: train_loss=  22216.61  val_mse=92683776.00  lr=9.40e-03  man=  76.1  king= 275.7
+[seed 44] epoch  6: train_loss=  22075.62  val_mse=92585400.00  lr=9.11e-03  man=  71.8  king= 271.2
+[seed 44] epoch  7: train_loss=  21945.90  val_mse=92492080.00  lr=8.77e-03  man=  67.7  king= 266.9
+[seed 44] epoch  8: train_loss=  21826.32  val_mse=92404384.00  lr=8.39e-03  man=  63.7  king= 262.8
+[seed 44] epoch  9: train_loss=  21717.60  val_mse=92322400.00  lr=7.96e-03  man=  59.9  king= 258.8
+[seed 44] epoch 10: train_loss=  21618.46  val_mse=92246408.00  lr=7.50e-03  man=  56.4  king= 255.1
+[seed 44] epoch 11: train_loss=  21529.69  val_mse=92176608.00  lr=7.01e-03  man=  53.0  king= 251.6
+[seed 44] epoch 12: train_loss=  21449.90  val_mse=92112664.00  lr=6.49e-03  man=  49.9  king= 248.3
+[seed 44] epoch 13: train_loss=  21379.21  val_mse=92054656.00  lr=5.96e-03  man=  47.0  king= 245.3
+[seed 44] epoch 14: train_loss=  21316.58  val_mse=92002448.00  lr=5.41e-03  man=  44.4  king= 242.5
+[seed 44] epoch 15: train_loss=  21261.37  val_mse=91956112.00  lr=4.86e-03  man=  42.1  king= 240.0
+[seed 44] epoch 16: train_loss=  21213.79  val_mse=91915360.00  lr=4.31e-03  man=  40.0  king= 237.8
+[seed 44] epoch 17: train_loss=  21172.65  val_mse=91879920.00  lr=3.77e-03  man=  38.1  king= 235.9
+[seed 44] epoch 18: train_loss=  21137.75  val_mse=91849576.00  lr=3.25e-03  man=  36.5  king= 234.2
+[seed 44] epoch 19: train_loss=  21108.39  val_mse=91823944.00  lr=2.74e-03  man=  35.1  king= 232.7
+[seed 44] epoch 20: train_loss=  21084.14  val_mse=91802800.00  lr=2.27e-03  man=  34.0  king= 231.6
+[seed 44] epoch 21: train_loss=  21064.43  val_mse=91785696.00  lr=1.82e-03  man=  33.0  king= 230.6
+[seed 44] epoch 22: train_loss=  21048.99  val_mse=91772312.00  lr=1.42e-03  man=  32.3  king= 229.8
+[seed 44] epoch 23: train_loss=  21036.86  val_mse=91762176.00  lr=1.05e-03  man=  31.7  king= 229.2
+[seed 44] epoch 24: train_loss=  21027.93  val_mse=91754880.00  lr=7.40e-04  man=  31.3  king= 228.8
+[seed 44] epoch 25: train_loss=  21021.86  val_mse=91749960.00  lr=4.78e-04  man=  31.0  king= 228.5
+[seed 44] epoch 26: train_loss=  21017.96  val_mse=91746984.00  lr=2.71e-04  man=  30.9  king= 228.4
+[seed 44] epoch 27: train_loss=  21015.65  val_mse=91745448.00  lr=1.21e-04  man=  30.8  king= 228.3
+[seed 44] epoch 28: train_loss=  21014.53  val_mse=91744888.00  lr=3.03e-05  man=  30.7  king= 228.2
+[seed 44] epoch 29: train_loss=  21014.28  val_mse=91744808.00  lr=0.00e+00  man=  30.7  king= 228.2
+averaging 3 models...
+final (saved) val_mse=91744608.00  man=30.7  king=228.2
+wrote /root/jass/jobs/results/0049-d2-hybrid-base3-pattern-v2/artefacts.src/pattern-v2-d2-hybrid-base3.jpat (420073 bytes)
