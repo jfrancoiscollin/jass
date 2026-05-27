@@ -1,13 +1,13 @@
 {
   "job_id": "0050-v7-quiet-pv-extract-1M",
-  "snapshot_at": "2026-05-27T14:10:18+00:00",
+  "snapshot_at": "2026-05-27T14:15:21+00:00",
   "started_at": "2026-05-26T17:39:08+00:00",
-  "elapsed_seconds": 73870,
+  "elapsed_seconds": 74173,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 5507570,
-      "records": 144935
+      "size_bytes": 5532194,
+      "records": 145583
     },
     {
       "name": "shard-1.log",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 5499362,
-      "records": 144719
+      "size_bytes": 5523986,
+      "records": 145367
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 5441906,
-      "records": 143207
+      "size_bytes": 5466530,
+      "records": 143855
     },
     {
       "name": "shard-3.log",
@@ -33,13 +33,13 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 5400866,
-      "records": 142127
+      "size_bytes": 5417282,
+      "records": 142559
     },
     {
       "name": "shard-4.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1    20:31:10  0.0  0.0 bash\n 439129  439127    20:31:10  0.0  0.0 bash\n 439178  439129    20:31:09  0.0  0.0 bash\n 439179  439129    20:31:09  0.0  0.0 bash\n 439181  439129    20:31:09  0.0  0.0 bash\n 439183  439129    20:31:09  0.0  0.0 bash\n 439186  439178    20:31:09 99.8  0.2 jass\n 439187  439179    20:31:09 99.8  0.2 jass\n 439188  439181    20:31:09 99.8  0.2 jass\n 439189  439183    20:31:09 99.8  0.2 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1    20:36:12  0.0  0.0 bash\n 439129  439127    20:36:12  0.0  0.0 bash\n 439178  439129    20:36:12  0.0  0.0 bash\n 439179  439129    20:36:12  0.0  0.0 bash\n 439181  439129    20:36:12  0.0  0.0 bash\n 439183  439129    20:36:12  0.0  0.0 bash\n 439186  439178    20:36:12 99.8  0.2 jass\n 439187  439179    20:36:12 99.8  0.2 jass\n 439188  439181    20:36:12 99.8  0.2 jass\n 439189  439183    20:36:12 99.8  0.2 jass\n"
 }
