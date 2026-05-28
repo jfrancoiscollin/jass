@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v9.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
