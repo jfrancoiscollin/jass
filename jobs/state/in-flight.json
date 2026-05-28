@@ -1,7 +1,0 @@
-{
-  "job_id": "0051-g1-lbfgs-d1-hybrid",
-  "script": "jobs/queue/0051-g1-lbfgs-d1-hybrid.sh",
-  "pid": 479786,
-  "started_at": "2026-05-28T07:01:36+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
