@@ -1156,6 +1156,55 @@ void test_pattern_network_v3_base3_roundtrip() {
     std::remove(path.c_str());
 }
 
+// G3a / JPAT v4 — round-trip the new king PST + balance fields and
+// verify evaluate() uses them with the documented mirroring convention
+// (black kings on FMJD square s use pst[50-s]).
+void test_pattern_network_v4_king_pst_balance_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v2();
+    net.set_encoding_base(3);
+    net.set_bias(0);
+    net.set_man_value(0);
+    net.set_king_value(0);
+    net.set_balance(7);
+    for (std::size_t i = 0; i < 50; ++i) {
+        net.king_pst_mut()[i] = static_cast<std::int32_t>(i * 2);  // [0,2,4,..,98]
+    }
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v4-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/4));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.encoding_base(), 3);
+    JASS_CHECK_EQ(loaded.balance(), 7);
+    for (std::size_t i = 0; i < 50; ++i) {
+        JASS_CHECK_EQ(loaded.king_pst()[i],
+                      static_cast<std::int32_t>(i * 2));
+    }
+
+    // Mirror check: positions paired so the non-king material is
+    // symmetric (1 white man at square 30 vs 1 black man at the
+    // row-mirror square 21, both on the same file) AND so balance=0
+    // (man_value/king_value are 0, balance is zeroed below to isolate
+    // pst). Then the eval is just the king PST contribution.
+    // king_pst layout (i ↦ 2i, i in [0,49]): pst[0]=0, pst[49]=98.
+    //   white K on 1  → +pst[0]  =   0
+    //   white K on 50 → +pst[49] = +98
+    //   black K on 50 → -pst[0]  =   0  (mirror: 50-50)
+    //   black K on 1  → -pst[49] = -98  (mirror: 50-1)
+    loaded.set_balance(0);  // isolate PST contribution
+    const Position w_k1  = parse("W:WK1,30:B21");
+    const Position w_k50 = parse("W:WK50,30:B21");
+    const Position b_k50 = parse("W:W30:B21,K50");
+    const Position b_k1  = parse("W:W30:B21,K1");
+    JASS_CHECK_EQ(loaded.evaluate(w_k1),  0);
+    JASS_CHECK_EQ(loaded.evaluate(w_k50), 98);
+    JASS_CHECK_EQ(loaded.evaluate(b_k50),  0);
+    JASS_CHECK_EQ(loaded.evaluate(b_k1), -98);
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1209,5 +1258,6 @@ void run_nnue_tests() {
     test_pattern_network_load_dispatch();
     test_pattern_network_v2_hybrid_roundtrip();
     test_pattern_network_v3_base3_roundtrip();
+    test_pattern_network_v4_king_pst_balance_roundtrip();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }

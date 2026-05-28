@@ -135,6 +135,51 @@ def load_jnnw(path: Path, max_records: int = 0) -> tuple[np.ndarray, np.ndarray,
     return bbs, stm, score, wdl
 
 
+def king_pst_features(bbs: np.ndarray) -> np.ndarray:
+    """G3a / JPAT v4 — return (50, N) float32 delta-PST feature matrix.
+
+    For each record n, delta[s, n] = (#white_kings at FMJD square s+1)
+                                   - (#black_kings at FMJD square 50-s)
+
+    The C++ eval uses king_pst[s-1] for each white king on s and
+    -king_pst[50-s] for each black king on s (row-mirror symmetry).
+    Folding into a single dot product against the 50-dim PST vector
+    keeps the model linear and trainable with the same Adam/L-BFGS path.
+    """
+    n = bbs.shape[1]
+    out = np.zeros((50, n), dtype=np.float32)
+    for s in range(50):  # 0..49 (FMJD square = s+1)
+        bit_w  = np.uint64(1) << np.uint64(s)
+        bit_b  = np.uint64(1) << np.uint64(49 - s)  # row-mirror
+        out[s] += ((bbs[1] & bit_w) != 0).astype(np.float32)   # white kings on s+1
+        out[s] -= ((bbs[3] & bit_b) != 0).astype(np.float32)   # black kings on 50-s
+    return out
+
+
+def balance_feature(bbs: np.ndarray) -> np.ndarray:
+    """G3a / JPAT v4 — L/R skew per record, float32 array of length N.
+    Matches C++ compute_skew: per piece, +1 if on a right-side file
+    (FMJD col >= 3), -1 if on left-side file (col <= 1), 0 on center
+    file (col == 2). White pieces add, black pieces subtract.
+    """
+    n = bbs.shape[1]
+    # Per-square contribution: +1 right (col 3,4), -1 left (col 0,1), 0 center
+    contrib = np.zeros(50, dtype=np.int32)
+    for s in range(50):
+        col = s % 5
+        if col < 2:
+            contrib[s] = -1
+        elif col > 2:
+            contrib[s] = +1
+    out = np.zeros(n, dtype=np.float32)
+    for s in range(50):
+        bit = np.uint64(1) << np.uint64(s)
+        w   = (((bbs[0] | bbs[1]) & bit) != 0).astype(np.int32) * contrib[s]
+        b   = (((bbs[2] | bbs[3]) & bit) != 0).astype(np.int32) * contrib[s]
+        out += (w - b).astype(np.float32)
+    return out
+
+
 def material_diffs(bbs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Return (mat_diff, king_diff) float32 arrays of length N, where
     mat_diff[i]  = popcount(Wmen[i])   - popcount(Bmen[i])
@@ -231,8 +276,13 @@ class HybridPatternModel(PatternModel):
     """D1 hybrid (JPAT v2 if base=5, v3 if base=3): patterns + material/king
     count skeleton.
 
+    When `extras = True` (G3a / JPAT v4), also include a king PST
+    (50-dim weight vector) and a scalar balance L/R parameter.
+
     The eval is `bias + man_value * (Wmen - Bmen)
               + king_value * (Wkings - Bkings)
+              + king_pst · delta_pst(pos)        [G3a only]
+              + balance  · skew(pos)             [G3a only]
               + sum_p pattern_p[idx_p(pos)]`
 
     in white-POV. Initialising man/king to handcrafted-eval-like values
@@ -244,10 +294,18 @@ class HybridPatternModel(PatternModel):
     def __init__(self, patterns: list[list[int]],
                  base: int = 5,
                  init_man:  float = 100.0,
-                 init_king: float = 300.0):
+                 init_king: float = 300.0,
+                 extras: bool = False):
         super().__init__(patterns, base=base)
         self.man_value  = nn.Parameter(torch.tensor(init_man))
         self.king_value = nn.Parameter(torch.tensor(init_king))
+        self.extras     = extras
+        if extras:
+            # G3a: 50-dim king PST + scalar balance, zero-initialised.
+            # The PST vector is in white-POV; black king contributions
+            # are computed externally as the row-mirrored slot.
+            self.king_pst = nn.Parameter(torch.zeros(50))
+            self.balance  = nn.Parameter(torch.tensor(0.0))
 
     def forward(self, indices: torch.Tensor,
                 mat_diff: torch.Tensor,
@@ -264,13 +322,17 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
     """Quantise float32 weights to int32 centipawn and write JPAT.
 
     Version is auto-selected:
-      * base != 5             → v3 (always, since base must be recorded)
-      * HybridPatternModel    → v2 (or v3 if base != 5)
-      * else                  → v1 (legacy, pure-pattern, base=5 implicit)
+      * extras (king PST + balance, G3a)  → v4
+      * base != 5                          → v3
+      * HybridPatternModel                 → v2
+      * else                               → v1 (legacy, base=5 implicit)
     """
     is_hybrid = isinstance(model, HybridPatternModel)
+    has_extras = is_hybrid and getattr(model, "extras", False)
     base      = model.base
-    if base != 5:
+    if has_extras:
+        version = 4
+    elif base != 5:
         version = 3
     elif is_hybrid:
         version = 2
@@ -283,13 +345,20 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
         bias_int = int(round(model.bias.item()))
         f.write(struct.pack("<i", bias_int))                 # bias
         if version >= 2:
-            # v1 has no skeleton; v2/v3 always write it (0/0 if not hybrid).
+            # v1 has no skeleton; v2+ always write it (0/0 if not hybrid).
             man_int  = int(round(model.man_value.item()))  if is_hybrid else 0
             king_int = int(round(model.king_value.item())) if is_hybrid else 0
             f.write(struct.pack("<i", man_int))              # man_value
             f.write(struct.pack("<i", king_int))             # king_value
         if version >= 3:
             f.write(struct.pack("<B", base))                 # encoding_base
+        if version >= 4:
+            # G3a / JPAT v4 extras: balance scalar + king_pst[50].
+            balance_int = int(round(model.balance.item()))
+            f.write(struct.pack("<i", balance_int))          # balance
+            pst = model.king_pst.detach().cpu().numpy()
+            pst_q = np.round(pst).clip(-2**31, 2**31 - 1).astype(np.int32)
+            f.write(pst_q.tobytes())                         # king_pst[50] int32
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -409,6 +478,8 @@ def train_one(
     wdl_t:   torch.Tensor,
     mat_diff_t:  torch.Tensor | None,   # D1 hybrid: required when hybrid=True
     king_diff_t: torch.Tensor | None,
+    king_pst_t:  torch.Tensor | None,   # G3a extras: (50, N) shaped
+    balance_t:   torch.Tensor | None,   # G3a extras: (N,) shaped
     train_idx: np.ndarray,
     val_idx:   np.ndarray,
     seed: int,
@@ -425,6 +496,7 @@ def train_one(
     init_man:  float = 100.0,
     init_king: float = 300.0,
     base: int = 5,
+    extras: bool = False,
     optimizer_kind: str = "adam",
     lbfgs_max_iter: int = 20,
     lbfgs_history: int = 10,
@@ -439,7 +511,8 @@ def train_one(
     if hybrid:
         assert mat_diff_t is not None and king_diff_t is not None
         model = HybridPatternModel(patterns, base=base,
-                                   init_man=init_man, init_king=init_king)
+                                   init_man=init_man, init_king=init_king,
+                                   extras=extras)
     else:
         model = PatternModel(patterns, base=base)
 
@@ -449,11 +522,18 @@ def train_one(
     score_scale_sq = score_scale * score_scale
 
     def _forward(idx_slice: np.ndarray) -> torch.Tensor:
-        if hybrid:
-            return model(pidx_t[:, idx_slice],
+        if not hybrid:
+            return model(pidx_t[:, idx_slice])
+        base_out = model(pidx_t[:, idx_slice],
                          mat_diff_t[idx_slice],
                          king_diff_t[idx_slice])
-        return model(pidx_t[:, idx_slice])
+        if extras:
+            assert king_pst_t is not None and balance_t is not None
+            # king_pst_t shape (50, N) ; balance_t shape (N,)
+            pst_contrib = (model.king_pst.unsqueeze(1)
+                           * king_pst_t[:, idx_slice]).sum(dim=0)
+            base_out = base_out + pst_contrib + model.balance * balance_t[idx_slice]
+        return base_out
 
     def _loss(pred: torch.Tensor, idx_slice: np.ndarray) -> torch.Tensor:
         score_batch = score_t[idx_slice]
@@ -553,6 +633,11 @@ def average_models(models: list[PatternModel]) -> PatternModel:
             king_stack = torch.stack([m.king_value for m in models], dim=0)
             avg.man_value.copy_(man_stack.mean(dim=0))
             avg.king_value.copy_(king_stack.mean(dim=0))
+            if getattr(avg, "extras", False):
+                pst_stack = torch.stack([m.king_pst for m in models], dim=0)
+                bal_stack = torch.stack([m.balance  for m in models], dim=0)
+                avg.king_pst.copy_(pst_stack.mean(dim=0))
+                avg.balance.copy_(bal_stack.mean(dim=0))
     return avg
 
 
@@ -601,6 +686,10 @@ def main(argv: list[str]) -> int:
                    help="initial man_value (cp per (Wmen - Bmen) diff)")
     p.add_argument("--init-king", type=float, default=300.0,
                    help="initial king_value (cp per (Wkings - Bkings) diff)")
+    p.add_argument("--extras", action="store_true",
+                   help="G3a / JPAT v4 : add king PST (50 white-POV weights, "
+                        "black uses row-mirror) + scalar balance L/R. "
+                        "Requires --hybrid.")
     p.add_argument("--pattern-base", type=int, default=5, choices=[3, 5],
                    help="per-square encoding base. 5 = legacy (empty/"
                         "W-man/W-king/B-man/B-king). 3 = D2 Scan-aligned "
@@ -627,6 +716,8 @@ def main(argv: list[str]) -> int:
     if args.pattern_base == 3 and not args.hybrid:
         p.error("--pattern-base 3 requires --hybrid (king info would "
                 "otherwise be lost; cf. docs/SCAN_ARCHITECTURE_NOTES.md §1)")
+    if args.extras and not args.hybrid:
+        p.error("--extras (G3a king PST + balance) requires --hybrid")
     if args.optimizer == "lbfgs" and args.weight_decay > 0:
         print(f"note: --weight-decay={args.weight_decay} applied as manual "
               "L2 inside the LBFGS closure (PyTorch LBFGS doesn't support "
@@ -665,12 +756,23 @@ def main(argv: list[str]) -> int:
     # STM=Black so they match the white-POV target sign.
     mat_diff_t  = None
     king_diff_t = None
+    king_pst_t  = None
+    balance_t   = None
     if args.hybrid:
         mat_diff, king_diff = material_diffs(bbs)
         mat_diff[stm  == 1] *= -1
         king_diff[stm == 1] *= -1
         mat_diff_t  = torch.from_numpy(mat_diff)
         king_diff_t = torch.from_numpy(king_diff)
+        if args.extras:
+            # G3a / JPAT v4 — king PST + balance. Same sign-flip for
+            # STM=Black (white-POV convention).
+            pst = king_pst_features(bbs)  # shape (50, N)
+            bal = balance_feature(bbs)    # shape (N,)
+            pst[:, stm == 1] *= -1
+            bal[stm == 1]    *= -1
+            king_pst_t = torch.from_numpy(pst)
+            balance_t  = torch.from_numpy(bal)
 
     # Sign-flip the score for STM=Black so the network always sees
     # white-POV (matches the eval convention of MLPNetworkQ and the
@@ -693,13 +795,14 @@ def main(argv: list[str]) -> int:
     common_kwargs = dict(
         patterns=patterns, pidx_t=pidx_t, score_t=score_t, wdl_t=wdl_t,
         mat_diff_t=mat_diff_t, king_diff_t=king_diff_t,
+        king_pst_t=king_pst_t, balance_t=balance_t,
         train_idx=train_idx, val_idx=val_idx,
         epochs=args.epochs, batch=args.batch, lr=args.lr, lam=args.lam,
         score_scale=args.score_scale, weight_decay=args.weight_decay,
         grad_clip=args.grad_clip, warmup_frac=args.warmup_frac,
         cosine_schedule=args.cosine_schedule,
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
-        base=args.pattern_base,
+        base=args.pattern_base, extras=args.extras,
         optimizer_kind=args.optimizer,
         lbfgs_max_iter=args.lbfgs_max_iter,
         lbfgs_history=args.lbfgs_history,
