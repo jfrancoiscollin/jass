@@ -1,8 +1,8 @@
 {
   "job_id": "0053-g3a-pattern-king-pst-balance",
-  "snapshot_at": "2026-05-28T15:55:23+00:00",
+  "snapshot_at": "2026-05-28T16:00:23+00:00",
   "started_at": "2026-05-28T15:29:25+00:00",
-  "elapsed_seconds": 1558,
+  "elapsed_seconds": 1858,
   "artefacts": [
     {
       "name": "bench-vs-hc.log",
@@ -10,11 +10,19 @@
     },
     {
       "name": "bench-vs-v5-d10.log",
-      "size_bytes": 0
+      "size_bytes": 324
     },
     {
       "name": "bench-vs-v5-d6.log",
       "size_bytes": 323
+    },
+    {
+      "name": "bench-vs-v6-d10.log",
+      "size_bytes": 327
+    },
+    {
+      "name": "bench-vs-v7-d10.log",
+      "size_bytes": 0
     },
     {
       "name": "pattern-v2-g3a.jpat",
@@ -25,5 +33,5 @@
       "size_bytes": 3023
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 485849       1       25:57  0.0  0.0 bash\n 485851  485849       25:57  0.0  0.0 bash\n 486416  485851       03:02 99.9  0.2 jass\n 486417  485851       03:02  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 485849       1       30:58  0.0  0.0 bash\n 485851  485849       30:58  0.0  0.0 bash\n 486732  485851       01:13 99.9  0.2 jass\n 486733  485851       01:13  0.0  0.0 tee\n"
 }
