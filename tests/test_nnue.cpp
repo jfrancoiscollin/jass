@@ -1205,6 +1205,64 @@ void test_pattern_network_v4_king_pst_balance_roundtrip() {
     std::remove(path.c_str());
 }
 
+// G3b / JPAT v5 — round-trip MG/EG skeleton counterparts and verify
+// the phase interpolation: at opening (full pieces) the eval leans
+// toward MG; at endgame (few pieces) toward EG.
+void test_pattern_network_v5_phase_split_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v2();
+    net.set_encoding_base(3);
+    net.set_bias(100);     // MG bias = 100
+    net.set_bias_eg(-50);  // EG bias = -50 (strong opposite signal)
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v5-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/5));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.bias(),    100);
+    JASS_CHECK_EQ(loaded.bias_eg(), -50);
+
+    // Start position: 40 pieces, all men → phase=40 → stage=0 → eval=MG.
+    const Position start = Position::start_position();
+    JASS_CHECK_EQ(loaded.evaluate(start), 100);
+
+    // Bare kings endgame: 2 kings → phase = 0+0+2*(1+1) = 4. stage =
+    // STAGE_SIZE * (40-4)/40 = 270. score = (100*30 + (-50)*270)/300
+    // = (3000 - 13500)/300 = -35.
+    const Position kk = parse("W:WK1:BK50");
+    JASS_CHECK_EQ(loaded.evaluate(kk), -35);
+
+    std::remove(path.c_str());
+}
+
+// v4 → v5 backward compat: a v4 file's evaluate() must be unchanged
+// after the v5 phase-split machinery was added (since the EG fields
+// stay at default zero and the eval detects "no phase split").
+void test_pattern_network_v4_load_preserves_eval() {
+    PatternNetwork net = PatternNetwork::default_v2();
+    net.set_encoding_base(3);
+    net.set_bias(42);
+    net.set_balance(7);
+    for (std::size_t i = 0; i < 50; ++i) {
+        net.king_pst_mut()[i] = static_cast<std::int32_t>(i * 2);
+    }
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v4-compat-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/4));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    // EG counterparts stay zero (load v4 doesn't touch them) → eval
+    // returns acc_mg, identical to what `net` itself returns.
+    const Position start = Position::start_position();
+    const Position mid   = parse(
+        "W:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22");
+    JASS_CHECK_EQ(loaded.evaluate(start), net.evaluate(start));
+    JASS_CHECK_EQ(loaded.evaluate(mid),   net.evaluate(mid));
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1259,5 +1317,7 @@ void run_nnue_tests() {
     test_pattern_network_v2_hybrid_roundtrip();
     test_pattern_network_v3_base3_roundtrip();
     test_pattern_network_v4_king_pst_balance_roundtrip();
+    test_pattern_network_v5_phase_split_roundtrip();
+    test_pattern_network_v4_load_preserves_eval();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
