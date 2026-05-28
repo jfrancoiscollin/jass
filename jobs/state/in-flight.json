@@ -1,0 +1,7 @@
+{
+  "job_id": "0053-g3a-pattern-king-pst-balance",
+  "script": "jobs/queue/0053-g3a-pattern-king-pst-balance.sh",
+  "pid": 485849,
+  "started_at": "2026-05-28T15:29:25+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
