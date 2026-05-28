@@ -1,13 +1,13 @@
 {
   "job_id": "0053-g3a-pattern-king-pst-balance",
-  "snapshot_at": "2026-05-28T15:45:16+00:00",
+  "snapshot_at": "2026-05-28T15:50:19+00:00",
   "started_at": "2026-05-28T15:29:25+00:00",
-  "elapsed_seconds": 951,
+  "elapsed_seconds": 1254,
   "artefacts": [
     {
       "name": "train.log",
-      "size_bytes": 2050
+      "size_bytes": 2578
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 485849       1       15:51  0.0  0.0 bash\n 485851  485849       15:51  0.0  0.0 bash\n 485953  485851       15:47  166  9.3 python3\n 485954  485851       15:47  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 485849       1       20:54  0.0  0.0 bash\n 485851  485849       20:54  0.0  0.0 bash\n 485953  485851       20:50  166  9.3 python3\n 485954  485851       20:50  0.0  0.0 tee\n"
 }
