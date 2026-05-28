@@ -215,20 +215,55 @@ trainer étend les modèles.
 - < 0.15 → feature engineering n'est pas le facteur dominant ; pivot
   G4 ou abandon.
 
-### Étape G4 — TD-leaf self-play (~€20-40, ~3-4 semaines)
+### Étape G4 — TD-leaf self-play (révision coût 2026-05-28)
 
-C'est l'ancienne "Phase 2" du PATTERN_ROADMAP. Coût élevé et risque
-réel d'échec sur 3-4 semaines. À ne lancer **que si G1+G2+G3 ont
-montré que l'archi a un signal exploitable**.
+**Note de révision** : l'estimation initiale (~€20-40, ~3-4 semaines)
+était héritée de `PATTERN_ROADMAP.md` écrit AVANT qu'on ait mesuré la
+vitesse pattern eval (~130 M evals/s, ~300× plus rapide que
+MLPNetworkQ). Recalcul honnête en deux modes :
 
-Implementation : nouveau mode C++ `--self-play-pattern N out.jnnw`
-qui joue N games pattern-vs-pattern, label = WDL observé + score
-intermédiaire (TD-leaf). Loop script `0050+` qui itère 10-20 fois.
+#### G4-diag — diagnostic minimal (~€2-3, ~1-2 jours wall)
 
-**Decision gate G4** : si après 10 itérations le rate ne dépasse pas
-0.40 vs v6, **abandon honnête de l'axe pattern pour cette ère du
-projet**. Le coût accumulé G1+G2+G3+G4 serait ~€30-50 et 1 mois wall,
-ce qui mérite cette borne stricte.
+Objet : voir si la méthodo self-play TD-leaf débloque quelque chose,
+SANS prétendre converger vers une eval compétitive. Sert de cheap-check
+final de la chain G avant abandon ferme.
+
+| Composant / iter | Wall |
+|---|---|
+| Self-play 10K games depth 4 (4 vCPU parallel) | ~30 min |
+| Train pattern v2 hybrid + extras + phase split | ~30-45 min |
+| Bench vs v6 d10 | ~15 min |
+| Total / iter | **~1-1.5h** |
+
+10 itérations = ~15h wall = ~1-2 jours sur 1× CCX23. Compute coût ~€2-3.
+
+**Decision gate G4-diag** : si rate vs v6 d10 ≥ 0.20 après 10 iter →
+self-play marche, monter en G4-prod ; sinon abandon ferme.
+
+#### G4-prod — production training (~€10-20, ~1 semaine wall)
+
+Objet : si G4-diag a montré du signal, train un réseau pattern
+sérieux. 100K-300K games par iter, depth 6, 20 itérations.
+
+| Composant / iter | Wall |
+|---|---|
+| Self-play 100K games depth 6 | ~5-8h |
+| Train + bench | ~1-1.5h |
+| Total / iter | ~6-9h |
+
+20 itérations ≈ 1 semaine wall, ~€10-20 compute.
+
+**Decision gate G4-prod** : si après 20 iter le rate ne dépasse pas
+0.40 vs v6, abandon ferme de l'axe pattern pour cette ère du projet.
+
+#### Implementation (commune G4-diag et G4-prod)
+
+- Nouveau mode C++ `--self-play-pattern N out.jnnw` qui joue N games
+  pattern-vs-pattern, log positions + WDL observé + score intermédiaire
+  (TD-leaf : valeur depuis le PV-leaf propagée vers les positions root).
+- Loop script `0055-g4-self-play-pattern.sh` qui itère `self-play →
+  train → bench-vs-previous → keep-winner`.
+- Effort dev : ~1-2 jours (mode self-play C++ + loop orchestration).
 
 ### Étape G5 — Réplication Scan exacte (~€?, ~3-6 mois)
 
@@ -255,7 +290,12 @@ sur plusieurs mois.
 
 **Long terme** :
 
-- G4 (TD-leaf self-play) seulement avec G3 validé.
+- **G4-diag** (TD-leaf self-play, mode diagnostic ~€2-3, ~1-2 jours wall)
+  reste accessible même après abandon supervised : c'est un cheap-check
+  final, pas un engagement multi-semaines comme on le pensait avant
+  révision du coût (cf §G4 ci-dessus).
+- G4-prod (~€10-20, ~1 semaine wall) seulement si G4-diag montre du
+  signal (rate ≥ 0.20 vs v6 d10 après 10 iter).
 - G5 ignoré sauf décision explicite.
 
 L'**erreur à éviter** : refaire D2/D3 variants sans avoir testé G1.
