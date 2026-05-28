@@ -1,12 +1,12 @@
 {
   "job_id": "0055-g4-diag-pattern-self-play",
-  "snapshot_at": "2026-05-28T21:38:05+00:00",
+  "snapshot_at": "2026-05-28T21:43:23+00:00",
   "started_at": "2026-05-28T21:16:44+00:00",
-  "elapsed_seconds": 1281,
+  "elapsed_seconds": 1599,
   "artefacts": [
     {
       "name": "iter-rates.tsv",
-      "size_bytes": 97
+      "size_bytes": 123
     },
     {
       "name": "iter1-bench-vs-prev.log",
@@ -548,7 +548,7 @@
     },
     {
       "name": "iter7-bench-vs-v6.log",
-      "size_bytes": 0
+      "size_bytes": 320
     },
     {
       "name": "iter7-data.bin",
@@ -632,6 +632,184 @@
       "size_bytes": 1176
     },
     {
+      "name": "iter8-bench-vs-prev.log",
+      "size_bytes": 326
+    },
+    {
+      "name": "iter8-bench-vs-v6.log",
+      "size_bytes": 320
+    },
+    {
+      "name": "iter8-data.bin",
+      "size_bytes": 760008,
+      "records": 20000
+    },
+    {
+      "name": "iter8-shard1.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard1.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard2.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard2.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard3.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard3.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard4.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard4.log",
+      "size_bytes": 477
+    },
+    {
+      "name": "iter8-shard5.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard5.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard6.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard6.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard7.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard7.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-shard8.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter8-shard8.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter8-train.log",
+      "size_bytes": 1095
+    },
+    {
+      "name": "iter9-bench-vs-prev.log",
+      "size_bytes": 321
+    },
+    {
+      "name": "iter9-bench-vs-v6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter9-data.bin",
+      "size_bytes": 760008,
+      "records": 20000
+    },
+    {
+      "name": "iter9-shard1.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard1.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard2.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard2.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard3.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard3.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard4.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard4.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard5.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard5.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard6.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard6.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard7.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard7.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-shard8.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter9-shard8.log",
+      "size_bytes": 435
+    },
+    {
+      "name": "iter9-train.log",
+      "size_bytes": 1253
+    },
+    {
       "name": "pattern-v0.jpat",
       "size_bytes": 420493
     },
@@ -662,7 +840,15 @@
     {
       "name": "pattern-v7.jpat",
       "size_bytes": 420493
+    },
+    {
+      "name": "pattern-v8.jpat",
+      "size_bytes": 420493
+    },
+    {
+      "name": "pattern-v9.jpat",
+      "size_bytes": 420493
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1047       1       21:21  0.0  0.0 bash\n   1049    1047       21:21  0.0  0.0 bash\n   1542    1049       01:44  100  0.1 jass\n   1543    1049       01:44  0.0  0.0 tee\n   1544    1049       01:44  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1047       1       26:39  0.0  0.0 bash\n   1049    1047       26:39  0.0  0.0 bash\n   1666    1049       00:39  100  0.1 jass\n   1667    1049       00:39  0.0  0.0 tee\n   1668    1049       00:39  0.0  0.0 tail\n"
 }
