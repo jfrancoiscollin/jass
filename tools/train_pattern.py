@@ -66,7 +66,22 @@ V2_PATTERNS: list[list[int]] = [
     [34, 35, 39, 40, 44, 45, 49, 50],
 ]
 
-PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS}
+# v3 Scan-geometry pattern set — 8 vertical-strip patterns × 12 squares.
+# Keep in sync with V3_PATTERNS in pattern_network.cpp.
+V3_PATTERNS: list[list[int]] = [
+    # Top half (rows 1-6)
+    [ 1,  2,  6,  7, 11, 12, 16, 17, 21, 22, 26, 27],   # cols 0-1
+    [ 2,  3,  7,  8, 12, 13, 17, 18, 22, 23, 27, 28],   # cols 1-2
+    [ 3,  4,  8,  9, 13, 14, 18, 19, 23, 24, 28, 29],   # cols 2-3
+    [ 4,  5,  9, 10, 14, 15, 19, 20, 24, 25, 29, 30],   # cols 3-4
+    # Bottom half (rows 5-10)
+    [21, 22, 26, 27, 31, 32, 36, 37, 41, 42, 46, 47],
+    [22, 23, 27, 28, 32, 33, 37, 38, 42, 43, 47, 48],
+    [23, 24, 28, 29, 33, 34, 38, 39, 43, 44, 48, 49],
+    [24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50],
+]
+
+PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS, "v3": V3_PATTERNS}
 
 # International draughts board is symmetric under horizontal flip. With
 # squares numbered 1..50, 5 per row, 10 rows, the mirror swaps positions

@@ -82,6 +82,31 @@ constexpr std::array<std::array<std::uint8_t, 8>, 16> V2_PATTERNS = {{
     {{34, 35, 39, 40, 44, 45, 49, 50}},  // (r=6, c=6)  SE corner
 }};
 
+// V3 Scan-inspired pattern set: 8 vertical-strip patterns × 12 squares
+// each. Geometry = (6 rows × 2 col-within-row) — captures forward-push
+// dynamics that 4×4 blocks (v2) miss. Approximates the verticals Scan
+// extracts via Perm_0/Perm_1 + 4-column bit-shifts (cf.
+// docs/SCAN_ARCHITECTURE_NOTES.md §3) without reproducing the exact
+// bitboard tricks (those depend on Scan's sparse layout, different
+// from jass's bitboard convention).
+//
+// Layout : 4 strips top (rows 1-6) × 4 strips bottom (rows 5-10), each
+// covering 2 adjacent col-within-row values. Strips overlap so every
+// square is in 2-4 patterns. Total weights: 8 × 3^12 = ~4.25M (~17 MB
+// JPAT base-3).
+constexpr std::array<std::array<std::uint8_t, 12>, 8> V3_PATTERNS = {{
+    // Top half (rows 1-6, i.e. row indices 0..5)
+    {{ 1,  2,  6,  7, 11, 12, 16, 17, 21, 22, 26, 27}},  // cols 0-1
+    {{ 2,  3,  7,  8, 12, 13, 17, 18, 22, 23, 27, 28}},  // cols 1-2
+    {{ 3,  4,  8,  9, 13, 14, 18, 19, 23, 24, 28, 29}},  // cols 2-3
+    {{ 4,  5,  9, 10, 14, 15, 19, 20, 24, 25, 29, 30}},  // cols 3-4
+    // Bottom half (rows 5-10, row indices 4..9)
+    {{21, 22, 26, 27, 31, 32, 36, 37, 41, 42, 46, 47}},
+    {{22, 23, 27, 28, 32, 33, 37, 38, 42, 43, 47, 48}},
+    {{23, 24, 28, 29, 33, 34, 38, 39, 43, 44, 48, 49}},
+    {{24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50}},
+}};
+
 constexpr char          JPAT_MAGIC[4]     = {'J', 'P', 'A', 'T'};
 constexpr std::uint32_t JPAT_VERSION_V1   = 1;
 constexpr std::uint32_t JPAT_VERSION_V2   = 2;
@@ -165,6 +190,14 @@ PatternNetwork PatternNetwork::default_v1() {
 PatternNetwork PatternNetwork::default_v2() {
     PatternNetwork net;
     for (const auto& p : V2_PATTERNS) {
+        net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
+    }
+    return net;
+}
+
+PatternNetwork PatternNetwork::default_v3() {
+    PatternNetwork net;
+    for (const auto& p : V3_PATTERNS) {
         net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
     }
     return net;
