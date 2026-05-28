@@ -14,6 +14,46 @@ mesures vs la baseline précédente.
 
 -----
 
+## v7 — 2026-05-28 (job 0050-v7-quiet-pv-extract-1M)
+
+**Artefact** : `jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin`
+
+**Architecture** : MLPNetworkQ 256-128 HalfMen 450 features, int8 quantifié.
+Identique à v5/v6 — c'est encore le DATA qui change.
+
+**Dataset** : **1M** self-play records @ depth 16, recipe identique v6 (×2 volume) :
+- `--quiet-only` (PR #81)
+- `--pv-extract 3` (PR #84)
+- Mixé avec master games (BCE blend, recipe v5)
+
+**Performance vs v6 et v5 (54 games par bench)** :
+
+| Métrique | v7 (1M) | v6 (500K) | v5 (1M depth-20) |
+|---|---|---|---|
+| vs handcrafted | **0.944** (17/18) | 0.861 | 0.852 |
+| vs v5 d10 | **0.583** | 0.556 | – |
+| vs v5 d6 | 0.556 | 0.722 | – |
+| **vs v6 d10** | **0.667** (36/54) | – | – |
+| vs v6 d6 | 0.417 | – | – |
+
+**ELO gain estimé** :
+- vs v6 d10 : `400 × log10(0.667/0.333)` ≈ **+120 ELO**
+- vs v5 d10 cumulé : ≈ **+58 ELO**
+
+**Quirk** : v7 < v6 à d6 (0.417). Probable interprétation : v7 a appris des
+features plus subtiles qui ne payent qu'à profondeur ≥ 10. La métrique de
+référence est d10 (cf. ROADMAP.md "depth 10 = signal principal") donc le
+ship est validé. À monitorer si on observe la même asymétrie sur v8.
+
+**Coût** : 35.9h gen + 1.2h train + ~0.5h bench = ~37.6h × 4 vCPU CCX23 ≈ ~€5.
+
+**Ship policy** : v7 devient l'artefact de référence pour les benchs et le
+labelleur des futurs gen-data. v6 (0045) reste accessible mais déclassé.
+L'embedded default reste sur v5/Cycle 8 (pas de bump tant que +50 ELO
+cumulés vs embedded ne sont pas franchis avec tests parity).
+
+-----
+
 ## v6 — 2026-05-26 (job 0045-quiet-pv-extract-scaleup)
 
 **Artefact** : `jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin`
