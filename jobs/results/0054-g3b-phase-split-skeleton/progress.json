@@ -1,13 +1,13 @@
 {
   "job_id": "0054-g3b-phase-split-skeleton",
-  "snapshot_at": "2026-05-28T17:08:02+00:00",
+  "snapshot_at": "2026-05-28T17:13:11+00:00",
   "started_at": "2026-05-28T16:57:59+00:00",
-  "elapsed_seconds": 603,
+  "elapsed_seconds": 912,
   "artefacts": [
     {
       "name": "train.log",
-      "size_bytes": 1140
+      "size_bytes": 1687
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 487817       1       10:02  0.0  0.0 bash\n 487819  487817       10:02  0.0  0.0 bash\n 487920  487819       09:58  169 10.0 python3\n 487921  487819       09:58  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 487817       1       15:11  0.0  0.0 bash\n 487819  487817       15:11  0.0  0.0 bash\n 487920  487819       15:07  169 15.2 python3\n 487921  487819       15:07  0.0  0.0 tee\n"
 }
