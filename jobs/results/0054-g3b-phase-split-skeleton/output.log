@@ -1,0 +1,99 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 4  mem: 15Gi
+dataset: /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin
+v5/v6/v7 refs: /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+      |                                                                    ~~^~~~
+[ 68%] Linking CXX executable jass_tests
+[100%] Built target jass_tests
+
+=== train pattern v2 HYBRID base-3 + extras + phase split — G3b ===
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 2000000)
+=== run 1/3 (seed 42) ===
+[seed 42] iter  0: train_loss=  23045.57  val_mse=88960560.00  man=  37.9  king=  40.6 *
+[seed 42] iter  1: train_loss=  20021.87  val_mse=88091080.00  man=   5.3  king= -36.9 *
+[seed 42] iter  2: train_loss=  19458.58  val_mse=87825000.00  man=  -3.1  king=  -1.6 *
+[seed 42] iter  3: train_loss=  19272.18  val_mse=87727864.00  man=  -0.6  king=   2.1 *
+[seed 42] iter  4: train_loss=  19222.09  val_mse=87717920.00  man=   0.1  king= -12.8 *
+[seed 42] iter  5: train_loss=  19209.77  val_mse=87718656.00  man=  -1.0  king= -10.7
+[seed 42] iter  6: train_loss=  19206.32  val_mse=87732248.00  man=   0.4  king= -10.0
+[seed 42] iter  7: train_loss=  19205.15  val_mse=87738488.00  man=  -0.4  king=  -9.9
+[seed 42] iter  8: train_loss=  19204.80  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 42] iter  9: train_loss=  19204.68  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 42] early stop: no val improvement for 5 iters (best val_mse=87717920.00)
+=== run 2/3 (seed 43) ===
+[seed 43] iter  0: train_loss=  23045.57  val_mse=88960560.00  man=  37.9  king=  40.6 *
+[seed 43] iter  1: train_loss=  20021.87  val_mse=88091080.00  man=   5.3  king= -36.9 *
+[seed 43] iter  2: train_loss=  19458.58  val_mse=87825000.00  man=  -3.1  king=  -1.6 *
+[seed 43] iter  3: train_loss=  19272.18  val_mse=87727864.00  man=  -0.6  king=   2.1 *
+[seed 43] iter  4: train_loss=  19222.09  val_mse=87717920.00  man=   0.1  king= -12.8 *
+[seed 43] iter  5: train_loss=  19209.77  val_mse=87718656.00  man=  -1.0  king= -10.7
+[seed 43] iter  6: train_loss=  19206.32  val_mse=87732248.00  man=   0.4  king= -10.0
+[seed 43] iter  7: train_loss=  19205.15  val_mse=87738488.00  man=  -0.4  king=  -9.9
+[seed 43] iter  8: train_loss=  19204.80  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 43] iter  9: train_loss=  19204.68  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 43] early stop: no val improvement for 5 iters (best val_mse=87717920.00)
+=== run 3/3 (seed 44) ===
+[seed 44] iter  0: train_loss=  23045.57  val_mse=88960560.00  man=  37.9  king=  40.6 *
+[seed 44] iter  1: train_loss=  20021.87  val_mse=88091080.00  man=   5.3  king= -36.9 *
+[seed 44] iter  2: train_loss=  19458.58  val_mse=87825000.00  man=  -3.1  king=  -1.6 *
+[seed 44] iter  3: train_loss=  19272.18  val_mse=87727864.00  man=  -0.6  king=   2.1 *
+[seed 44] iter  4: train_loss=  19222.09  val_mse=87717920.00  man=   0.1  king= -12.8 *
+[seed 44] iter  5: train_loss=  19209.77  val_mse=87718656.00  man=  -1.0  king= -10.7
+[seed 44] iter  6: train_loss=  19206.32  val_mse=87732248.00  man=   0.4  king= -10.0
+[seed 44] iter  7: train_loss=  19205.15  val_mse=87738488.00  man=  -0.4  king=  -9.9
+[seed 44] iter  8: train_loss=  19204.80  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 44] iter  9: train_loss=  19204.68  val_mse=87738872.00  man=  -0.3  king= -10.9
+[seed 44] early stop: no val improvement for 5 iters (best val_mse=87717920.00)
+averaging 3 models...
+final (saved) val_mse=87865584.00  man=0.1  king=-12.8
+wrote /root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat (420493 bytes)
+-rw-r--r-- 1 root root 411K May 28 17:30 /root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat
+
+=== bench vs handcrafted / v5 / v6 / v7 ===
+Benchmark: NNUE (/root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=1 Handcrafted=17 Draws=0 (total 18)
+NNUE score rate: 0.0555556 (1 / 18)
+Benchmark: A=NNUE(/root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0054-g3b-phase-split-skeleton/artefacts.src/pattern-v2-g3b.jpat) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0054 G3b PATTERN v2 + phase split skeleton VERDICT
+==========================================================
+  train wall:        1938s (32.3 min)
+  vs handcrafted:    0.0555556
+  vs v5 d6 / d10:    0 / 0
+  vs v6 d10:         0
+  vs v7 d10:         0
+
+  References (pattern v2 supervised paths) :
+    0046 Phase 1 pure       : 0/18 hc, 0/54 d6, 0/54 d10
+    0047 Phase 1 quiet data : 0/18 hc, 0/54 d6, 0/54 d10
+    0048 D1 hybrid base-5   : 0/18 hc, 6/54 d6, 0/54 d10
+    0049 D2 hybrid base-3   : 0/18 hc, 1.5/54 d6, 0/54 d10
+    0051 G1 LBFGS           : 0/18 hc, 0/54 d6, 0/54 d10
+    0052 G2 distillation v7 : 0/18 hc, 0/54 d6, 0/54 d10
+    0053 G3a king PST+bal   : 0/18 hc, 0/54 d6, 0/54 d10
+
+  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G3b, post-révision) :
+    FLAT — diagnostic chain G1-G3b complète, aucune variante
+    supervised cheap ne débloque l'archi pattern v2.
+    CONCLUSION FERME : abandon pattern axis pour cette session.
+    Reste seulement G4 self-play TD-leaf (€20-40, 3-4 sem,
+    risqué) à essayer plus tard si on commit le budget.
+==========================================================
