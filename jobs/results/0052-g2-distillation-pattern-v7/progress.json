@@ -1,0 +1,22 @@
+{
+  "job_id": "0052-g2-distillation-pattern-v7",
+  "snapshot_at": "2026-05-28T11:33:39+00:00",
+  "started_at": "2026-05-28T11:28:37+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [
+    {
+      "name": "depth20-1M-distilled-v7.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
+    },
+    {
+      "name": "distill.log",
+      "size_bytes": 719
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1415
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 483194       1       05:02  0.0  0.0 bash\n 483196  483194       05:02  0.0  0.0 bash\n 483283  483196       04:56  156 12.7 python3\n 483284  483196       04:56  0.0  0.0 tee\n"
+}
