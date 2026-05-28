@@ -1,8 +1,8 @@
 {
   "job_id": "0055-g4-diag-pattern-self-play",
-  "snapshot_at": "2026-05-28T21:53:47+00:00",
+  "snapshot_at": "2026-05-28T21:59:23+00:00",
   "started_at": "2026-05-28T21:16:44+00:00",
-  "elapsed_seconds": 2223,
+  "elapsed_seconds": 2559,
   "artefacts": [
     {
       "name": "final-vs-hc.log",
@@ -18,6 +18,10 @@
     },
     {
       "name": "final-vs-v6-d10.log",
+      "size_bytes": 321
+    },
+    {
+      "name": "final-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -959,5 +963,5 @@
       "size_bytes": 420493
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1047       1       37:03  0.0  0.0 bash\n   1049    1047       37:03  0.0  0.0 bash\n   1806    1049       02:16  100  0.1 jass\n   1807    1049       02:16  0.0  0.0 tee\n   1808    1049       02:16  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1047       1       42:39  0.0  0.0 bash\n   1049    1047       42:39  0.0  0.0 bash\n   1844    1049       05:17  100  0.1 jass\n   1845    1049       05:17  0.0  0.0 tee\n   1846    1049       05:17  0.0  0.0 tail\n"
 }
