@@ -1,8 +1,8 @@
 {
   "job_id": "0050-v7-quiet-pv-extract-1M",
-  "snapshot_at": "2026-05-28T06:08:36+00:00",
+  "snapshot_at": "2026-05-28T06:13:51+00:00",
   "started_at": "2026-05-26T17:39:08+00:00",
-  "elapsed_seconds": 131368,
+  "elapsed_seconds": 131683,
   "artefacts": [
     {
       "name": "nnue-128-64.bin",
@@ -76,5 +76,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1  1-12:29:28  0.0  0.0 bash\n 439129  439127  1-12:29:28  0.0  0.0 bash\n 478837  439129       34:35  181 92.0 python3\n 478838  439129       34:35  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1  1-12:34:43  0.0  0.0 bash\n 439129  439127  1-12:34:43  0.0  0.0 bash\n 478837  439129       39:50  181 92.0 python3\n 478838  439129       39:50  0.0  0.0 tee\n"
 }
