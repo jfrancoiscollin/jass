@@ -1,8 +1,8 @@
 {
   "job_id": "0050-v7-quiet-pv-extract-1M",
-  "snapshot_at": "2026-05-28T05:42:11+00:00",
+  "snapshot_at": "2026-05-28T05:47:21+00:00",
   "started_at": "2026-05-26T17:39:08+00:00",
-  "elapsed_seconds": 129783,
+  "elapsed_seconds": 130093,
   "artefacts": [
     {
       "name": "shard-1.bin",
@@ -66,5 +66,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1  1-12:03:03  0.0  0.0 bash\n 439129  439127  1-12:03:03  0.0  0.0 bash\n 478837  439129       08:10  178 92.0 python3\n 478838  439129       08:10  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 439127       1  1-12:08:13  0.0  0.0 bash\n 439129  439127  1-12:08:13  0.0  0.0 bash\n 478837  439129       13:20  179 92.0 python3\n 478838  439129       13:20  0.0  0.0 tee\n"
 }
