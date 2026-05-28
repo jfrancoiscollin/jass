@@ -5,9 +5,18 @@
 > de Fabien Letouzey). À lire en complément de `PATTERN_ROADMAP.md` et
 > `REFERENCES_BIBLIOGRAPHIE.md` axe 1.
 >
+> **Révisé 2026-05-28** suite à une note de relecture détaillée du code
+> Scan (extraits verbatim de `eval.cpp`) + posts forum Letouzey + crédit
+> Kingsrow d'Ed Gilbert. Plusieurs sections corrigent des approximations
+> de la première version. Les corrections importantes : géométrie pattern
+> §3 (4 colonnes décalées × 2 top/bottom = 8 fenêtres) et methodology §5
+> (auparavant "UNKNOWN" ; maintenant : **self-play + WDL + régression
+> logistique sur features sparses**).
+>
 > Objet : consolider ce qu'on a appris sur l'archi pattern Scan, qui est
 > *très différente* de notre tentative v2. Sert de référence pour les
-> expériences diagnostic D1-D3 du plan post-0046.
+> expériences diagnostic D1-D3 du plan post-0046 et pour la séquence
+> G1-G4 (`docs/SCAN_METHODOLOGY_GAP.md`).
 
 ---
 
@@ -81,20 +90,64 @@ source plausible du `pred=0` observé en 0046.
 
 ## 3. Géométrie des patterns Scan
 
-D'après `readme.txt` : *"8 overlapping rectangles (2-26, 3-27, ..., 25-49)"*.
-D'après `eval.cpp` : `Pattern_Size = 12` et 4 décalages `>> 0,1,2,3`.
+D'après `eval.cpp` (extraits clés) :
 
-Reconstruction probable :
-- Les 50 squares dark de la dame 10×10 sont organisés en 10 lignes × 5
-  colonnes (1 case noire sur 2).
-- Un "rectangle" est une fenêtre verticale couvrant 5 lignes × 5
-  colonnes = 25 squares dark, soit la moitié du board.
-- Le pattern de 12 squares est extrait via `Perm_0` / `Perm_1` qui
-  réordonnent ces squares pour qu'un même motif (ex. centre-ligne occupé,
-  flanc vide) ait le même index ternaire dans toutes les fenêtres.
+```cpp
+const int Pattern_Size {12};                        // 12 cases par pattern
+const int Perm_0[12] { 11,10, 7, 6, 3, 2, 9, 8, 5, 4, 1, 0 };
+const int Perm_1[12] {  0, 1, 4, 5, 8, 9, 2, 3, 6, 7,10,11 };
 
-Géométrie ≠ nos blocs 4×4. Scan capture des **relations longue distance
-verticales** (forward-backward), pas des **motifs locaux 2D**.
+static void indices_column(uint64 b, int& i0, int& i2) {
+    uint64 left    = b & 0x0C3061830C1860C3;        // masque 4 files
+    uint64 shuffle = (left >> 0) | (left >> 11) | (left >> 22);
+    uint64 mask    = (1 << Pattern_Size) - 1;
+    i0 = (shuffle >>  0) & mask;                    // top
+    i2 = (shuffle >> 26) & mask;                    // bottom
+}
+
+static void pattern(Score_2& s2, int var, const Pos& pos) {
+    int i0,i1,i2,i3, i4,i5,i6,i7;
+    indices_column(pos.wm() >> 0, pos.bm() >> 0, i0, i4);
+    indices_column(pos.wm() >> 1, pos.bm() >> 1, i1, i5);
+    indices_column(pos.wm() >> 2, pos.bm() >> 2, i2, i6);
+    indices_column(pos.wm() >> 3, pos.bm() >> 3, i3, i7);
+    s2.add(var +  265720 + i0, +1);                 // 4 sous-tables top
+    s2.add(var +  797161 + i1, +1);
+    s2.add(var + 1328602 + i2, +1);
+    s2.add(var + 1860043 + i3, +1);
+    s2.add(var + 1860043 - i4, -1);                 // 4 sous-tables bottom
+    s2.add(var + 1328602 - i5, -1);                 // (symétrie par soustraction)
+    s2.add(var +  797161 - i6, -1);
+    s2.add(var +  265720 - i7, -1);
+}
+```
+
+Lecture :
+- **Pattern_Size = 12 cases** par pattern (pas 12 colonnes).
+- **4 décalages de colonnes** `>> 0..3` (chaque shift sélectionne 4 files
+  différentes via le masque `0x0C3061830C1860C3`).
+- **2 moitiés top/bottom** par décalage, extraites du même mot par
+  shuffle (`>> 0` pour top, `>> 26` pour bottom).
+- **Total : 4 × 2 = 8 fenêtres** indexant 4 sous-tables (les bottoms
+  réutilisent les sous-tables des tops avec signe inversé pour la
+  symétrie blanc/noir).
+- **Encoding ternaire malin** : `Trits_*` précalcule la conversion
+  bitmask 12 bits → index base-3 via `Perm_0/Perm_1`. L'index final
+  pour une fenêtre est `Trits[noir] - Trits[blanc]` : sur chaque trit,
+  `0-0 = vide`, `+t = blanc`, `-t = noir`. Un seul int encode les 3
+  états des 12 cases.
+
+**Pattern_Size = 12 → 3¹² = 531 441 buckets par sous-table** (4
+sous-tables × 2 phases MG/EG = ~4.2M poids pattern, à confirmer avec
+le P = 2,125,820 dont la moitié est dans les patterns).
+
+**Note importante** : les **kings ne participent PAS** aux patterns
+(seul `pos.wm()` et `pos.bm()` sont passés). Kings + matériel +
+mobilité = features dédiées hors-pattern (cf §4 du même doc).
+
+Géométrie ≠ nos blocs 4×4. Scan capture des **relations longue
+distance verticales** (forward-backward, breakthrough threats), pas
+des **motifs locaux 2D**.
 
 ---
 
@@ -108,25 +161,84 @@ Pour comparaison, notre JPAT v2 est 25 MB (int32 = 4 bytes × 6.25M).
 
 ---
 
-## 5. Training methodology — UNKNOWN
+## 4bis. Features non-pattern (composition exacte)
 
-Le code public ne contient PAS le pipeline d'entraînement. Les poids
-arrivent comme un blob binaire dans `data/eval`. Letouzey n'a pas publié
-le trainer. Hypothèses sur ce qu'il utilise :
+L'éval Scan n'est PAS que des patterns. `eval()` accumule dans l'ordre
+(chaque bloc avance le compteur `var` qui indexe `G_Weight`) :
 
-- **Régression linéaire par moindres carrés** (Buro GLEM style) sur des
-  millions de positions labellisées par minimax shallow (ex. self-play
-  depth 4-6). Convergence en quelques itérations parce que la loss est
-  convexe.
-- **Itération TD-leaf** : self-play → corriger les poids vers la valeur
-  observée à la prochaine PV-leaf. Sur N itérations.
-- **Combinaison** : régression initiale + raffinement TD-leaf.
+1. **Matériel** (3 vars) :
+   - `nwm - nbm` (différence pions blancs/noirs)
+   - présence d'≥1 dame
+   - dames supplémentaires
+   *(les dames sont TRAITÉES ICI, pas dans les patterns.)*
+2. **PST des dames** (`pst`, **50 vars** = `Dense_Size`) : table
+   position-case pour les dames uniquement.
+3. **Mobilité des dames** (`king_mob`, **2 vars**) : cases sûres vs
+   cases attaquées accessibles aux dames.
+4. **Équilibre gauche/droite** (`skew`, **1 var**, sauf variante
+   Losing).
+5. **Patterns** (cf §3) : ~4.2M poids MG/EG combinés, le gros morceau.
+6. **Post-traitement** : interpolation MG/EG par `stage`, règle Wolf
+   (variante Frisian), atténuation des finales nulles (divise le score
+   si peu de matériel).
 
-Ce qu'on sait empiriquement (cf. [4] Wiering et al.) : les méthodes TD
-sur les dames internationales atteignent un niveau correct en quelques
-heures avec databases de parties. Donc l'investissement training réel
-est modeste — le coût est dans la définition des features, pas la durée
-d'entraînement.
+→ Tout porteur de l'archi doit implémenter au minimum : matériel + PST
+dame + mobilité dame + phase de jeu, en plus des patterns. Les pions
+sont DANS les patterns ; les dames sont DANS les features dédiées.
+C'est exactement le type de "squelette structurel" que notre D1 hybrid
+a tenté en cheap (juste man_value + king_value scalaires, sans PST
+50-square ni mobilité).
+
+---
+
+## 5. Training methodology — reconstituée
+
+Le code public ne contient PAS le pipeline d'entraînement. Mais
+Letouzey l'a décrit aux posts forum (damforum.nl) et Ed Gilbert
+(Kingsrow) l'a publiquement répliqué avec crédit à Letouzey/Buro. Le
+pipeline est :
+
+1. **Self-play à partir de zéro.** Scan démarre sans connaissance,
+   sauf les règles et heuristique `1 dame ≈ 3 pions`. Génère des
+   parties contre lui-même.
+2. **Labellisation par RÉSULTAT de partie (WDL), PAS par score de
+   recherche.** Chaque position extraite reçoit la valeur win/draw/
+   loss du résultat final de la partie. **Scan ne labellise JAMAIS
+   par une éval depth-N**. Le signal est l'issue réelle. (≈ exactement
+   le Cycle 8 master-games de jass, mais sur self-play au lieu de
+   parties humaines.)
+3. **Régression logistique** sur les features sparses (patterns +
+   matériel + PST + mobilité). Poids initialisés aléatoirement. Output =
+   somme pondérée des features actives → sigmoïde. Gradient descent
+   sur log-loss WDL. C'est un **GLM (= GLEM de Buro, Logistello)**,
+   pas un réseau profond. La connaissance est entièrement dans la
+   table de poids.
+4. **Itération.** Nouvel évaluateur rejoue, meilleures parties,
+   relabel WDL, retrain. Quelques cycles.
+
+**Enseignements directs pour jass** :
+- Cible *n'a jamais payé de recherche profonde* pour labelliser →
+  conforte priorité "WDL / master games" déjà observée en Cycle 8 et
+  v6/v7.
+- Représentation **linéaire sur patterns** → toute la force est dans
+  le *feature engineering*, pas dans la profondeur du modèle.
+- Inférence quasi gratuite (lookups + additions) → Scan cherche
+  profond très vite ; un MLP même incrémental ne rivalisera pas sur
+  ce poste.
+
+**Conséquence sur notre plan G** : notre G2 (job 0052) distille
+score = `v7.evaluate(pos)`. C'est une approche supervised score-based,
+qui n'a pas d'équivalent direct chez Scan. Si G2 plateau < 0.40,
+ajouter une variante **G2-WDL** (loss = pure BCE sur WDL, no score
+MSE, sur le même dataset 1M + master games) qui réplique exactement
+la méthodo Scan. À documenter dans `SCAN_METHODOLOGY_GAP.md`.
+
+**Caveat fiabilité** : la *structure* de l'éval (§3, §4bis) est tirée
+du code GPL, fait foi. La *méthode* (§5) est reconstituée de posts
+forum + réplication Kingsrow, pas d'un papier primaire. Les détails
+exacts du fit (learning rate, nombre d'itérations self-play,
+régularisation, ratio self-play vs corpus externe) ne sont **pas
+publics** et devront être ré-explorés empiriquement.
 
 ---
 
@@ -176,16 +288,30 @@ Phase 2 self-play sur une base saine.
 
 ---
 
-## Annexe — fichiers Scan lus
+## Annexe — sources
 
-- `src/eval.cpp` : 100% des patterns + composition de la sortie
-- `src/eval.hpp` : interface minimale (juste `eval_init()` + `eval(pos)`)
-- `readme.txt` : mention "8 overlapping rectangles", pas plus de detail
-- `src/var.cpp`, `src/main.cpp`, training pipeline — non lus pour l'instant
+**Code Scan** (fait foi pour structure §3, §4, §4bis) :
+- `src/eval.cpp` : patterns + Trits + composition de la sortie
+- `src/eval.hpp` : interface minimale (`eval_init()` + `eval(pos)`)
+- `src/common.cpp` (`Square_Sparse`) : layout case ↔ bit, **différent
+  probable de jass**, à mapper si porting des masques `0x0C30...`
+- `src/pos.hpp` : `stage`, `phase` pour interpolation MG/EG
+- `readme.txt` : mention "8 overlapping rectangles"
 
-**Sources non accessibles** (403) : Lidraughts blog post sur Scan,
-damforum thread NNUE Bert Tuyt. Si re-tentés via gh CLI ou archive.org
-pourraient ajouter de l'info sur la méthodo training réelle.
+Code Scan : <https://github.com/rhalbersma/scan>, GPL v3, ~2000 LOC
+évalue + search confondus.
 
-Code Scan : <https://github.com/rhalbersma/scan>, GPL v3, lisible et
-relativement court (~2000 LOC évalue + search confondus).
+**Sources pour méthodo §5** (reconstituée, pas papier primaire) :
+- Posts forum Letouzey, `damforum.nl` (threads "Scan" et "NNUE") —
+  description du self-play + WDL + logistique
+- Ed Gilbert (Kingsrow), *Machine Learning Comes To Kingsrow*, The
+  Checker Maven — réplication du même pipeline avec crédit explicite
+  à Letouzey + Buro
+- Buro, *Improving Heuristic Mini-Max Search by Supervised Learning*
+  (AI 2002) — fondation théorique (GLEM/Logistello) en éval Othello,
+  réutilisée pour Scan
+
+**Sources non lues / non accessibles depuis cette session** :
+- Lidraughts blog post sur Scan (403)
+- damforum thread NNUE Bert Tuyt (403)
+- Detail exact du trainer Letouzey (non publié)

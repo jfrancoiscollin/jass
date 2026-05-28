@@ -5,8 +5,17 @@
 > honnête de POURQUOI notre supervised cheap ne reproduit pas Scan, et
 > proposition d'un plan itératif pour fermer le gap progressivement.
 >
+> **Révisé 2026-05-28** suite à la note de relecture du code Scan +
+> méthodo Letouzey/Gilbert (cf. `docs/SCAN_ARCHITECTURE_NOTES.md`
+> révision 2026-05-28). Ajoute une étape **G2-WDL** entre G2 et G3 :
+> notre G2 distille un score depuis v7, alors que Scan utilise
+> exclusivement des labels WDL avec régression logistique. La variante
+> WDL pure aligne exactement la méthodo Scan, sans coût C++ (juste
+> `--lambda 0.0` dans le trainer).
+>
 > À lire avec `docs/SCAN_ARCHITECTURE_NOTES.md` (analyse statique du
-> code Scan) et `docs/SESSION_LOG_2026_05.md` (verdicts empiriques).
+> code Scan + méthodo training) et `docs/SESSION_LOG_2026_05.md`
+> (verdicts empiriques).
 
 ---
 
@@ -157,22 +166,52 @@ Puis train_pattern.py classique sur ce nouveau dataset.
 - rate vs v6 d10 ≥ 0.40 (distillation devrait facile imiter le master) →
   **archi pattern peut représenter une eval ; bug actuel = labels
   bruités** ; pivot vers G3 ou G4.
+- ∈ [0.20, 0.40] → partial signal, essayer **G2-WDL** (cf ci-dessous)
+  avant de conclure.
 - < 0.20 → l'archi pattern ne peut pas représenter l'eval v6 ;
-  prouve une limite fondamentale ; abandon honnête.
+  essayer G2-WDL aussi pour borner ; sinon abandon honnête.
+
+### Étape G2-WDL — Scan-aligned : pure logistic regression sur WDL (~€1, ~3h dev)
+
+**Pourquoi cette variante** : la note `docs/SCAN_ARCHITECTURE_NOTES.md`
+§5 (révision 2026-05-28) confirme que Scan n'utilise PAS de label score
+de recherche. **Cible = WDL de partie + régression logistique sur
+features sparses**. Notre G2 (distillation depuis v7) est une approche
+score-based différente. Si G2 plateau < 0.40, G2-WDL réplique la méthodo
+Scan exacte.
+
+Implementation :
+- Re-train pattern v2 hybrid avec `--lambda 0.0` (pure BCE WDL, no score
+  MSE) sur le dataset 1M self-play (WDL labels présents) + master games
+  Lidraughts (WDL réel = signal le plus propre).
+- Optimizer L-BFGS (G1 a montré qu'il converge proprement, juste qu'il
+  manque un signal utile à minimiser) — la log-loss WDL est convexe et
+  pas dégénérée vers pred=0.
+
+**Decision gate G2-WDL** : même grille que G2 (rate vs v6 d10).
 
 ### Étape G3 — Feature engineering complet (~€2, ~2j dev)
 
-**Pourquoi** : ajouter king PST + mobility + balance + phase split.
-Aligne la spécification sur Scan exactement. Combiné avec G1 (L-BFGS)
-et/ou G2 (distillation) si ceux-ci ont décollé.
+**Pourquoi** : ajouter king PST 50-square + mobility + balance + phase
+split MG/EG. Aligne la spécification sur Scan exactement (§4bis du
+doc archi). Notre D1 hybrid avait juste 2 scalaires (man_value,
+king_value) — Scan a en plus :
+- King PST : 50 vars (× 2 phases = 100 weights)
+- King mobility : 2 vars (× 2 phases = 4 weights)
+- Balance L/R : 1 var (× 2 phases = 2 weights)
+- Phase split MG/EG sur TOUS les paramètres : ×2 le compte total
 
-Implementation : JPAT v4 = v3 + king_PST[50×2 phases] + mobility[2
-phases] + balance[1 phase only?] + game_stage threshold. PatternNetwork
-étend evaluate(), trainer étend les modèles.
+Combiné avec G1 (L-BFGS), G2 (distillation) ou G2-WDL si ceux-ci ont
+décollé.
+
+Implementation : JPAT v4 = v3 + king_PST[50] + king_mobility[2] +
+balance[1] + game_stage threshold (Scan utilise `Stage_Size = 300`,
+stage dérivé du matériel restant). PatternNetwork extend evaluate(),
+trainer étend les modèles.
 
 **Decision gate G3** :
 - rate vs v5 d10 ≥ 0.30 → **archi viable**, on a la baseline pour
-  Phase 2 self-play.
+  Phase 2 self-play (G4).
 - < 0.15 → feature engineering n'est pas le facteur dominant ; pivot
   G4 ou abandon.
 
@@ -210,7 +249,7 @@ sur plusieurs mois.
 
 **Moyen terme (si on relance pattern axis)** :
 
-- G1 → G2 → G3 dans cet ordre. À chaque gate, accepter d'arrêter.
+- G1 → G2 → G2-WDL → G3 dans cet ordre. À chaque gate, accepter d'arrêter.
 - Budget total pessimiste : ~€5 + ~1 semaine dev.
 - ROI si G3 réussit : avoir une baseline pattern viable pour Phase 2.
 
