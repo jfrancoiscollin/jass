@@ -26,7 +26,7 @@ from pathlib import Path
 
 # Reuse train_pattern's model + saver for consistency.
 sys.path.insert(0, str(Path(__file__).parent))
-from train_pattern import (HybridPatternModel, V2_PATTERNS,  # noqa: E402
+from train_pattern import (HybridPatternModel, PATTERN_SETS,  # noqa: E402
                            save_jpat)
 
 
@@ -34,12 +34,15 @@ def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--out", required=True, type=Path,
                    help="output JPAT v5 file")
+    p.add_argument("--patterns", choices=list(PATTERN_SETS.keys()), default="v2",
+                   help="pattern geometry: v1/v2 (block) or v3 (Scan vertical strips)")
     p.add_argument("--init-man",  type=float, default=100.0)
     p.add_argument("--init-king", type=float, default=300.0)
     args = p.parse_args(argv)
 
+    patterns = PATTERN_SETS[args.patterns]
     model = HybridPatternModel(
-        V2_PATTERNS,
+        patterns,
         base=3,
         init_man=args.init_man,
         init_king=args.init_king,
@@ -54,10 +57,11 @@ def main(argv: list[str]) -> int:
         model.man_value_eg.copy_(model.man_value)
         model.king_value_eg.copy_(model.king_value)
 
-    save_jpat(model, V2_PATTERNS, args.out)
+    save_jpat(model, patterns, args.out)
     sz = args.out.stat().st_size
     print(f"wrote {args.out} ({sz} bytes, JPAT v5 init "
-          f"man={args.init_man} king={args.init_king})", flush=True)
+          f"patterns={args.patterns} man={args.init_man} king={args.init_king})",
+          flush=True)
     return 0
 
 
