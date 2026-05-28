@@ -87,6 +87,31 @@ constexpr std::uint32_t JPAT_VERSION_V1   = 1;
 constexpr std::uint32_t JPAT_VERSION_V2   = 2;
 constexpr std::uint32_t JPAT_VERSION_V3   = 3;
 constexpr std::uint32_t JPAT_VERSION_V4   = 4;
+constexpr std::uint32_t JPAT_VERSION_V5   = 5;
+
+// G3b / JPAT v5 — stage interpolation constants. Stage is an integer
+// in [0, STAGE_SIZE] where 0 = opening (full material) and STAGE_SIZE
+// = bare endgame. The eval interpolates:
+//   score = (acc_mg * (STAGE_SIZE - stage) + acc_eg * stage) / STAGE_SIZE
+// When acc_mg == acc_eg the result is acc_mg regardless of stage — the
+// trick used to preserve v1-v4 semantics when loading older files.
+constexpr int STAGE_SIZE = 300;
+// Opening material baseline = 40 (20 W men + 20 B men) ; weight kings
+// as 2× men so deep endgames with mostly kings count as "more endgamey"
+// than the raw piece count would suggest.
+constexpr int STAGE_OPEN_PHASE = 40;
+
+inline int compute_stage(const Position& pos) noexcept {
+    const int wm = popcount(pos.white_men());
+    const int bm = popcount(pos.black_men());
+    const int wk = popcount(pos.white_kings());
+    const int bk = popcount(pos.black_kings());
+    const int phase = wm + bm + 2 * (wk + bk);
+    const int s = STAGE_SIZE * (STAGE_OPEN_PHASE - phase) / STAGE_OPEN_PHASE;
+    if (s < 0) return 0;
+    if (s > STAGE_SIZE) return STAGE_SIZE;
+    return s;
+}
 
 // Files (columns of dark squares) split into left/right halves for the
 // G3a "balance" feature. FMJD square s has column index (s-1) % 5
@@ -161,41 +186,57 @@ void PatternNetwork::set_encoding_base(std::uint8_t b) noexcept {
 }
 
 int PatternNetwork::evaluate(const Position& pos) const noexcept {
-    // White-POV sum.
-    std::int32_t acc = bias_;
+    // White-POV. G3b / JPAT v5 phase split: we maintain TWO accumulators
+    // (mg / eg) and interpolate by game stage at the end. For v1-v4
+    // networks the EG counterparts are all zero (load() leaves them
+    // at default), which makes the bool `has_phase_split` below false
+    // — we then skip the EG accumulator and interpolation entirely
+    // and return acc_mg, exactly matching the v1-v4 mono-phase eval.
+    const bool has_phase_split =
+        bias_eg_       != 0 || man_value_eg_  != 0 ||
+        king_value_eg_ != 0 || balance_eg_    != 0 ||
+        std::any_of(king_pst_eg_.begin(), king_pst_eg_.end(),
+                    [](std::int32_t w) { return w != 0; });
 
-    // D1 hybrid skeleton (no-op when man_value_ == king_value_ == 0,
-    // i.e. pure-pattern v1 networks). Material + king count diffs are
-    // the cheapest structural features and give the patterns something
-    // to correct around rather than having to learn piece values from
-    // raw labels (cf. docs/SCAN_ARCHITECTURE_NOTES.md §6).
-    if (man_value_ != 0 || king_value_ != 0) {
+    std::int32_t acc_mg = bias_;
+    std::int32_t acc_eg = has_phase_split ? bias_eg_ : 0;
+
+    // D1 hybrid skeleton (mg/eg split when enabled). Material + king
+    // count diffs.
+    if (man_value_ != 0 || king_value_ != 0
+     || man_value_eg_ != 0 || king_value_eg_ != 0) {
         const int wm = popcount(pos.white_men());
         const int bm = popcount(pos.black_men());
         const int wk = popcount(pos.white_kings());
         const int bk = popcount(pos.black_kings());
-        acc += man_value_  * (wm - bm);
-        acc += king_value_ * (wk - bk);
+        const int mat_diff  = wm - bm;
+        const int king_diff = wk - bk;
+        acc_mg += man_value_    * mat_diff + king_value_    * king_diff;
+        if (has_phase_split) {
+            acc_eg += man_value_eg_ * mat_diff + king_value_eg_ * king_diff;
+        }
     }
 
-    // G3a / JPAT v4 — king PST + balance L/R. Both default to 0 so
-    // v1/v2/v3 networks behave unchanged. The PST is stored in
-    // white-POV; black kings get the row-mirrored entry (square 51-s
-    // ↔ index 50-s) so the eval is symmetric under colour flip.
-    if (balance_ != 0) {
-        acc += balance_ * compute_skew(pos);
+    // G3a + G3b — king PST + balance L/R.
+    if (balance_ != 0 || balance_eg_ != 0) {
+        const int skew = compute_skew(pos);
+        acc_mg += balance_ * skew;
+        if (has_phase_split) acc_eg += balance_eg_ * skew;
     }
     Bitboard wk = pos.white_kings();
     while (wk) {
         const std::size_t s = static_cast<std::size_t>(pop_lsb(wk));
-        acc += king_pst_[s - 1];
+        acc_mg += king_pst_[s - 1];
+        if (has_phase_split) acc_eg += king_pst_eg_[s - 1];
     }
     Bitboard bk = pos.black_kings();
     while (bk) {
         const std::size_t s = static_cast<std::size_t>(pop_lsb(bk));
-        acc -= king_pst_[50 - s];
+        acc_mg -= king_pst_[50 - s];
+        if (has_phase_split) acc_eg -= king_pst_eg_[50 - s];
     }
 
+    // Patterns stay mono-phase in v5; contribute equally to mg and eg.
     const std::uint8_t base = encoding_base_;
     for (const Pattern& p : patterns_) {
         std::size_t idx = 0;
@@ -204,13 +245,20 @@ int PatternNetwork::evaluate(const Position& pos) const noexcept {
             idx += static_cast<std::size_t>(encode_state(pos, sq, base)) * mult;
             mult *= base;
         }
-        // Defensive: out-of-range index falls through to weight 0.
         if (idx < p.weights.size()) {
-            acc += p.weights[idx];
+            const std::int32_t w = p.weights[idx];
+            acc_mg += w;
+            if (has_phase_split) acc_eg += w;
         }
     }
-    // STM-POV sign-flip, matching the LinearNetwork / MLPNetworkQ
-    // convention. acc is in white-POV centipawns.
+
+    std::int32_t acc;
+    if (has_phase_split) {
+        const int stage = compute_stage(pos);
+        acc = (acc_mg * (STAGE_SIZE - stage) + acc_eg * stage) / STAGE_SIZE;
+    } else {
+        acc = acc_mg;
+    }
     return (pos.side_to_move() == Color::White) ? acc : -acc;
 }
 
@@ -237,7 +285,8 @@ bool PatternNetwork::load(std::string_view path) {
     if (version != JPAT_VERSION_V1
      && version != JPAT_VERSION_V2
      && version != JPAT_VERSION_V3
-     && version != JPAT_VERSION_V4) {
+     && version != JPAT_VERSION_V4
+     && version != JPAT_VERSION_V5) {
         return false;
     }
     if (!read_u32(num_patterns))                       return false;
@@ -248,6 +297,11 @@ bool PatternNetwork::load(std::string_view path) {
     std::uint8_t base       = 5;  // v1/v2 imply base=5
     std::int32_t balance    = 0;
     std::array<std::int32_t, 50> king_pst{};
+    std::int32_t bias_eg       = 0;
+    std::int32_t man_value_eg  = 0;
+    std::int32_t king_value_eg = 0;
+    std::int32_t balance_eg    = 0;
+    std::array<std::int32_t, 50> king_pst_eg{};
     if (version >= JPAT_VERSION_V2) {
         if (!read_i32(man_value))  return false;
         if (!read_i32(king_value)) return false;
@@ -262,6 +316,19 @@ bool PatternNetwork::load(std::string_view path) {
                static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
         if (!f) return false;
     }
+    if (version >= JPAT_VERSION_V5) {
+        if (!read_i32(bias_eg))       return false;
+        if (!read_i32(man_value_eg))  return false;
+        if (!read_i32(king_value_eg)) return false;
+        if (!read_i32(balance_eg))    return false;
+        f.read(reinterpret_cast<char*>(king_pst_eg.data()),
+               static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
+        if (!f) return false;
+    }
+    // For v1-v4 the EG counterparts stay at their default (zeros). The
+    // evaluate() path detects "no EG populated" and skips the phase
+    // interpolation entirely, returning acc_mg as in v1-v4 (legacy
+    // semantics preserved without rewriting state on load).
 
     std::vector<Pattern> tmp;
     tmp.reserve(num_patterns);
@@ -280,13 +347,18 @@ bool PatternNetwork::load(std::string_view path) {
         tmp.push_back({std::move(sqs), std::move(w)});
     }
 
-    patterns_      = std::move(tmp);
-    bias_          = bias;
-    man_value_     = man_value;
-    king_value_    = king_value;
-    encoding_base_ = base;
-    balance_       = balance;
-    king_pst_      = king_pst;
+    patterns_       = std::move(tmp);
+    bias_           = bias;
+    man_value_      = man_value;
+    king_value_     = king_value;
+    encoding_base_  = base;
+    balance_        = balance;
+    king_pst_       = king_pst;
+    bias_eg_        = bias_eg;
+    man_value_eg_   = man_value_eg;
+    king_value_eg_  = king_value_eg;
+    balance_eg_     = balance_eg;
+    king_pst_eg_    = king_pst_eg;
     return true;
 }
 
@@ -294,23 +366,49 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (version != JPAT_VERSION_V1
      && version != JPAT_VERSION_V2
      && version != JPAT_VERSION_V3
-     && version != JPAT_VERSION_V4) {
+     && version != JPAT_VERSION_V4
+     && version != JPAT_VERSION_V5) {
         return false;
     }
-    // base=3 networks can only be saved as v3 or v4; refusing v1/v2
+    // base=3 networks can only be saved as v3/v4/v5; refusing v1/v2
     // prevents silent loss of the encoding info.
     if (encoding_base_ != 5
      && version != JPAT_VERSION_V3
-     && version != JPAT_VERSION_V4) {
+     && version != JPAT_VERSION_V4
+     && version != JPAT_VERSION_V5) {
         return false;
     }
     // v4 holds king_pst/balance; saving as v1/v2/v3 with non-zero values
-    // would silently drop them. Refuse.
+    // would silently drop them. v5 also OK since it's a superset.
     const bool has_v4_payload =
         balance_ != 0 ||
         std::any_of(king_pst_.begin(), king_pst_.end(),
                     [](std::int32_t w) { return w != 0; });
-    if (has_v4_payload && version != JPAT_VERSION_V4) {
+    if (has_v4_payload
+     && version != JPAT_VERSION_V4
+     && version != JPAT_VERSION_V5) {
+        return false;
+    }
+    // v5 holds the EG counterparts; saving as v<5 drops them by design
+    // (the loader rehydrates EG = MG to preserve mono-phase eval). We
+    // only refuse v<5 when at least one EG counterpart has been set to
+    // a *non-zero* value AND differs from its MG sibling — i.e. the
+    // user explicitly populated a phase split that v<5 can't represent.
+    // Default-zero EG fields against a non-zero MG are treated as
+    // "EG not yet populated", which is the common case before the
+    // trainer runs.
+    auto eg_dirty = [&](std::int32_t mg, std::int32_t eg) {
+        return eg != 0 && eg != mg;
+    };
+    bool has_v5_payload =
+        eg_dirty(bias_,       bias_eg_)       ||
+        eg_dirty(man_value_,  man_value_eg_)  ||
+        eg_dirty(king_value_, king_value_eg_) ||
+        eg_dirty(balance_,    balance_eg_);
+    for (std::size_t i = 0; !has_v5_payload && i < 50; ++i) {
+        has_v5_payload = eg_dirty(king_pst_[i], king_pst_eg_[i]);
+    }
+    if (has_v5_payload && version != JPAT_VERSION_V5) {
         return false;
     }
     std::ofstream f(std::string{path}, std::ios::binary);
@@ -330,6 +428,14 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (version >= JPAT_VERSION_V4) {
         f.write(reinterpret_cast<const char*>(&balance_), 4);
         f.write(reinterpret_cast<const char*>(king_pst_.data()),
+                static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
+    }
+    if (version >= JPAT_VERSION_V5) {
+        f.write(reinterpret_cast<const char*>(&bias_eg_),       4);
+        f.write(reinterpret_cast<const char*>(&man_value_eg_),  4);
+        f.write(reinterpret_cast<const char*>(&king_value_eg_), 4);
+        f.write(reinterpret_cast<const char*>(&balance_eg_),    4);
+        f.write(reinterpret_cast<const char*>(king_pst_eg_.data()),
                 static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
     }
     for (const Pattern& p : patterns_) {
