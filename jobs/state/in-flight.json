@@ -1,7 +1,0 @@
-{
-  "job_id": "0055-g4-diag-pattern-self-play",
-  "script": "jobs/queue/0055-g4-diag-pattern-self-play.sh",
-  "pid": 1047,
-  "started_at": "2026-05-28T21:16:44+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

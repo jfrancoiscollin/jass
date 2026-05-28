@@ -1,0 +1,3 @@
+gen-data-wdl: n=2500 out=/root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter10-shard2.bin eval_depth=4 play_depth=4 max_plies=200 seed=31002 nnue=/root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v9.jpat quiet_only=false pv_extract=0
+  played 50 games, 1397 / 2500 positions
+wrote 2500 WDL records to /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter10-shard2.bin

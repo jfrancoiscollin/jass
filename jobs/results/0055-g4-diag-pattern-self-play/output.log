@@ -1,0 +1,359 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+iters: 10, records/iter: 20000, depth: 4
+v5/v6/v7 refs: /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+=== Bootstrap : pattern-v0.jpat (skeleton init man=100 king=300) ===
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v0.jpat (420493 bytes, JPAT v5 init man=100.0 king=300.0)
+-rw-r--r-- 1 root root 411K May 28 21:16 /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v0.jpat
+
+============ iter 1 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter1-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter1-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  37557.70  val_mse=31227068.00  man=-111.8  king= -78.1 *
+iter  1: train_loss=  24904.27  val_mse=30743692.00  man= -27.1  king= -66.1 *
+iter  2: train_loss=  21595.15  val_mse=30568474.00  man= -37.0  king= -58.5 *
+iter  3: train_loss=  20509.76  val_mse=30477708.00  man= -13.6  king=-132.2 *
+iter  4: train_loss=  19997.26  val_mse=30456528.00  man=  -6.7  king=-106.7 *
+iter  5: train_loss=  19861.19  val_mse=30451722.00  man= -11.7  king= -81.0 *
+iter  6: train_loss=  19798.35  val_mse=30453884.00  man= -17.1  king=-109.1
+iter  7: train_loss=  19770.90  val_mse=30480620.00  man= -14.9  king= -97.8
+iter  8: train_loss=  19761.21  val_mse=30478066.00  man= -13.2  king=-105.5
+iter  9: train_loss=  19756.51  val_mse=30482622.00  man= -13.9  king=-105.3
+early stop: no val improvement for 4 iters (best val_mse=30451722.00)
+final (saved) val_mse=30450724.00  man=-11.7  king=-81.0
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v1.jpat (420493 bytes)
+-- bench new pattern (v1) vs previous (v0) at depth 6 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+-- bench new pattern (v1) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 1 : vs prev = 0 ; vs v6 d10 = 0
+
+============ iter 2 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter2-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter2-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  41545.68  val_mse=33818160.00  man= -30.5  king=  30.7 *
+iter  1: train_loss=  25103.14  val_mse=33874096.00  man=   1.4  king=  17.0
+iter  2: train_loss=  22772.85  val_mse=33567496.00  man=  -6.3  king=   4.0 *
+iter  3: train_loss=  21853.65  val_mse=33592336.00  man=  -9.1  king=   7.2
+iter  4: train_loss=  21433.96  val_mse=33697124.00  man=  -5.7  king= -31.4
+iter  5: train_loss=  21180.40  val_mse=33659048.00  man=  -3.0  king= -31.9
+iter  6: train_loss=  21079.12  val_mse=33594584.00  man=  -6.2  king= -26.7
+early stop: no val improvement for 4 iters (best val_mse=33567496.00)
+final (saved) val_mse=33662196.00  man=-6.3  king=4.0
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v2.jpat (420493 bytes)
+-- bench new pattern (v2) vs previous (v1) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+-- bench new pattern (v2) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 2 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 3 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter3-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter3-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  40477.93  val_mse=30770934.00  man= -22.1  king= 122.2 *
+iter  1: train_loss=  26980.57  val_mse=30147056.00  man=  -9.6  king= -39.2 *
+iter  2: train_loss=  24414.98  val_mse=30147378.00  man=   1.6  king= -10.7
+iter  3: train_loss=  23367.49  val_mse=30241070.00  man=  -0.0  king= -28.3
+iter  4: train_loss=  22951.89  val_mse=30082706.00  man=   0.6  king= -58.9 *
+iter  5: train_loss=  22733.00  val_mse=30114808.00  man=   2.3  king= -62.7
+iter  6: train_loss=  22637.30  val_mse=30070154.00  man=   3.1  king= -51.8 *
+iter  7: train_loss=  22587.27  val_mse=30084358.00  man=   1.1  king= -48.8
+iter  8: train_loss=  22567.73  val_mse=30074056.00  man=   1.1  king= -57.9
+iter  9: train_loss=  22558.10  val_mse=30087792.00  man=   1.7  king= -61.7
+iter 10: train_loss=  22551.96  val_mse=30087456.00  man=   1.1  king= -57.8
+early stop: no val improvement for 4 iters (best val_mse=30070154.00)
+final (saved) val_mse=30032774.00  man=3.1  king=-51.8
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v3.jpat (420493 bytes)
+-- bench new pattern (v3) vs previous (v2) at depth 6 --
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
+-- bench new pattern (v3) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 3 : vs prev = 0.555556 ; vs v6 d10 = 0
+
+============ iter 4 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter4-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter4-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  41471.17  val_mse=32512262.00  man= -10.2  king=  94.7 *
+iter  1: train_loss=  24089.38  val_mse=32094400.00  man= -10.9  king=  66.6 *
+iter  2: train_loss=  21880.87  val_mse=32288556.00  man=  -1.4  king=  80.0
+iter  3: train_loss=  20941.41  val_mse=32299298.00  man=  -8.1  king=  81.5
+iter  4: train_loss=  20564.49  val_mse=32334036.00  man=  -7.7  king=  96.1
+iter  5: train_loss=  20343.60  val_mse=32278516.00  man=  -7.7  king=  83.1
+early stop: no val improvement for 4 iters (best val_mse=32094400.00)
+final (saved) val_mse=32224628.00  man=-10.9  king=66.6
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v4.jpat (420493 bytes)
+-- bench new pattern (v4) vs previous (v3) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+-- bench new pattern (v4) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 4 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 5 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter5-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter5-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  40355.83  val_mse=26437902.00  man=  12.6  king= 148.5 *
+iter  1: train_loss=  28233.34  val_mse=26153056.00  man=  -2.6  king=  85.4 *
+iter  2: train_loss=  25559.57  val_mse=26107686.00  man=  -4.6  king= 143.0 *
+iter  3: train_loss=  24598.77  val_mse=26137206.00  man=  -5.0  king= 158.7
+iter  4: train_loss=  24105.04  val_mse=26123398.00  man=  -5.3  king= 154.5
+iter  5: train_loss=  23834.97  val_mse=26109214.00  man=  -1.7  king= 151.3
+iter  6: train_loss=  23736.78  val_mse=26134790.00  man=  -3.2  king= 156.6
+early stop: no val improvement for 4 iters (best val_mse=26107686.00)
+final (saved) val_mse=26077836.00  man=-4.6  king=143.0
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v5.jpat (420493 bytes)
+-- bench new pattern (v5) vs previous (v4) at depth 6 --
+Result: A=18 B=36 Draws=0 (total 54)
+A score rate: 0.333333 (18 / 54)
+-- bench new pattern (v5) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 5 : vs prev = 0.333333 ; vs v6 d10 = 0
+
+============ iter 6 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter6-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter6-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  40474.68  val_mse=27633286.00  man= -34.7  king=  19.5 *
+iter  1: train_loss=  25072.53  val_mse=27650226.00  man= -17.9  king= -19.9
+iter  2: train_loss=  22931.88  val_mse=27598070.00  man= -30.5  king=  32.4 *
+iter  3: train_loss=  21985.44  val_mse=27608908.00  man=  -2.9  king=  45.6
+iter  4: train_loss=  21598.32  val_mse=27634282.00  man=  -2.4  king=  11.7
+iter  5: train_loss=  21424.31  val_mse=27599332.00  man=  -3.6  king=  14.6
+iter  6: train_loss=  21357.06  val_mse=27617870.00  man=  -1.6  king=  25.6
+early stop: no val improvement for 4 iters (best val_mse=27598070.00)
+final (saved) val_mse=27562866.00  man=-30.5  king=32.4
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v6.jpat (420493 bytes)
+-- bench new pattern (v6) vs previous (v5) at depth 6 --
+Result: A=15 B=36 Draws=3 (total 54)
+A score rate: 0.305556 (16.5 / 54)
+-- bench new pattern (v6) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 6 : vs prev = 0.305556 ; vs v6 d10 = 0
+
+============ iter 7 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter7-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter7-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  41207.69  val_mse=35113300.00  man=   1.6  king= -27.2 *
+iter  1: train_loss=  25772.48  val_mse=34774936.00  man=  -7.3  king=-138.9 *
+iter  2: train_loss=  23719.75  val_mse=34604988.00  man=  -9.4  king= -63.9 *
+iter  3: train_loss=  22919.43  val_mse=34755812.00  man=  -6.9  king= -23.9
+iter  4: train_loss=  22513.56  val_mse=34687016.00  man=  -8.1  king= -95.4
+iter  5: train_loss=  22321.36  val_mse=34648948.00  man=  -9.5  king=-105.4
+iter  6: train_loss=  22204.93  val_mse=34659208.00  man=  -8.5  king= -92.0
+early stop: no val improvement for 4 iters (best val_mse=34604988.00)
+final (saved) val_mse=34565160.00  man=-9.4  king=-63.9
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v7.jpat (420493 bytes)
+-- bench new pattern (v7) vs previous (v6) at depth 6 --
+Result: A=33 B=18 Draws=3 (total 54)
+A score rate: 0.638889 (34.5 / 54)
+-- bench new pattern (v7) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 7 : vs prev = 0.638889 ; vs v6 d10 = 0
+
+============ iter 8 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter8-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter8-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  41520.56  val_mse=34854540.00  man=  -1.6  king=  48.5 *
+iter  1: train_loss=  26384.32  val_mse=34542624.00  man=   1.2  king=  41.3 *
+iter  2: train_loss=  24278.24  val_mse=34619980.00  man=   3.4  king=  87.6
+iter  3: train_loss=  23192.92  val_mse=34691280.00  man=   1.4  king=  81.4
+iter  4: train_loss=  22747.38  val_mse=34668732.00  man=   2.1  king=  75.1
+iter  5: train_loss=  22434.78  val_mse=34606340.00  man=   4.9  king=  88.0
+early stop: no val improvement for 4 iters (best val_mse=34542624.00)
+final (saved) val_mse=34577376.00  man=1.2  king=41.3
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v8.jpat (420493 bytes)
+-- bench new pattern (v8) vs previous (v7) at depth 6 --
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
+-- bench new pattern (v8) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 8 : vs prev = 0.555556 ; vs v6 d10 = 0
+
+============ iter 9 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter9-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter9-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  41225.08  val_mse=24212862.00  man= -56.0  king= 132.8 *
+iter  1: train_loss=  27557.98  val_mse=24104638.00  man= -25.5  king=  69.8 *
+iter  2: train_loss=  25122.76  val_mse=24155726.00  man= -13.2  king=  93.6
+iter  3: train_loss=  24182.91  val_mse=24061728.00  man= -15.0  king=  95.5 *
+iter  4: train_loss=  23722.62  val_mse=24084166.00  man=  -8.8  king=  77.2
+iter  5: train_loss=  23534.22  val_mse=24065636.00  man=  -9.6  king=  67.6
+iter  6: train_loss=  23454.50  val_mse=24095142.00  man=  -8.5  king=  78.7
+iter  7: train_loss=  23415.25  val_mse=24118454.00  man=  -7.2  king=  78.9
+early stop: no val improvement for 4 iters (best val_mse=24061728.00)
+final (saved) val_mse=24077056.00  man=-15.0  king=95.5
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v9.jpat (420493 bytes)
+-- bench new pattern (v9) vs previous (v8) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+-- bench new pattern (v9) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 9 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 10 / 10 ============
+-- gen-data 20000 records via current pattern net --
+merged 20000 records into /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter10-data.bin
+-- train pattern v2 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter10-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 40000)
+iter  0: train_loss=  40860.18  val_mse=32104956.00  man=  -5.6  king=  12.6 *
+iter  1: train_loss=  26031.36  val_mse=31968526.00  man=   6.8  king= -51.9 *
+iter  2: train_loss=  23780.07  val_mse=31998616.00  man=  -6.8  king=  11.8
+iter  3: train_loss=  22855.22  val_mse=31899324.00  man=  -5.6  king= -59.3 *
+iter  4: train_loss=  22496.50  val_mse=31960196.00  man=  -4.6  king= -79.9
+iter  5: train_loss=  22325.60  val_mse=31968416.00  man=  -6.1  king= -49.2
+iter  6: train_loss=  22226.23  val_mse=31975436.00  man=  -5.2  king= -30.3
+iter  7: train_loss=  22184.78  val_mse=31965272.00  man=  -6.5  king= -46.4
+early stop: no val improvement for 4 iters (best val_mse=31899324.00)
+final (saved) val_mse=31916284.00  man=-5.6  king=-59.3
+wrote /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/pattern-v10.jpat (420493 bytes)
+-- bench new pattern (v10) vs previous (v9) at depth 6 --
+Result: A=24 B=30 Draws=0 (total 54)
+A score rate: 0.444444 (24 / 54)
+-- bench new pattern (v10) vs v6 at depth 10 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 10 : vs prev = 0.444444 ; vs v6 d10 = 0
+
+=== final bench vs v5/v6/v7 ===
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0055 G4-DIAG PATTERN SELF-PLAY VERDICT
+==========================================================
+  wall:              1916s (0.5h)
+  iters complete:    10 × 20000 records each
+  per-iter rates :   (see /root/jass/jobs/results/0055-g4-diag-pattern-self-play/artefacts.src/iter-rates.tsv)
+iter  rate_vs_prev_d6  rate_vs_v6_d10
+1     0                0
+2     0.5              0
+3     0.555556         0
+4     0.5              0
+5     0.333333         0
+6     0.305556         0
+7     0.638889         0
+8     0.555556         0
+9     0.5              0
+10    0.444444         0
+
+  Final pattern-v10 vs :
+    handcrafted:       0
+    v5 d6  / d10:      0 / 0
+    v6 d10:            0
+    v7 d10:            0
+
+  Diagnostic chain G1→G3b history :
+    G1 LBFGS              : 0/54 vs v5 d10
+    G2 distill v7         : 0/54 vs v5 d10
+    G3a king PST+balance  : 0/54 vs v5 d10
+    G3b phase split skel  : 0/54 vs v5 d10
+
+  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G4-diag) :
+    FLAT — diagnostic chain COMPLÈTE G1→G3b→G4-diag.
+    ABANDON FERME pattern axis pour cette ère du projet.
+    Conclusion empirique : 5 hypothèses (optimizer / label /
+    features / phase / méthodo self-play) systématiquement
+    réfutées avec ~€10 total. Pattern axis nécessite un
+    leverage qualitatif nouveau (idée fraîche ou réplication
+    Scan complète) pour être relancée. Focus axe data v8.
+==========================================================
