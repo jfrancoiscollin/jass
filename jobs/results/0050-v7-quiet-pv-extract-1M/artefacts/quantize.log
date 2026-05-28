@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128.bin …
+  topology: 450 → 256 → 128 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/v7-quiet-pv-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.049257 sw2=0.10048 sw3=0.069539 sh1=0.066415 sh2=0.86485
+  multipliers: mul1=0.74165 mul2=0.0077164 mul_out=0.06014
+  reference range: float [-1753.4, 1802.1], quantised [-2376.3, 1829.0]
+  diff: mean=+13.12  std=72.46  |max|=862.42  RMSE=73.64
+wrote /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin (149672 bytes)

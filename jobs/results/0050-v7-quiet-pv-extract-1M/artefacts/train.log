@@ -1,0 +1,132 @@
+loading /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/v7-quiet-pv-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.1s to encode)
+  WDL distribution: W=34.1% D=29.0% L=36.9%
+  score range: [-29998, 29999]  mean=-378.0  std=6887.8
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.3s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 3000000 records (1000000 self-play + 2000000 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train=  53958.8  val=  81537.1 *
+  epoch   2: train=  42511.8  val=  58282.0 *
+  epoch   3: train=  38169.0  val=  48297.0 *
+  epoch   4: train=  36546.8  val=  45999.6 *
+  epoch   5: train=  35595.9  val=  42960.4 *
+  epoch   6: train=  35045.7  val=  41355.0 *
+  epoch   7: train=  34703.4  val=  40843.2 *
+  epoch   8: train=  34481.4  val=  41045.3
+  epoch   9: train=  34311.4  val=  39008.1 *
+  epoch  10: train=  34171.1  val=  39909.2
+  epoch  11: train=  34060.4  val=  38662.1 *
+  epoch  12: train=  33960.5  val=  39677.3
+  epoch  13: train=  33874.5  val=  40004.3
+  epoch  14: train=  33799.6  val=  37715.7 *
+  epoch  15: train=  33729.1  val=  39113.4
+  epoch  16: train=  33661.8  val=  38988.9
+  epoch  17: train=  33603.9  val=  39126.4
+  epoch  18: train=  33556.5  val=  39685.2
+  epoch  19: train=  33506.1  val=  38635.8
+  epoch  20: train=  33466.0  val=  38366.3
+  epoch  21: train=  33427.2  val=  39922.7
+  epoch  22: train=  33386.1  val=  37779.1
+  early-stop at epoch 22
+  wrote /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  50598.3  val=  70963.1 *
+  epoch   2: train=  39808.6  val=  50502.7 *
+  epoch   3: train=  36638.1  val=  43533.3 *
+  epoch   4: train=  35326.0  val=  42540.0 *
+  epoch   5: train=  34636.8  val=  40602.9 *
+  epoch   6: train=  34211.8  val=  39523.4 *
+  epoch   7: train=  33900.1  val=  38047.7 *
+  epoch   8: train=  33668.4  val=  39483.1
+  epoch   9: train=  33468.3  val=  37508.9 *
+  epoch  10: train=  33298.6  val=  38640.2
+  epoch  11: train=  33157.3  val=  37492.4 *
+  epoch  12: train=  33034.3  val=  38118.6
+  epoch  13: train=  32921.8  val=  37911.6
+  epoch  14: train=  32823.0  val=  36544.3 *
+  epoch  15: train=  32732.3  val=  37580.6
+  epoch  16: train=  32649.9  val=  37698.8
+  epoch  17: train=  32573.0  val=  37795.2
+  epoch  18: train=  32504.0  val=  39069.1
+  epoch  19: train=  32449.4  val=  37449.4
+  epoch  20: train=  32395.6  val=  37531.9
+  epoch  21: train=  32337.5  val=  39447.9
+  epoch  22: train=  32289.1  val=  37760.5
+  early-stop at epoch 22
+  wrote /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  48425.9  val=  62529.3 *
+  epoch   2: train=  38154.9  val=  46409.2 *
+  epoch   3: train=  35394.5  val=  39519.4 *
+  epoch   4: train=  34351.2  val=  39933.6
+  epoch   5: train=  33753.9  val=  37820.6 *
+  epoch   6: train=  33332.2  val=  38515.8
+  epoch   7: train=  32976.9  val=  36628.7 *
+  epoch   8: train=  32708.4  val=  37793.0
+  epoch   9: train=  32475.1  val=  36700.0
+  epoch  10: train=  32273.9  val=  37034.7
+  epoch  11: train=  32091.6  val=  36619.6 *
+  epoch  12: train=  31936.8  val=  37445.7
+  epoch  13: train=  31792.3  val=  36350.3 *
+  epoch  14: train=  31670.9  val=  36766.3
+  epoch  15: train=  31556.6  val=  35959.7 *
+  epoch  16: train=  31454.6  val=  36769.6
+  epoch  17: train=  31353.2  val=  37271.1
+  epoch  18: train=  31265.0  val=  37290.5
+  epoch  19: train=  31182.0  val=  36095.6
+  epoch  20: train=  31108.3  val=  36435.7
+  epoch  21: train=  31037.5  val=  38395.1
+  epoch  22: train=  30972.2  val=  37611.1
+  epoch  23: train=  30910.8  val=  35316.7 *
+  epoch  24: train=  30847.2  val=  36392.8
+  epoch  25: train=  30796.0  val=  37281.8
+  epoch  26: train=  30746.1  val=  37271.7
+  epoch  27: train=  30688.5  val=  34581.1 *
+  epoch  28: train=  30642.0  val=  35945.6
+  epoch  29: train=  30603.1  val=  37104.9
+  epoch  30: train=  30559.0  val=  37414.8
+  wrote /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  45221.2  val=  51252.9 *
+  epoch   2: train=  36423.7  val=  42809.3 *
+  epoch   3: train=  34758.3  val=  38166.8 *
+  epoch   4: train=  33901.9  val=  39690.1
+  epoch   5: train=  33293.8  val=  37591.3 *
+  epoch   6: train=  32823.2  val=  38088.0
+  epoch   7: train=  32415.7  val=  36371.6 *
+  epoch   8: train=  32104.7  val=  36794.6
+  epoch   9: train=  31815.1  val=  36817.1
+  epoch  10: train=  31557.1  val=  36370.7 *
+  epoch  11: train=  31323.2  val=  37031.9
+  epoch  12: train=  31121.5  val=  37646.6
+  epoch  13: train=  30923.7  val=  35622.3 *
+  epoch  14: train=  30755.1  val=  36312.3
+  epoch  15: train=  30588.0  val=  36217.4
+  epoch  16: train=  30440.8  val=  36055.4
+  epoch  17: train=  30302.5  val=  38288.9
+  epoch  18: train=  30172.7  val=  37625.9
+  epoch  19: train=  30065.3  val=  36315.3
+  epoch  20: train=  29947.7  val=  38102.2
+  epoch  21: train=  29836.4  val=  38236.1
+  early-stop at epoch 21
+  wrote /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  256-128            148,481     34581.1      186.0    1349s
+  512-256            362,497     35622.3      188.7    1320s
+  128-64              66,049     36544.3      191.2     845s
+  64-32               30,977     37715.7      194.2     787s
+
+summary → /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/summary.json
