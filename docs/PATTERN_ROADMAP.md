@@ -126,22 +126,35 @@ l'archi est viable end-to-end).
 vs v5 d10, l'approche "trainer supervised cheap" est inadéquate pour
 ce type de modèle. Passer en phase 2.
 
-### Phase 2 — Self-play iteration (medium, ~€20, ~3-4 semaines)
+### Phase 2 — Self-play iteration (révision coût 2026-05-28)
 
-Objectif : reproduire la méthodo Scan/Kingsrow à petite échelle —
-co-évolution.
+**Note de révision** : l'estimation initiale (~€20-40, ~3-4 semaines)
+était basée sur le coût d'eval MLPNetworkQ (~470K evals/s). Pattern eval
+est ~300× plus rapide (~130M evals/s mesuré PR #73-86). Recalcul honnête
+en deux modes (cf. `docs/SCAN_METHODOLOGY_GAP.md` §G4 pour le détail) :
+
+**Mode G4-diag** (~€2-3, ~1-2 jours wall) : 10K games × 10 iter, depth 4.
+Suffit à diagnostiquer si self-play débloque l'archi. À lancer si
+G3-supervised n'a pas franchi son gate.
+
+**Mode G4-prod** (~€10-20, ~1 semaine wall) : 100K-300K games × 20 iter,
+depth 6. À lancer si G4-diag montre du signal (rate ≥ 0.20 vs v6 d10).
 
 | Tâche | Effort | Hypothèse |
 |---|---|---|
-| C++ `--self-play-pattern N out.jnnw` : pattern net actuel joue N games contre lui-même, log positions + résultats | ~3-5 h code | – |
-| Trainer modifié : prend dataset en input, entraîne, sort nouveau pattern net | ~1 h code (existe déjà mais à wire) | – |
-| Loop script : iter `self-play → train → bench-vs-previous → keep-winner` | ~4-6 h code | – |
-| ~10-20 itérations sur 1× CCX23 (~24-48h/iter ?) | ~€20-40 compute | Convergence vers eval forte par self-improvement |
-| Bench final vs v5 et vs Scan | ~1 h | – |
+| C++ `--self-play-pattern N out.jnnw` | ~3-5 h code | – |
+| Trainer modifié (existe déjà) | ~1 h wire | – |
+| Loop script `0055-g4-self-play-pattern.sh` | ~4-6 h code | – |
+| G4-diag : 10 itérations × ~1.5h sur 1× CCX23 | ~€2-3 compute | Cheap-check méthodo |
+| G4-prod : 20 itérations × ~6-9h | ~€10-20 compute | Convergence vers eval forte par self-improvement |
+| Bench final vs v5/v6/v7 et vs Scan | ~1 h | – |
 
-**Decision gate** : si la self-play loop stagne sous 0.40 vs v5 d10
-après 10 itérations, l'archi pattern à 16×8 n'est probablement pas
-suffisante pour le 10×10 international draughts. Passer en phase 3.
+**Decision gate G4-diag** : rate vs v6 d10 ≥ 0.20 après 10 iter → G4-prod ;
+sinon abandon ferme (la self-play n'unlock pas la méthodo).
+
+**Decision gate G4-prod** : rate vs v6 d10 stagne < 0.40 après 20 iter →
+abandon, l'archi 16×8 n'est probablement pas suffisante pour le 10×10
+international draughts. Passer en phase 3.
 
 ### Phase 3 — Scale up pattern set (commitment, ~€50-100, ~1-2 mois)
 
