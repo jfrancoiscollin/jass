@@ -5,6 +5,7 @@
 
 #include "bitboard.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <string>
@@ -85,6 +86,37 @@ constexpr char          JPAT_MAGIC[4]     = {'J', 'P', 'A', 'T'};
 constexpr std::uint32_t JPAT_VERSION_V1   = 1;
 constexpr std::uint32_t JPAT_VERSION_V2   = 2;
 constexpr std::uint32_t JPAT_VERSION_V3   = 3;
+constexpr std::uint32_t JPAT_VERSION_V4   = 4;
+
+// Files (columns of dark squares) split into left/right halves for the
+// G3a "balance" feature. FMJD square s has column index (s-1) % 5
+// taking values 0..4. We call cols 0-1 "left", cols 3-4 "right",
+// col 2 is the center file (neutral, contributes 0).
+inline int file_side(std::uint8_t fmjd_sq) noexcept {
+    const int col = (fmjd_sq - 1) % 5;
+    if (col <  2) return -1;  // left
+    if (col >  2) return +1;  // right
+    return 0;                 // center file
+}
+
+// White-POV balance: positive when whites are skewed RIGHT relative
+// to blacks. For each white piece, add file_side(s); for each black
+// piece, subtract file_side(s). Sum across all pieces of both
+// colours via iteration over the 4 bitboards.
+inline int compute_skew(const Position& pos) noexcept {
+    int s = 0;
+    auto add_bb = [&](Bitboard bb, int sign) {
+        while (bb) {
+            const Square sq = pop_lsb(bb);
+            s += sign * file_side(static_cast<std::uint8_t>(sq));
+        }
+    };
+    add_bb(pos.white_men(),   +1);
+    add_bb(pos.white_kings(), +1);
+    add_bb(pos.black_men(),   -1);
+    add_bb(pos.black_kings(), -1);
+    return s;
+}
 
 inline std::size_t pow_n(std::size_t base, std::size_t k) noexcept {
     std::size_t r = 1;
@@ -146,6 +178,24 @@ int PatternNetwork::evaluate(const Position& pos) const noexcept {
         acc += king_value_ * (wk - bk);
     }
 
+    // G3a / JPAT v4 — king PST + balance L/R. Both default to 0 so
+    // v1/v2/v3 networks behave unchanged. The PST is stored in
+    // white-POV; black kings get the row-mirrored entry (square 51-s
+    // ↔ index 50-s) so the eval is symmetric under colour flip.
+    if (balance_ != 0) {
+        acc += balance_ * compute_skew(pos);
+    }
+    Bitboard wk = pos.white_kings();
+    while (wk) {
+        const std::size_t s = static_cast<std::size_t>(pop_lsb(wk));
+        acc += king_pst_[s - 1];
+    }
+    Bitboard bk = pos.black_kings();
+    while (bk) {
+        const std::size_t s = static_cast<std::size_t>(pop_lsb(bk));
+        acc -= king_pst_[50 - s];
+    }
+
     const std::uint8_t base = encoding_base_;
     for (const Pattern& p : patterns_) {
         std::size_t idx = 0;
@@ -186,7 +236,8 @@ bool PatternNetwork::load(std::string_view path) {
     if (!read_u32(version))                            return false;
     if (version != JPAT_VERSION_V1
      && version != JPAT_VERSION_V2
-     && version != JPAT_VERSION_V3) {
+     && version != JPAT_VERSION_V3
+     && version != JPAT_VERSION_V4) {
         return false;
     }
     if (!read_u32(num_patterns))                       return false;
@@ -195,6 +246,8 @@ bool PatternNetwork::load(std::string_view path) {
     std::int32_t man_value  = 0;
     std::int32_t king_value = 0;
     std::uint8_t base       = 5;  // v1/v2 imply base=5
+    std::int32_t balance    = 0;
+    std::array<std::int32_t, 50> king_pst{};
     if (version >= JPAT_VERSION_V2) {
         if (!read_i32(man_value))  return false;
         if (!read_i32(king_value)) return false;
@@ -202,6 +255,12 @@ bool PatternNetwork::load(std::string_view path) {
     if (version >= JPAT_VERSION_V3) {
         f.read(reinterpret_cast<char*>(&base), 1);
         if (!f || (base != 3 && base != 5)) return false;
+    }
+    if (version >= JPAT_VERSION_V4) {
+        if (!read_i32(balance)) return false;
+        f.read(reinterpret_cast<char*>(king_pst.data()),
+               static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
+        if (!f) return false;
     }
 
     std::vector<Pattern> tmp;
@@ -226,18 +285,32 @@ bool PatternNetwork::load(std::string_view path) {
     man_value_     = man_value;
     king_value_    = king_value;
     encoding_base_ = base;
+    balance_       = balance;
+    king_pst_      = king_pst;
     return true;
 }
 
 bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (version != JPAT_VERSION_V1
      && version != JPAT_VERSION_V2
-     && version != JPAT_VERSION_V3) {
+     && version != JPAT_VERSION_V3
+     && version != JPAT_VERSION_V4) {
         return false;
     }
-    // base=3 networks can only be saved as v3; refusing v1/v2 prevents
-    // silent loss of the encoding info.
-    if (encoding_base_ != 5 && version != JPAT_VERSION_V3) {
+    // base=3 networks can only be saved as v3 or v4; refusing v1/v2
+    // prevents silent loss of the encoding info.
+    if (encoding_base_ != 5
+     && version != JPAT_VERSION_V3
+     && version != JPAT_VERSION_V4) {
+        return false;
+    }
+    // v4 holds king_pst/balance; saving as v1/v2/v3 with non-zero values
+    // would silently drop them. Refuse.
+    const bool has_v4_payload =
+        balance_ != 0 ||
+        std::any_of(king_pst_.begin(), king_pst_.end(),
+                    [](std::int32_t w) { return w != 0; });
+    if (has_v4_payload && version != JPAT_VERSION_V4) {
         return false;
     }
     std::ofstream f(std::string{path}, std::ios::binary);
@@ -253,6 +326,11 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     }
     if (version >= JPAT_VERSION_V3) {
         f.write(reinterpret_cast<const char*>(&encoding_base_), 1);
+    }
+    if (version >= JPAT_VERSION_V4) {
+        f.write(reinterpret_cast<const char*>(&balance_), 4);
+        f.write(reinterpret_cast<const char*>(king_pst_.data()),
+                static_cast<std::streamsize>(50 * sizeof(std::int32_t)));
     }
     for (const Pattern& p : patterns_) {
         const std::uint8_t k = static_cast<std::uint8_t>(p.squares.size());
