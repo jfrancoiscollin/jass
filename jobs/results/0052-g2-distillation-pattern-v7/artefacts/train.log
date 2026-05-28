@@ -1,0 +1,46 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0052-g2-distillation-pattern-v7/artefacts.src/depth20-1M-distilled-v7.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (16 patterns, base=5)...
+  done, shape=(16, 2000000)
+=== run 1/3 (seed 42) ===
+[seed 42] iter  0: train_loss=   3720.81  val_mse= 260066.12  man=  -4.9  king=  13.7 *
+[seed 42] iter  1: train_loss=   3199.10  val_mse= 243456.70  man=   2.2  king=  -6.7 *
+[seed 42] iter  2: train_loss=   3174.32  val_mse= 244609.06  man=  -2.2  king=  -2.7
+[seed 42] iter  3: train_loss=   3171.97  val_mse= 243760.12  man=  -2.0  king=  -0.9
+[seed 42] iter  4: train_loss=   3171.79  val_mse= 243428.19  man=  -1.9  king=  -1.3 *
+[seed 42] iter  5: train_loss=   3171.78  val_mse= 243435.06  man=  -1.9  king=  -1.2
+[seed 42] iter  6: train_loss=   3171.78  val_mse= 243435.28  man=  -1.9  king=  -1.1
+[seed 42] iter  7: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 42] iter  8: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 42] iter  9: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 42] early stop: no val improvement for 5 iters (best val_mse=243428.19)
+=== run 2/3 (seed 43) ===
+[seed 43] iter  0: train_loss=   3720.81  val_mse= 260066.12  man=  -4.9  king=  13.7 *
+[seed 43] iter  1: train_loss=   3199.10  val_mse= 243456.70  man=   2.2  king=  -6.7 *
+[seed 43] iter  2: train_loss=   3174.32  val_mse= 244609.06  man=  -2.2  king=  -2.7
+[seed 43] iter  3: train_loss=   3171.97  val_mse= 243760.12  man=  -2.0  king=  -0.9
+[seed 43] iter  4: train_loss=   3171.79  val_mse= 243428.19  man=  -1.9  king=  -1.3 *
+[seed 43] iter  5: train_loss=   3171.78  val_mse= 243435.06  man=  -1.9  king=  -1.2
+[seed 43] iter  6: train_loss=   3171.78  val_mse= 243435.28  man=  -1.9  king=  -1.1
+[seed 43] iter  7: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 43] iter  8: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 43] iter  9: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 43] early stop: no val improvement for 5 iters (best val_mse=243428.19)
+=== run 3/3 (seed 44) ===
+[seed 44] iter  0: train_loss=   3720.81  val_mse= 260066.12  man=  -4.9  king=  13.7 *
+[seed 44] iter  1: train_loss=   3199.10  val_mse= 243456.70  man=   2.2  king=  -6.7 *
+[seed 44] iter  2: train_loss=   3174.32  val_mse= 244609.06  man=  -2.2  king=  -2.7
+[seed 44] iter  3: train_loss=   3171.97  val_mse= 243760.12  man=  -2.0  king=  -0.9
+[seed 44] iter  4: train_loss=   3171.79  val_mse= 243428.19  man=  -1.9  king=  -1.3 *
+[seed 44] iter  5: train_loss=   3171.78  val_mse= 243435.06  man=  -1.9  king=  -1.2
+[seed 44] iter  6: train_loss=   3171.78  val_mse= 243435.28  man=  -1.9  king=  -1.1
+[seed 44] iter  7: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 44] iter  8: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 44] iter  9: train_loss=   3171.78  val_mse= 243431.30  man=  -1.9  king=  -1.1
+[seed 44] early stop: no val improvement for 5 iters (best val_mse=243428.19)
+averaging 3 models...
+final (saved) val_mse= 243428.19  man=-1.9  king=-1.3
+wrote /root/jass/jobs/results/0052-g2-distillation-pattern-v7/artefacts.src/pattern-v2-g2-distilled.jpat (25000168 bytes)

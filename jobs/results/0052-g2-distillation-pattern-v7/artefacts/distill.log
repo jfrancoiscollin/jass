@@ -1,0 +1,12 @@
+rewriting 1000000 records: /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin → /root/jass/jobs/results/0052-g2-distillation-pattern-v7/artefacts.src/depth20-1M-distilled-v7.bin (labeller: /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin)
+  100000 / 1000000 records
+  200000 / 1000000 records
+  300000 / 1000000 records
+  400000 / 1000000 records
+  500000 / 1000000 records
+  600000 / 1000000 records
+  700000 / 1000000 records
+  800000 / 1000000 records
+  900000 / 1000000 records
+  1000000 / 1000000 records
+wrote 1000000 records (38 B each) to /root/jass/jobs/results/0052-g2-distillation-pattern-v7/artefacts.src/depth20-1M-distilled-v7.bin
