@@ -1,7 +1,9 @@
 {
   "job_id": "0050-v7-quiet-pv-extract-1M",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-26T17:39:08+00:00",
+  "ended_at": "2026-05-28T07:01:27+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 439127
+  "artefacts_server_path": "/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src"
 }
