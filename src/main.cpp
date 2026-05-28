@@ -23,6 +23,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -519,6 +520,169 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --rewrite-scores-with-nnue: read a JNNW dataset and write a new one with
+// the `score` field replaced by `nnue.evaluate(pos)` from a user-supplied
+// network. The bitboards / STM / WDL fields are passed through unchanged.
+//
+// Used for G2 of docs/SCAN_METHODOLOGY_GAP.md (knowledge distillation):
+// take the depth-20 self-play 1M dataset (noisy score labels from search)
+// and rewrite it with v7's outputs as labels (a network that's known to
+// generalise). If a pattern net trained on these cleaner labels still
+// flat-lines, the limit is the pattern architecture itself, not label
+// noise.
+// -----------------------------------------------------------------------------
+int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --rewrite-scores-with-nnue "
+                     "<input.jnnw> <output.jnnw> --nnue PATH\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+    const char* nnue_path = nullptr;
+    for (int i = 4; i < argc; ++i) {
+        if (std::string_view{argv[i]} == "--nnue" && i + 1 < argc) {
+            nnue_path = argv[++i];
+        }
+    }
+    if (!nnue_path) {
+        std::cerr << "error: --nnue PATH is required\n";
+        return 1;
+    }
+    // Reject in_path == out_path: ofstream defaults to ios::trunc and would
+    // wipe the input file before the read loop drains it. Path comparison
+    // is textual (good enough for the runner; symlinks aren't expected).
+    if (std::string_view{in_path} == std::string_view{out_path}) {
+        std::cerr << "error: input and output paths are identical ("
+                  << in_path << "); refusing to truncate the input\n";
+        return 1;
+    }
+    std::unique_ptr<INetwork> nnue = load_network(nnue_path);
+    if (!nnue) {
+        std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
+        return 1;
+    }
+
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) {
+        std::cerr << "error: cannot open " << in_path << "\n";
+        return 1;
+    }
+
+    // Pre-flight: derive the expected record count from the file size so
+    // we can reject a header-count that doesn't match the actual content
+    // BEFORE we've opened (and would have truncated) the output file.
+    in.seekg(0, std::ios::end);
+    const std::streampos file_end = in.tellg();
+    in.seekg(0, std::ios::beg);
+    if (file_end < std::streampos{8}) {
+        std::cerr << "error: " << in_path << " too small for a JNNW header\n";
+        return 1;
+    }
+
+    char magic[4]{};
+    in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n";
+        return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) {
+        std::cerr << "error: cannot read JNNW header\n";
+        return 1;
+    }
+    constexpr std::size_t RECORD_SZ = 38;
+    const std::size_t body_bytes  = static_cast<std::size_t>(file_end) - 8;
+    if (body_bytes % RECORD_SZ != 0) {
+        std::cerr << "error: " << in_path << " body size " << body_bytes
+                  << " is not a multiple of " << RECORD_SZ << " bytes\n";
+        return 1;
+    }
+    const std::size_t expected = body_bytes / RECORD_SZ;
+    if (count != expected) {
+        std::cerr << "error: header count " << count
+                  << " disagrees with file size (" << expected
+                  << " records based on " << body_bytes << " bytes)\n";
+        return 1;
+    }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) {
+        std::cerr << "error: cannot open " << out_path << " for writing\n";
+        return 1;
+    }
+    out.write("JNNW", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+
+    std::cout << "rewriting " << count << " records: " << in_path
+              << " → " << out_path << " (labeller: " << nnue_path << ")\n";
+
+    // Read/write one record at a time as a fixed-size buffer; that way a
+    // truncated tail is detected BEFORE any of the typed fields are
+    // consumed (avoids using a partially-initialised stm / score / wdl).
+    char record[RECORD_SZ];
+    Position pos;
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i
+                      << " (got " << in.gcount() << " of " << RECORD_SZ
+                      << " bytes)\n";
+            return 1;
+        }
+        std::uint64_t bbs[4];
+        std::uint8_t  stm_byte;
+        std::int8_t   wdl;
+        std::memcpy(bbs,       record,      32);
+        std::memcpy(&stm_byte, record + 32,  1);
+        // record + 33 .. + 36: old int32 score, discarded — we overwrite
+        // it in-place below before writing the record back out.
+        std::memcpy(&wdl,      record + 37,  1);
+
+        // Validate the record before reconstructing the Position. Any of
+        // these would silently produce a board different from what the
+        // file claims (and what would be re-emitted unchanged).
+        if (stm_byte > 1) {
+            std::cerr << "error: record " << i << " has invalid stm byte "
+                      << static_cast<int>(stm_byte) << " (expected 0 or 1)\n";
+            return 1;
+        }
+        const Bitboard all_pieces = bbs[0] | bbs[1] | bbs[2] | bbs[3];
+        if ((all_pieces & ~PLAYABLE_BB) != 0) {
+            std::cerr << "error: record " << i
+                      << " has bits set outside the 50 playable squares\n";
+            return 1;
+        }
+        if (((bbs[0] & bbs[1]) | (bbs[0] & bbs[2]) | (bbs[0] & bbs[3])
+           | (bbs[1] & bbs[2]) | (bbs[1] & bbs[3]) | (bbs[2] & bbs[3])) != 0) {
+            std::cerr << "error: record " << i
+                      << " has overlapping bits across colour/type planes\n";
+            return 1;
+        }
+
+        pos = Position{};
+        pos.set_side_to_move(stm_byte == 0 ? Color::White : Color::Black);
+        for (Bitboard b = bbs[0]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackKing);
+
+        const std::int32_t new_score = static_cast<std::int32_t>(nnue->evaluate(pos));
+        std::memcpy(record + 33, &new_score, 4);
+        // wdl is already in record + 37; bbs and stm preserved at the
+        // top of the buffer. Single write of the rewritten record.
+        out.write(record, RECORD_SZ);
+        if ((i + 1) % 100000 == 0) {
+            std::cout << "  " << (i + 1) << " / " << count << " records\n";
+        }
+    }
+    std::cout << "wrote " << count << " records (" << RECORD_SZ
+              << " B each) to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-nnue: pit a trained network (loaded from a binary weights
 // file — either the raw LinearNetwork int32 layout or the JNNM-tagged
 // MLPNetwork format) against the handcrafted eval. Both engines are
@@ -912,6 +1076,7 @@ int main(int argc, char** argv) {
         else if (a == "--bench-eval-server")        return run_bench_eval_server_mode(argc, argv);
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
+        else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
