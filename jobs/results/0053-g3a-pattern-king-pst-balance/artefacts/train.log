@@ -1,0 +1,40 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0010-gen-data-depth20-1M-smallbox/artefacts.src/depth20-1M.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 2000000)
+=== run 1/3 (seed 42) ===
+[seed 42] iter  0: train_loss=  23045.07  val_mse=89739104.00  man=  -6.1  king=  55.1 *
+[seed 42] iter  1: train_loss=  20234.39  val_mse=88380056.00  man=  -6.5  king= -20.2 *
+[seed 42] iter  2: train_loss=  19675.37  val_mse=87720248.00  man=  -1.5  king= -24.3 *
+[seed 42] iter  3: train_loss=  19411.89  val_mse=88058312.00  man=  -7.5  king=  31.7
+[seed 42] iter  4: train_loss=  19285.47  val_mse=87935208.00  man=  -3.1  king=  -6.1
+[seed 42] iter  5: train_loss=  19252.06  val_mse=87852568.00  man=  -5.5  king=   9.7
+[seed 42] iter  6: train_loss=  19225.42  val_mse=87781680.00  man=  -4.4  king=   3.6
+[seed 42] iter  7: train_loss=  19213.46  val_mse=87755584.00  man=  -2.8  king=  -2.0
+[seed 42] early stop: no val improvement for 5 iters (best val_mse=87720248.00)
+=== run 2/3 (seed 43) ===
+[seed 43] iter  0: train_loss=  23045.07  val_mse=89739104.00  man=  -6.1  king=  55.1 *
+[seed 43] iter  1: train_loss=  20234.39  val_mse=88380056.00  man=  -6.5  king= -20.2 *
+[seed 43] iter  2: train_loss=  19675.37  val_mse=87720248.00  man=  -1.5  king= -24.3 *
+[seed 43] iter  3: train_loss=  19411.89  val_mse=88058312.00  man=  -7.5  king=  31.7
+[seed 43] iter  4: train_loss=  19285.47  val_mse=87935208.00  man=  -3.1  king=  -6.1
+[seed 43] iter  5: train_loss=  19252.06  val_mse=87852568.00  man=  -5.5  king=   9.7
+[seed 43] iter  6: train_loss=  19225.42  val_mse=87781680.00  man=  -4.4  king=   3.6
+[seed 43] iter  7: train_loss=  19213.46  val_mse=87755584.00  man=  -2.8  king=  -2.0
+[seed 43] early stop: no val improvement for 5 iters (best val_mse=87720248.00)
+=== run 3/3 (seed 44) ===
+[seed 44] iter  0: train_loss=  23045.07  val_mse=89739104.00  man=  -6.1  king=  55.1 *
+[seed 44] iter  1: train_loss=  20234.39  val_mse=88380056.00  man=  -6.5  king= -20.2 *
+[seed 44] iter  2: train_loss=  19675.37  val_mse=87720248.00  man=  -1.5  king= -24.3 *
+[seed 44] iter  3: train_loss=  19411.89  val_mse=88058312.00  man=  -7.5  king=  31.7
+[seed 44] iter  4: train_loss=  19285.47  val_mse=87935208.00  man=  -3.1  king=  -6.1
+[seed 44] iter  5: train_loss=  19252.06  val_mse=87852568.00  man=  -5.5  king=   9.7
+[seed 44] iter  6: train_loss=  19225.42  val_mse=87781680.00  man=  -4.4  king=   3.6
+[seed 44] iter  7: train_loss=  19213.46  val_mse=87755584.00  man=  -2.8  king=  -2.0
+[seed 44] early stop: no val improvement for 5 iters (best val_mse=87720248.00)
+averaging 3 models...
+final (saved) val_mse=87720008.00  man=-1.5  king=-24.3
+wrote /root/jass/jobs/results/0053-g3a-pattern-king-pst-balance/artefacts.src/pattern-v2-g3a.jpat (420277 bytes)
