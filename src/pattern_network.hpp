@@ -85,6 +85,28 @@
 //                                        row-mirrored entry)
 //   For each pattern: (same layout as v3)
 //
+// Version 5 (G3b skeleton phase split — adds MG/EG counterparts for the
+// scalar skeleton features only; patterns remain mono-phase). Strict
+// additive extension of v4 (the v4 fields are interpreted as MG):
+//   [0..229)  identical to v4 header  (bias / man / king / base / balance
+//                                      / king_pst, all interpreted as MG)
+//   [229..233) int32  bias_eg
+//   [233..237) int32  man_value_eg
+//   [237..241) int32  king_value_eg
+//   [241..245) int32  balance_eg
+//   [245..445) int32[50] king_pst_eg
+//   For each pattern: (same layout as v3/v4, single weights table — the
+//                      patterns themselves are NOT phase-split in v5;
+//                      that would be a separate v6 if it ever ships).
+//
+// Stage interpolation: `score = (acc_mg * (Stage_Size - stage) +
+//                                acc_eg * stage) / Stage_Size`
+// with Stage_Size = 300 hardcoded. Stage derives from total piece
+// count (cf. compute_stage in pattern_network.cpp). For older versions
+// (v1-v4), the loader sets *_eg = *_mg which makes the interpolation
+// reduce to `acc_mg` regardless of stage — preserves v1-v4 semantics
+// exactly.
+//
 // `load()` accepts v1, v2, v3, v4 transparently. v1/v2 imply base=5 and
 // balance/king_pst=0. Phase split (mg/eg per Scan §2) is NOT in v4 yet
 // (it would be v5/G3b).
@@ -171,11 +193,26 @@ public:
     const std::array<std::int32_t, 50>& king_pst() const noexcept { return king_pst_; }
     std::array<std::int32_t, 50>&       king_pst_mut() noexcept   { return king_pst_; }
 
+    // G3b / JPAT v5 — skeleton phase split (MG/EG counterparts for the
+    // scalar skeleton features; patterns stay mono-phase). For v1-v4
+    // networks the loader sets *_eg = *_mg, so the eval reduces to
+    // acc_mg regardless of stage (preserves legacy semantics exactly).
+    std::int32_t bias_eg()       const noexcept { return bias_eg_;       }
+    std::int32_t man_value_eg()  const noexcept { return man_value_eg_;  }
+    std::int32_t king_value_eg() const noexcept { return king_value_eg_; }
+    std::int32_t balance_eg()    const noexcept { return balance_eg_;    }
+    const std::array<std::int32_t, 50>& king_pst_eg() const noexcept { return king_pst_eg_; }
+    void set_bias_eg(std::int32_t v)       noexcept { bias_eg_       = v; }
+    void set_man_value_eg(std::int32_t v)  noexcept { man_value_eg_  = v; }
+    void set_king_value_eg(std::int32_t v) noexcept { king_value_eg_ = v; }
+    void set_balance_eg(std::int32_t v)    noexcept { balance_eg_    = v; }
+    std::array<std::int32_t, 50>& king_pst_eg_mut() noexcept { return king_pst_eg_; }
+
     // Save format: pass `version = 2` to write the hybrid header (even
     // if man/king are 0); `version = 3` writes the v3 header that
     // additionally records the encoding_base; `version = 4` adds the
-    // G3a balance + king PST. Default `version = 1` matches the legacy
-    // pure-pattern layout.
+    // G3a balance + king PST; `version = 5` adds the EG counterparts.
+    // Default `version = 1` matches the legacy pure-pattern layout.
     bool load(std::string_view path);
     bool save(std::string_view path, std::uint32_t version = 1) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
@@ -191,6 +228,14 @@ private:
     // row-mirrored entry king_pst_[50-s] (square 51-s).
     std::int32_t                       balance_{0};
     std::array<std::int32_t, 50>       king_pst_{};
+    // G3b / JPAT v5 only — EG (endgame) counterparts of the skeleton.
+    // For v1-v4 networks load() copies *_mg into these so interpolation
+    // reduces to acc_mg regardless of stage.
+    std::int32_t                       bias_eg_{0};
+    std::int32_t                       man_value_eg_{0};
+    std::int32_t                       king_value_eg_{0};
+    std::int32_t                       balance_eg_{0};
+    std::array<std::int32_t, 50>       king_pst_eg_{};
 };
 
 }  // namespace jass

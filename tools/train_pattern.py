@@ -180,6 +180,33 @@ def balance_feature(bbs: np.ndarray) -> np.ndarray:
     return out
 
 
+def stage_features(bbs: np.ndarray) -> np.ndarray:
+    """G3b / JPAT v5 — return per-record float32 stage values in
+    [0, STAGE_SIZE]. Matches C++ `compute_stage`:
+      phase = wm + bm + 2*(wk + bk)
+      stage = clamp(STAGE_SIZE * (40 - phase) / 40, 0, STAGE_SIZE)
+    """
+    STAGE_SIZE      = 300
+    STAGE_OPEN_PHASE = 40
+    if hasattr(np, "bitwise_count"):
+        popcnt = lambda b: np.bitwise_count(b).astype(np.int32)
+    else:
+        def popcnt(b):
+            x = b.copy()
+            x = x - ((x >> np.uint64(1)) & np.uint64(0x5555555555555555))
+            x = (x & np.uint64(0x3333333333333333)) + ((x >> np.uint64(2)) & np.uint64(0x3333333333333333))
+            x = (x + (x >> np.uint64(4))) & np.uint64(0x0F0F0F0F0F0F0F0F)
+            return ((x * np.uint64(0x0101010101010101)) >> np.uint64(56)).astype(np.int32)
+    wm = popcnt(bbs[0])
+    wk = popcnt(bbs[1])
+    bm = popcnt(bbs[2])
+    bk = popcnt(bbs[3])
+    phase = wm + bm + 2 * (wk + bk)
+    stage = (STAGE_SIZE * (STAGE_OPEN_PHASE - phase) // STAGE_OPEN_PHASE)
+    stage = np.clip(stage, 0, STAGE_SIZE).astype(np.float32)
+    return stage
+
+
 def material_diffs(bbs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Return (mat_diff, king_diff) float32 arrays of length N, where
     mat_diff[i]  = popcount(Wmen[i])   - popcount(Bmen[i])
@@ -295,17 +322,27 @@ class HybridPatternModel(PatternModel):
                  base: int = 5,
                  init_man:  float = 100.0,
                  init_king: float = 300.0,
-                 extras: bool = False):
+                 extras: bool = False,
+                 phase_split: bool = False):
         super().__init__(patterns, base=base)
         self.man_value  = nn.Parameter(torch.tensor(init_man))
         self.king_value = nn.Parameter(torch.tensor(init_king))
         self.extras     = extras
+        self.phase_split = phase_split
         if extras:
-            # G3a: 50-dim king PST + scalar balance, zero-initialised.
-            # The PST vector is in white-POV; black king contributions
-            # are computed externally as the row-mirrored slot.
             self.king_pst = nn.Parameter(torch.zeros(50))
             self.balance  = nn.Parameter(torch.tensor(0.0))
+        if phase_split:
+            # G3b / JPAT v5 — EG counterparts of the skeleton. Initialised
+            # to MG values so the start state has no phase split (eval =
+            # MG everywhere); the trainer then deviates EG from MG as
+            # needed. Patterns themselves stay mono-phase in v5.
+            self.bias_eg       = nn.Parameter(torch.zeros(1))
+            self.man_value_eg  = nn.Parameter(torch.tensor(init_man))
+            self.king_value_eg = nn.Parameter(torch.tensor(init_king))
+            if extras:
+                self.king_pst_eg = nn.Parameter(torch.zeros(50))
+                self.balance_eg  = nn.Parameter(torch.tensor(0.0))
 
     def forward(self, indices: torch.Tensor,
                 mat_diff: torch.Tensor,
@@ -327,10 +364,13 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
       * HybridPatternModel                 → v2
       * else                               → v1 (legacy, base=5 implicit)
     """
-    is_hybrid = isinstance(model, HybridPatternModel)
-    has_extras = is_hybrid and getattr(model, "extras", False)
-    base      = model.base
-    if has_extras:
+    is_hybrid    = isinstance(model, HybridPatternModel)
+    has_extras   = is_hybrid and getattr(model, "extras", False)
+    has_phase    = is_hybrid and getattr(model, "phase_split", False)
+    base         = model.base
+    if has_phase:
+        version = 5
+    elif has_extras:
         version = 4
     elif base != 5:
         version = 3
@@ -359,6 +399,22 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
             pst = model.king_pst.detach().cpu().numpy()
             pst_q = np.round(pst).clip(-2**31, 2**31 - 1).astype(np.int32)
             f.write(pst_q.tobytes())                         # king_pst[50] int32
+        if version >= 5:
+            # G3b / JPAT v5: EG counterparts of bias/man/king/balance/king_pst.
+            bias_eg_i = int(round(model.bias_eg.item()))
+            man_eg_i  = int(round(model.man_value_eg.item()))
+            king_eg_i = int(round(model.king_value_eg.item()))
+            bal_eg_i  = int(round(model.balance_eg.item())) if has_extras else 0
+            f.write(struct.pack("<i", bias_eg_i))
+            f.write(struct.pack("<i", man_eg_i))
+            f.write(struct.pack("<i", king_eg_i))
+            f.write(struct.pack("<i", bal_eg_i))
+            if has_extras:
+                pst_eg   = model.king_pst_eg.detach().cpu().numpy()
+                pst_eg_q = np.round(pst_eg).clip(-2**31, 2**31 - 1).astype(np.int32)
+            else:
+                pst_eg_q = np.zeros(50, dtype=np.int32)
+            f.write(pst_eg_q.tobytes())
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -480,6 +536,7 @@ def train_one(
     king_diff_t: torch.Tensor | None,
     king_pst_t:  torch.Tensor | None,   # G3a extras: (50, N) shaped
     balance_t:   torch.Tensor | None,   # G3a extras: (N,) shaped
+    stage_t:     torch.Tensor | None,   # G3b phase split: (N,) shaped
     train_idx: np.ndarray,
     val_idx:   np.ndarray,
     seed: int,
@@ -497,6 +554,7 @@ def train_one(
     init_king: float = 300.0,
     base: int = 5,
     extras: bool = False,
+    phase_split: bool = False,
     optimizer_kind: str = "adam",
     lbfgs_max_iter: int = 20,
     lbfgs_history: int = 10,
@@ -512,7 +570,7 @@ def train_one(
         assert mat_diff_t is not None and king_diff_t is not None
         model = HybridPatternModel(patterns, base=base,
                                    init_man=init_man, init_king=init_king,
-                                   extras=extras)
+                                   extras=extras, phase_split=phase_split)
     else:
         model = PatternModel(patterns, base=base)
 
@@ -524,16 +582,34 @@ def train_one(
     def _forward(idx_slice: np.ndarray) -> torch.Tensor:
         if not hybrid:
             return model(pidx_t[:, idx_slice])
-        base_out = model(pidx_t[:, idx_slice],
-                         mat_diff_t[idx_slice],
-                         king_diff_t[idx_slice])
+        n = idx_slice.shape[0]
+        # Patterns contribute mono-phase in JPAT v5 — same value to mg
+        # and eg accumulators (so we compute once and reuse).
+        pat = torch.zeros(n, dtype=torch.float32)
+        for pi, table in enumerate(model.tables):
+            pat = pat + table(pidx_t[pi][idx_slice]).squeeze(-1)
+        # MG accumulator (skeleton + patterns).
+        acc_mg = (model.bias.expand(n).clone() + pat
+                  + model.man_value  * mat_diff_t[idx_slice]
+                  + model.king_value * king_diff_t[idx_slice])
         if extras:
             assert king_pst_t is not None and balance_t is not None
-            # king_pst_t shape (50, N) ; balance_t shape (N,)
-            pst_contrib = (model.king_pst.unsqueeze(1)
-                           * king_pst_t[:, idx_slice]).sum(dim=0)
-            base_out = base_out + pst_contrib + model.balance * balance_t[idx_slice]
-        return base_out
+            acc_mg = (acc_mg
+                      + (model.king_pst.unsqueeze(1) * king_pst_t[:, idx_slice]).sum(dim=0)
+                      + model.balance * balance_t[idx_slice])
+        if not phase_split:
+            return acc_mg
+        # EG accumulator (G3b / JPAT v5).
+        assert stage_t is not None
+        acc_eg = (model.bias_eg.expand(n).clone() + pat
+                  + model.man_value_eg  * mat_diff_t[idx_slice]
+                  + model.king_value_eg * king_diff_t[idx_slice])
+        if extras:
+            acc_eg = (acc_eg
+                      + (model.king_pst_eg.unsqueeze(1) * king_pst_t[:, idx_slice]).sum(dim=0)
+                      + model.balance_eg * balance_t[idx_slice])
+        stage = stage_t[idx_slice]
+        return (acc_mg * (300.0 - stage) + acc_eg * stage) / 300.0
 
     def _loss(pred: torch.Tensor, idx_slice: np.ndarray) -> torch.Tensor:
         score_batch = score_t[idx_slice]
@@ -638,6 +714,18 @@ def average_models(models: list[PatternModel]) -> PatternModel:
                 bal_stack = torch.stack([m.balance  for m in models], dim=0)
                 avg.king_pst.copy_(pst_stack.mean(dim=0))
                 avg.balance.copy_(bal_stack.mean(dim=0))
+            if getattr(avg, "phase_split", False):
+                be_stack  = torch.stack([m.bias_eg       for m in models], dim=0)
+                me_stack  = torch.stack([m.man_value_eg  for m in models], dim=0)
+                ke_stack  = torch.stack([m.king_value_eg for m in models], dim=0)
+                avg.bias_eg.copy_(be_stack.mean(dim=0))
+                avg.man_value_eg.copy_(me_stack.mean(dim=0))
+                avg.king_value_eg.copy_(ke_stack.mean(dim=0))
+                if getattr(avg, "extras", False):
+                    pe_stack = torch.stack([m.king_pst_eg for m in models], dim=0)
+                    be2_stack = torch.stack([m.balance_eg  for m in models], dim=0)
+                    avg.king_pst_eg.copy_(pe_stack.mean(dim=0))
+                    avg.balance_eg.copy_(be2_stack.mean(dim=0))
     return avg
 
 
@@ -690,6 +778,12 @@ def main(argv: list[str]) -> int:
                    help="G3a / JPAT v4 : add king PST (50 white-POV weights, "
                         "black uses row-mirror) + scalar balance L/R. "
                         "Requires --hybrid.")
+    p.add_argument("--phase-split", action="store_true",
+                   help="G3b / JPAT v5 : add MG/EG counterparts for the "
+                        "scalar skeleton features (bias / man / king / "
+                        "balance / king_pst). Patterns stay mono-phase. "
+                        "Stage interpolation in evaluate. Requires "
+                        "--hybrid.")
     p.add_argument("--pattern-base", type=int, default=5, choices=[3, 5],
                    help="per-square encoding base. 5 = legacy (empty/"
                         "W-man/W-king/B-man/B-king). 3 = D2 Scan-aligned "
@@ -718,6 +812,8 @@ def main(argv: list[str]) -> int:
                 "otherwise be lost; cf. docs/SCAN_ARCHITECTURE_NOTES.md §1)")
     if args.extras and not args.hybrid:
         p.error("--extras (G3a king PST + balance) requires --hybrid")
+    if args.phase_split and not args.hybrid:
+        p.error("--phase-split (G3b MG/EG skeleton) requires --hybrid")
     if args.optimizer == "lbfgs" and args.weight_decay > 0:
         print(f"note: --weight-decay={args.weight_decay} applied as manual "
               "L2 inside the LBFGS closure (PyTorch LBFGS doesn't support "
@@ -758,6 +854,7 @@ def main(argv: list[str]) -> int:
     king_diff_t = None
     king_pst_t  = None
     balance_t   = None
+    stage_t     = None
     if args.hybrid:
         mat_diff, king_diff = material_diffs(bbs)
         mat_diff[stm  == 1] *= -1
@@ -773,6 +870,10 @@ def main(argv: list[str]) -> int:
             bal[stm == 1]    *= -1
             king_pst_t = torch.from_numpy(pst)
             balance_t  = torch.from_numpy(bal)
+        if args.phase_split:
+            # G3b / JPAT v5 — stage is symmetric under STM (depends only
+            # on piece count). No sign-flip needed.
+            stage_t = torch.from_numpy(stage_features(bbs))
 
     # Sign-flip the score for STM=Black so the network always sees
     # white-POV (matches the eval convention of MLPNetworkQ and the
@@ -796,6 +897,7 @@ def main(argv: list[str]) -> int:
         patterns=patterns, pidx_t=pidx_t, score_t=score_t, wdl_t=wdl_t,
         mat_diff_t=mat_diff_t, king_diff_t=king_diff_t,
         king_pst_t=king_pst_t, balance_t=balance_t,
+        stage_t=stage_t,
         train_idx=train_idx, val_idx=val_idx,
         epochs=args.epochs, batch=args.batch, lr=args.lr, lam=args.lam,
         score_scale=args.score_scale, weight_decay=args.weight_decay,
@@ -803,6 +905,7 @@ def main(argv: list[str]) -> int:
         cosine_schedule=args.cosine_schedule,
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
         base=args.pattern_base, extras=args.extras,
+        phase_split=args.phase_split,
         optimizer_kind=args.optimizer,
         lbfgs_max_iter=args.lbfgs_max_iter,
         lbfgs_history=args.lbfgs_history,
