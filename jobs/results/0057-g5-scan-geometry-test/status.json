@@ -1,7 +1,9 @@
 {
   "job_id": "0057-g5-scan-geometry-test",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-29T22:08:57+00:00",
+  "ended_at": "2026-05-29T22:51:33+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 29352
+  "artefacts_server_path": "/root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src"
 }

@@ -1,0 +1,3 @@
+gen-data-wdl: n=2500 out=/root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter4-shard4.bin eval_depth=4 play_depth=4 max_plies=200 seed=31404 nnue=/root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v3.jpat quiet_only=false pv_extract=0
+  played 50 games, 1314 / 2500 positions
+wrote 2500 WDL records to /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter4-shard4.bin
