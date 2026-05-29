@@ -1,13 +1,13 @@
 {
   "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "snapshot_at": "2026-05-29T02:04:13+00:00",
+  "snapshot_at": "2026-05-29T02:09:14+00:00",
   "started_at": "2026-05-28T22:25:30+00:00",
-  "elapsed_seconds": 13123,
+  "elapsed_seconds": 13424,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 796178,
-      "records": 20951
+      "size_bytes": 820802,
+      "records": 21599
     },
     {
       "name": "shard-1.log",
@@ -15,8 +15,8 @@
     },
     {
       "name": "shard-2.bin",
-      "size_bytes": 894674,
-      "records": 23543
+      "size_bytes": 911090,
+      "records": 23975
     },
     {
       "name": "shard-2.log",
@@ -24,8 +24,8 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 779762,
-      "records": 20519
+      "size_bytes": 804386,
+      "records": 21167
     },
     {
       "name": "shard-3.log",
@@ -33,8 +33,8 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 722306,
-      "records": 19007
+      "size_bytes": 738722,
+      "records": 19439
     },
     {
       "name": "shard-4.log",
@@ -42,8 +42,8 @@
     },
     {
       "name": "shard-5.bin",
-      "size_bytes": 771554,
-      "records": 20303
+      "size_bytes": 796178,
+      "records": 20951
     },
     {
       "name": "shard-5.log",
@@ -51,8 +51,8 @@
     },
     {
       "name": "shard-6.bin",
-      "size_bytes": 845426,
-      "records": 22247
+      "size_bytes": 870050,
+      "records": 22895
     },
     {
       "name": "shard-6.log",
@@ -69,13 +69,13 @@
     },
     {
       "name": "shard-8.bin",
-      "size_bytes": 812594,
-      "records": 21383
+      "size_bytes": 829010,
+      "records": 21815
     },
     {
       "name": "shard-8.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    03:38:42  0.0  0.0 bash\n   2142    2140    03:38:42  0.0  0.0 bash\n   2195    2142    03:38:42  0.0  0.0 bash\n   2196    2142    03:38:42  0.0  0.0 bash\n   2198    2142    03:38:42  0.0  0.0 bash\n   2200    2142    03:38:42  0.0  0.0 bash\n   2202    2142    03:38:42  0.0  0.0 bash\n   2204    2142    03:38:42  0.0  0.0 bash\n   2206    2142    03:38:42  0.0  0.0 bash\n   2208    2195    03:38:42 99.9  0.1 jass\n   2210    2142    03:38:42  0.0  0.0 bash\n   2212    2196    03:38:42 99.9  0.1 jass\n   2213    2198    03:38:42 99.8  0.1 jass\n   2214    2202    03:38:42 99.9  0.1 jass\n   2215    2200    03:38:42 99.9  0.1 jass\n   2216    2204    03:38:42 99.9  0.1 jass\n   2217    2206    03:38:42 99.9  0.1 jass\n   2218    2210    03:38:42 99.8  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    03:43:43  0.0  0.0 bash\n   2142    2140    03:43:43  0.0  0.0 bash\n   2195    2142    03:43:43  0.0  0.0 bash\n   2196    2142    03:43:43  0.0  0.0 bash\n   2198    2142    03:43:43  0.0  0.0 bash\n   2200    2142    03:43:43  0.0  0.0 bash\n   2202    2142    03:43:43  0.0  0.0 bash\n   2204    2142    03:43:43  0.0  0.0 bash\n   2206    2142    03:43:43  0.0  0.0 bash\n   2208    2195    03:43:43 99.9  0.1 jass\n   2210    2142    03:43:43  0.0  0.0 bash\n   2212    2196    03:43:43 99.9  0.1 jass\n   2213    2198    03:43:43 99.8  0.1 jass\n   2214    2202    03:43:43 99.9  0.1 jass\n   2215    2200    03:43:43 99.9  0.1 jass\n   2216    2204    03:43:43 99.9  0.1 jass\n   2217    2206    03:43:43 99.9  0.1 jass\n   2218    2210    03:43:43 99.8  0.1 jass\n"
 }
