@@ -1,8 +1,8 @@
 {
   "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "snapshot_at": "2026-05-29T21:27:45+00:00",
+  "snapshot_at": "2026-05-29T21:32:48+00:00",
   "started_at": "2026-05-28T22:25:30+00:00",
-  "elapsed_seconds": 82935,
+  "elapsed_seconds": 83238,
   "artefacts": [
     {
       "name": "bench-vs-hc.log",
@@ -10,11 +10,15 @@
     },
     {
       "name": "bench-vs-v5-d10.log",
-      "size_bytes": 0
+      "size_bytes": 330
     },
     {
       "name": "bench-vs-v5-d6.log",
       "size_bytes": 331
+    },
+    {
+      "name": "bench-vs-v6-d10.log",
+      "size_bytes": 0
     },
     {
       "name": "nnue-128-64.bin",
@@ -163,5 +167,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    23:02:14  0.0  0.0 bash\n   2142    2140    23:02:14  0.0  0.0 bash\n  28326    2142       05:56 99.9  0.1 jass\n  28327    2142       05:56  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    23:07:17  0.0  0.0 bash\n   2142    2140    23:07:17  0.0  0.0 bash\n  28763    2142       00:37  100  0.1 jass\n  28764    2142       00:37  0.0  0.0 tee\n"
 }
