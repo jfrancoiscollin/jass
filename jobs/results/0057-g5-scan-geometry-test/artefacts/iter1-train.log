@@ -1,0 +1,21 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter1-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  37429.09  val_mse=30766134.00  man= -15.8  king=-161.4 *
+iter  1: train_loss=  25888.48  val_mse=30361970.00  man=  34.2  king=  65.8 *
+iter  2: train_loss=  22239.19  val_mse=30381912.00  man=   3.9  king=  13.1
+iter  3: train_loss=  20719.34  val_mse=30331874.00  man=   6.5  king= -38.3 *
+iter  4: train_loss=  20183.94  val_mse=30336940.00  man=  -4.4  king=  75.5
+iter  5: train_loss=  19996.82  val_mse=30305924.00  man=   5.1  king=  46.0 *
+iter  6: train_loss=  19921.38  val_mse=30302534.00  man=  -0.3  king=  28.7 *
+iter  7: train_loss=  19881.02  val_mse=30310612.00  man=   1.2  king=  40.4
+iter  8: train_loss=  19867.58  val_mse=30307598.00  man=   2.6  king=  36.4
+iter  9: train_loss=  19861.36  val_mse=30304244.00  man=   4.7  king=  38.8
+iter 10: train_loss=  19859.05  val_mse=30304084.00  man=   3.4  king=  41.7
+early stop: no val improvement for 4 iters (best val_mse=30302534.00)
+final (saved) val_mse=30436368.00  man=-0.3  king=28.7
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v1.jpat (17006661 bytes)

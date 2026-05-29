@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v4.jpat) vs B=NNUE(/root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v3.jpat), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)

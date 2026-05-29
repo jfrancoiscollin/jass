@@ -1,0 +1,335 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+iters: 10, records/iter: 20000, depth: 4
+patterns: v3 (8 × 12 vertical strips, ~4.25M weights base-3)
+v5/v6/v7 refs: /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+gmake[2]: *** [CMakeFiles/jass_tests.dir/build.make:216: CMakeFiles/jass_tests.dir/tests/test_nnue.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:139: CMakeFiles/jass_tests.dir/all] Error 2
+gmake: *** [Makefile:101: all] Error 2
+
+=== Bootstrap : g5-v0.jpat (v3 geometry, skeleton init) ===
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v0.jpat (17006661 bytes, JPAT v5 init patterns=v3 man=100.0 king=300.0)
+-rw-r--r-- 1 root root 17M May 29 22:09 /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v0.jpat
+
+============ iter 1 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter1-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter1-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  37429.09  val_mse=30766134.00  man= -15.8  king=-161.4 *
+iter  1: train_loss=  25888.48  val_mse=30361970.00  man=  34.2  king=  65.8 *
+iter  2: train_loss=  22239.19  val_mse=30381912.00  man=   3.9  king=  13.1
+iter  3: train_loss=  20719.34  val_mse=30331874.00  man=   6.5  king= -38.3 *
+iter  4: train_loss=  20183.94  val_mse=30336940.00  man=  -4.4  king=  75.5
+iter  5: train_loss=  19996.82  val_mse=30305924.00  man=   5.1  king=  46.0 *
+iter  6: train_loss=  19921.38  val_mse=30302534.00  man=  -0.3  king=  28.7 *
+iter  7: train_loss=  19881.02  val_mse=30310612.00  man=   1.2  king=  40.4
+iter  8: train_loss=  19867.58  val_mse=30307598.00  man=   2.6  king=  36.4
+iter  9: train_loss=  19861.36  val_mse=30304244.00  man=   4.7  king=  38.8
+iter 10: train_loss=  19859.05  val_mse=30304084.00  man=   3.4  king=  41.7
+early stop: no val improvement for 4 iters (best val_mse=30302534.00)
+final (saved) val_mse=30436368.00  man=-0.3  king=28.7
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v1.jpat (17006661 bytes)
+-- bench new (v3-v1) vs previous (v3-v0) at depth 6 --
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 1 : vs prev = 0 ; vs v6 d10 = 0
+
+============ iter 2 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter2-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter2-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41487.66  val_mse=35747256.00  man= -11.8  king=  -4.4 *
+iter  1: train_loss=  28806.66  val_mse=35153168.00  man=   2.1  king= -39.5 *
+iter  2: train_loss=  25419.85  val_mse=35149996.00  man=  -5.8  king= 113.1 *
+iter  3: train_loss=  23705.75  val_mse=35384132.00  man= -12.8  king=  27.8
+iter  4: train_loss=  22937.74  val_mse=35278596.00  man=  -8.7  king=  31.9
+iter  5: train_loss=  22590.55  val_mse=35266292.00  man=  -5.9  king=  48.7
+iter  6: train_loss=  22461.21  val_mse=35291716.00  man=  -4.3  king=  58.2
+early stop: no val improvement for 4 iters (best val_mse=35149996.00)
+final (saved) val_mse=35157984.00  man=-5.8  king=113.1
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v2.jpat (17006661 bytes)
+-- bench new (v3-v2) vs previous (v3-v1) at depth 6 --
+Result: A=51 B=3 Draws=0 (total 54)
+A score rate: 0.944444 (51 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 2 : vs prev = 0.944444 ; vs v6 d10 = 0
+
+============ iter 3 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter3-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter3-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40488.89  val_mse=31354958.00  man= -14.9  king=  16.9 *
+iter  1: train_loss=  29140.74  val_mse=31023948.00  man=  13.1  king=  22.7 *
+iter  2: train_loss=  26550.68  val_mse=31056564.00  man= -16.3  king=  95.4
+iter  3: train_loss=  25356.79  val_mse=31231988.00  man=  -5.7  king=  52.6
+iter  4: train_loss=  24820.98  val_mse=31109856.00  man=  -2.3  king=  23.8
+iter  5: train_loss=  24570.25  val_mse=31083792.00  man=  -3.5  king=  44.8
+early stop: no val improvement for 4 iters (best val_mse=31023948.00)
+final (saved) val_mse=31018914.00  man=13.1  king=22.7
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v3.jpat (17006661 bytes)
+-- bench new (v3-v3) vs previous (v3-v2) at depth 6 --
+Result: A=21 B=33 Draws=0 (total 54)
+A score rate: 0.388889 (21 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 3 : vs prev = 0.388889 ; vs v6 d10 = 0
+
+============ iter 4 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter4-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter4-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40448.71  val_mse=32055104.00  man= -41.6  king= -73.8 *
+iter  1: train_loss=  28325.24  val_mse=31580662.00  man=  11.5  king=  85.9 *
+iter  2: train_loss=  25227.82  val_mse=31815926.00  man=   3.7  king= -27.0
+iter  3: train_loss=  24202.92  val_mse=31721012.00  man=  -5.1  king= -48.6
+iter  4: train_loss=  23730.39  val_mse=31652920.00  man= -10.0  king= -10.2
+iter  5: train_loss=  23489.83  val_mse=31671970.00  man=  -6.1  king=   5.7
+early stop: no val improvement for 4 iters (best val_mse=31580662.00)
+final (saved) val_mse=31611076.00  man=11.5  king=85.9
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v4.jpat (17006661 bytes)
+-- bench new (v3-v4) vs previous (v3-v3) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 4 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 5 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter5-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter5-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40342.69  val_mse=34113844.00  man=  -5.5  king=  31.8 *
+iter  1: train_loss=  29487.83  val_mse=33425818.00  man=   5.4  king=  40.5 *
+iter  2: train_loss=  26509.29  val_mse=33714872.00  man= -11.3  king=  78.2
+iter  3: train_loss=  25202.70  val_mse=33721336.00  man=   5.6  king= 101.7
+iter  4: train_loss=  24547.56  val_mse=33520592.00  man=  -4.0  king=  79.3
+iter  5: train_loss=  24197.88  val_mse=33656972.00  man=   4.6  king=  95.8
+early stop: no val improvement for 4 iters (best val_mse=33425818.00)
+final (saved) val_mse=33500114.00  man=5.4  king=40.5
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v5.jpat (17006661 bytes)
+-- bench new (v3-v5) vs previous (v3-v4) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 5 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 6 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter6-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter6-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40923.05  val_mse=22805890.00  man=   7.6  king= -82.5 *
+iter  1: train_loss=  28502.95  val_mse=22713404.00  man=  -7.0  king=-189.0 *
+iter  2: train_loss=  25746.79  val_mse=22926934.00  man= -10.5  king= -42.6
+iter  3: train_loss=  24597.35  val_mse=22874960.00  man=   1.9  king=-106.6
+iter  4: train_loss=  24034.31  val_mse=22865318.00  man=   8.9  king=-111.0
+iter  5: train_loss=  23720.70  val_mse=22868762.00  man=  -1.6  king= -73.2
+early stop: no val improvement for 4 iters (best val_mse=22713404.00)
+final (saved) val_mse=22646704.00  man=-7.0  king=-189.0
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v6.jpat (17006661 bytes)
+-- bench new (v3-v6) vs previous (v3-v5) at depth 6 --
+Result: A=27 B=21 Draws=6 (total 54)
+A score rate: 0.555556 (30 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 6 : vs prev = 0.555556 ; vs v6 d10 = 0
+
+============ iter 7 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter7-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter7-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40715.38  val_mse=27649292.00  man=  -2.4  king= -69.6 *
+iter  1: train_loss=  29568.25  val_mse=27473630.00  man=  -5.9  king=  62.8 *
+iter  2: train_loss=  26547.37  val_mse=27581214.00  man=  -2.0  king=  99.3
+iter  3: train_loss=  25261.48  val_mse=27526382.00  man=  -2.9  king=  70.3
+iter  4: train_loss=  24626.84  val_mse=27461960.00  man=   3.1  king=  35.7 *
+iter  5: train_loss=  24255.18  val_mse=27508476.00  man=   1.1  king=  68.1
+iter  6: train_loss=  24107.06  val_mse=27512698.00  man=   0.5  king=  50.5
+iter  7: train_loss=  24037.79  val_mse=27492492.00  man=   0.8  king=  52.0
+iter  8: train_loss=  24005.22  val_mse=27504410.00  man=   1.3  king=  60.2
+early stop: no val improvement for 4 iters (best val_mse=27461960.00)
+final (saved) val_mse=27453266.00  man=3.1  king=35.7
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v7.jpat (17006661 bytes)
+-- bench new (v3-v7) vs previous (v3-v6) at depth 6 --
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 7 : vs prev = 0.5 ; vs v6 d10 = 0
+
+============ iter 8 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter8-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter8-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41154.06  val_mse=27956846.00  man=   4.9  king= -57.9 *
+iter  1: train_loss=  29365.26  val_mse=27899674.00  man= -14.5  king=  94.0 *
+iter  2: train_loss=  26428.49  val_mse=27732136.00  man=  -7.9  king=  12.2 *
+iter  3: train_loss=  25050.67  val_mse=27761358.00  man=  -6.8  king= -17.2
+iter  4: train_loss=  24338.28  val_mse=27865012.00  man=   0.1  king=  37.8
+iter  5: train_loss=  23991.64  val_mse=27822978.00  man=  -1.1  king=   4.3
+iter  6: train_loss=  23828.84  val_mse=27786434.00  man=  -2.5  king=  17.3
+early stop: no val improvement for 4 iters (best val_mse=27732136.00)
+final (saved) val_mse=27735266.00  man=-7.9  king=12.2
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v8.jpat (17006661 bytes)
+-- bench new (v3-v8) vs previous (v3-v7) at depth 6 --
+Result: A=21 B=33 Draws=0 (total 54)
+A score rate: 0.388889 (21 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 8 : vs prev = 0.388889 ; vs v6 d10 = 0
+
+============ iter 9 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter9-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter9-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40969.98  val_mse=22940452.00  man=  -1.6  king= -22.2 *
+iter  1: train_loss=  28697.51  val_mse=22679526.00  man=   2.7  king=  84.5 *
+iter  2: train_loss=  25770.87  val_mse=22902654.00  man=   1.6  king=   3.4
+iter  3: train_loss=  24213.25  val_mse=22894070.00  man=   5.5  king= -10.3
+iter  4: train_loss=  23585.85  val_mse=22934330.00  man=   4.8  king=  14.3
+iter  5: train_loss=  23313.91  val_mse=22922830.00  man=   1.4  king= -16.8
+early stop: no val improvement for 4 iters (best val_mse=22679526.00)
+final (saved) val_mse=22649264.00  man=2.7  king=84.5
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v9.jpat (17006661 bytes)
+-- bench new (v3-v9) vs previous (v3-v8) at depth 6 --
+Result: A=33 B=21 Draws=0 (total 54)
+A score rate: 0.611111 (33 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 9 : vs prev = 0.611111 ; vs v6 d10 = 0
+
+============ iter 10 / 10 ============
+-- gen-data 20000 records via current pattern v3 net --
+merged 20000 records into /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter10-data.bin
+-- train pattern v3 hybrid base-3 extras phase-split, pure BCE WDL --
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/iter10-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40394.60  val_mse=21664786.00  man=  -8.7  king= -84.9 *
+iter  1: train_loss=  29187.04  val_mse=21273722.00  man= -31.3  king=-174.3 *
+iter  2: train_loss=  26338.81  val_mse=21484612.00  man=  -0.2  king=   3.1
+iter  3: train_loss=  25279.56  val_mse=21518750.00  man=  -2.8  king= -64.8
+iter  4: train_loss=  24643.99  val_mse=21467980.00  man=  -6.0  king=-103.8
+iter  5: train_loss=  24182.44  val_mse=21449954.00  man=  -2.2  king= -76.0
+early stop: no val improvement for 4 iters (best val_mse=21273722.00)
+final (saved) val_mse=21387278.00  man=-31.3  king=-174.3
+wrote /root/jass/jobs/results/0057-g5-scan-geometry-test/artefacts.src/g5-v10.jpat (17006661 bytes)
+-- bench new (v3-v10) vs previous (v3-v9) at depth 6 --
+Result: A=21 B=33 Draws=0 (total 54)
+A score rate: 0.388889 (21 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 10 : vs prev = 0.388889 ; vs v6 d10 = 0
+
+=== final bench vs v5/v6/v7 ===
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0057 G5-SCAN-GEOMETRY VERDICT
+==========================================================
+  wall:              1641s (0.5h)
+  iters:             10 × 20000 records (v3 geometry)
+iter  rate_vs_prev_d6  rate_vs_v6_d10
+1     0                0
+2     0.944444         0
+3     0.388889         0
+4     0.5              0
+5     0.5              0
+6     0.555556         0
+7     0.5              0
+8     0.388889         0
+9     0.611111         0
+10    0.388889         0
+
+  Final pattern-v3-v10 vs :
+    handcrafted:       0
+    v5 d6  / d10:      0 / 0
+    v6 d10:            0
+    v7 d10:            0
+
+  Reference v2 geometry (G4-diag 0055) :
+    iter 10 final vs v6 d10 : 0/54 (FLAT)
+
+  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H1) :
+    FLAT — géométrie n'est pas la racine non plus. Diagnostic
+    continue : tester H3 (bootstrap depuis v7) puis H2 (scale-up
+    self-play à 200K records/iter). Pattern axis reste un puzzle.
+==========================================================

@@ -1,7 +1,0 @@
-{
-  "job_id": "0057-g5-scan-geometry-test",
-  "script": "jobs/queue/0057-g5-scan-geometry-test.sh",
-  "pid": 29352,
-  "started_at": "2026-05-29T22:08:57+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
