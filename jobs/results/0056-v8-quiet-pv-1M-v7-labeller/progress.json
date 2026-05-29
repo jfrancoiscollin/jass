@@ -1,9 +1,21 @@
 {
   "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "snapshot_at": "2026-05-29T21:17:42+00:00",
+  "snapshot_at": "2026-05-29T21:22:43+00:00",
   "started_at": "2026-05-28T22:25:30+00:00",
-  "elapsed_seconds": 82332,
+  "elapsed_seconds": 82633,
   "artefacts": [
+    {
+      "name": "bench-vs-hc.log",
+      "size_bytes": 263
+    },
+    {
+      "name": "bench-vs-v5-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "bench-vs-v5-d6.log",
+      "size_bytes": 331
+    },
     {
       "name": "nnue-128-64.bin",
       "size_bytes": 264220,
@@ -15,9 +27,23 @@
       "records": 15630
     },
     {
+      "name": "nnue-512-256-q.bin",
+      "size_bytes": 364840,
+      "records": 9600
+    },
+    {
+      "name": "nnue-512-256.bin",
+      "size_bytes": 1450012,
+      "records": 38158
+    },
+    {
       "name": "nnue-64-32.bin",
       "size_bytes": 123932,
       "records": 3261
+    },
+    {
+      "name": "quantize.log",
+      "size_bytes": 728
     },
     {
       "name": "shard-1.bin",
@@ -124,8 +150,12 @@
       "size_bytes": 8
     },
     {
+      "name": "summary.json",
+      "size_bytes": 831
+    },
+    {
       "name": "train.log",
-      "size_bytes": 0
+      "size_bytes": 6263
     },
     {
       "name": "v8-quiet-pv-1M.bin",
@@ -133,5 +163,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    22:52:11  0.0  0.0 bash\n   2142    2140    22:52:11  0.0  0.0 bash\n  27135    2142    01:21:06  356 45.8 python3\n  27136    2142    01:21:06  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    22:57:12  0.0  0.0 bash\n   2142    2140    22:57:12  0.0  0.0 bash\n  28326    2142       00:54  100  0.1 jass\n  28327    2142       00:54  0.0  0.0 tee\n"
 }
