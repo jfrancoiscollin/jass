@@ -265,7 +265,82 @@ sérieux. 100K-300K games par iter, depth 6, 20 itérations.
   train → bench-vs-previous → keep-winner`.
 - Effort dev : ~1-2 jours (mode self-play C++ + loop orchestration).
 
-### Étape G5 — Réplication Scan exacte (~€?, ~3-6 mois)
+### Étapes H1-H5 — espace DESIGN (hypothèses non-testées par G1-G4)
+
+> Ajouté 2026-05-28 après le verdict G4-diag (0055) FLAT. La chain
+> G1→G4-diag a couvert l'espace **méthodologie** (optimizer, labels,
+> features skeleton, phase awareness, self-play) avec géométrie v2
+> figée. L'espace **design** reste largement non-testé : géométrie
+> pattern, bootstrap, volume self-play, mobilité features, métriques.
+> Ce sont les hypothèses suivantes par ordre de probable racine ×
+> coût croissant.
+
+#### H1 — Géométrie pattern (probable racine, jamais testée)
+
+Notre v2 = 16 blocs **4×4 horizontaux**. Scan = 8 colonnes **verticales
+de 12 squares** + Trits/Perm reindexing. Ces géométries capturent des
+choses fondamentalement différentes : 4×4 = adjacence locale 2D ; 12-sq
+verticaux = forward-push, breakthrough threats, opposition de files
+(critique pour dames internationales où les hommes n'avancent QUE).
+
+**Test G5-diag** (job 0057, ~€1, ~3-4h CCX33) : reproduire la self-play
+loop de G4-diag (10 iter × 20K records, pure BCE WDL, LBFGS) MAIS avec
+géométrie v3 = 8 patterns × 12 squares verticaux. Si rate vs v6 d10 ≥
+0.10 → **géométrie était la racine**, escalader G5-prod. Si flat
+aussi → géométrie pas la racine non plus.
+
+**G5-prod** (~€10-20, ~1 semaine) : volume scale-up sur géométrie v3
+si G5-diag montre signal.
+
+#### H2 — Volume self-play insuffisant (medium-cost test)
+
+G4-diag = 200K positions totales. Scan a probablement utilisé millions
+à milliards de games. Notre 20K/iter ne suffit peut-être pas à
+distinguer good patterns de bad au bruit du gradient.
+
+**Test** (~€5-10, ~1-2 jours wall CCX33) : même setup G4-diag/G5-diag
+mais 200K records/iter × 10 iter = 2M total. À déclencher si H1
+montre signal mais G5-diag rate vs v6 d10 stagne.
+
+#### H3 — Bootstrap depuis 0 trop noisy (cheap test)
+
+On a démarré self-play depuis skeleton-only (man=100, king=300,
+patterns=0). Premiers iters de self-play produisent des games très
+bruitées (le réseau v0 joue ~random). Scan/Kingsrow démarrent souvent
+d'un état déjà tuné (régression initiale GLM sur master games avec
+features fixes) — pas d'un random.
+
+**Test** (~€2, ~3-4h CCX33) : G3-like régression de v3 patterns sur
+master games WDL (corpus 0014, 4.7M positions), produit v3-bootstrap.
+Puis self-play depuis ce starter (au lieu de g5-v0 skeleton-only).
+Si v3-bootstrap-then-self-play >> v3-skeleton-then-self-play, le
+bootstrap est critique. À tester après H1 si signal partiel.
+
+#### H4 — Mobilité features (skipped pour cost en G3a/b)
+
+Scan a king_mobility = 2 vars (cases sûres vs attaquées). On l'a
+sauté pour éviter d'appeler generate_legal_moves dans le hot path.
+Mais c'est probablement critique pour les positions tactiques (qu'on
+filtre via --quiet-only mais qui restent présentes en self-play).
+
+**Test** (~€3, ~1j dev + ~3-4h CCX33) : étendre PatternNetwork +
+trainer avec mobility (compté à l'eval via generate_legal_moves
+appelé une fois). JPAT v6 avec 2 nouvelles vars. À tester si H1 et H3
+sont flat.
+
+#### H5 — Métrique de progrès trop binaire (cosmétique, cheap)
+
+On benche binaire (rate vs v6 d10). Pattern v* progresse peut-être
+sur la val_loss / l'eval-correlation-vs-v7 sans encore se traduire en
+wins vs un MLP cycle 9 fully-trained. Une métrique non-binaire
+révélerait peut-être du progrès qu'on rate.
+
+**Test** (~€1, ~1h dev) : ajouter à chaque iter de la self-play loop
+un log de Pearson-correlation(pattern.evaluate(pos), v7.evaluate(pos))
+sur un sample de 1000 positions. À ajouter dans G5-diag pour qu'on
+ait cette métrique side-by-side avec le bench rate.
+
+### Étape G_final — Réplication Scan exacte (~€?, ~3-6 mois)
 
 Hors scope pratique. Implique de répliquer 15 ans d'itérations de
 Letouzey. Listée pour mémoire ; n'a pas de plan concret. Seulement
@@ -288,15 +363,21 @@ sur plusieurs mois.
 - Budget total pessimiste : ~€5 + ~1 semaine dev.
 - ROI si G3 réussit : avoir une baseline pattern viable pour Phase 2.
 
-**Long terme** :
+**Long terme — post G4-diag FLAT (2026-05-28)** :
 
-- **G4-diag** (TD-leaf self-play, mode diagnostic ~€2-3, ~1-2 jours wall)
-  reste accessible même après abandon supervised : c'est un cheap-check
-  final, pas un engagement multi-semaines comme on le pensait avant
-  révision du coût (cf §G4 ci-dessus).
-- G4-prod (~€10-20, ~1 semaine wall) seulement si G4-diag montre du
-  signal (rate ≥ 0.20 vs v6 d10 après 10 iter).
-- G5 ignoré sauf décision explicite.
+La chain G1→G4-diag a couvert l'espace méthodologie. La suite est
+l'espace **design** :
+
+- **H1 G5-diag** (géométrie v3 verticaux Scan-style, ~€1, ~3-4h) — le
+  test design le plus distinctif. À tester en premier après G4-diag.
+- **H3 bootstrap** (~€2, ~3-4h) — si H1 partiel/flat, essayer init
+  pattern depuis régression sur master games.
+- **H2 volume** (~€5-10, ~1-2 jours) — si H1+H3 partiels, scale-up
+  self-play à 200K records/iter.
+- **H4 mobilité** (~€3, ~1j dev) — si H1-H3 flat.
+- **H5 métrique** (cosmétique, ~€1) — à ajouter à toutes les variantes
+  H pour détecter du progrès non-binaire.
+- G_final (réplication Scan complète) ignoré sauf décision explicite.
 
 L'**erreur à éviter** : refaire D2/D3 variants sans avoir testé G1.
 La piste "supervised pur sur archi pattern" est exhaustée par les 4

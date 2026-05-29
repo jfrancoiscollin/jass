@@ -150,6 +150,16 @@ public:
     // points at for 10×10 draughts.
     static PatternNetwork default_v2();
 
+    // V3 Scan-geometry pattern set: 8 patterns × 12 squares each,
+    // organised as vertical strips (6 rows × 2 col-within-row). Captures
+    // forward-push dynamics that v2's 4×4 blocks miss — closer to the
+    // verticals Scan extracts via Perm_0/Perm_1 (cf.
+    // docs/SCAN_ARCHITECTURE_NOTES.md §3). Used by G5-diag of
+    // docs/SCAN_METHODOLOGY_GAP.md §H1 to test if pattern geometry was
+    // the bottleneck of the supervised chain G1→G4-diag. ~4.25M
+    // weights in base-3 (~17 MB JPAT).
+    static PatternNetwork default_v3();
+
     int evaluate(const Position& pos) const noexcept override;
 
     // Add a pattern (squares). Weights are initialised to zero. The
