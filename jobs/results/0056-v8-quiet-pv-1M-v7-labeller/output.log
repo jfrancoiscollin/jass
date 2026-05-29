@@ -1,0 +1,216 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+shards: 8 × 125000 = 1000000 records @ depth 16
+labeller (v7): /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+bench refs : v5=/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin ; v6=/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+=== Phase 0a : gen-data 1M WITH --quiet-only --pv-extract 3 (v7 labeller) ===
+  shard 1 launched as pid 2195 (seed 23001)
+  shard 2 launched as pid 2196 (seed 23002)
+  shard 3 launched as pid 2198 (seed 23003)
+  shard 4 launched as pid 2200 (seed 23004)
+  shard 5 launched as pid 2202 (seed 23005)
+  shard 6 launched as pid 2204 (seed 23006)
+  shard 7 launched as pid 2206 (seed 23007)
+  shard 8 launched as pid 2210 (seed 23008)
+
+=== merging into v8-quiet-pv-1M.bin ===
+merged 1000000 records into /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+
+=== Phase 0b : train v5-recipe sur dataset v8 (1M quiet+pv-extract via v7 labeller) ===
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.2s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29999]  mean=-386.6  std=6616.6
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.4s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 3000000 records (1000000 self-play + 2000000 master)
+
+=== arch 64-32 ===
+  params: 30,977
+  epoch   1: train=  56281.2  val=  91715.2 *
+  epoch   2: train=  43708.4  val=  67758.9 *
+  epoch   3: train=  39152.7  val=  56746.1 *
+  epoch   4: train=  37101.4  val=  50663.2 *
+  epoch   5: train=  36004.4  val=  48399.1 *
+  epoch   6: train=  35406.4  val=  46308.2 *
+  epoch   7: train=  35023.6  val=  45612.4 *
+  epoch   8: train=  34753.2  val=  45376.9 *
+  epoch   9: train=  34539.5  val=  44404.1 *
+  epoch  10: train=  34362.9  val=  44719.1
+  epoch  11: train=  34211.0  val=  44404.7
+  epoch  12: train=  34093.7  val=  43991.0 *
+  epoch  13: train=  33977.6  val=  43095.7 *
+  epoch  14: train=  33882.1  val=  43989.6
+  epoch  15: train=  33811.2  val=  44563.5
+  epoch  16: train=  33732.1  val=  43823.2
+  epoch  17: train=  33667.8  val=  42402.5 *
+  epoch  18: train=  33599.0  val=  43055.5
+  epoch  19: train=  33541.7  val=  42699.7
+  epoch  20: train=  33489.0  val=  43640.1
+  epoch  21: train=  33444.0  val=  43209.9
+  epoch  22: train=  33388.9  val=  44182.5
+  epoch  23: train=  33344.5  val=  42545.7
+  epoch  24: train=  33304.1  val=  42779.5
+  epoch  25: train=  33256.2  val=  43582.4
+  early-stop at epoch 25
+  wrote /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-64-32.bin (123932 bytes)
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  53270.8  val=  84788.0 *
+  epoch   2: train=  41429.5  val=  60404.9 *
+  epoch   3: train=  37486.6  val=  51353.1 *
+  epoch   4: train=  35722.2  val=  46993.8 *
+  epoch   5: train=  34906.2  val=  45367.7 *
+  epoch   6: train=  34440.2  val=  43644.2 *
+  epoch   7: train=  34109.7  val=  44462.3
+  epoch   8: train=  33850.5  val=  43696.1
+  epoch   9: train=  33625.3  val=  42446.0 *
+  epoch  10: train=  33434.8  val=  43327.0
+  epoch  11: train=  33264.9  val=  42672.9
+  epoch  12: train=  33120.2  val=  41490.6 *
+  epoch  13: train=  32978.5  val=  41009.5 *
+  epoch  14: train=  32859.2  val=  43121.5
+  epoch  15: train=  32760.5  val=  43695.4
+  epoch  16: train=  32659.6  val=  41511.6
+  epoch  17: train=  32572.5  val=  42033.1
+  epoch  18: train=  32486.1  val=  41556.6
+  epoch  19: train=  32403.3  val=  41792.0
+  epoch  20: train=  32339.5  val=  42580.4
+  epoch  21: train=  32277.1  val=  41866.0
+  early-stop at epoch 21
+  wrote /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-128-64.bin (264220 bytes)
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  49852.6  val=  71683.6 *
+  epoch   2: train=  39156.9  val=  55161.4 *
+  epoch   3: train=  36103.1  val=  48483.3 *
+  epoch   4: train=  34829.4  val=  45101.2 *
+  epoch   5: train=  34150.4  val=  43268.8 *
+  epoch   6: train=  33693.2  val=  41459.5 *
+  epoch   7: train=  33322.6  val=  43893.4
+  epoch   8: train=  33034.2  val=  43124.9
+  epoch   9: train=  32773.2  val=  40478.6 *
+  epoch  10: train=  32560.2  val=  41504.8
+  epoch  11: train=  32372.0  val=  41101.0
+  epoch  12: train=  32215.1  val=  41239.3
+  epoch  13: train=  32062.5  val=  40203.3 *
+  epoch  14: train=  31920.1  val=  43434.4
+  epoch  15: train=  31797.4  val=  45225.7
+  epoch  16: train=  31684.6  val=  41063.4
+  epoch  17: train=  31581.3  val=  41892.4
+  epoch  18: train=  31477.5  val=  40875.9
+  epoch  19: train=  31387.2  val=  39619.7 *
+  epoch  20: train=  31296.3  val=  40823.6
+  epoch  21: train=  31225.3  val=  41566.3
+  epoch  22: train=  31141.0  val=  41085.6
+  epoch  23: train=  31063.5  val=  41497.4
+  epoch  24: train=  30988.8  val=  40143.6
+  epoch  25: train=  30914.3  val=  41802.4
+  epoch  26: train=  30850.8  val=  41168.8
+  epoch  27: train=  30780.4  val=  41245.3
+  early-stop at epoch 27
+  wrote /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  47666.4  val=  65228.3 *
+  epoch   2: train=  37997.4  val=  50954.1 *
+  epoch   3: train=  35211.7  val=  45300.8 *
+  epoch   4: train=  34121.6  val=  43436.6 *
+  epoch   5: train=  33442.7  val=  43516.4
+  epoch   6: train=  32939.3  val=  40114.3 *
+  epoch   7: train=  32472.8  val=  44631.2
+  epoch   8: train=  32094.9  val=  41405.8
+  epoch   9: train=  31738.2  val=  40270.3
+  epoch  10: train=  31445.8  val=  39901.4 *
+  epoch  11: train=  31164.5  val=  39974.1
+  epoch  12: train=  30933.5  val=  39569.8 *
+  epoch  13: train=  30703.5  val=  40555.9
+  epoch  14: train=  30494.5  val=  41986.7
+  epoch  15: train=  30303.4  val=  42173.4
+  epoch  16: train=  30122.0  val=  39590.7
+  epoch  17: train=  29949.0  val=  39502.3 *
+  epoch  18: train=  29783.9  val=  39538.6
+  epoch  19: train=  29623.8  val=  39157.9 *
+  epoch  20: train=  29474.9  val=  38331.8 *
+  epoch  21: train=  29343.5  val=  39606.6
+  epoch  22: train=  29205.5  val=  40459.0
+  epoch  23: train=  29078.1  val=  39897.9
+  epoch  24: train=  28957.6  val=  39082.2
+  epoch  25: train=  28845.2  val=  40371.5
+  epoch  26: train=  28739.1  val=  41126.2
+  epoch  27: train=  28642.5  val=  39901.2
+  epoch  28: train=  28543.1  val=  39030.0
+  early-stop at epoch 28
+  wrote /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     38331.8      195.8    1819s
+  256-128            148,481     39619.7      199.0    1311s
+  128-64              66,049     41009.5      202.5     900s
+  64-32               30,977     42402.5      205.9    1005s
+
+summary → /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/summary.json
+loading float reference /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.028045 sw2=0.086476 sw3=0.065996 sh1=0.055348 sh2=1.237
+  multipliers: mul1=0.5067 mul2=0.0038694 mul_out=0.081634
+  reference range: float [-1851.7, 1788.7], quantised [-3424.2, 1795.2]
+  diff: mean=+13.51  std=129.34  |max|=1793.40  RMSE=130.05
+wrote /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin (364840 bytes)
+
+=== Phase 0c : bench v8 vs handcrafted / v5 / v6 / v7 ===
+Benchmark: NNUE (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=15 Handcrafted=3 Draws=0 (total 18)
+NNUE score rate: 0.833333 (15 / 18)
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=30 B=21 Draws=3 (total 54)
+A score rate: 0.583333 (31.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=36 B=12 Draws=6 (total 54)
+A score rate: 0.722222 (39 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=27 Draws=3 (total 54)
+A score rate: 0.472222 (25.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=21 B=30 Draws=3 (total 54)
+A score rate: 0.416667 (22.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=33 B=18 Draws=3 (total 54)
+A score rate: 0.638889 (34.5 / 54)
+
+==========================================================
+       0056 v8 QUIET+PV-EXTRACT 1M v7-LABELLER VERDICT
+==========================================================
+  gen wall:           77463s (21.5h)
+  train wall:         5051s
+  best arch:          512-256
+  records (quiet+pv): 1000000
+  labeller:           v7 (knowledge bootstrap)
+
+  vs handcrafted:     0.833333
+  vs v5 (d6 / d10):   0.583333 / 0.722222
+  vs v6 (d10):        0.472222
+  vs v7 (d6 / d10):   0.416667 / 0.638889
+
+  Reference :
+    v7 (0050 1M v5-labeller) vs handcrafted: 0.944
+    v7 vs v5 d10:                            0.583
+    v7 vs v6 d10:                            0.667
+
+  Decision :
+    v8 BEATS v7 — knowledge bootstrap a payé. Ship v8 comme
+    nouvelle référence. Considérer v9 = 1M avec v8 comme labeller.
+==========================================================

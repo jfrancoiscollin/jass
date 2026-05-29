@@ -1,7 +1,0 @@
-{
-  "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "script": "jobs/queue/0056-v8-quiet-pv-1M-v7-labeller.sh",
-  "pid": 2140,
-  "started_at": "2026-05-28T22:25:30+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
