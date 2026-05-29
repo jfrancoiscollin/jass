@@ -14,6 +14,44 @@ mesures vs la baseline précédente.
 
 -----
 
+## v8 — 2026-05-29 (job 0056-v8-quiet-pv-1M-v7-labeller)
+
+**Artefact** : `jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin`
+
+**Architecture** : MLPNetworkQ **512-256** (saut de capacité vs 256-128 pour v5/v6/v7) HalfMen 450 features, int8 quantifié.
+
+**Dataset** : 1M self-play records @ depth 16, recipe v7 + knowledge bootstrap :
+- `--quiet-only` + `--pv-extract 3` (identique v6/v7)
+- **Labeller : v7** (au lieu de v5 pour v6/v7) — knowledge bootstrap
+
+**Performance (54 games par bench)** :
+
+| Métrique | v8 (512-256) | v7 (256-128) | v6 |
+|---|---|---|---|
+| vs handcrafted | 0.833 (15/18) | **0.944** | 0.861 |
+| **vs v5 d10** | **0.722** (39/54) | 0.583 | 0.556 |
+| **vs v7 d10** | **0.639** (34.5/54) | – | – |
+| vs v7 d6 | 0.417 | – | – |
+| **vs v6 d10** | **0.472** (25.5/54) | 0.667 | – |
+
+**ELO gain estimé** :
+- vs v7 d10 : `400 × log10(0.639/0.361)` ≈ **+99 ELO**
+- vs v5 d10 cumulé : **+166 ELO**
+- Total v5 → v8 cumulé : **~+258 ELO**
+
+**⚠️ Quirks observés** (non-transitivités) :
+- vs v6 d10 = 0.472 — **v8 perd légèrement vs v6** alors que v8 > v7 > v6 transitivement. Suggère que la bigger arch + clean labels v7 ont **specialisé** vs v7 au coût d'une légère perte de généralisation vs v6.
+- vs handcrafted = 0.833 (drop vs v7 = 0.944) — robustesse vs adversaire faible légèrement érodée.
+- vs v7 d6 = 0.417 (perd à shallow depth) — même asymétrie depth d6 vs d10 que v7 vs v6.
+
+**Lecture** : v8 EST plus fort que v7 (gain vs v5 énorme, gain vs v7 d10 net), mais les quirks d6/handcrafted/v6 indiquent qu'on approche d'un **plateau du knowledge bootstrap** 1M quiet+pv-extract. Chaque cycle gagne mais hérite progressivement des biais du précédent.
+
+**Coût** : 21.5h gen + 1.4h train + 0.5h bench = ~23h × 8 vCPU CCX33 ≈ ~€5.
+
+**Ship policy** : v8 devient l'artefact de référence ; v7 reste accessible mais déclassé. **NON-recommandation** : v9 = 1M avec v8 labeller (diminishing returns probables, mieux investir sur axe pattern via H1/H2/H3 templates standby PRs #102 et le G5 H1 dans queue 0057). L'embedded default reste sur v5 (pas de bump tant que +50 ELO cumulés vs embedded ne sont pas franchis avec tests parity).
+
+-----
+
 ## v7 — 2026-05-28 (job 0050-v7-quiet-pv-extract-1M)
 
 **Artefact** : `jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin`
