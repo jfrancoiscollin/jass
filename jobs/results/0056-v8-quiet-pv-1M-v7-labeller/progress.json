@@ -1,8 +1,8 @@
 {
   "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "snapshot_at": "2026-05-29T19:53:50+00:00",
+  "snapshot_at": "2026-05-29T19:58:51+00:00",
   "started_at": "2026-05-28T22:25:30+00:00",
-  "elapsed_seconds": 77300,
+  "elapsed_seconds": 77601,
   "artefacts": [
     {
       "name": "shard-1.bin",
@@ -45,12 +45,16 @@
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 4727810,
-      "records": 124415
+      "size_bytes": 4750008,
+      "records": 125000
     },
     {
       "name": "shard-4.log",
-      "size_bytes": 0
+      "size_bytes": 1754
+    },
+    {
+      "name": "shard-4.result",
+      "size_bytes": 8
     },
     {
       "name": "shard-5.bin",
@@ -103,7 +107,16 @@
     {
       "name": "shard-8.result",
       "size_bytes": 8
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v8-quiet-pv-1M.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    21:28:19  0.0  0.0 bash\n   2142    2140    21:28:19  0.0  0.0 bash\n   2200    2142    21:28:19  0.0  0.0 bash\n   2215    2200    21:28:19 99.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    21:33:20  0.0  0.0 bash\n   2142    2140    21:33:20  0.0  0.0 bash\n  27135    2142       02:15  319 45.8 python3\n  27136    2142       02:15  0.0  0.0 tee\n"
 }
