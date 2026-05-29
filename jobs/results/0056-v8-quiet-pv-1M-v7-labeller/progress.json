@@ -1,17 +1,21 @@
 {
   "job_id": "0056-v8-quiet-pv-1M-v7-labeller",
-  "snapshot_at": "2026-05-29T19:18:42+00:00",
+  "snapshot_at": "2026-05-29T19:23:43+00:00",
   "started_at": "2026-05-28T22:25:30+00:00",
-  "elapsed_seconds": 75192,
+  "elapsed_seconds": 75493,
   "artefacts": [
     {
       "name": "shard-1.bin",
-      "size_bytes": 4719602,
-      "records": 124199
+      "size_bytes": 4750008,
+      "records": 125000
     },
     {
       "name": "shard-1.log",
-      "size_bytes": 0
+      "size_bytes": 1754
+    },
+    {
+      "name": "shard-1.result",
+      "size_bytes": 8
     },
     {
       "name": "shard-2.bin",
@@ -28,17 +32,21 @@
     },
     {
       "name": "shard-3.bin",
-      "size_bytes": 4736018,
-      "records": 124631
+      "size_bytes": 4750008,
+      "records": 125000
     },
     {
       "name": "shard-3.log",
-      "size_bytes": 0
+      "size_bytes": 1754
+    },
+    {
+      "name": "shard-3.result",
+      "size_bytes": 8
     },
     {
       "name": "shard-4.bin",
-      "size_bytes": 4547234,
-      "records": 119663
+      "size_bytes": 4571858,
+      "records": 120311
     },
     {
       "name": "shard-4.log",
@@ -85,13 +93,13 @@
     },
     {
       "name": "shard-8.bin",
-      "size_bytes": 4670354,
-      "records": 122903
+      "size_bytes": 4686770,
+      "records": 123335
     },
     {
       "name": "shard-8.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    20:53:11  0.0  0.0 bash\n   2142    2140    20:53:11  0.0  0.0 bash\n   2195    2142    20:53:11  0.0  0.0 bash\n   2198    2142    20:53:11  0.0  0.0 bash\n   2200    2142    20:53:11  0.0  0.0 bash\n   2208    2195    20:53:11 99.9  0.1 jass\n   2210    2142    20:53:11  0.0  0.0 bash\n   2213    2198    20:53:11 99.9  0.1 jass\n   2215    2200    20:53:11 99.9  0.1 jass\n   2218    2210    20:53:11 99.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   2140       1    20:58:12  0.0  0.0 bash\n   2142    2140    20:58:12  0.0  0.0 bash\n   2200    2142    20:58:12  0.0  0.0 bash\n   2210    2142    20:58:12  0.0  0.0 bash\n   2215    2200    20:58:12 99.9  0.1 jass\n   2218    2210    20:58:12 99.9  0.1 jass\n"
 }
