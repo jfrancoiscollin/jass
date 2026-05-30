@@ -1,0 +1,34 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw...
+  4738008 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 9476016 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 9476016)
+=== run 1/3 (seed 42) ===
+[seed 42] iter  0: train_loss=  35351.54  val_mse=   9657.53  man= -23.6  king=  18.5 *
+[seed 42] iter  1: train_loss=  34152.23  val_mse=  17906.45  man= -26.1  king= -55.9
+[seed 42] iter  2: train_loss=  33906.29  val_mse=  17937.02  man= -10.8  king= -24.0
+[seed 42] iter  3: train_loss=  33769.24  val_mse=  16191.40  man=  14.2  king=  15.6
+[seed 42] iter  4: train_loss=  33720.15  val_mse=  16533.46  man=   0.6  king=   1.3
+[seed 42] iter  5: train_loss=  33703.22  val_mse=  16588.34  man=   0.8  king=  -5.9
+[seed 42] early stop: no val improvement for 5 iters (best val_mse=9657.53)
+=== run 2/3 (seed 43) ===
+[seed 43] iter  0: train_loss=  35351.54  val_mse=   9657.53  man= -23.6  king=  18.5 *
+[seed 43] iter  1: train_loss=  34152.23  val_mse=  17906.45  man= -26.1  king= -55.9
+[seed 43] iter  2: train_loss=  33906.29  val_mse=  17937.02  man= -10.8  king= -24.0
+[seed 43] iter  3: train_loss=  33769.24  val_mse=  16191.40  man=  14.2  king=  15.6
+[seed 43] iter  4: train_loss=  33720.15  val_mse=  16533.46  man=   0.6  king=   1.3
+[seed 43] iter  5: train_loss=  33703.22  val_mse=  16588.34  man=   0.8  king=  -5.9
+[seed 43] early stop: no val improvement for 5 iters (best val_mse=9657.53)
+=== run 3/3 (seed 44) ===
+[seed 44] iter  0: train_loss=  35351.54  val_mse=   9657.53  man= -23.6  king=  18.5 *
+[seed 44] iter  1: train_loss=  34152.23  val_mse=  17906.45  man= -26.1  king= -55.9
+[seed 44] iter  2: train_loss=  33906.29  val_mse=  17937.02  man= -10.8  king= -24.0
+[seed 44] iter  3: train_loss=  33769.24  val_mse=  16191.40  man=  14.2  king=  15.6
+[seed 44] iter  4: train_loss=  33720.15  val_mse=  16533.46  man=   0.6  king=   1.3
+[seed 44] iter  5: train_loss=  33703.22  val_mse=  16588.34  man=   0.8  king=  -5.9
+[seed 44] early stop: no val improvement for 5 iters (best val_mse=9657.53)
+averaging 3 models...
+final (saved) val_mse=  10257.79  man=-23.6  king=18.5
+wrote /root/jass/jobs/results/0062-h1-h3-h4-combined/artefacts.src/h134-v0.jpat (17006669 bytes)
