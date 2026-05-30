@@ -1290,6 +1290,57 @@ void test_pattern_network_v6_king_mobility_roundtrip() {
     std::remove(path.c_str());
 }
 
+// JPAT v7 — round-trip hybrid MLP head. MLP receives the per-pattern
+// bucket values as input, applies hidden ReLU layer, outputs a scalar
+// residual added to acc_mg. Verifies float weights persist and that
+// the eval differs predictably when the MLP is active.
+void test_pattern_network_v7_mlp_head_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v1();  // 8 patterns × 4 squares
+    net.configure_mlp(/*hidden=*/4);
+    // Set MLP : output = ReLU(input_0 * 1.0 + 0) * 1.0 + 0 for one
+    // hidden neuron, others zero. So mlp_out = ReLU(pattern_value_0).
+    // We give pattern 0 a bucket weight of 50 cp at the empty-board
+    // bucket (idx=0), so on start_position the MLP outputs 50.
+    auto& w1 = net.mlp_w1_mut();  // 8×4 = 32 entries, row-major (pi * 4 + h)
+    auto& b1 = net.mlp_b1_mut();
+    auto& w2 = net.mlp_w2_mut();
+    std::fill(w1.begin(), w1.end(), 0.0f);
+    std::fill(b1.begin(), b1.end(), 0.0f);
+    std::fill(w2.begin(), w2.end(), 0.0f);
+    w1[0 * 4 + 0] = 1.0f;  // pattern 0 → hidden neuron 0
+    w2[0]         = 1.0f;  // hidden 0 → output
+    net.set_mlp_b2(0.0f);
+    net.pattern_mut(0).weights[0] = 50;  // bucket 0 of pattern 0 = 50 cp
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v7-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/7));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.mlp_hidden(),       4);
+    JASS_CHECK_EQ(loaded.mlp_w1().size(),    std::size_t{32});
+    JASS_CHECK_EQ(loaded.mlp_b1().size(),    std::size_t{4});
+    JASS_CHECK_EQ(loaded.mlp_w2().size(),    std::size_t{4});
+    JASS_CHECK_EQ(loaded.mlp_w1()[0],        1.0f);
+    JASS_CHECK_EQ(loaded.mlp_w2()[0],        1.0f);
+    JASS_CHECK_EQ(loaded.pattern(0).weights[0], 50);
+
+    // Position with bucket 0 active for ALL patterns (start position
+    // doesn't necessarily have bucket 0 — let me use a known position).
+    // Actually for v1 patterns covering corners, a position with NO
+    // pieces in any pattern's squares has bucket 0 for all patterns.
+    // The empty position is unreachable in legal play but Position{}
+    // default-constructs to it.
+    const Position empty{};
+    // Linear sum = 50 (pattern 0 bucket 0 = 50, others 0).
+    // MLP : pattern_value[0] = 50 → ReLU(50 × 1.0 + 0) × 1.0 + 0 = 50.
+    // Total acc_mg = bias(0) + skeleton(0) + linear(50) + MLP(50) = 100.
+    // No phase split → eval = 100. STM=W → +100.
+    JASS_CHECK_EQ(loaded.evaluate(empty), 100);
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1346,6 +1397,7 @@ void run_nnue_tests() {
     test_pattern_network_v4_king_pst_balance_roundtrip();
     test_pattern_network_v5_phase_split_roundtrip();
     test_pattern_network_v6_king_mobility_roundtrip();
+    test_pattern_network_v7_mlp_head_roundtrip();
     test_pattern_network_v4_load_preserves_eval();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
