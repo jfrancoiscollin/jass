@@ -107,6 +107,25 @@ constexpr std::array<std::array<std::uint8_t, 12>, 8> V3_PATTERNS = {{
     {{24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50}},
 }};
 
+// V4 long vertical strips: 8 patterns × 14 squares each (7 rows × 2
+// col-within-row). Pushes pattern length toward Scan's 12-square mark
+// + adds 1-2 rows of context. Total: 8 × 3^14 = ~38M weights base-3
+// (~153 MB JPAT). Memory-intensive (LBFGS history needs ~1.5 GB) but
+// fits in CCX33's 32 GB. The architectural test for "patterns ratent
+// peut-être les motifs long-distance" hypothesis post-H1-H4 flat.
+constexpr std::array<std::array<std::uint8_t, 14>, 8> V4_PATTERNS = {{
+    // Top half (rows 1-7, indices 0..6)
+    {{ 1,  2,  6,  7, 11, 12, 16, 17, 21, 22, 26, 27, 31, 32}},  // cols 0-1
+    {{ 2,  3,  7,  8, 12, 13, 17, 18, 22, 23, 27, 28, 32, 33}},  // cols 1-2
+    {{ 3,  4,  8,  9, 13, 14, 18, 19, 23, 24, 28, 29, 33, 34}},  // cols 2-3
+    {{ 4,  5,  9, 10, 14, 15, 19, 20, 24, 25, 29, 30, 34, 35}},  // cols 3-4
+    // Bottom half (rows 4-10, indices 3..9)
+    {{16, 17, 21, 22, 26, 27, 31, 32, 36, 37, 41, 42, 46, 47}},
+    {{17, 18, 22, 23, 27, 28, 32, 33, 37, 38, 42, 43, 47, 48}},
+    {{18, 19, 23, 24, 28, 29, 33, 34, 38, 39, 43, 44, 48, 49}},
+    {{19, 20, 24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50}},
+}};
+
 constexpr char          JPAT_MAGIC[4]     = {'J', 'P', 'A', 'T'};
 constexpr std::uint32_t JPAT_VERSION_V1   = 1;
 constexpr std::uint32_t JPAT_VERSION_V2   = 2;
@@ -279,6 +298,14 @@ PatternNetwork PatternNetwork::default_v2() {
 PatternNetwork PatternNetwork::default_v3() {
     PatternNetwork net;
     for (const auto& p : V3_PATTERNS) {
+        net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
+    }
+    return net;
+}
+
+PatternNetwork PatternNetwork::default_v4() {
+    PatternNetwork net;
+    for (const auto& p : V4_PATTERNS) {
         net.add_pattern(std::vector<std::uint8_t>(p.begin(), p.end()));
     }
     return net;

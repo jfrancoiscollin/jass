@@ -175,6 +175,13 @@ public:
     // weights in base-3 (~17 MB JPAT).
     static PatternNetwork default_v3();
 
+    // V4 long vertical strips: 8 patterns × 14 squares (7 rows × 2 cols).
+    // Pushes pattern length toward Scan's 12-square mark + 1-2 rows of
+    // additional context. ~38M weights base-3 (~153 MB JPAT). Memory-
+    // intensive but tractable on CCX33. Tests whether longer patterns
+    // capture long-distance motifs that v3 (6-row) misses.
+    static PatternNetwork default_v4();
+
     int evaluate(const Position& pos) const noexcept override;
 
     // Add a pattern (squares). Weights are initialised to zero. The
