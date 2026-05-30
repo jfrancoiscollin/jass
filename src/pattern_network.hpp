@@ -99,6 +99,21 @@
 //                      patterns themselves are NOT phase-split in v5;
 //                      that would be a separate v6 if it ever ships).
 //
+// Version 6 (H4 king mobility — Scan-aligned king_mob feature, mono-
+// component "free squares around kings", MG/EG split; cf.
+// docs/SCAN_METHODOLOGY_GAP.md §H4). Strict additive extension of v5
+// (mobility weights appended after king_pst_eg):
+//   [0..445)   identical to v5 header
+//   [445..449) int32  mobility_mg
+//   [449..453) int32  mobility_eg
+//   For each pattern: (same layout as v5)
+//
+// Mobility feature : sum over white kings of count(empty diag neighbors)
+// minus same for black kings. "Diag neighbor" = the up-to-4 dark squares
+// directly diagonally adjacent (KING_DIAG_NEIGHBORS table in
+// pattern_network.cpp). Cheap proxy for true mobility (skips full
+// move-gen; doesn't distinguish safe vs attacked moves like Scan does).
+//
 // Stage interpolation: `score = (acc_mg * (Stage_Size - stage) +
 //                                acc_eg * stage) / Stage_Size`
 // with Stage_Size = 300 hardcoded. Stage derives from total piece
@@ -218,11 +233,22 @@ public:
     void set_balance_eg(std::int32_t v)    noexcept { balance_eg_    = v; }
     std::array<std::int32_t, 50>& king_pst_eg_mut() noexcept { return king_pst_eg_; }
 
+    // H4 / JPAT v6 — king mobility feature (MG/EG split). Applied as
+    // `mobility_mg * mob_diff(pos)` for the MG accumulator (similarly
+    // mobility_eg for EG), where `mob_diff(pos) = sum_w_kings
+    // count(empty_diag_neighbors) - sum_b_kings count(...)`. Cheap
+    // proxy for Scan's "safe/denied moves" king_mob (no move-gen).
+    std::int32_t mobility_mg() const noexcept { return mobility_mg_; }
+    std::int32_t mobility_eg() const noexcept { return mobility_eg_; }
+    void set_mobility_mg(std::int32_t v) noexcept { mobility_mg_ = v; }
+    void set_mobility_eg(std::int32_t v) noexcept { mobility_eg_ = v; }
+
     // Save format: pass `version = 2` to write the hybrid header (even
     // if man/king are 0); `version = 3` writes the v3 header that
     // additionally records the encoding_base; `version = 4` adds the
-    // G3a balance + king PST; `version = 5` adds the EG counterparts.
-    // Default `version = 1` matches the legacy pure-pattern layout.
+    // G3a balance + king PST; `version = 5` adds the EG counterparts;
+    // `version = 6` adds king mobility (MG/EG). Default `version = 1`
+    // matches the legacy pure-pattern layout.
     bool load(std::string_view path);
     bool save(std::string_view path, std::uint32_t version = 1) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
@@ -246,6 +272,9 @@ private:
     std::int32_t                       king_value_eg_{0};
     std::int32_t                       balance_eg_{0};
     std::array<std::int32_t, 50>       king_pst_eg_{};
+    // H4 / JPAT v6 only — king mobility weights (MG/EG split).
+    std::int32_t                       mobility_mg_{0};
+    std::int32_t                       mobility_eg_{0};
 };
 
 }  // namespace jass

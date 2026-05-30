@@ -195,6 +195,56 @@ def balance_feature(bbs: np.ndarray) -> np.ndarray:
     return out
 
 
+def _build_king_diag_neighbors() -> list[list[int]]:
+    """Mirror of C++ KING_DIAG_NEIGHBORS — for each FMJD square 1..50,
+    list of valid diagonally adjacent dark squares (0 to 4 entries)."""
+    out: list[list[int]] = []
+    for s in range(1, 51):
+        r, c = (s - 1) // 5, (s - 1) % 5
+        cb = 2 * c + (1 - r % 2)
+        nbrs: list[int] = []
+        for dr in (-1, +1):
+            for dcb in (-1, +1):
+                rp, cbp = r + dr, cb + dcb
+                if rp < 0 or rp >= 10 or cbp < 0 or cbp >= 10:
+                    continue
+                if cbp % 2 != (rp + 1) % 2:
+                    continue
+                cp = (cbp - (1 - rp % 2)) // 2
+                nbrs.append(rp * 5 + cp + 1)
+        out.append(sorted(nbrs))
+    return out
+
+
+KING_DIAG_NEIGHBORS = _build_king_diag_neighbors()
+
+
+def king_mobility_feature(bbs: np.ndarray) -> np.ndarray:
+    """H4 / JPAT v6 — return per-record float32 mobility values matching
+    C++ `compute_king_mobility` : sum over white kings of count(empty
+    diag neighbors) minus same for black kings. Sign-flipped by STM at
+    the trainer level (white-POV convention)."""
+    n = bbs.shape[1]
+    occ = bbs[0] | bbs[1] | bbs[2] | bbs[3]
+    out = np.zeros(n, dtype=np.float32)
+    for s in range(1, 51):
+        nbrs = KING_DIAG_NEIGHBORS[s - 1]
+        if not nbrs:
+            continue
+        bit_s = np.uint64(1) << np.uint64(s - 1)
+        wk_here = (bbs[1] & bit_s) != 0
+        bk_here = (bbs[3] & bit_s) != 0
+        if not (wk_here.any() or bk_here.any()):
+            continue
+        free_count = np.zeros(n, dtype=np.int32)
+        for nbr in nbrs:
+            bit_n = np.uint64(1) << np.uint64(nbr - 1)
+            free_count += ((occ & bit_n) == 0).astype(np.int32)
+        out += np.where(wk_here, free_count, 0).astype(np.float32)
+        out -= np.where(bk_here, free_count, 0).astype(np.float32)
+    return out
+
+
 def stage_features(bbs: np.ndarray) -> np.ndarray:
     """G3b / JPAT v5 — return per-record float32 stage values in
     [0, STAGE_SIZE]. Matches C++ `compute_stage`:
@@ -338,15 +388,22 @@ class HybridPatternModel(PatternModel):
                  init_man:  float = 100.0,
                  init_king: float = 300.0,
                  extras: bool = False,
-                 phase_split: bool = False):
+                 phase_split: bool = False,
+                 mobility: bool = False):
         super().__init__(patterns, base=base)
         self.man_value  = nn.Parameter(torch.tensor(init_man))
         self.king_value = nn.Parameter(torch.tensor(init_king))
         self.extras     = extras
         self.phase_split = phase_split
+        self.mobility    = mobility
         if extras:
             self.king_pst = nn.Parameter(torch.zeros(50))
             self.balance  = nn.Parameter(torch.tensor(0.0))
+        if mobility:
+            # H4 / JPAT v6 — king mobility scalar (MG, EG if phase_split).
+            self.mobility_mg = nn.Parameter(torch.tensor(0.0))
+            if phase_split:
+                self.mobility_eg = nn.Parameter(torch.tensor(0.0))
         if phase_split:
             # G3b / JPAT v5 — EG counterparts of the skeleton. Initialised
             # to MG values so the start state has no phase split (eval =
@@ -382,8 +439,11 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
     is_hybrid    = isinstance(model, HybridPatternModel)
     has_extras   = is_hybrid and getattr(model, "extras", False)
     has_phase    = is_hybrid and getattr(model, "phase_split", False)
+    has_mobility = is_hybrid and getattr(model, "mobility", False)
     base         = model.base
-    if has_phase:
+    if has_mobility:
+        version = 6
+    elif has_phase:
         version = 5
     elif has_extras:
         version = 4
@@ -430,6 +490,13 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
             else:
                 pst_eg_q = np.zeros(50, dtype=np.int32)
             f.write(pst_eg_q.tobytes())
+        if version >= 6:
+            # H4 / JPAT v6: king mobility (mg / eg).
+            mob_mg_i = int(round(model.mobility_mg.item()))
+            mob_eg_i = (int(round(model.mobility_eg.item()))
+                        if has_phase else 0)
+            f.write(struct.pack("<i", mob_mg_i))
+            f.write(struct.pack("<i", mob_eg_i))
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -552,6 +619,7 @@ def train_one(
     king_pst_t:  torch.Tensor | None,   # G3a extras: (50, N) shaped
     balance_t:   torch.Tensor | None,   # G3a extras: (N,) shaped
     stage_t:     torch.Tensor | None,   # G3b phase split: (N,) shaped
+    mobility_t:  torch.Tensor | None,   # H4 mobility: (N,) shaped
     train_idx: np.ndarray,
     val_idx:   np.ndarray,
     seed: int,
@@ -570,6 +638,7 @@ def train_one(
     base: int = 5,
     extras: bool = False,
     phase_split: bool = False,
+    mobility: bool = False,
     optimizer_kind: str = "adam",
     lbfgs_max_iter: int = 20,
     lbfgs_history: int = 10,
@@ -585,7 +654,8 @@ def train_one(
         assert mat_diff_t is not None and king_diff_t is not None
         model = HybridPatternModel(patterns, base=base,
                                    init_man=init_man, init_king=init_king,
-                                   extras=extras, phase_split=phase_split)
+                                   extras=extras, phase_split=phase_split,
+                                   mobility=mobility)
     else:
         model = PatternModel(patterns, base=base)
 
@@ -612,6 +682,9 @@ def train_one(
             acc_mg = (acc_mg
                       + (model.king_pst.unsqueeze(1) * king_pst_t[:, idx_slice]).sum(dim=0)
                       + model.balance * balance_t[idx_slice])
+        if mobility:
+            assert mobility_t is not None
+            acc_mg = acc_mg + model.mobility_mg * mobility_t[idx_slice]
         if not phase_split:
             return acc_mg
         # EG accumulator (G3b / JPAT v5).
@@ -623,6 +696,8 @@ def train_one(
             acc_eg = (acc_eg
                       + (model.king_pst_eg.unsqueeze(1) * king_pst_t[:, idx_slice]).sum(dim=0)
                       + model.balance_eg * balance_t[idx_slice])
+        if mobility:
+            acc_eg = acc_eg + model.mobility_eg * mobility_t[idx_slice]
         stage = stage_t[idx_slice]
         return (acc_mg * (300.0 - stage) + acc_eg * stage) / 300.0
 
@@ -741,6 +816,12 @@ def average_models(models: list[PatternModel]) -> PatternModel:
                     be2_stack = torch.stack([m.balance_eg  for m in models], dim=0)
                     avg.king_pst_eg.copy_(pe_stack.mean(dim=0))
                     avg.balance_eg.copy_(be2_stack.mean(dim=0))
+            if getattr(avg, "mobility", False):
+                mob_mg_stack = torch.stack([m.mobility_mg for m in models], dim=0)
+                avg.mobility_mg.copy_(mob_mg_stack.mean(dim=0))
+                if getattr(avg, "phase_split", False):
+                    mob_eg_stack = torch.stack([m.mobility_eg for m in models], dim=0)
+                    avg.mobility_eg.copy_(mob_eg_stack.mean(dim=0))
     return avg
 
 
@@ -799,6 +880,11 @@ def main(argv: list[str]) -> int:
                         "balance / king_pst). Patterns stay mono-phase. "
                         "Stage interpolation in evaluate. Requires "
                         "--hybrid.")
+    p.add_argument("--mobility", action="store_true",
+                   help="H4 / JPAT v6 : add king mobility feature (count "
+                        "of empty diag neighbors per king, white - black). "
+                        "1 weight (MG-only) or 2 weights (with --phase-split). "
+                        "Requires --hybrid.")
     p.add_argument("--pattern-base", type=int, default=5, choices=[3, 5],
                    help="per-square encoding base. 5 = legacy (empty/"
                         "W-man/W-king/B-man/B-king). 3 = D2 Scan-aligned "
@@ -829,6 +915,8 @@ def main(argv: list[str]) -> int:
         p.error("--extras (G3a king PST + balance) requires --hybrid")
     if args.phase_split and not args.hybrid:
         p.error("--phase-split (G3b MG/EG skeleton) requires --hybrid")
+    if args.mobility and not args.hybrid:
+        p.error("--mobility (H4 king mobility) requires --hybrid")
     if args.optimizer == "lbfgs" and args.weight_decay > 0:
         print(f"note: --weight-decay={args.weight_decay} applied as manual "
               "L2 inside the LBFGS closure (PyTorch LBFGS doesn't support "
@@ -870,6 +958,7 @@ def main(argv: list[str]) -> int:
     king_pst_t  = None
     balance_t   = None
     stage_t     = None
+    mobility_t  = None
     if args.hybrid:
         mat_diff, king_diff = material_diffs(bbs)
         mat_diff[stm  == 1] *= -1
@@ -889,6 +978,12 @@ def main(argv: list[str]) -> int:
             # G3b / JPAT v5 — stage is symmetric under STM (depends only
             # on piece count). No sign-flip needed.
             stage_t = torch.from_numpy(stage_features(bbs))
+        if args.mobility:
+            # H4 / JPAT v6 — king mobility (white_free - black_free per
+            # record). Sign-flip for STM=Black (white-POV).
+            mob = king_mobility_feature(bbs)
+            mob[stm == 1] *= -1
+            mobility_t = torch.from_numpy(mob)
 
     # Sign-flip the score for STM=Black so the network always sees
     # white-POV (matches the eval convention of MLPNetworkQ and the
@@ -912,7 +1007,7 @@ def main(argv: list[str]) -> int:
         patterns=patterns, pidx_t=pidx_t, score_t=score_t, wdl_t=wdl_t,
         mat_diff_t=mat_diff_t, king_diff_t=king_diff_t,
         king_pst_t=king_pst_t, balance_t=balance_t,
-        stage_t=stage_t,
+        stage_t=stage_t, mobility_t=mobility_t,
         train_idx=train_idx, val_idx=val_idx,
         epochs=args.epochs, batch=args.batch, lr=args.lr, lam=args.lam,
         score_scale=args.score_scale, weight_decay=args.weight_decay,
@@ -920,7 +1015,7 @@ def main(argv: list[str]) -> int:
         cosine_schedule=args.cosine_schedule,
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
         base=args.pattern_base, extras=args.extras,
-        phase_split=args.phase_split,
+        phase_split=args.phase_split, mobility=args.mobility,
         optimizer_kind=args.optimizer,
         lbfgs_max_iter=args.lbfgs_max_iter,
         lbfgs_history=args.lbfgs_history,
