@@ -1,8 +1,8 @@
 {
   "job_id": "0063-h2-volume-scaleup-kitchen-sink",
-  "snapshot_at": "2026-05-30T14:21:16+00:00",
+  "snapshot_at": "2026-05-30T14:26:26+00:00",
   "started_at": "2026-05-30T13:12:43+00:00",
-  "elapsed_seconds": 4113,
+  "elapsed_seconds": 4423,
   "artefacts": [
     {
       "name": "final-vs-hc.log",
@@ -1003,5 +1003,5 @@
       "size_bytes": 1182
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  42254       1    01:08:33  0.0  0.0 bash\n  42256   42254    01:08:33  0.0  0.0 bash\n  43765   42256       01:14  100  0.1 jass\n  43766   42256       01:14  0.0  0.0 tee\n  43767   42256       01:14  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  42254       1    01:13:43  0.0  0.0 bash\n  42256   42254    01:13:43  0.0  0.0 bash\n  43765   42256       06:24 99.9  0.1 jass\n  43766   42256       06:24  0.0  0.0 tee\n  43767   42256       06:24  0.0  0.0 tail\n"
 }
