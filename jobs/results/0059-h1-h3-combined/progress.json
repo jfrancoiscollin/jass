@@ -1,8 +1,8 @@
 {
   "job_id": "0059-h1-h3-combined",
-  "snapshot_at": "2026-05-30T07:03:42+00:00",
+  "snapshot_at": "2026-05-30T07:09:13+00:00",
   "started_at": "2026-05-30T05:04:43+00:00",
-  "elapsed_seconds": 7139,
+  "elapsed_seconds": 7470,
   "artefacts": [
     {
       "name": "bootstrap-train.log",
@@ -17,7 +17,27 @@
       "size_bytes": 316
     },
     {
+      "name": "final-vs-hc.log",
+      "size_bytes": 236
+    },
+    {
+      "name": "final-vs-v5-d10.log",
+      "size_bytes": 302
+    },
+    {
+      "name": "final-vs-v5-d6.log",
+      "size_bytes": 301
+    },
+    {
+      "name": "final-vs-v6-d10.log",
+      "size_bytes": 0
+    },
+    {
       "name": "h3-v1.jpat",
+      "size_bytes": 17006661
+    },
+    {
+      "name": "h3-v10.jpat",
       "size_bytes": 17006661
     },
     {
@@ -54,7 +74,7 @@
     },
     {
       "name": "iter-rates.tsv",
-      "size_bytes": 218
+      "size_bytes": 257
     },
     {
       "name": "iter1-bench-vs-prev.log",
@@ -148,6 +168,99 @@
     {
       "name": "iter1-train.log",
       "size_bytes": 1070
+    },
+    {
+      "name": "iter10-bench-vs-prev.log",
+      "size_bytes": 295
+    },
+    {
+      "name": "iter10-bench-vs-v6.log",
+      "size_bytes": 305
+    },
+    {
+      "name": "iter10-data.bin",
+      "size_bytes": 760008,
+      "records": 20000
+    },
+    {
+      "name": "iter10-pearson.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter10-shard1.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard1.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard2.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard2.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard3.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard3.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard4.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard4.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard5.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard5.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard6.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard6.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard7.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard7.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-shard8.bin",
+      "size_bytes": 95008,
+      "records": 2500
+    },
+    {
+      "name": "iter10-shard8.log",
+      "size_bytes": 399
+    },
+    {
+      "name": "iter10-train.log",
+      "size_bytes": 1071
     },
     {
       "name": "iter2-bench-vs-prev.log",
@@ -806,12 +919,16 @@
     },
     {
       "name": "iter9-bench-vs-v6.log",
-      "size_bytes": 0
+      "size_bytes": 304
     },
     {
       "name": "iter9-data.bin",
       "size_bytes": 760008,
       "records": 20000
+    },
+    {
+      "name": "iter9-pearson.log",
+      "size_bytes": 0
     },
     {
       "name": "iter9-shard1.bin",
@@ -894,5 +1011,5 @@
       "size_bytes": 17006661
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    01:58:58  0.0  0.0 bash\n  34862   34860    01:58:58  0.0  0.0 bash\n  37390   34862       01:52 99.9  0.1 jass\n  37391   34862       01:52  0.0  0.0 tee\n  37392   34862       01:52  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    02:04:30  0.0  0.0 bash\n  34862   34860    02:04:30  0.0  0.0 bash\n  37542   34862       00:00  101  0.1 jass\n  37543   34862       00:00  0.0  0.0 tee\n  37544   34862       00:00  0.0  0.0 tail\n"
 }
