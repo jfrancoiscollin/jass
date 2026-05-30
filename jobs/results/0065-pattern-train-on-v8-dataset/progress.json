@@ -1,13 +1,33 @@
 {
   "job_id": "0065-pattern-train-on-v8-dataset",
-  "snapshot_at": "2026-05-30T23:16:41+00:00",
+  "snapshot_at": "2026-05-30T23:21:54+00:00",
   "started_at": "2026-05-30T23:00:39+00:00",
-  "elapsed_seconds": 962,
+  "elapsed_seconds": 1275,
   "artefacts": [
     {
+      "name": "bench-vs-hc.log",
+      "size_bytes": 259
+    },
+    {
+      "name": "bench-vs-v5-d10.log",
+      "size_bytes": 325
+    },
+    {
+      "name": "bench-vs-v5-d6.log",
+      "size_bytes": 324
+    },
+    {
+      "name": "bench-vs-v6-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "pattern-v3-on-v8.jpat",
+      "size_bytes": 17006669
+    },
+    {
       "name": "train.log",
-      "size_bytes": 2398
+      "size_bytes": 2759
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  49379       1       16:02  0.0  0.0 bash\n  49381   49379       16:02  0.0  0.0 bash\n  49505   49381       15:57  299  8.9 python3\n  49506   49381       15:57  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  49379       1       21:15  0.0  0.0 bash\n  49381   49379       21:15  0.0  0.0 bash\n  49789   49381       01:56  100  0.1 jass\n  49790   49381       01:56  0.0  0.0 tee\n"
 }
