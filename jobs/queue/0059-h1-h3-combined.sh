@@ -1,35 +1,40 @@
 #!/usr/bin/env bash
-# id: 0059-h3-bootstrap-from-master
-# description: H3 du docs/SCAN_METHODOLOGY_GAP.md. Bootstrap pattern
-#              depuis régression supervised sur master games WDL, PUIS
-#              self-play loop (vs partir de skeleton-only en G4/G5).
+# id: 0059-h1-h3-combined-bootstrap-v3-geometry
+# description: H1+H3 combiné. Aligne la self-play loop sur les DEUX
+#              hypothèses pattern non-encore-réfutées combinées :
+#                * H1 = géométrie v3 verticaux Scan-style (8 × 12 squares)
+#                * H3 = bootstrap depuis master games avant self-play
 #
-# Hypothèse : self-play depuis pattern weights=0 (skeleton-only) produit
-# des games très bruitées dans les premières iters (le réseau v0 joue
-# essentiellement random au-delà du material counting). Cette noise
-# pourrait empêcher la self-play loop de converger vers un signal utile.
+# Rationale : 6 hypothèses pattern flat après diag chain G1→G3b+G4-diag
+# (méthodologie) + G5/H1 seul (géométrie). Si H1+H3 combiné aussi flat,
+# preuve diagnostic très solide qu'aucune variante cheap dans notre
+# infra n'unlock l'archi pattern.
 #
-# Bootstrap = train supervised sur 0014 master-1600.jnnw (4.7M positions
-# WDL réelles) avec LBFGS pure BCE. Produit pattern-bootstrap.jpat avec
-# weights non-triviaux DÉJÀ tirés du signal master. Puis self-play loop
-# depuis ce starter (10 iter × 20K records, identique G4/G5).
+# Self-play depuis pattern weights=0 produit des games très bruitées
+# dans les premières iters (le réseau v0 joue essentiellement random
+# au-delà du material counting). Bootstrap = train supervised sur 0014
+# master-1600.jnnw (4.7M positions WDL réelles) avec LBFGS pure BCE.
+# Produit pattern-bootstrap.jpat avec weights non-triviaux tirés du
+# signal master. Puis self-play loop depuis ce starter.
 #
-# Géométrie : v2 par défaut. Override avec PATTERN_SET=v3 si #101 mergée.
+# Géométrie v3 (PR #101) = vertical strips 8 patterns × 12 squares.
 #
 # Decision gate :
-#   rate vs v6 d10 ≥ 0.10 après 10 iter → bootstrap était critique,
-#                                         self-play est viable depuis
-#                                         un starter pré-entraîné.
-#   < 0.10                              → bootstrap pas suffisant.
-#                                         Combiner avec H2/H4.
+#   rate vs v6 d10 ≥ 0.10 après 10 iter → COMBO unlock pattern axis
+#   ∈ (0, 0.10)                          → signal marginal mais existe
+#   = 0                                  → 7 hypothèses flat. Diagnostic
+#                                          combinaisons cheap exhaustif.
+#                                          Pattern axis nécessite leverage
+#                                          qualitatif nouveau ou abandon.
 #
-# expected_duration: ~5-6h sur 8 vCPU CCX33 :
-#                    * bootstrap supervised sur 4.7M master records (~1-2h)
+# expected_duration: ~5-7h sur 8 vCPU CCX33 :
+#                    * bootstrap supervised sur 4.7M master records v3
+#                      geometry (~1-2h, plus lent que v2 car 4.25M poids)
 #                    * 10 iter × (gen + train + bench) ~30 min each
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0059-h3-bootstrap-from-master"
+OUT_BASE="/root/jass/jobs/results/0059-h1-h3-combined"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
@@ -38,7 +43,7 @@ RECS_PER_ITER=20000
 SELF_PLAY_DEPTH=4
 MAX_PLIES=200
 SEED_BASE=33000
-PATTERN_SET="v2"
+PATTERN_SET="v3"     # H1+H3 combined : v3 verticaux Scan-style + bootstrap
 
 MASTER="/root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw"
 [ -f "$MASTER" ] || { echo "ABORT: master $MASTER not found"; exit 3; }
@@ -212,7 +217,7 @@ R_V6_D10=""; R_V7_D10=""
 
 echo
 echo "=========================================================="
-echo "       0059 H3 BOOTSTRAP-FROM-MASTER VERDICT"
+echo "       0059 H1+H3 COMBINED (v3 geometry + bootstrap) VERDICT"
 echo "=========================================================="
 echo "  bootstrap wall:    ${BOOT_SEC}s"
 echo "  bootstrap vs hc:   $BOOT_HC"
@@ -226,13 +231,16 @@ echo "    v5 d6 / d10:       $R_V5_D6 / $R_V5_D10"
 [ -n "$R_V6_D10" ] && echo "    v6 d10:            $R_V6_D10"
 [ -n "$R_V7_D10" ] && echo "    v7 d10:            $R_V7_D10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H3) :"
+echo "  Decision (H1+H3 combined, per docs/SCAN_METHODOLOGY_GAP.md) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
-    echo "    BOOTSTRAP WAS CRITICAL — partir d'un starter pré-entraîné"
-    echo "    sur master games débloque la self-play loop."
-    echo "    Suite : combiner avec H2 (volume) ou H1 (géométrie v3)."
+    echo "    COMBO UNLOCK — H1 (géométrie v3) + H3 (bootstrap master) ensemble"
+    echo "    débloquent l'archi pattern. Isoler ensuite : H3 seul vs H1 seul"
+    echo "    pour identifier la composante critique. Puis scale-up (H2 volume)."
 else
-    echo "    FLAT — bootstrap n'a pas suffi non plus. Reste H2 (volume)"
-    echo "    ou H4 (mobility features)."
+    echo "    FLAT — 7 hypothèses pattern systématiquement réfutées avec ~€13"
+    echo "    total. Combinaison la plus prometteuse (H1+H3) aussi flat."
+    echo "    Conclusion empirique : aucune variante cheap dans notre infra"
+    echo "    actuelle n'unlock l'archi pattern. Reste H2 volume (~€10) ou"
+    echo "    H4 mobility features (~€3 + 1j dev C++) ou leverage nouveau."
 fi
 echo "=========================================================="
