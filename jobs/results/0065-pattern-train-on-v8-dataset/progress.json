@@ -1,0 +1,13 @@
+{
+  "job_id": "0065-pattern-train-on-v8-dataset",
+  "snapshot_at": "2026-05-30T23:06:13+00:00",
+  "started_at": "2026-05-30T23:00:39+00:00",
+  "elapsed_seconds": 334,
+  "artefacts": [
+    {
+      "name": "train.log",
+      "size_bytes": 960
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  49379       1       05:34  0.0  0.0 bash\n  49381   49379       05:34  0.0  0.0 bash\n  49505   49381       05:29  299  6.6 python3\n  49506   49381       05:29  0.0  0.0 tee\n"
+}
