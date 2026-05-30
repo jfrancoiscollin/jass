@@ -81,7 +81,24 @@ V3_PATTERNS: list[list[int]] = [
     [24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50],
 ]
 
-PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS, "v3": V3_PATTERNS}
+# v4 long vertical strips — 8 patterns × 14 squares (7 rows × 2 cols).
+# Pushes context window beyond v3's 6 rows. ~38M weights base-3 (~153 MB).
+# Keep in sync with V4_PATTERNS in pattern_network.cpp.
+V4_PATTERNS: list[list[int]] = [
+    # Top half (rows 1-7)
+    [ 1,  2,  6,  7, 11, 12, 16, 17, 21, 22, 26, 27, 31, 32],
+    [ 2,  3,  7,  8, 12, 13, 17, 18, 22, 23, 27, 28, 32, 33],
+    [ 3,  4,  8,  9, 13, 14, 18, 19, 23, 24, 28, 29, 33, 34],
+    [ 4,  5,  9, 10, 14, 15, 19, 20, 24, 25, 29, 30, 34, 35],
+    # Bottom half (rows 4-10)
+    [16, 17, 21, 22, 26, 27, 31, 32, 36, 37, 41, 42, 46, 47],
+    [17, 18, 22, 23, 27, 28, 32, 33, 37, 38, 42, 43, 47, 48],
+    [18, 19, 23, 24, 28, 29, 33, 34, 38, 39, 43, 44, 48, 49],
+    [19, 20, 24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50],
+]
+
+PATTERN_SETS = {"v1": V1_PATTERNS, "v2": V2_PATTERNS,
+                "v3": V3_PATTERNS, "v4": V4_PATTERNS}
 
 # International draughts board is symmetric under horizontal flip. With
 # squares numbered 1..50, 5 per row, 10 rows, the mirror swaps positions
