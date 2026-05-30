@@ -1,0 +1,20 @@
+gen-data-wdl: n=25000 out=/root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter8-shard6.bin eval_depth=6 play_depth=6 max_plies=200 seed=32806 nnue=/root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v7.jpat quiet_only=false pv_extract=0
+  played 50 games, 1413 / 25000 positions
+  played 100 games, 2750 / 25000 positions
+  played 150 games, 4018 / 25000 positions
+  played 200 games, 5357 / 25000 positions
+  played 250 games, 6909 / 25000 positions
+  played 300 games, 8206 / 25000 positions
+  played 350 games, 9813 / 25000 positions
+  played 400 games, 11127 / 25000 positions
+  played 450 games, 12554 / 25000 positions
+  played 500 games, 13860 / 25000 positions
+  played 550 games, 15259 / 25000 positions
+  played 600 games, 16548 / 25000 positions
+  played 650 games, 17881 / 25000 positions
+  played 700 games, 19272 / 25000 positions
+  played 750 games, 20656 / 25000 positions
+  played 800 games, 22031 / 25000 positions
+  played 850 games, 23383 / 25000 positions
+  played 900 games, 24722 / 25000 positions
+wrote 25000 WDL records to /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter8-shard6.bin

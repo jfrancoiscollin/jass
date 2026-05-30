@@ -1,0 +1,314 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+iters: 10 × 200000 records depth 6
+patterns: v3
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v0.jpat (420493 bytes, JPAT v5 init patterns=v2 man=100.0 king=300.0)
+-rw-r--r-- 1 root root 411K May 30 13:12 /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v0.jpat
+
+============ iter 1 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter1-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter1-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  37261.13  val_mse=35220796.00  man=   5.3  king= 125.0 *
+iter  1: train_loss=  28044.07  val_mse=34969644.00  man= -35.4  king=  24.4 *
+iter  2: train_loss=  25590.75  val_mse=34903184.00  man=   1.1  king=  -9.8 *
+iter  3: train_loss=  24672.39  val_mse=34860916.00  man= -10.7  king= -20.8 *
+iter  4: train_loss=  24287.74  val_mse=34875976.00  man=   1.3  king=  -4.1
+iter  5: train_loss=  24106.87  val_mse=34822884.00  man=   3.6  king= -17.5 *
+iter  6: train_loss=  24040.17  val_mse=34851356.00  man=   2.1  king= -36.6
+iter  7: train_loss=  23998.58  val_mse=34838416.00  man=  -1.8  king= -41.0
+iter  8: train_loss=  23979.77  val_mse=34843348.00  man=  -4.7  king= -34.2
+iter  9: train_loss=  23973.12  val_mse=34841328.00  man=  -5.7  king= -34.9
+early stop: no val improvement for 4 iters (best val_mse=34822884.00)
+final (saved) val_mse=34579656.00  man=3.6  king=-17.5
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v1.jpat (17006669 bytes)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 1 : vs prev=0 ; vs v6 d10=0 ; pearson vs v7=+0.5642
+
+============ iter 2 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter2-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter2-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  42485.61  val_mse=44096100.00  man= -11.1  king=  83.7 *
+iter  1: train_loss=  29712.45  val_mse=43215476.00  man= -13.0  king= 103.5 *
+iter  2: train_loss=  27258.92  val_mse=43396600.00  man=  -3.9  king=  61.6
+iter  3: train_loss=  26325.57  val_mse=43257884.00  man=  -3.4  king=  36.8
+iter  4: train_loss=  25781.45  val_mse=43202156.00  man=   4.1  king=  70.2 *
+iter  5: train_loss=  25531.17  val_mse=43341024.00  man=   1.4  king=  46.7
+iter  6: train_loss=  25375.91  val_mse=43320476.00  man=   0.3  king=  41.7
+iter  7: train_loss=  25282.26  val_mse=43260588.00  man=  -4.0  king=  30.7
+iter  8: train_loss=  25233.88  val_mse=43291208.00  man=  -2.2  king=  45.3
+early stop: no val improvement for 4 iters (best val_mse=43202156.00)
+final (saved) val_mse=43185612.00  man=4.1  king=70.2
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v2.jpat (17006669 bytes)
+Result: A=48 B=6 Draws=0 (total 54)
+A score rate: 0.888889 (48 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 2 : vs prev=0.888889 ; vs v6 d10=0 ; pearson vs v7=+0.7552
+
+============ iter 3 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter3-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter3-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  39996.18  val_mse=37721124.00  man=  -1.8  king= 121.6 *
+iter  1: train_loss=  30748.68  val_mse=37463372.00  man=  -2.1  king=  -1.7 *
+iter  2: train_loss=  29160.95  val_mse=37494412.00  man=  -3.4  king= -64.6
+iter  3: train_loss=  28409.35  val_mse=37363012.00  man=   1.5  king= -57.5 *
+iter  4: train_loss=  28013.48  val_mse=37421560.00  man=  -3.5  king= -14.7
+iter  5: train_loss=  27764.69  val_mse=37479724.00  man=  -1.4  king=  -9.2
+iter  6: train_loss=  27682.60  val_mse=37451248.00  man=  -3.0  king=  -7.5
+iter  7: train_loss=  27623.41  val_mse=37426796.00  man=  -3.6  king= -21.0
+early stop: no val improvement for 4 iters (best val_mse=37363012.00)
+final (saved) val_mse=37338860.00  man=1.5  king=-57.5
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v3.jpat (17006669 bytes)
+Result: A=15 B=39 Draws=0 (total 54)
+A score rate: 0.277778 (15 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 3 : vs prev=0.277778 ; vs v6 d10=0 ; pearson vs v7=+0.6514
+
+============ iter 4 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter4-data.bin
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40854.48  val_mse=38064156.00  man=   1.1  king=  79.7 *
+iter  1: train_loss=  30206.93  val_mse=38055016.00  man=  -9.7  king=  86.5 *
+iter  2: train_loss=  28704.93  val_mse=37966220.00  man=  -1.1  king=   9.0 *
+iter  3: train_loss=  27581.58  val_mse=37887844.00  man=  -3.4  king= -38.2 *
+iter  4: train_loss=  27021.31  val_mse=37894492.00  man=  -2.1  king= -16.4
+iter  5: train_loss=  26837.08  val_mse=37903792.00  man=  -2.3  king=   4.9
+iter  6: train_loss=  26728.92  val_mse=37883284.00  man=  -4.1  king=   0.0 *
+iter  7: train_loss=  26666.93  val_mse=37876952.00  man=  -3.0  king=  -2.9 *
+iter  8: train_loss=  26637.62  val_mse=37880576.00  man=  -2.5  king= -10.2
+iter  9: train_loss=  26623.74  val_mse=37890288.00  man=  -4.1  king= -13.5
+iter 10: train_loss=  26614.93  val_mse=37899448.00  man=  -3.4  king= -13.2
+iter 11: train_loss=  26609.66  val_mse=37895496.00  man=  -4.2  king= -10.7
+early stop: no val improvement for 4 iters (best val_mse=37876952.00)
+final (saved) val_mse=37868752.00  man=-3.0  king=-2.9
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v4.jpat (17006669 bytes)
+Result: A=48 B=6 Draws=0 (total 54)
+A score rate: 0.888889 (48 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 4 : vs prev=0.888889 ; vs v6 d10=0 ; pearson vs v7=+0.7344
+
+============ iter 5 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter5-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter5-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40218.67  val_mse=39858396.00  man= -12.3  king= 123.3 *
+iter  1: train_loss=  29840.58  val_mse=39308040.00  man=  -4.8  king= -29.6 *
+iter  2: train_loss=  27965.89  val_mse=39403880.00  man=  -7.0  king= -35.9
+iter  3: train_loss=  27231.38  val_mse=39558904.00  man=  -2.9  king=  10.0
+iter  4: train_loss=  26843.56  val_mse=39421144.00  man=  -3.6  king=   9.2
+iter  5: train_loss=  26656.24  val_mse=39439648.00  man=  -1.7  king= -18.9
+early stop: no val improvement for 4 iters (best val_mse=39308040.00)
+final (saved) val_mse=39299920.00  man=-4.8  king=-29.6
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v5.jpat (17006669 bytes)
+Result: A=12 B=39 Draws=3 (total 54)
+A score rate: 0.25 (13.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 5 : vs prev=0.25 ; vs v6 d10=0 ; pearson vs v7=+0.7142
+
+============ iter 6 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter6-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter6-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40219.20  val_mse=32385162.00  man=  -4.8  king= 116.2 *
+iter  1: train_loss=  30845.70  val_mse=32243436.00  man=  -2.3  king= -43.7 *
+iter  2: train_loss=  29416.94  val_mse=32217782.00  man=  -1.8  king= -68.9 *
+iter  3: train_loss=  28675.58  val_mse=32314606.00  man=  -5.9  king= -71.3
+iter  4: train_loss=  28442.54  val_mse=32256884.00  man=  -2.3  king= -12.2
+iter  5: train_loss=  28286.20  val_mse=32245042.00  man=  -0.4  king= -12.5
+iter  6: train_loss=  28227.79  val_mse=32245128.00  man=  -1.5  king= -32.4
+early stop: no val improvement for 4 iters (best val_mse=32217782.00)
+final (saved) val_mse=32190750.00  man=-1.8  king=-68.9
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v6.jpat (17006669 bytes)
+Result: A=39 B=12 Draws=3 (total 54)
+A score rate: 0.75 (40.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 6 : vs prev=0.75 ; vs v6 d10=0 ; pearson vs v7=+0.6919
+
+============ iter 7 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter7-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter7-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40926.73  val_mse=40007312.00  man=  -2.4  king= 114.9 *
+iter  1: train_loss=  29365.74  val_mse=39708240.00  man= -18.1  king=  78.6 *
+iter  2: train_loss=  27717.57  val_mse=39616928.00  man=  -5.6  king= -28.5 *
+iter  3: train_loss=  26937.42  val_mse=39763200.00  man=  -6.5  king=  -9.8
+iter  4: train_loss=  26556.70  val_mse=39673784.00  man=  -4.3  king= -19.8
+iter  5: train_loss=  26428.38  val_mse=39631020.00  man=  -8.6  king=  -3.7
+iter  6: train_loss=  26358.96  val_mse=39652284.00  man=  -5.7  king=  -3.8
+early stop: no val improvement for 4 iters (best val_mse=39616928.00)
+final (saved) val_mse=39621344.00  man=-5.6  king=-28.5
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v7.jpat (17006669 bytes)
+Result: A=27 B=24 Draws=3 (total 54)
+A score rate: 0.527778 (28.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 7 : vs prev=0.527778 ; vs v6 d10=0 ; pearson vs v7=+0.6979
+
+============ iter 8 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter8-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter8-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40680.18  val_mse=35527300.00  man= -13.4  king= 138.9 *
+iter  1: train_loss=  30951.36  val_mse=35301824.00  man=  -4.8  king=  71.9 *
+iter  2: train_loss=  29151.79  val_mse=35218064.00  man=  -6.1  king= -25.8 *
+iter  3: train_loss=  28419.43  val_mse=35184268.00  man=  -3.0  king= -33.7 *
+iter  4: train_loss=  28096.70  val_mse=35187096.00  man=   0.7  king=   7.5
+iter  5: train_loss=  27841.54  val_mse=35143768.00  man=  -2.1  king=  38.7 *
+iter  6: train_loss=  27741.12  val_mse=35146604.00  man=  -2.3  king=  35.5
+iter  7: train_loss=  27686.67  val_mse=35173576.00  man=  -4.9  king=  17.8
+iter  8: train_loss=  27662.20  val_mse=35155092.00  man=  -2.0  king=   8.1
+iter  9: train_loss=  27647.02  val_mse=35147868.00  man=  -0.5  king=   7.3
+early stop: no val improvement for 4 iters (best val_mse=35143768.00)
+final (saved) val_mse=35141756.00  man=-2.1  king=38.7
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v8.jpat (17006669 bytes)
+Result: A=24 B=24 Draws=6 (total 54)
+A score rate: 0.5 (27 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 8 : vs prev=0.5 ; vs v6 d10=0 ; pearson vs v7=+0.6990
+
+============ iter 9 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter9-data.bin
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter9-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40257.09  val_mse=40725596.00  man=  -7.8  king= 120.0 *
+iter  1: train_loss=  30185.91  val_mse=40179472.00  man= -13.8  king=  -2.2 *
+iter  2: train_loss=  28346.48  val_mse=40096852.00  man=   2.7  king=  43.8 *
+iter  3: train_loss=  27515.26  val_mse=40256904.00  man=  -0.2  king=  62.3
+iter  4: train_loss=  27022.90  val_mse=40218016.00  man=  -1.2  king=  38.5
+iter  5: train_loss=  26791.15  val_mse=40141192.00  man=  -0.7  king=  62.2
+iter  6: train_loss=  26678.19  val_mse=40143668.00  man=   2.1  king=  66.8
+early stop: no val improvement for 4 iters (best val_mse=40096852.00)
+final (saved) val_mse=40123284.00  man=2.7  king=43.8
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v9.jpat (17006669 bytes)
+Result: A=27 B=27 Draws=0 (total 54)
+A score rate: 0.5 (27 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 9 : vs prev=0.5 ; vs v6 d10=0 ; pearson vs v7=+0.7203
+
+============ iter 10 / 10 ============
+merged 200000 records into /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter10-data.bin
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter10-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  40079.50  val_mse=37614688.00  man=  -6.7  king= 156.1 *
+iter  1: train_loss=  30438.66  val_mse=37457580.00  man=  -1.6  king=  55.2 *
+iter  2: train_loss=  29087.13  val_mse=37399028.00  man=  -5.9  king=  25.6 *
+iter  3: train_loss=  28113.85  val_mse=37446616.00  man=  -1.8  king=  10.5
+iter  4: train_loss=  27733.01  val_mse=37471744.00  man=  -2.6  king=  34.8
+iter  5: train_loss=  27604.32  val_mse=37347408.00  man=  -4.0  king=  54.2 *
+iter  6: train_loss=  27497.27  val_mse=37341652.00  man=  -4.6  king=  29.0 *
+iter  7: train_loss=  27452.86  val_mse=37360036.00  man=  -0.6  king=  12.9
+iter  8: train_loss=  27426.81  val_mse=37366968.00  man=  -2.7  king=  18.4
+iter  9: train_loss=  27413.17  val_mse=37366368.00  man=  -4.3  king=   9.6
+iter 10: train_loss=  27407.48  val_mse=37361284.00  man=  -2.1  king=  10.0
+early stop: no val improvement for 4 iters (best val_mse=37341652.00)
+final (saved) val_mse=37327720.00  man=-4.6  king=29.0
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v10.jpat (17006669 bytes)
+Result: A=30 B=21 Draws=3 (total 54)
+A score rate: 0.583333 (31.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 10 : vs prev=0.583333 ; vs v6 d10=0 ; pearson vs v7=+0.7051
+
+=== final bench vs v5/v6/v7 ===
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0058 H2 VOLUME SCALEUP VERDICT
+==========================================================
+  wall:              3672s (1.0h)
+  iters:             10 × 200000 records (×100 vs G4-diag)
+  patterns:          v3
+iter  rate_vs_prev_d6  rate_vs_v6_d10  pearson_vs_v7
+1     0                0               +0.5642
+2     0.888889         0               +0.7552
+3     0.277778         0               +0.6514
+4     0.888889         0               +0.7344
+5     0.25             0               +0.7142
+6     0.75             0               +0.6919
+7     0.527778         0               +0.6979
+8     0.5              0               +0.6990
+9     0.5              0               +0.7203
+10    0.583333         0               +0.7051
+
+  Final pattern-v10 vs :
+    handcrafted:       0
+    v5 d6 / d10:       0 / 0
+    v6 d10:            0
+    v7 d10:            0
+
+  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H2) :
+    FLAT même à ×100 volume — volume seul pas la racine.
+    Suite : H3 (bootstrap depuis master) ou H4 (mobility).
+==========================================================
