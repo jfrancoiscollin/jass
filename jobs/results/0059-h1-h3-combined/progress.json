@@ -1,13 +1,100 @@
 {
   "job_id": "0059-h1-h3-combined",
-  "snapshot_at": "2026-05-30T06:32:33+00:00",
+  "snapshot_at": "2026-05-30T06:37:53+00:00",
   "started_at": "2026-05-30T05:04:43+00:00",
-  "elapsed_seconds": 5270,
+  "elapsed_seconds": 5590,
   "artefacts": [
     {
       "name": "bootstrap-train.log",
-      "size_bytes": 2098
+      "size_bytes": 2443
+    },
+    {
+      "name": "bootstrap-vs-hc.log",
+      "size_bytes": 247
+    },
+    {
+      "name": "bootstrap-vs-v6.log",
+      "size_bytes": 316
+    },
+    {
+      "name": "iter-rates.tsv",
+      "size_bytes": 50
+    },
+    {
+      "name": "iter1-shard1.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard2.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard3.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard4.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard5.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard6.bin",
+      "size_bytes": 16418,
+      "records": 431
+    },
+    {
+      "name": "iter1-shard6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard7.bin",
+      "size_bytes": 24626,
+      "records": 647
+    },
+    {
+      "name": "iter1-shard7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard8.bin",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-shard8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "pattern-bootstrap.jpat",
+      "size_bytes": 17006661
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    01:27:50  0.0  0.0 bash\n  34862   34860    01:27:50  0.0  0.0 bash\n  34951   34862    01:27:47  305 25.4 python3\n  34952   34862    01:27:47  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    01:33:10  0.0  0.0 bash\n  34862   34860    01:33:10  0.0  0.0 bash\n  36654   34862       00:01  100  0.1 jass\n  36655   34862       00:01 99.3  0.1 jass\n  36656   34862       00:01 98.6  0.1 jass\n  36657   34862       00:01  100  0.1 jass\n  36658   34862       00:01  100  0.1 jass\n  36659   34862       00:01 99.3  0.1 jass\n  36660   34862       00:01 96.0  0.1 jass\n  36661   34862       00:01  100  0.1 jass\n"
 }
