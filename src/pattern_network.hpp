@@ -114,6 +114,30 @@
 // pattern_network.cpp). Cheap proxy for true mobility (skips full
 // move-gen; doesn't distinguish safe vs attacked moves like Scan does).
 //
+// Version 7 (hybrid pattern + MLP head — small non-linear combiner on
+// top of the per-pattern lookup outputs; MG-only). Strict additive
+// extension of v6:
+//   [0..453)   identical to v6 header
+//   [453..454) uint8  mlp_hidden (0 = no MLP, else hidden layer width)
+//   if mlp_hidden > 0 :
+//     [N × mlp_hidden] float32  mlp_w1   (N = num_patterns)
+//     [mlp_hidden]     float32  mlp_b1
+//     [mlp_hidden]     float32  mlp_w2
+//     [1]              float32  mlp_b2
+//   For each pattern: (same layout as v6)
+//
+// MLP head : single hidden layer with ReLU, single output. Acts as a
+// RESIDUAL on top of the existing linear pattern sum (i.e., the
+// pre-existing `acc_mg += sum_p pattern_p.weights[idx_p]` still
+// applies ; the MLP output is ADDED). When mlp_hidden = 0 (default),
+// behaviour is identical to v6.
+//
+// Float32 storage chosen over int32 to avoid quantization scale headaches
+// at inference time. The MLP input vector is the int32 pattern bucket
+// weights themselves (converted to float at eval time). Output cast back
+// to int32 cp at the end. Tiny: 145 weights for 8 patterns × 16 hidden
+// (~580 bytes) — adds < 1% to typical JPAT size.
+//
 // Stage interpolation: `score = (acc_mg * (Stage_Size - stage) +
 //                                acc_eg * stage) / Stage_Size`
 // with Stage_Size = 300 hardcoded. Stage derives from total piece
@@ -250,12 +274,32 @@ public:
     void set_mobility_mg(std::int32_t v) noexcept { mobility_mg_ = v; }
     void set_mobility_eg(std::int32_t v) noexcept { mobility_eg_ = v; }
 
+    // JPAT v7 — hybrid pattern + MLP head (MG-only residual). The
+    // MLP takes the N per-pattern bucket lookups as inputs, applies
+    // a single hidden layer (ReLU activation), and outputs a scalar
+    // residual added to acc_mg. Float32 weights, zero-init for
+    // backward-compat (mlp_hidden = 0 → no MLP, eval identical v6).
+    std::uint8_t mlp_hidden() const noexcept { return mlp_hidden_; }
+    const std::vector<float>& mlp_w1() const noexcept { return mlp_w1_; }
+    const std::vector<float>& mlp_b1() const noexcept { return mlp_b1_; }
+    const std::vector<float>& mlp_w2() const noexcept { return mlp_w2_; }
+    float                     mlp_b2() const noexcept { return mlp_b2_; }
+    // Configure the MLP head : allocate weight vectors of the right
+    // size (mlp_w1 = N_patterns × hidden, mlp_b1 = hidden, mlp_w2 =
+    // hidden, mlp_b2 = scalar). Existing values discarded.
+    void                      configure_mlp(std::uint8_t hidden) noexcept;
+    std::vector<float>&       mlp_w1_mut() noexcept { return mlp_w1_; }
+    std::vector<float>&       mlp_b1_mut() noexcept { return mlp_b1_; }
+    std::vector<float>&       mlp_w2_mut() noexcept { return mlp_w2_; }
+    void                      set_mlp_b2(float v) noexcept { mlp_b2_ = v; }
+
     // Save format: pass `version = 2` to write the hybrid header (even
     // if man/king are 0); `version = 3` writes the v3 header that
     // additionally records the encoding_base; `version = 4` adds the
     // G3a balance + king PST; `version = 5` adds the EG counterparts;
-    // `version = 6` adds king mobility (MG/EG). Default `version = 1`
-    // matches the legacy pure-pattern layout.
+    // `version = 6` adds king mobility (MG/EG); `version = 7` adds
+    // the hybrid MLP head. Default `version = 1` matches the legacy
+    // pure-pattern layout.
     bool load(std::string_view path);
     bool save(std::string_view path, std::uint32_t version = 1) const;
     bool load_from_bytes(const unsigned char* data, std::size_t n);
@@ -282,6 +326,14 @@ private:
     // H4 / JPAT v6 only — king mobility weights (MG/EG split).
     std::int32_t                       mobility_mg_{0};
     std::int32_t                       mobility_eg_{0};
+    // JPAT v7 only — hybrid MLP head (MG-only residual). mlp_hidden_ = 0
+    // means no MLP (v6 behaviour preserved exactly). Weights are float32
+    // to avoid quantization scale issues at inference time.
+    std::uint8_t                       mlp_hidden_{0};
+    std::vector<float>                 mlp_w1_{};   // size N_patterns × hidden
+    std::vector<float>                 mlp_b1_{};   // size hidden
+    std::vector<float>                 mlp_w2_{};   // size hidden
+    float                              mlp_b2_{0.0f};
 };
 
 }  // namespace jass
