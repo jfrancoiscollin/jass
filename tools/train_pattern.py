@@ -406,13 +406,23 @@ class HybridPatternModel(PatternModel):
                  init_king: float = 300.0,
                  extras: bool = False,
                  phase_split: bool = False,
-                 mobility: bool = False):
+                 mobility: bool = False,
+                 mlp_hidden: int = 0):
         super().__init__(patterns, base=base)
         self.man_value  = nn.Parameter(torch.tensor(init_man))
         self.king_value = nn.Parameter(torch.tensor(init_king))
         self.extras     = extras
         self.phase_split = phase_split
         self.mobility    = mobility
+        self.mlp_hidden  = mlp_hidden
+        if mlp_hidden > 0:
+            # JPAT v7 — hybrid MLP head. Per-pattern values → ReLU(hidden) → scalar.
+            # Small random init for non-trivial gradient flow.
+            n = len(patterns)
+            self.mlp_w1 = nn.Parameter(torch.randn(n, mlp_hidden) * 0.01)
+            self.mlp_b1 = nn.Parameter(torch.zeros(mlp_hidden))
+            self.mlp_w2 = nn.Parameter(torch.randn(mlp_hidden) * 0.01)
+            self.mlp_b2 = nn.Parameter(torch.zeros(1))
         if extras:
             self.king_pst = nn.Parameter(torch.zeros(50))
             self.balance  = nn.Parameter(torch.tensor(0.0))
@@ -457,8 +467,11 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
     has_extras   = is_hybrid and getattr(model, "extras", False)
     has_phase    = is_hybrid and getattr(model, "phase_split", False)
     has_mobility = is_hybrid and getattr(model, "mobility", False)
+    has_mlp      = is_hybrid and getattr(model, "mlp_hidden", 0) > 0
     base         = model.base
-    if has_mobility:
+    if has_mlp:
+        version = 7
+    elif has_mobility:
         version = 6
     elif has_phase:
         version = 5
@@ -509,11 +522,27 @@ def save_jpat(model: PatternModel, patterns: list[list[int]], out_path: Path) ->
             f.write(pst_eg_q.tobytes())
         if version >= 6:
             # H4 / JPAT v6: king mobility (mg / eg).
-            mob_mg_i = int(round(model.mobility_mg.item()))
+            mob_mg_i = int(round(model.mobility_mg.item())) if has_mobility else 0
             mob_eg_i = (int(round(model.mobility_eg.item()))
-                        if has_phase else 0)
+                        if (has_mobility and has_phase) else 0)
             f.write(struct.pack("<i", mob_mg_i))
             f.write(struct.pack("<i", mob_eg_i))
+        if version >= 7:
+            # JPAT v7: hybrid MLP head (uint8 hidden + float32 weights).
+            h = int(model.mlp_hidden) if has_mlp else 0
+            f.write(struct.pack("<B", h))
+            if h > 0:
+                n = len(patterns)
+                w1 = model.mlp_w1.detach().cpu().numpy().astype(np.float32)
+                b1 = model.mlp_b1.detach().cpu().numpy().astype(np.float32)
+                w2 = model.mlp_w2.detach().cpu().numpy().astype(np.float32)
+                b2 = float(model.mlp_b2.detach().cpu().numpy().item())
+                # w1 is (n_patterns, h), C++ expects row-major n × h
+                assert w1.shape == (n, h)
+                f.write(w1.tobytes())
+                f.write(b1.tobytes())
+                f.write(w2.tobytes())
+                f.write(struct.pack("<f", b2))
         for pi, sqs in enumerate(patterns):
             k = len(sqs)
             f.write(struct.pack("<B", k))                    # num_squares
@@ -656,6 +685,7 @@ def train_one(
     extras: bool = False,
     phase_split: bool = False,
     mobility: bool = False,
+    mlp_hidden: int = 0,
     optimizer_kind: str = "adam",
     lbfgs_max_iter: int = 20,
     lbfgs_history: int = 10,
@@ -672,7 +702,7 @@ def train_one(
         model = HybridPatternModel(patterns, base=base,
                                    init_man=init_man, init_king=init_king,
                                    extras=extras, phase_split=phase_split,
-                                   mobility=mobility)
+                                   mobility=mobility, mlp_hidden=mlp_hidden)
     else:
         model = PatternModel(patterns, base=base)
 
@@ -686,14 +716,23 @@ def train_one(
             return model(pidx_t[:, idx_slice])
         n = idx_slice.shape[0]
         # Patterns contribute mono-phase in JPAT v5 — same value to mg
-        # and eg accumulators (so we compute once and reuse).
-        pat = torch.zeros(n, dtype=torch.float32)
+        # and eg accumulators (so we compute once and reuse). For JPAT
+        # v7 (hybrid MLP head) we also keep the per-pattern values as a
+        # (n, P) tensor to feed the MLP.
+        num_p = len(model.tables)
+        pattern_vals = torch.zeros(n, num_p, dtype=torch.float32)
         for pi, table in enumerate(model.tables):
-            pat = pat + table(pidx_t[pi][idx_slice]).squeeze(-1)
+            pattern_vals[:, pi] = table(pidx_t[pi][idx_slice]).squeeze(-1)
+        pat = pattern_vals.sum(dim=1)
         # MG accumulator (skeleton + patterns).
         acc_mg = (model.bias.expand(n).clone() + pat
                   + model.man_value  * mat_diff_t[idx_slice]
                   + model.king_value * king_diff_t[idx_slice])
+        if mlp_hidden > 0:
+            # JPAT v7 — MLP residual on top of acc_mg (MG-only).
+            # pattern_vals : (n, P)  →  hidden : (n, H)  →  out : (n,)
+            hidden = torch.relu(pattern_vals @ model.mlp_w1 + model.mlp_b1)
+            acc_mg = acc_mg + hidden @ model.mlp_w2 + model.mlp_b2.squeeze()
         if extras:
             assert king_pst_t is not None and balance_t is not None
             acc_mg = (acc_mg
@@ -839,6 +878,15 @@ def average_models(models: list[PatternModel]) -> PatternModel:
                 if getattr(avg, "phase_split", False):
                     mob_eg_stack = torch.stack([m.mobility_eg for m in models], dim=0)
                     avg.mobility_eg.copy_(mob_eg_stack.mean(dim=0))
+            if getattr(avg, "mlp_hidden", 0) > 0:
+                w1_stack = torch.stack([m.mlp_w1 for m in models], dim=0)
+                b1_stack = torch.stack([m.mlp_b1 for m in models], dim=0)
+                w2_stack = torch.stack([m.mlp_w2 for m in models], dim=0)
+                b2_stack = torch.stack([m.mlp_b2 for m in models], dim=0)
+                avg.mlp_w1.copy_(w1_stack.mean(dim=0))
+                avg.mlp_b1.copy_(b1_stack.mean(dim=0))
+                avg.mlp_w2.copy_(w2_stack.mean(dim=0))
+                avg.mlp_b2.copy_(b2_stack.mean(dim=0))
     return avg
 
 
@@ -902,6 +950,11 @@ def main(argv: list[str]) -> int:
                         "of empty diag neighbors per king, white - black). "
                         "1 weight (MG-only) or 2 weights (with --phase-split). "
                         "Requires --hybrid.")
+    p.add_argument("--mlp-hidden", type=int, default=0,
+                   help="JPAT v7 : add a small MLP head (N patterns → H hidden "
+                        "ReLU → 1 output, MG-only residual) on top of the "
+                        "linear pattern sum. 0 (default) disables. Try 16 "
+                        "for a non-linear combiner. Requires --hybrid.")
     p.add_argument("--pattern-base", type=int, default=5, choices=[3, 5],
                    help="per-square encoding base. 5 = legacy (empty/"
                         "W-man/W-king/B-man/B-king). 3 = D2 Scan-aligned "
@@ -934,6 +987,8 @@ def main(argv: list[str]) -> int:
         p.error("--phase-split (G3b MG/EG skeleton) requires --hybrid")
     if args.mobility and not args.hybrid:
         p.error("--mobility (H4 king mobility) requires --hybrid")
+    if args.mlp_hidden > 0 and not args.hybrid:
+        p.error("--mlp-hidden requires --hybrid")
     if args.optimizer == "lbfgs" and args.weight_decay > 0:
         print(f"note: --weight-decay={args.weight_decay} applied as manual "
               "L2 inside the LBFGS closure (PyTorch LBFGS doesn't support "
@@ -1033,6 +1088,7 @@ def main(argv: list[str]) -> int:
         hybrid=args.hybrid, init_man=args.init_man, init_king=args.init_king,
         base=args.pattern_base, extras=args.extras,
         phase_split=args.phase_split, mobility=args.mobility,
+        mlp_hidden=args.mlp_hidden,
         optimizer_kind=args.optimizer,
         lbfgs_max_iter=args.lbfgs_max_iter,
         lbfgs_history=args.lbfgs_history,
