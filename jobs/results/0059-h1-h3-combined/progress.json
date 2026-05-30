@@ -1,13 +1,13 @@
 {
   "job_id": "0059-h1-h3-combined",
-  "snapshot_at": "2026-05-30T06:05:33+00:00",
+  "snapshot_at": "2026-05-30T06:10:33+00:00",
   "started_at": "2026-05-30T05:04:43+00:00",
-  "elapsed_seconds": 3650,
+  "elapsed_seconds": 3950,
   "artefacts": [
     {
       "name": "bootstrap-train.log",
       "size_bytes": 1666
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    01:00:49  0.0  0.0 bash\n  34862   34860    01:00:49  0.0  0.0 bash\n  34951   34862    01:00:47  305 25.1 python3\n  34952   34862    01:00:47  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    01:05:50  0.0  0.0 bash\n  34862   34860    01:05:50  0.0  0.0 bash\n  34951   34862    01:05:47  305 30.7 python3\n  34952   34862    01:05:47  0.0  0.0 tee\n"
 }
