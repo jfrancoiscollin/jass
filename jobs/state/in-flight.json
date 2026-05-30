@@ -1,7 +1,0 @@
-{
-  "job_id": "0065-pattern-train-on-v8-dataset",
-  "script": "jobs/queue/0065-pattern-train-on-v8-dataset.sh",
-  "pid": 49379,
-  "started_at": "2026-05-30T23:00:39+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
