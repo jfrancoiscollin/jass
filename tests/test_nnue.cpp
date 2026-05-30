@@ -1263,6 +1263,33 @@ void test_pattern_network_v4_load_preserves_eval() {
     std::remove(path.c_str());
 }
 
+// H4 / JPAT v6 — round-trip mobility + verify the compute_king_mobility
+// proxy : count(empty diag neighbors) per white king minus same for
+// black kings, sign-flipped by STM at eval output.
+void test_pattern_network_v6_king_mobility_roundtrip() {
+    PatternNetwork net = PatternNetwork::default_v2();
+    net.set_encoding_base(3);
+    net.set_mobility_mg(10);   // 10 cp per (white_mob - black_mob)
+    // mobility_eg left at 0 → no phase split → eval = acc_mg directly
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v6-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/6));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.mobility_mg(), 10);
+    JASS_CHECK_EQ(loaded.mobility_eg(),  0);
+
+    // White king on 1 (diag neighbors 6, 7 — both empty in this pos),
+    // black king on 5 (diag neighbor 10 — empty in this pos).
+    // mob = white(2) - black(1) = 1.
+    // acc_mg = mobility_mg * mob = 10 * 1 = 10. STM=W → eval = +10.
+    const Position p = parse("W:WK1,30:BK5,21");
+    JASS_CHECK_EQ(loaded.evaluate(p), 10);
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1318,6 +1345,7 @@ void run_nnue_tests() {
     test_pattern_network_v3_base3_roundtrip();
     test_pattern_network_v4_king_pst_balance_roundtrip();
     test_pattern_network_v5_phase_split_roundtrip();
+    test_pattern_network_v6_king_mobility_roundtrip();
     test_pattern_network_v4_load_preserves_eval();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
