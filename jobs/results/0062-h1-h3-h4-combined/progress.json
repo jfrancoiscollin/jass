@@ -1,8 +1,8 @@
 {
   "job_id": "0062-h1-h3-h4-combined",
-  "snapshot_at": "2026-05-30T12:57:05+00:00",
+  "snapshot_at": "2026-05-30T13:02:13+00:00",
   "started_at": "2026-05-30T10:56:09+00:00",
-  "elapsed_seconds": 7256,
+  "elapsed_seconds": 7564,
   "artefacts": [
     {
       "name": "bootstrap-train.log",
@@ -11,6 +11,22 @@
     {
       "name": "bootstrap-vs-v6.log",
       "size_bytes": 309
+    },
+    {
+      "name": "final-vs-hc.log",
+      "size_bytes": 241
+    },
+    {
+      "name": "final-vs-v5-d10.log",
+      "size_bytes": 307
+    },
+    {
+      "name": "final-vs-v5-d6.log",
+      "size_bytes": 306
+    },
+    {
+      "name": "final-vs-v6-d10.log",
+      "size_bytes": 0
     },
     {
       "name": "h134-v0.jpat",
@@ -58,7 +74,7 @@
     },
     {
       "name": "iter-rates.tsv",
-      "size_bytes": 234
+      "size_bytes": 256
     },
     {
       "name": "iter1-bench-vs-prev.log",
@@ -159,12 +175,16 @@
     },
     {
       "name": "iter10-bench-vs-v6.log",
-      "size_bytes": 0
+      "size_bytes": 310
     },
     {
       "name": "iter10-data.bin",
       "size_bytes": 760008,
       "records": 20000
+    },
+    {
+      "name": "iter10-pearson.log",
+      "size_bytes": 0
     },
     {
       "name": "iter10-shard1.bin",
@@ -987,5 +1007,5 @@
       "size_bytes": 1078
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  39390       1    02:00:56  0.0  0.0 bash\n  39392   39390    02:00:56  0.0  0.0 bash\n  41966   39392       00:51 99.9  0.1 jass\n  41967   39392       00:51  0.0  0.0 tee\n  41968   39392       00:51  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  39390       1    02:06:03  0.0  0.0 bash\n  39392   39390    02:06:03  0.0  0.0 bash\n  42046   39392       01:21  100  0.1 jass\n  42047   39392       01:21  0.0  0.0 tee\n  42048   39392       01:21  0.0  0.0 tail\n"
 }
