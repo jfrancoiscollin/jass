@@ -1,0 +1,28 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0062-h1-h3-h4-combined/artefacts.src/iter5-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40949.04  val_mse=23364432.00  man=   0.7  king=  94.1 *
+iter  1: train_loss=  30495.86  val_mse=23080030.00  man=   4.9  king=  37.1 *
+iter  2: train_loss=  27940.52  val_mse=23117374.00  man=  -5.8  king=  10.3
+iter  3: train_loss=  26812.17  val_mse=23119804.00  man= -11.2  king=  13.9
+iter  4: train_loss=  26156.30  val_mse=23110536.00  man=  -5.8  king=  63.7
+iter  5: train_loss=  25822.15  val_mse=23058074.00  man= -12.6  king=  94.7 *
+iter  6: train_loss=  25653.16  val_mse=23069274.00  man=  -6.1  king=  59.9
+iter  7: train_loss=  25572.99  val_mse=23064204.00  man=  -3.9  king=  36.9
+iter  8: train_loss=  25499.17  val_mse=23056498.00  man=  -5.4  king=  22.0 *
+iter  9: train_loss=  25464.36  val_mse=23048734.00  man=  -5.9  king=  21.1 *
+iter 10: train_loss=  25448.29  val_mse=23053294.00  man=  -7.2  king=  30.5
+iter 11: train_loss=  25440.16  val_mse=23057138.00  man=  -5.2  king=  29.4
+iter 12: train_loss=  25436.08  val_mse=23051022.00  man=  -6.2  king=  29.0
+iter 13: train_loss=  25434.20  val_mse=23046676.00  man=  -6.1  king=  23.2 *
+iter 14: train_loss=  25433.08  val_mse=23048104.00  man=  -6.1  king=  20.6
+iter 15: train_loss=  25432.17  val_mse=23050756.00  man=  -6.0  king=  20.4
+iter 16: train_loss=  25431.90  val_mse=23051008.00  man=  -6.2  king=  22.7
+iter 17: train_loss=  25431.61  val_mse=23050512.00  man=  -6.0  king=  23.3
+early stop: no val improvement for 4 iters (best val_mse=23046676.00)
+final (saved) val_mse=23039136.00  man=-6.1  king=23.2
+wrote /root/jass/jobs/results/0062-h1-h3-h4-combined/artefacts.src/h134-v5.jpat (17006669 bytes)
