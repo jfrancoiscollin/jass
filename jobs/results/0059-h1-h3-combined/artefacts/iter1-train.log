@@ -1,0 +1,16 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/iter1-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  42458.89  val_mse=35252488.00  man=  21.0  king=  -0.7 *
+iter  1: train_loss=  26551.74  val_mse=34835168.00  man= -29.2  king=  23.7 *
+iter  2: train_loss=  22509.92  val_mse=35072452.00  man=  13.6  king= -63.3
+iter  3: train_loss=  21276.40  val_mse=35033032.00  man=   7.2  king= -97.8
+iter  4: train_loss=  20738.56  val_mse=34923912.00  man=  -0.8  king= -48.8
+iter  5: train_loss=  20465.07  val_mse=34914488.00  man=  -0.1  king=-101.4
+early stop: no val improvement for 4 iters (best val_mse=34835168.00)
+final (saved) val_mse=34643492.00  man=-29.2  king=23.7
+wrote /root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/h3-v1.jpat (17006661 bytes)
