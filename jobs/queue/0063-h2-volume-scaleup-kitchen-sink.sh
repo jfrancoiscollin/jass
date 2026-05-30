@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: 0058-h2-volume-scaleup-self-play
+# id: 0063-h2-volume-scaleup-kitchen-sink
 # description: H2 du docs/SCAN_METHODOLOGY_GAP.md. Scale-up volume self-
 #              play : 10 iter × 200K records depth 6 (vs 20K depth 4 en
 #              G4-diag/G5-diag). Tout le reste identique : base-3 hybrid
@@ -28,7 +28,7 @@
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0058-h2-volume-scaleup-self-play"
+OUT_BASE="/root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
@@ -37,7 +37,7 @@ RECS_PER_ITER=200000
 SELF_PLAY_DEPTH=6     # vs 4 en G4-diag — labels plus précis
 MAX_PLIES=200
 SEED_BASE=32000
-PATTERN_SET="v2"      # → v3 si PR #101 mergée
+PATTERN_SET="v3"      # PR #101 mergée — Scan-aligned geometry
 
 V5=$(ls -t /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 V6=$(ls -t /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
@@ -119,7 +119,7 @@ PY
         --data           "$DATA" \
         --out            "$NEW_JPAT" \
         --patterns       "$PATTERN_SET" \
-        --hybrid --extras --phase-split \
+        --hybrid --extras --phase-split --mobility \
         --pattern-base   3 \
         --init-man       100 --init-king 300 \
         --optimizer      lbfgs \
