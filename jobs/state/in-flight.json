@@ -1,0 +1,7 @@
+{
+  "job_id": "0064-v4-long-pattern-self-play",
+  "script": "jobs/queue/0064-v4-long-pattern-self-play.sh",
+  "pid": 47883,
+  "started_at": "2026-05-30T22:08:35+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
