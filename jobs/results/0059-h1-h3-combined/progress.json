@@ -1,8 +1,8 @@
 {
   "job_id": "0059-h1-h3-combined",
-  "snapshot_at": "2026-05-30T07:09:13+00:00",
+  "snapshot_at": "2026-05-30T07:14:33+00:00",
   "started_at": "2026-05-30T05:04:43+00:00",
-  "elapsed_seconds": 7470,
+  "elapsed_seconds": 7790,
   "artefacts": [
     {
       "name": "bootstrap-train.log",
@@ -30,6 +30,10 @@
     },
     {
       "name": "final-vs-v6-d10.log",
+      "size_bytes": 305
+    },
+    {
+      "name": "final-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -1011,5 +1015,5 @@
       "size_bytes": 17006661
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    02:04:30  0.0  0.0 bash\n  34862   34860    02:04:30  0.0  0.0 bash\n  37542   34862       00:00  101  0.1 jass\n  37543   34862       00:00  0.0  0.0 tee\n  37544   34862       00:00  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34860       1    02:09:50  0.0  0.0 bash\n  34862   34860    02:09:50  0.0  0.0 bash\n  37586   34862       02:53 99.9  0.1 jass\n  37587   34862       02:53  0.0  0.0 tee\n  37588   34862       02:53  0.0  0.0 tail\n"
 }
