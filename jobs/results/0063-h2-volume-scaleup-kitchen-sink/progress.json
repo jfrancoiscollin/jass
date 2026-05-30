@@ -1,0 +1,110 @@
+{
+  "job_id": "0063-h2-volume-scaleup-kitchen-sink",
+  "snapshot_at": "2026-05-30T13:17:36+00:00",
+  "started_at": "2026-05-30T13:12:43+00:00",
+  "elapsed_seconds": 293,
+  "artefacts": [
+    {
+      "name": "h2-v0.jpat",
+      "size_bytes": 420493
+    },
+    {
+      "name": "h2-v1.jpat",
+      "size_bytes": 17006669
+    },
+    {
+      "name": "iter-rates.tsv",
+      "size_bytes": 50
+    },
+    {
+      "name": "iter1-bench-vs-prev.log",
+      "size_bytes": 317
+    },
+    {
+      "name": "iter1-bench-vs-v6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "iter1-data.bin",
+      "size_bytes": 7600008,
+      "records": 200000
+    },
+    {
+      "name": "iter1-shard1.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard1.log",
+      "size_bytes": 1060
+    },
+    {
+      "name": "iter1-shard2.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard2.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "iter1-shard3.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard3.log",
+      "size_bytes": 1059
+    },
+    {
+      "name": "iter1-shard4.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard4.log",
+      "size_bytes": 1060
+    },
+    {
+      "name": "iter1-shard5.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard5.log",
+      "size_bytes": 1016
+    },
+    {
+      "name": "iter1-shard6.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard6.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "iter1-shard7.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard7.log",
+      "size_bytes": 1059
+    },
+    {
+      "name": "iter1-shard8.bin",
+      "size_bytes": 950008,
+      "records": 25000
+    },
+    {
+      "name": "iter1-shard8.log",
+      "size_bytes": 1016
+    },
+    {
+      "name": "iter1-train.log",
+      "size_bytes": 1418
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  42254       1       04:53  0.0  0.0 bash\n  42256   42254       04:53  0.0  0.0 bash\n  42400   42256       01:39  100  0.1 jass\n  42401   42256       01:39  0.0  0.0 tee\n  42402   42256       01:39  0.0  0.0 tail\n"
+}
