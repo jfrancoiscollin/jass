@@ -1,0 +1,259 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+patterns: v4 (8 × 14 squares = ~38M weights base-3)
+      |                                                                    ~~^~~~
+[ 68%] Linking CXX executable jass_tests
+[100%] Built target jass_tests
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v0.jpat (153055573 bytes, JPAT v5 init patterns=v4 man=100.0 king=300.0)
+-rw-r--r-- 1 root root 146M May 30 22:08 /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v0.jpat
+============ iter 1 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter1-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  37526.46  val_mse=36462752.00  man= -36.8  king=  51.0 *
+iter  1: train_loss=  26913.68  val_mse=35701544.00  man= -39.0  king=   6.4 *
+iter  2: train_loss=  22465.87  val_mse=35595200.00  man= -41.1  king= 165.7 *
+iter  3: train_loss=  20162.35  val_mse=35932592.00  man=  43.7  king= 112.1
+iter  4: train_loss=  18887.45  val_mse=36221624.00  man=  -3.8  king= 105.9
+iter  5: train_loss=  17953.60  val_mse=36219952.00  man=   0.3  king= 100.4
+early stop: no val improvement for 3 iters (best val_mse=35595200.00)
+final (saved) val_mse=35579964.00  man=-41.1  king=165.7
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v1.jpat (153055581 bytes)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 1 : vs prev=0 ; vs v6 d10=0 ; pearson vs v7=+0.5685
+============ iter 2 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter2-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41121.49  val_mse=30784316.00  man=   8.3  king=  52.0 *
+iter  1: train_loss=  32480.67  val_mse=29912784.00  man=  -7.7  king= 190.9 *
+iter  2: train_loss=  28737.94  val_mse=30084488.00  man=  14.6  king=  27.0
+iter  3: train_loss=  27040.69  val_mse=29861732.00  man=  -8.5  king=  51.1 *
+iter  4: train_loss=  25723.71  val_mse=30098448.00  man=  -7.8  king=  29.8
+iter  5: train_loss=  24954.38  val_mse=30283930.00  man=   1.9  king=  27.4
+iter  6: train_loss=  24573.00  val_mse=30234992.00  man=  -7.6  king= 114.9
+early stop: no val improvement for 3 iters (best val_mse=29861732.00)
+final (saved) val_mse=29879430.00  man=-8.5  king=51.1
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v2.jpat (153055581 bytes)
+Result: A=36 B=18 Draws=0 (total 54)
+A score rate: 0.666667 (36 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 2 : vs prev=0.666667 ; vs v6 d10=0 ; pearson vs v7=+0.6017
+============ iter 3 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter3-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40733.63  val_mse=31728530.00  man=   3.1  king= -80.4 *
+iter  1: train_loss=  31547.40  val_mse=31248804.00  man= -54.5  king=  81.6 *
+iter  2: train_loss=  27353.18  val_mse=31296340.00  man=   7.5  king= 155.3
+iter  3: train_loss=  25625.79  val_mse=31335154.00  man=  -1.3  king=  39.1
+iter  4: train_loss=  24235.60  val_mse=31667946.00  man=   5.8  king= 110.2
+early stop: no val improvement for 3 iters (best val_mse=31248804.00)
+final (saved) val_mse=31353514.00  man=-54.5  king=81.6
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v3.jpat (153055581 bytes)
+Result: A=21 B=30 Draws=3 (total 54)
+A score rate: 0.416667 (22.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 3 : vs prev=0.416667 ; vs v6 d10=0 ; pearson vs v7=+0.5760
+============ iter 4 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter4-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41075.40  val_mse=31379014.00  man=  14.5  king=-111.8 *
+iter  1: train_loss=  31961.82  val_mse=30929876.00  man=  -3.5  king= 182.5 *
+iter  2: train_loss=  28534.15  val_mse=30815712.00  man=  33.5  king= 149.4 *
+iter  3: train_loss=  26402.07  val_mse=30964888.00  man=  13.3  king=-166.6
+iter  4: train_loss=  24631.42  val_mse=31042870.00  man=   1.6  king= -68.9
+iter  5: train_loss=  23619.47  val_mse=31122186.00  man=  -7.3  king=-110.2
+early stop: no val improvement for 3 iters (best val_mse=30815712.00)
+final (saved) val_mse=30869860.00  man=33.5  king=149.4
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v4.jpat (153055581 bytes)
+Result: A=30 B=21 Draws=3 (total 54)
+A score rate: 0.583333 (31.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 4 : vs prev=0.583333 ; vs v6 d10=0 ; pearson vs v7=+0.6557
+============ iter 5 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter5-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  39769.20  val_mse=25916436.00  man=  16.8  king= -25.2 *
+iter  1: train_loss=  32375.84  val_mse=25399668.00  man= -11.9  king= 113.6 *
+iter  2: train_loss=  29517.32  val_mse=25183024.00  man=  -5.9  king=  15.2 *
+iter  3: train_loss=  27558.86  val_mse=25488734.00  man=  14.6  king=  12.5
+iter  4: train_loss=  26144.22  val_mse=25711534.00  man=  -1.1  king= -94.5
+iter  5: train_loss=  25535.03  val_mse=25628678.00  man=   6.1  king=  26.3
+early stop: no val improvement for 3 iters (best val_mse=25183024.00)
+final (saved) val_mse=25182654.00  man=-5.9  king=15.2
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v5.jpat (153055581 bytes)
+Result: A=15 B=39 Draws=0 (total 54)
+A score rate: 0.277778 (15 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 5 : vs prev=0.277778 ; vs v6 d10=0 ; pearson vs v7=+0.5017
+============ iter 6 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter6-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41302.59  val_mse=34570800.00  man= -37.0  king= -16.1 *
+iter  1: train_loss=  31558.20  val_mse=33659592.00  man= -11.2  king= 195.8 *
+iter  2: train_loss=  27824.11  val_mse=33625532.00  man=  -1.8  king=-106.2 *
+iter  3: train_loss=  25659.10  val_mse=34017880.00  man= -26.9  king= 153.2
+iter  4: train_loss=  24135.01  val_mse=33888328.00  man=   8.6  king=   3.9
+iter  5: train_loss=  23002.30  val_mse=33836528.00  man=  -2.7  king=  61.1
+early stop: no val improvement for 3 iters (best val_mse=33625532.00)
+final (saved) val_mse=33753200.00  man=-1.8  king=-106.2
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v6.jpat (153055581 bytes)
+Result: A=15 B=39 Draws=0 (total 54)
+A score rate: 0.277778 (15 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 6 : vs prev=0.277778 ; vs v6 d10=0 ; pearson vs v7=+0.4842
+============ iter 7 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter7-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41198.10  val_mse=29550824.00  man=   0.7  king=  30.6 *
+iter  1: train_loss=  31806.51  val_mse=29065544.00  man=   7.2  king=  -8.4 *
+iter  2: train_loss=  28214.61  val_mse=28861976.00  man=  18.2  king=  16.1 *
+iter  3: train_loss=  26669.89  val_mse=29306704.00  man=   3.6  king=-117.9
+iter  4: train_loss=  25259.15  val_mse=29271922.00  man=  13.3  king=   3.4
+iter  5: train_loss=  24700.51  val_mse=29387782.00  man=  22.6  king= -56.6
+early stop: no val improvement for 3 iters (best val_mse=28861976.00)
+final (saved) val_mse=28912006.00  man=18.2  king=16.1
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v7.jpat (153055581 bytes)
+Result: A=42 B=12 Draws=0 (total 54)
+A score rate: 0.777778 (42 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 7 : vs prev=0.777778 ; vs v6 d10=0 ; pearson vs v7=+0.6219
+============ iter 8 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter8-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40889.69  val_mse=29988302.00  man=  -0.8  king=  69.1 *
+iter  1: train_loss=  31952.23  val_mse=29223942.00  man=  14.9  king=  30.7 *
+iter  2: train_loss=  27724.05  val_mse=29326106.00  man=   5.2  king= -41.4
+iter  3: train_loss=  25886.34  val_mse=29506652.00  man=  -6.1  king=  83.6
+iter  4: train_loss=  24785.01  val_mse=29444352.00  man=  12.1  king= -42.6
+early stop: no val improvement for 3 iters (best val_mse=29223942.00)
+final (saved) val_mse=29338656.00  man=14.9  king=30.7
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v8.jpat (153055581 bytes)
+Result: A=6 B=45 Draws=3 (total 54)
+A score rate: 0.138889 (7.5 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 8 : vs prev=0.138889 ; vs v6 d10=0 ; pearson vs v7=+0.5784
+============ iter 9 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter9-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  41315.80  val_mse=21796980.00  man=  -8.1  king=  59.2 *
+iter  1: train_loss=  32078.44  val_mse=21325550.00  man= -12.5  king= 124.0 *
+iter  2: train_loss=  28351.88  val_mse=21055248.00  man=  -9.3  king=   7.0 *
+iter  3: train_loss=  26433.87  val_mse=21068386.00  man=  -2.1  king= -67.9
+iter  4: train_loss=  24828.44  val_mse=21258968.00  man=  -0.7  king=-100.7
+iter  5: train_loss=  23748.01  val_mse=21378516.00  man=   1.1  king= -99.4
+early stop: no val improvement for 3 iters (best val_mse=21055248.00)
+final (saved) val_mse=21049542.00  man=-9.3  king=7.0
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v9.jpat (153055581 bytes)
+Result: A=24 B=30 Draws=0 (total 54)
+A score rate: 0.444444 (24 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 9 : vs prev=0.444444 ; vs v6 d10=0 ; pearson vs v7=+0.5910
+============ iter 10 / 10 ============
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/iter10-data.bin...
+  20000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 40000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 40000)
+iter  0: train_loss=  40587.34  val_mse=27117264.00  man=   1.7  king=  18.7 *
+iter  1: train_loss=  32570.56  val_mse=26471908.00  man=   3.3  king= -20.3 *
+iter  2: train_loss=  28353.46  val_mse=26121460.00  man=   0.0  king= -74.7 *
+iter  3: train_loss=  26415.01  val_mse=26463972.00  man=   1.0  king=-194.3
+iter  4: train_loss=  25068.84  val_mse=26522524.00  man=  -8.2  king=-124.7
+iter  5: train_loss=  24175.88  val_mse=26775508.00  man=   9.2  king=-133.2
+early stop: no val improvement for 3 iters (best val_mse=26121460.00)
+final (saved) val_mse=26124468.00  man=0.0  king=-74.7
+wrote /root/jass/jobs/results/0064-v4-long-pattern-self-play/artefacts.src/v4-v10.jpat (153055581 bytes)
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+  iter 10 : vs prev=0.555556 ; vs v6 d10=0 ; pearson vs v7=+0.5334
+=== final bench vs v5/v6/v7 ===
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0064 V4 LONG PATTERN VERDICT
+==========================================================
+  wall:              2130s (0.6h)
+  patterns:          v4 (14 squares × 8 patterns ~38M weights)
+iter  rate_vs_prev_d6  rate_vs_v6_d10  pearson_vs_v7
+1     0                0               +0.5685
+2     0.666667         0               +0.6017
+3     0.416667         0               +0.5760
+4     0.583333         0               +0.6557
+5     0.277778         0               +0.5017
+6     0.277778         0               +0.4842
+7     0.777778         0               +0.6219
+8     0.138889         0               +0.5784
+9     0.444444         0               +0.5910
+10    0.555556         0               +0.5334
+
+  Final pattern-v10 vs : hc=0 ; v5 d10=0 ; v6 d10=0 ; v7 d10=0
+
+    FLAT — 11 hypothèses cheap toutes réfutées. Long patterns
+    n'ont pas aidé non plus.
+==========================================================
