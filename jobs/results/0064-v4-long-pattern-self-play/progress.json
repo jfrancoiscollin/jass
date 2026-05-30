@@ -1,8 +1,8 @@
 {
   "job_id": "0064-v4-long-pattern-self-play",
-  "snapshot_at": "2026-05-30T22:44:53+00:00",
+  "snapshot_at": "2026-05-30T22:50:00+00:00",
   "started_at": "2026-05-30T22:08:35+00:00",
-  "elapsed_seconds": 2178,
+  "elapsed_seconds": 2485,
   "artefacts": [
     {
       "name": "final-vs-hc.log",
@@ -10,6 +10,14 @@
     },
     {
       "name": "final-vs-v5-d10.log",
+      "size_bytes": 313
+    },
+    {
+      "name": "final-vs-v6-d10.log",
+      "size_bytes": 316
+    },
+    {
+      "name": "final-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -991,5 +999,5 @@
       "size_bytes": 153055581
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  47883       1       36:17  0.0  0.0 bash\n  47885   47883       36:17  0.0  0.0 bash\n  49064   47885       00:41  100  0.5 jass\n  49065   47885       00:41  0.0  0.0 tee\n  49066   47885       00:41  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  47883       1       41:24  0.0  0.0 bash\n  47885   47883       41:24  0.0  0.0 bash\n  49148   47885       01:10  100  0.5 jass\n  49149   47885       01:10  0.0  0.0 tee\n  49150   47885       01:10  0.0  0.0 tail\n"
 }
