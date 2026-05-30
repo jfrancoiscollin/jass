@@ -1,0 +1,7 @@
+{
+  "job_id": "0059-h1-h3-combined",
+  "script": "jobs/queue/0059-h1-h3-combined.sh",
+  "pid": 34860,
+  "started_at": "2026-05-30T05:04:43+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
