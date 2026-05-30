@@ -1,0 +1,50 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+bootstrap: /root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat (17006661 bytes)
+v5/v6/v7: /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+pearson sample: /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+      |                                                                    ~~^~~~
+[ 68%] Linking CXX executable jass_tests
+[100%] Built target jass_tests
+
+=== bench bootstrap vs handcrafted / v5 / v6 / v7 ===
+Benchmark: NNUE (/root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=0 Handcrafted=18 Draws=0 (total 18)
+NNUE score rate: 0 (0 / 18)
+Benchmark: A=NNUE(/root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+=== pearson bootstrap vs v7 (n=1000) ===
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.3423  (n=1000)
+pattern : range=[-679, 573]  mean=-6.3  std=109.3
+ref     : range=[-2153, 1821]  mean=-39.5  std=425.4
+
+==========================================================
+       0061 BOOTSTRAP-PATTERN STANDALONE VERDICT
+==========================================================
+  pattern :          /root/jass/jobs/results/0059-h1-h3-combined/artefacts.src/pattern-bootstrap.jpat
+  vs handcrafted:    0
+  vs v5 d6 / d10:    0 / 0
+  vs v6 d10:         0
+  vs v7 d10:         0
+  pearson vs v7:     +0.3423
+
+  Reference (0059 H1+H3 self-play loop) :
+    iter 1 pearson vs v7: +0.7098 (just after bootstrap-trained)
+    iter 10 pearson vs v7: +0.5823 (after 10 self-play iters)
+
+  Decision :
+    BOOTSTRAP n'apporte rien vs self-play final — pas la
+    composante critique. Reste H4 seul ou H2 volume.
+==========================================================
