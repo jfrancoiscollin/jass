@@ -1,0 +1,19 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/iter2-data.bin...
+  200000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 400000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 400000)
+iter  0: train_loss=  42485.61  val_mse=44096100.00  man= -11.1  king=  83.7 *
+iter  1: train_loss=  29712.45  val_mse=43215476.00  man= -13.0  king= 103.5 *
+iter  2: train_loss=  27258.92  val_mse=43396600.00  man=  -3.9  king=  61.6
+iter  3: train_loss=  26325.57  val_mse=43257884.00  man=  -3.4  king=  36.8
+iter  4: train_loss=  25781.45  val_mse=43202156.00  man=   4.1  king=  70.2 *
+iter  5: train_loss=  25531.17  val_mse=43341024.00  man=   1.4  king=  46.7
+iter  6: train_loss=  25375.91  val_mse=43320476.00  man=   0.3  king=  41.7
+iter  7: train_loss=  25282.26  val_mse=43260588.00  man=  -4.0  king=  30.7
+iter  8: train_loss=  25233.88  val_mse=43291208.00  man=  -2.2  king=  45.3
+early stop: no val improvement for 4 iters (best val_mse=43202156.00)
+final (saved) val_mse=43185612.00  man=4.1  king=70.2
+wrote /root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v2.jpat (17006669 bytes)

@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v3.jpat) vs B=NNUE(/root/jass/jobs/results/0063-h2-volume-scaleup-kitchen-sink/artefacts.src/h2-v2.jpat), depth 6, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=15 B=39 Draws=0 (total 54)
+A score rate: 0.277778 (15 / 54)
