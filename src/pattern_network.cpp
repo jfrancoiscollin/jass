@@ -133,6 +133,7 @@ constexpr std::uint32_t JPAT_VERSION_V3   = 3;
 constexpr std::uint32_t JPAT_VERSION_V4   = 4;
 constexpr std::uint32_t JPAT_VERSION_V5   = 5;
 constexpr std::uint32_t JPAT_VERSION_V6   = 6;
+constexpr std::uint32_t JPAT_VERSION_V7   = 7;
 
 // H4 / JPAT v6 — diagonal neighbors per FMJD square (1..50), padded
 // with 0 for fewer-than-4 neighbors (corners and edges). 0 is used as
@@ -326,6 +327,16 @@ void PatternNetwork::set_encoding_base(std::uint8_t b) noexcept {
     }
 }
 
+void PatternNetwork::configure_mlp(std::uint8_t hidden) noexcept {
+    mlp_hidden_ = hidden;
+    const std::size_t n = patterns_.size();
+    const std::size_t h = static_cast<std::size_t>(hidden);
+    mlp_w1_.assign(n * h, 0.0f);
+    mlp_b1_.assign(h, 0.0f);
+    mlp_w2_.assign(h, 0.0f);
+    mlp_b2_ = 0.0f;
+}
+
 int PatternNetwork::evaluate(const Position& pos) const noexcept {
     // White-POV. G3b / JPAT v5 phase split: we maintain TWO accumulators
     // (mg / eg) and interpolate by game stage at the end. For v1-v4
@@ -386,20 +397,50 @@ int PatternNetwork::evaluate(const Position& pos) const noexcept {
         if (has_phase_split) acc_eg -= king_pst_eg_[50 - s];
     }
 
-    // Patterns stay mono-phase in v5; contribute equally to mg and eg.
+    // Patterns stay mono-phase in v5+; contribute equally to mg and eg.
+    // For JPAT v7 (hybrid MLP head) we also remember each pattern's
+    // bucket value individually, to feed the MLP head as input.
     const std::uint8_t base = encoding_base_;
-    for (const Pattern& p : patterns_) {
+    constexpr std::size_t MAX_PATTERNS_INLINE = 32;
+    std::array<std::int32_t, MAX_PATTERNS_INLINE> pattern_values{};
+    const bool       has_mlp     = (mlp_hidden_ > 0);
+    const std::size_t n_patterns = patterns_.size();
+    for (std::size_t pi = 0; pi < n_patterns; ++pi) {
+        const Pattern& p = patterns_[pi];
         std::size_t idx = 0;
         std::size_t mult = 1;
         for (std::uint8_t sq : p.squares) {
             idx += static_cast<std::size_t>(encode_state(pos, sq, base)) * mult;
             mult *= base;
         }
+        std::int32_t w = 0;
         if (idx < p.weights.size()) {
-            const std::int32_t w = p.weights[idx];
+            w = p.weights[idx];
             acc_mg += w;
             if (has_phase_split) acc_eg += w;
         }
+        if (has_mlp && pi < MAX_PATTERNS_INLINE) {
+            pattern_values[pi] = w;
+        }
+    }
+
+    // JPAT v7 — hybrid MLP head (MG-only residual). Single hidden layer
+    // with ReLU. Tiny float computation (~145 ops for 8 patterns × 16
+    // hidden) added on top of the linear pattern sum.
+    if (has_mlp && n_patterns <= MAX_PATTERNS_INLINE) {
+        const std::size_t h = static_cast<std::size_t>(mlp_hidden_);
+        float mlp_out = mlp_b2_;
+        for (std::size_t hi = 0; hi < h; ++hi) {
+            float acc_h = mlp_b1_[hi];
+            for (std::size_t pi = 0; pi < n_patterns; ++pi) {
+                acc_h += static_cast<float>(pattern_values[pi])
+                       * mlp_w1_[pi * h + hi];
+            }
+            if (acc_h > 0.0f) {
+                mlp_out += acc_h * mlp_w2_[hi];
+            }
+        }
+        acc_mg += static_cast<std::int32_t>(mlp_out);
     }
 
     std::int32_t acc;
@@ -437,7 +478,8 @@ bool PatternNetwork::load(std::string_view path) {
      && version != JPAT_VERSION_V3
      && version != JPAT_VERSION_V4
      && version != JPAT_VERSION_V5
-     && version != JPAT_VERSION_V6) {
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
         return false;
     }
     if (!read_u32(num_patterns))                       return false;
@@ -482,11 +524,35 @@ bool PatternNetwork::load(std::string_view path) {
         if (!read_i32(mobility_mg)) return false;
         if (!read_i32(mobility_eg)) return false;
     }
+    // JPAT v7 — hybrid MLP head (MG-only residual). Float32 weights.
+    std::uint8_t mlp_hidden = 0;
+    std::vector<float> mlp_w1, mlp_b1, mlp_w2;
+    float mlp_b2 = 0.0f;
+    if (version >= JPAT_VERSION_V7) {
+        f.read(reinterpret_cast<char*>(&mlp_hidden), 1);
+        if (!f) return false;
+        if (mlp_hidden > 0) {
+            const std::size_t h = static_cast<std::size_t>(mlp_hidden);
+            const std::size_t n = static_cast<std::size_t>(num_patterns);
+            mlp_w1.resize(n * h);
+            mlp_b1.resize(h);
+            mlp_w2.resize(h);
+            f.read(reinterpret_cast<char*>(mlp_w1.data()),
+                   static_cast<std::streamsize>(n * h * sizeof(float)));
+            f.read(reinterpret_cast<char*>(mlp_b1.data()),
+                   static_cast<std::streamsize>(h * sizeof(float)));
+            f.read(reinterpret_cast<char*>(mlp_w2.data()),
+                   static_cast<std::streamsize>(h * sizeof(float)));
+            f.read(reinterpret_cast<char*>(&mlp_b2), sizeof(float));
+            if (!f) return false;
+        }
+    }
     // For v1-v4 the EG counterparts stay at their default (zeros). The
     // evaluate() path detects "no EG populated" and skips the phase
     // interpolation entirely, returning acc_mg as in v1-v4 (legacy
     // semantics preserved without rewriting state on load). v1-v5 leave
     // mobility_mg/eg at 0 → no mobility contribution, identical eval.
+    // v1-v6 leave mlp_hidden = 0 → no MLP, identical eval.
 
     std::vector<Pattern> tmp;
     tmp.reserve(num_patterns);
@@ -519,6 +585,11 @@ bool PatternNetwork::load(std::string_view path) {
     king_pst_eg_    = king_pst_eg;
     mobility_mg_    = mobility_mg;
     mobility_eg_    = mobility_eg;
+    mlp_hidden_     = mlp_hidden;
+    mlp_w1_         = std::move(mlp_w1);
+    mlp_b1_         = std::move(mlp_b1);
+    mlp_w2_         = std::move(mlp_w2);
+    mlp_b2_         = mlp_b2;
     return true;
 }
 
@@ -528,7 +599,8 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
      && version != JPAT_VERSION_V3
      && version != JPAT_VERSION_V4
      && version != JPAT_VERSION_V5
-     && version != JPAT_VERSION_V6) {
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
         return false;
     }
     // base=3 networks can only be saved as v3+; refusing v1/v2 prevents
@@ -537,11 +609,12 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
      && version != JPAT_VERSION_V3
      && version != JPAT_VERSION_V4
      && version != JPAT_VERSION_V5
-     && version != JPAT_VERSION_V6) {
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
         return false;
     }
     // v4 holds king_pst/balance; saving as v1/v2/v3 with non-zero values
-    // would silently drop them. v5+v6 also OK since they're supersets.
+    // would silently drop them. v5+v6+v7 also OK since they're supersets.
     const bool has_v4_payload =
         balance_ != 0 ||
         std::any_of(king_pst_.begin(), king_pst_.end(),
@@ -549,7 +622,8 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (has_v4_payload
      && version != JPAT_VERSION_V4
      && version != JPAT_VERSION_V5
-     && version != JPAT_VERSION_V6) {
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
         return false;
     }
     // v5 holds the EG counterparts; saving as v<5 drops them by design
@@ -573,12 +647,20 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     }
     if (has_v5_payload
      && version != JPAT_VERSION_V5
-     && version != JPAT_VERSION_V6) {
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
         return false;
     }
     // v6 holds king mobility (mg/eg). Refuse v<6 if non-zero.
     const bool has_v6_payload = (mobility_mg_ != 0 || mobility_eg_ != 0);
-    if (has_v6_payload && version != JPAT_VERSION_V6) {
+    if (has_v6_payload
+     && version != JPAT_VERSION_V6
+     && version != JPAT_VERSION_V7) {
+        return false;
+    }
+    // v7 holds MLP head. Refuse v<7 if mlp_hidden != 0.
+    const bool has_v7_payload = (mlp_hidden_ != 0);
+    if (has_v7_payload && version != JPAT_VERSION_V7) {
         return false;
     }
     std::ofstream f(std::string{path}, std::ios::binary);
@@ -611,6 +693,20 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (version >= JPAT_VERSION_V6) {
         f.write(reinterpret_cast<const char*>(&mobility_mg_), 4);
         f.write(reinterpret_cast<const char*>(&mobility_eg_), 4);
+    }
+    if (version >= JPAT_VERSION_V7) {
+        f.write(reinterpret_cast<const char*>(&mlp_hidden_), 1);
+        if (mlp_hidden_ > 0) {
+            const std::size_t h = static_cast<std::size_t>(mlp_hidden_);
+            const std::size_t n = patterns_.size();
+            f.write(reinterpret_cast<const char*>(mlp_w1_.data()),
+                    static_cast<std::streamsize>(n * h * sizeof(float)));
+            f.write(reinterpret_cast<const char*>(mlp_b1_.data()),
+                    static_cast<std::streamsize>(h * sizeof(float)));
+            f.write(reinterpret_cast<const char*>(mlp_w2_.data()),
+                    static_cast<std::streamsize>(h * sizeof(float)));
+            f.write(reinterpret_cast<const char*>(&mlp_b2_), sizeof(float));
+        }
     }
     for (const Pattern& p : patterns_) {
         const std::uint8_t k = static_cast<std::uint8_t>(p.squares.size());
