@@ -69,7 +69,8 @@ def bbs_to_scan_pos(wm: int, wk: int, bm: int, bk: int, stm: int) -> str:
 
 class ScanScorer:
     """Subprocess Scan in HUB mode, query eval scores."""
-    def __init__(self, scan_path: str, bb_size: int = 6):
+    def __init__(self, scan_path: str, bb_size: int = 0,
+                 tt_size_log2: int = 24):
         scan_dir = str(Path(scan_path).resolve().parent)
         self.proc = subprocess.Popen(
             [scan_path, "hub"], stdin=subprocess.PIPE,
@@ -77,11 +78,20 @@ class ScanScorer:
             text=True, bufsize=1, cwd=scan_dir)
         self._send("hub")
         self._read_until(lambda l: l.startswith("wait"))
+        # CRITICAL : disable book (else Scan returns book moves with
+        # score=0 for opening positions, biasing the labelled dataset).
         self._send("set-param name=book value=false")
+        # tt-size = 2^N bytes ; 24 → 16 MiB. Big enough to amortize over
+        # batched positions (cf. --newgame-every).
+        self._send(f"set-param name=tt-size value={tt_size_log2}")
         if bb_size > 0:
             self._send(f"set-param name=bb-size value={bb_size}")
         self._send("init")
         self._read_until(lambda l: l.startswith("ready"))
+        # Initialise game state once ; subsequent new-game calls are
+        # gated by --newgame-every to preserve TT across nearby positions.
+        self._since_newgame = 0
+        self._send("new-game")
 
     def _send(self, line: str) -> None:
         assert self.proc.stdin is not None
@@ -104,11 +114,18 @@ class ScanScorer:
                 return lines
 
     def eval_position(self, scan_pos: str, depth: int,
-                      timeout_s: float = 60.0) -> Optional[int]:
+                      timeout_s: float = 60.0,
+                      newgame_every: int = 50) -> Optional[int]:
         """Set the position, search to `depth`, return the deepest score
-        from `info` lines (centipawns, Scan's POV convention = STM-POV
-        like ours). None on error/timeout."""
-        self._send("new-game")
+        from `info` lines (Scan emits float pawn units ; we ×100 to
+        centipawns, STM-POV like our JNNW convention)."""
+        # Clear TT only every N positions — preserves caches across
+        # similar (typically same-game-source) positions ; per-position
+        # newgame wipes useful entries.
+        self._since_newgame += 1
+        if newgame_every > 0 and self._since_newgame >= newgame_every:
+            self._send("new-game")
+            self._since_newgame = 0
         self._send(f"pos pos={scan_pos}")
         self._send(f"level depth={depth}")
         self._send("go think")
@@ -127,14 +144,14 @@ class ScanScorer:
             s_match = SCAN_INFO_RE.search(ln)
             if d_match and s_match:
                 d = int(d_match.group(1))
-                if d > best_depth:
+                if d >= best_depth:  # >= : keep the LAST info at max depth
                     best_depth = d
                     try:
+                        # Scan emits scores in PAWN UNITS as floats
+                        # (e.g. `score=-0.04` = -4 cp). Multiply by 100
+                        # to get centipawns matching jass's convention.
                         s = float(s_match.group(1))
-                        # Scan may emit fractional pawn units ; multiply by
-                        # 100 to centipawns if needed. We assume Scan's
-                        # default = centipawns (HUB v2 standard).
-                        best_score = int(round(s))
+                        best_score = int(round(s * 100.0))
                     except ValueError:
                         pass
         return best_score
@@ -152,7 +169,8 @@ class ScanScorer:
 
 def relabel(in_path: Path, out_path: Path, scan_path: str,
             depth: int, max_records: int, start: int,
-            timeout_s: float, progress_every: int) -> int:
+            timeout_s: float, progress_every: int,
+            newgame_every: int) -> int:
     raw = in_path.read_bytes()
     assert raw[:4] == b"JNNW", f"{in_path}: bad magic"
     total = struct.unpack_from("<I", raw, 4)[0]
@@ -181,7 +199,8 @@ def relabel(in_path: Path, out_path: Path, scan_path: str,
 
             scan_pos = bbs_to_scan_pos(wm, wk, bm, bk, stm)
             new_score = scorer.eval_position(scan_pos, depth,
-                                             timeout_s=timeout_s)
+                                             timeout_s=timeout_s,
+                                             newgame_every=newgame_every)
             if new_score is None:
                 # Scan failed on this position — keep original score, log it.
                 n_skip += 1
@@ -220,11 +239,15 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--timeout", type=float, default=60.0,
                     help="per-position timeout seconds")
     ap.add_argument("--progress-every", type=int, default=1000)
+    ap.add_argument("--newgame-every", type=int, default=50,
+                    help="emit `new-game` (clear Scan TT) every N positions ; "
+                         "0 = never (single game session for the full shard).")
     args = ap.parse_args(argv)
 
     return relabel(args.in_path, args.out_path, args.scan_path,
                    args.depth, args.max_records, args.start,
-                   args.timeout, args.progress_every)
+                   args.timeout, args.progress_every,
+                   args.newgame_every)
 
 
 if __name__ == "__main__":
