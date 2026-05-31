@@ -53,7 +53,8 @@ from train_pattern_embed import PatternEmbedMLP  # noqa: E402
 
 
 def export(model: PatternEmbedMLP, patterns: list[list[int]],
-           out_path: Path, output_scale: float = 1.0) -> int:
+           out_path: Path, output_scale: float = 1.0,
+           stm_flip: int = 1) -> int:
     n = len(patterns)
     ed = model.embed_dim
     h  = model.mlp_hidden
@@ -115,8 +116,8 @@ def export(model: PatternEmbedMLP, patterns: list[list[int]],
         f.write(struct.pack("<ii", 0, 0))
         # v7 : mlp_hidden = 0  (v7 head OFF for v8 files)
         f.write(struct.pack("<B", 0))
-        # v8 : embed_dim, v8_mlp_hidden, MLP weights
-        f.write(struct.pack("<BB", ed, h))
+        # v8 : embed_dim, v8_mlp_hidden, v8_stm_flip, MLP weights
+        f.write(struct.pack("<BBB", ed, h, stm_flip))
         f.write(w1_t.tobytes())
         f.write(b1.tobytes())
         f.write(w2_flat.tobytes())
@@ -149,7 +150,9 @@ def main(argv: list[str]) -> int:
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
-    sz = export(model, patterns, args.out_path, output_scale=args.output_scale)
+    stm_flip = 1 if cfg.get("stm_flip", True) else 0
+    sz = export(model, patterns, args.out_path,
+                output_scale=args.output_scale, stm_flip=stm_flip)
     print(f"wrote {args.out_path} ({sz} bytes) "
           f"v8 patterns={cfg['patterns_name']} base={cfg['base']} "
           f"embed_dim={cfg['embed_dim']} mlp_hidden={cfg['mlp_hidden']} "

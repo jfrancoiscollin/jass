@@ -337,6 +337,13 @@ public:
     // When embed_dim == 0 the v8 path is OFF (eval falls back to v1-v7).
     std::uint8_t embed_dim() const noexcept { return embed_dim_; }
     std::uint8_t v8_mlp_hidden() const noexcept { return v8_mlp_hidden_; }
+    // STM-flip convention : 1 (default) = legacy 0067 quirk (flip
+    // mat_diff/king_diff for STM=Black before applying skeleton, to
+    // match the trainer's mixed-frame convention). 0 = clean white-POV
+    // (skeleton inputs not flipped ; the trainer must have been run
+    // with --no-stm-flip).
+    std::uint8_t v8_stm_flip() const noexcept { return v8_stm_flip_; }
+    void set_v8_stm_flip(std::uint8_t v) noexcept { v8_stm_flip_ = v; }
     // Per-pattern embedding table : embeddings()[pi][bucket*embed_dim + e].
     const std::vector<std::vector<float>>& embeddings() const noexcept {
         return embeddings_;
@@ -399,6 +406,7 @@ private:
     // JPAT v8 only — pattern embeddings + MLP end-to-end.
     std::uint8_t                       embed_dim_{0};
     std::uint8_t                       v8_mlp_hidden_{0};
+    std::uint8_t                       v8_stm_flip_{1};  // 1 = legacy quirk
     std::vector<std::vector<float>>    embeddings_{};   // per-pattern
                                                         // [bucket*embed_dim + e]
     std::vector<float>                 v8_mlp_w1_{};    // N×embed_dim×hidden
