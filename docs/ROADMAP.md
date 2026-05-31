@@ -176,6 +176,7 @@ franchir le plateau. Cinq pistes capturées dans
 | **(D)** | AlphaZero-style MCTS + ResNet | ~2-3 semaines | ~€100-300 |
 | **(E)** | Bigger MLPNetworkQ (1024-512) sur v8 dataset | ~30 min | ~€5 |
 | **(F)** | MLPNetworkQ + têtes aux multi-tâches (force la représentation hidden) | ~3-5j | ~€5-10 |
+| **(G)** | Distillation depuis Scan (eval direct, pas self-play) — **option dominante** | ~1-2j | ~€5-10 |
 
 À reprendre quand : 0066 verdict tombe, ou G4-prod si tenté, ou tout
 moment où l'axe data cesse de progresser.

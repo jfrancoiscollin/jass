@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 Jean-François Collin
+"""
+Relabel a JNNW dataset using Scan as the eval oracle (paradigm shift G —
+distillation depuis Scan, cf. docs/PARADIGM_SHIFT_OPTIONS.md option G).
+
+For each position in the input JNNW, query Scan via the HUB v2 protocol
+(`pos pos=… ; level depth=N ; go think`), parse the deepest `info` line
+for the score, and write the same position with the Scan score replacing
+the original score field. Output JNNW has identical layout — drop-in
+replacement for train_v3.py.
+
+Usage :
+   python3 tools/relabel_with_scan.py \\
+       --in   v8-quiet-pv-1M.bin \\
+       --out  v10-scan-labelled.bin \\
+       --scan /tmp/scan/scan_linux --depth 16 \\
+       [--max-records N] [--start N] [--threads K]
+
+Scan is GPL3 — its scores ARE the protected output of GPL code. The
+derived dataset inherits GPL3 obligations ; jass itself is already
+AGPL3, no conflict.
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import struct
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+
+RECORD_SZ = 38
+HEADER_SZ = 8
+# JNNW record layout :
+#   0..32   uint64×4   bbs (wm, wk, bm, bk)
+#   32..33  uint8      stm (0=W, 1=B)
+#   33..37  int32      score (centipawns, STM-POV)
+#   37..38  int8       wdl (-1, 0, +1, STM-POV)
+
+
+# Scan HUB v2 emits `info` lines during search with score=, depth=, nodes=
+# and a final `done move=…` line. We take the score from the deepest info
+# line seen.
+SCAN_INFO_RE  = re.compile(r"\bscore=([-+]?\d+(?:\.\d+)?)\b")
+SCAN_DEPTH_RE = re.compile(r"\bdepth=(\d+)\b")
+SCAN_DONE_RE  = re.compile(r"^done\b")
+
+
+def bbs_to_scan_pos(wm: int, wk: int, bm: int, bk: int, stm: int) -> str:
+    """Build Scan's 51-char position string from 4 uint64 bitboards + stm.
+    Scan square numbering matches FMJD 1..50 directly (same as ours)."""
+    chars = ["e"] * 51
+    chars[0] = "B" if stm == 1 else "W"
+    for sq in range(1, 51):
+        bit = 1 << (sq - 1)
+        if   wm & bit: chars[sq] = "w"
+        elif wk & bit: chars[sq] = "W"
+        elif bm & bit: chars[sq] = "b"
+        elif bk & bit: chars[sq] = "B"
+    return "".join(chars)
+
+
+class ScanScorer:
+    """Subprocess Scan in HUB mode, query eval scores."""
+    def __init__(self, scan_path: str, bb_size: int = 6):
+        scan_dir = str(Path(scan_path).resolve().parent)
+        self.proc = subprocess.Popen(
+            [scan_path, "hub"], stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, bufsize=1, cwd=scan_dir)
+        self._send("hub")
+        self._read_until(lambda l: l.startswith("wait"))
+        self._send("set-param name=book value=false")
+        if bb_size > 0:
+            self._send(f"set-param name=bb-size value={bb_size}")
+        self._send("init")
+        self._read_until(lambda l: l.startswith("ready"))
+
+    def _send(self, line: str) -> None:
+        assert self.proc.stdin is not None
+        self.proc.stdin.write(line + "\n")
+        self.proc.stdin.flush()
+
+    def _read_until(self, pred, timeout_s: float = 30.0) -> list[str]:
+        assert self.proc.stdout is not None
+        lines: list[str] = []
+        deadline = time.monotonic() + timeout_s
+        while True:
+            if time.monotonic() > deadline:
+                raise TimeoutError(f"Scan timeout: last lines={lines[-3:]}")
+            line = self.proc.stdout.readline()
+            if not line:
+                raise RuntimeError("Scan stdout closed unexpectedly")
+            line = line.rstrip("\n")
+            lines.append(line)
+            if pred(line):
+                return lines
+
+    def eval_position(self, scan_pos: str, depth: int,
+                      timeout_s: float = 60.0) -> Optional[int]:
+        """Set the position, search to `depth`, return the deepest score
+        from `info` lines (centipawns, Scan's POV convention = STM-POV
+        like ours). None on error/timeout."""
+        self._send("new-game")
+        self._send(f"pos pos={scan_pos}")
+        self._send(f"level depth={depth}")
+        self._send("go think")
+        try:
+            lines = self._read_until(
+                lambda l: SCAN_DONE_RE.search(l) or l.startswith("error"),
+                timeout_s=timeout_s)
+        except (TimeoutError, RuntimeError):
+            return None
+        if lines[-1].startswith("error"):
+            return None
+        best_score: Optional[int] = None
+        best_depth = -1
+        for ln in lines:
+            d_match = SCAN_DEPTH_RE.search(ln)
+            s_match = SCAN_INFO_RE.search(ln)
+            if d_match and s_match:
+                d = int(d_match.group(1))
+                if d > best_depth:
+                    best_depth = d
+                    try:
+                        s = float(s_match.group(1))
+                        # Scan may emit fractional pawn units ; multiply by
+                        # 100 to centipawns if needed. We assume Scan's
+                        # default = centipawns (HUB v2 standard).
+                        best_score = int(round(s))
+                    except ValueError:
+                        pass
+        return best_score
+
+    def close(self) -> None:
+        try:
+            self._send("quit")
+        except BrokenPipeError:
+            pass
+        try:
+            self.proc.wait(timeout=2.0)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+
+
+def relabel(in_path: Path, out_path: Path, scan_path: str,
+            depth: int, max_records: int, start: int,
+            timeout_s: float, progress_every: int) -> int:
+    raw = in_path.read_bytes()
+    assert raw[:4] == b"JNNW", f"{in_path}: bad magic"
+    total = struct.unpack_from("<I", raw, 4)[0]
+    end = total if max_records == 0 else min(start + max_records, total)
+    n_to_do = end - start
+    print(f"input : {in_path} ({total} records, processing {n_to_do} "
+          f"from offset {start})", flush=True)
+
+    scorer = ScanScorer(scan_path)
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open("wb") as out:
+        out.write(b"JNNW")
+        out.write(struct.pack("<I", n_to_do))
+
+        t0 = time.monotonic()
+        n_ok = 0
+        n_skip = 0
+        for i in range(start, end):
+            rec_off = HEADER_SZ + i * RECORD_SZ
+            rec = raw[rec_off:rec_off + RECORD_SZ]
+            wm, wk, bm, bk = struct.unpack("<QQQQ", rec[:32])
+            stm = rec[32]
+            score_orig = struct.unpack("<i", rec[33:37])[0]
+            wdl = rec[37]
+
+            scan_pos = bbs_to_scan_pos(wm, wk, bm, bk, stm)
+            new_score = scorer.eval_position(scan_pos, depth,
+                                             timeout_s=timeout_s)
+            if new_score is None:
+                # Scan failed on this position — keep original score, log it.
+                n_skip += 1
+                new_score = score_orig
+
+            new_rec = rec[:33] + struct.pack("<i", int(new_score)) \
+                              + rec[37:38]
+            out.write(new_rec)
+            n_ok += 1
+
+            if n_ok % progress_every == 0:
+                elapsed = time.monotonic() - t0
+                rate = n_ok / elapsed if elapsed > 0 else 0.0
+                eta = (n_to_do - n_ok) / rate if rate > 0 else float("inf")
+                print(f"  {n_ok}/{n_to_do}  ({100*n_ok/n_to_do:.1f}%)  "
+                      f"rate={rate:.1f} pos/s  eta={eta/60:.1f} min  "
+                      f"skipped={n_skip}", flush=True)
+
+    scorer.close()
+    print(f"wrote {out_path} ({n_ok} records, {n_skip} skipped)", flush=True)
+    return 0
+
+
+def main(argv: list[str]) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--in",   dest="in_path", required=True, type=Path)
+    ap.add_argument("--out",  dest="out_path", required=True, type=Path)
+    ap.add_argument("--scan", dest="scan_path", required=True, type=str,
+                    help="path to scan_linux binary (its dir holds scan.ini)")
+    ap.add_argument("--depth", type=int, default=16,
+                    help="Scan search depth per position (default 16)")
+    ap.add_argument("--max-records", type=int, default=0,
+                    help="0 = all records (after --start)")
+    ap.add_argument("--start", type=int, default=0,
+                    help="skip this many records (resumable batching)")
+    ap.add_argument("--timeout", type=float, default=60.0,
+                    help="per-position timeout seconds")
+    ap.add_argument("--progress-every", type=int, default=1000)
+    args = ap.parse_args(argv)
+
+    return relabel(args.in_path, args.out_path, args.scan_path,
+                   args.depth, args.max_records, args.start,
+                   args.timeout, args.progress_every)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
