@@ -1,13 +1,13 @@
 {
   "job_id": "0071-v9-bigger-mlp-on-v8-dataset",
-  "snapshot_at": "2026-05-31T16:56:04+00:00",
+  "snapshot_at": "2026-05-31T17:01:05+00:00",
   "started_at": "2026-05-31T16:46:02+00:00",
-  "elapsed_seconds": 602,
+  "elapsed_seconds": 903,
   "artefacts": [
     {
       "name": "train.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   3471       1       10:02  0.0  0.0 bash\n   3473    3471       10:02  0.0  0.0 bash\n   3585    3473       09:59  373 45.9 python3\n   3586    3473       09:59  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   3471       1       15:03  0.0  0.0 bash\n   3473    3471       15:03  0.0  0.0 bash\n   3585    3473       15:00  375 45.9 python3\n   3586    3473       15:00  0.0  0.0 tee\n"
 }
