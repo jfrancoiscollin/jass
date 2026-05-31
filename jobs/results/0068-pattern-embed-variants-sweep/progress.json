@@ -1,19 +1,31 @@
 {
   "job_id": "0068-pattern-embed-variants-sweep",
-  "snapshot_at": "2026-05-31T10:20:59+00:00",
+  "snapshot_at": "2026-05-31T10:26:23+00:00",
   "started_at": "2026-05-31T10:15:47+00:00",
-  "elapsed_seconds": 312,
+  "elapsed_seconds": 636,
   "artefacts": [
     {
       "name": "embed-v2-d4-h64.pt",
       "size_bytes": 1704646
     },
     {
+      "name": "embed-v2-d8-h128.pt",
+      "size_bytes": 3433699
+    },
+    {
       "name": "embed-v2-d8-h64.pt",
       "size_bytes": 3400390
     },
     {
+      "name": "embed-v3-d4-h64.pt",
+      "size_bytes": 68039006
+    },
+    {
       "name": "pearson-master-v2-d4-h64.log",
+      "size_bytes": 240
+    },
+    {
+      "name": "pearson-master-v2-d8-h128.log",
       "size_bytes": 240
     },
     {
@@ -21,11 +33,23 @@
       "size_bytes": 241
     },
     {
+      "name": "pearson-master-v3-d4-h64.log",
+      "size_bytes": 242
+    },
+    {
       "name": "pearson-selfplay-v2-d4-h64.log",
       "size_bytes": 252
     },
     {
+      "name": "pearson-selfplay-v2-d8-h128.log",
+      "size_bytes": 252
+    },
+    {
       "name": "pearson-selfplay-v2-d8-h64.log",
+      "size_bytes": 252
+    },
+    {
+      "name": "pearson-selfplay-v3-d4-h64.log",
       "size_bytes": 252
     },
     {
@@ -34,12 +58,20 @@
     },
     {
       "name": "train-v2-d8-h128.log",
-      "size_bytes": 1824
+      "size_bytes": 2444
     },
     {
       "name": "train-v2-d8-h64.log",
       "size_bytes": 2442
+    },
+    {
+      "name": "train-v3-d4-h128.log",
+      "size_bytes": 1196
+    },
+    {
+      "name": "train-v3-d4-h64.log",
+      "size_bytes": 2436
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  59007       1       05:11  0.0  0.0 bash\n  59009   59007       05:11  0.0  0.0 bash\n  59226   59009       01:39  391  1.6 python3\n  59227   59009       01:39  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  59007       1       10:36  0.0  0.0 bash\n  59009   59007       10:36  0.0  0.0 bash\n  59426   59009       01:33  391  2.3 python3\n  59427   59009       01:33  0.0  0.0 tee\n"
 }
