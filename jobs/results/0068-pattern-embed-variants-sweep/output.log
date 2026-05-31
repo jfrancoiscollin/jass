@@ -1,0 +1,265 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+v8 dataset    : /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+v7 reference  : /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+master sample : /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+==========================================================
+=== train v2-d4-h64 (v2 × embed_dim=4 × hidden=64) ===
+==========================================================
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (16 × base=3)...
+  model: 424,132 params (embed_dim=4 mlp_hidden=64)
+epoch  0: train_loss=13932.77  val_mse=44507968  man=99.8  king=299.8
+epoch  1: train_loss=13267.69  val_mse=43522212  man=99.5  king=299.5
+epoch  2: train_loss=12379.49  val_mse=42482064  man=99.3  king=299.3
+epoch  3: train_loss=11915.43  val_mse=41795332  man=99.2  king=299.1
+epoch  4: train_loss=11655.48  val_mse=41310040  man=99.0  king=299.0
+epoch  5: train_loss=11472.25  val_mse=40929240  man=98.9  king=298.8
+epoch  6: train_loss=11328.08  val_mse=40612616  man=98.8  king=298.6
+epoch  7: train_loss=11207.78  val_mse=40346388  man=98.6  king=298.5
+epoch  8: train_loss=11103.89  val_mse=40112552  man=98.5  king=298.3
+epoch  9: train_loss=11011.91  val_mse=39900204  man=98.4  king=298.1
+epoch 10: train_loss=10929.47  val_mse=39726488  man=98.2  king=297.9
+epoch 11: train_loss=10854.82  val_mse=39563956  man=98.1  king=297.8
+epoch 12: train_loss=10787.57  val_mse=39426560  man=98.0  king=297.6
+epoch 13: train_loss=10727.16  val_mse=39294600  man=97.8  king=297.4
+epoch 14: train_loss=10673.91  val_mse=39185284  man=97.7  king=297.2
+epoch 15: train_loss=10628.40  val_mse=39081988  man=97.6  king=297.0
+epoch 16: train_loss=10589.92  val_mse=38998596  man=97.4  king=296.8
+epoch 17: train_loss=10557.70  val_mse=38944128  man=97.3  king=296.6
+epoch 18: train_loss=10531.45  val_mse=38885056  man=97.1  king=296.4
+epoch 19: train_loss=10509.32  val_mse=38845012  man=96.9  king=296.2
+epoch 20: train_loss=10491.30  val_mse=38816264  man=96.8  king=296.0
+epoch 21: train_loss=10477.03  val_mse=38785556  man=96.6  king=295.8
+epoch 22: train_loss=10465.56  val_mse=38752752  man=96.4  king=295.5
+epoch 23: train_loss=10455.28  val_mse=38725160  man=96.2  king=295.3
+epoch 24: train_loss=10447.04  val_mse=38719328  man=96.0  king=295.1
+epoch 25: train_loss=10440.03  val_mse=38707912  man=95.8  king=294.9
+epoch 26: train_loss=10434.14  val_mse=38694588  man=95.6  king=294.7
+epoch 27: train_loss=10428.82  val_mse=38696660  man=95.4  king=294.4
+epoch 28: train_loss=10424.39  val_mse=38690920  man=95.2  king=294.2
+epoch 29: train_loss=10420.09  val_mse=38678424  man=95.0  king=294.0
+wrote /root/jass/jobs/results/0068-pattern-embed-variants-sweep/artefacts.src/embed-v2-d4-h64.pt (1704646 bytes, 424,132 params)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.6109  (n=1000)
+embed : range=[-3678, 1955]  mean=-94.2  std=620.5
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8424  (n=1000)
+embed : range=[-6458, 4906]  mean=-124.8  std=1007.7
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+=== train v2-d8-h64 (v2 × embed_dim=8 × hidden=64) ===
+==========================================================
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (16 × base=3)...
+  model: 848,132 params (embed_dim=8 mlp_hidden=64)
+epoch  0: train_loss=13889.76  val_mse=44359556  man=99.8  king=299.8
+epoch  1: train_loss=12872.34  val_mse=42892288  man=99.6  king=299.5
+epoch  2: train_loss=12006.11  val_mse=41892288  man=99.4  king=299.4
+epoch  3: train_loss=11643.97  val_mse=41285704  man=99.2  king=299.2
+epoch  4: train_loss=11420.73  val_mse=40849700  man=99.1  king=299.0
+epoch  5: train_loss=11252.11  val_mse=40498392  man=99.0  king=298.8
+epoch  6: train_loss=11112.86  val_mse=40193188  man=98.9  king=298.7
+epoch  7: train_loss=10993.37  val_mse=39937508  man=98.7  king=298.5
+epoch  8: train_loss=10888.67  val_mse=39707544  man=98.6  king=298.3
+epoch  9: train_loss=10796.93  val_mse=39500708  man=98.5  king=298.2
+epoch 10: train_loss=10718.47  val_mse=39338428  man=98.4  king=298.0
+epoch 11: train_loss=10653.04  val_mse=39200460  man=98.2  king=297.8
+epoch 12: train_loss=10600.55  val_mse=39096128  man=98.1  king=297.6
+epoch 13: train_loss=10558.99  val_mse=38998108  man=98.0  king=297.4
+epoch 14: train_loss=10527.33  val_mse=38936884  man=97.8  king=297.2
+epoch 15: train_loss=10503.58  val_mse=38860844  man=97.7  king=297.0
+epoch 16: train_loss=10485.99  val_mse=38823032  man=97.5  king=296.8
+epoch 17: train_loss=10472.17  val_mse=38801552  man=97.4  king=296.6
+epoch 18: train_loss=10461.84  val_mse=38767440  man=97.2  king=296.4
+epoch 19: train_loss=10453.26  val_mse=38753480  man=97.0  king=296.2
+epoch 20: train_loss=10446.65  val_mse=38741744  man=96.8  king=296.0
+epoch 21: train_loss=10441.78  val_mse=38723632  man=96.7  king=295.7
+epoch 22: train_loss=10437.70  val_mse=38704176  man=96.5  king=295.5
+epoch 23: train_loss=10433.61  val_mse=38679264  man=96.3  king=295.3
+epoch 24: train_loss=10430.30  val_mse=38680668  man=96.1  king=295.1
+epoch 25: train_loss=10427.51  val_mse=38676496  man=95.9  king=294.8
+epoch 26: train_loss=10424.99  val_mse=38665244  man=95.7  king=294.6
+epoch 27: train_loss=10422.75  val_mse=38674664  man=95.4  king=294.4
+epoch 28: train_loss=10420.98  val_mse=38664212  man=95.2  king=294.2
+epoch 29: train_loss=10418.87  val_mse=38658092  man=95.0  king=293.9
+wrote /root/jass/jobs/results/0068-pattern-embed-variants-sweep/artefacts.src/embed-v2-d8-h64.pt (3400390 bytes, 848,132 params)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.6069  (n=1000)
+embed : range=[-3573, 2737]  mean=-100.3  std=636.5
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8380  (n=1000)
+embed : range=[-5486, 6045]  mean=-121.4  std=1018.1
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+=== train v2-d8-h128 (v2 × embed_dim=8 × hidden=128) ===
+==========================================================
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (16 × base=3)...
+  model: 856,452 params (embed_dim=8 mlp_hidden=128)
+epoch  0: train_loss=13804.66  val_mse=44085056  man=99.8  king=299.8
+epoch  1: train_loss=12521.40  val_mse=42305156  man=99.6  king=299.6
+epoch  2: train_loss=11787.90  val_mse=41405552  man=99.4  king=299.4
+epoch  3: train_loss=11469.94  val_mse=40817872  man=99.3  king=299.2
+epoch  4: train_loss=11251.37  val_mse=40378340  man=99.2  king=299.0
+epoch  5: train_loss=11079.09  val_mse=40022080  man=99.0  king=298.9
+epoch  6: train_loss=10937.56  val_mse=39717092  man=98.9  king=298.7
+epoch  7: train_loss=10819.99  val_mse=39481032  man=98.8  king=298.5
+epoch  8: train_loss=10723.48  val_mse=39283048  man=98.7  king=298.4
+epoch  9: train_loss=10645.99  val_mse=39114460  man=98.6  king=298.2
+epoch 10: train_loss=10587.08  val_mse=38998008  man=98.4  king=298.0
+epoch 11: train_loss=10543.23  val_mse=38915124  man=98.3  king=297.8
+epoch 12: train_loss=10512.22  val_mse=38861024  man=98.2  king=297.6
+epoch 13: train_loss=10489.26  val_mse=38806052  man=98.0  king=297.4
+epoch 14: train_loss=10472.88  val_mse=38782348  man=97.9  king=297.2
+epoch 15: train_loss=10460.68  val_mse=38733656  man=97.7  king=297.0
+epoch 16: train_loss=10451.76  val_mse=38712580  man=97.6  king=296.8
+epoch 17: train_loss=10444.38  val_mse=38713028  man=97.4  king=296.6
+epoch 18: train_loss=10438.42  val_mse=38689496  man=97.2  king=296.4
+epoch 19: train_loss=10432.86  val_mse=38684904  man=97.1  king=296.2
+epoch 20: train_loss=10428.50  val_mse=38684604  man=96.9  king=295.9
+epoch 21: train_loss=10425.13  val_mse=38670260  man=96.7  king=295.7
+epoch 22: train_loss=10422.42  val_mse=38652488  man=96.5  king=295.5
+epoch 23: train_loss=10418.95  val_mse=38635852  man=96.3  king=295.3
+epoch 24: train_loss=10416.12  val_mse=38638212  man=96.1  king=295.0
+epoch 25: train_loss=10413.47  val_mse=38633416  man=95.9  king=294.8
+epoch 26: train_loss=10411.27  val_mse=38627960  man=95.6  king=294.6
+epoch 27: train_loss=10409.18  val_mse=38636904  man=95.4  king=294.4
+epoch 28: train_loss=10406.94  val_mse=38634532  man=95.2  king=294.1
+epoch 29: train_loss=10403.89  val_mse=38624496  man=95.0  king=293.9
+wrote /root/jass/jobs/results/0068-pattern-embed-variants-sweep/artefacts.src/embed-v2-d8-h128.pt (3433699 bytes, 856,452 params)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.6106  (n=1000)
+embed : range=[-3540, 2593]  mean=-95.8  std=633.8
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8394  (n=1000)
+embed : range=[-6651, 5742]  mean=-125.2  std=1026.0
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+=== train v3-d4-h64 (v3 × embed_dim=4 × hidden=64) ===
+==========================================================
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (8 × base=3)...
+  model: 17,008,292 params (embed_dim=4 mlp_hidden=64)
+epoch  0: train_loss=13968.46  val_mse=44618476  man=99.8  king=299.8
+epoch  1: train_loss=13660.72  val_mse=44209400  man=99.5  king=299.5
+epoch  2: train_loss=12982.61  val_mse=43516284  man=99.3  king=299.3
+epoch  3: train_loss=12317.09  val_mse=42852592  man=99.1  king=299.1
+epoch  4: train_loss=11831.37  val_mse=42356164  man=98.9  king=298.9
+epoch  5: train_loss=11494.62  val_mse=41992136  man=98.8  king=298.7
+epoch  6: train_loss=11248.96  val_mse=41695220  man=98.6  king=298.5
+epoch  7: train_loss=11057.37  val_mse=41437804  man=98.5  king=298.3
+epoch  8: train_loss=10898.57  val_mse=41203864  man=98.3  king=298.2
+epoch  9: train_loss=10761.84  val_mse=40975124  man=98.2  king=298.0
+epoch 10: train_loss=10640.63  val_mse=40758340  man=98.0  king=297.8
+epoch 11: train_loss=10531.24  val_mse=40551756  man=97.9  king=297.6
+epoch 12: train_loss=10431.86  val_mse=40344300  man=97.8  king=297.4
+epoch 13: train_loss=10340.33  val_mse=40114268  man=97.6  king=297.2
+epoch 14: train_loss=10255.14  val_mse=39895524  man=97.5  king=297.0
+epoch 15: train_loss=10175.57  val_mse=39670424  man=97.3  king=296.8
+epoch 16: train_loss=10099.80  val_mse=39438872  man=97.2  king=296.6
+epoch 17: train_loss=10027.73  val_mse=39213816  man=97.0  king=296.4
+epoch 18: train_loss=9958.46  val_mse=38970148  man=96.9  king=296.2
+epoch 19: train_loss=9892.20  val_mse=38716444  man=96.7  king=296.0
+epoch 20: train_loss=9827.83  val_mse=38453092  man=96.6  king=295.8
+epoch 21: train_loss=9765.48  val_mse=38172396  man=96.4  king=295.6
+epoch 22: train_loss=9704.26  val_mse=37895092  man=96.3  king=295.4
+epoch 23: train_loss=9643.58  val_mse=37572396  man=96.1  king=295.2
+epoch 24: train_loss=9583.89  val_mse=37279288  man=95.9  king=295.0
+epoch 25: train_loss=9524.56  val_mse=36960452  man=95.8  king=294.8
+epoch 26: train_loss=9465.52  val_mse=36618448  man=95.6  king=294.6
+epoch 27: train_loss=9406.17  val_mse=36292428  man=95.4  king=294.4
+epoch 28: train_loss=9346.85  val_mse=35924896  man=95.2  king=294.1
+epoch 29: train_loss=9287.06  val_mse=35551688  man=95.1  king=293.9
+wrote /root/jass/jobs/results/0068-pattern-embed-variants-sweep/artefacts.src/embed-v3-d4-h64.pt (68039006 bytes, 17,008,292 params)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.4315  (n=1000)
+embed : range=[-7261, 5000]  mean=-106.8  std=1117.1
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8017  (n=1000)
+embed : range=[-9300, 6247]  mean=-235.6  std=1599.1
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+=== train v3-d4-h128 (v3 × embed_dim=4 × hidden=128) ===
+==========================================================
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (8 × base=3)...
+  model: 17,010,468 params (embed_dim=4 mlp_hidden=128)
+epoch  0: train_loss=13949.80  val_mse=44561764  man=99.8  king=299.8
+epoch  1: train_loss=13426.81  val_mse=43865000  man=99.5  king=299.5
+epoch  2: train_loss=12537.56  val_mse=42978356  man=99.3  king=299.3
+epoch  3: train_loss=11867.93  val_mse=42339760  man=99.1  king=299.1
+epoch  4: train_loss=11442.88  val_mse=41920968  man=99.0  king=298.9
+epoch  5: train_loss=11151.96  val_mse=41594156  man=98.8  king=298.8
+epoch  6: train_loss=10933.23  val_mse=41307228  man=98.7  king=298.6
+epoch  7: train_loss=10757.94  val_mse=41051504  man=98.6  king=298.4
+epoch  8: train_loss=10609.93  val_mse=40811536  man=98.4  king=298.2
+epoch  9: train_loss=10481.04  val_mse=40565888  man=98.3  king=298.0
+epoch 10: train_loss=10367.03  val_mse=40329792  man=98.2  king=297.8
+epoch 11: train_loss=10264.42  val_mse=40105508  man=98.0  king=297.7
+epoch 12: train_loss=10170.43  val_mse=39871532  man=97.9  king=297.5
+epoch 13: train_loss=10083.48  val_mse=39599828  man=97.8  king=297.3
+epoch 14: train_loss=10001.73  val_mse=39345884  man=97.6  king=297.1
+epoch 15: train_loss=9924.34  val_mse=39066576  man=97.5  king=296.9
+epoch 16: train_loss=9849.69  val_mse=38784912  man=97.3  king=296.7
+epoch 17: train_loss=9777.87  val_mse=38505340  man=97.2  king=296.5
+epoch 18: train_loss=9707.48  val_mse=38189404  man=97.1  king=296.3
+epoch 19: train_loss=9639.31  val_mse=37856140  man=96.9  king=296.1
+epoch 20: train_loss=9571.56  val_mse=37512676  man=96.7  king=295.9
+epoch 21: train_loss=9505.32  val_mse=37132112  man=96.6  king=295.7
+epoch 22: train_loss=9439.28  val_mse=36763800  man=96.4  king=295.4
+epoch 23: train_loss=9372.63  val_mse=36344280  man=96.3  king=295.2
+epoch 24: train_loss=9306.72  val_mse=35940412  man=96.1  king=295.0
+epoch 25: train_loss=9240.69  val_mse=35522724  man=95.9  king=294.8
+epoch 26: train_loss=9175.16  val_mse=35073340  man=95.7  king=294.6
+epoch 27: train_loss=9108.88  val_mse=34643348  man=95.6  king=294.4
+epoch 28: train_loss=9043.53  val_mse=34176052  man=95.4  king=294.1
+epoch 29: train_loss=8978.22  val_mse=33702796  man=95.2  king=293.9
+wrote /root/jass/jobs/results/0068-pattern-embed-variants-sweep/artefacts.src/embed-v3-d4-h128.pt (68047731 bytes, 17,010,468 params)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.4405  (n=1000)
+embed : range=[-8376, 5895]  mean=-138.9  std=1331.3
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8075  (n=1000)
+embed : range=[-12384, 8625]  mean=-281.9  std=1932.3
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+       0068 PATTERN EMBED VARIANTS SWEEP VERDICT
+==========================================================
+  v2-d4-h64  params=424,132  train=89s  pearson_master=+0.6109  pearson_selfplay=+0.8424
+  v2-d8-h64  params=848,132  train=117s  pearson_master=+0.6069  pearson_selfplay=+0.8380
+  v2-d8-h128  params=856,452  train=125s  pearson_master=+0.6106  pearson_selfplay=+0.8394
+  v3-d4-h64  params=17,008,292  train=201s  pearson_master=+0.4315  pearson_selfplay=+0.8017
+  v3-d4-h128  params=17,010,468  train=179s  pearson_master=+0.4405  pearson_selfplay=+0.8075
+
+
+  Baseline 0067 (v2-d4-h64) : pearson master +0.6109
+
+  Comparaison aux paradigm cousins :
+    0065 (v3 linear)         : pearson master ~0.28
+    0066 (v3 linear + MLP h) : pearson master ~0.12
+
+  Action :
+    * meilleur pearson master > 0.65  → port C++ avec cette config
+    * plateau ≈ 0.61                  → port C++ baseline 0067
+    * dégradation avec capacité       → overfit, baseline 0067 reste optimal
+==========================================================
