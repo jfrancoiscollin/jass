@@ -1,0 +1,74 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+v8 dataset    : /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+v7 reference  : /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin
+master sample : /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+=== train pattern v2 embeddings end-to-end on v8 dataset ===
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (16 × base=3)...
+  model: 424,132 params (embed_dim=4 mlp_hidden=64)
+epoch  0: train_loss=13932.77  val_mse=44507968  man=99.8  king=299.8
+epoch  1: train_loss=13267.69  val_mse=43522212  man=99.5  king=299.5
+epoch  2: train_loss=12379.49  val_mse=42482064  man=99.3  king=299.3
+epoch  3: train_loss=11915.43  val_mse=41795332  man=99.2  king=299.1
+epoch  4: train_loss=11655.48  val_mse=41310040  man=99.0  king=299.0
+epoch  5: train_loss=11472.25  val_mse=40929240  man=98.9  king=298.8
+epoch  6: train_loss=11328.08  val_mse=40612616  man=98.8  king=298.6
+epoch  7: train_loss=11207.78  val_mse=40346388  man=98.6  king=298.5
+epoch  8: train_loss=11103.89  val_mse=40112552  man=98.5  king=298.3
+epoch  9: train_loss=11011.91  val_mse=39900204  man=98.4  king=298.1
+epoch 10: train_loss=10929.47  val_mse=39726488  man=98.2  king=297.9
+epoch 11: train_loss=10854.82  val_mse=39563956  man=98.1  king=297.8
+epoch 12: train_loss=10787.57  val_mse=39426560  man=98.0  king=297.6
+epoch 13: train_loss=10727.16  val_mse=39294600  man=97.8  king=297.4
+epoch 14: train_loss=10673.91  val_mse=39185284  man=97.7  king=297.2
+epoch 15: train_loss=10628.40  val_mse=39081988  man=97.6  king=297.0
+epoch 16: train_loss=10589.92  val_mse=38998596  man=97.4  king=296.8
+epoch 17: train_loss=10557.70  val_mse=38944128  man=97.3  king=296.6
+epoch 18: train_loss=10531.45  val_mse=38885056  man=97.1  king=296.4
+epoch 19: train_loss=10509.32  val_mse=38845012  man=96.9  king=296.2
+epoch 20: train_loss=10491.30  val_mse=38816264  man=96.8  king=296.0
+epoch 21: train_loss=10477.03  val_mse=38785556  man=96.6  king=295.8
+epoch 22: train_loss=10465.56  val_mse=38752752  man=96.4  king=295.5
+epoch 23: train_loss=10455.28  val_mse=38725160  man=96.2  king=295.3
+epoch 24: train_loss=10447.04  val_mse=38719328  man=96.0  king=295.1
+epoch 25: train_loss=10440.03  val_mse=38707912  man=95.8  king=294.9
+epoch 26: train_loss=10434.14  val_mse=38694588  man=95.6  king=294.7
+epoch 27: train_loss=10428.82  val_mse=38696660  man=95.4  king=294.4
+epoch 28: train_loss=10424.39  val_mse=38690920  man=95.2  king=294.2
+epoch 29: train_loss=10420.09  val_mse=38678424  man=95.0  king=294.0
+wrote /root/jass/jobs/results/0067-pattern-embed-mlp-end-to-end/artefacts.src/embed-v2-d4-h64.pt (1704646 bytes, 424,132 params)
+-rw-r--r-- 1 root root 1.7M May 31 08:15 /root/jass/jobs/results/0067-pattern-embed-mlp-end-to-end/artefacts.src/embed-v2-d4-h64.pt
+
+=== pearson vs v7 (master positions, neutral sample) ===
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.6109  (n=1000)
+embed : range=[-3678, 1955]  mean=-94.2  std=620.5
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
+
+=== pearson vs v7 (v8 dataset positions, self-play biased) ===
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8424  (n=1000)
+embed : range=[-6458, 4906]  mean=-124.8  std=1007.7
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3
+
+==========================================================
+       0067 PATTERN EMBED MLP END-TO-END VERDICT
+==========================================================
+  train wall:                                  73s (1.2 min)
+  pearson vs v7 (master, neutral):             +0.6109
+  pearson vs v7 (v8 dataset, self-play bias):  +0.8424
+
+  Direct A/B vs paradigm cousins :
+    0065 (v3 linear,    v8 dataset) : pearson master ~0.28
+    0066 (v3 MLP head,  v8 dataset) : pearson master ~0.12
+    0067 (v2 embed+MLP, v8 dataset) : pearson master +0.6109
+
+    EMBEDDING UNLOCK — signal qualitatif fort vs linear/MLP-head.
+    Port C++ (JPAT v8 format) justifié. Phase 2 = win-rate bench.
+==========================================================

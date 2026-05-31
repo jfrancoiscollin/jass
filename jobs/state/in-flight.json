@@ -1,7 +1,0 @@
-{
-  "job_id": "0067-pattern-embed-mlp-end-to-end",
-  "script": "jobs/queue/0067-pattern-embed-mlp-end-to-end.sh",
-  "pid": 58087,
-  "started_at": "2026-05-31T08:14:34+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
