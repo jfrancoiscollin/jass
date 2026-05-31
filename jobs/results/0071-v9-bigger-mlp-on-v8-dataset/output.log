@@ -1,0 +1,99 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+v8 dataset : /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+master     : /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+v5/v6/v7/v8 : /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin / /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin
+      |                                                                    ~~^~~~
+[ 68%] Linking CXX executable jass_tests
+[100%] Built target jass_tests
+
+=== train v9 = MLPNetworkQ 1024-512 sur v8 dataset ===
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.2s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29999]  mean=-386.6  std=6616.6
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.4s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 3000000 records (1000000 self-play + 2000000 master)
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  44286.4  val=  55071.1 *
+  epoch   2: train=  36147.2  val=  48912.2 *
+  epoch   3: train=  34388.6  val=  44441.3 *
+  epoch   4: train=  33299.7  val=  42226.5 *
+  epoch   5: train=  32468.4  val=  41522.2 *
+  epoch   6: train=  31807.9  val=  38986.9 *
+  epoch   7: train=  31239.0  val=  42192.3
+  epoch   8: train=  30763.6  val=  40135.2
+  epoch   9: train=  30314.5  val=  39976.8
+  epoch  10: train=  29927.9  val=  39978.3
+  epoch  11: train=  29570.4  val=  38414.1 *
+  epoch  12: train=  29242.9  val=  39629.4
+  epoch  13: train=  28943.9  val=  39983.7
+  epoch  14: train=  28665.7  val=  42166.2
+  epoch  15: train=  28421.9  val=  41001.4
+  epoch  16: train=  28198.0  val=  39428.8
+  epoch  17: train=  27990.9  val=  40386.7
+  epoch  18: train=  27808.9  val=  38795.0
+  epoch  19: train=  27637.6  val=  40838.7
+  early-stop at epoch 19
+  wrote /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     38414.1      196.0    2116s
+
+summary → /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/summary.json
+loading float reference /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.016933 sw2=0.033894 sw3=0.050331 sh1=0.044446 sh2=0.33642
+  multipliers: mul1=0.38099 mul2=0.0044779 mul_out=0.016932
+  reference range: float [-1816.3, 1780.4], quantised [-1802.3, 1865.8]
+  diff: mean=-2.98  std=30.75  |max|=340.29  RMSE=30.89
+wrote /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin (991784 bytes)
+
+=== bench v9 (1024-512) vs handcrafted / v5 / v6 / v7 / v8 d10 3 seeds ===
+Benchmark: NNUE (/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs handcrafted, depth 6, 18 games (9 openings × 1 pairs × 2 colours)
+Result: NNUE=16 Handcrafted=1 Draws=1 (total 18)
+NNUE score rate: 0.916667 (16.5 / 18)
+Benchmark: A=NNUE(/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=33 B=18 Draws=3 (total 54)
+A score rate: 0.638889 (34.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=39 B=12 Draws=3 (total 54)
+A score rate: 0.75 (40.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=30 Draws=0 (total 54)
+A score rate: 0.444444 (24 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=18 B=30 Draws=6 (total 54)
+A score rate: 0.388889 (21 / 54)
+
+==========================================================
+       0071 v9 = MLPNetworkQ 1024-512 VERDICT
+==========================================================
+  train wall:    2132s (35.5 min)
+  vs handcrafted: 0.916667
+  vs v5 d10:      0.638889
+  vs v6 d10:      0.75
+  vs v7 d10:      0.444444
+  vs v8 d10:      0.388889
+
+  Comparaison (rate vs v6 d10, baseline historique) :
+    v7 ~0.50  (équivalence avec son ancêtre)
+    v8 ~0.50  (idem, non-transitif observé)
+    v9 = 0.75
+
+  Action :
+    * vs v8 > 0.55 → v9 ships clairement, retag baseline
+    * vs v8 ∈ [0.50, 0.55] → léger gain, ship + ajouter SMP avant v10
+    * vs v8 ∈ [0.45, 0.50] → flat, bigger MLP plafonne pareil
+                              passer direct à Lazy SMP comme leverage
+    * vs v8 < 0.45 → régression overfit, baisser arch ou debug
+==========================================================

@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.016933 sw2=0.033894 sw3=0.050331 sh1=0.044446 sh2=0.33642
+  multipliers: mul1=0.38099 mul2=0.0044779 mul_out=0.016932
+  reference range: float [-1816.3, 1780.4], quantised [-1802.3, 1865.8]
+  diff: mean=-2.98  std=30.75  |max|=340.29  RMSE=30.89
+wrote /root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin (991784 bytes)

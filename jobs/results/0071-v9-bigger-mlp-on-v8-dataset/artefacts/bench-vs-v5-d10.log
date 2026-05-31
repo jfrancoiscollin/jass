@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0071-v9-bigger-mlp-on-v8-dataset/artefacts.src/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-256-128-q.bin), depth 10, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=33 B=18 Draws=3 (total 54)
+A score rate: 0.638889 (34.5 / 54)

@@ -1,7 +1,0 @@
-{
-  "job_id": "0071-v9-bigger-mlp-on-v8-dataset",
-  "script": "jobs/queue/0071-v9-bigger-mlp-on-v8-dataset.sh",
-  "pid": 3471,
-  "started_at": "2026-05-31T16:46:02+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
