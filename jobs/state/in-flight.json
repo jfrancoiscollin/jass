@@ -1,7 +1,0 @@
-{
-  "job_id": "0066-pattern-mlp-head-on-v8-dataset",
-  "script": "jobs/queue/0066-pattern-mlp-head-on-v8-dataset.sh",
-  "pid": 54917,
-  "started_at": "2026-05-31T05:22:59+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
