@@ -1341,6 +1341,69 @@ void test_pattern_network_v7_mlp_head_roundtrip() {
     std::remove(path.c_str());
 }
 
+// JPAT v8 — paradigm shift A : pattern embeddings + MLP end-to-end.
+// Configures a tiny v8 net by hand (1 pattern × 1 square, embed_dim=2,
+// hidden=2), then round-trips through save/load and checks the hand-
+// computed eval matches the C++ implementation.
+void test_pattern_network_v8_pattern_embed_roundtrip() {
+    // Single pattern : 1 square (square 1). With base=3, the bucket
+    // index is 0 (empty), 1 (white piece on sq 1), or 2 (black piece).
+    // Empty board → bucket 0 for the single pattern.
+    PatternNetwork net;
+    net.set_encoding_base(3);
+    net.add_pattern({1});  // 1 pattern × 1 square
+    net.set_bias(0);
+    // Skeleton = 0 so eval reduces to the embedding MLP residual alone.
+
+    net.configure_v8(/*embed_dim=*/2, /*hidden=*/2);
+    JASS_CHECK_EQ(net.embed_dim(),     2);
+    JASS_CHECK_EQ(net.v8_mlp_hidden(), 2);
+    JASS_CHECK_EQ(net.embeddings().size(),       std::size_t{1});
+    JASS_CHECK_EQ(net.embeddings()[0].size(),    std::size_t{3 * 2});
+    JASS_CHECK_EQ(net.v8_mlp_w1().size(),        std::size_t{1 * 2 * 2});
+    JASS_CHECK_EQ(net.v8_mlp_b1().size(),        std::size_t{2});
+    JASS_CHECK_EQ(net.v8_mlp_w2().size(),        std::size_t{2});
+
+    // Embedding table for pattern 0 : 3 buckets × 2 dims.
+    // bucket 0 (empty) → (3.0, 5.0)
+    auto& emb = net.embeddings_mut()[0];
+    emb[0 * 2 + 0] = 3.0f;
+    emb[0 * 2 + 1] = 5.0f;
+    // MLP w1 : (in_dim=2, hidden=2) row-major.
+    //   w1[ii * h + hi]
+    //   hidden 0 = 1.0 * concat[0] + 0.0 * concat[1] = 3
+    //   hidden 1 = 0.0 * concat[0] + 1.0 * concat[1] = 5
+    auto& w1 = net.v8_mlp_w1_mut();
+    w1[0 * 2 + 0] = 1.0f;   // concat[0] → hidden 0
+    w1[0 * 2 + 1] = 0.0f;
+    w1[1 * 2 + 0] = 0.0f;
+    w1[1 * 2 + 1] = 1.0f;   // concat[1] → hidden 1
+    auto& w2 = net.v8_mlp_w2_mut();
+    w2[0] = 2.0f;
+    w2[1] = 4.0f;
+    net.set_v8_mlp_b2(7.0f);
+    // out = b2 + ReLU(3) * 2 + ReLU(5) * 4 = 7 + 6 + 20 = 33.
+
+    const Position empty{};
+    JASS_CHECK_EQ(net.evaluate(empty), 33);
+
+    const std::string path = make_tmp_path("/tmp/jass-jpat-v8-XXXXXX");
+    JASS_CHECK(net.save(path, /*version=*/8));
+
+    PatternNetwork loaded;
+    JASS_CHECK(loaded.load(path));
+    JASS_CHECK_EQ(loaded.embed_dim(),     2);
+    JASS_CHECK_EQ(loaded.v8_mlp_hidden(), 2);
+    JASS_CHECK_EQ(loaded.embeddings()[0][0], 3.0f);
+    JASS_CHECK_EQ(loaded.embeddings()[0][1], 5.0f);
+    JASS_CHECK_EQ(loaded.v8_mlp_w1()[0], 1.0f);
+    JASS_CHECK_EQ(loaded.v8_mlp_w2()[0], 2.0f);
+    JASS_CHECK_EQ(loaded.v8_mlp_b2(),    7.0f);
+    JASS_CHECK_EQ(loaded.evaluate(empty), 33);
+
+    std::remove(path.c_str());
+}
+
 // v1 files must still load and report man/king = 0 (i.e. pure pattern
 // behaviour, identical to legacy).
 void test_pattern_network_v1_load_sets_skeleton_to_zero() {
@@ -1398,6 +1461,7 @@ void run_nnue_tests() {
     test_pattern_network_v5_phase_split_roundtrip();
     test_pattern_network_v6_king_mobility_roundtrip();
     test_pattern_network_v7_mlp_head_roundtrip();
+    test_pattern_network_v8_pattern_embed_roundtrip();
     test_pattern_network_v4_load_preserves_eval();
     test_pattern_network_v1_load_sets_skeleton_to_zero();
 }
