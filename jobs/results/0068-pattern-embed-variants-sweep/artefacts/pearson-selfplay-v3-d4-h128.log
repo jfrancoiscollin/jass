@@ -1,0 +1,4 @@
+subsampled 1000 records from /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+pearson_r = +0.8075  (n=1000)
+embed : range=[-12384, 8625]  mean=-281.9  std=1932.3
+ref   : range=[-2397, 1945]  mean=-59.2  std=607.3

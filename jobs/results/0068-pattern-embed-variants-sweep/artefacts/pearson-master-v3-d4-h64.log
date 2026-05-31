@@ -1,0 +1,4 @@
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.4315  (n=1000)
+embed : range=[-7261, 5000]  mean=-106.8  std=1117.1
+ref   : range=[-2153, 1821]  mean=-39.5  std=425.4
