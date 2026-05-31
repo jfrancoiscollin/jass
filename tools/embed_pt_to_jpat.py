@@ -53,17 +53,21 @@ from train_pattern_embed import PatternEmbedMLP  # noqa: E402
 
 
 def export(model: PatternEmbedMLP, patterns: list[list[int]],
-           out_path: Path) -> int:
+           out_path: Path, output_scale: float = 1.0) -> int:
     n = len(patterns)
     ed = model.embed_dim
     h  = model.mlp_hidden
     base = model.base
 
     # Skeleton scalars (cast to int32 cp). The Python model uses floats,
-    # the C++ skeleton uses int32. Round to nearest cp.
-    bias       = int(round(model.bias.item()))
-    man_value  = int(round(model.man_value.item()))
-    king_value = int(round(model.king_value.item()))
+    # the C++ skeleton uses int32. Round to nearest cp. `output_scale`
+    # rescales the whole eval (skeleton + MLP) without retraining ;
+    # useful when the trained model is overconfident in absolute scale
+    # but rank-correlates well with the reference (typical calibration
+    # mismatch between MSE-trained eval and search-quality eval).
+    bias       = int(round(model.bias.item()       * output_scale))
+    man_value  = int(round(model.man_value.item()  * output_scale))
+    king_value = int(round(model.king_value.item() * output_scale))
 
     # MLP weights, float32, contiguous.
     # Python : nn.Linear(in_dim → h) stores weight as (h, in_dim) ;
@@ -74,6 +78,11 @@ def export(model: PatternEmbedMLP, patterns: list[list[int]],
     b1 = model.mlp[0].bias.detach().cpu().numpy().astype(np.float32)    # (h,)
     w2 = model.mlp[2].weight.detach().cpu().numpy().astype(np.float32)  # (1, h)
     b2 = float(model.mlp[2].bias.detach().cpu().item())                  # scalar
+    # output_scale propagates to the MLP via the final linear layer
+    # (w2 and b2 are linear at output ; ReLU + earlier layers stay
+    # unchanged). Embedding tables also stay unchanged.
+    w2 = w2 * output_scale
+    b2 = b2 * output_scale
     in_dim = n * ed
     assert w1.shape == (h, in_dim), f"w1 shape {w1.shape} vs ({h},{in_dim})"
     assert w2.shape == (1, h),      f"w2 shape {w2.shape} vs (1,{h})"
@@ -125,6 +134,10 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--in",  dest="in_path",  required=True, type=Path)
     ap.add_argument("--out", dest="out_path", required=True, type=Path)
+    ap.add_argument("--output-scale", type=float, default=1.0,
+                    help="multiplicative scale applied to the whole eval "
+                         "(skeleton + MLP). Use e.g. 0.7 to dampen an "
+                         "overconfident eval without retraining.")
     args = ap.parse_args(argv)
 
     ckpt = torch.load(args.in_path, map_location="cpu", weights_only=False)
@@ -136,7 +149,7 @@ def main(argv: list[str]) -> int:
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
 
-    sz = export(model, patterns, args.out_path)
+    sz = export(model, patterns, args.out_path, output_scale=args.output_scale)
     print(f"wrote {args.out_path} ({sz} bytes) "
           f"v8 patterns={cfg['patterns_name']} base={cfg['base']} "
           f"embed_dim={cfg['embed_dim']} mlp_hidden={cfg['mlp_hidden']} "
