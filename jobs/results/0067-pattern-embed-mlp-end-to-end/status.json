@@ -1,7 +1,9 @@
 {
   "job_id": "0067-pattern-embed-mlp-end-to-end",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-05-31T08:14:34+00:00",
+  "ended_at": "2026-05-31T08:20:13+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 58087
+  "artefacts_server_path": "/root/jass/jobs/results/0067-pattern-embed-mlp-end-to-end/artefacts.src"
 }
