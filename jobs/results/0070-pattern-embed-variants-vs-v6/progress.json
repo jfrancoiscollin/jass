@@ -1,16 +1,20 @@
 {
   "job_id": "0070-pattern-embed-variants-vs-v6",
-  "snapshot_at": "2026-05-31T14:33:05+00:00",
+  "snapshot_at": "2026-05-31T14:38:23+00:00",
   "started_at": "2026-05-31T14:27:53+00:00",
-  "elapsed_seconds": 312,
+  "elapsed_seconds": 630,
   "artefacts": [
     {
       "name": "bench-vs-v5-V1-cleanPOV.log",
-      "size_bytes": 0
+      "size_bytes": 327
     },
     {
       "name": "bench-vs-v6-V1-cleanPOV.log",
       "size_bytes": 330
+    },
+    {
+      "name": "bench-vs-v6-V2-cleanPOV-100ep.log",
+      "size_bytes": 0
     },
     {
       "name": "embed-V1-cleanPOV.jpat",
@@ -21,13 +25,33 @@
       "size_bytes": 1704768
     },
     {
+      "name": "embed-V2-cleanPOV-100ep.jpat",
+      "size_bytes": 1697117
+    },
+    {
+      "name": "embed-V2-cleanPOV-100ep.pt",
+      "size_bytes": 1705006
+    },
+    {
       "name": "export-V1-cleanPOV.log",
       "size_bytes": 189
     },
     {
+      "name": "export-V2-cleanPOV-100ep.log",
+      "size_bytes": 196
+    },
+    {
+      "name": "pearson-V1-cleanPOV.log",
+      "size_bytes": 240
+    },
+    {
       "name": "train-V1-cleanPOV.log",
       "size_bytes": 2474
+    },
+    {
+      "name": "train-V2-cleanPOV-100ep.log",
+      "size_bytes": 7450
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1189       1       05:11  0.0  0.0 bash\n   1191    1189       05:11  0.0  0.0 bash\n   1358    1191       01:37  100  0.1 jass\n   1359    1191       01:37  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   1189       1       10:29  0.0  0.0 bash\n   1191    1189       10:29  0.0  0.0 bash\n   1481    1191       00:04  100  0.1 jass\n   1482    1191       00:04  0.0  0.0 tee\n"
 }
