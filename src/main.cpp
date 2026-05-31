@@ -692,13 +692,16 @@ int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
 int run_benchmark_nnue_mode(int argc, char** argv) {
     if (argc < 3) {
         std::cerr << "usage: jass --benchmark-nnue <weights.bin> [depth=6] "
-                     "[pairs=1] [threads=1]\n";
+                     "[pairs=1] [threads=1] [movetime_ms=0]\n"
+                     "  movetime_ms > 0 caps wall time per move (depth becomes "
+                     "an upper bound) ; 0 = depth-only.\n";
         return 1;
     }
     const char* weights_path = argv[2];
-    const int   depth   = (argc > 3) ? parse_int_or(argv[3], 6) : 6;
-    const int   pairs   = (argc > 4) ? parse_int_or(argv[4], 1) : 1;
-    const int   threads = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   depth        = (argc > 3) ? parse_int_or(argv[3], 6) : 6;
+    const int   pairs        = (argc > 4) ? parse_int_or(argv[4], 1) : 1;
+    const int   threads      = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   movetime_ms  = (argc > 6) ? parse_int_or(argv[6], 0) : 0;
 
     std::unique_ptr<INetwork> trained = load_network(weights_path);
     if (!trained) {
@@ -707,14 +710,16 @@ int run_benchmark_nnue_mode(int argc, char** argv) {
     }
 
     EngineConfig handcrafted;
-    handcrafted.max_depth = depth;
-    handcrafted.threads   = threads;
-    handcrafted.nnue      = nullptr;
+    handcrafted.max_depth   = depth;
+    handcrafted.threads     = threads;
+    handcrafted.movetime_ms = movetime_ms;
+    handcrafted.nnue        = nullptr;
 
     EngineConfig nnue_cfg;
-    nnue_cfg.max_depth = depth;
-    nnue_cfg.threads   = threads;
-    nnue_cfg.nnue      = trained.get();
+    nnue_cfg.max_depth   = depth;
+    nnue_cfg.threads     = threads;
+    nnue_cfg.movetime_ms = movetime_ms;
+    nnue_cfg.nnue        = trained.get();
 
     const auto pool = default_opening_pool();
     const int  total_games = pairs * 2 * static_cast<int>(pool.size());
@@ -722,6 +727,7 @@ int run_benchmark_nnue_mode(int argc, char** argv) {
     std::cout << "Benchmark: NNUE (" << weights_path
               << ") vs handcrafted, depth " << depth
               << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
               << ", " << total_games << " games "
               << "(" << pool.size() << " openings × " << pairs
               << " pairs × 2 colours)\n";
@@ -752,14 +758,17 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: jass --benchmark-nnue-vs-nnue "
                      "<weights_a.bin> <weights_b.bin> [depth=6] [pairs=1] "
-                     "[threads=1]\n";
+                     "[threads=1] [movetime_ms=0]\n"
+                     "  movetime_ms > 0 caps wall time per move (depth becomes "
+                     "an upper bound) ; 0 = depth-only.\n";
         return 1;
     }
-    const char* path_a  = argv[2];
-    const char* path_b  = argv[3];
-    const int   depth   = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
-    const int   pairs   = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
-    const int   threads = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const char* path_a      = argv[2];
+    const char* path_b      = argv[3];
+    const int   depth       = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
+    const int   pairs       = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   threads     = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   movetime_ms = (argc > 7) ? parse_int_or(argv[7], 0) : 0;
 
     std::unique_ptr<INetwork> net_a = load_network(path_a);
     if (!net_a) {
@@ -773,14 +782,16 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     }
 
     EngineConfig cfg_a;
-    cfg_a.max_depth = depth;
-    cfg_a.threads   = threads;
-    cfg_a.nnue      = net_a.get();
+    cfg_a.max_depth   = depth;
+    cfg_a.threads     = threads;
+    cfg_a.movetime_ms = movetime_ms;
+    cfg_a.nnue        = net_a.get();
 
     EngineConfig cfg_b;
-    cfg_b.max_depth = depth;
-    cfg_b.threads   = threads;
-    cfg_b.nnue      = net_b.get();
+    cfg_b.max_depth   = depth;
+    cfg_b.threads     = threads;
+    cfg_b.movetime_ms = movetime_ms;
+    cfg_b.nnue        = net_b.get();
 
     const auto pool = default_opening_pool();
     const int  total_games = pairs * 2 * static_cast<int>(pool.size());
@@ -788,6 +799,7 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
               << ") vs B=NNUE(" << path_b
               << "), depth " << depth
               << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
               << ", " << total_games << " games "
               << "(" << pool.size() << " openings × " << pairs
               << " pairs × 2 colours)\n";
