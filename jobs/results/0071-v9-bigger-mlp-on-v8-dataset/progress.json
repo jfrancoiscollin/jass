@@ -1,8 +1,8 @@
 {
   "job_id": "0071-v9-bigger-mlp-on-v8-dataset",
-  "snapshot_at": "2026-05-31T17:27:39+00:00",
+  "snapshot_at": "2026-05-31T17:32:40+00:00",
   "started_at": "2026-05-31T16:46:02+00:00",
-  "elapsed_seconds": 2497,
+  "elapsed_seconds": 2798,
   "artefacts": [
     {
       "name": "bench-vs-hc.log",
@@ -35,5 +35,5 @@
       "size_bytes": 1893
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   3471       1       41:37  0.0  0.0 bash\n   3473    3471       41:37  0.0  0.0 bash\n   5125    3473       05:39 99.9  0.1 jass\n   5126    3473       05:39  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   3471       1       46:38  0.0  0.0 bash\n   3473    3471       46:38  0.0  0.0 bash\n   5125    3473       10:40 99.9  0.1 jass\n   5126    3473       10:40  0.0  0.0 tee\n"
 }
