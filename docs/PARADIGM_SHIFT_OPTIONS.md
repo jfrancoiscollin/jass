@@ -139,6 +139,62 @@ pas d'évaluateur externe pour labelliser.
 **Risque** : élevé en scope dev, faible en incertitude technique
 (méthodologie connue, plein d'open source AlphaZero clones existent).
 
+### Compute platform pour D — détail honnête
+
+**CCX33 (notre setup actuel, CPU 8 cores ~€60/mois)** :
+- ✅ **Viable pour prototype**. Petit ResNet (6-8 blocs × 64-128 channels),
+  MCTS 50-100 sims/coup. ~3-4 semaines pour atteindre un niveau
+  intéressant.
+- ❌ Trop lent pour production sérieuse (training 1 epoch sur 100K
+  positions = ~1-2h CPU vs ~5-10 min GPU).
+- ✅ Intégration naturelle avec notre runner / git workflow existant.
+
+**GPU dedicated (Hetzner / vast.ai / runpod ~€100-300/mois)** :
+- ✅ **Recommandé pour scale-up production** post-prototype.
+- ✅ Batched MCTS leaf evaluation = ~10-100× speedup vs CPU (la "killer
+  feature").
+- ❌ Implem batched MCTS plus complexe (virtual loss, batch collection).
+- Hetzner cloud n'a PAS de GPU on-demand facile ; il faut louer un
+  dedicated server (engagement mensuel) ou utiliser vast.ai/runpod
+  pour du tarif horaire.
+
+**Colab Pro / Kaggle (gratuit ou ~$10/mois)** :
+- ❌ **PAS adapté à notre setup** pour production AlphaZero.
+- Notebook interactif, session limitée 6-24h, disconnect quand idle.
+- Pas de cron / orchestration native. Upload du binary jass + data à
+  chaque session.
+- ❌ Pas adapté à un training multi-jours sans surveillance, ni à un
+  self-play loop continu.
+- ✅ **OK pour proof-of-concept ponctuel** : "est-ce qu'un ResNet 6×64
+  sur board 10×10 converge sur master games WDL en 1h ?" — parfait
+  Colab. Le self-play loop continu reste à faire sur CCX33 ou GPU
+  dedicated.
+- ✅ Quotas : Free Colab ~3-4h GPU/jour T4 ; Pro ~$10/mois prioritaire ;
+  Kaggle gratuit 30h/semaine T4 ou P100. "Fair use" pour Colab — si tu
+  pousses fort, accès dégradé pendant quelques jours.
+
+### Recommandation phasée pour D
+
+**Phase 1 — Prototype CCX33 (~2-3 semaines, ~€60-100)** :
+1. Petit ResNet (6 blocs × 64 channels) en PyTorch
+2. MCTS implementation simple, 50 sims/coup
+3. Self-play loop sur CCX33 + training Python local
+4. Bench vs v8 + handcrafted pour valider la méthodo
+
+Optionnellement : utilisation ponctuelle de **Colab Pro** pour tester
+des hyperparamètres NN training en isolation (~1-3h sessions).
+
+**Phase 2 — Scale-up GPU (~2-4 semaines, ~€200-400) — si Phase 1
+sort un signal** :
+1. Rent vast.ai T4 ou Hetzner dedicated GPU
+2. Implém batched MCTS (virtual loss + batch leaf eval)
+3. ResNet plus gros (10-12 blocs × 128 channels), MCTS 200-400 sims
+4. Self-play massive 24/7 sur plusieurs semaines
+
+**Verdict pratique** : ne pas commit GPU avant Phase 1 validation
+sur CCX33. Risque d'engager €200-400 sur une méthodo qui ne marche
+pas pour notre jeu/scale.
+
 **My recommendation** : engagement major. À considérer SEULEMENT si
 on décide de pivoter le projet vers un effort multi-mois (genre :
 "jass v2 = AlphaZero clone"). Pas un cheap test.
