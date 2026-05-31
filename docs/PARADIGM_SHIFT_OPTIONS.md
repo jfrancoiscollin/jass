@@ -278,6 +278,70 @@ le piège "variante des 14+1 déjà refutées".
 
 ---
 
+## (G) Distillation depuis Scan (proposé 2026-05-31)
+
+**Idée** : Scan est GPL, on peut le faire tourner localement. Générer
+un dataset où chaque position est labellisée par l'eval Scan directe
+(via HUB protocol, `pos … ; level depth=N ; go think`, parser le
+score), pas son self-play. Entraîner v10 (= MLPNetworkQ ré-utilisée)
+à imiter Scan position par position.
+
+```
+v8 dataset (1M positions, scores v7 d16)
+    ↓ pour chaque position : query Scan d16
+v10 dataset (1M positions, scores Scan d16)
+    ↓ train_v3.py avec target = Scan scores
+v10 NNUE quantisé
+    ↓ bench
+v10 vs Scan + v10 vs v8/v9
+```
+
+**Pourquoi c'est dominant vs tout le reste** :
+* Reframes le problème : "battre Scan" → "approximer une fonction
+  connue et tractable". Beaucoup plus tractable.
+* Borne le problème : si v10 capture 60-70% de Scan, on a tué la
+  moitié du gap d'un coup. Ce qui reste est diagnostiqué :
+  - écart positionnel résiduel → eval insuffisante (capacity/arch)
+  - écart tactique résiduel → search co-tuning / time control
+* Pas besoin d'infra self-play co-évolution (cf. SCAN_METHODOLOGY_GAP).
+  Scan est juste un oracle eval.
+
+**Effort** : ~1-2 jours dev
+* Wrapper Scan en mode HUB (relabel_with_scan.py) : ~4-6h
+* Re-labelling 1M positions (Scan d16 ~1-3 sec/pos × 1M = ~10-50h
+  wall, parallélisable). En batch sur prod CCX33.
+* Train v10 sur dataset re-labellisé : ~30 min (infra existante).
+* Bench v10 vs Scan + autres : ~30 min.
+
+**Coût compute** : ~€5-10 (gros poste = relabelling time).
+
+**Risques honnêtes** :
+1. **Capacité limit** : MLPNetworkQ 256-128 = ~150K params, Scan ≈ 4-50M
+   pattern weights. MLP ne peut pas représenter exactement Scan. Mitigation :
+   utiliser 1024-512 (~700K params), voire repivoter sur v10 = labeller
+   pour v11 1024-512 cascading distillation.
+2. **Quantization** : int8 perd ~5-10% du signal distillé. Inhérent.
+3. **Search-eval mismatch** : Scan a son search co-tuné. Notre alpha-beta
+   uses une eval ≈ Scan mais sans son contexte tactique. Probable +200-400
+   ELO atteignable, pas Scan-level direct.
+4. **Calibration** : Scan scores en unités probables différentes (HUB
+   protocol = centipawns standard, mais à vérifier). Affine.
+5. **License** : Scan = GPL3, dataset dérivé probablement GPL3. Compatible
+   avec notre AGPL3.
+
+**Gain estimé** :
+* Best : +400-500 ELO (capture 70-80% Scan) — tue la moitié du -812
+  ELO gap d'un coup
+* Median : +200-400 ELO (50-65% Scan)
+* Worst : +50-100 ELO (capacity limit dur, v10 ≈ v9 mais mieux calibré)
+
+**My recommendation** : **option dominante**. Seul axe qui s'attaque
+frontalement au -812 ELO gap, pas latéralement. À queue **avant** (F)
+aux heads et (B) input enrichi — si (G) marche, (F) et (B) deviennent
+des optimisations marginales par-dessus une base 4-5× plus forte.
+
+---
+
 ## Synthèse — recommandations par profil d'engagement
 
 ### "Curiosité cheap" (~€10, ~1-2 semaines wall)
