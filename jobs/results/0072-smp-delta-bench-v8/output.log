@@ -1,0 +1,66 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+v8 NNUE : /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin
+[ 97%] Built target jass_tests
+[100%] Linking CXX executable jass
+[100%] Built target jass
+
+==========================================================
+=== (A) sanity : t=1 d10 vs t=1 d10 ===
+==========================================================
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=24 Draws=6 (total 54)
+A score rate: 0.5 (27 / 54)
+
+==========================================================
+=== (B) SMP fixed-depth : t=8 d10 vs t=1 d10 ===
+==========================================================
+Benchmark: NNUE (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 10, threads 8, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: NNUE=53 Handcrafted=1 Draws=0 (total 54)
+NNUE score rate: 0.981481 (53 / 54)
+Benchmark: NNUE (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: NNUE=54 Handcrafted=0 Draws=0 (total 54)
+NNUE score rate: 1 (54 / 54)
+
+==========================================================
+=== (C) sanity movetime : t=1 mt=500 vs t=1 mt=500 ===
+==========================================================
+Benchmark: A=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 32, threads 1, movetime_ms 500, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=23 B=28 Draws=3 (total 54)
+A score rate: 0.453704 (24.5 / 54)
+
+==========================================================
+=== (D) SMP movetime : t=8 mt=500 vs handcrafted ===
+==========================================================
+Benchmark: NNUE (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 32, threads 8, movetime_ms 500, 54 games (9 openings × 3 pairs × 2 colours)
+Result: NNUE=50 Handcrafted=3 Draws=1 (total 54)
+NNUE score rate: 0.935185 (50.5 / 54)
+Benchmark: NNUE (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) vs handcrafted, depth 32, threads 1, movetime_ms 500, 54 games (9 openings × 3 pairs × 2 colours)
+Result: NNUE=50 Handcrafted=4 Draws=0 (total 54)
+NNUE score rate: 0.925926 (50 / 54)
+
+==========================================================
+       0072 SMP DELTA BENCH VERDICT
+==========================================================
+  (A) sanity self-play t=1 d10  → rate=0.5 (892s)
+       expected ~0.50 (self-play). Sanity check OK if proche.
+
+  (B) SMP fixed-depth d10 vs handcrafted :
+       t=8: rate=0.981481 (233s)
+       t=1: rate=1 (209s)
+       delta t8-t1 = -0.019
+       (~+10-30 ELO attendu si delta ~ +0.05-0.10)
+
+  (C) sanity movetime t=1 mt=500 self-play → rate=0.453704 (3324s)
+
+  (D) SMP movetime mt=500 vs handcrafted :
+       t=8 mt=500 : rate=0.935185 (2551s)
+       t=1 mt=500 : rate=0.925926 (2368s)
+       delta t8-t1 = 0.009
+       (~+50-100 ELO attendu si delta ~ +0.15-0.30)
+
+  Action :
+    * delta (D) > 0.15 → SMP ships, default threads=8 partout
+    * delta (D) ≈ delta (B) → SMP gain ≈ identique fixed/movetime, surprise
+    * delta (D) < 0.05 → SMP gain plus faible que prédit, debug
+==========================================================
