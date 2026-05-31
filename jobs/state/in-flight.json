@@ -1,7 +1,0 @@
-{
-  "job_id": "0072-smp-delta-bench-v8",
-  "script": "jobs/queue/0072-smp-delta-bench-v8.sh",
-  "pid": 8458,
-  "started_at": "2026-05-31T21:11:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
