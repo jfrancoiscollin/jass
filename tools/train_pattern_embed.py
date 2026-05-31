@@ -101,6 +101,10 @@ def main(argv: list[str]) -> int:
     p.add_argument("--max-records", type=int, default=0)
     p.add_argument("--val-frac",    type=float, default=0.05)
     p.add_argument("--seed",        type=int, default=42)
+    p.add_argument("--no-stm-flip", action="store_true",
+                   help="Don't flip mat_diff/king_diff for STM=Black. "
+                        "Cleaner white-POV convention (the legacy flip "
+                        "made the model fit a mixed reference frame).")
     args = p.parse_args(argv)
 
     torch.manual_seed(args.seed)
@@ -116,11 +120,14 @@ def main(argv: list[str]) -> int:
           flush=True)
     pidx = pattern_indices(bbs, patterns, base=3)
     mat_diff, king_diff = material_diffs(bbs)
-    # White-POV sign-flip
+    # White-POV sign-flip for the target. Skeleton inputs (mat_diff,
+    # king_diff) stay white-POV when --no-stm-flip is set ; otherwise
+    # they get flipped (legacy 0067 behavior — a mixed-frame quirk).
     score_w = score.astype(np.float32);  score_w[stm == 1] *= -1
     wdl_w   = wdl.astype(np.float32);    wdl_w[stm == 1]   *= -1
-    mat_diff[stm == 1] *= -1
-    king_diff[stm == 1] *= -1
+    if not args.no_stm_flip:
+        mat_diff[stm == 1] *= -1
+        king_diff[stm == 1] *= -1
 
     perm = np.random.permutation(n)
     val_n = int(n * args.val_frac)
@@ -177,6 +184,7 @@ def main(argv: list[str]) -> int:
             "base": 3,
             "embed_dim": args.embed_dim,
             "mlp_hidden": args.mlp_hidden,
+            "stm_flip": (not args.no_stm_flip),
         },
     }, args.out)
     print(f"wrote {args.out} ({args.out.stat().st_size} bytes, {n_params:,} params)",
