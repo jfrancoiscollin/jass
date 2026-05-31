@@ -150,6 +150,43 @@
 // balance/king_pst=0. Phase split (mg/eg per Scan §2) is NOT in v4 yet
 // (it would be v5/G3b).
 //
+// Version 8 (paradigm shift A — pattern embeddings + MLP end-to-end ;
+// cf. docs/PARADIGM_SHIFT_OPTIONS.md option A, jobs 0067/0068). Replaces
+// the per-pattern scalar weight lookup with a per-pattern EMBEDDING
+// table (base^K float32 vectors of size embed_dim), concatenated across
+// patterns and fed to a dedicated MLP (input dim = N×embed_dim, hidden
+// → 1). The skeleton (bias / man_value / king_value) stays as int32
+// residual. Phase split / king PST / balance / mobility / v7 MLP head
+// are NOT used by v8 (the embedding MLP replaces the linear sum, not
+// extends it).
+//
+// Strict additive extension of v7. The v8-specific fields come AFTER
+// the v7 MLP section but BEFORE the per-pattern blob (which itself
+// changes shape : K + squares + embeddings instead of K + squares +
+// int32 weights). Discriminator : `embed_dim_ > 0`.
+//
+//   [0..453)  identical to v6 header
+//   [453..454) uint8  mlp_hidden (v7 MLP, typically 0 for v8 files)
+//   if mlp_hidden > 0 : v7 MLP weights blob (see v7 layout)
+//   [next..+1) uint8  embed_dim   (0 = no embeddings — falls back to v7)
+//   if embed_dim > 0 :
+//     uint8  v8_mlp_hidden
+//     float32[N × embed_dim × v8_mlp_hidden] v8_mlp_w1 (row-major
+//                                                       [pi*ed*h + e*h + h])
+//     float32[v8_mlp_hidden] v8_mlp_b1
+//     float32[v8_mlp_hidden] v8_mlp_w2
+//     float32                v8_mlp_b2
+//   For each pattern (v8 layout — no int32 weights blob !) :
+//     uint8  K
+//     uint8[K] squares
+//     float32[base^K × embed_dim] embedding_table  (row-major
+//                                                   [bucket*embed_dim + e])
+//
+// `evaluate()` v8 branch (when embed_dim_ > 0) : skip the int32 weight
+// lookup entirely, look up each pattern's embedding vector, concat,
+// MLP forward, add to acc_mg as scalar int32 residual. Skeleton
+// (bias + man*mat_diff + king*king_diff) is applied as in v2+, MG-only.
+//
 // Single-file, self-describing. The pattern set is part of the file
 // (not hard-coded at load time), so different pattern sets can be
 // loaded transparently.
@@ -293,6 +330,31 @@ public:
     std::vector<float>&       mlp_w2_mut() noexcept { return mlp_w2_; }
     void                      set_mlp_b2(float v) noexcept { mlp_b2_ = v; }
 
+    // JPAT v8 — paradigm shift A : pattern embeddings + MLP end-to-end.
+    // Per-pattern embedding tables (base^K vectors of size embed_dim,
+    // float32) replace the int32 scalar weights ; a dedicated MLP
+    // (input dim = N × embed_dim) replaces the linear pattern sum.
+    // When embed_dim == 0 the v8 path is OFF (eval falls back to v1-v7).
+    std::uint8_t embed_dim() const noexcept { return embed_dim_; }
+    std::uint8_t v8_mlp_hidden() const noexcept { return v8_mlp_hidden_; }
+    // Per-pattern embedding table : embeddings()[pi][bucket*embed_dim + e].
+    const std::vector<std::vector<float>>& embeddings() const noexcept {
+        return embeddings_;
+    }
+    const std::vector<float>& v8_mlp_w1() const noexcept { return v8_mlp_w1_; }
+    const std::vector<float>& v8_mlp_b1() const noexcept { return v8_mlp_b1_; }
+    const std::vector<float>& v8_mlp_w2() const noexcept { return v8_mlp_w2_; }
+    float                     v8_mlp_b2() const noexcept { return v8_mlp_b2_; }
+    // Configure v8 : allocate embedding tables (per pattern : base^K ×
+    // embed_dim floats) + MLP weights (N×embed_dim×hidden, hidden, hidden,
+    // 1). Existing values discarded. Patterns must already be added.
+    void configure_v8(std::uint8_t embed_dim, std::uint8_t hidden) noexcept;
+    std::vector<std::vector<float>>& embeddings_mut() noexcept { return embeddings_; }
+    std::vector<float>&              v8_mlp_w1_mut() noexcept  { return v8_mlp_w1_; }
+    std::vector<float>&              v8_mlp_b1_mut() noexcept  { return v8_mlp_b1_; }
+    std::vector<float>&              v8_mlp_w2_mut() noexcept  { return v8_mlp_w2_; }
+    void                             set_v8_mlp_b2(float v) noexcept { v8_mlp_b2_ = v; }
+
     // Save format: pass `version = 2` to write the hybrid header (even
     // if man/king are 0); `version = 3` writes the v3 header that
     // additionally records the encoding_base; `version = 4` adds the
@@ -334,6 +396,15 @@ private:
     std::vector<float>                 mlp_b1_{};   // size hidden
     std::vector<float>                 mlp_w2_{};   // size hidden
     float                              mlp_b2_{0.0f};
+    // JPAT v8 only — pattern embeddings + MLP end-to-end.
+    std::uint8_t                       embed_dim_{0};
+    std::uint8_t                       v8_mlp_hidden_{0};
+    std::vector<std::vector<float>>    embeddings_{};   // per-pattern
+                                                        // [bucket*embed_dim + e]
+    std::vector<float>                 v8_mlp_w1_{};    // N×embed_dim×hidden
+    std::vector<float>                 v8_mlp_b1_{};    // hidden
+    std::vector<float>                 v8_mlp_w2_{};    // hidden
+    float                              v8_mlp_b2_{0.0f};
 };
 
 }  // namespace jass
