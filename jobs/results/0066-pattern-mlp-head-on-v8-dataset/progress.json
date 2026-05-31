@@ -1,13 +1,13 @@
 {
   "job_id": "0066-pattern-mlp-head-on-v8-dataset",
-  "snapshot_at": "2026-05-31T05:43:53+00:00",
+  "snapshot_at": "2026-05-31T05:48:57+00:00",
   "started_at": "2026-05-31T05:22:59+00:00",
-  "elapsed_seconds": 1254,
+  "elapsed_seconds": 1558,
   "artefacts": [
     {
       "name": "train.log",
-      "size_bytes": 2481
+      "size_bytes": 3015
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  54917       1       20:54  0.0  0.0 bash\n  54919   54917       20:54  0.0  0.0 bash\n  54993   54919       20:52  299  7.2 python3\n  54994   54919       20:52  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  54917       1       25:57  0.0  0.0 bash\n  54919   54917       25:57  0.0  0.0 bash\n  54993   54919       25:56  299  6.2 python3\n  54994   54919       25:56  0.0  0.0 tee\n"
 }
