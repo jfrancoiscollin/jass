@@ -1,13 +1,17 @@
 {
   "job_id": "0072-smp-delta-bench-v8",
-  "snapshot_at": "2026-05-31T21:22:05+00:00",
+  "snapshot_at": "2026-05-31T21:27:11+00:00",
   "started_at": "2026-05-31T21:11:52+00:00",
-  "elapsed_seconds": 613,
+  "elapsed_seconds": 919,
   "artefacts": [
     {
       "name": "A-sanity-t1-d10.log",
+      "size_bytes": 356
+    },
+    {
+      "name": "B-t8-d10-vs-hc.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   8458       1       10:12  0.0  0.0 bash\n   8460    8458       10:12  0.0  0.0 bash\n   8542    8460       10:10 99.9  0.1 jass\n   8543    8460       10:10  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   8458       1       15:18  0.0  0.0 bash\n   8460    8458       15:18  0.0  0.0 bash\n   8759    8460       00:24  773  0.1 jass\n   8760    8460       00:24  0.0  0.0 tee\n"
 }
