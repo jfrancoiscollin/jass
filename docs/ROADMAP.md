@@ -161,6 +161,26 @@ Inchangés depuis `PATTERN_ROADMAP.md` :
 
 ---
 
+## Pistes paradigm shift dormantes
+
+Si tous les axes cheap (data v8/v9 + pattern G1-G4-diag + H1-H4 + MLP
+head v7) s'épuisent, le projet aurait besoin d'un paradigm shift pour
+franchir le plateau. Cinq pistes capturées dans
+[`docs/PARADIGM_SHIFT_OPTIONS.md`](PARADIGM_SHIFT_OPTIONS.md) :
+
+| # | Piste | Effort dev | Coût compute |
+|---|---|---|---|
+| **(A)** | Pattern indices → embeddings dans MLP end-to-end | ~1j | ~€2 |
+| **(B)** | MLPNetworkQ enrichi (HalfMen + features Scan) | ~1j | ~€5 |
+| **(C)** | Convolution 2D sur le board | ~2-3j | ~€5-10 |
+| **(D)** | AlphaZero-style MCTS + ResNet | ~2-3 semaines | ~€100-300 |
+| **(E)** | Bigger MLPNetworkQ (1024-512) sur v8 dataset | ~30 min | ~€5 |
+
+À reprendre quand : 0066 verdict tombe, ou G4-prod si tenté, ou tout
+moment où l'axe data cesse de progresser.
+
+---
+
 ## Notes méthodo
 
 1. Tous les benchs vs v5 doivent utiliser **depth 10** comme signal principal
