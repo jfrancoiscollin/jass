@@ -1,0 +1,35 @@
+loading /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin...
+  1000000 records
+encoding pattern indices (16 × base=3)...
+  model: 424,132 params (embed_dim=4 mlp_hidden=64)
+epoch  0: train_loss=11954.34  val_mse=42716104  man=100.2  king=300.2
+epoch  1: train_loss=11648.32  val_mse=42183720  man=100.4  king=300.4
+epoch  2: train_loss=11311.13  val_mse=41679544  man=100.6  king=300.6
+epoch  3: train_loss=11126.61  val_mse=41332668  man=100.8  king=300.7
+epoch  4: train_loss=11013.74  val_mse=41078076  man=100.9  king=300.7
+epoch  5: train_loss=10929.87  val_mse=40863552  man=101.0  king=300.8
+epoch  6: train_loss=10859.79  val_mse=40672712  man=101.2  king=300.8
+epoch  7: train_loss=10797.93  val_mse=40497532  man=101.3  king=300.8
+epoch  8: train_loss=10741.85  val_mse=40332860  man=101.4  king=300.8
+epoch  9: train_loss=10690.23  val_mse=40168596  man=101.6  king=300.7
+epoch 10: train_loss=10642.36  val_mse=40034504  man=101.7  king=300.6
+epoch 11: train_loss=10597.77  val_mse=39899224  man=101.8  king=300.5
+epoch 12: train_loss=10556.70  val_mse=39781660  man=101.9  king=300.3
+epoch 13: train_loss=10518.67  val_mse=39666564  man=102.1  king=300.1
+epoch 14: train_loss=10484.38  val_mse=39571760  man=102.2  king=299.9
+epoch 15: train_loss=10454.41  val_mse=39477812  man=102.3  king=299.7
+epoch 16: train_loss=10428.34  val_mse=39397204  man=102.4  king=299.5
+epoch 17: train_loss=10405.82  val_mse=39335896  man=102.5  king=299.3
+epoch 18: train_loss=10387.22  val_mse=39273760  man=102.6  king=299.0
+epoch 19: train_loss=10371.42  val_mse=39230392  man=102.7  king=298.8
+epoch 20: train_loss=10358.42  val_mse=39190964  man=102.8  king=298.6
+epoch 21: train_loss=10348.12  val_mse=39152948  man=102.9  king=298.4
+epoch 22: train_loss=10339.64  val_mse=39121512  man=103.0  king=298.2
+epoch 23: train_loss=10331.91  val_mse=39083600  man=103.1  king=298.0
+epoch 24: train_loss=10325.75  val_mse=39072664  man=103.2  king=297.7
+epoch 25: train_loss=10320.52  val_mse=39055244  man=103.2  king=297.5
+epoch 26: train_loss=10316.32  val_mse=39040056  man=103.3  king=297.3
+epoch 27: train_loss=10312.32  val_mse=39036052  man=103.4  king=297.1
+epoch 28: train_loss=10309.28  val_mse=39022232  man=103.5  king=296.9
+epoch 29: train_loss=10306.09  val_mse=39010296  man=103.6  king=296.7
+wrote /root/jass/jobs/results/0070-pattern-embed-variants-vs-v6/artefacts.src/embed-V1-cleanPOV.pt (1704768 bytes, 424,132 params)

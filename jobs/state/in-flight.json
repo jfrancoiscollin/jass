@@ -1,7 +1,0 @@
-{
-  "job_id": "0070-pattern-embed-variants-vs-v6",
-  "script": "jobs/queue/0070-pattern-embed-variants-vs-v6.sh",
-  "pid": 1189,
-  "started_at": "2026-05-31T14:27:53+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
