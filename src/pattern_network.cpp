@@ -375,7 +375,7 @@ int PatternNetwork::evaluate(const Position& pos) const noexcept {
             // mixed convention during training.
             int mat_diff  = popcount(pos.white_men())   - popcount(pos.black_men());
             int king_diff = popcount(pos.white_kings()) - popcount(pos.black_kings());
-            if (pos.side_to_move() == Color::Black) {
+            if (v8_stm_flip_ != 0 && pos.side_to_move() == Color::Black) {
                 mat_diff  = -mat_diff;
                 king_diff = -king_diff;
             }
@@ -636,6 +636,7 @@ bool PatternNetwork::load(std::string_view path) {
     // inside the patterns loop below (replacing the int32 weights blob).
     std::uint8_t embed_dim     = 0;
     std::uint8_t v8_mlp_hidden = 0;
+    std::uint8_t v8_stm_flip   = 1;  // legacy default if absent
     std::vector<float> v8_mlp_w1, v8_mlp_b1, v8_mlp_w2;
     float v8_mlp_b2 = 0.0f;
     if (version == JPAT_VERSION_V8) {
@@ -643,6 +644,8 @@ bool PatternNetwork::load(std::string_view path) {
         if (!f || embed_dim == 0 || embed_dim > 32) return false;
         f.read(reinterpret_cast<char*>(&v8_mlp_hidden), 1);
         if (!f || v8_mlp_hidden == 0) return false;
+        f.read(reinterpret_cast<char*>(&v8_stm_flip), 1);
+        if (!f || v8_stm_flip > 1) return false;
         const std::size_t ed = static_cast<std::size_t>(embed_dim);
         const std::size_t h  = static_cast<std::size_t>(v8_mlp_hidden);
         const std::size_t n  = static_cast<std::size_t>(num_patterns);
@@ -716,6 +719,7 @@ bool PatternNetwork::load(std::string_view path) {
     mlp_b2_         = mlp_b2;
     embed_dim_      = embed_dim;
     v8_mlp_hidden_  = v8_mlp_hidden;
+    v8_stm_flip_    = v8_stm_flip;
     embeddings_     = std::move(tmp_embeddings);
     v8_mlp_w1_      = std::move(v8_mlp_w1);
     v8_mlp_b1_      = std::move(v8_mlp_b1);
@@ -852,6 +856,7 @@ bool PatternNetwork::save(std::string_view path, std::uint32_t version) const {
     if (version == JPAT_VERSION_V8) {
         f.write(reinterpret_cast<const char*>(&embed_dim_),     1);
         f.write(reinterpret_cast<const char*>(&v8_mlp_hidden_), 1);
+        f.write(reinterpret_cast<const char*>(&v8_stm_flip_),   1);
         const std::size_t ed   = static_cast<std::size_t>(embed_dim_);
         const std::size_t h    = static_cast<std::size_t>(v8_mlp_hidden_);
         const std::size_t npat = patterns_.size();

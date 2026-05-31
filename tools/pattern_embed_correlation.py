@@ -68,13 +68,13 @@ def read_scores(p: Path) -> np.ndarray:
 
 
 def eval_embed_on_jnnw(model: PatternEmbedMLP, patterns: list[list[int]],
-                       sample: Path) -> np.ndarray:
+                       sample: Path, stm_flip: bool = True) -> np.ndarray:
     bbs, stm, _score, _wdl = load_jnnw(sample, 0)
     pidx = pattern_indices(bbs, patterns, base=model.base)
     mat_diff, king_diff = material_diffs(bbs)
-    # White-POV sign-flip (same as training)
-    mat_diff[stm == 1] *= -1
-    king_diff[stm == 1] *= -1
+    if stm_flip:
+        mat_diff[stm == 1] *= -1
+        king_diff[stm == 1] *= -1
     model.eval()
     with torch.no_grad():
         out = model(torch.from_numpy(pidx),
@@ -118,7 +118,8 @@ def main(argv: list[str]) -> int:
             check=True, capture_output=True,
         )
         sr = read_scores(scored_ref).astype(np.float64)
-        sp = eval_embed_on_jnnw(model, patterns, sample)
+        sp = eval_embed_on_jnnw(model, patterns, sample,
+                                stm_flip=cfg.get("stm_flip", True))
 
     if sp.std() == 0 or sr.std() == 0:
         print(f"degenerate: one of the score arrays is constant "
