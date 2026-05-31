@@ -217,6 +217,67 @@ risque mais ROI marginal. Probablement +10-30 ELO vs v8 si ça marche.
 
 ---
 
+## (F) MLPNetworkQ + têtes auxiliaires multi-tâches (proposé 2026-05-31)
+
+**Idée** : garder l'archi MLPNetworkQ v8 inchangée (HalfMen 450 →
+256 → 128 → 1) mais ajouter des **têtes de prédiction supervisées
+sur les couches cachées** pendant le training. Chaque tête prédit
+une feature explicite (mobilité par pièce, contrôle de cases clés,
+structure de chaîne, distance à promotion, etc.) calculée
+analytiquement à la prep des données.
+
+```
+HalfMen 450 → Linear(256) → ReLU → [h1] ──► Linear(N_aux1) ← aux_head_1
+                              h1 →  Linear(128) → ReLU → [h2] ──► Linear(N_aux2) ← aux_head_2
+                                              h2 → Linear(1)        ← main_head (eval principal)
+```
+
+Loss totale : `L_main + λ₁·L_aux1 + λ₂·L_aux2`.
+
+À l'inference, les têtes auxiliaires sont prunées — **zéro overhead
+runtime** (binaire quantisé identique à v8/v9). Seul le training
+diffère.
+
+**Pourquoi c'est différent des 15 hypothèses pattern + (B) + (E)** :
+* On n'attaque ni l'input (que (B) enrichit), ni l'archi (que (A)/(E)
+  changent). On attaque la **représentation interne**.
+* Hypothèse : si le plafond eval-only est dû à "le MLP n'apprend pas
+  les bonnes features tout seul à partir du signal score+WDL", forcer
+  les hidden layers à encoder explicitement la mobilité / structure
+  pourrait débloquer.
+* Classe AlphaZero-like two-head / BERT-like aux objectives. Bien
+  documenté en deep learning mais **non testé chez nous**.
+
+**Tâches auxiliaires candidates** (toutes calculables analytiquement
+au sampling) :
+1. King mobility map — 50 outputs (free diag neighbors par square)
+2. Man mobility count W/B — 2 outputs
+3. Promotion proximity — 2 outputs (min distance to promo row par couleur)
+4. Center control — 4 outputs (occupation des 4 cases centrales par côté)
+5. Chain structure — count of supported men (men défendus par voisin diag arrière)
+
+Total ~60-80 sorties auxiliaires. Trivial en Python.
+
+**Effort** : ~3-5 jours dev (extend train_v3.py + Python feature helpers
++ bench harness pour comparer multi-task vs mono-task sur même dataset).
+~€5-10 compute.
+
+**Risque** :
+* Gradient interference si λ trop fort → main task dégrade. À tuner.
+* Capacité hidden insuffisante pour absorber main + aux signals.
+  Mitigation : tester sur 1024-512 si 256-128 sature.
+
+**Gain estimé** :
+* Best : +30-50 ELO si la représentation interne était le bottleneck
+* Median : +10-20 ELO (utile)
+* Worst : 0 à -10 ELO si gradient interference
+
+**My recommendation** : excellente piste à tester après 0072 SMP delta.
+Origine non-évidente (proposée par l'utilisateur) — ne tombe pas dans
+le piège "variante des 14+1 déjà refutées".
+
+---
+
 ## Synthèse — recommandations par profil d'engagement
 
 ### "Curiosité cheap" (~€10, ~1-2 semaines wall)
@@ -225,6 +286,8 @@ risque mais ROI marginal. Probablement +10-30 ELO vs v8 si ça marche.
    le pattern axis, cheap, ~1 jour
 2. **(B) MLPNetworkQ enrichi** en parallèle — back-up sur axe data
 3. **(E) Bigger MLP NNUE** — si on veut juste shipper un v9 vite
+4. **(F) MLPNetworkQ + têtes aux multi-tâches** — attaque la
+   représentation interne, original, ~3-5j
 
 ### "Investment moyen" (~€30, ~3-4 semaines wall)
 
