@@ -1,8 +1,8 @@
 {
   "job_id": "0080-scan-distill-pattern-v3-1M",
-  "snapshot_at": "2026-06-01T17:35:43+00:00",
+  "snapshot_at": "2026-06-01T17:40:45+00:00",
   "started_at": "2026-06-01T17:10:40+00:00",
-  "elapsed_seconds": 1503,
+  "elapsed_seconds": 1805,
   "artefacts": [
     {
       "name": "bench-v2-vs-scan-d10.log",
@@ -10,6 +10,10 @@
     },
     {
       "name": "bench-v2-vs-v6-d10.log",
+      "size_bytes": 365
+    },
+    {
+      "name": "bench-v2-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -58,5 +62,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 116081       1       25:02  0.0  0.0 bash\n 116083  116081       25:02  0.0  0.0 bash\n 117349  116083       02:04  100  0.1 jass\n 117350  116083       02:04  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 116081       1       30:05  0.0  0.0 bash\n 116083  116081       30:05  0.0  0.0 bash\n 117550  116083       03:05  100  0.1 jass\n 117551  116083       03:05  0.0  0.0 tee\n"
 }
