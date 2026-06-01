@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0082-scan-distill-pattern-clipped-labels/artefacts.src/pattern-noclip-v3-huber500.jpat) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)

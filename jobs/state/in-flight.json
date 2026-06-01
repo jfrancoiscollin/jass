@@ -1,7 +1,0 @@
-{
-  "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "script": "jobs/queue/0082-scan-distill-pattern-clipped-labels.sh",
-  "pid": 120839,
-  "started_at": "2026-06-01T20:50:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
