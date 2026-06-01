@@ -1,0 +1,39 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0079-scan-distill-pattern-calibration-sweep/artefacts.src/v10-distilled.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 2000000)
+iter  0: train_loss=7517527.50  val_mse=5281526.50  man=  20.0  king= 133.0 *
+iter  1: train_loss=5281063.00  val_mse=4771750.50  man=  20.4  king=   0.8 *
+iter  2: train_loss=4721446.50  val_mse=4578818.00  man=  15.9  king= -24.3 *
+iter  3: train_loss=4521296.50  val_mse=4465116.00  man=  15.7  king=   2.7 *
+iter  4: train_loss=4413349.50  val_mse=4387156.00  man=  11.6  king=  -5.6 *
+iter  5: train_loss=4340280.00  val_mse=4325403.00  man=  13.7  king=  -3.8 *
+iter  6: train_loss=4286995.00  val_mse=4289544.00  man=  14.1  king=  11.6 *
+iter  7: train_loss=4252864.50  val_mse=4261870.50  man=   7.2  king=  15.3 *
+iter  8: train_loss=4235179.00  val_mse=4242212.00  man=  13.2  king=  -2.4 *
+iter  9: train_loss=4222509.00  val_mse=4225516.00  man=  12.7  king=  -0.1 *
+iter 10: train_loss=4212263.00  val_mse=4218909.00  man=  13.5  king=   8.1 *
+iter 11: train_loss=4205664.00  val_mse=4208938.50  man=  12.4  king=   7.9 *
+iter 12: train_loss=4200046.50  val_mse=4201822.00  man=  12.9  king=  17.7 *
+iter 13: train_loss=4196296.50  val_mse=4199315.00  man=  11.5  king=   9.7 *
+iter 14: train_loss=4193555.75  val_mse=4197687.50  man=  12.5  king=   8.4 *
+iter 15: train_loss=4191576.25  val_mse=4196791.50  man=  11.2  king=  17.4 *
+iter 16: train_loss=4190261.50  val_mse=4196295.50  man=  11.9  king=  13.5 *
+iter 17: train_loss=4189615.50  val_mse=4194623.00  man=  11.7  king=  15.9 *
+iter 18: train_loss=4189034.25  val_mse=4193162.25  man=  12.1  king=  10.6 *
+iter 19: train_loss=4188638.75  val_mse=4193091.50  man=  12.4  king=  14.9 *
+iter 20: train_loss=4188387.00  val_mse=4191893.00  man=  12.2  king=  11.5 *
+iter 21: train_loss=4188122.75  val_mse=4191465.00  man=  12.1  king=  13.0 *
+iter 22: train_loss=4187963.00  val_mse=4191193.75  man=  12.2  king=  12.3 *
+iter 23: train_loss=4187878.75  val_mse=4190794.50  man=  12.0  king=  13.0 *
+iter 24: train_loss=4187812.75  val_mse=4190759.25  man=  12.2  king=  12.6 *
+iter 25: train_loss=4187788.00  val_mse=4190738.75  man=  12.4  king=  12.2 *
+iter 26: train_loss=4187784.25  val_mse=4190414.75  man=  12.2  king=  12.1 *
+iter 27: train_loss=4187753.75  val_mse=4190223.00  man=  12.2  king=  12.5 *
+iter 28: train_loss=4187741.25  val_mse=4190223.00  man=  12.2  king=  12.5
+iter 29: train_loss=4187741.25  val_mse=4190223.00  man=  12.2  king=  12.5
+final (saved) val_mse=4190223.00  man=12.2  king=12.5
+wrote /root/jass/jobs/results/0079-scan-distill-pattern-calibration-sweep/artefacts.src/pattern-v3-V3-LBFGS-s100-l10.jpat (17006241 bytes)

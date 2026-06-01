@@ -1,0 +1,68 @@
+loading /root/jass/jobs/results/0079-scan-distill-pattern-calibration-sweep/artefacts.src/v10-distilled.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 2000000)
+epoch  0: train_loss=7517224.27  val_mse=7463992.00  lr=1.00e-03  man=  99.7  king= 299.6
+epoch  1: train_loss=7515785.48  val_mse=7462733.00  lr=1.00e-03  man=  99.4  king= 299.2
+epoch  2: train_loss=7514243.73  val_mse=7461477.00  lr=1.00e-03  man=  99.1  king= 298.9
+epoch  3: train_loss=7512203.32  val_mse=7460223.50  lr=1.00e-03  man=  98.8  king= 298.5
+epoch  4: train_loss=7511904.88  val_mse=7458972.50  lr=1.00e-03  man=  98.5  king= 298.1
+epoch  5: train_loss=7510380.99  val_mse=7457723.00  lr=1.00e-03  man=  98.2  king= 297.7
+epoch  6: train_loss=7508780.66  val_mse=7456473.50  lr=1.00e-03  man=  97.9  king= 297.3
+epoch  7: train_loss=7507688.30  val_mse=7455226.00  lr=1.00e-03  man=  97.6  king= 297.0
+epoch  8: train_loss=7506223.68  val_mse=7453981.00  lr=1.00e-03  man=  97.3  king= 296.6
+epoch  9: train_loss=7505013.48  val_mse=7452737.00  lr=1.00e-03  man=  97.0  king= 296.2
+epoch 10: train_loss=7503893.63  val_mse=7451495.00  lr=1.00e-03  man=  96.7  king= 295.8
+epoch 11: train_loss=7502128.86  val_mse=7450254.50  lr=1.00e-03  man=  96.4  king= 295.4
+epoch 12: train_loss=7500906.82  val_mse=7449015.50  lr=1.00e-03  man=  96.1  king= 295.0
+epoch 13: train_loss=7499881.64  val_mse=7447778.50  lr=1.00e-03  man=  95.8  king= 294.7
+epoch 14: train_loss=7498663.95  val_mse=7446546.50  lr=1.00e-03  man=  95.5  king= 294.3
+epoch 15: train_loss=7497415.29  val_mse=7445314.50  lr=1.00e-03  man=  95.2  king= 293.9
+epoch 16: train_loss=7496222.99  val_mse=7444084.00  lr=1.00e-03  man=  94.9  king= 293.5
+epoch 17: train_loss=7494379.27  val_mse=7442855.50  lr=1.00e-03  man=  94.7  king= 293.1
+epoch 18: train_loss=7493856.18  val_mse=7441628.50  lr=1.00e-03  man=  94.4  king= 292.8
+epoch 19: train_loss=7492239.62  val_mse=7440403.00  lr=1.00e-03  man=  94.1  king= 292.4
+epoch 20: train_loss=7490786.85  val_mse=7439180.00  lr=1.00e-03  man=  93.8  king= 292.0
+epoch 21: train_loss=7489517.55  val_mse=7437960.00  lr=1.00e-03  man=  93.5  king= 291.6
+epoch 22: train_loss=7488689.24  val_mse=7436739.50  lr=1.00e-03  man=  93.2  king= 291.2
+epoch 23: train_loss=7487161.43  val_mse=7435520.00  lr=1.00e-03  man=  92.9  king= 290.9
+epoch 24: train_loss=7485470.58  val_mse=7434303.50  lr=1.00e-03  man=  92.7  king= 290.5
+epoch 25: train_loss=7484465.40  val_mse=7433090.50  lr=1.00e-03  man=  92.4  king= 290.1
+epoch 26: train_loss=7483443.53  val_mse=7431877.00  lr=1.00e-03  man=  92.1  king= 289.7
+epoch 27: train_loss=7482289.60  val_mse=7430665.50  lr=1.00e-03  man=  91.8  king= 289.4
+epoch 28: train_loss=7480482.30  val_mse=7429456.00  lr=1.00e-03  man=  91.5  king= 289.0
+epoch 29: train_loss=7479448.30  val_mse=7428250.00  lr=1.00e-03  man=  91.3  king= 288.6
+epoch 30: train_loss=7478107.39  val_mse=7427044.00  lr=1.00e-03  man=  91.0  king= 288.2
+epoch 31: train_loss=7477050.51  val_mse=7425840.50  lr=1.00e-03  man=  90.7  king= 287.9
+epoch 32: train_loss=7475490.72  val_mse=7424637.50  lr=1.00e-03  man=  90.4  king= 287.5
+epoch 33: train_loss=7474709.51  val_mse=7423436.50  lr=1.00e-03  man=  90.1  king= 287.1
+epoch 34: train_loss=7472891.09  val_mse=7422237.00  lr=1.00e-03  man=  89.9  king= 286.7
+epoch 35: train_loss=7472250.05  val_mse=7421039.00  lr=1.00e-03  man=  89.6  king= 286.3
+epoch 36: train_loss=7470634.52  val_mse=7419841.50  lr=1.00e-03  man=  89.3  king= 286.0
+epoch 37: train_loss=7469250.47  val_mse=7418645.00  lr=1.00e-03  man=  89.0  king= 285.6
+epoch 38: train_loss=7468529.92  val_mse=7417449.50  lr=1.00e-03  man=  88.8  king= 285.2
+epoch 39: train_loss=7466925.74  val_mse=7416257.50  lr=1.00e-03  man=  88.5  king= 284.8
+epoch 40: train_loss=7465877.36  val_mse=7415067.50  lr=1.00e-03  man=  88.2  king= 284.5
+epoch 41: train_loss=7463934.92  val_mse=7413879.50  lr=1.00e-03  man=  88.0  king= 284.1
+epoch 42: train_loss=7463330.40  val_mse=7412694.50  lr=1.00e-03  man=  87.7  king= 283.7
+epoch 43: train_loss=7461666.45  val_mse=7411507.00  lr=1.00e-03  man=  87.5  king= 283.3
+epoch 44: train_loss=7460672.58  val_mse=7410325.50  lr=1.00e-03  man=  87.2  king= 283.0
+epoch 45: train_loss=7459294.88  val_mse=7409141.00  lr=1.00e-03  man=  86.9  king= 282.6
+epoch 46: train_loss=7458209.45  val_mse=7407958.00  lr=1.00e-03  man=  86.7  king= 282.2
+epoch 47: train_loss=7457261.75  val_mse=7406778.00  lr=1.00e-03  man=  86.4  king= 281.8
+epoch 48: train_loss=7455357.45  val_mse=7405599.00  lr=1.00e-03  man=  86.1  king= 281.5
+epoch 49: train_loss=7454202.47  val_mse=7404421.00  lr=1.00e-03  man=  85.9  king= 281.1
+epoch 50: train_loss=7453732.83  val_mse=7403246.50  lr=1.00e-03  man=  85.6  king= 280.7
+epoch 51: train_loss=7452276.92  val_mse=7402071.50  lr=1.00e-03  man=  85.3  king= 280.4
+epoch 52: train_loss=7450299.69  val_mse=7400900.50  lr=1.00e-03  man=  85.1  king= 280.0
+epoch 53: train_loss=7449469.25  val_mse=7399729.50  lr=1.00e-03  man=  84.8  king= 279.6
+epoch 54: train_loss=7448371.06  val_mse=7398559.00  lr=1.00e-03  man=  84.6  king= 279.2
+epoch 55: train_loss=7446830.18  val_mse=7397391.50  lr=1.00e-03  man=  84.3  king= 278.9
+epoch 56: train_loss=7445666.51  val_mse=7396226.00  lr=1.00e-03  man=  84.1  king= 278.5
+epoch 57: train_loss=7444307.49  val_mse=7395059.50  lr=1.00e-03  man=  83.8  king= 278.1
+epoch 58: train_loss=7443289.12  val_mse=7393896.00  lr=1.00e-03  man=  83.6  king= 277.7
+epoch 59: train_loss=7442325.51  val_mse=7392734.00  lr=1.00e-03  man=  83.3  king= 277.4
+final (saved) val_mse=7392734.00  man=83.3  king=277.4
+wrote /root/jass/jobs/results/0079-scan-distill-pattern-calibration-sweep/artefacts.src/pattern-v3-V2-Adam-s100-l10.jpat (17006241 bytes)
