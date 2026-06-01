@@ -1,12 +1,12 @@
 {
   "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "snapshot_at": "2026-06-01T21:11:25+00:00",
+  "snapshot_at": "2026-06-01T21:16:46+00:00",
   "started_at": "2026-06-01T20:50:05+00:00",
-  "elapsed_seconds": 1280,
+  "elapsed_seconds": 1601,
   "artefacts": [
     {
       "name": "bench-c1000-v3-mse-vs-scan.log",
-      "size_bytes": 0
+      "size_bytes": 5367
     },
     {
       "name": "bench-c1000-v3-mse-vs-v8.log",
@@ -45,6 +45,10 @@
       "size_bytes": 5884
     },
     {
+      "name": "train-noclip-v3-huber200.log",
+      "size_bytes": 5234
+    },
+    {
       "name": "v10-distilled-1M-clip1000.bin",
       "size_bytes": 38000008,
       "records": 1000000
@@ -55,5 +59,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       21:19  0.0  0.0 bash\n 120841  120839       21:19  0.0  0.0 bash\n 121256  120841       00:10  1.7  0.0 python3\n 121257  120841       00:10  0.0  0.0 tee\n 121259  121256       00:10 79.2  0.1 jass\n 121260  121256       00:10 19.0  0.9 scan_linux\n 121262  121256       00:10  0.1  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       26:41  0.0  0.0 bash\n 120841  120839       26:41  0.0  0.0 bash\n 121324  120841       04:22  395  2.1 python3\n 121325  120841       04:22  0.0  0.0 tee\n"
 }
