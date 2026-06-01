@@ -1,8 +1,8 @@
 {
   "job_id": "0079-scan-distill-pattern-calibration-sweep",
-  "snapshot_at": "2026-06-01T16:50:35+00:00",
+  "snapshot_at": "2026-06-01T16:55:36+00:00",
   "started_at": "2026-06-01T15:59:33+00:00",
-  "elapsed_seconds": 3062,
+  "elapsed_seconds": 3363,
   "artefacts": [
     {
       "name": "bench-V1-Adam-s001-l10-vs-v8.log",
@@ -30,6 +30,10 @@
     },
     {
       "name": "bench-best-vs-v7.log",
+      "size_bytes": 374
+    },
+    {
+      "name": "bench-best-vs-v8.log",
       "size_bytes": 0
     },
     {
@@ -86,5 +90,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 113871       1       51:01  0.0  0.0 bash\n 113873  113871       51:01  0.0  0.0 bash\n 115010  113873       03:03 99.9  0.2 jass\n 115011  113873       03:03  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 113871       1       56:02  0.0  0.0 bash\n 113873  113871       56:02  0.0  0.0 bash\n 115098  113873       04:56 99.9  0.1 jass\n 115099  113873       04:56  0.0  0.0 tee\n"
 }
