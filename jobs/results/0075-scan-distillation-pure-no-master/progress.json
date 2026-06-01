@@ -1,8 +1,8 @@
 {
   "job_id": "0075-scan-distillation-pure-no-master",
-  "snapshot_at": "2026-06-01T10:58:29+00:00",
+  "snapshot_at": "2026-06-01T11:03:43+00:00",
   "started_at": "2026-06-01T10:42:55+00:00",
-  "elapsed_seconds": 934,
+  "elapsed_seconds": 1248,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -44,5 +44,5 @@
       "records": 100000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 108641       1       15:34  0.0  0.0 bash\n 108643  108641       15:34  0.0  0.0 bash\n 108905  108643       01:27  100  0.1 jass\n 108906  108643       01:27  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 108641       1       20:48  0.0  0.0 bash\n 108643  108641       20:48  0.0  0.0 bash\n 108905  108643       06:41 99.9  0.1 jass\n 108906  108643       06:41  0.0  0.0 tee\n"
 }
