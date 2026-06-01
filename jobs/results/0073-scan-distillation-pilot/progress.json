@@ -1,0 +1,104 @@
+{
+  "job_id": "0073-scan-distillation-pilot",
+  "snapshot_at": "2026-06-01T05:53:38+00:00",
+  "started_at": "2026-06-01T05:48:23+00:00",
+  "elapsed_seconds": 315,
+  "artefacts": [
+    {
+      "name": "shard-0.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-0.log",
+      "size_bytes": 641
+    },
+    {
+      "name": "shard-1.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-1.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "shard-2.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-2.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "shard-3.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-3.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "shard-4.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-4.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "shard-5.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-5.log",
+      "size_bytes": 646
+    },
+    {
+      "name": "shard-6.bin",
+      "size_bytes": 475046,
+      "records": 12501
+    },
+    {
+      "name": "shard-6.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "shard-7.bin",
+      "size_bytes": 474742,
+      "records": 12493
+    },
+    {
+      "name": "shard-7.log",
+      "size_bytes": 645
+    },
+    {
+      "name": "smoke-100-d12.bin",
+      "size_bytes": 3808,
+      "records": 100
+    },
+    {
+      "name": "smoke.log",
+      "size_bytes": 495
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v10-distilled-100K.bin",
+      "size_bytes": 3800008,
+      "records": 100000
+    },
+    {
+      "name": "v8-sample-100K.bin",
+      "size_bytes": 3800008,
+      "records": 100000
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 105118       1       05:14  0.0  0.0 bash\n 105120  105118       05:14  0.0  0.0 bash\n 105281  105120       00:41  354  7.1 python3\n 105282  105120       00:41  0.0  0.0 tee\n"
+}
