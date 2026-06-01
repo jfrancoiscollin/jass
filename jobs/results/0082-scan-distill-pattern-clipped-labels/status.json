@@ -1,7 +1,9 @@
 {
   "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-01T20:50:05+00:00",
+  "ended_at": "2026-06-01T21:58:15+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 120839
+  "artefacts_server_path": "/root/jass/jobs/results/0082-scan-distill-pattern-clipped-labels/artefacts.src"
 }
