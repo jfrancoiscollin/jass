@@ -1,8 +1,8 @@
 {
   "job_id": "0073-scan-distillation-pilot",
-  "snapshot_at": "2026-06-01T06:14:05+00:00",
+  "snapshot_at": "2026-06-01T06:19:23+00:00",
   "started_at": "2026-06-01T05:48:23+00:00",
-  "elapsed_seconds": 1542,
+  "elapsed_seconds": 1860,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -10,6 +10,10 @@
     },
     {
       "name": "bench-vs-v6-d10.log",
+      "size_bytes": 354
+    },
+    {
+      "name": "bench-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -126,5 +130,5 @@
       "records": 100000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 105118       1       25:41  0.0  0.0 bash\n 105120  105118       25:41  0.0  0.0 bash\n 105619  105120       08:00  100  0.1 jass\n 105620  105120       08:00  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 105118       1       30:59  0.0  0.0 bash\n 105120  105118       30:59  0.0  0.0 bash\n 105759  105120       01:26  100  0.1 jass\n 105760  105120       01:26  0.0  0.0 tee\n"
 }
