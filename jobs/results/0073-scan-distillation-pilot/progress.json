@@ -1,9 +1,27 @@
 {
   "job_id": "0073-scan-distillation-pilot",
-  "snapshot_at": "2026-06-01T05:53:38+00:00",
+  "snapshot_at": "2026-06-01T05:58:38+00:00",
   "started_at": "2026-06-01T05:48:23+00:00",
-  "elapsed_seconds": 315,
+  "elapsed_seconds": 615,
   "artefacts": [
+    {
+      "name": "bench-vs-scan-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "nnue-512-256-q.bin",
+      "size_bytes": 364840,
+      "records": 9600
+    },
+    {
+      "name": "nnue-512-256.bin",
+      "size_bytes": 1450012,
+      "records": 38158
+    },
+    {
+      "name": "quantize.log",
+      "size_bytes": 726
+    },
     {
       "name": "shard-0.bin",
       "size_bytes": 475046,
@@ -86,8 +104,12 @@
       "size_bytes": 495
     },
     {
+      "name": "summary.json",
+      "size_bytes": 210
+    },
+    {
       "name": "train.log",
-      "size_bytes": 0
+      "size_bytes": 2355
     },
     {
       "name": "v10-distilled-100K.bin",
@@ -100,5 +122,5 @@
       "records": 100000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 105118       1       05:14  0.0  0.0 bash\n 105120  105118       05:14  0.0  0.0 bash\n 105281  105120       00:41  354  7.1 python3\n 105282  105120       00:41  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 105118       1       10:15  0.0  0.0 bash\n 105120  105118       10:15  0.0  0.0 bash\n 105366  105120       01:27  0.3  0.0 python3\n 105367  105120       01:27  0.0  0.0 tee\n 105369  105366       01:27 94.9  0.1 jass\n 105370  105366       01:27  4.6  0.9 scan_linux\n 105372  105366       01:26  0.0  0.0 jass\n"
 }
