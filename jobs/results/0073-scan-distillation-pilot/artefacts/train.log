@@ -1,0 +1,49 @@
+loading /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/v10-distilled-100K.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=29.5% D=38.3% L=32.2%
+  score range: [-29998, 9999]  mean=-191.4  std=2707.4
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  300000 master records  (1.2s to encode)
+  master WDL: W=40.8% D=18.3% L=40.9%
+  master blend: weight=1.0  lam=1.0  (pure-WDL when lam=0)
+  blended total: 400000 records (100000 self-play + 300000 master)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  37734.7  val= 115171.2 *
+  epoch   2: train=  32566.1  val= 108048.3 *
+  epoch   3: train=  30544.3  val= 101241.0 *
+  epoch   4: train=  29481.6  val=  99424.6 *
+  epoch   5: train=  28517.1  val=  95848.0 *
+  epoch   6: train=  27663.9  val=  89857.0 *
+  epoch   7: train=  26964.9  val=  90164.8
+  epoch   8: train=  26379.4  val=  89654.4 *
+  epoch   9: train=  25960.6  val=  87644.0 *
+  epoch  10: train=  25567.2  val=  86675.0 *
+  epoch  11: train=  25194.3  val=  88756.8
+  epoch  12: train=  24808.7  val=  84554.0 *
+  epoch  13: train=  24406.9  val=  83674.2 *
+  epoch  14: train=  23991.9  val=  85047.1
+  epoch  15: train=  23581.6  val=  83719.6
+  epoch  16: train=  23200.0  val=  82935.4 *
+  epoch  17: train=  22805.6  val=  80745.9 *
+  epoch  18: train=  22381.9  val=  79753.8 *
+  epoch  19: train=  21991.2  val=  80416.7
+  epoch  20: train=  21588.6  val=  81331.6
+  epoch  21: train=  21197.5  val=  81532.3
+  epoch  22: train=  20792.8  val=  77257.5 *
+  epoch  23: train=  20391.1  val=  78887.8
+  epoch  24: train=  19955.4  val=  76047.0 *
+  epoch  25: train=  19529.4  val=  81303.8
+  epoch  26: train=  19098.5  val=  80031.3
+  epoch  27: train=  18707.8  val=  77686.9
+  epoch  28: train=  18195.2  val=  80039.3
+  epoch  29: train=  17793.0  val=  80240.9
+  epoch  30: train=  17345.5  val=  79457.7
+  wrote /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     76047.0      275.8     252s
+
+summary → /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/summary.json

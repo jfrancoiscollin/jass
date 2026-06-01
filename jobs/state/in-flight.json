@@ -1,7 +1,0 @@
-{
-  "job_id": "0073-scan-distillation-pilot",
-  "script": "jobs/queue/0073-scan-distillation-pilot.sh",
-  "pid": 105118,
-  "started_at": "2026-06-01T05:48:23+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

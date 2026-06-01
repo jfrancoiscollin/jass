@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/v10-distilled-100K.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.014472 sw2=0.024676 sw3=0.033284 sh1=0.033863 sh2=0.80644
+  multipliers: mul1=0.42737 mul2=0.0010362 mul_out=0.026842
+  reference range: float [-2220.3, 2279.0], quantised [-3521.4, 2166.6]
+  diff: mean=+58.24  std=165.64  |max|=1421.00  RMSE=175.58
+wrote /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/nnue-512-256-q.bin (364840 bytes)
