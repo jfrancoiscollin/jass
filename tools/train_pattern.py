@@ -690,6 +690,8 @@ def train_one(
     lbfgs_max_iter: int = 20,
     lbfgs_history: int = 10,
     lbfgs_early_stop_patience: int = 5,
+    loss_type: str = "mse",
+    huber_delta: float = 200.0,
     tag: str = "",
 ) -> PatternModel:
     """Train one PatternModel and return it. Factored out of `main`
@@ -760,10 +762,18 @@ def train_one(
     def _loss(pred: torch.Tensor, idx_slice: np.ndarray) -> torch.Tensor:
         score_batch = score_t[idx_slice]
         wdl_batch   = wdl_t[idx_slice]
-        score_mse = F.mse_loss(pred, score_batch) * score_scale_sq
+        if loss_type == "huber":
+            # Robust to outliers : L2 within ±delta cp, L1 beyond. Scan
+            # labels have outliers ±30000 (forced-mate scores) that
+            # destroy plain MSE fit ; Huber gracefully clips their
+            # gradient contribution.
+            score_loss = F.huber_loss(pred, score_batch,
+                                       delta=huber_delta) * score_scale_sq
+        else:
+            score_loss = F.mse_loss(pred, score_batch) * score_scale_sq
         wdl_prob  = (wdl_batch + 1.0) * 0.5
         wdl_bce   = F.binary_cross_entropy_with_logits(pred / 400.0, wdl_prob)
-        return lam * score_mse + (1.0 - lam) * wdl_bce * 50000.0
+        return lam * score_loss + (1.0 - lam) * wdl_bce * 50000.0
 
     if optimizer_kind == "lbfgs":
         return _train_lbfgs(
@@ -977,6 +987,15 @@ def main(argv: list[str]) -> int:
                         "checkpoint on exit. Critical because LBFGS without "
                         "regularisation can overfit aggressively on small "
                         "or WDL-only datasets.")
+    p.add_argument("--loss-type", choices=["mse", "huber"], default="mse",
+                   help="score-side loss. huber = robust to outliers (Scan "
+                        "labels have outliers ±30000 cp from forced-mate "
+                        "scores ; MSE compresses everything, huber preserves "
+                        "fit for normal range and L1-clips outliers).")
+    p.add_argument("--huber-delta", type=float, default=200.0,
+                   help="huber transition point (cp) : L2 within ±delta, L1 "
+                        "beyond. Default 200 cp matches typical search-tuned "
+                        "eval residuals.")
     args = p.parse_args(argv)
     if args.pattern_base == 3 and not args.hybrid:
         p.error("--pattern-base 3 requires --hybrid (king info would "
@@ -1093,6 +1112,8 @@ def main(argv: list[str]) -> int:
         lbfgs_max_iter=args.lbfgs_max_iter,
         lbfgs_history=args.lbfgs_history,
         lbfgs_early_stop_patience=args.lbfgs_early_stop_patience,
+        loss_type=args.loss_type,
+        huber_delta=args.huber_delta,
     )
 
     models: list[PatternModel] = []

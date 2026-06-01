@@ -1,25 +1,33 @@
 #!/usr/bin/env bash
 # id: 0082-scan-distill-pattern-clipped-labels
-# description: Last shot pattern distillation. Diagnostic 0081 a révélé :
-#              Scan labels = std 2682, range ±30000 cp (outliers énormes,
-#              probablement forced-mate scores). v7 NNUE = std 615.
-#              Pattern model MSE compresse implicitement pour gérer
-#              outliers → std 157 → search miscalibre.
+# description: Last shot pattern distillation — 2 fixes pour outliers.
 #
-# Fix : clipper Scan labels à ±2000 cp (matcher v7 range). Élimine les
-# outliers ±30000 qui forcent le MSE à compromettre.
+# Diagnostic 0081 a révélé : Scan labels = std 2682, range ±30000 cp
+# (forced-mate scores). v7 NNUE = std 615. Pattern model MSE compresse
+# implicitement → std 157. Search jass calibré pour std ~400-500 →
+# miscalibre → cutoffs ratés → 0/54.
 #
-# Tests deux thresholds :
-#   c2000 : clip à ±2000 (large mais kill les forced-mate)
-#   c1000 : clip à ±1000 (aggressive, force eval dans range "search-friendly")
+# 2 approches au choix complémentaires :
+#   (1) CLIP labels ±2000 + MSE  (kill outliers à la source)
+#   (2) HUBER loss (delta=200/500) sans clip  (loss robuste, L1 sur outliers)
+#
+# Huber loss ajoutée à train_pattern.py dans le même commit
+# (--loss-type huber --huber-delta D). Préserve fit normal range
+# (L2 within ±delta) et L1-clips les outliers.
+#
+# 6 variantes au total :
+#   clip2000 + V3 + MSE   (ref)
+#   clip1000 + V3 + MSE   (aggressive clip)
+#   nopclip + V3 + HUBER d=200
+#   noclip + V3 + HUBER d=500
+#   nopclip + V2 + HUBER d=200
+#   nopclip + V2 + HUBER d=500
 #
 # Decision gate :
-#   * clipped vs v8 > 0.30 → clipping était le bug, pattern paradigm marche
-#   * clipped vs Scan > 0.10 → tue le gap signal
-#   * tout flat → pattern paradigm vraiment plafonné dans notre infra,
-#                  drop définitif pour MLP (0078)
+#   * any vs Scan > 0.10 OR vs v8 > 0.30 → pattern paradigm vit
+#   * tout flat → pattern paradigm vraiment plafonné, drop pour MLP
 #
-# Réutilise dataset 1M de 0078. ~30-45 min wall.
+# Réutilise dataset 1M de 0078. ~45-60 min wall.
 set -uo pipefail
 cd /root/jass
 
@@ -75,80 +83,91 @@ for i in range(n):
     out.extend(new_rec)
 Path("$CLIPPED").write_bytes(bytes(out))
 print(f"clip ±$CLIP : mean={statistics.mean(clipped_scores):.1f}  "
-      f"std={statistics.stdev(clipped_scores):.1f}  "
-      f"range=[{min(clipped_scores)}, {max(clipped_scores)}]", flush=True)
+      f"std={statistics.stdev(clipped_scores):.1f}", flush=True)
 EOF
 done
 
-# Train pattern V3 + V2 sur les deux clipped datasets
+# Variant configs : tag : dataset : pattern : extra-args
+CONFIGS=(
+    "c2000-v3-mse:$ART/v10-distilled-1M-clip2000.bin:v3:--loss-type mse"
+    "c1000-v3-mse:$ART/v10-distilled-1M-clip1000.bin:v3:--loss-type mse"
+    "noclip-v3-huber200:$RELAB_1M:v3:--loss-type huber --huber-delta 200"
+    "noclip-v3-huber500:$RELAB_1M:v3:--loss-type huber --huber-delta 500"
+    "noclip-v2-huber200:$RELAB_1M:v2:--loss-type huber --huber-delta 200"
+    "noclip-v2-huber500:$RELAB_1M:v2:--loss-type huber --huber-delta 500"
+)
+
 RESULTS=""
-for CLIP in 2000 1000; do
-    CLIPPED="$ART/v10-distilled-1M-clip${CLIP}.bin"
-    for PSET in v3 v2; do
-        TAG="c${CLIP}-${PSET}"
-        JPAT="$ART/pattern-${TAG}.jpat"
-        echo
-        echo "=========================================================="
-        echo "=== train pattern $TAG ==="
-        echo "=========================================================="
-        START=$(date +%s)
-        python3 tools/train_pattern.py \
-            --data           "$CLIPPED" \
-            --out            "$JPAT" \
-            --patterns       "$PSET" \
-            --hybrid \
-            --pattern-base   3 \
-            --init-man       100 --init-king 300 \
-            --optimizer      adam \
-            --epochs         60 \
-            --lr             1e-3 \
-            --lambda         1.0 \
-            --score-scale    0.01 \
-            --weight-decay   1e-5 \
-            --symmetry \
-            --num-seeds      1 \
-            --seed           42 \
-            2>&1 | tee "$ART/train-$TAG.log"
-        T_SEC=$(( $(date +%s) - START ))
+for entry in "${CONFIGS[@]}"; do
+    TAG="${entry%%:*}"
+    rest="${entry#*:}"
+    DATA="${rest%%:*}"
+    rest="${rest#*:}"
+    PSET="${rest%%:*}"
+    EXTRA="${rest#*:}"
+    JPAT="$ART/pattern-${TAG}.jpat"
 
-        PEARSON="-"; PSTD="-"; RSTD="-"
-        if [ -f "$MASTER_SAMPLE" ] && [ -n "$V7" ]; then
-            python3 tools/pattern_eval_correlation.py \
-                --pattern "$JPAT" --ref "$V7" --data "$MASTER_SAMPLE" --n 1000 \
-                2>&1 | tee "$ART/pearson-$TAG.log"
-            PEARSON=$(grep -oE 'pearson_r = [-+0-9.]+' "$ART/pearson-$TAG.log" | head -1 | awk '{print $3}')
-            PSTD=$(grep -oE 'pattern : .*std=[0-9.]+' "$ART/pearson-$TAG.log" | head -1 | grep -oE 'std=[0-9.]+' | cut -d= -f2)
-            RSTD=$(grep -oE 'ref *: .*std=[0-9.]+' "$ART/pearson-$TAG.log" | head -1 | grep -oE 'std=[0-9.]+' | cut -d= -f2)
-        fi
+    echo
+    echo "=========================================================="
+    echo "=== $TAG : $PSET on $(basename $DATA) ==="
+    echo "    args: $EXTRA"
+    echo "=========================================================="
+    START=$(date +%s)
+    python3 tools/train_pattern.py \
+        --data           "$DATA" \
+        --out            "$JPAT" \
+        --patterns       "$PSET" \
+        --hybrid \
+        --pattern-base   3 \
+        --init-man       100 --init-king 300 \
+        --optimizer      adam \
+        --epochs         60 \
+        --lr             1e-3 \
+        --lambda         1.0 \
+        --score-scale    0.01 \
+        --weight-decay   1e-5 \
+        --symmetry \
+        --num-seeds      1 \
+        --seed           42 \
+        $EXTRA \
+        2>&1 | tee "$ART/train-$TAG.log"
+    T_SEC=$(( $(date +%s) - START ))
 
-        # Quick bench vs v8 + Scan (cheapest signals)
-        ./build/jass --benchmark-nnue-vs-nnue "$JPAT" "$V8" 10 3 1 0 \
-            2>&1 | tee "$ART/bench-$TAG-vs-v8-d10.log"
-        R_V8=$(grep -oE 'score rate: [0-9.]+' "$ART/bench-$TAG-vs-v8-d10.log" 2>/dev/null | head -1 | awk '{print $3}')
+    PEARSON="-"; PSTD="-"; RSTD="-"
+    if [ -f "$MASTER_SAMPLE" ] && [ -n "$V7" ]; then
+        python3 tools/pattern_eval_correlation.py \
+            --pattern "$JPAT" --ref "$V7" --data "$MASTER_SAMPLE" --n 1000 \
+            2>&1 | tee "$ART/pearson-$TAG.log"
+        PEARSON=$(grep -oE 'pearson_r = [-+0-9.]+' "$ART/pearson-$TAG.log" | head -1 | awk '{print $3}')
+        PSTD=$(grep -oE 'pattern : .*std=[0-9.]+' "$ART/pearson-$TAG.log" | head -1 | grep -oE 'std=[0-9.]+' | cut -d= -f2)
+        RSTD=$(grep -oE 'ref *: .*std=[0-9.]+' "$ART/pearson-$TAG.log" | head -1 | grep -oE 'std=[0-9.]+' | cut -d= -f2)
+    fi
 
-        python3 tools/calibrate_vs_scan.py \
-            --jass ./build/jass --scan "$SCAN_BIN" --nnue "$JPAT" \
-            --depth 10 --pairs 3 \
-            2>&1 | tee "$ART/bench-$TAG-vs-scan-d10.log"
-        R_SCAN=$(grep -oE 'score rate: [0-9.]+' "$ART/bench-$TAG-vs-scan-d10.log" | head -1 | awk '{print $3}')
+    ./build/jass --benchmark-nnue-vs-nnue "$JPAT" "$V8" 10 3 1 0 \
+        2>&1 | tee "$ART/bench-$TAG-vs-v8.log"
+    R_V8=$(grep -oE 'score rate: [0-9.]+' "$ART/bench-$TAG-vs-v8.log" 2>/dev/null | head -1 | awk '{print $3}')
 
-        RESULTS+="  $TAG (train ${T_SEC}s) : pearson $PEARSON std=$PSTD (ref=$RSTD)  vs Scan $R_SCAN  vs v8 $R_V8"$'\n'
-    done
+    python3 tools/calibrate_vs_scan.py \
+        --jass ./build/jass --scan "$SCAN_BIN" --nnue "$JPAT" \
+        --depth 10 --pairs 3 \
+        2>&1 | tee "$ART/bench-$TAG-vs-scan.log"
+    R_SCAN=$(grep -oE 'score rate: [0-9.]+' "$ART/bench-$TAG-vs-scan.log" | head -1 | awk '{print $3}')
+
+    RESULTS+="  $TAG (train ${T_SEC}s) : pearson $PEARSON std=$PSTD (ref=$RSTD)  vs Scan $R_SCAN  vs v8 $R_V8"$'\n'
 done
 
 echo
 echo "=========================================================="
-echo "       0082 PATTERN CLIPPED-LABELS VERDICT"
+echo "       0082 PATTERN OUTLIER-FIX SWEEP VERDICT"
 echo "=========================================================="
 echo "$RESULTS"
 echo
-echo "  Reference (avant clip) :"
-echo "    Pattern V3 1M (0080)        : pearson 0.79 std=157  vs Scan 0.000  vs v8 0.222"
-echo "    Pattern V3 1M scaled (0081) : pearson 0.80 std=115  vs Scan 0.000  vs v8 0.000"
+echo "  Reference :"
+echo "    Pattern V3 1M unfixed (0080)  : std=157 pearson 0.79 vs Scan 0.000 vs v8 0.222"
+echo "    Pattern V3 1M scaled (0081)   : std=115 pearson 0.80 vs Scan 0.000 vs v8 0.000"
 echo
 echo "  Decision :"
-echo "    * clipped vs v8 > 0.30 → clipping était le bug, pattern paradigm vit"
-echo "    * std clipped proche ref + vs Scan > 0.10 → tue le gap signal"
-echo "    * tout flat → pattern paradigm vraiment plafonné dans notre infra"
-echo "                   → drop définitif pour MLP (0078 baseline)"
+echo "    * any vs Scan > 0.10 OR vs v8 > 0.30 → pattern paradigm vit"
+echo "    * Huber > clip → loss robust wins, recommandation pour futurs jobs"
+echo "    * tout flat → pattern paradigm vraiment plafonné, drop pour MLP"
 echo "=========================================================="
