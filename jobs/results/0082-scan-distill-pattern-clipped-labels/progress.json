@@ -1,9 +1,17 @@
 {
   "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "snapshot_at": "2026-06-01T21:06:05+00:00",
+  "snapshot_at": "2026-06-01T21:11:25+00:00",
   "started_at": "2026-06-01T20:50:05+00:00",
-  "elapsed_seconds": 960,
+  "elapsed_seconds": 1280,
   "artefacts": [
+    {
+      "name": "bench-c1000-v3-mse-vs-scan.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "bench-c1000-v3-mse-vs-v8.log",
+      "size_bytes": 368
+    },
     {
       "name": "bench-c2000-v3-mse-vs-scan.log",
       "size_bytes": 5410
@@ -13,8 +21,16 @@
       "size_bytes": 368
     },
     {
+      "name": "pattern-c1000-v3-mse.jpat",
+      "size_bytes": 17006241
+    },
+    {
       "name": "pattern-c2000-v3-mse.jpat",
       "size_bytes": 17006241
+    },
+    {
+      "name": "pearson-c1000-v3-mse.log",
+      "size_bytes": 242
     },
     {
       "name": "pearson-c2000-v3-mse.log",
@@ -22,7 +38,7 @@
     },
     {
       "name": "train-c1000-v3-mse.log",
-      "size_bytes": 5341
+      "size_bytes": 5884
     },
     {
       "name": "train-c2000-v3-mse.log",
@@ -39,5 +55,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       15:59  0.0  0.0 bash\n 120841  120839       15:59  0.0  0.0 bash\n 121132  120841       04:22  394  2.1 python3\n 121133  120841       04:22  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       21:19  0.0  0.0 bash\n 120841  120839       21:19  0.0  0.0 bash\n 121256  120841       00:10  1.7  0.0 python3\n 121257  120841       00:10  0.0  0.0 tee\n 121259  121256       00:10 79.2  0.1 jass\n 121260  121256       00:10 19.0  0.9 scan_linux\n 121262  121256       00:10  0.1  0.0 jass\n"
 }
