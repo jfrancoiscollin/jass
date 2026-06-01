@@ -1,0 +1,35 @@
+{
+  "job_id": "0082-scan-distill-pattern-clipped-labels",
+  "snapshot_at": "2026-06-01T20:55:35+00:00",
+  "started_at": "2026-06-01T20:50:05+00:00",
+  "elapsed_seconds": 330,
+  "artefacts": [
+    {
+      "name": "bench-c2000-v3-mse-vs-v8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "pattern-c2000-v3-mse.jpat",
+      "size_bytes": 17006241
+    },
+    {
+      "name": "pearson-c2000-v3-mse.log",
+      "size_bytes": 242
+    },
+    {
+      "name": "train-c2000-v3-mse.log",
+      "size_bytes": 5884
+    },
+    {
+      "name": "v10-distilled-1M-clip1000.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
+    },
+    {
+      "name": "v10-distilled-1M-clip2000.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       05:30  0.0  0.0 bash\n 120841  120839       05:30  0.0  0.0 bash\n 120991  120841       00:52  100  0.2 jass\n 120992  120841       00:52  0.0  0.0 tee\n"
+}
