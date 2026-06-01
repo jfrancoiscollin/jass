@@ -1,0 +1,7 @@
+{
+  "job_id": "0079-scan-distill-pattern-calibration-sweep",
+  "state": "running",
+  "started_at": "2026-06-01T15:59:33+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 113871
+}
