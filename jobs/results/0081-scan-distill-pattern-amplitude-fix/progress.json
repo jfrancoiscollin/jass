@@ -1,0 +1,42 @@
+{
+  "job_id": "0081-scan-distill-pattern-amplitude-fix",
+  "snapshot_at": "2026-06-01T19:59:40+00:00",
+  "started_at": "2026-06-01T19:54:38+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [
+    {
+      "name": "bench-v3-vs-scan-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "pattern-v3-scan-1M-scaled.jpat",
+      "size_bytes": 17006241
+    },
+    {
+      "name": "pearson-v3.log",
+      "size_bytes": 242
+    },
+    {
+      "name": "sample-5K-for-scale.jnnw",
+      "size_bytes": 190008
+    },
+    {
+      "name": "sample-5K-v7-eval.jnnw",
+      "size_bytes": 190008
+    },
+    {
+      "name": "scale-factor.txt",
+      "size_bytes": 7
+    },
+    {
+      "name": "train-v3.log",
+      "size_bytes": 5885
+    },
+    {
+      "name": "v10-distilled-1M-scaled.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 119450       1       05:02  0.0  0.0 bash\n 119452  119450       05:02  0.0  0.0 bash\n 119678  119452       00:17  1.6  0.0 python3\n 119679  119452       00:17  0.0  0.0 tee\n 119681  119678       00:17 76.5  0.1 jass\n 119682  119678       00:17 21.6  0.9 scan_linux\n 119684  119678       00:17  0.1  0.0 jass\n"
+}
