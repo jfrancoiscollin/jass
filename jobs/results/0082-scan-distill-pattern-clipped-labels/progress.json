@@ -1,12 +1,12 @@
 {
   "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "snapshot_at": "2026-06-01T21:00:55+00:00",
+  "snapshot_at": "2026-06-01T21:06:05+00:00",
   "started_at": "2026-06-01T20:50:05+00:00",
-  "elapsed_seconds": 650,
+  "elapsed_seconds": 960,
   "artefacts": [
     {
       "name": "bench-c2000-v3-mse-vs-scan.log",
-      "size_bytes": 0
+      "size_bytes": 5410
     },
     {
       "name": "bench-c2000-v3-mse-vs-v8.log",
@@ -19,6 +19,10 @@
     {
       "name": "pearson-c2000-v3-mse.log",
       "size_bytes": 242
+    },
+    {
+      "name": "train-c1000-v3-mse.log",
+      "size_bytes": 5341
     },
     {
       "name": "train-c2000-v3-mse.log",
@@ -35,5 +39,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       10:49  0.0  0.0 bash\n 120841  120839       10:49  0.0  0.0 bash\n 121067  120841       00:22  2.9  0.0 python3\n 121068  120841       00:22  0.0  0.0 tee\n 121070  121067       00:22 61.2  0.1 jass\n 121071  121067       00:22 35.8  0.9 scan_linux\n 121073  121067       00:21  0.3  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       15:59  0.0  0.0 bash\n 120841  120839       15:59  0.0  0.0 bash\n 121132  120841       04:22  394  2.1 python3\n 121133  120841       04:22  0.0  0.0 tee\n"
 }
