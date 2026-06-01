@@ -1,0 +1,6 @@
+input : /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/v8-sample-100K.bin (100000 records, processing 100 from offset 0)
+  25/100  (25.0%)  rate=99.4 pos/s  eta=0.0 min  skipped=0
+  50/100  (50.0%)  rate=74.9 pos/s  eta=0.0 min  skipped=1
+  75/100  (75.0%)  rate=78.1 pos/s  eta=0.0 min  skipped=1
+  100/100  (100.0%)  rate=75.9 pos/s  eta=0.0 min  skipped=1
+wrote /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/smoke-100-d12.bin (100 records, 1 skipped)

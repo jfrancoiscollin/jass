@@ -1,0 +1,8 @@
+input : /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/v8-sample-100K.bin (100000 records, processing 12501 from offset 75006)
+  2000/12501  (16.0%)  rate=46.3 pos/s  eta=3.8 min  skipped=4
+  4000/12501  (32.0%)  rate=46.0 pos/s  eta=3.1 min  skipped=15
+  6000/12501  (48.0%)  rate=46.9 pos/s  eta=2.3 min  skipped=20
+  8000/12501  (64.0%)  rate=47.4 pos/s  eta=1.6 min  skipped=27
+  10000/12501  (80.0%)  rate=47.8 pos/s  eta=0.9 min  skipped=35
+  12000/12501  (96.0%)  rate=47.3 pos/s  eta=0.2 min  skipped=40
+wrote /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/shard-6.bin (12501 records, 40 skipped)
