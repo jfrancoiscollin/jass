@@ -1,0 +1,17 @@
+note: --weight-decay=1e-05 applied as manual L2 inside the LBFGS closure (PyTorch LBFGS doesn't support weight_decay natively)
+loading /root/jass/jobs/results/0077-scan-distill-pattern-v3/artefacts.src/v10-distilled-100K.bin...
+  100000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 200000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 200000)
+iter  0: train_loss=    735.80  val_mse=7492004.00  man=  61.1  king=  11.0 *
+iter  1: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2 *
+iter  2: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2
+iter  3: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2
+iter  4: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2
+iter  5: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2
+iter  6: train_loss=    721.68  val_mse=7491921.50  man=  61.1  king=  11.2
+early stop: no val improvement for 5 iters (best val_mse=7491921.50)
+final (saved) val_mse=7491921.50  man=61.1  king=11.2
+wrote /root/jass/jobs/results/0077-scan-distill-pattern-v3/artefacts.src/pattern-v3-scan-distilled.jpat (17006241 bytes)
