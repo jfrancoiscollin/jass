@@ -1,8 +1,8 @@
 {
   "job_id": "0076-scan-distill-256-128-pure",
-  "snapshot_at": "2026-06-01T11:45:05+00:00",
+  "snapshot_at": "2026-06-01T11:50:15+00:00",
   "started_at": "2026-06-01T11:34:49+00:00",
-  "elapsed_seconds": 616,
+  "elapsed_seconds": 926,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -10,6 +10,10 @@
     },
     {
       "name": "bench-vs-v6-d10.log",
+      "size_bytes": 358
+    },
+    {
+      "name": "bench-vs-v7-d10.log",
       "size_bytes": 0
     },
     {
@@ -40,5 +44,5 @@
       "records": 100000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 109432       1       10:15  0.0  0.0 bash\n 109434  109432       10:15  0.0  0.0 bash\n 109564  109434       06:22  100  0.1 jass\n 109565  109434       06:22  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 109432       1       15:25  0.0  0.0 bash\n 109434  109432       15:25  0.0  0.0 bash\n 109683  109434       04:50  100  0.1 jass\n 109684  109434       04:50  0.0  0.0 tee\n"
 }
