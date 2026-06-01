@@ -1,0 +1,7 @@
+{
+  "job_id": "0080-scan-distill-pattern-v3-1M",
+  "script": "jobs/queue/0080-scan-distill-pattern-v3-1M.sh",
+  "pid": 116081,
+  "started_at": "2026-06-01T17:10:40+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
