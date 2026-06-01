@@ -1,8 +1,8 @@
 {
   "job_id": "0083-scan-distill-v11-capacity-bump",
-  "snapshot_at": "2026-06-01T23:52:45+00:00",
+  "snapshot_at": "2026-06-01T23:57:54+00:00",
   "started_at": "2026-06-01T22:45:05+00:00",
-  "elapsed_seconds": 4060,
+  "elapsed_seconds": 4369,
   "artefacts": [
     {
       "name": "bench-1024-512-vs-scan-d10.log",
@@ -25,5 +25,5 @@
       "size_bytes": 1829
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 122389       1    01:07:39  0.0  0.0 bash\n 122391  122389    01:07:39  0.0  0.0 bash\n 123828  122391       05:40 99.9  0.1 jass\n 123829  122391       05:40  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 122389       1    01:12:49  0.0  0.0 bash\n 122391  122389    01:12:49  0.0  0.0 bash\n 123828  122391       10:49 99.9  0.1 jass\n 123829  122391       10:49  0.0  0.0 tee\n"
 }
