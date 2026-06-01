@@ -1,8 +1,8 @@
 {
   "job_id": "0078-scan-distill-1M-mlp-scaleup",
-  "snapshot_at": "2026-06-01T14:52:05+00:00",
+  "snapshot_at": "2026-06-01T14:57:12+00:00",
   "started_at": "2026-06-01T13:44:36+00:00",
-  "elapsed_seconds": 4049,
+  "elapsed_seconds": 4356,
   "artefacts": [
     {
       "name": "bench-256-128-vs-scan-d10.log",
@@ -106,5 +106,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 111121       1    01:07:28  0.0  0.0 bash\n 111123  111121    01:07:28  0.0  0.0 bash\n 112488  111123       08:10 99.9  0.1 jass\n 112489  111123       08:10  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 111121       1    01:12:35  0.0  0.0 bash\n 111123  111121    01:12:35  0.0  0.0 bash\n 112488  111123       13:17 99.9  0.1 jass\n 112489  111123       13:17  0.0  0.0 tee\n"
 }
