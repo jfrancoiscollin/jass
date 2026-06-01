@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=3 B=48 Draws=3 (total 54)
+A score rate: 0.0833333 (4.5 / 54)
