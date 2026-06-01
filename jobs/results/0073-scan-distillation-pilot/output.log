@@ -1,4 +1,0 @@
-Scan binary not found at /tmp/scan/scan_linux — attempting build.
-Cloning into '/tmp/scan-src'...
-make: *** No targets specified and no makefile found.  Stop.
-ABORT: Scan build failed
