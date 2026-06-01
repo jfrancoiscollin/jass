@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/arch-256-128/nnue-256-128.bin …
+  topology: 450 → 256 → 128 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.025776 sw2=0.077446 sw3=0.041564 sh1=0.07971 sh2=0.54598
+  multipliers: mul1=0.32338 mul2=0.011307 mul_out=0.022693
+  reference range: float [-1786.1, 2004.6], quantised [-1761.9, 1916.2]
+  diff: mean=+2.39  std=13.45  |max|=116.63  RMSE=13.66
+wrote /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/arch-256-128/nnue-256-128-q.bin (149672 bytes)

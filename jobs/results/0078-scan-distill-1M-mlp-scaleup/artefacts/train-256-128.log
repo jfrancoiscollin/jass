@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.4s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29991]  mean=-193.8  std=2731.5
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train=  68019.1  val=  58658.4 *
+  epoch   2: train=  50948.7  val=  54910.9 *
+  epoch   3: train=  47370.2  val=  48842.9 *
+  epoch   4: train=  41600.1  val=  45933.2 *
+  epoch   5: train=  39290.0  val=  43522.2 *
+  epoch   6: train=  37556.5  val=  40311.2 *
+  epoch   7: train=  36197.6  val=  40055.8 *
+  epoch   8: train=  35121.0  val=  38387.7 *
+  epoch   9: train=  34282.6  val=  37871.4 *
+  epoch  10: train=  33451.6  val=  38421.7
+  epoch  11: train=  32805.1  val=  36819.1 *
+  epoch  12: train=  32131.2  val=  38212.2
+  epoch  13: train=  31624.1  val=  35554.6 *
+  epoch  14: train=  31079.4  val=  36601.9
+  epoch  15: train=  30629.2  val=  36197.5
+  epoch  16: train=  30266.2  val=  35039.9 *
+  epoch  17: train=  29869.7  val=  34630.9 *
+  epoch  18: train=  29550.3  val=  33915.6 *
+  epoch  19: train=  29232.1  val=  34335.0
+  epoch  20: train=  28926.0  val=  33335.5 *
+  epoch  21: train=  28657.9  val=  33928.6
+  epoch  22: train=  28406.7  val=  33849.6
+  epoch  23: train=  28150.0  val=  33468.3
+  epoch  24: train=  27922.0  val=  32765.9 *
+  epoch  25: train=  27733.6  val=  32701.9 *
+  epoch  26: train=  27474.3  val=  32633.3 *
+  epoch  27: train=  27227.8  val=  33127.9
+  epoch  28: train=  27103.0  val=  33059.8
+  epoch  29: train=  26863.8  val=  32575.9 *
+  epoch  30: train=  26652.6  val=  33071.2
+  wrote /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/arch-256-128/nnue-256-128.bin (593948 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  256-128            148,481     32575.9      180.5     456s
+
+summary → /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/arch-256-128/summary.json
