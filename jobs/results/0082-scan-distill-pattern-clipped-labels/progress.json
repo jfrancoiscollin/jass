@@ -1,8 +1,8 @@
 {
   "job_id": "0082-scan-distill-pattern-clipped-labels",
-  "snapshot_at": "2026-06-01T21:47:55+00:00",
+  "snapshot_at": "2026-06-01T21:53:05+00:00",
   "started_at": "2026-06-01T20:50:05+00:00",
-  "elapsed_seconds": 3470,
+  "elapsed_seconds": 3780,
   "artefacts": [
     {
       "name": "bench-c1000-v3-mse-vs-scan.log",
@@ -27,6 +27,10 @@
     {
       "name": "bench-noclip-v2-huber200-vs-v8.log",
       "size_bytes": 374
+    },
+    {
+      "name": "bench-noclip-v2-huber500-vs-v8.log",
+      "size_bytes": 0
     },
     {
       "name": "bench-noclip-v3-huber200-vs-scan.log",
@@ -57,6 +61,10 @@
       "size_bytes": 420073
     },
     {
+      "name": "pattern-noclip-v2-huber500.jpat",
+      "size_bytes": 420073
+    },
+    {
       "name": "pattern-noclip-v3-huber200.jpat",
       "size_bytes": 17006241
     },
@@ -74,6 +82,10 @@
     },
     {
       "name": "pearson-noclip-v2-huber200.log",
+      "size_bytes": 242
+    },
+    {
+      "name": "pearson-noclip-v2-huber500.log",
       "size_bytes": 242
     },
     {
@@ -98,7 +110,7 @@
     },
     {
       "name": "train-noclip-v2-huber500.log",
-      "size_bytes": 5596
+      "size_bytes": 5873
     },
     {
       "name": "train-noclip-v3-huber200.log",
@@ -119,5 +131,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1       57:49  0.0  0.0 bash\n 120841  120839       57:49  0.0  0.0 bash\n 121893  120841       04:13  394  2.2 python3\n 121894  120841       04:13  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 120839       1    01:02:59  0.0  0.0 bash\n 120841  120839    01:02:59  0.0  0.0 bash\n 121976  120841       05:08 99.9  0.1 jass\n 121977  120841       05:08  0.0  0.0 tee\n"
 }
