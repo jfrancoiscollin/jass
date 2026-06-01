@@ -1,7 +1,0 @@
-{
-  "job_id": "0081-scan-distill-pattern-amplitude-fix",
-  "script": "jobs/queue/0081-scan-distill-pattern-amplitude-fix.sh",
-  "pid": 119450,
-  "started_at": "2026-06-01T19:54:38+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

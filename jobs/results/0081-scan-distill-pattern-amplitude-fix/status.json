@@ -1,7 +1,9 @@
 {
   "job_id": "0081-scan-distill-pattern-amplitude-fix",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-01T19:54:38+00:00",
+  "ended_at": "2026-06-01T20:34:55+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 119450
+  "artefacts_server_path": "/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src"
 }

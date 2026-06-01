@@ -1,0 +1,330 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+[ 57%] Built target jass_lib
+[100%] Built target jass_tests
+[ 74%] Built target jass
+
+==========================================================
+=== Mesure empirique : std(Scan labels) vs std(v7 eval) ===
+==========================================================
+Scan labels (n=5000): mean=-219.5  std=2682.2  range=[-29998, 9999]
+v7 NNUE eval (n=5000): mean=-51.1  std=615.2  range=[-2913, 2003]
+SCALE FACTOR (v7_std / scan_std) = 0.229
+Using scale factor : 0.2293
+
+==========================================================
+=== Scale Scan labels × 0.2293 ===
+==========================================================
+wrote /root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/v10-distilled-1M-scaled.bin (1000000 records, scores × 0.2293)
+
+==========================================================
+=== train pattern v3 Adam 60ep sur 1M SCALED ===
+==========================================================
+loading /root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/v10-distilled-1M-scaled.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (8 patterns, base=3)...
+  done, shape=(8, 2000000)
+epoch  0: train_loss=     43.99  val_mse= 434367.94  lr=1.00e-03  man=  99.5  king= 299.5
+epoch  1: train_loss=     43.93  val_mse= 433833.34  lr=1.00e-03  man=  99.1  king= 299.1
+epoch  2: train_loss=     43.88  val_mse= 433310.34  lr=1.00e-03  man=  98.6  king= 298.6
+epoch  3: train_loss=     43.82  val_mse= 432798.31  lr=1.00e-03  man=  98.2  king= 298.2
+epoch  4: train_loss=     43.77  val_mse= 432295.00  lr=1.00e-03  man=  97.7  king= 297.7
+epoch  5: train_loss=     43.72  val_mse= 431799.72  lr=1.00e-03  man=  97.3  king= 297.2
+epoch  6: train_loss=     43.67  val_mse= 431311.50  lr=1.00e-03  man=  96.8  king= 296.8
+epoch  7: train_loss=     43.62  val_mse= 430830.88  lr=1.00e-03  man=  96.4  king= 296.3
+epoch  8: train_loss=     43.57  val_mse= 430356.72  lr=1.00e-03  man=  95.9  king= 295.9
+epoch  9: train_loss=     43.52  val_mse= 429889.41  lr=1.00e-03  man=  95.4  king= 295.4
+epoch 10: train_loss=     43.47  val_mse= 429427.44  lr=1.00e-03  man=  95.0  king= 295.0
+epoch 11: train_loss=     43.42  val_mse= 428971.28  lr=1.00e-03  man=  94.5  king= 294.5
+epoch 12: train_loss=     43.37  val_mse= 428520.56  lr=1.00e-03  man=  94.1  king= 294.0
+epoch 13: train_loss=     43.33  val_mse= 428075.25  lr=1.00e-03  man=  93.6  king= 293.6
+epoch 14: train_loss=     43.28  val_mse= 427635.03  lr=1.00e-03  man=  93.2  king= 293.1
+epoch 15: train_loss=     43.24  val_mse= 427200.09  lr=1.00e-03  man=  92.7  king= 292.7
+epoch 16: train_loss=     43.19  val_mse= 426769.84  lr=1.00e-03  man=  92.3  king= 292.2
+epoch 17: train_loss=     43.15  val_mse= 426343.78  lr=1.00e-03  man=  91.8  king= 291.7
+epoch 18: train_loss=     43.11  val_mse= 425922.31  lr=1.00e-03  man=  91.4  king= 291.3
+epoch 19: train_loss=     43.06  val_mse= 425505.34  lr=1.00e-03  man=  90.9  king= 290.8
+epoch 20: train_loss=     43.02  val_mse= 425092.62  lr=1.00e-03  man=  90.5  king= 290.4
+epoch 21: train_loss=     42.97  val_mse= 424684.09  lr=1.00e-03  man=  90.0  king= 289.9
+epoch 22: train_loss=     42.93  val_mse= 424279.41  lr=1.00e-03  man=  89.6  king= 289.5
+epoch 23: train_loss=     42.89  val_mse= 423878.41  lr=1.00e-03  man=  89.1  king= 289.0
+epoch 24: train_loss=     42.85  val_mse= 423481.59  lr=1.00e-03  man=  88.7  king= 288.5
+epoch 25: train_loss=     42.81  val_mse= 423088.81  lr=1.00e-03  man=  88.2  king= 288.1
+epoch 26: train_loss=     42.77  val_mse= 422699.16  lr=1.00e-03  man=  87.7  king= 287.6
+epoch 27: train_loss=     42.73  val_mse= 422313.56  lr=1.00e-03  man=  87.3  king= 287.2
+epoch 28: train_loss=     42.68  val_mse= 421930.84  lr=1.00e-03  man=  86.8  king= 286.7
+epoch 29: train_loss=     42.65  val_mse= 421553.47  lr=1.00e-03  man=  86.4  king= 286.2
+epoch 30: train_loss=     42.61  val_mse= 421178.16  lr=1.00e-03  man=  85.9  king= 285.8
+epoch 31: train_loss=     42.57  val_mse= 420806.22  lr=1.00e-03  man=  85.5  king= 285.3
+epoch 32: train_loss=     42.53  val_mse= 420437.66  lr=1.00e-03  man=  85.0  king= 284.9
+epoch 33: train_loss=     42.49  val_mse= 420072.38  lr=1.00e-03  man=  84.6  king= 284.4
+epoch 34: train_loss=     42.45  val_mse= 419710.44  lr=1.00e-03  man=  84.1  king= 284.0
+epoch 35: train_loss=     42.42  val_mse= 419351.34  lr=1.00e-03  man=  83.7  king= 283.5
+epoch 36: train_loss=     42.38  val_mse= 418995.53  lr=1.00e-03  man=  83.2  king= 283.0
+epoch 37: train_loss=     42.34  val_mse= 418643.06  lr=1.00e-03  man=  82.8  king= 282.6
+epoch 38: train_loss=     42.31  val_mse= 418293.34  lr=1.00e-03  man=  82.3  king= 282.1
+epoch 39: train_loss=     42.27  val_mse= 417946.66  lr=1.00e-03  man=  81.9  king= 281.7
+epoch 40: train_loss=     42.23  val_mse= 417602.75  lr=1.00e-03  man=  81.4  king= 281.2
+epoch 41: train_loss=     42.19  val_mse= 417262.59  lr=1.00e-03  man=  81.0  king= 280.8
+epoch 42: train_loss=     42.16  val_mse= 416925.03  lr=1.00e-03  man=  80.5  king= 280.3
+epoch 43: train_loss=     42.12  val_mse= 416589.34  lr=1.00e-03  man=  80.1  king= 279.8
+epoch 44: train_loss=     42.09  val_mse= 416257.97  lr=1.00e-03  man=  79.6  king= 279.4
+epoch 45: train_loss=     42.06  val_mse= 415928.91  lr=1.00e-03  man=  79.2  king= 278.9
+epoch 46: train_loss=     42.02  val_mse= 415601.88  lr=1.00e-03  man=  78.7  king= 278.5
+epoch 47: train_loss=     41.99  val_mse= 415278.09  lr=1.00e-03  man=  78.3  king= 278.0
+epoch 48: train_loss=     41.95  val_mse= 414956.91  lr=1.00e-03  man=  77.8  king= 277.5
+epoch 49: train_loss=     41.92  val_mse= 414638.25  lr=1.00e-03  man=  77.4  king= 277.1
+epoch 50: train_loss=     41.89  val_mse= 414323.19  lr=1.00e-03  man=  76.9  king= 276.6
+epoch 51: train_loss=     41.85  val_mse= 414009.78  lr=1.00e-03  man=  76.5  king= 276.2
+epoch 52: train_loss=     41.82  val_mse= 413699.28  lr=1.00e-03  man=  76.0  king= 275.7
+epoch 53: train_loss=     41.79  val_mse= 413391.31  lr=1.00e-03  man=  75.6  king= 275.3
+epoch 54: train_loss=     41.76  val_mse= 413085.44  lr=1.00e-03  man=  75.1  king= 274.8
+epoch 55: train_loss=     41.72  val_mse= 412782.22  lr=1.00e-03  man=  74.7  king= 274.3
+epoch 56: train_loss=     41.69  val_mse= 412483.00  lr=1.00e-03  man=  74.2  king= 273.9
+epoch 57: train_loss=     41.66  val_mse= 412184.91  lr=1.00e-03  man=  73.8  king= 273.4
+epoch 58: train_loss=     41.63  val_mse= 411889.09  lr=1.00e-03  man=  73.3  king= 273.0
+epoch 59: train_loss=     41.60  val_mse= 411596.28  lr=1.00e-03  man=  72.9  king= 272.5
+final (saved) val_mse= 411596.28  man=72.9  king=272.5
+wrote /root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v3-scan-1M-scaled.jpat (17006241 bytes)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.7962  (n=1000)
+pattern : range=[-727, 599]  mean=-16.9  std=115.3
+ref     : range=[-2153, 1821]  mean=-39.5  std=425.4
+opening pool: 9 positions
+jass setup:   nnue=/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v3-scan-1M-scaled.jpat  book=(default/none)
+scan setup:   book=off  bb-size=0
+  game   1: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 168 plies)  Jass +0.0  [9s]
+  game   3: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [10s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 168 plies)  Jass +0.0  [12s]
+  game   5: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [14s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 168 plies)  Jass +0.0  [16s]
+  game   7: Jass=W Scan=B → L (no legal move from Jass-player, 117 plies)  Jass +0.0  [17s]
+  game   8: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [18s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 117 plies)  Jass +0.0  [19s]
+  game  10: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [20s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 117 plies)  Jass +0.0  [21s]
+  game  12: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [22s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 97 plies)  Jass +0.0  [23s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [24s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 97 plies)  Jass +0.0  [25s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [26s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 97 plies)  Jass +0.0  [26s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [27s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 143 plies)  Jass +0.0  [30s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 98 plies)  Jass +0.0  [31s]
+  game  21: Jass=W Scan=B → L (no legal move from Jass-player, 143 plies)  Jass +0.0  [34s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 98 plies)  Jass +0.0  [35s]
+  game  23: Jass=W Scan=B → L (no legal move from Jass-player, 143 plies)  Jass +0.0  [38s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 98 plies)  Jass +0.0  [38s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [40s]
+  game  26: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [40s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [42s]
+  game  28: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [42s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [44s]
+  game  30: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [44s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [45s]
+  game  32: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [46s]
+  game  33: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [47s]
+  game  34: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [48s]
+  game  35: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [49s]
+  game  36: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [50s]
+  game  37: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [51s]
+  game  38: Scan=W Jass=B → W (no legal move from Jass-player, 90 plies)  Jass +0.0  [52s]
+  game  39: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [53s]
+  game  40: Scan=W Jass=B → W (no legal move from Jass-player, 90 plies)  Jass +0.0  [53s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [55s]
+  game  42: Scan=W Jass=B → W (no legal move from Jass-player, 90 plies)  Jass +0.0  [55s]
+  game  43: Jass=W Scan=B → L (no legal move from Jass-player, 137 plies)  Jass +0.0  [57s]
+  game  44: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [58s]
+  game  45: Jass=W Scan=B → L (no legal move from Jass-player, 137 plies)  Jass +0.0  [59s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [60s]
+  game  47: Jass=W Scan=B → L (no legal move from Jass-player, 137 plies)  Jass +0.0  [62s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [63s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [64s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [64s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [66s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [66s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [67s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [68s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=0  Scan=54  Draws=0
+  Jass score rate: 0.000 (0.0 / 54)
+  ELO estimate:    -800 (95% CI ≈ ±109)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v3-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v3-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v3-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+=== train pattern v2 Adam 60ep sur 1M SCALED ===
+==========================================================
+loading /root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/v10-distilled-1M-scaled.bin...
+  1000000 records loaded
+augmenting with horizontal mirror (×2)...
+  augmented dataset: 2000000 records
+encoding pattern indices (16 patterns, base=3)...
+  done, shape=(16, 2000000)
+epoch  0: train_loss=     43.97  val_mse= 433995.12  lr=1.00e-03  man=  99.5  king= 299.5
+epoch  1: train_loss=     43.88  val_mse= 433091.41  lr=1.00e-03  man=  99.1  king= 299.1
+epoch  2: train_loss=     43.78  val_mse= 432204.38  lr=1.00e-03  man=  98.6  king= 298.6
+epoch  3: train_loss=     43.69  val_mse= 431333.53  lr=1.00e-03  man=  98.2  king= 298.2
+epoch  4: train_loss=     43.61  val_mse= 430475.47  lr=1.00e-03  man=  97.7  king= 297.7
+epoch  5: train_loss=     43.52  val_mse= 429630.44  lr=1.00e-03  man=  97.3  king= 297.2
+epoch  6: train_loss=     43.43  val_mse= 428796.03  lr=1.00e-03  man=  96.8  king= 296.8
+epoch  7: train_loss=     43.35  val_mse= 427973.88  lr=1.00e-03  man=  96.4  king= 296.3
+epoch  8: train_loss=     43.26  val_mse= 427162.47  lr=1.00e-03  man=  95.9  king= 295.9
+epoch  9: train_loss=     43.18  val_mse= 426362.06  lr=1.00e-03  man=  95.4  king= 295.4
+epoch 10: train_loss=     43.10  val_mse= 425571.03  lr=1.00e-03  man=  95.0  king= 295.0
+epoch 11: train_loss=     43.01  val_mse= 424790.25  lr=1.00e-03  man=  94.5  king= 294.5
+epoch 12: train_loss=     42.93  val_mse= 424018.94  lr=1.00e-03  man=  94.1  king= 294.0
+epoch 13: train_loss=     42.86  val_mse= 423257.47  lr=1.00e-03  man=  93.6  king= 293.6
+epoch 14: train_loss=     42.78  val_mse= 422505.44  lr=1.00e-03  man=  93.2  king= 293.1
+epoch 15: train_loss=     42.70  val_mse= 421762.25  lr=1.00e-03  man=  92.7  king= 292.7
+epoch 16: train_loss=     42.63  val_mse= 421028.09  lr=1.00e-03  man=  92.3  king= 292.2
+epoch 17: train_loss=     42.55  val_mse= 420302.03  lr=1.00e-03  man=  91.8  king= 291.7
+epoch 18: train_loss=     42.48  val_mse= 419584.53  lr=1.00e-03  man=  91.4  king= 291.3
+epoch 19: train_loss=     42.40  val_mse= 418875.72  lr=1.00e-03  man=  90.9  king= 290.8
+epoch 20: train_loss=     42.33  val_mse= 418174.50  lr=1.00e-03  man=  90.5  king= 290.4
+epoch 21: train_loss=     42.26  val_mse= 417481.84  lr=1.00e-03  man=  90.0  king= 289.9
+epoch 22: train_loss=     42.19  val_mse= 416796.19  lr=1.00e-03  man=  89.6  king= 289.5
+epoch 23: train_loss=     42.12  val_mse= 416117.81  lr=1.00e-03  man=  89.1  king= 289.0
+epoch 24: train_loss=     42.04  val_mse= 415447.78  lr=1.00e-03  man=  88.6  king= 288.5
+epoch 25: train_loss=     41.98  val_mse= 414785.34  lr=1.00e-03  man=  88.2  king= 288.1
+epoch 26: train_loss=     41.91  val_mse= 414129.53  lr=1.00e-03  man=  87.7  king= 287.6
+epoch 27: train_loss=     41.84  val_mse= 413481.53  lr=1.00e-03  man=  87.3  king= 287.2
+epoch 28: train_loss=     41.77  val_mse= 412839.31  lr=1.00e-03  man=  86.8  king= 286.7
+epoch 29: train_loss=     41.71  val_mse= 412207.28  lr=1.00e-03  man=  86.4  king= 286.2
+epoch 30: train_loss=     41.64  val_mse= 411579.62  lr=1.00e-03  man=  85.9  king= 285.8
+epoch 31: train_loss=     41.58  val_mse= 410959.25  lr=1.00e-03  man=  85.5  king= 285.3
+epoch 32: train_loss=     41.52  val_mse= 410345.47  lr=1.00e-03  man=  85.0  king= 284.9
+epoch 33: train_loss=     41.45  val_mse= 409738.59  lr=1.00e-03  man=  84.6  king= 284.4
+epoch 34: train_loss=     41.39  val_mse= 409138.06  lr=1.00e-03  man=  84.1  king= 284.0
+epoch 35: train_loss=     41.33  val_mse= 408543.81  lr=1.00e-03  man=  83.7  king= 283.5
+epoch 36: train_loss=     41.27  val_mse= 407955.47  lr=1.00e-03  man=  83.2  king= 283.0
+epoch 37: train_loss=     41.21  val_mse= 407374.06  lr=1.00e-03  man=  82.8  king= 282.6
+epoch 38: train_loss=     41.15  val_mse= 406797.59  lr=1.00e-03  man=  82.3  king= 282.1
+epoch 39: train_loss=     41.09  val_mse= 406227.03  lr=1.00e-03  man=  81.9  king= 281.7
+epoch 40: train_loss=     41.03  val_mse= 405663.00  lr=1.00e-03  man=  81.4  king= 281.2
+epoch 41: train_loss=     40.97  val_mse= 405105.88  lr=1.00e-03  man=  81.0  king= 280.7
+epoch 42: train_loss=     40.91  val_mse= 404554.72  lr=1.00e-03  man=  80.5  king= 280.3
+epoch 43: train_loss=     40.86  val_mse= 404007.31  lr=1.00e-03  man=  80.1  king= 279.8
+epoch 44: train_loss=     40.80  val_mse= 403468.12  lr=1.00e-03  man=  79.6  king= 279.4
+epoch 45: train_loss=     40.74  val_mse= 402933.47  lr=1.00e-03  man=  79.2  king= 278.9
+epoch 46: train_loss=     40.69  val_mse= 402403.75  lr=1.00e-03  man=  78.7  king= 278.5
+epoch 47: train_loss=     40.64  val_mse= 401880.03  lr=1.00e-03  man=  78.3  king= 278.0
+epoch 48: train_loss=     40.58  val_mse= 401361.38  lr=1.00e-03  man=  77.8  king= 277.5
+epoch 49: train_loss=     40.53  val_mse= 400848.12  lr=1.00e-03  man=  77.4  king= 277.1
+epoch 50: train_loss=     40.48  val_mse= 400341.59  lr=1.00e-03  man=  76.9  king= 276.6
+epoch 51: train_loss=     40.42  val_mse= 399838.66  lr=1.00e-03  man=  76.5  king= 276.2
+epoch 52: train_loss=     40.37  val_mse= 399341.72  lr=1.00e-03  man=  76.0  king= 275.7
+epoch 53: train_loss=     40.32  val_mse= 398849.56  lr=1.00e-03  man=  75.6  king= 275.3
+epoch 54: train_loss=     40.27  val_mse= 398361.44  lr=1.00e-03  man=  75.1  king= 274.8
+epoch 55: train_loss=     40.22  val_mse= 397878.44  lr=1.00e-03  man=  74.7  king= 274.3
+epoch 56: train_loss=     40.17  val_mse= 397402.72  lr=1.00e-03  man=  74.2  king= 273.9
+epoch 57: train_loss=     40.12  val_mse= 396929.72  lr=1.00e-03  man=  73.8  king= 273.4
+epoch 58: train_loss=     40.07  val_mse= 396462.03  lr=1.00e-03  man=  73.3  king= 273.0
+epoch 59: train_loss=     40.02  val_mse= 395999.94  lr=1.00e-03  man=  72.9  king= 272.5
+final (saved) val_mse= 395999.94  man=72.9  king=272.5
+wrote /root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat (420073 bytes)
+subsampled 1000 records from /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+pearson_r = +0.7914  (n=1000)
+pattern : range=[-796, 642]  mean=-17.9  std=127.5
+ref     : range=[-2153, 1821]  mean=-39.5  std=425.4
+opening pool: 9 positions
+jass setup:   nnue=/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat  book=(default/none)
+scan setup:   book=off  bb-size=0
+  game   1: Jass=W Scan=B → L (no legal move from Jass-player, 107 plies)  Jass +0.0  [1s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [3s]
+  game   3: Jass=W Scan=B → L (no legal move from Jass-player, 107 plies)  Jass +0.0  [4s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [6s]
+  game   5: Jass=W Scan=B → L (no legal move from Jass-player, 107 plies)  Jass +0.0  [7s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [9s]
+  game   7: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [10s]
+  game   8: Scan=W Jass=B → D (25-move rule, 164 plies)  Jass +0.5  [12s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [13s]
+  game  10: Scan=W Jass=B → D (25-move rule, 164 plies)  Jass +0.5  [15s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [16s]
+  game  12: Scan=W Jass=B → D (25-move rule, 164 plies)  Jass +0.5  [19s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 93 plies)  Jass +0.0  [20s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [21s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 93 plies)  Jass +0.0  [23s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [24s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 93 plies)  Jass +0.0  [26s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [27s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [29s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [31s]
+  game  21: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [32s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [34s]
+  game  23: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [35s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [37s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [38s]
+  game  26: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [39s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [41s]
+  game  28: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [42s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [43s]
+  game  30: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [45s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [46s]
+  game  32: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [48s]
+  game  33: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [49s]
+  game  34: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [51s]
+  game  35: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [53s]
+  game  36: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [55s]
+  game  37: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [56s]
+  game  38: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [57s]
+  game  39: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [58s]
+  game  40: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [59s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [60s]
+  game  42: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [61s]
+  game  43: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [63s]
+  game  44: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [65s]
+  game  45: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [66s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [68s]
+  game  47: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [70s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [71s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [73s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 134 plies)  Jass +0.0  [75s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [78s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 134 plies)  Jass +0.0  [80s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [82s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 134 plies)  Jass +0.0  [84s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=0  Scan=51  Draws=3
+  Jass score rate: 0.028 (1.5 / 54)
+  ELO estimate:    -618 (95% CI ≈ ±109)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=3 B=48 Draws=3 (total 54)
+A score rate: 0.0833333 (4.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=3 B=51 Draws=0 (total 54)
+A score rate: 0.0555556 (3 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0081-scan-distill-pattern-amplitude-fix/artefacts.src/pattern-v2-scan-1M-scaled.jpat) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=48 Draws=6 (total 54)
+A score rate: 0.0555556 (3 / 54)
+
+==========================================================
+       0081 PATTERN AMPLITUDE-FIX VERDICT
+==========================================================
+  v3 (train 282s) : pearson +0.7962 std=115.3 (ref=425.4)  vs Scan 0.000  vs v6 0  vs v7 0  vs v8 0
+  v2 (train 252s) : pearson +0.7914 std=127.5 (ref=425.4)  vs Scan 0.028  vs v6 0.0833333  vs v7 0.0555556  vs v8 0.0555556
+
+
+  Reference (avant amplitude fix) :
+    Pattern V3 1M (0080) : std=157 ref=425  pearson 0.79  vs Scan 0.000  vs v8 0.222
+    Pattern V2 1M (0080) : pearson 0.77  vs Scan 0.000  vs v8 0.083
+
+  Decision :
+    * pattern V3 vs Scan > 0.10 → amplitude était le bug, ship pattern!
+    * std désormais proche du ref std + vs Scan amélioré → fix confirmé
+    * pearson maintenu > 0.75 mais vs Scan toujours flat → bug ailleurs
+    * tout flat → pattern paradigm vraiment plafonné, MLP wins
+==========================================================
