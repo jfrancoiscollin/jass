@@ -1,8 +1,8 @@
 {
   "job_id": "0079-scan-distill-pattern-calibration-sweep",
-  "snapshot_at": "2026-06-01T16:30:26+00:00",
+  "snapshot_at": "2026-06-01T16:35:27+00:00",
   "started_at": "2026-06-01T15:59:33+00:00",
-  "elapsed_seconds": 1853,
+  "elapsed_seconds": 2154,
   "artefacts": [
     {
       "name": "bench-V1-Adam-s001-l10-vs-v8.log",
@@ -13,11 +13,19 @@
       "size_bytes": 387
     },
     {
+      "name": "bench-V3-LBFGS-s100-l10-vs-v8.log",
+      "size_bytes": 0
+    },
+    {
       "name": "pattern-v3-V1-Adam-s001-l10.jpat",
       "size_bytes": 17006241
     },
     {
       "name": "pattern-v3-V2-Adam-s100-l10.jpat",
+      "size_bytes": 17006241
+    },
+    {
+      "name": "pattern-v3-V3-LBFGS-s100-l10.jpat",
       "size_bytes": 17006241
     },
     {
@@ -29,6 +37,10 @@
       "size_bytes": 240
     },
     {
+      "name": "pearson-V3-LBFGS-s100-l10.log",
+      "size_bytes": 244
+    },
+    {
       "name": "train-V1-Adam-s001-l10.log",
       "size_bytes": 5885
     },
@@ -38,7 +50,7 @@
     },
     {
       "name": "train-V3-LBFGS-s100-l10.log",
-      "size_bytes": 2213
+      "size_bytes": 2948
     },
     {
       "name": "v10-distilled.bin",
@@ -46,5 +58,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 113871       1       30:52  0.0  0.0 bash\n 113873  113871       30:52  0.0  0.0 bash\n 114181  113873       17:17  257  5.4 python3\n 114182  113873       17:17  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 113871       1       35:53  0.0  0.0 bash\n 113873  113871       35:53  0.0  0.0 bash\n 114558  113873       02:03 99.9  0.1 jass\n 114559  113873       02:03  0.0  0.0 tee\n"
 }
