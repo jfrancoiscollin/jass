@@ -1,8 +1,8 @@
 {
   "job_id": "0074-scan-distillation-pilot-master-bce-fix",
-  "snapshot_at": "2026-06-01T09:51:05+00:00",
+  "snapshot_at": "2026-06-01T09:56:05+00:00",
   "started_at": "2026-06-01T09:04:30+00:00",
-  "elapsed_seconds": 2795,
+  "elapsed_seconds": 3095,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -48,5 +48,5 @@
       "records": 100000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 106885       1       46:34  0.0  0.0 bash\n 106887  106885       46:34  0.0  0.0 bash\n 107935  106887       07:13 99.9  0.1 jass\n 107936  106887       07:13  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 106885       1       51:34  0.0  0.0 bash\n 106887  106885       51:34  0.0  0.0 bash\n 107935  106887       12:14 99.9  0.1 jass\n 107936  106887       12:14  0.0  0.0 tee\n"
 }
