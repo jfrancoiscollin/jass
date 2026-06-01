@@ -1,0 +1,152 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8  mem: 30Gi
+v8 dataset : /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin
+scan       : /root/jass-scan/scan_linux
+[ 57%] Built target jass_lib
+[ 94%] Built target jass_tests
+[100%] Built target jass
+Reusing 0073 distilled dataset : /root/jass/jobs/results/0073-scan-distillation-pilot/artefacts.src/v10-distilled-100K.bin (3800008 bytes)
+relab: 100000 records, first 1000 scores nonzero=977/1000, mean=-37.8, stdev=2612.2, range=[-29996, 9999]
+
+==========================================================
+=== train v10 512-256 (master BCE, scan-distilled MSE) ===
+==========================================================
+loading /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/v10-distilled-100K.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=29.5% D=38.3% L=32.2%
+  score range: [-29998, 9999]  mean=-191.4  std=2707.4
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.4s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 2100000 records (100000 self-play + 2000000 master)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  34382.4  val=  67817.7 *
+  epoch   2: train=  33552.4  val=  50313.1 *
+  epoch   3: train=  33081.6  val=  46451.6 *
+  epoch   4: train=  32662.7  val=  44916.4 *
+  epoch   5: train=  32412.5  val=  45325.9
+  epoch   6: train=  32245.8  val=  45471.9
+  epoch   7: train=  32099.1  val=  43526.2 *
+  epoch   8: train=  31948.8  val=  44320.0
+  epoch   9: train=  31816.7  val=  44517.1
+  epoch  10: train=  31693.3  val=  45974.3
+  epoch  11: train=  31560.2  val=  46609.1
+  epoch  12: train=  31438.7  val=  46603.7
+  epoch  13: train=  31307.3  val=  48954.6
+  epoch  14: train=  31186.4  val=  47641.7
+  epoch  15: train=  31066.9  val=  48820.0
+  early-stop at epoch 15
+  wrote /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     43526.2      208.6     712s
+
+summary → /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/summary.json
+loading float reference /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256.bin …
+  topology: 450 → 512 → 256 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/v10-distilled-100K.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.016619 sw2=0.022934 sw3=0.026684 sh1=0.045411 sh2=0.42609
+  multipliers: mul1=0.36597 mul2=0.0024442 mul_out=0.01137
+  reference range: float [-2308.4, 2258.7], quantised [-2166.6, 1972.6]
+  diff: mean=+1.58  std=17.23  |max|=286.19  RMSE=17.30
+wrote /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256-q.bin (364840 bytes)
+
+==========================================================
+=== bench v10 vs Scan / v6 / v7 / v8 d10 ===
+==========================================================
+opening pool: 9 positions
+jass setup:   nnue=/root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256-q.bin  book=(default/none)
+scan setup:   book=off  bb-size=0
+  game   1: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [4s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [6s]
+  game   3: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [10s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [12s]
+  game   5: Jass=W Scan=B → L (no legal move from Jass-player, 111 plies)  Jass +0.0  [16s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [19s]
+  game   7: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [26s]
+  game   8: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [29s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [35s]
+  game  10: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [38s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [45s]
+  game  12: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [48s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [53s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [58s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [63s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [68s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [73s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 104 plies)  Jass +0.0  [78s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [81s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [87s]
+  game  21: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [90s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [96s]
+  game  23: Jass=W Scan=B → L (no legal move from Jass-player, 109 plies)  Jass +0.0  [99s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 124 plies)  Jass +0.0  [105s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 89 plies)  Jass +0.0  [109s]
+  game  26: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [112s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 89 plies)  Jass +0.0  [116s]
+  game  28: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [119s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 89 plies)  Jass +0.0  [123s]
+  game  30: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [125s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [130s]
+  game  32: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [134s]
+  game  33: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [139s]
+  game  34: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [143s]
+  game  35: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [148s]
+  game  36: Scan=W Jass=B → W (no legal move from Jass-player, 120 plies)  Jass +0.0  [152s]
+  game  37: Jass=W Scan=B → L (no legal move from Jass-player, 157 plies)  Jass +0.0  [166s]
+  game  38: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [172s]
+  game  39: Jass=W Scan=B → L (no legal move from Jass-player, 157 plies)  Jass +0.0  [180s]
+  game  40: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [185s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 157 plies)  Jass +0.0  [193s]
+  game  42: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [198s]
+  game  43: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [205s]
+  game  44: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [211s]
+  game  45: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [218s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [223s]
+  game  47: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [230s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [236s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [243s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [246s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [253s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [257s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [263s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 108 plies)  Jass +0.0  [267s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=0  Scan=54  Draws=0
+  Jass score rate: 0.000 (0.0 / 54)
+  ELO estimate:    -800 (95% CI ≈ ±109)
+Benchmark: A=NNUE(/root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=6 B=48 Draws=0 (total 54)
+A score rate: 0.111111 (6 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=9 B=42 Draws=3 (total 54)
+A score rate: 0.194444 (10.5 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=9 B=42 Draws=3 (total 54)
+A score rate: 0.194444 (10.5 / 54)
+
+==========================================================
+       0074 SCAN DISTILLATION (MASTER BCE FIX) VERDICT
+==========================================================
+  train wall : 723s
+  vs Scan d10 : 0.000
+  vs v6 d10   : 0.111111
+  vs v7 d10   : 0.194444
+  vs v8 d10   : 0.194444
+
+  Comparaison 0073 (master MSE buggy) :
+    vs Scan : 0.028 → ?
+    vs v8   : 0.111 → ?
+
+  Decision gate :
+    * v10 vs v8 > 0.55 → distillation fonctionne, scale-up 1M @ d16 (0075)
+    * v10 vs Scan > 0.10 (vs 0.028 buggy) → master fix a aidé
+    * tout < seuil → capacity limit OU bug autre, debug
+==========================================================

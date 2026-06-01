@@ -1,0 +1,35 @@
+loading /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/v10-distilled-100K.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=29.5% D=38.3% L=32.2%
+  score range: [-29998, 9999]  mean=-191.4  std=2707.4
+loading master /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw (encoding=halfmen) …
+  2000000 master records  (9.4s to encode)
+  master WDL: W=40.6% D=18.4% L=41.0%
+  master blend: weight=1.0  lam=0.0  (pure-WDL when lam=0)
+  blended total: 2100000 records (100000 self-play + 2000000 master)
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train=  34382.4  val=  67817.7 *
+  epoch   2: train=  33552.4  val=  50313.1 *
+  epoch   3: train=  33081.6  val=  46451.6 *
+  epoch   4: train=  32662.7  val=  44916.4 *
+  epoch   5: train=  32412.5  val=  45325.9
+  epoch   6: train=  32245.8  val=  45471.9
+  epoch   7: train=  32099.1  val=  43526.2 *
+  epoch   8: train=  31948.8  val=  44320.0
+  epoch   9: train=  31816.7  val=  44517.1
+  epoch  10: train=  31693.3  val=  45974.3
+  epoch  11: train=  31560.2  val=  46609.1
+  epoch  12: train=  31438.7  val=  46603.7
+  epoch  13: train=  31307.3  val=  48954.6
+  epoch  14: train=  31186.4  val=  47641.7
+  epoch  15: train=  31066.9  val=  48820.0
+  early-stop at epoch 15
+  wrote /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     43526.2      208.6     712s
+
+summary → /root/jass/jobs/results/0074-scan-distillation-pilot-master-bce-fix/artefacts.src/summary.json

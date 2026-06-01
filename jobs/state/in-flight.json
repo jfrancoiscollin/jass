@@ -1,7 +1,0 @@
-{
-  "job_id": "0074-scan-distillation-pilot-master-bce-fix",
-  "script": "jobs/queue/0074-scan-distillation-pilot-master-bce-fix.sh",
-  "pid": 106885,
-  "started_at": "2026-06-01T09:04:30+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
