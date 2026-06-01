@@ -1,0 +1,40 @@
+{
+  "job_id": "0075-scan-distillation-pure-no-master",
+  "snapshot_at": "2026-06-01T10:48:05+00:00",
+  "started_at": "2026-06-01T10:42:55+00:00",
+  "elapsed_seconds": 310,
+  "artefacts": [
+    {
+      "name": "bench-vs-scan-d10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "nnue-512-256-q.bin",
+      "size_bytes": 364840,
+      "records": 9600
+    },
+    {
+      "name": "nnue-512-256.bin",
+      "size_bytes": 1450012,
+      "records": 38158
+    },
+    {
+      "name": "quantize.log",
+      "size_bytes": 751
+    },
+    {
+      "name": "summary.json",
+      "size_bytes": 208
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 2077
+    },
+    {
+      "name": "v10-distilled-100K.bin",
+      "size_bytes": 3800008,
+      "records": 100000
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 108641       1       05:09  0.0  0.0 bash\n 108643  108641       05:09  0.0  0.0 bash\n 108763  108643       04:06  0.6  0.0 python3\n 108764  108643       04:06  0.0  0.0 tee\n 108766  108763       04:06 92.0  0.1 jass\n 108767  108763       04:06  7.2  0.9 scan_linux\n 108769  108763       04:05  0.1  0.0 jass\n"
+}
