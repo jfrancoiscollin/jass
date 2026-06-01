@@ -1,0 +1,7 @@
+{
+  "job_id": "0078-scan-distill-1M-mlp-scaleup",
+  "state": "running",
+  "started_at": "2026-06-01T13:44:36+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 111121
+}
