@@ -1,0 +1,13 @@
+{
+  "job_id": "0083-scan-distill-v11-capacity-bump",
+  "snapshot_at": "2026-06-01T22:50:15+00:00",
+  "started_at": "2026-06-01T22:45:05+00:00",
+  "elapsed_seconds": 310,
+  "artefacts": [
+    {
+      "name": "train-1024-512.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 122389       1       05:09  0.0  0.0 bash\n 122391  122389       05:09  0.0  0.0 bash\n 122469  122391       05:08  376 12.3 python3\n 122470  122391       05:08  0.0  0.0 tee\n"
+}
