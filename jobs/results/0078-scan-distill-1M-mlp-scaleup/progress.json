@@ -1,0 +1,81 @@
+{
+  "job_id": "0078-scan-distill-1M-mlp-scaleup",
+  "snapshot_at": "2026-06-01T13:49:35+00:00",
+  "started_at": "2026-06-01T13:44:36+00:00",
+  "elapsed_seconds": 299,
+  "artefacts": [
+    {
+      "name": "shard-0.bin",
+      "size_bytes": 707492,
+      "records": 18618
+    },
+    {
+      "name": "shard-0.log",
+      "size_bytes": 214
+    },
+    {
+      "name": "shard-1.bin",
+      "size_bytes": 752218,
+      "records": 19795
+    },
+    {
+      "name": "shard-1.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-2.bin",
+      "size_bytes": 703426,
+      "records": 18511
+    },
+    {
+      "name": "shard-2.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-3.bin",
+      "size_bytes": 691228,
+      "records": 18190
+    },
+    {
+      "name": "shard-3.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-4.bin",
+      "size_bytes": 679030,
+      "records": 17869
+    },
+    {
+      "name": "shard-4.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-5.bin",
+      "size_bytes": 723756,
+      "records": 19046
+    },
+    {
+      "name": "shard-5.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-6.bin",
+      "size_bytes": 687162,
+      "records": 18083
+    },
+    {
+      "name": "shard-6.log",
+      "size_bytes": 219
+    },
+    {
+      "name": "shard-7.bin",
+      "size_bytes": 727822,
+      "records": 19153
+    },
+    {
+      "name": "shard-7.log",
+      "size_bytes": 219
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 111121       1       04:58  0.0  0.0 bash\n 111123  111121       04:58  0.0  0.0 bash\n 111201  111123       04:57  1.5  0.1 python3\n 111202  111123       04:57  1.6  0.1 python3\n 111203  111123       04:57  1.5  0.1 python3\n 111204  111123       04:57  1.5  0.1 python3\n 111205  111123       04:57  1.4  0.1 python3\n 111206  111123       04:57  1.5  0.1 python3\n 111207  111123       04:57  1.5  0.1 python3\n 111208  111123       04:57  1.5  0.1 python3\n 111209  111203       04:57 98.4  0.9 scan_linux\n 111210  111205       04:57 98.4  0.9 scan_linux\n 111211  111202       04:57 98.3  0.9 scan_linux\n 111212  111204       04:57 98.4  0.9 scan_linux\n 111213  111208       04:57 98.4  0.9 scan_linux\n 111214  111207       04:57 98.4  0.9 scan_linux\n 111215  111201       04:57 98.3  0.9 scan_linux\n 111216  111206       04:57 98.4  0.9 scan_linux\n"
+}
