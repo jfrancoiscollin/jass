@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0076-scan-distill-256-128-pure/artefacts.src/v10-distilled-100K.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=29.5% D=38.3% L=32.2%
+  score range: [-29998, 9999]  mean=-191.4  std=2707.4
+
+=== arch 256-128 ===
+  params: 148,481
+  epoch   1: train= 171816.9  val=  87779.6 *
+  epoch   2: train=  65872.0  val=  68559.0 *
+  epoch   3: train=  61087.1  val=  65610.7 *
+  epoch   4: train=  58861.4  val=  63425.4 *
+  epoch   5: train=  56751.5  val=  61280.7 *
+  epoch   6: train=  54939.3  val=  59468.4 *
+  epoch   7: train=  53716.0  val=  58421.5 *
+  epoch   8: train=  53081.0  val=  57220.8 *
+  epoch   9: train=  52207.9  val=  56758.0 *
+  epoch  10: train=  51777.1  val=  56177.3 *
+  epoch  11: train=  51289.1  val=  55951.6 *
+  epoch  12: train=  50998.0  val=  55210.3 *
+  epoch  13: train=  50576.8  val=  55235.6
+  epoch  14: train=  50296.6  val=  54698.1 *
+  epoch  15: train=  50187.0  val=  54687.8 *
+  epoch  16: train=  49773.4  val=  53898.9 *
+  epoch  17: train=  49398.1  val=  53765.4 *
+  epoch  18: train=  49227.5  val=  53265.6 *
+  epoch  19: train=  48859.8  val=  53018.2 *
+  epoch  20: train=  48622.5  val=  52769.3 *
+  epoch  21: train=  48185.8  val=  53116.2
+  epoch  22: train=  47950.7  val=  52069.7 *
+  epoch  23: train=  47487.0  val=  51776.1 *
+  epoch  24: train=  47135.2  val=  51476.4 *
+  epoch  25: train=  46946.0  val=  51176.6 *
+  epoch  26: train=  46532.9  val=  50117.0 *
+  epoch  27: train=  45795.6  val=  50000.2 *
+  epoch  28: train=  45229.1  val=  49539.4 *
+  epoch  29: train=  44605.8  val=  49180.7 *
+  epoch  30: train=  43921.4  val=  48402.8 *
+  wrote /root/jass/jobs/results/0076-scan-distill-256-128-pure/artefacts.src/nnue-256-128.bin (593948 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  256-128            148,481     48402.8      220.0      45s
+
+summary → /root/jass/jobs/results/0076-scan-distill-256-128-pure/artefacts.src/summary.json
