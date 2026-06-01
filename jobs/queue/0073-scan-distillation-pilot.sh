@@ -38,23 +38,30 @@ mkdir -p "$ART"
 V8_DATA=$(ls -t /root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/v8-quiet-pv-1M.bin 2>/dev/null | head -1)
 [ -n "$V8_DATA" ] && [ -f "$V8_DATA" ] || { echo "ABORT: v8 dataset not found"; exit 3; }
 
-SCAN_BIN=/tmp/scan/scan_linux
+SCAN_BIN=/root/jass-scan/scan_linux
+# Install Scan outside /tmp to avoid systemd PrivateTmp=true issues
+# (the runner unit isolates /tmp, so a subprocess Popen's cwd=/tmp/scan
+# fails ENOENT even though the parent shell created /tmp/scan ; rc=6
+# in run #2 of 0073 was exactly this). /root/jass-scan/ persists across
+# job runs and is reachable from both the wrapper shell and Python.
 if [ ! -x "$SCAN_BIN" ]; then
     echo "Scan binary not found at $SCAN_BIN — installing from rhalbersma/scan."
-    SCAN_SRC=/tmp/scan-src
+    SCAN_SRC=/root/jass-scan-src
     if [ ! -d "$SCAN_SRC" ]; then
         git clone --depth=1 https://github.com/rhalbersma/scan.git "$SCAN_SRC" \
             || { echo "ABORT: git clone scan failed"; exit 3; }
     fi
     # rhalbersma/scan ships the pre-built Linux binary + data/ + scan.ini
     # in the repo root — no rebuild needed.
-    mkdir -p /tmp/scan
+    mkdir -p /root/jass-scan
     cp "$SCAN_SRC/scan_linux" "$SCAN_BIN"
     chmod +x "$SCAN_BIN"
-    cp -r "$SCAN_SRC/data"     /tmp/scan/data     2>/dev/null || true
-    cp    "$SCAN_SRC/scan.ini" /tmp/scan/scan.ini 2>/dev/null || true
-    [ -x "$SCAN_BIN" ] || { echo "ABORT: Scan install failed"; exit 3; }
+    cp -r "$SCAN_SRC/data"     /root/jass-scan/data     2>/dev/null || true
+    cp    "$SCAN_SRC/scan.ini" /root/jass-scan/scan.ini 2>/dev/null || true
 fi
+[ -x "$SCAN_BIN" ] || { echo "ABORT: Scan binary not present at $SCAN_BIN"; exit 3; }
+[ -d /root/jass-scan ] || { echo "ABORT: /root/jass-scan dir not present"; exit 3; }
+echo "Scan ready : $SCAN_BIN ; dir contents :"; ls -la /root/jass-scan/ | head -10
 
 V5=$(ls -t /root/jass/jobs/results/0018-train-with-master-bce/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
 V6=$(ls -t /root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-*-q.bin 2>/dev/null | head -1)
