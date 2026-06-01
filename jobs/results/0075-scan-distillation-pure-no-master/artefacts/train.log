@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0075-scan-distillation-pure-no-master/artefacts.src/v10-distilled-100K.bin (encoding=halfmen, input_dim=450) …
+  100000 self-play records  (0.3s to encode)
+  WDL distribution: W=29.5% D=38.3% L=32.2%
+  score range: [-29998, 9999]  mean=-191.4  std=2707.4
+
+=== arch 512-256 ===
+  params: 362,497
+  epoch   1: train= 139176.6  val=  72118.9 *
+  epoch   2: train=  62092.8  val=  65405.9 *
+  epoch   3: train=  58575.5  val=  61969.8 *
+  epoch   4: train=  55612.5  val=  59449.5 *
+  epoch   5: train=  53781.8  val=  57740.3 *
+  epoch   6: train=  52636.8  val=  56949.7 *
+  epoch   7: train=  51783.1  val=  56303.6 *
+  epoch   8: train=  51346.6  val=  55575.4 *
+  epoch   9: train=  50795.8  val=  56569.5
+  epoch  10: train=  50471.0  val=  55076.6 *
+  epoch  11: train=  50073.3  val=  54657.8 *
+  epoch  12: train=  49666.4  val=  54790.8
+  epoch  13: train=  49182.4  val=  53207.6 *
+  epoch  14: train=  48590.0  val=  52419.8 *
+  epoch  15: train=  48271.8  val=  52071.8 *
+  epoch  16: train=  47607.2  val=  50964.2 *
+  epoch  17: train=  46906.8  val=  51524.2
+  epoch  18: train=  46293.4  val=  50196.1 *
+  epoch  19: train=  45635.1  val=  49675.5 *
+  epoch  20: train=  44782.6  val=  49368.8 *
+  epoch  21: train=  43290.7  val=  49071.7 *
+  epoch  22: train=  42132.7  val=  48082.3 *
+  epoch  23: train=  41006.3  val=  46709.9 *
+  epoch  24: train=  40462.0  val=  47149.1
+  epoch  25: train=  40115.4  val=  46535.8 *
+  epoch  26: train=  39444.2  val=  46152.9 *
+  epoch  27: train=  39077.5  val=  46043.4 *
+  epoch  28: train=  38651.9  val=  45666.3 *
+  epoch  29: train=  38091.3  val=  45677.7
+  epoch  30: train=  37704.8  val=  45071.4 *
+  wrote /root/jass/jobs/results/0075-scan-distillation-pure-no-master/artefacts.src/nnue-512-256.bin (1450012 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  512-256            362,497     45071.4      212.3      60s
+
+summary → /root/jass/jobs/results/0075-scan-distillation-pure-no-master/artefacts.src/summary.json
