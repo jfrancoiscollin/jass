@@ -1,0 +1,7 @@
+{
+  "job_id": "0075-scan-distillation-pure-no-master",
+  "script": "jobs/queue/0075-scan-distillation-pure-no-master.sh",
+  "pid": 108641,
+  "started_at": "2026-06-01T10:42:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
