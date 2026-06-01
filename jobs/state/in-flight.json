@@ -1,0 +1,7 @@
+{
+  "job_id": "0076-scan-distill-256-128-pure",
+  "script": "jobs/queue/0076-scan-distill-256-128-pure.sh",
+  "pid": 109432,
+  "started_at": "2026-06-01T11:34:49+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
