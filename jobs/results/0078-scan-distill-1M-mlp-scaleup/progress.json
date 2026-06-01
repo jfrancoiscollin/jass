@@ -1,8 +1,8 @@
 {
   "job_id": "0078-scan-distill-1M-mlp-scaleup",
-  "snapshot_at": "2026-06-01T15:02:45+00:00",
+  "snapshot_at": "2026-06-01T15:07:58+00:00",
   "started_at": "2026-06-01T13:44:36+00:00",
-  "elapsed_seconds": 4689,
+  "elapsed_seconds": 5002,
   "artefacts": [
     {
       "name": "bench-256-128-vs-scan-d10.log",
@@ -21,8 +21,16 @@
       "size_bytes": 377
     },
     {
+      "name": "bench-512-256-vs-scan-d10.log",
+      "size_bytes": 0
+    },
+    {
       "name": "quantize-256-128.log",
       "size_bytes": 756
+    },
+    {
+      "name": "quantize-512-256.log",
+      "size_bytes": 759
     },
     {
       "name": "shard-0.bin",
@@ -102,7 +110,7 @@
     },
     {
       "name": "train-512-256.log",
-      "size_bytes": 0
+      "size_bytes": 2070
     },
     {
       "name": "v10-distilled-1M.bin",
@@ -110,5 +118,5 @@
       "records": 1000000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 111121       1    01:18:08  0.0  0.0 bash\n 111123  111121    01:18:08  0.0  0.0 bash\n 112849  111123       05:22  365 12.2 python3\n 112850  111123       05:22  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 111121       1    01:23:21  0.0  0.0 bash\n 111123  111121    01:23:21  0.0  0.0 bash\n 112939  111123       00:27  0.4  0.0 python3\n 112940  111123       00:27  0.0  0.0 tee\n 112942  112939       00:27 93.1  0.1 jass\n 112943  112939       00:27  6.4  0.9 scan_linux\n 112945  112939       00:27  0.0  0.0 jass\n"
 }
