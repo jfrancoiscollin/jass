@@ -1,7 +1,0 @@
-{
-  "job_id": "0078-scan-distill-1M-mlp-scaleup",
-  "script": "jobs/queue/0078-scan-distill-1M-mlp-scaleup.sh",
-  "pid": 111121,
-  "started_at": "2026-06-01T13:44:36+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
