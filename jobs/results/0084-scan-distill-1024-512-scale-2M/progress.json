@@ -1,8 +1,8 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "snapshot_at": "2026-06-02T10:05:00+00:00",
+  "snapshot_at": "2026-06-02T10:10:00+00:00",
   "started_at": "2026-06-02T06:00:05+00:00",
-  "elapsed_seconds": 14695,
+  "elapsed_seconds": 14995,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -180,5 +180,5 @@
       "size_bytes": 1086
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    04:04:55  0.0  0.0 bash\n 131172  131170    04:04:55  0.0  0.0 bash\n 135253  131172       04:21 99.9  0.1 jass\n 135254  131172       04:21  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    04:09:55  0.0  0.0 bash\n 131172  131170    04:09:55  0.0  0.0 bash\n 135253  131172       09:21 99.9  0.1 jass\n 135254  131172       09:21  0.0  0.0 tee\n"
 }
