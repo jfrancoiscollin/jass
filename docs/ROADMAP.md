@@ -183,6 +183,110 @@ moment où l'axe data cesse de progresser.
 
 ---
 
+## Plan post-distillation Scan — feuille de route consolidée (2026-06-02)
+
+> Mis à jour après cycle distillation Scan (jobs 0073-0087). v11 =
+> MLPNetworkQ 1024-512 sur 1M v8 Scan-distilled = **+330 ELO vs baseline
+> original** (vs Scan rate 0.194, ~-361 ELO vs Scan).
+
+### État actuel
+
+* **v11 = baseline shipped** (0083, 1024-512 sur 1M v8 Scan-distilled)
+* Pattern paradigm épuisé (18 hypothèses flat, dont distillation Scan
+  vers pattern eval 0077-0082)
+* Data axis épuisé : 0084 (mix 6.5M) et 0086 (v11 self-play 500K) ont
+  tous deux régressé. Augmentation data ≠ amélioration.
+* 0087 (master opening targeted, en cours) = dernier test data ; si flat,
+  data axis définitivement clos.
+
+### Trajectoire visée
+
+Cible long terme : **2500-2700 FMJD** (vs ~2150 actuel), atteignable par
+exploitation à fond de l'archi MLP existante avant de pivoter (D)
+AlphaZero. Refonte AlphaZero **dormante**, à activer si plan ci-dessous
+ne suffit pas.
+
+### Phase H — Search tuning + SMP (Mois 1)
+
+Objectif : extraire +100-200 ELO sans toucher au NNUE.
+
+**Tier 1 cheap wins (~1 semaine, +50-100 ELO)** :
+* SMP default `threads=8` partout (validé par 0088 si delta > 0.10)
+* Countermove heuristic (~1j C++)
+* Continuation history CMH (~1-2j C++)
+* Late Move Pruning LMP (~quelques heures)
+* SPSA tuning constantes LMR/NMP/futility/aspiration (~3-5j)
+
+**Tier 2 moyen (~2-3 semaines, +30-60 ELO additionnel)** :
+* Razoring (~1j)
+* Probcut (~2-3j)
+* Singular extension tuning (~1-2j)
+* TT optimization (prefetch, sizing, replacement) (~1-2j)
+* Time management amélioré (~3-5j, time control matches uniquement)
+
+**Tier 3 specifique draughts (~1 semaine, +20-40 ELO)** :
+* Promotion extensions (~1j) : extend si pion à 1 coup du roi
+* King mobility extensions (~1j)
+* Quiescence améliorée (forcing moves au-delà des captures) (~1-2j)
+
+Total Phase H : **~+150-300 ELO sur 1 mois**, jass passe à
+~**2300-2450 FMJD**.
+
+### Phase I — Stockfish-style cycles (Mois 2-3)
+
+Une fois Phase H stable, exploiter le moteur renforcé pour générer
+data plus profonde + plus volumineuse via self-play.
+
+**Cycle type** :
+1. Gen-data 10M positions via v11+SMP self-play à PLAY_DEPTH=12-16
+   (~50-100h compute, abordable grâce à SMP)
+2. Label par v11 lui-même au même depth (pure self-distillation, pas
+   de Scan re-label qui a échoué en 0086)
+3. Train v12 = 1024-512 ou bump à 1536-768
+4. Bench vs Scan + v11
+5. Si v12 > v11 : itérer cycle v12→v13→v14
+
+Gain attendu : **+30-80 ELO par cycle, asymptote à 3-5 cycles**.
+
+Mitigation distribution biaisée (leçon 0086) : **mixer 50/50 self-play +
+master-opening Scan-distilled** (de 0087, si validé). Force diversité
+humaine + apporte volume self-play cohérent.
+
+Total Phase I : **+80-200 ELO**, jass à ~**2400-2650 FMJD**.
+
+### Pivot (D) AlphaZero — Mois 4+
+
+À activer **uniquement** si Phase H + Phase I ne ferment pas le gap
+Scan (cible : rate vs Scan > 0.40, ~-100 ELO). Sinon ship jass v14
+comme baseline finale + projet considéré "fort amateur expert".
+
+### Estimation cumulative finale
+
+| Étape | ELO vs Scan | FMJD estimé |
+|---|---|---|
+| v11 baseline (acquis) | -361 | ~2150 |
+| + Phase H search | -211 à -161 | ~2300-2350 |
+| + Phase I cycles | -131 à -61 | ~2380-2450 |
+| + (D) AlphaZero (si activé, 3-5 mois) | 0 à +100 | ~2600-2750 |
+
+### Coût total estimé
+
+* Phase H : ~1 mois dev + ~€50 compute
+* Phase I : ~2 mois dev léger + ~€200-400 compute (cycles 10M)
+* (D) AlphaZero : ~3-5 mois + ~€200-500 compute additionnel
+* **Hors AlphaZero : ~3 mois + ~€250-450 pour atteindre ~2450 FMJD**
+
+### Axes dormants
+
+* Opening book (note `LIVRE_OUVERTURE.md`) : ~+30-50 ELO en tournoi
+  officiel, 0 dans nos benchs no-book. Implémenter avant compétitions.
+* Diversification self-play (note `DIVERSIFICATION_SELFPLAY.md`) :
+  alternative à Phase I, complémentaire si Phase I s'épuise.
+* Pattern eval distillation : abandonné définitivement (18 hypothèses
+  flat, structural bottleneck eval→search confirmé).
+
+---
+
 ## Notes méthodo
 
 1. Tous les benchs vs v5 doivent utiliser **depth 10** comme signal principal
