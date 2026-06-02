@@ -1,13 +1,13 @@
 {
   "job_id": "0088-smp-delta-vs-scan-v11",
-  "snapshot_at": "2026-06-02T19:27:07+00:00",
+  "snapshot_at": "2026-06-02T19:32:26+00:00",
   "started_at": "2026-06-02T18:56:10+00:00",
-  "elapsed_seconds": 1857,
+  "elapsed_seconds": 2176,
   "artefacts": [
     {
       "name": "A-vs-scan-t1-mt500.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 144417       1       30:56  0.0  0.0 bash\n 144419  144417       30:56  0.0  0.0 bash\n 144514  144419       30:54  0.1  0.0 python3\n 144515  144419       30:54  0.0  0.0 tee\n 144517  144514       30:54 49.5  0.1 jass\n 144518  144514       30:54 50.3  0.9 scan_linux\n 144520  144514       30:54  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 144417       1       36:16  0.0  0.0 bash\n 144419  144417       36:16  0.0  0.0 bash\n 144514  144419       36:14  0.1  0.0 python3\n 144515  144419       36:14  0.0  0.0 tee\n 144517  144514       36:14 49.4  0.1 jass\n 144518  144514       36:14 50.4  0.9 scan_linux\n 144520  144514       36:13  0.0  0.0 jass\n"
 }
