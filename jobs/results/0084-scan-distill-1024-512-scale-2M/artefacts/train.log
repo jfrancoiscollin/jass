@@ -1,0 +1,36 @@
+loading /root/jass/jobs/results/0084-scan-distill-1024-512-scale-2M/artefacts.src/v11-distilled-2M.bin (encoding=halfmen, input_dim=450) …
+  6738008 self-play records  (28.9s to encode)
+  WDL distribution: W=38.0% D=22.9% L=39.1%
+  score range: [-29998, 29999]  mean=-40.5  std=1917.4
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  71747.6  val=  49870.4 *
+  epoch   2: train=  61880.1  val=  45497.6 *
+  epoch   3: train=  58376.1  val=  42408.2 *
+  epoch   4: train=  55782.1  val=  41274.9 *
+  epoch   5: train=  53708.1  val=  40026.4 *
+  epoch   6: train=  52068.7  val=  40098.7
+  epoch   7: train=  50682.0  val=  39460.2 *
+  epoch   8: train=  49500.0  val=  38257.1 *
+  epoch   9: train=  48463.3  val=  38278.8
+  epoch  10: train=  47557.0  val=  37994.0 *
+  epoch  11: train=  46739.1  val=  37690.0 *
+  epoch  12: train=  45974.5  val=  38185.4
+  epoch  13: train=  45258.8  val=  37355.1 *
+  epoch  14: train=  44571.2  val=  37703.1
+  epoch  15: train=  43934.1  val=  38237.2
+  epoch  16: train=  43322.8  val=  38226.9
+  epoch  17: train=  42725.5  val=  38143.0
+  epoch  18: train=  42184.8  val=  38095.9
+  epoch  19: train=  41657.1  val=  38113.1
+  epoch  20: train=  41147.3  val=  38009.9
+  epoch  21: train=  40637.5  val=  38928.7
+  early-stop at epoch 21
+  wrote /root/jass/jobs/results/0084-scan-distill-1024-512-scale-2M/artefacts.src/arch-1024-512/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     37355.1      193.3    5023s
+
+summary → /root/jass/jobs/results/0084-scan-distill-1024-512-scale-2M/artefacts.src/arch-1024-512/summary.json
