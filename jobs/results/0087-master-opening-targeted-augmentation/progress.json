@@ -1,8 +1,8 @@
 {
   "job_id": "0087-master-opening-targeted-augmentation",
-  "snapshot_at": "2026-06-02T16:06:05+00:00",
+  "snapshot_at": "2026-06-02T16:11:19+00:00",
   "started_at": "2026-06-02T15:50:32+00:00",
-  "elapsed_seconds": 933,
+  "elapsed_seconds": 1247,
   "artefacts": [
     {
       "name": "master-opening-scan-distilled.bin",
@@ -95,5 +95,5 @@
       "records": 1144953
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 141289       1       15:33  0.0  0.0 bash\n 141291  141289       15:33  0.0  0.0 bash\n 141431  141291       11:04  378 13.9 python3\n 141432  141291       11:04  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 141289       1       20:46  0.0  0.0 bash\n 141291  141289       20:46  0.0  0.0 bash\n 141431  141291       16:18  379 13.9 python3\n 141432  141291       16:18  0.0  0.0 tee\n"
 }
