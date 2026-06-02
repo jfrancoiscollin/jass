@@ -1,0 +1,81 @@
+{
+  "job_id": "0084-scan-distill-1024-512-scale-2M",
+  "snapshot_at": "2026-06-02T06:05:55+00:00",
+  "started_at": "2026-06-02T06:00:05+00:00",
+  "elapsed_seconds": 350,
+  "artefacts": [
+    {
+      "name": "v7-shard-0.bin",
+      "size_bytes": 841670,
+      "records": 22149
+    },
+    {
+      "name": "v7-shard-0.log",
+      "size_bytes": 277
+    },
+    {
+      "name": "v7-shard-1.bin",
+      "size_bytes": 857934,
+      "records": 22577
+    },
+    {
+      "name": "v7-shard-1.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-2.bin",
+      "size_bytes": 849802,
+      "records": 22363
+    },
+    {
+      "name": "v7-shard-2.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-3.bin",
+      "size_bytes": 886396,
+      "records": 23326
+    },
+    {
+      "name": "v7-shard-3.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-4.bin",
+      "size_bytes": 862000,
+      "records": 22684
+    },
+    {
+      "name": "v7-shard-4.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-5.bin",
+      "size_bytes": 882330,
+      "records": 23219
+    },
+    {
+      "name": "v7-shard-5.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-6.bin",
+      "size_bytes": 829472,
+      "records": 21828
+    },
+    {
+      "name": "v7-shard-6.log",
+      "size_bytes": 282
+    },
+    {
+      "name": "v7-shard-7.bin",
+      "size_bytes": 841670,
+      "records": 22149
+    },
+    {
+      "name": "v7-shard-7.log",
+      "size_bytes": 282
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1       05:49  0.0  0.0 bash\n 131172  131170       05:49  0.0  0.0 bash\n 131245  131172       05:48  1.5  0.1 python3\n 131246  131172       05:48  1.5  0.1 python3\n 131247  131172       05:48  1.5  0.1 python3\n 131248  131172       05:48  1.6  0.1 python3\n 131249  131172       05:48  1.5  0.1 python3\n 131250  131172       05:48  1.6  0.1 python3\n 131251  131172       05:48  1.5  0.1 python3\n 131252  131172       05:48  1.5  0.1 python3\n 131253  131249       05:48 98.3  0.9 scan_linux\n 131254  131247       05:48 98.3  0.9 scan_linux\n 131255  131250       05:48 98.3  0.9 scan_linux\n 131256  131246       05:48 98.3  0.9 scan_linux\n 131257  131245       05:48 98.3  0.9 scan_linux\n 131258  131251       05:48 98.4  0.9 scan_linux\n 131259  131248       05:48 98.3  0.9 scan_linux\n 131260  131252       05:48 98.4  0.9 scan_linux\n"
+}
