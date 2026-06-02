@@ -1,0 +1,7 @@
+{
+  "job_id": "0084-scan-distill-1024-512-scale-2M",
+  "script": "jobs/queue/0084-scan-distill-1024-512-scale-2M.sh",
+  "pid": 131170,
+  "started_at": "2026-06-02T06:00:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
