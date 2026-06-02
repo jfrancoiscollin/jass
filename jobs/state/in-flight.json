@@ -1,0 +1,7 @@
+{
+  "job_id": "0085-loss-phase-diagnostic",
+  "script": "jobs/queue/0085-loss-phase-diagnostic.sh",
+  "pid": 137197,
+  "started_at": "2026-06-02T11:35:10+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
