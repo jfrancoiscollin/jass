@@ -1,0 +1,42 @@
+loading /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/v14-train-combined.bin (encoding=halfmen, input_dim=450) …
+  1144953 self-play records  (4.7s to encode)
+  WDL distribution: W=31.4% D=35.1% L=33.5%
+  score range: [-29998, 29991]  mean=-168.9  std=2553.7
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  58258.0  val=  46128.1 *
+  epoch   2: train=  46419.7  val=  39807.3 *
+  epoch   3: train=  40955.5  val=  37123.2 *
+  epoch   4: train=  38326.4  val=  35389.3 *
+  epoch   5: train=  36547.4  val=  33433.3 *
+  epoch   6: train=  34962.5  val=  32644.0 *
+  epoch   7: train=  33664.8  val=  31261.0 *
+  epoch   8: train=  32462.6  val=  31279.6
+  epoch   9: train=  31359.6  val=  30436.7 *
+  epoch  10: train=  30319.0  val=  30669.4
+  epoch  11: train=  29409.6  val=  29606.3 *
+  epoch  12: train=  28553.7  val=  29177.8 *
+  epoch  13: train=  27744.1  val=  29080.5 *
+  epoch  14: train=  26963.9  val=  29027.9 *
+  epoch  15: train=  26304.7  val=  28250.3 *
+  epoch  16: train=  25599.4  val=  28151.3 *
+  epoch  17: train=  24980.9  val=  29435.6
+  epoch  18: train=  24404.0  val=  28240.1
+  epoch  19: train=  23863.3  val=  28083.7 *
+  epoch  20: train=  23349.4  val=  28759.9
+  epoch  21: train=  22880.5  val=  28752.2
+  epoch  22: train=  22424.5  val=  29144.5
+  epoch  23: train=  22026.7  val=  29291.1
+  epoch  24: train=  21664.7  val=  28536.9
+  epoch  25: train=  21303.4  val=  29575.5
+  epoch  26: train=  20973.8  val=  29112.2
+  epoch  27: train=  20673.4  val=  28766.6
+  early-stop at epoch 27
+  wrote /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     28083.7      167.6    1098s
+
+summary → /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/summary.json

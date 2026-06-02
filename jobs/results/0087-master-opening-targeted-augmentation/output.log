@@ -1,0 +1,218 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+
+==========================================================
+=== Phase 1 : filter master-2000 to opening (>=30 pieces) ===
+==========================================================
+input master-2000 : 371449 records
+phase histogram: {'40-30': 127254, '29-22': 98460, '21-15': 59634, '14-8': 54250, '7-2': 31851}
+kept (>=30 pieces) : 144953 records
+
+==========================================================
+=== Phase 2 : Scan-relabel opening positions ===
+==========================================================
+Relabelling 144953 opening positions × 8 workers × 18120
+merged distilled opening → /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/master-opening-scan-distilled.bin (144953 records)
+relabel wall : 266s
+
+==========================================================
+=== Phase 3 : merge v8 distilled + master opening distilled ===
+==========================================================
+  /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin: 1000000 records
+  /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/master-opening-scan-distilled.bin: 144953 records
+combined → /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/v14-train-combined.bin (1144953 records)
+
+==========================================================
+=== Phase 4 : train v14 1024-512 sur combined ===
+==========================================================
+loading /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/v14-train-combined.bin (encoding=halfmen, input_dim=450) …
+  1144953 self-play records  (4.7s to encode)
+  WDL distribution: W=31.4% D=35.1% L=33.5%
+  score range: [-29998, 29991]  mean=-168.9  std=2553.7
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  58258.0  val=  46128.1 *
+  epoch   2: train=  46419.7  val=  39807.3 *
+  epoch   3: train=  40955.5  val=  37123.2 *
+  epoch   4: train=  38326.4  val=  35389.3 *
+  epoch   5: train=  36547.4  val=  33433.3 *
+  epoch   6: train=  34962.5  val=  32644.0 *
+  epoch   7: train=  33664.8  val=  31261.0 *
+  epoch   8: train=  32462.6  val=  31279.6
+  epoch   9: train=  31359.6  val=  30436.7 *
+  epoch  10: train=  30319.0  val=  30669.4
+  epoch  11: train=  29409.6  val=  29606.3 *
+  epoch  12: train=  28553.7  val=  29177.8 *
+  epoch  13: train=  27744.1  val=  29080.5 *
+  epoch  14: train=  26963.9  val=  29027.9 *
+  epoch  15: train=  26304.7  val=  28250.3 *
+  epoch  16: train=  25599.4  val=  28151.3 *
+  epoch  17: train=  24980.9  val=  29435.6
+  epoch  18: train=  24404.0  val=  28240.1
+  epoch  19: train=  23863.3  val=  28083.7 *
+  epoch  20: train=  23349.4  val=  28759.9
+  epoch  21: train=  22880.5  val=  28752.2
+  epoch  22: train=  22424.5  val=  29144.5
+  epoch  23: train=  22026.7  val=  29291.1
+  epoch  24: train=  21664.7  val=  28536.9
+  epoch  25: train=  21303.4  val=  29575.5
+  epoch  26: train=  20973.8  val=  29112.2
+  epoch  27: train=  20673.4  val=  28766.6
+  early-stop at epoch 27
+  wrote /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     28083.7      167.6    1098s
+
+summary → /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/summary.json
+loading float reference /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/v14-train-combined.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.015784 sw2=0.063521 sw3=0.033961 sh1=0.038632 sh2=0.31609
+  multipliers: mul1=0.40856 mul2=0.0077635 mul_out=0.010735
+  reference range: float [-1827.1, 1908.2], quantised [-1689.5, 2076.9]
+  diff: mean=-25.54  std=90.31  |max|=558.49  RMSE=93.85
+wrote /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin (991784 bytes)
+
+==========================================================
+=== bench v14 vs Scan / v6 / v7 / v8 / v11 d10 ===
+==========================================================
+dumping per-game JSONs to: /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/games-vs-scan
+opening pool: 9 positions
+jass setup:   nnue=/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin  book=(default/none)
+scan setup:   book=off  bb-size=0
+  game   1: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [10s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [21s]
+  game   3: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [31s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [42s]
+  game   5: Jass=W Scan=B → L (no legal move from Jass-player, 121 plies)  Jass +0.0  [52s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [64s]
+  game   7: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [75s]
+  game   8: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [85s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [97s]
+  game  10: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [106s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [118s]
+  game  12: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [127s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [143s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [161s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [177s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [194s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [210s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [228s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 95 plies)  Jass +0.0  [241s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 148 plies)  Jass +0.0  [267s]
+  game  21: Jass=W Scan=B → L (no legal move from Jass-player, 95 plies)  Jass +0.0  [281s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 148 plies)  Jass +0.0  [301s]
+  game  23: Jass=W Scan=B → L (no legal move from Jass-player, 95 plies)  Jass +0.0  [314s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 148 plies)  Jass +0.0  [334s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [347s]
+  game  26: Scan=W Jass=B → L (illegal move 28-19 from Scan-player, 121 plies)  Jass +1.0  [361s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [374s]
+  game  28: Scan=W Jass=B → L (illegal move 28-19 from Scan-player, 121 plies)  Jass +1.0  [388s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 103 plies)  Jass +0.0  [401s]
+  game  30: Scan=W Jass=B → L (illegal move 28-19 from Scan-player, 121 plies)  Jass +1.0  [415s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 163 plies)  Jass +0.0  [437s]
+  game  32: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [445s]
+  game  33: Jass=W Scan=B → L (no legal move from Jass-player, 163 plies)  Jass +0.0  [467s]
+  game  34: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [475s]
+  game  35: Jass=W Scan=B → L (no legal move from Jass-player, 163 plies)  Jass +0.0  [497s]
+  game  36: Scan=W Jass=B → W (no legal move from Jass-player, 102 plies)  Jass +0.0  [505s]
+  game  37: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [521s]
+  game  38: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [530s]
+  game  39: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [546s]
+  game  40: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [554s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 113 plies)  Jass +0.0  [571s]
+  game  42: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [579s]
+  game  43: Jass=W Scan=B → D (25-move rule, 151 plies)  Jass +0.5  [606s]
+  game  44: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [619s]
+  game  45: Jass=W Scan=B → D (25-move rule, 151 plies)  Jass +0.5  [646s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [658s]
+  game  47: Jass=W Scan=B → D (25-move rule, 151 plies)  Jass +0.5  [685s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 112 plies)  Jass +0.0  [698s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [708s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [737s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [746s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [775s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 105 plies)  Jass +0.0  [785s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 118 plies)  Jass +0.0  [814s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=3  Scan=48  Draws=3
+  Jass score rate: 0.083 (4.5 / 54)
+  ELO estimate:    -417 (95% CI ≈ ±109)
+Benchmark: A=NNUE(/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0045-quiet-pv-extract-scaleup/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=21 B=21 Draws=12 (total 54)
+A score rate: 0.5 (27 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/nnue-256-128-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=24 Draws=6 (total 54)
+A score rate: 0.5 (27 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=9 B=39 Draws=6 (total 54)
+A score rate: 0.222222 (12 / 54)
+Benchmark: A=NNUE(/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-1024-512/nnue-1024-512-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
+
+=== Loss phase diagnostic on v14 (compare vs v12 0085) ===
+
+Analyzed 54 games : jass W=3  D=3  L=48
+score rate : 0.083
+
+=== Terminal piece count (where the game ENDED) ===
+  phase                        L         D         W
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)          0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          48 (100.0%)    3 (100.0%)    3 (100.0%)
+
+=== Decision phase (when game entered its final phase) ===
+  phase                        L         D         W
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)          0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          48 (100.0%)    3 (100.0%)    3 (100.0%)
+
+=== Drift phase (eval crossed ±200 cp) ===
+  phase                        L         D         W
+  opening (30-40)        12 (25.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)        21 (43.8%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)       12 (25.0%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)          3 ( 6.2%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)           0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+
+Average plies by outcome :
+  L: n= 48  avg= 114.1  min= 95  max=163
+  D: n=  3  avg= 151.0  min=151  max=151
+  W: n=  3  avg= 121.0  min=121  max=121
+
+==========================================================
+       0087 v14 = MASTER-OPENING AUGMENTATION VERDICT
+==========================================================
+  relabel wall : 266s
+  train wall   : 1104s
+  vs Scan d10 : 0.083
+  vs v6 d10   : 0.5
+  vs v7 d10   : 0.5
+  vs v8 d10   : 0.222222
+  vs v11 (baseline) : 0.555556
+
+  Reference :
+    v11 (1M v8, 0083) : vs Scan 0.194  vs v8 0.639
+    v12 (6.5M v8+v7+master, 0084) : vs Scan 0.111 (régressé)
+    v13 (500K v11-selfplay, 0086) : vs Scan 0.028 (régressé)
+
+  Decision :
+    * v14 vs Scan > 0.25 → opening augmentation unlock, scale (0088)
+    * v14 vs v11 > 0.55 → cumulative gain confirmé
+    * v14 ≈ v11 → augmentation neutre, ship v11
+    * v14 < v11 → opening data nuit aussi, MLP infra plafonnée définitivement
+==========================================================

@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) vs B=NNUE(/root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-1024-512/nnue-1024-512-q.bin), depth 10, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=30 B=24 Draws=0 (total 54)
+A score rate: 0.555556 (30 / 54)
