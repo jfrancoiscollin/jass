@@ -1,8 +1,8 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "snapshot_at": "2026-06-02T08:24:45+00:00",
+  "snapshot_at": "2026-06-02T08:29:49+00:00",
   "started_at": "2026-06-02T06:00:05+00:00",
-  "elapsed_seconds": 8680,
+  "elapsed_seconds": 8984,
   "artefacts": [
     {
       "name": "master-distilled.bin",
@@ -168,5 +168,5 @@
       "size_bytes": 1086
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    02:24:39  0.0  0.0 bash\n 131172  131170    02:24:39  0.0  0.0 bash\n 133481  131172       06:22  353 76.7 python3\n 133482  131172       06:22  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    02:29:43  0.0  0.0 bash\n 131172  131170    02:29:43  0.0  0.0 bash\n 133481  131172       11:26  363 76.7 python3\n 133482  131172       11:26  0.0  0.0 tee\n"
 }
