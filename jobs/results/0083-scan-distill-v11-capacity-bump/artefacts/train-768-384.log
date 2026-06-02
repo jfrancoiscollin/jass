@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.1s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29991]  mean=-193.8  std=2731.5
+
+=== arch 768-384 ===
+  params: 642,049
+  epoch   1: train=  61112.0  val=  55840.8 *
+  epoch   2: train=  47257.8  val=  47658.1 *
+  epoch   3: train=  39855.0  val=  42284.6 *
+  epoch   4: train=  37129.6  val=  40502.2 *
+  epoch   5: train=  35210.3  val=  38230.5 *
+  epoch   6: train=  33826.0  val=  36660.1 *
+  epoch   7: train=  32741.9  val=  36705.7
+  epoch   8: train=  31801.7  val=  36447.5 *
+  epoch   9: train=  30889.8  val=  35701.3 *
+  epoch  10: train=  29995.2  val=  35765.9
+  epoch  11: train=  29279.4  val=  34004.1 *
+  epoch  12: train=  28536.7  val=  35536.9
+  epoch  13: train=  27945.2  val=  33687.8 *
+  epoch  14: train=  27290.8  val=  34241.0
+  epoch  15: train=  26730.2  val=  33252.2 *
+  epoch  16: train=  26181.9  val=  32037.5 *
+  epoch  17: train=  25622.0  val=  32569.1
+  epoch  18: train=  25124.1  val=  32375.1
+  epoch  19: train=  24578.8  val=  32680.3
+  epoch  20: train=  24100.2  val=  32077.8
+  epoch  21: train=  23634.1  val=  32165.7
+  epoch  22: train=  23185.1  val=  31974.5 *
+  epoch  23: train=  22753.4  val=  32907.6
+  epoch  24: train=  22338.6  val=  32425.3
+  epoch  25: train=  21976.3  val=  31675.9 *
+  epoch  26: train=  21575.9  val=  31422.3 *
+  epoch  27: train=  21196.9  val=  32754.1
+  epoch  28: train=  20901.7  val=  31650.5
+  epoch  29: train=  20579.6  val=  31739.5
+  epoch  30: train=  20241.8  val=  31796.0
+  wrote /root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-768-384/nnue-768-384.bin (2568220 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  768-384            642,049     31422.3      177.3     790s
+
+summary → /root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-768-384/summary.json

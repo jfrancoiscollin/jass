@@ -1,0 +1,39 @@
+loading /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.3s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29991]  mean=-193.8  std=2731.5
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  59681.0  val=  55060.7 *
+  epoch   2: train=  45098.9  val=  45983.6 *
+  epoch   3: train=  39054.5  val=  42489.1 *
+  epoch   4: train=  36308.9  val=  38855.8 *
+  epoch   5: train=  34232.8  val=  37060.3 *
+  epoch   6: train=  32673.3  val=  35722.8 *
+  epoch   7: train=  31368.8  val=  35806.4
+  epoch   8: train=  30148.4  val=  35543.3 *
+  epoch   9: train=  28982.2  val=  35254.3 *
+  epoch  10: train=  27901.5  val=  35298.9
+  epoch  11: train=  26955.5  val=  33038.0 *
+  epoch  12: train=  25992.9  val=  34761.1
+  epoch  13: train=  25233.2  val=  33668.4
+  epoch  14: train=  24376.2  val=  33834.0
+  epoch  15: train=  23650.3  val=  33473.7
+  epoch  16: train=  22975.4  val=  32163.9 *
+  epoch  17: train=  22315.4  val=  33167.4
+  epoch  18: train=  21723.6  val=  32903.8
+  epoch  19: train=  21155.6  val=  32619.9
+  epoch  20: train=  20592.4  val=  32947.1
+  epoch  21: train=  20101.4  val=  32318.5
+  epoch  22: train=  19601.0  val=  32846.9
+  epoch  23: train=  19135.9  val=  33369.2
+  epoch  24: train=  18733.8  val=  32986.7
+  early-stop at epoch 24
+  wrote /root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-1024-512/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     32163.9      179.3     838s
+
+summary → /root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-1024-512/summary.json
