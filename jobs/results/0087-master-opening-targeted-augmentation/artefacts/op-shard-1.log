@@ -1,0 +1,5 @@
+input : /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/master-opening.jnnw (144953 records, processing 18120 from offset 18120)
+  5000/18120  (27.6%)  rate=70.6 pos/s  eta=3.1 min  skipped=825
+  10000/18120  (55.2%)  rate=70.7 pos/s  eta=1.9 min  skipped=1607
+  15000/18120  (82.8%)  rate=72.5 pos/s  eta=0.7 min  skipped=2442
+wrote /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/op-shard-1.bin (18120 records, 2949 skipped)

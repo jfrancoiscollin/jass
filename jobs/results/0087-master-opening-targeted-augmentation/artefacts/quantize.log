@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/v14-train-combined.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.015784 sw2=0.063521 sw3=0.033961 sh1=0.038632 sh2=0.31609
+  multipliers: mul1=0.40856 mul2=0.0077635 mul_out=0.010735
+  reference range: float [-1827.1, 1908.2], quantised [-1689.5, 2076.9]
+  diff: mean=-25.54  std=90.31  |max|=558.49  RMSE=93.85
+wrote /root/jass/jobs/results/0087-master-opening-targeted-augmentation/artefacts.src/arch-1024-512/nnue-1024-512-q.bin (991784 bytes)
