@@ -1,0 +1,7 @@
+{
+  "job_id": "0087-master-opening-targeted-augmentation",
+  "script": "jobs/queue/0087-master-opening-targeted-augmentation.sh",
+  "pid": 141289,
+  "started_at": "2026-06-02T15:50:32+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
