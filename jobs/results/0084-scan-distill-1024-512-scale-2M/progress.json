@@ -1,80 +1,80 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "snapshot_at": "2026-06-02T07:04:35+00:00",
+  "snapshot_at": "2026-06-02T07:10:01+00:00",
   "started_at": "2026-06-02T06:00:05+00:00",
-  "elapsed_seconds": 3870,
+  "elapsed_seconds": 4196,
   "artefacts": [
     {
       "name": "master-shard-0.bin",
-      "size_bytes": 6822756,
-      "records": 179546
+      "size_bytes": 7928708,
+      "records": 208650
     },
     {
       "name": "master-shard-0.log",
-      "size_bytes": 1329
+      "size_bytes": 1542
     },
     {
       "name": "master-shard-1.bin",
-      "size_bytes": 7026056,
-      "records": 184896
+      "size_bytes": 8213328,
+      "records": 216140
     },
     {
       "name": "master-shard-1.log",
-      "size_bytes": 1406
+      "size_bytes": 1619
     },
     {
       "name": "master-shard-2.bin",
-      "size_bytes": 6843086,
-      "records": 180081
+      "size_bytes": 8042556,
+      "records": 211646
     },
     {
       "name": "master-shard-2.log",
-      "size_bytes": 1406
+      "size_bytes": 1619
     },
     {
       "name": "master-shard-3.bin",
-      "size_bytes": 6761766,
-      "records": 177941
+      "size_bytes": 7875850,
+      "records": 207259
     },
     {
       "name": "master-shard-3.log",
-      "size_bytes": 1334
+      "size_bytes": 1547
     },
     {
       "name": "master-shard-4.bin",
-      "size_bytes": 7115508,
-      "records": 187250
+      "size_bytes": 8310912,
+      "records": 218708
     },
     {
       "name": "master-shard-4.log",
-      "size_bytes": 1407
+      "size_bytes": 1620
     },
     {
       "name": "master-shard-5.bin",
-      "size_bytes": 6558466,
-      "records": 172591
+      "size_bytes": 7806728,
+      "records": 205440
     },
     {
       "name": "master-shard-5.log",
-      "size_bytes": 1337
+      "size_bytes": 1550
     },
     {
       "name": "master-shard-6.bin",
-      "size_bytes": 6839020,
-      "records": 179974
+      "size_bytes": 7973434,
+      "records": 209827
     },
     {
       "name": "master-shard-6.log",
-      "size_bytes": 1403
+      "size_bytes": 1545
     },
     {
       "name": "master-shard-7.bin",
-      "size_bytes": 6737370,
-      "records": 177299
+      "size_bytes": 7831124,
+      "records": 206082
     },
     {
       "name": "master-shard-7.log",
-      "size_bytes": 1335
+      "size_bytes": 1548
     },
     {
       "name": "v7-distilled-1M.bin",
@@ -154,5 +154,5 @@
       "size_bytes": 1086
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    01:04:29  0.0  0.0 bash\n 131172  131170    01:04:29  0.0  0.0 bash\n 131728  131172       31:50  1.7  0.5 python3\n 131729  131172       31:50  1.8  0.5 python3\n 131730  131172       31:50  1.8  0.5 python3\n 131731  131172       31:50  1.7  0.5 python3\n 131732  131172       31:50  1.8  0.5 python3\n 131733  131172       31:50  1.7  0.5 python3\n 131734  131172       31:50  1.8  0.5 python3\n 131735  131172       31:50  1.7  0.5 python3\n 131736  131733       31:50 98.1  0.9 scan_linux\n 131737  131729       31:50 98.0  0.9 scan_linux\n 131738  131731       31:50 98.1  0.9 scan_linux\n 131739  131735       31:50 98.1  0.9 scan_linux\n 131740  131732       31:50 98.0  0.9 scan_linux\n 131741  131730       31:50 98.1  0.9 scan_linux\n 131742  131734       31:50 98.1  0.9 scan_linux\n 131743  131728       31:50 98.1  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    01:09:56  0.0  0.0 bash\n 131172  131170    01:09:56  0.0  0.0 bash\n 131728  131172       37:17  1.7  0.5 python3\n 131729  131172       37:17  1.8  0.5 python3\n 131730  131172       37:17  1.8  0.5 python3\n 131731  131172       37:17  1.7  0.5 python3\n 131732  131172       37:17  1.8  0.5 python3\n 131733  131172       37:17  1.7  0.5 python3\n 131734  131172       37:17  1.8  0.5 python3\n 131735  131172       37:17  1.7  0.5 python3\n 131736  131733       37:17 98.1  0.9 scan_linux\n 131737  131729       37:17 98.1  0.9 scan_linux\n 131738  131731       37:17 98.1  0.9 scan_linux\n 131739  131735       37:17 98.1  0.9 scan_linux\n 131740  131732       37:17 98.0  0.9 scan_linux\n 131741  131730       37:17 98.1  0.9 scan_linux\n 131742  131734       37:17 98.1  0.9 scan_linux\n 131743  131728       37:17 98.1  0.9 scan_linux\n"
 }
