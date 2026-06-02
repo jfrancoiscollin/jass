@@ -1,7 +1,0 @@
-{
-  "job_id": "0088-smp-delta-vs-scan-v11",
-  "script": "jobs/queue/0088-smp-delta-vs-scan-v11.sh",
-  "pid": 144417,
-  "started_at": "2026-06-02T18:56:10+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
