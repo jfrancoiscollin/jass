@@ -1,9 +1,13 @@
 {
   "job_id": "0087-master-opening-targeted-augmentation",
-  "snapshot_at": "2026-06-02T16:11:19+00:00",
+  "snapshot_at": "2026-06-02T16:16:55+00:00",
   "started_at": "2026-06-02T15:50:32+00:00",
-  "elapsed_seconds": 1247,
+  "elapsed_seconds": 1583,
   "artefacts": [
+    {
+      "name": "bench-vs-scan-d10.log",
+      "size_bytes": 0
+    },
     {
       "name": "master-opening-scan-distilled.bin",
       "size_bytes": 5508222,
@@ -86,8 +90,12 @@
       "size_bytes": 492
     },
     {
+      "name": "quantize.log",
+      "size_bytes": 793
+    },
+    {
       "name": "train.log",
-      "size_bytes": 0
+      "size_bytes": 1994
     },
     {
       "name": "v14-train-combined.bin",
@@ -95,5 +103,5 @@
       "records": 1144953
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 141289       1       20:46  0.0  0.0 bash\n 141291  141289       20:46  0.0  0.0 bash\n 141431  141291       16:18  379 13.9 python3\n 141432  141291       16:18  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 141289       1       26:23  0.0  0.0 bash\n 141291  141289       26:23  0.0  0.0 bash\n 141723  141291       03:28  0.3  0.0 python3\n 141724  141291       03:28  0.0  0.0 tee\n 141726  141723       03:28 96.1  0.0 jass\n 141727  141723       03:28  3.3  0.9 scan_linux\n 141729  141723       03:28  0.0  0.0 jass\n"
 }
