@@ -1,81 +1,158 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "snapshot_at": "2026-06-02T06:28:05+00:00",
+  "snapshot_at": "2026-06-02T06:33:31+00:00",
   "started_at": "2026-06-02T06:00:05+00:00",
-  "elapsed_seconds": 1680,
+  "elapsed_seconds": 2006,
   "artefacts": [
     {
+      "name": "master-shard-0.bin",
+      "size_bytes": 187044,
+      "records": 4922
+    },
+    {
+      "name": "master-shard-0.log",
+      "size_bytes": 138
+    },
+    {
+      "name": "master-shard-1.bin",
+      "size_bytes": 162648,
+      "records": 4280
+    },
+    {
+      "name": "master-shard-1.log",
+      "size_bytes": 143
+    },
+    {
+      "name": "master-shard-2.bin",
+      "size_bytes": 154516,
+      "records": 4066
+    },
+    {
+      "name": "master-shard-2.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "master-shard-3.bin",
+      "size_bytes": 166714,
+      "records": 4387
+    },
+    {
+      "name": "master-shard-3.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "master-shard-4.bin",
+      "size_bytes": 158582,
+      "records": 4173
+    },
+    {
+      "name": "master-shard-4.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "master-shard-5.bin",
+      "size_bytes": 162648,
+      "records": 4280
+    },
+    {
+      "name": "master-shard-5.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "master-shard-6.bin",
+      "size_bytes": 182978,
+      "records": 4815
+    },
+    {
+      "name": "master-shard-6.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "master-shard-7.bin",
+      "size_bytes": 158582,
+      "records": 4173
+    },
+    {
+      "name": "master-shard-7.log",
+      "size_bytes": 144
+    },
+    {
+      "name": "v7-distilled-1M.bin",
+      "size_bytes": 38000008,
+      "records": 1000000
+    },
+    {
       "name": "v7-shard-0.bin",
-      "size_bytes": 4114800,
-      "records": 108284
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-0.log",
-      "size_bytes": 820
+      "size_bytes": 1081
     },
     {
       "name": "v7-shard-1.bin",
-      "size_bytes": 4102602,
-      "records": 107963
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-1.log",
-      "size_bytes": 825
+      "size_bytes": 1086
     },
     {
       "name": "v7-shard-2.bin",
-      "size_bytes": 4110734,
-      "records": 108177
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-2.log",
-      "size_bytes": 825
+      "size_bytes": 1086
     },
     {
       "name": "v7-shard-3.bin",
-      "size_bytes": 4122932,
-      "records": 108498
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-3.log",
-      "size_bytes": 824
+      "size_bytes": 1085
     },
     {
       "name": "v7-shard-4.bin",
-      "size_bytes": 4102602,
-      "records": 107963
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-4.log",
-      "size_bytes": 825
+      "size_bytes": 1086
     },
     {
       "name": "v7-shard-5.bin",
-      "size_bytes": 4208318,
-      "records": 110745
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-5.log",
-      "size_bytes": 893
+      "size_bytes": 1086
     },
     {
       "name": "v7-shard-6.bin",
-      "size_bytes": 4029414,
-      "records": 106037
+      "size_bytes": 4750046,
+      "records": 125001
     },
     {
       "name": "v7-shard-6.log",
-      "size_bytes": 825
+      "size_bytes": 1086
     },
     {
       "name": "v7-shard-7.bin",
-      "size_bytes": 4078206,
-      "records": 107321
+      "size_bytes": 4749742,
+      "records": 124993
     },
     {
       "name": "v7-shard-7.log",
-      "size_bytes": 825
+      "size_bytes": 1086
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1       27:59  0.0  0.0 bash\n 131172  131170       27:59  0.0  0.0 bash\n 131245  131172       27:58  1.5  0.1 python3\n 131246  131172       27:58  1.5  0.1 python3\n 131247  131172       27:58  1.5  0.1 python3\n 131248  131172       27:58  1.5  0.1 python3\n 131249  131172       27:58  1.5  0.1 python3\n 131250  131172       27:58  1.6  0.1 python3\n 131251  131172       27:58  1.5  0.1 python3\n 131252  131172       27:58  1.5  0.1 python3\n 131253  131249       27:58 98.3  0.9 scan_linux\n 131254  131247       27:58 98.3  0.9 scan_linux\n 131255  131250       27:58 98.3  0.9 scan_linux\n 131256  131246       27:58 98.3  0.9 scan_linux\n 131257  131245       27:58 98.3  0.9 scan_linux\n 131258  131251       27:58 98.4  0.9 scan_linux\n 131259  131248       27:58 98.3  0.9 scan_linux\n 131260  131252       27:58 98.4  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1       33:25  0.0  0.0 bash\n 131172  131170       33:25  0.0  0.0 bash\n 131728  131172       00:46  2.2  0.5 python3\n 131729  131172       00:46  2.0  0.5 python3\n 131730  131172       00:46  1.9  0.5 python3\n 131731  131172       00:46  2.1  0.5 python3\n 131732  131172       00:46  2.0  0.5 python3\n 131733  131172       00:46  2.0  0.5 python3\n 131734  131172       00:46  2.2  0.5 python3\n 131735  131172       00:46  2.0  0.5 python3\n 131736  131733       00:46 98.1  0.9 scan_linux\n 131737  131729       00:46 97.9  0.9 scan_linux\n 131738  131731       00:46 98.1  0.9 scan_linux\n 131739  131735       00:46 98.2  0.9 scan_linux\n 131740  131732       00:46 98.2  0.9 scan_linux\n 131741  131730       00:46 98.2  0.9 scan_linux\n 131742  131734       00:46 98.0  0.9 scan_linux\n 131743  131728       00:46 97.9  0.9 scan_linux\n"
 }
