@@ -1,44 +1,49 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "snapshot_at": "2026-06-02T08:14:05+00:00",
+  "snapshot_at": "2026-06-02T08:19:29+00:00",
   "started_at": "2026-06-02T06:00:05+00:00",
-  "elapsed_seconds": 8040,
+  "elapsed_seconds": 8364,
   "artefacts": [
     {
+      "name": "master-distilled.bin",
+      "size_bytes": 180044312,
+      "records": 4738008
+    },
+    {
       "name": "master-shard-0.bin",
-      "size_bytes": 21980804,
-      "records": 578442
+      "size_bytes": 22505584,
+      "records": 592252
     },
     {
       "name": "master-shard-0.log",
-      "size_bytes": 4169
+      "size_bytes": 4443
     },
     {
       "name": "master-shard-1.bin",
-      "size_bytes": 22147510,
-      "records": 582829
+      "size_bytes": 22505584,
+      "records": 592252
     },
     {
       "name": "master-shard-1.log",
-      "size_bytes": 4246
+      "size_bytes": 4449
     },
     {
       "name": "master-shard-2.bin",
-      "size_bytes": 21618930,
-      "records": 568919
+      "size_bytes": 22505584,
+      "records": 592252
     },
     {
       "name": "master-shard-2.log",
-      "size_bytes": 4104
+      "size_bytes": 4449
     },
     {
       "name": "master-shard-3.bin",
-      "size_bytes": 21976738,
-      "records": 578335
+      "size_bytes": 22505584,
+      "records": 592252
     },
     {
       "name": "master-shard-3.log",
-      "size_bytes": 4174
+      "size_bytes": 4448
     },
     {
       "name": "master-shard-4.bin",
@@ -60,21 +65,30 @@
     },
     {
       "name": "master-shard-6.bin",
-      "size_bytes": 22147510,
-      "records": 582829
+      "size_bytes": 22505584,
+      "records": 592252
     },
     {
       "name": "master-shard-6.log",
-      "size_bytes": 4242
+      "size_bytes": 4445
     },
     {
       "name": "master-shard-7.bin",
-      "size_bytes": 21452224,
-      "records": 564532
+      "size_bytes": 22505280,
+      "records": 592244
     },
     {
       "name": "master-shard-7.log",
-      "size_bytes": 4104
+      "size_bytes": 4449
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v11-distilled-2M.bin",
+      "size_bytes": 256044312,
+      "records": 6738008
     },
     {
       "name": "v7-distilled-1M.bin",
@@ -154,5 +168,5 @@
       "size_bytes": 1086
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    02:13:59  0.0  0.0 bash\n 131172  131170    02:13:59  0.0  0.0 bash\n 131728  131172    01:41:20  1.8  0.5 python3\n 131729  131172    01:41:20  1.8  0.5 python3\n 131730  131172    01:41:20  1.7  0.5 python3\n 131731  131172    01:41:20  1.8  0.5 python3\n 131734  131172    01:41:20  1.8  0.5 python3\n 131735  131172    01:41:20  1.7  0.5 python3\n 131737  131729    01:41:20 98.1  0.9 scan_linux\n 131738  131731    01:41:20 98.1  0.9 scan_linux\n 131739  131735    01:41:20 98.1  0.9 scan_linux\n 131741  131730    01:41:20 98.1  0.9 scan_linux\n 131742  131734    01:41:20 98.1  0.9 scan_linux\n 131743  131728    01:41:20 98.1  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 131170       1    02:19:24  0.0  0.0 bash\n 131172  131170    02:19:24  0.0  0.0 bash\n 133481  131172       01:06  242 76.7 python3\n 133482  131172       01:06  0.0  0.0 tee\n"
 }
