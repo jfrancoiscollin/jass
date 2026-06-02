@@ -72,6 +72,15 @@ struct Searcher {
 
     std::array<std::array<Move, 2>, MAX_PLY + 1>                       killers{};
     std::array<std::array<int,  NUM_SQUARES + 1>, NUM_SQUARES + 1>     history{};
+    // Countermove heuristic : best response to opponent's last move,
+    // indexed by [opp_from][opp_to]. Reset between top-level searches
+    // like killers/history. ~+20-40 ELO in typical alpha-beta engines.
+    std::array<std::array<Move, NUM_SQUARES + 1>, NUM_SQUARES + 1>     countermove{};
+    // Move stack : move_played[ply] is the move that brought us into
+    // this ply (i.e., the parent's move when entering negamax at ply).
+    // Used by countermove + LMP heuristics. Initialised to default
+    // (invalid) Move at root.
+    std::array<Move, MAX_PLY + 2>                                      move_played{};
 
     // Stack of Zobrist hashes representing the current path: the game
     // history prefix is loaded by `search()`, then negamax pushes/pops the
@@ -185,11 +194,20 @@ struct Searcher {
 
 // Score used to sort the move list. Larger = tried first.
 inline int order_score(const Searcher& s, const Move& m, int ply,
-                       const Move& tt_move, bool tt_hit) noexcept {
+                       const Move& tt_move, bool tt_hit,
+                       const Move& prev_move) noexcept {
     if (tt_hit && m == tt_move) return 1'000'000;
     if (m.is_capture())          return 0;            // captures: keep generation order
     if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
     if (m == s.killers[static_cast<std::size_t>(ply)][1])  return   700'000;
+    // Countermove heuristic : if this move was the best response to the
+    // opponent's last move on a prior beta cutoff, try it early.
+    if (prev_move.from != 0) {
+        const Move& cm = s.countermove
+            [static_cast<std::size_t>(prev_move.from)]
+            [static_cast<std::size_t>(prev_move.to)];
+        if (cm.from != 0 && m == cm) return 650'000;
+    }
     return s.history[m.from][m.to];
 }
 
@@ -197,11 +215,12 @@ inline int order_score(const Searcher& s, const Move& m, int ply,
 // list is small (~30 in the worst case) and an in-place ordering keeps the
 // hot loop cache-friendly.
 inline void order_moves(MoveList& moves, const Searcher& s, int ply,
-                        const Move& tt_move, bool tt_hit) {
+                        const Move& tt_move, bool tt_hit,
+                        const Move& prev_move) {
     std::array<int, 256> scores;  // populated for [0, n) before any read
     const std::size_t n = moves.size();
     for (std::size_t i = 0; i < n; ++i) {
-        scores[i] = order_score(s, moves[i], ply, tt_move, tt_hit);
+        scores[i] = order_score(s, moves[i], ply, tt_move, tt_hit, prev_move);
     }
     for (std::size_t i = 0; i < n; ++i) {
         std::size_t best = i;
@@ -388,7 +407,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
         }
     }
-    order_moves(moves, *this, ply, tt_move, tt_move_valid);
+    const Move prev_move = move_played[static_cast<std::size_t>(ply)];
+    order_moves(moves, *this, ply, tt_move, tt_move_valid, prev_move);
 
     // 4. Search.
     const int alpha_orig = alpha;
@@ -468,10 +488,33 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         return r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
     };
 
+    // Late Move Pruning : at shallow depth on non-PV nodes, skip late
+    // quiet moves entirely. They're statistically unlikely to raise
+    // alpha given move ordering has already sorted them. Captures are
+    // never pruned (FMJD majority rule forces them anyway). ~+10-20 ELO.
+    constexpr int LMP_MAX_DEPTH = 3;
+    // LMP_THRESHOLD[d] = first move index to skip at depth d.
+    constexpr int LMP_THRESHOLD[LMP_MAX_DEPTH + 1] = { 0, 4, 8, 14 };
+    const bool is_pv_node = (beta - alpha) > 1;
+
     int move_idx = 0;
     for (const auto& m : moves) {
+        // LMP : skip late quiet moves at shallow non-PV nodes.
+        if (!is_pv_node
+            && depth >= 1 && depth <= LMP_MAX_DEPTH
+            && move_idx >= LMP_THRESHOLD[depth]
+            && !m.is_capture()
+            && best > -INF_SCORE / 2) {  // already have a real score → safe to skip
+            ++move_idx;
+            continue;
+        }
         const Position next      = pos.after(m);
         push_accumulator(ply, pos, m, next);
+        // Record the move being played so the child node (ply+1) can
+        // consult it as `prev_move` for countermove ordering.
+        if (ply + 1 < static_cast<int>(move_played.size())) {
+            move_played[static_cast<std::size_t>(ply + 1)] = m;
+        }
         const bool     is_tt     = tt_move_valid
                                  && same_packed_move(m, tt_entry.best_move);
         const int      new_depth = depth - 1 + (singular_ext && is_tt ? 1 : 0);
@@ -511,6 +554,14 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                     killers[static_cast<std::size_t>(ply)][0] = m;
                 }
                 history[m.from][m.to] += depth * depth;
+                // Countermove : record `m` as the best response to the
+                // opponent's previous move (if any). Stored regardless
+                // of ply so siblings further up the tree also benefit.
+                if (prev_move.from != 0) {
+                    countermove
+                        [static_cast<std::size_t>(prev_move.from)]
+                        [static_cast<std::size_t>(prev_move.to)] = m;
+                }
             }
             break;
         }
