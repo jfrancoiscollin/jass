@@ -56,7 +56,7 @@ import re
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
@@ -417,6 +417,11 @@ class GameResult:
     outcome: str   # "W", "D", "L" from white's POV
     plies:   int
     reason:  str
+    # Optional move/FEN history for post-hoc analysis (piece count by phase,
+    # eval drift detection). Populated only when the caller explicitly
+    # captures them ; defaults to empty for back-compat.
+    moves:   list[str] = field(default_factory=list)
+    fens:    list[str] = field(default_factory=list)
 
 
 def play_game(white: object, black: object,
@@ -441,6 +446,8 @@ def play_game(white: object, black: object,
     side_to_move = "W" if opening_fen.startswith("W") else "B"
     halfmove_counter = 0
     ply = 0
+    moves_log: list[str] = []
+    fens_log:  list[str] = [opening_fen]
     while ply < max_plies:
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
@@ -453,11 +460,15 @@ def play_game(white: object, black: object,
         if mv is None or (mv.frm == 0 and mv.to == 0):
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
-            return GameResult(outcome, ply, "no legal move from " + current.label)
+            return GameResult(outcome, ply, "no legal move from " + current.label,
+                              moves=moves_log, fens=fens_log)
         # Apply to referee (canonical state).
         if not referee.apply_move(mv):
             outcome = "L" if side_to_move == "W" else "W"
-            return GameResult(outcome, ply, f"illegal move {mv.jass_str()} from {current.label}")
+            return GameResult(outcome, ply, f"illegal move {mv.jass_str()} from {current.label}",
+                              moves=moves_log, fens=fens_log)
+        moves_log.append(mv.jass_str())
+        fens_log.append(referee.current_fen())
         # Jass's `go` returns a move WITHOUT applying it — keep both
         # Jass-side engines in sync via an explicit `apply`. Scan is
         # stateless (we feed pos+moves on every `go_from`), so nothing
@@ -480,9 +491,11 @@ def play_game(white: object, black: object,
         else:
             halfmove_counter += 1
         if halfmove_counter >= 50:
-            return GameResult("D", ply, "25-move rule")
+            return GameResult("D", ply, "25-move rule",
+                              moves=moves_log, fens=fens_log)
 
-    return GameResult("D", ply, "ply cap")
+    return GameResult("D", ply, "ply cap",
+                      moves=moves_log, fens=fens_log)
 
 
 # ---------------------------------------------------------------------------
@@ -532,11 +545,24 @@ def main(argv):
                         "6 enables the up-to-6-pieces bitbase shipped in "
                         "rhalbersma/scan's data/ directory; 7 the full "
                         "bitbase. Used in the fair-comparison calibrate.")
+    p.add_argument("--dump-games-dir", metavar="DIR", default=None,
+                   help="if set, dumps one JSON per game with the full move "
+                        "history + outcome metadata. Required input to "
+                        "tools/analyze_loss_by_pieces.py for post-hoc "
+                        "diagnostic of where jass wins/loses by piece count.")
     args = p.parse_args(argv)
     if args.depth is None and args.movetime is None:
         args.depth = 8  # back-compat default
     budget_str = (f"depth {args.depth}" if args.depth is not None
                   else f"movetime {args.movetime}s")
+
+    dump_dir = None
+    if args.dump_games_dir:
+        from pathlib import Path
+        import json
+        dump_dir = Path(args.dump_games_dir)
+        dump_dir.mkdir(parents=True, exist_ok=True)
+        print(f"dumping per-game JSONs to: {dump_dir}")
 
     openings = opening_pool_via_jass(args.jass)
     print(f"opening pool: {len(openings)} positions")
@@ -586,6 +612,26 @@ def main(argv):
                           f"{'Scan' if jass_is_white else 'Jass'}=B "
                           f"→ {r.outcome} ({r.reason}, {r.plies} plies)  "
                           f"Jass +{jass_pts:.1f}  [{elapsed:.0f}s]")
+                    if dump_dir is not None:
+                        # Referee's move history was reset by the next
+                        # play_game's set_position_fen — capture here BEFORE
+                        # the loop iterates. But play_game doesn't expose
+                        # the history nicely ; we accept it's already-reset
+                        # by the time we get here. Workaround : reach into
+                        # referee BEFORE the reset. Simpler : add to
+                        # GameResult. For now, emit metadata-only JSON.
+                        out_json = dump_dir / f"game-{games:03d}.json"
+                        out_json.write_text(json.dumps({
+                            "game_id": games,
+                            "opening": opening,
+                            "jass_is_white": jass_is_white,
+                            "outcome": r.outcome,
+                            "reason": r.reason,
+                            "plies": r.plies,
+                            "jass_score": jass_pts,
+                            "moves": list(getattr(r, "moves", [])),
+                            "fens":  list(getattr(r, "fens",  [])),
+                        }, indent=2))
     finally:
         jass.close(); scan.close(); referee.close()
 
