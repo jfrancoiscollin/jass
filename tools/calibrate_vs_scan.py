@@ -220,7 +220,8 @@ class JassEngine(EngineProc):
     def __init__(self, path: str, label: str = "Jass",
                  no_book: bool = True, no_nnue: bool = False,
                  nnue_path: str | None = None,
-                 book_path: str | None = None):
+                 book_path: str | None = None,
+                 threads: int = 1):
         argv = [path]
         if no_nnue: argv.append("--no-nnue")
         elif nnue_path:
@@ -235,6 +236,9 @@ class JassEngine(EngineProc):
         # Handshake
         self._send("hello")
         self._read_until(lambda l: l.startswith("ready"))
+        if threads > 1:
+            # Lazy SMP : fan out search across N threads via shared TT.
+            self._send(f"set-param name=threads value={threads}")
         if no_book and not book_path:
             # Cleaner test of the eval — engines play their own moves
             # from the very first ply rather than parroting opening lines.
@@ -550,6 +554,12 @@ def main(argv):
                         "history + outcome metadata. Required input to "
                         "tools/analyze_loss_by_pieces.py for post-hoc "
                         "diagnostic of where jass wins/loses by piece count.")
+    p.add_argument("--jass-threads", type=int, default=1,
+                   help="Lazy SMP : number of threads for the jass player "
+                        "(via HUB `set-param name=threads value=N`). Default "
+                        "1. Use with --movetime to see SMP gain — fixed depth "
+                        "saturates at the eval ceiling and doesn't surface "
+                        "the depth-per-second advantage SMP gives.")
     args = p.parse_args(argv)
     if args.depth is None and args.movetime is None:
         args.depth = 8  # back-compat default
@@ -572,7 +582,8 @@ def main(argv):
 
     jass = JassEngine(args.jass, label="Jass-player",
                       no_nnue=args.no_nnue, nnue_path=args.nnue,
-                      book_path=args.jass_book)
+                      book_path=args.jass_book,
+                      threads=args.jass_threads)
     scan = ScanEngine(args.scan, label="Scan-player",
                       no_book=(args.scan_book == "off"),
                       bb_size=args.scan_bb_size)
