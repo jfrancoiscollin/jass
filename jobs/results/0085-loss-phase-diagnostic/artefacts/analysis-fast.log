@@ -1,0 +1,24 @@
+
+Analyzed 54 games : jass W=3  D=6  L=45
+score rate : 0.111
+
+=== Terminal piece count (where the game ENDED) ===
+  phase                        L         D         W
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        6 (13.3%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)         21 (46.7%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          18 (40.0%)    6 (100.0%)    3 (100.0%)
+
+=== Decision phase (when game entered its final phase) ===
+  phase                        L         D         W
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        6 (13.3%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)         21 (46.7%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          18 (40.0%)    6 (100.0%)    3 (100.0%)
+
+Average plies by outcome :
+  L: n= 45  avg= 103.7  min= 54  max=138
+  D: n=  6  avg= 171.5  min=167  max=176
+  W: n=  3  avg= 107.0  min=107  max=107
