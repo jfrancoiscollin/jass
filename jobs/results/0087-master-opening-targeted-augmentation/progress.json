@@ -1,0 +1,99 @@
+{
+  "job_id": "0087-master-opening-targeted-augmentation",
+  "snapshot_at": "2026-06-02T15:55:35+00:00",
+  "started_at": "2026-06-02T15:50:32+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": "master-opening-scan-distilled.bin",
+      "size_bytes": 5508222,
+      "records": 144953
+    },
+    {
+      "name": "master-opening.jnnw",
+      "size_bytes": 5508222
+    },
+    {
+      "name": "op-shard-0.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-0.log",
+      "size_bytes": 487
+    },
+    {
+      "name": "op-shard-1.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-1.log",
+      "size_bytes": 491
+    },
+    {
+      "name": "op-shard-2.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-2.log",
+      "size_bytes": 491
+    },
+    {
+      "name": "op-shard-3.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-3.log",
+      "size_bytes": 491
+    },
+    {
+      "name": "op-shard-4.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-4.log",
+      "size_bytes": 491
+    },
+    {
+      "name": "op-shard-5.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-5.log",
+      "size_bytes": 491
+    },
+    {
+      "name": "op-shard-6.bin",
+      "size_bytes": 688568,
+      "records": 18120
+    },
+    {
+      "name": "op-shard-6.log",
+      "size_bytes": 492
+    },
+    {
+      "name": "op-shard-7.bin",
+      "size_bytes": 688302,
+      "records": 18113
+    },
+    {
+      "name": "op-shard-7.log",
+      "size_bytes": 492
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v14-train-combined.bin",
+      "size_bytes": 43508222,
+      "records": 1144953
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 141289       1       05:03  0.0  0.0 bash\n 141291  141289       05:03  0.0  0.0 bash\n 141431  141291       00:34  332 13.9 python3\n 141432  141291       00:34  0.0  0.0 tee\n"
+}
