@@ -1,0 +1,14 @@
+input : /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/v11-selfplay-raw.bin (500000 records, processing 62493 from offset 437507)
+  5000/62493  (8.0%)  rate=55.7 pos/s  eta=17.2 min  skipped=27
+  10000/62493  (16.0%)  rate=54.4 pos/s  eta=16.1 min  skipped=43
+  15000/62493  (24.0%)  rate=54.7 pos/s  eta=14.5 min  skipped=68
+  20000/62493  (32.0%)  rate=55.2 pos/s  eta=12.8 min  skipped=85
+  25000/62493  (40.0%)  rate=55.2 pos/s  eta=11.3 min  skipped=107
+  30000/62493  (48.0%)  rate=55.0 pos/s  eta=9.8 min  skipped=122
+  35000/62493  (56.0%)  rate=55.2 pos/s  eta=8.3 min  skipped=144
+  40000/62493  (64.0%)  rate=55.2 pos/s  eta=6.8 min  skipped=160
+  45000/62493  (72.0%)  rate=55.3 pos/s  eta=5.3 min  skipped=180
+  50000/62493  (80.0%)  rate=55.3 pos/s  eta=3.8 min  skipped=198
+  55000/62493  (88.0%)  rate=55.0 pos/s  eta=2.3 min  skipped=212
+  60000/62493  (96.0%)  rate=54.9 pos/s  eta=0.8 min  skipped=230
+wrote /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/rel-shard-7.bin (62493 records, 237 skipped)

@@ -1,7 +1,0 @@
-{
-  "job_id": "0086-v11-selfplay-scan-distill-pilot",
-  "script": "jobs/queue/0086-v11-selfplay-scan-distill-pilot.sh",
-  "pid": 137596,
-  "started_at": "2026-06-02T11:55:14+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

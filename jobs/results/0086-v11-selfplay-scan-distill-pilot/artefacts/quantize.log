@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/arch-1024-512/nnue-1024-512.bin …
+  topology: 450 → 1024 → 512 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/v11-selfplay-scan-distilled.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.014426 sw2=0.029173 sw3=0.054281 sh1=0.029365 sh2=0.31516
+  multipliers: mul1=0.49125 mul2=0.0027182 mul_out=0.017107
+  reference range: float [-1753.9, 1867.2], quantised [-2264.6, 1843.8]
+  diff: mean=+14.48  std=50.80  |max|=584.27  RMSE=52.83
+wrote /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/arch-1024-512/nnue-1024-512-q.bin (991784 bytes)
