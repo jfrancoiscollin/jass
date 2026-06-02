@@ -1,8 +1,8 @@
 {
   "job_id": "0086-v11-selfplay-scan-distill-pilot",
-  "snapshot_at": "2026-06-02T13:13:05+00:00",
+  "snapshot_at": "2026-06-02T13:18:09+00:00",
   "started_at": "2026-06-02T11:55:14+00:00",
-  "elapsed_seconds": 4671,
+  "elapsed_seconds": 4975,
   "artefacts": [
     {
       "name": "bench-vs-scan-d10.log",
@@ -203,5 +203,5 @@
       "records": 500000
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 137596       1    01:17:51  0.0  0.0 bash\n 137598  137596    01:17:51  0.0  0.0 bash\n 138992  137598       09:47  0.1  0.0 python3\n 138993  137598       09:47  0.0  0.0 tee\n 138995  138992       09:47 97.7  0.1 jass\n 138996  138992       09:47  2.0  0.9 scan_linux\n 138998  138992       09:47  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 137596       1    01:22:55  0.0  0.0 bash\n 137598  137596    01:22:55  0.0  0.0 bash\n 138992  137598       14:51  0.1  0.0 python3\n 138993  137598       14:51  0.0  0.0 tee\n 138995  138992       14:51 97.8  0.1 jass\n 138996  138992       14:51  1.9  0.9 scan_linux\n 138998  138992       14:51  0.0  0.0 jass\n"
 }
