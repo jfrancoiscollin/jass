@@ -1,7 +1,9 @@
 {
   "job_id": "0083-scan-distill-v11-capacity-bump",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-01T22:45:05+00:00",
+  "ended_at": "2026-06-02T04:20:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 122389
+  "artefacts_server_path": "/root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src"
 }

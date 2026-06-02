@@ -1,7 +1,0 @@
-{
-  "job_id": "0083-scan-distill-v11-capacity-bump",
-  "script": "jobs/queue/0083-scan-distill-v11-capacity-bump.sh",
-  "pid": 122389,
-  "started_at": "2026-06-01T22:45:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
