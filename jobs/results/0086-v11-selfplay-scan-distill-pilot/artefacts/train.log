@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/v11-selfplay-scan-distilled.bin (encoding=halfmen, input_dim=450) …
+  500000 self-play records  (2.1s to encode)
+  WDL distribution: W=31.2% D=35.7% L=33.1%
+  score range: [-29998, 29995]  mean=-121.8  std=2896.5
+
+=== arch 1024-512 ===
+  params: 987,137
+  epoch   1: train=  91658.0  val=  90234.9 *
+  epoch   2: train=  70424.4  val=  78444.0 *
+  epoch   3: train=  61219.3  val=  65713.2 *
+  epoch   4: train=  53723.5  val=  59782.8 *
+  epoch   5: train=  47394.5  val=  55048.1 *
+  epoch   6: train=  41784.5  val=  52604.9 *
+  epoch   7: train=  37125.5  val=  48386.3 *
+  epoch   8: train=  33189.7  val=  46793.2 *
+  epoch   9: train=  30137.0  val=  44980.1 *
+  epoch  10: train=  27676.9  val=  43579.5 *
+  epoch  11: train=  25375.8  val=  42878.6 *
+  epoch  12: train=  23852.0  val=  43895.7
+  epoch  13: train=  21933.5  val=  41557.5 *
+  epoch  14: train=  20642.6  val=  41104.5 *
+  epoch  15: train=  19477.5  val=  40850.2 *
+  epoch  16: train=  18420.0  val=  39413.4 *
+  epoch  17: train=  17367.5  val=  38947.3 *
+  epoch  18: train=  16621.5  val=  38766.8 *
+  epoch  19: train=  15875.9  val=  37855.7 *
+  epoch  20: train=  15193.1  val=  37776.0 *
+  epoch  21: train=  14560.8  val=  38005.2
+  epoch  22: train=  13928.0  val=  38417.6
+  epoch  23: train=  13417.6  val=  38418.0
+  epoch  24: train=  12988.0  val=  38352.9
+  epoch  25: train=  12544.5  val=  38205.0
+  epoch  26: train=  12093.1  val=  38633.8
+  epoch  27: train=  11671.2  val=  36916.2 *
+  epoch  28: train=  11462.8  val=  37490.3
+  epoch  29: train=  11113.5  val=  37913.5
+  epoch  30: train=  10747.8  val=  37499.3
+  wrote /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/arch-1024-512/nnue-1024-512.bin (3948572 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  1024-512           987,137     36916.2      192.1     524s
+
+summary → /root/jass/jobs/results/0086-v11-selfplay-scan-distill-pilot/artefacts.src/arch-1024-512/summary.json
