@@ -1,7 +1,9 @@
 {
   "job_id": "0084-scan-distill-1024-512-scale-2M",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-02T06:00:05+00:00",
+  "ended_at": "2026-06-02T11:34:25+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 131170
+  "artefacts_server_path": "/root/jass/jobs/results/0084-scan-distill-1024-512-scale-2M/artefacts.src"
 }

@@ -1,0 +1,14 @@
+input : /root/jass/jobs/results/0050-v7-quiet-pv-extract-1M/artefacts.src/v7-quiet-pv-1M.bin (1000000 records, processing 125001 from offset 750006)
+  10000/125001  (8.0%)  rate=64.1 pos/s  eta=29.9 min  skipped=41
+  20000/125001  (16.0%)  rate=63.7 pos/s  eta=27.5 min  skipped=76
+  30000/125001  (24.0%)  rate=62.0 pos/s  eta=25.5 min  skipped=120
+  40000/125001  (32.0%)  rate=62.4 pos/s  eta=22.7 min  skipped=157
+  50000/125001  (40.0%)  rate=62.7 pos/s  eta=19.9 min  skipped=210
+  60000/125001  (48.0%)  rate=63.1 pos/s  eta=17.2 min  skipped=246
+  70000/125001  (56.0%)  rate=63.5 pos/s  eta=14.4 min  skipped=292
+  80000/125001  (64.0%)  rate=63.3 pos/s  eta=11.8 min  skipped=329
+  90000/125001  (72.0%)  rate=63.5 pos/s  eta=9.2 min  skipped=367
+  100000/125001  (80.0%)  rate=63.4 pos/s  eta=6.6 min  skipped=401
+  110000/125001  (88.0%)  rate=63.2 pos/s  eta=4.0 min  skipped=443
+  120000/125001  (96.0%)  rate=63.4 pos/s  eta=1.3 min  skipped=469
+wrote /root/jass/jobs/results/0084-scan-distill-1024-512-scale-2M/artefacts.src/v7-shard-6.bin (125001 records, 487 skipped)
