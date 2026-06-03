@@ -260,14 +260,115 @@ Total Phase I : **+80-200 ELO**, jass à ~**2400-2650 FMJD**.
 Scan (cible : rate vs Scan > 0.40, ~-100 ELO). Sinon ship jass v14
 comme baseline finale + projet considéré "fort amateur expert".
 
+---
+
+## Plan B — pivot pattern from scratch (si 0090 MLP plafond confirmé)
+
+> Mis à jour 2026-06-02. Pivot stratégique si small-arch MLP (0090) ne
+> donne pas de gain réel en time control. **Principe directeur :
+> jass doit avoir son identité de moteur, pas être un Scan-clone.**
+
+### Posture stratégique
+
+Distillation Scan = **bootstrap technique uniquement**, pas dépendance
+permanente. Le but final = **jass-pattern indépendant de Scan**,
+évolué par self-play.
+
+| Aspect | Pas acceptable | Acceptable |
+|---|---|---|
+| Réutiliser pattern code Scan | ❌ (GPL + clone) | — |
+| S'inspirer de la géométrie pattern Scan (4×12 verticals) | — | ✅ (idea is public) |
+| Bootstrap avec Scan labels temporaire | — | ✅ si suivi de self-play co-evolution |
+| Final eval qui mime exactement Scan | ❌ (pas d'apport) | — |
+| Final eval évolué par self-play depuis bootstrap | — | ✅ (vrai engine indépendant) |
+
+### Phase Pattern-1 — Othello POC (1 semaine)
+
+Valide infra pattern lookup propre, sans aucune dépendance externe.
+
+* Move generator Othello 8×8 (~200-400 lignes C++)
+* Pattern canonique Logistello-style (corners 3×3, edges, diagonals)
+* Logistic regression sur self-play WDL
+* Cible : 2000-2200 ELO Othello = infrastructure validée
+
+**Gate 1** : pattern Othello bat random à >95% → infra OK. Sinon
+debug avant de continuer.
+
+### Phase Pattern-2 — Pattern jass minimaliste (3-5 jours)
+
+* 8 features Scan-geometry mais code from scratch
+* Régression linéaire sur master Lidraughts 2200+ (humain, source
+  externe NON-Scan)
+* Bench vs **Network_HC** (handcrafted, baseline fixe)
+
+**Gate 2** : ≥55% vs handcrafted → infra pattern jass fonctionne.
+
+### Phase Pattern-3 — Bootstrap Scan distillation (1-2 semaines)
+
+Géométrie Scan complète + L-BFGS sur Scan labels.
+
+* Pattern weights initialisés via Scan distillation (cheap, démarre fort)
+* C'est **un point de départ**, pas la destination
+
+**Gate 3** : pattern bootstrap ≥75% vs handcrafted ET ≥30% vs v8 →
+continuer évolution. Sinon plafond pattern confirmé, drop.
+
+### Phase Pattern-4 — Self-play co-evolution (1-2 mois)
+
+**Le coeur du process d'indépendance.**
+
+1. jass-pattern joue contre soi-même (1-5M parties)
+2. Sampling positions à 1/4 ply, labels par WDL résultat + own deep search
+3. **Replace progressivement Scan labels par jass's own labels**
+4. Retrain pattern weights sur nouveau dataset (mix master + self-play)
+5. Cycles itératifs v(N) → v(N+1)
+6. 3-5 cycles avant plateau
+
+Modèle évolue indépendamment. **À la fin, jass-pattern n'utilise plus
+aucune sortie Scan à l'inférence.**
+
+### Phase Pattern-5 — Decision finale
+
+| Outcome | Décision |
+|---|---|
+| jass-pattern ≥ Scan en time control | **Indépendant ET fort** — ship comme baseline |
+| jass-pattern ≈ Scan-distill-only (n'évolue pas) | Bootstrap a marché mais évolution flat → ship comme "Scan-class" sans dépendance runtime |
+| jass-pattern < Scan | Indépendance acquise, force plafonnée. Acceptable comme exercise pédagogique |
+
+### Estimation Plan B
+
+* Phase Pattern-1 (Othello) : ~1 semaine
+* Phase Pattern-2 (minimal) : ~3-5j
+* Phase Pattern-3 (bootstrap) : ~1-2 semaines
+* Phase Pattern-4 (self-play 3 cycles) : ~1-2 mois
+* Phase Pattern-5 (decision) : ~3-5j
+
+**Total : 3-4 mois, coût ~€100-200 compute.**
+
+### Pourquoi PAS MCTS-light
+
+MCTS sans GPU = node throughput beaucoup plus faible que Scan (8M alpha-beta
+nodes/sec). Estimation realistic ~100-500 sims/move. **Plus lent ET moins
+performant que alpha-beta sans batching**. Pas d'intérêt si Scan prouve
+qu'alpha-beta+pattern est viable (vu dans Scan source : PVS, LMR, TT,
+lazy SMP, BUT, pas de MCTS).
+
+Si MCTS marchait sur draughts CPU, Scan/Kingsrow/Maximus l'auraient
+adopté. Ils n'ont pas. → drop MCTS-light de la roadmap.
+
+---
+
 ### Estimation cumulative finale
 
-| Étape | ELO vs Scan | FMJD estimé |
-|---|---|---|
-| v11 baseline (acquis) | -361 | ~2150 |
-| + Phase H search | -211 à -161 | ~2300-2350 |
-| + Phase I cycles | -131 à -61 | ~2380-2450 |
-| + (D) AlphaZero (si activé, 3-5 mois) | 0 à +100 | ~2600-2750 |
+| Étape | ELO vs Scan | FMJD estimé | Indépendance Scan |
+|---|---|---|---|
+| v11 baseline acquis (fixed d10) | -361 | ~2150 | ❌ (distilled from Scan) |
+| **v11 baseline en time control réel (0088)** | **-817** | **~2050** | ❌ |
+| + Phase H search Tier 1-3 | -700 à -600 | ~2150-2200 | ❌ |
+| + Phase A small arch (0090) | -500 à -400 | ~2300-2350 | ❌ |
+| + Phase I cycles MLP | -400 à -300 | ~2400-2450 | partial |
+| **Plan B pattern from scratch + self-play** | **-300 à -100** | **~2500-2700** | **✅ après Phase Pattern-4** |
+| + (D) AlphaZero (si activé, GPU coûteux) | 0 à +100 | ~2600-2750 | ✅ (self-play pure) |
 
 ### Coût total estimé
 
