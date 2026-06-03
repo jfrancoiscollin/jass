@@ -1,0 +1,3 @@
+=== host + perf availability ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+ABORT: perf not installed
