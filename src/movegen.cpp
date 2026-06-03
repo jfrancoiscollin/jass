@@ -49,6 +49,14 @@ struct CaptureCtx {
     std::array<Square, 20> captured_list{};
 
     MoveList* out{nullptr};
+
+    // Running max length of any emitted chain. FMJD prise majoritaire
+    // forces play of the longest capture, so emit_chain filters lazily :
+    // a chain shorter than `max_captures` is dropped; a longer one wipes
+    // the accumulated list and resets the bar. Saves the second pass that
+    // `generate_legal_moves` used to do (sub-bucket "wrapper" = 8.1% of
+    // total search at 0099).
+    std::uint8_t   max_captures{0};
 };
 
 // A square is blocked for landing iff it currently holds another piece.
@@ -61,6 +69,11 @@ constexpr bool landing_blocked(const CaptureCtx& ctx, Square s) noexcept {
 }
 
 void emit_chain(CaptureCtx& ctx) {
+    if (ctx.captured_count < ctx.max_captures) return;
+    if (ctx.captured_count > ctx.max_captures) {
+        ctx.out->clear();
+        ctx.max_captures = ctx.captured_count;
+    }
     Move m;
     m.from         = ctx.from_sq;
     m.to           = ctx.cur_sq;
@@ -217,19 +230,10 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
 void generate_legal_moves(const Position& pos, MoveList& out) {
     out.clear();
 
-    MoveList captures;
-    generate_captures(pos, captures);
-
-    if (!captures.empty()) {
-        std::uint8_t max_n = 0;
-        for (const auto& m : captures) {
-            if (m.num_captures > max_n) max_n = m.num_captures;
-        }
-        for (const auto& m : captures) {
-            if (m.num_captures == max_n) out.push(m);
-        }
-        return;
-    }
+    // generate_captures writes directly into `out`, keeping only max-length
+    // chains via emit_chain's max_captures tracking. No second pass needed.
+    generate_captures(pos, out);
+    if (!out.empty()) return;
 
     generate_quiet_moves(pos, out);
 }
