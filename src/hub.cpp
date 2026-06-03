@@ -200,19 +200,23 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
     if (bd.total_ns > 0) {
         const double t = static_cast<double>(bd.total_ns);
         std::cerr << "BREAKDOWN"
-                  << " total_ms="       << bd.total_ns       / 1'000'000
-                  << " eval_ms="        << bd.eval_ns        / 1'000'000
-                  << " movegen_ms="     << bd.movegen_ns     / 1'000'000
-                  << " apply_ms="       << bd.apply_ns       / 1'000'000
-                  << " accumulator_ms=" << bd.accumulator_ns / 1'000'000
-                  << " tt_ms="          << bd.tt_ns          / 1'000'000
-                  << " zobrist_ms="     << bd.zobrist_ns     / 1'000'000
-                  << " eval_pct="        << static_cast<int>(100.0 * bd.eval_ns        / t)
-                  << " movegen_pct="     << static_cast<int>(100.0 * bd.movegen_ns     / t)
-                  << " apply_pct="       << static_cast<int>(100.0 * bd.apply_ns       / t)
-                  << " accumulator_pct=" << static_cast<int>(100.0 * bd.accumulator_ns / t)
-                  << " tt_pct="          << static_cast<int>(100.0 * bd.tt_ns          / t)
-                  << " zobrist_pct="     << static_cast<int>(100.0 * bd.zobrist_ns     / t)
+                  << " total_ms="            << bd.total_ns            / 1'000'000
+                  << " eval_ms="             << bd.eval_ns             / 1'000'000
+                  << " movegen_ms="          << bd.movegen_ns          / 1'000'000
+                  << " apply_ms="            << bd.apply_ns            / 1'000'000
+                  << " accumulator_ms="      << bd.accumulator_ns      / 1'000'000
+                  << " tt_ms="               << bd.tt_ns               / 1'000'000
+                  << " zobrist_ms="          << bd.zobrist_ns          / 1'000'000
+                  << " movegen_capture_ms="  << bd.movegen_capture_ns  / 1'000'000
+                  << " movegen_quiet_ms="    << bd.movegen_quiet_ns    / 1'000'000
+                  << " eval_pct="            << static_cast<int>(100.0 * bd.eval_ns            / t)
+                  << " movegen_pct="         << static_cast<int>(100.0 * bd.movegen_ns         / t)
+                  << " apply_pct="           << static_cast<int>(100.0 * bd.apply_ns           / t)
+                  << " accumulator_pct="     << static_cast<int>(100.0 * bd.accumulator_ns     / t)
+                  << " tt_pct="              << static_cast<int>(100.0 * bd.tt_ns              / t)
+                  << " zobrist_pct="         << static_cast<int>(100.0 * bd.zobrist_ns         / t)
+                  << " movegen_capture_pct=" << static_cast<int>(100.0 * bd.movegen_capture_ns / t)
+                  << " movegen_quiet_pct="   << static_cast<int>(100.0 * bd.movegen_quiet_ns   / t)
                   << '\n';
         std::cerr.flush();
     }
