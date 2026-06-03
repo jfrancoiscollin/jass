@@ -1,0 +1,10 @@
+loading float reference /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64.bin …
+  topology: 450 → 128 → 64 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.025302 sw2=0.087797 sw3=0.10244 sh1=0.36922 sh2=2.8285
+  multipliers: mul1=0.068528 mul2=0.011461 mul_out=0.28977
+  reference range: float [-1876.4, 2696.0], quantised [-1956.5, 2738.0]
+  diff: mean=-5.79  std=26.92  |max|=152.27  RMSE=27.54
+wrote /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin (66664 bytes)

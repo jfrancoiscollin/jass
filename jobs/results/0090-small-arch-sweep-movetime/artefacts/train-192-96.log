@@ -1,0 +1,44 @@
+loading /root/jass/jobs/results/0078-scan-distill-1M-mlp-scaleup/artefacts.src/v10-distilled-1M.bin (encoding=halfmen, input_dim=450) …
+  1000000 self-play records  (4.1s to encode)
+  WDL distribution: W=29.6% D=38.3% L=32.1%
+  score range: [-29998, 29991]  mean=-193.8  std=2731.5
+
+=== arch 192-96 ===
+  params: 105,217
+  epoch   1: train=  71334.4  val=  60286.7 *
+  epoch   2: train=  52042.4  val=  55778.1 *
+  epoch   3: train=  48222.8  val=  49754.3 *
+  epoch   4: train=  44358.3  val=  46441.0 *
+  epoch   5: train=  41442.5  val=  44683.4 *
+  epoch   6: train=  38718.8  val=  41245.4 *
+  epoch   7: train=  37124.4  val=  40665.8 *
+  epoch   8: train=  36041.9  val=  38877.6 *
+  epoch   9: train=  35209.2  val=  38045.8 *
+  epoch  10: train=  34465.8  val=  38072.4
+  epoch  11: train=  33880.8  val=  37836.6 *
+  epoch  12: train=  33282.8  val=  38496.3
+  epoch  13: train=  32796.6  val=  36588.6 *
+  epoch  14: train=  32325.2  val=  36400.4 *
+  epoch  15: train=  31909.0  val=  36507.2
+  epoch  16: train=  31590.3  val=  36047.3 *
+  epoch  17: train=  31255.8  val=  35379.1 *
+  epoch  18: train=  30963.9  val=  35258.9 *
+  epoch  19: train=  30663.9  val=  35118.6 *
+  epoch  20: train=  30357.4  val=  34752.1 *
+  epoch  21: train=  30114.7  val=  34767.8
+  epoch  22: train=  29870.7  val=  34676.9 *
+  epoch  23: train=  29649.9  val=  34731.7
+  epoch  24: train=  29438.3  val=  34266.0 *
+  epoch  25: train=  29263.2  val=  33766.0 *
+  epoch  26: train=  29045.0  val=  34063.7
+  epoch  27: train=  28836.8  val=  34067.8
+  epoch  28: train=  28722.2  val=  34039.3
+  epoch  29: train=  28522.0  val=  33551.8 *
+  epoch  30: train=  28330.8  val=  33553.8
+  wrote /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-192-96/nnue-192-96.bin (420892 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  192-96             105,217     33551.8      183.2     417s
+
+summary → /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-192-96/summary.json
