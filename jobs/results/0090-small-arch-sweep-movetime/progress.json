@@ -1,8 +1,8 @@
 {
   "job_id": "0090-small-arch-sweep-movetime",
-  "snapshot_at": "2026-06-03T10:20:05+00:00",
+  "snapshot_at": "2026-06-03T10:25:15+00:00",
   "started_at": "2026-06-03T09:42:45+00:00",
-  "elapsed_seconds": 2240,
+  "elapsed_seconds": 2550,
   "artefacts": [
     {
       "name": "bench-128-64-vs-scan-d10.log",
@@ -29,5 +29,5 @@
       "size_bytes": 2070
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 220047       1       37:20  0.0  0.0 bash\n 220049  220047       37:20  0.0  0.0 bash\n 220398  220049       20:28  0.2  0.0 python3\n 220399  220049       20:28  0.0  0.0 tee\n 220401  220398       20:28 48.9  0.1 jass\n 220402  220398       20:28 50.9  0.9 scan_linux\n 220404  220398       20:28  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 220047       1       42:29  0.0  0.0 bash\n 220049  220047       42:29  0.0  0.0 bash\n 220398  220049       25:38  0.2  0.0 python3\n 220399  220049       25:38  0.0  0.0 tee\n 220401  220398       25:38 48.8  0.1 jass\n 220402  220398       25:38 50.9  0.9 scan_linux\n 220404  220398       25:38  0.0  0.0 jass\n"
 }
