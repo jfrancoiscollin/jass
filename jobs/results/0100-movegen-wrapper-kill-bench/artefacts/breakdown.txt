@@ -1,0 +1,10 @@
+positions: 5  walltime: 19657ms
+
+  eval               :   4132ms ( 21.0%)
+  movegen TOTAL      :   6324ms ( 32.2%)   [0099: 32.3%]
+    └─ capture       :   2948ms ( 15.0%)   [0099: 14.3%]
+    └─ quiet         :   1893ms (  9.6%)   [0099:  9.9%]
+    └─ wrapper       :   1483ms (  7.5%)   [0099:  8.1% → cible <2%]
+  apply              :    484ms (  2.5%)
+  accumulator        :   3617ms ( 18.4%)
+  tt                 :   1644ms (  8.4%)

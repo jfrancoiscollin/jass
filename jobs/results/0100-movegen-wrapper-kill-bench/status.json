@@ -1,7 +1,9 @@
 {
   "job_id": "0100-movegen-wrapper-kill-bench",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-03T22:01:50+00:00",
+  "ended_at": "2026-06-03T22:07:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 230915
+  "artefacts_server_path": "/root/jass/jobs/results/0100-movegen-wrapper-kill-bench/artefacts.src"
 }

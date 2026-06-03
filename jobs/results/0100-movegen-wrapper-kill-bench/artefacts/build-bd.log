@@ -1,0 +1,63 @@
+[ 18%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue.cpp.o
+[ 18%] Building CXX object CMakeFiles/jass_lib.dir/src/board.cpp.o
+[ 18%] Building CXX object CMakeFiles/jass_lib.dir/src/movegen.cpp.o
+[ 18%] Building CXX object CMakeFiles/jass_lib.dir/src/position.cpp.o
+[ 27%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_accumulator.cpp.o
+[ 27%] Building CXX object CMakeFiles/jass_lib.dir/src/eval.cpp.o
+[ 31%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_server_client.cpp.o
+[ 36%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_network.cpp.o
+[ 40%] Building CXX object CMakeFiles/jass_lib.dir/generated/nnue_default_data.cpp.o
+[ 45%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+[ 50%] Building CXX object CMakeFiles/jass_lib.dir/src/zobrist.cpp.o
+[ 54%] Building CXX object CMakeFiles/jass_lib.dir/src/tt.cpp.o
+/root/jass/src/pattern_network.cpp: In member function ‘bool jass::PatternNetwork::save(std::string_view, uint32_t) const’:
+/root/jass/src/pattern_network.cpp:846:31: warning: declaration of ‘n’ shadows a previous local [-Wshadow]
+  846 |             const std::size_t n = patterns_.size();
+      |                               ^
+/root/jass/src/pattern_network.cpp:814:25: note: shadowed declaration is here
+  814 |     const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
+      |                         ^
+[ 59%] Building CXX object CMakeFiles/jass_lib.dir/src/engine.cpp.o
+[ 63%] Building CXX object CMakeFiles/jass_lib.dir/src/endgame.cpp.o
+[ 68%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+[ 72%] Building CXX object CMakeFiles/jass_lib.dir/src/book.cpp.o
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:189:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  189 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:190:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  190 |                 : accumulators[ply].black;
+      |                                ^~~
+[ 77%] Building CXX object CMakeFiles/jass_lib.dir/src/timemgr.cpp.o
+[ 81%] Building CXX object CMakeFiles/jass_lib.dir/src/tournament.cpp.o
+[ 86%] Building CXX object CMakeFiles/jass_lib.dir/src/hub.cpp.o
+/root/jass/src/hub.cpp: In member function ‘void jass::HubFrontEnd::emit_bestmove(const jass::SearchResult&)’:
+/root/jass/src/hub.cpp:212:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  212 |                   << " eval_pct="            << static_cast<int>(100.0 * bd.eval_ns            / t)
+      |                                                                          ~~~^~~~~~~
+/root/jass/src/hub.cpp:213:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  213 |                   << " movegen_pct="         << static_cast<int>(100.0 * bd.movegen_ns         / t)
+      |                                                                          ~~~^~~~~~~~~~
+/root/jass/src/hub.cpp:214:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  214 |                   << " apply_pct="           << static_cast<int>(100.0 * bd.apply_ns           / t)
+      |                                                                          ~~~^~~~~~~~
+/root/jass/src/hub.cpp:215:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  215 |                   << " accumulator_pct="     << static_cast<int>(100.0 * bd.accumulator_ns     / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:216:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  216 |                   << " tt_pct="              << static_cast<int>(100.0 * bd.tt_ns              / t)
+      |                                                                          ~~~^~~~~
+/root/jass/src/hub.cpp:217:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  217 |                   << " zobrist_pct="         << static_cast<int>(100.0 * bd.zobrist_ns         / t)
+      |                                                                          ~~~^~~~~~~~~~
+/root/jass/src/hub.cpp:218:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  218 |                   << " movegen_capture_pct=" << static_cast<int>(100.0 * bd.movegen_capture_ns / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:219:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  219 |                   << " movegen_quiet_pct="   << static_cast<int>(100.0 * bd.movegen_quiet_ns   / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~~~
+[ 90%] Linking CXX static library libjass_lib.a
+[ 90%] Built target jass_lib
+[ 95%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+[100%] Linking CXX executable jass
+[100%] Built target jass
