@@ -1,7 +1,9 @@
 {
   "job_id": "0095-eval-time-breakdown-pipe",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-03T17:41:05+00:00",
+  "ended_at": "2026-06-03T17:46:45+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 226786
+  "artefacts_server_path": "/root/jass/jobs/results/0095-eval-time-breakdown-pipe/artefacts.src"
 }

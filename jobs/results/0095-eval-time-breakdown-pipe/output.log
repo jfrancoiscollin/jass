@@ -1,0 +1,59 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   12G  133G   9% /tmp
+/dev/sda1       150G   12G  133G   9% /
+TMPDIR=/root/jass/tmp-build
+
+=== rebuild with -DJASS_TIME_BREAKDOWN=ON + -pipe ===
+configure rc=0
+build OK : 355376 bytes
+sample positions :
+W:W22,25,26,34,36,38,39,42,43,47,48:B4,6,7,8,9,10,11,12,13,23,30
+W:W15,29,33,34,35,36,39,40,45,47:B4,8,9,10,13,14,18,21,25,26
+B:W16,25,34,35,37,38,39,41,42,43,44,45,46,47,48,49:B1,3,5,7,8,9,10,11,12,13,14,15,17,18,24,26
+B:W20,23,31,33,36,38,42,43,45,47,48,49:B2,3,6,8,9,12,15,16,17,18,21
+W:W27,28,31,32,34,35,36,37,40,41,42,43,44,45,48,49,50:B1,2,3,6,7,8,9,10,12,13,14,15,16,18,19,20,29
+
+=== 5 × go movetime 5000ms ===
+stdout :
+id name=Jass version=0.0.1 author="Jean-François Collin"
+ready
+ok
+bestmove 36-31 score=-233 depth=17 nodes=4516096 pv=36-31,30-35,38-33,12-18,31-27,23-28,22-17,11x31,33x22,18x27,26x37,6-11,43-38,8-12,37-32,11-17,32x21
+ok
+bestmove 35-30 score=-260 depth=20 nodes=4812143 pv=35-30,21-27,40-35,26-31,47-42,18-22,45-40,8-12,29-24,12-17,33-29,22-28,24-20,13-18,30-24,17-22,35-30,28-32,42-38,32x43
+ok
+bestmove 14-20 score=28 depth=17 nodes=5710848 pv=14-20,25x14,10x19,39-33,15-20,37-32,5-10,34-30,10-14,30-25,19-23,41-37,14-19,25x14,9x20,46-41,1-6
+ok
+bestmove 15x24 score=12 depth=21 nodes=4265679 captures=20 pv=15x24,33-29,24x33,38x29,8-13,43-38,9-14,42-37,21-26,31-27,17-21,38-32,6-11,49-44,13-19,47-41,19x28,32x23,21x32,37x28,11-17
+ok
+bestmove 34x23 score=19 depth=20 nodes=3172641 captures=29 pv=34x23,18x29,31-26,19-23,28x19,14x23,44-39,13-18,37-31,9-13,42-38,7-11,41-37,20-25,39-34,10-14,50-44,14-19,44-39,2-7
+
+BREAKDOWN lines :
+BREAKDOWN total_ms=3773 eval_ms=1032 movegen_ms=1085 apply_ms=111 eval_pct=27 movegen_pct=28 apply_pct=2
+BREAKDOWN total_ms=3884 eval_ms=963 movegen_ms=1101 apply_ms=124 eval_pct=24 movegen_pct=28 apply_pct=3
+BREAKDOWN total_ms=5000 eval_ms=1313 movegen_ms=1693 apply_ms=135 eval_pct=26 movegen_pct=33 apply_pct=2
+BREAKDOWN total_ms=3541 eval_ms=912 movegen_ms=989 apply_ms=105 eval_pct=25 movegen_pct=27 apply_pct=2
+BREAKDOWN total_ms=2704 eval_ms=635 movegen_ms=951 apply_ms=78 eval_pct=23 movegen_pct=35 apply_pct=2
+
+==========================================================
+       0095 EVAL / MOVEGEN / APPLY / OTHER BREAKDOWN
+==========================================================
+positions : 5
+total walltime : 18902ms
+
+  eval         :   4855ms ( 25.7%)
+  movegen      :   5819ms ( 30.8%)
+  apply (pos)  :    553ms (  2.9%)
+  other        :   7675ms ( 40.6%)
+
+Amdahl — gain NPS total via SIMD eval :
+  ×4  SIMD : 1.24×  (917K → 1135K NPS)
+  ×8  SIMD : 1.29×  (917K → 1182K NPS)
+  ×∞  SIMD : 1.35× (917K → 1233K NPS, upper bound)
+
+Cible Scan parity = 8.1M NPS → besoin 8.8× total
+  -> NON faisable via eval seul. Il faut AUSSI optimiser non-eval (74% du temps).
+==========================================================
