@@ -1,8 +1,8 @@
 {
   "job_id": "0090-small-arch-sweep-movetime",
-  "snapshot_at": "2026-06-03T13:38:05+00:00",
+  "snapshot_at": "2026-06-03T13:43:05+00:00",
   "started_at": "2026-06-03T09:42:45+00:00",
-  "elapsed_seconds": 14120,
+  "elapsed_seconds": 14420,
   "artefacts": [
     {
       "name": "bench-128-64-vs-scan-d10.log",
@@ -37,6 +37,10 @@
       "size_bytes": 373
     },
     {
+      "name": "bench-256-128-vs-scan-d10.log",
+      "size_bytes": 0
+    },
+    {
       "name": "nps-128-64.log",
       "size_bytes": 69
     },
@@ -45,12 +49,20 @@
       "size_bytes": 69
     },
     {
+      "name": "nps-256-128.log",
+      "size_bytes": 70
+    },
+    {
       "name": "quantize-128-64.log",
       "size_bytes": 744
     },
     {
       "name": "quantize-192-96.log",
       "size_bytes": 747
+    },
+    {
+      "name": "quantize-256-128.log",
+      "size_bytes": 749
     },
     {
       "name": "train-128-64.log",
@@ -62,8 +74,8 @@
     },
     {
       "name": "train-256-128.log",
-      "size_bytes": 0
+      "size_bytes": 2069
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 220047       1    03:55:19  0.0  0.0 bash\n 220049  220047    03:55:19  0.0  0.0 bash\n 223119  220049       03:04  354 12.2 python3\n 223120  220049       03:04  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 220047       1    04:00:20  0.0  0.0 bash\n 220049  220047    04:00:20  0.0  0.0 bash\n 223219  220049       00:25  0.6  0.0 python3\n 223220  220049       00:25  0.0  0.0 tee\n 223222  223219       00:25 88.2  0.1 jass\n 223223  223219       00:25 10.9  0.9 scan_linux\n 223225  223219       00:25  0.1  0.0 jass\n"
 }
