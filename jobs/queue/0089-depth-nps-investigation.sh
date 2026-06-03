@@ -43,7 +43,7 @@ if ! python3 -c "import numpy" 2>/dev/null; then
     pip3 install --break-system-packages --no-cache-dir --quiet numpy
 fi
 
-python3 - <<'EOF' 2>&1 | tee "$ART/depth-nps-report.log"
+python3 - <<EOF 2>&1 | tee "$ART/depth-nps-report.log"
 import struct, subprocess, re, statistics, random
 from pathlib import Path
 
