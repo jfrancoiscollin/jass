@@ -1,0 +1,5 @@
+BREAKDOWN total_ms=4281 eval_ms=1036 movegen_ms=1065 apply_ms=111 accumulator_ms=832 tt_ms=402 zobrist_ms=76 eval_pct=24 movegen_pct=24 apply_pct=2 accumulator_pct=19 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=4497 eval_ms=983 movegen_ms=1102 apply_ms=126 accumulator_ms=956 tt_ms=441 zobrist_ms=80 eval_pct=21 movegen_pct=24 apply_pct=2 accumulator_pct=21 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=2702 eval_ms=645 movegen_ms=812 apply_ms=65 accumulator_ms=509 tt_ms=201 zobrist_ms=38 eval_pct=23 movegen_pct=30 apply_pct=2 accumulator_pct=18 tt_pct=7 zobrist_pct=1
+BREAKDOWN total_ms=3076 eval_ms=718 movegen_ms=738 apply_ms=80 accumulator_ms=640 tt_ms=285 zobrist_ms=56 eval_pct=23 movegen_pct=24 apply_pct=2 accumulator_pct=20 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=3673 eval_ms=791 movegen_ms=1136 apply_ms=95 accumulator_ms=704 tt_ms=283 zobrist_ms=53 eval_pct=21 movegen_pct=30 apply_pct=2 accumulator_pct=19 tt_pct=7 zobrist_pct=1

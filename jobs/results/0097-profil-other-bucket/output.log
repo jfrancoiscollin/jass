@@ -1,0 +1,44 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+
+=== build with JASS_TIME_BREAKDOWN ===
+build OK
+
+=== profile run (5 × movetime 5000ms) ===
+raw BREAKDOWN lines :
+BREAKDOWN total_ms=4281 eval_ms=1036 movegen_ms=1065 apply_ms=111 accumulator_ms=832 tt_ms=402 zobrist_ms=76 eval_pct=24 movegen_pct=24 apply_pct=2 accumulator_pct=19 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=4497 eval_ms=983 movegen_ms=1102 apply_ms=126 accumulator_ms=956 tt_ms=441 zobrist_ms=80 eval_pct=21 movegen_pct=24 apply_pct=2 accumulator_pct=21 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=2702 eval_ms=645 movegen_ms=812 apply_ms=65 accumulator_ms=509 tt_ms=201 zobrist_ms=38 eval_pct=23 movegen_pct=30 apply_pct=2 accumulator_pct=18 tt_pct=7 zobrist_pct=1
+BREAKDOWN total_ms=3076 eval_ms=718 movegen_ms=738 apply_ms=80 accumulator_ms=640 tt_ms=285 zobrist_ms=56 eval_pct=23 movegen_pct=24 apply_pct=2 accumulator_pct=20 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=3673 eval_ms=791 movegen_ms=1136 apply_ms=95 accumulator_ms=704 tt_ms=283 zobrist_ms=53 eval_pct=21 movegen_pct=30 apply_pct=2 accumulator_pct=19 tt_pct=7 zobrist_pct=1
+
+positions: 5  total walltime: 18229ms
+
+  eval         :   4173ms ( 22.9%)
+  movegen      :   4853ms ( 26.6%)
+  apply        :    477ms (  2.6%)
+  accumulator  :   3641ms ( 20.0%)  [NEW]
+  tt           :   1612ms (  8.8%)  [NEW]
+  zobrist      :    303ms (  1.7%)  [NEW]
+  other (rest) :   3170ms ( 17.4%)
+
+Comparaison 0095 baseline (% du total) :
+  eval 25.7 → mesure cette fois
+  movegen 30.8 → mesure cette fois
+  apply 2.9 → mesure cette fois
+  other 40.6 → décomposé en accumulator + tt + zobrist + reste
+
+==========================================================
+       0097 PROFIL OTHER BUCKET VERDICT
+==========================================================
+Ranking buckets (gros au petit) :
+  movegen                4853ms  ( 26.6%)
+  eval                   4173ms  ( 22.9%)
+  accumulator            3641ms  ( 20.0%)
+  other-unaccounted      3170ms  ( 17.4%)
+  tt                     1612ms  (  8.8%)
+  apply                   477ms  (  2.6%)
+  zobrist                 303ms  (  1.7%)
+
+Next pivot recommendation : tackler le top-3 buckets.

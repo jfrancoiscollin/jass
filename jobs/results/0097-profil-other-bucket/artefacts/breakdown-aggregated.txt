@@ -1,0 +1,15 @@
+positions: 5  total walltime: 18229ms
+
+  eval         :   4173ms ( 22.9%)
+  movegen      :   4853ms ( 26.6%)
+  apply        :    477ms (  2.6%)
+  accumulator  :   3641ms ( 20.0%)  [NEW]
+  tt           :   1612ms (  8.8%)  [NEW]
+  zobrist      :    303ms (  1.7%)  [NEW]
+  other (rest) :   3170ms ( 17.4%)
+
+Comparaison 0095 baseline (% du total) :
+  eval 25.7 → mesure cette fois
+  movegen 30.8 → mesure cette fois
+  apply 2.9 → mesure cette fois
+  other 40.6 → décomposé en accumulator + tt + zobrist + reste
