@@ -1,0 +1,66 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+
+=== build INSTRUMENTED ===
+build-bd OK
+
+=== build PROD ===
+build-prod OK
+
+=== 1) breakdown NPS profile (5 × movetime 5000ms) ===
+raw BREAKDOWN :
+BREAKDOWN total_ms=4131 eval_ms=1823 movegen_ms=1067 apply_ms=112 accumulator_ms=736 tt_ms=396 zobrist_ms=76 eval_pct=44 movegen_pct=25 apply_pct=2 accumulator_pct=17 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=4256 eval_ms=1842 movegen_ms=1085 apply_ms=125 accumulator_ms=829 tt_ms=432 zobrist_ms=80 eval_pct=43 movegen_pct=25 apply_pct=2 accumulator_pct=19 tt_pct=10 zobrist_pct=1
+BREAKDOWN total_ms=2640 eval_ms=1148 movegen_ms=815 apply_ms=66 accumulator_ms=472 tt_ms=199 zobrist_ms=38 eval_pct=43 movegen_pct=30 apply_pct=2 accumulator_pct=17 tt_pct=7 zobrist_pct=1
+BREAKDOWN total_ms=2983 eval_ms=1325 movegen_ms=746 apply_ms=81 accumulator_ms=561 tt_ms=282 zobrist_ms=55 eval_pct=44 movegen_pct=25 apply_pct=2 accumulator_pct=18 tt_pct=9 zobrist_pct=1
+BREAKDOWN total_ms=3509 eval_ms=1442 movegen_ms=1117 apply_ms=95 accumulator_ms=629 tt_ms=279 zobrist_ms=53 eval_pct=41 movegen_pct=31 apply_pct=2 accumulator_pct=17 tt_pct=7 zobrist_pct=1
+positions: 5  total walltime: 17519ms
+
+  eval         :   7580ms ( 43.3%)   [vs 22.9% en 0097]
+  movegen      :   4830ms ( 27.6%)   [vs 26.6% en 0097]
+  apply        :    479ms (  2.7%)
+  accumulator  :   3227ms ( 18.4%)   [vs 20.0% en 0097 — should DROP]
+  tt           :   1588ms (  9.1%)
+  zobrist      :    302ms (  1.7%)
+  other (rest) :   -487ms ( -2.8%)
+
+=== 2) NPS PROD (uninstrumented, vs 0091) ===
+lazy : median_depth=15  median_nps=913480
+baseline 0091 : median_depth=15  median_nps=917320
+gain NPS : -0.4%
+
+=== 3) bench vs Scan d10 (quality regression) ===
+  game  40: Scan=W Jass=B → L (illegal move 19-23 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  41: Jass=W Scan=B → W (illegal move 40-34 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  42: Scan=W Jass=B → L (illegal move 19-23 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  43: Jass=W Scan=B → W (illegal move 40-34 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  44: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  45: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  46: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  47: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  48: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  49: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  50: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  51: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  52: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  53: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  54: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=47  Scan=7  Draws=0
+  Jass score rate: 0.870 (47.0 / 54)
+  ELO estimate:    +331 (95% CI ≈ ±109)
+
+==========================================================
+       0098 LAZY ACCUMULATOR VERDICT
+==========================================================
+Accumulator pct (était 20.0% en 0097) : 18.4%
+NPS gain vs 0091 baseline             : -0.4%
+Rate vs Scan d10                      : 0.870 (baseline 0.870)
+
+Gates :
+  Accumulator pct < 10%   : FAIL
+  NPS gain >= +5%         : FAIL
+  Rate vs Scan d10 >= 0.85 : PASS
+==========================================================

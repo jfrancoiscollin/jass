@@ -1,0 +1,9 @@
+positions: 5  total walltime: 17519ms
+
+  eval         :   7580ms ( 43.3%)   [vs 22.9% en 0097]
+  movegen      :   4830ms ( 27.6%)   [vs 26.6% en 0097]
+  apply        :    479ms (  2.7%)
+  accumulator  :   3227ms ( 18.4%)   [vs 20.0% en 0097 — should DROP]
+  tt           :   1588ms (  9.1%)
+  zobrist      :    302ms (  1.7%)
+  other (rest) :   -487ms ( -2.8%)

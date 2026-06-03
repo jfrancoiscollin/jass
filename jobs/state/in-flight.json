@@ -1,7 +1,0 @@
-{
-  "job_id": "0098-lazy-accumulator-bench",
-  "script": "jobs/queue/0098-lazy-accumulator-bench.sh",
-  "pid": 229835,
-  "started_at": "2026-06-03T20:52:48+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
