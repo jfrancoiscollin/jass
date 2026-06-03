@@ -57,3 +57,6 @@ emscripten_temp/
 # Python
 __pycache__/
 *.pyc
+
+# Local-only running notes (perf journey, etc.) — not pushed to repo
+docs/PERF_JOURNEY_*.md
