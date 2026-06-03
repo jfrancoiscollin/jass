@@ -110,10 +110,13 @@ std::vector<Move> extract_pv(const Position&            start,
 // the counters are not touched. ~5-10% overhead when active.
 void breakdown_reset() noexcept;
 struct BreakdownStats {
-    std::uint64_t eval_ns    = 0;
-    std::uint64_t movegen_ns = 0;
-    std::uint64_t apply_ns   = 0;
-    std::uint64_t total_ns   = 0;
+    std::uint64_t eval_ns        = 0;
+    std::uint64_t movegen_ns     = 0;
+    std::uint64_t apply_ns       = 0;
+    std::uint64_t accumulator_ns = 0;
+    std::uint64_t tt_ns          = 0;
+    std::uint64_t zobrist_ns     = 0;
+    std::uint64_t total_ns       = 0;
 };
 BreakdownStats breakdown_snapshot() noexcept;
 
