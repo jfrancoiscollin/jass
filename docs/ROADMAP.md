@@ -183,6 +183,71 @@ moment où l'axe data cesse de progresser.
 
 ---
 
+## Plan A++ priorisé — small arch + SIMD optim (2026-06-03)
+
+> Découverte 0090 transforme la stratégie. **128-64 Scan-distilled vs
+> Scan d10 = 0.870** = notre meilleur score vs Scan jamais. À depth fixe,
+> notre eval est SUPÉRIEURE à Scan. Le gap movetime est purement vitesse
+> d'inférence, pas qualité eval.
+
+### Verdict 0090
+
+| Arch | vs Scan d10 | vs Scan mt500 | vs v8 mt500 |
+|---|---|---|---|
+| **128-64** | **0.870** | 0.028 | 0.528 |
+| 192-96 | 0.111 | 0.019 | 0.537 |
+| 256-128 | 0.083 | 0.019 | 0.565 |
+| v11 1024-512 (réf) | 0.194 | 0.009 | — |
+
+Toutes les small archs battent v8 en movetime. **128-64 a la meilleure
+eval qualité (vs Scan d10 = 0.870)**. Le bottleneck = vitesse d'inference.
+
+### Phase A++ — séquence
+
+**1. Ship v15 = 128-64 baseline (acquis)**
+- Modèle déjà trained dans 0090
+- À promouvoir comme baseline officielle (remplace v11 1024-512)
+
+**2. Phase H Tier 1 restant (~1 semaine)**
+- ✅ CMH + LMP (PR #140 mergé)
+- ⏳ SPSA tuning constantes LMR/NMP/futility/aspiration (~3-5j)
+- ⏳ Razoring (~1j)
+
+**3. Inference SIMD optim (~1-2 semaines)**
+- int8 SIMD AVX2 sur la 128-64 archi
+- Cache-aligned weight layout
+- Prefetch + loop unrolling
+- Cible : 3M NPS → 6-10M NPS = **Scan parity**
+
+**4. Re-bench vs Scan movetime**
+- 100ms / 500ms / 2s / 5s pour scaling characterization
+- Cible : rate > 0.20 en mt500 = Scan-tier accessible
+
+### Estimation
+
+| Étape | Gain ELO mt500 | FMJD |
+|---|---|---|
+| v15 base (acquis) | inconnu mais ≥ v8 | 2050+ |
+| + Phase H Tier 1 search | +50-100 | ~2150-2200 |
+| + SIMD optim NPS-parity | +100-200 | ~2300-2400 |
+| + eval supériorité × depth-parity | **+200-300** | **~2500-2600** |
+
+**Total Phase A++ : ~2-3 mois pour ~2500-2600 FMJD.**
+
+### Pourquoi A++ vs Plan B pattern from scratch
+
+| Aspect | A++ small arch + SIMD | Plan B pattern from scratch |
+|---|---|---|
+| Durée | 2-3 mois | 3-5 mois |
+| Risque | Low (extension MLP existante) | Moyen (infra à valider via Othello) |
+| Indépendance Scan | Encore dépendant (distill labels) | True indépendance après self-play |
+| Apport unique | Engine MLP CPU bien optimisé | Engine pattern from-scratch jass |
+
+**A++ est l'option pragmatique court terme.** Plan B reste documenté
+comme alternative si A++ s'épuise.
+
+---
+
 ## Plan post-distillation Scan — feuille de route consolidée (2026-06-02)
 
 > Mis à jour après cycle distillation Scan (jobs 0073-0087). v11 =
