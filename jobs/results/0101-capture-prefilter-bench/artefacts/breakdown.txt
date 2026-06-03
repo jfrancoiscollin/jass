@@ -1,0 +1,7 @@
+positions: 5  walltime: 19332ms
+
+  eval         :   4145ms ( 21.4%)
+  movegen      :   6070ms ( 31.4%)
+    └─ capture :   2652ms ( 13.7%)   [0099: 14.3%]
+    └─ quiet   :   1934ms ( 10.0%)
+  accumulator  :   3618ms ( 18.7%)
