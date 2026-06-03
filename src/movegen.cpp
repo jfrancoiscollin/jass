@@ -165,9 +165,35 @@ void generate_captures(const Position& pos, MoveList& out) {
     ctx.enemy_bb  = pos.pieces_of(opposite(ctx.us));
     ctx.out       = &out;
 
-    Bitboard men = pos.men_of(ctx.us);
-    while (men) {
-        const Square s = pop_lsb(men);
+    const Bitboard kings_us = pos.kings_of(ctx.us);
+
+    // Pre-filter for man captures : compute the mask of squares that
+    // are 1-step adjacent to at least one enemy piece. A friend man can
+    // only START a capture from such a square, so iterating only over
+    // `friend_men & enemy_reach` skips the dead-end extend_man_captures
+    // calls that would just iterate over their 4 directions and find
+    // nothing. Cost ~popcount(enemy)*4 ops, paid once per position.
+    Bitboard enemy_reach = 0;
+    {
+        Bitboard e = ctx.enemy_bb;
+        while (e) {
+            const Square s = pop_lsb(e);
+            for (Dir d : ALL_DIRS) {
+                const Square n = neighbour(s, d);
+                if (n != NO_SQUARE) set(enemy_reach, n);
+            }
+        }
+    }
+
+    Bitboard threat_men = pos.men_of(ctx.us) & enemy_reach;
+
+    // Early-skip : when we have no kings and no man is adjacent to any
+    // enemy, there is no possible capture in this position. Skip the
+    // entire capture machinery.
+    if (threat_men == 0 && kings_us == 0) return;
+
+    while (threat_men) {
+        const Square s = pop_lsb(threat_men);
         ctx.from_sq        = s;
         ctx.cur_sq         = s;
         ctx.captured_bb    = 0;
@@ -175,7 +201,7 @@ void generate_captures(const Position& pos, MoveList& out) {
         extend_man_captures(ctx);
     }
 
-    Bitboard kings = pos.kings_of(ctx.us);
+    Bitboard kings = kings_us;
     while (kings) {
         const Square s = pop_lsb(kings);
         ctx.from_sq        = s;
