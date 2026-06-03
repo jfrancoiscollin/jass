@@ -1,0 +1,7 @@
+{
+  "job_id": "0094-eval-time-breakdown-retry",
+  "state": "running",
+  "started_at": "2026-06-03T17:20:05+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 226406
+}
