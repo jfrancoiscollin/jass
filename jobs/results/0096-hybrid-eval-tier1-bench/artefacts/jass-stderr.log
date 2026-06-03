@@ -1,0 +1,5 @@
+BREAKDOWN total_ms=4221 eval_ms=979 movegen_ms=1302 apply_ms=134 eval_pct=23 movegen_pct=30 apply_pct=3
+BREAKDOWN total_ms=2548 eval_ms=568 movegen_ms=754 apply_ms=84 eval_pct=22 movegen_pct=29 apply_pct=3
+BREAKDOWN total_ms=3953 eval_ms=932 movegen_ms=1411 apply_ms=111 eval_pct=23 movegen_pct=35 apply_pct=2
+BREAKDOWN total_ms=3079 eval_ms=705 movegen_ms=918 apply_ms=95 eval_pct=22 movegen_pct=29 apply_pct=3
+BREAKDOWN total_ms=2870 eval_ms=641 movegen_ms=1046 apply_ms=84 eval_pct=22 movegen_pct=36 apply_pct=2
