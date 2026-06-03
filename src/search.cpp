@@ -33,6 +33,9 @@ namespace bd {
 inline std::atomic<std::uint64_t> g_eval_ns{0};
 inline std::atomic<std::uint64_t> g_movegen_ns{0};
 inline std::atomic<std::uint64_t> g_apply_ns{0};
+inline std::atomic<std::uint64_t> g_accumulator_ns{0};
+inline std::atomic<std::uint64_t> g_tt_ns{0};
+inline std::atomic<std::uint64_t> g_zobrist_ns{0};
 inline std::atomic<std::uint64_t> g_total_ns{0};
 inline std::atomic<std::uint64_t> g_total_started{0};
 
@@ -61,10 +64,13 @@ struct ScopedTimer {
 
 void breakdown_reset() noexcept {
 #ifdef JASS_TIME_BREAKDOWN
-    bd::g_eval_ns.store(0,    std::memory_order_relaxed);
-    bd::g_movegen_ns.store(0, std::memory_order_relaxed);
-    bd::g_apply_ns.store(0,   std::memory_order_relaxed);
-    bd::g_total_ns.store(0,   std::memory_order_relaxed);
+    bd::g_eval_ns.store(0,        std::memory_order_relaxed);
+    bd::g_movegen_ns.store(0,     std::memory_order_relaxed);
+    bd::g_apply_ns.store(0,       std::memory_order_relaxed);
+    bd::g_accumulator_ns.store(0, std::memory_order_relaxed);
+    bd::g_tt_ns.store(0,          std::memory_order_relaxed);
+    bd::g_zobrist_ns.store(0,     std::memory_order_relaxed);
+    bd::g_total_ns.store(0,       std::memory_order_relaxed);
     bd::g_total_started.store(bd::now_ns(), std::memory_order_relaxed);
 #endif
 }
@@ -72,11 +78,14 @@ void breakdown_reset() noexcept {
 BreakdownStats breakdown_snapshot() noexcept {
     BreakdownStats s;
 #ifdef JASS_TIME_BREAKDOWN
-    s.eval_ns    = bd::g_eval_ns.load(std::memory_order_relaxed);
-    s.movegen_ns = bd::g_movegen_ns.load(std::memory_order_relaxed);
-    s.apply_ns   = bd::g_apply_ns.load(std::memory_order_relaxed);
+    s.eval_ns        = bd::g_eval_ns.load(std::memory_order_relaxed);
+    s.movegen_ns     = bd::g_movegen_ns.load(std::memory_order_relaxed);
+    s.apply_ns       = bd::g_apply_ns.load(std::memory_order_relaxed);
+    s.accumulator_ns = bd::g_accumulator_ns.load(std::memory_order_relaxed);
+    s.tt_ns          = bd::g_tt_ns.load(std::memory_order_relaxed);
+    s.zobrist_ns     = bd::g_zobrist_ns.load(std::memory_order_relaxed);
     const auto t0 = bd::g_total_started.load(std::memory_order_relaxed);
-    s.total_ns   = (t0 == 0) ? 0 : (bd::now_ns() - t0);
+    s.total_ns       = (t0 == 0) ? 0 : (bd::now_ns() - t0);
 #endif
     return s;
 }
@@ -229,6 +238,7 @@ struct Searcher {
                           const Move& m,
                           const Position& pos_after) noexcept {
         if (!mlpq_nnue) return;
+        BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;  // ply cap, no descent
@@ -242,6 +252,7 @@ struct Searcher {
     // bit-identical to the previous ply's. Just copy.
     void push_accumulator_null(int ply) noexcept {
         if (!mlpq_nnue) return;
+        BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;
@@ -354,7 +365,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // here because `nodes` was just bumped from 0 → 1 the very first time.
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
-    const ZobristHash hash = zobrist_hash(pos);
+    ZobristHash hash;
+    { BD_TIME(zobrist); hash = zobrist_hash(pos); }
 
     // 0. Path-dependent draw detection. Path-dependent because it depends
     //    on which prior positions the search has visited, so we must not
@@ -384,7 +396,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //    compatible with the current alpha-beta window; otherwise we still
     //    keep the suggested move for ordering.
     TTEntry tt_entry;
-    bool    tt_hit  = tt->probe(hash, tt_entry);
+    bool    tt_hit;
+    { BD_TIME(tt); tt_hit = tt->probe(hash, tt_entry); }
     if (tt_hit && tt_entry.depth >= depth) {
         const int s = score_from_tt(tt_entry.score, ply);
         if (tt_entry.bound() == Bound::Exact)                    return s;
@@ -656,8 +669,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         else if (best > alpha_orig) bound = Bound::Exact;
         else                        bound = Bound::Upper;
 
-        tt->store(hash, pack_move(best_move),
-                  score_to_tt(best, ply), depth, bound);
+        { BD_TIME(tt); tt->store(hash, pack_move(best_move),
+                                 score_to_tt(best, ply), depth, bound); }
     }
     return best;
 }
