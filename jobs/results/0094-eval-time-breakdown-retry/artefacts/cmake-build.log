@@ -1,0 +1,18 @@
+[  9%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+[  9%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:215:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  215 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:216:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  216 |                 : accumulators[ply].black;
+      |                                ^~~
+[ 13%] Linking CXX static library libjass_lib.a
+[ 90%] Built target jass_lib
+[ 95%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+Assembler messages:
+Error: can't open /tmp/ccfVO6Mr.s for reading: No such file or directory
+gmake[3]: *** [CMakeFiles/jass.dir/build.make:76: CMakeFiles/jass.dir/src/main.cpp.o] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:113: CMakeFiles/jass.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:120: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:147: jass] Error 2
