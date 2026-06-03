@@ -24,6 +24,7 @@
 
 #include "movegen.hpp"
 
+#include "bd_time.hpp"
 #include "bitboard.hpp"
 #include "board.hpp"
 
@@ -144,6 +145,7 @@ void extend_king_captures(CaptureCtx& ctx) {
 }
 
 void generate_captures(const Position& pos, MoveList& out) {
+    BD_TIME(movegen_capture);
     CaptureCtx ctx{};
     ctx.us        = pos.side_to_move();
     ctx.friend_bb = pos.pieces_of(ctx.us);
@@ -172,6 +174,7 @@ void generate_captures(const Position& pos, MoveList& out) {
 }
 
 void generate_quiet_moves(const Position& pos, MoveList& out) {
+    BD_TIME(movegen_quiet);
     const Color    us  = pos.side_to_move();
     const Bitboard occ = pos.occupied();
 
