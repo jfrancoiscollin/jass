@@ -1,0 +1,5 @@
+-- Jass: AVX2 enabled (-mavx2)
+-- Jass: time-breakdown instrumentation ENABLED
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+-- Build files have been written to: /root/jass/build-bd
