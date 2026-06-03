@@ -1,0 +1,7 @@
+{
+  "job_id": "0092-perf-profile-hot-path",
+  "state": "running",
+  "started_at": "2026-06-03T16:33:53+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 225734
+}
