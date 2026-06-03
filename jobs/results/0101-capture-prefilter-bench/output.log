@@ -1,0 +1,53 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build instrumented + prod ===
+
+=== 1) breakdown (5 × movetime 5000ms) ===
+BREAKDOWN total_ms=4538 eval_ms=1032 movegen_ms=1355 apply_ms=110 accumulator_ms=828 tt_ms=382 zobrist_ms=76 movegen_capture_ms=549 movegen_quiet_ms=457 eval_pct=22 movegen_pct=29 apply_pct=2 accumulator_pct=18 tt_pct=8 zobrist_pct=1 movegen_capture_pct=12 movegen_quiet_pct=10
+BREAKDOWN total_ms=4798 eval_ms=976 movegen_ms=1444 apply_ms=123 accumulator_ms=949 tt_ms=420 zobrist_ms=80 movegen_capture_ms=680 movegen_quiet_ms=396 eval_pct=20 movegen_pct=30 apply_pct=2 accumulator_pct=19 tt_pct=8 zobrist_pct=1 movegen_capture_pct=14 movegen_quiet_pct=8
+BREAKDOWN total_ms=2899 eval_ms=648 movegen_ms=998 apply_ms=65 accumulator_ms=513 tt_ms=200 zobrist_ms=38 movegen_capture_ms=447 movegen_quiet_ms=329 eval_pct=22 movegen_pct=34 apply_pct=2 accumulator_pct=17 tt_pct=6 zobrist_pct=1 movegen_capture_pct=15 movegen_quiet_pct=11
+BREAKDOWN total_ms=3301 eval_ms=720 movegen_ms=964 apply_ms=79 accumulator_ms=640 tt_ms=282 zobrist_ms=55 movegen_capture_ms=374 movegen_quiet_ms=338 eval_pct=21 movegen_pct=29 apply_pct=2 accumulator_pct=19 tt_pct=8 zobrist_pct=1 movegen_capture_pct=11 movegen_quiet_pct=10
+BREAKDOWN total_ms=3796 eval_ms=769 movegen_ms=1309 apply_ms=93 accumulator_ms=688 tt_ms=280 zobrist_ms=53 movegen_capture_ms=602 movegen_quiet_ms=414 eval_pct=20 movegen_pct=34 apply_pct=2 accumulator_pct=18 tt_pct=7 zobrist_pct=1 movegen_capture_pct=15 movegen_quiet_pct=10
+positions: 5  walltime: 19332ms
+
+  eval         :   4145ms ( 21.4%)
+  movegen      :   6070ms ( 31.4%)
+    └─ capture :   2652ms ( 13.7%)   [0099: 14.3%]
+    └─ quiet   :   1934ms ( 10.0%)
+  accumulator  :   3618ms ( 18.7%)
+
+=== 2) NPS PROD vs 0091 ===
+capture-prefilter : median_depth=15  median_nps=1190216
+baseline 0091     : median_depth=15  median_nps=917320
+gain NPS : +29.7%
+
+=== 3) bench vs Scan d10 ===
+  game  45: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  46: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  47: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  48: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  49: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  50: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  51: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  52: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  53: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  54: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=47  Scan=7  Draws=0
+  Jass score rate: 0.870 (47.0 / 54)
+  ELO estimate:    +331 (95% CI ≈ ±109)
+
+==========================================================
+       0101 CAPTURE PRE-FILTER VERDICT
+==========================================================
+Capture pct (était 14.3%) : 13.7%
+NPS gain vs 0091          : +29.7%
+Rate vs Scan d10          : 0.870 (baseline 0.870)
+
+Gates :
+  Capture pct < 11%       : FAIL
+  NPS gain >= +3%         : PASS
+  Rate vs Scan d10 >= 0.85 : PASS
+==========================================================
