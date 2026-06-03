@@ -1,0 +1,27 @@
+=== host facts ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+model name	: AMD EPYC-Milan Processor
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm rep_good nopl cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw topoext perfctr_core ssbd ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves clzero xsaveerptr wbnoinvd arat umip pku ospke rdpid fsrm
+gmake[2]: *** [CMakeFiles/jass_tests.dir/build.make:188: CMakeFiles/jass_tests.dir/tests/test_book.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:139: CMakeFiles/jass_tests.dir/all] Error 2
+gmake: *** [Makefile:101: all] Error 2
+
+engine              median_d  mean_d  median_nps
+v15-128-64              15.0    15.3      917320
+v15-192-96              15.0    14.9      786068
+v15-256-128             14.5    14.6      643340
+v8-256-128              13.0    12.8      297170
+v11-1024-512            10.0    10.6       98076
+
+==========================================================
+       0091 v15 NPS PROFILE VERDICT
+==========================================================
+Comparaison NPS scaled par params :
+  128-64  : ~66K params/eval
+  256-128 : ~148K params/eval (2.2× plus que 128-64)
+  1024-512: ~1.5M params/eval (10× plus que 256-128)
+
+Si 128-64 NPS ~ 256-128 × 2.2 → eval scaling dominé par compute, SIMD valable
+Si 128-64 NPS ~ 256-128 (peu de gain) → overhead search domine, SIMD limité
+Si 128-64 NPS << expected → bottleneck inconnu, à investiger
+==========================================================
