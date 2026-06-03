@@ -1,0 +1,77 @@
+
+=== jass-v11 (1024-512) (/root/jass/jobs/results/0083-scan-distill-v11-capacity-bump/artefacts.src/arch-1024-512/nnue-1024-512-q.bin) ===
+  pos 0: depth=9 nodes=50627 (101254 nps)
+  pos 1: depth=11 nodes=53607 (107214 nps)
+  pos 2: depth=11 nodes=47418 (94836 nps)
+  pos 3: depth=10 nodes=57511 (115022 nps)
+  pos 4: depth=9 nodes=46118 (92236 nps)
+  pos 5: depth=10 nodes=47790 (95580 nps)
+  pos 6: depth=9 nodes=41645 (83290 nps)
+  pos 7: depth=10 nodes=47884 (95768 nps)
+  pos 8: depth=10 nodes=46362 (92724 nps)
+  pos 9: depth=13 nodes=57142 (114284 nps)
+  pos 10: depth=12 nodes=60051 (120102 nps)
+  pos 11: depth=9 nodes=44115 (88230 nps)
+  pos 12: depth=11 nodes=50192 (100384 nps)
+  pos 13: depth=10 nodes=54609 (109218 nps)
+  pos 14: depth=12 nodes=61658 (123316 nps)
+  pos 15: depth=11 nodes=38627 (77254 nps)
+  pos 16: depth=11 nodes=72192 (144384 nps)
+  pos 17: depth=10 nodes=40761 (81522 nps)
+  pos 18: depth=14 nodes=54937 (109874 nps)
+  pos 19: depth=10 nodes=43711 (87422 nps)
+
+=== jass-v8 (512-256) (/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin) ===
+  pos 0: depth=11 nodes=157554 (315108 nps)
+  pos 1: depth=13 nodes=158100 (316200 nps)
+  pos 2: depth=13 nodes=130816 (261632 nps)
+  pos 3: depth=13 nodes=175104 (350208 nps)
+  pos 4: depth=10 nodes=116186 (232372 nps)
+  pos 5: depth=15 nodes=181681 (363362 nps)
+  pos 6: depth=11 nodes=90187 (180374 nps)
+  pos 7: depth=14 nodes=158355 (316710 nps)
+  pos 8: depth=11 nodes=179200 (358400 nps)
+  pos 9: depth=13 nodes=88591 (177182 nps)
+  pos 10: depth=13 nodes=109625 (219250 nps)
+  pos 11: depth=12 nodes=139616 (279232 nps)
+  pos 12: depth=13 nodes=176810 (353620 nps)
+  pos 13: depth=14 nodes=158820 (317640 nps)
+  pos 14: depth=11 nodes=109928 (219856 nps)
+  pos 15: depth=15 nodes=135275 (270550 nps)
+  pos 16: depth=13 nodes=168048 (336096 nps)
+  pos 17: depth=15 nodes=159294 (318588 nps)
+  pos 18: depth=16 nodes=180441 (360882 nps)
+  pos 19: depth=11 nodes=116746 (233492 nps)
+
+=== Scan ===
+  pos 0: depth=19 nodes=5081757
+  pos 1: depth=0 nodes=0
+  pos 2: depth=0 nodes=0
+  pos 3: depth=19 nodes=2869482
+  pos 4: depth=19 nodes=3118182
+  pos 5: depth=25 nodes=4345236
+  pos 6: depth=23 nodes=4799293
+  pos 7: depth=23 nodes=3589579
+  pos 8: depth=20 nodes=4209354
+  pos 9: depth=23 nodes=4315101
+  pos 10: depth=24 nodes=3508165
+  pos 11: depth=18 nodes=3124138
+  pos 12: depth=19 nodes=3896052
+  pos 13: depth=21 nodes=4782460
+  pos 14: depth=0 nodes=0
+  pos 15: depth=22 nodes=4398452
+  pos 16: depth=19 nodes=4417661
+  pos 17: depth=26 nodes=4295433
+  pos 18: depth=0 nodes=0
+  pos 19: depth=20 nodes=5302017
+
+=========================================
+        SUMMARY (movetime=500ms)
+=========================================
+engine                     median_d  mean_d  median_nodes  median_nps
+jass-v11 (1024-512)            10.0    10.6         49038       98076
+jass-v8 (512-256)              13.0    12.8        157827      315654
+Scan                           19.5    17.0       4052703     8105406
+
+v11 vs v8 depth delta : -3.0 (negative = v11 plus lent = H1 confirmé)
+v11 vs Scan depth delta : -9.5 (negative = Scan plus profond)
