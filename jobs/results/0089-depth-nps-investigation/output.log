@@ -1,0 +1,24 @@
+[ 57%] Built target jass_lib
+[ 62%] Built target jass
+[100%] Built target jass_tests
+Traceback (most recent call last):
+  File "<stdin>", line 12, in <module>
+  File "/usr/lib/python3.12/pathlib.py", line 1021, in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '$MASTER'
+
+==========================================================
+       0089 DEPTH+NPS INVESTIGATION VERDICT
+==========================================================
+See /root/jass/jobs/results/0089-depth-nps-investigation/artefacts.src/depth-nps-report.log
+
+  Lecture :
+    * Si v11 << v8 (depth) → eval cost dominant, optimize NNUE
+    * Si v8 << Scan (depth) → search inefficient ou Scan faster
+    * Si v11 ≈ v8 mais << Scan → Scan c++ tight, jass overhead Python/HUB
+    * Si v11 ≈ Scan (depth) mais lose rate massif → eval quality, pas time
+==========================================================
