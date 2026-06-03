@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 32, threads 1, movetime_ms 500, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=24 B=21 Draws=9 (total 54)
+A score rate: 0.527778 (28.5 / 54)
