@@ -1,0 +1,5 @@
+positions: 5  total walltime: 16671ms
+  eval         :   3825ms ( 22.9%)
+  movegen      :   5431ms ( 32.6%)
+  apply        :    508ms (  3.0%)
+  other        :   6907ms ( 41.4%)

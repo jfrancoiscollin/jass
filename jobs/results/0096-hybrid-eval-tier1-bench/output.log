@@ -1,0 +1,67 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+
+=== build INSTRUMENTED (with breakdown) ===
+build-bd OK
+
+=== build PROD (no instrumentation, for bench vs Scan) ===
+build-prod OK
+
+=== 1) breakdown NPS profile (5 × movetime 5000ms) ===
+BREAKDOWN lines :
+BREAKDOWN total_ms=4221 eval_ms=979 movegen_ms=1302 apply_ms=134 eval_pct=23 movegen_pct=30 apply_pct=3
+BREAKDOWN total_ms=2548 eval_ms=568 movegen_ms=754 apply_ms=84 eval_pct=22 movegen_pct=29 apply_pct=3
+BREAKDOWN total_ms=3953 eval_ms=932 movegen_ms=1411 apply_ms=111 eval_pct=23 movegen_pct=35 apply_pct=2
+BREAKDOWN total_ms=3079 eval_ms=705 movegen_ms=918 apply_ms=95 eval_pct=22 movegen_pct=29 apply_pct=3
+BREAKDOWN total_ms=2870 eval_ms=641 movegen_ms=1046 apply_ms=84 eval_pct=22 movegen_pct=36 apply_pct=2
+
+bestmove summary :
+bestmove 25-20 score=-143 depth=16 nodes=5495840
+bestmove 47-41 score=-119 depth=18 nodes=3337059
+bestmove 14-20 score=21 depth=17 nodes=4722449
+bestmove 15x24 score=17 depth=19 nodes=3921018
+bestmove 34x23 score=3 depth=19 nodes=3456510
+positions: 5  total walltime: 16671ms
+  eval         :   3825ms ( 22.9%)
+  movegen      :   5431ms ( 32.6%)
+  apply        :    508ms (  3.0%)
+  other        :   6907ms ( 41.4%)
+
+=== 2) NPS PROD (uninstrumented, vs 0091 baseline) ===
+v15-128-64 hybrid : median_depth=12  median_nps=1080338
+  baseline 0091   : median_depth=15  median_nps=917320
+  gain NPS        : +17.8%
+
+=== 3) bench vs Scan d10 (quality regression) ===
+  game  40: Scan=W Jass=B → D (ply cap, 200 plies)  Jass +0.5  [109s]
+  game  41: Jass=W Scan=B → L (no legal move from Jass-player, 159 plies)  Jass +0.0  [111s]
+  game  42: Scan=W Jass=B → D (ply cap, 200 plies)  Jass +0.5  [120s]
+  game  43: Jass=W Scan=B → L (no legal move from Jass-player, 133 plies)  Jass +0.0  [123s]
+  game  44: Scan=W Jass=B → W (no legal move from Jass-player, 138 plies)  Jass +0.0  [126s]
+  game  45: Jass=W Scan=B → L (no legal move from Jass-player, 133 plies)  Jass +0.0  [128s]
+  game  46: Scan=W Jass=B → W (no legal move from Jass-player, 138 plies)  Jass +0.0  [131s]
+  game  47: Jass=W Scan=B → L (no legal move from Jass-player, 133 plies)  Jass +0.0  [134s]
+  game  48: Scan=W Jass=B → W (no legal move from Jass-player, 138 plies)  Jass +0.0  [137s]
+  game  49: Jass=W Scan=B → L (no legal move from Jass-player, 153 plies)  Jass +0.0  [141s]
+  game  50: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [143s]
+  game  51: Jass=W Scan=B → L (no legal move from Jass-player, 153 plies)  Jass +0.0  [147s]
+  game  52: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [149s]
+  game  53: Jass=W Scan=B → L (no legal move from Jass-player, 153 plies)  Jass +0.0  [153s]
+  game  54: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [155s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=0  Scan=48  Draws=6
+  Jass score rate: 0.056 (3.0 / 54)
+  ELO estimate:    -492 (95% CI ≈ ±109)
+
+==========================================================
+       0096 HYBRID EVAL TIER 1 VERDICT
+==========================================================
+NPS gain vs 0091 baseline : +17.8%
+Rate vs Scan d10          : 0.056 (baseline 0.870)
+
+Gates :
+  NPS gain >= +5%        : PASS
+  Rate vs Scan d10 >= 0.80 : FAIL
+==========================================================
