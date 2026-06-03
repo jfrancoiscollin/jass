@@ -51,7 +51,10 @@ struct ScopedTimer {
     }
 };
 }  // namespace bd
-#define BD_TIME(bucket) ::jass::bd::ScopedTimer __bd_##__LINE__(::jass::bd::g_##bucket##_ns)
+#define BD_TIME_CAT_(a, b) a##b
+#define BD_TIME_CAT(a, b)  BD_TIME_CAT_(a, b)
+#define BD_TIME(bucket) ::jass::bd::ScopedTimer \
+    BD_TIME_CAT(__bd_, __COUNTER__)(::jass::bd::g_##bucket##_ns)
 #else
 #define BD_TIME(bucket) ((void)0)
 #endif
