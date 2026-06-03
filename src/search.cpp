@@ -219,20 +219,6 @@ struct Searcher {
         return nnue ? nnue->evaluate(pos) : evaluate(pos);
     }
 
-    // Hybrid-eval fast path : used for *prune-decision* evals (RFP, NMP)
-    // where alpha-beta only needs to answer "is this position clearly
-    // >= beta ?", not the exact value. The handcrafted `evaluate(pos)`
-    // is ~10× cheaper than NNUE forward (no L1/L2 matmul, no accumulator
-    // dereference) and is accurate enough for margin-based pruning.
-    //
-    // The result is NOT used for the score returned by alpha-beta — that
-    // path still goes through `eval_leaf` (NNUE). So search quality is
-    // preserved as long as the cheap eval's bias stays within the margin.
-    int eval_cheap(const Position& pos) const noexcept {
-        BD_TIME(eval);
-        return evaluate(pos);
-    }
-
     // Populate `accumulators[ply+1]` to reflect `pos_after` given that
     // `accumulators[ply]` already reflects `pos_before` and `m` was
     // played from pos_before. Fast path: copy + `apply_move`. Slow
@@ -434,10 +420,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             && !was_null
             && !is_mate_score(beta)
             && !moves[0].is_capture()) {
-            // Hybrid eval : cheap handcrafted suffices for the margin
-            // check. The margin (100 cp × depth) absorbs the cheap-eval
-            // bias; ELO-neutral or positive in practice.
-            const int eval   = eval_cheap(pos);
+            const int eval   = eval_leaf(pos, ply);
             const int margin = RFP_MARGIN * depth;
             if (eval - margin >= beta) return eval - margin;
         }
@@ -467,10 +450,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
             if (popcount(all) >= NMP_MIN_PIECES) {
-                // Hybrid eval : cheap suffices for the gating "is eval
-                // already >= beta ?" predicate. False negatives just
-                // mean NMP doesn't fire here — correctness preserved.
-                const int eval = eval_cheap(pos);
+                const int eval = eval_leaf(pos, ply);
                 if (eval >= beta) {
                     const int R          = 2 + depth / 4;
                     const int reduced    = depth - 1 - R;
