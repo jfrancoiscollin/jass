@@ -1,0 +1,28 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== rebuild with -DJASS_TIME_BREAKDOWN=ON ===
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /root/jass/build-bd
+gmake[2]: *** [CMakeFiles/Makefile2:87: CMakeFiles/jass_lib.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:120: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:147: jass] Error 2
+sample positions :
+W:W22,25,26,34,36,38,39,42,43,47,48:B4,6,7,8,9,10,11,12,13,23,30
+W:W15,29,33,34,35,36,39,40,45,47:B4,8,9,10,13,14,18,21,25,26
+B:W16,25,34,35,37,38,39,41,42,43,44,45,46,47,48,49:B1,3,5,7,8,9,10,11,12,13,14,15,17,18,24,26
+B:W20,23,31,33,36,38,42,43,45,47,48,49:B2,3,6,8,9,12,15,16,17,18,21
+W:W27,28,31,32,34,35,36,37,40,41,42,43,44,45,48,49,50:B1,2,3,6,7,8,9,10,12,13,14,15,16,18,19,20,29
+
+=== 5 × go movetime 5000ms ===
+stdout :
+
+BREAKDOWN lines :
+(none — instrumentation didn't fire?)
+
+==========================================================
+       0093 EVAL / MOVEGEN / APPLY / OTHER BREAKDOWN
+==========================================================
+no BREAKDOWN lines — abort
+==========================================================
