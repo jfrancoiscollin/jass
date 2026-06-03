@@ -1,0 +1,57 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build instrumented + prod ===
+builds OK
+
+=== 1) breakdown (5 × movetime 5000ms) ===
+BREAKDOWN total_ms=4638 eval_ms=1033 movegen_ms=1432 apply_ms=113 accumulator_ms=832 tt_ms=395 zobrist_ms=76 movegen_capture_ms=627 movegen_quiet_ms=456 eval_pct=22 movegen_pct=30 apply_pct=2 accumulator_pct=17 tt_pct=8 zobrist_pct=1 movegen_capture_pct=13 movegen_quiet_pct=9
+BREAKDOWN total_ms=4798 eval_ms=963 movegen_ms=1441 apply_ms=126 accumulator_ms=942 tt_ms=447 zobrist_ms=80 movegen_capture_ms=689 movegen_quiet_ms=385 eval_pct=20 movegen_pct=30 apply_pct=2 accumulator_pct=19 tt_pct=9 zobrist_pct=1 movegen_capture_pct=14 movegen_quiet_pct=8
+BREAKDOWN total_ms=2951 eval_ms=648 movegen_ms=1047 apply_ms=67 accumulator_ms=514 tt_ms=203 zobrist_ms=38 movegen_capture_ms=507 movegen_quiet_ms=318 eval_pct=21 movegen_pct=35 apply_pct=2 accumulator_pct=17 tt_pct=6 zobrist_pct=1 movegen_capture_pct=17 movegen_quiet_pct=10
+BREAKDOWN total_ms=3372 eval_ms=720 movegen_ms=1007 apply_ms=82 accumulator_ms=642 tt_ms=304 zobrist_ms=55 movegen_capture_ms=419 movegen_quiet_ms=335 eval_pct=21 movegen_pct=29 apply_pct=2 accumulator_pct=19 tt_pct=9 zobrist_pct=1 movegen_capture_pct=12 movegen_quiet_pct=9
+BREAKDOWN total_ms=3898 eval_ms=768 movegen_ms=1397 apply_ms=96 accumulator_ms=687 tt_ms=295 zobrist_ms=53 movegen_capture_ms=706 movegen_quiet_ms=399 eval_pct=19 movegen_pct=35 apply_pct=2 accumulator_pct=17 tt_pct=7 zobrist_pct=1 movegen_capture_pct=18 movegen_quiet_pct=10
+positions: 5  walltime: 19657ms
+
+  eval               :   4132ms ( 21.0%)
+  movegen TOTAL      :   6324ms ( 32.2%)   [0099: 32.3%]
+    └─ capture       :   2948ms ( 15.0%)   [0099: 14.3%]
+    └─ quiet         :   1893ms (  9.6%)   [0099:  9.9%]
+    └─ wrapper       :   1483ms (  7.5%)   [0099:  8.1% → cible <2%]
+  apply              :    484ms (  2.5%)
+  accumulator        :   3617ms ( 18.4%)
+  tt                 :   1644ms (  8.4%)
+
+=== 2) NPS PROD vs 0091 ===
+wrapper-kill : median_depth=15  median_nps=913480
+baseline 0091 : median_depth=15  median_nps=917320
+gain NPS : -0.4%
+
+=== 3) bench vs Scan d10 ===
+  game  45: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  46: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  47: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  48: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  49: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  50: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  51: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  52: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+  game  53: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [24s]
+  game  54: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [24s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=47  Scan=7  Draws=0
+  Jass score rate: 0.870 (47.0 / 54)
+  ELO estimate:    +331 (95% CI ≈ ±109)
+
+==========================================================
+       0100 MOVEGEN WRAPPER-KILL VERDICT
+==========================================================
+Wrapper pct (était 8.1%) : 7.5%
+NPS gain vs 0091         : -0.4%
+Rate vs Scan d10         : 0.870 (baseline 0.870)
+
+Gates :
+  Wrapper pct < 3%        : FAIL
+  NPS gain >= +5%         : FAIL
+  Rate vs Scan d10 >= 0.85 : PASS
+==========================================================
