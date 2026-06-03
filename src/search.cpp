@@ -3,6 +3,7 @@
 
 #include "search.hpp"
 
+#include "bd_time.hpp"
 #include "endgame.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
@@ -22,55 +23,17 @@
 
 namespace jass {
 
-// --- Time-breakdown instrumentation -------------------------------------
-//
-// Only active when the TU is built with `-DJASS_TIME_BREAKDOWN`. The
-// counters are shared across helper threads via relaxed atomics. The
-// helper macros wrap a single call site without changing its expression
-// type so the surrounding code stays readable.
-#ifdef JASS_TIME_BREAKDOWN
-namespace bd {
-inline std::atomic<std::uint64_t> g_eval_ns{0};
-inline std::atomic<std::uint64_t> g_movegen_ns{0};
-inline std::atomic<std::uint64_t> g_apply_ns{0};
-inline std::atomic<std::uint64_t> g_accumulator_ns{0};
-inline std::atomic<std::uint64_t> g_tt_ns{0};
-inline std::atomic<std::uint64_t> g_zobrist_ns{0};
-inline std::atomic<std::uint64_t> g_total_ns{0};
-inline std::atomic<std::uint64_t> g_total_started{0};
-
-inline std::uint64_t now_ns() noexcept {
-    return static_cast<std::uint64_t>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(
-            std::chrono::steady_clock::now().time_since_epoch()).count());
-}
-struct ScopedTimer {
-    std::atomic<std::uint64_t>& bucket;
-    std::uint64_t t0;
-    explicit ScopedTimer(std::atomic<std::uint64_t>& b) noexcept
-        : bucket(b), t0(now_ns()) {}
-    ~ScopedTimer() {
-        bucket.fetch_add(now_ns() - t0, std::memory_order_relaxed);
-    }
-};
-}  // namespace bd
-#define BD_TIME_CAT_(a, b) a##b
-#define BD_TIME_CAT(a, b)  BD_TIME_CAT_(a, b)
-#define BD_TIME(bucket) ::jass::bd::ScopedTimer \
-    BD_TIME_CAT(__bd_, __COUNTER__)(::jass::bd::g_##bucket##_ns)
-#else
-#define BD_TIME(bucket) ((void)0)
-#endif
-
 void breakdown_reset() noexcept {
 #ifdef JASS_TIME_BREAKDOWN
-    bd::g_eval_ns.store(0,        std::memory_order_relaxed);
-    bd::g_movegen_ns.store(0,     std::memory_order_relaxed);
-    bd::g_apply_ns.store(0,       std::memory_order_relaxed);
-    bd::g_accumulator_ns.store(0, std::memory_order_relaxed);
-    bd::g_tt_ns.store(0,          std::memory_order_relaxed);
-    bd::g_zobrist_ns.store(0,     std::memory_order_relaxed);
-    bd::g_total_ns.store(0,       std::memory_order_relaxed);
+    bd::g_eval_ns.store(0,             std::memory_order_relaxed);
+    bd::g_movegen_ns.store(0,          std::memory_order_relaxed);
+    bd::g_apply_ns.store(0,            std::memory_order_relaxed);
+    bd::g_accumulator_ns.store(0,      std::memory_order_relaxed);
+    bd::g_tt_ns.store(0,               std::memory_order_relaxed);
+    bd::g_zobrist_ns.store(0,          std::memory_order_relaxed);
+    bd::g_movegen_capture_ns.store(0,  std::memory_order_relaxed);
+    bd::g_movegen_quiet_ns.store(0,    std::memory_order_relaxed);
+    bd::g_total_ns.store(0,            std::memory_order_relaxed);
     bd::g_total_started.store(bd::now_ns(), std::memory_order_relaxed);
 #endif
 }
@@ -78,12 +41,14 @@ void breakdown_reset() noexcept {
 BreakdownStats breakdown_snapshot() noexcept {
     BreakdownStats s;
 #ifdef JASS_TIME_BREAKDOWN
-    s.eval_ns        = bd::g_eval_ns.load(std::memory_order_relaxed);
-    s.movegen_ns     = bd::g_movegen_ns.load(std::memory_order_relaxed);
-    s.apply_ns       = bd::g_apply_ns.load(std::memory_order_relaxed);
-    s.accumulator_ns = bd::g_accumulator_ns.load(std::memory_order_relaxed);
-    s.tt_ns          = bd::g_tt_ns.load(std::memory_order_relaxed);
-    s.zobrist_ns     = bd::g_zobrist_ns.load(std::memory_order_relaxed);
+    s.eval_ns             = bd::g_eval_ns.load(std::memory_order_relaxed);
+    s.movegen_ns          = bd::g_movegen_ns.load(std::memory_order_relaxed);
+    s.apply_ns            = bd::g_apply_ns.load(std::memory_order_relaxed);
+    s.accumulator_ns      = bd::g_accumulator_ns.load(std::memory_order_relaxed);
+    s.tt_ns               = bd::g_tt_ns.load(std::memory_order_relaxed);
+    s.zobrist_ns          = bd::g_zobrist_ns.load(std::memory_order_relaxed);
+    s.movegen_capture_ns  = bd::g_movegen_capture_ns.load(std::memory_order_relaxed);
+    s.movegen_quiet_ns    = bd::g_movegen_quiet_ns.load(std::memory_order_relaxed);
     const auto t0 = bd::g_total_started.load(std::memory_order_relaxed);
     s.total_ns       = (t0 == 0) ? 0 : (bd::now_ns() - t0);
 #endif
