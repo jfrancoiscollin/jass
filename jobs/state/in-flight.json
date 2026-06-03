@@ -1,0 +1,7 @@
+{
+  "job_id": "0091-v15-nps-profile",
+  "script": "jobs/queue/0091-v15-nps-profile.sh",
+  "pid": 225467,
+  "started_at": "2026-06-03T16:23:40+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
