@@ -1,7 +1,9 @@
 {
   "job_id": "0092-perf-profile-hot-path",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 4,
   "started_at": "2026-06-03T16:33:53+00:00",
+  "ended_at": "2026-06-03T16:39:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 225734
+  "artefacts_server_path": "/root/jass/jobs/results/0092-perf-profile-hot-path/artefacts.src"
 }
