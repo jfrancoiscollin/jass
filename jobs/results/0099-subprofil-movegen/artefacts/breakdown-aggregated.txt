@@ -1,0 +1,12 @@
+positions: 5  total walltime: 19495ms
+
+  eval               :   4102ms ( 21.0%)
+  movegen TOTAL      :   6288ms ( 32.3%)
+    └─ capture       :   2788ms ( 14.3%)  [NEW]
+    └─ quiet         :   1930ms (  9.9%)  [NEW]
+    └─ wrapper       :   1570ms (  8.1%)  [filter max-captures + push]
+  apply              :    468ms (  2.4%)
+  accumulator        :   3628ms ( 18.6%)
+  tt                 :   1561ms (  8.0%)
+  zobrist            :    302ms (  1.5%)
+  other (rest)       :   3146ms ( 16.1%)
