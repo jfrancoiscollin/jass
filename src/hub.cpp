@@ -5,10 +5,12 @@
 
 #include "eval.hpp"
 #include "nnue.hpp"
+#include "search.hpp"
 #include "timemgr.hpp"
 
 #include <cctype>
 #include <charconv>
+#include <iostream>
 #include <istream>
 #include <ostream>
 #include <string>
@@ -189,6 +191,26 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
     }
     out_ << '\n';
     out_.flush();
+
+#ifdef JASS_TIME_BREAKDOWN
+    // Auto-emit breakdown stats to stderr after every bestmove when the
+    // binary was built with JASS_TIME_BREAKDOWN. Job 0093 captures these
+    // lines to compute eval/movegen/apply breakdown %.
+    const auto bd = breakdown_snapshot();
+    if (bd.total_ns > 0) {
+        const double t = static_cast<double>(bd.total_ns);
+        std::cerr << "BREAKDOWN"
+                  << " total_ms="   << bd.total_ns    / 1'000'000
+                  << " eval_ms="    << bd.eval_ns     / 1'000'000
+                  << " movegen_ms=" << bd.movegen_ns  / 1'000'000
+                  << " apply_ms="   << bd.apply_ns    / 1'000'000
+                  << " eval_pct="   << static_cast<int>(100.0 * bd.eval_ns    / t)
+                  << " movegen_pct="<< static_cast<int>(100.0 * bd.movegen_ns / t)
+                  << " apply_pct="  << static_cast<int>(100.0 * bd.apply_ns   / t)
+                  << '\n';
+        std::cerr.flush();
+    }
+#endif
 }
 
 void HubFrontEnd::cmd_hello() {
