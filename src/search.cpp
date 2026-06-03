@@ -202,32 +202,6 @@ struct Searcher {
     const MLPNetworkQ*                    mlpq_nnue{nullptr};
     std::array<AccumulatorPair, MAX_PLY + 2> accumulators{};
 
-    // Lazy accumulator support.
-    //
-    // Profile 0097 mesured push_accumulator at 20% of total search time.
-    // Most accumulator updates are wasted on branches that get pruned
-    // before reaching eval. Strategy : defer the apply_move/refresh until
-    // an eval is actually requested at that ply.
-    //
-    // Invariants :
-    //  - `acc_clean_ply` : the highest ply for which accumulators[ply] is
-    //    valid for the *current* search path. Initially 0 after root
-    //    refresh.
-    //  - `stack_pos[ply]` : the Position passed to negamax/quiescence at
-    //    `ply`. Set at function top so ensure_accumulator can rebuild
-    //    accumulators[ply] from accumulators[ply-1] by applying
-    //    `stack_move[ply-1]` (or just copying when `stack_is_null[ply-1]`
-    //    is true).
-    //  - `stack_move[ply]` / `stack_is_null[ply]` : the transition that
-    //    was used to go from ply to ply+1 on the current path.
-    //
-    // On descent (push_accumulator at ply K), we INVALIDATE acc_clean_ply
-    // back to K (the new transition makes accumulators[K+1..] stale).
-    int                                      acc_clean_ply{0};
-    std::array<Position, MAX_PLY + 2>        stack_pos{};
-    std::array<Move,     MAX_PLY + 2>        stack_move{};
-    std::array<bool,     MAX_PLY + 2>        stack_is_null{};
-
     // Set to true while a Null-Move Pruning probe is in progress, so
     // the recursive negamax doesn't try another null move on top
     // (which would converge to nonsense at deep enough chains).
@@ -243,10 +217,9 @@ struct Searcher {
     // Layer-1 rebuild via `evaluate_with_accumulator`. Otherwise we
     // dispatch to whatever INetwork was provided (or to the static
     // handcrafted eval if none).
-    int eval_leaf(const Position& pos, int ply) noexcept {
+    int eval_leaf(const Position& pos, int ply) const noexcept {
         BD_TIME(eval);
         if (mlpq_nnue) {
-            ensure_accumulator(ply);
             const auto& acc = (pos.side_to_move() == Color::White)
                 ? accumulators[ply].white
                 : accumulators[ply].black;
@@ -255,60 +228,35 @@ struct Searcher {
         return nnue ? nnue->evaluate(pos) : evaluate(pos);
     }
 
-    // Walk acc_clean_ply up to target_ply, applying pending transitions
-    // recorded by push_accumulator / push_accumulator_null. No-op when
-    // already clean at target_ply, or when NNUE accumulator is inactive.
-    void ensure_accumulator(int target_ply) noexcept {
-        if (!mlpq_nnue) return;
-        if (acc_clean_ply >= target_ply) return;
-        BD_TIME(accumulator);
-        while (acc_clean_ply < target_ply) {
-            const std::size_t k = static_cast<std::size_t>(acc_clean_ply + 1);
-            if (k >= accumulators.size()) break;  // safety
-            if (stack_is_null[k - 1]) {
-                accumulators[k] = accumulators[k - 1];
-            } else {
-                accumulators[k] = accumulators[k - 1];
-                if (!accumulators[k].apply_move(stack_pos[k - 1], stack_move[k - 1],
-                                                stack_pos[k], *mlpq_nnue)) {
-                    accumulators[k].refresh_from(stack_pos[k], *mlpq_nnue);
-                }
-            }
-            acc_clean_ply = static_cast<int>(k);
-        }
-    }
-
     // Populate `accumulators[ply+1]` to reflect `pos_after` given that
     // `accumulators[ply]` already reflects `pos_before` and `m` was
     // played from pos_before. Fast path: copy + `apply_move`. Slow
     // fallback: full `refresh_from`. No-op when the accumulator path
     // is inactive (mlpq_nnue == nullptr).
     void push_accumulator(int ply,
-                          const Position& /*pos_before*/,
+                          const Position& pos_before,
                           const Move& m,
-                          const Position& /*pos_after*/) noexcept {
+                          const Position& pos_after) noexcept {
         if (!mlpq_nnue) return;
+        BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;  // ply cap, no descent
-        // Record the transition for later application by
-        // ensure_accumulator. pos_before / pos_after are looked up via
-        // stack_pos[ply] / stack_pos[ply+1] (set at the top of the next
-        // negamax/quiescence call).
-        stack_move[pi]     = m;
-        stack_is_null[pi]  = false;
-        if (acc_clean_ply > ply) acc_clean_ply = ply;
+        accumulators[pi1] = accumulators[pi];
+        if (!accumulators[pi1].apply_move(pos_before, m, pos_after, *mlpq_nnue)) {
+            accumulators[pi1].refresh_from(pos_after, *mlpq_nnue);
+        }
     }
 
-    // Null move: piece positions unchanged → next ply's accumulator is
-    // a bit-identical copy. Recorded as a null transition for lazy apply.
+    // Null move: piece positions unchanged → both accumulators are
+    // bit-identical to the previous ply's. Just copy.
     void push_accumulator_null(int ply) noexcept {
         if (!mlpq_nnue) return;
+        BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;
-        stack_is_null[pi] = true;
-        if (acc_clean_ply > ply) acc_clean_ply = ply;
+        accumulators[pi1] = accumulators[pi];
     }
 
     // Returns true if `h` already appears anywhere in `hash_path`.
@@ -384,8 +332,6 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
     ++nodes;
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
-    stack_pos[static_cast<std::size_t>(ply)] = pos;
-
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
@@ -410,7 +356,6 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
 int Searcher::negamax(const Position& pos, int depth, int ply,
                       int alpha, int beta) {
     if (stopped) return 0;
-    stack_pos[static_cast<std::size_t>(ply)] = pos;
     // Hard ply cap so single-move extensions can't run off the end of the
     // killers / hash_path arrays.
     if (ply >= MAX_PLY) return eval_leaf(pos, ply);
@@ -848,8 +793,6 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(limits.nnue);
     if (s.mlpq_nnue) {
         s.accumulators[0].refresh_from(pos, *s.mlpq_nnue);
-        s.stack_pos[0]    = pos;
-        s.acc_clean_ply   = 0;
     }
     if (limits.movetime_ms > 0) {
         s.has_deadline = true;
