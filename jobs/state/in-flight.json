@@ -1,0 +1,7 @@
+{
+  "job_id": "0090-small-arch-sweep-movetime",
+  "script": "jobs/queue/0090-small-arch-sweep-movetime.sh",
+  "pid": 220047,
+  "started_at": "2026-06-03T09:42:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
