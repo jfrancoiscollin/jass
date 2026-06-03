@@ -103,4 +103,18 @@ std::vector<Move> extract_pv(const Position&            start,
                              const TranspositionTable&  tt,
                              int                        max_len = MAX_PLY);
 
+// Time-breakdown instrumentation. When the binary is built with
+// `-DJASS_TIME_BREAKDOWN`, the search wraps the calls to eval / movegen /
+// position-application in chrono samplers and accumulates the time in
+// thread-shared atomic counters. Otherwise these helpers are no-ops and
+// the counters are not touched. ~5-10% overhead when active.
+void breakdown_reset() noexcept;
+struct BreakdownStats {
+    std::uint64_t eval_ns    = 0;
+    std::uint64_t movegen_ns = 0;
+    std::uint64_t apply_ns   = 0;
+    std::uint64_t total_ns   = 0;
+};
+BreakdownStats breakdown_snapshot() noexcept;
+
 }  // namespace jass

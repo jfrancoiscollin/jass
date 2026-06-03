@@ -22,7 +22,80 @@
 
 namespace jass {
 
+// --- Time-breakdown instrumentation -------------------------------------
+//
+// Only active when the TU is built with `-DJASS_TIME_BREAKDOWN`. The
+// counters are shared across helper threads via relaxed atomics. The
+// helper macros wrap a single call site without changing its expression
+// type so the surrounding code stays readable.
+#ifdef JASS_TIME_BREAKDOWN
+namespace bd {
+inline std::atomic<std::uint64_t> g_eval_ns{0};
+inline std::atomic<std::uint64_t> g_movegen_ns{0};
+inline std::atomic<std::uint64_t> g_apply_ns{0};
+inline std::atomic<std::uint64_t> g_total_ns{0};
+inline std::atomic<std::uint64_t> g_total_started{0};
+
+inline std::uint64_t now_ns() noexcept {
+    return static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+}
+struct ScopedTimer {
+    std::atomic<std::uint64_t>& bucket;
+    std::uint64_t t0;
+    explicit ScopedTimer(std::atomic<std::uint64_t>& b) noexcept
+        : bucket(b), t0(now_ns()) {}
+    ~ScopedTimer() {
+        bucket.fetch_add(now_ns() - t0, std::memory_order_relaxed);
+    }
+};
+}  // namespace bd
+#define BD_TIME(bucket) ::jass::bd::ScopedTimer __bd_##__LINE__(::jass::bd::g_##bucket##_ns)
+#else
+#define BD_TIME(bucket) ((void)0)
+#endif
+
+void breakdown_reset() noexcept {
+#ifdef JASS_TIME_BREAKDOWN
+    bd::g_eval_ns.store(0,    std::memory_order_relaxed);
+    bd::g_movegen_ns.store(0, std::memory_order_relaxed);
+    bd::g_apply_ns.store(0,   std::memory_order_relaxed);
+    bd::g_total_ns.store(0,   std::memory_order_relaxed);
+    bd::g_total_started.store(bd::now_ns(), std::memory_order_relaxed);
+#endif
+}
+
+BreakdownStats breakdown_snapshot() noexcept {
+    BreakdownStats s;
+#ifdef JASS_TIME_BREAKDOWN
+    s.eval_ns    = bd::g_eval_ns.load(std::memory_order_relaxed);
+    s.movegen_ns = bd::g_movegen_ns.load(std::memory_order_relaxed);
+    s.apply_ns   = bd::g_apply_ns.load(std::memory_order_relaxed);
+    const auto t0 = bd::g_total_started.load(std::memory_order_relaxed);
+    s.total_ns   = (t0 == 0) ? 0 : (bd::now_ns() - t0);
+#endif
+    return s;
+}
+
 namespace {
+
+// Movegen wrapper, used in search call sites so the breakdown
+// instrumentation captures movegen time. The handful of out-of-search
+// movegen consumers (root setup, etc.) call `generate_legal_moves`
+// directly so the timer doesn't account for non-search overhead.
+inline void gen_moves(const Position& pos, MoveList& moves) noexcept {
+    BD_TIME(movegen);
+    generate_legal_moves(pos, moves);
+}
+
+// `pos.after(m)` is where pieces get moved/captured/promoted. It dominates
+// the "apply move" bucket together with the accumulator push, which is
+// timed at its own call sites below.
+inline Position after_timed(const Position& pos, const Move& m) noexcept {
+    BD_TIME(apply);
+    return pos.after(m);
+}
 
 // Mate-score handling for the transposition table.
 //
@@ -133,6 +206,7 @@ struct Searcher {
     // dispatch to whatever INetwork was provided (or to the static
     // handcrafted eval if none).
     int eval_leaf(const Position& pos, int ply) const noexcept {
+        BD_TIME(eval);
         if (mlpq_nnue) {
             const auto& acc = (pos.side_to_move() == Color::White)
                 ? accumulators[ply].white
@@ -245,7 +319,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
     MoveList moves;
-    generate_legal_moves(pos, moves);
+    gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
 
     // generate_legal_moves either returns *all* maximum-length captures or
@@ -255,7 +329,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
 
     int best = -INF_SCORE;
     for (const auto& m : moves) {
-        const Position next  = pos.after(m);
+        const Position next  = after_timed(pos, m);
         push_accumulator(ply, pos, m, next);
         const int      score = -quiescence(next, ply + 1, -beta, -alpha);
         if (score > best) best = score;
@@ -318,7 +392,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // 2. Mate / leaf detection. At the horizon we hand off to quiescence
     //    so a forced capture pending at the leaf is not silently misvalued.
     MoveList moves;
-    generate_legal_moves(pos, moves);
+    gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
@@ -449,7 +523,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         int verify_alpha = singular_beta - 1;
         for (const auto& m : moves) {
             if (same_packed_move(m, tt_entry.best_move)) continue;  // exclude TT move
-            const Position next = pos.after(m);
+            const Position next = after_timed(pos, m);
             push_accumulator(ply, pos, m, next);
             const int      s    = -negamax(next, singular_depth - 1, ply + 1,
                                            -singular_beta, -verify_alpha);
@@ -508,7 +582,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             ++move_idx;
             continue;
         }
-        const Position next      = pos.after(m);
+        const Position next      = after_timed(pos, m);
         push_accumulator(ply, pos, m, next);
         // Record the move being played so the child node (ply+1) can
         // consult it as `prev_move` for countermove ordering.
@@ -649,6 +723,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     TranspositionTable& tt,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
+    breakdown_reset();
 
     // Bump the TT generation so entries written during this search are
     // protected from being clobbered by stale data left over from
@@ -683,7 +758,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     }
 
     MoveList root_moves;
-    generate_legal_moves(pos, root_moves);
+    gen_moves(pos, root_moves);
     if (root_moves.empty()) {
         res.score = -MATE_SCORE;
         return res;
@@ -759,7 +834,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
         for (const auto& m : root_moves) {
             if (s.stopped) break;
-            const Position next  = pos.after(m);
+            const Position next  = after_timed(pos, m);
             s.push_accumulator(0, pos, m, next);
             const int      score = -s.negamax(next, depth - 1, 1,
                                               -beta, -cur_alpha);

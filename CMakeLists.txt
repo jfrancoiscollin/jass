@@ -64,6 +64,18 @@ if(JASS_ENABLE_SIMD)
 endif()
 
 # -----------------------------------------------------------------------------
+# Optional time-breakdown instrumentation
+# -----------------------------------------------------------------------------
+# When ON, wraps eval / movegen / pos.after calls with chrono samplers and
+# emits a "BREAKDOWN ..." stderr line after every HUB bestmove. ~5-10%
+# overhead. Off by default — used only for profiling jobs (e.g. 0093).
+option(JASS_TIME_BREAKDOWN "Instrument the search with per-bucket chrono timers" OFF)
+if(JASS_TIME_BREAKDOWN)
+    add_compile_definitions(JASS_TIME_BREAKDOWN=1)
+    message(STATUS "Jass: time-breakdown instrumentation ENABLED")
+endif()
+
+# -----------------------------------------------------------------------------
 # Embedded NNUE weights
 # -----------------------------------------------------------------------------
 # `nnue.bin` at the repo root is the default LinearNetwork shipped with
