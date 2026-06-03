@@ -1,0 +1,7 @@
+{
+  "job_id": "0100-movegen-wrapper-kill-bench",
+  "state": "running",
+  "started_at": "2026-06-03T22:01:50+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 230915
+}
