@@ -118,6 +118,8 @@ struct BreakdownStats {
     std::uint64_t zobrist_ns          = 0;
     std::uint64_t movegen_capture_ns  = 0;
     std::uint64_t movegen_quiet_ns    = 0;
+    std::uint64_t move_ordering_ns    = 0;
+    std::uint64_t path_check_ns       = 0;
     std::uint64_t total_ns            = 0;
 };
 BreakdownStats breakdown_snapshot() noexcept;

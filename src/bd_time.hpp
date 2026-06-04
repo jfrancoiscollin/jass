@@ -37,6 +37,14 @@ inline std::atomic<std::uint64_t> g_total_started{0};
 inline std::atomic<std::uint64_t> g_movegen_capture_ns{0};
 inline std::atomic<std::uint64_t> g_movegen_quiet_ns{0};
 
+// "other-unaccounted" sub-buckets, added 0102 to investigate the
+// ~17% bucket that previously had no decomposition :
+//  - move_ordering : selection sort + order_score per node
+//  - path_check    : 3-fold repetition (path_contains) + hash_path
+//                    push/pop overhead per node
+inline std::atomic<std::uint64_t> g_move_ordering_ns{0};
+inline std::atomic<std::uint64_t> g_path_check_ns{0};
+
 inline std::uint64_t now_ns() noexcept {
     return static_cast<std::uint64_t>(
         std::chrono::duration_cast<std::chrono::nanoseconds>(

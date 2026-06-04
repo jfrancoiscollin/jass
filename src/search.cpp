@@ -33,6 +33,8 @@ void breakdown_reset() noexcept {
     bd::g_zobrist_ns.store(0,          std::memory_order_relaxed);
     bd::g_movegen_capture_ns.store(0,  std::memory_order_relaxed);
     bd::g_movegen_quiet_ns.store(0,    std::memory_order_relaxed);
+    bd::g_move_ordering_ns.store(0,    std::memory_order_relaxed);
+    bd::g_path_check_ns.store(0,       std::memory_order_relaxed);
     bd::g_total_ns.store(0,            std::memory_order_relaxed);
     bd::g_total_started.store(bd::now_ns(), std::memory_order_relaxed);
 #endif
@@ -49,6 +51,8 @@ BreakdownStats breakdown_snapshot() noexcept {
     s.zobrist_ns          = bd::g_zobrist_ns.load(std::memory_order_relaxed);
     s.movegen_capture_ns  = bd::g_movegen_capture_ns.load(std::memory_order_relaxed);
     s.movegen_quiet_ns    = bd::g_movegen_quiet_ns.load(std::memory_order_relaxed);
+    s.move_ordering_ns    = bd::g_move_ordering_ns.load(std::memory_order_relaxed);
+    s.path_check_ns       = bd::g_path_check_ns.load(std::memory_order_relaxed);
     const auto t0 = bd::g_total_started.load(std::memory_order_relaxed);
     s.total_ns       = (t0 == 0) ? 0 : (bd::now_ns() - t0);
 #endif
@@ -226,6 +230,7 @@ struct Searcher {
 
     // Returns true if `h` already appears anywhere in `hash_path`.
     bool path_contains(ZobristHash h) const noexcept {
+        BD_TIME(path_check);
         for (auto x : hash_path) if (x == h) return true;
         return false;
     }
@@ -270,6 +275,7 @@ inline int order_score(const Searcher& s, const Move& m, int ply,
 inline void order_moves(MoveList& moves, const Searcher& s, int ply,
                         const Move& tt_move, bool tt_hit,
                         const Move& prev_move) {
+    BD_TIME(move_ordering);
     std::array<int, 256> scores;  // populated for [0, n) before any read
     const std::size_t n = moves.size();
     for (std::size_t i = 0; i < n; ++i) {
@@ -470,7 +476,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     int       best       = -INF_SCORE;
     Move      best_move  = moves[0];
 
-    hash_path.push_back(hash);
+    { BD_TIME(path_check); hash_path.push_back(hash); }
 
     // 4bis. Singular extension. If the TT entry says one move scores at
     //     least `tt_entry.score`, a quick verification search at half
@@ -623,7 +629,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         ++move_idx;
     }
 
-    hash_path.pop_back();
+    { BD_TIME(path_check); hash_path.pop_back(); }
 
     // 5. Store back into the TT — but only if the result is real. An
     //    aborted search produced a placeholder score that would poison
