@@ -1,0 +1,5 @@
+quantize-simd    : median_depth=15  median_nps=1290978
+baseline 0091    : median_depth=15  median_nps=917320  (pre capture pre-filter)
+baseline 0101    : median_depth=15  median_nps=1190216 (post capture pre-filter)
+gain NPS vs 0091 : +40.7%
+gain NPS vs 0101 : +8.5%
