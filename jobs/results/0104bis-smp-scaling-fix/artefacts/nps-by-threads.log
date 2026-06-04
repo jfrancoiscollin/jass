@@ -1,0 +1,4 @@
+threads=1  setoption_resp='ok'  median_depth=20  median_nodes=6319318  median_nps=1263863
+threads=2  setoption_resp='ok'  median_depth=22  median_nodes=5436140  median_nps=1087228
+threads=4  setoption_resp='ok'  median_depth=22  median_nodes=5442530  median_nps=1088506
+threads=8  setoption_resp='ok'  median_depth=21  median_nodes=3018453  median_nps=603690
