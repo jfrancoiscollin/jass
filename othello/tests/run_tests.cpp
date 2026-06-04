@@ -11,7 +11,9 @@
 #include "movegen.hpp"
 #include "pattern.hpp"
 #include "search.hpp"
+#include "weights.hpp"
 
+#include <cstdio>
 #include <vector>
 
 #include <cstdint>
@@ -429,6 +431,62 @@ void test_search_must_pass() {
     REQUIRE(r.best_move == NO_SQUARE);
 }
 
+void test_weights_loader_roundtrip() {
+    // Write a synthetic OTHW file with all-zero weights, then load it.
+    const char* path = "/tmp/othello_weights_test.bin";
+    FILE* f = std::fopen(path, "wb");
+    REQUIRE(f != nullptr);
+    if (!f) return;
+
+    auto write_u32 = [](FILE* fp, std::uint32_t v) {
+        unsigned char b[4] = {
+            static_cast<unsigned char>( v        & 0xFF),
+            static_cast<unsigned char>((v >>  8) & 0xFF),
+            static_cast<unsigned char>((v >> 16) & 0xFF),
+            static_cast<unsigned char>((v >> 24) & 0xFF),
+        };
+        std::fwrite(b, 1, 4, fp);
+    };
+
+    const std::uint32_t count = static_cast<std::uint32_t>(total_pattern_buckets());
+    write_u32(f, WEIGHTS_MAGIC);
+    write_u32(f, WEIGHTS_VERSION);
+    write_u32(f, count);
+    write_u32(f, 1000);
+    // First weight = 42, rest = 0.
+    write_u32(f, 42);
+    for (std::uint32_t i = 1; i < count; ++i) write_u32(f, 0);
+    std::fclose(f);
+
+    std::string err;
+    auto loaded = load_weights(path, &err);
+    REQUIRE(loaded.has_value());
+    if (!loaded) { std::cerr << "  load err: " << err << "\n"; return; }
+    REQUIRE_EQ(loaded->scale, std::uint32_t{1000});
+    REQUIRE_EQ(loaded->w.size(), static_cast<std::size_t>(count));
+    REQUIRE_EQ(loaded->w[0], std::int32_t{42});
+    REQUIRE_EQ(loaded->w[1], std::int32_t{0});
+
+    std::remove(path);
+}
+
+void test_weights_loader_bad_magic() {
+    const char* path = "/tmp/othello_weights_bad.bin";
+    FILE* f = std::fopen(path, "wb");
+    REQUIRE(f != nullptr);
+    if (!f) return;
+    // Wrong magic.
+    const unsigned char hdr[16] = {0xDE, 0xAD, 0xBE, 0xEF};
+    std::fwrite(hdr, 1, 16, f);
+    std::fclose(f);
+
+    std::string err;
+    auto loaded = load_weights(path, &err);
+    REQUIRE(!loaded.has_value());
+
+    std::remove(path);
+}
+
 void test_gen_data_constants() {
     REQUIRE_EQ(GEN_DATA_MAGIC,       std::uint32_t{0x4F544843});
     REQUIRE_EQ(GEN_DATA_VERSION,     std::uint32_t{1});
@@ -480,6 +538,8 @@ int main() {
     test_search_must_pass();
     test_search_terminal();
     test_gen_data_constants();
+    test_weights_loader_roundtrip();
+    test_weights_loader_bad_magic();
 
     std::cerr << "passed: " << g_passed << "  failed: " << g_failed << '\n';
     return g_failed == 0 ? 0 : 1;

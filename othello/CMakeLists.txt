@@ -19,6 +19,7 @@ add_library(othello_core STATIC
     src/pattern.cpp
     src/eval.cpp
     src/search.cpp
+    src/weights.cpp
 )
 target_include_directories(othello_core PUBLIC src)
 target_compile_options(othello_core PRIVATE -Wall -Wextra -Wpedantic)
@@ -31,6 +32,9 @@ target_link_libraries(othello_bench_random PRIVATE othello_core)
 
 add_executable(othello_gen_data src/gen_data.cpp)
 target_link_libraries(othello_gen_data PRIVATE othello_core)
+
+add_executable(othello_bench_eval_vs_eval src/bench_eval_vs_eval.cpp)
+target_link_libraries(othello_bench_eval_vs_eval PRIVATE othello_core)
 
 enable_testing()
 add_executable(othello_tests tests/run_tests.cpp)
