@@ -1,0 +1,6 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build prod ===
+
+=== match 1t-vs-4t : A=1t vs B=4t, pairs=4, movetime=3000ms ===
