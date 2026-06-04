@@ -1,0 +1,35 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build with JASS_TIME_BREAKDOWN ===
+
+=== profile run (5 × movetime 5000ms) ===
+BREAKDOWN total_ms=4883 eval_ms=1030 movegen_ms=1332 apply_ms=111 accumulator_ms=830 tt_ms=403 zobrist_ms=76 movegen_capture_ms=535 movegen_quiet_ms=448 move_ordering_ms=111 path_check_ms=136 eval_pct=21 movegen_pct=27 apply_pct=2 accumulator_pct=16 tt_pct=8 zobrist_pct=1 movegen_capture_pct=10 movegen_quiet_pct=9 move_ordering_pct=2 path_check_pct=2
+BREAKDOWN total_ms=2862 eval_ms=543 movegen_ms=788 apply_ms=68 accumulator_ms=518 tt_ms=240 zobrist_ms=44 movegen_capture_ms=374 movegen_quiet_ms=212 move_ordering_ms=58 path_check_ms=85 eval_pct=18 movegen_pct=27 apply_pct=2 accumulator_pct=18 tt_pct=8 zobrist_pct=1 movegen_capture_pct=13 movegen_quiet_pct=7 move_ordering_pct=2 path_check_pct=2
+BREAKDOWN total_ms=3368 eval_ms=692 movegen_ms=1077 apply_ms=75 accumulator_ms=580 tt_ms=229 zobrist_ms=43 movegen_capture_ms=491 movegen_quiet_ms=342 move_ordering_ms=69 path_check_ms=74 eval_pct=20 movegen_pct=31 apply_pct=2 accumulator_pct=17 tt_pct=6 zobrist_pct=1 movegen_capture_pct=14 movegen_quiet_pct=10 move_ordering_pct=2 path_check_pct=2
+BREAKDOWN total_ms=3733 eval_ms=761 movegen_ms=998 apply_ms=84 accumulator_ms=675 tt_ms=297 zobrist_ms=58 movegen_capture_ms=383 movegen_quiet_ms=349 move_ordering_ms=97 path_check_ms=108 eval_pct=20 movegen_pct=26 apply_pct=2 accumulator_pct=18 tt_pct=7 zobrist_pct=1 movegen_capture_pct=10 movegen_quiet_pct=9 move_ordering_pct=2 path_check_pct=2
+BREAKDOWN total_ms=4095 eval_ms=787 movegen_ms=1305 apply_ms=96 accumulator_ms=707 tt_ms=285 zobrist_ms=54 movegen_capture_ms=595 movegen_quiet_ms=411 move_ordering_ms=92 path_check_ms=96 eval_pct=19 movegen_pct=31 apply_pct=2 accumulator_pct=17 tt_pct=6 zobrist_pct=1 movegen_capture_pct=14 movegen_quiet_pct=10 move_ordering_pct=2 path_check_pct=2
+positions: 5  walltime: 18941ms
+
+  eval            :   3813ms ( 20.1%)
+  movegen TOTAL   :   5500ms ( 29.0%)
+    └─ capture    :   2378ms ( 12.6%)
+    └─ quiet      :   1762ms (  9.3%)
+  apply           :    434ms (  2.3%)
+  accumulator     :   3310ms ( 17.5%)
+  tt              :   1454ms (  7.7%)
+  zobrist         :    275ms (  1.5%)
+  move_ordering   :    427ms (  2.3%)  [NEW]
+  path_check      :    499ms (  2.6%)  [NEW]
+  other-rest      :   3229ms ( 17.0%)
+
+==========================================================
+       0102 OTHER-UNACCOUNTED SUB-PROFIL VERDICT
+==========================================================
+NEW sub-buckets pct du total :
+  move_ordering : 2.3%
+  path_check    : 2.6%
+  other-rest    : 17.0%
+
+→ Plus gros sous-bucket dans 'other' : other-rest (17.0%)
+  Optim possible : sub-profil supplémentaire (alpha-beta logic, LMR/LMP)
