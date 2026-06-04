@@ -758,17 +758,20 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: jass --benchmark-nnue-vs-nnue "
                      "<weights_a.bin> <weights_b.bin> [depth=6] [pairs=1] "
-                     "[threads=1] [movetime_ms=0]\n"
+                     "[threads_a=1] [movetime_ms=0] [threads_b=threads_a]\n"
                      "  movetime_ms > 0 caps wall time per move (depth becomes "
-                     "an upper bound) ; 0 = depth-only.\n";
+                     "an upper bound) ; 0 = depth-only.\n"
+                     "  threads_b defaults to threads_a ; pass different "
+                     "values to compare SMP scaling at fixed movetime.\n";
         return 1;
     }
     const char* path_a      = argv[2];
     const char* path_b      = argv[3];
     const int   depth       = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
     const int   pairs       = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
-    const int   threads     = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   threads_a   = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
     const int   movetime_ms = (argc > 7) ? parse_int_or(argv[7], 0) : 0;
+    const int   threads_b   = (argc > 8) ? parse_int_or(argv[8], threads_a) : threads_a;
 
     std::unique_ptr<INetwork> net_a = load_network(path_a);
     if (!net_a) {
@@ -783,13 +786,13 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
 
     EngineConfig cfg_a;
     cfg_a.max_depth   = depth;
-    cfg_a.threads     = threads;
+    cfg_a.threads     = threads_a;
     cfg_a.movetime_ms = movetime_ms;
     cfg_a.nnue        = net_a.get();
 
     EngineConfig cfg_b;
     cfg_b.max_depth   = depth;
-    cfg_b.threads     = threads;
+    cfg_b.threads     = threads_b;
     cfg_b.movetime_ms = movetime_ms;
     cfg_b.nnue        = net_b.get();
 
@@ -798,7 +801,7 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     std::cout << "Benchmark: A=NNUE(" << path_a
               << ") vs B=NNUE(" << path_b
               << "), depth " << depth
-              << ", threads " << threads
+              << ", threads " << threads_a << " vs " << threads_b
               << ", movetime_ms " << movetime_ms
               << ", " << total_games << " games "
               << "(" << pool.size() << " openings × " << pairs
