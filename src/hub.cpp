@@ -209,6 +209,8 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
                   << " zobrist_ms="          << bd.zobrist_ns          / 1'000'000
                   << " movegen_capture_ms="  << bd.movegen_capture_ns  / 1'000'000
                   << " movegen_quiet_ms="    << bd.movegen_quiet_ns    / 1'000'000
+                  << " move_ordering_ms="    << bd.move_ordering_ns    / 1'000'000
+                  << " path_check_ms="       << bd.path_check_ns       / 1'000'000
                   << " eval_pct="            << static_cast<int>(100.0 * bd.eval_ns            / t)
                   << " movegen_pct="         << static_cast<int>(100.0 * bd.movegen_ns         / t)
                   << " apply_pct="           << static_cast<int>(100.0 * bd.apply_ns           / t)
@@ -217,6 +219,8 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
                   << " zobrist_pct="         << static_cast<int>(100.0 * bd.zobrist_ns         / t)
                   << " movegen_capture_pct=" << static_cast<int>(100.0 * bd.movegen_capture_ns / t)
                   << " movegen_quiet_pct="   << static_cast<int>(100.0 * bd.movegen_quiet_ns   / t)
+                  << " move_ordering_pct="   << static_cast<int>(100.0 * bd.move_ordering_ns   / t)
+                  << " path_check_pct="      << static_cast<int>(100.0 * bd.path_check_ns      / t)
                   << '\n';
         std::cerr.flush();
     }
