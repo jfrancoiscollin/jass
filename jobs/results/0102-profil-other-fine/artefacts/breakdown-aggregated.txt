@@ -1,0 +1,13 @@
+positions: 5  walltime: 18941ms
+
+  eval            :   3813ms ( 20.1%)
+  movegen TOTAL   :   5500ms ( 29.0%)
+    └─ capture    :   2378ms ( 12.6%)
+    └─ quiet      :   1762ms (  9.3%)
+  apply           :    434ms (  2.3%)
+  accumulator     :   3310ms ( 17.5%)
+  tt              :   1454ms (  7.7%)
+  zobrist         :    275ms (  1.5%)
+  move_ordering   :    427ms (  2.3%)  [NEW]
+  path_check      :    499ms (  2.6%)  [NEW]
+  other-rest      :   3229ms ( 17.0%)

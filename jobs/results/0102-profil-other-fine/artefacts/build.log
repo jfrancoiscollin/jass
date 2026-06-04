@@ -1,0 +1,69 @@
+[  4%] Building CXX object CMakeFiles/jass_lib.dir/src/board.cpp.o
+[ 13%] Building CXX object CMakeFiles/jass_lib.dir/src/position.cpp.o
+[ 13%] Building CXX object CMakeFiles/jass_lib.dir/src/movegen.cpp.o
+[ 22%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_accumulator.cpp.o
+[ 22%] Building CXX object CMakeFiles/jass_lib.dir/src/eval.cpp.o
+[ 27%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue.cpp.o
+[ 31%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_server_client.cpp.o
+[ 36%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_network.cpp.o
+[ 40%] Building CXX object CMakeFiles/jass_lib.dir/generated/nnue_default_data.cpp.o
+[ 45%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+[ 50%] Building CXX object CMakeFiles/jass_lib.dir/src/zobrist.cpp.o
+/root/jass/src/pattern_network.cpp: In member function ‘bool jass::PatternNetwork::save(std::string_view, uint32_t) const’:
+/root/jass/src/pattern_network.cpp:846:31: warning: declaration of ‘n’ shadows a previous local [-Wshadow]
+  846 |             const std::size_t n = patterns_.size();
+      |                               ^
+/root/jass/src/pattern_network.cpp:814:25: note: shadowed declaration is here
+  814 |     const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
+      |                         ^
+[ 54%] Building CXX object CMakeFiles/jass_lib.dir/src/tt.cpp.o
+[ 59%] Building CXX object CMakeFiles/jass_lib.dir/src/engine.cpp.o
+[ 63%] Building CXX object CMakeFiles/jass_lib.dir/src/endgame.cpp.o
+[ 68%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+[ 72%] Building CXX object CMakeFiles/jass_lib.dir/src/book.cpp.o
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:193:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  193 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:194:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  194 |                 : accumulators[ply].black;
+      |                                ^~~
+[ 77%] Building CXX object CMakeFiles/jass_lib.dir/src/timemgr.cpp.o
+[ 81%] Building CXX object CMakeFiles/jass_lib.dir/src/tournament.cpp.o
+[ 86%] Building CXX object CMakeFiles/jass_lib.dir/src/hub.cpp.o
+/root/jass/src/hub.cpp: In member function ‘void jass::HubFrontEnd::emit_bestmove(const jass::SearchResult&)’:
+/root/jass/src/hub.cpp:214:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  214 |                   << " eval_pct="            << static_cast<int>(100.0 * bd.eval_ns            / t)
+      |                                                                          ~~~^~~~~~~
+/root/jass/src/hub.cpp:215:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  215 |                   << " movegen_pct="         << static_cast<int>(100.0 * bd.movegen_ns         / t)
+      |                                                                          ~~~^~~~~~~~~~
+/root/jass/src/hub.cpp:216:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  216 |                   << " apply_pct="           << static_cast<int>(100.0 * bd.apply_ns           / t)
+      |                                                                          ~~~^~~~~~~~
+/root/jass/src/hub.cpp:217:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  217 |                   << " accumulator_pct="     << static_cast<int>(100.0 * bd.accumulator_ns     / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:218:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  218 |                   << " tt_pct="              << static_cast<int>(100.0 * bd.tt_ns              / t)
+      |                                                                          ~~~^~~~~
+/root/jass/src/hub.cpp:219:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  219 |                   << " zobrist_pct="         << static_cast<int>(100.0 * bd.zobrist_ns         / t)
+      |                                                                          ~~~^~~~~~~~~~
+/root/jass/src/hub.cpp:220:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  220 |                   << " movegen_capture_pct=" << static_cast<int>(100.0 * bd.movegen_capture_ns / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:221:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  221 |                   << " movegen_quiet_pct="   << static_cast<int>(100.0 * bd.movegen_quiet_ns   / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:222:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  222 |                   << " move_ordering_pct="   << static_cast<int>(100.0 * bd.move_ordering_ns   / t)
+      |                                                                          ~~~^~~~~~~~~~~~~~~~
+/root/jass/src/hub.cpp:223:77: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+  223 |                   << " path_check_pct="      << static_cast<int>(100.0 * bd.path_check_ns      / t)
+      |                                                                          ~~~^~~~~~~~~~~~~
+[ 90%] Linking CXX static library libjass_lib.a
+[ 90%] Built target jass_lib
+[ 95%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+[100%] Linking CXX executable jass
+[100%] Built target jass
