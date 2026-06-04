@@ -1,0 +1,21 @@
+{
+  "job_id": "0105-smp-selfplay",
+  "snapshot_at": "2026-06-04T16:07:49+00:00",
+  "started_at": "2026-06-04T16:02:45+00:00",
+  "elapsed_seconds": 304,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 2808
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "match-1t-vs-4t.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 247415       1       05:03  0.0  0.0 bash\n 247417  247415       05:03  0.0  0.0 bash\n 247653  247417       04:56  248  0.1 jass\n 247654  247417       04:56  0.0  0.0 tee\n 247655  247417       04:56  0.0  0.0 tail\n"
+}
