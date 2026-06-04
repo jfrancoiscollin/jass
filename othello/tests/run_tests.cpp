@@ -7,6 +7,7 @@
 
 #include "board.hpp"
 #include "eval.hpp"
+#include "gen_data.hpp"
 #include "movegen.hpp"
 #include "pattern.hpp"
 #include "search.hpp"
@@ -428,6 +429,13 @@ void test_search_must_pass() {
     REQUIRE(r.best_move == NO_SQUARE);
 }
 
+void test_gen_data_constants() {
+    REQUIRE_EQ(GEN_DATA_MAGIC,       std::uint32_t{0x4F544843});
+    REQUIRE_EQ(GEN_DATA_VERSION,     std::uint32_t{1});
+    REQUIRE_EQ(GEN_DATA_RECORD_SIZE, std::size_t{18});
+    REQUIRE_EQ(GEN_DATA_HEADER_SIZE, std::size_t{16});
+}
+
 void test_search_terminal() {
     // Fabricated terminal : both have passed already.
     Board b;
@@ -471,6 +479,7 @@ int main() {
     test_search_picks_move_start();
     test_search_must_pass();
     test_search_terminal();
+    test_gen_data_constants();
 
     std::cerr << "passed: " << g_passed << "  failed: " << g_failed << '\n';
     return g_failed == 0 ? 0 : 1;
