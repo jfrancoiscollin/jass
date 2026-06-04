@@ -7,6 +7,7 @@
 
 #include "board.hpp"
 #include "movegen.hpp"
+#include "pattern.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -185,6 +186,154 @@ void test_perft_known_values() {
     REQUIRE_EQ(perft(start, 6), std::uint64_t{8200});
 }
 
+// ---------------------------------------------------------------------------
+// Pattern tests
+// ---------------------------------------------------------------------------
+
+void test_pattern_layout() {
+    // 4 corners × 81 + 4 edges × 6561 + 2 diagonals × 6561 = 39690.
+    REQUIRE_EQ(total_pattern_buckets(), std::size_t{39690});
+
+    // Each PATTERNS[i].num_buckets should equal 3^size.
+    for (std::size_t i = 0; i < NUM_PATTERNS; ++i) {
+        const auto& p = PATTERNS[i];
+        REQUIRE_EQ(p.num_buckets, POW3[p.size]);
+    }
+
+    // Offsets cumulative + monotonic, starting at 0.
+    const auto offsets = pattern_offsets();
+    REQUIRE_EQ(offsets[0], std::uint32_t{0});
+    for (std::size_t i = 1; i < NUM_PATTERNS; ++i) {
+        REQUIRE_EQ(offsets[i], offsets[i-1] + PATTERNS[i-1].num_buckets);
+    }
+}
+
+void test_pattern_empty_board() {
+    const Board empty;  // all zero
+    std::array<std::uint32_t, NUM_PATTERNS> indices{};
+    extract_all(empty, indices);
+    for (std::size_t i = 0; i < NUM_PATTERNS; ++i) {
+        REQUIRE_EQ(indices[i], std::uint32_t{0});
+    }
+}
+
+void test_pattern_single_black_corner() {
+    // Single black piece at square 0 (NW corner). Should set the
+    // first cell of corner_NW pattern AND edge_top AND edge_left AND
+    // diag_main. Others unaffected.
+    Board b;
+    b.black = Bitboard{1} << 0;
+
+    std::array<std::uint32_t, NUM_PATTERNS> idx{};
+    extract_all(b, idx);
+
+    // corner_NW : squares[0]=0, so cell 0 = black = 1, idx = 1 * 3^0 = 1
+    REQUIRE_EQ(idx[0], std::uint32_t{1});
+    // corner_NE/SW/SE : sq 0 not in pattern → 0
+    REQUIRE_EQ(idx[1], std::uint32_t{0});
+    REQUIRE_EQ(idx[2], std::uint32_t{0});
+    REQUIRE_EQ(idx[3], std::uint32_t{0});
+    // edge_top : squares[0]=0 → idx 1
+    REQUIRE_EQ(idx[4], std::uint32_t{1});
+    // edge_bot : no overlap → 0
+    REQUIRE_EQ(idx[5], std::uint32_t{0});
+    // edge_left : squares[0]=0 → idx 1
+    REQUIRE_EQ(idx[6], std::uint32_t{1});
+    // edge_right : no overlap → 0
+    REQUIRE_EQ(idx[7], std::uint32_t{0});
+    // diag_main : squares[0]=0 → idx 1
+    REQUIRE_EQ(idx[8], std::uint32_t{1});
+    // diag_anti : no overlap → 0
+    REQUIRE_EQ(idx[9], std::uint32_t{0});
+}
+
+void test_pattern_single_white_corner() {
+    // Same but white piece. Cell value = 2 → idx = 2.
+    Board b;
+    b.white = Bitboard{1} << 0;
+
+    std::array<std::uint32_t, NUM_PATTERNS> idx{};
+    extract_all(b, idx);
+
+    REQUIRE_EQ(idx[0], std::uint32_t{2});  // corner_NW
+    REQUIRE_EQ(idx[4], std::uint32_t{2});  // edge_top
+    REQUIRE_EQ(idx[6], std::uint32_t{2});  // edge_left
+    REQUIRE_EQ(idx[8], std::uint32_t{2});  // diag_main
+}
+
+void test_pattern_index_max_value() {
+    // Full board with alternating black/white maxing out each
+    // pattern's index. Easier check : sanity that no index ever
+    // exceeds num_buckets - 1.
+    Board b;
+    // Fill all 64 squares with checkerboard.
+    for (Square s = 0; s < BOARD_SIZE; ++s) {
+        const Bitboard bit = Bitboard{1} << s;
+        if ((sq_row(s) + sq_col(s)) % 2 == 0) b.black |= bit;
+        else                                  b.white |= bit;
+    }
+    std::array<std::uint32_t, NUM_PATTERNS> idx{};
+    extract_all(b, idx);
+    for (std::size_t i = 0; i < NUM_PATTERNS; ++i) {
+        REQUIRE(idx[i] < PATTERNS[i].num_buckets);
+    }
+}
+
+void test_pattern_start_position() {
+    const Board b = Board::start_position();
+    // Black on e4(28), d5(35). White on d4(27), e5(36).
+    // None of these are in corner 2x2 patterns or edges (all in
+    // central 4×4 region), so corner/edge indices = 0.
+    // diag_main covers d5(35), e4(28) ? Let's check :
+    //   diag_main squares = {0, 9, 18, 27, 36, 45, 54, 63}
+    //     27 = white → cell 2 at position 3
+    //     36 = white → cell 2 at position 4
+    //     others empty
+    //   idx = 2*81 + 2*243 = 162 + 486 = 648
+    // diag_anti squares = {7, 14, 21, 28, 35, 42, 49, 56}
+    //     28 = black → cell 1 at position 3
+    //     35 = black → cell 1 at position 4
+    //   idx = 1*27 + 1*81 = 27 + 81 = ... wait pos 3 = POW3[3] = 27
+    //                                       pos 4 = POW3[4] = 81
+    //   idx = 27 + 81 = 108
+    std::array<std::uint32_t, NUM_PATTERNS> idx{};
+    extract_all(b, idx);
+
+    REQUIRE_EQ(idx[0], std::uint32_t{0});  // corner_NW empty
+    REQUIRE_EQ(idx[1], std::uint32_t{0});  // corner_NE empty
+    REQUIRE_EQ(idx[2], std::uint32_t{0});  // corner_SW empty
+    REQUIRE_EQ(idx[3], std::uint32_t{0});  // corner_SE empty
+    REQUIRE_EQ(idx[4], std::uint32_t{0});  // edge_top empty
+    REQUIRE_EQ(idx[5], std::uint32_t{0});  // edge_bot empty
+    REQUIRE_EQ(idx[6], std::uint32_t{0});  // edge_left empty
+    REQUIRE_EQ(idx[7], std::uint32_t{0});  // edge_right empty
+    // diag_main : white(2) at pos 3 & 4 → 2*27 + 2*81 = 216
+    REQUIRE_EQ(idx[8], std::uint32_t{216});
+    // diag_anti : black(1) at pos 3 & 4 → 1*27 + 1*81 = 108
+    REQUIRE_EQ(idx[9], std::uint32_t{108});
+}
+
+void test_pattern_color_flip() {
+    // Flipping colors should map cell 1 -> 2 and vice versa.
+    // We verify : extract_all_flipped(b) == extract_all(swap(b)).
+    Board b = Board::start_position();
+    // Add a few more pieces to make patterns non-trivial.
+    b.black |= Bitboard{1} << 0;
+    b.white |= Bitboard{1} << 63;
+
+    std::array<std::uint32_t, NUM_PATTERNS> flipped{};
+    extract_all_flipped(b, flipped);
+
+    Board b2 = b;
+    std::swap(b2.black, b2.white);
+    std::array<std::uint32_t, NUM_PATTERNS> swapped{};
+    extract_all(b2, swapped);
+
+    for (std::size_t i = 0; i < NUM_PATTERNS; ++i) {
+        REQUIRE_EQ(flipped[i], swapped[i]);
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -196,6 +345,14 @@ int main() {
     test_apply_illegal();
     test_pass_then_pass_terminates();
     test_perft_known_values();
+
+    test_pattern_layout();
+    test_pattern_empty_board();
+    test_pattern_single_black_corner();
+    test_pattern_single_white_corner();
+    test_pattern_index_max_value();
+    test_pattern_start_position();
+    test_pattern_color_flip();
 
     std::cerr << "passed: " << g_passed << "  failed: " << g_failed << '\n';
     return g_failed == 0 ? 0 : 1;
