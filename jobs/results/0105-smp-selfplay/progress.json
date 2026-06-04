@@ -1,8 +1,8 @@
 {
   "job_id": "0105-smp-selfplay",
-  "snapshot_at": "2026-06-04T16:28:25+00:00",
+  "snapshot_at": "2026-06-04T16:33:25+00:00",
   "started_at": "2026-06-04T16:02:45+00:00",
-  "elapsed_seconds": 1540,
+  "elapsed_seconds": 1840,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,5 +17,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 247415       1       25:39  0.0  0.0 bash\n 247417  247415       25:39  0.0  0.0 bash\n 247653  247417       25:32  250  0.1 jass\n 247654  247417       25:32  0.0  0.0 tee\n 247655  247417       25:32  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 247415       1       30:39  0.0  0.0 bash\n 247417  247415       30:39  0.0  0.0 bash\n 247653  247417       30:32  251  0.1 jass\n 247654  247417       30:32  0.0  0.0 tee\n 247655  247417       30:32  0.0  0.0 tail\n"
 }
