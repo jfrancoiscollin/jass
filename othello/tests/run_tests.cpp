@@ -6,8 +6,12 @@
 // non-zero if any failed.
 
 #include "board.hpp"
+#include "eval.hpp"
 #include "movegen.hpp"
 #include "pattern.hpp"
+#include "search.hpp"
+
+#include <vector>
 
 #include <cstdint>
 #include <iostream>
@@ -334,6 +338,110 @@ void test_pattern_color_flip() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Eval tests
+// ---------------------------------------------------------------------------
+
+void test_eval_basic_start_zero() {
+    // Start position is symmetric (2 black + 2 white centered, same
+    // mobility). eval_basic should return 0.
+    const Board b = Board::start_position();
+    REQUIRE_EQ(eval_basic(b), 0);
+}
+
+void test_eval_basic_corner_bonus() {
+    // Single black piece at corner 0. STM = black. eval should reward
+    // black for owning a corner.
+    Board b;
+    b.black = Bitboard{1} << 0;
+    b.stm = Color::Black;
+    REQUIRE(eval_basic(b) > 0);
+
+    // Same position but stm = white : eval should be opposite sign.
+    b.stm = Color::White;
+    REQUIRE(eval_basic(b) < 0);
+}
+
+void test_eval_basic_sign_symmetry() {
+    // If we swap colors AND stm, eval_basic should return the SAME
+    // value (the position is identical from the new stm's POV).
+    Board b = Board::start_position();
+    b.black |= Bitboard{1} << 0;   // black gets corner NW
+    b.white |= Bitboard{1} << 7;   // white gets corner NE
+    const int eb = eval_basic(b);
+
+    Board b2 = b;
+    std::swap(b2.black, b2.white);
+    b2.stm = ~b2.stm;
+    REQUIRE_EQ(eval_basic(b2), eb);
+}
+
+void test_eval_pattern_zero_weights() {
+    // With all-zero weights, eval_pattern returns 0.
+    std::vector<std::int32_t> w(total_pattern_buckets(), 0);
+    const Board b = Board::start_position();
+    REQUIRE_EQ(eval_pattern(b, w), 0);
+}
+
+void test_eval_pattern_one_hot() {
+    // Set a single weight at the offset of corner_NW pattern, index 1
+    // (= black piece at sq 0). Then place black at sq 0 and verify
+    // eval_pattern returns that weight (or its negative for white stm).
+    std::vector<std::int32_t> w(total_pattern_buckets(), 0);
+    constexpr auto offsets = pattern_offsets();
+    w[offsets[0] + 1] = 12345;
+
+    Board b;
+    b.black = Bitboard{1} << 0;
+    b.stm = Color::Black;
+    REQUIRE_EQ(eval_pattern(b, w), 12345);
+
+    b.stm = Color::White;
+    REQUIRE_EQ(eval_pattern(b, w), -12345);
+}
+
+// ---------------------------------------------------------------------------
+// Search tests
+// ---------------------------------------------------------------------------
+
+void test_search_picks_move_start() {
+    const Board b = Board::start_position();
+    SearchConfig cfg;
+    cfg.max_depth = 3;
+    const SearchResult r = search(b, cfg);
+    // Must return one of the 4 legal moves (19, 26, 37, 44).
+    REQUIRE(r.best_move == 19 || r.best_move == 26
+         || r.best_move == 37 || r.best_move == 44);
+    REQUIRE(r.depth_reached >= 1);
+    REQUIRE(r.nodes > 0);
+}
+
+void test_search_must_pass() {
+    // Sparse board where stm has no legal moves but opp does.
+    Board b;
+    b.black = Bitboard{1} << 0;
+    b.white = Bitboard{1} << 63;
+    b.stm = Color::Black;
+    SearchConfig cfg;
+    cfg.max_depth = 1;
+    const SearchResult r = search(b, cfg);
+    REQUIRE(r.best_move == NO_SQUARE);
+}
+
+void test_search_terminal() {
+    // Fabricated terminal : both have passed already.
+    Board b;
+    b.black = Bitboard{1} << 0;
+    b.white = Bitboard{1} << 63;
+    b.passes = 2;
+    REQUIRE(b.is_game_over());
+    SearchConfig cfg;
+    cfg.max_depth = 1;
+    const SearchResult r = search(b, cfg);
+    // Black and white have 1 piece each → DRAW_SCORE = 0.
+    REQUIRE_EQ(r.score, 0);
+}
+
 }  // namespace
 
 int main() {
@@ -353,6 +461,16 @@ int main() {
     test_pattern_index_max_value();
     test_pattern_start_position();
     test_pattern_color_flip();
+
+    test_eval_basic_start_zero();
+    test_eval_basic_corner_bonus();
+    test_eval_basic_sign_symmetry();
+    test_eval_pattern_zero_weights();
+    test_eval_pattern_one_hot();
+
+    test_search_picks_move_start();
+    test_search_must_pass();
+    test_search_terminal();
 
     std::cerr << "passed: " << g_passed << "  failed: " << g_failed << '\n';
     return g_failed == 0 ? 0 : 1;
