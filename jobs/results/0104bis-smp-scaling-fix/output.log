@@ -1,0 +1,54 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build prod ===
+
+=== NPS scaling at threads ∈ {1, 2, 4, 8} (setoption format hub) ===
+  measuring threads=1...
+threads=1  setoption_resp='ok'  median_depth=20  median_nodes=6319318  median_nps=1263863
+  measuring threads=2...
+threads=2  setoption_resp='ok'  median_depth=22  median_nodes=5436140  median_nps=1087228
+  measuring threads=4...
+threads=4  setoption_resp='ok'  median_depth=22  median_nodes=5442530  median_nps=1088506
+  measuring threads=8...
+threads=8  setoption_resp='ok'  median_depth=21  median_nodes=3018453  median_nps=603690
+
+Scaling table :
+  threads    depth    nps            scale vs 1t    efficiency  
+  1          20       1263863         1.00×        100%
+  2          22       1087228         0.86×         43%
+  4          22       1088506         0.86×         22%
+  8          21       603690          0.48×          6%
+
+=== Bench vs Scan d10 (threads=4 si supporté) ===
+  game  45: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [21s]
+  game  46: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [22s]
+  game  47: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [22s]
+  game  48: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [22s]
+  game  49: Jass=W Scan=B → W (illegal move 32-28 from Scan-player, 0 plies)  Jass +1.0  [22s]
+  game  50: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [22s]
+  game  51: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [22s]
+  game  52: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [22s]
+  game  53: Jass=W Scan=B → W (illegal move 33-29 from Scan-player, 0 plies)  Jass +1.0  [22s]
+  game  54: Scan=W Jass=B → L (illegal move 20-25 from Scan-player, 1 plies)  Jass +1.0  [22s]
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=47  Scan=7  Draws=0
+  Jass score rate: 0.870 (47.0 / 54)
+  ELO estimate:    +331 (95% CI ≈ ±109)
+
+==========================================================
+       0104bis SMP SCALING VERDICT (fixed)
+==========================================================
+
+Scaling table :
+  threads    depth    nps            scale vs 1t    efficiency  
+  1          20       1263863         1.00×        100%
+  2          22       1087228         0.86×         43%
+  4          22       1088506         0.86×         22%
+  8          21       603690          0.48×          6%
+
+Rate vs Scan d10 threads=4 : 0.870 (baseline 1t : 0.870)
+
+Verdict : Scaling 4t FAIBLE (0.86×) → investiguer TT layout / locks avant d'utiliser
+==========================================================
