@@ -1,0 +1,25 @@
+=== host facts ===
+host:    ubuntu-16gb-hel1-2
+nproc:   8
+cpu:     AMD EPYC-Milan Processor
+mem:     30Gi
+disk:    133G free of 150G
+load:    0.00 0.00 0.05
+labeller: /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== build prod ===
+
+=== launching 8 shards × 250000 records (= 2000000 total) ===
+    eval depth: 20  play depth: 4  max plies: 200
+    seed base:  10600   labeller: nnue-128-64-q.bin
+
+  shard 0 launched as pid 264587 (seed 10600)
+  shard 1 launched as pid 264588 (seed 10601)
+  shard 2 launched as pid 264590 (seed 10602)
+  shard 3 launched as pid 264592 (seed 10603)
+  shard 4 launched as pid 264594 (seed 10604)
+  shard 5 launched as pid 264596 (seed 10605)
+  shard 6 launched as pid 264599 (seed 10606)
+  shard 7 launched as pid 264602 (seed 10607)
+
+=== waiting on all shards ===
