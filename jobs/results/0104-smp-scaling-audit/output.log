@@ -1,0 +1,44 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build prod ===
+
+=== 1) NPS scaling at threads ∈ {1, 2, 4, 8} ===
+  measuring threads=1...
+threads=1  median_depth=20  median_nodes=6319318  median_nps=1263863
+  measuring threads=2...
+threads=2  median_depth=20  median_nodes=6319318  median_nps=1263863
+  measuring threads=4...
+threads=4  median_depth=20  median_nodes=6319318  median_nps=1263863
+  measuring threads=8...
+threads=8  median_depth=20  median_nodes=6319318  median_nps=1263863
+
+Scaling table :
+  threads    depth    nps            scale vs 1t 
+  1          20       1263863         1.00× ( 100%)
+  2          20       1263863         1.00× (  50%)
+  4          20       1263863         1.00× (  25%)
+  8          20       1263863         1.00× (  12%)
+
+=== 2) Bench vs Scan d10 à threads=4 ===
+                            [--jass-threads JASS_THREADS]
+  --jass-threads JASS_THREADS
+                        Lazy SMP : number of threads for the jass player (via
+  --threads non supporté par calibrate_vs_scan.py, skip
+
+==========================================================
+       0104 SMP SCALING AUDIT VERDICT
+==========================================================
+
+Scaling table :
+  threads    depth    nps            scale vs 1t 
+  1          20       1263863         1.00× ( 100%)
+  2          20       1263863         1.00× (  50%)
+  4          20       1263863         1.00× (  25%)
+  8          20       1263863         1.00× (  12%)
+
+Rate vs Scan d10 à threads=4 : non mesuré
+
+Recommandation :
+  Scaling 4t FAIBLE (1.00×). Lazy SMP peu efficace ; investiguer TT layout / locks.
+==========================================================
