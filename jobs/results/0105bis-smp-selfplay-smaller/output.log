@@ -1,0 +1,29 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== build prod ===
+
+=== match 1t-vs-4t : A=1t vs B=4t, pairs=1, movetime=1500ms ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1 vs 4, movetime_ms 1500, 18 games (9 openings × 1 pairs × 2 colours)
+Result: A=7 B=11 Draws=0 (total 18)
+A score rate: 0.388889 (7 / 18)
+
+=== match 1t-vs-2t : A=1t vs B=2t, pairs=1, movetime=1500ms ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1 vs 2, movetime_ms 1500, 18 games (9 openings × 1 pairs × 2 colours)
+Result: A=7 B=9 Draws=2 (total 18)
+A score rate: 0.444444 (8 / 18)
+
+=== match 1t-vs-1t-sanity : A=1t vs B=1t, pairs=1, movetime=1500ms ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1 vs 1, movetime_ms 1500, 18 games (9 openings × 1 pairs × 2 colours)
+Result: A=8 B=9 Draws=1 (total 18)
+A score rate: 0.472222 (8.5 / 18)
+
+==========================================================
+       0105bis SMP SELF-PLAY VERDICT
+==========================================================
+  1t-vs-4t             A=  7 B= 11 D=  0 (n=18)  rate_B=0.611 ±0.225  ΔELO≈+79
+  1t-vs-2t             A=  7 B=  9 D=  2 (n=18)  rate_B=0.556 ±0.230  ΔELO≈+39
+  1t-vs-1t-sanity      A=  8 B=  9 D=  1 (n=18)  rate_B=0.528 ±0.231  ΔELO≈+19
+
+  → 4t suggère gain (rate 0.611) mais CI inclut 0.50 sur n=18. Probable signal, refaire avec n×2 si critique.
+==========================================================
