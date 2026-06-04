@@ -1,0 +1,7 @@
+{
+  "job_id": "0106-gen-data-depth20-2M",
+  "state": "running",
+  "started_at": "2026-06-04T21:07:13+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 264449
+}
