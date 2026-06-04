@@ -29,6 +29,9 @@ target_link_libraries(othello_cli PRIVATE othello_core)
 add_executable(othello_bench_random src/bench_random.cpp)
 target_link_libraries(othello_bench_random PRIVATE othello_core)
 
+add_executable(othello_gen_data src/gen_data.cpp)
+target_link_libraries(othello_gen_data PRIVATE othello_core)
+
 enable_testing()
 add_executable(othello_tests tests/run_tests.cpp)
 target_link_libraries(othello_tests PRIVATE othello_core)
