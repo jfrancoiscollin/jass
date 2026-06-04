@@ -1,0 +1,4 @@
+threads=1  median_depth=20  median_nodes=6319318  median_nps=1263863
+threads=2  median_depth=20  median_nodes=6319318  median_nps=1263863
+threads=4  median_depth=20  median_nodes=6319318  median_nps=1263863
+threads=8  median_depth=20  median_nodes=6319318  median_nps=1263863
