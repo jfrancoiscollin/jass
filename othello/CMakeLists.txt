@@ -16,6 +16,7 @@ endif()
 add_library(othello_core STATIC
     src/board.cpp
     src/movegen.cpp
+    src/pattern.cpp
 )
 target_include_directories(othello_core PUBLIC src)
 target_compile_options(othello_core PRIVATE -Wall -Wextra -Wpedantic)
