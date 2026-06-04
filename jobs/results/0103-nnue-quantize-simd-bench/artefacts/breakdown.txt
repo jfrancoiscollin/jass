@@ -1,0 +1,6 @@
+positions: 5  walltime: 18953ms
+
+  eval         :   2404ms ( 12.7%)   [0102: 20.1%]
+  movegen      :   5995ms ( 31.6%)
+  accumulator  :   3638ms ( 19.2%)
+  tt           :   1572ms (  8.3%)

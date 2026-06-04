@@ -1,7 +1,0 @@
-{
-  "job_id": "0103-nnue-quantize-simd-bench",
-  "script": "jobs/queue/0103-nnue-quantize-simd-bench.sh",
-  "pid": 242781,
-  "started_at": "2026-06-04T09:34:45+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
