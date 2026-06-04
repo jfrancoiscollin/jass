@@ -1,8 +1,8 @@
 {
   "job_id": "0105bis-smp-selfplay-smaller",
-  "snapshot_at": "2026-06-04T18:23:31+00:00",
+  "snapshot_at": "2026-06-04T18:28:35+00:00",
   "started_at": "2026-06-04T17:52:05+00:00",
-  "elapsed_seconds": 1886,
+  "elapsed_seconds": 2190,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,5 +17,5 @@
       "size_bytes": 319
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 253498       1       31:26  0.0  0.0 bash\n 253500  253498       31:26  0.0  0.0 bash\n 253736  253500       31:19  252  0.1 jass\n 253737  253500       31:19  0.0  0.0 tee\n 253738  253500       31:19  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 253498       1       36:29  0.0  0.0 bash\n 253500  253498       36:29  0.0  0.0 bash\n 253736  253500       36:22  252  0.1 jass\n 253737  253500       36:22  0.0  0.0 tee\n 253738  253500       36:22  0.0  0.0 tail\n"
 }
