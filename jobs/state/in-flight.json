@@ -1,7 +1,0 @@
-{
-  "job_id": "0127-pattern-scan-geometry-bench",
-  "script": "jobs/queue/0127-pattern-scan-geometry-bench.sh",
-  "pid": 284360,
-  "started_at": "2026-06-05T18:21:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
