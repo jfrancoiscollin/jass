@@ -1,0 +1,13 @@
+loading JNNW /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-scan-d12.jnnw
+  200000 records  (0.01s)
+extracting pattern indices (men only)
+  shape (200000, 8) buckets=4251528  (0.05s)
+target=score  range=[-9998,9999]  clipped±2000cp / 100 → piece units  std=3.241
+loading skeleton /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-handcrafted.jnnw
+skeleton std=1.475  residual std=2.680  (corr score↔skel = 0.575)
+split : train=180000 val=20000
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=2.579898  iters=200  (81.45s)
+val   : mse=7.478393  sign_acc=0.0012
+quant : scale=1000  range=[-9218,8216]  nnz=96450
+wrote /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/pattern_jass_v8_scan_bootstrap.pjtw  (4251528 weights, 17006128 bytes)

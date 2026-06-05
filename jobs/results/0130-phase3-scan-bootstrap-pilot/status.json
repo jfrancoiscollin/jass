@@ -1,7 +1,9 @@
 {
   "job_id": "0130-phase3-scan-bootstrap-pilot",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-05T20:50:55+00:00",
+  "ended_at": "2026-06-05T21:01:23+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 287255
+  "artefacts_server_path": "/root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src"
 }
