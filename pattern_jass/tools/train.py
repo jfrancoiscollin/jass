@@ -95,6 +95,13 @@ def main():
                          '"score" (centipawn clipped to ±2000 / 100 → piece units)')
     ap.add_argument('--score-clip', type=float, default=2000.0,
                     help='clip score to ±N cp before scaling (default 2000)')
+    ap.add_argument('--skeleton-data', default=None,
+                    help='optional path to a sibling JNNW whose score field '
+                         'contains the handcrafted skeleton eval per record. '
+                         'When set with --target score, the actual training '
+                         'target becomes (score - skeleton_score) — the pattern '
+                         'learns the RESIDUAL on top of the skeleton (Scan-style '
+                         'hybrid). Records must align 1-to-1 with --data.')
     args = ap.parse_args()
 
     print(f'loading JNNW {args.data}')
@@ -126,6 +133,21 @@ def main():
         print(f'target=score  range=[{int(ds.score.min())},{int(ds.score.max())}]'
               f'  clipped±{int(args.score_clip)}cp / 100 → piece units'
               f'  std={target_stm.std():.3f}')
+
+        if args.skeleton_data is not None:
+            print(f'loading skeleton {args.skeleton_data}')
+            sk_ds = master_loader.load(args.skeleton_data, max_records=args.max_records)
+            if sk_ds.n_records != ds.n_records:
+                raise SystemExit(f'skeleton record count {sk_ds.n_records} != '
+                                 f'data {ds.n_records}')
+            sk_clipped = np.clip(sk_ds.score.astype(np.float64),
+                                 -args.score_clip, args.score_clip)
+            skeleton_stm = sk_clipped / 100.0
+            residual = target_stm - skeleton_stm
+            print(f'skeleton std={skeleton_stm.std():.3f}  '
+                  f'residual std={residual.std():.3f}  '
+                  f'(corr score↔skel = {np.corrcoef(target_stm, skeleton_stm)[0,1]:.3f})')
+            target_stm = residual
     y_black = np.where(ds.stm == 1, target_stm, -target_stm)
     wdl_black = y_black  # keep variable name for downstream code
 
