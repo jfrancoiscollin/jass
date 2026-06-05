@@ -37,13 +37,13 @@ using namespace pattern_jass;
 
 void test_layout_constants() {
     REQUIRE_EQ(PATTERN_SIZE, std::size_t{10});
-    REQUIRE_EQ(NUM_PATTERNS, std::size_t{8});
-    REQUIRE_EQ(BUCKETS_PER_PATTERN, std::uint32_t{59049});  // 3^10
-    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{472392});       // 8 * 59049
+    REQUIRE_EQ(NUM_PATTERNS, std::size_t{12});                // v2 (Variant B)
+    REQUIRE_EQ(BUCKETS_PER_PATTERN, std::uint32_t{59049});    // 3^10
+    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{708588});         // 12 * 59049
 
     constexpr auto offsets = pattern_offsets();
     REQUIRE_EQ(offsets[0], std::uint32_t{0});
-    REQUIRE_EQ(offsets[7], std::uint32_t{7 * 59049});
+    REQUIRE_EQ(offsets[11], std::uint32_t{11 * 59049});
 }
 
 void test_pattern_square_count() {
