@@ -16,6 +16,7 @@
 #include "nnue.hpp"
 #include "nnue_server_client.hpp"
 #include "pattern_jass_bridge.hpp"
+#include "pattern_jass_kings_bridge.hpp"
 #include "position.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
@@ -820,6 +821,70 @@ int run_benchmark_pattern_jass_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-pattern-jass-kings : Variant C, 5-state encoding (men + kings).
+// Same shape as --benchmark-pattern-jass but loads a kings PJTW (3.125M
+// weights) via the PatternJassKingsNetwork wrapper.
+// -----------------------------------------------------------------------------
+int run_benchmark_pattern_jass_kings_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --benchmark-pattern-jass-kings <weights.pjtw> "
+                     "[depth=6] [pairs=1] [threads=1] [movetime_ms=0]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const int   depth        = (argc > 3) ? parse_int_or(argv[3], 6) : 6;
+    const int   pairs        = (argc > 4) ? parse_int_or(argv[4], 1) : 1;
+    const int   threads      = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   movetime_ms  = (argc > 6) ? parse_int_or(argv[6], 0) : 0;
+
+    std::string err;
+    auto pjn = jass::load_pattern_jass_kings_network(weights_path, &err);
+    if (!pjn) {
+        std::cerr << "error: cannot load kings-PJTW from " << weights_path
+                  << " : " << err << "\n";
+        return 1;
+    }
+
+    EngineConfig pattern_cfg;
+    pattern_cfg.max_depth   = depth;
+    pattern_cfg.threads     = threads;
+    pattern_cfg.movetime_ms = movetime_ms;
+    pattern_cfg.nnue        = pjn.get();
+
+    EngineConfig handcrafted_cfg;
+    handcrafted_cfg.max_depth   = depth;
+    handcrafted_cfg.threads     = threads;
+    handcrafted_cfg.movetime_ms = movetime_ms;
+    handcrafted_cfg.nnue        = nullptr;
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: PATTERN_JASS_KINGS (" << weights_path
+              << ", " << pjn->count() << " weights, scale=" << pjn->scale()
+              << ") vs handcrafted, depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games "
+              << "(" << pool.size() << " openings × " << pairs
+              << " pairs × 2 colours)\n";
+
+    const TournamentResult r = run_tournament(pattern_cfg, handcrafted_cfg, pairs);
+
+    std::cout << "Result: PATTERN_JASS_KINGS=" << r.a_wins
+              << " Handcrafted=" << r.b_wins
+              << " Draws="       << r.draws
+              << " (total "      << r.games << ")\n";
+
+    const double pattern_score = r.a_wins + 0.5 * r.draws;
+    const double rate          = pattern_score / r.games;
+    std::cout << "PATTERN_JASS_KINGS score rate: " << rate
+              << " (" << pattern_score << " / " << r.games << ")\n";
+    if (rate >= 0.55) std::cout << "GATE 2 PASS (rate >= 0.55)\n";
+    else              std::cout << "GATE 2 FAIL (rate < 0.55)\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-nnue-vs-nnue: same colour-swap match as `--benchmark-nnue`,
 // but A and B are both NNUE networks (any combination of LinearNetwork
 // and MLPNetwork, auto-detected by `load_network`). Used to measure the
@@ -1175,6 +1240,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
+        else if (a == "--benchmark-pattern-jass-kings") return run_benchmark_pattern_jass_kings_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
