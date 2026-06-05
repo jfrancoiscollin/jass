@@ -1,0 +1,13 @@
+loading JNNW /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 8) buckets=4251528  (3.92s)
+target=score  range=[-2540,2876]  clipped±2000cp / 100 → piece units  std=2.990
+loading skeleton /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+skeleton std=1.474  residual std=1.896  (corr score↔skel = 0.853)
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=1.223955  iters=200  (128.84s)
+val   : mse=2.377048  sign_acc=0.0021
+quant : scale=1000  range=[-3499,3413]  nnz=215766
+wrote /root/jass/jobs/results/0129-pattern-hybrid-bench/artefacts.src/pattern_jass_v7_hybrid.pjtw  (4251528 weights, 17006128 bytes)
