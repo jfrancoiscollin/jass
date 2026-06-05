@@ -1,27 +1,26 @@
 #!/usr/bin/env bash
-# id: 0123-pattern-jass-variant-B-rescored
-# description: Re-test Variant B (12 patterns, target=score) sur le
-# master rescored par 0122 (v15 NNUE 1-ply scores).
-#
-# Pre-condition : 0122 doit avoir produit master-1600-rescored.jnnw.
+# id: 0123bis-pattern-jass-variant-B-rescored
+# description: Re-test Variant B (12 patterns target=score) sur master
+# rescored par 0122bis. Pre-condition : 0122bis OK.
 #
 # expected_duration: ~1h wall
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0123-pattern-jass-variant-B-rescored"
+OUT_BASE="/root/jass/jobs/results/0123bis-pattern-jass-variant-B-rescored"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 
-MASTER=/root/jass/jobs/results/0122-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
-[ -f "$MASTER" ] || { echo "ABORT: rescored master missing (0122 not done?)"; exit 3; }
+MASTER=/root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+[ -f "$MASTER" ] || { echo "ABORT: rescored master missing (0122bis not done?)"; exit 3; }
 
-export TMPDIR=/root/jass/tmp-build
-mkdir -p "$TMPDIR"
+TMPDIR_REAL=/root/jass/.compile-tmp
+mkdir -p "$TMPDIR_REAL"
+export TMPDIR="$TMPDIR_REAL"
+NCPU=$(nproc)
 
 echo "=== host ==="
-echo "host: $(hostname)  nproc: $(nproc)"
-NCPU=$(nproc)
+echo "host: $(hostname)  nproc: $NCPU  TMPDIR=$TMPDIR"
 
 echo
 echo "=== Phase 0 : install scipy ==="
@@ -36,12 +35,16 @@ if ! python3 -c "import scipy, numpy" 2>/dev/null; then
 fi
 
 echo
-echo "=== Phase 1 : build prod (12 patterns from main) ==="
+echo "=== Phase 1 : build prod ==="
 rm -rf build-prod
 cmake -S . -B build-prod -DCMAKE_BUILD_TYPE=Release \
     > "$ART/cmake.log" 2>&1
 cmake --build build-prod -j"$NCPU" --target jass > "$ART/build.log" 2>&1 || {
-    echo "BUILD FAIL"; tail -30 "$ART/build.log"; exit 5; }
+    echo "BUILD FAIL — retrying with j1"
+    cmake --build build-prod -j1 --target jass >> "$ART/build.log" 2>&1 || {
+        echo "BUILD FAIL even j1"; tail -30 "$ART/build.log"; exit 5
+    }
+}
 
 echo
 echo "=== Phase 2 : train target=score sur master RESCORED ==="
@@ -72,7 +75,7 @@ VERDICT=$(grep -E "^GATE 2 " "$ART/bench-d6-pairs3.log" | head -1)
 
 echo
 echo "=========================================================="
-echo "       0123 VARIANT B RESCORED VERDICT"
+echo "       0123bis VARIANT B RESCORED VERDICT"
 echo "=========================================================="
 echo "  train wall : ${TRAIN_SEC}s"
 echo "  bench wall : ${BENCH_SEC}s"
@@ -86,12 +89,12 @@ rate = float("$RATE")
 elo = -400 * math.log10(1/rate - 1) if 0 < rate < 1 else (float('inf') if rate==1 else -float('inf'))
 print(f"  rate {rate:.3f} = ΔELO ≈ {elo:+.0f} vs handcrafted")
 if rate >= 0.55:
-    print(f"  → GATE 2 PASS. Infra pattern jass validée avec scores rescored.")
+    print(f"  → GATE 2 PASS avec scores rescored.")
 elif rate >= 0.40:
-    print(f"  → Partiel ({rate:.3f}). Signal présent, peut-être que kings (Variant C) finit la marge.")
+    print(f"  → Partiel ({rate:.3f}). Variant C (kings, PR #186) reste à tester.")
 else:
-    print(f"  → FAIL ({rate:.3f}). Pattern lookup ne suffit pas sur draughts master.")
-    print(f"     Pivot : Phase Pattern-3 (Scan distillation directe) ou abandonner pattern paradigm.")
+    print(f"  → FAIL ({rate:.3f}). Pattern lookup ne suffit pas même avec scores.")
+fi
 EOF
 fi
 echo "=========================================================="
