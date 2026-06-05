@@ -29,21 +29,38 @@ namespace jass {
 
 class PatternJassNetwork : public INetwork {
 public:
+    // Build with handcrafted skeleton (default — Scan-style §3 hybrid).
     PatternJassNetwork(std::vector<std::int32_t> weights, std::uint32_t scale);
+
+    // Build with an NNUE skeleton instead of handcrafted. The pattern
+    // weights then learn the residual on top of the NNUE prediction
+    // (Option I — pattern hybride sur NNUE, cf
+    // docs/PARADIGM_SHIFT_OPTIONS.md). The bridge owns `skeleton`.
+    PatternJassNetwork(std::vector<std::int32_t> weights, std::uint32_t scale,
+                       std::unique_ptr<INetwork> skeleton);
 
     int evaluate(const Position& pos) const noexcept override;
 
     std::uint32_t scale() const noexcept { return scale_; }
     std::size_t   count() const noexcept { return weights_.size(); }
+    bool          has_nnue_skeleton() const noexcept { return skeleton_ != nullptr; }
 
 private:
     std::vector<std::int32_t> weights_;
     std::uint32_t             scale_;
+    std::unique_ptr<INetwork> skeleton_;  // nullptr → handcrafted skeleton
 };
 
-// Load weights from a PJTW file and return the wrapped network. Returns
-// nullptr and sets `err` on failure.
+// Load weights from a PJTW file and return the wrapped network with
+// handcrafted skeleton (default). Returns nullptr and sets `err` on failure.
 std::unique_ptr<PatternJassNetwork> load_pattern_jass_network(
     const std::string& path, std::string* err = nullptr);
+
+// Same but with an NNUE skeleton (loaded from `nnue_path` via
+// `load_network`). Used by --benchmark-pattern-jass-nnue-skel.
+std::unique_ptr<PatternJassNetwork> load_pattern_jass_network_nnue_skel(
+    const std::string& weights_path,
+    const std::string& nnue_path,
+    std::string* err = nullptr);
 
 }  // namespace jass
