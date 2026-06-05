@@ -1,0 +1,55 @@
+=== host : ubuntu-16gb-hel1-2  nproc: 8 ===
+
+=== Phase 0 : install python deps ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : sub-sample master 200K (seed=42) ===
+wrote /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-sample-200K.jnnw (200000 records)
+
+=== Phase 3 : relabel 200K avec Scan d12 (8 shards parallèles) ===
+  scan relabel wall : 383s (6m)
+merged 200000 scan-labelled records → /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-scan-d12.jnnw
+
+=== Phase 4 : compute handcrafted skeleton for the same 200K ===
+
+=== Phase 5 : train pattern hybride sur Scan-labels ===
+loading JNNW /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-scan-d12.jnnw
+  200000 records  (0.01s)
+extracting pattern indices (men only)
+  shape (200000, 8) buckets=4251528  (0.05s)
+target=score  range=[-9998,9999]  clipped±2000cp / 100 → piece units  std=3.241
+loading skeleton /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-handcrafted.jnnw
+skeleton std=1.475  residual std=2.680  (corr score↔skel = 0.575)
+split : train=180000 val=20000
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=2.579898  iters=200  (81.45s)
+val   : mse=7.478393  sign_acc=0.0012
+quant : scale=1000  range=[-9218,8216]  nnz=96450
+wrote /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/pattern_jass_v8_scan_bootstrap.pjtw  (4251528 weights, 17006128 bytes)
+
+=== Phase 6a : bench vs handcrafted ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/pattern_jass_v8_scan_bootstrap.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=3 Handcrafted=48 Draws=3 (total 54)
+PATTERN_JASS score rate: 0.0833333 (4.5 / 54)
+GATE 2 FAIL (rate < 0.55)
+
+=== Phase 6b : bench vs v8 NNUE ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/pattern_jass_v8_scan_bootstrap.pjtw) vs B=NNUE(/root/jass/jobs/results/0056-v8-quiet-pv-1M-v7-labeller/artefacts.src/nnue-512-256-q.bin), depth 6, threads 1 vs 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0130 PHASE 3 SCAN BOOTSTRAP PILOT VERDICT
+==========================================================
+  scan relabel wall : 383s
+  train wall        : 82s
+  weights output    : /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/pattern_jass_v8_scan_bootstrap.pjtw
+
+  Gate 3 thresholds :
+    vs handcrafted ≥ 0.75 : actual 0.0833333
+    vs v8 NNUE     ≥ 0.30 : actual 0
+
+  vs handcrafted : rate 0.083  ΔELO ≈ -417
+  → vs handcrafted REGRESS vs 0129 (0.667) — Scan labels n'aident pas
+==========================================================

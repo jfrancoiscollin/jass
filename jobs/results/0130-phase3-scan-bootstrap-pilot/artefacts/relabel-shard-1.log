@@ -1,0 +1,27 @@
+input : /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-sample-200K.jnnw (200000 records, processing 25000 from offset 25000)
+  1000/25000  (4.0%)  rate=65.4 pos/s  eta=6.1 min  skipped=180
+  2000/25000  (8.0%)  rate=66.3 pos/s  eta=5.8 min  skipped=390
+  3000/25000  (12.0%)  rate=66.4 pos/s  eta=5.5 min  skipped=583
+  4000/25000  (16.0%)  rate=66.7 pos/s  eta=5.2 min  skipped=769
+  5000/25000  (20.0%)  rate=68.0 pos/s  eta=4.9 min  skipped=960
+  6000/25000  (24.0%)  rate=68.4 pos/s  eta=4.6 min  skipped=1154
+  7000/25000  (28.0%)  rate=68.1 pos/s  eta=4.4 min  skipped=1308
+  8000/25000  (32.0%)  rate=68.2 pos/s  eta=4.2 min  skipped=1494
+  9000/25000  (36.0%)  rate=68.0 pos/s  eta=3.9 min  skipped=1691
+  10000/25000  (40.0%)  rate=68.0 pos/s  eta=3.7 min  skipped=1880
+  11000/25000  (44.0%)  rate=67.8 pos/s  eta=3.4 min  skipped=2091
+  12000/25000  (48.0%)  rate=68.1 pos/s  eta=3.2 min  skipped=2288
+  13000/25000  (52.0%)  rate=68.2 pos/s  eta=2.9 min  skipped=2473
+  14000/25000  (56.0%)  rate=67.9 pos/s  eta=2.7 min  skipped=2644
+  15000/25000  (60.0%)  rate=67.9 pos/s  eta=2.5 min  skipped=2845
+  16000/25000  (64.0%)  rate=67.9 pos/s  eta=2.2 min  skipped=3009
+  17000/25000  (68.0%)  rate=67.6 pos/s  eta=2.0 min  skipped=3194
+  18000/25000  (72.0%)  rate=67.6 pos/s  eta=1.7 min  skipped=3383
+  19000/25000  (76.0%)  rate=67.4 pos/s  eta=1.5 min  skipped=3559
+  20000/25000  (80.0%)  rate=67.5 pos/s  eta=1.2 min  skipped=3744
+  21000/25000  (84.0%)  rate=67.1 pos/s  eta=1.0 min  skipped=3928
+  22000/25000  (88.0%)  rate=67.0 pos/s  eta=0.7 min  skipped=4119
+  23000/25000  (92.0%)  rate=67.0 pos/s  eta=0.5 min  skipped=4309
+  24000/25000  (96.0%)  rate=67.1 pos/s  eta=0.2 min  skipped=4503
+  25000/25000  (100.0%)  rate=67.2 pos/s  eta=0.0 min  skipped=4689
+wrote /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/shard-1.jnnw (25000 records, 4689 skipped)

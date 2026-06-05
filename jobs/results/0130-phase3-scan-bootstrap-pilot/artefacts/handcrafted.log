@@ -1,0 +1,2 @@
+rewriting 200000 records (handcrafted): /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-sample-200K.jnnw → /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-handcrafted.jnnw
+wrote 200000 records (38 B each) to /root/jass/jobs/results/0130-phase3-scan-bootstrap-pilot/artefacts.src/master-200K-handcrafted.jnnw
