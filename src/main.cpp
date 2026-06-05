@@ -913,6 +913,66 @@ int run_benchmark_pattern_jass_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-pattern-jass-nnue-skel : Option I — pattern hybride avec
+// NNUE comme squelette (au lieu de handcrafted).
+//   eval_final = NNUE_forward(pos) + pattern_correction(pos)
+// Use case : pattern apprend le résidu Scan - v15_NNUE (squelette proche
+// de Scan car v15 a été distillé sur master).
+// -----------------------------------------------------------------------------
+int run_benchmark_pattern_jass_nnue_skel_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --benchmark-pattern-jass-nnue-skel "
+                     "<weights.pjtw> <skeleton.nnue.bin> "
+                     "[depth=6] [pairs=1] [threads=1] [movetime_ms=0]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const char* nnue_path    = argv[3];
+    const int   depth        = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
+    const int   pairs        = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   threads      = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   movetime_ms  = (argc > 7) ? parse_int_or(argv[7], 0) : 0;
+
+    std::string err;
+    auto pjn = jass::load_pattern_jass_network_nnue_skel(weights_path, nnue_path, &err);
+    if (!pjn) {
+        std::cerr << "error: cannot load pattern+nnue : " << err << "\n";
+        return 1;
+    }
+
+    // Bench vs handcrafted (baseline) AND vs NNUE-only (skeleton alone).
+    EngineConfig pattern_cfg;
+    pattern_cfg.max_depth   = depth;
+    pattern_cfg.threads     = threads;
+    pattern_cfg.movetime_ms = movetime_ms;
+    pattern_cfg.nnue        = pjn.get();
+
+    EngineConfig handcrafted_cfg;
+    handcrafted_cfg.max_depth   = depth;
+    handcrafted_cfg.threads     = threads;
+    handcrafted_cfg.movetime_ms = movetime_ms;
+    handcrafted_cfg.nnue        = nullptr;
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: PATTERN+NNUE_SKEL (" << weights_path
+              << " + " << nnue_path
+              << ", " << pjn->count() << " weights, scale=" << pjn->scale()
+              << ") vs handcrafted, depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games\n";
+
+    const TournamentResult r = run_tournament(pattern_cfg, handcrafted_cfg, pairs);
+    std::cout << "Result vs handcrafted: PATTERN+NNUE=" << r.a_wins
+              << " Handcrafted=" << r.b_wins
+              << " Draws="       << r.draws << '\n';
+    const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
+    std::cout << "PATTERN+NNUE_SKEL score rate vs handcrafted: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-nnue-vs-nnue: same colour-swap match as `--benchmark-nnue`,
 // but A and B are both NNUE networks (any combination of LinearNetwork
 // and MLPNetwork, auto-detected by `load_network`). Used to measure the
@@ -1269,6 +1329,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
+        else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
