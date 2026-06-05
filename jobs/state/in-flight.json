@@ -1,0 +1,7 @@
+{
+  "job_id": "0128-rewrite-master-handcrafted",
+  "script": "jobs/queue/0128-rewrite-master-handcrafted.sh",
+  "pid": 285530,
+  "started_at": "2026-06-05T18:51:15+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
