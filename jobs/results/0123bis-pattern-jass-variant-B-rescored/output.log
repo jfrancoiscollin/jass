@@ -1,0 +1,40 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8  TMPDIR=/root/jass/.compile-tmp
+
+=== Phase 0 : install scipy ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : train target=score sur master RESCORED ===
+loading JNNW /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 12) buckets=708588  (5.01s)
+target=score  range=[-2540,2876]  clipped±2000cp / 100 → piece units  std=2.990
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=2.606759  iters=200  (89.28s)
+val   : mse=4.964253  sign_acc=0.0018
+quant : scale=1000  range=[-5057,5894]  nnz=111174
+wrote /root/jass/jobs/results/0123bis-pattern-jass-variant-B-rescored/artefacts.src/pattern_jass_v5_rescored.pjtw  (708588 weights, 2834368 bytes)
+
+=== Phase 3 : bench Gate 2 ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0123bis-pattern-jass-variant-B-rescored/artefacts.src/pattern_jass_v5_rescored.pjtw, 708588 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=3 Handcrafted=51 Draws=0 (total 54)
+PATTERN_JASS score rate: 0.0555556 (3 / 54)
+GATE 2 FAIL (rate < 0.55)
+
+==========================================================
+       0123bis VARIANT B RESCORED VERDICT
+==========================================================
+  train wall : 95s
+  bench wall : 6s
+  rate       : 0.0555556
+  GATE 2 FAIL (rate < 0.55)
+
+  rate 0.056 = ΔELO ≈ -492 vs handcrafted
+  → FAIL (0.056). Pattern lookup ne suffit pas même avec scores.
+Traceback (most recent call last):
+  File "<stdin>", line 11, in <module>
+NameError: name 'fi' is not defined
+==========================================================

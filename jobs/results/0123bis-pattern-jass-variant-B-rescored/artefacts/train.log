@@ -1,0 +1,11 @@
+loading JNNW /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 12) buckets=708588  (5.01s)
+target=score  range=[-2540,2876]  clipped±2000cp / 100 → piece units  std=2.990
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=2.606759  iters=200  (89.28s)
+val   : mse=4.964253  sign_acc=0.0018
+quant : scale=1000  range=[-5057,5894]  nnz=111174
+wrote /root/jass/jobs/results/0123bis-pattern-jass-variant-B-rescored/artefacts.src/pattern_jass_v5_rescored.pjtw  (708588 weights, 2834368 bytes)
