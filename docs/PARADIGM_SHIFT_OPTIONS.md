@@ -342,6 +342,93 @@ des optimisations marginales par-dessus une base 4-5× plus forte.
 
 ---
 
+## (H) NNUE hybride avec squelette handcrafted (proposé 2026-06-05)
+
+**Ajouté après Gate 2 PASS de pattern_jass hybride (0129, rate 0.667
+vs handcrafted).** L'architecture Scan-style "skeleton + correction"
+n'est pas réservée aux patterns — elle peut s'appliquer telle quelle à
+notre MLP NNUE.
+
+### Idée
+
+```
+eval_final(pos) = handcrafted_evaluate(pos)    ← squelette material + PSQT + mobilité
+                + NNUE_forward(pos)              ← correction MLP
+```
+
+Le MLP n'apprend plus la valeur absolue de la position, mais seulement
+le **résidu** sur le handcrafted. Tâche d'apprentissage strictement
+plus facile.
+
+### Pourquoi ça aiderait
+
+Notre NNUE 128-64 (v15) actuel doit encoder material + PSQT +
+positionnel dans 10K poids. Avec squelette :
+- Material + PSQT offloadés sur handcrafted (gratuit, déjà existant)
+- Les 10K poids servent **uniquement** au positionnel fin
+- Capacité libérée → meilleure qualité d'eval à arch identique
+- **Ou** : on peut **rétrécir l'arch** (96-48, 64-32) sans perdre la qualité,
+  parce que material/PSQT est dans le squelette
+
+### Gain estimé
+
+| Configuration | vs Scan d10 (estim.) | vs Scan mt=500 (estim.) |
+|---|---|---|
+| v15 128-64 vanilla (actuel) | +331 (mesuré) | -500 à -550 |
+| v15 128-64 hybride | +350 à +400 | -470 à -520 |
+| **v16 64-32 hybride** | +280 à +330 | **-440 à -490** |
+| **v16 48-24 hybride** | +250 à +300 | **-420 à -470** |
+
+Le gain principal est sur **time-search via arch plus petite** :
+- 64-32 forward : ~2-3× plus rapide que 128-64
+- NPS gain : +15-25% global
+- ELO time-search : +30-50
+
+### Effort
+
+| Étape | Effort |
+|---|---|
+| Modifier inference C++ (search.cpp, eval_leaf bridge) | 1 jour |
+| Adapter pipeline training (target = score - handcrafted) | 1 jour |
+| Re-générer dataset avec colonne handcrafted alignée | 1 job (~10 min) |
+| Entraîner v16 64-32 hybride + bench | 1 jour wall |
+| Tuning (L2, archis, epochs) | 1 semaine |
+
+Total : **~2 semaines pour validation complète**.
+
+### Risques
+
+- v15 NNUE déjà bien tuné — gain marginal possible (+30-100 ELO)
+- Doubler le travail à chaque eval call (handcrafted + NNUE) — overhead
+  ~5% NPS, à mesurer
+- Si handcrafted a des biais, MLP peut les contre-balancer mal
+- Stockfish n'utilise pas cette approche en final ; ils ont essayé puis
+  pivoté pure NNUE. À comprendre pourquoi avant d'engager beaucoup
+  d'effort
+
+### Quick win possible
+
+**Test rapide** : pre-train v15 actuel avec target = score - handcrafted
+au lieu de score absolu, **sans changer l'arch**. 1 job, 1 PR, ~1h
+runner. Si gain > +20 ELO sur bench fixed-depth, signal suffisant pour
+investir dans l'arch downsize hybride.
+
+### Complémentarité
+
+- Combine bien avec **distillation Phase 3** : entraîner un 64-32
+  hybride distillé depuis Scan → potentiellement match v15 128-64 vanilla
+- Combine bien avec **multi-cycle training** : skeleton est stable
+  entre cycles, simplifie le moving target
+
+### Recommandation
+
+**Tester le quick win** (1 jour wall) avant d'engager les 2 semaines.
+Si le quick win donne ≥ +20 ELO, prioritiser l'arch downsize (64-32
+hybride). Sinon, drop et focus sur autres options (D, ou continuer
+v15+training cycles).
+
+---
+
 ## Synthèse — recommandations par profil d'engagement
 
 ### "Curiosité cheap" (~€10, ~1-2 semaines wall)
