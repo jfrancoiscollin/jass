@@ -115,6 +115,9 @@ add_library(jass_lib STATIC
     src/nnue_accumulator.cpp
     src/nnue_server_client.cpp
     src/pattern_network.cpp
+    src/pattern_jass_bridge.cpp
+    pattern_jass/src/pattern.cpp
+    pattern_jass/src/weights.cpp
     "${NNUE_DEFAULT_DATA_CPP}"
     src/search.cpp
     src/zobrist.cpp
