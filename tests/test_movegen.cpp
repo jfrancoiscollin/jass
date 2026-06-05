@@ -13,6 +13,7 @@
 #include "test_framework.hpp"
 
 #include "bitboard.hpp"
+#include "board.hpp"
 #include "movegen.hpp"
 #include "position.hpp"
 #include "types.hpp"
@@ -199,6 +200,42 @@ std::uint64_t perft(const Position& pos, int depth) {
     return total;
 }
 
+// Validate the SIMD-batched reach_all_dirs against the canonical
+// neighbour()-per-bit implementation on randomized bitboards.
+void test_reach_all_dirs_matches_canonical() {
+    auto canonical = [](Bitboard bb) -> Bitboard {
+        Bitboard out = 0;
+        Bitboard b = bb;
+        while (b) {
+            const Square s = pop_lsb(b);
+            for (Dir d : ALL_DIRS) {
+                const Square n = neighbour(s, d);
+                if (n != NO_SQUARE) set(out, n);
+            }
+        }
+        return out;
+    };
+
+    // Single-bit positions : every square in turn.
+    for (int bit = 0; bit < NUM_SQUARES; ++bit) {
+        const Bitboard bb = (Bitboard{1} << bit);
+        JASS_CHECK_EQ(reach_all_dirs(bb), canonical(bb));
+    }
+    // Empty + full.
+    JASS_CHECK_EQ(reach_all_dirs(EMPTY_BB), canonical(EMPTY_BB));
+    JASS_CHECK_EQ(reach_all_dirs(FULL_BB),  canonical(FULL_BB));
+
+    // A handful of randomized bitboards (LFSR-ish to be deterministic).
+    Bitboard seed = 0x123456789ABCDEFULL;
+    for (int trial = 0; trial < 64; ++trial) {
+        seed ^= (seed << 13);
+        seed ^= (seed >> 7);
+        seed ^= (seed << 17);
+        const Bitboard bb = seed & FULL_BB;
+        JASS_CHECK_EQ(reach_all_dirs(bb), canonical(bb));
+    }
+}
+
 void test_perft_start() {
     const Position p = Position::start_position();
     // FMJD international draughts perft from the standard initial position.
@@ -222,5 +259,6 @@ void run_movegen_tests() {
     test_man_promotes_at_end_of_capture();
     test_king_capture_multiple_landings();
     test_after_clears_captures_and_flips_stm();
+    test_reach_all_dirs_matches_canonical();
     test_perft_start();
 }

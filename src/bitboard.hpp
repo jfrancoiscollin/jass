@@ -56,4 +56,51 @@ constexpr Square lsb(Bitboard b) noexcept {
     return bit_to_square(std::countr_zero(b));
 }
 
+// -----------------------------------------------------------------------------
+// Directional neighbour batch shifts.
+// -----------------------------------------------------------------------------
+// `reach_all_dirs(bb)` returns the bitboard of all squares that are an
+// immediate diagonal neighbour (any of 4 directions) of any bit set in `bb`.
+//
+// O(1) bitboard operations — replaces the iterate-and-set loop that
+// otherwise costs ~4 × popcount(bb) ops. Used by the man-capture
+// pre-filter and other "is there an enemy nearby ?" queries.
+//
+// Brick layout : 50 squares numbered 1..50, row-major. Row r contains
+// FMJD (5r+1)..(5r+5) at bits (5r)..(5r+4). Even rows (r=0,2,4,6,8)
+// have their dark squares at physical columns 1,3,5,7,9 ; odd rows at
+// 0,2,4,6,8. Diagonal shifts therefore have different bit deltas per
+// row parity :
+//   dir   even-row delta   odd-row delta   constraint
+//   NW    -5               -6              odd row : c > 0
+//   NE    -4               -5              even row : c < 4
+//   SW    +5               +4              odd row : c > 0
+//   SE    +6               +5              even row : c < 4
+inline constexpr Bitboard EVEN_ROW_MASK =
+    (0x1FULL <<  0) | (0x1FULL << 10) | (0x1FULL << 20)
+  | (0x1FULL << 30) | (0x1FULL << 40);
+inline constexpr Bitboard ODD_ROW_MASK = FULL_BB & ~EVEN_ROW_MASK;
+
+// Bits where (bit_idx mod 5) == 0 : column 0 within each row.
+inline constexpr Bitboard COL_FIRST_MASK =
+    (1ULL <<  0) | (1ULL <<  5) | (1ULL << 10) | (1ULL << 15) | (1ULL << 20)
+  | (1ULL << 25) | (1ULL << 30) | (1ULL << 35) | (1ULL << 40) | (1ULL << 45);
+inline constexpr Bitboard COL_LAST_MASK  = COL_FIRST_MASK << 4;  // (mod 5) == 4
+inline constexpr Bitboard NOT_COL_FIRST  = FULL_BB & ~COL_FIRST_MASK;
+inline constexpr Bitboard NOT_COL_LAST   = FULL_BB & ~COL_LAST_MASK;
+
+constexpr Bitboard reach_all_dirs(Bitboard bb) noexcept {
+    const Bitboard even = bb & EVEN_ROW_MASK;
+    const Bitboard odd  = bb & ODD_ROW_MASK;
+    const Bitboard nw   = (even >> 5)
+                        | ((odd & NOT_COL_FIRST) >> 6);
+    const Bitboard ne   = ((even & NOT_COL_LAST) >> 4)
+                        | (odd >> 5);
+    const Bitboard se   = ((even & NOT_COL_LAST) << 6)
+                        | (odd << 5);
+    const Bitboard sw   = (even << 5)
+                        | ((odd & NOT_COL_FIRST) << 4);
+    return (nw | ne | se | sw) & FULL_BB;
+}
+
 }  // namespace jass

@@ -174,18 +174,10 @@ void generate_captures(const Position& pos, MoveList& out) {
     // only START a capture from such a square, so iterating only over
     // `friend_men & enemy_reach` skips the dead-end extend_man_captures
     // calls that would just iterate over their 4 directions and find
-    // nothing. Cost ~popcount(enemy)*4 ops, paid once per position.
-    Bitboard enemy_reach = 0;
-    {
-        Bitboard e = ctx.enemy_bb;
-        while (e) {
-            const Square s = pop_lsb(e);
-            for (Dir d : ALL_DIRS) {
-                const Square n = neighbour(s, d);
-                if (n != NO_SQUARE) set(enemy_reach, n);
-            }
-        }
-    }
+    // nothing. Computed as O(1) bitboard ops via brick-layout-aware
+    // `reach_all_dirs` (cf bitboard.hpp), replacing the iterate-and-set
+    // loop that was ~4×popcount(enemy) ops.
+    const Bitboard enemy_reach = reach_all_dirs(ctx.enemy_bb);
 
     Bitboard threat_men = pos.men_of(ctx.us) & enemy_reach;
 
