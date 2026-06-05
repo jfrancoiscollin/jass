@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/root/jass/pattern_jass/tools/train.py", line 37, in <module>
+    import scipy.sparse as sp
+ModuleNotFoundError: No module named 'scipy'
