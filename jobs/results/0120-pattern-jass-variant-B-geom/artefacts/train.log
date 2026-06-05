@@ -1,0 +1,11 @@
+loading JNNW /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 12) buckets=708588  (5.07s)
+target=score  range=[0,0]  clipped±2000cp / 100 → piece units  std=0.000
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=0.000000  iters=0  (0.69s)
+val   : mse=0.000000  sign_acc=1.0000
+quant : scale=1000  range=[0,0]  nnz=0
+wrote /root/jass/jobs/results/0120-pattern-jass-variant-B-geom/artefacts.src/pattern_jass_v3_geom.pjtw  (708588 weights, 2834368 bytes)

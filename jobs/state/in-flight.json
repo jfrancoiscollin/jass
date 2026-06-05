@@ -1,7 +1,0 @@
-{
-  "job_id": "0120-pattern-jass-variant-B-geom",
-  "script": "jobs/queue/0120-pattern-jass-variant-B-geom.sh",
-  "pid": 278715,
-  "started_at": "2026-06-05T13:38:25+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

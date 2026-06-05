@@ -1,0 +1,38 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== Phase 0 : install scipy if missing ===
+
+=== Phase 1 : build prod (12 patterns) ===
+
+=== Phase 2 : train v3 (target=score, 12 patterns × 59049 = 708K buckets) ===
+loading JNNW /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 12) buckets=708588  (5.07s)
+target=score  range=[0,0]  clipped±2000cp / 100 → piece units  std=0.000
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=0.000000  iters=0  (0.69s)
+val   : mse=0.000000  sign_acc=1.0000
+quant : scale=1000  range=[0,0]  nnz=0
+wrote /root/jass/jobs/results/0120-pattern-jass-variant-B-geom/artefacts.src/pattern_jass_v3_geom.pjtw  (708588 weights, 2834368 bytes)
+
+=== Phase 3 : bench Gate 2 ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0120-pattern-jass-variant-B-geom/artefacts.src/pattern_jass_v3_geom.pjtw, 708588 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=54 Draws=0 (total 54)
+PATTERN_JASS score rate: 0 (0 / 54)
+GATE 2 FAIL (rate < 0.55)
+
+==========================================================
+       0120 VARIANT B (geom +diag) VERDICT
+==========================================================
+  vs 0118bis (wdl, 8 patterns) : rate 0.000
+  vs 0119    (score, 8 patterns) : (see 0119)
+  vs 0120    (score, 12 patterns) : 0
+  GATE 2 FAIL (rate < 0.55)
+
+  rate 0.000 = ΔELO ≈ -inf vs handcrafted
+  → VARIANT B FAIL (0.000). Géométrie ≠ root cause.
+     Variant C (kings) reste à tester.
+==========================================================
