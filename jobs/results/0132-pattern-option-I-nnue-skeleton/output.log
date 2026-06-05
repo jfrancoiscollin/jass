@@ -1,0 +1,55 @@
+=== host : ubuntu-16gb-hel1-2 ===
+
+=== Phase 0 : install scipy ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : compute v15 NNUE scores sur 1.5M positions (skeleton) ===
+  v15 rewrite wall : 1s
+
+=== Phase 3 : preview corr(scan, v15) ===
+scan std = 1144.0cp,  v15 std = 274.9cp
+corr(scan, v15) = 0.4565
+residual (scan - v15) : std = 1047.5cp, mean = +28.2
+
+=== Phase 4 : train pattern résidu (target = scan - v15) ===
+loading JNNW /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw
+  1500000 records  (0.09s)
+extracting pattern indices (men only)
+  shape (1500000, 8) buckets=4251528  (0.72s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=6.349
+loading skeleton /root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/master-1500K-v15.jnnw
+skeleton std=2.990  residual std=5.377  (corr score↔skel = 0.536)
+split : train=1350000 val=150000
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=13.393456  iters=200  (84.88s)
+val   : mse=27.891595  sign_acc=0.0016
+quant : scale=1000  range=[-10311,11489]  nnz=169450
+wrote /root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/pattern_jass_v10_option_I.pjtw  (4251528 weights, 17006128 bytes)
+
+=== Phase 5a : bench pattern+v15-skeleton vs handcrafted ===
+Benchmark: PATTERN+NNUE_SKEL (/root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/pattern_jass_v10_option_I.pjtw + /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games
+Result vs handcrafted: PATTERN+NNUE=27 Handcrafted=15 Draws=12
+PATTERN+NNUE_SKEL score rate vs handcrafted: 0.611111
+
+=== Phase 5b : bench pattern+v15 vs v15-only (test si pattern AJOUTE) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/pattern_jass_v10_option_I.pjtw) vs B=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 6, threads 1 vs 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=0 B=54 Draws=0 (total 54)
+A score rate: 0 (0 / 54)
+
+==========================================================
+       0132 OPTION I — PATTERN + NNUE SKELETON VERDICT
+==========================================================
+  Historique pattern hybride :
+    0129 (v15-label + handcrafted-skel)        : 0.667
+    0130 (Scan d12 + handcrafted-skel, 200K)   : 0.083
+    0131 (Scan d10 + handcrafted-skel, 1.5M)   : 0.000
+    0132 (Scan d10 + v15-skel, 1.5M, OPTION I) : 0.611111 vs hc
+                                                0 vs v15
+
+  v15 rewrite  : 1s
+  train wall   : 86s
+
+  vs handcrafted rate 0.611 = ΔELO ≈ +79
+  → résultat modeste (0.611). Vérifier corr(scan, v15) et résidu.
+==========================================================

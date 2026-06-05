@@ -1,0 +1,3 @@
+Benchmark: PATTERN+NNUE_SKEL (/root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/pattern_jass_v10_option_I.pjtw + /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games
+Result vs handcrafted: PATTERN+NNUE=27 Handcrafted=15 Draws=12
+PATTERN+NNUE_SKEL score rate vs handcrafted: 0.611111
