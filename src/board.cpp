@@ -48,20 +48,20 @@ constinit const NeighbourTable kNeighbourTable = build_neighbour_table();
 
 // Build the king ray table : for each (from, dir), record the sequence
 // of squares reached by chaining `neighbour()` calls until off-board.
+// Constexpr-evaluated, reads from kNeighbourTable.
 constexpr KingRayTable build_king_ray_table() {
     KingRayTable t{};
-    // Note: built from kNeighbourTable contents (constexpr-evaluated).
     for (int s = FIRST_SQUARE; s <= LAST_SQUARE; ++s) {
         const Square from = static_cast<Square>(s);
+        const std::size_t from_idx = static_cast<std::size_t>(from);
         for (std::size_t di = 0; di < NUM_DIRS; ++di) {
-            const Dir d = static_cast<Dir>(di);
-            KingRay& ray = t.data[s][di];
-            Square cur = kNeighbourTable.data[from][di];
+            KingRay& ray = t.data[from_idx][di];
+            Square cur = kNeighbourTable.data[from_idx][di];
             while (cur != NO_SQUARE && ray.length < MAX_RAY_LEN) {
-                ray.squares[ray.length++] = cur;
-                cur = kNeighbourTable.data[cur][di];
+                ray.squares[ray.length] = cur;
+                ray.length = static_cast<std::uint8_t>(ray.length + 1);
+                cur = kNeighbourTable.data[static_cast<std::size_t>(cur)][di];
             }
-            (void)d;
         }
     }
     return t;
