@@ -1,7 +1,9 @@
 {
   "job_id": "0123-pattern-jass-variant-B-rescored",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 3,
   "started_at": "2026-06-05T16:08:43+00:00",
+  "ended_at": "2026-06-05T16:13:50+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 280819
+  "artefacts_server_path": "/root/jass/jobs/results/0123-pattern-jass-variant-B-rescored/artefacts.src"
 }
