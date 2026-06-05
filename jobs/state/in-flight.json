@@ -1,0 +1,7 @@
+{
+  "job_id": "0119-pattern-jass-variant-A-score",
+  "script": "jobs/queue/0119-pattern-jass-variant-A-score.sh",
+  "pid": 278232,
+  "started_at": "2026-06-05T13:23:06+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
