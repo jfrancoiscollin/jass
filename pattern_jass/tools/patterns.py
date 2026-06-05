@@ -18,11 +18,17 @@ PATTERNS: list[list[int]] = [
     [ 1,  6, 11, 16, 21, 26, 31, 36, 41, 46],   # col_left
     [ 3,  8, 13, 18, 23, 28, 33, 38, 43, 48],   # col_mid
     [ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50],   # col_right
+    # Variant B : diagonals + center
+    [ 5,  9, 14, 18, 23, 27, 32, 36, 41, 46],   # diag_NE_a
+    [ 1,  7, 12, 18, 23, 29, 34, 40, 45, 50],   # diag_SE_a
+    [ 2,  8, 13, 19, 24, 30, 35, 41, 46, 49],   # diag_SE_b
+    [12, 13, 17, 18, 19, 22, 23, 24, 28, 29],   # center_box
 ]
 
 PATTERN_NAMES = [
     "row_top", "row_2", "row_mid", "row_4", "row_bot",
     "col_left", "col_mid", "col_right",
+    "diag_NE_a", "diag_SE_a", "diag_SE_b", "center_box",
 ]
 
 NUM_PATTERNS    = len(PATTERNS)   # 8

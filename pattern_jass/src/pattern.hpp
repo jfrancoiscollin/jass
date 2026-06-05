@@ -25,7 +25,7 @@ using Bitboard = std::uint64_t;
 using Square   = std::uint8_t;   // FMJD 1..50
 
 constexpr std::size_t PATTERN_SIZE  = 10;
-constexpr std::size_t NUM_PATTERNS  = 8;
+constexpr std::size_t NUM_PATTERNS  = 12;   // v2 (Variant B) : +4 diagonal/center patterns
 
 struct Pattern {
     std::array<Square, PATTERN_SIZE> squares;  // FMJD square numbers, 1..50
@@ -52,6 +52,12 @@ inline constexpr std::array<Pattern, NUM_PATTERNS> PATTERNS = {{
     {{ 1,  6, 11, 16, 21, 26, 31, 36, 41, 46}, "col_left"},
     {{ 3,  8, 13, 18, 23, 28, 33, 38, 43, 48}, "col_mid"},
     {{ 5, 10, 15, 20, 25, 30, 35, 40, 45, 50}, "col_right"},
+    // Variant B additions : diagonal-flavoured + central regions to
+    // diversify the geometric correlations beyond rows/cols.
+    {{ 5,  9, 14, 18, 23, 27, 32, 36, 41, 46}, "diag_NE_a"},
+    {{ 1,  7, 12, 18, 23, 29, 34, 40, 45, 50}, "diag_SE_a"},
+    {{ 2,  8, 13, 19, 24, 30, 35, 41, 46, 49}, "diag_SE_b"},
+    {{12, 13, 17, 18, 19, 22, 23, 24, 28, 29}, "center_box"},
 }};
 
 // Offset of pattern `i`'s buckets inside the flat weight array.
