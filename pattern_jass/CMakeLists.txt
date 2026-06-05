@@ -14,6 +14,7 @@ endif()
 
 add_library(pattern_jass_core STATIC
     src/pattern.cpp
+    src/weights.cpp
 )
 target_include_directories(pattern_jass_core PUBLIC src)
 target_compile_options(pattern_jass_core PRIVATE -Wall -Wextra -Wpedantic)
