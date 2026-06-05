@@ -1,0 +1,23 @@
+=== Phase 1 : build prod ===
+
+=== Phase 2 : rewrite scores via handcrafted evaluate() ===
+  3000000 / 4738008 records
+  3500000 / 4738008 records
+  4000000 / 4738008 records
+  4500000 / 4738008 records
+wrote 4738008 records (38 B each) to /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+-rw-r--r-- 1 root root 180044312 Jun  5 18:51 /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+
+=== Phase 3 : sanity Python preview ===
+records      : 10000
+score range  : [-1194, 1081]
+score std    : 160.93
+non-zero     : 9879/10000 (98.8%)
+
+==========================================================
+       0128 REWRITE MASTER HANDCRAFTED VERDICT
+==========================================================
+  wall   : 2s
+  output : /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+  Next : 0129 train pattern hybride (résidu vs handcrafted)
+==========================================================
