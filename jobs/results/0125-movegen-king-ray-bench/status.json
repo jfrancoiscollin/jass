@@ -1,7 +1,9 @@
 {
   "job_id": "0125-movegen-king-ray-bench",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-05T17:56:00+00:00",
+  "ended_at": "2026-06-05T18:01:01+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 283354
+  "artefacts_server_path": "/root/jass/jobs/results/0125-movegen-king-ray-bench/artefacts.src"
 }

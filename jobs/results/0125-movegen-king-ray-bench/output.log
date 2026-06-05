@@ -1,0 +1,21 @@
+=== Phase 1 : build prod (king ray table active) ===
+
+=== Phase 2 : NPS bench (5 positions × 5s, median) ===
+median_depth=20  median_nodes=6319318  median_nps=1263863
+
+=== Phase 3 : rate vs Scan d10 (correctness gate) ===
+
+=== Jass vs Scan, depth 10, 54 games ===
+  Jass=47  Scan=7  Draws=0
+  Jass score rate: 0.870 (47.0 / 54)
+  ELO estimate:    +331 (95% CI ≈ ±109)
+
+==========================================================
+       0125 KING RAY MASKS BENCH VERDICT
+==========================================================
+  NPS         : 1263863  (baseline 0103 : 1.29M)
+  Rate Scan d10 : 0.870 (baseline : 0.870)
+
+  NPS gain vs 0103 : -2.0%
+  → régression -2.0%, investiguer.
+==========================================================
