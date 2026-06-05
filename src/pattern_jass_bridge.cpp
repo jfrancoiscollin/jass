@@ -3,6 +3,7 @@
 
 #include "pattern_jass_bridge.hpp"
 
+#include "eval.hpp"
 #include "position.hpp"
 
 // Use the standalone pattern_jass module via relative include. The
@@ -16,24 +17,27 @@ PatternJassNetwork::PatternJassNetwork(std::vector<std::int32_t> weights,
     : weights_(std::move(weights)), scale_(scale ? scale : 1U) {}
 
 int PatternJassNetwork::evaluate(const Position& pos) const noexcept {
-    // pattern_jass uses men only (kings excluded) by design.
-    // Black-POV pattern sum, then sign-flip for stm-POV.
+    // Scan-style hybrid eval :
+    //   eval_final = handcrafted(pos) + pattern_correction(pos)
+    // The pattern weights were trained on the RESIDUAL between true
+    // (NNUE-rewritten) score and handcrafted, so adding handcrafted
+    // back at eval time reconstructs the model's full prediction.
+    // Cf docs/SCAN_ARCHITECTURE_NOTES.md §3 : "Les patterns ne
+    // remplacent pas l'éval, ils s'ajoutent à un squelette".
+    const int handcrafted_cp = ::jass::evaluate(pos);
+
     const std::uint64_t bm = static_cast<std::uint64_t>(pos.black_men());
     const std::uint64_t wm = static_cast<std::uint64_t>(pos.white_men());
-
     const std::int64_t sum_black =
         pattern_jass::eval_pattern(bm, wm, weights_.data());
-
-    // Convert to stm-POV centipawn :
-    //   sum_black is in "scale * piece" units predicting WDL.
-    //   cp_black = sum_black * 100 / scale.
     const std::int64_t cp_black = (sum_black * 100) / static_cast<std::int64_t>(scale_);
-    const std::int64_t cp_stm   =
+    const std::int64_t pattern_cp_stm =
         (pos.side_to_move() == Color::Black) ? cp_black : -cp_black;
-    // Clamp to int range — pattern eval shouldn't be enormous but be safe.
-    if (cp_stm >  20000) return  20000;
-    if (cp_stm < -20000) return -20000;
-    return static_cast<int>(cp_stm);
+
+    const std::int64_t total = static_cast<std::int64_t>(handcrafted_cp) + pattern_cp_stm;
+    if (total >  20000) return  20000;
+    if (total < -20000) return -20000;
+    return static_cast<int>(total);
 }
 
 std::unique_ptr<PatternJassNetwork> load_pattern_jass_network(

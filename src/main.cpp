@@ -13,6 +13,7 @@
 #include "engine.hpp"
 #include "hub.hpp"
 #include "movegen.hpp"
+#include "eval.hpp"
 #include "nnue.hpp"
 #include "nnue_server_client.hpp"
 #include "pattern_jass_bridge.hpp"
@@ -684,6 +685,98 @@ int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --rewrite-scores-with-handcrafted: same as --rewrite-scores-with-nnue
+// but uses the handcrafted `evaluate()` instead of NNUE. Used to compute
+// the per-position handcrafted baseline needed by Scan-style hybrid
+// pattern training (target = NNUE_score - handcrafted_score).
+// -----------------------------------------------------------------------------
+int run_rewrite_scores_with_handcrafted_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --rewrite-scores-with-handcrafted "
+                     "<input.jnnw> <output.jnnw>\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+    if (std::string_view{in_path} == std::string_view{out_path}) {
+        std::cerr << "error: input and output paths are identical\n";
+        return 1;
+    }
+
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+
+    in.seekg(0, std::ios::end);
+    const std::streampos file_end = in.tellg();
+    in.seekg(0, std::ios::beg);
+    if (file_end < std::streampos{8}) {
+        std::cerr << "error: " << in_path << " too small for JNNW header\n";
+        return 1;
+    }
+    char magic[4]{};
+    in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n";
+        return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read JNNW header\n"; return 1; }
+
+    constexpr std::size_t RECORD_SZ = 38;
+    const std::size_t body_bytes  = static_cast<std::size_t>(file_end) - 8;
+    if (body_bytes % RECORD_SZ != 0) {
+        std::cerr << "error: body size not multiple of " << RECORD_SZ << "\n";
+        return 1;
+    }
+    const std::size_t expected = body_bytes / RECORD_SZ;
+    if (count != expected) {
+        std::cerr << "error: header count " << count
+                  << " != file-derived " << expected << "\n";
+        return 1;
+    }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    out.write("JNNW", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+
+    std::cout << "rewriting " << count << " records (handcrafted): "
+              << in_path << " → " << out_path << "\n";
+
+    char record[RECORD_SZ];
+    Position pos;
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i << "\n";
+            return 1;
+        }
+        std::uint64_t bbs[4];
+        std::uint8_t  stm_byte;
+        std::memcpy(bbs,       record,      32);
+        std::memcpy(&stm_byte, record + 32,  1);
+        if (stm_byte > 1) { std::cerr << "bad stm at " << i << "\n"; return 1; }
+
+        pos = Position{};
+        pos.set_side_to_move(stm_byte == 0 ? Color::White : Color::Black);
+        for (Bitboard b = bbs[0]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackKing);
+
+        const std::int32_t new_score = static_cast<std::int32_t>(evaluate(pos));
+        std::memcpy(record + 33, &new_score, 4);
+        out.write(record, RECORD_SZ);
+        if ((i + 1) % 500000 == 0) {
+            std::cout << "  " << (i + 1) << " / " << count << " records\n";
+        }
+    }
+    std::cout << "wrote " << count << " records (38 B each) to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-nnue: pit a trained network (loaded from a binary weights
 // file — either the raw LinearNetwork int32 layout or the JNNM-tagged
 // MLPNetwork format) against the handcrafted eval. Both engines are
@@ -1172,6 +1265,7 @@ int main(int argc, char** argv) {
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
         else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
+        else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
