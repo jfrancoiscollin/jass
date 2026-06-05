@@ -1,0 +1,7 @@
+{
+  "job_id": "0131-phase3-scan-bootstrap-full",
+  "state": "running",
+  "started_at": "2026-06-05T21:17:05+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 287861
+}
