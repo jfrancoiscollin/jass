@@ -90,6 +90,11 @@ def main():
     ap.add_argument('--max-iter', type=int, default=200)
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
+    ap.add_argument('--target', choices=['wdl', 'score'], default='wdl',
+                    help='training target : "wdl" (ternary {-1,0,1}) or '
+                         '"score" (centipawn clipped to ±2000 / 100 → piece units)')
+    ap.add_argument('--score-clip', type=float, default=2000.0,
+                    help='clip score to ±N cp before scaling (default 2000)')
     args = ap.parse_args()
 
     print(f'loading JNNW {args.data}')
@@ -104,11 +109,25 @@ def main():
     print(f'  shape {cols.shape} buckets={patterns.TOTAL_BUCKETS}  '
           f'({time.time() - t0:.2f}s)')
 
-    # Re-project WDL to black-POV (training convention).
+    # Re-project the chosen target to black-POV.
     # JNNW stm: 0 = white-to-move, 1 = black-to-move (cf src/main.cpp:222).
-    # wdl is from STM-POV. black-POV wdl = wdl if stm==1 else -wdl.
-    wdl_black = ds.wdl.astype(np.float64)
-    wdl_black = np.where(ds.stm == 1, wdl_black, -wdl_black)
+    # WDL and score are both STM-POV in the file.
+    # black-POV value = stm-POV if stm==1 else -(stm-POV).
+    if args.target == 'wdl':
+        target_stm = ds.wdl.astype(np.float64)
+        # Diagnostic : WDL distribution (helps catch sparse/all-zero datasets).
+        n_pos = int((ds.wdl > 0).sum()); n_neg = int((ds.wdl < 0).sum())
+        n_zero = int((ds.wdl == 0).sum())
+        print(f'target=wdl  pos={n_pos} neg={n_neg} zero={n_zero}'
+              f'  ({n_zero/ds.n_records*100:.1f}% draws)')
+    else:  # score
+        clipped = np.clip(ds.score.astype(np.float64), -args.score_clip, args.score_clip)
+        target_stm = clipped / 100.0  # centipawn → piece units
+        print(f'target=score  range=[{int(ds.score.min())},{int(ds.score.max())}]'
+              f'  clipped±{int(args.score_clip)}cp / 100 → piece units'
+              f'  std={target_stm.std():.3f}')
+    y_black = np.where(ds.stm == 1, target_stm, -target_stm)
+    wdl_black = y_black  # keep variable name for downstream code
 
     # Train/val split.
     n = ds.n_records
