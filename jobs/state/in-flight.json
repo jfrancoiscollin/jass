@@ -1,7 +1,0 @@
-{
-  "job_id": "0123-pattern-jass-variant-B-rescored",
-  "script": "jobs/queue/0123-pattern-jass-variant-B-rescored.sh",
-  "pid": 280819,
-  "started_at": "2026-06-05T16:08:43+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
