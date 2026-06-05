@@ -1,0 +1,11 @@
+rewriting 4738008 records (handcrafted): /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw → /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+  500000 / 4738008 records
+  1000000 / 4738008 records
+  1500000 / 4738008 records
+  2000000 / 4738008 records
+  2500000 / 4738008 records
+  3000000 / 4738008 records
+  3500000 / 4738008 records
+  4000000 / 4738008 records
+  4500000 / 4738008 records
+wrote 4738008 records (38 B each) to /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
