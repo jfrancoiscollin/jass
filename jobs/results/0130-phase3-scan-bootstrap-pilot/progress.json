@@ -1,0 +1,85 @@
+{
+  "job_id": "0130-phase3-scan-bootstrap-pilot",
+  "snapshot_at": "2026-06-05T20:56:05+00:00",
+  "started_at": "2026-06-05T20:50:55+00:00",
+  "elapsed_seconds": 310,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 3053
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "master-sample-200K.jnnw",
+      "size_bytes": 7600008
+    },
+    {
+      "name": "relabel-shard-0.log",
+      "size_bytes": 1409
+    },
+    {
+      "name": "relabel-shard-1.log",
+      "size_bytes": 1480
+    },
+    {
+      "name": "relabel-shard-2.log",
+      "size_bytes": 1413
+    },
+    {
+      "name": "relabel-shard-3.log",
+      "size_bytes": 1413
+    },
+    {
+      "name": "relabel-shard-4.log",
+      "size_bytes": 1481
+    },
+    {
+      "name": "relabel-shard-5.log",
+      "size_bytes": 1481
+    },
+    {
+      "name": "relabel-shard-6.log",
+      "size_bytes": 1414
+    },
+    {
+      "name": "relabel-shard-7.log",
+      "size_bytes": 1414
+    },
+    {
+      "name": "shard-0.jnnw",
+      "size_bytes": 756284
+    },
+    {
+      "name": "shard-1.jnnw",
+      "size_bytes": 768482
+    },
+    {
+      "name": "shard-2.jnnw",
+      "size_bytes": 748152
+    },
+    {
+      "name": "shard-3.jnnw",
+      "size_bytes": 756284
+    },
+    {
+      "name": "shard-4.jnnw",
+      "size_bytes": 788812
+    },
+    {
+      "name": "shard-5.jnnw",
+      "size_bytes": 776614
+    },
+    {
+      "name": "shard-6.jnnw",
+      "size_bytes": 752218
+    },
+    {
+      "name": "shard-7.jnnw",
+      "size_bytes": 744086
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 287255       1       05:09  0.0  0.0 bash\n 287257  287255       05:09  0.0  0.0 bash\n 287518  287257       05:01  1.5  0.0 python3\n 287519  287257       05:01  1.5  0.0 python3\n 287520  287257       05:01  1.5  0.0 python3\n 287521  287257       05:01  1.5  0.0 python3\n 287522  287257       05:01  1.5  0.0 python3\n 287523  287257       05:01  1.5  0.0 python3\n 287524  287257       05:01  1.5  0.0 python3\n 287525  287257       05:01  1.4  0.0 python3\n 287526  287519       05:01 98.4  0.9 scan_linux\n 287527  287522       05:01 98.3  0.9 scan_linux\n 287528  287525       05:01 98.4  0.9 scan_linux\n 287529  287518       05:01 98.4  0.9 scan_linux\n 287530  287521       05:01 98.4  0.9 scan_linux\n 287531  287524       05:01 98.4  0.9 scan_linux\n 287532  287523       05:01 98.4  0.9 scan_linux\n 287533  287520       05:01 98.4  0.9 scan_linux\n"
+}
