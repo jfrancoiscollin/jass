@@ -1,7 +1,0 @@
-{
-  "job_id": "0132-pattern-option-I-nnue-skeleton",
-  "script": "jobs/queue/0132-pattern-option-I-nnue-skeleton.sh",
-  "pid": 288696,
-  "started_at": "2026-06-05T22:09:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

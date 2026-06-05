@@ -1,0 +1,13 @@
+loading JNNW /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw
+  1500000 records  (0.09s)
+extracting pattern indices (men only)
+  shape (1500000, 8) buckets=4251528  (0.72s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=6.349
+loading skeleton /root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/master-1500K-v15.jnnw
+skeleton std=2.990  residual std=5.377  (corr score↔skel = 0.536)
+split : train=1350000 val=150000
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=13.393456  iters=200  (84.88s)
+val   : mse=27.891595  sign_acc=0.0016
+quant : scale=1000  range=[-10311,11489]  nnz=169450
+wrote /root/jass/jobs/results/0132-pattern-option-I-nnue-skeleton/artefacts.src/pattern_jass_v10_option_I.pjtw  (4251528 weights, 17006128 bytes)
