@@ -1,0 +1,7 @@
+{
+  "job_id": "0122bis-rewrite-master-scores-v15-nnue",
+  "script": "jobs/queue/0122bis-rewrite-master-scores-v15-nnue.sh",
+  "pid": 282059,
+  "started_at": "2026-06-05T17:04:43+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
