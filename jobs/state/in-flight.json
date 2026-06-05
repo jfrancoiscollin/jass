@@ -1,0 +1,7 @@
+{
+  "job_id": "0130-phase3-scan-bootstrap-pilot",
+  "script": "jobs/queue/0130-phase3-scan-bootstrap-pilot.sh",
+  "pid": 287255,
+  "started_at": "2026-06-05T20:50:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
