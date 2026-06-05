@@ -1,0 +1,50 @@
+=== host : ubuntu-16gb-hel1-2  nproc: 8 ===
+
+=== Phase 0 : install python deps ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : sub-sample master 1500000 records (seed=42) ===
+wrote /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-sample-1500K.jnnw (1500000 records)
+
+=== Phase 3 : Scan d10 relabel 1500000 en 8 shards parallèles ===
+  scan relabel wall : 969s (16m)
+merged 1500000 scan-labelled records → /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw
+
+=== Phase 4 : handcrafted skeleton aligné ===
+
+=== Phase 5 : train pattern hybride sur Scan-labels (clip ±5000) ===
+loading JNNW /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw
+  1500000 records  (0.09s)
+extracting pattern indices (men only)
+  shape (1500000, 8) buckets=4251528  (0.70s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=6.349
+loading skeleton /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-handcrafted.jnnw
+skeleton std=1.475  residual std=5.852  (corr score↔skel = 0.440)
+split : train=1350000 val=150000
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=15.393642  iters=200  (86.55s)
+val   : mse=31.929055  sign_acc=0.0015
+quant : scale=1000  range=[-12516,11940]  nnz=169332
+wrote /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/pattern_jass_v9_scan_full.pjtw  (4251528 weights, 17006128 bytes)
+
+=== Phase 6 : bench vs handcrafted (Gate 3) ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/pattern_jass_v9_scan_full.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=54 Draws=0 (total 54)
+PATTERN_JASS score rate: 0 (0 / 54)
+GATE 2 FAIL (rate < 0.55)
+
+==========================================================
+       0131 PHASE 3 SCAN BOOTSTRAP FULL VERDICT
+==========================================================
+  scan relabel : 969s (1.5M × d10 × 8 shards)
+  train wall   : 88s
+
+  Historique pattern hybride :
+    0129 (v15 NNUE label, 4.7M, clip 2000)   : 0.667
+    0130 (Scan d12,       200K, clip 2000)   : 0.083
+    0131 (Scan d10,       1.5M, clip 5000)   : 0
+
+  rate 0.000 = ΔELO ≈ +inf vs handcrafted
+  → regress vs 0129 : Scan distill ne marche pas même avec params corrigés
+==========================================================
