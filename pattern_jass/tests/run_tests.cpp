@@ -36,14 +36,14 @@ namespace {
 using namespace pattern_jass;
 
 void test_layout_constants() {
-    REQUIRE_EQ(PATTERN_SIZE, std::size_t{10});
-    REQUIRE_EQ(NUM_PATTERNS, std::size_t{12});                // v2 (Variant B)
-    REQUIRE_EQ(BUCKETS_PER_PATTERN, std::uint32_t{59049});    // 3^10
-    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{708588});         // 12 * 59049
+    REQUIRE_EQ(PATTERN_SIZE, std::size_t{12});
+    REQUIRE_EQ(NUM_PATTERNS, std::size_t{8});                  // v3 (Option D — Scan geometry)
+    REQUIRE_EQ(BUCKETS_PER_PATTERN, std::uint32_t{531441});    // 3^12
+    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{4251528});         // 8 * 531441
 
     constexpr auto offsets = pattern_offsets();
     REQUIRE_EQ(offsets[0], std::uint32_t{0});
-    REQUIRE_EQ(offsets[11], std::uint32_t{11 * 59049});
+    REQUIRE_EQ(offsets[7], std::uint32_t{7 * 531441});
 }
 
 void test_pattern_square_count() {
@@ -70,36 +70,32 @@ void test_extract_empty() {
 }
 
 void test_extract_single_black() {
-    // Black man on square 1 → bit 0. In pattern row_top (idx 0), sq 1
-    // is at position 0 → idx = 1 * 3^0 = 1. In col_left (idx 5), sq 1
-    // is at position 0 → idx = 1. Others = 0.
+    // Black man on square 1 → bit 0. Only top_band_0 (idx 0) contains
+    // sq 1 (at position 0). Other top_bands start at sq 2/3/4. Bottom
+    // bands cover rows 4-9, exclude sq 1.
     const Bitboard b1 = Bitboard{1} << 0;
     std::array<std::uint32_t, NUM_PATTERNS> idx{};
     extract_all(b1, 0, idx);
 
-    REQUIRE_EQ(idx[0], std::uint32_t{1});  // row_top
-    REQUIRE_EQ(idx[1], std::uint32_t{0});  // row_2
+    REQUIRE_EQ(idx[0], std::uint32_t{1});  // top_band_0 (sq 1 at pos 0)
+    REQUIRE_EQ(idx[1], std::uint32_t{0});  // top_band_1 (no sq 1)
     REQUIRE_EQ(idx[2], std::uint32_t{0});
     REQUIRE_EQ(idx[3], std::uint32_t{0});
-    REQUIRE_EQ(idx[4], std::uint32_t{0});
-    REQUIRE_EQ(idx[5], std::uint32_t{1});  // col_left
-    REQUIRE_EQ(idx[6], std::uint32_t{0});  // col_mid
-    REQUIRE_EQ(idx[7], std::uint32_t{0});  // col_right
+    REQUIRE_EQ(idx[4], std::uint32_t{0});  // bot_band_0
+    REQUIRE_EQ(idx[5], std::uint32_t{0});
+    REQUIRE_EQ(idx[6], std::uint32_t{0});
+    REQUIRE_EQ(idx[7], std::uint32_t{0});
 }
 
 void test_extract_single_white_far() {
-    // White man on square 50 → bit 49. In row_bot (idx 4), sq 50 is at
-    // position 9 → cell=2, idx = 2 * 3^9 = 2 * 19683 = 39366.
-    // In col_right (idx 7), sq 50 is at position 9 → 39366.
+    // White man on square 50 → bit 49. Only bot_band_3 (idx 7) contains
+    // sq 50 at position 11 → cell=2, idx = 2 * 3^11 = 2 * 177147 = 354294.
     const Bitboard w50 = Bitboard{1} << 49;
     std::array<std::uint32_t, NUM_PATTERNS> idx{};
     extract_all(0, w50, idx);
 
-    for (std::size_t i = 0; i < 4; ++i) REQUIRE_EQ(idx[i], std::uint32_t{0});
-    REQUIRE_EQ(idx[4], std::uint32_t{39366});   // row_bot
-    REQUIRE_EQ(idx[5], std::uint32_t{0});
-    REQUIRE_EQ(idx[6], std::uint32_t{0});
-    REQUIRE_EQ(idx[7], std::uint32_t{39366});   // col_right
+    for (std::size_t i = 0; i < 7; ++i) REQUIRE_EQ(idx[i], std::uint32_t{0});
+    REQUIRE_EQ(idx[7], std::uint32_t{354294});   // bot_band_3 (sq 50 at pos 11)
 }
 
 void test_extract_index_within_bounds() {
