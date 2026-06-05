@@ -1,0 +1,11 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== Phase 1 : build prod (avec pattern_jass_bridge) ===
+
+=== Phase 2 : train pattern_jass v1 sur master 1.6M ===
+Traceback (most recent call last):
+  File "/root/jass/pattern_jass/tools/train.py", line 37, in <module>
+    import scipy.sparse as sp
+ModuleNotFoundError: No module named 'scipy'
+ABORT: train failed rc=1
