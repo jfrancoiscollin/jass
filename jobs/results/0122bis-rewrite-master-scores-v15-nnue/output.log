@@ -1,0 +1,43 @@
+=== Phase 0 : disk space diag ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   12G  132G   9% /
+/dev/sda1       150G   12G  132G   9% /tmp
+/dev/sda1       150G   12G  132G   9% /
+
+/tmp content size :
+4.0K	/tmp
+
+=== Phase 0b : ensure TMPDIR is on a healthy mount ===
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       150G   12G  132G   9% /
+
+=== Phase 1 : build prod (TMPDIR=/root/jass/.compile-tmp) ===
+
+=== Phase 2 : rewrite master scores via v15 NNUE eval ===
+  3900000 / 4738008 records
+  4000000 / 4738008 records
+  4100000 / 4738008 records
+  4200000 / 4738008 records
+  4300000 / 4738008 records
+  4400000 / 4738008 records
+  4500000 / 4738008 records
+  4600000 / 4738008 records
+  4700000 / 4738008 records
+wrote 4738008 records (38 B each) to /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  wall: 6s (0m)
+-rw-r--r-- 1 root root 180044312 Jun  5 17:04 /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+
+=== Phase 3 : sanity Python preview ===
+records loaded     : 10000
+score range        : [-1908, 2706]
+score std          : 331.90
+score mean         : -13.63
+non-zero scores    : 9923/10000 (99.2%)
+
+==========================================================
+       0122bis REWRITE MASTER SCORES VERDICT
+==========================================================
+  wall      : 6s
+  output    : /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+Next : 0123bis re-train Variant B sur master-rescored.
+==========================================================
