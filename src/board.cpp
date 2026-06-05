@@ -47,20 +47,26 @@ constexpr NeighbourTable build_neighbour_table() {
 constinit const NeighbourTable kNeighbourTable = build_neighbour_table();
 
 // Build the king ray table : for each (from, dir), record the sequence
-// of squares reached by chaining `neighbour()` calls until off-board.
-// Constexpr-evaluated, reads from kNeighbourTable.
+// of squares reached by chaining neighbour lookups until off-board.
+//
+// Note : reads a freshly-built NeighbourTable inline rather than the
+// constinit `kNeighbourTable` variable, because clang (emcc) refuses
+// to read a constinit-but-not-constexpr variable inside a constexpr
+// context. Re-computing the neighbour table at compile-time is cheap
+// (constexpr, evaluated once).
 constexpr KingRayTable build_king_ray_table() {
+    const NeighbourTable nt = build_neighbour_table();
     KingRayTable t{};
     for (int s = FIRST_SQUARE; s <= LAST_SQUARE; ++s) {
         const Square from = static_cast<Square>(s);
         const std::size_t from_idx = static_cast<std::size_t>(from);
         for (std::size_t di = 0; di < NUM_DIRS; ++di) {
             KingRay& ray = t.data[from_idx][di];
-            Square cur = kNeighbourTable.data[from_idx][di];
+            Square cur = nt.data[from_idx][di];
             while (cur != NO_SQUARE && ray.length < MAX_RAY_LEN) {
                 ray.squares[ray.length] = cur;
                 ray.length = static_cast<std::uint8_t>(ray.length + 1);
-                cur = kNeighbourTable.data[static_cast<std::size_t>(cur)][di];
+                cur = nt.data[static_cast<std::size_t>(cur)][di];
             }
         }
     }
