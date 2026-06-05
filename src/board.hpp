@@ -81,4 +81,29 @@ inline Square neighbour(Square s, Dir d) noexcept {
 // leaves the board. Useful for king moves and capture rays.
 Square ray_step(Square s, Dir d, int n) noexcept;
 
+// -----------------------------------------------------------------------------
+// King ray table.
+// -----------------------------------------------------------------------------
+// For every (from, direction) pair, stores the sequence of squares reached
+// when sliding a king from `from` in direction `d`, in increasing distance
+// order. Pre-computed to eliminate the per-step `neighbour()` lookups in the
+// quiet-move generator's king inner loop.
+//
+// MAX_RAY_LEN = 9 covers the longest possible diagonal on a 10×10 board.
+constexpr std::size_t MAX_RAY_LEN = 9;
+
+struct KingRay {
+    std::array<Square, MAX_RAY_LEN> squares{};
+    std::uint8_t                    length = 0;
+};
+struct KingRayTable {
+    std::array<std::array<KingRay, NUM_DIRS>, NUM_SQUARES + 1> data{};
+};
+
+const KingRayTable& king_rays();
+
+inline const KingRay& king_ray(Square s, Dir d) noexcept {
+    return king_rays().data[s][static_cast<std::size_t>(d)];
+}
+
 }  // namespace jass
