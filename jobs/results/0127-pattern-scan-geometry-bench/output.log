@@ -1,0 +1,44 @@
+=== host : ubuntu-16gb-hel1-2  nproc: 8 ===
+
+=== Phase 0 : install scipy ===
+
+=== Phase 1 : build prod (Scan-style 8×12 patterns) ===
+
+=== Phase 2 : train target=score sur master RESCORED, 4.25M buckets ===
+loading JNNW /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  4738008 records  (0.25s)
+extracting pattern indices (men only)
+  shape (4738008, 8) buckets=4251528  (3.90s)
+target=score  range=[-2540,2876]  clipped±2000cp / 100 → piece units  std=2.990
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=2.729511  iters=200  (126.57s)
+val   : mse=5.196993  sign_acc=0.0019
+quant : scale=1000  range=[-6593,6316]  nnz=216157
+wrote /root/jass/jobs/results/0127-pattern-scan-geometry-bench/artefacts.src/pattern_jass_v6_scan.pjtw  (4251528 weights, 17006128 bytes)
+-rw-r--r-- 1 root root 17006128 Jun  5 18:23 /root/jass/jobs/results/0127-pattern-scan-geometry-bench/artefacts.src/pattern_jass_v6_scan.pjtw
+
+=== Phase 3 : bench Gate 2 ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0127-pattern-scan-geometry-bench/artefacts.src/pattern_jass_v6_scan.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=54 Draws=0 (total 54)
+PATTERN_JASS score rate: 0 (0 / 54)
+GATE 2 FAIL (rate < 0.55)
+
+==========================================================
+       0127 OPTION D — SCAN GEOMETRY VERDICT
+==========================================================
+  Historique :
+    0118bis (wdl, 8×10 patterns)              : 0.000
+    0119    (score=0 par bug, 8×10)           : 0.000
+    0120    (score=0 par bug, 12×10)          : 0.000
+    0123bis (score rescored, 12×10)           : 0.056
+    0127    (score rescored, 8×12 Scan-like)  : 0
+
+  train wall : 132s (2m)
+  bench wall : 3s
+  GATE 2 FAIL (rate < 0.55)
+
+  rate 0.000 = ΔELO ≈ -inf vs handcrafted
+  → FAIL (0.000). Pattern lookup linéaire plafonné.
+     Conclusion : sans MLP, pattern paradigm ne battra pas handcrafted.
+==========================================================
