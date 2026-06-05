@@ -1,0 +1,47 @@
+=== host : ubuntu-16gb-hel1-2 ===
+
+=== Phase 0 : install scipy ===
+
+=== Phase 1 : build prod (bridge hybride) ===
+
+=== Phase 2 : train pattern résidu (target=score-handcrafted) ===
+loading JNNW /root/jass/jobs/results/0122bis-rewrite-master-scores-v15-nnue/artefacts.src/master-1600-rescored.jnnw
+  4738008 records  (0.26s)
+extracting pattern indices (men only)
+  shape (4738008, 8) buckets=4251528  (3.92s)
+target=score  range=[-2540,2876]  clipped±2000cp / 100 → piece units  std=2.990
+loading skeleton /root/jass/jobs/results/0128-rewrite-master-handcrafted/artefacts.src/master-1600-handcrafted.jnnw
+skeleton std=1.474  residual std=1.896  (corr score↔skel = 0.853)
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=1.223955  iters=200  (128.84s)
+val   : mse=2.377048  sign_acc=0.0021
+quant : scale=1000  range=[-3499,3413]  nnz=215766
+wrote /root/jass/jobs/results/0129-pattern-hybrid-bench/artefacts.src/pattern_jass_v7_hybrid.pjtw  (4251528 weights, 17006128 bytes)
+
+=== Phase 3 : bench Gate 2 (bridge hybride) ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0129-pattern-hybrid-bench/artefacts.src/pattern_jass_v7_hybrid.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=33 Handcrafted=15 Draws=6 (total 54)
+PATTERN_JASS score rate: 0.666667 (36 / 54)
+GATE 2 PASS (rate >= 0.55)
+
+==========================================================
+       0129 OPTION F — PATTERN HYBRIDE VERDICT
+==========================================================
+  Historique complet (rate vs handcrafted, d6 pairs=3) :
+    0118bis (wdl, 8×10 standalone)            : 0.000
+    0119    (score=0 bug, 8×10 standalone)    : 0.000
+    0120    (score=0 bug, 12×10 standalone)   : 0.000
+    0123bis (score rescored, 12×10 standalone): 0.056
+    0127    (score, 8×12 Scan-like standalone): 0.000
+    0129    (HYBRID handcrafted+pattern)      : 0.666667
+
+  train wall : 134s
+  bench wall : 7s
+  GATE 2 PASS (rate >= 0.55)
+
+  rate 0.667 = ΔELO ≈ +120 vs handcrafted
+  → ✅ OPTION F PASS Gate 2. Architecture Scan-style validée.
+     L'erreur de nos 5 variants standalone est confirmée :
+     pattern doit AUGMENTER handcrafted, pas le remplacer.
+==========================================================

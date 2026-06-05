@@ -1,7 +1,0 @@
-{
-  "job_id": "0129-pattern-hybrid-bench",
-  "script": "jobs/queue/0129-pattern-hybrid-bench.sh",
-  "pid": 285963,
-  "started_at": "2026-06-05T18:56:18+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
