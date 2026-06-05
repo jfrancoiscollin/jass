@@ -1,0 +1,42 @@
+=== host ===
+host: ubuntu-16gb-hel1-2  nproc: 8
+
+=== Phase 0 : install scipy if missing ===
+scipy 1.17.1 numpy 2.4.4
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : train pattern_jass v2 (target=score, clip ±2000cp) ===
+loading JNNW /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw
+  4738008 records  (0.27s)
+extracting pattern indices (men only)
+  shape (4738008, 8) buckets=472392  (3.85s)
+target=score  range=[0,0]  clipped±2000cp / 100 → piece units  std=0.000
+split : train=4264208 val=473800
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=0.000000  iters=0  (0.60s)
+val   : mse=0.000000  sign_acc=1.0000
+quant : scale=1000  range=[0,0]  nnz=0
+wrote /root/jass/jobs/results/0119-pattern-jass-variant-A-score/artefacts.src/pattern_jass_v2_score.pjtw  (472392 weights, 1889584 bytes)
+  train wall: 6s (0m 6s)
+-rw-r--r-- 1 root root 1889584 Jun  5 13:23 /root/jass/jobs/results/0119-pattern-jass-variant-A-score/artefacts.src/pattern_jass_v2_score.pjtw
+
+=== Phase 3 : bench --benchmark-pattern-jass depth 6 pairs 3 ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0119-pattern-jass-variant-A-score/artefacts.src/pattern_jass_v2_score.pjtw, 472392 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=54 Draws=0 (total 54)
+PATTERN_JASS score rate: 0 (0 / 54)
+GATE 2 FAIL (rate < 0.55)
+  bench wall: 2s
+
+==========================================================
+       0119 VARIANT A (target=score) VERDICT
+==========================================================
+  vs 0118bis (target=wdl) :
+    0118bis rate : 0.000 (0/54)
+    0119    rate : 0
+  GATE 2 FAIL (rate < 0.55)
+
+  rate 0.000 = ΔELO ≈ -inf vs handcrafted
+  → VARIANT A FAIL (0.000).
+    Label ≠ root cause. Passer à Variant B (Scan geometry).
+==========================================================
