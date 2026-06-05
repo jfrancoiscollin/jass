@@ -119,9 +119,11 @@ void extend_king_captures(CaptureCtx& ctx) {
     bool extended = false;
 
     for (Dir d : ALL_DIRS) {
-        // Slide from cur_sq through empty squares until we hit a piece.
-        Square scan = neighbour(ctx.cur_sq, d);
-        while (scan != NO_SQUARE) {
+        // Slide from cur_sq through empty squares until we hit a piece,
+        // using the pre-computed king ray table.
+        const KingRay& scan_ray = king_ray(ctx.cur_sq, d);
+        for (std::uint8_t si = 0; si < scan_ray.length; ++si) {
+            const Square scan = scan_ray.squares[si];
             // Friend (other than the piece's vacated origin) blocks this ray.
             if (test(ctx.friend_bb, scan) && scan != ctx.from_sq) break;
             // An enemy: capturable iff not already in the chain.
@@ -133,8 +135,10 @@ void extend_king_captures(CaptureCtx& ctx) {
                 ctx.captured_list[ctx.captured_count++] = over;
 
                 // For each empty landing square strictly past `over`, recurse.
-                Square land = neighbour(over, d);
-                while (land != NO_SQUARE && !landing_blocked(ctx, land)) {
+                const KingRay& land_ray = king_ray(over, d);
+                for (std::uint8_t li = 0; li < land_ray.length; ++li) {
+                    const Square land = land_ray.squares[li];
+                    if (landing_blocked(ctx, land)) break;
                     const Square saved = ctx.cur_sq;
                     ctx.cur_sq         = land;
                     extended           = true;
@@ -142,7 +146,6 @@ void extend_king_captures(CaptureCtx& ctx) {
                     extend_king_captures(ctx);
 
                     ctx.cur_sq = saved;
-                    land = neighbour(land, d);
                 }
 
                 --ctx.captured_count;
@@ -150,7 +153,6 @@ void extend_king_captures(CaptureCtx& ctx) {
                 break;  // No more captures possible past `over` in this dir.
             }
             // Empty square (or our own vacated origin): keep sliding.
-            scan = neighbour(scan, d);
         }
     }
 
@@ -235,17 +237,20 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
     }
 
     // Kings slide arbitrarily far along any of the four diagonals.
+    // Uses the pre-computed king ray table to avoid the per-step
+    // `neighbour()` lookup and NO_SQUARE check in the inner loop.
     Bitboard kings = pos.kings_of(us);
     while (kings) {
         const Square from = pop_lsb(kings);
         for (Dir d : ALL_DIRS) {
-            Square cur = neighbour(from, d);
-            while (cur != NO_SQUARE && !test(occ, cur)) {
+            const KingRay& ray = king_ray(from, d);
+            for (std::uint8_t i = 0; i < ray.length; ++i) {
+                const Square to = ray.squares[i];
+                if (test(occ, to)) break;
                 Move m;
                 m.from = from;
-                m.to   = cur;
+                m.to   = to;
                 out.push(m);
-                cur = neighbour(cur, d);
             }
         }
     }
