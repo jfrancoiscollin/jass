@@ -60,3 +60,50 @@ absorbe le résiduel dans les marges. À monitorer, pas d'action a priori.
 
 Le pattern n'emprunte pas le fast-path `MLPNetworkQ` (chemin éval générique).
 Pas un problème de calibration ; aucune action (le pattern est déjà rapide).
+
+## Briques que Scan a et nous non (prochaines marches — CONDITIONNELLES)
+
+Audit architectural 2026-06-06. **Ne rien construire avant** d'avoir le
+verdict 0141/0142 : ces briques ne valent le coût que si le pattern de base
+(labels propres + TD-leaf + search tuné) se révèle compétitif. Sinon on
+optimiserait dans le vide.
+
+### A. Phase-split éval MG/EG  *(spécifique pattern — brique éval #1)*
+
+Scan stocke **2 poids par feature** (midgame + endgame) interpolés par stade,
+**patterns inclus** :
+```
+eval_scan = material + king_PST + mobility + balance + pattern_sum
+          + game_phase_interpolation(mg, eg)
+```
+**Notre pattern_jass (8×12) est mono-phase** (un poids/bucket ; squelette
+handcrafted mono-phase aussi) → un même pattern moyenne MG et EG.
+**Closeable** : doubler la table (mg/eg) + interpolation par stage.
+**Déclencheur** : si 0141/0142 montrent un pattern *proche mais pas tout à
+fait* compétitif → c'est la 1re brique éval à ajouter.
+*(NB : `src/pattern_network.hpp` v5/v6 a déjà l'infra phase-split pour le
+squelette scalaire — patterns encore mono-phase ; à porter sur pattern_jass.)*
+
+### B. Bitbases endgame 6-7 pièces  *(général — brique la plus dure)*
+
+- Nous : **KvK + KKvK** seulement (rois, 2-3 pièces).
+- Scan : jusqu'à **7 pièces**, toutes pièces.
+
+Pénalise les finales (fréquentes en draughts) quel que soit l'éval (pattern
+ou NNUE). Dur (données volumineuses, non shippées par rhalbersma/scan).
+**Déclencheur** : si on plafonne spécifiquement en **finale** (parties
+perdues en endgame analysable). C'est l'avantage structurel « 15 ans » de
+Scan — à n'attaquer que si tout le reste est réglé.
+
+### C. Raffinements search incrémentaux  *(général — faible chacun)*
+
+Manquants vs un top engine : **continuation history (CMH, ~+15-30 ELO)**,
+**IID** (internal iterative deepening), **improving heuristic**, **multi-cut**.
+Faciles à ajouter, gain modeste. À piocher après que le pattern/search de
+base soit validé, si on veut gratter de l'ELO.
+
+### Ce qu'on a déjà au niveau de Scan (pas un écart)
+
+- Patterns **men-only** + kings via PST dédié (même découpage que Scan).
+- Géométrie **8 colonnes × 12 cases** (≈ Scan, base-3).
+- Search : alpha-bêta complet + PVS + pruning tuné + Lazy SMP.
