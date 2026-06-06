@@ -1,0 +1,21 @@
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+=== build prod ===
+
+=== A. profondeur fixe d9, 90 games (sanity ~neutre) ===
+Benchmark: search-params A=[use_pvs=1] vs B=[use_pvs=0] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 9, threads 1, movetime_ms 0, 90 games
+Result: A=45 B=35 Draws=10 (total 90)
+A score rate: 0.555556
+
+=== B. temps fixe 0.3s/coup, 90 games (LE test) ===
+Benchmark: search-params A=[use_pvs=1] vs B=[use_pvs=0] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=47 B=35 Draws=8 (total 90)
+A score rate: 0.566667
+
+==========================================================
+        0135 PVS VALIDATION — VERDICT
+==========================================================
+  profondeur fixe d9 : rate 0.555556  ELO +39  (attendu ~0.50)
+  temps fixe 0.3s    : rate 0.566667  ELO +47  (LE test)
+
+  → PVS PASS — basculer use_pvs=1 par défaut (commit suivant).
+==========================================================
