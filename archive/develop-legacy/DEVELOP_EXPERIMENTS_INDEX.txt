@@ -1,0 +1,157 @@
+2026-05-24  docs + consolidation : session log, pattern roadmap, dormant templates
+2026-05-24  0025a-7: pattern v2 last shot — pure WDL BCE (lambda=0, lr=1.0)
+2026-05-24  pattern-network v2: 16 patterns × 8 squares, full coverage
+2026-05-23  0025a-5: recover bigger-arch verdict after 0025a-4 OOM on 2048-1024
+2026-05-23  activate pattern v1 + bigger-arch experiments (post-0028 verdict)
+2026-05-23  pattern-network: Scan/Kingsrow-inspired prototype (v1: 8×4 patterns)
+2026-05-23  unblock runner: rename 0027/0028 → 0025a-1/2 to match potential filter
+2026-05-22  search: wire incremental accumulator through negamax + quiescence
+2026-05-22  nnue: anchor-shift delta + evaluate_with_accumulator (apply_move handles all moves)
+2026-05-22  nnue: apply_move handles captures + promotions (still bails on anchor shift)
+2026-05-22  nnue: implement apply_move v1 (quiet, non-promoting, anchor-stable)
+2026-05-22  nnue: implement Accumulator slow-path (refresh_from) + parity test
+2026-05-22  nnue: column-major W1 + AVX2 Layer 1 (2.11× eval speedup)
+2026-05-22  nnue: HalfMen incremental accumulator scaffold (no behaviour change)
+2026-05-22  runner: drop stale kill-in-flight (no job running)
+2026-05-22  0025a re-queue: delete failed result dir + kill in-flight 0027
+2026-05-22  runner: killed 0025a-cycle9-pilot-host-a via kill-in-flight flag
+2026-05-22  0025a kill+re-scope: 100K @ depth 16 (was 500K @ depth 20, 36-day ETA)
+2026-05-21  Cycle 9 pilot: scope down to single-host 500K (2nd CCX23 not ready)
+2026-05-21  0029: diag book bug (jass+book vs jass-no-book)
+2026-05-21  Cycle 9 pilot pipeline: --nnue for gen-data-wdl + 0025-0028 jobs
+2026-05-21  0024: reverse-engineer FMJD results SPA to find PDN endpoint
+2026-05-21  0023: isolation diagnostic — master-book vs naked Scan
+2026-05-21  0022: v1 master-frequency opening book vs Scan
+2026-05-20  re-queue 0019 without scan bb-size
+2026-05-20  runner: killed 0019-calibrate-vs-scan-fair via kill-in-flight flag
+2026-05-20  runner: GitOps kill-in-flight + drop scan bb-size=6 from 0019
+2026-05-20  multi-host runner: JASS_HOST_FILTER + 2× CCX23 pilot templates (#62)
+2026-05-20  0019: fair-comparison calibrate (jass book + Scan book + Scan bb=6) (#61)
+2026-05-20  0012: extend NNUE lookup to prefer 0018 v5 + re-queue (measure vs Scan) (#60)
+2026-05-20  re-queue 0017 to bench the v5 BCE NNUE (#59)
+2026-05-19  activate Option A: queue 0018 v5 (hybrid BCE) + chain 0017 to bench it (#58)
+2026-05-19  Cycle 8 v5 (Option A): hybrid loss — self-play MSE + master BCE
+2026-05-19  0017: probe stale 0015-* path to find the v4 master-blend NNUE (#56)
+2026-05-19  Cycle 8 v4: --max-master-records to cap memory; 0016 uses 2M cap (#55)
+2026-05-19  Cycle 8 v3: master-1600 + master_weight=1.0 (volume not boost) (#54)
+2026-05-19  Cycle 8 v2: relax per-game rating filter + bump per-user cap
+2026-05-19  re-queue 0017: bench the cycle-8 master-blend NNUE at 1.0 s/move
+2026-05-18  fetch_lidraughts: fix split_pdn over-splitting + re-queue cascade (#51)
+2026-05-18  0017: bench NNUE vs handcrafted at 1.0 s/move (unclamped KPI) (#50)
+2026-05-18  0015: backup Cycle 8 master-games to GitHub Releases (#49)
+2026-05-18  runner: bump per-file artefact cap 50 MB → 95 MB (back up Cycle 8 JNNW) (#48)
+2026-05-18  Cycle 8 proper: train_v3 --master-data blend + activate 0014 + queue 0015 (#47)
+2026-05-18  re-queue 0011+0012 with the fixed STM-POV trainer (#46)
+2026-05-18  train_v3 + scout_wdl: stop sign-flipping STM-POV labels to white-POV (#45)
+2026-05-18  0012: install Scan to /root/jass/.scan instead of /tmp/scan (#44)
+2026-05-18  0011: robust pip install + awk fix + re-queue 0011/0012 (#43)
+2026-05-16  chore: standardize labels and issue templates for global project reporting
+2026-05-14  Cycle 8-pre: master-games fetcher + PDN→JNNW converter (dormant) (#41)
+2026-05-13  docs: Lidraughts/Toernooibase master-game extraction roadmap (#40)
+2026-05-13  docs: add dilf-extraction roadmap (Cycle 7-A / 7-B / 8) (#39)
+2026-05-12  docs: bring README + ARCHITECTURE in sync with current state (#38)
+2026-05-12  search: Reverse Futility Pruning (D1) (#37)
+2026-05-12  search: skip iteration N+1 if it cannot finish before deadline (E) (#36)
+2026-05-12  queue 0013-build-book: parallelized 77K depth-12 opening book (#35)
+2026-05-12  queue 0012-calibrate-vs-scan: measure NNUE-1M vs Scan (#34)
+2026-05-12  0011: rebuild jass at job start so src/ changes auto-deploy (#33)
+2026-05-12  0011: add 1024-512 arch as overfit canary for 10M decision (#32)
+2026-05-12  fix(0011): train HalfMen encoding (Cycle-6c target), not V2 (#31)
+2026-05-12  unblock 0009 thrashing (GitOps) + queue 0011 train-and-bench (#30)
+2026-05-12  feat(runner): persistent runner — pause/resume via committed flag, no SSH required (#29)
+2026-05-12  Add files via upload
+2026-05-12  pivot: 1M depth-20 on the current CCX23 (CCX33+ unavailable) (#28)
+2026-05-12  prepare CCX63 transition: 0008 (stop CCX23 runner), 0009 (CCX63 smoke), 0010 (10M gen-data) (#27)
+2026-05-12  feat(runner): heartbeat in-flight job progress to progress.json (#26)
+2026-05-12  fix(runner): wrapper.pid as source of truth + queue 0007 (kills 0005 orphans, retries rate test) (#25)
+2026-05-12  queue 0006-diag-runner-state: verify runner.py on disk + cgroup state (#24)
+2026-05-12  fix(runner): drop redundant setsid command (false-failed 0002) + queue 0005 v2 (#23)
+2026-05-12  fix(gitignore): re-include runner output.log + queue 0004 salvage (#22)
+2026-05-12  queue 0003-diag-after-0002: diagnose 0002 failure via GitOps (#21)
+2026-05-12  Merge PR #20: Cycle-4b → Cycle-6c + Hetzner GitOps runner
+2026-05-12  infra: Hetzner GitOps runner + first depth-20 jobs
+2026-05-11  Cycle 6c parts 2-4: HalfMen end-to-end through the int8 path
+2026-05-11  MLPNetwork: HalfMen-lite encoding (Cycle 6c part 1)
+2026-05-11  scout_halfmen: per-variant topology + --skip flags
+2026-05-11  scout_halfmen: support JNNW + blended-WDL loss
+2026-05-11  gitignore: ignore __pycache__/ and .pyc files
+2026-05-11  Cycle-5 scaffold: tools/bench_arch.py end-to-end NNUE bench
+2026-05-11  quantize_mlp.py: runtime hidden dims + JNNW dataset support
+2026-05-11  Add files via upload
+2026-05-11  Merge PR #19: Cycle-4a runtime-dim MLPNetworkQ
+2026-05-11  MLPNetworkQ: runtime-dimensioned hidden layers
+2026-05-11  Add files via upload
+2026-05-11  Merge PR #18: NNUE refonte phase 0+1 + Cycle-3 runtime-dim MLPNetwork
+2026-05-11  MLPNetwork: runtime-dimensioned hidden layers
+2026-05-11  Add Cycle-2 multi-architecture trainer
+2026-05-11  Add gen-data-wdl workflow with 10-way parallel sharding
+2026-05-11  gen-data-wdl: expose eval_depth / play_depth / max_plies / seed
+2026-05-11  Add Null-Move Pruning + Position::after_null
+2026-05-11  Add Late Move Reductions (LMR) to negamax
+2026-05-11  calibrate_vs_scan: support --movetime for fair-time benchmarks
+2026-05-11  Add Jass-vs-Scan calibration harness
+2026-05-11  scout_wdl.py: drop sigmoid-BCE for plain MSE-on-blended-target
+2026-05-11  Add --gen-data-wdl + tools/scout_wdl.py for WDL training scout
+2026-05-11  tools: add scout_halfmen.py for HalfKP-style encoding experiment
+2026-05-11  Runtime-dispatched VNNI dot product for MLPNetworkQ (#17)
+2026-05-11  Add files via upload
+2026-05-11  README: refresh to current state (NNUE shipped, SIMD, pipelines) (#16)
+2026-05-11  Add WASM SIMD128 forward path for MLPNetworkQ (#15)
+2026-05-11  SIMD AVX2 for MLPNetworkQ layer 2 + layer 3 (#14)
+2026-05-11  Add build-book workflow for one-click opening-book generation (#13)
+2026-05-11  Add JBOK opening-book format + --build-book pipeline (#12)
+2026-05-11  Add TT aging (generation counter) and singular extension (#11)
+2026-05-11  Add MLPNetworkQ: int8 quantised forward pass (infrastructure) (#10)
+2026-05-11  Add files via upload
+2026-05-10  Promote MLP v2 as the embedded default eval; revert v3a widening (#9)
+2026-05-10  Add files via upload
+2026-05-10  MLP v3a: widen the hidden layers to 200 → 128 → 64 → 1 (#8)
+2026-05-10  Add files via upload
+2026-05-10  MLP v2: STM-relative input encoding (mirror + colour swap) (#7)
+2026-05-10  Opt every workflow into the Node.js 24 runtime (#6)
+2026-05-10  Add files via upload
+2026-05-10  Embed the 100k-trained linear NNUE as the default eval (#5)
+2026-05-10  Add MLPNetwork (200→64→32→1, ReLU) alongside LinearNetwork (#4)
+2026-05-10  benchmark-nnue: default weights_path to 'nnue-weights 2.zip'
+2026-05-10  Drop the accidentally double-encoded nnue-weights.zip
+2026-05-10  Replace nnue-weights.zip with the 100k linear training run
+2026-05-10  Add files via upload
+2026-05-10  Add files via upload
+2026-05-10  Merge PR #3: NNUE search routing + benchmark mode + workflow
+2026-05-10  benchmark-nnue: default weights_path to repo root, not data/
+2026-05-10  benchmark-nnue workflow: accept the train-nnue zip artefact directly
+2026-05-10  Wire trained NNUE into the search + add benchmark mode and workflow
+2026-05-10  Merge PR #2: relicense to AGPL + milestones 17–21 + train-nnue CI
+2026-05-10  Add a one-click GitHub Actions workflow that trains NNUE weights
+2026-05-10  Diversify the tournament harness with an opening-position pool
+2026-05-10  Compact TT entries (16 B) + 4-way clusters
+2026-05-10  Adaptive aspiration windows + hard ply cap
+2026-05-10  Add NNUE training pipeline (C++ data generator + Python trainer)
+2026-05-10  Add 3-vs-1 kings endgame bitbase
+2026-05-10  Relicense to AGPL v3 + commercial dual-licence
+2026-05-10  Document the repository: full README rewrite + docs/ folder
+2026-05-10  Add NNUE-lite evaluation framework
+2026-05-10  Maintain Zobrist hash incrementally on Position
+2026-05-10  Add self-play tournament harness
+2026-05-10  Add tournament-style time management to the HUB CLI
+2026-05-10  Add a tiny built-in opening book
+2026-05-10  Add 2-vs-1 kings endgame bitbase via retrograde analysis
+2026-05-10  Add CI: native + WASM build, GitHub Pages deploy of the demo
+2026-05-10  Add lazy SMP: shared-TT multi-thread search
+2026-05-10  Add endgame-knowledge probe (K vs K = draw)
+2026-05-10  Add tactical evaluation terms: edge penalty, back-rank guard, support
+2026-05-10  Extract the principal variation by walking the TT
+2026-05-10  Add time control and external stop to the search & HUB CLI
+2026-05-10  Add HUB-flavoured command-line front-end
+2026-05-10  Detect FMJD draws: 25-move rule and 2-fold repetition
+2026-05-10  Add aspiration windows around the iterative-deepening root
+2026-05-10  Add killer-move and history move ordering
+2026-05-10  Add Engine facade with persistent transposition table
+2026-05-10  Add quiescence search to neutralise the capture horizon effect
+2026-05-10  Add Zobrist hashing and transposition table
+2026-05-10  Add positional evaluation (PSQT for men + king centralisation, tempo)
+2026-05-10  Add WebAssembly bindings via Embind
+2026-05-10  Add minimal search and material evaluation
+2026-05-10  Implement legal move generation and validate via perft
+2026-05-10  Bootstrap Jass engine (MIT, clean-room)
+2026-05-10  Initial commit
