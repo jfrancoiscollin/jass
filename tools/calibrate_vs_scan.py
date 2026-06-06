@@ -52,10 +52,11 @@ from __future__ import annotations
 
 import argparse
 import math
+import queue
 import re
-import select
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -175,13 +176,33 @@ def jass_fen_to_scan_pos(fen: str) -> str:
 # Engine adapters
 # ---------------------------------------------------------------------------
 class EngineProc:
-    """Common subprocess plumbing."""
+    """Common subprocess plumbing.
+
+    stdout is consumed by a dedicated reader thread into a queue. This is
+    what makes `_drain()` reliable: a naive `select`-based drain misses
+    lines already pulled into Python's `readline` buffer, so stale engine
+    output (notably a `done` from a prior search) accumulates over a long
+    match and eventually makes every read off-by-one — once a stale move
+    is returned the drift compounds and every later game forfeits at 0-1
+    plies on an illegal (stale) move. The reader thread pulls *every* line
+    out of the OS pipe immediately, so draining the queue discards all
+    pending output and re-aligns read<->command. (Diagnosed on the
+    fixed-depth calibrate match vs Scan, job 0137.)"""
     def __init__(self, argv: list[str], label: str, cwd: str | None = None):
         self.proc = subprocess.Popen(
             argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL, text=True, bufsize=1,
             cwd=cwd)
         self.label = label
+        self._q: queue.Queue = queue.Queue()
+        self._reader = threading.Thread(target=self._read_loop, daemon=True)
+        self._reader.start()
+
+    def _read_loop(self) -> None:
+        assert self.proc.stdout is not None
+        for line in self.proc.stdout:
+            self._q.put(line.rstrip("\n"))
+        self._q.put(None)  # EOF sentinel
 
     def _send(self, line: str) -> None:
         assert self.proc.stdin is not None
@@ -189,36 +210,30 @@ class EngineProc:
         self.proc.stdin.flush()
 
     def _drain(self) -> None:
-        """Discard any unread buffered stdout so the next `_read_until`
-        aligns with the command we are about to send. Without this, a
-        single stale line (e.g. a `done` from a prior search that was
-        left buffered) makes every subsequent read off-by-one, and once
-        a stale move is returned the drift compounds — every later game
-        forfeits instantly on an illegal (stale) move. Observed when the
-        opponent is slow (NNUE / high depth): long matches accumulate
-        enough buffered Scan output to trigger the drift. Non-blocking."""
-        out = self.proc.stdout
-        assert out is not None
+        """Discard any pending output so the next `_read_until` aligns
+        with the command we are about to send. Empties the reader queue
+        (the thread has already pulled everything out of the pipe)."""
         while True:
-            r, _, _ = select.select([out], [], [], 0.0)
-            if not r:
-                return
-            if not out.readline():
+            try:
+                self._q.get_nowait()
+            except queue.Empty:
                 return
 
     def _read_until(self, predicate, timeout_s: float = 60.0) -> list[str]:
         """Read lines from the engine until `predicate(line)` returns True.
         Returns all lines read (incl. the matched one). Raises on timeout."""
-        assert self.proc.stdout is not None
         deadline = time.monotonic() + timeout_s
         lines: list[str] = []
         while True:
-            if time.monotonic() > deadline:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
                 raise TimeoutError(f"{self.label}: no match in {timeout_s}s")
-            line = self.proc.stdout.readline()
-            if not line:
+            try:
+                line = self._q.get(timeout=min(remaining, 1.0))
+            except queue.Empty:
+                continue
+            if line is None:
                 raise EOFError(f"{self.label}: stdout closed")
-            line = line.rstrip("\n")
             lines.append(line)
             if predicate(line):
                 return lines
