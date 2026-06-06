@@ -1,7 +1,9 @@
 {
   "job_id": "0133-rebaseline-v15-vs-scan",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 5,
   "started_at": "2026-06-06T11:54:55+00:00",
+  "ended_at": "2026-06-06T12:00:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 299208
+  "artefacts_server_path": "/root/jass/jobs/results/0133-rebaseline-v15-vs-scan/artefacts.src"
 }
