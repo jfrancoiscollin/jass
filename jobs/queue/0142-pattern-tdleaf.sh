@@ -79,12 +79,25 @@ done
 FINAL="$BEST"     # pattern CONVERGÉ (meilleur via moniteur), pas le dernier
 echo; echo "convergé : meilleur pattern = iter$BEST_IT (vs handcrafted $BEST_R)"
 
-echo; echo "=== bench final : pattern(TD-leaf) vs v15 movetime (vs départ) ==="
+echo; echo "=== bench final : pattern(TD-leaf) convergé vs v15 (depth + movetime) ==="
 if [ -n "${V15:-}" ] && [ -f "$V15" ]; then
     ./build-prod/jass --benchmark-pattern-vs-nnue "$PAT0"  "$V15" 64 5 1 300 "" 2>&1 | tee "$ART/start-vs-v15-mt.log"
     R_START_V15=$(rate_pv "$ART/start-vs-v15-mt.log")
+    # convergé : à profondeur fixe (vitesse invisible) ET movetime (vitesse compte)
+    ./build-prod/jass --benchmark-pattern-vs-nnue "$FINAL" "$V15" 8 5 1 0   "" 2>&1 | tee "$ART/final-vs-v15-d8.log"
+    R_FINAL_V15_D=$(rate_pv "$ART/final-vs-v15-d8.log")
     ./build-prod/jass --benchmark-pattern-vs-nnue "$FINAL" "$V15" 64 5 1 300 "" 2>&1 | tee "$ART/final-vs-v15-mt.log"
     R_FINAL_V15=$(rate_pv "$ART/final-vs-v15-mt.log")
+    # Watch-item (cf docs/PATTERN_PROGRAM_NOTES.md §1) : un pattern rapide
+    # doit faire MIEUX en movetime qu'à profondeur fixe. Si movetime < depth,
+    # sa recherche profonde ne paie pas → suspecter time-mgmt/aspiration en
+    # haute profondeur (ou instabilité éval).
+    awk -v mt="${R_FINAL_V15:-1}" -v d="${R_FINAL_V15_D:-0}" 'BEGIN{
+        if (mt+0 < d+0 - 0.03)
+            print "  ⚠️  ALERTE watch-item : movetime("mt") < depth("d") — la recherche profonde du pattern ne paie pas. Voir docs/PATTERN_PROGRAM_NOTES.md §1 (time-mgmt haute profondeur)."
+        else
+            print "  ✓ movetime("mt") >= depth("d") : la vitesse paie (pas de souci time-mgmt)."
+    }'
 fi
 
 echo; echo "=========================================================="
