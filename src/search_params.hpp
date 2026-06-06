@@ -53,6 +53,24 @@ struct SearchParams {
     // Default ON since 2026-06-06: job 0135 measured +47 ELO at movetime
     // 0.3s and +39 ELO at fixed depth 9 vs use_pvs=0 on v15.
     bool use_pvs = true;
+
+    // Razoring (gated; razor_max_depth = 0 disables). At shallow non-PV
+    // quiet nodes, if static eval + razor_margin*depth <= alpha, drop to
+    // quiescence; if qsearch confirms <= alpha, prune.
+    int razor_max_depth = 0;     // 0 = off
+    int razor_margin    = 200;   // cp per remaining ply
+
+    // ProbCut (gated; probcut_min_depth = 0 disables). At high-depth
+    // non-PV nodes, if a (forced) capture leads to a reduced-depth score
+    // >= beta + probcut_margin, cut. NB draughts captures are forced, so
+    // this only fires at tactical nodes — value uncertain, hence opt-in.
+    int probcut_min_depth = 0;   // 0 = off
+    int probcut_margin    = 150;
+    int probcut_reduction = 4;
+
+    // Promotion extension (gated). Extend by 1 ply when the move crowns a
+    // man (Move::promotes) — these are sharp, tactically dense lines.
+    bool ext_promotion = false;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -82,6 +100,12 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmp_d3")               p.lmp_d3               = v;
     else if (key == "aspiration_initial")   p.aspiration_initial   = v;
     else if (key == "use_pvs")              p.use_pvs              = (v != 0);
+    else if (key == "razor_max_depth")      p.razor_max_depth      = v;
+    else if (key == "razor_margin")         p.razor_margin         = v;
+    else if (key == "probcut_min_depth")    p.probcut_min_depth    = v;
+    else if (key == "probcut_margin")       p.probcut_margin       = v;
+    else if (key == "probcut_reduction")    p.probcut_reduction    = v;
+    else if (key == "ext_promotion")        p.ext_promotion        = (v != 0);
     // unknown key → silently ignored
     return true;
 }

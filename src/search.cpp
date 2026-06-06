@@ -414,6 +414,25 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    // 2bis-b. Razoring (gated; default off via razor_max_depth=0).
+    //   Symmetric to RFP on the alpha side: at a shallow non-PV quiet
+    //   node whose static eval is far below alpha, verify with quiescence
+    //   and prune if qsearch confirms the node can't raise alpha. Placed
+    //   before the hash_path push so the early return needs no pop.
+    if (params.razor_max_depth > 0
+        && depth <= params.razor_max_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(alpha)
+        && !moves[0].is_capture()) {
+        const int eval   = eval_leaf(pos, ply);
+        const int margin = params.razor_margin * depth;
+        if (eval + margin <= alpha) {
+            const int q = quiescence(pos, ply, alpha, beta);
+            if (q <= alpha) return q;
+        }
+    }
+
     // 2ter. Null-Move Pruning. If we can give the opponent a free
     //     move (no rule actually permits passing in draughts — this
     //     is purely a search technique) and the resulting reduced-
@@ -528,6 +547,36 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    // 4ter. ProbCut (gated; default off via probcut_min_depth=0). At a
+    //   high-depth non-PV node, if a forced capture leads to a
+    //   reduced-depth score >= beta + probcut_margin, the node almost
+    //   certainly fails high — cut. Mirrors the singular verification's
+    //   move application; the early return must pop the hash_path pushed
+    //   above. NB: draughts captures are forced, so this only fires at
+    //   tactical nodes (value uncertain — measured via A/B before ship).
+    if (params.probcut_min_depth > 0
+        && depth >= params.probcut_min_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(beta)) {
+        const int rbeta  = beta + params.probcut_margin;
+        const int rdepth = depth - params.probcut_reduction;
+        if (rdepth >= 1 && !is_mate_score(rbeta)) {
+            for (const auto& m : moves) {
+                if (!m.is_capture()) continue;
+                const Position next = after_timed(pos, m);
+                push_accumulator(ply, pos, m, next);
+                const int sc = -negamax(next, rdepth - 1, ply + 1,
+                                        -rbeta, -rbeta + 1);
+                if (stopped) break;
+                if (sc >= rbeta) {
+                    { BD_TIME(path_check); hash_path.pop_back(); }
+                    return sc;
+                }
+            }
+        }
+    }
+
     // 4bis. Late Move Reductions. After the first few moves (TT-move,
     //     killers, and the head of the history-sorted tail), search the
     //     remaining quiet moves at a reduced depth first. If the reduced
@@ -585,7 +634,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
         const bool     is_tt     = tt_move_valid
                                  && same_packed_move(m, tt_entry.best_move);
-        const int      new_depth = depth - 1 + (singular_ext && is_tt ? 1 : 0);
+        const int      promo_ext = (params.ext_promotion && m.promotes) ? 1 : 0;
+        const int      new_depth = depth - 1
+                                 + (singular_ext && is_tt ? 1 : 0)
+                                 + promo_ext;
 
         int score;
         const bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
