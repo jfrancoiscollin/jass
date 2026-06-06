@@ -101,8 +101,11 @@ R_V15_MT=$(rate_pv "$ART/pat-vs-v15-mt.log")
 
 echo; echo "=== Phase 6 : SPSA-tune les constantes POUR le pattern (depth 8) ==="
 BEST_JSON="$ART/spsa-best.json"
+# 15 params (constantes + razoring/probcut/ext) → 60 iters pour converger.
+# Le pattern décide LUI-MÊME si razoring/probcut/ext l'aident (pas le
+# verdict NNUE de 0138).
 python3 tools/spsa_tune.py --jass ./build-prod/jass --net "$PAT" \
-    --iters 40 --pairs 4 --depth 8 --threads 1 --use-pvs 1 --out "$BEST_JSON" \
+    --iters 60 --pairs 4 --depth 8 --threads 1 --use-pvs 1 --out "$BEST_JSON" \
     2>&1 | tee "$ART/spsa.log"
 BEST=$(python3 -c "import json;print(json.load(open('$BEST_JSON'))['spec'])" 2>/dev/null || echo "use_pvs=1")
 echo "best spec : $BEST"
