@@ -44,6 +44,15 @@ TUNABLE = {
     "lmp_d2":          (8,   4,  16,   2, True),
     "lmp_d3":          (14,  6,  28,   2, True),
     "aspiration_initial": (50, 15, 120, 10, True),
+    # Phase-1 Tier-2 features — tuned ON/OFF + margins so the eval being
+    # tuned (e.g. a pattern, whose score distribution differs from the
+    # NNUE these were tried with in 0138) decides for ITSELF whether they
+    # help, rather than inheriting the NNUE verdict. 0 = feature off.
+    "razor_max_depth":   (0,  0,   4,   1, True),
+    "razor_margin":      (200, 80, 400, 40, True),
+    "probcut_min_depth": (0,  0,   8,   1, True),
+    "probcut_margin":    (150, 80, 300, 40, True),
+    "ext_promotion":     (0,  0,   1,   1, True),
 }
 
 
