@@ -16,6 +16,7 @@ OUT_BASE="/root/jass/jobs/results/0135-pvs-validation"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 NCPU=$(nproc)
+export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"   # /tmp runner trop petit pour l'assembleur
 
 V15=$(ls -t /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-*-q.bin 2>/dev/null | head -1)
 [ -n "$V15" ] && [ -f "$V15" ] || V15=$(find /root/jass/jobs/results -path '*128-64*' -name 'nnue-*-q.bin' 2>/dev/null | head -1)
