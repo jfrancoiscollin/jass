@@ -1,8 +1,8 @@
 {
   "job_id": "0141-pattern-reeval",
-  "snapshot_at": "2026-06-06T23:25:03+00:00",
+  "snapshot_at": "2026-06-06T23:30:03+00:00",
   "started_at": "2026-06-06T23:20:04+00:00",
-  "elapsed_seconds": 299,
+  "elapsed_seconds": 599,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,68 +14,68 @@
     },
     {
       "name": "relabel-shard-0.log",
-      "size_bytes": 341
+      "size_bytes": 508
     },
     {
       "name": "relabel-shard-1.log",
-      "size_bytes": 346
+      "size_bytes": 514
     },
     {
       "name": "relabel-shard-2.log",
-      "size_bytes": 346
+      "size_bytes": 430
     },
     {
       "name": "relabel-shard-3.log",
-      "size_bytes": 262
+      "size_bytes": 513
     },
     {
       "name": "relabel-shard-4.log",
-      "size_bytes": 346
+      "size_bytes": 513
     },
     {
       "name": "relabel-shard-5.log",
-      "size_bytes": 262
+      "size_bytes": 513
     },
     {
       "name": "relabel-shard-6.log",
-      "size_bytes": 347
+      "size_bytes": 598
     },
     {
       "name": "relabel-shard-7.log",
-      "size_bytes": 263
+      "size_bytes": 430
     },
     {
       "name": "shard-0.jnnw",
-      "size_bytes": 2028942
+      "size_bytes": 4183922
     },
     {
       "name": "shard-1.jnnw",
-      "size_bytes": 2089932
+      "size_bytes": 4212384
     },
     {
       "name": "shard-2.jnnw",
-      "size_bytes": 2028942
+      "size_bytes": 4126998
     },
     {
       "name": "shard-3.jnnw",
-      "size_bytes": 2024876
+      "size_bytes": 4131064
     },
     {
       "name": "shard-4.jnnw",
-      "size_bytes": 2106196
+      "size_bytes": 4261176
     },
     {
       "name": "shard-5.jnnw",
-      "size_bytes": 1988282
+      "size_bytes": 4167658
     },
     {
       "name": "shard-6.jnnw",
-      "size_bytes": 2033008
+      "size_bytes": 4159526
     },
     {
       "name": "shard-7.jnnw",
-      "size_bytes": 2016744
+      "size_bytes": 4082272
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1       04:58  0.0  0.0 bash\n 311454  311452       04:58  0.0  0.0 bash\n 311718  311454       04:50  3.2  0.2 python3\n 311719  311454       04:50  3.3  0.2 python3\n 311720  311454       04:50  3.2  0.2 python3\n 311721  311454       04:50  3.2  0.2 python3\n 311722  311454       04:50  3.3  0.2 python3\n 311723  311454       04:50  3.2  0.2 python3\n 311724  311454       04:50  3.3  0.2 python3\n 311725  311454       04:50  3.2  0.2 python3\n 311726  311719       04:50 96.6  0.9 scan_linux\n 311727  311722       04:50 96.4  0.9 scan_linux\n 311728  311720       04:50 96.5  0.9 scan_linux\n 311729  311723       04:50 96.5  0.9 scan_linux\n 311730  311718       04:50 96.6  0.9 scan_linux\n 311731  311724       04:50 96.6  0.9 scan_linux\n 311732  311721       04:50 96.5  0.9 scan_linux\n 311733  311725       04:50 96.6  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1       09:58  0.0  0.0 bash\n 311454  311452       09:58  0.0  0.0 bash\n 311718  311454       09:51  3.3  0.2 python3\n 311719  311454       09:51  3.3  0.2 python3\n 311720  311454       09:51  3.2  0.2 python3\n 311721  311454       09:51  3.2  0.2 python3\n 311722  311454       09:51  3.3  0.2 python3\n 311723  311454       09:51  3.3  0.2 python3\n 311724  311454       09:51  3.3  0.2 python3\n 311725  311454       09:51  3.2  0.2 python3\n 311726  311719       09:51 96.5  0.9 scan_linux\n 311727  311722       09:51 96.4  0.9 scan_linux\n 311728  311720       09:51 96.6  0.9 scan_linux\n 311729  311723       09:51 96.5  0.9 scan_linux\n 311730  311718       09:51 96.5  0.9 scan_linux\n 311731  311724       09:51 96.5  0.9 scan_linux\n 311732  311721       09:51 96.5  0.9 scan_linux\n 311733  311725       09:51 96.6  0.9 scan_linux\n"
 }
