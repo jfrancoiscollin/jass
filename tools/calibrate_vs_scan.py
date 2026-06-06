@@ -53,6 +53,7 @@ from __future__ import annotations
 import argparse
 import math
 import re
+import select
 import subprocess
 import sys
 import time
@@ -187,6 +188,24 @@ class EngineProc:
         self.proc.stdin.write(line + "\n")
         self.proc.stdin.flush()
 
+    def _drain(self) -> None:
+        """Discard any unread buffered stdout so the next `_read_until`
+        aligns with the command we are about to send. Without this, a
+        single stale line (e.g. a `done` from a prior search that was
+        left buffered) makes every subsequent read off-by-one, and once
+        a stale move is returned the drift compounds — every later game
+        forfeits instantly on an illegal (stale) move. Observed when the
+        opponent is slow (NNUE / high depth): long matches accumulate
+        enough buffered Scan output to trigger the drift. Non-blocking."""
+        out = self.proc.stdout
+        assert out is not None
+        while True:
+            r, _, _ = select.select([out], [], [], 0.0)
+            if not r:
+                return
+            if not out.readline():
+                return
+
     def _read_until(self, predicate, timeout_s: float = 60.0) -> list[str]:
         """Read lines from the engine until `predicate(line)` returns True.
         Returns all lines read (incl. the matched one). Raises on timeout."""
@@ -259,6 +278,7 @@ class JassEngine(EngineProc):
                  movetime: float | None = None) -> Move | None:
         """Either depth (plies) or movetime (seconds) — exactly one.
         Jass's HUB takes ms internally, we convert from seconds here."""
+        self._drain()  # re-align: discard any stale buffered output first
         if movetime is not None:
             self._send(f"go movetime {int(round(movetime * 1000))}")
             timeout_s = movetime * 3.0 + 5.0
@@ -306,6 +326,7 @@ class ScanEngine(EngineProc):
                 depth: int | None = None,
                 movetime: float | None = None) -> Move | None:
         """Either depth or movetime (seconds) — exactly one."""
+        self._drain()  # re-align: discard any stale buffered output first
         if scan_moves:
             moves_str = " ".join(scan_moves)
             self._send(f'pos pos={starting_scan_pos} moves="{moves_str}"')
