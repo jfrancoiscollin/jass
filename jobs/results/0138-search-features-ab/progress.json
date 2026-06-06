@@ -1,8 +1,8 @@
 {
   "job_id": "0138-search-features-ab",
-  "snapshot_at": "2026-06-06T19:55:29+00:00",
+  "snapshot_at": "2026-06-06T20:00:55+00:00",
   "started_at": "2026-06-06T19:45:06+00:00",
-  "elapsed_seconds": 623,
+  "elapsed_seconds": 949,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,5 +17,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 307399       1       10:22  0.0  0.0 bash\n 307401  307399       10:22  0.0  0.0 bash\n 307650  307401       10:14 99.9  0.1 jass\n 307651  307401       10:14  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 307399       1       15:48  0.0  0.0 bash\n 307401  307399       15:48  0.0  0.0 bash\n 307650  307401       15:40 99.9  0.1 jass\n 307651  307401       15:40  0.0  0.0 tee\n"
 }
