@@ -145,6 +145,9 @@ if hcv is not None:
 d,mt=f(v15d),f(v15mt)
 if d is not None and mt is not None:
     print(f"  (b) vitesse : vs v15 {d:.3f}→{mt:.3f} (depth→movetime), gain {mt-d:+.3f}")
+    if mt < d - 0.03:
+        print("      ⚠️  movetime < depth : la recherche profonde du pattern ne paie pas")
+        print("         → watch-item time-mgmt haute profondeur (docs/PATTERN_PROGRAM_NOTES.md §1)")
 td=f(tdmt)
 if td is not None:
     print("  (c) search :", "le pattern ÉTAIT bridé par une recherche réglée NNUE" if td>=0.53 else "le search n'était pas le facteur limitant")
