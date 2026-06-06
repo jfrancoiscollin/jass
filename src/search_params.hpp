@@ -50,9 +50,9 @@ struct SearchParams {
     int aspiration_initial = 50;
 
     // Principal Variation Search (zero-window scout on non-first moves).
-    // Default OFF so behaviour is unchanged until validated by A/B; the
-    // tuning job flips it to 1 to measure the gain.
-    bool use_pvs = false;
+    // Default ON since 2026-06-06: job 0135 measured +47 ELO at movetime
+    // 0.3s and +39 ELO at fixed depth 9 vs use_pvs=0 on v15.
+    bool use_pvs = true;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
