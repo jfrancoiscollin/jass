@@ -1,7 +1,0 @@
-{
-  "job_id": "0138-search-features-ab",
-  "script": "jobs/queue/0138-search-features-ab.sh",
-  "pid": 307399,
-  "started_at": "2026-06-06T19:45:06+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

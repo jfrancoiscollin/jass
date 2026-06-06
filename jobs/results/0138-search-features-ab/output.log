@@ -1,0 +1,36 @@
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+=== build prod ===
+
+=== razoring : A=[razor_max_depth=3,razor_margin=200] vs B=[défaut] @ mt 0.3s, 90 games ===
+Benchmark: search-params A=[razor_max_depth=3,razor_margin=200] vs B=[] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=42 B=46 Draws=2 (total 90)
+A score rate: 0.477778
+
+=== probcut : A=[probcut_min_depth=5,probcut_margin=150,probcut_reduction=4] vs B=[défaut] @ mt 0.3s, 90 games ===
+Benchmark: search-params A=[probcut_min_depth=5,probcut_margin=150,probcut_reduction=4] vs B=[] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=47 B=39 Draws=4 (total 90)
+A score rate: 0.544444
+
+=== ext_promotion : A=[ext_promotion=1] vs B=[défaut] @ mt 0.3s, 90 games ===
+Benchmark: search-params A=[ext_promotion=1] vs B=[] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=42 B=42 Draws=6 (total 90)
+A score rate: 0.5
+
+=== combined : A=[razor_max_depth=3,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=1] vs B=[défaut] @ mt 0.3s, 90 games ===
+Benchmark: search-params A=[razor_max_depth=3,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=1] vs B=[] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=35 B=50 Draws=5 (total 90)
+A score rate: 0.416667
+
+==========================================================
+        0138 SEARCH FEATURES A/B — VERDICT (vs défaut, mt 0.3s)
+==========================================================
+  razoring      : rate 0.477778  ELO -15
+  probcut       : rate 0.544444  ELO +31
+  ext_promotion : rate    0.5  ELO -0
+  combined      : rate 0.416667  ELO -58
+
+  → ACTIVER (rate>=0.53) :
+      probcut  [probcut_min_depth=5,probcut_margin=150,probcut_reduction=4]
+    committer ces défauts dans src/search_params.hpp.
+  (95% CI ≈ ±84 ELO à 90 games — un rate ~0.53 est faible, à reconfirmer si limite.)
+==========================================================
