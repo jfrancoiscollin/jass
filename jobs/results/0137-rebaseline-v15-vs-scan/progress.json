@@ -1,11 +1,15 @@
 {
   "job_id": "0137-rebaseline-v15-vs-scan",
-  "snapshot_at": "2026-06-06T17:02:05+00:00",
+  "snapshot_at": "2026-06-06T17:07:12+00:00",
   "started_at": "2026-06-06T16:25:39+00:00",
-  "elapsed_seconds": 2186,
+  "elapsed_seconds": 2493,
   "artefacts": [
     {
       "name": "A-mt500-1t.log",
+      "size_bytes": 5470
+    },
+    {
+      "name": "B-mt500-4t.log",
       "size_bytes": 0
     },
     {
@@ -17,5 +21,5 @@
       "size_bytes": 506
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 304872       1       36:26  0.0  0.0 bash\n 304874  304872       36:26  0.0  0.0 bash\n 305137  304874       36:18  0.1  0.0 python3\n 305138  304874       36:18  0.0  0.0 tee\n 305140  305137       36:18 48.6  0.1 jass\n 305141  305137       36:18 51.1  0.9 scan_linux\n 305143  305137       36:18  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 304872       1       41:33  0.0  0.0 bash\n 304874  304872       41:33  0.0  0.0 bash\n 305737  304874       00:07  0.9  0.0 python3\n 305738  304874       00:07  0.0  0.0 tee\n 305740  305737       00:07 44.4  0.0 jass\n 305741  305737       00:07 55.1  0.9 scan_linux\n 305743  305737       00:07  0.1  0.0 jass\n"
 }
