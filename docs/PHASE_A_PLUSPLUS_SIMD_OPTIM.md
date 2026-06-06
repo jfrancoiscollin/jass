@@ -1,5 +1,16 @@
 # Phase A++ — inference SIMD AVX2 optimization plan
 
+> ⚠️ **AVERTISSEMENT 2026-06-06 — prémisse de ce plan INVALIDÉE.** Ce plan
+> est justifié par « eval qualité 128-64 = 0.87 vs Scan d10 → bottleneck
+> purement NPS » (verdict 0090). Ce **0.87 est faux** : bug de buffer dans
+> `tools/calibrate_vs_scan.py` qui faisait forfaiter Scan en depth-fixe
+> (gonflait Jass ; 46/54 forfaits sur le job 0137). On n'a donc **aucune
+> preuve fiable** que l'éval bat Scan à profondeur égale — la justification
+> « optimiser le NPS plutôt que l'éval » est affaiblie. Bug corrigé ;
+> vraie mesure relancée par le **job 0139**. Les gains NPS mesurés
+> (capture pre-filter +29.7%, quantize SIMD +8.5%) restent réels (mesures
+> internes), seul le *gate qualité 0.870* était bidon.
+
 > Rédigé 2026-06-03. Plan technique pour optimiser l'inférence
 > MLPNetworkQ 128-64 quantisée int8 sur AVX2 (CCX33 = AMD EPYC 7003).
 > Cible : 3M NPS → 6-10M NPS = parity Scan.
