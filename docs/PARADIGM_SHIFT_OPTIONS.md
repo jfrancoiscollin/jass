@@ -344,6 +344,18 @@ des optimisations marginales par-dessus une base 4-5× plus forte.
 
 ## (H) NNUE hybride avec squelette handcrafted (proposé 2026-06-05)
 
+> **Statut 2026-06-06 — PARQUÉ (gate non concluant).** Job 0134 a testé le
+> quick-win (vanilla vs résiduel-hybride à archi 128-64 égale, labels
+> Scan-d10 de 0131) : gate `hybrid vs vanilla = 0.500` (FLAT). **Mais le
+> contrôle a échoué** : `vanilla(retrain) vs v15 = 0.139` — notre vanilla
+> entraîné sur les labels Scan-d10 bruités de 0131 est très inférieur à
+> v15, donc le gate comparait deux réseaux faibles → test confondu, ni
+> validé ni réfuté. Un re-test propre exigerait d'entraîner un vanilla
+> ≈ v15 (vraie recette/données de v15) puis le résiduel à l'identique.
+> Parqué au profit de la Phase 1 (search), plus robuste. Le code
+> (`src/hybrid_network.hpp`, `--benchmark-nnue-hybrid`,
+> `train_v3.py --skeleton-data`) reste en place pour un futur re-test.
+
 **Ajouté après Gate 2 PASS de pattern_jass hybride (0129, rate 0.667
 vs handcrafted).** L'architecture Scan-style "skeleton + correction"
 n'est pas réservée aux patterns — elle peut s'appliquer telle quelle à
