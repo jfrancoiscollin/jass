@@ -925,8 +925,11 @@ int run_benchmark_pattern_vs_nnue_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: jass --benchmark-pattern-vs-nnue "
                      "<weights.pjtw> <nnue.bin> "
-                     "[depth=64] [pairs=3] [threads=1] [movetime_ms=300]\n"
-                     "  movetime_ms > 0 is the point — pattern is ~100× faster\n";
+                     "[depth=64] [pairs=3] [threads=1] [movetime_ms=300] "
+                     "[pattern_spec]\n"
+                     "  movetime_ms > 0 is the point — pattern is ~100× faster\n"
+                     "  pattern_spec = SPSA-tuned search params for side A "
+                     "(e.g. \"rfp_margin=80,...\")\n";
         return 1;
     }
     const char* weights_path = argv[2];
@@ -935,6 +938,10 @@ int run_benchmark_pattern_vs_nnue_mode(int argc, char** argv) {
     const int   pairs        = (argc > 5) ? parse_int_or(argv[5], 3) : 3;
     const int   threads      = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
     const int   movetime_ms  = (argc > 7) ? parse_int_or(argv[7], 300) : 300;
+    // Optional search-param spec for the PATTERN side (e.g. SPSA-tuned
+    // constants), so we can test the pattern under search constants tuned
+    // for it rather than for the NNUE. The NNUE side keeps the defaults.
+    const char* pat_spec     = (argc > 8) ? argv[8] : "";
 
     std::string err;
     auto pjn = jass::load_pattern_jass_network(weights_path, &err);
@@ -954,6 +961,7 @@ int run_benchmark_pattern_vs_nnue_mode(int argc, char** argv) {
     pattern_cfg.threads     = threads;
     pattern_cfg.movetime_ms = movetime_ms;
     pattern_cfg.nnue        = pjn.get();
+    pattern_cfg.params      = jass::parse_search_params(pat_spec);
 
     EngineConfig nnue_cfg;
     nnue_cfg.max_depth   = depth;
@@ -1140,11 +1148,26 @@ int run_benchmark_search_params_mode(int argc, char** argv) {
 
     std::unique_ptr<INetwork> net;
     const bool handcrafted = (net_path == "hc" || net_path == "none" || net_path == "-");
+    const bool is_pjtw = net_path.size() >= 5
+                      && net_path.compare(net_path.size() - 5, 5, ".pjtw") == 0;
     if (!handcrafted) {
-        net = load_network(net_path);
-        if (!net) {
-            std::cerr << "error: cannot load network from " << net_path << "\n";
-            return 1;
+        if (is_pjtw) {
+            // Pattern eval: lets SPSA tune the search constants WITH the
+            // pattern as leaf eval (its score distribution differs from the
+            // NNUE the constants were tuned for).
+            std::string err;
+            net = jass::load_pattern_jass_network(net_path, &err);
+            if (!net) {
+                std::cerr << "error: cannot load PJTW from " << net_path
+                          << " : " << err << "\n";
+                return 1;
+            }
+        } else {
+            net = load_network(net_path);
+            if (!net) {
+                std::cerr << "error: cannot load network from " << net_path << "\n";
+                return 1;
+            }
         }
     }
 

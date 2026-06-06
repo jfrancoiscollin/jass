@@ -105,8 +105,6 @@ def main(argv=None):
     A = max(1, args.iters // 10)
     alpha, gamma = 0.602, 0.101
 
-    best = dict(theta)
-    best_margin = -1.0  # signed: validated separately; track cumulative drift
     print(f"SPSA: {len(TUNABLE)} params, {args.iters} iters, "
           f"{args.pairs*18} games/iter, net={args.net}, "
           f"depth={args.depth}, movetime_ms={args.movetime_ms}, "
@@ -137,12 +135,13 @@ def main(argv=None):
             theta[p] += ak * g * c0  # scale step by the param's natural magnitude
         theta = clamp(theta)
 
-        drift = rate - 0.5
-        if drift > best_margin:
-            best_margin, best = drift, dict(theta)
         print(f"  iter {k:3d}: θ+ rate={rate:.3f}  "
               f"spec={spec({p: theta[p] for p in TUNABLE})}")
 
+    # SPSA output is the FINAL accumulated point (not the noisiest-iteration
+    # one — that earlier heuristic just echoed the defaults when the match
+    # signal was weak, cf 0136). The caller validates this vs the defaults.
+    best = clamp(theta)
     out = {"params": {p: int(round(best[p])) for p in TUNABLE},
            "held": held,
            "spec": spec(best, held)}
