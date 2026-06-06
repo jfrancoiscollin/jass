@@ -1,5 +1,24 @@
 # Perf journey NNUE 128-64 : de l'archi sweep (0090) au pivot Othello (#170)
 
+> ⚠️ **AVERTISSEMENT 2026-06-06 — les chiffres « vs Scan d10 » de ce
+> document sont INVALIDÉS.** Toutes les mesures de qualité d'éval **à
+> profondeur fixe contre Scan** ici (notamment le **0.870 / +331 vs Scan
+> d10** présenté comme « baseline non-négociable ») sont **fausses** : un
+> bug de buffer dans `tools/calibrate_vs_scan.py` (dérive de lecture
+> stdout quand l'adversaire est lent en mode profondeur-fixe) faisait
+> **forfaiter Scan sur des coups illégaux**, ce qui **gonflait Jass**.
+> Mesuré sur le job 0137 : 46/54 parties depth-10 étaient des forfaits ;
+> les rares parties propres montraient Jass *perdant*. Le bug est corrigé
+> (lecteur threadé + queue, cf commit bridge) et la vraie mesure
+> depth-fixe est relancée par le **job 0139**.
+>
+> ✅ **Restent valides** : le **vs Scan en movetime** (north-star réel
+> ≈ **−685 ELO** à mt=0.5s, mesuré sur match propre) et **tous les
+> benchmarks internes** (en un seul process, sans bridge Scan : v5→v8,
+> PVS +47, SPSA, gates pattern…). La prémisse « notre éval bat déjà Scan
+> à profondeur égale, l'écart est purement du NPS » qui s'appuyait sur le
+> 0.870 est donc **non prouvée** — à trancher par 0139.
+
 > Document chronologique de la chasse à la performance depuis le choix
 > d'archi NNUE 128-64. Couvre toute la branche d'optims NNUE/search et
 > se termine sur la décision honnête de pivot vers le Plan B pattern

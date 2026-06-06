@@ -1,5 +1,12 @@
 # Paradigm shift options — beyond the cheap pattern axis
 
+> ⚠️ **NOTE 2026-06-06** : les estimations « vs Scan d10 » de ce document
+> (ex. « v15 128-64 = **+331 (mesuré)** ») partent du 0.870 depth-fixe qui
+> s'est révélé **invalidé** (bug de buffer dans `tools/calibrate_vs_scan.py`
+> faisant forfaiter Scan en depth-fixe ; cf 0137/0139). Les colonnes « vs
+> Scan d10 » sont donc à reprendre une fois 0139 connu. Le « vs Scan
+> mt=500 » (movetime) reste fiable.
+
 > Rédigé le 2026-05-30 après ~13 hypothèses cheap pattern toutes
 > réfutées (cf. `SCAN_METHODOLOGY_GAP.md` + `SESSION_LOG_*.md`). Capture
 > les pistes de **paradigm shift** discutées avec l'utilisateur pour
