@@ -140,3 +140,46 @@ Sur l'archi **enrichie** (pattern phase-split + search amélioré) :
 
 Itérer 1↔2 si gain. L'objectif final reste : pattern alpha-bêta qui tient
 le plus possible face à Scan en time-search.
+
+## Distillation de Scan : pourquoi ça a échoué, et quand la re-tester
+
+### Hypothèse sur l'échec passé (0131=0.000, 0132)
+
+Deux causes empilées :
+1. **~18 % de labels faux** (bug captures forcées) → on fittait du bruit. **Corrigé** (relabel fixé, #203).
+2. **Inadéquation de représentation** : le diagnostic « résidu (Scan − squelette) non fittable » s'explique probablement parce que **Scan est phase-split (MG/EG)** et **notre pattern est mono-phase**. Un modèle mono-phase **ne peut pas** représenter une fonction dépendante du stade → le résidu phase-dépendant de Scan est **non-fittable par construction** (limite de classe de fonction, pas du bruit).
+
+### Test décomposé (lecture de 0140/0141)
+
+`0140`/`0141` distillent sur **labels propres** mais **encore mono-phase** :
+- remonte nettement vs 0131 (0.000) → **les labels** étaient un gros facteur ;
+- reste bas / plafonne malgré labels propres → c'est la **représentation**
+  (mono-phase) qui bloque → **phase-split sera décisif** pour la distillation.
+
+→ Lire 0140/0141 sous cet angle : ils disent *pourquoi* la distillation
+échouait, donc si phase-split la débloquera.
+
+### Prédiction
+
+Sur l'archi **enrichie** (phase-split + features matchées), la distillation
+a de **bien meilleures chances** : Scan EST un moteur à pattern, donc mettre
+notre pattern dans **sa classe de fonction** rend « copier l'éval de Scan »
+tractable (la cible est *dans* notre classe). C'est *le* bon moment pour la
+re-tester — pas avant phase-split.
+
+**Réserves** : nos features ≠ exactement celles de Scan (balance, mobilité,
+définition de `game_stage`) → on **approxime**, on ne **réplique** pas
+(résidu non nul). Et la distillation ferme le gap **éval**, pas le moteur
+complet (bitbases, tuning search).
+
+### Règle de séquencement (IMPORTANT)
+
+La distillation est un **prior** (injecte la connaissance de Scan), le
+self-play (TD-leaf) **raffine pour notre recherche**. Donc l'ordre correct :
+
+> **distiller (prior Scan) → fine-tuner en self-play (TD-leaf)**, ou blender
+> les deux cibles.
+
+**Ne PAS** distiller *après* le boost self-play (étape 2 de la roadmap) — ça
+**écraserait** les gains du self-play. Quand on intègrera la distillation à
+la roadmap, elle vient **avant/pendant** le self-play, pas après.
