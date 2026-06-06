@@ -1,8 +1,8 @@
 {
   "job_id": "0136-spsa-search-tune",
-  "snapshot_at": "2026-06-06T14:30:32+00:00",
+  "snapshot_at": "2026-06-06T14:35:33+00:00",
   "started_at": "2026-06-06T14:04:08+00:00",
-  "elapsed_seconds": 1584,
+  "elapsed_seconds": 1885,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,5 +17,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 302349       1       26:23  0.0  0.0 bash\n 302351  302349       26:23  0.0  0.0 bash\n 302600  302351       26:14  0.0  0.0 python3\n 302601  302351       26:14  0.0  0.0 tee\n 302970  302600       00:14  100  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 302349       1       31:24  0.0  0.0 bash\n 302351  302349       31:24  0.0  0.0 bash\n 302600  302351       31:16  0.0  0.0 python3\n 302601  302351       31:16  0.0  0.0 tee\n 303056  302600       00:00  100  0.1 jass\n"
 }
