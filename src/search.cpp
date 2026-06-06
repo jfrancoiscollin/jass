@@ -124,6 +124,10 @@ struct Searcher {
     TranspositionTable* tt{nullptr};
     std::uint64_t       nodes{0};
 
+    // Tunable search constants + PVS toggle. Copied from SearchLimits at
+    // the start of each top-level search (and into helper searchers).
+    SearchParams        params{};
+
     std::array<std::array<Move, 2>, MAX_PLY + 1>                       killers{};
     std::array<std::array<int,  NUM_SQUARES + 1>, NUM_SQUARES + 1>     history{};
     // Countermove heuristic : best response to opponent's last move,
@@ -398,8 +402,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //   loses ELO by pruning critical lines whose static eval looks safe
     //   but where the opponent has a deep tactical resource.
     {
-        constexpr int RFP_MAX_DEPTH = 5;
-        constexpr int RFP_MARGIN    = 100;  // cp per remaining ply
+        const int RFP_MAX_DEPTH = params.rfp_max_depth;
+        const int RFP_MARGIN    = params.rfp_margin;  // cp per remaining ply
         if (depth <= RFP_MAX_DEPTH
             && !was_null
             && !is_mate_score(beta)
@@ -426,8 +430,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //         tempo legitimately loses
     //       - static eval already below beta: NMP can't possibly help
     {
-        constexpr int NMP_MIN_DEPTH  = 4;
-        constexpr int NMP_MIN_PIECES = 6;
+        const int NMP_MIN_DEPTH  = params.nmp_min_depth;
+        const int NMP_MIN_PIECES = params.nmp_min_pieces;
         if (depth >= NMP_MIN_DEPTH
             && !was_null
             && !is_mate_score(beta)) {
@@ -436,7 +440,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             if (popcount(all) >= NMP_MIN_PIECES) {
                 const int eval = eval_leaf(pos, ply);
                 if (eval >= beta) {
-                    const int R          = 2 + depth / 4;
+                    const int R          = params.nmp_r_base + depth / params.nmp_r_div;
                     const int reduced    = depth - 1 - R;
                     const int safe_depth = reduced < 1 ? 1 : reduced;
                     const Position null_pos = pos.after_null();
@@ -494,8 +498,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //   - Margin scales with depth so cuts near mate scores still
     //     make sense.
     //   - Reduced depth = (depth - 1) / 2.
-    constexpr int SINGULAR_MIN_DEPTH = 8;
-    constexpr int SINGULAR_MARGIN    = 2;  // centipawns per ply of depth
+    const int SINGULAR_MIN_DEPTH = params.singular_min_depth;
+    const int SINGULAR_MARGIN    = params.singular_margin;  // cp per ply of depth
     int  singular_ext = 0;
     if (tt_hit && tt_move_valid
         && depth >= SINGULAR_MIN_DEPTH
@@ -538,14 +542,16 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //         decisive)
     //       - shallow nodes (depth < 3 — LMR overhead exceeds saving)
     //       - the first few moves of the ordering (i < 4)
-    constexpr int LMR_MIN_DEPTH       = 3;
-    constexpr int LMR_FIRST_FULL_MOVES = 4;
-    auto lmr_reduction = [](int d, int move_idx) noexcept -> int {
+    const int LMR_MIN_DEPTH        = params.lmr_min_depth;
+    const int LMR_FIRST_FULL_MOVES = params.lmr_first_full_moves;
+    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH, LMR_FIRST_FULL_MOVES]
+                         (int d, int move_idx) noexcept -> int {
         // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
         // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
         // stays ≥ 1.
         if (d < LMR_MIN_DEPTH || move_idx < LMR_FIRST_FULL_MOVES) return 0;
-        int r = 1 + d / 6 + move_idx / 8;
+        int r = params.lmr_base + d / params.lmr_depth_div
+              + move_idx / params.lmr_idx_div;
         return r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
     };
 
@@ -555,7 +561,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // never pruned (FMJD majority rule forces them anyway). ~+10-20 ELO.
     constexpr int LMP_MAX_DEPTH = 3;
     // LMP_THRESHOLD[d] = first move index to skip at depth d.
-    constexpr int LMP_THRESHOLD[LMP_MAX_DEPTH + 1] = { 0, 4, 8, 14 };
+    const int LMP_THRESHOLD[LMP_MAX_DEPTH + 1] =
+        { 0, params.lmp_d1, params.lmp_d2, params.lmp_d3 };
     const bool is_pv_node = (beta - alpha) > 1;
 
     int move_idx = 0;
@@ -586,7 +593,24 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                          && !is_tt
                          && !m.is_capture()
                          && !singular_ext;  // don't reduce when we just extended a singular line
-        if (do_lmr) {
+        if (params.use_pvs && move_idx > 0) {
+            // Principal Variation Search: once a PV move has raised alpha,
+            // scout the remaining moves with a zero-width window (optionally
+            // LMR-reduced). Only moves that beat alpha pay for an exact
+            // full-window re-search.
+            const int r = do_lmr ? lmr_reduction(depth, move_idx) : 0;
+            score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
+            if (score > alpha && r > 0) {
+                // The reduction alone may have caused the fail-high; verify
+                // at full depth with the same zero window before paying for
+                // a full-window search.
+                score = -negamax(next, new_depth, ply + 1, -alpha - 1, -alpha);
+            }
+            if (score > alpha && score < beta) {
+                // Genuine PV candidate — establish its exact score.
+                score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
+            }
+        } else if (do_lmr) {
             const int r = lmr_reduction(depth, move_idx);
             const int reduced = new_depth - r;
             score = -negamax(next, reduced, ply + 1, -beta, -alpha);
@@ -701,8 +725,8 @@ namespace {
 // narrow window centred on the previous iteration's score, then widen
 // progressively on every fail-high or fail-low until the search returns a
 // score inside the window. Saves nodes when iteration-to-iteration scores
-// barely move, which is the common case in quiet positions.
-inline constexpr int ASPIRATION_INITIAL = 50;
+// barely move, which is the common case in quiet positions. The initial
+// half-width is tunable via SearchParams::aspiration_initial.
 
 }  // namespace
 
@@ -753,6 +777,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
     Searcher s;
     s.tt        = &tt;
+    s.params    = limits.params;
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
@@ -785,15 +810,17 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     if (limits.threads > 1) {
         helpers.reserve(static_cast<std::size_t>(limits.threads - 1));
         const INetwork* nnue_for_helpers = limits.nnue;
+        const SearchParams params_for_helpers = limits.params;
         for (int i = 1; i < limits.threads; ++i) {
             helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
                                   max_depth = limits.max_depth,
-                                  nnue_for_helpers]() {
+                                  nnue_for_helpers, params_for_helpers]() {
                 SearchLimits hlim;
                 hlim.max_depth = max_depth;
                 hlim.stop_flag = &helper_stop;
                 hlim.threads   = 1;  // critical: helpers must not fork further
                 hlim.nnue      = nnue_for_helpers;
+                hlim.params    = params_for_helpers;
                 (void)::jass::search(pos, hlim, tt, game_history);
             });
         }
@@ -885,7 +912,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                 const int diff = std::abs(score_history[i] - score_history[i - 1]);
                 if (diff > volatility) volatility = diff;
             }
-            delta = std::max(ASPIRATION_INITIAL, 2 * volatility);
+            delta = std::max(s.params.aspiration_initial, 2 * volatility);
             alpha = best_score - delta;
             beta  = best_score + delta;
         }
