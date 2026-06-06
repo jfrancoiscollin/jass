@@ -1,7 +1,0 @@
-{
-  "job_id": "0136-spsa-search-tune",
-  "script": "jobs/queue/0136-spsa-search-tune.sh",
-  "pid": 302349,
-  "started_at": "2026-06-06T14:04:08+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

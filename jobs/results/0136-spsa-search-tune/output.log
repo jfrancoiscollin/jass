@@ -1,0 +1,70 @@
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+=== build prod ===
+
+=== SPSA tuning (40 iters, 72 games/iter, d8, PVS on) ===
+SPSA: 10 params, 40 iters, 72 games/iter, net=/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth=8, movetime_ms=0, use_pvs=1
+  iter   1: θ+ rate=0.778  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50
+  iter   2: θ+ rate=0.361  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50
+  iter   3: θ+ rate=0.778  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   4: θ+ rate=0.194  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   5: θ+ rate=0.556  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   6: θ+ rate=0.500  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   7: θ+ rate=0.667  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   8: θ+ rate=0.472  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter   9: θ+ rate=0.444  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  10: θ+ rate=0.278  spec=rfp_margin=100,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  11: θ+ rate=0.722  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  12: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  13: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  14: θ+ rate=0.194  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  15: θ+ rate=0.694  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=3,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50
+  iter  16: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  17: θ+ rate=0.639  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  18: θ+ rate=0.611  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  19: θ+ rate=0.417  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  20: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  21: θ+ rate=0.722  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  22: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=3,singular_margin=2,lmr_depth_div=7,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  23: θ+ rate=0.278  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  24: θ+ rate=0.389  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  25: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  26: θ+ rate=0.333  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  27: θ+ rate=0.722  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  28: θ+ rate=0.611  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  29: θ+ rate=0.417  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  30: θ+ rate=0.250  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  31: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  32: θ+ rate=0.306  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=3,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  33: θ+ rate=0.278  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  34: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  35: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  36: θ+ rate=0.333  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  37: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  38: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  39: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+  iter  40: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=7,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=15,aspiration_initial=50
+
+Best spec (validate against default before shipping):
+  rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1
+written to /root/jass/jobs/results/0136-spsa-search-tune/artefacts.src/spsa-best.json
+best spec : rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1
+
+=== Validation A : best vs baseline, depth 9, 162 games ===
+Benchmark: search-params A=[rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1] vs B=[use_pvs=1] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 9, threads 1, movetime_ms 0, 162 games
+Result: A=81 B=81 Draws=0 (total 162)
+A score rate: 0.5
+
+=== Validation B : best vs baseline, movetime 0.3s, 162 games ===
+Benchmark: search-params A=[rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1] vs B=[use_pvs=1] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 162 games
+Result: A=83 B=72 Draws=7 (total 162)
+A score rate: 0.533951
+
+==========================================================
+        0136 SPSA SEARCH-TUNE — VERDICT
+==========================================================
+  best spec : rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1
+  best vs default  depth9 : rate 0.5  ELO -0
+  best vs default  mt0.3s : rate 0.533951  ELO +24
+
+  → SPSA PASS — committer ces constantes comme nouveaux défauts dans src/search_params.hpp.
+==========================================================

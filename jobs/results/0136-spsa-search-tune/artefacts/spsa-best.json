@@ -1,0 +1,18 @@
+{
+  "params": {
+    "rfp_margin": 100,
+    "nmp_r_base": 2,
+    "nmp_r_div": 4,
+    "singular_margin": 2,
+    "lmr_depth_div": 6,
+    "lmr_idx_div": 8,
+    "lmp_d1": 4,
+    "lmp_d2": 8,
+    "lmp_d3": 14,
+    "aspiration_initial": 50
+  },
+  "held": {
+    "use_pvs": 1
+  },
+  "spec": "rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,use_pvs=1"
+}

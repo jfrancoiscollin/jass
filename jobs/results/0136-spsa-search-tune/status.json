@@ -1,7 +1,9 @@
 {
   "job_id": "0136-spsa-search-tune",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-06T14:04:08+00:00",
+  "ended_at": "2026-06-06T16:25:35+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 302349
+  "artefacts_server_path": "/root/jass/jobs/results/0136-spsa-search-tune/artefacts.src"
 }
