@@ -30,6 +30,9 @@ struct EngineConfig {
     // `INetwork::evaluate()` instead of the handcrafted eval at every
     // leaf in the search. Any concrete network (Linear, MLP, …) works.
     const INetwork*      nnue        = nullptr;
+    // Tunable search parameters for this side (enables in-process A/B of
+    // two parameter sets — used by --benchmark-search-params and SPSA).
+    SearchParams         params{};
 };
 
 enum class GameOutcome : std::uint8_t {
