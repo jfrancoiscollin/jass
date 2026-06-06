@@ -1,8 +1,8 @@
 {
   "job_id": "0136-spsa-search-tune",
-  "snapshot_at": "2026-06-06T14:46:05+00:00",
+  "snapshot_at": "2026-06-06T14:51:08+00:00",
   "started_at": "2026-06-06T14:04:08+00:00",
-  "elapsed_seconds": 2517,
+  "elapsed_seconds": 2820,
   "artefacts": [
     {
       "name": "build.log",
@@ -22,8 +22,12 @@
     },
     {
       "name": "validate-depth9.log",
+      "size_bytes": 398
+    },
+    {
+      "name": "validate-movetime300.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 302349       1       41:56  0.0  0.0 bash\n 302351  302349       41:56  0.0  0.0 bash\n 303224  302351       01:28  100  0.1 jass\n 303225  302351       01:28  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 302349       1       46:59  0.0  0.0 bash\n 302351  302349       46:59  0.0  0.0 bash\n 303310  302351       03:13 99.9  0.1 jass\n 303311  302351       03:13  0.0  0.0 tee\n"
 }
