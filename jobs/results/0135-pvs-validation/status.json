@@ -1,0 +1,7 @@
+{
+  "job_id": "0135-pvs-validation",
+  "state": "running",
+  "started_at": "2026-06-06T13:01:47+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 300518
+}
