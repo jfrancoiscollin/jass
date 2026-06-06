@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# id: 0143-pattern-vs-scan
+# description: LE vrai bar — bench du meilleur pattern (TD-leaf 0142 →
+# propre+tuné 0141 → …) contre SCAN, via le bridge corrigé + le flag
+# --pattern jouable. C'est la mesure qui transforme « prometteur vs v15 »
+# en « oui/non vs Scan ». Lancé après 0141/0142.
+#
+# Mesures (bridge corrigé, garde-fou illegal=0) :
+#   - movetime 0.5s, 1 thread  (le vrai bar time-search)
+#   - depth 10, 1 thread       (qualité éval pattern à prof. égale vs Scan)
+#
+# expected_duration: ~2-3 h.
+set -uo pipefail
+cd /root/jass
+OUT_BASE="/root/jass/jobs/results/0143-pattern-vs-scan"; ART="$OUT_BASE/artefacts.src"; mkdir -p "$ART"
+NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
+echo "=== host : $(hostname)  nproc=$NCPU ==="
+
+# Meilleur pattern dispo : dernière itération TD-leaf de 0142, sinon 0141, sinon 0131
+PAT=$(ls -t /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter*.pjtw 2>/dev/null \
+      | sort -V | tail -1)
+[ -n "$PAT" ] && [ -f "$PAT" ] || PAT=/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw
+[ -f "$PAT" ] || PAT=/root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/pattern_jass_v9_scan_full.pjtw
+[ -f "$PAT" ] || PAT=$(find /root/jass/jobs/results -name '*.pjtw' 2>/dev/null | head -1)
+[ -n "$PAT" ] && [ -f "$PAT" ] || { echo "ABORT: aucun pattern .pjtw"; exit 3; }
+echo "pattern testé : $PAT"
+
+echo; echo "=== build prod ==="
+rm -rf build-prod
+cmake -S . -B build-prod -DCMAKE_BUILD_TYPE=Release > "$ART/cmake.log" 2>&1
+cmake --build build-prod -j"$NCPU" --target jass > "$ART/build.log" 2>&1 || { echo BUILD FAIL; tail -30 "$ART/build.log"; exit 5; }
+
+SCAN_DIR=/root/jass/.scan
+[ -x "$SCAN_DIR/scan_linux" ] || { rm -rf "$SCAN_DIR"; git clone --depth 1 https://github.com/rhalbersma/scan "$SCAN_DIR"; chmod +x "$SCAN_DIR/scan_linux"; }
+SCAN="$SCAN_DIR/scan_linux"
+
+run () {  # $1=label $2=log ; shift 2 -> extra
+    local label="$1"; local log="$2"; shift 2
+    echo; echo "=== $label ==="
+    python3 tools/calibrate_vs_scan.py --jass /root/jass/build-prod/jass --scan "$SCAN" \
+        --jass-pattern "$PAT" --pairs 3 "$@" 2>&1 | tee "$log"
+}
+run "A. pattern vs Scan, movetime 0.5s (LE bar)" "$ART/A-mt500.log"  --movetime 0.5 --jass-threads 1
+run "B. pattern vs Scan, depth 10 (éval prof. égale)" "$ART/B-d10.log" --depth 10 --jass-threads 1
+
+ext () { grep -oE 'score rate[^0-9]*[0-9.]+' "$1" 2>/dev/null | grep -oE '[0-9.]+$' | head -1; }
+illc () { grep -cE 'illegal move' "$1" 2>/dev/null || echo 0; }
+RA=$(ext "$ART/A-mt500.log"); RB=$(ext "$ART/B-d10.log")
+
+echo; echo "=========================================================="
+echo "        0143 PATTERN vs SCAN — VERDICT (le vrai bar)"
+echo "=========================================================="
+echo "  pattern : $(basename "$PAT")"
+echo "  illegal A/B (doit être 0, bridge corrigé) : $(illc "$ART/A-mt500.log")/$(illc "$ART/B-d10.log")"
+python3 - "${RA:-}" "${RB:-}" <<'EOF'
+import sys, math
+def elo(r):
+    try: r=float(r)
+    except: return "n/a"
+    if r<=0: return "-inf"
+    if r>=1: return "+inf"
+    return f"{-400*math.log10(1/r-1):+.0f}"
+a,b=sys.argv[1:3]
+print(f"  A movetime 0.5s : rate {a or 'n/a':>6}  ELO {elo(a)}  (le bar time-search)")
+print(f"  B depth 10      : rate {b or 'n/a':>6}  ELO {elo(b)}  (éval @ prof. égale)")
+print()
+print("  Rappel : v15 NNUE est à ~-685 ELO vs Scan (mt) / ~? (d10 propre via 0139).")
+print("  Si le pattern (movetime) >> v15 → la vitesse paie vs Scan → pousser le pattern.")
+print("  Si le pattern (d10) >> v15 d10 → meilleure éval/nœud que notre NNUE.")
+EOF
+echo "=========================================================="

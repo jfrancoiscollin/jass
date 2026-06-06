@@ -35,7 +35,8 @@ cmake --build build-prod -j"$NCPU" --target jass > "$ART/build.log" 2>&1 || { ec
 rate_pj () { grep -oE 'rate[^0-9]*[0-9.]+' "$1" 2>/dev/null | grep -oE '[0-9.]+$' | tail -1; }
 rate_pv () { grep -oE 'PATTERN score rate vs NNUE: [0-9.]+' "$1" 2>/dev/null | grep -oE '[0-9.]+$' | head -1; }
 
-bench_hc () { ./build-prod/jass --benchmark-pattern-jass "$1" 6 3 2>&1 | tee "$2"; }
+# moniteur de convergence (cheap) : 90 parties pour un signal moins bruité
+bench_hc () { ./build-prod/jass --benchmark-pattern-jass "$1" 6 5 2>&1 | tee "$2"; }
 
 # baseline : pattern de départ
 cp "$PAT0" "$ART/pattern_iter0.pjtw"
@@ -43,8 +44,13 @@ bench_hc "$ART/pattern_iter0.pjtw" "$ART/bench-iter0-hc.log" >/dev/null
 R0_HC=$(rate_pj "$ART/bench-iter0-hc.log")
 echo "iter0 (départ) vs handcrafted : $R0_HC"
 
-N_ITERS=6; NG=1500; DEPTH=8; LAM=0.7
+# Self-play TD-leaf jusqu'à CONVERGENCE (on ne benche le pattern contre
+# v15/Scan que sur le pattern convergé — sinon faux négatif). Le moniteur
+# cheap (vs handcrafted) sert de thermomètre : on garde le MEILLEUR et on
+# s'arrête sur plateau.
+N_ITERS=15; NG=2500; DEPTH=8; LAM=0.7; STALL_MAX=4
 CUR="$ART/pattern_iter0.pjtw"
+BEST="$CUR"; BEST_R="${R0_HC:-0}"; BEST_IT=0; STALL=0
 for it in $(seq 1 $N_ITERS); do
     echo; echo "=== TD-leaf itération $it/$N_ITERS ==="
     LEAVES="$ART/td-it${it}.jnnw"; TGT="$ART/targets-it${it}.jnnw"; HC="$ART/hc-it${it}.jnnw"
@@ -59,12 +65,19 @@ for it in $(seq 1 $N_ITERS); do
         > "$ART/train-it${it}.log" 2>&1 || { echo "  train it$it FAIL"; tail "$ART/train-it${it}.log"; break; }
     bench_hc "$NEW" "$ART/bench-it${it}-hc.log" >/dev/null
     R=$(rate_pj "$ART/bench-it${it}-hc.log")
-    echo "  iter$it vs handcrafted : $R"
-    # nettoie les gros intermédiaires
+    echo "  iter$it vs handcrafted : ${R:-n/a}  (best=$BEST_R @ it$BEST_IT)"
+    # suivi du meilleur + plateau (le moniteur dit quand on a convergé)
+    improved=$(awk -v r="${R:-0}" -v b="$BEST_R" 'BEGIN{print (r>b+0.01)?1:0}')
+    if [ "$improved" = "1" ]; then BEST="$NEW"; BEST_R="$R"; BEST_IT="$it"; STALL=0;
+    else STALL=$((STALL+1)); fi
     rm -f "$LEAVES" "${LEAVES}.games" "$TGT" "$HC"
     CUR="$NEW"
+    if [ "$STALL" -ge "$STALL_MAX" ]; then
+        echo "  plateau ($STALL itérations sans gain) → convergence, arrêt"; break
+    fi
 done
-FINAL="$CUR"
+FINAL="$BEST"     # pattern CONVERGÉ (meilleur via moniteur), pas le dernier
+echo; echo "convergé : meilleur pattern = iter$BEST_IT (vs handcrafted $BEST_R)"
 
 echo; echo "=== bench final : pattern(TD-leaf) vs v15 movetime (vs départ) ==="
 if [ -n "${V15:-}" ] && [ -f "$V15" ]; then
