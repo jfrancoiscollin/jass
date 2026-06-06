@@ -1,0 +1,144 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+labels  : /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw
+v15     : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== Phase 0 : scipy/numpy/torch ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : squelette handcrafted aligné sur les positions Scan-d10 ===
+
+=== Phase 3a : train VANILLA (target = scan) ===
+  --- train vanilla ---
+loading /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw (encoding=halfmen, input_dim=450) …
+  1500000 self-play records  (9.7s to encode)
+  WDL distribution: W=40.6% D=18.4% L=41.0%
+  score range: [-9998, 9999]  mean=+23.1  std=1233.8
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  82435.7  val=  53806.7 *
+  epoch   2: train=  78037.2  val=  53354.3 *
+  epoch   3: train=  77747.8  val=  52933.6 *
+  epoch   4: train=  77628.8  val=  52794.3 *
+  epoch   5: train=  77534.5  val=  52694.3 *
+  epoch   6: train=  77424.1  val=  52545.2 *
+  epoch   7: train=  76678.6  val=  50894.1 *
+  epoch   8: train=  74571.3  val=  48365.5 *
+  epoch   9: train=  72989.0  val=  46754.5 *
+  epoch  10: train=  71615.3  val=  45527.5 *
+  epoch  11: train=  70467.1  val=  45008.7 *
+  epoch  12: train=  69671.5  val=  44222.8 *
+  epoch  13: train=  69043.3  val=  44084.0 *
+  epoch  14: train=  68479.0  val=  43557.9 *
+  epoch  15: train=  67955.5  val=  43254.7 *
+  epoch  16: train=  67481.7  val=  43118.5 *
+  epoch  17: train=  67015.4  val=  43055.7 *
+  epoch  18: train=  66549.7  val=  42619.7 *
+  epoch  19: train=  66100.8  val=  42576.1 *
+  epoch  20: train=  65676.7  val=  42345.6 *
+  epoch  21: train=  65274.7  val=  42231.9 *
+  epoch  22: train=  64898.5  val=  42176.2 *
+  epoch  23: train=  64536.3  val=  41802.7 *
+  epoch  24: train=  64209.6  val=  42074.2
+  epoch  25: train=  63887.6  val=  42059.8
+  epoch  26: train=  63582.0  val=  42034.5
+  epoch  27: train=  63311.4  val=  42304.4
+  epoch  28: train=  63049.1  val=  41802.8
+  epoch  29: train=  62765.4  val=  42212.5
+  epoch  30: train=  62524.3  val=  41593.0 *
+  wrote /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/nnue-128-64.bin (264220 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  128-64              66,049     41593.0      203.9     711s
+
+summary → /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/summary.json
+loading float reference /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/nnue-128-64.bin …
+  topology: 450 → 128 → 64 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.028009 sw2=0.051668 sw3=0.066523 sh1=0.055093 sh2=0.61807
+  multipliers: mul1=0.5084 mul2=0.0046056 mul_out=0.041116
+  reference range: float [-1926.4, 2313.9], quantised [-1810.4, 1917.6]
+  diff: mean=+3.31  std=20.19  |max|=517.23  RMSE=20.45
+wrote /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/nnue-128-64-q.bin (66664 bytes)
+
+=== Phase 3b : train RESIDUAL (target = scan - handcrafted, lambda=1.0) ===
+  --- train residual ---
+loading /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw (encoding=halfmen, input_dim=450) …
+  1500000 self-play records  (9.6s to encode)
+  WDL distribution: W=40.6% D=18.4% L=41.0%
+  score range: [-9998, 9999]  mean=+23.1  std=1233.8
+loading skeleton /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/master-1500K-handcrafted.jnnw (handcrafted) …
+  skeleton score std=147.5  residual (label-skeleton) std=1186.8  mean=+39.0
+
+=== arch 128-64 ===
+  params: 66,049
+  epoch   1: train=  68642.8  val=  63391.8 *
+  epoch   2: train=  61699.4  val=  60092.9 *
+  epoch   3: train=  58663.2  val=  57460.1 *
+  epoch   4: train=  56413.7  val=  55913.7 *
+  epoch   5: train=  54703.6  val=  54509.6 *
+  epoch   6: train=  53363.9  val=  53670.9 *
+  epoch   7: train=  52354.8  val=  53050.2 *
+  epoch   8: train=  51525.8  val=  52549.6 *
+  epoch   9: train=  50805.2  val=  52192.1 *
+  epoch  10: train=  50148.8  val=  51902.8 *
+  epoch  11: train=  49558.6  val=  51755.8 *
+  epoch  12: train=  49004.2  val=  51479.0 *
+  epoch  13: train=  48468.9  val=  51164.0 *
+  epoch  14: train=  47931.8  val=  51019.4 *
+  epoch  15: train=  47422.9  val=  50940.4 *
+  epoch  16: train=  46896.5  val=  50754.4 *
+  epoch  17: train=  46399.2  val=  50580.4 *
+  epoch  18: train=  45915.2  val=  50631.5
+  epoch  19: train=  45444.9  val=  50303.7 *
+  epoch  20: train=  44956.6  val=  50040.7 *
+  epoch  21: train=  44506.2  val=  50074.8
+  epoch  22: train=  44014.2  val=  50173.8
+  epoch  23: train=  43569.4  val=  49924.4 *
+  epoch  24: train=  43115.4  val=  50075.6
+  epoch  25: train=  42636.6  val=  49932.9
+  epoch  26: train=  42162.9  val=  50224.0
+  epoch  27: train=  41729.7  val=  50043.8
+  epoch  28: train=  41269.5  val=  50125.8
+  epoch  29: train=  40805.2  val=  50066.4
+  epoch  30: train=  40396.2  val=  50205.6
+  wrote /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/residual/nnue-128-64.bin (264220 bytes)
+
+=== Summary (sorted by val MSE) ===
+  arch                params     val MSE   val RMSE     time
+  128-64              66,049     49924.4      223.4     684s
+
+summary → /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/residual/summary.json
+loading float reference /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/residual/nnue-128-64.bin …
+  topology: 450 → 128 → 64 → 1  (encoding=halfmen)
+loading 2000 calibration positions from /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw …
+  2000 positions, feature dim 450
+quantising …
+  scales: sw1=0.031473 sw2=0.098412 sw3=0.077408 sh1=0.087677 sh2=0.96382
+  multipliers: mul1=0.35896 mul2=0.0089525 mul_out=0.074607
+  reference range: float [-1855.1, 2535.6], quantised [-1850.2, 2495.4]
+  diff: mean=+15.83  std=14.18  |max|=190.74  RMSE=21.25
+wrote /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/residual/nnue-128-64-q.bin (66664 bytes)
+
+=== Phase 4a : GATE — hybrid(residual) vs vanilla (d10, 54 games) ===
+Benchmark: A=HYBRID(handcrafted+/root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/residual/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/nnue-128-64-q.bin), depth 10, threads 1, movetime_ms 0, 54 games
+Result: A(hybrid)=27 B(vanilla)=27 Draws=0 (total 54)
+HYBRID score rate vs vanilla: 0.5
+
+=== Phase 4b : sanity — vanilla (notre retrain) vs v15 (contrôle data/pipeline) ===
+Benchmark: A=NNUE(/root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/vanilla/nnue-128-64-q.bin) vs B=NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 10, threads 1 vs 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: A=6 B=45 Draws=3 (total 54)
+A score rate: 0.138889 (7.5 / 54)
+
+==========================================================
+        0134 OPTION H — HYBRID GATE VERDICT
+==========================================================
+  hybrid(residual) vs vanilla : rate 0.5   (le GATE)
+  vanilla(retrain) vs v15     : rate 0.138889 (contrôle ~0.5 attendu)
+  → ΔELO hybrid vs vanilla ≈ -0
+  → OPTION H FLAT — le résidu n'aide pas à archi égale. Drop, pivot (F/B).
+==========================================================

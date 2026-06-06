@@ -1,7 +1,0 @@
-{
-  "job_id": "0134-option-H-hybrid-gate",
-  "script": "jobs/queue/0134-option-H-hybrid-gate.sh",
-  "pid": 299510,
-  "started_at": "2026-06-06T12:00:09+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

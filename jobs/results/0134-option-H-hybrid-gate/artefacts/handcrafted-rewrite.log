@@ -1,0 +1,5 @@
+rewriting 1500000 records (handcrafted): /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-1500K-scan-d10.jnnw → /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/master-1500K-handcrafted.jnnw
+  500000 / 1500000 records
+  1000000 / 1500000 records
+  1500000 / 1500000 records
+wrote 1500000 records (38 B each) to /root/jass/jobs/results/0134-option-H-hybrid-gate/artefacts.src/master-1500K-handcrafted.jnnw
