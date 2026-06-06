@@ -1,36 +1,26 @@
 #!/usr/bin/env bash
-# id: 0133-rebaseline-v15-vs-scan
-# description: Phase 0 du programme "battre Scan time-search". Re-mesure
-# la référence actuelle (v15 NNUE 128-64 distillé Scan) contre Scan sur
-# le HEAD courant — les chiffres -500/-550 ELO et 0.870 vs Scan d10
-# datent de jobs antérieurs (0090+) et doivent être re-confirmés avant
-# d'investir 3-4 mois. Fige le benchmark "north-star".
+# id: 0137-rebaseline-v15-vs-scan
+# description: Remplace 0133 (échoué rc=5 : l'assembleur ne pouvait pas
+# écrire ses .s dans /tmp — trop petit sur le runner). Seule correction :
+# export TMPDIR=/root/jass/.compile-tmp avant le build (comme 0132/0134).
 #
-# Mesures :
-#   A. movetime 0.5s, 1 thread, no-book  → north-star (eval+search pur)
-#   B. movetime 0.5s, 4 threads, no-book → gain Lazy SMP en time-search
-#   C. depth 10, 1 thread, no-book       → qualité à profondeur fixe
-#      (doit re-confirmer ~0.87 — l'éval est censée battre Scan d10)
+# Phase 0 du programme compétitif. Re-mesure v15 NNUE 128-64 vs Scan sur
+# HEAD : north-star mt=0.5s no-book 1t, + Lazy SMP 4t, + qualité d10.
 #
-# no-book partout : on isole eval+search (le levier qu'on va travailler),
-# pas le livre d'ouvertures.
-#
-# expected_duration: ~2-3 h wall (3 matches ; mt=0.5 ≈ 40-50 min/match
-# à pairs=3, depth-10 plus rapide).
+# expected_duration: ~2-3 h wall.
 set -uo pipefail
 cd /root/jass
 
-OUT_BASE="/root/jass/jobs/results/0133-rebaseline-v15-vs-scan"
+OUT_BASE="/root/jass/jobs/results/0137-rebaseline-v15-vs-scan"
 ART="$OUT_BASE/artefacts.src"
 mkdir -p "$ART"
 NCPU=$(nproc)
+export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"   # /tmp runner trop petit pour l'assembleur
 
 echo "=== host : $(hostname)  nproc=$NCPU  mem=$(free -h | awk '/^Mem:/{print $2}') ==="
 
-# --- v15 weights lookup (même source que 0132) -----------------------------
 V15=$(ls -t /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-*-q.bin 2>/dev/null | head -1)
 if [ -z "$V15" ] || [ ! -f "$V15" ]; then
-    # fallback : n'importe quel 128-64 q.bin déjà produit
     V15=$(find /root/jass/jobs/results -path '*128-64*' -name 'nnue-*-q.bin' 2>/dev/null | head -1)
 fi
 [ -n "$V15" ] && [ -f "$V15" ] || { echo "ABORT: v15 128-64 weights introuvables"; exit 3; }
@@ -44,7 +34,6 @@ cmake --build build-prod -j"$NCPU" --target jass > "$ART/build.log" 2>&1 || {
     echo "BUILD FAIL"; tail -30 "$ART/build.log"; exit 5; }
 echo "jass : $(./build-prod/jass --version 2>/dev/null)"
 
-# --- Scan install (même pattern que 0019) ----------------------------------
 SCAN_DIR=/root/jass/.scan
 if [ ! -x "$SCAN_DIR/scan_linux" ]; then
     echo "=== installing Scan (rhalbersma/scan) ==="
@@ -78,20 +67,18 @@ run_match "B. movetime 0.5s, 4 threads (SMP)" \
 run_match "C. depth 10, 1 thread (qualité profondeur fixe)" \
     "$ART/C-d10-1t.log"     --depth 10     --jass-threads 1
 
-# --- Résumé ----------------------------------------------------------------
 extract () { grep -oE 'score rate[^0-9]*[0-9.]+' "$1" 2>/dev/null | grep -oE '[0-9.]+$' | head -1; }
 RA=$(extract "$ART/A-mt500-1t.log"); RB=$(extract "$ART/B-mt500-4t.log"); RC=$(extract "$ART/C-d10-1t.log")
 
 echo
 echo "=========================================================="
-echo "      0133 RE-BASELINE v15 vs SCAN — VERDICT"
+echo "      0137 RE-BASELINE v15 vs SCAN — VERDICT"
 echo "=========================================================="
 echo "  v15 : $(basename "$V15")"
 python3 - "$RA" "$RB" "$RC" <<'EOF'
 import sys, math
 def elo(r):
-    try:
-        r=float(r)
+    try: r=float(r)
     except: return "n/a"
     if r<=0: return "-inf"
     if r>=1: return "+inf"

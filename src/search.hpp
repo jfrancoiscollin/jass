@@ -11,6 +11,7 @@
 
 #include "movegen.hpp"
 #include "position.hpp"
+#include "search_params.hpp"
 #include "zobrist.hpp"
 
 #include <atomic>
@@ -51,6 +52,9 @@ struct SearchLimits {
     // handcrafted `evaluate(pos)`. Default null = use handcrafted.
     // Any concrete `INetwork` (Linear, MLP, …) is accepted.
     const INetwork* nnue = nullptr;
+    // Tunable search parameters (pruning/reduction/extension constants +
+    // PVS toggle). Default = behaviour-neutral baseline.
+    SearchParams params{};
 };
 
 struct SearchResult {

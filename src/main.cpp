@@ -1047,6 +1047,71 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-search-params : in-process A/B of two SEARCH parameter sets
+// (same network on both sides). Used to validate PVS (use_pvs=1 vs 0) and
+// to drive SPSA tuning. The net path may be "hc"/"none" for the handcrafted
+// eval. Param specs are "k=v,k=v" strings (cf src/search_params.hpp).
+//   jass --benchmark-search-params <net|hc> "<A spec>" "<B spec>"
+//        [depth=8] [pairs=2] [threads=1] [movetime_ms=0]
+// Reports A's score rate vs B (>0.5 ⇒ A's params are stronger).
+// -----------------------------------------------------------------------------
+int run_benchmark_search_params_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: jass --benchmark-search-params <net|hc> "
+                     "\"<A spec>\" \"<B spec>\" "
+                     "[depth=8] [pairs=2] [threads=1] [movetime_ms=0]\n"
+                     "  spec = comma-separated key=value (e.g. \"use_pvs=1\")\n";
+        return 1;
+    }
+    const std::string net_path = argv[2];
+    const char* spec_a      = argv[3];
+    const char* spec_b      = argv[4];
+    const int   depth       = (argc > 5) ? parse_int_or(argv[5], 8) : 8;
+    const int   pairs       = (argc > 6) ? parse_int_or(argv[6], 2) : 2;
+    const int   threads     = (argc > 7) ? parse_int_or(argv[7], 1) : 1;
+    const int   movetime_ms = (argc > 8) ? parse_int_or(argv[8], 0) : 0;
+
+    std::unique_ptr<INetwork> net;
+    const bool handcrafted = (net_path == "hc" || net_path == "none" || net_path == "-");
+    if (!handcrafted) {
+        net = load_network(net_path);
+        if (!net) {
+            std::cerr << "error: cannot load network from " << net_path << "\n";
+            return 1;
+        }
+    }
+
+    EngineConfig cfg_a;
+    cfg_a.max_depth   = depth;
+    cfg_a.threads     = threads;
+    cfg_a.movetime_ms = movetime_ms;
+    cfg_a.nnue        = net.get();
+    cfg_a.params      = jass::parse_search_params(spec_a);
+
+    EngineConfig cfg_b = cfg_a;
+    cfg_b.params      = jass::parse_search_params(spec_b);
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: search-params A=[" << spec_a
+              << "] vs B=[" << spec_b
+              << "] on " << (handcrafted ? "handcrafted" : net_path)
+              << ", depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games\n";
+
+    const TournamentResult r = run_tournament(cfg_a, cfg_b, pairs);
+    std::cout << "Result: A=" << r.a_wins
+              << " B="        << r.b_wins
+              << " Draws="    << r.draws
+              << " (total "   << r.games << ")\n";
+    const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
+    std::cout << "A score rate: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-nnue-hybrid : Option H — NNUE résiduel + squelette handcrafted.
 //   eval_final = handcrafted(pos) + residual_nnue(pos)
 // A = hybrid(residual.bin), B = vanilla NNUE (ex: v15). Mesure si entraîner
@@ -1395,6 +1460,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-hybrid")    return run_benchmark_nnue_hybrid_mode(argc, argv);
+        else if (a == "--benchmark-search-params")  return run_benchmark_search_params_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
