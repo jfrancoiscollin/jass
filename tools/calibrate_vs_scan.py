@@ -254,10 +254,15 @@ class JassEngine(EngineProc):
     def __init__(self, path: str, label: str = "Jass",
                  no_book: bool = True, no_nnue: bool = False,
                  nnue_path: str | None = None,
+                 pattern_path: str | None = None,
                  book_path: str | None = None,
                  threads: int = 1):
         argv = [path]
-        if no_nnue: argv.append("--no-nnue")
+        if pattern_path:
+            # Play with a pattern eval (PJTW) — lets us benchmark a pattern
+            # engine vs Scan. Takes precedence over nnue.
+            argv += ["--pattern", pattern_path]
+        elif no_nnue: argv.append("--no-nnue")
         elif nnue_path:
             argv += ["--nnue", nnue_path]
         if book_path:
@@ -567,6 +572,9 @@ def main(argv):
                              "referee keeps the default network.")
     g_nnue.add_argument("--no-nnue", action="store_true",
                         help="force Jass to fall back to the handcrafted eval")
+    g_nnue.add_argument("--jass-pattern", metavar="PATH",
+                        help="PJTW pattern weights — play the Jass side with a "
+                             "pattern eval (vs Scan). Only the player.")
     # Fair-comparison knobs. Disabled by default so the eval-vs-eval
     # measurement stays clean; the new 0019 job opts them in.
     p.add_argument("--jass-book", metavar="PATH", default=None,
@@ -612,12 +620,14 @@ def main(argv):
 
     openings = opening_pool_via_jass(args.jass)
     print(f"opening pool: {len(openings)} positions")
-    print(f"jass setup:   nnue={args.nnue or ('(handcrafted)' if args.no_nnue else '(default)')}"
-          f"  book={args.jass_book or '(default/none)'}")
+    eval_desc = (f"pattern={args.jass_pattern}" if args.jass_pattern
+                 else f"nnue={args.nnue or ('(handcrafted)' if args.no_nnue else '(default)')}")
+    print(f"jass setup:   {eval_desc}  book={args.jass_book or '(default/none)'}")
     print(f"scan setup:   book={args.scan_book}  bb-size={args.scan_bb_size}")
 
     jass = JassEngine(args.jass, label="Jass-player",
                       no_nnue=args.no_nnue, nnue_path=args.nnue,
+                      pattern_path=args.jass_pattern,
                       book_path=args.jass_book,
                       threads=args.jass_threads)
     scan = ScanEngine(args.scan, label="Scan-player",

@@ -1765,6 +1765,18 @@ int main(int argc, char** argv) {
                 return 2;
             }
             nnue_ptr = nnue_server.get();
+        } else if (a == "--pattern" && i + 1 < argc) {
+            // HUB mode only — play with a PatternJassNetwork eval instead
+            // of an NNUE, so the engine can be benchmarked vs Scan with a
+            // pattern eval (the pattern is an INetwork too).
+            std::string perr;
+            nnue_owned = jass::load_pattern_jass_network(argv[++i], &perr);
+            if (!nnue_owned) {
+                std::cerr << "error: cannot load pattern weights from "
+                          << argv[i] << " : " << perr << "\n";
+                return 2;
+            }
+            nnue_ptr = nnue_owned.get();
         } else if (a == "--book" && i + 1 < argc) {
             book_path = argv[++i];
         }
