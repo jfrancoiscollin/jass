@@ -84,16 +84,33 @@ fait* compétitif → c'est la 1re brique éval à ajouter.
 *(NB : `src/pattern_network.hpp` v5/v6 a déjà l'infra phase-split pour le
 squelette scalaire — patterns encore mono-phase ; à porter sur pattern_jass.)*
 
-### B. Bitbases endgame 6-7 pièces  *(général — brique la plus dure)*
+### B. Bitbases endgame 2-6 pièces  *(général — données DISPONIBLES en ligne)*
 
 - Nous : **KvK + KKvK** seulement (rois, 2-3 pièces).
-- Scan : jusqu'à **7 pièces**, toutes pièces.
+- Scan : **2-6 pièces** (WLD only, ~2 GiB RAM à bb-size=6 ; 7 pour BT).
 
 Pénalise les finales (fréquentes en draughts) quel que soit l'éval (pattern
-ou NNUE). Dur (données volumineuses, non shippées par rhalbersma/scan).
-**Déclencheur** : si on plafonne spécifiquement en **finale** (parties
-perdues en endgame analysable). C'est l'avantage structurel « 15 ans » de
-Scan — à n'attaquer que si tout le reste est réglé.
+ou NNUE). **Mise à jour 2026-06-06 : la donnée est TÉLÉCHARGEABLE** (juste
+pas bundlée dans le repo GitHub vu la taille). Readme de Scan : *« bitbases
+require a separate copy or download »*.
+
+**Source** (site officiel Scan : hjetten.home.xs4all.nl/scan/scan.html, lié
+depuis rhalbersma/scan) — variante standard = international (matche) :
+- `bb.zip` **706 MiB** (tables 2-6, → `data/bb/{2,3,4,5,6}`)
+- ou séparément : **5 pièces 26 MiB**, **6 pièces 720 MiB**.
+- Format WLD (win/loss/draw, pas de distance-au-mat) ; lisible dans le source
+  GPL3 de Scan.
+
+→ Brique re-classée « la plus dure » → **MODÉRÉE**, deux chemins :
+- **A. Intégrer la base externe** : reader du format Scan + câblage probe.
+  Rapide pour « avoir » la donnée. ⚠️ ~2 Go RAM/stockage + **licence à
+  vérifier** (moteur GPL3 ; usage des fichiers data).
+- **B. Générer les nôtres** : étendre la rétro-analyse KvK/KKvK
+  (`bitbase.cpp`) jusqu'à 5-6 pièces. Notre format, zéro licence, mais gros
+  job compute/mémoire.
+
+**Déclencheur** : si on plafonne spécifiquement en **finale**. La barrière
+est bien plus basse qu'estimé initialement.
 
 ### C. Raffinements search incrémentaux  *(général — faible chacun)*
 
