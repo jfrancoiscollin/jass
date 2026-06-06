@@ -107,3 +107,36 @@ base soit validé, si on veut gratter de l'ELO.
 - Patterns **men-only** + kings via PST dédié (même découpage que Scan).
 - Géométrie **8 colonnes × 12 cases** (≈ Scan, base-3).
 - Search : alpha-bêta complet + PVS + pruning tuné + Lazy SMP.
+
+## Roadmap post-validation (plan acté 2026-06-06)
+
+Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
+un pattern prometteur** (compétitif ou proche vs v15, pas effondré vs Scan).
+Si le pattern de base s'effondre malgré les 4 confondants corrigés → on
+re-décide, ces étapes ne le sauveraient pas.
+
+### Étape 1 — Ajouter les briques manquantes (HORS bitbases)
+
+1a. **Phase-split MG/EG sur pattern_jass** (brique éval #1, cf §A).
+    Doubler la table (poids mg + eg par bucket) + interpolation par
+    `game_stage`. Porter l'infra déjà présente dans `src/pattern_network.hpp`
+    (v5/v6 : phase-split du squelette ; étendre aux patterns eux-mêmes).
+    Re-train sur les labels propres.
+1b. **Raffinements search** (cf §C) : continuation history (CMH), IID,
+    improving heuristic, multi-cut. Gated + ajoutés au set SPSA → tunés
+    **pour le pattern**.
+
+> Bitbases (§B) **exclus** de cette vague (trop lourd) — à reconsidérer
+> seulement si on plafonne spécifiquement en finale.
+
+### Étape 2 — Fine-tune + boost en self-play
+
+Sur l'archi **enrichie** (pattern phase-split + search amélioré) :
+- relancer la boucle **TD-leaf self-play** avec plus de volume/itérations
+  (le « boost »),
+- **re-tuner les constantes** (SPSA) pour la nouvelle archi (les optima
+  changent quand l'éval/le search changent),
+- re-bench vs v15 puis **vs Scan** (0143).
+
+Itérer 1↔2 si gain. L'objectif final reste : pattern alpha-bêta qui tient
+le plus possible face à Scan en time-search.
