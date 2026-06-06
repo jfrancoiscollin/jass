@@ -14,6 +14,7 @@
 #include "hub.hpp"
 #include "movegen.hpp"
 #include "eval.hpp"
+#include "hybrid_network.hpp"
 #include "nnue.hpp"
 #include "nnue_server_client.hpp"
 #include "pattern_jass_bridge.hpp"
@@ -1046,6 +1047,71 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-nnue-hybrid : Option H — NNUE résiduel + squelette handcrafted.
+//   eval_final = handcrafted(pos) + residual_nnue(pos)
+// A = hybrid(residual.bin), B = vanilla NNUE (ex: v15). Mesure si entraîner
+// le MÊME archi sur le résidu (label - handcrafted) bat le vanilla à
+// profondeur fixe — gate Option H. Cf docs/PARADIGM_SHIFT_OPTIONS.md §H.
+// -----------------------------------------------------------------------------
+int run_benchmark_nnue_hybrid_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --benchmark-nnue-hybrid "
+                     "<residual.bin> <vanilla.bin> [depth=6] [pairs=1] "
+                     "[threads=1] [movetime_ms=0]\n";
+        return 1;
+    }
+    const char* residual_path = argv[2];
+    const char* vanilla_path  = argv[3];
+    const int   depth       = (argc > 4) ? parse_int_or(argv[4], 6) : 6;
+    const int   pairs       = (argc > 5) ? parse_int_or(argv[5], 1) : 1;
+    const int   threads     = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   movetime_ms = (argc > 7) ? parse_int_or(argv[7], 0) : 0;
+
+    auto hybrid = jass::load_hybrid_handcrafted_network(residual_path);
+    if (!hybrid) {
+        std::cerr << "error: cannot load residual network from "
+                  << residual_path << "\n";
+        return 1;
+    }
+    std::unique_ptr<INetwork> vanilla = load_network(vanilla_path);
+    if (!vanilla) {
+        std::cerr << "error: cannot load vanilla network from "
+                  << vanilla_path << "\n";
+        return 1;
+    }
+
+    EngineConfig cfg_a;
+    cfg_a.max_depth   = depth;
+    cfg_a.threads     = threads;
+    cfg_a.movetime_ms = movetime_ms;
+    cfg_a.nnue        = hybrid.get();
+
+    EngineConfig cfg_b;
+    cfg_b.max_depth   = depth;
+    cfg_b.threads     = threads;
+    cfg_b.movetime_ms = movetime_ms;
+    cfg_b.nnue        = vanilla.get();
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: A=HYBRID(handcrafted+" << residual_path
+              << ") vs B=NNUE(" << vanilla_path
+              << "), depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games\n";
+
+    const TournamentResult r = run_tournament(cfg_a, cfg_b, pairs);
+    std::cout << "Result: A(hybrid)=" << r.a_wins
+              << " B(vanilla)="       << r.b_wins
+              << " Draws="            << r.draws
+              << " (total "           << r.games << ")\n";
+    const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
+    std::cout << "HYBRID score rate vs vanilla: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --build-book: read a list of FENs (one per line, `#` comments OK), evaluate
 // each one with the current default NNUE at the requested depth and write a
 // JBOK file mapping (zobrist → best move). Used to pre-compute an opening
@@ -1328,6 +1394,7 @@ int main(int argc, char** argv) {
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
+        else if (a == "--benchmark-nnue-hybrid")    return run_benchmark_nnue_hybrid_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
