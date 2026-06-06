@@ -523,6 +523,123 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --gen-tdleaf : self-play piloté par un PATTERN, émettant par coup la
+// position FEUILLE de la PV de recherche + sa valeur (white-POV), groupée
+// par partie, pour l'entraînement TD-leaf(λ) du pattern (linéaire).
+// Sorties :
+//   <out>        JNNW des positions feuilles (score = V_leaf white-POV,
+//                wdl = result+1 ∈ {0,1,2})
+//   <out>.games  une ligne par partie : "<n_records> <result>" (result ∈
+//                {-1,0,1} white-POV)
+// Le côté Python (tools/td_leaf_targets.py) calcule les cibles λ-return
+// depuis les séquences de valeurs par partie, puis re-fit via train.py.
+// -----------------------------------------------------------------------------
+int run_gen_tdleaf_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --gen-tdleaf <weights.pjtw> [n_games=2000] "
+                     "[depth=8] [out=tdleaf.jnnw] [max_plies=200] [seed=1]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const int   n_games   = (argc > 3) ? parse_int_or(argv[3], 2000) : 2000;
+    const int   depth     = (argc > 4) ? parse_int_or(argv[4], 8)    : 8;
+    const char* out_path  = (argc > 5) ? argv[5] : "tdleaf.jnnw";
+    const int   max_plies = (argc > 6) ? parse_int_or(argv[6], 200)  : 200;
+    const std::uint64_t seed = (argc > 7)
+        ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+
+    std::string err;
+    auto pjn = jass::load_pattern_jass_network(weights_path, &err);
+    if (!pjn) {
+        std::cerr << "error: cannot load PJTW from " << weights_path
+                  << " : " << err << "\n";
+        return 1;
+    }
+
+    std::ofstream f(out_path, std::ios::binary);
+    std::ofstream g(std::string(out_path) + ".games");
+    if (!f || !g) { std::cerr << "error: cannot open output\n"; return 1; }
+    const char magic[4] = {'J', 'N', 'N', 'W'};
+    f.write(magic, 4);
+    std::uint32_t count_placeholder = 0;
+    f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
+
+    std::mt19937_64 rng(seed ? seed : 1ULL);
+    std::uint32_t total_records = 0;
+
+    struct Leaf { std::uint64_t bbs[4]; std::uint8_t stm; std::int32_t v_white; };
+
+    for (int game = 0; game < n_games; ++game) {
+        Engine e;
+        e.use_book(false);
+        e.new_game();
+        for (int i = 0; i < 4; ++i) {           // random opening plies
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) break;
+            e.apply_move(ml[rng() % ml.size()]);
+        }
+
+        std::vector<Leaf> leaves;
+        int  result    = 0;                     // white-POV: +1 / 0 / -1
+        int  halfmove  = 0;                     // 50-move (irreversible) counter
+        bool terminated = false;
+
+        for (int ply = 0; ply < max_plies; ++ply) {
+            MoveList ml;
+            generate_legal_moves(e.position(), ml);
+            if (ml.empty()) {                   // side to move has no move → loses
+                result = (e.position().side_to_move() == Color::White) ? -1 : +1;
+                terminated = true; break;
+            }
+            if (halfmove >= FIFTY_MOVE_PLIES) { result = 0; terminated = true; break; }
+
+            SearchLimits lim;
+            lim.max_depth = depth;
+            lim.nnue      = pjn.get();
+            const SearchResult r = e.search(lim);
+
+            // Walk the PV to the leaf the eval was effectively read at.
+            Position leaf = e.position();
+            for (const auto& m : r.pv) leaf = leaf.after(m);
+            const bool white_to_move = (e.position().side_to_move() == Color::White);
+            Leaf L;
+            L.bbs[0] = leaf.white_men();  L.bbs[1] = leaf.white_kings();
+            L.bbs[2] = leaf.black_men();  L.bbs[3] = leaf.black_kings();
+            L.stm     = (leaf.side_to_move() == Color::White) ? 0 : 1;
+            L.v_white = static_cast<std::int32_t>(white_to_move ? r.score : -r.score);
+            leaves.push_back(L);
+
+            const bool is_capture = r.best_move.is_capture();
+            if (!e.apply_move(r.best_move)) { terminated = true; break; }
+            halfmove = is_capture ? 0 : halfmove + 1;
+        }
+        if (!terminated) result = 0;            // ply cap → draw
+
+        for (const auto& L : leaves) {
+            f.write(reinterpret_cast<const char*>(L.bbs), 32);
+            f.write(reinterpret_cast<const char*>(&L.stm), 1);
+            f.write(reinterpret_cast<const char*>(&L.v_white), 4);
+            const std::uint8_t wdl = static_cast<std::uint8_t>(result + 1);
+            f.write(reinterpret_cast<const char*>(&wdl), 1);
+        }
+        total_records += static_cast<std::uint32_t>(leaves.size());
+        g << leaves.size() << ' ' << result << '\n';
+
+        if ((game + 1) % 100 == 0)
+            std::cout << "  " << (game + 1) << "/" << n_games << " games, "
+                      << total_records << " leaf records\n";
+    }
+
+    f.seekp(4, std::ios::beg);
+    f.write(reinterpret_cast<const char*>(&total_records), 4);
+    f.close();
+    std::cout << "wrote " << total_records << " leaf records to " << out_path
+              << " (+ " << out_path << ".games index)\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --rewrite-scores-with-nnue: read a JNNW dataset and write a new one with
 // the `score` field replaced by `nnue.evaluate(pos)` from a user-supplied
 // network. The bitboards / STM / WDL fields are passed through unchanged.
@@ -1545,6 +1662,7 @@ int main(int argc, char** argv) {
         else if (a == "--bench-eval-server")        return run_bench_eval_server_mode(argc, argv);
         else if (a == "--gen-data")                 return run_gen_data_mode(argc, argv);
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
+        else if (a == "--gen-tdleaf")               return run_gen_tdleaf_mode(argc, argv);
         else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
