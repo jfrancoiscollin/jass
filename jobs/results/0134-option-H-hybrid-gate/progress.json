@@ -1,8 +1,8 @@
 {
   "job_id": "0134-option-H-hybrid-gate",
-  "snapshot_at": "2026-06-06T12:20:44+00:00",
+  "snapshot_at": "2026-06-06T12:25:47+00:00",
   "started_at": "2026-06-06T12:00:09+00:00",
-  "elapsed_seconds": 1235,
+  "elapsed_seconds": 1538,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,6 +13,10 @@
       "size_bytes": 506
     },
     {
+      "name": "gate-hybrid-vs-vanilla.log",
+      "size_bytes": 0
+    },
+    {
       "name": "handcrafted-rewrite.log",
       "size_bytes": 450
     },
@@ -21,5 +25,5 @@
       "size_bytes": 57000008
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 299510       1       20:35  0.0  0.0 bash\n 299512  299510       20:35  0.0  0.0 bash\n 299948  299512       08:21  329 17.8 python3\n 299949  299512       08:21  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 299510       1       25:37  0.0  0.0 bash\n 299512  299510       25:37  0.0  0.0 bash\n 300128  299512       01:39  100  0.1 jass\n 300129  299512       01:39  0.0  0.0 tee\n"
 }
