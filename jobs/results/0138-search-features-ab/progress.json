@@ -1,8 +1,8 @@
 {
   "job_id": "0138-search-features-ab",
-  "snapshot_at": "2026-06-06T21:27:01+00:00",
+  "snapshot_at": "2026-06-06T21:32:05+00:00",
   "started_at": "2026-06-06T19:45:06+00:00",
-  "elapsed_seconds": 6115,
+  "elapsed_seconds": 6419,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,13 +13,17 @@
       "size_bytes": 506
     },
     {
-      "name": "probcut.log",
+      "name": "ext.log",
       "size_bytes": 0
+    },
+    {
+      "name": "probcut.log",
+      "size_bytes": 306
     },
     {
       "name": "razor.log",
       "size_bytes": 282
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 307399       1    01:41:55  0.0  0.0 bash\n 307401  307399    01:41:55  0.0  0.0 bash\n 308310  307401       48:15 99.9  0.1 jass\n 308311  307401       48:15  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 307399       1    01:46:58  0.0  0.0 bash\n 307401  307399    01:46:58  0.0  0.0 bash\n 309041  307401       01:01 99.9  0.1 jass\n 309042  307401       01:01  0.0  0.0 tee\n"
 }
