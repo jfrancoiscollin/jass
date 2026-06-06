@@ -1,7 +1,0 @@
-{
-  "job_id": "0133-rebaseline-v15-vs-scan",
-  "script": "jobs/queue/0133-rebaseline-v15-vs-scan.sh",
-  "pid": 299208,
-  "started_at": "2026-06-06T11:54:55+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
