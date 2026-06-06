@@ -573,6 +573,14 @@ def main(argv):
                         "15 GB host (CCX23) ~2-2.5M total records is the safe "
                         "upper bound; default 0 only works when the master "
                         "file is naturally small.")
+    p.add_argument("--skeleton-data", type=Path, default=None,
+                   help="Option H — handcrafted skeleton scores (same "
+                        "positions/order as --data, produced by "
+                        "`jass --rewrite-scores-with-handcrafted`). When set, "
+                        "the regression target becomes the RESIDUAL "
+                        "(label - skeleton); the C++ hybrid network adds the "
+                        "handcrafted skeleton back at eval time. Use with "
+                        "--lambda 1.0. Mutually exclusive with --master-data.")
     p.add_argument("--master-loss", choices=("mse", "bce"), default="mse",
                    help="Loss form applied to master records. 'mse' (default, "
                         "back-compat) reuses the blended-MSE target with "
@@ -598,6 +606,10 @@ def main(argv):
                         "dominate.")
     args = p.parse_args(argv)
 
+    if args.skeleton_data is not None and args.master_data is not None:
+        raise SystemExit("--skeleton-data and --master-data are mutually "
+                         "exclusive (residual vs absolute target).")
+
     input_dim = input_dim_for(args.encoding)
     print(f"loading {args.data} (encoding={args.encoding}, input_dim={input_dim}) …")
     t0 = time.time()
@@ -610,6 +622,26 @@ def main(argv):
     print(f"  WDL distribution: W={win:.1%} D={draw:.1%} L={loss:.1%}")
     print(f"  score range: [{y_score.min():.0f}, {y_score.max():.0f}]  "
           f"mean={y_score.mean():+.1f}  std={y_score.std():.1f}")
+
+    # Option H — residual target. When --skeleton-data is given, subtract
+    # the handcrafted skeleton score (same positions, produced by
+    # `jass --rewrite-scores-with-handcrafted`) so the network learns
+    # the RESIDUAL (label - handcrafted). At eval time the C++ hybrid
+    # network adds the handcrafted skeleton back. Cf
+    # docs/PARADIGM_SHIFT_OPTIONS.md §H. Use with --lambda 1.0 to keep a
+    # clean residual target (the WDL term is not skeleton-relative).
+    if args.skeleton_data is not None:
+        print(f"loading skeleton {args.skeleton_data} (handcrafted) …")
+        _, sk_score, _ = load_records(args.skeleton_data, encoding=args.encoding)
+        if len(sk_score) != n_self:
+            raise SystemExit(
+                f"skeleton-data count {len(sk_score)} != data count {n_self} "
+                f"— the two files must hold the same positions in the same order")
+        resid = y_score - sk_score
+        print(f"  skeleton score std={sk_score.std():.1f}  "
+              f"residual (label-skeleton) std={resid.std():.1f}  "
+              f"mean={resid.mean():+.1f}")
+        y_score = resid.astype(np.float32, copy=False)
 
     # Cycle 8: optional blend with master-game records.
     lam_per    = np.full(n_self, args.lam,            dtype=np.float32)
