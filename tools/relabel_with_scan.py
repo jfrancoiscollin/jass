@@ -140,20 +140,30 @@ class ScanScorer:
         best_score: Optional[int] = None
         best_depth = -1
         for ln in lines:
-            d_match = SCAN_DEPTH_RE.search(ln)
             s_match = SCAN_INFO_RE.search(ln)
-            if d_match and s_match:
-                d = int(d_match.group(1))
-                if d >= best_depth:  # >= : keep the LAST info at max depth
-                    best_depth = d
-                    try:
-                        # Scan emits scores in PAWN UNITS as floats
-                        # (e.g. `score=-0.04` = -4 cp). Multiply by 100
-                        # to get centipawns matching jass's convention.
-                        s = float(s_match.group(1))
-                        best_score = int(round(s * 100.0))
-                    except ValueError:
-                        pass
+            if not s_match:
+                continue
+            # Forced-move positions (mandatory capture) make Scan emit a
+            # single `info score=… pv=<capture>` line with NO `depth=`
+            # field, then `done`. The score is still valid (eval after the
+            # forced move) — treat a depth-less scored line as depth 0 so
+            # it is used when no deeper search line exists, but is
+            # overridden by any real depth>=1 info. Previously these lines
+            # were dropped (requiring depth=), so ~18% of positions
+            # (capture-forced) silently fell back to their ORIGINAL label
+            # instead of the Scan score — corrupting the distilled dataset.
+            d_match = SCAN_DEPTH_RE.search(ln)
+            d = int(d_match.group(1)) if d_match else 0
+            if d >= best_depth:  # >= : keep the LAST info at max depth
+                best_depth = d
+                try:
+                    # Scan emits scores in PAWN UNITS as floats
+                    # (e.g. `score=-0.04` = -4 cp). Multiply by 100
+                    # to get centipawns matching jass's convention.
+                    s = float(s_match.group(1))
+                    best_score = int(round(s * 100.0))
+                except ValueError:
+                    pass
         return best_score
 
     def close(self) -> None:
@@ -170,21 +180,21 @@ class ScanScorer:
 def relabel(in_path: Path, out_path: Path, scan_path: str,
             depth: int, max_records: int, start: int,
             timeout_s: float, progress_every: int,
-            newgame_every: int) -> int:
+            newgame_every: int, drop_skipped: bool = True) -> int:
     raw = in_path.read_bytes()
     assert raw[:4] == b"JNNW", f"{in_path}: bad magic"
     total = struct.unpack_from("<I", raw, 4)[0]
     end = total if max_records == 0 else min(start + max_records, total)
     n_to_do = end - start
     print(f"input : {in_path} ({total} records, processing {n_to_do} "
-          f"from offset {start})", flush=True)
+          f"from offset {start}, drop_skipped={drop_skipped})", flush=True)
 
     scorer = ScanScorer(scan_path)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("wb") as out:
         out.write(b"JNNW")
-        out.write(struct.pack("<I", n_to_do))
+        out.write(struct.pack("<I", n_to_do))  # backpatched at the end
 
         t0 = time.monotonic()
         n_ok = 0
@@ -202,8 +212,15 @@ def relabel(in_path: Path, out_path: Path, scan_path: str,
                                              timeout_s=timeout_s,
                                              newgame_every=newgame_every)
             if new_score is None:
-                # Scan failed on this position — keep original score, log it.
+                # Scan gave no score (forced single-move position with a
+                # `info pv=…` line carrying no score). Keeping the ORIGINAL
+                # (non-Scan) label corrupts the distilled set, so by default
+                # we DROP the record — a forced position needs no learned
+                # eval anyway. --keep-skipped-original restores the old
+                # (buggy) fall-back behaviour.
                 n_skip += 1
+                if drop_skipped:
+                    continue
                 new_score = score_orig
 
             new_rec = rec[:33] + struct.pack("<i", int(new_score)) \
@@ -211,16 +228,23 @@ def relabel(in_path: Path, out_path: Path, scan_path: str,
             out.write(new_rec)
             n_ok += 1
 
-            if n_ok % progress_every == 0:
+            n_proc = i - start + 1
+            if n_proc % progress_every == 0:
                 elapsed = time.monotonic() - t0
-                rate = n_ok / elapsed if elapsed > 0 else 0.0
-                eta = (n_to_do - n_ok) / rate if rate > 0 else float("inf")
-                print(f"  {n_ok}/{n_to_do}  ({100*n_ok/n_to_do:.1f}%)  "
+                rate = n_proc / elapsed if elapsed > 0 else 0.0
+                eta = (n_to_do - n_proc) / rate if rate > 0 else float("inf")
+                print(f"  {n_proc}/{n_to_do}  ({100*n_proc/n_to_do:.1f}%)  "
                       f"rate={rate:.1f} pos/s  eta={eta/60:.1f} min  "
-                      f"skipped={n_skip}", flush=True)
+                      f"written={n_ok} skipped={n_skip}", flush=True)
+
+        # Backpatch the real written count (records may have been dropped).
+        out.flush()
+        out.seek(4)
+        out.write(struct.pack("<I", n_ok))
 
     scorer.close()
-    print(f"wrote {out_path} ({n_ok} records, {n_skip} skipped)", flush=True)
+    print(f"wrote {out_path} ({n_ok} records written, {n_skip} skipped"
+          f" / {n_to_do} processed)", flush=True)
     return 0
 
 
@@ -242,12 +266,19 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--newgame-every", type=int, default=50,
                     help="emit `new-game` (clear Scan TT) every N positions ; "
                          "0 = never (single game session for the full shard).")
+    ap.add_argument("--keep-skipped-original", action="store_true",
+                    help="legacy: for positions Scan can't score (forced "
+                         "single-move), keep the ORIGINAL (non-Scan) label "
+                         "instead of dropping the record. Off by default "
+                         "because keeping non-Scan labels corrupts the "
+                         "distilled dataset (~8%% of master positions).")
     args = ap.parse_args(argv)
 
     return relabel(args.in_path, args.out_path, args.scan_path,
                    args.depth, args.max_records, args.start,
                    args.timeout, args.progress_every,
-                   args.newgame_every)
+                   args.newgame_every,
+                   drop_skipped=not args.keep_skipped_original)
 
 
 if __name__ == "__main__":
