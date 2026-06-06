@@ -1,8 +1,8 @@
 {
   "job_id": "0135-pvs-validation",
-  "snapshot_at": "2026-06-06T13:37:45+00:00",
+  "snapshot_at": "2026-06-06T13:42:57+00:00",
   "started_at": "2026-06-06T13:01:47+00:00",
-  "elapsed_seconds": 2158,
+  "elapsed_seconds": 2470,
   "artefacts": [
     {
       "name": "A-depth9.log",
@@ -21,5 +21,5 @@
       "size_bytes": 506
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300518       1       35:58  0.0  0.0 bash\n 300520  300518       35:58  0.0  0.0 bash\n 300791  300520       32:48 99.9  0.1 jass\n 300792  300520       32:48  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 300518       1       41:10  0.0  0.0 bash\n 300520  300518       41:10  0.0  0.0 bash\n 300791  300520       37:59 99.9  0.1 jass\n 300792  300520       37:59  0.0  0.0 tee\n"
 }
