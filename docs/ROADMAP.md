@@ -1,5 +1,15 @@
 # jass — feuille de route post-bibliographie
 
+> ⚠️ **AVERTISSEMENT 2026-06-06 — chiffres « vs Scan d10 » INVALIDÉS.** Les
+> mentions de **0.870 / +330 vs Scan d10** (« meilleur score vs Scan jamais »,
+> « bottleneck = vitesse d'inférence, éval déjà bonne ») reposent sur une
+> mesure **fausse** : bug de buffer dans `tools/calibrate_vs_scan.py` →
+> Scan forfaitait en depth-fixe → Jass gonflé (46/54 forfaits, job 0137).
+> Le raisonnement « speed-first » (éval supérieure à prof. égale, il suffit
+> d'accélérer) est donc **non prouvé**. Bug corrigé ; vraie mesure par le
+> **job 0139**. Le **vs Scan en movetime** (north-star −685 ELO) et les
+> benchmarks internes restent valides.
+
 > Rédigé le 2026-05-24. Supersede l'ordering de `PATTERN_ROADMAP.md` à la
 > lumière de la bibliographie annotée `docs/REFERENCES_BIBLIOGRAPHIE.md`.
 > À lire en complément de `ANALYSE_VEILLE_NNUE.md` (motivation) et
