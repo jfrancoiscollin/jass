@@ -1,0 +1,25 @@
+{
+  "job_id": "0134-option-H-hybrid-gate",
+  "snapshot_at": "2026-06-06T12:05:25+00:00",
+  "started_at": "2026-06-06T12:00:09+00:00",
+  "elapsed_seconds": 316,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 3053
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "handcrafted-rewrite.log",
+      "size_bytes": 450
+    },
+    {
+      "name": "master-1500K-handcrafted.jnnw",
+      "size_bytes": 57000008
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 299510       1       05:15  0.0  0.0 bash\n 299512  299510       05:15  0.0  0.0 bash\n 299772  299512       05:05  323 17.8 python3\n 299773  299512       05:05  0.0  0.0 tee\n"
+}
