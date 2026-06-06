@@ -914,6 +914,73 @@ int run_benchmark_pattern_jass_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-pattern-vs-nnue : pattern (A) vs NNUE (B), same colour-swap
+// match. The whole point is TIME-SEARCH: with movetime_ms > 0 the ~100×
+// faster pattern eval searches much deeper than the NNUE for the same wall
+// budget. At fixed depth the pattern's speed is invisible (only per-node
+// quality counts) — so always run this with movetime to test whether the
+// pattern's depth advantage beats the NNUE's per-node quality.
+// -----------------------------------------------------------------------------
+int run_benchmark_pattern_vs_nnue_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --benchmark-pattern-vs-nnue "
+                     "<weights.pjtw> <nnue.bin> "
+                     "[depth=64] [pairs=3] [threads=1] [movetime_ms=300]\n"
+                     "  movetime_ms > 0 is the point — pattern is ~100× faster\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const char* nnue_path    = argv[3];
+    const int   depth        = (argc > 4) ? parse_int_or(argv[4], 64) : 64;
+    const int   pairs        = (argc > 5) ? parse_int_or(argv[5], 3) : 3;
+    const int   threads      = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   movetime_ms  = (argc > 7) ? parse_int_or(argv[7], 300) : 300;
+
+    std::string err;
+    auto pjn = jass::load_pattern_jass_network(weights_path, &err);
+    if (!pjn) {
+        std::cerr << "error: cannot load PJTW from " << weights_path
+                  << " : " << err << "\n";
+        return 1;
+    }
+    std::unique_ptr<INetwork> nnue = load_network(nnue_path);
+    if (!nnue) {
+        std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
+        return 1;
+    }
+
+    EngineConfig pattern_cfg;
+    pattern_cfg.max_depth   = depth;
+    pattern_cfg.threads     = threads;
+    pattern_cfg.movetime_ms = movetime_ms;
+    pattern_cfg.nnue        = pjn.get();
+
+    EngineConfig nnue_cfg;
+    nnue_cfg.max_depth   = depth;
+    nnue_cfg.threads     = threads;
+    nnue_cfg.movetime_ms = movetime_ms;
+    nnue_cfg.nnue        = nnue.get();
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: PATTERN(" << weights_path
+              << ", " << pjn->count() << " weights) vs NNUE(" << nnue_path
+              << "), depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games\n";
+
+    const TournamentResult r = run_tournament(pattern_cfg, nnue_cfg, pairs);
+    std::cout << "Result: PATTERN=" << r.a_wins
+              << " NNUE="           << r.b_wins
+              << " Draws="          << r.draws
+              << " (total "         << r.games << ")\n";
+    const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
+    std::cout << "PATTERN score rate vs NNUE: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-pattern-jass-nnue-skel : Option I — pattern hybride avec
 // NNUE comme squelette (au lieu de handcrafted).
 //   eval_final = NNUE_forward(pos) + pattern_correction(pos)
@@ -1462,6 +1529,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-nnue-hybrid")    return run_benchmark_nnue_hybrid_mode(argc, argv);
         else if (a == "--benchmark-search-params")  return run_benchmark_search_params_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
+        else if (a == "--benchmark-pattern-vs-nnue") return run_benchmark_pattern_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);

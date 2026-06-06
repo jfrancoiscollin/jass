@@ -139,13 +139,27 @@ echo "--- bench pattern-propre vs handcrafted (d6, cf 0129=0.667 / 0131=0.000) -
     2>&1 | tee "$ART/bench-pattern-vs-hc.log"
 RATE_PAT_HC=$(grep -oE 'rate[^0-9]*[0-9.]+' "$ART/bench-pattern-vs-hc.log" | grep -oE '[0-9.]+$' | tail -1)
 
+# LE test qui compte : pattern vs v15 à PROFONDEUR FIXE (vitesse invisible)
+# PUIS à TEMPS FIXE (la vitesse ~100× du pattern compte). Si le pattern
+# perd en depth mais gagne/se rapproche en movetime → la vitesse paie,
+# le pattern n'est PAS mort (intuition à valider).
+echo "--- bench pattern-propre vs v15 : DEPTH 8 (vitesse invisible) ---"
+./build-prod/jass --benchmark-pattern-vs-nnue "$PAT" "$V15" 8 3 1 0 \
+    2>&1 | tee "$ART/bench-pattern-vs-v15-d8.log"
+RATE_PAT_V15_D=$(grep -oE 'PATTERN score rate vs NNUE: [0-9.]+' "$ART/bench-pattern-vs-v15-d8.log" | grep -oE '[0-9.]+$' | head -1)
+echo "--- bench pattern-propre vs v15 : MOVETIME 0.3s (la vitesse compte) ---"
+./build-prod/jass --benchmark-pattern-vs-nnue "$PAT" "$V15" 64 5 1 300 \
+    2>&1 | tee "$ART/bench-pattern-vs-v15-mt.log"
+RATE_PAT_V15_MT=$(grep -oE 'PATTERN score rate vs NNUE: [0-9.]+' "$ART/bench-pattern-vs-v15-mt.log" | grep -oE '[0-9.]+$' | head -1)
+
 # =====================  VERDICT  ===========================================
 echo; echo "=========================================================="
 echo "        0140 DISTILLATION PROPRE — VERDICT"
 echo "=========================================================="
 echo "  labels propres : $CLEAN (exclus forcées : ${SKIP:-?})"
 echo "  illegal bench NNUE-vs-Scan (doit être 0, bridge corrigé) : $ILL_NN"
-python3 - "${RATE_NN_V15:-}" "${RATE_NN_SCAN:-}" "${RATE_PAT_HC:-}" <<'EOF'
+python3 - "${RATE_NN_V15:-}" "${RATE_NN_SCAN:-}" "${RATE_PAT_HC:-}" \
+          "${RATE_PAT_V15_D:-}" "${RATE_PAT_V15_MT:-}" <<'EOF'
 import sys, math
 def elo(r):
     try: r=float(r)
@@ -153,14 +167,30 @@ def elo(r):
     if r<=0: return "-inf"
     if r>=1: return "+inf"
     return f"{-400*math.log10(1/r-1):+.0f}"
-nn_v15, nn_scan, pat_hc = sys.argv[1:4]
-print(f"  NNUE-propre vs v15      : rate {nn_v15 or 'n/a':>6}  ELO {elo(nn_v15)}")
-print(f"  NNUE-propre vs Scan d10 : rate {nn_scan or 'n/a':>6}  ELO {elo(nn_scan)}")
-print(f"  pattern-propre vs handcr: rate {pat_hc or 'n/a':>6}  (0129=0.667, 0131=0.000)")
+nn_v15, nn_scan, pat_hc, pat_d, pat_mt = sys.argv[1:6]
+print(f"  NNUE-propre vs v15        : rate {nn_v15 or 'n/a':>6}  ELO {elo(nn_v15)}")
+print(f"  NNUE-propre vs Scan d10   : rate {nn_scan or 'n/a':>6}  ELO {elo(nn_scan)}")
+print(f"  pattern-propre vs handcr  : rate {pat_hc or 'n/a':>6}  (0129=0.667, 0131=0.000)")
+print(f"  pattern vs v15  @ DEPTH 8 : rate {pat_d or 'n/a':>6}  ELO {elo(pat_d)}  (vitesse invisible)")
+print(f"  pattern vs v15  @ MT 0.3s : rate {pat_mt or 'n/a':>6}  ELO {elo(pat_mt)}  (la vitesse compte)")
 print()
 print("  Lecture :")
 print("   - NNUE vs v15 > 0.55  → les 18% de faux labels plombaient v15 → re-distiller partout")
 print("   - NNUE vs Scan d10     → 1re mesure éval-vs-Scan à prof. égale sur labels PROPRES")
-print("   - pattern vs hc remonte vers ~0.667 → 0131 était plombé par les labels, pas l'archi")
+print("   - pattern vs hc remonte vers ~0.667 → 0131 plombé par les labels, pas l'archi")
+print("   - pattern vs v15 : si MT >> DEPTH → la vitesse ~100× du pattern PAIE")
+print("                      (creuse plus profond) → le pattern n'est PAS mort.")
+def f(x):
+    try: return float(x)
+    except: return None
+d,mt=f(pat_d),f(pat_mt)
+if d is not None and mt is not None:
+    print(f"   → gain vitesse pattern : {mt-d:+.3f} de rate entre depth-fixe et movetime")
+    if mt >= 0.50:
+        print("   → pattern >= v15 à TEMPS ÉGAL : intuition CONFIRMÉE, prioriser le pattern.")
+    elif mt > d + 0.10:
+        print("   → la vitesse aide nettement mais ne suffit pas encore : pattern à creuser.")
+    else:
+        print("   → la vitesse ne compense pas le déficit de qualité : pattern reste derrière.")
 EOF
 echo "=========================================================="
