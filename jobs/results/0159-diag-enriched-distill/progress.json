@@ -1,8 +1,8 @@
 {
   "job_id": "0159-diag-enriched-distill",
-  "snapshot_at": "2026-06-07T18:20:05+00:00",
+  "snapshot_at": "2026-06-07T18:25:15+00:00",
   "started_at": "2026-06-07T18:04:50+00:00",
-  "elapsed_seconds": 915,
+  "elapsed_seconds": 1225,
   "artefacts": [
     {
       "name": "A-train.log",
@@ -45,5 +45,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 340261       1       15:14  0.0  0.0 bash\n 340263  340261       15:14  0.0  0.0 bash\n 340886  340263       01:24 99.9  1.0 jass\n 340887  340263       01:24  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 340261       1       20:24  0.0  0.0 bash\n 340263  340261       20:24  0.0  0.0 bash\n 340886  340263       06:34 99.9  1.0 jass\n 340887  340263       06:34  0.0  0.0 tee\n"
 }
