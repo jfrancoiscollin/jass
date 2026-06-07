@@ -1,0 +1,13 @@
+loading JNNW /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/targets-it3.jnnw
+  320406 records  (0.02s)
+extracting pattern indices (men only)
+  shape (320406, 8) buckets=4251528  (0.08s)
+target=score  range=[-28984,29286]  clipped±5000cp / 100 → piece units  std=18.683
+loading skeleton /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/hc-it3.jnnw
+skeleton std=3.935  residual std=16.409  (corr score↔skel = 0.648)
+split : train=288366 val=32040
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=19.657584  iters=200  (82.28s)
+val   : mse=40.068632  sign_acc=0.0008
+quant : scale=1000  range=[-35849,31789]  nnz=72538
+wrote /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter3.pjtw  (4251528 weights, 17006128 bytes)

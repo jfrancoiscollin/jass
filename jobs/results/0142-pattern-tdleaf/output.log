@@ -1,0 +1,47 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+pattern départ : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw
+
+=== deps + build ===
+iter0 (départ) vs handcrafted : 0.55
+
+=== TD-leaf itération 1/15 ===
+  iter1 vs handcrafted : 0.55  (best=0.55 @ it0)
+
+=== TD-leaf itération 2/15 ===
+  iter2 vs handcrafted : 0.55  (best=0.55 @ it0)
+
+=== TD-leaf itération 3/15 ===
+  iter3 vs handcrafted : 0.55  (best=0.55 @ it0)
+
+=== TD-leaf itération 4/15 ===
+  iter4 vs handcrafted : 0.55  (best=0.55 @ it0)
+  plateau (4 itérations sans gain) → convergence, arrêt
+
+convergé : meilleur pattern = iter0 (vs handcrafted 0.55)
+
+=== bench final : pattern(TD-leaf) convergé vs v15 (depth + movetime) ===
+Benchmark: PATTERN(/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 90 games
+Result: PATTERN=3 NNUE=85 Draws=2 (total 90)
+PATTERN score rate vs NNUE: 0.0444444
+Benchmark: PATTERN(/root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter0.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 8, threads 1, movetime_ms 0, 90 games
+Result: PATTERN=0 NNUE=90 Draws=0 (total 90)
+PATTERN score rate vs NNUE: 0
+Benchmark: PATTERN(/root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter0.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 90 games
+Result: PATTERN=12 NNUE=77 Draws=1 (total 90)
+PATTERN score rate vs NNUE: 0.138889
+  ✓ movetime(0.138889) >= depth(0) : la vitesse paie (pas de souci time-mgmt).
+
+==========================================================
+        0142 TD-LEAF PATTERN — VERDICT
+==========================================================
+  vs handcrafted par itération :
+    iter0 (départ) : 0.55
+    iter1          : 0.55
+    iter2          : 0.55
+    iter3          : 0.55
+    iter4          : 0.55
+
+  pattern vs v15 @ movetime : départ=0.0444444  TD-leaf=0.138889
+
+  → vs v15 movetime : 0.044 → 0.139 (+0.094)
+==========================================================
