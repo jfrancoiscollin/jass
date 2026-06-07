@@ -1,8 +1,8 @@
 {
   "job_id": "0161-redistill-on-4p5M",
-  "snapshot_at": "2026-06-07T21:08:26+00:00",
+  "snapshot_at": "2026-06-07T21:13:27+00:00",
   "started_at": "2026-06-07T20:43:24+00:00",
-  "elapsed_seconds": 1502,
+  "elapsed_seconds": 1803,
   "artefacts": [
     {
       "name": "A-train.log",
@@ -33,5 +33,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 345230       1       25:01  0.0  0.0 bash\n 345232  345230       25:01  0.0  0.0 bash\n 346631  345232       06:18  206 83.5 python3\n 346632  345232       06:18  0.0  0.0 tee\n 346633  345232       06:18  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 345230       1       30:03  0.0  0.0 bash\n 345232  345230       30:03  0.0  0.0 bash\n 346631  345232       11:19  210 85.7 python3\n 346632  345232       11:19  0.0  0.0 tee\n 346633  345232       11:19  0.0  0.0 grep\n"
 }
