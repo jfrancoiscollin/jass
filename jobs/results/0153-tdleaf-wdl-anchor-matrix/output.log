@@ -1,0 +1,29 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+prior/ancre = config A : /root/jass/jobs/results/0152-standalone-material-anchor/artefacts.src/A.pjtw
+SPEC1B='use_conthist=1'  anchor_l2(anti-oubli)=0.2  material-anchor=1.0
+
+=== build prod + tests ===
+TESTS PASS
+
+=== gen self-play (config A, depth 8, ~800 parties × 8 shards) ===
+merged 106711 leaf records → /root/jass/jobs/results/0153-tdleaf-wdl-anchor-matrix/artefacts.src/leaves.jnnw
+cibles TD-leaf + WDL prêtes ; features dumpées une fois.
+
+########## MATRICE 2×2 (vs hc, gen commune config A) ##########
+  rappel : config A (prior) vs hc = 0.444
+  td-noA         vs hc = 0.0833333 (mse=45.531242)
+  td-A           vs hc = 0.361111  (mse=55.771323)
+  wdl-noA        vs hc = 0         (mse=921.984107)
+  wdl-A          vs hc = 0.333333  (mse=1214.071408)
+
+==========================================================
+        0153 MATRICE TD-leaf/WDL × anti-oubli — VERDICT
+==========================================================
+  config A (réf)   vs hc = 0.444
+  td-noA  vs hc = 0.0833333
+  td-A  vs hc = 0.361111
+  wdl-noA  vs hc = 0
+  wdl-A  vs hc = 0.333333
+  → cellule ≥0.444 = recette du cycle d'apprentissage.
+  → toutes <0.444 = méthode non en cause → patterns plus riches (Levier 3).
+==========================================================
