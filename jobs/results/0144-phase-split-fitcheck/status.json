@@ -1,7 +1,9 @@
 {
   "job_id": "0144-phase-split-fitcheck",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T05:09:56+00:00",
+  "ended_at": "2026-06-07T05:15:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 320150
+  "artefacts_server_path": "/root/jass/jobs/results/0144-phase-split-fitcheck/artefacts.src"
 }
