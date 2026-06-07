@@ -388,6 +388,36 @@ survivant au movetime. Toujours loin de v15 (mt 0.083, ~−350 ELO) mais montée
 réelle dans la classe linéaire. Prochaines marches : ablation (0156) → élaguer/
 enrichir ciblé → extras structurels (0155) → re-cycler.
 
+### Axe QUALITÉ — le vrai goulot vs v15 (acté 2026-06-07, cf 0157)
+
+0157 a renversé une hypothèse : **on n'est PAS speed-bound**. En recherche
+réelle, l'éval 32-patterns (~1549 knps) est **plus rapide** que le NNUE v15
+(~1280 knps) et cherche **2,5 plies plus profond** (16.8 vs 14.2) — et pourtant
+on **perd** vs v15. Donc :
+
+> **Le déficit vs v15 = QUALITÉ d'éval par nœud, pas vitesse/profondeur.** On
+> voit plus loin que v15, on évalue moins bien. Le levier est la qualité.
+
+Accumulateur pattern (0158) : construit quand même (« pour de bon »), pour
+**relever le plafond de richesse abordable** — l'éval devient cheap, donc on
+peut empiler features/patterns sans payer la vitesse. C'est l'**activateur** de
+l'axe qualité, pas une fin.
+
+**Leviers qualité, ordonnés** (chacun benché vs hc + vs v15, en movetime) :
+1. **Géométrie diag-enrichie** (0159) : 0156 → diagonales = orientation la plus
+   contributive. L'accumulateur rend abordable d'**ajouter de la densité
+   diagonale** (les deux sens — l'asymétrie D≫A de 0156 est probablement du
+   bruit sur 36 parties, board symétrique). Re-distiller, mesurer.
+2. **Extras structurels** (0155) : mobilité des rois (séparée), pions
+   percée/bloqués, intégrité rangée de fond, tempo + **king-aware dense**
+   (ratio rois/pions, rois actifs/piégés). Additif, cheap.
+3. **Meilleure distillation / plus de données** : moins d'écrêtage, fit étagé,
+   plus de positions (sparsité ×N avec les patterns riches → besoin de data).
+4. **Capacité (FM)** : seulement si la classe additive sature (cf supra).
+
+Synergie : accumulateur (vitesse) **débloque** géométrie+extras (richesse) →
+qualité. La sparsité (plus de buckets) devient la contrainte, pas la vitesse.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
