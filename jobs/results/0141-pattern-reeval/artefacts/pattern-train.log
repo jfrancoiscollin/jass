@@ -1,0 +1,13 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.66s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=18.381475  iters=200  (90.70s)
+val   : mse=38.002802  sign_acc=0.0016
+quant : scale=1000  range=[-13502,13329]  nnz=162048
+wrote /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw  (4251528 weights, 17006128 bytes)

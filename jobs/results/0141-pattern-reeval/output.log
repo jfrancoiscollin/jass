@@ -1,0 +1,134 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+sample : /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-sample-1500K.jnnw
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== Phase 0 : deps ===
+
+=== Phase 1 : build prod ===
+
+=== Phase 2 : relabel Scan d10 PROPRE (1.5M, 8 shards) ===
+  relabel wall : 983s
+merged 1420193 CLEAN records → /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  positions exclues (Scan non-scorable) : 333354
+
+=== Phase 3 : handcrafted aligné ===
+
+=== Phase 4 : train pattern hybride sur labels PROPRES ===
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.66s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=18.381475  iters=200  (90.70s)
+val   : mse=38.002802  sign_acc=0.0016
+quant : scale=1000  range=[-13502,13329]  nnz=162048
+wrote /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw  (4251528 weights, 17006128 bytes)
+
+=== Phase 5 : bench pattern propre ===
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 54 games (9 openings × 3 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=54 Draws=0 (total 54)
+PATTERN_JASS score rate: 0 (0 / 54)
+GATE 2 FAIL (rate < 0.55)
+Benchmark: PATTERN(/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 8, threads 1, movetime_ms 0, 90 games
+Result: PATTERN=0 NNUE=90 Draws=0 (total 90)
+PATTERN score rate vs NNUE: 0
+Benchmark: PATTERN(/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 90 games
+Result: PATTERN=9 NNUE=80 Draws=1 (total 90)
+PATTERN score rate vs NNUE: 0.105556
+
+=== Phase 6 : SPSA-tune les constantes POUR le pattern (depth 8) ===
+SPSA: 15 params, 60 iters, 72 games/iter, net=/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, depth=8, movetime_ms=0, use_pvs=1
+  iter   1: θ+ rate=0.611  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   2: θ+ rate=0.444  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   3: θ+ rate=0.611  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   4: θ+ rate=0.417  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   5: θ+ rate=0.528  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   6: θ+ rate=0.333  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   7: θ+ rate=0.444  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   8: θ+ rate=0.444  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter   9: θ+ rate=0.389  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  10: θ+ rate=0.500  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  11: θ+ rate=0.472  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  12: θ+ rate=0.417  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  13: θ+ rate=0.667  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  14: θ+ rate=0.639  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  15: θ+ rate=0.278  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=8,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  16: θ+ rate=0.333  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  17: θ+ rate=0.556  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  18: θ+ rate=0.639  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  19: θ+ rate=0.722  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  20: θ+ rate=0.500  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  21: θ+ rate=0.361  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  22: θ+ rate=0.500  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  23: θ+ rate=0.667  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  24: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  25: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  26: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  27: θ+ rate=0.278  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  28: θ+ rate=0.306  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  29: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  30: θ+ rate=0.667  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  31: θ+ rate=0.611  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  32: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  33: θ+ rate=0.611  spec=rfp_margin=100,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  34: θ+ rate=0.417  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  35: θ+ rate=0.750  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  36: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  37: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  38: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  39: θ+ rate=0.528  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  40: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  41: θ+ rate=0.611  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  42: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  43: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  44: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  45: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  46: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  47: θ+ rate=0.417  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  48: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  49: θ+ rate=0.583  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  50: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  51: θ+ rate=0.500  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  52: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  53: θ+ rate=0.611  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  54: θ+ rate=0.472  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  55: θ+ rate=0.528  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  56: θ+ rate=0.667  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=5,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  57: θ+ rate=0.528  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=5,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  58: θ+ rate=0.611  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  59: θ+ rate=0.444  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+  iter  60: θ+ rate=0.556  spec=rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0
+
+Best spec (validate against default before shipping):
+  rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0,use_pvs=1
+written to /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/spsa-best.json
+best spec : rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0,use_pvs=1
+
+=== Phase 7 : re-bench avec constantes tunées ===
+Benchmark: search-params A=[rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0,use_pvs=1] vs B=[use_pvs=1] on /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=36 B=43 Draws=11 (total 90)
+A score rate: 0.461111
+Benchmark: PATTERN(/root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 90 games
+Result: PATTERN=3 NNUE=86 Draws=1 (total 90)
+PATTERN score rate vs NNUE: 0.0388889
+
+==========================================================
+        0141 RÉÉVALUATION PATTERN — VERDICT
+==========================================================
+  pattern propre : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw (exclus forcées : 333354)
+  best spec : rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0,use_pvs=1
+  (a) pattern vs handcrafted d6      :   0.55   (0129=0.667, 0131=0.000)
+  (b) pattern vs v15  @ DEPTH 8      :      0  ELO -inf  (vitesse invisible)
+  (b) pattern vs v15  @ MOVETIME     : 0.105556  ELO -371  (vitesse compte)
+  (c) tuned vs default (mt)          : 0.461111  ELO -27
+  (c) pattern(TUNÉ) vs v15 @ MT      : 0.0388889  ELO -557
+
+  (a) labels : 0131 était plombé par les labels, pas l'archi
+  (b) vitesse : vs v15 0.000→0.106 (depth→movetime), gain +0.106
+  (c) search : le search n'était pas le facteur limitant
+  → BILAN : pattern(propre+tuné) vs v15 à temps égal = 0.039 → encore derrière, mais sur quel facteur ?
+==========================================================

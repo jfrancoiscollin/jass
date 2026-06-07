@@ -1,0 +1,4 @@
+rewriting 1420193 records (handcrafted): /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw → /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+  500000 / 1420193 records
+  1000000 / 1420193 records
+wrote 1420193 records (38 B each) to /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw

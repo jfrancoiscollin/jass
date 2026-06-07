@@ -1,7 +1,0 @@
-{
-  "job_id": "0141-pattern-reeval",
-  "script": "jobs/queue/0141-pattern-reeval.sh",
-  "pid": 311452,
-  "started_at": "2026-06-06T23:20:04+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

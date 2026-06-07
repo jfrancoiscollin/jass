@@ -1,0 +1,3 @@
+Benchmark: search-params A=[rfp_margin=101,nmp_r_base=2,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=0,use_pvs=1] vs B=[use_pvs=1] on /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/pattern_clean.pjtw, depth 64, threads 1, movetime_ms 300, 90 games
+Result: A=36 B=43 Draws=11 (total 90)
+A score rate: 0.461111
