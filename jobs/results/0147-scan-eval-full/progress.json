@@ -1,8 +1,8 @@
 {
   "job_id": "0147-scan-eval-full",
-  "snapshot_at": "2026-06-07T07:18:05+00:00",
+  "snapshot_at": "2026-06-07T07:23:43+00:00",
   "started_at": "2026-06-07T07:08:07+00:00",
-  "elapsed_seconds": 598,
+  "elapsed_seconds": 936,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 323684       1       09:57  0.0  0.0 bash\n 323686  323684       09:57  0.0  0.0 bash\n 324110  323686       06:25 99.9  0.2 jass\n 324111  323686       06:25  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 323684       1       15:35  0.0  0.0 bash\n 323686  323684       15:35  0.0  0.0 bash\n 324110  323686       12:03 99.9  0.2 jass\n 324111  323686       12:03  0.0  0.0 tee\n"
 }
