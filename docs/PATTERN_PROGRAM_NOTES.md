@@ -204,6 +204,39 @@ Job **0147** : entraîne la v3 complète sur les labels propres 1.4M (0141) +
 bench vs v15 (depth + movetime) + SPSA. → étape « ajouter les briques
 manquantes (brique A, §A) » de la roadmap ci-dessous, faite.
 
+## Résultat 0147 + apprentissage du mode standalone (acté 2026-06-07)
+
+**Fait dur** : le prior v3 **standalone** (distillation Scan, une passe) perd
+**0/90 vs v15** (depth 8, movetime, tuné). Fit ~29 % de variance ; un v3 jouet
+perd aussi vs handcrafted → hypothèse : **standalone PIRE que le baseline**,
+probable **sous-évaluation du matériel** (homme/roi mal appris depuis des
+scores Scan écrêtés ±5000cp). Diagnostic en cours : **0151** (triangle v3/hc/
+v15 + sonde des poids matériel). 0149/0150 en pause le temps de trancher.
+
+**Décision de cadrage** : un éval **standalone** ne peut pas être bon après
+*une seule* régression naïve — il lui faut un **programme d'apprentissage**,
+quitte à itérer plusieurs cycles avant d'avoir une bonne base, *puis* une
+distillation **mieux adaptée**. Deux branches selon 0151 :
+
+- **Si `v3 < hc` par sous-éval matériel (réparable en training)** → garder le
+  standalone mais lui donner sa boucle d'apprentissage :
+  1. **distillation « plus adaptée »** : moins d'écrêtage (le clip ±5000cp
+     compresse le matériel), **ancrage/prior matériel** (homme≈100cp,
+     roi≈300cp) ou **fit étagé** (matériel d'abord, gelé, puis positionnel) ;
+     éventuellement blend WDL+score.
+  2. **bootstrap self-play (TD-leaf)** itéré : le self-play enseigne « perdre
+     une pièce perd la partie » → la notion de matériel/positionnel émerge des
+     résultats, sur plusieurs cycles.
+  3. **re-distiller** une fois la base décente (cible mieux adaptée).
+  Itérer 1↔2↔3 jusqu'à une base standalone compétente.
+- **Si l'écart est plus profond (résiduel non-représentable)** → repli
+  **HYBRIDE** (`eval = squelette handcrafted + correction structurée`), comme
+  l'approche pattern d'origine : base matériel solide + correction apprise.
+
+> NB : c'est l'analogue des « 15 ans » de Scan — son éval standalone est le
+> fruit d'itérations, pas d'une régression unique. Notre standalone aura sa
+> propre (mais bien plus courte) boucle.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
