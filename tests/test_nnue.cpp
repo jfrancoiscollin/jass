@@ -125,7 +125,15 @@ bool write_mlp_file(
 }
 
 std::string make_tmp_path(const char* tmpl_in) {
-    std::string buf{tmpl_in};
+    // Honour $TMPDIR (the runner's /tmp is too small). `tmpl_in` historically
+    // hard-coded "/tmp/<name>_XXXXXX"; redirect the directory part to TMPDIR
+    // while keeping the descriptive stem.
+    std::string in{tmpl_in};
+    const std::size_t slash = in.find_last_of('/');
+    std::string stem = (slash == std::string::npos) ? in : in.substr(slash + 1);
+    const std::size_t suf = stem.rfind("_XXXXXX");
+    if (suf != std::string::npos) stem.erase(suf);
+    std::string buf = jass_tmp_template(stem.c_str());
     int fd = ::mkstemp(buf.data());
     JASS_CHECK(fd >= 0);
     if (fd >= 0) ::close(fd);

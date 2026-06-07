@@ -124,10 +124,11 @@ void test_v3_file_roundtrip() {
     const std::uint32_t n_pat = pattern_jass::TOTAL_BUCKETS;
     const std::uint32_t n_ext = static_cast<std::uint32_t>(NUM_EXTRAS);
 
-    char tmpl[] = "/tmp/jass_scan_v3_XXXXXX";
-    const int fd = mkstemp(tmpl);
+    std::string tmpl = jass_tmp_template("jass_scan_v3");
+    const int fd = mkstemp(tmpl.data());
     JASS_CHECK(fd != -1);
-    if (fd != -1) close(fd);
+    if (fd == -1) return;   // no writable tmp → skip rather than write garbage
+    close(fd);
     const std::string path = tmpl;
 
     // Write a v3 file with a couple of distinctive non-zero weights.
@@ -175,10 +176,11 @@ void test_v3_file_roundtrip() {
 
 void test_v3_loader_rejects_v1() {
     // A 16-byte v1-style header must NOT be parsed as v3.
-    char tmpl[] = "/tmp/jass_scan_v1_XXXXXX";
-    const int fd = mkstemp(tmpl);
+    std::string tmpl = jass_tmp_template("jass_scan_v1");
+    const int fd = mkstemp(tmpl.data());
     JASS_CHECK(fd != -1);
-    if (fd != -1) close(fd);
+    if (fd == -1) return;
+    close(fd);
     const std::string path = tmpl;
     {
         std::ofstream f(path, std::ios::binary);
