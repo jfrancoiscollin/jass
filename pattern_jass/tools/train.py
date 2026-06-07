@@ -82,6 +82,20 @@ def piece_count(ds) -> np.ndarray:
 
 
 
+def king_onehot_block(black_kings: np.ndarray,
+                      white_kings: np.ndarray) -> sp.csr_matrix:
+    """100 extra linear features (king PST) in the fixed black-POV
+    orientation matching the men-pattern features : black_kings one-hot on
+    squares 0..49, white_kings on 50..99. Lets the fit-check see whether
+    explicit KING-position info (which the men-only patterns are blind to)
+    helps fit the Scan−handcrafted residual."""
+    n = len(black_kings)
+    sq = np.arange(50, dtype=np.uint64)
+    bk = ((black_kings[:, None] >> sq) & 1).astype(np.float64)   # (n, 50)
+    wk = ((white_kings[:, None] >> sq) & 1).astype(np.float64)
+    return sp.csr_matrix(np.hstack([bk, wk]))                    # (n, 100)
+
+
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int):
     XT = X.T.tocsr()
@@ -136,6 +150,11 @@ def main():
                     help='train 2 weight banks (mg/eg) interpolated by piece '
                          'count → PJTW v2. Rend le pattern game-stage aware '
                          '(comme Scan), lève le plafond mono-phase.')
+    ap.add_argument('--king-features', action='store_true',
+                    help='FIT-CHECK only : append 100 king-PST one-hot features '
+                         '(the men-only patterns are blind to kings). The '
+                         'output .pjtw is then NON-standard (not playable) — '
+                         'use only to read val_mse and test if king info helps.')
     args = ap.parse_args()
 
     print(f'loading JNNW {args.data}')
@@ -207,6 +226,13 @@ def main():
         X_tr  = build_sparse_X(cols[tr_idx],  patterns.TOTAL_BUCKETS)
         X_val = build_sparse_X(cols[val_idx], patterns.TOTAL_BUCKETS)
     y_tr, y_val = wdl_black[tr_idx], wdl_black[val_idx]
+
+    if args.king_features:
+        kb = king_onehot_block(ds.black_kings, ds.white_kings)
+        X_tr  = sp.hstack([X_tr,  kb[tr_idx]],  format='csr')
+        X_val = sp.hstack([X_val, kb[val_idx]], format='csr')
+        print(f'king-features : +{kb.shape[1]} king-PST features '
+              f'(men-patterns + kings ; fit-check, non-jouable)')
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
     t0 = time.time()
