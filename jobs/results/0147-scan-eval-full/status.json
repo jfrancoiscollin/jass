@@ -1,7 +1,9 @@
 {
   "job_id": "0147-scan-eval-full",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 6,
   "started_at": "2026-06-07T06:16:19+00:00",
+  "ended_at": "2026-06-07T06:21:29+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 321822
+  "artefacts_server_path": "/root/jass/jobs/results/0147-scan-eval-full/artefacts.src"
 }
