@@ -1,7 +1,0 @@
-{
-  "job_id": "0145-king-features-fitcheck",
-  "script": "jobs/queue/0145-king-features-fitcheck.sh",
-  "pid": 320639,
-  "started_at": "2026-06-07T05:35:25+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
