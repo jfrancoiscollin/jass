@@ -7,9 +7,23 @@
 #pragma once
 
 #include <cstdio>
+#include <cstdlib>
+#include <string>
 
 extern int g_failures;
 extern int g_assertions;
+
+// Build an mkstemp template under $TMPDIR (falling back to /tmp). The CI
+// runner has a tiny /tmp — jobs export TMPDIR to a roomy disk path, so any
+// test that writes temp files MUST honour it or mkstemp fails (and a cascade
+// of file-backed tests segfault). `name` is a short, descriptive stem.
+inline std::string jass_tmp_template(const char* name) {
+    const char* td = std::getenv("TMPDIR");
+    std::string dir = (td != nullptr && td[0] != '\0') ? std::string(td)
+                                                        : std::string("/tmp");
+    if (!dir.empty() && dir.back() == '/') dir.pop_back();
+    return dir + "/" + name + "_XXXXXX";
+}
 
 #define JASS_CHECK(cond)                                                       \
     do {                                                                       \

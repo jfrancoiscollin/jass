@@ -53,6 +53,15 @@ TUNABLE = {
     "probcut_min_depth": (0,  0,   8,   1, True),
     "probcut_margin":    (150, 80, 300, 40, True),
     "ext_promotion":     (0,  0,   1,   1, True),
+    # 1b — raffinements search incrémentaux. Gated, neutres par défaut ; le
+    # tuner décide ON/OFF + le seuil de profondeur POUR l'éval tunée (0 = off).
+    # Les sous-knobs (iid_reduction, multicut_*) restent à leurs défauts
+    # raisonnables, ajustables manuellement par spec si un run le motive —
+    # les inclure ici diluerait le SPSA quand la feature est off.
+    "use_improving":      (0,  0,   1,   1, True),
+    "use_conthist":       (0,  0,   1,   1, True),
+    "iid_min_depth":      (0,  0,   8,   1, True),
+    "multicut_min_depth": (0,  0,  10,   1, True),
 }
 
 
