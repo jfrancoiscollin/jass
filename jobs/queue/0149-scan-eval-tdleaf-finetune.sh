@@ -6,16 +6,20 @@
 #   - budget : MIXTE → itérations courtes (depth) puis profondes (movetime)
 #
 # Boucle par bras (modèle₀ = prior 0147) :
-#   a. gen-tdleaf  modèleₖ  (self-play SEARCH-AWARE : briques 1b activées)
+#   a. gen-tdleaf  modèleₖ  (self-play SEARCH-AWARE, SHARDÉ sur NCPU cœurs)
 #   b. td_leaf_targets.py  (λ-return forward-view)
 #   c. dump-eval-features  (les 106 extras des positions FEUILLES)
 #   d. train.py --scan-eval [--anchor-weights prior --anchor-l2]  → modèleₖ₊₁
 # Puis bench de chaque bras final vs v15 (depth+movetime) et vs le prior.
 #
-# NB : SPEC1B = briques 1b à activer en génération. À régler sur les
-# gagnantes de 0148 ; défaut conservateur conthist+iid en attendant.
+# NB : --gen-tdleaf est mono-thread → on lance NCPU shards (seeds disjoints)
+# en parallèle et on fusionne (leaves JNNW + index .games). Volumes calibrés
+# pour ~2-4 h total (pas les ~80 h du scoping naïf mono-thread).
 #
-# expected_duration: ~4-7 h (2 bras × 5 itérations × self-play+fit).
+# SPEC1B = briques 1b à activer en génération. À régler sur les gagnantes de
+# 0148 ; défaut conservateur conthist+iid en attendant.
+#
+# expected_duration: ~2-4 h.
 set -uo pipefail
 cd /root/jass
 OUT_BASE="/root/jass/jobs/results/0149-scan-eval-tdleaf-finetune"
@@ -45,15 +49,44 @@ cmake --build build-prod -j"$NCPU" --target jass jass_tests > "$ART/build.log" 2
 
 python3 -c "import numpy, scipy" 2>/dev/null || pip3 install --break-system-packages --no-cache-dir --quiet numpy scipy
 
+# Sharded self-play : NCPU instances mono-thread, seeds disjoints, fusion.
+# $1 in_model $2 depth $3 movetime $4 n_games_total $5 seedbase $6 out_leaves
+gen_sharded () {
+    local in="$1" depth="$2" mt="$3" ntot="$4" seedbase="$5" out="$6"
+    local per=$(( (ntot + NCPU - 1) / NCPU )); local pids=(); local shards=()
+    for sh in $(seq 0 $((NCPU-1))); do
+        local lv="${out}.shard${sh}.jnnw"; shards+=("$lv")
+        ./build-prod/jass --gen-tdleaf "$in" "$per" "$depth" "$lv" "$MAXPLY" \
+            "$(( seedbase + sh ))" "$mt" "$SPEC1B" > "${out}.shard${sh}.log" 2>&1 & pids+=($!)
+    done
+    for p in "${pids[@]}"; do wait "$p" || echo "  (shard $p rc!=0)"; done
+    # merge leaves (JNNW) + .games index
+    python3 - "$out" "${shards[@]}" <<'PYEOF'
+import struct, sys
+from pathlib import Path
+out=sys.argv[1]; shards=sys.argv[2:]; total=0
+with open(out,'wb') as o, open(out+'.games','w') as g:
+    o.write(b'JNNW'); o.write(struct.pack('<I',0))
+    for s in shards:
+        r=Path(s).read_bytes(); n=struct.unpack_from('<I',r,4)[0]
+        o.write(r[8:8+n*38]); total+=n
+        gp=Path(s+'.games')
+        if gp.exists(): g.write(gp.read_text())
+        Path(s).unlink(missing_ok=True); gp.unlink(missing_ok=True)
+    o.seek(4); o.write(struct.pack('<I',total))
+print(f'merged {total} leaf records → {out}')
+PYEOF
+    rm -f "${out}".shard*.log
+}
+
 # One TD-leaf iteration : $1 in_model $2 out_model $3 arm $4 depth $5 movetime
-#                         $6 n_games $7 seed
+#                         $6 n_games $7 seedbase
 tdleaf_iter () {
-    local in="$1" out="$2" arm="$3" depth="$4" mt="$5" ngames="$6" seed="$7"
-    local tag="${arm}-s${seed}"
+    local in="$1" out="$2" arm="$3" depth="$4" mt="$5" ngames="$6" seedbase="$7"
+    local tag="${arm}-s${seedbase}"
     local lv="$ART/${tag}-leaves.jnnw"
-    echo "  [$tag] gen-tdleaf depth=$depth mt=$mt games=$ngames"
-    ./build-prod/jass --gen-tdleaf "$in" "$ngames" "$depth" "$lv" "$MAXPLY" "$seed" "$mt" "$SPEC1B" \
-        > "$ART/${tag}-gen.log" 2>&1
+    echo "  [$tag] gen-tdleaf depth=$depth mt=$mt games=$ngames (×$NCPU shards)"
+    gen_sharded "$in" "$depth" "$mt" "$ngames" "$seedbase" "$lv"
     python3 tools/td_leaf_targets.py --leaves "$lv" --games "$lv.games" \
         --out "$ART/${tag}-targets.jnnw" --lam "$LAM" > "$ART/${tag}-td.log" 2>&1
     ./build-prod/jass --dump-eval-features "$ART/${tag}-targets.jnnw" \
@@ -64,18 +97,17 @@ tdleaf_iter () {
         --eval-features-file "$ART/${tag}-targets.feat" --target score --score-clip 5000 \
         --l2 1e-5 --max-iter 150 --scale 1000 $anchor_args --out "$out" \
         > "$ART/${tag}-train.log" 2>&1
-    # cleanup the big intermediate leaf/target files to save disk
     rm -f "$lv" "$lv.games" "$ART/${tag}-targets.jnnw" "$ART/${tag}-targets.feat"
     grep -E "val   :|wrote" "$ART/${tag}-train.log" | sed 's/^/    /'
 }
 
 rate_se () { grep -oE 'SCAN_EVAL score rate vs NNUE: [0-9.]+' "$1" | grep -oE '[0-9.]+$' | head -1; }
-rate_sp () { grep -oE 'A score rate: [0-9.]+' "$1" | grep -oE '[0-9.]+$' | head -1; }
 
-# Budget schedule per iteration : 1-2 = depth (vite), 3-5 = movetime (profond).
+# Budget schedule : itérations 1-2 = depth (vite), 3-5 = movetime (profond).
+# Volumes calibrés pour le sharding NCPU (mono-thread × NCPU).
 ITERS=5
-budget_for () { # $1=iter → echoes "depth movetime ngames"
-    if [ "$1" -le 2 ]; then echo "8 0 4000"; else echo "64 250 2000"; fi
+budget_for () { # $1=iter → "depth movetime ngames"
+    if [ "$1" -le 2 ]; then echo "8 0 800"; else echo "64 200 320"; fi
 }
 
 run_arm () {  # $1 = arm name (pure|anchored)
@@ -84,8 +116,8 @@ run_arm () {  # $1 = arm name (pure|anchored)
     for it in $(seq 1 $ITERS); do
         read -r d mt ng <<<"$(budget_for "$it")"
         local nxt="$ART/${arm}-v3-it${it}.pjtw"
-        echo "--- $arm itération $it (depth=$d movetime=$mt) ---"
-        tdleaf_iter "$model" "$nxt" "$arm" "$d" "$mt" "$ng" "$((100 + it))"
+        echo "--- $arm itération $it (depth=$d movetime=$mt games=$ng) ---"
+        tdleaf_iter "$model" "$nxt" "$arm" "$d" "$mt" "$ng" "$(( 1000 + it*10 ))"
         [ -f "$nxt" ] || { echo "  (échec it$it, on garde le précédent)"; break; }
         model="$nxt"
     done
@@ -110,7 +142,7 @@ echo; echo "=========================================================="
 echo "        0149 TD-LEAF FINE-TUNE — VERDICT (pur vs ancré)"
 echo "=========================================================="
 python3 - "$ART" <<'EOF'
-import sys, math, re, glob, os
+import sys, math, re
 art=sys.argv[1]
 def rate(p):
     try:
