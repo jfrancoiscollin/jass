@@ -1,7 +1,9 @@
 {
   "job_id": "0160-gen-more-data-3M",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T19:52:52+00:00",
+  "ended_at": "2026-06-07T20:43:20+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 343115
+  "artefacts_server_path": "/root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src"
 }

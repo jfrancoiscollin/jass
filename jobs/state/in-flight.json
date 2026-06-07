@@ -1,7 +1,0 @@
-{
-  "job_id": "0160-gen-more-data-3M",
-  "script": "jobs/queue/0160-gen-more-data-3M.sh",
-  "pid": 343115,
-  "started_at": "2026-06-07T19:52:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

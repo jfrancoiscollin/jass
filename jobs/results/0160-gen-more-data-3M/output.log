@@ -1,0 +1,23 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+existant (1.4M) : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+
+=== build prod ===
+
+=== 1) gen self-play 3000000 positions (8 shards × 375000) ===
+
+=== 2) convert JNNT(37o)→JNNW(38o) + merge shards ===
+merged+converted 3000000 self-play records → /root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src/selfplay-3M.jnnw
+
+=== 3) relabel Scan-d10 (sharded) ===
+  relabel wall : 1864s
+  skipped (Scan KO) : 44672788
+
+=== 4) merge relabel-shards + le 1.4M existant → ~4.5M ===
+merged 4120570 records → /root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src/master-clean-scan-d10-4p5M.jnnw
+
+==========================================================
+        0160 PLUS DE DONNÉES — RÉSULTAT
+  dataset final : /root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src/master-clean-scan-d10-4p5M.jnnw
+  records : 4120570  (existant 1.4M + ~3M self-play relabelisés Scan-d10)
+  → re-distiller v5 (40 patterns) dessus (0161) : la sparsité se résorbe ?
+==========================================================
