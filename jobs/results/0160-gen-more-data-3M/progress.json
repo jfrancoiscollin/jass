@@ -1,8 +1,8 @@
 {
   "job_id": "0160-gen-more-data-3M",
-  "snapshot_at": "2026-06-07T19:58:02+00:00",
+  "snapshot_at": "2026-06-07T20:03:03+00:00",
   "started_at": "2026-06-07T19:52:52+00:00",
-  "elapsed_seconds": 310,
+  "elapsed_seconds": 611,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,68 +14,68 @@
     },
     {
       "name": "gen-0.jnnt",
-      "size_bytes": 4386279
+      "size_bytes": 8706843
     },
     {
       "name": "gen-0.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-1.jnnt",
-      "size_bytes": 4378065
+      "size_bytes": 8641131
     },
     {
       "name": "gen-1.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-2.jnnt",
-      "size_bytes": 4345209
+      "size_bytes": 8780769
     },
     {
       "name": "gen-2.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-3.jnnt",
-      "size_bytes": 4254855
+      "size_bytes": 8641131
     },
     {
       "name": "gen-3.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-4.jnnt",
-      "size_bytes": 4287711
+      "size_bytes": 8657559
     },
     {
       "name": "gen-4.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-5.jnnt",
-      "size_bytes": 4287711
+      "size_bytes": 8715057
     },
     {
       "name": "gen-5.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-6.jnnt",
-      "size_bytes": 4279497
+      "size_bytes": 8698629
     },
     {
       "name": "gen-6.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     },
     {
       "name": "gen-7.jnnt",
-      "size_bytes": 4238427
+      "size_bytes": 8632917
     },
     {
       "name": "gen-7.log",
-      "size_bytes": 4096
+      "size_bytes": 8192
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 343115       1       05:10  0.0  0.0 bash\n 343117  343115       05:10  0.0  0.0 bash\n 343383  343117       05:01 99.9  0.0 jass\n 343384  343117       05:01 99.9  0.0 jass\n 343385  343117       05:01 99.9  0.1 jass\n 343386  343117       05:01 99.9  0.1 jass\n 343387  343117       05:01 99.9  0.1 jass\n 343388  343117       05:01 99.9  0.1 jass\n 343389  343117       05:01 99.9  0.1 jass\n 343390  343117       05:01 99.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 343115       1       10:11  0.0  0.0 bash\n 343117  343115       10:11  0.0  0.0 bash\n 343383  343117       10:02 99.9  0.1 jass\n 343384  343117       10:02 99.9  0.1 jass\n 343385  343117       10:02 99.9  0.1 jass\n 343386  343117       10:02 99.9  0.1 jass\n 343387  343117       10:02 99.8  0.1 jass\n 343388  343117       10:02 99.9  0.1 jass\n 343389  343117       10:02 99.8  0.1 jass\n 343390  343117       10:02 99.9  0.1 jass\n"
 }
