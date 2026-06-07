@@ -1,7 +1,9 @@
 {
   "job_id": "0149-scan-eval-tdleaf-finetune",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T14:48:53+00:00",
+  "ended_at": "2026-06-07T15:25:03+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 334814
+  "artefacts_server_path": "/root/jass/jobs/results/0149-scan-eval-tdleaf-finetune/artefacts.src"
 }
