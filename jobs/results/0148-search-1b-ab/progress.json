@@ -1,8 +1,8 @@
 {
   "job_id": "0148-search-1b-ab",
-  "snapshot_at": "2026-06-07T09:03:48+00:00",
+  "snapshot_at": "2026-06-07T09:09:05+00:00",
   "started_at": "2026-06-07T08:48:10+00:00",
-  "elapsed_seconds": 938,
+  "elapsed_seconds": 1255,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 322
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 325955       1       15:38  0.0  0.0 bash\n 325957  325955       15:38  0.0  0.0 bash\n 326513  325957       03:02  100  0.1 jass\n 326514  325957       03:02  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 325955       1       20:55  0.0  0.0 bash\n 325957  325955       20:55  0.0  0.0 bash\n 326513  325957       08:19 99.9  0.1 jass\n 326514  325957       08:19  0.0  0.0 tee\n"
 }
