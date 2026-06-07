@@ -1,7 +1,0 @@
-{
-  "job_id": "0161-redistill-on-4p5M",
-  "script": "jobs/queue/0161-redistill-on-4p5M.sh",
-  "pid": 345230,
-  "started_at": "2026-06-07T20:43:24+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
