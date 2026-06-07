@@ -1,9 +1,13 @@
 {
   "job_id": "0142-pattern-tdleaf",
-  "snapshot_at": "2026-06-07T02:40:33+00:00",
+  "snapshot_at": "2026-06-07T02:45:50+00:00",
   "started_at": "2026-06-07T02:30:26+00:00",
-  "elapsed_seconds": 607,
+  "elapsed_seconds": 924,
   "artefacts": [
+    {
+      "name": "bench-it1-hc.log",
+      "size_bytes": 348
+    },
     {
       "name": "bench-iter0-hc.log",
       "size_bytes": 348
@@ -21,29 +25,29 @@
       "size_bytes": 1587
     },
     {
-      "name": "hc-it1.jnnw",
-      "size_bytes": 12497638
+      "name": "gen-it2.log",
+      "size_bytes": 0
     },
     {
       "name": "pattern_iter0.pjtw",
       "size_bytes": 17006128
     },
     {
-      "name": "targets-it1.jnnw",
-      "size_bytes": 12497638
+      "name": "pattern_iter1.pjtw",
+      "size_bytes": 17006128
     },
     {
-      "name": "td-it1.jnnw",
-      "size_bytes": 12497638
+      "name": "td-it2.jnnw",
+      "size_bytes": 8708690
     },
     {
-      "name": "td-it1.jnnw.games",
-      "size_bytes": 15674
+      "name": "td-it2.jnnw.games",
+      "size_bytes": 8192
     },
     {
       "name": "train-it1.log",
-      "size_bytes": 0
+      "size_bytes": 754
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 316654       1       10:06  0.0  0.0 bash\n 316656  316654       10:06  0.0  0.0 bash\n 316999  316656       01:21  749  4.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 316654       1       15:23  0.0  0.0 bash\n 316656  316654       15:23  0.0  0.0 bash\n 317080  316656       05:11  100  0.1 jass\n"
 }
