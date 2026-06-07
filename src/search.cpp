@@ -1066,17 +1066,20 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         // Threshold tuned to fire only at depth >= 4 because shallow
         // iterations are too noisy to extrapolate from (single-ply timing
         // is dominated by overhead, not real work).
-        if (s.has_deadline && depth >= 5) {
+        if (s.has_deadline && depth >= s.params.tm_min_depth) {
             const auto now      = std::chrono::steady_clock::now();
             if (now >= s.deadline) break;
             const auto remaining = std::chrono::duration_cast<
                 std::chrono::milliseconds>(s.deadline - now).count();
             const auto last_iter = std::chrono::duration_cast<
                 std::chrono::milliseconds>(now - s.iter_started_at).count();
-            // last_iter*2 is the projected next-iteration cost. If even
-            // half of that exceeds the remaining time, the next iteration
-            // would be aborted mid-flight (wasted work).
-            if (last_iter > 0 && last_iter * 2 > remaining) break;
+            // Projected next-iteration cost = last_iter × tm_next_iter_pct/100.
+            // If even half of that exceeds the remaining time, the next
+            // iteration would be aborted mid-flight (wasted work). The factor
+            // is tunable because a fast eval's high-depth branching factor
+            // differs from the NNUE regime these were set for.
+            const auto projected = last_iter * s.params.tm_next_iter_pct / 100;
+            if (last_iter > 0 && projected > remaining) break;
         }
         s.iter_started_at = std::chrono::steady_clock::now();
 

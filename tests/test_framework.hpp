@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <unistd.h>
 
 extern int g_failures;
 extern int g_assertions;
@@ -17,11 +18,16 @@ extern int g_assertions;
 // runner has a tiny /tmp — jobs export TMPDIR to a roomy disk path, so any
 // test that writes temp files MUST honour it or mkstemp fails (and a cascade
 // of file-backed tests segfault). `name` is a short, descriptive stem.
+//
+// If TMPDIR is set but the directory is not writable (e.g. a job forgot to
+// `mkdir -p` it), fall back to /tmp rather than handing back a template
+// mkstemp can't create — a missing temp dir shouldn't crash the suite.
 inline std::string jass_tmp_template(const char* name) {
     const char* td = std::getenv("TMPDIR");
     std::string dir = (td != nullptr && td[0] != '\0') ? std::string(td)
                                                         : std::string("/tmp");
     if (!dir.empty() && dir.back() == '/') dir.pop_back();
+    if (::access(dir.c_str(), W_OK) != 0) dir = "/tmp";
     return dir + "/" + name + "_XXXXXX";
 }
 

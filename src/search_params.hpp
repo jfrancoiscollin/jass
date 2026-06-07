@@ -101,6 +101,16 @@ struct SearchParams {
     int multicut_reduction = 4;
     int multicut_moves     = 6;
     int multicut_cuts      = 3;
+
+    // --- Time-management for the iterative-deepening loop (movetime only) ---
+    // The "skip the next iteration" heuristic projects the next iteration's
+    // cost as `last_iter * tm_next_iter_pct/100` and stops if even half of
+    // that exceeds the remaining budget. These constants were set for the
+    // NNUE's depth regime (~15-20); a fast eval reaches depth ~30+ where the
+    // effective branching factor — hence the right projection factor — differs.
+    // Defaults reproduce the previous behaviour (200% = 2×, from depth 5).
+    int tm_next_iter_pct = 200;   // projected next-iter cost = last × this/100
+    int tm_min_depth     = 5;     // don't extrapolate below this depth
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -144,6 +154,8 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
     else if (key == "multicut_cuts")        p.multicut_cuts        = v;
+    else if (key == "tm_next_iter_pct")     p.tm_next_iter_pct     = v;
+    else if (key == "tm_min_depth")         p.tm_min_depth         = v;
     // unknown key → silently ignored
     return true;
 }
