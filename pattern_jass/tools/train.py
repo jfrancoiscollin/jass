@@ -156,14 +156,16 @@ def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
 
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int, prior: np.ndarray = None,
-                anchor_l2: float = 0.0):
+                anchor_l2=0.0):
     """Least-squares fit with L2 toward 0 (`l2`) and, optionally, an extra
-    L2 pulling the weights toward a `prior` (anchor_l2). The prior anchor is
-    the anti-forgetting term for TD-leaf fine-tuning : it keeps the
-    fine-tuned eval near the Scan-distilled prior instead of drifting freely
-    into whatever self-play rewards. anchor_l2=0 (or prior=None) → pure fit."""
+    L2 pulling the weights toward a `prior`. `anchor_l2` is either a scalar
+    (uniform anchor — the anti-forgetting term for TD-leaf fine-tuning) OR a
+    per-column array (used to pin specific features, e.g. material extras, to
+    sane target values while leaving the rest free). anchor_l2=0 (or
+    prior=None) → pure fit."""
     XT = X.T.tocsr()
-    anchored = prior is not None and anchor_l2 > 0.0
+    a = np.asarray(anchor_l2, dtype=np.float64)
+    anchored = prior is not None and bool(np.any(a > 0.0))
 
     def loss_and_grad(w):
         pred = X @ w
@@ -173,8 +175,8 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
         grad = (XT @ resid) / len(y) + l2 * w
         if anchored:
             d = w - prior
-            loss += 0.5 * anchor_l2 * float(np.dot(d, d))
-            grad += anchor_l2 * d
+            loss += 0.5 * float(np.sum(a * d * d))   # scalar or per-column
+            grad += a * d
         return loss, grad
 
     # Warm-start at the prior when anchoring (faster, stays in its basin).
@@ -182,6 +184,33 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
                    options={'maxiter': max_iter})
     return res.x, float(res.fun), int(res.nit)
+
+
+def material_anchor(n_cols: int, TB: int, E: int, strength: float,
+                    man_pu: float = 1.0, king_pu: float = 3.0):
+    """Per-column anchor that pins the MATERIAL extras to sane piece-unit
+    values, breaking the men-count↔patterns collinearity that scrambled the
+    sign of material in the standalone fit (cf 0151). Column order is
+    [pat_mg | pat_eg | ext_mg | ext_eg]; extras layout matches scan_eval.hpp:
+    bk-PST 0..49, wk-PST 50..99, black_men 100, white_men 101 (mob/bal 102-105
+    left free). Black-POV: black material positive, white negative.
+
+    Returns (prior, anchor) float arrays of length n_cols (0 everywhere except
+    the material columns, which get `strength` and their target value)."""
+    prior  = np.zeros(n_cols, dtype=np.float64)
+    anchor = np.zeros(n_cols, dtype=np.float64)
+    ext_mg0 = 2 * TB           # first ext_mg column
+    ext_eg0 = 2 * TB + E       # first ext_eg column
+    for base in (ext_mg0, ext_eg0):
+        # men material
+        prior[base + 100] = +man_pu;  anchor[base + 100] = strength   # black men
+        prior[base + 101] = -man_pu;  anchor[base + 101] = strength   # white men
+        # king material (PST one-hots) — kings are NOT in patterns, so this is
+        # the only king signal; pin every square to ±king_pu.
+        for sq in range(50):
+            prior[base + sq]      = +king_pu;  anchor[base + sq]      = strength
+            prior[base + 50 + sq] = -king_pu;  anchor[base + 50 + sq] = strength
+    return prior, anchor
 
 
 def load_v3_weights_float(path: str):
@@ -273,18 +302,28 @@ def train_scan_eval(args):
     print(f'design : {X_tr.shape[1]} columns '
           f'(2×{TB} pat + 2×{EVAL_NUM_EXTRAS} ext)')
 
+    n_cols = X_tr.shape[1]
     prior = None
-    if args.anchor_weights:
+    anchor = args.anchor_l2
+    if args.material_anchor > 0:
+        # Standalone FIX (cf 0151): pin material extras to sane piece-units so
+        # the men-count↔patterns collinearity can't scramble material's sign.
+        prior, anchor = material_anchor(n_cols, TB, EVAL_NUM_EXTRAS,
+                                        args.material_anchor,
+                                        man_pu=args.man_pu, king_pu=args.king_pu)
+        print(f'material-anchor : strength={args.material_anchor} '
+              f'man=±{args.man_pu} king=±{args.king_pu} '
+              f'(pinned columns={int((anchor>0).sum())})')
+    elif args.anchor_weights:
         prior, pscale, pnp, pne = load_v3_weights_float(args.anchor_weights)
         if pnp != TB or pne != EVAL_NUM_EXTRAS:
             raise SystemExit(f'anchor shape ({pnp},{pne}) != ({TB},{EVAL_NUM_EXTRAS})')
         print(f'anchor : L2={args.anchor_l2} toward prior {args.anchor_weights}')
 
-    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
-          f'{"  (anchored)" if prior is not None and args.anchor_l2 > 0 else "  (pure)"}')
+    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
     t0 = time.time()
     w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
-                                              prior=prior, anchor_l2=args.anchor_l2)
+                                              prior=prior, anchor_l2=anchor)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     val_pred = X_val @ w_float
@@ -369,6 +408,15 @@ def main():
                          'PURE (unanchored) fine-tune.')
     ap.add_argument('--anchor-l2', type=float, default=0.0,
                     help='Strength of the --anchor-weights pull (0 = off).')
+    ap.add_argument('--material-anchor', type=float, default=0.0,
+                    help='STANDALONE FIX (cf 0151): per-column L2 pinning the '
+                         'material extras (men count, king PST) to sane '
+                         'piece-units so the men-count/patterns collinearity '
+                         'cannot scramble material. 0 = off. Try ~0.5-2.0.')
+    ap.add_argument('--man-pu',  type=float, default=1.0,
+                    help='Target piece-units for a man (material anchor).')
+    ap.add_argument('--king-pu', type=float, default=3.0,
+                    help='Target piece-units for a king (material anchor).')
     args = ap.parse_args()
 
     if args.scan_eval:
