@@ -352,6 +352,28 @@ Boucle d'ensemble : *cycles WDL à convergence → si plafond < Scan, patterns p
 riches → re-train → re-cycler*, jusqu'au niveau Scan-dans-sa-classe (ou son
 plateau). **Alors seulement** : FM (cf ci-dessus) pour dépasser.
 
+### Journal de bord — saturation de la classe linéaire (2026-06-07)
+
+Tout vs handcrafted (hc) au bench rapide ; v15 = NNUE 128-64 (réf forte).
+
+| Jalon | Résultat | Lecture |
+|---|---|---|
+| **0151** diagnostic | v3 standalone perd 0/N vs hc | matériel mal signé en MG (colinéarité men-count↔patterns) |
+| **0152** ancrage matériel | **0.444** vs hc (de 0.000) | fix : épingler homme=±1, roi=±3 → matériel sain, plus de gaffes |
+| **0149/0153** fine-tuning | TD-leaf s'effondre (0.056) ; anti-oubli récupère 0.36 mais **< 0.444** | self-play d'une éval faible n'enseigne pas mieux qu'elle ; **méthode ≠ levier** |
+| **0154** patterns riches v4 (8→32) | **0.75** vs hc ; vs v15 mt **0.083** (de 0.056) | géométrie (diagonales+horiz) = grand saut, **survit au gate movetime** |
+| **0156** ablation | *(en cours)* | quelle orientation porte le gain → élaguer pour la vitesse |
+
+**Insight 0154** : la val_mse a à peine bougé (36.8→36.0) alors que le jeu a
+bondi (0.444→0.75) → la MSE moyenne est un proxy faible ; la géométrie corrige
+des angles morts tactiques qui comptent *en partie*. **Confirme** que le levier
+est les **features** (capacité), pas la méthode d'entraînement.
+
+État : standalone passé de **sous-handcrafted** à **+191 ELO vs hc**, en
+survivant au movetime. Toujours loin de v15 (mt 0.083, ~−350 ELO) mais montée
+réelle dans la classe linéaire. Prochaines marches : ablation (0156) → élaguer/
+enrichir ciblé → extras structurels (0155) → re-cycler.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
