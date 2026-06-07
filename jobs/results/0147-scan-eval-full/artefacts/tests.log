@@ -1,0 +1,7 @@
+[FAIL] /root/jass/tests/test_book.cpp:123: a.save(path)
+[FAIL] /root/jass/tests/test_book.cpp:126: b.load(path)
+[FAIL] /root/jass/tests/test_book.cpp:127: expected b.size() == a.size()
+[FAIL] /root/jass/tests/test_book.cpp:166: b.save(path)
+[FAIL] /root/jass/tests/test_book.cpp:170: e.load_book(path)
+[FAIL] /root/jass/tests/test_nnue.cpp:71: fd >= 0
+6 / 3399 assertions FAILED.
