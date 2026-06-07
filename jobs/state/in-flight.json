@@ -1,7 +1,0 @@
-{
-  "job_id": "0152-standalone-material-anchor",
-  "script": "jobs/queue/0152-standalone-material-anchor.sh",
-  "pid": 333648,
-  "started_at": "2026-06-07T14:02:25+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
