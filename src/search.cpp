@@ -140,6 +140,31 @@ struct Searcher {
     // (invalid) Move at root.
     std::array<Move, MAX_PLY + 2>                                      move_played{};
 
+    // Continuation history (1b, gated by params.use_conthist). Keyed by
+    // [opp_prev_to][m.from][m.to] — "after the opponent moved to square X,
+    // this quiet reply was good". Accumulated like `history` on beta
+    // cutoffs, added to the quiet-move ordering score. Heap-allocated
+    // (51³ ints ≈ 0.5 MB) so the per-thread Searcher stays off the stack.
+    static constexpr std::size_t CH_DIM  = NUM_SQUARES + 1;
+    static constexpr std::size_t CH_SIZE = CH_DIM * CH_DIM * CH_DIM;
+    std::vector<std::int32_t> cont_hist = std::vector<std::int32_t>(CH_SIZE, 0);
+
+    std::int32_t& ch(int prev_to, int from, int to) noexcept {
+        return cont_hist[(static_cast<std::size_t>(prev_to) * CH_DIM
+                          + static_cast<std::size_t>(from)) * CH_DIM
+                         + static_cast<std::size_t>(to)];
+    }
+    std::int32_t ch(int prev_to, int from, int to) const noexcept {
+        return cont_hist[(static_cast<std::size_t>(prev_to) * CH_DIM
+                          + static_cast<std::size_t>(from)) * CH_DIM
+                         + static_cast<std::size_t>(to)];
+    }
+
+    // Per-ply static eval, for the "improving" heuristic (1b). EVAL_NONE at
+    // tactical nodes (forced capture) where a static eval is meaningless.
+    static constexpr int EVAL_NONE = INF_SCORE;
+    std::array<int, MAX_PLY + 2> static_eval_stack{};
+
     // Stack of Zobrist hashes representing the current path: the game
     // history prefix is loaded by `search()`, then negamax pushes/pops the
     // hash of each node as it descends and ascends.
@@ -270,7 +295,12 @@ inline int order_score(const Searcher& s, const Move& m, int ply,
             [static_cast<std::size_t>(prev_move.to)];
         if (cm.from != 0 && m == cm) return 650'000;
     }
-    return s.history[m.from][m.to];
+    // History tail, optionally boosted by continuation history (1b).
+    int hist = s.history[m.from][m.to];
+    if (s.params.use_conthist && prev_move.from != 0) {
+        hist += s.ch(prev_move.to, m.from, m.to);
+    }
+    return hist;
 }
 
 // Sort moves in place, descending by `order_score`. Selection sort: the move
@@ -387,6 +417,31 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     if (moves.empty()) return -MATE_SCORE + ply;
     if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
 
+    // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
+    // all want it; compute at most once. A "tactical" node (a forced capture
+    // is pending) has no meaningful static eval. NB: lazy → when every 1b
+    // flag is off the call pattern matches the pre-1b behaviour exactly.
+    const bool tactical = moves[0].is_capture();
+    bool have_eval = false;
+    int  node_eval = 0;
+    auto static_eval = [&]() noexcept -> int {
+        if (!have_eval) { node_eval = eval_leaf(pos, ply); have_eval = true; }
+        return node_eval;
+    };
+
+    // Improving heuristic (1b, gated). Record this node's static eval and
+    // compare to the same side's eval 2 plies up.
+    static_eval_stack[static_cast<std::size_t>(ply)] = EVAL_NONE;
+    bool improving = false;
+    if (params.use_improving && !tactical) {
+        const int se = static_eval();
+        static_eval_stack[static_cast<std::size_t>(ply)] = se;
+        if (ply >= 2
+            && static_eval_stack[static_cast<std::size_t>(ply - 2)] != EVAL_NONE) {
+            improving = se > static_eval_stack[static_cast<std::size_t>(ply - 2)];
+        }
+    }
+
     // 2bis. Reverse Futility Pruning (a.k.a. static null move). When the
     //   position is quiet (no forced captures — recall draughts mandates
     //   the longest capture chain, so `moves[0].is_capture()` is reliable
@@ -407,8 +462,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         if (depth <= RFP_MAX_DEPTH
             && !was_null
             && !is_mate_score(beta)
-            && !moves[0].is_capture()) {
-            const int eval   = eval_leaf(pos, ply);
+            && !tactical) {
+            const int eval   = static_eval();
             const int margin = RFP_MARGIN * depth;
             if (eval - margin >= beta) return eval - margin;
         }
@@ -424,8 +479,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         && (beta - alpha) == 1
         && !was_null
         && !is_mate_score(alpha)
-        && !moves[0].is_capture()) {
-        const int eval   = eval_leaf(pos, ply);
+        && !tactical) {
+        const int eval   = static_eval();
         const int margin = params.razor_margin * depth;
         if (eval + margin <= alpha) {
             const int q = quiescence(pos, ply, alpha, beta);
@@ -457,7 +512,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
             if (popcount(all) >= NMP_MIN_PIECES) {
-                const int eval = eval_leaf(pos, ply);
+                const int eval = static_eval();
                 if (eval >= beta) {
                     const int R          = params.nmp_r_base + depth / params.nmp_r_div;
                     const int reduced    = depth - 1 - R;
@@ -491,6 +546,39 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
         }
     }
+
+    // 2quater. Internal Iterative Deepening (1b, gated). With no usable TT
+    //   move at a deep quiet node, a reduced-depth search of THIS position
+    //   first fills the TT with a best move, so the full search isn't run on
+    //   a blind move order. Runs before hash_path push (pos is not yet its
+    //   own ancestor) and re-probes the TT for the move it produced.
+    if (params.iid_min_depth > 0
+        && !tt_move_valid
+        && depth >= params.iid_min_depth
+        && !tactical) {
+        const int iid_depth = depth - params.iid_reduction;
+        if (iid_depth >= 1) {
+            (void)negamax(pos, iid_depth, ply, alpha, beta);
+            if (!stopped) {
+                TTEntry e2;
+                bool h2;
+                { BD_TIME(tt); h2 = tt->probe(hash, e2); }
+                if (h2) {
+                    for (const auto& m : moves) {
+                        if (same_packed_move(m, e2.best_move)) {
+                            tt_entry      = e2;
+                            tt_move       = m;
+                            tt_move_valid = true;
+                            tt_hit        = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (stopped) return 0;
+        }
+    }
+
     const Move prev_move = move_played[static_cast<std::size_t>(ply)];
     order_moves(moves, *this, ply, tt_move, tt_move_valid, prev_move);
 
@@ -577,6 +665,39 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    // 4quater. Multi-cut pruning (1b, gated). At a deep non-PV quiet node,
+    //   scout the first `multicut_moves` ordered moves at reduced depth; if
+    //   at least `multicut_cuts` of them fail high, the node almost certainly
+    //   fails high — cut. Speculative; the early return pops the hash_path
+    //   pushed above (mirror of ProbCut).
+    if (params.multicut_min_depth > 0
+        && depth >= params.multicut_min_depth
+        && (beta - alpha) == 1
+        && !was_null
+        && !is_mate_score(beta)
+        && !tactical) {
+        const int rdepth = depth - params.multicut_reduction;
+        if (rdepth >= 1) {
+            int cuts = 0, tried = 0;
+            for (const auto& m : moves) {
+                if (tried >= params.multicut_moves) break;
+                ++tried;
+                const Position next = after_timed(pos, m);
+                push_accumulator(ply, pos, m, next);
+                if (ply + 1 < static_cast<int>(move_played.size())) {
+                    move_played[static_cast<std::size_t>(ply + 1)] = m;
+                }
+                const int sc = -negamax(next, rdepth - 1, ply + 1,
+                                        -beta, -beta + 1);
+                if (stopped) break;
+                if (sc >= beta && ++cuts >= params.multicut_cuts) {
+                    { BD_TIME(path_check); hash_path.pop_back(); }
+                    return beta;
+                }
+            }
+        }
+    }
+
     // 4bis. Late Move Reductions. After the first few moves (TT-move,
     //     killers, and the head of the history-sorted tail), search the
     //     remaining quiet moves at a reduced depth first. If the reduced
@@ -593,14 +714,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //       - the first few moves of the ordering (i < 4)
     const int LMR_MIN_DEPTH        = params.lmr_min_depth;
     const int LMR_FIRST_FULL_MOVES = params.lmr_first_full_moves;
-    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH, LMR_FIRST_FULL_MOVES]
+    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH, LMR_FIRST_FULL_MOVES,
+                          improving]
                          (int d, int move_idx) noexcept -> int {
         // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
         // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
-        // stays ≥ 1.
+        // stays ≥ 1. When the improving heuristic is on and we are not
+        // improving, reduce one extra ply.
         if (d < LMR_MIN_DEPTH || move_idx < LMR_FIRST_FULL_MOVES) return 0;
         int r = params.lmr_base + d / params.lmr_depth_div
               + move_idx / params.lmr_idx_div;
+        if (params.use_improving && !improving) r += 1;
         return r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
     };
 
@@ -616,10 +740,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
 
     int move_idx = 0;
     for (const auto& m : moves) {
-        // LMP : skip late quiet moves at shallow non-PV nodes.
+        // LMP : skip late quiet moves at shallow non-PV nodes. When the
+        // improving heuristic is on and we are NOT improving, prune one step
+        // earlier (the position is already trending the wrong way).
+        int lmp_threshold = (depth >= 1 && depth <= LMP_MAX_DEPTH)
+                          ? LMP_THRESHOLD[depth] : 0;
+        if (params.use_improving && !improving && lmp_threshold > 0) {
+            lmp_threshold = (lmp_threshold + 1) / 2;
+        }
         if (!is_pv_node
             && depth >= 1 && depth <= LMP_MAX_DEPTH
-            && move_idx >= LMP_THRESHOLD[depth]
+            && move_idx >= lmp_threshold
             && !m.is_capture()
             && best > -INF_SCORE / 2) {  // already have a real score → safe to skip
             ++move_idx;
@@ -698,6 +829,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                     countermove
                         [static_cast<std::size_t>(prev_move.from)]
                         [static_cast<std::size_t>(prev_move.to)] = m;
+                    // Continuation history (1b) : same cutoff signal, keyed
+                    // by the opponent's landing square × this reply.
+                    if (params.use_conthist) {
+                        ch(prev_move.to, m.from, m.to) += depth * depth;
+                    }
                 }
             }
             break;

@@ -262,6 +262,47 @@ void test_search_depth_increases() {
     JASS_CHECK(r_hi.nodes > r_lo.nodes);
 }
 
+// 1b search refinements (continuation history, improving, IID, multi-cut).
+// Each is gated; default-off must be behaviour-neutral, and each flag, when
+// enabled, must still return a legal best move and a sane (non-mate) score
+// from the start position.
+void test_1b_defaults_are_behaviour_neutral() {
+    const Position p = Position::start_position();
+    SearchLimits base;       base.max_depth = 7;
+    const SearchResult r0 = search(p, base);
+
+    // SearchParams{} is the documented behaviour-neutral default: an
+    // explicitly-default params set must reproduce the same search exactly.
+    SearchLimits same;       same.max_depth = 7; same.params = SearchParams{};
+    const SearchResult r1 = search(p, same);
+    JASS_CHECK_EQ(r0.nodes, r1.nodes);
+    JASS_CHECK(r0.best_move == r1.best_move);
+}
+
+void test_1b_each_feature_searches_correctly() {
+    const Position p = Position::start_position();
+    MoveList legal;
+    generate_legal_moves(p, legal);
+
+    const char* specs[] = {
+        "use_conthist=1",
+        "use_improving=1",
+        "iid_min_depth=4,iid_reduction=2",
+        "multicut_min_depth=5,multicut_reduction=4,multicut_moves=6,multicut_cuts=3",
+        // all together
+        "use_conthist=1,use_improving=1,iid_min_depth=4,multicut_min_depth=5",
+    };
+    for (const char* spec : specs) {
+        SearchLimits lim;
+        lim.max_depth = 8;
+        lim.params    = parse_search_params(spec);
+        const SearchResult r = search(p, lim);
+        JASS_CHECK(list_contains(legal, r.best_move));
+        JASS_CHECK(!is_mate_score(r.score));   // start position isn't a mate
+        JASS_CHECK(r.nodes > 0);
+    }
+}
+
 }  // namespace
 
 void run_search_tests() {
@@ -280,4 +321,6 @@ void run_search_tests() {
     test_search_returns_pv_starting_with_best_move();
     test_search_with_multiple_threads();
     test_search_depth_increases();
+    test_1b_defaults_are_behaviour_neutral();
+    test_1b_each_feature_searches_correctly();
 }

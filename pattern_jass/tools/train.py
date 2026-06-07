@@ -155,8 +155,15 @@ def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
 
 
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
-                max_iter: int):
+                max_iter: int, prior: np.ndarray = None,
+                anchor_l2: float = 0.0):
+    """Least-squares fit with L2 toward 0 (`l2`) and, optionally, an extra
+    L2 pulling the weights toward a `prior` (anchor_l2). The prior anchor is
+    the anti-forgetting term for TD-leaf fine-tuning : it keeps the
+    fine-tuned eval near the Scan-distilled prior instead of drifting freely
+    into whatever self-play rewards. anchor_l2=0 (or prior=None) → pure fit."""
     XT = X.T.tocsr()
+    anchored = prior is not None and anchor_l2 > 0.0
 
     def loss_and_grad(w):
         pred = X @ w
@@ -164,12 +171,30 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
         loss = 0.5 * float(np.dot(resid, resid)) / len(y)
         loss += 0.5 * l2 * float(np.dot(w, w))
         grad = (XT @ resid) / len(y) + l2 * w
+        if anchored:
+            d = w - prior
+            loss += 0.5 * anchor_l2 * float(np.dot(d, d))
+            grad += anchor_l2 * d
         return loss, grad
 
-    w0 = np.zeros(X.shape[1], dtype=np.float64)
+    # Warm-start at the prior when anchoring (faster, stays in its basin).
+    w0 = prior.copy() if anchored else np.zeros(X.shape[1], dtype=np.float64)
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
                    options={'maxiter': max_iter})
     return res.x, float(res.fun), int(res.nit)
+
+
+def load_v3_weights_float(path: str):
+    """Read a PJTW v3 file into a float weight vector aligned to the
+    [pat_mg | pat_eg | ext_mg | ext_eg] design-matrix column order, plus its
+    (scale, n_pat, n_ext). Used as the anchor prior for fine-tuning."""
+    raw = Path(path).read_bytes()
+    magic, ver, scale, n_pat, n_ext = struct.unpack_from('<IIIII', raw, 0)
+    if magic != WEIGHTS_MAGIC or ver != WEIGHTS_VERSION_V3:
+        raise SystemExit(f'{path}: not a PJTW v3 file (magic/ver)')
+    total = 2 * (n_pat + n_ext)
+    arr = np.frombuffer(raw, dtype='<i4', offset=20, count=total).astype(np.float64)
+    return arr / float(scale), int(scale), int(n_pat), int(n_ext)
 
 
 def write_weights(path: Path, w_int32: np.ndarray, scale: int,
@@ -248,9 +273,18 @@ def train_scan_eval(args):
     print(f'design : {X_tr.shape[1]} columns '
           f'(2×{TB} pat + 2×{EVAL_NUM_EXTRAS} ext)')
 
-    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
+    prior = None
+    if args.anchor_weights:
+        prior, pscale, pnp, pne = load_v3_weights_float(args.anchor_weights)
+        if pnp != TB or pne != EVAL_NUM_EXTRAS:
+            raise SystemExit(f'anchor shape ({pnp},{pne}) != ({TB},{EVAL_NUM_EXTRAS})')
+        print(f'anchor : L2={args.anchor_l2} toward prior {args.anchor_weights}')
+
+    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
+          f'{"  (anchored)" if prior is not None and args.anchor_l2 > 0 else "  (pure)"}')
     t0 = time.time()
-    w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter)
+    w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
+                                              prior=prior, anchor_l2=args.anchor_l2)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     val_pred = X_val @ w_float
@@ -328,6 +362,13 @@ def main():
                          '--scan-eval to build the playable v3 eval. Values '
                          'are kept RAW (not standardised) so the weights apply '
                          'to the exact features the C++ eval computes.')
+    ap.add_argument('--anchor-weights', default=None,
+                    help='TD-leaf fine-tuning : a prior v3 PJTW (the Scan-'
+                         'distilled eval) toward which the fit is L2-'
+                         'regularised. Anti-forgetting anchor. Omit for a '
+                         'PURE (unanchored) fine-tune.')
+    ap.add_argument('--anchor-l2', type=float, default=0.0,
+                    help='Strength of the --anchor-weights pull (0 = off).')
     args = ap.parse_args()
 
     if args.scan_eval:
