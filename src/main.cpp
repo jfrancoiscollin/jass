@@ -803,6 +803,85 @@ int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --dump-features: read a JNNW dataset and write, per position, a small set
+// of features the men-only pattern is BLIND to, for fit-check diagnostics :
+//   f0 = black mobility   (legal moves with Black to move)
+//   f1 = white mobility   (legal moves with White to move)
+//   f2 = black L/R balance (black_men left − right, col_of<5 = left)
+//   f3 = white L/R balance
+// Output format : "FEAT"(4) + count(4) + K(4=#features) + count×K float32.
+// Used by pattern_jass/tools/train.py --features-file to test whether
+// DYNAMIC (mobility) / global (balance) info explains the Scan−handcrafted
+// residual that static men-patterns cannot fit.
+// -----------------------------------------------------------------------------
+int run_dump_features_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-features <in.jnnw> <out.feat>\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char magic[4]; in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n"; return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read header\n"; return 1; }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    const std::uint32_t K = 4;
+    out.write("FEAT", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+    out.write(reinterpret_cast<const char*>(&K), 4);
+
+    constexpr std::size_t RECORD_SZ = 38;
+    char record[RECORD_SZ];
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i << "\n"; return 1;
+        }
+        std::uint64_t bbs[4];
+        std::memcpy(bbs, record, 32);
+
+        auto build = [&](Color stm) {
+            Position p{};
+            p.set_side_to_move(stm);
+            for (Bitboard b = bbs[0]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
+            for (Bitboard b = bbs[1]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteKing);
+            for (Bitboard b = bbs[2]; b; ) p.add_piece(pop_lsb(b), Piece::BlackMan);
+            for (Bitboard b = bbs[3]; b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
+            return p;
+        };
+        MoveList ml_b, ml_w;
+        generate_legal_moves(build(Color::Black), ml_b);
+        generate_legal_moves(build(Color::White), ml_w);
+
+        auto lr_balance = [](Bitboard men) {
+            int left = 0, right = 0;
+            for (Bitboard b = men; b; ) {
+                const Square s = pop_lsb(b);
+                (col_of(s) < 5 ? left : right) += 1;
+            }
+            return static_cast<float>(left - right);
+        };
+        const float feats[4] = {
+            static_cast<float>(ml_b.size()),
+            static_cast<float>(ml_w.size()),
+            lr_balance(bbs[2]),   // black men
+            lr_balance(bbs[0]),   // white men
+        };
+        out.write(reinterpret_cast<const char*>(feats), sizeof(feats));
+    }
+    std::cout << "wrote " << count << " × " << K << " features to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --rewrite-scores-with-handcrafted: same as --rewrite-scores-with-nnue
 // but uses the handcrafted `evaluate()` instead of NNUE. Used to compute
 // the per-position handcrafted baseline needed by Scan-style hybrid
@@ -1665,6 +1744,7 @@ int main(int argc, char** argv) {
         else if (a == "--gen-tdleaf")               return run_gen_tdleaf_mode(argc, argv);
         else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
+        else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-hybrid")    return run_benchmark_nnue_hybrid_mode(argc, argv);
