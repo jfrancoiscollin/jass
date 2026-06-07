@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fstream>
+#include <random>
 #include <string>
 #include <string_view>
 #include <unistd.h>
@@ -193,9 +194,56 @@ void test_v3_loader_rejects_v1() {
     std::remove(path.c_str());
 }
 
+// Incremental pattern-index update must equal a from-scratch extract_all, for
+// arbitrary men reconfigurations (the basis of the search-time accumulator).
+void test_update_all_matches_extract() {
+    std::mt19937_64 rng(0xC0FFEEu);
+    auto gen = [&](pattern_jass::Bitboard& bm, pattern_jass::Bitboard& wm) {
+        bm = 0; wm = 0;
+        for (int b = 0; b < 50; ++b) {
+            const unsigned r = static_cast<unsigned>(rng() % 3u);
+            if      (r == 1) bm |= pattern_jass::Bitboard{1} << b;
+            else if (r == 2) wm |= pattern_jass::Bitboard{1} << b;
+        }
+    };
+    for (int trial = 0; trial < 3000; ++trial) {
+        pattern_jass::Bitboard bm0, wm0, bm1, wm1;
+        gen(bm0, wm0); gen(bm1, wm1);
+        std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{}, ref{};
+        pattern_jass::extract_all(bm0, wm0, idx);
+        pattern_jass::update_all(bm0, wm0, bm1, wm1, idx);
+        pattern_jass::extract_all(bm1, wm1, ref);
+        JASS_CHECK(idx == ref);
+    }
+}
+
+// evaluate_with_idx(pos, extract_all(pos)) must equal evaluate(pos) (the
+// accumulator path is just a precomputed-index version of the same eval).
+void test_evaluate_with_idx_matches_evaluate() {
+    ScanWeights w = zero_weights(1000);
+    for (std::size_t i = 0; i < pattern_jass::TOTAL_BUCKETS; i += 7919)
+        w.pat_mg[i] = static_cast<std::int32_t>((i % 251) - 125);
+    for (std::size_t i = 0; i < pattern_jass::TOTAL_BUCKETS; i += 6271)
+        w.pat_eg[i] = static_cast<std::int32_t>((i % 199) - 99);
+    ScanEvalNetwork net(std::move(w));
+    const char* fens[] = {
+        "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
+        "W:W31,32,33,34,35:B16,17,18,19,20",
+        "B:WK50:BK1",
+    };
+    for (const char* f : fens) {
+        const Position pos = parse(f);
+        std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
+        pattern_jass::extract_all(pos.black_men(), pos.white_men(), idx);
+        JASS_CHECK(net.evaluate_with_idx(pos, idx.data()) == net.evaluate(pos));
+    }
+}
+
 }  // namespace
 
 void run_scan_eval_tests() {
+    test_update_all_matches_extract();
+    test_evaluate_with_idx_matches_evaluate();
     test_extras_start_position();
     test_extras_king_pst_one_hot();
     test_evaluate_midgame_uses_mg_bank();

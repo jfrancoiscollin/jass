@@ -35,6 +35,8 @@
 #include "nnue.hpp"
 #include "position.hpp"
 
+#include "../pattern_jass/src/pattern.hpp"
+
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -105,6 +107,13 @@ public:
     explicit ScanEvalNetwork(ScanWeights w) : w_(std::move(w)) {}
     int evaluate(const Position& pos) const noexcept override;
 
+    // Accumulator fast path : same eval as evaluate(pos) but with the 32
+    // pattern base-3 indices supplied precomputed (the search maintains them
+    // incrementally via ScanAccumulator), skipping extract_all. `idx` must
+    // point to NUM_PATTERNS entries equal to extract_all(pos's men).
+    int evaluate_with_idx(const Position& pos,
+                          const std::uint32_t* idx) const noexcept;
+
     std::uint32_t scale() const noexcept { return w_.scale; }
     std::size_t   count() const noexcept {
         return 2 * (w_.pat_mg.size() + NUM_EXTRAS);
@@ -116,6 +125,28 @@ private:
 
 std::unique_ptr<ScanEvalNetwork> load_scan_eval_network(
     const std::string& path, std::string* err = nullptr);
+
+// Per-ply pattern accumulator for the search. Holds the 32 base-3 pattern
+// indices; `refresh_from` rebuilds them from scratch (root / fallback) and
+// `apply_move` updates them incrementally for a played move. Kings are not in
+// patterns, so only the men bitboards matter. One accumulator per ply (the
+// index does not depend on side-to-move; evaluate_with_idx applies the sign).
+struct ScanAccumulator {
+    std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
+
+    void refresh_from(const Position& pos) noexcept {
+        pattern_jass::extract_all(static_cast<std::uint64_t>(pos.black_men()),
+                                  static_cast<std::uint64_t>(pos.white_men()),
+                                  idx);
+    }
+    void apply_move(const Position& before, const Position& after) noexcept {
+        pattern_jass::update_all(static_cast<std::uint64_t>(before.black_men()),
+                                 static_cast<std::uint64_t>(before.white_men()),
+                                 static_cast<std::uint64_t>(after.black_men()),
+                                 static_cast<std::uint64_t>(after.white_men()),
+                                 idx);
+    }
+};
 
 }  // namespace jass::scan_eval
 

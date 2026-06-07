@@ -189,12 +189,16 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
 }
 
 int ScanEvalNetwork::evaluate(const Position& pos) const noexcept {
-    const std::uint64_t bm = static_cast<std::uint64_t>(pos.black_men());
-    const std::uint64_t wm = static_cast<std::uint64_t>(pos.white_men());
-
-    // Men patterns (sparse one-hots, base-3).
+    // Men patterns (sparse one-hots, base-3), recomputed from scratch. The
+    // accumulator path (evaluate_with_idx) shares everything below.
     std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
-    pattern_jass::extract_all(bm, wm, idx);
+    pattern_jass::extract_all(static_cast<std::uint64_t>(pos.black_men()),
+                              static_cast<std::uint64_t>(pos.white_men()), idx);
+    return evaluate_with_idx(pos, idx.data());
+}
+
+int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
+                                       const std::uint32_t* idx) const noexcept {
     constexpr auto offsets = pattern_jass::pattern_offsets();
     double pat_mg = 0.0, pat_eg = 0.0;
     for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
