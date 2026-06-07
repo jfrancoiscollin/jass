@@ -3,11 +3,14 @@
 
 #include "search.hpp"
 
+#include <cstdlib>
+
 #include "bd_time.hpp"
 #include "endgame.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
 #include "nnue_accumulator.hpp"
+#include "scan_eval.hpp"
 #include "tt.hpp"
 #include "zobrist.hpp"
 
@@ -200,6 +203,13 @@ struct Searcher {
     const MLPNetworkQ*                    mlpq_nnue{nullptr};
     std::array<AccumulatorPair, MAX_PLY + 2> accumulators{};
 
+    // Same idea for the Scan/pattern eval (v3/v4) : when `nnue` is a
+    // ScanEvalNetwork, maintain the 32 base-3 pattern indices per ply so each
+    // leaf skips the full extract_all rebuild. One accumulator per ply (the
+    // index is side-to-move-independent).
+    const scan_eval::ScanEvalNetwork*     scan_nnue{nullptr};
+    std::array<scan_eval::ScanAccumulator, MAX_PLY + 2> scan_accs{};
+
     // Set to true while a Null-Move Pruning probe is in progress, so
     // the recursive negamax doesn't try another null move on top
     // (which would converge to nonsense at deep enough chains).
@@ -223,6 +233,10 @@ struct Searcher {
                 : accumulators[ply].black;
             return mlpq_nnue->evaluate_with_accumulator(pos, acc.data.data());
         }
+        if (scan_nnue) {
+            return scan_nnue->evaluate_with_idx(
+                pos, scan_accs[static_cast<std::size_t>(ply)].idx.data());
+        }
         return nnue ? nnue->evaluate(pos) : evaluate(pos);
     }
 
@@ -235,26 +249,33 @@ struct Searcher {
                           const Position& pos_before,
                           const Move& m,
                           const Position& pos_after) noexcept {
-        if (!mlpq_nnue) return;
+        if (!mlpq_nnue && !scan_nnue) return;
         BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;  // ply cap, no descent
-        accumulators[pi1] = accumulators[pi];
-        if (!accumulators[pi1].apply_move(pos_before, m, pos_after, *mlpq_nnue)) {
-            accumulators[pi1].refresh_from(pos_after, *mlpq_nnue);
+        if (mlpq_nnue) {
+            accumulators[pi1] = accumulators[pi];
+            if (!accumulators[pi1].apply_move(pos_before, m, pos_after, *mlpq_nnue)) {
+                accumulators[pi1].refresh_from(pos_after, *mlpq_nnue);
+            }
+        }
+        if (scan_nnue) {
+            scan_accs[pi1] = scan_accs[pi];
+            scan_accs[pi1].apply_move(pos_before, pos_after);
         }
     }
 
     // Null move: piece positions unchanged → both accumulators are
     // bit-identical to the previous ply's. Just copy.
     void push_accumulator_null(int ply) noexcept {
-        if (!mlpq_nnue) return;
+        if (!mlpq_nnue && !scan_nnue) return;
         BD_TIME(accumulator);
         const std::size_t pi  = static_cast<std::size_t>(ply);
         const std::size_t pi1 = pi + 1;
         if (pi1 >= accumulators.size()) return;
-        accumulators[pi1] = accumulators[pi];
+        if (mlpq_nnue) accumulators[pi1] = accumulators[pi];
+        if (scan_nnue) scan_accs[pi1]    = scan_accs[pi];
     }
 
     // Returns true if `h` already appears anywhere in `hash_path`.
@@ -977,6 +998,15 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     s.mlpq_nnue = dynamic_cast<const MLPNetworkQ*>(limits.nnue);
     if (s.mlpq_nnue) {
         s.accumulators[0].refresh_from(pos, *s.mlpq_nnue);
+    }
+    // Same fast path for the Scan/pattern eval (v3/v4). `JASS_NO_SCAN_ACC`
+    // forces the recompute path (extract_all every leaf) for A/B benchmarking.
+    static const bool scan_acc_off = std::getenv("JASS_NO_SCAN_ACC") != nullptr;
+    s.scan_nnue = scan_acc_off
+        ? nullptr
+        : dynamic_cast<const scan_eval::ScanEvalNetwork*>(limits.nnue);
+    if (s.scan_nnue) {
+        s.scan_accs[0].refresh_from(pos);
     }
     if (limits.movetime_ms > 0) {
         s.has_deadline = true;

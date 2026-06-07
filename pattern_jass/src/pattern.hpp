@@ -99,4 +99,14 @@ std::uint32_t extract_index(Bitboard black_men, Bitboard white_men,
 void extract_all(Bitboard black_men, Bitboard white_men,
                  std::array<std::uint32_t, NUM_PATTERNS>& out) noexcept;
 
+// Incremental update : given the per-pattern base-3 indices `idx` valid for the
+// BEFORE men-bitboards, update them in place to the AFTER men-bitboards. Only
+// patterns containing a square whose men-occupancy changed are touched (via a
+// precomputed reverse map square→{(pattern,pos)}). Equivalent to, but much
+// cheaper than, a full extract_all when few squares change (a move touches ≤4).
+// Kings are not in patterns, so only men bitboards matter.
+void update_all(Bitboard bm_before, Bitboard wm_before,
+                Bitboard bm_after,  Bitboard wm_after,
+                std::array<std::uint32_t, NUM_PATTERNS>& idx) noexcept;
+
 }  // namespace pattern_jass
