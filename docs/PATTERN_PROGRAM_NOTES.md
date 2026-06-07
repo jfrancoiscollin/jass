@@ -309,6 +309,49 @@ Chacun **derrière le gate movetime**.
 > « égaler Scan ». Le résidu non-fitté (0146) est dynamique/interactions →
 > FM (ou la profondeur de recherche) peut le grignoter, pas les splines.
 
+### Programme de saturation de la classe linéaire (acté 2026-06-07)
+
+Barre : **atteindre le niveau Scan *dans sa classe*** (mesuré au bench équitable
+vs Scan bb-off + vs v15). On part du niveau handcrafted (0152 : 0.444 vs hc) →
+beaucoup de marge dans la classe avant que la capacité (FM) soit le goulot.
+
+**Levier 1 — pousser la boucle d'apprentissage à convergence** *(étape immédiate
+si 0149 progresse)*. 0149 = petit cycle (3 it × 800 parties, depth-8). S'il
+monte : **scaler** (plus de volume/cycles), passer la génération en **movetime**
+sur la fin (cibles plus profondes), garder l'**ancrage matériel** chaque cycle.
+Itérer jusqu'au **plateau** vs-hc/vs-v15.
+
+**Levier 2 — virage cibles self-play WDL (≠ distillation)**. Scan s'est entraîné
+sur **self-play + WDL**, pas en copiant un moteur. La distillation Scan était
+notre *prior/warm-start* ; la vraie saturation = **nos propres cycles self-play
+WDL** (relabel→retrain). Bonus : **élimine le risque GPL3** (on n'apprend plus
+des scores de Scan).
+
+**Levier 3 — patterns plus riches** *(levier STRUCTUREL le plus fort)*. Dans une
+classe additive, **les features fixent le plafond de fit**. Nos 8 bandes × 12
+cases << le set de Scan. → plus de bandes/géométries, fenêtres chevauchantes,
+fenêtres un peu plus grandes (⚠️ 3¹²=531k → 3¹³⁺ explose). **Si scaler les
+cycles plafonne bas, c'est ICI qu'on agit.**
+
+**Leviers de support** : elastic-net/L1 (élague les buckets-bruit → généralise) ;
+**bitbases 2-6** (finales exactes, complément de Scan — si plafond *en finale*) ;
+**re-tune SPSA** du search pour l'éval améliorée.
+
+**Logique de diagnostic** : scaler les cycles → *plafonne ?* → limiteur =
+**features** → enrichir patterns → re-cycler. Perte surtout *en finale* →
+**bitbases**. Continue de monter → continuer à cycler.
+
+**Jobs esquissés (si 0149 ✅)** :
+- **0153** — boucle self-play **WDL** scalée (gros volume, +cycles, movetime sur
+  la fin) → convergence + bench vs hc/v15.
+- **0154** — **patterns enrichis** (set élargi) + re-train → mesure du nouveau
+  plafond.
+- puis elastic-net / bitbases / SPSA selon le diagnostic.
+
+Boucle d'ensemble : *cycles WDL à convergence → si plafond < Scan, patterns plus
+riches → re-train → re-cycler*, jusqu'au niveau Scan-dans-sa-classe (ou son
+plateau). **Alors seulement** : FM (cf ci-dessus) pour dépasser.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
