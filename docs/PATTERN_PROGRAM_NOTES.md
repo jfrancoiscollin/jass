@@ -277,20 +277,37 @@ les **features denses** (mobilité, balance, king-PST), (2) dans la combinaison
 | **Régression pénalisée** (L1/elastic-net) | rien (reste linéaire) ; élague les buckets-bruit sparses | nul | *généralisation*, pas capacité |
 | **Game-stage spline fine** (4-8 bancs) | extension de MG/EG, non-lin. en stade | ~nul (cuit en poids) | gratuit, à prendre |
 | **Denses binnées** (one-hot de bins) = GAM | non-lin. **par-feature** | ~nul (cuit en table) | gratuit, additif (pas d'interactions) |
-| **Factorization Machine** `Σ⟨v_i,v_j⟩x_i x_j` | **interactions par-paires** (rang-k) | faible, quantifiable | **TÊTE DE FILE** post-standalone |
-| **Mini-MLP** | non-lin. générale | élevé | déjà gated (cf ci-dessus) |
+| **Factorization Machine** `Σ⟨v_i,v_j⟩x_i x_j` | **interactions par-paires** (rang-k) | faible, quantifiable | **dépasser Scan**, post-saturation linéaire |
+| **Mini-MLP** | non-lin. générale | élevé | dépasser Scan, gated vitesse |
 | ~~GBDT~~ | interactions | mauvais par-nœud (pas SIMD) | écarté (contrainte vitesse) |
 
-**FM = le candidat prioritaire** : il vise *exactement* le résidu
-interactions/dynamique que l'additif rate, en restant rapide. Forme :
-`eval = linéaire(patterns) + linéaire(extras) + FM(extras + scalaires-résumé
-patterns)`. Les splines/binning sont du **polish quasi-gratuit** (additif, pas
-d'interactions). **Ordre** : finir le standalone (0149) → spline/binning (offert)
-→ **FM** → mini-MLP seulement si FM plafonne. Chacun **derrière le gate
-movetime** (sinon éval plus riche mais plus lente = fausse bonne idée).
+**⚠️ SCAN EST DANS NOTRE CLASSE** (confirmé docs/SCAN_ARCHITECTURE_NOTES :
+*« régression logistique sur features sparses (patterns), pas un réseau ;
+représentation linéaire sur patterns »*). Donc :
+- **FM/mini-MLP nous emmènent AU-DELÀ de Scan** — pas « rattraper Scan ».
+- **Pour ÉGALER Scan, pas besoin de FM** : il faut faire ce que Scan a fait —
+  bons patterns + **beaucoup de cycles de training (WDL/self-play)** + bitbases,
+  dans la **même classe linéaire**.
+- Or on est aujourd'hui **au niveau du handcrafted** → **très loin** d'avoir
+  saturé la classe linéaire. **Notre goulot actuel n'est PAS la capacité du
+  modèle, c'est le training/les patterns/les cycles** dans la classe linéaire.
 
-> Honnête : le résidu non-fitté est surtout **dynamique/interactions** → c'est
-> **FM (ou la profondeur)** qui peut le grignoter, pas les splines par-feature.
+→ **FM est donc PRÉMATURÉ.** Forme prévue (pour plus tard) :
+`eval = linéaire(patterns) + linéaire(extras) + FM(extras + scalaires-résumé
+patterns)`. Splines/binning = polish quasi-gratuit (additif, comme Scan).
+
+**Ordre (reclassé 2026-06-07)** :
+1. **Saturer la classe linéaire** = la stratégie Scan : cycles d'apprentissage
+   (0149+), patterns plus riches, training plus volumineux, bitbases → viser
+   le niveau Scan **dans sa classe**. (+ spline/binning, offerts.)
+2. **Seulement après saturation**, pour **dépasser** Scan vers le territoire
+   NNUE : **FM** (interactions, cheap) → mini-MLP si FM plafonne.
+Chacun **derrière le gate movetime**.
+
+> L'évidence du domaine : ce qui a **battu Scan** = les moteurs **NNUE**
+> (non-linéaires). FM est un pas modeste sur ce chemin « dépasser Scan » — pas
+> « égaler Scan ». Le résidu non-fitté (0146) est dynamique/interactions →
+> FM (ou la profondeur de recherche) peut le grignoter, pas les splines.
 
 ## Roadmap post-validation (plan acté 2026-06-06)
 
