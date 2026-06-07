@@ -1,0 +1,19 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+v3  : /root/jass/jobs/results/0147-scan-eval-full/artefacts.src/scan_eval_v3.pjtw
+
+=== build prod + tests ===
+TESTS PASS
+
+########## PASSE v15  (depth=9 movetime=0) ##########
+  conthist   A=[use_conthist=1]  rate=0.638889  ELO +99
+  improving  A=[use_improving=1]  rate=0.361111  ELO -99
+  iid        A=[iid_min_depth=4,iid_reduction=2]  rate=0.555556  ELO +39
+  multicut   A=[multicut_min_depth=5,multicut_reduction=4,multicut_moves=6,multicut_cuts=3]  rate=0.388889  ELO -79
+  all        A=[use_conthist=1,use_improving=1,iid_min_depth=4,multicut_min_depth=5]  rate=0.361111  ELO -99
+
+########## PASSE v15  (depth=64 movetime=300) ##########
+  conthist   A=[use_conthist=1]  rate=0.444444  ELO -39
+  improving  A=[use_improving=1]  rate=0.467593  ELO -23
+  iid        A=[iid_min_depth=4,iid_reduction=2]  rate=0.472222  ELO -19
+  multicut   A=[multicut_min_depth=5,multicut_reduction=4,multicut_moves=6,multicut_cuts=3]  rate=0.472222  ELO -19
