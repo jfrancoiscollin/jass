@@ -86,7 +86,14 @@ void test_engine_disabled_book_falls_back_to_search() {
 // JBOK save / load round-trip
 // -----------------------------------------------------------------------------
 std::string mkstemp_path(const char* tmpl_in) {
-    std::string buf{tmpl_in};
+    // Honour $TMPDIR (the runner's /tmp is too small for mkstemp). Keep the
+    // descriptive stem from the historical "/tmp/<name>-XXXXXX" template.
+    std::string in{tmpl_in};
+    const std::size_t slash = in.find_last_of('/');
+    std::string stem = (slash == std::string::npos) ? in : in.substr(slash + 1);
+    const std::size_t suf = stem.rfind("-XXXXXX");
+    if (suf != std::string::npos) stem.erase(suf);
+    std::string buf = jass_tmp_template(stem.c_str());
     int fd = ::mkstemp(buf.data());
     if (fd >= 0) ::close(fd);
     return buf;
