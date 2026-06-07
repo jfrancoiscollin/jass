@@ -1,0 +1,36 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+labels: /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+v15: /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== build prod + tests (géométrie v5 = 40 patterns + accumulateur) ===
+TESTS PASS
+NUM_PATTERNS 40 TOTAL 21257640
+
+=== dump-eval-features (extras=106 ; réutilise 0147 si présent) ===
+feat: /root/jass/jobs/results/0147-scan-eval-full/artefacts.src/clean.feat
+
+=== TRAIN A (40 patterns, material-anchor 1.0, l2=1e-5) ===
+design : 42515492 columns (2×21257640 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=35.854031  sign_acc=0.0010
+    n_pat=21257640 HOMMES mg b=+1.06 w=-1.08 | ROIS mg b_moy=+3.00 | PAT nnz=773529/21257640 (3.6%)
+
+=== TRAIN B (40 patterns, material-anchor 1.0, l2=1e-3) ===
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: '/root/jass/jobs/results/0159-diag-enriched-distill/artefacts.src/B.pjtw'
+
+=== TRIANGLE vs handcrafted (depth 8) ===
+  A vs hc = 0.444444  (v4 32-pat baseline = 0.75)
+  B vs hc =   (v4 32-pat baseline = 0.75)
+
+=== meilleur (A) vs v15 — GATE MOVETIME (depth 9 + movetime 300) ===
+
+==========================================================
+        0159 DIAG-ENRICHI (40 patterns) — VERDICT
+  A vs hc=0.444444  B vs hc=?   (v4 32-pat baseline = 0.75)
+  A vs v15 : d9=0.222222  mt=0.101852
+                 (v4 32-pat baseline : d9=0.139  mt=0.083)
+  → vs hc / vs v15 mt > baselines = densité diagonale paie (et rapide via
+    l'accumulateur). val bon mais jeu en retrait = sparsité → plus de data.
+==========================================================

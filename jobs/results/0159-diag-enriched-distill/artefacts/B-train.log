@@ -1,0 +1,5 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0147-scan-eval-full/artefacts.src/clean.feat
+extras K=106 != expected 112 (rebuild with --dump-eval-features)
