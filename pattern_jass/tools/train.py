@@ -55,6 +55,33 @@ def build_sparse_X(cols: np.ndarray, n_features: int) -> sp.csr_matrix:
                          shape=(n, n_features), dtype=np.float64)
 
 
+def build_sparse_X_phased(cols: np.ndarray, wmg: np.ndarray, weg: np.ndarray,
+                          total_buckets: int) -> sp.csr_matrix:
+    """Phase-split design matrix : 2× columns [mg block | eg block]. Each row
+    has its NUM_PATTERNS buckets in the mg block (value wmg[i]) AND in the eg
+    block at col+total_buckets (value weg[i]). prediction = wmg·(w_mg·φ) +
+    weg·(w_eg·φ) = the game-stage interpolation the C++ eval must reproduce."""
+    n, npp = cols.shape
+    mg_idx = cols
+    eg_idx = cols + total_buckets
+    indices = np.concatenate([mg_idx, eg_idx], axis=1).reshape(-1)
+    mg_data = np.repeat(wmg[:, None], npp, axis=1)
+    eg_data = np.repeat(weg[:, None], npp, axis=1)
+    data    = np.concatenate([mg_data, eg_data], axis=1).reshape(-1).astype(np.float64)
+    indptr  = np.arange(0, n * 2 * npp + 1, 2 * npp, dtype=np.int64)
+    return sp.csr_matrix((data, indices, indptr),
+                         shape=(n, 2 * total_buckets), dtype=np.float64)
+
+
+def piece_count(ds) -> np.ndarray:
+    """Total pieces per record (men + kings, both sides), 0..40 — the game
+    stage proxy. Vectorised popcount of the OR of the 4 bitboards."""
+    allbb = (ds.white_men | ds.white_kings | ds.black_men | ds.black_kings)
+    bits  = np.unpackbits(allbb.view(np.uint8)).reshape(ds.n_records, 64)
+    return bits.sum(axis=1)
+
+
+
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int):
     XT = X.T.tocsr()
@@ -73,9 +100,12 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
     return res.x, float(res.fun), int(res.nit)
 
 
-def write_weights(path: Path, w_int32: np.ndarray, scale: int) -> None:
+def write_weights(path: Path, w_int32: np.ndarray, scale: int,
+                  version: int = WEIGHTS_VERSION) -> None:
+    # version 1 = mono-phase (count = TOTAL_BUCKETS) ; version 2 = phase-split
+    # (count = 2×TOTAL_BUCKETS, [mg | eg] ; stage = piece count / 40).
     with open(path, 'wb') as f:
-        f.write(struct.pack('<IIII', WEIGHTS_MAGIC, WEIGHTS_VERSION,
+        f.write(struct.pack('<IIII', WEIGHTS_MAGIC, version,
                             len(w_int32), scale))
         f.write(w_int32.astype('<i4').tobytes())
 
@@ -102,6 +132,10 @@ def main():
                          'target becomes (score - skeleton_score) — the pattern '
                          'learns the RESIDUAL on top of the skeleton (Scan-style '
                          'hybrid). Records must align 1-to-1 with --data.')
+    ap.add_argument('--phase-split', action='store_true',
+                    help='train 2 weight banks (mg/eg) interpolated by piece '
+                         'count → PJTW v2. Rend le pattern game-stage aware '
+                         '(comme Scan), lève le plafond mono-phase.')
     args = ap.parse_args()
 
     print(f'loading JNNW {args.data}')
@@ -159,8 +193,19 @@ def main():
     val_idx, tr_idx = perm[:n_val], perm[n_val:]
     print(f'split : train={len(tr_idx)} val={len(val_idx)}')
 
-    X_tr  = build_sparse_X(cols[tr_idx],  patterns.TOTAL_BUCKETS)
-    X_val = build_sparse_X(cols[val_idx], patterns.TOTAL_BUCKETS)
+    out_version = WEIGHTS_VERSION
+    if args.phase_split:
+        pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
+        wmg = pc / 40.0
+        weg = 1.0 - wmg
+        print(f'phase-split : piece-count mean={pc.mean():.1f}  '
+              f'wmg mean={wmg.mean():.3f} (1=tout midgame, 0=tout endgame)')
+        X_tr  = build_sparse_X_phased(cols[tr_idx],  wmg[tr_idx],  weg[tr_idx],  patterns.TOTAL_BUCKETS)
+        X_val = build_sparse_X_phased(cols[val_idx], wmg[val_idx], weg[val_idx], patterns.TOTAL_BUCKETS)
+        out_version = 2
+    else:
+        X_tr  = build_sparse_X(cols[tr_idx],  patterns.TOTAL_BUCKETS)
+        X_val = build_sparse_X(cols[val_idx], patterns.TOTAL_BUCKETS)
     y_tr, y_val = wdl_black[tr_idx], wdl_black[val_idx]
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
@@ -180,8 +225,8 @@ def main():
           f'range=[{int(w_scaled.min())},{int(w_scaled.max())}]  '
           f'nnz={int((w_scaled != 0).sum())}')
 
-    write_weights(Path(args.out), w_scaled, args.scale)
-    print(f'wrote {args.out}  ({len(w_scaled)} weights, '
+    write_weights(Path(args.out), w_scaled, args.scale, version=out_version)
+    print(f'wrote {args.out}  (v{out_version}, {len(w_scaled)} weights, '
           f'{16 + 4 * len(w_scaled)} bytes)')
 
 
