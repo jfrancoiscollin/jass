@@ -1,0 +1,6 @@
+depth-at-movetime : movetime=1000ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/0154-richer-patterns-distill/artefacts.src/A.pjtw
+    depth avg=19  min=17  max=20  | nodes avg=1381480  knps~1381.48
+  B hc
+    depth avg=20.5556  min=19  max=22  | nodes avg=2346905  knps~2346.91
+  → A reaches -1.55556 plies vs B (positive = A searches deeper for the same time)
