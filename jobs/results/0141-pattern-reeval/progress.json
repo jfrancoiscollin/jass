@@ -1,8 +1,8 @@
 {
   "job_id": "0141-pattern-reeval",
-  "snapshot_at": "2026-06-07T01:01:29+00:00",
+  "snapshot_at": "2026-06-07T01:06:38+00:00",
   "started_at": "2026-06-06T23:20:04+00:00",
-  "elapsed_seconds": 6085,
+  "elapsed_seconds": 6394,
   "artefacts": [
     {
       "name": "build.log",
@@ -121,5 +121,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1    01:41:24  0.0  0.0 bash\n 311454  311452    01:41:24  0.0  0.0 bash\n 314607  311454       12:54 99.9  0.2 jass\n 314608  311454       12:54  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1    01:46:34  0.0  0.0 bash\n 311454  311452    01:46:34  0.0  0.0 bash\n 314607  311454       18:03 99.9  0.2 jass\n 314608  311454       18:03  0.0  0.0 tee\n"
 }
