@@ -1,7 +1,0 @@
-{
-  "job_id": "0156-geometry-ablation",
-  "script": "jobs/queue/0156-geometry-ablation.sh",
-  "pid": 338450,
-  "started_at": "2026-06-07T17:01:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
