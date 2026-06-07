@@ -124,12 +124,19 @@ int run_gen_data_mode(int argc, char** argv) {
     int          play_depth = 4;       // depth used to advance games
     int          eval_depth = 8;       // depth used to label sampled positions
     int          random_open_plies = 4;
+    // Optional seed (argv[4]) so the generator can be sharded across cores
+    // with disjoint streams. Default keeps the historical fixed seed.
+    std::uint64_t seed = 0x5eed5eed5eed5eedULL;
 
     if (argc > 2) {
         int parsed = parse_int_or(argv[2], -1);
         if (parsed > 0) n = parsed;
     }
     if (argc > 3) out_path = argv[3];
+    if (argc > 4) {
+        const long long s = parse_int_or(argv[4], -1);
+        if (s >= 0) seed = static_cast<std::uint64_t>(s);
+    }
 
     std::ofstream f(out_path, std::ios::binary);
     if (!f) {
@@ -145,7 +152,7 @@ int run_gen_data_mode(int argc, char** argv) {
     std::uint32_t count_placeholder = 0;
     f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
 
-    std::mt19937_64 rng(0x5eed5eed5eed5eedULL);
+    std::mt19937_64 rng(seed);
     Engine          e;
     e.use_book(false);
 
