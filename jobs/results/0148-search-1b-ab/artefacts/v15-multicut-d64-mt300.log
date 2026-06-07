@@ -1,0 +1,3 @@
+Benchmark: search-params A=[multicut_min_depth=5,multicut_reduction=4,multicut_moves=6,multicut_cuts=3] vs B=[] on /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin, depth 64, threads 1, movetime_ms 300, 108 games
+Result: A=48 B=54 Draws=6 (total 108)
+A score rate: 0.472222
