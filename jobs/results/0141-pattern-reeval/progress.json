@@ -1,8 +1,8 @@
 {
   "job_id": "0141-pattern-reeval",
-  "snapshot_at": "2026-06-07T00:15:27+00:00",
+  "snapshot_at": "2026-06-07T00:20:46+00:00",
   "started_at": "2026-06-06T23:20:04+00:00",
-  "elapsed_seconds": 3323,
+  "elapsed_seconds": 3642,
   "artefacts": [
     {
       "name": "build.log",
@@ -34,7 +34,7 @@
     },
     {
       "name": "pat-vs-v15-mt.log",
-      "size_bytes": 0
+      "size_bytes": 352
     },
     {
       "name": "pattern-train.log",
@@ -107,7 +107,11 @@
     {
       "name": "shard-7.jnnw",
       "size_bytes": 6742196
+    },
+    {
+      "name": "spsa.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1       55:22  0.0  0.0 bash\n 311454  311452       55:22  0.0  0.0 bash\n 312397  311454       36:43 99.9  0.2 jass\n 312398  311454       36:43  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 311452       1    01:00:41  0.0  0.0 bash\n 311454  311452    01:00:41  0.0  0.0 bash\n 313855  311454       00:49  0.0  0.0 python3\n 313856  311454       00:49  0.0  0.0 tee\n 313869  313855       00:19  100  0.2 jass\n"
 }
