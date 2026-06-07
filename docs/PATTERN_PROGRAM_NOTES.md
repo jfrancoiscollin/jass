@@ -333,6 +333,20 @@ cases << le set de Scan. → plus de bandes/géométries, fenêtres chevauchante
 fenêtres un peu plus grandes (⚠️ 3¹²=531k → 3¹³⁺ explose). **Si scaler les
 cycles plafonne bas, c'est ICI qu'on agit.**
 
+**Levier king-aware** *(nos patterns sont men-only ; rois via PST seulement)*.
+Les rois sont puissants aux dames et leur interaction avec les pions échappe au
+modèle. Deux chemins, du moins cher au plus lourd :
+- **Extras denses king** *(cheap, 0155)* : mobilité des rois, ratio rois/pions,
+  rois actifs/piégés — additif, quasi gratuit, à inclure dans les extras
+  structurels.
+- **Petites tables 5-state king-patterns** *(plus tard)* : ajouter QUELQUES
+  patterns à encodage 5-state (vide/pion-N/roi-N/pion-B/roi-B) **à côté** des 32
+  men-only, sur **petites fenêtres** (5⁸=390k ; 5¹²=244M infaisable). Hybride :
+  contexte-roi là où il compte sans faire exploser les patterns men. Réf
+  d'implémentation base-5 : branche `claude/0121-pattern-jass-variant-C-kings`
+  (PR #186 fermée — module séparé non validé, géométrie dépassée par v4, mais
+  l'`extract_index` 5-state reste consultable).
+
 **Leviers de support** : elastic-net/L1 (élague les buckets-bruit → généralise) ;
 **bitbases 2-6** (finales exactes, complément de Scan — si plafond *en finale*) ;
 **re-tune SPSA** du search pour l'éval améliorée.
