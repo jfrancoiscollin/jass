@@ -1,7 +1,9 @@
 {
   "job_id": "0154-richer-patterns-distill",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T15:56:41+00:00",
+  "ended_at": "2026-06-07T16:45:32+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 336800
+  "artefacts_server_path": "/root/jass/jobs/results/0154-richer-patterns-distill/artefacts.src"
 }

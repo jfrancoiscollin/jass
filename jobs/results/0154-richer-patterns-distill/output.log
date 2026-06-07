@@ -1,0 +1,40 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+labels: /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+v15: /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== build prod + tests (géométrie v4 = 32 patterns) ===
+TESTS PASS
+NUM_PATTERNS 32 TOTAL_BUCKETS 17006112
+
+=== dump-eval-features (extras inchangés=106 ; réutilise 0147 si présent) ===
+feat: /root/jass/jobs/results/0147-scan-eval-full/artefacts.src/clean.feat
+
+=== TRAIN A (32 patterns, material-anchor 1.0, l2=1e-5) ===
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.019841  sign_acc=0.0010
+quant : scale=1000  pat range=[-892,905] ext_mg range=[-3002,3003]
+    n_pat=17006112 HOMMES mg b=+1.02 w=-1.04 | ROIS mg b_moy=+3.00 | PAT |w|max=0.91pu nnz=585828/17006112
+
+=== TRAIN B (32 patterns, material-anchor 1.0, l2=1e-3) ===
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.112588  sign_acc=0.0010
+quant : scale=1000  pat range=[-519,532] ext_mg range=[-3000,3001]
+    n_pat=17006112 HOMMES mg b=+1.00 w=-0.99 | ROIS mg b_moy=+3.00 | PAT |w|max=0.53pu nnz=480984/17006112
+
+=== TRIANGLE vs handcrafted (depth 8) ===
+  A vs hc = 0.75  (baseline 8-pat = 0.444)
+  B vs hc = 0.555556  (baseline 8-pat = 0.444)
+
+=== meilleur (A) vs v15 — GATE MOVETIME (depth 9 + movetime 300) ===
+  A vs v15 : d9=0.138889  mt=0.0833333
+
+==========================================================
+        0154 PATTERNS RICHES (32) — VERDICT
+  A vs hc=0.75  B vs hc=0.555556   (8-pat baseline = 0.444)
+  A vs v15 : d9=0.138889  mt=0.0833333
+                 (8-pat baseline v15 : d9=0.111  mt=0.056)
+  → vs hc >0.444 = la géométrie aide ; vs v15 mt >0.056 = survit au
+    coût vitesse (32 patterns = 4× lookups). Sinon trop lent/sur-appris.
+==========================================================
