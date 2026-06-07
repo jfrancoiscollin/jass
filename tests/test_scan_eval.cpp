@@ -217,6 +217,28 @@ void test_update_all_matches_extract() {
     }
 }
 
+// Structural extras (1st batch) : king mobility (separate), back-rank
+// integrity, advancement. Verify on known positions.
+void test_structural_extras() {
+    std::array<float, NUM_EXTRAS> ex{};
+    // Men on their home back ranks (black row 0, white row 9), not advanced.
+    compute_extras(parse("W:W46,47:B1,2"), ex);
+    JASS_CHECK(ex[EXTRA_BLACK_BACK] == 2.0f);   // black men on row 0
+    JASS_CHECK(ex[EXTRA_WHITE_BACK] == 2.0f);   // white men on row 9
+    JASS_CHECK(ex[EXTRA_BLACK_ADV]  == 0.0f);
+    JASS_CHECK(ex[EXTRA_WHITE_ADV]  == 0.0f);
+    JASS_CHECK(ex[EXTRA_BLACK_KMOB] == 0.0f);   // no kings
+    // Advanced men (near promotion) : black row 8, white row 1.
+    compute_extras(parse("B:W6,7:B43,44"), ex);
+    JASS_CHECK(ex[EXTRA_BLACK_ADV] == 16.0f);   // 2 men × row 8
+    JASS_CHECK(ex[EXTRA_WHITE_ADV] == 16.0f);   // 2 men × (9−1)
+    JASS_CHECK(ex[EXTRA_BLACK_BACK] == 0.0f);
+    // King slide mobility separate, > 0 on an open board.
+    compute_extras(parse("B:WK50:BK22"), ex);
+    JASS_CHECK(ex[EXTRA_BLACK_KMOB] > 0.0f);
+    JASS_CHECK(ex[EXTRA_WHITE_KMOB] > 0.0f);
+}
+
 // evaluate_with_idx(pos, extract_all(pos)) must equal evaluate(pos) (the
 // accumulator path is just a precomputed-index version of the same eval).
 void test_evaluate_with_idx_matches_evaluate() {
@@ -244,6 +266,7 @@ void test_evaluate_with_idx_matches_evaluate() {
 void run_scan_eval_tests() {
     test_update_all_matches_extract();
     test_evaluate_with_idx_matches_evaluate();
+    test_structural_extras();
     test_extras_start_position();
     test_extras_king_pst_one_hot();
     test_evaluate_midgame_uses_mg_bank();
