@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.68s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+king-features : +100 king-PST features (men-patterns + kings ; fit-check, non-jouable)
+features-file : +4 dynamic/global features (mobility, balance ; fit-check, non-jouable)
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=17.215221  iters=200  (85.84s)
+val   : mse=35.388552  sign_acc=0.0015
+quant : scale=1000  range=[-8153,9057]  nnz=161575
+wrote /root/jass/jobs/results/0146-dynamic-features-fitcheck/artefacts.src/menall.pjtw  (v1, 4251632 weights, 17006544 bytes)
