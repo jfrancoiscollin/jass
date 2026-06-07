@@ -116,6 +116,7 @@ add_library(jass_lib STATIC
     src/nnue_server_client.cpp
     src/pattern_network.cpp
     src/pattern_jass_bridge.cpp
+    src/scan_eval.cpp
     pattern_jass/src/pattern.cpp
     pattern_jass/src/weights.cpp
     "${NNUE_DEFAULT_DATA_CPP}"
@@ -163,6 +164,7 @@ add_executable(jass_tests
     tests/test_tournament.cpp
     tests/test_nnue.cpp
     tests/test_hub.cpp
+    tests/test_scan_eval.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)

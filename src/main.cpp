@@ -19,6 +19,7 @@
 #include "nnue_server_client.hpp"
 #include "pattern_jass_bridge.hpp"
 #include "position.hpp"
+#include "scan_eval.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
 
@@ -882,6 +883,92 @@ int run_dump_features_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --eval-position <net.pjtw> <fen> : load an eval (v1/v2 pattern or v3 Scan
+// eval) and print evaluate(pos) for the given Hub FEN. stm-POV centipawns.
+// Used to cross-check the Python trainer prediction against the playable C++
+// eval (numeric consistency of the v3 pipeline).
+// -----------------------------------------------------------------------------
+int run_eval_position_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --eval-position <net.pjtw> <fen>\n";
+        return 1;
+    }
+    std::string err;
+    auto net = jass::load_eval_network(argv[2], &err);
+    if (!net) {
+        std::cerr << "error: cannot load eval from " << argv[2]
+                  << " : " << err << "\n";
+        return 1;
+    }
+    auto pos = Position::from_fen(argv[3]);
+    if (!pos) { std::cerr << "error: bad FEN '" << argv[3] << "'\n"; return 1; }
+    std::cout << net->evaluate(*pos) << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+// --dump-eval-features: read a JNNW dataset and write, per position, the FULL
+// Scan-style "extras" feature vector (jass::scan_eval::NUM_EXTRAS dense
+// features = king PST + material + mobility + balance, black-POV). This is
+// the SINGLE source of truth shared with the playable v3 eval — the trainer
+// (pattern_jass/tools/train.py --scan-eval) consumes this file verbatim, and
+// ScanEvalNetwork::evaluate() recomputes the same vector. Format identical to
+// --dump-features : "FEAT"(4) + count(4) + K(4) + count×K float32.
+// -----------------------------------------------------------------------------
+int run_dump_eval_features_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-eval-features <in.jnnw> <out.feat>\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char magic[4]; in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n"; return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read header\n"; return 1; }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    const std::uint32_t K = static_cast<std::uint32_t>(jass::scan_eval::NUM_EXTRAS);
+    out.write("FEAT", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+    out.write(reinterpret_cast<const char*>(&K), 4);
+
+    constexpr std::size_t RECORD_SZ = 38;
+    char record[RECORD_SZ];
+    std::array<float, jass::scan_eval::NUM_EXTRAS> extras{};
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i << "\n"; return 1;
+        }
+        std::uint64_t bbs[4];
+        std::memcpy(bbs, record, 32);
+
+        Position p{};
+        // Side to move is irrelevant for the position-only extras, but set it
+        // so the Position invariants hold. bbs order: WhiteMan, WhiteKing,
+        // BlackMan, BlackKing (cf JNNW record layout).
+        for (Bitboard b = bbs[0]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) p.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
+
+        jass::scan_eval::compute_extras(p, extras);
+        out.write(reinterpret_cast<const char*>(extras.data()),
+                  sizeof(float) * extras.size());
+    }
+    std::cout << "wrote " << count << " × " << K << " Scan-style extras to "
+              << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --rewrite-scores-with-handcrafted: same as --rewrite-scores-with-nnue
 // but uses the handcrafted `evaluate()` instead of NNUE. Used to compute
 // the per-position handcrafted baseline needed by Scan-style hybrid
@@ -1185,6 +1272,74 @@ int run_benchmark_pattern_vs_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --benchmark-scan-eval : the full Scan-style v3 eval (A) vs NNUE (B), same
+// colour-swap match. Mirror of --benchmark-pattern-vs-nnue but loads the
+// structured phase-split v3 weights (material + king PST + mobility + balance
+// + men patterns, all MG/EG). movetime_ms > 0 is the point — the structured
+// eval is far cheaper than the NNUE forward pass, so it searches deeper.
+// -----------------------------------------------------------------------------
+int run_benchmark_scan_eval_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --benchmark-scan-eval "
+                     "<weights_v3.pjtw> <nnue.bin> "
+                     "[depth=64] [pairs=3] [threads=1] [movetime_ms=300] "
+                     "[scan_spec]\n";
+        return 1;
+    }
+    const char* weights_path = argv[2];
+    const char* nnue_path    = argv[3];
+    const int   depth        = (argc > 4) ? parse_int_or(argv[4], 64) : 64;
+    const int   pairs        = (argc > 5) ? parse_int_or(argv[5], 3) : 3;
+    const int   threads      = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
+    const int   movetime_ms  = (argc > 7) ? parse_int_or(argv[7], 300) : 300;
+    const char* scan_spec    = (argc > 8) ? argv[8] : "";
+
+    std::string err;
+    auto net = jass::scan_eval::load_scan_eval_network(weights_path, &err);
+    if (!net) {
+        std::cerr << "error: cannot load v3 PJTW from " << weights_path
+                  << " : " << err << "\n";
+        return 1;
+    }
+    std::unique_ptr<INetwork> nnue = load_network(nnue_path);
+    if (!nnue) {
+        std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
+        return 1;
+    }
+
+    EngineConfig scan_cfg;
+    scan_cfg.max_depth   = depth;
+    scan_cfg.threads     = threads;
+    scan_cfg.movetime_ms = movetime_ms;
+    scan_cfg.nnue        = net.get();
+    scan_cfg.params      = jass::parse_search_params(scan_spec);
+
+    EngineConfig nnue_cfg;
+    nnue_cfg.max_depth   = depth;
+    nnue_cfg.threads     = threads;
+    nnue_cfg.movetime_ms = movetime_ms;
+    nnue_cfg.nnue        = nnue.get();
+
+    const auto pool = default_opening_pool();
+    const int  total_games = pairs * 2 * static_cast<int>(pool.size());
+    std::cout << "Benchmark: SCAN_EVAL(" << weights_path
+              << ", " << net->count() << " weights, scale=" << net->scale()
+              << ") vs NNUE(" << nnue_path << "), depth " << depth
+              << ", threads " << threads
+              << ", movetime_ms " << movetime_ms
+              << ", " << total_games << " games\n";
+
+    const TournamentResult r = run_tournament(scan_cfg, nnue_cfg, pairs);
+    std::cout << "Result: SCAN_EVAL=" << r.a_wins
+              << " NNUE="             << r.b_wins
+              << " Draws="            << r.draws
+              << " (total "           << r.games << ")\n";
+    const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
+    std::cout << "SCAN_EVAL score rate vs NNUE: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --benchmark-pattern-jass-nnue-skel : Option I — pattern hybride avec
 // NNUE comme squelette (au lieu de handcrafted).
 //   eval_final = NNUE_forward(pos) + pattern_correction(pos)
@@ -1352,7 +1507,7 @@ int run_benchmark_search_params_mode(int argc, char** argv) {
             // pattern as leaf eval (its score distribution differs from the
             // NNUE the constants were tuned for).
             std::string err;
-            net = jass::load_pattern_jass_network(net_path, &err);
+            net = jass::load_eval_network(net_path, &err);
             if (!net) {
                 std::cerr << "error: cannot load PJTW from " << net_path
                           << " : " << err << "\n";
@@ -1745,12 +1900,15 @@ int main(int argc, char** argv) {
         else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
+        else if (a == "--dump-eval-features")       return run_dump_eval_features_mode(argc, argv);
+        else if (a == "--eval-position")            return run_eval_position_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-hybrid")    return run_benchmark_nnue_hybrid_mode(argc, argv);
         else if (a == "--benchmark-search-params")  return run_benchmark_search_params_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
         else if (a == "--benchmark-pattern-vs-nnue") return run_benchmark_pattern_vs_nnue_mode(argc, argv);
+        else if (a == "--benchmark-scan-eval")      return run_benchmark_scan_eval_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
@@ -1850,7 +2008,7 @@ int main(int argc, char** argv) {
             // of an NNUE, so the engine can be benchmarked vs Scan with a
             // pattern eval (the pattern is an INetwork too).
             std::string perr;
-            nnue_owned = jass::load_pattern_jass_network(argv[++i], &perr);
+            nnue_owned = jass::load_eval_network(argv[++i], &perr);
             if (!nnue_owned) {
                 std::cerr << "error: cannot load pattern weights from "
                           << argv[i] << " : " << perr << "\n";

@@ -20,6 +20,7 @@ int main() {
     run_tournament_tests();
     run_nnue_tests();
     run_hub_tests();
+    run_scan_eval_tests();
 
     if (g_failures == 0) {
         std::printf("All %d assertions passed.\n", g_assertions);

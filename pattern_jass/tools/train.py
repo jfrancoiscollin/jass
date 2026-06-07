@@ -44,6 +44,15 @@ import patterns
 WEIGHTS_MAGIC   = 0x57544A50  # "PJTW" little-endian
 WEIGHTS_VERSION = 1
 
+# Full Scan-style structured eval (v3). The dense "extras" vector is produced
+# by `jass --dump-eval-features` and MUST match src/scan_eval.hpp NUM_EXTRAS
+# and its layout exactly (king PST 0..99, men counts 100/101, mobility
+# 102/103, balance 104/105). The trainer consumes that dump verbatim — there
+# is no second implementation here, so the playable eval and the training
+# features are identical by construction.
+WEIGHTS_VERSION_V3 = 3
+EVAL_NUM_EXTRAS    = 106
+
 
 def build_sparse_X(cols: np.ndarray, n_features: int) -> sp.csr_matrix:
     """Each row = exactly NUM_PATTERNS non-zeros at `cols[i]`, value 1."""
@@ -96,10 +105,15 @@ def king_onehot_block(black_kings: np.ndarray,
     return sp.csr_matrix(np.hstack([bk, wk]))                    # (n, 100)
 
 
-def load_feature_file(path: str, n_expected: int) -> np.ndarray:
-    """Load a "FEAT" file from `jass --dump-features` (mobility/balance the
-    static men-patterns can't see). Returns (n, K) float64, z-standardised
-    so the L2 penalty is scale-fair vs the 0/1 pattern features."""
+def load_feature_file(path: str, n_expected: int,
+                      standardise: bool = True) -> np.ndarray:
+    """Load a "FEAT" file from `jass --dump-features` / `--dump-eval-features`.
+    Returns (n, K) float64. For FIT-CHECK use (standardise=True) the columns
+    are z-standardised so the L2 penalty is scale-fair vs the 0/1 pattern
+    features. For a PLAYABLE eval (standardise=False) the RAW values are kept
+    so the learned weights apply to the exact same feature values the C++
+    eval (ScanEvalNetwork) computes — standardising here would silently
+    rescale the eval at inference."""
     raw = Path(path).read_bytes()
     if raw[:4] != b'FEAT':
         raise SystemExit(f'{path}: not a FEAT file')
@@ -108,9 +122,36 @@ def load_feature_file(path: str, n_expected: int) -> np.ndarray:
         raise SystemExit(f'feature count {cnt} != data {n_expected}')
     arr = np.frombuffer(raw, dtype='<f4', offset=12,
                         count=cnt * k).reshape(cnt, k).astype(np.float64)
+    if not standardise:
+        return arr
     std = arr.std(axis=0)
     std[std == 0] = 1.0
     return (arr - arr.mean(axis=0)) / std
+
+
+def build_extras_phased(extras: np.ndarray, wmg: np.ndarray,
+                        weg: np.ndarray) -> sp.csr_matrix:
+    """Phase-split dense extras : [ext*wmg | ext*weg]. Row prediction
+    contributes wmg·(w_ext_mg·x) + weg·(w_ext_eg·x) — the same MG/EG
+    interpolation ScanEvalNetwork::evaluate() applies to the extras."""
+    mg = extras * wmg[:, None]
+    eg = extras * weg[:, None]
+    return sp.csr_matrix(np.hstack([mg, eg]))
+
+
+def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
+                     ext_mg: np.ndarray, ext_eg: np.ndarray,
+                     scale: int) -> None:
+    """PJTW v3 : magic, version=3, scale, n_pat, n_ext, then int32 weights
+    ordered [pat_mg | pat_eg | ext_mg | ext_eg] (cf src/scan_eval.hpp)."""
+    n_pat = len(pat_mg)
+    n_ext = len(ext_mg)
+    assert len(pat_eg) == n_pat and len(ext_eg) == n_ext
+    with open(path, 'wb') as f:
+        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC, WEIGHTS_VERSION_V3,
+                            scale, n_pat, n_ext))
+        for blk in (pat_mg, pat_eg, ext_mg, ext_eg):
+            f.write(blk.astype('<i4').tobytes())
 
 
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
@@ -139,6 +180,101 @@ def write_weights(path: Path, w_int32: np.ndarray, scale: int,
         f.write(struct.pack('<IIII', WEIGHTS_MAGIC, version,
                             len(w_int32), scale))
         f.write(w_int32.astype('<i4').tobytes())
+
+
+def train_scan_eval(args):
+    """Train the full Scan-style phase-split structured eval → PJTW v3.
+
+    Feature vector per position (all interpolated MG/EG by piece count) :
+      [ men patterns (8×12 ternary, sparse) | extras (dense, raw) ]
+    where extras = material + king PST + mobility + balance, dumped by
+    `jass --dump-eval-features` (single source of truth shared with the C++
+    eval). Standalone : the target is the score itself (no skeleton residual).
+    """
+    if not args.eval_features_file:
+        raise SystemExit('--scan-eval requires --eval-features-file '
+                         '(raw extras from `jass --dump-eval-features`)')
+    if args.skeleton_data:
+        print('note: --skeleton-data ignored under --scan-eval '
+              '(standalone eval, target = score)')
+
+    print(f'loading JNNW {args.data}')
+    t0 = time.time()
+    ds = master_loader.load(args.data, max_records=args.max_records)
+    print(f'  {ds.n_records} records  ({time.time() - t0:.2f}s)')
+
+    print('extracting pattern indices (men only)')
+    idx  = patterns.extract_indices(ds.black_men, ds.white_men)
+    cols = patterns.flat_feature_columns(idx)
+
+    print(f'loading raw extras {args.eval_features_file}')
+    extras = load_feature_file(args.eval_features_file, ds.n_records,
+                               standardise=False)
+    if extras.shape[1] != EVAL_NUM_EXTRAS:
+        raise SystemExit(f'extras K={extras.shape[1]} != expected '
+                         f'{EVAL_NUM_EXTRAS} (rebuild with --dump-eval-features)')
+    print(f'  extras shape {extras.shape}  '
+          f'(mean mob b/w={extras[:, 102].mean():.1f}/{extras[:, 103].mean():.1f})')
+
+    # Standalone target = score (STM-POV), reprojected to black-POV.
+    clipped = np.clip(ds.score.astype(np.float64), -args.score_clip, args.score_clip)
+    target_stm = clipped / 100.0
+    y_black = np.where(ds.stm == 1, target_stm, -target_stm)
+    print(f'target=score  clipped±{int(args.score_clip)}cp / 100  '
+          f'std={target_stm.std():.3f}')
+
+    # Game stage : piece count / 40 (matches scan_eval::game_stage).
+    pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
+    wmg = pc / 40.0
+    weg = 1.0 - wmg
+    print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}')
+
+    n = ds.n_records
+    rng = np.random.default_rng(seed=2026)
+    perm = rng.permutation(n)
+    n_val = int(n * args.val_frac)
+    val_idx, tr_idx = perm[:n_val], perm[n_val:]
+    print(f'split : train={len(tr_idx)} val={len(val_idx)}')
+
+    TB = patterns.TOTAL_BUCKETS
+
+    def build(sel):
+        xp = build_sparse_X_phased(cols[sel], wmg[sel], weg[sel], TB)
+        xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
+        return sp.hstack([xp, xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
+
+    X_tr, X_val = build(tr_idx), build(val_idx)
+    y_tr, y_val = y_black[tr_idx], y_black[val_idx]
+    print(f'design : {X_tr.shape[1]} columns '
+          f'(2×{TB} pat + 2×{EVAL_NUM_EXTRAS} ext)')
+
+    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
+    t0 = time.time()
+    w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter)
+    print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
+
+    val_pred = X_val @ w_float
+    val_mse = float(np.mean((val_pred - y_val) ** 2))
+    val_sign_acc = float(np.mean(np.sign(val_pred) == y_val))
+    print(f'val   : mse={val_mse:.6f}  sign_acc={val_sign_acc:.4f}')
+
+    def quant(block):
+        q = np.round(block * args.scale).astype(np.int64)
+        return np.clip(q, -(2 ** 31), 2 ** 31 - 1).astype(np.int32)
+
+    E = EVAL_NUM_EXTRAS
+    pat_mg = quant(w_float[0:TB])
+    pat_eg = quant(w_float[TB:2 * TB])
+    ext_mg = quant(w_float[2 * TB:2 * TB + E])
+    ext_eg = quant(w_float[2 * TB + E:2 * TB + 2 * E])
+    print(f'quant : scale={args.scale}  '
+          f'pat range=[{int(pat_mg.min())},{int(pat_mg.max())}] '
+          f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
+
+    write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale)
+    total = 2 * (TB + E)
+    print(f'wrote {args.out}  (v3, {total} weights, {20 + 4 * total} bytes)')
+    return 0
 
 
 def main():
@@ -178,7 +314,24 @@ def main():
                          'men-patterns cannot see). Appended as standardised '
                          'extra columns to test if DYNAMIC info explains the '
                          'residual. Output .pjtw non-playable.')
+    ap.add_argument('--scan-eval', action='store_true',
+                    help='Train the FULL Scan-style structured eval → PJTW v3 '
+                         '(PLAYABLE). Phase-split men patterns + dense extras '
+                         '(material + king PST + mobility + balance, all '
+                         'MG/EG). Requires --eval-features-file (the raw '
+                         'extras from `jass --dump-eval-features`). Implies '
+                         'phase-split; target is the score as-is (standalone '
+                         'eval, no skeleton residual).')
+    ap.add_argument('--eval-features-file', default=None,
+                    help='RAW "FEAT" file from `jass --dump-eval-features` '
+                         f'({EVAL_NUM_EXTRAS} Scan-style extras). Used with '
+                         '--scan-eval to build the playable v3 eval. Values '
+                         'are kept RAW (not standardised) so the weights apply '
+                         'to the exact features the C++ eval computes.')
     args = ap.parse_args()
+
+    if args.scan_eval:
+        return train_scan_eval(args)
 
     print(f'loading JNNW {args.data}')
     t0 = time.time()
