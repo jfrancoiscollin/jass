@@ -1,7 +1,0 @@
-{
-  "job_id": "0146-dynamic-features-fitcheck",
-  "script": "jobs/queue/0146-dynamic-features-fitcheck.sh",
-  "pid": 321011,
-  "started_at": "2026-06-07T05:50:47+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

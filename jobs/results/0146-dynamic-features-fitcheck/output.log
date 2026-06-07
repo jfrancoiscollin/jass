@@ -1,0 +1,67 @@
+=== host : ubuntu-16gb-hel1-2 ===
+=== build prod (pour --dump-features) ===
+=== dump features (mobilité noir/blanc + balance L/R) sur les positions propres ===
+wrote 1420193 × 4 features to /root/jass/jobs/results/0146-dynamic-features-fitcheck/artefacts.src/clean.feat
+
+=== FIT 1 : men-only ===
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.64s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=18.381475  iters=200  (85.82s)
+val   : mse=38.002802  sign_acc=0.0016
+quant : scale=1000  range=[-13502,13329]  nnz=162048
+wrote /root/jass/jobs/results/0146-dynamic-features-fitcheck/artefacts.src/men.pjtw  (v1, 4251528 weights, 17006128 bytes)
+
+=== FIT 2 : men + mobilité/balance ===
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.65s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+features-file : +4 dynamic/global features (mobility, balance ; fit-check, non-jouable)
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=18.219353  iters=200  (85.98s)
+val   : mse=37.643033  sign_acc=0.0014
+quant : scale=1000  range=[-10809,10718]  nnz=161871
+wrote /root/jass/jobs/results/0146-dynamic-features-fitcheck/artefacts.src/menmob.pjtw  (v1, 4251532 weights, 17006144 bytes)
+
+=== FIT 3 : men + king + mobilité/balance (tout l'addable) ===
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+  shape (1420193, 8) buckets=4251528  (0.68s)
+target=score  range=[-9998,9999]  clipped±5000cp / 100 → piece units  std=7.125
+loading skeleton /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-hc.jnnw
+skeleton std=1.441  residual std=6.539  (corr score↔skel = 0.491)
+split : train=1278174 val=142019
+king-features : +100 king-PST features (men-patterns + kings ; fit-check, non-jouable)
+features-file : +4 dynamic/global features (mobility, balance ; fit-check, non-jouable)
+L-BFGS  l2=1e-05  max_iter=200
+  train_loss=17.215221  iters=200  (85.84s)
+val   : mse=35.388552  sign_acc=0.0015
+quant : scale=1000  range=[-8153,9057]  nnz=161575
+wrote /root/jass/jobs/results/0146-dynamic-features-fitcheck/artefacts.src/menall.pjtw  (v1, 4251632 weights, 17006544 bytes)
+
+==========================================================
+        0146 DYNAMIC-FEATURES FIT-CHECK — VERDICT
+==========================================================
+  men-only              : val_mse=38.002802
+  men + mobilité/balance: val_mse=37.643033
+  men + king + mob/bal  : val_mse=35.388552
+
+  → mobilité/balance : +0.9%   |   tout addable : +6.9%
+
+  → même mobilité+balance+king ne bougent quasi rien le résidu →
+    il est DYNAMIQUE/TACTIQUE profond, qu'aucun pattern statique ne
+    capte → REPIVOT NNUE assumé (il encode ces interactions via la
+    recherche/les couches cachées).
+==========================================================
