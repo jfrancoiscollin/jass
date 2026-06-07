@@ -1,0 +1,7 @@
+{
+  "job_id": "0154-richer-patterns-distill",
+  "script": "jobs/queue/0154-richer-patterns-distill.sh",
+  "pid": 336800,
+  "started_at": "2026-06-07T15:56:41+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
