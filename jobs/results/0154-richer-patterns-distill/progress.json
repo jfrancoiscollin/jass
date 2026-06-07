@@ -1,12 +1,20 @@
 {
   "job_id": "0154-richer-patterns-distill",
-  "snapshot_at": "2026-06-07T16:13:05+00:00",
+  "snapshot_at": "2026-06-07T16:18:15+00:00",
   "started_at": "2026-06-07T15:56:41+00:00",
-  "elapsed_seconds": 984,
+  "elapsed_seconds": 1294,
   "artefacts": [
     {
       "name": "A-train.log",
       "size_bytes": 878
+    },
+    {
+      "name": "A-vs-hc.log",
+      "size_bytes": 266
+    },
+    {
+      "name": "A-vs-v15-d9.log",
+      "size_bytes": 0
     },
     {
       "name": "A.pjtw",
@@ -14,7 +22,15 @@
     },
     {
       "name": "B-train.log",
-      "size_bytes": 0
+      "size_bytes": 878
+    },
+    {
+      "name": "B-vs-hc.log",
+      "size_bytes": 270
+    },
+    {
+      "name": "B.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "build.log",
@@ -29,5 +45,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 336800       1       16:24  0.0  0.0 bash\n 336802  336800       16:24  0.0  0.0 bash\n 337716  336802       06:21  300 41.4 python3\n 337717  336802       06:21  0.0  0.0 tee\n 337718  336802       06:21  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 336800       1       21:34  0.0  0.0 bash\n 336802  336800       21:34  0.0  0.0 bash\n 337910  336802       00:54  100  0.9 jass\n 337911  336802       00:54  0.0  0.0 tee\n"
 }
