@@ -1,0 +1,16 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+labels : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== Phase 0 : deps ===
+
+=== Phase 1 : build prod + tests ===
+--- ctest (consistance Python↔C++ : test_scan_eval) ---
+TESTS FAIL
+[FAIL] /root/jass/tests/test_book.cpp:123: a.save(path)
+[FAIL] /root/jass/tests/test_book.cpp:126: b.load(path)
+[FAIL] /root/jass/tests/test_book.cpp:127: expected b.size() == a.size()
+[FAIL] /root/jass/tests/test_book.cpp:166: b.save(path)
+[FAIL] /root/jass/tests/test_book.cpp:170: e.load_book(path)
+[FAIL] /root/jass/tests/test_nnue.cpp:71: fd >= 0
+6 / 3399 assertions FAILED.
