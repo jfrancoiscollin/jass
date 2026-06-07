@@ -71,6 +71,36 @@ struct SearchParams {
     // Promotion extension (gated). Extend by 1 ply when the move crowns a
     // man (Move::promotes) — these are sharp, tactically dense lines.
     bool ext_promotion = false;
+
+    // --- 1b : raffinements search incrémentaux (gated, neutres par défaut) ---
+
+    // Improving heuristic. Track the node's static eval and compare to the
+    // same-side static eval 2 plies up : "improving" = the position is
+    // getting better for us. When NOT improving we prune harder (LMP fires
+    // earlier, LMR reduces one ply more). Pure modulation of existing knobs.
+    bool use_improving = false;
+
+    // Continuation history. A second history table keyed by the opponent's
+    // previous landing square × our move, accumulated like the main history
+    // on beta cutoffs and added to the quiet-move ordering score. Captures
+    // "after they go there, this reply is good" patterns the flat history
+    // misses. ~+15-30 ELO typical.
+    bool use_conthist = false;
+
+    // Internal Iterative Deepening (gated; iid_min_depth = 0 disables). At a
+    // deep node with no TT move, run a reduced-depth search first to populate
+    // a move to order, instead of searching deep on a blind move order.
+    int iid_min_depth = 0;    // 0 = off
+    int iid_reduction = 2;
+
+    // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
+    // non-PV quiet node, search the first `multicut_moves` moves at reduced
+    // depth; if at least `multicut_cuts` of them fail high, the node almost
+    // certainly fails high — cut. Speculative, hence opt-in.
+    int multicut_min_depth = 0;   // 0 = off
+    int multicut_reduction = 4;
+    int multicut_moves     = 6;
+    int multicut_cuts      = 3;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -106,6 +136,14 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "probcut_margin")       p.probcut_margin       = v;
     else if (key == "probcut_reduction")    p.probcut_reduction    = v;
     else if (key == "ext_promotion")        p.ext_promotion        = (v != 0);
+    else if (key == "use_improving")        p.use_improving        = (v != 0);
+    else if (key == "use_conthist")         p.use_conthist         = (v != 0);
+    else if (key == "iid_min_depth")        p.iid_min_depth        = v;
+    else if (key == "iid_reduction")        p.iid_reduction        = v;
+    else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
+    else if (key == "multicut_reduction")   p.multicut_reduction   = v;
+    else if (key == "multicut_moves")       p.multicut_moves       = v;
+    else if (key == "multicut_cuts")        p.multicut_cuts        = v;
     // unknown key → silently ignored
     return true;
 }

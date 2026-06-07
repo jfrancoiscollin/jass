@@ -112,12 +112,26 @@ depuis rhalbersma/scan) — variante standard = international (matche) :
 **Déclencheur** : si on plafonne spécifiquement en **finale**. La barrière
 est bien plus basse qu'estimé initialement.
 
-### C. Raffinements search incrémentaux  *(général — faible chacun)*
+### C. Raffinements search incrémentaux  *(général — IMPLÉMENTÉS 2026-06-07)*
 
-Manquants vs un top engine : **continuation history (CMH, ~+15-30 ELO)**,
-**IID** (internal iterative deepening), **improving heuristic**, **multi-cut**.
-Faciles à ajouter, gain modeste. À piocher après que le pattern/search de
-base soit validé, si on veut gratter de l'ELO.
+Les 4 briques manquantes vs un top engine sont **codées** dans
+`src/search.cpp`, **gated + neutres par défaut** (l'invariant
+`SearchParams{}` = comportement inchangé est préservé, vérifié par
+`test_1b_defaults_are_behaviour_neutral`) :
+- **continuation history (CMH)** — 2e table d'histoire keyée
+  `[opp_prev_to][from][to]`, ajoutée à l'ordering des coups quiets
+  (`use_conthist`). ~+15-30 ELO typique.
+- **improving heuristic** — eval statique vs 2 plies plus haut ; quand on
+  n'« improve » pas, LMP fire plus tôt + LMR réduit 1 ply de plus
+  (`use_improving`).
+- **IID** — recherche réduite pour obtenir un coup d'ordering quand pas de
+  TT-move (`iid_min_depth`, `iid_reduction`).
+- **multi-cut** — scout les premiers coups à profondeur réduite ; si assez
+  fail-high → cut (`multicut_min_depth`, `multicut_reduction/moves/cuts`).
+
+Toutes ajoutées au set SPSA (toggles ON/OFF + seuil profondeur). Job **0148**
+les A/B isolément (vs défaut, sur v15 + v3, depth + movetime) pour décider
+lesquelles flipper en défaut. Sous-knobs ajustables par spec.
 
 ### Ce qu'on a déjà au niveau de Scan (pas un écart)
 
@@ -185,8 +199,9 @@ re-décide, ces étapes ne le sauveraient pas.
     (v5/v6 : phase-split du squelette ; étendre aux patterns eux-mêmes).
     Re-train sur les labels propres.
 1b. **Raffinements search** (cf §C) : continuation history (CMH), IID,
-    improving heuristic, multi-cut. Gated + ajoutés au set SPSA → tunés
-    **pour le pattern**.
+    improving heuristic, multi-cut. ✅ **FAIT 2026-06-07** — codés gated +
+    neutres par défaut, ajoutés au set SPSA, A/B par 0148 pour flipper les
+    défauts.
 
 > Bitbases (§B) **exclus** de cette vague (trop lourd) — à reconsidérer
 > seulement si on plafonne spécifiquement en finale.
