@@ -125,6 +125,51 @@ base soit validé, si on veut gratter de l'ELO.
 - Géométrie **8 colonnes × 12 cases** (≈ Scan, base-3).
 - Search : alpha-bêta complet + PVS + pruning tuné + Lazy SMP.
 
+## Éval Scan-style complète — IMPLÉMENTÉE (PJTW v3, 2026-06-07)
+
+Brique demandée explicitement : *« tout comme Scan, King pst mobilité split
+phase. Tout codé nickel en C++ peu importe les résultats des evals. »* —
+construite indépendamment du verdict fit-check (0144/0145/0146 : le résidu
+Scan−handcrafted est ~93 % non-fittable par des features statiques, mais
+l'archi est montée quand même, proprement et testée).
+
+**`src/scan_eval.{hpp,cpp}`** — éval linéaire structurée, standalone,
+**tout phase-split MG/EG** (interpolé par `game_stage = min(pièces,40)/40`,
+exactement comme Scan §3) :
+```
+eval_black = wmg·(patterns_mg + extras_mg) + weg·(patterns_eg + extras_eg)
+```
+- **patterns** : 8 bandes × 12 cases ternaires (pattern_jass, men only),
+- **extras (106, dense)** = material (men counts) + **king PST** (one-hot
+  50×2) + **mobilité** (men step + king slide, **bitboard rapide, sans
+  movegen**) + **balance** (L/R men), tout en black-POV.
+
+**Contrat de consistance (clé)** : `compute_extras()` est la **source
+unique** du vecteur extras — appelée à la fois par le dump d'entraînement
+(`jass --dump-eval-features`) et par `ScanEvalNetwork::evaluate()`. Le
+trainer Python (`pattern_jass/tools/train.py --scan-eval`) consomme le dump
+**verbatim** (valeurs RAW, pas de standardisation), donc l'éval jouable et
+les features d'entraînement sont **identiques par construction**. La mobilité
+utilise des shifts bitboard (rapide) → même fonction des deux côtés, donc
+exacte sans devoir matcher `generate_legal_moves`.
+
+**Format PJTW v3** : `magic, version=3, scale, n_pat, n_ext`, puis int32
+`[pat_mg | pat_eg | ext_mg | ext_eg]`. Loader + dispatch (`load_eval_network`
+peeke la version → v3 = ScanEvalNetwork, v1/v2 = PatternJassNetwork). Câblé
+dans `--pattern` (HUB), `--benchmark-search-params` (SPSA) et le nouveau
+`--benchmark-scan-eval`.
+
+**Validation** (faite avant tout gros run) :
+- `tests/test_scan_eval.cpp` : extras (start pos symétrique, king one-hot),
+  interpolation MG/EG, flip de signe stm, round-trip v3, rejet v1.
+- cross-check numérique **Python prédiction == C++ eval** exact sur 10
+  positions (midgame + endgame, W & B au trait) — verrouille layout +
+  indexation patterns + phase + signe + quantification + format.
+
+Job **0147** : entraîne la v3 complète sur les labels propres 1.4M (0141) +
+bench vs v15 (depth + movetime) + SPSA. → étape « ajouter les briques
+manquantes (brique A, §A) » de la roadmap ci-dessous, faite.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
