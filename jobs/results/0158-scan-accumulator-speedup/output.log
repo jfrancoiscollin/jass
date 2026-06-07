@@ -1,0 +1,22 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+net 32-patterns : /root/jass/jobs/results/0154-richer-patterns-distill/artefacts.src/A.pjtw
+
+=== build prod + tests ===
+TESTS PASS
+
+########## VITESSE : depth-at-movetime 0154-A vs hc ##########
+  300ms : ON  knps=2171.04  depth=17.3333
+          OFF knps=1551.42 depth=16.7778
+  1000ms : ON  knps=1995.48  depth=19.6667
+          OFF knps=1381.48 depth=19
+
+########## CORRECTION : 0154-A vs hc, ON vs OFF (doit être identique) ##########
+  ON  rate=0.5   OFF rate=0.5
+
+==========================================================
+        0158 ACCUMULATEUR PATTERN — VERDICT
+  @300ms : knps ON=2171.04 vs OFF=1551.42  | depth ON=17.3333 vs OFF=16.7778
+  @1000ms : knps ON=1995.48 vs OFF=1381.48  | depth ON=19.6667 vs OFF=19
+  correction : ON rate=0.5 == OFF rate=0.5 ?
+  → knps(ON) > knps(OFF) = gain accumulateur ; rates égaux = correct.
+==========================================================

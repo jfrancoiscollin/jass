@@ -1,7 +1,0 @@
-{
-  "job_id": "0158-scan-accumulator-speedup",
-  "script": "jobs/queue/0158-scan-accumulator-speedup.sh",
-  "pid": 339697,
-  "started_at": "2026-06-07T17:53:18+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
