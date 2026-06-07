@@ -1,0 +1,38 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+prior (ancré) : /root/jass/jobs/results/0152-standalone-material-anchor/artefacts.src/A.pjtw
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+SPEC1B='use_conthist=1'  λ=0.7  material-anchor=1.0
+
+=== build prod + tests ===
+TESTS PASS
+
+########## CYCLES TD-LEAF (ancré matériel) ##########
+  prior (config A) vs hc = (rappel 0152) 0.444
+--- itération 1 (gen depth 8, 800 parties × 8 shards) ---
+    val   : mse=48.704938  sign_acc=0.0018
+    → itération 1 vs hc = merged 107215 leaf records → /root/jass/jobs/results/0149-scan-eval-tdleaf-finetune/artefacts.src/it-s2010-leaves.jnnw
+0.0555556
+--- itération 2 (gen depth 8, 800 parties × 8 shards) ---
+    val   : mse=37.704075  sign_acc=0.0018
+    → itération 2 vs hc = merged 106976 leaf records → /root/jass/jobs/results/0149-scan-eval-tdleaf-finetune/artefacts.src/it-s2020-leaves.jnnw
+0.0555556
+--- itération 3 (gen depth 8, 800 parties × 8 shards) ---
+    val   : mse=42.590598  sign_acc=0.0024
+    → itération 3 vs hc = merged 108516 leaf records → /root/jass/jobs/results/0149-scan-eval-tdleaf-finetune/artefacts.src/it-s2030-leaves.jnnw
+0.0555556
+
+final tuné : /root/jass/jobs/results/0149-scan-eval-tdleaf-finetune/artefacts.src/tuned-it3.pjtw
+
+=== bench final vs v15 (depth 9 + movetime 300) ===
+
+==========================================================
+        0149 CYCLE TD-LEAF (standalone ancré) — VERDICT
+==========================================================
+  prior(A) vs hc = 0.444 (0152)
+  itération 1 vs hc = 0.0555556
+  itération 2 vs hc = 0.0555556
+  itération 3 vs hc = 0.0555556
+  FINAL vs v15 : d9=0  mt=0.0555556
+  → si vs hc grimpe >0.5 : le self-play boost le standalone ; continuer.
+  → si plat/baisse : le TD-leaf ne paie pas ici → revoir cible/features.
+==========================================================
