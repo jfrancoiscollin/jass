@@ -96,6 +96,23 @@ def king_onehot_block(black_kings: np.ndarray,
     return sp.csr_matrix(np.hstack([bk, wk]))                    # (n, 100)
 
 
+def load_feature_file(path: str, n_expected: int) -> np.ndarray:
+    """Load a "FEAT" file from `jass --dump-features` (mobility/balance the
+    static men-patterns can't see). Returns (n, K) float64, z-standardised
+    so the L2 penalty is scale-fair vs the 0/1 pattern features."""
+    raw = Path(path).read_bytes()
+    if raw[:4] != b'FEAT':
+        raise SystemExit(f'{path}: not a FEAT file')
+    cnt, k = struct.unpack_from('<II', raw, 4)
+    if cnt != n_expected:
+        raise SystemExit(f'feature count {cnt} != data {n_expected}')
+    arr = np.frombuffer(raw, dtype='<f4', offset=12,
+                        count=cnt * k).reshape(cnt, k).astype(np.float64)
+    std = arr.std(axis=0)
+    std[std == 0] = 1.0
+    return (arr - arr.mean(axis=0)) / std
+
+
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int):
     XT = X.T.tocsr()
@@ -155,6 +172,12 @@ def main():
                          '(the men-only patterns are blind to kings). The '
                          'output .pjtw is then NON-standard (not playable) — '
                          'use only to read val_mse and test if king info helps.')
+    ap.add_argument('--features-file', default=None,
+                    help='FIT-CHECK only : a "FEAT" file from `jass '
+                         '--dump-features` (mobility / balance the static '
+                         'men-patterns cannot see). Appended as standardised '
+                         'extra columns to test if DYNAMIC info explains the '
+                         'residual. Output .pjtw non-playable.')
     args = ap.parse_args()
 
     print(f'loading JNNW {args.data}')
@@ -233,6 +256,13 @@ def main():
         X_val = sp.hstack([X_val, kb[val_idx]], format='csr')
         print(f'king-features : +{kb.shape[1]} king-PST features '
               f'(men-patterns + kings ; fit-check, non-jouable)')
+
+    if args.features_file:
+        ef = sp.csr_matrix(load_feature_file(args.features_file, ds.n_records))
+        X_tr  = sp.hstack([X_tr,  ef[tr_idx]],  format='csr')
+        X_val = sp.hstack([X_val, ef[val_idx]], format='csr')
+        print(f'features-file : +{ef.shape[1]} dynamic/global features '
+              f'(mobility, balance ; fit-check, non-jouable)')
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
     t0 = time.time()
