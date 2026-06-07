@@ -73,10 +73,32 @@ def dband(n):  # true physical down-right diagonal band (2 parallel x 6)
 def aband(n):  # true physical anti-diagonal band
     return _band(n, 1, -1, (0, -2), 6)
 
+def _diag_block(n, df, perp):  # 3 parallel diagonals x length 4 = 12 squares
+    parts = []
+    r0, f0 = coord(n)
+    for k in range(3):
+        start = nof(r0 + perp[0] * k, f0 + perp[1] * k)
+        if start is None:
+            return None
+        seg = _line(start, 1, df, 4)
+        if seg is None:
+            return None
+        parts += seg
+    return sorted(parts) if len(set(parts)) == 12 else None
+
+def dblock(n):   # down-right diagonal block (3 wide x 4 long)
+    return _diag_block(n, 1, (0, 2))
+
+def ablock(n):   # anti-diagonal block
+    return _diag_block(n, -1, (0, -2))
+
 
 def build():
-    """The curated v4 enriched set (~32 patterns), all orientations.
-    The 8 v3 vertical bands are kept verbatim as the first 8 (strict superset)."""
+    """The curated v5 DIAG-ENRICHED set (~44 patterns), all orientations.
+    0156 ablation: diagonals are the most contributive orientation. The pattern
+    accumulator makes a larger set affordable, so v5 keeps v4's 32 verbatim
+    (strict superset) and ADDS diagonal density: 3×4 diagonal BLOCKS in both
+    directions. The 8 v3 vertical bands remain the first 8."""
     pats: list[tuple[list[int], str]] = []
     # V : 8 v3 vertical bands (top rows 0-5, bottom rows 4-9 ; 4 col-shifts each)
     for half, r0 in (("top", 0), ("bot", 4)):
@@ -100,10 +122,28 @@ def build():
     # S : compact 4x3 square blocks
     for i, (r0, c0) in enumerate([(0, 1), (3, 0), (3, 2), (6, 1)]):
         pats.append((sblock(r0, c0), f"sq_{i}"))
-    # validate
+    # v5 ADD : 3×4 diagonal blocks, both directions. Subsample to 4 evenly-
+    # spread blocks per direction (8 total) — adds diagonal density without
+    # blowing up sparsity (53 distinct blocks would over-sparsify 1.4M data).
+    for tag, fn in (("db", dblock), ("ab", ablock)):
+        distinct = []
+        seen = set()
+        for s in range(1, 51):
+            p = fn(s)
+            if p and tuple(p) not in seen:
+                seen.add(tuple(p)); distinct.append(p)
+        n = len(distinct)
+        pick = sorted({(i * n) // 4 for i in range(4)})   # 4 evenly-spread
+        for j, gi in enumerate(pick):
+            pats.append((distinct[gi], f"{tag}_{j}"))
+    # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
+    allseen = set()
     for sqs, name in pats:
         assert sqs and len(sqs) == SIZE and len(set(sqs)) == SIZE \
             and all(1 <= x <= 50 for x in sqs), (name, sqs)
+        t = tuple(sqs)
+        assert t not in allseen, ("duplicate pattern", name)
+        allseen.add(t)
     return pats
 
 
