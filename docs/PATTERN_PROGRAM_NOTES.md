@@ -237,6 +237,32 @@ distillation **mieux adaptée**. Deux branches selon 0151 :
 > fruit d'itérations, pas d'une régression unique. Notre standalone aura sa
 > propre (mais bien plus courte) boucle.
 
+### Petite tête non-linéaire (mini-MLP) — ADDITIF, gated (acté 2026-06-07)
+
+Levier de **capacité** (au-delà du linéaire) : un mini-MLP sur les activations
+de patterns. **Pas rejeté**, mais **additif** : on l'investigue *seulement
+après* avoir bien ajusté le standalone linéaire — jamais à sa place.
+
+⚠️ **Gate « fausse bonne idée » — à vérifier AVANT d'investir.** Le danger : un
+MLP ralentit l'éval → moins de profondeur en time-search → on optimise un
+*depth fixe* puis on se fait éclater en **conditions réelles vs Scan** (où
+c'est la cadence qui compte). Protocole obligatoire :
+
+1. **Profiler** la part de l'éval dans le coût d'un nœud (`JASS_TIME_BREAKDOWN`
+   existe). Éval minoritaire (movegen/make/TT dominent) → marge pour la
+   ralentir sans tuer le NPS. Éval dominante → un MLP coûte directement de la
+   profondeur = danger.
+2. **Chiffrer** le coût du MLP (MACs → ns → impact NPS), en réutilisant le
+   chemin **SIMD int8 (AVX2)** déjà en place pour le garder *cheap*.
+3. **Gate décisif** : bench MLP-éval vs patterns-only **au même MOVETIME**
+   (jamais depth fixe). `--depth-at-movetime` montre explicitement la
+   profondeur perdue. **Ship le MLP UNIQUEMENT s'il gagne en time-search.**
+4. S'il gagne à depth fixe mais **perd en movetime** → fausse bonne idée,
+   **rejet**.
+
+> C'est précisément à ça que servent `--depth-at-movetime` et la discipline
+> « benchs décisifs en movetime » : attraper ce piège dès le départ.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
