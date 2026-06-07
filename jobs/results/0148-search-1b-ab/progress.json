@@ -1,8 +1,8 @@
 {
   "job_id": "0148-search-1b-ab",
-  "snapshot_at": "2026-06-07T10:01:58+00:00",
+  "snapshot_at": "2026-06-07T10:07:02+00:00",
   "started_at": "2026-06-07T08:48:10+00:00",
-  "elapsed_seconds": 4428,
+  "elapsed_seconds": 4732,
   "artefacts": [
     {
       "name": "build.log",
@@ -22,7 +22,7 @@
     },
     {
       "name": "v15-conthist-d64-mt300.log",
-      "size_bytes": 0
+      "size_bytes": 264
     },
     {
       "name": "v15-conthist-d9-mt0.log",
@@ -33,6 +33,10 @@
       "size_bytes": 279
     },
     {
+      "name": "v15-improving-d64-mt300.log",
+      "size_bytes": 0
+    },
+    {
       "name": "v15-improving-d9-mt0.log",
       "size_bytes": 262
     },
@@ -41,5 +45,5 @@
       "size_bytes": 322
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 325955       1    01:13:48  0.0  0.0 bash\n 325957  325955    01:13:48  0.0  0.0 bash\n 326513  325957    01:01:12 99.9  0.1 jass\n 326514  325957    01:01:12  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 325955       1    01:18:52  0.0  0.0 bash\n 325957  325955    01:18:52  0.0  0.0 bash\n 327654  325957       01:21  100  0.1 jass\n 327655  325957       01:21  0.0  0.0 tee\n"
 }
