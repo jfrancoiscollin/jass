@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/0153-tdleaf-wdl-anchor-matrix/artefacts.src/tg-wdl.jnnw
+  106711 records  (0.01s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0153-tdleaf-wdl-anchor-matrix/artefacts.src/feat
+  extras shape (106711, 106)  (mean mob b/w=11.0/11.0)
+target=score  clipped±5000cp / 100  std=38.849
+phase : piece-count mean=18.1  wmg mean=0.452
+split : train=96040 val=10671
+design : 8503268 columns (2×4251528 pat + 2×106 ext)
+anti-forget : L2=0.2 toward prior /root/jass/jobs/results/0152-standalone-material-anchor/artefacts.src/A.pjtw
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=1e-05  max_iter=150  (anchored)
+  train_loss=617.286402  iters=63  (44.66s)
+val   : mse=1214.071408  sign_acc=0.0000
+quant : scale=1000  pat range=[-1011,1017] ext_mg range=[-3025,3016]
+wrote /root/jass/jobs/results/0153-tdleaf-wdl-anchor-matrix/artefacts.src/wdl-A.pjtw  (v3, 8503268 weights, 34013092 bytes)

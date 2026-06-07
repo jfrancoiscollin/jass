@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0153-tdleaf-wdl-anchor-matrix/artefacts.src/wdl-A.pjtw, 8503268 weights, scale=1000) vs NNUE(hc), depth 8, threads 1, movetime_ms 0, 54 games
+Result: SCAN_EVAL=18 NNUE=36 Draws=0 (total 54)
+SCAN_EVAL score rate vs NNUE: 0.333333
