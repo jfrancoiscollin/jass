@@ -1,0 +1,81 @@
+{
+  "job_id": "0153-tdleaf-wdl-anchor-matrix",
+  "snapshot_at": "2026-06-07T15:45:45+00:00",
+  "started_at": "2026-06-07T15:40:23+00:00",
+  "elapsed_seconds": 322,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 6503
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 114
+    },
+    {
+      "name": "feat",
+      "size_bytes": 45245476
+    },
+    {
+      "name": "leaves.jnnw",
+      "size_bytes": 4055026
+    },
+    {
+      "name": "leaves.jnnw.games",
+      "size_bytes": 5042
+    },
+    {
+      "name": "td-A-train.log",
+      "size_bytes": 983
+    },
+    {
+      "name": "td-A-vs-hc.log",
+      "size_bytes": 273
+    },
+    {
+      "name": "td-A.pjtw",
+      "size_bytes": 34013092
+    },
+    {
+      "name": "td-noA-train.log",
+      "size_bytes": 876
+    },
+    {
+      "name": "td-noA-vs-hc.log",
+      "size_bytes": 275
+    },
+    {
+      "name": "td-noA.pjtw",
+      "size_bytes": 34013092
+    },
+    {
+      "name": "td07.log",
+      "size_bytes": 151
+    },
+    {
+      "name": "td10.log",
+      "size_bytes": 152
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "tg-td.jnnw",
+      "size_bytes": 4055026
+    },
+    {
+      "name": "tg-wdl.jnnw",
+      "size_bytes": 4055026
+    },
+    {
+      "name": "wdl-noA-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 336119       1       05:22  0.0  0.0 bash\n 336121  336119       05:22  0.0  0.0 bash\n 336563  336121       01:09  582  8.1 python3\n"
+}
