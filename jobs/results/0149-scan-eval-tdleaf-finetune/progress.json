@@ -1,0 +1,69 @@
+{
+  "job_id": "0149-scan-eval-tdleaf-finetune",
+  "snapshot_at": "2026-06-07T14:54:05+00:00",
+  "started_at": "2026-06-07T14:48:53+00:00",
+  "elapsed_seconds": 312,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 6503
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "it-s2010-dump.log",
+      "size_bytes": 127
+    },
+    {
+      "name": "it-s2010-td.log",
+      "size_bytes": 158
+    },
+    {
+      "name": "it-s2010-train.log",
+      "size_bytes": 888
+    },
+    {
+      "name": "it-s2010-vs-hc.log",
+      "size_bytes": 279
+    },
+    {
+      "name": "it-s2020-dump.log",
+      "size_bytes": 127
+    },
+    {
+      "name": "it-s2020-leaves.jnnw",
+      "size_bytes": 4065096
+    },
+    {
+      "name": "it-s2020-leaves.jnnw.games",
+      "size_bytes": 5042
+    },
+    {
+      "name": "it-s2020-td.log",
+      "size_bytes": 158
+    },
+    {
+      "name": "it-s2020-tg.feat",
+      "size_bytes": 45357836
+    },
+    {
+      "name": "it-s2020-tg.jnnw",
+      "size_bytes": 4065096
+    },
+    {
+      "name": "it-s2020-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "tuned-it1.pjtw",
+      "size_bytes": 34013092
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 334814       1       05:11  0.0  0.0 bash\n 334816  334814       05:11  0.0  0.0 bash\n 335240  334816       02:01  0.0  0.0 bash\n 335258  335240       01:24  586  8.1 python3\n"
+}
