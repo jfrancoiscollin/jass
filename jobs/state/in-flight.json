@@ -1,7 +1,0 @@
-{
-  "job_id": "0144-phase-split-fitcheck",
-  "script": "jobs/queue/0144-phase-split-fitcheck.sh",
-  "pid": 320150,
-  "started_at": "2026-06-07T05:09:56+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
