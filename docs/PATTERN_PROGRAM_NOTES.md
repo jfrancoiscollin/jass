@@ -112,6 +112,26 @@ depuis rhalbersma/scan) — variante standard = international (matche) :
 **Déclencheur** : si on plafonne spécifiquement en **finale**. La barrière
 est bien plus basse qu'estimé initialement.
 
+#### Équité du bench vs Scan (IMPORTANT — acté 2026-06-07)
+
+Tant qu'on n'a pas nos bitbases, bencher contre **Scan-avec-bitbases** est
+inéquitable : ça mélange l'écart éval+search et l'avantage *données de
+finale*. Protocole à **deux passes**, contrôlé par `--scan-bb-size` :
+
+| Passe | `--scan-bb-size` | Mesure |
+|---|---|---|
+| **Équitable** (défaut, 0143) | `0` | parité **éval+search** pure — *le* test honnête |
+| **Handicap** (plus tard) | `6` | ce que les bitbases nous coûtent → vaut-il le coup |
+
+`calibrate_vs_scan.py` envoie désormais `set-param bb-size` **explicitement**
+(même à 0) → on ne dépend plus du défaut du `scan.ini` ni de la présence des
+fichiers ; le bench **logue** le réglage (auditable). NB : les fichiers
+bitbases (~706 Mo) **ne sont PAS** dans le repo `rhalbersma/scan` (un ancien
+commentaire du code le prétendait à tort) — donc la passe handicap n'a d'effet
+qu'une fois ces fichiers téléchargés. Notre côté n'a qu'un KvK/KKvK trivial
+(négligeable), donc la passe équitable est bien « éval+search contre
+éval+search ».
+
 ### C. Raffinements search incrémentaux  *(général — IMPLÉMENTÉS 2026-06-07)*
 
 Les 4 briques manquantes vs un top engine sont **codées** dans

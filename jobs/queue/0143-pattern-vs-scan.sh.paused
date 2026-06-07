@@ -34,14 +34,19 @@ SCAN_DIR=/root/jass/.scan
 [ -x "$SCAN_DIR/scan_linux" ] || { rm -rf "$SCAN_DIR"; git clone --depth 1 https://github.com/rhalbersma/scan "$SCAN_DIR"; chmod +x "$SCAN_DIR/scan_linux"; }
 SCAN="$SCAN_DIR/scan_linux"
 
+# FAIRNESS (cf docs/PATTERN_PROGRAM_NOTES.md §B) : tant qu'on n'a pas nos
+# bitbases 2-6, on bench Scan SANS les siennes (--scan-bb-size 0, explicite →
+# garanti par calibrate_vs_scan), pour isoler éval+search. Le bench "handicap"
+# (Scan avec bb-size=6) ne sera lancé QUE quand on aura téléchargé/implémenté
+# les bitbases — il chiffrera alors ce que la brique finale nous coûte.
 run () {  # $1=label $2=log ; shift 2 -> extra
     local label="$1"; local log="$2"; shift 2
     echo; echo "=== $label ==="
     python3 tools/calibrate_vs_scan.py --jass /root/jass/build-prod/jass --scan "$SCAN" \
-        --jass-pattern "$PAT" --pairs 3 "$@" 2>&1 | tee "$log"
+        --jass-pattern "$PAT" --pairs 3 --scan-bb-size 0 "$@" 2>&1 | tee "$log"
 }
-run "A. pattern vs Scan, movetime 0.5s (LE bar)" "$ART/A-mt500.log"  --movetime 0.5 --jass-threads 1
-run "B. pattern vs Scan, depth 10 (éval prof. égale)" "$ART/B-d10.log" --depth 10 --jass-threads 1
+run "A. pattern vs Scan, movetime 0.5s (LE bar, FAIR bb-off)" "$ART/A-mt500.log"  --movetime 0.5 --jass-threads 1
+run "B. pattern vs Scan, depth 10 (éval prof. égale, FAIR bb-off)" "$ART/B-d10.log" --depth 10 --jass-threads 1
 
 ext () { grep -oE 'score rate[^0-9]*[0-9.]+' "$1" 2>/dev/null | grep -oE '[0-9.]+$' | head -1; }
 illc () { grep -cE 'illegal move' "$1" 2>/dev/null || echo 0; }
