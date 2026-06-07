@@ -6,6 +6,7 @@
 
 #include <cstdio>
 #include <iostream>
+#include <random>
 #include <string>
 
 static int g_failed = 0;
@@ -216,6 +217,36 @@ void test_eval_pattern_one_hot() {
     REQUIRE_EQ(eval_pattern(Bitboard{1} << 0, 0, w.data()), std::int64_t{0});
 }
 
+void test_update_all_matches_extract() {
+    // Incremental update_all(before→after) must equal a from-scratch
+    // extract_all(after), for ARBITRARY men reconfigurations (stronger than a
+    // single move). Random disjoint black/white men placements.
+    std::mt19937_64 rng(0xC0FFEEu);
+    auto gen = [&](Bitboard& bm, Bitboard& wm) {
+        bm = 0; wm = 0;
+        for (int b = 0; b < 50; ++b) {
+            const unsigned r = static_cast<unsigned>(rng() % 3u);
+            if      (r == 1) bm |= Bitboard{1} << b;
+            else if (r == 2) wm |= Bitboard{1} << b;
+        }
+    };
+    for (int trial = 0; trial < 3000; ++trial) {
+        Bitboard bm0, wm0, bm1, wm1;
+        gen(bm0, wm0); gen(bm1, wm1);
+        std::array<std::uint32_t, NUM_PATTERNS> idx{}, ref{};
+        extract_all(bm0, wm0, idx);            // before
+        update_all(bm0, wm0, bm1, wm1, idx);   // incremental → after
+        extract_all(bm1, wm1, ref);            // from scratch after
+        for (std::size_t i = 0; i < NUM_PATTERNS; ++i) REQUIRE_EQ(idx[i], ref[i]);
+    }
+    // No-op update (before == after) must leave indices untouched.
+    Bitboard bm, wm; gen(bm, wm);
+    std::array<std::uint32_t, NUM_PATTERNS> a{}, b{};
+    extract_all(bm, wm, a); b = a;
+    update_all(bm, wm, bm, wm, a);
+    for (std::size_t i = 0; i < NUM_PATTERNS; ++i) REQUIRE_EQ(a[i], b[i]);
+}
+
 }  // namespace
 
 int main() {
@@ -230,6 +261,7 @@ int main() {
     test_weights_loader_bad_magic();
     test_eval_pattern_zero_weights();
     test_eval_pattern_one_hot();
+    test_update_all_matches_extract();
 
     std::cerr << "passed: " << g_passed << "  failed: " << g_failed << '\n';
     return g_failed == 0 ? 0 : 1;
