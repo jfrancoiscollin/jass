@@ -303,27 +303,37 @@ def train_scan_eval(args):
           f'(2×{TB} pat + 2×{EVAL_NUM_EXTRAS} ext)')
 
     n_cols = X_tr.shape[1]
-    prior = None
-    anchor = args.anchor_l2
-    if args.material_anchor > 0:
-        # Standalone FIX (cf 0151): pin material extras to sane piece-units so
-        # the men-count↔patterns collinearity can't scramble material's sign.
-        prior, anchor = material_anchor(n_cols, TB, EVAL_NUM_EXTRAS,
-                                        args.material_anchor,
-                                        man_pu=args.man_pu, king_pu=args.king_pu)
-        print(f'material-anchor : strength={args.material_anchor} '
-              f'man=±{args.man_pu} king=±{args.king_pu} '
-              f'(pinned columns={int((anchor>0).sum())})')
-    elif args.anchor_weights:
-        prior, pscale, pnp, pne = load_v3_weights_float(args.anchor_weights)
+    # Anchors COMBINE (per-column): a uniform anti-forgetting pull toward a v3
+    # prior (--anchor-weights, keeps a TD/WDL re-fit from drifting away from a
+    # known-good model — cf the 0149 collapse) PLUS a strong per-column pin of
+    # the material extras to sane piece-units (--material-anchor, cf 0151). The
+    # material overlay overrides the uniform anchor on the material columns.
+    prior  = np.zeros(n_cols, dtype=np.float64)
+    anchor = np.zeros(n_cols, dtype=np.float64)
+    if args.anchor_weights:
+        wprior, pscale, pnp, pne = load_v3_weights_float(args.anchor_weights)
         if pnp != TB or pne != EVAL_NUM_EXTRAS:
             raise SystemExit(f'anchor shape ({pnp},{pne}) != ({TB},{EVAL_NUM_EXTRAS})')
-        print(f'anchor : L2={args.anchor_l2} toward prior {args.anchor_weights}')
+        prior = np.asarray(wprior, dtype=np.float64).copy()
+        anchor[:] = args.anchor_l2
+        print(f'anti-forget : L2={args.anchor_l2} toward prior {args.anchor_weights}')
+    if args.material_anchor > 0:
+        mprior, manchor = material_anchor(n_cols, TB, EVAL_NUM_EXTRAS,
+                                          args.material_anchor,
+                                          man_pu=args.man_pu, king_pu=args.king_pu)
+        mask = manchor > 0
+        prior[mask] = mprior[mask]; anchor[mask] = manchor[mask]
+        print(f'material-anchor : strength={args.material_anchor} '
+              f'man=±{args.man_pu} king=±{args.king_pu} '
+              f'(pinned columns={int(mask.sum())})')
+    use_anchor = bool(np.any(anchor > 0.0))
 
-    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}')
+    print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
+          f'{"  (anchored)" if use_anchor else "  (pure)"}')
     t0 = time.time()
     w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
-                                              prior=prior, anchor_l2=anchor)
+                                              prior=prior if use_anchor else None,
+                                              anchor_l2=anchor)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     val_pred = X_val @ w_float
