@@ -1,0 +1,41 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+32-pat (0154-A) : /root/jass/jobs/results/0154-richer-patterns-distill/artefacts.src/A.pjtw
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== build prod ===
+TESTS PASS
+
+########## movetime = 300ms ##########
+--- 32-patterns vs handcrafted ---
+    depth avg=16.7778  min=16  max=18  | nodes avg=464856  knps~1549.52
+    depth avg=17.5556  min=16  max=19  | nodes avg=701053  knps~2336.85
+  → A reaches -0.777778 plies vs B (positive = A searches deeper for the same time)
+--- v15 (NNUE incrémental) vs handcrafted ---
+    depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+    depth avg=17.5556  min=16  max=19  | nodes avg=702987  knps~2343.29
+  → A reaches -3.33333 plies vs B (positive = A searches deeper for the same time)
+--- 32-patterns vs v15 ---
+    depth avg=16.7778  min=16  max=18  | nodes avg=464514  knps~1548.38
+    depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+  → A reaches 2.55556 plies vs B (positive = A searches deeper for the same time)
+
+########## movetime = 1000ms ##########
+--- 32-patterns vs handcrafted ---
+    depth avg=19  min=17  max=20  | nodes avg=1383528  knps~1383.53
+    depth avg=20.5556  min=19  max=22  | nodes avg=2346905  knps~2346.91
+  → A reaches -1.55556 plies vs B (positive = A searches deeper for the same time)
+--- v15 (NNUE incrémental) vs handcrafted ---
+    depth avg=17.5556  min=16  max=19  | nodes avg=1430576  knps~1430.58
+    depth avg=20.5556  min=19  max=22  | nodes avg=2346792  knps~2346.79
+  → A reaches -3 plies vs B (positive = A searches deeper for the same time)
+--- 32-patterns vs v15 ---
+    depth avg=19  min=17  max=20  | nodes avg=1387852  knps~1387.85
+    depth avg=17.5556  min=16  max=19  | nodes avg=1430007  knps~1430.01
+  → A reaches 1.44444 plies vs B (positive = A searches deeper for the same time)
+
+==========================================================
+        0157 DÉBIT D'ÉVAL — LECTURE
+  Comparer knps : 32-pat (recompute) vs hc vs v15 (incrémental).
+  Grand écart 32-pat << v15 en knps = l'accumulateur pattern vaut le coup.
+  Petit écart = l'éval n'est pas le goulot → autre levier.
+==========================================================

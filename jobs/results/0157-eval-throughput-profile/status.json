@@ -1,7 +1,9 @@
 {
   "job_id": "0157-eval-throughput-profile",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T17:27:05+00:00",
+  "ended_at": "2026-06-07T17:32:25+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 339152
+  "artefacts_server_path": "/root/jass/jobs/results/0157-eval-throughput-profile/artefacts.src"
 }
