@@ -1,8 +1,8 @@
 {
   "job_id": "0152-standalone-material-anchor",
-  "snapshot_at": "2026-06-07T14:28:05+00:00",
+  "snapshot_at": "2026-06-07T14:33:15+00:00",
   "started_at": "2026-06-07T14:02:25+00:00",
-  "elapsed_seconds": 1540,
+  "elapsed_seconds": 1850,
   "artefacts": [
     {
       "name": "A-train.log",
@@ -53,5 +53,5 @@
       "size_bytes": 292
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 333648       1       25:40  0.0  0.0 bash\n 333650  333648       25:40  0.0  0.0 bash\n 334205  333650       17:45 99.9  0.6 jass\n 334206  333650       17:45  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 333648       1       30:50  0.0  0.0 bash\n 333650  333648       30:50  0.0  0.0 bash\n 334205  333650       22:55 99.9  0.6 jass\n 334206  333650       22:55  0.0  0.0 tee\n"
 }
