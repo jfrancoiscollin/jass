@@ -66,19 +66,19 @@ void test_network_save_load_roundtrip() {
     const Position p = Position::start_position();
     const int before = net.evaluate(p);
 
-    char tmpl[] = "/tmp/jass-nnue-XXXXXX";
-    int fd = ::mkstemp(tmpl);
+    std::string tmpl = jass_tmp_template("jass-nnue");  // honour $TMPDIR
+    int fd = ::mkstemp(tmpl.data());
     JASS_CHECK(fd >= 0);
     if (fd < 0) return;
     ::close(fd);
 
-    JASS_CHECK(net.save(tmpl));
+    JASS_CHECK(net.save(tmpl.c_str()));
 
     LinearNetwork loaded;
-    JASS_CHECK(loaded.load(tmpl));
+    JASS_CHECK(loaded.load(tmpl.c_str()));
     JASS_CHECK_EQ(loaded.evaluate(p), before);
 
-    std::remove(tmpl);
+    std::remove(tmpl.c_str());
 }
 
 void test_network_load_rejects_missing_file() {
