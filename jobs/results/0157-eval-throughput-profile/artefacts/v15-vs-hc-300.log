@@ -1,0 +1,6 @@
+depth-at-movetime : movetime=300ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+    depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+  B hc
+    depth avg=17.5556  min=16  max=19  | nodes avg=702987  knps~2343.29
+  → A reaches -3.33333 plies vs B (positive = A searches deeper for the same time)
