@@ -1,0 +1,10 @@
+input : /root/jass/jobs/results/0131-phase3-scan-bootstrap-full/artefacts.src/master-sample-1500K.jnnw (1500000 records, processing 187500 from offset 187500, drop_skipped=True)
+  20000/187500  (10.7%)  rate=195.2 pos/s  eta=14.3 min  written=18941 skipped=1059
+  40000/187500  (21.3%)  rate=200.1 pos/s  eta=12.3 min  written=37844 skipped=2156
+  60000/187500  (32.0%)  rate=200.4 pos/s  eta=10.6 min  written=56765 skipped=3235
+  100000/187500  (53.3%)  rate=199.3 pos/s  eta=7.3 min  written=94597 skipped=5403
+  120000/187500  (64.0%)  rate=198.4 pos/s  eta=5.7 min  written=113590 skipped=6410
+  140000/187500  (74.7%)  rate=198.1 pos/s  eta=4.0 min  written=132480 skipped=7520
+  160000/187500  (85.3%)  rate=197.6 pos/s  eta=2.3 min  written=151445 skipped=8555
+  180000/187500  (96.0%)  rate=194.7 pos/s  eta=0.6 min  written=170467 skipped=9533
+wrote /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/shard-1.jnnw (177579 records written, 9921 skipped / 187500 processed)
