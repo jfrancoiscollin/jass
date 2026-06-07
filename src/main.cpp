@@ -1313,10 +1313,17 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
                   << " : " << err << "\n";
         return 1;
     }
-    std::unique_ptr<INetwork> nnue = load_network(nnue_path);
-    if (!nnue) {
-        std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
-        return 1;
+    // Opponent: an NNUE .bin, or "hc"/"none" for the handcrafted eval (used
+    // to place the v3 relative to the handcrafted baseline it replaced).
+    const std::string opp{nnue_path};
+    const bool opp_hc = (opp == "hc" || opp == "none" || opp == "-");
+    std::unique_ptr<INetwork> nnue;
+    if (!opp_hc) {
+        nnue = load_network(nnue_path);
+        if (!nnue) {
+            std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
+            return 1;
+        }
     }
 
     EngineConfig scan_cfg;
