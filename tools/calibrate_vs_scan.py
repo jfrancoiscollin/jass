@@ -327,17 +327,26 @@ class ScanEngine(EngineProc):
         self._read_until(lambda l: l.startswith("wait"))
         if no_book:
             self._send("set-param name=book value=false")
-        if bb_size > 0:
-            # Enable Scan's endgame bitbases. value=6 covers up to 6 pieces,
-            # value=7 covers up to 7. Scan ships the bitbase data in the
-            # `data/` directory of the rhalbersma/scan repo so no extra
-            # download is needed. Used for the "fair-comparison" calibrate
-            # — without this flag, Scan plays endgames without any
-            # tablebase help, which is asymmetric vs jass's built-in
-            # KvK/KKvK retrograde-analysis bitbase.
-            self._send(f"set-param name=bb-size value={bb_size}")
+        # Set bb-size EXPLICITLY (never inherit scan.ini's default) so the
+        # comparison is reproducible and auditable, regardless of what the
+        # shipped scan.ini says or whether bitbase files happen to be present:
+        #   bb_size == 0 → Scan plays endgames with NO tablebase help. This is
+        #     the FAIR eval+search comparison vs jass (which has only a trivial
+        #     built-in KvK/KKvK bitbase — negligible).
+        #   bb_size >= 2 → Scan uses its 2..N-piece bitbases ("full handicap").
+        #     NB the bitbase data is NOT bundled in the rhalbersma/scan git
+        #     repo — it's a separate ~706 MiB download (hjetten's site), so
+        #     bb_size>0 only has effect once those files are installed.
+        self._send(f"set-param name=bb-size value={bb_size}")
         self._send("init")
-        self._read_until(lambda l: l.startswith("ready"))
+        init_lines = self._read_until(lambda l: l.startswith("ready"))
+        # Make the bench log show exactly what was configured/loaded.
+        for ln in init_lines:
+            if ln and not ln.startswith("ready"):
+                print(f"  [{self.label} init] {ln}")
+        print(f"  [{self.label}] bb-size={bb_size} "
+              + ("(no bitbases — FAIR comparison)" if bb_size == 0
+                 else "(WITH bitbases — handicap comparison)"))
 
     def new_game(self) -> None:
         self._send("new-game")
