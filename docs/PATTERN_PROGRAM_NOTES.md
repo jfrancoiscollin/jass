@@ -206,17 +206,28 @@ re-décide, ces étapes ne le sauveraient pas.
 > Bitbases (§B) **exclus** de cette vague (trop lourd) — à reconsidérer
 > seulement si on plafonne spécifiquement en finale.
 
-### Étape 2 — Fine-tune + boost en self-play
+### Étape 2 — Fine-tune + boost en self-play  *(infra prête, job 0149)*
 
-Sur l'archi **enrichie** (pattern phase-split + search amélioré) :
-- relancer la boucle **TD-leaf self-play** avec plus de volume/itérations
-  (le « boost »),
-- **re-tuner les constantes** (SPSA) pour la nouvelle archi (les optima
-  changent quand l'éval/le search changent),
-- re-bench vs v15 puis **vs Scan** (0143).
+Sur l'archi **enrichie** (v3 phase-split + search 1b), TD-leaf(λ) self-play
+**search-aware** par-dessus le prior distillé (0147). Infra réutilisée :
+`--gen-tdleaf` (rendu v3-capable + movetime + search-spec) → `td_leaf_targets.py`
+(λ-return) → `--dump-eval-features` → `train.py --scan-eval`. La régression
+linéaire re-fit sur les cibles bootstrappées = 1 pas de TD-leaf ; itérer.
 
-Itérer 1↔2 si gain. L'objectif final reste : pattern alpha-bêta qui tient
-le plus possible face à Scan en time-search.
+Décisions actées (2026-06-07) :
+- **2 bras comparés** : *pur* (re-fit libre) vs *ancré-Scan* (L2 des poids
+  vers le prior, `--anchor-weights/--anchor-l2`, anti-oubli). Le bench vs v15
+  tranche.
+- **budget mixte** : itérations courtes (depth) pour dégrosser, puis
+  profondes (movetime, la v3 est rapide) pour affiner.
+- **1b en génération** = briques validées par 0148 (cohérence search/train).
+
+Puis **re-tuner les constantes** (SPSA) pour l'archi finale, re-bench vs v15
+puis **vs Scan** (0143). Itérer 1↔2 si gain. Objectif : éval alpha-bêta qui
+tient le plus possible face à Scan en time-search.
+
+> Séquencement : 0147 (prior) → 0148 (quelles 1b) → 0149 (TD-leaf pur vs
+> ancré) → SPSA archi finale → vs Scan.
 
 ## Distillation de Scan : pourquoi ça a échoué, et quand la re-tester
 

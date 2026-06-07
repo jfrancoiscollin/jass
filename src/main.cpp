@@ -537,8 +537,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 // -----------------------------------------------------------------------------
 int run_gen_tdleaf_mode(int argc, char** argv) {
     if (argc < 3) {
-        std::cerr << "usage: jass --gen-tdleaf <weights.pjtw> [n_games=2000] "
-                     "[depth=8] [out=tdleaf.jnnw] [max_plies=200] [seed=1]\n";
+        std::cerr << "usage: jass --gen-tdleaf <weights.pjtw|v3> [n_games=2000] "
+                     "[depth=8] [out=tdleaf.jnnw] [max_plies=200] [seed=1] "
+                     "[movetime_ms=0] [search_spec]\n"
+                     "  Loads any eval (pattern v1/v2 or Scan v3). With "
+                     "movetime_ms>0 the budget is wall-time (depth becomes a "
+                     "cap). search_spec enables the 1b search bricks during "
+                     "generation (search-aware TD-leaf).\n";
         return 1;
     }
     const char* weights_path = argv[2];
@@ -548,11 +553,14 @@ int run_gen_tdleaf_mode(int argc, char** argv) {
     const int   max_plies = (argc > 6) ? parse_int_or(argv[6], 200)  : 200;
     const std::uint64_t seed = (argc > 7)
         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+    const int   movetime_ms = (argc > 8) ? parse_int_or(argv[8], 0) : 0;
+    const char* search_spec = (argc > 9) ? argv[9] : "";
+    const SearchParams gen_params = jass::parse_search_params(search_spec);
 
     std::string err;
-    auto pjn = jass::load_pattern_jass_network(weights_path, &err);
+    auto pjn = jass::load_eval_network(weights_path, &err);
     if (!pjn) {
-        std::cerr << "error: cannot load PJTW from " << weights_path
+        std::cerr << "error: cannot load eval from " << weights_path
                   << " : " << err << "\n";
         return 1;
     }
@@ -596,8 +604,10 @@ int run_gen_tdleaf_mode(int argc, char** argv) {
             if (halfmove >= FIFTY_MOVE_PLIES) { result = 0; terminated = true; break; }
 
             SearchLimits lim;
-            lim.max_depth = depth;
-            lim.nnue      = pjn.get();
+            lim.max_depth   = depth;
+            lim.movetime_ms = movetime_ms;
+            lim.nnue        = pjn.get();
+            lim.params      = gen_params;
             const SearchResult r = e.search(lim);
 
             // Walk the PV to the leaf the eval was effectively read at.
