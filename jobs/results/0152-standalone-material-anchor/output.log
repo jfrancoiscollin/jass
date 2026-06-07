@@ -1,0 +1,37 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+labels: /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+v15: /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+=== build prod + tests ===
+TESTS PASS
+
+=== dump-eval-features (réutilise 0147 si présent) ===
+feat: /root/jass/jobs/results/0147-scan-eval-full/artefacts.src/clean.feat
+
+=== TRAIN A (material-anchor 1.0, l2=1e-5) ===
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.788807  sign_acc=0.0010
+quant : scale=1000  pat range=[-1012,1012] ext_mg range=[-3003,3003]
+wrote /root/jass/jobs/results/0152-standalone-material-anchor/artefacts.src/A.pjtw  (v3, 8503268 weights, 34013092 bytes)
+    HOMMES mg b=+1.03 w=-1.03 | ROIS mg b_moy=+3.00 | PAT |w|max=1.01pu nnz=129431
+
+=== TRAIN B (material-anchor 1.0, l2=1e-3) ===
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.948852  sign_acc=0.0009
+quant : scale=1000  pat range=[-543,540] ext_mg range=[-2999,3000]
+wrote /root/jass/jobs/results/0152-standalone-material-anchor/artefacts.src/B.pjtw  (v3, 8503268 weights, 34013092 bytes)
+    HOMMES mg b=+1.03 w=-1.02 | ROIS mg b_moy=+3.00 | PAT |w|max=0.54pu nnz=109221
+
+=== TRIANGLE : chaque config vs handcrafted (depth 8) ===
+  A vs hc = 0.444444
+  B vs hc = 0.333333
+  v15 vs hc = 1
+
+=== meilleur (A) vs v15 (depth 9 + movetime 300) ===
+  A vs v15 : d9=0.111111  mt=0.0555556
+
+==========================================================
+        0152 STANDALONE MATERIAL-ANCHOR — LECTURE
+  A vs hc=0.444444  B vs hc=0.333333  v15 vs hc=1
+  → un v3 ancré qui BAT hc = fondation réparée ; sinon patterns nuisibles.
+==========================================================
