@@ -111,6 +111,24 @@ void compute_extras(const Position& pos,
     out[EXTRA_WHITE_MOB] = static_cast<float>(mobility(pos, Color::White));
     out[EXTRA_BLACK_BAL] = lr_balance(pos.black_men());
     out[EXTRA_WHITE_BAL] = lr_balance(pos.white_men());
+
+    // --- Structural extras (1st batch) -------------------------------------
+    const Bitboard empty = pos.empties();
+    // King slide mobility, separate from men mobility (kings are long-range).
+    out[EXTRA_BLACK_KMOB] = static_cast<float>(king_slide_mobility(pos.black_kings(), empty));
+    out[EXTRA_WHITE_KMOB] = static_cast<float>(king_slide_mobility(pos.white_kings(), empty));
+    // Back-rank integrity (promotion defence) : own men on the rank the
+    // opponent promotes on. Black promotes on row 9, white on row 0.
+    constexpr Bitboard ROW0 = Bitboard{0x1F};           // squares 1..5   (bits 0..4)
+    constexpr Bitboard ROW9 = Bitboard{0x1F} << 45;     // squares 46..50 (bits 45..49)
+    out[EXTRA_BLACK_BACK] = static_cast<float>(popcount(pos.black_men() & ROW0));
+    out[EXTRA_WHITE_BACK] = static_cast<float>(popcount(pos.white_men() & ROW9));
+    // Advancement toward promotion (proxy for runaway pressure).
+    int badv = 0, wadv = 0;
+    for (Bitboard b = pos.black_men(); b; ) badv += row_of(pop_lsb(b));
+    for (Bitboard b = pos.white_men(); b; ) wadv += 9 - row_of(pop_lsb(b));
+    out[EXTRA_BLACK_ADV] = static_cast<float>(badv);
+    out[EXTRA_WHITE_ADV] = static_cast<float>(wadv);
 }
 
 // ---------------------------------------------------------------------------
