@@ -2,16 +2,16 @@
 # id: 0148-search-1b-ab
 # description: A/B des 4 briques search 1b (continuation history, improving,
 # IID, multi-cut), CHACUNE isolée vs le défaut (toutes off), pour décider
-# lesquelles flipper en défaut. Mesure indépendante de l'éval : on tourne sur
-# v15 (NNUE) ET sur la v3 Scan-eval si dispo, en depth ET movetime. Une brique
-# « gated, neutre par défaut » ne devient défaut que si A/B la valide ici.
+# lesquelles flipper en défaut. SCOPE ALLÉGÉ (v1 tournait ~8h) : v15 seul,
+# 2 paires, depth 9 + movetime 200 court (la passe v3 reviendra une fois
+# l'éval réparée). Une brique « gated, neutre » ne devient défaut que validée.
 #
 # Convention : --benchmark-search-params A=<spec brique> B=<défaut "">.
 #   A score rate > 0.5  → la brique aide (ELO > 0) → candidate au flip défaut.
 #   ≈ 0.5               → neutre → laisser gated, SPSA décidera par éval.
 #   < 0.5               → nuit → laisser off.
 #
-# expected_duration: ~1.5-2.5 h.
+# expected_duration: ~30-50 min (scope allégé).
 set -uo pipefail
 cd /root/jass
 OUT_BASE="/root/jass/jobs/results/0148-search-1b-ab"; ART="$OUT_BASE/artefacts.src"; mkdir -p "$ART"
@@ -51,18 +51,18 @@ run_passe () {  # $1=label net  $2=net path  $3=depth  $4=movetime
     for name in conthist improving iid multicut all; do
         local log="$ART/${label}-${name}-d${d}-mt${mt}.log"
         ./build-prod/jass --benchmark-search-params "$net" "${SPECS[$name]}" "" \
-            "$d" 6 1 "$mt" 2>&1 | tee "$log" >/dev/null
+            "$d" 2 1 "$mt" 2>&1 | tee "$log" >/dev/null
         local r; r=$(rate_sp "$log")
         printf "  %-10s A=[%s]  rate=%s  ELO %s\n" "$name" "${SPECS[$name]}" "${r:-?}" "$(elo "${r:-0.5}")"
     done
 }
 
 run_passe "v15" "$V15" 9 0
-run_passe "v15" "$V15" 64 300
-if [ -n "${V3:-}" ] && [ -f "$V3" ]; then
-    run_passe "v3" "$V3" 9 0
-    run_passe "v3" "$V3" 64 300
-fi
+run_passe "v15" "$V15" 64 200
+# NB: scope ALLÉGÉ (2 paires, pas de movetime 300, pas de passe v3) — la v1
+# « 6 paires × movetime × v15+v3 » tournait ~8h. On A/B les briques sur v15
+# (vraie éval) en depth + un movetime court ; la passe v3 reviendra une fois
+# l'éval réparée (le prior v3 actuel perd 0/90, A/B dessus = peu décisif).
 
 echo; echo "=========================================================="
 echo "  0148 — VERDICT 1b : flipper en défaut les briques rate>0.53"
