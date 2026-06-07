@@ -1,7 +1,9 @@
 {
   "job_id": "0151-v3-diagnose",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T13:46:40+00:00",
+  "ended_at": "2026-06-07T13:51:34+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 333100
+  "artefacts_server_path": "/root/jass/jobs/results/0151-v3-diagnose/artefacts.src"
 }
