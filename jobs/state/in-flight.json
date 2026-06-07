@@ -1,0 +1,7 @@
+{
+  "job_id": "0147-scan-eval-full",
+  "script": "jobs/queue/0147-scan-eval-full.sh",
+  "pid": 322758,
+  "started_at": "2026-06-07T06:57:35+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
