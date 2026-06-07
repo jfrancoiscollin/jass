@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src/master-clean-scan-d10-4p5M.jnnw
+  4120570 records  (0.26s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0161-redistill-on-4p5M/artefacts.src/big112.feat
+  extras shape (4120570, 112)  (mean mob b/w=10.0/10.2)
+target=score  clipped±5000cp / 100  std=7.750
+phase : piece-count mean=23.5  wmg mean=0.587
+split : train=3708513 val=412057
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=0.001  max_iter=200  (anchored)
+  train_loss=16.784546  iters=200  (1076.42s)
+val   : mse=31.394565  sign_acc=0.0017
+quant : scale=1000  pat range=[-1257,1032] ext_mg range=[-3000,2999]
+wrote /root/jass/jobs/results/0161-redistill-on-4p5M/artefacts.src/B.pjtw  (v3, 42515504 weights, 170062036 bytes)

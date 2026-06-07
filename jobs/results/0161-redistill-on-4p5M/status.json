@@ -1,7 +1,9 @@
 {
   "job_id": "0161-redistill-on-4p5M",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-07T20:43:24+00:00",
+  "ended_at": "2026-06-07T21:49:28+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 345230
+  "artefacts_server_path": "/root/jass/jobs/results/0161-redistill-on-4p5M/artefacts.src"
 }

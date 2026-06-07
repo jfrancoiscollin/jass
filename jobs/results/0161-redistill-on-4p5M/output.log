@@ -1,0 +1,34 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+dataset élargi : /root/jass/jobs/results/0160-gen-more-data-3M/artefacts.src/master-clean-scan-d10-4p5M.jnnw (4120570 records)
+
+=== build prod + tests (v5 40 pat + 112 extras + accumulateur) ===
+TESTS PASS
+
+=== dump-eval-features (112) sur le dataset 4.5M ===
+wrote 4120570 × 112 Scan-style extras to /root/jass/jobs/results/0161-redistill-on-4p5M/artefacts.src/big112.feat
+
+=== TRAIN A (v5+112 sur 4.5M, material-anchor 1.0, l2=1e-5) ===
+split : train=3708513 val=412057
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+val   : mse=31.325433  sign_acc=0.0016
+    n_pat=21257640 PAT nnz=452268/21257640 (2.1%)  (v5/1.4M était 3.6%)
+
+=== TRAIN B (v5+112 sur 4.5M, material-anchor 1.0, l2=1e-3) ===
+split : train=3708513 val=412057
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+val   : mse=31.394565  sign_acc=0.0017
+    n_pat=21257640 PAT nnz=383090/21257640 (1.8%)  (v5/1.4M était 3.6%)
+
+=== TRIANGLE vs handcrafted (depth 8) ===
+  A vs hc = 0.0555556
+  B vs hc = 0.111111
+
+=== meilleur (B) vs v15 — GATE MOVETIME (depth 9 + movetime 300) ===
+
+==========================================================
+        0161 RE-DISTILL sur 4.5M (v5+112) — VERDICT
+  A vs hc=0.0555556  B vs hc=0.111111
+  B vs v15 : d9=0.0277778  mt=0.0740741
+  baselines (1.4M) : v4(32)=0.75  v5(40)=0.44  v5+ext=0.25
+  → remonte = plus de data résorbe la sparsité → richesse débloquée.
+==========================================================
