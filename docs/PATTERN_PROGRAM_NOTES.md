@@ -263,6 +263,35 @@ c'est la cadence qui compte). Protocole obligatoire :
 > C'est précisément à ça que servent `--depth-at-movetime` et la discipline
 > « benchs décisifs en movetime » : attraper ce piège dès le départ.
 
+### Leviers de capacité entre le linéaire et le NNUE (acté 2026-06-07)
+
+Notre éval n'est pas « linéaire » partout : chaque **pattern** est une table
+3¹² (non-paramétrique, max expressif **localement**). La linéarité est (1) sur
+les **features denses** (mobilité, balance, king-PST), (2) dans la combinaison
+**additive**. Déficit réel : **(a)** non-linéarité par-feature sur les denses,
+**(b)** **interactions croisées** (le gros morceau — cf 0146, résidu
+« dynamique »). Entre-deux candidats, classés capacité/coût-vitesse :
+
+| Levier | Ce qu'il ajoute | Coût inférence | Verdict |
+|---|---|---|---|
+| **Régression pénalisée** (L1/elastic-net) | rien (reste linéaire) ; élague les buckets-bruit sparses | nul | *généralisation*, pas capacité |
+| **Game-stage spline fine** (4-8 bancs) | extension de MG/EG, non-lin. en stade | ~nul (cuit en poids) | gratuit, à prendre |
+| **Denses binnées** (one-hot de bins) = GAM | non-lin. **par-feature** | ~nul (cuit en table) | gratuit, additif (pas d'interactions) |
+| **Factorization Machine** `Σ⟨v_i,v_j⟩x_i x_j` | **interactions par-paires** (rang-k) | faible, quantifiable | **TÊTE DE FILE** post-standalone |
+| **Mini-MLP** | non-lin. générale | élevé | déjà gated (cf ci-dessus) |
+| ~~GBDT~~ | interactions | mauvais par-nœud (pas SIMD) | écarté (contrainte vitesse) |
+
+**FM = le candidat prioritaire** : il vise *exactement* le résidu
+interactions/dynamique que l'additif rate, en restant rapide. Forme :
+`eval = linéaire(patterns) + linéaire(extras) + FM(extras + scalaires-résumé
+patterns)`. Les splines/binning sont du **polish quasi-gratuit** (additif, pas
+d'interactions). **Ordre** : finir le standalone (0149) → spline/binning (offert)
+→ **FM** → mini-MLP seulement si FM plafonne. Chacun **derrière le gate
+movetime** (sinon éval plus riche mais plus lente = fausse bonne idée).
+
+> Honnête : le résidu non-fitté est surtout **dynamique/interactions** → c'est
+> **FM (ou la profondeur)** qui peut le grignoter, pas les splines par-feature.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
