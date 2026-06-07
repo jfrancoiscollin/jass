@@ -1,0 +1,3 @@
+Benchmark: PATTERN(/root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter0.pjtw, 4251528 weights) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 8, threads 1, movetime_ms 0, 90 games
+Result: PATTERN=0 NNUE=90 Draws=0 (total 90)
+PATTERN score rate vs NNUE: 0

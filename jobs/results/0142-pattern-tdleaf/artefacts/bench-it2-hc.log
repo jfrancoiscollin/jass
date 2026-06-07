@@ -1,0 +1,4 @@
+Benchmark: PATTERN_JASS (/root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/pattern_iter2.pjtw, 4251528 weights, scale=1000) vs handcrafted, depth 6, threads 1, movetime_ms 0, 90 games (9 openings × 5 pairs × 2 colours)
+Result: PATTERN_JASS=0 Handcrafted=90 Draws=0 (total 90)
+PATTERN_JASS score rate: 0 (0 / 90)
+GATE 2 FAIL (rate < 0.55)

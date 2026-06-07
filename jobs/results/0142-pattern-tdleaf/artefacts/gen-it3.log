@@ -1,0 +1,29 @@
+  100/2500 games, 12965 leaf records
+  200/2500 games, 26058 leaf records
+  300/2500 games, 38918 leaf records
+  400/2500 games, 52075 leaf records
+  500/2500 games, 64535 leaf records
+  600/2500 games, 77260 leaf records
+  700/2500 games, 90556 leaf records
+  800/2500 games, 103128 leaf records
+  900/2500 games, 115620 leaf records
+  1000/2500 games, 128470 leaf records
+  1100/2500 games, 141793 leaf records
+  1200/2500 games, 153736 leaf records
+  1300/2500 games, 166735 leaf records
+  1400/2500 games, 179372 leaf records
+  1500/2500 games, 192364 leaf records
+  1600/2500 games, 204576 leaf records
+  1700/2500 games, 216915 leaf records
+  1800/2500 games, 230068 leaf records
+  1900/2500 games, 242646 leaf records
+  2000/2500 games, 255659 leaf records
+  2100/2500 games, 269790 leaf records
+  2200/2500 games, 282840 leaf records
+  2300/2500 games, 295615 leaf records
+  2400/2500 games, 308290 leaf records
+  2500/2500 games, 320406 leaf records
+wrote 320406 leaf records to /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/td-it3.jnnw (+ /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/td-it3.jnnw.games index)
+wrote 320406 TD-leaf targets → /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/targets-it3.jnnw (λ=0.7, terminal=±5000cp, 2500 games)
+rewriting 320406 records (handcrafted): /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/targets-it3.jnnw → /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/hc-it3.jnnw
+wrote 320406 records (38 B each) to /root/jass/jobs/results/0142-pattern-tdleaf/artefacts.src/hc-it3.jnnw
