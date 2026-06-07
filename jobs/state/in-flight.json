@@ -1,7 +1,0 @@
-{
-  "job_id": "0155-structural-extras-distill",
-  "script": "jobs/queue/0155-structural-extras-distill.sh",
-  "pid": 341540,
-  "started_at": "2026-06-07T18:50:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

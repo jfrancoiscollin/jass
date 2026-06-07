@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0155-structural-extras-distill/artefacts.src/clean112.feat
+  extras shape (1420193, 112)  (mean mob b/w=10.2/10.2)
+target=score  clipped±5000cp / 100  std=7.125
+phase : piece-count mean=24.0  wmg mean=0.600
+split : train=1278174 val=142019
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=0.001  max_iter=200  (anchored)
+  train_loss=18.987934  iters=200  (724.21s)
+val   : mse=36.011835  sign_acc=0.0009
+quant : scale=1000  pat range=[-597,609] ext_mg range=[-2999,3000]
+wrote /root/jass/jobs/results/0155-structural-extras-distill/artefacts.src/B.pjtw  (v3, 42515504 weights, 170062036 bytes)

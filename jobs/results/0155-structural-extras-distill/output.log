@@ -1,0 +1,36 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+
+=== build prod + tests (v5 40 patterns + 112 extras + accumulateur) ===
+TESTS PASS
+
+=== re-dump des features (112 colonnes) ===
+wrote 1420193 × 112 Scan-style extras to /root/jass/jobs/results/0155-structural-extras-distill/artefacts.src/clean112.feat
+feat: /root/jass/jobs/results/0155-structural-extras-distill/artefacts.src/clean112.feat
+
+=== TRAIN A (v5+112 extras, material-anchor 1.0, l2=1e-5) ===
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.041260  sign_acc=0.0010
+    n_ext=112  HOMMES mg b=+1.01 w=-1.02
+    extras structurels (mg) : BkMob=+0.275  WkMob=-0.349  Bback=-0.760  Wback=+0.796  Badv=-0.284  Wadv=+0.281
+
+=== TRAIN B (v5+112 extras, material-anchor 1.0, l2=1e-3) ===
+design : 42515504 columns (2×21257640 pat + 2×112 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.011835  sign_acc=0.0009
+    n_ext=112  HOMMES mg b=+1.01 w=-0.99
+    extras structurels (mg) : BkMob=+0.062  WkMob=-0.150  Bback=-0.923  Wback=+0.911  Badv=-0.309  Wadv=+0.296
+
+=== TRIANGLE vs handcrafted (depth 8) ===
+  A vs hc = 0.166667
+  B vs hc = 0.25
+
+=== meilleur (B) vs v15 — GATE MOVETIME (depth 9 + movetime 300) ===
+
+==========================================================
+        0155 EXTRAS STRUCTURELS (v5+112) — VERDICT
+  A vs hc=0.166667  B vs hc=0.25
+  B vs v15 : d9=0.111111  mt=0.0740741
+  baselines : 0154(v4,106) hc=0.75 ; 0159(v5,106) hc=<voir 0159>
+  → > 0159 = extras structurels aident. Regarder les poids appris (probe).
+==========================================================
