@@ -1,0 +1,40 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+modèle 32-patterns : /root/jass/jobs/results/0154-richer-patterns-distill/artefacts.src/A.pjtw
+
+=== build prod + tests (32 patterns) ===
+TESTS PASS
+
+=== énergie de poids par groupe (proxy gratuit) ===
+  V: 8 patterns  Σw²=   515.9  nnz= 243914  énergie/pattern=  64.5
+  D: 7 patterns  Σw²=   221.5  nnz= 259981  énergie/pattern=  31.6
+  A: 8 patterns  Σw²=   254.2  nnz= 301052  énergie/pattern=  31.8
+  H: 5 patterns  Σw²=   346.4  nnz= 196972  énergie/pattern=  69.3
+  S: 4 patterns  Σw²=   229.2  nnz= 149900  énergie/pattern=  57.3
+
+=== benchs vs hc (depth 8) ===
+  full (32)   vs hc = 0.75   (réf 0154 ~0.75)
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/onlyV.pjtw (zeroed patterns [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31])
+  only-V (8)  vs hc = 0.277778   (cross-check ≈ 0.444)
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/noV.pjtw (zeroed patterns [0, 1, 2, 3, 4, 5, 6, 7])
+  no-V        vs hc = 0.555556
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/noD.pjtw (zeroed patterns [8, 9, 10, 11, 12, 13, 14])
+  no-D        vs hc = 0.472222
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/noA.pjtw (zeroed patterns [15, 16, 17, 18, 19, 20, 21, 22])
+  no-A        vs hc = 0.666667
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/noH.pjtw (zeroed patterns [23, 24, 25, 26, 27])
+  no-H        vs hc = 0.555556
+  wrote /root/jass/jobs/results/0156-geometry-ablation/artefacts.src/noS.pjtw (zeroed patterns [28, 29, 30, 31])
+  no-S        vs hc = 0.527778
+
+==========================================================
+        0156 ABLATION GÉOMÉTRIE — VERDICT (vs hc)
+==========================================================
+  full (32)  = 0.75
+  only-V (8) = 0.277778   (attendu ≈ 0.444)
+  no-V       = 0.555556   → chute = contribution marginale de V
+  no-D       = 0.472222   → chute = contribution marginale de D
+  no-A       = 0.666667   → chute = contribution marginale de A
+  no-H       = 0.555556   → chute = contribution marginale de H
+  no-S       = 0.527778   → chute = contribution marginale de S
+  → grosse chute = orientation clé (garder) ; chute ~nulle = élaguer (vitesse).
+==========================================================
