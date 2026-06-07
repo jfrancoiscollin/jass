@@ -1,8 +1,8 @@
 {
   "job_id": "0142-pattern-tdleaf",
-  "snapshot_at": "2026-06-07T03:22:46+00:00",
+  "snapshot_at": "2026-06-07T03:27:53+00:00",
   "started_at": "2026-06-07T02:30:26+00:00",
-  "elapsed_seconds": 3140,
+  "elapsed_seconds": 3447,
   "artefacts": [
     {
       "name": "bench-it1-hc.log",
@@ -89,5 +89,5 @@
       "size_bytes": 754
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 316654       1       52:19  0.0  0.0 bash\n 316656  316654       52:19  0.0  0.0 bash\n 317657  316656       16:52 99.9  0.2 jass\n 317658  316656       16:52  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 316654       1       57:27  0.0  0.0 bash\n 316656  316654       57:27  0.0  0.0 bash\n 317657  316656       22:00 99.9  0.2 jass\n 317658  316656       22:00  0.0  0.0 tee\n"
 }
