@@ -1293,7 +1293,7 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
         std::cerr << "usage: jass --benchmark-scan-eval "
                      "<weights_v3.pjtw> <nnue.bin> "
                      "[depth=64] [pairs=3] [threads=1] [movetime_ms=300] "
-                     "[scan_spec]\n";
+                     "[scan_spec] [tt_mb=16]\n";
         return 1;
     }
     const char* weights_path = argv[2];
@@ -1303,6 +1303,8 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
     const int   threads      = (argc > 6) ? parse_int_or(argv[6], 1) : 1;
     const int   movetime_ms  = (argc > 7) ? parse_int_or(argv[7], 300) : 300;
     const char* scan_spec    = (argc > 8) ? argv[8] : "";
+    const std::size_t tt_mb  = (argc > 9)
+        ? static_cast<std::size_t>(parse_int_or(argv[9], 16)) : 16;
 
     std::string err;
     auto net = jass::scan_eval::load_scan_eval_network(weights_path, &err);
@@ -1321,6 +1323,7 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
     scan_cfg.max_depth   = depth;
     scan_cfg.threads     = threads;
     scan_cfg.movetime_ms = movetime_ms;
+    scan_cfg.tt_mb       = tt_mb;
     scan_cfg.nnue        = net.get();
     scan_cfg.params      = jass::parse_search_params(scan_spec);
 
@@ -1328,6 +1331,7 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
     nnue_cfg.max_depth   = depth;
     nnue_cfg.threads     = threads;
     nnue_cfg.movetime_ms = movetime_ms;
+    nnue_cfg.tt_mb       = tt_mb;
     nnue_cfg.nnue        = nnue.get();
 
     const auto pool = default_opening_pool();
@@ -1346,6 +1350,87 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
               << " (total "           << r.games << ")\n";
     const double rate = (r.a_wins + 0.5 * r.draws) / static_cast<double>(r.games);
     std::cout << "SCAN_EVAL score rate vs NNUE: " << rate << '\n';
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+// --depth-at-movetime <netA> <netB> <movetime_ms> [tt_mb=64] [search_spec]
+// Quantify the speed→depth lever : for each opening-pool position, search with
+// each eval at the SAME wall-clock budget and report the depth reached (avg /
+// min / max), nodes and knps. A fast eval (e.g. the v3) should reach many more
+// plies than the NNUE for the same time — that gap IS the lever's size.
+// net = "hc"/"none" (handcrafted), *.pjtw (pattern/Scan v3), else NNUE .bin.
+// -----------------------------------------------------------------------------
+int run_depth_at_movetime_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: jass --depth-at-movetime <netA> <netB> "
+                     "<movetime_ms> [tt_mb=64] [search_spec]\n";
+        return 1;
+    }
+    const std::string a_path = argv[2];
+    const std::string b_path = argv[3];
+    const int movetime_ms    = parse_int_or(argv[4], 300);
+    const std::size_t tt_mb  = (argc > 5)
+        ? static_cast<std::size_t>(parse_int_or(argv[5], 64)) : 64;
+    const SearchParams params = jass::parse_search_params((argc > 6) ? argv[6] : "");
+
+    // Owned networks keep the loaded evals alive for the duration.
+    std::vector<std::unique_ptr<INetwork>> owned;
+    auto load_eval = [&owned](const std::string& p) -> const INetwork* {
+        if (p == "hc" || p == "none" || p == "-") return nullptr;
+        const bool is_pjtw = p.size() >= 5
+                          && p.compare(p.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        std::unique_ptr<INetwork> net =
+            is_pjtw ? jass::load_eval_network(p, &err) : load_network(p);
+        if (!net) {
+            std::cerr << "error: cannot load eval from " << p
+                      << (err.empty() ? "" : (" : " + err)) << "\n";
+            std::exit(1);
+        }
+        owned.push_back(std::move(net));
+        return owned.back().get();
+    };
+    const INetwork* nets[2] = { load_eval(a_path), load_eval(b_path) };
+    const std::string names[2] = { a_path, b_path };
+
+    const auto pool = default_opening_pool();
+    std::cout << "depth-at-movetime : movetime=" << movetime_ms << "ms  tt="
+              << tt_mb << "MB  positions=" << pool.size() << "\n";
+
+    double avg_depth[2] = {0, 0};
+    for (int s = 0; s < 2; ++s) {
+        long long sum_depth = 0, sum_nodes = 0;
+        int min_d = 1 << 30, max_d = 0;
+        Engine eng(tt_mb);
+        eng.use_book(false);
+        for (const auto& pos : pool) {
+            eng.new_game();          // fresh TT + history → unbiased per position
+            eng.set_position(pos);
+            SearchLimits lim;
+            lim.max_depth   = 99;    // movetime drives depth, not the cap
+            lim.movetime_ms = movetime_ms;
+            lim.nnue        = nets[s];
+            lim.params      = params;
+            const SearchResult r = eng.search(lim);
+            sum_depth += r.depth;
+            sum_nodes += static_cast<long long>(r.nodes);
+            if (r.depth < min_d) min_d = r.depth;
+            if (r.depth > max_d) max_d = r.depth;
+        }
+        const double n = static_cast<double>(pool.size());
+        avg_depth[s] = sum_depth / n;
+        const double knps = (movetime_ms > 0)
+            ? (static_cast<double>(sum_nodes) / n) / movetime_ms
+            : 0.0;
+        std::cout << "  " << (s == 0 ? "A " : "B ") << names[s] << "\n"
+                  << "    depth avg=" << avg_depth[s]
+                  << "  min=" << min_d << "  max=" << max_d
+                  << "  | nodes avg=" << (sum_nodes / static_cast<long long>(pool.size()))
+                  << "  knps~" << knps << "\n";
+    }
+    std::cout << "  → A reaches " << (avg_depth[0] - avg_depth[1])
+              << " plies vs B (positive = A searches deeper for the same time)\n";
     return 0;
 }
 
@@ -1919,6 +2004,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-pattern-jass")   return run_benchmark_pattern_jass_mode(argc, argv);
         else if (a == "--benchmark-pattern-vs-nnue") return run_benchmark_pattern_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-scan-eval")      return run_benchmark_scan_eval_mode(argc, argv);
+        else if (a == "--depth-at-movetime")        return run_depth_at_movetime_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);

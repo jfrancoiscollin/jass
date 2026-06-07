@@ -45,8 +45,8 @@ GameRecord play_game(const EngineConfig& white_cfg,
                      const EngineConfig& black_cfg,
                      int                 max_plies,
                      const Position*     start) {
-    Engine w_engine;
-    Engine b_engine;
+    Engine w_engine(white_cfg.tt_mb);
+    Engine b_engine(black_cfg.tt_mb);
     w_engine.use_book(white_cfg.use_book);
     b_engine.use_book(black_cfg.use_book);
 

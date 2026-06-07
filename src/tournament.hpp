@@ -26,6 +26,11 @@ struct EngineConfig {
     int                  threads     = 1;
     int                  movetime_ms = 0;       // 0 → use depth only
     bool                 use_book    = false;
+    // Transposition-table size for this side's engine (MB). At high depth
+    // (a fast eval in movetime) a small TT thrashes and caps the realised
+    // depth — sizing it up is part of the speed→depth lever. Default 16
+    // matches the previous Engine DEFAULT_TT_MB (behaviour-neutral).
+    std::size_t          tt_mb       = 16;
     // Optional NNUE-style network — when non-null, the engine uses
     // `INetwork::evaluate()` instead of the handcrafted eval at every
     // leaf in the search. Any concrete network (Linear, MLP, …) works.
