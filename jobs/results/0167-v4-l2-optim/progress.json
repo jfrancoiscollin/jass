@@ -1,8 +1,8 @@
 {
   "job_id": "0167-v4-l2-optim",
-  "snapshot_at": "2026-06-08T13:11:05+00:00",
+  "snapshot_at": "2026-06-08T13:16:35+00:00",
   "started_at": "2026-06-08T12:55:03+00:00",
-  "elapsed_seconds": 962,
+  "elapsed_seconds": 1292,
   "artefacts": [
     {
       "name": "build.log",
@@ -11,6 +11,10 @@
     {
       "name": "cmake.log",
       "size_bytes": 506
+    },
+    {
+      "name": "l21e-6-train.log",
+      "size_bytes": 0
     },
     {
       "name": "l21e-7-train.log",
@@ -26,12 +30,20 @@
     },
     {
       "name": "l23e-7-train.log",
-      "size_bytes": 0
+      "size_bytes": 871
+    },
+    {
+      "name": "l23e-7-vs-hc.log",
+      "size_bytes": 265
+    },
+    {
+      "name": "l23e-7.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 364104       1       16:01  0.0  0.0 bash\n 364106  364104       16:01  0.0  0.0 bash\n 364681  364106       06:05  290 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 364104       1       21:31  0.0  0.0 bash\n 364106  364104       21:31  0.0  0.0 bash\n 364859  364106       01:30  280 27.9 python3\n"
 }
