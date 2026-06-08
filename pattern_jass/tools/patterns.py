@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Jean-François Collin
 #
 # Mirror of pattern_jass/src/pattern.hpp (v4 — enriched geometry).
-# 40 patterns × 12 squares, ternary encoding, 21 257 640 buckets total.
+# 32 patterns × 12 squares, ternary encoding, 17 006 112 buckets total.
 
 import numpy as np
 
@@ -42,25 +42,17 @@ PATTERNS: list[list[int]] = [
     [16, 17, 18, 21, 22, 23, 26, 27, 28, 31, 32, 33],   # sq_1
     [18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35],   # sq_2
     [32, 33, 34, 37, 38, 39, 42, 43, 44, 47, 48, 49],   # sq_3
-    [ 1,  2,  3,  7,  8,  9, 12, 13, 14, 18, 19, 20],   # db_0
-    [ 7,  8,  9, 12, 13, 14, 18, 19, 20, 23, 24, 25],   # db_1
-    [17, 18, 19, 22, 23, 24, 28, 29, 30, 33, 34, 35],   # db_2
-    [26, 27, 28, 31, 32, 33, 37, 38, 39, 42, 43, 44],   # db_3
-    [ 2,  3,  4,  7,  8,  9, 11, 12, 13, 16, 17, 18],   # ab_0
-    [ 8,  9, 10, 12, 13, 14, 17, 18, 19, 21, 22, 23],   # ab_1
-    [18, 19, 20, 22, 23, 24, 27, 28, 29, 31, 32, 33],   # ab_2
-    [28, 29, 30, 32, 33, 34, 37, 38, 39, 41, 42, 43],   # ab_3
 # @GEN-PATTERNS-END
 ]
 
 # @GEN-NAMES-BEGIN
-PATTERN_NAMES = ["v_top_0", "v_top_1", "v_top_2", "v_top_3", "v_bot_0", "v_bot_1", "v_bot_2", "v_bot_3", "diag_0", "diag_1", "diag_2", "diag_3", "diag_4", "diag_5", "diag_6", "anti_0", "anti_1", "anti_2", "anti_3", "anti_4", "anti_5", "anti_6", "anti_7", "horiz_0", "horiz_1", "horiz_2", "horiz_3", "horiz_4", "sq_0", "sq_1", "sq_2", "sq_3", "db_0", "db_1", "db_2", "db_3", "ab_0", "ab_1", "ab_2", "ab_3"]
+PATTERN_NAMES = ["v_top_0", "v_top_1", "v_top_2", "v_top_3", "v_bot_0", "v_bot_1", "v_bot_2", "v_bot_3", "diag_0", "diag_1", "diag_2", "diag_3", "diag_4", "diag_5", "diag_6", "anti_0", "anti_1", "anti_2", "anti_3", "anti_4", "anti_5", "anti_6", "anti_7", "horiz_0", "horiz_1", "horiz_2", "horiz_3", "horiz_4", "sq_0", "sq_1", "sq_2", "sq_3"]
 # @GEN-NAMES-END
 
-NUM_PATTERNS         = len(PATTERNS)               # 40
+NUM_PATTERNS         = len(PATTERNS)               # 32
 PATTERN_SIZE         = 12
 BUCKETS_PER_PATTERN  = 3 ** PATTERN_SIZE           # 531 441
-TOTAL_BUCKETS        = BUCKETS_PER_PATTERN * NUM_PATTERNS  # 21 257 640
+TOTAL_BUCKETS        = BUCKETS_PER_PATTERN * NUM_PATTERNS  # 17 006 112
 
 POW3 = np.array([3 ** k for k in range(PATTERN_SIZE + 1)], dtype=np.int64)
 PATTERN_OFFSETS = np.arange(NUM_PATTERNS, dtype=np.int64) * BUCKETS_PER_PATTERN

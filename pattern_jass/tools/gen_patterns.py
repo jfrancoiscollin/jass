@@ -94,11 +94,10 @@ def ablock(n):   # anti-diagonal block
 
 
 def build():
-    """The curated v5 DIAG-ENRICHED set (~44 patterns), all orientations.
-    0156 ablation: diagonals are the most contributive orientation. The pattern
-    accumulator makes a larger set affordable, so v5 keeps v4's 32 verbatim
-    (strict superset) and ADDS diagonal density: 3×4 diagonal BLOCKS in both
-    directions. The 8 v3 vertical bands remain the first 8."""
+    """The curated v4 ENRICHED set (32 patterns), all orientations: 8 vertical
+    bands (v3) + 7 down-right diagonals + 8 anti-diagonals + 5 horizontal + 4
+    square blocks. This is the proven sweet spot (0154: 0.75 vs hc). The v5
+    diagonal-block addition (32->40) regressed and is reverted (see below)."""
     pats: list[tuple[list[int], str]] = []
     # V : 8 v3 vertical bands (top rows 0-5, bottom rows 4-9 ; 4 col-shifts each)
     for half, r0 in (("top", 0), ("bot", 4)):
@@ -122,20 +121,9 @@ def build():
     # S : compact 4x3 square blocks
     for i, (r0, c0) in enumerate([(0, 1), (3, 0), (3, 2), (6, 1)]):
         pats.append((sblock(r0, c0), f"sq_{i}"))
-    # v5 ADD : 3×4 diagonal blocks, both directions. Subsample to 4 evenly-
-    # spread blocks per direction (8 total) — adds diagonal density without
-    # blowing up sparsity (53 distinct blocks would over-sparsify 1.4M data).
-    for tag, fn in (("db", dblock), ("ab", ablock)):
-        distinct = []
-        seen = set()
-        for s in range(1, 51):
-            p = fn(s)
-            if p and tuple(p) not in seen:
-                seen.add(tuple(p)); distinct.append(p)
-        n = len(distinct)
-        pick = sorted({(i * n) // 4 for i in range(4)})   # 4 evenly-spread
-        for j, gi in enumerate(pick):
-            pats.append((distinct[gi], f"{tag}_{j}"))
+    # NB: the v5 diagonal-block addition (db/ab, 32->40) regressed play badly
+    # (0.75 -> 0.44 vs hc on the same clean 1.4M) and was REVERTED. The dblock/
+    # ablock helpers are kept for a future, properly-attributed re-test.
     # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
     allseen = set()
     for sqs, name in pats:

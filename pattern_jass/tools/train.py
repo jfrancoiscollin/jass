@@ -51,7 +51,7 @@ WEIGHTS_VERSION = 1
 # is no second implementation here, so the playable eval and the training
 # features are identical by construction.
 WEIGHTS_VERSION_V3 = 3
-EVAL_NUM_EXTRAS    = 112
+EVAL_NUM_EXTRAS    = 106
 
 
 def build_sparse_X(cols: np.ndarray, n_features: int) -> sp.csr_matrix:
