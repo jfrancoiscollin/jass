@@ -1,0 +1,25 @@
+{
+  "job_id": "0164-distill-bigdata-lowmem",
+  "snapshot_at": "2026-06-08T05:33:05+00:00",
+  "started_at": "2026-06-08T05:27:45+00:00",
+  "elapsed_seconds": 320,
+  "artefacts": [
+    {
+      "name": "A-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 357277       1       05:19  0.0  0.0 bash\n 357279  357277       05:19  0.0  0.0 bash\n 357649  357279       05:00  182 63.6 python3\n 357650  357279       05:00  0.0  0.0 tee\n 357651  357279       05:00  0.0  0.0 grep\n 357652  357279       05:00  0.0  0.0 sed\n"
+}
