@@ -1,0 +1,28 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+pool master-1600 COMPLET : /root/jass/jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw  (4738008 records ; le sous-échantillon était 1.5M)
+
+=== build prod + tests ===
+TESTS PASS
+
+=== relabel master-1600 COMPLET en Scan-d10 (sharded) ===
+  relabel wall : 2508s
+master-full Scan-d10 : 4704759 records → /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/master-full-scan-d10.jnnw
+  dataset bonne-data : 4704759 records (vs 1.5M sous-échantillon)
+
+=== dump-eval-features (112) + distillation v5 ===
+wrote 4704759 × 112 Scan-style extras to /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/full112.feat
+
+=== TRAIN A (v5+112 sur master-FULL, l2=1e-5) ===
+
+=== TRAIN B (v5+112 sur master-FULL, l2=1e-3) ===
+  A vs hc = 
+  B vs hc = 
+
+==========================================================
+        0162 BONNE DATA (master-FULL Scan-d10) — VERDICT
+  pool : 4704759 records (master-1600 complet)
+  A vs hc=?  B vs hc=?
+  A vs v15 : d9=  mt=
+  baselines(1.5M) : v4=0.75  v5=0.44  v5+ext=0.25 ; v5+ext sur 4.1M(cheap)=0.11
+  → > 0.44 = vraie data débloque la richesse ; ≈ → pool master épuisé.
+==========================================================

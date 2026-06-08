@@ -1,7 +1,0 @@
-{
-  "job_id": "0162-good-data-full-master",
-  "script": "jobs/queue/0162-good-data-full-master.sh",
-  "pid": 355236,
-  "started_at": "2026-06-08T04:25:01+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
