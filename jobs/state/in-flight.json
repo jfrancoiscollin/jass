@@ -1,0 +1,7 @@
+{
+  "job_id": "0172-extras-retest-with-drop",
+  "script": "jobs/queue/0172-extras-retest-with-drop.sh",
+  "pid": 372753,
+  "started_at": "2026-06-08T20:58:07+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
