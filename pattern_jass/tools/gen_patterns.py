@@ -93,11 +93,12 @@ def ablock(n):   # anti-diagonal block
     return _diag_block(n, -1, (0, -2))
 
 
-def build():
-    """The curated v4 ENRICHED set (32 patterns), all orientations: 8 vertical
-    bands (v3) + 7 down-right diagonals + 8 anti-diagonals + 5 horizontal + 4
-    square blocks. This is the proven sweet spot (0154: 0.75 vs hc). The v5
-    diagonal-block addition (32->40) regressed and is reverted (see below)."""
+def build(variant="v4"):
+    """v4 ENRICHED set (32 patterns) : 8 vertical bands (v3) + 7 down-right
+    diagonals + 8 anti-diagonals + 5 horizontal + 4 square blocks. The proven
+    sweet spot (0165 reliable: 0.72 vs hc). variant="v5" appends 8 3×4 diagonal
+    BLOCKS (->40) — that addition regressed in earlier (confounded) tests; the
+    geometry investigation (0166) re-measures it cleanly with an l2 sweep."""
     pats: list[tuple[list[int], str]] = []
     # V : 8 v3 vertical bands (top rows 0-5, bottom rows 4-9 ; 4 col-shifts each)
     for half, r0 in (("top", 0), ("bot", 4)):
@@ -121,9 +122,17 @@ def build():
     # S : compact 4x3 square blocks
     for i, (r0, c0) in enumerate([(0, 1), (3, 0), (3, 2), (6, 1)]):
         pats.append((sblock(r0, c0), f"sq_{i}"))
-    # NB: the v5 diagonal-block addition (db/ab, 32->40) regressed play badly
-    # (0.75 -> 0.44 vs hc on the same clean 1.4M) and was REVERTED. The dblock/
-    # ablock helpers are kept for a future, properly-attributed re-test.
+    if variant == "v5":
+        # +8 3×4 diagonal blocks (4 per direction, evenly spread) → 40 patterns.
+        for tag, fn in (("db", dblock), ("ab", ablock)):
+            distinct, seen = [], set()
+            for s in range(1, 51):
+                p = fn(s)
+                if p and tuple(p) not in seen:
+                    seen.add(tuple(p)); distinct.append(p)
+            n = len(distinct)
+            for j, gi in enumerate(sorted({(i * n) // 4 for i in range(4)})):
+                pats.append((distinct[gi], f"{tag}_{j}"))
     # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
     allseen = set()
     for sqs, name in pats:
@@ -161,11 +170,22 @@ def rewrite(path: Path, start: str, end: str, new: str):
     print(f"rewrote {path}")
 
 
+def _sub_count(path: Path, n: int):
+    txt = path.read_text()
+    txt = re.sub(r"NUM_PATTERNS  = \d+;", f"NUM_PATTERNS  = {n};", txt)
+    txt = re.sub(r"NUM_PATTERNS, std::size_t\{\d+\}", f"NUM_PATTERNS, std::size_t{{{n}}}", txt)
+    txt = re.sub(r"TOTAL_BUCKETS, std::uint32_t\{\d+ \* 531441\}",
+                 f"TOTAL_BUCKETS, std::uint32_t{{{n} * 531441}}", txt)
+    path.write_text(txt)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
+    ap.add_argument("--variant", choices=["v4", "v5"], default="v4",
+                    help="v4=32 patterns (sweet spot), v5=40 (adds diagonal blocks)")
     args = ap.parse_args()
-    pats = build()
+    pats = build(args.variant)
     n = len(pats)
     by = {}
     for _, nm in pats:
@@ -184,8 +204,11 @@ def main():
         rewrite(root / "tools" / "patterns.py",
                 "# @GEN-NAMES-BEGIN", "# @GEN-NAMES-END",
                 f"PATTERN_NAMES = [{names}]")
-        print(f"\nNUM_PATTERNS is now {n} — update pattern.hpp NUM_PATTERNS and the "
-              f"run_tests.cpp guards (NUM_PATTERNS={n}, TOTAL_BUCKETS={n*531441}).")
+        # Patch the NUM_PATTERNS constant + run_tests guards so a variant switch
+        # is a single command (the count is not inside the @GEN markers).
+        _sub_count(root / "src" / "pattern.hpp", n)
+        _sub_count(root / "tests" / "run_tests.cpp", n)
+        print(f"\nNUM_PATTERNS set to {n} ({args.variant}); TOTAL_BUCKETS={n*531441}.")
 
 
 if __name__ == "__main__":
