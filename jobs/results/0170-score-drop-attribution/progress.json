@@ -1,8 +1,8 @@
 {
   "job_id": "0170-score-drop-attribution",
-  "snapshot_at": "2026-06-08T17:32:05+00:00",
+  "snapshot_at": "2026-06-08T17:37:44+00:00",
   "started_at": "2026-06-08T17:21:50+00:00",
-  "elapsed_seconds": 615,
+  "elapsed_seconds": 954,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,21 +13,29 @@
       "size_bytes": 506
     },
     {
+      "name": "small-drop-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "small-drop.feat",
+      "size_bytes": 602161844
+    },
+    {
       "name": "small-nofilter-train.log",
       "size_bytes": 907
     },
     {
       "name": "small-nofilter-vs-hc.log",
-      "size_bytes": 0
+      "size_bytes": 286
     },
     {
-      "name": "small-nofilter.pjtw",
-      "size_bytes": 136049764
+      "name": "small-nofilter-vs-v15.log",
+      "size_bytes": 381
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 368277       1       10:14  0.0  0.0 bash\n 368279  368277       10:14  0.0  0.0 bash\n 368766  368279       01:20 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 368277       1       15:54  0.0  0.0 bash\n 368279  368277       15:54  0.0  0.0 bash\n 368858  368279       03:29  292 27.9 python3\n 368859  368279       03:29  0.0  0.0 tee\n 368860  368279       03:29  0.0  0.0 grep\n"
 }
