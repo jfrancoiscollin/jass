@@ -1,8 +1,8 @@
 {
   "job_id": "0168-v4-on-bigdata",
-  "snapshot_at": "2026-06-08T15:27:14+00:00",
+  "snapshot_at": "2026-06-08T15:32:48+00:00",
   "started_at": "2026-06-08T15:22:05+00:00",
-  "elapsed_seconds": 309,
+  "elapsed_seconds": 643,
   "artefacts": [
     {
       "name": "big106.feat",
@@ -25,5 +25,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 366287       1       05:09  0.0  0.0 bash\n 366289  366287       05:09  0.0  0.0 bash\n 366665  366289       04:47  206 58.7 python3\n 366666  366289       04:47  0.0  0.0 tee\n 366667  366289       04:47  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 366287       1       10:43  0.0  0.0 bash\n 366289  366287       10:43  0.0  0.0 bash\n 366665  366289       10:21  211 58.6 python3\n 366666  366289       10:21  0.0  0.0 tee\n 366667  366289       10:21  0.0  0.0 grep\n"
 }
