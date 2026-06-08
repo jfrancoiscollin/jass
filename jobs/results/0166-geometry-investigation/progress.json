@@ -1,8 +1,8 @@
 {
   "job_id": "0166-geometry-investigation",
-  "snapshot_at": "2026-06-08T11:24:49+00:00",
+  "snapshot_at": "2026-06-08T11:30:05+00:00",
   "started_at": "2026-06-08T11:14:22+00:00",
-  "elapsed_seconds": 627,
+  "elapsed_seconds": 943,
   "artefacts": [
     {
       "name": "clean.feat",
@@ -33,5 +33,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 362100       1       10:27  0.0  0.0 bash\n 362102  362100       10:27  0.0  0.0 bash\n 362604  362102       00:36  261 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 362100       1       15:42  0.0  0.0 bash\n 362102  362100       15:42  0.0  0.0 bash\n 362604  362102       05:52  297 31.9 python3\n"
 }
