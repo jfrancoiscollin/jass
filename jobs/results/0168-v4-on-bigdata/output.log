@@ -1,0 +1,32 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8  RAM: 30G ===
+master-full : /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/master-full-scan-d10.jnnw (4704759 records)
+
+=== check propreté : distribution des scores du 4.7M ===
+  scores 4.7M : mean=22.5 std=1430.3 min=-9998 max=9999
+    p01=-1060    p05=-341    p50=1    p95=367    p99=9989
+  |score|>4900 (écrêtés/extrêmes) : 2.0%  (1.4M propre ~symétrique ; gros déséquilibre = sale)
+
+=== build prod + tests (v4 32 patterns, 106 extras) ===
+TESTS PASS
+
+=== dump features (106) sur le 4.7M + distill v4 (l2=1e-5) ===
+wrote 4704759 × 106 Scan-style extras to /root/jass/jobs/results/0168-v4-on-bigdata/artefacts.src/big106.feat
+split : train=4234284 val=470475
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+val   : mse=38.852460  sign_acc=0.0010
+
+=== benchs fiables ===
+Result: SCAN_EVAL=84 NNUE=120 Draws=12 (total 216)
+SCAN_EVAL score rate vs NNUE: 0.416667
+Result: SCAN_EVAL=48 NNUE=80 Draws=16 (total 144)
+SCAN_EVAL score rate vs NNUE: 0.388889
+
+==========================================================
+        0168 v4 sur 4.7M (data, test propre) — VERDICT
+  records : 4704759
+  v4/4.7M vs hc (216 fiable) : 0.416667
+  v4/4.7M vs v15 d9 (144)    : 0.388889
+  RÉFÉRENCE v4/1.4M : vs hc 0.72  vs v15 d9 0.11
+  → > 0.72 = plus de bonne data AIDE v4 (le vrai levier !).
+  → ≤ 0.72 = la data n'est pas le levier sur v4 (voir distribution scores).
+==========================================================
