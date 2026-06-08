@@ -1,8 +1,8 @@
 {
   "job_id": "0167-v4-l2-optim",
-  "snapshot_at": "2026-06-08T13:37:35+00:00",
+  "snapshot_at": "2026-06-08T13:43:05+00:00",
   "started_at": "2026-06-08T12:55:03+00:00",
-  "elapsed_seconds": 2552,
+  "elapsed_seconds": 2882,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,15 @@
     },
     {
       "name": "l21e-5-train.log",
+      "size_bytes": 871
+    },
+    {
+      "name": "l21e-5-vs-hc.log",
       "size_bytes": 0
+    },
+    {
+      "name": "l21e-5.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "l21e-6-train.log",
@@ -69,5 +77,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 364104       1       42:31  0.0  0.0 bash\n 364106  364104       42:31  0.0  0.0 bash\n 365235  364106       03:32  296 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 364104       1       48:01  0.0  0.0 bash\n 364106  364104       48:01  0.0  0.0 bash\n 365355  364106       00:36  100  0.9 jass\n"
 }
