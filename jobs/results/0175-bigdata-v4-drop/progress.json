@@ -1,8 +1,8 @@
 {
   "job_id": "0175-bigdata-v4-drop",
-  "snapshot_at": "2026-06-08T23:45:05+00:00",
+  "snapshot_at": "2026-06-08T23:50:05+00:00",
   "started_at": "2026-06-08T22:52:26+00:00",
-  "elapsed_seconds": 3159,
+  "elapsed_seconds": 3459,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 376189       1       52:38  0.0  0.0 bash\n 376191  376189       52:38  0.0  0.0 bash\n 376870  376191       33:51 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 376189       1       57:38  0.0  0.0 bash\n 376191  376189       57:38  0.0  0.0 bash\n 376870  376191       38:51 99.9  0.9 jass\n"
 }
