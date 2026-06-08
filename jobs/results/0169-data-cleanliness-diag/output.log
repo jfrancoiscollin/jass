@@ -1,0 +1,31 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+
+=== 1) DIAGNOSTIC : distributions 1.4M vs 4.7M côte à côte ===
+  1.4M propre (n=1420193): mean=+25 std=1386  p01=-962 p25=-23 p50=+1 p75=+32 p99=+9987
+      |score|>4900 : 1.9%   asymétrie(p99+p01)=+9025 (0=symétrique)
+  4.7M full (n=4704759): mean=+23 std=1430  p01=-1060 p25=-24 p50=+1 p75=+31 p99=+9989
+      |score|>4900 : 2.0%   asymétrie(p99+p01)=+8929 (0=symétrique)
+
+=== 2) FILTRER le 4.7M (|score|≤4900) → 4.7M-filtré ===
+  gardé 4610057/4704759 (98.0%) ; retiré 94702 extrêmes
+
+=== build prod + tests (v4) ===
+TESTS PASS
+
+=== distill v4 sur 4.7M-filtré (l2=1e-5) ===
+wrote 4610057 × 106 Scan-style extras to /root/jass/jobs/results/0169-data-cleanliness-diag/artefacts.src/filt106.feat
+split : train=4149052 val=461005
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+val   : mse=1.833541  sign_acc=0.0011
+Result: SCAN_EVAL=180 NNUE=36 Draws=0 (total 216)
+SCAN_EVAL score rate vs NNUE: 0.833333
+
+==========================================================
+        0169 DATA — DIAGNOSTIC + 4.7M FILTRÉ — VERDICT
+  4.7M-filtré : 4610057 records
+  v4/4.7M-filtré vs hc (216) : 0.833333
+  réf : v4/1.4M=0.72  v4/4.7M-brut=0.42
+  → > 0.72 = la queue extrême était le poison (data propre aide).
+  → ≈0.42 = le filtre ne suffit pas (relabel full-pool buggé, ou data ≠ levier).
+  (comparer les distributions ci-dessus : 1.4M symétrique vs 4.7M ?)
+==========================================================
