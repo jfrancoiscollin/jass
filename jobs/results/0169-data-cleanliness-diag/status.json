@@ -1,7 +1,9 @@
 {
   "job_id": "0169-data-cleanliness-diag",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-08T15:58:55+00:00",
+  "ended_at": "2026-06-08T16:19:31+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 367089
+  "artefacts_server_path": "/root/jass/jobs/results/0169-data-cleanliness-diag/artefacts.src"
 }
