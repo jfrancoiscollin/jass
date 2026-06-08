@@ -1,7 +1,0 @@
-{
-  "job_id": "0164-distill-bigdata-lowmem",
-  "script": "jobs/queue/0164-distill-bigdata-lowmem.sh",
-  "pid": 357277,
-  "started_at": "2026-06-08T05:27:45+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
