@@ -1,7 +1,0 @@
-{
-  "job_id": "0163-reuse-nnue-data",
-  "script": "jobs/queue/0163-reuse-nnue-data.sh",
-  "pid": 357025,
-  "started_at": "2026-06-08T05:12:39+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
