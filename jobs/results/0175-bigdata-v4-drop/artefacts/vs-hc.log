@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0175-bigdata-v4-drop/artefacts.src/v4big.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 8, threads 1, movetime_ms 0, 144 games
+Result: SCAN_EVAL=120 NNUE=24 Draws=0 (total 144)
+SCAN_EVAL score rate vs NNUE: 0.833333
