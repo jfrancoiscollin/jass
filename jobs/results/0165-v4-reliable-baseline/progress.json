@@ -1,8 +1,8 @@
 {
   "job_id": "0165-v4-reliable-baseline",
-  "snapshot_at": "2026-06-08T08:57:30+00:00",
+  "snapshot_at": "2026-06-08T09:02:49+00:00",
   "started_at": "2026-06-08T08:52:15+00:00",
-  "elapsed_seconds": 315,
+  "elapsed_seconds": 634,
   "artefacts": [
     {
       "name": "build.log",
@@ -18,8 +18,20 @@
     },
     {
       "name": "train.log",
+      "size_bytes": 876
+    },
+    {
+      "name": "v4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "vs-hc.log",
+      "size_bytes": 272
+    },
+    {
+      "name": "vs-v15-d9.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 359942       1       05:14  0.0  0.0 bash\n 359944  359942       05:14  0.0  0.0 bash\n 360320  359944       04:55  297 32.4 python3\n 360321  359944       04:55  0.0  0.0 tee\n 360322  359944       04:55  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 359942       1       10:33  0.0  0.0 bash\n 359944  359942       10:33  0.0  0.0 bash\n 360432  359944       00:26  100  0.6 jass\n 360433  359944       00:26  0.0  0.0 tee\n 360434  359944       00:26  0.0  0.0 grep\n"
 }
