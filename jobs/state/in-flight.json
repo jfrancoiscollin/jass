@@ -1,7 +1,0 @@
-{
-  "job_id": "0171-geometry-retest-with-drop",
-  "script": "jobs/queue/0171-geometry-retest-with-drop.sh",
-  "pid": 370570,
-  "started_at": "2026-06-08T19:36:33+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
