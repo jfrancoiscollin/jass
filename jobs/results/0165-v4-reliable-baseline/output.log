@@ -1,0 +1,31 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8  RAM: 30G ===
+1.4M propre : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw (1420193 records)
+
+=== build prod + tests (v4 32 patterns, 106 extras) ===
+TESTS PASS
+NUM_PATTERNS 32 (doit être 32)
+
+=== dump features (106) + distill v4 config A (l2 1e-5, material-anchor) ===
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+val   : mse=36.457223  sign_acc=0.0010
+
+=== BENCHS FIABLES (beaucoup de parties) ===
+--- vs handcrafted, depth 8, 10 paires (180 parties) ---
+Result: SCAN_EVAL=120 NNUE=40 Draws=20 (total 180)
+SCAN_EVAL score rate vs NNUE: 0.722222
+--- vs v15, depth 9, 8 paires (144 parties) ---
+Result: SCAN_EVAL=16 NNUE=128 Draws=0 (total 144)
+SCAN_EVAL score rate vs NNUE: 0.111111
+--- vs v15, movetime 300, 8 paires (144 parties) ---
+Result: SCAN_EVAL=10 NNUE=130 Draws=4 (total 144)
+SCAN_EVAL score rate vs NNUE: 0.0833333
+
+==========================================================
+        0165 BASELINE v4 FIABLE — VERDICT
+  vs hc       : 0.722222  (180 parties, ±0.037)
+  vs v15 d9   : 0.111111  (144 parties)
+  vs v15 mt   : 0.0833333  (144 parties)
+  (rappel bruité 0154 : vs hc 0.75 sur 54 parties)
+  → fige la VRAIE référence v4 pour les investigations point par point.
+==========================================================

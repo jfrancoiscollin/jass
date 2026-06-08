@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0165-v4-reliable-baseline/artefacts.src/v4.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 8, threads 1, movetime_ms 0, 180 games
+Result: SCAN_EVAL=120 NNUE=40 Draws=20 (total 180)
+SCAN_EVAL score rate vs NNUE: 0.722222
