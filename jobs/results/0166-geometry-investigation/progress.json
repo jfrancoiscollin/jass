@@ -1,8 +1,8 @@
 {
   "job_id": "0166-geometry-investigation",
-  "snapshot_at": "2026-06-08T11:30:05+00:00",
+  "snapshot_at": "2026-06-08T11:35:22+00:00",
   "started_at": "2026-06-08T11:14:22+00:00",
-  "elapsed_seconds": 943,
+  "elapsed_seconds": 1260,
   "artefacts": [
     {
       "name": "clean.feat",
@@ -17,8 +17,16 @@
       "size_bytes": 506
     },
     {
-      "name": "v4-l21e-4-train.log",
+      "name": "v4-l21e-3-train.log",
       "size_bytes": 0
+    },
+    {
+      "name": "v4-l21e-4-train.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "v4-l21e-4-vs-hc.log",
+      "size_bytes": 275
     },
     {
       "name": "v4-l21e-5-train.log",
@@ -33,5 +41,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 362100       1       15:42  0.0  0.0 bash\n 362102  362100       15:42  0.0  0.0 bash\n 362604  362102       05:52  297 31.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 362100       1       21:00  0.0  0.0 bash\n 362102  362100       21:00  0.0  0.0 bash\n 362787  362102       01:56  290 30.7 python3\n"
 }
