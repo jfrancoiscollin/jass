@@ -1,0 +1,12 @@
+RAM: 30G
+tests OK
+wrote 4704759 × 106 Scan-style extras to /root/jass/jobs/results/0175-bigdata-v4-drop/artefacts.src/feat
+score-drop : keep |score|<=4900cp → 4610057/4704759 (98.0%)
+split : train=4149052 val=461005
+val   : mse=1.833541  sign_acc=0.0011
+==========================================================
+  0175 DATA 4.7M + drop sur v4 — VERDICT
+  v4/4.7M+drop : vs hc=0.833333  vs v15 d9=0.416667  mt=0.368056
+  base v4/1.4M+drop : 0.944 / 0.389
+  → vs v15 > 0.389 = la data clean aide vers v15 (scaler) ; sinon 1.4M suffit.
+==========================================================

@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/master-full-scan-d10.jnnw
+  4704759 records  (0.25s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0175-bigdata-v4-drop/artefacts.src/feat
+  extras shape (4704759, 106)  (mean mob b/w=10.2/10.2)
+target=score  clipped±5000cp / 100  std=7.342
+phase : piece-count mean=24.0  wmg mean=0.600
+score-drop : keep |score|<=4900cp → 4610057/4704759 (98.0%)
+split : train=4149052 val=461005
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=1e-05  max_iter=200  (anchored)
+  train_loss=0.925321  iters=200  (855.20s)
+val   : mse=1.833541  sign_acc=0.0011
+quant : scale=1000  pat range=[-283,316] ext_mg range=[-3001,3001]
+wrote /root/jass/jobs/results/0175-bigdata-v4-drop/artefacts.src/v4big.pjtw  (v3, 34012436 weights, 136049764 bytes)
