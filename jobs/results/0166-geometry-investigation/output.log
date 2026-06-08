@@ -1,0 +1,32 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+1.4M propre : /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+
+##################### VARIANT v4 #####################
+NUM_PATTERNS set to 32 (v4); TOTAL_BUCKETS=17006112.
+  tests OK
+  NUM_PATTERNS=32
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0166-geometry-investigation/artefacts.src/clean.feat
+  v4 l2=1e-5 : vs hc=0.722222  (mse=36.457223)
+  v4 l2=1e-4 : vs hc=0.5  (mse=36.562611)
+  v4 l2=1e-3 : vs hc=0.388889  (mse=36.519508)
+
+##################### VARIANT v5 #####################
+NUM_PATTERNS set to 40 (v5); TOTAL_BUCKETS=21257640.
+  tests OK
+  NUM_PATTERNS=40
+  v5 l2=1e-5 : vs hc=0.527778  (mse=36.297560)
+  v5 l2=1e-4 : vs hc=  (mse=36.562611)
+  v5 l2=1e-3 : vs hc=  (mse=36.519508)
+
+==========================================================
+        0166 GÉOMÉTRIE v4(32) vs v5(40) × sweep l2 — VERDICT
+  (vs hc, 108 parties ±0.048 ; réf fiable 0165 : v4 l2=1e-5 = 0.72)
+  v4 l2=1e-5 : 0.722222
+  v4 l2=1e-4 : 0.5
+  v4 l2=1e-3 : 0.388889
+  v5 l2=1e-5 : 0.527778
+  v5 l2=1e-4 : 
+  v5 l2=1e-3 : 
+  → meilleur v5 ≈ meilleur v4 = régul (richesse récupérable, re-tuner l2).
+  → meilleur v5 < v4 partout = les blocs diagonaux nuisent vraiment.
+==========================================================
