@@ -1,0 +1,14 @@
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0174-l2-resweep-with-drop/artefacts.src/feat
+  l2=1e-6 : vs hc=0.944444  vs v15=0.194444  (mse=1.732940)
+  l2=1e-5 : vs hc=0.944444  vs v15=0.388889  (mse=1.748904)
+  l2=1e-4 : vs hc=1  vs v15=0.472222  (mse=1.731596)
+  l2=1e-3 : vs hc=0.833333  vs v15=0.416667  (mse=1.756353)
+==========================================================
+  0174 l2 AVEC FILTRE — VERDICT (l'optimum a-t-il bougé vs le poison ?)
+  l2=1e-6 : hc=0.944444  v15=0.194444
+  l2=1e-5 : hc=0.944444  v15=0.388889
+  l2=1e-4 : hc=1  v15=0.472222
+  l2=1e-3 : hc=0.833333  v15=0.416667
+  base l2=1e-5 : 0.944 / 0.389
+==========================================================
