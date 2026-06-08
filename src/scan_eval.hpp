@@ -59,7 +59,15 @@ inline constexpr int EXTRA_BLACK_MOB    = 102;  // black mobility (men step + ki
 inline constexpr int EXTRA_WHITE_MOB    = 103;  // white mobility
 inline constexpr int EXTRA_BLACK_BAL    = 104;  // black men left − right
 inline constexpr int EXTRA_WHITE_BAL    = 105;  // white men left − right
-inline constexpr int NUM_EXTRAS         = 106;
+// Structural extras (1st batch) — RE-TESTED on the clean (score-drop) baseline
+// after the poison was found (0172). Draughts-meaningful, cheap.
+inline constexpr int EXTRA_BLACK_KMOB   = 106;  // black KING slide mobility
+inline constexpr int EXTRA_WHITE_KMOB   = 107;  // white king slide mobility
+inline constexpr int EXTRA_BLACK_BACK   = 108;  // black men on row 0 (deny white promotion)
+inline constexpr int EXTRA_WHITE_BACK   = 109;  // white men on row 9 (deny black promotion)
+inline constexpr int EXTRA_BLACK_ADV    = 110;  // black men advancement (Σ row)
+inline constexpr int EXTRA_WHITE_ADV    = 111;  // white men advancement (Σ 9−row)
+inline constexpr int NUM_EXTRAS         = 112;
 
 // Game-stage normaliser : 20 men/side at the FMJD start = 40 pieces.
 inline constexpr int MAX_PIECES = 40;
