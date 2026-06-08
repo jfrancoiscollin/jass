@@ -1,0 +1,26 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+
+=== build prod + tests (v4 32 patterns) ===
+TESTS PASS
+NUM_PATTERNS 32 (=32)
+
+=== SWEEP l2 (vs hc, 144 parties) ===
+  l2=1e-7 : vs hc=0.5  (mse=36.367377)
+  l2=3e-7 : vs hc=0.666667  (mse=36.438763)
+  l2=1e-6 : vs hc=0.555556  (mse=36.419831)
+  l2=3e-6 : vs hc=0.666667  (mse=36.363363)
+  l2=1e-5 : vs hc=0.722222  (mse=36.457223)
+
+=== meilleur l2 = 1e-5 → bench FIABLE (216 vs hc) + vs v15 ===
+
+==========================================================
+        0167 OPTIM l2 sur v4 — VERDICT
+  (réf 0165 fiable : v4 l2=1e-5 = 0.72)
+  l2=1e-7 : vs hc(144)=0.5
+  l2=3e-7 : vs hc(144)=0.666667
+  l2=1e-6 : vs hc(144)=0.555556
+  l2=3e-6 : vs hc(144)=0.666667
+  l2=1e-5 : vs hc(144)=0.722222
+  MEILLEUR l2=1e-5 : vs hc(216 fiable)=0.722222  vs v15 d9=0.111111
+  → > 0.72 = gain gratuit (nouveau l2 optimal) ; ≈0.72 = 1e-5 confirmé.
+==========================================================
