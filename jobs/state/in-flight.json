@@ -1,0 +1,7 @@
+{
+  "job_id": "0169-data-cleanliness-diag",
+  "script": "jobs/queue/0169-data-cleanliness-diag.sh",
+  "pid": 367089,
+  "started_at": "2026-06-08T15:58:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
