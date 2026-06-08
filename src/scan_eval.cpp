@@ -111,9 +111,20 @@ void compute_extras(const Position& pos,
     out[EXTRA_WHITE_MOB] = static_cast<float>(mobility(pos, Color::White));
     out[EXTRA_BLACK_BAL] = lr_balance(pos.black_men());
     out[EXTRA_WHITE_BAL] = lr_balance(pos.white_men());
-    // NB: the 1st batch of structural extras (king-mob/back-rank/advancement,
-    // 106->112) regressed on the v5 base and was REVERTED with v5. To re-test
-    // on the v4 base, re-add them here + NUM_EXTRAS, one feature at a time.
+
+    // --- Structural extras (1st batch, re-tested on clean baseline) ---------
+    const Bitboard empty = pos.empties();
+    out[EXTRA_BLACK_KMOB] = static_cast<float>(king_slide_mobility(pos.black_kings(), empty));
+    out[EXTRA_WHITE_KMOB] = static_cast<float>(king_slide_mobility(pos.white_kings(), empty));
+    constexpr Bitboard ROW0 = Bitboard{0x1F};           // squares 1..5
+    constexpr Bitboard ROW9 = Bitboard{0x1F} << 45;     // squares 46..50
+    out[EXTRA_BLACK_BACK] = static_cast<float>(popcount(pos.black_men() & ROW0));
+    out[EXTRA_WHITE_BACK] = static_cast<float>(popcount(pos.white_men() & ROW9));
+    int badv = 0, wadv = 0;
+    for (Bitboard b = pos.black_men(); b; ) badv += row_of(pop_lsb(b));
+    for (Bitboard b = pos.white_men(); b; ) wadv += 9 - row_of(pop_lsb(b));
+    out[EXTRA_BLACK_ADV] = static_cast<float>(badv);
+    out[EXTRA_WHITE_ADV] = static_cast<float>(wadv);
 }
 
 // ---------------------------------------------------------------------------
