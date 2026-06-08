@@ -76,10 +76,12 @@ def build_sparse_X_phased(cols: np.ndarray, wmg: np.ndarray, weg: np.ndarray,
     indices = np.concatenate([mg_idx, eg_idx], axis=1).reshape(-1)
     mg_data = np.repeat(wmg[:, None], npp, axis=1)
     eg_data = np.repeat(weg[:, None], npp, axis=1)
-    data    = np.concatenate([mg_data, eg_data], axis=1).reshape(-1).astype(np.float64)
+    # float32 design matrix : halves memory (critical for multi-M datasets);
+    # ample precision for a least-squares fit on cp-scale targets.
+    data    = np.concatenate([mg_data, eg_data], axis=1).reshape(-1).astype(np.float32)
     indptr  = np.arange(0, n * 2 * npp + 1, 2 * npp, dtype=np.int64)
     return sp.csr_matrix((data, indices, indptr),
-                         shape=(n, 2 * total_buckets), dtype=np.float64)
+                         shape=(n, 2 * total_buckets), dtype=np.float32)
 
 
 def piece_count(ds) -> np.ndarray:
@@ -134,9 +136,12 @@ def build_extras_phased(extras: np.ndarray, wmg: np.ndarray,
     """Phase-split dense extras : [ext*wmg | ext*weg]. Row prediction
     contributes wmg·(w_ext_mg·x) + weg·(w_ext_eg·x) — the same MG/EG
     interpolation ScanEvalNetwork::evaluate() applies to the extras."""
-    mg = extras * wmg[:, None]
-    eg = extras * weg[:, None]
-    return sp.csr_matrix(np.hstack([mg, eg]))
+    # float32 throughout : the dense (n, 2·NUM_EXTRAS) intermediate is the peak
+    # allocation at multi-M rows — float32 halves it (~8GB→4GB at 4.7M).
+    ex = extras.astype(np.float32, copy=False)
+    mg = ex * wmg[:, None].astype(np.float32)
+    eg = ex * weg[:, None].astype(np.float32)
+    return sp.csr_matrix(np.hstack([mg, eg]), dtype=np.float32)
 
 
 def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
@@ -163,7 +168,8 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
     per-column array (used to pin specific features, e.g. material extras, to
     sane target values while leaving the rest free). anchor_l2=0 (or
     prior=None) → pure fit."""
-    XT = X.T.tocsr()
+    XT = X.T            # CSC view sharing X's data — no copy (was .tocsr() = a
+                        # full duplicate, ~doubling memory on multi-M datasets)
     a = np.asarray(anchor_l2, dtype=np.float64)
     anchored = prior is not None and bool(np.any(a > 0.0))
 
@@ -181,8 +187,12 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
 
     # Warm-start at the prior when anchoring (faster, stays in its basin).
     w0 = prior.copy() if anchored else np.zeros(X.shape[1], dtype=np.float64)
+    # maxcor caps the L-BFGS history : its internal storage is ~(2·maxcor+5)·n
+    # float64. At n=42.5M (40-pattern v5) the default maxcor=10 is ~8GB on its
+    # own → OOM once the design matrix is added. maxcor=5 halves it with
+    # negligible convergence cost for this least-squares fit.
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
-                   options={'maxiter': max_iter})
+                   options={'maxiter': max_iter, 'maxcor': 5})
     return res.x, float(res.fun), int(res.nit)
 
 
