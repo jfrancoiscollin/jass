@@ -1,0 +1,29 @@
+{
+  "job_id": "0166-geometry-investigation",
+  "snapshot_at": "2026-06-08T11:19:42+00:00",
+  "started_at": "2026-06-08T11:14:22+00:00",
+  "elapsed_seconds": 320,
+  "artefacts": [
+    {
+      "name": "clean.feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "v4-build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "v4-cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "v4-l21e-5-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v4-tests.log",
+      "size_bytes": 28
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 362100       1       05:20  0.0  0.0 bash\n 362102  362100       05:20  0.0  0.0 bash\n 362474  362102       05:00  295 32.3 python3\n"
+}
