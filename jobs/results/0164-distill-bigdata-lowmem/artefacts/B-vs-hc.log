@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0164-distill-bigdata-lowmem/artefacts.src/B.pjtw, 42515504 weights, scale=1000) vs NNUE(hc), depth 8, threads 1, movetime_ms 0, 54 games
+Result: SCAN_EVAL=6 NNUE=48 Draws=0 (total 54)
+SCAN_EVAL score rate vs NNUE: 0.111111

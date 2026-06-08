@@ -1,0 +1,27 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8  RAM: 30G ===
+master-full : /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/master-full-scan-d10.jnnw (4704759 records)
+
+=== build prod + tests ===
+TESTS PASS
+feat: /root/jass/jobs/results/0162-good-data-full-master/artefacts.src/full112.feat
+
+=== TRAIN A (v5+112 sur 4704759, low-mem maxcor=5 float32, l2=1e-5) ===
+    split : train=4234284 val=470475
+    design : 42515504 columns (2×21257640 pat + 2×112 ext)
+    val   : mse=38.727935  sign_acc=0.0010
+
+=== TRAIN B (v5+112 sur 4704759, low-mem maxcor=5 float32, l2=1e-3) ===
+    split : train=4234284 val=470475
+    design : 42515504 columns (2×21257640 pat + 2×112 ext)
+    val   : mse=38.752867  sign_acc=0.0010
+  A vs hc = 0.111111
+  B vs hc = 0.111111
+
+==========================================================
+        0164 BONNE DATA 4.70M (v5, low-mem) — VERDICT
+  records : 4704759
+  A vs hc=0.111111  B vs hc=0.111111
+  A vs v15 : d9=0.111111  mt=0.037037
+  baselines : v4(32,1.4M)=0.75  v5(40,1.4M)=0.44  cheap-4M=0.11
+  → > 0.44 = la vraie data aide ; > 0.75 = elle débloque la richesse.
+==========================================================
