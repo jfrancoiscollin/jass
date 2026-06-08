@@ -1,7 +1,9 @@
 {
   "job_id": "0170-score-drop-attribution",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-08T17:21:50+00:00",
+  "ended_at": "2026-06-08T18:08:45+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 368277
+  "artefacts_server_path": "/root/jass/jobs/results/0170-score-drop-attribution/artefacts.src"
 }

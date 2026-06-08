@@ -1,0 +1,40 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8  RAM: 30G ===
+
+=== build prod + tests (v4) ===
+TESTS PASS
+
+##### small-nofilter (drop=0) #####
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-nofilter.feat
+loading raw extras /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-nofilter.feat
+split : train=1278174 val=142019
+val   : mse=36.457223  sign_acc=0.0010
+wrote /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-nofilter.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  small-nofilter : vs hc=0.722222  vs v15 d9=0.111111
+
+##### small-drop (drop=4900) #####
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-drop.feat
+loading raw extras /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-drop.feat
+score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+split : train=1254026 val=139336
+val   : mse=1.748904  sign_acc=0.0011
+wrote /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/small-drop.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  small-drop : vs hc=0.944444  vs v15 d9=0.388889
+
+##### big-drop (drop=4900) #####
+wrote 4704759 × 106 Scan-style extras to /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/big-drop.feat
+loading raw extras /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/big-drop.feat
+score-drop : keep |score|<=4900cp → 4610057/4704759 (98.0%)
+split : train=4149052 val=461005
+val   : mse=1.833541  sign_acc=0.0011
+wrote /root/jass/jobs/results/0170-score-drop-attribution/artefacts.src/big-drop.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  big-drop : vs hc=0.833333  vs v15 d9=0.416667
+
+==========================================================
+        0170 SCORE-DROP — ATTRIBUTION — VERDICT
+  (vs hc 216 ±0.034 ; vs v15 d9 144)
+  1.4M sans filtre : vs hc=0.722222  vs v15=0.111111  (ref 0165: 0.72/0.11)
+  1.4M + drop      : vs hc=0.944444  vs v15=0.388889
+  4.7M + drop      : vs hc=0.833333  vs v15=0.416667
+  → 1.4M-drop > 1.4M-nofilter = le FILTRE aide. 4.7M-drop > 1.4M-drop = la DATA aide en plus.
+  → vs v15 qui monte = on RÉDUIT enfin l'écart (le vrai but).
+==========================================================
