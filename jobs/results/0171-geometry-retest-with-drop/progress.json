@@ -1,8 +1,8 @@
 {
   "job_id": "0171-geometry-retest-with-drop",
-  "snapshot_at": "2026-06-08T19:46:39+00:00",
+  "snapshot_at": "2026-06-08T19:51:42+00:00",
   "started_at": "2026-06-08T19:36:33+00:00",
-  "elapsed_seconds": 606,
+  "elapsed_seconds": 909,
   "artefacts": [
     {
       "name": "clean.feat",
@@ -30,12 +30,24 @@
     },
     {
       "name": "v4-vs-v15.log",
-      "size_bytes": 0
+      "size_bytes": 371
     },
     {
-      "name": "v4.pjtw",
-      "size_bytes": 136049764
+      "name": "v5-build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "v5-cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "v5-tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "v5-train.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 370570       1       10:06  0.0  0.0 bash\n 370572  370570       10:06  0.0  0.0 bash\n 371206  370572       00:02  100  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 370570       1       15:08  0.0  0.0 bash\n 370572  370570       15:08  0.0  0.0 bash\n 371625  370572       02:24  255 33.7 python3\n"
 }
