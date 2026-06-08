@@ -1,0 +1,28 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+
+##################### VARIANT v4 (score-drop 4900) #####################
+NUM_PATTERNS set to 32 (v4); TOTAL_BUCKETS=17006112.
+  tests OK
+  NUM_PATTERNS=32
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0171-geometry-retest-with-drop/artefacts.src/clean.feat
+    score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+    val   : mse=1.748904  sign_acc=0.0011
+  v4+drop : vs hc=0.944444  vs v15 d9=0.388889
+
+##################### VARIANT v5 (score-drop 4900) #####################
+NUM_PATTERNS set to 40 (v5); TOTAL_BUCKETS=21257640.
+  tests OK
+  NUM_PATTERNS=40
+    score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+    val   : mse=1.703866  sign_acc=0.0011
+  v5+drop : vs hc=0.944444  vs v15 d9=0.333333
+
+==========================================================
+        0171 GÉOMÉTRIE RE-TEST (avec score-drop) — VERDICT
+  (vs hc 180 ±0.037 ; vs v15 d9 144)
+  v4+drop : vs hc=0.944444  vs v15=0.388889
+  v5+drop : vs hc=0.944444  vs v15=0.333333
+  (rappel 0170 : v4+drop = 0.944 / 0.389)
+  → v5 > v4 = la richesse diagonale paie sur base saine → rouvrir géométrie+extras.
+  → v5 ≤ v4 = les blocs nuisent vraiment, v4 reste le set.
+==========================================================
