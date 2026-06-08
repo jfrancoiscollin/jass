@@ -1,8 +1,8 @@
 {
   "job_id": "0169-data-cleanliness-diag",
-  "snapshot_at": "2026-06-08T16:04:05+00:00",
+  "snapshot_at": "2026-06-08T16:09:10+00:00",
   "started_at": "2026-06-08T15:58:55+00:00",
-  "elapsed_seconds": 310,
+  "elapsed_seconds": 615,
   "artefacts": [
     {
       "name": "big-filtered.jnnw",
@@ -29,5 +29,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 367089       1       05:09  0.0  0.0 bash\n 367091  367089       05:09  0.0  0.0 bash\n 367474  367091       04:47  207 57.9 python3\n 367475  367091       04:47  0.0  0.0 tee\n 367476  367091       04:47  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 367089       1       10:15  0.0  0.0 bash\n 367091  367089       10:15  0.0  0.0 bash\n 367474  367091       09:53  215 47.9 python3\n 367475  367091       09:53  0.0  0.0 tee\n 367476  367091       09:53  0.0  0.0 grep\n"
 }
