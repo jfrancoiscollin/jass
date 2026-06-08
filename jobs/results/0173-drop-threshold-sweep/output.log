@@ -1,0 +1,14 @@
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0173-drop-threshold-sweep/artefacts.src/feat
+  drop=2000 : vs hc=0.833333  vs v15=0.361111  (mse=1.776411)
+  drop=3000 : vs hc=0.944444  vs v15=0.388889  (mse=1.748904)
+  drop=4000 : vs hc=0.944444  vs v15=0.388889  (mse=1.748904)
+  drop=4900 : vs hc=0.944444  vs v15=0.388889  (mse=1.748904)
+==========================================================
+  0173 SEUIL DE DROP — VERDICT (vs hc/v15, 108 parties)
+  drop=2000 : hc=0.833333  v15=0.361111
+  drop=3000 : hc=0.944444  v15=0.388889
+  drop=4000 : hc=0.944444  v15=0.388889
+  drop=4900 : hc=0.944444  v15=0.388889
+  base drop=4900 : 0.944 / 0.389 → meilleur seuil = gain gratuit.
+==========================================================
