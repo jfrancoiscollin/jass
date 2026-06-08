@@ -1,8 +1,8 @@
 {
   "job_id": "0173-drop-threshold-sweep",
-  "snapshot_at": "2026-06-08T21:23:39+00:00",
+  "snapshot_at": "2026-06-08T21:28:40+00:00",
   "started_at": "2026-06-08T21:18:32+00:00",
-  "elapsed_seconds": 307,
+  "elapsed_seconds": 608,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,13 +17,25 @@
       "size_bytes": 602161844
     },
     {
+      "name": "t2000-hc.log",
+      "size_bytes": 273
+    },
+    {
       "name": "t2000-train.log",
+      "size_bytes": 939
+    },
+    {
+      "name": "t2000-v15.log",
       "size_bytes": 0
+    },
+    {
+      "name": "t2000.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 373538       1       05:06  0.0  0.0 bash\n 373540  373538       05:06  0.0  0.0 bash\n 373907  373540       04:47  296 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 373538       1       10:08  0.0  0.0 bash\n 373540  373538       10:08  0.0  0.0 bash\n 374047  373540       00:39 99.9  0.9 jass\n"
 }
