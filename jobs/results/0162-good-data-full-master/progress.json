@@ -1,8 +1,8 @@
 {
   "job_id": "0162-good-data-full-master",
-  "snapshot_at": "2026-06-08T04:36:04+00:00",
+  "snapshot_at": "2026-06-08T04:41:05+00:00",
   "started_at": "2026-06-08T04:25:01+00:00",
-  "elapsed_seconds": 663,
+  "elapsed_seconds": 964,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,72 +14,72 @@
     },
     {
       "name": "relab-0.jnnw",
-      "size_bytes": 5798124
+      "size_bytes": 8469486
     },
     {
       "name": "relab-0.log",
-      "size_bytes": 10966
+      "size_bytes": 16298
     },
     {
       "name": "relab-1.jnnw",
-      "size_bytes": 5911972
+      "size_bytes": 8705314
     },
     {
       "name": "relab-1.log",
-      "size_bytes": 10246
+      "size_bytes": 15062
     },
     {
       "name": "relab-2.jnnw",
-      "size_bytes": 5871312
+      "size_bytes": 8619928
     },
     {
       "name": "relab-2.log",
-      "size_bytes": 11128
+      "size_bytes": 15944
     },
     {
       "name": "relab-3.jnnw",
-      "size_bytes": 5822520
+      "size_bytes": 8461354
     },
     {
       "name": "relab-3.log",
-      "size_bytes": 10654
+      "size_bytes": 15986
     },
     {
       "name": "relab-4.jnnw",
-      "size_bytes": 6017688
+      "size_bytes": 8758172
     },
     {
       "name": "relab-4.log",
-      "size_bytes": 10731
+      "size_bytes": 15633
     },
     {
       "name": "relab-5.jnnw",
-      "size_bytes": 5611088
+      "size_bytes": 8408496
     },
     {
       "name": "relab-5.log",
-      "size_bytes": 10365
+      "size_bytes": 15439
     },
     {
       "name": "relab-6.jnnw",
-      "size_bytes": 5810322
+      "size_bytes": 8363770
     },
     {
       "name": "relab-6.log",
-      "size_bytes": 10648
+      "size_bytes": 15378
     },
     {
       "name": "relab-7.jnnw",
-      "size_bytes": 5704606
+      "size_bytes": 8286516
     },
     {
       "name": "relab-7.log",
-      "size_bytes": 10292
+      "size_bytes": 15442
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 355236       1       11:03  0.0  0.0 bash\n 355238  355236       11:03  0.0  0.0 bash\n 355608  355238       10:44  3.7  0.5 python3\n 355609  355238       10:44  3.7  0.5 python3\n 355610  355238       10:44  3.7  0.5 python3\n 355611  355238       10:44  3.7  0.5 python3\n 355612  355238       10:44  3.8  0.5 python3\n 355613  355238       10:44  3.6  0.5 python3\n 355614  355238       10:44  3.7  0.5 python3\n 355615  355238       10:44  3.7  0.5 python3\n 355616  355609       10:44 96.1  0.9 scan_linux\n 355617  355615       10:44 96.1  0.9 scan_linux\n 355618  355611       10:44 96.2  0.9 scan_linux\n 355619  355614       10:44 96.2  0.9 scan_linux\n 355620  355608       10:44 96.2  0.9 scan_linux\n 355621  355610       10:44 96.2  0.9 scan_linux\n 355622  355612       10:44 96.0  0.9 scan_linux\n 355623  355613       10:44 96.2  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 355236       1       16:04  0.0  0.0 bash\n 355238  355236       16:04  0.0  0.0 bash\n 355608  355238       15:45  3.6  0.5 python3\n 355609  355238       15:45  3.7  0.5 python3\n 355610  355238       15:45  3.7  0.5 python3\n 355611  355238       15:45  3.6  0.5 python3\n 355612  355238       15:45  3.8  0.5 python3\n 355613  355238       15:45  3.7  0.5 python3\n 355614  355238       15:45  3.6  0.5 python3\n 355615  355238       15:45  3.6  0.5 python3\n 355616  355609       15:44 96.1  0.9 scan_linux\n 355617  355615       15:44 96.1  0.9 scan_linux\n 355618  355611       15:44 96.1  0.9 scan_linux\n 355619  355614       15:44 96.1  0.9 scan_linux\n 355620  355608       15:44 96.1  0.9 scan_linux\n 355621  355610       15:44 96.1  0.9 scan_linux\n 355622  355612       15:44 96.0  0.9 scan_linux\n 355623  355613       15:44 96.1  0.9 scan_linux\n"
 }
