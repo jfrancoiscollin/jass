@@ -1,8 +1,8 @@
 {
   "job_id": "0172-extras-retest-with-drop",
-  "snapshot_at": "2026-06-08T21:03:14+00:00",
+  "snapshot_at": "2026-06-08T21:08:17+00:00",
   "started_at": "2026-06-08T20:58:07+00:00",
-  "elapsed_seconds": 307,
+  "elapsed_seconds": 610,
   "artefacts": [
     {
       "name": "build.log",
@@ -22,8 +22,16 @@
     },
     {
       "name": "train.log",
+      "size_bytes": 952
+    },
+    {
+      "name": "v4e.pjtw",
+      "size_bytes": 136049812
+    },
+    {
+      "name": "vs-hc.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 372753       1       05:07  0.0  0.0 bash\n 372755  372753       05:07  0.0  0.0 bash\n 373121  372755       04:47  292 32.4 python3\n 373122  372755       04:47  0.0  0.0 tee\n 373123  372755       04:47  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 372753       1       10:10  0.0  0.0 bash\n 372755  372753       10:10  0.0  0.0 bash\n 373293  372755       01:09  100  0.9 jass\n 373294  372755       01:09  0.0  0.0 tee\n 373295  372755       01:09  0.0  0.0 grep\n"
 }
