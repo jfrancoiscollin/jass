@@ -1,8 +1,8 @@
 {
   "job_id": "0174-l2-resweep-with-drop",
-  "snapshot_at": "2026-06-08T22:10:50+00:00",
+  "snapshot_at": "2026-06-08T22:15:55+00:00",
   "started_at": "2026-06-08T22:05:29+00:00",
-  "elapsed_seconds": 321,
+  "elapsed_seconds": 626,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,13 +17,25 @@
       "size_bytes": 602161844
     },
     {
+      "name": "l1e-6-hc.log",
+      "size_bytes": 273
+    },
+    {
       "name": "l1e-6-train.log",
+      "size_bytes": 939
+    },
+    {
+      "name": "l1e-6-v15.log",
       "size_bytes": 0
+    },
+    {
+      "name": "l1e-6.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 374805       1       05:21  0.0  0.0 bash\n 374807  374805       05:21  0.0  0.0 bash\n 375172  374807       05:01  295 28.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 374805       1       10:26  0.0  0.0 bash\n 374807  374805       10:26  0.0  0.0 bash\n 375292  374807       00:44  100  0.9 jass\n"
 }
