@@ -1,8 +1,8 @@
 {
   "job_id": "0173-drop-threshold-sweep",
-  "snapshot_at": "2026-06-08T21:54:46+00:00",
+  "snapshot_at": "2026-06-08T22:00:05+00:00",
   "started_at": "2026-06-08T21:18:32+00:00",
-  "elapsed_seconds": 2174,
+  "elapsed_seconds": 2493,
   "artefacts": [
     {
       "name": "build.log",
@@ -61,5 +61,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 373538       1       36:14  0.0  0.0 bash\n 373540  373538       36:14  0.0  0.0 bash\n 374522  373540       02:18  293 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 373538       1       41:32  0.0  0.0 bash\n 373540  373538       41:32  0.0  0.0 bash\n 374522  373540       07:36  300 30.7 python3\n"
 }
