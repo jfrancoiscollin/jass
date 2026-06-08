@@ -1,7 +1,9 @@
 {
   "job_id": "0165-v4-reliable-baseline",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-08T08:52:15+00:00",
+  "ended_at": "2026-06-08T10:15:50+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 359942
+  "artefacts_server_path": "/root/jass/jobs/results/0165-v4-reliable-baseline/artefacts.src"
 }
