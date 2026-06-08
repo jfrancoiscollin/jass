@@ -1,0 +1,7 @@
+{
+  "job_id": "0166-geometry-investigation",
+  "script": "jobs/queue/0166-geometry-investigation.sh",
+  "pid": 362100,
+  "started_at": "2026-06-08T11:14:22+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
