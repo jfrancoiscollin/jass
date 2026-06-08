@@ -1,8 +1,8 @@
 {
   "job_id": "0164-distill-bigdata-lowmem",
-  "snapshot_at": "2026-06-08T06:08:57+00:00",
+  "snapshot_at": "2026-06-08T06:14:00+00:00",
   "started_at": "2026-06-08T05:27:45+00:00",
-  "elapsed_seconds": 2472,
+  "elapsed_seconds": 2775,
   "artefacts": [
     {
       "name": "A-train.log",
@@ -49,5 +49,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 357277       1       41:11  0.0  0.0 bash\n 357279  357277       41:11  0.0  0.0 bash\n 358590  357279       00:56 99.9  1.0 jass\n 358591  357279       00:56  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 357277       1       46:14  0.0  0.0 bash\n 357279  357277       46:14  0.0  0.0 bash\n 358590  357279       05:59 99.9  1.0 jass\n 358591  357279       05:59  0.0  0.0 tee\n"
 }
