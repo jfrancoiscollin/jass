@@ -294,9 +294,21 @@ def train_scan_eval(args):
     print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}')
 
     n = ds.n_records
+    # --score-drop : DROP rows whose |raw score| exceeds the threshold (the
+    # ±9989 "won/lost" Scan verdicts) instead of clipping them. In least-squares
+    # an extreme target dominates the loss even after a ±5000 clip (5000²=25M vs
+    # ~90K for a normal ±300 position), so ~2% of extremes poison the fit (cf
+    # 0169: dropping them took val_mse 38.7→1.8 and play 0.42→0.83). 0 = keep.
+    if getattr(args, 'score_drop', 0) and args.score_drop > 0:
+        keep = np.abs(ds.score.astype(np.float64)) <= args.score_drop
+        kept = np.flatnonzero(keep)
+        print(f'score-drop : keep |score|<={int(args.score_drop)}cp → '
+              f'{len(kept)}/{n} ({100*len(kept)/max(n,1):.1f}%)')
+    else:
+        kept = np.arange(n)
     rng = np.random.default_rng(seed=2026)
-    perm = rng.permutation(n)
-    n_val = int(n * args.val_frac)
+    perm = rng.permutation(kept)
+    n_val = int(len(perm) * args.val_frac)
     val_idx, tr_idx = perm[:n_val], perm[n_val:]
     print(f'split : train={len(tr_idx)} val={len(val_idx)}')
 
@@ -385,6 +397,10 @@ def main():
                          '"score" (centipawn clipped to ±2000 / 100 → piece units)')
     ap.add_argument('--score-clip', type=float, default=2000.0,
                     help='clip score to ±N cp before scaling (default 2000)')
+    ap.add_argument('--score-drop', type=float, default=0.0,
+                    help='DROP rows with |raw score| > N cp (extreme won/lost '
+                         'verdicts that dominate the LS loss). 0 = keep all. '
+                         'Try 4900 (cf 0169: val_mse 38→1.8, play 0.42→0.83).')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
