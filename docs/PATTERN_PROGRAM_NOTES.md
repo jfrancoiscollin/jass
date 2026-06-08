@@ -418,6 +418,42 @@ l'axe qualité, pas une fin.
 Synergie : accumulateur (vitesse) **débloque** géométrie+extras (richesse) →
 qualité. La sparsité (plus de buckets) devient la contrainte, pas la vitesse.
 
+### Inventaire DATA + stratégie (acté 2026-06-07, cf 0159→0163)
+
+**Leçon clé (0161)** : *plus de data ≠ mieux — c'est la QUALITÉ/diversité qui
+compte.* Le self-play **handcrafted depth-4** (0160) est de la **mauvaise** data
+(étroite, faible) : v5+extras a régressé 0.25 → **0.11**, avec val_mse qui
+*baisse* (31) mais nnz qui *tombe* (3.6%→2.1% : il fitte une distribution
+étroite hors-jeu). Ne JAMAIS générer de la data avec un éval faible à faible
+profondeur.
+
+**Datasets stockés (vérifiés)** — beaucoup plus que le 1.5M utilisé jusqu'ici :
+
+| Dataset | Records | Labels natifs | Statut |
+|---|---|---|---|
+| `master-1600.jnnw` (0014) | **4.74M** | WDL (résultats réels) | jeux maîtres ; **0162** le relabel Scan-d10 (propre) |
+| `gen-2M-depth20.bin` (0106) | **2.0M** | v15 eval (depth 20) | self-play **FORT** ; **0163** le relabel Scan-d10 |
+| `v11-distilled-2M.bin` (0084) | **6.74M** | Scan-distill | distrib **suspecte** (range [-30000,+10000] asymétrique) → à VÉRIFIER avant usage |
+| augmenté h1-h3 (0059/0062) | **9.48M** | **WDL** (BCE) | « le 10M » ; pour notre distillation par score → **relabel Scan requis** |
+| `master-clean-scan-d10` (0141) | ~1.4M | Scan-d10 (propre) | le set actuel (sous-échantillon nettoyé) |
+
+**Bonne data = joueur fort + recherche profonde + diversité.** master (humains
+1600+) et v15-depth20 self-play qualifient ; handcrafted-d4 non.
+
+**Plan data, par étapes** :
+1. **En cours (0162→0163)** : master-FULL (4.74M) + v15-depth20 (2M), tous
+   Scan-d10 → **~6.7M propre**. Re-distille v5 (40 pat + 112 extras). Test :
+   la bonne data débloque-t-elle la richesse (> 0.75) ?
+2. **Si oui & on veut plus** : ajouter le **9.48M WDL** (relabel Scan-d10, façon
+   0160) + le **6.74M v11** (après vérif distribution) → **~15-20M**. Permet des
+   géométries bien plus riches (50+ patterns) sans sur-apprendre.
+3. **Si non** (≤0.75 même sur bonne data) : le mur n'est pas la data → revenir
+   à **v4 (32, sweet spot 0.75)** et chercher ailleurs (cible de distillation,
+   conditionnement des extras à grande échelle, FM).
+
+> Rappel attribution : géométrie (0154→0159), extras (0159→0155), data
+> (0155→0163) — chaque axe isolé. v4(32,1.4M)=0.75 reste la référence à battre.
+
 ## Roadmap post-validation (plan acté 2026-06-06)
 
 Séquence **conditionnelle** : ne démarrer que **si 0141/0142/0143 confirment
