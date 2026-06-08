@@ -1,0 +1,7 @@
+{
+  "job_id": "0175-bigdata-v4-drop",
+  "script": "jobs/queue/0175-bigdata-v4-drop.sh",
+  "pid": 376189,
+  "started_at": "2026-06-08T22:52:26+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
