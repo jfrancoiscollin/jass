@@ -1,0 +1,24 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+
+=== build prod + tests (v4 32 patterns + 112 extras) ===
+TESTS PASS
+
+=== dump features (112) + distill v4+112 (score-drop 4900, l2=1e-5) ===
+wrote 1420193 × 112 Scan-style extras to /root/jass/jobs/results/0172-extras-retest-with-drop/artefacts.src/clean112.feat
+score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+val   : mse=1.689576  sign_acc=0.0010
+    extras structurels (poids mg) : BkMob=+0.689  WkMob=-0.701  Bback=-0.548  Wback=+0.534  Badv=-0.146  Wadv=+0.142
+
+=== benchs fiables ===
+Result: SCAN_EVAL=150 NNUE=10 Draws=20 (total 180)
+SCAN_EVAL score rate vs NNUE: 0.888889
+Result: SCAN_EVAL=56 NNUE=88 Draws=0 (total 144)
+SCAN_EVAL score rate vs NNUE: 0.388889
+
+==========================================================
+        0172 EXTRAS RE-TEST (avec score-drop) — VERDICT
+  v4+112+drop : vs hc=0.888889  vs v15 d9=0.388889
+  baseline v4+106+drop (0171) : 0.944 / 0.389
+  → > 0.944/0.389 = les extras structurels aident sur base saine (levier).
+  → ≈ = neutres. < = nuisent même propre.
+==========================================================
