@@ -1,8 +1,8 @@
 {
   "job_id": "0184-fm-distill-bench",
-  "snapshot_at": "2026-06-09T18:58:45+00:00",
+  "snapshot_at": "2026-06-09T19:03:58+00:00",
   "started_at": "2026-06-09T18:38:50+00:00",
-  "elapsed_seconds": 1195,
+  "elapsed_seconds": 1508,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,5 +37,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 405662       1       19:55  0.0  0.0 bash\n 405664  405662       19:55  0.0  0.0 bash\n 406298  405664       08:46 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 405662       1       25:08  0.0  0.0 bash\n 405664  405662       25:08  0.0  0.0 bash\n 406298  405664       13:59 99.9  0.9 jass\n"
 }
