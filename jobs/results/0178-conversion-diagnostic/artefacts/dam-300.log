@@ -1,0 +1,6 @@
+depth-at-movetime : movetime=300ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/0178-conversion-diagnostic/artefacts.src/champ.pjtw
+    depth avg=16.6667  min=15  max=18  | nodes avg=508643  knps~1695.48
+  B /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+    depth avg=14.3333  min=13  max=15  | nodes avg=397447  knps~1324.83
+  → A reaches 2.33333 plies vs B (positive = A searches deeper for the same time)
