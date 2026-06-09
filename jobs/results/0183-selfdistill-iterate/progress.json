@@ -1,8 +1,8 @@
 {
   "job_id": "0183-selfdistill-iterate",
-  "snapshot_at": "2026-06-09T17:42:15+00:00",
+  "snapshot_at": "2026-06-09T17:47:19+00:00",
   "started_at": "2026-06-09T15:36:56+00:00",
-  "elapsed_seconds": 7519,
+  "elapsed_seconds": 7823,
   "artefacts": [
     {
       "name": "build.log",
@@ -122,35 +122,35 @@
     },
     {
       "name": "sp2-0.jnnw",
-      "size_bytes": 410402
+      "size_bytes": 714098
     },
     {
       "name": "sp2-1.jnnw",
-      "size_bytes": 426818
+      "size_bytes": 730514
     },
     {
       "name": "sp2-2.jnnw",
-      "size_bytes": 418610
+      "size_bytes": 705890
     },
     {
       "name": "sp2-3.jnnw",
-      "size_bytes": 418610
+      "size_bytes": 714098
     },
     {
       "name": "sp2-4.jnnw",
-      "size_bytes": 418610
+      "size_bytes": 705890
     },
     {
       "name": "sp2-5.jnnw",
-      "size_bytes": 435026
+      "size_bytes": 730514
     },
     {
       "name": "sp2-6.jnnw",
-      "size_bytes": 443234
+      "size_bytes": 755138
     },
     {
       "name": "sp2-7.jnnw",
-      "size_bytes": 426818
+      "size_bytes": 730514
     },
     {
       "name": "tests.log",
@@ -193,5 +193,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1    02:05:18  0.0  0.0 bash\n 401939  401937    02:05:18  0.0  0.0 bash\n 404380  401939       07:19 99.9  0.5 jass\n 404381  401939       07:19 99.9  0.5 jass\n 404382  401939       07:19 99.9  0.5 jass\n 404383  401939       07:19 99.8  0.5 jass\n 404384  401939       07:19 99.9  0.5 jass\n 404385  401939       07:19 99.9  0.5 jass\n 404386  401939       07:19 99.9  0.5 jass\n 404387  401939       07:19 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1    02:10:22  0.0  0.0 bash\n 401939  401937    02:10:22  0.0  0.0 bash\n 404380  401939       12:23 99.9  0.5 jass\n 404381  401939       12:23 99.9  0.5 jass\n 404382  401939       12:23 99.9  0.5 jass\n 404383  401939       12:23 99.9  0.5 jass\n 404384  401939       12:23 99.9  0.5 jass\n 404385  401939       12:23 99.9  0.5 jass\n 404386  401939       12:23 99.9  0.5 jass\n 404387  401939       12:23 99.9  0.5 jass\n"
 }
