@@ -93,12 +93,89 @@ def ablock(n):   # anti-diagonal block
     return _diag_block(n, -1, (0, -2))
 
 
+def _distinct(fns, cap=99):
+    """All distinct 12-square patterns from the given (fn, tag) generators,
+    swept over every start square; deduped globally. `cap` limits the total."""
+    out, seen = [], set()
+    for fn, tag in fns:
+        k = 0
+        for s in range(1, 51):
+            p = fn(s)
+            if p and tuple(p) not in seen:
+                seen.add(tuple(p)); out.append((p, f"{tag}_{k}")); k += 1
+                if len(out) >= cap:
+                    return out
+    return out
+
+
+def build_v6():
+    """piste 1 — DIAGONAL-DENSE : the board is a diagonal game ; replace the
+    (misaligned) vertical bands by a dense set aligned on the movement axes —
+    every distinct down-right / anti-diagonal BAND and 3-wide BLOCK, plus a few
+    horizontal/square blocks for full coverage. Tests whether aligning + densi-
+    fying the geometry (Scan's mechanism) beats v4's vertical bands."""
+    pats = _distinct([(dband, "diag"), (aband, "anti"),
+                      (dblock, "db"),  (ablock, "ab")], cap=44)
+    for i, (r0, c0) in enumerate([(0, 0), (4, 1), (7, 0)]):
+        pats.append((hblock(r0, c0), f"horiz_{i}"))
+    for i, (r0, c0) in enumerate([(3, 0)]):
+        pats.append((sblock(r0, c0), f"sq_{i}"))
+    return pats
+
+
+def build_v7():
+    """piste 2 — REGION-SPECIALISED : spend the windows where the information
+    is dense — the two promotion bands (rows 0-2 and 7-9), the long central
+    diagonals, the left/right edges and the centre — rather than tiling uni-
+    formly. Draughts-specific placement (back rank, edges weak, centre strong)."""
+    pats, seen = [], set()
+    def add(p, name):
+        if p and tuple(p) not in seen:
+            seen.add(tuple(p)); pats.append((p, name))
+    # Promotion bands : 3×4 horizontal blocks on the top (0-2) and bottom (7-9).
+    for c0 in (0, 1):
+        add(hblock(0, c0), f"promo_top_{c0}")
+        add(hblock(7, c0), f"promo_bot_{c0}")
+    # Long central diagonals (both directions), densest near the centre.
+    for s in range(18, 34):
+        add(dband(s), f"cdiag_{s}")
+        add(aband(s), f"cadiag_{s}")
+    # Left / right edge vertical bands (edge men are weak — worth watching).
+    for half, r0 in (("top", 0), ("bot", 4)):
+        add(vband(r0, 0), f"edgeL_{half}")
+        add(vband(r0, 3), f"edgeR_{half}")
+    # Centre compact blocks (central control).
+    for i, (r0, c0) in enumerate([(3, 0), (3, 2), (4, 1)]):
+        add(sblock(r0, c0), f"centre_{i}")
+    return pats
+
+
 def build(variant="v4"):
     """v4 ENRICHED set (32 patterns) : 8 vertical bands (v3) + 7 down-right
     diagonals + 8 anti-diagonals + 5 horizontal + 4 square blocks. The proven
     sweet spot (0165 reliable: 0.72 vs hc). variant="v5" appends 8 3×4 diagonal
     BLOCKS (->40) — that addition regressed in earlier (confounded) tests; the
-    geometry investigation (0166) re-measures it cleanly with an l2 sweep."""
+    geometry investigation (0166) re-measures it cleanly with an l2 sweep.
+    variant="v6" (diagonal-dense) and "v7" (region-specialised) are the Scan-
+    route geometries (prepared ahead — run via 0186/0187)."""
+    if variant == "v6":
+        pats = build_v6()
+    elif variant == "v7":
+        pats = build_v7()
+    else:
+        pats = _build_v4_v5(variant)
+    # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
+    allseen = set()
+    for sqs, name in pats:
+        assert sqs and len(sqs) == SIZE and len(set(sqs)) == SIZE \
+            and all(1 <= x <= 50 for x in sqs), (name, sqs)
+        t = tuple(sqs)
+        assert t not in allseen, ("duplicate pattern", name)
+        allseen.add(t)
+    return pats
+
+
+def _build_v4_v5(variant="v4"):
     pats: list[tuple[list[int], str]] = []
     # V : 8 v3 vertical bands (top rows 0-5, bottom rows 4-9 ; 4 col-shifts each)
     for half, r0 in (("top", 0), ("bot", 4)):
@@ -182,8 +259,9 @@ def _sub_count(path: Path, n: int):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
-    ap.add_argument("--variant", choices=["v4", "v5"], default="v4",
-                    help="v4=32 patterns (sweet spot), v5=40 (adds diagonal blocks)")
+    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
+                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
+                         "v6=diagonal-dense, v7=region-specialised (Scan route)")
     args = ap.parse_args()
     pats = build(args.variant)
     n = len(pats)
