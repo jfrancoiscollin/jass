@@ -1,8 +1,8 @@
 {
   "job_id": "0178-conversion-diagnostic",
-  "snapshot_at": "2026-06-09T08:12:05+00:00",
+  "snapshot_at": "2026-06-09T08:17:28+00:00",
   "started_at": "2026-06-09T08:01:38+00:00",
-  "elapsed_seconds": 627,
+  "elapsed_seconds": 950,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,12 +17,16 @@
       "size_bytes": 506
     },
     {
+      "name": "d11.log",
+      "size_bytes": 0
+    },
+    {
       "name": "d7.log",
       "size_bytes": 370
     },
     {
       "name": "d9.log",
-      "size_bytes": 0
+      "size_bytes": 370
     },
     {
       "name": "dam-1000.log",
@@ -41,5 +45,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391090       1       10:26  0.0  0.0 bash\n 391092  391090       10:26  0.0  0.0 bash\n 391651  391092       00:18  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391090       1       15:50  0.0  0.0 bash\n 391092  391090       15:50  0.0  0.0 bash\n 391716  391092       03:27 99.9  0.9 jass\n"
 }
