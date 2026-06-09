@@ -1,12 +1,16 @@
 {
   "job_id": "0179-spsa-highdepth-regime",
-  "snapshot_at": "2026-06-09T08:42:45+00:00",
+  "snapshot_at": "2026-06-09T08:47:46+00:00",
   "started_at": "2026-06-09T08:37:42+00:00",
-  "elapsed_seconds": 303,
+  "elapsed_seconds": 604,
   "artefacts": [
     {
       "name": "build.log",
       "size_bytes": 9364
+    },
+    {
+      "name": "champ.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "cmake.log",
@@ -17,9 +21,13 @@
       "size_bytes": 602161844
     },
     {
+      "name": "spsa.log",
+      "size_bytes": 0
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 392278       1       05:03  0.0  0.0 bash\n 392280  392278       05:03  0.0  0.0 bash\n 392652  392280       04:43  292 27.9 python3\n 392653  392280       04:43  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 392278       1       10:04  0.0  0.0 bash\n 392280  392278       10:04  0.0  0.0 bash\n 392837  392280       01:01  0.0  0.0 python3\n 392838  392280       01:01  0.0  0.0 tee\n 392839  392280       01:01  0.0  0.0 tail\n 392849  392837       00:26  100  0.5 jass\n"
 }
