@@ -1,8 +1,8 @@
 {
   "job_id": "0181-selfplay-loop-pilot",
-  "snapshot_at": "2026-06-09T14:32:58+00:00",
+  "snapshot_at": "2026-06-09T14:38:00+00:00",
   "started_at": "2026-06-09T14:06:24+00:00",
-  "elapsed_seconds": 1594,
+  "elapsed_seconds": 1896,
   "artefacts": [
     {
       "name": "build.log",
@@ -30,72 +30,92 @@
     },
     {
       "name": "gen-0.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-1.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-2.log",
-      "size_bytes": 0
+      "size_bytes": 1065
     },
     {
       "name": "gen-3.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-4.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-5.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-6.log",
-      "size_bytes": 0
+      "size_bytes": 1021
     },
     {
       "name": "gen-7.log",
+      "size_bytes": 1065
+    },
+    {
+      "name": "sd-train.log",
+      "size_bytes": 1031
+    },
+    {
+      "name": "sd-v15.log",
       "size_bytes": 0
     },
     {
+      "name": "sd.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "selfplay.jnnw",
+      "size_bytes": 7600008
+    },
+    {
       "name": "sp-shard-0.jnnw",
-      "size_bytes": 829010
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-1.jnnw",
-      "size_bytes": 845426
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-2.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-3.jnnw",
-      "size_bytes": 812594
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-4.jnnw",
-      "size_bytes": 829010
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-5.jnnw",
-      "size_bytes": 812594
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-6.jnnw",
-      "size_bytes": 829010
+      "size_bytes": 950008
     },
     {
       "name": "sp-shard-7.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 950008
+    },
+    {
+      "name": "sp.feat",
+      "size_bytes": 84800012
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       26:34  0.0  0.0 bash\n 399531  399529       26:34  0.0  0.0 bash\n 400123  399531       14:29 99.9  0.5 jass\n 400124  399531       14:29 99.8  0.5 jass\n 400125  399531       14:29 99.9  0.5 jass\n 400126  399531       14:29 99.8  0.5 jass\n 400127  399531       14:29 99.8  0.5 jass\n 400128  399531       14:29 99.9  0.5 jass\n 400129  399531       14:29 99.9  0.5 jass\n 400130  399531       14:29 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       31:35  0.0  0.0 bash\n 399531  399529       31:35  0.0  0.0 bash\n 400629  399531       01:41  100  0.9 jass\n"
 }
