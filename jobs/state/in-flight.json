@@ -1,0 +1,7 @@
+{
+  "job_id": "0183-selfdistill-iterate",
+  "script": "jobs/queue/0183-selfdistill-iterate.sh",
+  "pid": 401937,
+  "started_at": "2026-06-09T15:36:56+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
