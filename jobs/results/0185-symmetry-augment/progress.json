@@ -1,8 +1,8 @@
 {
   "job_id": "0185-symmetry-augment",
-  "snapshot_at": "2026-06-09T23:13:05+00:00",
+  "snapshot_at": "2026-06-09T23:18:13+00:00",
   "started_at": "2026-06-09T22:15:18+00:00",
-  "elapsed_seconds": 3467,
+  "elapsed_seconds": 3775,
   "artefacts": [
     {
       "name": "aug.feat",
@@ -45,5 +45,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 411206       1       57:46  0.0  0.0 bash\n 411208  411206       57:46  0.0  0.0 bash\n 412587  411208       03:07  243 36.9 python3\n 412588  411208       03:07  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 411206       1    01:02:54  0.0  0.0 bash\n 411208  411206    01:02:54  0.0  0.0 bash\n 412587  411208       08:15  250 36.9 python3\n 412588  411208       08:15  0.0  0.0 grep\n"
 }
