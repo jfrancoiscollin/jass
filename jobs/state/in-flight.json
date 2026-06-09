@@ -1,0 +1,7 @@
+{
+  "job_id": "0184-fm-distill-bench",
+  "script": "jobs/queue/0184-fm-distill-bench.sh",
+  "pid": 405662,
+  "started_at": "2026-06-09T18:38:50+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
