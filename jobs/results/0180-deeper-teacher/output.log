@@ -1,0 +1,25 @@
+tests OK
+
+=== relabel sous-ensemble 250000 @ d10 (control) ===
+  merged 248864 → /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/sub-d10.jnnw
+  relabel d10 wall : 172s
+
+=== relabel MÊME sous-ensemble @ d16 (treatment) ===
+  merged 248778 → /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/sub-d16.jnnw
+  relabel d16 wall : 3032s
+  control d10 : 248864 records   treatment d16 : 248778 records
+
+=== distill + bench : d10 vs d16 (même positions) ===
+wrote 248864 × 106 Scan-style extras to /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/teacher-d10.feat
+  teacher-d10 : vs v15 d9=0.25  movetime=0.284722
+wrote 248778 × 106 Scan-style extras to /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/teacher-d16.feat
+  teacher-d16 : vs v15 d9=0.333333  movetime=0.222222
+
+==========================================================
+        0180 TEACHER PLUS PROFOND — VERDICT
+  control  d10 (248864) : v15 d9=0.25  mt=0.284722
+  treatment d16 (248778): v15 d9=0.333333  mt=0.222222
+  (sous-ensemble 250K : rates absolus < champion 1.4M ; c'est le DELTA d10→d16 qui compte)
+  → d16 > d10 = prof du teacher = levier (scaler vers d20+ / full master).
+  → d16 ≈ d10 = pas le levier ici.
+==========================================================

@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/sub-d10.jnnw
+  248864 records  (0.02s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/teacher-d10.feat
+  extras shape (248864, 106)  (mean mob b/w=10.2/10.2)
+target=score  clipped±5000cp / 100  std=6.667
+phase : piece-count mean=23.9  wmg mean=0.598
+score-drop : keep |score|<=4900cp → 244761/248864 (98.4%)
+split : train=220285 val=24476
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=0.0001  max_iter=200  (anchored)
+  train_loss=0.833092  iters=200  (392.29s)
+val   : mse=1.602521  sign_acc=0.0007
+quant : scale=1000  pat range=[-385,267] ext_mg range=[-3000,3000]
+wrote /root/jass/jobs/results/0180-deeper-teacher/artefacts.src/teacher-d10.pjtw  (v3, 34012436 weights, 136049764 bytes)
