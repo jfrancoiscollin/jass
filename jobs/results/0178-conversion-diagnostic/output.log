@@ -1,0 +1,41 @@
+tests OK
+
+=== (re)train champion (score, drop4900, l2=1e-4) ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0178-conversion-diagnostic/artefacts.src/feat
+score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+val   : mse=1.731596  sign_acc=0.0012
+
+=== (a) depth-at-movetime : champion vs v15 ===
+depth-at-movetime : movetime=300ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/0178-conversion-diagnostic/artefacts.src/champ.pjtw
+    depth avg=16.6667  min=15  max=18  | nodes avg=508643  knps~1695.48
+  B /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+    depth avg=14.3333  min=13  max=15  | nodes avg=397447  knps~1324.83
+  → A reaches 2.33333 plies vs B (positive = A searches deeper for the same time)
+depth-at-movetime : movetime=1000ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/0178-conversion-diagnostic/artefacts.src/champ.pjtw
+    depth avg=19.2222  min=17  max=21  | nodes avg=1877669  knps~1877.67
+  B /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+    depth avg=17.5556  min=16  max=19  | nodes avg=1432738  knps~1432.74
+  → A reaches 1.66667 plies vs B (positive = A searches deeper for the same time)
+
+=== (b) échelle rate(depth) : champion vs v15 (108 parties/point) ===
+  depth=7 : rate vs v15 = 0.305556
+  depth=9 : rate vs v15 = 0.472222
+  depth=11 : rate vs v15 = 0.138889
+  depth=13 : rate vs v15 = 0.444444
+
+==========================================================
+        0178 DIAGNOSTIC CONVERSION — VERDICT
+  profondeur atteinte (movetime) :
+    300ms  :     depth avg=16.6667  min=15  max=18  | nodes avg=508643  knps~1695.48     depth avg=14.3333  min=13  max=15  | nodes avg=397447  knps~1324.83
+    1000ms :     depth avg=19.2222  min=17  max=21  | nodes avg=1877669  knps~1877.67     depth avg=17.5556  min=16  max=19  | nodes avg=1432738  knps~1432.74
+  rate(depth) vs v15 :
+    d7 = 0.305556
+    d9 = 0.472222
+    d11 = 0.138889
+    d13 = 0.444444
+  réf : d9=0.472 (0176)  movetime=0.382
+  → rate stable/montant en depth = time-mgmt (0179 SPSA payant).
+  → rate qui BAISSE en depth = instabilité éval (cause racine à traiter).
+==========================================================
