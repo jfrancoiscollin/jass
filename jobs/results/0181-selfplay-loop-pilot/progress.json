@@ -1,16 +1,20 @@
 {
   "job_id": "0181-selfplay-loop-pilot",
-  "snapshot_at": "2026-06-09T14:17:03+00:00",
+  "snapshot_at": "2026-06-09T14:22:05+00:00",
   "started_at": "2026-06-09T14:06:24+00:00",
-  "elapsed_seconds": 639,
+  "elapsed_seconds": 941,
   "artefacts": [
     {
       "name": "build.log",
       "size_bytes": 9364
     },
     {
+      "name": "champ-hc.log",
+      "size_bytes": 265
+    },
+    {
       "name": "champ-v15.log",
-      "size_bytes": 0
+      "size_bytes": 368
     },
     {
       "name": "champ.feat",
@@ -25,9 +29,73 @@
       "size_bytes": 506
     },
     {
+      "name": "gen-0.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp-shard-0.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp-shard-1.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "sp-shard-2.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "sp-shard-3.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp-shard-4.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "sp-shard-5.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "sp-shard-6.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp-shard-7.jnnw",
+      "size_bytes": 188786
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       10:38  0.0  0.0 bash\n 399531  399529       10:38  0.0  0.0 bash\n 400035  399531       01:29  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       15:40  0.0  0.0 bash\n 399531  399529       15:40  0.0  0.0 bash\n 400123  399531       03:35 99.9  0.5 jass\n 400124  399531       03:35 99.9  0.5 jass\n 400125  399531       03:35 99.9  0.5 jass\n 400126  399531       03:35 99.9  0.5 jass\n 400127  399531       03:35 99.9  0.5 jass\n 400128  399531       03:35 99.9  0.5 jass\n 400129  399531       03:35 99.9  0.5 jass\n 400130  399531       03:35 99.9  0.5 jass\n"
 }
