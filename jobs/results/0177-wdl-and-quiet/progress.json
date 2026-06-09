@@ -1,8 +1,8 @@
 {
   "job_id": "0177-wdl-and-quiet",
-  "snapshot_at": "2026-06-09T06:23:10+00:00",
+  "snapshot_at": "2026-06-09T06:28:13+00:00",
   "started_at": "2026-06-09T05:52:59+00:00",
-  "elapsed_seconds": 1811,
+  "elapsed_seconds": 2114,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,6 +41,10 @@
       "size_bytes": 28
     },
     {
+      "name": "wdl-1e-4-train.log",
+      "size_bytes": 0
+    },
+    {
       "name": "wdl-1e-5-hc.log",
       "size_bytes": 270
     },
@@ -57,9 +61,21 @@
       "size_bytes": 136049764
     },
     {
+      "name": "wdl-3e-5-hc.log",
+      "size_bytes": 269
+    },
+    {
       "name": "wdl-3e-5-train.log",
-      "size_bytes": 0
+      "size_bytes": 862
+    },
+    {
+      "name": "wdl-3e-5-v15.log",
+      "size_bytes": 365
+    },
+    {
+      "name": "wdl-3e-5.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       30:10  0.0  0.0 bash\n 383362  383360       30:10  0.0  0.0 bash\n 384445  383362       07:36  312 30.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       35:14  0.0  0.0 bash\n 383362  383360       35:14  0.0  0.0 bash\n 384721  383362       01:59  302 27.0 python3\n"
 }
