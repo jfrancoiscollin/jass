@@ -1,7 +1,9 @@
 {
   "job_id": "0176-l2-1e-4-confirm",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-08T23:55:38+00:00",
+  "ended_at": "2026-06-09T01:16:53+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 377587
+  "artefacts_server_path": "/root/jass/jobs/results/0176-l2-1e-4-confirm/artefacts.src"
 }
