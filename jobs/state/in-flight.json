@@ -1,0 +1,7 @@
+{
+  "job_id": "0177-wdl-and-quiet",
+  "script": "jobs/queue/0177-wdl-and-quiet.sh",
+  "pid": 383360,
+  "started_at": "2026-06-09T05:52:59+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
