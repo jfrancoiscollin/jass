@@ -1,0 +1,11 @@
+rows : 400000 kept (of 1420193) ; train 360000 val 40000 ; rank=16 hash=8192
+fitting...
+  linear        : val_mse=1.5547  (29.5s, 262252 params)
+  linear+FM     : val_mse=1.3499  (1156.5s, 4458268 params)
+==========================================================
+        FM FIT-CHECK — VERDICT
+  linear      val_mse = 1.5547
+  linear + FM val_mse = 1.3499   (+13.2% vs linear)
+  → réduction nette (>~5-10%) = signal d'interaction → construire FM C++.
+  → ≈0% = pas d'interaction exploitable → ne pas construire FM.
+==========================================================
