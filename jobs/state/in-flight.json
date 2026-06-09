@@ -1,7 +1,0 @@
-{
-  "job_id": "0179-spsa-highdepth-regime",
-  "script": "jobs/queue/0179-spsa-highdepth-regime.sh",
-  "pid": 392278,
-  "started_at": "2026-06-09T08:37:42+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
