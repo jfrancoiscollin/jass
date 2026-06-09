@@ -541,3 +541,48 @@ self-play (TD-leaf) **raffine pour notre recherche**. Donc l'ordre correct :
 **Ne PAS** distiller *après* le boost self-play (étape 2 de la roadmap) — ça
 **écraserait** les gains du self-play. Quand on intègrera la distillation à
 la roadmap, elle vient **avant/pendant** le self-play, pas après.
+
+---
+
+## Route Scan — enrichissement de la géométrie (préparé)
+
+Constat : nos 32 patterns v4 sont des **bandes verticales génériques, non
+partagées, sur 1.4M positions** → tables affamées. Scan (même classe linéaire)
+est fort grâce au *feature engineering* (placement + partage) + data self-play.
+Trois pistes, hiérarchisées, à lancer si le FM (0184) ne convertit pas. Le FM
+reste le **capstone** : on le re-mesure SUR la géométrie finale (gain
+sous-additif), pas sur la base pauvre actuelle.
+
+### Piste 1 — diagonale dense  *(prêt : 0186, variant v6, 40 patterns)*
+Aligner les fenêtres sur les axes de jeu (diagonales) + densifier le pavage →
+les interactions tombent *dans* une fenêtre (mécanisme Scan). Remplace les
+bandes verticales par toutes les bandes+blocs diagonaux/anti-diagonaux.
+
+### Piste 2 — régions spécialisées  *(prêt : 0187, variant v7, 15 patterns)*
+Dépenser les fenêtres où l'info est dense : bandes de promotion (rangées 0-2 /
+7-9), longues diagonales centrales, bords (pions faibles), centre. « Moins mais
+mieux placé. »
+
+### Piste 3 — partage de poids par TRANSLATION  *(design — à implémenter)*
+Le vrai gain data-efficacité (façon CNN/Scan) : **une** forme de pattern
+appliquée à plusieurs positions translatées **partageant la table**. La
+translation n'étant PAS une symétrie de l'éval (un pion près de la promotion ≠
+au centre), partage **partiel** :
+
+    score_pattern(instance i) = SHARED_TABLE[bucket_i] + BIAS[i]
+
+c.-à-d. table de *forme* partagée entre toutes les instances translatées + un
+biais scalaire (ou petit) par instance pour la dépendance positionnelle.
+
+Implémentation requise (≠ simple set de patterns) :
+  * `pattern.hpp` : `pattern_offsets()` mappe plusieurs patterns sur le MÊME
+    offset de table (groupes de partage) + un tableau de biais par instance ;
+    `extract_all`/`update_all` inchangés (l'index bucket est le même).
+  * `train.py` : la matrice de design tie les colonnes des instances d'un même
+    groupe (somme), + colonnes de biais one-hot par instance.
+  * `scan_eval` : v3/v4 — `pat_mg[col]` lit la table partagée ; ajouter le biais.
+  * Gain : N instances d'une forme → 1 table (÷N params, ×N data/poids) + N biais.
+
+Combo cible (si les briques paient isolément) : **géométrie diagonale dense +
+régions + partage par translation + augmentation symétrique (0185)**, puis FM en
+capstone. = réinventer la géométrie de Scan, dérivée pour notre layout.
