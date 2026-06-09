@@ -1,7 +1,9 @@
 {
   "job_id": "0181-selfplay-loop-pilot",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-09T14:06:24+00:00",
+  "ended_at": "2026-06-09T14:48:41+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 399529
+  "artefacts_server_path": "/root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src"
 }

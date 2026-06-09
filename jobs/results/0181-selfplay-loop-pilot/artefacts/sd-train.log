@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/selfplay.jnnw
+  200000 records  (0.01s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/sp.feat
+  extras shape (200000, 106)  (mean mob b/w=11.8/11.7)
+target=score  clipped±5000cp / 100  std=12.864
+phase : piece-count mean=19.9  wmg mean=0.498
+score-drop : keep |score|<=4900cp → 187246/200000 (93.6%)
+split : train=168522 val=18724
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+anti-forget : L2=1.0 toward prior /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/champ.pjtw
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=0.0001  max_iter=200  (anchored)
+  train_loss=0.679627  iters=33  (63.40s)
+val   : mse=1.130223  sign_acc=0.0087
+quant : scale=1000  pat range=[-333,355] ext_mg range=[-3001,3001]
+wrote /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/sd.pjtw  (v3, 34012436 weights, 136049764 bytes)
