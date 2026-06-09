@@ -1,0 +1,15 @@
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0176-l2-1e-4-confirm/artefacts.src/feat
+  l2=1e-4 : vs hc=1  vs v15 d9=0.472222  (144 parties)
+  l2=2e-4 : vs hc=0.916667  vs v15 d9=0.416667  (144 parties)
+  l2=3e-4 : vs hc=0.805556  vs v15 d9=0.388889  (144 parties)
+  --- meilleur l2=1e-4 (v15=0.472222) → régime movetime (72) ---
+==========================================================
+  0176 l2 FINE-SWEEP (confirmation fiable du nouvel optimum)
+  l2=1e-4 : hc=1  v15 d9=0.472222
+  l2=2e-4 : hc=0.916667  v15 d9=0.416667
+  l2=3e-4 : hc=0.805556  v15 d9=0.388889
+  meilleur l2=1e-4 : v15 movetime=0.381944
+  réf : l2=1e-5+drop = 0.944/0.389 ; 0174(108p) l2=1e-4 = 1.0/0.472
+  → l2=1e-4..3e-4 > 0.389 confirmé = nouveau champion vers v15.
+==========================================================
