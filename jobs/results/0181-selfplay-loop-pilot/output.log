@@ -1,0 +1,29 @@
+tests OK
+
+=== iter0 : (re)train champion ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/champ.feat
+val   : mse=1.731596  sign_acc=0.0012
+  champion_v0 : vs v15 + vs hc (référence)
+    champ_v0 : v15=0.472222  hc=1
+
+=== self-play WDL avec le champion (~200K, eval_depth 12, sharded) ===
+  merged 200000 self-play WDL records  (gen wall 0s placeholder)
+  gen wall : 1004s
+  WDL : +1=75045 0=52545 -1=72410 (n=200000)
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/sp.feat
+
+=== iter1 : réentraîne sur le self-play (ancré) ===
+  sd : vs v15=0.555556  vs hc=0.888889
+  wdl-a1.0 : vs v15=0.277778  vs hc=0.777778
+  wdl-a0.3 : vs v15=0.277778  vs hc=0.722222
+
+==========================================================
+        0181 PILOTE SELF-PLAY — VERDICT (la boucle TIENT-elle ?)
+  champion_v0 (réf)  : vs v15=0.472222  vs hc=1   [200000 positions self-play]
+  SD (score+ancre)   : vs v15=0.555556  vs hc=0.888889
+  WDL ancre 1.0      : vs v15=0.277778  vs hc=0.777778
+  WDL ancre 0.3      : vs v15=0.277778  vs hc=0.722222
+  → ≈ champ_v0 = la boucle TIENT (anti-oubli OK, infra validée).
+  → << champ_v0 = effondrement (ancre trop faible / signal toxique).
+  → > champ_v0 = auto-amélioration (bonus : le self-play paie déjà).
+==========================================================

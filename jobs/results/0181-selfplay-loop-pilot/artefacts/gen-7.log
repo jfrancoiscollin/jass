@@ -1,0 +1,18 @@
+gen-data-wdl: n=25000 out=/root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/sp-shard-7.jnnw eval_depth=12 play_depth=4 max_plies=200 seed=8 nnue=/root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/champ.pjtw quiet_only=false pv_extract=0
+  played 50 games, 1594 / 25000 positions
+  played 100 games, 3190 / 25000 positions
+  played 150 games, 4809 / 25000 positions
+  played 200 games, 6376 / 25000 positions
+  played 250 games, 7836 / 25000 positions
+  played 300 games, 9444 / 25000 positions
+  played 350 games, 10843 / 25000 positions
+  played 400 games, 12393 / 25000 positions
+  played 450 games, 14001 / 25000 positions
+  played 500 games, 15677 / 25000 positions
+  played 550 games, 17277 / 25000 positions
+  played 600 games, 18828 / 25000 positions
+  played 650 games, 20326 / 25000 positions
+  played 700 games, 21966 / 25000 positions
+  played 750 games, 23521 / 25000 positions
+  played 800 games, 24986 / 25000 positions
+wrote 25000 WDL records to /root/jass/jobs/results/0181-selfplay-loop-pilot/artefacts.src/sp-shard-7.jnnw
