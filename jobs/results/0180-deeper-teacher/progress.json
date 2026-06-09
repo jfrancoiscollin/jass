@@ -1,8 +1,8 @@
 {
   "job_id": "0180-deeper-teacher",
-  "snapshot_at": "2026-06-09T12:26:05+00:00",
+  "snapshot_at": "2026-06-09T12:31:25+00:00",
   "started_at": "2026-06-09T11:34:59+00:00",
-  "elapsed_seconds": 3066,
+  "elapsed_seconds": 3386,
   "artefacts": [
     {
       "name": "build.log",
@@ -46,11 +46,11 @@
     },
     {
       "name": "d16-shard-0.jnnw",
-      "size_bytes": 1105960
+      "size_bytes": 1181314
     },
     {
       "name": "d16-shard-1.jnnw",
-      "size_bytes": 1105960
+      "size_bytes": 1181732
     },
     {
       "name": "d16-shard-2.jnnw",
@@ -58,23 +58,23 @@
     },
     {
       "name": "d16-shard-3.jnnw",
-      "size_bytes": 1179148
+      "size_bytes": 1181618
     },
     {
       "name": "d16-shard-4.jnnw",
-      "size_bytes": 1114092
+      "size_bytes": 1181314
     },
     {
       "name": "d16-shard-5.jnnw",
-      "size_bytes": 1114092
+      "size_bytes": 1182264
     },
     {
       "name": "d16-shard-6.jnnw",
-      "size_bytes": 1171016
+      "size_bytes": 1181656
     },
     {
       "name": "d16-shard-7.jnnw",
-      "size_bytes": 1162884
+      "size_bytes": 1181808
     },
     {
       "name": "relabel-d10-0.log",
@@ -110,11 +110,11 @@
     },
     {
       "name": "relabel-d16-0.log",
-      "size_bytes": 243
+      "size_bytes": 379
     },
     {
       "name": "relabel-d16-1.log",
-      "size_bytes": 246
+      "size_bytes": 382
     },
     {
       "name": "relabel-d16-2.log",
@@ -122,32 +122,44 @@
     },
     {
       "name": "relabel-d16-3.log",
-      "size_bytes": 246
+      "size_bytes": 382
     },
     {
       "name": "relabel-d16-4.log",
-      "size_bytes": 248
+      "size_bytes": 384
     },
     {
       "name": "relabel-d16-5.log",
-      "size_bytes": 167
+      "size_bytes": 303
     },
     {
       "name": "relabel-d16-6.log",
-      "size_bytes": 167
+      "size_bytes": 303
     },
     {
       "name": "relabel-d16-7.log",
-      "size_bytes": 167
+      "size_bytes": 303
     },
     {
       "name": "sub-d10.jnnw",
       "size_bytes": 9456840
     },
     {
+      "name": "sub-d16.jnnw",
+      "size_bytes": 9453572
+    },
+    {
+      "name": "teacher-d10-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "teacher-d10.feat",
+      "size_bytes": 105518348
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1       51:06  0.0  0.0 bash\n 396399  396397       51:06  0.0  0.0 bash\n 396802  396399       47:55  0.3  0.2 python3\n 396803  396399       47:55  0.3  0.2 python3\n 396805  396399       47:55  0.3  0.2 python3\n 396806  396399       47:55  0.3  0.2 python3\n 396807  396399       47:55  0.3  0.2 python3\n 396808  396399       47:55  0.3  0.2 python3\n 396809  396399       47:55  0.3  0.2 python3\n 396810  396802       47:55 99.5  0.9 scan_linux\n 396811  396808       47:55 99.5  0.9 scan_linux\n 396812  396809       47:55 99.5  0.9 scan_linux\n 396813  396805       47:55 99.5  0.9 scan_linux\n 396814  396806       47:55 99.5  0.9 scan_linux\n 396815  396803       47:55 99.5  0.9 scan_linux\n 396816  396807       47:55 99.5  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1       56:26  0.0  0.0 bash\n 396399  396397       56:26  0.0  0.0 bash\n 397809  396399       02:43  360 24.7 python3\n"
 }
