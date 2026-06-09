@@ -1,8 +1,8 @@
 {
   "job_id": "0185-symmetry-augment",
-  "snapshot_at": "2026-06-09T22:20:26+00:00",
+  "snapshot_at": "2026-06-09T22:25:45+00:00",
   "started_at": "2026-06-09T22:15:18+00:00",
-  "elapsed_seconds": 308,
+  "elapsed_seconds": 627,
   "artefacts": [
     {
       "name": "aug.jnnw",
@@ -17,13 +17,21 @@
       "size_bytes": 506
     },
     {
+      "name": "ctrl-v15d9.log",
+      "size_bytes": 0
+    },
+    {
       "name": "ctrl.feat",
       "size_bytes": 602161844
+    },
+    {
+      "name": "ctrl.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 411206       1       05:07  0.0  0.0 bash\n 411208  411206       05:07  0.0  0.0 bash\n 411581  411208       04:48  300 30.0 python3\n 411582  411208       04:48  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 411206       1       10:26  0.0  0.0 bash\n 411208  411206       10:26  0.0  0.0 bash\n 411716  411208       01:35  100  0.9 jass\n"
 }
