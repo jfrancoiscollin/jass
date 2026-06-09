@@ -1063,6 +1063,71 @@ int run_dump_quiet_flags_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --symmetry-augment <in.jnnw> <out.jnnw> : write each record TWICE — the
+// original, then its 180°-rotation-with-colour-swap image, the ONLY non-trivial
+// geometric symmetry of the dark-square draughts board (a left-right mirror maps
+// dark squares to light on an even×even board, so it is NOT usable). The
+// transform is a true game symmetry : stm-POV score/wdl are PRESERVED, only the
+// bitboards (swap colours + reverse the 50 bits) and the stm byte flip. Doubling
+// the data with this symmetry forces the pattern tables to be consistent under
+// it — the data-efficient "weight-sharing" effect (cf the Scan route).
+// -----------------------------------------------------------------------------
+static inline std::uint64_t rot180_50(std::uint64_t bb) noexcept {
+    std::uint64_t out = 0;
+    while (bb) {
+        const int i = std::countr_zero(bb);
+        bb &= bb - 1;
+        out |= std::uint64_t{1} << (49 - i);
+    }
+    return out;
+}
+
+int run_symmetry_augment_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --symmetry-augment <in.jnnw> <out.jnnw>\n";
+        return 1;
+    }
+    std::ifstream in(argv[2], std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << argv[2] << "\n"; return 1; }
+    char magic[4]; in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << argv[2] << " not a JNNW file\n"; return 1;
+    }
+    std::uint32_t count = 0; in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read header\n"; return 1; }
+
+    std::ofstream out(argv[3], std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << argv[3] << "\n"; return 1; }
+    const std::uint32_t out_count = count * 2;
+    out.write("JNNW", 4);
+    out.write(reinterpret_cast<const char*>(&out_count), 4);
+
+    constexpr std::size_t RECORD_SZ = 38;
+    char rec[RECORD_SZ], aug[RECORD_SZ];
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(rec, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at " << i << "\n"; return 1;
+        }
+        out.write(rec, RECORD_SZ);                       // original
+        std::uint64_t bbs[4];
+        std::memcpy(bbs, rec, 32);
+        std::uint64_t a[4];
+        a[0] = rot180_50(bbs[2]);   // new WhiteMan  = rot180(old BlackMan)
+        a[1] = rot180_50(bbs[3]);   // new WhiteKing = rot180(old BlackKing)
+        a[2] = rot180_50(bbs[0]);   // new BlackMan  = rot180(old WhiteMan)
+        a[3] = rot180_50(bbs[1]);   // new BlackKing = rot180(old WhiteKing)
+        std::memcpy(aug, rec, RECORD_SZ);                // copy score+wdl as-is
+        std::memcpy(aug, a, 32);
+        aug[32] = static_cast<char>(rec[32] == 0 ? 1 : 0);  // flip stm
+        out.write(aug, RECORD_SZ);                        // symmetry image
+    }
+    std::cout << "symmetry-augment: " << count << " → " << out_count
+              << " records (180°+colour-swap)\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --rewrite-scores-with-handcrafted: same as --rewrite-scores-with-nnue
 // but uses the handcrafted `evaluate()` instead of NNUE. Used to compute
 // the per-position handcrafted baseline needed by Scan-style hybrid
@@ -2088,6 +2153,7 @@ int main(int argc, char** argv) {
         else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
         else if (a == "--dump-eval-features")       return run_dump_eval_features_mode(argc, argv);
         else if (a == "--dump-quiet-flags")         return run_dump_quiet_flags_mode(argc, argv);
+        else if (a == "--symmetry-augment")         return run_symmetry_augment_mode(argc, argv);
         else if (a == "--eval-position")            return run_eval_position_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
