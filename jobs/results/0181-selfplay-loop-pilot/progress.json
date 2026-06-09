@@ -1,8 +1,8 @@
 {
   "job_id": "0181-selfplay-loop-pilot",
-  "snapshot_at": "2026-06-09T14:22:05+00:00",
+  "snapshot_at": "2026-06-09T14:27:55+00:00",
   "started_at": "2026-06-09T14:06:24+00:00",
-  "elapsed_seconds": 941,
+  "elapsed_seconds": 1291,
   "artefacts": [
     {
       "name": "build.log",
@@ -62,40 +62,40 @@
     },
     {
       "name": "sp-shard-0.jnnw",
-      "size_bytes": 188786
+      "size_bytes": 533522
     },
     {
       "name": "sp-shard-1.jnnw",
-      "size_bytes": 205202
+      "size_bytes": 541730
     },
     {
       "name": "sp-shard-2.jnnw",
-      "size_bytes": 196994
+      "size_bytes": 541730
     },
     {
       "name": "sp-shard-3.jnnw",
-      "size_bytes": 188786
+      "size_bytes": 525314
     },
     {
       "name": "sp-shard-4.jnnw",
-      "size_bytes": 196994
+      "size_bytes": 525314
     },
     {
       "name": "sp-shard-5.jnnw",
-      "size_bytes": 196994
+      "size_bytes": 533522
     },
     {
       "name": "sp-shard-6.jnnw",
-      "size_bytes": 188786
+      "size_bytes": 533522
     },
     {
       "name": "sp-shard-7.jnnw",
-      "size_bytes": 188786
+      "size_bytes": 541730
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       15:40  0.0  0.0 bash\n 399531  399529       15:40  0.0  0.0 bash\n 400123  399531       03:35 99.9  0.5 jass\n 400124  399531       03:35 99.9  0.5 jass\n 400125  399531       03:35 99.9  0.5 jass\n 400126  399531       03:35 99.9  0.5 jass\n 400127  399531       03:35 99.9  0.5 jass\n 400128  399531       03:35 99.9  0.5 jass\n 400129  399531       03:35 99.9  0.5 jass\n 400130  399531       03:35 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       21:30  0.0  0.0 bash\n 399531  399529       21:30  0.0  0.0 bash\n 400123  399531       09:25 99.9  0.5 jass\n 400124  399531       09:25 99.9  0.5 jass\n 400125  399531       09:25 99.9  0.5 jass\n 400126  399531       09:25 99.9  0.5 jass\n 400127  399531       09:25 99.9  0.5 jass\n 400128  399531       09:25 99.9  0.5 jass\n 400129  399531       09:25 99.9  0.5 jass\n 400130  399531       09:25 99.9  0.5 jass\n"
 }
