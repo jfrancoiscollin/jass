@@ -1,8 +1,8 @@
 {
   "job_id": "0176-l2-1e-4-confirm",
-  "snapshot_at": "2026-06-09T00:01:05+00:00",
+  "snapshot_at": "2026-06-09T00:06:25+00:00",
   "started_at": "2026-06-08T23:55:38+00:00",
-  "elapsed_seconds": 327,
+  "elapsed_seconds": 647,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,13 +17,25 @@
       "size_bytes": 602161844
     },
     {
+      "name": "l1e-4-hc.log",
+      "size_bytes": 261
+    },
+    {
       "name": "l1e-4-train.log",
+      "size_bytes": 930
+    },
+    {
+      "name": "l1e-4-v15.log",
       "size_bytes": 0
+    },
+    {
+      "name": "l1e-4.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 377587       1       05:26  0.0  0.0 bash\n 377589  377587       05:26  0.0  0.0 bash\n 377956  377589       05:07  296 27.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 377587       1       10:46  0.0  0.0 bash\n 377589  377587       10:46  0.0  0.0 bash\n 378077  377589       00:50  100  0.9 jass\n"
 }
