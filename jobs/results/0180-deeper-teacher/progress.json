@@ -1,8 +1,8 @@
 {
   "job_id": "0180-deeper-teacher",
-  "snapshot_at": "2026-06-09T12:37:05+00:00",
+  "snapshot_at": "2026-06-09T12:42:37+00:00",
   "started_at": "2026-06-09T11:34:59+00:00",
-  "elapsed_seconds": 3726,
+  "elapsed_seconds": 4058,
   "artefacts": [
     {
       "name": "build.log",
@@ -154,6 +154,10 @@
     },
     {
       "name": "teacher-d10-v15-d9.log",
+      "size_bytes": 366
+    },
+    {
+      "name": "teacher-d10-v15-mt.log",
       "size_bytes": 0
     },
     {
@@ -169,5 +173,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1    01:02:06  0.0  0.0 bash\n 396399  396397    01:02:06  0.0  0.0 bash\n 397901  396399       01:49  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1    01:07:38  0.0  0.0 bash\n 396399  396397    01:07:38  0.0  0.0 bash\n 397969  396399       04:45  100  0.9 jass\n"
 }
