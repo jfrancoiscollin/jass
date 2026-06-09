@@ -1,8 +1,8 @@
 {
   "job_id": "0183-selfdistill-iterate",
-  "snapshot_at": "2026-06-09T15:47:37+00:00",
+  "snapshot_at": "2026-06-09T15:52:45+00:00",
   "started_at": "2026-06-09T15:36:56+00:00",
-  "elapsed_seconds": 641,
+  "elapsed_seconds": 949,
   "artefacts": [
     {
       "name": "build.log",
@@ -22,6 +22,10 @@
     },
     {
       "name": "v0-v15d9.log",
+      "size_bytes": 365
+    },
+    {
+      "name": "v0-v15mt.log",
       "size_bytes": 0
     },
     {
@@ -29,5 +33,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1       10:41  0.0  0.0 bash\n 401939  401937       10:41  0.0  0.0 bash\n 402420  401939       01:43 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1       15:49  0.0  0.0 bash\n 401939  401937       15:49  0.0  0.0 bash\n 402492  401939       04:36 99.9  0.9 jass\n"
 }
