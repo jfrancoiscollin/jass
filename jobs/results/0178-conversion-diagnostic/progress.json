@@ -1,16 +1,36 @@
 {
   "job_id": "0178-conversion-diagnostic",
-  "snapshot_at": "2026-06-09T08:06:42+00:00",
+  "snapshot_at": "2026-06-09T08:12:05+00:00",
   "started_at": "2026-06-09T08:01:38+00:00",
-  "elapsed_seconds": 304,
+  "elapsed_seconds": 627,
   "artefacts": [
     {
       "name": "build.log",
       "size_bytes": 9364
     },
     {
+      "name": "champ.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "cmake.log",
       "size_bytes": 506
+    },
+    {
+      "name": "d7.log",
+      "size_bytes": 370
+    },
+    {
+      "name": "d9.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dam-1000.log",
+      "size_bytes": 471
+    },
+    {
+      "name": "dam-300.log",
+      "size_bytes": 468
     },
     {
       "name": "feat",
@@ -21,5 +41,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391090       1       05:03  0.0  0.0 bash\n 391092  391090       05:03  0.0  0.0 bash\n 391457  391092       04:44  294 32.2 python3\n 391458  391092       04:44  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391090       1       10:26  0.0  0.0 bash\n 391092  391090       10:26  0.0  0.0 bash\n 391651  391092       00:18  100  0.9 jass\n"
 }
