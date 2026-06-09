@@ -1,0 +1,27 @@
+{
+  "params": {
+    "rfp_margin": 99,
+    "nmp_r_base": 1,
+    "nmp_r_div": 4,
+    "singular_margin": 2,
+    "lmr_depth_div": 6,
+    "lmr_idx_div": 9,
+    "lmp_d1": 4,
+    "lmp_d2": 8,
+    "lmp_d3": 14,
+    "aspiration_initial": 50,
+    "razor_max_depth": 0,
+    "razor_margin": 200,
+    "probcut_min_depth": 0,
+    "probcut_margin": 150,
+    "ext_promotion": 1,
+    "use_improving": 0,
+    "use_conthist": 0,
+    "iid_min_depth": 0,
+    "multicut_min_depth": 0
+  },
+  "held": {
+    "use_pvs": 1
+  },
+  "spec": "rfp_margin=99,nmp_r_base=1,nmp_r_div=4,singular_margin=2,lmr_depth_div=6,lmr_idx_div=9,lmp_d1=4,lmp_d2=8,lmp_d3=14,aspiration_initial=50,razor_max_depth=0,razor_margin=200,probcut_min_depth=0,probcut_margin=150,ext_promotion=1,use_improving=0,use_conthist=0,iid_min_depth=0,multicut_min_depth=0,use_pvs=1"
+}
