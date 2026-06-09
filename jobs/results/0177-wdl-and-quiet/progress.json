@@ -1,8 +1,8 @@
 {
   "job_id": "0177-wdl-and-quiet",
-  "snapshot_at": "2026-06-09T06:18:07+00:00",
+  "snapshot_at": "2026-06-09T06:23:10+00:00",
   "started_at": "2026-06-09T05:52:59+00:00",
-  "elapsed_seconds": 1508,
+  "elapsed_seconds": 1811,
   "artefacts": [
     {
       "name": "build.log",
@@ -61,5 +61,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       25:08  0.0  0.0 bash\n 383362  383360       25:08  0.0  0.0 bash\n 384445  383362       02:33  305 27.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       30:10  0.0  0.0 bash\n 383362  383360       30:10  0.0  0.0 bash\n 384445  383362       07:36  312 30.9 python3\n"
 }
