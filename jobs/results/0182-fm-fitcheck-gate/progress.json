@@ -1,8 +1,8 @@
 {
   "job_id": "0182-fm-fitcheck-gate",
-  "snapshot_at": "2026-06-09T14:59:05+00:00",
+  "snapshot_at": "2026-06-09T15:04:16+00:00",
   "started_at": "2026-06-09T14:48:48+00:00",
-  "elapsed_seconds": 617,
+  "elapsed_seconds": 928,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,13 +17,17 @@
       "size_bytes": 602161844
     },
     {
+      "name": "k16.log",
+      "size_bytes": 0
+    },
+    {
       "name": "k4.log",
       "size_bytes": 586
     },
     {
       "name": "k8.log",
-      "size_bytes": 0
+      "size_bytes": 586
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400958       1       10:17  0.0  0.0 bash\n 400960  400958       10:17  0.0  0.0 bash\n 401277  400960       05:42  484 14.9 python3\n 401278  400960       05:42  0.0  0.0 tee\n 401279  400960       05:42  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 400958       1       15:27  0.0  0.0 bash\n 400960  400958       15:27  0.0  0.0 bash\n 401452  400960       01:30  471 16.0 python3\n 401453  400960       01:30  0.0  0.0 tee\n 401454  400960       01:30  0.0  0.0 grep\n"
 }
