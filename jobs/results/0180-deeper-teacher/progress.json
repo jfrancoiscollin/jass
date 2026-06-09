@@ -1,8 +1,8 @@
 {
   "job_id": "0180-deeper-teacher",
-  "snapshot_at": "2026-06-09T12:20:55+00:00",
+  "snapshot_at": "2026-06-09T12:26:05+00:00",
   "started_at": "2026-06-09T11:34:59+00:00",
-  "elapsed_seconds": 2756,
+  "elapsed_seconds": 3066,
   "artefacts": [
     {
       "name": "build.log",
@@ -46,35 +46,35 @@
     },
     {
       "name": "d16-shard-0.jnnw",
-      "size_bytes": 979914
+      "size_bytes": 1105960
     },
     {
       "name": "d16-shard-1.jnnw",
-      "size_bytes": 988046
+      "size_bytes": 1105960
     },
     {
       "name": "d16-shard-2.jnnw",
-      "size_bytes": 1061234
+      "size_bytes": 1181922
     },
     {
       "name": "d16-shard-3.jnnw",
-      "size_bytes": 1053102
+      "size_bytes": 1179148
     },
     {
       "name": "d16-shard-4.jnnw",
-      "size_bytes": 988046
+      "size_bytes": 1114092
     },
     {
       "name": "d16-shard-5.jnnw",
-      "size_bytes": 1000244
+      "size_bytes": 1114092
     },
     {
       "name": "d16-shard-6.jnnw",
-      "size_bytes": 1044970
+      "size_bytes": 1171016
     },
     {
       "name": "d16-shard-7.jnnw",
-      "size_bytes": 1040904
+      "size_bytes": 1162884
     },
     {
       "name": "relabel-d10-0.log",
@@ -118,7 +118,7 @@
     },
     {
       "name": "relabel-d16-2.log",
-      "size_bytes": 247
+      "size_bytes": 383
     },
     {
       "name": "relabel-d16-3.log",
@@ -149,5 +149,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1       45:56  0.0  0.0 bash\n 396399  396397       45:56  0.0  0.0 bash\n 396802  396399       42:45  0.3  0.2 python3\n 396803  396399       42:45  0.3  0.2 python3\n 396804  396399       42:45  0.3  0.2 python3\n 396805  396399       42:45  0.3  0.2 python3\n 396806  396399       42:45  0.3  0.2 python3\n 396807  396399       42:45  0.3  0.2 python3\n 396808  396399       42:45  0.3  0.2 python3\n 396809  396399       42:45  0.3  0.2 python3\n 396810  396802       42:45 99.5  0.9 scan_linux\n 396811  396808       42:45 99.5  0.9 scan_linux\n 396812  396809       42:45 99.5  0.9 scan_linux\n 396813  396805       42:45 99.5  0.9 scan_linux\n 396814  396806       42:45 99.5  0.9 scan_linux\n 396815  396803       42:45 99.5  0.9 scan_linux\n 396816  396807       42:45 99.5  0.9 scan_linux\n 396817  396804       42:45 99.5  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1       51:06  0.0  0.0 bash\n 396399  396397       51:06  0.0  0.0 bash\n 396802  396399       47:55  0.3  0.2 python3\n 396803  396399       47:55  0.3  0.2 python3\n 396805  396399       47:55  0.3  0.2 python3\n 396806  396399       47:55  0.3  0.2 python3\n 396807  396399       47:55  0.3  0.2 python3\n 396808  396399       47:55  0.3  0.2 python3\n 396809  396399       47:55  0.3  0.2 python3\n 396810  396802       47:55 99.5  0.9 scan_linux\n 396811  396808       47:55 99.5  0.9 scan_linux\n 396812  396809       47:55 99.5  0.9 scan_linux\n 396813  396805       47:55 99.5  0.9 scan_linux\n 396814  396806       47:55 99.5  0.9 scan_linux\n 396815  396803       47:55 99.5  0.9 scan_linux\n 396816  396807       47:55 99.5  0.9 scan_linux\n"
 }
