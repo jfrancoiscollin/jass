@@ -1,8 +1,8 @@
 {
   "job_id": "0184-fm-distill-bench",
-  "snapshot_at": "2026-06-09T21:28:15+00:00",
+  "snapshot_at": "2026-06-09T21:33:16+00:00",
   "started_at": "2026-06-09T18:38:50+00:00",
-  "elapsed_seconds": 10165,
+  "elapsed_seconds": 10466,
   "artefacts": [
     {
       "name": "build.log",
@@ -42,7 +42,19 @@
     },
     {
       "name": "v4r16-train.log",
+      "size_bytes": 1009
+    },
+    {
+      "name": "v4r16-v15d9.log",
+      "size_bytes": 365
+    },
+    {
+      "name": "v4r16-v15mt.log",
       "size_bytes": 0
+    },
+    {
+      "name": "v4r16.pjtw",
+      "size_bytes": 152826992
     },
     {
       "name": "v4r8-hc.log",
@@ -65,5 +77,5 @@
       "size_bytes": 144438384
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 405662       1    02:49:25  0.0  0.0 bash\n 405664  405662    02:49:25  0.0  0.0 bash\n 409482  405664       44:49  157 18.5 python3\n 409483  405664       44:49  0.0  0.0 tee\n 409484  405664       44:49  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 405662       1    02:54:26  0.0  0.0 bash\n 405664  405662    02:54:26  0.0  0.0 bash\n 410362  405664       00:20  100  0.9 jass\n"
 }
