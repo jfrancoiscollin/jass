@@ -1,0 +1,25 @@
+{
+  "job_id": "0178-conversion-diagnostic",
+  "snapshot_at": "2026-06-09T08:06:42+00:00",
+  "started_at": "2026-06-09T08:01:38+00:00",
+  "elapsed_seconds": 304,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391090       1       05:03  0.0  0.0 bash\n 391092  391090       05:03  0.0  0.0 bash\n 391457  391092       04:44  294 32.2 python3\n 391458  391092       04:44  0.0  0.0 grep\n"
+}
