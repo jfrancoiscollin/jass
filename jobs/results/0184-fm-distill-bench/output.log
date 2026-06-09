@@ -1,0 +1,35 @@
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0184-fm-distill-bench/artefacts.src/feat
+
+=== v3 linéaire (control) ===
+val   : mse=1.731596  sign_acc=0.0012
+wrote /root/jass/jobs/results/0184-fm-distill-bench/artefacts.src/v3.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  v3 : v15 d9=0.416667  movetime=0.416667  hc=1
+
+=== v4 FM rank 8 ===
+val   : mse=1.731596  sign_acc=0.0012
+FM : rank=8 hash=8192  val resid_mse 1.7316 → 1.6124 (+6.9%)  (1092.4s)
+wrote /root/jass/jobs/results/0184-fm-distill-bench/artefacts.src/v4r8.pjtw  (v4, linear 34012436 + FM 2097152 floats)
+  v4r8 : v15 d9=0.25  movetime=0.395833  hc=0.888889
+
+=== v4 FM rank 16 ===
+val   : mse=1.731596  sign_acc=0.0012
+FM : rank=16 hash=8192  val resid_mse 1.7316 → 1.6060 (+7.3%)  (2291.4s)
+wrote /root/jass/jobs/results/0184-fm-distill-bench/artefacts.src/v4r16.pjtw  (v4, linear 34012436 + FM 4194304 floats)
+  v4r16 : v15 d9=0.527778  movetime=0.326389  hc=0.916667
+
+=== vitesse : depth-at-movetime v3 vs v4r8 vs v15 ===
+  v3       depth avg=16.5556  min=15  max=18  | nodes avg=531406  knps~1771.35
+  v3       depth avg=14.3333  min=13  max=15  | nodes avg=397447  knps~1324.83
+  v4r8     depth avg=15.8889  min=14  max=17  | nodes avg=401705  knps~1339.02
+  v4r8     depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+
+==========================================================
+        0184 FM EN JEU — VERDICT
+  v3 linéaire : v15 d9=0.416667  mt=0.416667  hc=1
+  v4 FM r8    : v15 d9=0.25  mt=0.395833  hc=0.888889
+  v4 FM r16   : v15 d9=0.527778  mt=0.326389  hc=0.916667
+  réf champion (0176) : v15 d9=0.472  mt=0.382
+  → v4 mt > v3 mt = les interactions paient au temps réel → FM adopté.
+  → v4 mt ≈ v3 mt = gain held-out non converti (ou coût vitesse) → creuser.
+==========================================================
