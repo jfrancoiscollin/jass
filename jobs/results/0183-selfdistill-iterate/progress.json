@@ -1,0 +1,25 @@
+{
+  "job_id": "0183-selfdistill-iterate",
+  "snapshot_at": "2026-06-09T15:42:05+00:00",
+  "started_at": "2026-06-09T15:36:56+00:00",
+  "elapsed_seconds": 309,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "champ.feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1       05:08  0.0  0.0 bash\n 401939  401937       05:08  0.0  0.0 bash\n 402307  401939       04:49  296 27.9 python3\n 402308  401939       04:49  0.0  0.0 grep\n"
+}
