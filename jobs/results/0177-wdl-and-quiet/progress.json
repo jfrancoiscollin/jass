@@ -1,8 +1,8 @@
 {
   "job_id": "0177-wdl-and-quiet",
-  "snapshot_at": "2026-06-09T06:03:03+00:00",
+  "snapshot_at": "2026-06-09T06:08:05+00:00",
   "started_at": "2026-06-09T05:52:59+00:00",
-  "elapsed_seconds": 604,
+  "elapsed_seconds": 906,
   "artefacts": [
     {
       "name": "build.log",
@@ -30,7 +30,7 @@
     },
     {
       "name": "sq-v15.log",
-      "size_bytes": 0
+      "size_bytes": 359
     },
     {
       "name": "sq.pjtw",
@@ -39,7 +39,11 @@
     {
       "name": "tests.log",
       "size_bytes": 28
+    },
+    {
+      "name": "wdl-1e-5-train.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       10:03  0.0  0.0 bash\n 383362  383360       10:03  0.0  0.0 bash\n 384029  383362       00:51  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 383360       1       15:05  0.0  0.0 bash\n 383362  383360       15:05  0.0  0.0 bash\n 384139  383362       03:38  307 27.0 python3\n"
 }
