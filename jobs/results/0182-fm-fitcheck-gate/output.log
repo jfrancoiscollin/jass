@@ -1,0 +1,35 @@
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0182-fm-fitcheck-gate/artefacts.src/feat
+
+=== FM fit-check : sweep du rang k (400K, hash 8192, drop4900) ===
+--- rank 4 ---
+rows : 400000 kept (of 1420193) ; train 360000 val 40000 ; rank=4 hash=8192
+  linear        : val_mse=1.5547  (30.5s, 262252 params)
+  linear+FM     : val_mse=1.3513  (230.0s, 1311256 params)
+        FM FIT-CHECK — VERDICT
+  linear      val_mse = 1.5547
+  linear + FM val_mse = 1.3513   (+13.1% vs linear)
+--- rank 8 ---
+rows : 400000 kept (of 1420193) ; train 360000 val 40000 ; rank=8 hash=8192
+  linear        : val_mse=1.5547  (30.9s, 262252 params)
+  linear+FM     : val_mse=1.3391  (527.5s, 2360260 params)
+        FM FIT-CHECK — VERDICT
+  linear      val_mse = 1.5547
+  linear + FM val_mse = 1.3391   (+13.9% vs linear)
+--- rank 16 ---
+rows : 400000 kept (of 1420193) ; train 360000 val 40000 ; rank=16 hash=8192
+  linear        : val_mse=1.5547  (29.5s, 262252 params)
+  linear+FM     : val_mse=1.3499  (1156.5s, 4458268 params)
+        FM FIT-CHECK — VERDICT
+  linear      val_mse = 1.5547
+  linear + FM val_mse = 1.3499   (+13.2% vs linear)
+
+==========================================================
+        0182 GATE FM — VERDICT (réduction du val_mse)
+  rank=4 : linear=1.5547  FM=1.3513  (+13.1% vs linear)
+  rank=8 : linear=1.5547  FM=1.3391  (+13.9% vs linear)
+  rank=16 : linear=1.5547  FM=1.3499  (+13.2% vs linear)
+  → meilleur k avec réduction >~5-10% = construire le FM C++.
+  → tous ≈0-2% = capacité d'interaction n'est PAS le levier → pas FM.
+  (caveat : single-phase + stage-feature ; une partie du gain peut
+   recouvrir le phase-split déjà présent en prod — interpréter prudemment.)
+==========================================================
