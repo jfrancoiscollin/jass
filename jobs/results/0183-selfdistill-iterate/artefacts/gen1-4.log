@@ -1,0 +1,17 @@
+gen-data-wdl: n=25000 out=/root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/sp1-4.jnnw eval_depth=12 play_depth=4 max_plies=200 seed=105 nnue=/root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/v0.pjtw quiet_only=false pv_extract=0
+  played 50 games, 1570 / 25000 positions
+  played 100 games, 3126 / 25000 positions
+  played 150 games, 4750 / 25000 positions
+  played 200 games, 6428 / 25000 positions
+  played 250 games, 8033 / 25000 positions
+  played 300 games, 9662 / 25000 positions
+  played 350 games, 11288 / 25000 positions
+  played 400 games, 12884 / 25000 positions
+  played 450 games, 14537 / 25000 positions
+  played 500 games, 16052 / 25000 positions
+  played 550 games, 17636 / 25000 positions
+  played 600 games, 19272 / 25000 positions
+  played 650 games, 20807 / 25000 positions
+  played 700 games, 22495 / 25000 positions
+  played 750 games, 24114 / 25000 positions
+wrote 25000 WDL records to /root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/sp1-4.jnnw

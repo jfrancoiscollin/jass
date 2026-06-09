@@ -1,0 +1,27 @@
+tests OK
+
+=== v0 : champion distillé ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/champ.feat
+val   : mse=1.731596  sign_acc=0.0012
+  v0 : v15 d9=0.472222  movetime=0.340278  hc=1
+
+=== iter 1 : self-play(v0) → distill score d12 ancré à v0 ===
+  merged 200000 self-play records
+  gen wall : 1009s
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/sp1.feat
+  v1 : v15 d9=0.444444  movetime=0.381944  hc=0.944444
+
+=== iter 2 : self-play(v1) → distill score d12 ancré à v1 ===
+  merged 200000 self-play records
+  gen wall : 974s
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/0183-selfdistill-iterate/artefacts.src/sp2.feat
+  v2 : v15 d9=0.333333  movetime=0.3125  hc=0.833333
+
+==========================================================
+        0183 SELF-DISTILLATION ITÉRÉE — VERDICT
+  v0 (champion) : v15 d9=0.472222  mt=0.340278  hc=1
+  v1 (SD x1)   : v15 d9=0.444444  mt=0.381944  hc=0.944444
+  v2 (SD x2)   : v15 d9=0.333333  mt=0.3125  hc=0.833333
+  → mt monte across v0→v1→v2 = la self-distillation paie au temps réel (itérer).
+  → mt plat/baisse = le gain d9 ne se convertit pas / plateau ; on s'arrête.
+==========================================================
