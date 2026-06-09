@@ -131,6 +131,20 @@ def load_feature_file(path: str, n_expected: int,
     return (arr - arr.mean(axis=0)) / std
 
 
+def load_quiet_flags(path: str, n_expected: int) -> np.ndarray:
+    """Load a "QIET" sidecar from `jass --dump-quiet-flags` : one uint8 per
+    record, 1 = quiet (side to move has no mandatory capture), 0 = tactical.
+    Returns a boolean mask of length n_expected."""
+    raw = Path(path).read_bytes()
+    if raw[:4] != b'QIET':
+        raise SystemExit(f'{path}: not a QIET file')
+    cnt = struct.unpack_from('<I', raw, 4)[0]
+    if cnt != n_expected:
+        raise SystemExit(f'quiet-flag count {cnt} != data {n_expected}')
+    flags = np.frombuffer(raw, dtype=np.uint8, offset=8, count=cnt)
+    return flags.astype(bool)
+
+
 def build_extras_phased(extras: np.ndarray, wmg: np.ndarray,
                         weg: np.ndarray) -> sp.csr_matrix:
     """Phase-split dense extras : [ext*wmg | ext*weg]. Row prediction
@@ -280,12 +294,21 @@ def train_scan_eval(args):
     print(f'  extras shape {extras.shape}  '
           f'(mean mob b/w={extras[:, 102].mean():.1f}/{extras[:, 103].mean():.1f})')
 
-    # Standalone target = score (STM-POV), reprojected to black-POV.
-    clipped = np.clip(ds.score.astype(np.float64), -args.score_clip, args.score_clip)
-    target_stm = clipped / 100.0
+    # Standalone target (STM-POV), reprojected to black-POV. Default = the
+    # Scan teacher score (distillation) ; --target wdl fits the game outcome
+    # ternary {-1,0,1} instead (Scan-style logistic-ish, least-squares here).
+    if args.target == 'wdl':
+        target_stm = ds.wdl.astype(np.float64)
+        n_pos = int((ds.wdl > 0).sum()); n_neg = int((ds.wdl < 0).sum())
+        n_zero = int((ds.wdl == 0).sum())
+        print(f'target=wdl  pos={n_pos} neg={n_neg} zero={n_zero} '
+              f'({n_zero/ds.n_records*100:.1f}% draws)')
+    else:
+        clipped = np.clip(ds.score.astype(np.float64), -args.score_clip, args.score_clip)
+        target_stm = clipped / 100.0
+        print(f'target=score  clipped±{int(args.score_clip)}cp / 100  '
+              f'std={target_stm.std():.3f}')
     y_black = np.where(ds.stm == 1, target_stm, -target_stm)
-    print(f'target=score  clipped±{int(args.score_clip)}cp / 100  '
-          f'std={target_stm.std():.3f}')
 
     # Game stage : piece count / 40 (matches scan_eval::game_stage).
     pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
@@ -293,22 +316,35 @@ def train_scan_eval(args):
     weg = 1.0 - wmg
     print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}')
 
+    # Row selection : drop extreme teacher scores (the ±9989 "won/lost"
+    # verdicts whose squared loss dominates the least-squares fit and poisons
+    # it — cf the score-drop breakthrough) and optionally restrict to quiet
+    # (non-capture) positions. Both filters AND together; the train/val split
+    # is then drawn from the kept rows only.
     n = ds.n_records
     # --score-drop : DROP rows whose |raw score| exceeds the threshold (the
     # ±9989 "won/lost" Scan verdicts) instead of clipping them. In least-squares
     # an extreme target dominates the loss even after a ±5000 clip (5000²=25M vs
     # ~90K for a normal ±300 position), so ~2% of extremes poison the fit (cf
     # 0169: dropping them took val_mse 38.7→1.8 and play 0.42→0.83). 0 = keep.
+    # Row selection : drop extreme teacher scores (score-drop) and optionally
+    # restrict to quiet (non-capture) positions. Both filters AND together; the
+    # split is drawn from the kept rows only.
+    keep = np.ones(n, dtype=bool)
     if getattr(args, 'score_drop', 0) and args.score_drop > 0:
-        keep = np.abs(ds.score.astype(np.float64)) <= args.score_drop
-        kept = np.flatnonzero(keep)
+        sd = np.abs(ds.score.astype(np.float64)) <= args.score_drop
+        keep &= sd
         print(f'score-drop : keep |score|<={int(args.score_drop)}cp → '
-              f'{len(kept)}/{n} ({100*len(kept)/max(n,1):.1f}%)')
-    else:
-        kept = np.arange(n)
+              f'{int(sd.sum())}/{n} ({100*sd.mean():.1f}%)')
+    if args.quiet_flags_file:
+        q = load_quiet_flags(args.quiet_flags_file, n)
+        keep &= q
+        print(f'quiet-only : keep quiet positions → '
+              f'{int(q.sum())}/{n} ({100*q.mean():.1f}%)')
+    kept = np.flatnonzero(keep)
     rng = np.random.default_rng(seed=2026)
     perm = rng.permutation(kept)
-    n_val = int(len(perm) * args.val_frac)
+    n_val = int(len(kept) * args.val_frac)
     val_idx, tr_idx = perm[:n_val], perm[n_val:]
     print(f'split : train={len(tr_idx)} val={len(val_idx)}')
 
@@ -401,6 +437,10 @@ def main():
                     help='DROP rows with |raw score| > N cp (extreme won/lost '
                          'verdicts that dominate the LS loss). 0 = keep all. '
                          'Try 4900 (cf 0169: val_mse 38→1.8, play 0.42→0.83).')
+    ap.add_argument('--quiet-flags-file', default=None,
+                    help='(scan-eval) path to a "QIET" sidecar from '
+                         '--dump-quiet-flags ; restrict the fit to quiet '
+                         '(non-capture) positions.')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
