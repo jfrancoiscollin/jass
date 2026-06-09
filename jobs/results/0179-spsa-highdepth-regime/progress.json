@@ -1,8 +1,8 @@
 {
   "job_id": "0179-spsa-highdepth-regime",
-  "snapshot_at": "2026-06-09T09:08:12+00:00",
+  "snapshot_at": "2026-06-09T09:13:12+00:00",
   "started_at": "2026-06-09T08:37:42+00:00",
-  "elapsed_seconds": 1830,
+  "elapsed_seconds": 2130,
   "artefacts": [
     {
       "name": "build.log",
@@ -22,12 +22,12 @@
     },
     {
       "name": "spsa.log",
-      "size_bytes": 8383
+      "size_bytes": 16607
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 392278       1       30:30  0.0  0.0 bash\n 392280  392278       30:30  0.0  0.0 bash\n 392837  392280       21:27  0.0  0.0 python3\n 392838  392280       21:27  0.0  0.0 tee\n 392839  392280       21:27  0.0  0.0 tail\n 393326  392837       00:05  100  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 392278       1       35:30  0.0  0.0 bash\n 392280  392278       35:30  0.0  0.0 bash\n 392837  392280       26:27  0.0  0.0 python3\n 392838  392280       26:27  0.0  0.0 tee\n 392839  392280       26:27  0.0  0.0 tail\n 393437  392837       00:28  100  0.5 jass\n"
 }
