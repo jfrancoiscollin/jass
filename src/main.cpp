@@ -342,10 +342,18 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // across the whole function so the Engine can borrow the pointer.
     std::unique_ptr<INetwork> custom_nnue;
     if (nnue_path) {
-        custom_nnue = load_network(nnue_path);
+        // Accept either an NNUE .bin or a PJTW .pjtw pattern eval (so self-play
+        // can be driven by the pattern champion, not just NNUE) — same dispatch
+        // as --depth-at-movetime / --benchmark-scan-eval.
+        const std::string p{nnue_path};
+        const bool is_pjtw = p.size() >= 5
+                          && p.compare(p.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        custom_nnue = is_pjtw ? jass::load_eval_network(p, &err)
+                              : load_network(nnue_path);
         if (!custom_nnue) {
-            std::cerr << "error: cannot load NNUE weights from "
-                      << nnue_path << "\n";
+            std::cerr << "error: cannot load eval weights from "
+                      << nnue_path << (err.empty() ? "" : (" : " + err)) << "\n";
             return 1;
         }
     }

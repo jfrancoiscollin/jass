@@ -298,11 +298,15 @@ def train_scan_eval(args):
     # Scan teacher score (distillation) ; --target wdl fits the game outcome
     # ternary {-1,0,1} instead (Scan-style logistic-ish, least-squares here).
     if args.target == 'wdl':
-        target_stm = ds.wdl.astype(np.float64)
+        # WDL {-1,0,1} scaled to piece-units so the target lives on the same
+        # scale as the score eval (a win ≈ +wdl_scale piece-units). Lets the
+        # anti-forgetting anchor toward a score-distilled champion stay
+        # consistent (self-play loop) instead of being swamped by scale.
+        target_stm = ds.wdl.astype(np.float64) * args.wdl_scale
         n_pos = int((ds.wdl > 0).sum()); n_neg = int((ds.wdl < 0).sum())
         n_zero = int((ds.wdl == 0).sum())
         print(f'target=wdl  pos={n_pos} neg={n_neg} zero={n_zero} '
-              f'({n_zero/ds.n_records*100:.1f}% draws)')
+              f'({n_zero/ds.n_records*100:.1f}% draws)  wdl_scale={args.wdl_scale}')
     else:
         clipped = np.clip(ds.score.astype(np.float64), -args.score_clip, args.score_clip)
         target_stm = clipped / 100.0
@@ -441,6 +445,10 @@ def main():
                     help='(scan-eval) path to a "QIET" sidecar from '
                          '--dump-quiet-flags ; restrict the fit to quiet '
                          '(non-capture) positions.')
+    ap.add_argument('--wdl-scale', type=float, default=1.0,
+                    help='(--target wdl) map WDL {-1,0,1} to ±N piece-units so '
+                         'the target shares the score eval scale (self-play '
+                         'loop : keeps the anti-forgetting anchor consistent).')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
