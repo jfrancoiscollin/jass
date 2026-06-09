@@ -1,8 +1,8 @@
 {
   "job_id": "0183-selfdistill-iterate",
-  "snapshot_at": "2026-06-09T17:47:19+00:00",
+  "snapshot_at": "2026-06-09T17:52:34+00:00",
   "started_at": "2026-06-09T15:36:56+00:00",
-  "elapsed_seconds": 7823,
+  "elapsed_seconds": 8138,
   "artefacts": [
     {
       "name": "build.log",
@@ -50,35 +50,35 @@
     },
     {
       "name": "gen2-0.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-1.log",
-      "size_bytes": 0
+      "size_bytes": 1054
     },
     {
       "name": "gen2-2.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-3.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-4.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-5.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-6.log",
-      "size_bytes": 0
+      "size_bytes": 1010
     },
     {
       "name": "gen2-7.log",
-      "size_bytes": 0
+      "size_bytes": 1054
     },
     {
       "name": "sp1-0.jnnw",
@@ -122,35 +122,43 @@
     },
     {
       "name": "sp2-0.jnnw",
-      "size_bytes": 714098
+      "size_bytes": 950008
     },
     {
       "name": "sp2-1.jnnw",
-      "size_bytes": 730514
+      "size_bytes": 950008
     },
     {
       "name": "sp2-2.jnnw",
-      "size_bytes": 705890
+      "size_bytes": 950008
     },
     {
       "name": "sp2-3.jnnw",
-      "size_bytes": 714098
+      "size_bytes": 950008
     },
     {
       "name": "sp2-4.jnnw",
-      "size_bytes": 705890
+      "size_bytes": 950008
     },
     {
       "name": "sp2-5.jnnw",
-      "size_bytes": 730514
+      "size_bytes": 950008
     },
     {
       "name": "sp2-6.jnnw",
-      "size_bytes": 755138
+      "size_bytes": 950008
     },
     {
       "name": "sp2-7.jnnw",
-      "size_bytes": 730514
+      "size_bytes": 950008
+    },
+    {
+      "name": "sp2.feat",
+      "size_bytes": 84800012
+    },
+    {
+      "name": "sp2.jnnw",
+      "size_bytes": 7600008
     },
     {
       "name": "tests.log",
@@ -191,7 +199,19 @@
     {
       "name": "v1.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "v2-train.log",
+      "size_bytes": 1024
+    },
+    {
+      "name": "v2-v15d9.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v2.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1    02:10:22  0.0  0.0 bash\n 401939  401937    02:10:22  0.0  0.0 bash\n 404380  401939       12:23 99.9  0.5 jass\n 404381  401939       12:23 99.9  0.5 jass\n 404382  401939       12:23 99.9  0.5 jass\n 404383  401939       12:23 99.9  0.5 jass\n 404384  401939       12:23 99.9  0.5 jass\n 404385  401939       12:23 99.9  0.5 jass\n 404386  401939       12:23 99.9  0.5 jass\n 404387  401939       12:23 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 401937       1    02:15:38  0.0  0.0 bash\n 401939  401937    02:15:38  0.0  0.0 bash\n 404688  401939       00:22  100  0.9 jass\n"
 }
