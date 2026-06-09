@@ -93,6 +93,7 @@ int game_stage(const Position& pos) noexcept;
 //   int32  w[2 * (n_pat + n_ext)]  ordered [pat_mg | pat_eg | ext_mg | ext_eg]
 inline constexpr std::uint32_t V3_MAGIC   = 0x57544A50U;  // "PJTW"
 inline constexpr std::uint32_t V3_VERSION = 3U;
+inline constexpr std::uint32_t V4_VERSION = 4U;          // v3 linear + FM term
 inline constexpr std::size_t   V3_HEADER  = 20;
 
 struct ScanWeights {
@@ -101,6 +102,15 @@ struct ScanWeights {
     std::vector<std::int32_t> pat_eg;   // size n_pat
     std::array<std::int32_t, NUM_EXTRAS> ext_mg{};
     std::array<std::int32_t, NUM_EXTRAS> ext_eg{};
+    // Optional Factorization-Machine term (PJTW v4). fm_rank=0 → none. The
+    // pairwise pattern-interaction term ½ Σ_f[(Σ_p V_{p,f})² − Σ_p V_{p,f}²]
+    // is added in piece-units (same scale as the linear eval ÷ scale), using
+    // the same per-pattern bucket the accumulator already maintains, hashed to
+    // fm_hash slots. fm_v laid out slot-major : slot s=p*fm_hash+(bucket%H),
+    // then fm_rank factors. Size = NUM_PATTERNS * fm_hash * fm_rank.
+    std::uint32_t fm_rank = 0;
+    std::uint32_t fm_hash = 0;
+    std::vector<float> fm_v;
 };
 
 std::optional<ScanWeights> load_scan_weights(const std::string& path,

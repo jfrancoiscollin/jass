@@ -173,6 +173,77 @@ def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
             f.write(blk.astype('<i4').tobytes())
 
 
+WEIGHTS_VERSION_V4 = 4
+
+
+def fit_pattern_fm(idx_tr, r_tr, idx_val, r_val, H, k, l2_fm, max_iter, seed):
+    """Pattern-only Factorization-Machine term, fit to the LINEAR RESIDUAL
+    (boosting : linear first, FM explains the interactions it missed). Each of
+    the NUM_PATTERNS active buckets is HASHED to H slots and gets a rank-k
+    latent vector ; the pairwise term is ½ Σ_f [ (Σ_p V_{p,f})² − Σ_p V_{p,f}² ].
+    Returns V (NP*H, k) float64 and prints val_mse(linear) vs (linear+FM)."""
+    NP = patterns.NUM_PATTERNS
+    rng = np.random.default_rng(seed)
+    St = ((idx_tr % H) + np.arange(NP) * H).astype(np.int64)   # (n,NP) slots
+    Sv = ((idx_val % H) + np.arange(NP) * H).astype(np.int64)
+    SLOT = NP * H
+
+    def predict(V, S):
+        A = np.zeros((S.shape[0], k))
+        Bsq = np.zeros((S.shape[0], k))
+        for f in range(k):
+            vf = V[:, f][S]                       # (n,NP)
+            A[:, f] = vf.sum(1)
+            Bsq[:, f] = (vf * vf).sum(1)
+        return 0.5 * (A * A - Bsq).sum(1), A
+
+    def loss_grad(theta):
+        V = theta.reshape(SLOT, k)
+        pred, A = predict(V, St)
+        diff = pred - r_tr
+        N = len(r_tr)
+        loss = 0.5 * float(diff @ diff) / N + 0.5 * l2_fm * float(theta @ theta)
+        r = diff / N
+        gV = np.zeros((SLOT, k))
+        flat = St.ravel()
+        for f in range(k):
+            vf = V[:, f][St]                      # (n,NP)
+            contrib = ((r * A[:, f])[:, None] - r[:, None] * vf).ravel()
+            # bincount scatter-add (far faster than np.add.at at M-row scale).
+            gV[:, f] = np.bincount(flat, weights=contrib, minlength=SLOT)
+        return loss, (gV + l2_fm * V).ravel()
+
+    th0 = rng.standard_normal(SLOT * k) * 0.01
+    t0 = time.time()
+    res = minimize(loss_grad, th0, jac=True, method='L-BFGS-B',
+                   options={'maxiter': max_iter, 'maxcor': 5})
+    V = res.x.reshape(SLOT, k)
+    fmv, _ = predict(V, Sv)
+    mse_lin = float(np.mean(r_val ** 2))
+    mse_fm = float(np.mean((r_val - fmv) ** 2))
+    red = 100 * (mse_lin - mse_fm) / mse_lin if mse_lin else 0.0
+    print(f'FM : rank={k} hash={H}  val resid_mse {mse_lin:.4f} → {mse_fm:.4f} '
+          f'({red:+.1f}%)  ({time.time()-t0:.1f}s)')
+    return V
+
+
+def write_weights_v4(path: Path, pat_mg, pat_eg, ext_mg, ext_eg, scale,
+                     V, H, k):
+    """PJTW v4 : the full v3 block (version field = 4) then an FM section :
+    uint32 fm_rank, uint32 fm_hash, uint32 fm_npat, float32 V[fm_npat*H*k]
+    (row-major slot-major : slot s = p*H + (bucket%H), then k factors)."""
+    n_pat, n_ext = len(pat_mg), len(ext_mg)
+    NP = patterns.NUM_PATTERNS
+    assert V.shape == (NP * H, k)
+    with open(path, 'wb') as f:
+        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC, WEIGHTS_VERSION_V4,
+                            scale, n_pat, n_ext))
+        for blk in (pat_mg, pat_eg, ext_mg, ext_eg):
+            f.write(blk.astype('<i4').tobytes())
+        f.write(struct.pack('<III', k, H, NP))
+        f.write(V.astype('<f4').tobytes())
+
+
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int, prior: np.ndarray = None,
                 anchor_l2=0.0):
@@ -416,6 +487,21 @@ def train_scan_eval(args):
           f'pat range=[{int(pat_mg.min())},{int(pat_mg.max())}] '
           f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
 
+    if args.fm_rank > 0:
+        # Boosting : fit a pattern-only FM term on the LINEAR residual (in the
+        # same piece-units the C++ adds it). idx holds the raw per-pattern
+        # buckets; the FM hashes them. Emit v4 (v3 linear + FM tables).
+        r_tr = (y_tr - (X_tr @ w_float)).astype(np.float64)
+        r_val = (y_val - val_pred).astype(np.float64)
+        V = fit_pattern_fm(idx[tr_idx], r_tr, idx[val_idx], r_val,
+                           args.fm_hash, args.fm_rank, args.l2_fm,
+                           args.max_iter, seed=2027)
+        write_weights_v4(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg,
+                         args.scale, V, args.fm_hash, args.fm_rank)
+        nfm = patterns.NUM_PATTERNS * args.fm_hash * args.fm_rank
+        print(f'wrote {args.out}  (v4, linear {2*(TB+E)} + FM {nfm} floats)')
+        return 0
+
     write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale)
     total = 2 * (TB + E)
     print(f'wrote {args.out}  (v3, {total} weights, {20 + 4 * total} bytes)')
@@ -449,6 +535,14 @@ def main():
                     help='(--target wdl) map WDL {-1,0,1} to ±N piece-units so '
                          'the target shares the score eval scale (self-play '
                          'loop : keeps the anti-forgetting anchor consistent).')
+    ap.add_argument('--fm-rank', type=int, default=0,
+                    help='(scan-eval) if >0, fit a pattern-only Factorization-'
+                         'Machine term on the linear residual and emit PJTW v4 '
+                         '(linear + rank-k pairwise pattern interactions).')
+    ap.add_argument('--fm-hash', type=int, default=8192,
+                    help='(--fm-rank) hash slots per pattern for the FM tables.')
+    ap.add_argument('--l2-fm', type=float, default=1e-3,
+                    help='(--fm-rank) L2 on the FM factors.')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '

@@ -13,6 +13,7 @@
 #include "../pattern_jass/src/weights.hpp"
 
 #include <array>
+#include <cstring>
 #include <fstream>
 
 namespace jass::scan_eval {
@@ -152,8 +153,9 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
     const std::uint32_t n_ext   = rd_u32(raw.data() + 16);
 
     if (magic != V3_MAGIC)   { if (err) *err = "bad magic"; return std::nullopt; }
-    if (version != V3_VERSION) {
-        if (err) *err = "not a v3 PJTW (version " + std::to_string(version) + ")";
+    const bool is_v4 = (version == V4_VERSION);
+    if (version != V3_VERSION && !is_v4) {
+        if (err) *err = "not a v3/v4 PJTW (version " + std::to_string(version) + ")";
         return std::nullopt;
     }
     if (n_pat != pattern_jass::TOTAL_BUCKETS) {
@@ -167,7 +169,26 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
         return std::nullopt;
     }
     const std::size_t total = 2 * (static_cast<std::size_t>(n_pat) + n_ext);
-    const std::size_t expected = V3_HEADER + total * sizeof(std::int32_t);
+    const std::size_t lin_bytes = V3_HEADER + total * sizeof(std::int32_t);
+    // FM section (v4) : uint32 fm_rank, fm_hash, fm_npat, then float32 V[...].
+    std::uint32_t fm_rank = 0, fm_hash = 0, fm_npat = 0;
+    std::size_t expected = lin_bytes;
+    if (is_v4) {
+        if (raw.size() < lin_bytes + 12) {
+            if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+        }
+        fm_rank = rd_u32(raw.data() + lin_bytes + 0);
+        fm_hash = rd_u32(raw.data() + lin_bytes + 4);
+        fm_npat = rd_u32(raw.data() + lin_bytes + 8);
+        if (fm_npat != pattern_jass::NUM_PATTERNS) {
+            if (err) *err = "fm_npat " + std::to_string(fm_npat) + " != "
+                          + std::to_string(pattern_jass::NUM_PATTERNS);
+            return std::nullopt;
+        }
+        const std::size_t n_fm =
+            static_cast<std::size_t>(fm_npat) * fm_hash * fm_rank;
+        expected = lin_bytes + 12 + n_fm * sizeof(float);
+    }
     if (raw.size() != expected) {
         if (err) *err = "size " + std::to_string(raw.size())
                       + " != expected " + std::to_string(expected);
@@ -189,6 +210,18 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
     for (std::uint32_t i = 0; i < n_pat; ++i) w.pat_eg[i] = next();
     for (int e = 0; e < NUM_EXTRAS; ++e) w.ext_mg[static_cast<std::size_t>(e)] = next();
     for (int e = 0; e < NUM_EXTRAS; ++e) w.ext_eg[static_cast<std::size_t>(e)] = next();
+
+    if (is_v4) {
+        w.fm_rank = fm_rank;
+        w.fm_hash = fm_hash;
+        const std::size_t n_fm =
+            static_cast<std::size_t>(fm_npat) * fm_hash * fm_rank;
+        w.fm_v.resize(n_fm);
+        // FM floats start right after the 12-byte FM header (p is currently at
+        // lin_bytes after reading all linear int32s).
+        const unsigned char* fp = raw.data() + lin_bytes + 12;
+        std::memcpy(w.fm_v.data(), fp, n_fm * sizeof(float));
+    }
     return w;
 }
 
@@ -226,7 +259,27 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
     const double weg = 1.0 - wmg;
     const double eval_black = wmg * (pat_mg + ext_mg) + weg * (pat_eg + ext_eg);
 
-    const double cp_black = eval_black * 100.0 / static_cast<double>(w_.scale);
+    // Linear eval in piece-units, plus the optional FM pairwise pattern term
+    // (PJTW v4) — also in piece-units, in black-POV, using the same per-pattern
+    // buckets `idx` the accumulator maintains, hashed to fm_hash slots.
+    double pu_black = eval_black / static_cast<double>(w_.scale);
+    if (w_.fm_rank != 0) {
+        const std::uint32_t k = w_.fm_rank, H = w_.fm_hash;
+        double fm = 0.0;
+        // ½ Σ_f [ (Σ_p V_{p,f})² − Σ_p V_{p,f}² ], factor loop outermost.
+        for (std::uint32_t f = 0; f < k; ++f) {
+            double a = 0.0, bsq = 0.0;
+            for (std::size_t p = 0; p < pattern_jass::NUM_PATTERNS; ++p) {
+                const std::size_t slot = p * H + (idx[p] % H);
+                const double v = static_cast<double>(w_.fm_v[slot * k + f]);
+                a += v; bsq += v * v;
+            }
+            fm += a * a - bsq;
+        }
+        pu_black += 0.5 * fm;
+    }
+
+    const double cp_black = pu_black * 100.0;
     const double cp_stm   = (pos.side_to_move() == Color::Black) ? cp_black : -cp_black;
 
     if (cp_stm >  20000.0) return  20000;
@@ -260,7 +313,7 @@ std::unique_ptr<INetwork> load_eval_network(const std::string& path,
         | (static_cast<std::uint32_t>(hdr[7]) << 24);
     f.close();
 
-    if (version == scan_eval::V3_VERSION) {
+    if (version == scan_eval::V3_VERSION || version == scan_eval::V4_VERSION) {
         return scan_eval::load_scan_eval_network(path, err);
     }
     return load_pattern_jass_network(path, err);
