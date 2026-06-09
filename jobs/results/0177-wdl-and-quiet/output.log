@@ -1,0 +1,31 @@
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0177-wdl-and-quiet/artefacts.src/feat
+wrote 1420193 quiet flags to /root/jass/jobs/results/0177-wdl-and-quiet/artefacts.src/quiet (1129770 quiet / 79.5505%)
+
+=== A) score + QUIET (champion + propreté) ===
+  sq : vs hc=0.888889  vs v15 d9=0.388889
+
+=== B) WDL sweep l2 (no anchor) ===
+  wdl-1e-5 : vs hc=0.472222  vs v15 d9=0.111111
+  wdl-3e-5 : vs hc=0.388889  vs v15 d9=0.111111
+  wdl-1e-4 : vs hc=0.722222  vs v15 d9=0.194444
+  meilleur WDL l2=1e-4 (v15=0.194444)
+
+=== C) WDL + QUIET (meilleur l2 WDL) ===
+  wq : vs hc=0.666667  vs v15 d9=0.0555556
+
+=== finaliste → bench fiable (144) + movetime (72) ===
+  finaliste=sq (v15 d9=0.388889)
+
+==========================================================
+        0177 WDL + QUIET — VERDICT
+  champion réf (score,l2=1e-4,drop)        : hc=1.0   v15 d9=0.472
+  A score+quiet                            : hc=0.888889  v15 d9=0.388889
+  B wdl l2=1e-5                              : hc=0.472222  v15 d9=0.111111
+  B wdl l2=3e-5                              : hc=0.388889  v15 d9=0.111111
+  B wdl l2=1e-4                              : hc=0.722222  v15 d9=0.194444
+  C wdl+quiet (l2=1e-4)                  : hc=0.666667  v15 d9=0.0555556
+  finaliste=sq  →  v15 d9(144)=0.388889  movetime(72)=0.284722
+  → un config > 0.472 = la cible/propreté est un levier ; sinon le linéaire
+    est bien saturé et le prochain pas est non-linéaire (FM).
+==========================================================
