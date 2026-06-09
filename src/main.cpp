@@ -986,6 +986,75 @@ int run_dump_eval_features_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --dump-quiet-flags: read a JNNW dataset and write, per position, ONE byte :
+// 1 if the position is quiet (the side to move has NO mandatory capture), 0 if
+// tactical. In draughts captures are forced, so a tactical position's static
+// eval is meaningless (the search plays out the capture chain immediately).
+// The trainer uses this sidecar to restrict the fit to quiescent positions
+// (cf gen-data's --quiet-only, applied here after-the-fact on stored data).
+// Format : "QIET"(4) + count(4) + count×uint8.
+// -----------------------------------------------------------------------------
+int run_dump_quiet_flags_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-quiet-flags <in.jnnw> <out.quiet>\n";
+        return 1;
+    }
+    const char* in_path  = argv[2];
+    const char* out_path = argv[3];
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char magic[4]; in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n"; return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read header\n"; return 1; }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    out.write("QIET", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+
+    constexpr std::size_t RECORD_SZ = 38;
+    char record[RECORD_SZ];
+    std::uint64_t n_quiet = 0;
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i << "\n"; return 1;
+        }
+        std::uint64_t bbs[4];
+        std::uint8_t  stm_byte;
+        std::memcpy(bbs,       record,      32);
+        std::memcpy(&stm_byte, record + 32,  1);
+        if (stm_byte > 1) { std::cerr << "bad stm at " << i << "\n"; return 1; }
+
+        Position p{};
+        p.set_side_to_move(stm_byte == 0 ? Color::White : Color::Black);
+        for (Bitboard b = bbs[0]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) p.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
+
+        // generate_legal_moves returns ALL captures OR all quiet moves (never a
+        // mix), so the first move's capture flag classifies the position. An
+        // empty movelist (no legal move = terminal) is treated as quiet.
+        MoveList ml;
+        generate_legal_moves(p, ml);
+        const std::uint8_t quiet =
+            (ml.size() == 0 || !ml[0].is_capture()) ? 1u : 0u;
+        n_quiet += quiet;
+        out.write(reinterpret_cast<const char*>(&quiet), 1);
+    }
+    std::cout << "wrote " << count << " quiet flags to " << out_path
+              << " (" << n_quiet << " quiet / "
+              << (count ? 100.0 * static_cast<double>(n_quiet) / count : 0.0)
+              << "%)\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --rewrite-scores-with-handcrafted: same as --rewrite-scores-with-nnue
 // but uses the handcrafted `evaluate()` instead of NNUE. Used to compute
 // the per-position handcrafted baseline needed by Scan-style hybrid
@@ -2010,6 +2079,7 @@ int main(int argc, char** argv) {
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
         else if (a == "--dump-eval-features")       return run_dump_eval_features_mode(argc, argv);
+        else if (a == "--dump-quiet-flags")         return run_dump_quiet_flags_mode(argc, argv);
         else if (a == "--eval-position")            return run_eval_position_mode(argc, argv);
         else if (a == "--benchmark-nnue")           return run_benchmark_nnue_mode(argc, argv);
         else if (a == "--benchmark-nnue-vs-nnue")   return run_benchmark_nnue_vs_nnue_mode(argc, argv);
