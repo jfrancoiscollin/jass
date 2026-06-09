@@ -1,0 +1,153 @@
+{
+  "job_id": "0180-deeper-teacher",
+  "snapshot_at": "2026-06-09T11:40:05+00:00",
+  "started_at": "2026-06-09T11:34:59+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 9364
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "d10-shard-0.jnnw",
+      "size_bytes": 1182264
+    },
+    {
+      "name": "d10-shard-1.jnnw",
+      "size_bytes": 1181770
+    },
+    {
+      "name": "d10-shard-2.jnnw",
+      "size_bytes": 1182340
+    },
+    {
+      "name": "d10-shard-3.jnnw",
+      "size_bytes": 1181846
+    },
+    {
+      "name": "d10-shard-4.jnnw",
+      "size_bytes": 1181884
+    },
+    {
+      "name": "d10-shard-5.jnnw",
+      "size_bytes": 1182530
+    },
+    {
+      "name": "d10-shard-6.jnnw",
+      "size_bytes": 1181960
+    },
+    {
+      "name": "d10-shard-7.jnnw",
+      "size_bytes": 1182302
+    },
+    {
+      "name": "d16-shard-0.jnnw",
+      "size_bytes": 44734
+    },
+    {
+      "name": "d16-shard-1.jnnw",
+      "size_bytes": 48800
+    },
+    {
+      "name": "d16-shard-2.jnnw",
+      "size_bytes": 36602
+    },
+    {
+      "name": "d16-shard-3.jnnw",
+      "size_bytes": 40668
+    },
+    {
+      "name": "d16-shard-4.jnnw",
+      "size_bytes": 40668
+    },
+    {
+      "name": "d16-shard-5.jnnw",
+      "size_bytes": 40668
+    },
+    {
+      "name": "d16-shard-6.jnnw",
+      "size_bytes": 44734
+    },
+    {
+      "name": "d16-shard-7.jnnw",
+      "size_bytes": 36602
+    },
+    {
+      "name": "relabel-d10-0.log",
+      "size_bytes": 378
+    },
+    {
+      "name": "relabel-d10-1.log",
+      "size_bytes": 382
+    },
+    {
+      "name": "relabel-d10-2.log",
+      "size_bytes": 383
+    },
+    {
+      "name": "relabel-d10-3.log",
+      "size_bytes": 382
+    },
+    {
+      "name": "relabel-d10-4.log",
+      "size_bytes": 384
+    },
+    {
+      "name": "relabel-d10-5.log",
+      "size_bytes": 303
+    },
+    {
+      "name": "relabel-d10-6.log",
+      "size_bytes": 303
+    },
+    {
+      "name": "relabel-d10-7.log",
+      "size_bytes": 303
+    },
+    {
+      "name": "relabel-d16-0.log",
+      "size_bytes": 162
+    },
+    {
+      "name": "relabel-d16-1.log",
+      "size_bytes": 166
+    },
+    {
+      "name": "relabel-d16-2.log",
+      "size_bytes": 166
+    },
+    {
+      "name": "relabel-d16-3.log",
+      "size_bytes": 166
+    },
+    {
+      "name": "relabel-d16-4.log",
+      "size_bytes": 167
+    },
+    {
+      "name": "relabel-d16-5.log",
+      "size_bytes": 167
+    },
+    {
+      "name": "relabel-d16-6.log",
+      "size_bytes": 167
+    },
+    {
+      "name": "relabel-d16-7.log",
+      "size_bytes": 167
+    },
+    {
+      "name": "sub-d10.jnnw",
+      "size_bytes": 9456840
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 396397       1       05:06  0.0  0.0 bash\n 396399  396397       05:06  0.0  0.0 bash\n 396802  396399       01:55  0.4  0.2 python3\n 396803  396399       01:55  0.4  0.2 python3\n 396804  396399       01:55  0.3  0.2 python3\n 396805  396399       01:55  0.4  0.2 python3\n 396806  396399       01:55  0.3  0.2 python3\n 396807  396399       01:55  0.4  0.2 python3\n 396808  396399       01:55  0.4  0.2 python3\n 396809  396399       01:55  0.3  0.2 python3\n 396810  396802       01:55 99.6  0.9 scan_linux\n 396811  396808       01:55 99.5  0.9 scan_linux\n 396812  396809       01:55 99.6  0.9 scan_linux\n 396813  396805       01:55 99.6  0.9 scan_linux\n 396814  396806       01:55 99.6  0.9 scan_linux\n 396815  396803       01:55 99.5  0.9 scan_linux\n 396816  396807       01:55 99.6  0.9 scan_linux\n 396817  396804       01:55 99.5  0.9 scan_linux\n"
+}
