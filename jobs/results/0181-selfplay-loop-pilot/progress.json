@@ -1,8 +1,8 @@
 {
   "job_id": "0181-selfplay-loop-pilot",
-  "snapshot_at": "2026-06-09T14:38:00+00:00",
+  "snapshot_at": "2026-06-09T14:43:05+00:00",
   "started_at": "2026-06-09T14:06:24+00:00",
-  "elapsed_seconds": 1896,
+  "elapsed_seconds": 2201,
   "artefacts": [
     {
       "name": "build.log",
@@ -61,12 +61,16 @@
       "size_bytes": 1065
     },
     {
+      "name": "sd-hc.log",
+      "size_bytes": 269
+    },
+    {
       "name": "sd-train.log",
       "size_bytes": 1031
     },
     {
       "name": "sd-v15.log",
-      "size_bytes": 0
+      "size_bytes": 365
     },
     {
       "name": "sd.pjtw",
@@ -115,7 +119,27 @@
     {
       "name": "tests.log",
       "size_bytes": 28
+    },
+    {
+      "name": "wdl-a0.3-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "wdl-a1.0-hc.log",
+      "size_bytes": 275
+    },
+    {
+      "name": "wdl-a1.0-train.log",
+      "size_bytes": 1002
+    },
+    {
+      "name": "wdl-a1.0-v15.log",
+      "size_bytes": 371
+    },
+    {
+      "name": "wdl-a1.0.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       31:35  0.0  0.0 bash\n 399531  399529       31:35  0.0  0.0 bash\n 400629  399531       01:41  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 399529       1       36:40  0.0  0.0 bash\n 399531  399529       36:40  0.0  0.0 bash\n 400751  399531       00:10  321 21.1 python3\n"
 }
