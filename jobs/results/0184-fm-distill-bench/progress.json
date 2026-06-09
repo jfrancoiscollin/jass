@@ -1,0 +1,29 @@
+{
+  "job_id": "0184-fm-distill-bench",
+  "snapshot_at": "2026-06-09T18:43:41+00:00",
+  "started_at": "2026-06-09T18:38:50+00:00",
+  "elapsed_seconds": 291,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 9901
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "v3-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 405662       1       04:51  0.0  0.0 bash\n 405664  405662       04:51  0.0  0.0 bash\n 406034  405664       04:31  298 27.9 python3\n 406035  405664       04:31  0.0  0.0 tee\n 406036  405664       04:31  0.0  0.0 grep\n"
+}
