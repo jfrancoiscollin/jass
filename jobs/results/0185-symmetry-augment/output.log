@@ -1,0 +1,26 @@
+tests OK
+
+=== augmente le master par symétrie (1.4M → 2.8M) ===
+symmetry-augment: 1420193 → 2840386 records (180°+colour-swap)
+
+=== control : champion sur 1.4M ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0185-symmetry-augment/artefacts.src/ctrl.feat
+val   : mse=1.731596  sign_acc=0.0012
+wrote /root/jass/jobs/results/0185-symmetry-augment/artefacts.src/ctrl.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  ctrl : v15 d9=0.416667  mt=0.354167  hc=1
+
+=== augmenté : champion sur 2.8M (symétrie) ===
+wrote 2840386 × 106 Scan-style extras to /root/jass/jobs/results/0185-symmetry-augment/artefacts.src/aug.feat
+val   : mse=1.752303  sign_acc=0.0011
+wrote /root/jass/jobs/results/0185-symmetry-augment/artefacts.src/aug.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  aug : v15 d9=0.277778  mt=0.243056  hc=0.833333
+
+==========================================================
+        0185 SYMÉTRIE (route Scan) — VERDICT
+  control 1.4M : v15 d9=0.416667  mt=0.354167  hc=1
+  augmenté 2.8M: v15 d9=0.277778  mt=0.243056  hc=0.833333
+  → augmenté > control (surtout mt) = la cohérence par symétrie généralise
+    mieux → la route Scan (partage/géométrie) est un levier réel.
+  → ≈ = la symétrie ne suffit pas ; passer au partage de poids DUR ou à
+    la géométrie dense (plus de fenêtres).
+==========================================================
