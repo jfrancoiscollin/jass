@@ -1,7 +1,9 @@
 {
   "job_id": "0188-speed-conversion-diagnostic",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-10T05:42:25+00:00",
+  "ended_at": "2026-06-10T07:10:48+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 419740
+  "artefacts_server_path": "/root/jass/jobs/results/0188-speed-conversion-diagnostic/artefacts.src"
 }

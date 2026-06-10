@@ -1,0 +1,40 @@
+=== v4 (champion, 32 bandes verticales) ===
+  -- distill v4 --
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0188-speed-conversion-diagnostic/artefacts.src/v4.feat
+  -- échelle rate(depth) v4 (144 parties/point) --
+    v4 depth=7 : 0.305556
+    v4 depth=9 : 0.416667
+    v4 depth=11 : 0.416667
+    v4 depth=13 : 0.416667
+  -- vitesse v4 (depth-at-movetime) --
+    300ms      depth avg=16.5556  min=15  max=18  | nodes avg=529813  knps~1766.05
+    300ms      depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+    1000ms     depth avg=18.8889  min=17  max=21  | nodes avg=1693771  knps~1693.77
+    1000ms     depth avg=17.5556  min=16  max=19  | nodes avg=1429666  knps~1429.67
+
+=== v6 (diagonale dense, 40 patterns) ===
+constexpr std::size_t NUM_PATTERNS  = 40;   // v4 enriched (gen_patterns.py)
+  -- distill v6 --
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0188-speed-conversion-diagnostic/artefacts.src/v6.feat
+  -- échelle rate(depth) v6 (144 parties/point) --
+    v6 depth=7 : 0.305556
+    v6 depth=9 : 0.555556
+    v6 depth=11 : 0.5
+    v6 depth=13 : 0.388889
+  -- vitesse v6 (depth-at-movetime) --
+    300ms      depth avg=16.8889  min=15  max=19  | nodes avg=588237  knps~1960.79
+    300ms      depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+    1000ms     depth avg=19.4444  min=18  max=20  | nodes avg=1810677  knps~1810.68
+    1000ms     depth avg=17.5556  min=16  max=19  | nodes avg=1431373  knps~1431.37
+
+==========================================================
+        0188 DIAGNOSTIC VITESSE/CONVERSION — VERDICT
+  rate(depth) vs v15 (144 parties) :
+    v4 :  d7=0.305556  d9=0.416667  d11=0.416667  d13=0.416667
+    v6 :  d7=0.305556  d9=0.555556  d11=0.5  d13=0.388889
+  vitesse (depth atteinte @ movetime, A=pattern B=v15) :
+    v4 300ms :     depth avg=16.5556  min=15  max=18  | nodes avg=529813  knps~1766.05     depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+    v6 300ms :     depth avg=16.8889  min=15  max=19  | nodes avg=588237  knps~1960.79     depth avg=14.2222  min=13  max=15  | nodes avg=384145  knps~1280.48
+  → rate qui MONTE avec depth = borné VITESSE (piste A : optimiser l'éval).
+  → rate qui PLAFONNE = plafond de capacité (piste B : tête non-linéaire).
+==========================================================
