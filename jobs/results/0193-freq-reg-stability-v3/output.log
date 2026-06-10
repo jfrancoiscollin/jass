@@ -1,0 +1,37 @@
+=== émettre v6 + build (binaire = 40 patterns) ===
+constexpr std::size_t NUM_PATTERNS  = 40;   // v4 enriched (gen_patterns.py)
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/feat
+
+=== freq-reg=0 ===
+    loading raw extras /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/feat
+    design : 42515492 columns (2×21257640 pat + 2×106 ext)
+    val   : mse=1.768201  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/s0.pjtw  (v3, 42515492 weights, 170061988 bytes)
+  freq-reg=0 : d9=0.555556  d13=0.388889  mt=0.381944
+
+=== freq-reg=0.3 ===
+    loading raw extras /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/feat
+    design : 42515492 columns (2×21257640 pat + 2×106 ext)
+    freq-reg : strength=0.3  buckets≤2 visits=20661229/21257640 (97.2%)  anchor(rare)≈0.1  anchor(1k visits)≈0.0003
+    val   : mse=1.776325  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/s0.3.pjtw  (v3, 42515492 weights, 170061988 bytes)
+  freq-reg=0.3 : d9=0.333333  d13=0.194444  mt=0.215278
+
+=== freq-reg=3.0 ===
+    loading raw extras /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/feat
+    design : 42515492 columns (2×21257640 pat + 2×106 ext)
+    freq-reg : strength=3.0  buckets≤2 visits=20661229/21257640 (97.2%)  anchor(rare)≈1  anchor(1k visits)≈0.003
+    val   : mse=1.846157  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0193-freq-reg-stability-v3/artefacts.src/s3.0.pjtw  (v3, 42515492 weights, 170061988 bytes)
+  freq-reg=3.0 : d9=0.138889  d13=0.305556  mt=0.159722
+
+==========================================================
+        0193 FREQ-REG (piste A) — VERDICT (sur v6)
+  freq-reg=0 : d9=0.555556  d13=0.388889  mt=0.381944
+  freq-reg=0.3 : d9=0.333333  d13=0.194444  mt=0.215278
+  freq-reg=3.0 : d9=0.138889  d13=0.305556  mt=0.159722
+  réf v6 plein : d9=0.556 → d13=0.389 (dégrade)
+  → un S où d13≈d9 SANS écrouler d9 = famine corrigée proprement → éval riche STABLE.
+  → sinon → piste A épuisée → B (recul stratégique).
+==========================================================
