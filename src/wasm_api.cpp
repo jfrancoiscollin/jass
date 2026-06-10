@@ -44,8 +44,8 @@ emscripten::val move_to_js(const jass::Move& m) {
     obj.set("promotes", m.promotes);
     val caps = val::array();
     int ci = 0;
-    for (Bitboard b = m.captured; b; ) {
-        caps.set(ci++, static_cast<int>(pop_lsb(b)));
+    for (jass::Bitboard b = m.captured; b; ) {
+        caps.set(ci++, static_cast<int>(jass::pop_lsb(b)));
     }
     obj.set("captures", caps);
     return obj;
