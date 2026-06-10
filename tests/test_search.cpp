@@ -149,7 +149,7 @@ void test_search_finds_forced_capture() {
     JASS_CHECK_EQ(r.best_move.from, static_cast<Square>(28));
     JASS_CHECK_EQ(r.best_move.to,   static_cast<Square>(17));
     JASS_CHECK_EQ(r.best_move.num_captures, 1);
-    JASS_CHECK_EQ(r.best_move.captures[0], static_cast<Square>(22));
+    JASS_CHECK(test(r.best_move.captured, static_cast<Square>(22)));
     JASS_CHECK(r.score >= MATE_SCORE - MAX_PLY);
     JASS_CHECK(is_mate_score(r.score));
 }

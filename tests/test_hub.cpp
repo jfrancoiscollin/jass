@@ -48,7 +48,7 @@ void test_parse_move_capture() {
     const auto m = parse_move(p, "28x17");
     JASS_CHECK(m.has_value());
     JASS_CHECK(m->is_capture());
-    JASS_CHECK_EQ(m->captures[0], static_cast<Square>(22));
+    JASS_CHECK(test(m->captured, static_cast<Square>(22)));
 }
 
 void test_parse_move_multi_jump_takes_final_square() {
@@ -84,7 +84,7 @@ void test_format_move_quiet_and_capture() {
     cap.from = 28;
     cap.to   = 17;
     cap.num_captures = 1;
-    cap.captures[0]  = 22;
+    set(cap.captured, static_cast<Square>(22));
     JASS_CHECK_EQ(format_move(cap), std::string{"28x17"});
 }
 
