@@ -1,8 +1,8 @@
 {
   "job_id": "0192-freq-reg-stability-v2",
-  "snapshot_at": "2026-06-10T15:10:27+00:00",
+  "snapshot_at": "2026-06-10T15:15:28+00:00",
   "started_at": "2026-06-10T13:43:21+00:00",
-  "elapsed_seconds": 5226,
+  "elapsed_seconds": 5527,
   "artefacts": [
     {
       "name": "build.log",
@@ -89,5 +89,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431089       1    01:27:06  0.0  0.0 bash\n 431091  431089    01:27:06  0.0  0.0 bash\n 434722  431091       01:38  282 29.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431089       1    01:32:07  0.0  0.0 bash\n 431091  431089    01:32:07  0.0  0.0 bash\n 434722  431091       06:39  297 29.6 python3\n"
 }
