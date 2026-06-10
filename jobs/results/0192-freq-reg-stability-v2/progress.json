@@ -1,8 +1,8 @@
 {
   "job_id": "0192-freq-reg-stability-v2",
-  "snapshot_at": "2026-06-10T15:05:25+00:00",
+  "snapshot_at": "2026-06-10T15:10:27+00:00",
   "started_at": "2026-06-10T13:43:21+00:00",
-  "elapsed_seconds": 4924,
+  "elapsed_seconds": 5226,
   "artefacts": [
     {
       "name": "build.log",
@@ -49,6 +49,22 @@
       "size_bytes": 136049764
     },
     {
+      "name": "s0.3-d13.log",
+      "size_bytes": 136
+    },
+    {
+      "name": "s0.3-d9.log",
+      "size_bytes": 136
+    },
+    {
+      "name": "s0.3-mt.log",
+      "size_bytes": 136
+    },
+    {
+      "name": "s0.3.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "s0.pjtw",
       "size_bytes": 170061988
     },
@@ -62,12 +78,16 @@
     },
     {
       "name": "train-0.3.log",
-      "size_bytes": 0
+      "size_bytes": 1059
     },
     {
       "name": "train-0.log",
       "size_bytes": 939
+    },
+    {
+      "name": "train-3.0.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431089       1    01:22:04  0.0  0.0 bash\n 431091  431089    01:22:04  0.0  0.0 bash\n 433997  431091       05:18  294 29.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431089       1    01:27:06  0.0  0.0 bash\n 431091  431089    01:27:06  0.0  0.0 bash\n 434722  431091       01:38  282 29.7 python3\n"
 }
