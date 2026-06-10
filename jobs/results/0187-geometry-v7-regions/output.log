@@ -1,0 +1,20 @@
+=== émettre la géométrie v7 (régions stratégiques) ===
+
+NUM_PATTERNS set to 15 (v7); TOTAL_BUCKETS=7971615.
+constexpr std::size_t NUM_PATTERNS  = 15;   // v4 enriched (gen_patterns.py)
+
+=== build prod + tests (v7) ===
+tests OK
+
+=== distill champion sur géométrie v7 ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0187-geometry-v7-regions/artefacts.src/feat
+val   : mse=1.791450  sign_acc=0.0011
+wrote /root/jass/jobs/results/0187-geometry-v7-regions/artefacts.src/v7.pjtw  (v3, 15943442 weights, 63773788 bytes)
+
+==========================================================
+        0187 GÉOMÉTRIE v7 RÉGIONS — VERDICT
+  v7 (15 patterns placés) : v15 d9=0.5  mt=0.326389  hc=0.861111
+  v4 réf (32 génériques)  : v15 d9=0.472  mt=0.382  hc≈1.0
+  → v7 ≥ v4 = 'moins mais mieux placé' gagne → placement = levier.
+  → < v4 = trop peu de fenêtres ; densifier les régions clés.
+==========================================================
