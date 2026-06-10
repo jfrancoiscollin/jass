@@ -1,8 +1,8 @@
 {
   "job_id": "0194-logistic-wdl-scan-objective",
-  "snapshot_at": "2026-06-10T20:33:19+00:00",
+  "snapshot_at": "2026-06-10T20:38:19+00:00",
   "started_at": "2026-06-10T20:28:19+00:00",
-  "elapsed_seconds": 300,
+  "elapsed_seconds": 600,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,13 +17,21 @@
       "size_bytes": 602161844
     },
     {
+      "name": "l1e-5-v15d9.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "log1e-5.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     },
     {
       "name": "train-1e-5.log",
-      "size_bytes": 0
+      "size_bytes": 932
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1       05:00  0.0  0.0 bash\n 444701  444699       05:00  0.0  0.0 bash\n 445079  444701       04:41  303 27.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1       10:00  0.0  0.0 bash\n 444701  444699       10:00  0.0  0.0 bash\n 445398  444701       01:21  100  0.9 jass\n"
 }
