@@ -1,0 +1,7 @@
+{
+  "job_id": "0191-freq-reg-stability",
+  "script": "jobs/queue/0191-freq-reg-stability.sh",
+  "pid": 430596,
+  "started_at": "2026-06-10T13:27:30+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
