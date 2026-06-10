@@ -1,8 +1,8 @@
 {
   "job_id": "0188-speed-conversion-diagnostic",
-  "snapshot_at": "2026-06-10T06:39:14+00:00",
+  "snapshot_at": "2026-06-10T06:44:16+00:00",
   "started_at": "2026-06-10T05:42:25+00:00",
-  "elapsed_seconds": 3409,
+  "elapsed_seconds": 3711,
   "artefacts": [
     {
       "name": "build4.log",
@@ -61,13 +61,29 @@
       "size_bytes": 136049764
     },
     {
-      "name": "v6-train.log",
+      "name": "v6-d11.log",
       "size_bytes": 0
+    },
+    {
+      "name": "v6-d7.log",
+      "size_bytes": 373
+    },
+    {
+      "name": "v6-d9.log",
+      "size_bytes": 373
+    },
+    {
+      "name": "v6-train.log",
+      "size_bytes": 954
     },
     {
       "name": "v6.feat",
       "size_bytes": 602161844
+    },
+    {
+      "name": "v6.pjtw",
+      "size_bytes": 170061988
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1       56:49  0.0  0.0 bash\n 419742  419740       56:49  0.0  0.0 bash\n 421482  419742       09:50  262 33.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1    01:01:50  0.0  0.0 bash\n 419742  419740    01:01:50  0.0  0.0 bash\n 421866  419742       00:44  100  1.0 jass\n"
 }
