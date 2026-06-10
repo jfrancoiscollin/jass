@@ -1,16 +1,28 @@
 {
   "job_id": "0188-speed-conversion-diagnostic",
-  "snapshot_at": "2026-06-10T06:28:54+00:00",
+  "snapshot_at": "2026-06-10T06:34:05+00:00",
   "started_at": "2026-06-10T05:42:25+00:00",
-  "elapsed_seconds": 2789,
+  "elapsed_seconds": 3100,
   "artefacts": [
     {
       "name": "build4.log",
       "size_bytes": 9901
     },
     {
+      "name": "build6.log",
+      "size_bytes": 9901
+    },
+    {
       "name": "cmake4.log",
       "size_bytes": 506
+    },
+    {
+      "name": "cmake6.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "emit6.log",
+      "size_bytes": 2847
     },
     {
       "name": "v4-d11.log",
@@ -29,8 +41,12 @@
       "size_bytes": 373
     },
     {
+      "name": "v4-dam1000.log",
+      "size_bytes": 146
+    },
+    {
       "name": "v4-dam300.log",
-      "size_bytes": 0
+      "size_bytes": 144
     },
     {
       "name": "v4-train.log",
@@ -43,7 +59,15 @@
     {
       "name": "v4.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "v6-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v6.feat",
+      "size_bytes": 602161844
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1       46:28  0.0  0.0 bash\n 419742  419740       46:28  0.0  0.0 bash\n 421115  419742       00:00  100  0.4 jass\n 421116  419742       00:00  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1       51:39  0.0  0.0 bash\n 419742  419740       51:39  0.0  0.0 bash\n 421482  419742       04:41  258 39.1 python3\n"
 }
