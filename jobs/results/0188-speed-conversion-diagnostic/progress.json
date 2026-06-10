@@ -1,8 +1,8 @@
 {
   "job_id": "0188-speed-conversion-diagnostic",
-  "snapshot_at": "2026-06-10T06:44:16+00:00",
+  "snapshot_at": "2026-06-10T06:49:24+00:00",
   "started_at": "2026-06-10T05:42:25+00:00",
-  "elapsed_seconds": 3711,
+  "elapsed_seconds": 4019,
   "artefacts": [
     {
       "name": "build4.log",
@@ -85,5 +85,5 @@
       "size_bytes": 170061988
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1    01:01:50  0.0  0.0 bash\n 419742  419740    01:01:50  0.0  0.0 bash\n 421866  419742       00:44  100  1.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1    01:06:58  0.0  0.0 bash\n 419742  419740    01:06:58  0.0  0.0 bash\n 421866  419742       05:51 99.9  1.0 jass\n"
 }
