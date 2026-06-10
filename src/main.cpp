@@ -2072,7 +2072,14 @@ int run_bench_eval_mode(int argc, char** argv) {
     const long long iters = (argc > 3) ? std::max<long long>(1,
         parse_int_or(argv[3], 1000000)) : 1000000;
 
-    std::unique_ptr<INetwork> net = load_network(weights_path);
+    std::unique_ptr<INetwork> net;
+    {
+        const std::string p{weights_path};
+        const bool is_pjtw = p.size() >= 5
+                          && p.compare(p.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        net = is_pjtw ? jass::load_eval_network(p, &err) : load_network(p);
+    }
     if (!net) {
         std::cerr << "error: cannot load weights from " << weights_path << "\n";
         return 1;
