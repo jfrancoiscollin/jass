@@ -394,6 +394,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     ZobristHash hash;
     { BD_TIME(zobrist); hash = zobrist_hash(pos); }
 
+    // Kick off the TT cluster fetch now so its cache line is in flight while
+    // the node does the repetition / 50-move checks below (hides the random-
+    // access memory latency that dominates the probe at step 1).
+    if (tt) tt->prefetch(hash);
+
     // 0. Path-dependent draw detection. Path-dependent because it depends
     //    on which prior positions the search has visited, so we must not
     //    consult the TT for these answers.
