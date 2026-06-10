@@ -209,21 +209,34 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
     const Color    us  = pos.side_to_move();
     const Bitboard occ = pos.occupied();
 
-    // Men step one square in their two forward directions.
-    Bitboard men = pos.men_of(us);
-    const auto fwd = man_forward_dirs(us);
-    while (men) {
-        const Square from = pop_lsb(men);
-        for (Dir d : fwd) {
-            const Square to = neighbour(from, d);
-            if (to == NO_SQUARE) continue;
-            if (test(occ, to)) continue;
-            Move m;
-            m.from     = from;
-            m.to       = to;
-            m.promotes = is_promotion_square(to, us);
-            out.push(m);
-        }
+    // Men step one square in their two forward directions. Bitboard-parallel :
+    // shift the whole men set by each forward direction & empties to get ALL
+    // destinations at once (skipping blocked/edge candidates), then recover the
+    // source per move via the inverse-direction neighbour (UpLeft<->DownRight,
+    // UpRight<->DownLeft). Equivalent moves to the per-piece loop (perft-exact).
+    const Bitboard men   = pos.men_of(us);
+    const Bitboard empty = ~occ & PLAYABLE_BB;
+    const bool white = (us == Color::White);
+    // (dest set, inverse dir to recover `from`) for the two forward directions.
+    const Bitboard d0 = (white ? shift_nw(men) : shift_sw(men)) & empty;
+    const Bitboard d1 = (white ? shift_ne(men) : shift_se(men)) & empty;
+    const Dir inv0 = white ? Dir::DownRight : Dir::UpRight;   // inverse of NW / SW
+    const Dir inv1 = white ? Dir::DownLeft  : Dir::UpLeft;    // inverse of NE / SE
+    for (Bitboard d = d0; d; ) {
+        const Square to = pop_lsb(d);
+        Move m;
+        m.from     = neighbour(to, inv0);
+        m.to       = to;
+        m.promotes = is_promotion_square(to, us);
+        out.push(m);
+    }
+    for (Bitboard d = d1; d; ) {
+        const Square to = pop_lsb(d);
+        Move m;
+        m.from     = neighbour(to, inv1);
+        m.to       = to;
+        m.promotes = is_promotion_square(to, us);
+        out.push(m);
     }
 
     // Kings slide arbitrarily far along any of the four diagonals.

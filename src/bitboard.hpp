@@ -89,6 +89,27 @@ inline constexpr Bitboard COL_LAST_MASK  = COL_FIRST_MASK << 4;  // (mod 5) == 4
 inline constexpr Bitboard NOT_COL_FIRST  = FULL_BB & ~COL_FIRST_MASK;
 inline constexpr Bitboard NOT_COL_LAST   = FULL_BB & ~COL_LAST_MASK;
 
+// Single-step directional shifts (brick layout). `shift_dir(bb)` returns the
+// set of squares that are the `dir` neighbour of some bit in `bb`; off-board
+// neighbours are masked out. Dir mapping: nw=UpLeft, ne=UpRight, sw=DownLeft,
+// se=DownRight. (Same deltas as reach_all_dirs / scan_eval's mobility.)
+constexpr Bitboard shift_nw(Bitboard bb) noexcept {
+    const Bitboard even = bb & EVEN_ROW_MASK, odd = bb & ODD_ROW_MASK;
+    return ((even >> 5) | ((odd & NOT_COL_FIRST) >> 6)) & FULL_BB;
+}
+constexpr Bitboard shift_ne(Bitboard bb) noexcept {
+    const Bitboard even = bb & EVEN_ROW_MASK, odd = bb & ODD_ROW_MASK;
+    return (((even & NOT_COL_LAST) >> 4) | (odd >> 5)) & FULL_BB;
+}
+constexpr Bitboard shift_sw(Bitboard bb) noexcept {
+    const Bitboard even = bb & EVEN_ROW_MASK, odd = bb & ODD_ROW_MASK;
+    return ((even << 5) | ((odd & NOT_COL_FIRST) << 4)) & FULL_BB;
+}
+constexpr Bitboard shift_se(Bitboard bb) noexcept {
+    const Bitboard even = bb & EVEN_ROW_MASK, odd = bb & ODD_ROW_MASK;
+    return (((even & NOT_COL_LAST) << 6) | (odd << 5)) & FULL_BB;
+}
+
 constexpr Bitboard reach_all_dirs(Bitboard bb) noexcept {
     const Bitboard even = bb & EVEN_ROW_MASK;
     const Bitboard odd  = bb & ODD_ROW_MASK;
