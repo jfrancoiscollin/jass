@@ -1,7 +1,0 @@
-{
-  "job_id": "0185-symmetry-augment",
-  "script": "jobs/queue/0185-symmetry-augment.sh",
-  "pid": 411206,
-  "started_at": "2026-06-09T22:15:18+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
