@@ -42,11 +42,12 @@ struct CaptureCtx {
     Bitboard friend_bb;
     Bitboard enemy_bb;
 
+    Bitboard occ;   // friend_bb | enemy_bb, cached (constant per piece chain)
+
     Square         from_sq{NO_SQUARE};
     Square         cur_sq{NO_SQUARE};
     Bitboard       captured_bb{0};
     std::uint8_t   captured_count{0};
-    std::array<Square, 20> captured_list{};
 
     MoveList* out{nullptr};
 
@@ -64,8 +65,7 @@ struct CaptureCtx {
 // it for the duration of the chain); captured pieces still block until the
 // chain commits.
 constexpr bool landing_blocked(const CaptureCtx& ctx, Square s) noexcept {
-    const Bitboard occ = ctx.friend_bb | ctx.enemy_bb;
-    return test(occ, s) && s != ctx.from_sq;
+    return test(ctx.occ, s) && s != ctx.from_sq;
 }
 
 void emit_chain(CaptureCtx& ctx) {
@@ -98,7 +98,7 @@ void extend_man_captures(CaptureCtx& ctx) {
 
         // Mark the capture, recurse, then undo.
         set(ctx.captured_bb, over);
-        ctx.captured_list[ctx.captured_count++] = over;
+        ++ctx.captured_count;
         const Square saved = ctx.cur_sq;
         ctx.cur_sq         = land;
         extended           = true;
@@ -130,7 +130,7 @@ void extend_king_captures(CaptureCtx& ctx) {
 
                 const Square over = scan;
                 set(ctx.captured_bb, over);
-                ctx.captured_list[ctx.captured_count++] = over;
+                ++ctx.captured_count;
 
                 // For each empty landing square strictly past `over`, recurse.
                 const KingRay& land_ray = king_ray(over, d);
@@ -163,6 +163,7 @@ void generate_captures(const Position& pos, MoveList& out) {
     ctx.us        = pos.side_to_move();
     ctx.friend_bb = pos.pieces_of(ctx.us);
     ctx.enemy_bb  = pos.pieces_of(opposite(ctx.us));
+    ctx.occ       = ctx.friend_bb | ctx.enemy_bb;
     ctx.out       = &out;
 
     const Bitboard kings_us = pos.kings_of(ctx.us);
