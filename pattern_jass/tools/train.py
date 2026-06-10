@@ -246,22 +246,30 @@ def write_weights_v4(path: Path, pat_mg, pat_eg, ext_mg, ext_eg, scale,
 
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int, prior: np.ndarray = None,
-                anchor_l2=0.0):
-    """Least-squares fit with L2 toward 0 (`l2`) and, optionally, an extra
-    L2 pulling the weights toward a `prior`. `anchor_l2` is either a scalar
-    (uniform anchor — the anti-forgetting term for TD-leaf fine-tuning) OR a
-    per-column array (used to pin specific features, e.g. material extras, to
-    sane target values while leaving the rest free). anchor_l2=0 (or
-    prior=None) → pure fit."""
+                anchor_l2=0.0, logistic: bool = False):
+    """Fit by L-BFGS. Default = least-squares (resid = X@w - y). With
+    `logistic=True` (Scan's actual objective) the prediction X@w is a LOGIT and
+    the loss is the cross-entropy against `y` interpreted as a target PROBABILITY
+    in [0,1] (win=1, draw=0.5, loss=0) — i.e. logistic regression over the
+    pattern/extra features on game outcomes. `prior`/`anchor_l2` add an L2 pull
+    toward a prior (anti-forgetting / material pinning) ; anchor_l2=0 → pure."""
     XT = X.T            # CSC view sharing X's data — no copy (was .tocsr() = a
                         # full duplicate, ~doubling memory on multi-M datasets)
     a = np.asarray(anchor_l2, dtype=np.float64)
     anchored = prior is not None and bool(np.any(a > 0.0))
 
     def loss_and_grad(w):
-        pred = X @ w
-        resid = pred - y
-        loss = 0.5 * float(np.dot(resid, resid)) / len(y)
+        z = X @ w
+        if logistic:
+            # Numerically-stable sigmoid cross-entropy. d/dz = sigmoid(z) - y.
+            p = 0.5 * (np.tanh(0.5 * z) + 1.0)            # = sigmoid(z)
+            eps = 1e-12
+            loss = -float(np.mean(y * np.log(p + eps)
+                                  + (1.0 - y) * np.log(1.0 - p + eps)))
+            resid = p - y
+        else:
+            resid = z - y
+            loss = 0.5 * float(np.dot(resid, resid)) / len(y)
         loss += 0.5 * l2 * float(np.dot(w, w))
         grad = (XT @ resid) / len(y) + l2 * w
         if anchored:
@@ -385,6 +393,21 @@ def train_scan_eval(args):
               f'std={target_stm.std():.3f}')
     y_black = np.where(ds.stm == 1, target_stm, -target_stm)
 
+    # Scan recipe : logistic regression on game OUTCOMES. The eval score (X@w)
+    # is a logit ; the target is the win-probability in black-POV (win=1,
+    # draw=0.5, loss=0). Overrides the target/loss above. The output is in logit
+    # units (not piece-units) — ranking-preserving for play; the material anchor
+    # is disabled (it pins to piece-units, which would fight the logit scale).
+    logistic = (getattr(args, 'loss', 'ls') == 'logistic')
+    if logistic:
+        wdl_black = np.where(ds.stm == 1, ds.wdl.astype(np.float64),
+                             -ds.wdl.astype(np.float64))
+        y_black = (wdl_black + 1.0) * 0.5            # {-1,0,1} → {0,0.5,1}
+        np_ = int((ds.wdl > 0).sum()); nn = int((ds.wdl < 0).sum())
+        nz = int((ds.wdl == 0).sum())
+        print(f'loss=LOGISTIC on WDL outcomes  win={np_} draw={nz} loss={nn} '
+              f'({100*nz/ds.n_records:.1f}% draws)')
+
     # Game stage : piece count / 40 (matches scan_eval::game_stage).
     pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
     wmg = pc / 40.0
@@ -476,14 +499,15 @@ def train_scan_eval(args):
               f'{rare}/{TB} ({100*rare/TB:.1f}%)  '
               f'anchor(rare)≈{args.freq_reg/3:.3g}  anchor(1k visits)≈'
               f'{args.freq_reg/1000:.2g}')
-    use_anchor = bool(np.any(anchor > 0.0))
+    use_anchor = (not logistic) and bool(np.any(anchor > 0.0))
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
+          f'{"  LOGISTIC" if logistic else ""}'
           f'{"  (anchored)" if use_anchor else "  (pure)"}')
     t0 = time.time()
     w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
                                               prior=prior if use_anchor else None,
-                                              anchor_l2=anchor)
+                                              anchor_l2=anchor, logistic=logistic)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     val_pred = X_val @ w_float
@@ -548,6 +572,11 @@ def main():
                     help='(scan-eval) path to a "QIET" sidecar from '
                          '--dump-quiet-flags ; restrict the fit to quiet '
                          '(non-capture) positions.')
+    ap.add_argument('--loss', choices=['ls', 'logistic'], default='ls',
+                    help="(scan-eval) 'ls' = least-squares on the target ; "
+                         "'logistic' = Scan's objective : logistic regression on "
+                         "game OUTCOMES (WDL), eval score = logit. Disables the "
+                         "material anchor (logit scale != piece-units).")
     ap.add_argument('--wdl-scale', type=float, default=1.0,
                     help='(--target wdl) map WDL {-1,0,1} to ±N piece-units so '
                          'the target shares the score eval scale (self-play '
