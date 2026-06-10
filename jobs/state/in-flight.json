@@ -1,7 +1,0 @@
-{
-  "job_id": "0194-logistic-wdl-scan-objective",
-  "script": "jobs/queue/0194-logistic-wdl-scan-objective.sh",
-  "pid": 444699,
-  "started_at": "2026-06-10T20:28:19+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
