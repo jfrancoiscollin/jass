@@ -1,8 +1,8 @@
 {
   "job_id": "0190-bucket-hash-stability",
-  "snapshot_at": "2026-06-10T12:09:37+00:00",
+  "snapshot_at": "2026-06-10T12:14:45+00:00",
   "started_at": "2026-06-10T10:46:01+00:00",
-  "elapsed_seconds": 5016,
+  "elapsed_seconds": 5324,
   "artefacts": [
     {
       "name": "build-16384.log",
@@ -58,11 +58,15 @@
     },
     {
       "name": "h4096-d13.log",
-      "size_bytes": 0
+      "size_bytes": 369
     },
     {
       "name": "h4096-d9.log",
       "size_bytes": 369
+    },
+    {
+      "name": "h4096-mt.log",
+      "size_bytes": 0
     },
     {
       "name": "h4096.pjtw",
@@ -85,5 +89,5 @@
       "size_bytes": 938
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1    01:23:35  0.0  0.0 bash\n 426955  426953    01:23:35  0.0  0.0 bash\n 429027  426955       11:59 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1    01:28:43  0.0  0.0 bash\n 426955  426953    01:28:43  0.0  0.0 bash\n 429359  426955       00:00 98.4  0.4 jass\n"
 }
