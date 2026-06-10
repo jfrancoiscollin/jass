@@ -39,9 +39,8 @@ bool contains_capture(const MoveList& ml, Square from, Square to,
         if (m.from != from || m.to != to) continue;
         if (m.num_captures != caps.size()) continue;
         bool ok = true;
-        std::size_t i = 0;
         for (Square c : caps) {
-            if (m.captures[i++] != c) { ok = false; break; }
+            if (!test(m.captured, c)) { ok = false; break; }
         }
         if (ok) return true;
     }
@@ -159,7 +158,7 @@ void test_king_capture_multiple_landings() {
     for (Square land : {Square{22}, Square{17}, Square{11}, Square{6}}) {
         for (const auto& m : ml) {
             if (m.from == 33 && m.to == land &&
-                m.num_captures == 1 && m.captures[0] == 28) {
+                m.num_captures == 1 && test(m.captured, Square{28})) {
                 ++found;
             }
         }

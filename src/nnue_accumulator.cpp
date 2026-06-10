@@ -230,8 +230,8 @@ bool AccumulatorPair::apply_move(const Position&    pos_before,
     // Add mover at `to` (its post-move kind — same as pre unless promotes).
     changes[n++] = PieceChange{to_bit,   mover, mover_is_king_after, +1};
     // Remove each captured opponent piece.
-    for (std::uint8_t i = 0; i < m.num_captures; ++i) {
-        const int cap_bit = static_cast<int>(m.captures[i]) - 1;
+    for (Bitboard cb = m.captured; cb; ) {
+        const int cap_bit = static_cast<int>(pop_lsb(cb)) - 1;
         const Bitboard cap_msk = Bitboard{1} << cap_bit;
         const bool cap_was_king = (opponent == Color::White)
             ? ((pos_before.white_kings() & cap_msk) != 0)

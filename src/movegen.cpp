@@ -78,9 +78,7 @@ void emit_chain(CaptureCtx& ctx) {
     m.from         = ctx.from_sq;
     m.to           = ctx.cur_sq;
     m.num_captures = ctx.captured_count;
-    for (std::uint8_t i = 0; i < ctx.captured_count; ++i) {
-        m.captures[i] = ctx.captured_list[i];
-    }
+    m.captured     = ctx.captured_bb;   // already maintained during the chain
     m.promotes = is_promotion_square(ctx.cur_sq, ctx.us);
     ctx.out->push(m);
 }

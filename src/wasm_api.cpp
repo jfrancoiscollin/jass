@@ -26,6 +26,7 @@
 #include "nnue.hpp"
 #include "position.hpp"
 #include "search.hpp"
+#include "bitboard.hpp"
 #include "types.hpp"
 
 #include <emscripten/bind.h>
@@ -42,8 +43,9 @@ emscripten::val move_to_js(const jass::Move& m) {
     obj.set("to",       static_cast<int>(m.to));
     obj.set("promotes", m.promotes);
     val caps = val::array();
-    for (std::uint8_t i = 0; i < m.num_captures; ++i) {
-        caps.set(i, static_cast<int>(m.captures[i]));
+    int ci = 0;
+    for (Bitboard b = m.captured; b; ) {
+        caps.set(ci++, static_cast<int>(pop_lsb(b)));
     }
     obj.set("captures", caps);
     return obj;
