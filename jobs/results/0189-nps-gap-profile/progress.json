@@ -1,0 +1,29 @@
+{
+  "job_id": "0189-nps-gap-profile",
+  "snapshot_at": "2026-06-10T07:16:05+00:00",
+  "started_at": "2026-06-10T07:10:52+00:00",
+  "elapsed_seconds": 313,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 9901
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 422505       1       05:13  0.0  0.0 bash\n 422507  422505       05:13  0.0  0.0 bash\n 422879  422507       04:53  294 27.9 python3\n"
+}
