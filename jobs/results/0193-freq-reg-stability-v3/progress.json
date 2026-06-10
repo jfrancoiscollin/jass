@@ -1,0 +1,29 @@
+{
+  "job_id": "0193-freq-reg-stability-v3",
+  "snapshot_at": "2026-06-10T16:00:39+00:00",
+  "started_at": "2026-06-10T15:55:39+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 10030
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "train-0.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 437778       1       05:00  0.0  0.0 bash\n 437780  437778       05:00  0.0  0.0 bash\n 438230  437780       04:40  256 39.1 python3\n"
+}
