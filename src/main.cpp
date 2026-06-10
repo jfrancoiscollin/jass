@@ -908,6 +908,46 @@ int run_dump_features_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --perft <depth> [fen] : move-generation correctness + speed baseline. Counts
+// the leaf nodes of the legal-move tree to `depth` (the standard draughts
+// "perft"). This is the GOLDEN REFERENCE for the planned movegen rewrite : any
+// faster implementation must reproduce these counts bit-for-bit. Also prints
+// nodes/s as the movegen+make throughput baseline. Default FEN = FMJD start.
+// Known 10x10 international values from the start : 9, 81, 658, 4265, 27117,
+// 167140, 1049442, 6483961, 41022423.
+// -----------------------------------------------------------------------------
+static std::uint64_t perft(const Position& pos, int depth) {
+    MoveList ml;
+    generate_legal_moves(pos, ml);
+    if (depth <= 1) return ml.size();
+    std::uint64_t nodes = 0;
+    for (const auto& m : ml) nodes += perft(pos.after(m), depth - 1);
+    return nodes;
+}
+
+int run_perft_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --perft <depth> [fen]\n";
+        return 1;
+    }
+    const int depth = parse_int_or(argv[2], 1);
+    const std::string fen = (argc > 3) ? argv[3] : "W:W31-50:B1-20";
+    auto pos = Position::from_fen(fen);
+    if (!pos) { std::cerr << "error: bad FEN '" << fen << "'\n"; return 1; }
+    using clock = std::chrono::steady_clock;
+    for (int d = 1; d <= depth; ++d) {
+        const auto t0 = clock::now();
+        const std::uint64_t n = perft(*pos, d);
+        const auto t1 = clock::now();
+        const double s = std::chrono::duration<double>(t1 - t0).count();
+        std::cout << "perft(" << d << ") = " << n
+                  << "   " << (s > 0 ? static_cast<std::uint64_t>(n / s) : 0)
+                  << " nodes/s  (" << s << "s)\n";
+    }
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --eval-position <net.pjtw> <fen> : load an eval (v1/v2 pattern or v3 Scan
 // eval) and print evaluate(pos) for the given Hub FEN. stm-POV centipawns.
 // Used to cross-check the Python trainer prediction against the playable C++
@@ -2173,6 +2213,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
+        else if (a == "--perft")                    return run_perft_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
