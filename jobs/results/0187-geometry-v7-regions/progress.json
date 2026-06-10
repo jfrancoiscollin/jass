@@ -1,0 +1,33 @@
+{
+  "job_id": "0187-geometry-v7-regions",
+  "snapshot_at": "2026-06-10T01:06:05+00:00",
+  "started_at": "2026-06-10T01:01:04+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 12973
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "feat",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "tests.log",
+      "size_bytes": 28
+    },
+    {
+      "name": "v15d9.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v7.pjtw",
+      "size_bytes": 63773788
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 415397       1       05:00  0.0  0.0 bash\n 415399  415397       05:00  0.0  0.0 bash\n 415904  415399       00:35  100  0.7 jass\n"
+}
