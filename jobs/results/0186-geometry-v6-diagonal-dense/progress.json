@@ -1,8 +1,8 @@
 {
   "job_id": "0186-geometry-v6-diagonal-dense",
-  "snapshot_at": "2026-06-10T00:14:05+00:00",
+  "snapshot_at": "2026-06-10T00:19:48+00:00",
   "started_at": "2026-06-10T00:04:00+00:00",
-  "elapsed_seconds": 605,
+  "elapsed_seconds": 948,
   "artefacts": [
     {
       "name": "build.log",
@@ -19,7 +19,19 @@
     {
       "name": "tests.log",
       "size_bytes": 28
+    },
+    {
+      "name": "v15d9.log",
+      "size_bytes": 372
+    },
+    {
+      "name": "v15mt.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "v6.pjtw",
+      "size_bytes": 170061988
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 413935       1       10:05  0.0  0.0 bash\n 413937  413935       10:05  0.0  0.0 bash\n 414382  413937       09:44  260 38.6 python3\n 414383  413937       09:44  0.0  0.0 grep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 413935       1       15:48  0.0  0.0 bash\n 413937  413935       15:48  0.0  0.0 bash\n 414636  413937       02:29  100  1.0 jass\n"
 }
