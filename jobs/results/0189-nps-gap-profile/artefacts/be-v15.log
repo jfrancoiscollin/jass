@@ -1,0 +1,1 @@
+bench-eval: weights=/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin iters=3000000 total_ns=1897367509 ns/call=632.456 evals/s=1.58114e+06 sink=0
