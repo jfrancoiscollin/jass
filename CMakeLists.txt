@@ -64,6 +64,34 @@ if(JASS_ENABLE_SIMD)
 endif()
 
 # -----------------------------------------------------------------------------
+# Native-arch + LTO (engine speed). Standard engine build optimisations the
+# project previously skipped. -march=native enables the host's full ISA (BMI2
+# pext, etc.) — non-portable, so it is an option (turn OFF for distribution
+# builds). LTO (link-time / interprocedural optimisation) is portable. PGO
+# (profile-guided) is a separate two-pass job. Placed before the targets so the
+# compile options apply to jass_lib / jass / jass_tests.
+# -----------------------------------------------------------------------------
+option(JASS_NATIVE "Build for the host CPU (-march=native: BMI2 etc.)" ON)
+if(JASS_NATIVE AND NOT EMSCRIPTEN AND NOT MSVC)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-march=native JASS_SUPPORTS_MARCH_NATIVE)
+    if(JASS_SUPPORTS_MARCH_NATIVE)
+        add_compile_options(-march=native)
+        message(STATUS "Jass: -march=native enabled")
+    endif()
+endif()
+if(NOT EMSCRIPTEN)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT JASS_IPO_OK OUTPUT JASS_IPO_MSG)
+    if(JASS_IPO_OK)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+        message(STATUS "Jass: LTO enabled for Release")
+    else()
+        message(STATUS "Jass: LTO not supported (${JASS_IPO_MSG})")
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
 # Optional time-breakdown instrumentation
 # -----------------------------------------------------------------------------
 # When ON, wraps eval / movegen / pos.after calls with chrono samplers and
