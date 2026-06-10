@@ -1,8 +1,8 @@
 {
   "job_id": "0193-freq-reg-stability-v3",
-  "snapshot_at": "2026-06-10T18:08:28+00:00",
+  "snapshot_at": "2026-06-10T18:13:29+00:00",
   "started_at": "2026-06-10T15:55:39+00:00",
-  "elapsed_seconds": 7969,
+  "elapsed_seconds": 8270,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "s0.3-mt.log",
-      "size_bytes": 0
+      "size_bytes": 370
     },
     {
       "name": "s0.3.pjtw",
@@ -59,7 +59,11 @@
     {
       "name": "train-0.log",
       "size_bytes": 939
+    },
+    {
+      "name": "train-3.0.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 437778       1    02:12:49  0.0  0.0 bash\n 437780  437778    02:12:49  0.0  0.0 bash\n 440124  437780       36:15 99.9  1.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 437778       1    02:17:50  0.0  0.0 bash\n 437780  437778    02:17:49  0.0  0.0 bash\n 440709  437780       02:46  256 40.6 python3\n"
 }
