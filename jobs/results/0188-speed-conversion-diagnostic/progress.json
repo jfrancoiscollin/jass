@@ -1,8 +1,8 @@
 {
   "job_id": "0188-speed-conversion-diagnostic",
-  "snapshot_at": "2026-06-10T05:53:05+00:00",
+  "snapshot_at": "2026-06-10T05:58:08+00:00",
   "started_at": "2026-06-10T05:42:25+00:00",
-  "elapsed_seconds": 640,
+  "elapsed_seconds": 943,
   "artefacts": [
     {
       "name": "build4.log",
@@ -13,12 +13,16 @@
       "size_bytes": 506
     },
     {
+      "name": "v4-d11.log",
+      "size_bytes": 0
+    },
+    {
       "name": "v4-d7.log",
       "size_bytes": 373
     },
     {
       "name": "v4-d9.log",
-      "size_bytes": 0
+      "size_bytes": 373
     },
     {
       "name": "v4-train.log",
@@ -33,5 +37,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1       10:39  0.0  0.0 bash\n 419742  419740       10:39  0.0  0.0 bash\n 420229  419742       00:54  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 419740       1       15:42  0.0  0.0 bash\n 419742  419740       15:42  0.0  0.0 bash\n 420314  419742       03:00 99.9  0.9 jass\n"
 }
