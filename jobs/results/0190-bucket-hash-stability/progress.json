@@ -1,11 +1,15 @@
 {
   "job_id": "0190-bucket-hash-stability",
-  "snapshot_at": "2026-06-10T11:48:46+00:00",
+  "snapshot_at": "2026-06-10T11:54:05+00:00",
   "started_at": "2026-06-10T10:46:01+00:00",
-  "elapsed_seconds": 3765,
+  "elapsed_seconds": 4084,
   "artefacts": [
     {
       "name": "build-16384.log",
+      "size_bytes": 9901
+    },
+    {
+      "name": "build-4096.log",
       "size_bytes": 9901
     },
     {
@@ -14,6 +18,10 @@
     },
     {
       "name": "cmake-16384.log",
+      "size_bytes": 506
+    },
+    {
+      "name": "cmake-4096.log",
       "size_bytes": 506
     },
     {
@@ -29,6 +37,10 @@
       "size_bytes": 602161844
     },
     {
+      "name": "feat-4096",
+      "size_bytes": 602161844
+    },
+    {
       "name": "h16384-d13.log",
       "size_bytes": 372
     },
@@ -38,7 +50,7 @@
     },
     {
       "name": "h16384-mt.log",
-      "size_bytes": 0
+      "size_bytes": 371
     },
     {
       "name": "h16384.pjtw",
@@ -49,9 +61,17 @@
       "size_bytes": 28
     },
     {
+      "name": "tests-4096.log",
+      "size_bytes": 28
+    },
+    {
       "name": "train-16384.log",
       "size_bytes": 943
+    },
+    {
+      "name": "train-4096.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1    01:02:44  0.0  0.0 bash\n 426955  426953    01:02:44  0.0  0.0 bash\n 428005  426955       32:59 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1    01:08:03  0.0  0.0 bash\n 426955  426953    01:08:03  0.0  0.0 bash\n 428922  426955       00:57  489 11.7 python3\n"
 }
