@@ -1,0 +1,26 @@
+tests OK
+
+=== distill v4 champion (pour bench-eval) ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0189-nps-gap-profile/artefacts.src/feat
+
+=== (1) DÉBIT ÉVAL brut (evals/s) ===
+bench-eval: weights=/root/jass/jobs/results/0189-nps-gap-profile/artefacts.src/v4.pjtw iters=3000000 total_ns=1381027347 ns/call=460.342 evals/s=2.1723e+06 sink=0
+bench-eval: weights=/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin iters=3000000 total_ns=1897367509 ns/call=632.456 evals/s=1.58114e+06 sink=0
+
+=== (2) NPS de RECHERCHE (depth-at-movetime 1000ms) ===
+    depth avg=18.8889  min=17  max=21  | nodes avg=1690813  knps~1690.81
+    depth avg=17.5556  min=16  max=19  | nodes avg=1432055  knps~1432.06
+    depth avg=20.5556  min=19  max=22  | nodes avg=2345540  knps~2345.54
+    depth avg=17.5556  min=16  max=19  | nodes avg=1428983  knps~1428.98
+
+=== (3) NPS de SCAN (cible, best-effort) ===
+  (scan probe non concluant)
+
+==========================================================
+        0189 PROFIL DU ×6 NPS — VERDICT
+  débit éval brut : scan-eval=2.1723e+06 evals/s   v15=1.58114e+06 evals/s
+  NPS recherche   : scan-eval=1690.81 knps   hc=2345.54 knps   (v15≈1325)
+  Scan NPS (cible): 
+  → scan-eval evals/s >> v15 mais NPS scan-eval ≈ hc << Scan = goulot MOVEGEN/coeur.
+  → scan-eval evals/s ≈/< v15 OU NPS scan-eval << hc = goulot ÉVAL (extras non-incrémentaux ?).
+==========================================================

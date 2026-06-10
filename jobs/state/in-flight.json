@@ -1,7 +1,0 @@
-{
-  "job_id": "0189-nps-gap-profile",
-  "script": "jobs/queue/0189-nps-gap-profile.sh",
-  "pid": 422505,
-  "started_at": "2026-06-10T07:10:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
