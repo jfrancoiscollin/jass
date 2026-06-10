@@ -1,7 +1,9 @@
 {
   "job_id": "0191-freq-reg-stability",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 5,
   "started_at": "2026-06-10T13:27:30+00:00",
+  "ended_at": "2026-06-10T13:32:49+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 430596
+  "artefacts_server_path": "/root/jass/jobs/results/0191-freq-reg-stability/artefacts.src"
 }

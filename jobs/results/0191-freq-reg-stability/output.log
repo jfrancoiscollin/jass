@@ -1,0 +1,24 @@
+=== émettre v6 (diagonale dense, 40 patterns) — PATTERN_HASH plein ===
+constexpr std::size_t NUM_PATTERNS  = 40;   // v4 enriched (gen_patterns.py)
+constexpr std::uint32_t PATTERN_HASH        = 531441;   // = POW3[12] → no hashing
+BUILD FAIL
+/root/jass/src/main.cpp:1578:24: warning: conversion from ‘long long int’ to ‘double’ may change value [-Wconversion]
+ 1578 |         avg_depth[s] = sum_depth / n;
+      |                        ^~~~~~~~~
+[100%] Linking CXX executable jass
+/usr/bin/ld: libjass_lib.a(search.cpp.o): in function `jass::(anonymous namespace)::Searcher::quiescence(jass::Position const&, int, int, int)':
+search.cpp:(.text+0x50d): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: libjass_lib.a(search.cpp.o): in function `jass::(anonymous namespace)::Searcher::negamax(jass::Position const&, int, int, int, int)':
+search.cpp:(.text+0x1506): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: search.cpp:(.text+0x1c9f): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: search.cpp:(.text+0x2906): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: libjass_lib.a(search.cpp.o): in function `jass::search(jass::Position const&, jass::SearchLimits const&, jass::TranspositionTable&, std::vector<unsigned long, std::allocator<unsigned long> > const&)':
+search.cpp:(.text+0x3c71): undefined reference to `pattern_jass::extract_all(unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: search.cpp:(.text+0x405f): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+/usr/bin/ld: libjass_lib.a(search.cpp.o): in function `jass::(anonymous namespace)::Searcher::push_accumulator(int, jass::Position const&, jass::Move const&, jass::Position const&)':
+search.cpp:(.text+0x1b1): undefined reference to `pattern_jass::update_all(unsigned long, unsigned long, unsigned long, unsigned long, std::array<unsigned int, 32ul>&)'
+collect2: error: ld returned 1 exit status
+gmake[3]: *** [CMakeFiles/jass.dir/build.make:98: jass] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:113: CMakeFiles/jass.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:120: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:147: jass] Error 2
