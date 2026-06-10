@@ -239,7 +239,10 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
     constexpr auto offsets = pattern_jass::pattern_offsets();
     double pat_mg = 0.0, pat_eg = 0.0;
     for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
-        const std::size_t col = offsets[i] + idx[i];
+        // Bucket hashing : reduce the full base-3 index mod PATTERN_HASH (no-op
+        // when PATTERN_HASH == POW3[SIZE]). offsets[i] = i * BUCKETS_PER_PATTERN.
+        const std::size_t col =
+            offsets[i] + (idx[i] % pattern_jass::BUCKETS_PER_PATTERN);
         pat_mg += static_cast<double>(w_.pat_mg[col]);
         pat_eg += static_cast<double>(w_.pat_eg[col]);
     }
