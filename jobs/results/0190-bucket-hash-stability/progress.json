@@ -1,8 +1,8 @@
 {
   "job_id": "0190-bucket-hash-stability",
-  "snapshot_at": "2026-06-10T11:02:05+00:00",
+  "snapshot_at": "2026-06-10T11:07:08+00:00",
   "started_at": "2026-06-10T10:46:01+00:00",
-  "elapsed_seconds": 964,
+  "elapsed_seconds": 1267,
   "artefacts": [
     {
       "name": "build-16384.log",
@@ -49,5 +49,5 @@
       "size_bytes": 943
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1       16:03  0.0  0.0 bash\n 426955  426953       16:03  0.0  0.0 bash\n 427686  426955       09:48 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 426953       1       21:06  0.0  0.0 bash\n 426955  426953       21:06  0.0  0.0 bash\n 427686  426955       14:51 99.9  0.5 jass\n"
 }
