@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0190-bucket-hash-stability/artefacts.src/h16384.pjtw, 1310932 weights, scale=1000) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 72 games
+Result: SCAN_EVAL=19 NNUE=52 Draws=1 (total 72)
+SCAN_EVAL score rate vs NNUE: 0.270833
