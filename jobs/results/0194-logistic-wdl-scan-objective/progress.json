@@ -1,8 +1,8 @@
 {
   "job_id": "0194-logistic-wdl-scan-objective",
-  "snapshot_at": "2026-06-10T21:51:05+00:00",
+  "snapshot_at": "2026-06-10T21:56:07+00:00",
   "started_at": "2026-06-10T20:28:19+00:00",
-  "elapsed_seconds": 4966,
+  "elapsed_seconds": 5268,
   "artefacts": [
     {
       "name": "build.log",
@@ -57,5 +57,5 @@
       "size_bytes": 932
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1    01:22:46  0.0  0.0 bash\n 444701  444699    01:22:46  0.0  0.0 bash\n 446725  444701       27:23 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1    01:27:47  0.0  0.0 bash\n 444701  444699    01:27:47  0.0  0.0 bash\n 446725  444701       32:25 99.9  0.9 jass\n"
 }
