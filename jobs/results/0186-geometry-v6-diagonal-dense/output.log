@@ -1,0 +1,20 @@
+=== émettre la géométrie v6 (diagonale dense) ===
+
+NUM_PATTERNS set to 40 (v6); TOTAL_BUCKETS=21257640.
+constexpr std::size_t NUM_PATTERNS  = 40;   // v4 enriched (gen_patterns.py)
+
+=== build prod + tests (v6) ===
+tests OK
+
+=== distill champion sur géométrie v6 ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0186-geometry-v6-diagonal-dense/artefacts.src/feat
+val   : mse=1.768201  sign_acc=0.0011
+wrote /root/jass/jobs/results/0186-geometry-v6-diagonal-dense/artefacts.src/v6.pjtw  (v3, 42515492 weights, 170061988 bytes)
+
+==========================================================
+        0186 GÉOMÉTRIE v6 DIAGONALE DENSE — VERDICT
+  v6 (40 patterns diag) : v15 d9=0.555556  mt=0.277778  hc=1
+  v4 réf (32 vert)      : v15 d9=0.472  mt=0.382  hc≈1.0
+  → v6 mt > 0.382 = l'alignement diagonal + densité aide (route Scan vivante).
+  → ≈/< = la géométrie diagonale dense seule ne suffit pas.
+==========================================================
