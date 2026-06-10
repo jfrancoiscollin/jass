@@ -1,7 +1,0 @@
-{
-  "job_id": "0192-freq-reg-stability-v2",
-  "script": "jobs/queue/0192-freq-reg-stability-v2.sh",
-  "pid": 431089,
-  "started_at": "2026-06-10T13:43:21+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
