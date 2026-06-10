@@ -3,6 +3,7 @@
 
 #include "hub.hpp"
 
+#include "bitboard.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
 #include "search.hpp"
@@ -176,9 +177,10 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
     // quiet.
     if (r.best_move.num_captures > 0) {
         out_ << " captures=";
-        for (std::uint8_t i = 0; i < r.best_move.num_captures; ++i) {
-            if (i) out_ << ',';
-            out_ << static_cast<int>(r.best_move.captures[i]);
+        bool first = true;
+        for (Bitboard b = r.best_move.captured; b; first = false) {
+            if (!first) out_ << ',';
+            out_ << static_cast<int>(pop_lsb(b));
         }
     }
     if (r.from_book) out_ << " book=1";

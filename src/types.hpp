@@ -92,20 +92,21 @@ struct Move {
     Square                  to{NO_SQUARE};
     std::uint8_t            num_captures{0};
     bool                    promotes{false};
-    std::array<Square, 20>  captures{};
+    // Captured squares as a bitboard (bit = square_to_bit = square-1). Replaces
+    // the former std::array<Square,20> : the movegen already maintains this
+    // bitboard during a chain, so it shrinks Move (24->16 B) and drops the
+    // per-emit array copy. Capture ORDER is not preserved — it was never needed
+    // (make/unmake and the accumulator remove a SET of squares; the hub
+    // `captures=` list is consumed set-wise by the Scan-translation harness).
+    std::uint64_t           captured{0};
 
     constexpr bool is_capture() const noexcept { return num_captures > 0; }
     constexpr bool is_quiet()   const noexcept { return num_captures == 0; }
 
     friend constexpr bool operator==(const Move& a, const Move& b) noexcept {
-        if (a.from != b.from || a.to != b.to ||
-            a.num_captures != b.num_captures || a.promotes != b.promotes) {
-            return false;
-        }
-        for (std::uint8_t i = 0; i < a.num_captures; ++i) {
-            if (a.captures[i] != b.captures[i]) return false;
-        }
-        return true;
+        return a.from == b.from && a.to == b.to
+            && a.num_captures == b.num_captures && a.promotes == b.promotes
+            && a.captured == b.captured;
     }
 };
 

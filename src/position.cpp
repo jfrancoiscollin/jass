@@ -90,8 +90,8 @@ Position Position::after(const Move& m) const noexcept {
     const bool  was_man  = is_man(moving);
 
     next.remove_piece(m.from, moving);
-    for (std::uint8_t i = 0; i < m.num_captures; ++i) {
-        const Square c = m.captures[i];
+    for (Bitboard b = m.captured; b; ) {
+        const Square c = pop_lsb(b);
         next.remove_piece(c, next.piece_at(c));
     }
 
