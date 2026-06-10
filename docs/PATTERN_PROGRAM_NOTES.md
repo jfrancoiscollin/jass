@@ -586,3 +586,63 @@ Implémentation requise (≠ simple set de patterns) :
 Combo cible (si les briques paient isolément) : **géométrie diagonale dense +
 régions + partage par translation + augmentation symétrique (0185)**, puis FM en
 capstone. = réinventer la géométrie de Scan, dérivée pour notre layout.
+
+---
+
+## MILESTONE — état du programme & pivot vers la recette Scan (juin 2026)
+
+Après ~50 jobs (0141→0193) + un chantier vitesse, l'espace des leviers
+*incrémentaux* est épuisé. Consolidation avant le pivot.
+
+### Le champion (livrable actuel)
+`v4` : 32 patterns men-only (12 cases base-3, géométrie enrichie) + 106 extras
+(material/king-PST/mobilité/balance), phase-split MG/EG, **distillé sur
+Scan-d10** avec `--score-drop 4900` + `l2=1e-4` + material-anchor.
+- vs hc ≈ 1.0 ; **vs v15 ≈ 0.47 à depth-fixe, ~0.38-0.42 à movetime**.
+- Éval rapide (accumulateur incrémental), simple, AGPL-propre. Compétitive avec
+  v15 sans le battre au temps réel.
+
+### Le tournant qui a tout débloqué : `--score-drop`
+~2% de scores Scan extrêmes (±9989 "won/lost") dominaient la perte L2
+(5000²=25M même après clip). Les retirer : val_mse 38→1.8, play 0.42→0.94 vs hc.
+**Toutes les "régressions" antérieures venaient de ce poison** (amplifié par les
+modèles à plus de capacité).
+
+### Carte complète des leviers ÉVAL (tout testé proprement post-score-drop)
+NEUTRE ou NÉGATIF, sans exception :
+- Volume de data (4.7M ≈ 1.4M) ; teacher plus profond (d16 ≈ d10) ;
+- Géométrie : v5 blocs diagonaux (neutre), v6 diagonale-dense (**d9=0.556, BAT
+  v15 à depth-fixe** — mais DÉGRADE en profondeur → 0.389 d13), v7 régions ;
+- Extras structurels (0172 : nuisent) ; FM / interactions (gate +13% held-out
+  mais NE CONVERTIT PAS à movetime + coût vitesse) ;
+- Cible WDL (s'effondre) ; filtre quiet (nuit) ; augmentation symétrie (nuit) ;
+- Self-distillation itérée (dérive/dégrade) ; WDL self-play (toxique) ;
+- **Stabilité profondeur** : hashing de buckets (0190) ET freq-reg (0193)
+  ÉCROULENT d9 — les buckets "rares" portent la connaissance, pas du garbage.
+  L'instabilité en profondeur de v6 n'est PAS de la sous-représentation simple ;
+  non corrigeable à bas coût.
+
+**Conclusion éval** : la connaissance pour battre v15 EXISTE (v6 d9=0.556) mais
+ne se stabilise/convertit pas au temps réel par des moyens incrémentaux.
+
+### Carte des leviers VITESSE (notre seul avantage structurel vs v15)
+Diagnostic 0189 : Scan ≈ ×8 NPS vs v15 et le pulvérise au movetime ; nous ×1.3.
+Le ×6 manquant = implémentation. Breakdown (0189) : movegen 33%, eval 13%,
+TT 10%, reste ~13%, ordering 5%, accumulator 4%.
+- perft (filet de correction, `--perft`) : movegen CORRECT (valeurs FMJD
+  exactes) ; ~24M→34M nodes/s après l'étape 2.
+- **Gains réels (mémoire/cache)** : génération man-steps en bitboard (+19%),
+  prefetch TT (+5.4%) → **cumul +26% (1762→2215 knps)**.
+- Neutres : compact Move, cleanup captures, scan répétition (compute micro-opts
+  de buckets déjà bon marché ; certains % du breakdown = overhead BD_TIME).
+- Match de Scan (×8) = effort moteur soutenu, pas un levier unique.
+
+### Infra self-play (dé-risquée, prête)
+`--gen-data-wdl` accepte un `.pjtw` (self-play piloté par le pattern) ;
+`--wdl-scale` + ancrage anti-oubli ; la boucle génère→étiquette→réentraîne sans
+s'effondrer. Manque : l'itération depuis une base forte avec la bonne cible.
+
+### LE PIVOT — recette Scan complète (option 4)
+Le seul chemin restant vers « aussi bon que Scan, indépendant » = ce que Scan a
+fait : **self-play depuis zéro + WDL + régression logistique, ITÉRÉ**, sur
+géométrie correcte. Pré-approuvé. Chantier majeur multi-cycles. C'est l'endgame.
