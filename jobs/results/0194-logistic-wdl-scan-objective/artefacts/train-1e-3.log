@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts.src/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0194-logistic-wdl-scan-objective/artefacts.src/feat
+  extras shape (1420193, 106)  (mean mob b/w=10.2/10.2)
+target=wdl  pos=577248 neg=579323 zero=263622 (18.6% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=577248 draw=263622 loss=579323 (18.6% draws)
+phase : piece-count mean=24.0  wmg mean=0.600
+split : train=1278174 val=142019
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.001  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.664931  iters=200  (481.45s)
+val   : mse=0.565307  sign_acc=0.2593
+quant : scale=1000  pat range=[-116,105] ext_mg range=[-198,227]
+wrote /root/jass/jobs/results/0194-logistic-wdl-scan-objective/artefacts.src/log1e-3.pjtw  (v3, 34012436 weights, 136049764 bytes)
