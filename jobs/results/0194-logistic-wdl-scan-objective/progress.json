@@ -1,8 +1,8 @@
 {
   "job_id": "0194-logistic-wdl-scan-objective",
-  "snapshot_at": "2026-06-10T21:19:05+00:00",
+  "snapshot_at": "2026-06-10T21:24:06+00:00",
   "started_at": "2026-06-10T20:28:19+00:00",
-  "elapsed_seconds": 3046,
+  "elapsed_seconds": 3347,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,6 +17,14 @@
       "size_bytes": 602161844
     },
     {
+      "name": "l1e-4-v15d9.log",
+      "size_bytes": 378
+    },
+    {
+      "name": "l1e-4-v15mt.log",
+      "size_bytes": 0
+    },
+    {
       "name": "l1e-5-hc.log",
       "size_bytes": 282
     },
@@ -29,6 +37,10 @@
       "size_bytes": 378
     },
     {
+      "name": "log1e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "log1e-5.pjtw",
       "size_bytes": 136049764
     },
@@ -38,12 +50,12 @@
     },
     {
       "name": "train-1e-4.log",
-      "size_bytes": 0
+      "size_bytes": 933
     },
     {
       "name": "train-1e-5.log",
       "size_bytes": 932
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1       50:45  0.0  0.0 bash\n 444701  444699       50:45  0.0  0.0 bash\n 446608  444701       04:57  305 31.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 444699       1       55:47  0.0  0.0 bash\n 444701  444699       55:47  0.0  0.0 bash\n 446725  444701       00:24  100  0.8 jass\n"
 }
