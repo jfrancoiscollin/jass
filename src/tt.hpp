@@ -113,6 +113,14 @@ public:
     // is present, in which case `out` is filled.
     bool probe(ZobristHash key, TTEntry& out) const noexcept;
 
+    // Issue a prefetch of the cluster a key maps to. Called as soon as a
+    // node's hash is known so the cache line is in flight while the node does
+    // other setup (repetition check, etc.), hiding the random-access memory
+    // latency that dominates the TT probe.
+    void prefetch(ZobristHash key) const noexcept {
+        __builtin_prefetch(&cluster_table_[key & mask_], 0, 1);
+    }
+
     // Store an entry. The cluster's four entries are scanned: an empty
     // slot or the slot already holding this key wins, otherwise the
     // replacement targets the entry with the highest (old-gen, low-depth)
