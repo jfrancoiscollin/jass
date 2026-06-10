@@ -1,0 +1,44 @@
+=== émettre v6 (diagonale dense, 40 patterns) — PATTERN_HASH plein ===
+constexpr std::size_t NUM_PATTERNS  = 40;   // v4 enriched (gen_patterns.py)
+constexpr std::uint32_t PATTERN_HASH        = 531441;   // = POW3[12] → no hashing
+build retry (clean)
+tests OK
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/feat
+
+=== freq-reg=0 ===
+    loading raw extras /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/feat
+    val   : mse=1.768201  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/s0.pjtw  (v3, 42515492 weights, 170061988 bytes)
+  freq-reg=0 : d9=0.555556  d13=0.388889  mt=0.388889
+
+=== freq-reg=0.03 ===
+    loading raw extras /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/feat
+    freq-reg : strength=0.03  buckets≤2 visits=16541358/17006112 (97.3%)  anchor(rare)≈0.01  anchor(1k visits)≈3e-05
+    val   : mse=1.735329  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/s0.03.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  freq-reg=0.03 : d9=  d13=  mt=
+
+=== freq-reg=0.3 ===
+    loading raw extras /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/feat
+    freq-reg : strength=0.3  buckets≤2 visits=16541358/17006112 (97.3%)  anchor(rare)≈0.1  anchor(1k visits)≈0.0003
+    val   : mse=1.798344  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/s0.3.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  freq-reg=0.3 : d9=  d13=  mt=
+
+=== freq-reg=3.0 ===
+    loading raw extras /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/feat
+    freq-reg : strength=3.0  buckets≤2 visits=16541358/17006112 (97.3%)  anchor(rare)≈1  anchor(1k visits)≈0.003
+    val   : mse=1.833393  sign_acc=0.0011
+    wrote /root/jass/jobs/results/0192-freq-reg-stability-v2/artefacts.src/s3.0.pjtw  (v3, 34012436 weights, 136049764 bytes)
+  freq-reg=3.0 : d9=  d13=  mt=
+
+==========================================================
+        0191 FREQ-REG (piste A) — VERDICT (sur v6)
+  freq-reg=0 : d9=0.555556  d13=0.388889  mt=0.388889
+  freq-reg=0.03 : d9=  d13=  mt=
+  freq-reg=0.3 : d9=  d13=  mt=
+  freq-reg=3.0 : d9=  d13=  mt=
+  réf v6 plein (0188) : d9=0.556 → d13=0.389 (dégrade)
+  → un S où d13≈d9 (haut) = famine corrigée proprement → éval riche STABLE.
+  → d9 s'écroule / d13 chute toujours = freq-reg n'aide pas → on passe à B.
+==========================================================
