@@ -278,10 +278,19 @@ struct Searcher {
         if (scan_nnue) scan_accs[pi1]    = scan_accs[pi];
     }
 
-    // Returns true if `h` already appears anywhere in `hash_path`.
-    bool path_contains(ZobristHash h) const noexcept {
+    // Returns true if `h` repeats an ancestor on the current search path. A
+    // repetition requires the SAME side to move (even plies back) and can only
+    // involve positions since the last irreversible move (a man move/capture
+    // changes material or structure irreversibly) — i.e. the trailing
+    // `halfmove` entries. So scan back by 2, capped at `halfmove`, instead of
+    // the whole path : O(reversible run) per node, not O(depth).
+    bool path_contains(ZobristHash h, int halfmove) const noexcept {
         BD_TIME(path_check);
-        for (auto x : hash_path) if (x == h) return true;
+        const std::size_t n = hash_path.size();
+        const std::size_t cap = static_cast<std::size_t>(halfmove);
+        for (std::size_t back = 2; back <= n && back <= cap; back += 2) {
+            if (hash_path[n - back] == h) return true;
+        }
         return false;
     }
 
@@ -402,7 +411,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // 0. Path-dependent draw detection. Path-dependent because it depends
     //    on which prior positions the search has visited, so we must not
     //    consult the TT for these answers.
-    if (path_contains(hash))                        return 0;
+    if (path_contains(hash, pos.halfmove_clock()))  return 0;
     if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES)   return 0;
 
     // 0bis. Endgame tablebase: positions with a known theoretical result
