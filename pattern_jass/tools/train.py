@@ -459,6 +459,23 @@ def train_scan_eval(args):
         print(f'material-anchor : strength={args.material_anchor} '
               f'man=±{args.man_pu} king=±{args.king_pu} '
               f'(pinned columns={int(mask.sum())})')
+    if getattr(args, 'freq_reg', 0) and args.freq_reg > 0:
+        # Frequency-weighted L2 on the PATTERN buckets : per-column anchor toward
+        # 0 = strength / (visits + 1). Rare (under-trained) buckets — the ones
+        # that give garbage on the deep positions search reaches (cf 0188's depth
+        # degradation) — are shrunk HARD toward 0 (neutral), while well-trained
+        # common buckets keep their signal. The targeted, collision-free version
+        # of the (failed) bucket-hashing idea. Prior stays 0 for pattern columns.
+        counts = np.bincount(cols[tr_idx].ravel(),
+                             minlength=TB).astype(np.float64)
+        fanch = args.freq_reg / (counts + 1.0)            # (TB,)
+        anchor[0:TB]      = np.maximum(anchor[0:TB],      fanch)   # pat_mg
+        anchor[TB:2 * TB] = np.maximum(anchor[TB:2 * TB], fanch)   # pat_eg
+        rare = int((counts <= 2).sum())
+        print(f'freq-reg : strength={args.freq_reg}  buckets≤2 visits='
+              f'{rare}/{TB} ({100*rare/TB:.1f}%)  '
+              f'anchor(rare)≈{args.freq_reg/3:.3g}  anchor(1k visits)≈'
+              f'{args.freq_reg/1000:.2g}')
     use_anchor = bool(np.any(anchor > 0.0))
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
@@ -543,6 +560,11 @@ def main():
                     help='(--fm-rank) hash slots per pattern for the FM tables.')
     ap.add_argument('--l2-fm', type=float, default=1e-3,
                     help='(--fm-rank) L2 on the FM factors.')
+    ap.add_argument('--freq-reg', type=float, default=0.0,
+                    help='(scan-eval) frequency-weighted L2 on pattern buckets : '
+                         'per-column anchor toward 0 = STRENGTH/(visits+1). Rare '
+                         '(under-trained) buckets shrunk hard, common ones left '
+                         'alone — fights depth-instability without collisions.')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
