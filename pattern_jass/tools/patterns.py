@@ -51,7 +51,10 @@ PATTERN_NAMES = ["v_top_0", "v_top_1", "v_top_2", "v_top_3", "v_bot_0", "v_bot_1
 
 NUM_PATTERNS         = len(PATTERNS)               # 32
 PATTERN_SIZE         = 12
-BUCKETS_PER_PATTERN  = 3 ** PATTERN_SIZE           # 531 441
+# Bucket hashing (must match src/pattern.hpp PATTERN_HASH) : the full base-3
+# index is reduced mod PATTERN_HASH at the lookup. Default = 3**SIZE → no-op.
+PATTERN_HASH         = 3 ** PATTERN_SIZE           # 531 441 → no hashing
+BUCKETS_PER_PATTERN  = PATTERN_HASH
 TOTAL_BUCKETS        = BUCKETS_PER_PATTERN * NUM_PATTERNS  # 17 006 112
 
 POW3 = np.array([3 ** k for k in range(PATTERN_SIZE + 1)], dtype=np.int64)
@@ -74,4 +77,4 @@ def extract_indices(black_men: np.ndarray, white_men: np.ndarray) -> np.ndarray:
 
 
 def flat_feature_columns(indices: np.ndarray) -> np.ndarray:
-    return indices + PATTERN_OFFSETS[np.newaxis, :]
+    return (indices % PATTERN_HASH) + PATTERN_OFFSETS[np.newaxis, :]
