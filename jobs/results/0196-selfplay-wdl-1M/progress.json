@@ -1,8 +1,8 @@
 {
   "job_id": "0196-selfplay-wdl-1M",
-  "snapshot_at": "2026-06-11T16:38:12+00:00",
+  "snapshot_at": "2026-06-11T16:43:12+00:00",
   "started_at": "2026-06-11T11:07:09+00:00",
-  "elapsed_seconds": 19863,
+  "elapsed_seconds": 20163,
   "artefacts": [
     {
       "name": "build.log",
@@ -125,6 +125,14 @@
       "size_bytes": 136049764
     },
     {
+      "name": "sp3e-4-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3e-5-hc.log",
+      "size_bytes": 270
+    },
+    {
       "name": "sp3e-5-train.log",
       "size_bytes": 897
     },
@@ -134,7 +142,7 @@
     },
     {
       "name": "sp3e-5-v15mt.log",
-      "size_bytes": 0
+      "size_bytes": 366
     },
     {
       "name": "sp3e-5.pjtw",
@@ -145,5 +153,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    05:31:03  0.0  0.0 bash\n 464193  464191    05:31:03  0.0  0.0 bash\n 473737  464193       29:15 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    05:36:03  0.0  0.0 bash\n 464193  464191    05:36:03  0.0  0.0 bash\n 475763  464193       02:08  307 24.5 python3\n"
 }
