@@ -1,0 +1,29 @@
+{
+  "job_id": "0197-diag-speed-vs-accuracy",
+  "snapshot_at": "2026-06-11T17:31:21+00:00",
+  "started_at": "2026-06-11T17:26:15+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 8684
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "eqd-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "eqd-7.log",
+      "size_bytes": 13783
+    },
+    {
+      "name": "eqd-9.log",
+      "size_bytes": 13962
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 476755       1       05:06  0.0  0.0 bash\n 476757  476755       05:06  0.0  0.0 bash\n 477167  476757       01:55  4.2  0.0 python3\n 477170  477167       01:55 65.7  0.1 jass\n 477172  477167       01:55 30.3  0.9 scan_linux\n 477175  477167       01:55  0.5  0.0 jass\n"
+}
