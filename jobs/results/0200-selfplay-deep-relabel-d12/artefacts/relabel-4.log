@@ -1,0 +1,8 @@
+rewrite-search: 125000 records [375000..500000) depth=12  /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp-all.jnnw → /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/sp-d12-4.jnnw (eval /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.pjtw)
+  20000 / 125000 records
+  40000 / 125000 records
+  60000 / 125000 records
+  80000 / 125000 records
+  100000 / 125000 records
+  120000 / 125000 records
+wrote 125000 records (38 B each) to /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/sp-d12-4.jnnw

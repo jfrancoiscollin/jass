@@ -1,0 +1,2 @@
+rewrite-search: 2000 records [0..2000) depth=12  /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp-all.jnnw → /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/cal.jnnw (eval /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.pjtw)
+wrote 2000 records (38 B each) to /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/cal.jnnw
