@@ -836,6 +836,177 @@ int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --rewrite-scores-with-search: like --rewrite-scores-with-nnue, but the new
+// `score` is the result of a depth-D alpha-beta SEARCH driven by a user-supplied
+// eval (pattern .pjtw or NNUE .bin), not that eval in STATIC mode. A depth-D
+// search is stronger than the eval it uses, so training a fresh eval on these
+// labels pulls it toward the search's strength — the teacher-free bootstrap
+// step (eval <- search(eval)), with no external engine. The score is the
+// STM-POV search score, same convention as --gen-data.
+//
+// Supports --start/--count so the (per-position search) work can be sharded
+// across cores: each shard writes a standalone JNNW with `count` records;
+// concatenate the bodies and fix the header count (cf. job 0196's merge).
+//
+//   jass --rewrite-scores-with-search <input.jnnw> <output.jnnw> --nnue PATH
+//        [--depth D=12] [--start S=0] [--count C]
+// -----------------------------------------------------------------------------
+int run_rewrite_scores_with_search_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --rewrite-scores-with-search "
+                     "<input.jnnw> <output.jnnw> --nnue PATH "
+                     "[--depth D] [--start S] [--count C]\n";
+        return 1;
+    }
+    const char* in_path   = argv[2];
+    const char* out_path  = argv[3];
+    const char* eval_path = nullptr;
+    int depth = 12;
+    int start = 0;
+    int want_count = -1;            // -1 = to end of file
+    for (int i = 4; i < argc; ++i) {
+        const std::string_view a{argv[i]};
+        if      (a == "--nnue"  && i + 1 < argc) eval_path  = argv[++i];
+        else if (a == "--depth" && i + 1 < argc) depth      = parse_int_or(argv[++i], depth);
+        else if (a == "--start" && i + 1 < argc) start      = parse_int_or(argv[++i], 0);
+        else if (a == "--count" && i + 1 < argc) want_count = parse_int_or(argv[++i], -1);
+    }
+    if (!eval_path) { std::cerr << "error: --nnue PATH is required\n"; return 1; }
+    if (depth < 1)  { std::cerr << "error: --depth must be >= 1\n";    return 1; }
+    if (start < 0)  { std::cerr << "error: --start must be >= 0\n";    return 1; }
+    if (std::string_view{in_path} == std::string_view{out_path}) {
+        std::cerr << "error: input and output paths are identical ("
+                  << in_path << "); refusing to truncate the input\n";
+        return 1;
+    }
+
+    // Accept either a PJTW pattern eval or an NNUE .bin — same dispatch as
+    // --benchmark-scan-eval / the self-play generator.
+    const std::string ep{eval_path};
+    const bool is_pjtw = ep.size() >= 5 && ep.compare(ep.size() - 5, 5, ".pjtw") == 0;
+    std::string err;
+    std::unique_ptr<INetwork> eval = is_pjtw ? jass::load_eval_network(ep, &err)
+                                             : load_network(eval_path);
+    if (!eval) {
+        std::cerr << "error: cannot load eval from " << eval_path
+                  << (err.empty() ? "" : (" : " + err)) << "\n";
+        return 1;
+    }
+
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    in.seekg(0, std::ios::end);
+    const std::streampos file_end = in.tellg();
+    in.seekg(0, std::ios::beg);
+    if (file_end < std::streampos{8}) {
+        std::cerr << "error: " << in_path << " too small for a JNNW header\n";
+        return 1;
+    }
+    char magic[4]{};
+    in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n";
+        return 1;
+    }
+    std::uint32_t header_count = 0;
+    in.read(reinterpret_cast<char*>(&header_count), 4);
+    if (!in) { std::cerr << "error: cannot read JNNW header\n"; return 1; }
+    constexpr std::size_t RECORD_SZ = 38;
+    const std::size_t body_bytes = static_cast<std::size_t>(file_end) - 8;
+    if (body_bytes % RECORD_SZ != 0) {
+        std::cerr << "error: " << in_path << " body size " << body_bytes
+                  << " is not a multiple of " << RECORD_SZ << " bytes\n";
+        return 1;
+    }
+    const std::size_t total = body_bytes / RECORD_SZ;
+    if (header_count != total) {
+        std::cerr << "error: header count " << header_count
+                  << " disagrees with file size (" << total << " records)\n";
+        return 1;
+    }
+    if (static_cast<std::size_t>(start) > total) {
+        std::cerr << "error: --start " << start << " exceeds record count "
+                  << total << "\n";
+        return 1;
+    }
+    const std::size_t remaining = total - static_cast<std::size_t>(start);
+    const std::size_t count = (want_count < 0)
+        ? remaining
+        : std::min<std::size_t>(remaining, static_cast<std::size_t>(want_count));
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << " for writing\n"; return 1; }
+    out.write("JNNW", 4);
+    const std::uint32_t out_count = static_cast<std::uint32_t>(count);
+    out.write(reinterpret_cast<const char*>(&out_count), 4);
+    in.seekg(static_cast<std::streamoff>(8 + static_cast<std::size_t>(start) * RECORD_SZ),
+             std::ios::beg);
+
+    Engine e;
+    e.use_book(false);
+    e.set_nnue(eval.get());
+    SearchLimits lim;
+    lim.max_depth = depth;
+
+    std::cout << "rewrite-search: " << count << " records ["
+              << start << ".." << (static_cast<std::size_t>(start) + count)
+              << ") depth=" << depth << "  " << in_path << " → " << out_path
+              << " (eval " << eval_path << ")\n" << std::flush;
+
+    char record[RECORD_SZ];
+    Position pos;
+    for (std::size_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << (start + i) << "\n";
+            return 1;
+        }
+        std::uint64_t bbs[4];
+        std::uint8_t  stm_byte;
+        std::memcpy(bbs,       record,      32);
+        std::memcpy(&stm_byte, record + 32,  1);
+        // record + 33..36 (old score) is overwritten below; record + 37 (wdl)
+        // is preserved untouched in the buffer.
+        if (stm_byte > 1) {
+            std::cerr << "error: record " << (start + i) << " has invalid stm byte "
+                      << static_cast<int>(stm_byte) << "\n";
+            return 1;
+        }
+        const Bitboard all_pieces = bbs[0] | bbs[1] | bbs[2] | bbs[3];
+        if ((all_pieces & ~PLAYABLE_BB) != 0) {
+            std::cerr << "error: record " << (start + i)
+                      << " has bits set outside the 50 playable squares\n";
+            return 1;
+        }
+        if (((bbs[0] & bbs[1]) | (bbs[0] & bbs[2]) | (bbs[0] & bbs[3])
+           | (bbs[1] & bbs[2]) | (bbs[1] & bbs[3]) | (bbs[2] & bbs[3])) != 0) {
+            std::cerr << "error: record " << (start + i)
+                      << " has overlapping bits across colour/type planes\n";
+            return 1;
+        }
+
+        pos = Position{};
+        pos.set_side_to_move(stm_byte == 0 ? Color::White : Color::Black);
+        for (Bitboard b = bbs[0]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackKing);
+
+        e.set_position(pos);
+        const SearchResult r = e.search(lim);
+        const std::int32_t new_score = static_cast<std::int32_t>(r.score);
+        std::memcpy(record + 33, &new_score, 4);
+        out.write(record, RECORD_SZ);
+        if ((i + 1) % 20000 == 0) {
+            std::cout << "  " << (i + 1) << " / " << count << " records\n" << std::flush;
+        }
+    }
+    std::cout << "wrote " << count << " records (" << RECORD_SZ
+              << " B each) to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --dump-features: read a JNNW dataset and write, per position, a small set
 // of features the men-only pattern is BLIND to, for fit-check diagnostics :
 //   f0 = black mobility   (legal moves with Black to move)
@@ -2203,6 +2374,7 @@ int main(int argc, char** argv) {
         else if (a == "--gen-data-wdl")             return run_gen_data_wdl_mode(argc, argv);
         else if (a == "--gen-tdleaf")               return run_gen_tdleaf_mode(argc, argv);
         else if (a == "--rewrite-scores-with-nnue") return run_rewrite_scores_with_nnue_mode(argc, argv);
+        else if (a == "--rewrite-scores-with-search") return run_rewrite_scores_with_search_mode(argc, argv);
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
         else if (a == "--dump-eval-features")       return run_dump_eval_features_mode(argc, argv);
