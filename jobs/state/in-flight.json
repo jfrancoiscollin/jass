@@ -1,0 +1,7 @@
+{
+  "job_id": "0198-selfplay-score-target",
+  "script": "jobs/queue/0198-selfplay-score-target.sh",
+  "pid": 477507,
+  "started_at": "2026-06-11T18:09:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
