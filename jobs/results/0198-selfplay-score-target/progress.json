@@ -1,8 +1,8 @@
 {
   "job_id": "0198-selfplay-score-target",
-  "snapshot_at": "2026-06-11T18:53:02+00:00",
+  "snapshot_at": "2026-06-11T18:58:05+00:00",
   "started_at": "2026-06-11T18:09:05+00:00",
-  "elapsed_seconds": 2637,
+  "elapsed_seconds": 2940,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477507       1       43:57  0.0  0.0 bash\n 477509  477507       43:57  0.0  0.0 bash\n 478606  477509       00:59  287 25.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477507       1       48:59  0.0  0.0 bash\n 477509  477507       48:59  0.0  0.0 bash\n 478606  477509       06:02  311 25.3 python3\n"
 }
