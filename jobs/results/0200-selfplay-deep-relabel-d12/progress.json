@@ -1,8 +1,8 @@
 {
   "job_id": "0200-selfplay-deep-relabel-d12",
-  "snapshot_at": "2026-06-11T21:15:57+00:00",
+  "snapshot_at": "2026-06-11T21:20:58+00:00",
   "started_at": "2026-06-11T21:05:55+00:00",
-  "elapsed_seconds": 602,
+  "elapsed_seconds": 903,
   "artefacts": [
     {
       "name": "build.log",
@@ -18,72 +18,72 @@
     },
     {
       "name": "relabel-1.log",
-      "size_bytes": 288
+      "size_bytes": 313
     },
     {
       "name": "relabel-2.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-3.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-4.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-5.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-6.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-7.log",
-      "size_bytes": 293
+      "size_bytes": 318
     },
     {
       "name": "relabel-8.log",
-      "size_bytes": 294
+      "size_bytes": 319
     },
     {
       "name": "sp-d12-1.jnnw",
-      "size_bytes": 590984
+      "size_bytes": 943928
     },
     {
       "name": "sp-d12-2.jnnw",
-      "size_bytes": 566360
+      "size_bytes": 902888
     },
     {
       "name": "sp-d12-3.jnnw",
-      "size_bytes": 582776
+      "size_bytes": 935720
     },
     {
       "name": "sp-d12-4.jnnw",
-      "size_bytes": 599192
+      "size_bytes": 943928
     },
     {
       "name": "sp-d12-5.jnnw",
-      "size_bytes": 590984
+      "size_bytes": 927512
     },
     {
       "name": "sp-d12-6.jnnw",
-      "size_bytes": 590984
+      "size_bytes": 927512
     },
     {
       "name": "sp-d12-7.jnnw",
-      "size_bytes": 590984
+      "size_bytes": 952136
     },
     {
       "name": "sp-d12-8.jnnw",
-      "size_bytes": 607400
+      "size_bytes": 952136
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1       10:01  0.0  0.0 bash\n 481400  481398       10:01  0.0  0.0 bash\n 481971  481400       08:48 99.7  0.5 jass\n 481972  481400       08:48 99.7  0.5 jass\n 481973  481400       08:48 99.9  0.5 jass\n 481974  481400       08:48 99.9  0.5 jass\n 481975  481400       08:48 99.7  0.5 jass\n 481976  481400       08:48 99.7  0.5 jass\n 481977  481400       08:48 99.8  0.5 jass\n 481978  481400       08:48 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1       15:02  0.0  0.0 bash\n 481400  481398       15:02  0.0  0.0 bash\n 481971  481400       13:50 99.7  0.5 jass\n 481972  481400       13:50 99.8  0.5 jass\n 481973  481400       13:50 99.9  0.5 jass\n 481974  481400       13:50 99.9  0.5 jass\n 481975  481400       13:50 99.7  0.5 jass\n 481976  481400       13:50 99.7  0.5 jass\n 481977  481400       13:50 99.8  0.5 jass\n 481978  481400       13:50 99.8  0.5 jass\n"
 }
