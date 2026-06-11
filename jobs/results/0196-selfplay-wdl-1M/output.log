@@ -1,0 +1,29 @@
+tests OK
+=== distill champion (générateur) ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.feat
+  champion : v15 d9=0.388889  mt=0.4375  hc=0.916667
+=== self-play 1M : 8 shards × 125000, movetime=30ms ===
+merged 1000000 -> /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp-all.jnnw
+  1M self-play: n=1000000 win=204629 draw=592312 loss=203059 draws=59.2%
+=== dump features (une fois) ===
+wrote 1000000 × 106 Scan-style extras to /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp.feat
+=== logistic self-play-1M, l2=1e-4 ===
+  l2=1e-4 : v15 d9=0.111111  mt=0.0763889  hc=0.694444
+=== logistic self-play-1M, l2=3e-5 ===
+  l2=3e-5 : v15 d9=0.0555556  mt=0.0763889  hc=0.611111
+=== logistic self-play-1M, l2=3e-4 ===
+  l2=3e-4 : v15 d9=0.222222  mt=0.0833333  hc=0.388889
+
+==========================================================
+      0196 SELF-PLAY WDL 1M (recette Scan étape 3) — VERDICT
+  champion générateur : v15 d9=0.388889  mt=0.4375
+  self-play 1M draws  : n=1000000 win=204629 draw=592312 loss=203059 draws=59.2%
+  self-play  l2=1e-4  : v15 d9=0.111111  mt=0.0763889  hc=0.694444
+  self-play  l2=3e-5  : v15 d9=0.0555556  mt=0.0763889  hc=0.611111
+  self-play  l2=3e-4  : v15 d9=0.222222  mt=0.0833333  hc=0.388889
+  ANCRES : 0195 self-play-160k l2=1e-4 = 0.056 d9 / 0.47 hc
+           0194 logistic-master-1.4M  = 0.22 d9
+           champion distill           = 0.39 d9 / 0.33 mt / 0.92 hc
+  → 1M ↗ vers/au-delà de 0.22→0.39 = volume était le frein, bootstrap marche → cycle 2.
+  → 1M ≈ 160k (toujours ~0.05 vs v15) = ce n'est PAS le volume → classe linéaire saturée → NNUE.
+==========================================================

@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp3e-4.pjtw, 34012436 weights, scale=1000) vs NNUE(/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin), depth 64, threads 1, movetime_ms 300, 72 games
+Result: SCAN_EVAL=6 NNUE=66 Draws=0 (total 72)
+SCAN_EVAL score rate vs NNUE: 0.0833333
