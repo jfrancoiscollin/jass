@@ -1,8 +1,8 @@
 {
   "job_id": "0196-selfplay-wdl-1M",
-  "snapshot_at": "2026-06-11T16:59:05+00:00",
+  "snapshot_at": "2026-06-11T17:04:22+00:00",
   "started_at": "2026-06-11T11:07:09+00:00",
-  "elapsed_seconds": 21116,
+  "elapsed_seconds": 21433,
   "artefacts": [
     {
       "name": "build.log",
@@ -165,5 +165,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    05:51:56  0.0  0.0 bash\n 464193  464191    05:51:56  0.0  0.0 bash\n 476169  464193       09:02 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    05:57:13  0.0  0.0 bash\n 464193  464191    05:57:13  0.0  0.0 bash\n 476169  464193       14:19 99.9  0.9 jass\n"
 }
