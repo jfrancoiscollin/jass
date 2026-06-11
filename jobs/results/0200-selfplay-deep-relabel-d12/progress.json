@@ -1,8 +1,8 @@
 {
   "job_id": "0200-selfplay-deep-relabel-d12",
-  "snapshot_at": "2026-06-11T22:13:15+00:00",
+  "snapshot_at": "2026-06-11T22:18:34+00:00",
   "started_at": "2026-06-11T21:05:55+00:00",
-  "elapsed_seconds": 4040,
+  "elapsed_seconds": 4359,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,73 +17,81 @@
       "size_bytes": 672
     },
     {
+      "name": "d12-1e-4-train.log",
+      "size_bytes": 0
+    },
+    {
       "name": "relabel-1.log",
-      "size_bytes": 440
+      "size_bytes": 559
     },
     {
       "name": "relabel-2.log",
-      "size_bytes": 445
+      "size_bytes": 564
     },
     {
       "name": "relabel-3.log",
-      "size_bytes": 445
+      "size_bytes": 564
     },
     {
       "name": "relabel-4.log",
-      "size_bytes": 445
+      "size_bytes": 564
     },
     {
       "name": "relabel-5.log",
-      "size_bytes": 419
+      "size_bytes": 564
     },
     {
       "name": "relabel-6.log",
-      "size_bytes": 445
+      "size_bytes": 564
     },
     {
       "name": "relabel-7.log",
-      "size_bytes": 445
+      "size_bytes": 564
     },
     {
       "name": "relabel-8.log",
-      "size_bytes": 446
+      "size_bytes": 565
     },
     {
       "name": "sp-d12-1.jnnw",
-      "size_bytes": 4596488
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-2.jnnw",
-      "size_bytes": 4563656
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-3.jnnw",
-      "size_bytes": 4580072
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-4.jnnw",
-      "size_bytes": 4637528
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-5.jnnw",
-      "size_bytes": 4539032
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-6.jnnw",
-      "size_bytes": 4588280
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-7.jnnw",
-      "size_bytes": 4588280
+      "size_bytes": 4750008
     },
     {
       "name": "sp-d12-8.jnnw",
-      "size_bytes": 4563656
+      "size_bytes": 4750008
+    },
+    {
+      "name": "sp-d12.jnnw",
+      "size_bytes": 38000008
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:07:19  0.0  0.0 bash\n 481400  481398    01:07:19  0.0  0.0 bash\n 481971  481400    01:06:06 99.8  0.5 jass\n 481972  481400    01:06:06 99.8  0.5 jass\n 481973  481400    01:06:06 99.9  0.5 jass\n 481974  481400    01:06:06 99.9  0.5 jass\n 481975  481400    01:06:06 99.8  0.5 jass\n 481976  481400    01:06:06 99.8  0.5 jass\n 481977  481400    01:06:06 99.8  0.5 jass\n 481978  481400    01:06:06 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:12:38  0.0  0.0 bash\n 481400  481398    01:12:38  0.0  0.0 bash\n 484305  481400       02:39  298 29.3 python3\n"
 }
