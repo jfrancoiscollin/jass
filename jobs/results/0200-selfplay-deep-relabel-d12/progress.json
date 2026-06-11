@@ -1,8 +1,8 @@
 {
   "job_id": "0200-selfplay-deep-relabel-d12",
-  "snapshot_at": "2026-06-11T21:10:54+00:00",
+  "snapshot_at": "2026-06-11T21:15:57+00:00",
   "started_at": "2026-06-11T21:05:55+00:00",
-  "elapsed_seconds": 299,
+  "elapsed_seconds": 602,
   "artefacts": [
     {
       "name": "build.log",
@@ -50,40 +50,40 @@
     },
     {
       "name": "sp-d12-1.jnnw",
-      "size_bytes": 246248
+      "size_bytes": 590984
     },
     {
       "name": "sp-d12-2.jnnw",
-      "size_bytes": 229832
+      "size_bytes": 566360
     },
     {
       "name": "sp-d12-3.jnnw",
-      "size_bytes": 246248
+      "size_bytes": 582776
     },
     {
       "name": "sp-d12-4.jnnw",
-      "size_bytes": 238040
+      "size_bytes": 599192
     },
     {
       "name": "sp-d12-5.jnnw",
-      "size_bytes": 246248
+      "size_bytes": 590984
     },
     {
       "name": "sp-d12-6.jnnw",
-      "size_bytes": 254456
+      "size_bytes": 590984
     },
     {
       "name": "sp-d12-7.jnnw",
-      "size_bytes": 238040
+      "size_bytes": 590984
     },
     {
       "name": "sp-d12-8.jnnw",
-      "size_bytes": 246248
+      "size_bytes": 607400
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1       04:58  0.0  0.0 bash\n 481400  481398       04:58  0.0  0.0 bash\n 481971  481400       03:45 99.6  0.5 jass\n 481972  481400       03:45 99.7  0.5 jass\n 481973  481400       03:45 99.9  0.5 jass\n 481974  481400       03:45 99.9  0.5 jass\n 481975  481400       03:45 99.8  0.5 jass\n 481976  481400       03:45 99.9  0.5 jass\n 481977  481400       03:45 99.7  0.5 jass\n 481978  481400       03:45 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1       10:01  0.0  0.0 bash\n 481400  481398       10:01  0.0  0.0 bash\n 481971  481400       08:48 99.7  0.5 jass\n 481972  481400       08:48 99.7  0.5 jass\n 481973  481400       08:48 99.9  0.5 jass\n 481974  481400       08:48 99.9  0.5 jass\n 481975  481400       08:48 99.7  0.5 jass\n 481976  481400       08:48 99.7  0.5 jass\n 481977  481400       08:48 99.8  0.5 jass\n 481978  481400       08:48 99.9  0.5 jass\n"
 }
