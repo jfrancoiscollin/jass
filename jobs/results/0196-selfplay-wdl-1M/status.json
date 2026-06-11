@@ -1,7 +1,9 @@
 {
   "job_id": "0196-selfplay-wdl-1M",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-11T11:07:09+00:00",
+  "ended_at": "2026-06-11T17:26:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 464191
+  "artefacts_server_path": "/root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src"
 }
