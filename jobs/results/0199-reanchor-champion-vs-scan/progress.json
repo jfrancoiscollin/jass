@@ -1,8 +1,8 @@
 {
   "job_id": "0199-reanchor-champion-vs-scan",
-  "snapshot_at": "2026-06-11T20:34:54+00:00",
+  "snapshot_at": "2026-06-11T20:40:05+00:00",
   "started_at": "2026-06-11T19:53:05+00:00",
-  "elapsed_seconds": 2509,
+  "elapsed_seconds": 2820,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 13971
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 479378       1       41:48  0.0  0.0 bash\n 479380  479378       41:48  0.0  0.0 bash\n 480049  479380       26:32  0.0  0.0 bash\n 480050  480049       26:32  0.4  0.0 python3\n 480053  480050       26:32 48.1  0.5 jass\n 480055  480050       26:32 51.6  0.9 scan_linux\n 480058  480050       26:32  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 479378       1       46:59  0.0  0.0 bash\n 479380  479378       46:59  0.0  0.0 bash\n 480049  479380       31:44  0.0  0.0 bash\n 480050  480049       31:44  0.4  0.0 python3\n 480053  480050       31:44 48.3  0.5 jass\n 480055  480050       31:43 51.4  0.9 scan_linux\n 480058  480050       31:43  0.0  0.0 jass\n"
 }
