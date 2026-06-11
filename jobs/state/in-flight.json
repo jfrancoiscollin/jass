@@ -1,0 +1,7 @@
+{
+  "job_id": "0200-selfplay-deep-relabel-d12",
+  "script": "jobs/queue/0200-selfplay-deep-relabel-d12.sh",
+  "pid": 481398,
+  "started_at": "2026-06-11T21:05:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
