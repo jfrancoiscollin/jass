@@ -1,8 +1,8 @@
 {
   "job_id": "0200-selfplay-deep-relabel-d12",
-  "snapshot_at": "2026-06-11T22:28:45+00:00",
+  "snapshot_at": "2026-06-11T22:34:05+00:00",
   "started_at": "2026-06-11T21:05:55+00:00",
-  "elapsed_seconds": 4970,
+  "elapsed_seconds": 5290,
   "artefacts": [
     {
       "name": "build.log",
@@ -105,5 +105,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:22:49  0.0  0.0 bash\n 481400  481398    01:22:49  0.0  0.0 bash\n 484482  481400       03:39 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:28:09  0.0  0.0 bash\n 481400  481398    01:28:09  0.0  0.0 bash\n 484482  481400       08:59  100  0.9 jass\n"
 }
