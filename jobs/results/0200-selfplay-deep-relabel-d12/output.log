@@ -1,0 +1,25 @@
+=== host ubuntu-16gb-hel1-2  nproc=8 ; reuse 37M data + 405M feat ===
+tests OK
+champion : /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.pjtw
+=== auto-calibrage : 2000 positions @ d12 ===
+  champion d12 : 0.0262s/pos  → 1M sur 8 cœurs ≈ 0.9h
+=== relabel 1M @ d12 : 8 shards × 125000 ===
+merged 1000000 -> /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/sp-d12.jnnw from 8 shards (numeric order)
+=== stats score relabellisé ===
+n=1000000  range=[-29998,29999]  std=5471.6  nonzero=95.3%  |s|>4900=3.3%
+=== score-target d12 relabel, l2=1e-4 ===
+  l2=1e-4 : v15 d9=0  mt=0.0694444  hc=0.777778
+=== score-target d12 relabel, l2=3e-4 ===
+  l2=3e-4 : v15 d9=0.305556  mt=0.125  hc=0.638889
+  d12-1e-4 vs Scan d9 = 0.000
+  d12-3e-4 vs Scan d9 = 0.000
+
+==========================================================
+   0200 DEEP RELABEL d12 (recette Scan étape 6) — VERDICT
+  calibrage : champion d12 = 0.0262s/pos  (1M/8 ≈ 0.9h)
+  score-d12 l2=1e-4 : v15 d9=0  mt=0.0694444  hc=0.777778  | Scan d9=0.000
+  score-d12 l2=3e-4 : v15 d9=0.305556  mt=0.125  hc=0.638889  | Scan d9=0.000
+  ANCRES vs v15 : self-play+score@30ms (0198)=0.08-0.17 ; champion(Scan-d10 distill)=0.39 ; self-play+WDL=0.22
+  → d12 ≫ 0.17 (→ 0.39+) = la profondeur du label est le levier, bootstrap teacher-free marche → itérer.
+  → d12 ≈ 0.17 = la profondeur n'aide pas → features/classe à reposer.
+==========================================================
