@@ -1,8 +1,8 @@
 {
   "job_id": "0195-selfplay-wdl-bootstrap",
-  "snapshot_at": "2026-06-11T07:46:06+00:00",
+  "snapshot_at": "2026-06-11T07:51:07+00:00",
   "started_at": "2026-06-11T04:55:56+00:00",
-  "elapsed_seconds": 10210,
+  "elapsed_seconds": 10511,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,36 +37,44 @@
       "size_bytes": 672
     },
     {
+      "name": "master-sub.jnnw",
+      "size_bytes": 6080008
+    },
+    {
       "name": "sp-1.jnnw",
-      "size_bytes": 1469234
+      "size_bytes": 1520008
     },
     {
       "name": "sp-1.log",
-      "size_bytes": 0
+      "size_bytes": 1256
     },
     {
       "name": "sp-2.jnnw",
-      "size_bytes": 1477442
+      "size_bytes": 1520008
     },
     {
       "name": "sp-2.log",
-      "size_bytes": 0
+      "size_bytes": 1256
     },
     {
       "name": "sp-3.jnnw",
-      "size_bytes": 1485650
+      "size_bytes": 1520008
     },
     {
       "name": "sp-3.log",
-      "size_bytes": 0
+      "size_bytes": 1301
     },
     {
       "name": "sp-4.jnnw",
-      "size_bytes": 1485650
+      "size_bytes": 1520008
     },
     {
       "name": "sp-4.log",
-      "size_bytes": 0
+      "size_bytes": 1256
+    },
+    {
+      "name": "sp-all.jnnw",
+      "size_bytes": 6080008
     },
     {
       "name": "sp-pilot.jnnw",
@@ -77,9 +85,17 @@
       "size_bytes": 511
     },
     {
+      "name": "sp1e-5-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp1e-5.feat",
+      "size_bytes": 67840012
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1    02:50:09  0.0  0.0 bash\n 452331  452329    02:50:09  0.0  0.0 bash\n 455516  452331    01:43:17 99.9  0.5 jass\n 455517  452331    01:43:17 99.9  0.5 jass\n 455518  452331    01:43:17 99.9  0.5 jass\n 455519  452331    01:43:17 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1    02:55:10  0.0  0.0 bash\n 452331  452329    02:55:10  0.0  0.0 bash\n 458850  452331       02:00  388 21.2 python3\n"
 }
