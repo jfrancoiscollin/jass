@@ -1,7 +1,0 @@
-{
-  "job_id": "0195-selfplay-wdl-bootstrap",
-  "script": "jobs/queue/0195-selfplay-wdl-bootstrap.sh",
-  "pid": 452329,
-  "started_at": "2026-06-11T04:55:56+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

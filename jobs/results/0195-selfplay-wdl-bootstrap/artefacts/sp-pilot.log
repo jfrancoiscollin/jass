@@ -1,0 +1,5 @@
+gen-data-wdl: n=6000 out=/root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp-pilot.jnnw eval_depth=4 play_depth=64 max_plies=200 seed=1 nnue=/root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/champ.pjtw quiet_only=false pv_extract=0 movetime_ms=50
+  played 50 games, 1916 / 6000 positions
+  played 100 games, 3883 / 6000 positions
+  played 150 games, 5716 / 6000 positions
+wrote 6000 WDL records to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp-pilot.jnnw

@@ -1,0 +1,37 @@
+tests OK
+=== distill champion (générateur) ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/champ.feat
+  champion : v15 d9=0.388889  mt=0.326389  hc=0.916667
+=== self-play PILOTE (6k, movetime=50ms) — TAUX DE NULLES ===
+  pilote: n=6000 win=1157 draw=3690 loss=1153 draws=61.5%   (master faible=18.6% ; embarquée@20ms=59%)
+=== self-play GROS JEU (4×40k=160k, movetime=50ms) ===
+merged 160000 -> /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp-all.jnnw
+  gros jeu: n=160000 win=29784 draw=100473 loss=29743 draws=62.8%
+=== sous-échantillon master (N=160000) pour contrôler le volume ===
+subsampled 160000
+=== logistic self-play, l2=1e-5 ===
+wrote 160000 × 106 Scan-style extras to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp1e-5.feat
+  l2=1e-5 : v15 d9=0.111111  mt=0.0555556  hc=0.333333
+=== logistic self-play, l2=1e-4 ===
+wrote 160000 × 106 Scan-style extras to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp1e-4.feat
+  l2=1e-4 : v15 d9=0.0555556  mt=0.104167  hc=0.472222
+=== logistic self-play, l2=1e-3 ===
+wrote 160000 × 106 Scan-style extras to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/sp1e-3.feat
+  l2=1e-3 : v15 d9=0.0833333  mt=0.0416667  hc=0.416667
+=== logistic master-même-taille (contrôle), l2=1e-4 ===
+wrote 160000 × 106 Scan-style extras to /root/jass/jobs/results/0195-selfplay-wdl-bootstrap/artefacts.src/subm.feat
+  master-sub : v15 d9=0.0555556  mt=0.111111  hc=0.333333
+
+==========================================================
+        0195 SELF-PLAY WDL (recette Scan étape 2) — VERDICT
+  champion générateur : v15 d9=0.388889  mt=0.326389
+  self-play draws     : n=160000 win=29784 draw=100473 loss=29743 draws=62.8%
+  self-play  l2=1e-5   : v15 d9=0.111111  mt=0.0555556  hc=0.333333
+  self-play  l2=1e-4   : v15 d9=0.0555556  mt=0.104167  hc=0.472222
+  self-play  l2=1e-3   : v15 d9=0.0833333  mt=0.0416667  hc=0.416667
+  master-sub l2=1e-4  : v15 d9=0.0555556  mt=0.111111  hc=0.333333
+  réfs : 0194 master-1.4M=0.22 d9 ;  champion distill=0.47 d9 / 0.38 mt
+  → self-play >> master-sub (même taille) = la QUALITÉ des parties paie.
+  → self-play ↗ vers/au-delà de 0.47 = bootstrap marche → ITÉRER (étape 3).
+  → self-play ≈ master-sub ≈ 0.22 = générateur faible / classe linéaire saturée.
+==========================================================
