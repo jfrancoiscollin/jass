@@ -1,0 +1,20 @@
+=== reuse 0196 : 37M data + 405M feat ===
+tests OK
+=== stats du champ score dans sp-all.jnnw ===
+n=1000000  score range=[-29998,29999]  std=5079.5  nonzero=95.3%  |s|>4900=2.9%
+=== self-play + SCORE, l2=1e-4 ===
+  l2=1e-4 : v15 d9=0.0833333  mt=0.0555556  hc=0.583333
+=== self-play + SCORE, l2=3e-4 ===
+  l2=3e-4 : v15 d9=0.166667  mt=0.0416667  hc=0.666667
+
+==========================================================
+   0198 SELF-PLAY + SCORE (recette Scan étape 4) — VERDICT
+  self-play+score l2=1e-4 : v15 d9=0.0833333  mt=0.0555556  hc=0.583333
+  self-play+score l2=3e-4 : v15 d9=0.166667  mt=0.0416667  hc=0.666667
+  ANCRES : self-play+WDL 1M (0196)   = 0.22 d9   (même data, cible WDL)
+           master+score champion     = 0.39 d9 / 0.33 mt
+           master+WDL  (0194)        = 0.22 d9
+  → score ≈ 0.39 = LA CIBLE est le levier (data self-play = master pour distill)
+       → chemin compounding = labels de recherche PROFONDE, pas WDL. Pas NNUE.
+  → score ≈ 0.22 = ce n'est PAS la cible → features/data à ré-interroger.
+==========================================================
