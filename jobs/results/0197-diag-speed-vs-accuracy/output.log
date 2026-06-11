@@ -1,0 +1,57 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+jass : Jass 0.0.1
+scan : /root/jass/.scan/scan_linux (229K)
+v15 : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+############ ACCURACY — v15 vs Scan à profondeur égale ############
+=== depth 7 (livres off, no bitbases, 1t) ===
+  depth 7 : Jass score rate = 0.028
+  game 143: Jass=W Scan=B → D (25-move rule, 172 plies)  Jass +0.5  [55s]
+  game 144: Scan=W Jass=B → W (no legal move from Jass-player, 116 plies)  Jass +0.0  [55s]
+  Jass=0  Scan=136  Draws=8
+=== depth 9 (livres off, no bitbases, 1t) ===
+  depth 9 : Jass score rate = 0.056
+  game 143: Jass=W Scan=B → L (no legal move from Jass-player, 97 plies)  Jass +0.0  [114s]
+  game 144: Scan=W Jass=B → W (no legal move from Jass-player, 106 plies)  Jass +0.0  [115s]
+  Jass=8  Scan=136  Draws=0
+=== depth 11 (livres off, no bitbases, 1t) ===
+  depth 11 : Jass score rate = 0.056
+  game 143: Jass=W Scan=B → L (no legal move from Jass-player, 145 plies)  Jass +0.0  [343s]
+  game 144: Scan=W Jass=B → D (25-move rule, 183 plies)  Jass +0.5  [347s]
+  Jass=0  Scan=128  Draws=16
+
+############ SPEED — profondeur atteinte @ mt=0.5s (best-effort) ############
+--- sonde (lignes depth/nps) ---
+SCAN info depth=3 mean-depth=4.3 score=0.00 nodes=244 pv="32-28 18-23"
+SCAN info depth=4 mean-depth=6.5 score=-0.04 nodes=596 pv="32-28 18-23 33-29 23x32x28 37x28x32"
+SCAN info depth=4 mean-depth=6.1 score=-0.03 nodes=1220 pv="31-26 19-24 36-31 14-19"
+SCAN info depth=5 mean-depth=7.0 score=0.01 nodes=2360 pv="31-26 19-24 36-31 14-19 41-36"
+SCAN info depth=6 mean-depth=7.6 score=0.00 nodes=3669 pv="31-26 19-24 36-31 14-19 41-36 10-14"
+SCAN info depth=7 mean-depth=8.9 score=0.00 nodes=7069 time=0.001 pv="31-26 19-24 36-31 14-19 41-36 10-14 47-41"
+SCAN info depth=8 mean-depth=9.7 score=-0.04 nodes=15587 time=0.002 pv="31-26 19-24 36-31 14-19 41-36 10-14 47-41 5-10"
+SCAN info depth=8 mean-depth=9.7 score=-0.01 nodes=21940 time=0.002 pv="31-27 17-21 37-31 21-26 32-28 26x37x31 41x32x37 11-17 46-41"
+SCAN info depth=9 mean-depth=11.0 score=-0.03 nodes=34089 time=0.003 pv="31-27 17-21 37-31 21-26 33-28 26x37x31 42x31x37 11-17 27-22 18x27x22 31x11x17x27 6x17x11 39-33 19-23 28x19x23 14x23x19 34-29 23x34x29 40x29x34"
+SCAN info depth=9 mean-depth=10.5 score=0.00 nodes=63935 time=0.006 pv="34-30 17-21 30-25 21-26 39-34 11-17 44-39 7-11 50-44"
+SCAN info depth=10 mean-depth=11.1 score=0.00 nodes=77378 time=0.007 pv="34-30 17-21 30-25 21-26 39-34 11-17 44-39 7-11 50-44 1-7"
+SCAN info depth=11 mean-depth=12.3 score=-0.01 nodes=115891 time=0.010 nps=11.3 pv="34-30 17-21 30-25 21-26 39-34 11-17 44-39 7-11 50-44 1-7 32-28"
+SCAN info depth=12 mean-depth=12.7 score=-0.01 nodes=211989 time=0.018 nps=11.7 pv="34-30 19-23 30-25 20-24 33-29 24x33x29 39x19x23x33 13x24x19 38-33 8-13 44-39 14-20 25x14x20 10x19x14"
+SCAN info depth=13 mean-depth=13.6 score=0.00 nodes=315763 time=0.027 nps=11.7 pv="34-30 19-23 30-25 20-24 33-29 24x33x29 39x19x23x33 13x24x19 38-33 9-13 44-39 4-9 50-44 14-20 25x14x20 10x19x14"
+SCAN info depth=14 mean-depth=15.0 score=0.01 nodes=697939 time=0.059 nps=11.8 pv="34-30 20-25 32-28 25x34x30 39x30x34 17-22 28x17x22 12x21x17 44-39 7-12 37-32 21-26 32-27 26x37x31 41x32x37 11-17 46-41"
+SCAN info depth=15 mean-depth=15.5 score=-0.01 nodes=949000 time=0.081 nps=11.6 pv="34-30 20-25 32-28 25x34x30 39x30x34 17-22 28x17x22 12x21x17 44-39 7-12 37-32 21-26 32-27 26x37x31 41x32x37 11-17 46-41 15-20"
+SCAN info depth=16 mean-depth=16.8 score=0.00 nodes=1571691 time=0.135 nps=11.6 pv="34-30 20-25 32-28 25x34x30 39x30x34 17-22 28x17x22 12x21x17 44-39 7-12 40-34 21-26 31-27 14-20 30-25 19-23 25x14x20 10x19x14 37-31 26x37x31 41x32x37"
+SCAN info depth=17 mean-depth=17.3 score=0.00 nodes=2476360 time=0.213 nps=11.7 pv="34-30 20-25 32-28 25x34x30 39x30x34 17-22 28x17x22 12x21x17 44-39 7-12 40-34 21-26 31-27 14-20 30-25 19-23 25x14x20 10x19x14 37-31 26x37x31 41x32x37"
+SCAN info depth=18 mean-depth=18.4 score=-0.01 nodes=4002232 time=0.344 nps=11.6 pv="34-30 20-25 32-28 25x34x30 39x30x34 17-22 28x17x22 12x21x17 44-39 7-12 40-34 15-20 30-25 19-23 45-40 14-19 25x14x20 9x20x14 37-32 4-9 34-30 11-17"
+SCAN done move=34-30 ponder=20-25
+
+==========================================================
+   0197 DIAG — VITESSE vs PRÉCISION (v15 vs Scan)
+  ACCURACY (profondeur égale, FAIR) :
+    depth 7 : rate = 0.028
+    depth 9 : rate = 0.056
+    depth 11 : rate = 0.056
+  SPEED : v15 ref 0.92 Mnps / depth ~15 @0.5s (0091) ; Scan depth@0.5s → voir sonde
+  Rappel : v15 mt=0.5s vs Scan = 0.019 (0137, north-star)
+  → rate ≥ 0.5 à depth égale = éval OK, tout le gap est VITESSE
+       → archi : accumulateur incrémental + int8/AVX2 (NNUE rapide façon Kingsrow).
+  → rate ≪ 0.5 à depth égale = éval insuffisante → DONNÉES/FEATURES, pas archi.
+==========================================================
