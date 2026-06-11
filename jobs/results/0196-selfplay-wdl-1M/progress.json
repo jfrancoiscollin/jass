@@ -1,8 +1,8 @@
 {
   "job_id": "0196-selfplay-wdl-1M",
-  "snapshot_at": "2026-06-11T15:12:49+00:00",
+  "snapshot_at": "2026-06-11T15:17:53+00:00",
   "started_at": "2026-06-11T11:07:09+00:00",
-  "elapsed_seconds": 14740,
+  "elapsed_seconds": 15044,
   "artefacts": [
     {
       "name": "build.log",
@@ -34,66 +34,78 @@
     },
     {
       "name": "sp-1.jnnw",
-      "size_bytes": 4637522
+      "size_bytes": 4750008
     },
     {
       "name": "sp-1.log",
-      "size_bytes": 0
+      "size_bytes": 3387
     },
     {
       "name": "sp-2.jnnw",
-      "size_bytes": 4621106
+      "size_bytes": 4750008
     },
     {
       "name": "sp-2.log",
-      "size_bytes": 0
+      "size_bytes": 3341
     },
     {
       "name": "sp-3.jnnw",
-      "size_bytes": 4653938
+      "size_bytes": 4750008
     },
     {
       "name": "sp-3.log",
-      "size_bytes": 0
+      "size_bytes": 3341
     },
     {
       "name": "sp-4.jnnw",
-      "size_bytes": 4653938
+      "size_bytes": 4750008
     },
     {
       "name": "sp-4.log",
-      "size_bytes": 0
+      "size_bytes": 3341
     },
     {
       "name": "sp-5.jnnw",
-      "size_bytes": 4653938
+      "size_bytes": 4750008
     },
     {
       "name": "sp-5.log",
-      "size_bytes": 0
+      "size_bytes": 3388
     },
     {
       "name": "sp-6.jnnw",
-      "size_bytes": 4653938
+      "size_bytes": 4750008
     },
     {
       "name": "sp-6.log",
-      "size_bytes": 0
+      "size_bytes": 3341
     },
     {
       "name": "sp-7.jnnw",
-      "size_bytes": 4645730
+      "size_bytes": 4750008
     },
     {
       "name": "sp-7.log",
-      "size_bytes": 0
+      "size_bytes": 3388
     },
     {
       "name": "sp-8.jnnw",
-      "size_bytes": 4637522
+      "size_bytes": 4750008
     },
     {
       "name": "sp-8.log",
+      "size_bytes": 3341
+    },
+    {
+      "name": "sp-all.jnnw",
+      "size_bytes": 38000008
+    },
+    {
+      "name": "sp.feat",
+      "size_bytes": 424000012
+    },
+    {
+      "name": "sp1e-4-train.log",
       "size_bytes": 0
     },
     {
@@ -101,5 +113,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    04:05:40  0.0  0.0 bash\n 464193  464191    04:05:40  0.0  0.0 bash\n 465882  464193    03:16:05 99.9  0.5 jass\n 465883  464193    03:16:05 99.9  0.5 jass\n 465884  464193    03:16:05 99.8  0.5 jass\n 465885  464193    03:16:05 99.9  0.5 jass\n 465886  464193    03:16:05 99.9  0.5 jass\n 465887  464193    03:16:05 99.9  0.5 jass\n 465888  464193    03:16:05 99.9  0.5 jass\n 465889  464193    03:16:05 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 464191       1    04:10:44  0.0  0.0 bash\n 464193  464191    04:10:43  0.0  0.0 bash\n 471262  464193       00:00  350  0.0 python3\n"
 }
