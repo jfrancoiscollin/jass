@@ -1,0 +1,23 @@
+=== host : ubuntu-16gb-hel1-2  nproc=8 ===
+v15      : /root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+champion : /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.pjtw
+
+############ profondeur égale vs Scan (FAIR, no bitbases) ############
+  depth 7 : champion=0.028   v15=0.028
+  depth 9 : champion=0.000   v15=0.056
+  depth 11 : champion=0.000   v15=0.056
+
+############ movetime 0.5s vs Scan (north-star) ############
+  champion mt=0.5s vs Scan = 0.000
+
+==========================================================
+   0199 RÉ-ANCRAGE champion vs Scan — VERDICT
+  profondeur égale vs Scan :
+    depth 7 : champion=0.028   v15=0.028
+    depth 9 : champion=0.000   v15=0.056
+    depth 11 : champion=0.000   v15=0.056
+  movetime 0.5s : champion=0.000   (rappel v15 mt = 0.019, 0137)
+  RAPPEL 0197 : v15 vs Scan depth 7/9/11 = 0.028 / 0.056 / 0.056
+  → champion ≫ v15 vs Scan = pattern-eval bien plus proche → relabel profond linéaire vaut le coup (étape 6).
+  → champion ≈ v15 (~0.05) = même la meilleure eval est loin → plafond linéaire à reposer (NNUE/features).
+==========================================================
