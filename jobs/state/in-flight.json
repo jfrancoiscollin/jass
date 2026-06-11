@@ -1,0 +1,7 @@
+{
+  "job_id": "0196-selfplay-wdl-1M",
+  "script": "jobs/queue/0196-selfplay-wdl-1M.sh",
+  "pid": 464191,
+  "started_at": "2026-06-11T11:07:09+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
