@@ -1,12 +1,16 @@
 {
   "job_id": "0199-reanchor-champion-vs-scan",
-  "snapshot_at": "2026-06-11T19:58:24+00:00",
+  "snapshot_at": "2026-06-11T20:03:45+00:00",
   "started_at": "2026-06-11T19:53:05+00:00",
-  "elapsed_seconds": 319,
+  "elapsed_seconds": 640,
   "artefacts": [
     {
       "name": "build.log",
       "size_bytes": 8684
+    },
+    {
+      "name": "champ-d11.log",
+      "size_bytes": 13998
     },
     {
       "name": "champ-d7.log",
@@ -21,13 +25,17 @@
       "size_bytes": 672
     },
     {
+      "name": "v15-d11.log",
+      "size_bytes": 0
+    },
+    {
       "name": "v15-d7.log",
       "size_bytes": 13783
     },
     {
       "name": "v15-d9.log",
-      "size_bytes": 8262
+      "size_bytes": 13971
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 479378       1       05:19  0.0  0.0 bash\n 479380  479378       05:19  0.0  0.0 bash\n 479812  479380       01:32  0.0  0.0 bash\n 479813  479812       01:32  8.1  0.0 python3\n 479816  479813       01:32 60.0  0.1 jass\n 479818  479813       01:32 32.0  0.9 scan_linux\n 479821  479813       01:32  1.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 479378       1       10:39  0.0  0.0 bash\n 479380  479378       10:39  0.0  0.0 bash\n 479929  479380       01:25  0.0  0.0 bash\n 479930  479929       01:25  4.1  0.0 python3\n 479933  479930       01:25 66.9  0.1 jass\n 479935  479930       01:25 29.5  0.9 scan_linux\n 479938  479930       01:25  0.5  0.0 jass\n"
 }
