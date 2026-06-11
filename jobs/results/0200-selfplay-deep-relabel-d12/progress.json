@@ -1,8 +1,8 @@
 {
   "job_id": "0200-selfplay-deep-relabel-d12",
-  "snapshot_at": "2026-06-11T22:55:01+00:00",
+  "snapshot_at": "2026-06-11T23:00:05+00:00",
   "started_at": "2026-06-11T21:05:55+00:00",
-  "elapsed_seconds": 6546,
+  "elapsed_seconds": 6850,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,6 +17,10 @@
       "size_bytes": 672
     },
     {
+      "name": "d12-1e-4-hc.log",
+      "size_bytes": 281
+    },
+    {
       "name": "d12-1e-4-train.log",
       "size_bytes": 939
     },
@@ -26,11 +30,15 @@
     },
     {
       "name": "d12-1e-4-v15mt.log",
-      "size_bytes": 0
+      "size_bytes": 378
     },
     {
       "name": "d12-1e-4.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "d12-3e-4-train.log",
+      "size_bytes": 0
     },
     {
       "name": "relabel-1.log",
@@ -105,5 +113,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:49:05  0.0  0.0 bash\n 481400  481398    01:49:05  0.0  0.0 bash\n 484482  481400       29:54 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 481398       1    01:54:09  0.0  0.0 bash\n 481400  481398    01:54:09  0.0  0.0 bash\n 485024  481400       00:21  252 27.6 python3\n"
 }
