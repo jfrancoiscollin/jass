@@ -1,8 +1,8 @@
 {
   "job_id": "0195-selfplay-wdl-bootstrap",
-  "snapshot_at": "2026-06-11T05:51:14+00:00",
+  "snapshot_at": "2026-06-11T05:56:15+00:00",
   "started_at": "2026-06-11T04:55:56+00:00",
-  "elapsed_seconds": 3318,
+  "elapsed_seconds": 3619,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "sp-pilot.jnnw",
-      "size_bytes": 57458
+      "size_bytes": 131330
     },
     {
       "name": "sp-pilot.log",
@@ -49,5 +49,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1       55:17  0.0  0.0 bash\n 452331  452329       55:17  0.0  0.0 bash\n 454895  452331       04:22 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1    01:00:19  0.0  0.0 bash\n 452331  452329    01:00:19  0.0  0.0 bash\n 454895  452331       09:24 99.9  0.5 jass\n"
 }
