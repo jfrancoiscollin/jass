@@ -258,6 +258,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     const char*  nnue_path        = nullptr;
     bool         quiet_only       = false;  // skip positions with mandatory captures
     int          pv_extract       = 0;      // additional samples to harvest along the PV
+    int          movetime_ms      = 0;      // >0 → play moves by wall-clock (Scan-style
+                                            //      self-play); play_depth becomes a cap
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -278,6 +280,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--pv-extract" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) pv_extract = v;
+        } else if (a == "--movetime" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) movetime_ms = v;
         } else {
             positional.push_back(argv[i]);
         }
@@ -316,6 +321,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
               << " pv_extract=" << pv_extract
+              << " movetime_ms=" << movetime_ms
               << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
@@ -500,6 +506,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 
             SearchLimits lim;
             lim.max_depth = play_depth;
+            if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
             const SearchResult r = e.search(lim);
             if (!e.apply_move(r.best_move)) break;
         }
@@ -2245,7 +2252,7 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   Higher eval_depth = cleaner\n"
