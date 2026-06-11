@@ -1,8 +1,8 @@
 {
   "job_id": "0198-selfplay-score-target",
-  "snapshot_at": "2026-06-11T18:48:00+00:00",
+  "snapshot_at": "2026-06-11T18:53:02+00:00",
   "started_at": "2026-06-11T18:09:05+00:00",
-  "elapsed_seconds": 2335,
+  "elapsed_seconds": 2637,
   "artefacts": [
     {
       "name": "build.log",
@@ -11,6 +11,10 @@
     {
       "name": "cmake.log",
       "size_bytes": 672
+    },
+    {
+      "name": "sps1e-4-hc.log",
+      "size_bytes": 276
     },
     {
       "name": "sps1e-4-train.log",
@@ -22,16 +26,20 @@
     },
     {
       "name": "sps1e-4-v15mt.log",
-      "size_bytes": 0
+      "size_bytes": 373
     },
     {
       "name": "sps1e-4.pjtw",
       "size_bytes": 136049764
     },
     {
+      "name": "sps3e-4-train.log",
+      "size_bytes": 0
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477507       1       38:55  0.0  0.0 bash\n 477509  477507       38:55  0.0  0.0 bash\n 478130  477509       30:02 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477507       1       43:57  0.0  0.0 bash\n 477509  477507       43:57  0.0  0.0 bash\n 478606  477509       00:59  287 25.3 python3\n"
 }
