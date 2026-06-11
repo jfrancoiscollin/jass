@@ -1,8 +1,8 @@
 {
   "job_id": "0195-selfplay-wdl-bootstrap",
-  "snapshot_at": "2026-06-11T07:36:04+00:00",
+  "snapshot_at": "2026-06-11T07:41:05+00:00",
   "started_at": "2026-06-11T04:55:56+00:00",
-  "elapsed_seconds": 9608,
+  "elapsed_seconds": 9909,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "sp-1.jnnw",
-      "size_bytes": 1329698
+      "size_bytes": 1403570
     },
     {
       "name": "sp-1.log",
@@ -46,7 +46,7 @@
     },
     {
       "name": "sp-2.jnnw",
-      "size_bytes": 1329698
+      "size_bytes": 1403570
     },
     {
       "name": "sp-2.log",
@@ -54,7 +54,7 @@
     },
     {
       "name": "sp-3.jnnw",
-      "size_bytes": 1337906
+      "size_bytes": 1411778
     },
     {
       "name": "sp-3.log",
@@ -62,7 +62,7 @@
     },
     {
       "name": "sp-4.jnnw",
-      "size_bytes": 1346114
+      "size_bytes": 1419986
     },
     {
       "name": "sp-4.log",
@@ -81,5 +81,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1    02:40:07  0.0  0.0 bash\n 452331  452329    02:40:07  0.0  0.0 bash\n 455516  452331    01:33:15 99.9  0.5 jass\n 455517  452331    01:33:15 99.9  0.5 jass\n 455518  452331    01:33:15 99.9  0.5 jass\n 455519  452331    01:33:15 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452329       1    02:45:08  0.0  0.0 bash\n 452331  452329    02:45:08  0.0  0.0 bash\n 455516  452331    01:38:16 99.9  0.5 jass\n 455517  452331    01:38:16 99.9  0.5 jass\n 455518  452331    01:38:16 99.9  0.5 jass\n 455519  452331    01:38:16 99.9  0.5 jass\n"
 }
