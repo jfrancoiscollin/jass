@@ -1,7 +1,0 @@
-{
-  "job_id": "0205-wdl-loop-clean-bigbench",
-  "script": "jobs/queue/0205-wdl-loop-clean-bigbench.sh",
-  "pid": 508880,
-  "started_at": "2026-06-12T18:40:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

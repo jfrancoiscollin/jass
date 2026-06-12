@@ -1,7 +1,8 @@
 {
   "job_id": "0205-wdl-loop-clean-bigbench",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-06-12T18:40:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 508880
+  "ended_at": "2026-06-12T22:00:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
