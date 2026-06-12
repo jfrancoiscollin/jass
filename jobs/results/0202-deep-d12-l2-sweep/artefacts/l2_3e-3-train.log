@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/0200-selfplay-deep-relabel-d12/artefacts.src/sp-d12.jnnw
+  1000000 records  (0.07s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp.feat
+  extras shape (1000000, 106)  (mean mob b/w=12.2/11.9)
+target=score  clipped±5000cp / 100  std=9.412
+phase : piece-count mean=17.8  wmg mean=0.446
+score-drop : keep |score|<=4900cp → 966762/1000000 (96.7%)
+split : train=870086 val=96676
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+material-anchor : strength=1.0 man=±1.0 king=±3.0 (pinned columns=204)
+L-BFGS  l2=0.003  max_iter=200  (anchored)
+  train_loss=3.110369  iters=200  (484.78s)
+val   : mse=0.803488  sign_acc=0.0066
+quant : scale=1000  pat range=[-107,132] ext_mg range=[-2991,2992]
+wrote /root/jass/jobs/results/0202-deep-d12-l2-sweep/artefacts.src/l2_3e-3.pjtw  (v3, 34012436 weights, 136049764 bytes)
