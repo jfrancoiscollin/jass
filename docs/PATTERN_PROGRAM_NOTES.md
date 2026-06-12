@@ -646,3 +646,106 @@ s'effondrer. Manque : l'itération depuis une base forte avec la bonne cible.
 Le seul chemin restant vers « aussi bon que Scan, indépendant » = ce que Scan a
 fait : **self-play depuis zéro + WDL + régression logistique, ITÉRÉ**, sur
 géométrie correcte. Pré-approuvé. Chantier majeur multi-cycles. C'est l'endgame.
+
+---
+
+## EXÉCUTION recette Scan (0196 → 0201) + RÉ-ANCRAGE sur Scan (juin 2026)
+
+> Ce qui suit a été **réellement testé** dans cette série de jobs. À lire avant
+> toute nouvelle interprétation : plusieurs conclusions « intuitives » ont été
+> **réfutées** par la mesure.
+
+### Le piège n°1 : on benchait contre v15, qui est trop faible
+
+Tout le passé (0141→0198) mesure les eval **contre v15** (NNUE 128-64). Or v15
+est lui-même **très loin de Scan** : à profondeur ÉGALE (harness corrigé), v15
+vs Scan = **0.028 / 0.056 / 0.056** (d7/d9/d11) et **0.019** au movetime 0.5s
+(jobs `0197`, `0137`). Donc un score « 0.39 contre v15 » peut valoir **~0 contre
+Scan**. **v15 est un sparring-partner commode mais un mauvais mètre-étalon.**
+
+`0199` (ré-ancrage) mesure enfin le **champion vs Scan** à profondeur égale :
+
+| vs Scan (profondeur égale, no bitbases) | d7 | d9 | d11 | mt 0.5s |
+|---|---|---|---|---|
+| **champion** (pattern, distill Scan-d10) | 0.028 | **0.000** | **0.000** | **0.000** |
+| **v15** (NNUE 128-64) | 0.028 | 0.056 | 0.056 | 0.019 |
+
+→ **Le champion n'est PAS meilleur que v15 contre Scan** (les deux ≈ 0 ; l'écart
+est dans le bruit de 16 parties). Le `0.39 vs v15` du champion était **flatté**.
+Chargement `--pattern` vérifié (hub `return 2` sur échec ; les parties ont joué
+52 min → l'eval était bien chargée), donc le `0.000` est **réel**.
+
+### Le piège n°2 : « WDL vs score » — c'est la PROFONDEUR du label qui compte
+
+Triangulation (toutes les mesures **vs v15**, l'ancre faible) :
+
+| données × cible | d9 vs v15 |
+|---|---|
+| master + WDL 1.4M (`0194`) | 0.22 |
+| self-play + WDL 1M (`0196`, best l2=3e-4) | 0.22 |
+| self-play + score @movetime-30ms 1M (`0198`) | **0.08–0.17** ← le pire |
+| master + score Scan-d10 = **champion** (`0141`) | 0.39 |
+
+- WDL plafonne à **0.22 quelle que soit la source** (master = self-play) → c'est
+  le **label** qui plafonne, pas la classe linéaire (qui atteint 0.39 via score),
+  ni les données. La meilleure qualité de jeu du self-play (**59.2 % de nulles**
+  vs 18.6 % master) **n'aide pas** pour la cible WDL.
+- Le score self-play **tel quel** (recherche 30 ms, bruité : range ±30000,
+  std ~5000) est un **plus mauvais prof que le résultat de partie** (0.08 < 0.22).
+- Le 0.39 du champion vient de labels **profonds** (Scan-d10). → **Levier eval =
+  la PROFONDEUR/qualité du prof, pas « score vs WDL » en soi.**
+
+### Le piège n°3 : « la recherche est un levier » — FAUX, elle est déjà complète
+
+Tentation : champion ≈ v15 ≈ 0 vs Scan à profondeur égale ⇒ « c'est la recherche
+de jass qui est faible ». **Réfuté par le code.** La recherche de jass possède
+**déjà** tout l'arsenal moderne (cf. [ARCHITECTURE.md](ARCHITECTURE.md) §*A
+move's life inside the search*) : TT, iterative deepening, **aspiration, PVS,
+LMR, LMP, null-move, IID, extensions singulières/promotion, multi-cut**, killers,
+history, countermoves, **quiescence** (résout les prises forcées). **Il n'y a
+aucune technique de recherche manquante à ajouter.**
+
+> ⚠️ **Leçon de méthode** : ne JAMAIS déduire « telle technique manque » d'un
+> `grep` par mots-clés sur `search.cpp` (les noms varient : `null_pos` pas
+> `null_move`, réduction via variable `r` pas « LMR »…). **Consulter
+> ARCHITECTURE.md**, qui fait foi sur ce qui est codé.
+
+Raisonnement correct : à profondeur **nominale égale**, avec alpha-beta sain +
+quiescence, la qualité du coup est gouvernée par l'**eval des feuilles** (LMR,
+ordering, null-move ne changent que la *vitesse*). Deux eval ≈ 0 vs Scan = **les
+deux sont loin sous l'eval de Scan** (effet plancher). → **Le gap à Scan est
+l'EVAL, pas la recherche.** Reste à chiffrer la part eval vs efficacité de
+profondeur : job `0201` (handicap de profondeur — voir ci-dessous).
+
+### Vitesse (rappel, inchangé)
+`0189` : Scan ≈ **×8 NPS** vs v15, le pulvérise au movetime ; le ×6 manquant =
+implémentation (movegen 33 %, eval 13 %, TT 10 %…). Mais comme on perd **déjà à
+profondeur égale**, fermer l'eval passe avant la vitesse.
+
+### Outillage ajouté pendant cette série
+- **`jass --rewrite-scores-with-search <in.jnnw> <out.jnnw> --nnue <eval>
+  [--depth D] [--start S] [--count C]`** — relabel d'un JNNW par **recherche
+  profonde** (eval pattern `.pjtw` ou NNUE `.bin`), score STM-POV, shardable.
+  C'est la brique du **bootstrap teacher-free** (`eval ← recherche(eval)`), sans
+  Scan. Vérifié par smoke round-trip ; `jass_tests` passent.
+- **`tools/calibrate_vs_scan.py --jass-depth N --scan-depth M`** — profondeur
+  **asymétrique** (rétro-compatible) pour le diagnostic eval-vs-recherche.
+
+### État des jobs de la série
+| job | objet | verdict |
+|---|---|---|
+| `0196` | self-play 1M WDL @mt30 + logistic | WDL plafonne 0.22 (= master) ; volume aidait (160k→1M) |
+| `0197` | v15 vs Scan profondeur égale | 0.028/0.056/0.056 — instrument corrigé (plus de coups illégaux) |
+| `0198` | même data, cible score @30ms | 0.08–0.17 < WDL → le score superficiel est un mauvais prof |
+| `0199` | **ré-ancrage** champion vs Scan | **champion ≈ v15 ≈ 0** — le 0.39 vs v15 était flatté |
+| `0200` | relabel 1M @ **d12** teacher-free + train | *en cours* — dépasse-t-on 0.39 vs v15 sans Scan ? |
+| `0201` | handicap de profondeur jass vs Scan-d9 | *préparé* — combien de plies pour égaler Scan ? (eval vs efficacité) |
+
+### Où on en est (synthèse honnête)
+1. **Distance réelle à Scan = grande** (≈ 0 à profondeur égale). L'ancre v15
+   nous flattait. **Bencher désormais contre Scan** (profondeur égale, harness
+   corrigé), pas contre v15.
+2. **Le levier est l'EVAL** (la recherche est complète, la vitesse est seconde).
+3. **Cible eval = labels profonds** (pas WDL, pas score superficiel). D'où `0200`.
+4. Un seul cycle de bootstrap **ne fermera pas** le gap Scan (le champion-prof
+   est lui-même ≈ 0 vs Scan) ; c'est un chantier **multi-cycles**.

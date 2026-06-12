@@ -483,11 +483,14 @@ def play_game(white: object, black: object,
               opening_fen: str,
               depth: int | None = None,
               movetime: float | None = None,
+              jass_depth: int | None = None,
+              scan_depth: int | None = None,
               max_plies: int = 200) -> GameResult:
     """Both engines must already be ready. They are addressed via
     duck-typed helpers (`go_jass(engine, depth)` for JassEngine,
     `go_scan(engine, scan_pos, moves, depth)` for ScanEngine).
-    `white`/`black` may be either flavour."""
+    `white`/`black` may be either flavour. `jass_depth`/`scan_depth`, when
+    set, override `depth` for that side (asymmetric-depth diagnostic)."""
     referee.set_position_fen(opening_fen)
     # Sync engine internal positions to this start.
     for eng in (white, black):
@@ -506,11 +509,13 @@ def play_game(white: object, black: object,
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
         if isinstance(current, JassEngine):
-            mv = current.go(depth=depth, movetime=movetime)
+            d = jass_depth if jass_depth is not None else depth
+            mv = current.go(depth=d, movetime=movetime)
         else:
             scan_pos, scan_moves = referee.scan_pos()
+            d = scan_depth if scan_depth is not None else depth
             mv = current.go_from(scan_pos, scan_moves,
-                                 depth=depth, movetime=movetime)
+                                 depth=d, movetime=movetime)
         if mv is None or (mv.frm == 0 and mv.to == 0):
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
@@ -571,6 +576,14 @@ def main(argv):
                    help="fixed search depth (plies)")
     g.add_argument("--movetime", type=float,
                    help="per-move time budget in seconds (real number)")
+    # Asymmetric fixed-depth: give one side a different depth from --depth.
+    # Used by the eval-vs-search diagnostic (how many extra plies does Jass
+    # need to match Scan at a fixed Scan depth). Each overrides --depth for
+    # its side; ignored under --movetime.
+    p.add_argument("--jass-depth", type=int, default=None,
+                   help="override search depth for the Jass side (plies)")
+    p.add_argument("--scan-depth", type=int, default=None,
+                   help="override search depth for the Scan side (plies)")
     p.add_argument("--pairs", type=int, default=2,
                    help="colour-swap pairs per opening (total games = 18 × pairs)")
     p.add_argument("--max-plies", type=int, default=200)
@@ -655,10 +668,12 @@ def main(argv):
                     if jass_is_white:
                         r = play_game(jass, scan, referee, opening,
                                       depth=args.depth, movetime=args.movetime,
+                                      jass_depth=args.jass_depth, scan_depth=args.scan_depth,
                                       max_plies=args.max_plies)
                     else:
                         r = play_game(scan, jass, referee, opening,
                                       depth=args.depth, movetime=args.movetime,
+                                      jass_depth=args.jass_depth, scan_depth=args.scan_depth,
                                       max_plies=args.max_plies)
                     games += 1
                     # Map "W"/"L" outcome to Jass's POV.
