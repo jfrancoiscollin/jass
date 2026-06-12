@@ -1,0 +1,19 @@
+champion=/root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/champ.pjtw ; v15=/root/jass/jobs/results/0090-small-arch-sweep-movetime/artefacts.src/arch-128-64/nnue-128-64-q.bin
+
+############ champion vs Scan-d9, handicap de profondeur jass ############
+  jass d9  vs Scan d9 : champion = 0.000   (+0 plies)
+  jass d11  vs Scan d9 : champion = 0.194   (+2 plies)
+  jass d13  vs Scan d9 : champion = 0.083   (+4 plies)
+
+############ v15 (contrôle) vs Scan-d9 ############
+  jass d9  vs Scan d9 : v15 = 0.056   (+0 plies)
+  jass d13  vs Scan d9 : v15 = 0.056   (+4 plies)
+
+==========================================================
+   0201 DIAG eval-vs-recherche (handicap de profondeur) — VERDICT
+  champion vs Scan-d9 :  d9=0.000  d11=0.194  d13=0.083   (+0 / +2 / +4 plies)
+  v15      vs Scan-d9 :  d9=0.056  d13=0.056
+  RAPPEL 0199 : champion d9=d9 ≈ 0.000 ; v15 d9=d9 ≈ 0.056
+  → rate ↗ vers 0.5 avec +k = la profondeur compense → déficit d'efficacité de recherche (≈ +k plies).
+  → rate ~0 même à +4 = l'EVAL est le gap dominant → tout l'effort sur l'éval (0196-0200).
+==========================================================
