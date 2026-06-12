@@ -89,7 +89,8 @@ recherche » ≈ 2 plies est mineure).
 | 0200 | relabel 1M **d12** teacher-free + train | **levier deep confirmé** : 0.306 vs v15 (< champion 0.39, 0 vs Scan) |
 | 0201 | handicap de profondeur vs Scan-d9 | **l'eval est le gap** (+4 plies ne ramènent pas à parité) |
 | 0202 | **sweep12** (l2 sur deep-d12) | plafond cycle-1 ≈ **0.33** ≈ champion, **0 vs Scan** → deep-score = distillation, plafonné |
-| 0203 | **vraie recette Scan** : boucle **WDL ITÉRÉE** depuis seed faible | *en cours* — la courbe gen0→3 monte-t-elle ? (1er test de la boucle itérée) |
+| 0203 | **vraie recette Scan** : boucle **WDL ITÉRÉE** depuis seed faible | ✅ **ÇA MONTE** : 0→0→0.167→**0.25** vs v15 (gen0→3) — la boucle COMPOUNDE (dépasse déjà le 1-cycle 0.22), teacher-free. Toujours 0 vs Scan ; incrément décélère |
+| 0204 | continuation boucle (gen4→7, +replay buffer) | *à lancer* — où plafonne mt30 ? |
 
 ---
 
