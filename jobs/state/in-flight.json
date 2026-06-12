@@ -1,7 +1,0 @@
-{
-  "job_id": "0201-eval-vs-search-depth-handicap",
-  "script": "jobs/queue/0201-eval-vs-search-depth-handicap.sh",
-  "pid": 489275,
-  "started_at": "2026-06-12T05:35:15+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
