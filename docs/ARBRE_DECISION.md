@@ -27,12 +27,13 @@ RACINE : atteindre le niveau Scan (idéalement INDÉPENDANT)
 │
 ├─ Levier eval établi · cible = WDL itéré établie
 │
-└─ NŒUD 1 — La boucle WDL ITÉRÉE monte-t-elle ?  📍 (0203 en cours)
-   │   critère : courbe gen0 < gen1 < gen2 < gen3 (vs v15 d9)
+└─ NŒUD 1 — La boucle WDL ITÉRÉE monte-t-elle ?  🟢 OUI (0203 : 0→0.167→0.25 vs v15)
+   │   ✅ tranché : la boucle COMPOUNDE (teacher-free, dépasse déjà le 1-cycle 0.22)
    │
    ├─ 🟢 OUI, ça monte
-   │   └─ NŒUD 2 — Le RECUIT DE PROFONDEUR relève-t-il le point fixe vers Scan ?
+   │   └─ NŒUD 2 — Le RECUIT DE PROFONDEUR relève-t-il le point fixe vers Scan ?  📍 (0204)
    │       │   (mt30 → 60 → 100 → 200, quelques cycles/palier, ~500k + replay buffer)
+   │       │   sous-étape en cours : trouver le PLATEAU mt30 (0204, gen4→7)
    │       │
    │       ├─ 🔵 OUI, grimpe vers Scan  →  ✅ VOIE GAGNANTE : scaler, bencher vs Scan
    │       │      à chaque palier, s'arrêter quand un palier plafonne et le suivant
@@ -78,9 +79,9 @@ NŒUD 4 (transverse) — Indépendance vs force
 
 | Nœud | Statut | Critère de décision | Tranché par | Action si vrai |
 |---|---|---|---|---|
-| **1** boucle WDL monte | 📍 en test | courbe gen0→gen3 ↑ | **0203** | → Nœud 2 (recuit profondeur) |
-| **1bis** profondeur vs features | 🔵 si 1 échoue | rejeu mt100 grimpe ? | job à créer | grimpe→Nœud 2 ; plat→Nœud 3 |
-| **2** recuit profondeur | 🔵 | grimpe vers Scan par palier | jobs à créer | scaler = voie gagnante |
+| **1** boucle WDL monte | 🟢 OUI (0.25) | courbe gen0→gen3 ↑ | **0203 ✅** | → Nœud 2 (recuit profondeur) |
+| **1bis** profondeur vs features | ✂️ inutile | (1 a réussi) | — | — |
+| **2** recuit profondeur | 📍 en test | plateau mt30 puis grimpe par palier | **0204** + jobs | scaler = voie gagnante |
 | **3·C1** géométrie riche | 🔵 | bat la linéaire de base vs Scan | job à créer | étendre patterns |
 | **3·C2** non-linéaire ⭐ | 🔵 | NNUE-pattern > pattern-eval vs Scan | job à créer | basculer archi eval |
 | **3·C3** Scan-prof | 🔵 fallback | distill profond > teacher-free | job à créer | abandonner l'indépendance |
