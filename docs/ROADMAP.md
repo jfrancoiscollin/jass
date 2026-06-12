@@ -22,6 +22,45 @@
 
 ---
 
+## Méthodologie — plan d'expérience (adopté 2026-06-12)
+
+> Pourquoi : 0203/0204 ont conclu sur du **bruit** (benches 18 parties, ±0.08) et
+> des **facteurs confondus** (replay buffer changé en même temps que la boucle
+> continuée). On adopte une discipline de plan d'expérience pour ne plus.
+
+**Puissance d'abord.** Le taux de victoire a une variance binomiale
+`σ = √(p(1−p)/N)`. Pour résoudre un écart Δ de win-rate :
+`N ≈ (2·1.96·√(p(1−p))/Δ)²`. À p≈0.1, Δ=0.05 → **~550 parties**. En-dessous, on
+mesure du bruit. **Toujours fixer l'effet minimal détectable AVANT de lancer.**
+
+**Pilier 1 — réponse à faible variance.**
+- *Courbe d'apprentissage* (cheap, déterministe) : **`tools/eval_proxy.py`** —
+  accord de l'eval avec une référence forte (Scan-d10/champion) sur un **set
+  FIXE** de positions (Spearman/Pearson/sign des scores). Pas de bruit de
+  parties ; haute résolution. ⚠️ mesure la *proximité d'eval*, pas la force de
+  jeu — à valider contre 2-3 ancres (handcrafted/champion/v15).
+- *Jalons absolus* (force réelle) : **`tools/sprt_elo.py`** — Elo ± IC 95 % et
+  **SPRT** (test séquentiel façon fishtest : décide « A > B » au minimum de
+  parties, erreurs α/β contrôlées). Openings fixes (blocking), couleurs
+  équilibrées, IC **systématique**.
+
+**Pilier 2 — design des facteurs (sans confusion).**
+- Facteurs : profondeur de jeu, volume/gen, seed, replay buffer, l2, nb de gens.
+- **Plan fractionnaire / screening** (Plackett-Burman) plutôt que OFAT → effets
+  principaux + interactions sans confondre, en peu de runs (évalués au proxy).
+- **Réplication** (seeds RNG) pour la variance run-to-run ; pour la boucle
+  (autocorrélée) répliquer des **lignées entières**.
+
+**Pragmatique (budget 1 box).** 1) corriger la mesure (proxy + SPRT) ; 2) petit
+screening sur les facteurs au proxy ; 3) confirmer les gagnants par SPRT en
+parties. PAS de gros factoriel répliqué.
+
+**Set de référence canonique** : `0141-pattern-reeval/.../master-clean-scan-d10.jnnw`
+(scores Scan-d10). Évaluer les eval sur un **sous-ensemble tenu à l'écart** de
+leur training pour éviter la fuite.
+
+---
+
 ## Point de départ — ce que la biblio recadre
 
 `ANALYSE_VEILLE_NNUE.md` posait la thèse : l'archi MLP dense plafonne, il faut

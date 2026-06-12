@@ -101,6 +101,15 @@ recherche » ≈ 2 plies est mineure).
   (`eval ← recherche(eval)`), shardable. Cf. ARCHITECTURE.md.
 - `tools/calibrate_vs_scan.py --jass-depth N --scan-depth M` — profondeur
   asymétrique (diagnostic eval-vs-recherche).
+- **Mesure / plan d'expérience** (adopté 2026-06-12, cf. ROADMAP.md §Méthodologie) :
+  - `tools/eval_proxy.py` — proxy de force **déterministe** (accord eval vs
+    référence forte sur set fixe : Spearman/Pearson/sign). Courbe d'apprentissage
+    cheap et sans bruit. `jass --rewrite-scores-with-nnue` accepte désormais `.pjtw`.
+  - `tools/sprt_elo.py` — Elo ± IC 95 % et **SPRT** (W/D/L) pour confirmer les
+    jalons en parties au minimum de jeu.
+  - **Règle** : fixer l'effet minimal détectable AVANT (≈550 parties pour Δ=0.05) ;
+    courbe au proxy, jalons au SPRT ; un seul facteur changé à la fois (ou plan
+    fractionnaire). NE PLUS conclure sur des benches de 18-54 parties.
 
 ---
 
