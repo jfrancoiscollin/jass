@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/buf5.jnnw
+  600000 records  (0.04s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/feat5
+  extras shape (600000, 106)  (mean mob b/w=12.4/12.4)
+target=wdl  pos=142177 neg=140004 zero=317819 (53.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=142177 draw=317819 loss=140004 (53.0% draws)
+phase : piece-count mean=18.8  wmg mean=0.469
+split : train=540000 val=60000
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.613984  iters=200  (403.13s)
+val   : mse=0.791967  sign_acc=0.1942
+quant : scale=1000  pat range=[-143,158] ext_mg range=[-733,722]
+wrote /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/gen5.pjtw  (v3, 34012436 weights, 136049764 bytes)
