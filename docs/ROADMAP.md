@@ -1,5 +1,10 @@
 # jass — feuille de route post-bibliographie
 
+> 🧭 **Décision en cours → voir [ARBRE_DECISION.md](ARBRE_DECISION.md)** (arbre
+> vivant : quel chemin selon quel verdict ; branches élaguées vs à explorer) et
+> [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) (ancres + faits établis). Ce
+> document-ci est la feuille de route *historique* (2026-05-24).
+
 > ⚠️ **AVERTISSEMENT 2026-06-06 — chiffres « vs Scan d10 » INVALIDÉS.** Les
 > mentions de **0.870 / +330 vs Scan d10** (« meilleur score vs Scan jamais »,
 > « bottleneck = vitesse d'inférence, éval déjà bonne ») reposent sur une
