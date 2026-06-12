@@ -710,9 +710,17 @@ int run_rewrite_scores_with_nnue_mode(int argc, char** argv) {
                   << in_path << "); refusing to truncate the input\n";
         return 1;
     }
-    std::unique_ptr<INetwork> nnue = load_network(nnue_path);
+    // Accept either an NNUE .bin or a PJTW .pjtw pattern eval (so the static
+    // strength proxy can score pattern evals too), same dispatch as
+    // --rewrite-scores-with-search / --benchmark-scan-eval.
+    const std::string np{nnue_path};
+    const bool np_is_pjtw = np.size() >= 5 && np.compare(np.size() - 5, 5, ".pjtw") == 0;
+    std::string np_err;
+    std::unique_ptr<INetwork> nnue = np_is_pjtw ? jass::load_eval_network(np, &np_err)
+                                                : load_network(nnue_path);
     if (!nnue) {
-        std::cerr << "error: cannot load NNUE from " << nnue_path << "\n";
+        std::cerr << "error: cannot load eval from " << nnue_path
+                  << (np_err.empty() ? "" : (" : " + np_err)) << "\n";
         return 1;
     }
 
