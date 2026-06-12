@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0001-verify",
-  "script": "jobs/queue/cpx62-0001-verify.sh",
-  "pid": 3819,
-  "started_at": "2026-06-12T22:00:06+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
