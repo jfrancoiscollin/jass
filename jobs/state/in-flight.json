@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0206-wdl-loop-mt60",
-  "script": "jobs/queue/ccx33-0206-wdl-loop-mt60.sh",
-  "pid": 518832,
-  "started_at": "2026-06-12T23:05:29+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
