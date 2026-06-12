@@ -1,0 +1,29 @@
+{
+  "job_id": "0201-eval-vs-search-depth-handicap",
+  "snapshot_at": "2026-06-12T05:40:15+00:00",
+  "started_at": "2026-06-12T05:35:15+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 10035
+    },
+    {
+      "name": "champ-jd11.log",
+      "size_bytes": 10251
+    },
+    {
+      "name": "champ-jd13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "champ-jd9.log",
+      "size_bytes": 10560
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 489275       1       05:00  0.0  0.0 bash\n 489277  489275       05:00  0.0  0.0 bash\n 489700  489277       00:53  0.0  0.0 bash\n 489701  489700       00:53  2.1  0.0 python3\n 489704  489701       00:53 89.2  0.5 jass\n 489706  489701       00:52  8.6  0.9 scan_linux\n 489709  489701       00:52  0.1  0.0 jass\n"
+}
