@@ -6,7 +6,7 @@
 > Pour ce qui est **codé** → [ARCHITECTURE.md](ARCHITECTURE.md).
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
 >
-> Mise à jour : **2026-06-12** (après 0202).
+> Mise à jour : **2026-06-12** (après 0202 ; lance 0203 = boucle WDL itérée).
 
 ---
 
@@ -50,18 +50,28 @@ recherche » ≈ 2 plies est mineure).
    donc « X vs v15 » flatte (champion 0.39 vs v15 = ~0 vs Scan).
 3. **Le levier est l'EVAL** : la recherche est complète, et la profondeur/vitesse
    ne compensent pas (0201) → la vitesse (×8 NPS) est **secondaire**.
-4. **Cible eval = labels de recherche PROFONDE** (pas WDL, pas score superficiel).
-   Confirmé : deep-d12 (0.306) ≫ score@30ms (0.08) ≫… et > WDL (0.22).
-5. **WDL plafonne ~0.22** quelle que soit la source (master = self-play) — c'est
-   le label, pas la classe linéaire (qui atteint 0.39 via score) ni les données.
-6. **Un cycle de bootstrap ≈ le prof, pas au-delà** (deep-d12 0.31-0.33 ≈
-   champion 0.39 *dans le bruit*, et **0.000 vs Scan**). → ✅ on récupère le
-   champion **teacher-free** (indépendance), ❌ mais **aucun signal de
-   compounding** en 1 cycle (0202). Cohérent avec 0201 : une eval faible → une
-   recherche faible → ne peut pas enseigner mieux qu'elle-même. **Le volant
-   tourne à plat.** Dépasser exigera sans doute un **autre levier** (modèle
-   non-linéaire, ou prof plus fort), pas juste d'itérer.
-7. **Régularisation par cible** (à ne plus re-balayer) : self-play → **l2 ∈
+4. **WDL (issue de partie) vs SCORE de recherche — distinction CAPITALE** (corrige
+   une fausse piste) : le **score de recherche** (deep-d12) bat WDL en *1 cycle*
+   (0.33 > 0.22) MAIS c'est de la **DISTILLATION** — borné par l'eval qui génère
+   les labels → **ne peut PAS dépasser son générateur** (d'où le plateau ~champion
+   en 0200/0202). Le **WDL** (issue réelle) est borné par **RIEN** → **le seul
+   label qui peut compounder jusqu'à Scan**. **Scan = self-play + WDL + logistique
+   ITÉRÉ, JAMAIS de score d'eval** (SCAN_ARCHITECTURE_NOTES.md). → la cible pour
+   atteindre Scan est le **WDL itéré**, pas le deep-score (= cul-de-sac).
+5. **Point fixe WDL** : la boucle WDL converge vers un niveau (~0.22 vs v15 en 1
+   cycle mt30). Le champion (0.39, distillé Scan) est **au-dessus** → le WDL le
+   tire **vers le bas** (≠ « WDL toxique », on était juste du mauvais côté).
+   Scan part de **zéro** (sous le point fixe) → il **monte**. Reste à savoir
+   pourquoi notre point fixe est bas : **profondeur de jeu** (mt30 superficiel ?),
+   **géométrie**, ou **volume/itérations** — 0203 teste la montée, puis on isole.
+6. **WDL plafonne ~0.22** en **1 cycle** quelle que soit la source (master =
+   self-play) — mais c'est un palier de cycle-unique, PAS forcément le plafond de
+   la boucle itérée (jamais testée avant 0203).
+7. **Un cycle de DISTILLATION ≈ le prof, pas au-delà** (deep-d12 0.31-0.33 ≈
+   champion 0.39 *dans le bruit*, **0.000 vs Scan**) → ✅ on récupère le champion
+   teacher-free, ❌ mais c'est de la distillation (cf. fait 4) → pas de
+   compounding possible. Le bon levier est le **WDL itéré** (fait 4), pas ça.
+8. **Régularisation par cible** (à ne plus re-balayer) : self-play → **l2 ∈
    [3e-4, 3e-3]** (1e-4 et 1e-2 s'effondrent ; 0196/0198/0200/0202) ;
    master-distill (champion) → l2=1e-4.
 
@@ -77,8 +87,8 @@ recherche » ≈ 2 plies est mineure).
 | 0199 | **ré-ancrage** champion vs Scan | champion ≈ v15 ≈ 0 → 0.39 vs v15 était flatté |
 | 0200 | relabel 1M **d12** teacher-free + train | **levier deep confirmé** : 0.306 vs v15 (< champion 0.39, 0 vs Scan) |
 | 0201 | handicap de profondeur vs Scan-d9 | **l'eval est le gap** (+4 plies ne ramènent pas à parité) |
-| 0202 | **sweep12** (l2 sur deep-d12) | plafond cycle-1 ≈ **0.33** (l2=3e-3) ≈ champion, **0 vs Scan** → pas de compounding |
-| 0203 | cycle 2 / pivot | **carrefour** : (A) preuve formelle compounding vs (B) pivot non-linéaire / Scan-prof |
+| 0202 | **sweep12** (l2 sur deep-d12) | plafond cycle-1 ≈ **0.33** ≈ champion, **0 vs Scan** → deep-score = distillation, plafonné |
+| 0203 | **vraie recette Scan** : boucle **WDL ITÉRÉE** depuis seed faible | *en cours* — la courbe gen0→3 monte-t-elle ? (1er test de la boucle itérée) |
 
 ---
 
@@ -91,15 +101,18 @@ recherche » ≈ 2 plies est mineure).
 
 ---
 
-## 5. Prochaines étapes — CARREFOUR (post-0202)
-Cycle-1 deep-relabel ≈ champion (0.33) et 0 vs Scan → **pas de compounding** en
-1 cycle. Décision en attente :
-- **(A)** preuve formelle : cycle-2 naïf (regénérer + re-relabel + retrain, ~6h)
-  — prior faible (replafonne probablement) ; ou un **mini-test d14** (~1.5h, même
-  data) pour voir si plus de profondeur ajoute quoi que ce soit.
-- **(B)** acter le plafond de la **classe linéaire** ≈ champion ≈ 0 vs Scan et
-  **pivoter** : modèle **non-linéaire** (NNUE à entrées-patterns) ou **Scan
-  comme prof** (seed plus fort, au prix de l'indépendance).
+## 5. Prochaines étapes — ON SE REMET SUR LES RAILS (post-0202)
+**Décision actée** : le deep-score était une fausse piste (distillation, plafonné
+— fait 4). On lance **la vraie recette Scan : la boucle WDL ITÉRÉE** (`0203`),
+jamais testée jusqu'ici (on ne faisait que des cycles uniques).
+- **`0203` (en cours)** : seed faible → 3 générations self-play+WDL+logistique →
+  la courbe **monte-t-elle** ? (mt30, comparable à 0196).
+- **Si monte** → scaler : **profondeur de jeu** plus grande (suspect n°1 du point
+  fixe bas), volume, plus de générations.
+- **Si plate** → le plafond est les **features** (géométrie) → enrichir la
+  géométrie ou passer **non-linéaire** (NNUE à entrées-patterns).
+- **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
+  sur self-play (optimum = [3e-4,3e-3] établi). Cf. faits 4-8.
 - Tenir ce journal à jour **après chaque verdict**.
 
 ---
