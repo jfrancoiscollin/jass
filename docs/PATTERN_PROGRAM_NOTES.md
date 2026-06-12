@@ -738,7 +738,7 @@ profondeur égale**, fermer l'eval passe avant la vitesse.
 | `0197` | v15 vs Scan profondeur égale | 0.028/0.056/0.056 — instrument corrigé (plus de coups illégaux) |
 | `0198` | même data, cible score @30ms | 0.08–0.17 < WDL → le score superficiel est un mauvais prof |
 | `0199` | **ré-ancrage** champion vs Scan | **champion ≈ v15 ≈ 0** — le 0.39 vs v15 était flatté |
-| `0200` | relabel 1M @ **d12** teacher-free + train | *en cours* — dépasse-t-on 0.39 vs v15 sans Scan ? |
+| `0200` | relabel 1M @ **d12** teacher-free + train | **levier deep CONFIRMÉ** : 0.306 vs v15 (l2=3e-4) ≫ shallow 0.08 & WDL 0.22 — mais < champion 0.39, et **0.000 vs Scan**. l2=1e-4 s'effondre (0) → régularisation sensible. champion d12 = **0.026 s/pos** (~0.9h/1M, relabel cheap → itérable) |
 | `0201` | handicap de profondeur jass vs Scan-d9 | *préparé* — combien de plies pour égaler Scan ? (eval vs efficacité) |
 
 ### Où on en est (synthèse honnête)
@@ -746,6 +746,9 @@ profondeur égale**, fermer l'eval passe avant la vitesse.
    nous flattait. **Bencher désormais contre Scan** (profondeur égale, harness
    corrigé), pas contre v15.
 2. **Le levier est l'EVAL** (la recherche est complète, la vitesse est seconde).
-3. **Cible eval = labels profonds** (pas WDL, pas score superficiel). D'où `0200`.
-4. Un seul cycle de bootstrap **ne fermera pas** le gap Scan (le champion-prof
-   est lui-même ≈ 0 vs Scan) ; c'est un chantier **multi-cycles**.
+3. **Cible eval = labels profonds** (pas WDL, pas score superficiel) — **confirmé
+   par `0200`** : relabel d12 = 0.306 vs v15, ≫ shallow (0.08) et WDL (0.22).
+4. Mais **un cycle ≈ le prof, pas au-delà** (`0200` : 0.306 < champion 0.39, et
+   0.000 vs Scan). Dépasser exige d'**enchaîner les cycles** (regénérer avec
+   l'eval améliorée → re-relabel deep → retrain) ; relabel cheap (~1h) → faisable
+   mais long. Le gap Scan ne se ferme pas en un coup.
