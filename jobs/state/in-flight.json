@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-9002-filtertest",
-  "script": "jobs/queue/cpx62-9002-filtertest.sh",
-  "pid": 4132,
-  "started_at": "2026-06-12T22:26:29+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

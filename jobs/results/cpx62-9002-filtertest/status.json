@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-9002-filtertest",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-06-12T22:26:29+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4132
+  "ended_at": "2026-06-12T22:30:11+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
