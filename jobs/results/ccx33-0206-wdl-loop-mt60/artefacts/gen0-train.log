@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp-all.jnnw
+  1000000 records  (0.11s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0196-selfplay-wdl-1M/artefacts.src/sp.feat
+  extras shape (1000000, 106)  (mean mob b/w=12.2/11.9)
+target=wdl  pos=204629 neg=203059 zero=592312 (59.2% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=204629 draw=592312 loss=203059 (59.2% draws)
+phase : piece-count mean=17.8  wmg mean=0.446
+split : train=900000 val=100000
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.03  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.646516  iters=76  (226.78s)
+val   : mse=0.520528  sign_acc=0.1570
+quant : scale=1000  pat range=[-13,19] ext_mg range=[-431,425]
+wrote /root/jass/jobs/results/ccx33-0206-wdl-loop-mt60/artefacts.src/gen0.pjtw  (v3, 34012436 weights, 136049764 bytes)
