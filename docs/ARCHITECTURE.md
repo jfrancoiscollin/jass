@@ -118,6 +118,40 @@ caller
   incremented on a king's quiet move),
 - maintains the Zobrist hash incrementally (no full rehash).
 
+### Search features implemented — checklist (authoritative)
+
+The search is **feature-complete** for a modern alpha-beta engine. Do **not**
+infer that a technique is missing from a keyword `grep` on `search.cpp` — names
+vary (e.g. null-move uses `null_pos`/`null_score`, LMR uses a local `r`
+reduction, extensions are `singular_ext`/`promo_ext`). This table is the source
+of truth; if you change the search, update it.
+
+| Technique | Present | Where |
+|---|---|---|
+| Iterative deepening | ✅ | `search()` loop |
+| Aspiration windows (adaptive) | ✅ | fail-low/high retry |
+| Transposition table (lazy-SMP shared) | ✅ | `tt.hpp`, §TT lifecycle |
+| PVS (zero-window scout + re-search) | ✅ | `is_pv_node`, `negamax` |
+| Late Move Reductions (+ verified re-search) | ✅ | `lmr_reduction`, `do_lmr` |
+| Late Move Pruning | ✅ | `LMP_THRESHOLD` |
+| Null-move pruning (zugzwang-guarded) | ✅ | `null_pos` / `null_score` |
+| Internal Iterative Deepening | ✅ | `iid_depth` |
+| Singular + promotion extensions | ✅ | `singular_ext`, `promo_ext` |
+| Multi-cut | ✅ | `multicut_moves` |
+| Killers / history / countermoves / improving | ✅ | `order_moves` |
+| Quiescence (mandatory-capture resolution) | ✅ | `quiescence()` |
+| Lazy SMP (helper threads share the TT) | ✅ | §Threading model |
+
+Most search params are **tunable** (`params.lmp_d1/d2/d3`, `use_pvs`,
+`use_improving`, LMR amounts, null-move R, aspiration delta) — a calibration
+lever, not a missing-feature gap.
+
+> Consequence for eval work: at **equal nominal depth**, with sound alpha-beta +
+> quiescence, move quality is driven by the **leaf evaluation**, not by these
+> search refinements (which affect *speed* / depth-in-time). When two different
+> evals score ≈ the same against Scan at equal depth, the gap is the **eval**,
+> not the search. (See PATTERN_PROGRAM_NOTES.md §Ré-ancrage.)
+
 ## Threading model (lazy SMP)
 
 When `SearchLimits.threads > 1` the search spawns `threads - 1` helper
@@ -270,6 +304,24 @@ The training side lives in [`tools/`](../tools) and is driven by:
    └────────────────┘ └──────────────┘ │  real KPI)         │
                                        └────────────────────┘
 ```
+
+**Data relabelling modes** (rewrite the `score` field of a JNNW in place,
+preserving bitboards/STM/WDL):
+- `--rewrite-scores-with-nnue <in> <out> --nnue PATH` — new score = the network
+  in **static** mode (`nnue.evaluate(pos)`).
+- `--rewrite-scores-with-search <in> <out> --nnue PATH [--depth D] [--start S]
+  [--count C]` — new score = a **depth-D alpha-beta search** driven by the eval
+  (pattern `.pjtw` or NNUE `.bin`), STM-POV. This is the teacher-free bootstrap
+  primitive (`eval ← search(eval)`): a depth-D search is stronger than the
+  static eval, so training on these labels pulls a fresh eval upward, with no
+  external teacher. `--start/--count` shard the per-position search across cores
+  (each shard is a standalone JNNW; concatenate the bodies in order and fix the
+  header count).
+
+`tools/calibrate_vs_scan.py` also accepts **asymmetric depth**
+(`--jass-depth N --scan-depth M`, backward-compatible overrides of `--depth`)
+for the eval-vs-search diagnostic: how many extra plies does Jass need to match
+Scan at a fixed Scan depth.
 
 The Hetzner GitOps runner in [`infra/`](../infra/README.md) ties all
 of these together: long-running gen-data / training / calibration
