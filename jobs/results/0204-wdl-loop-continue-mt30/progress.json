@@ -1,13 +1,9 @@
 {
   "job_id": "0204-wdl-loop-continue-mt30",
-  "snapshot_at": "2026-06-12T17:12:09+00:00",
+  "snapshot_at": "2026-06-12T17:17:12+00:00",
   "started_at": "2026-06-12T13:50:04+00:00",
-  "elapsed_seconds": 12125,
+  "elapsed_seconds": 12428,
   "artefacts": [
-    {
-      "name": "buf5.jnnw",
-      "size_bytes": 22800008
-    },
     {
       "name": "buf6.jnnw",
       "size_bytes": 22800008
@@ -58,7 +54,15 @@
     },
     {
       "name": "gen6-train.log",
-      "size_bytes": 0
+      "size_bytes": 908
+    },
+    {
+      "name": "gen6-v15d9.log",
+      "size_bytes": 370
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp4-1.log",
@@ -133,64 +137,32 @@
       "size_bytes": 11400008
     },
     {
-      "name": "sp6-1.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-1.log",
       "size_bytes": 1258
-    },
-    {
-      "name": "sp6-2.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-2.log",
       "size_bytes": 1258
     },
     {
-      "name": "sp6-3.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-3.log",
       "size_bytes": 1258
-    },
-    {
-      "name": "sp6-4.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-4.log",
       "size_bytes": 1258
     },
     {
-      "name": "sp6-5.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-5.log",
       "size_bytes": 1258
-    },
-    {
-      "name": "sp6-6.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-6.log",
       "size_bytes": 1258
     },
     {
-      "name": "sp6-7.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-7.log",
       "size_bytes": 1258
-    },
-    {
-      "name": "sp6-8.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-8.log",
@@ -199,7 +171,71 @@
     {
       "name": "sp6.jnnw",
       "size_bytes": 11400008
+    },
+    {
+      "name": "sp7-1.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-2.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-3.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "sp7-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-4.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-5.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-6.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-7.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "sp7-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-8.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp7-8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 501426       1    03:22:04  0.0  0.0 bash\n 501428  501426    03:22:04  0.0  0.0 bash\n 506724  501428       05:16  352 21.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 501426       1    03:27:08  0.0  0.0 bash\n 501428  501426    03:27:08  0.0  0.0 bash\n 507134  501428       02:14 99.8  0.5 jass\n 507135  501428       02:14 99.8  0.5 jass\n 507136  501428       02:14 99.9  0.5 jass\n 507137  501428       02:14 99.8  0.5 jass\n 507138  501428       02:14 99.8  0.5 jass\n 507139  501428       02:14 99.8  0.5 jass\n 507140  501428       02:14 99.7  0.5 jass\n 507141  501428       02:14 99.9  0.5 jass\n"
 }
