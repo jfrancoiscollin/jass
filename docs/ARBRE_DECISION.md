@@ -27,13 +27,16 @@ RACINE : atteindre le niveau Scan (idéalement INDÉPENDANT)
 │
 ├─ Levier eval établi · cible = WDL itéré établie
 │
-└─ NŒUD 1 — La boucle WDL ITÉRÉE monte-t-elle ?  🟢 OUI (0203 : 0→0.167→0.25 vs v15)
-   │   ✅ tranché : la boucle COMPOUNDE (teacher-free, dépasse déjà le 1-cycle 0.22)
+└─ NŒUD 1 — La boucle WDL ITÉRÉE monte-t-elle ?  🔵 NON TRANCHÉ (mesure trop bruitée)
+   │   0203 : 0→0.167→0.25 (semblait monter) ; 0204 : retombe à ~0.06 (bruit).
+   │   ⚠️ confondu : (a) benches 18 parties (±0.08 → on lit du bruit) ;
+   │   (b) replay buffer en 0204 a tiré vers les gens passées (plus faibles).
+   │   → re-test PROPRE : 0205 (sans buffer, +gens, benches ~54 parties).
    │
-   ├─ 🟢 OUI, ça monte
-   │   └─ NŒUD 2 — Le RECUIT DE PROFONDEUR relève-t-il le point fixe vers Scan ?  📍 (0204)
-   │       │   (mt30 → 60 → 100 → 200, quelques cycles/palier, ~500k + replay buffer)
-   │       │   sous-étape en cours : trouver le PLATEAU mt30 (0204, gen4→7)
+   ├─ 🔵 si OUI (montée propre confirmée)
+   │   └─ NŒUD 2 — Le RECUIT DE PROFONDEUR relève-t-il le point fixe vers Scan ?  (après 0205)
+   │       │   (mt30 → 60 → 100 → 200, quelques cycles/palier, ~500k)
+   │       │   ⚠️ replay buffer : NE PAS utiliser en régime montant (ancre au passé).
    │       │
    │       ├─ 🔵 OUI, grimpe vers Scan  →  ✅ VOIE GAGNANTE : scaler, bencher vs Scan
    │       │      à chaque palier, s'arrêter quand un palier plafonne et le suivant
@@ -79,9 +82,8 @@ NŒUD 4 (transverse) — Indépendance vs force
 
 | Nœud | Statut | Critère de décision | Tranché par | Action si vrai |
 |---|---|---|---|---|
-| **1** boucle WDL monte | 🟢 OUI (0.25) | courbe gen0→gen3 ↑ | **0203 ✅** | → Nœud 2 (recuit profondeur) |
-| **1bis** profondeur vs features | ✂️ inutile | (1 a réussi) | — | — |
-| **2** recuit profondeur | 📍 en test | plateau mt30 puis grimpe par palier | **0204** + jobs | scaler = voie gagnante |
+| **1** boucle WDL monte | 🔵📍 non tranché | courbe propre (sans buffer, ~54 parties) ↑ | 0203/0204 ambigus → **0205** | si ↑ → Nœud 2 |
+| **2** recuit profondeur | 🔵 après 0205 | grimpe par palier de profondeur | jobs à créer | scaler = voie gagnante |
 | **3·C1** géométrie riche | 🔵 | bat la linéaire de base vs Scan | job à créer | étendre patterns |
 | **3·C2** non-linéaire ⭐ | 🔵 | NNUE-pattern > pattern-eval vs Scan | job à créer | basculer archi eval |
 | **3·C3** Scan-prof | 🔵 fallback | distill profond > teacher-free | job à créer | abandonner l'indépendance |
@@ -103,6 +105,8 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **Gros MLP** (1024-512) | overfit ; 0.009 movetime vs Scan | 0071/0088 |
 | **Corpus master 10M** | €700+ pour +30-80 ELO vs déficit −800 | SESSION_LOG |
 | **quiet-filter** (post-score-drop) · **augmentation symétrie** · **self-distillation itérée** | nuisent / dérivent | historique (0185, etc.) |
+| **Replay buffer en régime MONTANT** | ancre l'eval vers les gens passées (plus faibles) → tire vers le bas | 0204 (0.25→0.06) |
+| **Benches 18 parties** pour juger des taux faibles | bruit ±0.08 → on lit du bruit comme un signal ; viser ≥54 parties | 0203/0204 |
 
 ---
 
