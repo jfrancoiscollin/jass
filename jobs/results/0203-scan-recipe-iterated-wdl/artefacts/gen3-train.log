@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/sp3.jnnw
+  300000 records  (0.02s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/feat3
+  extras shape (300000, 106)  (mean mob b/w=12.1/12.0)
+target=wdl  pos=70032 neg=68856 zero=161112 (53.7% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=70032 draw=161112 loss=68856 (53.7% draws)
+phase : piece-count mean=19.0  wmg mean=0.475
+split : train=270000 val=30000
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.610949  iters=200  (376.79s)
+val   : mse=0.842571  sign_acc=0.1989
+quant : scale=1000  pat range=[-174,233] ext_mg range=[-1026,1008]
+wrote /root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/gen3.pjtw  (v3, 34012436 weights, 136049764 bytes)

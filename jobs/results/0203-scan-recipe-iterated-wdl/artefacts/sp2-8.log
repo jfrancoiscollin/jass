@@ -1,0 +1,22 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/sp2-8.jnnw eval_depth=4 play_depth=64 max_plies=200 seed=208 nnue=/root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/gen1.pjtw quiet_only=false pv_extract=0 movetime_ms=30
+  played 50 games, 1755 / 37500 positions
+  played 100 games, 3677 / 37500 positions
+  played 150 games, 5572 / 37500 positions
+  played 200 games, 7444 / 37500 positions
+  played 250 games, 9370 / 37500 positions
+  played 300 games, 11334 / 37500 positions
+  played 350 games, 13180 / 37500 positions
+  played 400 games, 14967 / 37500 positions
+  played 450 games, 16869 / 37500 positions
+  played 500 games, 18781 / 37500 positions
+  played 550 games, 20660 / 37500 positions
+  played 600 games, 22547 / 37500 positions
+  played 650 games, 24535 / 37500 positions
+  played 700 games, 26374 / 37500 positions
+  played 750 games, 28338 / 37500 positions
+  played 800 games, 30104 / 37500 positions
+  played 850 games, 31715 / 37500 positions
+  played 900 games, 33591 / 37500 positions
+  played 950 games, 35485 / 37500 positions
+  played 1000 games, 37396 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/0203-scan-recipe-iterated-wdl/artefacts.src/sp2-8.jnnw
