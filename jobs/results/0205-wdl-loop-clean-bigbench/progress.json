@@ -1,8 +1,8 @@
 {
   "job_id": "0205-wdl-loop-clean-bigbench",
-  "snapshot_at": "2026-06-12T19:47:32+00:00",
+  "snapshot_at": "2026-06-12T19:52:55+00:00",
   "started_at": "2026-06-12T18:40:05+00:00",
-  "elapsed_seconds": 4047,
+  "elapsed_seconds": 4370,
   "artefacts": [
     {
       "name": "build.log",
@@ -26,7 +26,15 @@
     },
     {
       "name": "gen4-train.log",
+      "size_bytes": 906
+    },
+    {
+      "name": "gen4-v15d9.log",
       "size_bytes": 0
+    },
+    {
+      "name": "gen4.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp4-1.jnnw",
@@ -97,5 +105,5 @@
       "size_bytes": 11400008
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 508880       1    01:07:26  0.0  0.0 bash\n 508882  508880    01:07:26  0.0  0.0 bash\n 510828  508882       02:20  374 20.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 508880       1    01:12:49  0.0  0.0 bash\n 508882  508880    01:12:49  0.0  0.0 bash\n 510967  508882       01:36  100  0.9 jass\n"
 }
