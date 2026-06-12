@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0205b-wdl-loop-proxy",
+  "script": "jobs/queue/ccx33-0205b-wdl-loop-proxy.sh",
+  "pid": 520104,
+  "started_at": "2026-06-12T23:20:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
