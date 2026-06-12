@@ -1,8 +1,8 @@
 {
   "job_id": "0202-deep-d12-l2-sweep",
-  "snapshot_at": "2026-06-12T06:21:38+00:00",
+  "snapshot_at": "2026-06-12T06:26:45+00:00",
   "started_at": "2026-06-12T05:56:00+00:00",
-  "elapsed_seconds": 1538,
+  "elapsed_seconds": 1845,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,15 @@
     },
     {
       "name": "l2_1e-3-train.log",
+      "size_bytes": 929
+    },
+    {
+      "name": "l2_1e-3-v15d9.log",
       "size_bytes": 0
+    },
+    {
+      "name": "l2_1e-3.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "l2_3e-4-scand9.log",
@@ -49,5 +57,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 490162       1       25:38  0.0  0.0 bash\n 490164  490162       25:38  0.0  0.0 bash\n 491077  490164       03:43  297 28.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 490162       1       30:44  0.0  0.0 bash\n 490164  490162       30:44  0.0  0.0 bash\n 491213  490164       00:21  100  0.9 jass\n"
 }
