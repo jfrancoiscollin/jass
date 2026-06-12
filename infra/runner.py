@@ -445,7 +445,13 @@ def main() -> int:
     # `git rm` it. This is the GitOps equivalent of `systemctl disable`
     # but doesn't require SSH to flip back — a single PR is enough.
     if (STATE_DIR / "runner-paused").exists():
-        return 0
+        # Per-host override: a host listed under jobs/state/host-active/<hostname>
+        # keeps working despite the global pause. Lets us park ONE box (e.g. a
+        # host stuck on old code that ignores host-filters) via GitOps while
+        # another keeps running — no SSH.
+        if not (STATE_DIR / "host-active" / socket.gethostname()).exists():
+            print("runner: paused (global, no host-active override)", flush=True)
+            return 0
     job = pick_next_job()
     if not job:
         return 0
