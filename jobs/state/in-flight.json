@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-9001-filtertest",
-  "script": "jobs/queue/ccx33-9001-filtertest.sh",
-  "pid": 516804,
-  "started_at": "2026-06-12T22:25:07+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
