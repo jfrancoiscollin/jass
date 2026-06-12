@@ -5,6 +5,7 @@
 > jobs. Pour l'analyse détaillée → [PATTERN_PROGRAM_NOTES.md](PATTERN_PROGRAM_NOTES.md).
 > Pour ce qui est **codé** → [ARCHITECTURE.md](ARCHITECTURE.md).
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
+> Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](ARBRE_DECISION.md).
 >
 > Mise à jour : **2026-06-12** (après 0202 ; lance 0203 = boucle WDL itérée).
 
