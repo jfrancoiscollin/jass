@@ -1,7 +1,0 @@
-{
-  "job_id": "0203-scan-recipe-iterated-wdl",
-  "script": "jobs/queue/0203-scan-recipe-iterated-wdl.sh",
-  "pid": 495211,
-  "started_at": "2026-06-12T09:47:22+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
