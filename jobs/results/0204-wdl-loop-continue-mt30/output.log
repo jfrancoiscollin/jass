@@ -1,0 +1,33 @@
+=== continuation boucle WDL (replay buffer = 2 dernières gens) depuis gen3 (0.25) ===
+=== gen4 : self-play 300000@mt30 avec gen3 → WDL → logistic (buffer) ===
+gen 4 merged 300000
+buffer 600000
+wrote 600000 × 106 Scan-style extras to /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/feat4
+  gen4 vs v15 d9 = 0.0555556
+=== gen5 : self-play 300000@mt30 avec gen4 → WDL → logistic (buffer) ===
+gen 5 merged 300000
+buffer 600000
+wrote 600000 × 106 Scan-style extras to /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/feat5
+  gen5 vs v15 d9 = 0.0277778
+=== gen6 : self-play 300000@mt30 avec gen5 → WDL → logistic (buffer) ===
+gen 6 merged 300000
+buffer 600000
+wrote 600000 × 106 Scan-style extras to /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/feat6
+  gen6 vs v15 d9 = 0.111111
+=== gen7 : self-play 300000@mt30 avec gen6 → WDL → logistic (buffer) ===
+gen 7 merged 300000
+buffer 600000
+wrote 600000 × 106 Scan-style extras to /root/jass/jobs/results/0204-wdl-loop-continue-mt30/artefacts.src/feat7
+  gen7 vs v15 d9 = 0.0277778
+
+==========================================================
+   0204 CONTINUATION BOUCLE WDL mt30 (replay buffer) — VERDICT
+  COURBE vs v15 d9 (rappel gen3=0.25 de 0203) :
+    gen4 = 0.0555556
+    gen5 = 0.0277778
+    gen6 = 0.111111
+    gen7 = 0.0277778
+    gen7 vs Scan d9 = 0.000
+  → continue à monter = pas le plateau mt30 → encore des gens puis RECUIT DE PROFONDEUR.
+  → plateau net = point fixe mt30 atteint → prochain job = monter la profondeur de jeu.
+==========================================================
