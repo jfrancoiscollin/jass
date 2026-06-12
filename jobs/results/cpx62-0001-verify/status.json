@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0001-verify",
+  "state": "running",
+  "started_at": "2026-06-12T22:00:06+00:00",
+  "host": "ubuntu-32gb-hel1-1",
+  "pid": 3819
+}
