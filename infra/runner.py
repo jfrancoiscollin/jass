@@ -150,10 +150,17 @@ def pick_next_job() -> Path | None:
     # `JASS_HOST_FILTER=0020a-`). When unset (default), every host picks
     # every job — the single-host behaviour we've had since day one.
     host_filter = os.environ.get("JASS_HOST_FILTER", "").strip()
+    if not host_filter:
+        # GitOps fallback: a committed per-host file routes jobs without
+        # SSH-editing each host's env. jobs/state/host-filter/<hostname>
+        # holds the filename-prefix this host should pick.
+        hf_file = STATE_DIR / "host-filter" / socket.gethostname()
+        if hf_file.exists():
+            host_filter = hf_file.read_text().strip()
     if host_filter:
         before = len(candidates)
         candidates = [c for c in candidates if c.stem.startswith(host_filter)]
-        print(f"runner: JASS_HOST_FILTER={host_filter!r} keeps "
+        print(f"runner: host_filter={host_filter!r} keeps "
               f"{len(candidates)}/{before} candidate jobs", flush=True)
 
     for c in candidates:
