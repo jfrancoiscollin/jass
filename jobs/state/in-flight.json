@@ -1,7 +1,0 @@
-{
-  "job_id": "0202-deep-d12-l2-sweep",
-  "script": "jobs/queue/0202-deep-d12-l2-sweep.sh",
-  "pid": 490162,
-  "started_at": "2026-06-12T05:56:00+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

@@ -1,0 +1,21 @@
+=== reuse 37M deep-d12 data ===
+=== sweep l2 (deep-d12 data) : v15 d9 + Scan d9 ===
+  l2=3e-4 : v15 d9=0.305556   Scan d9=0.000
+  l2=6e-4 : v15 d9=0.194444   Scan d9=0.000
+  l2=1e-3 : v15 d9=0.222222   Scan d9=0.000
+  l2=3e-3 : v15 d9=0.333333   Scan d9=0.000
+  l2=1e-2 : v15 d9=0.0555556   Scan d9=0.000
+=== gagnant=l2_3e-3 → full bench (mt + hc) ===
+
+==========================================================
+   0202 SWEEP12 (l2 sur deep-d12) — VERDICT
+  l2_3e-4 : v15 d9=0.305556   Scan d9=0.000
+  l2_6e-4 : v15 d9=0.194444   Scan d9=0.000
+  l2_1e-3 : v15 d9=0.222222   Scan d9=0.000
+  l2_3e-3 : v15 d9=0.333333   Scan d9=0.000
+  l2_1e-2 : v15 d9=0.0555556   Scan d9=0.000
+  GAGNANT l2_3e-3 : v15 d9=0.333333  mt=0.0833333  hc=0.583333  | Scan d9=0.000
+  ANCRES vs v15 : 0200 best (l2=3e-4)=0.306 ; champion=0.39 ; WDL=0.22
+  → meilleur l2 > 0.306 = plafond cycle-1 relevé → ce modèle = générateur cycle-2.
+  → si tous ≈ 0 vs Scan = confirme la distance ; cycle-2 testera le compounding vs v15.
+==========================================================
