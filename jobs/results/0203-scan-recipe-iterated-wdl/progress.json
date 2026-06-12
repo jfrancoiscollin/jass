@@ -1,8 +1,8 @@
 {
   "job_id": "0203-scan-recipe-iterated-wdl",
-  "snapshot_at": "2026-06-12T10:53:10+00:00",
+  "snapshot_at": "2026-06-12T10:58:10+00:00",
   "started_at": "2026-06-12T09:47:22+00:00",
-  "elapsed_seconds": 3948,
+  "elapsed_seconds": 4248,
   "artefacts": [
     {
       "name": "build.log",
@@ -105,5 +105,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 495211       1    01:05:48  0.0  0.0 bash\n 495213  495211    01:05:48  0.0  0.0 bash\n 498032  495213       01:10  372 20.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 495211       1    01:10:48  0.0  0.0 bash\n 495213  495211    01:10:48  0.0  0.0 bash\n 498032  495213       06:11  376 19.8 python3\n"
 }
