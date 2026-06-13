@@ -1,0 +1,337 @@
+{
+  "job_id": "cpx62-0230-pattern-importance",
+  "snapshot_at": "2026-06-13T20:35:08+00:00",
+  "started_at": "2026-06-13T20:30:03+00:00",
+  "elapsed_seconds": 305,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11619
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "cum.jnnw",
+      "size_bytes": 41800008
+    },
+    {
+      "name": "f0",
+      "size_bytes": 84800012
+    },
+    {
+      "name": "f1",
+      "size_bytes": 212000012
+    },
+    {
+      "name": "f2",
+      "size_bytes": 339200012
+    },
+    {
+      "name": "f3",
+      "size_bytes": 466400012
+    },
+    {
+      "name": "g0-train.log",
+      "size_bytes": 1130
+    },
+    {
+      "name": "g0.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "g1-train.log",
+      "size_bytes": 1140
+    },
+    {
+      "name": "g1.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "g2-train.log",
+      "size_bytes": 1139
+    },
+    {
+      "name": "g2.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "g3-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp0-1.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-10.log",
+      "size_bytes": 677
+    },
+    {
+      "name": "sp0-11.log",
+      "size_bytes": 632
+    },
+    {
+      "name": "sp0-12.log",
+      "size_bytes": 633
+    },
+    {
+      "name": "sp0-13.log",
+      "size_bytes": 677
+    },
+    {
+      "name": "sp0-14.log",
+      "size_bytes": 633
+    },
+    {
+      "name": "sp0-15.log",
+      "size_bytes": 633
+    },
+    {
+      "name": "sp0-16.log",
+      "size_bytes": 631
+    },
+    {
+      "name": "sp0-2.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-3.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-4.log",
+      "size_bytes": 631
+    },
+    {
+      "name": "sp0-5.log",
+      "size_bytes": 674
+    },
+    {
+      "name": "sp0-6.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-7.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-8.log",
+      "size_bytes": 630
+    },
+    {
+      "name": "sp0-9.log",
+      "size_bytes": 674
+    },
+    {
+      "name": "sp0.jnnw",
+      "size_bytes": 7600008
+    },
+    {
+      "name": "sp1-1.log",
+      "size_bytes": 907
+    },
+    {
+      "name": "sp1-10.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp1-11.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp1-12.log",
+      "size_bytes": 909
+    },
+    {
+      "name": "sp1-13.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp1-14.log",
+      "size_bytes": 909
+    },
+    {
+      "name": "sp1-15.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp1-16.log",
+      "size_bytes": 865
+    },
+    {
+      "name": "sp1-2.log",
+      "size_bytes": 907
+    },
+    {
+      "name": "sp1-3.log",
+      "size_bytes": 907
+    },
+    {
+      "name": "sp1-4.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp1-5.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp1-6.log",
+      "size_bytes": 905
+    },
+    {
+      "name": "sp1-7.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp1-8.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp1-9.log",
+      "size_bytes": 907
+    },
+    {
+      "name": "sp1.jnnw",
+      "size_bytes": 11400008
+    },
+    {
+      "name": "sp2-1.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp2-10.log",
+      "size_bytes": 865
+    },
+    {
+      "name": "sp2-11.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp2-12.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp2-13.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp2-14.log",
+      "size_bytes": 909
+    },
+    {
+      "name": "sp2-15.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp2-16.log",
+      "size_bytes": 865
+    },
+    {
+      "name": "sp2-2.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp2-3.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp2-4.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp2-5.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp2-6.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp2-7.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp2-8.log",
+      "size_bytes": 908
+    },
+    {
+      "name": "sp2-9.log",
+      "size_bytes": 906
+    },
+    {
+      "name": "sp2.jnnw",
+      "size_bytes": 11400008
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp3-10.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp3-11.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp3-12.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp3-13.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp3-14.log",
+      "size_bytes": 865
+    },
+    {
+      "name": "sp3-15.log",
+      "size_bytes": 866
+    },
+    {
+      "name": "sp3-16.log",
+      "size_bytes": 910
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 863
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 907
+    },
+    {
+      "name": "sp3-9.log",
+      "size_bytes": 864
+    },
+    {
+      "name": "sp3.jnnw",
+      "size_bytes": 11400008
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3556682       1       05:05  0.0  0.0 bash\n3556684 3556682       05:05  0.0  0.0 bash\n3557405 3556684       00:40 1007 11.5 python3\n"
+}
