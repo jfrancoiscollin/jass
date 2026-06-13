@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/cumulative.jnnw
+  800000 records  (0.05s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat2
+  extras shape (800000, 106)  (mean mob b/w=12.2/12.2)
+target=wdl  pos=277202 neg=268913 zero=253885 (31.7% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=277202 draw=253885 loss=268913 (31.7% draws)
+phase : piece-count mean=19.5  wmg mean=0.487
+split : train=720000 val=80000
+prune : keep 189,059 buckets (>= 1 visits) -> 378,120 pattern cols vs 34,012,224  (90.0× fewer); train fallback=0.000%
+design : 378332 columns (2×189060 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.586729  iters=200  (51.97s)
+val   : mse=1.226418  sign_acc=0.2779
+quant : scale=1000  pat range=[-327,327] ext_mg range=[-587,586]
+wrote /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/gen2.pjtw  (v3, 34012436 weights, 136049764 bytes)

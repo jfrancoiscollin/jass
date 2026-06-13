@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0231-rfe-baseline32",
-  "script": "jobs/queue/ccx33-0231-rfe-baseline32.sh",
-  "pid": 2360615,
-  "started_at": "2026-06-13T21:04:36+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
