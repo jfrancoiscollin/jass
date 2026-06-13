@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0234-rfe-prune24-v2",
-  "snapshot_at": "2026-06-13T21:43:03+00:00",
+  "snapshot_at": "2026-06-13T21:48:53+00:00",
   "started_at": "2026-06-13T21:37:03+00:00",
-  "elapsed_seconds": 360,
+  "elapsed_seconds": 710,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 19000008
+      "size_bytes": 41800008
     },
     {
       "name": "elo-gen0.log",
@@ -22,6 +22,14 @@
     },
     {
       "name": "elo-gen1.log",
+      "size_bytes": 275
+    },
+    {
+      "name": "elo-gen2.log",
+      "size_bytes": 274
+    },
+    {
+      "name": "elo-gen3.log",
       "size_bytes": 0
     },
     {
@@ -31,6 +39,14 @@
     {
       "name": "feat1",
       "size_bytes": 212000012
+    },
+    {
+      "name": "feat2",
+      "size_bytes": 339200012
+    },
+    {
+      "name": "feat3",
+      "size_bytes": 466400012
     },
     {
       "name": "gen0-train.log",
@@ -46,6 +62,22 @@
     },
     {
       "name": "gen1.pjtw",
+      "size_bytes": 102037540
+    },
+    {
+      "name": "gen2-train.log",
+      "size_bytes": 1138
+    },
+    {
+      "name": "gen2.pjtw",
+      "size_bytes": 102037540
+    },
+    {
+      "name": "gen3-train.log",
+      "size_bytes": 1141
+    },
+    {
+      "name": "gen3.pjtw",
       "size_bytes": 102037540
     },
     {
@@ -179,7 +211,135 @@
     {
       "name": "sp1-9.log",
       "size_bytes": 898
+    },
+    {
+      "name": "sp2-1.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp2-10.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp2-11.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp2-12.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-13.log",
+      "size_bytes": 855
+    },
+    {
+      "name": "sp2-14.log",
+      "size_bytes": 855
+    },
+    {
+      "name": "sp2-15.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp2-16.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp2-2.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-3.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-4.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-5.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp2-6.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-7.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp2-8.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp2-9.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-10.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-11.log",
+      "size_bytes": 855
+    },
+    {
+      "name": "sp3-12.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-13.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-14.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-15.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-16.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "sp3-9.log",
+      "size_bytes": 898
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 478106       1       05:59  0.0  0.0 bash\n 478108  478106       05:59  0.0  0.0 bash\n1054091  478108       01:41  0.0  0.0 bash\n1054093 1054091       01:41 1127  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 478106       1       11:49  0.0  0.0 bash\n 478108  478106       11:49  0.0  0.0 bash\n2157203  478108       00:19  0.0  0.0 bash\n2157205 2157203       00:19  890  0.5 jass\n"
 }
