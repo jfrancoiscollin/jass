@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/cumulative.jnnw
+  1700000 records  (0.12s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat5
+  extras shape (1700000, 106)  (mean mob b/w=12.4/12.2)
+target=wdl  pos=494334 neg=491086 zero=714580 (42.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=494334 draw=714580 loss=491086 (42.0% draws)
+phase : piece-count mean=18.8  wmg mean=0.471
+split : train=1530000 val=170000
+prune : keep 842,963 buckets (>= 1 visits) -> 1,685,928 pattern cols vs 34,012,224  (20.2× fewer); train fallback=0.000%
+design : 1686140 columns (2×842964 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.604093  iters=200  (228.28s)
+val   : mse=0.872975  sign_acc=0.2461
+quant : scale=1000  pat range=[-116,173] ext_mg range=[-763,762]
+wrote /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/gen5.pjtw  (v3, 34012436 weights, 136049764 bytes)
