@@ -1,1 +1,1 @@
-kill in-flight (round 1): stop the starved WDL loop on whichever box ticks first
+kill in-flight (round 2): target the remaining starved loop on CPX62 (cpx62-0208)
