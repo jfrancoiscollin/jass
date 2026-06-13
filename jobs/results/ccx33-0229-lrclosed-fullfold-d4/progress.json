@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0229-lrclosed-fullfold-d4",
-  "snapshot_at": "2026-06-13T19:47:05+00:00",
+  "snapshot_at": "2026-06-13T19:52:25+00:00",
   "started_at": "2026-06-13T18:48:36+00:00",
-  "elapsed_seconds": 3509,
+  "elapsed_seconds": 3829,
   "artefacts": [
     {
       "name": "build.log",
@@ -449,5 +449,5 @@
       "size_bytes": 1449
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1374925 3290763       00:16  0.0  0.0 bash\n1374927 1374925       00:16  504  0.8 jass\n3290761       1       58:29  0.0  0.0 bash\n3290763 3290761       58:29  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1374925 3290763       05:36  0.0  0.0 bash\n1374927 1374925       05:36  685  0.8 jass\n3290761       1    01:03:49  0.0  0.0 bash\n3290763 3290761    01:03:49  0.0  0.0 bash\n"
 }
