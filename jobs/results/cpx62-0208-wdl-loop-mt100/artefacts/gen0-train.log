@@ -1,0 +1,19 @@
+/root/jass/pattern_jass/tools/train.py:374: RuntimeWarning: Mean of empty slice
+  f'(mean mob b/w={extras[:, 102].mean():.1f}/{extras[:, 103].mean():.1f})')
+/root/.local/lib/python3.14/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+loading JNNW /root/jass/jobs/results/cpx62-0208-wdl-loop-mt100/artefacts.src/seed.jnnw
+  0 records  (0.00s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/cpx62-0208-wdl-loop-mt100/artefacts.src/seedfeat
+  extras shape (0, 106)  (mean mob b/w=nan/nan)
+Traceback (most recent call last):
+  File "/root/jass/pattern_jass/tools/train.py", line 761, in <module>
+    main()
+    ~~~~^^
+  File "/root/jass/pattern_jass/tools/train.py", line 652, in main
+    return train_scan_eval(args)
+  File "/root/jass/pattern_jass/tools/train.py", line 388, in train_scan_eval
+    f'({n_zero/ds.n_records*100:.1f}% draws)  wdl_scale={args.wdl_scale}')
+        ~~~~~~^~~~~~~~~~~~~
+ZeroDivisionError: division by zero

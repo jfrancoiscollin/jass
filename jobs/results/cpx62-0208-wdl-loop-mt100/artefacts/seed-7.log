@@ -1,0 +1,4 @@
+gen-data-wdl: n=5000 out=/root/jass/jobs/results/cpx62-0208-wdl-loop-mt100/artefacts.src/seed-7.jnnw eval_depth=4 play_depth=64 max_plies=200 seed=16751 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=100
+  played 50 games, 1907 / 5000 positions
+  played 100 games, 3928 / 5000 positions
+wrote 5000 WDL records to /root/jass/jobs/results/cpx62-0208-wdl-loop-mt100/artefacts.src/seed-7.jnnw
