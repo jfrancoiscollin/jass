@@ -87,11 +87,19 @@ NŒUD 2ter — DEBUG du pipeline  📍⭐  (la classe N'EST PAS le suspect)
 NŒUD 3 — (seulement APRÈS Nœud 2ter épuisé) la classe linéaire plafonne vraiment
    │   ⚠️ verrouillé tant que le DEBUG (Nœud 2ter) n'a pas été mené à terme.
    │
-   ├─ 🟢⭐ C1 — **PARTAGE DE POIDS PAR SYMÉTRIE** (la brique manquante, cf docs/
-   │        SYMMETRY_SHARING.md). Audit vs source Scan : Scan lie ses poids par
-   │        couleur (antisym) + rotation 180° + réflexion + translation → 2.1M poids
-   │        DENSES ; nous = 17M INDÉPENDANTS, affamés. Reste LINÉAIRE. Implémentation
-   │        incrémentale (couleur → rot180 → réflexion+translation). **CHEMIN ACTIF.**
+   ├─ 🟢📍⭐ C1 — **PARTAGE DE POIDS PAR SYMÉTRIE** (la brique manquante, cf docs/
+   │        SYMMETRY_SHARING.md + ARCHITECTURE.md). Audit vérifié sur la SOURCE Scan :
+   │        Scan lie ses poids par couleur + rot180 + réflexion (translation = 4
+   │        positions distinctes) → 2.1M poids DENSES ; nous = 17M INDÉPENDANTS,
+   │        affamés. Reste 100 % LINÉAIRE. **BRIQUES IMPLÉMENTÉES + VÉRIFIÉES
+   │        (2026-06-13)** dans train.py (fold puis EXPAND vers .pjtw 17M standard,
+   │        C++ inchangé) :
+   │          color-fold (17M→8.5M) → rot-fold (4.9M, rot∘cs EXACT) → trans-fold
+   │          (1.2M, approx) → full-fold +réflexion LR EXACTE (1.0M) →
+   │          **géométrie LR-CLOSE 54 patterns (gen_patterns.py --lr-close) → 0.6M
+   │          ≈ échelle Scan**, 0 orphelin, symétries exactes vérifiées, tests OK.
+   │        Mesuré en **Elo RÉEL** (A/B échelle, 5 bras, 0220-0224 en cours ; LR-close
+   │        0225/0226 prêt, déployé après l'A/B 32-pattern pour ne pas confondre).
    │
    ├─ 🔵 C2 — Modèle NON-LINÉAIRE (NNUE à entrées-patterns). ⚠️ DÉPRIORISÉ par
    │        directive user : NE PAS pivoter avant d'avoir épuisé le DEBUG (Nœud 2ter).
@@ -123,7 +131,9 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **gap absolu** | 📍 énorme | gen5 vs Scan d9 = **0/1080** | 0216 | encore très loin de Scan → scaler longtemps |
 | **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
 | **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
-| **3** classe linéaire plafonne | 🔒 verrouillé | APRÈS Nœud 2ter épuisé | — | ne pas pivoter avant |
+| **3·C1** partage de poids par symétrie ⭐ | 🟢📍 CHEMIN ACTIF | A/B Elo : full-fold > men-only ? | **0220-0224 en cours ; LR-close 0225/0226 prêt** | scaler l'archi montée vers Scan |
+| **3·C2** non-linéaire | 🔒 DÉPRIORISÉ | seulement si la symétrie+linéaire plafonne en Elo | — | ne pas pivoter avant |
+| **3·C3** Scan-prof (fallback) | 🔵 | teacher-free plafonne sous Scan | — | abandonner l'indépendance |
 | **4** indépendance | 🔵 décision | — | humain | trancher le requirement |
 
 ---

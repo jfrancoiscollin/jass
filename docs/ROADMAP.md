@@ -59,6 +59,29 @@ parties. PAS de gros factoriel répliqué.
 (scores Scan-d10). Évaluer les eval sur un **sous-ensemble tenu à l'écart** de
 leur training pour éviter la fuite.
 
+### RÉVISION (2026-06-13) — le proxy MENT, l'Elo réel devient la mesure primaire
+
+Le job **0216 (B4)** a montré que le proxy (accord-score vs Scan-d10) **SOUS-LIT
+la force réelle** : la boucle WDL a gagné **+80 Elo réels** (gen0→gen5, parties vs
+handcrafted, IC disjoints) pendant que le proxy STAGNAIT à ~0.43. Tous les « murs »
+mesurés au proxy (data, profondeur, rois) étaient des **artefacts de mesure**.
+Conséquences pour le plan d'expérience :
+- **Mesure primaire = Elo RÉEL** vs un adversaire commun pas cher (le handcrafted,
+  via `jass --benchmark-scan-eval <eval.pjtw> hc <depth> <pairs>`), + SPRT/Elo
+  (`tools/sprt_elo.py`). Jalon absolu = vs Scan à profondeur égale
+  (`calibrate_vs_scan.py`).
+- **Le proxy reste un co-indicateur** (cheap, déterministe) mais NE tranche PLUS un
+  verdict de force — il plafonne là où un eval STATIQUE peut s'accorder avec une
+  recherche d10, pas où la force de jeu plafonne.
+- **Design A/B « échelle » (adopté pour la symétrie)** : N bras IDENTIQUES (même
+  boucle WDL cumulée, même data/profondeur, `--prune`) ne différant QUE par le
+  facteur testé (men-only vs `--color-fold` vs `--rot-fold` vs `--trans-fold` vs
+  `--full-fold`), chacun mesuré en **Elo vs hc par génération** → trajectoires
+  directement comparables. L'adversaire commun rend le facteur isolé. C'est un
+  OFAT propre sur un facteur structurel, répliqué en lignées.
+- **Gauge de la couverture** : `tools/bucket_coverage.py` (Chao1 + accumulation)
+  pour dimensionner la data ; `tools/bucket_census.py` pour l'élagage dense.
+
 ---
 
 ## Point de départ — ce que la biblio recadre
