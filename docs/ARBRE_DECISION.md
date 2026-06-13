@@ -45,25 +45,55 @@ RACINE : atteindre le niveau Scan (idéalement INDÉPENDANT)
    │       └─ 🔵 NON, plafonne sous Scan malgré la profondeur  →  NŒUD 3
    │
    └─ ⚠️ NON, plat / descend
-       └─ NŒUD 1bis — Profondeur ou features ?  (discriminateur cheap)
+       └─ NŒUD 1bis — Profondeur ou BUG ?  (discriminateur cheap)
            │   test : rejouer la boucle avec jeu PLUS PROFOND (mt100+)
+           │   ⚠️ DIRECTIVE (user) : « si plat PROFOND, on cherche le BUG, PAS de
+           │   pivot non-linéaire — c'est la MÊME infra que Scan, donc ça DOIT monter ».
            │
            ├─ 🔵 grimpe avec profondeur  →  rejoint NŒUD 2 / voie gagnante
-           └─ 🔵 toujours plat  →  NŒUD 3
+           └─ 🔵 toujours plat  →  NŒUD 2ter (DEBUG), PAS Nœud 3
 
 
-NŒUD 3 — La CLASSE LINÉAIRE plafonne sous Scan → changer de capacité
+NŒUD 2ter — DEBUG du pipeline  📍⭐  (la classe N'EST PAS le suspect)
+   │   Scan prouve que pattern-linéaire + WDL self-play itéré MONTE. Si la nôtre
+   │   est plate, l'infra diverge de Scan quelque part. Suspects vérifiés / à vérifier :
+   │
+   ├─ ✂️ B1 — « le self-play n'utilise pas l'eval qui évolue » → FAUX (2026-06-13).
+   │        set_nnue() + recherche pilotent bien le jeu ; un échec de load est
+   │        BRUYANT (return 1 → le job abort), pas silencieux ; les valeurs proxy
+   │        réelles de 0205b prouvent que les .pjtw frais se chargent. Test #1 clos.
+   │
+   ├─ ⭐ B2 — FAMINE DE DONNÉES (le suspect n°1, mesuré 2026-06-13).
+   │        Table = 17 006 112 buckets (32 patterns × 3¹²). À 30k positions :
+   │        SEULS ~1.0 % des buckets sont touchés ; 62 % des touchés ont ≤2 visites
+   │        (poids = bruit tiré au prior l2 ≈ 0). À 300k/gen (0205b) la table reste
+   │        ~97 % non-estimée → l'eval ≈ matériel + petite tête fréquente → proxy
+   │        PLAT à ~0.41 PAR CONSTRUCTION. Et chaque gen régénère 300k FRAIS (pas
+   │        d'accumulation) → couverture constante gen-après-gen → aucun compounding.
+   │        Scan « même infra » monte parce qu'il estime DENSÉMENT sa table (corpus
+   │        énorme). FIX (reste linéaire, reste Scan) : VOLUME/gen ×10–50 (millions)
+   │        et/ou corpus CUMULÉ dominé par les gens récentes. → job sweep-volume.
+   │
+   ├─ 🔵 B3 — Rois invisibles aux patterns (extract_indices lit men-only ;
+   │        31 % des positions ont un roi). C++ et Python sont COHÉRENTS (pas un
+   │        bug de correctness) ; les rois entrent via les extras (compte+mobilité).
+   │        Limite représentationnelle, pas une panne. À garder en réserve — NE PAS
+   │        confondre avec « enrichir la classe » (ce serait le pivot interdit).
+   │
+   └─ 🔵 B4 — Mesure : le proxy lit l'accord avec les SCORES Scan-d10, pas la FORCE
+            en parties. Confirmer un palier au SPRT/Elo (tools/sprt_elo.py) avant de
+            conclure « plat = n'apprend pas ».
+
+NŒUD 3 — (seulement APRÈS Nœud 2ter épuisé) la classe linéaire plafonne vraiment
+   │   ⚠️ verrouillé tant que le DEBUG (Nœud 2ter) n'a pas été mené à terme.
    │
    ├─ 🔵 C1 — Géométrie plus RICHE (plus / meilleurs patterns, à la Scan).
    │        Reste linéaire & rapide. Incertain : nos tests géométrie passés
    │        (v6 diagonale, régions) étaient ~neutres ou instables en profondeur.
    │
-   ├─ ⭐🔵 C2 — Modèle NON-LINÉAIRE (NNUE à entrées-patterns : casse
-   │        l'additivité entre patterns — le vrai plafond de la classe linéaire).
-   │        Coûte du NPS, MAIS 0201 dit que la vitesse n'est pas bloquante →
-   │        une eval plus précise même un peu plus lente vaut le coup.
-   │        ⚠️ doit être > la pattern-eval (v15-NNUE naïf était PIRE) :
-   │        entrées = patterns incrémentaux + petite tête int8/AVX2.
+   ├─ 🔵 C2 — Modèle NON-LINÉAIRE (NNUE à entrées-patterns). ⚠️ DÉPRIORISÉ par
+   │        directive user : NE PAS pivoter avant d'avoir épuisé le DEBUG (Nœud 2ter).
+   │        Coûte du NPS ; doit battre la pattern-eval (v15-NNUE naïf était PIRE).
    │
    └─ 🔵 C3 — Scan comme PROF (renoncer à l'indépendance pour un seed fort).
             Distiller Scan plus profond/proprement, ou bootstrap Scan → fine-tune
@@ -82,11 +112,13 @@ NŒUD 4 (transverse) — Indépendance vs force
 
 | Nœud | Statut | Critère de décision | Tranché par | Action si vrai |
 |---|---|---|---|---|
-| **1** boucle WDL monte | 🔵📍 non tranché | courbe propre (sans buffer, ~54 parties) ↑ | 0203/0204 ambigus → **0205** | si ↑ → Nœud 2 |
-| **2** recuit profondeur | 🔵 après 0205 | grimpe par palier de profondeur | jobs à créer | scaler = voie gagnante |
-| **3·C1** géométrie riche | 🔵 | bat la linéaire de base vs Scan | job à créer | étendre patterns |
-| **3·C2** non-linéaire ⭐ | 🔵 | NNUE-pattern > pattern-eval vs Scan | job à créer | basculer archi eval |
-| **3·C3** Scan-prof | 🔵 fallback | distill profond > teacher-free | job à créer | abandonner l'indépendance |
+| **1** boucle WDL monte | ⚠️ plate au proxy (0205b mt30 ~0.41) | courbe propre (sans buffer, ~54 parties) ↑ | 0205b PLAT → Nœud 1bis | si plat → DEBUG |
+| **1bis** profondeur ou bug | 🔵📍 en cours | grimpe à mt100 ? | 0207/0208 (mt100) | si plat → Nœud 2ter |
+| **2ter·B1** eval pas utilisée | ✂️ FAUX (2026-06-13) | self-play change avec --nnue | inspection + load-bruyant + proxy 0205b | clos |
+| **2ter·B2** famine de données ⭐ | 🔵📍 suspect n°1 | proxy(gen1) ↑ avec le VOLUME | **sweep-volume à créer** | scaler volume/cumul |
+| **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
+| **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
+| **3** classe linéaire plafonne | 🔒 verrouillé | APRÈS Nœud 2ter épuisé | — | ne pas pivoter avant |
 | **4** indépendance | 🔵 décision | — | humain | trancher le requirement |
 
 ---
@@ -107,6 +139,9 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **quiet-filter** (post-score-drop) · **augmentation symétrie** · **self-distillation itérée** | nuisent / dérivent | historique (0185, etc.) |
 | **Replay buffer en régime MONTANT** | ancre l'eval vers les gens passées (plus faibles) → tire vers le bas | 0204 (0.25→0.06) |
 | **Benches 18 parties** pour juger des taux faibles | bruit ±0.08 → on lit du bruit comme un signal ; viser ≥54 parties | 0203/0204 |
+| **« Le self-play ignore l'eval qui évolue »** (hypothèse bug) | FAUX : set_nnue+recherche pilotent ; load échoue BRUYAMMENT (job abort), pas en silence | inspection + test 2026-06-13 |
+| **Pivot non-linéaire AVANT debug** | directive user : même infra que Scan → ça doit monter ; chercher le bug d'abord | 2026-06-13 |
+| **Charger les .pjtw champions COMMITTÉS** (pattern_clean, A, …) | format périmé : n_pat=4 251 528 (8 patterns) ≠ TOTAL_BUCKETS=17 006 112 (32) ; la géométrie a ×4 depuis | loader 2026-06-13 |
 
 ---
 
