@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/cum.jnnw
+  800000 records  (0.05s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/f2
+  extras shape (800000, 106)  (mean mob b/w=12.2/12.2)
+target=wdl  pos=276317 neg=270320 zero=253363 (31.7% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=276317 draw=253363 loss=270320 (31.7% draws)
+phase : piece-count mean=19.5  wmg mean=0.489
+split : train=720000 val=80000
+prune : keep 190,832 buckets (>= 1 visits) -> 381,666 pattern cols vs 34,012,224  (89.1× fewer); train fallback=0.000%
+design : 381878 columns (2×190833 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.584004  iters=200  (47.11s)
+val   : mse=1.182436  sign_acc=0.2765
+quant : scale=1000  pat range=[-274,274] ext_mg range=[-571,572]
+wrote /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/g2.pjtw  (v3, 34012436 weights, 136049764 bytes)
