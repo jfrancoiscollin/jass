@@ -1,0 +1,2 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0232-rfe-prune24/artefacts.src/sp6-13.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=3434 nnue=/root/jass/jobs/results/cpx62-0232-rfe-prune24/artefacts.src/gen5.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+error: cannot load eval weights from /root/jass/jobs/results/cpx62-0232-rfe-prune24/artefacts.src/gen5.pjtw : n_pat 17006112 != 12754584
