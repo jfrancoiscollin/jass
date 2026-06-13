@@ -1,0 +1,11 @@
+CCX33 generating 1000000 positions over 8 shards (embedded net, depth4)
+CCX33 shards done:
+  sh-1.jnnw 125000
+  sh-2.jnnw 125000
+  sh-3.jnnw 125000
+  sh-4.jnnw 125000
+  sh-5.jnnw 125000
+  sh-6.jnnw 125000
+  sh-7.jnnw 125000
+  sh-8.jnnw 125000
+=== ccx33-0212 : 8 shards prêts (le runner les commite) → cpx62-0213 prendra le relais ===
