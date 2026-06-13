@@ -116,7 +116,9 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **1bis** profondeur ou bug | 🔵📍 en cours | grimpe à mt100 ? | 0207/0208 (mt100) | si plat → Nœud 2ter |
 | **2ter·B1** eval pas utilisée | ✂️ FAUX (2026-06-13) | self-play change avec --nnue | inspection + load-bruyant + proxy 0205b | clos |
 | **2ter·B2** famine de données ⭐ | 🟢 CONFIRMÉE (partiel) | proxy ↑ avec couverture | **0210 (0.40→0.46) + 0211 (0.41→0.45)** vs 0205b PLAT | data = un mur (réglé +0.05) |
-| **2ter·B5** 2e mur ~0.46 (PAS data) | 🔵📍 à discriminer | +data ne le casse pas (0211 5.2M ⇒ 0.45) | rois ✂️ NEUTRE (A/B + 0145) → reste **profondeur de jeu (depth4!)** · B4 proxy≠Elo | test profondeur |
+| **2ter·B5** 2e mur ~0.46 (PAS data) | ✂️ ARTEFACT (résolu) | — | rois NEUTRE · profondeur NON · **B4 = proxy sous-lit** | métrique, pas un mur |
+| **2ter·B4** proxy ≠ Elo réel ⭐ | 🟢 CONFIRMÉ (0216) | gen0→gen5 = −20→+60 Elo vs hc (**+80**, CI disjoints) alors que proxy plat 0.40→0.43 | parties réelles 1440 | **RETIRER le proxy** ; mesurer en Elo réel (SPRT) ; SCALER |
+| **gap absolu** | 📍 énorme | gen5 vs Scan d9 = **0/1080** | 0216 | encore très loin de Scan → scaler longtemps |
 | **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
 | **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
 | **3** classe linéaire plafonne | 🔒 verrouillé | APRÈS Nœud 2ter épuisé | — | ne pas pivoter avant |
