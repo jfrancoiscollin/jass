@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0218-elo-loop-depth4",
-  "script": "jobs/queue/ccx33-0218-elo-loop-depth4.sh",
-  "pid": 547097,
-  "started_at": "2026-06-13T13:27:53+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

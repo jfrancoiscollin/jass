@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/cumulative.jnnw
+  500000 records  (0.03s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat1
+  extras shape (500000, 106)  (mean mob b/w=12.2/12.1)
+target=wdl  pos=171442 neg=166644 zero=161914 (32.4% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=171442 draw=161914 loss=166644 (32.4% draws)
+phase : piece-count mean=19.4  wmg mean=0.484
+split : train=450000 val=50000
+prune : keep 624,749 buckets (>= 1 visits) -> 1,249,500 pattern cols vs 34,012,224  (27.2× fewer); train fallback=0.000%
+design : 1249712 columns (2×624750 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.585008  iters=200  (51.85s)
+val   : mse=1.091422  sign_acc=0.2789
+quant : scale=1000  pat range=[-130,125] ext_mg range=[-640,640]
+wrote /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/gen1.pjtw  (v3, 34012436 weights, 136049764 bytes)
