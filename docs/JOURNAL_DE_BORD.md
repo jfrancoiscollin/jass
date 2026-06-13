@@ -148,10 +148,21 @@ qu'une eval compétente fait 0.64-0.67 ⇒ le proxy discrimine). **Directive use
   17 006 112` (32) — la géométrie a ×4 depuis. Sans impact sur la boucle (evals
   frais = géométrie courante) ni sur le proxy (référence = JNNW, scores lus direct).
 
-**En cours sur les box (origin/main in-flight) :**
-- CPX62 : `cpx62-0208-wdl-loop-mt100` · CCX33 : `ccx33-0207-wdl-loop-mt100` →
-  courbes proxy à **mt100** (test Nœud 1bis : la PROFONDEUR débloque-t-elle ?).
-  ⚠️ même à mt100, si le volume reste 300k/gen, B2 prédit que ça reste plat.
+**Root cause confirmé du « plat » 0205b (2026-06-13) :** chaque gen ré-entraîne sur
+**300k FRAIS** (aucune accumulation) → couverture constante ~1 % de la table 17M
+gen-après-gen → **zéro compounding** par construction. Le fix = **ACCUMULER** le
+self-play (couverture qui grandit) et/ou **gros volume**.
+
+**Décision (2026-06-13) :** on TUE les deux boucles mt100 starvées (300k/gen ne peut
+que reproduire la famine) et on lance la famine en test direct sur les DEUX box, en
+boucles à **corpus CUMULÉ** (gen_g s'entraîne sur l'union de tout le self-play) :
+- **`cpx62-0211-cumulative-loop-1M`** (box 32GB/16c) — **1M/gen** cumulé, 5 gens
+  (→ ~5M), couverture+proxy par gen.
+- **`ccx33-0210-cumulative-loop`** (box 16GB/8c) — **300k/gen** cumulé, 6 gens
+  (→ ~1.8M), couverture+proxy par gen.
+Verdict : le proxy MONTE au-dessus de 0.41 quand la couverture grandit ⇒ famine
+confirmée + accumulation/volume = le fix (linéaire, Scan). (La boucle « volume
+sweep » mono-gen a été remplacée par ces boucles cumulées sur décision user.)
 
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.

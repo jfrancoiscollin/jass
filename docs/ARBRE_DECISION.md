@@ -115,7 +115,7 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **1** boucle WDL monte | ⚠️ plate au proxy (0205b mt30 ~0.41) | courbe propre (sans buffer, ~54 parties) ↑ | 0205b PLAT → Nœud 1bis | si plat → DEBUG |
 | **1bis** profondeur ou bug | 🔵📍 en cours | grimpe à mt100 ? | 0207/0208 (mt100) | si plat → Nœud 2ter |
 | **2ter·B1** eval pas utilisée | ✂️ FAUX (2026-06-13) | self-play change avec --nnue | inspection + load-bruyant + proxy 0205b | clos |
-| **2ter·B2** famine de données ⭐ | 🔵📍 suspect n°1 | proxy(gen1) ↑ avec le VOLUME | **sweep-volume à créer** | scaler volume/cumul |
+| **2ter·B2** famine de données ⭐ | 🔵📍 EN TEST | proxy ↑ quand la couverture grandit | **cpx62-0211 (cumul 1M/gen) + ccx33-0210 (cumul 300k/gen)** | scaler volume/cumul |
 | **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
 | **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
 | **3** classe linéaire plafonne | 🔒 verrouillé | APRÈS Nœud 2ter épuisé | — | ne pas pivoter avant |
