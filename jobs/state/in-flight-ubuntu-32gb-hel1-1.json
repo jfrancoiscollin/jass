@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0211-cumulative-loop-1M",
-  "script": "jobs/queue/cpx62-0211-cumulative-loop-1M.sh",
-  "pid": 14990,
-  "started_at": "2026-06-13T07:26:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
