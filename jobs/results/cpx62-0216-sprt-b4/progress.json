@@ -1,11 +1,15 @@
 {
   "job_id": "cpx62-0216-sprt-b4",
-  "snapshot_at": "2026-06-13T12:15:46+00:00",
+  "snapshot_at": "2026-06-13T12:20:55+00:00",
   "started_at": "2026-06-13T11:55:05+00:00",
-  "elapsed_seconds": 1241,
+  "elapsed_seconds": 1550,
   "artefacts": [
     {
       "name": "best-hc.log",
+      "size_bytes": 273
+    },
+    {
+      "name": "best-vs-scan.log",
       "size_bytes": 0
     },
     {
@@ -17,9 +21,13 @@
       "size_bytes": 672
     },
     {
+      "name": "scan-clone.log",
+      "size_bytes": 35
+    },
+    {
       "name": "seed-hc.log",
-      "size_bytes": 0
+      "size_bytes": 273
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  23247       1       20:41  0.0  0.0 bash\n  23249   23247       20:41  0.0  0.0 bash\n  23734   23249       20:22  216  0.5 jass\n  23735   23249       20:22  205  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  23247       1       25:50  0.0  0.0 bash\n  23249   23247       25:50  0.0  0.0 bash\n2796031   23249       01:55  7.4  0.0 python3\n2796034 2796031       01:55 46.4  0.4 jass\n2796036 2796031       01:55 28.1  0.9 scan_linux\n2796039 2796031       01:54  0.8  0.0 jass\n"
 }
