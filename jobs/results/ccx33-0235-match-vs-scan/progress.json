@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0235-match-vs-scan",
-  "snapshot_at": "2026-06-13T22:38:08+00:00",
+  "snapshot_at": "2026-06-13T22:44:00+00:00",
   "started_at": "2026-06-13T22:17:25+00:00",
-  "elapsed_seconds": 1243,
+  "elapsed_seconds": 1595,
   "artefacts": [
     {
       "name": "build.log",
@@ -25,5 +25,5 @@
       "size_bytes": 3763
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1429425       1       20:42  0.0  0.0 bash\n1429427 1429425       20:42  0.0  0.0 bash\n1429983 1429427       15:04  0.0  0.0 python3\n1429984 1429427       15:04  0.0  0.0 tee\n1429985 1429427       15:04  0.0  0.0 tail\n1429988 1429983       15:04  0.0  0.4 jass\n1429990 1429983       15:04 99.9  0.9 scan_linux\n1429993 1429983       15:04  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1429425       1       26:35  0.0  0.0 bash\n1429427 1429425       26:35  0.0  0.0 bash\n1429983 1429427       20:57  0.0  0.0 python3\n1429984 1429427       20:57  0.0  0.0 tee\n1429985 1429427       20:57  0.0  0.0 tail\n1429988 1429983       20:57 20.4  0.4 jass\n1429990 1429983       20:57 79.5  0.9 scan_linux\n1429993 1429983       20:56  0.0  0.0 jass\n"
 }
