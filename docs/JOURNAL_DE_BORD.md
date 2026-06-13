@@ -251,6 +251,18 @@ Scan en absolu ; +80 Elo = vrai progrès mais goutte d'eau vs l'écart à Scan.
 3. **Réévaluer la PROFONDEUR en Elo** (le verdict « depth pire » était au proxy ; mt30/60
    sont peut-être PLUS forts en parties malgré un proxy plus bas).
 
+**AUDIT ARCHI vs SCAN (2026-06-13) — BRIQUE MANQUANTE = PARTAGE DE POIDS PAR SYMÉTRIE.**
+Vérifié sur la source `rhalbersma/scan` (`src/eval.cpp`). Scan = MÊME classe linéaire
+(patterns 12 cases men-only 3-états, phase MG/EG, extras king-PST/matériel/mobilité/balance,
+logistique WDL) SAUF qu'il **lie ses poids** : couleur (`index=Trits[N]−Trits[B]`, antisym),
+rotation 180° (bottom = tables inversées `−index,−1`), réflexion (`Perm_0/Perm_1`),
+translation (1 bande glissée `wm>>0..3`) → **4 tables, P=2 125 820 poids DENSES**. Nous =
+**32 tables indépendantes, 17M poids AFFAMÉS** (38 % des touchés ≤2 visites). Archi linéaire
+MAL MONTÉE, pas un besoin de non-linéaire. Détail+plan : **docs/SYMMETRY_SHARING.md**.
+Décision user : tuer le scaling (montée sur archi incomplète = sans intérêt), implémenter le
+partage par symétrie MAINTENANT, tester ASAP en **Elo réel** (le proxy ment, B4). Phases :
+1 = antisym COULEUR (17M→8.5M, ×2 data) → 2 = rotation 180° → 3 = réflexion + translation.
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
