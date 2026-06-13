@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/ccx33-0223-transfold-loop/artefacts.src/cumulative.jnnw
+  200000 records  (0.01s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation] : 1,197,567 distinct weights (17M -> 1,197,567, 14.20x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0223-transfold-loop/artefacts.src/feat0
+  extras shape (200000, 106)  (mean mob b/w=10.6/10.7)
+target=wdl  pos=67114 neg=65352 zero=67534 (33.8% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=67114 draw=67534 loss=65352 (33.8% draws)
+phase : piece-count mean=19.7  wmg mean=0.492
+split : train=180000 val=20000
+prune : keep 129,971 buckets (>= 1 visits) -> 259,944 pattern cols vs 34,012,224  (130.8× fewer); train fallback=0.000%
+design : 260156 columns (2×129972 pat + 2×106 ext)
+L-BFGS  l2=0.03  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.621703  iters=94  (12.72s)
+val   : mse=0.766556  sign_acc=0.2447
+quant : scale=1000  pat range=[-26,26] ext_mg range=[-292,288]
+wrote /root/jass/jobs/results/ccx33-0223-transfold-loop/artefacts.src/gen0.pjtw  (v3, 34012436 weights, 136049764 bytes)

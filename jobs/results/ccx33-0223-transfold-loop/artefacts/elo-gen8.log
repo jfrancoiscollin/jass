@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/ccx33-0223-transfold-loop/artefacts.src/gen8.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 9, threads 8, movetime_ms 0, 1080 games
+Result: SCAN_EVAL=788 NNUE=280 Draws=12 (total 1080)
+SCAN_EVAL score rate vs NNUE: 0.735185
