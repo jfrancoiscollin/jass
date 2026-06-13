@@ -171,6 +171,20 @@ Tooling : `tools/bucket_coverage.py <selfplay.jnnw>` (accumulation + Chao1 + Goo
 + extrapolation Poisson ; lit le nb d'enregistrements par TAILLE de fichier → marche
 sur shards en cours).
 
+**Élagage = remap dense COLLISION-FREE (validé 2026-06-13, `tools/bucket_census.py`).**
+Comme ~16M buckets sont fantômes, on peut élaguer vers une table dense (occurrent →
+slot 1..K, jamais-vu → slot 0 fallback). Sur 1.08M positions de census :
+- min-visits=1 → **K=751 872 (×22.6 plus petit)**, .pjtw 136MB→6MB, design train 34M→1.5M
+  colonnes, **taux de fallback hold-out = 0.62 %** des activations (→ quasi sans perte ;
+  les buckets fantômes valent ≈0 de toute façon) ;
+- min-visits=2 (drop singletons bruit) → K=537k (×31.6), fallback 1.16 %.
+⚠️ CE N'EST PAS le bucket-hashing LOSSY de 0190 (collisions rares→communs, casse la
+profondeur, cimetière) : ici zéro collision sur l'ensemble gardé. Gain = EFFICACITÉ
+(train ×~22 moins cher → plus de data/gens), PAS de la force en soi. Le levier force =
+**partage de poids par symétrie** (Piste 3, à implémenter : ~×4-8 data/poids). Dérive :
+re-census tous les N gens ou dimensionner K avec marge (le fallback grandit sinon).
+**Séquencement : on branche l'élagage APRÈS le verdict volume (0210/0211).**
+
 **Décision (2026-06-13) :** on TUE les deux boucles mt100 starvées (300k/gen ne peut
 que reproduire la famine) et on lance la famine en test direct sur les DEUX box, en
 boucles à **corpus CUMULÉ** (gen_g s'entraîne sur l'union de tout le self-play) :
