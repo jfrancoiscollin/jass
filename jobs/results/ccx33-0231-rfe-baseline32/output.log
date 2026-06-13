@@ -1,0 +1,57 @@
+geometry: NUM_PATTERNS set to 32 (32 patterns)
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2) --full-fold ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat0
+  gen0 proxy=0.4071  Elo_vs_hc=122-4-144 elo=-28.4
+=== gen1 : +300000 self-play depth4 avec gen0 → cumulé → logistic(--prune --full-fold) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat1
+  gen1 proxy=0.4565  Elo_vs_hc=182-8-80 elo=+138.1
+=== gen2 : +300000 self-play depth4 avec gen1 → cumulé → logistic(--prune --full-fold) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat2
+  gen2 proxy=0.4632  Elo_vs_hc=195-2-73 elo=+169.2
+=== gen3 : +300000 self-play depth4 avec gen2 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat3
+  gen3 proxy=0.4597  Elo_vs_hc=194-10-66 elo=+179.0
+=== gen4 : +300000 self-play depth4 avec gen3 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat4
+  gen4 proxy=0.4659  Elo_vs_hc=187-7-76 elo=+151.8
+=== gen5 : +300000 self-play depth4 avec gen4 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1700000
+wrote 1700000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat5
+  gen5 proxy=0.4775  Elo_vs_hc=198-2-70 elo=+179.0
+=== gen6 : +300000 self-play depth4 avec gen5 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2000000
+wrote 2000000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat6
+  gen6 proxy=0.4771  Elo_vs_hc=187-3-80 elo=+145.7
+=== gen7 : +300000 self-play depth4 avec gen6 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2300000
+wrote 2300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat7
+  gen7 proxy=0.4694  Elo_vs_hc=183-5-82 elo=+136.6
+=== gen8 : +300000 self-play depth4 avec gen7 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2600000
+wrote 2600000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0231-rfe-baseline32/artefacts.src/feat8
+  gen8 proxy=0.4707  Elo_vs_hc=198-5-67 elo=+184.1
+=== gen8 vs hc précis (60 paires) ===
+  735-28-317 elo=+141.9
+=== VITESSE eval : knps(pattern) vs knps(hc), movetime=1000ms (indépendant machine) ===
+  pattern knps=2328.29  hc knps=3563.08  ratio=0.653  depth@1s=20
+
+==========================================================
+   ccx33-0231 — RFE BRAS TÉMOIN 32-PAT — TRAJECTOIRE Elo + VITESSE
+  gen0  Elo_vs_hc=122-4-144 elo=-28.4  proxy=0.4071
+  gen1  Elo_vs_hc=182-8-80 elo=+138.1  proxy=0.4565
+  gen2  Elo_vs_hc=195-2-73 elo=+169.2  proxy=0.4632
+  gen3  Elo_vs_hc=194-10-66 elo=+179.0  proxy=0.4597
+  gen4  Elo_vs_hc=187-7-76 elo=+151.8  proxy=0.4659
+  gen5  Elo_vs_hc=198-2-70 elo=+179.0  proxy=0.4775
+  gen6  Elo_vs_hc=187-3-80 elo=+145.7  proxy=0.4771
+  gen7  Elo_vs_hc=183-5-82 elo=+136.6  proxy=0.4694
+  gen8  Elo_vs_hc=198-5-67 elo=+184.1  proxy=0.4707
+  gen8 (60p) : 735-28-317 elo=+141.9
+  SPEED 32-pat : pattern/hc knps ratio=0.653  depth@1s=20
+  → comparer à cpx62-0232 (24-pat élagué) : ΔElo = coût du prune, Δratio = gain vitesse
+==========================================================
