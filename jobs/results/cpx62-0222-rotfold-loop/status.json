@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0222-rotfold-loop",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-13T15:49:08+00:00",
+  "ended_at": "2026-06-13T16:34:34+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 2247705
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src"
 }

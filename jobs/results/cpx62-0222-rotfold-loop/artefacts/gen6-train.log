@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/cumulative.jnnw
+  2000000 records  (0.11s)
+extracting pattern indices (men only)
+sym-fold [color+rot] : 4,916,203 distinct weights (17M -> 4,916,203, 3.46x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/feat6
+  extras shape (2000000, 106)  (mean mob b/w=12.3/12.2)
+target=wdl  pos=693189 neg=677845 zero=628966 (31.4% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=693189 draw=628966 loss=677845 (31.4% draws)
+phase : piece-count mean=19.9  wmg mean=0.497
+split : train=1800000 val=200000
+prune : keep 612,520 buckets (>= 1 visits) -> 1,225,042 pattern cols vs 34,012,224  (27.8× fewer); train fallback=0.000%
+design : 1225254 columns (2×612521 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.589306  iters=200  (141.23s)
+val   : mse=1.168635  sign_acc=0.2829
+quant : scale=1000  pat range=[-199,199] ext_mg range=[-717,758]
+wrote /root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/gen6.pjtw  (v3, 34012436 weights, 136049764 bytes)
