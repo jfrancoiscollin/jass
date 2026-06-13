@@ -131,7 +131,7 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **gap absolu** | 📍 énorme | gen5 vs Scan d9 = **0/1080** | 0216 | encore très loin de Scan → scaler longtemps |
 | **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
 | **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
-| **3·C1** partage de poids par symétrie ⭐ | 🟢📍 CHEMIN ACTIF | A/B Elo : full-fold > men-only ? | **0220-0224 en cours ; LR-close 0225/0226 prêt** | scaler l'archi montée vers Scan |
+| **3·C1** partage de poids par symétrie ⭐ | 🟢 VALIDÉ (modeste) | A/B Elo précis : **trans +177 · full +175 vs men-only +148** (2 folds lourds concordent → +30 RÉEL ; color/rot nuls) | 0220-0227 (depth4, 2.6M) | scaler data+profondeur AVEC full-fold ; déployer LR-close ; optimiser géométrie |
 | **3·C2** non-linéaire | 🔒 DÉPRIORISÉ | seulement si la symétrie+linéaire plafonne en Elo | — | ne pas pivoter avant |
 | **3·C3** Scan-prof (fallback) | 🔵 | teacher-free plafonne sous Scan | — | abandonner l'indépendance |
 | **4** indépendance | 🔵 décision | — | humain | trancher le requirement |
