@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0229-lrclosed-fullfold-d4",
-  "snapshot_at": "2026-06-13T19:41:55+00:00",
+  "snapshot_at": "2026-06-13T19:47:05+00:00",
   "started_at": "2026-06-13T18:48:36+00:00",
-  "elapsed_seconds": 3199,
+  "elapsed_seconds": 3509,
   "artefacts": [
     {
       "name": "build.log",
@@ -47,6 +47,10 @@
     {
       "name": "elo-gen7.log",
       "size_bytes": 279
+    },
+    {
+      "name": "elo-gen8.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -150,7 +154,11 @@
     },
     {
       "name": "gen8-train.log",
-      "size_bytes": 0
+      "size_bytes": 1159
+    },
+    {
+      "name": "gen8.pjtw",
+      "size_bytes": 229583380
     },
     {
       "name": "sp0-1.log",
@@ -441,5 +449,5 @@
       "size_bytes": 1449
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1132686 3290763       01:36  218 30.3 python3\n3290761       1       53:19  0.0  0.0 bash\n3290763 3290761       53:19  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1374925 3290763       00:16  0.0  0.0 bash\n1374927 1374925       00:16  504  0.8 jass\n3290761       1       58:29  0.0  0.0 bash\n3290763 3290761       58:29  0.0  0.0 bash\n"
 }
