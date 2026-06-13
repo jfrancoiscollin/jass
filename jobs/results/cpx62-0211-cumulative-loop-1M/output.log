@@ -1,0 +1,39 @@
+tests OK
+=== gen0 : seed matériel (200k self-play embarqué, l2=3e-2) ===
+appended 200000 cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat0
+  gen0 proxy = 0.4056  [n=200000 coverage=405620 (2.385%) ≤2visites=48%des_touchés]
+=== gen1 : +1M self-play @depth4 avec gen0 → corpus cumulé → logistic ===
+appended 1000000 cumulative 1200000
+wrote 1200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat1
+  gen1 proxy = 0.4403  [n=1200000 coverage=843365 (4.959%) ≤2visites=40%des_touchés]
+=== gen2 : +1M self-play @depth4 avec gen1 → corpus cumulé → logistic ===
+appended 1000000 cumulative 2200000
+wrote 2200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat2
+  gen2 proxy = 0.4378  [n=2200000 coverage=1038114 (6.104%) ≤2visites=37%des_touchés]
+=== gen3 : +1M self-play @depth4 avec gen2 → corpus cumulé → logistic ===
+appended 1000000 cumulative 3200000
+wrote 3200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat3
+  gen3 proxy = 0.4434  [n=3200000 coverage=1173829 (6.902%) ≤2visites=35%des_touchés]
+=== gen4 : +1M self-play @depth4 avec gen3 → corpus cumulé → logistic ===
+appended 1000000 cumulative 4200000
+wrote 4200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat4
+  gen4 proxy = 0.4418  [n=4200000 coverage=1253009 (7.368%) ≤2visites=34%des_touchés]
+=== gen5 : +1M self-play @depth4 avec gen4 → corpus cumulé → logistic ===
+appended 1000000 cumulative 5200000
+wrote 5200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0211-cumulative-loop-1M/artefacts.src/feat5
+  gen5 proxy = 0.4494  [n=5200000 coverage=1325666 (7.795%) ≤2visites=33%des_touchés]
+
+==========================================================
+   cpx62-0211 — BOUCLE WDL à CORPUS CUMULÉ (1M/gen) — VERDICT
+  COURBE proxy (Spearman vs Scan-d10, set fixe 50k) :
+    gen0 = 0.4056
+    gen1 = 0.4403
+    gen2 = 0.4378
+    gen3 = 0.4434
+    gen4 = 0.4418
+    gen5 = 0.4494
+  RAPPEL : 0205b (300k FRAIS/gen, mt30) = PLAT ~0.41 ; eval compétent ~0.64-0.67.
+  → proxy MONTE en cumulant = FAMINE confirmée + l'ACCUMULATION/VOLUME est le fix.
+  → proxy plat malgré 5M cumulés = la famine n'est pas le mur → Nœud 2ter·B3/B4.
+==========================================================
