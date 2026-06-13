@@ -297,10 +297,21 @@ def main():
     ap.add_argument("--lr-close", action="store_true",
                     help="close the set under {rot180, LR} so reflection folds ALL "
                          "patterns (32->54). Names get _r/_l/_rl tags.")
+    ap.add_argument("--drop", default="",
+                    help="comma-separated pattern NAMES to remove (RFE geometry "
+                         "pruning, e.g. anti_0,sq_3); validated against the built set")
     args = ap.parse_args()
     pats = build(args.variant)
     if args.lr_close:
         pats = lr_close(pats)
+    if args.drop:
+        drop = {x.strip() for x in args.drop.split(",") if x.strip()}
+        have = {nm for _, nm in pats}
+        missing = drop - have
+        if missing:
+            sys.exit(f"--drop: unknown pattern name(s): {sorted(missing)}")
+        pats = [(s, nm) for s, nm in pats if nm not in drop]
+        print(f"dropped {len(drop)} patterns {sorted(drop)} -> {len(pats)} remain")
     n = len(pats)
     by = {}
     for _, nm in pats:
