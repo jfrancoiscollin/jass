@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0220-menonly-loop",
-  "snapshot_at": "2026-06-13T14:55:16+00:00",
+  "snapshot_at": "2026-06-13T15:00:20+00:00",
   "started_at": "2026-06-13T14:04:15+00:00",
-  "elapsed_seconds": 3061,
+  "elapsed_seconds": 3365,
   "artefacts": [
     {
       "name": "build.log",
@@ -449,5 +449,5 @@
       "size_bytes": 1380
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1848263       1       51:01  0.0  0.0 bash\n1848265 1848263       51:01  0.0  0.0 bash\n3886845 1848265       00:14  0.0  0.0 bash\n3886847 3886845       00:14  472  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1848263       1       56:05  0.0  0.0 bash\n1848265 1848263       56:05  0.0  0.0 bash\n4147138 1848265       03:03  0.0  0.0 bash\n4147140 4147138       03:03  691  0.6 jass\n"
 }
