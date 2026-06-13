@@ -7,7 +7,8 @@
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
 > Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](ARBRE_DECISION.md).
 >
-> Mise à jour : **2026-06-12** (après 0202 ; lance 0203 = boucle WDL itérée).
+> Mise à jour : **2026-06-13** (après 0234 ; géométrie close ; 0235 ancre Scan
+> réelle + 0236 plafond distillation **en vol** — trancheront label- vs class-limited).
 
 ---
 
@@ -92,6 +93,12 @@ recherche » ≈ 2 plies est mineure).
 | 0203 | boucle WDL itérée depuis seed faible | 0→0→0.167→**0.25** vs v15 — *semblait* monter, mais ⚠️ benches 18 parties (bruit) |
 | 0204 | continuation (gen4→7) **+ replay buffer** | ⚠️ **retombe ~0.06** : le 0.25 NON reproduit. Confondu : buffer (ancre au passé) + bruit 18 parties. **Nœud 1 non tranché** |
 | 0205 | re-test PROPRE : boucle SANS buffer, +gens, benches ~54 parties | *à lancer* — la boucle monte-t-elle vraiment, mesurée correctement ? |
+| 0227 | boucle full-fold itérée (8 gens, sym complet, 17M→1M) | **+175 vs hc** (gen8) — meilleur de la classe linéaire via la boucle (vs hc) |
+| 0230 | pattern_importance (std·\|corr\| + redondance) sur full-fold | **importance UNIFORME** : aucun pattern mort, redondance ≤0.40 |
+| 0231 | RFE bras témoin 32-pat (réplique 0227) | **+142 vs hc** (60p) ; vitesse knps/hc=0.653 ; reproduit 0227 |
+| 0234 | RFE bras élagué 24-pat (drop-8, reset-proof) | **+110 vs hc** = **−31 Elo** et **0 vitesse** (0.648) → élaguer = lose-lose |
+| 0235 | **ancre Scan réelle** (full-fold gen8, d9 + mt1s, no bb) | *en vol* — l'écart absolu qui manquait depuis toujours |
+| 0236 | **plafond distillation** (full-fold sur 1M labels Scan-d10) | *en vol* — tranche label-limited vs class-limited |
 
 ---
 
@@ -432,6 +439,43 @@ Détaillé en [§3](#3-index-des-jobs-récents) et dans
 était flatté) ; **deep-relabel d12 = 0.306** (levier confirmé, teacher-free) ;
 **0201 : l'eval est le gap** (la recherche est complète, la vitesse secondaire).
 
+### Phase 11 — Symétrie full-fold & CLÔTURE de la géométrie (0203-0236)
+**Le pli full-fold.** Fermer le jeu de patterns sous {couleur, rot180, translation,
+réflexion} et lier les poids → **17M → 1M poids distincts (17×)**, sans nouveau
+paramètre libre (que des lookups en plus). Boucle self-play WDL itérée (8 gens,
+self-play depth4, 300k/gen, cumulé, `logistic --prune --full-fold`) → **+175 vs hc**
+(`0227` gen8), reproduit **+142** (`0231`, 60 paires). ⚠ **vs hc seulement** (faible,
+cf. la leçon de mesure de la phase 10) — **pas encore ancré à Scan** (`0235` en vol).
+
+**Géométrie close — 3 angles convergents, c'est un levier mort :**
+- **(a) enrichir ne paie pas** — 54-pat LR-closed = **+134 < +175** du 32-pat ;
+  v5/v6/v7 (phases antérieures) idem. Plus/mieux de patterns ≠ plus de force.
+- **(b) importance UNIFORME** (`0230`) — les 32 patterns ont std 30-54, corr_ref
+  vs Scan minuscule (0.02-0.04), redondance ≤ 0.40. Aucun pattern mort, aucun doublon.
+- **(c) élaguer = LOSE-LOSE** (`0231` vs `0234`, RFE drop-8 reset-proof) — retirer
+  les 8 patterns les moins importants **coûte −31 Elo** (+142 → +110) **ET ne gagne
+  AUCUNE vitesse** (knps pattern/hc 0.653 → 0.648, depth@1s 20 → 19.4). Donc la
+  lenteur d'eval n'est **pas** dans les lookups de patterns mais dans les **106
+  extras Scan-style + l'overhead de recherche** — l'élagage ne l'attaque même pas.
+
+**Signature data-limited (re-confirmée).** Le proxy vs Scan **plafonne ~0.47** sur
+TOUTE la trajectoire self-play (gen1 0.456 → gen8 0.471, quasi plat) alors que l'Elo
+vs hc, lui, bouge → vs Scan on n'apprend quasiment plus. Couplé à la **sparsité 90×**
+des buckets (187k utilisés / 17M) : on ne remplit pas la capacité qu'on a déjà. Cohérent
+avec deep-d12 0.306 ≫ WDL 0.22 (phase 10). **Hypothèse de travail : data/label-limited,
+pas geometry-limited** — la classe additive-sur-patterns est la *bonne* (celle de Scan).
+
+**Outillage durable :** géométrie **reset-proof** via `JASS_PATTERNS_DIR` (copie hors
+du tree git ; le runner reset le tree vers main en cours de job et révertait sinon la
+géométrie émise au démarrage — bug qui a tué `0232`) ; `tools/pattern_importance.py`
+(std·|corr| + redondance) ; `gen_patterns.py --drop` ; métrique vitesse knps(pattern)/knps(hc),
+indépendante de la machine.
+
+**En vol (à trancher) :** `0235` = ancre **réelle vs Scan** (depth9 = qualité d'eval
+pure, mt1s = force réelle, sans bitbases) ; `0236` = **plafond de distillation** (full-fold
+entraîné sur 1.0M labels Scan-d10). Lecture : plafond ≫ 0.47 ⇒ **label-limited** (recette =
+distiller Scan / labels profonds) ; plafond ~ 0.5 ⇒ **class-limited** (éval non-linéaire requise).
+
 ### Lignée des modèles
 | Nom | Job | Données / labeller | Archi | Résultat phare |
 |---|---|---|---|---|
@@ -448,6 +492,7 @@ Détaillé en [§3](#3-index-des-jobs-récents) et dans
 | **champion** | 0141/0170 | master+**Scan-d10**, score-drop | 32 patterns+106 extras | 0.39 vs v15 d9 / 0.38-0.42 mt ; **0 vs Scan** |
 | géométrie v6 | 0166/0186 | diagonale dense | 40 patterns | d9=0.556 (bat v15 fixe) mais **se dégrade en profondeur** |
 | deep-d12 | 0200 | self-play, **relabel d12 teacher-free** | archi champion | 0.306 vs v15 |
+| **full-fold** | 0227/0231 | self-play WDL **itéré** (8 gens d4), pli sym complet | 32 patterns+106 extras (17M→1M poids) | **+175 / +142 vs hc** (gen8) ; **vs Scan non encore ancré** (0235) |
 
 ### Impasses (raison en une ligne)
 - **Corpus 10M** — gelé, €700+ pour +30-80 ELO vs un déficit −800.
@@ -457,6 +502,9 @@ Détaillé en [§3](#3-index-des-jobs-récents) et dans
 - **Pattern standalone (5 variants)** — doit augmenter, pas remplacer (0118-0127).
 - **TD-leaf d'une eval faible** — s'effondre 0.056 ; méthode ≠ levier (0149).
 - **Plus de data / teacher plus profond** — neutre une fois labels propres (4.7M≈1.4M, d16≈d10).
+- **Géométrie comme levier** — close sous 3 angles (0230/0231/0234) : enrichir ne paie
+  pas (54-pat +134 < 32-pat +175), importance uniforme (aucun gras), **élaguer = −31 Elo
+  ET 0 vitesse** (la lenteur d'eval est dans les 106 extras, pas les lookups patterns).
 - **Extras structurels** (0172), **augmentation symétrie** (0185, 0.42→0.28),
   **filtre quiet** (post-score-drop) — **nuisent**.
 - **Self-distillation itérée** — dérive ; **WDL self-play** — toxique.
