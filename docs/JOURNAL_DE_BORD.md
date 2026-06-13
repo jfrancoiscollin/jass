@@ -233,6 +233,24 @@ sont PAS le mur ~0.46**. Ne PAS investir l'intégration C++ king-pattern. Toggle
 `train.py --king-patterns`. → reste le levier non testé : **PROFONDEUR de jeu** (les deux
 boucles murées jouaient en depth4 → labels WDL faibles ; aucun changement de code requis).
 
+**VERDICT B4 (0216, 2026-06-13) — LE « MUR 0.46 » EST UN ARTEFACT DU PROXY. 🎯**
+Parties RÉELLES (1440 parties, CI serrés) des evals de la boucle mt30 (0214) :
+- gen0 (seed) vs handcrafted : 659-41-740 → **Elo −20** [−37,−2]
+- gen5 vs handcrafted        : 830-26-584 → **Elo +60** [+42,+78]
+⇒ la boucle a gagné **+80 Elo RÉELS** (gen0→gen5), CI DISJOINTS = significatif, ALORS
+QUE le proxy stagnait (0.40→0.43). **Le proxy SOUS-LIT massivement la force réelle.** On
+n'était PAS muré : l'eval continue de se renforcer pendant que l'accord-score-vs-Scan-d10
+plafonne. Tous les « murs » (data/rois/profondeur) étaient mesurés AU PROXY → trompeurs.
+Revers : gen5 vs **Scan** d9 = **0/1080** (perd TOUT) → on est encore ÉNORME ément loin de
+Scan en absolu ; +80 Elo = vrai progrès mais goutte d'eau vs l'écart à Scan.
+**Conséquences (réorientation) :**
+1. **RETIRER le proxy comme métrique primaire** (cause de tous les faux murs). Mesurer en
+   **Elo réel** : adversaire commun pas cher (hc) + SPRT périodique vs Scan (tools/sprt_elo.py).
+2. **La recette COMPOUNDE en force réelle** → reprendre le SCALING de la boucle WDL (data +
+   itérations), train --prune (pas cher) + pooling 2-box.
+3. **Réévaluer la PROFONDEUR en Elo** (le verdict « depth pire » était au proxy ; mt30/60
+   sont peut-être PLUS forts en parties malgré un proxy plus bas).
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
