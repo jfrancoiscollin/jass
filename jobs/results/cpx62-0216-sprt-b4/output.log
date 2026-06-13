@@ -1,0 +1,25 @@
+B4 : SEED=gen0  BEST=gen5
+=== (1) gen0 vs hc  &  gen5 vs hc  (depth 9, 80 pairs, 8 threads) ===
+  gen0  vs hc : W=659 D=41 L=740
+    games=1440  W=659 D=41 L=740
+    score=0.4719  95%CI=[0.4465, 0.4973]
+    elo=-19.6  95%CI=[-37.3, -1.9]
+  gen5 vs hc : W=830 D=26 L=584
+    games=1440  W=830 D=26 L=584
+    score=0.5854  95%CI=[0.5602, 0.6106]
+    elo=+59.9  95%CI=[+42.0, +78.2]
+=== (2) gen5 vs Scan (best-effort, equal depth 9) ===
+  gen5 vs Scan : W=0 D=0 L=1080
+    games=1080  W=0 D=0 L=1080
+    score=0.0000  95%CI=[0.0000, 0.0000]
+    elo=-3600.0  95%CI=[-3600.0, -3600.0]
+
+==========================================================
+   cpx62-0216 — B4 : le mur ~0.46 est-il RÉEL ?  (parties réelles)
+  Elo RÉEL gagné par la boucle (gen0→gen5, vs hc commun) :
+    gen0  vs hc : 659-41-740   |   gen5 vs hc : 830-26-584
+  → si gen5 ≫ gen0 en Elo alors que le proxy bouge peu (0.40→0.46) :
+    le PROXY SOUS-LIT la force → on n'est PAS muré → SCALER (data+profondeur+2-box).
+  → si gen5 ≈ gen0 : pas de gain réel → mur RÉEL → Nœud 3 (géométrie/FM/non-lin).
+  (2) écart absolu à Scan ci-dessus = à combien d'Elo on est de la cible.
+==========================================================
