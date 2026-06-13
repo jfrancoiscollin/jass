@@ -220,6 +220,19 @@ barrière en LISANT origin/main que le runner rafraîchit → zéro op git côt�
 contention), fusion + train --prune. Limite boucle ITÉRÉE 2-box : transporter l'eval
 entre gens (136MB>95MB cap → format dense C++ ~6MB, ou object store).
 
+**Harnais 2-box PROUVÉ (cpx62-0213, 2026-06-13) :** corpus de **3M fusionné des DEUX box**
+(CPX62 2M@16c + CCX33 1M@8c) via git ; barrière (lecture origin/main) résolue en 60s ;
+train --prune 176s ; total ~7 min. Couverture firmée : occurrent **≥1.25M** (95 % à ~7M
+positions). → on peut cumuler la puissance des deux box pour UN jeu de données.
+
+**B3 king-aware patterns = NEUTRE (A/B 2026-06-13).** Patterns piece-presence (men|kings)
+vs men-only sur 1.2M, même split, --prune : val_mse 1.088 (men) vs 1.097 (king-aware,
+LÉGÈREMENT pire), sign_acc +0.0007 (bruit). Aucun gain. 3 signaux convergents : rois
+DÉJÀ dans l'eval (PST+mobilité), 0145 neutre, et cet A/B pattern neutre ⇒ **les rois ne
+sont PAS le mur ~0.46**. Ne PAS investir l'intégration C++ king-pattern. Toggle dispo :
+`train.py --king-patterns`. → reste le levier non testé : **PROFONDEUR de jeu** (les deux
+boucles murées jouaient en depth4 → labels WDL faibles ; aucun changement de code requis).
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
