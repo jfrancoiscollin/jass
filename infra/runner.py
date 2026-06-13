@@ -49,7 +49,12 @@ REPO_DIR    = Path("/root/jass")
 QUEUE_DIR   = REPO_DIR / "jobs" / "queue"
 RESULTS_DIR = REPO_DIR / "jobs" / "results"
 STATE_DIR   = REPO_DIR / "jobs" / "state"
-IN_FLIGHT   = STATE_DIR / "in-flight.json"
+# Per-host in-flight file: each host tracks ONLY its own running job. This is
+# what makes concurrent multi-host operation safe — a host never sees (and so
+# never wrongly reaps as "failed") another host's in-flight job. Legacy global
+# `in-flight.json` is ignored by this code; migrate it to the per-host name when
+# upgrading a host that has a job running.
+IN_FLIGHT   = STATE_DIR / f"in-flight-{socket.gethostname()}.json"
 KILL_FLAG   = STATE_DIR / "kill-in-flight"
 
 MAX_LOG_BYTES       = 1_000_000   # tail kept in jobs/results/<id>/output.log
