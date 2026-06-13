@@ -1,0 +1,54 @@
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2) --full-fold ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat0
+  gen0 proxy=0.4116  Elo_vs_hc=128-7-135 elo=-9.0
+=== gen1 : +300000 self-play depth4 avec gen0 → cumulé → logistic(--prune --full-fold) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat1
+  gen1 proxy=0.4313  Elo_vs_hc=148-5-117 elo=+40.1
+=== gen2 : +300000 self-play depth4 avec gen1 → cumulé → logistic(--prune --full-fold) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat2
+  gen2 proxy=0.4465  Elo_vs_hc=173-5-92 elo=+107.5
+=== gen3 : +300000 self-play depth4 avec gen2 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat3
+  gen3 proxy=0.4468  Elo_vs_hc=173-1-96 elo=+101.9
+=== gen4 : +300000 self-play depth4 avec gen3 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat4
+  gen4 proxy=0.4408  Elo_vs_hc=183-0-87 elo=+129.2
+=== gen5 : +300000 self-play depth4 avec gen4 → cumulé → logistic(--prune --full-fold) ===
+cumulative 1700000
+wrote 1700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat5
+  gen5 proxy=0.4409  Elo_vs_hc=189-3-78 elo=+151.8
+=== gen6 : +300000 self-play depth4 avec gen5 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2000000
+wrote 2000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat6
+  gen6 proxy=0.4463  Elo_vs_hc=207-2-61 elo=+210.3
+=== gen7 : +300000 self-play depth4 avec gen6 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2300000
+wrote 2300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat7
+  gen7 proxy=0.4542  Elo_vs_hc=189-3-78 elo=+151.8
+=== gen8 : +300000 self-play depth4 avec gen7 → cumulé → logistic(--prune --full-fold) ===
+cumulative 2600000
+wrote 2600000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/feat8
+  gen8 proxy=0.4479  Elo_vs_hc=193-3-74 elo=+164.4
+=== gen8 vs hc précis (60 paires) ===
+  738-6-336 elo=+135.8
+
+==========================================================
+   cpx62-0219 — SYM FULL-FOLD — TRAJECTOIRE Elo
+  gen :  Elo_vs_hc  |  proxy
+   0 : 128-7-135 elo=-9.0   |  0.4116
+   1 : 148-5-117 elo=+40.1   |  0.4313
+   2 : 173-5-92 elo=+107.5   |  0.4465
+   3 : 173-1-96 elo=+101.9   |  0.4468
+   4 : 183-0-87 elo=+129.2   |  0.4408
+   5 : 189-3-78 elo=+151.8   |  0.4409
+   6 : 207-2-61 elo=+210.3   |  0.4463
+   7 : 189-3-78 elo=+151.8   |  0.4542
+   8 : 193-3-74 elo=+164.4   |  0.4479
+  → compare ccx33-0220 (men-only) : COLOR-FOLD monte-t-il PLUS HAUT en Elo ?
+    si oui → la 1re brique de symétrie aide → Phase 2 (rotation 180°).
+==========================================================
