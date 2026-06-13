@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0211-cumulative-loop-1M",
-  "snapshot_at": "2026-06-13T07:43:03+00:00",
+  "snapshot_at": "2026-06-13T07:49:03+00:00",
   "started_at": "2026-06-13T07:26:03+00:00",
-  "elapsed_seconds": 1020,
+  "elapsed_seconds": 1380,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 45600008
+      "size_bytes": 83600008
     },
     {
       "name": "feat0",
@@ -23,6 +23,10 @@
     {
       "name": "feat1",
       "size_bytes": 508800012
+    },
+    {
+      "name": "feat2",
+      "size_bytes": 932800012
     },
     {
       "name": "gen0-train.log",
@@ -39,6 +43,10 @@
     {
       "name": "gen1.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "gen2-train.log",
+      "size_bytes": 0
     },
     {
       "name": "sp0-1.log",
@@ -169,9 +177,73 @@
       "size_bytes": 2162
     },
     {
+      "name": "sp2-1.log",
+      "size_bytes": 2117
+    },
+    {
+      "name": "sp2-10.log",
+      "size_bytes": 2120
+    },
+    {
+      "name": "sp2-11.log",
+      "size_bytes": 2120
+    },
+    {
+      "name": "sp2-12.log",
+      "size_bytes": 2120
+    },
+    {
+      "name": "sp2-13.log",
+      "size_bytes": 2120
+    },
+    {
+      "name": "sp2-14.log",
+      "size_bytes": 2165
+    },
+    {
+      "name": "sp2-15.log",
+      "size_bytes": 2119
+    },
+    {
+      "name": "sp2-16.log",
+      "size_bytes": 2120
+    },
+    {
+      "name": "sp2-2.log",
+      "size_bytes": 2163
+    },
+    {
+      "name": "sp2-3.log",
+      "size_bytes": 2117
+    },
+    {
+      "name": "sp2-4.log",
+      "size_bytes": 2163
+    },
+    {
+      "name": "sp2-5.log",
+      "size_bytes": 2118
+    },
+    {
+      "name": "sp2-6.log",
+      "size_bytes": 2118
+    },
+    {
+      "name": "sp2-7.log",
+      "size_bytes": 2117
+    },
+    {
+      "name": "sp2-8.log",
+      "size_bytes": 2118
+    },
+    {
+      "name": "sp2-9.log",
+      "size_bytes": 2117
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1       17:00  0.0  0.0 bash\n  14991   14990       17:00  0.0  0.0 bash\n  15888   14991       00:02  0.0  0.0 bash\n  15889   15888       00:02  114  1.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1       23:00  0.0  0.0 bash\n  14991   14990       23:00  0.0  0.0 bash\n  16012   14991       02:26  232 32.0 python3\n"
 }
