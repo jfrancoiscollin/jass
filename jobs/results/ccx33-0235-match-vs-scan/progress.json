@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0235-match-vs-scan",
-  "snapshot_at": "2026-06-13T22:22:42+00:00",
+  "snapshot_at": "2026-06-13T22:27:54+00:00",
   "started_at": "2026-06-13T22:17:25+00:00",
-  "elapsed_seconds": 317,
+  "elapsed_seconds": 629,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,12 +14,16 @@
     },
     {
       "name": "match-d9.log",
-      "size_bytes": 32970
+      "size_bytes": 41290
+    },
+    {
+      "name": "match-mt1000.log",
+      "size_bytes": 0
     },
     {
       "name": "smoke.log",
       "size_bytes": 3763
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1429425       1       05:16  0.0  0.0 bash\n1429427 1429425       05:16  0.0  0.0 bash\n1429850 1429427       04:51 10.8  0.0 python3\n1429851 1429427       04:51  0.0  0.0 tee\n1429852 1429427       04:51  0.0  0.0 tail\n1429855 1429850       04:51 50.9  0.4 jass\n1429857 1429850       04:51 38.7  0.9 scan_linux\n1429860 1429850       04:50  1.1  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1429425       1       10:28  0.0  0.0 bash\n1429427 1429425       10:28  0.0  0.0 bash\n1429983 1429427       04:50  0.0  0.0 python3\n1429984 1429427       04:50  0.0  0.0 tee\n1429985 1429427       04:50  0.0  0.0 tail\n1429988 1429983       04:50  0.0  0.4 jass\n1429990 1429983       04:50 99.9  0.9 scan_linux\n1429993 1429983       04:50  0.0  0.0 jass\n"
 }
