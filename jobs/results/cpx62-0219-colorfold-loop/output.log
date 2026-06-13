@@ -1,0 +1,9 @@
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2) --color-fold ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0219-colorfold-loop/artefacts.src/feat0
+ABORT seed
+                [--scan-eval] [--eval-features-file EVAL_FEATURES_FILE]
+                [--anchor-weights ANCHOR_WEIGHTS] [--anchor-l2 ANCHOR_L2]
+                [--material-anchor MATERIAL_ANCHOR] [--man-pu MAN_PU]
+                [--king-pu KING_PU]
+train.py: error: unrecognized arguments: --color-fold
