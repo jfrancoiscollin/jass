@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0228-fullfold-mt30",
-  "snapshot_at": "2026-06-13T19:47:13+00:00",
+  "snapshot_at": "2026-06-13T19:52:46+00:00",
   "started_at": "2026-06-13T18:46:54+00:00",
-  "elapsed_seconds": 3619,
+  "elapsed_seconds": 3952,
   "artefacts": [
     {
       "name": "build.log",
@@ -737,5 +737,5 @@
       "size_bytes": 853
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 806558       1    01:00:18  0.0  0.0 bash\n 806560  806558    01:00:18  0.0  0.0 bash\n 943758  806560       00:39  0.0  0.0 bash\n 943760  943758       00:39  999  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 806558       1    01:05:51  0.0  0.0 bash\n 806560  806558    01:05:51  0.0  0.0 bash\n1453242  806560       04:31  0.0  0.0 bash\n1453244 1453242       04:31 1135  0.8 jass\n"
 }
