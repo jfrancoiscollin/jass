@@ -64,18 +64,45 @@ def build_sparse_X(cols: np.ndarray, n_features: int) -> sp.csr_matrix:
                          shape=(n, n_features), dtype=np.float64)
 
 
+CF_SIZE  = 12
+CF_HALF  = (3 ** CF_SIZE - 1) // 2          # 265720 = max |signed index|
+CF_BUCKETS = CF_HALF + 1                     # 265721 canonical buckets / pattern
+
+
+def colorfold_maps():
+    """Maps from the unsigned base-3 config index u (0..3^12-1, cell∈{0=empty,
+    1=black,2=white}) to its COLOUR-ANTISYMMETRIC canonical bucket and sign:
+      signed(u) = Σ_k sgn(cell_k)·3^k  with black→+1, white→-1, empty→0
+      U2C[u] = |signed(u)| ∈ [0, CF_HALF]   U2S[u] = ±1
+    A config and its colour-swap (black↔white) map to the SAME bucket with
+    opposite sign → one shared antisymmetric weight."""
+    n = 3 ** CF_SIZE
+    u = np.arange(n, dtype=np.int64)
+    tmp = u.copy(); signed = np.zeros(n, dtype=np.int64)
+    for k in range(CF_SIZE):
+        cell = tmp % 3; tmp //= 3
+        signed += np.where(cell == 1, 1, np.where(cell == 2, -1, 0)) * (3 ** k)
+    U2C = np.abs(signed).astype(np.int64)
+    U2S = np.where(signed >= 0, 1, -1).astype(np.int64)
+    return U2C, U2S
+
+
 def build_sparse_X_phased(cols: np.ndarray, wmg: np.ndarray, weg: np.ndarray,
-                          total_buckets: int) -> sp.csr_matrix:
+                          total_buckets: int,
+                          signs: np.ndarray | None = None) -> sp.csr_matrix:
     """Phase-split design matrix : 2× columns [mg block | eg block]. Each row
     has its NUM_PATTERNS buckets in the mg block (value wmg[i]) AND in the eg
     block at col+total_buckets (value weg[i]). prediction = wmg·(w_mg·φ) +
-    weg·(w_eg·φ) = the game-stage interpolation the C++ eval must reproduce."""
+    weg·(w_eg·φ) = the game-stage interpolation the C++ eval must reproduce.
+    `signs` (n, NUM_PATTERNS, ±1) multiplies the entries for --color-fold's
+    antisymmetric weights (default all +1)."""
     n, npp = cols.shape
     mg_idx = cols
     eg_idx = cols + total_buckets
     indices = np.concatenate([mg_idx, eg_idx], axis=1).reshape(-1)
-    mg_data = np.repeat(wmg[:, None], npp, axis=1)
-    eg_data = np.repeat(weg[:, None], npp, axis=1)
+    sg = np.ones((n, npp), dtype=np.float32) if signs is None else signs.astype(np.float32)
+    mg_data = np.repeat(wmg[:, None], npp, axis=1) * sg
+    eg_data = np.repeat(weg[:, None], npp, axis=1) * sg
     # float32 design matrix : halves memory (critical for multi-M datasets);
     # ample precision for a least-squares fit on cp-scale targets.
     data    = np.concatenate([mg_data, eg_data], axis=1).reshape(-1).astype(np.float32)
@@ -367,7 +394,20 @@ def train_scan_eval(args):
     else:
         print('extracting pattern indices (men only)')
         idx = patterns.extract_indices(ds.black_men, ds.white_men)
-    cols = patterns.flat_feature_columns(idx)
+    # cols/signs/PAT_BUCKETS depend on --color-fold (signed-canonical) vs default.
+    cf_U2C = cf_U2S = None
+    if getattr(args, 'color_fold', False):
+        cf_U2C, cf_U2S = colorfold_maps()
+        canon = cf_U2C[idx]                                         # (n,32) in [0,CF_HALF]
+        cf_signs = cf_U2S[idx].astype(np.float32)                  # (n,32) ±1
+        PAT_BUCKETS = CF_BUCKETS
+        cols = canon + (np.arange(patterns.NUM_PATTERNS, dtype=np.int64) * PAT_BUCKETS)[None, :]
+        print(f'color-fold : signed-canonical, {PAT_BUCKETS} buckets/pattern '
+              f'(17M -> {PAT_BUCKETS*patterns.NUM_PATTERNS:,}) ; antisymmetric weights')
+    else:
+        cf_signs = None
+        PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN
+        cols = patterns.flat_feature_columns(idx)
 
     print(f'loading raw extras {args.eval_features_file}')
     extras = load_feature_file(args.eval_features_file, ds.n_records,
@@ -451,7 +491,7 @@ def train_scan_eval(args):
     val_idx, tr_idx = perm[:n_val], perm[n_val:]
     print(f'split : train={len(tr_idx)} val={len(val_idx)}')
 
-    TB = patterns.TOTAL_BUCKETS
+    TB = PAT_BUCKETS * patterns.NUM_PATTERNS   # 17M (men-only) or 8.5M (--color-fold)
 
     # --- optional collision-free dense PRUNE of the pattern table ---------------
     # Build a remap bucket(0..TB) -> slot from the TRAIN split: occurring buckets
@@ -484,7 +524,8 @@ def train_scan_eval(args):
               f'train fallback={100*fb_tr:.3f}%')
 
     def build(sel):
-        xp = build_sparse_X_phased(dcols[sel], wmg[sel], weg[sel], PAT_N)
+        sg = cf_signs[sel] if cf_signs is not None else None
+        xp = build_sparse_X_phased(dcols[sel], wmg[sel], weg[sel], PAT_N, sg)
         xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
         return sp.hstack([xp, xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
 
@@ -559,18 +600,34 @@ def train_scan_eval(args):
     pat_eg_d = w_float[PAT_N:2 * PAT_N]
     ext_mg = quant(w_float[2 * PAT_N:2 * PAT_N + E])
     ext_eg = quant(w_float[2 * PAT_N + E:2 * PAT_N + 2 * E])
+    # (1) un-prune to the TRAINING-layout block (size TB : 8.5M if --color-fold else 17M).
     if remap is not None:
-        # scatter dense slots 1..K back to the full 17M layout; slot 0 (fallback)
-        # and every unseen bucket stay 0 — exactly the value a full-table fit
-        # leaves on never-activated columns. Output .pjtw is standard/playable.
-        full_mg = np.zeros(TB, dtype=w_float.dtype)
-        full_eg = np.zeros(TB, dtype=w_float.dtype)
+        canon_mg = np.zeros(TB, dtype=w_float.dtype)
+        canon_eg = np.zeros(TB, dtype=w_float.dtype)
         kept = np.flatnonzero(remap > 0)
-        full_mg[kept] = pat_mg_d[remap[kept]]
-        full_eg[kept] = pat_eg_d[remap[kept]]
+        canon_mg[kept] = pat_mg_d[remap[kept]]
+        canon_eg[kept] = pat_eg_d[remap[kept]]
+    else:
+        canon_mg, canon_eg = np.asarray(pat_mg_d), np.asarray(pat_eg_d)
+    # (2) --color-fold : EXPAND the canonical (8.5M) block to the standard 17M men-only
+    # layout with antisymmetry  W_full[u] = sign(u)·w_canon[|signed(u)|]  → standard v3.
+    if cf_U2C is not None:
+        NB = patterns.BUCKETS_PER_PATTERN                 # 531441
+        TBfull = NB * patterns.NUM_PATTERNS
+        # Canonical bucket 0 (|signed|=0) is the all-empty config — the colour-swap
+        # FIXPOINT, whose antisymmetric weight must be 0. Pin it (per pattern).
+        canon_mg[np.arange(patterns.NUM_PATTERNS) * CF_BUCKETS] = 0
+        canon_eg[np.arange(patterns.NUM_PATTERNS) * CF_BUCKETS] = 0
+        full_mg = np.empty(TBfull, dtype=w_float.dtype)
+        full_eg = np.empty(TBfull, dtype=w_float.dtype)
+        for p in range(patterns.NUM_PATTERNS):
+            cb_mg = canon_mg[p * CF_BUCKETS:(p + 1) * CF_BUCKETS]
+            cb_eg = canon_eg[p * CF_BUCKETS:(p + 1) * CF_BUCKETS]
+            full_mg[p * NB:(p + 1) * NB] = cf_U2S * cb_mg[cf_U2C]
+            full_eg[p * NB:(p + 1) * NB] = cf_U2S * cb_eg[cf_U2C]
         pat_mg, pat_eg = quant(full_mg), quant(full_eg)
     else:
-        pat_mg, pat_eg = quant(pat_mg_d), quant(pat_eg_d)
+        pat_mg, pat_eg = quant(canon_mg), quant(canon_eg)
     print(f'quant : scale={args.scale}  '
           f'pat range=[{int(pat_mg.min())},{int(pat_mg.max())}] '
           f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
@@ -591,7 +648,7 @@ def train_scan_eval(args):
         return 0
 
     write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale)
-    total = 2 * (TB + E)
+    total = 2 * (len(pat_mg) + E)   # len(pat_mg)=17M even under --color-fold (expanded)
     print(f'wrote {args.out}  (v3, {total} weights, {20 + 4 * total} bytes)')
     return 0
 
@@ -664,6 +721,16 @@ def main():
     ap.add_argument('--prune-min-visits', type=int, default=1,
                     help='with --prune : keep a bucket only if it occurs >= this '
                          'many times in the train split (2 drops singleton noise).')
+    ap.add_argument('--color-fold', action='store_true',
+                    help='(scan-eval) COLOUR-ANTISYMMETRY weight-sharing (Scan brick, '
+                         'cf docs/SYMMETRY_SHARING.md). Encode each pattern with a '
+                         'SIGNED balanced-ternary index (black=+1, white=-1, empty=0) '
+                         'and train one antisymmetric weight per |index| : a config '
+                         'and its colour-swap SHARE a weight (W[swap]=-W). Halves the '
+                         'pattern table (531441->265721/pattern, 17M->8.5M) and gives '
+                         '2x data per weight. Output is EXPANDED back to a standard '
+                         '17M v3 .pjtw (W_full[u]=sign(u)*w_canon[|signed(u)|]), so '
+                         'the C++ eval is unchanged. Composes with --prune.')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
