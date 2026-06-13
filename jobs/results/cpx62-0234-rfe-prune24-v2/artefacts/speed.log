@@ -1,0 +1,6 @@
+depth-at-movetime : movetime=1000ms  tt=64MB  positions=9
+  A /root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/gen8.pjtw
+    depth avg=19.4444  min=18  max=20  | nodes avg=2126681  knps~2126.68
+  B hc
+    depth avg=21.6667  min=20  max=24  | nodes avg=3282655  knps~3282.66
+  → A reaches -2.22222 plies vs B (positive = A searches deeper for the same time)
