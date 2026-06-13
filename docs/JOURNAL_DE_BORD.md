@@ -153,6 +153,24 @@ qu'une eval compétente fait 0.64-0.67 ⇒ le proxy discrimine). **Directive use
 gen-après-gen → **zéro compounding** par construction. Le fix = **ACCUMULER** le
 self-play (couverture qui grandit) et/ou **gros volume**.
 
+**Combien de data ? (reverse-engineering 2026-06-13, 1.2M positions self-play depth-play)**
+La table de 17M est surtout FANTÔME (compte combinatoire 32×3¹²). Le self-play réel
+ne TOUCHE qu'une petite fraction :
+- distinct touchés à 1.2M pos = 774 588 (**4.6 % de 17M**) ;
+- **ensemble OCCURRENT (Chao1) ≈ ≥1.0M buckets (~6 % de 17M)** — estimateur encore
+  croissant avec l'échantillon (queue lourde ⇒ borne basse) ;
+- couverture de masse (Good-Turing) = **99.4 %** (la masse est concentrée sur la tête).
+Courbe d'accumulation `distinct(D)=R(1−e^{−D/τ})`, **τ≈1.0M** ⇒ pour avoir **95 % de
+l'ensemble occurrent** : **~3.0M positions** ; à **≥8 visites** sur 95 % : ~10–20M ;
+à **≥30–50 visites** (bien estimé) : ~30–60M. **Réaliste** (échelle Scan), donc le fix
+est le VOLUME/cumul, pas un changement de classe. Conséquences : 0205b (300k frais ≈
+2 % de 17M ≈ ~46 % de l'occurrent, ≤2 visites) → matériel ⇒ plat ✔. Bonus dispo plus
+tard : comme seuls ~1M buckets occurrent, on peut ÉLAGUER/hasher la table à ~1M (×17),
+et le repliement par symétrie (à la Scan) diviserait encore le besoin par bucket ~4–8×.
+Tooling : `tools/bucket_coverage.py <selfplay.jnnw>` (accumulation + Chao1 + Good-Turing
++ extrapolation Poisson ; lit le nb d'enregistrements par TAILLE de fichier → marche
+sur shards en cours).
+
 **Décision (2026-06-13) :** on TUE les deux boucles mt100 starvées (300k/gen ne peut
 que reproduire la famine) et on lance la famine en test direct sur les DEUX box, en
 boucles à **corpus CUMULÉ** (gen_g s'entraîne sur l'union de tout le self-play) :
