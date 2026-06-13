@@ -28,6 +28,7 @@ Target convention :
 """
 
 import argparse
+import os
 import struct
 import sys
 import time
@@ -39,6 +40,14 @@ from scipy.optimize import minimize
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import master_loader
+# Geometry source: by default the repo's patterns.py, but JASS_PATTERNS_DIR (a path
+# OUTSIDE the git tree) takes precedence. The job runner periodically resets the
+# working tree to origin/main, which would silently revert a startup-emitted variant
+# geometry mid-run; pointing at an external copy makes the active geometry reset-proof
+# (and lets parallel jobs each pin their own pattern set without committing to main).
+_pgd = os.environ.get("JASS_PATTERNS_DIR")
+if _pgd:
+    sys.path.insert(0, _pgd)
 import patterns
 
 WEIGHTS_MAGIC   = 0x57544A50  # "PJTW" little-endian
