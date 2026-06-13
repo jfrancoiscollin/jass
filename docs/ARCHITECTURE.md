@@ -269,6 +269,61 @@ The loaders auto-detect both magic and input_dim from the header
 so a trained `nnue.bin` from either encoding can be dropped in
 without recompiling.
 
+### Scan-style pattern eval (`ScanEvalNetwork`, PJTW v3) — the main line
+
+The current eval line is a **linear pattern model** in the spirit of Scan
+(Letouzey), implemented in [scan_eval.cpp](../src/scan_eval.cpp) +
+[pattern_jass/](../pattern_jass/). It is what the WDL self-play loop trains.
+
+```
+evaluate(pos) =  Σ_p  W_pat[ phase, offset_p + index_p(men) ]      (32→54 patterns)
+              +  Σ_e  W_ext[ phase, e ] · extra_e(pos)             (106 dense extras)
+   phase = stage/40 interpolation between an MG bank and an EG bank
+   → black-POV piece-units → ×100 cp → flip for STM
+```
+
+- **Patterns** : each is a fixed set of 12 board squares; `index_p` is the
+  base-3 code of their **men** occupancy (empty/black-man/white-man = 3¹² =
+  531 441 buckets/pattern). Kings are NOT in the patterns (matches Scan) — they
+  enter via the extras. Geometry is the single source of truth in
+  `gen_patterns.py` → `pattern.hpp` + `patterns.py`.
+- **Extras (106, dense)** : king-PST (one-hot per square per colour), material
+  (men counts), mobility (men step + king slide), left-right balance — the same
+  non-pattern terms Scan uses.
+- **Format** : PJTW v3 — `magic, version, scale, n_pat, n_ext`, then int32
+  `[pat_mg | pat_eg | ext_mg | ext_eg]`. `n_pat = NUM_PATTERNS · 531441`.
+- **Speed** : an incremental accumulator (`update_all`) maintains the per-pattern
+  indices across a move (≤4 squares change) so the eval is cheap in search.
+
+### Symmetry weight-sharing (the Scan brick)
+
+A naïve pattern table has **NUM_PATTERNS independent** weights — 32×531441 =
+**17M**, which self-play cannot densely estimate (measured: ~1M buckets ever
+occur, ~38 % with ≤2 visits → most weights are L2-prior noise). Scan reaches
+~2500 Elo with the *same linear class* because it **ties weights across the
+board's symmetry group** (`P = 2 125 820` parameters). We replicate this purely
+in **training** (`pattern_jass/tools/symmetry.py` + `train.py` folds), then
+**expand** the tied weights back into a standard 17M-layout PJTW v3 so the C++
+eval is unchanged. Bricks (each composes; all verified to preserve the *exact*
+symmetries):
+
+| Fold (`train.py` flag) | Symmetry | Exact? | Weights (32-pat) |
+|---|---|---|---|
+| `--color-fold` | colour-swap antisymmetry `W[swap]=−W` | approx | 8.5M |
+| `--rot-fold`   | + rot180∘colour-swap (eval negates) | **exact** | 4.9M |
+| `--trans-fold` | + translation (7 translate-classes) | approx | 1.2M |
+| `--full-fold`  | + left-right reflection (within-row reversal) | **exact** | 1.0M |
+| `--full-fold` on **`--lr-close` geometry** (54 pat) | full group, all patterns | — | **0.6M ≈ Scan** |
+
+The exact board symmetry is **rot180 ∘ colour-swap** (rotate 180° + swap colours
+= same position from the other side → eval negates) and **left-right reflection**
+(within-row reversal; a naïve file-mirror flips dark↔light, so it must be the
+row reversal). Pure colour-swap and translation are *approximate* (men have a
+direction; absolute position matters) but pool data and empirically lower
+val-loss — validated by real-Elo A/B, not assumed. `gen_patterns.py --lr-close`
+closes the geometry under `{rot180, LR}` (32→54 patterns) so the fold ties
+**every** pattern, reaching ~600k dense weights at Scan's scale.
+
 ## Training & calibration pipeline (Cycles 1–6c)
 
 The training side lives in [`tools/`](../tools) and is driven by:

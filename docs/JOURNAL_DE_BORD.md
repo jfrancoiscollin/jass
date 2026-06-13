@@ -263,6 +263,30 @@ Décision user : tuer le scaling (montée sur archi incomplète = sans intérêt
 partage par symétrie MAINTENANT, tester ASAP en **Elo réel** (le proxy ment, B4). Phases :
 1 = antisym COULEUR (17M→8.5M, ×2 data) → 2 = rotation 180° → 3 = réflexion + translation.
 
+**IMPLÉMENTATION SYMÉTRIE — TOUTES LES BRIQUES FAITES + VÉRIFIÉES (2026-06-13).**
+Mécanique : on REPLIE les poids à l'entraînement (`pattern_jass/tools/symmetry.py` +
+`train.py` flags) puis on les RÉ-ÉTEND vers un `.pjtw` v3 17M standard → **le C++
+est inchangé**. Chaque brique compose et préserve les symétries EXACTES (vérifié
+numériquement, 0 violation) :
+- `--color-fold` : antisym couleur `W[swap]=−W` (approx). 17M→**8.5M**.
+- `--rot-fold` : + rot180∘couleur (**EXACT**, l'eval négatif). 17M→**4.9M**.
+- `--trans-fold` : + translation (7 classes, **approx**). 17M→**1.2M**.
+- `--full-fold` : + réflexion gauche-droite (inversion intra-rangée, **EXACT** ;
+  un miroir-fichier naïf échange noir↔blanc). 17M→**1.0M**.
+- **géométrie LR-CLOSE** (`gen_patterns.py --lr-close`, 32→**54 patterns**, fermée
+  sous {rot180,LR}, 0 orphelin) + full-fold → **0.6M poids ≈ échelle Scan** ;
+  C++ build + tests OK ; proxy 0.33 sur le probe 30k bidon (vs ~0 pour tout
+  32-pattern → la régularisation lourde tue l'overfit).
+Échelle des poids : men-only 17M → couleur 8.5M → rot 4.9M → trans 1.2M → réflexion
+1.0M → **LR-close 0.6M**. On est passé de 17M poids INDÉPENDANTS affamés à ~600k
+DENSES partagés = l'archi linéaire « bien montée » à l'échelle de Scan, 100 % linéaire.
+**A/B en Elo réel** (5 bras identiques, ne différant que par le fold, mesurés vs hc/gen) :
+`0220` men-only · `0221` couleur · `0222` rot · `0223` trans · `0224` full (en cours).
+LR-close (`0225` men-only / `0226` full) **prêt sur la branche, HORS main** (déployé
+après l'A/B 32-pattern pour ne pas confondre). ⚠️ caveat : 54 patterns = eval ~1.7×
+plus lente (opti future : calculer chaque orbite une fois). Détail : docs/
+SYMMETRY_SHARING.md + ARCHITECTURE.md.
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.

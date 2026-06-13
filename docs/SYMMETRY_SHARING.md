@@ -60,7 +60,15 @@ ET accélérer la montée**.
 On implémente **Phase 1 d'abord**, on la teste en Elo réel vs la baseline non partagée. Si
 ça monte plus haut/vite → Phase 2, puis 3. On vise la géométrie Scan-fidèle complète.
 
-## Statut
-- **A (vérif source Scan) : FAIT** (constantes citées ci-dessus).
-- **B (plan + docs) : ce document.**
-- **Implémentation : Phase 1 en cours.**
+## Statut (2026-06-13) — TOUTES LES BRIQUES IMPLÉMENTÉES + VÉRIFIÉES
+- **A (vérif source Scan)** : FAIT (constantes citées).
+- **B (plan + docs)** : ce document + ARCHITECTURE.md (§ Symmetry weight-sharing).
+- **Implémentation** (train.py replie puis ré-étend vers .pjtw 17M std, C++ inchangé) :
+  - `--color-fold` (8.5M) · `--rot-fold` (4.9M, rot∘cs EXACT) · `--trans-fold` (1.2M)
+    · `--full-fold` +réflexion LR EXACTE (1.0M). Symétries exactes vérifiées (0 viol).
+  - `gen_patterns.py --lr-close` → géométrie 54 patterns fermée {rot180,LR} (0
+    orphelin) → full-fold = **0.6M poids ≈ échelle Scan**. C++ build+tests OK.
+- **Test** : A/B « échelle » en **Elo réel** (le proxy ment, cf B4/0216). Bras
+  0220-0224 (32-pat) en cours ; LR-close 0225/0226 prêt (déployé après l'A/B).
+- **Reste** (optimisation, pas correctness) : éval 54-pat ~1.7× plus lente →
+  calculer chaque orbite de symétrie UNE fois dans le C++ (au lieu de N patterns liés).
