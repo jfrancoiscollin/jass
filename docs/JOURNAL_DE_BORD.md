@@ -287,6 +287,19 @@ après l'A/B 32-pattern pour ne pas confondre). ⚠️ caveat : 54 patterns = ev
 plus lente (opti future : calculer chaque orbite une fois). Détail : docs/
 SYMMETRY_SHARING.md + ARCHITECTURE.md.
 
+**VERDICT A/B SYMÉTRIE (2026-06-13) — le fold lourd MARCHE, +~30 Elo, modeste mais RÉEL.**
+Elo précis gen8 vs hc (60 paires, IC ±17), boucle cumulée depth4 8 gens (~2.6M) :
+men-only +147.6 · color +144.5 · rot +153.8 · **trans +177.4 · full +175.3**. Les deux
+folds LOURDS (trans 1.2M, full 1.0M) **concordent indépendamment** (~+176) → le **+30
+vs men-only est RÉEL** (pas du bruit). Les folds légers (color/rot) = NULS. Le gain vient
+de la **TRANSLATION** (32 tables → 7, le gros saut de densité), pas des petits folds.
+Bonus : meilleur SEED (full gen0 = +34 vs men-only −32). **Lecture honnête** : +30 est
+MODESTE (pas le bond du probe val-MSE) — à depth4/2.6M la table 17M n'est pas ASSEZ
+affamée pour que la densité paie plus. Le gros payoff attendu = **fold + plus de data +
+profondeur** (régime où le 17M non-foldé est vraiment affamé). PROCHAIN : (1) déployer
+LR-close full (0.6M, 0225/0226) ; (2) scaler data+profondeur AVEC full-fold ; (3)
+optimiser la géométrie (`pattern_importance.py`) pour récupérer la vitesse.
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
