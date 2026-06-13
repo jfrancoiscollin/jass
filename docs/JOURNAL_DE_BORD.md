@@ -113,18 +113,48 @@ recherche » ≈ 2 plies est mineure).
 
 ---
 
-## 5. Prochaines étapes — ON SE REMET SUR LES RAILS (post-0202)
-**Décision actée** : le deep-score était une fausse piste (distillation, plafonné
-— fait 4). On lance **la vraie recette Scan : la boucle WDL ITÉRÉE** (`0203`),
-jamais testée jusqu'ici (on ne faisait que des cycles uniques).
-- **`0203` (en cours)** : seed faible → 3 générations self-play+WDL+logistique →
-  la courbe **monte-t-elle** ? (mt30, comparable à 0196).
-- **Si monte** → scaler : **profondeur de jeu** plus grande (suspect n°1 du point
-  fixe bas), volume, plus de générations.
-- **Si plate** → le plafond est les **features** (géométrie) → enrichir la
-  géométrie ou passer **non-linéaire** (NNUE à entrées-patterns).
+## 5. Prochaines étapes — DEBUG du pipeline (post-0205b)
+
+**Statut 2026-06-13.** La boucle WDL itérée propre (`0205b`, mt30, mesurée au
+PROXY déterministe) est **PLATE ~0.41 = niveau matériel** de gen0→gen6 (alors
+qu'une eval compétente fait 0.64-0.67 ⇒ le proxy discrimine). **Directive user :**
+« si plat même PROFOND, on cherche le BUG, **pas** de pivot non-linéaire — c'est la
+**même infra que Scan** donc ça **doit** monter ». On debug, on ne pivote pas.
+
+**Debug mené (2026-06-13) :**
+- **Test #1 — le self-play utilise-t-il l'eval qui évolue ? → OUI (hypothèse bug
+  ÉCARTÉE).** `run_gen_data_wdl_mode` fait `e.set_nnue(custom_nnue.get())` puis
+  pilote chaque coup par `e.search()` (main.cpp:368-369, 507-511). Un échec de
+  chargement `--nnue` est **bruyant** (`error: cannot load` + `return 1` → le job
+  abort), donc PAS de repli silencieux sur le réseau embarqué ; et les valeurs
+  proxy réelles de 0205b prouvent que les `.pjtw` frais se chargent. → ✂️ B1.
+- **⭐ Suspect n°1 — FAMINE DE DONNÉES (mesuré).** Table = **17 006 112 buckets**
+  (32 patterns × 3¹²). Sur 30k positions self-play : **~1.0 % des buckets touchés**,
+  **62 % des touchés ont ≤2 visites** (poids = bruit tiré au prior l2≈0), 44.6 % une
+  seule visite. À 300k/gen (0205b), la table reste **~97 % non-estimée** ⇒ l'eval ≈
+  **matériel + petite tête de buckets fréquents** ⇒ **proxy plat à 0.41 PAR
+  CONSTRUCTION**. Pire : chaque gen régénère 300k FRAIS (aucune accumulation) ⇒
+  couverture constante ⇒ **aucun compounding**. Scan « même infra » monte parce
+  qu'il estime DENSÉMENT sa table (corpus énorme). **FIX (reste linéaire, reste
+  Scan)** : volume/gen ×10–50 (millions) et/ou **corpus cumulé** dominé par les
+  gens récentes. → **job sweep-volume à lancer** (proxy(gen1) vs 0.3M→1M→3M→10M).
+- **Rois invisibles aux patterns** : `extract_indices`/`extract_all` lisent
+  **men-only** (31 % des positions ont un roi). C++ et Python COHÉRENTS (pas un bug
+  de correctness) ; rois pris via les extras (compte+mobilité). Limite
+  représentationnelle, **pas** une panne — réserve, ne pas confondre avec « enrichir
+  la classe » (= le pivot interdit).
+- **Régression annexe** : les `.pjtw` champions **committés** (pattern_clean, 0152
+  A, …) ne se chargent plus : `n_pat=4 251 528` (8 patterns) ≠ `TOTAL_BUCKETS=
+  17 006 112` (32) — la géométrie a ×4 depuis. Sans impact sur la boucle (evals
+  frais = géométrie courante) ni sur le proxy (référence = JNNW, scores lus direct).
+
+**En cours sur les box (origin/main in-flight) :**
+- CPX62 : `cpx62-0208-wdl-loop-mt100` · CCX33 : `ccx33-0207-wdl-loop-mt100` →
+  courbes proxy à **mt100** (test Nœud 1bis : la PROFONDEUR débloque-t-elle ?).
+  ⚠️ même à mt100, si le volume reste 300k/gen, B2 prédit que ça reste plat.
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
-  sur self-play (optimum = [3e-4,3e-3] établi). Cf. faits 4-8.
+  sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
 
 ---
