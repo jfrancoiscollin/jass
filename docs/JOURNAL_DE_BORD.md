@@ -198,9 +198,27 @@ boucles à **corpus CUMULÉ** (gen_g s'entraîne sur l'union de tout le self-pla
   (→ ~5M), couverture+proxy par gen.
 - **`ccx33-0210-cumulative-loop`** (box 16GB/8c) — **300k/gen** cumulé, 6 gens
   (→ ~1.8M), couverture+proxy par gen.
-Verdict : le proxy MONTE au-dessus de 0.41 quand la couverture grandit ⇒ famine
-confirmée + accumulation/volume = le fix (linéaire, Scan). (La boucle « volume
-sweep » mono-gen a été remplacée par ces boucles cumulées sur décision user.)
+**VERDICT (2026-06-13) — famine CONFIRMÉE mais 2e mur.**
+- **ccx33-0210** (cumul 300k/gen, depth4) : 0.398→**0.462** puis PLATEAU ~0.46 (gen4-6,
+  1.88M cumulés, couverture 6.1 %).
+- **cpx62-0211** (cumul 1M/gen, depth4) : 0.406→**0.449** puis PLATEAU ~0.45 (dès gen1,
+  5.2M cumulés, couverture 7.8 %, ≤2visites 33 %).
+- Lecture : (1) la FAMINE est réelle et réglable — les deux MONTENT +0.05 vs 0205b PLAT
+  (fresh 300k) ⇒ l'accumulation compounde ✔ B2. (2) MAIS **2e mur ~0.45-0.46 que PLUS de
+  data ne casse PAS** (0211 a 2.8× la data de 0210 et plafonne PLUS BAS ; couverture
+  saturée ~1.3M buckets occurrents). Le gap restant **n'est pas la data**. Suspect n°1 =
+  **profondeur de jeu** (les deux jouent en **depth4** → parties/labels faibles →
+  l'eval plafonne en accord avec Scan-d10 fort). Autres : B3 (rois invisibles aux
+  patterns), B4 (le proxy = accord-SCORE Scan, pas l'Elo en parties → SPRT). →
+  **prochain test = PROFONDEUR de jeu** (boucle cumulée mt30/60, maintenant abordable
+  via --prune + harnais 2-box).
+
+**Outils/infra livrés (2026-06-13) :** `train.py --prune` (×51 train, lossless),
+`tools/bucket_census.py`, `tools/bucket_coverage.py`. **Harnais 2-box** `ccx33-0212` +
+`cpx62-0213` : génération parallèle CCX33+CPX62 → UN corpus (shards via git ≤95MB,
+barrière en LISANT origin/main que le runner rafraîchit → zéro op git côté job, zéro
+contention), fusion + train --prune. Limite boucle ITÉRÉE 2-box : transporter l'eval
+entre gens (136MB>95MB cap → format dense C++ ~6MB, ou object store).
 
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
