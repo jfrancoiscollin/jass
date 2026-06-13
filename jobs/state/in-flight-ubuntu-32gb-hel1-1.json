@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0234-rfe-prune24-v2",
+  "script": "jobs/queue/cpx62-0234-rfe-prune24-v2.sh",
+  "pid": 478106,
+  "started_at": "2026-06-13T21:37:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
