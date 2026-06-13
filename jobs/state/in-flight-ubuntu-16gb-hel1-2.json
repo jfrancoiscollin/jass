@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0210-cumulative-loop",
-  "script": "jobs/queue/ccx33-0210-cumulative-loop.sh",
-  "pid": 540453,
-  "started_at": "2026-06-13T07:28:45+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

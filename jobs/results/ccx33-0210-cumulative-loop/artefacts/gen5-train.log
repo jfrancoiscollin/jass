@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/cumulative.jnnw
+  1580000 records  (0.09s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat5
+  extras shape (1580000, 106)  (mean mob b/w=12.3/12.2)
+target=wdl  pos=549811 neg=535973 zero=494216 (31.3% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=549811 draw=494216 loss=535973 (31.3% draws)
+phase : piece-count mean=19.9  wmg mean=0.497
+split : train=1422000 val=158000
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.589988  iters=200  (517.63s)
+val   : mse=1.206593  sign_acc=0.2678
+quant : scale=1000  pat range=[-151,160] ext_mg range=[-813,912]
+wrote /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/gen5.pjtw  (v3, 34012436 weights, 136049764 bytes)
