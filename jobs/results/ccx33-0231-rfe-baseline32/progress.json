@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0231-rfe-baseline32",
-  "snapshot_at": "2026-06-13T21:20:05+00:00",
+  "snapshot_at": "2026-06-13T21:25:06+00:00",
   "started_at": "2026-06-13T21:04:36+00:00",
-  "elapsed_seconds": 929,
+  "elapsed_seconds": 1230,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 41800008
+      "size_bytes": 53200008
     },
     {
       "name": "elo-gen0.log",
@@ -27,6 +27,10 @@
     {
       "name": "elo-gen2.log",
       "size_bytes": 273
+    },
+    {
+      "name": "elo-gen3.log",
+      "size_bytes": 274
     },
     {
       "name": "feat0",
@@ -43,6 +47,10 @@
     {
       "name": "feat3",
       "size_bytes": 466400012
+    },
+    {
+      "name": "feat4",
+      "size_bytes": 593600012
     },
     {
       "name": "gen0-train.log",
@@ -70,6 +78,14 @@
     },
     {
       "name": "gen3-train.log",
+      "size_bytes": 1142
+    },
+    {
+      "name": "gen3.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen4-train.log",
       "size_bytes": 0
     },
     {
@@ -203,7 +219,39 @@
     {
       "name": "sp3-8.log",
       "size_bytes": 1382
+    },
+    {
+      "name": "sp4-1.log",
+      "size_bytes": 1386
+    },
+    {
+      "name": "sp4-2.log",
+      "size_bytes": 1431
+    },
+    {
+      "name": "sp4-3.log",
+      "size_bytes": 1431
+    },
+    {
+      "name": "sp4-4.log",
+      "size_bytes": 1386
+    },
+    {
+      "name": "sp4-5.log",
+      "size_bytes": 1386
+    },
+    {
+      "name": "sp4-6.log",
+      "size_bytes": 1386
+    },
+    {
+      "name": "sp4-7.log",
+      "size_bytes": 1431
+    },
+    {
+      "name": "sp4-8.log",
+      "size_bytes": 1386
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2360615       1       15:28  0.0  0.0 bash\n2360617 2360615       15:28  0.0  0.0 bash\n3118826 2360617       00:44  522 11.4 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2360615       1       20:29  0.0  0.0 bash\n2360617 2360615       20:29  0.0  0.0 bash\n3363013 2360617       00:45  430 14.2 python3\n"
 }
