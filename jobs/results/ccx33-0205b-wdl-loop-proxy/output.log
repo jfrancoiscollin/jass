@@ -1,0 +1,43 @@
+tests OK
+=== gen0 : seed matériel (logistic l2=3e-2 sur sp-all) ===
+  gen0 proxy(spearman vs Scan-d10) = 0.4081
+=== gen1 : self-play 300000@mt30 avec gen0 → WDL → logistic ===
+gen 1 merged 0
+wrote 0 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat1
+  gen1 proxy = 0.4131
+=== gen2 : self-play 300000@mt30 avec gen1 → WDL → logistic ===
+gen 2 merged 0
+wrote 0 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat2
+  gen2 proxy = 0.4120
+=== gen3 : self-play 300000@mt30 avec gen2 → WDL → logistic ===
+gen 3 merged 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat3
+  gen3 proxy = 0.3905
+=== gen4 : self-play 300000@mt30 avec gen3 → WDL → logistic ===
+gen 4 merged 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat4
+  gen4 proxy = 0.4130
+=== gen5 : self-play 300000@mt30 avec gen4 → WDL → logistic ===
+gen 5 merged 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat5
+  gen5 proxy = 0.4112
+=== gen6 : self-play 300000@mt30 avec gen5 → WDL → logistic ===
+gen 6 merged 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat6
+  gen6 proxy = 0.4113
+
+==========================================================
+   ccx33-0205b BOUCLE WDL PROXY-MESURÉE — VERDICT
+  COURBE proxy (Spearman des scores eval vs Scan-d10, set fixe 50k) :
+    gen0 = 0.4081
+    gen1 = 0.4131
+    gen2 = 0.4120
+    gen3 = 0.3905
+    gen4 = 0.4130
+    gen5 = 0.4112
+    gen6 = 0.4113
+  gen6 v15 d9 (54 parties, continuité) = 0.138889
+  → proxy MONTE proprement gen0→gen6 = la boucle WDL COMPOUNDE (Nœud 1 = OUI).
+  → proxy plat = ne grimpe pas à mt30 → profondeur (0206/0207) ou features.
+==========================================================
+===================

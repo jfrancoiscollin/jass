@@ -1,0 +1,15 @@
+loading JNNW /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/sp6.jnnw
+  300000 records  (0.02s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/feat6
+  extras shape (300000, 106)  (mean mob b/w=12.6/12.6)
+target=wdl  pos=76054 neg=75318 zero=148628 (49.5% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=76054 draw=148628 loss=75318 (49.5% draws)
+phase : piece-count mean=18.7  wmg mean=0.466
+split : train=270000 val=30000
+design : 34012436 columns (2×17006112 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.602993  iters=200  (383.70s)
+val   : mse=0.879337  sign_acc=0.2127
+quant : scale=1000  pat range=[-198,168] ext_mg range=[-871,876]
+wrote /root/jass/jobs/results/ccx33-0205b-wdl-loop-proxy/artefacts.src/gen6.pjtw  (v3, 34012436 weights, 136049764 bytes)
