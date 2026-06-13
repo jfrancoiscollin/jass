@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0205b-wdl-loop-proxy",
-  "snapshot_at": "2026-06-13T05:58:52+00:00",
+  "snapshot_at": "2026-06-13T06:03:55+00:00",
   "started_at": "2026-06-12T23:20:45+00:00",
-  "elapsed_seconds": 23887,
+  "elapsed_seconds": 24190,
   "artefacts": [
     {
       "name": "build.log",
@@ -86,7 +86,15 @@
     },
     {
       "name": "gen6-train.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "gen6-v15d9.log",
       "size_bytes": 0
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp1-1.log",
@@ -269,64 +277,32 @@
       "size_bytes": 11400008
     },
     {
-      "name": "sp6-1.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-1.log",
       "size_bytes": 1255
-    },
-    {
-      "name": "sp6-2.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-2.log",
       "size_bytes": 1255
     },
     {
-      "name": "sp6-3.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-3.log",
       "size_bytes": 1300
-    },
-    {
-      "name": "sp6-4.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-4.log",
       "size_bytes": 1255
     },
     {
-      "name": "sp6-5.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-5.log",
       "size_bytes": 1255
-    },
-    {
-      "name": "sp6-6.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-6.log",
       "size_bytes": 1255
     },
     {
-      "name": "sp6-7.jnnw",
-      "size_bytes": 1425008
-    },
-    {
       "name": "sp6-7.log",
       "size_bytes": 1255
-    },
-    {
-      "name": "sp6-8.jnnw",
-      "size_bytes": 1425008
     },
     {
       "name": "sp6-8.log",
@@ -341,5 +317,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 520104       1    06:38:06  0.0  0.0 bash\n 520106  520104    06:38:06  0.0  0.0 bash\n 537729  520106       01:23  270 22.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 520104       1    06:43:09  0.0  0.0 bash\n 520106  520104    06:43:09  0.0  0.0 bash\n 537893  520106       00:00  0.0  0.0 bash\n 537894  537893       00:00  100  0.0 python3\n 537895  537893       00:00  0.0  0.0 grep\n 537896  537893       00:00  0.0  0.0 head\n 537897  537893       00:00  0.0  0.0 cut\n"
 }
