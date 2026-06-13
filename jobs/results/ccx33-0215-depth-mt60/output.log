@@ -1,0 +1,33 @@
+=== gen0 : seed (150k self-play embarqué @mt60, l2=3e-2) ===
+cumulative 150000
+wrote 150000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0215-depth-mt60/artefacts.src/feat0
+  gen0 proxy = 0.4012  [distinct touched S_obs = 357,083  (2.100% of 17M)]
+=== gen1 : +150000 self-play @mt60 avec gen0 → corpus cumulé → logistic(--prune) ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0215-depth-mt60/artefacts.src/feat1
+  gen1 proxy = 0.4293  [distinct touched S_obs = 519,007  (3.052% of 17M)]
+=== gen2 : +150000 self-play @mt60 avec gen1 → corpus cumulé → logistic(--prune) ===
+cumulative 450000
+wrote 450000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0215-depth-mt60/artefacts.src/feat2
+  gen2 proxy = 0.4310  [distinct touched S_obs = 618,212  (3.635% of 17M)]
+=== gen3 : +150000 self-play @mt60 avec gen2 → corpus cumulé → logistic(--prune) ===
+cumulative 600000
+wrote 600000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0215-depth-mt60/artefacts.src/feat3
+  gen3 proxy = 0.4167  [distinct touched S_obs = 687,246  (4.041% of 17M)]
+=== gen4 : +150000 self-play @mt60 avec gen3 → corpus cumulé → logistic(--prune) ===
+cumulative 750000
+wrote 750000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0215-depth-mt60/artefacts.src/feat4
+  gen4 proxy = 0.4102  [distinct touched S_obs = 740,913  (4.357% of 17M)]
+
+==========================================================
+   ccx33-0215 — BOUCLE CUMULÉE @mt60 (--prune) — VERDICT
+  COURBE proxy (Spearman vs Scan-d10, set fixe 50k) :
+    gen0 = 0.4012
+    gen1 = 0.4293
+    gen2 = 0.4310
+    gen3 = 0.4167
+    gen4 = 0.4102
+  RAPPEL : depth4 PLAFONNE ~0.46 ; mt30=cpx62-0214 ; eval compétent ~0.64-0.67.
+  → proxy monte avec la profondeur (depth4<mt30<mt60) = la PROFONDEUR est le mur.
+  → plat ~0.46 = profondeur pas le mur → Nœud 2ter·B4 (proxy≠Elo, SPRT).
+==========================================================
