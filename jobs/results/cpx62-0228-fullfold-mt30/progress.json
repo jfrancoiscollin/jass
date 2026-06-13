@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0228-fullfold-mt30",
-  "snapshot_at": "2026-06-13T19:37:03+00:00",
+  "snapshot_at": "2026-06-13T19:42:10+00:00",
   "started_at": "2026-06-13T18:46:54+00:00",
-  "elapsed_seconds": 3009,
+  "elapsed_seconds": 3316,
   "artefacts": [
     {
       "name": "build.log",
@@ -43,6 +43,10 @@
     {
       "name": "elo-gen6.log",
       "size_bytes": 272
+    },
+    {
+      "name": "elo-gen7.log",
+      "size_bytes": 273
     },
     {
       "name": "feat0",
@@ -134,7 +138,11 @@
     },
     {
       "name": "gen7-train.log",
-      "size_bytes": 0
+      "size_bytes": 1138
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 229583380
     },
     {
       "name": "sp0-1.log",
@@ -647,7 +655,135 @@
     {
       "name": "sp7-9.log",
       "size_bytes": 853
+    },
+    {
+      "name": "sp8-1.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-10.jnnw",
+      "size_bytes": 615602
+    },
+    {
+      "name": "sp8-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-11.jnnw",
+      "size_bytes": 656642
+    },
+    {
+      "name": "sp8-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-12.jnnw",
+      "size_bytes": 640226
+    },
+    {
+      "name": "sp8-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-13.jnnw",
+      "size_bytes": 664850
+    },
+    {
+      "name": "sp8-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-14.jnnw",
+      "size_bytes": 640226
+    },
+    {
+      "name": "sp8-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-15.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-16.jnnw",
+      "size_bytes": 623810
+    },
+    {
+      "name": "sp8-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-2.jnnw",
+      "size_bytes": 648434
+    },
+    {
+      "name": "sp8-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-3.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-4.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-5.jnnw",
+      "size_bytes": 664850
+    },
+    {
+      "name": "sp8-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-6.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-7.jnnw",
+      "size_bytes": 623810
+    },
+    {
+      "name": "sp8-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-8.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp8-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-9.jnnw",
+      "size_bytes": 640226
+    },
+    {
+      "name": "sp8-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 414283  806560       02:43  446 31.1 python3\n 806558       1       50:08  0.0  0.0 bash\n 806560  806558       50:08  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 806558       1       55:15  0.0  0.0 bash\n 806560  806558       55:15  0.0  0.0 bash\n 943558  806560       02:22 99.9  0.8 jass\n 943559  806560       02:22 99.9  0.8 jass\n 943560  806560       02:22 99.9  0.8 jass\n 943561  806560       02:22 99.9  0.8 jass\n 943562  806560       02:22 99.9  0.8 jass\n 943563  806560       02:22 99.9  0.8 jass\n 943564  806560       02:22 99.9  0.8 jass\n 943565  806560       02:22 99.9  0.8 jass\n 943566  806560       02:22 99.9  0.8 jass\n 943567  806560       02:22 99.9  0.8 jass\n 943568  806560       02:22 99.9  0.8 jass\n 943569  806560       02:22 99.9  0.8 jass\n 943570  806560       02:22 99.9  0.8 jass\n 943571  806560       02:22 99.9  0.8 jass\n 943572  806560       02:22 99.9  0.8 jass\n 943573  806560       02:22 99.9  0.8 jass\n"
 }
