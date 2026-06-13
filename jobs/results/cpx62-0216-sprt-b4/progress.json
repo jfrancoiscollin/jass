@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0216-sprt-b4",
-  "snapshot_at": "2026-06-13T11:59:57+00:00",
+  "snapshot_at": "2026-06-13T12:05:03+00:00",
   "started_at": "2026-06-13T11:55:05+00:00",
-  "elapsed_seconds": 292,
+  "elapsed_seconds": 598,
   "artefacts": [
     {
       "name": "best-hc.log",
@@ -21,5 +21,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  23247       1       04:52  0.0  0.0 bash\n  23249   23247       04:52  0.0  0.0 bash\n  23734   23249       04:33  216  0.5 jass\n  23735   23249       04:33  205  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  23247       1       09:57  0.0  0.0 bash\n  23249   23247       09:57  0.0  0.0 bash\n  23734   23249       09:39  217  0.5 jass\n  23735   23249       09:39  206  0.5 jass\n"
 }
