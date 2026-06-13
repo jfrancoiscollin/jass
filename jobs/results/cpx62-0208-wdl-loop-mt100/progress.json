@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0208-wdl-loop-mt100",
-  "snapshot_at": "2026-06-13T07:03:03+00:00",
+  "snapshot_at": "2026-06-13T07:08:53+00:00",
   "started_at": "2026-06-13T06:43:04+00:00",
-  "elapsed_seconds": 1199,
+  "elapsed_seconds": 1549,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,137 +13,85 @@
       "size_bytes": 672
     },
     {
-      "name": "seed-1.jnnw",
-      "size_bytes": 172370
+      "name": "gen0-train.log",
+      "size_bytes": 0
     },
     {
       "name": "seed-1.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-10.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-10.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-11.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 409
     },
     {
       "name": "seed-11.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-12.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 409
     },
     {
       "name": "seed-12.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-13.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 409
     },
     {
       "name": "seed-13.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-14.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 410
     },
     {
       "name": "seed-14.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-15.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 409
     },
     {
       "name": "seed-15.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-16.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 410
     },
     {
       "name": "seed-16.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-2.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 410
     },
     {
       "name": "seed-2.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-3.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-3.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-4.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-4.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-5.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-5.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-6.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-6.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-7.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 407
     },
     {
       "name": "seed-7.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-8.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-8.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "seed-9.jnnw",
-      "size_bytes": 172370
+      "size_bytes": 408
     },
     {
       "name": "seed-9.log",
-      "size_bytes": 0
+      "size_bytes": 408
+    },
+    {
+      "name": "seed.jnnw",
+      "size_bytes": 3040008
+    },
+    {
+      "name": "seedfeat",
+      "size_bytes": 33920012
     },
     {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11990       1       19:59  0.0  0.0 bash\n  11991   11990       19:59  0.0  0.0 bash\n  12482   11991       19:36 49.9  0.1 jass\n  12483   11991       19:36 50.0  0.1 jass\n  12484   11991       19:36 49.9  0.1 jass\n  12485   11991       19:36 49.9  0.1 jass\n  12486   11991       19:36 49.8  0.1 jass\n  12487   11991       19:36 49.8  0.1 jass\n  12488   11991       19:36 49.8  0.1 jass\n  12489   11991       19:36 49.9  0.1 jass\n  12490   11991       19:36 49.8  0.1 jass\n  12491   11991       19:36 50.0  0.1 jass\n  12492   11991       19:36 49.7  0.1 jass\n  12493   11991       19:36 49.7  0.1 jass\n  12494   11991       19:36 49.8  0.1 jass\n  12495   11991       19:36 49.8  0.1 jass\n  12496   11991       19:36 49.6  0.1 jass\n  12497   11991       19:36 49.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11990       1       25:48  0.0  0.0 bash\n  11991   11990       25:48  0.0  0.0 bash\n  12482   11991       25:26 54.7  0.1 jass\n  12483   11991       25:26 54.2  0.1 jass\n  12484   11991       25:26 54.6  0.1 jass\n  12485   11991       25:26 54.6  0.1 jass\n  12486   11991       25:26 54.5  0.1 jass\n  12487   11991       25:26 54.5  0.1 jass\n  12488   11991       25:26 54.4  0.1 jass\n  12489   11991       25:26 54.6  0.1 jass\n  12490   11991       25:26 54.7  0.1 jass\n  12491   11991       25:26 54.6  0.1 jass\n  12492   11991       25:26 54.2  0.1 jass\n  12493   11991       25:26 54.4  0.1 jass\n  12494   11991       25:26 53.9  0.1 jass\n  12495   11991       25:26 54.5  0.1 jass\n  12496   11991       25:26 54.3  0.1 jass\n  12497   11991       25:26 54.2  0.1 jass\n"
 }
