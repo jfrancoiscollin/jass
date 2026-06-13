@@ -1,0 +1,23 @@
+CPX62 generating 2000000 positions over 16 shards (embedded net, depth4)
+CPX62 gen done in 228s
+barrier: waiting for ccx33-0212-genpar-seed to complete on main ...
+  peer completed
+barrier waited 60s
+pulled 8 peer shards from ccx33-0212-genpar-seed
+merged 24 shards -> 3000000 positions
+wrote 3000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0213-genpar-seed-train/artefacts.src/feat
+prune : keep 973,349 buckets (>= 1 visits) -> 1,946,700 pattern cols vs 34,012,224  (17.5× fewer); train fallback=0.000%
+design : 1946912 columns (2×973350 pat + 2×106 ext)
+  train_loss=0.623456  iters=86  (156.03s)
+wrote /root/jass/jobs/results/cpx62-0213-genpar-seed-train/artefacts.src/seed.pjtw  (v3, 34012436 weights, 136049764 bytes)
+
+==========================================================
+   cpx62-0213 — HARNESS 2-BOX (CCX33+CPX62) — UN corpus, 24 cœurs
+  positions totales = 3000000  (CPX62 2M @16c  +  CCX33 ~1M @8c, fusionnés via git)
+  temps : gen CPX62=228s · attente barrière=60s · train(--prune)=176s
+  seed proxy (Spearman vs Scan-d10) = 0.4043
+  Chao1 occurring-richness R_hat = 1,251,742  (observed = 79.8% of it; rises with sample => lower bound)   -> observe 95% of occurring set at ~6,935,722 positions 
+  → prouve le pooling 2-box pour un même jeu de données ; le train --prune
+    rend la fusion exploitable en minutes. Suite : boucle ITÉRÉE 2-box
+    (transporter l'eval entre gens : format dense C++ ~6MB < cap, ou object store).
+==========================================================
