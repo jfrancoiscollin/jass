@@ -1,0 +1,38 @@
+=== gen0 : seed (200k self-play embarqué @mt30, l2=3e-2) ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat0
+  gen0 proxy = 0.3987  [distinct touched S_obs = 324,300  (1.907% of 17M)]
+=== gen1 : +300000 self-play @mt30 avec gen0 → corpus cumulé → logistic(--prune) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat1
+  gen1 proxy = 0.4285  [distinct touched S_obs = 539,777  (3.174% of 17M)]
+=== gen2 : +300000 self-play @mt30 avec gen1 → corpus cumulé → logistic(--prune) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat2
+  gen2 proxy = 0.4229  [distinct touched S_obs = 658,704  (3.873% of 17M)]
+=== gen3 : +300000 self-play @mt30 avec gen2 → corpus cumulé → logistic(--prune) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat3
+  gen3 proxy = 0.4253  [distinct touched S_obs = 741,849  (4.362% of 17M)]
+=== gen4 : +300000 self-play @mt30 avec gen3 → corpus cumulé → logistic(--prune) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat4
+  gen4 proxy = 0.4280  [distinct touched S_obs = 808,346  (4.753% of 17M)]
+=== gen5 : +300000 self-play @mt30 avec gen4 → corpus cumulé → logistic(--prune) ===
+cumulative 1700000
+wrote 1700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0214-depth-mt30/artefacts.src/feat5
+  gen5 proxy = 0.4306  [distinct touched S_obs = 862,596  (5.072% of 17M)]
+
+==========================================================
+   cpx62-0214 — BOUCLE CUMULÉE @mt30 (--prune) — VERDICT
+  COURBE proxy (Spearman vs Scan-d10, set fixe 50k) :
+    gen0 = 0.3987
+    gen1 = 0.4285
+    gen2 = 0.4229
+    gen3 = 0.4253
+    gen4 = 0.4280
+    gen5 = 0.4306
+  RAPPEL : depth4 (0210/0211) PLAFONNE ~0.45-0.46 ; eval compétent ~0.64-0.67.
+  → proxy DÉPASSE 0.46 = la PROFONDEUR DE JEU est le mur → scaler la profondeur.
+  → proxy plat ~0.46 = la profondeur n'est pas le mur → Nœud 2ter·B4 (proxy≠Elo, SPRT).
+==========================================================
