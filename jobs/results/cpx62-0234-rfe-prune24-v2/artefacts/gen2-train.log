@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/cumulative.jnnw
+  800000 records  (0.05s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,396,230 distinct weights (17M -> 1,396,230, 9.14x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/feat2
+  extras shape (800000, 106)  (mean mob b/w=12.4/12.2)
+target=wdl  pos=274511 neg=268497 zero=256992 (32.1% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=274511 draw=256992 loss=268497 (32.1% draws)
+phase : piece-count mean=19.5  wmg mean=0.486
+split : train=720000 val=80000
+prune : keep 219,819 buckets (>= 1 visits) -> 439,640 pattern cols vs 25,509,168  (58.0× fewer); train fallback=0.000%
+design : 439852 columns (2×219820 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.586314  iters=200  (43.13s)
+val   : mse=1.139636  sign_acc=0.2817
+quant : scale=1000  pat range=[-282,282] ext_mg range=[-609,609]
+wrote /root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/gen2.pjtw  (v3, 25509380 weights, 102037540 bytes)

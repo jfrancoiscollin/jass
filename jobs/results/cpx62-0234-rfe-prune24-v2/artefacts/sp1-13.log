@@ -1,0 +1,14 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/sp1-13.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=10062 nnue=/root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/gen0.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+  played 50 games, 1518 / 18750 positions
+  played 100 games, 2941 / 18750 positions
+  played 150 games, 4343 / 18750 positions
+  played 200 games, 6041 / 18750 positions
+  played 250 games, 7497 / 18750 positions
+  played 300 games, 9013 / 18750 positions
+  played 350 games, 10380 / 18750 positions
+  played 400 games, 11925 / 18750 positions
+  played 450 games, 13486 / 18750 positions
+  played 500 games, 15024 / 18750 positions
+  played 550 games, 16568 / 18750 positions
+  played 600 games, 18140 / 18750 positions
+wrote 18750 WDL records to /root/jass/jobs/results/cpx62-0234-rfe-prune24-v2/artefacts.src/sp1-13.jnnw
