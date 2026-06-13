@@ -82,6 +82,25 @@ Conséquences pour le plan d'expérience :
 - **Gauge de la couverture** : `tools/bucket_coverage.py` (Chao1 + accumulation)
   pour dimensionner la data ; `tools/bucket_census.py` pour l'élagage dense.
 
+### JALON — Optimisation de la GÉOMÉTRIE (sélection de patterns, après l'A/B symétrie)
+
+Le repliement par symétrie densifie les POIDS ; ce jalon trouve les bonnes FORMES
+(nb/placement de patterns) → géométrie LEAN = moins de lookups (eval plus rapide,
+vers la légèreté de Scan) SANS perdre d'Elo. Évite de copier Scan : on optimise pour
+NOTRE data.
+- **Outil** : `tools/pattern_importance.py` (livré) — par pattern (ou par orbite de
+  symétrie) sur un set tenu à l'écart : `std(c_p)` (combien il bouge l'eval),
+  `corr(c_p, ref)` (alignement avec Scan-d10/WDL), redondance `max|corr(c_p,c_q)|`.
+  Range par `std·|corr|`.
+- **Méthode** : (1) entraîner la géométrie pleine (foldée) ; (2) classer ; (3) élaguer
+  la queue ; (4) ré-entraîner + **valider en Elo** (RFE récursif → trouver le GENOU =
+  set minimal qui garde l'Elo). Alternative one-shot : **group-lasso** (L1 sur la norme
+  du bloc de chaque pattern → sélection éparse en un seul train).
+- **Caveats** : importance dépend de l'eval entraîné (itérer / group-lasso) ;
+  redondance (patterns corrélés → forward-selection) ; **l'Elo tranche**, pas le score
+  d'importance (discipline B4). Résout quantitativement la question 32-vs-54 patterns.
+- **Séquencement** : APRÈS que l'A/B symétrie (0220-0226) confirme que le fold lève l'Elo.
+
 ---
 
 ## Point de départ — ce que la biblio recadre
