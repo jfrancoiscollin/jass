@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0222-rotfold-loop",
-  "script": "jobs/queue/cpx62-0222-rotfold-loop.sh",
-  "pid": 2247705,
-  "started_at": "2026-06-13T15:49:08+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

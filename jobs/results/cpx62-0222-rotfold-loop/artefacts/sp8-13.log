@@ -1,0 +1,13 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/sp8-13.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=30714 nnue=/root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/gen7.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+  played 50 games, 1518 / 18750 positions
+  played 100 games, 3078 / 18750 positions
+  played 150 games, 4551 / 18750 positions
+  played 200 games, 6139 / 18750 positions
+  played 250 games, 7771 / 18750 positions
+  played 300 games, 9348 / 18750 positions
+  played 350 games, 10949 / 18750 positions
+  played 400 games, 12579 / 18750 positions
+  played 450 games, 14142 / 18750 positions
+  played 500 games, 15707 / 18750 positions
+  played 550 games, 17236 / 18750 positions
+wrote 18750 WDL records to /root/jass/jobs/results/cpx62-0222-rotfold-loop/artefacts.src/sp8-13.jnnw
