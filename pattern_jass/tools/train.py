@@ -394,16 +394,27 @@ def train_scan_eval(args):
     else:
         print('extracting pattern indices (men only)')
         idx = patterns.extract_indices(ds.black_men, ds.white_men)
-    # cols/signs/PAT_BUCKETS depend on --color-fold (signed-canonical) vs default.
-    cf_U2C = cf_U2S = None
-    if getattr(args, 'color_fold', False):
+    # cols/signs/PAT_BUCKETS depend on the symmetry mode (--rot-fold > --color-fold > none).
+    cf_U2C = cf_U2S = None       # set for --color-fold expand
+    rf_canon = rf_sign = None    # set for --rot-fold expand (full (NP,NB) maps)
+    NP = patterns.NUM_PATTERNS
+    if getattr(args, 'rot_fold', False):
+        import symmetry
+        rf_canon, rf_sign = symmetry.build_canon()                 # (NP,NB) int64, int8
+        cols = rf_canon[np.arange(NP)[None, :], idx]               # (n,32) canonical 17M-space col
+        cf_signs = rf_sign[np.arange(NP)[None, :], idx].astype(np.float32)
+        PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN                 # canonical space = 17M index space
+        nused = int(np.unique(rf_canon.ravel()).size)
+        print(f'rot-fold : group {{id,cs,rot,rot∘cs}}, {nused:,} distinct weights '
+              f'(17M -> {nused:,}, {patterns.TOTAL_BUCKETS/max(nused,1):.2f}x) ; antisymmetric')
+    elif getattr(args, 'color_fold', False):
         cf_U2C, cf_U2S = colorfold_maps()
         canon = cf_U2C[idx]                                         # (n,32) in [0,CF_HALF]
         cf_signs = cf_U2S[idx].astype(np.float32)                  # (n,32) ±1
         PAT_BUCKETS = CF_BUCKETS
-        cols = canon + (np.arange(patterns.NUM_PATTERNS, dtype=np.int64) * PAT_BUCKETS)[None, :]
+        cols = canon + (np.arange(NP, dtype=np.int64) * PAT_BUCKETS)[None, :]
         print(f'color-fold : signed-canonical, {PAT_BUCKETS} buckets/pattern '
-              f'(17M -> {PAT_BUCKETS*patterns.NUM_PATTERNS:,}) ; antisymmetric weights')
+              f'(17M -> {PAT_BUCKETS*NP:,}) ; antisymmetric weights')
     else:
         cf_signs = None
         PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN
@@ -611,7 +622,13 @@ def train_scan_eval(args):
         canon_mg, canon_eg = np.asarray(pat_mg_d), np.asarray(pat_eg_d)
     # (2) --color-fold : EXPAND the canonical (8.5M) block to the standard 17M men-only
     # layout with antisymmetry  W_full[u] = sign(u)·w_canon[|signed(u)|]  → standard v3.
-    if cf_U2C is not None:
+    if rf_canon is not None:
+        # --rot-fold : full[p*NB+c] = sign[p][c]·w_canon[canon_col[p][c]] (canonical
+        # weights live in the 17M index space; canon_mg is the un-pruned 17M block).
+        full_mg = (rf_sign.ravel().astype(w_float.dtype) * canon_mg[rf_canon.ravel()])
+        full_eg = (rf_sign.ravel().astype(w_float.dtype) * canon_eg[rf_canon.ravel()])
+        pat_mg, pat_eg = quant(full_mg), quant(full_eg)
+    elif cf_U2C is not None:
         NB = patterns.BUCKETS_PER_PATTERN                 # 531441
         TBfull = NB * patterns.NUM_PATTERNS
         # Canonical bucket 0 (|signed|=0) is the all-empty config — the colour-swap
@@ -721,6 +738,15 @@ def main():
     ap.add_argument('--prune-min-visits', type=int, default=1,
                     help='with --prune : keep a bucket only if it occurs >= this '
                          'many times in the train split (2 drops singleton noise).')
+    ap.add_argument('--rot-fold', action='store_true',
+                    help='(scan-eval) Phase-2 symmetry sharing : the group {id, '
+                         'colour-swap, rot180, rot180∘colour-swap}. The board exact '
+                         'symmetry is rot180∘colour-swap (eval negates); pairs '
+                         'v_top_k<->v_bot_(3-k), diag/anti/sq pairs + diag_3 self '
+                         '(horiz orphans fall back to colour-fold). Ties ~3.5x more '
+                         'weights than men-only (17M->4.9M). Expanded to a standard '
+                         '17M v3 .pjtw (C++ unchanged). Supersedes --color-fold; '
+                         'composes with --prune. cf docs/SYMMETRY_SHARING.md.')
     ap.add_argument('--color-fold', action='store_true',
                     help='(scan-eval) COLOUR-ANTISYMMETRY weight-sharing (Scan brick, '
                          'cf docs/SYMMETRY_SHARING.md). Encode each pattern with a '
