@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0215-depth-mt60",
-  "snapshot_at": "2026-06-13T11:19:15+00:00",
+  "snapshot_at": "2026-06-13T11:24:34+00:00",
   "started_at": "2026-06-13T11:03:55+00:00",
-  "elapsed_seconds": 920,
+  "elapsed_seconds": 1239,
   "artefacts": [
     {
       "name": "build.log",
@@ -46,7 +46,11 @@
     },
     {
       "name": "gen2-train.log",
-      "size_bytes": 0
+      "size_bytes": 1014
+    },
+    {
+      "name": "gen2.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -143,7 +147,71 @@
     {
       "name": "sp2-8.log",
       "size_bytes": 800
+    },
+    {
+      "name": "sp3-1.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-2.jnnw",
+      "size_bytes": 623810
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-3.jnnw",
+      "size_bytes": 607394
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-4.jnnw",
+      "size_bytes": 599186
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-5.jnnw",
+      "size_bytes": 623810
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-6.jnnw",
+      "size_bytes": 615602
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-7.jnnw",
+      "size_bytes": 590978
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-8.jnnw",
+      "size_bytes": 632018
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 543954       1       15:20  0.0  0.0 bash\n 543956  543954       15:20  0.0  0.0 bash\n 544816  543956       00:15  701  5.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 543954       1       20:39  0.0  0.0 bash\n 543956  543954       20:38  0.0  0.0 bash\n 544940  543956       04:38 99.9  0.5 jass\n 544941  543956       04:38 99.9  0.5 jass\n 544942  543956       04:38 99.9  0.5 jass\n 544943  543956       04:38 99.9  0.5 jass\n 544944  543956       04:38 99.9  0.5 jass\n 544945  543956       04:38 99.9  0.5 jass\n 544946  543956       04:38 99.9  0.5 jass\n 544947  543956       04:38 99.9  0.5 jass\n"
 }
