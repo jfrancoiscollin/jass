@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0223-transfold-loop",
+  "script": "jobs/queue/ccx33-0223-transfold-loop.sh",
+  "pid": 965620,
+  "started_at": "2026-06-13T15:10:31+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
