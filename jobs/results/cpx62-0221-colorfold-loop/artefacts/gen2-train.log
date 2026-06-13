@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/cumulative.jnnw
+  800000 records  (0.05s)
+extracting pattern indices (men only)
+color-fold : signed-canonical, 265721 buckets/pattern (17M -> 8,503,072) ; antisymmetric weights
+loading raw extras /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat2
+  extras shape (800000, 106)  (mean mob b/w=12.3/12.3)
+target=wdl  pos=274476 neg=267401 zero=258123 (32.3% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=274476 draw=258123 loss=267401 (32.3% draws)
+phase : piece-count mean=19.5  wmg mean=0.487
+split : train=720000 val=80000
+prune : keep 689,164 buckets (>= 1 visits) -> 1,378,330 pattern cols vs 17,006,144  (12.3× fewer); train fallback=0.000%
+design : 1378542 columns (2×689165 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.586706  iters=200  (125.76s)
+val   : mse=1.174856  sign_acc=0.2797
+quant : scale=1000  pat range=[-151,151] ext_mg range=[-592,591]
+wrote /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/gen2.pjtw  (v3, 34012436 weights, 136049764 bytes)

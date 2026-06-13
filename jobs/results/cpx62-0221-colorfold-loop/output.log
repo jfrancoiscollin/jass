@@ -1,0 +1,54 @@
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2) --color-fold ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat0
+  gen0 proxy=0.4077  Elo_vs_hc=131-3-136 elo=-6.4
+=== gen1 : +300000 self-play depth4 avec gen0 → cumulé → logistic(--prune --color-fold) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat1
+  gen1 proxy=0.4402  Elo_vs_hc=173-8-89 elo=+111.8
+=== gen2 : +300000 self-play depth4 avec gen1 → cumulé → logistic(--prune --color-fold) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat2
+  gen2 proxy=0.4313  Elo_vs_hc=185-4-81 elo=+141.1
+=== gen3 : +300000 self-play depth4 avec gen2 → cumulé → logistic(--prune --color-fold) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat3
+  gen3 proxy=0.4351  Elo_vs_hc=180-6-84 elo=+129.2
+=== gen4 : +300000 self-play depth4 avec gen3 → cumulé → logistic(--prune --color-fold) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat4
+  gen4 proxy=0.4317  Elo_vs_hc=166-7-97 elo=+90.8
+=== gen5 : +300000 self-play depth4 avec gen4 → cumulé → logistic(--prune --color-fold) ===
+cumulative 1700000
+wrote 1700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat5
+  gen5 proxy=0.4334  Elo_vs_hc=179-5-86 elo=+124.8
+=== gen6 : +300000 self-play depth4 avec gen5 → cumulé → logistic(--prune --color-fold) ===
+cumulative 2000000
+wrote 2000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat6
+  gen6 proxy=0.4395  Elo_vs_hc=202-5-63 elo=+197.8
+=== gen7 : +300000 self-play depth4 avec gen6 → cumulé → logistic(--prune --color-fold) ===
+cumulative 2300000
+wrote 2300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat7
+  gen7 proxy=0.4313  Elo_vs_hc=203-9-58 elo=+208.5
+=== gen8 : +300000 self-play depth4 avec gen7 → cumulé → logistic(--prune --color-fold) ===
+cumulative 2600000
+wrote 2600000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0221-colorfold-loop/artefacts.src/feat8
+  gen8 proxy=0.4265  Elo_vs_hc=179-4-87 elo=+123.3
+=== gen8 vs hc précis (60 paires) ===
+  744-17-319 elo=+144.5
+
+==========================================================
+   cpx62-0219 — PHASE 1 COLOR-FOLD — TRAJECTOIRE Elo
+  gen :  Elo_vs_hc  |  proxy
+   0 : 131-3-136 elo=-6.4   |  0.4077
+   1 : 173-8-89 elo=+111.8   |  0.4402
+   2 : 185-4-81 elo=+141.1   |  0.4313
+   3 : 180-6-84 elo=+129.2   |  0.4351
+   4 : 166-7-97 elo=+90.8   |  0.4317
+   5 : 179-5-86 elo=+124.8   |  0.4334
+   6 : 202-5-63 elo=+197.8   |  0.4395
+   7 : 203-9-58 elo=+208.5   |  0.4313
+   8 : 179-4-87 elo=+123.3   |  0.4265
+  → compare ccx33-0220 (men-only) : COLOR-FOLD monte-t-il PLUS HAUT en Elo ?
+    si oui → la 1re brique de symétrie aide → Phase 2 (rotation 180°).
+==========================================================
