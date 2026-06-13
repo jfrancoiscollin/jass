@@ -1,0 +1,16 @@
+loading JNNW /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/cumulative.jnnw
+  500000 records  (0.03s)
+extracting pattern indices (men only)
+loading raw extras /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat1
+  extras shape (500000, 106)  (mean mob b/w=12.1/12.2)
+target=wdl  pos=169655 neg=165241 zero=165104 (33.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=169655 draw=165104 loss=165241 (33.0% draws)
+phase : piece-count mean=19.3  wmg mean=0.482
+split : train=450000 val=50000
+prune : keep 626,199 buckets (>= 1 visits) -> 1,252,400 pattern cols vs 34,012,224  (27.2× fewer); train fallback=0.000%
+design : 1252612 columns (2×626200 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.587930  iters=200  (54.03s)
+val   : mse=1.156020  sign_acc=0.2717
+quant : scale=1000  pat range=[-188,189] ext_mg range=[-543,542]
+wrote /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/gen1.pjtw  (v3, 34012436 weights, 136049764 bytes)

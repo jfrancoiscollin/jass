@@ -1,0 +1,54 @@
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2)  ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat0
+  gen0 proxy=0.4072  Elo_vs_hc=117-11-142 elo=-32.3
+=== gen1 : +300000 self-play depth4 avec gen0 → cumulé → logistic(--prune ) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat1
+  gen1 proxy=0.4467  Elo_vs_hc=176-7-87 elo=+119.0
+=== gen2 : +300000 self-play depth4 avec gen1 → cumulé → logistic(--prune ) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat2
+  gen2 proxy=0.4494  Elo_vs_hc=192-6-72 elo=+166.0
+=== gen3 : +300000 self-play depth4 avec gen2 → cumulé → logistic(--prune ) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat3
+  gen3 proxy=0.4476  Elo_vs_hc=176-7-87 elo=+119.0
+=== gen4 : +300000 self-play depth4 avec gen3 → cumulé → logistic(--prune ) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat4
+  gen4 proxy=0.4527  Elo_vs_hc=181-8-81 elo=+135.1
+=== gen5 : +300000 self-play depth4 avec gen4 → cumulé → logistic(--prune ) ===
+cumulative 1700000
+wrote 1700000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat5
+  gen5 proxy=0.4503  Elo_vs_hc=192-1-77 elo=+158.1
+=== gen6 : +300000 self-play depth4 avec gen5 → cumulé → logistic(--prune ) ===
+cumulative 2000000
+wrote 2000000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat6
+  gen6 proxy=0.4552  Elo_vs_hc=175-7-88 elo=+116.1
+=== gen7 : +300000 self-play depth4 avec gen6 → cumulé → logistic(--prune ) ===
+cumulative 2300000
+wrote 2300000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat7
+  gen7 proxy=0.4604  Elo_vs_hc=204-3-63 elo=+201.3
+=== gen8 : +300000 self-play depth4 avec gen7 → cumulé → logistic(--prune ) ===
+cumulative 2600000
+wrote 2600000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/feat8
+  gen8 proxy=0.4588  Elo_vs_hc=193-11-66 elo=+177.4
+=== gen8 vs hc précis (60 paires) ===
+  746-21-313 elo=+147.6
+
+==========================================================
+   cpx62-0219 — PHASE 1 MEN-ONLY (témoin) — TRAJECTOIRE Elo
+  gen :  Elo_vs_hc  |  proxy
+   0 : 117-11-142 elo=-32.3   |  0.4072
+   1 : 176-7-87 elo=+119.0   |  0.4467
+   2 : 192-6-72 elo=+166.0   |  0.4494
+   3 : 176-7-87 elo=+119.0   |  0.4476
+   4 : 181-8-81 elo=+135.1   |  0.4527
+   5 : 192-1-77 elo=+158.1   |  0.4503
+   6 : 175-7-88 elo=+116.1   |  0.4552
+   7 : 204-3-63 elo=+201.3   |  0.4604
+   8 : 193-11-66 elo=+177.4   |  0.4588
+  → compare cpx62-0219 (color-fold) : color-fold monte-t-il PLUS HAUT que ce témoin en Elo ?
+    si oui → la 1re brique de symétrie aide → Phase 2 (rotation 180°).
+==========================================================
