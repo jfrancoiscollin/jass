@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0228-fullfold-mt30",
-  "script": "jobs/queue/cpx62-0228-fullfold-mt30.sh",
-  "pid": 806558,
-  "started_at": "2026-06-13T18:46:54+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

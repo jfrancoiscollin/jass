@@ -1,0 +1,13 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/sp6-3.jnnw eval_depth=8 play_depth=8 max_plies=200 seed=21580 nnue=/root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/gen5.pjtw quiet_only=false pv_extract=0 movetime_ms=30
+  played 50 games, 1724 / 18750 positions
+  played 100 games, 3359 / 18750 positions
+  played 150 games, 5014 / 18750 positions
+  played 200 games, 6663 / 18750 positions
+  played 250 games, 8271 / 18750 positions
+  played 300 games, 9928 / 18750 positions
+  played 350 games, 11706 / 18750 positions
+  played 400 games, 13435 / 18750 positions
+  played 450 games, 15168 / 18750 positions
+  played 500 games, 16977 / 18750 positions
+  played 550 games, 18704 / 18750 positions
+wrote 18750 WDL records to /root/jass/jobs/results/cpx62-0228-fullfold-mt30/artefacts.src/sp6-3.jnnw
