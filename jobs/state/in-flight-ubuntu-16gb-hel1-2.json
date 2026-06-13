@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0215-depth-mt60",
+  "script": "jobs/queue/ccx33-0215-depth-mt60.sh",
+  "pid": 543954,
+  "started_at": "2026-06-13T11:03:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
