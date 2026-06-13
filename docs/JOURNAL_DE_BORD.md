@@ -300,6 +300,17 @@ profondeur** (régime où le 17M non-foldé est vraiment affamé). PROCHAIN : (1
 LR-close full (0.6M, 0225/0226) ; (2) scaler data+profondeur AVEC full-fold ; (3)
 optimiser la géométrie (`pattern_importance.py`) pour récupérer la vitesse.
 
+**VERDICT LR-CLOSE + PROFONDEUR (2026-06-13) — ON A SUR-FOLDÉ ; sweet spot = 32-pat full-fold.**
+Elo précis gen8 vs hc : 32-pat full-fold (0227) **+175.3** · **54-pat LR-close full-fold
+(0229) +134.0** · full-fold @mt30 54-pat (0228) +135.8. La géométrie LR-CLOSE (54 patterns,
+0.6M poids) est **−41 Elo PIRE** que le 32-pat full-fold (1.0M) — à chaque gen, seed inclus
+(gen0 −32 vs +33). On a **SUR-FOLDÉ** : 0.6M passe SOUS l'optimum ~1.0M, les folds
+approximatifs/agressifs mordent (exactement le risque théorique). **OPTIMUM = 32-pat
+full-fold (+175, soit +30 vs men-only).** → main REVERTÉ en 32-pat. La PROFONDEUR (mt30)
+n'a rien donné ici (+136≈+134) mais c'est CONFONDU (testé sur la mauvaise géométrie 54-pat)
+→ re-tester mt30 sur 32-pat (la bonne) pour trancher. ✂️ LR-closed geometry = impasse
+(sur-fold). Leçon : il y a un OPTIMUM de fold ~1.0M ; plus n'est pas mieux.
+
 - **NE PLUS** relancer : deep-score relabel (distillation), WDL 1-cycle, sweep l2
   sur self-play (optimum = [3e-4,3e-3] établi), **pivot non-linéaire avant debug**.
 - Tenir ce journal à jour **après chaque verdict**.
