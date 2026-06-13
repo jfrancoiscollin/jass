@@ -1,0 +1,101 @@
+{
+  "job_id": "cpx62-0217-elo-loop-mt30",
+  "snapshot_at": "2026-06-13T13:35:03+00:00",
+  "started_at": "2026-06-13T13:29:03+00:00",
+  "elapsed_seconds": 360,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11619
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "cumulative.jnnw",
+      "size_bytes": 7600008
+    },
+    {
+      "name": "elo-gen0.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "feat0",
+      "size_bytes": 84800012
+    },
+    {
+      "name": "gen0-train.log",
+      "size_bytes": 1010
+    },
+    {
+      "name": "gen0.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "sp0-1.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-10.log",
+      "size_bytes": 625
+    },
+    {
+      "name": "sp0-11.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-12.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-13.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-14.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-15.log",
+      "size_bytes": 625
+    },
+    {
+      "name": "sp0-16.log",
+      "size_bytes": 625
+    },
+    {
+      "name": "sp0-2.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-3.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-4.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-5.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-6.log",
+      "size_bytes": 578
+    },
+    {
+      "name": "sp0-7.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-8.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-9.log",
+      "size_bytes": 623
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2797115       1       06:00  0.0  0.0 bash\n2797117 2797115       06:00  0.0  0.0 bash\n2797706 2797117       03:05  0.0  0.0 bash\n2797708 2797706       03:05  377  0.6 jass\n"
+}
