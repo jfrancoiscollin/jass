@@ -1,0 +1,6 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts/master-clean-scan-d10.jnnw
+  1000000 records  (0.07s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+feature count 1420193 != data 1000000

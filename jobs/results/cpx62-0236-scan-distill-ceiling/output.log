@@ -1,0 +1,20 @@
+geometry: 32 patterns ; master records=1420193
+=== dump eval-features sur le master ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+  l2=3e-4  TRAIN FAIL
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+feature count 1420193 != data 1000000
+  l2=1e-4  TRAIN FAIL
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+feature count 1420193 != data 1000000
+  l2=3e-5  TRAIN FAIL
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+feature count 1420193 != data 1000000
+  l2=1e-5  TRAIN FAIL
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0236-scan-distill-ceiling/artefacts.src/featM
+feature count 1420193 != data 1000000
+ABORT: aucune distillation entraînée
