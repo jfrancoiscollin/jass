@@ -38,9 +38,9 @@ using namespace pattern_jass;
 
 void test_layout_constants() {
     REQUIRE_EQ(PATTERN_SIZE, std::size_t{12});
-    REQUIRE_EQ(NUM_PATTERNS, std::size_t{54});                 // v4 (enriched geometry)
+    REQUIRE_EQ(NUM_PATTERNS, std::size_t{32});                 // v4 (enriched geometry)
     REQUIRE_EQ(BUCKETS_PER_PATTERN, std::uint32_t{531441});    // 3^12
-    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{54 * 531441});     // 17 006 112
+    REQUIRE_EQ(TOTAL_BUCKETS, std::uint32_t{32 * 531441});     // 17 006 112
     REQUIRE_EQ(TOTAL_BUCKETS, BUCKETS_PER_PATTERN * static_cast<std::uint32_t>(NUM_PATTERNS));
 
     constexpr auto offsets = pattern_offsets();
