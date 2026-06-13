@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0218-elo-loop-depth4",
-  "snapshot_at": "2026-06-13T13:32:57+00:00",
+  "snapshot_at": "2026-06-13T13:38:05+00:00",
   "started_at": "2026-06-13T13:27:53+00:00",
-  "elapsed_seconds": 304,
+  "elapsed_seconds": 612,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,15 +14,23 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 7600008
+      "size_bytes": 19000008
     },
     {
       "name": "elo-gen0.log",
       "size_bytes": 275
     },
     {
+      "name": "elo-gen1.log",
+      "size_bytes": 274
+    },
+    {
       "name": "feat0",
       "size_bytes": 84800012
+    },
+    {
+      "name": "feat1",
+      "size_bytes": 212000012
     },
     {
       "name": "gen0-train.log",
@@ -30,6 +38,14 @@
     },
     {
       "name": "gen0.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen1-train.log",
+      "size_bytes": 1029
+    },
+    {
+      "name": "gen1.pjtw",
       "size_bytes": 136049764
     },
     {
@@ -65,69 +81,101 @@
       "size_bytes": 1020
     },
     {
-      "name": "sp1-1.jnnw",
-      "size_bytes": 952130
-    },
-    {
       "name": "sp1-1.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-2.jnnw",
-      "size_bytes": 968546
+      "size_bytes": 1433
     },
     {
       "name": "sp1-2.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-3.jnnw",
-      "size_bytes": 911090
+      "size_bytes": 1434
     },
     {
       "name": "sp1-3.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-4.jnnw",
-      "size_bytes": 984962
+      "size_bytes": 1434
     },
     {
       "name": "sp1-4.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-5.jnnw",
-      "size_bytes": 960338
+      "size_bytes": 1434
     },
     {
       "name": "sp1-5.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-6.jnnw",
-      "size_bytes": 960338
+      "size_bytes": 1433
     },
     {
       "name": "sp1-6.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-7.jnnw",
-      "size_bytes": 960338
+      "size_bytes": 1434
     },
     {
       "name": "sp1-7.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1-8.jnnw",
-      "size_bytes": 968546
+      "size_bytes": 1433
     },
     {
       "name": "sp1-8.log",
+      "size_bytes": 1388
+    },
+    {
+      "name": "sp2-1.jnnw",
+      "size_bytes": 1222994
+    },
+    {
+      "name": "sp2-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-2.jnnw",
+      "size_bytes": 1198370
+    },
+    {
+      "name": "sp2-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-3.jnnw",
+      "size_bytes": 1222994
+    },
+    {
+      "name": "sp2-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-4.jnnw",
+      "size_bytes": 1231202
+    },
+    {
+      "name": "sp2-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-5.jnnw",
+      "size_bytes": 1222994
+    },
+    {
+      "name": "sp2-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-6.jnnw",
+      "size_bytes": 1222994
+    },
+    {
+      "name": "sp2-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-7.jnnw",
+      "size_bytes": 1206578
+    },
+    {
+      "name": "sp2-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2-8.jnnw",
+      "size_bytes": 1255826
+    },
+    {
+      "name": "sp2-8.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 547097       1       05:03  0.0  0.0 bash\n 547099  547097       05:03  0.0  0.0 bash\n 817219  547099       01:05 99.9  0.5 jass\n 817220  547099       01:05 99.7  0.5 jass\n 817221  547099       01:05 99.9  0.5 jass\n 817222  547099       01:05 99.9  0.5 jass\n 817223  547099       01:05 99.9  0.5 jass\n 817224  547099       01:05 99.8  0.5 jass\n 817225  547099       01:05 99.9  0.5 jass\n 817226  547099       01:05 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 547097       1       10:11  0.0  0.0 bash\n 547099  547097       10:11  0.0  0.0 bash\n1077140  547099       01:18 99.8  0.5 jass\n1077141  547099       01:18 99.9  0.5 jass\n1077142  547099       01:18 99.9  0.5 jass\n1077143  547099       01:18 99.9  0.5 jass\n1077144  547099       01:18 99.9  0.5 jass\n1077145  547099       01:18 99.9  0.5 jass\n1077146  547099       01:18 99.8  0.5 jass\n1077147  547099       01:18 99.9  0.5 jass\n"
 }
