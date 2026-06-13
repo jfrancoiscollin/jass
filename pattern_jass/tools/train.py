@@ -448,15 +448,45 @@ def train_scan_eval(args):
 
     TB = patterns.TOTAL_BUCKETS
 
+    # --- optional collision-free dense PRUNE of the pattern table ---------------
+    # Build a remap bucket(0..TB) -> slot from the TRAIN split: occurring buckets
+    # get slots 1..K, everything else shares slot 0 (fallback). Training then runs
+    # over PAT_N = K+1 pattern columns instead of TB; we scatter back to the full
+    # 17M layout at output (so the .pjtw / C++ eval are unchanged). Lossless when
+    # the remap is built from the data we train on: slot 0 is never activated in
+    # train (every train bucket is occurring), so its weight stays 0, exactly the
+    # value a full-table fit leaves on those columns.
+    PAT_N = TB
+    dcols = cols
+    remap = None
+    if getattr(args, 'prune', False):
+        if args.anchor_weights or args.material_anchor > 0 or \
+           getattr(args, 'freq_reg', 0) > 0 or args.fm_rank > 0:
+            raise SystemExit('--prune is incompatible with anchors/freq-reg/fm '
+                             '(those index the full 17M table).')
+        ccounts = np.bincount(cols[tr_idx].ravel(), minlength=TB)
+        keep = np.flatnonzero(ccounts >= args.prune_min_visits)
+        # order kept buckets by frequency desc → common buckets get the low slots
+        keep = keep[np.argsort(ccounts[keep])[::-1]]
+        K = len(keep)
+        remap = np.zeros(TB, dtype=np.int64)      # 0 = fallback/unseen
+        remap[keep] = np.arange(1, K + 1)
+        dcols = remap[cols]                        # (n,32) in [0, K]
+        PAT_N = K + 1
+        fb_tr = float((dcols[tr_idx] == 0).mean())
+        print(f'prune : keep {K:,} buckets (>= {args.prune_min_visits} visits) '
+              f'-> {2*PAT_N:,} pattern cols vs {2*TB:,}  ({TB/max(PAT_N,1):.1f}× fewer); '
+              f'train fallback={100*fb_tr:.3f}%')
+
     def build(sel):
-        xp = build_sparse_X_phased(cols[sel], wmg[sel], weg[sel], TB)
+        xp = build_sparse_X_phased(dcols[sel], wmg[sel], weg[sel], PAT_N)
         xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
         return sp.hstack([xp, xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
 
     X_tr, X_val = build(tr_idx), build(val_idx)
     y_tr, y_val = y_black[tr_idx], y_black[val_idx]
     print(f'design : {X_tr.shape[1]} columns '
-          f'(2×{TB} pat + 2×{EVAL_NUM_EXTRAS} ext)')
+          f'(2×{PAT_N} pat + 2×{EVAL_NUM_EXTRAS} ext)')
 
     n_cols = X_tr.shape[1]
     # Anchors COMBINE (per-column): a uniform anti-forgetting pull toward a v3
@@ -520,10 +550,22 @@ def train_scan_eval(args):
         return np.clip(q, -(2 ** 31), 2 ** 31 - 1).astype(np.int32)
 
     E = EVAL_NUM_EXTRAS
-    pat_mg = quant(w_float[0:TB])
-    pat_eg = quant(w_float[TB:2 * TB])
-    ext_mg = quant(w_float[2 * TB:2 * TB + E])
-    ext_eg = quant(w_float[2 * TB + E:2 * TB + 2 * E])
+    pat_mg_d = w_float[0:PAT_N]
+    pat_eg_d = w_float[PAT_N:2 * PAT_N]
+    ext_mg = quant(w_float[2 * PAT_N:2 * PAT_N + E])
+    ext_eg = quant(w_float[2 * PAT_N + E:2 * PAT_N + 2 * E])
+    if remap is not None:
+        # scatter dense slots 1..K back to the full 17M layout; slot 0 (fallback)
+        # and every unseen bucket stay 0 — exactly the value a full-table fit
+        # leaves on never-activated columns. Output .pjtw is standard/playable.
+        full_mg = np.zeros(TB, dtype=w_float.dtype)
+        full_eg = np.zeros(TB, dtype=w_float.dtype)
+        kept = np.flatnonzero(remap > 0)
+        full_mg[kept] = pat_mg_d[remap[kept]]
+        full_eg[kept] = pat_eg_d[remap[kept]]
+        pat_mg, pat_eg = quant(full_mg), quant(full_eg)
+    else:
+        pat_mg, pat_eg = quant(pat_mg_d), quant(pat_eg_d)
     print(f'quant : scale={args.scale}  '
           f'pat range=[{int(pat_mg.min())},{int(pat_mg.max())}] '
           f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
@@ -594,6 +636,21 @@ def main():
                          'per-column anchor toward 0 = STRENGTH/(visits+1). Rare '
                          '(under-trained) buckets shrunk hard, common ones left '
                          'alone — fights depth-instability without collisions.')
+    ap.add_argument('--prune', action='store_true',
+                    help='(scan-eval) train over a COLLISION-FREE dense remap of '
+                         'the pattern table : only buckets occurring in the train '
+                         'split get a column (slot 1..K), all others share slot 0. '
+                         'Cuts the design from 2×17M to 2×(K+1) columns (~22× '
+                         'fewer params → far cheaper/faster L-BFGS, less RAM) and '
+                         'SCATTERS the result back into a standard 17M-layout '
+                         '.pjtw, so the C++ eval is unchanged and bit-compatible. '
+                         'Lossless: dropped buckets are unseen→0, exactly as a '
+                         'full-table fit leaves them. NOT the lossy hashing of '
+                         '0190 (zero collisions). Incompatible with anchors/'
+                         'freq-reg/fm (those index the full table).')
+    ap.add_argument('--prune-min-visits', type=int, default=1,
+                    help='with --prune : keep a bucket only if it occurs >= this '
+                         'many times in the train split (2 drops singleton noise).')
     ap.add_argument('--skeleton-data', default=None,
                     help='optional path to a sibling JNNW whose score field '
                          'contains the handcrafted skeleton eval per record. '
