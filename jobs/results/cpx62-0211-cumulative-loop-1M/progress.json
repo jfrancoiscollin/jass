@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0211-cumulative-loop-1M",
-  "snapshot_at": "2026-06-13T08:55:09+00:00",
+  "snapshot_at": "2026-06-13T09:00:51+00:00",
   "started_at": "2026-06-13T07:26:03+00:00",
-  "elapsed_seconds": 5346,
+  "elapsed_seconds": 5688,
   "artefacts": [
     {
       "name": "build.log",
@@ -82,7 +82,11 @@
     },
     {
       "name": "gen5-train.log",
-      "size_bytes": 0
+      "size_bytes": 931
+    },
+    {
+      "name": "gen5.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -473,5 +477,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1    01:29:06  0.0  0.0 bash\n  14991   14990    01:29:06  0.0  0.0 bash\n  17269   14991       14:45  210 62.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1    01:34:48  0.0  0.0 bash\n  14991   14990    01:34:48  0.0  0.0 bash\n  17953   14991       00:01  0.0  0.0 bash\n  17954   17953       00:01  225  0.3 python3\n  17955   17953       00:01  0.0  0.0 grep\n  17956   17953       00:01  0.0  0.0 head\n  17957   17953       00:01  0.0  0.0 cut\n"
 }
