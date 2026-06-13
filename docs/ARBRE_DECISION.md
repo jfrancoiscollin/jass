@@ -87,9 +87,11 @@ NŒUD 2ter — DEBUG du pipeline  📍⭐  (la classe N'EST PAS le suspect)
 NŒUD 3 — (seulement APRÈS Nœud 2ter épuisé) la classe linéaire plafonne vraiment
    │   ⚠️ verrouillé tant que le DEBUG (Nœud 2ter) n'a pas été mené à terme.
    │
-   ├─ 🔵 C1 — Géométrie plus RICHE (plus / meilleurs patterns, à la Scan).
-   │        Reste linéaire & rapide. Incertain : nos tests géométrie passés
-   │        (v6 diagonale, régions) étaient ~neutres ou instables en profondeur.
+   ├─ 🟢⭐ C1 — **PARTAGE DE POIDS PAR SYMÉTRIE** (la brique manquante, cf docs/
+   │        SYMMETRY_SHARING.md). Audit vs source Scan : Scan lie ses poids par
+   │        couleur (antisym) + rotation 180° + réflexion + translation → 2.1M poids
+   │        DENSES ; nous = 17M INDÉPENDANTS, affamés. Reste LINÉAIRE. Implémentation
+   │        incrémentale (couleur → rot180 → réflexion+translation). **CHEMIN ACTIF.**
    │
    ├─ 🔵 C2 — Modèle NON-LINÉAIRE (NNUE à entrées-patterns). ⚠️ DÉPRIORISÉ par
    │        directive user : NE PAS pivoter avant d'avoir épuisé le DEBUG (Nœud 2ter).
