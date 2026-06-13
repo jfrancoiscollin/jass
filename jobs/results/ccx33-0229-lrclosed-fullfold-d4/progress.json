@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0229-lrclosed-fullfold-d4",
-  "snapshot_at": "2026-06-13T19:36:12+00:00",
+  "snapshot_at": "2026-06-13T19:41:55+00:00",
   "started_at": "2026-06-13T18:48:36+00:00",
-  "elapsed_seconds": 2856,
+  "elapsed_seconds": 3199,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 87400008
+      "size_bytes": 98800008
     },
     {
       "name": "elo-gen0.log",
@@ -42,6 +42,10 @@
     },
     {
       "name": "elo-gen6.log",
+      "size_bytes": 279
+    },
+    {
+      "name": "elo-gen7.log",
       "size_bytes": 279
     },
     {
@@ -75,6 +79,10 @@
     {
       "name": "feat7",
       "size_bytes": 975200012
+    },
+    {
+      "name": "feat8",
+      "size_bytes": 1102400012
     },
     {
       "name": "gen0-train.log",
@@ -134,6 +142,14 @@
     },
     {
       "name": "gen7-train.log",
+      "size_bytes": 1159
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 229583380
+    },
+    {
+      "name": "gen8-train.log",
       "size_bytes": 0
     },
     {
@@ -391,7 +407,39 @@
     {
       "name": "sp7-8.log",
       "size_bytes": 1448
+    },
+    {
+      "name": "sp8-1.log",
+      "size_bytes": 1448
+    },
+    {
+      "name": "sp8-2.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp8-3.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp8-4.log",
+      "size_bytes": 1448
+    },
+    {
+      "name": "sp8-5.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp8-6.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp8-7.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp8-8.log",
+      "size_bytes": 1449
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 879318 3290763       03:44  265 31.8 python3\n3290761       1       47:36  0.0  0.0 bash\n3290763 3290761       47:36  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1132686 3290763       01:36  218 30.3 python3\n3290761       1       53:19  0.0  0.0 bash\n3290763 3290761       53:19  0.0  0.0 bash\n"
 }
