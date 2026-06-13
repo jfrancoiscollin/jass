@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0216-sprt-b4",
-  "script": "jobs/queue/cpx62-0216-sprt-b4.sh",
-  "pid": 23247,
-  "started_at": "2026-06-13T11:55:05+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
