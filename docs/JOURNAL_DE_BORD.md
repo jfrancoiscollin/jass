@@ -180,7 +180,13 @@ slot 1..K, jamais-vu → slot 0 fallback). Sur 1.08M positions de census :
 - min-visits=2 (drop singletons bruit) → K=537k (×31.6), fallback 1.16 %.
 ⚠️ CE N'EST PAS le bucket-hashing LOSSY de 0190 (collisions rares→communs, casse la
 profondeur, cimetière) : ici zéro collision sur l'ensemble gardé. Gain = EFFICACITÉ
-(train ×~22 moins cher → plus de data/gens), PAS de la force en soi. Le levier force =
+(train ×~22 moins cher → plus de data/gens), PAS de la force en soi.
+**Intégré + validé (2026-06-13) : `train.py --prune` [--prune-min-visits N].** Entraîne
+sur 2×(K+1) colonnes denses puis SCATTER vers le .pjtw 17M standard (C++ inchangé).
+A/B sur 30k (mêmes data/iters) : full = 584s, pruned = **11.4s (×51 plus vite)** ;
+`pat_mg` corr = **0.999962** (max|Δ|=2 = bruit de quant.) ; proxy full 0.0180 vs pruned
+0.0174 (**parité**). Lossless confirmé. L'écart de vitesse CROÎT avec la data (full =
+L-BFGS 34M params ; pruned ∝ K). Incompatible anchors/freq-reg/fm (gardé). Le levier force =
 **partage de poids par symétrie** (Piste 3, à implémenter : ~×4-8 data/poids). Dérive :
 re-census tous les N gens ou dimensionner K avec marge (le fallback grandit sinon).
 **Séquencement : on branche l'élagage APRÈS le verdict volume (0210/0211).**
