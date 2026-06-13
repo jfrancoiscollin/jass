@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0221-colorfold-loop",
-  "snapshot_at": "2026-06-13T15:27:03+00:00",
+  "snapshot_at": "2026-06-13T15:32:31+00:00",
   "started_at": "2026-06-13T14:11:51+00:00",
-  "elapsed_seconds": 4512,
+  "elapsed_seconds": 4840,
   "artefacts": [
     {
       "name": "build.log",
@@ -737,5 +737,5 @@
       "size_bytes": 897
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3547151       1    01:15:11  0.0  0.0 bash\n3547152 3547151    01:15:11  0.0  0.0 bash\n3768506 3547152       02:03  0.0  0.0 bash\n3768508 3768506       02:03  338  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 117284 3547152       03:18  0.0  0.0 bash\n 117286  117284       03:18  337  0.6 jass\n3547151       1    01:20:40  0.0  0.0 bash\n3547152 3547151    01:20:40  0.0  0.0 bash\n"
 }
