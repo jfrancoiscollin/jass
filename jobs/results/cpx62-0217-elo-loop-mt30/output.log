@@ -1,0 +1,7 @@
+=== gen0 : seed (200k self-play embarqué @mt30, l2=3e-2) ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0217-elo-loop-mt30/artefacts.src/feat0
+  gen0 proxy=0.3953  Elo_vs_hc=113-10-147 elo=-44.0
+=== gen1 : +300000 self-play @mt30 avec gen0 → cumulé → logistic(--prune) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0217-elo-loop-mt30/artefacts.src/feat1

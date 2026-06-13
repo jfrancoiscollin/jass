@@ -1,0 +1,9 @@
+gen-data-wdl: n=12500 out=/root/jass/jobs/results/cpx62-0217-elo-loop-mt30/artefacts.src/sp0-1.jnnw eval_depth=8 play_depth=8 max_plies=200 seed=22644 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=30
+  played 50 games, 1737 / 12500 positions
+  played 100 games, 3598 / 12500 positions
+  played 150 games, 5215 / 12500 positions
+  played 200 games, 7010 / 12500 positions
+  played 250 games, 8761 / 12500 positions
+  played 300 games, 10436 / 12500 positions
+  played 350 games, 12175 / 12500 positions
+wrote 12500 WDL records to /root/jass/jobs/results/cpx62-0217-elo-loop-mt30/artefacts.src/sp0-1.jnnw
