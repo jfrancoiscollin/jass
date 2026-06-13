@@ -1,0 +1,25 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/sp2-4.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=11249 nnue=/root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/gen1.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+  played 50 games, 1523 / 37500 positions
+  played 100 games, 3045 / 37500 positions
+  played 150 games, 4635 / 37500 positions
+  played 200 games, 6302 / 37500 positions
+  played 250 games, 7889 / 37500 positions
+  played 300 games, 9501 / 37500 positions
+  played 350 games, 11042 / 37500 positions
+  played 400 games, 12594 / 37500 positions
+  played 450 games, 14176 / 37500 positions
+  played 500 games, 15696 / 37500 positions
+  played 550 games, 17220 / 37500 positions
+  played 600 games, 18814 / 37500 positions
+  played 650 games, 20345 / 37500 positions
+  played 700 games, 21849 / 37500 positions
+  played 750 games, 23409 / 37500 positions
+  played 800 games, 25117 / 37500 positions
+  played 850 games, 26696 / 37500 positions
+  played 900 games, 28358 / 37500 positions
+  played 950 games, 29916 / 37500 positions
+  played 1000 games, 31409 / 37500 positions
+  played 1050 games, 33031 / 37500 positions
+  played 1100 games, 34556 / 37500 positions
+  played 1150 games, 36002 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/sp2-4.jnnw

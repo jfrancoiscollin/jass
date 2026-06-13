@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/gen3.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 9, threads 8, movetime_ms 0, 270 games
+Result: SCAN_EVAL=152 NNUE=112 Draws=6 (total 270)
+SCAN_EVAL score rate vs NNUE: 0.574074

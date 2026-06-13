@@ -1,0 +1,21 @@
+=== gen0 : seed (200k self-play embarqué depth4, l2=3e-2) ===
+cumulative 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat0
+  gen0 proxy=0.4062  Elo_vs_hc=125-7-138 elo=-16.7
+=== gen1 : +300000 self-play depth4 avec gen0 → cumulé → logistic(--prune) ===
+cumulative 500000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat1
+  gen1 proxy=0.4457  Elo_vs_hc=165-7-98 elo=+88.1
+=== gen2 : +300000 self-play depth4 avec gen1 → cumulé → logistic(--prune) ===
+cumulative 800000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat2
+  gen2 proxy=0.4496  Elo_vs_hc=181-10-79 elo=+138.1
+=== gen3 : +300000 self-play depth4 avec gen2 → cumulé → logistic(--prune) ===
+cumulative 1100000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat3
+  gen3 proxy=0.4348  Elo_vs_hc=152-6-112 elo=+51.9
+=== gen4 : +300000 self-play depth4 avec gen3 → cumulé → logistic(--prune) ===
+cumulative 1400000
+wrote 1400000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0218-elo-loop-depth4/artefacts.src/feat4
+  gen4 proxy=0.4549  Elo_vs_hc=191-1-78 elo=+154.9
+=== gen5 : +300000 self-play depth4 avec gen4 → cumulé → logistic(--prune) ===
