@@ -1,0 +1,181 @@
+{
+  "job_id": "cpx62-0222-rotfold-loop",
+  "snapshot_at": "2026-06-13T15:54:47+00:00",
+  "started_at": "2026-06-13T15:49:08+00:00",
+  "elapsed_seconds": 339,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11619
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "cumulative.jnnw",
+      "size_bytes": 19000008
+    },
+    {
+      "name": "elo-gen0.log",
+      "size_bytes": 273
+    },
+    {
+      "name": "elo-gen1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "feat0",
+      "size_bytes": 84800012
+    },
+    {
+      "name": "feat1",
+      "size_bytes": 212000012
+    },
+    {
+      "name": "gen0-train.log",
+      "size_bytes": 1098
+    },
+    {
+      "name": "gen0.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen1-train.log",
+      "size_bytes": 1109
+    },
+    {
+      "name": "gen1.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "sp0-1.log",
+      "size_bytes": 618
+    },
+    {
+      "name": "sp0-10.log",
+      "size_bytes": 621
+    },
+    {
+      "name": "sp0-11.log",
+      "size_bytes": 665
+    },
+    {
+      "name": "sp0-12.log",
+      "size_bytes": 620
+    },
+    {
+      "name": "sp0-13.log",
+      "size_bytes": 665
+    },
+    {
+      "name": "sp0-14.log",
+      "size_bytes": 665
+    },
+    {
+      "name": "sp0-15.log",
+      "size_bytes": 621
+    },
+    {
+      "name": "sp0-16.log",
+      "size_bytes": 665
+    },
+    {
+      "name": "sp0-2.log",
+      "size_bytes": 618
+    },
+    {
+      "name": "sp0-3.log",
+      "size_bytes": 619
+    },
+    {
+      "name": "sp0-4.log",
+      "size_bytes": 662
+    },
+    {
+      "name": "sp0-5.log",
+      "size_bytes": 619
+    },
+    {
+      "name": "sp0-6.log",
+      "size_bytes": 619
+    },
+    {
+      "name": "sp0-7.log",
+      "size_bytes": 663
+    },
+    {
+      "name": "sp0-8.log",
+      "size_bytes": 663
+    },
+    {
+      "name": "sp0-9.log",
+      "size_bytes": 619
+    },
+    {
+      "name": "sp1-1.log",
+      "size_bytes": 892
+    },
+    {
+      "name": "sp1-10.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-11.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-12.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-13.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-14.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-15.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-16.log",
+      "size_bytes": 894
+    },
+    {
+      "name": "sp1-2.log",
+      "size_bytes": 892
+    },
+    {
+      "name": "sp1-3.log",
+      "size_bytes": 892
+    },
+    {
+      "name": "sp1-4.log",
+      "size_bytes": 848
+    },
+    {
+      "name": "sp1-5.log",
+      "size_bytes": 892
+    },
+    {
+      "name": "sp1-6.log",
+      "size_bytes": 847
+    },
+    {
+      "name": "sp1-7.log",
+      "size_bytes": 847
+    },
+    {
+      "name": "sp1-8.log",
+      "size_bytes": 892
+    },
+    {
+      "name": "sp1-9.log",
+      "size_bytes": 891
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2247705       1       05:39  0.0  0.0 bash\n2247706 2247705       05:39  0.0  0.0 bash\n2805123 2247706       00:15  0.0  0.0 bash\n2805125 2805123       00:15  822  0.5 jass\n"
+}
