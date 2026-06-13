@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0210-cumulative-loop",
-  "snapshot_at": "2026-06-13T07:33:55+00:00",
+  "snapshot_at": "2026-06-13T07:38:58+00:00",
   "started_at": "2026-06-13T07:28:45+00:00",
-  "elapsed_seconds": 310,
+  "elapsed_seconds": 613,
   "artefacts": [
     {
       "name": "build.log",
@@ -105,5 +105,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 540453       1       05:09  0.0  0.0 bash\n 540455  540453       05:09  0.0  0.0 bash\n 541046  540455       00:29  354 20.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 540453       1       10:13  0.0  0.0 bash\n 540455  540453       10:13  0.0  0.0 bash\n 541046  540455       05:32  370 23.0 python3\n"
 }
