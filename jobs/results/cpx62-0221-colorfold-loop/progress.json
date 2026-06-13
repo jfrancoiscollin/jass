@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0221-colorfold-loop",
-  "snapshot_at": "2026-06-13T14:32:24+00:00",
+  "snapshot_at": "2026-06-13T14:38:03+00:00",
   "started_at": "2026-06-13T14:11:51+00:00",
-  "elapsed_seconds": 1233,
+  "elapsed_seconds": 1572,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 30400008
+      "size_bytes": 41800008
     },
     {
       "name": "elo-gen0.log",
@@ -26,6 +26,10 @@
     },
     {
       "name": "elo-gen2.log",
+      "size_bytes": 274
+    },
+    {
+      "name": "elo-gen3.log",
       "size_bytes": 0
     },
     {
@@ -39,6 +43,10 @@
     {
       "name": "feat2",
       "size_bytes": 339200012
+    },
+    {
+      "name": "feat3",
+      "size_bytes": 466400012
     },
     {
       "name": "gen0-train.log",
@@ -62,6 +70,14 @@
     },
     {
       "name": "gen2.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen3-train.log",
+      "size_bytes": 1127
+    },
+    {
+      "name": "gen3.pjtw",
       "size_bytes": 136049764
     },
     {
@@ -255,7 +271,71 @@
     {
       "name": "sp2-9.log",
       "size_bytes": 854
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp3-10.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-11.log",
+      "size_bytes": 855
+    },
+    {
+      "name": "sp3-12.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-13.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-14.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-15.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp3-16.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 852
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "sp3-9.log",
+      "size_bytes": 898
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 489770 3547152       02:59  0.0  0.0 bash\n 489772  489770       02:59  356  0.5 jass\n3547151       1       20:33  0.0  0.0 bash\n3547152 3547151       20:33  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1037607 3547152       00:26  0.0  0.0 bash\n1037609 1037607       00:26  292  0.6 jass\n3547151       1       26:12  0.0  0.0 bash\n3547152 3547151       26:12  0.0  0.0 bash\n"
 }
