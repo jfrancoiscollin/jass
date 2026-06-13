@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0221-colorfold-loop",
-  "snapshot_at": "2026-06-13T15:21:03+00:00",
+  "snapshot_at": "2026-06-13T15:27:03+00:00",
   "started_at": "2026-06-13T14:11:51+00:00",
-  "elapsed_seconds": 4152,
+  "elapsed_seconds": 4512,
   "artefacts": [
     {
       "name": "build.log",
@@ -47,6 +47,10 @@
     {
       "name": "elo-gen7.log",
       "size_bytes": 274
+    },
+    {
+      "name": "elo-gen8.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -150,7 +154,11 @@
     },
     {
       "name": "gen8-train.log",
-      "size_bytes": 0
+      "size_bytes": 1127
+    },
+    {
+      "name": "gen8.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -729,5 +737,5 @@
       "size_bytes": 897
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3547151       1    01:09:11  0.0  0.0 bash\n3547152 3547151    01:09:11  0.0  0.0 bash\n3768332 3547152       01:10  238 28.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3547151       1    01:15:11  0.0  0.0 bash\n3547152 3547151    01:15:11  0.0  0.0 bash\n3768506 3547152       02:03  0.0  0.0 bash\n3768508 3768506       02:03  338  0.6 jass\n"
 }
