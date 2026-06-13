@@ -398,18 +398,19 @@ def train_scan_eval(args):
     cf_U2C = cf_U2S = None       # set for --color-fold expand
     rf_canon = rf_sign = None    # set for --rot-fold expand (full (NP,NB) maps)
     NP = patterns.NUM_PATTERNS
-    if getattr(args, 'rot_fold', False) or getattr(args, 'trans_fold', False):
+    _full = getattr(args, 'full_fold', False)
+    _trans = getattr(args, 'trans_fold', False) or _full
+    _refl = getattr(args, 'refl_fold', False) or _full
+    if getattr(args, 'rot_fold', False) or _trans or _refl:
         import symmetry
-        _trans = getattr(args, 'trans_fold', False)
-        rf_canon, rf_sign = symmetry.build_canon(translate=_trans)  # (NP,NB) int64, int8
+        rf_canon, rf_sign = symmetry.build_canon(translate=_trans, reflect=_refl)
         cols = rf_canon[np.arange(NP)[None, :], idx]               # (n,32) canonical 17M-space col
         cf_signs = rf_sign[np.arange(NP)[None, :], idx].astype(np.float32)
         PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN                 # canonical space = 17M index space
         nused = int(np.unique(rf_canon.ravel()).size)
-        print(f'{"trans" if _trans else "rot"}-fold : '
-              f'{"color+rot+translation" if _trans else "group {id,cs,rot,rot∘cs}"}, '
-              f'{nused:,} distinct weights (17M -> {nused:,}, '
-              f'{patterns.TOTAL_BUCKETS/max(nused,1):.2f}x) ; antisymmetric')
+        bricks = 'color+rot' + ('+translation' if _trans else '') + ('+reflection' if _refl else '')
+        print(f'sym-fold [{bricks}] : {nused:,} distinct weights '
+              f'(17M -> {nused:,}, {patterns.TOTAL_BUCKETS/max(nused,1):.2f}x) ; antisymmetric')
     elif getattr(args, 'color_fold', False):
         cf_U2C, cf_U2S = colorfold_maps()
         canon = cf_U2C[idx]                                         # (n,32) in [0,CF_HALF]
@@ -741,6 +742,16 @@ def main():
     ap.add_argument('--prune-min-visits', type=int, default=1,
                     help='with --prune : keep a bucket only if it occurs >= this '
                          'many times in the train split (2 drops singleton noise).')
+    ap.add_argument('--refl-fold', action='store_true',
+                    help='(scan-eval) add LEFT-RIGHT REFLECTION (exact board symmetry, '
+                         'within-row reversal) to the fold group. Our diag/anti/horiz '
+                         'are LR-orphans (geometry not LR-closed) so it only folds the '
+                         'vband/sq pairs here. Composes with --trans-fold.')
+    ap.add_argument('--full-fold', action='store_true',
+                    help='(scan-eval) the FULL symmetry stack : colour + rot180 + '
+                         'translation + reflection. Folds 17M -> ~1.0M weights '
+                         '(~Scan scale). Exact symmetries (rot180∘cs, LR) preserved; '
+                         'translation is approximate. cf docs/SYMMETRY_SHARING.md.')
     ap.add_argument('--trans-fold', action='store_true',
                     help='(scan-eval) Phase-3 : --rot-fold PLUS translation tying (the '
                          '7 translate-classes share tables). Folds 17M->~1.2M weights '
