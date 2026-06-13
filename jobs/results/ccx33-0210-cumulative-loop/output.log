@@ -1,0 +1,44 @@
+tests OK
+=== gen0 : seed matériel (80k self-play embarqué, l2=3e-2) ===
+appended 80000 cumulative 80000
+wrote 80000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat0
+  gen0 proxy = 0.3980  [n=80000 coverage=283781 (1.669%) ≤2visites=55%des_touchés]
+=== gen1 : +300k self-play @depth4 avec gen0 → corpus cumulé → logistic ===
+appended 300000 cumulative 380000
+wrote 380000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat1
+  gen1 proxy = 0.4242  [n=380000 coverage=584458 (3.437%) ≤2visites=46%des_touchés]
+=== gen2 : +300k self-play @depth4 avec gen1 → corpus cumulé → logistic ===
+appended 300000 cumulative 680000
+wrote 680000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat2
+  gen2 proxy = 0.4421  [n=680000 coverage=752345 (4.424%) ≤2visites=42%des_touchés]
+=== gen3 : +300k self-play @depth4 avec gen2 → corpus cumulé → logistic ===
+appended 300000 cumulative 980000
+wrote 980000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat3
+  gen3 proxy = 0.4514  [n=980000 coverage=854558 (5.025%) ≤2visites=40%des_touchés]
+=== gen4 : +300k self-play @depth4 avec gen3 → corpus cumulé → logistic ===
+appended 300000 cumulative 1280000
+wrote 1280000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat4
+  gen4 proxy = 0.4619  [n=1280000 coverage=927396 (5.453%) ≤2visites=39%des_touchés]
+=== gen5 : +300k self-play @depth4 avec gen4 → corpus cumulé → logistic ===
+appended 300000 cumulative 1580000
+wrote 1580000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat5
+  gen5 proxy = 0.4620  [n=1580000 coverage=987085 (5.804%) ≤2visites=38%des_touchés]
+=== gen6 : +300k self-play @depth4 avec gen5 → corpus cumulé → logistic ===
+appended 300000 cumulative 1880000
+wrote 1880000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0210-cumulative-loop/artefacts.src/feat6
+  gen6 proxy = 0.4596  [n=1880000 coverage=1037708 (6.102%) ≤2visites=38%des_touchés]
+
+==========================================================
+   ccx33-0210 — BOUCLE WDL à CORPUS CUMULÉ — VERDICT
+  COURBE proxy (Spearman vs Scan-d10, set fixe 50k) :
+    gen0 = 0.3980
+    gen1 = 0.4242
+    gen2 = 0.4421
+    gen3 = 0.4514
+    gen4 = 0.4619
+    gen5 = 0.4620
+    gen6 = 0.4596
+  RAPPEL : 0205b (300k FRAIS/gen, mt30) = PLAT ~0.41 ; eval compétent ~0.64-0.67.
+  → proxy MONTE en cumulant = FAMINE confirmée + l'ACCUMULATION est le fix de la boucle.
+  → proxy plat malgré le cumul = la famine n'est pas le mur → Nœud 2ter·B3/B4.
+==========================================================
