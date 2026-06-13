@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# id: cpx62-0224-fullfold-loop
+# id: ccx33-0227-fullfold-loop
 # description: PHASE 1 symmetry-sharing — A/B (bras COLOR-FOLD). Boucle WDL cumulée,
 # depth4, train --prune --color-fold (antisym couleur : 17M→8.5M, ×2 data/poids), Elo
 # RÉEL vs handcrafted par gen. Le bras témoin men-only = ccx33-0220 (mêmes réglages SANS
 # --color-fold). Question : le partage de poids par couleur monte-t-il plus HAUT en Elo ?
 set -uo pipefail
 cd /root/jass
-ART="/root/jass/jobs/results/cpx62-0224-fullfold-loop/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 REF=/root/jass/jobs/results/0141-pattern-reeval/artefacts/master-clean-scan-d10.jnnw
 [ -f "$REF" ] || { echo "ABORT: master de référence introuvable"; exit 3; }
