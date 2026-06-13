@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0221-colorfold-loop",
+  "script": "jobs/queue/cpx62-0221-colorfold-loop.sh",
+  "pid": 3547151,
+  "started_at": "2026-06-13T14:11:51+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
