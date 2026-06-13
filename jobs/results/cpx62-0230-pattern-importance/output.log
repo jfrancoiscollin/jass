@@ -1,0 +1,95 @@
+geometry: NUM_PATTERNS=32
+0227 gen8 unavailable → training a 3-gen full-fold eval
+merged 200000
+wrote 200000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/f0
+merged 300000
+wrote 500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/f1
+merged 300000
+wrote 800000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/f2
+merged 300000
+wrote 1100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/f3
+EVAL=/root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/g3.pjtw
+
+=== IMPORTANCE (target=score, Scan-d10) ===
+eval=/root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/g3.pjtw  patterns=32  positions=50000  target=score  scale=1000
+rank pattern          std  corr_ref  importance  redund with      
+   0 diag_2         32.77    +0.042         1.4    0.26 diag_0    
+   1 anti_7         36.67    +0.029         1.1    0.18 sq_2      
+   2 horiz_0        46.89    +0.020         0.9    0.40 horiz_4   
+   3 sq_2           31.47    +0.028         0.9    0.25 diag_2    
+   4 anti_6         34.60    +0.026         0.9    0.36 anti_5    
+   5 v_bot_2        39.99    +0.021         0.9    0.35 sq_3      
+   6 horiz_4        54.31    +0.016         0.8    0.40 horiz_0   
+   7 v_top_3        41.21    +0.020         0.8    0.38 v_top_2   
+   8 anti_3         32.14    +0.026         0.8    0.27 anti_2    
+   9 diag_1         32.49    +0.024         0.8    0.21 diag_3    
+  10 sq_1           31.48    -0.024         0.8    0.27 diag_4    
+  11 anti_5         34.79    +0.021         0.7    0.36 anti_6    
+  12 diag_0         30.89    +0.024         0.7    0.26 diag_2    
+  13 horiz_3        30.13    +0.020         0.6    0.16 sq_2      
+  14 v_top_2        41.50    +0.014         0.6    0.40 sq_0      
+  15 diag_4         33.31    +0.018         0.6    0.28 diag_6    
+  16 v_bot_1        39.27    +0.015         0.6    0.38 sq_3      
+  17 v_bot_3        38.32    +0.015         0.6    0.31 v_bot_2   
+  18 diag_6         30.35    +0.017         0.5    0.28 diag_4    
+  19 horiz_2        31.37    -0.015         0.5    0.24 sq_1      
+  20 anti_4         32.27    +0.014         0.5    0.33 anti_5    
+  21 v_top_1        41.60    +0.011         0.5    0.37 sq_0      
+  22 diag_3         27.33    +0.015         0.4    0.23 diag_5    
+  23 horiz_1        31.17    +0.013         0.4    0.26 anti_4    
+  24 anti_1         35.97    +0.011         0.4    0.36 anti_2    
+  25 diag_5         33.73    +0.012         0.4    0.23 diag_3    
+  26 sq_0           30.70    +0.013         0.4    0.40 v_top_2   
+  27 sq_3           30.65    +0.011         0.3    0.40 horiz_4   
+  28 v_top_0        38.71    +0.005         0.2    0.36 v_top_1   
+  29 anti_2         34.62    +0.006         0.2    0.36 anti_1    
+  30 v_bot_0        38.90    +0.003         0.1    0.32 horiz_4   
+  31 anti_0         36.57    +0.002         0.1    0.17 sq_1      
+
+low-importance tail (prune candidates): ['anti_1', 'diag_5', 'sq_0', 'sq_3', 'v_top_0', 'anti_2', 'v_bot_0', 'anti_0']
+→ confirm any prune by Elo (RFE), not this score alone (cf B4).
+
+=== IMPORTANCE (target=wdl) ===
+eval=/root/jass/jobs/results/cpx62-0230-pattern-importance/artefacts.src/g3.pjtw  patterns=32  positions=50000  target=wdl  scale=1000
+rank pattern          std  corr_ref  importance  redund with      
+   0 v_bot_2        39.99    +0.013         0.5    0.35 sq_3      
+   1 horiz_4        54.31    -0.009         0.5    0.40 horiz_0   
+   2 horiz_3        30.13    +0.016         0.5    0.16 sq_2      
+   3 anti_1         35.97    +0.012         0.4    0.36 anti_2    
+   4 sq_0           30.70    -0.013         0.4    0.40 v_top_2   
+   5 diag_2         32.77    +0.013         0.4    0.26 diag_0    
+   6 sq_3           30.65    -0.013         0.4    0.40 horiz_4   
+   7 diag_1         32.49    +0.011         0.4    0.21 diag_3    
+   8 anti_0         36.57    -0.009         0.3    0.17 sq_1      
+   9 v_top_0        38.71    -0.008         0.3    0.36 v_top_1   
+  10 horiz_0        46.89    -0.006         0.3    0.40 horiz_4   
+  11 anti_5         34.79    +0.009         0.3    0.36 anti_6    
+  12 v_bot_3        38.32    -0.007         0.3    0.31 v_bot_2   
+  13 diag_3         27.33    -0.009         0.3    0.23 diag_5    
+  14 sq_2           31.47    +0.008         0.3    0.25 diag_2    
+  15 horiz_1        31.17    +0.007         0.2    0.26 anti_4    
+  16 v_top_3        41.21    +0.005         0.2    0.38 v_top_2   
+  17 v_bot_0        38.90    -0.005         0.2    0.32 horiz_4   
+  18 anti_7         36.67    +0.005         0.2    0.18 sq_2      
+  19 diag_0         30.89    +0.006         0.2    0.26 diag_2    
+  20 diag_4         33.31    +0.005         0.2    0.28 diag_6    
+  21 sq_1           31.48    -0.005         0.1    0.27 diag_4    
+  22 v_bot_1        39.27    +0.003         0.1    0.38 sq_3      
+  23 v_top_1        41.60    +0.003         0.1    0.37 sq_0      
+  24 v_top_2        41.50    -0.002         0.1    0.40 sq_0      
+  25 horiz_2        31.37    -0.003         0.1    0.24 sq_1      
+  26 diag_5         33.73    +0.003         0.1    0.23 diag_3    
+  27 diag_6         30.35    +0.003         0.1    0.28 diag_4    
+  28 anti_6         34.60    -0.001         0.0    0.36 anti_5    
+  29 anti_3         32.14    +0.001         0.0    0.27 anti_2    
+  30 anti_4         32.27    +0.000         0.0    0.33 anti_5    
+  31 anti_2         34.62    -0.000         0.0    0.36 anti_1    
+
+low-importance tail (prune candidates): ['v_top_2', 'horiz_2', 'diag_5', 'diag_6', 'anti_6', 'anti_3', 'anti_4', 'anti_2']
+→ confirm any prune by Elo (RFE), not this score alone (cf B4).
+
+==========================================================
+  cpx62-0230 — CLASSEMENT D'IMPORTANCE des 32 patterns (étape 1)
+  → la queue basse = candidats à l'élagage (étape 2 : prune+retrain+Elo).
+  → redondance haute = un des deux patterns corrélés est droppable.
+==========================================================
