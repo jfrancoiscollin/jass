@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0211-cumulative-loop-1M",
-  "snapshot_at": "2026-06-13T08:50:07+00:00",
+  "snapshot_at": "2026-06-13T08:55:09+00:00",
   "started_at": "2026-06-13T07:26:03+00:00",
-  "elapsed_seconds": 5044,
+  "elapsed_seconds": 5346,
   "artefacts": [
     {
       "name": "build.log",
@@ -473,5 +473,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1    01:24:04  0.0  0.0 bash\n  14991   14990    01:24:04  0.0  0.0 bash\n  17269   14991       09:43  197 61.4 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  14990       1    01:29:06  0.0  0.0 bash\n  14991   14990    01:29:06  0.0  0.0 bash\n  17269   14991       14:45  210 62.6 python3\n"
 }
