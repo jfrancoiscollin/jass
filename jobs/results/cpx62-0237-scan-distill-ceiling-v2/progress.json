@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0237-scan-distill-ceiling-v2",
-  "snapshot_at": "2026-06-13T22:42:03+00:00",
+  "snapshot_at": "2026-06-13T22:48:03+00:00",
   "started_at": "2026-06-13T22:36:03+00:00",
-  "elapsed_seconds": 360,
+  "elapsed_seconds": 720,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,12 +17,20 @@
       "size_bytes": 136049764
     },
     {
+      "name": "distill-l21e-5.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "distill-l23e-4.pjtw",
       "size_bytes": 136049764
     },
     {
       "name": "distill-l23e-5.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "elo-distill-l23e-4.log",
+      "size_bytes": 0
     },
     {
       "name": "featM",
@@ -38,7 +46,7 @@
     },
     {
       "name": "train-l21e-5.log",
-      "size_bytes": 0
+      "size_bytes": 1177
     },
     {
       "name": "train-l23e-4.log",
@@ -49,5 +57,5 @@
       "size_bytes": 1176
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3441843       1       05:59  0.0  0.0 bash\n3441845 3441843       05:59  0.0  0.0 bash\n3442476 3441845       00:36 1117  8.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3441843       1       11:59  0.0  0.0 bash\n3441845 3441843       11:59  0.0  0.0 bash\n3442641 3441845       04:53  0.0  0.0 bash\n3442643 3442641       04:53 1164  0.5 jass\n"
 }
