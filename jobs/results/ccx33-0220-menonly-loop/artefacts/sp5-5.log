@@ -1,0 +1,25 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/sp5-5.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=1751 nnue=/root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/gen4.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+  played 50 games, 1536 / 37500 positions
+  played 100 games, 3075 / 37500 positions
+  played 150 games, 4641 / 37500 positions
+  played 200 games, 6124 / 37500 positions
+  played 250 games, 7727 / 37500 positions
+  played 300 games, 9386 / 37500 positions
+  played 350 games, 10957 / 37500 positions
+  played 400 games, 12476 / 37500 positions
+  played 450 games, 14036 / 37500 positions
+  played 500 games, 15574 / 37500 positions
+  played 550 games, 17188 / 37500 positions
+  played 600 games, 18838 / 37500 positions
+  played 650 games, 20405 / 37500 positions
+  played 700 games, 21862 / 37500 positions
+  played 750 games, 23290 / 37500 positions
+  played 800 games, 25009 / 37500 positions
+  played 850 games, 26660 / 37500 positions
+  played 900 games, 28336 / 37500 positions
+  played 950 games, 29887 / 37500 positions
+  played 1000 games, 31509 / 37500 positions
+  played 1050 games, 33053 / 37500 positions
+  played 1100 games, 34597 / 37500 positions
+  played 1150 games, 36175 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/ccx33-0220-menonly-loop/artefacts.src/sp5-5.jnnw
