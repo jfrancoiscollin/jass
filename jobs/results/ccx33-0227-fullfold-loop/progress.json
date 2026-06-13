@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0227-fullfold-loop",
-  "snapshot_at": "2026-06-13T17:04:18+00:00",
+  "snapshot_at": "2026-06-13T17:09:22+00:00",
   "started_at": "2026-06-13T16:17:46+00:00",
-  "elapsed_seconds": 2792,
+  "elapsed_seconds": 3096,
   "artefacts": [
     {
       "name": "build.log",
@@ -449,5 +449,5 @@
       "size_bytes": 1383
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34732       1       46:31  0.0  0.0 bash\n  34734   34732       46:31  0.0  0.0 bash\n2038206   34734       00:31  0.0  0.0 bash\n2038208 2038206       00:31  595  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  34732       1       51:35  0.0  0.0 bash\n  34734   34732       51:35  0.0  0.0 bash\n2286695   34734       03:22  0.0  0.0 bash\n2286697 2286695       03:22  675  0.6 jass\n"
 }
