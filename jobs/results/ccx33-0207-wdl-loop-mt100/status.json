@@ -3,6 +3,7 @@
   "state": "failed",
   "exit_code": -1,
   "started_at": "2026-06-13T06:09:15+00:00",
-  "ended_at": "2026-06-13T06:38:08+00:00",
-  "host": "ubuntu-32gb-hel1-1"
+  "ended_at": "2026-06-13T07:18:11+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0207-wdl-loop-mt100/artefacts.src"
 }
