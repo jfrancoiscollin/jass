@@ -221,6 +221,38 @@ def _build_v4_v5(variant="v4"):
     return pats
 
 
+def lr_close(pats):
+    """Close the pattern set under the spatial group {rot180, left-right reflection}
+    so EVERY pattern's mirror/rotation is present → the symmetry fold (train.py
+    --full-fold) ties all patterns (exact LR over the whole set, not just vband/sq).
+    Added patterns inherit their source name + a _r/_l/_rl tag. NB: grows the count
+    (32->54) so the eval does more lookups; the added patterns are weight-TIED by
+    the fold (no new free params)."""
+    def rot(s):  # rot180 on FMJD 50-square board
+        return 51 - s
+    def lr(n):   # left-right = reverse the 5 squares within the row
+        r = (n - 1) // 5; i = (n - 1) % 5
+        return r * 5 + (4 - i) + 1
+    canon = lambda sqs: tuple(sorted(sqs))
+    have = {canon(s): nm for s, nm in pats}
+    out = list(pats)
+    ops = [("_r", lambda S: [rot(s) for s in S]),
+           ("_l", lambda S: [lr(s) for s in S]),
+           ("_rl", lambda S: [lr(rot(s)) for s in S])]
+    changed = True
+    while changed:
+        changed = False
+        for sqs, name in list(out):
+            for tag, op in ops:
+                im = op(sqs); key = canon(im)
+                if key not in have:
+                    base = name.split("_lr")[0]
+                    have[key] = f"{base}{tag}"
+                    out.append((sorted(im), f"{base}{tag}"))
+                    changed = True
+    return out
+
+
 def emit_hpp(pats):
     lines = []
     for sqs, name in pats:
@@ -262,8 +294,13 @@ def main():
     ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
                     help="v4=32 (sweet spot), v5=40 (diag blocks), "
                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
+    ap.add_argument("--lr-close", action="store_true",
+                    help="close the set under {rot180, LR} so reflection folds ALL "
+                         "patterns (32->54). Names get _r/_l/_rl tags.")
     args = ap.parse_args()
     pats = build(args.variant)
+    if args.lr_close:
+        pats = lr_close(pats)
     n = len(pats)
     by = {}
     for _, nm in pats:
