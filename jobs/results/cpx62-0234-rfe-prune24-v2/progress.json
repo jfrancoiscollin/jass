@@ -1,0 +1,185 @@
+{
+  "job_id": "cpx62-0234-rfe-prune24-v2",
+  "snapshot_at": "2026-06-13T21:43:03+00:00",
+  "started_at": "2026-06-13T21:37:03+00:00",
+  "elapsed_seconds": 360,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11619
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "cumulative.jnnw",
+      "size_bytes": 19000008
+    },
+    {
+      "name": "elo-gen0.log",
+      "size_bytes": 275
+    },
+    {
+      "name": "elo-gen1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "feat0",
+      "size_bytes": 84800012
+    },
+    {
+      "name": "feat1",
+      "size_bytes": 212000012
+    },
+    {
+      "name": "gen0-train.log",
+      "size_bytes": 1127
+    },
+    {
+      "name": "gen0.pjtw",
+      "size_bytes": 102037540
+    },
+    {
+      "name": "gen1-train.log",
+      "size_bytes": 1138
+    },
+    {
+      "name": "gen1.pjtw",
+      "size_bytes": 102037540
+    },
+    {
+      "name": "geom.log",
+      "size_bytes": 1944
+    },
+    {
+      "name": "sp0-1.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-10.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-11.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-12.log",
+      "size_bytes": 668
+    },
+    {
+      "name": "sp0-13.log",
+      "size_bytes": 625
+    },
+    {
+      "name": "sp0-14.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-15.log",
+      "size_bytes": 625
+    },
+    {
+      "name": "sp0-16.log",
+      "size_bytes": 624
+    },
+    {
+      "name": "sp0-2.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-3.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-4.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-5.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-6.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-7.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp0-8.log",
+      "size_bytes": 623
+    },
+    {
+      "name": "sp0-9.log",
+      "size_bytes": 622
+    },
+    {
+      "name": "sp1-1.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp1-10.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp1-11.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp1-12.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp1-13.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp1-14.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp1-15.log",
+      "size_bytes": 856
+    },
+    {
+      "name": "sp1-16.log",
+      "size_bytes": 900
+    },
+    {
+      "name": "sp1-2.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp1-3.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "sp1-4.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp1-5.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp1-6.log",
+      "size_bytes": 898
+    },
+    {
+      "name": "sp1-7.log",
+      "size_bytes": 853
+    },
+    {
+      "name": "sp1-8.log",
+      "size_bytes": 854
+    },
+    {
+      "name": "sp1-9.log",
+      "size_bytes": 898
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 478106       1       05:59  0.0  0.0 bash\n 478108  478106       05:59  0.0  0.0 bash\n1054091  478108       01:41  0.0  0.0 bash\n1054093 1054091       01:41 1127  0.4 jass\n"
+}
