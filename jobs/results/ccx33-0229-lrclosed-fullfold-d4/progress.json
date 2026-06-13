@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0229-lrclosed-fullfold-d4",
-  "snapshot_at": "2026-06-13T19:09:53+00:00",
+  "snapshot_at": "2026-06-13T19:15:05+00:00",
   "started_at": "2026-06-13T18:48:36+00:00",
-  "elapsed_seconds": 1277,
+  "elapsed_seconds": 1589,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 41800008
+      "size_bytes": 53200008
     },
     {
       "name": "elo-gen0.log",
@@ -30,6 +30,10 @@
     },
     {
       "name": "elo-gen3.log",
+      "size_bytes": 279
+    },
+    {
+      "name": "elo-gen4.log",
       "size_bytes": 0
     },
     {
@@ -47,6 +51,10 @@
     {
       "name": "feat3",
       "size_bytes": 466400012
+    },
+    {
+      "name": "feat4",
+      "size_bytes": 593600012
     },
     {
       "name": "gen0-train.log",
@@ -78,6 +86,14 @@
     },
     {
       "name": "gen3.pjtw",
+      "size_bytes": 229583380
+    },
+    {
+      "name": "gen4-train.log",
+      "size_bytes": 1159
+    },
+    {
+      "name": "gen4.pjtw",
       "size_bytes": 229583380
     },
     {
@@ -207,7 +223,39 @@
     {
       "name": "sp3-8.log",
       "size_bytes": 1449
+    },
+    {
+      "name": "sp4-1.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp4-2.log",
+      "size_bytes": 1448
+    },
+    {
+      "name": "sp4-3.log",
+      "size_bytes": 1448
+    },
+    {
+      "name": "sp4-4.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp4-5.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp4-6.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp4-7.log",
+      "size_bytes": 1449
+    },
+    {
+      "name": "sp4-8.log",
+      "size_bytes": 1403
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3290761       1       21:17  0.0  0.0 bash\n3290763 3290761       21:17  0.0  0.0 bash\n4067691 3290763       02:18  0.0  0.0 bash\n4067693 4067691       02:18  691  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 130532 3290763       00:54  0.0  0.0 bash\n 130534  130532       00:54  642  0.8 jass\n3290761       1       26:29  0.0  0.0 bash\n3290763 3290761       26:29  0.0  0.0 bash\n"
 }
