@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0234-rfe-prune24-v2",
-  "snapshot_at": "2026-06-13T22:12:03+00:00",
+  "snapshot_at": "2026-06-13T22:18:03+00:00",
   "started_at": "2026-06-13T21:37:03+00:00",
-  "elapsed_seconds": 2100,
+  "elapsed_seconds": 2460,
   "artefacts": [
     {
       "name": "build.log",
@@ -741,5 +741,5 @@
       "size_bytes": 898
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 478106       1       35:00  0.0  0.0 bash\n 478108  478106       35:00  0.0  0.0 bash\n 701114  478108       00:35  0.0  0.0 bash\n 701116  701114       00:35 1031  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 478106       1       40:59  0.0  0.0 bash\n 478108  478106       40:59  0.0  0.0 bash\n1254328  478108       04:36  0.0  0.0 bash\n1254330 1254328       04:36 1153  0.4 jass\n"
 }
