@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0208-wdl-loop-mt100",
-  "snapshot_at": "2026-06-13T06:48:07+00:00",
+  "snapshot_at": "2026-06-13T06:51:48+00:00",
   "started_at": "2026-06-13T06:43:04+00:00",
-  "elapsed_seconds": 303,
+  "elapsed_seconds": 524,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "seed-1.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-1.log",
@@ -22,7 +22,7 @@
     },
     {
       "name": "seed-10.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-10.log",
@@ -30,7 +30,7 @@
     },
     {
       "name": "seed-11.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-11.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "seed-12.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-12.log",
@@ -46,7 +46,7 @@
     },
     {
       "name": "seed-13.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-13.log",
@@ -54,7 +54,7 @@
     },
     {
       "name": "seed-14.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-14.log",
@@ -62,7 +62,7 @@
     },
     {
       "name": "seed-15.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-15.log",
@@ -70,7 +70,7 @@
     },
     {
       "name": "seed-16.jnnw",
-      "size_bytes": 57458
+      "size_bytes": 90290
     },
     {
       "name": "seed-16.log",
@@ -78,7 +78,7 @@
     },
     {
       "name": "seed-2.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-2.log",
@@ -86,7 +86,7 @@
     },
     {
       "name": "seed-3.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-3.log",
@@ -94,7 +94,7 @@
     },
     {
       "name": "seed-4.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-4.log",
@@ -102,7 +102,7 @@
     },
     {
       "name": "seed-5.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-5.log",
@@ -110,7 +110,7 @@
     },
     {
       "name": "seed-6.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-6.log",
@@ -118,7 +118,7 @@
     },
     {
       "name": "seed-7.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-7.log",
@@ -126,7 +126,7 @@
     },
     {
       "name": "seed-8.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-8.log",
@@ -134,7 +134,7 @@
     },
     {
       "name": "seed-9.jnnw",
-      "size_bytes": 65666
+      "size_bytes": 90290
     },
     {
       "name": "seed-9.log",
@@ -145,5 +145,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11990       1       05:03  0.0  0.0 bash\n  11991   11990       05:03  0.0  0.0 bash\n  12482   11991       04:41 50.2  0.1 jass\n  12483   11991       04:41 49.9  0.1 jass\n  12484   11991       04:41 50.1  0.1 jass\n  12485   11991       04:41 49.9  0.1 jass\n  12486   11991       04:41 49.8  0.1 jass\n  12487   11991       04:41 49.9  0.1 jass\n  12488   11991       04:41 49.9  0.1 jass\n  12489   11991       04:41 49.9  0.1 jass\n  12490   11991       04:41 49.9  0.1 jass\n  12491   11991       04:41 50.1  0.1 jass\n  12492   11991       04:41 49.8  0.1 jass\n  12493   11991       04:41 49.8  0.1 jass\n  12494   11991       04:41 49.9  0.1 jass\n  12495   11991       04:41 50.0  0.1 jass\n  12496   11991       04:41 49.7  0.1 jass\n  12497   11991       04:41 49.9  0.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11990       1       08:44  0.0  0.0 bash\n  11991   11990       08:44  0.0  0.0 bash\n  12482   11991       08:22 50.0  0.1 jass\n  12483   11991       08:22 49.8  0.1 jass\n  12484   11991       08:22 50.0  0.1 jass\n  12485   11991       08:22 49.9  0.1 jass\n  12486   11991       08:22 49.9  0.1 jass\n  12487   11991       08:22 49.7  0.1 jass\n  12488   11991       08:22 49.9  0.1 jass\n  12489   11991       08:22 50.0  0.1 jass\n  12490   11991       08:22 49.8  0.1 jass\n  12491   11991       08:22 49.8  0.1 jass\n  12492   11991       08:22 49.8  0.1 jass\n  12493   11991       08:22 49.9  0.1 jass\n  12494   11991       08:22 49.8  0.1 jass\n  12495   11991       08:22 49.9  0.1 jass\n  12496   11991       08:22 49.5  0.1 jass\n  12497   11991       08:22 49.6  0.1 jass\n"
 }
