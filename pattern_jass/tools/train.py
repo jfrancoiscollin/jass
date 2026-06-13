@@ -398,15 +398,18 @@ def train_scan_eval(args):
     cf_U2C = cf_U2S = None       # set for --color-fold expand
     rf_canon = rf_sign = None    # set for --rot-fold expand (full (NP,NB) maps)
     NP = patterns.NUM_PATTERNS
-    if getattr(args, 'rot_fold', False):
+    if getattr(args, 'rot_fold', False) or getattr(args, 'trans_fold', False):
         import symmetry
-        rf_canon, rf_sign = symmetry.build_canon()                 # (NP,NB) int64, int8
+        _trans = getattr(args, 'trans_fold', False)
+        rf_canon, rf_sign = symmetry.build_canon(translate=_trans)  # (NP,NB) int64, int8
         cols = rf_canon[np.arange(NP)[None, :], idx]               # (n,32) canonical 17M-space col
         cf_signs = rf_sign[np.arange(NP)[None, :], idx].astype(np.float32)
         PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN                 # canonical space = 17M index space
         nused = int(np.unique(rf_canon.ravel()).size)
-        print(f'rot-fold : group {{id,cs,rot,rot∘cs}}, {nused:,} distinct weights '
-              f'(17M -> {nused:,}, {patterns.TOTAL_BUCKETS/max(nused,1):.2f}x) ; antisymmetric')
+        print(f'{"trans" if _trans else "rot"}-fold : '
+              f'{"color+rot+translation" if _trans else "group {id,cs,rot,rot∘cs}"}, '
+              f'{nused:,} distinct weights (17M -> {nused:,}, '
+              f'{patterns.TOTAL_BUCKETS/max(nused,1):.2f}x) ; antisymmetric')
     elif getattr(args, 'color_fold', False):
         cf_U2C, cf_U2S = colorfold_maps()
         canon = cf_U2C[idx]                                         # (n,32) in [0,CF_HALF]
@@ -738,6 +741,12 @@ def main():
     ap.add_argument('--prune-min-visits', type=int, default=1,
                     help='with --prune : keep a bucket only if it occurs >= this '
                          'many times in the train split (2 drops singleton noise).')
+    ap.add_argument('--trans-fold', action='store_true',
+                    help='(scan-eval) Phase-3 : --rot-fold PLUS translation tying (the '
+                         '7 translate-classes share tables). Folds 17M->~1.2M weights '
+                         '(~Scan scale). WARNING: translation is APPROXIMATE (absolute '
+                         'board position matters in draughts) — test by Elo, do not '
+                         'assume correct. Expanded to standard 17M v3 .pjtw.')
     ap.add_argument('--rot-fold', action='store_true',
                     help='(scan-eval) Phase-2 symmetry sharing : the group {id, '
                          'colour-swap, rot180, rot180∘colour-swap}. The board exact '
