@@ -1,0 +1,22 @@
+geometry: 32 patterns ; master records=1420193
+train split 1000000 of 1420193
+=== dump eval-features sur le split 1M ===
+wrote 1000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0237-scan-distill-ceiling-v2/artefacts.src/featM
+  l2=3e-4  proxy(vs Scan held-out)=0.5440
+  l2=1e-4  proxy(vs Scan held-out)=0.5335
+  l2=3e-5  proxy(vs Scan held-out)=0.5309
+  l2=1e-5  proxy(vs Scan held-out)=0.5058
+MEILLEUR plafond : proxy=0.5440  (/root/jass/jobs/results/cpx62-0237-scan-distill-ceiling-v2/artefacts.src/distill-l23e-4.pjtw)
+  (664-28-388)
+  Elo vs hc (60 paires) = +90.8
+  (Scan absent — Elo vs Scan sauté ; proxy + Elo vs hc suffisent pour le plafond)
+
+==========================================================
+   cpx62-0237 — PLAFOND DE DISTILLATION (classe full-fold 32-pat sur Scan-truth)
+  proxy vs Scan (plafond)     : 0.5440    [self-play plafonnait ~0.47]
+  Elo vs hc (eval distillé)   : +90.8          [self-play gen8 = +142]
+  Elo vs Scan @ depth9        : (skipped)
+  Elo vs Scan @ movetime1s    : (skipped)
+  → proxy >> 0.47  : on est DATA/LABEL-limited (recette = distiller Scan / labels profonds)
+  → proxy ~ 0.5    : on est CLASS-limited (il faut une éval non-linéaire)
+==========================================================
