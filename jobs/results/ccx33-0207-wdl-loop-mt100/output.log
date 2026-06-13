@@ -1,0 +1,4 @@
+tests OK
+=== gen0 : seed matériel (logistic l2=3e-2 sur sp-all) ===
+  gen0 proxy(spearman vs Scan-d10) = 0.4081
+=== gen1 : self-play 300000@mt100 avec gen0 → WDL → logistic ===
