@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/ccx33-0229-lrclosed-fullfold-d4/artefacts.src/cumulative.jnnw
+  2300000 records  (0.13s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 601,902 distinct weights (17M -> 601,902, 47.68x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0229-lrclosed-fullfold-d4/artefacts.src/feat7
+  extras shape (2300000, 106)  (mean mob b/w=12.2/12.1)
+target=wdl  pos=812244 neg=794584 zero=693172 (30.1% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=812244 draw=693172 loss=794584 (30.1% draws)
+phase : piece-count mean=20.3  wmg mean=0.507
+split : train=2070000 val=230000
+prune : keep 239,062 buckets (>= 1 visits) -> 478,126 pattern cols vs 57,395,628  (120.0× fewer); train fallback=0.000%
+design : 478338 columns (2×239063 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.581921  iters=200  (200.66s)
+val   : mse=1.264268  sign_acc=0.2884
+quant : scale=1000  pat range=[-406,406] ext_mg range=[-562,572]
+wrote /root/jass/jobs/results/ccx33-0229-lrclosed-fullfold-d4/artefacts.src/gen7.pjtw  (v3, 57395840 weights, 229583380 bytes)
