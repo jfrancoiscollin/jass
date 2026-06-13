@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0210-cumulative-loop",
-  "snapshot_at": "2026-06-13T08:15:45+00:00",
+  "snapshot_at": "2026-06-13T08:20:50+00:00",
   "started_at": "2026-06-13T07:28:45+00:00",
-  "elapsed_seconds": 2820,
+  "elapsed_seconds": 3125,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 60040008
+      "size_bytes": 71440008
     },
     {
       "name": "feat0",
@@ -39,6 +39,10 @@
     {
       "name": "feat5",
       "size_bytes": 669920012
+    },
+    {
+      "name": "feat6",
+      "size_bytes": 797120012
     },
     {
       "name": "gen0-train.log",
@@ -82,6 +86,14 @@
     },
     {
       "name": "gen5-train.log",
+      "size_bytes": 915
+    },
+    {
+      "name": "gen5.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen6-train.log",
       "size_bytes": 0
     },
     {
@@ -277,9 +289,41 @@
       "size_bytes": 1387
     },
     {
+      "name": "sp6-1.log",
+      "size_bytes": 1433
+    },
+    {
+      "name": "sp6-2.log",
+      "size_bytes": 1389
+    },
+    {
+      "name": "sp6-3.log",
+      "size_bytes": 1433
+    },
+    {
+      "name": "sp6-4.log",
+      "size_bytes": 1387
+    },
+    {
+      "name": "sp6-5.log",
+      "size_bytes": 1433
+    },
+    {
+      "name": "sp6-6.log",
+      "size_bytes": 1389
+    },
+    {
+      "name": "sp6-7.log",
+      "size_bytes": 1433
+    },
+    {
+      "name": "sp6-8.log",
+      "size_bytes": 1434
+    },
+    {
       "name": "tests.log",
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 540453       1       47:00  0.0  0.0 bash\n 540455  540453       47:00  0.0  0.0 bash\n 541877  540455       08:06  295 30.4 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 540453       1       52:04  0.0  0.0 bash\n 540455  540453       52:04  0.0  0.0 bash\n 542112  540455       02:50  276 35.3 python3\n"
 }
