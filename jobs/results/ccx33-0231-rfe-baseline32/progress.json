@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0231-rfe-baseline32",
-  "snapshot_at": "2026-06-13T21:51:07+00:00",
+  "snapshot_at": "2026-06-13T21:56:15+00:00",
   "started_at": "2026-06-13T21:04:36+00:00",
-  "elapsed_seconds": 2791,
+  "elapsed_seconds": 3099,
   "artefacts": [
     {
       "name": "build.log",
@@ -453,5 +453,5 @@
       "size_bytes": 1430
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 157197 2360617       00:25  0.0  0.0 bash\n 157199  157197       00:25  576  0.6 jass\n2360615       1       46:30  0.0  0.0 bash\n2360617 2360615       46:30  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 408289 2360617       03:19  0.0  0.0 bash\n 408291  408289       03:19  681  0.6 jass\n2360615       1       51:39  0.0  0.0 bash\n2360617 2360615       51:39  0.0  0.0 bash\n"
 }
