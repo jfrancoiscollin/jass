@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0205b-wdl-loop-proxy",
-  "snapshot_at": "2026-06-13T05:53:45+00:00",
+  "snapshot_at": "2026-06-13T05:58:52+00:00",
   "started_at": "2026-06-12T23:20:45+00:00",
-  "elapsed_seconds": 23580,
+  "elapsed_seconds": 23887,
   "artefacts": [
     {
       "name": "build.log",
@@ -341,5 +341,5 @@
       "size_bytes": 28
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 520104       1    06:32:59  0.0  0.0 bash\n 520106  520104    06:32:59  0.0  0.0 bash\n 536734  520106       56:59 50.7  0.5 jass\n 536735  520106       56:59 50.6  0.5 jass\n 536736  520106       56:59 50.5  0.5 jass\n 536737  520106       56:59 50.6  0.5 jass\n 536738  520106       56:59 50.6  0.5 jass\n 536739  520106       56:59 50.6  0.5 jass\n 536740  520106       56:59 50.6  0.5 jass\n 536741  520106       56:59 50.6  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 520104       1    06:38:06  0.0  0.0 bash\n 520106  520104    06:38:06  0.0  0.0 bash\n 537729  520106       01:23  270 22.3 python3\n"
 }
