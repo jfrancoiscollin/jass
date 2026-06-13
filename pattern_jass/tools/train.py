@@ -360,8 +360,13 @@ def train_scan_eval(args):
     ds = master_loader.load(args.data, max_records=args.max_records)
     print(f'  {ds.n_records} records  ({time.time() - t0:.2f}s)')
 
-    print('extracting pattern indices (men only)')
-    idx  = patterns.extract_indices(ds.black_men, ds.white_men)
+    if getattr(args, 'king_patterns', False):
+        print('extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)')
+        idx = patterns.extract_indices(ds.black_men | ds.black_kings,
+                                       ds.white_men | ds.white_kings)
+    else:
+        print('extracting pattern indices (men only)')
+        idx = patterns.extract_indices(ds.black_men, ds.white_men)
     cols = patterns.flat_feature_columns(idx)
 
     print(f'loading raw extras {args.eval_features_file}')
@@ -636,6 +641,14 @@ def main():
                          'per-column anchor toward 0 = STRENGTH/(visits+1). Rare '
                          '(under-trained) buckets shrunk hard, common ones left '
                          'alone — fights depth-instability without collisions.')
+    ap.add_argument('--king-patterns', action='store_true',
+                    help='(scan-eval) PIECE-PRESENCE patterns : read men|kings per '
+                         'colour so a king-occupied square is VISIBLE to the pattern '
+                         '(today men-only -> kings read as empty). 3-state, no bucket '
+                         'blow-up; king VALUE stays in the PST extras. A/B vs men-only '
+                         'to test if the men-only blindness is the ~0.46 wall. NB: '
+                         'changes pattern semantics -> needs the matching C++ extract '
+                         '(men|kings) to be playable; this flag is for the fit A/B.')
     ap.add_argument('--prune', action='store_true',
                     help='(scan-eval) train over a COLLISION-FREE dense remap of '
                          'the pattern table : only buckets occurring in the train '
