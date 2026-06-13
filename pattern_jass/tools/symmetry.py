@@ -72,6 +72,27 @@ def translate_classes():
             for p in range(P.NUM_PATTERNS)]
 
 
+def lr_structure():
+    """Left-right reflection = reverse the 5 squares within each row: square
+    (row,idx) -> (row,4-idx). EXACT board symmetry (spatial mirror, eval unchanged,
+    NO colour swap, sign +1). lp[p] = index of LR(pattern p) or -1 (orphan; our diag/
+    anti/horiz are LR-orphans since LR maps diag<->anti shapes off our fixed set)."""
+    def lr(n):
+        r = (n - 1) // 5; i = (n - 1) % 5
+        return r * 5 + (4 - i) + 1
+    pat = [list(p) for p in P.PATTERNS]
+    idx = {tuple(sorted(q)): i for i, q in enumerate(pat)}
+    lp = [-1] * P.NUM_PATTERNS
+    lrperm = [None] * P.NUM_PATTERNS
+    for i, q in enumerate(pat):
+        key = tuple(sorted(lr(s) for s in q))
+        if key in idx:
+            j = idx[key]; tgt = list(key)
+            lrperm[i] = [tgt.index(lr(q[k])) for k in range(SIZE)]
+            lp[i] = j
+    return lp, lrperm
+
+
 def _reorder_all(perm):
     """For every config c, the config whose digit at perm[k] equals c's digit k."""
     tmp = np.arange(NB, dtype=np.int64).copy()
@@ -83,26 +104,39 @@ def _reorder_all(perm):
     return out
 
 
-def build_canon(translate=False):
+def build_canon(translate=False, reflect=False):
     """Returns (canon_col, sign): int64 (NP, NB) canonical 17M-space column, and
     int8 (NP, NB) sign∈{-1,0,+1} (0 = antisymmetry fixpoint → weight pinned to 0).
-    translate=True ALSO folds the translation classes (approximate; Phase 3) by
-    mapping every orbit pattern through its translate representative — composes with
-    the exact colour+rot180 group (which is preserved)."""
+
+    Group = spatial {id, rot180, [LR, rot∘LR if reflect]} × colour {id, cs}, with
+    sign(g) = -1 iff cs is applied (the exact symmetry is rot180∘cs, eval negates;
+    LR is exact with sign +1; cs/rot alone are approximate but pool data). translate
+    additionally maps orbit patterns through their translate representative. Spatial
+    ops that leave the pattern set (orphans) are skipped — partial fold there."""
     cs = colorswap_map()
     rp, rotperm = rot_structure()
+    lp, lrperm = lr_structure()
     tc = translate_classes() if translate else list(range(P.NUM_PATTERNS))
     NP = P.NUM_PATTERNS
     canon_col = np.empty((NP, NB), dtype=np.int64)
     sign = np.empty((NP, NB), dtype=np.int8)
     c = np.arange(NB, dtype=np.int64)
     for p in range(NP):
-        # orbit candidates: (pattern, config, intrinsic eval-sign σ); patterns are
-        # mapped through tc[] so translates collapse (config index is preserved).
-        cand = [(tc[p], c, 1), (tc[p], cs, -1)]
+        # spatial orbit: list of (target_pattern, config-remap array). Start with id;
+        # add rot, and (if reflect) lr and rot∘lr, skipping moves that leave the set.
+        spatial = [(p, c)]
         if rp[p] >= 0:
+            spatial.append((rp[p], _reorder_all(rotperm[p])))
+        if reflect and lp[p] >= 0:
+            spatial.append((lp[p], _reorder_all(lrperm[p])))
+        if reflect and rp[p] >= 0 and lp[rp[p]] >= 0:           # rot then lr
             rc = _reorder_all(rotperm[p])
-            cand += [(tc[rp[p]], rc, 1), (tc[rp[p]], cs[rc], -1)]
+            spatial.append((lp[rp[p]], _reorder_all(lrperm[rp[p]])[rc]))
+        # × colour {+1 (id), -1 (cs)}, then translate-map the pattern.
+        cand = []
+        for (pt, cc) in spatial:
+            cand.append((tc[pt], cc, 1))
+            cand.append((tc[pt], cs[cc], -1))
         g = [pp * NB + cc for (pp, cc, s) in cand]          # global indices
         best = g[0].copy()
         best_s = np.full(NB, cand[0][2], dtype=np.int64)
