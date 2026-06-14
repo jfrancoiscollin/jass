@@ -166,6 +166,14 @@ championne king-aware (mt0.2, 450 parties). `use_improving` = **+21.6 Elo** [CI
 significatif à ce budget mais cohérent). `use_conthist` = −11 → **laissé OFF**. Régime
 recherche FINALE (popcount-gated NMP/LMP/LMR, `0255`) testé séparément sur CCX33.
 
+**Régime recherche FINALE (2026-06-14, `0255`)** : A/B isolé des 3 mécanismes désactivés
+sous 12 pièces. **`eg_no_nmp` = +29.4 Elo** [CI −2.8,+61.6] — LE plus gros signal search
+de la session, confirme le zugzwang (l'assomption « passer est sûr » de NMP est fausse en
+finale) → **activé par défaut** (`eg_pieces=12, eg_no_nmp=true`). `eg_no_lmr` = **−13**
+(LMR achète la profondeur dont la finale search-bound a besoin → gardé ON), `eg_no_lmp` ≈ 0
+(gardé ON). Le combiné « tout off » = +2.3 (washout) → **tester ISOLÉ était décisif** (le
++29 du NMP était masqué par le −13 du LMR). Suivi possible : balayer le seuil (8/14).
+
 > **RÈGLE `--phase-weight` (densification)** : plafond **~3-4 MAX** ; départ `0254` =
 > `endgame=3,deep-eg=3`. NB le risque « pénaliser l'ouverture » est **structurellement
 > amorti** par le phase-split mg/eg : sur-pondérer la finale tire surtout sur le **banc EG**,
