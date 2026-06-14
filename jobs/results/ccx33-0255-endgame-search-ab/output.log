@@ -1,0 +1,36 @@
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [nmp] A=[eg_pieces=12,eg_no_nmp=1] vs B=[baseline] : mt200ms pairs=25 ===
+=== [lmp] A=[eg_pieces=12,eg_no_lmp=1] vs B=[baseline] : mt200ms pairs=25 ===
+=== [lmr] A=[eg_pieces=12,eg_no_lmr=1] vs B=[baseline] : mt200ms pairs=25 ===
+=== [all] A=[eg_pieces=12,eg_no_nmp=1,eg_no_lmp=1,eg_no_lmr=1] vs B=[baseline] : mt200ms pairs=25 ===
+
+==========================================================
+   ccx33-0255 — RÉGIME RECHERCHE FINALE (popcount<=12) : A=régime ON vs B=baseline
+   éval=gen8.pjtw  mt=200ms  ~450 parties/comparaison
+----------------------------------------------------------
+  [eg_no_nmp]  A(ON)=234  B(OFF)=196  Draws=20
+      games=450  W=234 D=20 L=196
+      score=0.5422  95%CI=[0.4960, 0.5877] (Wilson)
+      elo=+29.4  95%CI=[-2.8, +61.6]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.524  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [eg_no_lmp]  A(ON)=212  B(OFF)=211  Draws=27
+      games=450  W=212 D=27 L=211
+      score=0.5011  95%CI=[0.4551, 0.5471] (Wilson)
+      elo=+0.8  95%CI=[-31.3, +32.8]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.034  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [eg_no_lmr]  A(ON)=203  B(OFF)=220  Draws=27
+      games=450  W=203 D=27 L=220
+      score=0.4811  95%CI=[0.4353, 0.5272] (Wilson)
+      elo=-13.1  95%CI=[-45.2, +18.9]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.310  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [eg_no_all]  A(ON)=214  B(OFF)=211  Draws=25
+      games=450  W=214 D=25 L=211
+      score=0.5033  95%CI=[0.4573, 0.5493] (Wilson)
+      elo=+2.3  95%CI=[-29.7, +34.4]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.004  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  ACCEPT H1 (>=5 Elo) → activer ce régime finale par défaut (search_params.hpp) + déployer.
+  Lire les 3 mécanismes ISOLÉS : si seul eg_no_nmp gagne (cheap, zugzwang) → ne garder que lui ;
+  si eg_no_lmr/lmp perdent (trop lent → moins de profondeur, contre-productif vu search-bound) → off.
+  Suivi possible : balayer le seuil eg_pieces (8/12/14) une fois le bon mécanisme isolé.
+==========================================================
