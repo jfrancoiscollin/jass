@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0241-kingloop-scaled",
-  "snapshot_at": "2026-06-14T08:03:03+00:00",
+  "snapshot_at": "2026-06-14T08:08:49+00:00",
   "started_at": "2026-06-14T07:26:03+00:00",
-  "elapsed_seconds": 2220,
+  "elapsed_seconds": 2566,
   "artefacts": [
     {
       "name": "build.log",
@@ -43,6 +43,10 @@
     {
       "name": "elo-gen6.log",
       "size_bytes": 275
+    },
+    {
+      "name": "elo-gen7.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -134,7 +138,11 @@
     },
     {
       "name": "gen7-train.log",
-      "size_bytes": 0
+      "size_bytes": 1183
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -649,5 +657,5 @@
       "size_bytes": 1434
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1322118 1724055       00:02  236  5.0 python3\n1724053       1       37:00  0.0  0.0 bash\n1724055 1724053       37:00  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1322302 1724055       01:09  0.0  0.0 bash\n1322304 1322302       01:09 1086  0.6 jass\n1724053       1       42:46  0.0  0.0 bash\n1724055 1724053       42:46  0.0  0.0 bash\n"
 }
