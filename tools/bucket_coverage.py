@@ -40,11 +40,21 @@ def load(paths):
 
 
 def main():
-    if len(sys.argv) < 2:
+    argv = sys.argv[1:]
+    king = '--king' in argv                      # king-aware occupancy (men|kings)
+    paths = [a for a in argv if a != '--king']
+    if not paths:
         sys.exit(__doc__)
-    bb = load(sys.argv[1:])
+    bb = load(paths)
     D = len(bb)
-    cols = P.flat_feature_columns(P.extract_indices(bb[:, 2], bb[:, 0]))   # (D,32)
+    if king:
+        # cols: 0=white_men 1=white_kings 2=black_men 3=black_kings (piece-presence)
+        idx = P.extract_indices(bb[:, 2] | bb[:, 3], bb[:, 0] | bb[:, 1])
+        print("MODE: KING-AWARE (occupancy = men|kings, Scan-style)")
+    else:
+        idx = P.extract_indices(bb[:, 2], bb[:, 0])
+        print("MODE: men-only")
+    cols = P.flat_feature_columns(idx)   # (D,32)
     flat = cols.ravel()
     print(f"positions D = {D:,}   activations = {flat.size:,} (= D x 32)")
 
