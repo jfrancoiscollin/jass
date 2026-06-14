@@ -1,0 +1,14 @@
+=== SELF = ubuntu-32gb-hel1-1 ===
+-- interfaces --
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+eth0             UP             89.167.51.97/32 metric 100 2a01:4f9:c014:2a5f::1/64 fe80::9000:8ff:fe5c:2de0/64 
+public IP : 2a01:4f9:c014:2a5f::1
+private-range IPs : none
+=== reach OTHER = ubuntu-16gb-hel1-2 ? ===
+-- DNS (Hetzner internal?) --
+  no resolution for ubuntu-16gb-hel1-2
+-- ping hostname --
+  ping failed
+  (l'autre sonde n'a pas encore committé son IP — relancer cette sonde après l'autre)
+
+=== VERDICT : lien direct utilisable si ping IP OK + un TCP ouvert ===
