@@ -119,6 +119,10 @@ def main(argv):
     by_king  = defaultdict(lambda: [0, 0, 0.0, 0])   # key: "kings" / "no-kings"
     by_tac   = defaultdict(lambda: [0, 0, 0.0, 0])   # key: "capture-avail" / "quiet"
     by_res   = defaultdict(lambda: [0, 0, 0.0, 0])   # key: "lost" / "drawn" / "won"
+    # joint phase × king-presence : isolates the TRUE king effect from the phase
+    # confound (kings only appear late, and late positions are intrinsically
+    # sharper) by comparing king vs no-king WITHIN the same piece-count phase.
+    by_pk    = defaultdict(lambda: [0, 0, 0.0, 0])   # key: (phase, "kings"/"no-kings")
     tot = [0, 0, 0.0, 0]
     worst = []   # (severity, fen, our, scan, phase, kings, loss, game_id, result)
 
@@ -165,6 +169,7 @@ def main(argv):
                 bump(tot, agree, loss)
                 bump(by_phase[ph], agree, loss)
                 bump(by_king["kings" if kings else "no-kings"], agree, loss)
+                bump(by_pk[(ph, "kings" if kings else "no-kings")], agree, loss)
                 bump(by_tac["capture-avail" if cap else "quiet"], agree, loss)
                 bump(by_res[res], agree, loss)
                 if not agree:
@@ -192,9 +197,23 @@ def main(argv):
     out.append("\n-- par PHASE --")
     for name, _lo, _hi in PHASES:
         if name in by_phase: out.append(line(name, by_phase[name]))
-    out.append("\n-- par ROIS (hypothèse men-only) --")
+    out.append("\n-- par ROIS (global — CONFONDU avec la phase) --")
     for k in ("no-kings", "kings"):
         if k in by_king: out.append(line(k, by_king[k]))
+    out.append("\n-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --")
+    out.append(f"  {'phase':8s} {'no-king perte (n)':>22s} {'king perte (n)':>20s} {'ratio':>7s}")
+    for name, _lo, _hi in PHASES:
+        nk = by_pk.get((name, "no-kings")); kk = by_pk.get((name, "kings"))
+        nk_l = (nk[2]/nk[3]) if nk and nk[3] else None
+        kk_l = (kk[2]/kk[3]) if kk and kk[3] else None
+        if nk_l is None and kk_l is None:
+            continue
+        ns = f"{nk_l:6.2f} ({nk[0]})" if nk_l is not None else "   —"
+        ks = f"{kk_l:6.2f} ({kk[0]})" if kk_l is not None else "   —"
+        rs = f"×{kk_l/nk_l:.1f}" if (nk_l and kk_l and nk_l > 0) else "  —"
+        out.append(f"  {name:8s} {ns:>22s} {ks:>20s} {rs:>7s}")
+    out.append("  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;")
+    out.append("    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.")
     out.append("\n-- par TACTIQUE --")
     for k in ("quiet", "capture-avail"):
         if k in by_tac: out.append(line(k, by_tac[k]))
