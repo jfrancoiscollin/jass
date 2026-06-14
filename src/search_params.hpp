@@ -111,6 +111,18 @@ struct SearchParams {
     // Defaults reproduce the previous behaviour (200% = 2×, from depth 5).
     int tm_next_iter_pct = 200;   // projected next-iter cost = last × this/100
     int tm_min_depth     = 5;     // don't extrapolate below this depth
+
+    // Endgame search regime (gated; eg_pieces = 0 disables the whole thing).
+    // Below `eg_pieces` total pieces (popcount of occupied, same phase axis as
+    // pattern_jass --phase-weight) the listed pruning/reduction techniques are
+    // turned OFF, trading a few nodes for accuracy where the engine is most
+    // search-bound (job 0252) and most prone to discarding the one precise
+    // winning line (zugzwang for NMP; sharp quiet wins for LMP/LMR). A/B-tunable
+    // independently so each can be measured (job 0255).
+    int  eg_pieces  = 0;          // 0 = off ; else popcount threshold (<=)
+    bool eg_no_nmp  = false;      // disable null-move pruning in the endgame regime
+    bool eg_no_lmp  = false;      // disable late-move pruning in the endgame regime
+    bool eg_no_lmr  = false;      // disable late-move reductions in the endgame regime
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -156,6 +168,10 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "multicut_cuts")        p.multicut_cuts        = v;
     else if (key == "tm_next_iter_pct")     p.tm_next_iter_pct     = v;
     else if (key == "tm_min_depth")         p.tm_min_depth         = v;
+    else if (key == "eg_pieces")            p.eg_pieces            = v;
+    else if (key == "eg_no_nmp")            p.eg_no_nmp            = (v != 0);
+    else if (key == "eg_no_lmp")            p.eg_no_lmp            = (v != 0);
+    else if (key == "eg_no_lmr")            p.eg_no_lmr            = (v != 0);
     // unknown key → silently ignored
     return true;
 }
