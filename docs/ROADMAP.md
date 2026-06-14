@@ -143,6 +143,31 @@ rois** codée (`-DJASS_KING_PATTERNS=ON` + `train.py --king-patterns`, base-3 me
 full-fold **king-aware + scalé** (`0241`, 600k/gen) pour pousser la classe LINÉAIRE à
 son max (kings + couverture). Toujours **sans pivot non-linéaire** (directive).
 
+### VERDICT FINALES (2026-06-14) — densification à DEUX fronts (éval + recherche)
+
+Deux diagnostics ont localisé puis caractérisé le saignement en finale (autopsies
+`0249`/`0250` : ouverture/milieu ≈Scan perte ~0.05, finale à rois ~3.6) :
+- **`0251` (plafond de classe par phase)** : sur labels Scan-d10 **parfaits**, la classe
+  linéaire king-aware **RANGE bien la finale** (spearman 0.73–0.79, sa meilleure phase).
+  → **PAS class-limited** ; notre éval self-play est juste **mal entraînée** en finale.
+- **`0252` (éval vs recherche)** : la finale est **SEARCH-BOUND** — éval pure (depth-1)
+  catastrophique (perte 7.25), la recherche profonde rattrape (mt2.0 = 1.71) ; deep-eg
+  **plafonne** ~mt0.5 (plancher éval résiduel).
+
+→ Levier = **densifier la finale sur DEUX fronts**, jamais de non-linéarité :
+1. **éval** : labels profonds en finale (`--label-depth-by-phase endgame=12,deep-eg=14`,
+   cf `0252`) + sur-pondération des lignes finale (`train.py --phase-weight`, cf `0251`) ;
+2. **recherche** : finale search-bound → time-management/profondeur en finale, tuning
+   LMR/LMP par popcount, et à terme **bitbases 3-4 pièces** (profondeur effective infinie).
+
+> **RÈGLE `--phase-weight` (densification)** : DÉMARRER MODÉRÉ — **~3-4 MAX** (typiquement
+> `endgame=2,deep-eg=3`). L'ouverture est notre actif (≈Scan) ; sur-pondérer trop fort la
+> finale la pénalise. La sélection reste la **val-loss** ; surveiller le `val/phase mse`
+> imprimé (perte finale DOIT chuter, ouverture NE DOIT PAS régresser) et n'**escalader**
+> le poids que si l'ouverture tient. Les labels profonds (front éval) font déjà le gros
+> du travail : le poids ne fait que *nudger* le fit. Mesurer le VERDICT au **movetime vs
+> Scan** (finale search-bound → budget réaliste où la recherche rattrape). Boucle = `0254`.
+
 ---
 
 ## Point de départ — ce que la biblio recadre

@@ -10,8 +10,9 @@
 #   PROFONDEUR  : labels par phase — base depth-6 (ouverture/milieu déjà ≈Scan, on garde
 #                 le volume), endgame=12, deep-eg=14 (≈qualité mt0.5-1.0, là où la finale
 #                 est search-bound ; coût faible car peu de pièces = faible branching).
-#   RATIO FINALE: --phase-weight endgame=3,deep-eg=4 (le fit PRIORISE les lignes finale ;
-#                 l'ouverture reste quasi-parfaite, données massives + intrinsèquement faciles).
+#   RATIO FINALE: --phase-weight endgame=2,deep-eg=3 (le fit PRIORISE les lignes finale ;
+#                 DÉMARRAGE MODÉRÉ — ~3-4 MAX pour ne pas pénaliser l'ouverture, notre actif
+#                 ≈Scan ; escalader seulement si val/phase montre que l'ouverture tient).
 #   MT          : le play self-play reste depth-4 (rapide, chaque ply) ; le « plus de
 #                 recherche » de la finale est INJECTÉ dans le SIGNAL via les labels profonds ;
 #                 le VERDICT se mesure au movetime vs Scan (mt0.5 & mt1.0), budget réaliste
@@ -36,7 +37,10 @@ echo "geometry: $(python3 -c "import sys;sys.path.insert(0,'pattern_jass/tools')
 # --- PARAMÈTRES OPTIMISÉS (cf. en-tête) ---
 EVAL_DEPTH=6; PLAY_DEPTH=4; NPER=600000; NGEN=8; BD=9; EPAIRS=15
 LABEL_PHASE="endgame=12,deep-eg=14"      # PROFONDEUR : labels profonds en finale (0252)
-PHASE_W="endgame=3,deep-eg=4"            # RATIO FINALE : sur-pondère les lignes finale (0251)
+PHASE_W="endgame=2,deep-eg=3"            # RATIO FINALE : sur-pondère les lignes finale (0251) —
+                                         # DÉMARRAGE MODÉRÉ (cf. ROADMAP : ~3-4 MAX pour ne pas
+                                         # pénaliser l'ouverture, notre actif ≈Scan). Escalader
+                                         # SEULEMENT si val/phase montre que l'ouverture ne régresse pas.
 CFOLD="--full-fold --king-patterns"      # full-fold + ROIS dans les patterns (= le binaire)
 declare -A ELO EGM
 echo "PARAMS: label-depth-by-phase=[$LABEL_PHASE]  phase-weight=[$PHASE_W]  lowmem  base depth=$EVAL_DEPTH play=$PLAY_DEPTH  $NPER/gen ×$NGEN"
