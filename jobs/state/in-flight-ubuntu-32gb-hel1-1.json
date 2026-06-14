@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0243-autopsy-king-vs-scan",
-  "script": "jobs/queue/cpx62-0243-autopsy-king-vs-scan.sh",
-  "pid": 287293,
-  "started_at": "2026-06-14T08:29:24+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
