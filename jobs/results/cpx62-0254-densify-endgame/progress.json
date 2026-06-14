@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-14T22:34:56+00:00",
+  "snapshot_at": "2026-06-14T22:40:03+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 7190,
+  "elapsed_seconds": 7497,
   "artefacts": [
     {
       "name": "build.log",
@@ -39,6 +39,10 @@
     {
       "name": "elo-gen5.log",
       "size_bytes": 275
+    },
+    {
+      "name": "elo-gen6.log",
+      "size_bytes": 276
     },
     {
       "name": "feat0",
@@ -118,7 +122,11 @@
     },
     {
       "name": "gen6-train.log",
-      "size_bytes": 0
+      "size_bytes": 1541
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -567,7 +575,135 @@
     {
       "name": "sp6-9.log",
       "size_bytes": 1476
+    },
+    {
+      "name": "sp7-1.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp7-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-10.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "sp7-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-11.jnnw",
+      "size_bytes": 180578
+    },
+    {
+      "name": "sp7-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-12.jnnw",
+      "size_bytes": 221618
+    },
+    {
+      "name": "sp7-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-13.jnnw",
+      "size_bytes": 221618
+    },
+    {
+      "name": "sp7-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-14.jnnw",
+      "size_bytes": 213410
+    },
+    {
+      "name": "sp7-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-15.jnnw",
+      "size_bytes": 172370
+    },
+    {
+      "name": "sp7-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-16.jnnw",
+      "size_bytes": 155954
+    },
+    {
+      "name": "sp7-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-2.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "sp7-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-3.jnnw",
+      "size_bytes": 229826
+    },
+    {
+      "name": "sp7-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-4.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp7-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-5.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "sp7-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-6.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "sp7-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-7.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp7-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-8.jnnw",
+      "size_bytes": 238034
+    },
+    {
+      "name": "sp7-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-9.jnnw",
+      "size_bytes": 188786
+    },
+    {
+      "name": "sp7-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  38797  952037       06:39  650 46.6 python3\n 952035       1    01:59:49  0.0  0.0 bash\n 952037  952035    01:59:49  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 591104  952037       01:45 99.8  0.5 jass\n 591105  952037       01:45 99.9  0.5 jass\n 591106  952037       01:45 99.9  0.5 jass\n 591107  952037       01:45 99.9  0.5 jass\n 591108  952037       01:45 99.9  0.5 jass\n 591109  952037       01:45 99.9  0.5 jass\n 591110  952037       01:45 99.9  0.5 jass\n 591111  952037       01:45 99.9  0.5 jass\n 591112  952037       01:45 99.9  0.5 jass\n 591113  952037       01:45 99.8  0.5 jass\n 591114  952037       01:45 99.9  0.5 jass\n 591115  952037       01:45 99.9  0.5 jass\n 591116  952037       01:45 99.9  0.5 jass\n 591117  952037       01:45 99.8  0.5 jass\n 591118  952037       01:45 99.9  0.5 jass\n 591119  952037       01:45 99.9  0.5 jass\n 952035       1    02:04:56  0.0  0.0 bash\n 952037  952035    02:04:56  0.0  0.0 bash\n"
 }
