@@ -69,11 +69,11 @@ echo "  Elo vs hc (60 paires) = $EHC"
 #     non plafonné qui ferait exploser le runtime ; mt1s reste comparable à 0235) ---
 echo "=== distilled vs Scan (fair, sans bitbases) — LE VERDICT ==="
 python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-pattern "$BEST_EVAL" \
-    --scan-bb-size 0 --movetime 500 --pairs 16 >"$ART/scan-mt500.log" 2>&1
+    --scan-bb-size 0 --movetime 500 --pairs 3 >"$ART/scan-mt500.log" 2>&1
 SELO_MT5=$(grep -E 'score rate|ELO estimate' "$ART/scan-mt500.log" | tr '\n' ' ')
 echo "  mt0.5s : $SELO_MT5"
 python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-pattern "$BEST_EVAL" \
-    --scan-bb-size 0 --movetime 1000 --pairs 16 >"$ART/scan-mt.log" 2>&1
+    --scan-bb-size 0 --movetime 1000 --pairs 3 >"$ART/scan-mt.log" 2>&1
 SELO_MT=$(grep -E 'score rate|ELO estimate' "$ART/scan-mt.log" | tr '\n' ' ')
 echo "  mt1s : $SELO_MT"
 
