@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0242-bucket-coverage
+# id: cpx62-0242-bucket-coverage
 # description: FAMINE DE DONNÉES — chiffre dur. Sur un corpus self-play réel, mesure
 # (tools/bucket_coverage.py, Chao1 + courbe d'accumulation) : ensemble OCCURRENT foldé,
 # % couvert au scale actuel, et positions nécessaires pour 95 % / dense (≥8 visites).
@@ -7,7 +7,7 @@
 # 0241 (king-aware) vs l'ancien men-only. Pas de Scan, cheap.
 set -uo pipefail
 cd /root/jass
-ART="/root/jass/jobs/results/ccx33-0242-bucket-coverage/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/cpx62-0242-bucket-coverage/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 python3 -c "import numpy" 2>/dev/null || pip3 install --break-system-packages --no-cache-dir --quiet numpy
 
@@ -41,7 +41,7 @@ echo; echo "############## KING-AWARE (men|kings — le loop 0241) #############
 python3 tools/bucket_coverage.py "$CORPUS" --king 2>&1 | tee "$ART/cov-king.log"
 
 echo; echo "=========================================================="
-echo "   ccx33-0242 — FAMINE : ensemble occurrent + positions pour 95% / dense(≥8)"
+echo "   cpx62-0242 — FAMINE : ensemble occurrent + positions pour 95% / dense(≥8)"
 for m in menonly king; do
   echo "  -- $m --"
   grep -E "MODE:|Chao1 occurring|observe 95%|N>=8|N>=1 " "$ART/cov-$m.log" 2>/dev/null | sed 's/^/    /'
