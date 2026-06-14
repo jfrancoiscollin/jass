@@ -69,6 +69,13 @@ leur training pour éviter la fuite.
   recherche interminable sur une position de milieu (`0235` : **figé ~8h** sur l'arme
   d9, jamais fini). Utiliser `--movetime` (+ `--pairs` modeste). NB `calibrate_vs_scan`
   joue **9 ouvertures × pairs × 2** parties → `--pairs` multiplie par ~18.
+- **⚠️ UNITÉS movetime — incohérentes entre outils, source du hang `0237`/`0243`** :
+  `calibrate_vs_scan.py --movetime` est en **SECONDES** (0.5 = 0.5 s/coup) ; mais
+  `jass --depth-at-movetime <ms>` et le HUB `go movetime <ms>` sont en **MILLISECONDES**.
+  Passer `--movetime 500` à calibrate (en pensant ms) = **500 s/coup ≈ 16 h/partie**, 0
+  partie finie, log à 0 octet (gaspillage 4 h). **Garde-fou ajouté (2026-06-14)** :
+  calibrate refuse `--movetime>30` (`--allow-long-movetime` pour forcer). Pour Scan :
+  toujours **`--movetime 0.5` ou `1`** (secondes).
 - **Annulation d'un job** : poser `jobs/state/kill-in-flight` (le runner tue l'in-flight).
   Flag **global** (consommé par la 1ʳᵉ box qui le lit) → n'armer que quand les autres box
   n'ont rien de précieux en cours ; re-armer (« rounds ») si besoin.
