@@ -1,0 +1,33 @@
+{
+  "job_id": "ccx33-0255-endgame-search-ab",
+  "snapshot_at": "2026-06-14T19:16:05+00:00",
+  "started_at": "2026-06-14T19:10:55+00:00",
+  "elapsed_seconds": 310,
+  "artefacts": [
+    {
+      "name": "ab-all.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "ab-lmp.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "ab-lmr.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "ab-nmp.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 11571
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1388280       1       05:09  0.0  0.0 bash\n1388281 1388280       05:09  0.0  0.0 bash\n1388686 1388281       05:00  0.0  0.0 bash\n1388687 1388281       05:00  0.0  0.0 bash\n1388688 1388281       05:00  0.0  0.0 bash\n1388689 1388281       05:00  0.0  0.0 bash\n1388690 1388686       05:00  100  0.5 jass\n1388691 1388687       05:00  100  0.5 jass\n1388692 1388688       05:00 99.9  0.5 jass\n1388693 1388689       05:00  100  0.5 jass\n"
+}
