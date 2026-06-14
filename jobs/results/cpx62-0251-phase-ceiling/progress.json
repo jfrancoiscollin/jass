@@ -1,0 +1,53 @@
+{
+  "job_id": "cpx62-0251-phase-ceiling",
+  "snapshot_at": "2026-06-14T16:32:17+00:00",
+  "started_at": "2026-06-14T16:27:16+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 10035
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "distill-king-l21e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "distill-king-l23e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "distill-king-l23e-5.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "featM",
+      "size_bytes": 424000012
+    },
+    {
+      "name": "master1M.jnnw",
+      "size_bytes": 38000008
+    },
+    {
+      "name": "train-l21e-4.log",
+      "size_bytes": 1182
+    },
+    {
+      "name": "train-l21e-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "train-l23e-4.log",
+      "size_bytes": 1182
+    },
+    {
+      "name": "train-l23e-5.log",
+      "size_bytes": 1181
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 942458       1       05:00  0.0  0.0 bash\n 942460  942458       05:00  0.0  0.0 bash\n 943146  942460       00:21  946 10.4 python3\n"
+}
