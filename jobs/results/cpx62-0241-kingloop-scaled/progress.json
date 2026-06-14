@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0241-kingloop-scaled",
-  "snapshot_at": "2026-06-14T07:57:52+00:00",
+  "snapshot_at": "2026-06-14T08:03:03+00:00",
   "started_at": "2026-06-14T07:26:03+00:00",
-  "elapsed_seconds": 1909,
+  "elapsed_seconds": 2220,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 148200008
+      "size_bytes": 171000008
     },
     {
       "name": "elo-gen0.log",
@@ -38,6 +38,10 @@
     },
     {
       "name": "elo-gen5.log",
+      "size_bytes": 275
+    },
+    {
+      "name": "elo-gen6.log",
       "size_bytes": 275
     },
     {
@@ -67,6 +71,10 @@
     {
       "name": "feat6",
       "size_bytes": 1653600012
+    },
+    {
+      "name": "feat7",
+      "size_bytes": 1908000012
     },
     {
       "name": "gen0-train.log",
@@ -118,6 +126,14 @@
     },
     {
       "name": "gen6-train.log",
+      "size_bytes": 1183
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen7-train.log",
       "size_bytes": 0
     },
     {
@@ -567,7 +583,71 @@
     {
       "name": "sp6-9.log",
       "size_bytes": 1389
+    },
+    {
+      "name": "sp7-1.log",
+      "size_bytes": 1434
+    },
+    {
+      "name": "sp7-10.log",
+      "size_bytes": 1390
+    },
+    {
+      "name": "sp7-11.log",
+      "size_bytes": 1436
+    },
+    {
+      "name": "sp7-12.log",
+      "size_bytes": 1391
+    },
+    {
+      "name": "sp7-13.log",
+      "size_bytes": 1390
+    },
+    {
+      "name": "sp7-14.log",
+      "size_bytes": 1390
+    },
+    {
+      "name": "sp7-15.log",
+      "size_bytes": 1390
+    },
+    {
+      "name": "sp7-16.log",
+      "size_bytes": 1391
+    },
+    {
+      "name": "sp7-2.log",
+      "size_bytes": 1389
+    },
+    {
+      "name": "sp7-3.log",
+      "size_bytes": 1388
+    },
+    {
+      "name": "sp7-4.log",
+      "size_bytes": 1387
+    },
+    {
+      "name": "sp7-5.log",
+      "size_bytes": 1388
+    },
+    {
+      "name": "sp7-6.log",
+      "size_bytes": 1389
+    },
+    {
+      "name": "sp7-7.log",
+      "size_bytes": 1434
+    },
+    {
+      "name": "sp7-8.log",
+      "size_bytes": 1434
+    },
+    {
+      "name": "sp7-9.log",
+      "size_bytes": 1434
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 797316 1724055       01:57  393 37.1 python3\n1724053       1       31:49  0.0  0.0 bash\n1724055 1724053       31:49  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1322118 1724055       00:02  236  5.0 python3\n1724053       1       37:00  0.0  0.0 bash\n1724055 1724053       37:00  0.0  0.0 bash\n"
 }
