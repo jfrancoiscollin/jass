@@ -139,6 +139,49 @@ def piece_count(ds) -> np.ndarray:
     return bits.sum(axis=1)
 
 
+# Phase boundaries by piece count, IDENTICAL to tools/game_autopsy.py and
+# tools/phase_proxy.py so the training reweighting lines up with the microscopes
+# that measure where the eval bleeds. Used by --phase-weight to over/under-weight
+# rows of a given phase in the loss (the loop's "densification" knob : Scan proves
+# a linear eval CAN play endgames, so if ours bleeds there the fix is data weight /
+# label depth, not non-linearity — cf jobs 0249/0250/0251/0252).
+PHASE_BOUNDS = [("opening", 30, 99), ("midgame", 22, 29), ("late-mid", 15, 21),
+                ("endgame", 8, 14), ("deep-eg", 0, 7)]
+
+
+def parse_phase_weight(spec: str) -> dict:
+    """Parse "endgame=3,deep-eg=4" → {'endgame':3.0,'deep-eg':4.0}. Unlisted
+    phases default to 1.0. Raises on an unknown phase name or non-positive mult."""
+    names = {n for n, _lo, _hi in PHASE_BOUNDS}
+    out = {}
+    for tok in spec.split(','):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if '=' not in tok:
+            raise SystemExit(f'--phase-weight: bad token {tok!r} (want name=mult)')
+        name, val = tok.split('=', 1)
+        name = name.strip()
+        if name not in names:
+            raise SystemExit(f'--phase-weight: unknown phase {name!r} '
+                             f'(known: {sorted(names)})')
+        m = float(val)
+        if m <= 0:
+            raise SystemExit(f'--phase-weight: {name} mult must be > 0, got {m}')
+        out[name] = m
+    return out
+
+
+def phase_multiplier(pc: np.ndarray, spec: dict) -> np.ndarray:
+    """Per-row multiplier (1.0 default) from a parsed phase-weight spec."""
+    pw = np.ones(len(pc), dtype=np.float64)
+    for name, lo, hi in PHASE_BOUNDS:
+        m = spec.get(name, 1.0)
+        if m != 1.0:
+            pw[(pc >= lo) & (pc <= hi)] = m
+    return pw
+
+
 
 def king_onehot_block(black_kings: np.ndarray,
                       white_kings: np.ndarray) -> sp.csr_matrix:
@@ -298,13 +341,15 @@ def write_weights_v4(path: Path, pat_mg, pat_eg, ext_mg, ext_eg, scale,
 
 def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
                 max_iter: int, prior: np.ndarray = None,
-                anchor_l2=0.0, logistic: bool = False):
+                anchor_l2=0.0, logistic: bool = False, sw: np.ndarray = None):
     """Fit by L-BFGS. Default = least-squares (resid = X@w - y). With
     `logistic=True` (Scan's actual objective) the prediction X@w is a LOGIT and
     the loss is the cross-entropy against `y` interpreted as a target PROBABILITY
     in [0,1] (win=1, draw=0.5, loss=0) — i.e. logistic regression over the
     pattern/extra features on game outcomes. `prior`/`anchor_l2` add an L2 pull
-    toward a prior (anti-forgetting / material pinning) ; anchor_l2=0 → pure."""
+    toward a prior (anti-forgetting / material pinning) ; anchor_l2=0 → pure.
+    `sw` (per-row, mean≈1) re-weights the DATA term only (phase densification) —
+    the anchor/L2 stay unweighted (regularisers, not data)."""
     XT = X.T            # CSC view sharing X's data — no copy (was .tocsr() = a
                         # full duplicate, ~doubling memory on multi-M datasets)
     a = np.asarray(anchor_l2, dtype=np.float64)
@@ -316,12 +361,16 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
             # Numerically-stable sigmoid cross-entropy. d/dz = sigmoid(z) - y.
             p = 0.5 * (np.tanh(0.5 * z) + 1.0)            # = sigmoid(z)
             eps = 1e-12
-            loss = -float(np.mean(y * np.log(p + eps)
-                                  + (1.0 - y) * np.log(1.0 - p + eps)))
+            ce = -(y * np.log(p + eps) + (1.0 - y) * np.log(1.0 - p + eps))
             resid = p - y
         else:
             resid = z - y
-            loss = 0.5 * float(np.dot(resid, resid)) / len(y)
+            ce = 0.5 * resid * resid
+        if sw is not None:
+            loss = float(np.dot(sw, ce)) / len(y)
+            resid = sw * resid
+        else:
+            loss = float(np.sum(ce)) / len(y)
         loss += 0.5 * l2 * float(np.dot(w, w))
         grad = (XT @ resid) / len(y) + l2 * w
         if anchored:
@@ -342,13 +391,14 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
 
 
 def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
-                        logistic, n_cols, batch):
+                        logistic, n_cols, batch, sw_all=None):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
     whole set. Lets the fit scale to 10-40M rows on a fixed RAM budget — same
     optimum (the gradient is exact, only the assembly is streamed). Pure L2 only
-    (anchors/freq-reg index the whole table and are unsupported here)."""
+    (anchors/freq-reg index the whole table and are unsupported here). `sw_all`
+    (per-row, mean≈1 over tr_idx) re-weights the data term (phase densification)."""
     N = len(tr_idx); eps = 1e-12
 
     def loss_and_grad(w):
@@ -361,13 +411,18 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
             z = Xc @ w
             if logistic:
                 p = 0.5 * (np.tanh(0.5 * z) + 1.0)
-                cs += -float(np.sum(yc * np.log(p + eps)
-                                    + (1.0 - yc) * np.log(1.0 - p + eps)))
+                ce = -(yc * np.log(p + eps) + (1.0 - yc) * np.log(1.0 - p + eps))
                 resid = p - yc
             else:
                 resid = z - yc
-                cs += 0.5 * float(np.dot(resid, resid))
-            grad += Xc.T @ resid                      # accumulate XT@resid
+                ce = 0.5 * resid * resid
+            if sw_all is not None:
+                swc = sw_all[sel]
+                cs += float(np.dot(swc, ce))
+                resid = swc * resid
+            else:
+                cs += float(np.sum(ce))
+            grad += Xc.T @ resid                      # accumulate XT@(sw·resid)
         loss = cs / N + 0.5 * l2 * float(np.dot(w, w))
         grad = grad / N + l2 * w
         return loss, grad
@@ -389,14 +444,14 @@ def lowmem_z(Xpat, extras, wmg, weg, w, PAT_N, E):
 
 
 def train_lbfgs_lowmem(Xpat, extras, wmg, weg, y, l2, max_iter,
-                       logistic, PAT_N, E):
+                       logistic, PAT_N, E, sw=None):
     """Memory-efficient FULL-BATCH L-BFGS : same objective as train_lbfgs, but the
     dense phased extras (the (n,2E) peak, ~2GB/M) is never built — its contribution
     is computed on the fly from raw extras (n,E). Only the compact phased PATTERN
     sparse (n×64 nnz) is kept. Handles ~20M rows on 32GB. Converges to the same
     (convex) optimum up to float32 design-rounding (the matvecs differ in FP order
     from the full hstacked design, so w is equal only to low-order digits, not bit-
-    identical). Pure L2 only."""
+    identical). Pure L2 only. `sw` (per-row, mean≈1) re-weights the data term."""
     XpT = Xpat.T
     n_cols = 2 * PAT_N + 2 * E
     N = len(y); eps = 1e-12
@@ -407,12 +462,16 @@ def train_lbfgs_lowmem(Xpat, extras, wmg, weg, y, l2, max_iter,
         z = lowmem_z(Xpat, ex, wmg, weg, w, PAT_N, E)
         if logistic:
             p = 0.5 * (np.tanh(0.5 * z) + 1.0)
-            loss = -float(np.mean(y * np.log(p + eps)
-                                  + (1.0 - y) * np.log(1.0 - p + eps)))
+            ce = -(y * np.log(p + eps) + (1.0 - y) * np.log(1.0 - p + eps))
             resid = p - y
         else:
             resid = z - y
-            loss = 0.5 * float(np.dot(resid, resid)) / N
+            ce = 0.5 * resid * resid
+        if sw is not None:
+            loss = float(np.dot(sw, ce)) / N
+            resid = sw * resid
+        else:
+            loss = float(np.sum(ce)) / N
         loss += 0.5 * l2 * float(np.dot(w, w))
         g_pat = XpT @ resid
         # g_ext = ex.T @ (resid·phase) == (resid·phase) @ ex, but the latter keeps
@@ -728,6 +787,29 @@ def train_scan_eval(args):
               f'{args.freq_reg/1000:.2g}')
     use_anchor = (not logistic) and bool(np.any(anchor > 0.0))
 
+    # --phase-weight : per-row data-term multiplier by game phase (densification
+    # knob). Normalised so the mean weight over the TRAIN rows is 1.0 → the L2 and
+    # the loss scale stay directly comparable to an unweighted run; only the
+    # RELATIVE emphasis across phases changes. Validation stays unweighted (we
+    # still want the true held-out fit), but we also print a per-phase val_mse so
+    # the effect on the endgame is visible.
+    sw_tr = sw_all = None
+    pw_spec = parse_phase_weight(getattr(args, 'phase_weight', '') or '')
+    if pw_spec:
+        pw = phase_multiplier(pc, pw_spec)                  # (n,)
+        scale_sw = len(tr_idx) / float(pw[tr_idx].sum())    # → mean over tr = 1
+        sw_all = pw * scale_sw
+        sw_tr = sw_all[tr_idx]
+        # report the shift in effective mass per phase (where the fit now "looks")
+        msg = []
+        for name, lo, hi in PHASE_BOUNDS:
+            sel = (pc[tr_idx] >= lo) & (pc[tr_idx] <= hi)
+            if sel.any():
+                raw = 100.0 * sel.mean()
+                eff = 100.0 * sw_tr[sel].sum() / len(tr_idx)
+                msg.append(f'{name} {raw:.1f}%→{eff:.1f}%')
+        print(f'phase-weight : {pw_spec}  (mass: ' + '  '.join(msg) + ')')
+
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
           f'{"  LOGISTIC" if logistic else ""}'
           f'{"  (anchored)" if use_anchor else "  (pure)"}'
@@ -738,14 +820,16 @@ def train_scan_eval(args):
     if lm:
         w_float, train_loss, n_iter = train_lbfgs_lowmem(
             Xpat_tr, ex_tr, wmg[tr_idx], weg[tr_idx], y_tr, args.l2, args.max_iter,
-            logistic, PAT_N, EVAL_NUM_EXTRAS)
+            logistic, PAT_N, EVAL_NUM_EXTRAS, sw=sw_tr)
     elif mb > 0:
         w_float, train_loss, n_iter = train_lbfgs_chunked(
-            build, tr_idx, y_black, args.l2, args.max_iter, logistic, n_cols, mb)
+            build, tr_idx, y_black, args.l2, args.max_iter, logistic, n_cols, mb,
+            sw_all=sw_all)
     else:
         w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
                                                   prior=prior if use_anchor else None,
-                                                  anchor_l2=anchor, logistic=logistic)
+                                                  anchor_l2=anchor, logistic=logistic,
+                                                  sw=sw_tr)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     if lm:
@@ -756,6 +840,15 @@ def train_scan_eval(args):
     val_mse = float(np.mean((val_pred - y_val) ** 2))
     val_sign_acc = float(np.mean(np.sign(val_pred) == y_val))
     print(f'val   : mse={val_mse:.6f}  sign_acc={val_sign_acc:.4f}')
+    # Per-phase val_mse (UNWEIGHTED) : the densification microscope — shows
+    # whether --phase-weight actually shrank the endgame fit error, and at what
+    # cost to the opening. Always printed (cheap, useful even at weight 1.0).
+    pc_val = pc[val_idx]
+    sq = (val_pred - y_val) ** 2
+    pv = '  '.join(f'{name}={float(sq[m].mean()):.4f}(n{int(m.sum())})'
+                   for name, lo, hi in PHASE_BOUNDS
+                   if (m := (pc_val >= lo) & (pc_val <= hi)).any())
+    print(f'val/phase mse : {pv}')
 
     def quant(block):
         q = np.round(block * args.scale).astype(np.int64)
@@ -847,6 +940,16 @@ def main():
                          'phased pattern sparse + raw extras (dense n×2E never built). '
                          'Same optimum, full-batch SPEED, ~20M rows on 32GB. Preferred '
                          'over --minibatch for <=~20M. Pure L2 only.')
+    ap.add_argument('--phase-weight', default='',
+                    help='densification knob : over/under-weight rows of a game '
+                         'phase in the DATA loss, e.g. "endgame=3,deep-eg=4" (phases: '
+                         'opening/midgame/late-mid/endgame/deep-eg, by piece count, '
+                         'same bounds as game_autopsy). Unlisted=1.0. Normalised so the '
+                         'mean train weight stays 1 (L2 comparable). Works with full / '
+                         '--lowmem / --minibatch; the per-phase val_mse print shows the '
+                         'effect. Linear-class fix for the endgame bleed (Scan proves a '
+                         'linear eval CAN play endgames — feed it more endgame weight, '
+                         'no non-linearity). cf jobs 0249/0250/0251/0252.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
     ap.add_argument('--target', choices=['wdl', 'score'], default='wdl',
