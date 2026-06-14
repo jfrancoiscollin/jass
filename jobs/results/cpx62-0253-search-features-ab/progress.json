@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0253-search-features-ab",
-  "snapshot_at": "2026-06-14T17:37:53+00:00",
+  "snapshot_at": "2026-06-14T17:42:59+00:00",
   "started_at": "2026-06-14T17:32:45+00:00",
-  "elapsed_seconds": 308,
+  "elapsed_seconds": 614,
   "artefacts": [
     {
       "name": "ab-both.log",
@@ -25,5 +25,5 @@
       "size_bytes": 733
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 945804       1       05:07  0.0  0.0 bash\n 945806  945804       05:07  0.0  0.0 bash\n 946203  945806       04:59  0.0  0.0 bash\n 946204  945806       04:59  0.0  0.0 bash\n 946205  945806       04:59  0.0  0.0 bash\n 946206  946203       04:59 99.9  0.5 jass\n 946207  946204       04:59 99.9  0.5 jass\n 946208  946205       04:59  100  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 945804       1       10:13  0.0  0.0 bash\n 945806  945804       10:13  0.0  0.0 bash\n 946203  945806       10:04  0.0  0.0 bash\n 946204  945806       10:04  0.0  0.0 bash\n 946205  945806       10:04  0.0  0.0 bash\n 946206  946203       10:04 99.9  0.5 jass\n 946207  946204       10:04 99.9  0.5 jass\n 946208  946205       10:04 99.9  0.5 jass\n"
 }
