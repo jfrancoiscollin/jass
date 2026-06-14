@@ -103,6 +103,15 @@ if(JASS_TIME_BREAKDOWN)
     message(STATUS "Jass: time-breakdown instrumentation ENABLED")
 endif()
 
+# King-aware patterns : a king counts as a "piece" on its square (base-3
+# men|kings, Scan-style) instead of men-only. MUST be paired with a king-aware
+# eval (train.py --king-patterns). See src/scan_eval.hpp.
+option(JASS_KING_PATTERNS "Include kings in the pattern occupancy (men|kings, Scan-style)" OFF)
+if(JASS_KING_PATTERNS)
+    add_compile_definitions(JASS_KING_PATTERNS=1)
+    message(STATUS "Jass: KING-AWARE patterns ENABLED (occupancy = men|kings)")
+endif()
+
 # -----------------------------------------------------------------------------
 # Embedded NNUE weights
 # -----------------------------------------------------------------------------
