@@ -1,0 +1,4 @@
+=== Scan absent → install (git clone rhalbersma/scan) ===
+scan: /root/jass-scan/scan_linux (229K)
+EVAL (king-aware) = /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/gen8.pjtw
+=== match king-aware vs Scan (mt0.5s, dump) ===
