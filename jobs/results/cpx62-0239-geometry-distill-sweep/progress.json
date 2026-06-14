@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0239-geometry-distill-sweep",
-  "snapshot_at": "2026-06-14T06:27:29+00:00",
+  "snapshot_at": "2026-06-14T06:32:57+00:00",
   "started_at": "2026-06-14T06:22:26+00:00",
-  "elapsed_seconds": 303,
+  "elapsed_seconds": 631,
   "artefacts": [
     {
       "name": "build.log",
@@ -25,6 +25,14 @@
       "size_bytes": 2840
     },
     {
+      "name": "geom-v6.log",
+      "size_bytes": 2847
+    },
+    {
+      "name": "geom-v7.log",
+      "size_bytes": 1283
+    },
+    {
       "name": "master1M.jnnw",
       "size_bytes": 38000008
     },
@@ -37,9 +45,25 @@
       "size_bytes": 1171
     },
     {
+      "name": "train-v5-l21e-4.log",
+      "size_bytes": 1172
+    },
+    {
       "name": "train-v5-l23e-4.log",
+      "size_bytes": 1172
+    },
+    {
+      "name": "train-v6-l23e-4.log",
       "size_bytes": 0
+    },
+    {
+      "name": "train-v7-l21e-4.log",
+      "size_bytes": 1165
+    },
+    {
+      "name": "train-v7-l23e-4.log",
+      "size_bytes": 1165
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1498434       1       05:02  0.0  0.0 bash\n1498436 1498434       05:02  0.0  0.0 bash\n1498969 1498436       01:41 1084 12.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1498434       1       10:30  0.0  0.0 bash\n1498436 1498434       10:30  0.0  0.0 bash\n1499275 1498436       01:05 1011 12.0 python3\n"
 }
