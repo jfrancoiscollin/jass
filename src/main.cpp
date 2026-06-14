@@ -24,6 +24,7 @@
 #include "tournament.hpp"
 
 #include <algorithm>
+#include <array>
 #include <charconv>
 #include <chrono>
 #include <cstdint>
@@ -112,6 +113,54 @@ int parse_int_or(std::string_view s, int fallback) {
     int v = fallback;
     auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), v);
     return (ec == std::errc{}) ? v : fallback;
+}
+
+// Game phase by piece count, IDENTICAL bounds to pattern_jass/tools/train.py
+// (--phase-weight), tools/game_autopsy.py and tools/phase_proxy.py, so the
+// labelling, the training reweighting and the autopsies all bucket positions the
+// same way. Index 0..4 = opening / midgame / late-mid / endgame / deep-eg.
+constexpr int NUM_PHASES = 5;
+constexpr const char* PHASE_NAMES[NUM_PHASES] =
+    {"opening", "midgame", "late-mid", "endgame", "deep-eg"};
+inline int phase_index_of(int pieces) noexcept {
+    if (pieces >= 30) return 0;   // opening
+    if (pieces >= 22) return 1;   // midgame
+    if (pieces >= 15) return 2;   // late-mid
+    if (pieces >= 8)  return 3;   // endgame
+    return 4;                     // deep-eg
+}
+
+// Parse "endgame=16,deep-eg=20" into per-phase ABSOLUTE label-search depths
+// (0 = no override → use the base eval_depth). Lets self-play spend DEEPER
+// labelling search where our linear eval is weakest (king endgames, cf jobs
+// 0249/0250/0251) without slowing the cheap, low-variance opening labels.
+// Unknown phase names are reported and ignored; whitespace is tolerated.
+std::array<int, NUM_PHASES> parse_label_depth_by_phase(const std::string& spec) {
+    std::array<int, NUM_PHASES> out{};   // all 0 = "use eval_depth"
+    std::size_t i = 0;
+    while (i < spec.size()) {
+        const std::size_t comma = spec.find(',', i);
+        std::string tok = spec.substr(
+            i, comma == std::string::npos ? std::string::npos : comma - i);
+        i = (comma == std::string::npos) ? spec.size() : comma + 1;
+        const std::size_t eq = tok.find('=');
+        if (eq == std::string::npos) continue;
+        std::string name = tok.substr(0, eq);
+        // trim spaces around the name
+        const auto a = name.find_first_not_of(" \t");
+        const auto b = name.find_last_not_of(" \t");
+        name = (a == std::string::npos) ? "" : name.substr(a, b - a + 1);
+        const int d = parse_int_or(tok.substr(eq + 1), 0);
+        bool known = false;
+        for (int p = 0; p < NUM_PHASES; ++p) {
+            if (name == PHASE_NAMES[p]) { out[p] = d; known = true; break; }
+        }
+        if (!known) {
+            std::cerr << "warning: --label-depth-by-phase: unknown phase '"
+                      << name << "' ignored\n";
+        }
+    }
+    return out;
 }
 
 // -----------------------------------------------------------------------------
@@ -260,6 +309,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          pv_extract       = 0;      // additional samples to harvest along the PV
     int          movetime_ms      = 0;      // >0 → play moves by wall-clock (Scan-style
                                             //      self-play); play_depth becomes a cap
+    std::string  label_depth_spec;          // "endgame=16,deep-eg=20" → deeper LABEL
+                                            //      search by phase (empty = eval_depth)
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -283,10 +334,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--movetime" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) movetime_ms = v;
+        } else if (a == "--label-depth-by-phase" && i + 1 < argc) {
+            label_depth_spec = argv[++i];
         } else {
             positional.push_back(argv[i]);
         }
     }
+    const std::array<int, NUM_PHASES> label_depth = parse_label_depth_by_phase(label_depth_spec);
     const int p_argc = static_cast<int>(positional.size());
     char** const p_argv = positional.data();
 
@@ -321,8 +375,19 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
               << " pv_extract=" << pv_extract
-              << " movetime_ms=" << movetime_ms
-              << '\n';
+              << " movetime_ms=" << movetime_ms;
+    {
+        bool any = false;
+        for (int p = 0; p < NUM_PHASES; ++p) {
+            if (label_depth[p] > 0) {
+                std::cout << (any ? "," : " label_depth_by_phase=")
+                          << PHASE_NAMES[p] << ":" << label_depth[p];
+                any = true;
+            }
+        }
+        if (!any) std::cout << " label_depth_by_phase=(uniform eval_depth)";
+    }
+    std::cout << '\n';
 
     std::ofstream f(out_path, std::ios::binary);
     if (!f) {
@@ -432,10 +497,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                      && generated + static_cast<int>(game_samples.size()) < n
                                      && (!quiet_only || position_quiet);
             if (sample_now) {
-                SearchLimits lim;
-                lim.max_depth = eval_depth;
-                const SearchResult r = e.search(lim);
                 const Position&    pos = e.position();
+                // Phase-dependent LABEL depth : spend deeper search where the
+                // linear eval is weakest (endgames), keep opening labels cheap.
+                // Default (no spec) = eval_depth everywhere (back-compatible).
+                const int phase_ovr = label_depth[phase_index_of(popcount(pos.occupied()))];
+                const int this_label_depth = (phase_ovr > 0) ? phase_ovr : eval_depth;
+                SearchLimits lim;
+                lim.max_depth = this_label_depth;
+                const SearchResult r = e.search(lim);
                 Sample s;
                 s.bbs[0] = pos.white_men();
                 s.bbs[1] = pos.white_kings();
@@ -477,7 +547,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                          ++k) {
                         pv_pos = pv_pos.after(r.pv[k]);
                         const int depth_from_root = static_cast<int>(k) + 1;
-                        const int eff_depth = eval_depth - depth_from_root;
+                        const int eff_depth = this_label_depth - depth_from_root;
                         if (eff_depth < PV_MIN_EFF_DEPTH) break;
                         if (depth_from_root % PV_STRIDE != 0) continue;
                         if (generated +
@@ -2432,9 +2502,15 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--label-depth-by-phase SPEC]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
+                "                                   --label-depth-by-phase\n"
+                "                                   \"endgame=16,deep-eg=20\" labels\n"
+                "                                   those phases at a DEEPER search\n"
+                "                                   (others keep eval_depth) — feed\n"
+                "                                   the linear eval better endgame\n"
+                "                                   targets where it's weakest.\n"
                 "                                   Higher eval_depth = cleaner\n"
                 "                                   training signal; non-zero\n"
                 "                                   `seed` shifts the RNG state\n"
