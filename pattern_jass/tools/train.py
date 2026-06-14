@@ -1102,6 +1102,11 @@ def main():
     if args.scan_eval:
         return train_scan_eval(args)
 
+    # --phase-weight is a scan-eval (structured eval) feature : fail loudly
+    # rather than silently ignore it on the legacy pattern-only path.
+    if getattr(args, 'phase_weight', ''):
+        raise SystemExit('--phase-weight requires --scan-eval (structured eval path)')
+
     print(f'loading JNNW {args.data}')
     t0 = time.time()
     ds = master_loader.load(args.data, max_records=args.max_records)
