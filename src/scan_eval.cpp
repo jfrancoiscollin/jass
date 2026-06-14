@@ -226,11 +226,11 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
 }
 
 int ScanEvalNetwork::evaluate(const Position& pos) const noexcept {
-    // Men patterns (sparse one-hots, base-3), recomputed from scratch. The
+    // Patterns (sparse one-hots, base-3), recomputed from scratch. Occupancy is
+    // men-only or men|kings (pat_black/pat_white) per the king-aware switch. The
     // accumulator path (evaluate_with_idx) shares everything below.
     std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
-    pattern_jass::extract_all(static_cast<std::uint64_t>(pos.black_men()),
-                              static_cast<std::uint64_t>(pos.white_men()), idx);
+    pattern_jass::extract_all(pat_black(pos), pat_white(pos), idx);
     return evaluate_with_idx(pos, idx.data());
 }
 
