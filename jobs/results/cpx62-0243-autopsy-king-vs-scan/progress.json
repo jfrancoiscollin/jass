@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0243-autopsy-king-vs-scan",
-  "snapshot_at": "2026-06-14T09:41:03+00:00",
+  "snapshot_at": "2026-06-14T09:46:09+00:00",
   "started_at": "2026-06-14T08:29:24+00:00",
-  "elapsed_seconds": 4299,
+  "elapsed_seconds": 4605,
   "artefacts": [
     {
       "name": "build.log",
@@ -21,5 +21,5 @@
       "size_bytes": 34
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 287293       1    01:11:38  0.0  0.0 bash\n 287295  287293    01:11:38  0.0  0.0 bash\n 287703  287295    01:11:27  0.0  0.0 python3\n 287706  287703    01:11:27 45.9  0.4 jass\n 287708  287703    01:11:27 54.0  0.9 scan_linux\n 287711  287703    01:11:26  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 287293       1    01:16:44  0.0  0.0 bash\n 287295  287293    01:16:44  0.0  0.0 bash\n 287703  287295    01:16:33  0.0  0.0 python3\n 287706  287703    01:16:33 45.5  0.4 jass\n 287708  287703    01:16:33 54.4  0.9 scan_linux\n 287711  287703    01:16:33  0.0  0.0 jass\n"
 }
