@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0246-netprobe",
+  "script": "jobs/queue/cpx62-0246-netprobe.sh",
+  "pid": 935009,
+  "started_at": "2026-06-14T12:15:04+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
