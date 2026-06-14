@@ -1,0 +1,3 @@
+averaged 2 evals (naive element-wise mean)
+  pattern+extras cols=34,012,436  nonzero in >=1 box=4,977,154  in exactly 1 box=2,021,564 (40.6% — these the naive mean halves)
+  wrote /root/jass/jobs/results/ccx33-0245-federated-test/artefacts.src/fed.pjtw

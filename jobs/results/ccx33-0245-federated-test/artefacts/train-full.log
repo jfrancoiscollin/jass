@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/ccx33-0245-federated-test/artefacts.src/full.jnnw
+  3000000 records  (0.17s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0245-federated-test/artefacts.src/feat-full
+  extras shape (3000000, 106)  (mean mob b/w=10.6/10.7)
+target=wdl  pos=992299 neg=970515 zero=1037186 (34.6% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=992299 draw=1037186 loss=970515 (34.6% draws)
+phase : piece-count mean=19.6  wmg mean=0.491
+split : train=2700000 val=300000
+prune : keep 243,618 buckets (>= 1 visits) -> 487,238 pattern cols vs 34,012,224  (69.8× fewer); train fallback=0.000%
+design : 487450 columns (2×243619 pat + 2×106 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.599529  iters=200  (453.52s)
+val   : mse=1.066177  sign_acc=0.2418
+quant : scale=1000  pat range=[-453,453] ext_mg range=[-514,550]
+wrote /root/jass/jobs/results/ccx33-0245-federated-test/artefacts.src/full.pjtw  (v3, 34012436 weights, 136049764 bytes)
