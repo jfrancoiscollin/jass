@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0237-scan-distill-ceiling-v2",
-  "snapshot_at": "2026-06-14T10:29:25+00:00",
+  "snapshot_at": "2026-06-14T10:34:25+00:00",
   "started_at": "2026-06-14T07:18:29+00:00",
-  "elapsed_seconds": 11456,
+  "elapsed_seconds": 11756,
   "artefacts": [
     {
       "name": "build.log",
@@ -61,5 +61,5 @@
       "size_bytes": 1176
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1445061       1    03:10:55  0.0  0.0 bash\n1445063 1445061    03:10:55  0.0  0.0 bash\n2480595 1445063    02:54:56  0.0  0.0 python3\n2480598 2480595    02:54:56 47.5  0.4 jass\n2480600 2480595    02:54:56 52.4  0.9 scan_linux\n2480603 2480595    02:54:55  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1445061       1    03:15:55  0.0  0.0 bash\n1445063 1445061    03:15:55  0.0  0.0 bash\n2480595 1445063    02:59:56  0.0  0.0 python3\n2480598 2480595    02:59:56 49.0  0.4 jass\n2480600 2480595    02:59:56 50.9  0.9 scan_linux\n2480603 2480595    02:59:56  0.0  0.0 jass\n"
 }
