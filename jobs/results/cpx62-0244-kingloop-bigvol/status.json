@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0244-kingloop-bigvol",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-14T11:24:40+00:00",
+  "ended_at": "2026-06-14T12:15:01+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 293401
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src"
 }
