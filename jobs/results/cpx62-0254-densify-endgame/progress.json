@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-14T22:55:05+00:00",
+  "snapshot_at": "2026-06-14T23:00:10+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 8399,
+  "elapsed_seconds": 8704,
   "artefacts": [
     {
       "name": "build.log",
@@ -43,6 +43,10 @@
     {
       "name": "elo-gen6.log",
       "size_bytes": 276
+    },
+    {
+      "name": "elo-gen7.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -134,7 +138,11 @@
     },
     {
       "name": "gen7-train.log",
-      "size_bytes": 0
+      "size_bytes": 1543
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -649,5 +657,5 @@
       "size_bytes": 1477
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 591788  952037       04:06  612 56.6 python3\n 952035       1    02:19:58  0.0  0.0 bash\n 952037  952035    02:19:58  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 592166  952037       00:21  0.0  0.0 bash\n 592168  592166       00:21  927  0.4 jass\n 952035       1    02:25:04  0.0  0.0 bash\n 952037  952035    02:25:04  0.0  0.0 bash\n"
 }
