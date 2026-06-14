@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-14T21:11:58+00:00",
+  "snapshot_at": "2026-06-14T21:16:59+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 2212,
+  "elapsed_seconds": 2513,
   "artefacts": [
     {
       "name": "build.log",
@@ -23,6 +23,10 @@
     {
       "name": "elo-gen1.log",
       "size_bytes": 275
+    },
+    {
+      "name": "elo-gen2.log",
+      "size_bytes": 274
     },
     {
       "name": "feat0",
@@ -54,7 +58,11 @@
     },
     {
       "name": "gen2-train.log",
-      "size_bytes": 0
+      "size_bytes": 1535
+    },
+    {
+      "name": "gen2.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -247,7 +255,135 @@
     {
       "name": "sp2-9.log",
       "size_bytes": 1477
+    },
+    {
+      "name": "sp3-1.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-10.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-11.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp3-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-12.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp3-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-13.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-14.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-15.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-16.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-2.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-3.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-4.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-5.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-6.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-7.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-8.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-9.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp3-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1       36:52  0.0  0.0 bash\n 952037  952035       36:52  0.0  0.0 bash\n2068868  952037       00:34  819 20.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1       41:52  0.0  0.0 bash\n 952037  952035       41:52  0.0  0.0 bash\n2611260  952037       00:15  100  0.5 jass\n2611261  952037       00:15 99.9  0.5 jass\n2611262  952037       00:15 99.8  0.5 jass\n2611263  952037       00:15 99.6  0.5 jass\n2611264  952037       00:15 99.8  0.5 jass\n2611265  952037       00:15  100  0.5 jass\n2611266  952037       00:15 99.9  0.5 jass\n2611267  952037       00:15 99.8  0.5 jass\n2611268  952037       00:15 99.8  0.5 jass\n2611269  952037       00:15 99.8  0.5 jass\n2611270  952037       00:15 99.7  0.5 jass\n2611271  952037       00:15 99.8  0.5 jass\n2611272  952037       00:15 99.9  0.5 jass\n2611273  952037       00:15  100  0.5 jass\n2611274  952037       00:15 99.9  0.5 jass\n2611275  952037       00:15 99.9  0.5 jass\n"
 }
