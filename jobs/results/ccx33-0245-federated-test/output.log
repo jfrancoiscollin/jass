@@ -1,0 +1,16 @@
+=== gen corpus ~3M (king-aware self-play depth4) ===
+corpus 3000000  half 1500000
+=== fit JOINT (full), A, B ===
+=== merge A+B (naive) ===
+averaged 2 evals (naive element-wise mean)
+  pattern+extras cols=34,012,436  nonzero in >=1 box=4,977,154  in exactly 1 box=2,021,564 (40.6% — these the naive mean halves)
+  wrote /root/jass/jobs/results/ccx33-0245-federated-test/artefacts.src/fed.pjtw
+
+==========================================================
+   ccx33-0245 — FEDERATED-AVERAGING (Elo vs hc, 60 paires)
+   JOINT (full data)      : +187.9
+   FEDERATED (avg A,B)    : +164.8
+   single half (A only)   : +157.3
+   → fed ≈ joint : averaging viable → 2 box en parallèle sur le train (×2 vitesse).
+   → fed << joint : la dégradation buckets-rares tue l'idée (rester single-box lowmem).
+==========================================================
