@@ -7,8 +7,8 @@
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
 > Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](ARBRE_DECISION.md).
 >
-> Mise à jour : **2026-06-13** (après 0234 ; géométrie close ; 0235 ancre Scan
-> réelle + 0236 plafond distillation **en vol** — trancheront label- vs class-limited).
+> Mise à jour : **2026-06-14** (BRIQUE ROIS — le bug structurel vs Scan, corrigé.
+> Géométrie close (levier mort). Le push en cours = loop full-fold **king-aware + scalé** 0241).
 
 ---
 
@@ -97,8 +97,11 @@ recherche » ≈ 2 plies est mineure).
 | 0230 | pattern_importance (std·\|corr\| + redondance) sur full-fold | **importance UNIFORME** : aucun pattern mort, redondance ≤0.40 |
 | 0231 | RFE bras témoin 32-pat (réplique 0227) | **+142 vs hc** (60p) ; vitesse knps/hc=0.653 ; reproduit 0227 |
 | 0234 | RFE bras élagué 24-pat (drop-8, reset-proof) | **+110 vs hc** = **−31 Elo** et **0 vitesse** (0.648) → élaguer = lose-lose |
-| 0235 | **ancre Scan réelle** (full-fold gen8, d9 + mt1s, no bb) | *en vol* — l'écart absolu qui manquait depuis toujours |
-| 0236 | **plafond distillation** (full-fold sur 1M labels Scan-d10) | *en vol* — tranche label-limited vs class-limited |
+| 0235 | ancre Scan réelle (d9 + mt1s) | ✂️ **FIGÉ ~8h** sur l'arme depth-9 sans plafond temps → tué (`kill-in-flight`) ; leçon : **borner au movetime** |
+| 0237/0239 | plafond distillation + sweep géométrie | val-loss men-only **plate ~0.60** de 15→54 patterns → ni data ni géométrie : représentationnel |
+| 0240 | **BRIQUE ROIS** (men-only vs king-aware sous distillation) | **+37 Elo vs hc** (+78→+115), val-loss 0.613→0.602 → les rois = le bug structurel, corrigé |
+| 0238 | autopsie men-only vs Scan (`game_autopsy.py`) | *en vol* — où on perd (phase × rois) ; le « avant » du fix rois |
+| 0241 | **loop full-fold KING-AWARE + scalé** (600k/gen) 📍 | *en vol* — LE push : pousser la classe linéaire à son max (kings + data) |
 
 ---
 
@@ -476,6 +479,43 @@ pure, mt1s = force réelle, sans bitbases) ; `0236` = **plafond de distillation*
 entraîné sur 1.0M labels Scan-d10). Lecture : plafond ≫ 0.47 ⇒ **label-limited** (recette =
 distiller Scan / labels profonds) ; plafond ~ 0.5 ⇒ **class-limited** (éval non-linéaire requise).
 
+### Phase 12 — LA BRIQUE ROIS : le bug structurel vs Scan (0237-0241, 2026-06-14)
+**Le diagnostic.** On a cherché « pourquoi la classe linéaire ne monte pas comme Scan »
+par élimination, en restant linéaire (directive : *pas de pivot ; si plat = bug*) :
+- **géométrie = levier MORT** (3 angles) : importance uniforme (`0230`), élaguer = **−31
+  Elo ET 0 vitesse** (`0234`), richesse géométrique **plate sous labels parfaits** (`0239` :
+  val-loss 0.600-0.617 de 15→54 patterns). → le trou n'est pas la forme.
+- **plafond de distillation men-only ~0.60** (`0239`/`0237`) : même avec le prof PARFAIT
+  (master Scan-d10 dense, donc PAS la famine), la classe men-only plafonne → c'est
+  **représentationnel**, pas data ni géométrie.
+
+**Le bug (enfin trouvé).** Nos patterns lisaient **men-only** → une case occupée par un
+**roi se lisait VIDE**. Scan, lui, compte un roi comme « **pièce** » sur sa case (base-3
+amalgamé man|king ; la *valeur* du roi vit dans les extras PST/mobilité). Donc **« même
+infra que Scan » était FAUX** : une vraie **divergence**, exactement le « bug » pressenti.
+Ce n'était pas une limite de la classe linéaire — c'était une *régression* vs Scan.
+
+**Le fix (100 % linéaire, = Scan).** Brique rois : `-DJASS_KING_PATTERNS=ON` (occupation
+`men|kings` côté binaire, `src/scan_eval.hpp`) + `train.py --king-patterns`. Base-3
+amalgamé (PAS base-5 = jass v2 raté, buckets king trop creux). `update_all` gère coups de
+roi ET promotions (man→king même case = toujours « pièce » → index inchangé). Default OFF =
+no-op exact (6408/6408 tests). **VALIDÉ `0240`** : sous distillation Scan-d10, men-only
+**+78** → king-aware **+115 Elo vs hc** (= **+37**, ~1080 parties, IC serré), val-loss
+0.613→0.602. Le gain Elo > gain val-loss : voir les rois change surtout la **sélection de
+coups** en jeu réel (moins de bévues à rois), comme l'autopsie le prédit.
+
+**Le push (en cours).** `0241` = loop full-fold **king-aware + SCALÉ** (600k/gen cumulé vs
+300k) — pousser la classe LINÉAIRE à son max (kings + couverture), trajectoire vs les
+baselines men-only (0227 +175 / 0231 +142). Garde-fou : +37 ≠ tout le gap à Scan ; la
+**famine de données** reste un mur indépendant → kings ET data ensemble.
+
+**Outillage + hygiène.** `tools/game_autopsy.py` (autopsie coup-par-coup vs Scan-oracle :
+accord + perte d'éval par phase × rois × tactique + galerie de bévues — `0238`). Piège
+mesure corrigé : les matchs vs Scan en **profondeur fixe sans plafond temps** explosent
+(`0235` figé ~8h sur l'arme d9, tué via le flag `jobs/state/kill-in-flight`) → **toujours
+borner au movetime**. Proxy : confirmé **retiré** comme juge de force (B4/0216) ; sélection
+de modèle par **val-loss**, verdict par **parties réelles**.
+
 ### Lignée des modèles
 | Nom | Job | Données / labeller | Archi | Résultat phare |
 |---|---|---|---|---|
@@ -492,7 +532,8 @@ distiller Scan / labels profonds) ; plafond ~ 0.5 ⇒ **class-limited** (éval n
 | **champion** | 0141/0170 | master+**Scan-d10**, score-drop | 32 patterns+106 extras | 0.39 vs v15 d9 / 0.38-0.42 mt ; **0 vs Scan** |
 | géométrie v6 | 0166/0186 | diagonale dense | 40 patterns | d9=0.556 (bat v15 fixe) mais **se dégrade en profondeur** |
 | deep-d12 | 0200 | self-play, **relabel d12 teacher-free** | archi champion | 0.306 vs v15 |
-| **full-fold** | 0227/0231 | self-play WDL **itéré** (8 gens d4), pli sym complet | 32 patterns+106 extras (17M→1M poids) | **+175 / +142 vs hc** (gen8) ; **vs Scan non encore ancré** (0235) |
+| **full-fold** | 0227/0231 | self-play WDL **itéré** (8 gens d4), pli sym complet | 32 patterns+106 extras (17M→1M poids) | **+175 / +142 vs hc** (gen8) ; men-only (rois invisibles) |
+| **king-aware** | 0240/0241 | distill Scan-d10 + loop full-fold scalé, patterns **men\|kings** | 32 pat king-aware +106 extras | **+37 vs men-only** (0240, distill) ; loop scalé 0241 en cours |
 
 ### Impasses (raison en une ligne)
 - **Corpus 10M** — gelé, €700+ pour +30-80 ELO vs un déficit −800.
