@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/cumulative.jnnw
+  3900000 records  (0.21s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat6
+  extras shape (3900000, 106)  (mean mob b/w=12.4/12.4)
+target=wdl  pos=1402417 neg=1368277 zero=1129306 (29.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=1402417 draw=1129306 loss=1368277 (29.0% draws)
+phase : piece-count mean=19.9  wmg mean=0.497
+split : train=3510000 val=390000
+prune : keep 280,066 buckets (>= 1 visits) -> 560,134 pattern cols vs 34,012,224  (60.7× fewer); train fallback=0.000%
+design : 560346 columns (2×280067 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.583890  iters=200  (224.90s)
+val   : mse=1.258675  sign_acc=0.2873
+quant : scale=1000  pat range=[-540,540] ext_mg range=[-616,655]
+wrote /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/gen6.pjtw  (v3, 34012436 weights, 136049764 bytes)

@@ -1,0 +1,25 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/sp8-8.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=9259 nnue=/root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/gen7.pjtw quiet_only=false pv_extract=0 movetime_ms=0
+  played 50 games, 1587 / 37500 positions
+  played 100 games, 3231 / 37500 positions
+  played 150 games, 4880 / 37500 positions
+  played 200 games, 6587 / 37500 positions
+  played 250 games, 8216 / 37500 positions
+  played 300 games, 9763 / 37500 positions
+  played 350 games, 11362 / 37500 positions
+  played 400 games, 12904 / 37500 positions
+  played 450 games, 14435 / 37500 positions
+  played 500 games, 15942 / 37500 positions
+  played 550 games, 17457 / 37500 positions
+  played 600 games, 19033 / 37500 positions
+  played 650 games, 20626 / 37500 positions
+  played 700 games, 22197 / 37500 positions
+  played 750 games, 23780 / 37500 positions
+  played 800 games, 25311 / 37500 positions
+  played 850 games, 26773 / 37500 positions
+  played 900 games, 28301 / 37500 positions
+  played 950 games, 29790 / 37500 positions
+  played 1000 games, 31390 / 37500 positions
+  played 1050 games, 32969 / 37500 positions
+  played 1100 games, 34542 / 37500 positions
+  played 1150 games, 36048 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/sp8-8.jnnw
