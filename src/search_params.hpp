@@ -123,10 +123,15 @@ struct SearchParams {
     // pattern_jass --phase-weight) the listed pruning/reduction techniques are
     // turned OFF, trading a few nodes for accuracy where the engine is most
     // search-bound (job 0252) and most prone to discarding the one precise
-    // winning line (zugzwang for NMP; sharp quiet wins for LMP/LMR). A/B-tunable
-    // independently so each can be measured (job 0255).
-    int  eg_pieces  = 0;          // 0 = off ; else popcount threshold (<=)
-    bool eg_no_nmp  = false;      // disable null-move pruning in the endgame regime
+    // winning line (zugzwang for NMP; sharp quiet wins for LMP/LMR).
+    // Default = NMP off below 12 pieces : job 0255 A/B (mt0.2, 450 games)
+    // measured eg_no_nmp = +29.4 Elo [CI -2.8,+61.6] (zugzwang — NMP's "passing
+    // is safe" assumption fails in endgames), the strongest search signal of the
+    // session. eg_no_lmr was -13 (LMR buys depth, which the search-bound endgame
+    // needs → keep it ON) and eg_no_lmp ~0 (keep ON). Net measured at movetime so
+    // the regime's own cost (one popcount/node) is already priced into the +29.
+    int  eg_pieces  = 12;         // 0 = off ; else popcount threshold (<=)
+    bool eg_no_nmp  = true;       // disable null-move pruning in the endgame regime
     bool eg_no_lmp  = false;      // disable late-move pruning in the endgame regime
     bool eg_no_lmr  = false;      // disable late-move reductions in the endgame regime
 };
