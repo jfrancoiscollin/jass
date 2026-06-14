@@ -362,6 +362,54 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     return res.x, float(res.fun), int(res.nit)
 
 
+def lowmem_z(Xpat, extras, wmg, weg, w, PAT_N, E):
+    """Prediction z = phased-pattern part (Xpat is already wmg/weg-scaled) + the
+    phased-extras part computed ON THE FLY from raw extras (n,E) — so the dense
+    (n,2E) extras design is never materialised. w = [pat_mg|pat_eg|ext_mg|ext_eg]."""
+    w_pat = w[:2 * PAT_N]
+    w_emg = w[2 * PAT_N:2 * PAT_N + E]
+    w_eeg = w[2 * PAT_N + E:]
+    return Xpat @ w_pat + wmg * (extras @ w_emg) + weg * (extras @ w_eeg)
+
+
+def train_lbfgs_lowmem(Xpat, extras, wmg, weg, y, l2, max_iter,
+                       logistic, PAT_N, E):
+    """Memory-efficient FULL-BATCH L-BFGS : SAME objective/optimum as train_lbfgs,
+    but the dense phased extras (the (n,2E) peak, ~2GB/M) is never built — its
+    contribution is computed on the fly from raw extras (n,E). Only the compact
+    phased PATTERN sparse (n×64 nnz) is kept. Handles ~20M rows on 32GB at
+    full-batch speed (no per-iter re-streaming). Pure L2 only."""
+    XpT = Xpat.T
+    n_cols = 2 * PAT_N + 2 * E
+    N = len(y); eps = 1e-12
+    ex = extras.astype(np.float32, copy=False)
+    wmg = wmg.astype(np.float64, copy=False); weg = weg.astype(np.float64, copy=False)
+
+    def loss_and_grad(w):
+        z = lowmem_z(Xpat, ex, wmg, weg, w, PAT_N, E)
+        if logistic:
+            p = 0.5 * (np.tanh(0.5 * z) + 1.0)
+            loss = -float(np.mean(y * np.log(p + eps)
+                                  + (1.0 - y) * np.log(1.0 - p + eps)))
+            resid = p - y
+        else:
+            resid = z - y
+            loss = 0.5 * float(np.dot(resid, resid)) / N
+        loss += 0.5 * l2 * float(np.dot(w, w))
+        g_pat = XpT @ resid
+        # g_ext = ex.T @ (resid·phase) == (resid·phase) @ ex, but the latter keeps
+        # ex C-contiguous (the transpose-matvec is strided and ~3× slower).
+        g_emg = (resid * wmg) @ ex
+        g_eeg = (resid * weg) @ ex
+        grad = np.concatenate([np.asarray(g_pat), g_emg, g_eeg]) / N + l2 * w
+        return loss, grad
+
+    w0 = np.zeros(n_cols, dtype=np.float64)
+    res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
+                   options={'maxiter': max_iter, 'maxcor': 5})
+    return res.x, float(res.fun), int(res.nit)
+
+
 def material_anchor(n_cols: int, TB: int, E: int, strength: float,
                     man_pu: float = 1.0, king_pu: float = 3.0):
     """Per-column anchor that pins the MATERIAL extras to sane piece-unit
@@ -584,19 +632,30 @@ def train_scan_eval(args):
               f'-> {2*PAT_N:,} pattern cols vs {2*TB:,}  ({TB/max(PAT_N,1):.1f}× fewer); '
               f'train fallback={100*fb_tr:.3f}%')
 
-    def build(sel):
+    def build_pat(sel):
         sg = cf_signs[sel] if cf_signs is not None else None
-        xp = build_sparse_X_phased(dcols[sel], wmg[sel], weg[sel], PAT_N, sg)
-        xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
-        return sp.hstack([xp, xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
+        return build_sparse_X_phased(dcols[sel], wmg[sel], weg[sel], PAT_N, sg)
 
+    def build(sel):
+        xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
+        return sp.hstack([build_pat(sel), xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
+
+    lm = bool(getattr(args, 'lowmem', False))
     mb = int(getattr(args, 'minibatch', 0) or 0)
-    X_val = build(val_idx)
-    X_tr  = None if mb > 0 else build(tr_idx)   # minibatch streams tr in chunks
     y_tr, y_val = y_black[tr_idx], y_black[val_idx]
     n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
+    Xpat_tr = Xpat_val = ex_tr = ex_val = None
+    if lm:
+        # memory-efficient full-batch : keep only the compact phased PATTERN sparse
+        # + raw extras ; the dense (n,2E) extras design is computed on the fly.
+        Xpat_tr, Xpat_val = build_pat(tr_idx), build_pat(val_idx)
+        ex_tr, ex_val = extras[tr_idx], extras[val_idx]
+        X_tr = X_val = None
+    else:
+        X_val = build(val_idx)
+        X_tr  = None if mb > 0 else build(tr_idx)   # minibatch streams tr in chunks
     print(f'design : {n_cols} columns (2×{PAT_N} pat + 2×{EVAL_NUM_EXTRAS} ext)'
-          f'{f"  [MINIBATCH {mb:,} rows/chunk]" if mb else ""}')
+          f'{"  [LOWMEM full-batch, on-the-fly extras]" if lm else (f"  [MINIBATCH {mb:,} rows/chunk]" if mb else "")}')
     # Anchors COMBINE (per-column): a uniform anti-forgetting pull toward a v3
     # prior (--anchor-weights, keeps a TD/WDL re-fit from drifting away from a
     # known-good model — cf the 0149 collapse) PLUS a strong per-column pin of
@@ -642,11 +701,15 @@ def train_scan_eval(args):
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
           f'{"  LOGISTIC" if logistic else ""}'
           f'{"  (anchored)" if use_anchor else "  (pure)"}'
-          f'{f"  [minibatch {mb:,}]" if mb else ""}')
-    if mb > 0 and use_anchor:
-        raise SystemExit('--minibatch is pure-L2 only (anchors/freq-reg unsupported)')
+          f'{"  [lowmem]" if lm else (f"  [minibatch {mb:,}]" if mb else "")}')
+    if (lm or mb > 0) and use_anchor:
+        raise SystemExit('--lowmem/--minibatch are pure-L2 only (anchors/freq-reg unsupported)')
     t0 = time.time()
-    if mb > 0:
+    if lm:
+        w_float, train_loss, n_iter = train_lbfgs_lowmem(
+            Xpat_tr, ex_tr, wmg[tr_idx], weg[tr_idx], y_tr, args.l2, args.max_iter,
+            logistic, PAT_N, EVAL_NUM_EXTRAS)
+    elif mb > 0:
         w_float, train_loss, n_iter = train_lbfgs_chunked(
             build, tr_idx, y_black, args.l2, args.max_iter, logistic, n_cols, mb)
     else:
@@ -655,7 +718,11 @@ def train_scan_eval(args):
                                                   anchor_l2=anchor, logistic=logistic)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
-    val_pred = X_val @ w_float
+    if lm:
+        val_pred = lowmem_z(Xpat_val, ex_val.astype(np.float32, copy=False),
+                            wmg[val_idx], weg[val_idx], w_float, PAT_N, EVAL_NUM_EXTRAS)
+    else:
+        val_pred = X_val @ w_float
     val_mse = float(np.mean((val_pred - y_val) ** 2))
     val_sign_acc = float(np.mean(np.sign(val_pred) == y_val))
     print(f'val   : mse={val_mse:.6f}  sign_acc={val_sign_acc:.4f}')
@@ -740,6 +807,11 @@ def main():
                     help='rows per chunk for memory-bounded L-BFGS (0=full-batch). '
                          'Same optimum, streamed assembly — lets the fit scale to '
                          '10-40M rows on a fixed RAM budget. Pure L2 only.')
+    ap.add_argument('--lowmem', action='store_true',
+                    help='memory-efficient FULL-BATCH L-BFGS : keep only the compact '
+                         'phased pattern sparse + raw extras (dense n×2E never built). '
+                         'Same optimum, full-batch SPEED, ~20M rows on 32GB. Preferred '
+                         'over --minibatch for <=~20M. Pure L2 only.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
     ap.add_argument('--target', choices=['wdl', 'score'], default='wdl',
