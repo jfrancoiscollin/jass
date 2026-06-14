@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0245-federated-test",
-  "snapshot_at": "2026-06-14T12:15:49+00:00",
+  "snapshot_at": "2026-06-14T12:20:51+00:00",
   "started_at": "2026-06-14T11:50:09+00:00",
-  "elapsed_seconds": 1540,
+  "elapsed_seconds": 1842,
   "artefacts": [
     {
       "name": "A.jnnw",
@@ -137,5 +137,5 @@
       "size_bytes": 1224
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2488673       1       25:40  0.0  0.0 bash\n2488675 2488673       25:40  0.0  0.0 bash\n2489733 2488675       01:00  0.0  0.0 bash\n2489734 2489733       01:00  651  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2488673       1       30:42  0.0  0.0 bash\n2488675 2488673       30:42  0.0  0.0 bash\n2489733 2488675       06:02  0.0  0.0 bash\n2489734 2489733       06:02  695  0.6 jass\n"
 }
