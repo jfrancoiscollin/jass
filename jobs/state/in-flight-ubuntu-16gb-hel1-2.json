@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0245-federated-test",
+  "script": "jobs/queue/ccx33-0245-federated-test.sh",
+  "pid": 2488673,
+  "started_at": "2026-06-14T11:50:09+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
