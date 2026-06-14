@@ -47,6 +47,30 @@
 namespace jass::scan_eval {
 
 // ---------------------------------------------------------------------------
+// Pattern piece-presence (king-aware switch).
+// ---------------------------------------------------------------------------
+// The men-pattern bucket index is base-3 per square : 0 empty / 1 black / 2
+// white. By DEFAULT only MEN occupy a square (kings invisible to the patterns —
+// a king square reads as empty ; the king's value is carried by the king-PST +
+// king-mobility extras). With -DJASS_KING_PATTERNS the occupancy becomes
+// men|kings, so a king counts as a "piece" on its square EXACTLY like Scan
+// (base-3 amalgamating man+king, cf docs/SCAN_ARCHITECTURE_NOTES.md §1) — NOT
+// base-5 (that was jass v2 : king buckets near-empty, worse). A king-aware
+// build MUST be paired with a king-aware eval : train with
+// `pattern_jass/tools/train.py --king-patterns`.
+#ifdef JASS_KING_PATTERNS
+inline constexpr bool KING_AWARE_PATTERNS = true;
+#else
+inline constexpr bool KING_AWARE_PATTERNS = false;
+#endif
+inline std::uint64_t pat_black(const Position& p) noexcept {
+    return static_cast<std::uint64_t>(KING_AWARE_PATTERNS ? p.blacks() : p.black_men());
+}
+inline std::uint64_t pat_white(const Position& p) noexcept {
+    return static_cast<std::uint64_t>(KING_AWARE_PATTERNS ? p.whites() : p.white_men());
+}
+
+// ---------------------------------------------------------------------------
 // Dense "extras" feature layout (black-POV indicators / counts).
 // ---------------------------------------------------------------------------
 // Kept in a fixed, stable order so the trainer and the C++ eval agree. The
@@ -142,23 +166,21 @@ std::unique_ptr<ScanEvalNetwork> load_scan_eval_network(
 
 // Per-ply pattern accumulator for the search. Holds the 32 base-3 pattern
 // indices; `refresh_from` rebuilds them from scratch (root / fallback) and
-// `apply_move` updates them incrementally for a played move. Kings are not in
-// patterns, so only the men bitboards matter. One accumulator per ply (the
-// index does not depend on side-to-move; evaluate_with_idx applies the sign).
+// `apply_move` updates them incrementally for a played move. Occupancy fed to
+// the patterns is `pat_black/pat_white` (men only, or men|kings when king-aware)
+// — with king-aware occupancy, update_all naturally handles king moves AND
+// promotions (man→king keeps the square occupied → index unchanged). One
+// accumulator per ply (the index does not depend on side-to-move;
+// evaluate_with_idx applies the sign).
 struct ScanAccumulator {
     std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
 
     void refresh_from(const Position& pos) noexcept {
-        pattern_jass::extract_all(static_cast<std::uint64_t>(pos.black_men()),
-                                  static_cast<std::uint64_t>(pos.white_men()),
-                                  idx);
+        pattern_jass::extract_all(pat_black(pos), pat_white(pos), idx);
     }
     void apply_move(const Position& before, const Position& after) noexcept {
-        pattern_jass::update_all(static_cast<std::uint64_t>(before.black_men()),
-                                 static_cast<std::uint64_t>(before.white_men()),
-                                 static_cast<std::uint64_t>(after.black_men()),
-                                 static_cast<std::uint64_t>(after.white_men()),
-                                 idx);
+        pattern_jass::update_all(pat_black(before), pat_white(before),
+                                 pat_black(after),  pat_white(after), idx);
     }
 };
 
