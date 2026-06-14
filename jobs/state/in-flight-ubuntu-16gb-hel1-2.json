@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0246-netprobe",
+  "script": "jobs/queue/ccx33-0246-netprobe.sh",
+  "pid": 1379667,
+  "started_at": "2026-06-14T12:46:32+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
