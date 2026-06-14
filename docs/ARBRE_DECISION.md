@@ -74,11 +74,15 @@ NŒUD 2ter — DEBUG du pipeline  📍⭐  (la classe N'EST PAS le suspect)
    │        énorme). FIX (reste linéaire, reste Scan) : VOLUME/gen ×10–50 (millions)
    │        et/ou corpus CUMULÉ dominé par les gens récentes. → job sweep-volume.
    │
-   ├─ 🔵 B3 — Rois invisibles aux patterns (extract_indices lit men-only ;
-   │        31 % des positions ont un roi). C++ et Python sont COHÉRENTS (pas un
-   │        bug de correctness) ; les rois entrent via les extras (compte+mobilité).
-   │        Limite représentationnelle, pas une panne. À garder en réserve — NE PAS
-   │        confondre avec « enrichir la classe » (ce serait le pivot interdit).
+   ├─ 🟢⭐ B3 — Rois invisibles aux patterns → **LE BUG STRUCTUREL, CORRIGÉ (2026-06-14).**
+   │        Nos patterns lisaient men-only → une case avec un roi = VIDE. Scan, lui,
+   │        compte un roi comme « pièce » (base-3 amalgamé man|king). Donc « même infra
+   │        que Scan » était FAUX : c'était une DIVERGENCE, pas une simple limite « en
+   │        réserve ». Le fix (`-DJASS_KING_PATTERNS=ON` + `train.py --king-patterns`,
+   │        occupation = men|kings, valeur du roi toujours dans les extras) est 100 %
+   │        LINÉAIRE (= Scan, PAS base-5 = jass v2 raté) → ce n'est PAS le pivot interdit.
+   │        VALIDÉ `0240` : **+37 Elo vs hc** sous distillation (+78 → +115), val-loss
+   │        0.613→0.602. → embarqué dans le loop scalé `0241` (📍 le push en cours).
    │
    └─ 🔵 B4 — Mesure : le proxy lit l'accord avec les SCORES Scan-d10, pas la FORCE
             en parties. Confirmer un palier au SPRT/Elo (tools/sprt_elo.py) avant de
@@ -129,9 +133,11 @@ NŒUD 4 (transverse) — Indépendance vs force
 | **2ter·B5** 2e mur ~0.46 (PAS data) | ✂️ ARTEFACT (résolu) | — | rois NEUTRE · profondeur NON · **B4 = proxy sous-lit** | métrique, pas un mur |
 | **2ter·B4** proxy ≠ Elo réel ⭐ | 🟢 CONFIRMÉ (0216) | gen0→gen5 = −20→+60 Elo vs hc (**+80**, CI disjoints) alors que proxy plat 0.40→0.43 | parties réelles 1440 | **RETIRER le proxy** ; mesurer en Elo réel (SPRT) ; SCALER |
 | **gap absolu** | 📍 énorme | gen5 vs Scan d9 = **0/1080** | 0216 | encore très loin de Scan → scaler longtemps |
-| **2ter·B3** rois invisibles | 🔵 réserve | — (cohérent C++/Py) | inspection 2026-06-13 | limite, pas panne |
+| **2ter·B3** rois invisibles ⭐ | 🟢 **BUG CORRIGÉ (0240)** | divergence vs Scan (men-only vs piece-presence) ; king-aware **+37 Elo vs hc** (+78→+115), val-loss 0.613→0.602 | 0240 | `-DJASS_KING_PATTERNS=ON` + `--king-patterns` ; embarqué dans le loop scalé 0241 |
 | **2ter·B4** mesure proxy≠force | 🔵 | palier confirmé au SPRT | tools/sprt_elo.py | valider avant verdict |
-| **3·C1** partage de poids par symétrie ⭐ | 🟢 VALIDÉ (modeste) | A/B Elo précis : **trans +177 · full +175 vs men-only +148** (2 folds lourds concordent → +30 RÉEL ; color/rot nuls) | 0220-0227 (depth4, 2.6M) | scaler data+profondeur AVEC full-fold ; déployer LR-close ; optimiser géométrie |
+| **3·C1** partage de poids par symétrie ⭐ | 🟢 VALIDÉ (modeste) | A/B Elo précis : **trans +177 · full +175 vs men-only +148** (2 folds lourds concordent → +30 RÉEL ; color/rot nuls) | 0220-0227 (depth4, 2.6M) | full-fold adopté ; **géométrie = levier MORT** (prune 0234 −31 Elo & 0 vitesse ; sweep 0239 plat 0.60-0.62 de 15→54 pat) → reste : kings (B3) + data |
+| **géométrie LEAN** (prune/élagage) | ✂️ MORTE | RFE drop-8 (0234) = **−31 Elo ET 0 vitesse** ; sweep distillation (0239) plat | 0234/0239 | la lenteur d'eval est dans les 106 extras, pas les lookups ; importance uniforme |
+| **3·C1b** loop scalé KING-AWARE 📍⭐ | 🟢 EN COURS | trajectoire vs baselines men-only 0227 +175 / 0231 +142 | 0241 (king-aware + 600k/gen) | LE push : pousser la classe linéaire à son max (kings + data) |
 | **3·C2** non-linéaire | 🔒 DÉPRIORISÉ | seulement si la symétrie+linéaire plafonne en Elo | — | ne pas pivoter avant |
 | **3·C3** Scan-prof (fallback) | 🔵 | teacher-free plafonne sous Scan | — | abandonner l'indépendance |
 | **4** indépendance | 🔵 décision | — | humain | trancher le requirement |
