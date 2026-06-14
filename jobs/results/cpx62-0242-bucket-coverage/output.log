@@ -1,0 +1,69 @@
+0227 cumulé absent → build + génère ~2M self-play depth4
+corpus 2000000
+
+############## MEN-ONLY (l'ancienne géométrie) ##############
+MODE: men-only
+positions D = 2,000,000   activations = 64,000,000 (= D x 32)
+TOTAL_BUCKETS = 17,006,112
+distinct touched S_obs = 902,345  (5.306% of 17M)
+singletons f1=239,069  doubletons f2=106,342
+Chao1 occurring-richness R_hat = 1,171,069  (observed = 77.1% of it; rises with sample => lower bound)
+Good-Turing mass coverage = 99.6265%
+
+species accumulation (distinct vs positions):
+      20,000 pos ->    156,490 distinct (0.920% of 17M)
+      60,000 pos ->    267,939 distinct (1.576% of 17M)
+     200,000 pos ->    436,996 distinct (2.570% of 17M)
+     600,000 pos ->    636,356 distinct (3.742% of 17M)
+   1,200,000 pos ->    783,980 distinct (4.610% of 17M)
+   2,000,000 pos ->    902,345 distinct (5.306% of 17M)
+
+coverage model distinct(k)=R(1-e^-k/tau): tau~1,663,722
+  -> observe 95% of occurring set at ~4,984,066 positions
+  -> for >=N visits on 95%, scale that anchor by ~N (skew makes it the upper end of [N*D/27k , N*k95]):
+       N>=1  : ~4,984,066 positions
+       N>=8  : ~39,872,529 positions
+       N>=30 : ~149,521,982 positions
+       N>=50 : ~249,203,303 positions
+
+############## KING-AWARE (men|kings — le loop 0241) ##############
+MODE: KING-AWARE (occupancy = men|kings, Scan-style)
+positions D = 2,000,000   activations = 64,000,000 (= D x 32)
+TOTAL_BUCKETS = 17,006,112
+distinct touched S_obs = 1,016,776  (5.979% of 17M)
+singletons f1=280,265  doubletons f2=122,656
+Chao1 occurring-richness R_hat = 1,336,970  (observed = 76.1% of it; rises with sample => lower bound)
+Good-Turing mass coverage = 99.5621%
+
+species accumulation (distinct vs positions):
+      20,000 pos ->    169,244 distinct (0.995% of 17M)
+      60,000 pos ->    291,797 distinct (1.716% of 17M)
+     200,000 pos ->    480,485 distinct (2.825% of 17M)
+     600,000 pos ->    707,984 distinct (4.163% of 17M)
+   1,200,000 pos ->    878,882 distinct (5.168% of 17M)
+   2,000,000 pos ->  1,016,776 distinct (5.979% of 17M)
+
+coverage model distinct(k)=R(1-e^-k/tau): tau~1,702,508
+  -> observe 95% of occurring set at ~5,100,258 positions
+  -> for >=N visits on 95%, scale that anchor by ~N (skew makes it the upper end of [N*D/27k , N*k95]):
+       N>=1  : ~5,100,258 positions
+       N>=8  : ~40,802,061 positions
+       N>=30 : ~153,007,728 positions
+       N>=50 : ~255,012,880 positions
+
+==========================================================
+   cpx62-0242 — FAMINE : ensemble occurrent + positions pour 95% / dense(≥8)
+  -- menonly --
+    MODE: men-only
+    Chao1 occurring-richness R_hat = 1,171,069  (observed = 77.1% of it; rises with sample => lower bound)
+      -> observe 95% of occurring set at ~4,984,066 positions
+           N>=1  : ~4,984,066 positions
+           N>=8  : ~39,872,529 positions
+  -- king --
+    MODE: KING-AWARE (occupancy = men|kings, Scan-style)
+    Chao1 occurring-richness R_hat = 1,336,970  (observed = 76.1% of it; rises with sample => lower bound)
+      -> observe 95% of occurring set at ~5,100,258 positions
+           N>=1  : ~5,100,258 positions
+           N>=8  : ~40,802,061 positions
+  → compare le N positions cible au scale du loop (0241 ≈ 5M cumulé) = combien il manque.
+==========================================================

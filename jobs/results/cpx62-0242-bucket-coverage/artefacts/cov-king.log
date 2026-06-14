@@ -1,0 +1,23 @@
+MODE: KING-AWARE (occupancy = men|kings, Scan-style)
+positions D = 2,000,000   activations = 64,000,000 (= D x 32)
+TOTAL_BUCKETS = 17,006,112
+distinct touched S_obs = 1,016,776  (5.979% of 17M)
+singletons f1=280,265  doubletons f2=122,656
+Chao1 occurring-richness R_hat = 1,336,970  (observed = 76.1% of it; rises with sample => lower bound)
+Good-Turing mass coverage = 99.5621%
+
+species accumulation (distinct vs positions):
+      20,000 pos ->    169,244 distinct (0.995% of 17M)
+      60,000 pos ->    291,797 distinct (1.716% of 17M)
+     200,000 pos ->    480,485 distinct (2.825% of 17M)
+     600,000 pos ->    707,984 distinct (4.163% of 17M)
+   1,200,000 pos ->    878,882 distinct (5.168% of 17M)
+   2,000,000 pos ->  1,016,776 distinct (5.979% of 17M)
+
+coverage model distinct(k)=R(1-e^-k/tau): tau~1,702,508
+  -> observe 95% of occurring set at ~5,100,258 positions
+  -> for >=N visits on 95%, scale that anchor by ~N (skew makes it the upper end of [N*D/27k , N*k95]):
+       N>=1  : ~5,100,258 positions
+       N>=8  : ~40,802,061 positions
+       N>=30 : ~153,007,728 positions
+       N>=50 : ~255,012,880 positions
