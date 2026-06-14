@@ -160,6 +160,12 @@ Deux diagnostics ont localisé puis caractérisé le saignement en finale (autop
 2. **recherche** : finale search-bound → time-management/profondeur en finale, tuning
    LMR/LMP par popcount, et à terme **bitbases 3-4 pièces** (profondeur effective infinie).
 
+**Tier-1 recherche (2026-06-14, `0253`)** : A/B des features codées-mais-OFF sur la
+championne king-aware (mt0.2, 450 parties). `use_improving` = **+21.6 Elo** [CI
+−10.5,+53.8] → **activé par défaut** (meilleur signal, standard +15-30 ; non SPRT-
+significatif à ce budget mais cohérent). `use_conthist` = −11 → **laissé OFF**. Régime
+recherche FINALE (popcount-gated NMP/LMP/LMR, `0255`) testé séparément sur CCX33.
+
 > **RÈGLE `--phase-weight` (densification)** : plafond **~3-4 MAX** ; départ `0254` =
 > `endgame=3,deep-eg=3`. NB le risque « pénaliser l'ouverture » est **structurellement
 > amorti** par le phase-split mg/eg : sur-pondérer la finale tire surtout sur le **banc EG**,
