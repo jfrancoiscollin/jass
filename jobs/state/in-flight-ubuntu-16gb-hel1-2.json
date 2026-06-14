@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0237-scan-distill-ceiling-v2",
-  "script": "jobs/queue/ccx33-0237-scan-distill-ceiling-v2.sh",
-  "pid": 1445061,
-  "started_at": "2026-06-14T07:18:29+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

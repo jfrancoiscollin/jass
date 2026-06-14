@@ -1,0 +1,12 @@
+geometry: 32 patterns ; master records=1420193
+train split 1000000 of 1420193
+=== dump eval-features sur le split 1M ===
+wrote 1000000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0237-scan-distill-ceiling-v2/artefacts.src/featM
+  l2=3e-4  val_mse=0.605650
+  l2=1e-4  val_mse=0.678009
+  l2=3e-5  val_mse=0.719651
+  l2=1e-5  val_mse=0.719842
+MEILLEUR fit (val-loss) : l2=3e-4  val_mse=0.605650   (proxy FYI=0.5392)
+  (731-32-317)
+  Elo vs hc (60 paires) = +140.4
+=== distilled vs Scan (fair, sans bitbases) — LE VERDICT ===
