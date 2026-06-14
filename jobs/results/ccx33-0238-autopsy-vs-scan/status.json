@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0238-autopsy-vs-scan",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-14T11:19:49+00:00",
+  "ended_at": "2026-06-14T11:50:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 2487232
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0238-autopsy-vs-scan/artefacts.src"
 }
