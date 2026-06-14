@@ -1,0 +1,22 @@
+v4 enriched set : 15 patterns  {'promo': 4, 'cadiag': 3, 'cdiag': 1, 'edgeL': 2, 'edgeR': 2, 'centre': 3}
+TOTAL_BUCKETS = 15 * 531441 = 7971615
+  promo_top_0  [1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14]
+  promo_bot_0  [36, 37, 38, 39, 41, 42, 43, 44, 46, 47, 48, 49]
+  promo_top_1  [2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15]
+  promo_bot_1  [37, 38, 39, 40, 42, 43, 44, 45, 47, 48, 49, 50]
+  cadiag_20    [19, 20, 23, 24, 28, 29, 32, 33, 37, 38, 41, 42]
+  cdiag_21     [21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49, 50]
+  cadiag_24    [23, 24, 28, 29, 32, 33, 37, 38, 41, 42, 46, 47]
+  cadiag_25    [24, 25, 29, 30, 33, 34, 38, 39, 42, 43, 47, 48]
+  edgeL_top    [1, 2, 6, 7, 11, 12, 16, 17, 21, 22, 26, 27]
+  edgeR_top    [4, 5, 9, 10, 14, 15, 19, 20, 24, 25, 29, 30]
+  edgeL_bot    [21, 22, 26, 27, 31, 32, 36, 37, 41, 42, 46, 47]
+  edgeR_bot    [24, 25, 29, 30, 34, 35, 39, 40, 44, 45, 49, 50]
+  centre_0     [16, 17, 18, 21, 22, 23, 26, 27, 28, 31, 32, 33]
+  centre_1     [18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35]
+  centre_2     [22, 23, 24, 27, 28, 29, 32, 33, 34, 37, 38, 39]
+rewrote /root/jass/pattern_jass/src/pattern.hpp
+rewrote /root/jass/pattern_jass/tools/patterns.py
+rewrote /root/jass/pattern_jass/tools/patterns.py
+
+NUM_PATTERNS set to 15 (v7); TOTAL_BUCKETS=7971615.

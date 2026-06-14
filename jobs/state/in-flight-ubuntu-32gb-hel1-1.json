@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0239-geometry-distill-sweep",
-  "script": "jobs/queue/cpx62-0239-geometry-distill-sweep.sh",
-  "pid": 1498434,
-  "started_at": "2026-06-14T06:22:26+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

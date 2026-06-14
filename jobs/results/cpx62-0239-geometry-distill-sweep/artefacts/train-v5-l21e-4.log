@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/cpx62-0239-geometry-distill-sweep/artefacts.src/master1M.jnnw
+  1000000 records  (0.06s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,531,561 distinct weights (17M -> 1,531,561, 13.88x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0239-geometry-distill-sweep/artefacts.src/featM
+  extras shape (1000000, 106)  (mean mob b/w=10.2/10.2)
+target=wdl  pos=404686 neg=405688 zero=189626 (19.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=404686 draw=189626 loss=405688 (19.0% draws)
+phase : piece-count mean=24.0  wmg mean=0.600
+split : train=900000 val=100000
+prune : keep 259,686 buckets (>= 1 visits) -> 519,374 pattern cols vs 42,515,280  (81.9× fewer); train fallback=0.000%
+design : 519586 columns (2×259687 pat + 2×106 ext)
+L-BFGS  l2=0.0001  max_iter=300  LOGISTIC  (pure)
+  train_loss=0.646962  iters=300  (115.60s)
+val   : mse=0.675315  sign_acc=0.2608
+quant : scale=1000  pat range=[-326,326] ext_mg range=[-618,738]
+wrote /root/jass/jobs/results/cpx62-0239-geometry-distill-sweep/artefacts.src/d-v5-l21e-4.pjtw  (v3, 42515492 weights, 170061988 bytes)

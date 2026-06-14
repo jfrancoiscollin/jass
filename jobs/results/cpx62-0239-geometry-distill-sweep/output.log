@@ -1,0 +1,26 @@
+train split 1000000 of 1420193
+=== dump extras (106, géométrie-indépendants) ===
+wrote 1000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0239-geometry-distill-sweep/artefacts.src/featM
+=== SWEEP géométrie sous distillation Scan-d10 (val-loss, plus bas = mieux) ===
+  v4 (np=32) l2=3e-4  val_mse=0.613008
+  v4 (np=32) l2=1e-4  val_mse=0.690488
+  v5 (np=40) l2=3e-4  val_mse=0.617115
+  v5 (np=40) l2=1e-4  val_mse=0.675315
+  v7 (np=15) l2=3e-4  val_mse=0.606318
+  v7 (np=15) l2=1e-4  val_mse=0.646313
+  v6 (np=40) l2=3e-4  val_mse=0.604178
+  v6 (np=40) l2=1e-4  val_mse=0.665693
+  lrclose (np=54) l2=3e-4  val_mse=0.600240
+  lrclose (np=54) l2=1e-4  val_mse=0.744236
+
+==========================================================
+   cpx62-0239 — GÉOMÉTRIE SOUS DISTILLATION (val-loss vs Scan-truth)
+   geometrie  n_pat    val_mse   
+   v4         32       0.613008  
+   v5         40       0.617115  
+   v7         15       0.606318  
+   v6         40       0.604178  
+   lrclose    54       0.600240  
+   → val-loss BAISSE avec la richesse  : la classe PEUT être relevée (géométrie actionnable)
+   → val-loss PLATE / remonte          : richesse géométrique morte → non-linéarité requise
+==========================================================
