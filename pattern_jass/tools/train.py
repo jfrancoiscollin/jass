@@ -624,10 +624,13 @@ def train_scan_eval(args):
     # Build a remap bucket(0..TB) -> slot from the TRAIN split: occurring buckets
     # get slots 1..K, everything else shares slot 0 (fallback). Training then runs
     # over PAT_N = K+1 pattern columns instead of TB; we scatter back to the full
-    # 17M layout at output (so the .pjtw / C++ eval are unchanged). Lossless when
-    # the remap is built from the data we train on: slot 0 is never activated in
-    # train (every train bucket is occurring), so its weight stays 0, exactly the
-    # value a full-table fit leaves on those columns.
+    # table at output (so the .pjtw / C++ eval are unchanged).
+    # LOSSLESS ONLY at --prune-min-visits=1 : then every train bucket is kept, slot 0
+    # is never activated in train, its weight stays 0, and the deployed eval (pruned
+    # buckets -> 0) equals the full-table fit. With min_visits>=2 the 1..(min-1)-visit
+    # buckets pool into slot 0, which gets a non-zero fitted weight; the deploy DROPS
+    # it (those buckets play as 0), so the deployed eval differs slightly from the
+    # trained model — surfaced by the WARNING below.
     PAT_N = TB
     dcols = cols
     remap = None
@@ -649,6 +652,11 @@ def train_scan_eval(args):
         print(f'prune : keep {K:,} buckets (>= {args.prune_min_visits} visits) '
               f'-> {2*PAT_N:,} pattern cols vs {2*TB:,}  ({TB/max(PAT_N,1):.1f}× fewer); '
               f'train fallback={100*fb_tr:.3f}%')
+        if args.prune_min_visits > 1 and fb_tr > 0:
+            print(f'  WARNING: --prune-min-visits={args.prune_min_visits}>1 → the fallback '
+                  f'slot absorbs {100*fb_tr:.2f}% of train activations (low-count buckets) but '
+                  f'is DROPPED at deploy → the played eval differs slightly from the trained '
+                  f'model. Use --prune-min-visits=1 for a lossless prune.', file=sys.stderr)
 
     def build_pat(sel):
         sg = cf_signs[sel] if cf_signs is not None else None
@@ -797,6 +805,9 @@ def train_scan_eval(args):
           f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
 
     if args.fm_rank > 0:
+        if X_tr is None:
+            raise SystemExit('--fm-rank needs the full design matrix; incompatible with '
+                             '--lowmem/--minibatch (they never build X_tr). Drop one.')
         # Boosting : fit a pattern-only FM term on the LINEAR residual (in the
         # same piece-units the C++ adds it). idx holds the raw per-pattern
         # buckets; the FM hashes them. Emit v4 (v3 linear + FM tables).

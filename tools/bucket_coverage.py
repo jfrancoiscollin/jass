@@ -56,13 +56,13 @@ def main():
         print("MODE: men-only")
     cols = P.flat_feature_columns(idx)   # (D,32)
     flat = cols.ravel()
-    print(f"positions D = {D:,}   activations = {flat.size:,} (= D x 32)")
+    print(f"positions D = {D:,}   activations = {flat.size:,} (= D x {P.NUM_PATTERNS})")
 
     counts = np.bincount(flat, minlength=TB)
     S_obs = int((counts > 0).sum())
     f1 = int((counts == 1).sum()); f2 = int((counts == 2).sum())
     print(f"TOTAL_BUCKETS = {TB:,}")
-    print(f"distinct touched S_obs = {S_obs:,}  ({100*S_obs/TB:.3f}% of 17M)")
+    print(f"distinct touched S_obs = {S_obs:,}  ({100*S_obs/TB:.3f}% of {TB/1e6:.1f}M)")
     print(f"singletons f1={f1:,}  doubletons f2={f2:,}")
 
     chao1 = S_obs + (f1 * (f1 - 1)) / (2 * (f2 + 1))
@@ -77,7 +77,7 @@ def main():
         k = max(1, int(D * frac))
         d = int((np.bincount(cols[perm[:k]].ravel(), minlength=TB) > 0).sum())
         ks.append(k); ds.append(d)
-        print(f"  {k:>10,} pos -> {d:>10,} distinct ({100*d/TB:.3f}% of 17M)")
+        print(f"  {k:>10,} pos -> {d:>10,} distinct ({100*d/TB:.3f}% of {TB/1e6:.1f}M)")
 
     ks, ds = np.array(ks[1:], float), np.array(ds[1:], float)
     y = np.log(np.clip(1 - ds / chao1, 1e-9, 1))

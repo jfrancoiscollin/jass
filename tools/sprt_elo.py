@@ -26,6 +26,22 @@ def score_and_ci(W, D, L):
     return s, sem, N
 
 
+def wilson_ci(W, D, L, z=1.96):
+    """Wilson score interval on the win-equivalent proportion p=(W+D/2)/N. Unlike
+    the Wald interval (s ± z·sem), it does NOT collapse to zero width at a clean
+    sweep (score 0 or 1), so a short decisive match isn't reported as infinitely
+    certain. Slightly conservative when draws are frequent (treats the score as
+    binomial), which is the safe direction for a CI."""
+    N = W + D + L
+    if N == 0:
+        return 0.5, 0.0, 1.0
+    p = (W + 0.5 * D) / N
+    den = 1.0 + z * z / N
+    centre = (p + z * z / (2 * N)) / den
+    half = (z / den) * math.sqrt(p * (1 - p) / N + z * z / (4 * N * N))
+    return p, max(0.0, centre - half), min(1.0, centre + half)
+
+
 def elo(s):
     s = min(max(s, 1e-9), 1 - 1e-9)
     return -400.0 * math.log10(1.0 / s - 1.0)
@@ -59,9 +75,10 @@ def main():
     a = p.parse_args()
     W, D, L = a.wdl
     s, sem, N = score_and_ci(W, D, L)
-    lo, hi = max(s - 1.96 * sem, 1e-9), min(s + 1.96 * sem, 1 - 1e-9)
+    _p, wlo, whi = wilson_ci(W, D, L)                 # robust at score 0/1
+    lo, hi = max(wlo, 1e-9), min(whi, 1 - 1e-9)
     print(f"games={N}  W={W} D={D} L={L}")
-    print(f"score={s:.4f}  95%CI=[{lo:.4f}, {hi:.4f}]")
+    print(f"score={s:.4f}  95%CI=[{lo:.4f}, {hi:.4f}] (Wilson)")
     print(f"elo={elo(s):+.1f}  95%CI=[{elo(lo):+.1f}, {elo(hi):+.1f}]")
     if a.elo0 is not None and a.elo1 is not None:
         llr = llr_trinomial(W, D, L, a.elo0, a.elo1)
