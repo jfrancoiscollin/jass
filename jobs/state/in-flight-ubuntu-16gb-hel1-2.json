@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0255-endgame-search-ab",
-  "script": "jobs/queue/ccx33-0255-endgame-search-ab.sh",
-  "pid": 1388280,
-  "started_at": "2026-06-14T19:10:55+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
