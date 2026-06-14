@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-14T22:14:21+00:00",
+  "snapshot_at": "2026-06-14T22:19:24+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 5955,
+  "elapsed_seconds": 6258,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "elo-gen5.log",
-      "size_bytes": 0
+      "size_bytes": 275
     },
     {
       "name": "feat0",
@@ -495,7 +495,135 @@
     {
       "name": "sp5-9.log",
       "size_bytes": 1477
+    },
+    {
+      "name": "sp6-1.jnnw",
+      "size_bytes": 533522
+    },
+    {
+      "name": "sp6-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-10.jnnw",
+      "size_bytes": 459650
+    },
+    {
+      "name": "sp6-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-11.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp6-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-12.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp6-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-13.jnnw",
+      "size_bytes": 484274
+    },
+    {
+      "name": "sp6-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-14.jnnw",
+      "size_bytes": 492482
+    },
+    {
+      "name": "sp6-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-15.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp6-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-16.jnnw",
+      "size_bytes": 492482
+    },
+    {
+      "name": "sp6-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-2.jnnw",
+      "size_bytes": 492482
+    },
+    {
+      "name": "sp6-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-3.jnnw",
+      "size_bytes": 451442
+    },
+    {
+      "name": "sp6-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-4.jnnw",
+      "size_bytes": 476066
+    },
+    {
+      "name": "sp6-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-5.jnnw",
+      "size_bytes": 418610
+    },
+    {
+      "name": "sp6-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-6.jnnw",
+      "size_bytes": 492482
+    },
+    {
+      "name": "sp6-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-7.jnnw",
+      "size_bytes": 443234
+    },
+    {
+      "name": "sp6-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-8.jnnw",
+      "size_bytes": 459650
+    },
+    {
+      "name": "sp6-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6-9.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp6-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1    01:39:15  0.0  0.0 bash\n 952037  952035    01:39:15  0.0  0.0 bash\n3683324  952037       01:06  0.0  0.0 bash\n3683326 3683324       01:06 1125  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  38313  952037       04:11 99.9  0.5 jass\n  38314  952037       04:11 99.9  0.5 jass\n  38315  952037       04:11 99.9  0.5 jass\n  38316  952037       04:11 99.9  0.5 jass\n  38317  952037       04:11 99.9  0.5 jass\n  38318  952037       04:11 99.9  0.5 jass\n  38319  952037       04:11 99.9  0.5 jass\n  38320  952037       04:11 99.9  0.5 jass\n  38321  952037       04:11 99.9  0.5 jass\n  38322  952037       04:11 99.9  0.5 jass\n  38323  952037       04:11 99.9  0.5 jass\n  38324  952037       04:11 99.9  0.5 jass\n  38325  952037       04:11 99.9  0.5 jass\n  38326  952037       04:11 99.9  0.5 jass\n  38327  952037       04:11 99.9  0.5 jass\n  38328  952037       04:11 99.9  0.5 jass\n 952035       1    01:44:17  0.0  0.0 bash\n 952037  952035    01:44:17  0.0  0.0 bash\n"
 }
