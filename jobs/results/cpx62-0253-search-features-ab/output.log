@@ -1,0 +1,29 @@
+EVAL (king-aware) = /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/gen8.pjtw
+=== [conthist] A=[use_conthist=1] vs B=[baseline] : mt200ms pairs=25 ===
+=== [improving] A=[use_improving=1] vs B=[baseline] : mt200ms pairs=25 ===
+=== [both] A=[use_conthist=1,use_improving=1] vs B=[baseline] : mt200ms pairs=25 ===
+
+==========================================================
+   cpx62-0253 — FEATURES RECHERCHE (Tier-1) : A=feature ON vs B=baseline OFF
+   éval=gen8.pjtw  mt=200ms  ~450 parties/comparaison
+----------------------------------------------------------
+  [conthist]  A(ON)=206  B(OFF)=220  Draws=24
+      games=450  W=206 D=24 L=220
+      score=0.4844  95%CI=[0.4386, 0.5306] (Wilson)
+      elo=-10.8  95%CI=[-42.9, +21.3]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.262  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [improving]  A(ON)=228  B(OFF)=200  Draws=22
+      games=450  W=228 D=22 L=200
+      score=0.5311  95%CI=[0.4849, 0.5768] (Wilson)
+      elo=+21.6  95%CI=[-10.5, +53.8]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.375  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [both]  A(ON)=221  B(OFF)=204  Draws=25
+      games=450  W=221 D=25 L=204
+      score=0.5189  95%CI=[0.4728, 0.5647] (Wilson)
+      elo=+13.1  95%CI=[-18.9, +45.2]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.210  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  ACCEPT H1 (>=5 Elo) → activer la feature par défaut (search_params.hpp) + déployer.
+  ACCEPT H0 / négatif → laisser OFF (ou re-tuner LMR/LMP AVEC la feature = SPSA, job suivant).
+  CONTINUE → étendre le nombre de parties (verdict pas encore significatif).
+==========================================================
