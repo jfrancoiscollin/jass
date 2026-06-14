@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0249-reautopsy-menonly",
+  "script": "jobs/queue/ccx33-0249-reautopsy-menonly.sh",
+  "pid": 1380086,
+  "started_at": "2026-06-14T13:06:18+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
