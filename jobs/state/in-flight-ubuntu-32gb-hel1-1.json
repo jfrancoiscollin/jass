@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0250-reautopsy-king",
+  "script": "jobs/queue/cpx62-0250-reautopsy-king.sh",
+  "pid": 937544,
+  "started_at": "2026-06-14T13:02:28+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
