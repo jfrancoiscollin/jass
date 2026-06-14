@@ -78,7 +78,13 @@ struct SearchParams {
     // same-side static eval 2 plies up : "improving" = the position is
     // getting better for us. When NOT improving we prune harder (LMP fires
     // earlier, LMR reduces one ply more). Pure modulation of existing knobs.
-    bool use_improving = false;
+    // Enabled by default: job 0253 A/B (king-aware champion, mt0.2, 450 games)
+    // measured +21.6 Elo [95% CI -10.5,+53.8] ON vs baseline — best of the gated
+    // search features (conthist was -11, left off); consistent with the standard
+    // +15-30 Elo. Not SPRT-significant at that budget, but a standard technique
+    // with a positive, coherent signal; regressions would surface in the vs-Scan
+    // validation. cf docs/ROADMAP.md.
+    bool use_improving = true;
 
     // Continuation history. A second history table keyed by the opponent's
     // previous landing square × our move, accumulated like the main history
