@@ -1,0 +1,19 @@
+=== SELF = ubuntu-16gb-hel1-2 ===
+-- interfaces --
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+eth0             UP             204.168.225.225/32 metric 100 2a01:4f9:c012:b4fe::1/64 fe80::9000:7ff:fec7:122e/64 
+public IP : 2a01:4f9:c012:b4fe::1
+private-range IPs : none
+=== reach OTHER = ubuntu-32gb-hel1-1 ? ===
+-- DNS (Hetzner internal?) --
+  no resolution for ubuntu-32gb-hel1-1
+-- ping hostname --
+  ping failed
+-- other public IP (from its probe) = 2a01:4f9:c014:2a5f::1 --
+64 bytes from 2a01:4f9:c014:2a5f::1: icmp_seq=1 ttl=56 time=4.64 ms
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+  TCP 2a01:4f9:c014:2a5f::1:22 OPEN
+  TCP 2a01:4f9:c014:2a5f::1:443 closed/filtered
+  TCP 2a01:4f9:c014:2a5f::1:9999 closed/filtered
+
+=== VERDICT : lien direct utilisable si ping IP OK + un TCP ouvert ===
