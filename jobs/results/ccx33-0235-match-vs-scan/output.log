@@ -1,0 +1,21 @@
+=== probe Scan ===
+  scan binary: 234280 /root/jass-scan/scan_linux
+  scan dir   : data scan.ini scan_linux 
+  scan.ini   : present
+geometry: 32 patterns
+  candidate /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw : 3 weights
+EVAL = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== SMOKE (depth 6, 2 paires) ===
+  smoke OK :   Jass score rate: 0.000 (0.0 / 36)   ELO estimate:    -800 (95% CI ≈ ±133) 
+
+=== MATCH vs Scan [d9] : --depth 9 --pairs 24 ===
+  game 430: Scan=W Jass=B → W (no legal move from Jass-player, 162 plies)  Jass +0.0  [305s]
+  game 431: Jass=W Scan=B → L (no legal move from Jass-player, 107 plies)  Jass +0.0  [306s]
+  game 432: Scan=W Jass=B → W (no legal move from Jass-player, 162 plies)  Jass +0.0  [307s]
+
+=== Jass vs Scan, depth 9, 432 games ===
+  Jass=0  Scan=432  Draws=0
+  Jass score rate: 0.000 (0.0 / 432)
+  ELO estimate:    -800 (95% CI ≈ ±38)
+
+=== MATCH vs Scan [mt1000] : --movetime 1000 --pairs 24 ===
