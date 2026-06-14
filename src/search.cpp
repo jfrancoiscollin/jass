@@ -477,6 +477,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
     }
 
+    // Endgame search regime (gated; eg_pieces=0 disables → ZERO cost on the
+    // default path: the && short-circuits before the popcount). When few pieces
+    // remain the node is SEARCH-BOUND (job 0252: deep search rescues a weak
+    // endgame eval) yet tactically sharp with low branching, so aggressive
+    // reductions/pruning risk discarding the single precise winning line for
+    // little node saving. The gated flags let an A/B disable NMP (zugzwang),
+    // LMP and/or LMR below `eg_pieces` pieces (same popcount phase axis as
+    // pattern_jass --phase-weight). Cf docs/ROADMAP.md (VERDICT FINALES).
+    const bool eg = params.eg_pieces > 0
+                 && popcount(pos.occupied()) <= params.eg_pieces;
+
     // 2bis. Reverse Futility Pruning (a.k.a. static null move). When the
     //   position is quiet (no forced captures — recall draughts mandates
     //   the longest capture chain, so `moves[0].is_capture()` is reliable
@@ -543,7 +554,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         const int NMP_MIN_PIECES = params.nmp_min_pieces;
         if (depth >= NMP_MIN_DEPTH
             && !was_null
-            && !is_mate_score(beta)) {
+            && !is_mate_score(beta)
+            && !(eg && params.eg_no_nmp)) {     // endgame regime: NMP off (zugzwang)
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
             if (popcount(all) >= NMP_MIN_PIECES) {
@@ -787,6 +799,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             && depth >= 1 && depth <= LMP_MAX_DEPTH
             && move_idx >= lmp_threshold
             && !m.is_capture()
+            && !(eg && params.eg_no_lmp)   // endgame regime: don't prune late quiets
             && best > -INF_SCORE / 2) {  // already have a real score → safe to skip
             ++move_idx;
             continue;
@@ -810,6 +823,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                          && depth >= LMR_MIN_DEPTH
                          && !is_tt
                          && !m.is_capture()
+                         && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
                          && !singular_ext;  // don't reduce when we just extended a singular line
         if (params.use_pvs && move_idx > 0) {
             // Principal Variation Search: once a PV move has raised alpha,
