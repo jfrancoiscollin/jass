@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-14T20:45:08+00:00",
+  "snapshot_at": "2026-06-14T20:50:24+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 602,
+  "elapsed_seconds": 918,
   "artefacts": [
     {
       "name": "build.log",
@@ -98,7 +98,7 @@
     },
     {
       "name": "sp1-1.jnnw",
-      "size_bytes": 320114
+      "size_bytes": 952130
     },
     {
       "name": "sp1-1.log",
@@ -106,7 +106,7 @@
     },
     {
       "name": "sp1-10.jnnw",
-      "size_bytes": 361154
+      "size_bytes": 1026002
     },
     {
       "name": "sp1-10.log",
@@ -114,7 +114,7 @@
     },
     {
       "name": "sp1-11.jnnw",
-      "size_bytes": 295490
+      "size_bytes": 878258
     },
     {
       "name": "sp1-11.log",
@@ -122,7 +122,7 @@
     },
     {
       "name": "sp1-12.jnnw",
-      "size_bytes": 311906
+      "size_bytes": 943922
     },
     {
       "name": "sp1-12.log",
@@ -130,7 +130,7 @@
     },
     {
       "name": "sp1-13.jnnw",
-      "size_bytes": 361154
+      "size_bytes": 1009586
     },
     {
       "name": "sp1-13.log",
@@ -138,7 +138,7 @@
     },
     {
       "name": "sp1-14.jnnw",
-      "size_bytes": 361154
+      "size_bytes": 960338
     },
     {
       "name": "sp1-14.log",
@@ -146,7 +146,7 @@
     },
     {
       "name": "sp1-15.jnnw",
-      "size_bytes": 320114
+      "size_bytes": 894674
     },
     {
       "name": "sp1-15.log",
@@ -154,7 +154,7 @@
     },
     {
       "name": "sp1-16.jnnw",
-      "size_bytes": 311906
+      "size_bytes": 935714
     },
     {
       "name": "sp1-16.log",
@@ -162,7 +162,7 @@
     },
     {
       "name": "sp1-2.jnnw",
-      "size_bytes": 377570
+      "size_bytes": 968546
     },
     {
       "name": "sp1-2.log",
@@ -170,7 +170,7 @@
     },
     {
       "name": "sp1-3.jnnw",
-      "size_bytes": 279074
+      "size_bytes": 894674
     },
     {
       "name": "sp1-3.log",
@@ -178,7 +178,7 @@
     },
     {
       "name": "sp1-4.jnnw",
-      "size_bytes": 336530
+      "size_bytes": 993170
     },
     {
       "name": "sp1-4.log",
@@ -186,7 +186,7 @@
     },
     {
       "name": "sp1-5.jnnw",
-      "size_bytes": 344738
+      "size_bytes": 976754
     },
     {
       "name": "sp1-5.log",
@@ -194,7 +194,7 @@
     },
     {
       "name": "sp1-6.jnnw",
-      "size_bytes": 344738
+      "size_bytes": 927506
     },
     {
       "name": "sp1-6.log",
@@ -202,7 +202,7 @@
     },
     {
       "name": "sp1-7.jnnw",
-      "size_bytes": 295490
+      "size_bytes": 919298
     },
     {
       "name": "sp1-7.log",
@@ -210,7 +210,7 @@
     },
     {
       "name": "sp1-8.jnnw",
-      "size_bytes": 270866
+      "size_bytes": 853634
     },
     {
       "name": "sp1-8.log",
@@ -218,12 +218,12 @@
     },
     {
       "name": "sp1-9.jnnw",
-      "size_bytes": 311906
+      "size_bytes": 878258
     },
     {
       "name": "sp1-9.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1       10:01  0.0  0.0 bash\n 952037  952035       10:01  0.0  0.0 bash\n1533917  952037       02:57 99.9  0.5 jass\n1533918  952037       02:57 99.9  0.5 jass\n1533919  952037       02:57 99.9  0.5 jass\n1533920  952037       02:56 99.9  0.5 jass\n1533921  952037       02:56 99.9  0.5 jass\n1533922  952037       02:56 99.9  0.5 jass\n1533923  952037       02:56 99.9  0.5 jass\n1533924  952037       02:56 99.9  0.5 jass\n1533925  952037       02:56 99.9  0.5 jass\n1533926  952037       02:56 99.9  0.5 jass\n1533927  952037       02:56 99.9  0.5 jass\n1533928  952037       02:56 99.9  0.5 jass\n1533929  952037       02:56 99.9  0.5 jass\n1533930  952037       02:56 99.9  0.5 jass\n1533931  952037       02:56 99.9  0.5 jass\n1533932  952037       02:56 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1       15:17  0.0  0.0 bash\n 952037  952035       15:17  0.0  0.0 bash\n1533917  952037       08:13 99.9  0.5 jass\n1533918  952037       08:13 99.9  0.5 jass\n1533919  952037       08:13 99.9  0.5 jass\n1533920  952037       08:13 99.9  0.5 jass\n1533921  952037       08:13 99.9  0.5 jass\n1533922  952037       08:13 99.9  0.5 jass\n1533923  952037       08:13 99.9  0.5 jass\n1533924  952037       08:13 99.9  0.5 jass\n1533925  952037       08:13 99.9  0.5 jass\n1533926  952037       08:13 99.9  0.5 jass\n1533927  952037       08:13 99.9  0.5 jass\n1533928  952037       08:13 99.9  0.5 jass\n1533929  952037       08:13 99.9  0.5 jass\n1533930  952037       08:13 99.9  0.5 jass\n1533931  952037       08:13 99.9  0.5 jass\n1533932  952037       08:13 99.9  0.5 jass\n"
 }
