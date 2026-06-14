@@ -1,0 +1,84 @@
+scan: /root/jass-scan/scan_linux (229K)
+EVAL (king-aware) = /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/gen8.pjtw
+=== match king-aware vs Scan (mt0.5s, dump) ===
+    Jass score rate: 0.000 (0.0 / 36)   ELO estimate:    -800 (95% CI ≈ ±133) 
+  parties sauvées : 36
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)          1 ( 2.8%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          35 (97.2%)    0 ( 0.0%)    0 ( 0.0%)
+
+=== Decision phase (when game entered its final phase) ===
+  phase                        L         D         W
+  opening (30-40)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  midgame (22-29)         0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  late-mid (15-21)        0 ( 0.0%)    0 ( 0.0%)    0 ( 0.0%)
+  endgame (8-14)          1 ( 2.8%)    0 ( 0.0%)    0 ( 0.0%)
+  deep-eg (2-7)          35 (97.2%)    0 ( 0.0%)    0 ( 0.0%)
+
+Average plies by outcome :
+  L: n= 36  avg= 117.4  min= 94  max=172
+=== AUTOPSIE Scan-oracle king-aware (depth 11) ===
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2104  accord=0.548  perte_moy=   0.87
+
+-- par PHASE --
+  opening          n=  654  accord=0.573  perte_moy=   0.05
+  midgame          n=  483  accord=0.453  perte_moy=   0.10
+  late-mid         n=  373  accord=0.595  perte_moy=   0.20
+  endgame          n=  442  accord=0.518  perte_moy=   2.53
+  deep-eg          n=  152  accord=0.711  perte_moy=   3.70
+
+-- par ROIS (hypothèse men-only) --
+  no-kings         n= 1583  accord=0.536  perte_moy=   0.23
+  kings            n=  521  accord=0.585  perte_moy=   2.83
+
+-- par TACTIQUE --
+  quiet            n= 1591  accord=0.410  perte_moy=   1.07
+  capture-avail    n=  513  accord=0.977  perte_moy=   0.26
+
+-- par RÉSULTAT --
+  lost             n= 2104  accord=0.548  perte_moy=   0.87
+
+-- 30 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g16 [lost ] deep-eg    perte= 95.0      21-26 → 14-20      B:W13,32,34:B14,21,25
+  g15 [lost ] endgame    perte= 94.3      39-34 → 24-20      W:W24,25,39,41:B3,13,14,16,31,32
+  g22 [lost ] deep-eg  K perte= 93.3      41-46 → 37-42      B:W20,23,33,47,K11:B37,41
+  g32 [lost ] endgame  K perte= 93.0      16-21 → 22-27      B:W23,26,31,K20:B16,17,22,32
+  g20 [lost ] endgame  K perte= 92.4      10-14 → 11-16      B:W21,22,36,48,K12:B10,11,35
+  g21 [lost ] deep-eg  K perte= 91.8      35-30 → 40-34      W:W35,40:B15,26,27,K50
+  g7  [lost ] endgame  K perte= 91.2      32-28 → 23-18      W:W23,32,34:B7,9,25,26,K35
+  g30 [lost ] deep-eg  K perte= 91.2      41-46 → 44-50      B:W16,27,42,K10,K26:B41,44
+  g35 [lost ] endgame  K perte= 90.6      16-11 → 49-44      W:W16,35,40,49:B1,6,7,15,20,22,K39
+  g26 [lost ] deep-eg  K perte= 89.9        4-9 → 24-30      B:W18,33,38,50,K41:B4,24
+  g19 [lost ] endgame  K perte= 89.8      37-31 → 38-32      W:W16,37,38,49:B7,12,29,K22,K28
+  g2  [lost ] deep-eg  K perte= 88.0      17-39 → 17-33      B:W20,35,K3,K4,K5:BK17
+  g6  [lost ] endgame  K perte= 87.3      23-28 → 22-28      B:W15,25,26,33,47,K4:B6,22,23
+  g12 [lost ] endgame  K perte= 86.1      17-21 → 15-20      B:W7,8,44,45,47,49,K9:B15,17,26,35
+  g17 [lost ] late-mid   perte=  7.9      43-38 → 27-21      W:W16,26,27,39,40,43,44,47:B2,7,12,17,18,29,30,35
+  g12 [lost ] midgame  K perte=  4.0        2-8 → 14-20      B:W27,28,31,32,36,37,40,41,44,45,47,48,49,K5:B1,2,4,6,11,12,14,15,16,17,18,19,23,35
+  g19 [lost ] endgame  K perte=  3.6       5-37 → 5-41       W:W16,38,42,49,K5:B3,7,12,27,29,K22,K50
+  g6  [lost ] endgame    perte=  3.5      18-23 → 32-38      B:W9,15,25,26,33,36,42:B6,17,18,32
+  g13 [lost ] endgame  K perte=  3.3      44-40 → 44-39      W:W6,35,36,44,50:B1,5,7,22,25,K26
+  g27 [lost ] endgame    perte=  3.2      35-30 → 37-31      W:W24,35,36,37,38,43:B3,4,11,18,22,27,28
+  g11 [lost ] late-mid K perte=  3.1      43-39 → 50-44      W:W15,24,25,35,42,43,50:B4,14,16,18,21,26,28,K46
+  g24 [lost ] deep-eg  K perte=  3.1      10-14 → 26-31      B:W18,32,33,K1:B10,25,26
+  g35 [lost ] midgame    perte=  3.0      36-31 → 37-32      W:W16,33,35,36,37,38,39,45,49,50:B1,3,6,7,8,11,13,15,20,22,24,25
+  g18 [lost ] late-mid   perte=  2.8      12-18 → 7-11       B:W25,29,30,31,32,35,36,37,38,39,47:B4,6,7,12,13,14,15,16,17,19
+  g6  [lost ] midgame    perte=  2.7      19x30 → 29x20      B:W24,25,26,31,32,35,36,39,42,47,49:B1,8,9,10,11,12,14,17,19,21,29
+  g30 [lost ] deep-eg  K perte=  2.4      36-41 → 44-50      B:W16,32,42,K10,K26:B36,44
+  g21 [lost ] endgame  K perte=  2.0      44-40 → 39-33      W:W23,24,29,35,39,44:B12,14,15,26,27,K38
+  g12 [lost ] late-mid K perte=  1.8      16-21 → 17-21      B:W8,34,36,37,43,44,45,47,49,K9:B11,15,16,17,24,26,35
+  g33 [lost ] midgame  K perte=  1.8      36-31 → 39-33      W:W21,26,29,32,34,36,37,38,39,43,45,50:B1,3,5,6,7,15,19,20,22,25,40,K14
+  g33 [lost ] midgame  K perte=  1.7      17-12 → 32-28      W:W17,29,31,32,33,34,37,38,39,45,50:B1,3,5,6,11,15,16,19,20,25,K14,K35
+
+==========================================================
+   cpx62-0243 — AUTOPSIE KING-AWARE vs Scan (« après »)
+   à comparer à 0238 (men-only « avant ») : l'accord sur les positions à ROIS remonte-t-il ?
+   rapport : artefacts/autopsy-king-report.txt
+==========================================================
