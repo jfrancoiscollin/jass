@@ -1,0 +1,17 @@
+loading JNNW /root/jass/jobs/results/ccx33-0237-scan-distill-ceiling-v2/artefacts.src/master1M.jnnw
+  1000000 records  (0.06s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0237-scan-distill-ceiling-v2/artefacts.src/featM
+  extras shape (1000000, 106)  (mean mob b/w=10.2/10.2)
+target=wdl  pos=404686 neg=405688 zero=189626 (19.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=404686 draw=189626 loss=405688 (19.0% draws)
+phase : piece-count mean=24.0  wmg mean=0.600
+split : train=900000 val=100000
+prune : keep 182,428 buckets (>= 1 visits) -> 364,858 pattern cols vs 34,012,224  (93.2× fewer); train fallback=0.000%
+design : 365070 columns (2×182429 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=300  LOGISTIC  (pure)
+  train_loss=0.657631  iters=300  (94.26s)
+val   : mse=0.605650  sign_acc=0.2590
+quant : scale=1000  pat range=[-186,186] ext_mg range=[-282,325]
+wrote /root/jass/jobs/results/ccx33-0237-scan-distill-ceiling-v2/artefacts.src/distill-l23e-4.pjtw  (v3, 34012436 weights, 136049764 bytes)
