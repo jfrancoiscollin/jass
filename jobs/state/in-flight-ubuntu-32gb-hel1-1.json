@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0240-king-brick-test",
-  "script": "jobs/queue/cpx62-0240-king-brick-test.sh",
-  "pid": 1499791,
-  "started_at": "2026-06-14T06:49:09+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

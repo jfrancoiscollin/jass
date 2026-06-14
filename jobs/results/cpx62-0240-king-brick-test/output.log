@@ -1,0 +1,25 @@
+=== build men-only ===
+=== build king-aware (-DJASS_KING_PATTERNS=ON) ===
+train split 1000000 of 1420193
+=== dump extras (king-indépendants) ===
+wrote 1000000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0240-king-brick-test/artefacts.src/featM
+=== ARM men-only (binaire men-only) ===
+  [menonly] l2=3e-4  val_mse=0.613008
+  [menonly] l2=1e-4  val_mse=0.690488
+/root/jass/jobs/queue/cpx62-0240-king-brick-test.sh: line 40: EV: unbound variable
+  [menonly] BEST val_mse=0.613008  Elo_vs_hc=648-23-409 elo=+78.2
+=== ARM king-aware (--king-patterns, binaire king-aware) ===
+  [kingaware] l2=3e-4  val_mse=0.602466
+  [kingaware] l2=1e-4  val_mse=0.642601
+/root/jass/jobs/queue/cpx62-0240-king-brick-test.sh: line 40: EV: unbound variable
+  [kingaware] BEST val_mse=0.602466  Elo_vs_hc=707-12-361 elo=+115.4
+
+==========================================================
+   cpx62-0240 — BRIQUE ROIS sous distillation Scan-d10 (1M)
+   mode         val_mse      Elo_vs_hc(60p)        
+   men-only     0.613008     648-23-409 elo=+78.2  
+   king-aware   0.602466     707-12-361 elo=+115.4 
+   → king-aware val-loss PLUS BASSE / Elo PLUS HAUT : les rois étaient le morceau manquant
+     → embarquer --king-patterns + build king-aware dans le loop self-play scalé.
+   → égal/pire : ce n'est pas (que) les rois ; chercher ailleurs (toujours sans pivoter).
+==========================================================
