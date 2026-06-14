@@ -160,12 +160,16 @@ Deux diagnostics ont localisé puis caractérisé le saignement en finale (autop
 2. **recherche** : finale search-bound → time-management/profondeur en finale, tuning
    LMR/LMP par popcount, et à terme **bitbases 3-4 pièces** (profondeur effective infinie).
 
-> **RÈGLE `--phase-weight` (densification)** : DÉMARRER MODÉRÉ — **~3-4 MAX** (typiquement
-> `endgame=2,deep-eg=3`). L'ouverture est notre actif (≈Scan) ; sur-pondérer trop fort la
-> finale la pénalise. La sélection reste la **val-loss** ; surveiller le `val/phase mse`
-> imprimé (perte finale DOIT chuter, ouverture NE DOIT PAS régresser) et n'**escalader**
-> le poids que si l'ouverture tient. Les labels profonds (front éval) font déjà le gros
-> du travail : le poids ne fait que *nudger* le fit. Mesurer le VERDICT au **movetime vs
+> **RÈGLE `--phase-weight` (densification)** : plafond **~3-4 MAX** ; départ `0254` =
+> `endgame=3,deep-eg=3`. NB le risque « pénaliser l'ouverture » est **structurellement
+> amorti** par le phase-split mg/eg : sur-pondérer la finale tire surtout sur le **banc EG**,
+> qui touche peu les positions d'ouverture (banc MG) ; de plus l'ouverture est sur-
+> représentée et triviale à fitter (RMSE 48cp) → quasi-parfaite même à poids réduit. Donc
+> 2/3 est un peu trop timide ; 3/3 est visible sans danger. Ne PAS mettre au plafond (4)
+> sur un run qui change déjà labels+lowmem (attribution). La sélection reste la **val-loss** ;
+> surveiller le `val/phase mse` imprimé (perte finale DOIT chuter, ouverture NE DOIT PAS
+> régresser) et n'**escalader** que si l'ouverture tient. Les labels profonds (front éval)
+> font déjà le gros du travail ; le poids ne fait que *nudger*. VERDICT au **movetime vs
 > Scan** (finale search-bound → budget réaliste où la recherche rattrape). Boucle = `0254`.
 
 ---
