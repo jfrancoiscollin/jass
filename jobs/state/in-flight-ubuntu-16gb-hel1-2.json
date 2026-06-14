@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0238-autopsy-vs-scan",
+  "script": "jobs/queue/ccx33-0238-autopsy-vs-scan.sh",
+  "pid": 2487232,
+  "started_at": "2026-06-14T11:19:49+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
