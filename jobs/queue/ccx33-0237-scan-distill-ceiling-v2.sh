@@ -65,23 +65,24 @@ echo "MEILLEUR fit (val-loss) : l2=$BEST_L2  val_mse=$BEST_MSE   (proxy FYI=$RHO
 EHC=$(elo_vs_hc "$BEST_EVAL" 60)
 echo "  Elo vs hc (60 paires) = $EHC"
 
-# --- VERDICT : Elo RÉEL vs Scan (fair, sans bitbases) — directement comparable à 0235 ---
+# --- VERDICT : Elo RÉEL vs Scan (fair, sans bitbases, BORNÉ AU TEMPS — pas de depth fixe
+#     non plafonné qui ferait exploser le runtime ; mt1s reste comparable à 0235) ---
 echo "=== distilled vs Scan (fair, sans bitbases) — LE VERDICT ==="
 python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-pattern "$BEST_EVAL" \
-    --scan-bb-size 0 --depth 9 --pairs 24 >"$ART/scan-d9.log" 2>&1
-SELO_D9=$(grep -E 'score rate|ELO estimate' "$ART/scan-d9.log" | tr '\n' ' ')
-echo "  d9 : $SELO_D9"
+    --scan-bb-size 0 --movetime 500 --pairs 16 >"$ART/scan-mt500.log" 2>&1
+SELO_MT5=$(grep -E 'score rate|ELO estimate' "$ART/scan-mt500.log" | tr '\n' ' ')
+echo "  mt0.5s : $SELO_MT5"
 python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-pattern "$BEST_EVAL" \
-    --scan-bb-size 0 --movetime 1000 --pairs 24 >"$ART/scan-mt.log" 2>&1
+    --scan-bb-size 0 --movetime 1000 --pairs 16 >"$ART/scan-mt.log" 2>&1
 SELO_MT=$(grep -E 'score rate|ELO estimate' "$ART/scan-mt.log" | tr '\n' ' ')
 echo "  mt1s : $SELO_MT"
 
 echo; echo "=========================================================="
 echo "   ccx33-0237 — PLAFOND DE DISTILLATION (classe full-fold 32-pat sur Scan-truth)"
 echo "  VERDICT = PARTIES RÉELLES vs Scan (à comparer à 0235, l'éval self-play) :"
-echo "    Elo vs Scan @ depth9     : $SELO_D9"
-echo "    Elo vs Scan @ movetime1s : $SELO_MT"
-echo "    Elo vs hc (60 paires)    : $EHC          [self-play gen8 = +142]"
+echo "    Elo vs Scan @ movetime0.5s : $SELO_MT5"
+echo "    Elo vs Scan @ movetime1s   : $SELO_MT   [comparable à 0235 mt1s]"
+echo "    Elo vs hc (60 paires)      : $EHC          [self-play gen8 = +142]"
 echo "  (secondaire) val_mse=$BEST_MSE  proxy FYI=$RHO  [self-play proxy ~0.47]"
 echo "  → distillé NETTEMENT mieux vs Scan que 0235 : DATA/LABEL-limited"
 echo "     (recette = distiller Scan / labels profonds dans la boucle)"
