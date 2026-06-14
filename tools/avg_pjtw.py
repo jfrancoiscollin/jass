@@ -63,6 +63,10 @@ def main(argv):
         if len(args.counts) != len(args.files):
             sys.exit('--counts must give one .npy per file')
         cts = [np.load(c).astype(np.float64) for c in args.counts]   # each (n_pat,)
+        for c, arr in zip(args.counts, cts):
+            if arr.shape != (n_pat,):
+                sys.exit(f'--counts {c}: shape {arr.shape} != (n_pat={n_pat},) '
+                         f'(wrong geometry / stale census?)')
         # per-pattern-column weights (mg & eg share the bucket's visit count);
         # extras get uniform weights (always visited).
         cw = np.stack(cts, 0)                                        # (N, n_pat)
