@@ -1,0 +1,39 @@
+geometry: 32 patterns ; KING-AWARE ; GROS VOLUME
+=== gen0 : seed (400k self-play embarqué depth4, l2=3e-2) KING-AWARE ===
+cumulative 400000
+wrote 400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat0
+  gen0 proxy=0.4192  Elo_vs_hc=142-5-123 elo=+24.5
+=== gen1 : +1500000 self-play depth4 (king-aware) avec gen0 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 1900000
+wrote 1900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat1
+  gen1 proxy=0.4589  Elo_vs_hc=199-7-64 elo=+190.8
+=== gen2 : +1500000 self-play depth4 (king-aware) avec gen1 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 3400000
+wrote 3400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat2
+  gen2 proxy=0.4688  Elo_vs_hc=198-1-71 elo=+177.4
+=== gen3 : +1500000 self-play depth4 (king-aware) avec gen2 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 4900000
+wrote 4900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat3
+  gen3 proxy=0.4706  Elo_vs_hc=195-7-68 elo=+177.4
+=== gen4 : +1500000 self-play depth4 (king-aware) avec gen3 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 6400000
+wrote 6400000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat4
+  gen4 proxy=0.4819  Elo_vs_hc=203-4-63 elo=+199.5
+=== gen5 : +1500000 self-play depth4 (king-aware) avec gen4 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 7900000
+wrote 7900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0244-kingloop-bigvol/artefacts.src/feat5
+/root/jass/jobs/queue/cpx62-0244-kingloop-bigvol.sh: line 28: 3010446 Killed                     python3 pattern_jass/tools/train.py --data "$1" --scan-eval --eval-features-file "$2" --loss logistic --l2 "$4" --max-iter 200 --scale 1000 --prune $CFOLD --out "$3.pjtw" > "$3-train.log" 2>&1
+  gen5 train ÉCHEC (OOM probable à ce volume) — on s'arrête, trajectoire gardée jusqu'à gen4
+=== gen4 vs hc précis (60 paires) ===
+  796-14-270 elo=+184.9
+
+==========================================================
+   cpx62-0244 — LOOP KING-AWARE GROS VOLUME (1.5M/gen, ~12M) — TRAJECTOIRE Elo
+  gen0  Elo_vs_hc=142-5-123 elo=+24.5
+  gen1  Elo_vs_hc=199-7-64 elo=+190.8
+  gen2  Elo_vs_hc=198-1-71 elo=+177.4
+  gen3  Elo_vs_hc=195-7-68 elo=+177.4
+  gen4  Elo_vs_hc=203-4-63 elo=+199.5
+  gen4 (60p) : 796-14-270 elo=+184.9
+  → comparer à 0241 (king-aware 5M) +229.5 : densifier (5M→12M) monte-t-il encore ?
+==========================================================
