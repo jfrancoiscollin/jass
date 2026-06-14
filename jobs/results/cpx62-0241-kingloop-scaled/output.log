@@ -1,0 +1,56 @@
+geometry: 32 patterns ; KING-AWARE build
+=== gen0 : seed (300k self-play embarqué depth4, l2=3e-2) KING-AWARE --full-fold --king-patterns ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat0
+  gen0 proxy=0.4182  Elo_vs_hc=139-9-122 elo=+21.9
+=== gen1 : +600000 self-play depth4 (king-aware) avec gen0 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 900000
+wrote 900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat1
+  gen1 proxy=0.4636  Elo_vs_hc=200-3-67 elo=+187.4
+=== gen2 : +600000 self-play depth4 (king-aware) avec gen1 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 1500000
+wrote 1500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat2
+  gen2 proxy=0.4697  Elo_vs_hc=207-4-59 elo=+213.9
+=== gen3 : +600000 self-play depth4 (king-aware) avec gen2 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 2100000
+wrote 2100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat3
+  gen3 proxy=0.4729  Elo_vs_hc=202-6-62 elo=+199.5
+=== gen4 : +600000 self-play depth4 (king-aware) avec gen3 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 2700000
+wrote 2700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat4
+  gen4 proxy=0.4789  Elo_vs_hc=202-6-62 elo=+199.5
+=== gen5 : +600000 self-play depth4 (king-aware) avec gen4 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 3300000
+wrote 3300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat5
+  gen5 proxy=0.4693  Elo_vs_hc=195-5-70 elo=+174.1
+=== gen6 : +600000 self-play depth4 (king-aware) avec gen5 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 3900000
+wrote 3900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat6
+  gen6 proxy=0.4832  Elo_vs_hc=211-2-57 elo=+225.2
+=== gen7 : +600000 self-play depth4 (king-aware) avec gen6 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 4500000
+wrote 4500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat7
+  gen7 proxy=0.4787  Elo_vs_hc=189-6-75 elo=+156.5
+=== gen8 : +600000 self-play depth4 (king-aware) avec gen7 → cumulé → logistic(--full-fold --king-patterns) ===
+cumulative 5100000
+wrote 5100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0241-kingloop-scaled/artefacts.src/feat8
+  gen8 proxy=0.4882  Elo_vs_hc=212-3-55 elo=+230.9
+=== gen8 vs hc précis (60 paires) ===
+  847-11-222 elo=+229.5
+
+==========================================================
+   cpx62-0241 — LOOP FULL-FOLD KING-AWARE SCALÉ (600k/gen) — TRAJECTOIRE Elo
+  gen0  Elo_vs_hc=139-9-122 elo=+21.9  proxy=0.4182
+  gen1  Elo_vs_hc=200-3-67 elo=+187.4  proxy=0.4636
+  gen2  Elo_vs_hc=207-4-59 elo=+213.9  proxy=0.4697
+  gen3  Elo_vs_hc=202-6-62 elo=+199.5  proxy=0.4729
+  gen4  Elo_vs_hc=202-6-62 elo=+199.5  proxy=0.4789
+  gen5  Elo_vs_hc=195-5-70 elo=+174.1  proxy=0.4693
+  gen6  Elo_vs_hc=211-2-57 elo=+225.2  proxy=0.4832
+  gen7  Elo_vs_hc=189-6-75 elo=+156.5  proxy=0.4787
+  gen8  Elo_vs_hc=212-3-55 elo=+230.9  proxy=0.4882
+  gen8 (60p) : 847-11-222 elo=+229.5
+  → comparer aux baselines MEN-ONLY : 0227 +175 / 0231 +142 (60p).
+     king-aware + scalé monte plus haut ? = la classe linéaire se pousse (sans pivoter).
+  gen8.pjtw conservé pour l'autopsie king-aware vs Scan (avant/après).
+==========================================================
