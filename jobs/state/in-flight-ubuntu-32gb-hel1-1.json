@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0244-kingloop-bigvol",
+  "script": "jobs/queue/cpx62-0244-kingloop-bigvol.sh",
+  "pid": 293401,
+  "started_at": "2026-06-14T11:24:40+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
