@@ -59,6 +59,23 @@ parties. PAS de gros factoriel répliqué.
 (scores Scan-d10). Évaluer les eval sur un **sous-ensemble tenu à l'écart** de
 leur training pour éviter la fuite.
 
+**Règles ajoutées (2026-06-14).**
+- **Sélection de modèle = val-loss ; verdict = parties.** Le proxy est **retiré**
+  comme juge de force (B4/0216 : il sous-lit). Pour un fit de régression (distillation),
+  choisir l2/variante par la **val-loss** de `train.py` (gratuite, déterministe), pas
+  par le proxy ; trancher la force par **Elo réel** (vs hc / vs Scan).
+- **TOUJOURS borner les matchs vs Scan au movetime, jamais en profondeur fixe non
+  plafonnée.** Notre éval pattern est lente ; un match `--depth N` peut partir en
+  recherche interminable sur une position de milieu (`0235` : **figé ~8h** sur l'arme
+  d9, jamais fini). Utiliser `--movetime` (+ `--pairs` modeste). NB `calibrate_vs_scan`
+  joue **9 ouvertures × pairs × 2** parties → `--pairs` multiplie par ~18.
+- **Annulation d'un job** : poser `jobs/state/kill-in-flight` (le runner tue l'in-flight).
+  Flag **global** (consommé par la 1ʳᵉ box qui le lit) → n'armer que quand les autres box
+  n'ont rien de précieux en cours ; re-armer (« rounds ») si besoin.
+- **Géométrie reset-proof** : le runner reset le tree vers main en cours de job. Pour une
+  géométrie/variante non committée, l'épingler hors du tree (`JASS_PATTERNS_DIR` pour
+  train.py) ; le binaire (compilé) survit au reset, seul `patterns.py` est réverti.
+
 ### RÉVISION (2026-06-13) — le proxy MENT, l'Elo réel devient la mesure primaire
 
 Le job **0216 (B4)** a montré que le proxy (accord-score vs Scan-d10) **SOUS-LIT
@@ -100,6 +117,24 @@ NOTRE data.
   redondance (patterns corrélés → forward-selection) ; **l'Elo tranche**, pas le score
   d'importance (discipline B4). Résout quantitativement la question 32-vs-54 patterns.
 - **Séquencement** : APRÈS que l'A/B symétrie (0220-0226) confirme que le fold lève l'Elo.
+
+### VERDICT GÉOMÉTRIE (2026-06-14) — ✂️ levier MORT, on passe aux rois + data
+
+Le jalon géométrie est **clos, négatif**, sous 3 angles convergents :
+- **importance UNIFORME** (`0230`) : aucun pattern mort, redondance ≤ 0.40 ;
+- **élaguer = lose-lose** (RFE `0234`, drop-8 → 24 pat) : **−31 Elo ET 0 gain de
+  vitesse** (knps 0.653→0.648) — la lenteur d'eval est dans les **106 extras**, pas
+  les lookups de patterns ;
+- **richesse géométrique inutile sous labels parfaits** (`0239`) : val-loss PLATE
+  (0.600–0.617) de **15 à 54 patterns**.
+
+→ Le morceau manquant n'était NI la géométrie NI (seulement) la data, mais **les ROIS** :
+nos patterns étaient men-only (une case à roi = vide) alors que **Scan compte un roi
+comme « pièce »** — une *divergence* avec Scan, pas une limite de la classe. **Brique
+rois** codée (`-DJASS_KING_PATTERNS=ON` + `train.py --king-patterns`, base-3 men|kings,
+= Scan, 100 % linéaire) et **validée `0240` : +37 Elo vs hc**. **Le push courant** = loop
+full-fold **king-aware + scalé** (`0241`, 600k/gen) pour pousser la classe LINÉAIRE à
+son max (kings + couverture). Toujours **sans pivot non-linéaire** (directive).
 
 ---
 

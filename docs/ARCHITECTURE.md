@@ -283,10 +283,21 @@ evaluate(pos) =  Σ_p  W_pat[ phase, offset_p + index_p(men) ]      (32→54 pat
 ```
 
 - **Patterns** : each is a fixed set of 12 board squares; `index_p` is the
-  base-3 code of their **men** occupancy (empty/black-man/white-man = 3¹² =
-  531 441 buckets/pattern). Kings are NOT in the patterns (matches Scan) — they
-  enter via the extras. Geometry is the single source of truth in
+  base-3 code of their occupancy (empty/black/white = 3¹² = 531 441
+  buckets/pattern). Geometry is the single source of truth in
   `gen_patterns.py` → `pattern.hpp` + `patterns.py`.
+- **King-aware switch** (`-DJASS_KING_PATTERNS=ON`, see `src/scan_eval.hpp`). By
+  default occupancy = **men only** (a king square reads as empty; the king's
+  value lives in the king-PST/mobility extras). With the flag, occupancy =
+  **men|kings** so a king counts as a "piece" on its square — base-3 amalgamated
+  man+king, **exactly like Scan** (SCAN_ARCHITECTURE_NOTES §1), NOT base-5
+  (jass v2's failed king-distinct encoding: king buckets too sparse). 100 %
+  linear; the prime structural fix vs Scan's class. A king-aware build MUST pair
+  with a king-aware eval: `train.py --king-patterns` (both feed `men|kings`;
+  `update_all` then handles king moves AND promotions — man→king on the same
+  square keeps it occupied → index unchanged). Validated `0240`: **+37 Elo vs hc**
+  under distillation (men-only +78 → king-aware +115). Default OFF = true no-op
+  (6408/6408 unit assertions unchanged).
 - **Extras (106, dense)** : king-PST (one-hot per square per colour), material
   (men counts), mobility (men step + king slide), left-right balance — the same
   non-pattern terms Scan uses.
