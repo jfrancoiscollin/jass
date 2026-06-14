@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0238-autopsy-vs-scan",
-  "snapshot_at": "2026-06-14T11:39:53+00:00",
+  "snapshot_at": "2026-06-14T11:44:58+00:00",
   "started_at": "2026-06-14T11:19:49+00:00",
-  "elapsed_seconds": 1204,
+  "elapsed_seconds": 1509,
   "artefacts": [
     {
       "name": "build.log",
@@ -17,5 +17,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2487232       1       20:04  0.0  0.0 bash\n2487234 2487232       20:04  0.0  0.0 bash\n2487652 2487234       19:55  0.3  0.0 python3\n2487655 2487652       19:54 49.2  0.5 jass\n2487657 2487652       19:54 50.5  0.9 scan_linux\n2487660 2487652       19:54  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2487232       1       25:09  0.0  0.0 bash\n2487234 2487232       25:09  0.0  0.0 bash\n2487652 2487234       25:00  0.4  0.0 python3\n2487655 2487652       25:00 48.9  0.5 jass\n2487657 2487652       25:00 50.8  0.9 scan_linux\n2487660 2487652       24:59  0.0  0.0 jass\n"
 }
