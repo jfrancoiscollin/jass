@@ -325,6 +325,43 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
     return res.x, float(res.fun), int(res.nit)
 
 
+def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
+                        logistic, n_cols, batch):
+    """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
+    the design is rebuilt per `batch`-row chunk inside the objective so the dense
+    phased extras (the peak allocation, ~2GB/M rows) never materialise for the
+    whole set. Lets the fit scale to 10-40M rows on a fixed RAM budget — same
+    optimum (the gradient is exact, only the assembly is streamed). Pure L2 only
+    (anchors/freq-reg index the whole table and are unsupported here)."""
+    N = len(tr_idx); eps = 1e-12
+
+    def loss_and_grad(w):
+        cs = 0.0
+        grad = np.zeros(n_cols, dtype=np.float64)
+        for i in range(0, N, batch):
+            sel = tr_idx[i:i + batch]
+            Xc = build_fn(sel)                       # chunk design (csr)
+            yc = y_all[sel]
+            z = Xc @ w
+            if logistic:
+                p = 0.5 * (np.tanh(0.5 * z) + 1.0)
+                cs += -float(np.sum(yc * np.log(p + eps)
+                                    + (1.0 - yc) * np.log(1.0 - p + eps)))
+                resid = p - yc
+            else:
+                resid = z - yc
+                cs += 0.5 * float(np.dot(resid, resid))
+            grad += Xc.T @ resid                      # accumulate XT@resid
+        loss = cs / N + 0.5 * l2 * float(np.dot(w, w))
+        grad = grad / N + l2 * w
+        return loss, grad
+
+    w0 = np.zeros(n_cols, dtype=np.float64)
+    res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
+                   options={'maxiter': max_iter, 'maxcor': 5})
+    return res.x, float(res.fun), int(res.nit)
+
+
 def material_anchor(n_cols: int, TB: int, E: int, strength: float,
                     man_pu: float = 1.0, king_pu: float = 3.0):
     """Per-column anchor that pins the MATERIAL extras to sane piece-unit
@@ -553,12 +590,13 @@ def train_scan_eval(args):
         xe = build_extras_phased(extras[sel], wmg[sel], weg[sel])
         return sp.hstack([xp, xe], format='csr')   # [pat_mg|pat_eg|ext_mg|ext_eg]
 
-    X_tr, X_val = build(tr_idx), build(val_idx)
+    mb = int(getattr(args, 'minibatch', 0) or 0)
+    X_val = build(val_idx)
+    X_tr  = None if mb > 0 else build(tr_idx)   # minibatch streams tr in chunks
     y_tr, y_val = y_black[tr_idx], y_black[val_idx]
-    print(f'design : {X_tr.shape[1]} columns '
-          f'(2×{PAT_N} pat + 2×{EVAL_NUM_EXTRAS} ext)')
-
-    n_cols = X_tr.shape[1]
+    n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
+    print(f'design : {n_cols} columns (2×{PAT_N} pat + 2×{EVAL_NUM_EXTRAS} ext)'
+          f'{f"  [MINIBATCH {mb:,} rows/chunk]" if mb else ""}')
     # Anchors COMBINE (per-column): a uniform anti-forgetting pull toward a v3
     # prior (--anchor-weights, keeps a TD/WDL re-fit from drifting away from a
     # known-good model — cf the 0149 collapse) PLUS a strong per-column pin of
@@ -603,11 +641,18 @@ def train_scan_eval(args):
 
     print(f'L-BFGS  l2={args.l2}  max_iter={args.max_iter}'
           f'{"  LOGISTIC" if logistic else ""}'
-          f'{"  (anchored)" if use_anchor else "  (pure)"}')
+          f'{"  (anchored)" if use_anchor else "  (pure)"}'
+          f'{f"  [minibatch {mb:,}]" if mb else ""}')
+    if mb > 0 and use_anchor:
+        raise SystemExit('--minibatch is pure-L2 only (anchors/freq-reg unsupported)')
     t0 = time.time()
-    w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
-                                              prior=prior if use_anchor else None,
-                                              anchor_l2=anchor, logistic=logistic)
+    if mb > 0:
+        w_float, train_loss, n_iter = train_lbfgs_chunked(
+            build, tr_idx, y_black, args.l2, args.max_iter, logistic, n_cols, mb)
+    else:
+        w_float, train_loss, n_iter = train_lbfgs(X_tr, y_tr, args.l2, args.max_iter,
+                                                  prior=prior if use_anchor else None,
+                                                  anchor_l2=anchor, logistic=logistic)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time() - t0:.2f}s)')
 
     val_pred = X_val @ w_float
@@ -691,6 +736,10 @@ def main():
                     help='cap on records loaded (for smoke runs)')
     ap.add_argument('--l2',   type=float, default=1e-5)
     ap.add_argument('--max-iter', type=int, default=200)
+    ap.add_argument('--minibatch', type=int, default=0,
+                    help='rows per chunk for memory-bounded L-BFGS (0=full-batch). '
+                         'Same optimum, streamed assembly — lets the fit scale to '
+                         '10-40M rows on a fixed RAM budget. Pure L2 only.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
     ap.add_argument('--target', choices=['wdl', 'score'], default='wdl',
