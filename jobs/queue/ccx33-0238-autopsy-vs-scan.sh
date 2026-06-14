@@ -32,7 +32,7 @@ echo "EVAL = $EVAL"
 GAMES="$ART/games"; mkdir -p "$GAMES"
 echo "=== match vs Scan (mt0.5s, dump) ==="
 python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-pattern "$EVAL" \
-    --scan-bb-size 0 --movetime 500 --pairs 3 --dump-games-dir "$GAMES" >"$ART/match.log" 2>&1
+    --scan-bb-size 0 --movetime 0.5 --pairs 2 --dump-games-dir "$GAMES" >"$ART/match.log" 2>&1
 echo "  $(grep -E 'score rate|ELO estimate' "$ART/match.log" | tr '\n' ' ')"
 NG=$(ls "$GAMES"/game-*.json 2>/dev/null | wc -l); echo "  parties sauvées : $NG"
 [ "$NG" -gt 0 ] || { echo "ABORT: aucune partie sauvée"; tail -20 "$ART/match.log"; exit 7; }
