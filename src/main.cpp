@@ -158,6 +158,12 @@ std::array<int, NUM_PHASES> parse_label_depth_by_phase(const std::string& spec) 
         if (!known) {
             std::cerr << "warning: --label-depth-by-phase: unknown phase '"
                       << name << "' ignored\n";
+        } else if (d <= 0) {
+            // A non-positive depth silently means "use eval_depth" downstream;
+            // warn so a sign typo (endgame=-16) doesn't quietly disable the
+            // intended deeper labelling for that phase.
+            std::cerr << "warning: --label-depth-by-phase: " << name
+                      << " depth " << d << " <= 0 → using eval_depth for it\n";
         }
     }
     return out;

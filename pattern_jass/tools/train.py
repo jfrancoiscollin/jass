@@ -796,6 +796,9 @@ def train_scan_eval(args):
     sw_tr = sw_all = None
     pw_spec = parse_phase_weight(getattr(args, 'phase_weight', '') or '')
     if pw_spec:
+        if len(tr_idx) == 0:
+            raise SystemExit('--phase-weight: empty train split (check --val-frac / '
+                             'score-drop / quiet filters)')
         pw = phase_multiplier(pc, pw_spec)                  # (n,)
         scale_sw = len(tr_idx) / float(pw[tr_idx].sum())    # → mean over tr = 1
         sw_all = pw * scale_sw
