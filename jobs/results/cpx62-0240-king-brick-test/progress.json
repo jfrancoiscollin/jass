@@ -1,0 +1,53 @@
+{
+  "job_id": "cpx62-0240-king-brick-test",
+  "snapshot_at": "2026-06-14T06:55:03+00:00",
+  "started_at": "2026-06-14T06:49:09+00:00",
+  "elapsed_seconds": 354,
+  "artefacts": [
+    {
+      "name": "b-king.log",
+      "size_bytes": 10035
+    },
+    {
+      "name": "b-mo.log",
+      "size_bytes": 10035
+    },
+    {
+      "name": "cm-king.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "cm-mo.log",
+      "size_bytes": 670
+    },
+    {
+      "name": "elo-.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "featM",
+      "size_bytes": 424000012
+    },
+    {
+      "name": "master1M.jnnw",
+      "size_bytes": 38000008
+    },
+    {
+      "name": "menonly-l21e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "menonly-l23e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "train-menonly-l21e-4.log",
+      "size_bytes": 1153
+    },
+    {
+      "name": "train-menonly-l23e-4.log",
+      "size_bytes": 1153
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1499791       1       05:53  0.0  0.0 bash\n1499793 1499791       05:53  0.0  0.0 bash\n1500555 1499793       02:15  0.0  0.0 bash\n1500557 1500555       02:15 1141  0.6 jass\n"
+}
