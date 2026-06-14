@@ -1,0 +1,45 @@
+{
+  "job_id": "cpx62-0239-geometry-distill-sweep",
+  "snapshot_at": "2026-06-14T06:27:29+00:00",
+  "started_at": "2026-06-14T06:22:26+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 10035
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    },
+    {
+      "name": "featM",
+      "size_bytes": 424000012
+    },
+    {
+      "name": "geom-v4.log",
+      "size_bytes": 2327
+    },
+    {
+      "name": "geom-v5.log",
+      "size_bytes": 2840
+    },
+    {
+      "name": "master1M.jnnw",
+      "size_bytes": 38000008
+    },
+    {
+      "name": "train-v4-l21e-4.log",
+      "size_bytes": 1171
+    },
+    {
+      "name": "train-v4-l23e-4.log",
+      "size_bytes": 1171
+    },
+    {
+      "name": "train-v5-l23e-4.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1498434       1       05:02  0.0  0.0 bash\n1498436 1498434       05:02  0.0  0.0 bash\n1498969 1498436       01:41 1084 12.1 python3\n"
+}
