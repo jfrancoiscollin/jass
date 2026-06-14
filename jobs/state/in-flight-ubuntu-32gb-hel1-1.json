@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0254-densify-endgame",
+  "script": "jobs/queue/cpx62-0254-densify-endgame.sh",
+  "pid": 952035,
+  "started_at": "2026-06-14T20:35:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
