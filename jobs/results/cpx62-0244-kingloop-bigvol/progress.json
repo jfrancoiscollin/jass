@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0244-kingloop-bigvol",
-  "snapshot_at": "2026-06-14T11:54:43+00:00",
+  "snapshot_at": "2026-06-14T11:59:50+00:00",
   "started_at": "2026-06-14T11:24:40+00:00",
-  "elapsed_seconds": 1803,
+  "elapsed_seconds": 2110,
   "artefacts": [
     {
       "name": "build.log",
@@ -409,5 +409,5 @@
       "size_bytes": 3009
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 293401       1       30:02  0.0  0.0 bash\n 293403  293401       30:02  0.0  0.0 bash\n2472457  293403       00:56  130 55.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 293401       1       35:10  0.0  0.0 bash\n 293403  293401       35:10  0.0  0.0 bash\n2472457  293403       06:03  294 60.2 python3\n"
 }
