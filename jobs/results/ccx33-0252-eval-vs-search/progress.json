@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0252-eval-vs-search",
-  "snapshot_at": "2026-06-14T16:51:33+00:00",
+  "snapshot_at": "2026-06-14T16:56:45+00:00",
   "started_at": "2026-06-14T16:26:05+00:00",
-  "elapsed_seconds": 1528,
+  "elapsed_seconds": 1840,
   "artefacts": [
     {
       "name": "autopsy-depth1.err",
@@ -29,5 +29,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1383191       1       25:27  0.0  0.0 bash\n1383193 1383191       25:27  0.0  0.0 bash\n1383632 1383193       24:53  0.1  0.0 python3\n1383635 1383632       24:53 49.6  0.5 jass\n1383637 1383632       24:52 50.2  0.9 scan_linux\n1383640 1383632       24:52  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1383191       1       30:39  0.0  0.0 bash\n1383193 1383191       30:39  0.0  0.0 bash\n1383632 1383193       30:05  0.1  0.0 python3\n1383635 1383632       30:05 49.5  0.5 jass\n1383637 1383632       30:04 50.3  0.9 scan_linux\n1383640 1383632       30:04  0.0  0.0 jass\n"
 }
