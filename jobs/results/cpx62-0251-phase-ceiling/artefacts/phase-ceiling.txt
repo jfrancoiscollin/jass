@@ -1,0 +1,40 @@
+======================================================================
+  PLAFOND PAR PHASE — accord éval-statique vs master (n=117897 gardés / 120193, score-drop=4900)
+  eval=/root/jass/jobs/results/cpx62-0251-phase-ceiling/artefacts.src/distill-king-l23e-4.pjtw
+======================================================================
+  GLOBAL       n= 120193 (100.0%)  kept= 117897  spearman=0.546  RMSE_cp=    162
+
+-- par PHASE (nb de pièces) --
+  opening      n=  45553 ( 37.9%)  kept=  45553  spearman=0.314  RMSE_cp=     48
+  midgame      n=  25420 ( 21.1%)  kept=  25420  spearman=0.473  RMSE_cp=    114
+  late-mid     n=  19318 ( 16.1%)  kept=  19291  spearman=0.615  RMSE_cp=    198
+  endgame      n=  18744 ( 15.6%)  kept=  17924  spearman=0.731  RMSE_cp=    278
+  deep-eg      n=  11158 (  9.3%)  kept=   9709  spearman=0.789  RMSE_cp=    228
+
+-- par ROIS (confondu avec la phase) --
+  no-kings     n= 101397 ( 84.4%)  kept= 100811  spearman=0.481  RMSE_cp=    124
+  kings        n=  18796 ( 15.6%)  kept=  17086  spearman=0.746  RMSE_cp=    299
+
+-- PHASE × ROIS (isole la part rois dans une même phase) --
+  opening/no-king n=  45497 ( 37.9%)  kept=  45497  spearman=0.312  RMSE_cp=     47
+  opening/kings n=     56 (  0.0%)  kept=     56  spearman=0.863  RMSE_cp=    289
+  midgame/no-king n=  24640 ( 20.5%)  kept=  24640  spearman=0.459  RMSE_cp=    102
+  midgame/kings n=    780 (  0.6%)  kept=    780  spearman=0.740  RMSE_cp=    315
+  late-mid/no-king n=  17376 ( 14.5%)  kept=  17366  spearman=0.612  RMSE_cp=    164
+  late-mid/kings n=   1942 (  1.6%)  kept=   1925  spearman=0.691  RMSE_cp=    390
+  endgame/no-king n=  12099 ( 10.1%)  kept=  11855  spearman=0.711  RMSE_cp=    236
+  endgame/kings n=   6645 (  5.5%)  kept=   6069  spearman=0.761  RMSE_cp=    346
+  deep-eg/no-king n=   1785 (  1.5%)  kept=   1453  spearman=0.687  RMSE_cp=    224
+  deep-eg/kings n=   9373 (  7.8%)  kept=   8256  spearman=0.815  RMSE_cp=    229
+
+-- DISTRIBUTION DES LABELS (famine = combien de positions par bucket) --
+  opening      no-king=  45497  king=     56  total=  45553
+  midgame      no-king=  24640  king=    780  total=  25420
+  late-mid     no-king=  17376  king=   1942  total=  19318
+  endgame      no-king=  12099  king=   6645  total=  18744
+  deep-eg      no-king=   1785  king=   9373  total=  11158
+
+  LECTURE : spearman tombe / RMSE explose dans les buckets finale =
+  la CLASSE linéaire ne sait pas représenter la finale (même labels parfaits).
+  spearman reste haut partout = la classe tient ; le saignement en partie
+  (autopsie 0249/0250) vient alors de la DONNÉE (famine finale) ou de la recherche.
