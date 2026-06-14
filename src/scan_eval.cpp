@@ -153,9 +153,21 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
     const std::uint32_t n_ext   = rd_u32(raw.data() + 16);
 
     if (magic != V3_MAGIC)   { if (err) *err = "bad magic"; return std::nullopt; }
-    const bool is_v4 = (version == V4_VERSION);
-    if (version != V3_VERSION && !is_v4) {
+    const std::uint32_t base_ver = version & V_VERMASK;
+    const bool is_v4 = (base_ver == V4_VERSION);
+    if (base_ver != V3_VERSION && !is_v4) {
         if (err) *err = "not a v3/v4 PJTW (version " + std::to_string(version) + ")";
+        return std::nullopt;
+    }
+    // Self-describing king/men marker : a wrong binary/weights pairing fails loudly
+    // instead of silently mis-evaluating. Legacy files (no SELFDESC bit) load as-is.
+    if ((version & V_SELFDESC_BIT) &&
+        ((((version & V_KING_BIT) != 0)) != KING_AWARE_PATTERNS)) {
+        if (err) *err = std::string("king-aware mismatch: this .pjtw is ")
+            + (((version & V_KING_BIT) != 0) ? "KING-AWARE" : "men-only")
+            + " but this binary is " + (KING_AWARE_PATTERNS ? "KING-AWARE" : "men-only")
+            + " (use the matching build / (re)train with"
+            + (((version & V_KING_BIT) != 0) ? "" : "out") + " --king-patterns)";
         return std::nullopt;
     }
     if (n_pat != pattern_jass::TOTAL_BUCKETS) {
@@ -316,7 +328,8 @@ std::unique_ptr<INetwork> load_eval_network(const std::string& path,
         | (static_cast<std::uint32_t>(hdr[7]) << 24);
     f.close();
 
-    if (version == scan_eval::V3_VERSION || version == scan_eval::V4_VERSION) {
+    const std::uint32_t base_ver = version & scan_eval::V_VERMASK;  // strip self-desc/king bits
+    if (base_ver == scan_eval::V3_VERSION || base_ver == scan_eval::V4_VERSION) {
         return scan_eval::load_scan_eval_network(path, err);
     }
     return load_pattern_jass_network(path, err);

@@ -60,7 +60,18 @@ WEIGHTS_VERSION = 1
 # is no second implementation here, so the playable eval and the training
 # features are identical by construction.
 WEIGHTS_VERSION_V3 = 3
+# High bits OR'd into the version word self-describe the eval so the C++ loader
+# rejects a wrong binary/weights pairing loudly (cf src/scan_eval.hpp): SELFDESC
+# marks a king-aware-era file, KING marks men|kings occupancy. Must match
+# scan_eval.hpp V_SELFDESC_BIT / V_KING_BIT.
+PJTW_SELFDESC_BIT  = 0x200
+PJTW_KING_BIT      = 0x100
 EVAL_NUM_EXTRAS    = 106
+
+
+def _pjtw_version(base: int, king: bool) -> int:
+    """base version (3/4) OR the self-describing king/men marker bits."""
+    return base | PJTW_SELFDESC_BIT | (PJTW_KING_BIT if king else 0)
 
 
 def build_sparse_X(cols: np.ndarray, n_features: int) -> sp.csr_matrix:
@@ -196,14 +207,17 @@ def build_extras_phased(extras: np.ndarray, wmg: np.ndarray,
 
 def write_weights_v3(path: Path, pat_mg: np.ndarray, pat_eg: np.ndarray,
                      ext_mg: np.ndarray, ext_eg: np.ndarray,
-                     scale: int) -> None:
-    """PJTW v3 : magic, version=3, scale, n_pat, n_ext, then int32 weights
-    ordered [pat_mg | pat_eg | ext_mg | ext_eg] (cf src/scan_eval.hpp)."""
+                     scale: int, king: bool = False) -> None:
+    """PJTW v3 : magic, version=3 (+ self-desc/king marker bits), scale, n_pat,
+    n_ext, then int32 weights ordered [pat_mg | pat_eg | ext_mg | ext_eg]
+    (cf src/scan_eval.hpp). `king` records men|kings occupancy so a wrong
+    binary/weights pairing is rejected at load."""
     n_pat = len(pat_mg)
     n_ext = len(ext_mg)
     assert len(pat_eg) == n_pat and len(ext_eg) == n_ext
     with open(path, 'wb') as f:
-        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC, WEIGHTS_VERSION_V3,
+        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC,
+                            _pjtw_version(WEIGHTS_VERSION_V3, king),
                             scale, n_pat, n_ext))
         for blk in (pat_mg, pat_eg, ext_mg, ext_eg):
             f.write(blk.astype('<i4').tobytes())
@@ -264,15 +278,17 @@ def fit_pattern_fm(idx_tr, r_tr, idx_val, r_val, H, k, l2_fm, max_iter, seed):
 
 
 def write_weights_v4(path: Path, pat_mg, pat_eg, ext_mg, ext_eg, scale,
-                     V, H, k):
-    """PJTW v4 : the full v3 block (version field = 4) then an FM section :
-    uint32 fm_rank, uint32 fm_hash, uint32 fm_npat, float32 V[fm_npat*H*k]
-    (row-major slot-major : slot s = p*H + (bucket%H), then k factors)."""
+                     V, H, k, king: bool = False):
+    """PJTW v4 : the full v3 block (version field = 4 + self-desc/king marker)
+    then an FM section : uint32 fm_rank, uint32 fm_hash, uint32 fm_npat,
+    float32 V[fm_npat*H*k] (row-major slot-major : slot s = p*H + (bucket%H),
+    then k factors)."""
     n_pat, n_ext = len(pat_mg), len(ext_mg)
     NP = patterns.NUM_PATTERNS
     assert V.shape == (NP * H, k)
     with open(path, 'wb') as f:
-        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC, WEIGHTS_VERSION_V4,
+        f.write(struct.pack('<IIIII', WEIGHTS_MAGIC,
+                            _pjtw_version(WEIGHTS_VERSION_V4, king),
                             scale, n_pat, n_ext))
         for blk in (pat_mg, pat_eg, ext_mg, ext_eg):
             f.write(blk.astype('<i4').tobytes())
@@ -374,11 +390,13 @@ def lowmem_z(Xpat, extras, wmg, weg, w, PAT_N, E):
 
 def train_lbfgs_lowmem(Xpat, extras, wmg, weg, y, l2, max_iter,
                        logistic, PAT_N, E):
-    """Memory-efficient FULL-BATCH L-BFGS : SAME objective/optimum as train_lbfgs,
-    but the dense phased extras (the (n,2E) peak, ~2GB/M) is never built — its
-    contribution is computed on the fly from raw extras (n,E). Only the compact
-    phased PATTERN sparse (n×64 nnz) is kept. Handles ~20M rows on 32GB at
-    full-batch speed (no per-iter re-streaming). Pure L2 only."""
+    """Memory-efficient FULL-BATCH L-BFGS : same objective as train_lbfgs, but the
+    dense phased extras (the (n,2E) peak, ~2GB/M) is never built — its contribution
+    is computed on the fly from raw extras (n,E). Only the compact phased PATTERN
+    sparse (n×64 nnz) is kept. Handles ~20M rows on 32GB. Converges to the same
+    (convex) optimum up to float32 design-rounding (the matvecs differ in FP order
+    from the full hstacked design, so w is equal only to low-order digits, not bit-
+    identical). Pure L2 only."""
     XpT = Xpat.T
     n_cols = 2 * PAT_N + 2 * E
     N = len(y); eps = 1e-12
@@ -642,6 +660,10 @@ def train_scan_eval(args):
 
     lm = bool(getattr(args, 'lowmem', False))
     mb = int(getattr(args, 'minibatch', 0) or 0)
+    if lm and mb:
+        print('warning: --lowmem set → --minibatch ignored (lowmem is full-batch; '
+              'it keeps the whole pattern sparse + raw extras in RAM, not chunked)',
+              file=sys.stderr)
     y_tr, y_val = y_black[tr_idx], y_black[val_idx]
     n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
     Xpat_tr = Xpat_val = ex_tr = ex_val = None
@@ -784,12 +806,14 @@ def train_scan_eval(args):
                            args.fm_hash, args.fm_rank, args.l2_fm,
                            args.max_iter, seed=2027)
         write_weights_v4(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg,
-                         args.scale, V, args.fm_hash, args.fm_rank)
+                         args.scale, V, args.fm_hash, args.fm_rank,
+                         king=getattr(args, 'king_patterns', False))
         nfm = patterns.NUM_PATTERNS * args.fm_hash * args.fm_rank
         print(f'wrote {args.out}  (v4, linear {2*(TB+E)} + FM {nfm} floats)')
         return 0
 
-    write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale)
+    write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale,
+                     king=getattr(args, 'king_patterns', False))
     total = 2 * (len(pat_mg) + E)   # len(pat_mg)=17M even under --color-fold (expanded)
     print(f'wrote {args.out}  (v3, {total} weights, {20 + 4 * total} bytes)')
     return 0

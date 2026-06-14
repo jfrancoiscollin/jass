@@ -119,6 +119,14 @@ inline constexpr std::uint32_t V3_MAGIC   = 0x57544A50U;  // "PJTW"
 inline constexpr std::uint32_t V3_VERSION = 3U;
 inline constexpr std::uint32_t V4_VERSION = 4U;          // v3 linear + FM term
 inline constexpr std::size_t   V3_HEADER  = 20;
+// High bits OR'd into the version word self-describe the eval so a wrong
+// binary/weights pairing fails loudly instead of silently mis-evaluating
+// (the king-aware footgun). SELFDESC marks a file written by a king-aware-era
+// trainer; KING marks king|men occupancy. Legacy files (neither bit) load with
+// a stderr note. base version = version & 0xFF.
+inline constexpr std::uint32_t V_VERMASK     = 0x000000FFU;
+inline constexpr std::uint32_t V_SELFDESC_BIT= 0x00000200U;
+inline constexpr std::uint32_t V_KING_BIT    = 0x00000100U;
 
 struct ScanWeights {
     std::uint32_t scale = 1000;
@@ -148,7 +156,8 @@ public:
     // Accumulator fast path : same eval as evaluate(pos) but with the 32
     // pattern base-3 indices supplied precomputed (the search maintains them
     // incrementally via ScanAccumulator), skipping extract_all. `idx` must
-    // point to NUM_PATTERNS entries equal to extract_all(pos's men).
+    // point to NUM_PATTERNS entries equal to extract_all(pat_black(pos),
+    // pat_white(pos)) — i.e. men-only or men|kings per the king-aware switch.
     int evaluate_with_idx(const Position& pos,
                           const std::uint32_t* idx) const noexcept;
 
