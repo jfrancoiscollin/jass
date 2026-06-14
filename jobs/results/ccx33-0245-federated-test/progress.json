@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0245-federated-test",
-  "snapshot_at": "2026-06-14T12:30:55+00:00",
+  "snapshot_at": "2026-06-14T12:36:03+00:00",
   "started_at": "2026-06-14T11:50:09+00:00",
-  "elapsed_seconds": 2446,
+  "elapsed_seconds": 2754,
   "artefacts": [
     {
       "name": "A.jnnw",
@@ -33,8 +33,12 @@
       "size_bytes": 733
     },
     {
-      "name": "elo-fed.log",
+      "name": "elo-A.log",
       "size_bytes": 0
+    },
+    {
+      "name": "elo-fed.log",
+      "size_bytes": 276
     },
     {
       "name": "elo-full.log",
@@ -141,5 +145,5 @@
       "size_bytes": 1224
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2488673       1       40:46  0.0  0.0 bash\n2488675 2488673       40:46  0.0  0.0 bash\n3513359 2488675       06:09  0.0  0.0 bash\n3513360 3513359       06:09  697  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 345787 2488675       01:04  0.0  0.0 bash\n 345788  345787       01:04  656  0.5 jass\n2488673       1       45:54  0.0  0.0 bash\n2488675 2488673       45:54  0.0  0.0 bash\n"
 }
