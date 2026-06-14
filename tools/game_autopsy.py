@@ -156,7 +156,12 @@ def main(argv):
                         loss = max(0.0, sbefore - (-safter))
                 kings = has_king(fens[i])
                 ph = phase_of(fens[i])
-                cap = is_capture(sbest) or is_capture(our_mv)
+                # NB: the dumped move (jass_str "28x19") drops the captured-square
+                # list, so is_capture(our_mv) is always False. Derive our move's
+                # capture-ness from the board delta instead (a capture removes
+                # opponent pieces -> total piece count drops).
+                our_cap = (i + 1 < len(fens)) and piece_count(fens[i]) > piece_count(fens[i + 1])
+                cap = is_capture(sbest) or our_cap
                 bump(tot, agree, loss)
                 bump(by_phase[ph], agree, loss)
                 bump(by_king["kings" if kings else "no-kings"], agree, loss)
@@ -165,7 +170,7 @@ def main(argv):
                 if not agree:
                     sev = (loss if loss is not None else 0.0) \
                         + (5.0 if res == "lost" else 0.0) \
-                        + (3.0 if is_capture(sbest) and not is_capture(our_mv) else 0.0)
+                        + (3.0 if is_capture(sbest) and not our_cap else 0.0)
                     worst.append((sev, fens[i], moves[i],
                                   sbest.jass_str() if sbest else "?",
                                   ph, kings, loss, g.get("game_id", gi), res))
