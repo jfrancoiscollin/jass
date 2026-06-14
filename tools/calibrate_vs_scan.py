@@ -575,11 +575,18 @@ def main(argv):
     g.add_argument("--depth",    type=int,
                    help="fixed search depth (plies)")
     g.add_argument("--movetime", type=float,
-                   help="per-move time budget in seconds (real number)")
+                   help="per-move time budget in SECONDS — NOT milliseconds! "
+                        "e.g. 0.5 = half a second/move, 1 = one second/move. "
+                        "(Jass's HUB is ms internally; this flag converts s->ms. "
+                        "Passing 500 means 500 s/move = ~16 h/game — the 0237/0243 hang.)")
     # Asymmetric fixed-depth: give one side a different depth from --depth.
     # Used by the eval-vs-search diagnostic (how many extra plies does Jass
     # need to match Scan at a fixed Scan depth). Each overrides --depth for
     # its side; ignored under --movetime.
+    p.add_argument("--allow-long-movetime", action="store_true",
+                   help="override the >30s/move sanity guard (rare; for genuinely "
+                        "long per-move budgets). Without it, --movetime>30 aborts as "
+                        "a likely seconds/ms units error.")
     p.add_argument("--jass-depth", type=int, default=None,
                    help="override search depth for the Jass side (plies)")
     p.add_argument("--scan-depth", type=int, default=None,
@@ -627,6 +634,19 @@ def main(argv):
                         "saturates at the eval ceiling and doesn't surface "
                         "the depth-per-second advantage SMP gives.")
     args = p.parse_args(argv)
+    # UNITS GUARD : --movetime is per-move SECONDS, not ms. The trap is that
+    # `jass --depth-at-movetime` and the Jass HUB `go movetime` are MILLISECONDS,
+    # so passing 500/1000 (ms-thinking) here = 500/1000 s/move = hours/game with
+    # ZERO output (the 0237/0243 hang, ~4h for 0 games). Nobody intends >30s/move
+    # for these gauntlets, so refuse it as a near-certain units error.
+    if args.movetime is not None and args.movetime > 30.0 and not args.allow_long_movetime:
+        sys.exit(f"ABORT: --movetime {args.movetime} is per-move SECONDS (not ms). "
+                 f"{args.movetime}s/move x ~120 plies ~= {args.movetime*120/3600:.1f} h/game "
+                 f"-> the match never finishes. Did you mean --movetime "
+                 f"{args.movetime/1000:g}? Use seconds (e.g. 0.5, 1), or pass "
+                 f"--allow-long-movetime to override.")
+    if args.movetime is not None and args.movetime <= 0:
+        sys.exit("ABORT: --movetime must be > 0 seconds.")
     if args.depth is None and args.movetime is None:
         args.depth = 8  # back-compat default
     budget_str = (f"depth {args.depth}" if args.depth is not None
