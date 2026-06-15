@@ -1,0 +1,9 @@
+rewrite-search: 150000 records [0..150000) depth=12  /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg.jnnw → /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg-d12.jnnw (eval /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/labeler.pjtw)
+  20000 / 150000 records
+  40000 / 150000 records
+  60000 / 150000 records
+  80000 / 150000 records
+  100000 / 150000 records
+  120000 / 150000 records
+  140000 / 150000 records
+wrote 150000 records (38 B each) to /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg-d12.jnnw

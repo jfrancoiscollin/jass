@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0267-stability-validation",
-  "script": "jobs/queue/ccx33-0267-stability-validation.sh",
-  "pid": 1426270,
-  "started_at": "2026-06-15T21:38:54+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
