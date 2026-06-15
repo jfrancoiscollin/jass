@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0267-stability-validation",
-  "snapshot_at": "2026-06-15T21:54:12+00:00",
+  "snapshot_at": "2026-06-15T21:59:13+00:00",
   "started_at": "2026-06-15T21:38:54+00:00",
-  "elapsed_seconds": 918,
+  "elapsed_seconds": 1219,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "endg-d10.jnnw",
-      "size_bytes": 2043800
+      "size_bytes": 3389912
     },
     {
       "name": "endg-d8.jnnw",
@@ -38,12 +38,12 @@
     },
     {
       "name": "rw-d10.log",
-      "size_bytes": 361
+      "size_bytes": 411
     },
     {
       "name": "rw-d8.log",
       "size_bytes": 606
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1426270       1       15:18  0.0  0.0 bash\n1426272 1426270       15:18  0.0  0.0 bash\n1426846 1426272       08:05 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1426270       1       20:18  0.0  0.0 bash\n1426272 1426270       20:18  0.0  0.0 bash\n1426846 1426272       13:06 99.9  0.5 jass\n"
 }
