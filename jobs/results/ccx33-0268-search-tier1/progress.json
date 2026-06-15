@@ -1,0 +1,29 @@
+{
+  "job_id": "ccx33-0268-search-tier1",
+  "snapshot_at": "2026-06-15T23:33:05+00:00",
+  "started_at": "2026-06-15T23:27:12+00:00",
+  "elapsed_seconds": 353,
+  "artefacts": [
+    {
+      "name": "ab-lmp_less.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "ab-lmr_less.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "ab-tm_deep.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 12608
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 672
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1431089       1       05:53  0.0  0.0 bash\n1431091 1431089       05:53  0.0  0.0 bash\n1431501 1431091       05:43  0.0  0.0 bash\n1431502 1431091       05:43  0.0  0.0 bash\n1431503 1431091       05:43  0.0  0.0 bash\n1431504 1431501       05:43 99.9  0.5 jass\n1431505 1431502       05:43 99.9  0.5 jass\n1431506 1431503       05:43 99.9  0.5 jass\n"
+}
