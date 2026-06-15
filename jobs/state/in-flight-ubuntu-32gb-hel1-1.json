@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0263-kingloop-playdepth",
+  "script": "jobs/queue/cpx62-0263-kingloop-playdepth.sh",
+  "pid": 1936263,
+  "started_at": "2026-06-15T10:40:11+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
