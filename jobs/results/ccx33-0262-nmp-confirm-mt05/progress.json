@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0262-nmp-confirm-mt05",
-  "snapshot_at": "2026-06-15T13:17:02+00:00",
+  "snapshot_at": "2026-06-15T13:22:04+00:00",
   "started_at": "2026-06-15T10:41:37+00:00",
-  "elapsed_seconds": 9325,
+  "elapsed_seconds": 9627,
   "artefacts": [
     {
       "name": "ab-thr16.log",
@@ -21,5 +21,5 @@
       "size_bytes": 672
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1409168       1    02:35:24  0.0  0.0 bash\n1409170 1409168    02:35:24  0.0  0.0 bash\n1409581 1409170    02:35:15  0.0  0.0 bash\n1409582 1409170    02:35:15  0.0  0.0 bash\n1409583 1409581    02:35:15 99.9  0.5 jass\n1409584 1409582    02:35:15 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1409168       1    02:40:26  0.0  0.0 bash\n1409170 1409168    02:40:26  0.0  0.0 bash\n1409581 1409170    02:40:17  0.0  0.0 bash\n1409582 1409170    02:40:17  0.0  0.0 bash\n1409583 1409581    02:40:17 99.9  0.5 jass\n1409584 1409582    02:40:17 99.9  0.5 jass\n"
 }
