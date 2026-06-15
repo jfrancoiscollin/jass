@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "snapshot_at": "2026-06-15T16:15:03+00:00",
+  "snapshot_at": "2026-06-15T16:20:03+00:00",
   "started_at": "2026-06-15T10:40:11+00:00",
-  "elapsed_seconds": 20092,
+  "elapsed_seconds": 20392,
   "artefacts": [
     {
       "name": "build.log",
@@ -42,6 +42,10 @@
     },
     {
       "name": "elo-gen6.log",
+      "size_bytes": 278
+    },
+    {
+      "name": "elo-gen7.log",
       "size_bytes": 278
     },
     {
@@ -134,7 +138,11 @@
     },
     {
       "name": "gen7-train.log",
-      "size_bytes": 0
+      "size_bytes": 1329
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -647,7 +655,135 @@
     {
       "name": "sp7-9.log",
       "size_bytes": 1482
+    },
+    {
+      "name": "sp8-1.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "sp8-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-10.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp8-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-11.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-12.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-13.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp8-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-14.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-15.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "sp8-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-16.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-2.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "sp8-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-3.jnnw",
+      "size_bytes": 32834
+    },
+    {
+      "name": "sp8-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-4.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-5.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "sp8-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-6.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "sp8-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-7.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp8-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-8.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "sp8-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-9.jnnw",
+      "size_bytes": 32834
+    },
+    {
+      "name": "sp8-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443780 1936265       03:19  356 42.5 python3\n1936263       1    05:34:52  0.0  0.0 bash\n1936265 1936263    05:34:52  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1936263       1    05:39:52  0.0  0.0 bash\n1936265 1936263    05:39:52  0.0  0.0 bash\n1983659 1936265       01:46 99.9  0.5 jass\n1983660 1936265       01:46 99.9  0.5 jass\n1983661 1936265       01:46 99.9  0.5 jass\n1983662 1936265       01:46 99.9  0.5 jass\n1983663 1936265       01:46 99.9  0.5 jass\n1983664 1936265       01:46 99.9  0.5 jass\n1983665 1936265       01:46 99.9  0.5 jass\n1983666 1936265       01:46 99.9  0.5 jass\n1983667 1936265       01:46 99.9  0.5 jass\n1983668 1936265       01:46 99.9  0.5 jass\n1983669 1936265       01:46 99.9  0.5 jass\n1983670 1936265       01:46 99.9  0.5 jass\n1983671 1936265       01:46 99.9  0.5 jass\n1983672 1936265       01:46 99.9  0.5 jass\n1983673 1936265       01:46 99.9  0.5 jass\n1983674 1936265       01:46 99.9  0.5 jass\n"
 }
