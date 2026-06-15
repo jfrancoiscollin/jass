@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0260-endgame-distill",
-  "script": "jobs/queue/cpx62-0260-endgame-distill.sh",
-  "pid": 1847883,
-  "started_at": "2026-06-15T06:17:22+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

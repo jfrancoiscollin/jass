@@ -1,0 +1,5 @@
+error: cannot load v3 PJTW from   [withPW] l2=3e-4 val_mse=1.798708
+  [withPW] l2=1e-4 val_mse=1.779149
+/root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/withPW-l21e-4.pjtw : cannot open   [withPW] l2=3e-4 val_mse=1.798708
+  [withPW] l2=1e-4 val_mse=1.779149
+/root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/withPW-l21e-4.pjtw
