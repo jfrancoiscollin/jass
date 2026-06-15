@@ -870,7 +870,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                     killers[static_cast<std::size_t>(ply)][1] = killers[static_cast<std::size_t>(ply)][0];
                     killers[static_cast<std::size_t>(ply)][0] = m;
                 }
-                history[m.from][m.to] += depth * depth;
+                const int hbonus = depth * depth;
+                // History aging (gated) : gravity rule caps the table at
+                // ~history_max and decays large OLD cutoffs toward it, so stale
+                // history stops dominating the ordering. history_max=0 = legacy
+                // unbounded += bonus (byte-identical default).
+                {
+                    int& h = history[m.from][m.to];
+                    h += (params.history_max > 0)
+                       ? hbonus - h * hbonus / params.history_max
+                       : hbonus;
+                }
                 // Countermove : record `m` as the best response to the
                 // opponent's previous move (if any). Stored regardless
                 // of ply so siblings further up the tree also benefit.
@@ -881,7 +891,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                     // Continuation history (1b) : same cutoff signal, keyed
                     // by the opponent's landing square × this reply.
                     if (params.use_conthist) {
-                        ch(prev_move.to, m.from, m.to) += depth * depth;
+                        int& c = ch(prev_move.to, m.from, m.to);
+                        c += (params.history_max > 0)
+                           ? hbonus - c * hbonus / params.history_max
+                           : hbonus;
                     }
                 }
             }

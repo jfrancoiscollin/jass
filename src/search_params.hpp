@@ -46,6 +46,14 @@ struct SearchParams {
     int lmp_d2 = 8;
     int lmp_d3 = 14;
 
+    // History aging (gated; 0 = legacy unbounded accumulation). When > 0 the
+    // butterfly history (and conthist) is updated with a "gravity" rule
+    // h += bonus - h*bonus/history_max instead of h += bonus, which CAPS the
+    // table at ~history_max and decays large OLD cutoffs toward it — so stale
+    // history stops dominating the quiet-move ordering. Standard technique
+    // (~+5-15 Elo in chess). A/B before shipping (job 0269).
+    int history_max = 0;
+
     // Aspiration window initial half-width (cp).
     int aspiration_initial = 50;
 
@@ -165,6 +173,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
+    else if (key == "history_max")          p.history_max          = v;
     else if (key == "aspiration_initial")   p.aspiration_initial   = v;
     else if (key == "use_pvs")              p.use_pvs              = (v != 0);
     else if (key == "razor_max_depth")      p.razor_max_depth      = v;

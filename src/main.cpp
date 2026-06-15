@@ -1850,7 +1850,7 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
 int run_depth_at_movetime_mode(int argc, char** argv) {
     if (argc < 5) {
         std::cerr << "usage: jass --depth-at-movetime <netA> <netB> "
-                     "<movetime_ms> [tt_mb=64] [search_spec]\n";
+                     "<movetime_ms> [tt_mb=64] [search_spec] [threads=1]\n";
         return 1;
     }
     const std::string a_path = argv[2];
@@ -1859,6 +1859,9 @@ int run_depth_at_movetime_mode(int argc, char** argv) {
     const std::size_t tt_mb  = (argc > 5)
         ? static_cast<std::size_t>(parse_int_or(argv[5], 64)) : 64;
     const SearchParams params = jass::parse_search_params((argc > 6) ? argv[6] : "");
+    // Optional lazy-SMP fan-out (argv[7], default 1) so this mode can measure
+    // SMP scaling : depth/knps reached at the same wall-clock with N threads.
+    const int threads = (argc > 7) ? parse_int_or(argv[7], 1) : 1;
 
     // Owned networks keep the loaded evals alive for the duration.
     std::vector<std::unique_ptr<INetwork>> owned;
@@ -1896,6 +1899,7 @@ int run_depth_at_movetime_mode(int argc, char** argv) {
             SearchLimits lim;
             lim.max_depth   = 99;    // movetime drives depth, not the cap
             lim.movetime_ms = movetime_ms;
+            lim.threads     = threads;   // lazy-SMP fan-out (SMP-scaling measure)
             lim.nnue        = nets[s];
             lim.params      = params;
             const SearchResult r = eng.search(lim);
