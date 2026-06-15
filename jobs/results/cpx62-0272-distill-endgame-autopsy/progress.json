@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0272-distill-endgame-autopsy",
-  "snapshot_at": "2026-06-15T23:51:50+00:00",
+  "snapshot_at": "2026-06-15T23:57:03+00:00",
   "started_at": "2026-06-15T23:36:03+00:00",
-  "elapsed_seconds": 947,
+  "elapsed_seconds": 1260,
   "artefacts": [
     {
       "name": "build.log",
@@ -29,5 +29,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3029271       1       15:47  0.0  0.0 bash\n3029273 3029271       15:47  0.0  0.0 bash\n3029785 3029273       13:36  0.4  0.0 python3\n3029788 3029785       13:36 49.6  0.5 jass\n3029790 3029785       13:36 50.1  0.9 scan_linux\n3029793 3029785       13:36  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3029271       1       20:59  0.0  0.0 bash\n3029273 3029271       20:59  0.0  0.0 bash\n3029785 3029273       18:49  0.4  0.0 python3\n3029788 3029785       18:49 49.3  0.5 jass\n3029790 3029785       18:49 50.4  0.9 scan_linux\n3029793 3029785       18:48  0.0  0.0 jass\n"
 }
