@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0266-kingloop-deepplay",
-  "snapshot_at": "2026-06-15T23:14:03+00:00",
+  "snapshot_at": "2026-06-15T23:20:03+00:00",
   "started_at": "2026-06-15T21:12:03+00:00",
-  "elapsed_seconds": 7320,
+  "elapsed_seconds": 7680,
   "artefacts": [
     {
       "name": "build.log",
@@ -741,5 +741,5 @@
       "size_bytes": 1433
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1    02:02:00  0.0  0.0 bash\n 371077  371075    02:02:00  0.0  0.0 bash\n3027280  371077       19:54  0.4  0.0 python3\n3027283 3027280       19:54 48.0  0.5 jass\n3027285 3027280       19:54 51.7  0.9 scan_linux\n3027288 3027280       19:53  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1    02:08:00  0.0  0.0 bash\n 371077  371075    02:08:00  0.0  0.0 bash\n3027280  371077       25:54  0.4  0.0 python3\n3027283 3027280       25:54 48.0  0.5 jass\n3027285 3027280       25:54 51.7  0.9 scan_linux\n3027288 3027280       25:53  0.0  0.0 jass\n"
 }
