@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0261-endgame-distill-v2",
-  "snapshot_at": "2026-06-15T08:49:32+00:00",
+  "snapshot_at": "2026-06-15T08:55:03+00:00",
   "started_at": "2026-06-15T08:09:42+00:00",
-  "elapsed_seconds": 2390,
+  "elapsed_seconds": 2721,
   "artefacts": [
     {
       "name": "build.log",
@@ -57,5 +57,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       39:49  0.0  0.0 bash\n1849778 1849776       39:49  0.0  0.0 bash\n1934531 1849778       18:56  0.4  0.0 python3\n1934534 1934531       18:56 49.6  0.5 jass\n1934536 1934531       18:56 50.1  0.9 scan_linux\n1934539 1934531       18:55  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       45:20  0.0  0.0 bash\n1849778 1849776       45:20  0.0  0.0 bash\n1934531 1849778       24:26  0.4  0.0 python3\n1934534 1934531       24:26 49.4  0.5 jass\n1934536 1934531       24:26 50.3  0.9 scan_linux\n1934539 1934531       24:26  0.0  0.0 jass\n"
 }
