@@ -146,6 +146,19 @@ Most search params are **tunable** (`params.lmp_d1/d2/d3`, `use_pvs`,
 `use_improving`, LMR amounts, null-move R, aspiration delta) — a calibration
 lever, not a missing-feature gap.
 
+**Tuning verdicts (2026-06-15, A/B at movetime, `SearchParams`).** Feature-complete
+≠ feature-tuned. Measured calibration wins, now **default-ON**:
+- **`use_improving = true`** — +21.6 Elo (job 0253; `use_conthist` was −11 → left off).
+- **Endgame NMP regime** (`eg_pieces`, `eg_no_nmp`/`eg_no_lmp`/`eg_no_lmr` in
+  `search_params.hpp`) : below `eg_pieces` total pieces the chosen pruning is disabled.
+  **Null-move pruning is NET-NEGATIVE in jass** — draughts is zugzwang-pervasive (you
+  must move; being forced to move is often bad) so NMP's "passing is safe" premise fails
+  throughout the game, not just in endgames. Sweep (0256/0259) was **monotone-increasing**:
+  disabling NMP below 12 pieces = +29, below 36 (≈ everywhere) = **+97 Elo**. LMR is the
+  opposite (`eg_no_lmr` = −13: LMR buys the depth the search-bound endgame needs → keep
+  it). Default = `eg_pieces=12, eg_no_nmp=true` (the higher threshold is being confirmed
+  at mt0.5, job 0262). `eg_pieces=0` is a true no-op (popcount short-circuited away).
+
 > Consequence for eval work: at **equal nominal depth**, with sound alpha-beta +
 > quiescence, move quality is driven by the **leaf evaluation**, not by these
 > search refinements (which affect *speed* / depth-in-time). When two different
@@ -370,6 +383,25 @@ The training side lives in [`tools/`](../tools) and is driven by:
    └────────────────┘ └──────────────┘ │  real KPI)         │
                                        └────────────────────┘
 ```
+
+**Pattern self-play loop — the training SIGNAL (read before adding a "densify"
+lever).** The full-fold king-aware loop (`train.py --scan-eval --loss logistic`)
+trains on the **WDL game outcome**, NOT the per-record search `score`. This is the
+load-bearing fact behind the 2026-06-15 endgame campaign:
+- `--label-depth-by-phase` (deeper labelling search) is therefore a **no-op** for the
+  loop (it only fills the unused `score` field) — and worse, the deeper label search
+  pollutes the shared TT and perturbs the played moves (jobs 0254/0258: −80 Elo). Dead.
+- `--phase-weight` (up-weight endgame rows) is **dead** in all contexts: it amplifies
+  noisy endgame WDL labels (0254) and, even on perfect score labels, over-weighting the
+  large-magnitude endgame targets de-calibrates the eval for the bulk (0261: −210 Elo).
+- The **correct** endgame lever is `--play-depth-by-phase` (play endgames at a deeper
+  search → the resolved **WDL is accurate** where it was noisy; endgames are few-piece →
+  cheap). Both `--*-depth-by-phase` flags share `parse_depth_by_phase`; empty = uniform
+  (back-compatible). Phase bounds match `pattern_jass/tools/train.py` and `game_autopsy`.
+- For a **score** target (rich Scan-d10 teacher, not WDL), use `--target score` WITHOUT
+  `--loss logistic` (logistic always trains on WDL). Score-distillation = +141 vs hc
+  (job 0261), above WDL-distillation but below the self-play loop — a quality source, not
+  a standalone production eval.
 
 **Data relabelling modes** (rewrite the `score` field of a JNNW in place,
 preserving bitboards/STM/WDL):

@@ -83,6 +83,21 @@ leur training pour éviter la fuite.
   géométrie/variante non committée, l'épingler hors du tree (`JASS_PATTERNS_DIR` pour
   train.py) ; le binaire (compilé) survit au reset, seul `patterns.py` est réverti.
 
+**Règles ajoutées (2026-06-15, campagne 0254-0263).**
+- **Vérifier le SIGNAL d'entraînement AVANT d'ajouter un levier.** La boucle self-play
+  s'entraîne sur le **WDL** (résultat), pas le `score`. La moitié de la campagne finale a
+  buté là-dessus : `--label-depth-by-phase` (approfondit le score, inutilisé) = no-op nocif,
+  `--phase-weight` = mort. Toujours tracer le levier jusqu'à la **cible de loss** réelle.
+- **Tester ISOLÉ, jamais combiné.** Le combiné « NMP+LMP+LMR off » washait à +2 (le +29 du
+  NMP masqué par le −13 du LMR) ; isolé, chaque mécanisme se lit. Un facteur par A/B.
+- **La RECHERCHE est un levier de 1er plan** (révise le « recherche = close ») : NMP net-négatif
+  = +97 Elo (3× la brique rois +37). Re-tuner les features gated par A/B, pas les présumer bonnes.
+- **Ablation systématique d'une régression** : isoler par re-entraînement sur la MÊME donnée
+  (0257 phase-weight, 0258 lowmem) avant d'accuser un facteur. Cheap, décisif.
+- **Confirmer une cadence avant de figer un défaut search structurant** : un gain mesuré à
+  mt0.2 peut être TC-dépendant (le bénéfice de profondeur de NMP grandit avec le temps) →
+  re-A/B à mt0.5 avant d'adopter (`0262`).
+
 ### RÉVISION (2026-06-13) — le proxy MENT, l'Elo réel devient la mesure primaire
 
 Le job **0216 (B4)** a montré que le proxy (accord-score vs Scan-d10) **SOUS-LIT
@@ -174,17 +189,32 @@ finale) → **activé par défaut** (`eg_pieces=12, eg_no_nmp=true`). `eg_no_lmr
 (gardé ON). Le combiné « tout off » = +2.3 (washout) → **tester ISOLÉ était décisif** (le
 +29 du NMP était masqué par le −13 du LMR). Suivi possible : balayer le seuil (8/14).
 
-> **RÈGLE `--phase-weight` (densification)** : plafond **~3-4 MAX** ; départ `0254` =
-> `endgame=3,deep-eg=3`. NB le risque « pénaliser l'ouverture » est **structurellement
-> amorti** par le phase-split mg/eg : sur-pondérer la finale tire surtout sur le **banc EG**,
-> qui touche peu les positions d'ouverture (banc MG) ; de plus l'ouverture est sur-
-> représentée et triviale à fitter (RMSE 48cp) → quasi-parfaite même à poids réduit. Donc
-> 2/3 est un peu trop timide ; 3/3 est visible sans danger. Ne PAS mettre au plafond (4)
-> sur un run qui change déjà labels+lowmem (attribution). La sélection reste la **val-loss** ;
-> surveiller le `val/phase mse` imprimé (perte finale DOIT chuter, ouverture NE DOIT PAS
-> régresser) et n'**escalader** que si l'ouverture tient. Les labels profonds (front éval)
-> font déjà le gros du travail ; le poids ne fait que *nudger*. VERDICT au **movetime vs
-> Scan** (finale search-bound → budget réaliste où la recherche rattrape). Boucle = `0254`.
+### VERDICT CAMPAGNE FINALES + RECHERCHE (2026-06-15, 0254-0263) — supersède la règle phase-weight ci-dessus
+
+> **⚠️ La « RÈGLE `--phase-weight` » est CADUQUE — phase-weight est MORT.** La densif `0254`
+> (`--phase-weight` + `--label-depth-by-phase`) a fait **−80 Elo** vs 0241. Ablations : `0257`
+> innocente phase-weight, `0258` innocente lowmem → cause = la **donnée** (label-depth = no-op
+> qui pollue la TT). Puis `0261` (distill score) : phase-weight = **−210 Elo** sur de BONS labels.
+> → **`--phase-weight` et `--label-depth-by-phase`-en-boucle-WDL = cimetière.**
+
+**Ce qui MARCHE / le plan vivant :**
+1. **Levier finale (éval) = `--play-depth-by-phase`** : la boucle s'entraîne sur le **WDL**, donc
+   on ne pondère pas et on n'approfondit pas le *label* — on **JOUE les finales profond** →
+   WDL de finale fiables → la boucle apprend la finale. Boucle `0263` (= 0241 + play profond
+   finale, sans phase-weight/label-depth). Cible : battre +229 ET val_endgame_mse bas. À valider
+   à l'**autopsie** (perte finale < 3.6 de 0250) et **vs Scan**.
+2. **Distillation sur SCORE** (`--target score`, PAS logistic) = **+141 vs hc** (> distill-WDL 0237
+   +90) → bonne **source** de finale, sous le self-play. Blend éventuel (anchor anti-forget, banc
+   EG vers distill / banc MG libre) si Chemin B insuffisant.
+3. **Recherche = gros levier** : **NMP net-négatif en jass** (zugzwang omniprésent). Sweep
+   `0256`/`0259` **monotone** → désactiver NMP = **+97 Elo** à thr36 (≈ partout). `use_improving`
+   = +22. Déployés ; seuil NMP en confirmation mt0.5 (`0262`) avant de figer (12 → ~36/off).
+
+**Leçons de méthode (→ plan d'expérience)** : (a) **vérifier le SIGNAL d'entraînement** (WDL vs
+score) avant d'ajouter un levier — la moitié de la campagne a buté dessus ; (b) **tester ISOLÉ**,
+jamais combiné (le combiné « NMP+LMP+LMR off » washait le +29 du NMP) ; (c) un **levier de search
+peut valoir 3× un levier d'éval** (NMP +97 >> brique rois +37) — la recherche n'est PAS un domaine
+clos.
 
 ---
 

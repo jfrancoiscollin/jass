@@ -516,6 +516,39 @@ mesure corrigé : les matchs vs Scan en **profondeur fixe sans plafond temps** e
 borner au movetime**. Proxy : confirmé **retiré** comme juge de force (B4/0216) ; sélection
 de modèle par **val-loss**, verdict par **parties réelles**.
 
+### Phase 13 — Campagne FINALES (éval) + RECHERCHE (0249-0263, 2026-06-15)
+**Le diagnostic finale (deux microscopes).** Les autopsies phase×rois (`0249` men-only /
+`0250` king-aware) localisent le saignement : éval **≈Scan en ouverture/milieu** (perte
+oracle 0.05) mais **finale à rois ~3.6** (×50). Deux jobs tranchent le *pourquoi* :
+- **`0251` (plafond de classe par phase)** : sur labels Scan-d10 PARFAITS, la classe
+  king-aware **range très bien la finale** (spearman 0.73-0.79, sa meilleure phase) →
+  **PAS class-limited** ; notre éval self-play est juste **mal entraînée** en finale.
+- **`0252` (éval vs recherche)** : la finale est **SEARCH-BOUND** — éval pure (depth-1)
+  catastrophique (perte 7.25), la recherche profonde rattrape (mt2.0 = 1.71).
+
+**La densification finale — 3 leviers, 2 morts.** Tentative `0254` (boucle king-aware +
+`--label-depth-by-phase` + `--phase-weight`) : **−80 Elo vs 0241** (+149 vs +229). Ablations
+décisives : `0257` innocente phase-weight, `0258` innocente lowmem (full-batch = même +149)
+→ la cause est la **DONNÉE** : `--label-depth-by-phase` est un **no-op** (la boucle s'entraîne
+sur le **WDL**, pas le score) qui en plus **corrompt les parties** (la recherche de label
+profonde pollue la TT partagée). Puis `0261` (distillation SCORE + phase-weight) : phase-weight
+**−210 Elo** sur de BONS labels → **`--phase-weight` est MORT** (cimetière). MAIS la distillation
+sur **score** marche : **+141 vs hc** (> distill-WDL `0237` +90) → le score est le bon signal
+de teacher, sous le self-play en force globale. **Le vrai levier finale** (codé `0263`) :
+`--play-depth-by-phase` — **JOUER les finales profond** pendant le self-play → WDL de finale
+fiables → la boucle apprend la finale sans pondérer ni distiller. *Leçon de méthode : vérifier
+le SIGNAL d'entraînement (WDL vs score) avant d'ajouter un levier ; tester ISOLÉ (le combiné
+0255 « tout off » washait le +29 du NMP).*
+
+**La RECHERCHE redevient un levier (gros gain).** Features gated activées : `use_improving`
+**+22** (`0253`, conthist −11 laissé off). Surtout le **régime finale NMP** : sweep du seuil
+(`0256`+`0259`) **monotone croissant** jusqu'à thr36 = **+97 Elo** (≈ NMP désactivé partout) →
+**NMP est net-négatif en jass** (zugzwang omniprésent : « passer est sûr » est faux en
+permanence ; + captures obligatoires). Confirmation à mt0.5 en cours (`0262`). Déployés :
+`use_improving=true`, régime `eg_pieces`/`eg_no_nmp` (code search_params.hpp, default path
+byte-identique quand off). Outillage : `tools/phase_proxy.py` (accord statique par phase),
+`--phase-weight`/`--label-depth-by-phase`/`--play-depth-by-phase` (gated, rétro-compatibles).
+
 ### Lignée des modèles
 | Nom | Job | Données / labeller | Archi | Résultat phare |
 |---|---|---|---|---|
@@ -546,6 +579,11 @@ de modèle par **val-loss**, verdict par **parties réelles**.
 - **Géométrie comme levier** — close sous 3 angles (0230/0231/0234) : enrichir ne paie
   pas (54-pat +134 < 32-pat +175), importance uniforme (aucun gras), **élaguer = −31 Elo
   ET 0 vitesse** (la lenteur d'eval est dans les 106 extras, pas les lookups patterns).
+- **`--phase-weight`** (densifier la finale en pondérant les lignes) — **MORT** : −210 Elo
+  sur bons labels score (0261), neutre/négatif sur WDL (0254/0257). Sur-pondérer les scores
+  de grande magnitude de finale dé-calibre l'éval du gros du jeu ; le phase-split ne protège pas.
+- **`--label-depth-by-phase` en boucle WDL** — no-op (cible = WDL, pas score) ET nocif
+  (recherche de label profonde → pollue la TT → corrompt les parties jouées), −80 Elo (0254/0258).
 - **Extras structurels** (0172), **augmentation symétrie** (0185, 0.42→0.28),
   **filtre quiet** (post-score-drop) — **nuisent**.
 - **Self-distillation itérée** — dérive ; **WDL self-play** — toxique.
