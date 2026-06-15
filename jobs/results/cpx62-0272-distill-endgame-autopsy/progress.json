@@ -1,0 +1,33 @@
+{
+  "job_id": "cpx62-0272-distill-endgame-autopsy",
+  "snapshot_at": "2026-06-15T23:41:21+00:00",
+  "started_at": "2026-06-15T23:36:03+00:00",
+  "elapsed_seconds": 318,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 12608
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "distill-train.log",
+      "size_bytes": 1280
+    },
+    {
+      "name": "distill.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "featM",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "scan-mt05.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3029271       1       05:17  0.0  0.0 bash\n3029273 3029271       05:17  0.0  0.0 bash\n3029785 3029273       03:07  0.4  0.0 python3\n3029788 3029785       03:07 50.1  0.5 jass\n3029790 3029785       03:07 49.6  0.9 scan_linux\n3029793 3029785       03:07  0.0  0.0 jass\n"
+}
