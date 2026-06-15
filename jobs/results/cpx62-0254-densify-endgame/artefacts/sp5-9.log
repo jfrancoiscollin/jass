@@ -1,0 +1,26 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/sp5-9.jnnw eval_depth=6 play_depth=4 max_plies=200 seed=28606 nnue=/root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/gen4.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=endgame:12,deep-eg:14
+  played 50 games, 1527 / 37500 positions
+  played 100 games, 3011 / 37500 positions
+  played 150 games, 4524 / 37500 positions
+  played 200 games, 6049 / 37500 positions
+  played 250 games, 7613 / 37500 positions
+  played 300 games, 9130 / 37500 positions
+  played 350 games, 10570 / 37500 positions
+  played 400 games, 12105 / 37500 positions
+  played 450 games, 13708 / 37500 positions
+  played 500 games, 15243 / 37500 positions
+  played 550 games, 16777 / 37500 positions
+  played 600 games, 18260 / 37500 positions
+  played 650 games, 19881 / 37500 positions
+  played 700 games, 21437 / 37500 positions
+  played 750 games, 22980 / 37500 positions
+  played 800 games, 24539 / 37500 positions
+  played 850 games, 26012 / 37500 positions
+  played 900 games, 27643 / 37500 positions
+  played 950 games, 29189 / 37500 positions
+  played 1000 games, 30728 / 37500 positions
+  played 1050 games, 32278 / 37500 positions
+  played 1100 games, 33830 / 37500 positions
+  played 1150 games, 35405 / 37500 positions
+  played 1200 games, 36975 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/sp5-9.jnnw

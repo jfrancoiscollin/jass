@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/cumulative.jnnw
+  900000 records  (0.05s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat1
+  extras shape (900000, 106)  (mean mob b/w=12.4/12.3)
+target=wdl  pos=336838 neg=326498 zero=236664 (26.3% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=336838 draw=236664 loss=326498 (26.3% draws)
+phase : piece-count mean=19.6  wmg mean=0.490
+split : train=810000 val=90000
+prune : keep 193,257 buckets (>= 1 visits) -> 386,516 pattern cols vs 34,012,224  (88.0× fewer); train fallback=0.000%
+design : 386728 columns (2×193258 pat + 2×106 ext)  [LOWMEM full-batch, on-the-fly extras]
+phase-weight : {'endgame': 3.0, 'deep-eg': 3.0}  (mass: opening 21.7%→12.5%  midgame 20.5%→11.8%  late-mid 21.0%→12.1%  endgame 22.5%→38.8%  deep-eg 14.4%→24.8%)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.517331  iters=200  (129.58s)
+val   : mse=1.820579  sign_acc=0.3015
+val/phase mse : opening=0.8202(n19474)  midgame=1.1960(n18403)  late-mid=1.8392(n18844)  endgame=3.4963(n20055)  deep-eg=1.5950(n13224)
+quant : scale=1000  pat range=[-661,661] ext_mg range=[-681,682]
+wrote /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/gen1.pjtw  (v3, 34012436 weights, 136049764 bytes)
