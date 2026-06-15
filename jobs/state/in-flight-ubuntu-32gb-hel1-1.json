@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0257-densify-ablation",
-  "script": "jobs/queue/cpx62-0257-densify-ablation.sh",
-  "pid": 3869885,
-  "started_at": "2026-06-15T01:34:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
