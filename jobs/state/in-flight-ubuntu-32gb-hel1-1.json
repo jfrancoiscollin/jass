@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0266-kingloop-deepplay",
+  "script": "jobs/queue/cpx62-0266-kingloop-deepplay.sh",
+  "pid": 371075,
+  "started_at": "2026-06-15T21:12:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
