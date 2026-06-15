@@ -1,0 +1,21 @@
+{
+  "job_id": "cpx62-0258-lowmem-check",
+  "snapshot_at": "2026-06-15T02:16:33+00:00",
+  "started_at": "2026-06-15T02:11:32+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11571
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "fullbatch-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3909107       1       05:01  0.0  0.0 bash\n3909109 3909107       05:01  0.0  0.0 bash\n3909504 3909109       04:52  356 48.1 python3\n"
+}
