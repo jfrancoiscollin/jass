@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0254-densify-endgame",
-  "snapshot_at": "2026-06-15T00:09:03+00:00",
+  "snapshot_at": "2026-06-15T00:15:03+00:00",
   "started_at": "2026-06-14T20:35:06+00:00",
-  "elapsed_seconds": 12837,
+  "elapsed_seconds": 13197,
   "artefacts": [
     {
       "name": "build.log",
@@ -162,6 +162,10 @@
     },
     {
       "name": "scan-mt05.log",
+      "size_bytes": 5569
+    },
+    {
+      "name": "scan-mt1.log",
       "size_bytes": 0
     },
     {
@@ -741,5 +745,5 @@
       "size_bytes": 1477
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1    03:33:56  0.0  0.0 bash\n 952037  952035    03:33:56  0.0  0.0 bash\n3866212  952037       36:19  0.4  0.0 python3\n3866215 3866212       36:19 49.3  0.5 jass\n3866217 3866212       36:19 50.4  0.9 scan_linux\n3866220 3866212       36:19  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 952035       1    03:39:56  0.0  0.0 bash\n 952037  952035    03:39:56  0.0  0.0 bash\n3867211  952037       05:27  0.2  0.0 python3\n3867214 3867211       05:27 48.6  0.5 jass\n3867216 3867211       05:27 51.2  0.9 scan_linux\n3867219 3867211       05:27  0.0  0.0 jass\n"
 }
