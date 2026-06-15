@@ -1,0 +1,66 @@
+geometry: 32 patterns ; KING-AWARE build
+PARAMS: label-depth-by-phase=[endgame=12,deep-eg=14]  phase-weight=[endgame=3,deep-eg=3]  lowmem  base depth=6 play=4  600000/gen ×8
+=== gen0 : seed (300k self-play, labels profonds finale, l2=3e-2) KING-AWARE --full-fold --king-patterns ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat0
+  gen0 val_mse=1.032931  val_endgame=1.7262  Elo_vs_hc=112-6-152 elo=-51.9
+=== gen1 : +600000 self-play (labels profonds finale) avec gen0 → cumulé → logistic pondéré ===
+cumulative 900000
+wrote 900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat1
+  gen1 val_mse=1.820579  val_endgame=3.4963  Elo_vs_hc=184-6-80 elo=+141.1
+=== gen2 : +600000 self-play (labels profonds finale) avec gen1 → cumulé → logistic pondéré ===
+cumulative 1500000
+wrote 1500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat2
+  gen2 val_mse=1.780539  val_endgame=3.4264  Elo_vs_hc=193-3-74 elo=+164.4
+=== gen3 : +600000 self-play (labels profonds finale) avec gen2 → cumulé → logistic pondéré ===
+cumulative 2100000
+wrote 2100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat3
+  gen3 val_mse=1.618632  val_endgame=3.1628  Elo_vs_hc=199-2-69 elo=+182.4
+=== gen4 : +600000 self-play (labels profonds finale) avec gen3 → cumulé → logistic pondéré ===
+cumulative 2700000
+wrote 2700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat4
+  gen4 val_mse=1.611941  val_endgame=3.0570  Elo_vs_hc=189-4-77 elo=+153.4
+=== gen5 : +600000 self-play (labels profonds finale) avec gen4 → cumulé → logistic pondéré ===
+cumulative 3300000
+wrote 3300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat5
+  gen5 val_mse=1.630066  val_endgame=3.1702  Elo_vs_hc=180-5-85 elo=+127.7
+=== gen6 : +600000 self-play (labels profonds finale) avec gen5 → cumulé → logistic pondéré ===
+cumulative 3900000
+wrote 3900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat6
+  gen6 val_mse=1.476039  val_endgame=2.7756  Elo_vs_hc=171-12-87 elo=+111.8
+=== gen7 : +600000 self-play (labels profonds finale) avec gen6 → cumulé → logistic pondéré ===
+cumulative 4500000
+wrote 4500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat7
+  gen7 val_mse=1.655694  val_endgame=3.2718  Elo_vs_hc=191-7-72 elo=+164.4
+=== gen8 : +600000 self-play (labels profonds finale) avec gen7 → cumulé → logistic pondéré ===
+cumulative 5100000
+wrote 5100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0254-densify-endgame/artefacts.src/feat8
+  gen8 val_mse=1.624406  val_endgame=3.1642  Elo_vs_hc=189-5-76 elo=+154.9
+=== gen8 vs hc précis (60 paires) ===
+  743-32-305 elo=+149.5
+=== gen8 vs Scan @ mt0.5s (pairs=3) ===
+  mt0.5 :   Jass score rate: 0.000 (0.0 / 54)   ELO estimate:    -800 (95% CI ≈ ±109) 
+=== gen8 vs Scan @ mt1.0s (pairs=3) ===
+  mt1.0 :   Jass score rate: 0.009 (0.5 / 54)   ELO estimate:    -812 (95% CI ≈ ±109) 
+
+==========================================================
+   cpx62-0254 — DENSIFICATION FINALE (king-aware, labels profonds + ratio finale)
+   PARAMS : label[endgame=12,deep-eg=14]  phase-weight[endgame=3,deep-eg=3]  lowmem  base d6  600000/gen
+----------------------------------------------------------
+  gen0  Elo_vs_hc=112-6-152 elo=-51.9   val_endgame_mse=1.7262
+  gen1  Elo_vs_hc=184-6-80 elo=+141.1   val_endgame_mse=3.4963
+  gen2  Elo_vs_hc=193-3-74 elo=+164.4   val_endgame_mse=3.4264
+  gen3  Elo_vs_hc=199-2-69 elo=+182.4   val_endgame_mse=3.1628
+  gen4  Elo_vs_hc=189-4-77 elo=+153.4   val_endgame_mse=3.0570
+  gen5  Elo_vs_hc=180-5-85 elo=+127.7   val_endgame_mse=3.1702
+  gen6  Elo_vs_hc=171-12-87 elo=+111.8   val_endgame_mse=2.7756
+  gen7  Elo_vs_hc=191-7-72 elo=+164.4   val_endgame_mse=3.2718
+  gen8  Elo_vs_hc=189-5-76 elo=+154.9   val_endgame_mse=3.1642
+  gen8 (60p) vs hc : 743-32-305 elo=+149.5
+  gen8 vs Scan mt0.5 :   Jass score rate: 0.000 (0.0 / 54)   ELO estimate:    -800 (95% CI ≈ ±109) 
+  gen8 vs Scan mt1.0 :   Jass score rate: 0.009 (0.5 / 54)   ELO estimate:    -812 (95% CI ≈ ±109) 
+----------------------------------------------------------
+  LECTURE : val_endgame_mse DOIT chuter gen-après-gen (l'éval apprend la finale)
+            ET Elo monter au-dessus de 0241 (+229.5 @60p) = densification finale gagnante.
+  gen8.pjtw conservé pour autopsie king-aware vs Scan (comparer 0250 : endgame king 3.6).
+==========================================================
