@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0264-retune-nmpoff",
-  "script": "jobs/queue/ccx33-0264-retune-nmpoff.sh",
-  "pid": 1419459,
-  "started_at": "2026-06-15T16:00:36+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

@@ -1,0 +1,29 @@
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [lmr] A=[lmr_base=2] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+=== [lmp] A=[lmp_d1=3,lmp_d2=6,lmp_d3=10] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+=== [rfp] A=[rfp_max_depth=7] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+
+==========================================================
+   ccx33-0264 — RE-TUNE LMR/LMP/RFP avec NMP OFF : A=plus agressif vs B=baseline
+   éval=gen8.pjtw  mt=200ms  ~450 parties/comparaison
+----------------------------------------------------------
+  [lmr]  A=194 B=242 D=14
+      games=450  W=194 D=14 L=242
+      score=0.4467  95%CI=[0.4014, 0.4929] (Wilson)
+      elo=-37.2  95%CI=[-69.4, -5.0]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.761  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [lmp]  A=196 B=234 D=20
+      games=450  W=196 D=20 L=234
+      score=0.4578  95%CI=[0.4123, 0.5040] (Wilson)
+      elo=-29.4  95%CI=[-61.6, +2.8]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.621  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [rfp]  A=203 B=229 D=18
+      games=450  W=203 D=18 L=229
+      score=0.4711  95%CI=[0.4254, 0.5173] (Wilson)
+      elo=-20.1  95%CI=[-52.2, +12.0]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.438  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  Un candidat nettement >0 → l'adopter (search_params.hpp) puis raffiner (sweep du knob).
+  Tous ~0 → le tuning LMR/LMP/RFP est robuste à NMP-off (rien à changer là).
+  Un candidat <0 → trop agressif sans NMP (les coupes manquent des tactiques).
+==========================================================
