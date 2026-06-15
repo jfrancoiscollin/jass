@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "snapshot_at": "2026-06-15T17:43:03+00:00",
+  "snapshot_at": "2026-06-15T17:48:51+00:00",
   "started_at": "2026-06-15T10:40:11+00:00",
-  "elapsed_seconds": 25372,
+  "elapsed_seconds": 25720,
   "artefacts": [
     {
       "name": "build.log",
@@ -741,5 +741,5 @@
       "size_bytes": 1438
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381657 1936265       29:46  0.4  0.0 python3\n 381660  381657       29:46 49.3  0.5 jass\n 381662  381657       29:46 50.4  0.9 scan_linux\n 381665  381657       29:46  0.0  0.0 jass\n1936263       1    07:02:52  0.0  0.0 bash\n1936265 1936263    07:02:52  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381657 1936265       35:34  0.4  0.0 python3\n 381660  381657       35:34 49.0  0.5 jass\n 381662  381657       35:34 50.7  0.9 scan_linux\n 381665  381657       35:34  0.0  0.0 jass\n1936263       1    07:08:39  0.0  0.0 bash\n1936265 1936263    07:08:39  0.0  0.0 bash\n"
 }
