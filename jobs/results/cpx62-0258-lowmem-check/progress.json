@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0258-lowmem-check",
-  "snapshot_at": "2026-06-15T02:16:33+00:00",
+  "snapshot_at": "2026-06-15T02:21:38+00:00",
   "started_at": "2026-06-15T02:11:32+00:00",
-  "elapsed_seconds": 301,
+  "elapsed_seconds": 606,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,9 +13,17 @@
       "size_bytes": 733
     },
     {
-      "name": "fullbatch-train.log",
+      "name": "elo-fullbatch.log",
       "size_bytes": 0
+    },
+    {
+      "name": "fullbatch-train.log",
+      "size_bytes": 1324
+    },
+    {
+      "name": "fullbatch.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3909107       1       05:01  0.0  0.0 bash\n3909109 3909107       05:01  0.0  0.0 bash\n3909504 3909109       04:52  356 48.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3909107       1       10:06  0.0  0.0 bash\n3909109 3909107       10:06  0.0  0.0 bash\n3909773 3909109       04:47  0.0  0.0 bash\n3909775 3909773       04:47 1114  0.6 jass\n"
 }
