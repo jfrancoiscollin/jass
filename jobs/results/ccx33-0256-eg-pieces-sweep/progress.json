@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0256-eg-pieces-sweep",
-  "snapshot_at": "2026-06-15T00:03:56+00:00",
+  "snapshot_at": "2026-06-15T00:08:58+00:00",
   "started_at": "2026-06-14T23:27:34+00:00",
-  "elapsed_seconds": 2182,
+  "elapsed_seconds": 2484,
   "artefacts": [
     {
       "name": "ab-thr12.log",
@@ -25,5 +25,5 @@
       "size_bytes": 672
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1393683       1       36:22  0.0  0.0 bash\n1393685 1393683       36:21  0.0  0.0 bash\n1394093 1393685       36:12  0.0  0.0 bash\n1394094 1393685       36:12  0.0  0.0 bash\n1394095 1393685       36:12  0.0  0.0 bash\n1394096 1394093       36:12 99.9  0.5 jass\n1394097 1394095       36:12 99.9  0.5 jass\n1394098 1394094       36:12 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1393683       1       41:23  0.0  0.0 bash\n1393685 1393683       41:23  0.0  0.0 bash\n1394093 1393685       41:14  0.0  0.0 bash\n1394094 1393685       41:14  0.0  0.0 bash\n1394095 1393685       41:14  0.0  0.0 bash\n1394096 1394093       41:14 99.9  0.5 jass\n1394097 1394095       41:14 99.9  0.5 jass\n1394098 1394094       41:14 99.9  0.5 jass\n"
 }
