@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0266-kingloop-deepplay",
-  "snapshot_at": "2026-06-15T21:28:38+00:00",
+  "snapshot_at": "2026-06-15T21:34:02+00:00",
   "started_at": "2026-06-15T21:12:03+00:00",
-  "elapsed_seconds": 995,
+  "elapsed_seconds": 1319,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 34200008
+      "size_bytes": 57000008
     },
     {
       "name": "elo-gen0.log",
@@ -25,12 +25,20 @@
       "size_bytes": 277
     },
     {
+      "name": "elo-gen2.log",
+      "size_bytes": 0
+    },
+    {
       "name": "feat0",
       "size_bytes": 127200012
     },
     {
       "name": "feat1",
       "size_bytes": 381600012
+    },
+    {
+      "name": "feat2",
+      "size_bytes": 636000012
     },
     {
       "name": "gen0-train.log",
@@ -46,6 +54,14 @@
     },
     {
       "name": "gen1.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen2-train.log",
+      "size_bytes": 1318
+    },
+    {
+      "name": "gen2.pjtw",
       "size_bytes": 136049764
     },
     {
@@ -177,133 +193,69 @@
       "size_bytes": 1478
     },
     {
-      "name": "sp2-1.jnnw",
-      "size_bytes": 845426
-    },
-    {
       "name": "sp2-1.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-10.jnnw",
-      "size_bytes": 845426
+      "size_bytes": 1478
     },
     {
       "name": "sp2-10.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-11.jnnw",
-      "size_bytes": 853634
+      "size_bytes": 1480
     },
     {
       "name": "sp2-11.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-12.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 1480
     },
     {
       "name": "sp2-12.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-13.jnnw",
-      "size_bytes": 845426
+      "size_bytes": 1435
     },
     {
       "name": "sp2-13.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-14.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 1480
     },
     {
       "name": "sp2-14.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-15.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 1480
     },
     {
       "name": "sp2-15.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-16.jnnw",
-      "size_bytes": 845426
+      "size_bytes": 1435
     },
     {
       "name": "sp2-16.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-2.jnnw",
-      "size_bytes": 829010
+      "size_bytes": 1480
     },
     {
       "name": "sp2-2.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-3.jnnw",
-      "size_bytes": 845426
+      "size_bytes": 1477
     },
     {
       "name": "sp2-3.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-4.jnnw",
-      "size_bytes": 861842
+      "size_bytes": 1432
     },
     {
       "name": "sp2-4.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-5.jnnw",
-      "size_bytes": 853634
+      "size_bytes": 1478
     },
     {
       "name": "sp2-5.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-6.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 1432
     },
     {
       "name": "sp2-6.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-7.jnnw",
-      "size_bytes": 837218
+      "size_bytes": 1478
     },
     {
       "name": "sp2-7.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-8.jnnw",
-      "size_bytes": 861842
+      "size_bytes": 1478
     },
     {
       "name": "sp2-8.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp2-9.jnnw",
-      "size_bytes": 861842
+      "size_bytes": 1432
     },
     {
       "name": "sp2-9.log",
-      "size_bytes": 0
+      "size_bytes": 1478
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1       16:35  0.0  0.0 bash\n 371077  371075       16:35  0.0  0.0 bash\n1449964  371077       03:29 99.9  0.5 jass\n1449965  371077       03:29 99.9  0.5 jass\n1449966  371077       03:29 99.9  0.5 jass\n1449967  371077       03:29 99.9  0.5 jass\n1449968  371077       03:29 99.9  0.5 jass\n1449969  371077       03:29 99.9  0.5 jass\n1449970  371077       03:29 99.9  0.5 jass\n1449971  371077       03:29 99.9  0.5 jass\n1449972  371077       03:29 99.9  0.5 jass\n1449973  371077       03:29 99.9  0.5 jass\n1449974  371077       03:29 99.9  0.5 jass\n1449975  371077       03:29 99.9  0.5 jass\n1449976  371077       03:29 99.9  0.5 jass\n1449977  371077       03:29 99.9  0.5 jass\n1449978  371077       03:29 99.9  0.5 jass\n1449979  371077       03:29 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1       21:59  0.0  0.0 bash\n 371077  371075       21:59  0.0  0.0 bash\n1450176  371077       01:16  0.0  0.0 bash\n1450178 1450176       01:16 1147  0.6 jass\n"
 }
