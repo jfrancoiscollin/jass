@@ -1,0 +1,21 @@
+réutilise featM de 0260
+=== A : distillation SCORE SANS phase-weight (contrôle) ===
+  [noPW] l2=3e-4 val_mse=1.766302
+  [noPW] l2=1e-4 val_mse=1.758665
+=== B : distillation SCORE AVEC phase-weight endgame=3,deep-eg=3 ===
+  [withPW] l2=3e-4 val_mse=1.798708
+  [withPW] l2=1e-4 val_mse=1.779149
+A_EVAL=/root/jass/jobs/results/cpx62-0261-endgame-distill-v2/artefacts.src/noPW-l21e-4.pjtw  B_EVAL=/root/jass/jobs/results/cpx62-0261-endgame-distill-v2/artefacts.src/withPW-l21e-4.pjtw
+
+==========================================================
+   cpx62-0261 — DISTILLATION FINALE SUR SCORE (king-aware, Scan-d10)
+----------------------------------------------------------
+  A SANS phase-weight : l2=1e-4  val_endgame_mse=4.4196  Elo_vs_hc=738-20-322 elo=+141.1
+  B AVEC phase-weight : l2=1e-4  val_endgame_mse=4.3475  Elo_vs_hc=424-15-641 elo=-70.8
+  meilleure vs Scan mt0.5 :   Jass score rate: 0.000 (0.0 / 54)   ELO estimate:    -800 (95% CI ≈ ±109) 
+  (rappels : self-play 0241 +229 vs hc ; distill-WDL 0237 +90.8)
+----------------------------------------------------------
+  B val_endgame_mse < A SANS casser l'Elo global → phase-weight MARCHE sur bons labels.
+  Si distill-score >> distill-WDL 0237 → le SCORE est le bon signal de finale.
+  Suite probable : BLENDER self-play (force globale) + distill-finale (anti-forget anchor).
+==========================================================

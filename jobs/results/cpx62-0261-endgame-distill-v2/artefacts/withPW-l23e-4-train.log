@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/featM
+  extras shape (1420193, 106)  (mean mob b/w=10.2/10.2)
+target=score  clipped±2000cp / 100  std=3.332
+phase : piece-count mean=24.0  wmg mean=0.600
+score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+split : train=1254026 val=139336
+prune : keep 203,356 buckets (>= 1 visits) -> 406,714 pattern cols vs 34,012,224  (83.6× fewer); train fallback=0.000%
+design : 406926 columns (2×203357 pat + 2×106 ext)
+phase-weight : {'endgame': 3.0, 'deep-eg': 3.0}  (mass: opening 39.2%→26.8%  midgame 21.4%→14.6%  late-mid 16.2%→11.1%  endgame 15.1%→30.9%  deep-eg 8.1%→16.7%)
+L-BFGS  l2=0.0003  max_iter=300  (pure)
+  train_loss=1.324649  iters=300  (107.76s)
+val   : mse=1.798708  sign_acc=0.0011
+val/phase mse : opening=0.2079(n54611)  midgame=1.1072(n29721)  late-mid=2.8527(n22596)  endgame=4.4789(n21025)  deep-eg=4.1936(n11383)
+quant : scale=1000  pat range=[-1618,1618] ext_mg range=[-1295,1360]
+wrote /root/jass/jobs/results/cpx62-0261-endgame-distill-v2/artefacts.src/withPW-l23e-4.pjtw  (v3, 34012436 weights, 136049764 bytes)
