@@ -130,13 +130,16 @@ inline int phase_index_of(int pieces) noexcept {
     return 4;                     // deep-eg
 }
 
-// Parse "endgame=16,deep-eg=20" into per-phase ABSOLUTE label-search depths
-// (0 = no override → use the base eval_depth). Lets self-play spend DEEPER
-// labelling search where our linear eval is weakest (king endgames, cf jobs
-// 0249/0250/0251) without slowing the cheap, low-variance opening labels.
+// Parse "endgame=16,deep-eg=20" into per-phase ABSOLUTE search depths (0 = no
+// override → use the base depth). Shared by --label-depth-by-phase (deeper
+// LABELLING search) and --play-depth-by-phase (deeper PLAY search so the WDL
+// outcome of endgames is accurate — cf the 0254/0261 finding that the loop
+// trains on WDL, so what fixes endgame labels is playing them deeper, not a
+// deeper label search or row-weighting). `flag` names the option in warnings.
 // Unknown phase names are reported and ignored; whitespace is tolerated.
-std::array<int, NUM_PHASES> parse_label_depth_by_phase(const std::string& spec) {
-    std::array<int, NUM_PHASES> out{};   // all 0 = "use eval_depth"
+std::array<int, NUM_PHASES> parse_depth_by_phase(const std::string& spec,
+                                                 const char* flag) {
+    std::array<int, NUM_PHASES> out{};   // all 0 = "use base depth"
     std::size_t i = 0;
     while (i < spec.size()) {
         const std::size_t comma = spec.find(',', i);
@@ -156,14 +159,14 @@ std::array<int, NUM_PHASES> parse_label_depth_by_phase(const std::string& spec) 
             if (name == PHASE_NAMES[p]) { out[p] = d; known = true; break; }
         }
         if (!known) {
-            std::cerr << "warning: --label-depth-by-phase: unknown phase '"
+            std::cerr << "warning: " << flag << ": unknown phase '"
                       << name << "' ignored\n";
         } else if (d <= 0) {
-            // A non-positive depth silently means "use eval_depth" downstream;
+            // A non-positive depth silently means "use base depth" downstream;
             // warn so a sign typo (endgame=-16) doesn't quietly disable the
-            // intended deeper labelling for that phase.
-            std::cerr << "warning: --label-depth-by-phase: " << name
-                      << " depth " << d << " <= 0 → using eval_depth for it\n";
+            // intended deeper search for that phase.
+            std::cerr << "warning: " << flag << ": " << name
+                      << " depth " << d << " <= 0 → using base depth for it\n";
         }
     }
     return out;
@@ -317,6 +320,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      self-play); play_depth becomes a cap
     std::string  label_depth_spec;          // "endgame=16,deep-eg=20" → deeper LABEL
                                             //      search by phase (empty = eval_depth)
+    std::string  play_depth_spec;           // "endgame=12,deep-eg=14" → deeper PLAY
+                                            //      search by phase → accurate endgame WDL
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -342,11 +347,16 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (v >= 0) movetime_ms = v;
         } else if (a == "--label-depth-by-phase" && i + 1 < argc) {
             label_depth_spec = argv[++i];
+        } else if (a == "--play-depth-by-phase" && i + 1 < argc) {
+            play_depth_spec = argv[++i];
         } else {
             positional.push_back(argv[i]);
         }
     }
-    const std::array<int, NUM_PHASES> label_depth = parse_label_depth_by_phase(label_depth_spec);
+    const std::array<int, NUM_PHASES> label_depth =
+        parse_depth_by_phase(label_depth_spec, "--label-depth-by-phase");
+    const std::array<int, NUM_PHASES> play_depth_by_phase =
+        parse_depth_by_phase(play_depth_spec, "--play-depth-by-phase");
     const int p_argc = static_cast<int>(positional.size());
     char** const p_argv = positional.data();
 
@@ -392,6 +402,17 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             }
         }
         if (!any) std::cout << " label_depth_by_phase=(uniform eval_depth)";
+    }
+    {
+        bool any = false;
+        for (int p = 0; p < NUM_PHASES; ++p) {
+            if (play_depth_by_phase[p] > 0) {
+                std::cout << (any ? "," : " play_depth_by_phase=")
+                          << PHASE_NAMES[p] << ":" << play_depth_by_phase[p];
+                any = true;
+            }
+        }
+        if (!any) std::cout << " play_depth_by_phase=(uniform play_depth)";
     }
     std::cout << '\n';
 
@@ -581,7 +602,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             }
 
             SearchLimits lim;
-            lim.max_depth = play_depth;
+            // Phase-dependent PLAY depth : play endgames deeper so the resolved
+            // WDL outcome is accurate (the loop trains on WDL — the corrected
+            // endgame densification lever, cf jobs 0254/0261). Default (empty
+            // spec) = uniform play_depth (back-compatible). Endgames are cheap
+            // (few pieces) so the extra depth there costs little.
+            const int phase_pd =
+                play_depth_by_phase[phase_index_of(popcount(e.position().occupied()))];
+            lim.max_depth = (phase_pd > 0) ? phase_pd : play_depth;
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
             const SearchResult r = e.search(lim);
             if (!e.apply_move(r.best_move)) break;
@@ -2508,15 +2536,18 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--label-depth-by-phase SPEC]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
-                "                                   --label-depth-by-phase\n"
-                "                                   \"endgame=16,deep-eg=20\" labels\n"
+                "                                   --play-depth-by-phase\n"
+                "                                   \"endgame=12,deep-eg=14\" PLAYS\n"
                 "                                   those phases at a DEEPER search\n"
-                "                                   (others keep eval_depth) — feed\n"
-                "                                   the linear eval better endgame\n"
-                "                                   targets where it's weakest.\n"
+                "                                   (others keep play_depth) so the\n"
+                "                                   endgame WDL outcomes are accurate\n"
+                "                                   — the corrected endgame lever\n"
+                "                                   (the loop trains on WDL, so play\n"
+                "                                   endgames well, don't deepen the\n"
+                "                                   unused label score or weight rows).\n"
                 "                                   Higher eval_depth = cleaner\n"
                 "                                   training signal; non-zero\n"
                 "                                   `seed` shifts the RNG state\n"
