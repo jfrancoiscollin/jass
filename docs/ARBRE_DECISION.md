@@ -3,7 +3,7 @@
 > **Doc VIVANT.** À chaque verdict de job, on **élague** (✂️ une branche morte,
 > avec sa raison) ou on **active** (🟢) la branche à explorer. Lire avec
 > [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) (ancres + faits) et
-> [ROADMAP.md](ROADMAP.md). Mise à jour : **2026-06-12** (0203 en cours).
+> [ROADMAP.md](ROADMAP.md). Mise à jour : **2026-06-15** (campagne finales + recherche 0249-0263).
 >
 > **Légende** : 🟢 chemin actif · 🔵 branche ouverte (à explorer) · ✂️ élaguée
 > (morte, raison donnée) · ⭐ candidat le plus probable · 📍 position actuelle.
@@ -12,11 +12,17 @@
 
 ## Acquis (racine — déjà tranché)
 
-- **Levier = l'EVAL.** ✂️ Recherche (complète, cf. ARCHITECTURE.md) · ✂️ vitesse
-  pure (0201 : +4 plies ne ramènent pas à parité Scan) → secondaires.
+- **Levier = l'EVAL** (principal) **+ la RECHERCHE** (réactivé 2026-06-15). La
+  recherche n'est PLUS un levier mort : **NMP est net-négatif en jass** (zugzwang
+  omniprésent → −% Elo ; sweep 0256/0259 : désactiver NMP = jusqu'à **+97 Elo**) et
+  l'**improving-heuristic** = +22 (0253). Vitesse pure reste secondaire (0201).
 - **Juge = Scan** à profondeur égale (✂️ v15 : flatteur, ≈ 0 vs Scan).
-- **Cible label = WDL itéré.** ✂️ deep-score (distillation, plafonné au
-  générateur — 0200/0202) · ✂️ WDL 1-cycle (0196 : sans itération ça ne monte pas).
+- **Cible label = WDL itéré** (production). La **distillation sur SCORE** n'est PAS
+  morte comme source de qualité (0261 : +141 vs hc, > distill-WDL 0237 +90) mais reste
+  sous le self-play en force globale ✂️ comme éval unique. ✂️ WDL 1-cycle (0196).
+- **Phase faible = la FINALE** (autopsies 0249/0250 : ≈Scan en ouverture/milieu, saigne
+  en finale à rois). Attaquée par : (a) **play profond en finale** (`--play-depth-by-phase`,
+  Chemin B) pour des WDL de finale fiables ; (b) la recherche (NMP off). PAS par pondération.
 
 ---
 
@@ -148,7 +154,9 @@ NŒUD 4 (transverse) — Indépendance vs force
 
 | Branche | Pourquoi morte | Preuve |
 |---|---|---|
-| Ajouter des techniques de **recherche** | déjà complète | ARCHITECTURE.md |
+| ~~Techniques de recherche « déjà complète »~~ | **RÉVISÉ 2026-06-15** : NON — NMP net-négatif (+97 à désactiver), improving +22. La recherche est un LEVIER VIVANT. | 0253/0256/0259 |
+| **`--phase-weight`** (densifier la finale en pondérant les lignes) | **MORTE** : −210 Elo sur bons labels score (0261), neutre/négatif sur WDL (0254/0257). Sur-pondérer les scores de grande magnitude de finale dé-calibre l'éval du gros du jeu. | 0254/0257/0261 |
+| **`--label-depth-by-phase`** dans la boucle WDL | **MORTE** : no-op (la boucle s'entraîne sur le WDL, pas le score) ET nocif (la recherche de label profonde pollue la TT → corrompt les parties jouées, −80 Elo). | 0254/0258 |
 | **Vitesse / NPS** comme levier principal | +4 plies ne compensent pas l'eval | 0201 |
 | **Deep-score relabel** (labels = score de recherche) | distillation → plafonné au générateur | 0200/0202 |
 | **WDL 1-cycle** (sans itérer) | ne monte pas ; un cycle ≠ compounding | 0196 |
