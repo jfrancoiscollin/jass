@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "snapshot_at": "2026-06-15T17:04:50+00:00",
+  "snapshot_at": "2026-06-15T17:10:03+00:00",
   "started_at": "2026-06-15T10:40:11+00:00",
-  "elapsed_seconds": 23079,
+  "elapsed_seconds": 23392,
   "artefacts": [
     {
       "name": "build.log",
@@ -47,6 +47,10 @@
     {
       "name": "elo-gen7.log",
       "size_bytes": 278
+    },
+    {
+      "name": "elo-gen8.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -150,7 +154,11 @@
     },
     {
       "name": "gen8-train.log",
-      "size_bytes": 0
+      "size_bytes": 1330
+    },
+    {
+      "name": "gen8.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -729,5 +737,5 @@
       "size_bytes": 1438
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1936263       1    06:24:39  0.0  0.0 bash\n1936265 1936263    06:24:39  0.0  0.0 bash\n1984723 1936265       04:36  345 39.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1936263       1    06:29:52  0.0  0.0 bash\n1936265 1936263    06:29:52  0.0  0.0 bash\n2505889 1936265       02:41  0.0  0.0 bash\n2505891 2505889       02:41 1072  0.6 jass\n"
 }
