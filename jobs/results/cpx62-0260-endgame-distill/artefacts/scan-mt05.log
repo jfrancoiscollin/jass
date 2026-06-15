@@ -1,0 +1,21 @@
+opening pool: 9 positions
+jass setup:   pattern=  [noPW] l2=3e-4 val_mse=1.766302
+  [noPW] l2=1e-4 val_mse=1.758665
+/root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/noPW-l21e-4.pjtw  book=(default/none)
+scan setup:   book=off  bb-size=0
+Traceback (most recent call last):
+  File "/root/jass/tools/calibrate_vs_scan.py", line 751, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ~~~~^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 670, in main
+    jass = JassEngine(args.jass, label="Jass-player",
+                      no_nnue=args.no_nnue, nnue_path=args.nnue,
+                      pattern_path=args.jass_pattern,
+                      book_path=args.jass_book,
+                      threads=args.jass_threads)
+  File "/root/jass/tools/calibrate_vs_scan.py", line 277, in __init__
+    self._read_until(lambda l: l.startswith("ready"))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 236, in _read_until
+    raise EOFError(f"{self.label}: stdout closed")
+EOFError: Jass-player: stdout closed

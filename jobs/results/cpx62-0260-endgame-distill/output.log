@@ -1,0 +1,29 @@
+master=1420193 positions Scan-d10
+=== dump eval-features (extras) sur le master ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/featM
+=== A : distillation SCORE SANS phase-weight (contrôle) ===
+=== B : distillation SCORE AVEC phase-weight endgame=3,deep-eg=3 ===
+grep:   [noPW] l2=3e-4 val_mse=1.766302
+  [noPW] l2=1e-4 val_mse=1.758665
+/root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/noPW-l21e-4-train.log: No such file or directory
+grep:   [withPW] l2=3e-4 val_mse=1.798708
+  [withPW] l2=1e-4 val_mse=1.779149
+/root/jass/jobs/results/cpx62-0260-endgame-distill/artefacts.src/withPW-l21e-4-train.log: No such file or directory
+
+==========================================================
+   cpx62-0260 — DISTILLATION FINALE SUR SCORE (king-aware, Scan-d10)
+----------------------------------------------------------
+  A SANS phase-weight : l2=  [noPW] l2=3e-4 val_mse=1.766302
+  [noPW] l2=1e-4 val_mse=1.758665
+1e-4  val_endgame_mse=  Elo_vs_hc=0-0-0 elo=-0.0
+  B AVEC phase-weight : l2=  [withPW] l2=3e-4 val_mse=1.798708
+  [withPW] l2=1e-4 val_mse=1.779149
+1e-4  val_endgame_mse=  Elo_vs_hc=0-0-0 elo=-0.0
+  meilleure vs Scan mt0.5 : (Scan indispo)
+  (rappels : self-play 0241 +229 vs hc ; distill-WDL 0237 +90.8)
+----------------------------------------------------------
+  B val_endgame_mse < A SANS casser l'Elo global → phase-weight MARCHE sur bons labels
+  (≠ WDL self-play où il nuisait). Si distill score >> distill-WDL 0237 → le SCORE est
+  le bon signal de finale. Étape suivante probable : BLENDER self-play (force globale) +
+  distill-finale (anti-forget anchor) pour cumuler force d'ouverture ET qualité de finale.
+==========================================================
