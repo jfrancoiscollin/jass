@@ -124,13 +124,17 @@ struct SearchParams {
     // turned OFF, trading a few nodes for accuracy where the engine is most
     // search-bound (job 0252) and most prone to discarding the one precise
     // winning line (zugzwang for NMP; sharp quiet wins for LMP/LMR).
-    // Default = NMP off below 12 pieces : job 0255 A/B (mt0.2, 450 games)
-    // measured eg_no_nmp = +29.4 Elo [CI -2.8,+61.6] (zugzwang — NMP's "passing
-    // is safe" assumption fails in endgames), the strongest search signal of the
-    // session. eg_no_lmr was -13 (LMR buys depth, which the search-bound endgame
-    // needs → keep it ON) and eg_no_lmp ~0 (keep ON). Net measured at movetime so
-    // the regime's own cost (one popcount/node) is already priced into the +29.
-    int  eg_pieces  = 12;         // 0 = off ; else popcount threshold (<=)
+    // Default = NMP OFF EVERYWHERE (eg_pieces=40 ≥ max 40 pieces). Sweep 0256/0259
+    // (mt0.2) was monotone-increasing — disabling NMP below 12 = +29, below 36 =
+    // +97 — and confirmation 0262 (mt0.5) gave thr40 = **+106 Elo** [CI +67,+146],
+    // i.e. the gain GREW at the slower TC (NMP does not "catch up" at longer time —
+    // it hurts more). Null-move pruning is net-negative in jass : draughts is
+    // zugzwang-pervasive (you must move; being forced to is often bad) so NMP's
+    // "passing is safe" premise fails throughout the game, plus mandatory captures
+    // make tempo sharp. eg_no_lmr was -13 (LMR buys the depth the search-bound
+    // endgame needs → kept ON) and eg_no_lmp ~0 (kept ON). eg_pieces=0 disables
+    // the whole regime (true no-op : popcount short-circuited).
+    int  eg_pieces  = 40;         // 0 = off ; else popcount threshold (<=). 40 = always.
     bool eg_no_nmp  = true;       // disable null-move pruning in the endgame regime
     bool eg_no_lmp  = false;      // disable late-move pruning in the endgame regime
     bool eg_no_lmr  = false;      // disable late-move reductions in the endgame regime

@@ -207,8 +207,10 @@ finale) → **activé par défaut** (`eg_pieces=12, eg_no_nmp=true`). `eg_no_lmr
    +90) → bonne **source** de finale, sous le self-play. Blend éventuel (anchor anti-forget, banc
    EG vers distill / banc MG libre) si Chemin B insuffisant.
 3. **Recherche = gros levier** : **NMP net-négatif en jass** (zugzwang omniprésent). Sweep
-   `0256`/`0259` **monotone** → désactiver NMP = **+97 Elo** à thr36 (≈ partout). `use_improving`
-   = +22. Déployés ; seuil NMP en confirmation mt0.5 (`0262`) avant de figer (12 → ~36/off).
+   `0256`/`0259` **monotone** → désactiver NMP = +97 à thr36 ; **confirmation `0262` à mt0.5 :
+   thr40 (NMP OFF partout) = +106 Elo** [CI +67,+146], gain qui GRANDIT à cadence longue. →
+   **NMP DÉSACTIVÉ PAR DÉFAUT** (`eg_pieces=40`). `use_improving` = +22. Tous déployés. Suite :
+   re-tuner LMR/LMP/RFP **avec NMP off** (l'arbre a changé) + confirmer le combiné **vs Scan**.
 
 **Leçons de méthode (→ plan d'expérience)** : (a) **vérifier le SIGNAL d'entraînement** (WDL vs
 score) avant d'ajouter un levier — la moitié de la campagne a buté dessus ; (b) **tester ISOLÉ**,
