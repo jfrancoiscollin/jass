@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0261-endgame-distill-v2",
-  "snapshot_at": "2026-06-15T08:20:03+00:00",
+  "snapshot_at": "2026-06-15T08:26:03+00:00",
   "started_at": "2026-06-15T08:09:42+00:00",
-  "elapsed_seconds": 621,
+  "elapsed_seconds": 981,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,6 +14,10 @@
     },
     {
       "name": "elo-noPW-l21e-4.log",
+      "size_bytes": 289
+    },
+    {
+      "name": "elo-withPW-l21e-4.log",
       "size_bytes": 0
     },
     {
@@ -49,5 +53,5 @@
       "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       10:20  0.0  0.0 bash\n1849778 1849776       10:20  0.0  0.0 bash\n1850461 1849778       02:17  0.0  0.0 bash\n1850463 1850461       02:17 1090  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       16:20  0.0  0.0 bash\n1849778 1849776       16:20  0.0  0.0 bash\n3996739 1849778       01:56  0.0  0.0 bash\n3996741 3996739       01:56 1088  0.6 jass\n"
 }
