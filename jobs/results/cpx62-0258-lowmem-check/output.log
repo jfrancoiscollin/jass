@@ -1,0 +1,14 @@
+data: 5100000 positions (réutilisées de 0254)
+=== ré-entraînement FULL-BATCH (sans --lowmem) sur les 5.1M de 0254 ===
+
+==========================================================
+   cpx62-0258 — LOWMEM vs FULL-BATCH (mêmes 5.1M de 0254, Elo vs hc 60p)
+----------------------------------------------------------
+  FULL-BATCH (sans lowmem) : val_mse=1.585085  val_endgame=3.1819  Elo_vs_hc=751-16-313 elo=+149.5
+  (rappels : 0257-A lowmem sans-PW = +138.1 ; 0241 full-batch baseline = +229.5)
+----------------------------------------------------------
+  FULL-BATCH ~+229 (>> +138) → BUG --lowmem sur le chemin full-fold/prune (à corriger,
+     impacte tout entraînement gros volume) ; refaire la densif en full-batch ou lowmem-fixé.
+  FULL-BATCH ~+140 (~ lowmem) → ce sont les DONNÉES de 0254 (perturbation TT par les labels
+     profonds) ; régénérer SANS --label-depth-by-phase, lowmem est OK.
+==========================================================
