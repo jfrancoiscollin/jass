@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0266-kingloop-deepplay",
-  "snapshot_at": "2026-06-15T22:51:03+00:00",
+  "snapshot_at": "2026-06-15T22:56:21+00:00",
   "started_at": "2026-06-15T21:12:03+00:00",
-  "elapsed_seconds": 5940,
+  "elapsed_seconds": 6258,
   "artefacts": [
     {
       "name": "build.log",
@@ -50,7 +50,7 @@
     },
     {
       "name": "elo-gen8.log",
-      "size_bytes": 0
+      "size_bytes": 281
     },
     {
       "name": "feat0",
@@ -159,6 +159,10 @@
     {
       "name": "gen8.pjtw",
       "size_bytes": 136049764
+    },
+    {
+      "name": "scan-mt05.log",
+      "size_bytes": 0
     },
     {
       "name": "sp0-1.log",
@@ -737,5 +741,5 @@
       "size_bytes": 1433
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1    01:39:00  0.0  0.0 bash\n 371077  371075    01:39:00  0.0  0.0 bash\n 953952  371077       04:36  0.0  0.0 bash\n 953954  953952       04:36 1193  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 371075       1    01:44:18  0.0  0.0 bash\n 371077  371075    01:44:18  0.0  0.0 bash\n3027280  371077       02:13  0.4  0.0 python3\n3027283 3027280       02:13 50.1  0.5 jass\n3027285 3027280       02:13 49.6  0.9 scan_linux\n3027288 3027280       02:12  0.0  0.0 jass\n"
 }
