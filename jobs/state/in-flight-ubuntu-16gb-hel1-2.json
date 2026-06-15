@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0268-search-tier1",
+  "script": "jobs/queue/ccx33-0268-search-tier1.sh",
+  "pid": 1431089,
+  "started_at": "2026-06-15T23:27:12+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
