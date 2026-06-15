@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "snapshot_at": "2026-06-15T15:28:25+00:00",
+  "snapshot_at": "2026-06-15T15:33:30+00:00",
   "started_at": "2026-06-15T10:40:11+00:00",
-  "elapsed_seconds": 17294,
+  "elapsed_seconds": 17599,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,6 +38,10 @@
     },
     {
       "name": "elo-gen5.log",
+      "size_bytes": 278
+    },
+    {
+      "name": "elo-gen6.log",
       "size_bytes": 278
     },
     {
@@ -118,7 +122,11 @@
     },
     {
       "name": "gen6-train.log",
-      "size_bytes": 0
+      "size_bytes": 1328
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "sp0-1.log",
@@ -567,7 +575,135 @@
     {
       "name": "sp6-9.log",
       "size_bytes": 1482
+    },
+    {
+      "name": "sp7-1.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "sp7-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-10.jnnw",
+      "size_bytes": 123122
+    },
+    {
+      "name": "sp7-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-11.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "sp7-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-12.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "sp7-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-13.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp7-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-14.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp7-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-15.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp7-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-16.jnnw",
+      "size_bytes": 123122
+    },
+    {
+      "name": "sp7-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-2.jnnw",
+      "size_bytes": 123122
+    },
+    {
+      "name": "sp7-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-3.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp7-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-4.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "sp7-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-5.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "sp7-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-6.jnnw",
+      "size_bytes": 131330
+    },
+    {
+      "name": "sp7-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-7.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp7-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-8.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "sp7-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp7-9.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp7-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 926061 1936265       03:32  436 36.8 python3\n1936263       1    04:48:14  0.0  0.0 bash\n1936265 1936263    04:48:14  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1442653 1936265       03:04 99.9  0.5 jass\n1442654 1936265       03:04 99.9  0.5 jass\n1442655 1936265       03:04 99.9  0.5 jass\n1442656 1936265       03:04 99.9  0.5 jass\n1442657 1936265       03:04 99.9  0.5 jass\n1442658 1936265       03:04 99.9  0.5 jass\n1442659 1936265       03:04 99.9  0.5 jass\n1442660 1936265       03:04 99.9  0.5 jass\n1442661 1936265       03:04 99.9  0.5 jass\n1442662 1936265       03:04 99.9  0.5 jass\n1442663 1936265       03:04 99.9  0.5 jass\n1442664 1936265       03:04 99.9  0.5 jass\n1442665 1936265       03:04 99.9  0.5 jass\n1442666 1936265       03:04 99.9  0.5 jass\n1442667 1936265       03:04 99.9  0.5 jass\n1442668 1936265       03:04 99.9  0.5 jass\n1936263       1    04:53:19  0.0  0.0 bash\n1936265 1936263    04:53:19  0.0  0.0 bash\n"
 }
