@@ -156,6 +156,8 @@ NŒUD 4 (transverse) — Indépendance vs force
 |---|---|---|
 | ~~Techniques de recherche « déjà complète »~~ | **RÉVISÉ 2026-06-15** : NON — NMP net-négatif (+97 à désactiver), improving +22. La recherche est un LEVIER VIVANT. | 0253/0256/0259 |
 | **`--phase-weight`** (densifier la finale en pondérant les lignes) | **MORTE** : −210 Elo sur bons labels score (0261), neutre/négatif sur WDL (0254/0257). Sur-pondérer les scores de grande magnitude de finale dé-calibre l'éval du gros du jeu. | 0254/0257/0261 |
+| **Filtre de STABILITÉ de recherche** (garder les positions où le score converge) | **INUTILE en finale** : nos erreurs de finale sont SYSTÉMATIQUES (stables), pas du bruit — éval confiante ET fausse en finale à rois. accord(stable)=0.917 ≈ accord(instable)=0.938 (gain −0.021). Filtre le bruit, pas le biais. | 0267 |
+| **Densif finale CIBLÉE dans la boucle WDL** (poids / label-depth / play-depth-finale) | **MORTE** (3 confirmations) : phase-weight −210, label-depth −80, play-depth-finale −30. Le WDL est trop grossier pour la précision de finale ; play-finale-seul = incohérence. | 0254/0261/0265 |
 | **`--label-depth-by-phase`** dans la boucle WDL | **MORTE** : no-op (la boucle s'entraîne sur le WDL, pas le score) ET nocif (la recherche de label profonde pollue la TT → corrompt les parties jouées, −80 Elo). | 0254/0258 |
 | **Vitesse / NPS** comme levier principal | +4 plies ne compensent pas l'eval | 0201 |
 | **Deep-score relabel** (labels = score de recherche) | distillation → plafonné au générateur | 0200/0202 |
