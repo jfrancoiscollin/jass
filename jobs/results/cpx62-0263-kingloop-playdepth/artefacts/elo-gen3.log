@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/gen3.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 9, threads 16, movetime_ms 0, 270 games
+Result: SCAN_EVAL=193 NNUE=76 Draws=1 (total 270)
+SCAN_EVAL score rate vs NNUE: 0.716667

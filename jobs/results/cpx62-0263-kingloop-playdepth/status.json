@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-15T10:40:11+00:00",
+  "ended_at": "2026-06-15T17:53:54+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 1936263
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src"
 }

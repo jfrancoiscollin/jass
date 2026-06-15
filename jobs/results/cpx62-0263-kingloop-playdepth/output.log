@@ -1,0 +1,60 @@
+geometry: 32 patterns ; KING-AWARE
+PARAMS: play-depth-by-phase=[endgame=12,deep-eg=14]  (PAS de phase-weight, PAS de label-depth)  full-batch  600000/gen ×8
+=== gen0 : seed (300k, play profond finale, l2=3e-2) ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat0
+  gen0 val_endgame=1.7611  Elo_vs_hc=132-7-131 elo=+1.3
+=== gen1 : +600000 (play profond finale) avec gen0 → cumulé → logistic ===
+cumulative 900000
+wrote 900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat1
+  gen1 val_endgame=3.4318  Elo_vs_hc=197-0-73 elo=+172.5
+=== gen2 : +600000 (play profond finale) avec gen1 → cumulé → logistic ===
+cumulative 1500000
+wrote 1500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat2
+  gen2 val_endgame=3.3008  Elo_vs_hc=200-8-62 elo=+196.0
+=== gen3 : +600000 (play profond finale) avec gen2 → cumulé → logistic ===
+cumulative 2100000
+wrote 2100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat3
+  gen3 val_endgame=3.2573  Elo_vs_hc=193-1-76 elo=+161.2
+=== gen4 : +600000 (play profond finale) avec gen3 → cumulé → logistic ===
+cumulative 2700000
+wrote 2700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat4
+  gen4 val_endgame=3.1134  Elo_vs_hc=194-8-68 elo=+175.7
+=== gen5 : +600000 (play profond finale) avec gen4 → cumulé → logistic ===
+cumulative 3300000
+wrote 3300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat5
+  gen5 val_endgame=3.1570  Elo_vs_hc=188-5-77 elo=+151.8
+=== gen6 : +600000 (play profond finale) avec gen5 → cumulé → logistic ===
+cumulative 3900000
+wrote 3900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat6
+  gen6 val_endgame=3.1371  Elo_vs_hc=203-1-66 elo=+194.3
+=== gen7 : +600000 (play profond finale) avec gen6 → cumulé → logistic ===
+cumulative 4500000
+wrote 4500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat7
+  gen7 val_endgame=3.4467  Elo_vs_hc=186-3-81 elo=+142.6
+=== gen8 : +600000 (play profond finale) avec gen7 → cumulé → logistic ===
+cumulative 5100000
+wrote 5100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0263-kingloop-playdepth/artefacts.src/feat8
+  gen8 val_endgame=3.2025  Elo_vs_hc=198-0-72 elo=+175.7
+=== gen8 vs hc précis (60 paires) ===
+  799-3-278 elo=+182.8
+
+==========================================================
+   cpx62-0263 — CHEMIN B : boucle king-aware + PLAY PROFOND FINALE (sans phase-weight/label-depth)
+   play-depth-by-phase=[endgame=12,deep-eg=14]  full-batch  600000/gen
+----------------------------------------------------------
+  gen0  Elo_vs_hc=132-7-131 elo=+1.3   val_endgame_mse=1.7611
+  gen1  Elo_vs_hc=197-0-73 elo=+172.5   val_endgame_mse=3.4318
+  gen2  Elo_vs_hc=200-8-62 elo=+196.0   val_endgame_mse=3.3008
+  gen3  Elo_vs_hc=193-1-76 elo=+161.2   val_endgame_mse=3.2573
+  gen4  Elo_vs_hc=194-8-68 elo=+175.7   val_endgame_mse=3.1134
+  gen5  Elo_vs_hc=188-5-77 elo=+151.8   val_endgame_mse=3.1570
+  gen6  Elo_vs_hc=203-1-66 elo=+194.3   val_endgame_mse=3.1371
+  gen7  Elo_vs_hc=186-3-81 elo=+142.6   val_endgame_mse=3.4467
+  gen8  Elo_vs_hc=198-0-72 elo=+175.7   val_endgame_mse=3.2025
+  gen8 (60p) vs hc : 799-3-278 elo=+182.8
+  gen8 vs Scan mt0.5 :   Jass score rate: 0.000 (0.0 / 54)   ELO estimate:    -800 (95% CI ≈ ±109) 
+----------------------------------------------------------
+  CIBLE : Elo >= 0241 (+229.5) ET val_endgame_mse plus bas que la densif ratée (0254 ~3.16).
+  Si oui → jouer les finales profond DENSIFIE bien la finale (lever correct). Autopsie ensuite.
+==========================================================
