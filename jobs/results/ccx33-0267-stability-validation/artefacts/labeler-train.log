@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/0141-pattern-reeval/artefacts/master-clean-scan-d10.jnnw
+  1420193 records  (0.08s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/featM
+  extras shape (1420193, 106)  (mean mob b/w=10.2/10.2)
+target=score  clipped±2000cp / 100  std=3.332
+phase : piece-count mean=24.0  wmg mean=0.600
+score-drop : keep |score|<=4900cp → 1393362/1420193 (98.1%)
+split : train=1254026 val=139336
+prune : keep 203,356 buckets (>= 1 visits) -> 406,714 pattern cols vs 34,012,224  (83.6× fewer); train fallback=0.000%
+design : 406926 columns (2×203357 pat + 2×106 ext)
+L-BFGS  l2=0.0001  max_iter=300  (pure)
+  train_loss=0.888665  iters=300  (122.44s)
+val   : mse=1.767918  sign_acc=0.0012
+val/phase mse : opening=0.1774(n54611)  midgame=0.9999(n29721)  late-mid=2.6960(n22596)  endgame=4.4138(n21025)  deep-eg=4.6746(n11383)
+quant : scale=1000  pat range=[-1739,1739] ext_mg range=[-1848,1963]
+wrote /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/labeler.pjtw  (v3, 34012436 weights, 136049764 bytes)

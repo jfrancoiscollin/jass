@@ -1,0 +1,19 @@
+==================================================================
+  STABILITÉ → JUSTESSE  (finale popcount<=14, depths [8, 10, 12], Δ<=30cp)
+  base=/root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg.jnnw
+==================================================================
+  finales jugeables    : 116248
+  STABLES              : n=58151 (50.0%)  accord-Scan=0.917
+  INSTABLES            : n=58097 (50.0%)  accord-Scan=0.938
+  GAIN du filtre       : -0.021  (stable − instable)
+
+-- STABLES, par rois --
+  no-king  n= 26379  accord-Scan=0.946
+  kings    n= 31772  accord-Scan=0.892
+
+-- accord global (toutes finales, sans filtre) vs STABLES --
+  sans filtre : accord=0.927 (n=116248)   |   stables : accord=0.917 (n=58151)
+
+  accord(stable) >> accord(instable) → la STABILITÉ prédit la JUSTESSE :
+  garder les stables extrait les labels fiables de notre recherche (filtre VALIDE).
+  accord(stable) ≈ accord(instable) → la stabilité ne discrimine pas (filtre INUTILE ici).

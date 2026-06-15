@@ -1,0 +1,57 @@
+=== distille un labeler king-aware (score, l2=1e-4) ===
+wrote 1420193 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/featM
+=== extrait les finales (popcount<=14) du master ===
+finales extraites : 150000 (popcount<=14) sur 1420193
+=== rewrite-scores-with-search depth=8 ===
+=== rewrite-scores-with-search depth=10 ===
+=== rewrite-scores-with-search depth=12 ===
+=== analyse stabilité → justesse ===
+
+rapport: /root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/report.txt
+==================================================================
+  STABILITÉ → JUSTESSE  (finale popcount<=14, depths [8, 10, 12], Δ<=30cp)
+  base=/root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg.jnnw
+==================================================================
+  finales jugeables    : 116248
+  STABLES              : n=58151 (50.0%)  accord-Scan=0.917
+  INSTABLES            : n=58097 (50.0%)  accord-Scan=0.938
+  GAIN du filtre       : -0.021  (stable − instable)
+
+-- STABLES, par rois --
+  no-king  n= 26379  accord-Scan=0.946
+  kings    n= 31772  accord-Scan=0.892
+
+-- accord global (toutes finales, sans filtre) vs STABLES --
+  sans filtre : accord=0.927 (n=116248)   |   stables : accord=0.917 (n=58151)
+
+  accord(stable) >> accord(instable) → la STABILITÉ prédit la JUSTESSE :
+  garder les stables extrait les labels fiables de notre recherche (filtre VALIDE).
+  accord(stable) ≈ accord(instable) → la stabilité ne discrimine pas (filtre INUTILE ici).
+
+==========================================================
+   ccx33-0267 — VALIDATION : la STABILITÉ de recherche prédit-elle la JUSTESSE (vs Scan) ?
+----------------------------------------------------------
+==================================================================
+  STABILITÉ → JUSTESSE  (finale popcount<=14, depths [8, 10, 12], Δ<=30cp)
+  base=/root/jass/jobs/results/ccx33-0267-stability-validation/artefacts.src/endg.jnnw
+==================================================================
+  finales jugeables    : 116248
+  STABLES              : n=58151 (50.0%)  accord-Scan=0.917
+  INSTABLES            : n=58097 (50.0%)  accord-Scan=0.938
+  GAIN du filtre       : -0.021  (stable − instable)
+
+-- STABLES, par rois --
+  no-king  n= 26379  accord-Scan=0.946
+  kings    n= 31772  accord-Scan=0.892
+
+-- accord global (toutes finales, sans filtre) vs STABLES --
+  sans filtre : accord=0.927 (n=116248)   |   stables : accord=0.917 (n=58151)
+
+  accord(stable) >> accord(instable) → la STABILITÉ prédit la JUSTESSE :
+  garder les stables extrait les labels fiables de notre recherche (filtre VALIDE).
+  accord(stable) ≈ accord(instable) → la stabilité ne discrimine pas (filtre INUTILE ici).
+----------------------------------------------------------
+  accord(stable) >> accord(instable) → FILTRE VALIDE : prochaine étape = entraîner l'éval
+     de finale UNIQUEMENT sur les positions stables (labels fiables extraits de notre recherche).
+  ≈ égal → la stabilité ne discrimine pas ; il faut un teacher plus fort (Scan/bitbases).
+==========================================================
