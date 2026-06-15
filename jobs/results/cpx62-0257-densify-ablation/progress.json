@@ -1,0 +1,21 @@
+{
+  "job_id": "cpx62-0257-densify-ablation",
+  "snapshot_at": "2026-06-15T01:40:03+00:00",
+  "started_at": "2026-06-15T01:34:03+00:00",
+  "elapsed_seconds": 360,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 11571
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "noPW-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3869885       1       06:00  0.0  0.0 bash\n3869887 3869885       06:00  0.0  0.0 bash\n3870281 3869887       05:51  580 63.4 python3\n"
+}
