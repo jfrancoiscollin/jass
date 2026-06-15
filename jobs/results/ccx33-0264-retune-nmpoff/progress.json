@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0264-retune-nmpoff",
-  "snapshot_at": "2026-06-15T16:53:03+00:00",
+  "snapshot_at": "2026-06-15T16:58:05+00:00",
   "started_at": "2026-06-15T16:00:36+00:00",
-  "elapsed_seconds": 3147,
+  "elapsed_seconds": 3449,
   "artefacts": [
     {
       "name": "ab-lmp.log",
@@ -25,5 +25,5 @@
       "size_bytes": 672
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1419459       1       52:26  0.0  0.0 bash\n1419461 1419459       52:26  0.0  0.0 bash\n1419871 1419461       52:16  0.0  0.0 bash\n1419872 1419461       52:16  0.0  0.0 bash\n1419873 1419461       52:16  0.0  0.0 bash\n1419874 1419871       52:16 99.9  0.5 jass\n1419875 1419872       52:16 99.9  0.5 jass\n1419876 1419873       52:16 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1419459       1       57:29  0.0  0.0 bash\n1419461 1419459       57:29  0.0  0.0 bash\n1419871 1419461       57:19  0.0  0.0 bash\n1419872 1419461       57:19  0.0  0.0 bash\n1419873 1419461       57:19  0.0  0.0 bash\n1419874 1419871       57:19 99.9  0.5 jass\n1419875 1419872       57:19 99.9  0.5 jass\n1419876 1419873       57:19 99.9  0.5 jass\n"
 }
