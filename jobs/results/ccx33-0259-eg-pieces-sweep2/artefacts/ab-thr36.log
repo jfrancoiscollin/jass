@@ -1,0 +1,3 @@
+Benchmark: search-params A=[eg_pieces=36,eg_no_nmp=1] vs B=[eg_pieces=0] on /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw, depth 64, threads 1, movetime_ms 200, 540 games
+Result: A=337 B=190 Draws=13 (total 540)
+A score rate: 0.636111
