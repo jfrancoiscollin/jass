@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0268-search-tier1",
-  "snapshot_at": "2026-06-15T23:54:48+00:00",
+  "snapshot_at": "2026-06-15T23:59:50+00:00",
   "started_at": "2026-06-15T23:27:12+00:00",
-  "elapsed_seconds": 1656,
+  "elapsed_seconds": 1958,
   "artefacts": [
     {
       "name": "ab-lmp_less.log",
@@ -25,5 +25,5 @@
       "size_bytes": 672
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1431089       1       27:36  0.0  0.0 bash\n1431091 1431089       27:36  0.0  0.0 bash\n1431501 1431091       27:27  0.0  0.0 bash\n1431502 1431091       27:27  0.0  0.0 bash\n1431503 1431091       27:27  0.0  0.0 bash\n1431504 1431501       27:27 99.9  0.5 jass\n1431505 1431502       27:27 99.9  0.5 jass\n1431506 1431503       27:27 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1431089       1       32:37  0.0  0.0 bash\n1431091 1431089       32:37  0.0  0.0 bash\n1431501 1431091       32:28  0.0  0.0 bash\n1431502 1431091       32:28  0.0  0.0 bash\n1431503 1431091       32:28  0.0  0.0 bash\n1431504 1431501       32:28 99.9  0.5 jass\n1431505 1431502       32:28 99.9  0.5 jass\n1431506 1431503       32:28 99.9  0.5 jass\n"
 }
