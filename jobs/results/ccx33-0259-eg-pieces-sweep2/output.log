@@ -1,0 +1,29 @@
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [thr20] A=[eg_pieces=20,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=30 ===
+=== [thr28] A=[eg_pieces=28,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=30 ===
+=== [thr36] A=[eg_pieces=36,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=30 ===
+
+==========================================================
+   ccx33-0259 — SWEEP SEUIL eg_pieces (EXTENSION 20/28/36) vs régime OFF
+   éval=gen8.pjtw  mt=200ms  ~540 parties/comparaison  (improving=ON)
+   rappel 0256 : thr8=+17  thr12=+31  thr16=+47 (monotone croissant)
+----------------------------------------------------------
+  [thr20]  A=285 B=231 D=24
+      games=540  W=285 D=24 L=231
+      score=0.5500  95%CI=[0.5078, 0.5915] (Wilson)
+      elo=+34.9  95%CI=[+5.4, +64.3]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.755  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [thr28]  A=318 B=197 D=25
+      games=540  W=318 D=25 L=197
+      score=0.6120  95%CI=[0.5703, 0.6522] (Wilson)
+      elo=+79.2  95%CI=[+49.2, +109.2]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=1.767  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [thr36]  A=337 B=190 D=13
+      games=540  W=337 D=13 L=190
+      score=0.6361  95%CI=[0.5947, 0.6756] (Wilson)
+      elo=+97.0  95%CI=[+66.6, +127.4]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=2.110  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  Lire la courbe 8/12/16/20/28/36 : pic = seuil optimal à adopter (search_params.hpp).
+  Si monotone jusqu'à 36 → NMP net-négatif en jass : désactiver globalement / nmp_min_pieces↑.
+==========================================================

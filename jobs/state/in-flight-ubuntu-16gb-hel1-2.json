@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0259-eg-pieces-sweep2",
-  "script": "jobs/queue/ccx33-0259-eg-pieces-sweep2.sh",
-  "pid": 1403087,
-  "started_at": "2026-06-15T06:16:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
