@@ -1,0 +1,15 @@
+binaire = NMP OFF (eg_pieces=40)
+=== re-mesure 0241 gen8 (binaire NMP-off, 60p) ===
+  782-15-283 elo=+173.7
+=== re-mesure 0263 gen8 (binaire NMP-off, 60p) ===
+  746-11-323 elo=+143.8
+
+==========================================================
+   cpx62-0265 — CONTRÔLE : 0241 vs 0263 sur le MÊME binaire (NMP-off)
+----------------------------------------------------------
+  0241 gen8 (sans deep-play)   : 782-15-283 elo=+173.7   [mesuré +229.5 sur l'ANCIEN binaire]
+  0263 gen8 (deep-play finale) : 746-11-323 elo=+143.8   [mesuré +182.8 sur le binaire NMP-off]
+----------------------------------------------------------
+  Écart faible → Chemin B NEUTRE (le -47 = effet NMP-off sur la mesure) → densif finale OUVERTE.
+  0241 >> 0263 → Chemin B a NUI. Dans les 2 cas : le champion = le plus haut des deux.
+==========================================================
