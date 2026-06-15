@@ -1,0 +1,29 @@
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [thr8] A=[eg_pieces=8,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=35 ===
+=== [thr12] A=[eg_pieces=12,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=35 ===
+=== [thr16] A=[eg_pieces=16,eg_no_nmp=1] vs B=[eg_pieces=0] : mt200ms pairs=35 ===
+
+==========================================================
+   ccx33-0256 — SWEEP SEUIL eg_pieces (eg_no_nmp) : A=seuil ON vs B=régime OFF
+   éval=gen8.pjtw  mt=200ms  ~630 parties/comparaison  (improving=ON des 2 côtés)
+----------------------------------------------------------
+  [thr8]  A=315 B=284 D=31
+      games=630  W=315 D=31 L=284
+      score=0.5246  95%CI=[0.4856, 0.5633] (Wilson)
+      elo=+17.1  95%CI=[-10.0, +44.2]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.401  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [thr12]  A=326 B=269 D=35
+      games=630  W=326 D=35 L=269
+      score=0.5452  95%CI=[0.5062, 0.5837] (Wilson)
+      elo=+31.5  95%CI=[+4.3, +58.7]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.799  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [thr16]  A=343 B=258 D=29
+      games=630  W=343 D=29 L=258
+      score=0.5675  95%CI=[0.5285, 0.6056] (Wilson)
+      elo=+47.2  95%CI=[+19.8, +74.5]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=1.214  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  MEILLEUR seuil (Elo brut) : thr16  (elo=+47.2)
+  Si les 3 seuils sont ~équivalents (différences << bruit) → le seuil n'est pas critique,
+  garder 12. Si un seuil domine nettement → l'adopter comme défaut (search_params.hpp).
+==========================================================
