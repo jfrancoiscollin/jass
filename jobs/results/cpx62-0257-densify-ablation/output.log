@@ -1,0 +1,15 @@
+data: 5100000 positions (réutilisées de 0254)
+=== A : ré-entraînement SANS phase-weight (contrôle) ===
+=== B : ré-entraînement AVEC phase-weight endgame=3,deep-eg=3 (repro) ===
+
+==========================================================
+   cpx62-0257 — ABLATION phase-weight (mêmes 5.1M de 0254, Elo vs hc 60p)
+----------------------------------------------------------
+  A  SANS phase-weight : val_mse=1.570846  val_endgame=3.0826  Elo_vs_hc=734-20-326 elo=+138.1
+  B  AVEC phase-weight : val_mse=1.624406  val_endgame=3.1642  Elo_vs_hc=749-13-318 elo=+146.8
+  (rappels : 0241 baseline +229.5 ; 0254 gen8 densifié +149.5)
+----------------------------------------------------------
+  A ~+229 & A >> B → phase-weight EST le coupable (sur-pondère du WDL de finale bruité).
+  A ~+149 ~ B      → ce n'est pas phase-weight ; creuser lowmem/données/build.
+  → corrige le chemin : densif finale par DISTILLATION sur SCORE (deep/Scan-d10), pas WDL+poids.
+==========================================================
