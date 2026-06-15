@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0272-distill-endgame-autopsy",
+  "script": "jobs/queue/cpx62-0272-distill-endgame-autopsy.sh",
+  "pid": 3029271,
+  "started_at": "2026-06-15T23:36:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
