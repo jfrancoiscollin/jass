@@ -218,9 +218,28 @@ jamais combiné (le combiné « NMP+LMP+LMR off » washait le +29 du NMP) ; (c) 
 peut valoir 3× un levier d'éval** (NMP +97 >> brique rois +37) — la recherche n'est PAS un domaine
 clos.
 
----
+### VERDICT FINALES — ACTE 2 (2026-06-15, 0263-0266) : la méthodo Scan = la nôtre, le gap est l'EXÉCUTION
 
-## Point de départ — ce que la biblio recadre
+`SCAN_ARCHITECTURE_NOTES.md` §5 (méthodo Letouzey/Gilbert) confirme : Scan = **self-play
+depuis zéro + labels WDL (résultat de partie, JAMAIS un score) + régression logistique,
+itéré quelques cycles** = **EXACTEMENT notre boucle +229**. Donc archi ✓, méthode ✓ ; le gap
+est l'**exécution**. Diagnostic : Scan joue son self-play **FORT** → WDL justes partout (finale
+comprise) → la finale bootstrappe ; nous à **depth-4** jouons les finales au hasard (finale
+search-bound, 0252) → labels-bruit → la finale ne peut pas monter.
+
+**3e confirmation que densifier la finale CIBLÉE nuit** : `--play-depth-by-phase` (play profond
+finale SEULE) = `0263` ; contrôle `0265` (même binaire NMP-off) : **0263 +143.8 < 0241 +173.7
+(−30)** → a NUI (incohérence finale-forte / milieu-faible). Rejoint phase-weight (mort) et
+label-depth (mort) → **cimetière : toute densif finale CIBLÉE dans la boucle**.
+
+→ **La formule testée (`0266`)** : jouer fort **UNIFORMÉMENT** (`play_depth` 4→8, pas juste la
+finale) + binaire NMP-off → labels cohérents et plus justes partout → la finale doit grimper.
+Champion actuel = **0241 (+173.7 sur le binaire NMP-off)**. Si 0266 ne suffit pas (éval trop
+lente pour self-play assez profond), bascule sur **labels EXTERNES de finale** (recherche
+profonde / bitbases comme **TEACHER de l'éval**, pas comme tables de jeu) — reste « éval forte
+comme Scan », pas un abandon de la classe.
+
+---
 
 `ANALYSE_VEILLE_NNUE.md` posait la thèse : l'archi MLP dense plafonne, il faut
 basculer sur du pattern-based Scan-style. La biblio annotée confirme cette
