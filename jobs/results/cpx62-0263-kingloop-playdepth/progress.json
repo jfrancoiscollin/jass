@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0263-kingloop-playdepth",
-  "snapshot_at": "2026-06-15T13:06:03+00:00",
+  "snapshot_at": "2026-06-15T13:18:03+00:00",
   "started_at": "2026-06-15T10:40:11+00:00",
-  "elapsed_seconds": 8752,
+  "elapsed_seconds": 9472,
   "artefacts": [
     {
       "name": "build.log",
@@ -29,6 +29,10 @@
       "size_bytes": 278
     },
     {
+      "name": "elo-gen3.log",
+      "size_bytes": 278
+    },
+    {
       "name": "feat0",
       "size_bytes": 127200012
     },
@@ -42,7 +46,7 @@
     },
     {
       "name": "feat3",
-      "size_bytes": 353963692
+      "size_bytes": 890400012
     },
     {
       "name": "gen0-train.log",
@@ -66,6 +70,14 @@
     },
     {
       "name": "gen2.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "gen3-train.log",
+      "size_bytes": 1322
+    },
+    {
+      "name": "gen3.pjtw",
       "size_bytes": 136049764
     },
     {
@@ -323,7 +335,135 @@
     {
       "name": "sp3-9.log",
       "size_bytes": 1482
+    },
+    {
+      "name": "sp4-1.jnnw",
+      "size_bytes": 303698
+    },
+    {
+      "name": "sp4-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-10.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-11.jnnw",
+      "size_bytes": 287282
+    },
+    {
+      "name": "sp4-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-12.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-13.jnnw",
+      "size_bytes": 262658
+    },
+    {
+      "name": "sp4-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-14.jnnw",
+      "size_bytes": 328322
+    },
+    {
+      "name": "sp4-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-15.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-16.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-2.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-3.jnnw",
+      "size_bytes": 336530
+    },
+    {
+      "name": "sp4-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-4.jnnw",
+      "size_bytes": 303698
+    },
+    {
+      "name": "sp4-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-5.jnnw",
+      "size_bytes": 279074
+    },
+    {
+      "name": "sp4-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-6.jnnw",
+      "size_bytes": 377570
+    },
+    {
+      "name": "sp4-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-7.jnnw",
+      "size_bytes": 295490
+    },
+    {
+      "name": "sp4-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-8.jnnw",
+      "size_bytes": 336530
+    },
+    {
+      "name": "sp4-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp4-9.jnnw",
+      "size_bytes": 287282
+    },
+    {
+      "name": "sp4-9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1936263       1    02:25:52  0.0  0.0 bash\n1936265 1936263    02:25:52  0.0  0.0 bash\n3540762 1936265       00:00  100  0.0 jass\n3540763 1936265       00:00  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1936263       1    02:37:52  0.0  0.0 bash\n1936265 1936263    02:37:52  0.0  0.0 bash\n4048552 1936265       08:22 99.9  0.5 jass\n4048553 1936265       08:22 99.9  0.5 jass\n4048554 1936265       08:22 99.9  0.5 jass\n4048555 1936265       08:22 99.9  0.5 jass\n4048556 1936265       08:22 99.9  0.5 jass\n4048557 1936265       08:22 99.9  0.5 jass\n4048558 1936265       08:22 99.9  0.5 jass\n4048559 1936265       08:22 99.9  0.5 jass\n4048560 1936265       08:22 99.9  0.5 jass\n4048561 1936265       08:22 99.9  0.5 jass\n4048562 1936265       08:22 99.9  0.5 jass\n4048563 1936265       08:22 99.9  0.5 jass\n4048564 1936265       08:22 99.9  0.5 jass\n4048565 1936265       08:22 99.9  0.5 jass\n4048566 1936265       08:22 99.9  0.5 jass\n4048567 1936265       08:22 99.9  0.5 jass\n"
 }
