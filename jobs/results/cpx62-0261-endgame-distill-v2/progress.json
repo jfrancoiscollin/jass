@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0261-endgame-distill-v2",
-  "snapshot_at": "2026-06-15T08:14:57+00:00",
+  "snapshot_at": "2026-06-15T08:20:03+00:00",
   "started_at": "2026-06-15T08:09:42+00:00",
-  "elapsed_seconds": 315,
+  "elapsed_seconds": 621,
   "artefacts": [
     {
       "name": "build.log",
@@ -11,6 +11,10 @@
     {
       "name": "cmake.log",
       "size_bytes": 733
+    },
+    {
+      "name": "elo-noPW-l21e-4.log",
+      "size_bytes": 0
     },
     {
       "name": "noPW-l21e-4-train.log",
@@ -29,9 +33,21 @@
       "size_bytes": 136049764
     },
     {
+      "name": "withPW-l21e-4-train.log",
+      "size_bytes": 1444
+    },
+    {
+      "name": "withPW-l21e-4.pjtw",
+      "size_bytes": 136049764
+    },
+    {
       "name": "withPW-l23e-4-train.log",
-      "size_bytes": 0
+      "size_bytes": 1444
+    },
+    {
+      "name": "withPW-l23e-4.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       05:14  0.0  0.0 bash\n1849778 1849776       05:14  0.0  0.0 bash\n1850265 1849778       01:09  0.0  0.0 bash\n1850266 1850265       01:09 1049 12.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1849776       1       10:20  0.0  0.0 bash\n1849778 1849776       10:20  0.0  0.0 bash\n1850461 1849778       02:17  0.0  0.0 bash\n1850463 1850461       02:17 1090  0.6 jass\n"
 }
