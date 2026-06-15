@@ -1,0 +1,23 @@
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [thr40] A=[eg_pieces=40,eg_no_nmp=1] vs B=[eg_pieces=0] : mt500ms pairs=18 ===
+=== [thr16] A=[eg_pieces=16,eg_no_nmp=1] vs B=[eg_pieces=0] : mt500ms pairs=18 ===
+
+==========================================================
+   ccx33-0262 — CONFIRMATION NMP à mt0.5 : A=NMP off vs B=NMP on (eg_pieces=0)
+   éval=gen8.pjtw  mt=500ms  ~324 parties/comparaison  (improving=ON)
+   rappel mt0.2 : thr16=+47  thr36=+97 (monotone)
+----------------------------------------------------------
+  [thr16]  A=176 B=143 D=5
+      games=324  W=176 D=5 L=143
+      score=0.5509  95%CI=[0.4965, 0.6042] (Wilson)
+      elo=+35.5  95%CI=[-2.4, +73.5]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.448  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [thr40]  A=202 B=106 D=16
+      games=324  W=202 D=16 L=106
+      score=0.6481  95%CI=[0.5947, 0.6981] (Wilson)
+      elo=+106.1  95%CI=[+66.6, +145.7]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=1.418  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  thr40 toujours nettement >0 à mt0.5 → NMP net-négatif CONFIRMÉ : désactiver (défaut).
+  thr40 ~0 ou négatif à mt0.5 → le gain mt0.2 était TC-dépendant : garder un seuil modéré.
+==========================================================
