@@ -1,0 +1,119 @@
+binaire = NMP OFF
+PARAMS: play_depth=8 UNIFORME (pas de phase-weight/label-depth/play-depth-by-phase)  600000/gen ×8
+=== gen0 : seed (300k, play depth-8, l2=3e-2) ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat0
+  gen0 val_endgame=1.2318 Elo=116-5-149 elo=-42.7
+=== gen1 : +600000 (play depth-8) avec gen0 → cumulé → logistic ===
+cumulative 900000
+wrote 900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat1
+  gen1 val_endgame=2.2687 Elo=200-1-69 elo=+184.1
+=== gen2 : +600000 (play depth-8) avec gen1 → cumulé → logistic ===
+cumulative 1500000
+wrote 1500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat2
+  gen2 val_endgame=2.0990 Elo=188-6-76 elo=+153.4
+=== gen3 : +600000 (play depth-8) avec gen2 → cumulé → logistic ===
+cumulative 2100000
+wrote 2100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat3
+  gen3 val_endgame=2.1482 Elo=191-6-73 elo=+162.8
+=== gen4 : +600000 (play depth-8) avec gen3 → cumulé → logistic ===
+cumulative 2700000
+wrote 2700000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat4
+  gen4 val_endgame=2.3129 Elo=188-3-79 elo=+148.7
+=== gen5 : +600000 (play depth-8) avec gen4 → cumulé → logistic ===
+cumulative 3300000
+wrote 3300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat5
+  gen5 val_endgame=2.3120 Elo=194-4-72 elo=+169.2
+=== gen6 : +600000 (play depth-8) avec gen5 → cumulé → logistic ===
+cumulative 3900000
+wrote 3900000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat6
+  gen6 val_endgame=2.2829 Elo=190-6-74 elo=+159.6
+=== gen7 : +600000 (play depth-8) avec gen6 → cumulé → logistic ===
+cumulative 4500000
+wrote 4500000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat7
+  gen7 val_endgame=2.3245 Elo=194-5-71 elo=+170.8
+=== gen8 : +600000 (play depth-8) avec gen7 → cumulé → logistic ===
+cumulative 5100000
+wrote 5100000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat8
+  gen8 val_endgame=2.3471 Elo=194-3-73 elo=+167.6
+=== gen8 vs hc précis (60p) ===
+  814-17-249 elo=+201.7
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2276  accord=0.535  perte_moy=   0.88
+
+-- par PHASE --
+  opening          n=  657  accord=0.508  perte_moy=   0.03
+  midgame          n=  447  accord=0.548  perte_moy=   0.08
+  late-mid         n=  397  accord=0.519  perte_moy=   0.15
+  endgame          n=  521  accord=0.576  perte_moy=   2.15
+  deep-eg          n=  254  accord=0.524  perte_moy=   3.00
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 1653  accord=0.532  perte_moy=   0.14
+  kings            n=  623  accord=0.543  perte_moy=   2.83
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (657)                    —       —
+  midgame              0.08 (444)             0.12 (3)    ×1.6
+  late-mid             0.13 (320)            0.25 (77)    ×1.9
+  endgame              0.62 (215)           3.22 (306)    ×5.2
+  deep-eg               0.12 (17)           3.21 (237)   ×26.6
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 1749  accord=0.405  perte_moy=   1.02
+  capture-avail    n=  527  accord=0.966  perte_moy=   0.42
+
+-- par RÉSULTAT --
+  lost             n= 2276  accord=0.535  perte_moy=   0.88
+
+-- 10 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g13 [lost ] deep-eg  K perte= 95.8       3-17 → 3-26       W:W25,31,K3:B23,28,K16,K47
+  g29 [lost ] endgame  K perte= 93.5      44-39 → 12-7       W:W12,18,28,36,44:B2,14,16,19,25,K47
+  g17 [lost ] deep-eg  K perte= 93.1      21-16 → 2-19       W:W21,27,K2:B6,35,K12,K50
+  g24 [lost ] deep-eg  K perte= 91.5      12-18 → 6-11       B:W37,40,42,K17:B6,12,21
+  g30 [lost ] endgame  K perte= 91.0      10-15 → 26-31      B:W27,35,36,K3,K9:B7,10,16,26
+  g36 [lost ] deep-eg  K perte= 90.8      11-16 → 17-21      B:W36,37,K29,K48:B2,11,17
+  g12 [lost ] endgame  K perte= 89.8      19-24 → 23-28      B:W25,26,30,38,39,42,K33:B19,23,45
+  g18 [lost ] endgame  K perte= 89.5      31-37 → 21-27      B:W10,46,47,K5,K22:B6,21,31,36
+  g25 [lost ] deep-eg  K perte= 89.1      26-37 → 26-8       W:WK26:B36,K15,K49,K50
+  g16 [lost ] endgame  K perte= 88.7       8-12 → 8-13       B:W10,22,37,42,47,K38:B8,11,26,31,36
+
+==========================================================
+   cpx62-0266 — FORMULE : self-play PLAY DEPTH-8 UNIFORME (king-aware, NMP-off)
+----------------------------------------------------------
+  gen0  Elo_vs_hc=116-5-149 elo=-42.7   val_endgame_mse=1.2318
+  gen1  Elo_vs_hc=200-1-69 elo=+184.1   val_endgame_mse=2.2687
+  gen2  Elo_vs_hc=188-6-76 elo=+153.4   val_endgame_mse=2.0990
+  gen3  Elo_vs_hc=191-6-73 elo=+162.8   val_endgame_mse=2.1482
+  gen4  Elo_vs_hc=188-3-79 elo=+148.7   val_endgame_mse=2.3129
+  gen5  Elo_vs_hc=194-4-72 elo=+169.2   val_endgame_mse=2.3120
+  gen6  Elo_vs_hc=190-6-74 elo=+159.6   val_endgame_mse=2.2829
+  gen7  Elo_vs_hc=194-5-71 elo=+170.8   val_endgame_mse=2.3245
+  gen8  Elo_vs_hc=194-3-73 elo=+167.6   val_endgame_mse=2.3471
+  gen8 (60p) vs hc : 814-17-249 elo=+201.7   [0241 vanilla même binaire = +173.7]
+  gen8 vs Scan mt0.5 :   Jass score rate: 0.000 (0.0 / 36)   ELO estimate:    -800 (95% CI ≈ ±133) 
+----------------------------------------------------------
+  AUTOPSIE FINALE (perte par phase × rois vs Scan ; comparer 0250 : endgame-rois ~3.6) :
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (657)                    —       —
+  midgame              0.08 (444)             0.12 (3)    ×1.6
+  late-mid             0.13 (320)            0.25 (77)    ×1.9
+  endgame              0.62 (215)           3.22 (306)    ×5.2
+  deep-eg               0.12 (17)           3.21 (237)   ×26.6
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+----------------------------------------------------------
+  Elo > +173.7 ET perte finale-rois < 3.6 → JOUER FORT UNIFORME densifie la finale = LA FORMULE.
+  Finale toujours ~3.6 → play depth-8 insuffisant (éval trop lente pour self-play assez profond)
+     → la finale a besoin de labels EXTERNES (recherche profonde / bitbases comme TEACHER de l'éval).
+==========================================================

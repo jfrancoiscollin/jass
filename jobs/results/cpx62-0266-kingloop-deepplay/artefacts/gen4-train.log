@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/cumulative.jnnw
+  2700000 records  (0.14s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/feat4
+  extras shape (2700000, 106)  (mean mob b/w=12.1/12.1)
+target=wdl  pos=931498 neg=925970 zero=842532 (31.2% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=931498 draw=842532 loss=925970 (31.2% draws)
+phase : piece-count mean=19.8  wmg mean=0.495
+split : train=2430000 val=270000
+prune : keep 259,486 buckets (>= 1 visits) -> 518,974 pattern cols vs 34,012,224  (65.5× fewer); train fallback=0.000%
+design : 519186 columns (2×259487 pat + 2×106 ext)
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.583307  iters=200  (154.99s)
+val   : mse=1.263601  sign_acc=0.2835
+val/phase mse : opening=0.6127(n65597)  midgame=0.8203(n52750)  late-mid=1.1933(n50503)  endgame=2.3129(n55512)  deep-eg=1.5131(n45638)
+quant : scale=1000  pat range=[-450,450] ext_mg range=[-727,737]
+wrote /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/gen4.pjtw  (v3, 34012436 weights, 136049764 bytes)
