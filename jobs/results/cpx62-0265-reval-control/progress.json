@@ -1,0 +1,21 @@
+{
+  "job_id": "cpx62-0265-reval-control",
+  "snapshot_at": "2026-06-15T20:55:57+00:00",
+  "started_at": "2026-06-15T20:50:52+00:00",
+  "elapsed_seconds": 305,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 12608
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "elo-0241.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 385542       1       05:05  0.0  0.0 bash\n 385544  385542       05:04  0.0  0.0 bash\n 385947  385544       04:55  0.0  0.0 bash\n 385948  385947       04:55 1197  0.6 jass\n"
+}
