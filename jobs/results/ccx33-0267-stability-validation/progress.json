@@ -1,0 +1,41 @@
+{
+  "job_id": "ccx33-0267-stability-validation",
+  "snapshot_at": "2026-06-15T21:44:05+00:00",
+  "started_at": "2026-06-15T21:38:54+00:00",
+  "elapsed_seconds": 311,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 12608
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 733
+    },
+    {
+      "name": "endg-d8.jnnw",
+      "size_bytes": 3275000
+    },
+    {
+      "name": "endg.jnnw",
+      "size_bytes": 5700008
+    },
+    {
+      "name": "featM",
+      "size_bytes": 602161844
+    },
+    {
+      "name": "labeler-train.log",
+      "size_bytes": 1274
+    },
+    {
+      "name": "labeler.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "rw-d8.log",
+      "size_bytes": 409
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1426270       1       05:11  0.0  0.0 bash\n1426272 1426270       05:11  0.0  0.0 bash\n1426723 1426272       02:47 99.9  0.5 jass\n"
+}
