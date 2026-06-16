@@ -234,7 +234,36 @@ colour-swapping the position and inverting the result.
 Trade-off: the FMJD 16-move drawing rule for kings-only endgames is
 NOT modelled. A small minority of the WIN-marked positions are in fact
 drawn under FMJD because the strong side cannot mate within 16 plies.
-Storing distance-to-mate would fix this and is a future refinement.
+Storing distance-to-mate would fix this and is a future refinement —
+**superseded in practice by the external egdb bitbase below** (exact WLD,
+which also revealed the in-memory 2v1/3v1 tables over-claim wins).
+
+### External egdb bitbase (Kingsrow WLD 2→7, gated `-DJASS_EGDB`)
+
+[egdb_bridge.cpp](../src/egdb_bridge.cpp) links Ed Gilbert's `egdb_intl` to
+serve **exact** win/loss/draw for ≤7-piece positions. Seam:
+
+- `egdb::init(dir, cache_mb)` opens the driver; `egdb::probe(pos)` converts the
+  jass `Position` to the gapped `EGDB_POSITION` bitboards (`spread50_to_egdb`,
+  bit-for-bit validated) and looks up the WLD.
+- `probe_endgame` ([endgame.cpp](../src/endgame.cpp)) consults egdb **first**,
+  falling back to the in-memory tables on `Unknown`.
+- **<3-piece guard**: egdb's `db2` slice returns a spurious decisive for some
+  bare KvK; `probe()` declines below 3 pieces so the exact in-memory `KvK=Draw`
+  shortcut wins. Default build (`JASS_EGDB` OFF) = no-op stubs.
+
+Validation = the **native egdb example self-test** (164/164), not the in-memory
+tables (a shallow heuristic). `jass --egdb-selfcheck <dir> <n>` asserts the one
+airtight invariant (KvK-no-capture = Draw); see BITBASE_INTEGRATION.md.
+
+**Self-play data tools** (exact endgame supervision):
+- `--gen-egdb-wld <N> <out> <db>` — emit N random quiet ≤7-piece positions
+  labelled with exact WLD (free dense endgame coverage).
+- `--egdb-relabel <in> <db> [out]` — overwrite WDL labels of ≤7-piece positions
+  in a self-play dataset with the exact egdb result (idempotent).
+
+The full target self-play loop using these is documented in
+[EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
 
 ## Evaluation pipeline
 
