@@ -1,0 +1,105 @@
+=== (0) installeur présent ? (persiste hors repo) ===
+total 3612256
+drwxr-xr-x  2 root root       4096 Jun 16 12:29 .
+drwx------ 12 root root       4096 Jun 16 12:38 ..
+-rw-r--r--  1 root root 2099686144 Jun 16 12:28 Kingsrow_Intl_7pc_WLD_Setup-1.bin
+-rw-r--r--  1 root root 1598927404 Jun 16 12:29 Kingsrow_Intl_7pc_WLD_Setup-2.bin
+-rw-r--r--  1 root root     313345 Jun 16 12:27 Kingsrow_Intl_7pc_WLD_Setup.exe
+installeur: /root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe
+=== (1) innoextract statique (GitHub, zéro dépendance) ===
+innoextract dl+untar OK
+innoextract 1.9
+=== (2) extraction de l'installeur ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       150G  121G   24G  84% /
+innoextract rc=0
+ - "app/db7-5011.idx1"
+ - "app/db7-5020.cpr1"
+ - "app/db7-5020.idx1"
+Done.
+  after  Filesystem      Size  Used Avail Use% Mounted on
+  after  /dev/sda1       150G  125G   19G  87% /
+  du -sh /root/egdb_extracted : 4.8G
+  arborescence extraite (≤3 niveaux) :
+/root/egdb_extracted
+/root/egdb_extracted/app
+/root/egdb_extracted/app/db7-2221.cpr1
+/root/egdb_extracted/app/db6-4101.cpr1
+/root/egdb_extracted/app/db7-2230.idx1
+/root/egdb_extracted/app/db6-1320.cpr1
+/root/egdb_extracted/app/db6-0303.idx1
+/root/egdb_extracted/app/db7-0511.cpr1
+/root/egdb_extracted/app/db3.idx1
+/root/egdb_extracted/app/db7-1411.idx1
+/root/egdb_extracted/app/db7-5020.cpr1
+/root/egdb_extracted/app/db5.idx1
+/root/egdb_extracted/app/db6-4110.idx1
+/root/egdb_extracted/app/db7-4030.idx1
+/root/egdb_extracted/app/db7-3130.cpr1
+/root/egdb_extracted/app/db7-0502.cpr1
+/root/egdb_extracted/app/db6-1302.cpr1
+/root/egdb_extracted/app/db2.cpr1
+/root/egdb_extracted/app/db6-0402.cpr1
+/root/egdb_extracted/app/db6-3102.idx1
+/root/egdb_extracted/app/db6-3030.cpr1
+/root/egdb_extracted/app/db7-5011.cpr1
+/root/egdb_extracted/app/db6-1311.idx1
+/root/egdb_extracted/app/db7-2311.idx1
+/root/egdb_extracted/app/db6-3030.idx1
+/root/egdb_extracted/app/db7-0421.idx1
+/root/egdb_extracted/app/db7-0403.idx1
+/root/egdb_extracted/app/db6-0510.idx1
+/root/egdb_extracted/app/db6-2121.cpr1
+/root/egdb_extracted/app/db7-4012.idx1
+/root/egdb_extracted/app/db6-3201.idx1
+/root/egdb_extracted/app/db6-2202.idx1
+/root/egdb_extracted/app/db7-1312.idx1
+/root/egdb_extracted/app/db7-1330.idx1
+/root/egdb_extracted/app/db7-5020.idx1
+/root/egdb_extracted/app/db7-4111.idx1
+/root/egdb_extracted/app/db7-5002.idx1
+/root/egdb_extracted/app/db7-2311.cpr1
+/root/egdb_extracted/app/db6-2130.cpr1
+/root/egdb_extracted/app/db7-2302.cpr1
+/root/egdb_extracted/app/db7-0520.idx1
+/root/egdb_extracted/app/db6-0321.idx1
+/root/egdb_extracted/app/db6-0501.idx1
+/root/egdb_extracted/app/db7-4111.cpr1
+/root/egdb_extracted/app/db7-2212.idx1
+/root/egdb_extracted/app/db7-3121.idx1
+/root/egdb_extracted/app/db7-3220.idx1
+/root/egdb_extracted/app/db6-0501.cpr1
+/root/egdb_extracted/app/db6-1221.cpr1
+/root/egdb_extracted/app/db7-0430.idx1
+=== (3) build JASS_EGDB + selfcheck ===
+BUILD OK
+  DBROOT=.
+total 18160
+drwxr-xr-x 24 root root    4096 Jun 16 12:52 .
+drwx------ 13 root root    4096 Jun 16 12:49 ..
+drwxr-xr-x  3 root root    4096 Jun  6 11:06 archive
+drwxr-xr-x  4 root root    4096 Jun  4 21:07 build
+drwxr-xr-x  4 root root    4096 Jun 16 05:22 build-bd
+drwxr-xr-x  4 root root    4096 Jun 16 12:52 build-egdb
+drwxr-xr-x  4 root root    4096 Jun 16 07:09 build-prod
+drwxr-xr-x  2 root root    4096 May 12 05:01 cmake
+-rw-r--r--  1 root root   12467 Jun 16 10:27 CMakeLists.txt
+drwxr-xr-x  3 root root    4096 Jun 16 12:52 .compile-tmp
+-rw-r--r--  1 root root    3736 May 12 05:01 CONTRIBUTING.md
+drwxr-xr-x  2 root root    4096 May 21 14:16 data
+drwxr-xr-x  2 root root    4096 Jun 16 00:15 docs
+drwxr-xr-x  8 root root    4096 Jun 16 12:49 .git
+drwxr-xr-x  4 root root    4096 May 16 15:19 .github
+-rw-r--r--  1 root root     531 Jun  4 21:48 .gitignore
+drwxr-xr-x  2 root root    4096 Jun 13 06:30 infra
+drwxr-xr-x  6 root root    4096 May 20 10:17 jobs
+-rw-r--r--  1 root root   34020 May 12 05:01 LICENSE
+--- selfcheck (200k positions) ---
+error: egdb::init failed for '.' (built without -DJASS_EGDB, or no DB there)
+
+==========================================================
+   ccx33-0283 — INNOEXTRACT + SELFCHECK BITBASE
+----------------------------------------------------------
+  RESULT: CLEAN → mapping validé sur données réelles → bitbase opérationnelle.
+  (sinon : voir DBROOT / structure extraite ci-dessus, ajuster le chemin.)
+==========================================================
