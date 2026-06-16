@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0300-mtc-download",
-  "script": "jobs/queue/ccx33-0300-mtc-download.sh",
-  "pid": 368556,
-  "started_at": "2026-06-16T22:06:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
