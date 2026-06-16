@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0276-selfplay-features/artefacts.src/cumulative.jnnw
+  900000 records  (0.05s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0276-selfplay-features/artefacts.src/feat1
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (900000, 110)  (mean mob b/w=11.9/11.9)
+target=wdl  pos=297643 neg=295766 zero=306591 (34.1% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=297643 draw=306591 loss=295766 (34.1% draws)
+phase : piece-count mean=19.4  wmg mean=0.485
+split : train=810000 val=90000
+prune : keep 195,266 buckets (>= 1 visits) -> 390,534 pattern cols vs 34,012,224  (87.1× fewer); train fallback=0.000%
+design : 390754 columns (2×195267 pat + 2×110 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.574017  iters=200  (184.26s)
+val   : mse=1.432191  sign_acc=0.2819
+val/phase mse : opening=0.6821(n21008)  midgame=0.9520(n17153)  late-mid=1.4981(n16751)  endgame=2.7678(n18645)  deep-eg=1.3099(n16443)
+quant : scale=1000  pat range=[-415,415] ext_mg range=[-884,883]
+wrote /root/jass/jobs/results/ccx33-0276-selfplay-features/artefacts.src/gen1.pjtw  (v3, 34012444 weights, 136049796 bytes)
