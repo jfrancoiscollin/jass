@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T09:46:11+00:00",
+  "snapshot_at": "2026-06-16T09:51:16+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 9392,
+  "elapsed_seconds": 9697,
   "artefacts": [
     {
       "name": "build.log",
@@ -345,5 +345,5 @@
       "size_bytes": 2513
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    02:36:32  0.0  0.0 bash\n2393733 2393731    02:36:32  0.0  0.0 bash\n3900944 2393733       03:28  348 45.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    02:41:37  0.0  0.0 bash\n2393733 2393731    02:41:37  0.0  0.0 bash\n3900944 2393733       08:34  362 47.7 python3\n"
 }
