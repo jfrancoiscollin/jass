@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0293-depthramp-ab",
-  "snapshot_at": "2026-06-16T19:18:57+00:00",
+  "snapshot_at": "2026-06-16T19:24:02+00:00",
   "started_at": "2026-06-16T17:26:07+00:00",
-  "elapsed_seconds": 6770,
+  "elapsed_seconds": 7075,
   "artefacts": [
     {
       "name": "A8-1.log",
@@ -185,5 +185,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1136050 2431592       09:06  0.4  0.0 python3\n1136053 1136050       09:06 48.2  0.5 jass\n1136055 1136050       09:05 51.5  0.9 scan_linux\n1136058 1136050       09:05  0.0  0.0 jass\n2431590       1    01:52:50  0.0  0.0 bash\n2431592 2431590    01:52:50  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1136050 2431592       14:11  0.4  0.0 python3\n1136053 1136050       14:10 47.7  0.5 jass\n1136055 1136050       14:10 52.0  0.9 scan_linux\n1136058 1136050       14:10  0.0  0.0 jass\n2431590       1    01:57:55  0.0  0.0 bash\n2431592 2431590    01:57:55  0.0  0.0 bash\n"
 }
