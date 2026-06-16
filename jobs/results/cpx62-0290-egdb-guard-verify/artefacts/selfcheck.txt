@@ -1,0 +1,10 @@
+egdb opened: max_pieces=7  samples=5000
+
+=== egdb self-check (egdb = ground truth) ===
+  checked positions          : 5000
+  egdb W/L decisive          : 235
+  egdb draw                  : 3745
+  egdb unknown (out of slice): 1020
+  egdb != our in-mem table   : 826  (informational — our tables are heuristic, not truth)
+  KvK-no-capture NOT draw    : 0  (hard invariant)
+  RESULT: invariant OK. Authoritative validation = egdb native example test.
