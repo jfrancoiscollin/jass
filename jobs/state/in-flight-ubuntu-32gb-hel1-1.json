@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0274-coverage-augment",
+  "script": "jobs/queue/cpx62-0274-coverage-augment.sh",
+  "pid": 3607038,
+  "started_at": "2026-06-16T06:02:09+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
