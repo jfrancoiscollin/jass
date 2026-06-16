@@ -1,0 +1,56 @@
+=== (1) reachability edgilbert.org depuis la boxe ===
+HTTP/1.1 200 OK
+Date: Tue, 16 Jun 2026 11:34:23 GMT
+Content-Type: text/html
+Content-Length: 1712
+Connection: keep-alive
+Set-Cookie: request_id=a9141289-1808-4d46-ae59-ddcd43d0e72f; Max-Age=3600; Path=/; HttpOnly
+Last-Modified: Fri, 29 Jul 2016 16:08:52 GMT
+ETag: "6b0-538c877757c90"
+curl head rc=0  (0 + '200/30x' = boxe ATTEINT edgilbert.org)
+=== (2) dump des liens de base (href + tailles) ===
+page bytes: 1712
+--- liens DB potentiels (db|wld|piece|.zip|.7z|.cpr) ---
+--- tout texte mentionnant tailles GB/MB + nombre de pièces ---
+7 piece
+8 piece
+=== (3) build JASS_EGDB=ON from-source sur la boxe + tests ===
+clone egdb_intl OK
+cmake: EGDB ENABLED
+BUILD FAIL
+[  8%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/indexing.cpp.o
+[ 13%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/compression_tables.cpp.o
+[ 13%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/crc.cpp.o
+[ 15%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_dtw.cpp.o
+[ 17%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_common.cpp.o
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:104: CMakeFiles/egdb_intl.dir/root/egdb_intl/Re-pair/utils.cpp.o] Aborted (core dumped)
+gmake[3]: *** Waiting for unfinished jobs....
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:146: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/crc.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:132: CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/indexing.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:90: CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/huffman.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:160: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_common.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:174: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_dtw.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:76: CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/bitbuf.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:118: CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/compression_tables.cpp.o] Aborted (core dumped)
+gmake[2]: *** [CMakeFiles/Makefile2:89: CMakeFiles/egdb_intl.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:149: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:160: jass] Error 2
+
+==========================================================
+   ccx33-0277 — PROBE BITBASE
+----------------------------------------------------------
+  reachability rc=0  (voir head.txt ; 200/30x = OK)
+  liens DB     : /root/jass/jobs/results/ccx33-0277-egdb-probe/artefacts.src/links.txt  (+ filtrés ci-dessus)
+  build EGDB   : voir BUILD OK + 6428 tests + perft(6)=167140
+----------------------------------------------------------
+  SUITE si reachable : job download (db ≤4-6 pièces) → --egdb-selfcheck (DOIT être CLEAN)
+  SUITE si bloqué    : débloquer le réseau côté boxe (firewall sortant)
+==========================================================
