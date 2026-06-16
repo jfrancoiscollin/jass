@@ -1,0 +1,21 @@
+BUILD OK
+All 6428 assertions passed.
+=== (1) gen-egdb-wld 100k (coverage WLD exact) ===
+gen-egdb-wld: wrote 100000 / 100000 (56048 decisive, 43952 draw) in 185544 tries → /root/jass/jobs/results/cpx62-0292-egdb-tools-verify/artefacts.src/cov.jnnw
+  header_count=100000 records=100000
+  WDL: win(+1)=29332 draw(0)=43952 loss(-1)=26716
+  pieces: {3: 29413, 4: 25452, 5: 22062, 6: 18305, 7: 4768}
+  one-sided(BAD)=0  max_pieces=7
+=== (2) relabel : petit self-play (50k, sans egdb) → relabel → idempotence ===
+self-play 50000
+--- relabel pass 1 (attendu : labels changés > 0) ---
+egdb-relabel: 50000 records, 7990 egdb-resolved (2658 decisive, 5332 draw), 1087 labels changed → /root/jass/jobs/results/cpx62-0292-egdb-tools-verify/artefacts.src/sp-rl.jnnw
+--- relabel pass 2 sur le déjà-relabelisé (attendu : 0 changement = idempotent) ---
+egdb-relabel: 50000 records, 7990 egdb-resolved (2658 decisive, 5332 draw), 0 labels changed → /root/jass/jobs/results/cpx62-0292-egdb-tools-verify/artefacts.src/sp-rl2.jnnw
+  IDEMPOTENT (rl == rl2)
+
+==========================================================
+   cpx62-0292 — VALIDATION outils egdb
+  coverage : distribution + ≤7p + ≥1/côté ci-dessus.
+  relabel  : changements>0 (finales corrigées) + idempotence = OK → prêts pour la boucle.
+==========================================================
