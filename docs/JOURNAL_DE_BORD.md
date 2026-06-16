@@ -12,6 +12,43 @@
 
 ---
 
+## 0. Dernier verdict — 2026-06-16 (BITBASE egdb + outils self-play exact)
+
+**Faits établis (à ne pas re-litiger) :**
+
+- **Bitbase egdb SCELLÉE** : WLD Kingsrow 2→7 pièces téléchargée+extraite sur les 2
+  boxes, **self-test natif 164/164**, conversion bit-à-bit validée, **guard <3 pièces**
+  (le slice db2 rend un décisif faux sur quelques KvK → on défère à KvK=Draw exact).
+  egdb a aussi **révélé que nos tables internes 2v1/3v1 sur-revendiquent** les gains.
+  → Procédure : [BITBASE_INTEGRATION.md](BITBASE_INTEGRATION.md). Plan d'usage :
+  [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+- **Features de finale = +28 Elo** (0276 : +230 vs hc, vs 0266 +201.7) mais
+  endgame-rois reste ~3.06 → **aident, ne cassent PAS le verrou**. Code intact
+  (`JASS_ENDGAME_FEATURES`, NUM_EXTRAS 110). *Flip défaut→ON en attente du verdict 0287.*
+- **Outils labels exacts codés+validés (0292)** : `--gen-egdb-wld` (coverage aléatoire
+  quiète ≤7p, distribution saine, 0 one-sided) et `--egdb-relabel` (réécrit WDL ≤7p,
+  idempotent). Les briques (2)+(3) de la boucle cible.
+- **minibatch vs lowmem (0291)** : minibatch = **moitié RAM** (11.6 vs 21.9 GB sur 5.1M)
+  → l'outil mémoire pour scaler (crossover lowmem ≈ 7M lignes/32GB). **Le wedge 5h de
+  0274 n'était PAS un thrash lowmem** (lowmem 5M = 4 min, tient à 22 GB) → one-off.
+  Exactitude minibatch (problème convexe → optimum unique) **à confirmer à convergence
+  (0294)** : à 80 it, mse 2.94 vs 3.03 (sous-convergé).
+- **Micro-optims movegen mergées en prod** : `MoveList::reserve(48)` + promo-split
+  bitboard (coups identiques, 6428 tests incl. perft). Géométrie pattern_jass 54
+  **fermée** (✂️ 32 déjà optimal). Test scan_eval king-aware **corrigé** (était rouge
+  dans tout build king-aware — bug de test, pas d'éval).
+
+**En cours :** `0287` (jeu-parfait-finale egdb casse-t-il le verrou ?) · `0293` (A/B
+profondeur `late-mid=12,endgame=16` sur l'entre-deux 8-21p) · `0294` (exactitude minibatch).
+
+**Index jobs (session bitbase)** : 0274 (coverage depth-16, **tué** — supplanté par
+egdb) · 0276 (features self-play, +28) · 0277-0286 (download/extract/build/scellé
+bitbase) · 0287 (self-play egdb-perfect) · 0288-0290 (prep cpx62 + guard) · 0291
+(contrôle minibatch) · 0292 (outils egdb) · 0293 (A/B profondeur) · 0294 (convergence
+minibatch).
+
+---
+
 ## 1. Ancres mesurées (durables)
 
 ### vs Scan — la VRAIE référence (profondeur égale, no bitbases, harness corrigé)

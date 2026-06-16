@@ -10,6 +10,25 @@
 
 ---
 
+## 🟢 Branche ACTIVE 2026-06-16 — verrou finale par bitbase egdb exacte
+
+📍 **Position** : bitbase egdb **scellée** (WLD 2→7, 164/164) → on attaque le verrou
+roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+
+- ✂️ **0274 (coverage depth-16)** — ÉLAGUÉE : labels par recherche imparfaite,
+  **supplantés** par le WLD exact de la bitbase. Job tué.
+- 🟢 **Jeu-parfait-finale en génération (0287)** : egdb ON → finales jouées parfaites
+  → labels WDL exacts. ⏳ verdict : endgame-rois ≪ 3.06 = couverture était la clé ;
+  ≈ 3.06 = verrou = capacité éval (→ 🔵 archi éval).
+- 🟢 **Relabel + coverage exacts** (`--egdb-relabel`, `--gen-egdb-wld`, validés 0292) :
+  briques (2)+(3) de la boucle — densité finale exacte et gratuite.
+- 🔵 **Depth-ramp sur l'entre-deux 8-21p (0293)** : `late-mid=12,endgame=16` → la
+  recherche mord dans la TB → labels de transition ancrés-TB. ⏳ A/B vs uniforme-8.
+- 🟢 **minibatch = outil mémoire** (0291 : moitié RAM) pour scaler le cumulatif
+  gonflé par la coverage. Exactitude ⏳ (0294, convexe → doit converger au même optimum).
+- ⭐ **Candidat le plus probable** : si 0287 casse → boucle complète egdb + minibatch ;
+  si plafonne → archi éval (le linéaire king-aware ne représente pas la finale-rois).
+
 ## Acquis (racine — déjà tranché)
 
 - **Levier = l'EVAL** (principal) **+ la RECHERCHE** (réactivé 2026-06-15). La
