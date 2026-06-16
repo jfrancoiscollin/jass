@@ -17,13 +17,17 @@ roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md]
 
 - ✂️ **0274 (coverage depth-16)** — ÉLAGUÉE : labels par recherche imparfaite,
   **supplantés** par le WLD exact de la bitbase. Job tué.
-- ✂️ **Jeu-parfait-finale / couverture (0287)** — VERDICT : endgame-rois **3.22 ≈ 3.06**
-  (PAS mieux) malgré labels EXACTS (val-mse ÷3.5), vs Scan **−741**. → **la couverture
-  N'EST PAS le verrou**. ÉLAGUÉE comme levier finale.
-- 🟢⭐ **ARCHI / CAPACITÉ ÉVAL** (activée par 0287) : l'éval linéaire ne représente pas la
-  relation roi-roi. Ordre : (1) **features king-king riches** (table déplacement relatif
-  roi-roi — la 1ère, moins risquée) → (2) **tête non-linéaire MLP** sur positions de rois
-  → (3) **MTC** (court-circuit éval, Scan ne l'a pas). Cible : endgame-rois ≪ 3.06.
+- **0287 (egdb-perfect, depth-8 uniforme)** : endgame-rois 3.22 inchangé → j'avais conclu
+  « capacité ». ⚠️ **VERDICT CORRIGÉ par 0293** (verdict 0287 trop hâtif, depth-8 sous-testait).
+- ⭐ **0293 (depth-ramp 12/16)** : endgame-rois **2.86→2.04 (−29 %) + 74 Elo** à labels ≤7
+  identiques → un levier **données/labels** (profondeur de transition mordant la TB) marche
+  encore → **la classe linéaire N'EST PAS saturée**.
+- ✂️ **Branche "capacité/FM/MLP" RÉTRACTÉE** (0296 FM annulé) : **Scan est dans notre classe**
+  (linéaire) → pour l'ÉGALER, pas besoin de non-linéarité (FM/MLP = *dépasser* Scan,
+  prématuré ; déjà tranché en 0184). Capacité = *plus tard, seulement après saturation*.
+- 🟢⭐ **LEVIER ACTIF = SATURER LA CLASSE LINÉAIRE** (stratégie Scan) : **egdb-perfect +
+  depth-ramp + coverage exacte + multi-gen à convergence**. C'est ce que 0287/0293 valident.
+  Cible : endgame-rois ≪ 2.04, et re-baseline vs Scan.
 - 🟢 **Relabel + coverage exacts** (`--egdb-relabel`, `--gen-egdb-wld`, validés 0292) :
   briques (2)+(3) de la boucle — densité finale exacte et gratuite.
 - 🔵 **Depth-ramp sur l'entre-deux 8-21p (0293)** : `late-mid=12,endgame=16` → la
