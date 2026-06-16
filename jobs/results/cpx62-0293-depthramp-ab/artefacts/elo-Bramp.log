@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp.pjtw, 34012436 weights, scale=1000) vs NNUE(hc), depth 9, threads 16, movetime_ms 0, 720 games
+Result: SCAN_EVAL=463 NNUE=250 Draws=7 (total 720)
+SCAN_EVAL score rate vs NNUE: 0.647917

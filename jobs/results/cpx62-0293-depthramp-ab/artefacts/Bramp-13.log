@@ -1,0 +1,15 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp-13.jnnw eval_depth=6 play_depth=8 max_plies=200 seed=26488 nnue=/root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/gen8.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=late-mid:12,endgame:16 play_depth_by_phase=late-mid:12,endgame:16
+  played 50 games, 1387 / 18750 positions
+  played 100 games, 2751 / 18750 positions
+  played 150 games, 4118 / 18750 positions
+  played 200 games, 5541 / 18750 positions
+  played 250 games, 6981 / 18750 positions
+  played 300 games, 8384 / 18750 positions
+  played 350 games, 9706 / 18750 positions
+  played 400 games, 11111 / 18750 positions
+  played 450 games, 12525 / 18750 positions
+  played 500 games, 13869 / 18750 positions
+  played 550 games, 15262 / 18750 positions
+  played 600 games, 16619 / 18750 positions
+  played 650 games, 17928 / 18750 positions
+wrote 18750 WDL records to /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp-13.jnnw
