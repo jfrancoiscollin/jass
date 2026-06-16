@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0287-selfplay-egdb-perfect",
-  "snapshot_at": "2026-06-16T18:51:25+00:00",
+  "snapshot_at": "2026-06-16T18:56:29+00:00",
   "started_at": "2026-06-16T15:34:05+00:00",
-  "elapsed_seconds": 11840,
+  "elapsed_seconds": 12144,
   "artefacts": [
     {
       "name": "build.log",
@@ -441,5 +441,5 @@
       "size_bytes": 2882
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1423837       1    03:17:20  0.0  0.0 bash\n1423839 1423837    03:17:20  0.0  0.0 bash\n3369821 1423839       03:19  297 71.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1423837       1    03:22:23  0.0  0.0 bash\n1423839 1423837    03:22:23  0.0  0.0 bash\n3369821 1423839       08:22  328 65.9 python3\n"
 }
