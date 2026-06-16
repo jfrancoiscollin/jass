@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp.jnnw
+  300000 records  (0.02s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/feat-Bramp
+  extras shape (300000, 106)  (mean mob b/w=11.8/11.8)
+target=wdl  pos=64519 neg=64098 zero=171383 (57.1% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=64519 draw=171383 loss=64098 (57.1% draws)
+phase : piece-count mean=22.7  wmg mean=0.567
+split : train=270000 val=30000
+prune : keep 159,233 buckets (>= 1 visits) -> 318,468 pattern cols vs 34,012,224  (106.8× fewer); train fallback=0.000%
+design : 318680 columns (2×159234 pat + 2×106 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.631092  iters=200  (79.51s)
+val   : mse=0.665707  sign_acc=0.1861
+val/phase mse : opening=0.4539(n8889)  midgame=0.4626(n6868)  late-mid=0.5375(n6665)  endgame=1.0739(n6199)  deep-eg=1.8274(n1379)
+quant : scale=1000  pat range=[-212,212] ext_mg range=[-560,552]
+wrote /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp.pjtw  (v3, 34012436 weights, 136049764 bytes)

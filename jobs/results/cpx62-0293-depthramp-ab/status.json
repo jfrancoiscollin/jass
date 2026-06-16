@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0293-depthramp-ab",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T17:26:07+00:00",
+  "ended_at": "2026-06-16T20:11:02+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 2431590
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src"
 }

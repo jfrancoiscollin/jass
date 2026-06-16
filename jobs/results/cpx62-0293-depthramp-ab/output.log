@@ -1,0 +1,113 @@
+All 6428 assertions passed.
+perft(6)=167140 OK (movegen opts move-identical)
+=== BRAS A : depth-8 UNIFORME (= 0287) ===
+/root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/A8.jnnw: 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/feat-A8
+=== BRAS B : ramp late-mid=12, endgame=16 ===
+/root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/Bramp.jnnw: 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0293-depthramp-ab/artefacts.src/feat-Bramp
+
+==========================================================
+   cpx62-0293 — A/B PROFONDEUR sur l'entre-deux (vs Scan)
+----------------------------------------------------------
+  BRAS A (uniforme-8)        Elo_vs_hc=+31.9 (389-8-323)
+  --- autopsie A (king-perte par phase) ---
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2239  accord=0.533  perte_moy=   0.80
+
+-- par PHASE --
+  opening          n=  732  accord=0.490  perte_moy=   0.05
+  midgame          n=  407  accord=0.577  perte_moy=   0.09
+  late-mid         n=  418  accord=0.560  perte_moy=   0.19
+  endgame          n=  535  accord=0.514  perte_moy=   2.03
+  deep-eg          n=  147  accord=0.619  perte_moy=   3.73
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 1546  accord=0.538  perte_moy=   0.09
+  kings            n=  693  accord=0.524  perte_moy=   2.38
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.05 (732)                    —       —
+  midgame              0.08 (396)            0.35 (11)    ×4.3
+  late-mid             0.15 (239)           0.26 (179)    ×1.7
+  endgame              0.21 (168)           2.86 (367)   ×13.5
+  deep-eg               0.14 (11)           4.02 (136)   ×28.5
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 1744  accord=0.412  perte_moy=   0.86
+  capture-avail    n=  495  accord=0.962  perte_moy=   0.59
+
+-- par RÉSULTAT --
+  lost             n= 2239  accord=0.533  perte_moy=   0.80
+
+-- 6 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g9  [lost ] deep-eg  K perte= 92.4      33-28 → 33-29      W:W26,33,42:B25,34,35,K44
+  g29 [lost ] endgame  K perte= 92.0      47-42 → 33-28      W:W18,33,47:B11,14,26,30,K49
+  g8  [lost ] deep-eg  K perte= 91.2      32-37 → 32-43      B:W35,50,K1,K3,K33:B15,K32
+  g15 [lost ] deep-eg  K perte= 90.5       28-6 → 28-32      W:WK28:B31,K3,K4,K48
+  g18 [lost ] endgame  K perte= 89.3      33-38 → 5-10       B:W19,25,35,44,47,K18:B5,15,33
+  g19 [lost ] endgame  K perte= 88.6      20-15 → 36-31      W:W20,36,47:B7,9,26,40,41,K46
+      late-mid         n=  418  accord=0.560  perte_moy=   0.19
+      endgame          n=  535  accord=0.514  perte_moy=   2.03
+      late-mid             0.15 (239)           0.26 (179)    ×1.7
+      endgame              0.21 (168)           2.86 (367)   ×13.5
+  BRAS B (ramp 12/16)        Elo_vs_hc=+105.9 (463-7-250)
+  --- autopsie B (king-perte par phase) ---
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2289  accord=0.537  perte_moy=   0.81
+
+-- par PHASE --
+  opening          n=  690  accord=0.500  perte_moy=   0.04
+  midgame          n=  445  accord=0.506  perte_moy=   0.08
+  late-mid         n=  400  accord=0.547  perte_moy=   0.17
+  endgame          n=  553  accord=0.542  perte_moy=   1.55
+  deep-eg          n=  201  accord=0.701  perte_moy=   4.31
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 1592  accord=0.518  perte_moy=   0.28
+  kings            n=  697  accord=0.581  perte_moy=   2.03
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.04 (683)             0.10 (7)    ×2.5
+  midgame              0.08 (423)            0.06 (22)    ×0.8
+  late-mid             0.16 (258)           0.19 (142)    ×1.2
+  endgame              0.70 (201)           2.04 (352)    ×2.9
+  deep-eg               7.28 (27)           3.84 (174)    ×0.5
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 1777  accord=0.419  perte_moy=   0.66
+  capture-avail    n=  512  accord=0.947  perte_moy=   1.32
+
+-- par RÉSULTAT --
+  lost             n= 2289  accord=0.537  perte_moy=   0.81
+
+-- 6 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g32 [lost ] deep-eg    perte= 96.5        1-6 → 1-7        B:W26,34,37,50:B1,16
+  g22 [lost ] endgame    perte= 93.9      41-47 → 11-16      B:W18,20,23,24,35,38:B11,41
+  g34 [lost ] endgame  K perte= 91.5      15-20 → 21-27      B:W8,33,35,37,K25:B15,21,36
+  g28 [lost ] endgame  K perte= 91.2      18-23 → 18-22      B:W9,33,47,K41:B16,18,31,36
+  g19 [lost ] deep-eg  K perte= 89.3      28-23 → 28-17      W:WK28:B34,K47,K48,K49
+  g16 [lost ] deep-eg  K perte= 88.2      23-45 → 18-27      B:W20,39,K1,K3,K24:BK18,K23
+      late-mid         n=  400  accord=0.547  perte_moy=   0.17
+      endgame          n=  553  accord=0.542  perte_moy=   1.55
+      late-mid             0.16 (258)           0.19 (142)    ×1.2
+      endgame              0.70 (201)           2.04 (352)    ×2.9
+----------------------------------------------------------
+  Si late-mid-rois ET/OU endgame-rois de B < A → approfondir l'entre-deux AIDE
+     (labels de transition ancrés-TB) → schedule à intégrer dans la boucle prod.
+  Si ≈ égal → depth-8 uniforme suffit (la recherche mordait déjà la TB / l'éval limite).
+==========================================================
