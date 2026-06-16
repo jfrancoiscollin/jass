@@ -1,0 +1,17 @@
+dataset = cumulatif 0266 : 5100000 positions
+wrote 5100000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/featM
+=== A) LOWMEM (max-iter 80) ===
+  lowmem: rc=0  endgame_mse=2.9405  peakRSS=21.89 GB  wall=4:19.13
+=== B) MINIBATCH 500000 (max-iter 80) ===
+  minibatch: rc=0  endgame_mse=3.0343  peakRSS=11.62 GB  wall=16:38.83
+
+==========================================================
+   cpx62-0291 — CONTRÔLE minibatch vs lowmem  (N=5100000 positions, 80 iters)
+----------------------------------------------------------
+  LOWMEM    : lowmem: rc=0  endgame_mse=2.9405  peakRSS=21.89 GB  wall=4:19.13   Elo_vs_hc=+18.8 (373-13-334)
+  MINIBATCH : minibatch: rc=0  endgame_mse=3.0343  peakRSS=11.62 GB  wall=16:38.83   Elo_vs_hc=+72.4 (428-12-280)
+----------------------------------------------------------
+  endgame_mse ≈ identique → minibatch EXACT (même optimum que lowmem).
+  peakRSS(minibatch) ≪ peakRSS(lowmem) → minibatch = l'outil mémoire pour scaler.
+  si lowmem rc=124 (timeout) ou RSS proche 32GB → CONFIRME le thrash = cause du wedge 0274.
+==========================================================

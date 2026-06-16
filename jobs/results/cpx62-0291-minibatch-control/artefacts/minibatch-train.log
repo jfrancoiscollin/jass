@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/cumulative.jnnw
+  5100000 records  (0.27s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/featM
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (5100000, 110)  (mean mob b/w=12.1/12.1)
+target=wdl  pos=1771128 neg=1757172 zero=1571700 (30.8% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=1771128 draw=1571700 loss=1757172 (30.8% draws)
+phase : piece-count mean=19.9  wmg mean=0.498
+split : train=4590000 val=510000
+prune : keep 294,136 buckets (>= 1 visits) -> 588,274 pattern cols vs 34,012,224  (57.8× fewer); train fallback=0.000%
+design : 588494 columns (2×294137 pat + 2×110 ext)  [MINIBATCH 500,000 rows/chunk]
+L-BFGS  l2=0.0003  max_iter=80  LOGISTIC  (pure)  [minibatch 500,000]
+  train_loss=0.573496  iters=80  (972.89s)
+val   : mse=1.602177  sign_acc=0.2945
+val/phase mse : opening=0.7039(n126886)  midgame=1.1610(n98276)  late-mid=1.7753(n95756)  endgame=3.0343(n104589)  deep-eg=1.4954(n84493)
+quant : scale=1000  pat range=[-117,117] ext_mg range=[-853,848]
+wrote /root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/minibatch.pjtw  (v3, 34012444 weights, 136049796 bytes)

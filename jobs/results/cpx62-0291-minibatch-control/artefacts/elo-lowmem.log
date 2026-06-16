@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/lowmem.pjtw, 34012444 weights, scale=1000) vs NNUE(hc), depth 9, threads 16, movetime_ms 0, 720 games
+Result: SCAN_EVAL=373 NNUE=334 Draws=13 (total 720)
+SCAN_EVAL score rate vs NNUE: 0.527083

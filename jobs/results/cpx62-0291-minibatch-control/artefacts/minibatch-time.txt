@@ -1,0 +1,23 @@
+	Command being timed: "timeout 3600 python3 pattern_jass/tools/train.py --data /root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src/cumulative.jnnw --scan-eval --king-patterns --eval-features-file /root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/featM --loss logistic --l2 3e-4 --max-iter 80 --scale 1000 --prune --full-fold --minibatch 500000 --out /root/jass/jobs/results/cpx62-0291-minibatch-control/artefacts.src/minibatch.pjtw"
+	User time (seconds): 1018.70
+	System time (seconds): 174.36
+	Percent of CPU this job got: 119%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 16:38.83
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 12188460
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 17710055
+	Voluntary context switches: 12945
+	Involuntary context switches: 54720
+	Swaps: 0
+	File system inputs: 1611672
+	File system outputs: 265736
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
