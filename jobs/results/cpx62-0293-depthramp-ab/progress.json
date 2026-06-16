@@ -1,0 +1,225 @@
+{
+  "job_id": "cpx62-0293-depthramp-ab",
+  "snapshot_at": "2026-06-16T17:31:39+00:00",
+  "started_at": "2026-06-16T17:26:07+00:00",
+  "elapsed_seconds": 332,
+  "artefacts": [
+    {
+      "name": "A8-1.log",
+      "size_bytes": 1020
+    },
+    {
+      "name": "A8-10.log",
+      "size_bytes": 1023
+    },
+    {
+      "name": "A8-11.log",
+      "size_bytes": 1023
+    },
+    {
+      "name": "A8-12.log",
+      "size_bytes": 1023
+    },
+    {
+      "name": "A8-13.log",
+      "size_bytes": 1023
+    },
+    {
+      "name": "A8-14.log",
+      "size_bytes": 1022
+    },
+    {
+      "name": "A8-15.log",
+      "size_bytes": 1022
+    },
+    {
+      "name": "A8-16.log",
+      "size_bytes": 1023
+    },
+    {
+      "name": "A8-2.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-3.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-4.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-5.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-6.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-7.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-8.log",
+      "size_bytes": 1021
+    },
+    {
+      "name": "A8-9.log",
+      "size_bytes": 1020
+    },
+    {
+      "name": "A8-train.log",
+      "size_bytes": 1333
+    },
+    {
+      "name": "A8.jnnw",
+      "size_bytes": 11400008
+    },
+    {
+      "name": "A8.pjtw",
+      "size_bytes": 136049764
+    },
+    {
+      "name": "Bramp-1.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-10.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-11.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-12.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-13.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-14.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-15.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-16.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-2.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-3.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-4.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-5.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-6.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-7.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "Bramp-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-8.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-9.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "Bramp-9.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 25375
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 895
+    },
+    {
+      "name": "feat-A8",
+      "size_bytes": 127200012
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2431590       1       05:32  0.0  0.0 bash\n2431592 2431590       05:32  0.0  0.0 bash\n2432476 2431592       00:58 98.6  1.3 jass\n2432477 2431592       00:58 99.7  1.3 jass\n2432478 2431592       00:58 98.9  1.3 jass\n2432479 2431592       00:58 99.5  1.3 jass\n2432480 2431592       00:58 99.4  1.3 jass\n2432481 2431592       00:58 98.0  1.3 jass\n2432482 2431592       00:58 99.4  1.3 jass\n2432483 2431592       00:58 97.4  1.3 jass\n2432484 2431592       00:58 99.1  1.3 jass\n2432485 2431592       00:58 98.6  1.3 jass\n2432486 2431592       00:58 99.3  1.3 jass\n2432487 2431592       00:58 99.6  1.3 jass\n2432488 2431592       00:58 99.2  1.3 jass\n2432489 2431592       00:58 99.5  1.3 jass\n2432490 2431592       00:58 98.2  1.3 jass\n2432491 2431592       00:58 99.5  1.3 jass\n"
+}
