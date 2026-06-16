@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0290-egdb-guard-verify",
+  "script": "jobs/queue/cpx62-0290-egdb-guard-verify.sh",
+  "pid": 3646742,
+  "started_at": "2026-06-16T16:23:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
