@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0297-saturate-loop
+# id: ccx33-0297-saturate-loop
 # description: SATURER LA CLASSE LINÉAIRE sur la finale (stratégie Scan). 0287/0293 : la classe n'est
 # PAS saturée, les leviers DONNÉES marchent encore. Boucle self-play combinant les briques VALIDÉES :
 # (a) king-aware + ENDGAME-FEATURES (110), (b) egdb-perfect (finales ≤7 jouées par la TB → labels WDL
@@ -9,7 +9,7 @@
 # 1-gen) + re-baseline vs Scan. PAS de FM (prématuré : Scan est linéaire, on rattrape DANS la classe).
 set -uo pipefail
 cd /root/jass
-ART="/root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0297-saturate-loop/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 APP=/root/egdb_extracted/app
 ls "$APP"/db2.idx1 >/dev/null 2>&1 || { echo "ABORT: base egdb absente"; exit 4; }
