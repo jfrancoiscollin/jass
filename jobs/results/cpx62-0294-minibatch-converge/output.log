@@ -1,0 +1,16 @@
+wrote 5100000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0294-minibatch-converge/artefacts.src/featM
+=== lowmem (max-iter 300) ===
+  lowmem: train_loss=0.569193 iters=300 val_mse=1.589102 endgame_mse=3.1334 peakRSS=21.89GB
+=== minibatch 500000 (max-iter 300) ===
+  minibatch: train_loss=0.569173 iters=300 val_mse=1.583395 endgame_mse=3.1261 peakRSS=11.62GB
+  pjtw bytes: lowmem=136049796 minibatch=136049796  same_size=True
+  weights float32 view: max|Δ|=2.52234e-44  mean|Δ|=0  (≈0 = mêmes poids)
+
+==========================================================
+   cpx62-0294 — CONVERGENCE minibatch vs lowmem (N=5100000, 300 it)
+  lowmem    : lowmem: train_loss=0.569193 iters=300 val_mse=1.589102 endgame_mse=3.1334 peakRSS=21.89GB
+  minibatch : minibatch: train_loss=0.569173 iters=300 val_mse=1.583395 endgame_mse=3.1261 peakRSS=11.62GB
+----------------------------------------------------------
+  train_loss égaux + iters<300 → CONVERGÉ au même optimum = minibatch EXACT (écart 0291 = sous-convergence).
+  train_loss encore différents → divergence réelle du chemin chunké → creuser avant prod.
+==========================================================
