@@ -1,0 +1,61 @@
+{
+  "job_id": "ccx33-0276-selfplay-features",
+  "snapshot_at": "2026-06-16T07:14:45+00:00",
+  "started_at": "2026-06-16T07:09:39+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 14192
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 784
+    },
+    {
+      "name": "cumulative.jnnw",
+      "size_bytes": 11400008
+    },
+    {
+      "name": "feat0",
+      "size_bytes": 132000012
+    },
+    {
+      "name": "gen0-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp0-1.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-2.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-3.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-4.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-5.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-6.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-7.log",
+      "size_bytes": 1420
+    },
+    {
+      "name": "sp0-8.log",
+      "size_bytes": 1420
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1       05:06  0.0  0.0 bash\n2393733 2393731       05:06  0.0  0.0 bash\n2394353 2393733       00:38  727  4.5 python3\n"
+}
