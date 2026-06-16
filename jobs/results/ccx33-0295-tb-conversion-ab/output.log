@@ -1,0 +1,20 @@
+=== build DIST (main, score TB distance-aware) ===
+=== build FLAT (patch -ply → constante) ===
+patch flat appliqué+build, source restauré
+=== génération + relabel : bras FLAT ===
+/root/jass/jobs/results/ccx33-0295-tb-conversion-ab/artefacts.src/flat.jnnw: 500000
+=== génération + relabel : bras DIST ===
+/root/jass/jobs/results/ccx33-0295-tb-conversion-ab/artefacts.src/dist.jnnw: 500000
+
+==========================================================
+   cpx62-0295 — A/B fix TB distance-aware (conversion)
+----------------------------------------------------------
+  FLAT : egdb-relabel: 500000 records, 23217 egdb-resolved (20458 decisive, 2759 draw), 10481 labels changed, 10261 stalls (won/lost recorded draw) → /root/jass/jobs/results/ccx33-0295-tb-conversion-ab/artefacts.src/flat-rl.jnnw
+         draw_rate=60.09% (300440/500000)
+  DIST : egdb-relabel: 500000 records, 20368 egdb-resolved (17607 decisive, 2761 draw), 9230 labels changed, 8995 stalls (won/lost recorded draw) → /root/jass/jobs/results/ccx33-0295-tb-conversion-ab/artefacts.src/dist-rl.jnnw
+         draw_rate=58.41% (292040/500000)
+----------------------------------------------------------
+  stalls(DIST) < stalls(FLAT) → le fix CONVERTIT mieux (moins de finales gagnées nullifiées).
+  + draw_rate(DIST) < draw_rate(FLAT) → confirme (moins de nuls globaux).
+  écart ~0 → le fix mord peu à depth-8 (la navette intra-TB profonde attend MTC).
+==========================================================
