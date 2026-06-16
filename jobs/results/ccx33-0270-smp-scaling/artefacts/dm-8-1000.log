@@ -1,0 +1,6 @@
+depth-at-movetime : movetime=1000ms  tt=256MB  positions=9
+  A /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+    depth avg=18  min=18  max=18  | nodes avg=1342372  knps~1342.37
+  B hc
+    depth avg=19.3333  min=18  max=21  | nodes avg=2081334  knps~2081.33
+  → A reaches -1.33333 plies vs B (positive = A searches deeper for the same time)
