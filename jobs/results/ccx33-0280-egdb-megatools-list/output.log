@@ -1,0 +1,16 @@
+=== (1) binaire megatools statique depuis GitHub releases ===
+asset URL: <none found via API>
+téléchargement: https://github.com/megous/megatools/releases/download/1.11.1.20230212/megatools-1.11.1.20230212-linux-x86_64.tar.gz
+dl OK (9 octets)
+(untar a échoué — format ?)
+megatools binaire: INTROUVABLE
+/root/jass/jobs/queue/ccx33-0280-egdb-megatools-list.sh: line 29: : command not found
+=== (2) listing du dossier WLD 2-7 (tailles) ===
+megatools indisponible — voir dl.err / apt.log.
+
+==========================================================
+   ccx33-0280 — MEGATOOLS (statique) + LISTING TAILLES
+----------------------------------------------------------
+  27GB libres sur la boxe → si total WLD 2-7 < ~24GB : 0281 download ENTIER + selfcheck.
+  sinon : 0281 download SÉLECTIF des plus petites tranches (2-4p) + selfcheck.
+==========================================================
