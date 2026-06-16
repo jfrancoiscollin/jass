@@ -124,4 +124,11 @@ constexpr Bitboard reach_all_dirs(Bitboard bb) noexcept {
     return (nw | ne | se | sw) & FULL_BB;
 }
 
+// Promotion rows as bitboards (bit i = FMJD square i+1). White promotes on the
+// top row (FMJD 1..5 = bits 0..4) ; Black on the bottom row (FMJD 46..50 = bits
+// 45..49). Lets the quiet man generator decide `promotes` by masking the whole
+// destination set once instead of calling is_promotion_square() per move.
+inline constexpr Bitboard WHITE_PROMO_BB = 0x1FULL;          // bits 0..4
+inline constexpr Bitboard BLACK_PROMO_BB = 0x1FULL << 45;    // bits 45..49
+
 }  // namespace jass
