@@ -1,0 +1,19 @@
+=== (0) place disque + reachability mega.nz ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sda1       150G  117G   27G  82% /
+  /dev/sda1       150G  117G   27G  82% /
+  /dev/sda1       150G  117G   27G  82% /tmp
+mega.nz HEAD: 200
+=== (1) installer megatools ===
+apt megatools FAIL (voir apt.log)
+  megals=''  megadl=''  (version?)
+=== (2) listing du dossier WLD 2-7 (noms + tailles) ===
+megatools indisponible → impossible de lister. Fallback à étudier (megacmd / mega.py).
+
+==========================================================
+   ccx33-0279 — RECON MEGA (tailles des tranches WLD)
+----------------------------------------------------------
+  disque + mega reachability + listing ci-dessus.
+  SUITE 0280 : megadl SÉLECTIF des tranches ≤4-6 pièces vers /root/egdb_db,
+               build JASS_EGDB, JASS_EGDB_PATH=/root/egdb_db jass --egdb-selfcheck (CLEAN requis).
+==========================================================

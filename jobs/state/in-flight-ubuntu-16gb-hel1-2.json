@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0279-egdb-mega-recon",
-  "script": "jobs/queue/ccx33-0279-egdb-mega-recon.sh",
-  "pid": 1418516,
-  "started_at": "2026-06-16T11:55:38+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
