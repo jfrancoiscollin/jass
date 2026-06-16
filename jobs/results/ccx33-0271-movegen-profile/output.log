@@ -1,0 +1,16 @@
+=== build avec -DJASS_TIME_BREAKDOWN (king-aware pour gérer les finales à rois) ===
+positions: {'opening': 6, 'midgame': 6, 'endgame': 6}
+
+==========================================================
+   ccx33-0271 — SOUS-PROFIL MOVEGEN (split capture/quiet par phase)
+----------------------------------------------------------
+  phase      eval%  movegen%   ↳capt%  ↳quiet%  apply%  (n)
+  ----------------------------------------------------------
+  opening      3.3      31.3      7.8     10.0     4.0  (6)
+  midgame      2.7      31.0      9.0     10.0     3.8  (6)
+  endgame      1.2      19.5     13.0     14.8     2.7  (6)
+----------------------------------------------------------
+  Lecture : si movegen_capture% >> quiet% → attaquer la DFS captures (audit #1/#2).
+  Si quiet% domine en finale → movegen rois (audit #5) ; sinon priorité = captures partout.
+  Cf docs/MOVEGEN_OPTIM.md pour le plan priorisé + garde-fou perft.
+==========================================================

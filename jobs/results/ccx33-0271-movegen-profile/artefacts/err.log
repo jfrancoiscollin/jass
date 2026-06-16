@@ -1,0 +1,1 @@
+BREAKDOWN total_ms=2165 eval_ms=49 movegen_ms=638 apply_ms=81 accumulator_ms=0 tt_ms=215 zobrist_ms=58 movegen_capture_ms=265 movegen_quiet_ms=300 move_ordering_ms=107 path_check_ms=113 eval_pct=2 movegen_pct=29 apply_pct=3 accumulator_pct=0 tt_pct=9 zobrist_pct=2 movegen_capture_pct=12 movegen_quiet_pct=13 move_ordering_pct=4 path_check_pct=5
