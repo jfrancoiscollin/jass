@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0285-egdb-selfcheck",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T12:59:39+00:00",
+  "ended_at": "2026-06-16T13:04:59+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 1421555
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0285-egdb-selfcheck/artefacts.src"
 }
