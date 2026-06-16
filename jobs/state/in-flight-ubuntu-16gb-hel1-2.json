@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0302-mtc-probe",
+  "script": "jobs/queue/ccx33-0302-mtc-probe.sh",
+  "pid": 370674,
+  "started_at": "2026-06-16T22:36:36+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
