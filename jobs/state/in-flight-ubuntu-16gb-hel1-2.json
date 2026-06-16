@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0285-egdb-selfcheck",
+  "script": "jobs/queue/ccx33-0285-egdb-selfcheck.sh",
+  "pid": 1421555,
+  "started_at": "2026-06-16T12:59:39+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
