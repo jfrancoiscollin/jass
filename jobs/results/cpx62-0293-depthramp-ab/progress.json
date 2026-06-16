@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0293-depthramp-ab",
-  "snapshot_at": "2026-06-16T18:58:48+00:00",
+  "snapshot_at": "2026-06-16T19:03:50+00:00",
   "started_at": "2026-06-16T17:26:07+00:00",
-  "elapsed_seconds": 5561,
+  "elapsed_seconds": 5863,
   "artefacts": [
     {
       "name": "A8-1.log",
@@ -146,11 +146,15 @@
     },
     {
       "name": "Bramp-train.log",
-      "size_bytes": 0
+      "size_bytes": 1342
     },
     {
       "name": "Bramp.jnnw",
       "size_bytes": 11400008
+    },
+    {
+      "name": "Bramp.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "build.log",
@@ -161,6 +165,10 @@
       "size_bytes": 895
     },
     {
+      "name": "elo-A8.log",
+      "size_bytes": 0
+    },
+    {
       "name": "feat-A8",
       "size_bytes": 127200012
     },
@@ -169,5 +177,5 @@
       "size_bytes": 127200012
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2431590       1    01:32:40  0.0  0.0 bash\n2431592 2431590    01:32:40  0.0  0.0 bash\n2438347 2431592       01:05 1504  4.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2431590       1    01:37:43  0.0  0.0 bash\n2431592 2431590    01:37:43  0.0  0.0 bash\n2438570 2431592       04:43  0.0  0.0 bash\n2438571 2438570       04:43 1213  0.6 jass\n"
 }
