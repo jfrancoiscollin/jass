@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0275-endgame-features",
-  "snapshot_at": "2026-06-16T06:18:20+00:00",
+  "snapshot_at": "2026-06-16T06:23:32+00:00",
   "started_at": "2026-06-16T06:13:14+00:00",
-  "elapsed_seconds": 306,
+  "elapsed_seconds": 618,
   "artefacts": [
     {
       "name": "build.log",
@@ -25,5 +25,5 @@
       "size_bytes": 1332
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443337       1       05:05  0.0  0.0 bash\n1443339 1443337       05:05  0.0  0.0 bash\n1443841 1443339       02:43  0.0  0.0 bash\n1443842 1443841       02:43  691  0.5 jass\n1443843 1443841       02:43  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443337       1       10:17  0.0  0.0 bash\n1443339 1443337       10:17  0.0  0.0 bash\n1443841 1443339       07:55  0.0  0.0 bash\n1443842 1443841       07:55  704  0.6 jass\n1443843 1443841       07:55  0.0  0.0 bash\n"
 }
