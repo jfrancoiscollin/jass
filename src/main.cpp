@@ -19,6 +19,10 @@
 #include "nnue_server_client.hpp"
 #include "pattern_jass_bridge.hpp"
 #include "position.hpp"
+#include "bitbase.hpp"
+#include "bitboard.hpp"
+#include "egdb_bridge.hpp"
+#include "endgame.hpp"
 #include "scan_eval.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
@@ -1281,6 +1285,123 @@ int run_perft_mode(int argc, char** argv) {
                   << " nodes/s  (" << s << "s)\n";
     }
     return 0;
+}
+
+// -----------------------------------------------------------------------------
+// --egdb-selfcheck <db_dir> [samples] [cache_mb] : the #1 validation gate for
+// the external bitbase bridge. Opens the egdb_intl DB at <db_dir> and, on a
+// random sample of kings-only positions that jass's own in-memory tables also
+// resolve, cross-checks egdb::probe() against the reference:
+//   * K-vs-K  → must be Draw (unambiguous; any other value = a mapping bug).
+//   * 2v1/3v1 → wherever the in-memory bitbase asserts a DEFINITE win, egdb
+//     must return the SAME absolute result (our table only flags concrete
+//     wins, so this direction catches bit-layout / colour / result-mapping
+//     bugs; the reverse — egdb decisive where ours is Draw/Unknown — is just
+//     egdb's exact retrograde being stronger and is reported, not failed).
+// A clean run (0 violations) locks the adaptation before trusting the eval.
+// -----------------------------------------------------------------------------
+int run_egdb_selfcheck_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --egdb-selfcheck <db_dir> [samples] [cache_mb]\n";
+        return 1;
+    }
+    const std::string db_dir = argv[2];
+    const int samples  = (argc > 3) ? parse_int_or(argv[3], 200000) : 200000;
+    const int cache_mb = (argc > 4) ? parse_int_or(argv[4], 1024)   : 1024;
+
+    if (!jass::egdb::init(db_dir, cache_mb)) {
+        std::cerr << "error: egdb::init failed for '" << db_dir
+                  << "' (built without -DJASS_EGDB, or no DB there)\n";
+        return 1;
+    }
+    std::cout << "egdb opened: max_pieces=" << jass::egdb::max_pieces()
+              << "  samples=" << samples << "\n";
+
+    auto fen_of = [](const jass::Position& p) {
+        auto sqs = [](jass::Bitboard b) {
+            std::string s; bool first = true;
+            while (b) { int q = jass::pop_lsb(b);
+                if (!first) s += ','; first = false; s += std::to_string(q); }
+            return s;
+        };
+        return std::string(p.side_to_move() == jass::Color::White ? "W" : "B")
+             + ":WK" + sqs(p.white_kings()) + ":BK" + sqs(p.black_kings());
+    };
+
+    std::mt19937_64 rng(0xB17BA5E5ULL);
+    // (white-kings, black-kings) configs our in-memory tables resolve.
+    const std::pair<int,int> configs[] = {{1,1},{2,1},{1,2},{3,1},{1,3}};
+
+    long checked = 0, kvk_bad = 0, decisive_mismatch = 0, egdb_stronger = 0,
+         egdb_unknown = 0;
+    int shown = 0;
+
+    for (int i = 0; i < samples; ++i) {
+        const auto [wk, bk] = configs[rng() % 5];
+        // place wk+bk kings on distinct random playable squares (1..50)
+        jass::Position p;
+        int placed = 0; bool ok = true;
+        std::array<int, 6> used{}; int nused = 0;
+        auto place = [&](jass::Piece piece) {
+            for (int tries = 0; tries < 64; ++tries) {
+                const int sq = static_cast<int>(rng() % 50) + 1;
+                bool dup = false;
+                for (int u = 0; u < nused; ++u) if (used[static_cast<std::size_t>(u)] == sq) dup = true;
+                if (dup) continue;
+                used[static_cast<std::size_t>(nused++)] = sq;
+                p.add_piece(static_cast<jass::Square>(sq), piece);
+                ++placed; return true;
+            }
+            return false;
+        };
+        for (int k = 0; k < wk && ok; ++k) ok = place(jass::Piece::WhiteKing);
+        for (int k = 0; k < bk && ok; ++k) ok = place(jass::Piece::BlackKing);
+        if (!ok || placed != wk + bk) continue;
+        p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
+
+        const jass::EndgameResult got = jass::egdb::probe(p);
+        // Reference from the in-memory tables (NOT probe_endgame, which now
+        // routes to egdb first).
+        const jass::EndgameResult ref = (wk == 1 && bk == 1)
+            ? jass::EndgameResult::Draw
+            : jass::probe_kings_endgame(p);
+
+        ++checked;
+        if (wk == 1 && bk == 1) {
+            if (got != jass::EndgameResult::Draw) {
+                ++kvk_bad;
+                if (shown++ < 12) std::cout << "  KvK NOT draw: egdb=" << static_cast<int>(got)
+                                            << "  " << fen_of(p) << "\n";
+            }
+            continue;
+        }
+        const bool ref_decisive = (ref == jass::EndgameResult::WhiteWin
+                                || ref == jass::EndgameResult::BlackWin);
+        if (ref_decisive) {
+            if (got != ref) {
+                ++decisive_mismatch;
+                if (shown++ < 12) std::cout << "  DECISIVE mismatch: ours=" << static_cast<int>(ref)
+                                            << " egdb=" << static_cast<int>(got)
+                                            << "  " << fen_of(p) << "\n";
+            }
+        } else if (got == jass::EndgameResult::Unknown) {
+            ++egdb_unknown;
+        } else if (got != ref) {
+            ++egdb_stronger;   // egdb decisive where our table was Draw/Unknown
+        }
+    }
+
+    jass::egdb::shutdown();
+    std::cout << "\n=== egdb self-check ===\n"
+              << "  checked positions     : " << checked << "\n"
+              << "  KvK non-draw (BUG)    : " << kvk_bad << "\n"
+              << "  decisive mismatch(BUG): " << decisive_mismatch << "\n"
+              << "  egdb stronger (ok)    : " << egdb_stronger << "\n"
+              << "  egdb unknown (slice?) : " << egdb_unknown << "\n";
+    const bool clean = (kvk_bad == 0 && decisive_mismatch == 0);
+    std::cout << (clean ? "  RESULT: CLEAN — mapping validated\n"
+                        : "  RESULT: BUG — mapping mismatch, DO NOT trust egdb\n");
+    return clean ? 0 : 1;
 }
 
 // -----------------------------------------------------------------------------
@@ -2555,6 +2676,7 @@ int main(int argc, char** argv) {
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
+        else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
