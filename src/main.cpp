@@ -1377,8 +1377,12 @@ int run_egdb_selfcheck_mode(int argc, char** argv) {
             // (win/loss split is symmetric; egdb_loss kept for completeness)
         }
 
-        // Hard invariant: KvK with no capture available is a forced draw.
-        if (wk == 1 && bk == 1 && got != jass::EndgameResult::Draw) {
+        // Hard invariant: KvK with no capture available is a forced draw, so
+        // egdb must never return a DECISIVE result for it. Draw or Unknown
+        // (e.g. the <3-piece guard declining db2) are both acceptable.
+        const bool got_decisive = (got == jass::EndgameResult::WhiteWin
+                                || got == jass::EndgameResult::BlackWin);
+        if (wk == 1 && bk == 1 && got_decisive) {
             jass::MoveList ml; jass::generate_legal_moves(p, ml);
             const bool has_cap = !ml.empty() && ml[0].is_capture();
             if (!has_cap) {
