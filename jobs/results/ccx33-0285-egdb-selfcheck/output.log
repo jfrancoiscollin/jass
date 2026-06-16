@@ -1,0 +1,121 @@
+=== (0) installeur présent ? (persiste hors repo) ===
+total 3612256
+drwxr-xr-x  2 root root       4096 Jun 16 12:29 .
+drwx------ 13 root root       4096 Jun 16 12:49 ..
+-rw-r--r--  1 root root 2099686144 Jun 16 12:28 Kingsrow_Intl_7pc_WLD_Setup-1.bin
+-rw-r--r--  1 root root 1598927404 Jun 16 12:29 Kingsrow_Intl_7pc_WLD_Setup-2.bin
+-rw-r--r--  1 root root     313345 Jun 16 12:27 Kingsrow_Intl_7pc_WLD_Setup.exe
+installeur: /root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe
+=== (1) innoextract statique (GitHub, zéro dépendance) ===
+innoextract dl+untar OK
+innoextract 1.9
+=== (2) extraction de l'installeur ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       150G  125G   19G  87% /
+déjà extrait (79 fichiers idx1) → skip extraction
+  after  Filesystem      Size  Used Avail Use% Mounted on
+  after  /dev/sda1       150G  125G   19G  87% /
+  du -sh /root/egdb_extracted : 4.8G
+  arborescence extraite (≤3 niveaux) :
+/root/egdb_extracted
+/root/egdb_extracted/app
+/root/egdb_extracted/app/db7-2221.cpr1
+/root/egdb_extracted/app/db6-4101.cpr1
+/root/egdb_extracted/app/db7-2230.idx1
+/root/egdb_extracted/app/db6-1320.cpr1
+/root/egdb_extracted/app/db6-0303.idx1
+/root/egdb_extracted/app/db7-0511.cpr1
+/root/egdb_extracted/app/db3.idx1
+/root/egdb_extracted/app/db7-1411.idx1
+/root/egdb_extracted/app/db7-5020.cpr1
+/root/egdb_extracted/app/db5.idx1
+/root/egdb_extracted/app/db6-4110.idx1
+/root/egdb_extracted/app/db7-4030.idx1
+/root/egdb_extracted/app/db7-3130.cpr1
+/root/egdb_extracted/app/db7-0502.cpr1
+/root/egdb_extracted/app/db6-1302.cpr1
+/root/egdb_extracted/app/db2.cpr1
+/root/egdb_extracted/app/db6-0402.cpr1
+/root/egdb_extracted/app/db6-3102.idx1
+/root/egdb_extracted/app/db6-3030.cpr1
+/root/egdb_extracted/app/db7-5011.cpr1
+/root/egdb_extracted/app/db6-1311.idx1
+/root/egdb_extracted/app/db7-2311.idx1
+/root/egdb_extracted/app/db6-3030.idx1
+/root/egdb_extracted/app/db7-0421.idx1
+/root/egdb_extracted/app/db7-0403.idx1
+/root/egdb_extracted/app/db6-0510.idx1
+/root/egdb_extracted/app/db6-2121.cpr1
+/root/egdb_extracted/app/db7-4012.idx1
+/root/egdb_extracted/app/db6-3201.idx1
+/root/egdb_extracted/app/db6-2202.idx1
+/root/egdb_extracted/app/db7-1312.idx1
+/root/egdb_extracted/app/db7-1330.idx1
+/root/egdb_extracted/app/db7-5020.idx1
+/root/egdb_extracted/app/db7-4111.idx1
+/root/egdb_extracted/app/db7-5002.idx1
+/root/egdb_extracted/app/db7-2311.cpr1
+/root/egdb_extracted/app/db6-2130.cpr1
+/root/egdb_extracted/app/db7-2302.cpr1
+/root/egdb_extracted/app/db7-0520.idx1
+/root/egdb_extracted/app/db6-0321.idx1
+/root/egdb_extracted/app/db6-0501.idx1
+/root/egdb_extracted/app/db7-4111.cpr1
+/root/egdb_extracted/app/db7-2212.idx1
+/root/egdb_extracted/app/db7-3121.idx1
+/root/egdb_extracted/app/db7-3220.idx1
+/root/egdb_extracted/app/db6-0501.cpr1
+/root/egdb_extracted/app/db6-1221.cpr1
+/root/egdb_extracted/app/db7-0430.idx1
+=== (3) build JASS_EGDB + selfcheck ===
+BUILD OK
+  DBROOT=/root/egdb_extracted/app
+total 4933344
+drwxr-xr-x 2 root root      4096 Jun 16 12:52 .
+drwxr-xr-x 3 root root      4096 Jun 16 12:49 ..
+-rw-r--r-- 1 root root       404 Apr 23  2014 db2.cpr1
+-rw-r--r-- 1 root root       111 Apr 23  2014 db2.idx1
+-rw-r--r-- 1 root root     21628 Apr 23  2014 db3.cpr1
+-rw-r--r-- 1 root root       413 Apr 23  2014 db3.idx1
+-rw-r--r-- 1 root root   1176396 Apr 23  2014 db4.cpr1
+-rw-r--r-- 1 root root      4729 Apr 23  2014 db4.idx1
+-rw-r--r-- 1 root root  33886572 Apr 23  2014 db5.cpr1
+-rw-r--r-- 1 root root    126504 Apr 23  2014 db5.idx1
+-rw-r--r-- 1 root root   1413194 Apr 23  2014 db6-0303.cpr1
+-rw-r--r-- 1 root root      5415 Apr 23  2014 db6-0303.idx1
+-rw-r--r-- 1 root root  16957986 Apr 23  2014 db6-0312.cpr1
+-rw-r--r-- 1 root root     65620 Apr 23  2014 db6-0312.idx1
+-rw-r--r-- 1 root root  36118046 Apr 23  2014 db6-0321.cpr1
+-rw-r--r-- 1 root root    143579 Apr 23  2014 db6-0321.idx1
+-rw-r--r-- 1 root root  10587316 Apr 23  2014 db6-0330.cpr1
+-rw-r--r-- 1 root root     42776 Apr 23  2014 db6-0330.idx1
+-rw-r--r-- 1 root root  14580828 Apr 23  2014 db6-0402.cpr1
+--- selfcheck (200k positions) ---
+egdb opened: max_pieces=7  samples=200000
+  DECISIVE mismatch: ours=2 egdb=1  W:WK2,14:BK11
+  DECISIVE mismatch: ours=3 egdb=1  B:WK13:BK19,45,50
+  DECISIVE mismatch: ours=2 egdb=1  W:WK6,49:BK22
+  DECISIVE mismatch: ours=3 egdb=1  B:WK44:BK6,39,49
+  DECISIVE mismatch: ours=3 egdb=1  B:WK19:BK5,47
+  DECISIVE mismatch: ours=3 egdb=1  B:WK11:BK7,18,41
+  DECISIVE mismatch: ours=2 egdb=1  W:WK18,19:BK40
+  DECISIVE mismatch: ours=2 egdb=1  W:WK29,49:BK12
+  DECISIVE mismatch: ours=3 egdb=1  B:WK10:BK41,50
+  DECISIVE mismatch: ours=2 egdb=1  W:WK44,46:BK22
+  DECISIVE mismatch: ours=2 egdb=1  W:WK19,44:BK24
+  DECISIVE mismatch: ours=2 egdb=1  W:WK19,28:BK17
+
+=== egdb self-check ===
+  checked positions     : 200000
+  KvK non-draw (BUG)    : 325
+  decisive mismatch(BUG): 29401
+  egdb stronger (ok)    : 3375
+  egdb unknown (slice?) : 0
+  RESULT: BUG — mapping mismatch, DO NOT trust egdb
+
+==========================================================
+   ccx33-0283 — INNOEXTRACT + SELFCHECK BITBASE
+----------------------------------------------------------
+  RESULT: CLEAN → mapping validé sur données réelles → bitbase opérationnelle.
+  (sinon : voir DBROOT / structure extraite ci-dessus, ajuster le chemin.)
+==========================================================

@@ -1,0 +1,21 @@
+egdb opened: max_pieces=7  samples=200000
+  DECISIVE mismatch: ours=2 egdb=1  W:WK2,14:BK11
+  DECISIVE mismatch: ours=3 egdb=1  B:WK13:BK19,45,50
+  DECISIVE mismatch: ours=2 egdb=1  W:WK6,49:BK22
+  DECISIVE mismatch: ours=3 egdb=1  B:WK44:BK6,39,49
+  DECISIVE mismatch: ours=3 egdb=1  B:WK19:BK5,47
+  DECISIVE mismatch: ours=3 egdb=1  B:WK11:BK7,18,41
+  DECISIVE mismatch: ours=2 egdb=1  W:WK18,19:BK40
+  DECISIVE mismatch: ours=2 egdb=1  W:WK29,49:BK12
+  DECISIVE mismatch: ours=3 egdb=1  B:WK10:BK41,50
+  DECISIVE mismatch: ours=2 egdb=1  W:WK44,46:BK22
+  DECISIVE mismatch: ours=2 egdb=1  W:WK19,44:BK24
+  DECISIVE mismatch: ours=2 egdb=1  W:WK19,28:BK17
+
+=== egdb self-check ===
+  checked positions     : 200000
+  KvK non-draw (BUG)    : 325
+  decisive mismatch(BUG): 29401
+  egdb stronger (ok)    : 3375
+  egdb unknown (slice?) : 0
+  RESULT: BUG — mapping mismatch, DO NOT trust egdb
