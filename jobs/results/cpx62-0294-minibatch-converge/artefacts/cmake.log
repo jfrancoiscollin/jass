@@ -1,0 +1,18 @@
+-- The CXX compiler identification is GNU 15.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test JASS_COMPILER_SUPPORTS_AVX2
+-- Performing Test JASS_COMPILER_SUPPORTS_AVX2 - Success
+-- Jass: AVX2 enabled (-mavx2)
+-- Performing Test JASS_SUPPORTS_MARCH_NATIVE
+-- Performing Test JASS_SUPPORTS_MARCH_NATIVE - Success
+-- Jass: -march=native enabled
+-- Jass: LTO enabled for Release
+-- Jass: KING-AWARE patterns ENABLED (occupancy = men|kings)
+-- Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)
+-- Configuring done (1.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /root/jass/build-prod
