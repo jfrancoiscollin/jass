@@ -1,0 +1,129 @@
+{
+  "job_id": "ccx33-0295-tb-conversion-ab",
+  "snapshot_at": "2026-06-16T20:54:49+00:00",
+  "started_at": "2026-06-16T20:49:25+00:00",
+  "elapsed_seconds": 324,
+  "artefacts": [
+    {
+      "name": "build-build-dist.log",
+      "size_bytes": 22797
+    },
+    {
+      "name": "build-build-flat.log",
+      "size_bytes": 22797
+    },
+    {
+      "name": "cmake-build-dist.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "cmake-build-flat.log",
+      "size_bytes": 897
+    },
+    {
+      "name": "dist-1.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-2.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-3.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-4.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-5.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-6.jnnw",
+      "size_bytes": 205202
+    },
+    {
+      "name": "dist-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-7.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "dist-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "dist-8.jnnw",
+      "size_bytes": 196994
+    },
+    {
+      "name": "dist-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "flat-1.log",
+      "size_bytes": 2453
+    },
+    {
+      "name": "flat-2.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-3.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-4.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-5.log",
+      "size_bytes": 2453
+    },
+    {
+      "name": "flat-6.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-7.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-8.log",
+      "size_bytes": 2454
+    },
+    {
+      "name": "flat-rl.jnnw",
+      "size_bytes": 19000008
+    },
+    {
+      "name": "flat.jnnw",
+      "size_bytes": 19000008
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 365133       1       05:24  0.0  0.0 bash\n 365135  365133       05:24  0.0  0.0 bash\n 366234  365135       00:24 99.7  0.8 jass\n 366235  365135       00:24 99.5  0.8 jass\n 366236  365135       00:24 99.3  0.8 jass\n 366237  365135       00:24 99.7  0.8 jass\n 366238  365135       00:24 99.8  0.8 jass\n 366239  365135       00:24 99.5  0.8 jass\n 366240  365135       00:24 99.4  0.8 jass\n 366241  365135       00:24 99.7  0.8 jass\n"
+}
