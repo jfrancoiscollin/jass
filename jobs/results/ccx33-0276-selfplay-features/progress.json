@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T08:54:21+00:00",
+  "snapshot_at": "2026-06-16T08:59:25+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 6282,
+  "elapsed_seconds": 6586,
   "artefacts": [
     {
       "name": "build.log",
@@ -30,6 +30,10 @@
     },
     {
       "name": "elo-gen3.log",
+      "size_bytes": 276
+    },
+    {
+      "name": "elo-gen4.log",
       "size_bytes": 276
     },
     {
@@ -86,7 +90,11 @@
     },
     {
       "name": "gen4-train.log",
-      "size_bytes": 0
+      "size_bytes": 1435
+    },
+    {
+      "name": "gen4.pjtw",
+      "size_bytes": 136049796
     },
     {
       "name": "sp0-1.log",
@@ -247,7 +255,71 @@
     {
       "name": "sp4-8.log",
       "size_bytes": 2513
+    },
+    {
+      "name": "sp5-1.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp5-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-2.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-3.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-4.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-5.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-6.jnnw",
+      "size_bytes": 8210
+    },
+    {
+      "name": "sp5-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-7.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-8.jnnw",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp5-8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    01:44:42  0.0  0.0 bash\n2393733 2393731    01:44:42  0.0  0.0 bash\n3411147 2393733       04:39  399 37.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    01:49:46  0.0  0.0 bash\n2393733 2393731    01:49:46  0.0  0.0 bash\n3659968 2393733       00:05 99.6  0.4 jass\n3659969 2393733       00:05 98.8  0.5 jass\n3659970 2393733       00:05 99.4  0.5 jass\n3659971 2393733       00:05 99.8  0.5 jass\n3659972 2393733       00:05 99.4  0.5 jass\n3659973 2393733       00:05 98.2  0.5 jass\n3659974 2393733       00:05 99.4  0.5 jass\n3659975 2393733       00:05  100  0.5 jass\n"
 }
