@@ -19,6 +19,13 @@ namespace jass {
 
 class MoveList {
 public:
+    // Pre-size the backing store to the practical FMJD branching factor so a
+    // freshly-constructed list (one per negamax node) does not pay a heap
+    // (re)allocation on its first pushes. 48 covers the vast majority of
+    // positions (max legal move count is well under this in practice); larger
+    // capture fans still grow on demand.
+    MoveList() { moves_.reserve(48); }
+
     void clear() noexcept { moves_.clear(); }
     void push(const Move& m) { moves_.push_back(m); }
 
