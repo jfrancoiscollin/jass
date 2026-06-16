@@ -1,0 +1,41 @@
+{
+  "job_id": "cpx62-0291-minibatch-control",
+  "snapshot_at": "2026-06-16T16:50:02+00:00",
+  "started_at": "2026-06-16T16:44:20+00:00",
+  "elapsed_seconds": 342,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 13223
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 784
+    },
+    {
+      "name": "featM",
+      "size_bytes": 2244000012
+    },
+    {
+      "name": "lowmem-time.txt",
+      "size_bytes": 1167
+    },
+    {
+      "name": "lowmem-train.log",
+      "size_bytes": 1441
+    },
+    {
+      "name": "lowmem.pjtw",
+      "size_bytes": 136049796
+    },
+    {
+      "name": "minibatch-time.txt",
+      "size_bytes": 0
+    },
+    {
+      "name": "minibatch-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3648254       1       05:41  0.0  0.0 bash\n3648264 3648254       05:41  0.0  0.0 bash\n3648878 3648264       01:11  0.0  0.0 bash\n3648879 3648878       01:11  0.0  0.0 time\n3648880 3648879       01:11  0.0  0.0 timeout\n3648881 3648880       01:11  115 37.7 python3\n"
+}
