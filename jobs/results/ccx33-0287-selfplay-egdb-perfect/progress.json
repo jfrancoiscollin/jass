@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0287-selfplay-egdb-perfect",
-  "snapshot_at": "2026-06-16T17:58:25+00:00",
+  "snapshot_at": "2026-06-16T18:03:30+00:00",
   "started_at": "2026-06-16T15:34:05+00:00",
-  "elapsed_seconds": 8660,
+  "elapsed_seconds": 8965,
   "artefacts": [
     {
       "name": "build.log",
@@ -39,6 +39,10 @@
     {
       "name": "elo-gen5.log",
       "size_bytes": 280
+    },
+    {
+      "name": "elo-gen6.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -118,7 +122,11 @@
     },
     {
       "name": "gen6-train.log",
-      "size_bytes": 0
+      "size_bytes": 1450
+    },
+    {
+      "name": "gen6.pjtw",
+      "size_bytes": 136049796
     },
     {
       "name": "sp0-1.log",
@@ -345,5 +353,5 @@
       "size_bytes": 2884
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1423837       1    02:24:19  0.0  0.0 bash\n1423839 1423837    02:24:19  0.0  0.0 bash\n2886307 1423839       04:18  358 45.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1423837       1    02:29:24  0.0  0.0 bash\n1423839 1423837    02:29:24  0.0  0.0 bash\n2886466 1423839       00:16  0.0  0.0 bash\n2886468 2886466       00:16  523  0.6 jass\n"
 }
