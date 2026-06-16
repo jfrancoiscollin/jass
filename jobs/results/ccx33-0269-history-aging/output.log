@@ -1,0 +1,28 @@
+EVAL = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [h8k] A=[history_max=8192] vs B=[baseline, history_max=0] : mt200ms pairs=25 ===
+=== [h16k] A=[history_max=16384] vs B=[baseline, history_max=0] : mt200ms pairs=25 ===
+=== [h32k] A=[history_max=32768] vs B=[baseline, history_max=0] : mt200ms pairs=25 ===
+
+==========================================================
+   ccx33-0269 — HISTORY AGING (gravity) : A=history_max vs B=legacy(0)
+   éval=gen8.pjtw  mt=200ms  ~450 parties/comparaison
+----------------------------------------------------------
+  [h8k]  A=210 B=222 D=18
+      games=450  W=210 D=18 L=222
+      score=0.4867  95%CI=[0.4408, 0.5328] (Wilson)
+      elo=-9.3  95%CI=[-41.3, +22.8]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.228  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [h16k]  A=223 B=196 D=31
+      games=450  W=223 D=31 L=196
+      score=0.5300  95%CI=[0.4838, 0.5757] (Wilson)
+      elo=+20.9  95%CI=[-11.2, +53.0]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.367  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [h32k]  A=200 B=234 D=16
+      games=450  W=200 D=16 L=234
+      score=0.4622  95%CI=[0.4167, 0.5084] (Wilson)
+      elo=-26.3  95%CI=[-58.4, +5.8]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.556  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  Un cap >0 → l'adopter par défaut (search_params.hpp history_max). Tous ~0 → l'history
+     non-bornée ne nuit pas ici (peu de coups calmes en dames → ordonnancement déjà bon).
+==========================================================
