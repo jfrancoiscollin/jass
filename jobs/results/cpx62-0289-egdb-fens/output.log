@@ -1,0 +1,21 @@
+=== selfcheck COMPLET (2000, seed fixe) — capture des violations ===
+egdb opened: max_pieces=7  samples=2000
+  INVARIANT VIOLATION (KvK no-capture not draw): egdb=2  W:WK37:BK46
+  INVARIANT VIOLATION (KvK no-capture not draw): egdb=3  B:WK5:BK32
+=== egdb self-check (egdb = ground truth) ===
+  checked positions          : 2000
+  egdb W/L decisive          : 98
+  egdb draw                  : 1902
+  egdb unknown (out of slice): 0
+  egdb != our in-mem table   : 337  (informational — our tables are heuristic, not truth)
+  KvK-no-capture NOT draw    : 2  (hard invariant)
+  RESULT: INVARIANT VIOLATION — conversion/mapping bug, do not trust egdb.
+
+=== les FEN flaggées ===
+  INVARIANT VIOLATION (KvK no-capture not draw): egdb=2  W:WK37:BK46
+  INVARIANT VIOLATION (KvK no-capture not draw): egdb=3  B:WK5:BK32
+  RESULT: INVARIANT VIOLATION — conversion/mapping bug, do not trust egdb.
+
+==========================================================
+   cpx62-0289 — FEN des 2 violations KvK (diag conversion vs détecteur)
+==========================================================
