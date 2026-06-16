@@ -1,0 +1,29 @@
+{
+  "job_id": "ccx33-0275-endgame-features",
+  "snapshot_at": "2026-06-16T06:18:20+00:00",
+  "started_at": "2026-06-16T06:13:14+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 12608
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 784
+    },
+    {
+      "name": "distill-egf.pjtw",
+      "size_bytes": 136049796
+    },
+    {
+      "name": "featM",
+      "size_bytes": 624884932
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1332
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443337       1       05:05  0.0  0.0 bash\n1443339 1443337       05:05  0.0  0.0 bash\n1443841 1443339       02:43  0.0  0.0 bash\n1443842 1443841       02:43  691  0.5 jass\n1443843 1443841       02:43  0.0  0.0 bash\n"
+}
