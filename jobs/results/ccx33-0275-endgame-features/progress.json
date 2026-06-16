@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0275-endgame-features",
-  "snapshot_at": "2026-06-16T06:23:32+00:00",
+  "snapshot_at": "2026-06-16T06:28:35+00:00",
   "started_at": "2026-06-16T06:13:14+00:00",
-  "elapsed_seconds": 618,
+  "elapsed_seconds": 921,
   "artefacts": [
     {
       "name": "build.log",
@@ -21,9 +21,13 @@
       "size_bytes": 624884932
     },
     {
+      "name": "scan-mt05.log",
+      "size_bytes": 0
+    },
+    {
       "name": "train.log",
       "size_bytes": 1332
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443337       1       10:17  0.0  0.0 bash\n1443339 1443337       10:17  0.0  0.0 bash\n1443841 1443339       07:55  0.0  0.0 bash\n1443842 1443841       07:55  704  0.6 jass\n1443843 1443841       07:55  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1443337       1       15:20  0.0  0.0 bash\n1443339 1443337       15:20  0.0  0.0 bash\n2392488 1443339       02:41  0.4  0.0 python3\n2392491 2392488       02:41 51.5  0.5 jass\n2392493 2392488       02:41 48.1  0.9 scan_linux\n2392496 2392488       02:41  0.0  0.0 jass\n"
 }
