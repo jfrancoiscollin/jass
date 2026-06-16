@@ -1,0 +1,126 @@
+binaire = NMP OFF
+=== pré-vol egdb (selfcheck invariant) ===
+  egdb unknown (out of slice): 0
+  egdb != our in-mem table   : 510  (informational — our tables are heuristic, not truth)
+  KvK-no-capture NOT draw    : 3  (hard invariant)
+  RESULT: INVARIANT VIOLATION — conversion/mapping bug, do not trust egdb.
+PARAMS: play_depth=8 UNIFORME + ENDGAME FEATURES + EGDB-PERFECT play (gen only) + --lowmem  600000/gen ×8
+=== gen0 : seed (300k, play depth-8 EGDB-perfect, l2=3e-2) ===
+cumulative 300000
+wrote 300000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat0
+  gen0 val_endgame=0.7167 Elo=177-8-85 elo=+123.3
+=== gen1 : +600000 (play depth-8 EGDB-perfect) avec gen0 → cumulé → logistic (features+lowmem) ===
+cumulative 900000
+wrote 900000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat1
+  gen1 val_endgame=0.7676 Elo=195-6-69 elo=+175.7
+=== gen2 : +600000 (play depth-8 EGDB-perfect) avec gen1 → cumulé → logistic (features+lowmem) ===
+cumulative 1500000
+wrote 1500000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat2
+  gen2 val_endgame=0.8739 Elo=208-7-55 elo=+223.3
+=== gen3 : +600000 (play depth-8 EGDB-perfect) avec gen2 → cumulé → logistic (features+lowmem) ===
+cumulative 2100000
+wrote 2100000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat3
+  gen3 val_endgame=0.8162 Elo=214-7-49 elo=+246.9
+=== gen4 : +600000 (play depth-8 EGDB-perfect) avec gen3 → cumulé → logistic (features+lowmem) ===
+cumulative 2700000
+wrote 2700000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat4
+  gen4 val_endgame=0.8312 Elo=206-4-60 elo=+210.3
+=== gen5 : +600000 (play depth-8 EGDB-perfect) avec gen4 → cumulé → logistic (features+lowmem) ===
+cumulative 3300000
+wrote 3300000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat5
+  gen5 val_endgame=0.8535 Elo=216-3-51 elo=+246.9
+=== gen6 : +600000 (play depth-8 EGDB-perfect) avec gen5 → cumulé → logistic (features+lowmem) ===
+cumulative 3900000
+wrote 3900000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat6
+  gen6 val_endgame=0.8568 Elo=217-2-51 elo=+249.0
+=== gen7 : +600000 (play depth-8 EGDB-perfect) avec gen6 → cumulé → logistic (features+lowmem) ===
+cumulative 4500000
+wrote 4500000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat7
+  gen7 val_endgame=0.8541 Elo=199-5-66 elo=+187.4
+=== gen8 : +600000 (play depth-8 EGDB-perfect) avec gen7 → cumulé → logistic (features+lowmem) ===
+cumulative 5100000
+wrote 5100000 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat8
+  gen8 val_endgame=0.8358 Elo=219-1-50 elo=+255.3
+=== gen8 vs hc précis (60p) ===
+  847-20-213 elo=+233.9
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2243  accord=0.543  perte_moy=   0.81
+
+-- par PHASE --
+  opening          n=  705  accord=0.566  perte_moy=   0.03
+  midgame          n=  426  accord=0.521  perte_moy=   0.08
+  late-mid         n=  390  accord=0.559  perte_moy=   0.17
+  endgame          n=  513  accord=0.517  perte_moy=   1.99
+  deep-eg          n=  209  accord=0.541  perte_moy=   3.19
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 1703  accord=0.548  perte_moy=   0.15
+  kings            n=  540  accord=0.524  perte_moy=   2.87
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (705)                    —       —
+  midgame              0.08 (423)             0.00 (3)       —
+  late-mid             0.17 (355)            0.21 (35)    ×1.2
+  endgame              0.23 (211)           3.22 (302)   ×14.2
+  deep-eg               10.85 (9)           2.85 (200)    ×0.3
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 1729  accord=0.419  perte_moy=   0.87
+  capture-avail    n=  514  accord=0.959  perte_moy=   0.59
+
+-- par RÉSULTAT --
+  drawn            n=   88  accord=0.432  perte_moy=   0.08
+  lost             n= 2155  accord=0.547  perte_moy=   0.84
+
+-- 10 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g21 [lost ] deep-eg  K perte= 92.5       2-11 → 2-16       W:WK2:B20,28,41,K35
+  g9  [lost ] endgame  K perte= 92.4      20-14 → 36-31      W:W20,28,36,37,41:B4,11,17,18,26,K16
+  g33 [lost ] endgame  K perte= 91.3      40-35 → 23-19      W:W23,26,36,40:B8,9,11,K15,K39
+  g12 [lost ] deep-eg  K perte= 90.9      39-33 → 39-43      B:W12,24,K1,K2:BK39
+  g31 [lost ] endgame  K perte= 90.4      41-37 → 23-19      W:W23,28,41:B3,15,17,40,K4
+  g19 [lost ] endgame  K perte= 90.2      36-31 → 45-40      W:W25,26,30,36,45:B14,16,19,29,32,K6
+  g4  [lost ] deep-eg  K perte= 89.1      42-47 → 42-24      B:W14,K5,K16,K36:BK42
+  g24 [lost ] endgame  K perte= 88.9      13-18 → 16-21      B:W10,33,36,41,48,K23:B13,16,22,27,31
+  g36 [lost ] endgame  K perte= 88.5      21-26 → 27-32      B:W23,25,37,42,47,K2:B16,21,27
+  g34 [lost ] endgame  K perte= 88.0      16-21 → 49-40      B:W25,31,36,37,48,K2,K3,K4:B16,26,K49
+
+==========================================================
+   ccx33-0287 — SELF-PLAY EGDB-PERFECT (finales jouées par la bitbase, labels exacts)
+----------------------------------------------------------
+  gen0  Elo_vs_hc=177-8-85 elo=+123.3   val_endgame_mse=0.7167
+  gen1  Elo_vs_hc=195-6-69 elo=+175.7   val_endgame_mse=0.7676
+  gen2  Elo_vs_hc=208-7-55 elo=+223.3   val_endgame_mse=0.8739
+  gen3  Elo_vs_hc=214-7-49 elo=+246.9   val_endgame_mse=0.8162
+  gen4  Elo_vs_hc=206-4-60 elo=+210.3   val_endgame_mse=0.8312
+  gen5  Elo_vs_hc=216-3-51 elo=+246.9   val_endgame_mse=0.8535
+  gen6  Elo_vs_hc=217-2-51 elo=+249.0   val_endgame_mse=0.8568
+  gen7  Elo_vs_hc=199-5-66 elo=+187.4   val_endgame_mse=0.8541
+  gen8  Elo_vs_hc=219-1-50 elo=+255.3   val_endgame_mse=0.8358
+  gen8 (60p) vs hc : 847-20-213 elo=+233.9   [0276 features-sans-egdb = +230 ; 0266 = +201.7]
+  gen8 vs Scan mt0.5 :   Jass score rate: 0.014 (0.5 / 36)   ELO estimate:    -741 (95% CI ≈ ±133) 
+----------------------------------------------------------
+  AUTOPSIE FINALE (perte phase×rois vs Scan ; comparer 0276=3.06, 0275 distill=3.22, 0266~3.x) :
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (705)                    —       —
+  midgame              0.08 (423)             0.00 (3)       —
+  late-mid             0.17 (355)            0.21 (35)    ×1.2
+  endgame              0.23 (211)           3.22 (302)   ×14.2
+  deep-eg               10.85 (9)           2.85 (200)    ×0.3
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+----------------------------------------------------------
+  endgame-rois NETTEMENT < 3.06 (0276) → le jeu-parfait-finale CASSE le verrou : la couverture
+     par labels EXACTS était la clé → on garde egdb dans la boucle de prod + on re-baseline vs Scan.
+  endgame-rois ~3.06 → même le jeu parfait ne suffit pas : le verrou est la CAPACITÉ de l'éval
+     (le PST/features ne peuvent pas représenter la finale-rois) → piste archi éval.
+==========================================================
