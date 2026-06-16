@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0294-minibatch-converge",
-  "snapshot_at": "2026-06-16T20:33:03+00:00",
+  "snapshot_at": "2026-06-16T20:38:20+00:00",
   "started_at": "2026-06-16T20:11:09+00:00",
-  "elapsed_seconds": 1314,
+  "elapsed_seconds": 1631,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,5 +37,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1140650       1       21:53  0.0  0.0 bash\n1140652 1140650       21:53  0.0  0.0 bash\n1141816 1140652       06:35  0.0  0.0 bash\n1141817 1141816       06:35  0.0  0.0 time\n1141818 1141817       06:35  118 34.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1140650       1       27:11  0.0  0.0 bash\n1140652 1140650       27:11  0.0  0.0 bash\n1141816 1140652       11:53  0.0  0.0 bash\n1141817 1141816       11:53  0.0  0.0 time\n1141818 1141817       11:53  118 32.7 python3\n"
 }
