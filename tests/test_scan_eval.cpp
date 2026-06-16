@@ -234,7 +234,11 @@ void test_evaluate_with_idx_matches_evaluate() {
     for (const char* f : fens) {
         const Position pos = parse(f);
         std::array<std::uint32_t, pattern_jass::NUM_PATTERNS> idx{};
-        pattern_jass::extract_all(pos.black_men(), pos.white_men(), idx);
+        // Occupancy must match evaluate()'s pattern source: men-only, or men|kings
+        // under -DJASS_KING_PATTERNS. pat_black/pat_white keeps both eval paths
+        // consistent in BOTH configs (the old men-only call was wrong for the
+        // king-aware build, whose FENs here include kings).
+        pattern_jass::extract_all(pat_black(pos), pat_white(pos), idx);
         JASS_CHECK(net.evaluate_with_idx(pos, idx.data()) == net.evaluate(pos));
     }
 }
