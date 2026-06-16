@@ -1,16 +1,16 @@
 {
   "job_id": "ccx33-0269-history-aging",
-  "snapshot_at": "2026-06-16T05:06:05+00:00",
+  "snapshot_at": "2026-06-16T05:11:07+00:00",
   "started_at": "2026-06-16T02:20:57+00:00",
-  "elapsed_seconds": 9908,
+  "elapsed_seconds": 10210,
   "artefacts": [
     {
       "name": "ab-h16k.log",
-      "size_bytes": 0
+      "size_bytes": 240
     },
     {
       "name": "ab-h32k.log",
-      "size_bytes": 0
+      "size_bytes": 244
     },
     {
       "name": "ab-h8k.log",
@@ -25,5 +25,5 @@
       "size_bytes": 672
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1435942       1    02:45:07  0.0  0.0 bash\n1435944 1435942    02:45:07  0.0  0.0 bash\n1436353 1435944    02:44:58  0.0  0.0 bash\n1436354 1435944    02:44:58  0.0  0.0 bash\n1436355 1435944    02:44:58  0.0  0.0 bash\n1436356 1436353    02:44:58 99.9  0.5 jass\n1436357 1436354    02:44:58 99.9  0.5 jass\n1436358 1436355    02:44:58 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1435942       1    02:50:09  0.0  0.0 bash\n1435944 1435942    02:50:09  0.0  0.0 bash\n1436353 1435944    02:50:00  0.0  0.0 bash\n1436356 1436353    02:50:00 99.9  0.5 jass\n"
 }
