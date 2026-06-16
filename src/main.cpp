@@ -1621,6 +1621,90 @@ int run_gen_egdb_wld_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --egdb-mtc-probe <wld_dir> <mtc_dir> [n=20000] [cache_mb=1024]
+// Validate the MTC database reading + reveal the distance-to-conversion
+// distribution (for designing the conversion-gradient target). For N random
+// legal quiet positions: WLD-probe; on a WIN/LOSS, MTC-probe (the MTC db is only
+// valid for win/loss — gate on WLD first, per the egdb guideline). MTC returns
+// 1 ("< 10 plies to conversion") or the actual ply count (>= 10).
+// -----------------------------------------------------------------------------
+int run_egdb_mtc_probe_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --egdb-mtc-probe <wld_dir> <mtc_dir> [n] [cache_mb]\n";
+        return 2;
+    }
+    const std::string wld_dir = argv[2], mtc_dir = argv[3];
+    const int n     = (argc > 4) ? parse_int_or(argv[4], 20000) : 20000;
+    const int cache = (argc > 5) ? parse_int_or(argv[5], 1024)  : 1024;
+    if (!jass::egdb::init(wld_dir, cache)) {
+        std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
+    if (!jass::egdb::init_mtc(mtc_dir, cache)) {
+        std::cerr << "error: MTC init failed for '" << mtc_dir << "'\n"; return 1; }
+    std::cout << "WLD max_pieces=" << jass::egdb::max_pieces()
+              << "  MTC max_pieces=" << jass::egdb::mtc_max_pieces() << "\n";
+
+    std::mt19937_64 rng(0x4D54435EULL);
+    long decisive = 0, draws = 0, mtc_lt10 = 0, mtc_ge10 = 0, mtc_bad = 0, tries = 0;
+    long mtc_min = 1 << 30, mtc_max = 0, mtc_sum = 0;
+    int shown = 0;
+    const long max_tries = static_cast<long>(n) * 50L + 200000L;
+    while (decisive + draws < n && tries < max_tries) {
+        ++tries;
+        const int total = 3 + static_cast<int>(rng() % 5);            // 3..7
+        const int wtot  = 1 + static_cast<int>(rng() % static_cast<unsigned>(total - 1));
+        const int btot  = total - wtot;
+        const int wk = static_cast<int>(rng() % static_cast<unsigned>(wtot + 1)); const int wm = wtot - wk;
+        const int bk = static_cast<int>(rng() % static_cast<unsigned>(btot + 1)); const int bm = btot - bk;
+        jass::Position p; std::array<int, 8> used{}; int nu = 0; bool ok = true;
+        auto place = [&](jass::Piece piece) -> bool {
+            const bool wman = (piece == jass::Piece::WhiteMan), bman = (piece == jass::Piece::BlackMan);
+            for (int t = 0; t < 80; ++t) {
+                const int sq = static_cast<int>(rng() % 50) + 1;
+                if (wman && sq <= 5) continue;
+                if (bman && sq >= 46) continue;
+                bool dup = false; for (int u = 0; u < nu; ++u) if (used[static_cast<std::size_t>(u)] == sq) dup = true;
+                if (dup) continue;
+                used[static_cast<std::size_t>(nu++)] = sq;
+                p.add_piece(static_cast<jass::Square>(sq), piece); return true;
+            }
+            return false;
+        };
+        for (int k = 0; k < wm && ok; ++k) ok = place(jass::Piece::WhiteMan);
+        for (int k = 0; k < wk && ok; ++k) ok = place(jass::Piece::WhiteKing);
+        for (int k = 0; k < bm && ok; ++k) ok = place(jass::Piece::BlackMan);
+        for (int k = 0; k < bk && ok; ++k) ok = place(jass::Piece::BlackKing);
+        if (!ok) continue;
+        p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
+        jass::MoveList ml; jass::generate_legal_moves(p, ml);
+        if (ml.empty() || ml[0].is_capture()) continue;             // quiet leaves only
+        const jass::EndgameResult wld = jass::egdb::probe(p);
+        if (wld == jass::EndgameResult::WhiteWin || wld == jass::EndgameResult::BlackWin) {
+            ++decisive;
+            const int m = jass::egdb::probe_mtc(p);
+            if (m == 1) ++mtc_lt10;
+            else if (m >= 10) {
+                ++mtc_ge10; if (m < mtc_min) mtc_min = m; if (m > mtc_max) mtc_max = m; mtc_sum += m;
+                if (shown++ < 8) std::cout << "  win  MTC=" << m << " plies  ("
+                                           << popcount(p.occupied()) << " pieces)\n";
+            } else ++mtc_bad;                                        // 0 / negative / unexpected
+        } else if (wld == jass::EndgameResult::Draw) ++draws;
+    }
+    jass::egdb::shutdown();
+    std::cout << "\n=== MTC probe ===\n"
+              << "  decisive (WLD win/loss) : " << decisive << "   draws : " << draws << "\n"
+              << "  MTC < 10 plies (=1)     : " << mtc_lt10 << "\n"
+              << "  MTC >= 10 (actual)      : " << mtc_ge10
+              << (mtc_ge10 ? ("   range[" + std::to_string(mtc_min) + ".." + std::to_string(mtc_max)
+                              + "] mean " + std::to_string(mtc_sum / std::max(1L, mtc_ge10))) : std::string())
+              << "\n"
+              << "  MTC bad/unavailable     : " << mtc_bad << "\n";
+    std::cout << ((mtc_bad == 0 && (mtc_lt10 + mtc_ge10) > 0)
+        ? "  RESULT: MTC readable, conversion-distance signal present.\n"
+        : "  RESULT: check MTC (no usable distance values).\n");
+    return (mtc_bad == 0 && (mtc_lt10 + mtc_ge10) > 0) ? 0 : 1;
+}
+
+// -----------------------------------------------------------------------------
 // --eval-position <net.pjtw> <fen> : load an eval (v1/v2 pattern or v3 Scan
 // eval) and print evaluate(pos) for the given Hub FEN. stm-POV centipawns.
 // Used to cross-check the Python trainer prediction against the playable C++
@@ -2895,6 +2979,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
+        else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
