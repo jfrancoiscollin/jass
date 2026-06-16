@@ -42,6 +42,28 @@
 - **Outils labels exacts codés+validés (0292)** : `--gen-egdb-wld` (coverage aléatoire
   quiète ≤7p, distribution saine, 0 one-sided) et `--egdb-relabel` (réécrit WDL ≤7p,
   idempotent). Les briques (2)+(3) de la boucle cible.
+- **⭐ STALL POLLUTION (0295) + fix `terminate-at-TB`.** 0295 a MESURÉ que **~50 % des
+  positions de finale DÉCISIVES en self-play STALLENT** : finale gagnée non convertie (le
+  moteur tourne en rond) → règle de nul → partie enregistrée NULLE → **label de finale
+  FAUX**. Ça polluait TOUT l'entraînement finale **depuis le début, y compris 0287**
+  ("egdb-perfect" jouait ≤7 parfait coup-par-coup mais la PARTIE stallait quand même →
+  étiquette nulle). → Fix **`terminate-at-TB`** (codé `gen-data-wdl`) : dès qu'une partie
+  atteint une position egdb-résolue ≤7, on la **termine au résultat TB EXACT** (les
+  positions de transition 8-21 héritent du bon résultat). Labels de finale enfin propres,
+  **sans MTC**. **0297** = 1er run qui en profite. (Le fix distance-aware `search.cpp`
+  score-TB `−ply` ne corrigeait que ~12 % des stalls — 0295.)
+- **0294 — minibatch EXACT** : à convergence (300 it), `train_loss` lowmem **0.569193** ≡
+  minibatch **0.569173**, et **moitié RAM** (11.6 vs 21.9 GB). Validé comme outil de scaling
+  quand le cumulatif dépasse **~7M** (plafond lowmem/32GB) ; en dessous, lowmem suffit.
+- **🟢 PROCHAIN LEVIER — le GRADIENT de conversion (cible MTC offline, option a).**
+  terminate-at-TB corrige la *valuation* mais PAS la *conversion en match*. Rappel clé :
+  **Scan convertit SANS MTC**, via le **GRADIENT de son éval** (une position gagnée "plus
+  convertie" score plus haut). Notre cible **WLD est PLATE** (gain = 1 partout) → l'éval ne
+  peut pas apprendre "plus proche de la conversion". Plan **(a)** : utiliser le **MTC comme
+  CIBLE D'ENTRAÎNEMENT offline** (distance-à-la-conversion → cible graduée) → l'éval
+  **apprend le gradient et le GÉNÉRALISE à 8-21** → **pas de MTC au jeu** (potentiellement
+  mieux que Scan). `egdb_intl` lit le MTC (`is_mtc`, `egdb_lookup` unifié, vérifié). 0298 =
+  recon taille MTC 2-8. (Alternatives écartées : (b) DTW maison ≤5-6 ; (c) proxy heuristique.)
 - **minibatch vs lowmem (0291)** : minibatch = **moitié RAM** (11.6 vs 21.9 GB sur 5.1M)
   → l'outil mémoire pour scaler (crossover lowmem ≈ 7M lignes/32GB). **Le wedge 5h de
   0274 n'était PAS un thrash lowmem** (lowmem 5M = 4 min, tient à 22 GB) → one-off.
