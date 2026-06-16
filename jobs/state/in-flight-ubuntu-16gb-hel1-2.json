@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0271-movegen-profile",
-  "script": "jobs/queue/ccx33-0271-movegen-profile.sh",
-  "pid": 1442164,
-  "started_at": "2026-06-16T05:22:09+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

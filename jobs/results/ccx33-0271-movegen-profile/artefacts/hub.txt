@@ -1,0 +1,4 @@
+hello
+position fen B:W6,27,32,35,38:B3,8,24,K44
+go movetime 3000
+quit
