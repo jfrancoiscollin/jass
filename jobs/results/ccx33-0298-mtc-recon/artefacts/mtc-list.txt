@@ -1,0 +1,1 @@
+ERROR: /root/mtc_probe must be a directory
