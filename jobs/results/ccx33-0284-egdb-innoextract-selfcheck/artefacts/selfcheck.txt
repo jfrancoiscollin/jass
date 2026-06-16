@@ -1,0 +1,1 @@
+error: egdb::init failed for '.' (built without -DJASS_EGDB, or no DB there)
