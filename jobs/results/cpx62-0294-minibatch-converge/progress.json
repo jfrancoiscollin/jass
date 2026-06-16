@@ -1,0 +1,29 @@
+{
+  "job_id": "cpx62-0294-minibatch-converge",
+  "snapshot_at": "2026-06-16T20:17:02+00:00",
+  "started_at": "2026-06-16T20:11:09+00:00",
+  "elapsed_seconds": 353,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 14111
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 784
+    },
+    {
+      "name": "featM",
+      "size_bytes": 2244000012
+    },
+    {
+      "name": "lowmem-time.txt",
+      "size_bytes": 0
+    },
+    {
+      "name": "lowmem-train.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1140650       1       05:53  0.0  0.0 bash\n1140652 1140650       05:53  0.0  0.0 bash\n1141071 1140652       05:42  0.0  0.0 bash\n1141072 1141071       05:42  0.0  0.0 time\n1141073 1141072       05:42  566 65.9 python3\n"
+}
