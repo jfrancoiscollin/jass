@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0288-egdb-prep",
-  "script": "jobs/queue/cpx62-0288-egdb-prep.sh",
-  "pid": 3644878,
-  "started_at": "2026-06-16T15:56:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
