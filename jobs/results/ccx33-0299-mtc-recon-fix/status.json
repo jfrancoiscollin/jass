@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0299-mtc-recon-fix",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T21:50:44+00:00",
+  "ended_at": "2026-06-16T21:55:49+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 368068
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0299-mtc-recon-fix/artefacts.src"
 }

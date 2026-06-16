@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0299-mtc-recon-fix",
-  "script": "jobs/queue/ccx33-0299-mtc-recon-fix.sh",
-  "pid": 368068,
-  "started_at": "2026-06-16T21:50:44+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
