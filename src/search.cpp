@@ -421,15 +421,23 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     {
         const EndgameResult eg = probe_endgame(pos);
         if (eg == EndgameResult::Draw) return 0;
-        if (eg == EndgameResult::WhiteWin) {
-            return (pos.side_to_move() == Color::White)
-                ?  (MATE_SCORE - MAX_PLY - 1)
-                : -(MATE_SCORE - MAX_PLY - 1);
-        }
-        if (eg == EndgameResult::BlackWin) {
-            return (pos.side_to_move() == Color::Black)
-                ?  (MATE_SCORE - MAX_PLY - 1)
-                : -(MATE_SCORE - MAX_PLY - 1);
+        if (eg == EndgameResult::WhiteWin || eg == EndgameResult::BlackWin) {
+            // Distance-aware TB terminal. A flat win score gave the search no
+            // reason to PROGRESS in a won endgame: every winning move tied, so
+            // it could shuffle until the FMJD draw rule and throw the win (and,
+            // in self-play, mislabel the won line as a draw). Subtracting `ply`
+            // makes a SHORTER win score higher and a LONGER loss score higher
+            // (less negative) → the search prefers to convert sooner / resist
+            // longer, shedding pieces toward a simpler win. Stays one ply-band
+            // below MATE_BOUND so it outranks any eval but is never mistaken for
+            // a real forced mate. (TB nodes are re-probed here BEFORE the TT, so
+            // the ply-relative value is never served from a stale TT entry; a
+            // proper MTC database would make the within-TB distance exact.)
+            const bool stm_wins = (eg == EndgameResult::WhiteWin)
+                ? (pos.side_to_move() == Color::White)
+                : (pos.side_to_move() == Color::Black);
+            const int v = (MATE_SCORE - MAX_PLY - 1) - ply;
+            return stm_wins ? v : -v;
         }
     }
 
