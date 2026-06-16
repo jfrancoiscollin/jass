@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0295-tb-conversion-ab
+# id: ccx33-0295-tb-conversion-ab
 # description: QUANTIFIE le gain du fix TB distance-aware (search.cpp). 2 binaires identiques SAUF le
 # score TB : bras FLAT (ancien : score gagnant constant) vs bras DIST (nouveau : -ply → préfère gain
 # court / défaite longue). Chacun génère du self-play AVEC egdb (champion 0266, depth-8), puis on
@@ -7,13 +7,12 @@
 # ratées). Attendu : DIST a MOINS de stalls que FLAT (+ moins de nuls globaux) = le fix convertit mieux.
 set -uo pipefail
 cd /root/jass
-ART="/root/jass/jobs/results/cpx62-0295-tb-conversion-ab/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0295-tb-conversion-ab/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 APP=/root/egdb_extracted/app
 SRC=/root/jass/jobs/results/cpx62-0266-kingloop-deepplay/artefacts.src
 CHAMP="$SRC/gen8.pjtw"
 ls "$APP"/db2.idx1 >/dev/null 2>&1 || { echo "ABORT: base egdb absente"; exit 4; }
-[ -f "$CHAMP" ] || { echo "ABORT: champion 0266 absent"; exit 3; }
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl >"$ART/clone.log" 2>&1
 
 build(){ # $1 = build dir
@@ -35,7 +34,7 @@ gen_arm(){ # $1=tag $2=binaire
   local PER=$(( (NPER + NCPU - 1) / NCPU )); local CUM="$ART/$1.jnnw"
   for s in $(seq 1 "$NCPU"); do
     JASS_EGDB_PATH="$APP" JASS_EGDB_CACHE_MB=256 \
-      "$2" --gen-data-wdl "$PER" "$ART/$1-$s.jnnw" "$EVAL_DEPTH" "$PLAY_DEPTH" 200 $((RANDOM)) --nnue "$CHAMP" >"$ART/$1-$s.log" 2>&1 &
+      "$2" --gen-data-wdl "$PER" "$ART/$1-$s.jnnw" "$EVAL_DEPTH" "$PLAY_DEPTH" 200 $((RANDOM)) >"$ART/$1-$s.log" 2>&1 &
   done; wait
   python3 - "$ART/$1" "$CUM" <<'PY'
 import struct,glob,sys,re
