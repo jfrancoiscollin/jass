@@ -7,6 +7,10 @@
 #include "board.hpp"
 #include "pattern_jass_bridge.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+
 // pattern_jass is compiled into jass_lib; reach it via relative include
 // (same pattern as pattern_jass_bridge.cpp).
 #include "../pattern_jass/src/pattern.hpp"
@@ -112,6 +116,42 @@ void compute_extras(const Position& pos,
     out[EXTRA_WHITE_MOB] = static_cast<float>(mobility(pos, Color::White));
     out[EXTRA_BLACK_BAL] = lr_balance(pos.black_men());
     out[EXTRA_WHITE_BAL] = lr_balance(pos.white_men());
+
+#ifdef JASS_ENDGAME_FEATURES
+    // Endgame king-interaction (Direction B). central = how central each king sits
+    // (0 edge .. 9 centre) ; prox = how close each king is to the enemy (9 adjacent
+    // .. 0 far, Chebyshev on row/col). Few kings in endgames -> cheap; gated.
+    auto central = [](Square s) -> float {
+        const float r = static_cast<float>(row_of(s));
+        const float c = static_cast<float>(col_of(s));
+        return (4.5f - std::fabs(r - 4.5f)) + (4.5f - std::fabs(c - 4.5f));
+    };
+    auto min_dist = [](Square ks, Bitboard targets) -> int {
+        const int kr = row_of(ks), kc = col_of(ks);
+        int best = 9;
+        for (Bitboard b = targets; b; ) {
+            const Square t = pop_lsb(b);
+            const int d = std::max(std::abs(row_of(t) - kr), std::abs(col_of(t) - kc));
+            if (d < best) best = d;
+        }
+        return best;
+    };
+    const Bitboard whites = pos.white_men() | pos.white_kings();
+    const Bitboard blacks = pos.black_men() | pos.black_kings();
+    float bk_c = 0, wk_c = 0, bk_p = 0, wk_p = 0;
+    for (Bitboard b = pos.black_kings(); b; ) {
+        const Square s = pop_lsb(b);
+        bk_c += central(s);
+        if (whites) bk_p += static_cast<float>(9 - min_dist(s, whites));
+    }
+    for (Bitboard b = pos.white_kings(); b; ) {
+        const Square s = pop_lsb(b);
+        wk_c += central(s);
+        if (blacks) wk_p += static_cast<float>(9 - min_dist(s, blacks));
+    }
+    out[EXTRA_BK_CENTRAL] = bk_c;  out[EXTRA_WK_CENTRAL] = wk_c;
+    out[EXTRA_BK_PROX]    = bk_p;  out[EXTRA_WK_PROX]    = wk_p;
+#endif
     // NB: the 1st batch of structural extras (king-mob/back-rank/advancement,
     // 106->112) regressed on the v5 base and AGAIN on the clean v4 base (0172:
     // 0.889/0.389 vs the v4+106 champion 0.944/0.389). REVERTED. To re-test on
