@@ -1,0 +1,4 @@
+PARAMS: egdb-perfect + DEPTH-RAMP(late-mid=12,endgame=16) + coverage + ENDGAME-FEATURES, 500000/gen ×6
+=== coverage exacte ≤7 (densité finale gratuite) → seed du cumulatif ===
+gen-egdb-wld: wrote 400000 / 400000 (224028 decisive, 175972 draw) in 744282 tries → /root/jass/jobs/results/ccx33-0297-saturate-loop/artefacts.src/cumulative.jnnw
+=== gen0 : seed self-play (300k, egdb-perfect + ramp) sur coverage → l2=3e-2 ===

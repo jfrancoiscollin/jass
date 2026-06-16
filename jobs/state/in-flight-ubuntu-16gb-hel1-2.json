@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0297-saturate-loop",
-  "script": "jobs/queue/ccx33-0297-saturate-loop.sh",
-  "pid": 363999,
-  "started_at": "2026-06-16T20:34:06+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
