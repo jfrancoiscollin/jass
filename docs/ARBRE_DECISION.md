@@ -17,9 +17,13 @@ roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md]
 
 - ✂️ **0274 (coverage depth-16)** — ÉLAGUÉE : labels par recherche imparfaite,
   **supplantés** par le WLD exact de la bitbase. Job tué.
-- 🟢 **Jeu-parfait-finale en génération (0287)** : egdb ON → finales jouées parfaites
-  → labels WDL exacts. ⏳ verdict : endgame-rois ≪ 3.06 = couverture était la clé ;
-  ≈ 3.06 = verrou = capacité éval (→ 🔵 archi éval).
+- ✂️ **Jeu-parfait-finale / couverture (0287)** — VERDICT : endgame-rois **3.22 ≈ 3.06**
+  (PAS mieux) malgré labels EXACTS (val-mse ÷3.5), vs Scan **−741**. → **la couverture
+  N'EST PAS le verrou**. ÉLAGUÉE comme levier finale.
+- 🟢⭐ **ARCHI / CAPACITÉ ÉVAL** (activée par 0287) : l'éval linéaire ne représente pas la
+  relation roi-roi. Ordre : (1) **features king-king riches** (table déplacement relatif
+  roi-roi — la 1ère, moins risquée) → (2) **tête non-linéaire MLP** sur positions de rois
+  → (3) **MTC** (court-circuit éval, Scan ne l'a pas). Cible : endgame-rois ≪ 3.06.
 - 🟢 **Relabel + coverage exacts** (`--egdb-relabel`, `--gen-egdb-wld`, validés 0292) :
   briques (2)+(3) de la boucle — densité finale exacte et gratuite.
 - 🔵 **Depth-ramp sur l'entre-deux 8-21p (0293)** : `late-mid=12,endgame=16` → la
