@@ -35,9 +35,12 @@ struct SearchParams {
     int singular_margin    = 2;   // cp per ply of depth
 
     // Late move reductions (LMR). r = lmr_base + d/lmr_depth_div + idx/lmr_idx_div.
+    // lmr_base=0 (was 1) : job 0268 measured +41.9 Elo [CI +9.6,+74.2] for LESS
+    // LMR — jass prefers conservative search (zugzwang), like NMP-off. (More
+    // aggressive LMR/LMP/RFP all hurt, 0264; less LMP / time-mgmt also hurt, 0268.)
     int lmr_min_depth        = 3;
     int lmr_first_full_moves = 4;
-    int lmr_base             = 1;
+    int lmr_base             = 0;
     int lmr_depth_div        = 6;
     int lmr_idx_div          = 8;
 
@@ -50,9 +53,10 @@ struct SearchParams {
     // butterfly history (and conthist) is updated with a "gravity" rule
     // h += bonus - h*bonus/history_max instead of h += bonus, which CAPS the
     // table at ~history_max and decays large OLD cutoffs toward it — so stale
-    // history stops dominating the quiet-move ordering. Standard technique
-    // (~+5-15 Elo in chess). A/B before shipping (job 0269).
-    int history_max = 0;
+    // history stops dominating the quiet-move ordering. Default 16384 : job 0269
+    // A/B measured +20.9 Elo [CI -11,+53] (best of 8k/16k/32k; 8k/32k were
+    // negative). Consistent with the "jass prefers conservative search" theme.
+    int history_max = 16384;
 
     // Aspiration window initial half-width (cp).
     int aspiration_initial = 50;
