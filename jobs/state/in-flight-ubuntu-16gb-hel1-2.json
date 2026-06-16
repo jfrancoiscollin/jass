@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0275-endgame-features",
-  "script": "jobs/queue/ccx33-0275-endgame-features.sh",
-  "pid": 1443337,
-  "started_at": "2026-06-16T06:13:14+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
