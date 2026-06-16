@@ -1,0 +1,58 @@
+=== (1) NETTOYAGE ccx33 ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       150G  137G  7.2G  95% /
+  rm /root/egdb_db (installeur WLD)
+  rm artefacts.src jobs terminés (~118993 MiB)
+  after-clean Filesystem      Size  Used Avail Use% Mounted on
+  after-clean /dev/sda1       150G   18G  127G  12% /
+=== (2) DOWNLOAD MTC (megatools, ~13 GiB) ===
+  dl rc=0
+  total 13373136
+  drwxr-xr-x  2 root root       4096 Jun 16 22:12 .
+  drwx------ 14 root root       4096 Jun 16 22:06 ..
+  -rw-r--r--  1 root root 2099690752 Jun 16 22:07 Kingsrow_International_MTC_Setup-1.bin
+  -rw-r--r--  1 root root 2100000000 Jun 16 22:07 Kingsrow_International_MTC_Setup-2.bin
+  -rw-r--r--  1 root root 2100000000 Jun 16 22:08 Kingsrow_International_MTC_Setup-3.bin
+  -rw-r--r--  1 root root 2100000000 Jun 16 22:09 Kingsrow_International_MTC_Setup-4.bin
+  -rw-r--r--  1 root root 2100000000 Jun 16 22:10 Kingsrow_International_MTC_Setup-5.bin
+  -rw-r--r--  1 root root 2100000000 Jun 16 22:11 Kingsrow_International_MTC_Setup-6.bin
+  -rw-r--r--  1 root root 1094039179 Jun 16 22:12 Kingsrow_International_MTC_Setup-7.bin
+  -rw-r--r--  1 root root     309092 Jun 16 22:06 Kingsrow_International_MTC_Setup.exe
+  du: 13G
+=== (3) innoextract (statique amd64) → /root/egdb_mtc ===
+  innoextract rc=0
+ - "app/db8-4121.cpr_mtc"
+ - "app/db8-4121.idx_mtc"
+Done.
+  du extrait: 29G
+=== (4) vire l'installeur (libère ~13 GiB) ===
+  final Filesystem      Size  Used Avail Use% Mounted on
+  final /dev/sda1       150G   46G   99G  32% /
+=== (5) structure extraite MTC ===
+/root/egdb_mtc/app/db6-1401.idx_mtc
+/root/egdb_mtc/app/db5-1301.cpr_mtc
+/root/egdb_mtc/app/db8-1313.idx_mtc
+/root/egdb_mtc/app/db7-0502.cpr_mtc
+/root/egdb_mtc/app/db8-0521.idx_mtc
+/root/egdb_mtc/app/db7-0511.idx_mtc
+/root/egdb_mtc/app/db7-4111.cpr_mtc
+/root/egdb_mtc/app/db6-4101.cpr_mtc
+/root/egdb_mtc/app/db5-2201.idx_mtc
+/root/egdb_mtc/app/db8-2222.cpr_mtc
+/root/egdb_mtc/app/db8-4112.cpr_mtc
+/root/egdb_mtc/app/db8-1412.idx_mtc
+/root/egdb_mtc/app/db5-2201.cpr_mtc
+/root/egdb_mtc/app/db7-3121.idx_mtc
+/root/egdb_mtc/app/db5-0401.idx_mtc
+/root/egdb_mtc/app/db8-3131.cpr_mtc
+/root/egdb_mtc/app/db8-1421.idx_mtc
+/root/egdb_mtc/app/db5-1301.idx_mtc
+/root/egdb_mtc/app/db7-2221.idx_mtc
+/root/egdb_mtc/app/db6-0312.idx_mtc
+  nb fichiers: 138  ; idx/cpr: 138
+
+==========================================================
+   ccx33-0300 — MTC téléchargé + extrait dans /root/egdb_mtc
+   SUITE : sonde MTC dans egdb_bridge (egdb_open MTC + is_mtc + lookup) + outil de
+           labellisation-gradient (position ≤8 → distance MTC → cible graduée).
+==========================================================
