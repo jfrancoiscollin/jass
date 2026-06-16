@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0280-egdb-megatools-list",
-  "script": "jobs/queue/ccx33-0280-egdb-megatools-list.sh",
-  "pid": 1419173,
-  "started_at": "2026-06-16T12:06:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
