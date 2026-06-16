@@ -1,0 +1,90 @@
+Available RAM: 31335mb
+         1 index blocks: /root/egdb_extracted/app/db2.idx1
+         6 index blocks: /root/egdb_extracted/app/db3.idx1
+       288 index blocks: /root/egdb_extracted/app/db4.idx1
+      8274 index blocks: /root/egdb_extracted/app/db5.idx1
+      2121 index blocks: /root/egdb_extracted/app/db6-3030.idx1
+      9097 index blocks: /root/egdb_extracted/app/db6-2130.idx1
+     10283 index blocks: /root/egdb_extracted/app/db6-2121.idx1
+      8766 index blocks: /root/egdb_extracted/app/db6-1230.idx1
+     22998 index blocks: /root/egdb_extracted/app/db6-1221.idx1
+      7396 index blocks: /root/egdb_extracted/app/db6-1212.idx1
+      2585 index blocks: /root/egdb_extracted/app/db6-0330.idx1
+      8818 index blocks: /root/egdb_extracted/app/db6-0321.idx1
+      4141 index blocks: /root/egdb_extracted/app/db6-0312.idx1
+       346 index blocks: /root/egdb_extracted/app/db6-0303.idx1
+      2421 index blocks: /root/egdb_extracted/app/db6-4020.idx1
+      5848 index blocks: /root/egdb_extracted/app/db6-4011.idx1
+      2505 index blocks: /root/egdb_extracted/app/db6-4002.idx1
+      4355 index blocks: /root/egdb_extracted/app/db6-3120.idx1
+     33091 index blocks: /root/egdb_extracted/app/db6-3111.idx1
+      4956 index blocks: /root/egdb_extracted/app/db6-3102.idx1
+      3904 index blocks: /root/egdb_extracted/app/db6-2220.idx1
+     42999 index blocks: /root/egdb_extracted/app/db6-2211.idx1
+      9807 index blocks: /root/egdb_extracted/app/db6-2202.idx1
+      2342 index blocks: /root/egdb_extracted/app/db6-1320.idx1
+     24268 index blocks: /root/egdb_extracted/app/db6-1311.idx1
+      9650 index blocks: /root/egdb_extracted/app/db6-1302.idx1
+       598 index blocks: /root/egdb_extracted/app/db6-0420.idx1
+      5949 index blocks: /root/egdb_extracted/app/db6-0411.idx1
+      3560 index blocks: /root/egdb_extracted/app/db6-0402.idx1
+        57 index blocks: /root/egdb_extracted/app/db6-5010.idx1
+       794 index blocks: /root/egdb_extracted/app/db6-5001.idx1
+        69 index blocks: /root/egdb_extracted/app/db6-4110.idx1
+      1300 index blocks: /root/egdb_extracted/app/db6-4101.idx1
+        72 index blocks: /root/egdb_extracted/app/db6-3210.idx1
+      1211 index blocks: /root/egdb_extracted/app/db6-3201.idx1
+        38 index blocks: /root/egdb_extracted/app/db6-2310.idx1
+       614 index blocks: /root/egdb_extracted/app/db6-2301.idx1
+        14 index blocks: /root/egdb_extracted/app/db6-1410.idx1
+       176 index blocks: /root/egdb_extracted/app/db6-1401.idx1
+         3 index blocks: /root/egdb_extracted/app/db6-0510.idx1
+        23 index blocks: /root/egdb_extracted/app/db6-0501.idx1
+Reading index files took 0 secs
+autoload db2
+autoload db3
+autoload db4
+autoload db5
+autoload db6-3030
+autoload db6-4020
+autoload db6-5010
+autoload db6-4011
+autoload db6-5001
+autoload db6-2130
+autoload db6-3120
+autoload db6-4110
+autoload db6-4002
+autoload db6-2121
+autoload db6-3111
+autoload db6-4101
+autoload db6-1230
+autoload db6-2220
+autoload db6-3210
+autoload db6-3102
+autoload db6-1221
+autoload db6-2211
+autoload db6-3201
+autoload db6-0330
+autoload db6-1320
+autoload db6-2310
+autoload db6-1212
+autoload db6-2202
+autoload db6-0321
+autoload db6-1311
+autoload db6-2301
+autoload db6-0420
+autoload db6-1410
+autoload db6-0312
+autoload db6-1302
+autoload db6-0411
+autoload db6-1401
+autoload db6-0510
+autoload db6-0303
+autoload db6-0402
+autoload db6-0501
+Allocated 1493kb for indexing
+Allocated 1044421kb for permanent slice caches
+Autoload took 1 secs
+Available RAM: 31335mb
+Testing 164 positions.
+Test complete, 0 errors.
