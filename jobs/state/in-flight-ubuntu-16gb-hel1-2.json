@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0284-egdb-innoextract-selfcheck",
+  "script": "jobs/queue/ccx33-0284-egdb-innoextract-selfcheck.sh",
+  "pid": 1420807,
+  "started_at": "2026-06-16T12:49:30+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
