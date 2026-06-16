@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T08:06:21+00:00",
+  "snapshot_at": "2026-06-16T08:12:05+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 3402,
+  "elapsed_seconds": 3746,
   "artefacts": [
     {
       "name": "build.log",
@@ -26,7 +26,7 @@
     },
     {
       "name": "elo-gen2.log",
-      "size_bytes": 0
+      "size_bytes": 273
     },
     {
       "name": "feat0",
@@ -159,7 +159,71 @@
     {
       "name": "sp2-8.log",
       "size_bytes": 2467
+    },
+    {
+      "name": "sp3-1.jnnw",
+      "size_bytes": 533522
+    },
+    {
+      "name": "sp3-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-2.jnnw",
+      "size_bytes": 525314
+    },
+    {
+      "name": "sp3-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-3.jnnw",
+      "size_bytes": 517106
+    },
+    {
+      "name": "sp3-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-4.jnnw",
+      "size_bytes": 533522
+    },
+    {
+      "name": "sp3-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-5.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp3-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-6.jnnw",
+      "size_bytes": 533522
+    },
+    {
+      "name": "sp3-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-7.jnnw",
+      "size_bytes": 508898
+    },
+    {
+      "name": "sp3-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3-8.jnnw",
+      "size_bytes": 533522
+    },
+    {
+      "name": "sp3-8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1       56:42  0.0  0.0 bash\n2393733 2393731       56:42  0.0  0.0 bash\n2918545 2393733       00:13  0.0  0.0 bash\n2918547 2918545       00:13  478  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    01:02:26  0.0  0.0 bash\n2393733 2393731    01:02:26  0.0  0.0 bash\n3162184 2393733       03:22 99.9  0.5 jass\n3162185 2393733       03:22 99.9  0.5 jass\n3162186 2393733       03:22 99.9  0.5 jass\n3162187 2393733       03:22 99.9  0.5 jass\n3162188 2393733       03:22 99.9  0.5 jass\n3162189 2393733       03:22 99.9  0.5 jass\n3162190 2393733       03:22 99.9  0.5 jass\n3162191 2393733       03:22 99.9  0.5 jass\n"
 }
