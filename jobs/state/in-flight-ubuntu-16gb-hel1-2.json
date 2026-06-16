@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0269-history-aging",
+  "script": "jobs/queue/ccx33-0269-history-aging.sh",
+  "pid": 1435942,
+  "started_at": "2026-06-16T02:20:57+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
