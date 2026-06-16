@@ -1,0 +1,4 @@
+global 0266 = 5100000 positions
+=== extrait seeds finales (popcount<=14) ===
+seeds finales : 350103
+=== génère ~1000000 finales (play_depth=16, seed 100%, champion 0266) ===
