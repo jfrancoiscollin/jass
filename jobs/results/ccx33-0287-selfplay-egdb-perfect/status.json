@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0287-selfplay-egdb-perfect",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T15:34:05+00:00",
+  "ended_at": "2026-06-16T19:42:46+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 1423837
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src"
 }

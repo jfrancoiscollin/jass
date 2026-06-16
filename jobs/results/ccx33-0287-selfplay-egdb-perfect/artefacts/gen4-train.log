@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/cumulative.jnnw
+  2700000 records  (0.15s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/feat4
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (2700000, 110)  (mean mob b/w=10.8/10.8)
+target=wdl  pos=540728 neg=536306 zero=1622966 (60.1% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=540728 draw=1622966 loss=536306 (60.1% draws)
+phase : piece-count mean=22.8  wmg mean=0.570
+split : train=2430000 val=270000
+prune : keep 268,111 buckets (>= 1 visits) -> 536,224 pattern cols vs 34,012,224  (63.4× fewer); train fallback=0.000%
+design : 536444 columns (2×268112 pat + 2×110 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.649596  iters=200  (424.82s)
+val   : mse=0.553139  sign_acc=0.1674
+val/phase mse : opening=0.3872(n83457)  midgame=0.4282(n61695)  late-mid=0.5321(n55956)  endgame=0.8312(n54996)  deep-eg=1.0887(n13896)
+quant : scale=1000  pat range=[-127,127] ext_mg range=[-429,426]
+wrote /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/gen4.pjtw  (v3, 34012444 weights, 136049796 bytes)

@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/gen5.pjtw, 34012444 weights, scale=1000) vs NNUE(hc), depth 9, threads 8, movetime_ms 0, 270 games
+Result: SCAN_EVAL=216 NNUE=51 Draws=3 (total 270)
+SCAN_EVAL score rate vs NNUE: 0.805556

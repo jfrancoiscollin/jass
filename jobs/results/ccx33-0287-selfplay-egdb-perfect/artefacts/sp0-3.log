@@ -1,0 +1,30 @@
+gen-data-wdl: n=37500 out=/root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/sp0-3.jnnw eval_depth=6 play_depth=8 max_plies=200 seed=11105 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1290 / 37500 positions
+  played 100 games, 2660 / 37500 positions
+  played 150 games, 4024 / 37500 positions
+  played 200 games, 5368 / 37500 positions
+  played 250 games, 6744 / 37500 positions
+  played 300 games, 8066 / 37500 positions
+  played 350 games, 9349 / 37500 positions
+  played 400 games, 10623 / 37500 positions
+  played 450 games, 11984 / 37500 positions
+  played 500 games, 13333 / 37500 positions
+  played 550 games, 14621 / 37500 positions
+  played 600 games, 15952 / 37500 positions
+  played 650 games, 17366 / 37500 positions
+  played 700 games, 18702 / 37500 positions
+  played 750 games, 20025 / 37500 positions
+  played 800 games, 21388 / 37500 positions
+  played 850 games, 22768 / 37500 positions
+  played 900 games, 24105 / 37500 positions
+  played 950 games, 25393 / 37500 positions
+  played 1000 games, 26647 / 37500 positions
+  played 1050 games, 27977 / 37500 positions
+  played 1100 games, 29270 / 37500 positions
+  played 1150 games, 30677 / 37500 positions
+  played 1200 games, 31997 / 37500 positions
+  played 1250 games, 33333 / 37500 positions
+  played 1300 games, 34679 / 37500 positions
+  played 1350 games, 35984 / 37500 positions
+  played 1400 games, 37351 / 37500 positions
+wrote 37500 WDL records to /root/jass/jobs/results/ccx33-0287-selfplay-egdb-perfect/artefacts.src/sp0-3.jnnw

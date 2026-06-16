@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0287-selfplay-egdb-perfect",
-  "script": "jobs/queue/ccx33-0287-selfplay-egdb-perfect.sh",
-  "pid": 1423837,
-  "started_at": "2026-06-16T15:34:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
