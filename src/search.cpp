@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "bd_time.hpp"
+#include "egdb_bridge.hpp"
 #include "endgame.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
@@ -985,6 +986,11 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                     const std::vector<ZobristHash>& game_history) {
     SearchResult res;
     breakdown_reset();
+
+    // One-time bootstrap of the external endgame DB (Kingsrow egdb_intl) from
+    // JASS_EGDB_PATH. No-op (and free thereafter) in the default build; here
+    // rather than per-node so probe_endgame's gate stays a single atomic load.
+    egdb::ensure_initialised();
 
     // Bump the TT generation so entries written during this search are
     // protected from being clobbered by stale data left over from
