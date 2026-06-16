@@ -31,6 +31,10 @@ namespace {
 std::atomic<bool> g_available{false};
 std::atomic<int>  g_max_pieces{0};
 std::once_flag    g_lazy_once;
+// Separate MTC (moves-to-conversion) handle/state — opened independently of the
+// WLD db, used offline to build the conversion-gradient training target.
+std::atomic<bool> g_mtc_available{false};
+std::atomic<int>  g_mtc_max_pieces{0};
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -53,6 +57,8 @@ bool ensure_initialised() noexcept {
 
 bool available() noexcept { return g_available.load(std::memory_order_acquire); }
 int  max_pieces() noexcept { return g_max_pieces.load(std::memory_order_acquire); }
+bool available_mtc() noexcept { return g_mtc_available.load(std::memory_order_acquire); }
+int  mtc_max_pieces() noexcept { return g_mtc_max_pieces.load(std::memory_order_acquire); }
 
 #ifndef JASS_EGDB
 // ===========================================================================
@@ -61,6 +67,8 @@ int  max_pieces() noexcept { return g_max_pieces.load(std::memory_order_acquire)
 bool init(const std::string&, int) noexcept { return false; }
 void shutdown() noexcept {}
 EndgameResult probe(const Position&) noexcept { return EndgameResult::Unknown; }
+bool init_mtc(const std::string&, int) noexcept { return false; }
+int  probe_mtc(const Position&) noexcept { return -1; }
 
 #else
 // ===========================================================================
@@ -76,6 +84,7 @@ EndgameResult probe(const Position&) noexcept { return EndgameResult::Unknown; }
 namespace {
 
 egdb_interface::EGDB_DRIVER* g_handle = nullptr;
+egdb_interface::EGDB_DRIVER* g_mtc_handle = nullptr;
 std::mutex                   g_mutex;
 
 // egdb_intl emits diagnostics through a caller-supplied callback. Swallow them
@@ -156,9 +165,64 @@ void shutdown() noexcept {
             egdb_interface::egdb_close(g_handle);
             g_handle = nullptr;
         }
+        if (g_mtc_handle) {
+            egdb_interface::egdb_close(g_mtc_handle);
+            g_mtc_handle = nullptr;
+        }
         g_available.store(false, std::memory_order_release);
         g_max_pieces.store(0, std::memory_order_release);
+        g_mtc_available.store(false, std::memory_order_release);
+        g_mtc_max_pieces.store(0, std::memory_order_release);
     } catch (...) {
+    }
+}
+
+// Open the MTC (moves-to-conversion) database, independently of the WLD handle.
+// Mirrors init(). The MTC db is identified as EGDB_MTC_RUNLEN (files *.cpr_mtc /
+// *.idx_mtc) and only has valid data for WIN/LOSS positions — so callers MUST
+// first confirm a win/loss via the WLD probe() before trusting probe_mtc().
+bool init_mtc(const std::string& db_dir, int cache_mb) noexcept {
+    try {
+        std::lock_guard<std::mutex> lk(g_mutex);
+        if (g_mtc_handle) return true;
+        egdb_interface::EGDB_TYPE type;
+        int id_max = 0;
+        if (egdb_interface::egdb_identify(db_dir.c_str(), &type, &id_max) != 0
+            || id_max <= 0) {
+            return false;
+        }
+        const std::string options = "maxpieces=" + std::to_string(id_max);
+        g_mtc_handle = egdb_interface::egdb_open(options.c_str(), cache_mb,
+                                                 db_dir.c_str(), &egdb_msg);
+        if (!g_mtc_handle) return false;
+        if (!egdb_interface::is_mtc(g_mtc_handle)) {   // wrong db type → refuse
+            egdb_interface::egdb_close(g_mtc_handle); g_mtc_handle = nullptr;
+            return false;
+        }
+        int maxp = id_max, maxp_1side = 0;
+        egdb_interface::egdb_get_pieces(g_mtc_handle, &maxp, &maxp_1side);
+        g_mtc_max_pieces.store(maxp > 0 ? maxp : id_max, std::memory_order_release);
+        g_mtc_available.store(true, std::memory_order_release);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+// Raw MTC lookup: plies-to-conversion (MTC_LESS_THAN_THRESHOLD=1 when <10, else
+// the actual value), or -1 when unavailable / out of the MTC piece cap. Only
+// meaningful for WIN/LOSS positions (check WLD first). The <3-piece guard does
+// not apply (MTC is about conversion distance, not WLD correctness).
+int probe_mtc(const Position& pos) noexcept {
+    if (!g_mtc_available.load(std::memory_order_acquire)) return -1;
+    if (popcount(pos.occupied()) > g_mtc_max_pieces.load(std::memory_order_acquire))
+        return -1;
+    try {
+        const egdb_interface::EGDB_POSITION ep = to_egdb_position(pos);
+        const int color = to_egdb_color(pos.side_to_move());
+        return egdb_interface::egdb_lookup(g_mtc_handle, &ep, color, 0);
+    } catch (...) {
+        return -1;
     }
 }
 
