@@ -164,8 +164,16 @@ void shutdown() noexcept {
 
 EndgameResult probe(const Position& pos) noexcept {
     if (!g_available.load(std::memory_order_acquire)) return EndgameResult::Unknown;
-    if (popcount(pos.occupied()) > g_max_pieces.load(std::memory_order_acquire))
+    const int n = popcount(pos.occupied());
+    if (n > g_max_pieces.load(std::memory_order_acquire))
         return EndgameResult::Unknown;
+    // The 2-piece slice (db2) returns a spurious decisive WLD for some 1K-vs-1K
+    // positions (observed e.g. WK37/BK46, WK5/BK32: egdb=WIN, but bare KvK with
+    // no capture is a forced draw — confirmed against the native egdb example
+    // test, which only covers >=4 pieces). KvK is trivially drawn anyway, so
+    // never trust egdb below 3 pieces — defer to the in-memory tables, whose
+    // 1v1 = Draw shortcut is exact.
+    if (n < 3) return EndgameResult::Unknown;
     try {
         const egdb_interface::EGDB_POSITION ep = to_egdb_position(pos);
         const int color = to_egdb_color(pos.side_to_move());
