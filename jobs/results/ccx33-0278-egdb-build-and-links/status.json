@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0278-egdb-build-and-links",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T11:45:02+00:00",
+  "ended_at": "2026-06-16T11:50:05+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 1417580
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0278-egdb-build-and-links/artefacts.src"
 }

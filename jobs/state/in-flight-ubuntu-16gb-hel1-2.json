@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0278-egdb-build-and-links",
-  "script": "jobs/queue/ccx33-0278-egdb-build-and-links.sh",
-  "pid": 1417580,
-  "started_at": "2026-06-16T11:45:02+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
