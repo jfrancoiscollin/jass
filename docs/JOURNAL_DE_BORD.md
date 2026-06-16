@@ -22,9 +22,19 @@
   egdb a aussi **révélé que nos tables internes 2v1/3v1 sur-revendiquent** les gains.
   → Procédure : [BITBASE_INTEGRATION.md](BITBASE_INTEGRATION.md). Plan d'usage :
   [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+- **⭐ VERDICT 0287 (pivot) — le verrou finale = CAPACITÉ de l'éval, PAS la couverture.**
+  Self-play egdb-PERFECT (finales jouées par la TB, labels WLD EXACTS) : la val
+  endgame-mse **÷3.5** (2.98→0.84, l'éval *fit* les labels propres) MAIS l'**endgame-rois
+  vs Scan ne bouge PAS** (3.22 ≈ 3.06 de 0276), vs Scan toujours **−741**. → Donner des
+  données parfaites ne casse pas le verrou : l'éval **linéaire + features king-king crues
+  ne PEUVENT pas représenter** la relation roi-roi (opposition/diagonale), et la cible
+  **WLD est trop grossière** (tous les gains = cible 1, aucun gradient de conversion).
+  ✂️ **Couverture élaguée comme levier du verrou.** 🟢 **Branche ARCHI/CAPACITÉ active** :
+  features king-king riches (table de déplacement relatif) → tête non-linéaire (MLP) →
+  MTC. La bitbase/outils restent utiles (bons labels) mais ne suffisent pas seuls.
 - **Features de finale = +28 Elo** (0276 : +230 vs hc, vs 0266 +201.7) mais
-  endgame-rois reste ~3.06 → **aident, ne cassent PAS le verrou**. Code intact
-  (`JASS_ENDGAME_FEATURES`, NUM_EXTRAS 110). *Flip défaut→ON en attente du verdict 0287.*
+  endgame-rois reste ~3.06 → **aident, ne cassent PAS le verrou** (confirmé par 0287).
+  Code intact (`JASS_ENDGAME_FEATURES`, NUM_EXTRAS 110).
 - **Outils labels exacts codés+validés (0292)** : `--gen-egdb-wld` (coverage aléatoire
   quiète ≤7p, distribution saine, 0 one-sided) et `--egdb-relabel` (réécrit WDL ≤7p,
   idempotent). Les briques (2)+(3) de la boucle cible.
