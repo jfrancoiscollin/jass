@@ -1,0 +1,26 @@
+MTC files: 69
+BUILD OK
+All 6428 assertions passed.
+=== --egdb-mtc-probe (30000 positions) ===
+WLD max_pieces=7  MTC max_pieces=8
+  win  MTC=10 plies  (5 pieces)
+  win  MTC=10 plies  (5 pieces)
+  win  MTC=22 plies  (7 pieces)
+  win  MTC=10 plies  (7 pieces)
+  win  MTC=20 plies  (7 pieces)
+  win  MTC=10 plies  (5 pieces)
+  win  MTC=14 plies  (6 pieces)
+  win  MTC=10 plies  (6 pieces)
+
+=== MTC probe ===
+  decisive (WLD win/loss) : 16821   draws : 13179
+  MTC < 10 plies (=1)     : 16779
+  MTC >= 10 (actual)      : 42   range[10..22] mean 11
+  MTC bad/unavailable     : 0
+  RESULT: MTC readable, conversion-distance signal present.
+
+==========================================================
+   ccx33-0302 — VALIDATION sonde MTC
+  'MTC readable, conversion-distance signal present' → on code la labellisation-gradient :
+  outil offline : position ≤8 → (WLD win/loss) ? distance MTC → cible graduée → train l'éval.
+==========================================================
