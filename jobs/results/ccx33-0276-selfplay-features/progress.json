@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T10:22:06+00:00",
+  "snapshot_at": "2026-06-16T10:27:12+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 11547,
+  "elapsed_seconds": 11853,
   "artefacts": [
     {
       "name": "build.log",
@@ -46,7 +46,7 @@
     },
     {
       "name": "elo-gen7.log",
-      "size_bytes": 0
+      "size_bytes": 276
     },
     {
       "name": "feat0",
@@ -399,7 +399,71 @@
     {
       "name": "sp7-8.log",
       "size_bytes": 2468
+    },
+    {
+      "name": "sp8-1.jnnw",
+      "size_bytes": 435026
+    },
+    {
+      "name": "sp8-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-2.jnnw",
+      "size_bytes": 426818
+    },
+    {
+      "name": "sp8-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-3.jnnw",
+      "size_bytes": 418610
+    },
+    {
+      "name": "sp8-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-4.jnnw",
+      "size_bytes": 418610
+    },
+    {
+      "name": "sp8-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-5.jnnw",
+      "size_bytes": 418610
+    },
+    {
+      "name": "sp8-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-6.jnnw",
+      "size_bytes": 435026
+    },
+    {
+      "name": "sp8-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-7.jnnw",
+      "size_bytes": 418610
+    },
+    {
+      "name": "sp8-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp8-8.jnnw",
+      "size_bytes": 443234
+    },
+    {
+      "name": "sp8-8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    03:12:27  0.0  0.0 bash\n2393733 2393731    03:12:27  0.0  0.0 bash\n4146452 2393733       00:04  0.0  0.0 bash\n4146454 4146452       00:04  526  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 196016 2393733       02:25 99.8  0.5 jass\n 196017 2393733       02:25 99.7  0.5 jass\n 196018 2393733       02:25 99.9  0.5 jass\n 196019 2393733       02:25 99.8  0.5 jass\n 196020 2393733       02:25 99.9  0.5 jass\n 196021 2393733       02:25 99.7  0.5 jass\n 196022 2393733       02:25 99.9  0.5 jass\n 196023 2393733       02:25 99.9  0.5 jass\n2393731       1    03:17:33  0.0  0.0 bash\n2393733 2393731    03:17:33  0.0  0.0 bash\n"
 }
