@@ -598,9 +598,14 @@ def train_scan_eval(args):
     print(f'loading raw extras {args.eval_features_file}')
     extras = load_feature_file(args.eval_features_file, ds.n_records,
                                standardise=False)
+    # The C++ NUM_EXTRAS can change with build flags (e.g. -DJASS_ENDGAME_FEATURES
+    # makes it 110). The dump self-describes its width, so adapt to it rather than
+    # hardcode 106. Material/anchor indices (100/101) are unchanged in any layout.
+    global EVAL_NUM_EXTRAS
     if extras.shape[1] != EVAL_NUM_EXTRAS:
-        raise SystemExit(f'extras K={extras.shape[1]} != expected '
-                         f'{EVAL_NUM_EXTRAS} (rebuild with --dump-eval-features)')
+        print(f'  note: extras K={extras.shape[1]} (default {EVAL_NUM_EXTRAS}) '
+              f'→ adapting to the dump width')
+        EVAL_NUM_EXTRAS = int(extras.shape[1])
     print(f'  extras shape {extras.shape}  '
           f'(mean mob b/w={extras[:, 102].mean():.1f}/{extras[:, 103].mean():.1f})')
 

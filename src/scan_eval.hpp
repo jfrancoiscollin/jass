@@ -87,7 +87,20 @@ inline constexpr int EXTRA_WHITE_BAL    = 105;  // white men left − right
 // was RE-TESTED on the clean (score-drop) baseline in 0172 and CONDEMNED:
 // v4+112 = 0.889/0.389 vs the v4+106 champion 0.944/0.389 (hurts vs hc,
 // neutral vs v15). Reverted to 106. To re-test, re-add here + NUM_EXTRAS.
+#ifdef JASS_ENDGAME_FEATURES
+// Endgame KING-INTERACTION features (gated; -DJASS_ENDGAME_FEATURES). The
+// per-square king-PST [0..99] + per-side mobility [102..103] do NOT capture
+// king CENTRALITY (active vs edge kings) nor king→enemy PROXIMITY (chasing /
+// opposition), which decide king endgames where we bleed (autopsy ~3.6). NOT
+// the 0172-condemned set. Black-POV (white negated by the trainer antisymmetry).
+inline constexpr int EXTRA_BK_CENTRAL   = 106;  // Σ black-king centralisation
+inline constexpr int EXTRA_WK_CENTRAL   = 107;  // Σ white-king centralisation
+inline constexpr int EXTRA_BK_PROX      = 108;  // Σ black-king proximity to white pieces
+inline constexpr int EXTRA_WK_PROX      = 109;  // Σ white-king proximity to black pieces
+inline constexpr int NUM_EXTRAS         = 110;
+#else
 inline constexpr int NUM_EXTRAS         = 106;
+#endif
 
 // Game-stage normaliser : 20 men/side at the FMJD start = 40 pieces.
 inline constexpr int MAX_PIECES = 40;

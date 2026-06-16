@@ -112,6 +112,12 @@ if(JASS_KING_PATTERNS)
     message(STATUS "Jass: KING-AWARE patterns ENABLED (occupancy = men|kings)")
 endif()
 
+option(JASS_ENDGAME_FEATURES "Add endgame king-interaction extras (NUM_EXTRAS 106->110)" OFF)
+if(JASS_ENDGAME_FEATURES)
+    add_compile_definitions(JASS_ENDGAME_FEATURES=1)
+    message(STATUS "Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)")
+endif()
+
 # -----------------------------------------------------------------------------
 # Embedded NNUE weights
 # -----------------------------------------------------------------------------
