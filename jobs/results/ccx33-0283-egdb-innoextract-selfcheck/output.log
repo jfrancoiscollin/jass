@@ -1,0 +1,12 @@
+=== (0) installeur présent ? (persiste hors repo) ===
+total 3612256
+drwxr-xr-x  2 root root       4096 Jun 16 12:29 .
+drwx------ 11 root root       4096 Jun 16 12:29 ..
+-rw-r--r--  1 root root 2099686144 Jun 16 12:28 Kingsrow_Intl_7pc_WLD_Setup-1.bin
+-rw-r--r--  1 root root 1598927404 Jun 16 12:29 Kingsrow_Intl_7pc_WLD_Setup-2.bin
+-rw-r--r--  1 root root     313345 Jun 16 12:27 Kingsrow_Intl_7pc_WLD_Setup.exe
+installeur: /root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe
+=== (1) innoextract statique (GitHub, zéro dépendance) ===
+innoextract dl+untar OK
+/root/jass/jobs/queue/ccx33-0283-egdb-innoextract-selfcheck.sh: line 40: /root/ie/innoextract-1.9-linux/bin/i686/innoextract: cannot execute: required file not found
+ABORT: innoextract KO
