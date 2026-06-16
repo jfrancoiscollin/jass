@@ -1,0 +1,36 @@
+=== disque + espace libérable ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sda1       150G  137G  7.2G  95% /
+  /root/egdb_db (installeur WLD, supprimable) : 3.5G
+  /root/egdb_extracted (base WLD, À GARDER)   : 4.8G
+  builds jass (build*, regénérables)          : 13M
+megatools: /root/mt/x/usr/bin/megatools
+=== listing MTC 2-8 (mkdir d'abord cette fois) ===
+1. Kingsrow international 2 through 8 pieces MTC database/
+|--[0m2. Kingsrow_International_MTC_Setup-1.bin (2.0 GiB)
+|--[0m3. Kingsrow_International_MTC_Setup-2.bin (2.0 GiB)
+|--[0m4. Kingsrow_International_MTC_Setup-3.bin (2.0 GiB)
+|--[0m5. Kingsrow_International_MTC_Setup-4.bin (2.0 GiB)
+|--[0m6. Kingsrow_International_MTC_Setup-5.bin (2.0 GiB)
+|--[0m7. Kingsrow_International_MTC_Setup-6.bin (2.0 GiB)
+|--[0m8. Kingsrow_International_MTC_Setup-7.bin (1.0 GiB)
+|--[0m9. Kingsrow_International_MTC_Setup.exe (301.8 KiB)
+Enter numbers of files or folders to download separated by spaces (or type 'all' to download everything, or a range with two numbers separated by '-'):
+> WARNING: Skipping non-numeric value 'q'
+WARNING: Nothing was selected
+--- lignes : 12 ---
+--- fichiers + tailles (Setup/.bin/.exe + nombres) ---
+Setup-1.bin
+Setup-2.bin
+Setup-3.bin
+Setup-4.bin
+Setup-5.bin
+Setup-6.bin
+Setup-7.bin
+Setup.exe
+
+==========================================================
+   ccx33-0299 — RECON MTC (corrigée)
+  taille MTC ci-dessus vs ~7.2GB libres (+3.5GB si on vire l'installeur WLD).
+  SUITE : choisir MTC complet / sous-ensemble ≤6-7 / libérer / autre boxe.
+==========================================================
