@@ -1418,6 +1418,186 @@ int run_egdb_selfcheck_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --egdb-relabel <in.jnnw> <db_dir> [out.jnnw=in] [cache_mb=1024]
+// Rewrite each JNNW record's WDL byte with the EXACT egdb result for positions
+// egdb can resolve (3..max_pieces). WDL is STM-POV (+1 STM wins / 0 draw / -1
+// STM loses), matching --gen-data-wdl. Records egdb cannot resolve (>max_pieces,
+// or the <3-piece guard) keep their original game-outcome label. Turns noisy
+// game-propagated endgame labels into ground truth.
+// -----------------------------------------------------------------------------
+namespace {
+int wdl_from_result(jass::EndgameResult r, std::uint8_t stm) {
+    if (r == jass::EndgameResult::Draw) return 0;
+    const bool white_wins = (r == jass::EndgameResult::WhiteWin);
+    const bool stm_white   = (stm == 0);
+    return (white_wins == stm_white) ? +1 : -1;
+}
+jass::Position position_from_record(const char* rec) {
+    std::uint64_t bbs[4]; std::memcpy(bbs, rec, 32);
+    jass::Position p;
+    for (jass::Bitboard b = bbs[0]; b; ) p.add_piece(jass::pop_lsb(b), jass::Piece::WhiteMan);
+    for (jass::Bitboard b = bbs[1]; b; ) p.add_piece(jass::pop_lsb(b), jass::Piece::WhiteKing);
+    for (jass::Bitboard b = bbs[2]; b; ) p.add_piece(jass::pop_lsb(b), jass::Piece::BlackMan);
+    for (jass::Bitboard b = bbs[3]; b; ) p.add_piece(jass::pop_lsb(b), jass::Piece::BlackKing);
+    p.set_side_to_move(static_cast<std::uint8_t>(rec[32]) == 0 ? jass::Color::White
+                                                               : jass::Color::Black);
+    return p;
+}
+}  // namespace
+
+int run_egdb_relabel_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n";
+        return 2;
+    }
+    const std::string in_path  = argv[2];
+    const std::string db_dir   = argv[3];
+    const std::string out_path = (argc > 4) ? argv[4] : in_path;
+    const int cache_mb = (argc > 5) ? parse_int_or(argv[5], 1024) : 1024;
+
+    if (!jass::egdb::init(db_dir, cache_mb)) {
+        std::cerr << "error: egdb::init failed for '" << db_dir
+                  << "' (built without -DJASS_EGDB, or no DB there)\n";
+        return 1;
+    }
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+        std::cerr << "error: " << in_path << " is not JNNW\n"; return 1;
+    }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)),
+                          std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    long in_range = 0, decisive = 0, draw = 0, changed = 0;
+    for (std::size_t i = 0; i < nrec; ++i) {
+        char* rec = buf.data() + i * 38;
+        const jass::Position p = position_from_record(rec);
+        const jass::EndgameResult got = jass::egdb::probe(p);  // Unknown if out of egdb range
+        if (got == jass::EndgameResult::Unknown) continue;
+        ++in_range;
+        (got == jass::EndgameResult::Draw) ? ++draw : ++decisive;
+        const std::int8_t nb = static_cast<std::int8_t>(
+            wdl_from_result(got, static_cast<std::uint8_t>(rec[32])));
+        if (rec[37] != static_cast<char>(nb)) ++changed;
+        rec[37] = static_cast<char>(nb);
+    }
+    jass::egdb::shutdown();
+
+    std::ofstream o(out_path, std::ios::binary);
+    if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
+    o.write("JNNW", 4);
+    const std::uint32_t c32 = static_cast<std::uint32_t>(nrec);
+    o.write(reinterpret_cast<const char*>(&c32), 4);
+    o.write(buf.data(), static_cast<std::streamsize>(buf.size()));
+    o.close();
+
+    std::cout << "egdb-relabel: " << nrec << " records, " << in_range
+              << " egdb-resolved (" << decisive << " decisive, " << draw
+              << " draw), " << changed << " labels changed → " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
+// --gen-egdb-wld <count> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb=1024] [seed=0]
+// Emit `count` random LEGAL QUIET positions (3..max_pieces pieces, >=1 per side)
+// each labelled with the EXACT egdb WLD (STM-POV; score=0). Capture positions are
+// skipped — the WLD value is for quiet leaves, which is what the eval scores. Free
+// dense coverage of the endgame space the self-play games never reach.
+// -----------------------------------------------------------------------------
+int run_gen_egdb_wld_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: --gen-egdb-wld <count> <out.jnnw> <db_dir> "
+                     "[max_pieces=7] [cache_mb=1024] [seed=0]\n";
+        return 2;
+    }
+    const int   count     = parse_int_or(argv[2], 1000000);
+    const char* out_path  = argv[3];
+    const std::string db_dir = argv[4];
+    int max_pieces = (argc > 5) ? parse_int_or(argv[5], 7) : 7;
+    const int cache_mb = (argc > 6) ? parse_int_or(argv[6], 1024) : 1024;
+    const std::uint64_t seed = (argc > 7)
+        ? static_cast<std::uint64_t>(parse_int_or(argv[7], 0)) : 0xC0FFEEULL;
+    if (max_pieces > 7) max_pieces = 7;     // egdb WLD covers 2..7
+    if (max_pieces < 3) max_pieces = 3;     // probe() declines <3 pieces
+
+    if (!jass::egdb::init(db_dir, cache_mb)) {
+        std::cerr << "error: egdb::init failed for '" << db_dir << "'\n"; return 1;
+    }
+    std::ofstream f(out_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    f.write("JNNW", 4);
+    std::uint32_t count32 = 0; f.write(reinterpret_cast<const char*>(&count32), 4);
+
+    std::mt19937_64 rng(seed ? seed : 0xC0FFEEULL);
+    long written = 0, decisive = 0, draw = 0, tries = 0;
+    const long max_tries = static_cast<long>(count) * 50L + 200000L;
+
+    while (written < count && tries < max_tries) {
+        ++tries;
+        const int total = 3 + static_cast<int>(rng() % static_cast<unsigned>(max_pieces - 2));
+        const int wtot  = 1 + static_cast<int>(rng() % static_cast<unsigned>(total - 1));
+        const int btot  = total - wtot;
+        const int wk = static_cast<int>(rng() % static_cast<unsigned>(wtot + 1)); const int wm = wtot - wk;
+        const int bk = static_cast<int>(rng() % static_cast<unsigned>(btot + 1)); const int bm = btot - bk;
+
+        jass::Position p;
+        std::array<int, 8> used{}; int nused = 0; bool ok = true;
+        auto place = [&](jass::Piece piece) -> bool {
+            const bool wman = (piece == jass::Piece::WhiteMan);
+            const bool bman = (piece == jass::Piece::BlackMan);
+            for (int t = 0; t < 80; ++t) {
+                const int sq = static_cast<int>(rng() % 50) + 1;
+                if (wman && sq <= 5)  continue;   // white man can't sit on its promo row 1..5
+                if (bman && sq >= 46) continue;   // black man can't sit on 46..50
+                bool dup = false; for (int u = 0; u < nused; ++u) if (used[static_cast<std::size_t>(u)] == sq) dup = true;
+                if (dup) continue;
+                used[static_cast<std::size_t>(nused++)] = sq;
+                p.add_piece(static_cast<jass::Square>(sq), piece);
+                return true;
+            }
+            return false;
+        };
+        for (int k = 0; k < wm && ok; ++k) ok = place(jass::Piece::WhiteMan);
+        for (int k = 0; k < wk && ok; ++k) ok = place(jass::Piece::WhiteKing);
+        for (int k = 0; k < bm && ok; ++k) ok = place(jass::Piece::BlackMan);
+        for (int k = 0; k < bk && ok; ++k) ok = place(jass::Piece::BlackKing);
+        if (!ok) continue;
+        p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
+
+        jass::MoveList ml; jass::generate_legal_moves(p, ml);
+        if (ml.empty() || ml[0].is_capture()) continue;   // quiet leaves only
+
+        const jass::EndgameResult got = jass::egdb::probe(p);
+        if (got == jass::EndgameResult::Unknown) continue;
+        (got == jass::EndgameResult::Draw) ? ++draw : ++decisive;
+
+        const std::uint64_t bbs[4] = { p.white_men(), p.white_kings(),
+                                       p.black_men(), p.black_kings() };
+        const std::uint8_t stmb = (p.side_to_move() == jass::Color::White) ? 0 : 1;
+        const std::int32_t score = 0;
+        const std::int8_t  wdlb = static_cast<std::int8_t>(
+            wdl_from_result(got, stmb));
+        f.write(reinterpret_cast<const char*>(bbs), 32);
+        f.write(reinterpret_cast<const char*>(&stmb), 1);
+        f.write(reinterpret_cast<const char*>(&score), 4);
+        f.write(reinterpret_cast<const char*>(&wdlb), 1);
+        ++written;
+    }
+    jass::egdb::shutdown();
+    f.seekp(4, std::ios::beg);
+    const std::uint32_t c32 = static_cast<std::uint32_t>(written);
+    f.write(reinterpret_cast<const char*>(&c32), 4);
+    f.close();
+    std::cout << "gen-egdb-wld: wrote " << written << " / " << count << " ("
+              << decisive << " decisive, " << draw << " draw) in " << tries
+              << " tries → " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --eval-position <net.pjtw> <fen> : load an eval (v1/v2 pattern or v3 Scan
 // eval) and print evaluate(pos) for the given Hub FEN. stm-POV centipawns.
 // Used to cross-check the Python trainer prediction against the playable C++
@@ -2690,6 +2870,8 @@ int main(int argc, char** argv) {
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
+        else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
+        else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
@@ -2721,6 +2903,12 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
+                "  --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n"
+                "                                   rewrite WDL labels of <=7-piece\n"
+                "                                   positions with the EXACT egdb result.\n"
+                "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
+                "                                   emit N random quiet endgame positions\n"
+                "                                   labelled with the exact egdb WLD.\n"
                 "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
