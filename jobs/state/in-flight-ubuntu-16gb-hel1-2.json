@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0286-egdb-native-selftest",
-  "script": "jobs/queue/ccx33-0286-egdb-native-selftest.sh",
-  "pid": 1422728,
-  "started_at": "2026-06-16T13:10:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

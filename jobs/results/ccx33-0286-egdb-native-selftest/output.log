@@ -1,0 +1,43 @@
+=== base présente ? ===
+OK base extraite (158 fichiers)
+=== lib egdb_intl (réutilise le build jass si présent, sinon build) ===
+lib OK: /root/jass/build-egdb/libegdb_intl.a
+=== compile le self-test natif (example/main.cpp, DB_PATH→base, maxpieces inchangé=6) ===
+7:#define DB_PATH "/root/egdb_extracted/app"
+192:	EGDB_DRIVER *handle = egdb_open("maxpieces=6", 1024, DB_PATH, print_msgs);
+194:		std::printf("Cannot open egdb driver at %s\n", DB_PATH);
+compile OK
+=== RUN self-test natif egdb ===
+autoload db6-3201
+autoload db6-0330
+autoload db6-1320
+autoload db6-2310
+autoload db6-1212
+autoload db6-2202
+autoload db6-0321
+autoload db6-1311
+autoload db6-2301
+autoload db6-0420
+autoload db6-1410
+autoload db6-0312
+autoload db6-1302
+autoload db6-0411
+autoload db6-1401
+autoload db6-0510
+autoload db6-0303
+autoload db6-0402
+autoload db6-0501
+Allocated 1493kb for indexing
+Allocated 1044421kb for permanent slice caches
+Autoload took 1 secs
+Available RAM: 31335mb
+Testing 164 positions.
+Test complete, 0 errors.
+
+==========================================================
+   ccx33-0286 — SELF-TEST NATIF EGDB (autoritaire)
+----------------------------------------------------------
+  'Test complete, 0 errors.' → egdb_lookup + base + format VALIDÉS (indépendant de jass).
+  → combiné à la conversion validée hors-ligne = BITBASE SCELLÉE, prête à intégrer.
+  (erreurs > 0 → vrai problème base/format, on creuse.)
+==========================================================
