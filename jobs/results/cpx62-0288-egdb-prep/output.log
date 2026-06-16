@@ -1,0 +1,36 @@
+=== (0) disque ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sda1       601G  116G  461G  21% /
+=== (1) megatools (.deb Ubuntu, dpkg-deb -x) ===
+megatools OK
+=== (2) download WLD 2-7 (skip si déjà là) ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       601G  116G  461G  21% /
+  dl rc=0
+  after  Filesystem      Size  Used Avail Use% Mounted on
+  after  /dev/sda1       601G  119G  458G  21% /
+installeur: /root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe (3.5G)
+=== (3) innoextract statique amd64 → extraction (skip si déjà fait) ===
+innoextract 1.9
+  innoextract rc=0
+ - "app/db7-5020.cpr1"
+ - "app/db7-5020.idx1"
+Done.
+base OK (158 fichiers, 4.8G)
+=== (4) build JASS_EGDB + self-test natif (autoritaire) ===
+BUILD OK
+compile self-test OK
+Autoload took 1 secs
+Available RAM: 31326mb
+Testing 164 positions.
+Test complete, 0 errors.
+  egdb != our in-mem table   : 337  (informational — our tables are heuristic, not truth)
+  KvK-no-capture NOT draw    : 2  (hard invariant)
+  RESULT: INVARIANT VIOLATION — conversion/mapping bug, do not trust egdb.
+
+==========================================================
+   cpx62-0288 — PREP BITBASE (cpx62 prêt pour egdb)
+----------------------------------------------------------
+  base : /root/egdb_extracted/app   (self-test natif egdb attendu = 'Test complete, 0 errors.')
+  → cpx62 peut désormais tourner les jobs egdb en parallèle de ccx33.
+==========================================================

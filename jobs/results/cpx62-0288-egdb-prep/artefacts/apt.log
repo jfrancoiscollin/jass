@@ -1,0 +1,3 @@
+Get:1 https://mirror.hetzner.com/ubuntu/packages resolute/universe amd64 megatools amd64 1.11.5-1build1 [115 kB]
+Fetched 115 kB in 1s (85.2 kB/s)
+W: Download is performed unsandboxed as root as file '/root/mt/megatools_1.11.5-1build1_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
