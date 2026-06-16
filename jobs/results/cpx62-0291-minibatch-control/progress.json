@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0291-minibatch-control",
-  "snapshot_at": "2026-06-16T17:00:03+00:00",
+  "snapshot_at": "2026-06-16T17:05:20+00:00",
   "started_at": "2026-06-16T16:44:20+00:00",
-  "elapsed_seconds": 943,
+  "elapsed_seconds": 1260,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,5 +37,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3648254       1       15:42  0.0  0.0 bash\n3648264 3648254       15:42  0.0  0.0 bash\n3648878 3648264       11:12  0.0  0.0 bash\n3648879 3648878       11:12  0.0  0.0 time\n3648880 3648879       11:12  0.0  0.0 timeout\n3648881 3648880       11:12  119 34.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3648254       1       21:00  0.0  0.0 bash\n3648264 3648254       21:00  0.0  0.0 bash\n3648878 3648264       16:29  0.0  0.0 bash\n3648879 3648878       16:29  0.0  0.0 time\n3648880 3648879       16:29  0.0  0.0 timeout\n3648881 3648880       16:29  119 33.3 python3\n"
 }
