@@ -1,0 +1,1 @@
+ERROR: /root/egdb_db must be a directory

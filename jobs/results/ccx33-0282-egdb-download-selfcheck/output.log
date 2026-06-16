@@ -1,0 +1,53 @@
+=== (1) megatools via .deb Ubuntu (codename-matched) ===
+  box: Ubuntu 24.04.3 LTS  codename=noble
+apt-get download OK
+extrait
+  ldd megatools:
+	libgio-2.0.so.0 => /lib/x86_64-linux-gnu/libgio-2.0.so.0 (0x00007a3787be4000)
+	libgobject-2.0.so.0 => /lib/x86_64-linux-gnu/libgobject-2.0.so.0 (0x00007a3787b81000)
+	libglib-2.0.so.0 => /lib/x86_64-linux-gnu/libglib-2.0.so.0 (0x00007a3787a38000)
+	libcurl.so.4 => /lib/x86_64-linux-gnu/libcurl.so.4 (0x00007a3787977000)
+	libcrypto.so.3 => /lib/x86_64-linux-gnu/libcrypto.so.3 (0x00007a3787400000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007a3787000000)
+	libgmodule-2.0.so.0 => /lib/x86_64-linux-gnu/libgmodule-2.0.so.0 (0x00007a378796e000)
+	libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007a3787952000)
+	libmount.so.1 => /lib/x86_64-linux-gnu/libmount.so.1 (0x00007a37873b3000)
+	libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007a3787925000)
+	libffi.so.8 => /lib/x86_64-linux-gnu/libffi.so.8 (0x00007a3787917000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007a37872ca000)
+  liveness (dl --help) :
+  megatools OK
+=== (2) listing du dossier WLD 2-7 (dl --choose-files, EOF→print&abort) ===
+ERROR: /root/egdb_db must be a directory
+  (lignes: 1)
+=== (3) download du dossier WLD 2-7 ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       150G  117G   27G  82% /
+  dl rc=0 (124=timeout)
+  after  Filesystem      Size  Used Avail Use% Mounted on
+  after  /dev/sda1       150G  121G   24G  84% /
+  du -sh /root/egdb_db : 3.5G
+  arborescence (≤2 niveaux) :
+/root/egdb_db
+/root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup-1.bin
+/root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup-2.bin
+/root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe
+=== (4) build JASS_EGDB + selfcheck ===
+clone OK
+BUILD OK
+  DBROOT=/root/egdb_db
+total 3612256
+drwxr-xr-x  2 root root       4096 Jun 16 12:29 .
+drwx------ 11 root root       4096 Jun 16 12:29 ..
+-rw-r--r--  1 root root 2099686144 Jun 16 12:28 Kingsrow_Intl_7pc_WLD_Setup-1.bin
+-rw-r--r--  1 root root 1598927404 Jun 16 12:29 Kingsrow_Intl_7pc_WLD_Setup-2.bin
+-rw-r--r--  1 root root     313345 Jun 16 12:27 Kingsrow_Intl_7pc_WLD_Setup.exe
+--- selfcheck (200k positions) ---
+error: egdb::init failed for '/root/egdb_db' (built without -DJASS_EGDB, or no DB there)
+
+==========================================================
+   ccx33-0281 — DOWNLOAD WLD 2-7 + SELFCHECK
+----------------------------------------------------------
+  selfcheck : voir 'RESULT: CLEAN' (mapping validé) ou 'BUG'.
+  CLEAN → on intègre la bitbase (probe en finale) + on l'utilise pour relabeliser les finales.
+==========================================================

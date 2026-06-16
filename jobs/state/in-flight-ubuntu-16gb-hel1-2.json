@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0282-egdb-download-selfcheck",
-  "script": "jobs/queue/ccx33-0282-egdb-download-selfcheck.sh",
-  "pid": 1419745,
-  "started_at": "2026-06-16T12:27:20+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

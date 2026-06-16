@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0282-egdb-download-selfcheck",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-16T12:27:20+00:00",
+  "ended_at": "2026-06-16T12:32:25+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 1419745
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0282-egdb-download-selfcheck/artefacts.src"
 }
