@@ -2,7 +2,8 @@
 # id: cpx62-0297-saturate-loop
 # description: SATURER LA CLASSE LINÉAIRE sur la finale (stratégie Scan). 0287/0293 : la classe n'est
 # PAS saturée, les leviers DONNÉES marchent encore. Boucle self-play combinant les briques VALIDÉES :
-# (a) king-aware + ENDGAME-FEATURES (110), (b) egdb-perfect (finales ≤7 jouées par la TB → labels WDL
+# (a) king-aware + ENDGAME-FEATURES (110), (b) egdb-perfect + TERMINATE-AT-TB (les parties finissent au résultat TB exact ≤7 → fini
+# le stall ~50% de 0295 ; finales ≤7 jouées par la TB → labels WDL
 # exacts), (c) DEPTH-RAMP late-mid=12/endgame=16 (0293 : −29% endgame-rois, +74 Elo — la recherche mord
 # dans la TB sur l'entre-deux 8-21), (d) COVERAGE exacte (--gen-egdb-wld, densité finale ≤7 gratuite).
 # Multi-gen. egdb ON en génération, OFF aux benchmarks (éval pure). Cible : endgame-rois ≪ 2.04 (0293-B,

@@ -511,6 +511,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int generated  = 0;
     int game_count = 0;
 
+    // Load the egdb tablebase if JASS_EGDB_PATH is set (no-op otherwise). Used by
+    // the terminate-at-TB rule below so won/lost endgames get their EXACT result
+    // instead of stalling to the draw rule (~50% of decisive finals, job 0295).
+    jass::egdb::ensure_initialised();
+
     while (generated < n) {
         ++game_count;
         e.new_game();
@@ -551,6 +556,19 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                               ? -1 : +1;
                 game_ended_by_loss = true;
                 break;
+            }
+            // Terminate-at-TB: the moment the game reaches an egdb-resolved
+            // endgame, end it with the EXACT result instead of playing on.
+            // Playing it out stalls ~50% of won/lost finals to the draw rule and
+            // mislabels them (job 0295) — this gives clean endgame labels (and the
+            // transition samples already collected inherit the correct outcome).
+            // egdb-exact only (probe() = Unknown without egdb / above max_pieces /
+            // <3 pieces) — never the over-claiming in-memory tables.
+            if (jass::egdb::available()) {
+                const jass::EndgameResult tb = jass::egdb::probe(e.position());
+                if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; break; }
+                if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; break; }
+                if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; break; }
             }
             if (e.position().halfmove_clock() >= FIFTY_MOVE_PLIES) {
                 // 25-move rule: declare a draw.
