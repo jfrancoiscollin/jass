@@ -22,18 +22,22 @@
   egdb a aussi **révélé que nos tables internes 2v1/3v1 sur-revendiquent** les gains.
   → Procédure : [BITBASE_INTEGRATION.md](BITBASE_INTEGRATION.md). Plan d'usage :
   [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
-- **⭐ VERDICT 0287 (pivot) — le verrou finale = CAPACITÉ de l'éval, PAS la couverture.**
-  Self-play egdb-PERFECT (finales jouées par la TB, labels WLD EXACTS) : la val
-  endgame-mse **÷3.5** (2.98→0.84, l'éval *fit* les labels propres) MAIS l'**endgame-rois
-  vs Scan ne bouge PAS** (3.22 ≈ 3.06 de 0276), vs Scan toujours **−741**. → Donner des
-  données parfaites ne casse pas le verrou : l'éval **linéaire + features king-king crues
-  ne PEUVENT pas représenter** la relation roi-roi (opposition/diagonale), et la cible
-  **WLD est trop grossière** (tous les gains = cible 1, aucun gradient de conversion).
-  ✂️ **Couverture élaguée comme levier du verrou.** 🟢 **Branche ARCHI/CAPACITÉ active** :
-  features king-king riches (table de déplacement relatif) → tête non-linéaire (MLP) →
-  MTC. La bitbase/outils restent utiles (bons labels) mais ne suffisent pas seuls.
-- **Features de finale = +28 Elo** (0276 : +230 vs hc, vs 0266 +201.7) mais
-  endgame-rois reste ~3.06 → **aident, ne cassent PAS le verrou** (confirmé par 0287).
+- **VERDICT 0287 + 0293 — le verrou finale = la classe linéaire PAS ENCORE SATURÉE
+  (training/labels), PAS la capacité.** ⚠️ *correction d'un verdict 0287 trop hâtif.*
+  - **0287** (egdb-perfect, **profondeur-8 uniforme**) : val endgame-mse ÷3.5 (2.98→0.84)
+    mais endgame-rois vs Scan inchangé (3.22), vs Scan −741. J'en avais conclu « capacité ».
+  - **0293 le DÉMENT** : à labels exacts ≤7 identiques, **approfondir l'entre-deux 8-21**
+    (`--play/--label-depth-by-phase late-mid=12,endgame=16`) fait chuter endgame-rois
+    **2.86→2.04 (−29 %)** ET **+74 Elo** (+106 vs +32). Donc un levier **données/labels**
+    (la recherche profonde mord dans la TB → labels de transition ancrés) **marche encore**
+    → la classe linéaire **n'est pas saturée**. 0287 sous-testait (depth-8 n'atteint pas la
+    TB depuis 8-21).
+  - **Stratégie actée (PATTERN_PROGRAM_NOTES) confirmée** : **Scan est dans notre classe**
+    (logistique linéaire sur patterns). Pour l'ÉGALER → saturer la classe linéaire (cycles,
+    patterns, data, bitbases), **PAS de FM/MLP** (= au-delà de Scan, prématuré ; FM déjà
+    rangé là en 0184). ✂️ **Branche "capacité/FM" rétractée** (0296 FM annulé). 🟢 **Levier
+    actif = saturer le linéaire** : egdb-perfect + depth-ramp + coverage + multi-gen.
+- **Features de finale = +28 Elo** (0276) — un levier données qui aide (classe pas saturée).
   Code intact (`JASS_ENDGAME_FEATURES`, NUM_EXTRAS 110).
 - **Outils labels exacts codés+validés (0292)** : `--gen-egdb-wld` (coverage aléatoire
   quiète ≤7p, distribution saine, 0 one-sided) et `--egdb-relabel` (réécrit WDL ≤7p,
