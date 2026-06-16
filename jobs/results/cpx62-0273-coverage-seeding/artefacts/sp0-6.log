@@ -1,0 +1,21 @@
+gen-data-wdl: n=18750 out=/root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/sp0-6.jnnw eval_depth=6 play_depth=8 max_plies=200 seed=10866 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+seed-file: 350103 positions, seed_frac=50%
+  played 50 games, 883 / 18750 positions
+  played 100 games, 1993 / 18750 positions
+  played 150 games, 2873 / 18750 positions
+  played 200 games, 3991 / 18750 positions
+  played 250 games, 5107 / 18750 positions
+  played 300 games, 6065 / 18750 positions
+  played 350 games, 6935 / 18750 positions
+  played 400 games, 8062 / 18750 positions
+  played 450 games, 9187 / 18750 positions
+  played 500 games, 10273 / 18750 positions
+  played 550 games, 11386 / 18750 positions
+  played 600 games, 12324 / 18750 positions
+  played 650 games, 13425 / 18750 positions
+  played 700 games, 14589 / 18750 positions
+  played 750 games, 15659 / 18750 positions
+  played 800 games, 16589 / 18750 positions
+  played 850 games, 17411 / 18750 positions
+  played 900 games, 18477 / 18750 positions
+wrote 18750 WDL records to /root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/sp0-6.jnnw

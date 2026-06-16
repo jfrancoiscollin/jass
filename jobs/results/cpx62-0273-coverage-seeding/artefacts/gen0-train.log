@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/cumulative.jnnw
+  300000 records  (0.02s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/feat0
+  extras shape (300000, 106)  (mean mob b/w=11.2/11.2)
+target=wdl  pos=89876 neg=88854 zero=121270 (40.4% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=89876 draw=121270 loss=88854 (40.4% draws)
+phase : piece-count mean=16.9  wmg mean=0.423
+split : train=270000 val=30000
+prune : keep 131,429 buckets (>= 1 visits) -> 262,860 pattern cols vs 34,012,224  (129.4× fewer); train fallback=0.000%
+design : 263072 columns (2×131430 pat + 2×106 ext)
+L-BFGS  l2=0.03  max_iter=200  LOGISTIC  (pure)
+  train_loss=0.621312  iters=101  (15.61s)
+val   : mse=0.712953  sign_acc=0.2428
+val/phase mse : opening=0.5152(n6098)  midgame=0.5390(n4599)  late-mid=0.5960(n4223)  endgame=0.9509(n5802)  deep-eg=0.8336(n9278)
+quant : scale=1000  pat range=[-33,33] ext_mg range=[-323,322]
+wrote /root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/gen0.pjtw  (v3, 34012436 weights, 136049764 bytes)

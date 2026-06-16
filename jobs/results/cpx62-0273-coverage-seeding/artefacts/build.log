@@ -1,0 +1,151 @@
+[  3%] Building CXX object CMakeFiles/jass_lib.dir/src/position.cpp.o
+[  7%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_network.cpp.o
+[ 11%] Building CXX object CMakeFiles/jass_lib.dir/src/scan_eval.cpp.o
+[ 19%] Building CXX object CMakeFiles/jass_lib.dir/src/movegen.cpp.o
+[ 19%] Building CXX object CMakeFiles/jass_lib.dir/src/eval.cpp.o
+[ 23%] Building CXX object CMakeFiles/jass_lib.dir/src/board.cpp.o
+[ 26%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_server_client.cpp.o
+[ 34%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_accumulator.cpp.o
+[ 34%] Building CXX object CMakeFiles/jass_lib.dir/pattern_jass/src/weights.cpp.o
+[ 38%] Building CXX object CMakeFiles/jass_lib.dir/generated/nnue_default_data.cpp.o
+[ 42%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue.cpp.o
+[ 46%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+[ 50%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_jass_bridge.cpp.o
+[ 53%] Building CXX object CMakeFiles/jass_lib.dir/pattern_jass/src/pattern.cpp.o
+[ 61%] Building CXX object CMakeFiles/jass_lib.dir/src/zobrist.cpp.o
+[ 61%] Building CXX object CMakeFiles/jass_lib.dir/src/tt.cpp.o
+[ 65%] Building CXX object CMakeFiles/jass_lib.dir/src/engine.cpp.o
+/root/jass/pattern_jass/src/pattern.cpp: In constructor ‘pattern_jass::{anonymous}::ReverseMap::ReverseMap()’:
+/root/jass/pattern_jass/src/pattern.cpp:28:44: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   28 |         for (int b = 0; b < 50; ++b) { off[b] = acc; acc = static_cast<std::uint16_t>(acc + cnt[b]); }
+      |                                            ^
+/root/jass/pattern_jass/src/pattern.cpp:28:97: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   28 |         for (int b = 0; b < 50; ++b) { off[b] = acc; acc = static_cast<std::uint16_t>(acc + cnt[b]); }
+      |                                                                                                 ^
+/root/jass/pattern_jass/src/pattern.cpp:31:42: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   31 |         for (int b = 0; b < 50; ++b) cur[b] = off[b];
+      |                                          ^
+/root/jass/pattern_jass/src/pattern.cpp:31:51: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   31 |         for (int b = 0; b < 50; ++b) cur[b] = off[b];
+      |                                                   ^
+/root/jass/pattern_jass/src/pattern.cpp:35:26: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   35 |                 flat[cur[b]++] = PatRef{static_cast<std::uint8_t>(p),
+      |                          ^
+/root/jass/pattern_jass/src/pattern.cpp: In function ‘void pattern_jass::update_all(Bitboard, Bitboard, Bitboard, Bitboard, std::array<unsigned int, 32>&)’:
+/root/jass/pattern_jass/src/pattern.cpp:80:45: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   80 |         for (std::uint16_t k = g_revmap.off[b]; k < g_revmap.off[b + 1]; ++k) {
+      |                                             ^
+/root/jass/pattern_jass/src/pattern.cpp:80:68: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   80 |         for (std::uint16_t k = g_revmap.off[b]; k < g_revmap.off[b + 1]; ++k) {
+      |                                                                  ~~^~~
+[ 69%] Building CXX object CMakeFiles/jass_lib.dir/src/endgame.cpp.o
+[ 73%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+[ 76%] Building CXX object CMakeFiles/jass_lib.dir/src/book.cpp.o
+[ 80%] Building CXX object CMakeFiles/jass_lib.dir/src/timemgr.cpp.o
+[ 84%] Building CXX object CMakeFiles/jass_lib.dir/src/tournament.cpp.o
+[ 88%] Building CXX object CMakeFiles/jass_lib.dir/src/hub.cpp.o
+/root/jass/src/scan_eval.cpp: In function ‘std::optional<jass::scan_eval::ScanWeights> jass::scan_eval::load_scan_weights(const std::string&, std::string*)’:
+/root/jass/src/scan_eval.cpp:143:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  143 |         if (err) *err = "file too short"; return std::nullopt;
+      |         ^~
+/root/jass/src/scan_eval.cpp:143:43: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  143 |         if (err) *err = "file too short"; return std::nullopt;
+      |                                           ^~~~~~
+/root/jass/src/scan_eval.cpp:190:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  190 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |             ^~
+/root/jass/src/scan_eval.cpp:190:64: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  190 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |                                                                ^~~~~~
+/root/jass/src/pattern_network.cpp: In member function ‘bool jass::PatternNetwork::save(std::string_view, uint32_t) const’:
+/root/jass/src/pattern_network.cpp:846:31: warning: declaration of ‘n’ shadows a previous local [-Wshadow]
+  846 |             const std::size_t n = patterns_.size();
+      |                               ^
+/root/jass/src/pattern_network.cpp:814:25: note: shadowed declaration is here
+  814 |     const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
+      |                         ^
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:232:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  232 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:233:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  233 |                 : accumulators[ply].black;
+      |                                ^~~
+[ 92%] Linking CXX static library libjass_lib.a
+[ 92%] Built target jass_lib
+[ 96%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+/root/jass/src/main.cpp: In function ‘std::array<int, 5> parse_depth_by_phase(const std::string&, const char*)’:
+/root/jass/src/main.cpp:159:47: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  159 |             if (name == PHASE_NAMES[p]) { out[p] = d; known = true; break; }
+      |                                               ^
+/root/jass/src/main.cpp: In function ‘int run_gen_data_wdl_mode(int, char**)’:
+/root/jass/src/main.cpp:405:29: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  405 |             if (label_depth[p] > 0) {
+      |                             ^
+/root/jass/src/main.cpp:407:67: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  407 |                           << PHASE_NAMES[p] << ":" << label_depth[p];
+      |                                                                   ^
+/root/jass/src/main.cpp:416:37: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  416 |             if (play_depth_by_phase[p] > 0) {
+      |                                     ^
+/root/jass/src/main.cpp:418:75: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  418 |                           << PHASE_NAMES[p] << ":" << play_depth_by_phase[p];
+      |                                                                           ^
+/root/jass/src/main.cpp:577:65: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  577 |                 const int phase_ovr = label_depth[phase_index_of(popcount(pos.occupied()))];
+      |                                                   ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:657:51: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  657 |                 play_depth_by_phase[phase_index_of(popcount(e.position().occupied()))];
+      |                                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_gen_tdleaf_mode(int, char**)’:
+/root/jass/src/main.cpp:727:11: warning: conversion to ‘long long unsigned int’ from ‘uint64_t’ {aka ‘long unsigned int’} may change the sign of the result [-Wsign-conversion]
+  727 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:727:9: warning: conversion to ‘uint64_t’ {aka ‘long unsigned int’} from ‘long long unsigned int’ may change the sign of the result [-Wsign-conversion]
+  726 |     const std::uint64_t seed = (argc > 7)
+      |                                ~~~~~~~~~~
+  727 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_rewrite_scores_with_search_mode(int, char**)’:
+/root/jass/src/main.cpp:1119:61: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1119 |             std::cerr << "error: short read at record " << (start + i) << "\n";
+      |                                                             ^~~~~
+/root/jass/src/main.cpp:1129:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1129 |             std::cerr << "error: record " << (start + i) << " has invalid stm byte "
+      |                                               ^~~~~
+/root/jass/src/main.cpp:1135:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1135 |             std::cerr << "error: record " << (start + i)
+      |                                               ^~~~~
+/root/jass/src/main.cpp:1141:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1141 |             std::cerr << "error: record " << (start + i)
+      |                                               ^~~~~
+/root/jass/src/main.cpp: In function ‘int run_perft_mode(int, char**)’:
+/root/jass/src/main.cpp:1280:67: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+ 1280 |                   << "   " << (s > 0 ? static_cast<std::uint64_t>(n / s) : 0)
+      |                                                                   ^
+/root/jass/src/main.cpp: In function ‘int run_depth_at_movetime_mode(int, char**)’:
+/root/jass/src/main.cpp:1958:24: warning: conversion from ‘long long int’ to ‘double’ may change value [-Wconversion]
+ 1958 |         avg_depth[s] = sum_depth / n;
+      |                        ^~~~~~~~~
+[100%] Linking CXX executable jass
+[100%] Built target jass
+[ 63%] Built target jass_lib
+[ 65%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_engine.cpp.o
+[ 68%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_position.cpp.o
+[ 71%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_draws.cpp.o
+[ 73%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_main.cpp.o
+[ 81%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_movegen.cpp.o
+[ 81%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_endgame.cpp.o
+[ 81%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_tt.cpp.o
+[ 84%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_book.cpp.o
+[ 86%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_nnue.cpp.o
+[ 89%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_hub.cpp.o
+[ 92%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_search.cpp.o
+[ 97%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_scan_eval.cpp.o
+[ 97%] Building CXX object CMakeFiles/jass_tests.dir/tests/test_tournament.cpp.o
+/root/jass/tests/test_nnue.cpp: In function ‘void {anonymous}::test_evaluate_with_accumulator_matches_evaluate()’:
+/root/jass/tests/test_nnue.cpp:970:70: warning: conversion from ‘std::size_t’ {aka ‘long unsigned int’} to ‘std::array<int, 64>::value_type’ {aka ‘int’} may change value [-Wconversion]
+  970 |     for (std::size_t j = 0; j < MLPNetworkQ::HIDDEN1; ++j) b1[j] = j - 50;
+      |                                                                    ~~^~~~
+[100%] Linking CXX executable jass_tests
+[100%] Built target jass_tests

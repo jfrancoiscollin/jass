@@ -1,0 +1,9 @@
+binaire = NMP-off + lmr0 + history16k
+=== extrait seeds finales (popcount<=14) ===
+seeds finales : 350103 (popcount<=14)
+PARAMS: play_depth=8 + SEEDING finale 50% (couverture) ; 600000/gen ×8
+=== gen0 : seed 300k (play depth-8 + seeding finale, l2=3e-2) ===
+cumulative 300000
+wrote 300000 × 106 Scan-style extras to /root/jass/jobs/results/cpx62-0273-coverage-seeding/artefacts.src/feat0
+  gen0 val_endgame=0.9509 Elo=117-7-146 elo=-37.5
+=== gen1 : +600000 (play depth-8 + seeding finale) ===
