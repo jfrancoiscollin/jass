@@ -1,0 +1,16 @@
+=== disque ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sda1       150G  137G  7.2G  95% /
+  occupé par egdb : 3.5G	/root/egdb_db 4.8G	/root/egdb_extracted 
+=== megatools (réutilise /root/mt ou .deb) ===
+megatools OK (/root/mt/x/usr/bin/megatools)
+=== listing du dossier MTC 2-8 (noms + tailles) ===
+ERROR: /root/mtc_probe must be a directory
+--- fichiers + tailles repérés ---
+
+==========================================================
+   ccx33-0298 — RECON taille MTC 2-8
+  voir mtc-list.txt + df ci-dessus.
+  SUITE : si total tient (~19GB libres) → download+extract MTC ; sinon sous-ensemble ≤6/≤7
+          ou virer l'installeur WLD (/root/egdb_db, ~3.5GB) pour faire de la place.
+==========================================================
