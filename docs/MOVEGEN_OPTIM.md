@@ -69,6 +69,22 @@ lookups de table répétés dans la DFS (vs masques bitboard) + l'alloc MoveList
 
 ## État
 
-- **Mesure** : `ccx33-0271-movegen-profile` (en file) → split capture/quiet par phase.
-- **Optims** : non commencées (en attente que l'éval respire + du profil 0271).
-- **Candidat Codex** : chantier isolé, spec ci-dessus, vérif par perft + Elo.
+- **Mesure** : `ccx33-0271-movegen-profile` → capture-DFS ~8-13 %, quiet ~10-15 %.
+- **#6 MoveList reserve(48)** : **FAIT** (2026-06-16). Constructeur
+  `MoveList() { moves_.reserve(48); }` (`movegen.hpp`). La `MoveList` est créée
+  FRAÎCHE par nœud negamax (`search.cpp`), donc chaque nœud payait une
+  (ré)allocation tas sur ses premiers `push`. **Résultat perft(8) : 30 M → 49 M
+  nodes/s (~+60 %)**, comptages **bit-identiques** (167140 / 1049442 / 6483971),
+  6408 tests OK. Surprise vs l'estimation doc (~+1 %) : perft est du movegen
+  PUR, donc l'alloc/nœud pesait bien plus que prévu. **En recherche réelle le
+  gain sera plus modeste** (l'éval domine le nœud, Amdahl) mais réel et
+  zéro-risque (le `reserve` ne change aucun coup).
+- **#3 skip-check (men)** : **DÉJÀ EN PLACE** (`generate_captures` :
+  `threat_men = men_of(us) & enemy_reach`, early-`return` si `threat_men==0 &&
+  kings_us==0`). Le résidu (vérifier la case d'arrivée libre par homme, +
+  skip-check ROIS) est marginal/MEDIUM-risque → non fait (rois peu nombreux en
+  finale → DFS rois déjà bon marché par nœud).
+- **Optims restantes** (#1 captures-hommes bitboard, #2/#5 rois, #4 quiet, #7
+  majorité) : non commencées. Upside borné (Amdahl) + l'éval plafonne → différer
+  tant que l'éval respire. **Candidat Codex** : chantier isolé, spec ci-dessus,
+  vérif par perft + Elo.
