@@ -239,6 +239,25 @@ lente pour self-play assez profond), bascule sur **labels EXTERNES de finale** (
 profonde / bitbases comme **TEACHER de l'éval**, pas comme tables de jeu) — reste « éval forte
 comme Scan », pas un abandon de la classe.
 
+### VERDICT FINALES — ACTE 3 (2026-06-16, 0266/0267/0272) : ni bruit, ni labels — COUVERTURE ou FEATURES
+
+Trois leviers finale testés, **deux réfutés** :
+- **Play uniforme depth-8** (`0266`) : **+201.7 vs hc** (+28 sur vanilla 0241=+173.7) — jouer fort
+  uniformément AIDE globalement (1er gain finale-related) MAIS endgame-rois toujours **3.22** (autopsie).
+  → **nouveau champion éval = 0266 gen8** (+201.7, king-aware, depth-8 uniforme).
+- **Filtre de stabilité** (`0267`, idée user) : **INVALIDE** — accord(stable)=0.917 ≈ accord(instable)=0.938
+  (gain −0.021). Nos erreurs de finale sont **SYSTÉMATIQUES (biais stable), pas du bruit** → un filtre de
+  confiance ne les enlève pas (éval confiante ET fausse en finale à rois). Cimetière.
+- **Teacher correct Scan-d10** (`0272`) : **RÉFUTÉ** — distiller les labels Scan PARFAITS donne la finale la
+  PIRE (endgame-rois **5.13** > 3.22 self-play). Les labels ne sont donc PAS le verrou. (Confond : la distill
+  est globalement + faible, +141 < +201 ; mais « distiller Scan » ne bat clairement pas le self-play.)
+
+→ **Le verrou finale n'est NI le bruit NI la justesse des labels.** Reste 2 candidats (décision de DIRECTION) :
+1. **COUVERTURE/famine** : le self-play (3.22) couvre mieux les finales-de-PARTIE que le master (5.13) → plus
+   de **volume + diversité de finales** dans le self-play (seeding de finales, gros volume).
+2. **REPRÉSENTATION** : features de finale manquantes (distance-roi, opposition, breakthrough — *encore
+   linéaire, encore Scan-family*) ; OU **bitbases** (teacher PARFAIT ≤N pièces) qui court-circuitent la finale.
+
 ---
 
 `ANALYSE_VEILLE_NNUE.md` posait la thèse : l'archi MLP dense plafonne, il faut
