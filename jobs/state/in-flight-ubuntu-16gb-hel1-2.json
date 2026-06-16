@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0277-egdb-probe",
+  "script": "jobs/queue/ccx33-0277-egdb-probe.sh",
+  "pid": 1417076,
+  "started_at": "2026-06-16T11:34:22+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
