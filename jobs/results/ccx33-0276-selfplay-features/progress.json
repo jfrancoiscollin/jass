@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T09:15:14+00:00",
+  "snapshot_at": "2026-06-16T09:20:15+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 7535,
+  "elapsed_seconds": 7836,
   "artefacts": [
     {
       "name": "build.log",
@@ -58,7 +58,7 @@
     },
     {
       "name": "feat5",
-      "size_bytes": 429129728
+      "size_bytes": 1452000012
     },
     {
       "name": "gen0-train.log",
@@ -99,6 +99,10 @@
     {
       "name": "gen4.pjtw",
       "size_bytes": 136049796
+    },
+    {
+      "name": "gen5-train.log",
+      "size_bytes": 0
     },
     {
       "name": "sp0-1.log",
@@ -293,5 +297,5 @@
       "size_bytes": 2513
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    02:05:35  0.0  0.0 bash\n2393733 2393731    02:05:35  0.0  0.0 bash\n3660347 2393733       00:00  100  0.0 jass\n3660348 2393733       00:00  0.0  0.0 tail\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    02:10:36  0.0  0.0 bash\n2393733 2393731    02:10:36  0.0  0.0 bash\n3660408 2393733       04:59  376 46.7 python3\n"
 }
