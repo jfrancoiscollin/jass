@@ -1,0 +1,28 @@
+[  2%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/bitbuf.cpp.o
+[  4%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Re-pair/utils.cpp.o
+[  6%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/huffman.cpp.o
+[  8%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/indexing.cpp.o
+[ 13%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/compression_tables.cpp.o
+[ 13%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/crc.cpp.o
+[ 15%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_dtw.cpp.o
+[ 17%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_common.cpp.o
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+Cannot create temporary file in /tmp/: No such file or directory
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:104: CMakeFiles/egdb_intl.dir/root/egdb_intl/Re-pair/utils.cpp.o] Aborted (core dumped)
+gmake[3]: *** Waiting for unfinished jobs....
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:146: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/crc.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:132: CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/indexing.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:90: CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/huffman.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:160: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_common.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:174: CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_dtw.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:76: CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/bitbuf.cpp.o] Aborted (core dumped)
+gmake[3]: *** [CMakeFiles/egdb_intl.dir/build.make:118: CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/compression_tables.cpp.o] Aborted (core dumped)
+gmake[2]: *** [CMakeFiles/Makefile2:89: CMakeFiles/egdb_intl.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:149: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:160: jass] Error 2
