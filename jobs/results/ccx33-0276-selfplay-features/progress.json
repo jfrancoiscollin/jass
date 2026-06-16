@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0276-selfplay-features",
-  "snapshot_at": "2026-06-16T08:22:58+00:00",
+  "snapshot_at": "2026-06-16T08:28:03+00:00",
   "started_at": "2026-06-16T07:09:39+00:00",
-  "elapsed_seconds": 4399,
+  "elapsed_seconds": 4704,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 57000008
+      "size_bytes": 79800008
     },
     {
       "name": "elo-gen0.log",
@@ -41,6 +41,10 @@
       "size_bytes": 660000012
     },
     {
+      "name": "feat3",
+      "size_bytes": 924000012
+    },
+    {
       "name": "gen0-train.log",
       "size_bytes": 1418
     },
@@ -63,6 +67,10 @@
     {
       "name": "gen2.pjtw",
       "size_bytes": 136049796
+    },
+    {
+      "name": "gen3-train.log",
+      "size_bytes": 0
     },
     {
       "name": "sp0-1.log",
@@ -161,69 +169,37 @@
       "size_bytes": 2467
     },
     {
-      "name": "sp3-1.jnnw",
-      "size_bytes": 2347490
-    },
-    {
       "name": "sp3-1.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-2.jnnw",
-      "size_bytes": 2331074
+      "size_bytes": 2468
     },
     {
       "name": "sp3-2.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-3.jnnw",
-      "size_bytes": 2298242
+      "size_bytes": 2468
     },
     {
       "name": "sp3-3.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-4.jnnw",
-      "size_bytes": 2339282
+      "size_bytes": 2513
     },
     {
       "name": "sp3-4.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-5.jnnw",
-      "size_bytes": 2331074
+      "size_bytes": 2513
     },
     {
       "name": "sp3-5.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-6.jnnw",
-      "size_bytes": 2322866
+      "size_bytes": 2512
     },
     {
       "name": "sp3-6.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-7.jnnw",
-      "size_bytes": 2314658
+      "size_bytes": 2513
     },
     {
       "name": "sp3-7.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp3-8.jnnw",
-      "size_bytes": 2298242
+      "size_bytes": 2513
     },
     {
       "name": "sp3-8.log",
-      "size_bytes": 0
+      "size_bytes": 2468
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    01:13:19  0.0  0.0 bash\n2393733 2393731    01:13:19  0.0  0.0 bash\n3162184 2393733       14:14 99.9  0.5 jass\n3162185 2393733       14:14 99.8  0.5 jass\n3162186 2393733       14:14 99.9  0.5 jass\n3162187 2393733       14:14 99.9  0.5 jass\n3162188 2393733       14:14 99.9  0.5 jass\n3162189 2393733       14:14 99.9  0.5 jass\n3162190 2393733       14:14 99.9  0.5 jass\n3162191 2393733       14:14 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2393731       1    01:18:24  0.0  0.0 bash\n2393733 2393731    01:18:24  0.0  0.0 bash\n3162578 2393733       01:48  426 26.7 python3\n"
 }
