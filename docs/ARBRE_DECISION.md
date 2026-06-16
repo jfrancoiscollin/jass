@@ -27,7 +27,18 @@ roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md]
   prématuré ; déjà tranché en 0184). Capacité = *plus tard, seulement après saturation*.
 - 🟢⭐ **LEVIER ACTIF = SATURER LA CLASSE LINÉAIRE** (stratégie Scan) : **egdb-perfect +
   depth-ramp + coverage exacte + multi-gen à convergence**. C'est ce que 0287/0293 valident.
-  Cible : endgame-rois ≪ 2.04, et re-baseline vs Scan.
+  Cible : endgame-rois ≪ 2.04, et re-baseline vs Scan. → **run 0297** (1er avec terminate-at-TB).
+- 🟢 **terminate-at-TB** (codé) : 0295 a montré **~50 % des finales décisives STALLENT** →
+  labels NULS faux (polluait 0287 et tout l'entraînement finale). On termine la partie au
+  **résultat TB exact ≤7** → labels propres, sans MTC.
+- 🟢⭐ **GRADIENT DE CONVERSION (cible MTC offline — option a)** : terminate-at-TB corrige la
+  *valuation*, PAS la *conversion en match*. Scan convertit via le **gradient de son éval**
+  (sans MTC) ; notre cible WLD est **plate** → l'éval n'apprend pas "comment convertir". On
+  utilise le **MTC comme CIBLE D'ENTRAÎNEMENT** (distance → cible graduée) → l'éval apprend le
+  gradient, **généralise 8-21**, **pas de MTC au jeu**. ✂️ (b) DTW maison ≤5-6 · ✂️ (c) proxy.
+  → **0298** = recon taille MTC.
+- 🟢 **minibatch validé EXACT** (0294 : train_loss identique à convergence, ½ RAM) → outil de
+  scaling quand le cumulatif > ~7M.
 - 🟢 **Relabel + coverage exacts** (`--egdb-relabel`, `--gen-egdb-wld`, validés 0292) :
   briques (2)+(3) de la boucle — densité finale exacte et gratuite.
 - 🔵 **Depth-ramp sur l'entre-deux 8-21p (0293)** : `late-mid=12,endgame=16` → la

@@ -256,11 +256,26 @@ Validation = the **native egdb example self-test** (164/164), not the in-memory
 tables (a shallow heuristic). `jass --egdb-selfcheck <dir> <n>` asserts the one
 airtight invariant (KvK-no-capture = Draw); see BITBASE_INTEGRATION.md.
 
+**Terminate-at-TB** ([main.cpp](../src/main.cpp) `run_gen_data_wdl_mode`): when a
+self-play game reaches an egdb-resolved (≤7-piece) position, the game ends with
+the EXACT egdb result instead of being played out. Without this, ~50% of decisive
+endgames stall to the FMJD draw rule and get mislabelled as draws (job 0295),
+poisoning the endgame training data. Active only when `JASS_EGDB_PATH` is set
+(`egdb::ensure_initialised()` + `egdb::available()`); egdb-exact only.
+
 **Self-play data tools** (exact endgame supervision):
 - `--gen-egdb-wld <N> <out> <db>` — emit N random quiet ≤7-piece positions
   labelled with exact WLD (free dense endgame coverage).
 - `--egdb-relabel <in> <db> [out]` — overwrite WDL labels of ≤7-piece positions
-  in a self-play dataset with the exact egdb result (idempotent).
+  in a self-play dataset with the exact egdb result (idempotent); reports
+  **stalls** (won/lost recorded as draw = conversion failures).
+
+**Conversion gradient (planned)**: `egdb_intl` also reads MTC (moves-to-conversion)
+and DTW databases (`is_mtc`/`is_dtw`, unified `egdb_lookup`). The WLD target is flat
+on wins, so the eval cannot learn *how* to convert; the plan is to use MTC as an
+**offline training target** (graded by distance-to-conversion) so the eval learns a
+conversion gradient that generalises beyond the bitbase — no MTC needed at play time
+(Scan-style). See [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
 
 The full target self-play loop using these is documented in
 [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
