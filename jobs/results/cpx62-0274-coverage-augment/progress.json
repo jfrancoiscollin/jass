@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0274-coverage-augment",
-  "snapshot_at": "2026-06-16T06:07:10+00:00",
+  "snapshot_at": "2026-06-16T06:12:17+00:00",
   "started_at": "2026-06-16T06:02:09+00:00",
-  "elapsed_seconds": 301,
+  "elapsed_seconds": 608,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "eg-1.jnnw",
-      "size_bytes": 0
+      "size_bytes": 16418
     },
     {
       "name": "eg-1.log",
@@ -22,7 +22,7 @@
     },
     {
       "name": "eg-10.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-10.log",
@@ -30,7 +30,7 @@
     },
     {
       "name": "eg-11.jnnw",
-      "size_bytes": 0
+      "size_bytes": 16418
     },
     {
       "name": "eg-11.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "eg-12.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-12.log",
@@ -46,7 +46,7 @@
     },
     {
       "name": "eg-13.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-13.log",
@@ -54,7 +54,7 @@
     },
     {
       "name": "eg-14.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-14.log",
@@ -62,7 +62,7 @@
     },
     {
       "name": "eg-15.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-15.log",
@@ -70,7 +70,7 @@
     },
     {
       "name": "eg-16.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-16.log",
@@ -78,7 +78,7 @@
     },
     {
       "name": "eg-2.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-2.log",
@@ -86,7 +86,7 @@
     },
     {
       "name": "eg-3.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-3.log",
@@ -94,7 +94,7 @@
     },
     {
       "name": "eg-4.jnnw",
-      "size_bytes": 16418
+      "size_bytes": 24626
     },
     {
       "name": "eg-4.log",
@@ -102,7 +102,7 @@
     },
     {
       "name": "eg-5.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-5.log",
@@ -110,7 +110,7 @@
     },
     {
       "name": "eg-6.jnnw",
-      "size_bytes": 0
+      "size_bytes": 16418
     },
     {
       "name": "eg-6.log",
@@ -118,7 +118,7 @@
     },
     {
       "name": "eg-7.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-7.log",
@@ -126,7 +126,7 @@
     },
     {
       "name": "eg-8.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 24626
     },
     {
       "name": "eg-8.log",
@@ -134,7 +134,7 @@
     },
     {
       "name": "eg-9.jnnw",
-      "size_bytes": 8210
+      "size_bytes": 16418
     },
     {
       "name": "eg-9.log",
@@ -145,5 +145,5 @@
       "size_bytes": 13303922
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3607038       1       05:00  0.0  0.0 bash\n3607040 3607038       05:00  0.0  0.0 bash\n3607465 3607040       04:51 99.9  0.5 jass\n3607466 3607040       04:51 99.9  0.5 jass\n3607467 3607040       04:51 99.8  0.5 jass\n3607468 3607040       04:51  100  0.5 jass\n3607469 3607040       04:51 99.9  0.5 jass\n3607470 3607040       04:51 99.9  0.5 jass\n3607471 3607040       04:51 99.9  0.5 jass\n3607472 3607040       04:51 99.9  0.5 jass\n3607473 3607040       04:51 99.9  0.5 jass\n3607474 3607040       04:51 99.8  0.5 jass\n3607475 3607040       04:51 99.9  0.5 jass\n3607476 3607040       04:51 99.9  0.5 jass\n3607477 3607040       04:51 99.7  0.5 jass\n3607478 3607040       04:51 99.9  0.5 jass\n3607479 3607040       04:51 99.9  0.5 jass\n3607480 3607040       04:51 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3607038       1       10:07  0.0  0.0 bash\n3607040 3607038       10:07  0.0  0.0 bash\n3607465 3607040       09:58 99.9  0.5 jass\n3607466 3607040       09:58 99.9  0.5 jass\n3607467 3607040       09:58 99.9  0.5 jass\n3607468 3607040       09:58 99.9  0.5 jass\n3607469 3607040       09:58 99.9  0.5 jass\n3607470 3607040       09:58 99.9  0.5 jass\n3607471 3607040       09:58 99.9  0.5 jass\n3607472 3607040       09:58 99.9  0.5 jass\n3607473 3607040       09:58 99.9  0.5 jass\n3607474 3607040       09:58 99.9  0.5 jass\n3607475 3607040       09:58 99.9  0.5 jass\n3607476 3607040       09:58 99.9  0.5 jass\n3607477 3607040       09:58 99.7  0.5 jass\n3607478 3607040       09:58 99.9  0.5 jass\n3607479 3607040       09:58 99.9  0.5 jass\n3607480 3607040       09:58 99.9  0.5 jass\n"
 }
