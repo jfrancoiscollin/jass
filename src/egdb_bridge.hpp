@@ -35,9 +35,30 @@
 #include "endgame.hpp"
 #include "position.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace jass::egdb {
+
+// Bit-layout adaptation (the #1 correctness item, RESOLVED against the
+// egdb_intl header). jass packs the 50 playable squares CONTIGUOUSLY: FMJD
+// square s → bit (s-1), bits 0..49. egdb_intl packs them with a 1-bit GAP after
+// each group of 10 squares (skipped bits 10, 21, 32, 43): square s → bit
+// (s-1) + (s-1)/10, spanning bits 0..53. `spread50_to_egdb` converts one of
+// jass's contiguous 50-bit piece bitboards into egdb's gapped layout by
+// shifting each 10-square group left by its group index. Pure + always
+// compiled (no egdb dependency) so it is unit-tested offline against the
+// egdb_intl example positions — the strongest guard on the mapping before any
+// real probe. Verified: square 2 → 0x2, square 26 → 0x08000000 (cf the
+// egdb_intl example table).
+inline std::uint64_t spread50_to_egdb(std::uint64_t jass_bb) noexcept {
+    constexpr std::uint64_t G = 0x3FFULL;  // 10-bit group mask
+    return  (jass_bb & G)
+         | ((jass_bb & (G << 10)) << 1)
+         | ((jass_bb & (G << 20)) << 2)
+         | ((jass_bb & (G << 30)) << 3)
+         | ((jass_bb & (G << 40)) << 4);
+}
 
 // Open the database rooted at `db_dir` with `cache_mb` of RAM cache. Safe to
 // call more than once (subsequent calls are ignored once a handle is open).

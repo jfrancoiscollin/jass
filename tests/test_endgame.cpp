@@ -136,10 +136,43 @@ void test_egdb_stub_is_inert() {
     JASS_CHECK(egdb::available() == false);
 }
 
+// -----------------------------------------------------------------------------
+// External egdb_intl bridge — bitboard layout conversion (the #1 risk).
+// -----------------------------------------------------------------------------
+// jass packs the 50 squares contiguously (FMJD square s → bit s-1); egdb_intl
+// packs them with a 1-bit gap after each group of 10 (skipped bits 10/21/32/43,
+// square s → bit (s-1)+(s-1)/10). spread50_to_egdb() does that remap. Validated
+// OFFLINE against values decoded from the egdb_intl `example/main.cpp` table —
+// no database needed, so the mapping is locked before any real probe.
+void test_egdb_bitboard_spread() {
+    auto sq = [](int s) noexcept {                       // jass bit for FMJD square s
+        return std::uint64_t{1} << (s - 1);
+    };
+    // Per-group boundaries: first/last square of each 10-block and the gaps.
+    JASS_CHECK(egdb::spread50_to_egdb(sq(1))  == (std::uint64_t{1} << 0));   // grp0
+    JASS_CHECK(egdb::spread50_to_egdb(sq(10)) == (std::uint64_t{1} << 9));
+    JASS_CHECK(egdb::spread50_to_egdb(sq(11)) == (std::uint64_t{1} << 11));  // bit10 gap
+    JASS_CHECK(egdb::spread50_to_egdb(sq(20)) == (std::uint64_t{1} << 20));
+    JASS_CHECK(egdb::spread50_to_egdb(sq(21)) == (std::uint64_t{1} << 22));  // bit21 gap
+    JASS_CHECK(egdb::spread50_to_egdb(sq(31)) == (std::uint64_t{1} << 33));  // bit32 gap
+    JASS_CHECK(egdb::spread50_to_egdb(sq(41)) == (std::uint64_t{1} << 44));  // bit43 gap
+    JASS_CHECK(egdb::spread50_to_egdb(sq(50)) == (std::uint64_t{1} << 53));
+    // Full example row: {black=0x08000000, white=0x02, king=0x08000002} =
+    // BK on square 26, WK on square 2 (a K-vs-K draw in the egdb table).
+    JASS_CHECK(egdb::spread50_to_egdb(sq(2))  == 0x0000000000000002ULL);
+    JASS_CHECK(egdb::spread50_to_egdb(sq(26)) == 0x0000000008000000ULL);
+    JASS_CHECK(egdb::spread50_to_egdb(sq(2) | sq(26)) == 0x0000000008000002ULL);
+    // The 4 gap bits are never produced.
+    const std::uint64_t all50 = (std::uint64_t{1} << 50) - 1;
+    const std::uint64_t gaps  = (1ULL << 10) | (1ULL << 21) | (1ULL << 32) | (1ULL << 43);
+    JASS_CHECK((egdb::spread50_to_egdb(all50) & gaps) == 0);
+}
+
 }  // namespace
 
 void run_endgame_tests() {
     test_egdb_stub_is_inert();
+    test_egdb_bitboard_spread();
     test_probe_kvk_draw_at_various_squares();
     test_probe_unknown_when_men_present();
     test_probe_unknown_when_outside_tablebase();

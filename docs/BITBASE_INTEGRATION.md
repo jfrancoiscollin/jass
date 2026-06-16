@@ -39,23 +39,29 @@ inchangé.
 
 **Deux saveurs de compilation** :
 - `JASS_EGDB` **OFF (défaut)** : `egdb_bridge.cpp` = stubs no-op. **Zéro
-  dépendance externe**, comportement finale identique à avant (6408 tests OK,
+  dépendance externe**, comportement finale identique à avant (6428 tests OK,
   perft inchangé).
-- `JASS_EGDB` **ON** : lie `egdb_intl`, ouvre la base, convertit et sonde.
+- `JASS_EGDB` **ON** : compile `egdb_intl` depuis les sources, ouvre la base,
+  convertit et sonde. **Compile + linke + tourne validé** (this commit) contre
+  un checkout d'egdb_intl ; binaire OK, 6428 tests OK (bridge inerte sans data).
 
-## Build (saveur réelle)
+## Build (saveur réelle) — VALIDÉE
 
-Sur un host qui a la lib + les fichiers de base :
+Compile `egdb_intl` depuis un checkout (aucune lib pré-buildée requise ; le job
+clone le repo comme les jobs Scan) :
 
 ```
+git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl
 cmake -S . -B build-egdb -DCMAKE_BUILD_TYPE=Release \
-      -DJASS_EGDB=ON \
-      -DJASS_EGDB_INCLUDE_DIR=/opt/egdb_intl/include \   # contient egdb/egdb_intl.h
-      -DJASS_EGDB_LIB=/opt/egdb_intl/build/libegdb_intl.a
+      -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl
 cmake --build build-egdb -j --target jass
 ```
 
-`CMakeLists.txt` câble include + link sur `jass_lib` quand `JASS_EGDB=ON`.
+`CMakeLists.txt` compile `egdb/ engine/ builddb/ Huffman/ Re-pair/*.cpp` en une
+static lib `egdb_intl` (avec `USE_MULTI_THREADING` + `Threads::Threads`), include
+= racine du checkout, et linke sur `jass_lib`. (Une lib pré-buildée reste
+acceptée via `-DJASS_EGDB_LIB` + `-DJASS_EGDB_INCLUDE_DIR`.) Les **fichiers de
+données** se téléchargent à part (edgilbert.org).
 
 ## Config runtime
 
@@ -67,28 +73,39 @@ Aucun plumbing Engine/HUB/main nécessaire : `ensure_initialised()` lit l'env au
 1er search. (Un `egdb::init()` explicite reste exposé si on veut ouvrir au
 démarrage HUB plus tard.)
 
-## Adaptation — points de VÉRIFICATION (à confirmer contre les headers egdb_intl)
+## Adaptation — points de vérification : RÉSOLUS contre `egdb/egdb_intl.h`
 
-Le skeleton `#ifdef JASS_EGDB` code l'adaptation mais chaque hypothèse marquée
-`VERIFY` doit être confirmée AVANT de faire confiance à une sonde. **Un bug ici
-rend des WLD faussement confiants qui corrompent silencieusement la recherche.**
+Les 6 hypothèses `VERIFY` ont été confirmées contre le header public + le
+`example/main.cpp` d'egdb_intl. L'implémentation `#ifdef JASS_EGDB` est désormais
+**correcte, pas un skeleton** :
 
-1. **Layout de bits `EGDB_POSITION` (#1 RISQUE)** : jass utilise bit `i` =
-   case FMJD `i+1` (`bitboard.hpp`). Confirmer qu'egdb_intl utilise le **même**
-   mapping (numérotation FMJD standard, bit = case−1). Sinon → permuter les bits
-   dans `to_egdb_position()`.
-2. **Convention couleur** : `EGDB_BLACK`/`EGDB_WHITE` (valeurs + sens de jeu).
-   jass Noir en haut (FMJD 1..20), Blanc en bas (31..50) ; vérifier que les
-   home-rows egdb correspondent.
-3. **Signature `egdb_open`** + chaîne `options` (type de base / sélection du
-   plafond de pièces) + nom du membre `close`.
-4. **Codes retour `lookup`** : `EGDB_WIN/LOSS/DRAW` exacts vs partiels
-   (`*_OR_*`, `NOT_IN_CACHE`) → seuls les exacts propagés, le reste = Unknown.
-   Vérifier que WIN/LOSS sont bien **du point de vue du trait** (`color`).
-5. **Argument `cl`** du lookup (load-from-disk vs cache-only) + thread-safety
-   du driver pour le lazy-SMP (plusieurs threads sondent le même handle).
-6. **Plafond de pièces** : comment l'interroger (`get_pieces` ?) ; codé en dur
-   à 8 dans le skeleton.
+1. **Layout de bits `EGDB_POSITION` — DIFFÉRENT (le risque était réel).**
+   egdb_intl insère un **bit de gap après chaque groupe de 10 cases** (bits
+   sautés 10/21/32/43) : case `s` → bit `(s−1)+(s−1)/10`, sur bits 0..53. jass
+   est CONTIGU (case `s` → bit `s−1`, bits 0..49). → `spread50_to_egdb()`
+   (header) décale chaque groupe de 10 par son index. **Validé OFFLINE** par
+   `test_egdb_bitboard_spread` (12 assertions ; case 2→`0x2`, case 26→`0x08000000`,
+   etc., décodés de la table d'exemple egdb) — le verrou du mapping est posé
+   SANS base de données.
+2. **Couleur** : `EGDB_BLACK=0`, `EGDB_WHITE=1`. jass Noir (cases basses / haut
+   du damier, hommes vers le bas) = egdb black. Confirmé via les lignes
+   WIN/LOSS de l'exemple (même position, BLACK→WIN ⇔ WHITE→LOSS).
+3. **`egdb_open(options, cache_mb, dir, msg_fn)`** — options = `"maxpieces=N"`.
+   `egdb_close(handle)` (fonction LIBRE, pas un membre). `egdb_identify(dir,
+   &type, &max)` interroge la base avant ouverture.
+4. **`egdb_lookup` (fonction libre)** rend `EGDB_WIN=1/LOSS=2/DRAW=3` **du point
+   de vue de `color` (le trait)** ; partiels `*_OR_*`=4/5, `UNKNOWN`=0,
+   `NOT_IN_CACHE`=−1, `SUBDB_UNAVAILABLE`=−2 → tous `Unknown`. `from_egdb_value`
+   ré-exprime WIN/LOSS en absolu White/Black via le trait.
+5. **`cl`** : `0` = lookup inconditionnel (charge du disque si pas en cache).
+   `egdb_lookup` est **thread-safe** (README + macro `USE_MULTI_THREADING` au
+   build) → pas de lock côté jass pour les sondes lazy-SMP.
+6. **Plafond de pièces** : `egdb_get_pieces(handle, &max, &max_1side)` +
+   `egdb_identify` → `max_pieces()` réel (plus de hard-code).
+
+Tout `egdb_intl` est dans `namespace egdb_interface` au scope GLOBAL → le
+`#include <egdb/egdb_intl.h>` est hors de `namespace jass::egdb` (sinon
+nesting → link fail ; corrigé).
 
 ## Caveat règle FMJD
 
@@ -97,32 +114,39 @@ règle de nulle des 16/25 coups dames-contre-dames n'est PAS modélisée. Quelqu
 positions « gagnantes » seraient nulles en partie réelle. Limitation connue,
 acceptable (Scan/Kingsrow l'utilisent ainsi en pratique).
 
-## Plan de validation (saveur réelle, sur boxe)
+## Plan de validation (sur boxe, avec les fichiers de base)
 
-1. **Cross-check tables internes** : sur toutes les positions K-vs-K / 2v1 / 3v1
-   que `bitbase.cpp` résout déjà, la sonde egdb DOIT donner le **même** WLD.
-   Tout désaccord = bug de mapping (point #1/#2). C'est le garde-fou le plus
-   fort avant d'élargir aux positions avec hommes.
-2. **Sondes de référence** : un petit jeu de positions de finale connues
-   (compositions, finales théoriques men+king) avec WLD attendu.
-3. **Perft inchangé** + 6408 tests (la sonde ne change pas la génération).
-4. **Elo / autopsie** : A/B avec vs sans base sur des finales — la perte côté
+1. **Cross-check tables internes — OUTILLÉ** : `jass --egdb-selfcheck <db_dir>
+   [samples] [cache_mb]` (mode CLI, `main.cpp`). Tire un échantillon de
+   positions rois-only K-vs-K / 2v1 / 3v1 et compare `egdb::probe` à la
+   référence interne : **KvK doit être Draw** (sinon bug mapping), et partout où
+   notre bitbase affirme un gain DÉFINI egdb doit rendre le **même** absolu (les
+   bugs layout/couleur/résultat se voient ici). egdb décisif là où on dit
+   Draw/Unknown = egdb plus fort (reporté, pas un échec). **Garde-fou : 0
+   violation requis avant de faire confiance à la base.** (Le mapping de bits
+   est DÉJÀ validé offline par `test_egdb_bitboard_spread`.)
+2. **Perft inchangé** + 6428 tests (la sonde ne change pas la génération).
+3. **Elo / autopsie** : A/B avec vs sans base sur des finales — la perte côté
    rois (~3.6) doit chuter ; vérifier 0 régression milieu de jeu.
-5. **Self-play seedé finale** (cf Directions A/B) **relabelisé par la base** :
+4. **Self-play seedé finale** (cf Directions A/B) **relabelisé par la base** :
    labels de finale parfaits → re-densification → mesurer si le verrou cède.
 
-## Scope du suivi (boxe / Codex — chantier isolé)
+## Scope du suivi (sur boxe — il reste UNIQUEMENT les données + le run)
 
-- Vendoriser/builder `egdb_intl` sur la boxe ; récupérer un sous-ensemble de
-  base (≤6 pièces d'abord, ~quelques Go) sur le host.
-- Confirmer les 6 points VERIFY contre les vrais headers ; ajuster
-  `egdb_bridge.cpp`.
-- Lancer la validation 1→5 ci-dessus, perft + tests à chaque étape.
-- Garde-fou : **rien ne fusionne tant que le cross-check (1) n'est pas vert.**
+Le code est complet et build-validé. Reste, sur un host :
+- **Télécharger un sous-ensemble de base** (≤6 pièces d'abord) depuis
+  edgilbert.org/InternationalDraughts (dépend de la policy réseau de la boxe).
+- `git clone egdb_intl` + build `-DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=...`.
+- `jass --egdb-selfcheck <db_dir>` → **doit être CLEAN** (étape 1).
+- Puis étapes 3-4 (Elo/autopsie, relabel self-play).
+- **Garde-fou : rien ne se branche en défaut tant que le self-check n'est pas
+  vert.**
 
 ## État
 
-- **Seam + stubs + hook + CMake + doc** : FAIT (ce commit), build défaut OK
-  (6408 tests, perft inchangé, zéro dépendance).
-- **Saveur réelle** : skeleton écrit, `VERIFY` en attente d'un host avec la lib
-  + les bases. Candidat Codex.
+- **Seam + hook + CMake from-source + CLI self-check + doc** : FAIT.
+- **Saveur réelle = CORRECTE et BUILD-VALIDÉE** (compile+linke+tourne contre un
+  checkout egdb_intl ; 6428 tests OK ; mapping de bits validé offline). Les 6
+  points VERIFY sont RÉSOLUS contre le header.
+- **Reste** : les fichiers de données + le run `--egdb-selfcheck` sur une boxe
+  (pas de Codex requis — c'est du run, plus du code).

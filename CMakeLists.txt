@@ -121,15 +121,36 @@ endif()
 # External endgame database (Kingsrow egdb_intl). OFF → src/egdb_bridge.cpp
 # compiles to no-op stubs and the engine has ZERO external dependency. ON →
 # adapt Ed Gilbert's egdb_intl driver (https://github.com/eygilbert/egdb_intl)
-# for full men+kings WLD lookups. Built only on a host that has the library and
-# the database files; point CMake at them with -DJASS_EGDB_INCLUDE_DIR and
-# -DJASS_EGDB_LIB. See docs/BITBASE_INTEGRATION.md.
+# for full men+kings WLD lookups. Point CMake at a checkout of egdb_intl with
+# -DJASS_EGDB_SRC_DIR=/path/to/egdb_intl and it is compiled from source into a
+# static `egdb_intl` lib (no prebuilt lib needed; the build job clones the repo
+# the same way the Scan jobs do). A prebuilt lib is still accepted via
+# -DJASS_EGDB_LIB + -DJASS_EGDB_INCLUDE_DIR. The DB *data* files are downloaded
+# separately on the host (edgilbert.org). See docs/BITBASE_INTEGRATION.md.
 option(JASS_EGDB "Link Kingsrow egdb_intl for full endgame WLD lookups" OFF)
 if(JASS_EGDB)
     add_compile_definitions(JASS_EGDB=1)
     message(STATUS "Jass: EXTERNAL EGDB ENABLED (egdb_intl)")
-    set(JASS_EGDB_INCLUDE_DIR "" CACHE PATH "Path to egdb_intl headers (dir containing egdb/egdb_intl.h)")
-    set(JASS_EGDB_LIB "" CACHE FILEPATH "Path to the built egdb_intl library to link")
+    set(JASS_EGDB_SRC_DIR     "" CACHE PATH     "Path to an egdb_intl source checkout (built from source)")
+    set(JASS_EGDB_INCLUDE_DIR "" CACHE PATH     "Path to egdb_intl headers (dir containing egdb/egdb_intl.h)")
+    set(JASS_EGDB_LIB         "" CACHE FILEPATH "Path to a prebuilt egdb_intl library to link")
+    if(JASS_EGDB_SRC_DIR)
+        # Compile the driver's three source dirs into one static lib. Includes
+        # are root-relative ("egdb/...", "engine/...") so the checkout root is
+        # the include dir. USE_MULTI_THREADING makes egdb_lookup thread-safe for
+        # the lazy-SMP search. Built without jass_warnings (3rd-party code).
+        file(GLOB JASS_EGDB_SOURCES
+            "${JASS_EGDB_SRC_DIR}/egdb/*.cpp"
+            "${JASS_EGDB_SRC_DIR}/engine/*.cpp"
+            "${JASS_EGDB_SRC_DIR}/builddb/*.cpp"
+            "${JASS_EGDB_SRC_DIR}/Huffman/*.cpp"
+            "${JASS_EGDB_SRC_DIR}/Re-pair/*.cpp")
+        add_library(egdb_intl STATIC ${JASS_EGDB_SOURCES})
+        target_include_directories(egdb_intl PUBLIC "${JASS_EGDB_SRC_DIR}")
+        target_compile_definitions(egdb_intl PUBLIC USE_MULTI_THREADING)
+        find_package(Threads REQUIRED)
+        target_link_libraries(egdb_intl PUBLIC Threads::Threads)
+    endif()
 endif()
 
 # -----------------------------------------------------------------------------
@@ -195,13 +216,19 @@ target_link_libraries(jass_lib PRIVATE jass_warnings jass_simd)
 # When the external endgame DB is enabled, wire its headers + library into the
 # engine library that owns src/egdb_bridge.cpp.
 if(JASS_EGDB)
-    if(JASS_EGDB_INCLUDE_DIR)
-        target_include_directories(jass_lib PRIVATE "${JASS_EGDB_INCLUDE_DIR}")
-    endif()
-    if(JASS_EGDB_LIB)
+    if(JASS_EGDB_SRC_DIR)
+        # From-source path: jass_lib gets the egdb headers + the lib we built.
+        target_include_directories(jass_lib PRIVATE "${JASS_EGDB_SRC_DIR}")
+        target_link_libraries(jass_lib PRIVATE egdb_intl)
+    elseif(JASS_EGDB_LIB)
+        # Prebuilt-lib path.
+        if(JASS_EGDB_INCLUDE_DIR)
+            target_include_directories(jass_lib PRIVATE "${JASS_EGDB_INCLUDE_DIR}")
+        endif()
         target_link_libraries(jass_lib PRIVATE "${JASS_EGDB_LIB}")
     else()
-        message(WARNING "JASS_EGDB=ON but JASS_EGDB_LIB is empty — link will fail")
+        message(WARNING "JASS_EGDB=ON but neither JASS_EGDB_SRC_DIR nor "
+                        "JASS_EGDB_LIB is set — egdb_bridge will fail to link")
     endif()
 endif()
 
