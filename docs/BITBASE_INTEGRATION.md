@@ -142,11 +142,46 @@ Le code est complet et build-validé. Reste, sur un host :
 - **Garde-fou : rien ne se branche en défaut tant que le self-check n'est pas
   vert.**
 
-## État
+## Procédure validée sur boxe (jobs 0277→0286)
 
-- **Seam + hook + CMake from-source + CLI self-check + doc** : FAIT.
-- **Saveur réelle = CORRECTE et BUILD-VALIDÉE** (compile+linke+tourne contre un
-  checkout egdb_intl ; 6428 tests OK ; mapping de bits validé offline). Les 6
-  points VERIFY sont RÉSOLUS contre le header.
-- **Reste** : les fichiers de données + le run `--egdb-selfcheck` sur une boxe
-  (pas de Codex requis — c'est du run, plus du code).
+Bout-à-bout, reproductible (CCX33, Ubuntu 24.04, 27 GB libres) :
+
+1. **Réseau** : la boxe ATTEINT edgilbert.org + mega.nz (pas de policy à toucher ;
+   le 403 ne concernait que le container Claude).
+2. **Hébergement** : les bases sont sur **MEGA**, en liens DOSSIER. La page liste
+   un INSTALLEUR Inno Setup `Kingsrow_Intl_7pc_WLD_Setup.exe` + `Setup-1/2.bin`
+   (≈3.5 GB), PAS les fichiers bruts.
+3. **megatools** : `apt-get download megatools` puis `dpkg-deb -x` (les libs
+   glib/curl/ssl sont déjà là sur noble). `megatools dl --path <dir> "<folderlink>"`.
+4. **innoextract** : binaire STATIQUE GitHub
+   (`dscharrer/innoextract` release 1.9, `bin/amd64/innoextract` — zéro dépendance).
+   `innoextract --extract --output-dir <ex> Setup.exe` → `app/` contient
+   `db2.cpr1/.idx1 … db7-NNNN.cpr1/.idx1` (≈4.8 GB, WLD 2→7 pièces).
+5. **Build** : `-DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl` (TMPDIR doit
+   pointer hors /tmp, ex `/root/jass/.compile-tmp`).
+6. **Validation AUTORITAIRE** : compiler+lancer le `example/main.cpp` natif
+   d'egdb_intl (DB_PATH→`…/app`) → **`Testing 164 positions. Test complete, 0
+   errors.`** (job 0286). C'EST la référence, PAS nos tables internes.
+
+## Mise en garde sur `--egdb-selfcheck` (notre CLI)
+
+Le `--egdb-selfcheck` jass compare egdb à **nos tables internes** — qui ne sont
+PAS une vérité (heuristique courte : KvK clamé toujours-nul, 2v1/3v1
+sur-revendiqués). Sur la vraie base il a sorti "BUG" à tort (KvK avec capture
+immédiate = gain ; la plupart des 2v1/3v1 sont NULS et nos tables clamaient
+gain). **La référence est le self-test natif egdb (0286), pas ce CLI.** egdb a
+au contraire RÉVÉLÉ que nos tables rois sur-revendiquent → la base les remplace
+avantageusement (probe_endgame consulte egdb d'abord).
+
+## État — BITBASE SCELLÉE ✅
+
+- **Code** : seam + hook + CMake from-source + CLI + tests — FAIT. 6 VERIFY
+  résolus. Conversion bit-à-bit validée offline (homme+roi asymétrique).
+- **Données + run** : base WLD 2→7 téléchargée + extraite sur CCX33
+  (`/root/egdb_extracted/app`), build JASS_EGDB OK, **self-test natif egdb =
+  164/164, 0 erreurs**. La bitbase est OPÉRATIONNELLE.
+- **Reste (exploitation)** : (a) build prod `-DJASS_EGDB=ON` +
+  `JASS_EGDB_PATH=…/app` ; (b) **relabeliser les finales de self-play en WLD
+  EXACT** (le vrai levier couverture, ≫ labels depth-16 de 0274) → re-densifier
+  → mesurer si le verrou finale cède ; (c) chaque boxe doit avoir la base en
+  local (téléchargement indépendant).

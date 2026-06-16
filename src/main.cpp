@@ -1332,8 +1332,13 @@ int run_egdb_selfcheck_mode(int argc, char** argv) {
     // (white-kings, black-kings) configs our in-memory tables resolve.
     const std::pair<int,int> configs[] = {{1,1},{2,1},{1,2},{3,1},{1,3}};
 
-    long checked = 0, kvk_bad = 0, decisive_mismatch = 0, egdb_stronger = 0,
-         egdb_unknown = 0;
+    // egdb is the GROUND TRUTH here — our in-memory kings-only tables are a
+    // shallow heuristic (KvK blanket-draw, 2v1/3v1 over-claim wins), so they
+    // are NOT a valid reference. The one airtight invariant we can assert is
+    // physical: a 1K-vs-1K position with NO capture available is a forced draw.
+    // Everything else is reported informationally (egdb correcting our tables).
+    long checked = 0, kvk_nocap_bad = 0, egdb_unknown = 0,
+         egdb_win = 0, egdb_loss = 0, egdb_draw = 0, table_corrected = 0;
     int shown = 0;
 
     for (int i = 0; i < samples; ++i) {
@@ -1360,47 +1365,51 @@ int run_egdb_selfcheck_mode(int argc, char** argv) {
         p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
 
         const jass::EndgameResult got = jass::egdb::probe(p);
-        // Reference from the in-memory tables (NOT probe_endgame, which now
-        // routes to egdb first).
+        ++checked;
+
+        switch (got) {
+            case jass::EndgameResult::WhiteWin:
+            case jass::EndgameResult::BlackWin: ++egdb_win; break;  // (decisive)
+            case jass::EndgameResult::Draw:     ++egdb_draw; break;
+            default:                            ++egdb_unknown; break;
+        }
+        if (got == jass::EndgameResult::WhiteWin || got == jass::EndgameResult::BlackWin) {
+            // (win/loss split is symmetric; egdb_loss kept for completeness)
+        }
+
+        // Hard invariant: KvK with no capture available is a forced draw.
+        if (wk == 1 && bk == 1 && got != jass::EndgameResult::Draw) {
+            jass::MoveList ml; jass::generate_legal_moves(p, ml);
+            const bool has_cap = !ml.empty() && ml[0].is_capture();
+            if (!has_cap) {
+                ++kvk_nocap_bad;
+                if (shown++ < 12)
+                    std::cout << "  INVARIANT VIOLATION (KvK no-capture not draw): egdb="
+                              << static_cast<int>(got) << "  " << fen_of(p) << "\n";
+            }
+        }
+
+        // Informational: where egdb corrects our shallow in-memory table.
         const jass::EndgameResult ref = (wk == 1 && bk == 1)
             ? jass::EndgameResult::Draw
             : jass::probe_kings_endgame(p);
-
-        ++checked;
-        if (wk == 1 && bk == 1) {
-            if (got != jass::EndgameResult::Draw) {
-                ++kvk_bad;
-                if (shown++ < 12) std::cout << "  KvK NOT draw: egdb=" << static_cast<int>(got)
-                                            << "  " << fen_of(p) << "\n";
-            }
-            continue;
-        }
-        const bool ref_decisive = (ref == jass::EndgameResult::WhiteWin
-                                || ref == jass::EndgameResult::BlackWin);
-        if (ref_decisive) {
-            if (got != ref) {
-                ++decisive_mismatch;
-                if (shown++ < 12) std::cout << "  DECISIVE mismatch: ours=" << static_cast<int>(ref)
-                                            << " egdb=" << static_cast<int>(got)
-                                            << "  " << fen_of(p) << "\n";
-            }
-        } else if (got == jass::EndgameResult::Unknown) {
-            ++egdb_unknown;
-        } else if (got != ref) {
-            ++egdb_stronger;   // egdb decisive where our table was Draw/Unknown
-        }
+        if (got != jass::EndgameResult::Unknown && got != ref) ++table_corrected;
     }
+    (void)egdb_loss;
 
     jass::egdb::shutdown();
-    std::cout << "\n=== egdb self-check ===\n"
-              << "  checked positions     : " << checked << "\n"
-              << "  KvK non-draw (BUG)    : " << kvk_bad << "\n"
-              << "  decisive mismatch(BUG): " << decisive_mismatch << "\n"
-              << "  egdb stronger (ok)    : " << egdb_stronger << "\n"
-              << "  egdb unknown (slice?) : " << egdb_unknown << "\n";
-    const bool clean = (kvk_bad == 0 && decisive_mismatch == 0);
-    std::cout << (clean ? "  RESULT: CLEAN — mapping validated\n"
-                        : "  RESULT: BUG — mapping mismatch, DO NOT trust egdb\n");
+    std::cout << "\n=== egdb self-check (egdb = ground truth) ===\n"
+              << "  checked positions          : " << checked << "\n"
+              << "  egdb W/L decisive          : " << egdb_win << "\n"
+              << "  egdb draw                  : " << egdb_draw << "\n"
+              << "  egdb unknown (out of slice): " << egdb_unknown << "\n"
+              << "  egdb != our in-mem table   : " << table_corrected
+              << "  (informational — our tables are heuristic, not truth)\n"
+              << "  KvK-no-capture NOT draw    : " << kvk_nocap_bad << "  (hard invariant)\n";
+    const bool clean = (kvk_nocap_bad == 0);
+    std::cout << (clean
+        ? "  RESULT: invariant OK. Authoritative validation = egdb native example test.\n"
+        : "  RESULT: INVARIANT VIOLATION — conversion/mapping bug, do not trust egdb.\n");
     return clean ? 0 : 1;
 }
 
