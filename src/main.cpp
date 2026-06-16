@@ -1471,7 +1471,7 @@ int run_egdb_relabel_mode(int argc, char** argv) {
     f.close();
     const std::size_t nrec = buf.size() / 38;
 
-    long in_range = 0, decisive = 0, draw = 0, changed = 0;
+    long in_range = 0, decisive = 0, draw = 0, changed = 0, stalls = 0;
     for (std::size_t i = 0; i < nrec; ++i) {
         char* rec = buf.data() + i * 38;
         const jass::Position p = position_from_record(rec);
@@ -1481,6 +1481,10 @@ int run_egdb_relabel_mode(int argc, char** argv) {
         (got == jass::EndgameResult::Draw) ? ++draw : ++decisive;
         const std::int8_t nb = static_cast<std::int8_t>(
             wdl_from_result(got, static_cast<std::uint8_t>(rec[32])));
+        // STALL = egdb says this is a WIN/LOSS but the game recorded a DRAW
+        // here = the engine failed to convert (shuffled to the draw rule). The
+        // headline diagnostic for the distance-aware-TB / MTC conversion fix.
+        if (nb != 0 && rec[37] == 0) ++stalls;
         if (rec[37] != static_cast<char>(nb)) ++changed;
         rec[37] = static_cast<char>(nb);
     }
@@ -1496,7 +1500,8 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 
     std::cout << "egdb-relabel: " << nrec << " records, " << in_range
               << " egdb-resolved (" << decisive << " decisive, " << draw
-              << " draw), " << changed << " labels changed → " << out_path << "\n";
+              << " draw), " << changed << " labels changed, " << stalls
+              << " stalls (won/lost recorded draw) → " << out_path << "\n";
     return 0;
 }
 
