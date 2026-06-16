@@ -1,0 +1,3 @@
+Get:1 https://mirror.hetzner.com/ubuntu/packages noble/universe amd64 megatools amd64 1.11.1-1build3 [112 kB]
+Fetched 112 kB in 0s (420 kB/s)
+W: Download is performed unsandboxed as root as file '/root/mt/megatools_1.11.1-1build3_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
