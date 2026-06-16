@@ -1,0 +1,30 @@
+baseline = NMP off
+EVAL (men-only) = /root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+=== [lmr_less] A=[lmr_base=0] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+=== [lmp_less] A=[lmp_d1=6,lmp_d2=12,lmp_d3=20] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+=== [tm_deep] A=[tm_next_iter_pct=300] vs B=[baseline NMP-off] : mt200ms pairs=25 ===
+
+==========================================================
+   ccx33-0268 — SEARCH TIER-1 (post NMP-off) : A=candidat vs B=baseline
+   éval=gen8.pjtw  mt=200ms  ~450 parties/comparaison
+----------------------------------------------------------
+  [lmr_less]  A=240 B=186 D=24
+      games=450  W=240 D=24 L=186
+      score=0.5600  95%CI=[0.5138, 0.6052] (Wilson)
+      elo=+41.9  95%CI=[+9.6, +74.2]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=0.772  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [lmp_less]  A=205 B=225 D=20
+      games=450  W=205 D=20 L=225
+      score=0.4778  95%CI=[0.4320, 0.5239] (Wilson)
+      elo=-15.5  95%CI=[-47.5, +16.6]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.350  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+  [tm_deep]  A=200 B=230 D=20
+      games=450  W=200 D=20 L=230
+      score=0.4667  95%CI=[0.4210, 0.5128] (Wilson)
+      elo=-23.2  95%CI=[-55.3, +8.9]
+      SPRT[0.0,5.0] a=0.05 b=0.05: LLR=-0.501  bounds=[-2.944, 2.944]  → CONTINUE (not yet significant)
+----------------------------------------------------------
+  Un candidat nettement >0 → l'adopter (search_params.hpp) + raffiner (sweep).
+  Tous ~0/<0 → le tuning actuel est déjà bon (recherche conservative + NMP off suffit) ;
+     reste alors l'éval-vitesse (modeste) ou les bitbases comme prochains leviers.
+==========================================================
