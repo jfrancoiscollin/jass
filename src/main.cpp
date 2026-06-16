@@ -322,6 +322,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      search by phase (empty = eval_depth)
     std::string  play_depth_spec;           // "endgame=12,deep-eg=14" → deeper PLAY
                                             //      search by phase → accurate endgame WDL
+    const char*  seed_path        = nullptr; // --seed-file : JNNW of seed positions
+    int          seed_frac        = 0;       // --seed-frac : % of games started from a
+                                            //      random seed (endgame COVERAGE / famine)
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -349,6 +352,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             label_depth_spec = argv[++i];
         } else if (a == "--play-depth-by-phase" && i + 1 < argc) {
             play_depth_spec = argv[++i];
+        } else if (a == "--seed-file" && i + 1 < argc) {
+            seed_path = argv[++i];
+        } else if (a == "--seed-frac" && i + 1 < argc) {
+            seed_frac = parse_int_or(argv[++i], 0);
         } else {
             positional.push_back(argv[i]);
         }
@@ -436,6 +443,32 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               * std::uint64_t{0x9E3779B97F4A7C15}
         : std::uint64_t{0x5eed5eed5eed5eed};
     std::mt19937_64 rng(seed_value);
+
+    // Endgame seeding (--seed-file / --seed-frac) : load seed positions. With
+    // probability seed_frac%, a game STARTS from a random seed (e.g. an endgame
+    // sampled from the master) instead of the FMJD start → directly boosts the
+    // COVERAGE of under-represented phases (the endgame famine, Direction A).
+    struct SeedPos { std::uint64_t bbs[4]; std::uint8_t stm; };
+    std::vector<SeedPos> seeds;
+    if (seed_path) {
+        std::ifstream sf(seed_path, std::ios::binary);
+        if (!sf) { std::cerr << "error: cannot open --seed-file " << seed_path << "\n"; return 1; }
+        char hdr[8];
+        if (!sf.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+            std::cerr << "error: --seed-file " << seed_path << " is not JNNW\n"; return 1;
+        }
+        std::uint32_t cnt = 0; std::memcpy(&cnt, hdr + 4, 4);
+        seeds.reserve(cnt);
+        char rec[38];
+        while (sf.read(rec, 38)) {
+            SeedPos sp; std::memcpy(sp.bbs, rec, 32);
+            sp.stm = static_cast<std::uint8_t>(rec[32]);
+            seeds.push_back(sp);
+        }
+        std::cout << "seed-file: " << seeds.size() << " positions, seed_frac=" << seed_frac << "%\n";
+        if (seeds.empty()) seed_frac = 0;
+    }
+
     // Load the user-supplied NNUE if any; keep the unique_ptr alive
     // across the whole function so the Engine can borrow the pointer.
     std::unique_ptr<INetwork> custom_nnue;
@@ -478,6 +511,19 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         ++game_count;
         e.new_game();
         game_samples.clear();
+
+        // Endgame seeding : start this game from a random seed position instead
+        // of the FMJD start (then the random opening plies add diversity around it).
+        if (!seeds.empty() && static_cast<int>(rng() % 100) < seed_frac) {
+            const SeedPos& sp = seeds[rng() % seeds.size()];
+            Position p{};
+            p.set_side_to_move(sp.stm ? Color::Black : Color::White);
+            for (Bitboard b = static_cast<Bitboard>(sp.bbs[0]); b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
+            for (Bitboard b = static_cast<Bitboard>(sp.bbs[1]); b; ) p.add_piece(pop_lsb(b), Piece::WhiteKing);
+            for (Bitboard b = static_cast<Bitboard>(sp.bbs[2]); b; ) p.add_piece(pop_lsb(b), Piece::BlackMan);
+            for (Bitboard b = static_cast<Bitboard>(sp.bbs[3]); b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
+            e.set_position(p);
+        }
 
         for (int i = 0; i < random_open_plies; ++i) {
             MoveList ml;
