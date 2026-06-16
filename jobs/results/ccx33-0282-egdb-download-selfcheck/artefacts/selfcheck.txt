@@ -1,0 +1,1 @@
+error: egdb::init failed for '/root/egdb_db' (built without -DJASS_EGDB, or no DB there)
