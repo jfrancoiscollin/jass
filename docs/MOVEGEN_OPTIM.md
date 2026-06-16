@@ -79,12 +79,26 @@ lookups de table répétés dans la DFS (vs masques bitboard) + l'alloc MoveList
   PUR, donc l'alloc/nœud pesait bien plus que prévu. **En recherche réelle le
   gain sera plus modeste** (l'éval domine le nœud, Amdahl) mais réel et
   zéro-risque (le `reserve` ne change aucun coup).
+- **#4 quiet-men promotion-split** : **FAIT** (2026-06-16). Les destinations
+  hommes-calmes sont déjà des bitboards (`d0`/`d1`) ; on les AND une fois avec le
+  masque `WHITE/BLACK_PROMO_BB` (`bitboard.hpp`) et on émet les sous-ensembles
+  promo / non-promo avec un flag constant, au lieu d'`is_promotion_square()` (un
+  divide-ligne + compare) PAR coup. **perft(8) : ~50.0 M → ~52.3 M nodes/s
+  (+4.6 %)** A/B propre (clusters disjoints), comptages identiques, 6408 tests OK.
+  Quiet = le plus gros poste movegen (0271), généré à presque chaque nœud.
+- **Cumul movegen (reserve #6 + promo #4)** : perft(8) **30 M → ~52 M nodes/s
+  (~+74 %)**. NB perft = movegen PUR ; en recherche réelle (éval-dominée) le gain
+  net sera bien plus petit, mais réel et zéro-risque sur la classe d'éval.
 - **#3 skip-check (men)** : **DÉJÀ EN PLACE** (`generate_captures` :
   `threat_men = men_of(us) & enemy_reach`, early-`return` si `threat_men==0 &&
   kings_us==0`). Le résidu (vérifier la case d'arrivée libre par homme, +
   skip-check ROIS) est marginal/MEDIUM-risque → non fait (rois peu nombreux en
   finale → DFS rois déjà bon marché par nœud).
-- **Optims restantes** (#1 captures-hommes bitboard, #2/#5 rois, #4 quiet, #7
-  majorité) : non commencées. Upside borné (Amdahl) + l'éval plafonne → différer
-  tant que l'éval respire. **Candidat Codex** : chantier isolé, spec ci-dessus,
-  vérif par perft + Elo.
+- **Optims restantes** (#1 captures-hommes bitboard, #2 rois, #5 quiet-rois, #7
+  majorité) : non commencées, **MEDIUM-risque** et gain NON prouvé (le plan est
+  une hypothèse, pas une mesure ; pour la DFS hommes, `neighbour()` est DÉJÀ un
+  simple lookup-table → des shifts par bit-unique ne sont pas évidemment plus
+  rapides). Chacune ≤ ~3 % NPS réel, et le NPS plafonne en Elo tant que l'éval
+  plafonne. → **Ne les attaquer qu'avec validation Elo** (boxe libre) ; bon
+  **candidat Codex** (chantier isolé, perft + Elo). On NE poursuit PAS en
+  spéculatif : les 2 gains sûrs (reserve, promo-split) sont pris.
