@@ -118,6 +118,20 @@ if(JASS_ENDGAME_FEATURES)
     message(STATUS "Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)")
 endif()
 
+# External endgame database (Kingsrow egdb_intl). OFF → src/egdb_bridge.cpp
+# compiles to no-op stubs and the engine has ZERO external dependency. ON →
+# adapt Ed Gilbert's egdb_intl driver (https://github.com/eygilbert/egdb_intl)
+# for full men+kings WLD lookups. Built only on a host that has the library and
+# the database files; point CMake at them with -DJASS_EGDB_INCLUDE_DIR and
+# -DJASS_EGDB_LIB. See docs/BITBASE_INTEGRATION.md.
+option(JASS_EGDB "Link Kingsrow egdb_intl for full endgame WLD lookups" OFF)
+if(JASS_EGDB)
+    add_compile_definitions(JASS_EGDB=1)
+    message(STATUS "Jass: EXTERNAL EGDB ENABLED (egdb_intl)")
+    set(JASS_EGDB_INCLUDE_DIR "" CACHE PATH "Path to egdb_intl headers (dir containing egdb/egdb_intl.h)")
+    set(JASS_EGDB_LIB "" CACHE FILEPATH "Path to the built egdb_intl library to link")
+endif()
+
 # -----------------------------------------------------------------------------
 # Embedded NNUE weights
 # -----------------------------------------------------------------------------
@@ -169,6 +183,7 @@ add_library(jass_lib STATIC
     src/engine.cpp
     src/endgame.cpp
     src/bitbase.cpp
+    src/egdb_bridge.cpp
     src/book.cpp
     src/timemgr.cpp
     src/tournament.cpp
@@ -176,6 +191,19 @@ add_library(jass_lib STATIC
 )
 target_include_directories(jass_lib PUBLIC src)
 target_link_libraries(jass_lib PRIVATE jass_warnings jass_simd)
+
+# When the external endgame DB is enabled, wire its headers + library into the
+# engine library that owns src/egdb_bridge.cpp.
+if(JASS_EGDB)
+    if(JASS_EGDB_INCLUDE_DIR)
+        target_include_directories(jass_lib PRIVATE "${JASS_EGDB_INCLUDE_DIR}")
+    endif()
+    if(JASS_EGDB_LIB)
+        target_link_libraries(jass_lib PRIVATE "${JASS_EGDB_LIB}")
+    else()
+        message(WARNING "JASS_EGDB=ON but JASS_EGDB_LIB is empty — link will fail")
+    endif()
+endif()
 
 # -----------------------------------------------------------------------------
 # Front-end executable

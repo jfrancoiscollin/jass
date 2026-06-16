@@ -6,6 +6,7 @@
 
 #include "test_framework.hpp"
 
+#include "egdb_bridge.hpp"
 #include "endgame.hpp"
 #include "position.hpp"
 #include "search.hpp"
@@ -116,9 +117,29 @@ void test_probe_3v1_unknown_when_men_present() {
     JASS_CHECK(probe_endgame(p) == EndgameResult::Unknown);
 }
 
+// -----------------------------------------------------------------------------
+// External egdb_intl bridge — stub contract (default build, JASS_EGDB OFF).
+// -----------------------------------------------------------------------------
+// In a build without the external database the bridge must be inert: no handle,
+// zero piece cap, every probe Unknown, and probe_endgame must fall through to
+// the in-memory kings-only logic exactly as before. (The real-flavour
+// behaviour is validated on a host that has the library + DBs; see
+// docs/BITBASE_INTEGRATION.md.)
+void test_egdb_stub_is_inert() {
+    JASS_CHECK(egdb::init("/nonexistent/path", 16) == false);
+    JASS_CHECK(egdb::available() == false);
+    JASS_CHECK(egdb::max_pieces() == 0);
+    JASS_CHECK(egdb::probe(parse("W:WK28:BK1")) == EndgameResult::Unknown);
+    // Bridge inert ⇒ kings-only path still governs the result.
+    JASS_CHECK(probe_endgame(parse("W:WK28:BK1")) == EndgameResult::Draw);
+    egdb::shutdown();  // idempotent, must not throw.
+    JASS_CHECK(egdb::available() == false);
+}
+
 }  // namespace
 
 void run_endgame_tests() {
+    test_egdb_stub_is_inert();
     test_probe_kvk_draw_at_various_squares();
     test_probe_unknown_when_men_present();
     test_probe_unknown_when_outside_tablebase();
