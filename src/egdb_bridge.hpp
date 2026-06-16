@@ -94,4 +94,15 @@ EndgameResult probe(const Position& pos) noexcept;
 // (std::call_once); never throws.
 bool ensure_initialised() noexcept;
 
+// --- MTC (moves-to-conversion) — opened separately, for the offline conversion
+// gradient training target. The MTC db only has valid data for WIN/LOSS
+// positions, so callers MUST first confirm a win/loss via probe() (WLD) before
+// trusting probe_mtc(). No-op stubs without -DJASS_EGDB.
+bool init_mtc(const std::string& db_dir, int cache_mb) noexcept;
+bool available_mtc() noexcept;
+int  mtc_max_pieces() noexcept;
+// Raw plies-to-conversion (1 == "< MTC_THRESHOLD(10) plies", else the value);
+// -1 when unavailable or above the MTC piece cap.
+int  probe_mtc(const Position& pos) noexcept;
+
 }  // namespace jass::egdb
