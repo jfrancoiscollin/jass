@@ -1,0 +1,4 @@
+gen-data-wdl: n=3125 out=/root/jass/jobs/results/cpx62-0292-egdb-tools-verify/artefacts.src/sp-7.jnnw eval_depth=6 play_depth=6 max_plies=200 seed=2518 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1522 / 3125 positions
+  played 100 games, 3125 / 3125 positions
+wrote 3125 WDL records to /root/jass/jobs/results/cpx62-0292-egdb-tools-verify/artefacts.src/sp-7.jnnw
