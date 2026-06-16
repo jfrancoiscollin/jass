@@ -55,7 +55,12 @@ STATE_DIR   = REPO_DIR / "jobs" / "state"
 # `in-flight.json` is ignored by this code; migrate it to the per-host name when
 # upgrading a host that has a job running.
 IN_FLIGHT   = STATE_DIR / f"in-flight-{socket.gethostname()}.json"
-KILL_FLAG   = STATE_DIR / "kill-in-flight"
+# Global kill flag (kills whichever host processes it first, then self-deletes)
+# and a HOST-SCOPED variant: `kill-in-flight-<hostname>` lets us surgically kill
+# one host's job while other hosts keep running theirs (multi-host safe). The
+# host-scoped flag takes precedence.
+KILL_FLAG       = STATE_DIR / "kill-in-flight"
+KILL_FLAG_HOST  = STATE_DIR / f"kill-in-flight-{socket.gethostname()}"
 
 MAX_LOG_BYTES       = 1_000_000   # tail kept in jobs/results/<id>/output.log
 
@@ -195,13 +200,16 @@ def kill_in_flight_if_requested() -> None:
     the flag (so we don't kill the next job too), and the tick after
     that picks the next queued script normally.
     """
-    if not KILL_FLAG.exists():
+    # Host-scoped flag wins; fall back to the global one.
+    flag = KILL_FLAG_HOST if KILL_FLAG_HOST.exists() else (
+        KILL_FLAG if KILL_FLAG.exists() else None)
+    if flag is None:
         return
     info = read_in_flight()
     if not info:
         # No job to kill — still clean up the flag so it doesn't sit
         # around and slay an unrelated future job.
-        KILL_FLAG.unlink()
+        flag.unlink()
         commit_and_push("runner: drop stale kill-in-flight (no job running)",
                         [STATE_DIR])
         return
@@ -230,9 +238,9 @@ def kill_in_flight_if_requested() -> None:
                 os.killpg(pgid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
-    KILL_FLAG.unlink()
+    flag.unlink()
     commit_and_push(
-        f"runner: killed {job_id} via kill-in-flight flag",
+        f"runner: killed {job_id} via {flag.name}",
         [STATE_DIR])
 
 
