@@ -1,0 +1,73 @@
+=== build king-aware + ENDGAME FEATURES (NUM_EXTRAS=110) ===
+=== dump features (doit être 110/pos) + distillation SCORE king-aware ===
+wrote 1420193 × 110 Scan-style extras to /root/jass/jobs/results/ccx33-0275-endgame-features/artefacts.src/featM
+trainer a bien adapté à 110 features
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 36 parties)
+================================================================
+  GLOBAL           n= 2244  accord=0.558  perte_moy=   0.72
+
+-- par PHASE --
+  opening          n=  642  accord=0.547  perte_moy=   0.03
+  midgame          n=  428  accord=0.563  perte_moy=   0.09
+  late-mid         n=  421  accord=0.594  perte_moy=   0.15
+  endgame          n=  494  accord=0.563  perte_moy=   1.65
+  deep-eg          n=  259  accord=0.514  perte_moy=   2.59
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 1706  accord=0.559  perte_moy=   0.10
+  kings            n=  538  accord=0.556  perte_moy=   2.67
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (641)             0.48 (1)   ×17.5
+  midgame              0.08 (419)             0.39 (9)    ×4.9
+  late-mid             0.15 (368)            0.19 (53)    ×1.3
+  endgame              0.23 (260)           3.22 (234)   ×13.8
+  deep-eg               0.20 (18)           2.76 (241)   ×13.9
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 1731  accord=0.437  perte_moy=   0.91
+  capture-avail    n=  513  accord=0.969  perte_moy=   0.06
+
+-- par RÉSULTAT --
+  drawn            n=   81  accord=0.481  perte_moy=   0.06
+  lost             n= 2163  accord=0.561  perte_moy=   0.74
+
+-- 10 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g22 [lost ] deep-eg  K perte= 94.7      11-16 → 11-17      B:W43,47,K37:B11,27,33
+  g28 [lost ] deep-eg  K perte= 94.5       7-11 → 7-12       B:W39,41,K32:B7,16
+  g4  [lost ] deep-eg  K perte= 91.9       8-12 → 8-13       B:W28,46,K5,K31:B8,29
+  g14 [lost ] endgame  K perte= 91.4      31-36 → 25-30      B:W29,39,44,47,K12:B25,31,35
+  g25 [lost ] deep-eg  K perte= 90.0       6-33 → 6-11       W:WK6:B21,41,K36,K48
+  g1  [lost ] endgame  K perte= 89.9      15-10 → 35-30      W:W15,25,35,38:B2,4,16,K28,K36
+  g33 [lost ] deep-eg  K perte= 89.0       11-2 → 11-7       W:WK11:BK15,K30,K49,K50
+  g27 [lost ] endgame  K perte= 88.7      30-24 → 40-34      W:W30,35,40:B7,14,15,20,33,K16
+  g20 [lost ] endgame  K perte= 88.5      16-21 → 12-17      B:W14,31,35,36,K10:B6,12,16
+  g10 [lost ] deep-eg  K perte= 84.4      17-26 → 17-21      B:W10,20,37,K1,K2,K4:BK17
+
+==========================================================
+   ccx33-0275 — DIRECTION B : FEATURES DE FINALE (centralité + proximité roi)
+----------------------------------------------------------
+  distill+features : Elo_vs_hc(60p)=892-21-167 elo=+282.5
+  vs Scan mt0.5 :   Jass score rate: 0.014 (0.5 / 36)   ELO estimate:    -741 (95% CI ≈ ±133) 
+  AUTOPSIE (endgame-rois ; comparer 0272 SANS features = 5.13) :
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (641)             0.48 (1)   ×17.5
+  midgame              0.08 (419)             0.39 (9)    ×4.9
+  late-mid             0.15 (368)            0.19 (53)    ×1.3
+  endgame              0.23 (260)           3.22 (234)   ×13.8
+  deep-eg               0.20 (18)           2.76 (241)   ×13.9
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+----------------------------------------------------------
+  endgame-rois < 5.13 → les features de finale AIDENT → les intégrer (gated→défaut) + tester sur self-play.
+  endgame-rois ~5.13 → features n'aident pas ; combiné à 0274 (couverture) ça tranchera la nature du verrou.
+==========================================================
