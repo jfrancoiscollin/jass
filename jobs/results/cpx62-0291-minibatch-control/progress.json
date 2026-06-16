@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0291-minibatch-control",
-  "snapshot_at": "2026-06-16T17:10:47+00:00",
+  "snapshot_at": "2026-06-16T17:15:50+00:00",
   "started_at": "2026-06-16T16:44:20+00:00",
-  "elapsed_seconds": 1587,
+  "elapsed_seconds": 1890,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,6 +14,10 @@
     },
     {
       "name": "elo-lowmem.log",
+      "size_bytes": 281
+    },
+    {
+      "name": "elo-minibatch.log",
       "size_bytes": 0
     },
     {
@@ -45,5 +49,5 @@
       "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3648254       1       26:26  0.0  0.0 bash\n3648264 3648254       26:26  0.0  0.0 bash\n3649945 3648264       05:17  0.0  0.0 bash\n3649946 3649945       05:17 1204  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 938341 3648264       04:57  0.0  0.0 bash\n 938342  938341       04:57 1208  0.6 jass\n3648254       1       31:29  0.0  0.0 bash\n3648264 3648254       31:29  0.0  0.0 bash\n"
 }
