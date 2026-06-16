@@ -223,22 +223,24 @@ void generate_quiet_moves(const Position& pos, MoveList& out) {
     const Bitboard d1 = (white ? shift_ne(men) : shift_se(men)) & empty;
     const Dir inv0 = white ? Dir::DownRight : Dir::UpRight;   // inverse of NW / SW
     const Dir inv1 = white ? Dir::DownLeft  : Dir::UpLeft;    // inverse of NE / SE
-    for (Bitboard d = d0; d; ) {
-        const Square to = pop_lsb(d);
-        Move m;
-        m.from     = neighbour(to, inv0);
-        m.to       = to;
-        m.promotes = is_promotion_square(to, us);
-        out.push(m);
-    }
-    for (Bitboard d = d1; d; ) {
-        const Square to = pop_lsb(d);
-        Move m;
-        m.from     = neighbour(to, inv1);
-        m.to       = to;
-        m.promotes = is_promotion_square(to, us);
-        out.push(m);
-    }
+    // Whole-set promotion split : a destination promotes iff it lands on the
+    // mover's far row, so AND the dest set with the promo-row mask once and the
+    // inner loop carries a constant `promotes` flag (no per-move row divide).
+    const Bitboard promo = white ? WHITE_PROMO_BB : BLACK_PROMO_BB;
+    auto emit_dests = [&](Bitboard dests, Dir inv) noexcept {
+        for (Bitboard p = dests & promo; p; ) {
+            const Square to = pop_lsb(p);
+            Move m; m.from = neighbour(to, inv); m.to = to; m.promotes = true;
+            out.push(m);
+        }
+        for (Bitboard q = dests & ~promo; q; ) {
+            const Square to = pop_lsb(q);
+            Move m; m.from = neighbour(to, inv); m.to = to; m.promotes = false;
+            out.push(m);
+        }
+    };
+    emit_dests(d0, inv0);
+    emit_dests(d1, inv1);
 
     // Kings slide arbitrarily far along any of the four diagonals.
     // Uses the pre-computed king ray table to avoid the per-step
