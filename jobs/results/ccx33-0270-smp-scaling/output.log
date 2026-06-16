@@ -1,0 +1,14 @@
+nproc=8  EVAL=/root/jass/jobs/results/ccx33-0227-fullfold-loop/artefacts.src/gen8.pjtw
+==========================================================
+   ccx33-0270 — SCALING LAZY-SMP (profondeur à budget fixe, éval=gen8.pjtw)
+----------------------------------------------------------
+  --- movetime=1000ms ---
+    threads=1  depth=16.4444  (Δ vs 1thr=+0.00 plies)  knps~1791.06
+    threads=2  depth=17.3333  (Δ vs 1thr=+0.89 plies)  knps~1987.44
+    threads=4  depth=17.8889  (Δ vs 1thr=+1.44 plies)  knps~1709.72
+    threads=8  depth=18  (Δ vs 1thr=+1.56 plies)  knps~1342.37
+----------------------------------------------------------
+  Δprofondeur 2 threads ≳ +0.8-1 pli → scaling correct. ≲ +0.3 → scaling FAIBLE :
+    force gratuite à récupérer (le lazy-SMP partage mal / contention TT). NB knps total
+    est indicatif seulement (lazy-SMP : nodes du searcher principal, pas la somme).
+==========================================================
