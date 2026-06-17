@@ -1731,12 +1731,16 @@ int run_egdb_mtc_relabel_mode(int argc, char** argv) {
     if (!jass::egdb::init(wld_dir, cache))     { std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
     if (!jass::egdb::init_mtc(mtc_dir, cache)) { std::cerr << "error: MTC init failed for '" << mtc_dir << "'\n"; return 1; }
 
-    // Conversion-progress weights (prob units), tunable. PROXY complements MTC's
-    // flat <10-ply zone: ALPHA per enemy piece left, GAMMA per enemy-king
-    // centrality. BETA per ply beyond MTC_THRESHOLD(10) (the exact maneuvering zone).
-    constexpr double ALPHA = 0.04;
-    constexpr double GAMMA = 0.008;
-    constexpr double BETA  = 0.03;
+    // Conversion-progress weights (prob units). PROXY complements MTC's flat
+    // <10-ply zone: ALPHA per enemy piece left, GAMMA per enemy-king centrality.
+    // BETA per ply beyond MTC_THRESHOLD(10) (the exact maneuvering zone).
+    // Overridable via env (MTC_ALPHA/MTC_GAMMA/MTC_BETA) for sweeping without rebuild.
+    double ALPHA = 0.04, GAMMA = 0.008, BETA = 0.03;
+    if (const char* e = std::getenv("MTC_ALPHA")) ALPHA = std::atof(e);
+    if (const char* e = std::getenv("MTC_GAMMA")) GAMMA = std::atof(e);
+    if (const char* e = std::getenv("MTC_BETA"))  BETA  = std::atof(e);
+    std::cout << "mtc-relabel weights: ALPHA=" << ALPHA << " GAMMA=" << GAMMA
+              << " BETA=" << BETA << "\n";
 
     std::ifstream f(in_path, std::ios::binary);
     if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
