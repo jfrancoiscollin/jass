@@ -1,0 +1,108 @@
+PARAMS: egdb-perfect + DEPTH-RAMP(late-mid=12,endgame=16) + coverage + ENDGAME-FEATURES, 500000/gen ×6
+=== coverage exacte ≤7 (densité finale gratuite) → seed du cumulatif ===
+gen-egdb-wld: wrote 400000 / 400000 (224028 decisive, 175972 draw) in 744282 tries → /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/cumulative.jnnw
+=== gen0 : seed self-play (300k, egdb-perfect + ramp) sur coverage → l2=3e-2 ===
+cumulative 700000
+wrote 700000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat0
+  gen0 endgame_mse=1.8272 Elo=182-6-82 elo=+135.1
+=== gen1 : +500000 (egdb-perfect + ramp) avec gen0 → cumulé → logistic ===
+cumulative 1200000
+wrote 1200000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat1
+  gen1 endgame_mse=3.7891 Elo=218-2-50 elo=+253.1
+=== gen2 : +500000 (egdb-perfect + ramp) avec gen1 → cumulé → logistic ===
+cumulative 1700000
+wrote 1700000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat2
+  gen2 endgame_mse=4.3249 Elo=214-5-51 elo=+242.8
+=== gen3 : +500000 (egdb-perfect + ramp) avec gen2 → cumulé → logistic ===
+cumulative 2200000
+wrote 2200000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat3
+  gen3 endgame_mse=4.6667 Elo=216-5-49 elo=+251.1
+=== gen4 : +500000 (egdb-perfect + ramp) avec gen3 → cumulé → logistic ===
+cumulative 2700000
+wrote 2700000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat4
+  gen4 endgame_mse=4.5644 Elo=193-7-70 elo=+170.8
+=== gen5 : +500000 (egdb-perfect + ramp) avec gen4 → cumulé → logistic ===
+cumulative 3200000
+wrote 3200000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat5
+  gen5 endgame_mse=4.8417 Elo=206-4-60 elo=+210.3
+=== gen6 : +500000 (egdb-perfect + ramp) avec gen5 → cumulé → logistic ===
+cumulative 3700000
+wrote 3700000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/feat6
+  gen6 endgame_mse=5.3885 Elo=202-3-65 elo=+194.3
+=== gen6 vs hc précis (60p) ===
+  850-15-215 elo=+234.4
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 54 parties)
+================================================================
+  GLOBAL           n= 3481  accord=0.566  perte_moy=   0.69
+
+-- par PHASE --
+  opening          n= 1037  accord=0.551  perte_moy=   0.03
+  midgame          n=  760  accord=0.525  perte_moy=   0.08
+  late-mid         n=  594  accord=0.618  perte_moy=   0.14
+  endgame          n=  772  accord=0.574  perte_moy=   1.64
+  deep-eg          n=  318  accord=0.601  perte_moy=   3.00
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 2692  accord=0.561  perte_moy=   0.16
+  kings            n=  789  accord=0.584  perte_moy=   2.51
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening             0.03 (1037)                    —       —
+  midgame              0.08 (748)            0.24 (12)    ×3.1
+  late-mid             0.14 (558)            0.18 (36)    ×1.3
+  endgame              0.74 (343)           2.36 (429)    ×3.2
+  deep-eg                0.01 (6)           3.06 (312)  ×306.2
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 2688  accord=0.451  perte_moy=   0.63
+  capture-avail    n=  793  accord=0.958  perte_moy=   0.87
+
+-- par RÉSULTAT --
+  lost             n= 3481  accord=0.566  perte_moy=   0.69
+
+-- 8 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g48 [lost ] deep-eg  K perte= 94.9      40-45 → 40-44      B:W18,42,50,K26:B16,35,40
+  g10 [lost ] deep-eg  K perte= 92.3      10-14 → 10-15      B:W35,39,43,45,K7,K24:BK10
+  g2  [lost ] endgame    perte= 92.1      17-21 → 22-27      B:W10,24,29,37,38:B16,17,22,25
+  g18 [lost ] endgame  K perte= 91.0      21-27 → 40-44      B:W41,50,K4,K23:B12,16,21,40
+  g17 [lost ] deep-eg  K perte= 90.8       8-17 → 8-12       W:WK8:B24,39,K19,K49
+  g46 [lost ] deep-eg  K perte= 88.7      28-50 → 28-6       B:W47,K1,K2,K13,K25:B36,K28
+  g24 [lost ] deep-eg  K perte= 87.9      33-20 → 33-17      B:W6,13,40,K4,K19:BK33
+  g44 [lost ] endgame  K perte= 87.1      17-22 → 21-27      B:W14,32,35,37,42,K4:B11,16,17,21,26
+
+==========================================================
+   cpx62-0297 — SATURER LE LINÉAIRE (egdb-perfect + depth-ramp + coverage + features)
+----------------------------------------------------------
+  gen0  Elo_vs_hc=182-6-82 elo=+135.1   endgame_mse=1.8272
+  gen1  Elo_vs_hc=218-2-50 elo=+253.1   endgame_mse=3.7891
+  gen2  Elo_vs_hc=214-5-51 elo=+242.8   endgame_mse=4.3249
+  gen3  Elo_vs_hc=216-5-49 elo=+251.1   endgame_mse=4.6667
+  gen4  Elo_vs_hc=193-7-70 elo=+170.8   endgame_mse=4.5644
+  gen5  Elo_vs_hc=206-4-60 elo=+210.3   endgame_mse=4.8417
+  gen6  Elo_vs_hc=202-3-65 elo=+194.3   endgame_mse=5.3885
+  gen6 (60p) vs hc : 850-15-215 elo=+234.4   [0287 uniforme-8 = +233.9 ; 0276 = +230]
+  gen6 vs Scan mt0.5 :   Jass score rate: 0.000 (0.0 / 54)   ELO estimate:    -800 (95% CI ≈ ±109)    [0287 = −741]
+----------------------------------------------------------
+  AUTOPSIE FINALE (perte phase×rois vs Scan ; cibles : 0287=3.22, 0293-B-1gen=2.04) :
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening             0.03 (1037)                    —       —
+  midgame              0.08 (748)            0.24 (12)    ×3.1
+  late-mid             0.14 (558)            0.18 (36)    ×1.3
+  endgame              0.74 (343)           2.36 (429)    ×3.2
+  deep-eg                0.01 (6)           3.06 (312)  ×306.2
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+----------------------------------------------------------
+  endgame-rois ≪ 2.04 + Elo ≫ +234 + vs Scan ≫ −741 → la classe linéaire MONTE encore
+     (saturation pas atteinte) → continuer à scaler données/cycles.
+  plateau (≈ 0293/0287) → la classe linéaire SATURE en finale → ALORS capacité (FM/MLP/MTC).
+==========================================================

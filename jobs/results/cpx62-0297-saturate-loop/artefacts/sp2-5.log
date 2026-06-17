@@ -1,0 +1,25 @@
+gen-data-wdl: n=31250 out=/root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/sp2-5.jnnw eval_depth=6 play_depth=8 max_plies=200 seed=24257 nnue=/root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/gen1.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=late-mid:12,endgame:16 play_depth_by_phase=late-mid:12,endgame:16
+  played 50 games, 1355 / 31250 positions
+  played 100 games, 2665 / 31250 positions
+  played 150 games, 4033 / 31250 positions
+  played 200 games, 5443 / 31250 positions
+  played 250 games, 6746 / 31250 positions
+  played 300 games, 8090 / 31250 positions
+  played 350 games, 9431 / 31250 positions
+  played 400 games, 10842 / 31250 positions
+  played 450 games, 12228 / 31250 positions
+  played 500 games, 13610 / 31250 positions
+  played 550 games, 14900 / 31250 positions
+  played 600 games, 16224 / 31250 positions
+  played 650 games, 17493 / 31250 positions
+  played 700 games, 18820 / 31250 positions
+  played 750 games, 20230 / 31250 positions
+  played 800 games, 21601 / 31250 positions
+  played 850 games, 22873 / 31250 positions
+  played 900 games, 24244 / 31250 positions
+  played 950 games, 25563 / 31250 positions
+  played 1000 games, 26928 / 31250 positions
+  played 1050 games, 28186 / 31250 positions
+  played 1100 games, 29507 / 31250 positions
+  played 1150 games, 30859 / 31250 positions
+wrote 31250 WDL records to /root/jass/jobs/results/cpx62-0297-saturate-loop/artefacts.src/sp2-5.jnnw
