@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0301-cleanup-mtc-download",
+  "snapshot_at": "2026-06-17T12:23:54+00:00",
+  "started_at": "2026-06-17T12:18:54+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2801487       1       05:00  0.0  0.0 bash\n2801489 2801487       05:00  0.0  0.0 bash\n2801977 2801489       00:50  100  0.0 innoextract\n"
+}
