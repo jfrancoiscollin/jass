@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0314-endgame-data-aug",
+  "script": "jobs/queue/cpx62-0314-endgame-data-aug.sh",
+  "pid": 526351,
+  "started_at": "2026-06-17T19:11:40+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
