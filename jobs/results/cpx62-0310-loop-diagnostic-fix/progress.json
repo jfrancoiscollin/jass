@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0310-loop-diagnostic-fix",
-  "snapshot_at": "2026-06-17T15:24:45+00:00",
+  "snapshot_at": "2026-06-17T15:30:03+00:00",
   "started_at": "2026-06-17T14:58:05+00:00",
-  "elapsed_seconds": 1600,
+  "elapsed_seconds": 1918,
   "artefacts": [
     {
       "name": "build.log",
@@ -11,6 +11,22 @@
     {
       "name": "cmake.log",
       "size_bytes": 784
+    },
+    {
+      "name": "endonly-elo.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "endonly-train.log",
+      "size_bytes": 1340
+    },
+    {
+      "name": "endonly.feat",
+      "size_bytes": 183881292
+    },
+    {
+      "name": "endonly.pjtw",
+      "size_bytes": 136049796
     },
     {
       "name": "full-elo.log",
@@ -30,7 +46,7 @@
     },
     {
       "name": "noend-elo.log",
-      "size_bytes": 0
+      "size_bytes": 284
     },
     {
       "name": "noend-train.log",
@@ -45,5 +61,5 @@
       "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 631719       1       26:39  0.0  0.0 bash\n 631721  631719       26:39  0.0  0.0 bash\n2693081  631721       05:22  0.0  0.0 bash\n2693082 2693081       05:22 1183  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 503172  631721       02:27  0.0  0.0 bash\n 503173  503172       02:27 1210  0.6 jass\n 631719       1       31:57  0.0  0.0 bash\n 631721  631719       31:57  0.0  0.0 bash\n"
 }
