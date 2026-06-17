@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0297-saturate-loop",
-  "snapshot_at": "2026-06-17T04:44:02+00:00",
+  "snapshot_at": "2026-06-17T04:49:53+00:00",
   "started_at": "2026-06-16T21:30:53+00:00",
-  "elapsed_seconds": 25989,
+  "elapsed_seconds": 26340,
   "artefacts": [
     {
       "name": "build.log",
@@ -290,11 +290,11 @@
     },
     {
       "name": "sp3-13.jnnw",
-      "size_bytes": 1124498
+      "size_bytes": 1187508
     },
     {
       "name": "sp3-13.log",
-      "size_bytes": 0
+      "size_bytes": 1471
     },
     {
       "name": "sp3-14.jnnw",
@@ -314,7 +314,7 @@
     },
     {
       "name": "sp3-16.jnnw",
-      "size_bytes": 1083458
+      "size_bytes": 1140914
     },
     {
       "name": "sp3-16.log",
@@ -322,19 +322,19 @@
     },
     {
       "name": "sp3-2.jnnw",
-      "size_bytes": 1132706
+      "size_bytes": 1187508
     },
     {
       "name": "sp3-2.log",
-      "size_bytes": 0
+      "size_bytes": 1469
     },
     {
       "name": "sp3-3.jnnw",
-      "size_bytes": 1173746
+      "size_bytes": 1187508
     },
     {
       "name": "sp3-3.log",
-      "size_bytes": 0
+      "size_bytes": 1468
     },
     {
       "name": "sp3-4.jnnw",
@@ -385,5 +385,5 @@
       "size_bytes": 1469
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    07:13:08  0.0  0.0 bash\n1145535 1145533    07:13:08  0.0  0.0 bash\n2776872 1145535    01:49:36 99.9  1.3 jass\n2776873 1145535    01:49:36 99.9  1.3 jass\n2776883 1145535    01:49:36 99.9  1.3 jass\n2776886 1145535    01:49:36 99.9  1.3 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    07:19:00  0.0  0.0 bash\n1145535 1145533    07:19:00  0.0  0.0 bash\n2776886 1145535    01:55:27 99.9  1.3 jass\n"
 }
