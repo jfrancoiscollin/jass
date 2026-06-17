@@ -131,10 +131,15 @@ self-play) → train `--target prob` → mesurer la **conversion vs Scan** ; cal
   conclure « saturation »**, `0309` doit séparer **bug de loop** (cumul pollué → nettoyer/
   ré-itérer proprement, le 2.04 serait récupérable) de **saturation représentationnelle**
   (le linéaire ne descend pas même sur finales-seules → capacité).
-- **Conversion en match** (jass nulle des gains vs Scan) → **gradient MTC (a)** : `0306`
-  mesure si ça entame le 3.06. *Décision capacité (FM/MLP) prise APRÈS 0306.*
-- **FM/MLP** : le verrou deep-eg (×306, perte 3.06) est **hors de portée du linéaire** → la
-  capacité est **désormais justifiée** (0296 n'était que prématuré). Lever choisi post-0306.
+- **Conversion en match** : `0306` a tranché — le **gradient proxy+MTC NE TRANSFÈRE PAS**
+  (Elo −20, deep-eg 2.91→3.78, vs Scan inchangé) car 99,9 % proxy / 148 vrais signaux MTC.
+  Cul-de-sac comme cible. *Ce n'est PAS un appel à la non-linéarité.*
+- **⛔ PAS de FM/MLP** (cf. PRINCIPE DIRECTEUR, ARBRE_DECISION) : on a la classe de Scan, on doit
+  l'égaler DEDANS. Le verrou deep-eg-rois (perte ~3) = **ce qui MANQUE au linéaire**, pas une
+  preuve de saturation. Pistes, par ordre : **(1) patterns/features de finale-rois manquants**
+  (Scan capture la conversion via ses patterns) ; **(2) équilibre d'entraînement** (≤7p = 11.3 %
+  des données → la finale est écrasée 9:1 par le midgame ; re-pondérer / phase-split — `0310`
+  teste si le linéaire fitte la finale SEULE) ; **(3) recherche** (profondeur/temps en finale).
 
 ## Décisions en attente (pas du code)
 
