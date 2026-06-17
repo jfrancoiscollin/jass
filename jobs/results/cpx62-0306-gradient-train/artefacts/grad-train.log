@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0306-gradient-train/artefacts.src/cum-grad.jnnw
+  3700000 records  (0.21s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0306-gradient-train/artefacts.src/feat
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (3700000, 110)  (mean mob b/w=10.8/10.8)
+target=score  clipped±2000cp / 100  std=9.212
+loss=LOGISTIC on PROB target (score/10000)  graded(non-0/0.5/1)=224028  mean=0.514 std=0.401
+phase : piece-count mean=21.5  wmg mean=0.537
+split : train=3330000 val=370000
+prune : keep 276,508 buckets (>= 1 visits) -> 553,018 pattern cols vs 34,012,224  (61.5× fewer); train fallback=0.000%
+design : 553238 columns (2×276509 pat + 2×110 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.553591  iters=200  (411.83s)
+val   : mse=1.989335  sign_acc=0.2670
+val/phase mse : opening=0.8849(n109136)  midgame=1.4456(n75150)  late-mid=2.2488(n69339)  endgame=3.7859(n74500)  deep-eg=2.2174(n41875)
+quant : scale=1000  pat range=[-352,352] ext_mg range=[-1096,1098]
+wrote /root/jass/jobs/results/cpx62-0306-gradient-train/artefacts.src/grad.pjtw  (v3, 34012444 weights, 136049796 bytes)
