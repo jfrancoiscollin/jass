@@ -1,0 +1,15 @@
+=== host ===
+hostname : User
+nproc    : 16   (build -j7, plafonné par la RAM)
+cpu      : AMD Ryzen 7 PRO 4750U with Radeon Graphics
+mem      : 15.2 GiB
+wsl?     : OUI
+=== build jass (Release, -j7) ===
+BUILD OK
+=== eval sanity ===
+ok
+
+==========================================================
+  home-0002 — runner WSL2 OK sur User (16 threads, build -j7)
+  Prêt pour des jobs home-* (self-play gen / trains autonomes).
+==========================================================
