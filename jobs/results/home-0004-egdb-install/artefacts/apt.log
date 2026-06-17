@@ -1,0 +1,7 @@
+sudo: The "no new privileges" flag is set, which prevents sudo from running as root.
+sudo: If sudo is running in a container, you may need to adjust the container configuration to disable the flag.
+sudo: The "no new privileges" flag is set, which prevents sudo from running as root.
+sudo: If sudo is running in a container, you may need to adjust the container configuration to disable the flag.
+Get:1 http://archive.ubuntu.com/ubuntu resolute/universe amd64 megatools amd64 1.11.5-1build1 [115 kB]
+Fetched 115 kB in 0s (954 kB/s)
+W: Download is performed unsandboxed as root as file '/root/mt/megatools_1.11.5-1build1_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)

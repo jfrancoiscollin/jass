@@ -1,0 +1,35 @@
+=== (0) disque ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sdd       1007G  9.4G  947G   1% /
+  libre: 947 GB
+=== (1) megatools (apt install, sinon apt download + dpkg-deb) ===
+megatools OK (/root/mt/x/usr/bin/megatools)
+=== (2) download WLD 2-7 (skip si déjà extrait) ===
+  dl rc=0
+  after dl Filesystem      Size  Used Avail Use% Mounted on
+  after dl /dev/sdd       1007G   13G  943G   2% /
+installeur: /root/egdb_db/Kingsrow_Intl_7pc_WLD_Setup.exe (3.5G)
+=== (3) innoextract statique amd64 → /root/egdb_extracted/app ===
+innoextract 1.9
+  innoextract rc=0
+ - "app/db7-5020.cpr1"
+ - "app/db7-5020.idx1"
+Done.
+  installeur supprimé (espace récupéré)
+base OK (158 fichiers, 4.8G)
+=== (4) build JASS_EGDB + self-test natif (autoritaire) ===
+BUILD OK
+compile self-test OK
+Autoload took 2 secs
+Available RAM: 15599mb
+Testing 164 positions.
+Test complete, 0 errors.
+  egdb != our in-mem table   : 335  (informational — our tables are heuristic, not truth)
+  KvK-no-capture NOT draw    : 0  (hard invariant)
+  RESULT: invariant OK. Authoritative validation = egdb native example test.
+
+==========================================================
+   home-0004 — bitbase WLD installée sur le PC (4.8G)
+   Self-test natif attendu = 'Test complete, 0 errors.'  → PC prêt pour les jobs egdb.
+   (MTC 2-8 ~29GB = job séparé home-0005 si le disque suit.)
+==========================================================
