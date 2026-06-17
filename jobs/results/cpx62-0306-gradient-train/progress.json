@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0306-gradient-train",
-  "snapshot_at": "2026-06-17T12:50:03+00:00",
+  "snapshot_at": "2026-06-17T12:55:04+00:00",
   "started_at": "2026-06-17T12:39:37+00:00",
-  "elapsed_seconds": 626,
+  "elapsed_seconds": 927,
   "artefacts": [
     {
       "name": "base-train.log",
@@ -30,12 +30,16 @@
     },
     {
       "name": "elo-base.log",
-      "size_bytes": 0
+      "size_bytes": 278
     },
     {
       "name": "feat",
       "size_bytes": 1628000012
+    },
+    {
+      "name": "grad-train.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2802740       1       10:25  0.0  0.0 bash\n2802742 2802740       10:25  0.0  0.0 bash\n2803520 2802742       02:32  0.0  0.0 bash\n2803521 2803520       02:32 1202  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 654773 2802742       00:58  510 46.1 python3\n2802740       1       15:26  0.0  0.0 bash\n2802742 2802740       15:26  0.0  0.0 bash\n"
 }
