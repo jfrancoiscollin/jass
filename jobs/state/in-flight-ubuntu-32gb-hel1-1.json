@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0310-loop-diagnostic-fix",
+  "script": "jobs/queue/cpx62-0310-loop-diagnostic-fix.sh",
+  "pid": 631719,
+  "started_at": "2026-06-17T14:58:05+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
