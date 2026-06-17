@@ -117,19 +117,24 @@ self-play) → train `--target prob` → mesurer la **conversion vs Scan** ; cal
 | **0291/0294** ✅ | minibatch = outil exact + ½ RAM | OUI : train_loss identique à convergence ; outil de scaling >7M. |
 | **0295** ✅ | quantifier le stall / fix distance-aware | **~50 % des finales décisives stallent** ; fix `−ply` corrige ~12 %. → motive terminate-at-TB. |
 | **0296** ✂️ | FM (non-linéaire) | ANNULÉ — prématuré (Scan linéaire ; déjà tranché 0184). |
-| **0297** ⏳ | saturer le linéaire (labels PROPRES) | egdb-perfect + terminate-at-TB + depth-ramp + coverage + features, 6 gen + re-baseline vs Scan. |
-| **0298** ⏳ | recon taille MTC (pour le gradient (a)) | tient sur disque (~19GB libres) ? sinon sous-ensemble ≤6/≤7. |
+| **0297** ⚠️ | saturer le linéaire (labels PROPRES) | **PLAFOND + RÉGRESSION du loop.** gen6 60p vs hc **+234** (= 0287/0276, aucun gain) ; vs Scan **−800** (0/54, pire que 0287 −741) ; endgame-rois deep-eg **3.06** — **le loop 6-gen RÉGRESSE sous le 2.04 du depth-ramp 1-gen 0293**. Le loop dégrade : Elo culmine gen1-3 (+253)→↘+194 ; **endgame_mse ↑ 1.8→5.4** monotone (labels finale exacts *augmentent* l'erreur). → SOIT saturation linéaire, SOIT le loop pollue/dégrade. **0309 tranche.** |
+| **0298** ✅ | recon taille MTC (pour le gradient (a)) | MTC 2-8 (~29 GB extrait) téléchargé sur les 2 boxes (0300/0301). |
+| **0306** ⏳ | gradient conversion greffé sur 0297 | A/B WDL vs `--target prob` (0.12/0.04). Après 0301. **Prochaine vraie mesure.** |
+| **0307** ⏳ | livre d'ouverture à la Scan (drop-out) | A/B self-play jass±livre + vs Scan + audit (0308). |
+| **0309** ⏳ | drift 0297 : bug (pollution) vs saturation | ablation FULL/NO-EG/EG-ONLY + scan de contradictions WDL. Après 0306. |
 
-## Règles de décision (à jour 2026-06-16)
+## Règles de décision (à jour 2026-06-17)
 
-- **Levier confirmé = saturer la classe linéaire** (Scan est dans notre classe).
-  0293/0295 le valident ; **0297** est le run propre. Cible : endgame-rois ≪ 2.04 +
-  re-baseline vs Scan ≫ −741.
-- **0297 monte encore** → continuer à scaler (cycles/coverage, minibatch quand >7M).
-  **0297 plafonne** → on approche la saturation → *alors* gradient/capacité priment.
-- **Conversion en match** (jass nulle des gains vs Scan) → **gradient MTC (a)** : la
-  pièce qui manque pour *gagner* les finales, pas seulement les *valuer*.
-- **FM/MLP** (dépasser Scan) : **seulement après** saturation du linéaire. Pas avant.
+- **0297 a plafonné** : scaler des cycles **ne marche plus** (le loop régresse même). Le
+  point de bascule est passé → **gradient + capacité priment** sur « plus de données ».
+- **MAIS** : le depth-ramp 1-gen (0293) avait atteint 2.04, le loop l'a perdu → **avant de
+  conclure « saturation »**, `0309` doit séparer **bug de loop** (cumul pollué → nettoyer/
+  ré-itérer proprement, le 2.04 serait récupérable) de **saturation représentationnelle**
+  (le linéaire ne descend pas même sur finales-seules → capacité).
+- **Conversion en match** (jass nulle des gains vs Scan) → **gradient MTC (a)** : `0306`
+  mesure si ça entame le 3.06. *Décision capacité (FM/MLP) prise APRÈS 0306.*
+- **FM/MLP** : le verrou deep-eg (×306, perte 3.06) est **hors de portée du linéaire** → la
+  capacité est **désormais justifiée** (0296 n'était que prématuré). Lever choisi post-0306.
 
 ## Décisions en attente (pas du code)
 
