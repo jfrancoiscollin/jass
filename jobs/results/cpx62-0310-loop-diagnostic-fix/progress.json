@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0310-loop-diagnostic-fix",
-  "snapshot_at": "2026-06-17T15:30:03+00:00",
+  "snapshot_at": "2026-06-17T15:35:07+00:00",
   "started_at": "2026-06-17T14:58:05+00:00",
-  "elapsed_seconds": 1918,
+  "elapsed_seconds": 2222,
   "artefacts": [
     {
       "name": "build.log",
@@ -61,5 +61,5 @@
       "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 503172  631721       02:27  0.0  0.0 bash\n 503173  503172       02:27 1210  0.6 jass\n 631719       1       31:57  0.0  0.0 bash\n 631721  631719       31:57  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 503172  631721       07:31  0.0  0.0 bash\n 503173  503172       07:31 1230  0.6 jass\n 631719       1       37:01  0.0  0.0 bash\n 631721  631719       37:01  0.0  0.0 bash\n"
 }
