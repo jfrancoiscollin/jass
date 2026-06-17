@@ -7,8 +7,8 @@
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
 > Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](ARBRE_DECISION.md).
 >
-> Mise à jour : **2026-06-14** (BRIQUE ROIS — le bug structurel vs Scan, corrigé.
-> Géométrie close (levier mort). Le push en cours = loop full-fold **king-aware + scalé** 0241).
+> Mise à jour : **2026-06-17** (audit Scan : même classe, gap = features rois ;
+> `endgame_mse` trompeur → métrique conversion exacte ; MTC-in-search ; flotte +PC perso).
 
 ---
 
@@ -58,6 +58,19 @@
 - **Livre d'ouverture à la Scan** (0307/0308) : valeurs de feuilles SAINES (spearman 0.844, 0 piège)
   mais **trop plat** (max ply 10) et **accord-coup vs Scan faible (42%)** car construit sur l'éval
   jass → s'améliorera avec l'éval. Secondaire. *(0307 tué à 11h : matchs sur-dimensionnés.)*
+
+**Outils codés cette campagne (cf [SCAN_EVAL_DIFF.md](SCAN_EVAL_DIFF.md), [ARCHITECTURE.md](ARCHITECTURE.md)) :**
+- **Audit Scan** : même classe (linéaire, patterns pions-only ternaire, phase mg/eg, logistic WDL).
+  Scan gère les rois HORS patterns par `king_mob` (mobilité-sûre − cases déniées) + WLD-6p en search,
+  **sans MTC/DTW** : sa « progression » est le *gradient d'éval* `king_mob`, pas une distance.
+- **Features rois** (gated) : `JASS_ENDGAME_FEATURES` (**ON par défaut** depuis 0311), `JASS_KING_MOBILITY`
+  (king_mob séparé + roi-piégé). **Rampe de phase** raidissable `JASS_PHASE_LO/HI` + `--phase-lo/--phase-hi`.
+- **`--egdb-mtc-regret`** : métrique de conversion EXACTE (préservation-du-gain + CRITIQUE + fastest-path +
+  MTC-regret), sans Scan, sans mse — le bon juge.
+- **MTC-in-search** : aux feuilles TB, score = `WIN − (ply + MTC exact)` → joue la conversion la **plus
+  rapide** (au-dessus de Scan). Auto-charge via `JASS_EGDB_MTC_PATH`. Validé par `--egdb-conversion-test` (0316).
+- **Flotte élargie** : **PC perso ajouté** (runner WSL2 scopé `home-`, 16 threads/15 Go) + **pré-flight
+  compute** (`jobs/lib/preflight.sh`, abort si > cap — leçon 0307) + build RAM-aware (`mem_safe_jobs`).
 
 ## 0bis. Verdict précédent — 2026-06-16 (BITBASE egdb + outils self-play exact)
 

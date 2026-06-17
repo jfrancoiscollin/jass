@@ -300,13 +300,30 @@ actual value), so `--egdb-mtc-relabel` writes a **hybrid** STM-POV win-probabili
 into the score field (`prob×10000`): a PROXY (enemy material + enemy-king centrality)
 covers MTC's flat <10-ply zone, MTC covers the ≥10-ply maneuvering zone —
 `winp = 1 − α·enemy_pieces − γ·enemy_central − β·max(0,MTC−10)`, clamped [0.55,1].
-Training with `--target prob` runs the logistic loss on `score/10000`, keeping the
-prod WDL regime for most positions while injecting the conversion gradient in the
-endgame. The eval learns the gradient and generalises beyond the bitbase — no MTC at
-play time (Scan-style). See [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+Training with `--target prob` runs the logistic loss on `score/10000`.
+**VERDICT (job 0306): this conversion-gradient-as-TARGET does NOT transfer** —
+only ~148/3.7M records carried real MTC≥11 (99.9 % proxy), the proxy misleads, and
+Elo dropped. The Scan audit ([SCAN_EVAL_DIFF.md](SCAN_EVAL_DIFF.md)) showed the
+conversion gradient belongs in a **FEATURE** (Scan's `king_mob`), not the label —
+so the lever moved to the king-mobility extras (below), and **MTC is now used as a
+METRIC and in SEARCH, not as a training target**:
 
-The full target self-play loop using these is documented in
-[EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+- **`--egdb-mtc-regret <pjtw> <wld> <mtc>`** — exact, Scan-free CONVERSION metric.
+  Samples won quiet ≤7p positions, the eval picks 1-ply-greedy (pure eval, no
+  search), judged by the perfect dbs: win-preservation (overall + on CRITICAL
+  positions where a win-throwing move exists), fastest-path rate, MTC-regret. The
+  right yardstick after 0311/0312 showed `endgame_mse` is decoupled from strength.
+- **`--egdb-conversion-test <pjtw> <wld> <mtc|off>`** — plays out won ≤7p positions
+  with the FULL search, reporting WON%/STALL%/plies, MTC-on vs ply-only (validates
+  the search feature below).
+- **MTC-in-search** (`search.cpp`): at a won/lost TB leaf the terminal score folds
+  in `egdb::probe_mtc(pos)` (exact within-TB distance) on top of search ply →
+  the engine plays the **fastest** conversion, not just *a* conversion (beyond
+  Scan, which has only WLD bitbases). Auto-loads from `JASS_EGDB_MTC_PATH` in
+  `ensure_initialised`; absent db ⇒ ply-only fallback (behaviour unchanged).
+
+See [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md) for the self-play loop and
+[SCAN_EVAL_DIFF.md](SCAN_EVAL_DIFF.md) for the eval diff vs Scan.
 
 ## Evaluation pipeline
 
@@ -383,9 +400,22 @@ evaluate(pos) =  Σ_p  W_pat[ phase, offset_p + index_p(men) ]      (32→54 pat
   square keeps it occupied → index unchanged). Validated `0240`: **+37 Elo vs hc**
   under distillation (men-only +78 → king-aware +115). Default OFF = true no-op
   (6408/6408 unit assertions unchanged).
-- **Extras (106, dense)** : king-PST (one-hot per square per colour), material
-  (men counts), mobility (men step + king slide), left-right balance — the same
-  non-pattern terms Scan uses.
+- **Extras (dense)** : base 106 = king-PST (one-hot per square per colour),
+  material (men counts), mobility (men step + king slide), left-right balance.
+  Gated additions (see `src/scan_eval.hpp` / `CMakeLists.txt`):
+  - **`-DJASS_ENDGAME_FEATURES` (DEFAULT ON since 0311)** → +4 extras (106→110):
+    per-king centralisation + king→enemy proximity. The **best Elo arm in 0311**
+    (+87 vs base on hc) → baked on. A pjtw must match the binary's `NUM_EXTRAS`
+    (loader rejects a mismatch loudly).
+  - **`-DJASS_KING_MOBILITY`** → +4 extras: per-side king-slide mobility SEPARATED
+    from men + trapped-king count = Scan's `king_mob`, the structural conversion
+    gradient (the FEATURE the failed MTC target was groping for). Helped +33 Elo
+    in 0311; default OFF pending a cleaner strength measurement.
+- **Phase ramp** (`phase_wmg`, `-DJASS_PHASE_LO/HI`, `train.py --phase-lo/--phase-hi`):
+  `wmg` ramps 0 (≤LO pieces) → 1 (≥HI). Default 0/40 = legacy `pieces/40`. A
+  sharper ramp (e.g. 8/18) specialises the EG bank — 0312 confirmed it lowers
+  endgame_mse to 3.03 (the linear class is NOT saturated) but trades midgame Elo,
+  so kept at 0/40. C++ `phase_wmg` and the trainer MUST use the same endpoints.
 - **Format** : PJTW v3 — `magic, version, scale, n_pat, n_ext`, then int32
   `[pat_mg | pat_eg | ext_mg | ext_eg]`. `n_pat = NUM_PATTERNS · 531441`.
 - **Speed** : an incremental accumulator (`update_all`) maintains the per-pattern

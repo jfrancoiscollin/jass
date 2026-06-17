@@ -119,9 +119,17 @@ self-play) → train `--target prob` → mesurer la **conversion vs Scan** ; cal
 | **0296** ✂️ | FM (non-linéaire) | ANNULÉ — prématuré (Scan linéaire ; déjà tranché 0184). |
 | **0297** ⚠️ | saturer le linéaire (labels PROPRES) | **PLAFOND + RÉGRESSION du loop.** gen6 60p vs hc **+234** (= 0287/0276, aucun gain) ; vs Scan **−800** (0/54, pire que 0287 −741) ; endgame-rois deep-eg **3.06** — **le loop 6-gen RÉGRESSE sous le 2.04 du depth-ramp 1-gen 0293**. Le loop dégrade : Elo culmine gen1-3 (+253)→↘+194 ; **endgame_mse ↑ 1.8→5.4** monotone (labels finale exacts *augmentent* l'erreur). → SOIT saturation linéaire, SOIT le loop pollue/dégrade. **0309 tranche.** |
 | **0298** ✅ | recon taille MTC (pour le gradient (a)) | MTC 2-8 (~29 GB extrait) téléchargé sur les 2 boxes (0300/0301). |
-| **0306** ⏳ | gradient conversion greffé sur 0297 | A/B WDL vs `--target prob` (0.12/0.04). Après 0301. **Prochaine vraie mesure.** |
-| **0307** ⏳ | livre d'ouverture à la Scan (drop-out) | A/B self-play jass±livre + vs Scan + audit (0308). |
-| **0309** ⏳ | drift 0297 : bug (pollution) vs saturation | ablation FULL/NO-EG/EG-ONLY + scan de contradictions WDL. Après 0306. |
+| **0306** ❌ | gradient conversion comme CIBLE (`--target prob`) | **NE TRANSFÈRE PAS** : 148/3.7M MTC réel (99,9 % proxy), Elo −20, deep-eg 2.91→3.78, vs Scan inchangé. Cul-de-sac comme cible → pivot vers la FEATURE (king_mob) + MTC comme métrique/recherche. |
+| **0307** ✂️ | livre d'ouverture à la Scan (matchs) | Livre construit ; matchs **sur-dimensionnés** (tué à 11h). Audit 0308 OK. |
+| **0308** ✅ | audit du livre (sans matchs) | Valeurs feuilles SAINES (spearman 0.844, 0 piège) mais **trop plat** (max ply 10) + accord-coup vs Scan **42 %** (construit sur l'éval jass). Secondaire. |
+| **0309/0310** ✅ | drift 0297 : bug vs saturation | **PAS saturation — CONFLIT DE PHASE.** 0 contradiction ≤7p ; NO-ENDGAME Elo **+268 ≫ FULL +222** ; ENDGAME-ONLY deep-eg **3.27 ≪ FULL 5.39**. Fix linéaire (phase-split + features finale). |
+| **0311** ⚠️ | features rois manquantes (king-mob, endg, kingpat) | Aident vs hc (kmob +33, **endg +87**) mais endgame_mse↑ et vs Scan 0/54. **endg BAKÉ par défaut.** Bench 60p bruité. |
+| **0312** ⚠️ | phase-split (rampe raidie) | mse↓ à **3.03** (< plancher → pas de saturation) MAIS Elo↓ (+184→+158, sacrifie midgame). Rampe gardée 0/40. |
+| **⚠️ LEÇON** | — | `endgame_mse` et Elo **anti-corrélés** (0311+0312) → mse trompeur ; mesurer la FORCE : `--egdb-mtc-regret` (conversion exacte) + autopsie vs Scan. |
+| **0313/0314** ⏳ | dataset finale-enrichi (LEAD 3) | ccx33 (frais) + cpx62 (augmente 0297) → ~30-45 % finale vs 11 %. Nourrit le run combiné. |
+| **0315** ⏳ | valide la métrique `--egdb-mtc-regret` | sur endg.pjtw, n=5000. Après 0314. |
+| **0316** ⏳ | valide **MTC-in-search** (conversion la + rapide) | playout MTC-on vs ply-only : WON%/STALL%/plies. Après 0315. |
+| **home-0003/0004** ⏳ | PC maison dans la flotte | self-play 500k (✅ committé) ; install egdb WLD (en cours). |
 
 ## Règles de décision (à jour 2026-06-17)
 
