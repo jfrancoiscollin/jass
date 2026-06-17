@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0307-scan-book-v1",
-  "snapshot_at": "2026-06-17T08:05:28+00:00",
+  "snapshot_at": "2026-06-17T08:10:31+00:00",
   "started_at": "2026-06-17T07:29:04+00:00",
-  "elapsed_seconds": 2184,
+  "elapsed_seconds": 2487,
   "artefacts": [
     {
       "name": "build.log",
@@ -21,5 +21,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1       36:23  0.0  0.0 bash\n 381177  381176       36:23  0.0  0.0 bash\n 381625  381177       36:13  0.0  0.0 time\n 381626  381625       36:13  415  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1       41:27  0.0  0.0 bash\n 381177  381176       41:27  0.0  0.0 bash\n 381625  381177       41:17  0.0  0.0 time\n 381626  381625       41:17  414  0.4 jass\n"
 }
