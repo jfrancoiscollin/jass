@@ -1,0 +1,22 @@
+gen-data-wdl: n=31250 out=/root/jass/jobs/results/home-0003-selfplay-gen/artefacts.src/sp-13.jnnw eval_depth=8 play_depth=6 max_plies=200 seed=224397 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1608 / 31250 positions
+  played 100 games, 3050 / 31250 positions
+  played 150 games, 4685 / 31250 positions
+  played 200 games, 6343 / 31250 positions
+  played 250 games, 7849 / 31250 positions
+  played 300 games, 9432 / 31250 positions
+  played 350 games, 10874 / 31250 positions
+  played 400 games, 12438 / 31250 positions
+  played 450 games, 13940 / 31250 positions
+  played 500 games, 15387 / 31250 positions
+  played 550 games, 16948 / 31250 positions
+  played 600 games, 18613 / 31250 positions
+  played 650 games, 20228 / 31250 positions
+  played 700 games, 21740 / 31250 positions
+  played 750 games, 23275 / 31250 positions
+  played 800 games, 24770 / 31250 positions
+  played 850 games, 26379 / 31250 positions
+  played 900 games, 28010 / 31250 positions
+  played 950 games, 29592 / 31250 positions
+  played 1000 games, 31183 / 31250 positions
+wrote 31250 WDL records to /root/jass/jobs/results/home-0003-selfplay-gen/artefacts.src/sp-13.jnnw

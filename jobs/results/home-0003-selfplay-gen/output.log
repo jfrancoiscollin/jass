@@ -1,0 +1,14 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] self-play 500000 WDL (depth 8/6, ×16, CPU portable): ≈ 55 min
+  [preflight] TOTAL estimé ≈ 59 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass (Release, RAM-aware) ===
+=== self-play WDL (500000, depth 8/6, ×16 shards) ===
+shards: 16/16
+FUSION  total=500000  taille=19.0 MB  (<50 MB → committable)
+PHASE   ≤12p=154727 (30.9%)  >12p=345273
+
+==========================================================
+   home-0003 — self-play WDL généré sur le PC (16 threads)
+   home-selfplay.jnnw committé → une box le fusionnera au training.
+==========================================================
