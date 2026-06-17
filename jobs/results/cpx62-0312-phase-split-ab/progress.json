@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0312-phase-split-ab",
-  "snapshot_at": "2026-06-17T18:40:03+00:00",
+  "snapshot_at": "2026-06-17T18:45:13+00:00",
   "started_at": "2026-06-17T18:08:57+00:00",
-  "elapsed_seconds": 1866,
+  "elapsed_seconds": 2176,
   "artefacts": [
     {
       "name": "ctrl-build.log",
@@ -65,5 +65,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2570611       1       31:05  0.0  0.0 bash\n2570613 2570611       31:05  0.0  0.0 bash\n2597937 2570613       01:23  585 47.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2570611       1       36:16  0.0  0.0 bash\n2570613 2570611       36:16  0.0  0.0 bash\n2597937 2570613       06:33  677 42.5 python3\n"
 }
