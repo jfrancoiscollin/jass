@@ -1,0 +1,25 @@
+  [preflight] build ×3 ≈ 12 min
+  [preflight] feature dump (partagé): ≈ 5 min
+  [preflight] train: 3 × 3700000 lignes @ 4min/M ≈ 44.4 min
+  [preflight] elo×3: ≈ 15 min
+  [preflight] TOTAL estimé ≈ 76.4 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+cumulatif=3700000 lignes ; features dumpées (partagées)
+=== CONTROL (0/40 = legacy pièces/40) ===
+  ctrl (ramp 0/40) : endgame_mse=3.5355  Elo_vs_hc=+184.1 (797-10-273)
+=== SHARP1 (10/24) ===
+  sharp1 (ramp 10/24) : endgame_mse=3.7051  Elo_vs_hc=+117.5 (708-16-356)
+=== SHARP2 (8/18) ===
+  sharp2 (ramp 8/18) : endgame_mse=3.0253  Elo_vs_hc=+158.4 (764-13-303)
+
+==========================================================
+   cpx62-0312 — PHASE-SPLIT (fix conflit 0310, linéaire)
+----------------------------------------------------------
+  ctrl    endgame_mse=3.5355   Elo=+184.1 (797-10-273)
+  sharp1  endgame_mse=3.7051   Elo=+117.5 (708-16-356)
+  sharp2  endgame_mse=3.0253   Elo=+158.4 (764-13-303)
+----------------------------------------------------------
+  SHARP endgame_mse < CONTROL (vers le plancher 3.27 de 0310) + Elo ≈/> +222 → le phase-split
+     résorbe le conflit (le bank eg se spécialise) → baker LO/HI gagnant par défaut + autopsie vs
+     Scan (endgame-rois) sur le gagnant. Si Elo chute → la rampe trop dure coupe le midgame → ajuster.
+==========================================================
