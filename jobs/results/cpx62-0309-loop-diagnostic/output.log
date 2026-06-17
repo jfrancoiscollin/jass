@@ -1,0 +1,24 @@
+COHERENCE  n=3700000  uniques=3428969  dup=271031  CONTRADICTIONS-globales(WDL)=153013 (4.14%)
+  CONTRADICTIONS ≤7p (exact-TB → devraient être ~0, sinon BUG) = 0
+  (>7p : quelques contradictions = bruit normal de label par résultat-de-partie)
+PIECES     ≤7p(exact-TB)=417912 (11.3%)  ≤10p=733543 (19.8%)  >7p=3282088
+SPLIT      no-endgame(>7p)=3282088  endgame-only(≤7p)=417912
+=== ablation : FULL ===
+  FULL      endgame_mse=5.3885  Elo_vs_hc=+221.4
+=== ablation : NO-ENDGAME (>7p) ===
+  NO-ENDGAME endgame_mse=  Elo_vs_hc=NA
+=== ablation : ENDGAME-ONLY (≤7p, labels exacts) ===
+  ENDGAME-ONLY endgame_mse= (= plancher représentationnel)  Elo_vs_hc=NA
+
+==========================================================
+   cpx62-0309 — DIAGNOSTIC du drift 0297
+----------------------------------------------------------
+  FULL        : mse=5.3885  Elo=+221.4
+  NO-ENDGAME  : mse=  Elo=NA
+  ENDGAME-ONLY: mse=  Elo=NA
+----------------------------------------------------------
+  CONTRADICTIONS WDL élevées (≫0.1%) → BUG (données polluées) : nettoyer le cumul/relabel.
+  Contradictions ~0 MAIS endgame_mse(ENDGAME-ONLY) déjà HAUT (le linéaire ne descend pas même
+     en n'ayant QUE les finales) → SATURATION représentationnelle confirmée → capacité (FM/MLP).
+  NO-ENDGAME Elo ≫ FULL Elo → les finales TIRENT le fit global vers le bas (conflit linéaire).
+==========================================================
