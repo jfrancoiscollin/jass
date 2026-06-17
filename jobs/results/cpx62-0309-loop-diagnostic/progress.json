@@ -1,0 +1,33 @@
+{
+  "job_id": "cpx62-0309-loop-diagnostic",
+  "snapshot_at": "2026-06-17T14:42:53+00:00",
+  "started_at": "2026-06-17T14:37:53+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 15795
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 784
+    },
+    {
+      "name": "endonly.jnnw",
+      "size_bytes": 15880664
+    },
+    {
+      "name": "full-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "full.feat",
+      "size_bytes": 1628000012
+    },
+    {
+      "name": "noend.jnnw",
+      "size_bytes": 124719352
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2762704       1       04:59  0.0  0.0 bash\n2762706 2762704       04:59  0.0  0.0 bash\n2763137 2762706       04:43  0.0  0.0 bash\n2763140 2763137       04:41  661 48.6 python3\n"
+}
