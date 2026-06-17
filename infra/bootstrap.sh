@@ -32,6 +32,11 @@ REPO_URL_HTTPS="https://github.com/jfrancoiscollin/jass.git"
 REPO_DIR="/root/jass"
 RUNNER_KEY="/root/.ssh/jass_runner"
 INSTALL_TORCH="${INSTALL_TORCH:-0}"
+# Optional: scope this runner to only pick jobs/queue/<prefix>*.sh (e.g.
+# JASS_HOST_FILTER=home- for a home/WSL box so it never races the cloud boxes
+# for their cpx62-/ccx33- jobs). Written as a systemd drop-in BEFORE the timer
+# is enabled → race-free. Unset = picks everything (the cloud default).
+JASS_HOST_FILTER="${JASS_HOST_FILTER:-}"
 
 log() { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 
@@ -88,6 +93,14 @@ git -C "$REPO_DIR" config user.email "jass-runner@$(hostname)"
 log "5/6 installing systemd unit + timer"
 install -m 0644 "$REPO_DIR/infra/jass-runner.service" /etc/systemd/system/jass-runner.service
 install -m 0644 "$REPO_DIR/infra/jass-runner.timer"   /etc/systemd/system/jass-runner.timer
+if [[ -n "$JASS_HOST_FILTER" ]]; then
+    log "5b/6 scoping runner to JASS_HOST_FILTER=$JASS_HOST_FILTER (race-free drop-in)"
+    mkdir -p /etc/systemd/system/jass-runner.service.d
+    cat > /etc/systemd/system/jass-runner.service.d/host-filter.conf <<EOF
+[Service]
+Environment=JASS_HOST_FILTER=$JASS_HOST_FILTER
+EOF
+fi
 systemctl daemon-reload
 systemctl enable --now jass-runner.timer
 
