@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0308-book-audit",
+  "script": "jobs/queue/ccx33-0308-book-audit.sh",
+  "pid": 432268,
+  "started_at": "2026-06-17T18:28:40+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
