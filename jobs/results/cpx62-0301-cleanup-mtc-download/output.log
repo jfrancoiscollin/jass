@@ -1,0 +1,40 @@
+=== (1) NETTOYAGE cpx62 (garde champions 0266 + 0297) ===
+  before Filesystem      Size  Used Avail Use% Mounted on
+  before /dev/sda1       601G  137G  440G  24% /
+  rm /root/egdb_db (installeur WLD)
+  rm artefacts.src jobs terminés (~102436 MiB ; gardé 0266+0297)
+  after-clean Filesystem      Size  Used Avail Use% Mounted on
+  after-clean /dev/sda1       601G   33G  544G   6% /
+=== (2) DOWNLOAD MTC (megatools, ~13 GiB) ===
+  dl rc=0
+  du DL: 13G	/root/egdb_mtc_dl
+=== (3) innoextract → /root/egdb_mtc ===
+  innoextract rc=0
+ - "app/db8-4121.cpr_mtc"
+ - "app/db8-4121.idx_mtc"
+Done.
+  du extrait: 29G	/root/egdb_mtc
+=== (4) vire l'installeur ===
+  final Filesystem      Size  Used Avail Use% Mounted on
+  final /dev/sda1       601G   62G  516G  11% /
+=== (5) structure extraite ===
+/root/egdb_mtc/app/db7-2221.idx_mtc
+/root/egdb_mtc/app/db7-2311.idx_mtc
+/root/egdb_mtc/app/db6-1221.idx_mtc
+/root/egdb_mtc/app/db6-1302.idx_mtc
+/root/egdb_mtc/app/db6-3102.cpr_mtc
+/root/egdb_mtc/app/db6-2211.cpr_mtc
+/root/egdb_mtc/app/db7-3121.idx_mtc
+/root/egdb_mtc/app/db3.idx_mtc
+/root/egdb_mtc/app/db8-0512.idx_mtc
+/root/egdb_mtc/app/db6-1401.idx_mtc
+/root/egdb_mtc/app/db7-3103.idx_mtc
+/root/egdb_mtc/app/db7-3202.cpr_mtc
+/root/egdb_mtc/app/db8-1403.idx_mtc
+/root/egdb_mtc/app/db7-2203.cpr_mtc
+/root/egdb_mtc/app/db8-2303.cpr_mtc
+  nb fichiers: 138 ; idx/cpr: 138
+
+==========================================================
+   cpx62-0301 — cpx62 nettoyé + MTC extrait dans /root/egdb_mtc (champions 0266+0297 gardés)
+==========================================================
