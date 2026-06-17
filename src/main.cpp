@@ -1711,9 +1711,10 @@ int run_egdb_mtc_probe_mode(int argc, char** argv) {
 // each record's `score` field (as prob*10000), so training with `--target prob`
 // (logistic on score/10000) keeps the prod WDL regime for most positions but
 // gains a conversion gradient in the endgame:
-//   * <=7-piece WLD win/loss with an MTC distance d → prob graded by distance:
-//       win : 1 - BETA*max(0, d-10), clamped to [0.55, 1.0]   (closer = higher)
-//       loss: 0 + BETA*max(0, d-10), clamped to [0.0, 0.45]    (farther = less bad)
+//   * <=7-piece WLD win/loss → prob graded by conversion progress, HYBRID:
+//       PROXY (fine, covers MTC's flat <10-ply zone): enemy material left + enemy
+//       king centrality ; + MTC (exact, the >=10-ply maneuvering zone). Winning
+//       side prob in [0.55, 1.0] (more progressed = higher), STM-POV reprojected.
 //   * draw / out-of-WLD-range → fall back to the record's WDL byte (0/0.5/1).
 // MTC is only valid for win/loss, so we gate on the WLD probe first (egdb rule).
 // -----------------------------------------------------------------------------
@@ -1730,7 +1731,12 @@ int run_egdb_mtc_relabel_mode(int argc, char** argv) {
     if (!jass::egdb::init(wld_dir, cache))     { std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
     if (!jass::egdb::init_mtc(mtc_dir, cache)) { std::cerr << "error: MTC init failed for '" << mtc_dir << "'\n"; return 1; }
 
-    constexpr double BETA = 0.03;   // prob units per ply beyond MTC_THRESHOLD(10)
+    // Conversion-progress weights (prob units), tunable. PROXY complements MTC's
+    // flat <10-ply zone: ALPHA per enemy piece left, GAMMA per enemy-king
+    // centrality. BETA per ply beyond MTC_THRESHOLD(10) (the exact maneuvering zone).
+    constexpr double ALPHA = 0.04;
+    constexpr double GAMMA = 0.008;
+    constexpr double BETA  = 0.03;
 
     std::ifstream f(in_path, std::ios::binary);
     if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
@@ -1742,6 +1748,13 @@ int run_egdb_mtc_relabel_mode(int argc, char** argv) {
     f.close();
     const std::size_t nrec = buf.size() / 38;
 
+    // king centrality 0 (edge) .. 9 (centre), like scan_eval — an active enemy
+    // king is harder to convert against → less progress.
+    auto central = [](jass::Square s) -> double {
+        const double r = static_cast<double>(jass::row_of(s));
+        const double c = static_cast<double>(jass::col_of(s));
+        return (4.5 - std::fabs(r - 4.5)) + (4.5 - std::fabs(c - 4.5));
+    };
     long graded = 0, wld_decisive = 0, mtc_far = 0, fell_back = 0;
     for (std::size_t i = 0; i < nrec; ++i) {
         char* rec = buf.data() + i * 38;
@@ -1751,12 +1764,25 @@ int run_egdb_mtc_relabel_mode(int argc, char** argv) {
         double prob;                                            // STM-POV win probability
         if (wld == jass::EndgameResult::WhiteWin || wld == jass::EndgameResult::BlackWin) {
             ++wld_decisive;
-            const int stm_wdl = wdl_from_result(wld, stm);     // +1 STM wins / -1 STM loses
-            const int d = jass::egdb::probe_mtc(p);            // 1 (<10) or actual >=10, -1 if N/A
-            const double pen = (d >= 10) ? (BETA * static_cast<double>(d - 10)) : 0.0;
+            const bool white_wins = (wld == jass::EndgameResult::WhiteWin);
+            // Progress of the WINNING side toward the bare-king win, graded by:
+            //   * PROXY (fine, covers MTC's flat <10 zone): enemy material left
+            //     (fewer = closer) + enemy-king centrality (edge = more confined);
+            //   * MTC (exact, the >=10-ply maneuvering zone): plies to next conversion.
+            const jass::Bitboard loser_all = white_wins
+                ? (p.black_men() | p.black_kings()) : (p.white_men() | p.white_kings());
+            jass::Bitboard loser_kings = white_wins ? p.black_kings() : p.white_kings();
+            const int    enemy_pieces  = popcount(loser_all);
+            double enemy_central = 0.0;
+            for (jass::Bitboard b = loser_kings; b; ) enemy_central += central(pop_lsb(b));
+            const int    d        = jass::egdb::probe_mtc(p);   // 1 (<10) or actual >=10
+            const double mtc_pen  = (d >= 10) ? (BETA * static_cast<double>(d - 10)) : 0.0;
             if (d >= 11) ++mtc_far;
-            if (stm_wdl > 0) prob = std::max(0.55, 1.0 - pen);  // win
-            else             prob = std::min(0.45, 0.0 + pen);  // loss
+            double winp = 1.0 - ALPHA * static_cast<double>(enemy_pieces)
+                              - GAMMA * enemy_central - mtc_pen;
+            winp = std::min(1.0, std::max(0.55, winp));
+            const bool stm_white = (stm == 0);
+            prob = (stm_white == white_wins) ? winp : (1.0 - winp);   // STM-POV
             ++graded;
         } else {
             // draw, or position outside the WLD db → keep the game-outcome WDL.
