@@ -43,8 +43,21 @@
   dur) ; (b) **donner à la finale ses propres features** (king-mobility, LEAD 1, job 0311) pour
   qu'elle cesse de distordre les men-patterns. ⇒ **confirme le PRINCIPE : pas la capacité,
   c'est ce qui MANQUE + l'équilibre.**
-- **Livre d'ouverture à la Scan** codé (drop-out best-first + probe marge/softmax, format JBK2)
-  + audit (structure + Scan-oracle). Runtime JBOK déjà sain (0029). Mesure : 0307/0308.
+- **0311 (king-features A/B, LEAD 1+2)** : les features rois AIDENT vs hc — kmob (+33), **endg
+  (+87, le meilleur arm)**, kingpat ~neutre. MAIS endgame_mse *monte* et vs Scan reste 0/54.
+  → **`endg` (JASS_ENDGAME_FEATURES) BAKÉ par défaut (ON)** [NUM_EXTRAS 106→110]. *Caveat : bench
+  60-parties bruité (base +171 vs +234 ailleurs) → réversible si une mesure propre déçoit.*
+- **0312 (phase-split, fix-b 0310)** : raidir la rampe (8/18) **fait tomber endgame_mse à 3.03**
+  (< plancher 3.27 → **PAS de saturation, re-confirmé**) MAIS **l'Elo baisse** (+184→+158 : sacrifie
+  le midgame). Rampe gardée au défaut 0/40.
+- **⚠️ LEÇON MÉTHODO (0311+0312)** : `endgame_mse` et Elo bougent **en sens INVERSE** dans les deux
+  → **`endgame_mse` est un mauvais proxy de force.** Arrêter le mse-chasing ; mesurer la FORCE
+  (plus de parties + **autopsie endgame-rois vs Scan**), seul juge réel de la finale.
+- **LEAD 3 en cours (0313, ccx33)** : dataset finale-enrichi (coverage ≤7p + self-play egdb-perfect,
+  ~45% finale vs 11%) pour nourrir le run COMBINÉ king-features + phase-split.
+- **Livre d'ouverture à la Scan** (0307/0308) : valeurs de feuilles SAINES (spearman 0.844, 0 piège)
+  mais **trop plat** (max ply 10) et **accord-coup vs Scan faible (42%)** car construit sur l'éval
+  jass → s'améliorera avec l'éval. Secondaire. *(0307 tué à 11h : matchs sur-dimensionnés.)*
 
 ## 0bis. Verdict précédent — 2026-06-16 (BITBASE egdb + outils self-play exact)
 

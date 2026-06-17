@@ -112,7 +112,11 @@ if(JASS_KING_PATTERNS)
     message(STATUS "Jass: KING-AWARE patterns ENABLED (occupancy = men|kings)")
 endif()
 
-option(JASS_ENDGAME_FEATURES "Add endgame king-interaction extras (NUM_EXTRAS 106->110)" OFF)
+# DEFAULT ON since job 0311 (endgame king-interaction extras = best Elo arm,
+# +87 vs base on hc; king-features help, per SCAN_EVAL_DIFF). NUM_EXTRAS 106->110.
+# A pjtw must match the binary's NUM_EXTRAS (loader rejects a mismatch loudly) —
+# retrain evals with this default. Flip OFF to reproduce the legacy 106-extras eval.
+option(JASS_ENDGAME_FEATURES "Add endgame king-interaction extras (NUM_EXTRAS 106->110)" ON)
 if(JASS_ENDGAME_FEATURES)
     add_compile_definitions(JASS_ENDGAME_FEATURES=1)
     message(STATUS "Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)")
