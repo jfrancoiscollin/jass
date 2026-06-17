@@ -436,7 +436,20 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             const bool stm_wins = (eg == EndgameResult::WhiteWin)
                 ? (pos.side_to_move() == Color::White)
                 : (pos.side_to_move() == Color::Black);
-            const int v = (MATE_SCORE - MAX_PLY - 1) - ply;
+            // Distance = search plies to reach here (`ply`) PLUS the exact
+            // moves-to-conversion from the MTC database when loaded (Kingsrow
+            // has it, Scan does not — this plays the FASTEST conversion, not
+            // just *a* conversion). probe_mtc returns 1 in the flat <10-ply zone
+            // and the true value >=10 (the band where dawdling is a real risk),
+            // or <=0 when the position is outside the MTC db; gate on a
+            // confirmed WLD win (we are in the win branch). Capped so the TB-win
+            // band stays well above any eval and below MATE_BOUND.
+            int dist = ply;
+            if (egdb::available_mtc()) {
+                const int m = egdb::probe_mtc(pos);
+                if (m > 0) dist += (m < 500 ? m : 500);
+            }
+            const int v = (MATE_SCORE - MAX_PLY - 1) - dist;
             return stm_wins ? v : -v;
         }
     }
