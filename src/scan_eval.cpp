@@ -152,6 +152,26 @@ void compute_extras(const Position& pos,
     out[EXTRA_BK_CENTRAL] = bk_c;  out[EXTRA_WK_CENTRAL] = wk_c;
     out[EXTRA_BK_PROX]    = bk_p;  out[EXTRA_WK_PROX]    = wk_p;
 #endif
+
+#ifdef JASS_KING_MOBILITY
+    // Direction LEAD-1 : king-specific mobility + confinement (Scan's king_mob).
+    const Bitboard empty_km = pos.empties();
+    out[EXTRA_BK_KMOB] = static_cast<float>(king_slide_mobility(pos.black_kings(), empty_km));
+    out[EXTRA_WK_KMOB] = static_cast<float>(king_slide_mobility(pos.white_kings(), empty_km));
+    auto trapped_count = [&](Bitboard kings) -> int {
+        int t = 0;
+        for (Bitboard b = kings; b; ) {
+            const Bitboard k = Bitboard{1} << square_to_bit(pop_lsb(b));
+            bool any = false;
+            for (const ShiftFn sh : ALL_SHIFTS)
+                if (sh(k) & empty_km) { any = true; break; }
+            if (!any) ++t;
+        }
+        return t;
+    };
+    out[EXTRA_BK_KTRAP] = static_cast<float>(trapped_count(pos.black_kings()));
+    out[EXTRA_WK_KTRAP] = static_cast<float>(trapped_count(pos.white_kings()));
+#endif
     // NB: the 1st batch of structural extras (king-mob/back-rank/advancement,
     // 106->112) regressed on the v5 base and AGAIN on the clean v4 base (0172:
     // 0.889/0.389 vs the v4+106 champion 0.944/0.389). REVERTED. To re-test on

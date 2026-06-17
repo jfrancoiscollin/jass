@@ -118,6 +118,15 @@ if(JASS_ENDGAME_FEATURES)
     message(STATUS "Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)")
 endif()
 
+# King-mobility / confinement extras (Scan's king_mob) : separate king-slide
+# mobility per side + trapped-king count = the structural conversion gradient.
+# See src/scan_eval.hpp + docs/SCAN_EVAL_DIFF.md (LEAD 1).
+option(JASS_KING_MOBILITY "Add king-mobility/confinement extras (Scan king_mob, +4 extras)" OFF)
+if(JASS_KING_MOBILITY)
+    add_compile_definitions(JASS_KING_MOBILITY=1)
+    message(STATUS "Jass: KING-MOBILITY extras ENABLED (+4 extras)")
+endif()
+
 # External endgame database (Kingsrow egdb_intl). OFF → src/egdb_bridge.cpp
 # compiles to no-op stubs and the engine has ZERO external dependency. ON →
 # adapt Ed Gilbert's egdb_intl driver (https://github.com/eygilbert/egdb_intl)
