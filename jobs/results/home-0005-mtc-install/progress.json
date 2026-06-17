@@ -1,8 +1,8 @@
 {
   "job_id": "home-0005-mtc-install",
-  "snapshot_at": "2026-06-17T20:49:05+00:00",
+  "snapshot_at": "2026-06-17T20:54:13+00:00",
   "started_at": "2026-06-17T20:38:41+00:00",
-  "elapsed_seconds": 624,
+  "elapsed_seconds": 932,
   "artefacts": [
     {
       "name": "dl.log",
@@ -10,8 +10,8 @@
     },
     {
       "name": "inno.log",
-      "size_bytes": 2698
+      "size_bytes": 3144
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11305       1       10:24  0.0  0.0 bash\n  11307   11305       10:24  0.0  0.0 bash\n  11601   11307       04:23 99.6  0.0 innoextract\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11305       1       15:32  0.0  0.0 bash\n  11307   11305       15:32  0.0  0.0 bash\n  11601   11307       09:31 99.7  0.0 innoextract\n"
 }
