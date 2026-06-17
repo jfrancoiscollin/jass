@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0306-gradient-train",
+  "script": "jobs/queue/cpx62-0306-gradient-train.sh",
+  "pid": 2802740,
+  "started_at": "2026-06-17T12:39:37+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
