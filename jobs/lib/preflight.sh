@@ -68,3 +68,14 @@ preflight_check(){
   fi
   echo "  [preflight] OK — sous le cap, lancement."
 }
+
+# mem_safe_jobs — parallel build width capped by RAM. Heavy C++ TUs (bitbase.cpp,
+# scan_eval.cpp) peak ~1.5-2 GB per g++; on a low-RAM box -j$(nproc) OOMs and the
+# assembler temp gets killed ("can't open /tmp/ccXXXX.s"). Cap at ~RAM/2 cores.
+# Use: cmake --build B -j"$(mem_safe_jobs)".
+mem_safe_jobs(){
+  local n m j; n=$(nproc)
+  m=$(awk '/MemTotal/{printf "%d",$2/1024/1024}' /proc/meminfo 2>/dev/null); [ -z "$m" ] && m=$n
+  j=$(( m / 2 )); [ "$j" -lt 1 ] && j=1; [ "$j" -gt "$n" ] && j="$n"
+  echo "$j"
+}
