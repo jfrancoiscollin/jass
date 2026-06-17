@@ -33,10 +33,20 @@
 
 ---
 
-## 🟢 Branche ACTIVE 2026-06-16 — verrou finale par bitbase egdb exacte
+## 🟢 Branche ACTIVE 2026-06-17 — fermer le verrou finale DANS le linéaire
 
-📍 **Position** : bitbase egdb **scellée** (WLD 2→7, 164/164) → on attaque le verrou
-roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+📍 **Position** : audit Scan fait ([SCAN_EVAL_DIFF.md](SCAN_EVAL_DIFF.md)) → même classe que
+Scan ; le gap = **features rois manquantes + équilibre de phase**, PAS la capacité (0309/0310 :
+conflit de phase, pas saturation — le linéaire fitte la finale à 3.03). On combine, sur données
+finale-enrichies (0313/0314) : **(a) features rois** (`king_mob`/`endg`, 0311 — endg baké), **(b)
+phase-split** (0312), jugés à la **conversion exacte** (`--egdb-mtc-regret`) + Elo, pas au `endgame_mse`
+(trompeur). En bonus, **MTC-in-search** (conversion la + rapide, au-dessus de Scan). Prochain : run
+COMBINÉ mesuré à la force. Flotte : cpx62 + ccx33 + **PC perso** (runner `home-`).
+
+> ⚠️ Anciennes hypothèses tranchées cette campagne : **saturer le linéaire par cycles** (0297, plafonne) ;
+> **gradient MTC comme CIBLE** (0306, ne transfère pas) ; **livre** (0307/0308, secondaire). Détail ↓.
+
+📍 *Historique de la branche (egdb scellée → labels exacts) :*
 
 - ✂️ **0274 (coverage depth-16)** — ÉLAGUÉE : labels par recherche imparfaite,
   **supplantés** par le WLD exact de la bitbase. Job tué.
