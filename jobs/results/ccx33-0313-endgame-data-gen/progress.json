@@ -1,0 +1,85 @@
+{
+  "job_id": "ccx33-0313-endgame-data-gen",
+  "snapshot_at": "2026-06-17T19:09:09+00:00",
+  "started_at": "2026-06-17T19:04:05+00:00",
+  "elapsed_seconds": 304,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 24481
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 836
+    },
+    {
+      "name": "cov.jnnw",
+      "size_bytes": 38000008
+    },
+    {
+      "name": "self-1.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "self-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-2.jnnw",
+      "size_bytes": 90290
+    },
+    {
+      "name": "self-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-3.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-4.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-5.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-6.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "self-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-7.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-8.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "self-8.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1       05:04  0.0  0.0 bash\n 433433  433431       05:04  0.0  0.0 bash\n 434018  433433       04:37 97.3  0.8 jass\n 434019  433433       04:37 98.2  0.8 jass\n 434020  433433       04:37 97.9  0.8 jass\n 434021  433433       04:37 98.1  0.8 jass\n 434022  433433       04:37 98.9  0.8 jass\n 434023  433433       04:37 98.2  0.8 jass\n 434024  433433       04:37 98.7  0.8 jass\n 434025  433433       04:37 98.1  0.8 jass\n"
+}
