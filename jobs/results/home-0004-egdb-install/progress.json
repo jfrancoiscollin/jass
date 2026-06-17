@@ -1,0 +1,17 @@
+{
+  "job_id": "home-0004-egdb-install",
+  "snapshot_at": "2026-06-17T20:22:19+00:00",
+  "started_at": "2026-06-17T20:17:16+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": "apt.log",
+      "size_bytes": 709
+    },
+    {
+      "name": "dl.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  10131       1       05:02  0.0  0.0 bash\n  10133   10131       05:02  0.0  0.0 bash\n  10225   10133       05:01  0.0  0.0 timeout\n  10226   10225       05:01 12.4  0.1 megatools\n"
+}
