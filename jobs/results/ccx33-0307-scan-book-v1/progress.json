@@ -1,12 +1,12 @@
 {
   "job_id": "ccx33-0307-scan-book-v1",
-  "snapshot_at": "2026-06-17T16:13:37+00:00",
+  "snapshot_at": "2026-06-17T16:18:38+00:00",
   "started_at": "2026-06-17T07:29:04+00:00",
-  "elapsed_seconds": 31473,
+  "elapsed_seconds": 31774,
   "artefacts": [
     {
       "name": "ab-selfplay.log",
-      "size_bytes": 785038
+      "size_bytes": 801403
     },
     {
       "name": "ab-selfplay.out",
@@ -37,5 +37,5 @@
       "size_bytes": 400066
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1    08:44:32  0.0  0.0 bash\n 381177  381176    08:44:32  0.0  0.0 bash\n 420880  381177    04:09:47  0.1  0.0 python3\n 420883  420880    04:09:47 48.9  0.1 jass\n 420885  420880    04:09:47 50.8  0.1 jass\n 420887  420880    04:09:47  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1    08:49:34  0.0  0.0 bash\n 381177  381176    08:49:34  0.0  0.0 bash\n 420880  381177    04:14:49  0.1  0.0 python3\n 420883  420880    04:14:48 49.0  0.1 jass\n 420885  420880    04:14:48 50.8  0.1 jass\n 420887  420880    04:14:48  0.0  0.0 jass\n"
 }
