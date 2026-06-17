@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0313-endgame-data-gen",
-  "snapshot_at": "2026-06-17T20:29:40+00:00",
+  "snapshot_at": "2026-06-17T20:34:41+00:00",
   "started_at": "2026-06-17T19:04:05+00:00",
-  "elapsed_seconds": 5135,
+  "elapsed_seconds": 5436,
   "artefacts": [
     {
       "name": "build.log",
@@ -18,7 +18,7 @@
     },
     {
       "name": "self-1.jnnw",
-      "size_bytes": 1600562
+      "size_bytes": 1690850
     },
     {
       "name": "self-1.log",
@@ -26,7 +26,7 @@
     },
     {
       "name": "self-2.jnnw",
-      "size_bytes": 1436402
+      "size_bytes": 1518482
     },
     {
       "name": "self-2.log",
@@ -34,7 +34,7 @@
     },
     {
       "name": "self-3.jnnw",
-      "size_bytes": 1510274
+      "size_bytes": 1608770
     },
     {
       "name": "self-3.log",
@@ -42,7 +42,7 @@
     },
     {
       "name": "self-4.jnnw",
-      "size_bytes": 1534898
+      "size_bytes": 1625186
     },
     {
       "name": "self-4.log",
@@ -50,7 +50,7 @@
     },
     {
       "name": "self-5.jnnw",
-      "size_bytes": 1485650
+      "size_bytes": 1584146
     },
     {
       "name": "self-5.log",
@@ -58,7 +58,7 @@
     },
     {
       "name": "self-6.jnnw",
-      "size_bytes": 1477442
+      "size_bytes": 1567730
     },
     {
       "name": "self-6.log",
@@ -66,7 +66,7 @@
     },
     {
       "name": "self-7.jnnw",
-      "size_bytes": 1428194
+      "size_bytes": 1502066
     },
     {
       "name": "self-7.log",
@@ -74,12 +74,12 @@
     },
     {
       "name": "self-8.jnnw",
-      "size_bytes": 1461026
+      "size_bytes": 1559522
     },
     {
       "name": "self-8.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    01:25:34  0.0  0.0 bash\n 433433  433431    01:25:34  0.0  0.0 bash\n 434018  433433    01:25:07 99.6  0.8 jass\n 434019  433433    01:25:07 99.6  0.8 jass\n 434020  433433    01:25:07 99.6  0.8 jass\n 434021  433433    01:25:07 99.7  0.8 jass\n 434022  433433    01:25:07 99.7  0.8 jass\n 434023  433433    01:25:07 99.7  0.8 jass\n 434024  433433    01:25:07 99.6  0.8 jass\n 434025  433433    01:25:07 99.7  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    01:30:36  0.0  0.0 bash\n 433433  433431    01:30:36  0.0  0.0 bash\n 434018  433433    01:30:09 99.6  0.8 jass\n 434019  433433    01:30:09 99.6  0.8 jass\n 434020  433433    01:30:09 99.6  0.8 jass\n 434021  433433    01:30:09 99.7  0.8 jass\n 434022  433433    01:30:09 99.7  0.8 jass\n 434023  433433    01:30:09 99.7  0.8 jass\n 434024  433433    01:30:09 99.6  0.8 jass\n 434025  433433    01:30:09 99.7  0.8 jass\n"
 }
