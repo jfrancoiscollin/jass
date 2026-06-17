@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0310-loop-diagnostic-fix",
-  "snapshot_at": "2026-06-17T15:19:03+00:00",
+  "snapshot_at": "2026-06-17T15:24:45+00:00",
   "started_at": "2026-06-17T14:58:05+00:00",
-  "elapsed_seconds": 1258,
+  "elapsed_seconds": 1600,
   "artefacts": [
     {
       "name": "build.log",
@@ -29,13 +29,21 @@
       "size_bytes": 136049796
     },
     {
-      "name": "noend-train.log",
+      "name": "noend-elo.log",
       "size_bytes": 0
+    },
+    {
+      "name": "noend-train.log",
+      "size_bytes": 1421
     },
     {
       "name": "noend.feat",
       "size_bytes": 1444118732
+    },
+    {
+      "name": "noend.pjtw",
+      "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 631719       1       20:57  0.0  0.0 bash\n 631721  631719       20:57  0.0  0.0 bash\n2692757  631721       06:36  0.0  0.0 bash\n2692759 2692757       06:34  711 46.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 631719       1       26:39  0.0  0.0 bash\n 631721  631719       26:39  0.0  0.0 bash\n2693081  631721       05:22  0.0  0.0 bash\n2693082 2693081       05:22 1183  0.6 jass\n"
 }
