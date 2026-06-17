@@ -1,0 +1,39 @@
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 54 parties)
+================================================================
+  GLOBAL           n= 3590  accord=0.534  perte_moy=   0.75
+
+-- par PHASE --
+  opening          n=  952  accord=0.517  perte_moy=   0.03
+  midgame          n=  667  accord=0.523  perte_moy=   0.07
+  late-mid         n=  580  accord=0.557  perte_moy=   0.13
+  endgame          n=  967  accord=0.556  perte_moy=   1.24
+  deep-eg          n=  424  accord=0.509  perte_moy=   3.19
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 2560  accord=0.541  perte_moy=   0.16
+  kings            n= 1030  accord=0.518  perte_moy=   2.22
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (951)             0.00 (1)       —
+  midgame              0.06 (643)            0.21 (24)    ×3.4
+  late-mid             0.11 (500)            0.24 (80)    ×2.2
+  endgame              0.42 (439)           1.92 (528)    ×4.6
+  deep-eg               3.66 (27)           3.16 (397)    ×0.9
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 2807  accord=0.414  perte_moy=   0.81
+  capture-avail    n=  783  accord=0.967  perte_moy=   0.53
+
+-- par RÉSULTAT --
+  drawn            n=  268  accord=0.500  perte_moy=   0.10
+  lost             n= 3322  accord=0.537  perte_moy=   0.80
+
+-- 4 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g46 [lost ] deep-eg  K perte= 95.0      26-31 → 40-45      B:W28,33,36,K49:B26,40
+  g17 [lost ] deep-eg  K perte= 91.5      23-14 → 23-34      W:WK23:B24,36,K35,K42
+  g31 [lost ] endgame  K perte= 90.7      33-28 → 49-43      W:W15,25,33,49:B3,4,9,K18,K35
+  g6  [lost ] endgame  K perte= 90.7      30-35 → 8-12       B:W11,19,33,39,48,K45:B8,30,K50

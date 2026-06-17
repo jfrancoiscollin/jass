@@ -1,0 +1,38 @@
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 54 parties)
+================================================================
+  GLOBAL           n= 3417  accord=0.549  perte_moy=   0.88
+
+-- par PHASE --
+  opening          n= 1023  accord=0.514  perte_moy=   0.03
+  midgame          n=  691  accord=0.524  perte_moy=   0.08
+  late-mid         n=  625  accord=0.558  perte_moy=   0.17
+  endgame          n=  709  accord=0.568  perte_moy=   1.72
+  deep-eg          n=  369  accord=0.640  perte_moy=   4.35
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 2611  accord=0.531  perte_moy=   0.24
+  kings            n=  806  accord=0.608  perte_moy=   2.97
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening             0.03 (1022)             0.00 (1)       —
+  midgame              0.07 (665)            0.18 (26)    ×2.5
+  late-mid             0.16 (557)            0.19 (68)    ×1.1
+  endgame              0.20 (336)           3.08 (373)   ×15.4
+  deep-eg              12.29 (31)           3.62 (338)    ×0.3
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 2648  accord=0.428  perte_moy=   1.02
+  capture-avail    n=  769  accord=0.965  perte_moy=   0.41
+
+-- par RÉSULTAT --
+  lost             n= 3417  accord=0.549  perte_moy=   0.88
+
+-- 4 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g15 [lost ] deep-eg  K perte= 99.3      17-33 → 17-8       W:WK17:B24,42,K43
+  g10 [lost ] deep-eg  K perte= 96.7      19-24 → 25-30      B:W41,K45:B19,25
+  g40 [lost ] deep-eg    perte= 96.0      10-14 → 16-21      B:W29,31,39,43:B10,16
+  g50 [lost ] endgame  K perte= 94.5      27-31 → 27-32      B:W18,24,37,50,K3:B25,26,27,40
