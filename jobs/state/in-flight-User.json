@@ -1,0 +1,7 @@
+{
+  "job_id": "home-0003-selfplay-gen",
+  "script": "jobs/queue/home-0003-selfplay-gen.sh",
+  "pid": 9677,
+  "started_at": "2026-06-17T20:00:20+00:00",
+  "host": "User"
+}
