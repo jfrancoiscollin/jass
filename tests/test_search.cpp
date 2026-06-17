@@ -263,16 +263,16 @@ void test_search_depth_increases() {
 }
 
 // 1b search refinements (continuation history, improving, IID, multi-cut).
-// Each is gated; default-off must be behaviour-neutral, and each flag, when
-// enabled, must still return a legal best move and a sane (non-mate) score
-// from the start position.
-void test_1b_defaults_are_behaviour_neutral() {
+// `SearchLimits{}` already contains the tuned production SearchParams defaults;
+// assigning `SearchParams{}` explicitly must therefore leave the search identical.
+// Each opt-in flag must still return a legal best move and a sane (non-mate)
+// score from the start position.
+void test_explicit_default_params_match_searchlimits_default() {
     const Position p = Position::start_position();
     SearchLimits base;       base.max_depth = 7;
     const SearchResult r0 = search(p, base);
 
-    // SearchParams{} is the documented behaviour-neutral default: an
-    // explicitly-default params set must reproduce the same search exactly.
+    // Explicit default params must reproduce the SearchLimits default exactly.
     SearchLimits same;       same.max_depth = 7; same.params = SearchParams{};
     const SearchResult r1 = search(p, same);
     JASS_CHECK_EQ(r0.nodes, r1.nodes);
@@ -321,6 +321,6 @@ void run_search_tests() {
     test_search_returns_pv_starting_with_best_move();
     test_search_with_multiple_threads();
     test_search_depth_increases();
-    test_1b_defaults_are_behaviour_neutral();
+    test_explicit_default_params_match_searchlimits_default();
     test_1b_each_feature_searches_correctly();
 }

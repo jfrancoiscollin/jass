@@ -6,8 +6,9 @@
 // All the pruning / reduction / extension magic numbers that used to live
 // as function-local `constexpr` inside negamax are centralised here so an
 // external tuner (SPSA) can perturb them and an A/B harness can compare
-// two parameter sets in a single process. Defaults reproduce the exact
-// pre-refactor behaviour, so `SearchParams{}` is behaviour-neutral.
+// two parameter sets in a single process. Defaults are the current tuned
+// production defaults (`use_improving` on, `eg_pieces=40`, `eg_no_nmp` on);
+// older baselines should be requested explicitly in the A/B spec.
 //
 // A parameter set can be loaded from a "k=v,k=v" string (used by the CLI
 // A/B mode and the SPSA driver) or from the JASS_SEARCH_PARAMS env var.
