@@ -1,0 +1,24 @@
+BUILD OK
+gen-egdb-wld: wrote 120000 / 120000 (67308 decisive, 52692 draw) in 222473 tries → /root/jass/jobs/results/ccx33-0305-weight-sweep/artefacts.src/cov.jnnw
+ALPHA GAMMA | win-graded: n  mean  std  %floor(0.55)  %ceil(1.0)
+ 0.04 0.008 | n= 35321  mean=0.938  std=0.030  floor=  0.0%  ceil=  0.0%
+ 0.04  0.02 | n= 35321  mean=0.926  std=0.046  floor=  0.0%  ceil=  0.0%
+ 0.04  0.04 | n= 35321  mean=0.908  std=0.080  floor=  0.3%  ceil=  0.0%
+ 0.08 0.008 | n= 35321  mean=0.883  std=0.053  floor=  0.0%  ceil=  0.0%
+ 0.08  0.02 | n= 35321  mean=0.871  std=0.063  floor=  0.1%  ceil=  0.0%
+ 0.08  0.04 | n= 35321  mean=0.853  std=0.088  floor=  0.9%  ceil=  0.0%
+ 0.12 0.008 | n= 35321  mean=0.828  std=0.075  floor=  1.0%  ceil=  0.0%
+ 0.12  0.02 | n= 35321  mean=0.817  std=0.082  floor=  1.4%  ceil=  0.0%
+ 0.12  0.04 | n= 35321  mean=0.800  std=0.098  floor=  3.2%  ceil=  0.0%
+ 0.16 0.008 | n= 35321  mean=0.777  std=0.090  floor=  5.9%  ceil=  0.0%
+ 0.16  0.02 | n= 35321  mean=0.766  std=0.094  floor=  6.8%  ceil=  0.0%
+ 0.16  0.04 | n= 35321  mean=0.752  std=0.104  floor=  9.8%  ceil=  0.0%
+ 0.20 0.008 | n= 35321  mean=0.729  std=0.097  floor=  6.8%  ceil=  0.0%
+ 0.20  0.02 | n= 35321  mean=0.721  std=0.098  floor= 10.4%  ceil=  0.0%
+ 0.20  0.04 | n= 35321  mean=0.708  std=0.103  floor= 12.5%  ceil=  0.0%
+
+==========================================================
+   ccx33-0305 — sweep poids gradient
+  Optimum DISTRIBUTION = std la plus grande avec %floor raisonnable (<~20%) et %ceil pas trop
+  haut → bonne utilisation de [0.55,1]. Puis A/B d'entraînement sur 2-3 finalistes = vrai optimum.
+==========================================================
