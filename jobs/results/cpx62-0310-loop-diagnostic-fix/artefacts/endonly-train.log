@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0309-loop-diagnostic/artefacts.src/endonly.jnnw
+  417912 records  (0.03s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0310-loop-diagnostic-fix/artefacts.src/endonly.feat
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (417912, 110)  (mean mob b/w=11.5/11.4)
+target=wdl  pos=124804 neg=116052 zero=177056 (42.4% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=124804 draw=177056 loss=116052 (42.4% draws)
+phase : piece-count mean=4.5  wmg mean=0.114
+split : train=376121 val=41791
+prune : keep 21,926 buckets (>= 1 visits) -> 43,854 pattern cols vs 34,012,224  (775.6× fewer); train fallback=0.000%
+design : 44074 columns (2×21927 pat + 2×110 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.448781  iters=200  (85.07s)
+val   : mse=3.265549  sign_acc=0.2848
+val/phase mse : deep-eg=3.2655(n41791)
+quant : scale=1000  pat range=[-323,323] ext_mg range=[-1163,1210]
+wrote /root/jass/jobs/results/cpx62-0310-loop-diagnostic-fix/artefacts.src/endonly.pjtw  (v3, 34012444 weights, 136049796 bytes)

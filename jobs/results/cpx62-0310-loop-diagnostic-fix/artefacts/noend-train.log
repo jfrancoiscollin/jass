@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0309-loop-diagnostic/artefacts.src/noend.jnnw
+  3282088 records  (0.17s)
+extracting pattern indices (PIECE-PRESENCE : men|kings, king-aware)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0310-loop-diagnostic-fix/artefacts.src/noend.feat
+  note: extras K=110 (default 106) → adapting to the dump width
+  extras shape (3282088, 110)  (mean mob b/w=10.7/10.7)
+target=wdl  pos=1139279 neg=1136419 zero=1006390 (30.7% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=1139279 draw=1006390 loss=1136419 (30.7% draws)
+phase : piece-count mean=23.6  wmg mean=0.591
+split : train=2953880 val=328208
+prune : keep 276,255 buckets (>= 1 visits) -> 552,512 pattern cols vs 34,012,224  (61.6× fewer); train fallback=0.000%
+design : 552732 columns (2×276256 pat + 2×110 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.536756  iters=200  (397.15s)
+val   : mse=2.795395  sign_acc=0.3036
+val/phase mse : opening=0.7073(n109395)  midgame=1.1897(n74898)  late-mid=2.5433(n68935)  endgame=7.6776(n74980)
+quant : scale=1000  pat range=[-256,256] ext_mg range=[-933,932]
+wrote /root/jass/jobs/results/cpx62-0310-loop-diagnostic-fix/artefacts.src/noend.pjtw  (v3, 34012444 weights, 136049796 bytes)
