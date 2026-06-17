@@ -10,8 +10,10 @@ JNNW is the jass core self-play/master-data format:
           int32 score, int8 wdl
 
 The tool reports record-count consistency, phase/WDL distributions, and duplicate
-position keys (bitboards + side-to-move), including WDL contradictions split
-between <=7-piece endgames and the rest of the dataset.
+position keys (bitboards + side-to-move), including WDL contradictions — counted as
+distinct KEYS whose records carry mixed WDL (the record-level redundancy is reported
+separately as duplicate_extra_records) — split between <=7-piece endgames and the
+rest of the dataset.
 """
 
 from __future__ import annotations
@@ -274,7 +276,7 @@ def format_text(stats: dict[str, Any]) -> str:
     for key, label in (
         ("duplicate_keys", "duplicated keys"),
         ("duplicate_extra_records", "duplicate extra records"),
-        ("wdl_contradictions", "WDL contradictions"),
+        ("wdl_contradictions", "WDL contradictions (keys)"),
     ):
         item = cons[key]
         lines.append(
