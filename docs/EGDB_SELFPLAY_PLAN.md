@@ -86,9 +86,26 @@ CIBLE** :
 > (b) DTW « maison » ≤5-6 par rétro-analyse du WLD — zéro download, gradient exact mais
 > petites tranches seulement. (c) cible-proxy (confinement/matériel) — cheap, heuristique.
 
-**Pipeline (a)** : 0298 recon taille → download+extract MTC → sonde MTC dans le bridge
-→ outil de labellisation gradient → train sur cible graduée → mesurer si la conversion
-vs Scan s'améliore.
+### Implémenté (option a + proxy) — la chaîne
+
+1. **MTC sur disque** (0300/0301) : Kingsrow MTC 2-8 (≤8p, ~29 GB extrait) sur les 2 boxes.
+   `egdb::init_mtc / probe_mtc` (handle séparé, `is_mtc`-vérifié). CLI `--egdb-mtc-probe`.
+2. **MTC est COARSE** (0302) : `egdb_lookup` MTC rend `1` si <10 plies (la base ne stocke pas
+   <10 → **plat** : 99.75 % des gains), sinon la distance réelle (≥10, ~0.25 %). Le gradient
+   MTC n'existe que dans la zone de manœuvre **≥10 plies** (= la zone de stall).
+3. **HYBRIDE proxy+MTC** (`--egdb-mtc-relabel <in> <wld> <mtc>`) — comble le <10 plat :
+   ```
+   winp = 1 − ALPHA·(pièces adverses) − GAMMA·(centralité rois adverses) − BETA·max(0, MTC−10)
+        clampé [0.55, 1.0]   (perte symétrique ; nul/hors-WLD → fallback WDL)
+   ```
+   PROXY (matériel + confinement) = gradient fin dans le <10 ; MTC = exact dans le ≥10.
+   Stocké en `score = prob×10000`. `ALPHA=0.04, GAMMA=0.008, BETA=0.03` (tunables).
+4. **`train.py --target prob`** : loss logistique sur `score/10000` → **garde le régime
+   WDL-logistique prod** pour la masse, injecte le gradient en finale.
+5. **Chaîne validée end-to-end** (0303) : `gen-egdb-wld → mtc-relabel → train --target prob`.
+
+**Reste** : vrai run gradient (coverage **enrichie en positions ≥10-MTC** + finales-rois +
+self-play) → train `--target prob` → mesurer la **conversion vs Scan** ; caler ALPHA/GAMMA/BETA.
 
 ## Matrice d'expériences
 

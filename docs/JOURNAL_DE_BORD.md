@@ -55,15 +55,25 @@
 - **0294 — minibatch EXACT** : à convergence (300 it), `train_loss` lowmem **0.569193** ≡
   minibatch **0.569173**, et **moitié RAM** (11.6 vs 21.9 GB). Validé comme outil de scaling
   quand le cumulatif dépasse **~7M** (plafond lowmem/32GB) ; en dessous, lowmem suffit.
-- **🟢 PROCHAIN LEVIER — le GRADIENT de conversion (cible MTC offline, option a).**
-  terminate-at-TB corrige la *valuation* mais PAS la *conversion en match*. Rappel clé :
-  **Scan convertit SANS MTC**, via le **GRADIENT de son éval** (une position gagnée "plus
-  convertie" score plus haut). Notre cible **WLD est PLATE** (gain = 1 partout) → l'éval ne
-  peut pas apprendre "plus proche de la conversion". Plan **(a)** : utiliser le **MTC comme
-  CIBLE D'ENTRAÎNEMENT offline** (distance-à-la-conversion → cible graduée) → l'éval
-  **apprend le gradient et le GÉNÉRALISE à 8-21** → **pas de MTC au jeu** (potentiellement
-  mieux que Scan). `egdb_intl` lit le MTC (`is_mtc`, `egdb_lookup` unifié, vérifié). 0298 =
-  recon taille MTC 2-8. (Alternatives écartées : (b) DTW maison ≤5-6 ; (c) proxy heuristique.)
+- **🟢 GRADIENT de conversion — CODÉ + chaîne validée (le "comment convertir").**
+  terminate-at-TB corrige la *valuation* mais PAS la *conversion en match*. **Scan convertit
+  SANS MTC**, via le **GRADIENT de son éval** ; notre cible **WLD est PLATE** (gain=1 partout)
+  → l'éval ne peut pas apprendre "plus proche de la conversion". Solution : un signal de
+  distance dans la **CIBLE**, appris offline, qui **généralise à 8-21** → **pas de MTC au jeu**.
+  - **MTC téléchargé+extrait sur les 2 boxes** (2-8 pièces, ~29 GB ; download 0300/0301 après
+    gros nettoyage disque). `egdb::init_mtc/probe_mtc` (handle séparé, `is_mtc`-vérifié, 0302).
+  - **MTC est COARSE** (0302) : 99.75 % des gains sont à <10 plies (MTC=1, plat — la base ne
+    stocke pas <10) ; seulement 0.25 % ont une distance réelle (≥10). → gradient seulement
+    dans la zone de manœuvre ≥10 (= la zone de stall), rien dans le <10.
+  - **→ HYBRIDE proxy+MTC** (`--egdb-mtc-relabel`) : `winp = 1 − ALPHA·pièces_adverses −
+    GAMMA·centralité_roi_adverse − BETA·max(0,MTC−10)`, clampé [0.55,1], STM-POV. Le **proxy**
+    (matériel+confinement) comble le <10 plat, le **MTC** donne l'exact ≥10. Stocké en
+    `score=prob×10000`, entraîné par **`train.py --target prob`** (loss logistique sur
+    score/10000) → garde le **régime WDL-logistique prod** pour la masse, injecte le gradient
+    en finale. ALPHA=0.04, GAMMA=0.008, BETA=0.03 (tunables).
+  - **Chaîne validée end-to-end (0303)** : `gen-egdb-wld → mtc-relabel → train --target prob`
+    tourne. Reste : vrai run gradient (coverage enrichie ≥10-MTC + self-play) → mesurer la
+    conversion vs Scan. (Alternatives écartées : (b) DTW maison ≤5-6 ; (c) proxy seul.)
 - **minibatch vs lowmem (0291)** : minibatch = **moitié RAM** (11.6 vs 21.9 GB sur 5.1M)
   → l'outil mémoire pour scaler (crossover lowmem ≈ 7M lignes/32GB). **Le wedge 5h de
   0274 n'était PAS un thrash lowmem** (lowmem 5M = 4 min, tient à 22 GB) → one-off.

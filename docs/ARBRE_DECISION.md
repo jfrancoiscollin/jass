@@ -31,12 +31,16 @@ roi-finale avec des **labels EXACTS** (≫ depth-16). Cf [EGDB_SELFPLAY_PLAN.md]
 - 🟢 **terminate-at-TB** (codé) : 0295 a montré **~50 % des finales décisives STALLENT** →
   labels NULS faux (polluait 0287 et tout l'entraînement finale). On termine la partie au
   **résultat TB exact ≤7** → labels propres, sans MTC.
-- 🟢⭐ **GRADIENT DE CONVERSION (cible MTC offline — option a)** : terminate-at-TB corrige la
-  *valuation*, PAS la *conversion en match*. Scan convertit via le **gradient de son éval**
-  (sans MTC) ; notre cible WLD est **plate** → l'éval n'apprend pas "comment convertir". On
-  utilise le **MTC comme CIBLE D'ENTRAÎNEMENT** (distance → cible graduée) → l'éval apprend le
-  gradient, **généralise 8-21**, **pas de MTC au jeu**. ✂️ (b) DTW maison ≤5-6 · ✂️ (c) proxy.
-  → **0298** = recon taille MTC.
+- 🟢⭐ **GRADIENT DE CONVERSION — CODÉ + chaîne validée (le "comment convertir")** : terminate-
+  at-TB corrige la *valuation*, PAS la *conversion en match*. Scan convertit via le **gradient
+  de son éval** (sans MTC) ; notre cible WLD est **plate**. On apprend le gradient offline depuis
+  une cible graduée → généralise 8-21 → **pas de MTC au jeu**.
+  - MTC sur les 2 boxes (0300/0301) ; sonde `egdb::init_mtc/probe_mtc` (0302).
+  - MTC **coarse** (0302 : 99.75 % à <10 plies = plat) → **HYBRIDE proxy+MTC**
+    (`--egdb-mtc-relabel`) : proxy matériel+confinement (zone <10) + MTC exact (zone ≥10) →
+    `score=prob×10000`, entraîné par `train.py --target prob` (régime WDL-logistique prod
+    préservé). Chaîne validée end-to-end (0303). ✂️ (b) DTW maison · ✂️ (c) proxy seul.
+  - ⏳ reste : vrai run gradient (coverage enrichie ≥10-MTC + self-play) → conversion vs Scan.
 - 🟢 **minibatch validé EXACT** (0294 : train_loss identique à convergence, ½ RAM) → outil de
   scaling quand le cumulatif > ~7M.
 - 🟢 **Relabel + coverage exacts** (`--egdb-relabel`, `--gen-egdb-wld`, validés 0292) :
