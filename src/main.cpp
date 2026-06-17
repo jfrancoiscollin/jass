@@ -1709,6 +1709,138 @@ int run_egdb_mtc_probe_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --egdb-mtc-regret <pjtw> <wld_dir> <mtc_dir> [n=20000] [cache_mb=1024] [seed=1]
+// CONVERSION metric (exact, Scan-free, NOT endgame_mse — cf the 0311/0312 lesson
+// that endgame_mse is decoupled from strength). Samples random WON, quiet, <=7p
+// positions; the EVAL picks its move 1-ply-greedy (argmin evaluate(child) — pure
+// eval preference, NO search so the core search's egdb leaf is never consulted),
+// then we JUDGE that move with the perfect WLD+MTC dbs:
+//   (1) win-preservation : does the move KEEP the win? (WLD-exact, dense)
+//   (2) win-preservation on CRITICAL positions (a win-throwing move exists) —
+//       the discriminating conversion-skill number.
+//   (3) fastest-path rate : move sits on a minimal-MTC line (played==best, dense).
+//   (4) MTC-regret : extra plies-to-conversion vs optimal, on the MTC>=10 subset.
+// MTC is win/loss-only -> gate on WLD first (egdb guideline). probe_mtc returns 1
+// for the flat <10-ply zone, so the fine regret (4) uses the >=10 subset only.
+// -----------------------------------------------------------------------------
+int run_egdb_mtc_regret_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: --egdb-mtc-regret <pjtw> <wld_dir> <mtc_dir> "
+                     "[n=20000] [cache_mb=1024] [seed=1]\n";
+        return 1;
+    }
+    const std::string pjtw = argv[2], wld_dir = argv[3], mtc_dir = argv[4];
+    const long n     = (argc > 5) ? parse_int_or(argv[5], 20000) : 20000;
+    const int  cache = (argc > 6) ? parse_int_or(argv[6], 1024)  : 1024;
+    const std::uint64_t seed = (argc > 7)
+        ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+
+    if (!jass::egdb::init(wld_dir, cache)) {
+        std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
+    if (!jass::egdb::init_mtc(mtc_dir, cache)) {
+        std::cerr << "error: MTC init failed for '" << mtc_dir << "'\n"; return 1; }
+    std::string err;
+    auto pjn = jass::load_eval_network(pjtw, &err);
+    if (!pjn) { std::cerr << "error: cannot load eval '" << pjtw << "': " << err << "\n"; return 1; }
+
+    auto is_win_for = [](jass::EndgameResult r, jass::Color c) {
+        return (c == jass::Color::White && r == jass::EndgameResult::WhiteWin)
+            || (c == jass::Color::Black && r == jass::EndgameResult::BlackWin);
+    };
+    const int MTC_INF = 1 << 30;
+
+    std::mt19937_64 rng(seed ? seed : 1ULL);
+    long sampled = 0, preserved = 0, blunders = 0, tries = 0;
+    long critical = 0, critical_kept = 0;
+    long onpath = 0, onpath_den = 0, mtc_pairs = 0; long long regret_sum = 0;
+    const long max_tries = n * 300L;
+
+    while (sampled < n && tries < max_tries) {
+        ++tries;
+        const int total = 3 + static_cast<int>(rng() % 5);            // 3..7 pieces
+        const int wtot  = 1 + static_cast<int>(rng() % static_cast<unsigned>(total - 1));
+        const int btot  = total - wtot;
+        const int wk = static_cast<int>(rng() % static_cast<unsigned>(wtot + 1)); const int wm = wtot - wk;
+        const int bk = static_cast<int>(rng() % static_cast<unsigned>(btot + 1)); const int bm = btot - bk;
+        jass::Position p; std::array<int, 8> used{}; int nu = 0; bool ok = true;
+        auto place = [&](jass::Piece piece) -> bool {
+            const bool wman = (piece == jass::Piece::WhiteMan), bman = (piece == jass::Piece::BlackMan);
+            for (int t = 0; t < 80; ++t) {
+                const int sq = static_cast<int>(rng() % 50) + 1;
+                if (wman && sq <= 5) continue;
+                if (bman && sq >= 46) continue;
+                bool dup = false; for (int u = 0; u < nu; ++u) if (used[static_cast<std::size_t>(u)] == sq) dup = true;
+                if (dup) continue;
+                used[static_cast<std::size_t>(nu++)] = sq;
+                p.add_piece(static_cast<jass::Square>(sq), piece); return true;
+            }
+            return false;
+        };
+        for (int k = 0; k < wm && ok; ++k) ok = place(jass::Piece::WhiteMan);
+        for (int k = 0; k < wk && ok; ++k) ok = place(jass::Piece::WhiteKing);
+        for (int k = 0; k < bm && ok; ++k) ok = place(jass::Piece::BlackMan);
+        for (int k = 0; k < bk && ok; ++k) ok = place(jass::Piece::BlackKing);
+        if (!ok) continue;
+        p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
+        const jass::Color stm = p.side_to_move();
+
+        jass::MoveList ml; jass::generate_legal_moves(p, ml);
+        if (ml.empty() || ml[0].is_capture()) continue;              // quiet leaves only
+        if (!is_win_for(jass::egdb::probe(p), stm)) continue;        // WON-for-stm only
+        ++sampled;
+
+        // Optimal over legal moves: min MTC among win-preserving children + a
+        // count of how many moves keep the win (to flag CRITICAL positions).
+        int best_mtc = MTC_INF, keep_cnt = 0;
+        for (const auto& m : ml) {
+            const jass::Position c = p.after(m);
+            if (is_win_for(jass::egdb::probe(c), stm)) {
+                ++keep_cnt;
+                const int cm = jass::egdb::probe_mtc(c);
+                if (cm > 0 && cm < best_mtc) best_mtc = cm;
+            }
+        }
+        const bool is_critical = (keep_cnt < static_cast<int>(ml.size()));  // a win-throwing move exists
+        if (is_critical) ++critical;
+
+        // Eval's 1-ply-greedy choice : argmin evaluate(child) (child is opp-POV,
+        // so the smallest opp-POV score is best for us). Pure eval, no search.
+        jass::Move choice = ml[0]; int best_score = MTC_INF;
+        for (const auto& m : ml) {
+            const int s = pjn->evaluate(p.after(m));
+            if (s < best_score) { best_score = s; choice = m; }
+        }
+
+        const jass::Position pc = p.after(choice);
+        const bool keeps = is_win_for(jass::egdb::probe(pc), stm);
+        if (!keeps) { ++blunders; continue; }
+        ++preserved;
+        if (is_critical) ++critical_kept;
+        const int played_mtc = jass::egdb::probe_mtc(pc);
+        if (best_mtc != MTC_INF && played_mtc > 0) {
+            ++onpath_den;
+            if (played_mtc == best_mtc) ++onpath;
+            if (played_mtc >= 10 && best_mtc >= 10) { ++mtc_pairs; regret_sum += (played_mtc - best_mtc); }
+        }
+    }
+
+    auto pct = [](long a, long b) { return b ? 100.0 * static_cast<double>(a) / static_cast<double>(b) : 0.0; };
+    std::cout << "\n=== MTC conversion metric (eval=" << pjtw << ", 1-ply eval-greedy) ===\n"
+              << "  sampled won quiet <=7p   : " << sampled << "\n"
+              << "  win-preservation         : " << preserved << "/" << sampled
+              << " = " << pct(preserved, sampled) << "%   (conversion BLUNDERS: " << blunders << ")\n"
+              << "  win-preservation CRITICAL: " << critical_kept << "/" << critical
+              << " = " << pct(critical_kept, critical) << "%   (a win-throwing move exists)\n"
+              << "  fastest-path rate        : " << onpath << "/" << onpath_den
+              << " = " << pct(onpath, onpath_den) << "%   (move on a minimal-MTC line)\n"
+              << "  MTC-regret (MTC>=10)     : "
+              << (mtc_pairs ? static_cast<double>(regret_sum) / static_cast<double>(mtc_pairs) : 0.0)
+              << " plies mean (n=" << mtc_pairs << ")\n"
+              << "  -> higher win-preservation(+CRITICAL) & fastest-path, lower regret = better conversion.\n";
+    return (sampled > 0) ? 0 : 1;
+}
+
+// -----------------------------------------------------------------------------
 // --egdb-mtc-relabel <in.jnnw> <wld_dir> <mtc_dir> [out] [cache_mb]
 // CONVERSION-GRADIENT labelling. Writes a continuous win-probability target into
 // each record's `score` field (as prob*10000), so training with `--target prob`
@@ -3484,6 +3616,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
+        else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);
         else if (a == "--egdb-mtc-relabel")         return run_egdb_mtc_relabel_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
