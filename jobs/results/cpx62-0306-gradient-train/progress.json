@@ -1,9 +1,17 @@
 {
   "job_id": "cpx62-0306-gradient-train",
-  "snapshot_at": "2026-06-17T13:52:12+00:00",
+  "snapshot_at": "2026-06-17T13:57:14+00:00",
   "started_at": "2026-06-17T12:39:37+00:00",
-  "elapsed_seconds": 4355,
+  "elapsed_seconds": 4657,
   "artefacts": [
+    {
+      "name": "autopsy-base.err",
+      "size_bytes": 2530
+    },
+    {
+      "name": "autopsy-base.txt",
+      "size_bytes": 2276
+    },
     {
       "name": "base-train.log",
       "size_bytes": 1427
@@ -50,8 +58,12 @@
     },
     {
       "name": "scan-base.log",
+      "size_bytes": 5669
+    },
+    {
+      "name": "scan-grad.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2758521 2802742       43:37  0.4  0.0 python3\n2758524 2758521       43:37 47.8  0.5 jass\n2758526 2758521       43:37 51.9  0.9 scan_linux\n2758529 2758521       43:37  0.0  0.0 jass\n2802740       1    01:12:34  0.0  0.0 bash\n2802742 2802740    01:12:34  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2760614 2802742       04:00  0.4  0.0 python3\n2760617 2760614       04:00 48.4  0.5 jass\n2760620 2760614       04:00 51.3  0.9 scan_linux\n2760623 2760614       04:00  0.0  0.0 jass\n2802740       1    01:17:36  0.0  0.0 bash\n2802742 2802740    01:17:36  0.0  0.0 bash\n"
 }
