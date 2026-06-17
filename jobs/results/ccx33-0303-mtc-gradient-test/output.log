@@ -1,0 +1,20 @@
+BUILD OK
+=== (1) coverage ≤7 (150k) ===
+gen-egdb-wld: wrote 150000 / 150000 (83970 decisive, 66030 draw) in 279887 tries → /root/jass/jobs/results/ccx33-0303-mtc-gradient-test/artefacts.src/cov.jnnw
+=== (2) mtc-relabel → score = prob graduée ===
+egdb-mtc-relabel: 150000 records, score=prob*10000 (83970 egdb-graded incl. 58 MTC>=11, 66030 WDL-fallback) → train with --target prob → /root/jass/jobs/results/ccx33-0303-mtc-gradient-test/artefacts.src/cov-grad.jnnw
+=== (3) distribution du score (prob*10000) ===
+  prob target distribution: {'win(1.0)': 44046, 'loss(0.0)': 39866, 'draw(0.5)': 66030, 'win-graded(0.55-0.99)': 41, 'loss-graded(0.01-0.45)': 17}
+  win-graded: n=41 range[0.550..0.940] mean 0.827
+=== (4) train --target prob --loss logistic (petit, lowmem) ===
+wrote 150000 × 106 Scan-style extras to /root/jass/jobs/results/ccx33-0303-mtc-gradient-test/artefacts.src/featG
+TRAIN OK → grad.pjtw
+loss=LOGISTIC on PROB target (score/10000)  graded(non-0/0.5/1)=58  mean=0.499 std=0.374
+  train_loss=0.473571  iters=80  (26.85s)
+val/phase mse : deep-eg=2.7004(n15000)
+
+==========================================================
+   ccx33-0303 — VALIDATION chaîne gradient (mtc-relabel + --target prob)
+  distribution graduée présente + TRAIN OK → la chaîne est prête.
+  SUITE : vrai run gradient (coverage enrichie en ≥10-MTC + self-play) vs baseline → conversion.
+==========================================================
