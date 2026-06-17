@@ -1,0 +1,119 @@
+cumulatif 0297 = 3700000 positions
+=== relabel gradient (hybride proxy+MTC, défaut 0.12/0.04) ===
+mtc-relabel weights: ALPHA=0.12 GAMMA=0.04 BETA=0.03
+egdb-mtc-relabel: 3700000 records, score=prob*10000 (224028 egdb-graded incl. 148 MTC>=11, 3475972 WDL-fallback) → train with --target prob → /root/jass/jobs/results/cpx62-0306-gradient-train/artefacts.src/cum-grad.jnnw
+=== features (partagées : positions identiques) ===
+wrote 3700000 × 110 Scan-style extras to /root/jass/jobs/results/cpx62-0306-gradient-train/artefacts.src/feat
+=== BASE : logistic WDL (régime prod) ===
+  base endgame_mse=5.3885 Elo=+233.9 (852-10-218)
+=== GRAD : logistic --target prob (gradient conversion) ===
+  grad endgame_mse=3.7859 Elo=+214.4 (825-23-232)
+
+==========================================================
+   cpx62-0306 — GRADIENT de conversion greffé sur l'éval saturée 0297 (A/B même données)
+----------------------------------------------------------
+  BASE (WDL)        Elo_vs_hc=+233.9 (852-10-218)
+  --- autopsie BASE vs Scan ---
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 54 parties)
+================================================================
+  GLOBAL           n= 3515  accord=0.558  perte_moy=   0.75
+
+-- par PHASE --
+  opening          n= 1053  accord=0.525  perte_moy=   0.03
+  midgame          n=  734  accord=0.541  perte_moy=   0.07
+  late-mid         n=  580  accord=0.609  perte_moy=   0.12
+  endgame          n=  750  accord=0.588  perte_moy=   1.77
+  deep-eg          n=  398  accord=0.548  perte_moy=   2.91
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 2626  accord=0.560  perte_moy=   0.08
+  kings            n=  889  accord=0.553  perte_moy=   2.73
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening             0.03 (1053)                    —       —
+  midgame              0.07 (733)             0.00 (1)       —
+  late-mid             0.12 (521)            0.13 (59)    ×1.0
+  endgame              0.21 (298)           2.80 (452)   ×13.1
+  deep-eg               0.15 (21)           3.07 (377)   ×20.3
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 2737  accord=0.445  perte_moy=   0.85
+  capture-avail    n=  778  accord=0.955  perte_moy=   0.40
+
+-- par RÉSULTAT --
+  drawn            n=  100  accord=0.520  perte_moy=   0.11
+  lost             n= 3415  accord=0.559  perte_moy=   0.77
+
+-- 6 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g47 [lost ] deep-eg  K perte= 99.5      47-41 → 47-33      W:WK47:B32,K14
+  g33 [lost ] deep-eg  K perte= 94.8      47-42 → 47-41      W:W45,47:B14,24,K5
+  g10 [lost ] deep-eg  K perte= 93.9      18-22 → 30-35      B:W8,39,K41:B11,18,30
+  g26 [lost ] deep-eg  K perte= 91.9      21-26 → 31-36      B:W13,34,38,K10:B21,27,31
+  g54 [lost ] endgame  K perte= 91.9      40-44 → 21-27      B:W10,18,32,37,K3:B21,26,40
+  g31 [lost ] deep-eg  K perte= 91.7      44-39 → 44-40      W:W20,25,44:B4,8,37,K9
+      late-mid         n=  580  accord=0.609  perte_moy=   0.12
+      endgame          n=  750  accord=0.588  perte_moy=   1.77
+      deep-eg          n=  398  accord=0.548  perte_moy=   2.91
+      late-mid             0.12 (521)            0.13 (59)    ×1.0
+  Jass score rate: 0.009 (0.5 / 54)   ELO estimate:    -812 (95% CI ≈ ±109) 
+  GRAD (--target prob)  Elo_vs_hc=+214.4 (825-23-232)
+  --- autopsie GRAD vs Scan ---
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+================================================================
+  AUTOPSIE vs SCAN — où et combien on perd (oracle depth 11, 54 parties)
+================================================================
+  GLOBAL           n= 3458  accord=0.578  perte_moy=   0.90
+
+-- par PHASE --
+  opening          n=  998  accord=0.551  perte_moy=   0.03
+  midgame          n=  671  accord=0.554  perte_moy=   0.06
+  late-mid         n=  632  accord=0.604  perte_moy=   0.12
+  endgame          n=  705  accord=0.591  perte_moy=   1.77
+  deep-eg          n=  452  accord=0.615  perte_moy=   3.78
+
+-- par ROIS (global — CONFONDU avec la phase) --
+  no-kings         n= 2694  accord=0.574  perte_moy=   0.15
+  kings            n=  764  accord=0.592  perte_moy=   3.53
+
+-- PHASE × ROIS (isole la VRAIE part rois : comparer dans la MÊME phase) --
+  phase         no-king perte (n)       king perte (n)   ratio
+  opening              0.03 (998)                    —       —
+  midgame              0.06 (668)             0.03 (3)    ×0.5
+  late-mid             0.11 (618)            0.43 (14)    ×3.8
+  endgame              0.45 (372)           3.25 (333)    ×7.2
+  deep-eg               2.58 (38)           3.89 (414)    ×1.5
+  → si le ratio king/no-king reste GRAND dans une même phase = effet ROI réel ;
+    s'il tombe ~1 = le ×14 global était surtout l'effet PHASE (finale dure), pas les rois.
+
+-- par TACTIQUE --
+  quiet            n= 2635  accord=0.457  perte_moy=   1.02
+  capture-avail    n=  823  accord=0.966  perte_moy=   0.52
+
+-- par RÉSULTAT --
+  drawn            n=   83  accord=0.530  perte_moy=   0.10
+  lost             n= 3375  accord=0.579  perte_moy=   0.92
+
+-- 6 PIRES BÉVUES (FEN · notre coup → coup de Scan · phase · rois · perte) --
+  g40 [lost ] deep-eg  K perte= 95.1       8-12 → 24-29      B:W23,37,K45:B8,24,26,35
+  g35 [lost ] endgame  K perte= 94.7      24-15 → 24-13      W:W25,35,K24:B10,14,16,K47,K50
+  g24 [lost ] deep-eg  K perte= 93.5      13-18 → 13-19      B:W37,50,K15:B5,13
+  g21 [lost ] deep-eg  K perte= 91.9      22-18 → 22-33      W:WK22:B30,34,K37,K46
+  g29 [lost ] endgame  K perte= 91.9      32-27 → 28-23      W:W22,28,32,36:B7,9,42,K50
+  g50 [lost ] deep-eg  K perte= 91.8      14-28 → 14-41      B:W17,34,K29,K30:BK14
+      late-mid         n=  632  accord=0.604  perte_moy=   0.12
+      endgame          n=  705  accord=0.591  perte_moy=   1.77
+      deep-eg          n=  452  accord=0.615  perte_moy=   3.78
+      late-mid             0.11 (618)            0.43 (14)    ×3.8
+  Jass score rate: 0.009 (0.5 / 54)   ELO estimate:    -812 (95% CI ≈ ±109) 
+----------------------------------------------------------
+  endgame-rois(GRAD) < endgame-rois(BASE) + Elo ≈ ou > → le gradient AIDE la finale
+     (l'éval valorise mieux la conversion) → intégrer + sweep conversion autour de 0.12/0.04.
+  ≈ égal → le gradient hybride ne transfère pas → reconsidérer (DTW maison / cible plus forte).
+==========================================================
