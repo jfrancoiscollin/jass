@@ -46,6 +46,39 @@ git commit -m "queue smoke job 0001"
 git push
 ```
 
+## Compute budgeting — pre-flight (MANDATORY for match/train jobs)
+
+> **Lesson from 0307** (an 8h+ overrun on a measurement job that should have
+> taken ~3h, blocking the queue for a box-day): jobs that under-estimate their
+> own cost waste a whole machine. **Estimate before you launch.**
+
+Two rules:
+
+1. **Declare** the expected wall-clock in the header (`# expected_duration: ...`).
+2. **Pre-flight** the cost in-script with [`jobs/lib/preflight.sh`](../jobs/lib/preflight.sh):
+   it prints a wall-clock estimate and **aborts (exit 9) before doing any work**
+   if the estimate exceeds the cap (default 180 min). A runaway is then caught
+   in seconds, not hours.
+
+```bash
+source jobs/lib/preflight.sh
+preflight_build 4                       # 4 cmake builds
+preflight_train 3700000 4               # 4 logistic evals on 3.7M rows
+preflight_match $((PAIRS*2*COND)) 1.0 140   # games × movetime × ~plies
+preflight_check                         # prints TOTAL, aborts if > PREFLIGHT_CAP_MIN
+```
+
+Override when a long run is intentional: `PREFLIGHT_CAP_MIN=300` or
+`PREFLIGHT_FORCE=1`.
+
+**Match-volume caps (the 0307 trap).** For *measurement* matches keep it cheap:
+`pairs ≤ 4`, **cap `--max-plies` (≤ 160)** so drawn games don't drift to the ply
+limit, and prefer a low `movetime`. The cost of a match block is
+`games × movetime × avg_plies` seconds with `games = pairs × 2 × conditions` —
+e.g. `pairs=12 × 3 conditions × 1.0s × 140 plies ≈ 3.4h` (don't), vs
+`pairs=4 × 1 condition × 0.5s × 140 ≈ 9 min` (do). Run the heavy
+Scan-oracle autopsy on the **winning variant only**, not every arm.
+
 ## Reading results
 
 ```
