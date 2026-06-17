@@ -2782,6 +2782,127 @@ int run_benchmark_nnue_hybrid_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --book-audit: reconstruct a Scan-style book (JBK2) as a tree by BFS from the
+// start position — a position is "in book" iff its zobrist key is stored — and
+// report VOLUME/structure stats (ply histogram, branching, width, leaves). It
+// also writes two TSVs for the offline Scan-oracle quality check
+// (tools/book_audit_vs_scan.py): internal nodes with the book's recommended
+// move, and leaves with their stored score (for value calibration vs Scan).
+//
+// usage: jass --book-audit <book.jbk2> [out_prefix] [margin=30]
+// -----------------------------------------------------------------------------
+int run_book_audit_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --book-audit <book.jbk2> [out_prefix] [margin=30]\n";
+        return 1;
+    }
+    const char* book_path = argv[2];
+    const std::string prefix = (argc > 3) ? argv[3] : "book-audit";
+    const int margin = (argc > 4) ? parse_int_or(argv[4], 30) : 30;
+
+    ScanBook book;
+    if (!book.load(book_path)) {
+        std::cerr << "error: cannot load JBK2 book from " << book_path << "\n";
+        return 1;
+    }
+
+    const Position start = Position::start_position();
+    if (!book.contains(zobrist_hash(start))) {
+        std::cerr << "error: start position not in book — not a from-start tree?\n";
+        return 1;
+    }
+
+    std::ofstream moves_out(prefix + ".moves.tsv");
+    std::ofstream leaves_out(prefix + ".leaves.tsv");
+    moves_out  << "# fen\tbook_move\tscore\tn_children\tn_within_margin\tply\n";
+    leaves_out << "# fen\tscore\tply\n";
+
+    // BFS over in-book positions (a position is in book iff its key is stored).
+    std::unordered_map<ZobristHash, int> seen;     // key -> ply (dedup)
+    std::vector<std::pair<Position, int>> frontier;
+    frontier.push_back({start, 0});
+    seen[zobrist_hash(start)] = 0;
+
+    std::vector<long> ply_hist;
+    long internal = 0, leaves = 0, edges = 0, width_sum = 0;
+    int  max_ply = 0;
+    long root_width = 0;
+
+    std::size_t qi = 0;
+    while (qi < frontier.size()) {
+        const Position pos = frontier[qi].first;
+        const int ply      = frontier[qi].second;
+        ++qi;
+        if (ply >= static_cast<int>(ply_hist.size())) ply_hist.resize(ply + 1, 0);
+        ply_hist[ply]++;
+        max_ply = std::max(max_ply, ply);
+
+        MoveList ml;
+        generate_legal_moves(pos, ml);
+        struct Kid { Move m; int val; ZobristHash key; Position child; };
+        std::vector<Kid> kids;
+        for (const auto& m : ml) {
+            const Position child = pos.after(m);
+            const ZobristHash k = zobrist_hash(child);
+            if (auto s = book.score_of(k))
+                kids.push_back({m, -*s, k, child});      // negamax: our value = -child
+        }
+
+        if (kids.empty()) {                              // leaf (book frontier)
+            ++leaves;
+            const int sc = book.score_of(zobrist_hash(pos)).value_or(0);
+            leaves_out << pos.to_fen() << '\t' << sc << '\t' << ply << '\n';
+            continue;
+        }
+
+        ++internal;
+        edges += static_cast<long>(kids.size());
+        int best = kids[0].val;
+        for (const auto& k : kids) best = std::max(best, k.val);
+        int within = 0;
+        const Kid* top = &kids[0];
+        for (const auto& k : kids) {
+            if (k.val + margin >= best) ++within;
+            if (k.val > top->val) top = &k;
+        }
+        width_sum += within;
+        if (ply == 0) root_width = within;
+        moves_out << pos.to_fen() << '\t' << format_move(top->m) << '\t'
+                  << top->val << '\t' << kids.size() << '\t' << within
+                  << '\t' << ply << '\n';
+
+        for (const auto& k : kids) {
+            if (seen.find(k.key) == seen.end()) {
+                seen[k.key] = ply + 1;
+                frontier.push_back({k.child, ply + 1});
+            }
+        }
+    }
+
+    const long nodes = internal + leaves;
+    std::cout << "book-audit: " << book_path << "\n";
+    std::cout << "  positions stored : " << book.size() << "\n";
+    std::cout << "  reachable nodes  : " << nodes
+              << "  (internal=" << internal << ", leaves=" << leaves << ")\n";
+    std::cout << "  max ply          : " << max_ply << "\n";
+    std::cout << "  root width       : " << root_width
+              << " moves within " << margin << "cp of best (variety at move 1)\n";
+    if (internal > 0) {
+        std::cout << "  avg branching    : "
+                  << (static_cast<double>(edges) / internal) << " in-book children/internal\n";
+        std::cout << "  avg width        : "
+                  << (static_cast<double>(width_sum) / internal)
+                  << " near-best (<=" << margin << "cp) moves/internal\n";
+    }
+    std::cout << "  ply histogram (ply: nodes):\n";
+    for (std::size_t p = 0; p < ply_hist.size(); ++p)
+        std::cout << "    " << p << ": " << ply_hist[p] << "\n";
+    std::cout << "  wrote " << prefix << ".moves.tsv (" << internal
+              << " internal) and " << prefix << ".leaves.tsv ("
+              << leaves << " leaves)\n";
+    return 0;
+}
+
 // --gen-scan-book: build a Scan-style opening book by DROP-OUT BEST-FIRST
 // expansion (self-play). Starting from the initial position we grow a tree:
 // repeatedly descend from the root following the near-optimal moves (dropping
@@ -3355,6 +3476,7 @@ int main(int argc, char** argv) {
         else if (a == "--depth-at-movetime")        return run_depth_at_movetime_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--gen-scan-book")            return run_gen_scan_book_mode(argc, argv);
+        else if (a == "--book-audit")               return run_book_audit_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
