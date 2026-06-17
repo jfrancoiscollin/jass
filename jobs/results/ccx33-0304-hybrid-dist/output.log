@@ -1,0 +1,10 @@
+BUILD OK
+gen-egdb-wld: wrote 100000 / 100000 (55967 decisive, 44033 draw) in 186184 tries → /root/jass/jobs/results/ccx33-0304-hybrid-dist/artefacts.src/cov.jnnw
+egdb-mtc-relabel: 100000 records, score=prob*10000 (55967 egdb-graded incl. 33 MTC>=11, 44033 WDL-fallback) → train with --target prob → /root/jass/jobs/results/ccx33-0304-hybrid-dist/artefacts.src/cg.jnnw
+  total=100000  flat(0/0.5/1)=44033  GRADED=55967 (56.0%)
+  win-graded: n=29425 range[0.550..0.960] mean 0.938 std 0.030
+  histogramme (arrondi 0.1): {np.float64(0.0): 16651, np.float64(0.1): 9721, np.float64(0.2): 168, np.float64(0.3): 1, np.float64(0.4): 1, np.float64(0.5): 44033, np.float64(0.6): 9, np.float64(0.7): 4, np.float64(0.8): 466, np.float64(0.9): 12932, np.float64(1.0): 16014}
+
+==========================================================
+   ccx33-0304 — distribution hybride (GRADED ≫ 58 = le proxy comble le <10)
+==========================================================
