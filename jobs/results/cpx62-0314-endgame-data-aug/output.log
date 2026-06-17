@@ -1,0 +1,17 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] coverage ≤7p exacte (1500000): ≈ 10 min
+  [preflight] self-play 1500000 (egdb-perfect + ramp, ×16): ≈ 110 min
+  [preflight] TOTAL estimé ≈ 124 min  (cap 300 min)
+  [preflight] OK — sous le cap, lancement.
+=== coverage ≤7p exacte (1500000) ===
+gen-egdb-wld: wrote 1500000 / 1500000 (840553 decisive, 659447 draw) in 2796756 tries → /root/jass/jobs/results/cpx62-0314-endgame-data-aug/artefacts.src/cov.jnnw
+=== self-play (1500000, egdb-perfect + ramp late-mid=12,endgame=16, ×16) ===
+self-play shards: 16/16
+FUSION  total=6700000  (0297 base + coverage + self) → /root/jass/jobs/results/cpx62-0314-endgame-data-aug/artefacts.src/enriched-cumulative.jnnw
+PHASE   ≤7p=1926653 (28.8%)  ≤10p=2385697 (35.6%)  ≤12p=2700463 (40.3%)
+        (était ≤7p=11% dans 0297 ; cible enrichie ~30%)
+
+==========================================================
+   cpx62-0314 — cumulatif 0297 AUGMENTÉ en finale (LEAD 3)
+   enriched-cumulative.jnnw prêt sur cpx62 pour le run COMBINÉ king-features + phase-split.
+==========================================================
