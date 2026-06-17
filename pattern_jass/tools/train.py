@@ -635,7 +635,16 @@ def train_scan_eval(args):
     # units (not piece-units) — ranking-preserving for play; the material anchor
     # is disabled (it pins to piece-units, which would fight the logit scale).
     logistic = (getattr(args, 'loss', 'ls') == 'logistic')
-    if logistic:
+    if logistic and getattr(args, 'target', 'wdl') == 'prob':
+        # Conversion-gradient target : score field holds a STM-POV win-probability
+        # in [0,1] (×10000), written by `jass --egdb-mtc-relabel` — WDL {0,0.5,1}
+        # for most positions, MTC-graded in the endgame. Reproject to black-POV.
+        prob_stm = np.clip(ds.score.astype(np.float64) / 10000.0, 0.0, 1.0)
+        y_black = np.where(ds.stm == 1, prob_stm, 1.0 - prob_stm)
+        graded = int(((prob_stm > 0.0) & (prob_stm < 1.0) & (prob_stm != 0.5)).sum())
+        print(f'loss=LOGISTIC on PROB target (score/10000)  graded(non-0/0.5/1)={graded}'
+              f'  mean={y_black.mean():.3f} std={y_black.std():.3f}')
+    elif logistic:
         wdl_black = np.where(ds.stm == 1, ds.wdl.astype(np.float64),
                              -ds.wdl.astype(np.float64))
         y_black = (wdl_black + 1.0) * 0.5            # {-1,0,1} → {0,0.5,1}
@@ -960,7 +969,7 @@ def main():
                          'no non-linearity). cf jobs 0249/0250/0251/0252.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
-    ap.add_argument('--target', choices=['wdl', 'score'], default='wdl',
+    ap.add_argument('--target', choices=['wdl', 'score', 'prob'], default='wdl',
                     help='training target : "wdl" (ternary {-1,0,1}) or '
                          '"score" (centipawn clipped to ±2000 / 100 → piece units)')
     ap.add_argument('--score-clip', type=float, default=2000.0,

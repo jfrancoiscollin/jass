@@ -31,6 +31,7 @@
 #include <array>
 #include <charconv>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -1705,6 +1706,84 @@ int run_egdb_mtc_probe_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --egdb-mtc-relabel <in.jnnw> <wld_dir> <mtc_dir> [out] [cache_mb]
+// CONVERSION-GRADIENT labelling. Writes a continuous win-probability target into
+// each record's `score` field (as prob*10000), so training with `--target prob`
+// (logistic on score/10000) keeps the prod WDL regime for most positions but
+// gains a conversion gradient in the endgame:
+//   * <=7-piece WLD win/loss with an MTC distance d → prob graded by distance:
+//       win : 1 - BETA*max(0, d-10), clamped to [0.55, 1.0]   (closer = higher)
+//       loss: 0 + BETA*max(0, d-10), clamped to [0.0, 0.45]    (farther = less bad)
+//   * draw / out-of-WLD-range → fall back to the record's WDL byte (0/0.5/1).
+// MTC is only valid for win/loss, so we gate on the WLD probe first (egdb rule).
+// -----------------------------------------------------------------------------
+int run_egdb_mtc_relabel_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: --egdb-mtc-relabel <in.jnnw> <wld_dir> <mtc_dir> [out] [cache_mb]\n";
+        return 2;
+    }
+    const std::string in_path  = argv[2];
+    const std::string wld_dir  = argv[3];
+    const std::string mtc_dir  = argv[4];
+    const std::string out_path = (argc > 5) ? argv[5] : in_path;
+    const int cache = (argc > 6) ? parse_int_or(argv[6], 1024) : 1024;
+    if (!jass::egdb::init(wld_dir, cache))     { std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
+    if (!jass::egdb::init_mtc(mtc_dir, cache)) { std::cerr << "error: MTC init failed for '" << mtc_dir << "'\n"; return 1; }
+
+    constexpr double BETA = 0.03;   // prob units per ply beyond MTC_THRESHOLD(10)
+
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+        std::cerr << "error: " << in_path << " is not JNNW\n"; return 1; }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)),
+                          std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    long graded = 0, wld_decisive = 0, mtc_far = 0, fell_back = 0;
+    for (std::size_t i = 0; i < nrec; ++i) {
+        char* rec = buf.data() + i * 38;
+        const jass::Position p = position_from_record(rec);
+        const std::uint8_t stm = static_cast<std::uint8_t>(rec[32]);
+        const jass::EndgameResult wld = jass::egdb::probe(p);  // Unknown if out of WLD range
+        double prob;                                            // STM-POV win probability
+        if (wld == jass::EndgameResult::WhiteWin || wld == jass::EndgameResult::BlackWin) {
+            ++wld_decisive;
+            const int stm_wdl = wdl_from_result(wld, stm);     // +1 STM wins / -1 STM loses
+            const int d = jass::egdb::probe_mtc(p);            // 1 (<10) or actual >=10, -1 if N/A
+            const double pen = (d >= 10) ? (BETA * static_cast<double>(d - 10)) : 0.0;
+            if (d >= 11) ++mtc_far;
+            if (stm_wdl > 0) prob = std::max(0.55, 1.0 - pen);  // win
+            else             prob = std::min(0.45, 0.0 + pen);  // loss
+            ++graded;
+        } else {
+            // draw, or position outside the WLD db → keep the game-outcome WDL.
+            const std::int8_t w = static_cast<std::int8_t>(rec[37]);
+            prob = (w > 0) ? 1.0 : (w < 0) ? 0.0 : 0.5;
+            ++fell_back;
+        }
+        const std::int32_t s = static_cast<std::int32_t>(std::lround(prob * 10000.0));
+        std::memcpy(rec + 33, &s, 4);                          // score field = prob*10000
+    }
+    jass::egdb::shutdown();
+
+    std::ofstream o(out_path, std::ios::binary);
+    if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
+    o.write("JNNW", 4);
+    const std::uint32_t c32 = static_cast<std::uint32_t>(nrec);
+    o.write(reinterpret_cast<const char*>(&c32), 4);
+    o.write(buf.data(), static_cast<std::streamsize>(buf.size()));
+    o.close();
+
+    std::cout << "egdb-mtc-relabel: " << nrec << " records, score=prob*10000 ("
+              << graded << " egdb-graded incl. " << mtc_far << " MTC>=11, "
+              << fell_back << " WDL-fallback) → train with --target prob → " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --eval-position <net.pjtw> <fen> : load an eval (v1/v2 pattern or v3 Scan
 // eval) and print evaluate(pos) for the given Hub FEN. stm-POV centipawns.
 // Used to cross-check the Python trainer prediction against the playable C++
@@ -2980,6 +3059,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
+        else if (a == "--egdb-mtc-relabel")         return run_egdb_mtc_relabel_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {
             std::cout <<
