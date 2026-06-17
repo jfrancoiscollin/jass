@@ -125,6 +125,27 @@ inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME;
 // Game-stage normaliser : 20 men/side at the FMJD start = 40 pieces.
 inline constexpr int MAX_PIECES = 40;
 
+// Phase ramp endpoints (pieces). wmg ramps 0 (≤LO) → 1 (≥HI), weg = 1−wmg.
+// DEFAULT LO=0, HI=40 reproduces the legacy `wmg = pieces/40` blend EXACTLY.
+// A SHARPER ramp (e.g. LO=10, HI=24) lets the endgame (eg) bank specialise on
+// low-piece positions instead of being pulled 0.25 by every midgame position —
+// the phase CONFLICT 0310 measured (endgame fits far better when not co-fit
+// with midgame). A king-mobility/phase build MUST be evaluated AND trained with
+// the SAME endpoints (train.py --phase-lo/--phase-hi). Cf docs/SCAN_EVAL_DIFF.md.
+#ifndef JASS_PHASE_LO
+#define JASS_PHASE_LO 0
+#endif
+#ifndef JASS_PHASE_HI
+#define JASS_PHASE_HI 40
+#endif
+inline double phase_wmg(int pieces) noexcept {
+    constexpr double LO = static_cast<double>(JASS_PHASE_LO);
+    constexpr double HI = static_cast<double>(JASS_PHASE_HI);
+    const double denom = (HI > LO) ? (HI - LO) : 1.0;
+    const double w = (static_cast<double>(pieces) - LO) / denom;
+    return w < 0.0 ? 0.0 : (w > 1.0 ? 1.0 : w);
+}
+
 // Fast bitboard mobility (no movegen) : number of quiet destinations for
 // `c`'s men (one forward step) plus king slides (until first blocker).
 // Used identically by the feature dump and by evaluate().

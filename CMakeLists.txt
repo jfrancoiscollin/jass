@@ -127,6 +127,20 @@ if(JASS_KING_MOBILITY)
     message(STATUS "Jass: KING-MOBILITY extras ENABLED (+4 extras)")
 endif()
 
+# Phase ramp endpoints (pieces) for the mg/eg blend. Empty = default 0/40 (=
+# legacy pieces/40). A sharper ramp (e.g. 10/24) specialises the endgame bank
+# (cf 0310 phase conflict). MUST match train.py --phase-lo/--phase-hi.
+set(JASS_PHASE_LO "" CACHE STRING "phase ramp low (pieces); empty=default 0")
+set(JASS_PHASE_HI "" CACHE STRING "phase ramp high (pieces); empty=default 40")
+if(JASS_PHASE_LO)
+    add_compile_definitions(JASS_PHASE_LO=${JASS_PHASE_LO})
+    message(STATUS "Jass: phase ramp LO=${JASS_PHASE_LO}")
+endif()
+if(JASS_PHASE_HI)
+    add_compile_definitions(JASS_PHASE_HI=${JASS_PHASE_HI})
+    message(STATUS "Jass: phase ramp HI=${JASS_PHASE_HI}")
+endif()
+
 # External endgame database (Kingsrow egdb_intl). OFF → src/egdb_bridge.cpp
 # compiles to no-op stubs and the engine has ZERO external dependency. ON →
 # adapt Ed Gilbert's egdb_intl driver (https://github.com/eygilbert/egdb_intl)

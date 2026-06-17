@@ -329,8 +329,8 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
         ext_eg += static_cast<double>(w_.ext_eg[e]) * x;
     }
 
-    // Phase interpolation : wmg = stage/40, weg = 1 − wmg.
-    const double wmg = static_cast<double>(game_stage(pos)) / MAX_PIECES;
+    // Phase interpolation : sharpenable ramp (default = legacy stage/40).
+    const double wmg = phase_wmg(game_stage(pos));
     const double weg = 1.0 - wmg;
     const double eval_black = wmg * (pat_mg + ext_mg) + weg * (pat_eg + ext_eg);
 
