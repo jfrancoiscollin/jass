@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0303-mtc-gradient-test",
-  "script": "jobs/queue/ccx33-0303-mtc-gradient-test.sh",
-  "pid": 377685,
-  "started_at": "2026-06-17T06:05:30+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
