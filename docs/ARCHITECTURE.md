@@ -178,8 +178,9 @@ lever, not a missing-feature gap.
   throughout the game, not just in endgames. Sweep (0256/0259) was **monotone-increasing**:
   disabling NMP below 12 pieces = +29, below 36 (≈ everywhere) = **+97 Elo**. LMR is the
   opposite (`eg_no_lmr` = −13: LMR buys the depth the search-bound endgame needs → keep
-  it). Default = `eg_pieces=12, eg_no_nmp=true` (the higher threshold is being confirmed
-  at mt0.5, job 0262). `eg_pieces=0` is a true no-op (popcount short-circuited away).
+  it). Current tuned default = `eg_pieces=40, eg_no_nmp=true`: NMP is disabled
+  everywhere (40 >= the max piece count), while LMP/LMR stay enabled. `eg_pieces=0`
+  is a true no-op (popcount short-circuited away).
 
 > Consequence for eval work: at **equal nominal depth**, with sound alpha-beta +
 > quiescence, move quality is driven by the **leaf evaluation**, not by these

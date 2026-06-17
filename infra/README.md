@@ -85,10 +85,10 @@ Scan-oracle autopsy on the **winning variant only**, not every arm.
 jobs/results/<id>/
 ├── status.json         { state, exit_code, started_at, ended_at, host }
 ├── output.log          tail of stdout+stderr (max 1 MB)
-└── artefacts/          small files (< 50 MB each) the job produced
+└── artefacts/          small files (< 95 MB each) the job produced
 ```
 
-Files > 50 MB stay on the server (path noted in `status.json` under
+Files > 95 MB stay on the server (path noted in `status.json` under
 `artefacts_server_path`). For bigger artefacts, upload to object
 storage from inside the job script.
 
@@ -99,7 +99,7 @@ storage from inside the job script.
 systemctl status jass-runner.timer    # timer health
 systemctl status jass-runner.service  # last tick result
 journalctl -fu jass-runner.service    # live logs of the tick
-cat /root/jass/jobs/state/in-flight.json  # currently running job (if any)
+cat /root/jass/jobs/state/in-flight-<hostname>.json  # currently running job (if any)
 tail -f /root/jass/jobs/results/<id>/output.log.raw  # raw job output
 ```
 
@@ -156,9 +156,9 @@ normal exit-code path. To re-queue with a fix: edit the script, then
 
 ## Conventions
 
-- One job runs at a time (the runner reserves itself via
-  `jobs/state/in-flight.json`). Long jobs span many ticks; subsequent
-  ticks are no-ops until the in-flight process exits.
+- One job runs at a time per host (the runner reserves itself via
+  `jobs/state/in-flight-<hostname>.json`). Long jobs span many ticks;
+  subsequent ticks are no-ops until the in-flight process exits.
 - A queue entry is "done" iff `jobs/results/<id>/status.json` exists
   with `state` in `{completed, failed}`. Re-queue a failed job by
   deleting its result directory.
@@ -169,7 +169,7 @@ normal exit-code path. To re-queue with a fix: edit the script, then
 
 By default every runner picks every job in `jobs/queue/`. Running two
 or more hosts against the **same** repo without coordination causes
-races on `in-flight.json` and heartbeat commits — symptoms include
+races on `in-flight-<hostname>.json` and heartbeat commits — symptoms include
 "one host marks the other's running job as failed" and "every other
 heartbeat commit fails the push because the remote moved".
 
