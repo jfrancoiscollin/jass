@@ -1,0 +1,14 @@
+  [Scan-oracle init] init eval
+  [Scan-oracle] bb-size=0 (no bitbases — FAIR comparison)
+MOVE AGREEMENT vs Scan@depth13: 126/300 = 42.0%
+   ply  2: 2/4 = 50%
+   ply  3: 5/11 = 45%
+   ply  4: 26/44 = 59%
+   ply  5: 55/124 = 44%
+   ply  6: 27/73 = 37%
+   ply  7: 9/39 = 23%
+   ply  8: 2/5 = 40%
+   (>~85% = excellent ; <70% = book recommends moves Scan dislikes)
+LEAF VALUE CALIBRATION (n=192): spearman(book,scan)=0.844  sign-agreement=85%
+   potential traps (book>=+50cp but Scan<0): 0/192
+   (high spearman + high sign-agreement + few traps = sound valuations)

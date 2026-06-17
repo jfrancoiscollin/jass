@@ -1,0 +1,20 @@
+book-audit: /root/jass/jobs/results/ccx33-0307-scan-book-v1/artefacts.src/scan-book-v1.jbk2
+  positions stored : 40005
+  reachable nodes  : 40005  (internal=9568, leaves=30437)
+  max ply          : 10
+  root width       : 9 moves within 30cp of best (variety at move 1)
+  avg branching    : 6.14193 in-book children/internal
+  avg width        : 4.28428 near-best (<=30cp) moves/internal
+  ply histogram (ply: nodes):
+    0: 1
+    1: 9
+    2: 81
+    3: 445
+    4: 1774
+    5: 6419
+    6: 15476
+    7: 12463
+    8: 2562
+    9: 736
+    10: 39
+  wrote /root/jass/jobs/results/ccx33-0308-book-audit/artefacts.src/aud.moves.tsv (9568 internal) and /root/jass/jobs/results/ccx33-0308-book-audit/artefacts.src/aud.leaves.tsv (30437 leaves)
