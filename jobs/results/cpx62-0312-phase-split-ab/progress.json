@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0312-phase-split-ab",
-  "snapshot_at": "2026-06-17T18:45:13+00:00",
+  "snapshot_at": "2026-06-17T18:50:45+00:00",
   "started_at": "2026-06-17T18:08:57+00:00",
-  "elapsed_seconds": 2176,
+  "elapsed_seconds": 2508,
   "artefacts": [
     {
       "name": "ctrl-build.log",
@@ -61,9 +61,17 @@
       "size_bytes": 725
     },
     {
-      "name": "sharp2-train.log",
+      "name": "sharp2-elo.log",
       "size_bytes": 0
+    },
+    {
+      "name": "sharp2-train.log",
+      "size_bytes": 1354
+    },
+    {
+      "name": "sharp2.pjtw",
+      "size_bytes": 136049764
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2570611       1       36:16  0.0  0.0 bash\n2570613 2570611       36:16  0.0  0.0 bash\n2597937 2570613       06:33  677 42.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2570611       1       41:48  0.0  0.0 bash\n2570613 2570611       41:48  0.0  0.0 bash\n2598287 2570613       04:48  0.0  0.0 bash\n2598288 2598287       04:48 1210  0.6 jass\n"
 }
