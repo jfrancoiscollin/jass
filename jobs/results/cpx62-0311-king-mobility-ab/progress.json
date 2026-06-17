@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0311-king-mobility-ab",
-  "snapshot_at": "2026-06-17T16:32:47+00:00",
+  "snapshot_at": "2026-06-17T16:38:03+00:00",
   "started_at": "2026-06-17T15:41:06+00:00",
-  "elapsed_seconds": 3101,
+  "elapsed_seconds": 3417,
   "artefacts": [
     {
       "name": "base-build.log",
@@ -73,12 +73,20 @@
       "size_bytes": 121
     },
     {
-      "name": "kingpat-train.log",
+      "name": "kingpat-elo.log",
       "size_bytes": 0
+    },
+    {
+      "name": "kingpat-train.log",
+      "size_bytes": 1397
     },
     {
       "name": "kingpat.feat",
       "size_bytes": 1568800012
+    },
+    {
+      "name": "kingpat.pjtw",
+      "size_bytes": 136049764
     },
     {
       "name": "kmob-build.log",
@@ -109,5 +117,5 @@
       "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 491153 2598002       07:05  681 46.3 python3\n2598000       1       51:41  0.0  0.0 bash\n2598002 2598000       51:41  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 491506 2598002       05:02  0.0  0.0 bash\n 491507  491506       05:02 1206  0.6 jass\n2598000       1       56:56  0.0  0.0 bash\n2598002 2598000       56:56  0.0  0.0 bash\n"
 }
