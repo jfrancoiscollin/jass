@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0297-saturate-loop",
-  "snapshot_at": "2026-06-17T04:55:02+00:00",
+  "snapshot_at": "2026-06-17T05:00:02+00:00",
   "started_at": "2026-06-16T21:30:53+00:00",
-  "elapsed_seconds": 26649,
+  "elapsed_seconds": 26949,
   "artefacts": [
     {
       "name": "build.log",
@@ -27,6 +27,10 @@
     {
       "name": "elo-gen2.log",
       "size_bytes": 273
+    },
+    {
+      "name": "elo-gen3.log",
+      "size_bytes": 0
     },
     {
       "name": "feat0",
@@ -70,7 +74,11 @@
     },
     {
       "name": "gen3-train.log",
-      "size_bytes": 0
+      "size_bytes": 1425
+    },
+    {
+      "name": "gen3.pjtw",
+      "size_bytes": 136049796
     },
     {
       "name": "sp0-1.log",
@@ -329,5 +337,5 @@
       "size_bytes": 1469
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    07:24:08  0.0  0.0 bash\n1145535 1145533    07:24:08  0.0  0.0 bash\n2783858 1145535       00:53  688 29.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    07:29:08  0.0  0.0 bash\n1145535 1145533    07:29:08  0.0  0.0 bash\n2784171 1145535       00:47  0.0  0.0 bash\n2784173 2784171       00:47 1100  0.6 jass\n"
 }
