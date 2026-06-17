@@ -72,7 +72,8 @@ For a single search request the call chain is:
 ```
 caller
   └─ Engine::search(SearchLimits)              [engine.cpp]
-       ├─ Book::probe(pos)                     [book.cpp]      (early-out)
+       ├─ ScanBook::probe(pos)                 [scan_book.cpp] (early-out, if JBK2 loaded)
+       │   else Book::probe(pos)               [book.cpp]      (early-out)
        └─ jass::search(pos, lim, tt, history)  [search.cpp]
             ├─ probe_endgame(pos)              [endgame.cpp]   (root)
             ├─ for depth = 1 .. max_depth:
@@ -107,6 +108,27 @@ caller
             │      (window half-width adapts to recent score volatility)
             └─ extract_pv(pos, tt)              [search.cpp]   (after last iter)
 ```
+
+### Livre d'ouverture — deux saveurs
+
+Deux représentations cohabitent ; `Engine::load_book` auto-détecte le format
+au chargement (magic) et route le probe.
+
+- **Classique `Book`** ([book.cpp](../src/book.cpp), format **JBOK**) : table
+  zobrist→**un coup**. Construit par `--build-book` (search d'une liste de FEN)
+  ou `--build-book-from-moves` (fréquences master). Probe **déterministe**.
+- **`ScanBook` — à la Scan** ([scan_book.cpp](../src/scan_book.cpp), format
+  **JBK2**) : table zobrist→**score negamax remonté** de TOUTE position d'un
+  arbre d'ouverture. Probe = classe les coups par la valeur (negamax) de leur
+  *enfant*, garde ceux à ≤ `margin` du meilleur, **tirage softmax** (température
+  20, comme Scan) → soundness + variété. L'arbre est produit hors-ligne par
+  `--gen-scan-book` : **expansion best-first + drop-out** en self-play
+  (descendre les lignes quasi-optimales, développer une feuille = search
+  parallèle de ses enfants à `leaf_depth`, remonter les valeurs negamax ; une
+  ligne sous *best − drop_margin* « drop out »). `[eval.pjtw]` optionnel pour
+  bâtir le livre avec l'**éval de match** exacte. Mesure : A/B self-play
+  jass+livre vs jass-sans-livre (méthode 0029, indépendant de l'éval) +
+  vs Scan (ccx33-0307).
 
 `Position::after(Move)` (in [position.cpp](../src/position.cpp)):
 - removes the moving piece from its origin square,
