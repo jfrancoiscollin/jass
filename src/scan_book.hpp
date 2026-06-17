@@ -65,6 +65,12 @@ public:
     void put(ZobristHash key, int score);
 
     bool        contains(ZobristHash key) const { return scores_.count(key) != 0; }
+    // Backed-up score (centipawns, STM POV) for a key, or nullopt if absent.
+    std::optional<int> score_of(ZobristHash key) const {
+        const auto it = scores_.find(key);
+        if (it == scores_.end()) return std::nullopt;
+        return static_cast<int>(it->second);
+    }
     std::size_t size() const noexcept { return scores_.size(); }
 
     // Tunables. Defaults mirror Scan's standard-variant behaviour.
