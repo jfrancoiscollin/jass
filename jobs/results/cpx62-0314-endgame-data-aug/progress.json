@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0314-endgame-data-aug",
-  "snapshot_at": "2026-06-17T21:41:19+00:00",
+  "snapshot_at": "2026-06-17T21:46:33+00:00",
   "started_at": "2026-06-17T19:11:40+00:00",
-  "elapsed_seconds": 8979,
+  "elapsed_seconds": 9293,
   "artefacts": [
     {
       "name": "build.log",
@@ -18,15 +18,15 @@
     },
     {
       "name": "self-1.jnnw",
-      "size_bytes": 3513026
+      "size_bytes": 3562508
     },
     {
       "name": "self-1.log",
-      "size_bytes": 0
+      "size_bytes": 3584
     },
     {
       "name": "self-10.jnnw",
-      "size_bytes": 3348866
+      "size_bytes": 3471986
     },
     {
       "name": "self-10.log",
@@ -42,7 +42,7 @@
     },
     {
       "name": "self-12.jnnw",
-      "size_bytes": 3373490
+      "size_bytes": 3504818
     },
     {
       "name": "self-12.log",
@@ -50,7 +50,7 @@
     },
     {
       "name": "self-13.jnnw",
-      "size_bytes": 3373490
+      "size_bytes": 3513026
     },
     {
       "name": "self-13.log",
@@ -58,15 +58,15 @@
     },
     {
       "name": "self-14.jnnw",
-      "size_bytes": 3447362
+      "size_bytes": 3562508
     },
     {
       "name": "self-14.log",
-      "size_bytes": 0
+      "size_bytes": 3631
     },
     {
       "name": "self-15.jnnw",
-      "size_bytes": 3447362
+      "size_bytes": 3529442
     },
     {
       "name": "self-15.log",
@@ -74,15 +74,15 @@
     },
     {
       "name": "self-16.jnnw",
-      "size_bytes": 3521234
+      "size_bytes": 3562508
     },
     {
       "name": "self-16.log",
-      "size_bytes": 0
+      "size_bytes": 3586
     },
     {
       "name": "self-2.jnnw",
-      "size_bytes": 3332450
+      "size_bytes": 3447362
     },
     {
       "name": "self-2.log",
@@ -90,7 +90,7 @@
     },
     {
       "name": "self-3.jnnw",
-      "size_bytes": 3373490
+      "size_bytes": 3455570
     },
     {
       "name": "self-3.log",
@@ -98,7 +98,7 @@
     },
     {
       "name": "self-4.jnnw",
-      "size_bytes": 3357074
+      "size_bytes": 3439154
     },
     {
       "name": "self-4.log",
@@ -106,19 +106,19 @@
     },
     {
       "name": "self-5.jnnw",
-      "size_bytes": 3545858
+      "size_bytes": 3562508
     },
     {
       "name": "self-5.log",
-      "size_bytes": 0
+      "size_bytes": 3584
     },
     {
       "name": "self-6.jnnw",
-      "size_bytes": 3439154
+      "size_bytes": 3562508
     },
     {
       "name": "self-6.log",
-      "size_bytes": 0
+      "size_bytes": 3629
     },
     {
       "name": "self-7.jnnw",
@@ -130,20 +130,20 @@
     },
     {
       "name": "self-8.jnnw",
-      "size_bytes": 3488402
+      "size_bytes": 3562508
     },
     {
       "name": "self-8.log",
-      "size_bytes": 0
+      "size_bytes": 3584
     },
     {
       "name": "self-9.jnnw",
-      "size_bytes": 3455570
+      "size_bytes": 3562508
     },
     {
       "name": "self-9.log",
-      "size_bytes": 0
+      "size_bytes": 3584
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 526351       1    02:29:39  0.0  0.0 bash\n 526353  526351    02:29:39  0.0  0.0 bash\n 526903  526353    02:29:21 99.9  0.8 jass\n 526904  526353    02:29:21 99.9  0.8 jass\n 526905  526353    02:29:21 99.9  0.8 jass\n 526906  526353    02:29:21 99.9  0.8 jass\n 526907  526353    02:29:21 99.9  0.8 jass\n 526908  526353    02:29:21 99.9  0.8 jass\n 526910  526353    02:29:21 99.9  0.8 jass\n 526911  526353    02:29:21 99.9  0.8 jass\n 526912  526353    02:29:21 99.9  0.8 jass\n 526914  526353    02:29:21 99.9  0.8 jass\n 526915  526353    02:29:21 99.9  0.8 jass\n 526916  526353    02:29:21 99.9  0.8 jass\n 526917  526353    02:29:21 99.9  0.8 jass\n 526918  526353    02:29:21 99.9  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 526351       1    02:34:53  0.0  0.0 bash\n 526353  526351    02:34:53  0.0  0.0 bash\n 526904  526353    02:34:35 99.9  0.8 jass\n 526905  526353    02:34:35 99.9  0.8 jass\n 526906  526353    02:34:35 99.9  0.8 jass\n 526912  526353    02:34:35 99.9  0.8 jass\n 526914  526353    02:34:35 99.9  0.8 jass\n 526915  526353    02:34:35 99.9  0.8 jass\n 526917  526353    02:34:35 99.9  0.8 jass\n"
 }
