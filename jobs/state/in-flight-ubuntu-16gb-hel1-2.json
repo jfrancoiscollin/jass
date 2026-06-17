@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0304-hybrid-dist",
+  "script": "jobs/queue/ccx33-0304-hybrid-dist.sh",
+  "pid": 378521,
+  "started_at": "2026-06-17T06:15:37+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
