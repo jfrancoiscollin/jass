@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0315-mtc-regret-validate",
+  "script": "jobs/queue/cpx62-0315-mtc-regret-validate.sh",
+  "pid": 533928,
+  "started_at": "2026-06-17T21:52:17+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
