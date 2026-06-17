@@ -12,6 +12,7 @@
 
 #include "book.hpp"
 #include "position.hpp"
+#include "scan_book.hpp"
 #include "search.hpp"
 #include "tt.hpp"
 #include "types.hpp"
@@ -93,6 +94,10 @@ private:
     TranspositionTable       tt_;
     std::vector<ZobristHash> hash_history_;
     Book                     book_;
+    // Scan-style book, populated only when a JBK2 file is loaded. When
+    // active it takes precedence over the classic `book_` at probe time.
+    ScanBook                 scan_book_;
+    bool                     scan_book_active_{false};
     bool                     use_book_{true};
     const INetwork*          nnue_{nullptr};
 };

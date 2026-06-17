@@ -6,6 +6,8 @@
 #include "movegen.hpp"
 #include "zobrist.hpp"
 
+#include <optional>
+
 namespace jass {
 
 namespace {
@@ -62,7 +64,9 @@ SearchResult Engine::search(int max_depth) {
 
 SearchResult Engine::search(const SearchLimits& limits) {
     if (use_book_) {
-        if (auto bm = book_.probe(pos_); bm) {
+        std::optional<Move> bm = scan_book_active_ ? scan_book_.probe(pos_)
+                                                   : book_.probe(pos_);
+        if (bm) {
             SearchResult r;
             r.best_move = *bm;
             r.score     = 0;
@@ -86,11 +90,19 @@ SearchResult Engine::search(const SearchLimits& limits) {
 }
 
 bool Engine::load_book(std::string_view path) {
+    // Auto-detect the format: a JBK2 file is accepted only by the Scan-style
+    // loader and a JBOK file only by the classic loader, so trying the Scan
+    // loader first cleanly routes each format to the right table.
+    if (scan_book_.load(path)) {
+        scan_book_active_ = true;
+        return true;
+    }
+    scan_book_active_ = false;
     return book_.load(path);
 }
 
 std::size_t Engine::book_size() const noexcept {
-    return book_.size();
+    return scan_book_active_ ? scan_book_.size() : book_.size();
 }
 
 void Engine::clear_tt() noexcept {
