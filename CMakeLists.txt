@@ -131,6 +131,15 @@ if(JASS_KING_MOBILITY)
     message(STATUS "Jass: KING-MOBILITY extras ENABLED (+4 extras)")
 endif()
 
+# Drawish-material draw-scaling (Scan's one non-linear eval term) : shrink the
+# score toward a draw in unwinnable K-vs-few / near-equal endgames. Play-time
+# only (not trained). See src/scan_eval.cpp + docs/SCAN_EVAL_DIFF.md.
+option(JASS_DRAWISH_SCALING "Scale eval toward draw in drawish material endgames (Scan)" OFF)
+if(JASS_DRAWISH_SCALING)
+    add_compile_definitions(JASS_DRAWISH_SCALING=1)
+    message(STATUS "Jass: DRAWISH SCALING ENABLED")
+endif()
+
 # Phase ramp endpoints (pieces) for the mg/eg blend. Empty = default 0/40 (=
 # legacy pieces/40). A sharper ramp (e.g. 10/24) specialises the endgame bank
 # (cf 0310 phase conflict). MUST match train.py --phase-lo/--phase-hi.
