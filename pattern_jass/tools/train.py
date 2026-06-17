@@ -139,6 +139,13 @@ def piece_count(ds) -> np.ndarray:
     return bits.sum(axis=1)
 
 
+def phase_wmg(pc: np.ndarray, lo: float, hi: float) -> np.ndarray:
+    """Midgame weight from piece count, ramp 0 (≤lo) → 1 (≥hi). Must match the
+    C++ scan_eval::phase_wmg EXACTLY. lo=0,hi=40 reproduces the legacy pc/40."""
+    denom = (hi - lo) if hi > lo else 1.0
+    return np.clip((pc - lo) / denom, 0.0, 1.0)
+
+
 # Phase boundaries by piece count, IDENTICAL to tools/game_autopsy.py and
 # tools/phase_proxy.py so the training reweighting lines up with the microscopes
 # that measure where the eval bleeds. Used by --phase-weight to over/under-weight
@@ -653,11 +660,12 @@ def train_scan_eval(args):
         print(f'loss=LOGISTIC on WDL outcomes  win={np_} draw={nz} loss={nn} '
               f'({100*nz/ds.n_records:.1f}% draws)')
 
-    # Game stage : piece count / 40 (matches scan_eval::game_stage).
+    # Game stage : sharpenable ramp (matches scan_eval::phase_wmg).
     pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
-    wmg = pc / 40.0
+    wmg = phase_wmg(pc, args.phase_lo, args.phase_hi)
     weg = 1.0 - wmg
-    print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}')
+    print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}'
+          f'  (ramp {args.phase_lo}/{args.phase_hi})')
 
     # Row selection : drop extreme teacher scores (the ±9989 "won/lost"
     # verdicts whose squared loss dominates the least-squares fit and poisons
@@ -1073,6 +1081,12 @@ def main():
                     help='train 2 weight banks (mg/eg) interpolated by piece '
                          'count → PJTW v2. Rend le pattern game-stage aware '
                          '(comme Scan), lève le plafond mono-phase.')
+    ap.add_argument('--phase-lo', type=float, default=0.0,
+                    help='phase ramp low (pieces): wmg=0 at/below this. Default 0 '
+                         '(=legacy pc/40). MUST match the C++ build -DJASS_PHASE_LO.')
+    ap.add_argument('--phase-hi', type=float, default=40.0,
+                    help='phase ramp high (pieces): wmg=1 at/above this. Default 40. '
+                         'Sharper (e.g. 10/24) specialises the endgame bank (0310).')
     ap.add_argument('--king-features', action='store_true',
                     help='FIT-CHECK only : append 100 king-PST one-hot features '
                          '(the men-only patterns are blind to kings). The '
@@ -1182,7 +1196,7 @@ def main():
     out_version = WEIGHTS_VERSION
     if args.phase_split:
         pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
-        wmg = pc / 40.0
+        wmg = phase_wmg(pc, args.phase_lo, args.phase_hi)
         weg = 1.0 - wmg
         print(f'phase-split : piece-count mean={pc.mean():.1f}  '
               f'wmg mean={wmg.mean():.3f} (1=tout midgame, 0=tout endgame)')
