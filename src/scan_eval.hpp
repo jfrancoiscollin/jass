@@ -97,9 +97,29 @@ inline constexpr int EXTRA_BK_CENTRAL   = 106;  // Σ black-king centralisation
 inline constexpr int EXTRA_WK_CENTRAL   = 107;  // Σ white-king centralisation
 inline constexpr int EXTRA_BK_PROX      = 108;  // Σ black-king proximity to white pieces
 inline constexpr int EXTRA_WK_PROX      = 109;  // Σ white-king proximity to black pieces
-inline constexpr int NUM_EXTRAS         = 110;
+inline constexpr int EXTRAS_AFTER_ENDGAME = 110;
 #else
-inline constexpr int NUM_EXTRAS         = 106;
+inline constexpr int EXTRAS_AFTER_ENDGAME = 106;
+#endif
+
+// King-MOBILITY / CONFINEMENT (gated; -DJASS_KING_MOBILITY). The base mobility
+// extras [102/103] LUMP men-steps with king-slides into one raw number per side,
+// so the trainer cannot weight KING mobility distinctly — and there is no
+// confinement signal. Scan's `king_mob` (king-specific, denial-aware) is exactly
+// what drives its conversion in king endgames WITHOUT any MTC (cf
+// docs/SCAN_EVAL_DIFF.md, LEAD 1). Here we SEPARATE king-slide mobility per side
+// (the eval can then learn "maximise my king mobility, minimise the enemy's" =
+// confinement gradient, structural & linear) plus a trapped-king count (the
+// extreme). v1 uses raw slide mobility (blocked diagonals already capture most
+// confinement); a safety/denial refinement is a follow-up if v1 transfers.
+#ifdef JASS_KING_MOBILITY
+inline constexpr int EXTRA_BK_KMOB  = EXTRAS_AFTER_ENDGAME + 0;  // black king slide mobility
+inline constexpr int EXTRA_WK_KMOB  = EXTRAS_AFTER_ENDGAME + 1;  // white king slide mobility
+inline constexpr int EXTRA_BK_KTRAP = EXTRAS_AFTER_ENDGAME + 2;  // # black kings with 0 slides
+inline constexpr int EXTRA_WK_KTRAP = EXTRAS_AFTER_ENDGAME + 3;  // # white kings with 0 slides
+inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME + 4;
+#else
+inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME;
 #endif
 
 // Game-stage normaliser : 20 men/side at the FMJD start = 40 pieces.
