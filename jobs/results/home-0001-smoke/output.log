@@ -1,0 +1,32 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] TOTAL estimé ≈ 4 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== host ===
+hostname : User
+nproc    : 16
+cpu      : AMD Ryzen 7 PRO 4750U with Radeon Graphics
+mem      : 15.2 GiB
+kernel   : 6.18.33.1-microsoft-standard-WSL2   (WSL si 'microsoft' présent)
+wsl?     : OUI
+=== build jass (Release) ===
+BUILD FAIL
+      |                                           ^~~~~~
+/root/jass/src/scan_eval.cpp:250:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  250 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |             ^~
+/root/jass/src/scan_eval.cpp:250:64: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  250 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |                                                                ^~~~~~
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:233:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  233 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:234:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  234 |                 : accumulators[ply].black;
+      |                                ^~~
+/tmp/ccTP7o6a.s: Assembler messages:
+Error: can't open /tmp/ccTP7o6a.s for reading: No such file or directory
+gmake[3]: *** [CMakeFiles/jass_lib.dir/build.make:331: CMakeFiles/jass_lib.dir/src/bitbase.cpp.o] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:93: CMakeFiles/jass_lib.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:132: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:147: jass] Error 2
