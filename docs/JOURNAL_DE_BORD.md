@@ -12,7 +12,37 @@
 
 ---
 
-## 0. Dernier verdict — 2026-06-16 (BITBASE egdb + outils self-play exact)
+## 0. Dernier verdict — 2026-06-17 (saturation apparente + gradient mort + PRINCIPE)
+
+> ## ⛔ PRINCIPE DIRECTEUR — NON NÉGOCIABLE (redit par JFC, 2026-06-17)
+> **On a la MÊME architecture que Scan (éval LINÉAIRE sur patterns). On DOIT donc
+> pouvoir l'égaler DANS la classe linéaire. Le gap n'est PAS un manque de capacité :
+> c'est quelque chose qui nous MANQUE** (d'abord les **patterns/features de
+> finale-rois** — Scan capture la conversion via ses patterns ; puis l'**équilibre
+> d'entraînement** finale/midgame ; puis la **recherche**). **INTERDIT de reproposer
+> FM/MLP** tant que la voie linéaire n'est pas *prouvée épuisée* (= on a trouvé et
+> corrigé ce qui manque, pas « le loop plafonne »). Détail : [ARBRE_DECISION.md](ARBRE_DECISION.md).
+
+**Faits établis (à ne pas re-litiger) :**
+
+- **0297 (saturer le linéaire, 6 gen) — AUCUN GAIN + le loop RÉGRESSE.** gen6 60p vs hc
+  **+234** (= 0287/0276) ; vs Scan **−800** (0/54) ; endgame-rois deep-eg **3.06** — le loop
+  6-gen **perd le 2.04 du depth-ramp 1-gen 0293**. Elo culmine gen1-3 (+253)→↘+194 ;
+  endgame_mse ↑ 1.8→5.4. → *apparente* saturation, **mais voir le principe : c'est un
+  indice qu'il manque quelque chose, pas une preuve.**
+- **0306 (gradient conversion proxy+MTC) — NE TRANSFÈRE PAS.** Cible mieux ajustée
+  (endgame_mse 5.39→3.79) mais **joue la finale plus mal** (deep-eg 2.91→3.78, Elo −20,
+  vs Scan inchangé). Cause : **148 vrais signaux MTC sur 3,7 M** (99,9 % proxy
+  matériel/centralité → mauvais maître). **Gradient-cible = cul-de-sac.**
+- **0309/0310 (diagnostic du drift)** : **0 contradiction ≤7p** (labels exacts PROPRES, pas de
+  bug). ≤7p = **11.3 %** des données → forte présomption que **la finale est écrasée 9:1 par le
+  midgame** dans le fit linéaire partagé (→ re-pondérer / phase-split, **2.04 récupérable**).
+  `0310` mesure le plancher `endgame_mse` du linéaire sur **finales-seules** (le vrai test :
+  bas = c'est l'équilibre des données, PAS la classe ; haut = il manque un pattern de finale).
+- **Livre d'ouverture à la Scan** codé (drop-out best-first + probe marge/softmax, format JBK2)
+  + audit (structure + Scan-oracle). Runtime JBOK déjà sain (0029). Mesure : 0307/0308.
+
+## 0bis. Verdict précédent — 2026-06-16 (BITBASE egdb + outils self-play exact)
 
 **Faits établis (à ne pas re-litiger) :**
 

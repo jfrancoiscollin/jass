@@ -10,6 +10,29 @@
 
 ---
 
+## ⛔ PRINCIPE DIRECTEUR — NON NÉGOCIABLE (acté 2026-06-17, redit par JFC)
+
+> **On a EXACTEMENT la même architecture que Scan : une éval LINÉAIRE sur patterns.
+> Donc on DOIT pouvoir atteindre son niveau DANS la classe linéaire.**
+>
+> **Le gap vs Scan n'est PAS un manque de capacité. C'est quelque chose qui nous
+> MANQUE dans le setup linéaire** — le plus probable : **les bons PATTERNS/features
+> de finale-rois** (Scan capture l'opposition / le confinement / la conversion *via
+> son jeu de patterns*, pas via de la non-linéarité), puis l'**équilibre/cible
+> d'entraînement** (finale écrasée par le midgame), la **recherche**, la
+> **présentation des données**.
+>
+> **INTERDIT de reproposer FM / MLP / toute non-linéarité** tant que la voie linéaire
+> n'est pas **prouvée épuisée** — et « épuisée » veut dire : *on a identifié CE QUI
+> MANQUE et on l'a corrigé*, pas « le loop plafonne ». Un plafond de loop = un
+> indice qu'il manque quelque chose, **pas** une preuve de saturation de classe.
+>
+> Quand un job dit « endgame_mse ne descend pas » → la question n'est JAMAIS
+> « faut-il un MLP ? » mais **« quel pattern/feature/poids manque pour que le
+> LINÉAIRE le capture, comme Scan ? »**.
+
+---
+
 ## 🟢 Branche ACTIVE 2026-06-16 — verrou finale par bitbase egdb exacte
 
 📍 **Position** : bitbase egdb **scellée** (WLD 2→7, 164/164) → on attaque le verrou
