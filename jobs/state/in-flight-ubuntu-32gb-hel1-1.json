@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0312-phase-split-ab",
+  "script": "jobs/queue/cpx62-0312-phase-split-ab.sh",
+  "pid": 2570611,
+  "started_at": "2026-06-17T18:08:57+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
