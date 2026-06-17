@@ -64,6 +64,27 @@ int king_slide_mobility(Bitboard kings, Bitboard empty) noexcept {
     return count;
 }
 
+// Set (not count) of empty squares a king can slide to (union over 4 diagonals).
+Bitboard king_reach(Bitboard kings, Bitboard empty) noexcept {
+    Bitboard reach = 0;
+    for (const ShiftFn shift : ALL_SHIFTS) {
+        Bitboard frontier = shift(kings) & empty;
+        while (frontier) { reach |= frontier; frontier = shift(frontier) & empty; }
+    }
+    return reach;
+}
+
+// Squares attacked by `men` = squares x where an enemy man could capture a king
+// on x : a man sits diagonally adjacent on one side (x+d) and the square beyond
+// (x−d) is empty, for any of the 4 diagonals (FMJD men capture forward & back).
+// attacked_d = shift_{−d}(men) & shift_{+d}(empty), OR'd over the 4 directions.
+Bitboard man_attacks(Bitboard men, Bitboard empty) noexcept {
+    return (shift_se(men) & shift_nw(empty))
+         | (shift_sw(men) & shift_ne(empty))
+         | (shift_ne(men) & shift_sw(empty))
+         | (shift_nw(men) & shift_se(empty));
+}
+
 float lr_balance(Bitboard men) noexcept {
     int left = 0, right = 0;
     for (Bitboard b = men; b; ) {
@@ -154,23 +175,18 @@ void compute_extras(const Position& pos,
 #endif
 
 #ifdef JASS_KING_MOBILITY
-    // Direction LEAD-1 : king-specific mobility + confinement (Scan's king_mob).
+    // Scan's king_mob (audit-faithful) : split each king's empty slide squares
+    // into SAFE (not attacked by an enemy man) and DENIED (attacked → the king
+    // would be capturable there). The denial count is the confinement gradient.
     const Bitboard empty_km = pos.empties();
-    out[EXTRA_BK_KMOB] = static_cast<float>(king_slide_mobility(pos.black_kings(), empty_km));
-    out[EXTRA_WK_KMOB] = static_cast<float>(king_slide_mobility(pos.white_kings(), empty_km));
-    auto trapped_count = [&](Bitboard kings) -> int {
-        int t = 0;
-        for (Bitboard b = kings; b; ) {
-            const Bitboard k = Bitboard{1} << square_to_bit(pop_lsb(b));
-            bool any = false;
-            for (const ShiftFn sh : ALL_SHIFTS)
-                if (sh(k) & empty_km) { any = true; break; }
-            if (!any) ++t;
-        }
-        return t;
-    };
-    out[EXTRA_BK_KTRAP] = static_cast<float>(trapped_count(pos.black_kings()));
-    out[EXTRA_WK_KTRAP] = static_cast<float>(trapped_count(pos.white_kings()));
+    const Bitboard watt = man_attacks(pos.white_men(), empty_km);  // squares attacked by WHITE men
+    const Bitboard batt = man_attacks(pos.black_men(), empty_km);  // squares attacked by BLACK men
+    const Bitboard bkr  = king_reach(pos.black_kings(), empty_km);
+    const Bitboard wkr  = king_reach(pos.white_kings(), empty_km);
+    out[EXTRA_BK_SAFEMOB] = static_cast<float>(popcount(bkr & ~watt));
+    out[EXTRA_WK_SAFEMOB] = static_cast<float>(popcount(wkr & ~batt));
+    out[EXTRA_BK_DENIED]  = static_cast<float>(popcount(bkr & watt));
+    out[EXTRA_WK_DENIED]  = static_cast<float>(popcount(wkr & batt));
 #endif
     // NB: the 1st batch of structural extras (king-mob/back-rank/advancement,
     // 106->112) regressed on the v5 base and AGAIN on the clean v4 base (0172:

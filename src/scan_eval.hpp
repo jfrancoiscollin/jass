@@ -102,22 +102,19 @@ inline constexpr int EXTRAS_AFTER_ENDGAME = 110;
 inline constexpr int EXTRAS_AFTER_ENDGAME = 106;
 #endif
 
-// King-MOBILITY / CONFINEMENT (gated; -DJASS_KING_MOBILITY). The base mobility
-// extras [102/103] LUMP men-steps with king-slides into one raw number per side,
-// so the trainer cannot weight KING mobility distinctly — and there is no
-// confinement signal. Scan's `king_mob` (king-specific, denial-aware) is exactly
-// what drives its conversion in king endgames WITHOUT any MTC (cf
-// docs/SCAN_EVAL_DIFF.md, LEAD 1). Here we SEPARATE king-slide mobility per side
-// (the eval can then learn "maximise my king mobility, minimise the enemy's" =
-// confinement gradient, structural & linear) plus a trapped-king count (the
-// extreme). v1 uses raw slide mobility (blocked diagonals already capture most
-// confinement); a safety/denial refinement is a follow-up if v1 transfers.
+// King-MOBILITY / CONFINEMENT (gated; -DJASS_KING_MOBILITY) — Scan's `king_mob`,
+// faithful version (exhaustive Scan eval audit, 2026-06-17). Scan splits each
+// king's empty slide squares into SAFE (not attacked by an enemy MAN) and DENIED
+// (attacked = the king would be capturable there), per side. The DENIAL signal is
+// the confinement/conversion gradient — and it was ABSENT from the v1 raw-slide
+// version. SAFEMOB ↑ own / DENIED ↑ enemy = squeezing the enemy king. 4 features:
+// own-king safe slides + enemy-denied slides, per colour. See SCAN_EVAL_DIFF.md.
 #ifdef JASS_KING_MOBILITY
-inline constexpr int EXTRA_BK_KMOB  = EXTRAS_AFTER_ENDGAME + 0;  // black king slide mobility
-inline constexpr int EXTRA_WK_KMOB  = EXTRAS_AFTER_ENDGAME + 1;  // white king slide mobility
-inline constexpr int EXTRA_BK_KTRAP = EXTRAS_AFTER_ENDGAME + 2;  // # black kings with 0 slides
-inline constexpr int EXTRA_WK_KTRAP = EXTRAS_AFTER_ENDGAME + 3;  // # white kings with 0 slides
-inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME + 4;
+inline constexpr int EXTRA_BK_SAFEMOB = EXTRAS_AFTER_ENDGAME + 0;  // black king SAFE slide squares
+inline constexpr int EXTRA_WK_SAFEMOB = EXTRAS_AFTER_ENDGAME + 1;  // white king SAFE slide squares
+inline constexpr int EXTRA_BK_DENIED  = EXTRAS_AFTER_ENDGAME + 2;  // black king slides DENIED (attacked by white men)
+inline constexpr int EXTRA_WK_DENIED  = EXTRAS_AFTER_ENDGAME + 3;  // white king slides DENIED (attacked by black men)
+inline constexpr int NUM_EXTRAS       = EXTRAS_AFTER_ENDGAME + 4;
 #else
 inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME;
 #endif
