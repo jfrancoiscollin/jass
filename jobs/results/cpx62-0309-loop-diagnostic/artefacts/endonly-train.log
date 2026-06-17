@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/cpx62-0309-loop-diagnostic/artefacts.src/endonly
+Traceback (most recent call last):
+  File "/root/jass/pattern_jass/tools/train.py", line 1234, in <module>
+    main()
+    ~~~~^^
+  File "/root/jass/pattern_jass/tools/train.py", line 1120, in main
+    return train_scan_eval(args)
+  File "/root/jass/pattern_jass/tools/train.py", line 558, in train_scan_eval
+    ds = master_loader.load(args.data, max_records=args.max_records)
+  File "/root/jass/pattern_jass/tools/master_loader.py", line 45, in load
+    raw = Path(path).read_bytes()
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 778, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 772, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/root/jass/jobs/results/cpx62-0309-loop-diagnostic/artefacts.src/endonly'
