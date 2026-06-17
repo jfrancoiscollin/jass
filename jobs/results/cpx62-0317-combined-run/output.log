@@ -1,0 +1,7 @@
+  [preflight] build ×4 ≈ 16 min
+  [preflight] train: 4 × 6700000 lignes @ 4min/M ≈ 107.2 min
+  [preflight] 4× (mtc-regret + Elo): ≈ 40 min
+  [preflight] TOTAL estimé ≈ 163.2 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+dataset enrichi: 6700000 lignes ;   <=7p  :  1926653 ( 28.76%)   <=12p :  2700463 ( 40.31%)   duplicated keys         : 246730 (<=7p 101103, >7p 145627)   duplicate extra records : 607772 (<=7p 120335, >7p 487437)   WDL contradictions (keys): 101582 (<=7p 0, >7p 101582) 
+=== ctrl  (endg, rampe 0/40) ===

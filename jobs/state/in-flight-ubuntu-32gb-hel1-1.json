@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0317-combined-run",
-  "script": "jobs/queue/cpx62-0317-combined-run.sh",
-  "pid": 535652,
-  "started_at": "2026-06-17T22:40:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
