@@ -1,0 +1,149 @@
+{
+  "job_id": "cpx62-0314-endgame-data-aug",
+  "snapshot_at": "2026-06-17T19:16:40+00:00",
+  "started_at": "2026-06-17T19:11:40+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 24845
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 885
+    },
+    {
+      "name": "cov.jnnw",
+      "size_bytes": 57000008
+    },
+    {
+      "name": "self-1.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "self-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-10.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "self-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-11.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "self-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-12.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "self-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-13.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "self-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-14.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "self-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-15.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-16.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "self-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-2.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "self-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-3.jnnw",
+      "size_bytes": 90290
+    },
+    {
+      "name": "self-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-4.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "self-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-5.jnnw",
+      "size_bytes": 123122
+    },
+    {
+      "name": "self-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-6.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "self-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-7.jnnw",
+      "size_bytes": 123122
+    },
+    {
+      "name": "self-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-8.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "self-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "self-9.jnnw",
+      "size_bytes": 114914
+    },
+    {
+      "name": "self-9.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 526351       1       05:00  0.0  0.0 bash\n 526353  526351       05:00  0.0  0.0 bash\n 526903  526353       04:42 99.9  0.8 jass\n 526904  526353       04:42 99.9  0.8 jass\n 526905  526353       04:42 99.9  0.8 jass\n 526906  526353       04:42 99.9  0.8 jass\n 526907  526353       04:42 99.9  0.8 jass\n 526908  526353       04:42 99.9  0.8 jass\n 526909  526353       04:42 99.9  0.8 jass\n 526910  526353       04:42 99.9  0.8 jass\n 526911  526353       04:42 99.9  0.8 jass\n 526912  526353       04:42 99.9  0.8 jass\n 526913  526353       04:42 99.9  0.8 jass\n 526914  526353       04:42 99.9  0.8 jass\n 526915  526353       04:42 99.9  0.8 jass\n 526916  526353       04:42 99.9  0.8 jass\n 526917  526353       04:42 99.8  0.8 jass\n 526918  526353       04:42 99.8  0.8 jass\n"
+}
