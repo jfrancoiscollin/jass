@@ -1,0 +1,22 @@
+réutilise les splits de 0309
+=== FULL ===
+  FULL         endgame_mse=5.3885  Elo_vs_hc=+222.3
+=== NO-ENDGAME (>7p) ===
+  NO-ENDGAME   endgame_mse=7.6776  Elo_vs_hc=+268.3
+=== ENDGAME-ONLY (≤7p, labels exacts) ===
+  ENDGAME-ONLY endgame_mse=  Elo_vs_hc=-99.1
+
+==========================================================
+   cpx62-0310 — DIAGNOSTIC du drift 0297 (reprise, ablation complète)
+   rappel 0309 : 0 contradiction ≤7p (labels exacts propres) ; ≤7p=11.3% des données.
+----------------------------------------------------------
+  FULL         : mse=5.3885  Elo=+222.3
+  NO-ENDGAME   : mse=7.6776  Elo=+268.3
+  ENDGAME-ONLY : mse=  Elo=-99.1
+----------------------------------------------------------
+  ENDGAME-ONLY endgame_mse HAUT (le linéaire ne descend pas même sur finales-seules)
+     → SATURATION représentationnelle CONFIRMÉE → capacité (FM/MLP).
+  NO-ENDGAME Elo ≫ FULL Elo → les finales TIRENT le fit global vers le bas (conflit linéaire).
+  ENDGAME-ONLY mse BAS mais FULL mse HAUT → ce n'est PAS la capacité, c'est un CONFLIT de
+     données (le midgame écrase la finale) → re-pondérer / phase-split, 2.04 récupérable.
+==========================================================
