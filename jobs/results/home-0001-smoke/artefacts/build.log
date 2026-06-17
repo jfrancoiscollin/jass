@@ -1,0 +1,50 @@
+[  7%] Building CXX object CMakeFiles/jass_lib.dir/src/position.cpp.o
+[ 14%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_server_client.cpp.o
+[ 14%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue.cpp.o
+[ 14%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_accumulator.cpp.o
+[ 21%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_jass_bridge.cpp.o
+[ 21%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_network.cpp.o
+[ 25%] Building CXX object CMakeFiles/jass_lib.dir/src/scan_eval.cpp.o
+[ 32%] Building CXX object CMakeFiles/jass_lib.dir/pattern_jass/src/weights.cpp.o
+[ 32%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+[ 35%] Building CXX object CMakeFiles/jass_lib.dir/src/tt.cpp.o
+[ 42%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+[ 42%] Building CXX object CMakeFiles/jass_lib.dir/src/engine.cpp.o
+[ 46%] Building CXX object CMakeFiles/jass_lib.dir/src/egdb_bridge.cpp.o
+[ 53%] Building CXX object CMakeFiles/jass_lib.dir/src/scan_book.cpp.o
+[ 53%] Building CXX object CMakeFiles/jass_lib.dir/src/book.cpp.o
+[ 57%] Building CXX object CMakeFiles/jass_lib.dir/src/tournament.cpp.o
+[ 60%] Building CXX object CMakeFiles/jass_lib.dir/src/hub.cpp.o
+/root/jass/src/pattern_network.cpp: In member function ‘bool jass::PatternNetwork::save(std::string_view, uint32_t) const’:
+/root/jass/src/pattern_network.cpp:846:31: warning: declaration of ‘n’ shadows a previous local [-Wshadow]
+  846 |             const std::size_t n = patterns_.size();
+      |                               ^
+/root/jass/src/pattern_network.cpp:814:25: note: shadowed declaration is here
+  814 |     const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
+      |                         ^
+/root/jass/src/scan_eval.cpp: In function ‘std::optional<jass::scan_eval::ScanWeights> jass::scan_eval::load_scan_weights(const std::string&, std::string*)’:
+/root/jass/src/scan_eval.cpp:203:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  203 |         if (err) *err = "file too short"; return std::nullopt;
+      |         ^~
+/root/jass/src/scan_eval.cpp:203:43: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  203 |         if (err) *err = "file too short"; return std::nullopt;
+      |                                           ^~~~~~
+/root/jass/src/scan_eval.cpp:250:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  250 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |             ^~
+/root/jass/src/scan_eval.cpp:250:64: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  250 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |                                                                ^~~~~~
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:233:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  233 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:234:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  234 |                 : accumulators[ply].black;
+      |                                ^~~
+/tmp/ccTP7o6a.s: Assembler messages:
+Error: can't open /tmp/ccTP7o6a.s for reading: No such file or directory
+gmake[3]: *** [CMakeFiles/jass_lib.dir/build.make:331: CMakeFiles/jass_lib.dir/src/bitbase.cpp.o] Error 1
+gmake[2]: *** [CMakeFiles/Makefile2:93: CMakeFiles/jass_lib.dir/all] Error 2
+gmake[1]: *** [CMakeFiles/Makefile2:132: CMakeFiles/jass.dir/rule] Error 2
+gmake: *** [Makefile:147: jass] Error 2
