@@ -1,0 +1,7 @@
+
+=== conversion playout (eval=/root/jass/jobs/results/cpx62-0311-king-mobility-ab/artefacts.src/endg.pjtw, depth 12, MTC=ON) ===
+  sampled won quiet <=7p : 2000
+  WON within budget      : 1110/2000 = 55.5%
+  STALLED (50-move/budget): 890/2000 = 44.5%
+  mean plies-to-win      : 6.57477
+  -> MTC ON should give MORE wins, FEWER stalls, FEWER plies than MTC off.
