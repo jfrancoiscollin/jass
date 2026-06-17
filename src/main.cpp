@@ -23,6 +23,7 @@
 #include "bitboard.hpp"
 #include "egdb_bridge.hpp"
 #include "endgame.hpp"
+#include "scan_book.hpp"
 #include "scan_eval.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
@@ -39,6 +40,8 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <thread>
+#include <unordered_map>
 #include <vector>
 #include <string_view>
 
@@ -2779,6 +2782,275 @@ int run_benchmark_nnue_hybrid_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --gen-scan-book: build a Scan-style opening book by DROP-OUT BEST-FIRST
+// expansion (self-play). Starting from the initial position we grow a tree:
+// repeatedly descend from the root following the near-optimal moves (dropping
+// lines that fall more than `drop_margin` below the best), reach an
+// unexpanded leaf, expand it (search every child at `leaf_depth`), and back up
+// negamax values to the root. Every visited position is written to a JBK2 file
+// as (zobrist → backed-up score), which ScanBook consults at play time with a
+// margin + softmax pick. This is the Scan recipe: a wide-but-sound tree over
+// the relevant opening moves rather than a single stored line.
+//
+// usage: jass --gen-scan-book <out.jbk2> [node_budget=4000] [leaf_depth=12]
+//             [drop_margin=100] [max_ply=20] [threads=nproc] [eval.pjtw]
+//
+// `eval.pjtw` (optional) makes the builder score leaves with the SAME pattern
+// eval the engine plays matches with (loaded via --pattern), so the book's
+// move ordering matches actual play. Omitted → the compiled default eval.
+// -----------------------------------------------------------------------------
+int run_gen_scan_book_mode(int argc, char** argv) {
+    if (argc < 3) {
+        std::cerr << "usage: jass --gen-scan-book <out.jbk2> [node_budget=4000]"
+                     " [leaf_depth=12] [drop_margin=100] [max_ply=20]"
+                     " [threads=nproc] [eval.pjtw]\n";
+        return 1;
+    }
+    const char* out_path   = argv[2];
+    const int node_budget  = (argc > 3) ? parse_int_or(argv[3], 4000) : 4000;
+    const int leaf_depth   = (argc > 4) ? parse_int_or(argv[4], 12)   : 12;
+    const int drop_margin  = (argc > 5) ? parse_int_or(argv[5], 100)  : 100;
+    const int max_ply      = (argc > 6) ? parse_int_or(argv[6], 20)   : 20;
+    int threads            = (argc > 7) ? parse_int_or(argv[7], 0)    : 0;
+    const char* eval_path  = (argc > 8 && argv[8][0]) ? argv[8] : nullptr;
+    if (threads <= 0) {
+        threads = static_cast<int>(std::thread::hardware_concurrency());
+        if (threads <= 0) threads = 1;
+    }
+
+    std::unique_ptr<INetwork> owned_eval;
+    const INetwork* net = default_nnue();
+    if (eval_path) {
+        std::string perr;
+        owned_eval = jass::load_eval_network(eval_path, &perr);
+        if (!owned_eval) {
+            std::cerr << "error: cannot load eval from " << eval_path
+                      << " : " << perr << "\n";
+            return 1;
+        }
+        net = owned_eval.get();
+        std::cout << "gen-scan-book: leaf eval = " << eval_path << "\n";
+    }
+
+    // One tree node. `score` is the negamax value from the node STM's POV: a
+    // leaf score from search, then max over children of -child.score once
+    // expanded. `closed` marks a node that can never be expanded further
+    // (terminal, at max_ply, or all children closed).
+    struct Node {
+        Position              pos;
+        int                   ply{0};
+        int                   score{0};
+        bool                  expanded{false};
+        bool                  closed{false};
+        std::uint64_t         visits{0};
+        std::vector<std::pair<Move, std::uint32_t>> kids;  // move -> node id
+        std::vector<std::uint32_t> parents;
+    };
+    std::vector<Node> nodes;
+    std::unordered_map<ZobristHash, std::uint32_t> idx;
+    nodes.reserve(static_cast<std::size_t>(node_budget) * 2);
+
+    auto leaf_eval = [&](const Position& p) -> int {
+        SearchLimits lim;
+        lim.max_depth = leaf_depth;
+        lim.tt_mb     = 16;
+        lim.nnue      = net;
+        return ::jass::search(p, lim).score;
+    };
+
+    // Root.
+    {
+        Node root;
+        root.pos   = Position::start_position();
+        root.ply   = 0;
+        root.score = leaf_eval(root.pos);
+        idx[zobrist_hash(root.pos)] = 0;
+        nodes.push_back(std::move(root));
+    }
+
+    // Recompute a node's negamax value/closed flag from its children. Returns
+    // true if either changed.
+    auto recompute = [&](std::uint32_t id) -> bool {
+        Node& n = nodes[id];
+        if (!n.expanded) return false;
+        int best = -INF_SCORE;
+        bool all_closed = true;
+        for (const auto& [mv, cid] : n.kids) {
+            const int v = -nodes[cid].score;
+            if (v > best) best = v;
+            if (!nodes[cid].closed) all_closed = false;
+        }
+        bool changed = false;
+        if (best != n.score)        { n.score = best;   changed = true; }
+        if (all_closed != n.closed) { n.closed = all_closed; changed = true; }
+        return changed;
+    };
+
+    // Propagate a value/closed change upward through the DAG of parents. A
+    // hard cap guards against the (opening-rare) possibility of a cycle.
+    auto propagate = [&](std::uint32_t from) {
+        std::vector<std::uint32_t> stack(nodes[from].parents.begin(),
+                                         nodes[from].parents.end());
+        long guard = 0;
+        const long guard_cap = static_cast<long>(nodes.size()) * 8 + 1024;
+        while (!stack.empty() && guard++ < guard_cap) {
+            const std::uint32_t id = stack.back(); stack.pop_back();
+            if (recompute(id))
+                stack.insert(stack.end(), nodes[id].parents.begin(),
+                                          nodes[id].parents.end());
+        }
+    };
+
+    auto expand = [&](std::uint32_t id) {
+        Node& n = nodes[id];
+        MoveList ml;
+        generate_legal_moves(n.pos, ml);
+        if (ml.empty()) {                          // terminal: STM has lost
+            n.expanded = true;
+            n.closed   = true;
+            n.score    = -MATE_SCORE + n.ply;
+            propagate(id);
+            return;
+        }
+        // Collect children: reuse existing nodes on transposition, else create
+        // and score the new ones in parallel.
+        struct NewKid { Move m; Position pos; ZobristHash key; int slot; };
+        std::vector<std::pair<Move, std::uint32_t>> existing;  // move, node id
+        std::vector<NewKid> fresh;
+        for (const auto& m : ml) {
+            const Position child = n.pos.after(m);
+            const ZobristHash key = zobrist_hash(child);
+            const auto it = idx.find(key);
+            if (it != idx.end()) existing.push_back({m, it->second});
+            else fresh.push_back({m, child, key,
+                                  static_cast<int>(fresh.size())});
+        }
+        std::vector<int> fresh_score(fresh.size(), 0);
+        const int nthr = std::min<int>(threads,
+                                       std::max<std::size_t>(1, fresh.size()));
+        std::atomic<std::size_t> next{0};
+        auto worker = [&]() {
+            for (;;) {
+                const std::size_t i = next.fetch_add(1);
+                if (i >= fresh.size()) break;
+                fresh_score[i] = leaf_eval(fresh[i].pos);
+            }
+        };
+        std::vector<std::thread> pool;
+        for (int t = 1; t < nthr; ++t) pool.emplace_back(worker);
+        worker();
+        for (auto& th : pool) th.join();
+
+        // Materialise children (order does not matter for backup).
+        for (const auto& [m, cid] : existing) {
+            nodes[id].kids.push_back({m, cid});
+            nodes[cid].parents.push_back(id);
+        }
+        for (std::size_t i = 0; i < fresh.size(); ++i) {
+            Node c;
+            c.pos    = fresh[i].pos;
+            c.ply    = nodes[id].ply + 1;
+            c.score  = fresh_score[i];
+            c.closed = (c.ply >= max_ply);          // depth cap: never expanded
+            const std::uint32_t cid = static_cast<std::uint32_t>(nodes.size());
+            c.parents.push_back(id);
+            idx[fresh[i].key] = cid;
+            nodes.push_back(std::move(c));
+            nodes[id].kids.push_back({fresh[i].m, cid});
+        }
+        nodes[id].expanded = true;
+        recompute(id);
+        propagate(id);
+    };
+
+    // Drop-out best-first descent: from the root, follow near-optimal,
+    // non-closed children (preferring the least-visited to widen the tree)
+    // until an unexpanded leaf is found. Returns UINT32_MAX when the root is
+    // closed (whole relevant tree explored to the cap).
+    auto select_leaf = [&]() -> std::uint32_t {
+        for (;;) {
+            std::uint32_t cur = 0;
+            std::vector<std::uint32_t> path = {0};
+            bool restart = false;
+            for (;;) {
+                Node& n = nodes[cur];
+                if (!n.expanded && !n.closed) return cur;   // leaf to expand
+                if (n.closed) {                              // shouldn't descend
+                    if (cur == 0) return UINT32_MAX;
+                    restart = true; break;
+                }
+                int best = -INF_SCORE;
+                for (const auto& [mv, cid] : n.kids)
+                    best = std::max(best, -nodes[cid].score);
+                std::uint32_t pick = UINT32_MAX;
+                std::uint64_t pick_visits = 0;
+                int pick_val = 0;
+                for (const auto& [mv, cid] : n.kids) {
+                    if (nodes[cid].closed) continue;
+                    const int v = -nodes[cid].score;
+                    if (v + drop_margin < best) continue;    // dropped out
+                    bool on_path = false;
+                    for (auto pid : path) if (pid == cid) { on_path = true; break; }
+                    if (on_path) continue;
+                    if (pick == UINT32_MAX
+                        || nodes[cid].visits < pick_visits
+                        || (nodes[cid].visits == pick_visits && v > pick_val)) {
+                        pick = cid; pick_visits = nodes[cid].visits; pick_val = v;
+                    }
+                }
+                if (pick == UINT32_MAX) {            // dead end: close & retry
+                    n.closed = true;
+                    propagate(cur);
+                    if (cur == 0) return UINT32_MAX;
+                    restart = true; break;
+                }
+                nodes[pick].visits++;
+                cur = pick;
+                path.push_back(cur);
+            }
+            if (restart) continue;
+        }
+    };
+
+    std::cout << "gen-scan-book: budget=" << node_budget
+              << " leaf_depth=" << leaf_depth
+              << " drop_margin=" << drop_margin
+              << " max_ply=" << max_ply
+              << " threads=" << threads << "\n";
+
+    int expansions = 0;
+    while (static_cast<int>(nodes.size()) < node_budget) {
+        const std::uint32_t leaf = select_leaf();
+        if (leaf == UINT32_MAX) {
+            std::cout << "  root closed — relevant tree fully explored\n";
+            break;
+        }
+        expand(leaf);
+        if (++expansions % 100 == 0) {
+            std::cout << "  expansions=" << expansions
+                      << " nodes=" << nodes.size()
+                      << " root_score=" << nodes[0].score << "\n";
+        }
+    }
+
+    // Persist every node's backed-up score.
+    ScanBook book;
+    int max_reached = 0;
+    for (const auto& n : nodes) {
+        book.put(zobrist_hash(n.pos), n.score);
+        max_reached = std::max(max_reached, n.ply);
+    }
+    if (!book.save(out_path)) {
+        std::cerr << "error: cannot write " << out_path << "\n";
+        return 1;
+    }
+    std::cout << "wrote " << book.size() << " positions to " << out_path
+              << " (expansions=" << expansions
+              << ", max_ply_reached=" << max_reached
+              << ", root_score=" << nodes[0].score << ")\n";
+    return 0;
+}
+
 // --build-book: read a list of FENs (one per line, `#` comments OK), evaluate
 // each one with the current default NNUE at the requested depth and write a
 // JBOK file mapping (zobrist → best move). Used to pre-compute an opening
@@ -3082,6 +3354,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-scan-eval")      return run_benchmark_scan_eval_mode(argc, argv);
         else if (a == "--depth-at-movetime")        return run_depth_at_movetime_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
+        else if (a == "--gen-scan-book")            return run_gen_scan_book_mode(argc, argv);
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);

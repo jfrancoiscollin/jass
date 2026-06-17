@@ -206,6 +206,7 @@ add_library(jass_lib STATIC
     src/bitbase.cpp
     src/egdb_bridge.cpp
     src/book.cpp
+    src/scan_book.cpp
     src/timemgr.cpp
     src/tournament.cpp
     src/hub.cpp
@@ -259,6 +260,7 @@ add_executable(jass_tests
     tests/test_draws.cpp
     tests/test_endgame.cpp
     tests/test_book.cpp
+    tests/test_scan_book.cpp
     tests/test_tournament.cpp
     tests/test_nnue.cpp
     tests/test_hub.cpp
