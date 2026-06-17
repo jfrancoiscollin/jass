@@ -1,5 +1,8 @@
 # Journal de bord — programme « battre Scan »
 
+> 🟢 **ÉTAT ACTIF EN 1 PAGE → [CURRENT.md](CURRENT.md)** (hypothèse, defaults, métrique
+> primaire, branches mortes + revival, jobs en cours). Lire ÇA d'abord ; ce journal = faits/archive.
+>
 > **À LIRE AVANT DE (RE)CHERCHER.** Registre court et tenu à jour à chaque
 > verdict. Ancres mesurées + faits établis (à ne pas re-litiger) + index des
 > jobs. Pour l'analyse détaillée → [PATTERN_PROGRAM_NOTES.md](PATTERN_PROGRAM_NOTES.md).
