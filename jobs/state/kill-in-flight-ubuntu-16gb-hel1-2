@@ -1,1 +1,0 @@
-kill 0307-scan-book-v1: runaway match phase (~11h, >3x estimate, likely hung). Book .jbk2 is built on disk; let 0308 audit it. Approved by JFC 2026-06-17.
