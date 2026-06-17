@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0305-weight-sweep",
-  "script": "jobs/queue/ccx33-0305-weight-sweep.sh",
-  "pid": 379370,
-  "started_at": "2026-06-17T06:31:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
