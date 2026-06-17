@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0311-king-mobility-ab",
-  "snapshot_at": "2026-06-17T16:22:18+00:00",
+  "snapshot_at": "2026-06-17T16:27:18+00:00",
   "started_at": "2026-06-17T15:41:06+00:00",
-  "elapsed_seconds": 2472,
+  "elapsed_seconds": 2772,
   "artefacts": [
     {
       "name": "base-build.log",
@@ -46,7 +46,7 @@
     },
     {
       "name": "endg-elo.log",
-      "size_bytes": 0
+      "size_bytes": 280
     },
     {
       "name": "endg-train.log",
@@ -59,6 +59,26 @@
     {
       "name": "endg.pjtw",
       "size_bytes": 136049796
+    },
+    {
+      "name": "kingpat-build.log",
+      "size_bytes": 15795
+    },
+    {
+      "name": "kingpat-cmake.log",
+      "size_bytes": 736
+    },
+    {
+      "name": "kingpat-dump.log",
+      "size_bytes": 121
+    },
+    {
+      "name": "kingpat-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "kingpat.feat",
+      "size_bytes": 1568800012
     },
     {
       "name": "kmob-build.log",
@@ -89,5 +109,5 @@
       "size_bytes": 136049796
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2598000       1       41:12  0.0  0.0 bash\n2598002 2598000       41:12  0.0  0.0 bash\n2618313 2598002       03:42  0.0  0.0 bash\n2618314 2618313       03:42 1173  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 491153 2598002       01:37  586 50.9 python3\n2598000       1       46:12  0.0  0.0 bash\n2598002 2598000       46:12  0.0  0.0 bash\n"
 }
