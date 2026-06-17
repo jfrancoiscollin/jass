@@ -1,0 +1,11 @@
+In function ‘parseindexfile’,
+    inlined from ‘initdblookup’ at /root/egdb_intl/egdb/egdb_dtw.cpp:567:25,
+    inlined from ‘egdb_open_dtw’ at /root/egdb_intl/egdb/egdb_dtw.cpp:1230:23,
+    inlined from ‘egdb_open’ at /root/egdb_intl/egdb/egdb_open.cpp:80:25:
+/root/egdb_intl/egdb/egdb_dtw.cpp:827:69: warning: argument 1 value ‘18446744073709551615’ exceeds maximum object size 9223372036854775807 [-Walloc-size-larger-than=]
+  827 |                         dbp->subdb = new CPRSUBDB[dbp->num_subslices];
+      |                                                                     ^
+/usr/include/c++/15/new: In function ‘egdb_open’:
+/usr/include/c++/15/new:140:26: note: in a call to allocation function ‘operator new []’ declared here
+  140 | _GLIBCXX_NODISCARD void* operator new[](std::size_t)
+      |                          ^
