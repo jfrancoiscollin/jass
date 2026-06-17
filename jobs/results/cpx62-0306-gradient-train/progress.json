@@ -1,0 +1,33 @@
+{
+  "job_id": "cpx62-0306-gradient-train",
+  "snapshot_at": "2026-06-17T12:44:43+00:00",
+  "started_at": "2026-06-17T12:39:37+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "base-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 24845
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 946
+    },
+    {
+      "name": "cum-grad.jnnw",
+      "size_bytes": 140600008
+    },
+    {
+      "name": "cum.jnnw",
+      "size_bytes": 140600008
+    },
+    {
+      "name": "feat",
+      "size_bytes": 1628000012
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2802740       1       05:05  0.0  0.0 bash\n2802742 2802740       05:05  0.0  0.0 bash\n2803298 2802742       04:46  627 46.0 python3\n"
+}
