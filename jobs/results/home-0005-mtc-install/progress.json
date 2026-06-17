@@ -1,0 +1,13 @@
+{
+  "job_id": "home-0005-mtc-install",
+  "snapshot_at": "2026-06-17T20:43:50+00:00",
+  "started_at": "2026-06-17T20:38:41+00:00",
+  "elapsed_seconds": 309,
+  "artefacts": [
+    {
+      "name": "dl.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  11305       1       05:09  0.0  0.0 bash\n  11307   11305       05:09  0.0  0.0 bash\n  11375   11307       05:09  0.0  0.0 timeout\n  11378   11375       05:09 37.3  0.1 megatools\n"
+}
