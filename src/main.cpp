@@ -1735,7 +1735,7 @@ int run_egdb_mtc_relabel_mode(int argc, char** argv) {
     // <10-ply zone: ALPHA per enemy piece left, GAMMA per enemy-king centrality.
     // BETA per ply beyond MTC_THRESHOLD(10) (the exact maneuvering zone).
     // Overridable via env (MTC_ALPHA/MTC_GAMMA/MTC_BETA) for sweeping without rebuild.
-    double ALPHA = 0.04, GAMMA = 0.008, BETA = 0.03;
+    double ALPHA = 0.12, GAMMA = 0.04, BETA = 0.03;   // sweep 0305 distribution optimum
     if (const char* e = std::getenv("MTC_ALPHA")) ALPHA = std::atof(e);
     if (const char* e = std::getenv("MTC_GAMMA")) GAMMA = std::atof(e);
     if (const char* e = std::getenv("MTC_BETA"))  BETA  = std::atof(e);
