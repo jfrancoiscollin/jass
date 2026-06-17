@@ -1,0 +1,18 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] TOTAL estimé ≈ 4 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== --egdb-mtc-regret sur endg.pjtw (n=5000) ===
+
+=== MTC conversion metric (eval=/root/jass/jobs/results/cpx62-0311-king-mobility-ab/artefacts.src/endg.pjtw, 1-ply eval-greedy) ===
+  sampled won quiet <=7p   : 5000
+  win-preservation         : 4069/5000 = 81.38%   (conversion BLUNDERS: 931)
+  win-preservation CRITICAL: 710/1641 = 43.2663%   (a win-throwing move exists)
+  fastest-path rate        : 4066/4069 = 99.9263%   (move on a minimal-MTC line)
+  MTC-regret (MTC>=10)     : 0 plies mean (n=0)
+  -> higher win-preservation(+CRITICAL) & fastest-path, lower regret = better conversion.
+
+==========================================================
+   cpx62-0315 — validation métrique conversion (--egdb-mtc-regret)
+   Si les 4 chiffres sont sains (préservation ~haute, regret fini) → métrique OK,
+   on l'intègre au run COMBINÉ comme juge de conversion (à la place du endgame_mse).
+==========================================================
