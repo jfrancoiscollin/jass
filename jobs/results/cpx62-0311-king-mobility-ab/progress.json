@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0311-king-mobility-ab",
-  "snapshot_at": "2026-06-17T17:48:10+00:00",
+  "snapshot_at": "2026-06-17T17:53:15+00:00",
   "started_at": "2026-06-17T15:41:06+00:00",
-  "elapsed_seconds": 7624,
+  "elapsed_seconds": 7929,
   "artefacts": [
     {
       "name": "autopsy-base.err",
@@ -133,5 +133,5 @@
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2569310 2598002       21:55  0.4  0.0 python3\n2569313 2569310       21:55 48.9  0.5 jass\n2569315 2569310       21:55 50.8  0.9 scan_linux\n2569318 2569310       21:54  0.0  0.0 jass\n2598000       1    02:07:03  0.0  0.0 bash\n2598002 2598000    02:07:03  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2569310 2598002       27:01  0.4  0.0 python3\n2569313 2569310       27:00 48.8  0.5 jass\n2569315 2569310       27:00 50.9  0.9 scan_linux\n2569318 2569310       27:00  0.0  0.0 jass\n2598000       1    02:12:09  0.0  0.0 bash\n2598002 2598000    02:12:09  0.0  0.0 bash\n"
 }
