@@ -1,9 +1,17 @@
 {
   "job_id": "ccx33-0307-scan-book-v1",
-  "snapshot_at": "2026-06-17T12:03:05+00:00",
+  "snapshot_at": "2026-06-17T12:08:25+00:00",
   "started_at": "2026-06-17T07:29:04+00:00",
-  "elapsed_seconds": 16441,
+  "elapsed_seconds": 16761,
   "artefacts": [
+    {
+      "name": "ab-selfplay.log",
+      "size_bytes": 13280
+    },
+    {
+      "name": "ab-selfplay.out",
+      "size_bytes": 0
+    },
     {
       "name": "build.log",
       "size_bytes": 14528
@@ -14,12 +22,20 @@
     },
     {
       "name": "genbook.log",
-      "size_bytes": 0
+      "size_bytes": 3161
     },
     {
       "name": "genbook.time",
-      "size_bytes": 0
+      "size_bytes": 874
+    },
+    {
+      "name": "sanity.log",
+      "size_bytes": 55
+    },
+    {
+      "name": "scan-book-v1.jbk2",
+      "size_bytes": 400066
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1    04:34:00  0.0  0.0 bash\n 381177  381176    04:34:00  0.0  0.0 bash\n 381625  381177    04:33:50  0.0  0.0 time\n 381626  381625    04:33:50  407  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 381176       1    04:39:20  0.0  0.0 bash\n 381177  381176    04:39:20  0.0  0.0 bash\n 420880  381177       04:35  0.1  0.0 python3\n 420883  420880       04:35 47.9  0.1 jass\n 420885  420880       04:35 51.9  0.1 jass\n 420887  420880       04:35  0.0  0.0 jass\n"
 }
