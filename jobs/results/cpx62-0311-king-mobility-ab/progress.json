@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0311-king-mobility-ab",
-  "snapshot_at": "2026-06-17T15:56:48+00:00",
+  "snapshot_at": "2026-06-17T16:02:03+00:00",
   "started_at": "2026-06-17T15:41:06+00:00",
-  "elapsed_seconds": 942,
+  "elapsed_seconds": 1257,
   "artefacts": [
     {
       "name": "base-build.log",
@@ -53,5 +53,5 @@
       "size_bytes": 1628000012
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 493638 2598002       00:33  336 47.9 python3\n2598000       1       15:42  0.0  0.0 bash\n2598002 2598000       15:42  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 493638 2598002       05:47  667 48.5 python3\n2598000       1       20:56  0.0  0.0 bash\n2598002 2598000       20:56  0.0  0.0 bash\n"
 }
