@@ -1,0 +1,9 @@
+=== gen-scan-book budget=40000 leaf_depth=14 drop_margin=50 max_ply=24 ===
+  expansions=6600 nodes=38478 root_score=2
+  expansions=6700 nodes=39080 root_score=1
+  expansions=6800 nodes=39628 root_score=1
+wrote 40005 positions to /root/jass/jobs/results/ccx33-0307-scan-book-v1/artefacts.src/scan-book-v1.jbk2 (expansions=6863, max_ply_reached=10, root_score=1)
+  taille fichier : 400066 o   (magic JBK2)
+=== sanity : le moteur consulte le livre (attendu book=1) ===
+bestmove 31-26 score=0 depth=0 nodes=0 book=1 pv=31-26
+=== A/B  jass+livre  vs  jass-sans-livre  (méthode 0029, indépendant de l'éval) ===

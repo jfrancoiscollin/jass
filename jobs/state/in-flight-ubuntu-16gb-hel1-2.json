@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0307-scan-book-v1",
-  "script": "jobs/queue/ccx33-0307-scan-book-v1.sh",
-  "pid": 381176,
-  "started_at": "2026-06-17T07:29:04+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
