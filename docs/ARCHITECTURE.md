@@ -270,12 +270,18 @@ poisoning the endgame training data. Active only when `JASS_EGDB_PATH` is set
   in a self-play dataset with the exact egdb result (idempotent); reports
   **stalls** (won/lost recorded as draw = conversion failures).
 
-**Conversion gradient (planned)**: `egdb_intl` also reads MTC (moves-to-conversion)
-and DTW databases (`is_mtc`/`is_dtw`, unified `egdb_lookup`). The WLD target is flat
-on wins, so the eval cannot learn *how* to convert; the plan is to use MTC as an
-**offline training target** (graded by distance-to-conversion) so the eval learns a
-conversion gradient that generalises beyond the bitbase — no MTC needed at play time
-(Scan-style). See [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
+**Conversion gradient** (`egdb_bridge.cpp` + `--egdb-mtc-relabel` + `train.py
+--target prob`): the WLD target is flat on wins, so the eval cannot learn *how* to
+convert. `egdb::init_mtc/probe_mtc` open the MTC (moves-to-conversion) database on a
+separate handle (`is_mtc`-checked); MTC is coarse (`1` = "< 10 plies", else the
+actual value), so `--egdb-mtc-relabel` writes a **hybrid** STM-POV win-probability
+into the score field (`prob×10000`): a PROXY (enemy material + enemy-king centrality)
+covers MTC's flat <10-ply zone, MTC covers the ≥10-ply maneuvering zone —
+`winp = 1 − α·enemy_pieces − γ·enemy_central − β·max(0,MTC−10)`, clamped [0.55,1].
+Training with `--target prob` runs the logistic loss on `score/10000`, keeping the
+prod WDL regime for most positions while injecting the conversion gradient in the
+endgame. The eval learns the gradient and generalises beyond the bitbase — no MTC at
+play time (Scan-style). See [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
 
 The full target self-play loop using these is documented in
 [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
