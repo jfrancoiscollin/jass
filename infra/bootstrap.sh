@@ -46,6 +46,15 @@ fi
 
 log "1/6 apt update + install base packages"
 export DEBIAN_FRONTEND=noninteractive
+# WSL clocks drift behind the Windows host → apt rejects future-dated Release
+# files ("Release file ... is not valid yet") and the script dies at 1/6.
+# Best-effort resync from an HTTP Date header, AND make apt tolerant of clock
+# skew for the whole bootstrap (harmless on correctly-clocked cloud boxes).
+if command -v curl >/dev/null 2>&1; then
+    _netdate="$(curl -sI https://deb.debian.org 2>/dev/null | grep -i '^date:' | cut -d' ' -f2-)"
+    [ -n "$_netdate" ] && date -s "$_netdate" >/dev/null 2>&1 || true
+fi
+echo 'Acquire::Check-Date "false";' > /etc/apt/apt.conf.d/99jass-no-check-date
 apt-get update -qq
 apt-get install -y -qq \
     build-essential cmake git curl wget unzip jq tmux htop \
