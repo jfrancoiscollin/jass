@@ -1,0 +1,7 @@
+{
+  "job_id": "home-0004-egdb-install",
+  "script": "jobs/queue/home-0004-egdb-install.sh",
+  "pid": 10131,
+  "started_at": "2026-06-17T20:17:16+00:00",
+  "host": "User"
+}
