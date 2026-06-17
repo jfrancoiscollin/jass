@@ -1,0 +1,27 @@
+=== (0) disque ===
+  Filesystem      Size  Used Avail Use% Mounted on
+  /dev/sdd       1007G   15G  942G   2% /
+=== (1) megatools ===
+=== (2) download MTC (~13 Go) ===
+  dl rc=0
+  du DL: 13G	/root/egdb_mtc_dl
+=== (3) innoextract → /root/egdb_mtc ===
+  innoextract rc=0
+ - "app/db8-4121.cpr_mtc"
+ - "app/db8-4121.idx_mtc"
+Done.
+  installeur MTC supprimé
+  du MTC extrait: 29G	/root/egdb_mtc
+  idx/cpr: 138
+=== (4) vérif lecture MTC (--egdb-mtc-probe) ===
+=== MTC probe ===
+  decisive (WLD win/loss) : 11210   draws : 8790
+  MTC < 10 plies (=1)     : 11181
+  MTC >= 10 (actual)      : 29   range[10..22] mean 11
+  MTC bad/unavailable     : 0
+  RESULT: MTC readable, conversion-distance signal present.
+
+==========================================================
+   home-0005 — MTC installé sur le PC (29G)
+   PC prêt pour --egdb-mtc-regret / --egdb-conversion-test / MTC-in-search.
+==========================================================
