@@ -34,11 +34,15 @@
   (endgame_mse 5.39→3.79) mais **joue la finale plus mal** (deep-eg 2.91→3.78, Elo −20,
   vs Scan inchangé). Cause : **148 vrais signaux MTC sur 3,7 M** (99,9 % proxy
   matériel/centralité → mauvais maître). **Gradient-cible = cul-de-sac.**
-- **0309/0310 (diagnostic du drift)** : **0 contradiction ≤7p** (labels exacts PROPRES, pas de
-  bug). ≤7p = **11.3 %** des données → forte présomption que **la finale est écrasée 9:1 par le
-  midgame** dans le fit linéaire partagé (→ re-pondérer / phase-split, **2.04 récupérable**).
-  `0310` mesure le plancher `endgame_mse` du linéaire sur **finales-seules** (le vrai test :
-  bas = c'est l'équilibre des données, PAS la classe ; haut = il manque un pattern de finale).
+- **0309/0310 (diagnostic du drift) — VERDICT : PAS de saturation, c'est un CONFLIT DE PHASE
+  (linéaire-réparable).** 0 contradiction ≤7p (labels propres). Ablation : **NO-ENDGAME Elo
+  +268 ≫ FULL +222** (les finales TIRENT le fit global −46 Elo) ; **ENDGAME-ONLY deep-eg mse
+  3.27 ≪ FULL endgame mse 5.39** (le linéaire fitte la finale BIEN mieux **seul**). Donc la
+  classe linéaire **n'est PAS le goulot** — le midgame (89 % des données) écrase la finale dans
+  les poids partagés. **Fix linéaire** : (a) séparer le fit finale/midgame (phase-split plus
+  dur) ; (b) **donner à la finale ses propres features** (king-mobility, LEAD 1, job 0311) pour
+  qu'elle cesse de distordre les men-patterns. ⇒ **confirme le PRINCIPE : pas la capacité,
+  c'est ce qui MANQUE + l'équilibre.**
 - **Livre d'ouverture à la Scan** codé (drop-out best-first + probe marge/softmax, format JBK2)
   + audit (structure + Scan-oracle). Runtime JBOK déjà sain (0029). Mesure : 0307/0308.
 
