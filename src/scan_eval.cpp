@@ -370,6 +370,26 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
         pu_black += 0.5 * fm;
     }
 
+#ifdef JASS_DRAWISH_SCALING
+    // Drawish-material draw-scaling (Scan, Normal variant) — the one non-linear
+    // term Scan has that the linear net cannot learn. When the side AHEAD has too
+    // little to win and the DEFENDER has a king, shrink the score toward a draw:
+    // winner ≤3 pieces → ÷8 ; else equal kings & |Δmen|≤1 → ÷2. Play-time only
+    // (the trained WDL weights are unchanged). Gated; -DJASS_DRAWISH_SCALING.
+    {
+        const int nwm = popcount(pos.white_men()), nwk = popcount(pos.white_kings());
+        const int nbm = popcount(pos.black_men()), nbk = popcount(pos.black_kings());
+        const bool near_equal = (nwk == nbk) && ((nwm > nbm ? nwm - nbm : nbm - nwm) <= 1);
+        if (pu_black > 0.0 && nwk != 0) {            // black ahead, white (loser) has a king
+            if (nbm + nbk <= 3)  pu_black *= 0.125;
+            else if (near_equal) pu_black *= 0.5;
+        } else if (pu_black < 0.0 && nbk != 0) {     // white ahead, black (loser) has a king
+            if (nwm + nwk <= 3)  pu_black *= 0.125;
+            else if (near_equal) pu_black *= 0.5;
+        }
+    }
+#endif
+
     const double cp_black = pu_black * 100.0;
     const double cp_stm   = (pos.side_to_move() == Color::Black) ? cp_black : -cp_black;
 
