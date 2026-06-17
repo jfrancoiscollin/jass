@@ -1841,6 +1841,110 @@ int run_egdb_mtc_regret_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --egdb-conversion-test <pjtw> <wld_dir> <mtc_dir|off> [n=2000] [depth=12] [budget=150] [seed=1]
+// Validates DISTANCE-AWARE TB PLAY (the MTC-in-search feature). Samples WON, quiet,
+// <=7p positions and PLAYS THEM OUT with the FULL search (both sides use the same
+// eval; egdb makes the loser resist optimally and the winner hold the win). With
+// the MTC db loaded the winner plays the FASTEST conversion; pass mtc_dir=off to
+// compare the ply-only distance. Reports win-within-budget %, mean plies-to-win,
+// and 50-move STALL %% — fewer stalls + fewer plies with MTC = the feature works.
+// -----------------------------------------------------------------------------
+int run_egdb_conversion_test_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: --egdb-conversion-test <pjtw> <wld_dir> <mtc_dir|off> "
+                     "[n=2000] [depth=12] [budget=150] [seed=1]\n";
+        return 1;
+    }
+    const std::string pjtw = argv[2], wld_dir = argv[3], mtc_arg = argv[4];
+    const long n      = (argc > 5) ? parse_int_or(argv[5], 2000) : 2000;
+    const int  depth  = (argc > 6) ? parse_int_or(argv[6], 12)   : 12;
+    const int  budget = (argc > 7) ? parse_int_or(argv[7], 150)  : 150;
+    const std::uint64_t seed = (argc > 8)
+        ? static_cast<std::uint64_t>(parse_int_or(argv[8], 1)) : 1ULL;
+
+    if (!jass::egdb::init(wld_dir, 1024)) {
+        std::cerr << "error: WLD init failed for '" << wld_dir << "'\n"; return 1; }
+    const bool use_mtc = (mtc_arg != "off" && mtc_arg != "-");
+    if (use_mtc && !jass::egdb::init_mtc(mtc_arg, 1024)) {
+        std::cerr << "warning: MTC init failed for '" << mtc_arg << "' (falling back to ply-only)\n"; }
+    std::string err;
+    auto pjn = jass::load_eval_network(pjtw, &err);
+    if (!pjn) { std::cerr << "error: cannot load eval '" << pjtw << "': " << err << "\n"; return 1; }
+
+    auto is_win_for = [](jass::EndgameResult r, jass::Color c) {
+        return (c == jass::Color::White && r == jass::EndgameResult::WhiteWin)
+            || (c == jass::Color::Black && r == jass::EndgameResult::BlackWin);
+    };
+
+    std::mt19937_64 rng(seed ? seed : 1ULL);
+    jass::Engine e; e.use_book(false);
+    long sampled = 0, won = 0, stalled = 0, tries = 0; long long plies_sum = 0;
+    const long max_tries = n * 300L;
+
+    while (sampled < n && tries < max_tries) {
+        ++tries;
+        const int total = 3 + static_cast<int>(rng() % 5);
+        const int wtot  = 1 + static_cast<int>(rng() % static_cast<unsigned>(total - 1));
+        const int btot  = total - wtot;
+        const int wk = static_cast<int>(rng() % static_cast<unsigned>(wtot + 1)); const int wm = wtot - wk;
+        const int bk = static_cast<int>(rng() % static_cast<unsigned>(btot + 1)); const int bm = btot - bk;
+        jass::Position p; std::array<int, 8> used{}; int nu = 0; bool ok = true;
+        auto place = [&](jass::Piece piece) -> bool {
+            const bool wman = (piece == jass::Piece::WhiteMan), bman = (piece == jass::Piece::BlackMan);
+            for (int t = 0; t < 80; ++t) {
+                const int sq = static_cast<int>(rng() % 50) + 1;
+                if (wman && sq <= 5) continue;
+                if (bman && sq >= 46) continue;
+                bool dup = false; for (int u = 0; u < nu; ++u) if (used[static_cast<std::size_t>(u)] == sq) dup = true;
+                if (dup) continue;
+                used[static_cast<std::size_t>(nu++)] = sq;
+                p.add_piece(static_cast<jass::Square>(sq), piece); return true;
+            }
+            return false;
+        };
+        for (int k = 0; k < wm && ok; ++k) ok = place(jass::Piece::WhiteMan);
+        for (int k = 0; k < wk && ok; ++k) ok = place(jass::Piece::WhiteKing);
+        for (int k = 0; k < bm && ok; ++k) ok = place(jass::Piece::BlackMan);
+        for (int k = 0; k < bk && ok; ++k) ok = place(jass::Piece::BlackKing);
+        if (!ok) continue;
+        p.set_side_to_move((rng() & 1) ? jass::Color::White : jass::Color::Black);
+        const jass::Color winner = p.side_to_move();
+
+        { jass::MoveList ml0; jass::generate_legal_moves(p, ml0);
+          if (ml0.empty() || ml0[0].is_capture()) continue; }
+        if (!is_win_for(jass::egdb::probe(p), winner)) continue;
+        ++sampled;
+
+        // Play it out with the full search (both sides).
+        jass::Position cur = p; int plies = 0, hm = 0, outcome = 0;  // +1 win, 0 stall
+        while (plies < budget) {
+            jass::MoveList ml; jass::generate_legal_moves(cur, ml);
+            if (ml.empty()) { outcome = (cur.side_to_move() == winner) ? -1 : +1; break; }
+            if (hm >= FIFTY_MOVE_PLIES) { outcome = 0; break; }
+            e.set_position(cur);
+            jass::SearchLimits lim; lim.max_depth = depth; lim.nnue = pjn.get();
+            const jass::SearchResult r = e.search(lim);
+            const bool cap = r.best_move.is_capture();
+            cur = cur.after(r.best_move);
+            hm = cap ? 0 : hm + 1;
+            ++plies;
+        }
+        if (outcome == 1) { ++won; plies_sum += plies; }
+        else              { ++stalled; }   // 50-move/budget without finishing (or a fluke loss)
+    }
+
+    auto pct = [](long a, long b) { return b ? 100.0 * static_cast<double>(a) / static_cast<double>(b) : 0.0; };
+    std::cout << "\n=== conversion playout (eval=" << pjtw << ", depth " << depth
+              << ", MTC=" << (use_mtc && jass::egdb::available_mtc() ? "ON" : "off") << ") ===\n"
+              << "  sampled won quiet <=7p : " << sampled << "\n"
+              << "  WON within budget      : " << won << "/" << sampled << " = " << pct(won, sampled) << "%\n"
+              << "  STALLED (50-move/budget): " << stalled << "/" << sampled << " = " << pct(stalled, sampled) << "%\n"
+              << "  mean plies-to-win      : " << (won ? static_cast<double>(plies_sum) / static_cast<double>(won) : 0.0) << "\n"
+              << "  -> MTC ON should give MORE wins, FEWER stalls, FEWER plies than MTC off.\n";
+    return (sampled > 0) ? 0 : 1;
+}
+
+// -----------------------------------------------------------------------------
 // --egdb-mtc-relabel <in.jnnw> <wld_dir> <mtc_dir> [out] [cache_mb]
 // CONVERSION-GRADIENT labelling. Writes a continuous win-probability target into
 // each record's `score` field (as prob*10000), so training with `--target prob`
@@ -3617,6 +3721,7 @@ int main(int argc, char** argv) {
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);
+        else if (a == "--egdb-conversion-test")     return run_egdb_conversion_test_mode(argc, argv);
         else if (a == "--egdb-mtc-relabel")         return run_egdb_mtc_relabel_mode(argc, argv);
         else if (a == "--version") { std::cout << "Jass 0.0.1\n"; return 0; }
         else if (a == "--help") {

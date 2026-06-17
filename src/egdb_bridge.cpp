@@ -51,6 +51,12 @@ bool ensure_initialised() noexcept {
             if (v > 0) cache_mb = v;
         }
         init(std::string(path), cache_mb);
+        // Optional MTC database (moves-to-conversion) for distance-aware TB
+        // play in the search. Best-effort: absent env / db just leaves MTC
+        // unavailable and the search falls back to the ply-only TB distance.
+        if (const char* mpath = std::getenv("JASS_EGDB_MTC_PATH"); mpath && *mpath) {
+            init_mtc(std::string(mpath), cache_mb);
+        }
     });
     return g_available.load(std::memory_order_acquire);
 }
