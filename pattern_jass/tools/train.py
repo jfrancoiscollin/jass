@@ -966,15 +966,13 @@ def main():
                          'Same optimum, full-batch SPEED, ~20M rows on 32GB. Preferred '
                          'over --minibatch for <=~20M. Pure L2 only.')
     ap.add_argument('--phase-weight', default='',
-                    help='densification knob : over/under-weight rows of a game '
-                         'phase in the DATA loss, e.g. "endgame=3,deep-eg=4" (phases: '
-                         'opening/midgame/late-mid/endgame/deep-eg, by piece count, '
-                         'same bounds as game_autopsy). Unlisted=1.0. Normalised so the '
-                         'mean train weight stays 1 (L2 comparable). Works with full / '
-                         '--lowmem / --minibatch; the per-phase val_mse print shows the '
-                         'effect. Linear-class fix for the endgame bleed (Scan proves a '
-                         'linear eval CAN play endgames — feed it more endgame weight, '
-                         'no non-linearity). cf jobs 0249/0250/0251/0252.')
+                    help='DEPRECATED/historical: lever MORT (-210 Elo, jobs '
+                         '0254/0257/0261). Conserved for reproduction only; do not '
+                         'use in new experiments. Over/under-weights rows of a game '
+                         'phase in the DATA loss, e.g. "endgame=3,deep-eg=4" '
+                         '(phases: opening/midgame/late-mid/endgame/deep-eg, by '
+                         'piece count, same bounds as game_autopsy). Unlisted=1.0; '
+                         'normalised so the mean train weight stays 1.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
     ap.add_argument('--target', choices=['wdl', 'score', 'prob'], default='wdl',

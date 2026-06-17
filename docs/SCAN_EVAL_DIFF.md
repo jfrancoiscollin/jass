@@ -58,11 +58,12 @@ Entraîner logistic WDL sur données enrichies egdb (coverage ≤7p), mesurer **
 Scan + Elo**. Coût : ~4-6 extras + retrain. **Teste directement l'hypothèse conversion-par-
 feature** que 0306 aurait dû tester. → job dédié.
 
-### LEAD 2 — Ré-évaluer les bricks gated (déjà codées, OFF par défaut) — le quick win
-`JASS_KING_PATTERNS` (rois dans patterns, men|kings base-3 ; **+37 Elo en distillation, job
-0240**) et `JASS_ENDGAME_FEATURES` (extras 106-109) sont **OFF par défaut**. A/B propre dans
-le régime actuel (logistic WDL + données 0297 + coverage egdb) : défaut vs king-patterns-ON
-vs endgame-features-ON. Coût quasi nul (flags de build + retrain).
+### LEAD 2 — Ré-évaluer les bricks gated (defaults actuels explicites)
+`JASS_ENDGAME_FEATURES` (extras 106-109) est **ON par défaut** depuis 0311
+(NUM_EXTRAS 106→110). `JASS_KING_MOBILITY` reste **OFF par défaut** et
+`JASS_KING_PATTERNS` reste **OFF par défaut**. A/B propre dans le régime actuel
+(logistic WDL + données 0297 + coverage egdb) : défaut vs king-mobility-ON vs
+king-patterns-ON si besoin. Coût quasi nul (flags de build + retrain).
 
 ### LEAD 3 — Densité de données finale (PAS le `--phase-weight`, mort)
 ≤7p = **11.3 %** des données → le bank `eg` (king-PST/mobilité) est **sous-peuplé**. Le
