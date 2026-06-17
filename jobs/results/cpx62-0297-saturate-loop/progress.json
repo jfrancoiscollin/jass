@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0297-saturate-loop",
-  "snapshot_at": "2026-06-17T02:42:51+00:00",
+  "snapshot_at": "2026-06-17T02:48:02+00:00",
   "started_at": "2026-06-16T21:30:53+00:00",
-  "elapsed_seconds": 18718,
+  "elapsed_seconds": 19029,
   "artefacts": [
     {
       "name": "build.log",
@@ -202,11 +202,11 @@
     },
     {
       "name": "sp2-12.jnnw",
-      "size_bytes": 1124498
+      "size_bytes": 1187508
     },
     {
       "name": "sp2-12.log",
-      "size_bytes": 0
+      "size_bytes": 1471
     },
     {
       "name": "sp2-13.jnnw",
@@ -274,7 +274,7 @@
     },
     {
       "name": "sp2-6.jnnw",
-      "size_bytes": 1124498
+      "size_bytes": 1181954
     },
     {
       "name": "sp2-6.log",
@@ -290,11 +290,11 @@
     },
     {
       "name": "sp2-8.jnnw",
-      "size_bytes": 1157330
+      "size_bytes": 1187508
     },
     {
       "name": "sp2-8.log",
-      "size_bytes": 0
+      "size_bytes": 1469
     },
     {
       "name": "sp2-9.jnnw",
@@ -305,5 +305,5 @@
       "size_bytes": 1469
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    05:11:57  0.0  0.0 bash\n1145535 1145533    05:11:57  0.0  0.0 bash\n2234100 1145535    01:51:45 99.9  1.3 jass\n2234102 1145535    01:51:45 99.9  1.3 jass\n2234106 1145535    01:51:45 99.9  1.3 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1145533       1    05:17:08  0.0  0.0 bash\n1145535 1145533    05:17:08  0.0  0.0 bash\n2234100 1145535    01:56:57 99.9  1.3 jass\n"
 }
