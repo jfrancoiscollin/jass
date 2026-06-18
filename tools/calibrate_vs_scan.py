@@ -256,6 +256,7 @@ class JassEngine(EngineProc):
                  nnue_path: str | None = None,
                  pattern_path: str | None = None,
                  book_path: str | None = None,
+                 search_params: str | None = None,
                  threads: int = 1):
         argv = [path]
         if pattern_path:
@@ -265,6 +266,10 @@ class JassEngine(EngineProc):
         elif no_nnue: argv.append("--no-nnue")
         elif nnue_path:
             argv += ["--nnue", nnue_path]
+        if search_params:
+            # Override the HUB engine's search constants (LMR/pruning/etc.)
+            # WITHOUT a rebuild — tune search vs Scan in one build.
+            argv += ["--search-params", search_params]
         if book_path:
             # Load a custom JBOK book (e.g. the 77K-position book from 0013).
             # When set, no_book is ignored — the user explicitly opted in to a
@@ -654,6 +659,11 @@ def main(argv):
                         "1. Use with --movetime to see SMP gain — fixed depth "
                         "saturates at the eval ceiling and doesn't surface "
                         "the depth-per-second advantage SMP gives.")
+    p.add_argument("--jass-search-params", metavar="SPEC", default=None,
+                   help="override the jass player's search constants via a "
+                        "\"k=v,k=v\" spec (e.g. \"multicut_min_depth=6,"
+                        "razor_max_depth=4\") — tune search vs Scan in ONE build, "
+                        "no recompile. Keys: src/search_params.hpp.")
     args = p.parse_args(argv)
     # UNITS GUARD : --movetime is per-move SECONDS, not ms. The trap is that
     # `jass --depth-at-movetime` and the Jass HUB `go movetime` are MILLISECONDS,
@@ -715,6 +725,7 @@ def main(argv):
                       no_nnue=args.no_nnue, nnue_path=args.nnue,
                       pattern_path=args.jass_pattern,
                       book_path=args.jass_book,
+                      search_params=args.jass_search_params,
                       threads=args.jass_threads)
     scan = ScanEngine(args.scan, label="Scan-player",
                       no_book=(args.scan_book == "off"),
