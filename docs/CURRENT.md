@@ -1,135 +1,101 @@
 # CURRENT — source de vérité active (programme « battre Scan »)
 
 > **1 page, tenue à jour à CHAQUE verdict.** Le reste des docs = archive/historique.
-> But : empêcher qu'un passage périmé relance une **branche morte** (cf le quasi-incident
-> `--play-depth-by-phase` de l'audit 2026-06-17 : marqué « mort » dans une vieille ligne,
-> en fait VIVANT). Lire avec [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe + arbre) et
-> [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits). MAJ : **2026-06-18**.
+> But : empêcher qu'un passage périmé relance une **branche morte**. Lire avec
+> [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe + arbre), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md)
+> §0 (faits) et [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md) (règles permanentes). MAJ : **2026-06-18**.
 
-## Hypothèse active n°1 (2026-06-18) — COVARIATE-SHIFT : la DISTRIBUTION, depuis le départ
-**Conviction JFC : « depuis le départ, on ne décolle pas à cause de ça ».** Le verrou n'est ni
-les features, ni la capacité, ni le label — c'est la **distribution des positions d'entraînement**.
-Toute notre data vient du **self-play de jass avec sa propre éval faible** (ou de coverage ≤7p
-*aléatoire*) → on apprend l'éval (la nôtre OU celle de Scan en distillation) sur **les positions que
-jass visite**, pas sur celles que **Scan traverse**. Covariate-shift classique.
+## Hypothèse active (2026-06-18) — la RECHERCHE est le levier DOMINANT
+Le mur n'est **ni la data, ni la classe d'éval** — c'est que **la recherche de jass ne scale pas**.
+- **0332** : à profondeur égale jass = Scan en vitesse (d9 : 1,1×) MAIS le branchement effectif est
+  **2,0/ply (jass) vs 1,28 (Scan)** → l'arbre de jass explose (d15 : **18× plus lent**). jass ne peut
+  pas atteindre les profondeurs de Scan à temps égal.
+- **0330** : le gap d'éval est **réel mais petit** (~2-4 plies ; +2 plies → score ×6). jass *compense
+  déjà* l'éval par la profondeur — qu'il n'arrive pas à obtenir (cf 0332). La recherche est le **multiplicateur**.
+- **0333** : les prunings qui **achètent de la profondeur** (probcut/razor/multicut/iid) sont TOUS OFF
+  par défaut ; le **combo = 0.639 à temps fixe** (≈ +100 Elo self-play). **Premier levier qui bouge.**
 
-**Pourquoi ça mord un LINÉAIRE plus fort que tout.** Un MLP a la capacité de bien fitter *partout* ;
-un linéaire **partage les mêmes poids sur toutes les positions** → la distribution d'entraînement
-*EST* la pondération de l'objectif. Mauvaise distribution = le fit linéaire **alloue ses poids au
-mauvais endroit**, on n'optimise pas « là où ça compte ». Distiller Scan sur des positions que Scan
-ne joue jamais = apprendre Scan dans ses angles morts à nous.
+**Plan** : caler le combo de recherche (0334 ablations → 0335 vs Scan depth-égale), puis itérer le
+réglage recherche (marges, LMR profond, ordering) — terrain neuf sous la BONNE méthodo (temps fixe).
+L'éval (pool mixte) reste un levier secondaire additif (une éval plus nette aide aussi l'ordering).
 
-**Preuves convergentes (toute l'histoire la corrobore) :**
-- Plateau **constant** 0/54 · −741 · −800 quels que soient les features → suspect commun = data.
-- **`endgame_mse` ⟂ force** (0311/0312) : signature *exacte* du mismatch (on fitte les positions
-  données, ça ne transfère pas au jeu).
-- **0309/0310** « linéaire fitte la finale à mse 3.03, 0 contradiction ≤7p » : on sait fitter les
-  positions qu'on a — elles sont juste **les mauvaises**. Renforce, ne contredit pas.
-- **Champion Scan-distillé** ne bat jamais Scan : distillé sur distribution faible.
-- **0306** (gradient ne transfère pas, 99,9 % proxy) : encore couverture/distribution.
-
-**Test décisif — 0327 (cpx62)** : A/B chirurgical, seule la SOURCE des positions change. ARM-OLD =
-distribution 0314 ; ARM-NEW = **jeu propre de Scan** (Scan joue les deux côtés, on dumpe son chemin —
-`tools/scan_selfplay_gen.py`). Même archi FULL Scan-alignée, même relabel Scan d9, même train, même
-taille, même juge vs Scan mt1.5. **`new ≫ old` → conviction DÉMONTRÉE** (reframe tout le programme) ;
-`new ≈ old` → seul résultat qui l'infirme → regarder recherche/temps ou terme d'éval tuné manquant.
-
-**Conséquence si confirmé** : on ne « rajoute » plus rien. On **régénère toute la data depuis du jeu
-fort**, puis on **co-évolue la distribution** (AlphaZero-style) : éval distillée-forte → self-play
-avec *cette* éval (visite des positions quasi-fortes) → re-distille → … La distribution monte avec
-l'éval au lieu de tourner sur les angles morts de jass. Corpus `ccx33-0328` = 1re brique.
-
-## Hypothèse active n°2 (subordonnée) — verrou finale-rois
-Fermer le verrou **finale-rois DANS la classe linéaire**. Le gap n'est **PAS la capacité**
-(0309/0310 : *conflit de phase*, pas saturation). Leviers : features rois (`king_mob`/`endg`),
-phase-split. ⚠️ **Réinterprété par n°1** : si même la finale est mal *distribuée* (coverage ≤7p
-aléatoire ≠ finales que Scan atteint), ce verrou n'est qu'une *facette* du covariate-shift. Jugé à
-la **CONVERSION exacte**, jamais au `endgame_mse`.
+## 🔑 Découvertes & ERREURS méthodologiques (2026-06-18) — à ne JAMAIS réintroduire
+1. **ERREUR (corrigée) : on comparait à Scan à TEMPS FIXE ÉGAL depuis le début.** Ça confond éval et
+   vitesse de recherche → on a longtemps mal diagnostiqué (« l'éval est nulle »). À temps égal jass voit
+   moins de plies et perd quelle que soit l'éval. **Règle : depth fixe ou movetime compensé-NPS.**
+2. **ERREUR (corrigée) : on a calé toute la recherche à PROFONDEUR FIXE.** Ce benchmark sous-évalue
+   *structurellement* tout ce qui **achète de la profondeur** (à depth fixe la profondeur est gratuite →
+   on ne voit que le risque du pruning) → probcut/razor/multicut/iid ont été désactivés à tort. **Régler
+   la recherche À TEMPS FIXE** (self-play A/B `--benchmark-search-params … movetime_ms`).
+3. **PIÈGE évité : ne PAS rallumer NMP.** Évident mais FAUX — NMP est off à dessein (+97 Elo, sweep
+   0256/0259 ; zugzwang du draughts rend « passer est sûr » faux). Scan tient 1,28/ply SANS NMP.
+4. **ERREUR (de raisonnement) : sur-indexation sur l'éval/data.** La conviction covariate-shift était
+   forte et bien argumentée mais **réfutée** (0327/0329/0331 : 3 runs, même bande). Le vrai levier était
+   la recherche. Leçon : *isoler* (éval vs recherche) AVANT de présumer la cause.
 
 ## ⛔ Principe (prior fort, pas dogme)
-**Aucun pivot non-linéaire (FM/MLP) tant que la parité features/données/recherche avec
-Scan n'est pas fermée.** (cf ARBRE_DECISION)
+**Aucun pivot non-linéaire (FM/MLP) tant que la parité features/données/recherche avec Scan n'est pas
+fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord. (cf ARBRE_DECISION)
 
-## Defaults actuels (build) — vérifier via le manifeste d'artefact
+## Defaults actuels (build/recherche) — vérifier via le manifeste d'artefact
 | flag | valeur | source |
 |---|---|---|
 | `JASS_ENDGAME_FEATURES` | **ON** (NUM_EXTRAS=110) | baké 0311 |
-| `JASS_KING_MOBILITY` | OFF | 0311 +33 Elo, attente mesure propre |
-| `JASS_KING_PATTERNS` | OFF | 0240 +37 distill, off en prod |
-| `JASS_PHASE_LO/HI` | vide = **0/40** (legacy) | 0312 (sharp testé, gardé 0/40) |
-| search `eg_pieces` / `eg_no_nmp` | **40 / true** (NMP off partout) | `src/search_params.hpp` |
+| `JASS_KING_MOBILITY` / `JASS_KING_PATTERNS` | OFF / OFF | 0311 / 0240 |
+| `JASS_SCAN_PARITY` / `JASS_TEMPO_STAGE` | dispo (build runs récents ON) | 0323 |
+| search NMP (`eg_no_nmp`) | **OFF partout** (garder) | +97 Elo 0256/0259 (zugzwang) |
+| search probcut/razor/multicut/iid | **OFF par défaut → À RALLUMER** (combo +0.64) | 0333, calé à depth-fixe à tort |
 
-## 🔒 Comparaison vs Scan — RÈGLE PERMANENTE (2026-06-18)
-**Jamais à temps fixe ÉGAL** (confond éval et vitesse : jass NPS ≪ Scan → broyé quelle
-que soit l'éval). Standard = **profondeur fixe** (`--depth`/`--jass-depth`/`--scan-depth`)
-OU **movetime compensé-NPS** (jass 2× plus lent → `--jass-movetime 1 --scan-movetime 0.5`).
-Temps égal = uniquement pour *mesurer* le handicap de vitesse. `calibrate_vs_scan.py` :
-`--jass-movetime`/`--scan-movetime` + garde-fou. Détail : SCAN_METHODOLOGY_GAP.md.
+## 🔒 RÈGLES PERMANENTES (2026-06-18)
+- **Comparer à Scan** : jamais temps fixe égal → **profondeur fixe** (`--depth`/`--jass-depth`/`--scan-depth`)
+  ou **movetime compensé-NPS** (`--jass-movetime`/`--scan-movetime`). Temps égal = seulement pour *mesurer*
+  le handicap de vitesse. Garde-fou dans `calibrate_vs_scan.py`.
+- **Régler la recherche** : à **TEMPS FIXE** (`--benchmark-search-params A B … movetime_ms`), jamais à
+  profondeur fixe (sous-évalue le depth-buying).
+- **Pool de données** : **mixer** Scan-self-play (qualité ; quiet → *nuit* seul, 0327) + jass-self-play
+  (diversité) + coverage — `tools/jnnw_mix.py`. Diversité Scan : `scan_selfplay_gen.py --weak-depth`
+  (fort vs affaibli) / `--depth-jitter`.
+- **Outils** : `tools/nps_vs_scan.py` (handicap vitesse = facteur de compensation movetime) ;
+  `tools/jnnw_mix.py` ; `tools/scan_selfplay_gen.py` (corpus fort).
 
-## 🔒 Pool de données — RÈGLE PERMANENTE (2026-06-18)
-**Mixer** Scan-self-play (qualité, mais quiet → *nuit* seul au linéaire, 0327) + jass-self-play
-(diversité) + coverage. `tools/jnnw_mix.py` (parts contrôlées). Diversité Scan forcée :
-`scan_selfplay_gen.py --weak-depth` (fort vs affaibli = parties décisives) / `--depth-jitter`.
-
-## Verdict 0332 (2026-06-18) — la RECHERCHE NE SCALE PAS (le multiplicateur)
-NPS jass vs Scan à profondeur égale : **d9 = 1,1×** (même vitesse !), **d12 = 4,2×**, **d15 = 18,4×**.
-Facteur de branchement effectif : **jass ≈ 2,0/ply, Scan ≈ 1,28/ply** → l'arbre de jass explose, celui de
-Scan reste plat. C'est du **move-ordering / réductions** faibles, PAS de la vitesse d'éval (égale à d9).
-**Conséquence** : jass ne peut PAS obtenir les +2-4 plies que 0330 réclame (à temps égal il voit ~d11-12
-quand Scan voit d15). La recherche est le **levier dominant** — c'est le multiplicateur qui empêche de
-compenser l'éval. ⚠️ **PAS via NMP** : NMP est OFF *à dessein* (sweep 0256/0259 = **+97 Elo** à désactiver,
-zugzwang draughts). Le gain doit venir d'un **meilleur ordonnancement / réductions saines** (comme Scan, qui
-tient 1,28/ply SANS NMP). Note : une éval plus nette améliore aussi l'ordering → éval (0331) et recherche liées.
-
-## Verdict 0330 (2026-06-18) — le mur = ÉVAL faible MAIS gap PETIT (~2 plies)
-Isolation éval/recherche, même éval distillée Scan, jugée par profondeur : **C2 depth-égale d9 = 0.056**
-(jass perd même à depth égale → l'éval est vraiment plus faible/ply, PAS qu'un problème de vitesse) ;
-**C3 jass d11 vs Scan d9 (+2 plies) = 0.333** (×6 le score) ; C1 temps-égal mt1.5 = 0.111. → l'éval de
-jass est **~2-4 plies derrière** celle de Scan (gap petit, closeable), et jass **compense déjà par la
-profondeur**. **Deux leviers additifs** : (a) rapprocher l'éval (pool mixte + méthodo), (b) gagner du NPS
-(atteindre +2-4 plies à temps égal). Suite : **0331** (levier éval, jugé depth-égale) + **0332** (mesure NPS).
-
-## Verdict 0327/0329 (2026-06-18) — covariate-shift PUR : NON
-A/B contrôlé (même archi, même relabel Scan, juge mt1.5) : NEW (Scan self-play) **pire** que OLD
-(0314) — vs Scan −545 vs −387, Elo_hc +182 vs +318 ; champion 500k self-play = −545 aussi. La
-« bonne » distribution *seule* n'a pas fait décoller (au contraire). MAIS : toutes les défaites =
-« no legal move » (jass broyé) → forte présomption que le mur à temps égal est la **RECHERCHE**, pas
-l'éval. `0330` (éval vs recherche, depth-fixe) tranche. → d'où les 2 règles permanentes ci-dessus.
+## Verdicts récents (chronologie condensée)
+- **0327/0329** — covariate-shift PUR : **NON**. NEW (Scan self-play) *pire* que OLD (0314) vs Scan
+  (−545 vs −387), Elo_hc +182 vs +318 ; champion 500k = −545. La bonne distribution *seule* ne décolle pas.
+- **0330** — éval vs recherche : **gap d'éval réel mais petit** (~2 plies). C2 depth9=0.056, C3 jass+2=0.333.
+- **0331** — pool mixte jugé depth-égale : **pas d'amélioration nette** (dans le bruit 36 parties). Éval-data plafonné.
+- **0332** — **la recherche ne scale pas** (branchement 2,0 vs 1,28 ; 18× à d15). Levier dominant.
+- **0333** — prunings depth-buying OFF par défaut ; **combo = 0.639 à temps fixe**. Premier gain.
+- **0334** ⏳ — ablations du combo (sans conthist ?) + confirmation 1500ms.
 
 ## Métriques — SCREEN vs DECISION (un proxy priorise, ne décide JAMAIS seul)
-- **DECISION_GATE** : Elo réel/SPRT vs adversaire fort · autopsie **endgame-rois vs Scan**
-  (sur parties) · conversion `--egdb-conversion-test` (playout) / `--egdb-mtc-regret` (≤7p exact).
-- **SCREEN_ONLY** : `endgame_mse`, `val_mse`, fit-check, MTC-regret 1-ply, quick autopsy.
-- ⚠️ **Leçon 0311/0312** : `endgame_mse` est **ANTI-corrélé à la force**. Jamais décider dessus.
-- Pour chaque candidat sérieux, produire les **slices** (phase, phase×rois, quiet/tactique,
-  ≤7p/>7p, WDL, contradictions, autopsie Scan) — un Elo global masque le signal finale-rois.
+- **DECISION_GATE** : vs Scan **à profondeur égale / temps compensé** (méthodo permanente) · self-play
+  A/B recherche **à temps fixe** (`--benchmark-search-params`) · autopsie endgame-rois.
+- **SCREEN_ONLY** : `endgame_mse`, `val_mse`, Elo_hc, fit-check. ⚠️ **`endgame_mse` ⟂ force** (0311/0312).
+- ⚠️ Matchs vs Scan : 36 parties = bruit ±0.08 → pour une décision, **≥90 parties** ou self-play A/B.
 
 ## Branches MORTES (NE PAS relancer — + condition de revival)
 | Levier mort | Preuve | Reviendrait légitime si… |
 |---|---|---|
+| **Covariate-shift PUR** (data forte seule) | 0327/0329/0331 (3 runs, même bande) | dans un pool *mixte* + recherche réglée |
 | Saturer le linéaire par cycles | 0297 plafonne/régresse | — |
-| Gradient MTC comme **CIBLE** d'entraînement | 0306 (99,9 % proxy, ne transfère pas) | densité ≥10-MTC massivement enrichie |
-| `--phase-weight` (densif par poids) | −210 Elo (0261) | repro only |
-| label-depth / **play-depth-finale SEUL** (boucle WDL) | 0254/0265 (−80/−30) | — |
-| Géométrie de patterns (enrichir) | 0203-0236 (flat) | — |
-| **FM/MLP** | prématuré (principe) | parité features/données/recherche fermée |
+| Gradient MTC comme **CIBLE** | 0306 (99,9 % proxy) | densité ≥10-MTC massivement enrichie |
+| `--phase-weight` | −210 Elo (0261) | repro only |
+| play-depth-finale SEUL (pré-egdb) | 0254/0265 | — |
+| Géométrie de patterns | 0203-0236 (flat) | — |
+| **Rallumer NMP** | −97 Elo (0256/0259, zugzwang) | — |
+| **FM/MLP** | prématuré (principe) | parité features/données/**recherche** fermée |
 
-> ⚠️ **NE PAS confondre** : le **depth-RAMP** `--play-depth-by-phase late-mid=12,endgame=16`
-> en **régime egdb-exact** est **VIVANT** (revival 0293 **+74 Elo**, utilisé 0297/0313/0314).
-> Seul « play-depth-finale SEUL » (pré-egdb) est mort.
+> ⚠️ **VIVANT** : depth-RAMP `--play-depth-by-phase late-mid=12,endgame=16` en régime egdb-exact (revival 0293 +74 Elo).
 
 ## Garde-fou artefacts
-Tout `.pjtw`/`.jnnw` produit → **manifeste** (`jobs/lib/manifest.sh : manifest_write` :
-commit, host, flags, NUM_EXTRAS, dataset hash). **Avant tout A/B** de deux `.pjtw` :
-`manifest_assert_comparable` (ABORT si flags/NUM_EXTRAS/dataset diffèrent — évite le
-footgun « deux 110-extras de layouts différents »). Pré-flight compute : `jobs/lib/preflight.sh`.
+`.pjtw`/`.jnnw` → **manifeste** (`jobs/lib/manifest.sh`). Avant tout A/B de deux `.pjtw` :
+`manifest_assert_comparable`. Pré-flight compute : `jobs/lib/preflight.sh`. Sharding relabel : `jobs/lib/relabel.sh`.
 
 ## Jobs en cours
-- **cpx62** : **0331** (pool MIXTE Scan-divers+jass, jugé depth-égale — levier ÉVAL).
-- **ccx33** : **0332** (mesure NPS jass vs Scan — levier RECHERCHE).
-- **PC perso** : éteint ; egdb WLD+MTC ✅, self-play ✅
-- *0326/0327/0329/0330 finis. Baseline depth-juge : C2=0.056, C3(jass+2)=0.333.*
+- **cpx62** : **0334** (raffinement combo recherche — ablations + temps long).
+- **ccx33** : libre (corpus 0328 ✅, NPS 0332 ✅).
+- **PC perso** : éteint ; egdb WLD+MTC ✅.
 
 ## Prochain verdict attendu
-**0327** : `new (Scan self-play) vs_Scan ≫ old (0314)` → **covariate-shift confirmé**, le verrou
-historique → bascule sur pipeline de génération Scan-self-play (corpus 0328) + co-évolution.
+**0334** → meilleur sous-ensemble de prunings. Puis **0335** : geler le combo + valider **vs Scan à
+profondeur égale / temps compensé** (le branchement passe-t-il de 2,0 vers 1,28 ? le score vs Scan grimpe-t-il ?).

@@ -15,39 +15,52 @@
 
 ---
 
-## 0. Hypothèse de tête — 2026-06-18 (COVARIATE-SHIFT : la distribution, depuis le départ)
+## 0. Verdict de tête — 2026-06-18 (la RECHERCHE est le levier dominant + méthodo refondue)
 
-> **Conviction JFC (2026-06-18) : « depuis le départ, on ne décolle pas à cause de ça ».**
-> Le verrou n'est ni les features, ni la capacité, ni le label — c'est la **distribution des
-> positions d'entraînement**. Toute notre data vient du self-play de jass avec *sa propre éval
-> faible* (ou coverage ≤7p *aléatoire*) → on apprend l'éval (la nôtre OU Scan en distillation)
-> sur les positions que **jass** visite, pas celles que **Scan** traverse. Covariate-shift.
+> **Bascule majeure.** Après 3 échecs du levier éval/data, l'isolation propre (éval vs recherche)
+> montre que **le mur, c'est que la recherche de jass ne scale pas**. Et on découvre qu'on
+> **mesurait mal depuis le départ** (temps fixe vs Scan ; recherche calée à profondeur fixe).
 
-**Pourquoi ça mord un LINÉAIRE en particulier.** Un linéaire partage les mêmes poids sur toutes
-les positions → **la distribution d'entraînement EST la pondération de l'objectif**. Mauvaise
-distribution ⇒ le fit alloue ses poids au mauvais endroit. Distiller Scan sur des positions que
-Scan ne joue jamais = apprendre Scan dans nos angles morts. (Un MLP, lui, peut fitter partout —
-d'où l'illusion que « la capacité aiderait » ; en réalité c'est la distribution.)
+**La chaîne de verdicts (cpx62/ccx33, 2026-06-18) :**
+- **0327/0329 — covariate-shift PUR : RÉFUTÉ.** A/B chirurgical (même archi, même relabel Scan d9,
+  juge mt1.5) : distribution NEW (Scan self-play) **pire** que OLD (0314) — vs Scan **−545 vs −387**,
+  Elo_hc +182 vs +318 ; champion 500k self-play = −545. La « bonne » distribution *seule* ne décolle
+  pas (elle nuit : jeu Scan-vs-Scan trop *quiet*, peu de contraste pour un fit linéaire). Mais toutes
+  les défaites = « no legal move » (jass broyé) → présomption que le mur est la **recherche**.
+- **0330 — éval vs recherche (jugé par PROFONDEUR) : gap d'éval réel mais PETIT (~2-4 plies).**
+  C2 depth-égale d9 = 0.056 (jass perd même à depth égale → éval plus faible/ply, pas qu'une vitesse) ;
+  **C3 jass d11 vs Scan d9 (+2 plies) = 0.333 (×6)** ; C1 temps-égal = 0.111. jass *compense déjà* par
+  la profondeur.
+- **0331 — pool mixte (Scan-divers + jass) jugé depth-égale : pas d'amélioration nette** (non-monotone
+  → dans le bruit 36 parties). **3e échec d'affilée du levier éval-data → plafonné.**
+- **0332 — la RECHERCHE NE SCALE PAS (le multiplicateur).** NPS jass/Scan à depth égale : d9 = **1,1×**
+  (même vitesse), d12 = 4,2×, d15 = **18,4×**. Branchement effectif **jass ≈ 2,0/ply vs Scan ≈ 1,28**.
+  jass ne peut PAS obtenir les +2-4 plies que 0330 réclame. **Levier dominant.**
+- **0333 — premier GAIN.** Les prunings qui **achètent de la profondeur** (probcut/razor/multicut/iid)
+  sont TOUS OFF par défaut ; jugés à **temps fixe** (self-play A/B), le **combo des 5 = 0.639** (≈ +100
+  Elo), alors qu'individuellement ils sont neutres → **synergie de profondeur**. `conthist` seul nuit.
 
-**Ce que ça unifie (corrobore tout l'historique) :**
-- Plateau **constant** 0/54 · −741 · −800 quels que soient les features → suspect commun = data.
-- **`endgame_mse` ⟂ force** (0311/0312) = signature exacte du mismatch (fit ≠ transfert).
-- **0309/0310** « linéaire fitte la finale mse 3.03, 0 contradiction ≤7p » : on fitte les
-  positions qu'on a — *les mauvaises*. Renforce, ne contredit pas.
-- **Champion Scan-distillé** plafonné = distillé sur distribution faible. **0306** idem (99,9 % proxy).
+**🔑 ERREURS MÉTHODOLOGIQUES capitalisées (à ne jamais réintroduire) :**
+1. **Comparaison vs Scan à TEMPS FIXE ÉGAL** (depuis le début) → confond éval et vitesse → mauvais
+   diagnostic prolongé. **Corrigé** : depth fixe / movetime compensé-NPS (`calibrate_vs_scan` + garde-fou).
+2. **Recherche réglée à PROFONDEUR FIXE** → sous-évalue *structurellement* le depth-buying (probcut/
+   razor/multicut/iid désactivés à tort, levier dominant laissé intact tout le programme). **Corrigé** :
+   régler la recherche à **TEMPS FIXE** (`--benchmark-search-params … movetime_ms`).
+3. **PIÈGE évité** : ne PAS rallumer NMP (évident mais −97 Elo, zugzwang ; Scan tient 1,28/ply sans NMP).
+4. **Sur-indexation éval/data** (conviction covariate-shift, forte mais réfutée) → leçon : *isoler*
+   (éval vs recherche) AVANT de présumer la cause.
 
-**Test décisif — `cpx62-0327`** (covariate-shift A/B) : seule la SOURCE des positions change.
-ARM-OLD = distribution 0314 ; ARM-NEW = **jeu propre de Scan** (Scan joue les deux côtés, on dumpe
-son chemin — `tools/scan_selfplay_gen.py`, shards de seeds DISJOINTS car Scan @ depth fixe est
-déterministe). Tout le reste identique (archi FULL Scan-alignée, relabel Scan d9, train, taille,
-juge Scan mt1.5). **`new ≫ old` → conviction démontrée → reframe le programme** ; `new ≈ old` →
-seul résultat qui l'infirme. `ccx33-0328` construit en parallèle le corpus Scan-self-play réutilisable.
+**Conviction JFC (2026-06-18, conservée pour mémoire)** : « depuis le départ on ne décolle pas à cause
+de la distribution ». Bien argumentée (covariate-shift : un linéaire pondère son objectif par la
+distribution), mais **le test l'a réfutée** — le vrai verrou était la recherche. La distribution reste
+un facteur *secondaire* (d'où le pool mixte permanent), pas LE verrou.
 
-**Conséquence si confirmé** : régénérer **toute** la data depuis du jeu fort, puis **co-évoluer la
-distribution** (AlphaZero-style) — éval distillée-forte → self-play avec *cette* éval → re-distille.
+**Outils créés (2026-06-18)** : `tools/scan_selfplay_gen.py` (corpus Scan-self-play + `--weak-depth`
+diversité), `tools/jnnw_mix.py` (pool mixte), `tools/nps_vs_scan.py` (handicap vitesse = facteur de
+compensation movetime), `calibrate_vs_scan` `--jass-movetime/--scan-movetime`. Corpus `0328` (1.19M) committé.
 
-**Ops 2026-06-18** : `ccx33-0326` (alignment A/B) **TUÉ** — il jugeait sur la distribution suspecte
-0314/0313 (« trop long, surtout si on juge sur de mauvaises positions », JFC). Remplacé par 0328.
+**Ops** : `ccx33-0326` (alignment A/B) **tué** (jugeait sur distribution suspecte). Suite : 0334 (ablations
+combo recherche) → 0335 (combo gelé vs Scan depth-égale).
 
 ## 0bis. Verdict précédent — 2026-06-17 (saturation apparente + gradient mort + PRINCIPE)
 
