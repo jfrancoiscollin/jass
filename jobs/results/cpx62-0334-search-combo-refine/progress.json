@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0334-search-combo-refine",
-  "snapshot_at": "2026-06-18T16:52:06+00:00",
+  "snapshot_at": "2026-06-18T16:57:07+00:00",
   "started_at": "2026-06-18T15:06:47+00:00",
-  "elapsed_seconds": 6319,
+  "elapsed_seconds": 6620,
   "artefacts": [
     {
       "name": "build.log",
@@ -18,15 +18,15 @@
     },
     {
       "name": "c-combo5_LONG.log",
-      "size_bytes": 0
+      "size_bytes": 318
     },
     {
       "name": "c-combo_noct.log",
-      "size_bytes": 0
+      "size_bytes": 302
     },
     {
       "name": "c-combo_noct_LONG.log",
-      "size_bytes": 0
+      "size_bytes": 303
     },
     {
       "name": "c-no_iid.log",
@@ -34,15 +34,15 @@
     },
     {
       "name": "c-no_multicut.log",
-      "size_bytes": 0
+      "size_bytes": 281
     },
     {
       "name": "c-no_probcut.log",
-      "size_bytes": 0
+      "size_bytes": 282
     },
     {
       "name": "c-no_razor.log",
-      "size_bytes": 0
+      "size_bytes": 285
     },
     {
       "name": "c-noct_plus_rfp.log",
@@ -69,5 +69,5 @@
       "size_bytes": 1360
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3289584       1    01:45:18  0.0  0.0 bash\n3289586 3289584    01:45:18  0.0  0.0 bash\n3290177 3289586    01:43:37 99.9  0.5 jass\n3290178 3289586    01:43:37 99.9  0.5 jass\n3290179 3289586    01:43:37 99.9  0.5 jass\n3290180 3289586    01:43:37 99.9  0.5 jass\n3290182 3289586    01:43:37 99.9  0.5 jass\n3290183 3289586    01:43:37 99.9  0.5 jass\n3290184 3289586    01:43:37 99.9  0.5 jass\n3290186 3289586    01:43:37 99.9  0.5 jass\n3290187 3289586    01:43:37 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3289584       1    01:50:20  0.0  0.0 bash\n3289586 3289584    01:50:20  0.0  0.0 bash\n3290177 3289586    01:48:39 99.9  0.5 jass\n3290183 3289586    01:48:39 99.9  0.5 jass\n3290184 3289586    01:48:39 99.9  0.5 jass\n"
 }
