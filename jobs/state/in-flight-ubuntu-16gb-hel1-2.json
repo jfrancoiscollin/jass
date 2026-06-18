@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0332-nps-vs-scan",
+  "script": "jobs/queue/ccx33-0332-nps-vs-scan.sh",
+  "pid": 2472340,
+  "started_at": "2026-06-18T13:26:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
