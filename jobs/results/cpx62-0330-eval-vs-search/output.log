@@ -1,0 +1,27 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] matches: 18 parties × 1.5s × ~150 plies ≈ 67.5 min
+  [preflight] C2 depth=9 (18 parties): ≈ 55 min
+  [preflight] C3 jass11/scan9 (18 parties): ≈ 75 min
+  [preflight] TOTAL estimé ≈ 202.5 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval (distrib 0314, Scan-relabel, FULL-aligned + tempo-stage) ===
+=== C1 : TEMPS ÉGAL mt1.5 (baseline) ===
+  time-mt15 : rate=0.111  Elo=-361  ~temps/partie=150s
+=== C2 : PROFONDEUR ÉGALE depth=9 ===
+  depth9-eq : rate=0.056  Elo=-492  ~temps/partie=1s
+=== C3 : ASYMÉTRIQUE jass depth=11 vs Scan depth=9 (+2 plies) ===
+  jass11-scan9 : rate=0.333  Elo=-120  ~temps/partie=2s
+
+==========================================================
+   cpx62-0330 — ISOLER ÉVAL vs RECHERCHE (même éval distillée Scan)
+----------------------------------------------------------
+  C1 mt1.5       rate=0.111   Elo=-361   temps/partie≈150s
+  C2 depth9=9    rate=0.056   Elo=-492   temps/partie≈1s
+  C3 jass11/sc9  rate=0.333   Elo=-120   temps/partie≈2s
+----------------------------------------------------------
+  C2 ≫ C1 → le verrou est la RECHERCHE/vitesse (NPS) : on arrête la data/éval, on attaque le NPS.
+  C2 ≈ C1 (toujours broyé) → le verrou est l'ÉVAL (classe) : ni features ni distrib ne l'ont bougé.
+  C3 montre combien de plies de recherche en plus compensent l'écart d'éval.
+==========================================================
