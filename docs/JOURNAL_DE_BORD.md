@@ -15,7 +15,41 @@
 
 ---
 
-## 0. Dernier verdict — 2026-06-17 (saturation apparente + gradient mort + PRINCIPE)
+## 0. Hypothèse de tête — 2026-06-18 (COVARIATE-SHIFT : la distribution, depuis le départ)
+
+> **Conviction JFC (2026-06-18) : « depuis le départ, on ne décolle pas à cause de ça ».**
+> Le verrou n'est ni les features, ni la capacité, ni le label — c'est la **distribution des
+> positions d'entraînement**. Toute notre data vient du self-play de jass avec *sa propre éval
+> faible* (ou coverage ≤7p *aléatoire*) → on apprend l'éval (la nôtre OU Scan en distillation)
+> sur les positions que **jass** visite, pas celles que **Scan** traverse. Covariate-shift.
+
+**Pourquoi ça mord un LINÉAIRE en particulier.** Un linéaire partage les mêmes poids sur toutes
+les positions → **la distribution d'entraînement EST la pondération de l'objectif**. Mauvaise
+distribution ⇒ le fit alloue ses poids au mauvais endroit. Distiller Scan sur des positions que
+Scan ne joue jamais = apprendre Scan dans nos angles morts. (Un MLP, lui, peut fitter partout —
+d'où l'illusion que « la capacité aiderait » ; en réalité c'est la distribution.)
+
+**Ce que ça unifie (corrobore tout l'historique) :**
+- Plateau **constant** 0/54 · −741 · −800 quels que soient les features → suspect commun = data.
+- **`endgame_mse` ⟂ force** (0311/0312) = signature exacte du mismatch (fit ≠ transfert).
+- **0309/0310** « linéaire fitte la finale mse 3.03, 0 contradiction ≤7p » : on fitte les
+  positions qu'on a — *les mauvaises*. Renforce, ne contredit pas.
+- **Champion Scan-distillé** plafonné = distillé sur distribution faible. **0306** idem (99,9 % proxy).
+
+**Test décisif — `cpx62-0327`** (covariate-shift A/B) : seule la SOURCE des positions change.
+ARM-OLD = distribution 0314 ; ARM-NEW = **jeu propre de Scan** (Scan joue les deux côtés, on dumpe
+son chemin — `tools/scan_selfplay_gen.py`, shards de seeds DISJOINTS car Scan @ depth fixe est
+déterministe). Tout le reste identique (archi FULL Scan-alignée, relabel Scan d9, train, taille,
+juge Scan mt1.5). **`new ≫ old` → conviction démontrée → reframe le programme** ; `new ≈ old` →
+seul résultat qui l'infirme. `ccx33-0328` construit en parallèle le corpus Scan-self-play réutilisable.
+
+**Conséquence si confirmé** : régénérer **toute** la data depuis du jeu fort, puis **co-évoluer la
+distribution** (AlphaZero-style) — éval distillée-forte → self-play avec *cette* éval → re-distille.
+
+**Ops 2026-06-18** : `ccx33-0326` (alignment A/B) **TUÉ** — il jugeait sur la distribution suspecte
+0314/0313 (« trop long, surtout si on juge sur de mauvaises positions », JFC). Remplacé par 0328.
+
+## 0bis. Verdict précédent — 2026-06-17 (saturation apparente + gradient mort + PRINCIPE)
 
 > ## ⛔ PRINCIPE DIRECTEUR — NON NÉGOCIABLE (redit par JFC, 2026-06-17)
 > **On a la MÊME architecture que Scan (éval LINÉAIRE sur patterns). On DOIT donc
