@@ -22,14 +22,24 @@
 - probcut / iid / conthist : OFF (n'ajoutent pas / nuisent — 0334/0335/0336).
 - Région move-ordering/aspiration/LMP/singular/history (0337) : déjà bien calée (marginal).
 
-## Audit move-ordering / pruning (`src/search.cpp`) — prochains leviers
-| # | Constat | Lever / expé | Priorité |
+## Audit move-ordering / pruning (`src/search.cpp`) — leviers
+| # | Constat | Lever / expé | État |
 |---|---|---|---|
-| 1 | **LMP plafonnée à depth ≤ 3** (`constexpr LMP_MAX_DEPTH = 3`, l.804) — non réglable | **Paramétrer + ÉTENDRE la LMP en profondeur** (formule move-count quadratique jusqu'à d6-8). Classique depth-buyer, sous-évalué par l'ancien réglage depth-fixe. Code + valider à temps fixe. | **HAUTE** |
-| 2 | **Captures non ordonnées** (`return 0`, l.318) — ordre de génération | Ordonner les rafles max (promotion / rois capturés d'abord). Cheap. Mineur (captures forcées). | basse |
-| 3 | LMR cap `d-2`, formule monotone | Tester LMR plus profond *sélectif* (low-history) ; `lmr_idx_div` agressif a nui (0333). | moyenne |
-| 4 | RFP `rfp_max_depth=5` | home-0007 : `rfp_max_depth=7,margin=70` = 0.639 (hc, 36p) → **confirmer sur éval pattern** (home-0008) puis baker. | moyenne |
-| 5 | Éval → ordering | Une éval plus nette améliore l'ordering (moins de branchement) → l'axe éval reste *additif*. | (phase 2) |
+| 1 | LMP était plafonnée à depth ≤ 3 (codé en dur) | **IMPLÉMENTÉ** : `lmp_max_depth` (défaut 3=inchangé), tail quadratique 2+d+d². −6 % nœuds à =5 (plateau : branchement quiet faible en draughts). À juger en force (0340). | ✅ param |
+| 2 | LMR sans terme d'historique (depth+index seul) | **IMPLÉMENTÉ** : `lmr_hist_div` (défaut 0=OFF) : réduit moins les coups à fort historique. Effet nœuds petit (levier qualité). À juger en force. | ✅ param |
+| 3 | RFP `rfp_max_depth=5` | home-0007 : `rfp_max_depth=7,margin=70`=0.639 (hc) → re-validé sur éval pattern dans 0340 (rfp7, lmpX_rfp7). | ⏳ 0340 |
+| 4 | Captures non ordonnées (`return 0`, l.318) | Mineur (captures forcées, toutes longueur max) — **écarté**. | ✂️ |
+| 5 | Éval → ordering | Une éval plus nette améliore l'ordering → l'axe éval reste *additif*. | (phase 2) |
+
+### Prochain sweep (quand une box se libère) — candidats à temps fixe, vs combo baké
+`lmp_max_depth=4/5` · `lmr_hist_div=2000/4000` · `rfp_max_depth=7,rfp_margin=70` · les stacks
+(lmp5+rfp7, lmr_hist+rfp7, lmp5+lmr_hist). Puis valider le meilleur **vs Scan** via
+`calibrate_vs_scan --jass-search-params "<combo final>"` (un seul build, le flag 2026-06-18).
+
+### Infra de tuning (2026-06-18)
+- `jass --search-params "k=v,…"` : règle la recherche du moteur HUB sans rebuild.
+- `calibrate_vs_scan --jass-search-params "…"` : tuning recherche **vs Scan en un seul build**.
+- Tous les params : `src/search_params.hpp` (`parse_search_params`).
 
 ## RFP — lead en cours
 home-0007 (hc, 36 parties) : `rfp_max_depth=7, rfp_margin=70` = **0.639**. À re-valider sur l'éval
