@@ -3809,6 +3809,7 @@ int main(int argc, char** argv) {
     std::unique_ptr<NetworkServerClient> nnue_server;
     const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
     const char*     book_path = nullptr;
+    const char*     search_params_spec = nullptr;  // --search-params "k=v,k=v"
     for (int i = 1; i < argc; ++i) {
         const std::string_view a{argv[i]};
         if (a == "--no-nnue") {
@@ -3843,11 +3844,19 @@ int main(int argc, char** argv) {
             nnue_ptr = nnue_owned.get();
         } else if (a == "--book" && i + 1 < argc) {
             book_path = argv[++i];
+        } else if (a == "--search-params" && i + 1 < argc) {
+            // Override the HUB engine's search constants (LMR/pruning/etc.)
+            // from a "k=v,k=v" spec — lets calibrate_vs_scan tune search vs
+            // Scan without a rebuild. Keys: see src/search_params.hpp.
+            search_params_spec = argv[++i];
         }
     }
 
     HubFrontEnd hub(std::cin, std::cout);
     hub.set_nnue(nnue_ptr);
+    if (search_params_spec) {
+        hub.set_search_params(jass::parse_search_params(search_params_spec));
+    }
     if (book_path) {
         if (!hub.load_book(book_path)) {
             std::cerr << "error: cannot load book from " << book_path << "\n";

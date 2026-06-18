@@ -69,12 +69,19 @@ public:
     // (e.g. a freshly loaded MLP) to swap models without recompiling.
     void set_nnue(const INetwork* n) noexcept;
 
+    // Override the search parameters used for every `go` (LMR/pruning/etc.).
+    // Lets a harness (e.g. calibrate_vs_scan via --search-params) play the
+    // HUB engine with non-default search constants WITHOUT a rebuild — the
+    // workflow for tuning search vs Scan. Default = compiled SearchParams{}.
+    void set_search_params(const SearchParams& p) noexcept;
+
     // Replace the engine's opening book with the contents of a JBOK
     // file at `path`. Returns false on I/O error or bad format.
     bool load_book(std::string_view path);
 
 private:
     Engine        engine_;
+    SearchParams  params_{};   // applied to every `go` (see set_search_params)
     std::istream& in_;
     std::ostream& out_;
 
