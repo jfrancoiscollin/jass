@@ -1,9 +1,29 @@
 {
   "job_id": "cpx62-0318-combined-run",
-  "snapshot_at": "2026-06-18T01:45:03+00:00",
+  "snapshot_at": "2026-06-18T01:50:03+00:00",
   "started_at": "2026-06-17T22:46:12+00:00",
-  "elapsed_seconds": 10731,
+  "elapsed_seconds": 11031,
   "artefacts": [
+    {
+      "name": "combo-build.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "combo-cmake.log",
+      "size_bytes": 987
+    },
+    {
+      "name": "combo-dump.log",
+      "size_bytes": 115
+    },
+    {
+      "name": "combo-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "combo.feat",
+      "size_bytes": 3055200012
+    },
     {
       "name": "ctrl-build.log",
       "size_bytes": 27196
@@ -90,7 +110,7 @@
     },
     {
       "name": "phase-elo.log",
-      "size_bytes": 0
+      "size_bytes": 277
     },
     {
       "name": "phase-regret.log",
@@ -113,5 +133,5 @@
       "size_bytes": 485
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    02:58:50  0.0  0.0 bash\n 536488  536486    02:58:50  0.0  0.0 bash\n 541804  536488       02:50  0.0  0.0 bash\n 541805  541804       02:50 1167  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    03:03:51  0.0  0.0 bash\n 536488  536486    03:03:51  0.0  0.0 bash\n2623717  536488       00:33  109 86.2 python3\n"
 }
