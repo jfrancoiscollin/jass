@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0336-search-combo-confirm",
-  "snapshot_at": "2026-06-18T18:58:19+00:00",
+  "snapshot_at": "2026-06-18T19:03:51+00:00",
   "started_at": "2026-06-18T17:52:35+00:00",
-  "elapsed_seconds": 3944,
+  "elapsed_seconds": 4276,
   "artefacts": [
     {
       "name": "build.log",
@@ -45,5 +45,5 @@
       "size_bytes": 1362
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3296938       1    01:05:44  0.0  0.0 bash\n3296940 3296938    01:05:44  0.0  0.0 bash\n3297556 3296940    01:04:03 99.9  0.5 jass\n3297557 3296940    01:04:03 99.9  0.5 jass\n3297558 3296940    01:04:03 99.9  0.5 jass\n3297559 3296940    01:04:03 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3296938       1    01:11:15  0.0  0.0 bash\n3296940 3296938    01:11:15  0.0  0.0 bash\n3297556 3296940    01:09:34 99.9  0.5 jass\n3297557 3296940    01:09:34 99.9  0.5 jass\n3297558 3296940    01:09:34 99.9  0.5 jass\n3297559 3296940    01:09:34 99.9  0.5 jass\n"
 }
