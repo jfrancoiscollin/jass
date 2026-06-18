@@ -1,0 +1,13 @@
+{
+  "build_flags": "DISTILL=Scan-d10 -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON --tempo-stage",
+  "dataset": {
+    "bytes": 16291634,
+    "path": "/root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/scan.jnnw",
+    "sha256_head64m": "a4d79efff49761bdec1b5cf238ff3e687c53850b62c07cecb47d7afe5eb384fe"
+  },
+  "date": "2026-06-18T06:17:15Z",
+  "git_commit": "67a28c19",
+  "host": "ubuntu-16gb-hel1-2",
+  "n_ext": 120,
+  "pjtw": "/root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/aligned.pjtw"
+}

@@ -1,0 +1,13 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] relabel Scan 500000 @ d10 (×8, dominant): ≈ 360 min
+  [preflight] train: 2 × 500000 lignes @ 4min/M ≈ 4.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] TOTAL estimé ≈ 660.0 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== échantillon 500000 + relabel Scan (depth 10) ===
+sub 500000 / 2500000
+  [relabel] 500000 positions, 8 shards × ~62500 (Scan depth 10)
+  [relabel] mergé 428727 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/scan.jnnw
+  relabelisé: 428727 positions
+=== ALIGNÉ (king_mob + scan-parity + tempo-stage) ===

@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/scan.jnnw
+  428727 records  (0.03s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/aligned.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (428727, 120)  (mean mob b/w=10.9/11.0)
+target=score  clipped±2000cp / 100  std=8.975
+phase : piece-count mean=14.9  wmg mean=0.316  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 350835/428727 (81.8%)
+split : train=315752 val=35083
+prune : keep 113,712 buckets (>= 1 visits) -> 227,426 pattern cols vs 34,012,224  (149.6× fewer); train fallback=0.000%
+design : 227666 columns (2×113713 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=1.342204  iters=300  (145.03s)
+val   : mse=2.756490  sign_acc=0.0014
+val/phase mse : opening=0.3276(n7506)  midgame=1.1026(n5610)  late-mid=2.1236(n5200)  endgame=3.5078(n4971)  deep-eg=5.0510(n11796)
+quant : scale=1000  pat range=[-880,880] ext_mg range=[-1315,1265]
+wrote /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/aligned.pjtw  (v3, 34012464 weights, 136049876 bytes)
