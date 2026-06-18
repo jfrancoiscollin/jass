@@ -1,8 +1,8 @@
 {
   "job_id": "home-0007-search-region4",
-  "snapshot_at": "2026-06-18T20:14:39+00:00",
+  "snapshot_at": "2026-06-18T20:19:57+00:00",
   "started_at": "2026-06-18T18:54:21+00:00",
-  "elapsed_seconds": 4818,
+  "elapsed_seconds": 5136,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,5 +37,5 @@
       "size_bytes": 721
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n    683       1       21:16  0.0  0.0 bash\n    685     683       21:16  0.0  0.0 bash\n   1104     685       20:59 99.9  0.3 jass\n   1105     685       20:59 99.9  0.3 jass\n   1106     685       20:59 99.9  0.3 jass\n   1107     685       20:59 99.9  0.3 jass\n   1108     685       20:59 99.9  0.3 jass\n   1109     685       20:59 99.9  0.3 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n    683       1       26:33  0.0  0.0 bash\n    685     683       26:33  0.0  0.0 bash\n   1104     685       26:16 99.9  0.3 jass\n   1105     685       26:16 99.9  0.3 jass\n   1106     685       26:16 99.9  0.3 jass\n   1107     685       26:16 99.9  0.3 jass\n   1108     685       26:16 99.9  0.3 jass\n   1109     685       26:16 99.9  0.3 jass\n"
 }
