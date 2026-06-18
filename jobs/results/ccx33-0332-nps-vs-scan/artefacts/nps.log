@@ -1,0 +1,9 @@
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0212      0.0190       1.11
+   12      0.2082      0.0498       4.18
+   15      1.4855      0.0809      18.36
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
