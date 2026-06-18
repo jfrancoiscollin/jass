@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0327-scan-selfplay-distill",
-  "snapshot_at": "2026-06-18T08:33:28+00:00",
+  "snapshot_at": "2026-06-18T08:38:40+00:00",
   "started_at": "2026-06-18T07:03:06+00:00",
-  "elapsed_seconds": 5422,
+  "elapsed_seconds": 5734,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -185,5 +185,5 @@
       "size_bytes": 493
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1067171 3211208    01:18:06  0.1  0.0 python3\n1067174 1067171    01:18:06 48.3  0.5 jass\n1067176 1067171    01:18:06 51.5  0.9 scan_linux\n1067179 1067171    01:18:06  0.0  0.0 jass\n3211206       1    01:30:22  0.0  0.0 bash\n3211208 3211206    01:30:22  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1067171 3211208    01:23:19  0.1  0.0 python3\n1067174 1067171    01:23:19 48.2  0.5 jass\n1067176 1067171    01:23:18 51.7  0.9 scan_linux\n1067179 1067171    01:23:18  0.0  0.0 jass\n3211206       1    01:35:34  0.0  0.0 bash\n3211208 3211206    01:35:34  0.0  0.0 bash\n"
 }
