@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0338-combo-vs-scan",
-  "snapshot_at": "2026-06-18T21:33:03+00:00",
+  "snapshot_at": "2026-06-18T21:38:06+00:00",
   "started_at": "2026-06-18T20:16:29+00:00",
-  "elapsed_seconds": 4594,
+  "elapsed_seconds": 4897,
   "artefacts": [
     {
       "name": "build-base-build.log",
@@ -49,5 +49,5 @@
       "size_bytes": 234
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3303064       1    01:16:33  0.0  0.0 bash\n3303066 3303064    01:16:33  0.0  0.0 bash\n3307468 3303066       13:56  0.2  0.0 python3\n3307471 3307468       13:56 48.1  0.5 jass\n3307473 3307468       13:56 51.7  0.9 scan_linux\n3307476 3307468       13:56  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3303064       1    01:21:36  0.0  0.0 bash\n3303066 3303064    01:21:36  0.0  0.0 bash\n3307468 3303066       18:59  0.2  0.0 python3\n3307471 3307468       18:59 47.9  0.5 jass\n3307473 3307468       18:59 51.9  0.9 scan_linux\n3307476 3307468       18:59  0.0  0.0 jass\n"
 }
