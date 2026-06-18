@@ -801,10 +801,19 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // quiet moves entirely. They're statistically unlikely to raise
     // alpha given move ordering has already sorted them. Captures are
     // never pruned (FMJD majority rule forces them anyway). ~+10-20 ELO.
-    constexpr int LMP_MAX_DEPTH = 3;
-    // LMP_THRESHOLD[d] = first move index to skip at depth d.
-    const int LMP_THRESHOLD[LMP_MAX_DEPTH + 1] =
-        { 0, params.lmp_d1, params.lmp_d2, params.lmp_d3 };
+    // LMP applies for depth <= lmp_max_depth (param ; default 3 = legacy).
+    // first-move-index to skip at depth d : tuned d1/d2/d3 for the shallow
+    // nodes, then a quadratic move-count tail (2 + d + d*d) that continues the
+    // d1/d2/d3 trend exactly (4,8,14,22,32,44…) for the deepened range.
+    const int LMP_MAX_DEPTH = params.lmp_max_depth;
+    auto lmp_threshold_for = [&params = params](int d) noexcept -> int {
+        switch (d) {
+            case 1:  return params.lmp_d1;
+            case 2:  return params.lmp_d2;
+            case 3:  return params.lmp_d3;
+            default: return 2 + d + d * d;   // depths >= 4 (only when lmp_max_depth>3)
+        }
+    };
     const bool is_pv_node = (beta - alpha) > 1;
 
     int move_idx = 0;
@@ -813,7 +822,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // improving heuristic is on and we are NOT improving, prune one step
         // earlier (the position is already trending the wrong way).
         int lmp_threshold = (depth >= 1 && depth <= LMP_MAX_DEPTH)
-                          ? LMP_THRESHOLD[depth] : 0;
+                          ? lmp_threshold_for(depth) : 0;
         if (params.use_improving && !improving && lmp_threshold > 0) {
             lmp_threshold = (lmp_threshold + 1) / 2;
         }

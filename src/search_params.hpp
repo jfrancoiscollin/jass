@@ -48,6 +48,11 @@ struct SearchParams {
     int lmp_d1 = 4;
     int lmp_d2 = 8;
     int lmp_d3 = 14;
+    // LMP applies for depth <= lmp_max_depth. Default 3 = legacy (only d1/d2/d3).
+    // For depths 4..lmp_max_depth the threshold follows a quadratic move-count
+    // tail (2 + d + d*d) that continues the d1/d2/d3 trend exactly (4,8,14,22,32…).
+    // Deepening LMP is a depth-buyer the old fixed-DEPTH tuning under-valued (0333+).
+    int lmp_max_depth = 3;
 
     // History aging (gated; 0 = legacy unbounded accumulation). When > 0 the
     // butterfly history (and conthist) is updated with a "gravity" rule
@@ -177,6 +182,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
+    else if (key == "lmp_max_depth")        p.lmp_max_depth        = v;
     else if (key == "history_max")          p.history_max          = v;
     else if (key == "aspiration_initial")   p.aspiration_initial   = v;
     else if (key == "use_pvs")              p.use_pvs              = (v != 0);
