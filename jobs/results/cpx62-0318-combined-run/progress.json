@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0318-combined-run",
-  "snapshot_at": "2026-06-18T00:41:22+00:00",
+  "snapshot_at": "2026-06-18T00:46:38+00:00",
   "started_at": "2026-06-17T22:46:12+00:00",
-  "elapsed_seconds": 6910,
+  "elapsed_seconds": 7226,
   "artefacts": [
     {
       "name": "ctrl-build.log",
@@ -54,7 +54,7 @@
     },
     {
       "name": "kmob-elo.log",
-      "size_bytes": 0
+      "size_bytes": 276
     },
     {
       "name": "kmob-regret.log",
@@ -75,7 +75,27 @@
     {
       "name": "kmob.pjtw.manifest.json",
       "size_bytes": 486
+    },
+    {
+      "name": "phase-build.log",
+      "size_bytes": 27196
+    },
+    {
+      "name": "phase-cmake.log",
+      "size_bytes": 937
+    },
+    {
+      "name": "phase-dump.log",
+      "size_bytes": 115
+    },
+    {
+      "name": "phase-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "phase.feat",
+      "size_bytes": 2948000012
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    01:55:10  0.0  0.0 bash\n 536488  536486    01:55:10  0.0  0.0 bash\n2605257  536488       02:55  0.0  0.0 bash\n2605258 2605257       02:55 1186  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    02:00:26  0.0  0.0 bash\n 536488  536486    02:00:26  0.0  0.0 bash\n 539746  536488       00:30  110 65.1 python3\n"
 }
