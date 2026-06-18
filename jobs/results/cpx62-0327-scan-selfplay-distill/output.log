@@ -1,0 +1,36 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] Scan self-play 7000 parties @ d8 (×16): ≈ 120 min
+  [preflight] relabel Scan 2×280000 @ d9 (×16): ≈ 260 min
+  [preflight] train: 2 × 280000 lignes @ 4min/M ≈ 2.2 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] TOTAL estimé ≈ 674.2 min  (cap 900 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (egdb) ===
+=== ARM-NEW : Scan self-play (depth 8, 7000 parties, ×16 shards) ===
+  [selfplay] mergé 527906 positions Scan-self-play -> /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new-raw.jnnw
+  Scan self-play : 527906 positions
+=== taille A/B commune : N=280000 ===
+  subsample 280000/527906 -> /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new.jnnw
+  subsample 280000/6700000 -> /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/old.jnnw
+=== relabel Scan depth 9 (×16) — ARM-OLD ===
+  [relabel] 280000 positions, 16 shards × ~17500 (Scan depth 9)
+  [relabel] mergé 236018 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/old-scan.jnnw
+=== relabel Scan depth 9 (×16) — ARM-NEW ===
+  [relabel] 280000 positions, 16 shards × ~17500 (Scan depth 9)
+  [relabel] mergé 277477 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new-scan.jnnw
+=== ARM-OLD (distribution 0314) ===
+  old : Elo_hc=+318.3  vs_Scan_mt1.5=NA
+=== ARM-NEW (distribution Scan self-play) ===
+  new : Elo_hc=+182.4  vs_Scan_mt1.5=NA
+
+==========================================================
+   cpx62-0327 — COVARIATE-SHIFT A/B (la DISTRIBUTION est-elle le verrou ?)
+----------------------------------------------------------
+   N=280000 positions/bras · relabel Scan d9 · archi FULL Scan-alignée · juge Scan mt1.5
+  old  Elo_hc=+318.3    vs_Scan_mt1.5=NA
+  new  Elo_hc=+182.4    vs_Scan_mt1.5=NA
+----------------------------------------------------------
+  new vs_Scan > old → la DISTRIBUTION est le verrou (covariate-shift confirmé).
+  ≈ égal → la distribution n'est pas le lever ; le plafond de distillation est ailleurs.
+==========================================================

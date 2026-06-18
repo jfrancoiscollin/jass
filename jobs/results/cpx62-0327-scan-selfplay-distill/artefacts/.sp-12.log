@@ -1,0 +1,12 @@
+scan-selfplay: 438 seeds (>= 40p), Scan depth 8
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  50/438 games, 3844 positions
+  100/438 games, 7535 positions
+  150/438 games, 11068 positions
+  200/438 games, 14803 positions
+  250/438 games, 18624 positions
+  300/438 games, 22457 positions
+  350/438 games, 26059 positions
+  400/438 games, 29846 positions
+wrote /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/.sp-12.jnnw (32548 positions from 438 Scan self-play games)
