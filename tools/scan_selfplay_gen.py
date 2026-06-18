@@ -60,12 +60,23 @@ def fen_to_record(fen: str, wdl_stm: int) -> bytes:
             + struct.pack("<b", wdl_stm))
 
 
-def load_seeds(path: Path, min_pieces: int, rng: random.Random, n: int) -> list[str]:
+def load_seeds(path: Path, min_pieces: int, rng: random.Random, n: int,
+               shard: int = 0, nshards: int = 1) -> list[str]:
+    """Sample up to `n` early-game (>= min_pieces) seed FENs.
+
+    For parallel generation, pass nshards>1 with a SHARED rng seed across all
+    shards: every shard shuffles the index list identically, then takes the
+    disjoint stripe `idx[shard::nshards]`. This guarantees no two shards ever
+    seed from the same opening — critical because Scan at a fixed depth is
+    deterministic, so a shared opening would yield byte-identical games.
+    """
     b = path.read_bytes()
     total = struct.unpack("<I", b[4:8])[0]
     body = b[8:]
     idx = list(range(total))
     rng.shuffle(idx)
+    if nshards > 1:
+        idx = idx[shard::nshards]
     seeds: list[str] = []
     for i in idx:
         rec = body[i * REC:(i + 1) * REC]
@@ -91,10 +102,14 @@ def main(argv=None) -> int:
     ap.add_argument("--min-pieces", type=int, default=40, help="seed piece-count floor (early game)")
     ap.add_argument("--sample-every", type=int, default=1, help="keep 1 position in N")
     ap.add_argument("--seed", type=int, default=1)
+    ap.add_argument("--nshards", type=int, default=1,
+                    help="total parallel shards (all must share the SAME --seed)")
+    ap.add_argument("--shard", type=int, default=0, help="this shard's index in [0,nshards)")
     args = ap.parse_args(argv)
 
     rng = random.Random(args.seed)
-    seeds = load_seeds(args.seeds, args.min_pieces, rng, args.games)
+    seeds = load_seeds(args.seeds, args.min_pieces, rng, args.games,
+                       shard=args.shard, nshards=args.nshards)
     if not seeds:
         print("error: no seed positions found", file=sys.stderr)
         return 1
