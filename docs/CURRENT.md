@@ -59,6 +59,25 @@ Scan n'est pas fermée.** (cf ARBRE_DECISION)
 | `JASS_PHASE_LO/HI` | vide = **0/40** (legacy) | 0312 (sharp testé, gardé 0/40) |
 | search `eg_pieces` / `eg_no_nmp` | **40 / true** (NMP off partout) | `src/search_params.hpp` |
 
+## 🔒 Comparaison vs Scan — RÈGLE PERMANENTE (2026-06-18)
+**Jamais à temps fixe ÉGAL** (confond éval et vitesse : jass NPS ≪ Scan → broyé quelle
+que soit l'éval). Standard = **profondeur fixe** (`--depth`/`--jass-depth`/`--scan-depth`)
+OU **movetime compensé-NPS** (jass 2× plus lent → `--jass-movetime 1 --scan-movetime 0.5`).
+Temps égal = uniquement pour *mesurer* le handicap de vitesse. `calibrate_vs_scan.py` :
+`--jass-movetime`/`--scan-movetime` + garde-fou. Détail : SCAN_METHODOLOGY_GAP.md.
+
+## 🔒 Pool de données — RÈGLE PERMANENTE (2026-06-18)
+**Mixer** Scan-self-play (qualité, mais quiet → *nuit* seul au linéaire, 0327) + jass-self-play
+(diversité) + coverage. `tools/jnnw_mix.py` (parts contrôlées). Diversité Scan forcée :
+`scan_selfplay_gen.py --weak-depth` (fort vs affaibli = parties décisives) / `--depth-jitter`.
+
+## Verdict 0327/0329 (2026-06-18) — covariate-shift PUR : NON
+A/B contrôlé (même archi, même relabel Scan, juge mt1.5) : NEW (Scan self-play) **pire** que OLD
+(0314) — vs Scan −545 vs −387, Elo_hc +182 vs +318 ; champion 500k self-play = −545 aussi. La
+« bonne » distribution *seule* n'a pas fait décoller (au contraire). MAIS : toutes les défaites =
+« no legal move » (jass broyé) → forte présomption que le mur à temps égal est la **RECHERCHE**, pas
+l'éval. `0330` (éval vs recherche, depth-fixe) tranche. → d'où les 2 règles permanentes ci-dessus.
+
 ## Métriques — SCREEN vs DECISION (un proxy priorise, ne décide JAMAIS seul)
 - **DECISION_GATE** : Elo réel/SPRT vs adversaire fort · autopsie **endgame-rois vs Scan**
   (sur parties) · conversion `--egdb-conversion-test` (playout) / `--egdb-mtc-regret` (≤7p exact).
@@ -88,10 +107,10 @@ commit, host, flags, NUM_EXTRAS, dataset hash). **Avant tout A/B** de deux `.pjt
 footgun « deux 110-extras de layouts différents »). Pré-flight compute : `jobs/lib/preflight.sh`.
 
 ## Jobs en cours
-- **cpx62** : **0327** (covariate-shift A/B — distribution Scan-self-play vs 0314) — *le test décisif*.
-- **ccx33** : **0328** (corpus Scan-self-play réutilisable, génération seule, committé).
-  *0326 (alignment A/B) TUÉ 2026-06-18 : il jugeait sur la distribution suspecte 0314/0313.*
+- **cpx62** : **0330** (isole ÉVAL vs RECHERCHE — depth-fixe & asym vs Scan) — *tranche le mur*.
+- **ccx33** : libre (0328 corpus 1.19M ✅ committé ; 0329 champion ✅ = −545).
 - **PC perso** : éteint ; egdb WLD+MTC ✅, self-play ✅
+- *0326/0327/0329 finis ; 0326 tué (jugeait sur distrib suspecte).*
 
 ## Prochain verdict attendu
 **0327** : `new (Scan self-play) vs_Scan ≫ old (0314)` → **covariate-shift confirmé**, le verrou

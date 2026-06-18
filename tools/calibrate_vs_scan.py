@@ -485,6 +485,8 @@ def play_game(white: object, black: object,
               movetime: float | None = None,
               jass_depth: int | None = None,
               scan_depth: int | None = None,
+              jass_movetime: float | None = None,
+              scan_movetime: float | None = None,
               max_plies: int = 200) -> GameResult:
     """Both engines must already be ready. They are addressed via
     duck-typed helpers (`go_jass(engine, depth)` for JassEngine,
@@ -510,12 +512,19 @@ def play_game(white: object, black: object,
         # Ask engine for its move.
         if isinstance(current, JassEngine):
             d = jass_depth if jass_depth is not None else depth
-            mv = current.go(depth=d, movetime=movetime)
+            mt = jass_movetime if jass_movetime is not None else movetime
+            mv = current.go(depth=d, movetime=mt)
         else:
             scan_pos, scan_moves = referee.scan_pos()
-            d = scan_depth if scan_depth is not None else depth
+            # Per-engine defaults let two Scan instances of DIFFERENT strength
+            # (e.g. strong depth-9 vs weak depth-5) face off in one game — used by
+            # scan_selfplay_gen to force decisive, diverse self-play positions.
+            d = scan_depth if scan_depth is not None else (
+                getattr(current, "default_depth", None) or depth)
+            mt = scan_movetime if scan_movetime is not None else (
+                getattr(current, "default_movetime", None) or movetime)
             mv = current.go_from(scan_pos, scan_moves,
-                                 depth=d, movetime=movetime)
+                                 depth=d, movetime=mt)
         if mv is None or (mv.frm == 0 and mv.to == 0):
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
@@ -591,6 +600,18 @@ def main(argv):
                    help="override search depth for the Jass side (plies)")
     p.add_argument("--scan-depth", type=int, default=None,
                    help="override search depth for the Scan side (plies)")
+    # PERMANENT METHODOLOGY (2026-06-18): an equal fixed --movetime vs Scan is
+    # NOT a fair comparison — it conflates eval quality with search SPEED (jass'
+    # NPS << Scan, so equal time = jass sees fewer plies and loses regardless of
+    # eval). The standard comparison is FIXED DEPTH (--depth / --jass-depth +
+    # --scan-depth) OR NPS-COMPENSATED movetime: give the slower engine more time
+    # in proportion to the NPS gap (e.g. jass 2x slower → --jass-movetime 1.0
+    # --scan-movetime 0.5). See docs/SCAN_METHODOLOGY_GAP.md.
+    p.add_argument("--jass-movetime", type=float, default=None,
+                   help="per-move time budget (SECONDS) for the Jass side only — "
+                        "use with --scan-movetime to NPS-compensate (fair).")
+    p.add_argument("--scan-movetime", type=float, default=None,
+                   help="per-move time budget (SECONDS) for the Scan side only.")
     p.add_argument("--pairs", type=int, default=2,
                    help="colour-swap pairs per opening (total games = 18 × pairs)")
     p.add_argument("--max-plies", type=int, default=200)
@@ -647,10 +668,33 @@ def main(argv):
                  f"--allow-long-movetime to override.")
     if args.movetime is not None and args.movetime <= 0:
         sys.exit("ABORT: --movetime must be > 0 seconds.")
-    if args.depth is None and args.movetime is None:
+    _any_timing = any(v is not None for v in (
+        args.depth, args.movetime, args.jass_depth, args.scan_depth,
+        args.jass_movetime, args.scan_movetime))
+    if not _any_timing:
         args.depth = 8  # back-compat default
+    if args.jass_movetime is not None and args.jass_movetime > 30.0 and not args.allow_long_movetime:
+        sys.exit("ABORT: --jass-movetime is per-move SECONDS; >30 is a units error "
+                 "(pass --allow-long-movetime to override).")
+    if args.scan_movetime is not None and args.scan_movetime > 30.0 and not args.allow_long_movetime:
+        sys.exit("ABORT: --scan-movetime is per-move SECONDS; >30 is a units error "
+                 "(pass --allow-long-movetime to override).")
+    # FAIRNESS GUARD (permanent methodology, 2026-06-18): an equal fixed --movetime
+    # vs Scan conflates eval quality with search SPEED. Warn loudly; the standard is
+    # fixed depth or NPS-compensated per-side movetime. (Not an abort — sometimes you
+    # genuinely want the equal-time number, e.g. to MEASURE the speed handicap.)
+    _symmetric_time = (args.movetime is not None and args.jass_movetime is None
+                       and args.scan_movetime is None and args.depth is None
+                       and args.jass_depth is None and args.scan_depth is None)
+    if _symmetric_time:
+        print("  ⚠️  EQUAL fixed-time vs Scan is NOT a fair eval comparison "
+              "(jass NPS << Scan → fewer plies). Standard = --depth/--jass-depth "
+              "+--scan-depth, or NPS-compensated --jass-movetime/--scan-movetime. "
+              "See docs/SCAN_METHODOLOGY_GAP.md.", flush=True)
     budget_str = (f"depth {args.depth}" if args.depth is not None
-                  else f"movetime {args.movetime}s")
+                  else (f"jass_mt={args.jass_movetime}s/scan_mt={args.scan_movetime}s"
+                        if (args.jass_movetime or args.scan_movetime) is not None
+                        else f"movetime {args.movetime}s"))
 
     dump_dir = None
     if args.dump_games_dir:
@@ -689,11 +733,13 @@ def main(argv):
                         r = play_game(jass, scan, referee, opening,
                                       depth=args.depth, movetime=args.movetime,
                                       jass_depth=args.jass_depth, scan_depth=args.scan_depth,
+                                      jass_movetime=args.jass_movetime, scan_movetime=args.scan_movetime,
                                       max_plies=args.max_plies)
                     else:
                         r = play_game(scan, jass, referee, opening,
                                       depth=args.depth, movetime=args.movetime,
                                       jass_depth=args.jass_depth, scan_depth=args.scan_depth,
+                                      jass_movetime=args.jass_movetime, scan_movetime=args.scan_movetime,
                                       max_plies=args.max_plies)
                     games += 1
                     # Map "W"/"L" outcome to Jass's POV.
