@@ -1,0 +1,38 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] Scan self-play DIVERS 6000 parties (×16): ≈ 70 min
+  [preflight] relabel Scan 500000 @ d9 (×16): ≈ 90 min
+  [preflight] train: 1 × 500000 lignes @ 4min/M ≈ 2.0 min
+  [preflight] benchmarks depth-fixe (quasi-gratuit): ≈ 20 min
+  [preflight] TOTAL estimé ≈ 186.0 min  (cap 300 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== Scan self-play DIVERS (fort d9 vs faible d5, ×16 shards disjoints) ===
+  diverse-scan 807006 positions
+  diverse-scan : 807006 positions
+=== pool mixte (60% Scan-divers + 40% jass-0314) → 500000 ===
+  mixing pool target=500000
+    diverse-scan.jnnw                share=0.60 quota=   300000 avail=   807006 took=   300000
+    enriched-cumulative.jnnw         share=0.40 quota=   200000 avail=  6700000 took=   200000
+  wrote /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/pool.jnnw (500000 records)
+=== relabel Scan d9 (×16) ===
+  [relabel] 500000 positions, 16 shards × ~31250 (Scan depth 9)
+  [relabel] mergé 464007 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/scan.jnnw
+  relabelisé: 464007 positions
+=== train (FULL-aligned, --target score, --tempo-stage) ===
+=== C2 depth=9 égale ===
+  depth9 : rate=0.111  Elo=-361
+=== C3 jass11 vs scan9 (+2) ===
+  jass11sc9 : rate=0.056  Elo=-492
+=== C3b jass13 vs scan9 (+4) ===
+  jass13sc9 : rate=0.306  Elo=-143
+
+==========================================================
+   cpx62-0331 — POOL MIXTE jugé à PROFONDEUR ÉGALE (levier éval, méthodo permanente)
+----------------------------------------------------------
+  C2 depth9      rate=0.111   Elo=-361
+  C3 jass11/sc9  rate=0.056   Elo=-492
+  C3b jass13/sc9 rate=0.306   Elo=-143
+----------------------------------------------------------
+   BASELINE 0330 (distrib 0314 seule) : C2=0.056  C3(jass11)=0.333
+   C2/C3 mixte > baseline → le pool mixte rapproche l'éval (gap < ~2 plies). Sinon : éval stagne.
+==========================================================

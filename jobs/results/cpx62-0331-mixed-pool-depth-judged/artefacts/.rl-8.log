@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/pool.jnnw (500000 records, processing 31250 from offset 250000, drop_skipped=True)
+wrote /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/.rl-8.jnnw (30812 records written, 438 skipped / 31250 processed)

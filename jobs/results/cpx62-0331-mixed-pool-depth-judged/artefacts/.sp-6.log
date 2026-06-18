@@ -1,0 +1,14 @@
+scan-selfplay: 375 seeds (>= 40p), Scan depth 9
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  diversity: strong depth 9 vs weak depth 5 (strong side randomized per game)
+  50/375 games, 6875 positions
+  100/375 games, 13610 positions
+  150/375 games, 20478 positions
+  200/375 games, 27519 positions
+  250/375 games, 34270 positions
+  300/375 games, 40921 positions
+  350/375 games, 47412 positions
+wrote /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/.sp-6.jnnw (50670 positions from 375 Scan self-play games)
