@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0313-endgame-data-gen",
-  "snapshot_at": "2026-06-18T01:47:20+00:00",
+  "snapshot_at": "2026-06-18T01:52:45+00:00",
   "started_at": "2026-06-17T19:04:05+00:00",
-  "elapsed_seconds": 24195,
+  "elapsed_seconds": 24520,
   "artefacts": [
     {
       "name": "build.log",
@@ -26,7 +26,7 @@
     },
     {
       "name": "self-2.jnnw",
-      "size_bytes": 6820850
+      "size_bytes": 6985010
     },
     {
       "name": "self-2.log",
@@ -58,28 +58,28 @@
     },
     {
       "name": "self-6.jnnw",
-      "size_bytes": 7058882
+      "size_bytes": 7125008
     },
     {
       "name": "self-6.log",
-      "size_bytes": 4096
+      "size_bytes": 7036
     },
     {
       "name": "self-7.jnnw",
-      "size_bytes": 7026050
+      "size_bytes": 7125008
     },
     {
       "name": "self-7.log",
-      "size_bytes": 4096
+      "size_bytes": 7036
     },
     {
       "name": "self-8.jnnw",
-      "size_bytes": 7116338
+      "size_bytes": 7125008
     },
     {
       "name": "self-8.log",
-      "size_bytes": 4096
+      "size_bytes": 7035
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    06:43:15  0.0  0.0 bash\n 433433  433431    06:43:15  0.0  0.0 bash\n 434019  433433    06:42:48 99.8  0.8 jass\n 434023  433433    06:42:48 99.8  0.8 jass\n 434024  433433    06:42:48 99.8  0.8 jass\n 434025  433433    06:42:48 99.8  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    06:48:40  0.0  0.0 bash\n 433433  433431    06:48:40  0.0  0.0 bash\n 434019  433433    06:48:13 99.8  0.8 jass\n"
 }
