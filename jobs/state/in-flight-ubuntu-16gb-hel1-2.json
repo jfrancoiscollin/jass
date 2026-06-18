@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0339-combo-refine2",
+  "script": "jobs/queue/ccx33-0339-combo-refine2.sh",
+  "pid": 2483198,
+  "started_at": "2026-06-18T20:25:13+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
