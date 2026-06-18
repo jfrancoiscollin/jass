@@ -1,0 +1,13 @@
+{
+  "build_flags": "DISTILL=Scan-d9 FULL-aligned SRC=new",
+  "dataset": {
+    "bytes": 10544134,
+    "path": "/root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new-scan.jnnw",
+    "sha256_head64m": "8f5de769e219e2347baa56b4cc0077db4bbbb67a71356e232890dbda463d9cd9"
+  },
+  "date": "2026-06-18T08:49:15Z",
+  "git_commit": "99e87063",
+  "host": "ubuntu-32gb-hel1-1",
+  "n_ext": 120,
+  "pjtw": "/root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new.pjtw"
+}

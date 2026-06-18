@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/new.jnnw (280000 records, processing 17500 from offset 0, drop_skipped=True)
+wrote /root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts.src/.rl-0.jnnw (17326 records written, 174 skipped / 17500 processed)
