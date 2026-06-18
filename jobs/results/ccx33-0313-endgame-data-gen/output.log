@@ -1,0 +1,17 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] coverage ≤7p exacte (1000000): ≈ 8 min
+  [preflight] self-play 1500000 (egdb-perfect + ramp endgame=16, shardé ×8): ≈ 150 min
+  [preflight] TOTAL estimé ≈ 162 min  (cap 300 min)
+  [preflight] OK — sous le cap, lancement.
+=== coverage ≤7p exacte (1000000) ===
+gen-egdb-wld: wrote 1000000 / 1000000 (560032 decisive, 439968 draw) in 1860780 tries → /root/jass/jobs/results/ccx33-0313-endgame-data-gen/artefacts.src/cov.jnnw
+=== self-play (1500000, egdb-perfect + ramp late-mid=12,endgame=16, ×8 shards) ===
+self-play shards: 8/8
+FUSION  total=2500000  → /root/jass/jobs/results/ccx33-0313-endgame-data-gen/artefacts.src/endgame-cumulative.jnnw
+PHASE   ≤7p=1008449 (40.3%)  ≤10p=1151497 (46.1%)  ≤12p=1248907 (50.0%)
+        (cible LEAD 3 : ≤7p ~30-40% vs 11% du cumulatif 0297)
+
+==========================================================
+   ccx33-0313 — dataset FINALE-ENRICHI (LEAD 3)
+   endgame-cumulative.jnnw prêt sur ccx33 pour le run COMBINÉ phase-split + king-features.
+==========================================================
