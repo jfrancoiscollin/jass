@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0325-scan-distill",
-  "snapshot_at": "2026-06-18T06:16:03+00:00",
+  "snapshot_at": "2026-06-18T06:21:21+00:00",
   "started_at": "2026-06-18T06:05:32+00:00",
-  "elapsed_seconds": 631,
+  "elapsed_seconds": 949,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -109,5 +109,5 @@
       "size_bytes": 45600008
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1203857       1       10:30  0.0  0.0 bash\n1203859 1203857       10:30  0.0  0.0 bash\n1204772 1203859       00:20  995  0.6 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1203857       1       15:49  0.0  0.0 bash\n1203859 1203857       15:49  0.0  0.0 bash\n1204772 1203859       05:39 1206  0.6 jass\n"
 }
