@@ -1,0 +1,46 @@
+opening pool: 9 positions
+jass setup:   pattern=/root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/mixed.pjtw  book=(default/none)
+scan setup:   book=off  bb-size=0
+  [Scan-player init] init eval
+  [Scan-player] bb-size=0 (no bitbases — FAIR comparison)
+  game   1: Jass=W Scan=B → W (no legal move from Scan-player, 124 plies)  Jass +1.0  [11s]
+  game   2: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [16s]
+  game   3: Jass=W Scan=B → W (no legal move from Scan-player, 124 plies)  Jass +1.0  [23s]
+  game   4: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [27s]
+  game   5: Jass=W Scan=B → D (ply cap, 160 plies)  Jass +0.5  [37s]
+  game   6: Scan=W Jass=B → W (no legal move from Jass-player, 150 plies)  Jass +0.0  [46s]
+  game   7: Jass=W Scan=B → D (ply cap, 160 plies)  Jass +0.5  [56s]
+  game   8: Scan=W Jass=B → W (no legal move from Jass-player, 150 plies)  Jass +0.0  [65s]
+  game   9: Jass=W Scan=B → L (no legal move from Jass-player, 151 plies)  Jass +0.0  [72s]
+  game  10: Scan=W Jass=B → W (no legal move from Jass-player, 142 plies)  Jass +0.0  [79s]
+  game  11: Jass=W Scan=B → L (no legal move from Jass-player, 151 plies)  Jass +0.0  [86s]
+  game  12: Scan=W Jass=B → W (no legal move from Jass-player, 142 plies)  Jass +0.0  [92s]
+  game  13: Jass=W Scan=B → L (no legal move from Jass-player, 141 plies)  Jass +0.0  [98s]
+  game  14: Scan=W Jass=B → W (no legal move from Jass-player, 140 plies)  Jass +0.0  [104s]
+  game  15: Jass=W Scan=B → L (no legal move from Jass-player, 141 plies)  Jass +0.0  [110s]
+  game  16: Scan=W Jass=B → W (no legal move from Jass-player, 140 plies)  Jass +0.0  [115s]
+  game  17: Jass=W Scan=B → L (no legal move from Jass-player, 141 plies)  Jass +0.0  [124s]
+  game  18: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [128s]
+  game  19: Jass=W Scan=B → L (no legal move from Jass-player, 141 plies)  Jass +0.0  [136s]
+  game  20: Scan=W Jass=B → W (no legal move from Jass-player, 114 plies)  Jass +0.0  [140s]
+  game  21: Jass=W Scan=B → W (no legal move from Scan-player, 112 plies)  Jass +1.0  [144s]
+  game  22: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [148s]
+  game  23: Jass=W Scan=B → W (no legal move from Scan-player, 112 plies)  Jass +1.0  [152s]
+  game  24: Scan=W Jass=B → W (no legal move from Jass-player, 126 plies)  Jass +0.0  [156s]
+  game  25: Jass=W Scan=B → L (no legal move from Jass-player, 129 plies)  Jass +0.0  [161s]
+  game  26: Scan=W Jass=B → D (ply cap, 160 plies)  Jass +0.5  [166s]
+  game  27: Jass=W Scan=B → L (no legal move from Jass-player, 129 plies)  Jass +0.0  [170s]
+  game  28: Scan=W Jass=B → D (ply cap, 160 plies)  Jass +0.5  [175s]
+  game  29: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [180s]
+  game  30: Scan=W Jass=B → D (ply cap, 160 plies)  Jass +0.5  [188s]
+  game  31: Jass=W Scan=B → L (no legal move from Jass-player, 131 plies)  Jass +0.0  [193s]
+  game  32: Scan=W Jass=B → D (ply cap, 160 plies)  Jass +0.5  [202s]
+  game  33: Jass=W Scan=B → W (no legal move from Scan-player, 114 plies)  Jass +1.0  [209s]
+  game  34: Scan=W Jass=B → L (no legal move from Scan-player, 125 plies)  Jass +1.0  [214s]
+  game  35: Jass=W Scan=B → W (no legal move from Scan-player, 114 plies)  Jass +1.0  [221s]
+  game  36: Scan=W Jass=B → L (no legal move from Scan-player, 125 plies)  Jass +1.0  [226s]
+
+=== Jass vs Scan, movetime Nones, 36 games ===
+  Jass=8  Scan=22  Draws=6
+  Jass score rate: 0.306 (11.0 / 36)
+  ELO estimate:    -143 (95% CI ≈ ±133)

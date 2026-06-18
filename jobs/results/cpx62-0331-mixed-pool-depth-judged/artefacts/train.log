@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/scan.jnnw
+  464007 records  (0.03s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/m.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (464007, 120)  (mean mob b/w=11.0/11.1)
+target=score  clipped±2000cp / 100  std=6.062
+phase : piece-count mean=18.6  wmg mean=0.408  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 428747/464007 (92.4%)
+split : train=385873 val=42874
+prune : keep 151,131 buckets (>= 1 visits) -> 302,264 pattern cols vs 34,012,224  (112.5× fewer); train fallback=0.000%
+design : 302504 columns (2×151132 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=0.927048  iters=300  (135.25s)
+val   : mse=1.884231  sign_acc=0.0013
+val/phase mse : opening=0.2469(n10880)  midgame=0.7045(n8180)  late-mid=1.5929(n7173)  endgame=3.1541(n8057)  deep-eg=4.1353(n8584)
+quant : scale=1000  pat range=[-531,531] ext_mg range=[-1692,1735]
+wrote /root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/mixed.pjtw  (v3, 34012464 weights, 136049876 bytes)

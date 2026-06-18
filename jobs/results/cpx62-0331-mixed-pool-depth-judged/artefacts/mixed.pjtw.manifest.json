@@ -1,0 +1,13 @@
+{
+  "build_flags": "DISTILL=Scan-d9 POOL=60scan-divers+40jass FULL-aligned",
+  "dataset": {
+    "bytes": 17632274,
+    "path": "/root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/scan.jnnw",
+    "sha256_head64m": "183068d3d851602b89a0486d03f9a2771b555d3dc4071d628240ea543b067a6e"
+  },
+  "date": "2026-06-18T13:28:24Z",
+  "git_commit": "60ce44b3",
+  "host": "ubuntu-32gb-hel1-1",
+  "n_ext": 120,
+  "pjtw": "/root/jass/jobs/results/cpx62-0331-mixed-pool-depth-judged/artefacts.src/mixed.pjtw"
+}
