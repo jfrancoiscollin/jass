@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/scan-labeled.jnnw
+  1016386 records  (0.06s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (1016386, 120)  (mean mob b/w=11.1/11.1)
+target=score  clipped±2000cp / 100  std=8.224
+phase : piece-count mean=16.7  wmg mean=0.364  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 863704/1016386 (85.0%)
+split : train=777334 val=86370
+prune : keep 160,926 buckets (>= 1 visits) -> 321,854 pattern cols vs 34,012,224  (105.7× fewer); train fallback=0.000%
+design : 322094 columns (2×160927 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=1.201947  iters=300  (182.92s)
+val   : mse=2.424592  sign_acc=0.0016
+val/phase mse : opening=0.2956(n21693)  midgame=1.0657(n14824)  late-mid=1.9790(n13845)  endgame=3.4744(n13704)  deep-eg=5.0300(n22304)
+quant : scale=1000  pat range=[-716,716] ext_mg range=[-1433,1397]
+wrote /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/distill.pjtw  (v3, 34012464 weights, 136049876 bytes)

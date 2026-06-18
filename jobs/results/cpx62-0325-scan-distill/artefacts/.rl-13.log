@@ -1,0 +1,5 @@
+input : /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/sub.jnnw (1200000 records, processing 75000 from offset 975000, drop_skipped=True)
+  20000/75000  (26.7%)  rate=229.7 pos/s  eta=4.0 min  written=19031 skipped=969
+  40000/75000  (53.3%)  rate=228.9 pos/s  eta=2.5 min  written=38087 skipped=1913
+  60000/75000  (80.0%)  rate=228.2 pos/s  eta=1.1 min  written=57053 skipped=2947
+wrote /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/.rl-13.jnnw (69753 records written, 5247 skipped / 75000 processed)
