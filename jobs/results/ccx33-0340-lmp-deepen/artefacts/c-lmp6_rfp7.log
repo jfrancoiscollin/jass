@@ -1,0 +1,3 @@
+Benchmark: search-params A=[lmp_max_depth=6,rfp_max_depth=7,rfp_margin=70] vs B=[] on /root/jass/jobs/results/ccx33-0340-lmp-deepen/artefacts.src/eval.pjtw, depth 30, threads 1, movetime_ms 600, 72 games
+Result: A=34 B=31 Draws=7 (total 72)
+A score rate: 0.520833
