@@ -54,11 +54,20 @@ commit, host, flags, NUM_EXTRAS, dataset hash). **Avant tout A/B** de deux `.pjt
 `manifest_assert_comparable` (ABORT si flags/NUM_EXTRAS/dataset diffèrent — évite le
 footgun « deux 110-extras de layouts différents »). Pré-flight compute : `jobs/lib/preflight.sh`.
 
+## Hypothèse fraîche (2026-06-18) — COVARIATE-SHIFT
+La distillation est **plafonnée par la DISTRIBUTION des positions**, pas par le label : si les
+positions de base sont **peu instructives** (self-play faible + coverage ≤7p aléatoire = le dataset
+0314), Scan a beau labeliser parfaitement, l'éval n'apprend Scan que là où ça ne compte pas — quelle
+que soit la depth/mt. **Test (0327)** : A/B chirurgical, seule la SOURCE des positions change —
+ARM-OLD = distribution 0314 ; ARM-NEW = positions issues du **jeu propre de Scan** (Scan joue les
+deux côtés, on dumpe tout son chemin). Même archi FULL Scan-alignée, même relabel Scan d9, même
+train, même taille, même juge vs Scan mt1.5. Outil : `tools/scan_selfplay_gen.py`.
+
 ## Jobs en cours
-- **cpx62** : 0314 (data finale-aug) → 0315 (valide mtc-regret) → 0316 (valide MTC-search)
-- **ccx33** : 0313 (data finale-enrichie)
-- **PC perso** : home-0005 (install MTC) ; egdb WLD ✅ (home-0004) ; self-play ✅ (home-0003)
+- **cpx62** : **0327** (covariate-shift A/B — distribution Scan-self-play vs 0314)
+- **ccx33** : 0326 (alignment A/B distillation — l'alignement Scan aide-t-il ?)
+- **PC perso** : éteint ; egdb WLD+MTC ✅, self-play ✅
 
 ## Prochain verdict attendu
-0315/0316 (validité des métriques de conversion) → puis le **RUN COMBINÉ**
-(king-features + phase-split sur données enrichies, jugé **conversion + Elo**, pas mse).
+**0327** (la distribution est-elle le verrou ?) + **0326** (l'alignement Scan aide-t-il ?).
+new vs_Scan > old → covariate-shift confirmé → pipeline de génération Scan-self-play.
