@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0330-eval-vs-search",
+  "script": "jobs/queue/cpx62-0330-eval-vs-search.sh",
+  "pid": 3282065,
+  "started_at": "2026-06-18T11:32:53+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
