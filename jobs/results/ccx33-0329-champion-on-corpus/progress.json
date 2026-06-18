@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0329-champion-on-corpus",
-  "snapshot_at": "2026-06-18T07:52:05+00:00",
+  "snapshot_at": "2026-06-18T07:57:07+00:00",
   "started_at": "2026-06-18T07:36:16+00:00",
-  "elapsed_seconds": 949,
+  "elapsed_seconds": 1251,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -62,7 +62,7 @@
     },
     {
       "name": "elo.log",
-      "size_bytes": 0
+      "size_bytes": 282
     },
     {
       "name": "scan.jnnw",
@@ -75,7 +75,11 @@
     {
       "name": "train.log",
       "size_bytes": 1363
+    },
+    {
+      "name": "vs-scan.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1449580       1       15:49  0.0  0.0 bash\n1449582 1449580       15:49  0.0  0.0 bash\n1450393 1449582       09:27  703  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1449580       1       20:51  0.0  0.0 bash\n1449582 1449580       20:51  0.0  0.0 bash\n2467489 1449582       04:24  0.1  0.0 python3\n2467492 2467489       04:24 48.7  0.5 jass\n2467494 2467489       04:24 51.2  0.9 scan_linux\n2467497 2467489       04:24  0.0  0.0 jass\n"
 }
