@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0335-search-margin-tune",
-  "snapshot_at": "2026-06-18T17:19:30+00:00",
+  "snapshot_at": "2026-06-18T17:24:31+00:00",
   "started_at": "2026-06-18T16:02:56+00:00",
-  "elapsed_seconds": 4594,
+  "elapsed_seconds": 4895,
   "artefacts": [
     {
       "name": "build.log",
@@ -10,7 +10,7 @@
     },
     {
       "name": "c-iid_depth5.log",
-      "size_bytes": 0
+      "size_bytes": 391
     },
     {
       "name": "c-mc_depth5.log",
@@ -22,7 +22,7 @@
     },
     {
       "name": "c-pc_depth4.log",
-      "size_bytes": 0
+      "size_bytes": 395
     },
     {
       "name": "c-pc_margin250.log",
@@ -61,5 +61,5 @@
       "size_bytes": 1359
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2474901       1    01:16:33  0.0  0.0 bash\n2474903 2474901    01:16:33  0.0  0.0 bash\n2475505 2474903    01:13:12 49.9  0.5 jass\n2475506 2474903    01:13:12 49.9  0.5 jass\n2475507 2474903    01:13:12 49.9  0.5 jass\n2475508 2474903    01:13:12 49.9  0.5 jass\n2475509 2474903    01:13:12 50.0  0.5 jass\n2475510 2474903    01:13:12 49.9  0.5 jass\n2475511 2474903    01:13:12 49.9  0.5 jass\n2475512 2474903    01:13:12 49.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2474901       1    01:21:35  0.0  0.0 bash\n2474903 2474901    01:21:35  0.0  0.0 bash\n2475505 2474903    01:18:14 49.9  0.5 jass\n2475506 2474903    01:18:14 49.9  0.5 jass\n2475507 2474903    01:18:14 49.9  0.5 jass\n2475508 2474903    01:18:14 50.0  0.5 jass\n2475509 2474903    01:18:14 49.8  0.5 jass\n2475510 2474903    01:18:14 49.9  0.5 jass\n2475511 2474903    01:18:14 49.9  0.5 jass\n2475512 2474903    01:18:14 49.9  0.5 jass\n"
 }
