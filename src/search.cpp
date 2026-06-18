@@ -785,7 +785,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     const int LMR_FIRST_FULL_MOVES = params.lmr_first_full_moves;
     auto lmr_reduction = [&params = params, LMR_MIN_DEPTH, LMR_FIRST_FULL_MOVES,
                           improving]
-                         (int d, int move_idx) noexcept -> int {
+                         (int d, int move_idx, int hist) noexcept -> int {
         // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
         // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
         // stays ≥ 1. When the improving heuristic is on and we are not
@@ -794,7 +794,22 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         int r = params.lmr_base + d / params.lmr_depth_div
               + move_idx / params.lmr_idx_div;
         if (params.use_improving && !improving) r += 1;
-        return r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
+        r = r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
+        // History-based softening (opt-in ; lmr_hist_div=0 = unchanged): reduce
+        // high-history quiet moves less. Applied AFTER the base clamp so the
+        // default path is byte-identical.
+        if (params.lmr_hist_div > 0) {
+            r -= hist / params.lmr_hist_div;
+            if (r < 0) r = 0;
+        }
+        return r;
+    };
+    // Butterfly+conthist history of a quiet move, for history-based LMR.
+    auto move_history = [this, prev_move](const Move& m) noexcept -> int {
+        int h = history[m.from][m.to];
+        if (params.use_conthist && prev_move.from != 0)
+            h += ch(prev_move.to, m.from, m.to);
+        return h;
     };
 
     // Late Move Pruning : at shallow depth on non-PV nodes, skip late
@@ -861,7 +876,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             // scout the remaining moves with a zero-width window (optionally
             // LMR-reduced). Only moves that beat alpha pay for an exact
             // full-window re-search.
-            const int r = do_lmr ? lmr_reduction(depth, move_idx) : 0;
+            const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m)) : 0;
             score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
             if (score > alpha && r > 0) {
                 // The reduction alone may have caused the fail-high; verify
@@ -874,7 +889,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
             }
         } else if (do_lmr) {
-            const int r = lmr_reduction(depth, move_idx);
+            const int r = lmr_reduction(depth, move_idx, move_history(m));
             const int reduced = new_depth - r;
             score = -negamax(next, reduced, ply + 1, -beta, -alpha);
             if (score > alpha && score < beta) {

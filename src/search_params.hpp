@@ -43,6 +43,11 @@ struct SearchParams {
     int lmr_base             = 0;
     int lmr_depth_div        = 6;
     int lmr_idx_div          = 8;
+    // History-based LMR (opt-in ; 0 = OFF = legacy). When > 0, the reduction is
+    // softened for high-history quiet moves: r -= history / lmr_hist_div (then
+    // clamped to >= 0). Reduces good moves less, bad moves at the base rate — a
+    // standard tree-shrinker. history_max=16384 → div ~4000-8000 ≈ up to ~2-4 plies.
+    int lmr_hist_div         = 0;
 
     // Late move pruning (LMP): first late-quiet index to skip at depth 1/2/3.
     int lmp_d1 = 4;
@@ -179,6 +184,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmr_base")             p.lmr_base             = v;
     else if (key == "lmr_depth_div")        p.lmr_depth_div        = v;
     else if (key == "lmr_idx_div")          p.lmr_idx_div          = v;
+    else if (key == "lmr_hist_div")         p.lmr_hist_div         = v;
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
