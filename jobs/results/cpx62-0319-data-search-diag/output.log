@@ -1,0 +1,12 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 1000000 lignes @ 4min/M ≈ 4.0 min
+  [preflight] train: 1 × 2000000 lignes @ 4min/M ≈ 8.0 min
+  [preflight] train: 1 × 6700000 lignes @ 4min/M ≈ 26.8 min
+  [preflight] 3× Elo hc: ≈ 15 min
+  [preflight] matches: 18 parties × 0.5s × ~120 plies ≈ 18.0 min
+  [preflight] matches: 18 parties × 1.5s × ~120 plies ≈ 54.0 min
+  [preflight] TOTAL estimé ≈ 129.8 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+full-feature build : endg + king_mob + drawish-scaling (toutes features actives)
+=== (A) DATA-SCALING (full-feature) ===
+subset 1000000 / 6700000

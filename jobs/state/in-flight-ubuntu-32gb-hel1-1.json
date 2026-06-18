@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0319-data-search-diag",
-  "script": "jobs/queue/cpx62-0319-data-search-diag.sh",
-  "pid": 581103,
-  "started_at": "2026-06-18T05:14:23+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
