@@ -101,6 +101,15 @@ def main(argv=None) -> int:
     ap.add_argument("--max-plies", type=int, default=200)
     ap.add_argument("--min-pieces", type=int, default=40, help="seed piece-count floor (early game)")
     ap.add_argument("--sample-every", type=int, default=1, help="keep 1 position in N")
+    # DIVERSITY (piste 3) — force decisive, varied self-play instead of quiet/drawish
+    # Scan-vs-equal-Scan games (the 0327 low-contrast problem). Two knobs:
+    #   --weak-depth D2 : the two sides play at DIFFERENT depths (strong --depth vs
+    #     weak D2), the strong side randomized per game → decisive games, gradient.
+    #   --depth-jitter J: per game, the (strong) depth is drawn from [depth-J, depth].
+    ap.add_argument("--weak-depth", type=int, default=None,
+                    help="weaker side's Scan depth (strong=--depth); asymmetric self-play")
+    ap.add_argument("--depth-jitter", type=int, default=0,
+                    help="per-game random depth reduction in [0, J] on the strong side")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--nshards", type=int, default=1,
                     help="total parallel shards (all must share the SAME --seed)")
@@ -116,15 +125,34 @@ def main(argv=None) -> int:
     print(f"scan-selfplay: {len(seeds)} seeds (>= {args.min_pieces}p), Scan depth {args.depth}")
 
     scan = cv.ScanEngine(args.scan, bb_size=0)
+    # Asymmetric-strength self-play (diversity): a SECOND Scan at --weak-depth.
+    scan_weak = cv.ScanEngine(args.scan, bb_size=0) if args.weak_depth else None
+    if scan_weak is not None:
+        print(f"  diversity: strong depth {args.depth} vs weak depth {args.weak_depth} "
+              f"(strong side randomized per game)")
     referee = cv.Referee(args.jass)
     records = bytearray()
     n_pos = 0
     wmap = {"W": 1, "D": 0, "L": -1}
     try:
         for g, opening in enumerate(seeds):
+            # per-game depth jitter on the strong side
+            sd = args.depth - (rng.randint(0, args.depth_jitter) if args.depth_jitter else 0)
+            sd = max(2, sd)
             try:
-                r = cv.play_game(scan, scan, referee, opening,
-                                 depth=args.depth, max_plies=args.max_plies)
+                if scan_weak is not None:
+                    # assign strong/weak to the two sides, randomized per game
+                    scan.default_depth = sd
+                    scan_weak.default_depth = args.weak_depth
+                    if rng.random() < 0.5:
+                        white, black = scan, scan_weak
+                    else:
+                        white, black = scan_weak, scan
+                    r = cv.play_game(white, black, referee, opening,
+                                     max_plies=args.max_plies)
+                else:
+                    r = cv.play_game(scan, scan, referee, opening,
+                                     depth=sd, max_plies=args.max_plies)
             except Exception as exc:  # noqa: BLE001 — keep going on a flaky game
                 print(f"  game {g}: {exc}", file=sys.stderr)
                 continue
@@ -144,6 +172,9 @@ def main(argv=None) -> int:
     finally:
         try: scan.close()
         except Exception: pass
+        if scan_weak is not None:
+            try: scan_weak.close()
+            except Exception: pass
         try: referee.close()
         except Exception: pass
 

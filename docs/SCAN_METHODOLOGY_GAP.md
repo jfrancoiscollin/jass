@@ -1,5 +1,31 @@
 # Scan methodology gap — ce qui nous sépare, et comment fermer le gap itérativement
 
+> ## 🔒 RÈGLE PERMANENTE (2026-06-18) — comment on COMPARE à Scan
+> **NE JAMAIS comparer à Scan à TEMPS FIXE ÉGAL.** Un `--movetime` égal confond
+> la **qualité d'éval** avec la **vitesse de recherche** : jass a un NPS ≪ Scan,
+> donc à temps égal jass voit *moins de plies* et perd quelle que soit l'éval
+> (0327/0329 : −387/−545, *toutes* défaites « no legal move », jass broyé). Le
+> standard est :
+> 1. **PROFONDEUR FIXE** : `--depth D` (les deux), ou asymétrique `--jass-depth`/
+>    `--scan-depth` (combien de plies en plus il faut à jass pour égaler Scan = la
+>    taille du gap d'éval *en plies*). C'est la mesure d'**éval pure**.
+> 2. **MOVETIME COMPENSÉ-NPS** : donner au plus lent un budget proportionnel au gap
+>    de NPS — jass 2× plus lent → `--jass-movetime 1.0 --scan-movetime 0.5`. C'est la
+>    mesure **fair en conditions de jeu réelles**. (`calibrate_vs_scan.py` expose
+>    `--jass-movetime`/`--scan-movetime` + un garde-fou qui avertit sur le temps égal.)
+>
+> Le temps égal ne sert QU'À une chose : **mesurer le handicap de vitesse** (le diff
+> entre temps-égal et depth-égale = ce que la recherche nous coûte). `cpx62-0330`
+> isole éval vs recherche par cette méthode.
+>
+> ## 🔒 RÈGLE PERMANENTE (2026-06-18) — le POOL de données
+> Ni 100 % Scan-self-play (fort mais **quiet/peu de contraste** → *nuit* au fit
+> linéaire, 0327), ni 100 % jass-self-play (divers mais **faible**, covariate-shift).
+> **MIXER** : un pool avec un **% garanti de qualité forte** (Scan-self-play) ET de la
+> **diversité** (jass-self-play + coverage). Outil : `tools/jnnw_mix.py` (parts
+> contrôlées). Diversité du Scan-self-play forcée par `tools/scan_selfplay_gen.py
+> --weak-depth` (Scan fort vs Scan affaibli → parties décisives) et `--depth-jitter`.
+
 > Rédigé le 2026-05-26 après les 4 tentatives D0-D2 sur l'archi pattern
 > (jobs 0046/0047/0048/0049, tous flat à 0/54 vs v5 d10). Synthèse
 > honnête de POURQUOI notre supervised cheap ne reproduit pas Scan, et
