@@ -1,0 +1,20 @@
+--- BASELINE ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0114      0.0158       0.72
+   12      0.0632      0.0433       1.46
+   15      0.3845      0.0789       4.87
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- COMBO ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0096      0.0158       0.61
+   12      0.0265      0.0240       1.10
+   15      0.1086      0.0560       1.94
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).

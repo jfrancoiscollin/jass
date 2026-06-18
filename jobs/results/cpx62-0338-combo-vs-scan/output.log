@@ -1,0 +1,48 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] nps×2 builds (40 pos × d9/12/15): ≈ 50 min
+  [preflight] matches: 36 parties × 1.0s × ~150 plies ≈ 90.0 min
+  [preflight] matches: 36 parties × 1.0s × ~150 plies ≈ 90.0 min
+  [preflight] TOTAL estimé ≈ 239.0 min  (cap 300 min)
+  [preflight] OK — sous le cap, lancement.
+=== build COMBO (main baké : multicut+razor) ===
+=== revert defaults → build BASELINE ===
+=== train éval (partagée par les 2 builds) ===
+=== (a) BRANCHEMENT : nps_vs_scan (baseline vs combo) ===
+--- BASELINE ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0114      0.0158       0.72
+   12      0.0632      0.0433       1.46
+   15      0.3845      0.0789       4.87
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- COMBO ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0096      0.0158       0.61
+   12      0.0265      0.0240       1.10
+   15      0.1086      0.0560       1.94
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+=== (b) vs Scan à TEMPS ÉGAL (mt1.0, 36 parties) ===
+
+==========================================================
+   cpx62-0338 — combo recherche baké vs Scan
+----------------------------------------------------------
+  (a) branchement (temps/pos à d9/d12/d15) — voir nps.txt :
+          9      0.0114      0.0158       0.72
+         12      0.0632      0.0433       1.46
+         15      0.3845      0.0789       4.87
+          9      0.0096      0.0158       0.61
+         12      0.0265      0.0240       1.10
+         15      0.1086      0.0560       1.94
+  (b) vs Scan mt1.0 :  baseline=0.097 ; combo=0.139
+----------------------------------------------------------
+  combo: temps/pos à d12/d15 PLUS BAS que baseline → arbre aplati (gain confirmé).
+  combo vs Scan > baseline vs Scan → le levier recherche se traduit en points vs Scan.
+==========================================================
