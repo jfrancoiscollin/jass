@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0313-endgame-data-gen",
-  "snapshot_at": "2026-06-18T01:52:45+00:00",
+  "snapshot_at": "2026-06-18T01:58:05+00:00",
   "started_at": "2026-06-17T19:04:05+00:00",
-  "elapsed_seconds": 24520,
+  "elapsed_seconds": 24840,
   "artefacts": [
     {
       "name": "build.log",
@@ -26,7 +26,7 @@
     },
     {
       "name": "self-2.jnnw",
-      "size_bytes": 6985010
+      "size_bytes": 7116338
     },
     {
       "name": "self-2.log",
@@ -81,5 +81,5 @@
       "size_bytes": 7035
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    06:48:40  0.0  0.0 bash\n 433433  433431    06:48:40  0.0  0.0 bash\n 434019  433433    06:48:13 99.8  0.8 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 433431       1    06:54:00  0.0  0.0 bash\n 433433  433431    06:54:00  0.0  0.0 bash\n 434019  433433    06:53:33 99.8  0.8 jass\n"
 }
