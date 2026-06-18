@@ -18,6 +18,15 @@
 > entre temps-égal et depth-égale = ce que la recherche nous coûte). `cpx62-0330`
 > isole éval vs recherche par cette méthode.
 >
+> ## 🔒 RÈGLE PERMANENTE (2026-06-18) — RÉGLER LA RECHERCHE À TEMPS FIXE
+> **Ne jamais régler/juger la recherche à PROFONDEUR FIXE.** Un benchmark à depth fixe sous-évalue
+> *structurellement* tout pruning qui **achète de la profondeur** (probcut/razor/multicut/iid/LMR) : à
+> depth fixe la profondeur est gratuite → on ne voit que le *risque* du pruning, jamais son *bénéfice*.
+> C'est pour ça que ces techniques étaient désactivées à tort (0333 : combo = 0.639 à temps fixe, ≈ +100
+> Elo). **Régler/juger à TEMPS FIXE** : self-play A/B `jass --benchmark-search-params <eval> "<A>" "<B>"
+> <depthcap> <pairs> <threads> <movetime_ms>` ; `A-rate > 0.5` = le réglage achète de la profondeur nette.
+> (NMP reste l'exception OFF : −97 Elo, zugzwang — cf 0256/0259.)
+>
 > ## 🔒 RÈGLE PERMANENTE (2026-06-18) — le POOL de données
 > Ni 100 % Scan-self-play (fort mais **quiet/peu de contraste** → *nuit* au fit
 > linéaire, 0327), ni 100 % jass-self-play (divers mais **faible**, covariate-shift).
