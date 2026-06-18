@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0334-search-combo-refine",
+  "script": "jobs/queue/cpx62-0334-search-combo-refine.sh",
+  "pid": 3289584,
+  "started_at": "2026-06-18T15:06:47+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
