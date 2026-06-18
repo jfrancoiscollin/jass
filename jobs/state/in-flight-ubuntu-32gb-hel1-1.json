@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0327-scan-selfplay-distill",
+  "script": "jobs/queue/cpx62-0327-scan-selfplay-distill.sh",
+  "pid": 3211206,
+  "started_at": "2026-06-18T07:03:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
