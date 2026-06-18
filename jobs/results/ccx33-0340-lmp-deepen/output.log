@@ -1,0 +1,23 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep LMP-deepen 6 candidats @ 600ms, 4pairs (×8): ≈ 110 min
+  [preflight] TOTAL estimé ≈ 115.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (defaults = combo baké + LMP paramétrable) ===
+=== train éval représentative ===
+=== sweep 6 (vs combo baké, parallèle ×8) ===
+
+==========================================================
+   ccx33-0340 — LMP-deepening (+RFP) par-dessus le combo baké (temps fixe 600ms, 72 parties)
+----------------------------------------------------------
+  tweak        A-rate vs combo-baké (>0.5 = mieux)
+  lmp4         0.520833
+  lmp5         0.472222
+  lmp6         0.472222
+  rfp7         0.583333
+  lmp5_rfp7    0.625
+  lmp6_rfp7    0.520833
+----------------------------------------------------------
+   MEILLEUR : lmp5_rfp7 (lmp_max_depth=5,rfp_max_depth=7,rfp_margin=70) @ 0.625
+   net >0.5 → ajouter au bake (LMP-deep et/ou RFP). Sinon → combo actuel déjà optimal.
+==========================================================
