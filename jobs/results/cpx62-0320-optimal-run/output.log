@@ -1,0 +1,9 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] self-play HQ 4000000 (--nnue fort + egdb + MTC + ramp, ×16): ≈ 300 min
+  [preflight] train: 1 × 10700000 lignes @ 4min/M ≈ 42.8 min
+  [preflight] matches: 54 parties × 1.5s × ~160 plies ≈ 216.0 min
+  [preflight] Elo hc: ≈ 8 min
+  [preflight] TOTAL estimé ≈ 574.8 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== builds ===
+=== (1) self-play HQ 4000000 (joué par ctrl.pjtw +253, egdb+MTC+ramp) ===
