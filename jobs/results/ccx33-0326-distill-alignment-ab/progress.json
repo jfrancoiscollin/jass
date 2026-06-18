@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0326-distill-alignment-ab",
-  "snapshot_at": "2026-06-18T06:23:57+00:00",
+  "snapshot_at": "2026-06-18T06:29:05+00:00",
   "started_at": "2026-06-18T06:08:15+00:00",
-  "elapsed_seconds": 942,
+  "elapsed_seconds": 1250,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -46,6 +46,10 @@
     },
     {
       "name": "aligned-elo.log",
+      "size_bytes": 286
+    },
+    {
+      "name": "aligned-scan.log",
       "size_bytes": 0
     },
     {
@@ -73,5 +77,5 @@
       "size_bytes": 19000008
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 457845       1       15:42  0.0  0.0 bash\n 457847  457845       15:42  0.0  0.0 bash\n 458664  457847       06:42  0.0  0.0 bash\n 458665  458664       06:42  704  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 457845       1       20:50  0.0  0.0 bash\n 457847  457845       20:50  0.0  0.0 bash\n1447287  457847       01:48  0.2  0.0 python3\n1447290 1447287       01:48 49.7  0.5 jass\n1447292 1447287       01:48 50.1  0.9 scan_linux\n1447295 1447287       01:47  0.0  0.0 jass\n"
 }
