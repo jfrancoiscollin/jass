@@ -1,0 +1,19 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] sweep région-4 6 candidats @ 500ms, 2pairs (×16): ≈ 45 min
+  [preflight] TOTAL estimé ≈ 49 min  (cap 90 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass SIMPLE (Release, hc) ===
+=== sweep région-4 6 (hc, parallèle ×16) ===
+
+==========================================================
+   home-0007 — sweep recherche région-4 (hc, temps fixe 500ms)
+----------------------------------------------------------
+  candidat       A-rate (>0.5 = MIEUX)
+  lmr_aggr       0.458333
+  rfp_aggr       0.638889
+  razor_lowm     0.555556
+  ext_promo_off  0.541667
+  pvs_off        0.444444
+  lmr_less       0.388889
+   (pvs_off doit donner <0.5 — sanity : PVS est net-positif)
+==========================================================

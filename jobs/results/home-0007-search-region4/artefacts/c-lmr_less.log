@@ -1,0 +1,3 @@
+Benchmark: search-params A=[lmr_base=1] vs B=[] on handcrafted, depth 30, threads 1, movetime_ms 500, 36 games
+Result: A=14 B=22 Draws=0 (total 36)
+A score rate: 0.388889

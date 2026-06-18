@@ -1,7 +1,0 @@
-{
-  "job_id": "home-0007-search-region4",
-  "script": "jobs/queue/home-0007-search-region4.sh",
-  "pid": 683,
-  "started_at": "2026-06-18T18:54:21+00:00",
-  "host": "User"
-}
