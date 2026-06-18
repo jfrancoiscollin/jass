@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0335-search-margin-tune",
+  "script": "jobs/queue/ccx33-0335-search-margin-tune.sh",
+  "pid": 2474901,
+  "started_at": "2026-06-18T16:02:56+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
