@@ -1,0 +1,13 @@
+{
+  "build_flags": "ENDGAME=ON KMOB= PHASE=0/40",
+  "dataset": {
+    "bytes": 254600008,
+    "path": "/root/jass/jobs/results/cpx62-0314-endgame-data-aug/artefacts.src/enriched-cumulative.jnnw",
+    "sha256_head64m": "5d49820692a33e7343bbd6dcfa6c9d888c426a6943817c12a6195212350bb9d0"
+  },
+  "date": "2026-06-17T23:30:27Z",
+  "git_commit": "8376a9c9",
+  "host": "ubuntu-32gb-hel1-1",
+  "n_ext": 110,
+  "pjtw": "/root/jass/jobs/results/cpx62-0318-combined-run/artefacts.src/ctrl.pjtw"
+}

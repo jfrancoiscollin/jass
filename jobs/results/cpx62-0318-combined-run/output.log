@@ -1,0 +1,30 @@
+  [preflight] build ×4 ≈ 16 min
+  [preflight] train: 4 × 6700000 lignes @ 4min/M ≈ 107.2 min
+  [preflight] 4× (mtc-regret + Elo): ≈ 40 min
+  [preflight] TOTAL estimé ≈ 163.2 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+dataset enrichi: 6700000 lignes ;   <=7p  :  1926653 ( 28.76%)   <=12p :  2700463 ( 40.31%)   duplicated keys         : 246730 (<=7p 101103, >7p 145627)   duplicate extra records : 607772 (<=7p 120335, >7p 487437)   WDL contradictions (keys): 101582 (<=7p 0, >7p 101582) 
+=== ctrl  (endg, rampe 0/40) ===
+  ctrl : critical-win-preservation=42.7179%  Elo_vs_hc=+253.1  (mse=4.5583)
+=== kmob  (+king_mob) ===
+  kmob : critical-win-preservation=43.8757%  Elo_vs_hc=+230.0  (mse=4.9919)
+=== phase (+rampe 8/18) ===
+  phase : critical-win-preservation=42.4741%  Elo_vs_hc=+267.7  (mse=3.7999)
+=== combo (+king_mob +rampe 8/18) ===
+  combo : critical-win-preservation=43.6929%  Elo_vs_hc=+213.5  (mse=4.1742)
+
+==========================================================
+   cpx62-0318 — RUN COMBINÉ (le vrai test, données enrichies)
+   baseline conversion à battre (0315/endg) : critical-win-preservation = 43%
+----------------------------------------------------------
+  ctrl   critical=42.7179% Elo=+253.1       (mse=4.5583)
+  kmob   critical=43.8757% Elo=+230.0       (mse=4.9919)
+  phase  critical=42.4741% Elo=+267.7       (mse=3.7999)
+  combo  critical=43.6929% Elo=+213.5       (mse=4.1742)
+----------------------------------------------------------
+  VERDICT (DECISION = critical + Elo, PAS mse) :
+   combo critical > 43% ET Elo ≈/> ctrl → les leviers CONVERTISSENT mieux → flywheel viable,
+      on monte un loop multi-gen (combo + self-play MTC-in-search) et on cherche gen N+1 > gen N.
+   combo ≈ ctrl sur critical → les features/équilibre ne suffisent pas → c'est données/recherche
+      (cf audit features Scan) → pivot diagnostic, pas plus de features.
+==========================================================

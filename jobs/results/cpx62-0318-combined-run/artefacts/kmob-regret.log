@@ -1,0 +1,8 @@
+
+=== MTC conversion metric (eval=/root/jass/jobs/results/cpx62-0318-combined-run/artefacts.src/kmob.pjtw, 1-ply eval-greedy) ===
+  sampled won quiet <=7p   : 5000
+  win-preservation         : 4079/5000 = 81.58%   (conversion BLUNDERS: 921)
+  win-preservation CRITICAL: 720/1641 = 43.8757%   (a win-throwing move exists)
+  fastest-path rate        : 4079/4079 = 100%   (move on a minimal-MTC line)
+  MTC-regret (MTC>=10)     : 0 plies mean (n=0)
+  -> higher win-preservation(+CRITICAL) & fastest-path, lower regret = better conversion.
