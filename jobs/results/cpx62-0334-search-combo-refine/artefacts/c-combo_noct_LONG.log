@@ -1,0 +1,3 @@
+Benchmark: search-params A=[probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6] vs B=[] on /root/jass/jobs/results/cpx62-0334-search-combo-refine/artefacts.src/eval.pjtw, depth 30, threads 1, movetime_ms 1500, 36 games
+Result: A=18 B=16 Draws=2 (total 36)
+A score rate: 0.527778
