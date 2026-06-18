@@ -115,6 +115,10 @@ void HubFrontEnd::set_nnue(const INetwork* n) noexcept {
     engine_.set_nnue(n);
 }
 
+void HubFrontEnd::set_search_params(const SearchParams& p) noexcept {
+    params_ = p;
+}
+
 bool HubFrontEnd::load_book(std::string_view path) {
     return engine_.load_book(path);
 }
@@ -278,6 +282,7 @@ void HubFrontEnd::cmd_go(std::string_view args) {
     wait_for_worker();
 
     SearchLimits lim;
+    lim.params = params_;   // honour --search-params (default = compiled defaults)
     TimeBudget   tb;
     bool async      = false;
     bool depth_set  = false;
