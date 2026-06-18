@@ -1,0 +1,3 @@
+Benchmark: search-params A=[lmp_d1=6,lmp_d2=12,lmp_d3=18] vs B=[] on /root/jass/jobs/results/ccx33-0337-search-region3/artefacts.src/eval.pjtw, depth 30, threads 1, movetime_ms 600, 72 games
+Result: A=29 B=35 Draws=8 (total 72)
+A score rate: 0.458333
