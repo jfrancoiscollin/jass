@@ -1,0 +1,4 @@
+Benchmark: search-params A=[probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6,probcut_reduction=5] vs B=[probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6] on /root/jass/jobs/results/ccx33-0335-search-margin-tune/artefacts.src/eval.pjtw, depth 30, threads 1, movetime_ms 600, 72 games
+Result: A=35 B=29 Draws=8 (total 72)
+A score rate: 0.541667
+
