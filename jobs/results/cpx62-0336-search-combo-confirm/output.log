@@ -1,0 +1,22 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] confirm 4 candidats × 90 parties @ 700ms (4 procs/16 cœurs): ≈ 130 min
+  [preflight] TOTAL estimé ≈ 135.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval représentative ===
+=== confirmation 4 candidats × 90 parties @ 700ms ===
+
+==========================================================
+   cpx62-0336 — CONFIRMATION combo recherche focalisé (propre, 700ms, 90 parties)
+----------------------------------------------------------
+  candidat      spec                                                       A-rate (>0.5 = MIEUX)
+  mc_only       multicut_min_depth=6,multicut_moves=8,multicut_cuts=2      0.438889
+  mc_razor      multicut_min_depth=6,multicut_moves=8,multicut_cuts=2,razor_max_depth=4 0.605556
+  mc_razor_ct   multicut_min_depth=6,multicut_moves=8,multicut_cuts=2,razor_max_depth=4,use_conthist=1 0.6
+  mc_razor_pc   multicut_min_depth=6,multicut_moves=8,multicut_cuts=2,razor_max_depth=4,probcut_min_depth=6,probcut_margin=250 0.522222
+----------------------------------------------------------
+   MEILLEUR : mc_razor → multicut_min_depth=6,multicut_moves=8,multicut_cuts=2,razor_max_depth=4 @ 0.605556
+   razor aide ? = mc_razor vs mc_only. conthist/probcut ? = _ct/_pc vs mc_razor.
+   Suite 0337 : baker le gagnant dans search_params.hpp + valider vs Scan à temps égal.
+==========================================================

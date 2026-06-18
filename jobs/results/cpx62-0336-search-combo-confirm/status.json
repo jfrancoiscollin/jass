@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0336-search-combo-confirm",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-18T17:52:35+00:00",
+  "ended_at": "2026-06-18T20:11:24+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 3296938
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0336-search-combo-confirm/artefacts.src"
 }

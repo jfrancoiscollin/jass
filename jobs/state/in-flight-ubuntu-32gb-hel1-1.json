@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0336-search-combo-confirm",
-  "script": "jobs/queue/cpx62-0336-search-combo-confirm.sh",
-  "pid": 3296938,
-  "started_at": "2026-06-18T17:52:35+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
