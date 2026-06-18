@@ -6,9 +6,8 @@
 // All the pruning / reduction / extension magic numbers that used to live
 // as function-local `constexpr` inside negamax are centralised here so an
 // external tuner (SPSA) can perturb them and an A/B harness can compare
-// two parameter sets in a single process. Defaults are the current tuned
-// production defaults (`use_improving` on, `eg_pieces=40`, `eg_no_nmp` on);
-// older baselines should be requested explicitly in the A/B spec.
+// two parameter sets in a single process. Defaults reproduce the exact
+// pre-refactor behaviour, so `SearchParams{}` is behaviour-neutral.
 //
 // A parameter set can be loaded from a "k=v,k=v" string (used by the CLI
 // A/B mode and the SPSA driver) or from the JASS_SEARCH_PARAMS env var.
@@ -70,7 +69,7 @@ struct SearchParams {
     // Razoring (gated; razor_max_depth = 0 disables). At shallow non-PV
     // quiet nodes, if static eval + razor_margin*depth <= alpha, drop to
     // quiescence; if qsearch confirms <= alpha, prune.
-    int razor_max_depth = 0;     // 0 = off
+    int razor_max_depth = 4;     // 0 = off ; ON=4 depuis 0336 (combo recherche, +Elo à temps fixe)
     int razor_margin    = 200;   // cp per remaining ply
 
     // ProbCut (gated; probcut_min_depth = 0 disables). At high-depth
@@ -116,10 +115,10 @@ struct SearchParams {
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
     // depth; if at least `multicut_cuts` of them fail high, the node almost
     // certainly fails high — cut. Speculative, hence opt-in.
-    int multicut_min_depth = 0;   // 0 = off
+    int multicut_min_depth = 6;   // 0 = off ; ON=6 depuis 0336 (porteur principal du gain recherche)
     int multicut_reduction = 4;
-    int multicut_moves     = 6;
-    int multicut_cuts      = 3;
+    int multicut_moves     = 8;   // 8 (was 6) — 0335 mc_easy = plus gros gain du sweep
+    int multicut_cuts      = 2;   // 2 (was 3) — déclenchement plus facile (0335/0336)
 
     // --- Time-management for the iterative-deepening loop (movetime only) ---
     // The "skip the next iteration" heuristic projects the next iteration's
