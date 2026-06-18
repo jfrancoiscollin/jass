@@ -146,6 +146,33 @@ def phase_wmg(pc: np.ndarray, lo: float, hi: float) -> np.ndarray:
     return np.clip((pc - lo) / denom, 0.0, 1.0)
 
 
+def _tempo_weights():
+    """Per-array-index men row-weights matching np.unpackbits(uint64.view(uint8))
+    order, so the trainer's tempo equals the C++ scan_eval::tempo_wmg. Array index
+    j ↔ actual bit (j//8)*8 + (7 − j%8) ; square=bit+1 ; row=bit//5 (5 sq/row)."""
+    ww = np.zeros(64, dtype=np.float64)   # white man contributes its row
+    bw = np.zeros(64, dtype=np.float64)   # black man contributes 9 − row
+    for j in range(64):
+        bit = (j // 8) * 8 + (7 - j % 8)
+        if bit < 50:
+            row = bit // 5
+            ww[j] = row
+            bw[j] = 9 - row
+    return ww, bw
+
+
+_TEMPO_WW, _TEMPO_BW = _tempo_weights()
+
+
+def tempo_wmg(ds) -> np.ndarray:
+    """Scan's tempo-based midgame weight = clip(tempo/300). tempo = Σ white-men row
+    + Σ black-men (9−row). Must match C++ scan_eval::tempo_wmg EXACTLY (men only)."""
+    wm = np.unpackbits(ds.white_men.view(np.uint8)).reshape(ds.n_records, 64).astype(np.float64)
+    bm = np.unpackbits(ds.black_men.view(np.uint8)).reshape(ds.n_records, 64).astype(np.float64)
+    tempo = wm.dot(_TEMPO_WW) + bm.dot(_TEMPO_BW)
+    return np.clip(tempo / 300.0, 0.0, 1.0)
+
+
 # Phase boundaries by piece count, IDENTICAL to tools/game_autopsy.py and
 # tools/phase_proxy.py so the training reweighting lines up with the microscopes
 # that measure where the eval bleeds. Used by --phase-weight to over/under-weight
@@ -660,9 +687,12 @@ def train_scan_eval(args):
         print(f'loss=LOGISTIC on WDL outcomes  win={np_} draw={nz} loss={nn} '
               f'({100*nz/ds.n_records:.1f}% draws)')
 
-    # Game stage : sharpenable ramp (matches scan_eval::phase_wmg).
+    # Game stage : Scan's tempo-based blend (--tempo-stage) or the piece-count ramp.
     pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
-    wmg = phase_wmg(pc, args.phase_lo, args.phase_hi)
+    if getattr(args, 'tempo_stage', False):
+        wmg = tempo_wmg(ds)
+    else:
+        wmg = phase_wmg(pc, args.phase_lo, args.phase_hi)
     weg = 1.0 - wmg
     print(f'phase : piece-count mean={pc.mean():.1f}  wmg mean={wmg.mean():.3f}'
           f'  (ramp {args.phase_lo}/{args.phase_hi})')
@@ -966,13 +996,15 @@ def main():
                          'Same optimum, full-batch SPEED, ~20M rows on 32GB. Preferred '
                          'over --minibatch for <=~20M. Pure L2 only.')
     ap.add_argument('--phase-weight', default='',
-                    help='DEPRECATED/historical: lever MORT (-210 Elo, jobs '
-                         '0254/0257/0261). Conserved for reproduction only; do not '
-                         'use in new experiments. Over/under-weights rows of a game '
-                         'phase in the DATA loss, e.g. "endgame=3,deep-eg=4" '
-                         '(phases: opening/midgame/late-mid/endgame/deep-eg, by '
-                         'piece count, same bounds as game_autopsy). Unlisted=1.0; '
-                         'normalised so the mean train weight stays 1.')
+                    help='densification knob : over/under-weight rows of a game '
+                         'phase in the DATA loss, e.g. "endgame=3,deep-eg=4" (phases: '
+                         'opening/midgame/late-mid/endgame/deep-eg, by piece count, '
+                         'same bounds as game_autopsy). Unlisted=1.0. Normalised so the '
+                         'mean train weight stays 1 (L2 comparable). Works with full / '
+                         '--lowmem / --minibatch; the per-phase val_mse print shows the '
+                         'effect. Linear-class fix for the endgame bleed (Scan proves a '
+                         'linear eval CAN play endgames — feed it more endgame weight, '
+                         'no non-linearity). cf jobs 0249/0250/0251/0252.')
     ap.add_argument('--scale', type=int, default=1000)
     ap.add_argument('--val-frac', type=float, default=0.1)
     ap.add_argument('--target', choices=['wdl', 'score', 'prob'], default='wdl',
@@ -1085,6 +1117,9 @@ def main():
     ap.add_argument('--phase-hi', type=float, default=40.0,
                     help='phase ramp high (pieces): wmg=1 at/above this. Default 40. '
                          'Sharper (e.g. 10/24) specialises the endgame bank (0310).')
+    ap.add_argument('--tempo-stage', action='store_true',
+                    help="Scan's tempo (men-advancement) phase blend instead of the "
+                         "piece-count ramp. MUST pair with the C++ -DJASS_TEMPO_STAGE.")
     ap.add_argument('--king-features', action='store_true',
                     help='FIT-CHECK only : append 100 king-PST one-hot features '
                          '(the men-only patterns are blind to kings). The '
@@ -1194,7 +1229,8 @@ def main():
     out_version = WEIGHTS_VERSION
     if args.phase_split:
         pc  = np.minimum(piece_count(ds), 40).astype(np.float64)
-        wmg = phase_wmg(pc, args.phase_lo, args.phase_hi)
+        wmg = tempo_wmg(ds) if getattr(args, 'tempo_stage', False) \
+            else phase_wmg(pc, args.phase_lo, args.phase_hi)
         weg = 1.0 - wmg
         print(f'phase-split : piece-count mean={pc.mean():.1f}  '
               f'wmg mean={wmg.mean():.3f} (1=tout midgame, 0=tout endgame)')

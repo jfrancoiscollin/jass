@@ -114,9 +114,28 @@ inline constexpr int EXTRA_BK_SAFEMOB = EXTRAS_AFTER_ENDGAME + 0;  // black king
 inline constexpr int EXTRA_WK_SAFEMOB = EXTRAS_AFTER_ENDGAME + 1;  // white king SAFE slide squares
 inline constexpr int EXTRA_BK_DENIED  = EXTRAS_AFTER_ENDGAME + 2;  // black king slides DENIED (attacked by white men)
 inline constexpr int EXTRA_WK_DENIED  = EXTRAS_AFTER_ENDGAME + 3;  // white king slides DENIED (attacked by black men)
-inline constexpr int NUM_EXTRAS       = EXTRAS_AFTER_ENDGAME + 4;
+inline constexpr int EXTRAS_AFTER_KMOB = EXTRAS_AFTER_ENDGAME + 4;
 #else
-inline constexpr int NUM_EXTRAS     = EXTRAS_AFTER_ENDGAME;
+inline constexpr int EXTRAS_AFTER_KMOB = EXTRAS_AFTER_ENDGAME;
+#endif
+
+// SCAN-PARITY structural terms (gated; -DJASS_SCAN_PARITY) — the last small
+// audit gaps so the eval matches Scan's structural set (for faithful distillation):
+//  * absolute men-SKEW per side : |Σ men (2·col − 9)| — penalises lopsided wings
+//    (Scan uses |skew_W|−|skew_B| ; jass had only a binary left/right balance).
+//  * KING MATERIAL : has-a-king bool + extra-king count (2nd+ king worth less),
+//    per side — Scan weights the first king and surplus kings separately; jass had
+//    king value only implicit in the PST. See docs/SCAN_EVAL_DIFF.md.
+#ifdef JASS_SCAN_PARITY
+inline constexpr int EXTRA_BK_SKEWABS = EXTRAS_AFTER_KMOB + 0;  // |skew| of black men
+inline constexpr int EXTRA_WK_SKEWABS = EXTRAS_AFTER_KMOB + 1;  // |skew| of white men
+inline constexpr int EXTRA_BK_HASKING = EXTRAS_AFTER_KMOB + 2;  // black has >=1 king
+inline constexpr int EXTRA_WK_HASKING = EXTRAS_AFTER_KMOB + 3;  // white has >=1 king
+inline constexpr int EXTRA_BK_EXTRAK  = EXTRAS_AFTER_KMOB + 4;  // black kings beyond the first
+inline constexpr int EXTRA_WK_EXTRAK  = EXTRAS_AFTER_KMOB + 5;  // white kings beyond the first
+inline constexpr int NUM_EXTRAS       = EXTRAS_AFTER_KMOB + 6;
+#else
+inline constexpr int NUM_EXTRAS       = EXTRAS_AFTER_KMOB;
 #endif
 
 // Game-stage normaliser : 20 men/side at the FMJD start = 40 pieces.
