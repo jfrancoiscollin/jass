@@ -71,6 +71,16 @@ Temps égal = uniquement pour *mesurer* le handicap de vitesse. `calibrate_vs_sc
 (diversité) + coverage. `tools/jnnw_mix.py` (parts contrôlées). Diversité Scan forcée :
 `scan_selfplay_gen.py --weak-depth` (fort vs affaibli = parties décisives) / `--depth-jitter`.
 
+## Verdict 0332 (2026-06-18) — la RECHERCHE NE SCALE PAS (le multiplicateur)
+NPS jass vs Scan à profondeur égale : **d9 = 1,1×** (même vitesse !), **d12 = 4,2×**, **d15 = 18,4×**.
+Facteur de branchement effectif : **jass ≈ 2,0/ply, Scan ≈ 1,28/ply** → l'arbre de jass explose, celui de
+Scan reste plat. C'est du **move-ordering / réductions** faibles, PAS de la vitesse d'éval (égale à d9).
+**Conséquence** : jass ne peut PAS obtenir les +2-4 plies que 0330 réclame (à temps égal il voit ~d11-12
+quand Scan voit d15). La recherche est le **levier dominant** — c'est le multiplicateur qui empêche de
+compenser l'éval. ⚠️ **PAS via NMP** : NMP est OFF *à dessein* (sweep 0256/0259 = **+97 Elo** à désactiver,
+zugzwang draughts). Le gain doit venir d'un **meilleur ordonnancement / réductions saines** (comme Scan, qui
+tient 1,28/ply SANS NMP). Note : une éval plus nette améliore aussi l'ordering → éval (0331) et recherche liées.
+
 ## Verdict 0330 (2026-06-18) — le mur = ÉVAL faible MAIS gap PETIT (~2 plies)
 Isolation éval/recherche, même éval distillée Scan, jugée par profondeur : **C2 depth-égale d9 = 0.056**
 (jass perd même à depth égale → l'éval est vraiment plus faible/ply, PAS qu'un problème de vitesse) ;
