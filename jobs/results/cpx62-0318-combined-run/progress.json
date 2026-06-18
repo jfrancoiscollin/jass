@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0318-combined-run",
-  "snapshot_at": "2026-06-18T02:32:36+00:00",
+  "snapshot_at": "2026-06-18T02:37:49+00:00",
   "started_at": "2026-06-17T22:46:12+00:00",
-  "elapsed_seconds": 13584,
+  "elapsed_seconds": 13897,
   "artefacts": [
     {
       "name": "combo-build.log",
@@ -133,5 +133,5 @@
       "size_bytes": 485
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    03:46:24  0.0  0.0 bash\n 536488  536486    03:46:24  0.0  0.0 bash\n2623717  536488       43:06  200 92.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 536486       1    03:51:37  0.0  0.0 bash\n 536488  536486    03:51:37  0.0  0.0 bash\n2623717  536488       48:20  200 93.8 python3\n"
 }
