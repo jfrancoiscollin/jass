@@ -1,0 +1,77 @@
+{
+  "job_id": "ccx33-0326-distill-alignment-ab",
+  "snapshot_at": "2026-06-18T06:13:55+00:00",
+  "started_at": "2026-06-18T06:08:15+00:00",
+  "elapsed_seconds": 340,
+  "artefacts": [
+    {
+      "name": ".rl-0.jnnw",
+      "size_bytes": 1988282
+    },
+    {
+      "name": ".rl-0.log",
+      "size_bytes": 318
+    },
+    {
+      "name": ".rl-1.jnnw",
+      "size_bytes": 1980150
+    },
+    {
+      "name": ".rl-1.log",
+      "size_bytes": 322
+    },
+    {
+      "name": ".rl-2.jnnw",
+      "size_bytes": 1996414
+    },
+    {
+      "name": ".rl-2.log",
+      "size_bytes": 323
+    },
+    {
+      "name": ".rl-3.jnnw",
+      "size_bytes": 1911028
+    },
+    {
+      "name": ".rl-3.log",
+      "size_bytes": 324
+    },
+    {
+      "name": ".rl-4.jnnw",
+      "size_bytes": 1887012
+    },
+    {
+      "name": ".rl-4.log",
+      "size_bytes": 324
+    },
+    {
+      "name": ".rl-5.jnnw",
+      "size_bytes": 1888304
+    },
+    {
+      "name": ".rl-5.log",
+      "size_bytes": 325
+    },
+    {
+      "name": ".rl-6.jnnw",
+      "size_bytes": 1885530
+    },
+    {
+      "name": ".rl-6.log",
+      "size_bytes": 386
+    },
+    {
+      "name": ".rl-7.jnnw",
+      "size_bytes": 1886366
+    },
+    {
+      "name": ".rl-7.log",
+      "size_bytes": 551
+    },
+    {
+      "name": "sub.jnnw",
+      "size_bytes": 19000008
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 457845       1       05:40  0.0  0.0 bash\n 457847  457845       05:40  0.0  0.0 bash\n 457925  457847       05:39  2.8  0.1 python3\n 457926  457847       05:39  2.8  0.1 python3\n 457927  457847       05:39  2.8  0.1 python3\n 457928  457847       05:39  3.2  0.1 python3\n 457929  457847       05:39  3.4  0.1 python3\n 457930  457847       05:39  3.4  0.1 python3\n 457933  457925       05:39 97.1  0.9 scan_linux\n 457934  457926       05:39 97.0  0.9 scan_linux\n 457936  457930       05:39 96.1  0.0 scan_linux\n 457937  457929       05:39 96.0  0.0 scan_linux\n 457938  457927       05:39 97.0  0.9 scan_linux\n 457939  457928       05:39 96.6  0.9 scan_linux\n"
+}
