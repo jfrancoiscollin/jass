@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0340-lmp-deepen",
+  "script": "jobs/queue/ccx33-0340-lmp-deepen.sh",
+  "pid": 2486815,
+  "started_at": "2026-06-18T22:03:59+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
