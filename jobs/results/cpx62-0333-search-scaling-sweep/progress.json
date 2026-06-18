@@ -1,0 +1,69 @@
+{
+  "job_id": "cpx62-0333-search-scaling-sweep",
+  "snapshot_at": "2026-06-18T13:54:11+00:00",
+  "started_at": "2026-06-18T13:49:08+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "c-combo.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-conthist.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-iid6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-lmr_idx4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-multicut6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-probcut4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-probcut5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-razor3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-rfp6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1048
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 118
+    },
+    {
+      "name": "e.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "eval.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1362
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3286716       1       05:02  0.0  0.0 bash\n3286718 3286716       05:02  0.0  0.0 bash\n3287327 3286718       03:19 99.9  0.5 jass\n3287328 3286718       03:19 99.9  0.5 jass\n3287329 3286718       03:19 99.9  0.5 jass\n3287330 3286718       03:19 99.9  0.5 jass\n3287331 3286718       03:19 99.9  0.5 jass\n3287332 3286718       03:19 99.9  0.5 jass\n3287333 3286718       03:19 99.9  0.5 jass\n3287334 3286718       03:19 99.9  0.5 jass\n3287335 3286718       03:19 99.9  0.5 jass\n"
+}
