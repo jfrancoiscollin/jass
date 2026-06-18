@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0339-combo-refine2",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-18T20:25:13+00:00",
+  "ended_at": "2026-06-18T22:03:55+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 2483198
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0339-combo-refine2/artefacts.src"
 }

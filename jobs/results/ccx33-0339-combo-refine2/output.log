@@ -1,0 +1,24 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep raffinement 8 candidats @ 600ms, 4pairs (×8): ≈ 110 min
+  [preflight] TOTAL estimé ≈ 115.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (defaults = combo baké) ===
+=== train éval représentative ===
+=== sweep raffinement 8 (vs combo baké) parallèle ×8 ===
+
+==========================================================
+   ccx33-0339 — raffinement PAR-DESSUS le combo baké (temps fixe 600ms, 72 parties)
+----------------------------------------------------------
+  tweak         A-rate vs combo-baké (>0.5 = encore mieux)
+  mc_red3       0.423611
+  mc_red5       0.465278
+  razor_m120    0.534722
+  razor_m300    0.458333
+  mc_cuts1      0.444444
+  mc_moves10    0.444444
+  razor_d5      0.479167
+  history_big   0.416667
+----------------------------------------------------------
+   >0.5 net → ajouter au combo baké (nouveau bake). Sinon → combo actuel déjà bien calé.
+==========================================================
