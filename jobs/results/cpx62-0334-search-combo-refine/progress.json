@@ -1,0 +1,73 @@
+{
+  "job_id": "cpx62-0334-search-combo-refine",
+  "snapshot_at": "2026-06-18T15:12:02+00:00",
+  "started_at": "2026-06-18T15:06:47+00:00",
+  "elapsed_seconds": 315,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "c-aggr.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-combo5_90.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-combo5_LONG.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-combo_noct.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-combo_noct_LONG.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-no_iid.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-no_multicut.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-no_probcut.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-no_razor.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-noct_plus_rfp.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1048
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 117
+    },
+    {
+      "name": "e.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "eval.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1360
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3289584       1       05:15  0.0  0.0 bash\n3289586 3289584       05:15  0.0  0.0 bash\n3290177 3289586       03:34 99.9  0.5 jass\n3290178 3289586       03:34 99.9  0.5 jass\n3290179 3289586       03:34 99.9  0.5 jass\n3290180 3289586       03:34 99.9  0.5 jass\n3290182 3289586       03:34 99.9  0.5 jass\n3290183 3289586       03:34 99.9  0.5 jass\n3290184 3289586       03:34 99.9  0.5 jass\n3290185 3289586       03:34 99.9  0.5 jass\n3290186 3289586       03:34 99.9  0.5 jass\n3290187 3289586       03:34 99.9  0.5 jass\n"
+}
