@@ -1,7 +1,9 @@
 {
   "job_id": "home-0007-search-region4",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-18T18:54:21+00:00",
+  "ended_at": "2026-06-18T20:30:47+00:00",
   "host": "User",
-  "pid": 683
+  "artefacts_server_path": "/root/jass/jobs/results/home-0007-search-region4/artefacts.src"
 }

@@ -1,0 +1,3 @@
+Benchmark: search-params A=[use_pvs=0] vs B=[] on handcrafted, depth 30, threads 1, movetime_ms 500, 36 games
+Result: A=15 B=19 Draws=2 (total 36)
+A score rate: 0.444444
