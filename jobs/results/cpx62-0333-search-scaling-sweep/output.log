@@ -1,0 +1,27 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep 3pairs × ~9 candidats @ 600ms (×16 parallèle): ≈ 90 min
+  [preflight] TOTAL estimé ≈ 95.0 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval représentative (distrib 0314, Scan-relabel) ===
+=== sweep 9 candidats @ 600ms, 3 pairs (parallèle ×16) ===
+
+==========================================================
+   cpx62-0333 — sweep RECHERCHE à TEMPS FIXE (600ms) : candidat vs défaut
+----------------------------------------------------------
+  candidat     spec                                               A-rate (>0.5 = MIEUX)
+  probcut5     probcut_min_depth=5                                0.462963
+  probcut4     probcut_min_depth=4,probcut_margin=100             0.444444
+  razor3       razor_max_depth=3                                  0.546296
+  multicut6    multicut_min_depth=6                               0.472222
+  iid6         iid_min_depth=6                                    0.490741
+  conthist     use_conthist=1                                     0.416667
+  lmr_idx4     lmr_idx_div=4                                      0.398148
+  rfp6         rfp_max_depth=6,rfp_margin=80                      0.453704
+  combo        probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6,use_conthist=1 0.638889
+----------------------------------------------------------
+   MEILLEUR : combo (probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6,use_conthist=1) @ rate 0.638889
+   rate > 0.5 → la technique achète de la profondeur nette → GAIN à temps fixe.
+   (suite : combiner les gagnants + valider vs Scan à profondeur égale / temps compensé)
+==========================================================
