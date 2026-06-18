@@ -85,6 +85,18 @@ Bitboard man_attacks(Bitboard men, Bitboard empty) noexcept {
          | (shift_nw(men) & shift_se(empty));
 }
 
+// Scan's tempo-based game stage : wmg = tempo / 300, tempo = total MEN advancement
+// (Σ white-men row + Σ black-men (9−row)). Both fully-developed sides at the FMJD
+// start = 300 → wmg = 1 (full midgame). Men advance / get captured → tempo drops →
+// wmg → 0 (endgame). This is Scan's phase DRIVER (vs jass's piece-count). Men-only.
+double tempo_wmg(const Position& pos) noexcept {
+    long tempo = 0;
+    for (Bitboard b = pos.white_men(); b; ) tempo += row_of(pop_lsb(b));
+    for (Bitboard b = pos.black_men(); b; ) tempo += 9 - row_of(pop_lsb(b));
+    const double w = static_cast<double>(tempo) / 300.0;
+    return w < 0.0 ? 0.0 : (w > 1.0 ? 1.0 : w);
+}
+
 float lr_balance(Bitboard men) noexcept {
     int left = 0, right = 0;
     for (Bitboard b = men; b; ) {
@@ -187,6 +199,22 @@ void compute_extras(const Position& pos,
     out[EXTRA_WK_SAFEMOB] = static_cast<float>(popcount(wkr & ~batt));
     out[EXTRA_BK_DENIED]  = static_cast<float>(popcount(bkr & watt));
     out[EXTRA_WK_DENIED]  = static_cast<float>(popcount(wkr & batt));
+#endif
+
+#ifdef JASS_SCAN_PARITY
+    // Scan parity : absolute men-skew (lopsided wings) + king material split.
+    auto skew_abs = [](Bitboard men) -> float {
+        long s = 0;
+        for (Bitboard b = men; b; ) { const int c = col_of(pop_lsb(b)); s += 2 * c - 9; }
+        return static_cast<float>(s < 0 ? -s : s);
+    };
+    out[EXTRA_BK_SKEWABS] = skew_abs(pos.black_men());
+    out[EXTRA_WK_SKEWABS] = skew_abs(pos.white_men());
+    const int nbk2 = popcount(pos.black_kings()), nwk2 = popcount(pos.white_kings());
+    out[EXTRA_BK_HASKING] = static_cast<float>(nbk2 >= 1 ? 1 : 0);
+    out[EXTRA_WK_HASKING] = static_cast<float>(nwk2 >= 1 ? 1 : 0);
+    out[EXTRA_BK_EXTRAK]  = static_cast<float>(nbk2 > 1 ? nbk2 - 1 : 0);
+    out[EXTRA_WK_EXTRAK]  = static_cast<float>(nwk2 > 1 ? nwk2 - 1 : 0);
 #endif
     // NB: the 1st batch of structural extras (king-mob/back-rank/advancement,
     // 106->112) regressed on the v5 base and AGAIN on the clean v4 base (0172:
@@ -346,7 +374,11 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
     }
 
     // Phase interpolation : sharpenable ramp (default = legacy stage/40).
+#ifdef JASS_TEMPO_STAGE
+    const double wmg = tempo_wmg(pos);            // Scan's man-advancement phase
+#else
     const double wmg = phase_wmg(game_stage(pos));
+#endif
     const double weg = 1.0 - wmg;
     const double eval_black = wmg * (pat_mg + ext_mg) + weg * (pat_eg + ext_eg);
 

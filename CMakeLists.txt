@@ -131,6 +131,20 @@ if(JASS_KING_MOBILITY)
     message(STATUS "Jass: KING-MOBILITY extras ENABLED (+4 extras)")
 endif()
 
+# Scan-parity structural extras : absolute men-skew + king material split (+6 extras).
+option(JASS_SCAN_PARITY "Add Scan-parity extras (abs skew + king material), +6 extras" OFF)
+if(JASS_SCAN_PARITY)
+    add_compile_definitions(JASS_SCAN_PARITY=1)
+    message(STATUS "Jass: SCAN-PARITY extras ENABLED (+6 extras)")
+endif()
+
+# Tempo-based game stage (Scan's phase driver = men advancement, not piece count).
+option(JASS_TEMPO_STAGE "Use Scan's tempo (men-advancement) phase blend instead of piece-count" OFF)
+if(JASS_TEMPO_STAGE)
+    add_compile_definitions(JASS_TEMPO_STAGE=1)
+    message(STATUS "Jass: TEMPO-STAGE phase blend ENABLED (men advancement / 300)")
+endif()
+
 # Drawish-material draw-scaling (Scan's one non-linear eval term) : shrink the
 # score toward a draw in unwinnable K-vs-few / near-equal endgames. Play-time
 # only (not trained). See src/scan_eval.cpp + docs/SCAN_EVAL_DIFF.md.
