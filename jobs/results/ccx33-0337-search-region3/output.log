@@ -1,0 +1,24 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep région-3 8 candidats @ 600ms, 4pairs (×8): ≈ 110 min
+  [preflight] TOTAL estimé ≈ 115.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval représentative ===
+=== sweep région-3 8 (éval pattern, parallèle ×8) ===
+
+==========================================================
+   ccx33-0337 — sweep recherche région-3 (éval pattern, temps fixe 600ms, 72 parties)
+----------------------------------------------------------
+  candidat       A-rate (>0.5 = MIEUX)
+  lmp_tight      0.534722
+  lmp_loose      0.458333
+  asp_tight      0.465278
+  asp_wide       0.5
+  singular6      0.548611
+  history_big    0.569444
+  history_small  0.506944
+  lmp_asp        0.444444
+----------------------------------------------------------
+   >0.5 → combiner au combo multicut+razor (0336) puis valider vs Scan.
+==========================================================
