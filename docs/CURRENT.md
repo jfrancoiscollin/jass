@@ -71,6 +71,14 @@ Temps égal = uniquement pour *mesurer* le handicap de vitesse. `calibrate_vs_sc
 (diversité) + coverage. `tools/jnnw_mix.py` (parts contrôlées). Diversité Scan forcée :
 `scan_selfplay_gen.py --weak-depth` (fort vs affaibli = parties décisives) / `--depth-jitter`.
 
+## Verdict 0330 (2026-06-18) — le mur = ÉVAL faible MAIS gap PETIT (~2 plies)
+Isolation éval/recherche, même éval distillée Scan, jugée par profondeur : **C2 depth-égale d9 = 0.056**
+(jass perd même à depth égale → l'éval est vraiment plus faible/ply, PAS qu'un problème de vitesse) ;
+**C3 jass d11 vs Scan d9 (+2 plies) = 0.333** (×6 le score) ; C1 temps-égal mt1.5 = 0.111. → l'éval de
+jass est **~2-4 plies derrière** celle de Scan (gap petit, closeable), et jass **compense déjà par la
+profondeur**. **Deux leviers additifs** : (a) rapprocher l'éval (pool mixte + méthodo), (b) gagner du NPS
+(atteindre +2-4 plies à temps égal). Suite : **0331** (levier éval, jugé depth-égale) + **0332** (mesure NPS).
+
 ## Verdict 0327/0329 (2026-06-18) — covariate-shift PUR : NON
 A/B contrôlé (même archi, même relabel Scan, juge mt1.5) : NEW (Scan self-play) **pire** que OLD
 (0314) — vs Scan −545 vs −387, Elo_hc +182 vs +318 ; champion 500k self-play = −545 aussi. La
@@ -107,10 +115,10 @@ commit, host, flags, NUM_EXTRAS, dataset hash). **Avant tout A/B** de deux `.pjt
 footgun « deux 110-extras de layouts différents »). Pré-flight compute : `jobs/lib/preflight.sh`.
 
 ## Jobs en cours
-- **cpx62** : **0330** (isole ÉVAL vs RECHERCHE — depth-fixe & asym vs Scan) — *tranche le mur*.
-- **ccx33** : libre (0328 corpus 1.19M ✅ committé ; 0329 champion ✅ = −545).
+- **cpx62** : **0331** (pool MIXTE Scan-divers+jass, jugé depth-égale — levier ÉVAL).
+- **ccx33** : **0332** (mesure NPS jass vs Scan — levier RECHERCHE).
 - **PC perso** : éteint ; egdb WLD+MTC ✅, self-play ✅
-- *0326/0327/0329 finis ; 0326 tué (jugeait sur distrib suspecte).*
+- *0326/0327/0329/0330 finis. Baseline depth-juge : C2=0.056, C3(jass+2)=0.333.*
 
 ## Prochain verdict attendu
 **0327** : `new (Scan self-play) vs_Scan ≫ old (0314)` → **covariate-shift confirmé**, le verrou
