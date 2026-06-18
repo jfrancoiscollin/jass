@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0330-eval-vs-search",
-  "snapshot_at": "2026-06-18T11:38:02+00:00",
+  "snapshot_at": "2026-06-18T11:44:02+00:00",
   "started_at": "2026-06-18T11:32:53+00:00",
-  "elapsed_seconds": 309,
+  "elapsed_seconds": 669,
   "artefacts": [
     {
       "name": "build.log",
@@ -37,5 +37,5 @@
       "size_bytes": 1350
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3282065       1       05:09  0.0  0.0 bash\n3282067 3282065       05:09  0.0  0.0 bash\n3282673 3282067       03:24  0.1  0.0 python3\n3282676 3282673       03:24 46.1  0.5 jass\n3282678 3282673       03:23 53.8  0.9 scan_linux\n3282681 3282673       03:23  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3282065       1       11:09  0.0  0.0 bash\n3282067 3282065       11:09  0.0  0.0 bash\n3282673 3282067       09:24  0.1  0.0 python3\n3282676 3282673       09:24 47.3  0.5 jass\n3282678 3282673       09:23 52.5  0.9 scan_linux\n3282681 3282673       09:23  0.0  0.0 jass\n"
 }
