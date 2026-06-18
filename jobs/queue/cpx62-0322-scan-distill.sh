@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0321-scan-distill
+# id: cpx62-0322-scan-distill
 # description: PIVOT FALLBACK (documenté) — le teacher-free plafonne à 0/54 vs Scan, donc on DISTILLE Scan
 # directement (ton idée : utiliser l'éval de Scan). (1) Échantillonne ~1.2M positions diverses du dataset
 # enrichi 0314. (2) relabel_with_scan : Scan SCORE chaque position (depth-10, hub) → labels-maître. (3)
@@ -12,7 +12,7 @@ cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-720}"
 source jobs/lib/preflight.sh
 source jobs/lib/manifest.sh
-ART="/root/jass/jobs/results/cpx62-0321-scan-distill/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/cpx62-0322-scan-distill/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 WLD=/root/egdb_extracted/app
 ENR=/root/jass/jobs/results/cpx62-0314-endgame-data-aug/artefacts.src/enriched-cumulative.jnnw
@@ -29,10 +29,10 @@ preflight_check
 [ -x "$SCAN_BIN" ] || { rm -rf /root/jass-scan; git clone --depth 1 https://github.com/rhalbersma/scan /root/jass-scan >"$ART/scan-clone.log" 2>&1; chmod +x "$SCAN_BIN" 2>/dev/null || true; }
 [ -x "$SCAN_BIN" ] || { echo "ABORT: Scan binaire indisponible"; exit 5; }
 
-# full-feature build (egdb pour le match ; endg+king_mob+drawish gardés)
+# full-feature build (egdb pour le match ; endg+king_mob (drawish OFF : Scan score inclut déjà son drawish) gardés)
 rm -rf build-ff
 cmake -S . -B build-ff -DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl \
-      -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_DRAWISH_SCALING=ON >"$ART/cmake.log" 2>&1
+      -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON >"$ART/cmake.log" 2>&1
 grep -q "EXTERNAL EGDB ENABLED" "$ART/cmake.log" || { echo "ABORT: egdb off"; exit 5; }
 cmake --build build-ff -j"$(mem_safe_jobs)" --target jass >"$ART/build.log" 2>&1 || { echo BUILD FAIL; tail -20 "$ART/build.log"; exit 6; }
 JASS=/root/jass/build-ff/jass
@@ -78,7 +78,7 @@ python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-patt
     --scan-bb-size 0 --movetime 1.5 --pairs 3 --max-plies 160 --allow-long-movetime >"$ART/scan-mt15.log" 2>&1 || true
 
 echo; echo "=========================================================="
-echo "   cpx62-0321 — DISTILLATION SCAN (full-feature, vs Scan mt1.5)"
+echo "   cpx62-0322 — DISTILLATION SCAN (full-feature, vs Scan mt1.5)"
 echo "----------------------------------------------------------"
 echo "  positions distillées : ${NPOS} @ Scan depth ${SCAN_DEPTH}"
 echo "  Elo vs hc        : ${ELO_HC:-NA}"
