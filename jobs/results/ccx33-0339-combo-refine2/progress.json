@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0339-combo-refine2",
-  "snapshot_at": "2026-06-18T21:48:05+00:00",
+  "snapshot_at": "2026-06-18T21:53:25+00:00",
   "started_at": "2026-06-18T20:25:13+00:00",
-  "elapsed_seconds": 4972,
+  "elapsed_seconds": 5292,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "c-mc_cuts1.log",
-      "size_bytes": 0
+      "size_bytes": 238
     },
     {
       "name": "c-mc_moves10.log",
@@ -22,7 +22,7 @@
     },
     {
       "name": "c-mc_red3.log",
-      "size_bytes": 0
+      "size_bytes": 242
     },
     {
       "name": "c-mc_red5.log",
@@ -30,11 +30,11 @@
     },
     {
       "name": "c-razor_d5.log",
-      "size_bytes": 0
+      "size_bytes": 239
     },
     {
       "name": "c-razor_m120.log",
-      "size_bytes": 0
+      "size_bytes": 238
     },
     {
       "name": "c-razor_m300.log",
@@ -61,5 +61,5 @@
       "size_bytes": 1349
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2483198       1    01:22:52  0.0  0.0 bash\n2483200 2483198    01:22:52  0.0  0.0 bash\n2483835 2483200    01:20:49 99.9  0.5 jass\n2483836 2483200    01:20:49 99.9  0.5 jass\n2483837 2483200    01:20:49 99.9  0.5 jass\n2483838 2483200    01:20:49 99.9  0.5 jass\n2483839 2483200    01:20:49 99.9  0.5 jass\n2483840 2483200    01:20:49 99.9  0.5 jass\n2483841 2483200    01:20:49 99.9  0.5 jass\n2483842 2483200    01:20:49 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2483198       1    01:28:12  0.0  0.0 bash\n2483200 2483198    01:28:12  0.0  0.0 bash\n2483836 2483200    01:26:09 99.9  0.5 jass\n2483838 2483200    01:26:09 99.9  0.5 jass\n2483840 2483200    01:26:09 99.9  0.5 jass\n2483842 2483200    01:26:09 99.9  0.5 jass\n"
 }
