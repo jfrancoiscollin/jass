@@ -1,0 +1,15 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] relabel Scan 1200000 @ depth10 (×16, dominant): ≈ 360 min
+  [preflight] train: 1 × 1200000 lignes @ 4min/M ≈ 4.8 min
+  [preflight] matches: 54 parties × 1.5s × ~160 plies ≈ 216.0 min
+  [preflight] TOTAL estimé ≈ 584.8 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== (1) échantillon 1200000 positions diverses (stride) ===
+sub 1200000 / 6700000 (stride 5 )
+=== (2) relabel par Scan (depth 10, ×16 threads) — phase dominante ===
+  [relabel] 1200000 positions, 16 shards × ~75000 (Scan depth 10)
+  [relabel] mergé 1016386 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/scan-labeled.jnnw
+tail: cannot open '/root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src/relabel.log' for reading: No such file or directory
+  labelisé: 1016386 positions (score=Scan)
+=== (3) train distillation (--target score) ===
+=== (4) vs SCAN @ mt1.5 (le juge) ===
