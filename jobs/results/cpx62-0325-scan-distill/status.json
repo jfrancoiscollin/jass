@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0325-scan-distill",
+  "state": "running",
+  "started_at": "2026-06-18T06:05:32+00:00",
+  "host": "ubuntu-32gb-hel1-1",
+  "pid": 1203857
+}
