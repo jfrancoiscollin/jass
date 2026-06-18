@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0338-combo-vs-scan",
-  "script": "jobs/queue/cpx62-0338-combo-vs-scan.sh",
-  "pid": 3303064,
-  "started_at": "2026-06-18T20:16:29+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
