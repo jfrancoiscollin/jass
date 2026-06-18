@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0333-search-scaling-sweep",
+  "script": "jobs/queue/cpx62-0333-search-scaling-sweep.sh",
+  "pid": 3286716,
+  "started_at": "2026-06-18T13:49:08+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
