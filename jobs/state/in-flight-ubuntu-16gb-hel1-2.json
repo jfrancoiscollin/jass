@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0337-search-region3",
+  "script": "jobs/queue/ccx33-0337-search-region3.sh",
+  "pid": 2478816,
+  "started_at": "2026-06-18T18:05:21+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
