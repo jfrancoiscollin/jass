@@ -1,0 +1,26 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] relabel Scan 500000 @ d9 (×8, dominant): ≈ 540 min
+  [preflight] train: 1 × 500000 lignes @ 4min/M ≈ 2.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] TOTAL estimé ≈ 690.0 min  (cap 840 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (referee + éval), drawish OFF ===
+=== sous-échantillon corpus → 500000 ===
+  sub 500000 / 1193458
+=== relabel Scan depth 9 (×8) ===
+  [relabel] 500000 positions, 8 shards × ~62500 (Scan depth 9)
+  [relabel] mergé 494882 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/scan.jnnw
+  relabelisé: 494882 positions
+=== train champion (FULL-aligned, --target score, --tempo-stage) ===
+=== Elo vs hc ===
+=== vs Scan mt1.5 (36 parties) ===
+
+==========================================================
+   ccx33-0329 — CHAMPION sur corpus Scan-self-play (BONNE distribution)
+----------------------------------------------------------
+   500000 positions (sous-éch. du 1.19M 0328) · relabel Scan d9 · archi FULL Scan-alignée
+   Elo_vs_hc      = +167.2
+   vs_Scan_mt1.5  = NA    (plafond historique = 0/54)
+----------------------------------------------------------
+   RATE nettement > 0 → la BONNE distribution décolle (covariate-shift = le verrou).
+==========================================================

@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/scan.jnnw
+  494882 records  (0.03s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/champ.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (494882, 120)  (mean mob b/w=11.3/11.5)
+target=score  clipped±2000cp / 100  std=3.323
+phase : piece-count mean=17.8  wmg mean=0.385  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 485399/494882 (98.1%)
+split : train=436860 val=48539
+prune : keep 141,523 buckets (>= 1 visits) -> 283,048 pattern cols vs 34,012,224  (120.2× fewer); train fallback=0.000%
+design : 283288 columns (2×141524 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=0.614840  iters=300  (173.07s)
+val   : mse=1.246040  sign_acc=0.0012
+val/phase mse : opening=0.1664(n10473)  midgame=0.2868(n8555)  late-mid=0.7180(n7353)  endgame=2.0846(n9104)  deep-eg=2.4535(n13054)
+quant : scale=1000  pat range=[-509,509] ext_mg range=[-1620,1472]
+wrote /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/champ.pjtw  (v3, 34012464 weights, 136049876 bytes)

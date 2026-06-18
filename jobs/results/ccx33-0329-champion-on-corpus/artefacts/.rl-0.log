@@ -1,0 +1,5 @@
+input : /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/sub.jnnw (500000 records, processing 62500 from offset 0, drop_skipped=True)
+  20000/62500  (32.0%)  rate=333.3 pos/s  eta=2.1 min  written=19774 skipped=226
+  40000/62500  (64.0%)  rate=335.6 pos/s  eta=1.1 min  written=39546 skipped=454
+  60000/62500  (96.0%)  rate=337.2 pos/s  eta=0.1 min  written=59353 skipped=647
+wrote /root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/.rl-0.jnnw (61834 records written, 666 skipped / 62500 processed)
