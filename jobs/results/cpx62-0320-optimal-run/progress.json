@@ -1,0 +1,153 @@
+{
+  "job_id": "cpx62-0320-optimal-run",
+  "snapshot_at": "2026-06-18T05:29:47+00:00",
+  "started_at": "2026-06-18T05:24:31+00:00",
+  "elapsed_seconds": 316,
+  "artefacts": [
+    {
+      "name": "build-full.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "build-gen.log",
+      "size_bytes": 27196
+    },
+    {
+      "name": "cmake-full.log",
+      "size_bytes": 968
+    },
+    {
+      "name": "cmake-gen.log",
+      "size_bytes": 917
+    },
+    {
+      "name": "hq-1.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "hq-1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-10.jnnw",
+      "size_bytes": 32834
+    },
+    {
+      "name": "hq-10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-11.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "hq-11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-12.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "hq-12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-13.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "hq-13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-14.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "hq-14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-15.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "hq-15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-16.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "hq-16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-2.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "hq-2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-3.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "hq-3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-4.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "hq-4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-5.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "hq-5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-6.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "hq-6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-7.jnnw",
+      "size_bytes": 57458
+    },
+    {
+      "name": "hq-7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-8.jnnw",
+      "size_bytes": 49250
+    },
+    {
+      "name": "hq-8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "hq-9.jnnw",
+      "size_bytes": 41042
+    },
+    {
+      "name": "hq-9.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1199023       1       05:15  0.0  0.0 bash\n1199025 1199023       05:15  0.0  0.0 bash\n1200019 1199025       04:52 99.1  2.1 jass\n1200020 1199025       04:52 99.0  2.1 jass\n1200021 1199025       04:52 99.0  2.1 jass\n1200022 1199025       04:52 98.8  2.1 jass\n1200023 1199025       04:52 98.6  2.1 jass\n1200024 1199025       04:52 97.9  2.1 jass\n1200025 1199025       04:52 98.5  2.1 jass\n1200026 1199025       04:52 98.2  2.1 jass\n1200027 1199025       04:52 97.6  2.1 jass\n1200028 1199025       04:52 97.5  2.1 jass\n1200029 1199025       04:52 97.5  2.1 jass\n1200030 1199025       04:52 99.0  2.1 jass\n1200031 1199025       04:52 98.0  2.1 jass\n1200032 1199025       04:52 99.2  2.1 jass\n1200033 1199025       04:52 98.5  2.1 jass\n1200034 1199025       04:52 98.7  2.1 jass\n"
+}
