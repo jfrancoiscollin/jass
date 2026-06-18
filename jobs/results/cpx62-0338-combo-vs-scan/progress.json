@@ -1,0 +1,49 @@
+{
+  "job_id": "cpx62-0338-combo-vs-scan",
+  "snapshot_at": "2026-06-18T20:21:35+00:00",
+  "started_at": "2026-06-18T20:16:29+00:00",
+  "elapsed_seconds": 306,
+  "artefacts": [
+    {
+      "name": "build-base-build.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "build-base-cmake.log",
+      "size_bytes": 1048
+    },
+    {
+      "name": "build-combo-build.log",
+      "size_bytes": 26590
+    },
+    {
+      "name": "build-combo-cmake.log",
+      "size_bytes": 1049
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 111
+    },
+    {
+      "name": "e.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "eval.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "nps.txt",
+      "size_bytes": 777
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1348
+    },
+    {
+      "name": "vs-base.log",
+      "size_bytes": 234
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3303064       1       05:05  0.0  0.0 bash\n3303066 3303064       05:05  0.0  0.0 bash\n3304199 3303066       02:26  0.2  0.0 python3\n3304202 3304199       02:26 48.2  0.5 jass\n3304204 3304199       02:25 51.6  0.9 scan_linux\n3304207 3304199       02:25  0.0  0.0 jass\n"
+}
