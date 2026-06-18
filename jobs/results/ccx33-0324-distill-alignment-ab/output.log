@@ -1,0 +1,17 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] relabel Scan 500000 @ d10 (×8, dominant): ≈ 360 min
+  [preflight] train: 2 × 500000 lignes @ 4min/M ≈ 4.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] matches: 36 parties × 1.5s × ~160 plies ≈ 144.0 min
+  [preflight] TOTAL estimé ≈ 660.0 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== échantillon 500000 + relabel Scan (depth 10) ===
+sub 500000 / 2500000
+RELABEL FAIL
+usage: relabel_with_scan.py [-h] --in IN_PATH --out OUT_PATH --scan SCAN_PATH
+                            [--depth DEPTH] [--max-records MAX_RECORDS]
+                            [--start START] [--timeout TIMEOUT]
+                            [--progress-every PROGRESS_EVERY]
+                            [--newgame-every NEWGAME_EVERY]
+                            [--keep-skipped-original]
+relabel_with_scan.py: error: unrecognized arguments: --threads 8
