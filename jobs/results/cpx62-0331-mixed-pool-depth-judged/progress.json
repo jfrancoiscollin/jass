@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0331-mixed-pool-depth-judged",
-  "snapshot_at": "2026-06-18T13:28:45+00:00",
+  "snapshot_at": "2026-06-18T13:33:50+00:00",
   "started_at": "2026-06-18T13:23:03+00:00",
-  "elapsed_seconds": 342,
+  "elapsed_seconds": 647,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -150,6 +150,14 @@
     },
     {
       "name": "j-depth9.log",
+      "size_bytes": 3615
+    },
+    {
+      "name": "j-jass11sc9.log",
+      "size_bytes": 3727
+    },
+    {
+      "name": "j-jass13sc9.log",
       "size_bytes": 0
     },
     {
@@ -177,5 +185,5 @@
       "size_bytes": 1373
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3284797       1       05:41  0.0  0.0 bash\n3284799 3284797       05:41  0.0  0.0 bash\n3285770 3284799       00:20  8.1  0.0 python3\n3285773 3285770       00:20 61.6  0.5 jass\n3285775 3285770       00:20 31.4  0.9 scan_linux\n3285778 3285770       00:20  0.9  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3284797       1       10:47  0.0  0.0 bash\n3284799 3284797       10:47  0.0  0.0 bash\n3286000 3284799       03:31  1.3  0.0 python3\n3286003 3286000       03:31 93.4  0.5 jass\n3286005 3286000       03:31  5.2  0.9 scan_linux\n3286008 3286000       03:31  0.1  0.0 jass\n"
 }
