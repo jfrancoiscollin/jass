@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0321-scan-distill",
-  "script": "jobs/queue/cpx62-0321-scan-distill.sh",
-  "pid": 1200778,
-  "started_at": "2026-06-18T05:35:01+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
