@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep marges ~8 candidats @ 600ms, 4pairs (×8 parallèle): ≈ 100 min
+  [preflight] TOTAL estimé ≈ 105.0 min  (cap 160 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval représentative ===
+=== sweep marges 8 (base=probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6) parallèle ×8 ===
+
+==========================================================
+   ccx33-0335 — TUNING marges du combo recherche (vs base, temps fixe 600ms)
+   base = probcut_min_depth=5,razor_max_depth=3,multicut_min_depth=6,iid_min_depth=6
+----------------------------------------------------------
+  tweak          A-rate vs base (>0.5 = AMÉLIORE)
+  pc_margin80    0.402778
+  pc_margin250   0.534722
+  pc_depth4      0.486111
+  pc_red5        0.541667
+  razor_d4       0.611111
+  mc_easy        0.694444
+  mc_depth5      0.520833
+  iid_depth5     0.381944
+----------------------------------------------------------
+   >0.5 → adopter le tweak. Combiner les gagnants de 0334 (membres) + 0335 (marges) → combo final.
+==========================================================
