@@ -1,0 +1,24 @@
+scan-selfplay: 1000 seeds (>= 40p), Scan depth 8
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  50/1000 games, 7426 positions
+  100/1000 games, 15016 positions
+  150/1000 games, 22435 positions
+  200/1000 games, 30056 positions
+  250/1000 games, 37588 positions
+  300/1000 games, 45001 positions
+  350/1000 games, 52363 positions
+  400/1000 games, 59543 positions
+  450/1000 games, 67030 positions
+  500/1000 games, 74522 positions
+  550/1000 games, 82193 positions
+  600/1000 games, 89615 positions
+  650/1000 games, 97097 positions
+  700/1000 games, 104589 positions
+  750/1000 games, 112320 positions
+  800/1000 games, 119664 positions
+  850/1000 games, 127077 positions
+  900/1000 games, 134678 positions
+  950/1000 games, 142363 positions
+  1000/1000 games, 149931 positions
+wrote /root/jass/jobs/results/ccx33-0328-scan-selfplay-corpus/artefacts.src/.sp-3.jnnw (149931 positions from 1000 Scan self-play games)

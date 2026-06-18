@@ -1,0 +1,31 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] Scan self-play 8000 parties @ d8 (×8): ≈ 240 min
+  [preflight] TOTAL estimé ≈ 244 min  (cap 360 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass (referee egdb) ===
+=== Scan self-play (depth 8, 8000 parties, ×8 shards DISJOINTS) ===
+  [selfplay] CORPUS 1193458 positions -> /root/jass/jobs/results/ccx33-0328-scan-selfplay-corpus/artefacts.src/scan-selfplay-corpus.jnnw (45.4 MB)
+  corpus : 1193458 positions (45.4 MB)
+JNNW stats: /root/jass/jobs/results/ccx33-0328-scan-selfplay-corpus/artefacts.src/scan-selfplay-corpus.jnnw
+
+Records
+  header count : 1193458
+  file records : 1193458
+  count check  : OK
+
+Phase distribution
+  <=7p  :   332978 ( 27.90%)
+  <=10p :   443662 ( 37.17%)
+  <=12p :   501888 ( 42.05%)
+  histogram:
+     1 pieces: 247
+     2 pieces: 12038
+     3 pieces: 47906
+     4 pieces: 80454
+     5 pieces: 78604
+     6 pieces: 66540
+
+==========================================================
+   ccx33-0328 — CORPUS Scan self-play (distribution forte, réutilisable)
+   1193458 positions committées → seeds/train de la prochaine run décisive.
+==========================================================
