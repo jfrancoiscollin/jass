@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0327-scan-selfplay-distill",
-  "snapshot_at": "2026-06-18T08:44:03+00:00",
+  "snapshot_at": "2026-06-18T08:49:23+00:00",
   "started_at": "2026-06-18T07:03:06+00:00",
-  "elapsed_seconds": 6057,
+  "elapsed_seconds": 6377,
   "artefacts": [
     {
       "name": ".rl-0.log",
@@ -141,6 +141,10 @@
       "size_bytes": 1048
     },
     {
+      "name": "new-elo.log",
+      "size_bytes": 0
+    },
+    {
       "name": "new-raw.jnnw",
       "size_bytes": 20060436
     },
@@ -149,8 +153,24 @@
       "size_bytes": 10544134
     },
     {
+      "name": "new-train.log",
+      "size_bytes": 1369
+    },
+    {
+      "name": "new.feat",
+      "size_bytes": 133188972
+    },
+    {
       "name": "new.jnnw",
       "size_bytes": 10640008
+    },
+    {
+      "name": "new.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "new.pjtw.manifest.json",
+      "size_bytes": 494
     },
     {
       "name": "old-elo.log",
@@ -162,7 +182,7 @@
     },
     {
       "name": "old-scan.log",
-      "size_bytes": 0
+      "size_bytes": 3762
     },
     {
       "name": "old-train.log",
@@ -185,5 +205,5 @@
       "size_bytes": 493
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1067171 3211208    01:28:41  0.1  0.0 python3\n1067174 1067171    01:28:41 48.1  0.5 jass\n1067176 1067171    01:28:41 51.7  0.9 scan_linux\n1067179 1067171    01:28:41  0.0  0.0 jass\n3211206       1    01:40:56  0.0  0.0 bash\n3211208 3211206    01:40:56  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1070029 3211208       00:07  0.0  0.0 bash\n1070030 1070029       00:07  610  0.6 jass\n3211206       1    01:46:17  0.0  0.0 bash\n3211208 3211206    01:46:17  0.0  0.0 bash\n"
 }
