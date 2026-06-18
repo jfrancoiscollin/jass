@@ -44,7 +44,8 @@ fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord.
 | `JASS_KING_MOBILITY` / `JASS_KING_PATTERNS` | OFF / OFF | 0311 / 0240 |
 | `JASS_SCAN_PARITY` / `JASS_TEMPO_STAGE` | dispo (build runs récents ON) | 0323 |
 | search NMP (`eg_no_nmp`) | **OFF partout** (garder) | +97 Elo 0256/0259 (zugzwang) |
-| search probcut/razor/multicut/iid | **OFF par défaut → À RALLUMER** (combo +0.64) | 0333, calé à depth-fixe à tort |
+| search **multicut** (min_depth=6, moves=8, cuts=2) + **razor** (max_depth=4) | **BAKÉ ON** (≈+75 Elo self-play) | 0336, jugé à temps fixe |
+| search probcut / iid / conthist | OFF (n'ajoutent pas / nuisent) | 0334/0335/0336 |
 
 ## 🔒 RÈGLES PERMANENTES (2026-06-18)
 - **Comparer à Scan** : jamais temps fixe égal → **profondeur fixe** (`--depth`/`--jass-depth`/`--scan-depth`)
@@ -91,11 +92,16 @@ fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord.
 `.pjtw`/`.jnnw` → **manifeste** (`jobs/lib/manifest.sh`). Avant tout A/B de deux `.pjtw` :
 `manifest_assert_comparable`. Pré-flight compute : `jobs/lib/preflight.sh`. Sharding relabel : `jobs/lib/relabel.sh`.
 
+## Sweep recherche 0333-0337 (jugé à TEMPS FIXE) — combo figé
+- **multicut (min_depth=6, moves=8, cuts=2) + razor (max_depth=4) = ~+75 Elo self-play** (0336, 90 parties). **BAKÉ.**
+- multicut SEUL ne suffit pas (0336 mc_only=0.439) ; probcut/iid/conthist n'ajoutent pas.
+- Région-3 (LMP/asp/singular/history, 0337) : marginale (history_big 0.569 le seul ~1σ). Région-4 (home-0007) ⏳.
+
 ## Jobs en cours
-- **cpx62** : **0334** (raffinement combo recherche — ablations + temps long).
-- **ccx33** : libre (corpus 0328 ✅, NPS 0332 ✅).
-- **PC perso** : éteint ; egdb WLD+MTC ✅.
+- **cpx62** : **0338** (combo baké vs Scan — branchement + score à temps égal).
+- **ccx33** : libre.
+- **PC perso** : home-0007 (région-4) — heartbeat figé (PC peut-être en veille).
 
 ## Prochain verdict attendu
-**0334** → meilleur sous-ensemble de prunings. Puis **0335** : geler le combo + valider **vs Scan à
-profondeur égale / temps compensé** (le branchement passe-t-il de 2,0 vers 1,28 ? le score vs Scan grimpe-t-il ?).
+**0338** : le combo aplatit-il l'arbre (2,0 → vers 1,28) et marque-t-il **plus vs Scan à temps égal** ?
+Si oui → continuer le tuning recherche, puis re-mesurer le gap d'éval résiduel (phase 2), puis la boucle gen-data (phase 3).
