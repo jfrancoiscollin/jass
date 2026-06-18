@@ -1,0 +1,3 @@
+Benchmark: SCAN_EVAL(/root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/champ.pjtw, 34012464 weights, scale=1000) vs NNUE(hc), depth 9, threads 8, movetime_ms 0, 1080 games
+Result: SCAN_EVAL=767 NNUE=284 Draws=29 (total 1080)
+SCAN_EVAL score rate vs NNUE: 0.723611

@@ -1,0 +1,13 @@
+{
+  "build_flags": "DISTILL=Scan-d9 FULL-aligned SRC=corpus0328-selfplay N=500000",
+  "dataset": {
+    "bytes": 18805524,
+    "path": "/root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/scan.jnnw",
+    "sha256_head64m": "d137a5c6d2c623dc3582057a48d594db175737892436d669702bce62c2ac7902"
+  },
+  "date": "2026-06-18T07:42:37Z",
+  "git_commit": "80643a60",
+  "host": "ubuntu-16gb-hel1-2",
+  "n_ext": 120,
+  "pjtw": "/root/jass/jobs/results/ccx33-0329-champion-on-corpus/artefacts.src/champ.pjtw"
+}

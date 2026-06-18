@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0329-champion-on-corpus",
-  "script": "jobs/queue/ccx33-0329-champion-on-corpus.sh",
-  "pid": 1449580,
-  "started_at": "2026-06-18T07:36:16+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
