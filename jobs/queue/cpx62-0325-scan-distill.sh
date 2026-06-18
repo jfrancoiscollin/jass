@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0323-scan-distill
+# id: cpx62-0325-scan-distill
 # description: PIVOT FALLBACK (documenté) — le teacher-free plafonne à 0/54 vs Scan, donc on DISTILLE Scan
 # directement (ton idée : utiliser l'éval de Scan). (1) Échantillonne ~1.2M positions diverses du dataset
 # enrichi 0314. (2) relabel_with_scan : Scan SCORE chaque position (depth-10, hub) → labels-maître. (3)
@@ -12,7 +12,8 @@ cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-720}"
 source jobs/lib/preflight.sh
 source jobs/lib/manifest.sh
-ART="/root/jass/jobs/results/cpx62-0323-scan-distill/artefacts.src"; mkdir -p "$ART"
+source jobs/lib/relabel.sh
+ART="/root/jass/jobs/results/cpx62-0325-scan-distill/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 WLD=/root/egdb_extracted/app
 ENR=/root/jass/jobs/results/cpx62-0314-endgame-data-aug/artefacts.src/enriched-cumulative.jnnw
@@ -54,9 +55,8 @@ PY
 
 # --- (2) relabel Scan : Scan SCORE chaque position (distillation) ---
 echo "=== (2) relabel par Scan (depth ${SCAN_DEPTH}, ×$NCPU threads) — phase dominante ==="
-python3 tools/relabel_with_scan.py --in "$ART/sub.jnnw" --out "$ART/scan-labeled.jnnw" \
-    --scan "$SCAN_BIN" --depth "$SCAN_DEPTH" --threads "$NCPU" --progress-every 20000 >"$ART/relabel.log" 2>&1
-[ -f "$ART/scan-labeled.jnnw" ] || { echo "RELABEL FAIL"; tail -15 "$ART/relabel.log"; exit 7; }
+relabel_scan_sharded "$ART/sub.jnnw" "$ART/scan-labeled.jnnw" "$SCAN_BIN" "$SCAN_DEPTH" "$NCPU"
+[ -f "$ART/scan-labeled.jnnw" ] || { echo "RELABEL FAIL"; exit 7; }
 tail -3 "$ART/relabel.log"
 echo "  labelisé: $(python3 -c "import struct;print(struct.unpack('<I',open('$ART/scan-labeled.jnnw','rb').read(8)[4:8])[0])") positions (score=Scan)"
 
@@ -78,7 +78,7 @@ python3 tools/calibrate_vs_scan.py --jass "$JASS" --scan "$SCAN_BIN" --jass-patt
     --scan-bb-size 0 --movetime 1.5 --pairs 3 --max-plies 160 --allow-long-movetime >"$ART/scan-mt15.log" 2>&1 || true
 
 echo; echo "=========================================================="
-echo "   cpx62-0323 — DISTILLATION SCAN (full-feature, vs Scan mt1.5)"
+echo "   cpx62-0325 — DISTILLATION SCAN (full-feature, vs Scan mt1.5)"
 echo "----------------------------------------------------------"
 echo "  positions distillées : ${NPOS} @ Scan depth ${SCAN_DEPTH}"
 echo "  Elo vs hc        : ${ELO_HC:-NA}"

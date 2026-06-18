@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0324-distill-alignment-ab
+# id: ccx33-0326-distill-alignment-ab
 # description: CONTRÔLE de l'alignement Scan (en parallèle de cpx62-0323). A/B CHIRURGICAL : mêmes positions
 # (~500k échantillonnées du 2.5M de ccx33), MÊME relabel Scan (depth-10, fait UNE fois), on entraîne deux
 # évals et on les juge vs Scan mt1.5 : ALIGNÉ (king_mob + scan-parity + tempo-stage) vs BASE (king_mob seul,
@@ -10,7 +10,8 @@ cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-720}"
 source jobs/lib/preflight.sh
 source jobs/lib/manifest.sh
-ART="/root/jass/jobs/results/ccx33-0324-distill-alignment-ab/artefacts.src"; mkdir -p "$ART"
+source jobs/lib/relabel.sh
+ART="/root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 WLD=/root/egdb_extracted/app
 DS=/root/jass/jobs/results/ccx33-0313-endgame-data-gen/artefacts.src/endgame-cumulative.jnnw
@@ -39,9 +40,8 @@ for i in range(0,tot,stride):
     if n>=npos: break
 open(out,'wb').write(b'JNNW'+struct.pack('<I',n)+bytes(recs)); print('sub',n,'/',tot)
 PY
-python3 tools/relabel_with_scan.py --in "$ART/sub.jnnw" --out "$ART/scan.jnnw" \
-    --scan "$SCAN_BIN" --depth "$SCAN_DEPTH" --threads "$NCPU" --progress-every 20000 >"$ART/relabel.log" 2>&1
-[ -f "$ART/scan.jnnw" ] || { echo "RELABEL FAIL"; tail -15 "$ART/relabel.log"; exit 7; }
+relabel_scan_sharded "$ART/sub.jnnw" "$ART/scan.jnnw" "$SCAN_BIN" "$SCAN_DEPTH" "$NCPU"
+[ -f "$ART/scan.jnnw" ] || { echo "RELABEL FAIL"; exit 7; }
 echo "  relabelisé: $(python3 -c "import struct;print(struct.unpack('<I',open('$ART/scan.jnnw','rb').read(8)[4:8])[0])") positions"
 
 elo(){ local lg="$1-elo.log"; "$2" --benchmark-scan-eval "$1.pjtw" hc 9 60 "$NCPU" 0 >"$lg" 2>&1
@@ -76,7 +76,7 @@ echo "=== BASE (king_mob seul, phase pièces) ==="
 arm base "" ""
 
 echo; echo "=========================================================="
-echo "   ccx33-0324 — CONTRÔLE alignement Scan (distillation A/B chirurgical)"
+echo "   ccx33-0326 — CONTRÔLE alignement Scan (distillation A/B chirurgical)"
 echo "----------------------------------------------------------"
 printf "  %-8s Elo_hc=%-9s vs_Scan_mt1.5=%s\n" aligned "${ELOHC[aligned]:-NA}" "${SCAN[aligned]:-NA}"
 printf "  %-8s Elo_hc=%-9s vs_Scan_mt1.5=%s\n" base    "${ELOHC[base]:-NA}"    "${SCAN[base]:-NA}"
