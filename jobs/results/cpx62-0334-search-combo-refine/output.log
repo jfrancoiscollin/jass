@@ -1,0 +1,28 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep ablations 90 parties + confirmation 1500ms (×16 parallèle): ≈ 130 min
+  [preflight] TOTAL estimé ≈ 135.0 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval représentative ===
+=== sweep 10 (parallèle ×16) ===
+
+==========================================================
+   cpx62-0334 — RAFFINEMENT combo recherche (ablations + temps long)
+----------------------------------------------------------
+  candidat         mt(ms)  games  A-rate (>0.5 = MIEUX)
+  combo5_90        600     90     0.472222
+  combo_noct       600     90     0.566667
+  no_probcut       600     90     0.611111
+  no_razor         600     90     0.566667
+  no_multicut      600     90     0.422222
+  no_iid           600     90     0.5
+  aggr             600     90     0.561111
+  noct_plus_rfp    600     90     0.566667
+  combo5_LONG      1500    36     0.652778
+  combo_noct_LONG  1500    36     0.527778
+----------------------------------------------------------
+   Cherche : le sous-ensemble qui MAXIMISE A-rate (no_X bas → X porte le gain).
+   LONG > 600ms → le bénéfice de profondeur grandit avec le temps (attendu).
+   Suite : geler le meilleur combo + valider vs Scan à profondeur égale / temps compensé.
+==========================================================
