@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0326-distill-alignment-ab",
-  "script": "jobs/queue/ccx33-0326-distill-alignment-ab.sh",
-  "pid": 457845,
-  "started_at": "2026-06-18T06:08:15+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

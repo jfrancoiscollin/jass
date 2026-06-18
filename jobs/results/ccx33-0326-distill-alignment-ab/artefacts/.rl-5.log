@@ -1,0 +1,4 @@
+input : /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/sub.jnnw (500000 records, processing 62500 from offset 312500, drop_skipped=True)
+  20000/62500  (32.0%)  rate=184.5 pos/s  eta=3.8 min  written=15971 skipped=4029
+  60000/62500  (96.0%)  rate=184.7 pos/s  eta=0.2 min  written=47755 skipped=12245
+wrote /root/jass/jobs/results/ccx33-0326-distill-alignment-ab/artefacts.src/.rl-5.jnnw (49692 records written, 12808 skipped / 62500 processed)
