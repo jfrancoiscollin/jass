@@ -1,0 +1,13 @@
+{
+  "build_flags": "ENDGAME=ON KMOB=ON DRAWISH=ON N=1000000",
+  "dataset": {
+    "bytes": 38000008,
+    "path": "/root/jass/jobs/results/cpx62-0319-data-search-diag/artefacts.src/d1000000.jnnw",
+    "sha256_head64m": "3d959a098fcd537c404a0c1d0de19d5e148e062d80819099e3de7801ff9cec1f"
+  },
+  "date": "2026-06-18T05:17:16Z",
+  "git_commit": "d09ea47e",
+  "host": "ubuntu-32gb-hel1-1",
+  "n_ext": 114,
+  "pjtw": "/root/jass/jobs/results/cpx62-0319-data-search-diag/artefacts.src/d1000000.pjtw"
+}

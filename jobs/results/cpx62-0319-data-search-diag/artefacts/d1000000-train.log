@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0319-data-search-diag/artefacts.src/d1000000.jnnw
+  1000000 records  (0.06s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0319-data-search-diag/artefacts.src/d1000000.feat
+  note: extras K=114 (default 106) → adapting to the dump width
+  extras shape (1000000, 114)  (mean mob b/w=11.3/11.4)
+target=wdl  pos=325824 neg=314384 zero=359792 (36.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=325824 draw=359792 loss=314384 (36.0% draws)
+phase : piece-count mean=15.5  wmg mean=0.388  (ramp 0.0/40.0)
+split : train=900000 val=100000
+prune : keep 180,497 buckets (>= 1 visits) -> 360,996 pattern cols vs 34,012,224  (94.2× fewer); train fallback=0.000%
+design : 361224 columns (2×180498 pat + 2×114 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0003  max_iter=200  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.509460  iters=200  (153.22s)
+val   : mse=2.549940  sign_acc=0.2882
+val/phase mse : opening=0.7602(n17455)  midgame=1.1134(n14467)  late-mid=1.8476(n13752)  endgame=4.3261(n14082)  deep-eg=3.4611(n40244)
+quant : scale=1000  pat range=[-473,473] ext_mg range=[-950,946]
+wrote /root/jass/jobs/results/cpx62-0319-data-search-diag/artefacts.src/d1000000.pjtw  (v3, 34012452 weights, 136049828 bytes)
