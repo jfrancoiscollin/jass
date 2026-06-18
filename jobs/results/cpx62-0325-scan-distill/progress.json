@@ -1,136 +1,72 @@
 {
   "job_id": "cpx62-0325-scan-distill",
-  "snapshot_at": "2026-06-18T06:10:37+00:00",
+  "snapshot_at": "2026-06-18T06:16:03+00:00",
   "started_at": "2026-06-18T06:05:32+00:00",
-  "elapsed_seconds": 305,
+  "elapsed_seconds": 631,
   "artefacts": [
     {
-      "name": ".rl-0.jnnw",
-      "size_bytes": 2359124
-    },
-    {
       "name": ".rl-0.log",
-      "size_bytes": 393
-    },
-    {
-      "name": ".rl-1.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 528
     },
     {
       "name": ".rl-1.log",
-      "size_bytes": 399
-    },
-    {
-      "name": ".rl-10.jnnw",
-      "size_bytes": 2228062
+      "size_bytes": 535
     },
     {
       "name": ".rl-10.log",
-      "size_bytes": 398
-    },
-    {
-      "name": ".rl-11.jnnw",
-      "size_bytes": 2359124
+      "size_bytes": 534
     },
     {
       "name": ".rl-11.log",
-      "size_bytes": 398
-    },
-    {
-      "name": ".rl-12.jnnw",
-      "size_bytes": 2228062
+      "size_bytes": 534
     },
     {
       "name": ".rl-12.log",
-      "size_bytes": 398
-    },
-    {
-      "name": ".rl-13.jnnw",
-      "size_bytes": 2359124
+      "size_bytes": 534
     },
     {
       "name": ".rl-13.log",
-      "size_bytes": 398
-    },
-    {
-      "name": ".rl-14.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 534
     },
     {
       "name": ".rl-14.log",
-      "size_bytes": 154
-    },
-    {
-      "name": ".rl-15.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 291
     },
     {
       "name": ".rl-15.log",
-      "size_bytes": 319
-    },
-    {
-      "name": ".rl-2.jnnw",
-      "size_bytes": 1572752
+      "size_bytes": 456
     },
     {
       "name": ".rl-2.log",
-      "size_bytes": 317
-    },
-    {
-      "name": ".rl-3.jnnw",
-      "size_bytes": 1965938
+      "size_bytes": 536
     },
     {
       "name": ".rl-3.log",
-      "size_bytes": 400
-    },
-    {
-      "name": ".rl-4.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 536
     },
     {
       "name": ".rl-4.log",
-      "size_bytes": 400
-    },
-    {
-      "name": ".rl-5.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 536
     },
     {
       "name": ".rl-5.log",
-      "size_bytes": 400
-    },
-    {
-      "name": ".rl-6.jnnw",
-      "size_bytes": 1965938
+      "size_bytes": 536
     },
     {
       "name": ".rl-6.log",
-      "size_bytes": 400
-    },
-    {
-      "name": ".rl-7.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 536
     },
     {
       "name": ".rl-7.log",
-      "size_bytes": 400
-    },
-    {
-      "name": ".rl-8.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 536
     },
     {
       "name": ".rl-8.log",
-      "size_bytes": 318
-    },
-    {
-      "name": ".rl-9.jnnw",
-      "size_bytes": 2097000
+      "size_bytes": 454
     },
     {
       "name": ".rl-9.log",
-      "size_bytes": 318
+      "size_bytes": 454
     },
     {
       "name": "build.log",
@@ -141,9 +77,37 @@
       "size_bytes": 1046
     },
     {
+      "name": "distill-train.log",
+      "size_bytes": 1355
+    },
+    {
+      "name": "distill.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "distill.pjtw.manifest.json",
+      "size_bytes": 504
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 109
+    },
+    {
+      "name": "elo.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "feat",
+      "size_bytes": 487865292
+    },
+    {
+      "name": "scan-labeled.jnnw",
+      "size_bytes": 38622676
+    },
+    {
       "name": "sub.jnnw",
       "size_bytes": 45600008
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1203857       1       05:05  0.0  0.0 bash\n1203859 1203857       05:05  0.0  0.0 bash\n1204420 1203859       04:52  2.5  0.1 python3\n1204421 1203859       04:52  2.8  0.1 python3\n1204422 1203859       04:52  2.3  0.1 python3\n1204423 1203859       04:52  2.7  0.1 python3\n1204424 1203859       04:52  2.8  0.1 python3\n1204425 1203859       04:52  2.8  0.1 python3\n1204426 1203859       04:52  2.7  0.1 python3\n1204427 1203859       04:52  2.7  0.1 python3\n1204428 1203859       04:52  2.8  0.1 python3\n1204429 1203859       04:52  2.7  0.1 python3\n1204430 1203859       04:52  2.6  0.1 python3\n1204431 1203859       04:52  2.6  0.1 python3\n1204432 1203859       04:52  2.4  0.1 python3\n1204433 1203859       04:52  2.5  0.1 python3\n1204434 1203859       04:52  2.9  0.1 python3\n1204435 1203859       04:52  2.8  0.1 python3\n1204436 1204422       04:52 97.6  0.9 scan_linux\n1204437 1204426       04:52 97.2  0.9 scan_linux\n1204438 1204434       04:52 97.0  0.9 scan_linux\n1204439 1204432       04:52 97.4  0.9 scan_linux\n1204440 1204428       04:52 97.1  0.9 scan_linux\n1204441 1204429       04:52 97.2  0.9 scan_linux\n1204442 1204431       04:52 97.2  0.9 scan_linux\n1204443 1204420       04:52 97.3  0.9 scan_linux\n1204444 1204435       04:52 97.0  0.9 scan_linux\n1204445 1204424       04:52 97.1  0.9 scan_linux\n1204446 1204423       04:52 97.2  0.9 scan_linux\n1204447 1204421       04:52 97.1  0.9 scan_linux\n1204448 1204427       04:52 97.2  0.9 scan_linux\n1204449 1204425       04:52 97.0  0.9 scan_linux\n1204450 1204433       04:52 97.3  0.9 scan_linux\n1204455 1204430       04:52 97.3  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n1203857       1       10:30  0.0  0.0 bash\n1203859 1203857       10:30  0.0  0.0 bash\n1204772 1203859       00:20  995  0.6 jass\n"
 }
