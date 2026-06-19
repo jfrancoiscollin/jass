@@ -1,0 +1,49 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 9 × 2400000 lignes @ 4min/M ≈ 86.4 min
+  [preflight] boucle WDL 8 gens (self-play gros volume, sans relabel) + DIRECT/vsScan: ≈ 120 min
+  [preflight] TOTAL estimé ≈ 210.4 min  (cap 260 min)
+  [preflight] OK — sous le cap, lancement.
+=== build (32-pat, EGDB ON pour adjudication finale + jugement) ===
+  egdb data: ON (/root/egdb_extracted)
+=== seed MATÉRIEL-SEUL (Scan-like : pions ±1, dames ±3, patterns=0) ===
+seed matériel-seul écrit : n_ext=120 NB=17006112 MAN=1000 KING=3000
+=== gen1 : seed matériel rejoue (décisif) → fit logistique WDL = 1re vraie eval ===
+cumulative 300000
+  gen1 vsScan=0.000
+=== gen2 : +300000 self-play(gen1) → cumulé → logistique WDL ===
+cumulative 600000
+  gen2 : DIRECT(vs gen1)=0.472222  vsScan=0.028
+=== gen3 : +300000 self-play(gen2) → cumulé → logistique WDL ===
+cumulative 900000
+  gen3 : DIRECT(vs gen1)=0.5  vsScan=0.000
+=== gen4 : +300000 self-play(gen3) → cumulé → logistique WDL ===
+cumulative 1200000
+  gen4 : DIRECT(vs gen1)=0.5  vsScan=0.028
+=== gen5 : +300000 self-play(gen4) → cumulé → logistique WDL ===
+cumulative 1500000
+  gen5 : DIRECT(vs gen1)=0.611111  vsScan=0.000
+=== gen6 : +300000 self-play(gen5) → cumulé → logistique WDL ===
+cumulative 1800000
+  gen6 : DIRECT(vs gen1)=0.722222  vsScan=0.000
+=== gen7 : +300000 self-play(gen6) → cumulé → logistique WDL ===
+cumulative 2100000
+  gen7 : DIRECT(vs gen1)=0.555556  vsScan=0.056
+=== gen8 : +300000 self-play(gen7) → cumulé → logistique WDL ===
+cumulative 2400000
+  gen8 : DIRECT(vs gen1)=0.555556  vsScan=0.000
+
+==========================================================
+   cpx62-0363 — BOOTSTRAP WDL façon Scan (matériel→self-play→logistique, itéré)
+   gen :  DIRECT(vs gen1)   vsScan-d9
+    1 :   0.500            0.000
+    2 :   0.472222            0.028
+    3 :   0.5            0.000
+    4 :   0.5            0.028
+    5 :   0.611111            0.000
+    6 :   0.722222            0.000
+    7 :   0.555556            0.056
+    8 :   0.555556            0.000
+----------------------------------------------------------
+   vsScan MONTE à travers les gens (vers Scan) → notre gradient WDL décolle (départ décisif = le fix) → SCALER le volume.
+   vsScan plafonne ~0.0-0.1 (comme 0227) → bootstrap WDL linéaire volume/représentation-limité → dépasser Scan = NNUE.
+==========================================================
