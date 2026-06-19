@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0364-lean8-distill-loop-resetproof",
+  "script": "jobs/queue/ccx33-0364-lean8-distill-loop-resetproof.sh",
+  "pid": 2529705,
+  "started_at": "2026-06-19T18:37:47+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
