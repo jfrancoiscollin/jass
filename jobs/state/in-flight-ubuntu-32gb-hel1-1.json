@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0363-wdl-bootstrap-scan-style",
+  "script": "jobs/queue/cpx62-0363-wdl-bootstrap-scan-style.sh",
+  "pid": 3345770,
+  "started_at": "2026-06-19T18:26:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
