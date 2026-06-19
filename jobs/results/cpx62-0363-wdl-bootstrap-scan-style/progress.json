@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0363-wdl-bootstrap-scan-style",
-  "snapshot_at": "2026-06-19T18:48:01+00:00",
+  "snapshot_at": "2026-06-19T18:53:03+00:00",
   "started_at": "2026-06-19T18:26:06+00:00",
-  "elapsed_seconds": 1315,
+  "elapsed_seconds": 1617,
   "artefacts": [
     {
       "name": "build.log",
@@ -97,12 +97,20 @@
       "size_bytes": 136049876
     },
     {
-      "name": "gen5-train.log",
+      "name": "gen5-direct.log",
       "size_bytes": 0
+    },
+    {
+      "name": "gen5-train.log",
+      "size_bytes": 1447
     },
     {
       "name": "gen5.feat",
       "size_bytes": 720000012
+    },
+    {
+      "name": "gen5.pjtw",
+      "size_bytes": 136049876
     },
     {
       "name": "mini.jnnw",
@@ -437,5 +445,5 @@
       "size_bytes": 1014
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       21:55  0.0  0.0 bash\n3345772 3345770       21:55  0.0  0.0 bash\n3347136 3345772       00:27  754 19.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       26:57  0.0  0.0 bash\n3345772 3345770       26:57  0.0  0.0 bash\n3347322 3345772       01:14  0.0  0.0 bash\n3347323 3347322       01:14  100  0.9 jass\n"
 }
