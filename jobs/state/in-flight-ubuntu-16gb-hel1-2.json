@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0362-lean8-distill-loop-colorfold",
+  "script": "jobs/queue/ccx33-0362-lean8-distill-loop-colorfold.sh",
+  "pid": 2527397,
+  "started_at": "2026-06-19T17:57:50+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
