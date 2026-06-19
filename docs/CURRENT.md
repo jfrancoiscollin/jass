@@ -133,11 +133,25 @@ Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12
    sépare vraiment les banques mg/eg pour spécialiser la finale. Jugé vs Scan d9, 270 p/arm. evalC > eval0 → baker.
 2. **0359 (F) — jeu LEAN 8 patterns (= Scan) vs enrichi 32** : on est un SURENSEMBLE de Scan (32 ⊃ 8, hash=3^12=aucun) ;
    test si nos 24 patterns enrichis **sur-paramètrent** la finale clairsemée. Jugé vs Scan d9, 216 p/arm. F > 32 → baker 8.
-3. **Si 0358 ET 0359 ≈ (dans le bruit)** → **plafond pratique du fit linéaire** posé : seul le **pivot NN** (boucle
+3. **0360 — ROIS dans les patterns (`JASS_KING_PATTERNS`), le VRAI levier finale** (PAS l'élagage, cf ci-dessous).
+   Le trou ≤7p (0349 : 0.39) vient de patterns **men-only aveugles aux rois** alors que la finale est dominée par eux.
+   0240 = **+37 Elo** (men|kings) mais en Elo_hc (SCREEN) puis mis OFF sous logistic-WDL ; on re-juge en **distillation
+   + vs Scan d9** (DECISION) + corr finale held-out. Guard SELFDESC ⇒ no-op type 0355 impossible. evalK > eval0 → baker.
+4. **Si 0358/0359/0360 ≈ (dans le bruit)** → **plafond pratique du fit linéaire** posé : seul le **pivot NN** (boucle
    vertueuse + apprentissage de représentation) peut dépasser. **MLP boîte-noire reste INTERDIT** jusqu'à ce verdict.
 - ✅ **Drawish (`JASS_DRAWISH_SCALING`) = NEUTRE en jeu** (0353, 270 p) — testé, codé, défaut 0, NE PAS baker (cf §drawish).
 
+## ⛔ ÉLAGUER la capacité = branche MORTE (3 angles — NE PAS relancer)
+Intuition « 32 patterns = 4× Scan = sur-paramétré, il faut élaguer » → **réfutée par notre propre historique** :
+- **0230** : importance des 32 patterns **uniforme**, redondance ≤0.40 — aucun pattern mort. **0234** : drop des 8 moins
+  importants (32→24) = **−31 Elo ET 0 vitesse** (la lenteur d'éval est dans les extras+recherche, PAS les lookups pattern).
+- **0190/0193** : bucket-hashing lossy = **casse la profondeur** (les buckets rares **portent la connaissance**).
+- **0239** : richesse géométrique **plate sous labels parfaits** (15→54 patterns) → le trou n'est PAS la capacité.
+- La sparsité 90× est déjà gérée **sans perte** par `--prune` (remap dense collision-free, ×51, corr 0.9999). On ne paie
+  rien pour les buckets fantômes. ⇒ réduire la *capacité* (géométrie OU buckets) = testé 3×, perd. **0359 (F) = re-test
+  PROPRE de 0234** sous DECISION-gate (0234 n'était que Elo_hc) ; prior fort « ça perd ».
+
 ## Jobs en cours
-- **cpx62** : **0358** (C — phase-split finale PROPRE : rampe 8/24 vs 0/40, vs Scan d9).
-- **ccx33** : **0359** (F — jeu LEAN 8 patterns vs enrichi 32, vs Scan d9).
+- **cpx62** : **0358** (C — phase-split finale PROPRE) → puis **0360** (rois-dans-patterns, en file).
+- **ccx33** : **0359** (F — jeu LEAN 8 vs 32).
 - **PC perso** : éteint.
