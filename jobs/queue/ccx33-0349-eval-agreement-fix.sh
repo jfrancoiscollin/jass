@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0349-eval-agreement-fix
+# id: ccx33-0349-eval-agreement-fix
 # description: 0347 CORRIGÉ. Le bug de 0347 : le relabel DROPPE ~17% des positions → scores-jass (sur l'original)
 # et scores-Scan (sous-ensemble réordonné) DÉSALIGNÉS → corrélation ~0 spurious. FIX : on relabel d'abord
 # (Scan d2 + d9), PUIS on calcule l'éval-jass SUR CES fichiers relabelisés (mêmes positions, même ordre) →
@@ -10,7 +10,7 @@ cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-150}"
 source jobs/lib/preflight.sh
 source jobs/lib/relabel.sh
-ART="/root/jass/jobs/results/cpx62-0349-eval-agreement-fix/artefacts.src"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 DATA=/root/jass/jobs/results/cpx62-0327-scan-selfplay-distill/artefacts/old-scan.jnnw
 CORPUS=/root/jass/jobs/results/ccx33-0328-scan-selfplay-corpus/artefacts/scan-selfplay-corpus.jnnw
