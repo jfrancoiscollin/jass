@@ -39,6 +39,15 @@
 | **Captures ordonnées** (promotion/rois d'abord) | ✂️ écarté | Captures forcées, toutes longueur max → peu discriminant (l.318). |
 | **Prunings marginaux SUR le combo** (probcut, iid, conthist, **lmp_max_depth, rfp7**) | ❌ ne stackent pas | 0334/0335/0336 + **0342 (90p propre)** : lmp5=0.54, rfp7=0.44, lmp5+rfp7=0.47 = bruit. Le 0.625 de 0340 (72p) était un spike. probcut chevauche razor ; le combo a déjà pris le gain de pruning. |
 | **NPS via l'éval** | ❌ non pertinent | profil `--search-profile` : éval = **3,2 %** du temps/nœud (déjà SIMD). Le NPS n'est pas limité par l'éval. |
+| **history-malus** (pénaliser quiets ratés) | ❌ marginal/inconclus | codé (`hist_malus`, défaut off). hc local ≈0.52 (neutre) ; pattern 0344 : hm50=0.578 (~1,5σ, non-monotone) — *pas bakeable sur 1 run*. Ordering déjà quasi-optimal. |
+
+> ## 🏁 CHAPITRE RECHERCHE CLOS (2026-06-18)
+> **Un seul vrai gain : le combo `multicut(min_depth=6,moves=8,cuts=2)+razor(max_depth=4)`** (baké),
+> ~+50 Elo self-play, **vs Scan 0.097 → ~0.12** (0338/0343). Tout le reste est testé-et-plat (prunings
+> marginaux, history-malus, TT, movegen-captures, NPS). jass perd encore ~7:1 vs Scan → **le gap restant
+> est l'ÉVAL**. Infra dispo pour plus tard : `--search-params`, `--jass-search-params`, `--tt-mb`,
+> `--search-profile`, params `lmp_max_depth`/`lmr_hist_div`/`hist_malus` (tous défaut-off/legacy).
+> **→ Pivot Phase 2 : éval/data.**
 
 > **Leçon générale (NPS)** : la movegen est lean, l'éval SIMD, la TT inutile → **le NPS est une traîne à faible plafond**. Le gros levier recherche (combo multicut+razor) est PRIS. Ne pas s'enliser ; le prochain grand levier = **éval/data (Phase 2/3)**.
 
