@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0373-virtuous-loop-deep",
-  "snapshot_at": "2026-06-19T23:16:03+00:00",
+  "snapshot_at": "2026-06-19T23:22:03+00:00",
   "started_at": "2026-06-19T22:36:54+00:00",
-  "elapsed_seconds": 2349,
+  "elapsed_seconds": 2709,
   "artefacts": [
     {
       "name": "build.log",
@@ -254,7 +254,7 @@
     },
     {
       "name": "sp3.1.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1075250
     },
     {
       "name": "sp3.1.log",
@@ -262,7 +262,7 @@
     },
     {
       "name": "sp3.10.jnnw",
-      "size_bytes": 648434
+      "size_bytes": 1108082
     },
     {
       "name": "sp3.10.log",
@@ -270,7 +270,7 @@
     },
     {
       "name": "sp3.11.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1075250
     },
     {
       "name": "sp3.11.log",
@@ -278,7 +278,7 @@
     },
     {
       "name": "sp3.12.jnnw",
-      "size_bytes": 648434
+      "size_bytes": 1108082
     },
     {
       "name": "sp3.12.log",
@@ -286,7 +286,7 @@
     },
     {
       "name": "sp3.13.jnnw",
-      "size_bytes": 640226
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.13.log",
@@ -294,7 +294,7 @@
     },
     {
       "name": "sp3.14.jnnw",
-      "size_bytes": 648434
+      "size_bytes": 1099874
     },
     {
       "name": "sp3.14.log",
@@ -302,7 +302,7 @@
     },
     {
       "name": "sp3.15.jnnw",
-      "size_bytes": 656642
+      "size_bytes": 1116290
     },
     {
       "name": "sp3.15.log",
@@ -310,7 +310,7 @@
     },
     {
       "name": "sp3.16.jnnw",
-      "size_bytes": 656642
+      "size_bytes": 1116290
     },
     {
       "name": "sp3.16.log",
@@ -318,7 +318,7 @@
     },
     {
       "name": "sp3.2.jnnw",
-      "size_bytes": 640226
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.2.log",
@@ -326,7 +326,7 @@
     },
     {
       "name": "sp3.3.jnnw",
-      "size_bytes": 640226
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.3.log",
@@ -334,7 +334,7 @@
     },
     {
       "name": "sp3.4.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1075250
     },
     {
       "name": "sp3.4.log",
@@ -342,7 +342,7 @@
     },
     {
       "name": "sp3.5.jnnw",
-      "size_bytes": 648434
+      "size_bytes": 1108082
     },
     {
       "name": "sp3.5.log",
@@ -350,7 +350,7 @@
     },
     {
       "name": "sp3.6.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.6.log",
@@ -358,7 +358,7 @@
     },
     {
       "name": "sp3.7.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.7.log",
@@ -366,7 +366,7 @@
     },
     {
       "name": "sp3.8.jnnw",
-      "size_bytes": 640226
+      "size_bytes": 1083458
     },
     {
       "name": "sp3.8.log",
@@ -374,12 +374,12 @@
     },
     {
       "name": "sp3.9.jnnw",
-      "size_bytes": 632018
+      "size_bytes": 1099874
     },
     {
       "name": "sp3.9.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1       39:08  0.0  0.0 bash\n3354410 3354408       39:08  0.0  0.0 bash\n3356024 3354410       08:35 99.9  0.5 jass\n3356025 3354410       08:35 99.9  0.5 jass\n3356026 3354410       08:35 99.9  0.5 jass\n3356027 3354410       08:35 99.9  0.5 jass\n3356028 3354410       08:35 99.9  0.5 jass\n3356029 3354410       08:35 99.9  0.5 jass\n3356030 3354410       08:35 99.9  0.5 jass\n3356031 3354410       08:35 99.9  0.5 jass\n3356032 3354410       08:35 99.9  0.5 jass\n3356033 3354410       08:35 99.9  0.5 jass\n3356034 3354410       08:35 99.9  0.5 jass\n3356035 3354410       08:35 99.9  0.5 jass\n3356036 3354410       08:35 99.9  0.5 jass\n3356037 3354410       08:35 99.9  0.5 jass\n3356038 3354410       08:35 99.9  0.5 jass\n3356039 3354410       08:35 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1       45:08  0.0  0.0 bash\n3354410 3354408       45:08  0.0  0.0 bash\n3356024 3354410       14:35 99.9  0.5 jass\n3356025 3354410       14:35 99.9  0.5 jass\n3356026 3354410       14:35 99.9  0.5 jass\n3356027 3354410       14:35 99.9  0.5 jass\n3356028 3354410       14:35 99.9  0.5 jass\n3356029 3354410       14:35 99.9  0.5 jass\n3356030 3354410       14:35 99.9  0.5 jass\n3356031 3354410       14:35 99.9  0.5 jass\n3356032 3354410       14:35 99.9  0.5 jass\n3356033 3354410       14:35 99.9  0.5 jass\n3356034 3354410       14:35 99.9  0.5 jass\n3356035 3354410       14:35 99.9  0.5 jass\n3356036 3354410       14:35 99.9  0.5 jass\n3356037 3354410       14:35 99.9  0.5 jass\n3356038 3354410       14:35 99.9  0.5 jass\n3356039 3354410       14:35 99.9  0.5 jass\n"
 }
