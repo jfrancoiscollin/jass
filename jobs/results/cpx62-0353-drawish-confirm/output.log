@@ -1,0 +1,20 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] 4 matchs depth-fixe ×270 parties vs Scan: ≈ 100 min
+  [preflight] TOTAL estimé ≈ 105.0 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train éval ===
+=== vs Scan, 270 parties/condition ===
+  d9_off : 0.083
+  d9_on : 0.083
+  d11_off : 0.139
+  d11_on : 0.111
+
+==========================================================
+   cpx62-0353 — CONFIRMATION drawish vs Scan (270 parties/condition)
+----------------------------------------------------------
+   jass d9  vs Scan d9 :  OFF=0.083   ON=0.083
+   jass d11 vs Scan d9 :  OFF=0.139  ON=0.111
+----------------------------------------------------------
+   ON > OFF net aux deux profondeurs → baker drawish_scaling=1 (jeu + self-play). Sinon → bruit.
+==========================================================
