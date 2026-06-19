@@ -68,6 +68,13 @@ struct SearchParams {
     // negative). Consistent with the "jass prefers conservative search" theme.
     int history_max = 16384;
 
+    // History malus (opt-in ; 0 = OFF = legacy). On a quiet beta-cutoff, the
+    // quiet moves that were tried BEFORE the cutoff move (and failed) get a
+    // malus = depth*depth * hist_malus/100 subtracted from their history — so
+    // moves that consistently fail sink in the ordering. Standard tree-sharpener
+    // (more cutoffs → smaller tree). 100 = malus equal to the bonus magnitude.
+    int hist_malus = 0;
+
     // Aspiration window initial half-width (cp).
     int aspiration_initial = 50;
 
@@ -190,6 +197,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmp_d3")               p.lmp_d3               = v;
     else if (key == "lmp_max_depth")        p.lmp_max_depth        = v;
     else if (key == "history_max")          p.history_max          = v;
+    else if (key == "hist_malus")           p.hist_malus           = v;
     else if (key == "aspiration_initial")   p.aspiration_initial   = v;
     else if (key == "use_pvs")              p.use_pvs              = (v != 0);
     else if (key == "razor_max_depth")      p.razor_max_depth      = v;
