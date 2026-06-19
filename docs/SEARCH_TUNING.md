@@ -37,15 +37,16 @@
 | **Agrandir la TT** (>16 Mo) | ❌ mort | `--tt-mb` testé : à temps de match (~100-400k nœuds/search) 16 Mo n'est même pas pleine ; à 1,57M nœuds, 256 Mo = **−0,3 % nœuds**, même profondeur. Peu de transpositions en draughts (faible branchement). |
 | **Optimiser la movegen captures** (table man-jump précalculée `[case][dir]={over,land}`) | ❌ mort (0 gain) | Implémentée + perft-vérifiée (perft9=35264, perft11=1 666 207 133, nodes identiques) : **0,5966 s vs 0,5925 s baseline** = bruit. La DFS des rafles n'est PAS le goulot ; `neighbour()` déjà optimisé par le compilo. Le « movegen_capture 15,5 % » = détection par-nœud (`reach_all_dirs`, O(1), irréductible) + récursion. **Reverté.** |
 | **Captures ordonnées** (promotion/rois d'abord) | ✂️ écarté | Captures forcées, toutes longueur max → peu discriminant (l.318). |
-| **Prunings marginaux SUR le combo** (probcut, iid, conthist) | ❌ ne stackent pas | 0334/0335/0336 + sweep local hc : ~0.50 vs le combo. probcut chevauche razor ; le combo a déjà pris le gain de pruning. |
+| **Prunings marginaux SUR le combo** (probcut, iid, conthist, **lmp_max_depth, rfp7**) | ❌ ne stackent pas | 0334/0335/0336 + **0342 (90p propre)** : lmp5=0.54, rfp7=0.44, lmp5+rfp7=0.47 = bruit. Le 0.625 de 0340 (72p) était un spike. probcut chevauche razor ; le combo a déjà pris le gain de pruning. |
 | **NPS via l'éval** | ❌ non pertinent | profil `--search-profile` : éval = **3,2 %** du temps/nœud (déjà SIMD). Le NPS n'est pas limité par l'éval. |
 
 > **Leçon générale (NPS)** : la movegen est lean, l'éval SIMD, la TT inutile → **le NPS est une traîne à faible plafond**. Le gros levier recherche (combo multicut+razor) est PRIS. Ne pas s'enliser ; le prochain grand levier = **éval/data (Phase 2/3)**.
 
-### Sweep en cours (juge le RESTE des candidats) — vs combo baké, temps fixe
-`lmp_max_depth=4/5` · `lmr_hist_div=2000/4000` · `rfp_max_depth=7,rfp_margin=70` · stacks (lmp5+rfp7…).
-0340/0342 (pattern) tranchent ; le meilleur → **vs Scan** via `calibrate_vs_scan --jass-search-params`
-(0343, un seul build). Si tout ≈0.5 → combo final = **multicut+razor** seul (déjà baké).
+### Combo recherche FINAL = **multicut + razor** (baké). Tranché.
+0342 (90p propre) : les additions (lmp_max_depth, rfp7, lmr_hist) sont du **bruit** sur le combo.
+0343 (en cours) solidifie le combo **vs Scan** (vs combo+lmp5+rfp7, 54p, un seul build).
+**Levier d'ordering en test** : `hist_malus` (history malus, codé 2026-06-18) — jugé par A/B de force
+(le node-count à depth fixe est trompeur : l'ordering change ce que LMR/LMP élaguent).
 
 ### Infra de tuning (2026-06-18)
 - `jass --search-params "k=v,…"` : règle la recherche du moteur HUB sans rebuild.
