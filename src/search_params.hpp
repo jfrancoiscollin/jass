@@ -167,6 +167,11 @@ struct SearchParams {
     bool eg_no_nmp  = true;       // disable null-move pruning in the endgame regime
     bool eg_no_lmp  = false;      // disable late-move pruning in the endgame regime
     bool eg_no_lmr  = false;      // disable late-move reductions in the endgame regime
+
+    // Drawish-material scaling on the network leaf (Scan's one non-linearity).
+    // 0 = off (default). 1 = apply ÷8/÷2 toward draw in won-but-drawish endgames.
+    // The eval gap vs Scan is localized in the finale (0349) — this is candidate #1.
+    int  drawish_scaling = 0;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -216,6 +221,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "multicut_cuts")        p.multicut_cuts        = v;
     else if (key == "tm_next_iter_pct")     p.tm_next_iter_pct     = v;
     else if (key == "tm_min_depth")         p.tm_min_depth         = v;
+    else if (key == "drawish_scaling")      p.drawish_scaling      = v;
     else if (key == "eg_pieces")            p.eg_pieces            = v;
     else if (key == "eg_no_nmp")            p.eg_no_nmp            = (v != 0);
     else if (key == "eg_no_lmp")            p.eg_no_lmp            = (v != 0);
