@@ -1,0 +1,20 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] 3 échantillons self-play + comptage W/D/L: ≈ 15 min
+  [preflight] TOTAL estimé ≈ 19 min  (cap 60 min)
+  [preflight] OK — sous le cap, lancement.
+=== build (EGDB ON = même adjudication finale que 0363) ===
+  egdb data: ON
+=== seed matériel-seul (= 0363) ===
+seed ok n_ext=120
+=== W/D/L par régime ===
+  /root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/mat_d4 n= 80000  W=38.9%  D=22.6%  L=38.5%  -> décisif=77.4%
+  /root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/mat_d9 n= 40000  W=35.5%  D=29.1%  L=35.3%  -> décisif=70.9%
+  /root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/embed_d4 n= 40000  W=34.2%  D=31.8%  L=34.0%  -> décisif=68.2%
+
+==========================================================
+   cpx62-0365 — DÉCISIVITÉ du self-play (pourquoi 0363 plat vs Scan ?)
+   (cf comptages ci-dessus)
+----------------------------------------------------------
+   décisif% ÉLEVÉ (>40%) → signal WDL présent → plafond vs Scan = VOLUME/RECHERCHE → scaler (mini-batch)+search.
+   NULLES ≫ décisifs → signal dégénéré → FORCER la décisivité (plies aléatoires/température) avant de scaler.
+==========================================================
