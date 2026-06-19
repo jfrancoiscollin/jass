@@ -1,0 +1,15 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 2 × 240000 lignes @ 4min/M ≈ 1.9 min
+  [preflight] evalA vs eval0 direct + vs Scan: ≈ 50 min
+  [preflight] TOTAL estimé ≈ 55.9 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build ===
+=== train eval0 (baseline) + evalA (phase-split finale-focus) ===
+=== evalA vs eval0 EN DIRECT (depth9, 108 parties) — métrique sensible ===
+=== vs Scan depth-égale d9 ===
+
+==========================================================
+   cpx62-0355 — A : phase-split finale-focus (mg/eg séparés)
+   evalA vs eval0 DIRECT : 0.5  (>0.55 = A meilleur)
+   vs Scan d9 : eval0=0.083  evalA=0.083
+==========================================================
