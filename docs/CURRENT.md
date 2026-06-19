@@ -68,6 +68,14 @@ fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord.
 - **0333** — prunings depth-buying OFF par défaut ; **combo = 0.639 à temps fixe**. Premier gain.
 - **0334** ⏳ — ablations du combo (sans conthist ?) + confirmation 1500ms.
 
+## Verdict drawish (2026-06-18) — NEUTRE en jeu, NE PAS baker
+La non-linéarité de Scan (drawish ÷8/÷2), enfin testée en jeu : 0351 (108p) semblait aider (0.028→0.139)
+mais **0353 (270p) = BRUIT** (vrai OFF=0.083) → ON ≈ OFF (d9 0.083=0.083, d11 légèrement pire). Au jeu, **la
+recherche résout déjà les finales** → le scaling statique est redondant. Code dispo (`drawish_scaling`, défaut 0).
+0354 (résidus) : confondu par la saturation ±9999, MAIS révèle que jass **sous-évalue les finales matériel-vs-roi
+gagnées** (≤7p, mais **gérées par l'egdb au jeu** → moot). Vrai résidu d'éval = **8-15p** (corr 0.51-0.57).
+→ Options A (phase-split finale) + B (WDL logistique, méthode Scan) en test (0355/0356).
+
 ## Métriques — SCREEN vs DECISION (un proxy priorise, ne décide JAMAIS seul)
 - **DECISION_GATE** : vs Scan **à profondeur égale / temps compensé** (méthodo permanente) · self-play
   A/B recherche **à temps fixe** (`--benchmark-search-params`) · autopsie endgame-rois.
