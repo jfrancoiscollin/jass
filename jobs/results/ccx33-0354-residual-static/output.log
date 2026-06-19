@@ -1,0 +1,30 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] relabel Scan d2 (statique) + analyse résidus: ≈ 70 min
+  [preflight] TOTAL estimé ≈ 75.0 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train éval ===
+test (<=14p) 24000
+=== relabel Scan d2 (statique) + éval-jass alignée (rewrite-scores SUR le relabel) ===
+  [relabel] 24000 positions, 8 shards × ~3000 (Scan depth 2)
+  [relabel] mergé 23391 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0354-residual-static/artefacts.src/scan.jnnw
+=== ANALYSE RÉSIDUS (drawish vs poids) ===
+n=23391  (echelle jass alignee par regression sur Scan)
+  <=7p (tout)                  n=14023  corr=+0.400 rmse=  1323  | +drawish corr=+0.358 rmse=  1391
+  <=7p DRAWISH-applies         n=12214  corr=+0.397 rmse=  1216  | +drawish corr=+0.396 rmse=  1301
+  <=7p NON-drawish             n= 1809  corr=+0.488 rmse=  1893  | +drawish corr=+0.488 rmse=  1893
+  8-14p (tout)                 n= 9368  corr=+0.502 rmse=   583  | +drawish corr=+0.403 rmse=   604
+  8-14p DRAWISH-applies        n= 1486  corr=+0.550 rmse=   883  | +drawish corr=+0.434 rmse=   969
+  --- pires desaccords finale NON-drawish (jass_norm vs scan) ---
+    pc=4 wm3wk0 bm0bk1  jass=19 scan=9997 |res|=9978
+    pc=4 wm3wk0 bm0bk1  jass=19 scan=9997 |res|=9978
+    pc=4 wm3wk0 bm0bk1  jass=175 scan=9999 |res|=9824
+    pc=3 wm2wk0 bm1bk0  jass=-218 scan=-9998 |res|=9780
+    pc=3 wm2wk0 bm1bk0  jass=222 scan=9999 |res|=9777
+    pc=3 wm2wk0 bm1bk0  jass=329 scan=9997 |res|=9668
+    pc=5 wm3wk0 bm2bk0  jass=346 scan=9997 |res|=9651
+    pc=4 wm1wk0 bm3bk0  jass=-376 scan=-9998 |res|=9622
+==========================================================
+  drawish REDUIT fort le rmse / monte la corr sur DRAWISH-applies -> c'est la brique (confirme 0351).
+  Gros residu sur <=7p NON-drawish -> part QUALITE DES POIDS finale (pas un terme manquant).
+==========================================================
