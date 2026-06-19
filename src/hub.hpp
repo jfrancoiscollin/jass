@@ -75,6 +75,11 @@ public:
     // workflow for tuning search vs Scan. Default = compiled SearchParams{}.
     void set_search_params(const SearchParams& p) noexcept;
 
+    // Resize the transposition table (MB). Default 16 MB is small for deep
+    // search (the TT thrashes → worse move ordering + re-searched transpositions
+    // → bigger tree). Lets a harness sweep TT size at fixed time without rebuild.
+    void set_tt_mb(std::size_t mb);
+
     // Replace the engine's opening book with the contents of a JBOK
     // file at `path`. Returns false on I/O error or bad format.
     bool load_book(std::string_view path);

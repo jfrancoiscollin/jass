@@ -3810,6 +3810,7 @@ int main(int argc, char** argv) {
     const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
     const char*     book_path = nullptr;
     const char*     search_params_spec = nullptr;  // --search-params "k=v,k=v"
+    int             tt_mb_override = 0;             // --tt-mb N (0 = default 16)
     for (int i = 1; i < argc; ++i) {
         const std::string_view a{argv[i]};
         if (a == "--no-nnue") {
@@ -3849,6 +3850,8 @@ int main(int argc, char** argv) {
             // from a "k=v,k=v" spec — lets calibrate_vs_scan tune search vs
             // Scan without a rebuild. Keys: see src/search_params.hpp.
             search_params_spec = argv[++i];
+        } else if (a == "--tt-mb" && i + 1 < argc) {
+            tt_mb_override = std::atoi(argv[++i]);
         }
     }
 
@@ -3856,6 +3859,9 @@ int main(int argc, char** argv) {
     hub.set_nnue(nnue_ptr);
     if (search_params_spec) {
         hub.set_search_params(jass::parse_search_params(search_params_spec));
+    }
+    if (tt_mb_override > 0) {
+        hub.set_tt_mb(static_cast<std::size_t>(tt_mb_override));
     }
     if (book_path) {
         if (!hub.load_book(book_path)) {
