@@ -1,0 +1,15 @@
+opening pool: 9 positions
+jass setup:   pattern=/root/jass/jobs/results/ccx33-0362-lean8-distill-loop-colorfold/artefacts.src/gen3.pjtw  book=(default/none)
+scan setup:   book=off  bb-size=0
+Traceback (most recent call last):
+  File "/root/jass/tools/calibrate_vs_scan.py", line 808, in <module>
+    sys.exit(main(sys.argv[1:]))
+             ^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 724, in main
+    jass = JassEngine(args.jass, label="Jass-player",
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 282, in __init__
+    self._read_until(lambda l: l.startswith("ready"))
+  File "/root/jass/tools/calibrate_vs_scan.py", line 236, in _read_until
+    raise EOFError(f"{self.label}: stdout closed")
+EOFError: Jass-player: stdout closed

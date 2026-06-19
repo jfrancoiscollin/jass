@@ -1,0 +1,40 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 4 × 240000 lignes @ 4min/M ≈ 3.8 min
+  [preflight] loop 3 gens : selfplay + relabel Scan d9 + DIRECT/vsScan: ≈ 150 min
+  [preflight] TOTAL estimé ≈ 157.8 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+=== régénère le jeu LEAN 8 (bandes verticales de Scan) + build ===
+=== gen0 : distill old-scan (8-pat, COLOR-FOLD ~2.1M) = baseline corrigé ===
+    [fit] color-fold : signed-canonical, 265721 buckets/pattern (17M -> 2,125,768) ; antisymmetric weights
+  gen0 vsScan=0.028  (doit décoller du plancher 0.028 de 0359 si le fold était le bug)
+=== gen1 : self-play(gen0) +15000 → relabel Scan d9 → pool → refit ===
+  [relabel] 15000 positions, 8 shards × ~1875 (Scan depth 9)
+  [relabel] mergé 13821 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0362-lean8-distill-loop-colorfold/artefacts.src/sp1.scan.jnnw
+pool 249839
+    [fit] color-fold : signed-canonical, 265721 buckets/pattern (17M -> 2,125,768) ; antisymmetric weights
+  gen1 : DIRECT(vs gen0)=0.333333  vsScan=-
+=== gen2 : self-play(gen1) +15000 → relabel Scan d9 → pool → refit ===
+  [relabel] 15000 positions, 8 shards × ~1875 (Scan depth 9)
+  [relabel] mergé 13833 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0362-lean8-distill-loop-colorfold/artefacts.src/sp2.scan.jnnw
+pool 263672
+    [fit] color-fold : signed-canonical, 265721 buckets/pattern (17M -> 8,503,072) ; antisymmetric weights
+  gen2 : DIRECT(vs gen0)=  vsScan=-
+=== gen3 : self-play(gen2) +15000 → relabel Scan d9 → pool → refit ===
+  [relabel] 0 positions, 8 shards × ~0 (Scan depth 9)
+  [relabel] mergé 0 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0362-lean8-distill-loop-colorfold/artefacts.src/sp3.scan.jnnw
+pool 263672
+    [fit] color-fold : signed-canonical, 265721 buckets/pattern (17M -> 8,503,072) ; antisymmetric weights
+  gen3 : DIRECT(vs gen0)=  vsScan=
+
+==========================================================
+   ccx33-0362 — BOUCLE distillation Scan, LEAN 8, COLOR-FOLD (Scan-faithful 2.1M)
+   gen :  DIRECT(vs gen0)   vsScan-d9
+    0 :   0.500            0.028
+    1 :   0.333333            -
+    2 :   NA            -
+    3 :   NA            NA
+----------------------------------------------------------
+   gen0 vsScan >> 0.028 → le fold ÉTAIT le bug (capacité Scan rétablie).
+   DIRECT croît > 0.55 → itérer améliore le fit (covariate shift = le manque) → SCALER la boucle.
+   DIRECT plat ~0.5 → fit one-shot déjà convergé → le levier est ailleurs.
+==========================================================
