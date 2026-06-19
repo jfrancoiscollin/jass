@@ -1,0 +1,19 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 2 × 240000 lignes @ 4min/M ≈ 1.9 min
+  [preflight] 2 arms × 270 parties vs Scan d9: ≈ 90 min
+  [preflight] TOTAL estimé ≈ 99.9 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== ARM 0 : rampe legacy 0/40 (mg/eg co-fit = baseline) ===
+=== ARM C : rampe FINALE-NETTE 8/24 (banque eg spécialisée finale) ===
+=== vs Scan d9 — 270 parties/arm (openings appariés, depth-égale) ===
+
+==========================================================
+   cpx62-0358 — C : phase-split finale PROPRE (rampe piece-count)
+----------------------------------------------------------
+   eval0 (rampe 0/40)  vs Scan d9 : 0.028
+   evalC (rampe 8/24)  vs Scan d9 : 0.083
+   (rappel : ship tempo-stage ≈ 0.083 — 0353/0355)
+----------------------------------------------------------
+   evalC > eval0 nettement → netteté finale aide le fit eg → brique à confirmer vs tempo-ship.
+   evalC ≈ eval0 → la séparation mg/eg ne lève pas le résidu finale = plafond pratique du fit linéaire.
+==========================================================
