@@ -1,0 +1,19 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] train: 1 × 400000 lignes @ 4min/M ≈ 1.6 min
+  [preflight] evalB vs eval0 + vs Scan: ≈ 60 min
+  [preflight] TOTAL estimé ≈ 66.6 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== build ===
+=== eval0 : notre champion (distill score sur old-scan) ===
+=== sous-échantillon corpus 0328 → 400000 (data forte WDL) ===
+strong 400000 / 1193458
+=== evalB : WDL LOGISTIQUE (méthode Scan) sur la data forte ===
+=== evalB vs eval0 EN DIRECT (depth9, 144 parties) ===
+=== vs Scan depth-égale d9 (8 pairs) ===
+
+==========================================================
+   cpx62-0357 — B-PROPRE : WDL logistique sur data forte (méthode Scan)
+   evalB vs eval0 DIRECT : 0.388889   (>0.55 = la méthode Scan gagne)
+   vs Scan d9 : eval0=0.083  evalB=0.000
+==========================================================
