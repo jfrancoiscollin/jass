@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0342-lmp-rfp-confirm",
-  "snapshot_at": "2026-06-19T05:43:13+00:00",
+  "snapshot_at": "2026-06-19T05:48:16+00:00",
   "started_at": "2026-06-19T05:28:09+00:00",
-  "elapsed_seconds": 904,
+  "elapsed_seconds": 1207,
   "artefacts": [
     {
       "name": "build.log",
@@ -45,5 +45,5 @@
       "size_bytes": 1353
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2492187       1       15:04  0.0  0.0 bash\n2492189 2492187       15:04  0.0  0.0 bash\n2492874 2492189       12:59 99.9  0.5 jass\n2492875 2492189       12:59 99.9  0.5 jass\n2492876 2492189       12:59 99.9  0.5 jass\n2492877 2492189       12:59 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2492187       1       20:07  0.0  0.0 bash\n2492189 2492187       20:07  0.0  0.0 bash\n2492874 2492189       18:02 99.9  0.5 jass\n2492875 2492189       18:02 99.9  0.5 jass\n2492876 2492189       18:02 99.9  0.5 jass\n2492877 2492189       18:02 99.9  0.5 jass\n"
 }
