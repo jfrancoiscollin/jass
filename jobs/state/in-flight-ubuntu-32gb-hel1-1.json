@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0365-wdl-decisiveness-diag",
+  "script": "jobs/queue/cpx62-0365-wdl-decisiveness-diag.sh",
+  "pid": 3350230,
+  "started_at": "2026-06-19T20:52:25+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
