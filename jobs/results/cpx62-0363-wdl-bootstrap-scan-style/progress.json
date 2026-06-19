@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0363-wdl-bootstrap-scan-style",
-  "snapshot_at": "2026-06-19T18:53:03+00:00",
+  "snapshot_at": "2026-06-19T18:58:02+00:00",
   "started_at": "2026-06-19T18:26:06+00:00",
-  "elapsed_seconds": 1617,
+  "elapsed_seconds": 1916,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 57000008
+      "size_bytes": 68400008
     },
     {
       "name": "gen0.pjtw",
@@ -98,11 +98,15 @@
     },
     {
       "name": "gen5-direct.log",
-      "size_bytes": 0
+      "size_bytes": 359
     },
     {
       "name": "gen5-train.log",
       "size_bytes": 1447
+    },
+    {
+      "name": "gen5-vs.log",
+      "size_bytes": 10568
     },
     {
       "name": "gen5.feat",
@@ -111,6 +115,14 @@
     {
       "name": "gen5.pjtw",
       "size_bytes": 136049876
+    },
+    {
+      "name": "gen6-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen6.feat",
+      "size_bytes": 864000012
     },
     {
       "name": "mini.jnnw",
@@ -443,7 +455,71 @@
     {
       "name": "sp5.9.log",
       "size_bytes": 1014
+    },
+    {
+      "name": "sp6.1.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.10.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp6.11.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp6.12.log",
+      "size_bytes": 1016
+    },
+    {
+      "name": "sp6.13.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp6.14.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp6.15.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.16.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp6.2.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.3.log",
+      "size_bytes": 1013
+    },
+    {
+      "name": "sp6.4.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.5.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.6.log",
+      "size_bytes": 1014
+    },
+    {
+      "name": "sp6.7.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.8.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp6.9.log",
+      "size_bytes": 1014
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       26:57  0.0  0.0 bash\n3345772 3345770       26:57  0.0  0.0 bash\n3347322 3345772       01:14  0.0  0.0 bash\n3347323 3347322       01:14  100  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       31:56  0.0  0.0 bash\n3345772 3345770       31:56  0.0  0.0 bash\n3347518 3345772       02:37  946 25.2 python3\n"
 }
