@@ -1,0 +1,85 @@
+{
+  "job_id": "ccx33-0346-deeper-teacher",
+  "snapshot_at": "2026-06-19T10:34:55+00:00",
+  "started_at": "2026-06-19T10:29:52+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": ".rl-0.jnnw",
+      "size_bytes": 577380
+    },
+    {
+      "name": ".rl-0.log",
+      "size_bytes": 149
+    },
+    {
+      "name": ".rl-1.jnnw",
+      "size_bytes": 524522
+    },
+    {
+      "name": ".rl-1.log",
+      "size_bytes": 153
+    },
+    {
+      "name": ".rl-2.jnnw",
+      "size_bytes": 516390
+    },
+    {
+      "name": ".rl-2.log",
+      "size_bytes": 153
+    },
+    {
+      "name": ".rl-3.jnnw",
+      "size_bytes": 597710
+    },
+    {
+      "name": ".rl-3.log",
+      "size_bytes": 153
+    },
+    {
+      "name": ".rl-4.jnnw",
+      "size_bytes": 577380
+    },
+    {
+      "name": ".rl-4.log",
+      "size_bytes": 153
+    },
+    {
+      "name": ".rl-5.jnnw",
+      "size_bytes": 589578
+    },
+    {
+      "name": ".rl-5.log",
+      "size_bytes": 153
+    },
+    {
+      "name": ".rl-6.jnnw",
+      "size_bytes": 593644
+    },
+    {
+      "name": ".rl-6.log",
+      "size_bytes": 154
+    },
+    {
+      "name": ".rl-7.jnnw",
+      "size_bytes": 561116
+    },
+    {
+      "name": ".rl-7.log",
+      "size_bytes": 154
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 26514
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1050
+    },
+    {
+      "name": "sub.jnnw",
+      "size_bytes": 5700008
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2510865       1       05:03  0.0  0.0 bash\n2510867 2510865       05:03  0.0  0.0 bash\n2511458 2510867       04:49  1.2  0.0 python3\n2511459 2510867       04:49  1.4  0.0 python3\n2511460 2510867       04:49  1.3  0.0 python3\n2511461 2510867       04:49  1.6  0.0 python3\n2511462 2510867       04:49  1.5  0.0 python3\n2511463 2510867       04:49  1.6  0.0 python3\n2511464 2510867       04:49  1.5  0.0 python3\n2511465 2510867       04:49  1.1  0.0 python3\n2511466 2511462       04:49 98.4  0.9 scan_linux\n2511467 2511460       04:49 98.5  0.9 scan_linux\n2511468 2511459       04:49 98.4  0.9 scan_linux\n2511469 2511463       04:49 98.3  0.9 scan_linux\n2511470 2511458       04:49 98.6  0.9 scan_linux\n2511471 2511464       04:49 98.4  0.9 scan_linux\n2511472 2511461       04:49 98.2  0.9 scan_linux\n2511473 2511465       04:49 98.8  0.9 scan_linux\n"
+}
