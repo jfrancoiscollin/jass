@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0348-coevo-d14",
+  "script": "jobs/queue/ccx33-0348-coevo-d14.sh",
+  "pid": 2512316,
+  "started_at": "2026-06-19T11:06:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
