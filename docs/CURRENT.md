@@ -119,27 +119,29 @@ Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12
   en FINALE** (≤7p:**0.39**). → **PAS un plafond linéaire absolu** ; **trou LOCALISÉ en finale** = briques
   manquantes, *là où Scan a sa non-linéarité (drawish-scaling)*. (0347 = bug d'alignement, ignoré.)
 
-## Fine-tuning du fit linéaire (2026-06-19) — attaquer le résidu finale (poids eg sous-ajustés)
-- **0355 (option A « phase-split ») = NO-OP confirmé** (evalA vs eval0 DIRECT = **0.5 exact**, pjtw byte-identiques).
-  CAUSE (⚠️ VIGILANCE, à ne jamais reproduire) : le chemin `--scan-eval` **IGNORE `--phase-split`** et `--tempo-stage`
-  **ÉCRASE** `--phase-lo/hi` → les deux arms étaient la MÊME config. Pour vraiment varier la rampe : `JASS_PHASE_LO/HI`
-  (build) ↔ `--phase-lo/--phase-hi` (train) **SANS tempo**, 2 binaires distincts. → refait proprement en **0358**.
-- **0356/0357 (option B, WDL logistique = recette Scan) = PIRE.** Sur data forte (0328 Scan-self-play) ~majorité de
-  nulles → cible WDL≈0.5 → éval **plate** (corr ~0 vs Scan). La **distillation de score** reste supérieure pour notre
-  setup (signal de score dense ; WDL dégénéré sur self-play fort). → branche WDL-sur-data-forte morte.
+## ⚖️ RECADRAGE (2026-06-19) — PAS de plafond de classe : notre FIT est sous-optimal, point
+**Scan = même classe (linéaire-patterns) et BEAUCOUP plus fort ⇒ il n'y a PAS de plafond de classe là où on est ;
+notre écart = notre *fit* des poids est moins bon que celui de Scan, donc améliorable PAR CONSTRUCTION.** Scan obtient
+son fit par une **boucle itérée** (self-play + ré-apprentissage), pas du **one-shot** comme nous. Erreur à ne pas
+refaire : conclure « plafond linéaire » alors que Scan le réfute. Le levier = **mieux fitter** (boucle), pas changer
+d'archi.
 
-## ⭐ NEXT STEPS — fine-tuning du fit (briques/réglages linéaires) puis verdict plafond
-1. **0358 (C) — rampe de phase finale-nette 8/24 vs legacy 0/40** (piece-count, SANS tempo, 2 binaires) :
-   sépare vraiment les banques mg/eg pour spécialiser la finale. Jugé vs Scan d9, 270 p/arm. evalC > eval0 → baker.
-2. **0359 (F) — jeu LEAN 8 patterns (= Scan) vs enrichi 32** : on est un SURENSEMBLE de Scan (32 ⊃ 8, hash=3^12=aucun) ;
-   test si nos 24 patterns enrichis **sur-paramètrent** la finale clairsemée. Jugé vs Scan d9, 216 p/arm. F > 32 → baker 8.
-3. **0360 — ROIS dans les patterns (`JASS_KING_PATTERNS`), le VRAI levier finale** (PAS l'élagage, cf ci-dessous).
-   Le trou ≤7p (0349 : 0.39) vient de patterns **men-only aveugles aux rois** alors que la finale est dominée par eux.
-   0240 = **+37 Elo** (men|kings) mais en Elo_hc (SCREEN) puis mis OFF sous logistic-WDL ; on re-juge en **distillation
-   + vs Scan d9** (DECISION) + corr finale held-out. Guard SELFDESC ⇒ no-op type 0355 impossible. evalK > eval0 → baker.
-4. **Si 0358/0359/0360 ≈ (dans le bruit)** → **plafond pratique du fit linéaire** posé : seul le **pivot NN** (boucle
-   vertueuse + apprentissage de représentation) peut dépasser. **MLP boîte-noire reste INTERDIT** jusqu'à ce verdict.
-- ✅ **Drawish (`JASS_DRAWISH_SCALING`) = NEUTRE en jeu** (0353, 270 p) — testé, codé, défaut 0, NE PAS baker (cf §drawish).
+## Fine-tuning du fit (2026-06-19) — verdicts
+- **0358 (C, rampe phase) & 0359 (F, 8 vs 32 patterns) = PLATS dans un plancher BRUITÉ.** F : 8 pat = 32 pat (0.028=0.028)
+  → la **capacité n'est pas le mur** (ferme « élaguer », cf §dessous). C : evalC(8/24)=0.083 ≈ ship tempo, eval0(0/40)=0.028.
+  ⚠️ **LEÇON MÉTHODO** : la même config (tempo+32) donne **0.083 (0353) vs 0.028 (0359)** → **vs-Scan-d9 AU PLANCHER**
+  (jass perd ~10:1) est **dominé par la variance** et **insensible** aux petits gains d'éval. Juge sensible = **eval-vs-eval
+  DIRECT même archi** (bande ~0.5) ou **corr éval↔Scan par bande** — PAS le taux vs-Scan près de zéro.
+- **0355 (phase-split) = NO-OP** (⚠️ `--scan-eval` ignore `--phase-split`, `--tempo-stage` écrase `--phase-lo/hi`). **0356/0357
+  (WDL logistique sur data forte) = PIRE** (nulles → cible plate). La **distillation de score** reste notre meilleur signal.
+
+## ⭐ NEXT STEPS — MIEUX FITTER l'archi (boucle itérée, juge DIRECT sensible)
+1. **0361 — BOUCLE de distillation Scan sur l'archi LEAN 8** (ccx33) : itère self-play(gen)→relabel Scan d9→pool→refit ;
+   juge **gen_k vs gen0 DIRECT** (8-pat même binaire = sensible ~0.5) + vs Scan. Monte > 0.55 → le fit one-shot
+   sous-ajustait (covariate shift) → **scaler la boucle**. Plat → fit déjà convergé sur cette archi → levier ailleurs.
+2. **0360 — ROIS dans les patterns** (`JASS_KING_PATTERNS`) : la finale est king-dominée, nos patterns sont men-only
+   (0240 = +37 Elo en distillation, mis OFF sous WDL) ; re-jugé distillation + corr finale held-out. Guard SELFDESC ⇒ pas de no-op.
+- ✅ **Drawish = NEUTRE** (0353) — codé, défaut 0, NE PAS baker.
 
 ## ⛔ ÉLAGUER la capacité = branche MORTE (3 angles — NE PAS relancer)
 Intuition « 32 patterns = 4× Scan = sur-paramétré, il faut élaguer » → **réfutée par notre propre historique** :
@@ -149,9 +151,11 @@ Intuition « 32 patterns = 4× Scan = sur-paramétré, il faut élaguer » → *
 - **0239** : richesse géométrique **plate sous labels parfaits** (15→54 patterns) → le trou n'est PAS la capacité.
 - La sparsité 90× est déjà gérée **sans perte** par `--prune` (remap dense collision-free, ×51, corr 0.9999). On ne paie
   rien pour les buckets fantômes. ⇒ réduire la *capacité* (géométrie OU buckets) = testé 3×, perd. **0359 (F) = re-test
-  PROPRE de 0234** sous DECISION-gate (0234 n'était que Elo_hc) ; prior fort « ça perd ».
+  PROPRE de 0234** sous DECISION-gate (0234 n'était que Elo_hc) ; prior fort « ça perd ». NB : 0359 confirme 8=32
+  (capacité ≠ mur) MAIS ce n'est PAS « notre archi est au max » — c'est notre **FIT** qui est sous-optimal (cf §RECADRAGE :
+  Scan = même classe, plus fort). D'où 0361 (boucle, mieux fitter).
 
 ## Jobs en cours
-- **cpx62** : **0358** (C — phase-split finale PROPRE) → puis **0360** (rois-dans-patterns, en file).
-- **ccx33** : **0359** (F — jeu LEAN 8 vs 32).
+- **cpx62** : **0360** (rois-dans-patterns, vrai levier finale). [0358 C ✅ plat, 0359 F ✅ 8=32]
+- **ccx33** : **0361** (boucle distillation Scan sur archi LEAN 8 — juge DIRECT sensible).
 - **PC perso** : éteint.
