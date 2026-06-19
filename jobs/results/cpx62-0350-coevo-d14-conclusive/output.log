@@ -1,0 +1,38 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] self-play jass d14 280000 (×16, dominant): ≈ 180 min
+  [preflight] train: 1 × 280000 lignes @ 4min/M ≈ 1.1 min
+  [preflight] juge eval-vs-eval (180p depth9) + vs Scan: ≈ 40 min
+  [preflight] TOTAL estimé ≈ 226.1 min  (cap 360 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train eval0 (Scan-distillé d9, l'éval courante) ===
+=== self-play jass d14 avec eval0 (data forte), 280000 shardé ×16 ===
+d14 self-play 280000 positions
+  d14 self-play : 280000 positions
+JNNW stats: /root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/d14.jnnw
+
+Records
+  header count : 280000
+  file records : 280000
+  count check  : OK
+
+Phase distribution
+  <=7p  :    70119 ( 25.04%)
+  <=10p :    94985 ( 33.92%)
+  <=12p :   108819 ( 38.86%)
+  histogram:
+     2 pieces: 358
+     3 pieces: 10922
+=== train eval1 sur le self-play d14 (target WDL) ===
+=== JUGE 1 (sensible) : eval1 vs eval0 EN DIRECT (depth 9, 180 parties) ===
+=== JUGE 2 (absolu) : eval0 et eval1 vs Scan (depth-égale d9) ===
+
+==========================================================
+   cpx62-0350 — CO-ÉVOLUTION d14 CONCLUSIVE (280000 positions)
+----------------------------------------------------------
+   eval1 vs eval0 EN DIRECT (depth9, 180p) : A-rate=0.388889   <-- métrique sensible
+   eval0 vs Scan d9 : 0.083    eval1 vs Scan d9 : 0.056
+----------------------------------------------------------
+   A-rate(eval1 vs eval0) > 0.55 → la co-évolution d14 MONTE → itérer (boucle 2).
+   ≈0.5 / < → le jeu fort seul ne suffit pas → capacité (diag 0349) ou target score-d14.
+==========================================================

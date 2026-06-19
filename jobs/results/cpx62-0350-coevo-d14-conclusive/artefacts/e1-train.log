@@ -1,0 +1,18 @@
+loading JNNW /root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/d14.jnnw
+  280000 records  (0.02s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/e1.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (280000, 120)  (mean mob b/w=11.1/11.0)
+target=wdl  pos=60151 neg=60005 zero=159844 (57.1% draws)  wdl_scale=1.0
+phase : piece-count mean=18.7  wmg mean=0.410  (ramp 0.0/40.0)
+split : train=252000 val=28000
+prune : keep 133,547 buckets (>= 1 visits) -> 267,096 pattern cols vs 34,012,224  (127.3× fewer); train fallback=0.000%
+design : 267336 columns (2×133548 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=0.124928  iters=300  (106.90s)
+val   : mse=0.261123  sign_acc=0.3725
+val/phase mse : opening=0.3551(n6817)  midgame=0.3530(n4905)  late-mid=0.3197(n4152)  endgame=0.2139(n5248)  deep-eg=0.1032(n6878)
+quant : scale=1000  pat range=[-159,159] ext_mg range=[-531,529]
+wrote /root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/eval1.pjtw  (v3, 34012464 weights, 136049876 bytes)

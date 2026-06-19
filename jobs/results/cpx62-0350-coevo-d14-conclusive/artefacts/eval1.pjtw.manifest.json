@@ -1,0 +1,13 @@
+{
+  "build_flags": "COEVO d14 (play14) target=wdl from eval0 N=280000",
+  "dataset": {
+    "bytes": 10640008,
+    "path": "/root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/d14.jnnw",
+    "sha256_head64m": "14a5cf626c596e5d2b95c84fef394ec0aff8dba9346982935107be6ff0e601a4"
+  },
+  "date": "2026-06-19T12:00:13Z",
+  "git_commit": "b0ef4dd9",
+  "host": "ubuntu-32gb-hel1-1",
+  "n_ext": 120,
+  "pjtw": "/root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/eval1.pjtw"
+}
