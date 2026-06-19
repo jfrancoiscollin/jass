@@ -1,0 +1,21 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 2 × 240000 lignes @ 4min/M ≈ 1.9 min
+  [preflight] 2 arms × 216 parties vs Scan d9: ≈ 90 min
+  [preflight] TOTAL estimé ≈ 99.9 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== ARM 32 : jeu enrichi actuel (baseline, arbre par défaut) ===
+  NUM_PATTERNS (arbre défaut) = 32
+=== régénère le jeu LEAN 8 (8 bandes verticales = les patterns de Scan) ===
+  NUM_PATTERNS (après drop) = 8
+=== ARM 8 : build + train sur le jeu LEAN ===
+=== vs Scan d9 — 216 parties/arm (openings appariés, depth-égale) ===
+
+==========================================================
+   ccx33-0359 — F : jeu LEAN 8 patterns (Scan) vs enrichi 32
+----------------------------------------------------------
+   eval0 (32 patterns) vs Scan d9 : 0.028
+   evalF ( 8 patterns) vs Scan d9 : 0.028
+----------------------------------------------------------
+   evalF > eval0 → le surplus géométrique sur-paramètre la finale → baker le jeu 8.
+   evalF ≈/pire eval0 → la capacité n'est pas le mur (surensemble) = plafond pratique du fit linéaire → pivot NN.
+==========================================================
