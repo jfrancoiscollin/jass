@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] échelle depth-fixe vs Scan (~600 parties, rapide): ≈ 110 min
+  [preflight] TOTAL estimé ≈ 115.0 min  (cap 200 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (combo baké) ===
+=== train éval ===
+=== échelle de profondeur (éval combo) vs Scan d9 ===
+  jass d9 vs Scan d9 (144p): rate=0.083
+  jass d10 vs Scan d9 (144p): rate=0.056
+  jass d11 vs Scan d9 (108p): rate=0.139
+  jass d12 vs Scan d9 (90p): rate=0.250
+  jass d13 vs Scan d9 (72p): rate=0.417
+
+==========================================================
+   cpx62-0345 — GAP D'ÉVAL résiduel (profondeur égale, combo baké) vs Scan d9
+----------------------------------------------------------
+  eq9   rate=0.083
+  j10   rate=0.056
+  j11   rate=0.139
+  j12   rate=0.250
+  j13   rate=0.417
+----------------------------------------------------------
+   Le +N plies où le rate croise 0.5 = le gap d'éval EN PLIES (rappel 0330 : ~2-4).
+==========================================================
