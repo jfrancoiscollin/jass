@@ -1,0 +1,125 @@
+{
+  "job_id": "ccx33-0361-lean8-distill-loop",
+  "snapshot_at": "2026-06-19T17:52:31+00:00",
+  "started_at": "2026-06-19T17:47:30+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": ".rl-0.log",
+      "size_bytes": 289
+    },
+    {
+      "name": ".rl-1.log",
+      "size_bytes": 292
+    },
+    {
+      "name": ".rl-2.log",
+      "size_bytes": 292
+    },
+    {
+      "name": ".rl-3.log",
+      "size_bytes": 292
+    },
+    {
+      "name": ".rl-4.log",
+      "size_bytes": 292
+    },
+    {
+      "name": ".rl-5.log",
+      "size_bytes": 292
+    },
+    {
+      "name": ".rl-6.log",
+      "size_bytes": 293
+    },
+    {
+      "name": ".rl-7.log",
+      "size_bytes": 293
+    },
+    {
+      "name": "build.log",
+      "size_bytes": 26513
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1051
+    },
+    {
+      "name": "gen0-train.log",
+      "size_bytes": 1345
+    },
+    {
+      "name": "gen0-vs.log",
+      "size_bytes": 13764
+    },
+    {
+      "name": "gen0.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "gen0.pjtw",
+      "size_bytes": 34013204
+    },
+    {
+      "name": "gen1-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen1.feat",
+      "size_bytes": 119935692
+    },
+    {
+      "name": "gen8.log",
+      "size_bytes": 1043
+    },
+    {
+      "name": "loop.log",
+      "size_bytes": 22
+    },
+    {
+      "name": "pool.jnnw",
+      "size_bytes": 9494916
+    },
+    {
+      "name": "sp1.jnnw",
+      "size_bytes": 570008
+    },
+    {
+      "name": "sp1.jnnw.1.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.jnnw.2.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.jnnw.3.log",
+      "size_bytes": 524
+    },
+    {
+      "name": "sp1.jnnw.4.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.jnnw.5.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.jnnw.6.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.jnnw.7.log",
+      "size_bytes": 524
+    },
+    {
+      "name": "sp1.jnnw.8.log",
+      "size_bytes": 525
+    },
+    {
+      "name": "sp1.scan.jnnw",
+      "size_bytes": 526232
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2526026       1       05:00  0.0  0.0 bash\n2526027 2526026       05:00  0.0  0.0 bash\n2526865 2526027       01:02  781  2.7 python3\n"
+}
