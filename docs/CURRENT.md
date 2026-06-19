@@ -84,6 +84,9 @@ fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord.
 | play-depth-finale SEUL (pré-egdb) | 0254/0265 | — |
 | Géométrie de patterns | 0203-0236 (flat) | — |
 | **Rallumer NMP** | −97 Elo (0256/0259, zugzwang) | — |
+| **TT >16 Mo** | testé `--tt-mb` : −0,3 % nœuds (peu de transpositions draughts) | — |
+| **Optimiser movegen captures** (man-jump) | testé, perft-OK, 0 gain (movegen déjà lean) — cf SEARCH_TUNING | rewrite movegen majeur |
+| Prunings marginaux sur le combo (probcut/iid/conthist) | 0334/0336 ~0.5 (chevauchent le combo) | — |
 | **FM/MLP** | prématuré (principe) | parité features/données/**recherche** fermée |
 
 > ⚠️ **VIVANT** : depth-RAMP `--play-depth-by-phase late-mid=12,endgame=16` en régime egdb-exact (revival 0293 +74 Elo).
