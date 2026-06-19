@@ -31,6 +31,23 @@
 > « faut-il un MLP ? » mais **« quel pattern/feature/poids manque pour que le
 > LINÉAIRE le capture, comme Scan ? »**.
 
+> ### 🔶 RAFFINEMENT 2026-06-18 (JFC) — « notre linéaire » ≠ « le linéaire », et Scan N'EST PAS 100 % linéaire
+> Si un diagnostic montre un **plafond** (ex. 0349 : faible accord éval-jass/éval-Scan), ce n'est PAS
+> le plafond de *la classe linéaire dans l'absolu* (Scan, lui, y arrive) — c'est le plafond de **NOTRE
+> vocabulaire d'éval** : il nous **manque des features/patterns**. → creuser *quoi*, pas changer de classe.
+>
+> **MAIS l'audit l'a établi : l'éval de Scan est linéaire SAUF UNE non-linéarité localisée** — le
+> **drawish-material scaling** (un camp mène mais c'est nul-tendance → score ÷2/÷8). C'est une **brique
+> conditionnelle/multiplicative**, pas un MLP. Donc la frontière du principe est :
+> - **INTERDIT** : pivot non-linéaire *en gros* (MLP/FM boîte-noire qui remplace l'éval).
+> - **AUTORISÉ et probablement NÉCESSAIRE** : des **briques localisées, interprétables, éventuellement
+>   non-linéaires** *que Scan lui-même utilise* (drawish-scaling ; confinement-roi conditionnel ; bascule
+>   de phase). Les ajouter = **se rapprocher de l'archi RÉELLE de Scan**, c'est *dans* l'esprit du principe.
+>
+> **⚠️ LEÇON DE PROCESS** : on avait **codé** `JASS_DRAWISH_SCALING` (la non-linéarité de Scan) et on ne
+> l'a **jamais testée en jeu** (coupée pour la distillation → oubliée). On aurait dû. **Vigilance** : toute
+> feature identifiée chez Scan et mise de côté DOIT être testée en jeu avant de conclure à un plafond.
+
 ---
 
 ## 🟢 Branche ACTIVE 2026-06-17 — fermer le verrou finale DANS le linéaire
