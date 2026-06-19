@@ -1,0 +1,2 @@
+gen-data-wdl: n=200 out=/root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src/probe.8.jnnw eval_depth=4 play_depth=10 max_plies=200 seed=18369548 nnue=/root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src/gen0.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+wrote 200 WDL records to /root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src/probe.8.jnnw

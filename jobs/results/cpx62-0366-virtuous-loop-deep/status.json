@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0366-virtuous-loop-deep",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 9,
   "started_at": "2026-06-19T21:53:06+00:00",
+  "ended_at": "2026-06-19T21:58:12+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 3352977
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src"
 }

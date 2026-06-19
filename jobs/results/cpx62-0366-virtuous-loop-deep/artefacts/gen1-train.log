@@ -1,0 +1,12 @@
+loading JNNW /root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src/cumulative.jnnw
+Traceback (most recent call last):
+  File "/root/jass/pattern_jass/tools/train.py", line 1282, in <module>
+    main()
+    ~~~~^^
+  File "/root/jass/pattern_jass/tools/train.py", line 1167, in main
+    return train_scan_eval(args)
+  File "/root/jass/pattern_jass/tools/train.py", line 592, in train_scan_eval
+    ds = master_loader.load(args.data, max_records=args.max_records)
+  File "/root/jass/pattern_jass/tools/master_loader.py", line 47, in load
+    raise ValueError(f"file too short : {len(raw)} bytes")
+ValueError: file too short : 0 bytes
