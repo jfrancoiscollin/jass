@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/ccx33-0354-residual-static/artefacts.src/test.jnnw (24000 records, processing 3000 from offset 15000, drop_skipped=True)
+wrote /root/jass/jobs/results/ccx33-0354-residual-static/artefacts.src/.rl-5.jnnw (2910 records written, 90 skipped / 3000 processed)
