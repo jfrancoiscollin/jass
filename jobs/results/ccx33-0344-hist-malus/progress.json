@@ -1,0 +1,49 @@
+{
+  "job_id": "ccx33-0344-hist-malus",
+  "snapshot_at": "2026-06-19T07:53:56+00:00",
+  "started_at": "2026-06-19T07:48:54+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26514
+    },
+    {
+      "name": "c-hm100.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-hm150.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-hm200.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-hm50.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1050
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 108
+    },
+    {
+      "name": "e.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "eval.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1343
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2501349       1       05:02  0.0  0.0 bash\n2501350 2501349       05:02  0.0  0.0 bash\n2502024 2501350       02:56 99.9  0.5 jass\n2502025 2501350       02:56 99.9  0.5 jass\n2502026 2501350       02:56 99.9  0.5 jass\n2502027 2501350       02:56 99.9  0.5 jass\n"
+}
