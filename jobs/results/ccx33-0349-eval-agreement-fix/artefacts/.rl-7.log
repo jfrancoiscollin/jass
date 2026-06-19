@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/test.jnnw (20000 records, processing 2500 from offset 17500, drop_skipped=True)
+wrote /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/.rl-7.jnnw (2056 records written, 444 skipped / 2500 processed)
