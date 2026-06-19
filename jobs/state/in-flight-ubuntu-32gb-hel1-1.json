@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0358-phasesplit-finale-proper",
-  "script": "jobs/queue/cpx62-0358-phasesplit-finale-proper.sh",
-  "pid": 3340541,
-  "started_at": "2026-06-19T16:52:35+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
