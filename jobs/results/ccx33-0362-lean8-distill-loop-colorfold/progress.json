@@ -1,40 +1,40 @@
 {
   "job_id": "ccx33-0362-lean8-distill-loop-colorfold",
-  "snapshot_at": "2026-06-19T18:02:39+00:00",
+  "snapshot_at": "2026-06-19T18:07:39+00:00",
   "started_at": "2026-06-19T17:57:50+00:00",
-  "elapsed_seconds": 289,
+  "elapsed_seconds": 589,
   "artefacts": [
     {
       "name": ".rl-0.log",
-      "size_bytes": 309
+      "size_bytes": 294
     },
     {
       "name": ".rl-1.log",
-      "size_bytes": 312
+      "size_bytes": 294
     },
     {
       "name": ".rl-2.log",
-      "size_bytes": 312
+      "size_bytes": 294
     },
     {
       "name": ".rl-3.log",
-      "size_bytes": 312
+      "size_bytes": 294
     },
     {
       "name": ".rl-4.log",
-      "size_bytes": 312
+      "size_bytes": 294
     },
     {
       "name": ".rl-5.log",
-      "size_bytes": 312
+      "size_bytes": 294
     },
     {
       "name": ".rl-6.log",
-      "size_bytes": 313
+      "size_bytes": 294
     },
     {
       "name": ".rl-7.log",
-      "size_bytes": 313
+      "size_bytes": 294
     },
     {
       "name": "build.log",
@@ -61,12 +61,44 @@
       "size_bytes": 34013204
     },
     {
+      "name": "gen1-direct.log",
+      "size_bytes": 366
+    },
+    {
       "name": "gen1-train.log",
-      "size_bytes": 0
+      "size_bytes": 1363
     },
     {
       "name": "gen1.feat",
       "size_bytes": 119922732
+    },
+    {
+      "name": "gen1.pjtw",
+      "size_bytes": 34013204
+    },
+    {
+      "name": "gen2-direct.log",
+      "size_bytes": 120
+    },
+    {
+      "name": "gen2-train.log",
+      "size_bytes": 1369
+    },
+    {
+      "name": "gen2.feat",
+      "size_bytes": 126562572
+    },
+    {
+      "name": "gen2.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "gen3-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen3.feat",
+      "size_bytes": 126562572
     },
     {
       "name": "gen8.log",
@@ -74,11 +106,11 @@
     },
     {
       "name": "loop.log",
-      "size_bytes": 22
+      "size_bytes": 62
     },
     {
       "name": "pool.jnnw",
-      "size_bytes": 9493890
+      "size_bytes": 10019544
     },
     {
       "name": "sp1.jnnw",
@@ -119,7 +151,87 @@
     {
       "name": "sp1.scan.jnnw",
       "size_bytes": 525206
+    },
+    {
+      "name": "sp2.jnnw",
+      "size_bytes": 570008
+    },
+    {
+      "name": "sp2.jnnw.1.log",
+      "size_bytes": 554
+    },
+    {
+      "name": "sp2.jnnw.2.log",
+      "size_bytes": 555
+    },
+    {
+      "name": "sp2.jnnw.3.log",
+      "size_bytes": 554
+    },
+    {
+      "name": "sp2.jnnw.4.log",
+      "size_bytes": 554
+    },
+    {
+      "name": "sp2.jnnw.5.log",
+      "size_bytes": 555
+    },
+    {
+      "name": "sp2.jnnw.6.log",
+      "size_bytes": 555
+    },
+    {
+      "name": "sp2.jnnw.7.log",
+      "size_bytes": 555
+    },
+    {
+      "name": "sp2.jnnw.8.log",
+      "size_bytes": 555
+    },
+    {
+      "name": "sp2.scan.jnnw",
+      "size_bytes": 525662
+    },
+    {
+      "name": "sp3.jnnw",
+      "size_bytes": 8
+    },
+    {
+      "name": "sp3.jnnw.1.log",
+      "size_bytes": 546
+    },
+    {
+      "name": "sp3.jnnw.2.log",
+      "size_bytes": 545
+    },
+    {
+      "name": "sp3.jnnw.3.log",
+      "size_bytes": 547
+    },
+    {
+      "name": "sp3.jnnw.4.log",
+      "size_bytes": 547
+    },
+    {
+      "name": "sp3.jnnw.5.log",
+      "size_bytes": 546
+    },
+    {
+      "name": "sp3.jnnw.6.log",
+      "size_bytes": 547
+    },
+    {
+      "name": "sp3.jnnw.7.log",
+      "size_bytes": 547
+    },
+    {
+      "name": "sp3.jnnw.8.log",
+      "size_bytes": 546
+    },
+    {
+      "name": "sp3.scan.jnnw",
+      "size_bytes": 8
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2527397       1       04:48  0.0  0.0 bash\n2527399 2527397       04:48  0.0  0.0 bash\n2528240 2527399       01:15  793  3.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2527397       1       09:48  0.0  0.0 bash\n2527399 2527397       09:48  0.0  0.0 bash\n2528528 2527399       01:21  789  4.6 python3\n"
 }
