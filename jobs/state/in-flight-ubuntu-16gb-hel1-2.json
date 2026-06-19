@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0361-lean8-distill-loop",
+  "script": "jobs/queue/ccx33-0361-lean8-distill-loop.sh",
+  "pid": 2526026,
+  "started_at": "2026-06-19T17:47:30+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
