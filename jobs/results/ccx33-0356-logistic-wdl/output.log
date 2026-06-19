@@ -1,0 +1,15 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 2 × 240000 lignes @ 4min/M ≈ 1.9 min
+  [preflight] evalB vs eval0 direct + vs Scan: ≈ 50 min
+  [preflight] TOTAL estimé ≈ 55.9 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build ===
+=== train eval0 (baseline = distill score) + evalB (WDL logistique = méthode Scan, MÊME data) ===
+=== evalB vs eval0 EN DIRECT (depth9, 108 parties) — métrique sensible ===
+=== vs Scan depth-égale d9 ===
+
+==========================================================
+   ccx33-0356 — B : WDL logistique (méthode Scan, même data)
+   evalB vs eval0 DIRECT : 0.472222  (>0.55 = B meilleur)
+   vs Scan d9 : eval0=0.028  evalB=0.028
+==========================================================
