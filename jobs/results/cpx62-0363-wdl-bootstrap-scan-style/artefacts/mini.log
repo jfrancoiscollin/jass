@@ -1,0 +1,2 @@
+gen-data-wdl: n=256 out=/root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/mini.jnnw eval_depth=2 play_depth=2 max_plies=60 seed=1 nnue=(default embedded) quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+wrote 256 WDL records to /root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/mini.jnnw

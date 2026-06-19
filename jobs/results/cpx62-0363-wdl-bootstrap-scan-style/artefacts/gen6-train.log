@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/cumulative.jnnw
+  1800000 records  (0.10s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/gen6.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (1800000, 120)  (mean mob b/w=10.7/10.8)
+target=wdl  pos=669364 neg=662840 zero=467796 (26.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=669364 draw=467796 loss=662840 (26.0% draws)
+phase : piece-count mean=20.5  wmg mean=0.513  (ramp 0.0/40.0)
+split : train=1620000 val=180000
+prune : keep 202,856 buckets (>= 1 visits) -> 405,714 pattern cols vs 34,012,224  (83.8× fewer); train fallback=0.000%
+design : 405954 columns (2×202857 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=250  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.534559  iters=250  (276.80s)
+val   : mse=1.955824  sign_acc=0.3451
+val/phase mse : opening=0.6009(n43118)  midgame=0.9244(n41496)  late-mid=2.0268(n35172)  endgame=4.8269(n36503)  deep-eg=1.6995(n23711)
+quant : scale=1000  pat range=[-411,411] ext_mg range=[-651,632]
+wrote /root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/gen6.pjtw  (v3, 34012464 weights, 136049876 bytes)

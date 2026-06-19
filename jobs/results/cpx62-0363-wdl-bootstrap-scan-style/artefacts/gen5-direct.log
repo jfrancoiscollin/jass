@@ -1,0 +1,3 @@
+Benchmark: A=NNUE(/root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/gen5.pjtw) vs B=NNUE(/root/jass/jobs/results/cpx62-0363-wdl-bootstrap-scan-style/artefacts.src/gen1.pjtw), depth 9, threads 1 vs 1, movetime_ms 0, 108 games (9 openings × 6 pairs × 2 colours)
+Result: A=60 B=36 Draws=12 (total 108)
+A score rate: 0.611111 (66 / 108)
