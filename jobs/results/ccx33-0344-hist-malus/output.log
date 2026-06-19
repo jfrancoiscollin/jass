@@ -1,0 +1,18 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] sweep hist_malus 4 candidats × 90 parties @ 700ms: ≈ 120 min
+  [preflight] TOTAL estimé ≈ 125.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval ===
+=== sweep hist_malus (vs combo baké, 5pairs) ===
+
+==========================================================
+   ccx33-0344 — history-malus (pattern, 90 parties, vs combo baké)
+----------------------------------------------------------
+  hm50     0.577778
+  hm100    0.516667
+  hm150    0.533333
+  hm200    0.444444
+   >0.55 net → baker hist_malus=V. ≈0.5 → ordering déjà optimal, ne pas baker.
+==========================================================

@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0344-hist-malus",
-  "script": "jobs/queue/ccx33-0344-hist-malus.sh",
-  "pid": 2501349,
-  "started_at": "2026-06-19T07:48:54+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
