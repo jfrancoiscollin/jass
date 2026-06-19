@@ -2885,12 +2885,22 @@ int run_benchmark_nnue_vs_nnue_mode(int argc, char** argv) {
     const int   movetime_ms = (argc > 7) ? parse_int_or(argv[7], 0) : 0;
     const int   threads_b   = (argc > 8) ? parse_int_or(argv[8], threads_a) : threads_a;
 
-    std::unique_ptr<INetwork> net_a = load_network(path_a);
+    // Accept either an NNUE .bin or a .pjtw pattern eval for BOTH sides, so two
+    // pattern evals can be compared head-to-head (eval1 vs eval0) — the sensitive
+    // metric for the co-evolution loop (vs Scan at low rates is too noisy).
+    auto load_any = [](const char* p) -> std::unique_ptr<INetwork> {
+        const std::string_view s{p};
+        if (s.size() >= 5 && s.compare(s.size() - 5, 5, ".pjtw") == 0) {
+            std::string err; return jass::load_eval_network(p, &err);
+        }
+        return load_network(p);
+    };
+    std::unique_ptr<INetwork> net_a = load_any(path_a);
     if (!net_a) {
         std::cerr << "error: cannot load weights from " << path_a << "\n";
         return 1;
     }
-    std::unique_ptr<INetwork> net_b = load_network(path_b);
+    std::unique_ptr<INetwork> net_b = load_any(path_b);
     if (!net_b) {
         std::cerr << "error: cannot load weights from " << path_b << "\n";
         return 1;
