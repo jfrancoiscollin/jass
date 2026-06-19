@@ -12,6 +12,11 @@
 > 5. **Géométrie reset-proof** : `gen_patterns --emit` réverté mid-run par le runner → build de suite + `JASS_PATTERNS_DIR`
 >    hors-tree + garde-fou « ×32 » (0359/0362 invalidés sans ça).
 > 6. **La gen data WDL est arch-indépendante = actif durable** → pool distribué via git (fenêtre glissante ≤2M).
+> 7. **Nos verdicts « géométrie morte » (0230/0234/0239/0359) sont CONFONDUS par `full-fold`** : il impose une
+>    invariance par TRANSLATION (fausse en dames) qui écrase chaque famille de translates (verticales→1, etc.).
+>    Comparer des géométries = au repli position-préservant **`--color-fold`**, jamais full-fold. Capacité (poids) :
+>    32+color-fold = 8,5M (surensemble de Scan) ; 8+color-fold = 2,1M (= Scan) ; 32+full-fold = 1M (squishé).
+>    Test propre cross-arch = `tools/jass_vs_jass_arch.py` (2 binaires, NUM_PATTERNS ≠). Cf [BOUCLE_VIRTUEUSE.md §7](BOUCLE_VIRTUEUSE.md).
 
 > ## 🔒 RÈGLE PERMANENTE (2026-06-18) — comment on COMPARE à Scan
 > **NE JAMAIS comparer à Scan à TEMPS FIXE ÉGAL.** Un `--movetime` égal confond

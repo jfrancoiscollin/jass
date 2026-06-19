@@ -108,9 +108,41 @@ d'attente** (chaque job attend la data committée dont il dépend). ⚠️ La da
 - **Juger vs Scan au plancher = bruit** (run-to-run ±0.05 sur la même config). Juge = **DIRECT self**.
 - **Décisif ≠ véridique** : ne PAS bootstrapper sur du d4 (blunder-driven) — profond (≥10) ou rien.
 
-## 7. Quand on plateau
+## 7. Quelle GÉOMÉTRIE / quel REPLI ? (2026-06-19) — verdict géométrie CONFONDU à refaire
+
+Comptage poids (= capacité) selon archi × repli :
+
+| repli | 32-pat | 8-pat | vs Scan (~2,1M) |
+|---|---|---|---|
+| **full-fold** (trans+refl) | 1 000 119 | 66 977 | translation-écrasé |
+| **color-fold** (camp seul) | **8 503 072** | **2 125 768** | 8 = Scan exact ; 32 = surensemble 4× |
+| no-fold | 17 006 112 | 4 251 528 | — |
+
+**Le repli = curseur efficacité-data ↔ expressivité.** `full-fold` impose l'**invariance par translation** →
+replie chaque **famille de translates** vers 1 canonique. Or TOUTES nos familles sont des translates (8
+verticales, 7 diagonales, 8 anti-diag, 5 horizontales, 4 blocs) → full-fold les écrase. En 8-pat (1 seule
+famille) = effondrement total visible (67k) ; en 32-pat le **MÊME bug** est là (les 8 verticales se confondent
+en ~1) mais **masqué** par les ~5-6 familles qui survivent (→ 1M). **L'invariance par translation est FAUSSE
+en dames** (avancement = position-dépendant) ⇒ full-fold *jette de l'info positionnelle*.
+
+⚠️ **BOMBE** : **tous** nos verdicts « géométrie = levier mort » (0230 importance uniforme, 0234 élaguer
+−31 Elo, 0239 plat, 0359 8=32) ont été faits **en full-fold** → en comparant des géométries **déjà écrasées
+par translation**. **CONFONDUS.** On n'a JAMAIS comparé les géométries au repli position-préservant (color-fold).
+
+**Sur le papier (promesse à HAUT volume)** : `32+color-fold ≥ 8+color-fold ≫ 32+full-fold`.
+- `8+color-fold` (2,1M) = **réplique fidèle de Scan**, le socle.
+- `32+color-fold` (8,5M) = **surensemble** : verticales de Scan **+ 24 géométries qu'il n'a PAS** (diagonales
+  = naturelles en dames). À haut volume (100M+) → fittable (~12 pos/poids). Si la richesse capte du signal
+  que les verticales de Scan ratent → **plafond plus haut que l'éval de Scan, en restant linéaire**.
+- `32+full-fold` (1M, ce qu'on tourne) = le pire des deux : ni Scan-fidèle, ni position-préservant. **À quitter.**
+
+**Test propre prévu (`0372`, quand la boucle a du volume)** : `32+color-fold` vs `8+color-fold`, MÊME pool,
+jugé **cross-arch** en DIRECT (`tools/jass_vs_jass_arch.py` : 2 binaires, car NUM_PATTERNS diffère — voilà
+pourquoi `benchmark-nnue-vs-nnue` ne suffit pas). Ne vaut qu'avec un GROS pool (fitter 8,5M poids).
+
+## 8. Quand on plateau
 
 `gen_k vs gen_{k-1} ≈ 0.5` soutenu (la data fraîche n'améliore plus) ⇒ **plateau du fit linéaire sur ce
-volume/cette profondeur**. Leviers AVANT de conclure : ↑ profondeur, ↑ volume (plus de tours/boxes), pool
-plus large. **Au vrai plateau** : on ressort Scan (depth-égale) pour situer. Si très en dessous de Scan
-malgré volume+profondeur → le reste du gap = **type A (NNUE)**, décision produit.
+volume/cette profondeur/cette géométrie**. Leviers AVANT de conclure : ↑ profondeur, ↑ volume (plus de
+tours/boxes), pool plus large, **géométrie+repli (cf §7 : 32+color-fold)**. **Au vrai plateau** : on ressort
+Scan (depth-égale) pour situer. Si très en dessous de Scan malgré tout → le reste = **type A (NNUE)**.
