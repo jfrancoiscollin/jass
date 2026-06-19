@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0364-lean8-distill-loop-resetproof/artefacts.src/pool.jnnw
+  249858 records  (0.02s)
+extracting pattern indices (men only)
+color-fold : signed-canonical, 265721 buckets/pattern (17M -> 2,125,768) ; antisymmetric weights
+loading raw extras /root/jass/jobs/results/ccx33-0364-lean8-distill-loop-resetproof/artefacts.src/gen1.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (249858, 120)  (mean mob b/w=11.0/11.0)
+target=score  clipped±2000cp / 100  std=7.758
+phase : piece-count mean=17.4  wmg mean=0.380  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 217007/249858 (86.9%)
+split : train=195307 val=21700
+prune : keep 93,462 buckets (>= 1 visits) -> 186,926 pattern cols vs 4,251,536  (22.7× fewer); train fallback=0.000%
+design : 187166 columns (2×93463 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=1.094002  iters=300  (99.42s)
+val   : mse=2.200075  sign_acc=0.0014
+val/phase mse : opening=0.4633(n5572)  midgame=1.0522(n3837)  late-mid=1.7692(n3507)  endgame=3.3973(n3530)  deep-eg=4.3635(n5254)
+quant : scale=1000  pat range=[-150,150] ext_mg range=[-1192,1136]
+wrote /root/jass/jobs/results/ccx33-0364-lean8-distill-loop-resetproof/artefacts.src/gen1.pjtw  (v3, 8503296 weights, 34013204 bytes)

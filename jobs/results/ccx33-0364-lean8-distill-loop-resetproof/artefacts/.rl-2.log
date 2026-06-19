@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/ccx33-0364-lean8-distill-loop-resetproof/artefacts.src/sp3.jnnw (15000 records, processing 1875 from offset 3750, drop_skipped=True)
+wrote /root/jass/jobs/results/ccx33-0364-lean8-distill-loop-resetproof/artefacts.src/.rl-2.jnnw (1742 records written, 133 skipped / 1875 processed)

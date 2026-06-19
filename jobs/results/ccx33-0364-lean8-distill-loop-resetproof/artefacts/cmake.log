@@ -1,0 +1,24 @@
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test JASS_COMPILER_SUPPORTS_AVX2
+-- Performing Test JASS_COMPILER_SUPPORTS_AVX2 - Success
+-- Jass: AVX2 enabled (-mavx2)
+-- Performing Test JASS_SUPPORTS_MARCH_NATIVE
+-- Performing Test JASS_SUPPORTS_MARCH_NATIVE - Success
+-- Jass: -march=native enabled
+-- Jass: LTO enabled for Release
+-- Jass: ENDGAME FEATURES ENABLED (NUM_EXTRAS=110)
+-- Jass: KING-MOBILITY extras ENABLED (+4 extras)
+-- Jass: SCAN-PARITY extras ENABLED (+6 extras)
+-- Jass: TEMPO-STAGE phase blend ENABLED (men advancement / 300)
+-- Jass: EXTERNAL EGDB ENABLED (egdb_intl)
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Configuring done (1.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /root/jass/build-lean8
