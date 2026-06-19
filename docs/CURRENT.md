@@ -119,15 +119,25 @@ Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12
   en FINALE** (≤7p:**0.39**). → **PAS un plafond linéaire absolu** ; **trou LOCALISÉ en finale** = briques
   manquantes, *là où Scan a sa non-linéarité (drawish-scaling)*. (0347 = bug d'alignement, ignoré.)
 
-## ⭐ NEXT STEPS — briques de FINALE (dont une non-linéaire qu'on a mise de côté)
-1. **Baker `JASS_DRAWISH_SCALING` en JEU et tester** — la non-linéarité localisée de Scan (÷2/÷8 nul-tendance),
-   codée mais **jamais testée en jeu** (coupée pour la distillation). Candidat n°1. ⚠️ leçon de vigilance.
-2. **Co-évolution d14** (0350, en cours) : self-play fort → eval1 vs eval0 direct. Monte ?
-3. **Analyse des résidus finale** (positions où jass↔Scan désaccordent le +) + **diff source Scan**
-   (`/root/jass-scan`) → énumérer les briques finale manquantes ; ajouter chirurgicalement, jugées
-   profondeur-égale vs Scan / accord-éval. **MLP boîte-noire INTERDIT ; briques localisées Scan-like OK** (cf ARBRE_DECISION §RAFFINEMENT).
+## Fine-tuning du fit linéaire (2026-06-19) — attaquer le résidu finale (poids eg sous-ajustés)
+- **0355 (option A « phase-split ») = NO-OP confirmé** (evalA vs eval0 DIRECT = **0.5 exact**, pjtw byte-identiques).
+  CAUSE (⚠️ VIGILANCE, à ne jamais reproduire) : le chemin `--scan-eval` **IGNORE `--phase-split`** et `--tempo-stage`
+  **ÉCRASE** `--phase-lo/hi` → les deux arms étaient la MÊME config. Pour vraiment varier la rampe : `JASS_PHASE_LO/HI`
+  (build) ↔ `--phase-lo/--phase-hi` (train) **SANS tempo**, 2 binaires distincts. → refait proprement en **0358**.
+- **0356/0357 (option B, WDL logistique = recette Scan) = PIRE.** Sur data forte (0328 Scan-self-play) ~majorité de
+  nulles → cible WDL≈0.5 → éval **plate** (corr ~0 vs Scan). La **distillation de score** reste supérieure pour notre
+  setup (signal de score dense ; WDL dégénéré sur self-play fort). → branche WDL-sur-data-forte morte.
+
+## ⭐ NEXT STEPS — fine-tuning du fit (briques/réglages linéaires) puis verdict plafond
+1. **0358 (C) — rampe de phase finale-nette 8/24 vs legacy 0/40** (piece-count, SANS tempo, 2 binaires) :
+   sépare vraiment les banques mg/eg pour spécialiser la finale. Jugé vs Scan d9, 270 p/arm. evalC > eval0 → baker.
+2. **0359 (F) — jeu LEAN 8 patterns (= Scan) vs enrichi 32** : on est un SURENSEMBLE de Scan (32 ⊃ 8, hash=3^12=aucun) ;
+   test si nos 24 patterns enrichis **sur-paramètrent** la finale clairsemée. Jugé vs Scan d9, 216 p/arm. F > 32 → baker 8.
+3. **Si 0358 ET 0359 ≈ (dans le bruit)** → **plafond pratique du fit linéaire** posé : seul le **pivot NN** (boucle
+   vertueuse + apprentissage de représentation) peut dépasser. **MLP boîte-noire reste INTERDIT** jusqu'à ce verdict.
+- ✅ **Drawish (`JASS_DRAWISH_SCALING`) = NEUTRE en jeu** (0353, 270 p) — testé, codé, défaut 0, NE PAS baker (cf §drawish).
 
 ## Jobs en cours
-- **cpx62** : **0350** (co-évolution d14 CONCLUSIVE — eval1 vs eval0 direct + vs Scan).
-- **ccx33** : libre (0349 ✅).
+- **cpx62** : **0358** (C — phase-split finale PROPRE : rampe 8/24 vs 0/40, vs Scan d9).
+- **ccx33** : **0359** (F — jeu LEAN 8 patterns vs enrichi 32, vs Scan d9).
 - **PC perso** : éteint.
