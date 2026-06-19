@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0356-logistic-wdl",
+  "script": "jobs/queue/ccx33-0356-logistic-wdl.sh",
+  "pid": 2523106,
+  "started_at": "2026-06-19T15:56:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
