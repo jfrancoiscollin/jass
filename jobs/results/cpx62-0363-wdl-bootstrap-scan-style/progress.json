@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0363-wdl-bootstrap-scan-style",
-  "snapshot_at": "2026-06-19T19:08:09+00:00",
+  "snapshot_at": "2026-06-19T19:13:13+00:00",
   "started_at": "2026-06-19T18:26:06+00:00",
-  "elapsed_seconds": 2523,
+  "elapsed_seconds": 2827,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,7 +14,7 @@
     },
     {
       "name": "cumulative.jnnw",
-      "size_bytes": 79800008
+      "size_bytes": 91200008
     },
     {
       "name": "gen0.pjtw",
@@ -137,12 +137,32 @@
       "size_bytes": 136049876
     },
     {
+      "name": "gen7-direct.log",
+      "size_bytes": 359
+    },
+    {
       "name": "gen7-train.log",
-      "size_bytes": 0
+      "size_bytes": 1447
+    },
+    {
+      "name": "gen7-vs.log",
+      "size_bytes": 10342
     },
     {
       "name": "gen7.feat",
       "size_bytes": 1008000012
+    },
+    {
+      "name": "gen7.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "gen8-train.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "gen8.feat",
+      "size_bytes": 1152000012
     },
     {
       "name": "mini.jnnw",
@@ -603,7 +623,71 @@
     {
       "name": "sp7.9.log",
       "size_bytes": 1014
+    },
+    {
+      "name": "sp8.1.log",
+      "size_bytes": 1014
+    },
+    {
+      "name": "sp8.10.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.11.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.12.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.13.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.14.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.15.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.16.log",
+      "size_bytes": 1017
+    },
+    {
+      "name": "sp8.2.log",
+      "size_bytes": 1014
+    },
+    {
+      "name": "sp8.3.log",
+      "size_bytes": 1013
+    },
+    {
+      "name": "sp8.4.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp8.5.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp8.6.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp8.7.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp8.8.log",
+      "size_bytes": 1015
+    },
+    {
+      "name": "sp8.9.log",
+      "size_bytes": 1014
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       42:03  0.0  0.0 bash\n3345772 3345770       42:03  0.0  0.0 bash\n3347923 3345772       04:45  899 31.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3345770       1       47:07  0.0  0.0 bash\n3345772 3345770       47:07  0.0  0.0 bash\n3348239 3345772       00:44  600 32.7 python3\n"
 }
