@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0351-drawish-test",
-  "snapshot_at": "2026-06-19T13:19:12+00:00",
+  "snapshot_at": "2026-06-19T13:24:25+00:00",
   "started_at": "2026-06-19T11:37:24+00:00",
-  "elapsed_seconds": 6108,
+  "elapsed_seconds": 6421,
   "artefacts": [
     {
       "name": "ab.log",
@@ -29,5 +29,5 @@
       "size_bytes": 1347
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2514320       1    01:41:48  0.0  0.0 bash\n2514322 2514320    01:41:48  0.0  0.0 bash\n2514974 2514322    01:39:46 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2514320       1    01:47:01  0.0  0.0 bash\n2514322 2514320    01:47:01  0.0  0.0 bash\n2514974 2514322    01:44:59 99.9  0.5 jass\n"
 }
