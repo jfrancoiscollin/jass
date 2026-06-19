@@ -228,17 +228,33 @@ struct Searcher {
     // handcrafted eval if none).
     int eval_leaf(const Position& pos, int ply) const noexcept {
         BD_TIME(eval);
+        int s;
         if (mlpq_nnue) {
             const auto& acc = (pos.side_to_move() == Color::White)
                 ? accumulators[ply].white
                 : accumulators[ply].black;
-            return mlpq_nnue->evaluate_with_accumulator(pos, acc.data.data());
-        }
-        if (scan_nnue) {
-            return scan_nnue->evaluate_with_idx(
+            s = mlpq_nnue->evaluate_with_accumulator(pos, acc.data.data());
+        } else if (scan_nnue) {
+            s = scan_nnue->evaluate_with_idx(
                 pos, scan_accs[static_cast<std::size_t>(ply)].idx.data());
+        } else if (nnue) {
+            s = nnue->evaluate(pos);
+        } else {
+            return evaluate(pos);  // handcrafted: drawish already applied inside evaluate()
         }
-        return nnue ? nnue->evaluate(pos) : evaluate(pos);
+        // Scan's drawish-material scaling on the NETWORK leaf (the pattern eval can't
+        // learn this localized non-linearity). Runtime-gated (params.drawish_scaling,
+        // default 0) so it can be A/B'd sensitively via --benchmark-search-params.
+        // Winner ≤3 pieces → ÷8 ; equal kings & |Δmen|≤1 → ÷2.
+        if (params.drawish_scaling) {
+            const int nwm = popcount(pos.white_men()), nwk = popcount(pos.white_kings());
+            const int nbm = popcount(pos.black_men()), nbk = popcount(pos.black_kings());
+            const bool near_equal = (nwk == nbk) && ((nwm > nbm ? nwm - nbm : nbm - nwm) <= 1);
+            const int sb = (pos.side_to_move() == Color::Black) ? s : -s;  // black-POV
+            if (sb > 0 && nwk != 0) { if (nbm + nbk <= 3) s /= 8; else if (near_equal) s /= 2; }
+            else if (sb < 0 && nbk != 0) { if (nwm + nwk <= 3) s /= 8; else if (near_equal) s /= 2; }
+        }
+        return s;
     }
 
     // Populate `accumulators[ply+1]` to reflect `pos_after` given that
