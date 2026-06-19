@@ -1,0 +1,49 @@
+{
+  "job_id": "ccx33-0342-lmp-rfp-confirm",
+  "snapshot_at": "2026-06-19T05:33:10+00:00",
+  "started_at": "2026-06-19T05:28:09+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26226
+    },
+    {
+      "name": "c-lmp5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-lmp5_rfp7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-lmp5_rfp7_h.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "c-rfp7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1050
+    },
+    {
+      "name": "dump.log",
+      "size_bytes": 113
+    },
+    {
+      "name": "e.feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "eval.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "train.log",
+      "size_bytes": 1353
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2492187       1       05:01  0.0  0.0 bash\n2492189 2492187       05:01  0.0  0.0 bash\n2492874 2492189       02:56 99.9  0.5 jass\n2492875 2492189       02:56 99.9  0.5 jass\n2492876 2492189       02:56  100  0.5 jass\n2492877 2492189       02:56 99.9  0.5 jass\n"
+}
