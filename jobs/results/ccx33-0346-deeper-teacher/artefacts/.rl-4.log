@@ -1,0 +1,2 @@
+input : /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/sub.jnnw (150000 records, processing 18750 from offset 75000, drop_skipped=True)
+wrote /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/.rl-4.jnnw (18750 records written, 0 skipped / 18750 processed)

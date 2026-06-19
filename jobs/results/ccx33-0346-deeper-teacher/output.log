@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] relabel Scan d12 150000 (×8, dominant): ≈ 130 min
+  [preflight] train: 2 × 150000 lignes @ 4min/M ≈ 1.2 min
+  [preflight] matchs depth-égale vs Scan (rapide): ≈ 30 min
+  [preflight] TOTAL estimé ≈ 165.2 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (combo baké) ===
+=== sous-échantillon 150000 (déjà d9) ===
+sub 150000 / 236018
+=== relabel Scan d12 (teacher plus profond) ===
+  [relabel] 150000 positions, 8 shards × ~18750 (Scan depth 12)
+  [relabel] mergé 150000 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/sub-d12.jnnw
+=== train éval d9 (baseline) + d12 (teacher profond), mêmes positions ===
+=== juge à profondeur égale (éval pure) vs Scan d9 ===
+  d9 : depth9 vs Scan = 0.083
+  d12 : depth9 vs Scan = 0.028
+
+==========================================================
+   ccx33-0346 — teacher d12 vs d9 (éval pure, depth9 vs Scan, 108 parties)
+----------------------------------------------------------
+   éval d9  (teacher d9 ) : 0.083
+   éval d12 (teacher d12) : 0.028
+----------------------------------------------------------
+   d12 > d9 → teacher plus profond rapproche l'éval. ≈ → plafond de distillation.
+==========================================================
