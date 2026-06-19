@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0374-virtuous-loop-deep12",
-  "snapshot_at": "2026-06-19T23:19:55+00:00",
+  "snapshot_at": "2026-06-19T23:25:05+00:00",
   "started_at": "2026-06-19T22:36:47+00:00",
-  "elapsed_seconds": 2588,
+  "elapsed_seconds": 2898,
   "artefacts": [
     {
       "name": "build.log",
@@ -158,7 +158,7 @@
     },
     {
       "name": "sp3.1.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 205202
     },
     {
       "name": "sp3.1.log",
@@ -166,7 +166,7 @@
     },
     {
       "name": "sp3.2.jnnw",
-      "size_bytes": 106706
+      "size_bytes": 213410
     },
     {
       "name": "sp3.2.log",
@@ -174,7 +174,7 @@
     },
     {
       "name": "sp3.3.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 205202
     },
     {
       "name": "sp3.3.log",
@@ -182,7 +182,7 @@
     },
     {
       "name": "sp3.4.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 196994
     },
     {
       "name": "sp3.4.log",
@@ -190,7 +190,7 @@
     },
     {
       "name": "sp3.5.jnnw",
-      "size_bytes": 106706
+      "size_bytes": 213410
     },
     {
       "name": "sp3.5.log",
@@ -198,7 +198,7 @@
     },
     {
       "name": "sp3.6.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 205202
     },
     {
       "name": "sp3.6.log",
@@ -206,7 +206,7 @@
     },
     {
       "name": "sp3.7.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 213410
     },
     {
       "name": "sp3.7.log",
@@ -214,12 +214,12 @@
     },
     {
       "name": "sp3.8.jnnw",
-      "size_bytes": 98498
+      "size_bytes": 213410
     },
     {
       "name": "sp3.8.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2534719       1       43:08  0.0  0.0 bash\n2534721 2534719       43:08  0.0  0.0 bash\n2536554 2534721       05:07 99.9  0.5 jass\n2536555 2534721       05:07 99.9  0.5 jass\n2536556 2534721       05:07 99.9  0.5 jass\n2536557 2534721       05:07 99.9  0.5 jass\n2536558 2534721       05:07 99.9  0.5 jass\n2536559 2534721       05:07 99.9  0.5 jass\n2536560 2534721       05:07 99.9  0.5 jass\n2536561 2534721       05:07 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2534719       1       48:18  0.0  0.0 bash\n2534721 2534719       48:18  0.0  0.0 bash\n2536554 2534721       10:17 99.9  0.5 jass\n2536555 2534721       10:17 99.9  0.5 jass\n2536556 2534721       10:17 99.9  0.5 jass\n2536557 2534721       10:17 99.9  0.5 jass\n2536558 2534721       10:17 99.9  0.5 jass\n2536559 2534721       10:17 99.9  0.5 jass\n2536560 2534721       10:17 99.9  0.5 jass\n2536561 2534721       10:17 99.9  0.5 jass\n"
 }
