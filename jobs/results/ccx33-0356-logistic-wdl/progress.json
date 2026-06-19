@@ -1,0 +1,41 @@
+{
+  "job_id": "ccx33-0356-logistic-wdl",
+  "snapshot_at": "2026-06-19T16:01:55+00:00",
+  "started_at": "2026-06-19T15:56:45+00:00",
+  "elapsed_seconds": 310,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26514
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1050
+    },
+    {
+      "name": "direct.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "e0.log",
+      "size_bytes": 1346
+    },
+    {
+      "name": "eA.log",
+      "size_bytes": 1398
+    },
+    {
+      "name": "eval0.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "evalB.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "feat",
+      "size_bytes": 113288652
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2523106       1       05:09  0.0  0.0 bash\n2523108 2523106       05:09  0.0  0.0 bash\n2523727 2523108       00:59  100  0.9 jass\n"
+}
