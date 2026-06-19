@@ -1,0 +1,7 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] matches: 72 parties × 1.0s × ~150 plies ≈ 180.0 min
+  [preflight] matches: 72 parties × 1.0s × ~150 plies ≈ 180.0 min
+  [preflight] TOTAL estimé ≈ 365.0 min  (cap 360 min)
+  [preflight] ABORT — estimé > cap. Réduis pairs/conditions/max-plies/n_models,
+  [preflight]   ou relance avec PREFLIGHT_FORCE=1 (ou PREFLIGHT_CAP_MIN plus haut) si c'est voulu.
