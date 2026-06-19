@@ -1,0 +1,30 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] relabel Scan d2+d9 20000 (×16) + corrélation: ≈ 80 min
+  [preflight] TOTAL estimé ≈ 85.0 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train éval (la même qu'on évalue partout) ===
+=== set de test FORT indépendant : 20000 positions du corpus 0328 ===
+test 20000 / 1193458
+=== éval-jass sur le test (rewrite-scores avec le pjtw) ===
+=== éval-Scan d2 (≈ statique) et d9 (cible) ===
+  [relabel] 20000 positions, 16 shards × ~1250 (Scan depth 2)
+  [relabel] mergé 16668 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0347-eval-agreement/artefacts.src/scan_d2.jnnw
+  [relabel] 20000 positions, 16 shards × ~1250 (Scan depth 9)
+  [relabel] mergé 16668 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0347-eval-agreement/artefacts.src/scan_d9.jnnw
+=== ACCORD éval-jass vs éval-Scan (Pearson/Spearman/RMSE, par phase) ===
+n=16668
+  vs Scan d2 (statique): pearson=+0.012  spearman=+0.008  rmse=675
+      <=7p    n= 4640  pearson=+0.006
+      8-15p   n= 3374  pearson=+0.031
+      16-25p  n= 3618  pearson=+0.007
+      26+p    n= 5033  pearson=-0.002
+  vs Scan d9 (cible)   : pearson=+0.009  spearman=+0.007  rmse=1337
+      <=7p    n= 4640  pearson=+0.006
+      8-15p   n= 3374  pearson=+0.007
+      16-25p  n= 3618  pearson=+0.021
+      26+p    n= 5033  pearson=+0.008
+==========================================================
+  pearson/spearman ÉLEVÉ (>0.9) → le linéaire FITTE Scan → gap=erreurs fines (capacité).
+  BAS / chute par phase → le linéaire NE PEUT PAS fitter Scan = plafond linéaire (patterns/capacité).
+==========================================================
