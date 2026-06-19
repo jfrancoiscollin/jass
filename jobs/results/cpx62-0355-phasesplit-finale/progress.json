@@ -1,0 +1,45 @@
+{
+  "job_id": "cpx62-0355-phasesplit-finale",
+  "snapshot_at": "2026-06-19T16:00:03+00:00",
+  "started_at": "2026-06-19T15:54:31+00:00",
+  "elapsed_seconds": 332,
+  "artefacts": [
+    {
+      "name": "build.log",
+      "size_bytes": 26878
+    },
+    {
+      "name": "cmake.log",
+      "size_bytes": 1048
+    },
+    {
+      "name": "direct.log",
+      "size_bytes": 341
+    },
+    {
+      "name": "e0.log",
+      "size_bytes": 1355
+    },
+    {
+      "name": "eA.log",
+      "size_bytes": 1355
+    },
+    {
+      "name": "eval0.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "evalA.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "vs0.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3337424       1       05:31  0.0  0.0 bash\n3337426 3337424       05:31  0.0  0.0 bash\n3338068 3337426       01:16  9.8  0.0 python3\n3338071 3338068       01:16 54.0  0.5 jass\n3338073 3338068       01:16 37.0  0.9 scan_linux\n3338076 3338068       01:16  1.1  0.0 jass\n"
+}
