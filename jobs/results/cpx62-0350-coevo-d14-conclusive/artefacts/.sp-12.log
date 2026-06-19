@@ -1,0 +1,11 @@
+gen-data-wdl: n=17500 out=/root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/.sp-12.jnnw eval_depth=10 play_depth=14 max_plies=200 seed=7112 nnue=/root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/eval0.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1828 / 17500 positions
+  played 100 games, 3875 / 17500 positions
+  played 150 games, 5776 / 17500 positions
+  played 200 games, 7536 / 17500 positions
+  played 250 games, 9368 / 17500 positions
+  played 300 games, 11213 / 17500 positions
+  played 350 games, 12966 / 17500 positions
+  played 400 games, 14835 / 17500 positions
+  played 450 games, 16780 / 17500 positions
+wrote 17500 WDL records to /root/jass/jobs/results/cpx62-0350-coevo-d14-conclusive/artefacts.src/.sp-12.jnnw
