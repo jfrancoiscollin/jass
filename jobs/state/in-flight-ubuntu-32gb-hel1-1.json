@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0373-virtuous-loop-deep",
+  "script": "jobs/queue/cpx62-0373-virtuous-loop-deep.sh",
+  "pid": 3354408,
+  "started_at": "2026-06-19T22:36:54+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
