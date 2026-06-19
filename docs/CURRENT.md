@@ -185,6 +185,8 @@ pin **`JASS_PATTERNS_DIR`** (le trainer la lit, reset-proof), (3) garde-fou : ab
 PIRE** → ajouter du jass-self-play dégradait (cohérent 0327 : jass-self-play faible/dilue).
 
 ## 🔄 PIVOT STRATÉGIQUE (2026-06-19) — on ne se compare PLUS à Scan ; on tune la boucle virtuelle
+> 📘 **Système actif documenté en détail → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)** (recette, débit, pipeline distribué, pièges).
+
 **Directive JFC** : tant qu'on n'a pas convergé, vs-Scan = forcément perdant et démoralisant → **on se juge
 UNIQUEMENT SOI-MÊME** (DIRECT eval-vs-eval). Scan ne ressort qu'**au plateau**. On a tous les ingrédients (archi =
 surensemble/égal à Scan, recette WDL itérée). Verdicts qui mènent là :
