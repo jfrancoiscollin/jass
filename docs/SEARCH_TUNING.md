@@ -31,10 +31,21 @@
 | 4 | Captures non ordonnées (`return 0`, l.318) | Mineur (captures forcées, toutes longueur max) — **écarté**. | ✂️ |
 | 5 | Éval → ordering | Une éval plus nette améliore l'ordering → l'axe éval reste *additif*. | (phase 2) |
 
-### Prochain sweep (quand une box se libère) — candidats à temps fixe, vs combo baké
-`lmp_max_depth=4/5` · `lmr_hist_div=2000/4000` · `rfp_max_depth=7,rfp_margin=70` · les stacks
-(lmp5+rfp7, lmr_hist+rfp7, lmp5+lmr_hist). Puis valider le meilleur **vs Scan** via
-`calibrate_vs_scan --jass-search-params "<combo final>"` (un seul build, le flag 2026-06-18).
+## ⛔ Pistes TESTÉES et MORTES — NE PAS re-tester (2026-06-18)
+| Piste | Verdict | Preuve |
+|---|---|---|
+| **Agrandir la TT** (>16 Mo) | ❌ mort | `--tt-mb` testé : à temps de match (~100-400k nœuds/search) 16 Mo n'est même pas pleine ; à 1,57M nœuds, 256 Mo = **−0,3 % nœuds**, même profondeur. Peu de transpositions en draughts (faible branchement). |
+| **Optimiser la movegen captures** (table man-jump précalculée `[case][dir]={over,land}`) | ❌ mort (0 gain) | Implémentée + perft-vérifiée (perft9=35264, perft11=1 666 207 133, nodes identiques) : **0,5966 s vs 0,5925 s baseline** = bruit. La DFS des rafles n'est PAS le goulot ; `neighbour()` déjà optimisé par le compilo. Le « movegen_capture 15,5 % » = détection par-nœud (`reach_all_dirs`, O(1), irréductible) + récursion. **Reverté.** |
+| **Captures ordonnées** (promotion/rois d'abord) | ✂️ écarté | Captures forcées, toutes longueur max → peu discriminant (l.318). |
+| **Prunings marginaux SUR le combo** (probcut, iid, conthist) | ❌ ne stackent pas | 0334/0335/0336 + sweep local hc : ~0.50 vs le combo. probcut chevauche razor ; le combo a déjà pris le gain de pruning. |
+| **NPS via l'éval** | ❌ non pertinent | profil `--search-profile` : éval = **3,2 %** du temps/nœud (déjà SIMD). Le NPS n'est pas limité par l'éval. |
+
+> **Leçon générale (NPS)** : la movegen est lean, l'éval SIMD, la TT inutile → **le NPS est une traîne à faible plafond**. Le gros levier recherche (combo multicut+razor) est PRIS. Ne pas s'enliser ; le prochain grand levier = **éval/data (Phase 2/3)**.
+
+### Sweep en cours (juge le RESTE des candidats) — vs combo baké, temps fixe
+`lmp_max_depth=4/5` · `lmr_hist_div=2000/4000` · `rfp_max_depth=7,rfp_margin=70` · stacks (lmp5+rfp7…).
+0340/0342 (pattern) tranchent ; le meilleur → **vs Scan** via `calibrate_vs_scan --jass-search-params`
+(0343, un seul build). Si tout ≈0.5 → combo final = **multicut+razor** seul (déjà baké).
 
 ### Infra de tuning (2026-06-18)
 - `jass --search-params "k=v,…"` : règle la recherche du moteur HUB sans rebuild.
