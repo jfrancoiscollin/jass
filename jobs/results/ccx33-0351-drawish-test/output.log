@@ -1,0 +1,18 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] A/B drawish self-play 90p + vs Scan depth-égale: ≈ 110 min
+  [preflight] TOTAL estimé ≈ 115.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train éval ===
+=== (A) self-play SENSIBLE : drawish_scaling=1 vs 0 (même éval, 700ms, 90 parties) ===
+=== (B) vs Scan profondeur-égale d9 : drawish ON vs baseline ===
+
+==========================================================
+   ccx33-0351 — DRAWISH-SCALING en jeu (la non-linéarité de Scan oubliée)
+----------------------------------------------------------
+   (A) self-play drawish=1 vs drawish=0 : A-rate=0.522222   <-- métrique sensible
+   (B) vs Scan d9 : drawish OFF=0.028   drawish ON=0.139
+----------------------------------------------------------
+   A-rate > 0.55 net → la brique drawish AIDE → la baker (drawish_scaling=1 par défaut).
+   ≈0.5 → la non-linéarité ne suffit pas → passer aux résidus finale + diff source Scan.
+==========================================================
