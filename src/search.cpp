@@ -832,6 +832,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     const bool is_pv_node = (beta - alpha) > 1;
 
     int move_idx = 0;
+    // Quiet moves actually searched (for the history malus on a beta cutoff).
+    std::array<Move, 64> quiets_searched;
+    int n_quiets_searched = 0;
     for (const auto& m : moves) {
         // LMP : skip late quiet moves at shallow non-PV nodes. When the
         // improving heuristic is on and we are NOT improving, prune one step
@@ -901,6 +904,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
         }
 
+        // Record searched quiet moves so a later cutoff can malus the ones that
+        // were tried and failed (history malus). Captures are never tracked.
+        if (!m.is_capture() && n_quiets_searched < static_cast<int>(quiets_searched.size()))
+            quiets_searched[static_cast<std::size_t>(n_quiets_searched++)] = m;
+
         if (score > best) {
             best      = score;
             best_move = m;
@@ -926,6 +934,20 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                     h += (params.history_max > 0)
                        ? hbonus - h * hbonus / params.history_max
                        : hbonus;
+                }
+                // History malus (opt-in) : penalise the quiet moves that were
+                // tried before this cutoff and failed, so they sink in the
+                // ordering. Same gravity rule, with a negative delta.
+                if (params.hist_malus > 0) {
+                    const int hmal = hbonus * params.hist_malus / 100;
+                    for (int qi = 0; qi < n_quiets_searched; ++qi) {
+                        const Move& qm = quiets_searched[static_cast<std::size_t>(qi)];
+                        if (qm == m) continue;  // the cutoff move got the bonus
+                        int& h = history[qm.from][qm.to];
+                        h += (params.history_max > 0)
+                           ? -hmal - h * hmal / params.history_max
+                           : -hmal;
+                    }
                 }
                 // Countermove : record `m` as the best response to the
                 // opponent's previous move (if any). Stored regardless
