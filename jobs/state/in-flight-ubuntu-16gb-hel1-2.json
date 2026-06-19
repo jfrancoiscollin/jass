@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0346-deeper-teacher",
+  "script": "jobs/queue/ccx33-0346-deeper-teacher.sh",
+  "pid": 2510865,
+  "started_at": "2026-06-19T10:29:52+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
