@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0343-vs-scan-robust",
-  "snapshot_at": "2026-06-19T08:42:03+00:00",
+  "snapshot_at": "2026-06-19T08:47:23+00:00",
   "started_at": "2026-06-19T05:40:54+00:00",
-  "elapsed_seconds": 10869,
+  "elapsed_seconds": 11189,
   "artefacts": [
     {
       "name": "build.log",
@@ -41,5 +41,5 @@
       "size_bytes": 5565
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3317457       1    03:01:08  0.0  0.0 bash\n3317459 3317457    03:01:08  0.0  0.0 bash\n3322896 3317459    01:27:39  0.2  0.0 python3\n3322899 3322896    01:27:39 48.5  0.5 jass\n3322902 3322896    01:27:39 51.3  0.9 scan_linux\n3322905 3322896    01:27:39  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3317457       1    03:06:29  0.0  0.0 bash\n3317459 3317457    03:06:29  0.0  0.0 bash\n3322896 3317459    01:33:00  0.2  0.0 python3\n3322899 3322896    01:33:00 48.5  0.5 jass\n3322902 3322896    01:32:59 51.3  0.9 scan_linux\n3322905 3322896    01:32:59  0.0  0.0 jass\n"
 }
