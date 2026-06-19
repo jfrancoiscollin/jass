@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0352-residual-analysis",
-  "script": "jobs/queue/cpx62-0352-residual-analysis.sh",
-  "pid": 3333275,
-  "started_at": "2026-06-19T13:41:07+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
