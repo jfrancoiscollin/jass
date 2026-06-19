@@ -1,0 +1,20 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] matches: 54 parties × 1.0s × ~150 plies ≈ 135.0 min
+  [preflight] matches: 54 parties × 1.0s × ~150 plies ≈ 135.0 min
+  [preflight] TOTAL estimé ≈ 275.0 min  (cap 360 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée (UN seul build — flag --jass-search-params) ===
+=== train éval ===
+=== ARM A : combo baké vs Scan (mt1.0, 54 parties) ===
+=== ARM B : combo + lmp_max_depth=5,rfp_max_depth=7,rfp_margin=70 vs Scan (même build, --jass-search-params) ===
+
+==========================================================
+   cpx62-0341 — combo (+lmp5/rfp7 ?) vs Scan, mt1.0, 54 parties/bras
+----------------------------------------------------------
+   ARM A combo baké        : rate=0.111  Elo=-361
+   ARM B combo+lmp5+rfp7   : rate=0.167  Elo=-280
+----------------------------------------------------------
+   Rappel : baseline sans combo = 0.097 ; combo (0338, 36p) = 0.139.
+   B > A nettement → baker lmp5+rfp7. A solide > 0.097 → le combo tient.
+==========================================================
