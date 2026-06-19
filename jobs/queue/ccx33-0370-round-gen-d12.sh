@@ -16,7 +16,7 @@ CHAMP_PATH=jobs/results/cpx62-0369-merge-champion/artefacts/champion.pjtw
 preflight_build 1; preflight_note "gen d12 cap relevé + commit shard" 60; preflight_check
 
 echo "=== récupère le champion (0369) ==="
-ok=0; for i in $(seq 1 20); do git fetch origin main >/dev/null 2>&1 || true
+ok=0; for i in $(seq 1 120); do git fetch origin main >/dev/null 2>&1 || true
   git cat-file -e "origin/main:$CHAMP_PATH" 2>/dev/null && { ok=1; break; }; echo "  attente champion 0369 ($i/20)"; sleep 30; done
 [ "$ok" = 1 ] || { echo "ABORT: champion 0369 absent"; exit 4; }
 git show "origin/main:$CHAMP_PATH" > "$ART/champion.pjtw"

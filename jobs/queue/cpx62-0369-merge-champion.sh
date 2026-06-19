@@ -21,7 +21,7 @@ GEN66=$(ls "$SRC66"/gen*.pjtw 2>/dev/null | sort -V | tail -1); [ -n "$GEN66" ] 
 echo "  0373 (d10) : data=$SRC66/cumulative.jnnw  éval=$GEN66"
 
 echo "=== attente de la data 0374 committée par 0368 ==="
-ok=0; for i in $(seq 1 30); do
+ok=0; for i in $(seq 1 120); do
   git fetch origin main >/dev/null 2>&1 || true
   if git cat-file -e "origin/main:$H0368/0374-cumulative.jnnw" 2>/dev/null; then ok=1; break; fi
   echo "  ...0368 pas encore committé ($i/30)"; sleep 30

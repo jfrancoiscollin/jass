@@ -20,7 +20,7 @@ preflight_build 1; preflight_train 2500000 1; preflight_note "gen d10 cap relev�
 
 echo "=== récupère champion + pool (0369) et attend le shard d12 (0370) ==="
 fetch_one(){ local p="$1" out="$2"; local ok=0
-  for i in $(seq 1 24); do git fetch origin main >/dev/null 2>&1 || true
+  for i in $(seq 1 120); do git fetch origin main >/dev/null 2>&1 || true
     git cat-file -e "origin/main:$p" 2>/dev/null && { ok=1; break; }; echo "  attente $p ($i/24)"; sleep 30; done
   [ "$ok" = 1 ] || { echo "ABORT: $p absent"; exit 4; }; git show "origin/main:$p" > "$out"; }
 fetch_one "$CHAMP_PATH" "$ART/champion.pjtw"

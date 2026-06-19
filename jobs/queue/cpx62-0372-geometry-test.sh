@@ -21,7 +21,7 @@ POOL_PATH="${POOL_PATH:-jobs/results/cpx62-0371-round-refit/artefacts/pooled.jnn
 preflight_build 2; preflight_train 2000000 2; preflight_note "2 évals color-fold (32 vs 8) + match cross-arch" 60; preflight_check
 
 echo "=== récupère le pool de la boucle ($POOL_PATH) ==="
-ok=0; for i in $(seq 1 20); do git fetch origin main >/dev/null 2>&1 || true
+ok=0; for i in $(seq 1 120); do git fetch origin main >/dev/null 2>&1 || true
   git cat-file -e "origin/main:$POOL_PATH" 2>/dev/null && { ok=1; break; }; echo "  attente pool ($i/20)"; sleep 30; done
 [ "$ok" = 1 ] || { echo "ABORT: pool $POOL_PATH absent (la boucle a-t-elle tourné ?)"; exit 4; }
 git show "origin/main:$POOL_PATH" > "$ART/pooled.jnnw"
