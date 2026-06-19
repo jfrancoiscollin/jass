@@ -164,7 +164,19 @@ une **invariance par translation que Scan N'UTILISE PAS** (il garde ses 4 colonn
 seule, 8 patterns distincts). À 32 patterns full-fold reste OK (géométrie diverse, ~1M). **0359 "8=32" est CONFONDU**
 (son arm-8 plié à 67k). **0361 tué** pour ça, relancé **0362** (color-fold).
 
+## Recette Scan = self-play + WDL + logistique, ITÉRÉ, DEPUIS ZÉRO (2026-06-19)
+Source des WDL de Scan = **son propre self-play depuis zéro** (matériel-seul « 1 dame ≈ 3 pions »), label = **résultat
+réel** de la partie, régression logistique, itéré (lignée Buro/GLEM → Letouzey → Gilbert). Pas de prof, pas de corpus
+externe. **Pourquoi ça marche malgré la drawishness** : départ FAIBLE → parties DÉCISIVES → signal WDL fort ; la
+drawishness ne mord qu'une fois fort (raffinement). **Nos échecs WDL** (0356/0357) partaient du **sommet drawish**
+(corpus fort) → cible ≈0.5 dégénérée. **Distinction** : WDL d'une eval faible NE collapse PAS (résultat = vérité
+externe qui corrige) ; TD-leaf d'une eval faible collapse (0.056, auto-distillation). Deux boucles à ne pas confondre :
+**A = apprentissage de représentation** (AlphaZero/NNUE, features apprises) = IMPOSSIBLE en linéaire ; **B = optim des
+poids sur features FIXES** (Scan/Texel) = possible, plafond = best-linéaire. Distillation (0362) = atteindre Scan ;
+WDL-from-scratch (0363) = égaler Scan sans prof (gourmand en volume) ; **dépasser** Scan = forcément A = NNUE.
+
 ## Jobs en cours
-- **cpx62** : libre. [0358 C ✅ plat, 0360 rois ✅ corr finale men≈king (0.46/0.45) → rois ≠ levier finale]
-- **ccx33** : **0362** (boucle distillation Scan LEAN 8 **color-fold** = capacité Scan ; 0361 full-fold tué).
-- **PC perso** : éteint.
+- **cpx62** : **0363** (bootstrap WDL façon Scan : seed matériel-seul → self-play décisif egdb → logistique, itéré, gros
+  volume ; vs Scan + DIRECT). NB : 0224/0227 (prior, depuis eval embarquée) montait +175 vs hc mais plafonnait ~0 vs Scan.
+- **ccx33** : **0362** (boucle distillation Scan LEAN 8 **color-fold**).
+- **PC perso** : éteint. [0358 C ✅ plat · 0360 rois ✅ men≈king (corr 0.46/0.45) → rois ≠ levier finale]
