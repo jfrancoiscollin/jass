@@ -1,0 +1,9 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] self-play jass d14 120000 (×8, dominant): ≈ 170 min
+  [preflight] train: 1 × 120000 lignes @ 4min/M ≈ 0.5 min
+  [preflight] matchs depth-égale (rapide): ≈ 25 min
+  [preflight] TOTAL estimé ≈ 200.5 min  (cap 300 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train eval0 (l'éval courante, Scan-distillée d9) ===
+=== self-play jass à play_depth=14 avec eval0 (data FORTE), shardé ×8 ===
