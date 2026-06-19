@@ -1,0 +1,49 @@
+{
+  "job_id": "cpx62-0358-phasesplit-finale-proper",
+  "snapshot_at": "2026-06-19T16:57:38+00:00",
+  "started_at": "2026-06-19T16:52:35+00:00",
+  "elapsed_seconds": 303,
+  "artefacts": [
+    {
+      "name": "build-build-p040.log",
+      "size_bytes": 27168
+    },
+    {
+      "name": "build-build-p824.log",
+      "size_bytes": 27168
+    },
+    {
+      "name": "cmake-build-p040.log",
+      "size_bytes": 1009
+    },
+    {
+      "name": "cmake-build-p824.log",
+      "size_bytes": 1034
+    },
+    {
+      "name": "eval0.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "evalC.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "feat",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "train-eval0.pjtw.log",
+      "size_bytes": 1371
+    },
+    {
+      "name": "train-evalC.pjtw.log",
+      "size_bytes": 1369
+    },
+    {
+      "name": "vs0.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3340541       1       05:03  0.0  0.0 bash\n3340543 3340541       05:03  0.0  0.0 bash\n3341723 3340543       01:30 10.0  0.0 python3\n3341726 3341723       01:30 50.0  0.4 jass\n3341728 3341723       01:29 41.2  0.9 scan_linux\n3341731 3341723       01:29  0.8  0.0 jass\n"
+}
