@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0350-coevo-d14-conclusive",
+  "script": "jobs/queue/cpx62-0350-coevo-d14-conclusive.sh",
+  "pid": 3329922,
+  "started_at": "2026-06-19T11:17:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
