@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0345-eval-gap-ladder",
-  "snapshot_at": "2026-06-19T10:33:52+00:00",
+  "snapshot_at": "2026-06-19T10:39:03+00:00",
   "started_at": "2026-06-19T10:28:42+00:00",
-  "elapsed_seconds": 310,
+  "elapsed_seconds": 621,
   "artefacts": [
     {
       "name": "L-eq9.log",
@@ -10,6 +10,14 @@
     },
     {
       "name": "L-j10.log",
+      "size_bytes": 13967
+    },
+    {
+      "name": "L-j11.log",
+      "size_bytes": 9915
+    },
+    {
+      "name": "L-j12.log",
       "size_bytes": 0
     },
     {
@@ -37,5 +45,5 @@
       "size_bytes": 1352
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3327587       1       05:09  0.0  0.0 bash\n3327589 3327587       05:09  0.0  0.0 bash\n3328223 3327589       01:43  8.2  0.0 python3\n3328226 3328223       01:43 61.5  0.5 jass\n3328228 3328223       01:42 30.9  0.9 scan_linux\n3328231 3328223       01:42  0.9  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3327587       1       10:20  0.0  0.0 bash\n3327589 3327587       10:20  0.0  0.0 bash\n3328408 3327589       02:34  3.8  0.0 python3\n3328411 3328408       02:34 81.3  0.5 jass\n3328413 3328408       02:34 15.2  0.9 scan_linux\n3328417 3328408       02:34  0.4  0.0 jass\n"
 }
