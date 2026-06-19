@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0373-virtuous-loop-deep",
-  "snapshot_at": "2026-06-19T22:42:02+00:00",
+  "snapshot_at": "2026-06-19T22:47:03+00:00",
   "started_at": "2026-06-19T22:36:54+00:00",
-  "elapsed_seconds": 308,
+  "elapsed_seconds": 609,
   "artefacts": [
     {
       "name": "build.log",
@@ -13,7 +13,23 @@
       "size_bytes": 1048
     },
     {
+      "name": "cumulative.jnnw",
+      "size_bytes": 18240008
+    },
+    {
       "name": "gen0.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "gen1-train.log",
+      "size_bytes": 1421
+    },
+    {
+      "name": "gen1.feat",
+      "size_bytes": 230400012
+    },
+    {
+      "name": "gen1.pjtw",
       "size_bytes": 136049876
     },
     {
@@ -89,133 +105,197 @@
       "size_bytes": 122892
     },
     {
-      "name": "sp1.1.jnnw",
-      "size_bytes": 738722
-    },
-    {
       "name": "sp1.1.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.10.jnnw",
-      "size_bytes": 730514
+      "size_bytes": 1263
     },
     {
       "name": "sp1.10.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.11.jnnw",
-      "size_bytes": 722306
+      "size_bytes": 1264
     },
     {
       "name": "sp1.11.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.12.jnnw",
-      "size_bytes": 722306
+      "size_bytes": 1264
     },
     {
       "name": "sp1.12.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.13.jnnw",
-      "size_bytes": 722306
+      "size_bytes": 1263
     },
     {
       "name": "sp1.13.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.14.jnnw",
-      "size_bytes": 738722
+      "size_bytes": 1264
     },
     {
       "name": "sp1.14.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.15.jnnw",
-      "size_bytes": 738722
+      "size_bytes": 1264
     },
     {
       "name": "sp1.15.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.16.jnnw",
-      "size_bytes": 714098
+      "size_bytes": 1264
     },
     {
       "name": "sp1.16.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.2.jnnw",
-      "size_bytes": 714098
+      "size_bytes": 1264
     },
     {
       "name": "sp1.2.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.3.jnnw",
-      "size_bytes": 746930
+      "size_bytes": 1263
     },
     {
       "name": "sp1.3.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.4.jnnw",
-      "size_bytes": 746930
+      "size_bytes": 1261
     },
     {
       "name": "sp1.4.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.5.jnnw",
-      "size_bytes": 746930
+      "size_bytes": 1262
     },
     {
       "name": "sp1.5.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.6.jnnw",
-      "size_bytes": 738722
+      "size_bytes": 1262
     },
     {
       "name": "sp1.6.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.7.jnnw",
-      "size_bytes": 714098
+      "size_bytes": 1262
     },
     {
       "name": "sp1.7.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.8.jnnw",
-      "size_bytes": 738722
+      "size_bytes": 1262
     },
     {
       "name": "sp1.8.log",
-      "size_bytes": 0
-    },
-    {
-      "name": "sp1.9.jnnw",
-      "size_bytes": 722306
+      "size_bytes": 1261
     },
     {
       "name": "sp1.9.log",
+      "size_bytes": 1261
+    },
+    {
+      "name": "sp2.1.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.10.jnnw",
+      "size_bytes": 24626
+    },
+    {
+      "name": "sp2.10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.11.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.12.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.13.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.14.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.15.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.16.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.2.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.3.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.4.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.5.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.6.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.7.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.8.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp2.9.jnnw",
+      "size_bytes": 16418
+    },
+    {
+      "name": "sp2.9.log",
       "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1       05:08  0.0  0.0 bash\n3354410 3354408       05:08  0.0  0.0 bash\n3355024 3354410       04:47 99.9  0.5 jass\n3355025 3354410       04:47 99.9  0.5 jass\n3355026 3354410       04:47 99.9  0.5 jass\n3355027 3354410       04:47 99.9  0.5 jass\n3355028 3354410       04:47 99.9  0.5 jass\n3355029 3354410       04:47 99.9  0.5 jass\n3355030 3354410       04:47 99.9  0.5 jass\n3355031 3354410       04:47 99.9  0.5 jass\n3355032 3354410       04:47 99.9  0.5 jass\n3355033 3354410       04:47  100  0.5 jass\n3355034 3354410       04:47  100  0.5 jass\n3355035 3354410       04:47 99.9  0.5 jass\n3355036 3354410       04:47 99.9  0.5 jass\n3355037 3354410       04:47 99.9  0.5 jass\n3355038 3354410       04:47  100  0.5 jass\n3355039 3354410       04:47 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1       10:09  0.0  0.0 bash\n3354410 3354408       10:09  0.0  0.0 bash\n3355254 3354410       00:21 99.9  0.5 jass\n3355255 3354410       00:21 99.9  0.5 jass\n3355256 3354410       00:21 99.9  0.5 jass\n3355257 3354410       00:21 99.9  0.5 jass\n3355258 3354410       00:21 99.5  0.5 jass\n3355259 3354410       00:21 99.9  0.5 jass\n3355260 3354410       00:21 99.9  0.5 jass\n3355261 3354410       00:21 99.9  0.5 jass\n3355262 3354410       00:21 99.9  0.5 jass\n3355263 3354410       00:21 99.9  0.5 jass\n3355264 3354410       00:21 99.9  0.5 jass\n3355265 3354410       00:21 99.8  0.5 jass\n3355266 3354410       00:21 99.6  0.5 jass\n3355267 3354410       00:21 99.9  0.5 jass\n3355268 3354410       00:21 99.9  0.5 jass\n3355269 3354410       00:21 99.9  0.5 jass\n"
 }
