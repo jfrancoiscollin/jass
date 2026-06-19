@@ -1,0 +1,314 @@
+[  2%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/huffman.cpp.o
+[  6%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Re-pair/utils.cpp.o
+[  6%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/compression_tables.cpp.o
+[  8%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/Huffman/bitbuf.cpp.o
+[ 10%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/crc.cpp.o
+[ 12%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/builddb/indexing.cpp.o
+[ 14%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_common.cpp.o
+[ 17%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_dtw.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/egdb/egdb_common.h:3,
+                 from /root/egdb_intl/egdb/egdb_common.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/builddb/indexing.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/egdb/egdb_dtw.cpp:2:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 19%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_identify.cpp.o
+[ 21%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_mtc_runlen.cpp.o
+[ 23%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_open.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/egdb/egdb_mtc_runlen.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/egdb/egdb_identify.cpp:3:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/egdb/egdb_common.h:3,
+                 from /root/egdb_intl/egdb/egdb_open.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 25%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_wld_runlen.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/egdb/egdb_wld_runlen.cpp:2:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 27%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_wld_tunstall_v1.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/egdb/egdb_wld_tunstall_v1.cpp:2:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 29%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/egdb/egdb_wld_tunstall_v2.cpp.o
+[ 31%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/engine/bicoef.cpp.o
+/root/egdb_intl/egdb/egdb_mtc_runlen.cpp: In function ‘int egdb_interface::parseindexfile(DBHANDLE_MTC*, DBFILE_MTC*, int*)’:
+/root/egdb_intl/egdb/egdb_mtc_runlen.cpp:750:51: warning: ignoring return value of ‘char* fgets(char*, int, FILE*)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+  750 |                                         std::fgets(line, sizeof(line), fp);
+      |                                         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+[ 34%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/engine/bitcount.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.h:2,
+                 from /root/egdb_intl/builddb/indexing.h:4,
+                 from /root/egdb_intl/egdb/egdb_wld_tunstall_v2.cpp:2:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bitcount.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 36%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/engine/board.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bool.h:2,
+                 from /root/egdb_intl/engine/board.h:3,
+                 from /root/egdb_intl/engine/board.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+[ 38%] Building CXX object CMakeFiles/egdb_intl.dir/root/egdb_intl/engine/reverse.cpp.o
+In file included from /root/egdb_intl/egdb/platform.h:2,
+                 from /root/egdb_intl/engine/bool.h:2,
+                 from /root/egdb_intl/engine/board.h:3,
+                 from /root/egdb_intl/engine/reverse.h:2,
+                 from /root/egdb_intl/engine/reverse.cpp:1:
+/root/egdb_intl/engine/config.h:34: warning: "USE_MULTI_THREADING" redefined
+   34 | #define USE_MULTI_THREADING
+      | 
+<command-line>: note: this is the location of the previous definition
+/root/egdb_intl/egdb/egdb_wld_runlen.cpp: In function ‘int egdb_interface::parseindexfile(DBHANDLE_RUNLEN*, DBFILE_RUNLEN*, int64_t*)’:
+/root/egdb_intl/egdb/egdb_wld_runlen.cpp:1172:51: warning: ignoring return value of ‘char* fgets(char*, int, FILE*)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+ 1172 |                                         std::fgets(line, sizeof(line), fp);
+      |                                         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+/root/egdb_intl/egdb/egdb_wld_tunstall_v1.cpp: In function ‘int egdb_interface::parseindexfile(DBHANDLE_TUN_V1*, DBFILE_TUN_V1*, int64_t*)’:
+/root/egdb_intl/egdb/egdb_wld_tunstall_v1.cpp:1542:51: warning: ignoring return value of ‘char* fgets(char*, int, FILE*)’ declared with attribute ‘warn_unused_result’ [-Wunused-result]
+ 1542 |                                         std::fgets(line, sizeof(line), fp);
+      |                                         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~
+[ 40%] Linking CXX static library libegdb_intl.a
+[ 40%] Built target egdb_intl
+[ 42%] Building CXX object CMakeFiles/jass_lib.dir/src/position.cpp.o
+[ 48%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_server_client.cpp.o
+[ 48%] Building CXX object CMakeFiles/jass_lib.dir/src/movegen.cpp.o
+[ 48%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue_accumulator.cpp.o
+[ 51%] Building CXX object CMakeFiles/jass_lib.dir/src/board.cpp.o
+[ 53%] Building CXX object CMakeFiles/jass_lib.dir/src/nnue.cpp.o
+[ 57%] Building CXX object CMakeFiles/jass_lib.dir/src/eval.cpp.o
+[ 57%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_network.cpp.o
+[ 59%] Building CXX object CMakeFiles/jass_lib.dir/src/pattern_jass_bridge.cpp.o
+[ 61%] Building CXX object CMakeFiles/jass_lib.dir/src/scan_eval.cpp.o
+[ 63%] Building CXX object CMakeFiles/jass_lib.dir/pattern_jass/src/pattern.cpp.o
+[ 65%] Building CXX object CMakeFiles/jass_lib.dir/pattern_jass/src/weights.cpp.o
+[ 68%] Building CXX object CMakeFiles/jass_lib.dir/generated/nnue_default_data.cpp.o
+[ 70%] Building CXX object CMakeFiles/jass_lib.dir/src/search.cpp.o
+/root/jass/pattern_jass/src/pattern.cpp: In constructor ‘pattern_jass::{anonymous}::ReverseMap::ReverseMap()’:
+/root/jass/pattern_jass/src/pattern.cpp:28:44: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   28 |         for (int b = 0; b < 50; ++b) { off[b] = acc; acc = static_cast<std::uint16_t>(acc + cnt[b]); }
+      |                                            ^
+/root/jass/pattern_jass/src/pattern.cpp:28:97: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   28 |         for (int b = 0; b < 50; ++b) { off[b] = acc; acc = static_cast<std::uint16_t>(acc + cnt[b]); }
+      |                                                                                                 ^
+/root/jass/pattern_jass/src/pattern.cpp:31:42: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   31 |         for (int b = 0; b < 50; ++b) cur[b] = off[b];
+      |                                          ^
+/root/jass/pattern_jass/src/pattern.cpp:31:51: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   31 |         for (int b = 0; b < 50; ++b) cur[b] = off[b];
+      |                                                   ^
+/root/jass/pattern_jass/src/pattern.cpp:35:26: warning: conversion to ‘std::array<short unsigned int, 50>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   35 |                 flat[cur[b]++] = PatRef{static_cast<std::uint8_t>(p),
+      |                          ^
+/root/jass/pattern_jass/src/pattern.cpp: In function ‘void pattern_jass::update_all(Bitboard, Bitboard, Bitboard, Bitboard, std::array<unsigned int, 32>&)’:
+/root/jass/pattern_jass/src/pattern.cpp:80:45: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   80 |         for (std::uint16_t k = g_revmap.off[b]; k < g_revmap.off[b + 1]; ++k) {
+      |                                             ^
+/root/jass/pattern_jass/src/pattern.cpp:80:68: warning: conversion to ‘std::array<short unsigned int, 51>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+   80 |         for (std::uint16_t k = g_revmap.off[b]; k < g_revmap.off[b + 1]; ++k) {
+      |                                                                  ~~^~~
+/root/jass/src/pattern_network.cpp: In member function ‘bool jass::PatternNetwork::save(std::string_view, uint32_t) const’:
+/root/jass/src/pattern_network.cpp:846:31: warning: declaration of ‘n’ shadows a previous local [-Wshadow]
+  846 |             const std::size_t n = patterns_.size();
+      |                               ^
+/root/jass/src/pattern_network.cpp:814:25: note: shadowed declaration is here
+  814 |     const std::uint32_t n = static_cast<std::uint32_t>(patterns_.size());
+      |                         ^
+[ 72%] Building CXX object CMakeFiles/jass_lib.dir/src/zobrist.cpp.o
+[ 74%] Building CXX object CMakeFiles/jass_lib.dir/src/tt.cpp.o
+[ 76%] Building CXX object CMakeFiles/jass_lib.dir/src/engine.cpp.o
+[ 78%] Building CXX object CMakeFiles/jass_lib.dir/src/endgame.cpp.o
+[ 80%] Building CXX object CMakeFiles/jass_lib.dir/src/bitbase.cpp.o
+/root/jass/src/scan_eval.cpp: In function ‘std::optional<jass::scan_eval::ScanWeights> jass::scan_eval::load_scan_weights(const std::string&, std::string*)’:
+/root/jass/src/scan_eval.cpp:247:9: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  247 |         if (err) *err = "file too short"; return std::nullopt;
+      |         ^~
+/root/jass/src/scan_eval.cpp:247:43: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  247 |         if (err) *err = "file too short"; return std::nullopt;
+      |                                           ^~~~~~
+/root/jass/src/scan_eval.cpp:294:13: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+  294 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |             ^~
+/root/jass/src/scan_eval.cpp:294:64: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  294 |             if (err) *err = "v4 file too short for FM header"; return std::nullopt;
+      |                                                                ^~~~~~
+[ 82%] Building CXX object CMakeFiles/jass_lib.dir/src/egdb_bridge.cpp.o
+[ 85%] Building CXX object CMakeFiles/jass_lib.dir/src/book.cpp.o
+[ 87%] Building CXX object CMakeFiles/jass_lib.dir/src/scan_book.cpp.o
+[ 89%] Building CXX object CMakeFiles/jass_lib.dir/src/timemgr.cpp.o
+[ 91%] Building CXX object CMakeFiles/jass_lib.dir/src/tournament.cpp.o
+/root/jass/src/search.cpp: In member function ‘int jass::{anonymous}::Searcher::eval_leaf(const jass::Position&, int) const’:
+/root/jass/src/search.cpp:233:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  233 |                 ? accumulators[ply].white
+      |                                ^~~
+/root/jass/src/search.cpp:234:32: warning: conversion to ‘std::array<jass::AccumulatorPair, 66>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  234 |                 : accumulators[ply].black;
+      |                                ^~~
+[ 93%] Building CXX object CMakeFiles/jass_lib.dir/src/hub.cpp.o
+[ 95%] Linking CXX static library libjass_lib.a
+[ 95%] Built target jass_lib
+[ 97%] Building CXX object CMakeFiles/jass.dir/src/main.cpp.o
+/root/jass/src/main.cpp: In function ‘std::array<int, 5> parse_depth_by_phase(const std::string&, const char*)’:
+/root/jass/src/main.cpp:167:47: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  167 |             if (name == PHASE_NAMES[p]) { out[p] = d; known = true; break; }
+      |                                               ^
+/root/jass/src/main.cpp: In function ‘int run_gen_data_wdl_mode(int, char**)’:
+/root/jass/src/main.cpp:413:29: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  413 |             if (label_depth[p] > 0) {
+      |                             ^
+/root/jass/src/main.cpp:415:67: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  415 |                           << PHASE_NAMES[p] << ":" << label_depth[p];
+      |                                                                   ^
+/root/jass/src/main.cpp:424:37: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  424 |             if (play_depth_by_phase[p] > 0) {
+      |                                     ^
+/root/jass/src/main.cpp:426:75: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  426 |                           << PHASE_NAMES[p] << ":" << play_depth_by_phase[p];
+      |                                                                           ^
+/root/jass/src/main.cpp:603:65: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  603 |                 const int phase_ovr = label_depth[phase_index_of(popcount(pos.occupied()))];
+      |                                                   ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:683:51: warning: conversion to ‘std::array<int, 5>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+  683 |                 play_depth_by_phase[phase_index_of(popcount(e.position().occupied()))];
+      |                                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_gen_tdleaf_mode(int, char**)’:
+/root/jass/src/main.cpp:753:11: warning: conversion to ‘long long unsigned int’ from ‘uint64_t’ {aka ‘long unsigned int’} may change the sign of the result [-Wsign-conversion]
+  753 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:753:9: warning: conversion to ‘uint64_t’ {aka ‘long unsigned int’} from ‘long long unsigned int’ may change the sign of the result [-Wsign-conversion]
+  752 |     const std::uint64_t seed = (argc > 7)
+      |                                ~~~~~~~~~~
+  753 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_rewrite_scores_with_search_mode(int, char**)’:
+/root/jass/src/main.cpp:1145:61: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1145 |             std::cerr << "error: short read at record " << (start + i) << "\n";
+      |                                                             ^~~~~
+/root/jass/src/main.cpp:1155:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1155 |             std::cerr << "error: record " << (start + i) << " has invalid stm byte "
+      |                                               ^~~~~
+/root/jass/src/main.cpp:1161:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1161 |             std::cerr << "error: record " << (start + i)
+      |                                               ^~~~~
+/root/jass/src/main.cpp:1167:47: warning: conversion to ‘std::size_t’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 1167 |             std::cerr << "error: record " << (start + i)
+      |                                               ^~~~~
+/root/jass/src/main.cpp: In function ‘int run_perft_mode(int, char**)’:
+/root/jass/src/main.cpp:1306:67: warning: conversion from ‘long unsigned int’ to ‘double’ may change value [-Wconversion]
+ 1306 |                   << "   " << (s > 0 ? static_cast<std::uint64_t>(n / s) : 0)
+      |                                                                   ^
+/root/jass/src/main.cpp: In lambda function:
+/root/jass/src/main.cpp:1346:17: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1346 |                 if (!first) s += ','; first = false; s += std::to_string(q); }
+      |                 ^~
+/root/jass/src/main.cpp:1346:39: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+ 1346 |                 if (!first) s += ','; first = false; s += std::to_string(q); }
+      |                                       ^~~~~
+/root/jass/src/main.cpp: In function ‘int run_gen_egdb_wld_mode(int, char**)’:
+/root/jass/src/main.cpp:1549:11: warning: conversion to ‘long long unsigned int’ from ‘uint64_t’ {aka ‘long unsigned int’} may change the sign of the result [-Wsign-conversion]
+ 1549 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 0)) : 0xC0FFEEULL;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:1549:9: warning: conversion to ‘uint64_t’ {aka ‘long unsigned int’} from ‘long long unsigned int’ may change the sign of the result [-Wsign-conversion]
+ 1548 |     const std::uint64_t seed = (argc > 7)
+      |                                ~~~~~~~~~~
+ 1549 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 0)) : 0xC0FFEEULL;
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_egdb_mtc_regret_mode(int, char**)’:
+/root/jass/src/main.cpp:1736:11: warning: conversion to ‘long long unsigned int’ from ‘uint64_t’ {aka ‘long unsigned int’} may change the sign of the result [-Wsign-conversion]
+ 1736 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:1736:9: warning: conversion to ‘uint64_t’ {aka ‘long unsigned int’} from ‘long long unsigned int’ may change the sign of the result [-Wsign-conversion]
+ 1735 |     const std::uint64_t seed = (argc > 7)
+      |                                ~~~~~~~~~~
+ 1736 |         ? static_cast<std::uint64_t>(parse_int_or(argv[7], 1)) : 1ULL;
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_egdb_conversion_test_mode(int, char**)’:
+/root/jass/src/main.cpp:1863:11: warning: conversion to ‘long long unsigned int’ from ‘uint64_t’ {aka ‘long unsigned int’} may change the sign of the result [-Wsign-conversion]
+ 1863 |         ? static_cast<std::uint64_t>(parse_int_or(argv[8], 1)) : 1ULL;
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp:1863:9: warning: conversion to ‘uint64_t’ {aka ‘long unsigned int’} from ‘long long unsigned int’ may change the sign of the result [-Wsign-conversion]
+ 1862 |     const std::uint64_t seed = (argc > 8)
+      |                                ~~~~~~~~~~
+ 1863 |         ? static_cast<std::uint64_t>(parse_int_or(argv[8], 1)) : 1ULL;
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_depth_at_movetime_mode(int, char**)’:
+/root/jass/src/main.cpp:2727:24: warning: conversion from ‘long long int’ to ‘double’ may change value [-Wconversion]
+ 2727 |         avg_depth[s] = sum_depth / n;
+      |                        ^~~~~~~~~
+/root/jass/src/main.cpp: In function ‘int run_book_audit_mode(int, char**)’:
+/root/jass/src/main.cpp:3072:75: warning: conversion to ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 3072 |         if (ply >= static_cast<int>(ply_hist.size())) ply_hist.resize(ply + 1, 0);
+      |                                                                       ~~~~^~~
+/root/jass/src/main.cpp:3073:18: warning: conversion to ‘std::vector<long int>::size_type’ {aka ‘long unsigned int’} from ‘int’ may change the sign of the result [-Wsign-conversion]
+ 3073 |         ply_hist[ply]++;
+      |                  ^~~
+/root/jass/src/main.cpp:3128:52: warning: conversion from ‘long int’ to ‘double’ may change value [-Wconversion]
+ 3128 |                   << (static_cast<double>(edges) / internal) << " in-book children/internal\n";
+      |                                                    ^~~~~~~~
+/root/jass/src/main.cpp:3130:56: warning: conversion from ‘long int’ to ‘double’ may change value [-Wconversion]
+ 3130 |                   << (static_cast<double>(width_sum) / internal)
+      |                                                        ^~~~~~~~
+/root/jass/src/main.cpp: In lambda function:
+/root/jass/src/main.cpp:3287:61: warning: conversion from ‘long unsigned int’ to ‘int’ may change value [-Wconversion]
+ 3287 |                                        std::max<std::size_t>(1, fresh.size()));
+      |                                        ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+[100%] Linking CXX executable jass
+/root/egdb_intl/egdb/egdb_dtw.cpp: In function ‘parseindexfile’:
+/root/egdb_intl/egdb/egdb_dtw.cpp:827:69: warning: argument 1 value ‘18446744073709551615’ exceeds maximum object size 9223372036854775807 [-Walloc-size-larger-than=]
+  827 |                         dbp->subdb = new CPRSUBDB[dbp->num_subslices];
+      |                                                                     ^
+/usr/include/c++/13/new:128:26: note: in a call to allocation function ‘operator new []’ declared here
+  128 | _GLIBCXX_NODISCARD void* operator new[](std::size_t) _GLIBCXX_THROW (std::bad_alloc)
+      |                          ^
+[100%] Built target jass
