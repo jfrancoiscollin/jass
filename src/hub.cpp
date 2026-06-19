@@ -119,6 +119,10 @@ void HubFrontEnd::set_search_params(const SearchParams& p) noexcept {
     params_ = p;
 }
 
+void HubFrontEnd::set_tt_mb(std::size_t mb) {
+    engine_.resize_tt_mb(mb);
+}
+
 bool HubFrontEnd::load_book(std::string_view path) {
     return engine_.load_book(path);
 }
