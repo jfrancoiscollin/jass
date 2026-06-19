@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0353-drawish-confirm",
-  "snapshot_at": "2026-06-19T14:14:03+00:00",
+  "snapshot_at": "2026-06-19T14:20:03+00:00",
   "started_at": "2026-06-19T14:03:17+00:00",
-  "elapsed_seconds": 646,
+  "elapsed_seconds": 1006,
   "artefacts": [
     {
       "name": "build.log",
@@ -14,6 +14,10 @@
     },
     {
       "name": "d11_off.log",
+      "size_bytes": 24281
+    },
+    {
+      "name": "d11_on.log",
       "size_bytes": 0
     },
     {
@@ -37,5 +41,5 @@
       "size_bytes": 1352
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3334257       1       10:45  0.0  0.0 bash\n3334259 3334257       10:45  0.0  0.0 bash\n3335055 3334259       03:15  6.2  0.0 python3\n3335058 3335055       03:15 68.3  0.5 jass\n3335060 3335055       03:15 25.8  0.9 scan_linux\n3335063 3335055       03:14  0.7  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3334257       1       16:45  0.0  0.0 bash\n3334259 3334257       16:45  0.0  0.0 bash\n3335230 3334259       03:40  6.2  0.0 python3\n3335233 3335230       03:40 69.1  0.5 jass\n3335235 3335230       03:40 24.8  0.9 scan_linux\n3335238 3335230       03:40  0.7  0.0 jass\n"
 }
