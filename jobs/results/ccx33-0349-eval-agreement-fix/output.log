@@ -1,0 +1,27 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] relabel Scan d2+d9 20000 + corrélation alignée: ≈ 80 min
+  [preflight] TOTAL estimé ≈ 85.0 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== build + train éval ===
+=== test set 20000 (corpus 0328) ===
+=== relabel Scan d2 + d9 (chacun son sous-ensemble) ===
+  [relabel] 20000 positions, 8 shards × ~2500 (Scan depth 2)
+  [relabel] mergé 16668 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/scan_d2.jnnw
+  [relabel] 20000 positions, 8 shards × ~2500 (Scan depth 9)
+  [relabel] mergé 16668 positions (score=Scan) -> /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/scan_d9.jnnw
+=== éval-jass SUR les fichiers relabelisés (ALIGNÉ : mêmes positions, même ordre) ===
+=== ACCORD (aligné) éval-jass vs éval-Scan ===
+  vs Scan d2 (statique): pearson=+0.402  spearman=+0.754  n=16668
+      <=7p    n= 5311  pearson=+0.390
+      8-15p   n= 3272  pearson=+0.573
+      16-25p  n= 3298  pearson=+0.791
+      26+p    n= 4787  pearson=+0.799
+  vs Scan d9 (cible)   : pearson=+0.454  spearman=+0.728  n=16668
+      <=7p    n= 5311  pearson=+0.455
+      8-15p   n= 3272  pearson=+0.510
+      16-25p  n= 3298  pearson=+0.755
+      26+p    n= 4787  pearson=+0.778
+==========================================================
+  ALIGNEMENT vérifié (assert bitboards). pearson élevé → linéaire fitte Scan. bas → plafond.
+==========================================================

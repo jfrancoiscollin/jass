@@ -1,0 +1,4 @@
+rewriting 16668 records: /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/scan_d2.jnnw → /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/jass_on_d2.jnnw (labeller: /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/eval.pjtw)
+wrote 16668 records (38 B each) to /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/jass_on_d2.jnnw
+rewriting 16668 records: /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/scan_d9.jnnw → /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/jass_on_d9.jnnw (labeller: /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/eval.pjtw)
+wrote 16668 records (38 B each) to /root/jass/jobs/results/ccx33-0349-eval-agreement-fix/artefacts.src/jass_on_d9.jnnw
