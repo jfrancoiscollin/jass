@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0354-residual-static",
+  "script": "jobs/queue/ccx33-0354-residual-static.sh",
+  "pid": 2520242,
+  "started_at": "2026-06-19T14:15:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
