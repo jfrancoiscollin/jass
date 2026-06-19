@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0341-vs-scan-robust",
-  "script": "jobs/queue/cpx62-0341-vs-scan-robust.sh",
-  "pid": 3316882,
-  "started_at": "2026-06-19T05:30:47+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
