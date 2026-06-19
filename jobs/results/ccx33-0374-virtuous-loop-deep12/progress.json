@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0374-virtuous-loop-deep12",
-  "snapshot_at": "2026-06-19T23:14:05+00:00",
+  "snapshot_at": "2026-06-19T23:19:55+00:00",
   "started_at": "2026-06-19T22:36:47+00:00",
-  "elapsed_seconds": 2238,
+  "elapsed_seconds": 2588,
   "artefacts": [
     {
       "name": "build.log",
@@ -38,7 +38,7 @@
     },
     {
       "name": "gen2-vsgen1.log",
-      "size_bytes": 0
+      "size_bytes": 350
     },
     {
       "name": "gen2-vsprev.log",
@@ -155,7 +155,71 @@
     {
       "name": "sp2.8.log",
       "size_bytes": 741
+    },
+    {
+      "name": "sp3.1.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.2.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp3.2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.3.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.4.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.5.jnnw",
+      "size_bytes": 106706
+    },
+    {
+      "name": "sp3.5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.6.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.7.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp3.8.jnnw",
+      "size_bytes": 98498
+    },
+    {
+      "name": "sp3.8.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2534719       1       37:18  0.0  0.0 bash\n2534721 2534719       37:18  0.0  0.0 bash\n2536421 2534721       00:46  0.0  0.0 bash\n2536422 2536421       00:46 99.9  0.9 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2534719       1       43:08  0.0  0.0 bash\n2534721 2534719       43:08  0.0  0.0 bash\n2536554 2534721       05:07 99.9  0.5 jass\n2536555 2534721       05:07 99.9  0.5 jass\n2536556 2534721       05:07 99.9  0.5 jass\n2536557 2534721       05:07 99.9  0.5 jass\n2536558 2534721       05:07 99.9  0.5 jass\n2536559 2534721       05:07 99.9  0.5 jass\n2536560 2534721       05:07 99.9  0.5 jass\n2536561 2534721       05:07 99.9  0.5 jass\n"
 }
