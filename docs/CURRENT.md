@@ -175,8 +175,17 @@ externe qui corrige) ; TD-leaf d'une eval faible collapse (0.056, auto-distillat
 poids sur features FIXES** (Scan/Texel) = possible, plafond = best-linéaire. Distillation (0362) = atteindre Scan ;
 WDL-from-scratch (0363) = égaler Scan sans prof (gourmand en volume) ; **dépasser** Scan = forcément A = NNUE.
 
+## ⚠️ BUG INFRA — `gen_patterns --emit` PAS reset-proof (2026-06-19, re-mordu)
+Le runner **reset l'arbre git vers main EN COURS de job** (bug 0232) → une géométrie émise au démarrage est
+**révertée mid-run**. **0362** : gen0/gen1 = ×8 (correct) puis gen2+ = ×32 (réverté) → cascade. **Donc 0362 ET 0359
+"8=32" sont INVALIDES** (géométrie instable). **Règle (déjà documentée, ratée par moi)** : tout job qui `--emit` une
+géométrie DOIT (1) build tout de suite (le binaire fige la géométrie), (2) copier `patterns.py` **hors du tree** et
+pin **`JASS_PATTERNS_DIR`** (le trainer la lit, reset-proof), (3) garde-fou : abort si le trainer affiche `17M ->
+8,503,072` (×32). → **0364** = relance reset-proof de 0362. NB partie propre de 0362 (gen0→gen1) : **gen1 DIRECT=0.333 =
+PIRE** → ajouter du jass-self-play dégradait (cohérent 0327 : jass-self-play faible/dilue).
+
 ## Jobs en cours
 - **cpx62** : **0363** (bootstrap WDL façon Scan : seed matériel-seul → self-play décisif egdb → logistique, itéré, gros
-  volume ; vs Scan + DIRECT). NB : 0224/0227 (prior, depuis eval embarquée) montait +175 vs hc mais plafonnait ~0 vs Scan.
-- **ccx33** : **0362** (boucle distillation Scan LEAN 8 **color-fold**).
+  volume ; vs Scan + DIRECT). Reset-safe (n'émet pas de géométrie). NB 0224/0227 montait +175 vs hc, plafonnait ~0 vs Scan.
+- **ccx33** : **0364** (boucle distillation lean-8 **reset-proof** via `JASS_PATTERNS_DIR` ; 0362 invalidé par le reset).
 - **PC perso** : éteint. [0358 C ✅ plat · 0360 rois ✅ men≈king (corr 0.46/0.45) → rois ≠ levier finale]
