@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/sub.jnnw
+  150000 records  (0.01s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/d9.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (150000, 120)  (mean mob b/w=11.0/11.1)
+target=score  clipped±2000cp / 100  std=6.945
+phase : piece-count mean=19.1  wmg mean=0.425  (ramp 0.0/40.0)
+score-drop : keep |score|<=3000cp → 134642/150000 (89.8%)
+split : train=121178 val=13464
+prune : keep 100,985 buckets (>= 1 visits) -> 201,972 pattern cols vs 34,012,224  (168.4× fewer); train fallback=0.000%
+design : 202212 columns (2×100986 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=300  (pure)  [lowmem]
+  train_loss=0.921054  iters=300  (85.57s)
+val   : mse=1.940818  sign_acc=0.0017
+val/phase mse : opening=0.3235(n3786)  midgame=1.0325(n2568)  late-mid=1.6022(n2379)  endgame=3.0033(n2493)  deep-eg=4.8955(n2238)
+quant : scale=1000  pat range=[-862,862] ext_mg range=[-1244,1296]
+wrote /root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src/d9.pjtw  (v3, 34012464 weights, 136049876 bytes)

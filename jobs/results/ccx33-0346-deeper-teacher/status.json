@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0346-deeper-teacher",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-19T10:29:52+00:00",
+  "ended_at": "2026-06-19T10:45:07+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 2510865
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0346-deeper-teacher/artefacts.src"
 }
