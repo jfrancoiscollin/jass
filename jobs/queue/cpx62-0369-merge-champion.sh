@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # id: cpx62-0369-merge-champion
-# description: ÉTAGE 2 de l'orchestration distribuée (capitalisation des 2 runs). Lit la data 0366 (d10, LOCALE cpx62)
-# + tire la data 0367 (d12) committée par 0368, DÉPARTAGE les 2 évals en DIRECT, POOLE les deux corpus WDL (volume
+# description: ÉTAGE 2 de l'orchestration distribuée (capitalisation des 2 runs). Lit la data 0373 (d10, LOCALE cpx62)
+# + tire la data 0374 (d12) committée par 0368, DÉPARTAGE les 2 évals en DIRECT, POOLE les deux corpus WDL (volume
 # d10 + qualité d12 = « les deux d'un coup »), et RE-FIT l'archi sur le pool combiné → champion. Juge champion vs
 # chaque box EN DIRECT : pooler bat-il les 2 ? Committe le champion (réutilisable comme pilote du prochain tour =
 # amorce de la boucle distribuée poolée). DÉPLOYER après 0368 (qui dépend de la fin de 0367). Aucun Scan (pivot self).
@@ -12,26 +12,26 @@ export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-90}"
 source jobs/lib/preflight.sh
 ART="/root/jass/jobs/results/cpx62-0369-merge-champion/artefacts"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"; SCALE=1000
-SRC66=/root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src
+SRC66=/root/jass/jobs/results/cpx62-0373-virtuous-loop-deep/artefacts.src
 H0368=jobs/results/ccx33-0368-harvest-0367/artefacts
 preflight_build 1; preflight_train 1500000 1; preflight_note "merge + champion + DIRECT" 30; preflight_check
 
-[ -d "$SRC66" ] && [ -f "$SRC66/cumulative.jnnw" ] || { echo "ABORT: data 0366 (locale cpx62) introuvable (container recyclé ?)"; exit 4; }
+[ -d "$SRC66" ] && [ -f "$SRC66/cumulative.jnnw" ] || { echo "ABORT: data 0373 (locale cpx62) introuvable (container recyclé ?)"; exit 4; }
 GEN66=$(ls "$SRC66"/gen*.pjtw 2>/dev/null | sort -V | tail -1); [ -n "$GEN66" ] || { echo "ABORT: pas d'éval 0366"; exit 4; }
-echo "  0366 (d10) : data=$SRC66/cumulative.jnnw  éval=$GEN66"
+echo "  0373 (d10) : data=$SRC66/cumulative.jnnw  éval=$GEN66"
 
-echo "=== attente de la data 0367 committée par 0368 ==="
+echo "=== attente de la data 0374 committée par 0368 ==="
 ok=0; for i in $(seq 1 30); do
   git fetch origin main >/dev/null 2>&1 || true
-  if git cat-file -e "origin/main:$H0368/0367-cumulative.jnnw" 2>/dev/null; then ok=1; break; fi
+  if git cat-file -e "origin/main:$H0368/0374-cumulative.jnnw" 2>/dev/null; then ok=1; break; fi
   echo "  ...0368 pas encore committé ($i/30)"; sleep 30
 done
-[ "$ok" = 1 ] || { echo "ABORT: data 0367 absente après attente (0368 a échoué ?)"; exit 4; }
-git show "origin/main:$H0368/0367-cumulative.jnnw" > "$ART/0367-cumulative.jnnw"
-for p in $(git ls-tree --name-only "origin/main" "$H0368/" | grep -E '0367-gen.*\.pjtw'); do
+[ "$ok" = 1 ] || { echo "ABORT: data 0374 absente après attente (0368 a échoué ?)"; exit 4; }
+git show "origin/main:$H0368/0374-cumulative.jnnw" > "$ART/0374-cumulative.jnnw"
+for p in $(git ls-tree --name-only "origin/main" "$H0368/" | grep -E '0374-gen.*\.pjtw'); do
   git show "origin/main:$p" > "$ART/$(basename "$p")"; done
-GEN67=$(ls "$ART"/0367-gen*.pjtw 2>/dev/null | sort -V | tail -1); [ -n "$GEN67" ] || { echo "ABORT: pas d'éval 0367 récupérée"; exit 4; }
-echo "  0367 (d12) : data=$ART/0367-cumulative.jnnw  éval=$GEN67"
+GEN67=$(ls "$ART"/0374-gen*.pjtw 2>/dev/null | sort -V | tail -1); [ -n "$GEN67" ] || { echo "ABORT: pas d'éval 0367 récupérée"; exit 4; }
+echo "  0374 (d12) : data=$ART/0374-cumulative.jnnw  éval=$GEN67"
 
 echo "=== build (même archi 32-pat que les boucles) ==="
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl >"$ART/clone.log" 2>&1
@@ -49,7 +49,7 @@ echo "  d10 vs d12 = ${D_6667}  (>0.5 → d10 plus fort ; <0.5 → d12 plus fort
 
 echo "=== POOL des 2 corpus WDL (volume d10 + qualité d12) ==="
 cp "$SRC66/cumulative.jnnw" "$ART/pooled.jnnw"
-python3 - "$ART/0367-cumulative.jnnw" "$ART/pooled.jnnw" <<'PY'
+python3 - "$ART/0374-cumulative.jnnw" "$ART/pooled.jnnw" <<'PY'
 import struct,sys
 src,pool=sys.argv[1],sys.argv[2]; REC=38
 b=open(src,'rb').read(); n=(len(b)-8)//REC; body=b[8:8+n*REC]
