@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0342-lmp-rfp-confirm",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-19T05:28:09+00:00",
+  "ended_at": "2026-06-19T07:38:49+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 2492187
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0342-lmp-rfp-confirm/artefacts.src"
 }

@@ -1,0 +1,20 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 240000 lignes @ 4min/M ≈ 1.0 min
+  [preflight] confirm 4 candidats × 90 parties @ 700ms: ≈ 120 min
+  [preflight] TOTAL estimé ≈ 125.0 min  (cap 170 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass FULL Scan-alignée ===
+=== train éval ===
+=== confirm 4 × 90 parties @ 700ms (vs combo baké) ===
+
+==========================================================
+   ccx33-0342 — CONFIRMATION lmp5+rfp7 (pattern, 90 parties, faible contention)
+----------------------------------------------------------
+  candidat     A-rate vs combo-baké (>0.5 = ajoute)
+  rfp7         0.444444
+  lmp5         0.538889
+  lmp5_rfp7    0.466667
+  lmp5_rfp7_h  0.527778
+----------------------------------------------------------
+   >0.55 net (confirme 0340) → baker lmp5+rfp7. ≈0.5 → c'était du bruit, combo final = multicut+razor.
+==========================================================

@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0342-lmp-rfp-confirm",
-  "script": "jobs/queue/ccx33-0342-lmp-rfp-confirm.sh",
-  "pid": 2492187,
-  "started_at": "2026-06-19T05:28:09+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
