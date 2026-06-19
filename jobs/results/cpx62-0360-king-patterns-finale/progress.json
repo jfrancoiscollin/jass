@@ -1,0 +1,53 @@
+{
+  "job_id": "cpx62-0360-king-patterns-finale",
+  "snapshot_at": "2026-06-19T17:17:44+00:00",
+  "started_at": "2026-06-19T17:12:42+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [
+    {
+      "name": "build-build-king.log",
+      "size_bytes": 26878
+    },
+    {
+      "name": "build-build-men.log",
+      "size_bytes": 26878
+    },
+    {
+      "name": "cmake-build-king.log",
+      "size_bytes": 1109
+    },
+    {
+      "name": "cmake-build-men.log",
+      "size_bytes": 1047
+    },
+    {
+      "name": "eval0.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "evalK.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "feat-0",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "feat-1",
+      "size_bytes": 113288652
+    },
+    {
+      "name": "train-eval0.pjtw.log",
+      "size_bytes": 1363
+    },
+    {
+      "name": "train-evalK.pjtw.log",
+      "size_bytes": 1393
+    },
+    {
+      "name": "vs0.log",
+      "size_bytes": 0
+    }
+  ],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3342604       1       05:01  0.0  0.0 bash\n3342606 3342604       05:01  0.0  0.0 bash\n3343779 3342606       01:25  9.6  0.0 python3\n3343782 3343779       01:25 53.2  0.5 jass\n3343784 3343779       01:25 37.9  0.9 scan_linux\n3343787 3343779       01:25  1.1  0.0 jass\n"
+}
