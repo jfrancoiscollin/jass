@@ -184,8 +184,22 @@ pin **`JASS_PATTERNS_DIR`** (le trainer la lit, reset-proof), (3) garde-fou : ab
 8,503,072` (×32). → **0364** = relance reset-proof de 0362. NB partie propre de 0362 (gen0→gen1) : **gen1 DIRECT=0.333 =
 PIRE** → ajouter du jass-self-play dégradait (cohérent 0327 : jass-self-play faible/dilue).
 
+## 🔄 PIVOT STRATÉGIQUE (2026-06-19) — on ne se compare PLUS à Scan ; on tune la boucle virtuelle
+**Directive JFC** : tant qu'on n'a pas convergé, vs-Scan = forcément perdant et démoralisant → **on se juge
+UNIQUEMENT SOI-MÊME** (DIRECT eval-vs-eval). Scan ne ressort qu'**au plateau**. On a tous les ingrédients (archi =
+surensemble/égal à Scan, recette WDL itérée). Verdicts qui mènent là :
+- **0363 (bootstrap WDL matériel→self-play→logistique, 8 gens)** : **GRIMPE en interne** (DIRECT vs gen1 : 0.50→0.72)
+  → mécanisme SAIN, pas de bug. MAIS **plat ~0 vs Scan** (plateau de 0227). La montée interne ne bouge pas le vs-Scan.
+- **0365 (décisivité)** : self-play matériel d4 = **77% décisif** (D=23%) → **signal WDL RICHE, pas dégénéré**. Donc le
+  plat n'est PAS la décisivité. **Insight clé : décisif ≠ véridique** — à d4 les issues sont **blunder-driven** (2 faibles,
+  qqn gaffe) → l'eval apprend la value-function d'un JOUEUR FAIBLE, pas la vraie valeur. Gradient : d4 77% > d9 71% >
+  embarquée 68% (plus on joue fort, moins décisif). → le levier = **FORCE du self-play (profondeur) + VOLUME**.
+- **0364 (distill lean-8, reset-proof OK : ×8 toutes gens)** : DIRECT gen1/2/3 = 0.47/0.33/0.47 (≤0.5) → **jass-self-play
+  Scan-relabel DÉGRADE le fit** (réfuté proprement). gen0 color-fold=capacité Scan = 0.028 vs Scan (capacité ≠ décollage).
+- ⚠️ `--minibatch` est **L2-only** (incompatible `--loss logistic`) ; à d10 le goulot = la GÉNÉRATION pas la RAM → full-batch (`--lowmem`) suffit.
+
 ## Jobs en cours
-- **cpx62** : **0363** (bootstrap WDL façon Scan : seed matériel-seul → self-play décisif egdb → logistique, itéré, gros
-  volume ; vs Scan + DIRECT). Reset-safe (n'émet pas de géométrie). NB 0224/0227 montait +175 vs hc, plafonnait ~0 vs Scan.
-- **ccx33** : **0364** (boucle distillation lean-8 **reset-proof** via `JASS_PATTERNS_DIR` ; 0362 invalidé par le reset).
-- **PC perso** : éteint. [0358 C ✅ plat · 0360 rois ✅ men≈king (corr 0.46/0.45) → rois ≠ levier finale]
+- **cpx62** : **0366** (BOUCLE VIRTUELLE PROFONDE : self-play d10 = issues véridiques + volume sondé, logistique full-batch,
+  jugée **SELF** gen_k vs gen_{k-1}/gen1, **aucun Scan**). vs gen(k-1) >0.5 soutenu = grimpe ; ~0.5 = plateau → là on ressort Scan.
+- **ccx33** : libre.
+- **PC perso** : éteint. [0358 C ✅ plat · 0360 rois ✅ men≈king → rois ≠ levier · 0363/0364/0365 → pivot self-juge]
