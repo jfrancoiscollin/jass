@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0344-hist-malus",
-  "snapshot_at": "2026-06-19T09:19:26+00:00",
+  "snapshot_at": "2026-06-19T09:24:28+00:00",
   "started_at": "2026-06-19T07:48:54+00:00",
-  "elapsed_seconds": 5432,
+  "elapsed_seconds": 5734,
   "artefacts": [
     {
       "name": "build.log",
@@ -45,5 +45,5 @@
       "size_bytes": 1343
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2501349       1    01:30:32  0.0  0.0 bash\n2501350 2501349    01:30:32  0.0  0.0 bash\n2502024 2501350    01:28:26 99.9  0.5 jass\n2502025 2501350    01:28:26 99.9  0.5 jass\n2502026 2501350    01:28:26 99.9  0.5 jass\n2502027 2501350    01:28:26 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2501349       1    01:35:33  0.0  0.0 bash\n2501350 2501349    01:35:33  0.0  0.0 bash\n2502024 2501350    01:33:28 99.9  0.5 jass\n2502025 2501350    01:33:28 99.9  0.5 jass\n2502026 2501350    01:33:28 99.9  0.5 jass\n2502027 2501350    01:33:28 99.9  0.5 jass\n"
 }
