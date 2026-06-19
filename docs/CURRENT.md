@@ -105,11 +105,21 @@ Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12
 (prunings marginaux, history-malus, TT, movegen, NPS) testé-et-plat → cf SEARCH_TUNING.md. jass perd encore
 ~7:1 vs Scan → **le gap restant est l'ÉVAL**. → **Phase 2**.
 
-## Jobs en cours
-- **cpx62** : **0345** (Phase 2 — échelle de profondeur : gap d'éval résiduel EN PLIES vs Scan).
-- **ccx33** : **0346** (Phase 2 — teacher d12 vs d9 : un Scan plus profond rapproche-t-il l'éval ?).
-- **PC perso** : éteint (home-0008 = dernier).
+## Phase 2 ÉVAL — verdicts (2026-06-18)
+- **0345** : gap d'éval **~5 plies** (jass@d14 ≈ Scan@d9). **0346** : teacher Scan d12 N'aide pas (distill plafonné).
+- **0349** (corrélation éval-jass↔éval-Scan, ALIGNÉE) : **fort en midgame** (16-25p:0.79, 26+p:0.80), **effondré
+  en FINALE** (≤7p:**0.39**). → **PAS un plafond linéaire absolu** ; **trou LOCALISÉ en finale** = briques
+  manquantes, *là où Scan a sa non-linéarité (drawish-scaling)*. (0347 = bug d'alignement, ignoré.)
 
-## Prochain verdict attendu
-**0345** (combien de plies d'éval il nous manque) + **0346** (teacher profond = levier ?). → choisir
-l'attaque éval (distillation plus profonde / terme manquant / pool), puis Phase 3 (gen-data co-évolution).
+## ⭐ NEXT STEPS — briques de FINALE (dont une non-linéaire qu'on a mise de côté)
+1. **Baker `JASS_DRAWISH_SCALING` en JEU et tester** — la non-linéarité localisée de Scan (÷2/÷8 nul-tendance),
+   codée mais **jamais testée en jeu** (coupée pour la distillation). Candidat n°1. ⚠️ leçon de vigilance.
+2. **Co-évolution d14** (0350, en cours) : self-play fort → eval1 vs eval0 direct. Monte ?
+3. **Analyse des résidus finale** (positions où jass↔Scan désaccordent le +) + **diff source Scan**
+   (`/root/jass-scan`) → énumérer les briques finale manquantes ; ajouter chirurgicalement, jugées
+   profondeur-égale vs Scan / accord-éval. **MLP boîte-noire INTERDIT ; briques localisées Scan-like OK** (cf ARBRE_DECISION §RAFFINEMENT).
+
+## Jobs en cours
+- **cpx62** : **0350** (co-évolution d14 CONCLUSIVE — eval1 vs eval0 direct + vs Scan).
+- **ccx33** : libre (0349 ✅).
+- **PC perso** : éteint.

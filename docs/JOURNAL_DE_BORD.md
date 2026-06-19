@@ -62,6 +62,36 @@ compensation movetime), `calibrate_vs_scan` `--jass-movetime/--scan-movetime`. C
 **Ops** : `ccx33-0326` (alignment A/B) **tué** (jugeait sur distribution suspecte). Suite : 0334 (ablations
 combo recherche) → 0335 (combo gelé vs Scan depth-égale).
 
+### Phase recherche CLOSE + Phase 2/3 ÉVAL (2026-06-18, suite)
+- **Recherche tranchée** : combo `multicut(min6,moves8,cuts2)+razor(max4)` baké = +50 Elo, vs Scan
+  0.097→~0.12 (0338/0343). Tout le reste plat (TT, movegen, history-malus, prunings marginaux) — cf
+  [SEARCH_TUNING.md](SEARCH_TUNING.md). jass perd encore ~7:1 → **le gap restant est l'ÉVAL**.
+- **0345 — gap d'éval ~5 PLIES** : échelle vs Scan d9 ; jass croise 0.5 vers d14 (jass@d14 ≈ Scan@d9).
+- **0346 — teacher plus profond (Scan d12) N'aide pas** (distillation plafonnée).
+- **0347 — BUG d'alignement** (relabel droppe 17 % → corrélation ~0 spurious). **Refait = 0349.**
+- **0349 (corrélation corrigée, assert d'alignement) — LE diagnostic** : accord éval-jass↔éval-Scan
+  **FORT en midgame/ouverture** (16-25p:0.79, 26+p:0.80) mais **EFFONDRÉ en finale** (≤7p:**0.39**, 8-15p:0.57).
+  → **PAS un plafond linéaire absolu** (la classe fitte Scan en midgame) ; **trou LOCALISÉ en FINALE** = il
+  nous manque les bonnes briques de finale, *exactement là où Scan a sa non-linéarité* (drawish-scaling).
+
+> ### 🔶 INSIGHT + LEÇON (JFC, 2026-06-18) — briques localisées, dont une non-linéaire
+> « Notre linéaire » ≠ « le linéaire ». Le mur 0349 est notre **vocabulaire d'éval en finale**, pas la
+> classe. Scan **n'est pas 100 % linéaire** : il a le **drawish-material scaling** (÷2/÷8 quand on mène
+> en position nul-tendance = terme de FINALE). On l'a **codé** (`JASS_DRAWISH_SCALING`) et **jamais testé
+> en jeu** (coupé pour la distillation). **LEÇON** : toute feature repérée chez Scan et mise de côté DOIT
+> être testée avant de conclure à un plafond. **Frontière du principe** (cf ARBRE_DECISION §RAFFINEMENT) :
+> MLP boîte-noire INTERDIT ; **briques localisées interprétables (même non-linéaires) que Scan utilise =
+> AUTORISÉES et probablement nécessaires** en finale.
+
+### Phase 3 (en cours) — co-évolution d14 + briques finale
+- **cpx62-0350** : co-évolution CONCLUSIVE — self-play jass à **play_depth=14** (data forte, ≈ Scan-d9,
+  *sans* Scan ; les vieilles boucles jouaient à d4=faible), eval1 ré-entraîné WDL, jugé **eval1 vs eval0
+  EN DIRECT** (`--benchmark-nnue-vs-nnue` accepte 2 `.pjtw`, patch 2026-06-18) + vs Scan.
+- **NEXT (briques finale)** : (1) **baker `JASS_DRAWISH_SCALING` en jeu** et tester (la non-linéarité de
+  Scan, jamais essayée) ; (2) **analyse des résidus** finale (positions où jass↔Scan désaccordent le +) +
+  **diff source Scan** (`/root/jass-scan`) → énumérer les briques finale manquantes ; les ajouter
+  chirurgicalement, jugées à profondeur égale vs Scan / accord-éval.
+
 ## 0bis. Verdict précédent — 2026-06-17 (saturation apparente + gradient mort + PRINCIPE)
 
 > ## ⛔ PRINCIPE DIRECTEUR — NON NÉGOCIABLE (redit par JFC, 2026-06-17)

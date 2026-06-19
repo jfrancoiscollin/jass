@@ -22,6 +22,23 @@
 
 ---
 
+## ⭐ NEXT STEPS ACTIFS — 2026-06-18 (roadmap vivante : [CURRENT.md](CURRENT.md) · [ARBRE_DECISION.md](ARBRE_DECISION.md))
+
+> **État** : recherche réglée (combo multicut+razor baké, +50 Elo). Le gap restant vs Scan = l'**ÉVAL**,
+> et 0349 le **localise en FINALE** : corrélation éval-jass↔éval-Scan **forte en midgame (~0.80)** mais
+> **effondrée à ≤7p (0.39)**. Donc **pas un plafond de la classe linéaire** — un trou de **vocabulaire
+> d'éval en finale**, *là où Scan a sa non-linéarité*.
+>
+> **Plan (briques de finale, ordre) :**
+> 1. **`JASS_DRAWISH_SCALING` en JEU** — la non-linéarité localisée de Scan (÷2/÷8, nul-tendance), **codée
+>    mais jamais testée en jeu** (coupée pour la distillation). À baker+tester. *(Leçon : ne plus mettre de
+>    côté une feature Scan repérée sans la tester — vigilance.)*
+> 2. **Co-évolution d14** (jass@d14 ≈ Scan@d9 → self-play FORT sans Scan ; les vieilles boucles jouaient à d4).
+> 3. **Résidus finale + diff source Scan** (`/root/jass-scan`) → énumérer les briques finale manquantes,
+>    ajout chirurgical interprétable. **MLP boîte-noire reste INTERDIT** ; briques localisées Scan-like = OK.
+
+---
+
 ## Méthodologie — plan d'expérience (adopté 2026-06-12)
 
 > Pourquoi : 0203/0204 ont conclu sur du **bruit** (benches 18 parties, ±0.08) et
