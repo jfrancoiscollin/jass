@@ -1,0 +1,5 @@
+gen-data-wdl: n=5000 out=/root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/mat_d4.8.jnnw eval_depth=4 play_depth=4 max_plies=200 seed=234033602 nnue=/root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/seed.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1558 / 5000 positions
+  played 100 games, 3098 / 5000 positions
+  played 150 games, 4579 / 5000 positions
+wrote 5000 WDL records to /root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src/mat_d4.8.jnnw

@@ -1,7 +1,9 @@
 {
   "job_id": "cpx62-0365-wdl-decisiveness-diag",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-19T20:52:25+00:00",
+  "ended_at": "2026-06-19T20:57:26+00:00",
   "host": "ubuntu-32gb-hel1-1",
-  "pid": 3350230
+  "artefacts_server_path": "/root/jass/jobs/results/cpx62-0365-wdl-decisiveness-diag/artefacts.src"
 }
