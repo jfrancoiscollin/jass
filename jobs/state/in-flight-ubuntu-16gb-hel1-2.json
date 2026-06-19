@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0359-lean8-patterns",
+  "script": "jobs/queue/ccx33-0359-lean8-patterns.sh",
+  "pid": 2524365,
+  "started_at": "2026-06-19T16:55:03+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
