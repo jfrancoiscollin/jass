@@ -15,7 +15,29 @@
 
 ---
 
-## 0. Verdict de tête — 2026-06-18 (la RECHERCHE est le levier dominant + méthodo refondue)
+## 0. Verdict de tête — 2026-06-19 (PIVOT : boucle virtuelle distribuée, on ne se compare plus à Scan)
+
+> **Bascule.** Après la recherche (0333-0344) puis l'éval (0345-0360, plats au plancher vs Scan), on
+> **arrête de se comparer à Scan** (perdant + bruité tant qu'on n'a pas convergé) → **auto-jugement DIRECT**.
+> On a la recette de Scan (self-play + WDL + logistique itéré depuis matériel-seul). Système actif documenté
+> dans **[BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)**.
+
+**Chaîne de verdicts (2026-06-19) :**
+- **0358 (phase-split) / 0359 (8 vs 32 pat)** : plats au **plancher bruité** vs Scan (même config = 0.028 ou
+  0.083 selon le run) → vs-Scan-au-plancher INSENSIBLE. ⚠️ 0359/0362 **invalidés** : `gen_patterns --emit`
+  réverté mid-run par le reset du runner (fix = `JASS_PATTERNS_DIR`).
+- **0360 (rois dans patterns)** : corr finale held-out **men≈king** (0.46/0.45) → les rois ≠ levier finale ici.
+- **0363 (bootstrap WDL d4, 8 gens)** : **grimpe en interne** (DIRECT vs gen1 0.50→0.72) = mécanisme SAIN,
+  pas de bug ; **mais plat ~0 vs Scan** (plateau de 0227). Converge dans un bassin faible.
+- **0365 (décisivité)** : self-play d4 = **77 % décisif** (signal RICHE, pas dégénéré). **Insight : décisif ≠
+  véridique** — issues d4 **blunder-driven** → eval = value-function d'un faible. Levier = **profondeur + volume**.
+- **Débit (sonde 0366)** : **24k pos/min @ d10** (cpx62) — jeu profond **~2× d4** seulement (pruning) → qualité
+  ET volume possibles ensemble. Cap génération relevé 160k→800k.
+- **0364 (distill lean-8, reset-proof OK)** : DIRECT ≤0.5 → ajouter du jass-self-play DÉGRADE (réfuté propre).
+- **→ Voie active** : boucle virtuelle **distribuée poolée** profonde (d10/d12), jugée SELF, pipeline
+  0366/0367 (bootstrap) → 0368/0369 (pool→champion) → 0370/0371 (tour cap-relevé), pool durable arch-indépendant.
+
+## 0bis. Verdict — 2026-06-18 (la RECHERCHE est le levier dominant + méthodo refondue)
 
 > **Bascule majeure.** Après 3 échecs du levier éval/data, l'isolation propre (éval vs recherche)
 > montre que **le mur, c'est que la recherche de jass ne scale pas**. Et on découvre qu'on

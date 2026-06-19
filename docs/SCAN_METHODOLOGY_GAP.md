@@ -1,5 +1,18 @@
 # Scan methodology gap — ce qui nous sépare, et comment fermer le gap itérativement
 
+> ## 🔒 RÈGLES PERMANENTES (2026-06-19) — la BOUCLE VIRTUELLE (cf [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md))
+> 1. **On NE se compare PLUS à Scan tant qu'on n'a pas convergé.** Au plancher, vs-Scan est perdant ET bruité
+>    (même config = 0.028 ↔ 0.083 d'un run à l'autre). **Métrique = SOI-MÊME en DIRECT** (`benchmark-nnue-vs-nnue`,
+>    `gen_k vs gen_{k-1}`, bande ~0.5 = sensible). Scan ne ressort qu'**au plateau** (`vs gen_{k-1} ≈ 0.5`).
+> 2. **DÉCISIF ≠ VÉRIDIQUE — jouer PROFOND (≥10).** Le self-play peu profond (d4) est *décisif* (77 %) mais
+>    **blunder-driven** → l'eval apprend la value-function d'un faible (0363 grimpe en interne, plat vs Scan ; 0365).
+>    Le levier = **force du self-play (profondeur) + volume**, PAS la décisivité. Bootstrapper d4 = branche morte.
+> 3. **Le jeu profond est ~gratuit** : 24k pos/min @ d10 (cpx62), ~2× d4 seulement (pruning). Qualité+volume ensemble.
+> 4. **`--minibatch` est L2-only** (≠ logistique) ; à d10 le goulot = génération pas RAM → **full-batch `--lowmem`**.
+> 5. **Géométrie reset-proof** : `gen_patterns --emit` réverté mid-run par le runner → build de suite + `JASS_PATTERNS_DIR`
+>    hors-tree + garde-fou « ×32 » (0359/0362 invalidés sans ça).
+> 6. **La gen data WDL est arch-indépendante = actif durable** → pool distribué via git (fenêtre glissante ≤2M).
+
 > ## 🔒 RÈGLE PERMANENTE (2026-06-18) — comment on COMPARE à Scan
 > **NE JAMAIS comparer à Scan à TEMPS FIXE ÉGAL.** Un `--movetime` égal confond
 > la **qualité d'éval** avec la **vitesse de recherche** : jass a un NPS ≪ Scan,
