@@ -2662,6 +2662,67 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
 // plies than the NNUE for the same time — that gap IS the lever's size.
 // net = "hc"/"none" (handcrafted), *.pjtw (pattern/Scan v3), else NNUE .bin.
 // -----------------------------------------------------------------------------
+// --search-profile <FEN> <depth> [movetime_ms=0] [eval.pjtw|hc]
+// Run ONE search and dump where the per-node time goes (eval / movegen-capture /
+// movegen-quiet / move-ordering / tt / accumulator / …) as % of total. Requires a
+// build with -DJASS_TIME_BREAKDOWN=ON (else the counters stay 0). Guides the NPS axis:
+// optimise the hot bucket instead of guessing. (Eval defaults to handcrafted; the
+// SEARCH buckets — movegen/ordering/tt — are eval-independent.)
+int run_search_profile_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --search-profile <FEN> <depth> [movetime_ms=0] "
+                     "[eval.pjtw|hc]\n  (build with -DJASS_TIME_BREAKDOWN=ON)\n";
+        return 1;
+    }
+    const std::string fen     = argv[2];
+    const int   depth         = parse_int_or(argv[3], 15);
+    const int   movetime_ms   = (argc > 4) ? parse_int_or(argv[4], 0) : 0;
+    std::unique_ptr<INetwork> net;
+    if (argc > 5 && std::string(argv[5]) != "hc" && std::string(argv[5]) != "none") {
+        const std::string p{argv[5]};
+        const bool is_pjtw = p.size() >= 5 && p.compare(p.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        net = is_pjtw ? jass::load_eval_network(p, &err) : load_network(p);
+        if (!net) { std::cerr << "error: cannot load eval " << p << " : " << err << "\n"; return 1; }
+    }
+    Engine e; e.use_book(false);
+    if (net) e.set_nnue(net.get());
+    if (!e.set_position_fen(fen)) { std::cerr << "error: bad FEN: " << fen << "\n"; return 1; }
+
+    SearchLimits lim;
+    lim.max_depth   = (movetime_ms > 0) ? MAX_PLY : depth;
+    lim.movetime_ms = movetime_ms;
+    jass::breakdown_reset();
+    const SearchResult r = e.search(lim);
+    const jass::BreakdownStats s = jass::breakdown_snapshot();
+
+    std::cout << "search-profile: depth=" << r.depth << " nodes=" << r.nodes;
+    if (r.nodes) std::cout << "  (" << (s.total_ns ? (r.nodes * 1000ULL / std::max<std::uint64_t>(1, s.total_ns / 1000)) : 0) << " knps)";
+    std::cout << "\n";
+    if (s.total_ns == 0) {
+        std::cout << "  (no breakdown — rebuild with -DJASS_TIME_BREAKDOWN=ON)\n";
+        return 0;
+    }
+    const double tot = static_cast<double>(s.total_ns);
+    auto line = [&](const char* name, std::uint64_t ns) {
+        std::cout << "  " << std::left << std::setw(20) << name
+                  << std::right << std::setw(6)
+                  << (ns * 100.0 / tot) << " %\n";
+    };
+    std::cout.setf(std::ios::fixed); std::cout.precision(1);
+    line("eval",            s.eval_ns);
+    line("accumulator",     s.accumulator_ns);
+    line("movegen (total)", s.movegen_ns);
+    line("  - captures",    s.movegen_capture_ns);
+    line("  - quiets",      s.movegen_quiet_ns);
+    line("move-ordering",   s.move_ordering_ns);
+    line("apply/make",      s.apply_ns);
+    line("tt",              s.tt_ns);
+    line("zobrist",         s.zobrist_ns);
+    line("path-check",      s.path_check_ns);
+    return 0;
+}
+
 int run_depth_at_movetime_mode(int argc, char** argv) {
     if (argc < 5) {
         std::cerr << "usage: jass --depth-at-movetime <netA> <netB> "
@@ -3710,6 +3771,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-pattern-vs-nnue") return run_benchmark_pattern_vs_nnue_mode(argc, argv);
         else if (a == "--benchmark-scan-eval")      return run_benchmark_scan_eval_mode(argc, argv);
         else if (a == "--depth-at-movetime")        return run_depth_at_movetime_mode(argc, argv);
+        else if (a == "--search-profile")           return run_search_profile_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--gen-scan-book")            return run_gen_scan_book_mode(argc, argv);
         else if (a == "--book-audit")               return run_book_audit_mode(argc, argv);
