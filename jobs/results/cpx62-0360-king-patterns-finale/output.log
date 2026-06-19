@@ -1,0 +1,25 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 2 × 240000 lignes @ 4min/M ≈ 1.9 min
+  [preflight] 2×216 parties vs Scan + relabel d9 + corr finale: ≈ 90 min
+  [preflight] TOTAL estimé ≈ 99.9 min  (cap 150 min)
+  [preflight] OK — sous le cap, lancement.
+=== ARM 0 : men-only (baseline) ===
+=== ARM K : king-aware (patterns men|kings) ===
+=== DECISION : vs Scan d9 — 216 parties/arm (depth-égale, openings appariés) ===
+=== DIAGNOSTIC mécanisme : corr(éval↔Scan-d9) par bande, set finale HELD-OUT (0328, <=14p) ===
+test finale (<=14p) 14000
+  [relabel] 14000 positions, 16 shards × ~875 (Scan depth 9)
+  [relabel] mergé 13835 positions (score=Scan) -> /root/jass/jobs/results/cpx62-0360-king-patterns-finale/artefacts.src/scan.jnnw
+n=13835  corr(éval-jass ↔ Scan-d9) par bande de pièces :
+  <=7p    n= 8202  men-only=+0.463  king-aware=+0.450
+  8-14p   n= 5633  men-only=+0.499  king-aware=+0.495
+
+==========================================================
+   cpx62-0360 — ROIS dans les patterns (vrai levier finale, PAS l'élagage)
+----------------------------------------------------------
+   vs Scan d9 :  men-only=0.083   king-aware=0.028
+   (corr finale par bande ci-dessus : ≤7p men-only ~0.39 attendu — remonte-t-elle ?)
+----------------------------------------------------------
+   king-aware > men-only net + corr finale qui remonte → baker JASS_KING_PATTERNS.
+   ≈ → les rois ne lèvent pas la finale dans ce régime → renforce le plafond linéaire (pivot NN).
+==========================================================

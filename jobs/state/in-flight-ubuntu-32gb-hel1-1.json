@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0360-king-patterns-finale",
-  "script": "jobs/queue/cpx62-0360-king-patterns-finale.sh",
-  "pid": 3342604,
-  "started_at": "2026-06-19T17:12:42+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
