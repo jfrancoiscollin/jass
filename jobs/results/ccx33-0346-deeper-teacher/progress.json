@@ -1,72 +1,40 @@
 {
   "job_id": "ccx33-0346-deeper-teacher",
-  "snapshot_at": "2026-06-19T10:34:55+00:00",
+  "snapshot_at": "2026-06-19T10:40:05+00:00",
   "started_at": "2026-06-19T10:29:52+00:00",
-  "elapsed_seconds": 303,
+  "elapsed_seconds": 613,
   "artefacts": [
     {
-      "name": ".rl-0.jnnw",
-      "size_bytes": 577380
-    },
-    {
       "name": ".rl-0.log",
-      "size_bytes": 149
-    },
-    {
-      "name": ".rl-1.jnnw",
-      "size_bytes": 524522
+      "size_bytes": 283
     },
     {
       "name": ".rl-1.log",
-      "size_bytes": 153
-    },
-    {
-      "name": ".rl-2.jnnw",
-      "size_bytes": 516390
+      "size_bytes": 287
     },
     {
       "name": ".rl-2.log",
-      "size_bytes": 153
-    },
-    {
-      "name": ".rl-3.jnnw",
-      "size_bytes": 597710
+      "size_bytes": 287
     },
     {
       "name": ".rl-3.log",
-      "size_bytes": 153
-    },
-    {
-      "name": ".rl-4.jnnw",
-      "size_bytes": 577380
+      "size_bytes": 287
     },
     {
       "name": ".rl-4.log",
-      "size_bytes": 153
-    },
-    {
-      "name": ".rl-5.jnnw",
-      "size_bytes": 589578
+      "size_bytes": 287
     },
     {
       "name": ".rl-5.log",
-      "size_bytes": 153
-    },
-    {
-      "name": ".rl-6.jnnw",
-      "size_bytes": 593644
+      "size_bytes": 287
     },
     {
       "name": ".rl-6.log",
-      "size_bytes": 154
-    },
-    {
-      "name": ".rl-7.jnnw",
-      "size_bytes": 561116
+      "size_bytes": 288
     },
     {
       "name": ".rl-7.log",
-      "size_bytes": 154
+      "size_bytes": 288
     },
     {
       "name": "build.log",
@@ -77,9 +45,41 @@
       "size_bytes": 1050
     },
     {
+      "name": "d12-train.log",
+      "size_bytes": 1347
+    },
+    {
+      "name": "d12.feat",
+      "size_bytes": 72000012
+    },
+    {
+      "name": "d12.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "d9-train.log",
+      "size_bytes": 1341
+    },
+    {
+      "name": "d9.feat",
+      "size_bytes": 72000012
+    },
+    {
+      "name": "d9.pjtw",
+      "size_bytes": 136049876
+    },
+    {
+      "name": "sub-d12.jnnw",
+      "size_bytes": 5700008
+    },
+    {
       "name": "sub.jnnw",
       "size_bytes": 5700008
+    },
+    {
+      "name": "vs-d9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2510865       1       05:03  0.0  0.0 bash\n2510867 2510865       05:03  0.0  0.0 bash\n2511458 2510867       04:49  1.2  0.0 python3\n2511459 2510867       04:49  1.4  0.0 python3\n2511460 2510867       04:49  1.3  0.0 python3\n2511461 2510867       04:49  1.6  0.0 python3\n2511462 2510867       04:49  1.5  0.0 python3\n2511463 2510867       04:49  1.6  0.0 python3\n2511464 2510867       04:49  1.5  0.0 python3\n2511465 2510867       04:49  1.1  0.0 python3\n2511466 2511462       04:49 98.4  0.9 scan_linux\n2511467 2511460       04:49 98.5  0.9 scan_linux\n2511468 2511459       04:49 98.4  0.9 scan_linux\n2511469 2511463       04:49 98.3  0.9 scan_linux\n2511470 2511458       04:49 98.6  0.9 scan_linux\n2511471 2511464       04:49 98.4  0.9 scan_linux\n2511472 2511461       04:49 98.2  0.9 scan_linux\n2511473 2511465       04:49 98.8  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2510865       1       10:13  0.0  0.0 bash\n2510867 2510865       10:13  0.0  0.0 bash\n2511694 2510867       00:28 11.7  0.0 python3\n2511697 2511694       00:28 50.7  0.4 jass\n2511699 2511694       00:28 37.7  0.9 scan_linux\n2511702 2511694       00:28  1.3  0.0 jass\n"
 }
