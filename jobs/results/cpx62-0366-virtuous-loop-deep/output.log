@@ -1,0 +1,24 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 7 × 1500000 lignes @ 4min/M ≈ 42.0 min
+  [preflight] boucle profonde d10 6 gens (sonde débit) + DIRECT self: ≈ 150 min
+  [preflight] TOTAL estimé ≈ 196.0 min  (cap 280 min)
+  [preflight] OK — sous le cap, lancement.
+=== build (EGDB ON = adjudication finale exacte) ===
+  egdb data: ON
+=== seed matériel-seul (recherche d10 compense) ===
+seed ok n_ext=120
+=== sonde de débit @ d10 (dimensionne NPER pour ~18 min/gen) ===
+  débit ≈ 24000 pos/min @ d10 → NPER=160000/gen
+=== gen1 : self-play(gen0) d10 +160000 → cumulé → logistique ===
+Traceback (most recent call last):
+  File "<stdin>", line 10, in <module>
+struct.error: unpack requires a buffer of 4 bytes
+TRAIN FAIL /root/jass/jobs/results/cpx62-0366-virtuous-loop-deep/artefacts.src/gen1
+    ~~~~^^
+  File "/root/jass/pattern_jass/tools/train.py", line 1167, in main
+    return train_scan_eval(args)
+  File "/root/jass/pattern_jass/tools/train.py", line 592, in train_scan_eval
+    ds = master_loader.load(args.data, max_records=args.max_records)
+  File "/root/jass/pattern_jass/tools/master_loader.py", line 47, in load
+    raise ValueError(f"file too short : {len(raw)} bytes")
+ValueError: file too short : 0 bytes
