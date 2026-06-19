@@ -100,11 +100,16 @@ fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord.
 - multicut SEUL ne suffit pas (0336 mc_only=0.439) ; probcut/iid/conthist n'ajoutent pas.
 - Région-3 (LMP/asp/singular/history, 0337) : marginale (history_big 0.569 le seul ~1σ). Région-4 (home-0007) ⏳.
 
+## 🏁 Chapitre RECHERCHE clos (2026-06-18)
+Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12, 0338/0343). Tout le reste
+(prunings marginaux, history-malus, TT, movegen, NPS) testé-et-plat → cf SEARCH_TUNING.md. jass perd encore
+~7:1 vs Scan → **le gap restant est l'ÉVAL**. → **Phase 2**.
+
 ## Jobs en cours
-- **cpx62** : **0338** (combo baké vs Scan — branchement + score à temps égal).
-- **ccx33** : libre.
-- **PC perso** : home-0007 (région-4) — heartbeat figé (PC peut-être en veille).
+- **cpx62** : **0345** (Phase 2 — échelle de profondeur : gap d'éval résiduel EN PLIES vs Scan).
+- **ccx33** : **0346** (Phase 2 — teacher d12 vs d9 : un Scan plus profond rapproche-t-il l'éval ?).
+- **PC perso** : éteint (home-0008 = dernier).
 
 ## Prochain verdict attendu
-**0338** : le combo aplatit-il l'arbre (2,0 → vers 1,28) et marque-t-il **plus vs Scan à temps égal** ?
-Si oui → continuer le tuning recherche, puis re-mesurer le gap d'éval résiduel (phase 2), puis la boucle gen-data (phase 3).
+**0345** (combien de plies d'éval il nous manque) + **0346** (teacher profond = levier ?). → choisir
+l'attaque éval (distillation plus profonde / terme manquant / pool), puis Phase 3 (gen-data co-évolution).
