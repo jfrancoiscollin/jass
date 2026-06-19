@@ -1,1 +1,1 @@
-kill 0307-scan-book-v1: runaway match phase (~11h, >3x estimate, likely hung). Book .jbk2 is built on disk; let 0308 audit it. Approved by JFC 2026-06-17.
+kill ccx33-0361-lean8-distill-loop: --full-fold replie les 8 bandes verticales (toutes des translates) en 66 977 poids = ~32x sous la capacite pattern de Scan (~2.1M) ET impose une invariance par translation que Scan n'utilise pas -> fit plafonne sous Scan par construction. Relance corrigee ccx33-0362 (--color-fold = 2 125 768 poids ~ capacite Scan, 8 patterns distincts). Approuve par JFC 2026-06-19.

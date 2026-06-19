@@ -155,7 +155,16 @@ Intuition « 32 patterns = 4× Scan = sur-paramétré, il faut élaguer » → *
   (capacité ≠ mur) MAIS ce n'est PAS « notre archi est au max » — c'est notre **FIT** qui est sous-optimal (cf §RECADRAGE :
   Scan = même classe, plus fort). D'où 0361 (boucle, mieux fitter).
 
+## ⚠️ PIÈGE FOLD (2026-06-19) — `--full-fold` PATHOLOGIQUE sur l'archi LEAN 8
+Audit avant la boucle (demande JFC) : les **8 bandes verticales sont toutes des TRANSLATES** → `--full-fold`
+(translation+réflexion) les **replie en 66 977 poids** = **~32× sous la capacité pattern de Scan (~2.1M)** ET impose
+une **invariance par translation que Scan N'UTILISE PAS** (il garde ses 4 colonnes en tables distinctes) ⇒ fit
+**plafonné sous Scan par construction**. Comptes NP=8 : full-fold **67k**, +réflexion 531k, **color-fold 2 125 768
+≈ Scan exact**. → **règle : sur un set tout-translates, NE PAS `--full-fold` ; `--color-fold`** (antisymétrie couleur
+seule, 8 patterns distincts). À 32 patterns full-fold reste OK (géométrie diverse, ~1M). **0359 "8=32" est CONFONDU**
+(son arm-8 plié à 67k). **0361 tué** pour ça, relancé **0362** (color-fold).
+
 ## Jobs en cours
-- **cpx62** : **0360** (rois-dans-patterns, vrai levier finale). [0358 C ✅ plat, 0359 F ✅ 8=32]
-- **ccx33** : **0361** (boucle distillation Scan sur archi LEAN 8 — juge DIRECT sensible).
+- **cpx62** : libre. [0358 C ✅ plat, 0360 rois ✅ corr finale men≈king (0.46/0.45) → rois ≠ levier finale]
+- **ccx33** : **0362** (boucle distillation Scan LEAN 8 **color-fold** = capacité Scan ; 0361 full-fold tué).
 - **PC perso** : éteint.
