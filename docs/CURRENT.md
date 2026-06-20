@@ -1,9 +1,8 @@
 # CURRENT — source de vérité active (programme « battre Scan »)
 
-> **1 page, tenue à jour à CHAQUE verdict.** Le reste des docs = archive/historique.
-> But : empêcher qu'un passage périmé relance une **branche morte**. Lire avec
-> [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe + arbre), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md)
-> §0 (faits) et [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md) (règles permanentes). MAJ : **2026-06-20**.
+> **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
+> actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
+> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-20**.
 
 ## 🎯 Hypothèse active (2026-06-20) — on était limité par le FIT, pas par l'archi
 > 📘 **Système actif → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)** (boucle vertueuse profonde + scale du fit).
@@ -11,8 +10,8 @@
 **LA découverte (JFC) : depuis le début on fittait sur ~2M positions max** (limite full-batch RAM). Donc on jugeait
 l'archi linéaire **affamée**. → plusieurs verdicts (« géométrie morte » 0230/0234/0239, « plafond linéaire ») sont
 **confondus** par cette famine et **à revisiter**. Scan : milliards de positions ; nous : millions = 3 ordres en dessous.
-**Les deux vrais leviers (récents)** : (1) **jeu profond** (d≥10 → issues véridiques, pas blunder-driven, 0363/0365) ;
-(2) **scaler le FIT** (volume d'entraînement). Plan = boucle vertueuse profonde, self-jugée, **fit qui grossit avec la data**.
+**Les deux vrais leviers** : (1) **jeu profond** (d≥10 → issues véridiques, pas blunder-driven, 0363/0365) ; (2) **scaler
+le FIT** (volume d'entraînement). Plan = boucle vertueuse profonde, self-jugée, **fit qui grossit avec la data**.
 
 ### Scale du fit — 3 tiers (le mur historique levé)
 | tier | méthode | volume | état |
@@ -23,195 +22,58 @@ l'archi linéaire **affamée**. → plusieurs verdicts (« géométrie morte » 
 
 ⚠️ **Un plateau de la fenêtre 2M ≠ le vrai plafond** (elle expulse les buckets rares avant leurs 30-50 visites). Avant
 de « ressortir Scan » : **test scale-du-fit** (gros fit sur le cumul). Nouveau pacing = la **génération** (~1,4M/h →
-30M ≈ ~21h ; le fit n'est plus le mur). Acquis : champion poolé bat d10 ET d12 (0378) ; **d10 > d12** (0.75, volume gagne).
+30M ≈ ~21h). Acquis : boucles profondes GRIMPENT (0373/0374) ; champion poolé bat d10 ET d12 (0378) ; **d10 > d12** (0.75, volume gagne).
 
-## 🔑 Découvertes & ERREURS méthodologiques (2026-06-18) — à ne JAMAIS réintroduire
-1. **ERREUR (corrigée) : on comparait à Scan à TEMPS FIXE ÉGAL depuis le début.** Ça confond éval et
-   vitesse de recherche → on a longtemps mal diagnostiqué (« l'éval est nulle »). À temps égal jass voit
-   moins de plies et perd quelle que soit l'éval. **Règle : depth fixe ou movetime compensé-NPS.**
-2. **ERREUR (corrigée) : on a calé toute la recherche à PROFONDEUR FIXE.** Ce benchmark sous-évalue
-   *structurellement* tout ce qui **achète de la profondeur** (à depth fixe la profondeur est gratuite →
-   on ne voit que le risque du pruning) → probcut/razor/multicut/iid ont été désactivés à tort. **Régler
-   la recherche À TEMPS FIXE** (self-play A/B `--benchmark-search-params … movetime_ms`).
-3. **PIÈGE évité : ne PAS rallumer NMP.** Évident mais FAUX — NMP est off à dessein (+97 Elo, sweep
-   0256/0259 ; zugzwang du draughts rend « passer est sûr » faux). Scan tient 1,28/ply SANS NMP.
-4. **ERREUR (de raisonnement) : sur-indexation sur l'éval/data.** La conviction covariate-shift était
-   forte et bien argumentée mais **réfutée** (0327/0329/0331 : 3 runs, même bande). Le vrai levier était
-   la recherche. Leçon : *isoler* (éval vs recherche) AVANT de présumer la cause.
-
-## ⛔ Principe (prior fort, pas dogme)
-**Aucun pivot non-linéaire (FM/MLP) tant que la parité features/données/recherche avec Scan n'est pas
-fermée.** La recherche est désormais le chantier ouvert — la fermer d'abord. (cf ARBRE_DECISION)
+## ⛔ Principe directeur (MAJ 2026-06-20)
+**Scaler le fit linéaire AVANT tout pivot.** Scan = même classe (linéaire-patterns) et plus fort ⇒ **pas de plafond de
+classe** là où on est ; notre fit était juste **affamé**. Donc : boucle vertueuse profonde + fit qui grossit (minibatch →
+`train_stream`, vers 30-100M), self-jugée. **NNUE (type A, apprentissage de représentation) UNIQUEMENT SI** ça plateaute
+encore **à gros volume + profondeur** (cf BOUCLE_VIRTUEUSE §1 : A invente des features, B optimise des poids fixes = nous).
 
 ## Defaults actuels (build/recherche) — vérifier via le manifeste d'artefact
 | flag | valeur | source |
 |---|---|---|
 | `JASS_ENDGAME_FEATURES` | **ON** (NUM_EXTRAS=110) | baké 0311 |
-| `JASS_KING_MOBILITY` / `JASS_KING_PATTERNS` | OFF / OFF | 0311 / 0240 |
-| `JASS_SCAN_PARITY` / `JASS_TEMPO_STAGE` | dispo (build runs récents ON) | 0323 |
+| `JASS_KING_MOBILITY` / `JASS_KING_PATTERNS` | OFF / OFF (0360 : rois ≠ levier finale) | 0311 / 0240 / 0360 |
+| `JASS_SCAN_PARITY` / `JASS_TEMPO_STAGE` | ON (builds boucle) | 0323 |
 | search NMP (`eg_no_nmp`) | **OFF partout** (garder) | +97 Elo 0256/0259 (zugzwang) |
-| search **multicut** (min_depth=6, moves=8, cuts=2) + **razor** (max_depth=4) | **BAKÉ ON** (≈+75 Elo self-play) | 0336, jugé à temps fixe |
-| search probcut / iid / conthist | OFF (n'ajoutent pas / nuisent) | 0334/0335/0336 |
+| search **multicut**(min6,moves8,cuts2) + **razor**(max4) | **BAKÉ ON** (~+50 Elo, seul gain recherche) | 0336/0338/0343 |
+| search probcut / iid / conthist / history-malus / TT>16Mo | OFF (plats, cf SEARCH_TUNING) | 0334-0344 |
 
-## 🔒 RÈGLES PERMANENTES (2026-06-18)
-- **Comparer à Scan** : jamais temps fixe égal → **profondeur fixe** (`--depth`/`--jass-depth`/`--scan-depth`)
-  ou **movetime compensé-NPS** (`--jass-movetime`/`--scan-movetime`). Temps égal = seulement pour *mesurer*
-  le handicap de vitesse. Garde-fou dans `calibrate_vs_scan.py`.
-- **Régler la recherche** : à **TEMPS FIXE** (`--benchmark-search-params A B … movetime_ms`), jamais à
-  profondeur fixe (sous-évalue le depth-buying).
-- **Pool de données** : **mixer** Scan-self-play (qualité ; quiet → *nuit* seul, 0327) + jass-self-play
-  (diversité) + coverage — `tools/jnnw_mix.py`. Diversité Scan : `scan_selfplay_gen.py --weak-depth`
-  (fort vs affaibli) / `--depth-jitter`.
-- **Outils** : `tools/nps_vs_scan.py` (handicap vitesse = facteur de compensation movetime) ;
-  `tools/jnnw_mix.py` ; `tools/scan_selfplay_gen.py` (corpus fort).
+## Métrique (pivot 2026-06-19)
+**Juge = SOI-MÊME, EN DIRECT** : `benchmark-nnue-vs-nnue` (même archi) ou `tools/jass_vs_jass_arch.py` (cross-archi, shardé
+parallèle), bande ~0.5 = sensible. **Scan ne ressort qu'au PLATEAU *après* scale-du-fit** — jamais au plancher (bruité,
+run-to-run ±0.05, insensible). SCREEN_ONLY : `endgame_mse`/`val_mse`/Elo_hc (⚠️ ⟂ force, 0311/0312). Auto-stop boucle :
+champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par archi (cf BOUCLE_VIRTUEUSE).
 
-## Verdicts récents (chronologie condensée)
-- **0327/0329** — covariate-shift PUR : **NON**. NEW (Scan self-play) *pire* que OLD (0314) vs Scan
-  (−545 vs −387), Elo_hc +182 vs +318 ; champion 500k = −545. La bonne distribution *seule* ne décolle pas.
-- **0330** — éval vs recherche : **gap d'éval réel mais petit** (~2 plies). C2 depth9=0.056, C3 jass+2=0.333.
-- **0331** — pool mixte jugé depth-égale : **pas d'amélioration nette** (dans le bruit 36 parties). Éval-data plafonné.
-- **0332** — **la recherche ne scale pas** (branchement 2,0 vs 1,28 ; 18× à d15). Levier dominant.
-- **0333** — prunings depth-buying OFF par défaut ; **combo = 0.639 à temps fixe**. Premier gain.
-- **0334** ⏳ — ablations du combo (sans conthist ?) + confirmation 1500ms.
+## 🔒 Règles permanentes (détail → [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md))
+- **Jeu profond ≥10** : décisif ≠ véridique (d4 = blunder-driven → value-function d'un faible, 0363/0365).
+- **Scaler le fit** : la fenêtre 2M plafonne *artificiellement* ; `--minibatch` **supporte la logistique**, puis `train_stream`.
+- **Géométrie/fold** : `--full-fold` impose une invariance par TRANSLATION **fausse en dames** → écrase les familles de
+  translates → **nos verdicts « géométrie » sont CONFONDUS**. Comparer au repli position-préservant **`--color-fold`**
+  (32cf = 8,5M ⊃ Scan 2,1M = 8cf). 32cf vs 8cf = la question ouverte, à trancher **à gros volume**.
+- **Infra (cf BOUCLE §6)** : `gen_patterns --emit` pas reset-proof → build de suite + `JASS_PATTERNS_DIR` hors-tree +
+  garde-fou ×32 ; runner **nettoie l'untracked du tree mid-job** → **travailler HORS-tree** ; pjtw full-fold 136 Mo → **gzip** (cap git 95 Mo) ;
+  cross-box fragile → boucle **self-contained une box**.
 
-## Verdict drawish (2026-06-18) — NEUTRE en jeu, NE PAS baker
-La non-linéarité de Scan (drawish ÷8/÷2), enfin testée en jeu : 0351 (108p) semblait aider (0.028→0.139)
-mais **0353 (270p) = BRUIT** (vrai OFF=0.083) → ON ≈ OFF (d9 0.083=0.083, d11 légèrement pire). Au jeu, **la
-recherche résout déjà les finales** → le scaling statique est redondant. Code dispo (`drawish_scaling`, défaut 0).
-0354 (résidus) : confondu par la saturation ±9999, MAIS révèle que jass **sous-évalue les finales matériel-vs-roi
-gagnées** (≤7p, mais **gérées par l'egdb au jeu** → moot). Vrai résidu d'éval = **8-15p** (corr 0.51-0.57).
-→ Options A (phase-split finale) + B (WDL logistique, méthode Scan) en test (0355/0356).
-
-## Métriques — SCREEN vs DECISION (un proxy priorise, ne décide JAMAIS seul)
-- **DECISION_GATE** : vs Scan **à profondeur égale / temps compensé** (méthodo permanente) · self-play
-  A/B recherche **à temps fixe** (`--benchmark-search-params`) · autopsie endgame-rois.
-- **SCREEN_ONLY** : `endgame_mse`, `val_mse`, Elo_hc, fit-check. ⚠️ **`endgame_mse` ⟂ force** (0311/0312).
-- ⚠️ Matchs vs Scan : 36 parties = bruit ±0.08 → pour une décision, **≥90 parties** ou self-play A/B.
-
-## Branches MORTES (NE PAS relancer — + condition de revival)
-| Levier mort | Preuve | Reviendrait légitime si… |
+## Branches MORTES / à REVISITER
+| Levier | Statut | reviendrait si… |
 |---|---|---|
-| **Covariate-shift PUR** (data forte seule) | 0327/0329/0331 (3 runs, même bande) | dans un pool *mixte* + recherche réglée |
-| Saturer le linéaire par cycles | 0297 plafonne/régresse | — |
-| Gradient MTC comme **CIBLE** | 0306 (99,9 % proxy) | densité ≥10-MTC massivement enrichie |
-| `--phase-weight` | −210 Elo (0261) | repro only |
-| play-depth-finale SEUL (pré-egdb) | 0254/0265 | — |
-| Géométrie de patterns | 0203-0236 (flat) | — |
-| **Rallumer NMP** | −97 Elo (0256/0259, zugzwang) | — |
-| **TT >16 Mo** | testé `--tt-mb` : −0,3 % nœuds (peu de transpositions draughts) | — |
-| **Optimiser movegen captures** (man-jump) | testé, perft-OK, 0 gain (movegen déjà lean) — cf SEARCH_TUNING | rewrite movegen majeur |
-| Prunings marginaux sur le combo (probcut/iid/conthist) | 0334/0336 ~0.5 (chevauchent le combo) | — |
-| **FM/MLP** | prématuré (principe) | parité features/données/**recherche** fermée |
-
-> ⚠️ **VIVANT** : depth-RAMP `--play-depth-by-phase late-mid=12,endgame=16` en régime egdb-exact (revival 0293 +74 Elo).
-
-## Garde-fou artefacts
-`.pjtw`/`.jnnw` → **manifeste** (`jobs/lib/manifest.sh`). Avant tout A/B de deux `.pjtw` :
-`manifest_assert_comparable`. Pré-flight compute : `jobs/lib/preflight.sh`. Sharding relabel : `jobs/lib/relabel.sh`.
-
-## Sweep recherche 0333-0337 (jugé à TEMPS FIXE) — combo figé
-- **multicut (min_depth=6, moves=8, cuts=2) + razor (max_depth=4) = ~+75 Elo self-play** (0336, 90 parties). **BAKÉ.**
-- multicut SEUL ne suffit pas (0336 mc_only=0.439) ; probcut/iid/conthist n'ajoutent pas.
-- Région-3 (LMP/asp/singular/history, 0337) : marginale (history_big 0.569 le seul ~1σ). Région-4 (home-0007) ⏳.
-
-## 🏁 Chapitre RECHERCHE clos (2026-06-18)
-Combo `multicut+razor` baké = **le seul gain** (~+50 Elo, vs Scan 0.097→~0.12, 0338/0343). Tout le reste
-(prunings marginaux, history-malus, TT, movegen, NPS) testé-et-plat → cf SEARCH_TUNING.md. jass perd encore
-~7:1 vs Scan → **le gap restant est l'ÉVAL**. → **Phase 2**.
-
-## Phase 2 ÉVAL — verdicts (2026-06-18)
-- **0345** : gap d'éval **~5 plies** (jass@d14 ≈ Scan@d9). **0346** : teacher Scan d12 N'aide pas (distill plafonné).
-- **0349** (corrélation éval-jass↔éval-Scan, ALIGNÉE) : **fort en midgame** (16-25p:0.79, 26+p:0.80), **effondré
-  en FINALE** (≤7p:**0.39**). → **PAS un plafond linéaire absolu** ; **trou LOCALISÉ en finale** = briques
-  manquantes, *là où Scan a sa non-linéarité (drawish-scaling)*. (0347 = bug d'alignement, ignoré.)
-
-## ⚖️ RECADRAGE (2026-06-19) — PAS de plafond de classe : notre FIT est sous-optimal, point
-**Scan = même classe (linéaire-patterns) et BEAUCOUP plus fort ⇒ il n'y a PAS de plafond de classe là où on est ;
-notre écart = notre *fit* des poids est moins bon que celui de Scan, donc améliorable PAR CONSTRUCTION.** Scan obtient
-son fit par une **boucle itérée** (self-play + ré-apprentissage), pas du **one-shot** comme nous. Erreur à ne pas
-refaire : conclure « plafond linéaire » alors que Scan le réfute. Le levier = **mieux fitter** (boucle), pas changer
-d'archi.
-
-## Fine-tuning du fit (2026-06-19) — verdicts
-- **0358 (C, rampe phase) & 0359 (F, 8 vs 32 patterns) = PLATS dans un plancher BRUITÉ.** F : 8 pat = 32 pat (0.028=0.028)
-  → la **capacité n'est pas le mur** (ferme « élaguer », cf §dessous). C : evalC(8/24)=0.083 ≈ ship tempo, eval0(0/40)=0.028.
-  ⚠️ **LEÇON MÉTHODO** : la même config (tempo+32) donne **0.083 (0353) vs 0.028 (0359)** → **vs-Scan-d9 AU PLANCHER**
-  (jass perd ~10:1) est **dominé par la variance** et **insensible** aux petits gains d'éval. Juge sensible = **eval-vs-eval
-  DIRECT même archi** (bande ~0.5) ou **corr éval↔Scan par bande** — PAS le taux vs-Scan près de zéro.
-- **0355 (phase-split) = NO-OP** (⚠️ `--scan-eval` ignore `--phase-split`, `--tempo-stage` écrase `--phase-lo/hi`). **0356/0357
-  (WDL logistique sur data forte) = PIRE** (nulles → cible plate). La **distillation de score** reste notre meilleur signal.
-
-## ⭐ NEXT STEPS — MIEUX FITTER l'archi (boucle itérée, juge DIRECT sensible)
-1. **0361 — BOUCLE de distillation Scan sur l'archi LEAN 8** (ccx33) : itère self-play(gen)→relabel Scan d9→pool→refit ;
-   juge **gen_k vs gen0 DIRECT** (8-pat même binaire = sensible ~0.5) + vs Scan. Monte > 0.55 → le fit one-shot
-   sous-ajustait (covariate shift) → **scaler la boucle**. Plat → fit déjà convergé sur cette archi → levier ailleurs.
-2. **0360 — ROIS dans les patterns** (`JASS_KING_PATTERNS`) : la finale est king-dominée, nos patterns sont men-only
-   (0240 = +37 Elo en distillation, mis OFF sous WDL) ; re-jugé distillation + corr finale held-out. Guard SELFDESC ⇒ pas de no-op.
-- ✅ **Drawish = NEUTRE** (0353) — codé, défaut 0, NE PAS baker.
-
-## ⛔ ÉLAGUER la capacité = branche MORTE (3 angles — NE PAS relancer)
-Intuition « 32 patterns = 4× Scan = sur-paramétré, il faut élaguer » → **réfutée par notre propre historique** :
-- **0230** : importance des 32 patterns **uniforme**, redondance ≤0.40 — aucun pattern mort. **0234** : drop des 8 moins
-  importants (32→24) = **−31 Elo ET 0 vitesse** (la lenteur d'éval est dans les extras+recherche, PAS les lookups pattern).
-- **0190/0193** : bucket-hashing lossy = **casse la profondeur** (les buckets rares **portent la connaissance**).
-- **0239** : richesse géométrique **plate sous labels parfaits** (15→54 patterns) → le trou n'est PAS la capacité.
-- La sparsité 90× est déjà gérée **sans perte** par `--prune` (remap dense collision-free, ×51, corr 0.9999). On ne paie
-  rien pour les buckets fantômes. ⇒ réduire la *capacité* (géométrie OU buckets) = testé 3×, perd. **0359 (F) = re-test
-  PROPRE de 0234** sous DECISION-gate (0234 n'était que Elo_hc) ; prior fort « ça perd ». NB : 0359 confirme 8=32
-  (capacité ≠ mur) MAIS ce n'est PAS « notre archi est au max » — c'est notre **FIT** qui est sous-optimal (cf §RECADRAGE :
-  Scan = même classe, plus fort). D'où 0361 (boucle, mieux fitter).
-
-## ⚠️ PIÈGE FOLD (2026-06-19) — `--full-fold` PATHOLOGIQUE sur l'archi LEAN 8
-Audit avant la boucle (demande JFC) : les **8 bandes verticales sont toutes des TRANSLATES** → `--full-fold`
-(translation+réflexion) les **replie en 66 977 poids** = **~32× sous la capacité pattern de Scan (~2.1M)** ET impose
-une **invariance par translation que Scan N'UTILISE PAS** (il garde ses 4 colonnes en tables distinctes) ⇒ fit
-**plafonné sous Scan par construction**. Comptes NP=8 : full-fold **67k**, +réflexion 531k, **color-fold 2 125 768
-≈ Scan exact**. → **règle : sur un set tout-translates, NE PAS `--full-fold` ; `--color-fold`** (antisymétrie couleur
-seule, 8 patterns distincts). À 32 patterns full-fold reste OK (géométrie diverse, ~1M). **0359 "8=32" est CONFONDU**
-(son arm-8 plié à 67k). **0361 tué** pour ça, relancé **0362** (color-fold).
-
-## Recette Scan = self-play + WDL + logistique, ITÉRÉ, DEPUIS ZÉRO (2026-06-19)
-Source des WDL de Scan = **son propre self-play depuis zéro** (matériel-seul « 1 dame ≈ 3 pions »), label = **résultat
-réel** de la partie, régression logistique, itéré (lignée Buro/GLEM → Letouzey → Gilbert). Pas de prof, pas de corpus
-externe. **Pourquoi ça marche malgré la drawishness** : départ FAIBLE → parties DÉCISIVES → signal WDL fort ; la
-drawishness ne mord qu'une fois fort (raffinement). **Nos échecs WDL** (0356/0357) partaient du **sommet drawish**
-(corpus fort) → cible ≈0.5 dégénérée. **Distinction** : WDL d'une eval faible NE collapse PAS (résultat = vérité
-externe qui corrige) ; TD-leaf d'une eval faible collapse (0.056, auto-distillation). Deux boucles à ne pas confondre :
-**A = apprentissage de représentation** (AlphaZero/NNUE, features apprises) = IMPOSSIBLE en linéaire ; **B = optim des
-poids sur features FIXES** (Scan/Texel) = possible, plafond = best-linéaire. Distillation (0362) = atteindre Scan ;
-WDL-from-scratch (0363) = égaler Scan sans prof (gourmand en volume) ; **dépasser** Scan = forcément A = NNUE.
-
-## ⚠️ BUG INFRA — `gen_patterns --emit` PAS reset-proof (2026-06-19, re-mordu)
-Le runner **reset l'arbre git vers main EN COURS de job** (bug 0232) → une géométrie émise au démarrage est
-**révertée mid-run**. **0362** : gen0/gen1 = ×8 (correct) puis gen2+ = ×32 (réverté) → cascade. **Donc 0362 ET 0359
-"8=32" sont INVALIDES** (géométrie instable). **Règle (déjà documentée, ratée par moi)** : tout job qui `--emit` une
-géométrie DOIT (1) build tout de suite (le binaire fige la géométrie), (2) copier `patterns.py` **hors du tree** et
-pin **`JASS_PATTERNS_DIR`** (le trainer la lit, reset-proof), (3) garde-fou : abort si le trainer affiche `17M ->
-8,503,072` (×32). → **0364** = relance reset-proof de 0362. NB partie propre de 0362 (gen0→gen1) : **gen1 DIRECT=0.333 =
-PIRE** → ajouter du jass-self-play dégradait (cohérent 0327 : jass-self-play faible/dilue).
-
-## 🔄 PIVOT STRATÉGIQUE (2026-06-19) — on ne se compare PLUS à Scan ; on tune la boucle virtuelle
-> 📘 **Système actif documenté en détail → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)** (recette, débit, pipeline distribué, pièges).
-
-**Directive JFC** : tant qu'on n'a pas convergé, vs-Scan = forcément perdant et démoralisant → **on se juge
-UNIQUEMENT SOI-MÊME** (DIRECT eval-vs-eval). Scan ne ressort qu'**au plateau**. On a tous les ingrédients (archi =
-surensemble/égal à Scan, recette WDL itérée). Verdicts qui mènent là :
-- **0363 (bootstrap WDL matériel→self-play→logistique, 8 gens)** : **GRIMPE en interne** (DIRECT vs gen1 : 0.50→0.72)
-  → mécanisme SAIN, pas de bug. MAIS **plat ~0 vs Scan** (plateau de 0227). La montée interne ne bouge pas le vs-Scan.
-- **0365 (décisivité)** : self-play matériel d4 = **77% décisif** (D=23%) → **signal WDL RICHE, pas dégénéré**. Donc le
-  plat n'est PAS la décisivité. **Insight clé : décisif ≠ véridique** — à d4 les issues sont **blunder-driven** (2 faibles,
-  qqn gaffe) → l'eval apprend la value-function d'un JOUEUR FAIBLE, pas la vraie valeur. Gradient : d4 77% > d9 71% >
-  embarquée 68% (plus on joue fort, moins décisif). → le levier = **FORCE du self-play (profondeur) + VOLUME**.
-- **0364 (distill lean-8, reset-proof OK : ×8 toutes gens)** : DIRECT gen1/2/3 = 0.47/0.33/0.47 (≤0.5) → **jass-self-play
-  Scan-relabel DÉGRADE le fit** (réfuté proprement). gen0 color-fold=capacité Scan = 0.028 vs Scan (capacité ≠ décollage).
-- ⚠️ `--minibatch` est **L2-only** (incompatible `--loss logistic`) ; à d10 le goulot = la GÉNÉRATION pas la RAM → full-batch (`--lowmem`) suffit.
+| **Rallumer NMP** | MORT −97 Elo (zugzwang) | — |
+| **TT >16 Mo / movegen captures / probcut-iid-conthist** | MORT (plats, cf SEARCH_TUNING) | — |
+| `--phase-weight` | MORT −210 Elo (0261) | — |
+| Gradient MTC comme CIBLE | MORT (99,9 % proxy, 0306) | densité MTC massive |
+| Covariate-shift PUR (data forte seule) | MORT (0327/0329/0331) | pool mixte |
+| Distillation via jass-self-play | MORT (0362/0364 : dégrade) | — |
+| WDL/bootstrap depuis data DÉJÀ forte/drawish | MORT (0356/0357 : cible ≈0.5) | départ faible décisif |
+| **« Géométrie morte » / « élaguer la capacité »** | ⚠️ **CONFONDU par le fit-volume** (testé à ≤2M) | **À REVISITER** (color-fold + 30M+) |
+| **FM/MLP (NNUE)** | reporté (principe) | plateau confirmé **à gros volume + profondeur** |
+| Drawish ÷8/÷2 | NEUTRE en jeu (0353), codé défaut 0 | — |
 
 ## Jobs en cours (2026-06-20)
 - **cpx62** : **0381** (boucle vertueuse autonome AUTO-STOP, self-contained hors-tree, juge parallèle N≈1000, bake-off
   32cf/8cf tous les 2 tours) → puis **0383** (test scale-du-fit : minibatch 5M vs 2M).
 - **ccx33** : **0382** (diversité d12, additif non-bloquant ; la prochaine boucle piochera).
 - **PC perso** : éteint.
-- **Acquis récents** : 0373/0374 (boucles profondes GRIMPENT, d10 0.64/d12 0.69 vs gen1) · 0378 (champion poolé bat d10=0.75
-  ET d12=0.61 → capitalisation OK) · `train_stream.py` livré (fit streaming 100M) · auto-stop = N1000/1σ/3 tours, par archi.
-- **Pièges infra** (cf BOUCLE_VIRTUEUSE §6) : runner NETTOIE l'untracked du tree mid-job → travailler HORS-tree ; `.pjtw`
-  full-fold = 136Mo → **gziper** pour git (cap 95Mo) ; cross-box fragile → boucle **self-contained une box**.
+- **Acquis** : 0373/0374 (boucles profondes grimpent) · 0378 (capitalisation : champion poolé bat les 2 boxes) ·
+  `train_stream.py` livré · auto-stop câblé.
