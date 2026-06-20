@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0383-fit-scaling-test",
+  "script": "jobs/queue/cpx62-0383-fit-scaling-test.sh",
+  "pid": 3390889,
+  "started_at": "2026-06-20T11:25:43+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
