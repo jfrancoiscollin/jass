@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0392-corpus-d10",
-  "script": "jobs/queue/cpx62-0392-corpus-d10.sh",
-  "pid": 3404630,
-  "started_at": "2026-06-20T16:34:38+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
