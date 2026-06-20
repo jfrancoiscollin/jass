@@ -22,20 +22,32 @@
 
 ---
 
-## ⭐ NEXT STEPS ACTIFS — 2026-06-18 (roadmap vivante : [CURRENT.md](CURRENT.md) · [ARBRE_DECISION.md](ARBRE_DECISION.md))
+## ⭐ NEXT STEPS ACTIFS — 2026-06-20 (roadmap vivante : [CURRENT.md](CURRENT.md) · [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md))
 
-> **État** : recherche réglée (combo multicut+razor baké, +50 Elo). Le gap restant vs Scan = l'**ÉVAL**,
-> et 0349 le **localise en FINALE** : corrélation éval-jass↔éval-Scan **forte en midgame (~0.80)** mais
-> **effondrée à ≤7p (0.39)**. Donc **pas un plafond de la classe linéaire** — un trou de **vocabulaire
-> d'éval en finale**, *là où Scan a sa non-linéarité*.
+> **État** : on a trouvé LA limitation = le **FIT-VOLUME** (on fittait ≤2M depuis le début → archi affamée). Les
+> deux leviers réels : **jeu profond ≥10** (issues véridiques) + **scaler le fit** (`--minibatch` 15M → `train_stream`
+> 100M). Conséquence : **une grande partie de nos verdicts éval/archi sont CONFONDUS** (cf
+> [BIAIS_FIT_VOLUME.md](BIAIS_FIT_VOLUME.md)) — il NE FAUT PLUS les utiliser pour trancher.
+
+> ## ⏱️ SÉQUENCE GATÉE — le TIMING est critique (ne pas décider à tort)
+> Chaque étape **conditionne** la suivante. Décider hors-ordre = re-trancher sur du confondu. **À ne PAS faire avant la gate.**
 >
-> **Plan (briques de finale, ordre) :**
-> 1. **`JASS_DRAWISH_SCALING` en JEU** — la non-linéarité localisée de Scan (÷2/÷8, nul-tendance), **codée
->    mais jamais testée en jeu** (coupée pour la distillation). À baker+tester. *(Leçon : ne plus mettre de
->    côté une feature Scan repérée sans la tester — vigilance.)*
-> 2. **Co-évolution d14** (jass@d14 ≈ Scan@d9 → self-play FORT sans Scan ; les vieilles boucles jouaient à d4).
-> 3. **Résidus finale + diff source Scan** (`/root/jass-scan`) → énumérer les briques finale manquantes,
->    ajout chirurgical interprétable. **MLP boîte-noire reste INTERDIT** ; briques localisées Scan-like = OK.
+> - **GATE 0 — Scaler le fit (PRÉALABLE absolu).** 0383 (minibatch 5M vs 2M) → puis `train_stream` sur 30M+.
+>   Tant que le fit n'est pas scalé, **AUCUNE** décision géométrie/archi/NNUE n'est valide.
+> - **GATE 1 — Géométrie × repli, à gros volume.** `32cf vs 8cf`, `color-fold vs full-fold` (juge cross-arch DIRECT).
+>   ⛔ Ne **PAS** re-déclarer « géométrie morte » / « élaguer » sur les vieux verdicts (≤2M, confondus).
+> - **GATE 2 — Richesse plein-format.** no-hash (3¹² plein), moins de fold, **rois dans patterns** (`JASS_KING_PATTERNS`)
+>   — tous re-jugés *bien fittés*. ⛔ Le « bucket-hashing casse la profondeur » (0190/0193) est confondu.
+> - **GATE 3 — Cible : WDL profond vs distillation, à gros volume.** ⛔ Le « WDL plafonne 0.22 / distillation>WDL »
+>   est confondu (WDL = haute variance → exige du volume). C'est la voie active (boucle profonde).
+> - **GATE 4 — Décision NNUE (type A) : GELÉE.** Ne s'ouvre QUE si plateau **confirmé à gros volume + profondeur +
+>   bonne géométrie/repli**. Un plateau de la **fenêtre 2M n'est PAS** ce plateau (il faut le test scale-du-fit d'abord).
+
+> ## 🚦 Règles de timing (garde-fous décision)
+> 1. **Un verdict jugé sur un fit ≤2M ne ferme JAMAIS une piste.** (cf BIAIS_FIT_VOLUME) Re-tester au scale d'abord.
+> 2. **Un plateau de l'auto-stop boucle (fenêtre 2M) déclenche le scale-du-fit**, PAS « ressortir Scan » ni « pivot NNUE ».
+> 3. **On ne ressort Scan** (depth-égale) **qu'après** un plateau à gros volume — pas au plancher (bruité, insensible).
+> 4. **NNUE = dernière carte**, après que la classe linéaire ait été fittée à l'échelle de Scan et ait plateauté.
 
 ---
 
@@ -158,6 +170,9 @@ NOTRE data.
 - **Séquencement** : APRÈS que l'A/B symétrie (0220-0226) confirme que le fold lève l'Elo.
 
 ### VERDICT GÉOMÉTRIE (2026-06-14) — ✂️ levier MORT, on passe aux rois + data
+> ⚠️ **CONFONDU (2026-06-20)** : ce verdict a été établi sur des fits **≤2M** (archi affamée) → il **ne ferme PLUS**
+> la piste géométrie. À **re-juger au scale** (color-fold, 30M+). Cf [BIAIS_FIT_VOLUME.md](BIAIS_FIT_VOLUME.md) #1 et la
+> SÉQUENCE GATÉE en tête de roadmap. **Ne pas s'appuyer sur ce qui suit pour décider.**
 
 Le jalon géométrie est **clos, négatif**, sous 3 angles convergents :
 - **importance UNIFORME** (`0230`) : aucun pattern mort, redondance ≤ 0.40 ;
