@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# MODÈLE (hors queue : le runner ne l'exécute PAS). Pour activer : copier en
+# jobs/queue/<host>-NNNN-objstore-sync.sh, déployer sur main APRÈS avoir configuré
+# JASS_OBJSTORE_REMOTE + RCLONE_CONF_B64 (cf docs/OBJSTORE_SETUP.md).
+#
+# Pousse tous les shards corpus committés vers le store objet, puis vérifie. No-op si non configuré.
+# id: HOST-NNNN-objstore-sync
+# description: sync des shards corpus committés vers l'object-store (rclone S3-compatible)
+set -uo pipefail
+cd /root/jass
+source jobs/lib/preflight.sh 2>/dev/null || true
+git fetch origin main -q 2>/dev/null || true
+
+echo "=== état du store ==="
+tools/objstore.sh check
+
+echo "=== push des shards corpus committés ==="
+tools/objstore.sh sync-shards
+
+echo "=== inventaire distant après sync ==="
+tools/objstore.sh list || true
+
+echo "=== rappel : manifeste local pour recoupement ==="
+tools/corpus_manifest.sh >/dev/null 2>&1 || true
+echo "(voir docs/CORPUS_30M_MANIFEST.md pour les comptes attendus)"
