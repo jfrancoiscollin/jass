@@ -1,0 +1,27 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 3 × 3000000 lignes @ 4min/M ≈ 36.0 min
+  [preflight] champion poolé + test géométrie 32 vs 8: ≈ 110 min
+  [preflight] TOTAL estimé ≈ 154.0 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+  d10 (local) : 2880000 positions, éval=gen6.pjtw
+=== attente data d12 (0375) ===
+  attente 0375 (1)
+  attente 0375 (2)
+  attente 0375 (3)
+  attente 0375 (4)
+  attente 0375 (5)
+  attente 0375 (6)
+  attente 0375 (7)
+  attente 0375 (8)
+  attente 0375 (9)
+  attente 0375 (10)
+  attente 0375 (11)
+  d12 (git) : 576000 positions
+=== build 32-pat ===
+=== départage d10 vs d12 ===
+  d10 vs d12 = 0.75
+=== POOL d10 ∪ d12 ===
+  pool = 2880000 (d10) + 576000 (d12) = 3456000
+=== CHAMPION (full-fold) sur le pool combiné ===
+TRAIN FAIL /root/jass/jobs/results/cpx62-0376-champion-geometry/artefacts/champion.pjtw
+tail: cannot open '/root/jass/jobs/results/cpx62-0376-champion-geometry/artefacts/champion-train.log' for reading: No such file or directory
