@@ -1,0 +1,19 @@
+loading JNNW /root/jass/jobs/results/ccx33-0374-virtuous-loop-deep12/artefacts.src/cumulative.jnnw
+  96000 records  (0.01s)
+extracting pattern indices (men only)
+sym-fold [color+rot+translation+reflection] : 1,000,119 distinct weights (17M -> 1,000,119, 17.00x) ; antisymmetric
+loading raw extras /root/jass/jobs/results/ccx33-0374-virtuous-loop-deep12/artefacts.src/gen1.feat
+  note: extras K=120 (default 106) → adapting to the dump width
+  extras shape (96000, 120)  (mean mob b/w=9.8/11.5)
+target=wdl  pos=33233 neg=33041 zero=29726 (31.0% draws)  wdl_scale=1.0
+loss=LOGISTIC on WDL outcomes  win=33233 draw=29726 loss=33041 (31.0% draws)
+phase : piece-count mean=20.0  wmg mean=0.500  (ramp 0.0/40.0)
+split : train=86400 val=9600
+prune : keep 91,243 buckets (>= 1 visits) -> 182,488 pattern cols vs 34,012,224  (186.4× fewer); train fallback=0.000%
+design : 182728 columns (2×91244 pat + 2×120 ext)  [LOWMEM full-batch, on-the-fly extras]
+L-BFGS  l2=0.0001  max_iter=250  LOGISTIC  (pure)  [lowmem]
+  train_loss=0.497916  iters=250  (76.91s)
+val   : mse=3.055926  sign_acc=0.2873
+val/phase mse : opening=1.0509(n2540)  midgame=1.3108(n1947)  late-mid=2.6913(n1566)  endgame=8.3058(n1922)  deep-eg=2.4229(n1625)
+quant : scale=1000  pat range=[-544,544] ext_mg range=[-1065,1054]
+wrote /root/jass/jobs/results/ccx33-0374-virtuous-loop-deep12/artefacts.src/gen1.pjtw  (v3, 34012464 weights, 136049876 bytes)
