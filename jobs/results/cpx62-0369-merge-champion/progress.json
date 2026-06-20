@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0369-merge-champion",
-  "snapshot_at": "2026-06-20T01:07:41+00:00",
+  "snapshot_at": "2026-06-20T01:12:56+00:00",
   "started_at": "2026-06-20T00:41:55+00:00",
-  "elapsed_seconds": 1546,
+  "elapsed_seconds": 1861,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3359312       1       25:45  0.0  0.0 bash\n3359314 3359312       25:45  0.0  0.0 bash\n3360509 3359314       00:00  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3359312       1       31:00  0.0  0.0 bash\n3359314 3359312       31:00  0.0  0.0 bash\n3360750 3359314       00:00  0.0  0.0 sleep\n"
 }
