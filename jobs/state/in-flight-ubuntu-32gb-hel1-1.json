@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0376-champion-geometry",
+  "script": "jobs/queue/cpx62-0376-champion-geometry.sh",
+  "pid": 3375824,
+  "started_at": "2026-06-20T08:15:51+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
