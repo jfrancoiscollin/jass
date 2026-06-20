@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0383-fit-scaling-test",
-  "snapshot_at": "2026-06-20T13:29:41+00:00",
+  "snapshot_at": "2026-06-20T13:34:46+00:00",
   "started_at": "2026-06-20T11:25:43+00:00",
-  "elapsed_seconds": 7438,
+  "elapsed_seconds": 7743,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3390889       1    02:03:58  0.0  0.0 bash\n3390891 3390889    02:03:58  0.0  0.0 bash\n3395667 3390891       20:31  117 34.0 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3390889       1    02:09:02  0.0  0.0 bash\n3390891 3390889    02:09:02  0.0  0.0 bash\n3395667 3390891       25:35  117 33.5 python3\n"
 }
