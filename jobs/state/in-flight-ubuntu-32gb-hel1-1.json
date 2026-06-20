@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0369-merge-champion",
+  "script": "jobs/queue/cpx62-0369-merge-champion.sh",
+  "pid": 3359312,
+  "started_at": "2026-06-20T00:41:55+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
