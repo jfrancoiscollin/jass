@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0371-round-refit",
+  "script": "jobs/queue/cpx62-0371-round-refit.sh",
+  "pid": 3362984,
+  "started_at": "2026-06-20T01:48:32+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
