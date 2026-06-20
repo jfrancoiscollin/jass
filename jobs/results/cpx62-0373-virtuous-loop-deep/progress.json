@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0373-virtuous-loop-deep",
-  "snapshot_at": "2026-06-20T00:10:59+00:00",
+  "snapshot_at": "2026-06-20T00:16:03+00:00",
   "started_at": "2026-06-19T22:36:54+00:00",
-  "elapsed_seconds": 5645,
+  "elapsed_seconds": 5949,
   "artefacts": [
     {
       "name": "build.log",
@@ -94,11 +94,23 @@
     },
     {
       "name": "gen5-train.log",
-      "size_bytes": 0
+      "size_bytes": 1431
+    },
+    {
+      "name": "gen5-vsgen1.log",
+      "size_bytes": 346
+    },
+    {
+      "name": "gen5-vsprev.log",
+      "size_bytes": 346
     },
     {
       "name": "gen5.feat",
       "size_bytes": 1152000012
+    },
+    {
+      "name": "gen5.pjtw",
+      "size_bytes": 136049876
     },
     {
       "name": "mini.jnnw",
@@ -491,7 +503,135 @@
     {
       "name": "sp5.9.log",
       "size_bytes": 1219
+    },
+    {
+      "name": "sp6.1.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.1.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.10.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.10.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.11.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.11.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.12.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.12.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.13.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.13.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.14.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.14.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.15.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.15.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.16.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "sp6.16.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.2.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.2.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.3.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.3.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.4.jnnw",
+      "size_bytes": 82082
+    },
+    {
+      "name": "sp6.4.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.5.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.5.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.6.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.6.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.7.jnnw",
+      "size_bytes": 65666
+    },
+    {
+      "name": "sp6.7.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.8.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.8.log",
+      "size_bytes": 0
+    },
+    {
+      "name": "sp6.9.jnnw",
+      "size_bytes": 73874
+    },
+    {
+      "name": "sp6.9.log",
+      "size_bytes": 0
     }
   ],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1    01:34:05  0.0  0.0 bash\n3354410 3354408    01:34:05  0.0  0.0 bash\n3357977 3354410       04:20  830 30.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3354408       1    01:39:08  0.0  0.0 bash\n3354410 3354408    01:39:08  0.0  0.0 bash\n3358215 3354410       00:55 99.9  0.5 jass\n3358216 3354410       00:55 99.9  0.5 jass\n3358217 3354410       00:55 99.9  0.5 jass\n3358218 3354410       00:55 99.9  0.5 jass\n3358219 3354410       00:55 99.9  0.5 jass\n3358220 3354410       00:55 99.9  0.5 jass\n3358221 3354410       00:55  100  0.5 jass\n3358222 3354410       00:55 99.8  0.5 jass\n3358223 3354410       00:55 99.9  0.5 jass\n3358224 3354410       00:55 99.9  0.5 jass\n3358225 3354410       00:55 99.9  0.5 jass\n3358226 3354410       00:55  100  0.5 jass\n3358227 3354410       00:55 99.9  0.5 jass\n3358228 3354410       00:55 99.9  0.5 jass\n3358229 3354410       00:55 99.9  0.5 jass\n3358230 3354410       00:55 99.8  0.5 jass\n"
 }
