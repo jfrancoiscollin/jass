@@ -1,0 +1,28 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 2 × 5000000 lignes @ 4min/M ≈ 40.0 min
+  [preflight] gen ~3.5M d10 + minibatch fit BIG vs 2M: ≈ 150 min
+  [preflight] TOTAL estimé ≈ 194.0 min  (cap 240 min)
+  [preflight] OK — sous le cap, lancement.
+=== champion 0378 (pilote + baseline 2M) ===
+=== assemble le pool BIG : 3500000 d10 frais + d12 (0374,0382) ===
+  d10 accumulé 500000
+  d10 accumulé 1000000
+  d10 accumulé 1500000
+  d10 accumulé 2000000
+  d10 accumulé 2500000
+  d10 accumulé 3000000
+  d10 accumulé 3500000
+  POOL BIG = 5012000 positions
+=== fit champion_BIG sur 5012000 (--minibatch 600000 --loss logistic) ===
+  [fit] loss=LOGISTIC on WDL outcomes  win=1357408 draw=2309876 loss=1344716 (46.1% draws)
+  [fit] design : 538650 columns (2×269205 pat + 2×120 ext)  [MINIBATCH 600,000 rows/chunk]
+  [fit] L-BFGS  l2=0.0001  max_iter=250  LOGISTIC  (pure)  [minibatch 600,000]
+=== DIRECT : champion_BIG (5012000) vs champion_2M (0378) — juge parallèle N≈1000 ===
+
+==========================================================
+   cpx62-0383 — TEST SCALE DU FIT : BIG(5012000) vs 2M(0378)
+   champion_BIG vs champion_2M = 0.3333  (N=504)
+----------------------------------------------------------
+   > 0.55 → la fenêtre 2M ÉTAIT le mur → basculer la boucle en ACCUMULATION + minibatch (puis streaming pour 100M).
+   ≈ 0.5  → 2M suffisait à ce stade (le rare-bucket ne paie pas encore) → re-tester à plus gros volume.
+==========================================================
