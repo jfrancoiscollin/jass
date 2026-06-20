@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0370-round-gen-d12",
-  "snapshot_at": "2026-06-20T01:56:17+00:00",
+  "snapshot_at": "2026-06-20T02:01:45+00:00",
   "started_at": "2026-06-20T01:10:01+00:00",
-  "elapsed_seconds": 2776,
+  "elapsed_seconds": 3104,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2540203       1       46:16  0.0  0.0 bash\n2540205 2540203       46:16  0.0  0.0 bash\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2540203       1       51:44  0.0  0.0 bash\n2540205 2540203       51:44  0.0  0.0 bash\n2542825 2540205       00:12  0.0  0.0 sleep\n"
 }
