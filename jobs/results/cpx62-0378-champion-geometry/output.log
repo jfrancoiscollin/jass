@@ -1,0 +1,25 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 3 × 2000000 lignes @ 4min/M ≈ 24.0 min
+  [preflight] champion + géométrie (hors-tree): ≈ 120 min
+  [preflight] TOTAL estimé ≈ 152.0 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+  d10 (local) : 2880000 pos
+=== data d12 (0375, git) ===
+  pool 2880000+576000=3456000
+=== sous-échantillonne le pool à 2M ===
+  3456000 -> 2000000
+=== build 32-pat (hors-tree) ===
+=== départage d10 vs d12 ===
+  d10 vs d12 = 0.75
+=== CHAMPION (full-fold) ===
+=== 32+color-fold ===
+=== réduit à 8-pat + 8+color-fold ===
+=== MATCH cross-arch 32cf vs 8cf ===
+
+==========================================================
+   cpx62-0378 — CHAMPION + GÉOMÉTRIE (pool 2M, hors-tree)
+   départage d10 vs d12 = 0.75
+   champion vs d10 = 0.75  |  champion vs d12 = 0.611111   (>0.5 vs LES DEUX → pooler gagne)
+   GÉOMÉTRIE 32cf vs 8cf =    (⚠️ 2M = 32cf sous-fitté ; s'il perd, point bas de la courbe, NE PAS le tuer)
+   champion.pjtw.gz + pooled-2M.jnnw.gz committés (gzip = fix cap 95Mo).
+==========================================================
