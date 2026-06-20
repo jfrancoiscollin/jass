@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0371-round-refit",
-  "snapshot_at": "2026-06-20T02:39:16+00:00",
+  "snapshot_at": "2026-06-20T02:44:19+00:00",
   "started_at": "2026-06-20T01:48:32+00:00",
-  "elapsed_seconds": 3044,
+  "elapsed_seconds": 3347,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3362984       1       50:44  0.0  0.0 bash\n3362986 3362984       50:44  0.0  0.0 bash\n3365879 3362986       00:21  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3362984       1       55:47  0.0  0.0 bash\n3362986 3362984       55:47  0.0  0.0 bash\n3366123 3362986       00:10  0.0  0.0 sleep\n"
 }
