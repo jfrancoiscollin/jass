@@ -1,0 +1,28 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 3 × 3000000 lignes @ 4min/M ≈ 36.0 min
+  [preflight] champion poolé + test géométrie 32 vs 8: ≈ 110 min
+  [preflight] TOTAL estimé ≈ 154.0 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+  d10 (local) : 2880000 positions, éval=gen6.pjtw
+=== attente data d12 (0375) ===
+  d12 (git) : 576000 positions
+=== build 32-pat ===
+=== départage d10 vs d12 ===
+  d10 vs d12 = 0.75
+=== POOL d10 ∪ d12 ===
+  pool = 2880000 (d10) + 576000 (d12) = 3456000
+=== sous-échantillonne le pool à 2M (mémoire : 3,456M OOM en 0376) ===
+  subsample 3456000 -> 2000000
+=== CHAMPION (full-fold) sur le pool combiné ===
+  champion gzippé : 5 Mo
+  pool gzippé committé (20 Mo)
+=== TEST GÉOMÉTRIE : 32+color-fold vs 8+color-fold (MÊME pool) ===
+TRAIN FAIL /root/jass/jobs/results/cpx62-0377-champion-geometry/artefacts/eval32cf.pjtw
+    raw = Path(path).read_bytes()
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 778, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 772, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/root/jass/jobs/results/cpx62-0377-champion-geometry/artefacts/feat'
