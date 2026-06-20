@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0372-geometry-test",
+  "script": "jobs/queue/cpx62-0372-geometry-test.sh",
+  "pid": 3366691,
+  "started_at": "2026-06-20T02:55:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
