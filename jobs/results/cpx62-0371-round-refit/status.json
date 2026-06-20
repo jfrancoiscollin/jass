@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0371-round-refit",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 4,
   "started_at": "2026-06-20T01:48:32+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3362984
+  "ended_at": "2026-06-20T02:55:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
