@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0382-d12-diversity",
-  "script": "jobs/queue/ccx33-0382-d12-diversity.sh",
-  "pid": 2546820,
-  "started_at": "2026-06-20T09:45:45+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
