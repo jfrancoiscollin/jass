@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0393-corpus-d10",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-20T17:16:30+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3406974
+  "ended_at": "2026-06-20T17:57:51+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
