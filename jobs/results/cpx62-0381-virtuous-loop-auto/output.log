@@ -1,0 +1,44 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 5 × 2000000 lignes @ 4min/M ≈ 40.0 min
+  [preflight] boucle auto 5 tours (gen d10 + refit + juge parallèle): ≈ 180 min
+  [preflight] TOTAL estimé ≈ 224.0 min  (cap 260 min)
+  [preflight] OK — sous le cap, lancement.
+=== graine : champion + pool de 0378 ===
+  pool graine = 2000000
+=== build 32-pat ===
+=== TOUR 1 : gen d10 + refit + juge parallèle ===
+320000
+pool=2000000
+  TOUR 1 : champ vs champ-1 = 0.4444   |  vs champ-3 = NA   (pool ↑, NPER=320000)
+=== TOUR 2 : gen d10 + refit + juge parallèle ===
+320000
+pool=2000000
+  TOUR 2 : champ vs champ-1 = 0.6111   |  vs champ-3 = NA   (pool ↑, NPER=320000)
+  [bake-off] 32cf vs 8cf = 0.7778   (⚠️ pool encore petit → 32cf sous-fitté, on suit la PENTE)
+=== TOUR 3 : gen d10 + refit + juge parallèle ===
+320000
+pool=2000000
+  TOUR 3 : champ vs champ-1 = 0.5278   |  vs champ-3 = 0.4167   (pool ↑, NPER=320000)
+=== TOUR 4 : gen d10 + refit + juge parallèle ===
+349088
+pool=2000000
+  TOUR 4 : champ vs champ-1 = 0.5278   |  vs champ-3 = 0.5000   (pool ↑, NPER=349080)
+  [bake-off] 32cf vs 8cf = 0.5278   (⚠️ pool encore petit → 32cf sous-fitté, on suit la PENTE)
+=== TOUR 5 : gen d10 + refit + juge parallèle ===
+349088
+pool=2000000
+  TOUR 5 : champ vs champ-1 = 0.5000   |  vs champ-3 = 0.5000   (pool ↑, NPER=349080)
+
+==========================================================
+   cpx62-0380 — BOUCLE VERTUEUSE AUTO (trajectoire)
+tour 1  vs_prev=0.4444  vs_3=NA  NPER=320000
+tour 2  vs_prev=0.6111  vs_3=NA  NPER=320000
+  bakeoff tour 2  32cf_vs_8cf=0.7778
+tour 3  vs_prev=0.5278  vs_3=0.4167  NPER=320000
+tour 4  vs_prev=0.5278  vs_3=0.5000  NPER=349080
+  bakeoff tour 4  32cf_vs_8cf=0.5278
+tour 5  vs_prev=0.5000  vs_3=0.5000  NPER=349080
+----------------------------------------------------------
+   MAX 5 tours atteint (pas encore de plateau → relancer pour continuer)
+   → si PLATEAU : c'est ICI qu'on ressort Scan (depth-égale) pour situer le niveau.
+==========================================================

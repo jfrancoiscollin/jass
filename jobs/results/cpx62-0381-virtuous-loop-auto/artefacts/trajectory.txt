@@ -1,0 +1,7 @@
+tour 1  vs_prev=0.4444  vs_3=NA  NPER=320000
+tour 2  vs_prev=0.6111  vs_3=NA  NPER=320000
+  bakeoff tour 2  32cf_vs_8cf=0.7778
+tour 3  vs_prev=0.5278  vs_3=0.4167  NPER=320000
+tour 4  vs_prev=0.5278  vs_3=0.5000  NPER=349080
+  bakeoff tour 4  32cf_vs_8cf=0.5278
+tour 5  vs_prev=0.5000  vs_3=0.5000  NPER=349080
