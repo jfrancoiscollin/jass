@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0376-champion-geometry",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 9,
   "started_at": "2026-06-20T08:15:51+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3375824
+  "ended_at": "2026-06-20T08:36:16+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
