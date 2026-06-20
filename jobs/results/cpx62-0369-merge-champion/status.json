@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0369-merge-champion",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 4,
   "started_at": "2026-06-20T00:41:55+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3359312
+  "ended_at": "2026-06-20T01:48:28+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
