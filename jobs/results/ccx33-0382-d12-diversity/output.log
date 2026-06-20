@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] génération d12 diversité (~900000): ≈ 180 min
+  [preflight] TOTAL estimé ≈ 184 min  (cap 220 min)
+  [preflight] OK — sous le cap, lancement.
+=== champion (0378) comme pilote ===
+=== sonde débit d12 ===
+  débit ≈ 2880 pos/min @ d12 → batch=72000, cible 900000
+  accumulé : 72000
+  accumulé : 144000
+  accumulé : 216000
+  accumulé : 288000
+  accumulé : 360000
+  accumulé : 432000
+  accumulé : 504000
+  accumulé : 576000
+  accumulé : 648000
+  accumulé : 720000
+  accumulé : 792000
+  accumulé : 864000
+  accumulé : 936000
+
+==========================================================
+   ccx33-0382 — DIVERSITÉ d12 : 936000 positions, 8 Mo gzippé → committé
+   La prochaine itération de boucle (cpx62) piochera ce shard pour mixer d12 ∪ d10.
+==========================================================
