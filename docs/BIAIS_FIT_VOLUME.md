@@ -1,10 +1,22 @@
 # Choix techniques BIAISÉS par la limitation du fit-volume — à REVISITER (2026-06-20)
 
-> **Le critère de tri.** Pendant ~toute l'histoire du projet on a fitté sur **~2M positions max** (full-batch RAM).
-> **TOUT verdict éval/data/archi jugé sur un fit ≤2M est potentiellement CONFONDU** : on a comparé des modèles
-> **affamés**, dont les plus riches (plus de poids) étaient *structurellement* désavantagés (sous-fittés). Maintenant
-> que le fit scale (minibatch 15M → `train_stream` 100M, cf [BOUCLE_VIRTUEUSE.md §8](BOUCLE_VIRTUEUSE.md)), il faut
-> **re-juger** cette classe de décisions. Les choix **recherche/méthodo/infra** ne sont PAS touchés (indépendants du fit).
+> **Le critère de tri.** Le **défaut** et la **grande majorité** des verdicts A/B (géométrie, replis, élagage, rois…)
+> ont été jugés sur un fit **≤2M** (full-batch RAM, OOM à ~3.4M). **TOUT verdict éval/data/archi jugé sur un fit ≤2M
+> est potentiellement CONFONDU** : on a comparé des modèles **affamés**, dont les plus riches (plus de poids) étaient
+> *structurellement* désavantagés (sous-fittés). Maintenant que le fit scale (minibatch 15M → `train_stream` 100M,
+> cf [BOUCLE_VIRTUEUSE.md §8](BOUCLE_VIRTUEUSE.md)), il faut **re-juger** cette classe de décisions. Les choix
+> **recherche/méthodo/infra** ne sont PAS touchés (indépendants du fit).
+
+> **⚠️ Nuance factuelle (corrigée 2026-06-20) — on N'a PAS *toujours* été à ≤2M.** On a **visé 6.7-10.7M plusieurs
+> fois** avec le pattern-eval (chargé via `--nnue`) : 0317 (6.7M, **FAILED**), **0318 (6.7M, COMPLETED → +253 Elo vs
+> hc)**, 0319 (sweep data-scaling 1M/2M/6.7M, **FAILED** au `subset 1000000`), 0320 (10.7M, **FAILED**). Soit **3 fits
+> sur 4 ont CRASHÉ** (OOM/instabilité de l'ancien pipeline minibatch) — *le crash est lui-même le symptôme du cap*.
+> Le seul réussi (0318) n'a **jamais** été comparé en tête-à-tête à un petit fit du même setup ⇒ **aucune courbe de
+> data-scaling propre n'existe** (celle qui devait la produire, 0319, a planté). Et les **vrais réseaux** (1024-512,
+> 128-64) ont plafonné à **~2.37M** (0084). **Bilan : on a *touché* 10M mais (a) non fiable (3/4 crashés), (b) jamais
+> contrôlé, (c) jamais >10.7M (vs 30-100M visés), (d) sur l'ancien pipeline distillation, pas la géométrie actuelle.**
+> **GATE 0 = la version qui MARCHE de 0319-qui-a-planté** : `train_stream` streame du disque (gradient exact) là où
+> les vieux minibatch crashaient.
 
 ## A. Le biais mécanique (pourquoi « plus riche perdait » à bas volume)
 Plus de poids = plus de data nécessaire pour bien les estimer. À 2M, un modèle à 8,5M poids voit ~0,24 visite/poids :
@@ -33,6 +45,14 @@ choix « lean / replier / élaguer / hasher » étaient des réponses à la fami
 Revenue plusieurs fois (0237/0239, distillation plafonnée, plats vs Scan). **Confondue** : on n'a JAMAIS fitté la classe
 linéaire à l'échelle où Scan l'a fittée (milliards). Scan = même classe, bien plus fort ⇒ la classe n'est pas le mur.
 **Décision NNUE GELÉE** tant qu'on n'a pas un plateau confirmé **à gros volume + profondeur + bonne géométrie/repli**.
+
+> **Le pendant symétrique (les DEUX méta-conclusions sont confondues par la même racine).** Côté **réseau** aussi :
+> nos vrais NNUE (1024-512, 128-64) ont été entraînés sur **≤2.37M** (0084 ; le reste à 1M, ex. 0090). Un réseau est
+> **non-convexe** et plus gourmand qu'un linéaire ⇒ il a besoin d'**ordres de grandeur PLUS** de data (Scan/SF : 10⁸-10⁹).
+> Donc le verdict **« le NNUE n'ajoute rien »** (0132 Phase 5b : pattern-résidu **0/54** vs 128-64) est **au moins aussi
+> CONFONDU** que « linéaire au plafond ». On a comparé deux affamés, le plus gourmand (le net) le plus pénalisé.
+> **Conséquence** : quand on dégèlera la question NNUE, **le réseau est le candidat qui profite le PLUS du 30M+** — il
+> faudra le **réentraîner au scale** (trainer streaming, comme `train_stream` côté linéaire) **avant tout verdict**.
 
 ## D. Choix de DESIGN à corriger (conséquences directes)
 - **Fenêtre glissante 2M dans la boucle** : posée *à cause* du cap fit → expulse les buckets rares. → **accumuler** sur
