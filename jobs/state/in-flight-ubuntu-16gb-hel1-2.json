@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0389-corpus-d12",
+  "script": "jobs/queue/ccx33-0389-corpus-d12.sh",
+  "pid": 2575651,
+  "started_at": "2026-06-20T21:46:10+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
