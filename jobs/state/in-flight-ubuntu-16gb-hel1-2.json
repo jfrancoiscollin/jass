@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0368-harvest-0367",
+  "script": "jobs/queue/ccx33-0368-harvest-0367.sh",
+  "pid": 2539663,
+  "started_at": "2026-06-20T00:59:24+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
