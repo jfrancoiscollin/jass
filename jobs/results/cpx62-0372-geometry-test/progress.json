@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0372-geometry-test",
-  "snapshot_at": "2026-06-20T03:30:15+00:00",
+  "snapshot_at": "2026-06-20T03:35:20+00:00",
   "started_at": "2026-06-20T02:55:06+00:00",
-  "elapsed_seconds": 2109,
+  "elapsed_seconds": 2414,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3366691       1       35:09  0.0  0.0 bash\n3366693 3366691       35:09  0.0  0.0 bash\n3369063 3366693       00:00  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3366691       1       40:14  0.0  0.0 bash\n3366693 3366691       40:14  0.0  0.0 bash\n3369394 3366693       00:21  0.0  0.0 sleep\n"
 }
