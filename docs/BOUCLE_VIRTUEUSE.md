@@ -3,7 +3,7 @@
 > **Référence du système actif** : comment on fait *monter* notre archi linéaire-patterns par
 > auto-amélioration itérée, façon Scan, en distribué sur nos boxes. À lire avec [CURRENT.md](CURRENT.md)
 > (état 1 page), [SCAN_ARCHITECTURE_NOTES.md §5](SCAN_ARCHITECTURE_NOTES.md) (recette Scan reconstituée)
-> et [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-19**.
+> et [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-20**.
 
 ## 0. Le pivot — on ne se compare PLUS à Scan (jusqu'au plateau)
 
@@ -141,9 +141,32 @@ par translation**. **CONFONDUS.** On n'a JAMAIS comparé les géométries au rep
 jugé **cross-arch** en DIRECT (`tools/jass_vs_jass_arch.py` : 2 binaires, car NUM_PATTERNS diffère — voilà
 pourquoi `benchmark-nnue-vs-nnue` ne suffit pas). Ne vaut qu'avec un GROS pool (fitter 8,5M poids).
 
-## 8. Quand on plateau
+## 8. SCALER LE FIT (2026-06-20) — la limitation structurelle qu'on avait depuis le début
 
-`gen_k vs gen_{k-1} ≈ 0.5` soutenu (la data fraîche n'améliore plus) ⇒ **plateau du fit linéaire sur ce
-volume/cette profondeur/cette géométrie**. Leviers AVANT de conclure : ↑ profondeur, ↑ volume (plus de
-tours/boxes), pool plus large, **géométrie+repli (cf §7 : 32+color-fold)**. **Au vrai plateau** : on ressort
-Scan (depth-égale) pour situer. Si très en dessous de Scan malgré tout → le reste = **type A (NNUE)**.
+**Le diagnostic de fond (JFC) : depuis le début on fittait sur ~2M positions max** (limite full-batch RAM). On jugeait
+donc l'archi linéaire **affamée** → « géométrie morte » / « plafond linéaire » étaient des **plafonds du FIT, pas de la
+classe**. Scan : milliards ; nous : millions. Le fit (pas la génération, pas les boxes) **était le mur**.
+
+**Pourquoi une fenêtre 2M plafonne ARTIFICIELLEMENT** : elle **expulse** les buckets rares avant qu'ils atteignent leurs
+~30-50 visites (« bien estimé »). Les buckets communs sont fittés dès 2M ; la **longue traîne** (où se joue le dernier
+Elo) ne se remplit jamais. Le vrai plafond data-driven = **~30-100M** (estimation journal : 30-60M pour le 32-pattern).
+
+**Les 3 tiers** (le mur levé) :
+| tier | méthode | volume | coût | quand |
+|---|---|---|---|---|
+| 0 | full-batch `--lowmem` | ~2,4M | OOM au-delà | (déprécié) |
+| 1 | **`--minibatch <N> --loss logistic`** | ~10-15M | RAM, rapide | ≤15M (la RAM tient `cols`+`extras`) |
+| 2 | **`tools/train_stream.py --data --feat`** | **15-100M+** | disque : ~0,46 Go/M-lignes/passe | >15M |
+
+- **`--minibatch` SUPPORTE la logistique** (le « L2-only » du code visait les **ancres**, pas la loss). Aucun code à changer pour le Tier 1.
+- **`train_stream.py`** : logistique L-BFGS **streamée du disque** (FEAT pré-dumpé aligné), gradient **EXACT** (unit-test : 3e-15 vs full-batch),
+  `.pjtw` byte-compatible C++. Réutilise `train_lbfgs_chunked` + l'expand v3 de `train.py`. `--full-fold|--color-fold`, `--max-iter ~25`,
+  `--chunk 500000`, `--prune`. Chaque itération **re-lit tout le disque** → ~30M faisable (<1h), 100M = ~1,15 TB d'I/O (heures NVMe).
+- **Nouveau pacing = la GÉNÉRATION** : ~1,4M/h (cpx62 d10) → 30M ≈ ~21h. Le fit n'est plus le goulot ; le volume de data l'est.
+
+## 9. Quand on plateau
+
+`gen_k vs gen_{k-1} ≈ 0.5` soutenu ⇒ plateau **sur ce volume/profondeur/géométrie/FIT**. ⚠️ **Un plateau de la fenêtre 2M
+n'est PAS le vrai plafond** (§8). Leviers AVANT de conclure, dans l'ordre : **scaler le fit** (minibatch → train_stream sur
+le cumul) · ↑ profondeur · ↑ volume généré · géométrie+repli (§7 : 32cf enfin nourri). **Au vrai plateau** (gros fit sur
+gros volume qui ne bouge plus) : on ressort Scan (depth-égale) pour situer. Si loin malgré tout → reste = **type A (NNUE)**.
