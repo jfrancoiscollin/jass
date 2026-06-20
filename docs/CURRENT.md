@@ -57,6 +57,7 @@ champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par arc
   cross-box fragile → boucle **self-contained une box**.
 
 ## Branches MORTES / à REVISITER
+> 📋 **État des lieux complet des verdicts CONFONDUS par le fit-volume → [BIAIS_FIT_VOLUME.md](BIAIS_FIT_VOLUME.md)** (géométrie, fold, hash, rois, WDL, méta « plafond linéaire »).
 | Levier | Statut | reviendrait si… |
 |---|---|---|
 | **Rallumer NMP** | MORT −97 Elo (zugzwang) | — |
