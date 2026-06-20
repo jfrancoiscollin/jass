@@ -1,0 +1,20 @@
+gen-data-wdl: n=30000 out=/root/jass/jobs/results/cpx62-0373-virtuous-loop-deep/artefacts.src/sp1.9.jnnw eval_depth=4 play_depth=10 max_plies=200 seed=51094801 nnue=/root/jass/jobs/results/cpx62-0373-virtuous-loop-deep/artefacts.src/gen0.pjtw quiet_only=false pv_extract=0 movetime_ms=0 label_depth_by_phase=(uniform eval_depth) play_depth_by_phase=(uniform play_depth)
+  played 50 games, 1688 / 30000 positions
+  played 100 games, 3307 / 30000 positions
+  played 150 games, 4884 / 30000 positions
+  played 200 games, 6486 / 30000 positions
+  played 250 games, 8272 / 30000 positions
+  played 300 games, 9779 / 30000 positions
+  played 350 games, 11393 / 30000 positions
+  played 400 games, 13150 / 30000 positions
+  played 450 games, 14737 / 30000 positions
+  played 500 games, 16320 / 30000 positions
+  played 550 games, 18063 / 30000 positions
+  played 600 games, 19720 / 30000 positions
+  played 650 games, 21372 / 30000 positions
+  played 700 games, 22942 / 30000 positions
+  played 750 games, 24530 / 30000 positions
+  played 800 games, 26286 / 30000 positions
+  played 850 games, 27984 / 30000 positions
+  played 900 games, 29687 / 30000 positions
+wrote 30000 WDL records to /root/jass/jobs/results/cpx62-0373-virtuous-loop-deep/artefacts.src/sp1.9.jnnw
