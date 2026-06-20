@@ -1,0 +1,15 @@
+=== évals de 0374 (gen*.pjtw) ===
+  7 évals copiées
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 /root/jass/jobs/results/ccx33-0368-harvest-0367/artefacts/0374-gen4.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 /root/jass/jobs/results/ccx33-0368-harvest-0367/artefacts/0374-gen5.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 /root/jass/jobs/results/ccx33-0368-harvest-0367/artefacts/0374-gen6.pjtw
+=== gen data (cumulative.jnnw, tronqué ≤ ~1.5M records pour rester sous le cap 95Mo) ===
+  0367 cumulative : 576000 records -> harvest 576000 (21.9 Mo)
+
+=== HARVEST 0367 OK -> committé dans git, prêt pour le merge cpx62-0369 ===
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen1.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen2.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen3.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen4.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen5.pjtw
+-rw-r--r-- 1 root root 136049876 Jun 20 00:59 0374-gen6.pjtw
