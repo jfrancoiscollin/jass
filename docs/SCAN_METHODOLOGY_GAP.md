@@ -8,7 +8,9 @@
 >    **blunder-driven** → l'eval apprend la value-function d'un faible (0363 grimpe en interne, plat vs Scan ; 0365).
 >    Le levier = **force du self-play (profondeur) + volume**, PAS la décisivité. Bootstrapper d4 = branche morte.
 > 3. **Le jeu profond est ~gratuit** : 24k pos/min @ d10 (cpx62), ~2× d4 seulement (pruning). Qualité+volume ensemble.
-> 4. **`--minibatch` est L2-only** (≠ logistique) ; à d10 le goulot = génération pas RAM → **full-batch `--lowmem`**.
+> 4. **`--minibatch` SUPPORTE la logistique** (le « L2-only » visait les ancres) → fit ~10-15M sans OOM, SANS code à
+>    changer. La fenêtre 2M (`--lowmem` full-batch) plafonne ARTIFICIELLEMENT (expulse les buckets rares) ; **scaler le
+>    fit** (minibatch puis streaming-disque) = le levier pour atteindre le vrai plafond (~30-100M, échelle Scan).
 > 5. **Géométrie reset-proof** : `gen_patterns --emit` réverté mid-run par le runner → build de suite + `JASS_PATTERNS_DIR`
 >    hors-tree + garde-fou « ×32 » (0359/0362 invalidés sans ça).
 > 6. **La gen data WDL est arch-indépendante = actif durable** → pool distribué via git (fenêtre glissante ≤2M).

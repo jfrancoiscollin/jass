@@ -103,8 +103,9 @@ d'attente** (chaque job attend la data committée dont il dépend). ⚠️ La da
 - **`gen_patterns --emit` PAS reset-proof** : le runner reset l'arbre vers `main` mid-run → géométrie
   émise révertée (0359/0362 invalidés). **Règle** : build tout de suite (le binaire fige la géométrie) +
   copier `patterns.py` hors-tree + pin **`JASS_PATTERNS_DIR`** (le trainer la lit) + garde-fou « ×32 ».
-- **`--minibatch` est L2-only** (incompatible `--loss logistic`). À d10 le goulot = la GÉNÉRATION pas la
-  RAM → **full-batch `--lowmem`** suffit (a encaissé 2,4M en 0224).
+- **`--minibatch` SUPPORTE la logistique** (correction : `train_lbfgs_chunked` a la branche sigmoïde ; le « L2-only »
+  visait les ANCRES). → fit ~10-15M sans OOM, **sans changement de code**. C'est le levier pour SCALER le fit au-delà
+  de la fenêtre 2M (full-batch `--lowmem` cape ~2,4M). Pour 100M : streaming-disque du chargement (Stage 2).
 - **Juger vs Scan au plancher = bruit** (run-to-run ±0.05 sur la même config). Juge = **DIRECT self**.
 - **Décisif ≠ véridique** : ne PAS bootstrapper sur du d4 (blunder-driven) — profond (≥10) ou rien.
 
