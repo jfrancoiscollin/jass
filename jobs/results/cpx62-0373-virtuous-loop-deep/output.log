@@ -1,0 +1,43 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 7 × 1500000 lignes @ 4min/M ≈ 42.0 min
+  [preflight] boucle profonde d10 6 gens (sonde débit) + DIRECT self: ≈ 150 min
+  [preflight] TOTAL estimé ≈ 196.0 min  (cap 280 min)
+  [preflight] OK — sous le cap, lancement.
+=== build (EGDB ON = adjudication finale exacte) ===
+  egdb data: ON
+=== seed matériel-seul (recherche d10 compense) ===
+seed ok n_ext=120
+=== sonde de débit @ d10 (dimensionne NPER pour ~20 min/gen) ===
+  débit ≈ 24000 pos/min @ d10 → NPER=480000/gen
+=== gen1 : self-play(gen0) d10 +480000 → cumulé → logistique ===
+cumulative 480000
+  gen1 : (baseline self)
+=== gen2 : self-play(gen1) d10 +480000 → cumulé → logistique ===
+cumulative 960000
+  gen2 : vs gen1=0.388889   vs gen1=0.388889
+=== gen3 : self-play(gen2) d10 +480000 → cumulé → logistique ===
+cumulative 1440000
+  gen3 : vs gen2=0.472222   vs gen1=0.416667
+=== gen4 : self-play(gen3) d10 +480000 → cumulé → logistique ===
+cumulative 1920000
+  gen4 : vs gen3=0.583333   vs gen1=0.5
+=== gen5 : self-play(gen4) d10 +480000 → cumulé → logistique ===
+cumulative 2400000
+  gen5 : vs gen4=0.555556   vs gen1=0.611111
+=== gen6 : self-play(gen5) d10 +480000 → cumulé → logistique ===
+cumulative 2880000
+  gen6 : vs gen5=0.722222   vs gen1=0.638889
+
+==========================================================
+   cpx62-0373 — BOUCLE VIRTUELLE PROFONDE (FIX bug CUM + cap relevé 600k) (d10), jugée SELF (aucun Scan)
+   NPER=480000/gen  cumul final=2880000
+   gen :  vs gen(k-1)   vs gen1
+    2 :   0.388889        0.388889
+    3 :   0.472222        0.416667
+    4 :   0.583333        0.5
+    5 :   0.555556        0.611111
+    6 :   0.722222        0.638889
+----------------------------------------------------------
+   vs gen(k-1) > 0.5 SOUTENU → la boucle GRIMPE encore (jeu profond = issues véridiques) → continuer/scaler.
+   vs gen(k-1) ~0.5 → PLATEAU → c'est LÀ qu'on ressort Scan (et pas avant).
+==========================================================
