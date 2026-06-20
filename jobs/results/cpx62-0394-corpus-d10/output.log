@@ -1,0 +1,9 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] corpus d10 1400000: ≈ 90 min
+  [preflight] TOTAL estimé ≈ 94 min  (cap 110 min)
+  [preflight] OK — sous le cap, lancement.
+  accumulé 350000
+  accumulé 700000
+  accumulé 1050000
+  accumulé 1400000
+=== shard d10 : 1400000 pos, 13 Mo gz → committé ===
