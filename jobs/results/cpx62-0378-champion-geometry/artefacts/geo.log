@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/root/jass/tools/jass_vs_jass_arch.py", line 74, in <module>
+    raise SystemExit(main(sys.argv[1:]))
+                     ~~~~^^^^^^^^^^^^^^
+  File "/root/jass/tools/jass_vs_jass_arch.py", line 56, in main
+    r = play_game(white, black, referee, opening, depth=args.depth, max_plies=args.max_plies)
+  File "/root/jass/tools/calibrate_vs_scan.py", line 539, in play_game
+    if not referee.apply_move(mv):
+           ^^^^^^^^^^^^^^^^^^
+AttributeError: 'JassEngine' object has no attribute 'apply_move'
