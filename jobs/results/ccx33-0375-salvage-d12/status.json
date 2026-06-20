@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0375-salvage-d12",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-20T08:16:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2546007
+  "ended_at": "2026-06-20T08:21:25+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

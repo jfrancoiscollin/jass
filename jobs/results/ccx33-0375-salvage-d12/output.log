@@ -1,0 +1,8 @@
+  d12 data : 576000 positions, 21 Mo
+  d12 éval (gen6.pjtw) : 136Mo -> 8.8 Mo gzippé
+=== SALVAGE d12 OK (data + éval gzip committées) → prêt pour cpx62-0376 ===
+total 30052
+drwxr-xr-x 2 root root     4096 Jun 20 08:16 .
+drwxr-xr-x 3 root root     4096 Jun 20 08:16 ..
+-rw-r--r-- 1 root root 21888008 Jun 20 08:16 d12-data.jnnw
+-rw-r--r-- 1 root root  8875962 Jun 20 08:16 d12-eval.pjtw.gz
