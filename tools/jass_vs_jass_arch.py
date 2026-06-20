@@ -42,7 +42,7 @@ def main(argv):
 
     a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a)
     b = JassEngine(args.jass_b, label="B", pattern_path=args.pattern_b)
-    referee = JassEngine(args.jass_a, label="Referee")
+    referee = Referee(args.jass_a)   # play_game needs a Referee (apply_move/legality), NOT a JassEngine
     openings = opening_pool_via_jass(args.jass_a)
 
     # Full deterministic game list, then take this shard's disjoint slice.
