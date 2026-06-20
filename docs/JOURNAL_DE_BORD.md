@@ -15,7 +15,16 @@
 
 ---
 
-## 0. Verdict de tête — 2026-06-19 (PIVOT : boucle virtuelle distribuée, on ne se compare plus à Scan)
+## 0. Verdict de tête — 2026-06-20 (LA limitation : le FIT, pas l'archi)
+
+> **Découverte structurelle (JFC).** Depuis le début on fittait sur **~2M positions max** (full-batch RAM) → on jugeait
+> l'archi linéaire **affamée**. Plusieurs verdicts (« géométrie morte », « plafond linéaire ») sont **confondus** par cette
+> famine, **à revisiter**. Les 2 vrais leviers : **jeu profond** (d≥10, issues véridiques) + **scaler le FIT**. Mur levé :
+> `--minibatch --loss logistic` (~15M, supporte la logistique — le « L2-only » visait les ancres) puis **`train_stream.py`**
+> (disque, 15-100M, gradient EXACT 3e-15, byte-compatible C++). Nouveau pacing = la **génération** (~1,4M/h). Boucles
+> profondes GRIMPENT (0373/0374), champion poolé bat les 2 boxes (0378), d10>d12 (0.75). Détail → **[BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)**.
+
+## 0bis. Verdict — 2026-06-19 (PIVOT : boucle virtuelle, on ne se compare plus à Scan)
 
 > **Bascule.** Après la recherche (0333-0344) puis l'éval (0345-0360, plats au plancher vs Scan), on
 > **arrête de se comparer à Scan** (perdant + bruité tant qu'on n'a pas convergé) → **auto-jugement DIRECT**.
