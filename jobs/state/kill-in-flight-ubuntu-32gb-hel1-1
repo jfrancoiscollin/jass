@@ -1,1 +1,0 @@
-kill cpx62-0380-virtuous-loop-auto: juge casse (jass_vs_jass_arch passait un JassEngine comme referee au lieu d une Referee -> apply_move AttributeError -> juge NA chaque tour). Fix pousse, relance cpx62-0381. Approuve JFC 2026-06-20.
