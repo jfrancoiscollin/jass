@@ -3,21 +3,27 @@
 > **1 page, tenue à jour à CHAQUE verdict.** Le reste des docs = archive/historique.
 > But : empêcher qu'un passage périmé relance une **branche morte**. Lire avec
 > [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe + arbre), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md)
-> §0 (faits) et [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md) (règles permanentes). MAJ : **2026-06-18**.
+> §0 (faits) et [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md) (règles permanentes). MAJ : **2026-06-20**.
 
-## Hypothèse active (2026-06-18) — la RECHERCHE est le levier DOMINANT
-Le mur n'est **ni la data, ni la classe d'éval** — c'est que **la recherche de jass ne scale pas**.
-- **0332** : à profondeur égale jass = Scan en vitesse (d9 : 1,1×) MAIS le branchement effectif est
-  **2,0/ply (jass) vs 1,28 (Scan)** → l'arbre de jass explose (d15 : **18× plus lent**). jass ne peut
-  pas atteindre les profondeurs de Scan à temps égal.
-- **0330** : le gap d'éval est **réel mais petit** (~2-4 plies ; +2 plies → score ×6). jass *compense
-  déjà* l'éval par la profondeur — qu'il n'arrive pas à obtenir (cf 0332). La recherche est le **multiplicateur**.
-- **0333** : les prunings qui **achètent de la profondeur** (probcut/razor/multicut/iid) sont TOUS OFF
-  par défaut ; le **combo = 0.639 à temps fixe** (≈ +100 Elo self-play). **Premier levier qui bouge.**
+## 🎯 Hypothèse active (2026-06-20) — on était limité par le FIT, pas par l'archi
+> 📘 **Système actif → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md)** (boucle vertueuse profonde + scale du fit).
 
-**Plan** : caler le combo de recherche (0334 ablations → 0335 vs Scan depth-égale), puis itérer le
-réglage recherche (marges, LMR profond, ordering) — terrain neuf sous la BONNE méthodo (temps fixe).
-L'éval (pool mixte) reste un levier secondaire additif (une éval plus nette aide aussi l'ordering).
+**LA découverte (JFC) : depuis le début on fittait sur ~2M positions max** (limite full-batch RAM). Donc on jugeait
+l'archi linéaire **affamée**. → plusieurs verdicts (« géométrie morte » 0230/0234/0239, « plafond linéaire ») sont
+**confondus** par cette famine et **à revisiter**. Scan : milliards de positions ; nous : millions = 3 ordres en dessous.
+**Les deux vrais leviers (récents)** : (1) **jeu profond** (d≥10 → issues véridiques, pas blunder-driven, 0363/0365) ;
+(2) **scaler le FIT** (volume d'entraînement). Plan = boucle vertueuse profonde, self-jugée, **fit qui grossit avec la data**.
+
+### Scale du fit — 3 tiers (le mur historique levé)
+| tier | méthode | volume | état |
+|---|---|---|---|
+| 0 | full-batch `--lowmem` | ~2,4M | le mur (OOM 3,4M) |
+| 1 | **`--minibatch --loss logistic`** (RAM, design streamé) | ~10-15M | **dispo, 0 code** (le « L2-only » visait les ancres) — test 0383 |
+| 2 | **`tools/train_stream.py`** (disque, gradient EXACT 3e-15) | **15-100M+** | **livré + unit-validé, byte-compatible C++** |
+
+⚠️ **Un plateau de la fenêtre 2M ≠ le vrai plafond** (elle expulse les buckets rares avant leurs 30-50 visites). Avant
+de « ressortir Scan » : **test scale-du-fit** (gros fit sur le cumul). Nouveau pacing = la **génération** (~1,4M/h →
+30M ≈ ~21h ; le fit n'est plus le mur). Acquis : champion poolé bat d10 ET d12 (0378) ; **d10 > d12** (0.75, volume gagne).
 
 ## 🔑 Découvertes & ERREURS méthodologiques (2026-06-18) — à ne JAMAIS réintroduire
 1. **ERREUR (corrigée) : on comparait à Scan à TEMPS FIXE ÉGAL depuis le début.** Ça confond éval et
@@ -200,8 +206,12 @@ surensemble/égal à Scan, recette WDL itérée). Verdicts qui mènent là :
   Scan-relabel DÉGRADE le fit** (réfuté proprement). gen0 color-fold=capacité Scan = 0.028 vs Scan (capacité ≠ décollage).
 - ⚠️ `--minibatch` est **L2-only** (incompatible `--loss logistic`) ; à d10 le goulot = la GÉNÉRATION pas la RAM → full-batch (`--lowmem`) suffit.
 
-## Jobs en cours
-- **cpx62** : **0366** (BOUCLE VIRTUELLE PROFONDE : self-play d10 = issues véridiques + volume sondé, logistique full-batch,
-  jugée **SELF** gen_k vs gen_{k-1}/gen1, **aucun Scan**). vs gen(k-1) >0.5 soutenu = grimpe ; ~0.5 = plateau → là on ressort Scan.
-- **ccx33** : libre.
-- **PC perso** : éteint. [0358 C ✅ plat · 0360 rois ✅ men≈king → rois ≠ levier · 0363/0364/0365 → pivot self-juge]
+## Jobs en cours (2026-06-20)
+- **cpx62** : **0381** (boucle vertueuse autonome AUTO-STOP, self-contained hors-tree, juge parallèle N≈1000, bake-off
+  32cf/8cf tous les 2 tours) → puis **0383** (test scale-du-fit : minibatch 5M vs 2M).
+- **ccx33** : **0382** (diversité d12, additif non-bloquant ; la prochaine boucle piochera).
+- **PC perso** : éteint.
+- **Acquis récents** : 0373/0374 (boucles profondes GRIMPENT, d10 0.64/d12 0.69 vs gen1) · 0378 (champion poolé bat d10=0.75
+  ET d12=0.61 → capitalisation OK) · `train_stream.py` livré (fit streaming 100M) · auto-stop = N1000/1σ/3 tours, par archi.
+- **Pièges infra** (cf BOUCLE_VIRTUEUSE §6) : runner NETTOIE l'untracked du tree mid-job → travailler HORS-tree ; `.pjtw`
+  full-fold = 136Mo → **gziper** pour git (cap 95Mo) ; cross-box fragile → boucle **self-contained une box**.
