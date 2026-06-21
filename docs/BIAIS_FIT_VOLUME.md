@@ -1,5 +1,12 @@
 # Choix techniques BIAISÉS par la limitation du fit-volume — à REVISITER (2026-06-20)
 
+> ## ✅ CONFIRMÉ EMPIRIQUEMENT — GATE 0401 (2026-06-21)
+> La thèse de ce document n'est plus une hypothèse. Matrice 2×2 (volume × archi) sur **29M**, fits `train_stream`,
+> juge cross-arch : **32cf@29M vs 32cf@2M = 0.694 (+6σ)** ⇒ le volume paie pour l'archi riche. **32cf vs 8cf : 0.306
+> à 2M → 0.583 à 29M** ⇒ l'archi riche passe de **perdante à gagnante** juste en la nourrissant (l'INVERSION prédite
+> en §A). La 8cf (≈Scan-exact) **sature à 2M** (volume ns). ⇒ les verdicts #1/#2/#3 ci-dessous (« géométrie morte »,
+> « full-fold le bon repli », « 8=32 ») sont **CONFONDUS CONFIRMÉS**. **Archi retenue : 32cf**, à scaler (>100M).
+
 > **Le critère de tri.** Le **défaut** et la **grande majorité** des verdicts A/B (géométrie, replis, élagage, rois…)
 > ont été jugés sur un fit **≤2M** (full-batch RAM, OOM à ~3.4M). **TOUT verdict éval/data/archi jugé sur un fit ≤2M
 > est potentiellement CONFONDU** : on a comparé des modèles **affamés**, dont les plus riches (plus de poids) étaient
