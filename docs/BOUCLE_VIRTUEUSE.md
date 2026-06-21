@@ -170,3 +170,53 @@ Elo) ne se remplit jamais. Le vrai plafond data-driven = **~30-100M** (estimatio
 n'est PAS le vrai plafond** (§8). Leviers AVANT de conclure, dans l'ordre : **scaler le fit** (minibatch → train_stream sur
 le cumul) · ↑ profondeur · ↑ volume généré · géométrie+repli (§7 : 32cf enfin nourri). **Au vrai plateau** (gros fit sur
 gros volume qui ne bouge plus) : on ressort Scan (depth-égale) pour situer. Si loin malgré tout → reste = **type A (NNUE)**.
+
+## 10. L'ITÉRATION 60M est le MOTEUR — la couverture utile est déjà gagnée (2026-06-21)
+
+> Suite directe de §7-§8. Mesures sur **8,4M de nos parties** (color-fold, TB=8 503 072). Recadre le « viser 100M ».
+
+### 10.1 Couverture des buckets : nombre vs JEU réel (mesuré)
+| seuil visites | % des **buckets** | % du **JEU réel** (activations) |
+|---|---|---|
+| ≥5 | 62 % | **99,7 %** |
+| ≥30 (bien déterminés) | 34 % | **98,1 %** |
+| ≥100 | 20 % | **94,8 %** |
+
+**« 47 % de buckets bien déterminés » TROMPE.** Les 66 % mal déterminés pèsent **1,9 % du jeu réel** — configs rarissimes.
+**98 % de ce qui se joue tombe déjà sur des buckets bien déterminés dès ~8M.** Le volume fait donc 2 choses, qui saturent
+différemment : **COUVERTURE** (mettre les buckets du jeu réel au-dessus du bruit) ≈ **saturée à 10-30M** ; **PRÉCISION**
+(affiner les poids des fréquents, variance ~1/visites) = **rendements décroissants**. ⇒ **courir après le volume (80M/round)
+est inutile** : on ne couvrirait que la queue à <2 % du jeu. **Socle ~30-60M suffit.**
+
+### 10.2 Le bon levier au-delà du socle = ITÉRER (qualité), pas grossir (volume)
+Un pilote plus fort **concentre ses visites** sur les positions qui comptent (y c. nos finales de rois faibles, autopsie ~3,6)
+→ il rend bien-déterminée la **queue PERTINENTE** sans volume brut. C'est le levier **B** (§1), le moteur de Scan.
+
+**Pourquoi 0405 (accumulation) n'a rien montré** : +0,8M sur 30M figé en gardant ~le même pilote → 97 % de données
+identiques, pilote inchangé → juge ~0,50 (sous le bruit). Ce **n'était pas une itération**. Une vraie itération **régénère
+une large fraction** du corpus avec le **nouveau** champion. → 0405 **retirée** ; remplacée par la gen pure (socle) + la boucle.
+
+### 10.3 La boucle d'itération 60M — `cpx62-0420-iterloop-60M` (système cible)
+```
+iter k :  gen FRESH (8M) PILOTÉE PAR champion_{k-1}   ← le pilote s'améliore vraiment
+          → fenêtre glissante FIFO (jette les + vieilles, garde WINDOW≈48M)
+          → refit 32cf (train_stream color-fold)
+          → JUGE champion_k vs champion_{k-1} (+ vs champ-3)   ← progression MESURABLE
+          → auto-stop plateau (3× ≤0,52 + cumulé ≤0,53)
+```
+Choix de design assumés :
+- **Fenêtre figée ~48M** : 98 %+ de couverture (10.1) → inutile de la pousser ; le levier est le **pilote qui monte**.
+- **Data fraîche box-local (régénérable)** → **0 bloat git** (`.git`≈1,7 Go ; la corpus durable réutilisable vient des
+  maillons gen-pure, séparément). Seuls **champions + trajectoire** committés.
+- **Self-contained une box** (leçon cross-box §6) · **re-lançable** (re-seed = dernier champion) · params coût↔signal en tête.
+
+### 10.4 Fiabilité du fit au scale (vérifié, « rien au hasard »)
+- **Fit 60M en streaming OK** : bloc *prunée* ≈ **1,8M buckets actifs** (pas 8,5M ! 86 % jamais vus → 0), ~**2 Go RAM**.
+- **Pruning `--prune-min-visits=1` = LOSSLESS** (entraîne tous les vus, laisse les non-vus à 0). Mémoire, pas régularisation.
+- **Régularisation = L2** ; le `1e-4` fut calé ≤2M (0176) → **re-sweep au scale** (3e-5/1e-4/3e-4) dans le GATE progression
+  `cpx62-0410`, meilleur L2 **adopté dans 0420**.
+- **`train_stream --king-patterns`** livré + validé byte-compat (test `test_train_stream_king`) → débloque GATE 2b (`0409`).
+
+### 10.5 Séquence
+`gen pure → socle ~60M` → `GATE 2a/2b` (fold, rois) → `GATE progression + L2` (quantifie la précision, fige le L2) →
+**`boucle d'itération 60M`** (le moteur). Object store : dormant, non bloquant jusqu'à ~70-80M (cf OBJSTORE_SETUP.md).
