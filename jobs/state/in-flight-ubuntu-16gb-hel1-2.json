@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0415-corpus-d10",
+  "script": "jobs/queue/ccx33-0415-corpus-d10.sh",
+  "pid": 2599657,
+  "started_at": "2026-06-21T14:03:56+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
