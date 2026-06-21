@@ -3,7 +3,7 @@
 # description: BOUCLE D'ITERATION 60M (systeme cible Scan-style) — la VRAIE iteration, pas l'accumulation de 0405.
 # Chaque iteration REGENERE une LARGE fenetre fraiche PILOTEE PAR LE CHAMPION COURANT (qui s'ameliore), en MIX
 # d10/d12 5:1 par COMPTE (5/6 d10 decisivite+volume, 1/6 d12 labels + precis ; ~2:1 en TEMPS car d12 ~2.5x plus lent),
-# l'integre dans une fenetre glissante FIFO 40M (couverture saturee ~10-30M), refit 32cf, JUGE champion_k vs champion_{k-1}. Le pilote
+# l'integre dans une fenetre glissante FIFO 35M (couverture saturee ~10-30M), refit 32cf, JUGE champion_k vs champion_{k-1}. Le pilote
 # change vraiment a chaque tour => la progression devient MESURABLE (contrairement aux +0,8M figes de 0405). Levier =
 # QUALITE/distribution des donnees (le moteur de Scan), pas le volume. Auto-stop au plateau. La data fraiche reste
 # box-local (REGENERABLE ; on ne bloate pas git — la corpus durable reutilisable vient des maillons 0411-0418) ; SEULS
@@ -12,7 +12,7 @@
 set -uo pipefail
 cd /root/jass
 # ----- params (cout <-> signal) -----
-WINDOW=40000000          # fenetre glissante pour le FIT : 40M suffit (couverture saturee ~10-30M, cf BOUCLE §10.1)
+WINDOW=35000000          # fenetre glissante pour le FIT : 35M suffit (couverture saturee ~10-30M, cf BOUCLE §10.1) ; +turnover (8/35=23%)
 FRESH=8000000            # data FRAICHE / iteration, pilotee par le champion COURANT (la vraie iteration ; ~20% turnover)
 DEEP_DEPTH=12; DEEP_NUM=1; DEEP_DEN=6  # MIX d10/d12 : 1/6 FRESH en d12 (labels+precis), 5/6 en d10 (decisivite+volume) = 5:1 par COMPTE (~2:1 en TEMPS, d12 ~2.5x plus lent)
 MAX=4                    # nb d'iterations (job re-lancable : re-seed avec le dernier champion pour continuer)
