@@ -2,7 +2,7 @@
 # id: cpx62-0420-iterloop-60M
 # description: BOUCLE D'ITERATION 60M (systeme cible Scan-style) — la VRAIE iteration, pas l'accumulation de 0405.
 # Chaque iteration REGENERE une LARGE fenetre fraiche PILOTEE PAR LE CHAMPION COURANT (qui s'ameliore), en MIX
-# d10/d12 2:1 (2/3 d10 decisivite+volume, 1/3 d12 labels + precis ; d12 plus lent => d10 domine aussi a temps egal),
+# d10/d12 5:1 par COMPTE (5/6 d10 decisivite+volume, 1/6 d12 labels + precis ; ~2:1 en TEMPS car d12 ~2.5x plus lent),
 # l'integre dans une fenetre glissante FIFO 40M (couverture saturee ~10-30M), refit 32cf, JUGE champion_k vs champion_{k-1}. Le pilote
 # change vraiment a chaque tour => la progression devient MESURABLE (contrairement aux +0,8M figes de 0405). Levier =
 # QUALITE/distribution des donnees (le moteur de Scan), pas le volume. Auto-stop au plateau. La data fraiche reste
@@ -14,7 +14,7 @@ cd /root/jass
 # ----- params (cout <-> signal) -----
 WINDOW=40000000          # fenetre glissante pour le FIT : 40M suffit (couverture saturee ~10-30M, cf BOUCLE §10.1)
 FRESH=8000000            # data FRAICHE / iteration, pilotee par le champion COURANT (la vraie iteration ; ~20% turnover)
-DEEP_DEPTH=12; DEEP_NUM=1; DEEP_DEN=3  # MIX d10/d12 : 1/3 de FRESH en d12 (labels + precis), 2/3 en d10 (decisivite+volume) = 2:1
+DEEP_DEPTH=12; DEEP_NUM=1; DEEP_DEN=6  # MIX d10/d12 : 1/6 FRESH en d12 (labels+precis), 5/6 en d10 (decisivite+volume) = 5:1 par COMPTE (~2:1 en TEMPS, d12 ~2.5x plus lent)
 MAX=4                    # nb d'iterations (job re-lancable : re-seed avec le dernier champion pour continuer)
 PLAY_DEPTH=10; EVAL_DEPTH=4   # d>=10 = issues veridiques (non negociable) ; d10 = profondeur DOMINANTE du mix
 CHUNK=1000000; MAXIT=25; JUDGE_PAIRS=28
@@ -102,8 +102,8 @@ declare -a CH; CH[0]="$W/champ0.pjtw"
 echo "iter 0  pool=${NP0}  (graine = w32_full 0401)  WINDOW=${WINDOW} FRESH=${FRESH}" | tee -a "$TRAJ"
 plat=0; STOP=""
 for k in $(seq 1 "$MAX"); do
-  echo "=== ITER $k : gen ${FRESH} mix d${PLAY_DEPTH}/d${DEEP_DEPTH} 2:1 (champion_$((k-1))) -> FIFO ${WINDOW} -> refit -> juge ==="
-  # MIX d10/d12 (2:1 par compte) : 1/3 de FRESH en d12 (labels + precis), 2/3 en d10 (decisivite + volume)
+  echo "=== ITER $k : gen ${FRESH} mix d${PLAY_DEPTH}/d${DEEP_DEPTH} 5:1 (champion_$((k-1))) -> FIFO ${WINDOW} -> refit -> juge ==="
+  # MIX d10/d12 (5:1 par compte) : 1/6 de FRESH en d12 (labels + precis), 5/6 en d10 (decisivite + volume)
   ND12=$(( FRESH*DEEP_NUM/DEEP_DEN )); ND10=$(( FRESH - ND12 ))
   gen "${CH[$((k-1))]}" "$ND10" "$W/new10.jnnw" "$PLAY_DEPTH"
   gen "${CH[$((k-1))]}" "$ND12" "$W/new12.jnnw" "$DEEP_DEPTH"

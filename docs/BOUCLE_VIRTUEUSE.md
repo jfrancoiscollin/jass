@@ -198,8 +198,8 @@ une large fraction** du corpus avec le **nouveau** champion. → 0405 **retirée
 
 ### 10.3 La boucle d'itération 60M — `cpx62-0420-iterloop-60M` (système cible)
 ```
-iter k :  gen FRESH (8M) PILOTÉE PAR champion_{k-1}, MIX d10/d12 2:1   ← le pilote s'améliore vraiment
-          (2/3 d10 décisivité+volume, 1/3 d12 labels + précis ; d12 plus lent → d10 domine aussi à temps égal)
+iter k :  gen FRESH (8M) PILOTÉE PAR champion_{k-1}, MIX d10/d12 5:1 par compte   ← le pilote s'améliore vraiment
+          (5/6 d10 décisivité+volume, 1/6 d12 labels + précis ; d12 ~2,5× plus lent → ≈2:1 en TEMPS, d12 minorité réelle)
           → fenêtre glissante FIFO (jette les + vieilles, garde WINDOW=40M)
           → refit 32cf (train_stream color-fold)
           → JUGE champion_k vs champion_{k-1} (+ vs champ-3)   ← progression MESURABLE
@@ -207,8 +207,9 @@ iter k :  gen FRESH (8M) PILOTÉE PAR champion_{k-1}, MIX d10/d12 2:1   ← le p
 ```
 Choix de design assumés :
 - **Fenêtre figée 40M** : 98 %+ de couverture (10.1) → inutile de la pousser ; le levier est le **pilote qui monte**.
-- **MIX d10/d12 2:1** (par compte) : d10 garde la décisivité (issues tranchées, cf 0378/0356) + le volume ; le 1/3 d12
-  apporte des labels + précis / atteint de meilleures structures (finales de rois). Pas de 50/50 (d12 → + de nulles → signal ≈0,5).
+- **MIX d10/d12 5:1 par compte** (≈2:1 en TEMPS, d12 ~2,5× plus lent ⇒ d12 = 17 % des positions / ~33 % du compute) :
+  d10 garde la décisivité (issues tranchées, cf 0378/0356) + le volume ; le 1/6 d12 apporte des labels + précis / de
+  meilleures structures (finales de rois). ⚠️ ratio par COMPTE ≠ par TEMPS (2:1-compte = ~1:1-temps → trop de d12 drawish).
 - **Data fraîche box-local (régénérable)** → **0 bloat git** (`.git`≈1,7 Go ; la corpus durable réutilisable vient des
   maillons gen-pure, séparément). Seuls **champions + trajectoire** committés.
 - **Self-contained une box** (leçon cross-box §6) · **re-lançable** (re-seed = dernier champion) · params coût↔signal en tête.
