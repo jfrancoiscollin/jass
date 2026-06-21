@@ -14,9 +14,22 @@
 2. **Des credentials** (Access Key ID + Secret) avec accès en lecture/écriture à ce bucket.
 3. **Confirmer l'egress** : la policy réseau du runner doit autoriser les sorties vers l'endpoint du bucket (et vers `downloads.rclone.org` pour bootstrapper le binaire rclone, une fois).
 
-## Comment l'activer (variables d'environnement du runner — en SECRETS)
+## Méthode FACILE — variables d'env natives rclone (recommandée, ni terminal ni base64)
+Pose directement ces variables dans la config d'environnement du runner (la dernière est un SECRET).
+Le nom du remote (`R2` ici) doit matcher le préfixe de `JASS_OBJSTORE_REMOTE` (`r2:`), insensible à la casse.
 ```
-JASS_OBJSTORE_REMOTE = "r2:jass-corpus"          # <remote rclone>:<bucket>
+JASS_OBJSTORE_REMOTE              = r2:jass-data
+JASS_OBJSTORE_PREFIX              = corpus
+RCLONE_CONFIG_R2_TYPE             = s3
+RCLONE_CONFIG_R2_PROVIDER         = Cloudflare
+RCLONE_CONFIG_R2_ENDPOINT         = https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+RCLONE_CONFIG_R2_ACCESS_KEY_ID    = <ACCESS_KEY_ID>
+RCLONE_CONFIG_R2_SECRET_ACCESS_KEY= <SECRET_ACCESS_KEY>   # SECRET
+```
+
+## Méthode B (alternative) — un seul secret base64
+```
+JASS_OBJSTORE_REMOTE = "r2:jass-data"            # <remote rclone>:<bucket>
 JASS_OBJSTORE_PREFIX = "corpus"                  # optionnel (sous-dossier)
 RCLONE_CONF_B64      = "<base64 de rclone.conf>" # SECRET — contient les credentials
 ```
