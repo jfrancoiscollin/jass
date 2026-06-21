@@ -1,0 +1,3 @@
+# build OK : 32-pat men-only (/root/cw-gate2a/build-32/jass)
+# corpus assemble : 33410792 positions
+# --- FITS (axe fold, meme corpus 33410792, meme maxit) ---
