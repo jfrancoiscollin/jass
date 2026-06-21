@@ -88,3 +88,28 @@ pour une traçabilité 1:1 avec le manifeste (`docs/CORPUS_30M_MANIFEST.md`).
 ## État actuel
 - ≤30M visés pour GATE 0/1 → **git suffit**, le store n'est pas encore nécessaire (mais prêt).
 - Bascule recommandée vers le store **si** les gates montrent que le volume paie encore et qu'on vise 100M+.
+
+## Diagnostic 2026-06-21 — testé, encore DORMANT (et pourquoi)
+Variables R2 posées (session Claude + bucket Cloudflare R2 OK), mais **personne ne peut pousser en l'état**.
+Cause structurelle : les credentials et l'egress ne se trouvent jamais dans le **même** environnement.
+
+| Environnement | Creds R2 | Egress R2 | Peut pousser ? | Vérif |
+|---|---|---|---|---|
+| Session Claude (conteneur orchestrateur) | ✅ (config env claude.ai) | ❌ **proxy 503** | non | session parallèle |
+| **Box runner** (Hetzner cpx62/ccx33) | ❌ (config claude.ai n'y descend PAS) | ✅ ouvert | non | probe **0406** |
+| Cette session (ancienne) | ❌ | ❌ | non | env vide |
+
+- La config d'environnement claude.ai **n'alimente que les conteneurs Claude**, jamais les machines Hetzner du runner.
+- On **ne committe jamais** de secret dans un job (git) → on ne peut pas « passer » les creds au runner par ce canal.
+
+**Aucune perte possible pour autant** : le corpus 30M est déjà durable (shards ≤95 Mo committés `origin/main`).
+R2 ne sert qu'au **futur** (>95 Mo : bitbases Kingsrow, corpus 100M+). Donc déféré sans risque.
+
+### Les deux seuls chemins d'activation
+1. **Ouvrir l'egress de l'environnement** (pas d'accès box requis) : autoriser **l'hôte de
+   `RCLONE_CONFIG_R2_ENDPOINT`** (`…r2.cloudflarestorage.com`) dans la policy réseau → la session Claude
+   pousse via `tools/objstore.sh sync-shards`. Resservira pour `pull`.
+2. **Poser les creds sur les box runner** (accès direct aux machines Hetzner requis) → le runner pousse
+   (il a déjà l'egress ouvert, confirmé par 0406).
+
+**Reco** : option 1 le jour où un artefact dépasse 95 Mo. D'ici là, rien à faire.
