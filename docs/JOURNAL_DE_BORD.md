@@ -15,7 +15,16 @@
 
 ---
 
-## 0. Verdict de tête — 2026-06-20 (LA limitation : le FIT, pas l'archi)
+## 0. Verdict de tête — 2026-06-21 (GATE 0401 : fit-volume CONFIRMÉ, géométrie riche s'INVERSE au scale)
+- **Matrice 2×2 (volume × archi) sur corpus 29M** (17 shards, manifeste), fits `train_stream` (gradient exact, 32cf@29M=56min/8cf@29M=31min), juge cross-arch N=252/case :
+  - **V32** 32cf@29M vs 32cf@2M = **0.694** (+6.2σ) → le **volume paie** (archi riche).
+  - **V8** 8cf@29M vs 8cf@2M = 0.472 (ns) → volume **inutile** (8cf ≈ Scan-exact, 2.1M poids, **sature à 2M**).
+  - **A29** 32cf@29M vs 8cf@29M = **0.583** (+2.6σ) → au scale la **riche gagne**.
+  - **A2** 32cf@2M vs 8cf@2M = **0.306** (8cf +6.2σ) → à 2M la riche **perd**.
+- **L'INVERSION prédite est réelle** : A2=0.31 → A29=0.58, *même archi*, juste plus de data. ⇒ « géométrie morte / 8=32 / full-fold » = **CONFONDUS CONFIRMÉS** (cf BIAIS_FIT_VOLUME). **Archi retenue = 32cf** ; 32cf encore sous-nourrie à 29M (3.4 visites/poids) → avantage croîtra >100M. Artefacts : `w32_full.pjtw.gz`, `w8_full.pjtw.gz` (0401).
+- **Suite** : boucle de production à archi figée 32cf, `train_stream` sur corpus accumulé (plus de fenêtre 2M) ; continuer à scaler (object-store prêt pour 100M+).
+
+## 0bis. Verdict — 2026-06-20 (LA limitation : le FIT, pas l'archi)
 
 > **Découverte structurelle (JFC).** Depuis le début on fittait sur **~2M positions max** (full-batch RAM) → on jugeait
 > l'archi linéaire **affamée**. Plusieurs verdicts (« géométrie morte », « plafond linéaire ») sont **confondus** par cette
