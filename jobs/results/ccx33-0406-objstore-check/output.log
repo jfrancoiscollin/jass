@@ -1,0 +1,16 @@
+=== variables d'env object-store visibles dans le job ? (presence seulement, pas de valeurs) ===
+JASS_OBJSTORE_REMOTE present : NON
+JASS_OBJSTORE_PREFIX present : NON
+RCLONE_CONFIG_* count        : 0
+RCLONE_CONFIG_R2_SECRET set  : NON
+
+=== objstore.sh check (config + bootstrap rclone + connectivite) ===
+remote     : <non défini>
+prefix     : corpus
+conf b64   : <absent>
+rclone bin : <à bootstrapper>
+ÉTAT       : DORMANT (non configuré). Toutes les commandes no-op. Voir docs/OBJSTORE_SETUP.md.
+
+=== egress test (R2 endpoint + rclone download) ===
+downloads.rclone.org joignable : OUI
+=== fin probe ===

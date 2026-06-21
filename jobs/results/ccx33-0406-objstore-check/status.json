@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0406-objstore-check",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-21T11:31:59+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2597327
+  "ended_at": "2026-06-21T11:37:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
