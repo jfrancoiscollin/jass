@@ -5,8 +5,10 @@
 # accumule courant. AUTO-GARDE : si le corpus < THRESH (doublement pas atteint), no-op propre (exit 0) -> a re-deployer
 # quand le volume est la. Sinon : build 32-pat, assemble, dump FEAT, fit 32cf challenger (meme config que 0401), juge
 # challenger vs baseline. >0.55 => la 32cf PROGRESSE encore avec le volume (prediction 0401 : avantage croit vers 100M).
-# Meme build/fold/extras des 2 cotes => isole l'effet VOLUME. Hors-tree (/root/cw-prog), gzip. Aucun Scan.
-# expected_duration: ~3 h (au-dela du seuil ; quasi-instantane si no-op)
+# Meme build/fold/extras des 2 cotes => isole l'effet VOLUME. EN PLUS : sweep L2 au scale (3e-5/1e-4/3e-4) car le
+# l2=1e-4 fut cale a <=2M et l'optimum peut differer a gros volume -> on adopte le meilleur dans la boucle 0420.
+# Hors-tree (/root/cw-prog), gzip. Aucun Scan.
+# expected_duration: ~6 h (3 fits L2 + 3 juges, au-dela du seuil ; quasi-instantane si no-op)
 set -uo pipefail
 cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-300}"
@@ -54,18 +56,17 @@ git show "origin/main:$BASE_GZ" | gunzip > "$W/baseline.pjtw" || { echo "ABORT g
 
 echo "=== dump FEAT + fit 32cf challenger sur ${NBIG} ==="
 "$J32" --dump-eval-features "$W/big.jnnw" "$W/feat.full" >"$W/feat.log" 2>&1 || { echo "ABORT dump feat"; tail "$W/feat.log"; exit 8; }
-env JASS_PATTERNS_DIR="$GEOM" python3 pattern_jass/tools/train_stream.py --data "$W/big.jnnw" --feat "$W/feat.full" \
-    --color-fold --tempo-stage --loss logistic --l2 1e-4 --max-iter "$MAXIT" --chunk "$CHUNK" --out "$W/chal.pjtw" \
-    >"$W/chal.log" 2>&1 || { echo "TRAIN FAIL challenger"; tail -12 "$W/chal.log"; exit 9; }
-grep -iE "fold :|train_loss|wrote" "$W/chal.log" | tail -3 | sed 's/^/    /'
-gzip -c "$W/chal.pjtw" > "$ART/w32-challenger-${NBIG}.pjtw.gz" 2>/dev/null || true
-say "# challenger fit OK (32cf@${NBIG}, gzippe en artefact)"
 
-echo "=== juge challenger@${NBIG} vs baseline@${BASE_VOL} ==="
-for s in $(seq 0 $((NCPU-1))); do python3 tools/jass_vs_jass_arch.py \
-   --jass-a "$J32" --pattern-a "$W/chal.pjtw" --jass-b "$J32" --pattern-b "$W/baseline.pjtw" \
-   --depth 9 --pairs 28 --max-plies 160 --shard "$s" --nshards "$NCPU" --quiet >"$W/j.$s" 2>"$W/je.$s" & done; wait
-SCORE=$(python3 - "$W"/j.* <<'PY'
+# ---------- L2 SWEEP au scale : l2=1e-4 fut cale a <=2M (0176) ; a ${NBIG} l'optimum peut etre + BAS ----------
+# (a gros volume + ~47% de buckets bien determines, trop de L2 bride la queue qu'on vient de nourrir).
+L2S="3e-5 1e-4 3e-4"
+fit_l2(){ env JASS_PATTERNS_DIR="$GEOM" python3 pattern_jass/tools/train_stream.py --data "$W/big.jnnw" --feat "$W/feat.full" \
+      --color-fold --tempo-stage --loss logistic --l2 "$1" --max-iter "$MAXIT" --chunk "$CHUNK" --out "$2" \
+      >"${2%.pjtw}.log" 2>&1 || { echo "TRAIN FAIL l2=$1"; tail -12 "${2%.pjtw}.log"; exit 9; }
+  grep -iE "train_loss|wrote" "${2%.pjtw}.log" | tail -1 | sed 's/^/    /'; }
+judge(){ for s in $(seq 0 $((NCPU-1))); do python3 tools/jass_vs_jass_arch.py --jass-a "$J32" --pattern-a "$1" \
+     --jass-b "$J32" --pattern-b "$2" --depth 9 --pairs 28 --max-plies 160 --shard "$s" --nshards "$NCPU" --quiet >"$W/j.$s" 2>"$W/je.$s" & done; wait
+  python3 - "$W"/j.* <<'PY'
 import sys; a=d=b=0
 for f in sys.argv[1:]:
   try:
@@ -74,12 +75,19 @@ for f in sys.argv[1:]:
   except: pass
 g=a+d+b; print(f"{(a+0.5*d)/g:.4f} (N={g})" if g else "NA")
 PY
-)
-say "# --- VERDICT PROGRESSION ---"
-say "P  32cf@${NBIG} (x${RATIO}) vs 32cf@${BASE_VOL} baseline = ${SCORE}   [le volume paie-t-il encore au doublement ?]"
+  rm -f "$W"/j.* "$W"/je.* ; }
+
+say "# --- FITS (sweep L2 au scale ${NBIG}) + PROGRESSION vs baseline@${BASE_VOL} ---"
+for L2 in $L2S; do
+  tag=$(echo "$L2" | tr -cd '0-9a-z')
+  echo "  [fit l2=$L2] sur ${NBIG}"; fit_l2 "$L2" "$W/chal_${tag}.pjtw"
+  gzip -c "$W/chal_${tag}.pjtw" > "$ART/w32-chal-l2-${tag}-${NBIG}.pjtw.gz" 2>/dev/null || true
+  s=$(judge "$W/chal_${tag}.pjtw" "$W/baseline.pjtw")
+  say "P(l2=$L2)  32cf@${NBIG} (x${RATIO}) vs baseline@${BASE_VOL} = ${s}"
+done
 say ""
 say "================= LECTURE ================="
-say "  P > 0.55  => la 32cf PROGRESSE encore avec le volume (prediction 0401 confirmee, viser 100M)."
-say "  P ~ 0.50  => debut de plateau du fit-volume a ce palier (re-tester au doublement suivant avant conclure)."
-say "  P < 0.45  => regression (sur-ajustement/data bruitee ?) -> diagnostiquer la qualite de la gen."
+say "  Meilleur L2 = score le + haut vs baseline (= meilleur fit au scale). Si argmax(P) != 1e-4 =>"
+say "  ADOPTER ce L2 dans la boucle d'iteration (0420) + tous les futurs fits (le 1e-4 etait cale a <=2M)."
+say "  P > 0.55 => la 32cf PROGRESSE encore avec le volume (viser 100M). ~0.50 => debut de plateau. <0.45 => data bruitee."
 say "==========================================="
