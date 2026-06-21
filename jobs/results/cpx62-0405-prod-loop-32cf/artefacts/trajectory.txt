@@ -1,0 +1,1 @@
+tour 0  cumul=30210792  (seed w32_full 0401)
