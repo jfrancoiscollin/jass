@@ -1,0 +1,32 @@
+  [preflight] build ×2 ≈ 8 min
+  [preflight] train: 1 × 31000000 lignes @ 4min/M ≈ 124.0 min
+  [preflight] 2 builds + assemble + dump feat + 2 fits + 1 juge: ≈ 200 min
+  [preflight] TOTAL estimé ≈ 332.0 min  (cap 420 min)
+  [preflight] OK — sous le cap, lancement.
+=== build men-only (defaut) + king-aware (-DJASS_KING_PATTERNS=ON) ===
+WARN: JASS_KING_PATTERNS absent du cmake king ?
+# builds OK : men-only (/root/cw-gate2b/build-men/jass) + king-aware (/root/cw-gate2b/build-king/jass)
+=== assemble le corpus depuis les shards committes ===
+écrit /root/cw-gate2b/big.jnnw : 36210792 records, 1376010104 octets
+# corpus assemble : 36210792 positions
+=== dump FEAT (extras identiques men/king, dump via build men-only) ===
+# --- FITS (color-fold, meme corpus 36210792 ; men vs king) ---
+  [fit men-only(baseline)] train_stream color-fold  logistic maxit=25
+    fold : color  (265,721 buckets/pattern, TB=8,503,072)
+    occupancy : men only
+      train_loss=0.610133  iters=25  (4159.7s)
+    wrote /root/cw-gate2b/men.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4243.7s]
+  [fit king-aware] train_stream color-fold --king-patterns logistic maxit=25
+    fold : color  (265,721 buckets/pattern, TB=8,503,072)
+    occupancy : men|kings (king-aware, Scan-style)
+      train_loss=0.611779  iters=25  (4157.4s)
+    wrote /root/cw-gate2b/king.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4252.3s]
+# fits OK (men + king gzippes en artefacts)
+# --- JUGE (score = king-aware vs men-only baseline, >0.5 => les ROIS aident) ---
+K  32cf king-aware vs 32cf men-only = 0.3056 (N=252)   [les rois dans les patterns paient-ils au scale ?]
+
+================= LECTURE =================
+  K > 0.55  => les ROIS dans les patterns paient au scale (etaient CONFONDUS par le fit ~2M) -> archi candidate.
+  K ~ 0.5   => neutre a 36210792 (rois ~OK mais pas decisifs ; retester a 100M).
+  K < 0.45  => men-only confirme meilleur (les buckets king diluent ; verdict 0240/0360 tient au scale).
+===========================================
