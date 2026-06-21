@@ -224,6 +224,7 @@ def train_stream(args):
     print(f'FEAT {args.feat} : k={K} extras')
     print(f'fold : {fold_mode}  ({folder.PAT_BUCKETS:,} buckets/pattern, '
           f'TB={folder.TB:,})')
+    print(f'occupancy : {"men|kings (king-aware, Scan-style)" if args.king_patterns else "men only"}')
 
     chunk = int(args.chunk)
     TB = folder.TB
@@ -260,7 +261,9 @@ def train_stream(args):
         wmg_all[i:j] = wmg.astype(np.float32)
         weg_all[i:j] = (1.0 - wmg).astype(np.float32)
         if do_prune:
-            cols, _ = folder.cols_signs(bm, wm)
+            pb = (bm | bk) if args.king_patterns else bm
+            pw = (wm | wk) if args.king_patterns else wm
+            cols, _ = folder.cols_signs(pb, pw)
             ccounts += np.bincount(cols.ravel(), minlength=TB)
     print(f'  target=WDL  win={n_win} draw={n_draw} loss={n_loss} '
           f'({100*n_draw/max(N,1):.1f}% draws)  ({time.time()-tA:.1f}s)')
@@ -302,7 +305,12 @@ def train_stream(args):
             'build_fn expects a contiguous row range (tr_idx must be arange(N))'
         rec = mm[lo:hi]
         wm = np.ascontiguousarray(rec['wm']); bm = np.ascontiguousarray(rec['bm'])
-        cols, signs = folder.cols_signs(bm, wm)
+        if args.king_patterns:
+            wk = np.ascontiguousarray(rec['wk']); bk = np.ascontiguousarray(rec['bk'])
+            pb = bm | bk; pw = wm | wk
+        else:
+            pb = bm; pw = wm
+        cols, signs = folder.cols_signs(pb, pw)
         if remap is not None:
             cols = remap[cols]                            # (n,NP) in [0,K]
         wmg = wmg_all[lo:hi].astype(np.float64)
@@ -352,7 +360,7 @@ def train_stream(args):
           f'ext_mg range=[{int(ext_mg.min())},{int(ext_mg.max())}]')
 
     write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale,
-                     king=False)
+                     king=args.king_patterns)
     total = 2 * (len(pat_mg) + E)
     print(f'wrote {args.out}  (v3, {total:,} weights, {20 + 4 * total:,} bytes)  '
           f'[total {time.time()-t_start:.1f}s]')
@@ -398,6 +406,12 @@ def main(argv=None):
     ap.add_argument('--prune-min-visits', type=int, default=1,
                     help='with --prune : keep a bucket only if visited >= this many '
                          'times (1 = lossless).')
+    ap.add_argument('--king-patterns', action='store_true',
+                    help='PIECE-PRESENCE occupancy includes kings (men|kings, '
+                         'Scan-style) for the pattern buckets, exactly like '
+                         'train.py --king-patterns and a -DJASS_KING_PATTERNS build. '
+                         'Records king=True in the PJTW v3 marker (rejected by a '
+                         'men-only binary). Default OFF = men-only occupancy.')
     args = ap.parse_args(argv)
     return train_stream(args)
 
