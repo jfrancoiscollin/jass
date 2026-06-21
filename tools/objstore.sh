@@ -29,14 +29,19 @@ CONF="/root/.config/jass-rclone.conf"
 
 log(){ echo "[objstore] $*" >&2; }
 
-configured(){ [ -n "${JASS_OBJSTORE_REMOTE:-}" ] && [ -n "${RCLONE_CONF_B64:-}" ]; }
+# Deux modes d'auth supportés :
+#  (A) FACILE : variables natives rclone RCLONE_CONFIG_<REMOTE>_* (pas de fichier, pas de base64).
+#  (B) RCLONE_CONF_B64 : contenu base64 d'un rclone.conf.
+have_envconf(){ env | grep -q '^RCLONE_CONFIG_'; }
+configured(){ [ -n "${JASS_OBJSTORE_REMOTE:-}" ] && { [ -n "${RCLONE_CONF_B64:-}" ] || have_envconf; }; }
 
-rclone_cmd(){ # rclone avec la config décodée
+rclone_cmd(){ # mode A (env-vars natives) : pas de --config ; mode B (b64) : --config CONF
   local bin; bin="$(command -v rclone || echo "$RCLONE_BIN")"
-  "$bin" --config "$CONF" "$@"
+  if [ -n "${RCLONE_CONF_B64:-}" ]; then "$bin" --config "$CONF" "$@"; else "$bin" "$@"; fi
 }
 
-ensure_conf(){
+ensure_conf(){ # n'écrit un fichier que dans le mode B ; mode A = rien à faire
+  [ -n "${RCLONE_CONF_B64:-}" ] || return 0
   mkdir -p "$(dirname "$CONF")"
   printf '%s' "${RCLONE_CONF_B64}" | base64 -d > "$CONF" 2>/dev/null || { log "RCLONE_CONF_B64 invalide (base64)"; return 1; }
   chmod 600 "$CONF"
