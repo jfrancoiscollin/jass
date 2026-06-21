@@ -1,0 +1,3 @@
+# build OK : 32-pat (/root/cw-gate/build-32/jass) + 8-pat (/root/cw-gate/build-8/jass)
+# corpus assemble : 29010792 positions
+# --- FITS ---
