@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0401-gate-matrix-2x2",
-  "snapshot_at": "2026-06-21T09:14:03+00:00",
+  "snapshot_at": "2026-06-21T09:20:03+00:00",
   "started_at": "2026-06-21T07:45:53+00:00",
-  "elapsed_seconds": 5290,
+  "elapsed_seconds": 5650,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3441272       1    01:28:09  0.0  0.0 bash\n3441274 3441272    01:28:09  0.0  0.0 bash\n3444521 3441274       23:35  107 60.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3441272       1    01:34:09  0.0  0.0 bash\n3441274 3441272    01:34:09  0.0  0.0 bash\n3444521 3441274       29:35  106 62.3 python3\n"
 }
