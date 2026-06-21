@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0400-corpus-d10",
+  "script": "jobs/queue/cpx62-0400-corpus-d10.sh",
+  "pid": 3433174,
+  "started_at": "2026-06-21T01:37:11+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
