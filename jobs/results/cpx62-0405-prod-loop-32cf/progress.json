@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0405-prod-loop-32cf",
-  "snapshot_at": "2026-06-21T14:56:00+00:00",
+  "snapshot_at": "2026-06-21T15:01:03+00:00",
   "started_at": "2026-06-21T10:26:03+00:00",
-  "elapsed_seconds": 16197,
+  "elapsed_seconds": 16500,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3446839       1    04:29:57  0.0  0.0 bash\n3446841 3446839    04:29:57  0.0  0.0 bash\n3458288 3446841    01:00:43  104 60.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3446839       1    04:35:00  0.0  0.0 bash\n3446841 3446839    04:35:00  0.0  0.0 bash\n3458288 3446841    01:05:46  103 72.3 python3\n"
 }
