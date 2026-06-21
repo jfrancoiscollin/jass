@@ -1,0 +1,7 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] corpus d12 350000: ≈ 90 min
+  [preflight] TOTAL estimé ≈ 94 min  (cap 110 min)
+  [preflight] OK — sous le cap, lancement.
+  accumulé 200000
+  accumulé 400000
+=== shard d12 : 400000 pos, 3 Mo gz → committé (maillon chaîne corpus) ===
