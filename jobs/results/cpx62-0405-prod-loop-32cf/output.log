@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 32000000 lignes @ 4min/M ≈ 128.0 min
+  [preflight] boucle prod 32cf : assemble + 3x (gen d10 + refit train_stream + juge): ≈ 200 min
+  [preflight] TOTAL estimé ≈ 332.0 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== assemble le cumul depuis tous les shards corpus committes ===
+écrit /root/cw-prod/cum.jnnw : 30210792 records, 1148010104 octets
+=== cumul de depart : 30210792 positions ===
+=== TOUR 1 : gen d10 (champion courant) + APPEND + refit train_stream + juge ===
+800000
+  TOUR 1 : champ vs champ-1 = 0.5000   |  vs champ-3 = NA   (cumul=31010792, NPER=800000)
+=== TOUR 2 : gen d10 (champion courant) + APPEND + refit train_stream + juge ===
+800000
+  TOUR 2 : champ vs champ-1 = 0.5833   |  vs champ-3 = NA   (cumul=31810792, NPER=800000)
+=== TOUR 3 : gen d10 (champion courant) + APPEND + refit train_stream + juge ===
+800000
+  TOUR 3 : champ vs champ-1 = 0.6111   |  vs champ-3 = 0.4444   (cumul=32610792, NPER=800000)
+
+==========================================================
+   cpx62-0405 — BOUCLE PROD 32cf (accumulation, 3 tours max)
+   tour 0  cumul=30210792  (seed w32_full 0401)
+   tour 3  vs_prev=0.6111  vs_3=0.4444  cumul=32610792  NPER=800000
+   pas encore de plateau -> relancer pour continuer (le cumul a grossi, shards durables)
+   champion final -> artefacts/champion-32cf.pjtw.gz ; nouvelles parties -> prod-0405-r*-corpus.jnnw.gz
+==========================================================
