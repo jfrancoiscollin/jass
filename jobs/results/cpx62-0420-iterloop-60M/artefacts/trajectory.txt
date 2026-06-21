@@ -1,0 +1,1 @@
+iter 0  pool=35000000  (graine = w32_full 0401)  WINDOW=35000000 FRESH=8000000
