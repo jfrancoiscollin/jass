@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # id: cpx62-0420-iterloop-60M
 # description: BOUCLE D'ITERATION 60M (systeme cible Scan-style) — la VRAIE iteration, pas l'accumulation de 0405.
-# Chaque iteration REGENERE une LARGE fenetre de data fraiche PILOTEE PAR LE CHAMPION COURANT (qui s'ameliore),
-# l'integre dans une fenetre glissante FIFO (~WINDOW), refit 32cf, et JUGE champion_k vs champion_{k-1}. Le pilote
+# Chaque iteration REGENERE une LARGE fenetre fraiche PILOTEE PAR LE CHAMPION COURANT (qui s'ameliore), en MIX
+# d10/d12 2:1 (2/3 d10 decisivite+volume, 1/3 d12 labels + precis ; d12 plus lent => d10 domine aussi a temps egal),
+# l'integre dans une fenetre glissante FIFO 40M (couverture saturee ~10-30M), refit 32cf, JUGE champion_k vs champion_{k-1}. Le pilote
 # change vraiment a chaque tour => la progression devient MESURABLE (contrairement aux +0,8M figes de 0405). Levier =
 # QUALITE/distribution des donnees (le moteur de Scan), pas le volume. Auto-stop au plateau. La data fraiche reste
 # box-local (REGENERABLE ; on ne bloate pas git — la corpus durable reutilisable vient des maillons 0411-0418) ; SEULS
@@ -11,10 +12,11 @@
 set -uo pipefail
 cd /root/jass
 # ----- params (cout <-> signal) -----
-WINDOW=48000000          # fenetre glissante pour le FIT : >=~40M pour ne plus etre affame, plafonnee pour le cout
-FRESH=8000000            # data FRAICHE / iteration, pilotee par le champion COURANT (la vraie iteration ; ~17% turnover)
+WINDOW=40000000          # fenetre glissante pour le FIT : 40M suffit (couverture saturee ~10-30M, cf BOUCLE §10.1)
+FRESH=8000000            # data FRAICHE / iteration, pilotee par le champion COURANT (la vraie iteration ; ~20% turnover)
+DEEP_DEPTH=12; DEEP_NUM=1; DEEP_DEN=3  # MIX d10/d12 : 1/3 de FRESH en d12 (labels + precis), 2/3 en d10 (decisivite+volume) = 2:1
 MAX=4                    # nb d'iterations (job re-lancable : re-seed avec le dernier champion pour continuer)
-PLAY_DEPTH=10; EVAL_DEPTH=4   # d>=10 = issues veridiques (non negociable)
+PLAY_DEPTH=10; EVAL_DEPTH=4   # d>=10 = issues veridiques (non negociable) ; d10 = profondeur DOMINANTE du mix
 CHUNK=1000000; MAXIT=25; JUDGE_PAIRS=28
 PLAT_THR=0.52; PLAT_CUM=0.53  # auto-stop : champ_k vs champ_{k-1} <= 0.52 x3 consecutifs ET vs champ_{k-3} <= 0.53
 SEED_CH=jobs/results/cpx62-0401-gate-matrix-2x2/artefacts/w32_full.pjtw.gz  # graine = meilleur 32cf connu au lancement
@@ -45,8 +47,8 @@ echo "=== pool initial : assemble le corpus committe -> fenetre glissante (<=${W
 tools/corpus_manifest.sh assemble "$W/pool.jnnw" 2>"$W/assemble.log" || { echo "ABORT assemble"; tail "$W/assemble.log"; exit 8; }
 
 # ---------- helpers (gen/app preuves de 0405 ; trim FIFO nouveau, memory-light) ----------
-gen(){ local pilot="$1" nn="$2" out="$3"; local per=$(( (nn+NCPU-1)/NCPU ))
-  for s in $(seq 1 "$NCPU"); do "$J" --gen-data-wdl "$per" "$out.$s" "$EVAL_DEPTH" "$PLAY_DEPTH" 200 "$((RANDOM*RANDOM+s))" --nnue "$pilot" >/dev/null 2>&1 & done; wait
+gen(){ local pilot="$1" nn="$2" out="$3" depth="${4:-$PLAY_DEPTH}"; local per=$(( (nn+NCPU-1)/NCPU ))
+  for s in $(seq 1 "$NCPU"); do "$J" --gen-data-wdl "$per" "$out.$s" "$EVAL_DEPTH" "$depth" 200 "$((RANDOM*RANDOM+s))" --nnue "$pilot" >/dev/null 2>&1 & done; wait
   python3 - "$out" <<'PY'
 import struct,glob,sys,re
 out=sys.argv[1]; REC=38; body=b""; tot=0
@@ -100,8 +102,13 @@ declare -a CH; CH[0]="$W/champ0.pjtw"
 echo "iter 0  pool=${NP0}  (graine = w32_full 0401)  WINDOW=${WINDOW} FRESH=${FRESH}" | tee -a "$TRAJ"
 plat=0; STOP=""
 for k in $(seq 1 "$MAX"); do
-  echo "=== ITER $k : gen ${FRESH} d${PLAY_DEPTH} (champion_$((k-1))) -> FIFO -> refit -> juge champ vs champ-1 ==="
-  gen "${CH[$((k-1))]}" "$FRESH" "$W/new.jnnw"
+  echo "=== ITER $k : gen ${FRESH} mix d${PLAY_DEPTH}/d${DEEP_DEPTH} 2:1 (champion_$((k-1))) -> FIFO ${WINDOW} -> refit -> juge ==="
+  # MIX d10/d12 (2:1 par compte) : 1/3 de FRESH en d12 (labels + precis), 2/3 en d10 (decisivite + volume)
+  ND12=$(( FRESH*DEEP_NUM/DEEP_DEN )); ND10=$(( FRESH - ND12 ))
+  gen "${CH[$((k-1))]}" "$ND10" "$W/new10.jnnw" "$PLAY_DEPTH"
+  gen "${CH[$((k-1))]}" "$ND12" "$W/new12.jnnw" "$DEEP_DEPTH"
+  rm -f "$W/new.jnnw"; app "$W/new10.jnnw" "$W/new.jnnw" >/dev/null; app "$W/new12.jnnw" "$W/new.jnnw" >/dev/null
+  echo "    mix gen : ${ND10} @d${PLAY_DEPTH} + ${ND12} @d${DEEP_DEPTH}"
   NTOT=$(app "$W/new.jnnw" "$W/pool.jnnw")
   NPOOL=$(trim "$W/pool.jnnw" "$WINDOW")           # jette les plus vieilles (data du pilote le plus faible)
   "$J" --dump-eval-features "$W/pool.jnnw" "$W/feat" >"$W/feat-k$k.log" 2>&1 || { echo "ABORT dump feat k$k"; exit 8; }
@@ -127,6 +134,6 @@ echo; echo "=========================================================="
 echo "   cpx62-0420 — BOUCLE ITERATION 60M (Scan-style, ${MAX} iters max)"
 cat "$TRAJ" | sed 's/^/   /'
 echo "   LECTURE : vs_prev > 0.55 a chaque iter = ca PROGRESSE (le pilote ameliorant paie). vs_3 cumule la progression."
-echo "   ${STOP:-pas de plateau -> RE-LANCER (re-seed SEED_CH=champion-iterloop-final) pour poursuivre l'iteration}"
+echo "   ${STOP:-pas de plateau -> RE-LANCER (re-seed SEED_CH=champion-iterloop-final) pour continuer la boucle}"
 echo "   champion final -> artefacts/champion-iterloop-final.pjtw.gz"
 echo "=========================================================="
