@@ -4,6 +4,16 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-21**.
 
+## ✅ VERDICT 2026-06-21 (ter) — fold TRANCHÉ : color-fold gagne, no-fold/full-fold perdent (GATE 2a / 0408)
+> Sur **33,4M**, 32 patterns, 3 fits `train_stream`, juge cross N=252.
+
+| fold vs color-fold | score | lecture |
+|---|---|---|
+| **no-fold** (17M poids pleins) | **0,417** | perd (−2,6σ) — capacité en + **non justifiée**, encore affamé |
+| **full-fold** (translation) | **0,306** | perd — contrôle OK (mauvaise invariance) |
+
+**→ `color-fold` VERROUILLÉ** comme géométrie de prod. Cohérent avec la couverture (verdict bis) : no-fold double les poids → buckets rares à <2 % du jeu → **inutile de le rechercher à 100M**. Le levier n'est ni le fold ni le volume brut → **itération**.
+
 ## ✅ VERDICT 2026-06-21 (bis) — la couverture utile est DÉJÀ gagnée → le moteur, c'est l'ITÉRATION (pas + de volume)
 > Mesuré sur **8,4M de nos parties** (color-fold, TB=8 503 072) : distribution réelle des visites de buckets.
 
@@ -79,7 +89,7 @@ champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par arc
 - **Scaler le fit** : la fenêtre 2M plafonne *artificiellement* ; `--minibatch` **supporte la logistique**, puis `train_stream`.
 - **Géométrie/fold** : `--full-fold` impose une invariance par TRANSLATION **fausse en dames** → écrase les familles de
   translates → **nos verdicts « géométrie » sont CONFONDUS**. Comparer au repli position-préservant **`--color-fold`**
-  (32cf = 8,5M ⊃ Scan 2,1M = 8cf). 32cf vs 8cf = la question ouverte, à trancher **à gros volume**.
+  (32cf = 8,5M ⊃ Scan 2,1M = 8cf). **TRANCHÉ au scale** : 32cf > 8cf (0401) ET color-fold > no-fold > full-fold (0408) → **color-fold 32cf verrouillé**.
 - **Infra (cf BOUCLE §6)** : `gen_patterns --emit` pas reset-proof → build de suite + `JASS_PATTERNS_DIR` hors-tree +
   garde-fou ×32 ; runner **nettoie l'untracked du tree mid-job** → **travailler HORS-tree** ; pjtw full-fold 136 Mo → **gzip** (cap git 95 Mo) ;
   cross-box fragile → boucle **self-contained une box**.
