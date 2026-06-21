@@ -1,0 +1,3 @@
+# builds OK : men-only (/root/cw-gate2b/build-men/jass) + king-aware (/root/cw-gate2b/build-king/jass)
+# corpus assemble : 36210792 positions
+# --- FITS (color-fold, meme corpus 36210792 ; men vs king) ---
