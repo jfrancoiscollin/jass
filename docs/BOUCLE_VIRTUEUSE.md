@@ -200,13 +200,13 @@ une large fraction** du corpus avec le **nouveau** champion. → 0405 **retirée
 ```
 iter k :  gen FRESH (8M) PILOTÉE PAR champion_{k-1}, MIX d10/d12 5:1 par compte   ← le pilote s'améliore vraiment
           (5/6 d10 décisivité+volume, 1/6 d12 labels + précis ; d12 ~2,5× plus lent → ≈2:1 en TEMPS, d12 minorité réelle)
-          → fenêtre glissante FIFO (jette les + vieilles, garde WINDOW=40M)
+          → fenêtre glissante FIFO (jette les + vieilles, garde WINDOW=35M)
           → refit 32cf (train_stream color-fold)
           → JUGE champion_k vs champion_{k-1} (+ vs champ-3)   ← progression MESURABLE
           → auto-stop plateau (3× ≤0,52 + cumulé ≤0,53)
 ```
 Choix de design assumés :
-- **Fenêtre figée 40M** : 98 %+ de couverture (10.1) → inutile de la pousser ; le levier est le **pilote qui monte**.
+- **Fenêtre figée 35M** : 98 %+ de couverture (10.1) → inutile de la pousser ; +turnover (8/35=23 %) ; le levier est le **pilote qui monte**.
 - **MIX d10/d12 5:1 par compte** (≈2:1 en TEMPS, d12 ~2,5× plus lent ⇒ d12 = 17 % des positions / ~33 % du compute) :
   d10 garde la décisivité (issues tranchées, cf 0378/0356) + le volume ; le 1/6 d12 apporte des labels + précis / de
   meilleures structures (finales de rois). ⚠️ ratio par COMPTE ≠ par TEMPS (2:1-compte = ~1:1-temps → trop de d12 drawish).
