@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0405-prod-loop-32cf",
+  "state": "running",
+  "started_at": "2026-06-21T10:26:03+00:00",
+  "host": "ubuntu-32gb-hel1-1",
+  "pid": 3446839
+}
