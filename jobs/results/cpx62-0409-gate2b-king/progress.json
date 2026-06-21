@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0409-gate2b-king",
-  "snapshot_at": "2026-06-21T18:41:26+00:00",
+  "snapshot_at": "2026-06-21T18:46:28+00:00",
   "started_at": "2026-06-21T18:31:09+00:00",
-  "elapsed_seconds": 617,
+  "elapsed_seconds": 919,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3472173       1       10:16  0.0  0.0 bash\n3472175 3472173       10:16  0.0  0.0 bash\n3473431 3472175       09:18  111 66.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3472173       1       15:18  0.0  0.0 bash\n3472175 3472173       15:18  0.0  0.0 bash\n3473431 3472175       14:20  108 77.9 python3\n"
 }
