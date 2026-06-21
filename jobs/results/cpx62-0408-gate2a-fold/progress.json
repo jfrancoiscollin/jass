@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0408-gate2a-fold",
-  "snapshot_at": "2026-06-21T15:26:12+00:00",
+  "snapshot_at": "2026-06-21T15:31:16+00:00",
   "started_at": "2026-06-21T15:06:09+00:00",
-  "elapsed_seconds": 1203,
+  "elapsed_seconds": 1507,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3461594       1       20:02  0.0  0.0 bash\n3461596 3461594       20:02  0.0  0.0 bash\n3462424 3461596       19:18  106 61.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3461594       1       25:07  0.0  0.0 bash\n3461596 3461594       25:07  0.0  0.0 bash\n3462424 3461596       24:22  106 62.3 python3\n"
 }
