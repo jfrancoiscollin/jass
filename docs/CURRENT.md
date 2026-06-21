@@ -4,6 +4,22 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-21**.
 
+## ✅ VERDICT 2026-06-21 (bis) — la couverture utile est DÉJÀ gagnée → le moteur, c'est l'ITÉRATION (pas + de volume)
+> Mesuré sur **8,4M de nos parties** (color-fold, TB=8 503 072) : distribution réelle des visites de buckets.
+
+| seuil visites | % des **buckets** | % du **JEU réel** (activations) |
+|---|---|---|
+| ≥5 | 62 % | **99,7 %** |
+| ≥30 (bien déterminés) | 34 % | **98,1 %** |
+| ≥100 | 20 % | **94,8 %** |
+
+**« 47 % de buckets bien déterminés » TROMPE** : les 66 % mal déterminés pèsent **1,9 % du jeu réel** (configs rarissimes). **98 % de ce qui se joue tombe déjà sur des buckets bien déterminés dès ~8M.** Le volume fait 2 choses : **COUVERTURE** (≈ saturée à **10-30M**) + **PRÉCISION** des fréquents (rendements **décroissants**). Donc :
+- **NE PAS courir après le volume** (80M/round inutile : on ne couvrirait que la queue à <2 % du jeu). **Socle ~30-60M suffit.**
+- **Le moteur de progression = ITÉRER** (pilote améliorant → concentre les visites là où ça compte, y c. nos finales de rois faibles), **pas grossir la fenêtre**. → fenêtre boucle figée **48M** (98 %+ de couverture).
+- ⚠️ **tempère** l'optimisme « viser 100M » du 0401 : le **60M vs 29M** (GATE progression) montrera un gain **MODESTE** (précision), pas un nouveau 0,69. Le gros gain (2M→30M) est **encaissé**.
+
+**Pruning VÉRIFIÉ** : `--prune-min-visits=1` **lossless** ; ~1,16M buckets actifs à 8,4M (→ ~1,77M à 60M) ; **86 % des 8,5M jamais vus** (configs illégales → 0). **Fit 60M en streaming OK** (bloc prunée ~1,8M, ~2 Go RAM). **L2** (calé ≤2M, 0176) **re-swept au scale** (3e-5/1e-4/3e-4) dans le GATE progression. `train_stream --king-patterns` **livré + validé byte-compat**.
+
 ## ✅ VERDICT 2026-06-21 — fit-volume CONFIRMÉ, la géométrie riche s'INVERSE au scale (GATE 0401)
 > Matrice 2×2 (volume × archi) sur le corpus **29M** (17 shards), fits `train_stream` (gradient exact), juge cross-arch N=252/case.
 
@@ -83,10 +99,21 @@ champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par arc
 | **FM/MLP (NNUE)** | reporté (principe) | plateau confirmé **à gros volume + profondeur** |
 | Drawish ÷8/÷2 | NEUTRE en jeu (0353), codé défaut 0 | — |
 
-## Jobs en cours (2026-06-20)
-- **cpx62** : **0381** (boucle vertueuse autonome AUTO-STOP, self-contained hors-tree, juge parallèle N≈1000, bake-off
-  32cf/8cf tous les 2 tours) → puis **0383** (test scale-du-fit : minibatch 5M vs 2M).
-- **ccx33** : **0382** (diversité d12, additif non-bloquant ; la prochaine boucle piochera).
-- **PC perso** : éteint.
-- **Acquis** : 0373/0374 (boucles profondes grimpent) · 0378 (capitalisation : champion poolé bat les 2 boxes) ·
-  `train_stream.py` livré · auto-stop câblé.
+## Pipeline actif (2026-06-21) — socle 60M → gates → ITÉRATION
+> 📘 Mécanique détaillée → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) §7 (boucle d'itération 60M).
+
+**En cours** : cpx62 termine **0405** (boucle prod 32cf, **retirée** ensuite — accumulation +0,8M/round sous le bruit) ;
+ccx33 **gen pure** (0415+). **Queue cpx62 (auto-enchaînée)** : `0408` GATE 2a (fold : color vs **no-fold** vs full) →
+`0409` GATE 2b (**rois** king-aware vs men, via `train_stream --king-patterns`) → `0411-0414` **gen pure** (+11,2M).
+**ccx33** : `0415-0418` gen pure (+5,6M). Tous **pilote figé `w32_full`**, vers le **doublement ~60M**.
+
+**Prêts, non déployés (lancés au bon moment)** :
+- `0410` **GATE progression + sweep L2** (challenger@~60M vs baseline 29M) → au doublement. Mesure le gain de PRÉCISION
+  du volume (attendu **modeste**) et **fige le L2 au scale**. Auto-gardé (no-op si <55M).
+- `0420` **BOUCLE D'ITÉRATION 60M** (le MOTEUR) : régénère une large fenêtre fraîche **pilotée par le champion courant**
+  → fenêtre glissante FIFO 48M → refit → juge **champ_k vs champ_{k-1}** → auto-stop. Data box-local (régénérable) ;
+  champions committés. Se lance une fois le socle 60M là.
+
+**Object store** : dormant, **non bloquant jusqu'à ~70-80M** (git porte ; `.git`≈1,7 Go). Diagnostic + activation →
+[OBJSTORE_SETUP.md](OBJSTORE_SETUP.md). **Acquis** : `train_stream` (+king) livré · pruning lossless vérifié · gen pure
+(pilote figé) remplace le théâtre de mesure de 0405.
