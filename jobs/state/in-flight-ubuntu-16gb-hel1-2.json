@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0404-corpus-d12",
-  "script": "jobs/queue/ccx33-0404-corpus-d12.sh",
-  "pid": 2594107,
-  "started_at": "2026-06-21T10:10:43+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

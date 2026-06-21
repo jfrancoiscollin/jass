@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0404-corpus-d12",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-21T10:10:43+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2594107
+  "ended_at": "2026-06-21T11:31:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
