@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0420-iterloop-60M",
+  "script": "jobs/queue/cpx62-0420-iterloop-60M.sh",
+  "pid": 3483122,
+  "started_at": "2026-06-21T22:35:11+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
