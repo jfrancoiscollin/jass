@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0427-l2refine",
-  "snapshot_at": "2026-06-22T21:16:54+00:00",
+  "snapshot_at": "2026-06-22T21:22:05+00:00",
   "started_at": "2026-06-22T20:46:00+00:00",
-  "elapsed_seconds": 1854,
+  "elapsed_seconds": 2165,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2653426       1       30:54  0.0  0.0 bash\n2653428 2653426       30:54  0.0  0.0 bash\n2654341 2653428       29:49  102 76.4 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2653426       1       36:04  0.0  0.0 bash\n2653428 2653426       36:04  0.0  0.0 bash\n2654341 2653428       34:59  102 65.5 python3\n"
 }
