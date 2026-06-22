@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0426-l2sweep",
+  "script": "jobs/queue/ccx33-0426-l2sweep.sh",
+  "pid": 2644293,
+  "started_at": "2026-06-22T15:44:20+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
