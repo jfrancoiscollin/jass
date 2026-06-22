@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0423-l2sweep
+# id: ccx33-0426-l2sweep
 # description: GATE PROGRESSION — mesure le gain de volume au DOUBLEMENT (la vraie progression, pas les +0,8M/round
 # qui sont sous le bruit). Baseline FIGE = w32_full (32cf@29M, archive par 0401). Challenger = 32cf REFIT sur le corpus
 # accumule courant. AUTO-GARDE : si le corpus < THRESH (doublement pas atteint), no-op propre (exit 0) -> a re-deployer
@@ -11,9 +11,9 @@
 # expected_duration: ~6 h (3 fits L2 + 3 juges, au-dela du seuil ; quasi-instantane si no-op)
 set -uo pipefail
 cd /root/jass
-export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-300}"
+export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-720}"
 source jobs/lib/preflight.sh
-ART="/root/jass/jobs/results/cpx62-0423-l2sweep/artefacts"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0426-l2sweep/artefacts"; mkdir -p "$ART"
 RES="$ART/RESULTS.txt"; : > "$RES"
 W=/root/cw-prog; rm -rf "$W"; mkdir -p "$W"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
@@ -36,8 +36,28 @@ if [ "$NBIG" -lt "$THRESH" ]; then
   exit 0
 fi
 
+# ---------- sous-echantillon 35M (ccx33 16Go/disque : FEAT + petit, fits + rapides ; L2 tout aussi representatif) ----------
+SUB=35000000
+if [ "$NBIG" -gt "$SUB" ]; then
+  python3 - "$W/big.jnnw" "$W/sub.jnnw" "$SUB" <<'PY'
+import struct,sys,numpy as np
+src,dst,sub=sys.argv[1],sys.argv[2],int(sys.argv[3]); REC=38
+with open(src,'rb') as f: n=struct.unpack('<I',f.read(8)[4:8])[0]
+mm=np.memmap(src,dtype=np.uint8,mode='r',offset=8,shape=(n,REC))
+sub=min(sub,n); idx=np.sort(np.random.default_rng(42).choice(n,sub,replace=False))
+sel=np.ascontiguousarray(mm[idx])
+with open(dst,'wb') as o: o.write(b'JNNW'+struct.pack('<I',sub)); o.write(sel.tobytes())
+print(f"sous-ech {sub}/{n}")
+PY
+  DATA="$W/sub.jnnw"
+else
+  DATA="$W/big.jnnw"
+fi
+NFIT=$(python3 -c "import struct;print(struct.unpack('<I',open('$DATA','rb').read(8)[4:8])[0])")
+say "# L2 sweep sur ${NFIT} positions (sous-ech de ${NBIG} pour ccx33)"
+
 # ---------- au-dela du seuil : on mesure la progression ----------
-preflight_build 1; preflight_train "$NBIG" 1; preflight_note "gate progression : fit 32cf challenger + juge vs baseline 29M" 120; preflight_check
+preflight_build 1; preflight_train "$NFIT" 1; preflight_note "L2 sweep ccx33 : 3 fits + 3 juges vs baseline 29M" 120; preflight_check
 
 echo "=== build 32-pat (memes flags que 0401) ==="
 cmake -S . -B "$W/build-32" -DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl \
@@ -55,12 +75,12 @@ git cat-file -e "origin/main:$BASE_GZ" 2>/dev/null || { echo "ABORT: baseline $B
 git show "origin/main:$BASE_GZ" | gunzip > "$W/baseline.pjtw" || { echo "ABORT gunzip baseline"; exit 4; }
 
 echo "=== dump FEAT + fit 32cf challenger sur ${NBIG} ==="
-"$J32" --dump-eval-features "$W/big.jnnw" "$W/feat.full" >"$W/feat.log" 2>&1 || { echo "ABORT dump feat"; tail "$W/feat.log"; exit 8; }
+"$J32" --dump-eval-features "$DATA" "$W/feat.full" >"$W/feat.log" 2>&1 || { echo "ABORT dump feat"; tail "$W/feat.log"; exit 8; }
 
 # ---------- L2 SWEEP au scale : l2=1e-4 fut cale a <=2M (0176) ; a ${NBIG} l'optimum peut etre + BAS ----------
 # (a gros volume + ~47% de buckets bien determines, trop de L2 bride la queue qu'on vient de nourrir).
 L2S="3e-5 1e-4 3e-4"
-fit_l2(){ env JASS_PATTERNS_DIR="$GEOM" python3 pattern_jass/tools/train_stream.py --data "$W/big.jnnw" --feat "$W/feat.full" \
+fit_l2(){ env JASS_PATTERNS_DIR="$GEOM" python3 pattern_jass/tools/train_stream.py --data "$DATA" --feat "$W/feat.full" \
       --color-fold --tempo-stage --loss logistic --l2 "$1" --max-iter "$MAXIT" --chunk "$CHUNK" --out "$2" \
       >"${2%.pjtw}.log" 2>&1 || { echo "TRAIN FAIL l2=$1"; tail -12 "${2%.pjtw}.log"; exit 9; }
   grep -iE "train_loss|wrote" "${2%.pjtw}.log" | tail -1 | sed 's/^/    /'; }
