@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0420-iterloop-60M",
-  "snapshot_at": "2026-06-22T04:16:38+00:00",
+  "snapshot_at": "2026-06-22T04:21:38+00:00",
   "started_at": "2026-06-21T22:35:11+00:00",
-  "elapsed_seconds": 20487,
+  "elapsed_seconds": 20787,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3483122       1    05:41:26  0.0  0.0 bash\n3483124 3483122    05:41:26  0.0  0.0 bash\n3499537 3483124       00:21  192  4.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3483122       1    05:46:27  0.0  0.0 bash\n3483124 3483122    05:46:27  0.0  0.0 bash\n3499537 3483124       05:22  118 61.4 python3\n"
 }
