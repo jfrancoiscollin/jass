@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0426-l2sweep",
-  "snapshot_at": "2026-06-22T16:50:45+00:00",
+  "snapshot_at": "2026-06-22T16:55:49+00:00",
   "started_at": "2026-06-22T15:44:20+00:00",
-  "elapsed_seconds": 3985,
+  "elapsed_seconds": 4289,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2644293       1    01:06:24  0.0  0.0 bash\n2644295 2644293    01:06:24  0.0  0.0 bash\n2645180 2644295    01:05:19  101 64.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2644293       1    01:11:28  0.0  0.0 bash\n2644295 2644293    01:11:28  0.0  0.0 bash\n2645180 2644295    01:10:23  101 64.6 python3\n"
 }
