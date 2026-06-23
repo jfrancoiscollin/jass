@@ -1,0 +1,3 @@
+# corpus combinaisons : 305 positions (data/dilf_combinations.fen)
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== match champion 3e-5 vs Scan depuis 305 combinaisons (depth 11, no-DB, ~4h max) ===
