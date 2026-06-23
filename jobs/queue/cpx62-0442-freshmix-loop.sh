@@ -11,7 +11,7 @@
 set -uo pipefail
 cd /root/jass
 # ----- params -----
-FRESH=12000000               # positions FRAICHES par boucle (100% neuf ; >saturation couverture ~10M pour un fit net)
+FRESH=25000000               # positions FRAICHES par boucle (100% neuf, demande JFC ; bien au-dela de la saturation ~10-30M)
 LABEL_LO=4                   # label/score depth de base (le WDL vient du DEROULE a play-depth, pas de ce search)
 JUDGE_PAIRS=28; PLAY_FALLBACK=10
 MID_LO=14; MID_HI=40; SEED_CAP=400000
@@ -32,7 +32,7 @@ R_EPS=(   0 12  5  8  0)
 R_NAME=(humain-profond exploration-large tactique volume-decisif haute-fidelite)
 NREC=${#R_NAME[@]}
 # ------------------
-export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-1500}"
+export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-3000}"
 source jobs/lib/preflight.sh
 ART="/root/jass/jobs/results/cpx62-0442-freshmix-loop/artefacts"; mkdir -p "$ART"
 W=/root/cw-freshmix; rm -rf "$W"; mkdir -p "$W"
@@ -40,7 +40,7 @@ NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 GEOM32=/root/jass-geom32-freshmix; TRAJ="$ART/trajectory.txt"; : > "$TRAJ"
 RES="$ART/RESULTS.txt"; : > "$RES"; say(){ echo "$@" | tee -a "$RES"; }
 
-preflight_build 1; preflight_train "$FRESH" "$NREC"; preflight_note "freshmix : ${NREC} boucles 100% epure (gen ${FRESH} mixe + refit + 2 juges)" 600; preflight_check
+preflight_build 1; preflight_train "$FRESH" "$NREC"; preflight_note "freshmix : ${NREC} boucles 100% epure (gen ${FRESH} mixe + refit + 2 juges)" 1200; preflight_check
 
 # ---------- build 32-pat (memes flags que 0428) + seed champion ----------
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl >"$W/clone.log" 2>&1
