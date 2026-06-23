@@ -1,0 +1,29 @@
+=== probe Scan (/root/jass-scan/scan_linux) ===
+  scan.ini : present
+  scan dir : data scan.ini scan_linux 
+=== build jass (32-pat, extras = build du champion, sans EGDB) ===
+# champion = w32 fit L2=3e-5 @35M (le plus fort 32cf connu)
+=== MATCH : champion 32cf vs Scan | depth=11 (partage) | 40 paires = 80 parties | no-DB des 2 cotes ===
+    game 706: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [994s]
+    game 707: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [995s]
+    game 708: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [998s]
+    game 709: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [999s]
+    game 710: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1001s]
+    game 711: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1003s]
+    game 712: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1005s]
+    game 713: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1006s]
+    game 714: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1008s]
+    game 715: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1010s]
+    game 716: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1012s]
+    game 717: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1013s]
+    game 718: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1016s]
+    game 719: Jass=W Scan=B → L (no legal move from Jass-player, 115 plies)  Jass +0.0  [1017s]
+    game 720: Scan=W Jass=B → W (no legal move from Jass-player, 154 plies)  Jass +0.0  [1020s]
+  
+  === Jass vs Scan, depth 11, 720 games ===
+    Jass=40  Scan=680  Draws=0
+    Jass score rate: 0.056 (40.0 / 720)
+    ELO estimate:    -492 (95% CI ≈ ±30)
+=== RESUME ===
+  score champion vs Scan = 0.056  (~-491 Elo)
+# LECTURE : ~0.5 = a egalite ; <0.5 = on est sous Scan (de combien = l'ecart restant). Bruite, ordre de grandeur.
