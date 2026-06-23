@@ -1,0 +1,26 @@
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== sonde profondeur sur 305 combinaisons (jass d11/15/18/20 + Scan d18 ref) ===
+  positions : 305  | 1 pion ~ 85 unites | accord = coup jass == coup Scan d18
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+    ... 50/305
+    ... 100/305
+    ... 150/305
+    ... 200/305
+    ... 250/305
+    ... 300/305
+
+  Scan a fourni un coup de reference sur 305/305 positions (anchor 'un gain existe').
+   prof |  accord/Scan | score median |  >=1 pion | >=2 pions
+  d  11 |   161/305   53% |           11 |   57/305  19% |   14/305   5%
+  d  15 |   191/305   63% |           47 |  100/305  33% |   26/305   9%
+  d  18 |   194/305   64% |           61 |  118/305  39% |   39/305  13%
+  d  20 |   193/305   63% |           70 |  134/305  44% |   42/305  14%
+  d18-OFF|   191/305   63%  (elagage multicut/razor desactive)
+
+  LECTURE :
+   accord & %>=pion MONTENT vers d20  => HORIZON : plus de profondeur trouve la combinaison (search, recuperable).
+   restent PLATS et BAS meme a d20     => EVAL shot-blind : la profondeur n'aide pas, c'est l'eval qu'il faut enrichir.
+   d18-OFF >> d18                       => notre ELAGAGE cache le coup en profondeur (a re-tuner vs adversaire fort).
+
+# cible de reference : Scan convertit 95% (0440). Ici on mesure si jass VOIT/JOUE le coup gagnant a profondeur croissante.
