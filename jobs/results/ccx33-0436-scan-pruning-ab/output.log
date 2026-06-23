@@ -1,0 +1,13 @@
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== A/B ELAGAGE (champion 3e-5, depth 11, no-DB des 2 cotes) ===
+  [match A-elagage-ON] depth 11, elagage DEFAUT
+  A-elagage-ON : score rate: 0.056   [Jass=1  Scan=17  Draws=0]
+  [match B-elagage-OFF] depth 11, multicut_min_depth=0,razor_max_depth=0
+  B-elagage-OFF : score rate: 0.028   [Jass=0  Scan=17  Draws=1]
+
+================= LECTURE =================
+  B >> A (ex 0.05 -> 0.3+) => l'ELAGAGE nous rendait tactiquement aveugles vs Scan => faiblesse de RECHERCHE,
+                              recuperable SANS NNUE (re-tuner/desactiver multicut+razor vs adversaires forts).
+  B ~ A (~0.05)            => l'elagage n'est PAS le coupable => c'est l'EVAL (shot-vulnerable) => richesse / NNUE.
+  (parties dumpees dans games-A / games-B pour analyse combinaisons)
+===========================================
