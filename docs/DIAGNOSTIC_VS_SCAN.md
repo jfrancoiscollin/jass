@@ -52,3 +52,39 @@ aiguisé comme Scan.**
   `scan_selfplay_gen.py` → fit train_stream → juger vs Scan) pour atteindre SON point fixe **dans la classe linéaire**.
   C'était classé MORT (0073-0084) mais **à ≤2M = confondu par le fit-volume** → à revisiter au scale.
 - ⛔ **NNUE INTERDIT** tant que ce levier (et les autres linéaires) ne sont pas épuisés (RÈGLE GRAVÉE, cf CURRENT.md).
+
+## MESURE TACTIQUE CHIFFRÉE (0440, 2026-06-23) — combinaisons de livre, jass vs Scan
+Job `ccx33-0440-dilf-tactical` : champion 3e-5 **vs Scan**, **depth 11, eval pur (no-DB)**, joué **depuis 305
+combinaisons de livre** (dilf `ALL_DIAGRAMS` → `data/dilf_combinations.fen`, médiane 26 pièces = plein milieu).
+Chaque position jouée 2× (jass au trait / Scan au trait via swap). Métrique = **taux de conversion du camp AU TRAIT**
+(celui qui a le coup gagnant). Verdict reconstruit depuis les 610 parties dumpées (`artefacts/games/`) :
+
+| Camp **au trait** (a la combinaison gagnante) | Conversion |
+|---|---|
+| **JASS** | **0,246** (75 / 305) |
+| **SCAN** | **0,954** (291 / 305) |
+| **Écart** | **−0,708** |
+
+- **Scan trouve+convertit 95 % des combinaisons ; jass seulement 25 % de LES MÊMES.** Pire : **499/610** parties
+  finissent par « jass sans coup légal » (maté/bloqué) vs 67 pour Scan ⇒ **jass change régulièrement une position
+  GAGNÉE en DÉFAITE.**
+- À depth 11 ces combinaisons (2-6 plis) sont **dans l'horizon** : jass devrait les voir. S'il ne convertit pas,
+  **c'est son éval qui le détourne du bon coup** (shot-vulnerable) — cohérent avec le verdict A/B (l'éval, pas la recherche).
+- Caveat : la métrique mêle attaque (jass vs défense forte de Scan) et défense (Scan vs défense faible de jass) ;
+  les deux pointent dans le même sens, donc −0,708 majore le pur trou d'attaque, mais la direction est certaine.
+- **C'est notre meilleure cible MESURABLE** : refaire ce match (25 % → ?) après chaque champion = la jauge de progrès.
+
+## CADRE STRATÉGIQUE COURANT (2026-06-23, après décisions JFC)
+- ❌ **Distillation Scan ABANDONNÉE** (la ligne « distiller depuis Scan » ci-dessus est CADUQUE) : Scan est monté
+  **sans** distillation, on doit pouvoir grimper sans (plafond = Scan ; dépendance Scan). Règle gravée.
+- ✅ **Plan de base : self-play 100 % ÉPURÉ 25M, diversifié** (`cpx62-0442-freshmix-loop`) — chaque boucle régénère
+  un corpus neuf avec une **composition de μ distincte** (profondeur de jeu d8/d10/d12 + seeds combinaisons dilf /
+  milieux lidraughts + `--random-open-plies` + `--explore-eps`). Pilote = meilleur champion connu. Jugé vs base 3e-5 ;
+  une recette qui passe `vs_base > 0,55` = composition de μ qui **casse le point fixe** (self-play à son point fixe = 0,50,
+  cf `cpx62-0428` iter1/2 = 0,50). La cible directe : le trou tactique 25 %→ ci-dessus.
+- 🅱️ **Réserve si stagnation : value-target distillation INDÉPENDANTE** (label = recherche profonde jass d18-20 + EGDB,
+  PAS Scan). Outillage prêt et dormant : `--deep-relabel` (src/main.cpp) + `train_stream --target value` ;
+  sonde `ccx33-0443-deeplabel-probe` en `jobs/paused/`. Failles connues (à corriger avant un vrai run) : filtre quiet
+  / valeur-feuille, clip des scores de mat, contrôle WDL-vs-valeur, et **itérer** le relabel (sinon plafond sous notre
+  propre force). Ne casse PAS un éventuel plafond de features (seul risque que rien de linéaire ne corrige).
+- ⛔ **NNUE toujours INTERDIT** tant que le linéaire n'est pas poussé à fond (RÈGLE GRAVÉE).
