@@ -1,0 +1,2 @@
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== sonde profondeur sur 305 combinaisons (jass d11/15/18/20 + Scan d18 ref) ===
