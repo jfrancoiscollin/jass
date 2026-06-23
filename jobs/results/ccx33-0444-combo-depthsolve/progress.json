@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0444-combo-depthsolve",
-  "snapshot_at": "2026-06-23T22:14:52+00:00",
+  "snapshot_at": "2026-06-23T22:19:56+00:00",
   "started_at": "2026-06-23T22:04:51+00:00",
-  "elapsed_seconds": 601,
+  "elapsed_seconds": 905,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2696605       1       10:01  0.0  0.0 bash\n2696607 2696605       10:01  0.0  0.0 bash\n2697076 2696607       09:50  0.1  0.0 python3\n2697077 2696607       09:50  0.0  0.0 tee\n2697078 2697076       09:50 29.7  0.5 jass\n2697080 2697076       09:50 66.1  0.4 jass\n2697082 2697076       09:49  3.9  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2696605       1       15:04  0.0  0.0 bash\n2696607 2696605       15:04  0.0  0.0 bash\n2697076 2696607       14:53  0.1  0.0 python3\n2697077 2696607       14:53  0.0  0.0 tee\n2697078 2697076       14:53 29.6  0.5 jass\n2697080 2697076       14:53 66.3  0.4 jass\n2697082 2697076       14:53  4.0  0.9 scan_linux\n"
 }
