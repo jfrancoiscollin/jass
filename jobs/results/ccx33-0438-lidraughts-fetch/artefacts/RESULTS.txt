@@ -1,0 +1,3 @@
+=== build jass ===
+# DB existante : 43996 parties (survie de 0014 ?)
+=== fetch lidraughts (1600-2300, 4.5h max, on garde ce qu'on a) ===
