@@ -1,0 +1,23 @@
+=== PROBES acces lidraughts (depuis la box) ===
+  [200] API user (base joignable ?) (693o) : https://lidraughts.org/api/user/lidraughts
+      {"id":"lidraughts","username":"lidraughts","online":true,"perfs":{"blitz":{"games":0,"rating":1500,"rd":350,"prog":0,"prov":true},"bullet":{"games":0,"rating":1  [404] PUZZLE du jour (suite tactique ?) (5866o) : https://lidraughts.org/api/puzzle/daily
+  [404] PUZZLE dashboard (5880o) : https://lidraughts.org/api/puzzle/dashboard/30
+  [000000] DUMP en bloc (index) (5880o) : https://database.lidraughts.org
+  [000000] DUMP puzzles (zst) (5880o) : https://database.lidraughts.org/lidraughts_db_puzzle.csv.zst
+  [000000] DUMP parties (liste) (5880o) : https://database.lidraughts.org/standard/list.txt
+
+=== build jass (pour la conversion) ===
+
+=== ECHANTILLON fetch_lidraughts_games -> pdn_to_jnnw (timeout 12min, petits caps) ===
+  parties fetchees (echantillon) : 3586
+    fetch: 19:59:22 INFO fetch_lidraughts | 'ANANTA' (rating 1695): 30 PDN games -> 30 kept, 30 new inserts. DB total = 3549/100000.
+    fetch: 19:59:26 INFO fetch_lidraughts | 'kembos' (rating 1602): 30 PDN games -> 0 kept, 0 new inserts. DB total = 3549/100000.
+    fetch: 19:59:32 INFO fetch_lidraughts | 'Rocking1234' (rating 1644): 30 PDN games -> 7 kept, 7 new inserts. DB total = 3556/100000.
+    fetch: 19:59:37 INFO fetch_lidraughts | 'chouky' (rating 1846): 30 PDN games -> 30 kept, 30 new inserts. DB total = 3586/100000.
+  positions JNNW converties : 214030
+
+================= LECTURE =================
+  Puzzles 200 => suite de test tactique directe (position->coup) = etape 1 ideale.
+  Dump en bloc 200 => fetch RAPIDE (vs crawl API lent) pour le gros corpus d'entrainement.
+  Echantillon JNNW>0 => pipeline fetch->jnnw OK => on peut monter le gros corpus + le test combinaisons.
+===========================================
