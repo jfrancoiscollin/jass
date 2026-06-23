@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0434-match-vs-scan-fair",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-23T18:18:47+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2686743
+  "ended_at": "2026-06-23T18:24:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
