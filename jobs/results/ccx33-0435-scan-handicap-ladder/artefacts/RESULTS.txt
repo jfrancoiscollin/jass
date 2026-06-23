@@ -1,0 +1,13 @@
+=== build jass (32-pat, extras du champion, SANS egdb = eval pur) ===
+=== ECHELLE DE HANDICAP (jass-depth vs Scan d11, no-DB, champion 3e-5) ===
+  jass d11 vs Scan d11 : score rate: 0.056   [Jass=1  Scan=17  Draws=0]
+  jass d13 vs Scan d11 : score rate: 0.000   [Jass=0  Scan=18  Draws=0]
+  jass d15 vs Scan d11 : score rate: 0.028   [Jass=0  Scan=17  Draws=1]
+# LECTURE LADDER : ou jass croise ~0.5 = la profondeur qui compense l'eval -> (jass_d - 11) plies derriere.
+#   si jass reste ~0 meme a d15 => ecart EVAL fondamental (la profondeur ne rattrape pas -> territoire NNUE).
+
+=== ANALYSE : ou/pourquoi on perd ===
+  [d11] 18 parties | issues {'L': 8, 'W': 10} | blocage(no-move) 18/18 | plies med 117 | pieces fin med 5
+  [d13] 18 parties | issues {'L': 9, 'W': 9} | blocage(no-move) 18/18 | plies med 119 | pieces fin med 5
+  [d15] 18 parties | issues {'L': 8, 'D': 1, 'W': 9} | blocage(no-move) 17/18 | plies med 127 | pieces fin med 4
+# (JSON par partie dans artefacts/games/ pour analyse plus fine ulterieure)
