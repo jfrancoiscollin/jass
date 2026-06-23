@@ -1547,7 +1547,122 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
-// --gen-egdb-wld <count> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb=1024] [seed=0]
+// --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]
+// Independent value-target distillation (option B) : rewrite each record's SCORE
+// field with the value of a DEEP jass search (STM-POV, search-amplified), and its
+// WDL byte with the sign. With --egdb, endgame positions egdb can resolve get the
+// EXACT value (saturated) — ground-truth anchor. The teacher is OUR OWN deep search
+// (no Scan), so the static eval distilled from these labels can exceed Scan, unlike
+// Scan-distillation which caps at Scan. Single-threaded — shard the input across
+// cores in the job for parallelism.
+// -----------------------------------------------------------------------------
+int run_deep_relabel_mode(int argc, char** argv) {
+    std::string in_path, out_path, nnue_path, label_spec, egdb_dir;
+    int depth = 18, cache_mb = 1024;
+    constexpr std::int32_t EG_SAT = 10000;  // saturated value for egdb-exact win/loss
+    constexpr std::int32_t DRAW_BAND = 50;  // |score| <= band → wdl 0 (draw-ish)
+    std::vector<std::string> pos;
+    for (int i = 2; i < argc; ++i) {
+        const std::string a = argv[i];
+        if      (a == "--nnue" && i + 1 < argc)                 nnue_path  = argv[++i];
+        else if (a == "--label-depth-by-phase" && i + 1 < argc) label_spec = argv[++i];
+        else if (a == "--egdb" && i + 1 < argc)                 egdb_dir   = argv[++i];
+        else if (a == "--cache-mb" && i + 1 < argc)             cache_mb   = parse_int_or(argv[++i], 1024);
+        else pos.push_back(a);
+    }
+    if (pos.size() < 2) {
+        std::cerr << "usage: --deep-relabel <in.jnnw> <out.jnnw> [depth=18] "
+                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]\n";
+        return 2;
+    }
+    in_path = pos[0]; out_path = pos[1];
+    if (pos.size() > 2) { const int d = parse_int_or(pos[2].c_str(), -1); if (d > 0) depth = d; }
+    const std::array<int, NUM_PHASES> label_depth =
+        parse_depth_by_phase(label_spec, "--label-depth-by-phase");
+
+    std::unique_ptr<INetwork> custom_nnue;
+    if (!nnue_path.empty()) {
+        const bool is_pjtw = nnue_path.size() >= 5
+                          && nnue_path.compare(nnue_path.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        custom_nnue = is_pjtw ? jass::load_eval_network(nnue_path, &err)
+                              : load_network(nnue_path.c_str());
+        if (!custom_nnue) {
+            std::cerr << "error: cannot load eval weights from " << nnue_path
+                      << (err.empty() ? "" : (" : " + err)) << "\n";
+            return 1;
+        }
+    }
+    const bool have_egdb = !egdb_dir.empty() && jass::egdb::init(egdb_dir, cache_mb);
+    if (!egdb_dir.empty() && !have_egdb)
+        std::cerr << "warning: egdb::init failed for '" << egdb_dir << "' — proceeding without exact anchor\n";
+
+    Engine e;
+    e.use_book(false);
+    if (custom_nnue) e.set_nnue(custom_nnue.get());
+
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+        std::cerr << "error: " << in_path << " is not JNNW\n"; return 1;
+    }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)),
+                          std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    long egdb_exact = 0;
+    const auto t0 = std::chrono::steady_clock::now();
+    for (std::size_t i = 0; i < nrec; ++i) {
+        char* rec = buf.data() + i * 38;
+        const Position p = position_from_record(rec);
+        const std::uint8_t stm = static_cast<std::uint8_t>(rec[32]);
+        std::int32_t score;
+        if (have_egdb) {
+            const jass::EndgameResult tb = jass::egdb::probe(p);
+            if (tb != jass::EndgameResult::Unknown) {
+                const int w = wdl_from_result(tb, stm);            // STM-POV {+1,0,-1}
+                score = static_cast<std::int32_t>(w) * EG_SAT;
+                std::memcpy(rec + 33, &score, 4);
+                rec[37] = static_cast<char>(w);
+                ++egdb_exact;
+                continue;
+            }
+        }
+        e.set_position(p);
+        const int phase_ovr = label_depth[phase_index_of(popcount(p.occupied()))];
+        SearchLimits lim;
+        lim.max_depth = (phase_ovr > 0) ? phase_ovr : depth;
+        const SearchResult r = e.search(lim);
+        score = static_cast<std::int32_t>(r.score);               // STM-POV
+        std::memcpy(rec + 33, &score, 4);
+        const std::int8_t wdl = (score > DRAW_BAND) ? 1 : (score < -DRAW_BAND ? -1 : 0);
+        rec[37] = static_cast<char>(wdl);
+        if (((i + 1) % 2000) == 0) {
+            const double el = std::chrono::duration<double>(
+                std::chrono::steady_clock::now() - t0).count();
+            std::cout << "  deep-relabel " << (i + 1) << " / " << nrec
+                      << "  (" << (el > 0 ? (i + 1) / el : 0.0) << " pos/s)\n" << std::flush;
+        }
+    }
+    if (have_egdb) jass::egdb::shutdown();
+
+    std::ofstream o(out_path, std::ios::binary);
+    if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
+    o.write("JNNW", 4);
+    const std::uint32_t c32 = static_cast<std::uint32_t>(nrec);
+    o.write(reinterpret_cast<const char*>(&c32), 4);
+    o.write(buf.data(), static_cast<std::streamsize>(buf.size()));
+    o.close();
+    const double el = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - t0).count();
+    std::cout << "deep-relabel: " << nrec << " records, depth=" << depth
+              << ", egdb-exact=" << egdb_exact << ", " << el << "s ("
+              << (el > 0 ? nrec / el : 0.0) << " pos/s) → " << out_path << "\n";
+    return 0;
+}
+
 // Emit `count` random LEGAL QUIET positions (3..max_pieces pieces, >=1 per side)
 // each labelled with the EXACT egdb WLD (STM-POV; score=0). Capture positions are
 // skipped — the WLD value is for quiet leaves, which is what the eval scores. Free
@@ -3809,6 +3924,7 @@ int main(int argc, char** argv) {
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
+        else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);
@@ -3848,6 +3964,10 @@ int main(int argc, char** argv) {
                 "  --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n"
                 "                                   rewrite WDL labels of <=7-piece\n"
                 "                                   positions with the EXACT egdb result.\n"
+                "  --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR]\n"
+                "                                   rewrite the SCORE field with a DEEP\n"
+                "                                   search value (independent value-target\n"
+                "                                   distillation) ; --egdb anchors endgames exactly.\n"
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"

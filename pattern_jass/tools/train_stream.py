@@ -247,9 +247,18 @@ def train_stream(args):
         bm = np.ascontiguousarray(rec['bm']); bk = np.ascontiguousarray(rec['bk'])
         stm = np.ascontiguousarray(rec['stm'])
         wdl = np.ascontiguousarray(rec['wdl']).astype(np.float64)
-        # black-POV WDL target y = (wdl_black+1)/2, wdl_black = wdl if stm==1 else -wdl.
-        wdl_black = np.where(stm == 1, wdl, -wdl)
-        y_all[i:j] = (wdl_black + 1.0) * 0.5
+        if args.target == 'value':
+            # Independent value-target distillation (option B) : regress on the
+            # DEEP-search value stored in `score` (STM-POV), mapped to a black-POV
+            # win-prob via a sigmoid so it stays in the same [0,1] regime as the
+            # WDL-logistic champions. score_black = score if stm==1 else -score.
+            score = np.ascontiguousarray(rec['score']).astype(np.float64)
+            score_black = np.where(stm == 1, score, -score)
+            y_all[i:j] = 1.0 / (1.0 + np.exp(-score_black / float(args.value_scale)))
+        else:
+            # black-POV WDL target y = (wdl_black+1)/2, wdl_black = wdl if stm==1 else -wdl.
+            wdl_black = np.where(stm == 1, wdl, -wdl)
+            y_all[i:j] = (wdl_black + 1.0) * 0.5
         n_win += int((wdl > 0).sum()); n_loss += int((wdl < 0).sum())
         n_draw += int((wdl == 0).sum())
         # phase weights (same as train.py : tempo-stage or piece-count ramp).
@@ -265,8 +274,12 @@ def train_stream(args):
             pw = (wm | wk) if args.king_patterns else wm
             cols, _ = folder.cols_signs(pb, pw)
             ccounts += np.bincount(cols.ravel(), minlength=TB)
-    print(f'  target=WDL  win={n_win} draw={n_draw} loss={n_loss} '
-          f'({100*n_draw/max(N,1):.1f}% draws)  ({time.time()-tA:.1f}s)')
+    if args.target == 'value':
+        print(f'  target=VALUE (deep-search score, scale={args.value_scale})  '
+              f'y mean={y_all.mean():.3f} std={y_all.std():.3f}  ({time.time()-tA:.1f}s)')
+    else:
+        print(f'  target=WDL  win={n_win} draw={n_draw} loss={n_loss} '
+              f'({100*n_draw/max(N,1):.1f}% draws)  ({time.time()-tA:.1f}s)')
 
     # --- Prune remap : bucket(0..TB) -> dense slot. Lossless at min-visits=1 (every
     #     visited bucket gets a slot 1..K; slot 0 = unseen fallback, stays 0). ----- #
@@ -377,6 +390,14 @@ def main(argv=None):
     ap.add_argument('--loss', choices=['logistic', 'ls'], default='logistic',
                     help="logistic regression on WDL outcomes (Scan's objective, "
                          "default) or least-squares on the WDL target.")
+    ap.add_argument('--target', choices=['wdl', 'value'], default='wdl',
+                    help="wdl (default) = train on the game/egdb outcome label. "
+                         "value = independent value-target distillation : train on the "
+                         "DEEP-search value in the `score` field (via --deep-relabel), "
+                         "mapped to a win-prob with --value-scale.")
+    ap.add_argument('--value-scale', type=float, default=200.0,
+                    help="sigmoid scale (eval units) mapping deep-search score → win-prob "
+                         "when --target value. Larger = softer targets. Default 200.")
     fold = ap.add_mutually_exclusive_group()
     fold.add_argument('--full-fold', action='store_true',
                       help='FULL symmetry fold (colour+rot180+translation+reflection); '
