@@ -1,0 +1,26 @@
+=== probes (Scan / egdb jass / bitbases Scan) ===
+  Scan bitbases : repertoire data/ present -> --scan-bb-size 6 (Scan AVEC finale)
+  jass egdb : present -> ON
+=== build jass (egdb ON, extras du champion) ===
+# champion = w32 fit L2=3e-5 @35M
+=== MATCH FAIR : depth 11 (partage) | 2 paires = 18 parties distinctes | jass egdb=ON (/root/egdb_extracted) | scan-bb=6 ===
+  opening pool: 9 positions
+  jass setup:   pattern=/root/cw-vs-scan2/champ.pjtw  book=(default/none)
+  scan setup:   book=off  bb-size=6
+  Traceback (most recent call last):
+    File "/root/jass/tools/calibrate_vs_scan.py", line 808, in <module>
+      sys.exit(main(sys.argv[1:]))
+               ^^^^^^^^^^^^^^^^^^
+    File "/root/jass/tools/calibrate_vs_scan.py", line 730, in main
+      scan = ScanEngine(args.scan, label="Scan-player",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/root/jass/tools/calibrate_vs_scan.py", line 347, in __init__
+      init_lines = self._read_until(lambda l: l.startswith("ready"))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/root/jass/tools/calibrate_vs_scan.py", line 230, in _read_until
+      raise TimeoutError(f"{self.label}: no match in {timeout_s}s")
+  TimeoutError: Scan-player: no match in 60.0s
+=== RESUME ===
+  (score non parse — lire ci-dessus)
+# RAPPEL 0433 (no-DB des 2 cotes, jass handicape finale) = 0.056. Ce match-ci (jass egdb) = la vraie config jass.
+# Lecture : l'ecart 0433->0434 = l'effet egdb ; le score 0434 = ou en est jass *en vrai* vs Scan (a +-0.12 pres).
