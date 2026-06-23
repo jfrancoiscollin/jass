@@ -333,6 +333,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     const char*  seed_path        = nullptr; // --seed-file : JNNW of seed positions
     int          seed_frac        = 0;       // --seed-frac : % of games started from a
                                             //      random seed (endgame COVERAGE / famine)
+    int          explore_eps      = 0;       // --explore-eps : % of plies played as a
+                                            //      uniform-random legal move instead of
+                                            //      the search best (off-policy μ widening)
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -364,6 +367,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             seed_path = argv[++i];
         } else if (a == "--seed-frac" && i + 1 < argc) {
             seed_frac = parse_int_or(argv[++i], 0);
+        } else if (a == "--random-open-plies" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) random_open_plies = v;
+        } else if (a == "--explore-eps" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) explore_eps = v;
         } else {
             positional.push_back(argv[i]);
         }
@@ -684,7 +693,17 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             lim.max_depth = (phase_pd > 0) ? phase_pd : play_depth;
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
             const SearchResult r = e.search(lim);
-            if (!e.apply_move(r.best_move)) break;
+            // Epsilon-random exploration : with probability explore_eps%, play a
+            // uniform-random legal move instead of the search best. Visits states
+            // the greedy policy never reaches (off-policy μ widening) ; safe here
+            // because the label is the eventual game outcome (MC return), not a
+            // bootstrapped value, so the played-out result stays truthful.
+            Move play_mv = r.best_move;
+            if (explore_eps > 0 && !ml.empty()
+                && static_cast<int>(rng() % 100) < explore_eps) {
+                play_mv = ml[rng() % ml.size()];
+            }
+            if (!e.apply_move(play_mv)) break;
         }
 
         // Flush this game's samples with the resolved WDL label. WDL is
@@ -3832,9 +3851,13 @@ int main(int argc, char** argv) {
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
+                "                                   --random-open-plies K : K random\n"
+                "                                   opening plies (default 4). --explore-eps E :\n"
+                "                                   play E%% of plies as a random legal move\n"
+                "                                   (off-policy μ widening).\n"
                 "                                   --play-depth-by-phase\n"
                 "                                   \"endgame=12,deep-eg=14\" PLAYS\n"
                 "                                   those phases at a DEEPER search\n"
