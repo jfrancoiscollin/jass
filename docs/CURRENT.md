@@ -2,7 +2,23 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-21**.
+> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-23**.
+
+## 🔴 RÉVISION 2026-06-23 — « scaler vers les milliards » est INFIRMÉ par la littérature (rapport documenté)
+> 📚 Détail + sources → [PROGRESSION_LITTERATURE.md](PROGRESSION_LITTERATURE.md) (6 angles, vérifié).
+
+**Le mythe tombe** : Scan **n'a PAS** utilisé des milliards de data. Son eval = **~2,1M poids** (code source lu, *plus
+petit* que notre 32cf 8,5M ≈ notre 8cf) ; volume d'entraînement **non documenté** ; la famille Kingsrow = **~1M parties /
+145-231M positions** = **NOTRE ordre de grandeur**. Donc on n'est **pas** « 3 ordres sous Scan ».
+
+**Théorie (vérifiée, scikit-learn + TD linéaire)** : un modèle **linéaire à features fixes** converge vers un **point
+fixe UNIQUE** en **peu d'itérations** ; le **plafond = les features**, et **le volume ne fait que de la PRÉCISION**
+(variance des poids), pas le biais de classe. ⇒ **un plateau rapide / petits gains près du plafond = NORMAL**, et
+**scaler au-delà de ~50-100M n'est PAS un levier de force** (couverture déjà saturée, cf BOUCLE §10).
+
+**Les deux SEULS leviers pour dépasser** (révise le principe directeur ci-dessous) :
+1. **géométrie linéaire PLUS RICHE que Scan** (32cf 8,5M ⊃ 8cf 2,1M), bien fittée → relève notre point fixe au-dessus du sien ;
+2. **NNUE** (non-linéaire) = le seul lève-plafond universellement documenté → **au plateau confirmé**.
 
 ## ✅ VERDICT 2026-06-21 (quater) — rois TRANCHÉS : men-only gagne, king-aware perd (GATE 2b / 0409)
 > Sur **36,2M**, 32cf color-fold, fit `train_stream --king-patterns` (extension livrée + validée), juge cross N=252.
