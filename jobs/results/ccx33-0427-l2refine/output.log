@@ -1,0 +1,30 @@
+=== assemble le corpus accumule (tous les shards committes) ===
+écrit /root/cw-prog/big.jnnw : 47410792 records, 1801610104 octets
+# corpus courant : 47410792 positions  (x1.63 le baseline 29010792)
+sous-ech 35000000/47410792
+# L2 sweep sur 35000000 positions (sous-ech de 47410792 pour ccx33)
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 35000000 lignes @ 4min/M ≈ 140.0 min
+  [preflight] L2 sweep ccx33 : 3 fits + 3 juges vs baseline 29M: ≈ 120 min
+  [preflight] TOTAL estimé ≈ 264.0 min  (cap 720 min)
+  [preflight] OK — sous le cap, lancement.
+=== build 32-pat (memes flags que 0401) ===
+# build OK : 32-pat (/root/cw-prog/build-32/jass)
+=== recupere + decompresse le baseline w32_full (0401) ===
+=== dump FEAT + fit 32cf challenger sur 47410792 ===
+# --- FITS (sweep L2 au scale 47410792) + PROGRESSION vs baseline@29010792 ---
+  [fit l2=1e-6] sur 47410792
+    wrote /root/cw-prog/chal_1e6.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4331.1s]
+P(l2=1e-6)  32cf@47410792 (x1.63) vs baseline@29010792 = 0.3056 (N=504)
+  [fit l2=1e-5] sur 47410792
+    wrote /root/cw-prog/chal_1e5.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4273.0s]
+P(l2=1e-5)  32cf@47410792 (x1.63) vs baseline@29010792 = 0.3056 (N=504)
+  [fit l2=3e-5] sur 47410792
+    wrote /root/cw-prog/chal_3e5.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4297.2s]
+P(l2=3e-5)  32cf@47410792 (x1.63) vs baseline@29010792 = 0.5556 (N=504)
+
+================= LECTURE =================
+  Meilleur L2 = score le + haut vs baseline (= meilleur fit au scale). Si argmax(P) != 1e-4 =>
+  ADOPTER ce L2 dans la boucle d'iteration (0420) + tous les futurs fits (le 1e-4 etait cale a <=2M).
+  P > 0.55 => la 32cf PROGRESSE encore avec le volume (viser 100M). ~0.50 => debut de plateau. <0.45 => data bruitee.
+===========================================
