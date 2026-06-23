@@ -619,6 +619,10 @@ def main(argv):
                    help="per-move time budget (SECONDS) for the Scan side only.")
     p.add_argument("--pairs", type=int, default=2,
                    help="colour-swap pairs per opening (total games = 18 × pairs)")
+    p.add_argument("--openings-file", metavar="PATH", default=None,
+                   help="play from custom opening FENs (one per line, '#' comments "
+                        "stripped) instead of the built-in 9-first-move pool. Used to "
+                        "test on a position set, e.g. dilf combination diagrams.")
     p.add_argument("--max-plies", type=int, default=200)
     g_nnue = p.add_mutually_exclusive_group()
     g_nnue.add_argument("--nnue", metavar="PATH",
@@ -714,8 +718,14 @@ def main(argv):
         dump_dir.mkdir(parents=True, exist_ok=True)
         print(f"dumping per-game JSONs to: {dump_dir}")
 
-    openings = opening_pool_via_jass(args.jass)
-    print(f"opening pool: {len(openings)} positions")
+    if getattr(args, "openings_file", None):
+        openings = [ln.split("#", 1)[0].strip()
+                    for ln in open(args.openings_file)
+                    if ln.split("#", 1)[0].strip()]
+        print(f"opening pool: {len(openings)} positions (from {args.openings_file})")
+    else:
+        openings = opening_pool_via_jass(args.jass)
+        print(f"opening pool: {len(openings)} positions")
     eval_desc = (f"pattern={args.jass_pattern}" if args.jass_pattern
                  else f"nnue={args.nnue or ('(handcrafted)' if args.no_nnue else '(default)')}")
     print(f"jass setup:   {eval_desc}  book={args.jass_book or '(default/none)'}")
