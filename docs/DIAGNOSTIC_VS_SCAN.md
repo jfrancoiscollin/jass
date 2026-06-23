@@ -42,3 +42,13 @@ aiguisé comme Scan.**
   **récupérable sans changer de classe**. À trancher par l'A/B avant toute décision NNUE.
 - ⚠️ Réserves : 18 parties déterministes, champion mi-itération, no-egdb (mais le décrochage est en **milieu** de partie
   à 26 pièces → l'egdb n'y change rien).
+
+## VERDICT A/B (0436, 2026-06-23) — c'est l'EVAL, et le linéaire n'est PAS épuisé
+- élagage **ON** = 0,056 · élagage **OFF** = 0,028 → **B ≈ A : ce n'est PAS la recherche.** Hypothèse élagage RÉFUTÉE.
+- Donc l'écart est dans l'**EVAL**. MAIS **Scan = 2,1M poids, nous = 8,5M, et il nous bat** ⇒ **PAS un plafond de
+  capacité** : notre best-linear-fit possible est **≥** le sien ; **notre FIT est moins bon** (self-play borné par notre
+  pilote plus faible → point fixe trop bas).
+- **⇒ Prochain levier LINÉAIRE : distiller depuis Scan au scale** (Scan dispo en binaire ; `relabel_with_scan.py`,
+  `scan_selfplay_gen.py` → fit train_stream → juger vs Scan) pour atteindre SON point fixe **dans la classe linéaire**.
+  C'était classé MORT (0073-0084) mais **à ≤2M = confondu par le fit-volume** → à revisiter au scale.
+- ⛔ **NNUE INTERDIT** tant que ce levier (et les autres linéaires) ne sont pas épuisés (RÈGLE GRAVÉE, cf CURRENT.md).

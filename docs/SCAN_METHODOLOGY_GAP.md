@@ -1,6 +1,10 @@
 # Scan methodology gap — ce qui nous sépare, et comment fermer le gap itérativement
 
 > ## 🔒 RÈGLES PERMANENTES (2026-06-19) — la BOUCLE VIRTUELLE (cf [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md))
+> 0. **⛔ GRAVÉ DANS LE MARBRE (2026-06-23, JFC) : AUCUN NNUE / réseau / changement de classe TANT QUE le LINÉAIRE
+>    n'est pas POUSSÉ À FOND.** Empirique : on a **8,5M poids vs 2,1M (Scan)** et on ne l'a **pas égalé** → classe
+>    linéaire **PAS épuisée**, c'est notre FIT qui est moins bon. Épuiser AVANT NNUE : **distillation Scan au scale**,
+>    itération, géométrie, qualité de data, recherche. NNUE seulement si best-linear-fit ATTEINT **et** prouvé < Scan. **Non négociable.**
 > 1. **On NE se compare PLUS à Scan tant qu'on n'a pas convergé.** Au plancher, vs-Scan est perdant ET bruité
 >    (même config = 0.028 ↔ 0.083 d'un run à l'autre). **Métrique = SOI-MÊME en DIRECT** (`benchmark-nnue-vs-nnue`,
 >    `gen_k vs gen_{k-1}`, bande ~0.5 = sensible). Scan ne ressort qu'**au plateau** (`vs gen_{k-1} ≈ 0.5`).
