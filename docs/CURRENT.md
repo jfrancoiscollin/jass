@@ -1,5 +1,12 @@
 # CURRENT — source de vérité active (programme « battre Scan »)
 
+> # ⛔⛔ RÈGLE GRAVÉE DANS LE MARBRE (2026-06-23, JFC) — AUCUN NNUE ⛔⛔
+> **ZÉRO NNUE, ZÉRO réseau, ZÉRO changement de classe TANT QUE la classe LINÉAIRE n'est pas POUSSÉE À FOND.**
+> Justification empirique : on a **8,5M poids vs 2,1M pour Scan** et on ne l'a **même pas égalé** → la classe linéaire
+> est **LOIN d'être épuisée** ; notre FIT est juste moins bon que celui de Scan. Leviers linéaires à épuiser AVANT toute
+> évocation de NNUE : **distillation depuis Scan au scale** (Scan = prof dispo), itération, géométrie, qualité de data,
+> recherche. **NNUE = INTERDIT** jusqu'à preuve d'un vrai plafond linéaire (best-linear-fit atteint ET < Scan). Non négociable.
+
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-23**.
@@ -10,7 +17,7 @@
 **Échelle handicap** : jass d11/d13/d15 vs Scan d11 = 0,056 / 0,000 / 0,028 → **la profondeur ne rattrape PAS**.
 **Analyse des défaites** : **17/17 par COMBINAISON** (shot : ≥2 matériel en ≤2 plies), en **plein milieu (26 pièces, move ~27, men-only)**, **0/17 dérive lente**. On se fait **cueillir par des coups**, pas user en finale.
 
-**Hypothèse forte (test A/B en cours, `ccx33-0436`)** : notre **élagage forward** (multicut+razor, +50 Elo *en self-play*) **coupe les défenses tactiques** vs Scan → aveugle aux shots à toute profondeur. Si élagage OFF remonte le score ⇒ faiblesse de **RECHERCHE récupérable (PAS NNUE)** ; sinon ⇒ eval → NNUE. **À trancher AVANT toute décision NNUE.**
+**VERDICT A/B (0436)** : élagage OFF = 0,028 ≈ ON = 0,056 → **ce n'est PAS la recherche, c'est l'EVAL.** MAIS (logique clé) **Scan a 2,1M poids, nous 8,5M, et il nous bat** ⇒ **PAS un plafond de capacité** : notre best-linear-fit possible est ≥ le sien, **notre FIT est juste moins bon** (self-play borné par notre pilote faible → point fixe trop bas). **Prochain levier LINÉAIRE = distiller depuis Scan au scale** (le prof est dispo) pour atteindre son point fixe. ⛔ **NNUE INTERDIT** (cf règle gravée en tête).
 
 ## 🔴 RÉVISION 2026-06-23 — « scaler vers les milliards » est INFIRMÉ par la littérature (rapport documenté)
 > 📚 Détail + sources → [PROGRESSION_LITTERATURE.md](PROGRESSION_LITTERATURE.md) (6 angles, vérifié).
@@ -26,7 +33,7 @@ fixe UNIQUE** en **peu d'itérations** ; le **plafond = les features**, et **le 
 
 **Les deux SEULS leviers pour dépasser** (révise le principe directeur ci-dessous) :
 1. **géométrie linéaire PLUS RICHE que Scan** (32cf 8,5M ⊃ 8cf 2,1M), bien fittée → relève notre point fixe au-dessus du sien ;
-2. **NNUE** (non-linéaire) = le seul lève-plafond universellement documenté → **au plateau confirmé**.
+2. **NNUE** (non-linéaire) = lève-plafond documenté → **⛔ INTERDIT tant que le linéaire n'est pas épuisé** (règle gravée en tête).
 
 ## ✅ VERDICT 2026-06-21 (quater) — rois TRANCHÉS : men-only gagne, king-aware perd (GATE 2b / 0409)
 > Sur **36,2M**, 32cf color-fold, fit `train_stream --king-patterns` (extension livrée + validée), juge cross N=252.
@@ -96,8 +103,9 @@ de « ressortir Scan » : **test scale-du-fit** (gros fit sur le cumul). Nouveau
 ## ⛔ Principe directeur (MAJ 2026-06-20)
 **Scaler le fit linéaire AVANT tout pivot.** Scan = même classe (linéaire-patterns) et plus fort ⇒ **pas de plafond de
 classe** là où on est ; notre fit était juste **affamé**. Donc : boucle vertueuse profonde + fit qui grossit (minibatch →
-`train_stream`, vers 30-100M), self-jugée. **NNUE (type A, apprentissage de représentation) UNIQUEMENT SI** ça plateaute
-encore **à gros volume + profondeur** (cf BOUCLE_VIRTUEUSE §1 : A invente des features, B optimise des poids fixes = nous).
+`train_stream`, vers 30-100M), self-jugée. **NNUE = INTERDIT** (règle gravée en tête) tant que le LINÉAIRE n'est pas
+épuisé — et on a **plus de poids que Scan sans l'égaler**, donc il ne l'est pas. (cf BOUCLE_VIRTUEUSE §1 : A invente des
+features, B optimise des poids fixes = nous ; on reste en B jusqu'à preuve d'un vrai plafond linéaire.)
 
 ## Defaults actuels (build/recherche) — vérifier via le manifeste d'artefact
 | flag | valeur | source |
@@ -137,7 +145,7 @@ champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par arc
 | Distillation via jass-self-play | MORT (0362/0364 : dégrade) | — |
 | WDL/bootstrap depuis data DÉJÀ forte/drawish | MORT (0356/0357 : cible ≈0.5) | départ faible décisif |
 | **« Géométrie morte » / « élaguer la capacité »** | ⚠️ **CONFONDU par le fit-volume** (testé à ≤2M) | **À REVISITER** (color-fold + 30M+) |
-| **FM/MLP (NNUE)** | reporté (principe) | plateau confirmé **à gros volume + profondeur** |
+| **FM/MLP (NNUE)** | ⛔ **INTERDIT** (règle gravée 2026-06-23) | best-linear-fit ATTEINT **et** prouvé < Scan (linéaire épuisé : distill-Scan, itération, géométrie) |
 | Drawish ÷8/÷2 | NEUTRE en jeu (0353), codé défaut 0 | — |
 
 ## Pipeline actif (2026-06-21) — socle 60M → gates → ITÉRATION
