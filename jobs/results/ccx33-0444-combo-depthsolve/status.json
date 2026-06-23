@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0444-combo-depthsolve",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-23T22:04:51+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2696605
+  "ended_at": "2026-06-23T22:30:02+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
