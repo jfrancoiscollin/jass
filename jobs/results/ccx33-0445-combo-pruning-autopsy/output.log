@@ -1,0 +1,23 @@
+=== build jass (32-pat, extras champion, SANS egdb) ===
+# élagage OFF = rfp_max_depth=0,nmp_min_depth=99,lmr_min_depth=99,lmp_max_depth=0,razor_max_depth=0,multicut_min_depth=0,probcut_min_depth=0
+=== autopsie sur 305 combinaisons (sharde 8 coeurs) ===
+  positions mesurees : 305
+
+=== AGREGAT (accord = coup jass == coup Scan d11 ; MAN=85) ===
+  positions=305  Scan a donne un coup ref sur 305
+    config |   accord/Scan | score med |  >=1 pion | >=2 pions
+    d11def |   146/305   48% |        10 |   54  18% |   11   4%
+    d18def |   125/305   41% |        61 |  120  39% |   30  10%
+    d11off |   133/305   44% |        44 |   95  31% |   16   5%
+    d14off |   122/305   40% |        64 |  118  39% |   28   9%
+
+  RECUPERES par elagage-OFF (rates en d11 defaut, trouves OFF) : 76/305 (25%)
+  RATES MEME OFF d14 (jamais vus)                             : 54/305 (18%)
+
+  LECTURE :
+   d11off >> d11def  => l'ELAGAGE cachait les combinaisons => FIX RECHERCHE (re-tuner LMR/LMP/NMP/multicut),
+                        SANS retrain, SANS NNUE. Le plus gros levier le moins cher.
+   d11off ~ d11def, d14off mieux => HORIZON : il faut chercher plus profond (extensions sacrifice).
+   tout plat meme d14off         => gain positionnel differe / eval shot-blind (vrai mur d'eval).
+
+# CSV detaille : artefacts/per-position.csv (fen, coup_scan, puis coup+score par config) pour fouiller les ratés.
