@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0438-lidraughts-fetch",
-  "snapshot_at": "2026-06-23T20:12:54+00:00",
+  "snapshot_at": "2026-06-23T20:17:56+00:00",
   "started_at": "2026-06-23T20:07:51+00:00",
-  "elapsed_seconds": 303,
+  "elapsed_seconds": 605,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2691110       1       05:03  0.0  0.0 bash\n2691112 2691110       05:03  0.0  0.0 bash\n2691579 2691112       04:52  0.0  0.0 timeout\n2691580 2691579       04:52  0.8  0.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2691110       1       10:05  0.0  0.0 bash\n2691112 2691110       10:05  0.0  0.0 bash\n2691579 2691112       09:54  0.0  0.0 timeout\n2691580 2691579       09:54  0.6  0.1 python3\n"
 }
