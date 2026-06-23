@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0435-scan-handicap-ladder",
+  "script": "jobs/queue/ccx33-0435-scan-handicap-ladder.sh",
+  "pid": 2687733,
+  "started_at": "2026-06-23T18:29:15+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
