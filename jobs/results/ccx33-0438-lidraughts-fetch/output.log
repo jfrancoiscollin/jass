@@ -1,0 +1,17 @@
+=== build jass ===
+# DB existante : 43996 parties (survie de 0014 ?)
+=== fetch lidraughts (1600-2300, 4.5h max, on garde ce qu'on a) ===
+# DB apres fetch : 76316 parties (+32320 nouvelles)
+    fetch: 21:21:35 INFO fetch_lidraughts | 'patsheko-pathy944' (rating 1665): 400 PDN games -> 384 kept, 384 new inserts. DB total = 75549/100000.
+    fetch: 21:22:21 INFO fetch_lidraughts | 'vak' (rating 1969): 400 PDN games -> 57 kept, 57 new inserts. DB total = 75606/100000.
+    fetch: 21:23:06 INFO fetch_lidraughts | 'nabinak' (rating 1944): 400 PDN games -> 348 kept, 348 new inserts. DB total = 75954/100000.
+    fetch: 21:23:51 INFO fetch_lidraughts | 'lenynflow' (rating 1660): 400 PDN games -> 362 kept, 362 new inserts. DB total = 76316/100000.
+    fetch: 21:23:51 INFO fetch_lidraughts | done. 76316 lidraughts games in DB (added 32320 this run).
+=== conversion -> JNNW (toutes les parties, rating>=1600) ===
+# corpus lidraughts : 6918845 positions
+  shard 0: 6918845 pos
+1 shards committes
+  35Mo /root/jass/jobs/results/ccx33-0438-lidraughts-fetch/artefacts/lidraughts-00.jnnw.gz
+
+# SUITE : (1) mixer ce corpus au self-play -> fit train_stream -> juger vs Scan + vs champion 3e-5 ;
+#         (2) miner les combinaisons depuis la DB (box-local) -> suite de test tactique vs Scan.

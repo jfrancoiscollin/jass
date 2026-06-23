@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0438-lidraughts-fetch",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-23T20:07:51+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2691110
+  "ended_at": "2026-06-23T21:39:40+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
