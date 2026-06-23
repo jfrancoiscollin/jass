@@ -1,0 +1,8 @@
+{
+  "job_id": "ccx33-0440-dilf-tactical",
+  "snapshot_at": "2026-06-23T21:44:42+00:00",
+  "started_at": "2026-06-23T21:39:50+00:00",
+  "elapsed_seconds": 292,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2695175       1       04:51  0.0  0.0 bash\n2695177 2695175       04:51  0.0  0.0 bash\n2695652 2695177       04:40  0.0  0.0 timeout\n2695653 2695652       04:40  4.7  0.0 python3\n2695654 2695653       04:40 67.8  0.5 jass\n2695656 2695653       04:40 29.3  0.9 scan_linux\n2695659 2695653       04:39  0.4  0.0 jass\n"
+}
