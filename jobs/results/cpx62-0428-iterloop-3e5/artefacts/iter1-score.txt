@@ -1,0 +1,1 @@
+iter 1  vs_prev=0.5000  vs_3=NA  (L2=3e-5)
