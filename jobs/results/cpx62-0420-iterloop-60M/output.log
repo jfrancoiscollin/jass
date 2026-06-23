@@ -1,0 +1,41 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 35000000 lignes @ 4min/M ≈ 140.0 min
+  [preflight] iterloop 60M : 4x (gen 8000000 + FIFO + refit + juge): ≈ 200 min
+  [preflight] TOTAL estimé ≈ 344.0 min  (cap 600 min)
+  [preflight] OK — sous le cap, lancement.
+=== pool initial : assemble le corpus committe -> fenetre glissante (<=35000000) ===
+écrit /root/cw-iterloop/pool.jnnw : 40410792 records, 1535610104 octets
+iter 0  pool=35000000  (graine = w32_full 0401)  WINDOW=35000000 FRESH=8000000
+=== ITER 1 : gen 8000000 mix d10/d12 5:1 (champion_0) -> FIFO 35000000 -> refit -> juge ===
+6666672
+1333344
+    mix gen : 6666667 @d10 + 1333333 @d12
+  ITER 1 : champ vs champ-1 = 0.4167   |  vs champ-3 = NA   (pool=35000000, turnover 8000000/35000000)
+cp: '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' are the same file
+=== ITER 2 : gen 8000000 mix d10/d12 5:1 (champion_1) -> FIFO 35000000 -> refit -> juge ===
+6666672
+1333344
+    mix gen : 6666667 @d10 + 1333333 @d12
+  ITER 2 : champ vs champ-1 = 0.6667   |  vs champ-3 = NA   (pool=35000000, turnover 8000000/35000000)
+cp: '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' are the same file
+=== ITER 3 : gen 8000000 mix d10/d12 5:1 (champion_2) -> FIFO 35000000 -> refit -> juge ===
+6666672
+1333344
+    mix gen : 6666667 @d10 + 1333333 @d12
+  ITER 3 : champ vs champ-1 = 0.4167   |  vs champ-3 = 0.3889   (pool=35000000, turnover 8000000/35000000)
+cp: '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' are the same file
+=== ITER 4 : gen 8000000 mix d10/d12 5:1 (champion_3) -> FIFO 35000000 -> refit -> juge ===
+6666672
+1333344
+    mix gen : 6666667 @d10 + 1333333 @d12
+  ITER 4 : champ vs champ-1 = 0.4444   |  vs champ-3 = 0.5000   (pool=35000000, turnover 8000000/35000000)
+cp: '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0420-iterloop-60M/artefacts/trajectory.txt' are the same file
+
+==========================================================
+   cpx62-0420 — BOUCLE ITERATION 60M (Scan-style, 4 iters max)
+   iter 0  pool=35000000  (graine = w32_full 0401)  WINDOW=35000000 FRESH=8000000
+   iter 4  vs_prev=0.4444  vs_3=0.5000  pool=35000000
+   LECTURE : vs_prev > 0.55 a chaque iter = ca PROGRESSE (le pilote ameliorant paie). vs_3 cumule la progression.
+   pas de plateau -> RE-LANCER (re-seed SEED_CH=champion-iterloop-final) pour continuer la boucle
+   champion final -> artefacts/champion-iterloop-final.pjtw.gz
+==========================================================
