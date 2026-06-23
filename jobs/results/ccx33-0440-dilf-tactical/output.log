@@ -1,0 +1,22 @@
+# corpus combinaisons : 305 positions (data/dilf_combinations.fen)
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== match champion 3e-5 vs Scan depuis 305 combinaisons (depth 11, no-DB, ~4h max) ===
+      game 610: Scan=W Jass=B → W (no legal move from Jass-player, 59 plies)  Jass +0.0  [564s]
+    
+    === Jass vs Scan, depth 11, 610 games ===
+      Jass=67  Scan=499  Draws=44
+      Jass score rate: 0.146 (89.0 / 610)
+      ELO estimate:    -307 (95% CI ≈ ±32)
+
+=== ANALYSE : conversion du camp AU TRAIT (qui a la combinaison) ===
+  parties analysees      : 610  (positions sans coup legal au depart : 0)
+  JASS au trait (convertit la combinaison) : 0.246 (75.0/305)
+  SCAN au trait (convertit la combinaison) : 0.954 (291.0/305)
+  ECART jass - scan : -0.708  => jass convertit MOINS = trou tactique
+
+================= LECTURE =================
+  jass-au-trait << scan-au-trait => on RATE des combinaisons que Scan trouve => trou tactique d'EVAL
+    (shot-vulnerable) sur des positions de livre => cible d'entrainement : injecter ces positions au fit.
+  jass-au-trait ~ scan-au-trait => on convertit aussi bien => la faiblesse vs Scan est ailleurs (jeu positionnel).
+  (parties dumpees dans artefacts/games/ pour rejouer les ratees)
+===========================================
