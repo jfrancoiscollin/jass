@@ -1,0 +1,26 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + egdb (base) ===
+écrit /root/cw-tacsup60/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 20000000
+=== mine 300000 positions de milieu (14-40 pieces) a re-labelliser ===
+  mine : 300000 positions milieu
+=== deep-relabel d13 + EGDB (verite-terrain sur lignes forcees, sharde) ===
+300000
+=== corrections (deep-WDL != self-play WDL) -> sur-pondere x4 ===
+  corrections=214956/300000 (71.7%) ; flux tactique total (avec oversample)=944868
+=== fit : pool + egdb-finale + flux tactique sur-pondere ===
+  corpus final : 24944868
+    train_loss=0.591148  iters=25  (2960.8s)
+  wrote /root/cw-tacsup60/champ_tac.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 3015.0s]
+
+=== self-direct (toujours) + GATE 0440 (si Scan) ===
+  self-direct : tactical vs egdbmix = 0.4722   (>0.5 = la supervision tactique aide)
+  conversion 0440 : egdbmix 0.302 (92/305)   TACTICAL 0.259 (79/305)   (cible : 0.246 -> ? ; Scan 0.95)
+
+================= LECTURE =================
+  conversion 0440 TACTICAL >> egdbmix => la supervision tactique attaque le mode d'echec (le label corrige paie)
+       => promouvoir + baker le flux tactique dans la recette. PREMIER levier qui vise le MILIEU directement.
+  conversion ~ egale => les corrections deep-d13 ne suffisent pas (jass-deep rate trop de shots, cf 0445)
+       => monter RELABEL_D, ou mining cible par detecteurs dilf, ou (gate) signal feature (cf 0457).
+==========================================
