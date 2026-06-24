@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0449-promo-sac-egdb",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 7,
   "started_at": "2026-06-24T06:16:08+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2709284
+  "ended_at": "2026-06-24T06:21:17+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

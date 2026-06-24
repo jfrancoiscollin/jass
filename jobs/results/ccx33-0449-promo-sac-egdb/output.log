@@ -1,0 +1,4 @@
+=== build jass JASS_EGDB=ON (from-source) ===
+=== generation pool egdb-resolu (<=7 pieces) ===
+ABORT gen-egdb-wld
+  error: egdb::init failed for '/root/egdb_extracted'
