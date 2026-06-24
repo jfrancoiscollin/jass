@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0453-egdb-fit",
+  "script": "jobs/queue/ccx33-0453-egdb-fit.sh",
+  "pid": 2724057,
+  "started_at": "2026-06-24T11:27:37+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
