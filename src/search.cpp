@@ -847,6 +847,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     };
     const bool is_pv_node = (beta - alpha) > 1;
 
+    // Forcing-move exemption (params.no_reduce_forcing) : a quiet move that
+    // leaves the opponent with ONLY captures is a sacrifice / combination
+    // starter — the reply is forced (FMJD majority-capture rule), so the line
+    // is deterministic and must not be reduced/pruned away. Ablation 0446
+    // isolated LMR+LMP as the mechanisms hiding such lines at fixed depth.
+    auto leaves_forced_capture = [&](const Position& child) -> bool {
+        MoveList cml;
+        gen_moves(child, cml);
+        return !cml.empty() && cml[0].is_capture();
+    };
+
     int move_idx = 0;
     // Quiet moves actually searched (for the history malus on a beta cutoff).
     std::array<Move, 64> quiets_searched;
@@ -865,7 +876,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             && move_idx >= lmp_threshold
             && !m.is_capture()
             && !(eg && params.eg_no_lmp)   // endgame regime: don't prune late quiets
-            && best > -INF_SCORE / 2) {  // already have a real score → safe to skip
+            && best > -INF_SCORE / 2  // already have a real score → safe to skip
+            // forcing-move exemption: never LMP-prune a quiet sacrifice that
+            // forces the opponent to capture (combination starter).
+            && !(params.no_reduce_forcing && leaves_forced_capture(after_timed(pos, m)))) {
             ++move_idx;
             continue;
         }
@@ -884,12 +898,16 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                                  + promo_ext;
 
         int score;
-        const bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
+        bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
                          && depth >= LMR_MIN_DEPTH
                          && !is_tt
                          && !m.is_capture()
                          && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
                          && !singular_ext;  // don't reduce when we just extended a singular line
+        // Forcing-move exemption: don't reduce a quiet sacrifice that forces
+        // the opponent to capture (`next` is already the post-move position).
+        if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
+            do_lmr = false;
         if (params.use_pvs && move_idx > 0) {
             // Principal Variation Search: once a PV move has raised alpha,
             // scout the remaining moves with a zero-width window (optionally
