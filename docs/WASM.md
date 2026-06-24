@@ -14,7 +14,7 @@ any other browser front-end.
 `.github/workflows/build.yml` builds the WASM on every push, uploads
 the artefacts under the workflow-artefact name `jass-wasm`, and
 optionally publishes a demo site to GitHub Pages on `main`. See the
-[CI section of the README](../README.md#continuous-integration--wasm-hosting).
+[CI section of the README](README.md#continuous-integration--wasm-hosting).
 
 ### Locally
 
