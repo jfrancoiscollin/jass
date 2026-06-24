@@ -1,5 +1,12 @@
 # Audit éval — jass vs Scan vs Kingsrow : trouver ce qui manque (LINÉAIRE)
 
+> ✅ **MAJ 2026-06-24 — LEAD 1 (king_mob / confinement) RÉSOLU.** La feature « mobilité-roi SÛRE − cases déniées »
+> identifiée ci-dessous comme LE manque est désormais **implémentée, bakée et validée** : `JASS_KING_MOBILITY=ON` dans
+> tous les builds, poids **LIVE** dans le champion (`BK_DENIED` = 287 en finale ≈ 57 % d'un homme), **+33 Elo** (0311).
+> ⇒ Cet audit a **rempli sa fonction** ; les features sont **matchées à Scan** (cf [CURRENT.md](CURRENT.md), VERDICTS
+> 2026-06-24). Le mur restant n'est PLUS une feature manquante mais le **FIT des poids au MILIEU** (combinaisons). Doc
+> conservé comme référence du raisonnement ; ne plus traiter LEAD 1 comme « à faire ».
+
 > Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](ARBRE_DECISION.md) (même classe que
 > Scan → on doit l'égaler DEDANS ; le gap = ce qui MANQUE, pas la capacité). Audit
 > source-à-source des trois moteurs pour localiser l'ingrédient manquant. À lire avec

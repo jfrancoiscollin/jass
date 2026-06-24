@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — NE PAS PRENDRE COMME CONSIGNE ACTIVE.** Doc historique (ère pré-fit-volume / NNUE).
+> Source de vérité unique = [CURRENT.md](CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
+> DIAGNOSTIC_VS_SCAN, BIAIS_FIT_VOLUME, PROGRESSION_LITTERATURE). Conservé pour l'historique seulement. _(Classé archive 2026-06-24.)_
+
 # Pattern eval roadmap — feuille de route axe architecture
 
 > **Note 2026-05-26 — Phase 1 frozen** : 4 expériences supervised ont

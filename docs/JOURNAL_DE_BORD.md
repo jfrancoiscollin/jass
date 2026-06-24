@@ -3,6 +3,15 @@
 > 🟢 **ÉTAT ACTIF EN 1 PAGE → [CURRENT.md](CURRENT.md)** (hypothèse, defaults, métrique
 > primaire, branches mortes + revival, jobs en cours). Lire ÇA d'abord ; ce journal = faits/archive.
 >
+> 📅 **2026-06-24 (faits du jour)** : (1) **`champion-egdbmix` PROMU** = nouveau best 32cf, **+58 Elo** (mix 4M
+> egdb-finale phase-weighté baké dans la recette ; 0454). (2) **Finale WLD SATURÉE** : 12M egdb = +stats mais
+> self-play neutre (0455) ; bitbases MTC non installés. (3) **Branche SEARCH/PROMOTION FERMÉE** : fix élagage
+> `no_reduce_forcing` inutile à temps réel (0451) ; promo-sac = motif milieu, pas finale (0452, 0 sur 37k finales).
+> (4) **Features MATCHÉES à Scan** confirmé (king_mob LIVE, +33 Elo, pas dormant ; patterns dead lever). (5) Le mur =
+> **FIT des poids au MILIEU** (combinaisons, jauge 0440 = 0,246) → seuls leviers = données/μ (`0442`/`0456`) + leads
+> dormants (`JASS_DRAWISH_SCALING` jamais testé en jeu ; value-target itérée). ⚠️ Méthodo : vs-Scan = depth-fixe ou
+> movetime NPS-compensé, **jamais temps fixe égal** (0451 l'a enfreint).
+>
 > **À LIRE AVANT DE (RE)CHERCHER.** Registre court et tenu à jour à chaque
 > verdict. Ancres mesurées + faits établis (à ne pas re-litiger) + index des
 > jobs. Pour l'analyse détaillée → [PATTERN_PROGRAM_NOTES.md](PATTERN_PROGRAM_NOTES.md).
