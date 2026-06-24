@@ -38,10 +38,16 @@ def main(argv):
     p.add_argument("--shard", type=int, default=0, help="this shard index [0..nshards)")
     p.add_argument("--nshards", type=int, default=1, help="total shards (game-level parallelism)")
     p.add_argument("--quiet", action="store_true", help="only print the RESULT line")
+    p.add_argument("--search-params-a", default=None,
+                   help="HUB --search-params override for side A (e.g. no_reduce_forcing=1)")
+    p.add_argument("--search-params-b", default=None,
+                   help="HUB --search-params override for side B")
     args = p.parse_args(argv)
 
-    a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a)
-    b = JassEngine(args.jass_b, label="B", pattern_path=args.pattern_b)
+    a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a,
+                   search_params=args.search_params_a)
+    b = JassEngine(args.jass_b, label="B", pattern_path=args.pattern_b,
+                   search_params=args.search_params_b)
     referee = Referee(args.jass_a)   # play_game needs a Referee (apply_move/legality), NOT a JassEngine
     openings = opening_pool_via_jass(args.jass_a)
 
