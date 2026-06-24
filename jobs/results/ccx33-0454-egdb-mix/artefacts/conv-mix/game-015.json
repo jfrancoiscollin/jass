@@ -1,0 +1,20 @@
+{
+  "game_id": 15,
+  "opening": "B:W16,K18:B40,K11,K17,K45",
+  "jass_is_white": true,
+  "outcome": "L",
+  "reason": "no legal move from Jass-player",
+  "plies": 3,
+  "jass_score": 0.0,
+  "moves": [
+    "40-44",
+    "16x7",
+    "45x1"
+  ],
+  "fens": [
+    "B:W16,K18:B40,K11,K17,K45",
+    "W:W16,K18:B44,K11,K17,K45",
+    "B:W7,K18:B44,K17,K45",
+    "W:W:B44,K1,K17"
+  ]
+}

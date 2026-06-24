@@ -1,0 +1,20 @@
+{
+  "game_id": 94,
+  "opening": "W:WK16,K43,K47:B10,K49",
+  "jass_is_white": false,
+  "outcome": "W",
+  "reason": "no legal move from Jass-player",
+  "plies": 3,
+  "jass_score": 0.0,
+  "moves": [
+    "43-27",
+    "49x21",
+    "16x5"
+  ],
+  "fens": [
+    "W:WK16,K43,K47:B10,K49",
+    "B:WK16,K27,K47:B10,K49",
+    "W:WK16,K47:B10,K21",
+    "B:WK5,K47:B"
+  ]
+}

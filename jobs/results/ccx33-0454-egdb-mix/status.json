@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0454-egdb-mix",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-24T15:29:55+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2728434
+  "ended_at": "2026-06-24T16:21:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

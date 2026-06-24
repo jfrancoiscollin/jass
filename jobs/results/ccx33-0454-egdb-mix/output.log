@@ -1,0 +1,28 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool self-play (corpus committe) ===
+écrit /root/cw-egdbmix/pool.jnnw : 50210792 records, 1908010104 octets
+  pool self-play : 18000000
+=== gen egdb : 4000000 (mix) + 40000 test + 60 conversion (seeds disjoints) ===
+=== mix (pool + egdb-finale) -> fit 32cf ===
+22000000
+  corpus mixe : 22000000 (18000000 self-play + 4000000 egdb)
+    train_loss=0.585629  iters=25  (2676.1s)
+  wrote /root/cw-egdbmix/champ_mix.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 2728.3s]
+
+=== (1) precision finale vs egdb (eval-pur prof 1) : base vs mix ===
+  decisifs finale correct : BASE 88.2% (19911/22571)   MIX 94.4% (21309/22571)   (rappel 0453 egdb-only: 97.3%)
+
+=== (2) conversion finales gagnees vs Scan (d11, no-DB) : base vs mix ===
+60
+  positions finale gagnees (STM) : 60
+  conversion finale vs Scan : BASE 0.867 (52/60)   MIX 0.900 (54/60)
+
+=== (3) mix vs base 3e-5 en self-play (d9) : le mix nuit-il au jeu general ? ===
+  mix vs base (self-play d9) : 0.5833 (mix=224 D=140 base=140)   (>=0.5 = le mix ne nuit pas / aide)
+
+================= LECTURE =================
+  (1) MIX > BASE en precision finale ET (2) conversion MIX > BASE vs Scan ET (3) self-play >= 0.5
+       => gain endgame PROPRE par bitbase-mix, sans nuire au milieu => champion a promouvoir.
+  (2) conversion ~ egale => l'eval finale etait deja assez bonne pour la conversion a cette profondeur.
+==========================================
