@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0454-egdb-mix",
-  "snapshot_at": "2026-06-24T15:40:05+00:00",
+  "snapshot_at": "2026-06-24T15:45:07+00:00",
   "started_at": "2026-06-24T15:29:55+00:00",
-  "elapsed_seconds": 610,
+  "elapsed_seconds": 912,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2728434       1       10:10  0.0  0.0 bash\n2728436 2728434       10:10  0.0  0.0 bash\n2729360 2728436       08:46  102 49.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2728434       1       15:11  0.0  0.0 bash\n2728436 2728434       15:11  0.0  0.0 bash\n2729360 2728436       13:48  102 44.9 python3\n"
 }
