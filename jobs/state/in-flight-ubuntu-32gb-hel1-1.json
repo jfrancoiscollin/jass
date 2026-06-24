@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0442-freshmix-loop",
+  "script": "jobs/queue/cpx62-0442-freshmix-loop.sh",
+  "pid": 3611987,
+  "started_at": "2026-06-24T02:57:20+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
