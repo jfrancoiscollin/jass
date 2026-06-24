@@ -38,10 +38,16 @@
   positions à shot (détecteurs dilf / filtre « shot ≥2 matériel en ≤k plis ») → labels **recherche profonde / EGDB**
   (vérité-terrain) → **sur-pondérés** dans le fit WDL. Attaque directe le mode d'échec, sans Scan. (Ré-habilite `--deep-relabel`
   appliqué aux positions **tactiquement vivantes**, pas random.)
-- **GATE NNUE FALSIFIABLE (à ratifier JFC)** : « linéaire pas épuisé » n'a aucun critère d'arrêt → risque de **tapis roulant**.
-  Proposition : *à fit-saturation (gen_k vs gen_{k-1} ≤ 0,52 soutenu, scale ≥60M) ET après la liste de re-tests (men-only/0440,
-  flux tactique, king_mob/drawish), si conversion 0440 plafonne sous **Y %** → gap = features/classe → le gate NNUE s'ouvre.*
-  **Y à fixer À L'AVANCE par JFC** (sinon le programme peut tourner sans fin). Suggestion Y ≈ 60-70 % (Scan = 95 %).
+- **GATE NNUE FALSIFIABLE (FIXÉ 2026-06-24)** — s'ouvre **ssi les 4 conditions tiennent simultanément** :
+  - **C1 saturation** : self-direct (gen_k vs gen_{k-1}) ≤ 0,52 × 3 itérations consécutives, corpus ≥ 60M.
+  - **C2 leviers épuisés (LISTE CLOSE, aucun ajout)** : (1) men-only vs king-aware/0440 (`0457`) · (2) supervision tactique
+    (`0458`) · (3) `JASS_DRAWISH_SCALING` testé en jeu · (4) géométrie plus riche SI `0457`=feature. [déjà faits : king_mob,
+    egdb-mix]. Liste finie → on ÉVALUE ; **pas de « encore une idée »** (= le cœur anti-tapis-roulant).
+  - **C3 conversion 0440 plafonnée ET basse** : meilleure conversion 0440 (a) n'améliore plus de ≥0,05 sur les 2 derniers
+    leviers, ET (b) reste **< 0,70**.
+  - **C4 vs-Scan confirme** : champion saturé, **éval-pur depth-fixe**, **N≥550 (ou SPRT)**, score **≤ 0,40**.
+  - **C1∧C2∧C3∧C4 ⇒ linéaire prouvé < Scan ⇒ GATE OUVERT.** Un seul levier qui pousse 0440 ≥ 0,70 OU vs-Scan ≥ 0,40 ⇒
+    on n'est PAS plafonné ⇒ on reste linéaire. (AND des 4 = conservateur, respecte le biais pro-linéaire gravé.)
 - **Bruit du juge** : ±0,05 run-to-run, ~550 parties pour Δ=0,05 → pour les petits gains, **monter N ou SPRT**, sinon
   un « plateau » = plateau de **résolution de mesure**, pas de force.
 
