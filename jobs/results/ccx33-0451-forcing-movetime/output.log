@@ -1,0 +1,13 @@
+=== build jass (fix dispo, SANS egdb) ===
+
+=== (A) JEU GENERAL vs Scan @0.3s (pool standard, 14 pairs) ===
+  jass vs Scan (general) : baseline=0.010   fix=0.004
+
+=== (B) COMBINAISONS vs Scan @0.3s (80 positions) ===
+  conversion combinaisons : baseline=0.519   fix=0.506   (d11 fixe rappel 0447 : 0.246->0.348)
+
+================= VERDICT =================
+  general fix>=base ET combos fix>base  => le gain tactique bat le cout vitesse => PASSER no_reduce_forcing EN DEFAUT.
+  general fix<base                       => -1.6 plies nuit au jeu general => optimiser le check (has_capture rapide)
+                                            ou gater plus etroitement avant de trancher.
+==========================================
