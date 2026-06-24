@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0428-iterloop-3e5",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-23T05:31:26+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3558136
+  "ended_at": "2026-06-24T02:57:17+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
