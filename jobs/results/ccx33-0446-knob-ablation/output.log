@@ -1,0 +1,21 @@
+=== build jass (32-pat, extras champion, SANS egdb) ===
+=== ablation knob-par-knob a d11 (sharde 8 coeurs) ===
+  lignes mesurees : 2440
+
+=== AGREGAT (MAN=85 ; recupere = raté baseline, vu avec ce knob off) ===
+  positions=302  ratees par baseline=135
+         config | voit>=1pion | accord Scan | recuperees vs baseline
+       baseline |   54  18% |  145  48% |     0 (  0% des ratees)
+        lmr_off |   79  26% |  135  45% |    37 ( 27% des ratees) <= COUPABLE
+        lmp_off |   60  20% |  151  50% |    35 ( 26% des ratees) <= COUPABLE
+        nmp_off |   54  18% |  145  48% |     0 (  0% des ratees)
+        rfp_off |   52  17% |  139  46% |    16 ( 12% des ratees) <= COUPABLE
+      razor_off |   55  18% |  143  47% |     5 (  4% des ratees) <= COUPABLE
+   multicut_off |   57  19% |  144  48% |    26 ( 19% des ratees) <= COUPABLE
+        all_off |   95  31% |  132  44% |    52 ( 39% des ratees)
+
+  LECTURE : le knob (hors all_off) avec le plus de 'recuperees' = celui qui cache les sacrifices.
+   Si un seul knob ~= all_off => re-tuner CE knob seul (vs adversaire tactique) = gain cheap, vitesse preservee.
+   Si recuperees etalees sur plusieurs => combinaison de reductions ; sinon c'est surtout l'eval (cf 0445, ~60%).
+
+# CSV : artefacts/per-config.csv (config,fen,coup_scan,coup_jass,score) ; defauts moteur INCHANGES (diagnostic).
