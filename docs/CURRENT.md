@@ -9,7 +9,17 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-23**.
+> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-24**.
+
+## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
+> **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
+> Fit sur (pool self-play **+ 4M positions egdb-finale exactes**, phase-weighté → ne touche que la banque EG).
+> Gains mesurés (0454) vs le champion 3e-5 précédent : **+58 Elo self-play** (0,583), **conversion de finale vs Scan
+> 0,867 → 0,900**, **précision décisive finale 88,2 % → 94,4 %** (plafond linéaire egdb-only = 97,3 %).
+> ⇒ **Le mix egdb-finale est BAKÉ dans la recette** : toute future boucle/champion inclut cette étape (gen egdb-WLD
+> + mix phase-weighté). Premier +Elo concret post-diagnostic → **le linéaire n'est PAS épuisé (jus dans la finale).**
+> Le trou MILIEU (combinaisons) reste ouvert (job `0442` data/μ, en cours). Prochain : pousser la finale (`0455`, plus d'egdb / MTC).
+
 
 ## 🔬 DIAGNOSTIC 2026-06-23 — on perd vs Scan par COMBINAISONS en milieu de partie (pas finale, pas profondeur)
 > 📋 Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md). Match eval-pur no-DB, champion 3e-5 vs Scan (0435).
