@@ -1,0 +1,36 @@
+{
+  "game_id": 109,
+  "opening": "W:W21,K10,K34,K41:BK49",
+  "jass_is_white": true,
+  "outcome": "W",
+  "reason": "no legal move from Scan-player",
+  "plies": 11,
+  "jass_score": 1.0,
+  "moves": [
+    "21-17",
+    "49-44",
+    "17-12",
+    "44-11",
+    "34-18",
+    "11-16",
+    "18-27",
+    "16x5",
+    "41-46",
+    "5-10",
+    "46x5"
+  ],
+  "fens": [
+    "W:W21,K10,K34,K41:BK49",
+    "B:W17,K10,K34,K41:BK49",
+    "W:W17,K10,K34,K41:BK44",
+    "B:W12,K10,K34,K41:BK44",
+    "W:W12,K10,K34,K41:BK11",
+    "B:W12,K10,K18,K41:BK11",
+    "W:W12,K10,K18,K41:BK16",
+    "B:W12,K10,K27,K41:BK16",
+    "W:W12,K41:BK5",
+    "B:W12,K46:BK5",
+    "W:W12,K46:BK10",
+    "B:W12,K5:B"
+  ]
+}

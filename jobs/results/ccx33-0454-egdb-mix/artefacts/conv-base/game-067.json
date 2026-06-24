@@ -1,0 +1,20 @@
+{
+  "game_id": 67,
+  "opening": "W:W15,29,K12,K14,K25:B35",
+  "jass_is_white": true,
+  "outcome": "W",
+  "reason": "no legal move from Scan-player",
+  "plies": 3,
+  "jass_score": 1.0,
+  "moves": [
+    "29-24",
+    "35-40",
+    "12x45"
+  ],
+  "fens": [
+    "W:W15,29,K12,K14,K25:B35",
+    "B:W15,24,K12,K14,K25:B35",
+    "W:W15,24,K12,K14,K25:B40",
+    "B:W15,24,K14,K25,K45:B"
+  ]
+}

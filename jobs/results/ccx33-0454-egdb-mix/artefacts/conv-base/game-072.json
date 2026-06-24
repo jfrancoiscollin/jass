@@ -1,0 +1,28 @@
+{
+  "game_id": 72,
+  "opening": "W:WK11,K19,K24,K42,K47:BK43",
+  "jass_is_white": false,
+  "outcome": "W",
+  "reason": "no legal move from Jass-player",
+  "plies": 7,
+  "jass_score": 0.0,
+  "moves": [
+    "24-33",
+    "43-25",
+    "42-48",
+    "25-3",
+    "19-14",
+    "3x38",
+    "47x15"
+  ],
+  "fens": [
+    "W:WK11,K19,K24,K42,K47:BK43",
+    "B:WK11,K19,K33,K42,K47:BK43",
+    "W:WK11,K19,K33,K42,K47:BK25",
+    "B:WK11,K19,K33,K47,K48:BK25",
+    "W:WK11,K19,K33,K47,K48:BK3",
+    "B:WK11,K14,K33,K47,K48:BK3",
+    "W:WK11,K47,K48:BK38",
+    "B:WK11,K15,K48:B"
+  ]
+}

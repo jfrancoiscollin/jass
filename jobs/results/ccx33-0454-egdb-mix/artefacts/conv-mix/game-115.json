@@ -1,0 +1,20 @@
+{
+  "game_id": 115,
+  "opening": "B:W27:B11,14,17,30,42",
+  "jass_is_white": true,
+  "outcome": "L",
+  "reason": "no legal move from Jass-player",
+  "plies": 3,
+  "jass_score": 0.0,
+  "moves": [
+    "30-35",
+    "27-21",
+    "17x26"
+  ],
+  "fens": [
+    "B:W27:B11,14,17,30,42",
+    "W:W27:B11,14,17,35,42",
+    "B:W21:B11,14,17,35,42",
+    "W:W:B11,14,26,35,42"
+  ]
+}
