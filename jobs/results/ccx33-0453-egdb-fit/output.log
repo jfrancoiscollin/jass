@@ -1,0 +1,20 @@
+  egdb detecte : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== mine egdb : 3000000 train + 40000 test (seeds disjoints) ===
+  train=3000000  test=40000
+=== fit champion 32cf SUR l'egdb seul (plafond lineaire de la finale) ===
+    target=WDL  win=881449 draw=1319914 loss=798637 (44.0% draws)  (7.5s)
+    train_loss=0.444299  iters=25  (391.6s)
+  wrote /root/cw-egdbfit/champ_egdb.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 399.7s]
+=== precision finale vs egdb (eval-pur, SANS egdb, prof 1) : base vs egdb-fit ===
+    champion |   decisifs (signe correct) |  nulles (|eval|<=band)
+   BASE 3e-5 |        88.2% (19911/22571) |     42.0% (7321/17429)
+    EGDB-fit |        97.3% (21956/22571) |     39.7% (6913/17429)
+
+  LECTURE :
+   EGDB-fit >> BASE sur les decisifs => l'eval de finale du champion est tres ameliorable par les bitbases
+     => GO mix egdb au pool self-play (phase-weighted) -> refit -> juger vs base + Scan.
+   EGDB-fit ~ BASE                   => le champion classe deja bien la finale, peu a gagner.
+   EGDB-fit lui-meme bas (<~85%)     => plafond d'expressivite lineaire : l'eval ne PEUT pas representer la finale exacte.
+
+# si prometteur : job suivant = assemble pool self-play + egdb (mix phase-weightee) -> fit -> juge vs base 3e-5 + Scan.
