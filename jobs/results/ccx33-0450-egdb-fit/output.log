@@ -1,0 +1,4 @@
+=== build jass JASS_EGDB=ON ===
+=== mine egdb : 3000000 train + 40000 test (seeds disjoints) ===
+ABORT gen train
+  error: egdb::init failed for '/root/egdb_extracted'

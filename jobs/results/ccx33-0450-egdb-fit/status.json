@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0450-egdb-fit",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 7,
   "started_at": "2026-06-24T06:21:21+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2710257
+  "ended_at": "2026-06-24T06:26:27+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
