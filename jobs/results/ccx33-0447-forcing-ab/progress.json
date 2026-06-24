@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0447-forcing-ab",
-  "snapshot_at": "2026-06-24T05:45:25+00:00",
+  "snapshot_at": "2026-06-24T05:50:28+00:00",
   "started_at": "2026-06-24T05:40:05+00:00",
-  "elapsed_seconds": 320,
+  "elapsed_seconds": 623,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2707412       1       05:20  0.0  0.0 bash\n2707414 2707412       05:20  0.0  0.0 bash\n2707880 2707414       05:08  4.3  0.0 python3\n2707881 2707880       05:08 65.7  0.5 jass\n2707883 2707880       05:08 31.4  0.9 scan_linux\n2707886 2707880       05:08  0.5  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2707412       1       10:22  0.0  0.0 bash\n2707414 2707412       10:22  0.0  0.0 bash\n2708144 2707414       00:26  2.5  0.0 python3\n2708145 2708144       00:26 85.4  0.5 jass\n2708147 2708144       00:25 12.9  0.9 scan_linux\n2708150 2708144       00:25  0.3  0.0 jass\n"
 }
