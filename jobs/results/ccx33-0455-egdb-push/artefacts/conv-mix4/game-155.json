@@ -1,0 +1,20 @@
+{
+  "game_id": 155,
+  "opening": "B:W25:BK3,K4,K13,K18,K32",
+  "jass_is_white": true,
+  "outcome": "L",
+  "reason": "no legal move from Jass-player",
+  "plies": 3,
+  "jass_score": 0.0,
+  "moves": [
+    "3-20",
+    "25x14",
+    "32x5"
+  ],
+  "fens": [
+    "B:W25:BK3,K4,K13,K18,K32",
+    "W:W25:BK4,K13,K18,K20,K32",
+    "B:W14:BK4,K13,K18,K32",
+    "W:W:BK4,K5,K13,K18"
+  ]
+}

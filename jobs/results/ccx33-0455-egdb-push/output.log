@@ -1,0 +1,31 @@
+  egdb WLD : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== sonde bitbases MTC (pour un futur job labels-distance) ===
+  MTC absent (pas de bitbases distance) => le futur job 'labels MTC' devra d'abord les installer ; on reste en WLD.
+=== assemble pool self-play + gen 12M egdb ===
+écrit /root/cw-egdbpush/pool.jnnw : 50210792 records, 1908010104 octets
+  pool self-play : 15000000
+=== mix (pool + 12M egdb) -> fit push ===
+27000000
+  corpus mixe : 27000000 (15000000 sp + 12000000 egdb)
+    train_loss=0.545558  iters=25  (3223.2s)
+  wrote /root/cw-egdbpush/champ_push.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 3284.7s]
+
+=== (1) precision finale vs egdb (eval-pur prof 1) : 3e-5 / mix4M(0454) / push12M ===
+      3e-5 decisifs finale : 88.2% (19911/22571)
+     mix4M decisifs finale : 94.4% (21309/22571)
+   push12M decisifs finale : 95.9% (21652/22571)
+  (rappel : 3e-5=88.2%, mix4M=94.4%, plafond egdb-only=97.3%)
+
+=== (2) conversion finales gagnees vs Scan (d11) : mix4M vs push12M ===
+80
+  positions finale gagnees : 80
+  conversion finale vs Scan : mix4M 0.900 (72/80)   push12M 0.950 (76/80)
+
+=== (3) push12M vs mix4M self-play (d9) : plus d'egdb gagne-t-il ? ===
+  push12M vs mix4M (self-play d9) : 0.5000 (push=196 D=112 mix4=196)   (>0.5 = plus d'egdb aide encore)
+
+================= LECTURE =================
+  push12M > mix4M (precision + conversion + self-play) => continuer a augmenter l'egdb (vers le plafond 97%).
+  push12M ~ mix4M => 4M saturait deja la banque finale => le gain WLD est PRIS ; pour aller plus loin = labels MTC (distance).
+==========================================
