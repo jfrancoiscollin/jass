@@ -1,0 +1,3 @@
+=== build jass (avec le fix no_reduce_forcing, SANS egdb) ===
+
+=== (1) CONVERSION combinaisons vs Scan (d11, no-DB) : baseline vs fix ===
