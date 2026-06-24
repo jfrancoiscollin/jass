@@ -1,0 +1,8 @@
+{
+  "job_id": "ccx33-0453-egdb-fit",
+  "snapshot_at": "2026-06-24T11:32:57+00:00",
+  "started_at": "2026-06-24T11:27:37+00:00",
+  "elapsed_seconds": 320,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2724057       1       05:19  0.0  0.0 bash\n2724059 2724057       05:19  0.0  0.0 bash\n2724840 2724059       04:40  108 11.2 python3\n"
+}
