@@ -1,0 +1,9 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + mine 800000 positions de milieu ===
+  pool : 18000000
+  mine : 800000
+=== SHOT-FILTER : recherche elagage OFF d6, garde |score|>=170 (shot materiel force >=2 pions) ===
+  shots trouves=14672 ; flux tactique (oversample x4)=58688
+=== fit : pool + egdb-finale + flux SHOTS sur-pondere ===
+  corpus final : 22058688
