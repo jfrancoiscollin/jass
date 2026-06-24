@@ -1,0 +1,12 @@
+  egdb detecte : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON (from-source) ===
+=== generation pool egdb-resolu (<=7 pieces) ===
+  pool egdb : 400000 positions
+=== PHASE 1 : filtrer + PROUVER (egdb gain + homme avance + sac forcant + DAME dans la ligne optimale) ===
+  candidats (egdb-win + homme avance) : 37686
+  positions PROUVEES (sac -> dame sure, egdb) : 0
+/root/jass/jobs/queue/ccx33-0452-promo-sac-egdb.sh: line 103: [: 0
+0: integer expression expected
+  (set trop maigre: 0
+0)
+FIN
