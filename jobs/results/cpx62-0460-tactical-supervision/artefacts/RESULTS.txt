@@ -1,0 +1,7 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + egdb (base) ===
+  pool : 20000000
+=== mine 300000 positions de milieu (14-40 pieces) a re-labelliser ===
+  mine : 300000 positions milieu
+=== deep-relabel d13 + EGDB (verite-terrain sur lignes forcees, sharde) ===
