@@ -7,7 +7,7 @@
 > 2026-06-24). Le mur restant n'est PLUS une feature manquante mais le **FIT des poids au MILIEU** (combinaisons). Doc
 > conservé comme référence du raisonnement ; ne plus traiter LEAD 1 comme « à faire ».
 
-> Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](ARBRE_DECISION.md) (même classe que
+> Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](archives/ARBRE_DECISION.md) (même classe que
 > Scan → on doit l'égaler DEDANS ; le gap = ce qui MANQUE, pas la capacité). Audit
 > source-à-source des trois moteurs pour localiser l'ingrédient manquant. À lire avec
 > [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 et [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).
