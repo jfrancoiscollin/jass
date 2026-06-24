@@ -20,6 +20,31 @@
 > + mix phase-weighté). Premier +Elo concret post-diagnostic → **le linéaire n'est PAS épuisé (jus dans la finale).**
 > Le trou MILIEU (combinaisons) reste ouvert (job `0442` data/μ, en cours).
 
+## 🧭 RÉÉVALUATION MÉTHODO 2026-06-24 (failles critiques — prises en compte)
+> Le juge primaire (self-direct) est **AVEUGLE au mode d'échec** : si champ_k et champ_{k-1} partagent la cécité
+> combinatoire (même éval), le match ne la voit pas → la boucle peut grimper (positionnel), s'auto-stopper « plateau »,
+> et livrer **avec le gap à Scan intact**. Mêmes mots que pour l'élagage : « invisible en self-play, les 2 côtés pareil ».
+- **GATE PRIMAIRE AJOUTÉ — conversion combinaisons 0440** (`data/dilf_combinations.fen`, vs Scan, depth-fixe) : mesurée à
+  **CHAQUE champion**, loguée ici **au même rang que le self-direct**. Progrès = `25 % → ?`. (Vérité = recherche/EGDB, pas
+  « battre Scan » au plancher → non bruité.) Le self-direct seul ne suffit plus.
+- **FIT vs FEATURE — test décisif AVANT de parier l'itération** (`0457`) : re-juger **men-only vs king-aware SPÉCIFIQUEMENT
+  sur le set 0440** (pas en agrégat — le verrou 0401/0408/0409 était sur la force GLOBALE). men-only **lit une case de roi
+  comme vide** ⇒ suspect si une combinaison s'articule sur un roi. Si king-aware convertit MIEUX sur 0440 ⇒ c'est la
+  **FEATURE** (l'itération n'y touchera JAMAIS, géométrie à rouvrir) ; si égal/pire ⇒ c'est le **FIT** (notre pari tient).
+- **LEVIER TACTIQUE DIRECT (anti-25 %)** : la doctrine « WDL seul non borné » est **mal appliquée à nos défaites** — ce sont
+  des **lignes FORCÉES** (2-6 plis, dans l'horizon) ⇒ recherche profonde + quiescence **résout le matériel en vérité-terrain,
+  PAS borné par l'éval** ⇒ **ce n'est PAS de la distillation.** Le self-play WDL **mal-étiquette** ces positions (jass ne
+  convertit que 25 % → label « gagnant » faux 75 % du temps). Lever = **flux de supervision tactique dédié** : miner les
+  positions à shot (détecteurs dilf / filtre « shot ≥2 matériel en ≤k plis ») → labels **recherche profonde / EGDB**
+  (vérité-terrain) → **sur-pondérés** dans le fit WDL. Attaque directe le mode d'échec, sans Scan. (Ré-habilite `--deep-relabel`
+  appliqué aux positions **tactiquement vivantes**, pas random.)
+- **GATE NNUE FALSIFIABLE (à ratifier JFC)** : « linéaire pas épuisé » n'a aucun critère d'arrêt → risque de **tapis roulant**.
+  Proposition : *à fit-saturation (gen_k vs gen_{k-1} ≤ 0,52 soutenu, scale ≥60M) ET après la liste de re-tests (men-only/0440,
+  flux tactique, king_mob/drawish), si conversion 0440 plafonne sous **Y %** → gap = features/classe → le gate NNUE s'ouvre.*
+  **Y à fixer À L'AVANCE par JFC** (sinon le programme peut tourner sans fin). Suggestion Y ≈ 60-70 % (Scan = 95 %).
+- **Bruit du juge** : ±0,05 run-to-run, ~550 parties pour Δ=0,05 → pour les petits gains, **monter N ou SPRT**, sinon
+  un « plateau » = plateau de **résolution de mesure**, pas de force.
+
 ## 📌 VERDICTS 2026-06-24 (état consolidé)
 - **FINALE WLD = SATURÉE (0455)** : pousser l'egdb 4M → 12M monte les stats (précision 94,4 → **95,9 %** ; conversion vs
   Scan 0,90 → **0,95**) mais reste **neutre en self-play (0,500)** vs le champion 4M → **le gain finale-WLD est PRIS à ~4M.**
