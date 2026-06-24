@@ -1,0 +1,21 @@
+=== build jass MEN-ONLY (defaut) ===
+=== build jass KING-AWARE (-DJASS_KING_PATTERNS=ON) ===
+=== corpus commun : pool self-play + 4M egdb-finale ===
+écrit /root/cw-mk0440-62/pool.jnnw : 50210792 records, 1908010104 octets
+18000000
+22000000
+  corpus : 22000000
+=== fit men-only + king-aware (meme corpus) ===
+
+=== (1) CONVERSION combinaisons dilf vs Scan (d11) — LE test : men-only vs king-aware ===
+  conversion 0440 : MEN-ONLY=0.300 (92/305)   KING-AWARE=0.284 (86/305)   (cible 0440 = 0.246 ; Scan ~0.95)
+
+=== (2) sanity agregat (men doit gagner, rappel 0409=0.306) : men vs king self-play d9 ===
+  men vs king (agregat self-play) : 0.4722 (men=140 D=196 king=168)   (>0.5 = men gagne en agregat, coherent 0409)
+
+================= VERDICT =================
+  KING-AWARE convertit MIEUX sur 0440 (CK > CM) => le trou est une FEATURE (men-only lit le roi comme vide) =>
+       la geometrie figee est sur la MAUVAISE metrique => rouvrir king-aware/geometrie. L'iteration n'y touchera JAMAIS.
+  KING-AWARE = ou pire sur 0440 (CK <= CM) => c'est le FIT (pas la feature) => le pari donnees/mu + flux tactique tient.
+  (agregat men>king attendu : ne contredit PAS un eventuel king>men SUR 0440 — c'est tout le point de la faille 2.)
+==========================================
