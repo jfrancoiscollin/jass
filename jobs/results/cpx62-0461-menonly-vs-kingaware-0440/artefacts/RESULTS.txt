@@ -1,0 +1,5 @@
+=== build jass MEN-ONLY (defaut) ===
+=== build jass KING-AWARE (-DJASS_KING_PATTERNS=ON) ===
+=== corpus commun : pool self-play + 4M egdb-finale ===
+  corpus : 22000000
+=== fit men-only + king-aware (meme corpus) ===
