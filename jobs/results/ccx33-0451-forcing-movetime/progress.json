@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0451-forcing-movetime",
-  "snapshot_at": "2026-06-24T10:41:37+00:00",
+  "snapshot_at": "2026-06-24T10:46:40+00:00",
   "started_at": "2026-06-24T06:26:31+00:00",
-  "elapsed_seconds": 15306,
+  "elapsed_seconds": 15609,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2711192       1    04:15:05  0.0  0.0 bash\n2711194 2711192    04:15:05  0.0  0.0 bash\n2719313 2711194       35:11  0.6  0.0 python3\n2719314 2719313       35:10 50.4  0.5 jass\n2719386 2719313       35:10 49.2  0.9 scan_linux\n2719391 2719313       35:10  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2711192       1    04:20:08  0.0  0.0 bash\n2711194 2711192    04:20:08  0.0  0.0 bash\n2721158 2711194       04:34  0.6  0.0 python3\n2721159 2721158       04:34 50.4  0.5 jass\n2721161 2721158       04:33 49.3  0.9 scan_linux\n2721164 2721158       04:33  0.0  0.0 jass\n"
 }
