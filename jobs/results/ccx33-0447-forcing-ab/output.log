@@ -1,0 +1,15 @@
+=== build jass (avec le fix no_reduce_forcing, SANS egdb) ===
+
+=== (1) CONVERSION combinaisons vs Scan (d11, no-DB) : baseline vs fix ===
+  conversion JASS-au-trait : baseline=0.246   fix=0.348   (reference 0440 = 0.246 ; Scan ~0.95)
+
+=== (2) A/B self-play a profondeur fixe d11 : jass(fix) vs jass(baseline) ===
+  jass(fix) vs jass(baseline) @d11 : 0.5000 (A=168 D=168 B=168, n=504)   (>0.5 = le fix choisit de meilleurs coups)
+
+=== (3) cout NPS a movetime fixe (300ms) sur 20 combinaisons ===
+  profondeur moyenne atteinte @300ms : baseline=16.3  fix=14.7  (delta=-1.6 plies = cout vitesse)
+
+================= LECTURE =================
+  conversion fix >> baseline  ET  self-play >= 0.5  => le fix gagne des combinaisons sans coûter ailleurs => PASSER EN DEFAUT.
+  self-play < 0.5 ou conversion ~ baseline => le coût (NPS / instabilite) annule le gain => garder OFF / re-tuner.
+==========================================
