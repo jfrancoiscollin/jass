@@ -1,0 +1,28 @@
+{
+  "game_id": 8,
+  "opening": "W:WK1,K8,K26,K36,K48:BK46",
+  "jass_is_white": false,
+  "outcome": "W",
+  "reason": "no legal move from Jass-player",
+  "plies": 7,
+  "jass_score": 0.0,
+  "moves": [
+    "8-12",
+    "46-5",
+    "36-41",
+    "5x46",
+    "26-37",
+    "46x7",
+    "1x12"
+  ],
+  "fens": [
+    "W:WK1,K8,K26,K36,K48:BK46",
+    "B:WK1,K12,K26,K36,K48:BK46",
+    "W:WK1,K12,K26,K36,K48:BK5",
+    "B:WK1,K12,K26,K41,K48:BK5",
+    "W:WK1,K12,K26,K48:BK46",
+    "B:WK1,K12,K37,K48:BK46",
+    "W:WK1,K48:BK7",
+    "B:WK12,K48:B"
+  ]
+}

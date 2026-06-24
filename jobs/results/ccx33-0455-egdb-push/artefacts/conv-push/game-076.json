@@ -1,0 +1,20 @@
+{
+  "game_id": 76,
+  "opening": "B:WK34:B1,7,14,20,33",
+  "jass_is_white": false,
+  "outcome": "L",
+  "reason": "no legal move from Scan-player",
+  "plies": 3,
+  "jass_score": 1.0,
+  "moves": [
+    "7-12",
+    "34x7",
+    "1x12"
+  ],
+  "fens": [
+    "B:WK34:B1,7,14,20,33",
+    "W:WK34:B1,12,14,20,33",
+    "B:WK7:B1,14,20,33",
+    "W:W:B12,14,20,33"
+  ]
+}
