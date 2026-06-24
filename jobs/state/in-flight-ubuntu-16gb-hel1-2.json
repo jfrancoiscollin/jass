@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0456-combine-egdbmix-mu",
+  "script": "jobs/queue/ccx33-0456-combine-egdbmix-mu.sh",
+  "pid": 2735332,
+  "started_at": "2026-06-24T18:35:30+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
