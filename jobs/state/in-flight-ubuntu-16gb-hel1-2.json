@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0446-knob-ablation",
+  "script": "jobs/queue/ccx33-0446-knob-ablation.sh",
+  "pid": 2700647,
+  "started_at": "2026-06-24T00:35:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
