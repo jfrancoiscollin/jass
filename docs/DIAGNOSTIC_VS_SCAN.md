@@ -88,3 +88,19 @@ Chaque position jouée 2× (jass au trait / Scan au trait via swap). Métrique =
   / valeur-feuille, clip des scores de mat, contrôle WDL-vs-valeur, et **itérer** le relabel (sinon plafond sous notre
   propre force). Ne casse PAS un éventuel plafond de features (seul risque que rien de linéaire ne corrige).
 - ⛔ **NNUE toujours INTERDIT** tant que le linéaire n'est pas poussé à fond (RÈGLE GRAVÉE).
+
+## BRANCHE SEARCH/PROMOTION FERMÉE (2026-06-24, verdicts 0444-0452)
+Investigation « et si l'écart combinaisons était de la RECHERCHE (élagage) ou un mur de promotion ? » → **non, cul-de-sac.**
+- **0446 (ablation)** : LMR(27 %)+LMP(26 %) cachent ~40 % des combinaisons ratées **à profondeur fixe d11** → fix
+  `no_reduce_forcing` construit (gaté, exempte les coups forçants de LMR/LMP).
+- **0451 (décideur, A/B vs Scan à MOVETIME 300 ms)** : le fix **n'apporte rien à temps réel** — conversion combinaisons
+  baseline **0,519** vs fix **0,506** (≈), jeu général légèrement pire. À movetime jass atteint **d14-16** → il trouve
+  DÉJÀ les combos que le dé-élagage récupérait à d11 → bénéfice redondant + coût −1,6 plies. **Param gardé OFF par défaut.**
+  ⇒ Le « gain search » était un **mirage du test à profondeur fixe d11** ; le d11 de 0440 **sous-estimait jass** (0,246
+  vs 0,519 réel à movetime). Le résidu (0,52 vs Scan 0,95) est l'**ÉVAL**, pas la recherche.
+- **0450/0453 (valeur du roi)** : l'éval valorise déjà le roi à **~3,5 hommes** → le mur promotion n'est PAS la valeur du roi.
+- **0452 (promo egdb, 37 686 finales gagnantes)** : **0 sacrifice-de-promotion** trouvé → ce motif est du **MILIEU de partie**,
+  pas de la finale (≤7 pièces) ; egdb ne peut pas le tester. (Branche promotion abandonnée — JFC, option B.)
+- **CONCLUSION** : la recherche/l'élagage n'est PAS le levier. Le mur est l'**ÉVAL au milieu de partie** (combinaisons
+  positionnelles shot-blind). Seuls leviers restants : **données/μ** (`0442`) et, à terme, **features linéaires plus riches**.
+
