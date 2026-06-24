@@ -1,0 +1,7 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool self-play (corpus committe) ===
+  pool self-play : 18000000
+=== gen egdb : 4000000 (mix) + 40000 test + 60 conversion (seeds disjoints) ===
+=== mix (pool + egdb-finale) -> fit 32cf ===
+  corpus mixe : 22000000 (18000000 self-play + 4000000 egdb)
