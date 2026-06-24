@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0461-menonly-vs-kingaware-0440",
-  "script": "jobs/queue/cpx62-0461-menonly-vs-kingaware-0440.sh",
-  "pid": 3660505,
-  "started_at": "2026-06-24T21:39:25+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
