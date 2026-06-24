@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0461-menonly-vs-kingaware-0440",
-  "snapshot_at": "2026-06-24T21:44:22+00:00",
+  "snapshot_at": "2026-06-24T21:49:27+00:00",
   "started_at": "2026-06-24T21:39:25+00:00",
-  "elapsed_seconds": 297,
+  "elapsed_seconds": 602,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3660505       1       04:57  0.0  0.0 bash\n3660507 3660505       04:57  0.0  0.0 bash\n3661843 3660507       03:46  120 56.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3660505       1       10:02  0.0  0.0 bash\n3660507 3660505       10:02  0.0  0.0 bash\n3661843 3660507       08:51  110 54.7 python3\n"
 }
