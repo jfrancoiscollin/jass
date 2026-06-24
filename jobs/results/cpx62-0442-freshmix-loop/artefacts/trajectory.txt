@@ -1,0 +1,1 @@
+iter 0  base=champion-3e-5  (NREC=5 recettes, FRESH=25000000/boucle, 100% epure)
