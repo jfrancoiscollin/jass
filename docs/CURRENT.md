@@ -18,8 +18,27 @@
 > 0,867 → 0,900**, **précision décisive finale 88,2 % → 94,4 %** (plafond linéaire egdb-only = 97,3 %).
 > ⇒ **Le mix egdb-finale est BAKÉ dans la recette** : toute future boucle/champion inclut cette étape (gen egdb-WLD
 > + mix phase-weighté). Premier +Elo concret post-diagnostic → **le linéaire n'est PAS épuisé (jus dans la finale).**
-> Le trou MILIEU (combinaisons) reste ouvert (job `0442` data/μ, en cours). Prochain : pousser la finale (`0455`, plus d'egdb / MTC).
+> Le trou MILIEU (combinaisons) reste ouvert (job `0442` data/μ, en cours).
 
+## 📌 VERDICTS 2026-06-24 (état consolidé)
+- **FINALE WLD = SATURÉE (0455)** : pousser l'egdb 4M → 12M monte les stats (précision 94,4 → **95,9 %** ; conversion vs
+  Scan 0,90 → **0,95**) mais reste **neutre en self-play (0,500)** vs le champion 4M → **le gain finale-WLD est PRIS à ~4M.**
+  Aller plus loin en finale = **labels MTC (distance)**, mais **bitbases MTC NON installés** (sonde 0455 absente) → gros
+  download pour gain marginal ⇒ **pas prioritaire vs le milieu.** Lead « pousser la finale » ≈ **clos** côté WLD.
+- **SEARCH = CLOS** (confirmé) : 0451 a montré que le fix d'élagage `no_reduce_forcing` **n'apporte rien à temps réel**
+  (à movetime jass atteint d14-16 et trouve déjà les combos que le dé-élagage récupérait à d11). Param gardé **OFF**.
+  ⚠️ Méthodo : 0451 comparait vs Scan **à movetime ÉGAL** = fautif (confond éval/vitesse) ; verdict tient pour d'autres
+  raisons, mais **vs-Scan = depth-fixe (éval pure) ou movetime NPS-compensé, JAMAIS temps fixe égal.**
+- **king_mob = DÉJÀ TIRÉ, pas dormant** : `JASS_KING_MOBILITY=ON` dans tous nos builds, **LIVE dans le champion** (poids
+  lus : `BK_DENIED` = 287 en finale ≈ 57 % d'un homme ; validé **+33 Elo** en 0311). Le confinement de Scan est **codé,
+  fitté et actif** — ce n'est pas un lead à tester, c'est acquis. (Correction du briefing §4.)
+- **FEATURES = MATCHÉES À SCAN** : géométrie patterns identique (men-only ternaire, dead lever 0203-0236) + features
+  king/confinement présentes et fittées ⇒ **pas de feature riche manquante.** Le mur restant = **FIT des poids de
+  patterns au MILIEU** (combinaisons), borné par la distribution self-play → c'est `0442`/`0456` (données/μ).
+- **EN COURS** : `0456` (synthèse — champion-egdbmix piloté + μ diversifié + egdb → conversion combos vs Scan = LE test
+  milieu) ; `0442` (freshmix 25M, lent). **Jauge forward = conversion combinaisons dilf vs Scan (0440 : 0,246).**
+- **LEADS DORMANTS** (post-milieu) : **`JASS_DRAWISH_SCALING`** (seule non-linéarité localisée de Scan, codée, **jamais
+  testée en jeu** — interprétable, autorisée) ; value-target distillation indépendante (`0443` paused, **seulement itérée**).
 
 ## 🔬 DIAGNOSTIC 2026-06-23 — on perd vs Scan par COMBINAISONS en milieu de partie (pas finale, pas profondeur)
 > 📋 Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md). Match eval-pur no-DB, champion 3e-5 vs Scan (0435).
