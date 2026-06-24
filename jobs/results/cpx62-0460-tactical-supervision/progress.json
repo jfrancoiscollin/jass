@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0460-tactical-supervision",
-  "snapshot_at": "2026-06-24T20:33:03+00:00",
+  "snapshot_at": "2026-06-24T20:38:03+00:00",
   "started_at": "2026-06-24T20:07:12+00:00",
-  "elapsed_seconds": 1551,
+  "elapsed_seconds": 1851,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3655599       1       25:50  0.0  0.0 bash\n3655601 3655599       25:50  0.0  0.0 bash\n3657082 3655601       08:29  111 47.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3655599       1       30:50  0.0  0.0 bash\n3655601 3655599       30:50  0.0  0.0 bash\n3657082 3655601       13:29  108 47.6 python3\n"
 }
