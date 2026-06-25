@@ -1,0 +1,8 @@
+{
+  "job_id": "ccx33-0467-fullline-tactical",
+  "snapshot_at": "2026-06-25T13:50:59+00:00",
+  "started_at": "2026-06-25T13:45:58+00:00",
+  "elapsed_seconds": 301,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2774070       1       05:00  0.0  0.0 bash\n2774072 2774070       05:00  0.0  0.0 bash\n2775252 2774072       03:04  109 29.6 python3\n"
+}
