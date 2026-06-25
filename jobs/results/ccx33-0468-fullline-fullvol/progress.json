@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0468-fullline-fullvol",
-  "snapshot_at": "2026-06-25T14:06:05+00:00",
+  "snapshot_at": "2026-06-25T14:11:06+00:00",
   "started_at": "2026-06-25T13:56:09+00:00",
-  "elapsed_seconds": 596,
+  "elapsed_seconds": 897,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2775859       1       09:56  0.0  0.0 bash\n2775861 2775859       09:56  0.0  0.0 bash\n2777052 2775861       07:44  103 73.1 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2775859       1       14:56  0.0  0.0 bash\n2775861 2775859       14:56  0.0  0.0 bash\n2777052 2775861       12:45  102 61.4 python3\n"
 }
