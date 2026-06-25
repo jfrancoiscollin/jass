@@ -1,0 +1,14 @@
+=== build jass standard (drawish param TOUJOURS compile, SANS egdb) ===
+
+=== (A) SELF-PLAY A/B : drawish ON (side A) vs OFF (side B), meme champion egdbmix, depth 9 ===
+  self-play drawish ON vs OFF : 0.528  (W=64 D=24 L=56, N=144)  IC95~[0.446,0.609]
+  => 0.50 DANS l'IC => NEUTRE (drawish ne change pas la force en self-play) ; >0.55 => ON aide.
+
+=== (B) vs SCAN eval-pur depth-FIXE d11, no-DB : drawish ON vs Scan, puis OFF vs Scan ===
+  vs Scan (eval-pur d11) : drawish ON=0.000   OFF=0.000   (rappel 0353 : neutre)
+
+================= LECTURE =================
+  ON ~ OFF (self-play IC contient 0.50 ET pas d'ecart vs Scan) => DRAWISH NEUTRE confirme sur egdbmix
+       => dernier item C2-(3) CLOS (neutre, comme 0353). Reste 0465 (donnees-mu) avant evaluation C3/C4 du gate.
+  ON >> OFF => drawish aide => le levier vit, le baker en defaut (drawish_scaling=1).
+==========================================
