@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0470-deeprelabel-probe",
-  "snapshot_at": "2026-06-25T23:35:45+00:00",
+  "snapshot_at": "2026-06-25T23:40:47+00:00",
   "started_at": "2026-06-25T17:11:05+00:00",
-  "elapsed_seconds": 23080,
+  "elapsed_seconds": 23382,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2782355       1    06:24:39  0.0  0.0 bash\n2782357 2782355    06:24:39  0.0  0.0 bash\n2797137 2782357       04:34  108 40.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2782355       1    06:29:41  0.0  0.0 bash\n2782357 2782355    06:29:41  0.0  0.0 bash\n2797137 2782357       09:35  104 41.0 python3\n"
 }
