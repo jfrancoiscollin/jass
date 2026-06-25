@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0462-tactical-shotfilter",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-24T23:34:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3667600
+  "ended_at": "2026-06-25T00:41:53+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

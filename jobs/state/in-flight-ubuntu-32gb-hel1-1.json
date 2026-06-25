@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0462-tactical-shotfilter",
-  "script": "jobs/queue/cpx62-0462-tactical-shotfilter.sh",
-  "pid": 3667600,
-  "started_at": "2026-06-24T23:34:06+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
