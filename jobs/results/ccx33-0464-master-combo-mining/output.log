@@ -1,0 +1,37 @@
+  egdb : /root/egdb_extracted/app
+  DB : 65386 parties decisives (result 1-0/0-1)
+=== build jass JASS_EGDB=ON ===
+=== assemble pool self-play (meme base que 0462) ===
+écrit /root/cw-mcombo/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 18000000
+=== MINE combinaisons depuis les VRAIES parties (sacrifice -> regain net >=2, gagnant au trait ; label = resultat reel) ===
+  shard 0: kept 19581
+  shard 1: kept 19155
+  shard 2: kept 19319
+  shard 3: kept 19102
+  shard 4: kept 19774
+  shard 5: kept 19528
+  shard 6: kept 19203
+  shard 7: kept 19294
+  combinaisons uniques=154956 ; flux tactique externe (oversample x8)=1239648
+  echantillon (positions a combinaison, gagnant au trait) :
+    W:W24,26,33,34,35,36,38,39,40,41,42,43,45,46,47,49:B3,5,6,7,8,9,10,11,13,15,16,17,18,23,25,27
+    B:W24,26,27,28,29,30,32,34,38,40,45,48,49:B3,4,8,11,13,14,15,16,18,19,20,23,25
+    W:W25,28,32,35,36,38,39,40,43,44,45,48:B3,5,8,9,11,13,14,15,19,21,23,27
+    B:W22,27,28,29,32,33,34,37,39,40,42,43,44,48:B1,2,6,7,8,9,11,15,16,20,25,26,30,35
+    W:W22,28,29,31,32,33,37,38,39,44:B3,8,9,11,12,13,25,26,30
+=== fit : pool + egdb-finale + flux COMBINAISONS-VERITE sur-pondere ===
+  corpus final : 23239648
+    train_loss=0.597792  iters=25  (2751.7s)
+  wrote /root/cw-mcombo/champ_combo.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 2805.0s]
+
+=== self-direct + GATE 0440 ===
+  self-direct : mastercombo vs egdbmix = 0.3889
+  conversion 0440 : egdbmix 0.302 (92/305)   MASTERCOMBO 0.297 (90/305)   (rappel : egdbmix~0.302 ; 0462 shotfilter AUTO=0.285 ; Scan 0.95)
+
+================= LECTURE =================
+  MASTERCOMBO > egdbmix (0.302) ET > 0462-AUTO (0.285) => la VERITE EXTERNE deplace 0440 la ou l'auto-supervision echouait
+      => le levier est bien la VUE EXTERNE (parties de maitres), pas le volume auto-genere. Promouvoir + scaler le mining.
+  MASTERCOMBO ~ 0462 ~ egdbmix => meme la verite-terrain tactique externe ne bouge pas 0440 a features verrouillees
+      => indice fort de PLAFOND FEATURE lineaire (cf 0461 FIT-pas-FEATURE a l'envers) => rouvrir le debat du gate NNUE (C3/C4).
+==========================================

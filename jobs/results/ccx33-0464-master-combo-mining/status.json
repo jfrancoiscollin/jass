@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0464-master-combo-mining",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-25T05:42:46+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2761098
+  "ended_at": "2026-06-25T07:00:09+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
