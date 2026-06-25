@@ -1,0 +1,1 @@
+kill cpx62-0463-freshmix-egdbmix: re-dimensionnement 25M->12M (TVR : volume au-dela de saturation ne deplace pas le point fixe). Re-issue = cpx62-0465-freshmix-12m. JFC 2026-06-25.
