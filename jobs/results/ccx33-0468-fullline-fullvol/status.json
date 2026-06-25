@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0468-fullline-fullvol",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-25T13:56:09+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2775859
+  "ended_at": "2026-06-25T15:23:07+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

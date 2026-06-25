@@ -1,0 +1,39 @@
+  egdb : /root/egdb_extracted/app
+  DB : 65386 parties decisives
+=== build jass JASS_EGDB=ON ===
+=== assemble pool (reduit 18000000) ===
+écrit /root/cw-flinevol/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 18000000
+=== MINE lignes forcantes COMPLETES (sac->regain net >=2 ; emet [racine..resolution], label=resultat reel POV trait) ===
+  shard 0: kept 84802
+  shard 1: kept 82534
+  shard 2: kept 83810
+  shard 3: kept 83527
+  shard 4: kept 85320
+  shard 5: kept 84612
+  shard 6: kept 83221
+  shard 7: kept 84036
+  positions full-line uniques=671854
+12093372
+  echantillon (noeuds de ligne forcante ; wdl = POV trait) :
+    wdl=+0  B:WK3,K5,K6,K7,K8,K9,K10,K11,K13,K15,K16,K17,K18,K23,K25,K27:BK41
+    wdl=+0  W:WK12,K13,K14,K16,K17,K18,K19,K30,K35:BK1,K41
+    wdl=+0  W:WK9,K10,K11,K12,K13,K15,K22,K23,K27,K29:B48,K1,K41
+    wdl=+0  B:WK3,K4,K13,K15,K18,K23,K27,K28:BK1,K41
+    wdl=+0  W:W7,K31:BK41
+=== fit : pool + egdb-finale + flux FULL-LINE (poids LOURD ~35%) ===
+  corpus final : 34093372  (full-line 12093372 = 35% du corpus ; uniques=671854, replique x18)
+    train_loss=0.651808  iters=25  (4289.4s)
+  wrote /root/cw-flinevol/champ_fline.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 4366.0s]
+
+=== GATE 0440 : full-line vs Scan (DILF complet, d11, 1 seul juge => pas de troncature) ===
+  conversion 0440 : FULL-LINE(~35%) 0.251 (76/305)   [points etablis : egdbmix=0.302 ; 0464 racine 5.4%=0.304 ; 0466 racine 35%=0.308 ; Scan=0.95]
+  IC95 (bootstrap, n=305) : 0.251  [0.205 , 0.297]   (egdbmix 0.302 DANS l'IC => statistiquement plat)
+
+================= LECTURE =================
+  FULL-LINE >> 0.31 => on supervisait les MAUVAISES positions (racine seule) : enseigner la ligne (voir au-dela du sac)
+       debloque la conversion => le levier tactique externe VIT => scaler. C2-(2) ROUVERT.
+  FULL-LINE ~ 0.31  => 5e echec d'affilee, MECANISME tactique epuise (racine ET ligne, auto ET externe, dilue ET lourd)
+       => la classe lineaire ne represente PAS le signal combinatoire a geometrie verrouillee => PLAFOND FEATURE solide.
+       => avec 0461(FIT) + 0465(donnees-mu) + DRAWISH, C2 vide => C3/C4 du gate NNUE deviennent decisifs.
+==========================================
