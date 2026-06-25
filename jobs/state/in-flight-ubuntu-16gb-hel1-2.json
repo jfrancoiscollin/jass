@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0468-fullline-fullvol",
+  "script": "jobs/queue/ccx33-0468-fullline-fullvol.sh",
+  "pid": 2775859,
+  "started_at": "2026-06-25T13:56:09+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
