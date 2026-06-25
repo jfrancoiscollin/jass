@@ -1,0 +1,7 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+  combos reutilisees (0464) : 1239648 records
+=== assemble pool (reduit 5000000) + egdb 4000000 + combos x4 (poids LOURD) ===
+  pool : 5000000
+  corpus final : 13958592  (combos lourdes 4958592 = 35% du corpus)
+=== fit champion combo-LOURD ===
