@@ -1,0 +1,4 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+  seeds : 400305 (dilf=305, lidr=400000)
+=== gen 10000000 diversifie (pilote=egdbmix, 70% d10+30% d12, seed_frac=30, eps=8) ===
