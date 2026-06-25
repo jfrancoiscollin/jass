@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0466-combo-weight-doseresponse",
-  "script": "jobs/queue/ccx33-0466-combo-weight-doseresponse.sh",
-  "pid": 2769726,
-  "started_at": "2026-06-25T11:26:18+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
