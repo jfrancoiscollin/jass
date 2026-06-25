@@ -1,0 +1,20 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+  combos reutilisees (0464) : 1239648 records
+=== assemble pool (reduit 5000000) + egdb 4000000 + combos x4 (poids LOURD) ===
+écrit /root/cw-combowt/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 5000000
+4958592
+  corpus final : 13958592  (combos lourdes 4958592 = 35% du corpus)
+=== fit champion combo-LOURD ===
+    train_loss=0.607467  iters=25  (1713.5s)
+  wrote /root/cw-combowt/champ_heavy.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 1744.9s]
+
+=== GATE 0440 : combo-LOURD vs Scan (DILF complet, d11, 1 seul juge => pas de troncature) ===
+  conversion 0440 : combo-LOURD(~35%) 0.308 (94/305)   [points etablis : egdbmix=0.302 ; 0464 ~5.4%=0.304 ; 0462 auto=0.285 ; Scan=0.95]
+
+================= LECTURE =================
+  combo-LOURD >> 0.30  => le plat de 0464 etait de la DILUTION => le levier tactique externe VIT, on scale le poids.
+  combo-LOURD ~ 0.30   => DOSE-REPONSE PLATE (5%->35% sans bouger) => la classe lineaire ne represente pas le signal
+       combinatoire a geometrie verrouillee => PLAFOND FEATURE => rouvre proprement le debat du gate NNUE (C3/C4).
+==========================================
