@@ -1,0 +1,10 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 5 × 25000000 lignes @ 4min/M ≈ 500.0 min
+  [preflight] freshmix : 5 boucles 100% epure (gen 25000000 mixe + refit + 2 juges): ≈ 1200 min
+  [preflight] TOTAL estimé ≈ 1704.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== seed-files (dilf combinaisons / lidraughts milieux / both) ===
+  shards lidraughts : 1
+  dilf=305  lidraughts_milieu=400000  both=400305
+iter 0  base=champion-egdbmix  (NREC=5 recettes, FRESH=25000000/boucle, 100% epure)
+=== BOUCLE 1 [humain-profond] : 70% d10 + 30% d12 | label d4 | seeds=lidr frac=30% | open=6 eps=0% | pilote=egdbmix ===
