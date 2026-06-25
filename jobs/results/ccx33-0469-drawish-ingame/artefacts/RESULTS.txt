@@ -1,0 +1,1 @@
+=== build jass standard (drawish param TOUJOURS compile, SANS egdb) ===
