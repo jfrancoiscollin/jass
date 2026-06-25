@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0462-tactical-shotfilter",
-  "snapshot_at": "2026-06-25T00:16:28+00:00",
+  "snapshot_at": "2026-06-25T00:21:39+00:00",
   "started_at": "2026-06-24T23:34:06+00:00",
-  "elapsed_seconds": 2542,
+  "elapsed_seconds": 2853,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3667600       1       42:21  0.0  0.0 bash\n3667602 3667600       42:21  0.0  0.0 bash\n3668574 3667602       39:26  104 55.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3667600       1       47:32  0.0  0.0 bash\n3667602 3667600       47:32  0.0  0.0 bash\n3670311 3667602       01:44  5.2  0.0 python3\n3670312 3670311       01:44 67.1  0.5 jass\n3670314 3670311       01:44 29.2  0.9 scan_linux\n3670317 3670311       01:44  0.3  0.0 jass\n"
 }
