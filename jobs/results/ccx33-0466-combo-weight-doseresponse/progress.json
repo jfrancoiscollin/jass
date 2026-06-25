@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0466-combo-weight-doseresponse",
-  "snapshot_at": "2026-06-25T11:42:05+00:00",
+  "snapshot_at": "2026-06-25T11:47:56+00:00",
   "started_at": "2026-06-25T11:26:18+00:00",
-  "elapsed_seconds": 947,
+  "elapsed_seconds": 1298,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2769726       1       15:47  0.0  0.0 bash\n2769728 2769726       15:47  0.0  0.0 bash\n2770652 2769728       14:48  103 30.3 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2769726       1       21:38  0.0  0.0 bash\n2769728 2769726       21:38  0.0  0.0 bash\n2770652 2769728       20:38  103 29.4 python3\n"
 }
