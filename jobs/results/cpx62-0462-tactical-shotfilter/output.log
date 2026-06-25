@@ -1,0 +1,22 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + mine 800000 positions de milieu ===
+écrit /root/cw-shotf/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 18000000
+  mine : 800000
+=== SHOT-FILTER : recherche elagage OFF d6, garde |score|>=170 (shot materiel force >=2 pions) ===
+  shots trouves=14672 ; flux tactique (oversample x4)=58688
+=== fit : pool + egdb-finale + flux SHOTS sur-pondere ===
+  corpus final : 22058688
+    train_loss=0.580135  iters=25  (2473.1s)
+  wrote /root/cw-shotf/champ_shot.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 2525.8s]
+
+=== self-direct + GATE 0440 ===
+  self-direct : shotfilter vs egdbmix = 0.3611
+  conversion 0440 : egdbmix 0.302 (92/305)   SHOTFILTER 0.285 (87/305)   (rappel : egdbmix~0.302 ; Scan 0.95)
+
+================= LECTURE =================
+  SHOTFILTER > egdbmix sur 0440 ET self-direct >=0.5 => la supervision tactique CORRECTE (shots seulement) paie
+       => promouvoir + baker. Branche FIT confirmee (les donnees attaquent le milieu).
+  ~ egal => meme avec le filtre, les labels-shot ne suffisent pas => probable signal FEATURE (cf 0461) ou monter le volume de shots.
+==========================================
