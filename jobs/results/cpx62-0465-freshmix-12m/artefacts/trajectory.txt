@@ -1,0 +1,1 @@
+iter 0  base=champion-egdbmix  (NREC=5 recettes, FRESH=12000000/boucle, 100% epure)
