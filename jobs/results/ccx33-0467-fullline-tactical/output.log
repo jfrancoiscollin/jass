@@ -1,0 +1,25 @@
+  egdb : /root/egdb_extracted/app
+  DB : 65386 parties decisives
+=== build jass JASS_EGDB=ON ===
+=== assemble pool (reduit 5000000) ===
+écrit /root/cw-fullline/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 5000000
+=== MINE lignes forcantes COMPLETES (sac->regain net >=2 ; emet [racine..resolution], label=resultat reel POV trait) ===
+  shard 0: kept 84802
+  shard 1: kept 82534
+  shard 2: kept 83810
+  shard 3: kept 83527
+  shard 4: kept 85320
+  shard 5: kept 84612
+  shard 6: kept 83221
+  shard 7: kept 84036
+  positions full-line uniques=671854
+5374832
+  echantillon (noeuds de ligne forcante ; wdl = POV trait) :
+    wdl=+0  B:WK3,K5,K6,K7,K8,K9,K10,K11,K13,K15,K16,K17,K18,K23,K25,K27:BK41
+    wdl=+0  W:WK12,K13,K14,K16,K17,K18,K19,K30,K35:BK1,K41
+    wdl=+0  W:WK9,K10,K11,K12,K13,K15,K22,K23,K27,K29:B48,K1,K41
+    wdl=+0  B:WK3,K4,K13,K15,K18,K23,K27,K28:BK1,K41
+    wdl=+0  W:W7,K31:BK41
+=== fit : pool + egdb-finale + flux FULL-LINE (poids LOURD ~35%) ===
+  corpus final : 14374832  (full-line 5374832 = 37% du corpus ; uniques=671854, replique x8)

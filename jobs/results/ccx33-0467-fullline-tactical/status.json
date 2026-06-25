@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0467-fullline-tactical",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-06-25T13:45:58+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2774070
+  "ended_at": "2026-06-25T13:56:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
