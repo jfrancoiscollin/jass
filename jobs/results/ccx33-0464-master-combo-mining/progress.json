@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0464-master-combo-mining",
-  "snapshot_at": "2026-06-25T05:52:50+00:00",
+  "snapshot_at": "2026-06-25T05:58:05+00:00",
   "started_at": "2026-06-25T05:42:46+00:00",
-  "elapsed_seconds": 604,
+  "elapsed_seconds": 919,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2761098       1       10:03  0.0  0.0 bash\n2761100 2761098       10:03  0.0  0.0 bash\n2762235 2761100       07:57  105 43.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2761098       1       15:18  0.0  0.0 bash\n2761100 2761098       15:18  0.0  0.0 bash\n2762235 2761100       13:13  104 56.5 python3\n"
 }
