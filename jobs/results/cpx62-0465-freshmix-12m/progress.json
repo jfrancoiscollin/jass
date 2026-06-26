@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0465-freshmix-12m",
-  "snapshot_at": "2026-06-26T17:42:26+00:00",
+  "snapshot_at": "2026-06-26T17:47:34+00:00",
   "started_at": "2026-06-25T05:47:38+00:00",
-  "elapsed_seconds": 129288,
+  "elapsed_seconds": 129596,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3676112       1  1-11:54:48  0.0  0.0 bash\n3676114 3676112  1-11:54:48  0.0  0.0 bash\n3762219 3676114       00:28  187  5.2 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3676112       1  1-11:59:56  0.0  0.0 bash\n3676114 3676112  1-11:59:56  0.0  0.0 bash\n3762219 3676114       05:36  112 29.6 python3\n"
 }
