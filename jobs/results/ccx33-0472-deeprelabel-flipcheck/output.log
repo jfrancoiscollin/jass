@@ -1,0 +1,24 @@
+=== recupere le deep_sample.jnnw committe par 0470 ===
+  deep_sample (0470) : 500000 positions relabelisees
+=== assemble pool + re-echantillonne les MEMES positions (seed 20) pour leurs labels SHALLOW ===
+écrit /root/cw-flipcheck/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 12000000
+  re-echantillon shallow : 500000 positions (seed 20, mid 12-44)
+=== FLIP : matche par cle (bitboards+stm), compare shallow WDL vs deep WDL ===
+  matched=500000 flip=214942 same=285058 flip_pct=43.0
+  deep_dist L=82960 D=324703 W=92337
+  transitions(shallow->deep): -1->+0:90445, +1->+0:85825, +0->+1:19330, +0->-1:15592, -1->+1:2181, +1->-1:1569
+  exemples shallow-gagnant/nul -> deep-PERDANT (shot que d16 attrape) :
+    +0->-1  B:W23,34,35,36,38,39,45,46,47,48,49:B1,2,6,8,10,12,16,17,24,25
+    +0->-1  W:W16,25,26,31,40,47:B8,9,12,17,19,43
+    +0->-1  W:W29,34,39,43,44:B4,11,13,16,17,20,23
+    +0->-1  W:W26,27,28,32,33,34,35,37,44,45,47,48:B2,4,5,6,7,8,12,15,16,17,18,19,21,25
+    +0->-1  W:W25,27,32,35,39:B12,14,15,23,24,26,29
+
+  LECTURE :
+   FLIP eleve (>~25%) => le relabel d16 CORRIGE beaucoup de labels => 0470 plat (0.313) = labels corriges qui
+        n'aident pas EN SINGLE-PASS => le bootstrap itere (0471) est bien le bon test (la correction doit s'accumuler).
+   FLIP faible (<~10%) => le relabel est quasi NO-OP a d16/egdbmix => 0.313~egdbmix attendu, rien teste => monter
+        depth (d18-20) ou desactiver l'elagage pendant le relabel pour que la recherche attrape plus de shots.
+
+# FLIP committe dans artefacts/FLIP.txt (survit au non-flush de RESULTS).
