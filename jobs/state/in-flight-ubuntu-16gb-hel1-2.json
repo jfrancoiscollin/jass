@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0474-deepscale-bootstrap",
+  "script": "jobs/queue/ccx33-0474-deepscale-bootstrap.sh",
+  "pid": 2817909,
+  "started_at": "2026-06-26T16:24:14+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
