@@ -1,0 +1,6 @@
+  Scan : /root/jass-scan/scan_linux ; egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + echantillonne 1500 ouvertures milieu diverses -> 8 shards FEN ===
+  pool : 12000000
+  ouvertures milieu : 1500 -> 8 shards
+=== SPARRING : jass(egdbmix) vs Scan depuis chaque ouverture, d11 no-DB, dump fens+outcome (parallele) ===
