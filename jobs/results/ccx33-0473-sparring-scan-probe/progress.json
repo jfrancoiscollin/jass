@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0473-sparring-scan-probe",
-  "snapshot_at": "2026-06-26T06:14:05+00:00",
+  "snapshot_at": "2026-06-26T06:19:08+00:00",
   "started_at": "2026-06-26T05:27:53+00:00",
-  "elapsed_seconds": 2772,
+  "elapsed_seconds": 3075,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2803572       1       46:11  0.0  0.0 bash\n2803574 2803572       46:11  0.0  0.0 bash\n2804940 2803574       35:32  102 52.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2803572       1       51:14  0.0  0.0 bash\n2803574 2803572       51:14  0.0  0.0 bash\n2804940 2803574       40:34  102 55.9 python3\n"
 }
