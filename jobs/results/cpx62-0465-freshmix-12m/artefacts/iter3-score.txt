@@ -1,0 +1,1 @@
+iter 3  recette=tactique  vs_base=0.5278  vs_pilote=0.5278 <- NOUVEAU MEILLEUR (adopte comme pilote)
