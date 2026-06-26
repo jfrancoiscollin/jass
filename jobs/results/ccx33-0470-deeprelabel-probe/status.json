@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0470-deeprelabel-probe",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-25T17:11:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2782355
+  "ended_at": "2026-06-26T00:38:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

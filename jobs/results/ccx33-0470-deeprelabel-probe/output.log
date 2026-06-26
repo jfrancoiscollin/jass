@@ -1,0 +1,25 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool (12000000) + echantillon milieu 500000 -> 8 shards pour relabel parallele ===
+écrit /root/cw-deeprl/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 12000000
+  echantillon milieu : 500000 positions -> 8 shards (~62500/shard)
+=== DEEP-RELABEL parallele : recherche d16 (eval=egdbmix) + ancre egdb, wdl=signe(valeur), bande-nulle +-50 ===
+  relabel : 500000 positions ; FLIP vs shallow = 215142/500000 (43%)  [deep wdl: L=82960 D=324703 W=92337]
+  (un FLIP eleve = la recherche profonde corrige beaucoup de labels shallow-faux => le levier a de la matiere)
+=== fit : pool + egdb + flux DEEP-RELABEL sur-pondere (~25%) ===
+5500000
+  corpus : 21500000  (deep 5500000 = 25% ; uniques=500000, replique x11, depth 16)
+    train_loss=0.584844  iters=25  (2949.2s)
+  wrote /root/cw-deeprl/champ_deep.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 2997.5s]
+
+=== GATE 0440 : deep-relabel vs Scan (DILF complet, d11, 1 juge) + IC95 ===
+  conversion 0440 : DEEP-RELABEL(d16) 0.269 (76/281)   [etablis : egdbmix=0.302 ; 0468 full-line=0.251 ; Scan=0.95 ; cible-recherche-jass ~0.52]
+  IC95 deep-relabel : 0.269 [0.221,0.319] (n=281)  => egdbmix 0.302 DANS l'IC
+
+================= LECTURE =================
+  deep > 0.35 (egdbmix HORS l'IC, vers ~0.52) => LES LABELS PROFONDS ENSEIGNENT LA SECURITE TACTIQUE : le levier-fit VIT
+       => scaler sur cpx62 (d18-20, plus de positions) + iterer le relabel (pilote ameliore -> punit plus de shots).
+  deep ~ 0.30 => meme la recherche profonde ne corrige pas le fit a ce poids => creuser (depth plus haute / pruning-off
+       pendant le relabel / volume) avant de conclure. FLIP%% (ci-dessus) dit si le relabel avait de la matiere.
+==========================================
