@@ -1547,7 +1547,7 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
-// --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]
+// --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]
 // Independent value-target distillation (option B) : rewrite each record's SCORE
 // field with the value of a DEEP jass search (STM-POV, search-amplified), and its
 // WDL byte with the sign. With --egdb, endgame positions egdb can resolve get the
@@ -1557,10 +1557,10 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 // cores in the job for parallelism.
 // -----------------------------------------------------------------------------
 int run_deep_relabel_mode(int argc, char** argv) {
-    std::string in_path, out_path, nnue_path, label_spec, egdb_dir;
+    std::string in_path, out_path, nnue_path, label_spec, egdb_dir, search_spec;
     int depth = 18, cache_mb = 1024;
+    std::int32_t draw_band = 50;             // |score| <= band → wdl 0 (draw-ish) ; override via --draw-band
     constexpr std::int32_t EG_SAT = 10000;  // saturated value for egdb-exact win/loss
-    constexpr std::int32_t DRAW_BAND = 50;  // |score| <= band → wdl 0 (draw-ish)
     std::vector<std::string> pos;
     for (int i = 2; i < argc; ++i) {
         const std::string a = argv[i];
@@ -1568,11 +1568,13 @@ int run_deep_relabel_mode(int argc, char** argv) {
         else if (a == "--label-depth-by-phase" && i + 1 < argc) label_spec = argv[++i];
         else if (a == "--egdb" && i + 1 < argc)                 egdb_dir   = argv[++i];
         else if (a == "--cache-mb" && i + 1 < argc)             cache_mb   = parse_int_or(argv[++i], 1024);
+        else if (a == "--search-params" && i + 1 < argc)        search_spec = argv[++i];  // e.g. pruning OFF (catch hidden shots)
+        else if (a == "--draw-band" && i + 1 < argc)            draw_band  = parse_int_or(argv[++i], 50);
         else pos.push_back(a);
     }
     if (pos.size() < 2) {
         std::cerr << "usage: --deep-relabel <in.jnnw> <out.jnnw> [depth=18] "
-                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]\n";
+                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]\n";
         return 2;
     }
     in_path = pos[0]; out_path = pos[1];
@@ -1600,6 +1602,7 @@ int run_deep_relabel_mode(int argc, char** argv) {
     Engine e;
     e.use_book(false);
     if (custom_nnue) e.set_nnue(custom_nnue.get());
+    const SearchParams relabel_params = jass::parse_search_params(search_spec);
 
     std::ifstream f(in_path, std::ios::binary);
     if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
@@ -1634,10 +1637,11 @@ int run_deep_relabel_mode(int argc, char** argv) {
         const int phase_ovr = label_depth[phase_index_of(popcount(p.occupied()))];
         SearchLimits lim;
         lim.max_depth = (phase_ovr > 0) ? phase_ovr : depth;
+        lim.params    = relabel_params;                           // e.g. pruning OFF to expose hidden shots
         const SearchResult r = e.search(lim);
         score = static_cast<std::int32_t>(r.score);               // STM-POV
         std::memcpy(rec + 33, &score, 4);
-        const std::int8_t wdl = (score > DRAW_BAND) ? 1 : (score < -DRAW_BAND ? -1 : 0);
+        const std::int8_t wdl = (score > draw_band) ? 1 : (score < -draw_band ? -1 : 0);
         rec[37] = static_cast<char>(wdl);
         if (((i + 1) % 2000) == 0) {
             const double el = std::chrono::duration<double>(
