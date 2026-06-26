@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0473-sparring-scan-probe",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-26T05:27:53+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2803572
+  "ended_at": "2026-06-26T06:34:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
