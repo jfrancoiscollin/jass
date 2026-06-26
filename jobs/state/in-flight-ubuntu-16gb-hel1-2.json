@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0473-sparring-scan-probe",
+  "script": "jobs/queue/ccx33-0473-sparring-scan-probe.sh",
+  "pid": 2803572,
+  "started_at": "2026-06-26T05:27:53+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
