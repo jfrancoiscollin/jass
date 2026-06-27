@@ -73,17 +73,27 @@
   voyant** (parties de maîtres/lidraughts où le coup gagnant a été **joué ET gagné**), étiquetées par le **résultat réel**
   — **ni auto-supervision, ni distillation Scan** (aucun moteur dans le label).
 
-## 🔬 EN TEST MAINTENANT (snapshot live — 2026-06-27) — le DÉCIDEUR de la gate, 2 bras croisés
-> Tout le reste de C2 est clos (11 leviers plats, cf VERDICTS 2026-06-27). Ces 2 bras sont le test **final** du linéaire.
+## 🔬 EN TEST MAINTENANT (snapshot live — 2026-06-27 soir) — LE DÉCIDEUR MANQUANT : extensions forçantes
+> **Recadrage briefing externe #1** (accepté) : « c'est l'ÉVAL pas la recherche » N'EST PAS prouvé. 0436/0451 ont isolé
+> l'**élagage** et la **non-réduction** — JAMAIS une **extension**. Et (briefing §3) un éval linéaire statique **ne PEUT PAS**
+> encoder des combinaisons résolubles par la recherche, quelle que soit la distribution d'entraînement ⇒ **2 seeds plats
+> (0481/0482) ne prouvent PAS « linéaire épuisé »**. Le vrai décideur = est-ce que les **extensions** bougent 0440.
 
 | box | job | ce qu'on teste | décision |
 |---|---|---|---|
-| **cpx62** | `0481-fromscratch-bootstrap` ⏳ tourne | bootstrap from-scratch, seed = **éval embarquée** (primitif appris) → chaîne forcée 10 gen, juge **0440/gen** | courbe **monte >0,28** = init comptait, linéaire pas épuisé ; **colle ~0,28** = plateau de classe |
-| **ccx33** | `0482-fromscratch-material-seed` ⏳ tourne | **MÊME** protocole, seed = **matériel PUR** (men=1 roi=3, zéro positionnel ; indépendant d'egdbmix) | **croise 0481** : 2 seeds collent à 0,28 = preuve BLINDÉE plateau=CLASSE → **gate NNUE** |
+| **cpx62** | `0483-forcing-extension-ab` ⏳ **NOUVEAU** | flag `ext_forcing` (search.cpp, gated) : étend +1 ply tout coup quiet forçant une capture (sac) + exempte LMR/LMP. A/B sur jauge **0440** (champion egdbmix, **sans re-entraînement**), 3 bras : baseline / no_reduce-seul / ext_forcing | **C hors IC (>~0,35)** = l'écart était la RECHERCHE → baker + re-juger movetime ; gate NNUE non pertinente. **C~A** = c'est l'ÉVAL (prouvé sans le confond extensions) |
+| **ccx33** | `0482-fromscratch-material-seed` ⏳ tourne | bootstrap from-scratch seed matériel-pur (le bras conservé) | courbe (info, mais **décideur faible** cf §3) |
 
-- **Lecture conjointe** : deux courbes plates à ~0,28 ⇒ épuisement linéaire **prouvé** (pas présumé) ⇒ ouvre C3/C4. Un bras qui
-  monte ⇒ point fixe déplaçable ⇒ on creuse. Les deux montent ⇒ on continue le bootstrap à plein volume.
-- **Antérieurs clos** : `0470`/`0474` deep-relabel (bootstrap A : 0,25–0,31, calé sous egdbmix) · `0473`/`0477` sparring (B : 0,236–0,279, n'allume pas) · `0479` élagage-gen OFF (0,261≈ON) · Drawish (`0469`) ☠️ dead end · 0464/0466/0468 supervision tactique ✅ clos plat-à-pire.
+- **Check local (avant déploiement)** : `ext_forcing` change **12/13** combinaisons dilf à d11 — les scores flippent vers le
+  **sacrifice** (ex. −155 → +122). La recherche **trouve** enfin les shots. **Mais** : voir le sac en recherche ≠ le convertir
+  vs Scan (qui défend) — c'est pourquoi 0483 joue des **parties complètes** (teste si les sacs sont SAINS, pas juste optimistes).
+- ⚠️ **Caveat 0451** (le piège à éviter) : `no_reduce_forcing` à **movetime** = 0,506 ≈ 0,519 baseline (redondant car jass
+  atteint déjà d14-16). Donc si 0483 (d11) monte, il **faut** un A/B **movetime NPS-compensé** pour écarter le « mirage d11 ».
+- **AUDIT quiet-only (briefing #4) — CONFIRMÉ** : `--quiet-only` n'a **jamais** été passé dans aucun gen récent (seulement
+  les vieux 0043-0086) ; `quiet_only` défaut **false**. Les 11 leviers plats + 0481/0482 se sont entraînés sur des positions
+  tactiquement instables (capture en attente). **Validité à re-vérifier** (cheap : ré-run d'un levier avec `--quiet-only`).
+- **0481 (seed eval-défaut) MIS EN PAUSE** (tué pour libérer cpx62 ; reprise-safe, champions committés/gen → reprenable).
+- **Antérieurs clos** : `0470`/`0474` deep-relabel (0,25–0,31) · `0473`/`0477` sparring (0,236–0,279) · `0479` élagage-gen OFF (0,261≈ON) · Drawish (`0469`) ☠️ · 0464/0466/0468 supervision tactique ✅ clos.
 
 ## 🗺️ PROCHAINES ÉTAPES (roadmap linéaire « poussé à fond » — à exécuter dans l'ordre)
 > Jauge unique = conversion combinaisons **0440** vs Scan (IC ±0,05). Seuil de victoire linéaire = **asymptote ≥0,70**.
