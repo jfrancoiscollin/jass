@@ -1,0 +1,11 @@
+=== build jass standard (SANS egdb, juge eval-pur) ===
+=== juge 0440 : champion-3-tactique vs Scan (DILF complet, d11, no-DB) ===
+  conversion 0440 : champion-3-tactique = 0.284 (86/305)  IC95=[0.238,0.336]  [games=610]
+  rappels : egdbmix=0.302 [0.25,0.35] ; deep-relabel bootstrap ~0.25-0.29 ; sparring v1=0.279 ; Scan=0.95
+  => egdbmix 0.302 DANS l'IC ; seuil compte >0.35
+
+================= LECTURE =================
+  > 0.35 (egdbmix hors IC) => la recette tactique (seeds combinaisons + 50% d12) convertit MIEUX les combinaisons
+       => la diversification-mu PAIE sur la cible 0440 ; on refit cette recette a plein volume + 2e generation autour.
+  ~ 0.30 => gain self-play positionnel sans effet tactique ; le seedage-combinaisons n'a pas transfere la conversion.
+==========================================
