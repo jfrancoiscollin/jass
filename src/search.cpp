@@ -878,8 +878,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             && !(eg && params.eg_no_lmp)   // endgame regime: don't prune late quiets
             && best > -INF_SCORE / 2  // already have a real score → safe to skip
             // forcing-move exemption: never LMP-prune a quiet sacrifice that
-            // forces the opponent to capture (combination starter).
-            && !(params.no_reduce_forcing && leaves_forced_capture(after_timed(pos, m)))) {
+            // forces the opponent to capture (combination starter). Also
+            // exempt under ext_forcing, else the extension is defeated by LMP
+            // pruning the move before it is searched.
+            && !((params.no_reduce_forcing || params.ext_forcing) && leaves_forced_capture(after_timed(pos, m)))) {
             ++move_idx;
             continue;
         }
@@ -893,9 +895,19 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         const bool     is_tt     = tt_move_valid
                                  && same_packed_move(m, tt_entry.best_move);
         const int      promo_ext = (params.ext_promotion && m.promotes) ? 1 : 0;
+        // Forcing extension (gated): a quiet move that leaves the opponent only
+        // captures (sacrifice / combination starter) is searched one ply deeper
+        // so the forced sac->capture->regain line resolves to full effective
+        // depth regardless of the nominal horizon. `next` is the post-move
+        // position. Captures don't qualify (full depth already + qsearch
+        // resolves chains at the leaf). Default-off: the `params.ext_forcing &&`
+        // short-circuit keeps the default path byte-identical (no extra movegen).
+        const int      forcing_ext = (params.ext_forcing && !m.is_capture()
+                                      && leaves_forced_capture(next)) ? 1 : 0;
         const int      new_depth = depth - 1
                                  + (singular_ext && is_tt ? 1 : 0)
-                                 + promo_ext;
+                                 + promo_ext
+                                 + forcing_ext;
 
         int score;
         bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
@@ -903,7 +915,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                          && !is_tt
                          && !m.is_capture()
                          && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
-                         && !singular_ext;  // don't reduce when we just extended a singular line
+                         && !singular_ext   // don't reduce when we just extended a singular line
+                         && !forcing_ext;   // nor an extended forcing sacrifice (full extended depth)
         // Forcing-move exemption: don't reduce a quiet sacrifice that forces
         // the opponent to capture (`next` is already the post-move position).
         if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
