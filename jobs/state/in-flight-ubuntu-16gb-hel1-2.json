@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0486-selfplay-clean",
+  "script": "jobs/queue/ccx33-0486-selfplay-clean.sh",
+  "pid": 2882370,
+  "started_at": "2026-06-27T23:21:15+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
