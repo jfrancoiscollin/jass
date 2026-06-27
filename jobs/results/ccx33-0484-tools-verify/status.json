@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0484-tools-verify",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-27T22:13:45+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2880916
+  "ended_at": "2026-06-27T22:18:58+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
