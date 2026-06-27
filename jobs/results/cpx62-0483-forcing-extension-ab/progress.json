@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0483-forcing-extension-ab",
+  "snapshot_at": "2026-06-27T21:58:59+00:00",
+  "started_at": "2026-06-27T21:54:01+00:00",
+  "elapsed_seconds": 298,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3837598       1       04:57  0.0  0.0 bash\n3837600 3837598       04:57  0.0  0.0 bash\n3838158 3837600       04:46  0.0  0.0 bash\n3838159 3838158       04:46  5.2  0.0 python3\n3838160 3838159       04:46 67.7  0.5 jass\n3838162 3838159       04:45 28.4  0.9 scan_linux\n3838165 3838159       04:45  0.5  0.0 jass\n"
+}
