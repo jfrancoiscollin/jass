@@ -77,20 +77,31 @@
   voyant** (parties de maîtres/lidraughts où le coup gagnant a été **joué ET gagné**), étiquetées par le **résultat réel**
   — **ni auto-supervision, ni distillation Scan** (aucun moteur dans le label).
 
-## 🔬 EN TEST MAINTENANT (snapshot live — 2026-06-27 soir) — LE DÉCIDEUR MANQUANT : extensions forçantes
-> **Recadrage briefing externe #1** (accepté) : « c'est l'ÉVAL pas la recherche » N'EST PAS prouvé. 0436/0451 ont isolé
-> l'**élagage** et la **non-réduction** — JAMAIS une **extension**. Et (briefing §3) un éval linéaire statique **ne PEUT PAS**
-> encoder des combinaisons résolubles par la recherche, quelle que soit la distribution d'entraînement ⇒ **2 seeds plats
-> (0481/0482) ne prouvent PAS « linéaire épuisé »**. Le vrai décideur = est-ce que les **extensions** bougent 0440.
+## 🔥 VERDICT 0483 (2026-06-27 nuit) — L'ÉCART 0440 EST EN GRANDE PARTIE DE LA **RECHERCHE** (extension forçante)
+> Le décideur #1 du briefing externe a tranché. A/B sur la jauge **0440** (champion egdbmix, depth-fixe d11, eval-pur no-DB,
+> vs Scan, **SANS re-entraînement**), reconstruit des 610 parties/bras dumpées :
 
+| bras (search) | 0440 | IC95 | Δ vs base |
+|---|---|---|---|
+| **A baseline** | 0,302 | [0,254 ; 0,352] | — |
+| **B no_reduce_forcing seul** | **0,434** | [0,382 ; 0,485] | +0,13 |
+| **C ext_forcing** (extension +1 + exempt LMR/LMP) | **0,603** | [0,552 ; 0,652] | **+0,30 (HORS IC)** |
+
+- **C quasi DOUBLE la baseline** (0,302 → 0,603), IC disjoint (0,552 > 0,352). **À profondeur fixe d11, l'écart 0440 était
+  surtout de la RECHERCHE** (l'horizon coupait les lignes forçantes sac→rafle→regain), **pas de l'éval**. Recadre fortement le
+  diagnostic « c'est l'éval » (qui n'avait isolé que l'élagage 0436 et la non-réduction 0451, jamais une **extension**).
+- **C (0,603) DÉPASSE même la baseline-à-movetime (0,519, 0451)** ⇒ indice que ce n'est pas qu'un « d11 qui rattrape le
+  movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
+- **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
+
+## 🔬 EN TEST MAINTENANT (2026-06-27 nuit) — confirmer le levier recherche + lancer la recette propre
 | box | job | ce qu'on teste | décision |
 |---|---|---|---|
-| **cpx62** | `0483-forcing-extension-ab` ⏳ tourne | flag `ext_forcing` (search.cpp, gated) : étend +1 ply tout coup quiet forçant une capture (sac) + exempte LMR/LMP. A/B sur jauge **0440** (champion egdbmix, **sans re-entraînement**), 3 bras : baseline / no_reduce-seul / ext_forcing | **C hors IC (>~0,35)** = l'écart était la RECHERCHE → baker + re-juger movetime ; gate NNUE non pertinente. **C~A** = c'est l'ÉVAL (prouvé sans le confond extensions) |
-| **ccx33** | `0484-tools-verify` ⏳ tourne | vérif réelle des outils #2/#5/#6 (suites unit + run sur `expert_games.db`) + livre la **calibration #5** (Texel K + ECE/phase d'egdbmix) | JNNW valides + ECE/phase → feu vert pour la recette self-play propre |
+| **cpx62** | `0485-forcing-ext-depthsweep` ⏳ | **TEST DU MIRAGE D11** : 0440 à **d13/d15** (les profondeurs du jeu réel), baseline vs ext_forcing | **d15_ext ≫ d15_base** = vrai levier au-delà de la profondeur → **baker** ext_forcing ; **d15_ext ≈ d15_base (~0,52)** = la profondeur substitue (mirage, cohérent 0451) → garder OFF |
+| **ccx33** | `0486-selfplay-clean` ⏳ | **RECETTE PROPRE** : gen `--quiet-only` (#4) + `--seed-file=ballots` (#2) + mix **masters-naturels** (#6), pilote egdbmix, **ext_forcing OFF au gen** (§3). Fit + juge 0440 + vs_egdbmix | 0440 hors-IC > 0,302 → la recette éval déplace la conversion ; plat → prioriser la RECHERCHE (0485) |
 
-- **Check local `ext_forcing` (avant déploiement)** : change **12/13** combinaisons dilf à d11 — les scores flippent vers le
-  **sacrifice** (ex. −155 → +122). La recherche **trouve** enfin les shots. **Mais** : voir le sac en recherche ≠ le convertir
-  vs Scan (qui défend) — c'est pourquoi 0483 joue des **parties complètes** (teste si les sacs sont SAINS, pas juste optimistes).
+- **0484 (vérif outils) = FINI rc=0** mais sortie perdue (non-flush + workdir box-local). Suites unit **vertes en local** (déterministe). La calibration #5 réelle est reperdue ; `0486` re-valide #2/#6 **sur vraies données au passage** (avec fallback dilf+lidraughts si `expert_games.db` absent).
+- **Gen ext_forcing OFF (briefing §3)** : une recherche plus propre au gen RETIRE le signal-shot des labels ; l'extension sert au **JEU**, pas au gen. Si 0485 valide l'extension, on la bake au **déploiement** (movetime), sans re-gen.
 - ⚠️ **Caveat 0451** (le piège à éviter) : `no_reduce_forcing` à **movetime** = 0,506 ≈ 0,519 baseline (redondant car jass
   atteint déjà d14-16). Donc si 0483 (d11) monte, il **faut** un A/B **movetime NPS-compensé** pour écarter le « mirage d11 ».
 
