@@ -20,8 +20,12 @@
 > + mix phase-weighté). Premier +Elo concret post-diagnostic → **le linéaire n'est PAS épuisé (jus dans la finale).**
 > Le trou MILIEU (combinaisons) reste ouvert — voir VERDICTS 2026-06-25.
 
-## 🔑 VERDICTS 2026-06-27 — le MUR des ~11 leviers, et LE DÉCIDEUR FINAL (bootstrap from-scratch ×2 seeds)
+## 🔑 VERDICTS 2026-06-27 — le MUR des ~11 leviers, et le bootstrap from-scratch ×2 seeds
 > MAJ **2026-06-27**. Suite directe du recadrage 2026-06-25 (« c'est le FIT / la distribution des labels, pas les features »).
+> ⚠️ **SUPERSEDÉ le 2026-06-27 soir** : le briefing externe §3 a montré qu'un éval linéaire **statique** ne peut PAS encoder
+> des combinaisons résolubles par la **recherche** ⇒ « 2 seeds plats » ne prouve PAS « linéaire épuisé ». Le bootstrap est
+> **rétrogradé** au rang d'info (décideur faible) et **mis en pause** ; le vrai décideur = les **extensions** (`0483`, #1).
+> Voir « 🔬 EN TEST MAINTENANT » + « PHASE IMPLÉMENTATION » ci-dessous.
 
 - **HYPOTHÈSE ÉLAGAGE-GEN RÉFUTÉE (`0479`, A/B 5M/bras, dimensionné pour conclure)** : on pensait que l'élagage forward
   (multicut/razor/LMR/LMP) baké ON **aveuglait nos labels** au gen (cachait ~40 % des shots à profondeur fixe → distribution
@@ -81,18 +85,34 @@
 
 | box | job | ce qu'on teste | décision |
 |---|---|---|---|
-| **cpx62** | `0483-forcing-extension-ab` ⏳ **NOUVEAU** | flag `ext_forcing` (search.cpp, gated) : étend +1 ply tout coup quiet forçant une capture (sac) + exempte LMR/LMP. A/B sur jauge **0440** (champion egdbmix, **sans re-entraînement**), 3 bras : baseline / no_reduce-seul / ext_forcing | **C hors IC (>~0,35)** = l'écart était la RECHERCHE → baker + re-juger movetime ; gate NNUE non pertinente. **C~A** = c'est l'ÉVAL (prouvé sans le confond extensions) |
-| **ccx33** | `0482-fromscratch-material-seed` ⏳ tourne | bootstrap from-scratch seed matériel-pur (le bras conservé) | courbe (info, mais **décideur faible** cf §3) |
+| **cpx62** | `0483-forcing-extension-ab` ⏳ tourne | flag `ext_forcing` (search.cpp, gated) : étend +1 ply tout coup quiet forçant une capture (sac) + exempte LMR/LMP. A/B sur jauge **0440** (champion egdbmix, **sans re-entraînement**), 3 bras : baseline / no_reduce-seul / ext_forcing | **C hors IC (>~0,35)** = l'écart était la RECHERCHE → baker + re-juger movetime ; gate NNUE non pertinente. **C~A** = c'est l'ÉVAL (prouvé sans le confond extensions) |
+| **ccx33** | `0484-tools-verify` ⏳ tourne | vérif réelle des outils #2/#5/#6 (suites unit + run sur `expert_games.db`) + livre la **calibration #5** (Texel K + ECE/phase d'egdbmix) | JNNW valides + ECE/phase → feu vert pour la recette self-play propre |
 
-- **Check local (avant déploiement)** : `ext_forcing` change **12/13** combinaisons dilf à d11 — les scores flippent vers le
+- **Check local `ext_forcing` (avant déploiement)** : change **12/13** combinaisons dilf à d11 — les scores flippent vers le
   **sacrifice** (ex. −155 → +122). La recherche **trouve** enfin les shots. **Mais** : voir le sac en recherche ≠ le convertir
   vs Scan (qui défend) — c'est pourquoi 0483 joue des **parties complètes** (teste si les sacs sont SAINS, pas juste optimistes).
 - ⚠️ **Caveat 0451** (le piège à éviter) : `no_reduce_forcing` à **movetime** = 0,506 ≈ 0,519 baseline (redondant car jass
   atteint déjà d14-16). Donc si 0483 (d11) monte, il **faut** un A/B **movetime NPS-compensé** pour écarter le « mirage d11 ».
-- **AUDIT quiet-only (briefing #4) — CONFIRMÉ** : `--quiet-only` n'a **jamais** été passé dans aucun gen récent (seulement
-  les vieux 0043-0086) ; `quiet_only` défaut **false**. Les 11 leviers plats + 0481/0482 se sont entraînés sur des positions
-  tactiquement instables (capture en attente). **Validité à re-vérifier** (cheap : ré-run d'un levier avec `--quiet-only`).
-- **0481 (seed eval-défaut) MIS EN PAUSE** (tué pour libérer cpx62 ; reprise-safe, champions committés/gen → reprenable).
+
+### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
+> Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
+> puis on lancera **une** recette self-play propre. Implémenté + **unit-testé** ce tour, déployé sur `main` :
+
+| # | livrable | ce que ça fait | état |
+|---|---|---|---|
+| **#1** | `ext_forcing` (`search.cpp`/`search_params.hpp`, gated OFF) | extension forçante +1 ply (cf ci-dessus) | code + build OK ; A/B `0483` en cours |
+| **#2** | `tools/build_ballots.py` | ouvertures réelles diverses/déséquilibrées (ply 6-12) + **miroir couleur** (rot180+swap = symétrie exacte) → `--seed-file` | unit-testé (miroir involutif, fenêtre plis, déséquilibre) |
+| **#5** | `tools/eval_calibration.py` | **K de Texel** (calibration eval→winprob, *a posteriori*, ne ré-entraîne rien) + **ECE par phase** | unit-testé (récup K synthétique) ; chiffres réels via `0484` |
+| **#6** | `tools/master_games_to_jnnw.py` | parties entières → positions **quiètes** (capture obligatoire ⟹ quiet ssi coup non-`x`) labellisées **résultat réel**, **fréquence naturelle** (PAS d'oversampling de racines comme 0464/0466/0468) | unit-testé (filtre quiet, labels STM-POV) |
+| **#4** | audit `--quiet-only` | **CONFIRMÉ jamais utilisé** (11 leviers + 0481/0482 entraînés sur positions à capture en attente) ; fix = passer le flag (existe) | à intégrer à la recette |
+
+- **#5 — honnêteté** : le #5 *littéral* (« fitter K=2.0 codé en dur ») **N/A** — `train.py` fait une **régression logistique
+  complète** (`z=w·x` logit, gradient `σ(z)−y`) ⇒ la température est **déjà fittée** (dans `w`), l'échelle train↔inférence est
+  cohérente, et re-pondérer = `--phase-weight` = **MORT** (−210 Elo). La version implémentée fitte le K de **calibration**
+  (utile, distinct) et mesure l'ECE/phase — teste « le milieu est-il mal calibré ? ».
+- **RECETTE SELF-PLAY PROPRE (à lancer quand 0483 + 0484 verts)** : gen avec **`--quiet-only`** (#4) + **`--seed-file=ballots`**
+  (#2) + mélange **masters-naturels** (#6) à fréquence naturelle + **`ext_forcing` au jeu SI 0483 le valide** (#1). Rien lancé
+  encore — c'est le « lancer proprement » d'après JFC.
 - **Antérieurs clos** : `0470`/`0474` deep-relabel (0,25–0,31) · `0473`/`0477` sparring (0,236–0,279) · `0479` élagage-gen OFF (0,261≈ON) · Drawish (`0469`) ☠️ · 0464/0466/0468 supervision tactique ✅ clos.
 
 ## 🗺️ PROCHAINES ÉTAPES (roadmap linéaire « poussé à fond » — à exécuter dans l'ordre)
