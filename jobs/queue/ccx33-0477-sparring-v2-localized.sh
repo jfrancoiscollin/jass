@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0475-sparring-v2-localized
+# id: ccx33-0477-sparring-v2-localized
 # description: SPARRING v2 = ENCODAGE LOCALISE (cadrage JFC : le sparring est un TRANSFERT D'INFO Scan->jass ; si plat,
 # c'est volume ou ENCODAGE, pas la source). 0473 etiquetait TOUTES les positions d'une partie par le resultat = canal ~1 bit/
 # partie etale sur ~85 positions => le signal-shot (le blunder de jass) noye dans 84 non-informatives. v2 : on DETECTE la
@@ -10,13 +10,13 @@
 set -uo pipefail
 cd /root/jass
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/ccx33-0475-sparring-v2-localized/artefacts"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/ccx33-0477-sparring-v2-localized/artefacts"; mkdir -p "$ART"
 RES="$ART/RESULTS.txt"; : > "$RES"; say(){ echo "$@" | tee -a "$RES"; }
-W=/root/cw-sparring75; rm -rf "$W"; mkdir -p "$W"
+W=/root/cw-sparring77; rm -rf "$W"; mkdir -p "$W"
 SCAN_BIN=/root/jass-scan/scan_linux
 PILOT_GZ=jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz
 DILF=data/dilf_combinations.fen
-GEOM32=/root/jass-geom32-sparring75
+GEOM32=/root/jass-geom32-sparring77
 POOL_TRIM=12000000; NEGDB=4000000; NOPEN=4000; MID_LO=14; MID_HI=40; TARGET_FRAC=35; GENDEPTH=11
 L2=3e-5; MAXIT=25; CHUNK=1000000; D=11
 CMK="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
