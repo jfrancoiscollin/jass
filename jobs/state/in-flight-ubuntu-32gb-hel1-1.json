@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0479-selfplay-pruningoff-ab",
-  "script": "jobs/queue/cpx62-0479-selfplay-pruningoff-ab.sh",
-  "pid": 3811727,
-  "started_at": "2026-06-27T11:06:04+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

@@ -1,0 +1,19 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON (avec --search-params au gen) ===
+
+=== ARM A : self-play ELAGAGE ON (baseline) — pilote egdbmix, play d8, 5000000 pos ===
+5000000
+  [on] corpus = 9000000
+  [on] 0440 = 0.280  IC95=[0.236,0.325]  (n=305)
+
+=== ARM B : self-play ELAGAGE OFF (full-width) — meme tout, SEULE difference = elagage OFF ===
+5000000
+  [off] corpus = 9000000
+  [off] 0440 = 0.261  IC95=[0.216,0.310]  (n=305)
+
+================= VERDICT (A/B elagage au gen) =================
+  on 0.280 0.236 0.325 305
+  off 0.261 0.216 0.310 305
+  rappel egdbmix=0.302 [0.25,0.35] ; seuil compte >0.35
+  OFF >> ON (et > 0.35) => l'elagage AVEUGLAIT nos labels (shots non joues au gen) => recette Scan tenue => scaler+bootstrap.
+  OFF ~ ON            => l'elagage n'etait pas le coupable des labels => creuser (profondeur de gen, volume, from-scratch).
