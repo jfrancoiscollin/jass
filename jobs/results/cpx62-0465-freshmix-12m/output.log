@@ -1,0 +1,29 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 5 × 12000000 lignes @ 4min/M ≈ 240.0 min
+  [preflight] freshmix : 5 boucles 100% epure (gen 12000000 mixe + refit + 2 juges): ≈ 1200 min
+  [preflight] TOTAL estimé ≈ 1444.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== seed-files (dilf combinaisons / lidraughts milieux / both) ===
+  shards lidraughts : 1
+  dilf=305  lidraughts_milieu=400000  both=400305
+iter 0  base=champion-egdbmix  (NREC=5 recettes, FRESH=12000000/boucle, 100% epure)
+=== BOUCLE 1 [humain-profond] : 70% d10 + 30% d12 | label d4 | seeds=lidr frac=30% | open=6 eps=0% | pilote=egdbmix ===
+8400000
+3600000
+  BOUCLE 1 [humain-profond] : corpus=12000000  vs_BASE=0.3056  vs_pilote=0.3056
+cp: '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' are the same file
+=== BOUCLE 2 [exploration-large] : 100% d10 + 0% d10 | label d4 | seeds=both frac=20% | open=14 eps=12% | pilote=egdbmix ===
+12000000
+  BOUCLE 2 [exploration-large] : corpus=12000000  vs_BASE=0.3611  vs_pilote=0.3611
+cp: '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' are the same file
+=== BOUCLE 3 [tactique] : 50% d10 + 50% d12 | label d6 | seeds=dilf frac=40% | open=8 eps=5% | pilote=egdbmix ===
+6000000
+6000000
+  BOUCLE 3 [tactique] : corpus=12000000  vs_BASE=0.5278  vs_pilote=0.5278 <- NOUVEAU MEILLEUR (adopte comme pilote)
+cp: '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' are the same file
+=== BOUCLE 4 [volume-decisif] : 60% d8 + 40% d10 | label d4 | seeds=lidr frac=25% | open=10 eps=8% | pilote=tactique ===
+7200000
+4800000
+  BOUCLE 4 [volume-decisif] : corpus=12000000  vs_BASE=0.6944  vs_pilote=0.5833 <- NOUVEAU MEILLEUR (adopte comme pilote)
+cp: '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' and '/root/jass/jobs/results/cpx62-0465-freshmix-12m/artefacts/trajectory.txt' are the same file
+=== BOUCLE 5 [haute-fidelite] : 100% d12 + 0% d12 | label d6 | seeds=both frac=30% | open=6 eps=0% | pilote=volume-decisif ===
