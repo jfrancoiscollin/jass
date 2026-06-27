@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0481-fromscratch-bootstrap",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-06-27T20:08:43+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3833617
+  "ended_at": "2026-06-27T21:53:57+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

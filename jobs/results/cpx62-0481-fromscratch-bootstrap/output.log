@@ -1,0 +1,8 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 10 × 10000000 lignes @ 4min/M ≈ 400.0 min
+  [preflight] from-scratch bootstrap : seed eval-defaut -> 10 generations chainees (gen 10000000 + refit + juge 0440): ≈ 1800 min
+  [preflight] TOTAL estimé ≈ 2204.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+  seeds milieu : dilf=305 lidraughts=400000 both=400305
+
+================= GENERATION 1 / 10  (pilote = eval-defaut(SEED)) =================
