@@ -1,0 +1,4 @@
+  egdb : /root/egdb_extracted/app ; CHUNK=1000000 x 24 ; play d8 full-width (elagage OFF)
+=== build jass JASS_EGDB=ON (avec --search-params au gen) ===
+  chunk 01 : +1000000 (cumul ~1000000) -> committe genoff-01.jnnw.gz
+  chunk 02 : +1000000 (cumul ~2000000) -> committe genoff-02.jnnw.gz
