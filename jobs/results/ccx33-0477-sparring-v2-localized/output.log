@@ -1,0 +1,25 @@
+  Scan : /root/jass-scan/scan_linux ; egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== assemble pool + echantillonne 4000 ouvertures milieu diverses -> 8 shards FEN ===
+écrit /root/cw-sparring77/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 12000000
+  ouvertures milieu : 4000 -> 8 shards
+=== SPARRING : jass(egdbmix) vs Scan depuis chaque ouverture, d11 no-DB, dump fens+outcome (parallele) ===
+  parties sparring jouees : 8000
+=== extrait FENETRE autour de la FALAISE materielle (shot) + label = RESULTAT REEL (POV trait), puis REEQUILIBRE ===
+  parties decisives=7532 ; avec falaise(shot)=7532 ; positions LOCALISEES : W=30128 L=30128 (total 60256)
+  reequilibre : W=30128 L=30128 (total 60256)
+=== fit : pool + egdb + flux SPARRING sur-pondere (~35%) ===
+  corpus : 24616608  (sparring 8616608 = 35% ; uniques=60256, replique x143)
+    train_loss=0.583932  iters=25  (2742.1s)
+  wrote /root/cw-sparring77/champ_spar.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 2796.8s]
+
+=== GATE 0440 : sparring vs Scan (DILF complet, d11) + IC95 ===
+  conversion 0440 : SPARRING 0.236  IC95=[0.192,0.282]  (n=305) [egdbmix=0.302 ; 0468 full-line=0.251 ; Scan=0.95]
+  => egdbmix 0.302 HORS l'IC ; seuil 'compte' >0.35
+
+================= LECTURE =================
+  SPARRING > 0.35 (egdbmix HORS l'IC, voire vers ~Scan) => la distribution-punie par Scan ENSEIGNE la securite tactique
+       => le levier B vit => baseline acquise => derriere : self-play depuis ce champion (independance, etape 7).
+  SPARRING ~ 0.30 => meme la punition d'un agent voyant ne prend pas a ce volume/poids => monter volume/poids ou affiner
+       le label (positions pre-shot seulement) avant de conclure. (Probe : volume modeste sur box lente.)
