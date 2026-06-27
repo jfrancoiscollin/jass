@@ -1,0 +1,13 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 10 × 10000000 lignes @ 4min/M ≈ 400.0 min
+  [preflight] from-scratch MATERIEL : forge seed + 10 generations chainees (gen 10000000 + refit + juge 0440): ≈ 1800 min
+  [preflight] TOTAL estimé ≈ 2204.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+  seeds milieu : dilf=305 lidraughts=400000 both=400305
+=== forge seed materiel pur (gen 1500000 eval-defaut -> reetiquette materiel -> fit) ===
+1500000
+  reetiquette materiel : n=1500000 (+=554978 -=629142 nul=315880)
+  verif seed : eval(blanc-au-trait,+1h)=344cp  eval(noir-au-trait,-1h)=-344cp  (attendu >0 et <0)
+  seed materiel forge + verifie OK -> pilote de la generation 1
+
+================= GENERATION 1 / 10  (pilote = seed-materiel-pur(SEED)) =================
