@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0481-fromscratch-bootstrap",
-  "script": "jobs/queue/cpx62-0481-fromscratch-bootstrap.sh",
-  "pid": 3833617,
-  "started_at": "2026-06-27T20:08:43+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
