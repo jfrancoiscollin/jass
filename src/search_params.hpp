@@ -101,6 +101,17 @@ struct SearchParams {
     // man (Move::promotes) — these are sharp, tactically dense lines.
     bool ext_promotion = false;
 
+    // Forcing extension (gated, default off). Extend by 1 ply any QUIET move
+    // that leaves the opponent only captures (a sacrifice / combination
+    // starter — FMJD majority rule makes the reply forced). Makes a
+    // sac->capture->regain line resolve to full effective depth regardless of
+    // the nominal horizon, so fixed-depth tactics (jauge 0440) are not cut by
+    // the leaf. DISTINCT from no_reduce_forcing (which only skips LMR/LMP);
+    // this ADDS depth, and also implies the no-reduce/no-LMP exemption for the
+    // extended move so the extension is not defeated by pruning. Untested
+    // lever (0436/0451 isolated pruning/non-reduction, NEVER an extension).
+    bool ext_forcing = false;
+
     // --- 1b : raffinements search incrémentaux (gated, neutres par défaut) ---
 
     // Improving heuristic. Track the node's static eval and compare to the
@@ -221,6 +232,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "probcut_margin")       p.probcut_margin       = v;
     else if (key == "probcut_reduction")    p.probcut_reduction    = v;
     else if (key == "ext_promotion")        p.ext_promotion        = (v != 0);
+    else if (key == "ext_forcing")          p.ext_forcing          = (v != 0);
     else if (key == "use_improving")        p.use_improving        = (v != 0);
     else if (key == "use_conthist")         p.use_conthist         = (v != 0);
     else if (key == "iid_min_depth")        p.iid_min_depth        = v;
