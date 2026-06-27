@@ -1,0 +1,1 @@
+gen 0  seed=eval-defaut(materiel+king-PST+mob+balance)  egdbmix-0440=0.302  plateau-11-leviers~0.28

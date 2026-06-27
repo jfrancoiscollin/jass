@@ -1,0 +1,4 @@
+  seeds milieu : dilf=305 lidraughts=400000 both=400305
+gen 0  seed=eval-defaut(materiel+king-PST+mob+balance)  egdbmix-0440=0.302  plateau-11-leviers~0.28
+
+================= GENERATION 1 / 10  (pilote = eval-defaut(SEED)) =================
