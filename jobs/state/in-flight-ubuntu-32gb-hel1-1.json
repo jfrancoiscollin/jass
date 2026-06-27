@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0483-forcing-extension-ab",
-  "script": "jobs/queue/cpx62-0483-forcing-extension-ab.sh",
-  "pid": 3837598,
-  "started_at": "2026-06-27T21:54:01+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

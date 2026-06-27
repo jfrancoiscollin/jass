@@ -1,0 +1,13 @@
+=== 0440 forcing-extension A/B (champion egdbmix, depth 11, eval-pur no-DB, vs Scan) ===
+A_baseline  spec=[<defauts>]  0440=0.302  IC95=[0.254,0.352]  (n=305)
+B_noreduce  spec=[no_reduce_forcing=1]  0440=0.434  IC95=[0.382,0.485]  (n=305)
+C_extforcing  spec=[ext_forcing=1]  0440=0.603  IC95=[0.552,0.652]  (n=305)
+
+================= LECTURE =================
+  baseline egdbmix attendu ~0.30. B (no_reduce SEUL) attendu ~baseline (reproduit 0451).
+  C (ext_forcing) HORS IC au-dessus (>~0.35) => l'ecart 0440 etait de la RECHERCHE (extension) => baker + re-juger
+       vs Scan a temps compense ; gate NNUE non pertinente.
+  C ~ A => c'est l'EVAL, prouve proprement sans le confond extensions => leviers donnees (#2/#4/#6 du briefing).
+  Effet PUR extension = C - B ; traitement forcant complet = C - A.
+  C_extforcing  spec=[ext_forcing=1]  0440=0.603  IC95=[0.552,0.652]  (n=305)
+===========================================
