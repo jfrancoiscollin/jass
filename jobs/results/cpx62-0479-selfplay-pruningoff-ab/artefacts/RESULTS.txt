@@ -1,0 +1,4 @@
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON (avec --search-params au gen) ===
+
+=== ARM A : self-play ELAGAGE ON (baseline) — pilote egdbmix, play d8, 5000000 pos ===
