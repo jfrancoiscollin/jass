@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0480-genoff-scale",
+  "script": "jobs/queue/ccx33-0480-genoff-scale.sh",
+  "pid": 2865166,
+  "started_at": "2026-06-27T13:01:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
