@@ -6,6 +6,13 @@
 > ⇒ Cet audit a **rempli sa fonction** ; les features sont **matchées à Scan** (cf [CURRENT.md](CURRENT.md), VERDICTS
 > 2026-06-24). Le mur restant n'est PLUS une feature manquante mais le **FIT des poids au MILIEU** (combinaisons). Doc
 > conservé comme référence du raisonnement ; ne plus traiter LEAD 1 comme « à faire ».
+>
+> ✅ **MAJ 2026-06-25 — LEAD 2 (`JASS_KING_PATTERNS`, rois dans l'occupancy) RÉFUTÉ sur la cible qui compte.** `0461` :
+> king-aware **0,284** vs men-only **0,300** sur la conversion combinaisons **0440** ⇒ mettre les rois dans les patterns
+> **n'aide pas** à convertir → géométrie **verrouillée men-only**. **Le gap n'est donc PAS une feature roi manquante** :
+> c'est le **FIT/les données** (vue propre du pilote). Et l'auto-supervision tactique (labels = recherche de jass) a
+> **échoué** (0460/0462) car elle ne couvre que les shots déjà vus ⇒ levier courant = **vérité tactique EXTERNE** (`0464`).
+> Pistes LEAD 1-5 ci-dessous = **soldées ou N/A**. Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md) §SAGA 2026-06-25.
 
 > Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](archives/ARBRE_DECISION.md) (même classe que
 > Scan → on doit l'égaler DEDANS ; le gap = ce qui MANQUE, pas la capacité). Audit
@@ -65,12 +72,11 @@ Entraîner logistic WDL sur données enrichies egdb (coverage ≤7p), mesurer **
 Scan + Elo**. Coût : ~4-6 extras + retrain. **Teste directement l'hypothèse conversion-par-
 feature** que 0306 aurait dû tester. → job dédié.
 
-### LEAD 2 — Ré-évaluer les bricks gated (defaults actuels explicites)
-`JASS_ENDGAME_FEATURES` (extras 106-109) est **ON par défaut** depuis 0311
-(NUM_EXTRAS 106→110). `JASS_KING_MOBILITY` reste **OFF par défaut** et
-`JASS_KING_PATTERNS` reste **OFF par défaut**. A/B propre dans le régime actuel
-(logistic WDL + données 0297 + coverage egdb) : défaut vs king-mobility-ON vs
-king-patterns-ON si besoin. Coût quasi nul (flags de build + retrain).
+### LEAD 2 — Ré-évaluer les bricks gated (déjà codées, OFF par défaut) — le quick win
+`JASS_KING_PATTERNS` (rois dans patterns, men|kings base-3 ; **+37 Elo en distillation, job
+0240**) et `JASS_ENDGAME_FEATURES` (extras 106-109) sont **OFF par défaut**. A/B propre dans
+le régime actuel (logistic WDL + données 0297 + coverage egdb) : défaut vs king-patterns-ON
+vs endgame-features-ON. Coût quasi nul (flags de build + retrain).
 
 ### LEAD 3 — Densité de données finale (PAS le `--phase-weight`, mort)
 ≤7p = **11.3 %** des données → le bank `eg` (king-PST/mobilité) est **sous-peuplé**. Le

@@ -3,6 +3,31 @@
 > 🟢 **ÉTAT ACTIF EN 1 PAGE → [CURRENT.md](CURRENT.md)** (hypothèse, defaults, métrique
 > primaire, branches mortes + revival, jobs en cours). Lire ÇA d'abord ; ce journal = faits/archive.
 >
+> 📅 **2026-06-27 (faits du jour)** : (1) **HYPOTHÈSE ÉLAGAGE-GEN RÉFUTÉE** — `0479` A/B à **5M/bras** (dimensionné pour
+> conclure) : élagage **ON=0,280** [0,236;0,325] vs **OFF=0,261** [0,216;0,310] ⇒ couper l'élagage au gen n'aide PAS (même
+> légèrement pire). « L'élagage aveuglait nos labels » est mort. (2) **LE MUR, ~11 LEVIERS PLATS** : tout ce qu'on a tenté
+> côté données/entraînement atterrit ~0,28 sur 0440 (0460=0,259, 0464=0,304, 0468=0,251, 0470=0,313, 0473=0,279,
+> 0474=0,25–0,29, 0476=0,284, 0477=0,236, 0479=0,261). **Rien ne bouge la conversion de combinaisons** — ni volume, ni μ,
+> ni élagage (gen/jeu), ni encodage sparring, ni seed tactique. Scan (même classe linéaire, 2,1M poids) est à 0,95.
+> (3) **DERNIER LEVIER LINÉAIRE FIDÈLE À SCAN lancé** : `cpx62-0481` **bootstrap from-scratch**. Recherche clean-room ⇒
+> Scan monté DEPUIS ZÉRO en self-play pur (seed primitif + règles, itéré sur des centaines de générations). Nous, à chaque
+> essai, on a piloté depuis **egdbmix** = un point fixe DÉJÀ formé, possiblement COINCÉ ⇒ on a varié μ/volume/élagage
+> AUTOUR du même point fixe, jamais migré le point fixe lui-même. `0481` repart de l'**éval embarquée par défaut** (matériel
+> + king-PST + mob + balance ≈ seed « piece-count roi=3h » de Scan, très loin d'egdbmix) → **chaîne forcée** de 10 générations
+> 10M/gen, juge **0440 vs Scan à chaque génération**. **LE DÉCIDEUR DE LA GATE** : courbe MONTE au-delà de 0,28 ⇒ egdbmix
+> était coincé, **linéaire pas épuisé** ; courbe se COLLE à ~0,28 malgré un seed tout autre ⇒ plateau = propriété de la
+> **CLASSE** (pas de l'init) ⇒ **linéaire PROUVÉ épuisé, gate NNUE s'ouvre avec preuve (11 leviers + bootstrap)**.
+>
+> 📅 **2026-06-25 (faits du jour)** : (1) **FIT, pas FEATURE** — `0461` men-only **0,300** vs king-aware **0,284** sur la
+> conversion 0440 ⇒ rois-dans-patterns n'aide pas, **géométrie verrouillée men-only**, le pari FIT/données tient.
+> (2) **Auto-supervision tactique MORTE** : `0460` (relabel-tout, 0,259) ET `0462` (shot-filter labels-jass, 0,285<0,302)
+> échouent — **la recherche de jass ne peut étiqueter que les shots qu'il voit déjà**, pas ses angles morts (= le trou 0440).
+> (3) **PIVOT vérité EXTERNE** : `ccx33-0464` mine les combinaisons de **vraies parties** (`expert_games.db` ; sac→regain net
+> dans la ligne réelle, label = résultat réel) — ni auto-supervision ni distillation ; **A/B propre vs 0462** (même base).
+> (4) **Plan de base repris** : `cpx62-0465` (self-play diversifié, pilote egdbmix), **re-dimensionné 25M→12M** (TVR : au-delà
+> de la saturation le volume ne déplace pas le point fixe, juste la variance). (5) `0456` zombie (10M/ccx33, ~10,5h) **tué**.
+> Si `0464` échoue aussi ⇒ **C2 quasi vidé ⇒ gate NNUE C3/C4 décisifs.** Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md) §SAGA 2026-06-25.
+>
 > 📅 **2026-06-24 (faits du jour)** : (1) **`champion-egdbmix` PROMU** = nouveau best 32cf, **+58 Elo** (mix 4M
 > egdb-finale phase-weighté baké dans la recette ; 0454). (2) **Finale WLD SATURÉE** : 12M egdb = +stats mais
 > self-play neutre (0455) ; bitbases MTC non installés. (3) **Branche SEARCH/PROMOTION FERMÉE** : fix élagage

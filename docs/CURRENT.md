@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-24**.
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-27** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -18,7 +18,182 @@
 > 0,867 → 0,900**, **précision décisive finale 88,2 % → 94,4 %** (plafond linéaire egdb-only = 97,3 %).
 > ⇒ **Le mix egdb-finale est BAKÉ dans la recette** : toute future boucle/champion inclut cette étape (gen egdb-WLD
 > + mix phase-weighté). Premier +Elo concret post-diagnostic → **le linéaire n'est PAS épuisé (jus dans la finale).**
-> Le trou MILIEU (combinaisons) reste ouvert (job `0442` data/μ, en cours).
+> Le trou MILIEU (combinaisons) reste ouvert — voir VERDICTS 2026-06-25.
+
+## 🔑 VERDICTS 2026-06-27 — le MUR des ~11 leviers, et LE DÉCIDEUR FINAL (bootstrap from-scratch ×2 seeds)
+> MAJ **2026-06-27**. Suite directe du recadrage 2026-06-25 (« c'est le FIT / la distribution des labels, pas les features »).
+
+- **HYPOTHÈSE ÉLAGAGE-GEN RÉFUTÉE (`0479`, A/B 5M/bras, dimensionné pour conclure)** : on pensait que l'élagage forward
+  (multicut/razor/LMR/LMP) baké ON **aveuglait nos labels** au gen (cachait ~40 % des shots à profondeur fixe → distribution
+  shot-blind). Verdict : élagage **ON = 0,280** [0,236 ; 0,325] vs **OFF = 0,261** [0,216 ; 0,310] ⇒ **OFF n'aide PAS** (même
+  légèrement pire, IC chevauchants). **L'élagage au gen N'EST PAS le coupable.** ⇒ défaut **gen = élagage ON** (confirmé). Le
+  bon paramétrage reste : **gen = élagage ON** (0479) **ET** jeu/movetime = élagage ON (0451 : OFF au jeu = −1,6 plies).
+- **LE MUR : ~11 leviers données/entraînement TOUS plats à ~0,28 sur 0440.** Rien ne déplace la conversion de combinaisons :
+  `0460`=0,259 · `0462`=0,285 · `0464`=0,304 · `0466`=0,308 · `0468`=0,251 · `0470`=0,313 · `0473`(sparring v1)=0,279 ·
+  `0474`(bootstrap deep-relabel)=0,25–0,29 · `0476`(champ-3-tactique)=0,284 · `0477`(sparring localisé)=0,236 · `0479`=0,261.
+  **Ni volume, ni μ, ni élagage (gen/jeu), ni encodage du sparring, ni seed tactiquement riche.** Scan (MÊME classe linéaire,
+  **2,1M poids**) est à **0,95**. Le sparring-vs-Scan (B) a été essayé (`0473`/`0477`) et **n'allume pas** sous les formes testées.
+- **LE SEUL INGRÉDIENT SCAN JAMAIS RÉPLIQUÉ = le bootstrap FROM-SCRATCH.** Recherche clean-room (méthode publiée, pas le code) :
+  Scan a été monté **depuis zéro en self-play pur** — seed = éval matérielle primitive + règles, **PAS de prof, PAS de
+  master-games** — logistic regression **itérée sur des centaines de générations**. Nous, à **chacun** des 11 essais ci-dessus,
+  on a piloté le gen depuis **egdbmix** = un point fixe **déjà formé, possiblement COINCÉ** ⇒ on a fait varier μ/volume/élagage
+  **autour du même point fixe**, sans jamais **migrer le point fixe lui-même**. C'est le **dernier trou** dans la preuve « le
+  linéaire est épuisé », et le dernier levier 100 % fidèle à Scan avant la gate.
+- **LANCÉ — bootstrap from-scratch, 2 bras (croisés sur le SEED)** : même protocole exact (10M/gen, **depth 10**, **élagage ON**,
+  chaîne forcée 10 générations, juge **0440 vs Scan à chaque génération** + IC95), **seule** variable = le seed de la gen 1 :
+  - **`cpx62-0481`** : seed = **éval embarquée par défaut** (matériel + king-PST + mob + balance ; primitif *appris*, loin d'egdbmix).
+  - **`ccx33-0482`** : seed = **matériel PUR** (men=1, roi=3, **zéro prior positionnel** ; forgé par fit-sur-signe-matériel +
+    vérif `--eval-position`), **totalement indépendant** d'egdbmix ⇒ équivalent littéral du seed « piece-count, roi=3h » de Scan.
+- **LE DÉCIDEUR DE LA GATE** (lecture des 2 courbes) :
+  - les **deux bras MONTENT** au-delà de 0,28 ⇒ egdbmix était un point fixe **coincé**, **le linéaire n'est PAS épuisé** ⇒ on continue (refit à plein volume).
+  - les **deux COLLENT à ~0,28** malgré deux seeds indépendants ⇒ le plateau est une **propriété de la CLASSE** (pas de l'init) ⇒
+    **le linéaire est PROUVÉ épuisé** ⇒ **la gate NNUE s'ouvre proprement, preuve à l'appui (11 leviers + bootstrap ×2 seeds).**
+  - **un seul bras monte** ⇒ dépendance au seed/chemin ⇒ le point fixe est déplaçable ⇒ on creuse ce bras.
+- **ÉTAT RÈGLE GRAVÉE** : ⛔ NNUE toujours INTERDIT. Ces deux bras sont le test final qui rend l'épuisement **prouvé** plutôt que
+  **présumé** ; c'est leur verdict (et lui seul) qui peut ouvrir le débat C3/C4 — pas une « impression de plateau ».
+
+## 🔑 VERDICTS 2026-06-25 — FIT confirmé, l'auto-supervision tactique est MORTE, pivot VÉRITÉ EXTERNE
+> Trois résultats reconstruits depuis les game-dumps gold (les `RESULTS.txt` n'avaient pas flushé) → conclusion nette.
+
+- **FIT, pas FEATURE (0461, ex-`0457`)** : men-only vs king-aware **jugés sur le set 0440** (le test décisif pré-engagé).
+  Conversion 0440 : **men-only 0,300 · king-aware 0,284** → mettre les rois dans l'occupancy des patterns **n'aide PAS**
+  à convertir les combinaisons. ⇒ **la géométrie n'est pas le mur** ; le levier est bien le **FIT/les données** (notre pari
+  tient). La géométrie reste **verrouillée**. (Résout le lever C2-(1) et la branche « feature roi manquante ».)
+- **Auto-supervision tactique = MORTE (0460 + 0462)** — les deux tentatives ont échoué, **pour la même raison de fond** :
+  - `0460` (relabel-TOUT le milieu, recherche profonde jass) : self-direct **0,472**, 0440 **0,259** → **auto-distillation**
+    (72 % des « corrections » = opinion d'éval, pas vérité-terrain). Recul.
+  - `0462` (shot-filter : ne garder que les positions à shot forcé ≥2, labels = recherche d6 élagage-OFF de jass) :
+    0440 **0,285 < 0,302** (egdbmix). Régresse aussi.
+  - **LE point** : étiqueter avec **la recherche de jass lui-même** ne peut enseigner que les shots **qu'il voit déjà**.
+    Or le trou 0440 EST les ~70 % de combinaisons qu'il **ne voit pas**. **On ne peut pas apprendre ses angles morts avec
+    des labels produits par l'œil aveugle.** (Version-données de Tsitsiklis-Van Roy : le point fixe est borné par ce que le
+    pilote **sait voir**.) ⇒ le lever C2-(2) « supervision tactique » **dans sa forme AUTO-supervisée est CLOS**.
+- **⇒ PIVOT : la donnée doit venir d'une VUE EXTERNE.** FIT est le mur (0461) mais la donnée **auto-générée est insuffisante
+  par construction** (0460/0462). Seule issue restante côté données : injecter des combinaisons **trouvées par un agent
+  voyant** (parties de maîtres/lidraughts où le coup gagnant a été **joué ET gagné**), étiquetées par le **résultat réel**
+  — **ni auto-supervision, ni distillation Scan** (aucun moteur dans le label).
+
+## 🔬 EN TEST MAINTENANT (snapshot live — 2026-06-27) — le DÉCIDEUR de la gate, 2 bras croisés
+> Tout le reste de C2 est clos (11 leviers plats, cf VERDICTS 2026-06-27). Ces 2 bras sont le test **final** du linéaire.
+
+| box | job | ce qu'on teste | décision |
+|---|---|---|---|
+| **cpx62** | `0481-fromscratch-bootstrap` ⏳ tourne | bootstrap from-scratch, seed = **éval embarquée** (primitif appris) → chaîne forcée 10 gen, juge **0440/gen** | courbe **monte >0,28** = init comptait, linéaire pas épuisé ; **colle ~0,28** = plateau de classe |
+| **ccx33** | `0482-fromscratch-material-seed` ⏳ tourne | **MÊME** protocole, seed = **matériel PUR** (men=1 roi=3, zéro positionnel ; indépendant d'egdbmix) | **croise 0481** : 2 seeds collent à 0,28 = preuve BLINDÉE plateau=CLASSE → **gate NNUE** |
+
+- **Lecture conjointe** : deux courbes plates à ~0,28 ⇒ épuisement linéaire **prouvé** (pas présumé) ⇒ ouvre C3/C4. Un bras qui
+  monte ⇒ point fixe déplaçable ⇒ on creuse. Les deux montent ⇒ on continue le bootstrap à plein volume.
+- **Antérieurs clos** : `0470`/`0474` deep-relabel (bootstrap A : 0,25–0,31, calé sous egdbmix) · `0473`/`0477` sparring (B : 0,236–0,279, n'allume pas) · `0479` élagage-gen OFF (0,261≈ON) · Drawish (`0469`) ☠️ dead end · 0464/0466/0468 supervision tactique ✅ clos plat-à-pire.
+
+## 🗺️ PROCHAINES ÉTAPES (roadmap linéaire « poussé à fond » — à exécuter dans l'ordre)
+> Jauge unique = conversion combinaisons **0440** vs Scan (IC ±0,05). Seuil de victoire linéaire = **asymptote ≥0,70**.
+
+0. **MAINTENANT** : `0470` probe (ccx33) + `0465` boucle 1 (cpx62). Lecture probe : 0440 **>0,35** + FLIP % élevé = matière.
+1. **(5) Bootstrap deep-relabel** — `0471-bootstrap` (armé, tire si 0465 boucle 1 flat) : K=4 passes, lire la **courbe** `{0440_p1..p4}`.
+   - **≥0,70** ⇒ 🎉 **linéaire gagne, NNUE jamais nécessaire. FIN.**
+   - **cale ~0,52** ⇒ borné par la vue de jass → étape (6).
+   - **plate ~0,30** ⇒ FLIP %/depth/volume à creuser avant (6).
+2. **(6) Sparring vs Scan baseline** (B — à ÉCRIRE quand (5) cale) : jass vs Scan, labels résultat réel, rééquilibré W/D/L,
+   mixé self-play profond → **champion-B** (~Scan, casse le plafond 52 %). **Dépendance-Scan = allumage transitoire.**
+3. **(7) Self-play bootstrap DEPUIS champion-B** (à ÉCRIRE après (6)) : pilote shot-safe → self-play punit les shots → point fixe
+   remonte **sans Scan** → indépendance ; la classe linéaire grimpe-t-elle vers 0,70 ?
+4. **Gate NNUE (C3/C4)** : décisif **seulement si (7) reste <0,70** (avec C1 saturation + C4 vs-Scan ≤0,40, cf gate falsifiable).
+
+## ⏳ EN COURS (historique daté — 2026-06-25) — deux box, deux leviers en parallèle
+- **cpx62 → `0465-freshmix-12m`** : **reprise du plan de base** (self-play diversifié, 100 % épuré/boucle, 5 recettes de μ),
+  **pilote = champion-egdbmix**, ancre/juge = egdbmix (⇒ `vs_base>0,55` = la recette a cassé le point fixe du **meilleur**
+  champion actuel). Le plan de base n'avait **jamais** été joué (`0442` tué en vol pour le détour tactique). **Re-dimensionné
+  25M→12M** : TVR ⇒ au-delà de la saturation (~10M) le volume ne **déplace pas** le point fixe, il ne réduit que la variance
+  de `vs_base` (bruit dominant = le juge, 28 paires) ⇒ 12M screene en ~1,5 j au lieu de 3-4 ; on refit la gagnante à plein
+  volume ensuite. (`0463` à 25M tué.)
+- **ccx33 → `0464-master-combo-mining` ✅ FINI = PLAT (vérité externe NE bouge PAS 0440)** : 155k vraies combinaisons
+  minées (`data/expert_games.db` ; sac→regain net dans la ligne RÉELLE, gagnant au trait, label = résultat réel),
+  sur-pondérées ×8 (~5,4 % du corpus), même base que 0462. Conversion 0440 **apples-to-apples sur 232 ouvertures-attaquant
+  communes** : **combo 0,304 vs egdbmix 0,302 = +0,002** (juge tronqué à 76 % par le wall-time, mais la compa sur le
+  sous-ensemble jugé est propre). ⇒ **même la vérité-terrain tactique externe ne déplace pas 0440.** 3ᵉ échec données
+  d'affilée (0460 0,259 · 0462 0,285 · 0464 0,304) → **signal de plafond FEATURE linéaire le plus fort à ce jour.**
+  ⚠️ Caveat restant : combos à seulement ~5,4 % ⇒ **dilution** possible (vs vrai plafond) → levé par `0466`.
+- **ccx33 → `0466-combo-weight-doseresponse` ✅ FINI = DOSE-RÉPONSE PLATE (caveat dilution LEVÉ)** : mêmes combos 0464 à
+  **poids LOURD ~35 % du corpus** (1 fit, 1 juge vs Scan, DILF complet 305, **pas de troncature**). Conversion 0440 =
+  **0,308** (94/305). Dose-réponse **0 %→5,4 %→35 % = 0,302 → 0,304 → 0,308** : **PLATE**. ⇒ **ce n'était PAS la dilution** ;
+  même de vraies combinaisons à poids lourd ne déplacent pas 0440. **Le levier données-tactique C2-(2) est ENTIÈREMENT clos**
+  (4 formes : relabel, self-shot, vue-externe, vue-externe-lourde). ⚠️ Une seule réserve de VALIDITÉ subsiste (cf note gate).
+- **0456 (combine-egdbmix-μ) TUÉ** : zombie ~10,5 h (gen 10M trop lent sur ccx33 16gb) ; verdicts décisifs déjà tombés.
+
+## 🎯 RECADRAGE (JFC, 2026-06-25 soir) — ce n'est PAS un plafond de features, c'est la DISTRIBUTION des labels
+> **Objection décisive de JFC** : « ça doit décoller, sinon comment Scan aurait fait ? » — et il a raison. **Correction d'un
+> excès de pessimisme des notes précédentes** (« plafond FEATURE solide » = FAUX).
+- **Notre classe ⊇ celle de Scan** : 32cf (8,5M) **⊃** 8cf (2,1M) + features rois appariées (king_mob). Donc **les poids qui
+  convertissent les combinaisons EXISTENT dans notre classe** — au moins ceux de Scan, représentables exactement. **Scan = preuve
+  d'existence.** Si c'était un mur de représentation, **Scan ne convertirait pas non plus** (il convertit à 95 %). ⇒ **PAS un
+  plafond de features.**
+- **Donc c'est le FIT — précisément la DISTRIBUTION des labels** (Tsitsiklis-Van Roy : le point fixe linéaire-WDL = la distrib
+  d'entraînement). **Notre défaut** : self-play par un pilote **shot-aveugle**, joué **superficiellement (d8-d12)** ⇒ dans nos
+  parties **les shots ne sont jamais punis** ⇒ le WDL n'enseigne **pas** la sécurité tactique. L'entraînement de Scan avait des
+  shots punis. Même classe, distrib différente ⇒ poids différents.
+- **Pourquoi 0468/oversampling a échoué autrement que je le disais** : sur-pondérer des **racines** étiquetées par le résultat
+  est du **point-par-point** (ça corrompt les poids matériels) ; il faut que la shot-vulnérabilité → défaite sur des **milliers
+  de positions naturelles** (un déplacement de **distribution**, pas des points).
+- **LEVIER-FIT (sans Scan) = la PROFONDEUR DE JEU.** Re-étiqueter par recherche **profonde d16-d20** (où jass punit déjà ~52 %
+  des shots, cf 0451 movetime) ⇒ le WDL enseigne enfin la sécurité tactique ⇒ on monte vers **~0,52 (le plafond de NOTRE
+  recherche)**. C'est `--deep-relabel` (réserve dormante, réhabilitée). **Probe `ccx33-0470`** lancé (correctif de 0462 qui
+  filtrait à d6 = trop superficiel). **Cap honnête** : ne punit que les shots que jass VOIT (~52 %) ; au-delà → sparring fort
+  (Scan, distinct de la distillation) ou **bootstrap** (jeu profond → pilote plus fort → punit plus → itérer = la voie pure).
+- **0465 = version trop faible** (d10-d12, pas assez profond pour punir fiablement) : s'il sort plat, **ce n'est pas « le
+  linéaire est mort », c'est « la profondeur était trop basse »** → 0470 est le vrai test.
+
+> **DÉCISION GATE — où on en est (2026-06-25, après 0468 + recadrage)** : levier **données-tactique point-par-point** clos (5
+> formes : 0460/0462/0464/0466/0468, full-line à volume plein **dégrade** à 0,251). MAIS ce n'est **PAS** un plafond de features
+> (Scan le réfute) — **le levier-FIT par la PROFONDEUR DE JEU n'a jamais été poussé** (`0470` probe en cours, scale d18-20 +
+> bootstrap à suivre). **Items C2 restants** : profondeur-de-jeu/deep-relabel (`0470`+) · données-μ (`0465`). [`JASS_DRAWISH_SCALING`
+> = ☠️ **DEAD END** : 0353 neutre + finale-only ⊥ gap midgame.] **Tant que la profondeur de jeu n'est pas épuisée (probe → scale → bootstrap), AUCUNE ouverture du débat NNUE** —
+> c'est le cœur du « linéaire poussé à fond ». C3/C4 ne deviennent décisifs qu'après ça.
+
+## 🧮 DÉCIDEUR FINAL DU LINÉAIRE (ajouts JFC 2026-06-25 soir — A & B) — la COURBE, puis le SPARRING
+> Le levier-fit ne se juge **pas** sur un probe unique : deep-relabel ne punit que les **~52 %** de shots que le pilote VOIT
+> (cf 0451) ⇒ son plafond intrinsèque sur 0440 ≈ **0,52**. Donc `0470>0,35` une fois ne prouve **rien de structurel**.
+
+- **A — Bootstrap jugé sur la COURBE d'asymptote** (`0471-bootstrap`, armé) : relabel **ITÉRÉ** (pilote plus fort → punit plus
+  → relabel → refit), instrumenté **pass-après-pass** : on logue la suite `{0440_p1, 0440_p2, …}` (+ FLIP %) dans `curve.txt`.
+  **Lecture** : asymptote **≥0,70** ⇒ le linéaire **gagne** (bootstrap converge au-dessus de C3) → NNUE jamais nécessaire ·
+  asymptote **calée ~0,52** ⇒ borné par la **vue de jass**, PAS par la classe → **levier B avant tout NNUE** · plate ~0,30 ⇒
+  le relabel ne prend pas (FLIP % faible / depth / volume) → creuser.
+- **B — C2-(4) NOUVEAU : SPARRING vs Scan, labels = RÉSULTAT RÉEL** (à monter SI le bootstrap cale ~0,52) : jass joue **contre
+  Scan**, parties étiquetées par le **résultat W/D/L** — **aucune éval moteur dans le label**. ⇒ **NI distillation** (≠ éval-Scan
+  comme cible, ⛔) **NI auto-supervision** (≠ labels-jass, mort 0460-0468). Un adversaire qui voit **95 %** des shots fabrique la
+  distribution-punie que le deep-relabel produit en interne, **sans le plafond des 52 %**. Jamais essayé sous cette forme.
+  - ✅ **B = ALLUMAGE, dépendance-Scan TRANSITOIRE (cadrage JFC 2026-06-25)** : B ne sert qu'à **fabriquer une BASELINE** —
+    casser le plafond des 52 % en important la distribution-punie d'un agent voyant. **Derrière, on REPART en self-play** avec
+    le **champion-B comme pilote** : ce pilote étant shot-safe (~Scan), ses parties self-play **punissent enfin les shots** → le
+    point fixe self-play se déplace au niveau shot-safe **sans Scan** → **indépendance retrouvée**, et le bootstrap self-play
+    peut continuer à grimper (potentiellement au-delà de Scan, n'étant plus borné par son jeu exact). ⇒ la dépendance-Scan est
+    **un démarreur ponctuel, pas un plafond** : c'est l'échappée façon AlphaZero (prof externe une fois → auto-amélioration).
+  - Failles à gérer au build : (1) labels **biaisés perte** (jass perd la plupart des milieux vs Scan) → **rééquilibrer** W/D/L
+    au fit ; (2) volume borné par la vitesse de Scan → movetime modéré + paralléliser ; (3) punition récoltée **seulement** où
+    jass marche dans un shot vs Scan → **mélanger** avec self-play profond pour la couverture positionnelle. (Job écrit au
+    moment où A cale, son dimensionnement utilisant FLIP %/asymptote observés.)
+- **SÉQUENCE LINÉAIRE COMPLÈTE (le « poussé à fond »)** : (5) deep-relabel bootstrap (A, auto, cap ~0,52) → (6) sparring-Scan
+  baseline (B, allumage externe, ~Scan) → **(7) self-play bootstrap DEPUIS le champion-B** (indépendance ; la classe linéaire
+  sustain/grimpe-t-elle vers 0,70 une fois débloquée ?). **C3/C4 ne deviennent décisifs qu'APRÈS (7).** Un bootstrap <0,70 à
+  l'étape (5) **n'ouvre PAS** le NNUE — il enchaîne sur (6) puis (7).
+## 🔬 DOUTE-VOLUME (JFC, 2026-06-25) — pris en compte : 0466/0467 affamaient le pool, refait à volume plein
+> Question : a-t-on conclu/fermé des leviers sur des volumes trop faibles (= la famine 0401 qu'on a passé le programme à fuir) ?
+> **Cartographie** : architecture (29-36M, dé-confondue) · egdbmix/0461/0462/0464 = **base PLEINE 18M+4M** (saturation,
+> appariée). **MAIS `0466`/`0467` ont rétréci le pool à 5M** pour monter les combos à 35 % ⇒ **base sous-saturation, sans
+> contrôle apparié** ⇒ leur « plat à poids lourd » **n'est pas concluant**.
+- **Ce qui TIENT** : `0464` est déjà un null PROPRE — egdbmix **EST** le champion « 18M+4M sans combos » (contrôle apparié),
+  0464 = même base **+ combos 5,4 %** = 0,304 vs 0,302 ⇒ combos n'ajoutent rien **à saturation, contrôle apparié**.
+- **Ce qui était FRAGILE** : « les combos LOURDES n'aident pas » (0466/0467) — testé en **affamant** le pool, pas en répliquant.
+- **CORRECTION `0468` ✅ FINI (full-line à volume PLEIN, `0467` 5M tué)** : pool **18M** (saturation, apparié egdbmix) +
+  671k positions full-line montées à ~35 % **par RÉPLICATION** (pool jamais réduit) + **bootstrap IC95**. Verdict :
+  **conversion 0440 = 0,251 [0,205 ; 0,297]** — egdbmix 0,302 est **HORS l'IC95 (au-dessus)** ⇒ full-line à volume propre
+  **ne monte pas, il DÉGRADE** (significativement). Sur-pondérer la ligne forçante (nœuds matériel-en-bas étiquetés
+  « gagnant ») **corrompt** l'éval linéaire (elle ne peut représenter « en-moins-de-matériel MAIS gagnant » → le signal se
+  smear dans les poids matériels). ⇒ **doute-volume LEVÉ : le test lourd, refait proprement, confirme le null — et pire.**
+  **Le levier données-tactique est CLOS, sans reproche de volume** (5 formes : relabel, self-shot, racine-léger, racine-lourd,
+  full-line-lourd — la seule à volume sous-saturé était 0466, redondante avec 0468/0464).
+- **Résolution du juge (chiffrée)** : 0440 = **305 positions** ⇒ IC95 bootstrap **≈ ±0,05** (egdbmix 0,302 ∈ [0,25 ; 0,35]).
+  Un vrai levier doit pousser 0440 **> ~0,35** (hors IC) pour compter ; aucune supervision tactique n'en approche.
 
 ## 🧭 RÉÉVALUATION MÉTHODO 2026-06-24 (failles critiques — prises en compte)
 > Le juge primaire (self-direct) est **AVEUGLE au mode d'échec** : si champ_k et champ_{k-1} partagent la cécité
@@ -27,22 +202,27 @@
 - **GATE PRIMAIRE AJOUTÉ — conversion combinaisons 0440** (`data/dilf_combinations.fen`, vs Scan, depth-fixe) : mesurée à
   **CHAQUE champion**, loguée ici **au même rang que le self-direct**. Progrès = `25 % → ?`. (Vérité = recherche/EGDB, pas
   « battre Scan » au plancher → non bruité.) Le self-direct seul ne suffit plus.
-- **FIT vs FEATURE — test décisif AVANT de parier l'itération** (`0457`) : re-juger **men-only vs king-aware SPÉCIFIQUEMENT
-  sur le set 0440** (pas en agrégat — le verrou 0401/0408/0409 était sur la force GLOBALE). men-only **lit une case de roi
-  comme vide** ⇒ suspect si une combinaison s'articule sur un roi. Si king-aware convertit MIEUX sur 0440 ⇒ c'est la
-  **FEATURE** (l'itération n'y touchera JAMAIS, géométrie à rouvrir) ; si égal/pire ⇒ c'est le **FIT** (notre pari tient).
-- **LEVIER TACTIQUE DIRECT (anti-25 %)** : la doctrine « WDL seul non borné » est **mal appliquée à nos défaites** — ce sont
-  des **lignes FORCÉES** (2-6 plis, dans l'horizon) ⇒ recherche profonde + quiescence **résout le matériel en vérité-terrain,
-  PAS borné par l'éval** ⇒ **ce n'est PAS de la distillation.** Le self-play WDL **mal-étiquette** ces positions (jass ne
-  convertit que 25 % → label « gagnant » faux 75 % du temps). Lever = **flux de supervision tactique dédié** : miner les
-  positions à shot (détecteurs dilf / filtre « shot ≥2 matériel en ≤k plis ») → labels **recherche profonde / EGDB**
-  (vérité-terrain) → **sur-pondérés** dans le fit WDL. Attaque directe le mode d'échec, sans Scan. (Ré-habilite `--deep-relabel`
-  appliqué aux positions **tactiquement vivantes**, pas random.)
+- **FIT vs FEATURE — ✅ TRANCHÉ (0461, 2026-06-25) = FIT** : men-only vs king-aware jugés **sur le set 0440** ⇒
+  **men-only 0,300 · king-aware 0,284** (king-aware n'aide PAS). Le pari FIT/données tient, **géométrie verrouillée**.
+  (cf VERDICTS 2026-06-25 en tête.)
+- **LEVIER TACTIQUE DIRECT (anti-25 %)** — la doctrine « WDL seul non borné » est **mal appliquée à nos défaites** (lignes
+  FORCÉES 2-6 plis, dans l'horizon, résolubles en vérité-terrain → PAS de la distillation). MAIS ⚠️ **la forme
+  AUTO-supervisée a ÉCHOUÉ** (0460 relabel-tout 0,259 ; 0462 shot-filter labels-jass 0,285) : **les labels produits par la
+  recherche de jass ne couvrent que les shots qu'il voit déjà** — pas ses angles morts (= le trou 0440). ⇒ **le flux tactique
+  doit venir d'une VUE EXTERNE** : combinaisons de **vraies parties de maîtres** (sac→regain net dans la ligne réelle,
+  label = résultat réel), `0464` en cours. (cf VERDICTS 2026-06-25.)
 - **GATE NNUE FALSIFIABLE (FIXÉ 2026-06-24)** — s'ouvre **ssi les 4 conditions tiennent simultanément** :
   - **C1 saturation** : self-direct (gen_k vs gen_{k-1}) ≤ 0,52 × 3 itérations consécutives, corpus ≥ 60M.
-  - **C2 leviers épuisés (LISTE CLOSE, aucun ajout)** : (1) men-only vs king-aware/0440 (`0457`) · (2) supervision tactique
-    (`0458`) · (3) `JASS_DRAWISH_SCALING` testé en jeu · (4) géométrie plus riche SI `0457`=feature. [déjà faits : king_mob,
-    egdb-mix]. Liste finie → on ÉVALUE ; **pas de « encore une idée »** (= le cœur anti-tapis-roulant).
+  - **C2 leviers épuisés (LISTE CLOSE, aucun ajout)** : (1) ✅ men-only vs king-aware/0440 (`0461` = FIT, fait) ·
+    (2) supervision tactique ✅ **CLOSE** — AUTO (0460/0462) ET VÉRITÉ-EXTERNE diluée+lourde (`0464` 0,304 / `0466` 0,308),
+    **dose-réponse PLATE 0→35 %** ⇒ pas la dilution ; réserve validité « full-line » à arbitrer · (3) `JASS_DRAWISH_SCALING` ✅ **DEAD END** (0353 neutre + finale-only ⊥ gap midgame) ·
+    (4) ✅ géométrie plus riche — **N/A** (0461=FIT) · **(5) PROFONDEUR DE JEU / deep-relabel bootstrap** (`0470`/`0471`,
+    jugé sur la COURBE d'asymptote vs 0,70) · **(6) SPARRING vs Scan, labels résultat réel** (C2-(4) du mémo — CONDITIONNEL,
+    si (5) cale ~0,52 ; réintroduit la dépendance-Scan, plafonne ~Scan) · (données-μ) `0465` = **mauvais cheval** (d10-d12 trop
+    superficiel, ne pas conclure dessus).
+    [déjà faits : king_mob, egdb-mix]. Liste finie → on ÉVALUE ; **pas de « encore une idée »**.
+    **C2 n'est vidé que quand (5) la courbe-bootstrap ET (6) le sparring ont tourné** (un bootstrap calé <0,70 n'ouvre PAS le
+    gate tant que (6) n'a pas été essayé). Alors seulement C3/C4 deviennent décisifs.
   - **C3 conversion 0440 plafonnée ET basse** : meilleure conversion 0440 (a) n'améliore plus de ≥0,05 sur les 2 derniers
     leviers, ET (b) reste **< 0,70**.
   - **C4 vs-Scan confirme** : champion saturé, **éval-pur depth-fixe**, **N≥550 (ou SPRT)**, score **≤ 0,40**.
@@ -66,10 +246,11 @@
 - **FEATURES = MATCHÉES À SCAN** : géométrie patterns identique (men-only ternaire, dead lever 0203-0236) + features
   king/confinement présentes et fittées ⇒ **pas de feature riche manquante.** Le mur restant = **FIT des poids de
   patterns au MILIEU** (combinaisons), borné par la distribution self-play → c'est `0442`/`0456` (données/μ).
-- **EN COURS** : `0456` (synthèse — champion-egdbmix piloté + μ diversifié + egdb → conversion combos vs Scan = LE test
-  milieu) ; `0442` (freshmix 25M, lent). **Jauge forward = conversion combinaisons dilf vs Scan (0440 : 0,246).**
-- **LEADS DORMANTS** (post-milieu) : **`JASS_DRAWISH_SCALING`** (seule non-linéarité localisée de Scan, codée, **jamais
-  testée en jeu** — interprétable, autorisée) ; value-target distillation indépendante (`0443` paused, **seulement itérée**).
+- **EN COURS (2026-06-25)** : `0465` (plan de base 12M, pilote egdbmix) + `0464` (vérité tactique externe). `0456`/`0442`
+  **tués/superseded** (cf VERDICTS 2026-06-25). **Jauge forward = conversion combinaisons dilf vs Scan (0440 ; egdbmix = 0,302).**
+- **LEADS DORMANTS** (post-milieu) : ~~`JASS_DRAWISH_SCALING`~~ **☠️ DEAD END** (0353 neutre + finale-only, orthogonal au gap
+  midgame — cf branches mortes) ; value-target distillation indépendante (`0443` paused) = **réhabilitée** comme le levier-fit
+  profondeur-de-jeu (`0470`/`0471` deep-relabel).
 
 ## 🔬 DIAGNOSTIC 2026-06-23 — on perd vs Scan par COMBINAISONS en milieu de partie (pas finale, pas profondeur)
 > 📋 Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md). Match eval-pur no-DB, champion 3e-5 vs Scan (0435).
@@ -206,7 +387,8 @@ champ_k vs champ_{k-1} ≤ 0,52 (≈1σ@1000) 3 tours + cumulé ≤0,53, par arc
 | WDL/bootstrap depuis data DÉJÀ forte/drawish | MORT (0356/0357 : cible ≈0.5) | départ faible décisif |
 | **« Géométrie morte » / « élaguer la capacité »** | ⚠️ **CONFONDU par le fit-volume** (testé à ≤2M) | **À REVISITER** (color-fold + 30M+) |
 | **FM/MLP (NNUE)** | ⛔ **INTERDIT** (règle gravée 2026-06-23) | best-linear-fit ATTEINT **et** prouvé < Scan (linéaire épuisé : distill-Scan, itération, géométrie) |
-| Drawish ÷8/÷2 | NEUTRE en jeu (0353), codé défaut 0 | — |
+| Drawish ÷8/÷2 (`JASS_DRAWISH_SCALING`) | ☠️ **DEAD END (2026-06-25)** : NEUTRE en jeu (0353) **+** feature de FINALE only (gagnant ≤3p vs roi / matériel quasi-égal) → **orthogonale au gap MIDGAME** (0440) → ne peut le bouger par construction ; la recherche résout déjà ces finales rares. C2-(3) clos. | — (rien ne le ressuscite : le gap n'est pas en finale) |
+
 
 ## Pipeline actif (2026-06-21) — socle 60M → gates → ITÉRATION
 > 📘 Mécanique détaillée → [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) §7 (boucle d'itération 60M).
