@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0476-champ3-tactique-0440",
+  "script": "jobs/queue/ccx33-0476-champ3-tactique-0440.sh",
+  "pid": 2859736,
+  "started_at": "2026-06-27T09:40:09+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
