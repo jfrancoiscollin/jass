@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0477-sparring-v2-localized",
+  "script": "jobs/queue/ccx33-0477-sparring-v2-localized.sh",
+  "pid": 2860539,
+  "started_at": "2026-06-27T09:50:25+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
