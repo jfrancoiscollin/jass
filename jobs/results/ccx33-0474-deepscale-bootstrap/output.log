@@ -1,0 +1,30 @@
+  egdb : /root/egdb_extracted/app ; KPASS=3 ; NSAMPLE=350000 ; relabel d16
+=== build jass JASS_EGDB=ON ===
+=== assemble pool (12000000) + gen egdb (4000000) une fois ===
+écrit /root/cw-bootstrap74/pool.jnnw : 50210792 records, 1908010104 octets
+  pool : 12000000
+pass 0  pilote=egdbmix  baseline 0440=0.302  cap-vue-jass~0.52  seuil-C3=0.70
+
+================= PASSE 1 / 3 (pilote = egdbmix) =================
+  passe 1 : echantillon milieu frais = 350000 (8 shards)
+  passe : relabel 350000 ; FLIP=41% [deep L=90435 D=162077 W=97488]
+pass 1  0440=0.251  IC95=[0.208,0.297]  FLIP=40.8%  (n=305 ; egdbmix 0.302 HORS l'IC)
+
+================= PASSE 2 / 3 (pilote = champion-passe-1) =================
+  passe 2 : echantillon milieu frais = 350000 (8 shards)
+  passe : relabel 350000 ; FLIP=41% [deep L=91186 D=160017 W=98797]
+pass 2  0440=0.292  IC95=[0.243,0.341]  FLIP=40.8%  (n=305 ; egdbmix 0.302 DANS l'IC)
+
+================= PASSE 3 / 3 (pilote = champion-passe-2) =================
+  passe 3 : echantillon milieu frais = 350000 (8 shards)
+  passe : relabel 350000 ; FLIP=40% [deep L=89571 D=163691 W=96738]
+pass 3  0440=0.277  IC95=[0.231,0.328]  FLIP=40.4%  (n=305 ; egdbmix 0.302 DANS l'IC)
+
+================= COURBE D'ASYMPTOTE (le decideur) =================
+  pass 3  0440=0.277  IC95=[0.231,0.328]  FLIP=40.4%  (n=305 ; egdbmix 0.302 DANS l'IC)
+
+  LECTURE :
+   suite {0440_p1..pK} GRIMPE vers >=0.70  => le linaire GAGNE (bootstrap converge au-dessus de C3) => NNUE jamais necessaire.
+   suite CALE ~0.52 (plateau, IC se chevauchent) => borne par la VUE de jass (~52% des shots), PAS par la classe
+        => passer au levier B = SPARRING vs Scan (labels resultat reel, C2-(4)) AVANT toute ouverture NNUE.
+   suite plate ~0.30 => meme le relabel profond ne prend pas (FLIP% faible ? depth ? volume ?) => creuser avant de conclure.
