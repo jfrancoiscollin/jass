@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0475-sparring-v2-localized",
-  "snapshot_at": "2026-06-27T09:03:12+00:00",
+  "snapshot_at": "2026-06-27T09:08:35+00:00",
   "started_at": "2026-06-27T08:16:49+00:00",
-  "elapsed_seconds": 2783,
+  "elapsed_seconds": 3106,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2856031       1       46:22  0.0  0.0 bash\n2856033 2856031       46:22  0.0  0.0 bash\n2857824 2856033       21:45  103 48.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2856031       1       51:46  0.0  0.0 bash\n2856033 2856031       51:46  0.0  0.0 bash\n2857824 2856033       27:08  102 46.9 python3\n"
 }
