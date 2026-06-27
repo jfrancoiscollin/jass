@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0483-forcing-extension-ab",
-  "snapshot_at": "2026-06-27T22:04:03+00:00",
+  "snapshot_at": "2026-06-27T22:09:24+00:00",
   "started_at": "2026-06-27T21:54:01+00:00",
-  "elapsed_seconds": 602,
+  "elapsed_seconds": 923,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3837598       1       10:01  0.0  0.0 bash\n3837600 3837598       10:01  0.0  0.0 bash\n3838427 3837600       00:12  0.0  0.0 bash\n3838428 3838427       00:12  2.9  0.0 python3\n3838429 3838428       00:12 84.2  0.5 jass\n3838431 3838428       00:12 14.3  0.9 scan_linux\n3838434 3838428       00:11  0.2  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3837598       1       15:22  0.0  0.0 bash\n3837600 3837598       15:22  0.0  0.0 bash\n3838427 3837600       05:33  0.0  0.0 bash\n3838428 3838427       05:33  3.2  0.0 python3\n3838429 3838428       05:33 78.8  0.5 jass\n3838431 3838428       05:33 18.9  0.9 scan_linux\n3838434 3838428       05:32  0.3  0.0 jass\n"
 }
