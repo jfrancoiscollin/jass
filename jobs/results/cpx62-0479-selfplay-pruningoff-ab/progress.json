@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0479-selfplay-pruningoff-ab",
-  "snapshot_at": "2026-06-27T12:14:03+00:00",
+  "snapshot_at": "2026-06-27T12:20:02+00:00",
   "started_at": "2026-06-27T11:06:04+00:00",
-  "elapsed_seconds": 4079,
+  "elapsed_seconds": 4438,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3811727       1    01:07:58  0.0  0.0 bash\n3811729 3811727    01:07:58  0.0  0.0 bash\n3814094 3811729       04:44  112 21.5 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3811727       1    01:13:58  0.0  0.0 bash\n3811729 3811727    01:13:58  0.0  0.0 bash\n3814094 3811729       10:44  110 21.4 python3\n"
 }
