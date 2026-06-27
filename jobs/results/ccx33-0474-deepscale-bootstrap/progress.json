@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0474-deepscale-bootstrap",
-  "snapshot_at": "2026-06-27T07:15:05+00:00",
+  "snapshot_at": "2026-06-27T07:20:13+00:00",
   "started_at": "2026-06-26T16:24:14+00:00",
-  "elapsed_seconds": 53451,
+  "elapsed_seconds": 53759,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2817909       1    14:50:50  0.0  0.0 bash\n2817911 2817909    14:50:50  0.0  0.0 bash\n2845781 2817911    04:11:17 99.9  2.1 jass\n2845783 2817911    04:11:17 99.9  2.1 jass\n2845784 2817911    04:11:17 99.9  2.1 jass\n2845786 2817911    04:11:17 99.9  2.1 jass\n2845788 2817911    04:11:17 99.9  2.1 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2817909       1    14:55:58  0.0  0.0 bash\n2817911 2817909    14:55:58  0.0  0.0 bash\n2853959 2817911       02:17  115 51.8 python3\n"
 }
