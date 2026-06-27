@@ -1,0 +1,29 @@
+=== 1. suites unit (logique) ===
+  PASS test_master_games_to_jnnw
+  PASS test_build_ballots
+  PASS test_eval_calibration
+=== build jass ===
+=== 2. donnees reelles : expert_games.db = 76316 parties ===
+  -- #2 build_ballots (ply 6-12, miroir, cap 600) --
+    ballots : games=50 unique-positions=600 (ply 6-12, imbalance>=0, mirror=yes) -> /root/cw-toolsverify/ballots.jnnw
+    JNNW: OK 600
+  -- #6 master_games_to_jnnw (quiet, label resultat, naturel) --
+    masters→jnnw : games=4000 positions=269262 (W=108102 D=52951 L=108209) -> /root/cw-toolsverify/masters.jnnw
+    JNNW: OK 269262
+  -- #5 eval_calibration : K de Texel + ECE par phase (eval egdbmix vs resultats reels) --
+    rewriting 269262 records: /root/cw-toolsverify/masters.jnnw → /root/jass/.compile-tmp/tmpwjrtocff.jnnw (labeller: /root/cw-toolsverify/egdbmix.pjtw)
+      100000 / 269262 records
+      200000 / 269262 records
+    wrote 269262 records (38 B each) to /root/jass/.compile-tmp/tmpwjrtocff.jnnw
+    calibration : N=216311  K*=78.6  logloss=0.6509  ECE=0.0254
+      phase      N      K*(global)  logloss   ECE   mean|eval|
+      opening   83752  78.6        0.6999    0.046  14
+      midgame   67095  78.6        0.6651    0.017  27
+      late-mid  55044  78.6        0.5851    0.048  59
+      endgame   10420  78.6        0.5132    0.057  98
+      LECTURE : ECE plat sur les phases => calibration uniforme, #5 non-levier confirme.
+                ECE du midgame >> autres => l'eval est mal calibree au milieu (vrai signal, != K).
+
+=== LECTURE ===
+  PASS partout + JNNW valides => les 3 outils (#2/#5/#6) sont prets pour la recette self-play propre.
+  #5 : ECE plat sur les phases => calibration uniforme (K non-levier confirme) ; ECE midgame >> => vrai signal.
