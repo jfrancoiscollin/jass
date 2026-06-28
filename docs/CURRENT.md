@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-27** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-28** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -94,16 +94,50 @@
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
 
-## 🔬 EN TEST MAINTENANT (2026-06-27 nuit) — confirmer le levier recherche + lancer la recette propre
-| box | job | ce qu'on teste | décision |
-|---|---|---|---|
-| **cpx62** | `0485-forcing-ext-depthsweep` ⏳ | **TEST DU MIRAGE D11** : 0440 à **d13/d15** (les profondeurs du jeu réel), baseline vs ext_forcing | **d15_ext ≫ d15_base** = vrai levier au-delà de la profondeur → **baker** ext_forcing ; **d15_ext ≈ d15_base (~0,52)** = la profondeur substitue (mirage, cohérent 0451) → garder OFF |
-| **ccx33** | `0486-selfplay-clean` ⏳ | **RECETTE PROPRE** : gen `--quiet-only` (#4) + `--seed-file=ballots` (#2) + mix **masters-naturels** (#6), pilote egdbmix, **ext_forcing OFF au gen** (§3). Fit + juge 0440 + vs_egdbmix | 0440 hors-IC > 0,302 → la recette éval déplace la conversion ; plat → prioriser la RECHERCHE (0485) |
+## 🔥 VERDICT 0485 (2026-06-28) — PAS un mirage d11 : ext_forcing tient à TOUTE profondeur
+> Test du mirage : 0440 (egdbmix, eval-pur no-DB, vs Scan, sans re-entraînement) aux profondeurs du jeu réel.
 
-- **0484 (vérif outils) = FINI rc=0** mais sortie perdue (non-flush + workdir box-local). Suites unit **vertes en local** (déterministe). La calibration #5 réelle est reperdue ; `0486` re-valide #2/#6 **sur vraies données au passage** (avec fallback dilf+lidraughts si `expert_games.db` absent).
-- **Gen ext_forcing OFF (briefing §3)** : une recherche plus propre au gen RETIRE le signal-shot des labels ; l'extension sert au **JEU**, pas au gen. Si 0485 valide l'extension, on la bake au **déploiement** (movetime), sans re-gen.
-- ⚠️ **Caveat 0451** (le piège à éviter) : `no_reduce_forcing` à **movetime** = 0,506 ≈ 0,519 baseline (redondant car jass
-  atteint déjà d14-16). Donc si 0483 (d11) monte, il **faut** un A/B **movetime NPS-compensé** pour écarter le « mirage d11 ».
+| profondeur | baseline | ext_forcing | écart |
+|---|---|---|---|
+| d11 (0483) | 0,302 | 0,603 | +0,30 |
+| d13 | 0,382 | 0,652 | +0,27 |
+| **d15** | **0,502** | **0,726** | **+0,22** |
+
+- La baseline monte vers ~0,52 avec la profondeur (cohérent movetime 0,519/0451 — la profondeur substitue en partie).
+  **MAIS ext_forcing reste loin au-dessus à toute profondeur**, y compris d15 : **0,726 vs 0,502, IC disjoints**.
+  **L'extension est un vrai levier de recherche, au-delà de la profondeur — pas un artefact d11.** (Caveat : d15_ext
+  n=93/305, lent ; mais borne basse 0,645 ≫ 0,502 ⇒ direction certaine.)
+- ⚠️ **0487 (bake-decider movetime, ON vs OFF @ temps égal) = FINI rc=0 mais SORTIE PERDUE** (non-flush : shards écrits
+  en fin de job, committés vides). Le « net positif à temps fixe » n'est pas mesuré ⇒ **à re-run** (shards incrémentaux).
+  L'évidence depth-fixe (0485) reste forte pour baker, mais le coût-en-nœuds à movetime n'est pas confirmé.
+
+## 🛠️ FORCING-EXT SPEC (2026-06-28) — 3 slots + self-play ASYMÉTRIQUE + cap (implémenté, vérifié)
+> Affinement de #1 (cadrage JFC). Implémenté dans `src/` + déployé `main`. **Découverte pipeline** : dans notre
+> `gen-data-wdl`, le **label = RÉSULTAT de la partie (rollout)** ; le « label search » ne fixe que le champ `score`,
+> **IGNORÉ par logistic-WDL** (compte seulement pour `--target value`). ⇒ le slot **gen-label est un no-op pour notre
+> recette** ; le lever au gen = **gen-play** (le rollout fait le WDL).
+
+- **3 slots** (`search.cpp`/`main.cpp`) : `test` (match, déjà via `--jass-search-params`), `--search-params-play`
+  (rollout→WDL, le vrai levier), `--search-params-label` (score, ignoré en WDL). Back-compatible.
+- **Asymétrie §4** (`--asym-punisher-params`) : couleur **punisher** aléatoire/partie joue `ext_forcing=1` (voyante) vs
+  **victim** aveugle ⇒ fabrique la classe **« shot-vulnérable ATTEINTE par la victime → PUNIE → label DÉFAITE »** que le
+  self-play symétrique n'a pas. Réponse directe au mur 0460/0462, **sans Scan**.
+- **`forcing_ext_cap`** : garde-fou anti-explosion (cap des extensions accumulées sur un chemin). Vérifié : 187k→87k nœuds.
+- Tout **vérifié en local** (gen asym + slots + cap → JNNW valides ; cap réduit les nœuds).
+
+## 🔬 EN TEST MAINTENANT (2026-06-28) — le LADDER de recettes gen (couplé ballot/asym)
+> Le décideur gen pour notre pipeline = **gen-play** (pas gen-label). 3 recettes comparées sur 0440, base egdbmix 0,302 :
+
+| box | job | recette gen | rôle |
+|---|---|---|---|
+| **ccx33** | `0486-selfplay-clean` ⏳ tourne | play **OFF** / label OFF (+ quiet-only #4 + ballots #2 + masters #6) | baseline : vulnérable atteinte mais **non punie** (mur 0460/0462) |
+| **ccx33** | `0488-selfplay-extgen` ⏳ en file | play **ON** (symétrique) | punie mais **trop propre** (§3) — + exploration |
+| **cpx62** | `0489-selfplay-asym` ⏳ tourne | **ASYMÉTRIE** punisher ON / victim OFF | atteinte **ET** punie = le signal manufacturé (§4) |
+
+- **Lecture** : 0440(asym/0489) **>** 0486 ET 0488, hors-IC ⇒ l'asymétrie débloque l'auto-supervision **sans Scan** ⇒
+  industrialiser. Plat ⇒ le résidu est RECHERCHE (baker ext_forcing au jeu, cf 0487 à re-run) ou plafond-de-jeu.
+- **Caveat seed** : 0489 sur cpx62 peut tomber en fallback dilf+lidraughts (DB box-local ccx33) ⇒ comparer à égalité de seeds.
+- **0484 (vérif outils)** = fini rc=0, sortie perdue (non-flush) ; suites unit vertes en local ; 0486/0489 re-valident #2/#6 sur vraies données.
 
 ### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
 > Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
