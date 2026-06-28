@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0487-forcing-ext-movetime",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-28T05:08:53+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3854059
+  "ended_at": "2026-06-28T05:35:28+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
