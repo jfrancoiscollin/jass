@@ -339,6 +339,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     std::string  search_spec;                // --search-params : applied to PLAY+LABEL search
                                             //      (e.g. pruning OFF so self-play PUNISHES shots
                                             //      → labels teach shot-safety, cf Scan recipe)
+    // Slot separation (forcing-ext SPEC). The 3 slots = test / gen-play / gen-label. The TEST
+    // slot lives in the match tools (calibrate --jass-search-params). Here we split GEN:
+    //   --search-params-play  : the ROLLOUT search → it decides the game OUTCOME → the WDL of every
+    //                           sample. THIS is the lever for logistic-WDL (the default recipe).
+    //   --search-params-label : the LABELLING search → only sets the per-sample `score` field, which
+    //                           logistic-WDL training IGNORES (it matters ONLY for --target value).
+    //   --asym-punisher-params: if set, ASYMMETRIC self-play. Each game a random "punisher" colour
+    //                           plays with these params (e.g. ext_forcing=1) while the "victim" plays
+    //                           the base play params. Manufactures the class symmetric play lacks:
+    //                           vulnerable position REACHED by the (blind) victim → PUNISHED by the
+    //                           (seeing) punisher → labelled LOSS (forcing-ext SPEC §4).
+    // Empty per-slot spec falls back to --search-params.
+    std::string  search_spec_play;
+    std::string  search_spec_label;
+    std::string  search_spec_punisher;
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -378,6 +393,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (v >= 0) explore_eps = v;
         } else if (a == "--search-params" && i + 1 < argc) {
             search_spec = argv[++i];
+        } else if (a == "--search-params-play" && i + 1 < argc) {
+            search_spec_play = argv[++i];
+        } else if (a == "--search-params-label" && i + 1 < argc) {
+            search_spec_label = argv[++i];
+        } else if (a == "--asym-punisher-params" && i + 1 < argc) {
+            search_spec_punisher = argv[++i];
         } else {
             positional.push_back(argv[i]);
         }
@@ -386,7 +407,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         parse_depth_by_phase(label_depth_spec, "--label-depth-by-phase");
     const std::array<int, NUM_PHASES> play_depth_by_phase =
         parse_depth_by_phase(play_depth_spec, "--play-depth-by-phase");
-    const SearchParams gen_params = jass::parse_search_params(search_spec);  // PLAY+LABEL search params
+    const SearchParams gen_params = jass::parse_search_params(search_spec);  // PLAY+LABEL fallback
+    // Per-slot params (forcing-ext SPEC) : empty falls back to gen_params (back-compatible).
+    const SearchParams play_params  = search_spec_play.empty()
+        ? gen_params : jass::parse_search_params(search_spec_play);
+    const SearchParams label_params = search_spec_label.empty()
+        ? gen_params : jass::parse_search_params(search_spec_label);
+    const bool asym_mode = !search_spec_punisher.empty();
+    const SearchParams punisher_params = asym_mode
+        ? jass::parse_search_params(search_spec_punisher) : play_params;
     const int p_argc = static_cast<int>(positional.size());
     char** const p_argv = positional.data();
 
@@ -565,6 +594,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         // path treats unresolved games as drawn.
         int outcome_white = 0;
         bool game_ended_by_loss = false;
+        // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
+        // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
+        // (blind → stumbles into shots). Random per game so neither colour is systematically favoured.
+        const bool punisher_is_white = (rng() & 1u) != 0u;
 
         for (int ply = 0; ply < max_plies; ++ply) {
             MoveList ml;
@@ -619,7 +652,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 const int this_label_depth = (phase_ovr > 0) ? phase_ovr : eval_depth;
                 SearchLimits lim;
                 lim.max_depth = this_label_depth;
-                lim.params    = gen_params;
+                lim.params    = label_params;   // gen-label slot (only sets `score` ; WDL-logistic ignores it)
                 const SearchResult r = e.search(lim);
                 Sample s;
                 s.bbs[0] = pos.white_men();
@@ -698,7 +731,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             const int phase_pd =
                 play_depth_by_phase[phase_index_of(popcount(e.position().occupied()))];
             lim.max_depth = (phase_pd > 0) ? phase_pd : play_depth;
-            lim.params    = gen_params;
+            // gen-play slot. In asymmetric mode the side-to-move uses punisher_params when it is the
+            // game's punisher colour, else play_params (the blind "victim"). Non-asym = play_params.
+            const bool stm_is_punisher =
+                (e.position().side_to_move() == Color::White) == punisher_is_white;
+            lim.params    = (asym_mode && stm_is_punisher) ? punisher_params : play_params;
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
             const SearchResult r = e.search(lim);
             // Epsilon-random exploration : with probability explore_eps%, play a
@@ -1555,7 +1592,7 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
-// --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]
+// --deep-relabel <in.jnnw> <out.jnnw> [depth=18] [--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]
 // Independent value-target distillation (option B) : rewrite each record's SCORE
 // field with the value of a DEEP jass search (STM-POV, search-amplified), and its
 // WDL byte with the sign. With --egdb, endgame positions egdb can resolve get the
@@ -1565,10 +1602,10 @@ int run_egdb_relabel_mode(int argc, char** argv) {
 // cores in the job for parallelism.
 // -----------------------------------------------------------------------------
 int run_deep_relabel_mode(int argc, char** argv) {
-    std::string in_path, out_path, nnue_path, label_spec, egdb_dir;
+    std::string in_path, out_path, nnue_path, label_spec, egdb_dir, search_spec;
     int depth = 18, cache_mb = 1024;
+    std::int32_t draw_band = 50;             // |score| <= band → wdl 0 (draw-ish) ; override via --draw-band
     constexpr std::int32_t EG_SAT = 10000;  // saturated value for egdb-exact win/loss
-    constexpr std::int32_t DRAW_BAND = 50;  // |score| <= band → wdl 0 (draw-ish)
     std::vector<std::string> pos;
     for (int i = 2; i < argc; ++i) {
         const std::string a = argv[i];
@@ -1576,11 +1613,13 @@ int run_deep_relabel_mode(int argc, char** argv) {
         else if (a == "--label-depth-by-phase" && i + 1 < argc) label_spec = argv[++i];
         else if (a == "--egdb" && i + 1 < argc)                 egdb_dir   = argv[++i];
         else if (a == "--cache-mb" && i + 1 < argc)             cache_mb   = parse_int_or(argv[++i], 1024);
+        else if (a == "--search-params" && i + 1 < argc)        search_spec = argv[++i];  // e.g. pruning OFF (catch hidden shots)
+        else if (a == "--draw-band" && i + 1 < argc)            draw_band  = parse_int_or(argv[++i], 50);
         else pos.push_back(a);
     }
     if (pos.size() < 2) {
         std::cerr << "usage: --deep-relabel <in.jnnw> <out.jnnw> [depth=18] "
-                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N]\n";
+                     "[--nnue PATH] [--label-depth-by-phase SPEC] [--egdb DIR] [--cache-mb N] [--search-params SPEC] [--draw-band N]\n";
         return 2;
     }
     in_path = pos[0]; out_path = pos[1];
@@ -1608,6 +1647,7 @@ int run_deep_relabel_mode(int argc, char** argv) {
     Engine e;
     e.use_book(false);
     if (custom_nnue) e.set_nnue(custom_nnue.get());
+    const SearchParams relabel_params = jass::parse_search_params(search_spec);
 
     std::ifstream f(in_path, std::ios::binary);
     if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
@@ -1642,10 +1682,11 @@ int run_deep_relabel_mode(int argc, char** argv) {
         const int phase_ovr = label_depth[phase_index_of(popcount(p.occupied()))];
         SearchLimits lim;
         lim.max_depth = (phase_ovr > 0) ? phase_ovr : depth;
+        lim.params    = relabel_params;                           // e.g. pruning OFF to expose hidden shots
         const SearchResult r = e.search(lim);
         score = static_cast<std::int32_t>(r.score);               // STM-POV
         std::memcpy(rec + 33, &score, 4);
-        const std::int8_t wdl = (score > DRAW_BAND) ? 1 : (score < -DRAW_BAND ? -1 : 0);
+        const std::int8_t wdl = (score > draw_band) ? 1 : (score < -draw_band ? -1 : 0);
         rec[37] = static_cast<char>(wdl);
         if (((i + 1) % 2000) == 0) {
             const double el = std::chrono::duration<double>(
