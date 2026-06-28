@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0486-selfplay-clean",
-  "snapshot_at": "2026-06-28T23:18:05+00:00",
+  "snapshot_at": "2026-06-28T23:23:55+00:00",
   "started_at": "2026-06-27T23:21:15+00:00",
-  "elapsed_seconds": 86210,
+  "elapsed_seconds": 86560,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2882370       1    23:56:49  0.0  0.0 bash\n2882372 2882370    23:56:49  0.0  0.0 bash\n2938055 2882372       20:05  103 30.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n2882370       1  1-00:02:39  0.0  0.0 bash\n2882372 2882370  1-00:02:39  0.0  0.0 bash\n2938055 2882372       25:55  103 43.3 python3\n"
 }
