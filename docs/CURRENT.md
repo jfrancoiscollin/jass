@@ -168,6 +168,22 @@ propre **bat** le chemin sinueux → B devient le champion. **Pour la gate** : B
 que le plateau est une propriété de **(classe + recette)**, pas un artefact ⇒ toute décision « linéaire épuisé → gate » devient
 **rigoureuse et reproductible**.
 
+### 🚀 BOOST AU PLATEAU — drawish + FM, AVANT de figer la lignée B [gravé 2026-06-28, JFC]
+> **Au plateau du champion A linéaire** (et seulement là — sinon on ne peut pas attribuer le gain à l'option vs « encore
+> d'entraînement »), tester si **2 options dormantes** le boostent. Celles qui passent **hors-IC** → **bakées dans la recette
+> FIXE** avant de lancer la lignée B. Ordre : (1) plateau A linéaire → (2) A/B isolés → (3) baker les gagnantes → (4) lignée B.
+
+- **Drawish scaling** (`drawish_scaling=1` runtime, ou build `JASS_DRAWISH_SCALING`) : re-test légitime (verdict ☠️ 0353
+  datait d'un autre régime) **MAIS** feature de **FINALE** (÷8/÷2 vers nulle) ⊥ trou MILIEU ⇒ juger sur la **force globale**
+  (self-play + vs-Scan), **PAS sur 0440**. Cheap (flag + re-juge, sans re-fit). Attente : marginal.
+- **FM (Factorization Machine)** = **le 1er pas (doux) de la gate**, légitime AU plateau du linéaire pur. Terme FM fitté sur
+  le **RÉSIDU LINÉAIRE** (`train.py --fm-rank`, PJTW v4) ⇒ capte les **interactions de paires de patterns** que la somme
+  linéaire ne peut PAS représenter = candidat crédible pour le trou **combinaisons** (0440). Protocole : (a) `fm_fitcheck.py`
+  = **GATE cheap** (le terme FM réduit-il le résidu ? sans build C++) ; (b) si oui, fit v4 → juger **0440 + force globale** ;
+  (c) ⚠️ **temps compensé** (le FM alourdit l'éval → moins de NPS, comme ext_forcing → gain net à confirmer à movetime).
+- **Cohérence règle gravée** : FM n'entre qu'**au plateau PROUVÉ du linéaire pur** ⇒ on ne triche pas. Si FM est baké, B reste
+  un test de reproductibilité valide (A et B même classe linéaire+FM).
+
 ### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
 > Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
 > puis on lancera **une** recette self-play propre. Implémenté + **unit-testé** ce tour, déployé sur `main` :
