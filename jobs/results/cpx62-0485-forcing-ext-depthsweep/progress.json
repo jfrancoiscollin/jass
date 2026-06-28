@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0485-forcing-ext-depthsweep",
-  "snapshot_at": "2026-06-28T00:19:03+00:00",
+  "snapshot_at": "2026-06-28T00:24:47+00:00",
   "started_at": "2026-06-27T23:19:03+00:00",
-  "elapsed_seconds": 3600,
+  "elapsed_seconds": 3944,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3841147       1    01:00:00  0.0  0.0 bash\n3841149 3841147    01:00:00  0.0  0.0 bash\n3842502 3841149       37:12  0.0  0.0 bash\n3842503 3842502       37:12  0.4  0.0 python3\n3842504 3842503       37:12 95.1  0.5 jass\n3842506 3842503       37:11  4.5  0.9 scan_linux\n3842509 3842503       37:11  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3841147       1    01:05:44  0.0  0.0 bash\n3841149 3841147    01:05:44  0.0  0.0 bash\n3842502 3841149       42:56  0.0  0.0 bash\n3842503 3842502       42:56  0.4  0.0 python3\n3842504 3842503       42:56 95.3  0.5 jass\n3842506 3842503       42:56  4.3  0.9 scan_linux\n3842509 3842503       42:56  0.0  0.0 jass\n"
 }
