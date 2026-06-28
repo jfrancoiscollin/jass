@@ -139,6 +139,35 @@
 - **Caveat seed** : 0489 sur cpx62 peut tomber en fallback dilf+lidraughts (DB box-local ccx33) ⇒ comparer à égalité de seeds.
 - **0484 (vérif outils)** = fini rc=0, sortie perdue (non-flush) ; suites unit vertes en local ; 0486/0489 re-valident #2/#6 sur vraies données.
 
+## 🧭 PLAN DE VALIDATION — clean-run convergence (lignée B) [gravé 2026-06-28, JFC]
+> **Test de reproductibilité / indépendance au chemin.** Notre champion actuel (lignée **A**) est atteint en BRICOLANT
+> la recette en route (chemin sinueux, params changés en marche). Une fois la **bonne recette FIXÉE** (sortie de
+> 0486/0489/0490 + suite) et le champion A **poussé à SON plateau** avec, on lance une **lignée B indépendante, tout figé
+> dès la génération 0**, jusqu'à SON plateau, et on vérifie que **B converge vers A**. Successeur de 0481/0482 (from-scratch),
+> mais **avec la nouvelle recette forte** (ext_forcing + asymétrie) qui donne à B une raison mécanique d'apprendre ce que
+> 0481/0482 ne pouvaient pas (§3).
+
+**Distinction gravée (sinon le test est invalide) :**
+- **ARCHITECTURE** (32cf men-only, features bakées, L2, fold) = DESIGN validé (gates 0401/0408/0409) ⇒ B la **garde identique**.
+- **RECETTE DONNÉES + lignée des poids** (config gen, seeds, règle de mise-à-jour pilote, volume, slots ext_forcing,
+  quiet-only…) = ce qu'on a bricolé ⇒ B la **fige dès le départ** et **repart d'un seed INDÉPENDANT** (matériel-pur 0482 ou
+  éval embarquée, **PAS egdbmix**). On ne fige pas les **poids** (ils s'entraînent) — on fige tout le **reste** (règles fixes).
+
+**Protocole :**
+1. **Figer la recette gagnante** dès qu'elle sort du ladder courant (0486/0489/0490 + follow-ups).
+2. **Pousser le champion A à son plateau** avec cette recette (auto-stop quand 0440/force stagnent K itérations).
+3. **Lancer B** : recette identique **figée**, seed indépendant, jusqu'à SON plateau.
+4. **Trancher la convergence** (B ≈ A ?) :
+   - **tête-à-tête** champion_B vs champion_A ≈ **0,50** (le test le plus propre) ;
+   - **0440** : |0440_B − 0440_A| dans l'IC (±0,05) ;
+   - **vs-Scan** à temps compensé : même bande.
+
+**Lecture :** B→A = **point fixe reproductible** (le bricolage n'était que l'exploration pour TROUVER la recette ; la recette
+seule suffit → c'est elle le livrable). B<A = lignée A **path-dependent** (creuser ce qui manque au spec). B>A = la recette
+propre **bat** le chemin sinueux → B devient le champion. **Pour la gate** : B converge vers A (best linéaire) ⇒ preuve solide
+que le plateau est une propriété de **(classe + recette)**, pas un artefact ⇒ toute décision « linéaire épuisé → gate » devient
+**rigoureuse et reproductible**.
+
 ### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
 > Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
 > puis on lancera **une** recette self-play propre. Implémenté + **unit-testé** ce tour, déployé sur `main` :
