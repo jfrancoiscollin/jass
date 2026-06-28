@@ -1,0 +1,22 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 10000000 lignes @ 4min/M ≈ 40.0 min
+  [preflight] self-play propre : quiet-only + ballots + masters-naturels + fit + juges: ≈ 700 min
+  [preflight] TOTAL estimé ≈ 744.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== expert_games.db present -> #2 ballots + #6 masters-naturels ===
+  ballots : games=113 unique-positions=1200 (ply 6-12, imbalance>=0, mirror=yes) -> /root/cw-spclean/ballots.jnnw
+  masters→jnnw : games=74443 positions=4976121 (W=2077225 D=816901 L=2081995) -> /root/cw-spclean/masters.jnnw
+  seed-file = /root/cw-spclean/ballots.jnnw (1200 positions) ; masters = /root/cw-spclean/masters.jnnw
+=== gen self-play 10000000 (--quiet-only, --seed-file ballots frac 60%, pilote egdbmix, ext_forcing OFF) ===
+10000000
+  self-play quiet = 10000000 positions
+  + masters-naturels = 4976121 positions (frequence naturelle ~33%)
+  corpus total = 14976121
+
+================= VERDICT =================
+recette : quiet-only + seeds=BALLOTS + masters=OUI
+0440 = 0.282  IC95=[0.233,0.330]  (n=305)   [base egdbmix = 0.302]
+vs_egdbmix (self-play) = 0.4444
+LECTURE : 0440 hors-IC au-dessus de 0.302 => la recette propre deplace la conversion => industrialiser ;
+          vs_egdbmix>0.55 => casse le point fixe self-play. Plat => consigner (eval-lever) et prioriser la RECHERCHE (ext_forcing, 0485).
+===========================================
