@@ -1,0 +1,5 @@
+recette : quiet-only + seeds=BALLOTS + masters=OUI
+0440 = 0.282  IC95=[0.233,0.330]  (n=305)   [base egdbmix = 0.302]
+vs_egdbmix (self-play) = 0.4444
+LECTURE : 0440 hors-IC au-dessus de 0.302 => la recette propre deplace la conversion => industrialiser ;
+          vs_egdbmix>0.55 => casse le point fixe self-play. Plat => consigner (eval-lever) et prioriser la RECHERCHE (ext_forcing, 0485).
