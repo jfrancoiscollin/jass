@@ -1,0 +1,11 @@
+=== 0440 forcing-ext depth-sweep (champion egdbmix, eval-pur no-DB, vs Scan) ===
+d13_base  0440=0.382  IC95=[0.331,0.433]  (n=305)
+d13_ext  0440=0.652  IC95=[0.605,0.702]  (n=305)
+d15_base  0440=0.502  IC95=[0.451,0.552]  (n=305)
+  (d15_ext : calibrate erreur, on juge le dump)
+d15_ext  0440=0.726  IC95=[0.645,0.801]  (n=93)
+
+=== LECTURE (vs 0483 d11 : base 0.302 / ext 0.603 ; baseline movetime 0451 ~0.519) ===
+  d15_ext  0440=0.726  IC95=[0.645,0.801]  (n=93)
+  d15_ext >> d15_base (hors IC) => VRAI levier au-dela de la profondeur => baker ext_forcing au jeu.
+  d15_ext ~ d15_base (~0.52) => la profondeur substitue => mirage d11 => garder OFF (coherent 0451).
