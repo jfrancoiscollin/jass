@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0489-selfplay-asym",
+  "script": "jobs/queue/cpx62-0489-selfplay-asym.sh",
+  "pid": 3855697,
+  "started_at": "2026-06-28T05:51:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
