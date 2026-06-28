@@ -127,6 +127,10 @@ inline void hoist_move(MoveList& moves, const Move& priority) {
 struct Searcher {
     TranspositionTable* tt{nullptr};
     std::uint64_t       nodes{0};
+    // Root depth of the current iterative-deepening iteration. Set by
+    // run_root_window before recursing. Used to bound forcing extensions:
+    // total extensions accumulated on a path = (depth + ply) - root_depth_.
+    int                 root_depth_{0};
 
     // Tunable search constants + PVS toggle. Copied from SearchLimits at
     // the start of each top-level search (and into helper searchers).
@@ -902,7 +906,11 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // position. Captures don't qualify (full depth already + qsearch
         // resolves chains at the leaf). Default-off: the `params.ext_forcing &&`
         // short-circuit keeps the default path byte-identical (no extra movegen).
-        const int      forcing_ext = (params.ext_forcing && !m.is_capture()
+        // Cap: skip the extension once the path has accumulated forcing_ext_cap
+        // total extensions ((depth+ply)-root_depth_), bounding ultra-forcing blowups.
+        const bool     ext_cap_ok = params.forcing_ext_cap <= 0
+                                 || (depth + ply - root_depth_) < params.forcing_ext_cap;
+        const int      forcing_ext = (params.ext_forcing && ext_cap_ok && !m.is_capture()
                                       && leaves_forced_capture(next)) ? 1 : 0;
         const int      new_depth = depth - 1
                                  + (singular_ext && is_tt ? 1 : 0)
@@ -1224,6 +1232,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         Move iter_best  = root_moves[0];
         int  iter_score = -INF_SCORE;
         int  cur_alpha  = alpha;
+        s.root_depth_   = depth;   // baseline for the forcing-extension accumulation cap
 
         for (const auto& m : root_moves) {
             if (s.stopped) break;
