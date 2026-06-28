@@ -184,6 +184,16 @@ que le plateau est une propriété de **(classe + recette)**, pas un artefact �
 - **Cohérence règle gravée** : FM n'entre qu'**au plateau PROUVÉ du linéaire pur** ⇒ on ne triche pas. Si FM est baké, B reste
   un test de reproductibilité valide (A et B même classe linéaire+FM).
 
+### ⚙️ VOLUME PAR BOUCLE — gravé 8M plancher [2026-06-28, JFC]
+> Principe (TVR + verdict couverture 0428) : le **point fixe** se déplace par **ITÉRATION**, pas par volume/boucle ; la
+> couverture **sature ~10M** ⇒ au-delà = précision (variance), pas un point fixe plus haut. ⇒ **max d'itérations sur du
+> volume juste-suffisant**, PAS peu d'itérations sur du gros volume (20M/boucle = le pire des deux mondes).
+- **Volume MONTÉE = 8M/boucle (PLANCHER — ne pas descendre en dessous)**. Proche de la saturation (~10M) → variance/couverture
+  sûres, mais ~20% moins cher que 10M. (Le run actuel 0486/0489 mesure le coût réel de 10M quiet-only : >19 h ccx33 / >13 h cpx62.)
+- **Refit FINAL unique à gros volume (20-30M+)** sur la distribution convergée → minimise la variance du **champion déployé**.
+  C'est le SEUL endroit où le gros volume sert (le champion final), pas par-boucle.
+- **Bruit dominant = le JUGE** (305 pos / 28 paires, ±0,05), pas le fit ⇒ on combat ce bruit en augmentant **N du juge**, pas le gen.
+
 ### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
 > Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
 > puis on lancera **une** recette self-play propre. Implémenté + **unit-testé** ce tour, déployé sur `main` :
