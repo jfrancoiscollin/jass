@@ -33,6 +33,9 @@ def main(argv):
     p.add_argument("--jass-b", required=True)
     p.add_argument("--pattern-b", required=True)
     p.add_argument("--depth", type=int, default=9)
+    p.add_argument("--movetime", type=float, default=None,
+                   help="seconds/move for BOTH sides (overrides --depth). Use for "
+                        "equal-time A/B where one side has a costlier search (e.g. ext_forcing).")
     p.add_argument("--pairs", type=int, default=8, help="colour-swap pairs per opening")
     p.add_argument("--max-plies", type=int, default=160)
     p.add_argument("--shard", type=int, default=0, help="this shard index [0..nshards)")
@@ -59,7 +62,9 @@ def main(argv):
     t0 = time.time()
     for opening, a_is_white in specs:
         white, black = (a, b) if a_is_white else (b, a)
-        r = play_game(white, black, referee, opening, depth=args.depth, max_plies=args.max_plies)
+        r = play_game(white, black, referee, opening,
+                      depth=(None if args.movetime else args.depth),
+                      movetime=args.movetime, max_plies=args.max_plies)
         if r.outcome == "D":
             draws += 1
         elif (r.outcome == "W" and a_is_white) or (r.outcome == "L" and not a_is_white):
