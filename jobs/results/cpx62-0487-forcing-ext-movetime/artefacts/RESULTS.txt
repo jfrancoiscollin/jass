@@ -1,0 +1,1 @@
+=== ext_forcing ON vs OFF @ movetime 1.0s (eval egdbmix des 2 cotes, ouvertures diverses, pairs=12) ===
