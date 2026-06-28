@@ -45,6 +45,10 @@ def main(argv):
                    help="HUB --search-params override for side A (e.g. no_reduce_forcing=1)")
     p.add_argument("--search-params-b", default=None,
                    help="HUB --search-params override for side B")
+    p.add_argument("--progress-file", default=None,
+                   help="write the running 'RESULT a d b' tally to this path after EVERY "
+                        "game (overwrite+flush). Survives the runner's non-flush on jobs whose "
+                        "result is only known at the end (point it under the committed artefacts dir).")
     args = p.parse_args(argv)
 
     a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a,
@@ -71,6 +75,12 @@ def main(argv):
             a_wins += 1
         else:
             b_wins += 1
+        # Incremental tally so the running result survives the runner's non-flush
+        # (the final RESULT only lands at job end otherwise → lost if not committed).
+        if args.progress_file:
+            with open(args.progress_file, "w") as pf:
+                pf.write(f"RESULT {a_wins} {draws} {b_wins}\n")
+                pf.flush()
     # Machine-readable line for aggregation across shards.
     print(f"RESULT {a_wins} {draws} {b_wins}")
     if not args.quiet:
