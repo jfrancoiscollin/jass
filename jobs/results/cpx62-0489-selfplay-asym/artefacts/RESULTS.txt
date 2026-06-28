@@ -1,0 +1,4 @@
+=== expert_games.db ABSENT (box-local non survivante) -> FALLBACK seeds dilf+lidraughts, pas de masters ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-spasym/seeds_both.jnnw (400305 positions) ; masters = <aucun>
+=== gen self-play ASYMETRIQUE 10000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
