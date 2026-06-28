@@ -194,6 +194,16 @@ que le plateau est une propriété de **(classe + recette)**, pas un artefact �
   C'est le SEUL endroit où le gros volume sert (le champion final), pas par-boucle.
 - **Bruit dominant = le JUGE** (305 pos / 28 paires, ±0,05), pas le fit ⇒ on combat ce bruit en augmentant **N du juge**, pas le gen.
 
+### ⚡ PARALLÉLISME 2-BOX — split-gen pondéré par la vitesse [gravé 2026-06-28, JFC]
+> Pour accélérer le **climb**, les deux box génèrent le corpus d'UNE boucle **en parallèle** (modèle « split-gen », ~2×
+> plus vite/boucle) — PAS deux lignées indépendantes (ça double le débit, pas la vitesse/boucle).
+- **Sync via git uniquement** (les box ne partagent PAS de FS — « cross-box fragile ») : chaque box gén son shard et le
+  **commite en `.jnnw.gz`** ; un job `fit-juge` **attend les 2 shards committés** → merge → fit → juge. git = vérité partagée.
+- **Split DÉSÉQUILIBRÉ, pondéré par la vitesse** (sinon ccx33, ~1,5-2× plus lent, devient le goulot). Sur 8M/boucle, ex :
+  **cpx62 ≈ 5M + ccx33 ≈ 3M** → finissent ensemble. **Ratio exact calibré sur les temps du run 10M en cours.**
+- **Orchestration en 3 jobs** : `cpx62-gen` (commite `shard-cpx62.jnnw.gz`) · `ccx33-gen` (commite `shard-ccx33.jnnw.gz`) ·
+  `fit-juge` (poll les 2 gz → merge → fit → juge 0440). À monter quand la recette gagnante est figée.
+
 ### 🛠️ PHASE IMPLÉMENTATION (directive JFC : « tout implémenté/testé/vérifié AVANT de relancer le self-play »)
 > Boucles from-scratch **0481+0482 MISES EN PAUSE** (tuées, reprise-safe). On code/teste les leviers du briefing externe,
 > puis on lancera **une** recette self-play propre. Implémenté + **unit-testé** ce tour, déployé sur `main` :
