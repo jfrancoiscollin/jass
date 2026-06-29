@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0492-selfplay-asym-clean",
+  "script": "jobs/queue/ccx33-0492-selfplay-asym-clean.sh",
+  "pid": 2954092,
+  "started_at": "2026-06-29T15:22:15+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
