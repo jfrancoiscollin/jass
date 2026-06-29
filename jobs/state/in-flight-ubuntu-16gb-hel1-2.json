@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0497-lmr-log-sweep",
+  "script": "jobs/queue/ccx33-0497-lmr-log-sweep.sh",
+  "pid": 2967417,
+  "started_at": "2026-06-29T21:53:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
