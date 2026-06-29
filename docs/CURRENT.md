@@ -130,6 +130,20 @@
 - ⚠️ **Aucun backup hors-box de `expert_games.db`** (0 release ; 0015 jamais exécuté) ⇒ DB = point unique de défaillance sur
   ccx33. Le corpus masters, lui, est durable (`master-2000.jnnw`). 0488 (sym ON/ON) **retiré de la file** (swap JFC).
 
+### Plus-value quiet-only / logistic-WDL / ballots : NON déductible (bundlés) — 2026-06-29
+> Question JFC : peut-on chiffrer l'apport de **quiet-only (#4) + logistic-WDL + ballots (#2)** sur le gen-data ?
+- **Non, pas isolément** : dans tout le ladder ces trois sont appliqués **ensemble** (+ masters #6 + pilote egdbmix) ⇒
+  confondus, **aucun A/B un-à-un**.
+- **Seul signal = agrégé et PLAT** : 0486 (les 3 + masters, recette propre) = 0440 **0,282** [0,233 ; 0,330], base egdbmix
+  **0,302 DANS l'IC** ⇒ **bundle indistinguable de la base** ⇒ aucune plus-value mesurable, et **le signe de chacun est
+  inconnu** (quiet-only pourrait être net-négatif via la perte de volume, ballots net-positif, et s'annuler à ~plat).
+- **Cohérent avec le mur des ~11 leviers (2026-06-27)** : le goulot est le **FIT / distribution des labels**, pas les
+  features. quiet-only & ballots = leviers de **distribution-données** ⇒ sous le plancher de bruit de 0440 (±0,05).
+  **logistic-WDL** est à part (c'est le **FIT** lui-même, baké comme standard car il agit directement sur le goulot).
+- **Implication** : l'**asym (0489/0493)** n'est PAS un 12ᵉ levier de ce type — il change les **labels** (ni features, ni
+  filtrage) ⇒ attaque le goulot. Pour chiffrer les 3 il faudrait un A/B **factoriel** (8 cellules, seeds/pilote/volume figés,
+  jugé 0440) — **reporté** (compute prioritaire = le décideur asym ; vu le mur, attendu « tous marginaux »).
+
 ## 🔥 VERDICT 0485 (2026-06-28) — PAS un mirage d11 : ext_forcing tient à TOUTE profondeur
 > Test du mirage : 0440 (egdbmix, eval-pur no-DB, vs Scan, sans re-entraînement) aux profondeurs du jeu réel.
 
