@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0495-ebf-remeasure",
-  "script": "jobs/queue/ccx33-0495-ebf-remeasure.sh",
-  "pid": 2964270,
-  "started_at": "2026-06-29T20:06:19+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
