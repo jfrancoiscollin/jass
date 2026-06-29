@@ -1,0 +1,6 @@
+=== CHANTIER EBF #1 — LMR-LOG(mul=40) vs LINEAIRE @ movetime 0.3s, openings=dilf (305), progress-file ===
+  LMR-log(A) vs lineaire(B) @ movetime, dilf : score=0.461  IC95=[0.407,0.516]  (games=324 ; log=125 D=49 lin=150)
+  LECTURE (crible dilf, tactique = FAVORABLE au log) : IC > 0.50 => le log achete de la profondeur utile =>
+           CONFIRMER en jeu GENERAL (#1b) contre le prior 0264/0268 (jass +42 Elo en reduisant MOINS) avant de baker.
+           IC contient/sous 0.50 => le log NE gagne pas meme sur dilf => levier LMR-log MORT (coherent 0268) => consigner.
+=== rappel : EBF_jass post-combo = 1,69 vs Scan 1,25 (0495). Le log VISE a baisser ca. Si #1 positif -> #1b general + re-mesure EBF avec lmr_formula=1 + vs Scan. ===
