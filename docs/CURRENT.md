@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-29** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-29 soir** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -93,6 +93,38 @@
 - **C (0,603) DÉPASSE même la baseline-à-movetime (0,519, 0451)** ⇒ indice que ce n'est pas qu'un « d11 qui rattrape le
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
+
+## 🔧 CHANTIER EBF (2026-06-29 soir, memo JFC v2) — le gap movetime = EFFICACITÉ de recherche, pas l'éval
+> Recadrage : `ext_forcing` neutre à movetime (0490/0491) **parce que l'EBF (facteur de branchement) de jass est trop
+> haut** → il ne peut pas se payer la profondeur que les extensions coûtent. Baisser l'EBF = acheter les ~2-4 plies du gap
+> d'éval (0330) **sans toucher l'éval** ET rendre `ext_forcing` abordable. **Tout dans la classe linéaire, gate NNUE fermée.**
+
+**#0 (0495, FAIT) — re-mesure EBF post-combo :**
+| profondeur | jass s/pos | scan s/pos | jass/scan |
+|---|---|---|---|
+| d9 | 0,0059 | 0,0149 | **0,40** (jass + rapide) |
+| d12 | 0,0340 | 0,0237 | 1,44 |
+| d15 | 0,1377 | 0,0573 | **2,40** |
+
+- **EBF_jass = 1,69 · EBF_scan = 1,25.** Faits qui recadrent : (1) **jass est plus rapide PAR NŒUD** (0,40 à d9 *avec*
+  un EBF plus haut → SIMD payé) ⇒ **tout le gap movetime est de l'EBF, zéro du coût/nœud** ; (2) **le croisement est ~d11**
+  (jass gagne jusqu'à d11, perd au-delà). **Cible recadrée (atteignable) : repousser le croisement ≥ d15, PAS viser le 1,25
+  de Scan.** Arithmétique : R(15)=2,40 → il suffit de **~6 %/ply** d'EBF (`(1−0,06)^15≈0,42`) — un petit écart élevé à la
+  puissance 15. Un swap LMR linéaire→log en rend typiquement >6-10 %.
+- **SRC** : `lmr_formula` (0=linéaire legacy DÉFAUT byte-identique ; 1=log `R=lmr_log_base+log(d)·log(idx)·lmr_log_mul/100`)
+  + `lmr_log_base`/`lmr_log_mul` ajoutés sur **main, gated OFF** (parser int-only respecté). Impl **inline** pour la phase
+  A/B (test conservateur : log() coûte/nœud) ; **table-ize obligatoire AVANT tout bake** (sinon on mange le gain d'EBF).
+
+**#1 (0496, FAIT) — A/B log(mul=40) vs linéaire @ movetime, dilf :** score log = **0,444** [0,388 ; 0,500] (n=303, 5/8
+shards — non-flush). **Le log mul=40 PERD même sur dilf** (le cas favorable), variance énorme entre shards = **signature
+0264/0268** (jass a mesuré +42 Elo en réduisant MOINS ; la sur-réduction rate des lignes forcées). ⇒ **mul=40 sur-réduit**,
+pas « log mort ».
+
+**#1b (0497, EN QUEUE) — sweep mul {20,25,30,35}** (plus petit = moins de réduction). **GATE** : un mul **≥0,55 hors-IC** =
+garde la force EN réduisant ⇒ CANDIDAT → #1c (re-mesure EBF avec ce mul + A/B jeu GÉNÉRAL **Elo≥baseline** + vs Scan +
+table-ize). **TOUS ≤0,5** ⇒ le LMR-log sur-réduit à tout coefficient utile en dames (**prior 0264/0268 confirmé**) ⇒
+chantier LMR-log **négatif** ⇒ basculer **diagnostic #3** (part éval-noise de l'EBF : churn PV / re-recherches ; un objectif
+d'éval de STABILITÉ ≠ 0440 baisserait l'EBF). ⚠️ **0264/0268 est LE mur de ce chantier** ; le garde-fou Elo≥baseline tranche.
 
 ## 🔥 VERDICT 2026-06-29 — ext_forcing au JEU = NEUTRE (le gain depth-fixe NE passe PAS à temps réel) ⇒ recherche-vs-éval tranché
 > Re-run propre du bake-decider perdu en 0487 (non-flush). 0490 (n=30) puis **0491 (n=75 ; 4 shards/16 — le non-flush a
