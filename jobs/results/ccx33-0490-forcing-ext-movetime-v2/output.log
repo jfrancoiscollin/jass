@@ -1,0 +1,4 @@
+=== [RE-RUN propre] ext_forcing ON vs OFF @ movetime 1.0s (eval egdbmix, pairs=12, progress-file incremental) ===
+  ext_forcing(ON) vs baseline(OFF) @ movetime : score=0.309  IC95=[0.187,0.431]  (games=55 ; ON=11 D=12 OFF=32)
+  LECTURE : IC entierement > 0.50 => BAKER (defaut ON au jeu) ; IC contient 0.50 => le cout noeuds annule le gain => garder OFF.
+=== rappel fixed-depth (0483/0485) : 0440 base 0.30/0.38/0.50 (d11/13/15) -> ext 0.60/0.65/0.73 ===
