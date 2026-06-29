@@ -49,6 +49,19 @@ struct SearchParams {
     // standard tree-shrinker. history_max=16384 → div ~4000-8000 ≈ up to ~2-4 plies.
     int lmr_hist_div         = 0;
 
+    // Logarithmic LMR shape (opt-in ; lmr_formula=0 = linear = legacy default,
+    // BYTE-IDENTICAL). When lmr_formula=1 the base reduction is Stockfish-like :
+    //   R = lmr_log_base + log(d)*log(move_idx) * lmr_log_mul/100
+    // softer at shallow depth / early moves, more aggressive for late moves at
+    // high depth → attacks the effective branching factor (EBF) where the tree
+    // is most expensive. improving/clamp/history-softening applied AFTER, as for
+    // the linear path. lmr_log_mul is the coefficient ×100 (40 = 0.40 ≈ /2.5).
+    // EBF chantier 2026-06-29 (memo JFC) — ⚠️ A/B vs 0264/0268 (jass a GAGNÉ +Elo
+    // en réduisant MOINS) : décider à TEMPS FIXE + 0 régression Elo.
+    int lmr_formula  = 0;     // 0 = linear (legacy) ; 1 = logarithmic
+    int lmr_log_base = 0;     // additive base offset for the log formula
+    int lmr_log_mul  = 40;    // R coefficient ×100 (40 = 0.40 ≈ divide by 2.5)
+
     // Late move pruning (LMP): first late-quiet index to skip at depth 1/2/3.
     int lmp_d1 = 4;
     int lmp_d2 = 8;
@@ -224,6 +237,9 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmr_depth_div")        p.lmr_depth_div        = v;
     else if (key == "lmr_idx_div")          p.lmr_idx_div          = v;
     else if (key == "lmr_hist_div")         p.lmr_hist_div         = v;
+    else if (key == "lmr_formula")          p.lmr_formula          = v;
+    else if (key == "lmr_log_base")         p.lmr_log_base         = v;
+    else if (key == "lmr_log_mul")          p.lmr_log_mul          = v;
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
