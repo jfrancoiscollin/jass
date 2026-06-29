@@ -19,6 +19,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <thread>
 #include <tuple>
 #include <unordered_set>
@@ -811,8 +812,19 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // stays ≥ 1. When the improving heuristic is on and we are not
         // improving, reduce one extra ply.
         if (d < LMR_MIN_DEPTH || move_idx < LMR_FIRST_FULL_MOVES) return 0;
-        int r = params.lmr_base + d / params.lmr_depth_div
+        int r;
+        if (params.lmr_formula == 1) {
+            // Logarithmic LMR shape (opt-in ; formula 0 = linear below = legacy,
+            // byte-identical). Softer early, more aggressive for late moves at
+            // high depth → lowers the effective branching factor. EBF chantier.
+            const double rr = std::log(static_cast<double>(d))
+                            * std::log(static_cast<double>(move_idx))
+                            * static_cast<double>(params.lmr_log_mul) / 100.0;
+            r = params.lmr_log_base + static_cast<int>(rr);
+        } else {
+            r = params.lmr_base + d / params.lmr_depth_div
               + move_idx / params.lmr_idx_div;
+        }
         if (params.use_improving && !improving) r += 1;
         r = r < 1 ? 1 : (r > d - 2 ? d - 2 : r);
         // History-based softening (opt-in ; lmr_hist_div=0 = unchanged): reduce
