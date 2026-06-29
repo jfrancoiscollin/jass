@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0491-forcing-ext-movetime-v3",
-  "script": "jobs/queue/ccx33-0491-forcing-ext-movetime-v3.sh",
-  "pid": 2943656,
-  "started_at": "2026-06-29T04:25:32+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
