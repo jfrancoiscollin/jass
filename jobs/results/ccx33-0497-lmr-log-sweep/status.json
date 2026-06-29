@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0497-lmr-log-sweep",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-29T21:53:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2967417
+  "ended_at": "2026-06-29T23:22:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

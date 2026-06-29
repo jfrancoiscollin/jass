@@ -1,0 +1,17 @@
+=== CHANTIER EBF #1b — SWEEP LMR-log mul={20 25 30 35} vs lineaire @ movetime 0.3s, dilf (305) ===
+  (rappel #1/0496 : mul=40 = 0.444 PERD ; on cherche un mul plus doux >=0.55 hors-IC)
+--- mul=20 (R=log(d)*log(idx)*20/100) ---
+  mul=20: log score=0.554 IC95=[0.478,0.629] (n=167, 5 shards ; log=78 D=29 lin=60) => parite (IC contient 0.5)
+--- mul=25 (R=log(d)*log(idx)*25/100) ---
+  mul=25: log score=0.622 IC95=[0.540,0.704] (n=135, 4 shards ; log=76 D=16 lin=43) => leger+ (0.5..0.55)
+--- mul=30 (R=log(d)*log(idx)*30/100) ---
+  mul=30: log score=0.564 IC95=[0.486,0.641] (n=157, 6 shards ; log=78 D=21 lin=58) => parite (IC contient 0.5)
+--- mul=35 (R=log(d)*log(idx)*35/100) ---
+  mul=35: log score=0.479 IC95=[0.408,0.550] (n=189, 5 shards ; log=80 D=21 lin=88) => parite (IC contient 0.5)
+
+================= VERDICT SWEEP =================
+  LECTURE : un mul >=0.55 hors-IC = garde/gagne la force EN reduisant => CANDIDAT => #1c (re-mesure EBF avec ce mul +
+            A/B jeu GENERAL Elo>=baseline + vs Scan + table-ize au bake). TOUS <=0.5 => le LMR-log SUR-REDUIT a tout
+            coefficient utile en dames (prior 0264/0268 confirme) => chantier LMR-log NEGATIF => basculer diagnostic #3
+            (part eval-noise de l'EBF : churn PV / re-recherches). EBF baseline #0 = 1,69 (cible : croisement >= d15).
+===============================================
