@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-28** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-29** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -94,6 +94,42 @@
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
 
+## 🔥 VERDICT 2026-06-29 — ext_forcing au JEU = NEUTRE (le gain depth-fixe NE passe PAS à temps réel) ⇒ recherche-vs-éval tranché
+> Re-run propre du bake-decider perdu en 0487 (non-flush). 0490 (n=30) puis **0491 (n=75 ; 4 shards/16 — le non-flush a
+> encore mangé 12 shards)** : ext_forcing **ON vs OFF à movetime 0,3 s**, openings dilf tactiques, eval-pur egdbmix.
+
+| test | profondeur | score ON vs OFF | lecture |
+|---|---|---|---|
+| 0485 | **FIXE** (d11→d15) | 0,60 → 0,73 (hors-IC) | gros gain… mais à profondeur fixe |
+| **0490/0491** | **temps fixe** (movetime) | **0,473** [0,360 ; 0,586] | **NEUTRE — le coût-nœuds annule le gain** |
+
+- **Le gain depth-fixe (0485) NE se traduit PAS en jeu chronométré.** À movetime, jass atteint déjà la profondeur où il
+  trouve les combos (0451 : 0,519) ; étendre les lignes forçantes coûte autant de nœuds qu'il en rapporte ⇒ wash.
+  **⇒ on NE bake PAS ext_forcing comme levier de RECHERCHE au jeu.** La jauge 0440 à d11 **surestimait** sa valeur réelle
+  (mirage profondeur-fixe, exactement la crainte 0451). Caveat n=75 (non-flush), mais 0,47 est si loin du seuil bake 0,55
+  que « ne pas baker » tient.
+- **SYNTHÈSE recherche-vs-éval** (la vraie question stratégique) : ext_forcing est un outil de **recherche**, mais —
+  - **comme recherche AU JEU → ne sert pas** (neutre, mesuré 0490/0491) : coût-nœuds = gain.
+  - **comme fabricant de labels POUR l'ÉVAL (asym gen) → la SEULE porte** : on **déplace le coût hors-ligne** (le punisher
+    paie les nœuds au gen, sans pression temps, pour produire des labels justes `shot-vulnérable → défaite`) ; l'éval
+    absorbe le motif **en statique** ⇒ au jeu **coût runtime ZÉRO**. On prend le bénéfice tactique et on le bake dans une
+    éval gratuite à l'exécution. **Ce n'est PAS l'inverse** : la recherche-au-jeu est mesurée morte ; l'éval est le pari vivant.
+  - **Risque** : suppose que l'éval 32-patterns PEUT représenter « shot-vulnérable » en statique. 0486 (labels propres,
+    0,282 ≈ base 0,302) fait craindre un **plafond de représentation**. 0489/0493 tranchent : 0440(asym) ≫ 0,30 ⇒ l'éval
+    absorbe ⇒ industrialiser · ≈ 0,30 ⇒ plafond pattern (⇒ archi plus expressive, ou ext_forcing ne sert nulle part à ce stade).
+- **Reconnexion** : au jeu réel le goulot reste l'**ÉVAL** (~0,52 vs Scan 0,95), pas la recherche ⇒ la seule voie où
+  ext_forcing aide passe par l'éval. L'enthousiasme « l'écart était la recherche » (0483/0485) était un artefact depth-fixe.
+
+### État du ladder asym au 2026-06-29 (en cours)
+- **0489** (cpx62) : asym **fallback** dilf+lidraughts 10M (DB box-local absente de cpx62), **⏳ ~37 h**, fin ~21:45 UTC.
+- **0492 tué** (10M trop long sur ccx33, 8 cœurs) → **0493** (ccx33) : asym **propre** 3M (vrais ballots+masters SI la DB
+  a survécu), à égalité de seeds vs 0486, **⏳ ~3 h / ~18 h total** (fin ~09:40 UTC le 30/06).
+- **0494** (`jobs/paused/`, prêt à dégainer) : variante asym **masters ROBUSTES** — masters chargés du corpus committé
+  `master-2000.jnnw` (0014, 371k parties ≥2000) au lieu de la DB éphémère ⇒ **masters=OUI garanti**. À promouvoir vers la
+  file si 0493 sort en fallback sans masters.
+- ⚠️ **Aucun backup hors-box de `expert_games.db`** (0 release ; 0015 jamais exécuté) ⇒ DB = point unique de défaillance sur
+  ccx33. Le corpus masters, lui, est durable (`master-2000.jnnw`). 0488 (sym ON/ON) **retiré de la file** (swap JFC).
+
 ## 🔥 VERDICT 0485 (2026-06-28) — PAS un mirage d11 : ext_forcing tient à TOUTE profondeur
 > Test du mirage : 0440 (egdbmix, eval-pur no-DB, vs Scan, sans re-entraînement) aux profondeurs du jeu réel.
 
@@ -110,6 +146,7 @@
 - ⚠️ **0487 (bake-decider movetime, ON vs OFF @ temps égal) = FINI rc=0 mais SORTIE PERDUE** (non-flush : shards écrits
   en fin de job, committés vides). Le « net positif à temps fixe » n'est pas mesuré ⇒ **à re-run** (shards incrémentaux).
   L'évidence depth-fixe (0485) reste forte pour baker, mais le coût-en-nœuds à movetime n'est pas confirmé.
+  **↑ RE-RUN FAIT (0490/0491, voir VERDICT 2026-06-29 ci-dessus) : NEUTRE 0,473 ⇒ coût-nœuds = gain ⇒ NE PAS baker au jeu.**
 
 ## 🛠️ FORCING-EXT SPEC (2026-06-28) — 3 slots + self-play ASYMÉTRIQUE + cap (implémenté, vérifié)
 > Affinement de #1 (cadrage JFC). Implémenté dans `src/` + déployé `main`. **Découverte pipeline** : dans notre
