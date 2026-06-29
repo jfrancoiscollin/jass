@@ -1,0 +1,10 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 3000000 lignes @ 4min/M ≈ 12.0 min
+  [preflight] self-play ASYMETRIQUE punisher/victim (forcing-ext §4) : quiet-only + ballots + masters + fit + juges (echelle 3M): ≈ 300 min
+  [preflight] TOTAL estimé ≈ 316.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== expert_games.db present -> #2 ballots + #6 masters-naturels ===
+  ballots : games=113 unique-positions=1200 (ply 6-12, imbalance>=0, mirror=yes) -> /root/cw-spasym-clean3m/ballots.jnnw
+  masters→jnnw : games=74443 positions=4976121 (W=2077225 D=816901 L=2081995) -> /root/cw-spasym-clean3m/masters.jnnw
+  seed-file = /root/cw-spasym-clean3m/ballots.jnnw (1200 positions) ; masters = /root/cw-spasym-clean3m/masters.jnnw
+=== gen self-play ASYMETRIQUE 3000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
