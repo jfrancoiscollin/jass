@@ -1,0 +1,4 @@
+=== [v3 n=610] ext_forcing ON vs OFF @ movetime 0.3s, openings=dilf (305), progress-file incremental ===
+  ext_forcing(ON) vs baseline(OFF) @ movetime : score=0.426  IC95=[0.370,0.482]  (games=304 ; ON=109 D=41 OFF=154)
+  LECTURE : IC entierement > 0.50 => BAKER (defaut ON au jeu) ; IC contient 0.50 => le cout noeuds annule le gain => garder OFF.
+=== rappel fixed-depth (0483/0485) : 0440 base 0.30/0.38/0.50 (d11/13/15) -> ext 0.60/0.65/0.73 ===
