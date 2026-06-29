@@ -49,6 +49,10 @@ def main(argv):
                    help="write the running 'RESULT a d b' tally to this path after EVERY "
                         "game (overwrite+flush). Survives the runner's non-flush on jobs whose "
                         "result is only known at the end (point it under the committed artefacts dir).")
+    p.add_argument("--openings-file", default=None,
+                   help="play from custom opening FENs (one per line, '#' comments). With deterministic "
+                        "search each (opening, colour) is ONE unique game, so the built-in 9-opening pool "
+                        "caps N at ~18 — pass e.g. data/dilf_combinations.fen for hundreds of openings.")
     args = p.parse_args(argv)
 
     a = JassEngine(args.jass_a, label="A", pattern_path=args.pattern_a,
@@ -56,7 +60,11 @@ def main(argv):
     b = JassEngine(args.jass_b, label="B", pattern_path=args.pattern_b,
                    search_params=args.search_params_b)
     referee = Referee(args.jass_a)   # play_game needs a Referee (apply_move/legality), NOT a JassEngine
-    openings = opening_pool_via_jass(args.jass_a)
+    if args.openings_file:
+        openings = [ln.split("#", 1)[0].strip() for ln in open(args.openings_file)]
+        openings = [o for o in openings if o]
+    else:
+        openings = opening_pool_via_jass(args.jass_a)
 
     # Full deterministic game list, then take this shard's disjoint slice.
     specs = [(op, aw) for op in openings for _ in range(args.pairs) for aw in (True, False)]
