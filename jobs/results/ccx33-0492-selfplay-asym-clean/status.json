@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0492-selfplay-asym-clean",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-06-29T15:22:15+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2954092
+  "ended_at": "2026-06-29T15:27:49+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
