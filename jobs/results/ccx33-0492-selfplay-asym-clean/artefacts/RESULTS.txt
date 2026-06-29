@@ -1,0 +1,2 @@
+=== expert_games.db present -> #2 ballots + #6 masters-naturels ===
+  ballots : games=113 unique-positions=1200 (ply 6-12, imbalance>=0, mirror=yes) -> /root/cw-spasym-clean/ballots.jnnw
