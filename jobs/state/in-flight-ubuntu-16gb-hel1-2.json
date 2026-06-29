@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0496-lmr-log-ab",
+  "script": "jobs/queue/ccx33-0496-lmr-log-ab.sh",
+  "pid": 2965904,
+  "started_at": "2026-06-29T21:19:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
