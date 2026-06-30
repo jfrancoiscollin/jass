@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0498-ebf-lmrlog-rd
+# id: cpx62-0498-ebf-lmrlog-rd
 # description: CHANTIER EBF #1c (memo v2) — LE DECIDEUR. Le sweep 0497 a montre que les muls LMR-log doux (20/25/30) sont
 # a PARITE Elo avec le lineaire (ne perdent pas). Gate v2 = Elo>=baseline (OK) ET EBF baisse. Ici on mesure la 2e moitie :
 # R(d) d9/12/15 (= croissance temps/pos = facteur de branchement) sous lmr_formula=1 a chaque mul vs lineaire, champion
@@ -13,7 +13,7 @@ set -uo pipefail
 cd /root/jass
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-120}"
 source jobs/lib/preflight.sh
-ART="/root/jass/jobs/results/ccx33-0498-ebf-lmrlog-rd/artefacts"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/cpx62-0498-ebf-lmrlog-rd/artefacts"; mkdir -p "$ART"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 W=/root/cw-ebf1c; mkdir -p "$W"
 RES="$ART/RESULTS.txt"; say(){ echo "$@" | tee -a "$RES"; }; [ -f "$RES" ] || : > "$RES"
