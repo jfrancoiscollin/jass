@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-29 soir** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-30** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -93,6 +93,28 @@
 - **C (0,603) DÉPASSE même la baseline-à-movetime (0,519, 0451)** ⇒ indice que ce n'est pas qu'un « d11 qui rattrape le
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
+
+## 🏁 CLÔTURE CHANTIER RECHERCHE/EBF (2026-06-30) — exploré à fond ; 1 gain (conthist) ; l'EBF est éval-bound
+> Bilan final du chantier "battre le gap movetime vs Scan par la recherche" (memo EBF v2). Verdict : **l'EBF est largement
+> STRUCTUREL/éval-bound en dames ; aucun knob de recherche ne le déplace significativement.** Détail des leviers :
+
+| levier | méthode | verdict |
+|---|---|---|
+| LMR linéaire→log (#1) | A/B movetime + node-EBF | **aucun** effet EBF (mild=EBF↑, agressif=Elo↓) ; clos |
+| sweep `forcing_ext_cap` | A/B movetime dilf | optimum cap~6 (0,491) mais **pas de flip** ; clos |
+| ext_forcing @ tous movetimes | A/B clean (0508/0509) | **PERD** (0,357@0,1s, neutre@0,3s, perd@1,0s) ; le 0,543@0,1s était un artefact non-flush ; **CLOS définitif** |
+| history-LMR (#2) | A/B | parité ; clos |
+| IID (`iid_min_depth`) | **node-EBF EXACT (0507)** | **ratio nœuds 1,000** = ZÉRO effet (le "−9% EBF" de 0504 était du bruit-timing) ; clos |
+| **conthist** | node-EBF + A/B | **−9,5% nœuds @d12 (exact) + Elo-neutre → BAKÉ (use_conthist=true, PR #321)** ; seul gain, modeste |
+| TT-2-bucket (#5) | lecture `tt.cpp` | **MOOT** : TT déjà 4-way clustered + generation aging (mieux que 2-bucket) ; rien à faire |
+
+- **Méthodo clé acquise** : l'EBF-par-TEMPS est trop bruité (±11%) ; le **node-EBF EXACT** (`--search-profile +search-params`,
+  commit 24ef71dc6) est le bon outil. Et le **non-flush est résolu** (stdout shard→output.log + pairs=1 → n=610 propre).
+- **Conclusion** : la thèse du mémo (« l'EBF = le grand levier gagnable ») **NE se vérifie pas**. Le seul gain (conthist
+  ~9%) est sous le bruit Elo. ⇒ **le détour recherche est CLOS.** Le gap movetime n'est pas réductible par le tuning search.
+- **En cours (0510)** : test EVAL-BOUND en node-EBF (hc faible vs egdbmix fort) — si une meilleure éval = moins de nœuds,
+  l'EBF gap ET le gap de conversion (0,52 vs Scan 0,95) sont **LE MÊME problème (l'éval)** ⇒ pivot éval unifié et justifié.
+- **Prochaine grande étape (décidée avec JFC)** : pivot ÉVAL/GEN — le vrai goulot que tous les diagnostics répètent.
 
 ## 🔧 CHANTIER EBF (2026-06-29 soir, memo JFC v2) — le gap movetime = EFFICACITÉ de recherche, pas l'éval
 > Recadrage : `ext_forcing` neutre à movetime (0490/0491) **parce que l'EBF (facteur de branchement) de jass est trop
