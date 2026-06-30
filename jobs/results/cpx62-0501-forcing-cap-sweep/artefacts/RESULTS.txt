@@ -1,0 +1,3 @@
+=== FINE-TUNING ext_forcing — sweep forcing_ext_cap={4 6 8 12} (ext_forcing=1) vs baseline(OFF) @ movetime 0.3s, dilf ===
+  (rappel : 0490/0491 = cap=0 ILLIMITE => 0,473 neutre. On cherche le cap qui FLIPPE positif.)
+--- forcing_ext_cap=4 ---
