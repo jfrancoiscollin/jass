@@ -1,0 +1,33 @@
+=== CHANTIER EBF #3 — EBF eval-bound ? (hc faible vs egdbmix fort) ===
+--- eval=hc (handcrafted, defaut faible) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0208      0.0181       1.15
+   12      0.1158      0.0301       3.85
+   15      0.4575      0.0671       6.82
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- eval=egdbmix (champion fort) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0094      0.0162       0.58
+   12      0.0342      0.0240       1.43
+   15      0.1492      0.0595       2.51
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+
+=== VERDICT : EBF vs qualite d'eval ===
+      eval  EBF_jass(d9-15)  R(15)=j/s@d15
+        hc            1.674           6.82
+   egdbmix            1.585           2.51
+
+  delta EBF (egdbmix vs hc) = -5.3%
+  LECTURE : egdbmix EBF NETTEMENT < hc (>~5-8%) => l'EBF est EVAL-BOUND (meilleure eval = meilleur ordering =
+            arbre plus petit) => le levier EBF restant = OBJECTIF D'EVAL-STABILITE (!= 0440) => relie EBF et eval.
+            EBF ~ identique => l'EBF est MECANIQUE/structurel aux dames => la recherche n'est PAS le levier =>
+            CLORE le chantier EBF, le gap movetime n'est pas adressable par la recherche => retour gen/eval.
+==================================================
