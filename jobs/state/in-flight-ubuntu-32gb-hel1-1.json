@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0504-ordering-ebf",
-  "script": "jobs/queue/cpx62-0504-ordering-ebf.sh",
-  "pid": 3972515,
-  "started_at": "2026-06-30T07:01:06+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
