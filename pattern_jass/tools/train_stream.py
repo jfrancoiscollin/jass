@@ -340,10 +340,23 @@ def train_stream(args):
     print(f'L-BFGS  loss={args.loss}  l2={args.l2}  max_iter={args.max_iter}  '
           f'chunk={chunk:,}  (~{args.max_iter} disk passes over data+feat)')
     tr_idx = np.arange(N, dtype=np.int64)
+    # Hierarchical-shrinkage grouping : slot -> parent pattern id (-1 = unseen fallback).
+    slot_pattern = None
+    if args.hier_l2 > 0.0:
+        PB = folder.PAT_BUCKETS
+        if remap is None:                               # no prune : PAT_N == TB, dense grid
+            slot_pattern = (np.arange(PAT_N, dtype=np.int64) // PB).astype(np.int32)
+        else:                                           # pruned : slot 0 = fallback, 1..K = keep
+            slot_pattern = np.full(PAT_N, -1, dtype=np.int32)
+            slot_pattern[1:K + 1] = (keep // PB).astype(np.int32)
+        print(f'hier-l2 : {args.hier_l2}  (backoff vers la moyenne du pattern parent, '
+              f'{patterns.NUM_PATTERNS} patterns)')
     t0 = time.time()
     w_float, train_loss, n_iter = train_lbfgs_chunked(
         build_fn, tr_idx, y_all, args.l2, args.max_iter,
-        logistic, n_cols, chunk, sw_all=None)
+        logistic, n_cols, chunk, sw_all=None,
+        hier_l2=args.hier_l2, slot_pattern=slot_pattern,
+        pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
 
     # --- Un-prune to the TB-sized training block, then fold-EXPAND to the full 17M
@@ -414,6 +427,10 @@ def main(argv=None):
                     help='phase ramp high (pieces); wmg=1 at/above. MUST match C++ '
                          '-DJASS_PHASE_HI. Ignored under --tempo-stage.')
     ap.add_argument('--l2', type=float, default=1e-4)
+    ap.add_argument('--hier-l2', type=float, default=0.0,
+                    help='Hierarchical shrinkage (backoff) : penalise each pattern bucket toward its '
+                         'PARENT pattern mean (λ·Σ(w_b−μ_p)²) instead of 0. Rare buckets inherit the '
+                         'pattern mean, not neutral. 0 = off (legacy L2→0). Pairs with a small --l2.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--scale', type=int, default=1000, help='quantisation factor')
