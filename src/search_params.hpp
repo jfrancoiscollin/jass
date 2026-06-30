@@ -150,7 +150,7 @@ struct SearchParams {
     // on beta cutoffs and added to the quiet-move ordering score. Captures
     // "after they go there, this reply is good" patterns the flat history
     // misses. ~+15-30 ELO typical.
-    bool use_conthist = false;
+    bool use_conthist = true;   // baké 2026-06-30 : -9% noeuds @d12 (node-EBF exact 0507) + Elo-neutre (0505/0508 n=610)
 
     // Internal Iterative Deepening (gated; iid_min_depth = 0 disables). At a
     // deep node with no TT move, run a reduced-depth search first to populate
