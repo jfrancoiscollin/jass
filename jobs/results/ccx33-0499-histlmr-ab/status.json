@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0499-histlmr-ab",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-30T05:02:31+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2973612
+  "ended_at": "2026-06-30T06:06:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

@@ -1,0 +1,12 @@
+=== CHANTIER EBF #2 — history-LMR (lmr_hist_div=H ON) vs defaut(0) @ movetime 0.3s, dilf (305) ===
+--- lmr_hist_div=4000 (softening ~4.1 plies max) ---
+  hist_div=4000: histON score=0.535 IC95=[0.457,0.614] (n=155, 5 shards ; ON=70 D=26 OFF=59) => parite
+--- lmr_hist_div=8000 (softening ~2.0 plies max) ---
+  hist_div=8000: histON score=0.422 IC95=[0.339,0.506] (n=135, 6 shards ; ON=44 D=26 OFF=65) => parite
+--- lmr_hist_div=16000 (softening ~1.0 plies max) ---
+  hist_div=16000: histON score=0.461 IC95=[0.405,0.517] (n=305, 5 shards ; ON=121 D=39 OFF=145) => parite
+
+================= VERDICT #2 history-LMR =================
+  Un H >=0.55 hors-IC => history-softening aide la force seule => candidat (a combiner avec #1 si #1 baisse l'EBF).
+  Tous parite/perte => history-LMR ne paie pas seul en dames => consigner ; le levier EBF reste #1 (log) ou #3 (eval-noise).
+=========================================================
