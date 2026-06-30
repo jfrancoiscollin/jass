@@ -803,15 +803,15 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     //       - shallow nodes (depth < 3 — LMR overhead exceeds saving)
     //       - the first few moves of the ordering (i < 4)
     const int LMR_MIN_DEPTH        = params.lmr_min_depth;
-    const int LMR_FIRST_FULL_MOVES = params.lmr_first_full_moves;
-    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH, LMR_FIRST_FULL_MOVES,
+    auto lmr_reduction = [&params = params, LMR_MIN_DEPTH,
                           improving]
-                         (int d, int move_idx, int hist) noexcept -> int {
+                         (int d, int move_idx, int hist, bool is_pv) noexcept -> int {
         // Simple monotone formula: ~1 ply at low depth/index, ~3 plies
         // at depth ≥ 12 with index ≥ 16. Capped so the reduced depth
         // stays ≥ 1. When the improving heuristic is on and we are not
         // improving, reduce one extra ply.
-        if (d < LMR_MIN_DEPTH || move_idx < LMR_FIRST_FULL_MOVES) return 0;
+        if (d < LMR_MIN_DEPTH ||
+            move_idx < (is_pv ? params.lmr_first_full_pv : params.lmr_first_full_nonpv)) return 0;
         int r;
         if (params.lmr_formula == 1) {
             // Logarithmic LMR shape (opt-in ; formula 0 = linear below = legacy,
@@ -937,19 +937,25 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                                  || (depth + ply - root_depth_) < params.forcing_ext_cap;
         const int      forcing_ext = (params.ext_forcing && ext_cap_ok && !m.is_capture()
                                       && leaves_forced_capture(next)) ? 1 : 0;
-        const int      new_depth = depth - 1
-                                 + (singular_ext && is_tt ? 1 : 0)
-                                 + promo_ext
-                                 + forcing_ext;
+        // Single-reply extension (Scan, gated) : a node with exactly one legal move is
+        // searched +1 ply — branching factor 1 => zero width cost. Narrow, FREE version of
+        // ext_forcing. Cap the node's TOTAL extension at +1 (Scan) when this is on.
+        const int      single_reply_ext = (params.ext_single_reply && moves.size() == 1) ? 1 : 0;
+        int            node_ext = (singular_ext && is_tt ? 1 : 0)
+                                 + promo_ext + forcing_ext + single_reply_ext;
+        if (params.ext_single_reply && node_ext > 1) node_ext = 1;
+        const int      new_depth = depth - 1 + node_ext;
 
         int score;
-        bool do_lmr = move_idx >= LMR_FIRST_FULL_MOVES
+        bool do_lmr = move_idx >= (is_pv_node ? params.lmr_first_full_pv
+                                                : params.lmr_first_full_nonpv)
                          && depth >= LMR_MIN_DEPTH
                          && !is_tt
                          && !m.is_capture()
                          && !(eg && params.eg_no_lmr)  // endgame regime: full-depth, no reductions
                          && !singular_ext   // don't reduce when we just extended a singular line
-                         && !forcing_ext;   // nor an extended forcing sacrifice (full extended depth)
+                         && !forcing_ext    // nor an extended forcing sacrifice (full extended depth)
+                         && single_reply_ext == 0;  // nor a single-reply extension (Scan interplay)
         // Forcing-move exemption: don't reduce a quiet sacrifice that forces
         // the opponent to capture (`next` is already the post-move position).
         if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
@@ -959,7 +965,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             // scout the remaining moves with a zero-width window (optionally
             // LMR-reduced). Only moves that beat alpha pay for an exact
             // full-window re-search.
-            const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m)) : 0;
+            const int r = do_lmr ? lmr_reduction(depth, move_idx, move_history(m), is_pv_node) : 0;
             score = -negamax(next, new_depth - r, ply + 1, -alpha - 1, -alpha);
             if (score > alpha && r > 0) {
                 // The reduction alone may have caused the fail-high; verify
@@ -972,7 +978,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
             }
         } else if (do_lmr) {
-            const int r = lmr_reduction(depth, move_idx, move_history(m));
+            const int r = lmr_reduction(depth, move_idx, move_history(m), is_pv_node);
             const int reduced = new_depth - r;
             score = -negamax(next, reduced, ply + 1, -beta, -alpha);
             if (score > alpha && score < beta) {
