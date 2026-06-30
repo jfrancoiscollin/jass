@@ -2882,7 +2882,10 @@ int run_search_profile_mode(int argc, char** argv) {
     const SearchResult r = e.search(lim);
     const jass::BreakdownStats s = jass::breakdown_snapshot();
 
-    std::cout << "search-profile: depth=" << r.depth << " nodes=" << r.nodes;
+    std::cout << "search-profile: depth=" << r.depth << " nodes=" << r.nodes
+              << " bestmove=" << static_cast<int>(r.best_move.from) << "-"
+              << static_cast<int>(r.best_move.to) << "-"
+              << static_cast<int>(r.best_move.num_captures);
     if (r.nodes) std::cout << "  (" << (s.total_ns ? (r.nodes * 1000ULL / std::max<std::uint64_t>(1, s.total_ns / 1000)) : 0) << " knps)";
     std::cout << "\n";
     if (s.total_ns == 0) {

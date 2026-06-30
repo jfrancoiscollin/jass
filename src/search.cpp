@@ -821,6 +821,19 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                             * std::log(static_cast<double>(move_idx))
                             * static_cast<double>(params.lmr_log_mul) / 100.0;
             r = params.lmr_log_base + static_cast<int>(rr);
+        } else if (params.lmr_formula == 2) {
+            // Box-Cox LMR shape : R = lmr_log_base + BC_ld(d)*BC_lidx(idx)*lmr_log_mul/100,
+            // BC_λ(x)=(x^λ−1)/λ (λ≠0) else log(x). Famille continue, exposants depth/index
+            // SÉPARÉS (lmr_bc_ld, lmr_bc_lidx, ×100) → réduction sélective. Chantier EBF :
+            // chercher la FORME optimale de réduction, pas une formule fixe.
+            const double _ld  = static_cast<double>(params.lmr_bc_ld)   / 100.0;
+            const double _lid = static_cast<double>(params.lmr_bc_lidx) / 100.0;
+            const double _bd  = (_ld  == 0.0) ? std::log(static_cast<double>(d))
+                                              : (std::pow(static_cast<double>(d), _ld) - 1.0) / _ld;
+            const double _bi  = (_lid == 0.0) ? std::log(static_cast<double>(move_idx))
+                                              : (std::pow(static_cast<double>(move_idx), _lid) - 1.0) / _lid;
+            const double rr = _bd * _bi * static_cast<double>(params.lmr_log_mul) / 100.0;
+            r = params.lmr_log_base + static_cast<int>(rr);
         } else {
             r = params.lmr_base + d / params.lmr_depth_div
               + move_idx / params.lmr_idx_div;
