@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0499-histlmr-ab",
+  "script": "jobs/queue/ccx33-0499-histlmr-ab.sh",
+  "pid": 2973612,
+  "started_at": "2026-06-30T05:02:31+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
