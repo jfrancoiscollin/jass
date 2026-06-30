@@ -126,6 +126,24 @@ table-ize). **TOUS ≤0,5** ⇒ le LMR-log sur-réduit à tout coefficient utile
 chantier LMR-log **négatif** ⇒ basculer **diagnostic #3** (part éval-noise de l'EBF : churn PV / re-recherches ; un objectif
 d'éval de STABILITÉ ≠ 0440 baisserait l'EBF). ⚠️ **0264/0268 est LE mur de ce chantier** ; le garde-fou Elo≥baseline tranche.
 
+**#1c (0498, FAIT) — R(d)/EBF sous LMR-log : VERDICT NÉGATIF, volet LMR-shape CLOS.** Mesure (cpx62, eval-pur, vs Scan) :
+| config | EBF_jass | R(15)=j/s@d15 |
+|---|---|---|
+| linéaire | 1,578 | 2,40 |
+| mul20 | 1,646 (+4,3%) | 3,93 (+64%) |
+| mul25 | 1,596 (+1,1%) | 3,61 (+50%) |
+| mul30 | 1,617 (+2,4%) | 2,41 |
+- **Aucun mul ne baisse l'EBF** — tous égaux/PIRES que le linéaire (et dans le bruit ~7% de la mesure-temps). Verrou :
+  mild log (20-30) réduit MOINS que le linéaire → EBF↑ ; aggressive (40) → Elo↓ (0496 0,444). **Aucun coefficient log ne
+  baisse l'EBF en gardant la force.** ⇒ **la forme LMR (linéaire→log) N'EST PAS le levier EBF en dames** — l'hypothèse du
+  mémo (nœuds calmes dominent l'arbre comme aux échecs) NE transfère pas (captures forcées → structure d'arbre différente).
+  **#1 (LMR-log) CLOS NÉGATIF.** Le linéaire actuel est déjà ~Pareto-optimal.
+- **#2 (0499) history-LMR** (`lmr_hist_div`) testé en parallèle (levier indépendant) — résultat à venir.
+- **Reste du chantier EBF** : si #2 ne paie pas non plus, le seul angle restant = **#3 diagnostic éval-noise** (l'EBF
+  1,58 vs Scan 1,25 est-il *mécanique* — alors épuisé — ou *éval-bound* (mauvaise éval → mauvais ordering → arbre touffu) ?
+  Si éval-bound ⇒ le levier EBF devient un objectif d'éval-STABILITÉ ≠ 0440). Sinon l'EBF est structurel aux dames ⇒
+  le gap movetime n'est PAS adressable par la recherche ⇒ retour au gen/éval. Décision JFC après #2/#3.
+
 ## 🔥 VERDICT 2026-06-29 — ext_forcing au JEU = NEUTRE (le gain depth-fixe NE passe PAS à temps réel) ⇒ recherche-vs-éval tranché
 > Re-run propre du bake-decider perdu en 0487 (non-flush). 0490 (n=30) puis **0491 (n=75 ; 4 shards/16 — le non-flush a
 > encore mangé 12 shards)** : ext_forcing **ON vs OFF à movetime 0,3 s**, openings dilf tactiques, eval-pur egdbmix.
