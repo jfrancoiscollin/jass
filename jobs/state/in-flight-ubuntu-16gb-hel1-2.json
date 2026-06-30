@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0512-off-pair",
+  "script": "jobs/queue/ccx33-0512-off-pair.sh",
+  "pid": 2994865,
+  "started_at": "2026-06-30T17:05:38+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
