@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0501-forcing-cap-sweep",
-  "script": "jobs/queue/cpx62-0501-forcing-cap-sweep.sh",
-  "pid": 3966256,
-  "started_at": "2026-06-30T05:42:08+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
