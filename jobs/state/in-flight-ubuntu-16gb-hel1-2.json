@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0509-extforcing-mt01-clean",
+  "script": "jobs/queue/ccx33-0509-extforcing-mt01-clean.sh",
+  "pid": 2992817,
+  "started_at": "2026-06-30T14:45:15+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
