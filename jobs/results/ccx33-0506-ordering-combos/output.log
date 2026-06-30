@@ -1,0 +1,69 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] ORDERING EBF : R(d) x6 configs (baseline+IID4/6/8+malus+conthist): ≈ 70 min
+  [preflight] TOTAL estimé ≈ 74 min  (cap 90 min)
+  [preflight] OK — sous le cap, lancement.
+=== ORDERING EBF — R(d) par fenetre (baseline #0 : EBF 1,79 d9-12 / 1,59 d12-15 ; Scan 1,17 / 1,34) ===
+--- config=baseline (iid_min_depth=0) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0122      0.0164       0.74
+   12      0.0357      0.0258       1.38
+   15      0.1457      0.0615       2.37
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=iid8 (iid_min_depth=8) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0125      0.0150       0.83
+   12      0.0358      0.0233       1.54
+   15      0.1442      0.0536       2.69
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=conthist (use_conthist=1) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0063      0.0156       0.40
+   12      0.0325      0.0226       1.44
+   15      0.1447      0.0614       2.36
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=iid6_ch (iid_min_depth=6,use_conthist=1) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0083      0.0149       0.55
+   12      0.0316      0.0229       1.38
+   15      0.1426      0.0582       2.45
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=iid8_ch (iid_min_depth=8,use_conthist=1) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0118      0.0150       0.78
+   12      0.0338      0.0284       1.19
+   15      0.1393      0.0675       2.06
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+
+=== EBF PAR FENETRE + R(15) par config ===
+   config  EBF d9-12  EBF d12-15   R(15)
+ baseline      1.430       1.598    2.37
+     iid8      1.420       1.591    2.69  d9-12 -0.7% | R15 +13.5%
+ conthist      1.728       1.645    2.36  d9-12 +20.8% | R15 -0.4%
+  iid6_ch      1.561       1.653    2.45  d9-12 +9.2% | R15 +3.4%
+  iid8_ch      1.420       1.603    2.06  d9-12 -0.7% | R15 -13.1%
+
+LECTURE : un config avec EBF d9-12 NETTEMENT < baseline (la fenetre qui explose) => l'ordering attaque le bon endroit
+          => candidat. Surtout IID (cible les noeuds sans coup-TT). Ensuite A/B Elo (doit etre >= baseline : l'ordering
+          ne change pas QUELS coups, juste l'ordre => zero risque, contrairement a l'elagage). EBF inchange partout =>
+          l'ordering n'est pas le frein (alors c'est l'elagage-shape ou structurel) => re-orienter.
+==================================================
