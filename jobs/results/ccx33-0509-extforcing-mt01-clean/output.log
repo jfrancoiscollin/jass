@@ -1,0 +1,23 @@
+===CFG=== extforcing_cap6_mt01 (ext_forcing=1,forcing_ext_cap=6 vs OFF @ movetime 0.1s, dilf)
+START 0
+START 2
+START 1
+START 3
+START 4
+START 5
+START 7
+START 6
+DONE 4
+DONE 0
+DONE 1
+DONE 6
+RESULT 19 6 51
+DONE 3
+RESULT 15 10 51
+DONE 7
+RESULT 44 10 22
+DONE 2
+RESULT 12 11 53
+DONE 5
+===ENDCFG=== extforcing_cap6_mt01
+=== Agreger RESULT depuis output.log. >=0.55 hors-IC => ext_forcing capé positif a temps court => baker au rapide. ===
