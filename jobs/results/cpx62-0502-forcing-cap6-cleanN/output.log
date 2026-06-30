@@ -1,0 +1,16 @@
+=== RE-RUN CLEAN cap=6 : ext_forcing=1,forcing_ext_cap=6 vs OFF @ movetime 0.3s, dilf, pairs=2, nshards=16 ===
+=== (rappel sweep 0501 : cap6=0,491 n~227 sous-puissant ; ref cap-illimite=0,473) ===
+=== shards terminés, agrégation depuis les shard.log committés ===
+=== AGREGAT CLEAN cap=6 ===
+shards OK=5/16 ; crashés/vides=11
+  shard 4 KO: no-RESULT | empty
+  shard 5 KO: no-RESULT | empty
+  shard 6 KO: no-RESULT | empty
+  shard 7 KO: no-RESULT | empty
+  shard 8 KO: no-RESULT | empty
+  shard 9 KO: no-RESULT | empty
+  shard 10 KO: no-RESULT | empty
+  shard 12 KO: no-RESULT | empty
+CLEANRESULT cap=6 : ext_forcing score=0.454 IC95=[0.405,0.504] n=384 (ON=145 D=59 OFF=180) => parite
+  vs sweep0501 cap6=0,491 (n227) et cap-illimite=0,473. Si <0,50 hors-IC => ext_forcing NEUTRE/negatif confirme propre.
+=== FIN 0502 ===
