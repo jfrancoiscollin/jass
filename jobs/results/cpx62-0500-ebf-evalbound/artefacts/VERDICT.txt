@@ -1,0 +1,9 @@
+      eval  EBF_jass(d9-15)  R(15)=j/s@d15
+        hc            1.674           6.82
+   egdbmix            1.585           2.51
+
+  delta EBF (egdbmix vs hc) = -5.3%
+  LECTURE : egdbmix EBF NETTEMENT < hc (>~5-8%) => l'EBF est EVAL-BOUND (meilleure eval = meilleur ordering =
+            arbre plus petit) => le levier EBF restant = OBJECTIF D'EVAL-STABILITE (!= 0440) => relie EBF et eval.
+            EBF ~ identique => l'EBF est MECANIQUE/structurel aux dames => la recherche n'est PAS le levier =>
+            CLORE le chantier EBF, le gap movetime n'est pas adressable par la recherche => retour gen/eval.
