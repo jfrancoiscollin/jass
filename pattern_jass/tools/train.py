@@ -425,7 +425,8 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
 
 
 def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
-                        logistic, n_cols, batch, sw_all=None):
+                        logistic, n_cols, batch, sw_all=None,
+                        hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
@@ -434,6 +435,16 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     (anchors/freq-reg index the whole table and are unsupported here). `sw_all`
     (per-row, mean≈1 over tr_idx) re-weights the data term (phase densification)."""
     N = len(tr_idx); eps = 1e-12
+    # --- Hierarchical shrinkage (backoff) : penalise each pattern bucket's DEVIATION
+    #     from its parent pattern mean (λ_h·Σ(w_b−μ_p)²) instead of toward 0, so rare
+    #     buckets inherit the pattern mean rather than collapsing to "neutral". The
+    #     μ_p-dependence of the gradient vanishes (Σ(w−μ)=0) → grad += λ_h·(w_b−μ_p).
+    _hier = hier_l2 > 0.0 and slot_pattern is not None and pat_n > 0
+    if _hier:
+        _valid = slot_pattern >= 0                     # exclude the unseen fallback slot
+        _spv   = slot_pattern[_valid].astype(np.int64)
+        _cnt   = np.bincount(_spv, minlength=n_patterns).astype(np.float64)
+        _cntsafe = np.where(_cnt > 0.0, _cnt, 1.0)
 
     def loss_and_grad(w):
         cs = 0.0
@@ -459,6 +470,15 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
             grad += Xc.T @ resid                      # accumulate XT@(sw·resid)
         loss = cs / N + 0.5 * l2 * float(np.dot(w, w))
         grad = grad / N + l2 * w
+        if _hier:
+            for _blk in (0, pat_n):                     # mg block, eg block
+                _wb  = w[_blk:_blk + pat_n]
+                _sum = np.bincount(_spv, weights=_wb[_valid], minlength=n_patterns)
+                _mu  = _sum / _cntsafe                   # per-pattern mean over valid slots
+                _dev = np.zeros(pat_n, dtype=np.float64)
+                _dev[_valid] = _wb[_valid] - _mu[_spv]
+                loss += 0.5 * hier_l2 * float(np.dot(_dev, _dev))
+                grad[_blk:_blk + pat_n] += hier_l2 * _dev
         return loss, grad
 
     w0 = np.zeros(n_cols, dtype=np.float64)
