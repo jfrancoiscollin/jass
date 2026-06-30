@@ -1,0 +1,7 @@
+=== BALAYAGE movetime=0.1s, cap=6 : ext_forcing=1,forcing_ext_cap=6 vs OFF, dilf, pairs=2 ===
+CLEANRESULT movetime=0.1 cap=6 : ext_forcing score=0.543 IC95=[0.497,0.588] n=456 shardsOK=3/8 (ON=217 D=61 OFF=178) => parite
+=== BALAYAGE movetime=0.3s, cap=6 : ext_forcing=1,forcing_ext_cap=6 vs OFF, dilf, pairs=2 ===
+CLEANRESULT movetime=0.3 cap=6 : ext_forcing score=0.501 IC95=[0.461,0.541] n=608 shardsOK=4/8 (ON=259 D=91 OFF=258) => parite
+=== BALAYAGE movetime=1.0s, cap=6 : ext_forcing=1,forcing_ext_cap=6 vs OFF, dilf, pairs=2 ===
+CLEANRESULT movetime=1.0 cap=6 : ext_forcing score=0.333 IC95=[0.259,0.408] n=153 shardsOK=1/8 (ON=37 D=28 OFF=88) => PERD
+=== FIN 0503 : si un movetime court flippe positif => regime budget-tendu paie. ===
