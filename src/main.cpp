@@ -2854,7 +2854,7 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
 int run_search_profile_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: jass --search-profile <FEN> <depth> [movetime_ms=0] "
-                     "[eval.pjtw|hc]\n  (build with -DJASS_TIME_BREAKDOWN=ON)\n";
+                     "[eval.pjtw|hc] [search-params]\n  (build with -DJASS_TIME_BREAKDOWN=ON)\n";
         return 1;
     }
     const std::string fen     = argv[2];
@@ -2875,6 +2875,9 @@ int run_search_profile_mode(int argc, char** argv) {
     SearchLimits lim;
     lim.max_depth   = (movetime_ms > 0) ? MAX_PLY : depth;
     lim.movetime_ms = movetime_ms;
+    // Optional search-params override (argv[6]) — lets us measure EXACT node counts
+    // under alternative search params (e.g. iid_min_depth=8) free of timing noise.
+    if (argc > 6) lim.params = jass::parse_search_params(argv[6]);
     jass::breakdown_reset();
     const SearchResult r = e.search(lim);
     const jass::BreakdownStats s = jass::breakdown_snapshot();
