@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/root/jass/tools/jass_vs_jass_arch.py", line 103, in <module>
+    raise SystemExit(main(sys.argv[1:]))
+                     ^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/jass_vs_jass_arch.py", line 77, in main
+    r = play_game(white, black, referee, opening,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 521, in play_game
+    mv = current.go(depth=d, movetime=mt)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 313, in go
+    lines = self._read_until(lambda l: l.startswith("bestmove")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/jass/tools/calibrate_vs_scan.py", line 230, in _read_until
+    raise TimeoutError(f"{self.label}: no match in {timeout_s}s")
+TimeoutError: A: no match in 5.3s
+EXIT 1
