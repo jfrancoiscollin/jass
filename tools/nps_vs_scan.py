@@ -60,6 +60,8 @@ def main(argv=None) -> int:
     ap.add_argument("--jass", required=True)
     ap.add_argument("--scan", required=True)
     ap.add_argument("--jass-pattern", default=None)
+    ap.add_argument("--jass-search-params", default=None,
+                    help="HUB --search-params spec passed to jass (e.g. lmr_formula=1,lmr_log_mul=25)")
     ap.add_argument("--positions", required=True, type=Path)
     ap.add_argument("--n", type=int, default=40)
     ap.add_argument("--depths", default="9,12,15")
@@ -74,7 +76,8 @@ def main(argv=None) -> int:
         print("error: no positions", file=sys.stderr); return 1
     print(f"nps: {len(fens)} positions (>= {args.min_pieces}p), depths {depths}")
 
-    jass = cv.JassEngine(args.jass, pattern_path=args.jass_pattern)
+    jass = cv.JassEngine(args.jass, pattern_path=args.jass_pattern,
+                         search_params=args.jass_search_params)
     scan = cv.ScanEngine(args.scan, bb_size=0)
     try:
         print(f"{'depth':>5} {'jass_s/pos':>11} {'scan_s/pos':>11} {'jass/scan':>10}")
