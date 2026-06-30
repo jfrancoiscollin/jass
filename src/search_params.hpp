@@ -61,6 +61,8 @@ struct SearchParams {
     int lmr_formula  = 0;     // 0 = linear (legacy) ; 1 = logarithmic
     int lmr_log_base = 0;     // additive base offset for the log formula
     int lmr_log_mul  = 40;    // R coefficient ×100 (40 = 0.40 ≈ divide by 2.5)
+    int lmr_bc_ld    = 100;   // Box-Cox (lmr_formula=2) DEPTH exponent ×100 (100=λ1, 50=√, 0=log, <0=récip)
+    int lmr_bc_lidx  = 100;   // Box-Cox INDEX exponent ×100
 
     // Late move pruning (LMP): first late-quiet index to skip at depth 1/2/3.
     int lmp_d1 = 4;
@@ -240,6 +242,8 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmr_formula")          p.lmr_formula          = v;
     else if (key == "lmr_log_base")         p.lmr_log_base         = v;
     else if (key == "lmr_log_mul")          p.lmr_log_mul          = v;
+    else if (key == "lmr_bc_ld")            p.lmr_bc_ld            = v;
+    else if (key == "lmr_bc_lidx")          p.lmr_bc_lidx          = v;
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
