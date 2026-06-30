@@ -1,0 +1,16 @@
+=== node-EBF : 40 FEN x depths {9 12 15} x configs ===
+  baseline fait
+  iid6 fait
+  iid8 fait
+  conthist fait
+=== RATIOS PAIRED (median nodes_knob/nodes_baseline par depth) + node-EBF ===
+   config | EBFn d9-12 EBFn d12-15 | ratio@d12 ratio@d15  (vs baseline, median)
+ baseline |      1.733       1.528 |     1.000     1.000
+     iid6 |      1.712       1.543 |     1.003     0.997
+     iid8 |      1.733       1.530 |     1.000     1.001
+ conthist |      1.709       1.607 |     0.905     0.941
+
+LECTURE (EXACTE, sans bruit) : ratio@d12 < 1 => le knob reduit VRAIMENT l'arbre au milieu => gain EBF gratuit
+(Elo neutre, 0505) => baker. ratio ~1.0 partout => l'ordering ne bouge pas l'arbre (0504 etait du bruit) => l'EBF
+n'est reductible NI par LMR-shape NI par ordering => le levier recherche est clos, re-orienter (ext_forcing regime / gen).
+=== FIN 0507 ===
