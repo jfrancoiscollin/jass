@@ -1,0 +1,15 @@
+=== VALIDATION bake conthist : jass_tests ===
+  ⚠️ jass_tests ECHEC avec conthist=true : [FAIL] /root/jass/tests/test_scan_book.cpp:132: e.load_book(path)
+[FAIL] /root/jass/tests/test_scan_book.cpp:133: expected e.book_size() == b.size()
+10 / 6486 assertions FAILED.
+=== EVAL-BOUND node-EBF : 40 FEN x {9 12 15} x {hc, egdbmix} ===
+  hc fait
+  egdbmix fait
+=== EBF eval-bound (median ratio nodes egdbmix/hc, exact) ===
+  d9: median nodes hc=10428 egdbmix=13648 | ratio egdbmix/hc = 1.440
+  d12: median nodes hc=45120 egdbmix=73780 | ratio egdbmix/hc = 1.352
+  d15: median nodes hc=183394 egdbmix=317112 | ratio egdbmix/hc = 1.621
+
+LECTURE : ratio egdbmix/hc NETTEMENT <1 => eval forte = moins de noeuds => EBF EVAL-BOUND => l'eval est LE levier
+(baisse l'EBF ET la conversion) => pivot eval justifie/unifie. ratio ~1 => EBF structurel, independant de l'eval.
+=== FIN 0510 ===

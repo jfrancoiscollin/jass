@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0510-evalbound-nodeebf",
-  "script": "jobs/queue/cpx62-0510-evalbound-nodeebf.sh",
-  "pid": 3985697,
-  "started_at": "2026-06-30T16:04:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
