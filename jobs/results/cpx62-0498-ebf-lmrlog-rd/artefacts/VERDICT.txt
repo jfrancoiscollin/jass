@@ -1,0 +1,10 @@
+  config  EBF_jass(d9-15)  R(15)=j/s@d15  vs baseline
+  linear            1.578           2.40             
+   mul20            1.646           3.93 EBF +4.3% R(15) +63.8%
+   mul25            1.596           3.61 EBF +1.1% R(15) +50.4%
+   mul30            1.617           2.41 EBF +2.4% R(15) +0.4%
+
+LECTURE : un mul avec EBF NETTEMENT < linear ET R(15) qui chute vers ~1 (croisement repousse >=d15) =>
+          mecanisme OK (parite Elo 0497 + EBF baisse) => baker ce mul + #4 (ext_forcing sur build bas-EBF).
+          EBF ~ identique au lineaire a tous les muls => le log NE mord PAS l'arbre en dames (les noeuds calmes
+          ne dominent peut-etre pas comme en echecs) => chantier LMR-log NEGATIF => pivot diagnostic #3 (eval-noise).
