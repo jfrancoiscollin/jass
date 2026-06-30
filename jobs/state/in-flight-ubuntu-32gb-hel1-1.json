@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0507-node-ebf",
+  "script": "jobs/queue/cpx62-0507-node-ebf.sh",
+  "pid": 3979045,
+  "started_at": "2026-06-30T13:31:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
