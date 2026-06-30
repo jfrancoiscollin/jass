@@ -1,0 +1,17 @@
+=== FINE-TUNING ext_forcing — sweep forcing_ext_cap={4 6 8 12} (ext_forcing=1) vs baseline(OFF) @ movetime 0.3s, dilf ===
+  (rappel : 0490/0491 = cap=0 ILLIMITE => 0,473 neutre. On cherche le cap qui FLIPPE positif.)
+--- forcing_ext_cap=4 ---
+  cap=4: ext_forcing score=0.412 IC95=[0.368,0.456] (n=489, 16 shards ; ON=156 D=91 OFF=242) => PERD
+--- forcing_ext_cap=6 ---
+  cap=6: ext_forcing score=0.449 IC95=[0.409,0.489] (n=588, 16 shards ; ON=225 D=78 OFF=285) => PERD
+--- forcing_ext_cap=8 ---
+  cap=8: ext_forcing score=0.452 IC95=[0.413,0.492] (n=610, 16 shards ; ON=231 D=90 OFF=289) => PERD
+--- forcing_ext_cap=12 ---
+  cap=12: ext_forcing score=0.455 IC95=[0.366,0.543] (n=121, 16 shards ; ON=46 D=18 OFF=57) => parite
+
+================= VERDICT FINE-TUNING ext_forcing =================
+  Un cap >=0.55 hors-IC => ext_forcing cape FLIPPE POSITIF a movetime (vs 0,473 illimite) => fine-tuning reussi =>
+    baker ext_forcing=1,forcing_ext_cap=X au jeu => conversion combos a movetime, sans NNUE. Puis confirmer jeu general.
+  Tous parite/perte => meme cape, le cout-noeuds annule le gain a movetime => ext_forcing pas le levier a temps fixe.
+  (Aussi utile : balayer le cap montre la courbe cout/gain de l'extension.)
+===================================================
