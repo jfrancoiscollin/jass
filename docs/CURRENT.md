@@ -144,6 +144,23 @@ d'éval de STABILITÉ ≠ 0440 baisserait l'EBF). ⚠️ **0264/0268 est LE mur 
   Si éval-bound ⇒ le levier EBF devient un objectif d'éval-STABILITÉ ≠ 0440). Sinon l'EBF est structurel aux dames ⇒
   le gap movetime n'est PAS adressable par la recherche ⇒ retour au gen/éval. Décision JFC après #2/#3.
 
+### 🔧 FINE-TUNING ext_forcing — `forcing_ext_cap` (insight JFC, 2026-06-30)
+> **Correction** : « ext_forcing NEUTRE à movetime » (0490/0491 = 0,473) était mesuré avec **`forcing_ext_cap=0` =
+> ILLIMITÉ** (défaut ; `cap<=0` ⇒ extensions sans borne) → blowup de nœuds → neutre. **Test mal tuné** (jass meilleur
+> par-nœud à d4-d9 mais perd à d15 ⇒ deepen SÉLECTIVEMENT les combos, pas exploser uniformément).
+
+**0501 (sweep cap) — ext_forcing=1 + cap={4,6,8,12} vs baseline @ movetime 0,3s, dilf :**
+| cap | score | IC95 | n |
+|---|---|---|---|
+| 4 | 0,438 | [0,379;0,497] | 273 (perd, trop serré) |
+| **6** | **0,491** | [0,426;0,556] | 227 (optimum) |
+| 8 | 0,479 | [0,409;0,550] | 193 |
+| ∞ réf | 0,473 | — | (0490/0491) |
+- **Le cap COMPTE** (intuition JFC validée) : optimum ~cap=6 (0,491) > illimité (0,473) > cap=4 (0,438). **MAIS pas de
+  flip** : ~0,49 = neutre, pas ≥0,55. Le tuning récupère ~+0,018, pas la conversion. Coût-nœuds ≈ gain tactique, même capé.
+- ⚠️ **Sous-puissant** (non-flush n~200-270) → IC cap=6 jusqu'à 0,556, positif marginal non exclu.
+- **Suite (choix JFC)** : re-run CLEAN haut-N à cap=6 ± balayage movetime (0,1/0,3/1,0s). #2 history-LMR (0499) = tout parité.
+
 ## 🔥 VERDICT 2026-06-29 — ext_forcing au JEU = NEUTRE (le gain depth-fixe NE passe PAS à temps réel) ⇒ recherche-vs-éval tranché
 > Re-run propre du bake-decider perdu en 0487 (non-flush). 0490 (n=30) puis **0491 (n=75 ; 4 shards/16 — le non-flush a
 > encore mangé 12 shards)** : ext_forcing **ON vs OFF à movetime 0,3 s**, openings dilf tactiques, eval-pur egdbmix.
