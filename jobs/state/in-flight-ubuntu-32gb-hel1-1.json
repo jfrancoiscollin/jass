@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0502-forcing-cap6-cleanN",
-  "script": "jobs/queue/cpx62-0502-forcing-cap6-cleanN.sh",
-  "pid": 3970202,
-  "started_at": "2026-06-30T06:34:15+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

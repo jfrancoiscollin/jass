@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0502-forcing-cap6-cleanN",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-30T06:34:15+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3970202
+  "ended_at": "2026-06-30T07:01:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
