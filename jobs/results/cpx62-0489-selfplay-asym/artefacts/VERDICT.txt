@@ -1,0 +1,7 @@
+recette : gen ASYMETRIQUE (punisher ext_forcing=1 vs victim OFF) + quiet-only + seeds=dilf+lidraughts + masters=non
+0440 (asym, 0489) = 0.252  IC95=[0.210,0.302]  (n=305)   [base egdbmix = 0.302 ; vs 0486 OFF/OFF et 0488 ON/ON]
+vs_egdbmix (self-play) = 0.5278
+LECTURE : 0440(asym) > 0486 ET > 0488 hors-IC => l'asymetrie FABRIQUE le signal manquant (vulnerable->punie->perte)
+          => DEBLOCAGE de l'auto-supervision sans Scan (mur 0460/0462 leve). On industrialise (asym bake dans la recette).
+          0440(asym) ~ 0.302 => meme le signal manufacture ne deplace pas l'eval => le residu est RECHERCHE (baker au jeu,
+          cf 0487) ou plafond-de-jeu ; consigner dans C2. (Comparer les 3 arms a egalite de seeds avant de conclure.)

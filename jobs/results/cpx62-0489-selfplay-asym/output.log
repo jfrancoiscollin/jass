@@ -1,0 +1,22 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 10000000 lignes @ 4min/M ≈ 40.0 min
+  [preflight] self-play ASYMETRIQUE punisher/victim (forcing-ext §4) : quiet-only + ballots + masters + fit + juges: ≈ 800 min
+  [preflight] TOTAL estimé ≈ 844.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== expert_games.db ABSENT (box-local non survivante) -> FALLBACK seeds dilf+lidraughts, pas de masters ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-spasym/seeds_both.jnnw (400305 positions) ; masters = <aucun>
+=== gen self-play ASYMETRIQUE 10000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
+10000000
+  self-play quiet = 10000000 positions
+  corpus total = 10000000
+
+================= VERDICT (asymetrie punisher/victim vs 0486 OFF / 0488 sym-ON) =================
+recette : gen ASYMETRIQUE (punisher ext_forcing=1 vs victim OFF) + quiet-only + seeds=dilf+lidraughts + masters=non
+0440 (asym, 0489) = 0.252  IC95=[0.210,0.302]  (n=305)   [base egdbmix = 0.302 ; vs 0486 OFF/OFF et 0488 ON/ON]
+vs_egdbmix (self-play) = 0.5278
+LECTURE : 0440(asym) > 0486 ET > 0488 hors-IC => l'asymetrie FABRIQUE le signal manquant (vulnerable->punie->perte)
+          => DEBLOCAGE de l'auto-supervision sans Scan (mur 0460/0462 leve). On industrialise (asym bake dans la recette).
+          0440(asym) ~ 0.302 => meme le signal manufacture ne deplace pas l'eval => le residu est RECHERCHE (baker au jeu,
+          cf 0487) ou plafond-de-jeu ; consigner dans C2. (Comparer les 3 arms a egalite de seeds avant de conclure.)
+===========================================
