@@ -40,6 +40,8 @@ struct SearchParams {
     // aggressive LMR/LMP/RFP all hurt, 0264; less LMP / time-mgmt also hurt, 0268.)
     int lmr_min_depth        = 3;
     int lmr_first_full_moves = 4;
+    int lmr_first_full_pv    = 4;   // LMR pv/non-pv asymmetry (Scan : non-PV réduit dès le 2e coup,
+    int lmr_first_full_nonpv = 4;   // PV dès le 4e). Réduit le 1er coup d'index >= ce seuil. Les deux=4 => uniforme legacy.
     int lmr_base             = 0;
     int lmr_depth_div        = 6;
     int lmr_idx_div          = 8;
@@ -132,6 +134,9 @@ struct SearchParams {
     // already accumulated this many extensions, bounding the cost of pathological
     // ultra-forcing positions.
     int forcing_ext_cap = 0;
+    // Single-reply extension (Scan) : un nœud à EXACTEMENT 1 coup légal est cherché +1 ply
+    // (branchement=1 => GRATUIT en largeur). Version ÉTROITE de ext_forcing (qui est large/cher). default off.
+    bool ext_single_reply = false;
 
     // --- 1b : raffinements search incrémentaux (gated, neutres par défaut) ---
 
@@ -235,6 +240,8 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "singular_margin")      p.singular_margin      = v;
     else if (key == "lmr_min_depth")        p.lmr_min_depth        = v;
     else if (key == "lmr_first_full_moves") p.lmr_first_full_moves = v;
+    else if (key == "lmr_first_full_pv")    p.lmr_first_full_pv    = v;
+    else if (key == "lmr_first_full_nonpv") p.lmr_first_full_nonpv = v;
     else if (key == "lmr_base")             p.lmr_base             = v;
     else if (key == "lmr_depth_div")        p.lmr_depth_div        = v;
     else if (key == "lmr_idx_div")          p.lmr_idx_div          = v;
@@ -260,6 +267,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "ext_promotion")        p.ext_promotion        = (v != 0);
     else if (key == "ext_forcing")          p.ext_forcing          = (v != 0);
     else if (key == "forcing_ext_cap")      p.forcing_ext_cap      = v;
+    else if (key == "ext_single_reply")     p.ext_single_reply     = (v != 0);
     else if (key == "use_improving")        p.use_improving        = (v != 0);
     else if (key == "use_conthist")         p.use_conthist         = (v != 0);
     else if (key == "iid_min_depth")        p.iid_min_depth        = v;
