@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0500-ebf-evalbound",
+  "script": "jobs/queue/cpx62-0500-ebf-evalbound.sh",
+  "pid": 3965357,
+  "started_at": "2026-06-30T05:36:42+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
