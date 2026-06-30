@@ -115,6 +115,16 @@
 - **En cours (0510)** : test EVAL-BOUND en node-EBF (hc faible vs egdbmix fort) — si une meilleure éval = moins de nœuds,
   l'EBF gap ET le gap de conversion (0,52 vs Scan 0,95) sont **LE MÊME problème (l'éval)** ⇒ pivot éval unifié et justifié.
 - **Prochaine grande étape (décidée avec JFC)** : pivot ÉVAL/GEN — le vrai goulot que tous les diagnostics répètent.
+- **0510 — test EVAL-BOUND (node-EBF exact, hc vs egdbmix) : RÉFUTÉ.** L'éval FORTE (egdbmix) cherche PLUS de nœuds
+  (ratio egdbmix/hc = 1,44/1,35/1,62 à d9/12/15), pas moins. ⇒ **l'EBF est STRUCTUREL, PAS éval-bound** : améliorer l'éval
+  ne baisse PAS l'EBF (au contraire). EBF (movetime) et conversion (force) sont **deux problèmes SÉPARÉS**. Le gap movetime
+  est structurel et non réductible (ni par search, ni par éval). Le champion egdbmix est net-positif malgré + de nœuds
+  (meilleure éval > coût-nœuds) — situation standard : améliorer l'éval reste gagnant au jeu.
+- **Bake conthist validé** (0510) : 6476/6486 assertions OK ; les 10 échecs sont TOUS dans test_scan_book (roundtrip
+  save/load de livre — env/filesystem sur la box, SANS rapport avec conthist). Bake maintenu. (À re-vérifier que ces
+  échecs scan_book existent aussi sur baseline = bruit d'env.)
+- **CONCLUSION FINALE** : chantier recherche CLOS ; EBF structurel (pas réductible) ; la conversion (0,52 vs Scan 0,95)
+  reste le goulot et c'est l'ÉVAL. ⇒ pivot ÉVAL/GEN pour la FORCE (pas pour l'EBF, qui est un problème séparé/structurel).
 
 ## 🔧 CHANTIER EBF (2026-06-29 soir, memo JFC v2) — le gap movetime = EFFICACITÉ de recherche, pas l'éval
 > Recadrage : `ext_forcing` neutre à movetime (0490/0491) **parce que l'EBF (facteur de branchement) de jass est trop
