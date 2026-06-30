@@ -161,6 +161,28 @@ d'éval de STABILITÉ ≠ 0440 baisserait l'EBF). ⚠️ **0264/0268 est LE mur 
 - ⚠️ **Sous-puissant** (non-flush n~200-270) → IC cap=6 jusqu'à 0,556, positif marginal non exclu.
 - **Suite (choix JFC)** : re-run CLEAN haut-N à cap=6 ± balayage movetime (0,1/0,3/1,0s). #2 history-LMR (0499) = tout parité.
 
+### 🧪 PISTE ORDERING + node-EBF EXACT (2026-06-30) — conthist = le seul (petit) gain GRATUIT
+> Constat : déficit movetime = EBF concentré en d9-12. En dames captures forcées => l'EBF = ordering des coups CALMES.
+> Knobs ordering OFF par défaut : IID (iid_min_depth=0), conthist (use_conthist=false).
+
+- **Méthodo corrigée** : l'EBF-par-TEMPS est trop bruité (0504 vs 0506 contredits, baseline ±11% sur mêmes positions) =>
+  incapable de voir ~6%. Fix : **node-EBF EXACT** (`--search-profile <fen> <d> 0 <eval> <params>`, commit 24ef71dc6 ; nodes
+  déterministes), **paired** (ratio nodes_knob/nodes_baseline, variance-position annulée).
+- **0507 (node-EBF exact, paired) — verdict net** :
+  | config | ratio nœuds @d12 | @d15 |
+  |---|---|---|
+  | iid6/iid8 | 1,00 / 1,00 | aucun effet |
+  | **conthist** | **0,905** | 0,941 |
+  ⇒ **IID = du vent** (le « IID baisse l'EBF » de 0504 était du BRUIT, confirmé exact). **conthist = vrai gain : −9,5 %
+  nœuds @d12, EXACT, et Elo-neutre (0505 n=610)** => **gain EBF GRATUIT** (l'arbre rétrécit ~9% au milieu sans coût force).
+- **Lecture chantier EBF** : l'EBF est **largement STRUCTUREL** en dames — ni LMR-shape (#1c) ni IID ne le bougent. **Seul
+  conthist** donne une réduction réelle, mais **modeste** (~9% niveau, PAS le 6%/ply compoundé du mémo). Pas le grand
+  effondrement promis ; un petit levier gratuit à prendre.
+- **Non-flush RÉSOLU** : stdout shard (START/RESULT/DONE) → output.log (committé fiable) + pairs=1 => n=610 propre (0505).
+- **En cours** : 0508 (conthist multi-movetime, bake-decider — bémol historique −11 Elo en 0253 à lever) ; 0509 (ext_forcing
+  cap=6 @ movetime 0,1s : 0503 penchait 0,543 en budget tendu). Si 0508 ≥ parité partout => **baker use_conthist=true**.
+
+
 ## 🔥 VERDICT 2026-06-29 — ext_forcing au JEU = NEUTRE (le gain depth-fixe NE passe PAS à temps réel) ⇒ recherche-vs-éval tranché
 > Re-run propre du bake-decider perdu en 0487 (non-flush). 0490 (n=30) puis **0491 (n=75 ; 4 shards/16 — le non-flush a
 > encore mangé 12 shards)** : ext_forcing **ON vs OFF à movetime 0,3 s**, openings dilf tactiques, eval-pur egdbmix.
