@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0511-asym-pair",
+  "script": "jobs/queue/cpx62-0511-asym-pair.sh",
+  "pid": 3988059,
+  "started_at": "2026-06-30T17:00:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
