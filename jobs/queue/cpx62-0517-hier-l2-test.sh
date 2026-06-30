@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0515-hier-l2-test
+# id: cpx62-0517-hier-l2-test
 # description: BRAS ASYMETRIQUE "PUNISHER vs VICTIM" (forcing-ext SPEC §4) — VARIANTE ROBUSTE MASTERS (DB-independante).
 # Durcissement de 0493 : les #6 masters ne dependent PLUS de expert_games.db (box-local, ephemere => disparait au reboot
 # de ccx33). Ils sont charges du corpus DURABLE committe master-2000.jnnw (0014, 371k parties rating>=2000) => masters=OUI
@@ -26,7 +26,7 @@ SCAN_BIN=/root/jass-scan/scan_linux
 DB=/nonexistent
 export PREFLIGHT_CAP_MIN="${PREFLIGHT_CAP_MIN:-3000}"
 source jobs/lib/preflight.sh
-ART="/root/jass/jobs/results/cpx62-0515-hier-l2-test/artefacts"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/cpx62-0517-hier-l2-test/artefacts"; mkdir -p "$ART"
 W=/root/cw-asym-rm3m; mkdir -p "$W"
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
 GEOM32=/root/jass-geom32-asym-rm3m
