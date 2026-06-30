@@ -1,0 +1,58 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] EBF #1c : R(d) d9/12/15 x4 configs (lineaire + mul20/25/30): ≈ 90 min
+  [preflight] TOTAL estimé ≈ 94 min  (cap 120 min)
+  [preflight] OK — sous le cap, lancement.
+=== CHANTIER EBF #1c — R(d) sous LMR-log (baseline #0 : EBF=1,69 ; R(15)=2,40) ===
+--- config=linear (lmr_formula=0) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0094      0.0157       0.60
+   12      0.0355      0.0257       1.38
+   15      0.1454      0.0605       2.40
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=mul20 (lmr_formula=1,lmr_log_mul=20) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0114      0.0158       0.72
+   12      0.0462      0.0239       1.93
+   15      0.2264      0.0576       3.93
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=mul25 (lmr_formula=1,lmr_log_mul=25) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0130      0.0154       0.84
+   12      0.0405      0.0242       1.68
+   15      0.2146      0.0594       3.61
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=mul30 (lmr_formula=1,lmr_log_mul=30) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0108      0.0163       0.66
+   12      0.0429      0.0331       1.30
+   15      0.1927      0.0799       2.41
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+
+=== EBF + R(15) par config (verdict) ===
+  config  EBF_jass(d9-15)  R(15)=j/s@d15  vs baseline
+  linear            1.578           2.40             
+   mul20            1.646           3.93 EBF +4.3% R(15) +63.8%
+   mul25            1.596           3.61 EBF +1.1% R(15) +50.4%
+   mul30            1.617           2.41 EBF +2.4% R(15) +0.4%
+
+LECTURE : un mul avec EBF NETTEMENT < linear ET R(15) qui chute vers ~1 (croisement repousse >=d15) =>
+          mecanisme OK (parite Elo 0497 + EBF baisse) => baker ce mul + #4 (ext_forcing sur build bas-EBF).
+          EBF ~ identique au lineaire a tous les muls => le log NE mord PAS l'arbre en dames (les noeuds calmes
+          ne dominent peut-etre pas comme en echecs) => chantier LMR-log NEGATIF => pivot diagnostic #3 (eval-noise).
+==========================================================

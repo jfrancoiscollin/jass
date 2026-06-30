@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0498-ebf-lmrlog-rd",
-  "script": "jobs/queue/cpx62-0498-ebf-lmrlog-rd.sh",
-  "pid": 3964079,
-  "started_at": "2026-06-30T04:59:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
