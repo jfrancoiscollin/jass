@@ -1,0 +1,5 @@
+=== #6 masters (repo master-2000.jnnw, DB-independant) = 371449 positions ===
+=== expert_games.db ABSENT -> #2 ballots : FALLBACK seeds dilf+lidraughts (masters deja garantis ci-dessus) ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-asym-rm3m/seeds_both.jnnw (400305 positions) ; masters = /root/cw-asym-rm3m/masters.jnnw
+=== gen self-play ASYMETRIQUE 3000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
