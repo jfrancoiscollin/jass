@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0489-selfplay-asym",
-  "snapshot_at": "2026-06-30T00:05:25+00:00",
+  "snapshot_at": "2026-06-30T00:10:27+00:00",
   "started_at": "2026-06-28T05:51:03+00:00",
-  "elapsed_seconds": 152062,
+  "elapsed_seconds": 152364,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3855697       1  1-18:14:22  0.0  0.0 bash\n3855699 3855697  1-18:14:22  0.0  0.0 bash\n3956491 3855699       10:16  109 35.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3855697       1  1-18:19:23  0.0  0.0 bash\n3855699 3855697  1-18:19:23  0.0  0.0 bash\n3956491 3855699       15:17  108 22.7 python3\n"
 }
