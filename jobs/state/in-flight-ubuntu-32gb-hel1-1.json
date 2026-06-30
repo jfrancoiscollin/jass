@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0505-ordering-elo",
-  "script": "jobs/queue/cpx62-0505-ordering-elo.sh",
-  "pid": 3976544,
-  "started_at": "2026-06-30T12:03:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
