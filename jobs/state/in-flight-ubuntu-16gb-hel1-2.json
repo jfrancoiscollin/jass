@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0506-ordering-combos",
-  "script": "jobs/queue/ccx33-0506-ordering-combos.sh",
-  "pid": 2987099,
-  "started_at": "2026-06-30T12:03:13+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
