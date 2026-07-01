@@ -114,6 +114,22 @@
   règle gravée pour ouvrir la gate NNUE. QUESTION RESTANTE : la distillation Scan a-t-elle visé l'éval STATIQUE de Scan
   (in-class) ou son score de RECHERCHE (contaminé, mur statique-vs-combo) ? = le dernier point à clarifier avant NNUE.
 
+## 🚀 EN TEST (2026-07-01 soir) — LOCALISEUR éval-vs-recherche : distillation STATIQUE de Scan (0523/0524)
+> Exécute la QUESTION RESTANTE ci-dessus (« Par curiosité va y », JFC). Le port `src/scan_eval.cpp` EXISTE mais n'a JAMAIS été
+> fitté sur l'éval STATIQUE de Scan : toutes nos distillations (0073-0086/0147-0149) visaient son score de RECHERCHE (d10 = contaminé).
+
+- **cpx62-0523 (STATIQUE, d0)** : relabel corpus (`0328`, 400k) au Scan **depth 0** (en dames, d0 ne résout que les prises
+  FORCÉES → jamais le SACRIFICE → vraiment statique, aveugle aux combos) → fit le port v3 (features déjà matchées à Scan) →
+  JOUE **jass-search + Scan-static-eval vs Scan** sur la jauge **0440** (d11, no-DB).
+- **ccx33-0524 (CONTRÔLE, d12)** : jumeau exact, relabel au **score de RECHERCHE** (d12) → static-vs-search apples-to-apples
+  (reproduit proprement 0147 sur le corpus/pipeline courant).
+- **DÉCIDEUR** : conv ~Scan(0,95) ⇒ **gap = ÉVAL** (notre fit/point-fixe) → re-distiller/enrichir l'éval (pas encore NNUE) ;
+  conv ~baseline(0,30-0,52) ≪ Scan ⇒ **gap = RECHERCHE** (jass-search < Scan même AVEC son éval) → avec le faisceau plateau,
+  **condition de la gate NNUE remplie (preuve, pas impression)**. Croisé : static ≫ search ⇒ la contamination-recherche
+  PLOMBAIT le fit historique (le vrai signal était l'éval statique) ; static ~ search ⇒ la profondeur du label n'est pas le levier.
+- **Réserve (si 0523/0524 ambigus)** : porter les **poids RÉELS de Scan** (open-source, présents sur les box `/root/jass-scan`)
+  dans le port v3 via convertisseur → mesure jass-search+Scan-eval EXACTE, sans dépendre de notre fit. Non lancé (plus coûteux).
+
 ## 🔬 BATCH LEVIERS 2026-07-01 (4 négatifs, 1 lead) — méthodo node-EBF exact
 > Après réouverture (mémos Box-Cox + Scan lus dans rhalbersma/scan). Tous mesurés proprement (node-EBF exact / A/B N propre).
 
