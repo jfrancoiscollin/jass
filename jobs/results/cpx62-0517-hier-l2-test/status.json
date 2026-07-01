@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0517-hier-l2-test",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-01T06:08:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4025151
+  "ended_at": "2026-07-01T08:43:43+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

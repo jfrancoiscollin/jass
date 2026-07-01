@@ -1,0 +1,35 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 2000000 lignes @ 4min/M ≈ 8.0 min
+  [preflight] self-play ASYMETRIQUE punisher/victim (forcing-ext §4) : quiet-only + ballots + masters + fit + juges (echelle 3M): ≈ 300 min
+  [preflight] TOTAL estimé ≈ 312.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== #6 masters (repo master-2000.jnnw, DB-independant) = 371449 positions ===
+=== expert_games.db ABSENT -> #2 ballots : FALLBACK seeds dilf+lidraughts (masters deja garantis ci-dessus) ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-asym-rm3m/seeds_both.jnnw (400305 positions) ; masters = /root/cw-asym-rm3m/masters.jnnw
+=== gen self-play ASYMETRIQUE 2000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
+2000000
+  self-play quiet = 2000000 positions
+  + masters-naturels = 371449 positions (frequence naturelle ~16%)
+  corpus total = 2371449
+
+================= TEST REGULARISATION HIERARCHIQUE (--hier-l2) =================
+  corpus OFF/OFF propre 2M (egdbmix pilote, quiet-only, robust masters) ; fit NO-PRUNE (expose les buckets rares)
+  configs : baseline(L2->0) vs hier-l2 (backoff vers moyenne pattern). Juge = 0440 vs Scan. Delta = effet du backoff.
+--- fit baseline : --l2 3e-5 --hier-l2 0 --prune-min-visits 1 (no-prune) ---
+  RESULT-HIER baseline : 0440=0.279 IC95=[0.231,0.326] n=305 (l2=3e-5 hier_l2=0)
+--- fit hierA : --l2 1e-5 --hier-l2 1e-3 --prune-min-visits 1 (no-prune) ---
+  RESULT-HIER hierA : 0440=0.239 IC95=[0.195,0.285] n=305 (l2=1e-5 hier_l2=1e-3)
+--- fit hierB : --l2 1e-5 --hier-l2 1e-2 --prune-min-visits 1 (no-prune) ---
+  RESULT-HIER hierB : 0440=0.236 IC95=[0.192,0.284] n=305 (l2=1e-5 hier_l2=1e-2)
+--- fit hierC : --l2 3e-5 --hier-l2 3e-3 --prune-min-visits 1 (no-prune) ---
+  RESULT-HIER hierC : 0440=0.275 IC95=[0.230,0.326] n=305 (l2=3e-5 hier_l2=3e-3)
+
+LECTURE : un hier-l2 avec 0440 NETTEMENT > baseline (hors-IC) => le backoff vers la moyenne pattern bat L2->0 =>
+  les buckets rares heritant du parent generalisent mieux que ->0 => levier LINEAIRE debloque => industrialiser +
+  sweep fin + v2 (prior materiel / visit-pondere). ~baseline => le backoff ne change rien a cette echelle/prune.
+  base egdbmix = 0.302 (ref). Champion best -> gzip pour reutilisation.
+sort: separator must be exactly one character long: ''
+Try 'sort --help' for more information.
+  meilleur : NA
+===========================================
