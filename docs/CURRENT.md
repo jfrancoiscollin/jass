@@ -94,6 +94,31 @@
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
 
+## 🎯 VERDICT 0525/0526 (2026-07-01 nuit) — le trou COMBINAISONS est de la RECHERCHE, PAS l'éval-feuille ⇒ distill statique CLOS
+> Le localiseur éval-vs-recherche a tranché (demande JFC « Par curiosité va y »). Distille l'éval de Scan (STATIQUE d1 vs
+> RECHERCHE d12) → JOUE jass-search+eval vs Scan sur la jauge 0440 (d11, no-DB, N=610). Relance après bug --threads (0523/0524).
+
+| bras | fit train_loss | conv. 0440 (jass au trait) | Scan au trait | vs baseline egdbmix 0,302 |
+|---|---|---|---|---|
+| **STATIQUE (0525, Scan d1)** | **2,57** (bien posé) | **0,261** | 0,943 | ≈ (−0,04) |
+| RECHERCHE (0526, Scan d12) | 20,77 (mal posé, 8×) | 0,179 (n=475) | 0,956 | pire |
+
+- **CONTAMINATION CONFIRMÉE** : fitter l'éval STATIQUE de Scan est bien posé (loss 2,57) ; fitter son SCORE DE RECHERCHE
+  est mal posé (loss **20,77 = 8×**) — une fonction statique ne PEUT PAS représenter une valeur de recherche. ⇒ nos
+  distillations historiques (0147 = Scan-d10) visaient le **mauvais signal** (le plateau distill était en partie un artefact).
+- **MAIS le distill statique PROPRE NE LÈVE PAS la conversion** : **0,261 ≈ baseline 0,302, LOIN de Scan 0,943.** Donner à
+  jass une éval DÉRIVÉE de Scan ne le fait PAS convertir comme Scan. ⇒ **le trou 0440 n'est PAS l'éval-feuille → c'est la
+  RECHERCHE** (quelles lignes forçantes l'arbre d11 explore). **Converge** avec ext_forcing (0483/0485 : l'EXTENSION forçante
+  récupère les combos à profondeur fixe) et DIAG#1a (ordering sain). Les deux bras ≈ baseline, aucun proche de 0,95.
+- **IMPLICATION STRATÉGIQUE (majeure)** : une meilleure éval — linéaire riche OU **NNUE** — ne fermera PAS ces combinaisons ;
+  c'est un problème d'ARBRE (quelles lignes explorées), pas de feuille. L'axe éval sert le jeu **POSITIONNEL** (0330 : perte à
+  profondeur égale), pas ces shots. ⇒ **le levier « distiller l'éval de Scan » est CLOS** (version propre testée, n'aide pas)
+  ET **l'argument « ouvrir la gate NNUE pour fermer les combos » est AFFAIBLI** (NNUE = meilleure feuille, pas meilleur arbre).
+- **Caveat** : éval Scan-DÉRIVÉE (fit loss 2,57), pas les poids EXACTS de Scan ; signal robuste (les 2 bras ≈ baseline). Version
+  airtight = porter les poids réels de Scan (réserve). 0526 : 475/610 parties analysées (dumps manquants), signal 0,179 net.
+- ⇒ **RESTE** : (a) **tactique = recherche** (ext_forcing movetime-neutre 0509 → dur) ou **FM** (interactions = encodage
+  STATIQUE des paires de motifs, que le linéaire NE peut pas — ce verdict le MOTIVE) ; (b) **positionnel = éval** (vérité-externe #6, FM).
+
 ## 🎯 DIAG #1a + COMBO Scan (2026-07-01 soir) — l'éval-structure ÉCARTÉE ; convergence « linéaire proche épuisé »
 > Briefing localisateurs (JFC) : mesurer OÙ est le gap d'arbre vs Scan, pas deviner.
 
