@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0517-hier-l2-test",
+  "script": "jobs/queue/cpx62-0517-hier-l2-test.sh",
+  "pid": 4025151,
+  "started_at": "2026-07-01T06:08:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
