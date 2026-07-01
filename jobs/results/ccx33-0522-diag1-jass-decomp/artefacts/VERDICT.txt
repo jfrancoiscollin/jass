@@ -1,0 +1,13 @@
+=== DIAG #1 jass decomposition d1-d6 sur 40 FEN ===
+ d       N(d)   mult cutoff1er% research% coups/noeud
+ 1       1341   0.00        0.0      0.00        0.00
+ 2       4214   3.14       89.9      1.21        0.19
+ 3      15575   3.70       86.0      1.07        0.30
+ 4      30522   1.96       91.3      0.99        0.40
+ 5      57519   1.88       90.7      0.95        0.44
+ 6     103597   1.80       92.0      0.77        0.50
+
+LECTURE : cutoff-1er% BAS (<~85 ?) => ordering faible = suspect discrimination EVAL => #2 (port Scan-eval).
+  research% HAUT => instabilite des valeurs (echelle/discrimination eval). multiplicateur qui monte des d2-d4 =>
+  inefficacite STRUCTURELLE precoce (these JFC etayee). Compare a Scan = #1b (instrumenter le clone). base : un
+  moteur alpha-beta sain a ~90%+ de cutoff-1er et un multiplicateur qui se tasse en profondeur.

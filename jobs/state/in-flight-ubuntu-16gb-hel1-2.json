@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0522-diag1-jass-decomp",
-  "script": "jobs/queue/ccx33-0522-diag1-jass-decomp.sh",
-  "pid": 3031484,
-  "started_at": "2026-07-01T17:40:10+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
