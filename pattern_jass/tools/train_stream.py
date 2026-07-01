@@ -45,6 +45,7 @@ from train import (                                # noqa: E402
     CF_BUCKETS, colorfold_maps,
     build_sparse_X_phased, build_extras_phased,
     train_lbfgs_chunked, write_weights_v3,
+    load_v3_weights_float,
     phase_wmg, _TEMPO_WW, _TEMPO_BW,
 )
 
@@ -210,6 +211,56 @@ def expand_pat(folder: Folder, canon_mg, canon_eg, scale):
 
 
 # --------------------------------------------------------------------------- #
+#  Sequential-Bayesian prior : project the previous champion (full PJTW v3) into
+#  the CURRENT training layout [pat_mg|pat_eg|ext_mg|ext_eg] as a Gaussian prior.
+#  mean μ = champion weights (fold-back to canonical + prune-align to dense slots) ;
+#  precision = l2 + decay·λ·(visits/N) per weight (extras : visits=N). Carries the
+#  champion forward — well-visited buckets anchored, rare buckets barely moved
+#  (anti-forgetting). Dimensionally consistent with the mean-normalised objective
+#  (data-Fisher_i ~ 0.25·visits_i/N). Feeds train_lbfgs_chunked's prior_mean/prec.
+# --------------------------------------------------------------------------- #
+def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
+    w_champ, scale_c, n_pat_c, n_ext_c = load_v3_weights_float(args.prior_mean)
+    if n_ext_c != E:
+        raise SystemExit(f'--prior-mean n_ext {n_ext_c} != current extras {E} '
+                         '(champion built with different feature flags)')
+    NP = patterns.NUM_PATTERNS
+    NB = patterns.BUCKETS_PER_PATTERN
+    if n_pat_c != NP * NB:
+        raise SystemExit(f'--prior-mean n_pat {n_pat_c} != {NP * NB} (full 17M v3 expected)')
+    cm_full = w_champ[0:n_pat_c]
+    ce_full = w_champ[n_pat_c:2 * n_pat_c]
+    ext_mg_c = w_champ[2 * n_pat_c:2 * n_pat_c + n_ext_c]
+    ext_eg_c = w_champ[2 * n_pat_c + n_ext_c:2 * n_pat_c + 2 * n_ext_c]
+    # --- fold-back full -> canonical training block (p*PAT_BUCKETS + cc) ---
+    if folder.mode == 'color':
+        U2C, U2S = colorfold_maps()
+        rep_b = np.empty(CF_BUCKETS, dtype=np.int64)
+        rep_b[U2C] = np.arange(NB, dtype=np.int64)          # any representative per canonical
+        srb = U2S[rep_b].astype(np.float64)
+        canon_mg = (cm_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
+        canon_eg = (ce_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
+    elif folder.mode == 'none':
+        canon_mg, canon_eg = cm_full, ce_full               # canonical == full
+    else:
+        raise SystemExit(f'--prior-mean unsupported for fold={folder.mode!r} (color/none only)')
+    # --- prune-align : dense slot s(1..K) -> canonical bucket keep[s-1] ; slot0=fallback(0) ---
+    mu_pat_mg = np.zeros(PAT_N, dtype=np.float64); mu_pat_mg[1:] = canon_mg[keep]
+    mu_pat_eg = np.zeros(PAT_N, dtype=np.float64); mu_pat_eg[1:] = canon_eg[keep]
+    lam = float(args.prior_visit_scale); dec = float(args.prior_decay)
+    prec_pat = np.full(PAT_N, l2, dtype=np.float64)
+    prec_pat[1:] = l2 + dec * lam * (kept_counts.astype(np.float64) / max(N, 1))
+    prec_ext_val = l2 + dec * lam                            # extras active every row (visits/N=1)
+    mu = np.concatenate([mu_pat_mg, mu_pat_eg, ext_mg_c, ext_eg_c])
+    prec = np.concatenate([prec_pat, prec_pat,
+                           np.full(E, prec_ext_val), np.full(E, prec_ext_val)])
+    print(f'prior : champion={args.prior_mean} (scale={scale_c})  λ={lam} decay={dec}  '
+          f'prec[pat] med={np.median(prec_pat[1:]):.3e} max={prec_pat[1:].max():.3e} '
+          f'prec[ext]={prec_ext_val:.3e}  warm-start at μ')
+    return mu, prec
+
+
+# --------------------------------------------------------------------------- #
 #  The streaming trainer.
 # --------------------------------------------------------------------------- #
 def train_stream(args):
@@ -293,6 +344,7 @@ def train_stream(args):
         remap = np.zeros(TB, dtype=np.int32)             # 0 = fallback/unseen
         remap[keep] = np.arange(1, K + 1, dtype=np.int32)
         PAT_N = K + 1
+        kept_counts = ccounts[keep].copy() if args.prior_mean else None  # per-slot visits for prior
         print(f'prune : keep {K:,} buckets (>= {args.prune_min_visits} visits) '
               f'-> {2*PAT_N:,} pattern cols vs {2*TB:,}  ({TB/max(PAT_N,1):.1f}x fewer); '
               f'remap RAM={remap.nbytes/1e6:.0f}MB')
@@ -302,6 +354,8 @@ def train_stream(args):
                   'differs slightly from the trained model. Use 1 for a lossless prune.',
                   file=sys.stderr)
         del ccounts
+    if args.prior_mean and not do_prune:
+        raise SystemExit('--prior-mean requires --prune (per-bucket precision needs visit counts)')
 
     n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
     print(f'design : {n_cols:,} columns (2x{PAT_N:,} pat + 2x{EVAL_NUM_EXTRAS} ext)')
@@ -351,12 +405,20 @@ def train_stream(args):
             slot_pattern[1:K + 1] = (keep // PB).astype(np.int32)
         print(f'hier-l2 : {args.hier_l2}  (backoff vers la moyenne du pattern parent, '
               f'{patterns.NUM_PATTERNS} patterns)')
+    # Sequential-Bayesian prior (opt-in) : project the previous champion into the
+    # training layout as a per-weight precision-weighted Gaussian prior. OFF
+    # (--prior-mean unset) => exact plain-L2 behaviour, byte-identical output.
+    prior_mean = prior_prec = None
+    if args.prior_mean:
+        prior_mean, prior_prec = build_sequential_prior(
+            args, folder, keep, kept_counts, PAT_N, EVAL_NUM_EXTRAS, N, args.l2)
     t0 = time.time()
     w_float, train_loss, n_iter = train_lbfgs_chunked(
         build_fn, tr_idx, y_all, args.l2, args.max_iter,
         logistic, n_cols, chunk, sw_all=None,
         hier_l2=args.hier_l2, slot_pattern=slot_pattern,
-        pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS)
+        pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
+        prior_mean=prior_mean, prior_prec=prior_prec)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
 
     # --- Un-prune to the TB-sized training block, then fold-EXPAND to the full 17M
@@ -431,6 +493,19 @@ def main(argv=None):
                     help='Hierarchical shrinkage (backoff) : penalise each pattern bucket toward its '
                          'PARENT pattern mean (λ·Σ(w_b−μ_p)²) instead of 0. Rare buckets inherit the '
                          'pattern mean, not neutral. 0 = off (legacy L2→0). Pairs with a small --l2.')
+    ap.add_argument('--prior-mean', type=str, default=None,
+                    help='SEQUENTIAL-BAYESIAN prior : PJTW v3 of the PREVIOUS champion. When set, the '
+                         'ridge toward 0 is replaced by a Gaussian prior toward this champion, with '
+                         'per-weight precision = l2 + decay·λ·(visits/N) (extras: visits=N), warm-started '
+                         'at μ. Carries acquired knowledge across generations (anti-forgetting of rare '
+                         'buckets). OFF (default) = plain L2, byte-identical. Requires --prune ; '
+                         '--color-fold or none only.')
+    ap.add_argument('--prior-visit-scale', type=float, default=0.25,
+                    help='λ : prior evidence per accumulated visit (dimensionless ; ~0.25 balances the '
+                         'prior against the logistic data-Fisher). Only with --prior-mean.')
+    ap.add_argument('--prior-decay', type=float, default=1.0,
+                    help='discount on the prior precision (0..1). 1 = full visit-weighting ; 0 = plain '
+                         'ridge toward the champion (uniform l2, μ=champion). Only with --prior-mean.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--scale', type=int, default=1000, help='quantisation factor')
