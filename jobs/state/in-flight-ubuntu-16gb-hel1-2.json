@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0527-cleanloop-gen1-validate",
+  "script": "jobs/queue/ccx33-0527-cleanloop-gen1-validate.sh",
+  "pid": 3035780,
+  "started_at": "2026-07-01T22:12:53+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}

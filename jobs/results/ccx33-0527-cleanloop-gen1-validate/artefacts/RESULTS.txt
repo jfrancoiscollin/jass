@@ -1,0 +1,1 @@
+=== build jass (32-pat, egdb ON) ===
