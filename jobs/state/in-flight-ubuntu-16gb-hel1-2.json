@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0519-singlereply-win",
+  "script": "jobs/queue/ccx33-0519-singlereply-win.sh",
+  "pid": 3022167,
+  "started_at": "2026-07-01T11:09:04+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
