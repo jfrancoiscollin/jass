@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0516-scan-levers-nodeebf",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-01T06:03:02+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4023782
+  "ended_at": "2026-07-01T06:08:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
