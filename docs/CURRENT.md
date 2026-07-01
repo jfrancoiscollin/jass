@@ -94,6 +94,26 @@
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
 
+## 🎯 DIAG #1a + COMBO Scan (2026-07-01 soir) — l'éval-structure ÉCARTÉE ; convergence « linéaire proche épuisé »
+> Briefing localisateurs (JFC) : mesurer OÙ est le gap d'arbre vs Scan, pas deviner.
+
+- **DIAG #1a (0522, node-count jass d1-d6, instrumentation passive PR #325)** : **cutoff-au-1er-coup = ~90%** (89,9→92,0
+  sur d2-d6) + **re-recherche = ~1%** (0,77-1,21%). Un alpha-bêta sain est à ~90%+ ⇒ **jass ordonne DÉJÀ très bien**. La thèse
+  JFC « trop de patterns → éval moins fiable → mauvais ordering → arbre gras » est **ÉCARTÉE** (si l'ordering était le canal,
+  cutoff-1er serait à 70-80%). ⇒ **l'arbre gras ne vient PAS de la structure/discrimination de l'éval** mais du CALENDRIER
+  D'ÉLAGAGE (jass tuné conservateur, 0264/0268 : réduit MOINS pour garder la force). Converge avec 0510 (EBF non-éval-bound).
+  JFC : « ça suffit » ⇒ #1b (compare Scan) et #2 (port Scan-eval) et #3 (8cf) NON lancés.
+- **COMBO Scan (0520/0521)** : single_reply+asym ensemble = **parité** (combo 0,534@0,1s ≈ single_reply seul, n=610, pas de
+  composition) ; **EBF vs Scan AGGRAVÉ** (le single_reply étend, domine l'asym → d15 ratio 2,23→4,98). ⇒ la recette Scan
+  assemblée **ne ferme pas l'écart**.
+- **CONVERGENCE (bilan de tout)** : (1) EBF = tradeoff d'élagage Elo-LOCKÉ (moins réduire = +Elo, 0264/0268 ⇒ on ne peut pas
+  rétrécir l'arbre sans perdre la force) ⇒ **recherche proche épuisée** (conthist −9% baké ; Scan-levers = efficacité parité).
+  (2) éval : ordering sain (DIAG#1a), qualité ne pilote pas l'EBF (0510) ⇒ la faiblesse = **jugement positionnel par-ply**
+  (0330 : perd à profondeur égale), qui **plafonne** (distill-plateau, from-scratch-plat, hier-l2/asym négatifs, tous ~0,28
+  en 0440 / ~0,52 movetime vs Scan 0,95). ⇒ **faisceau de preuves d'un plateau linéaire SOUS Scan** = la condition de la
+  règle gravée pour ouvrir la gate NNUE. QUESTION RESTANTE : la distillation Scan a-t-elle visé l'éval STATIQUE de Scan
+  (in-class) ou son score de RECHERCHE (contaminé, mur statique-vs-combo) ? = le dernier point à clarifier avant NNUE.
+
 ## 🔬 BATCH LEVIERS 2026-07-01 (4 négatifs, 1 lead) — méthodo node-EBF exact
 > Après réouverture (mémos Box-Cox + Scan lus dans rhalbersma/scan). Tous mesurés proprement (node-EBF exact / A/B N propre).
 
