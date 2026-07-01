@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0512-off-pair",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 9,
   "started_at": "2026-06-30T17:05:38+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 2994865
+  "ended_at": "2026-07-01T06:58:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

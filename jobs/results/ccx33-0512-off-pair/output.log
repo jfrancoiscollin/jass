@@ -1,0 +1,17 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 3000000 lignes @ 4min/M ≈ 12.0 min
+  [preflight] self-play ASYMETRIQUE punisher/victim (forcing-ext §4) : quiet-only + ballots + masters + fit + juges (echelle 3M): ≈ 300 min
+  [preflight] TOTAL estimé ≈ 316.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== #6 masters (repo master-2000.jnnw, DB-independant) = 371449 positions ===
+=== expert_games.db ABSENT -> #2 ballots : FALLBACK seeds dilf+lidraughts (masters deja garantis ci-dessus) ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-asym-rm3m/seeds_both.jnnw (400305 positions) ; masters = /root/cw-asym-rm3m/masters.jnnw
+=== gen self-play ASYMETRIQUE 3000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
+0
+  self-play quiet = 0 positions
+ABORT: self-play vide (0)
+turels = 371449 positions (frequence naturelle ~11%)
+  corpus total = 3371449
+/root/jass/jobs/queue/ccx33-0512-off-pair.sh: line 194: 3017744 Bus error               (core dumped) env JASS_PATTERNS_DIR="$GEOM32" python3 pattern_jass/tools/train_stream.py --data "$W/corpus.jnnw" --feat "$W/feat" --color-fold --tempo-stage --loss logistic --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" --out "$W/champ.pjtw" > "$W/fit.log" 2>&1
+TRAIN FAIL
