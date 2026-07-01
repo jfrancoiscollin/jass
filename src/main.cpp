@@ -2886,6 +2886,9 @@ int run_search_profile_mode(int argc, char** argv) {
               << " bestmove=" << static_cast<int>(r.best_move.from) << "-"
               << static_cast<int>(r.best_move.to) << "-"
               << static_cast<int>(r.best_move.num_captures);
+    // DIAG #1 : décomposition node-count (cutoff-1er, re-recherche, coups/noeud)
+    std::cout << " cutoffs=" << r.cutoffs << " cut1=" << r.first_move_cutoffs
+              << " research=" << r.pvs_researches << " movessearched=" << r.moves_searched;
     if (r.nodes) std::cout << "  (" << (s.total_ns ? (r.nodes * 1000ULL / std::max<std::uint64_t>(1, s.total_ns / 1000)) : 0) << " knps)";
     std::cout << "\n";
     if (s.total_ns == 0) {
