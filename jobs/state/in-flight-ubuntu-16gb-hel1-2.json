@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0526-scan-search-eval-control",
+  "script": "jobs/queue/ccx33-0526-scan-search-eval-control.sh",
+  "pid": 3033657,
+  "started_at": "2026-07-01T18:57:10+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
