@@ -1,0 +1,86 @@
+===CFG=== single_reply_mt0.1 (ext_single_reply=1) vs baseline @ movetime 0.1s, dilf
+START 0
+START 1
+START 2
+START 4
+START 3
+START 5
+START 6
+START 7
+DONE 1
+DONE 0
+DONE 2
+DONE 3
+RESULT 50 9 17
+DONE 6
+RESULT 27 8 41
+DONE 5
+RESULT 45 9 22
+DONE 4
+RESULT 21 13 42
+DONE 7
+===ENDCFG=== single_reply_mt0.1
+===CFG=== ext_forcing_mt0.1 (ext_forcing=1) vs baseline @ movetime 0.1s, dilf
+START 0
+START 1
+START 3
+START 2
+START 4
+START 5
+START 6
+START 7
+DONE 3
+DONE 2
+DONE 1
+DONE 0
+DONE 7
+DONE 4
+DONE 6
+RESULT 14 12 50
+DONE 5
+===ENDCFG=== ext_forcing_mt0.1
+===CFG=== single_reply_mt0.3 (ext_single_reply=1) vs baseline @ movetime 0.3s, dilf
+START 0
+START 1
+START 2
+START 3
+START 4
+START 5
+START 6
+START 7
+DONE 1
+DONE 0
+DONE 3
+DONE 2
+RESULT 53 6 17
+DONE 6
+RESULT 15 10 51
+DONE 7
+RESULT 16 9 51
+DONE 5
+RESULT 44 15 17
+DONE 4
+===ENDCFG=== single_reply_mt0.3
+===CFG=== ext_forcing_mt0.3 (ext_forcing=1) vs baseline @ movetime 0.3s, dilf
+START 0
+START 1
+START 2
+START 3
+START 5
+START 4
+START 6
+START 7
+DONE 0
+DONE 1
+DONE 2
+DONE 7
+RESULT 44 12 20
+DONE 6
+RESULT 11 8 57
+DONE 3
+RESULT 15 12 49
+DONE 5
+RESULT 42 13 21
+DONE 4
+===ENDCFG=== ext_forcing_mt0.3
+=== Agreger par bloc. single_reply > baseline (0.5) ET > ext_forcing => forcing gratuit gagne => baker. ===
