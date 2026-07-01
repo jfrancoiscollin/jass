@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0525-scan-static-eval-localizer",
+  "script": "jobs/queue/cpx62-0525-scan-static-eval-localizer.sh",
+  "pid": 4041354,
+  "started_at": "2026-07-01T18:56:55+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
