@@ -1,0 +1,8 @@
+=== LOCALISEUR ÉVAL-vs-RECHERCHE — bras STATIQUE (Scan depth 1) ===
+=== build jass (ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO — NUM_EXTRAS cohérent train<->play) ===
+=== Phase 1 : relabel corpus PARALLÈLE (Scan depth 1, 400000 pos) ===
+  8 shards //, 50000 pos/shard
+  merged 332992 records depuis 8 shards
+  garde-fou : 332992 pos ; scores non-nuls 321993/332992 (96.7%) ; min -9998 max 9999 med 4
+=== Phase 2 : dump-eval-features ===
+=== Phase 3 : fit éval Scan-portée v3 sur le SCORE QUASI-STATIQUE de Scan ===
