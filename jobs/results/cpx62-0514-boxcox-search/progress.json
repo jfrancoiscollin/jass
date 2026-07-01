@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0514-boxcox-search",
+  "snapshot_at": "2026-07-01T05:57:52+00:00",
+  "started_at": "2026-07-01T05:52:47+00:00",
+  "elapsed_seconds": 305,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4019786       1       05:04  0.0  0.0 bash\n4019788 4019786       05:04  0.0  0.0 bash\n4020350 4019788       04:53  0.3  0.0 python3\n4020351 4019788       04:53  0.0  0.0 tee\n4021925 4020350       00:00  114  0.4 jass\n"
+}
