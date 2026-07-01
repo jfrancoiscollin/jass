@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0516-scan-levers-nodeebf",
+  "script": "jobs/queue/cpx62-0516-scan-levers-nodeebf.sh",
+  "pid": 4023782,
+  "started_at": "2026-07-01T06:03:02+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
