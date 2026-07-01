@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0526-scan-search-eval-control",
-  "snapshot_at": "2026-07-01T19:02:18+00:00",
+  "snapshot_at": "2026-07-01T19:07:35+00:00",
   "started_at": "2026-07-01T18:57:10+00:00",
-  "elapsed_seconds": 308,
+  "elapsed_seconds": 625,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3033657       1       05:08  0.0  0.0 bash\n3033659 3033657       05:08  0.0  0.0 bash\n3034087 3033659       04:56  2.1  0.1 python3\n3034088 3033659       04:56  2.1  0.1 python3\n3034089 3033659       04:56  2.1  0.1 python3\n3034090 3033659       04:56  2.0  0.1 python3\n3034091 3033659       04:56  2.1  0.1 python3\n3034092 3033659       04:56  2.1  0.1 python3\n3034093 3033659       04:56  2.1  0.1 python3\n3034094 3033659       04:56  2.0  0.1 python3\n3034095 3034087       04:56 97.8  0.9 scan_linux\n3034096 3034092       04:56 97.7  0.9 scan_linux\n3034097 3034090       04:56 97.9  0.9 scan_linux\n3034098 3034094       04:56 97.8  0.9 scan_linux\n3034099 3034088       04:56 97.7  0.9 scan_linux\n3034100 3034093       04:56 97.7  0.9 scan_linux\n3034101 3034091       04:56 97.7  0.9 scan_linux\n3034102 3034089       04:56 97.8  0.9 scan_linux\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3033657       1       10:25  0.0  0.0 bash\n3033659 3033657       10:25  0.0  0.0 bash\n3034252 3033659       02:49  371 20.8 python3\n"
 }
