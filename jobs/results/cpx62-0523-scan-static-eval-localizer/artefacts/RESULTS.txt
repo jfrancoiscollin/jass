@@ -1,0 +1,4 @@
+=== LOCALISEUR ÉVAL-vs-RECHERCHE — bras STATIQUE (Scan depth 0) ===
+=== build jass (flags champion : ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO — NUM_EXTRAS cohérent train<->play) ===
+=== Phase 1 : relabel corpus au SCAN STATIQUE (depth 0, 400000 pos, 16 threads) ===
+ABORT relabel
