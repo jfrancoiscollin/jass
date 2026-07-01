@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0521-combo-ebf-vs-scan",
+  "script": "jobs/queue/ccx33-0521-combo-ebf-vs-scan.sh",
+  "pid": 3030695,
+  "started_at": "2026-07-01T16:49:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}

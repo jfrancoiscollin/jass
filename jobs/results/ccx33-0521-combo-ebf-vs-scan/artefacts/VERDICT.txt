@@ -1,0 +1,21 @@
+--- config=baseline () ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0133      0.0150       0.89
+   12      0.0336      0.0228       1.48
+   15      0.1464      0.0658       2.23
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+--- config=combo (ext_single_reply=1,lmr_first_full_nonpv=2,lmr_first_full_pv=4) ---
+nps: 40 positions (>= 14p), depths [9, 12, 15]
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+depth  jass_s/pos  scan_s/pos  jass/scan
+    9      0.0127      0.0147       0.87
+   12      0.0676      0.0226       3.00
+   15      0.2602      0.0522       4.98
+
+jass/scan ratio = movetime-compensation factor (give jass that x more time = fair).
+=== R(15) combo < baseline (2,40) => handicap movetime vs Scan reduit => la recette Scan aide. ===
