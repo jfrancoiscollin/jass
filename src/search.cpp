@@ -128,6 +128,10 @@ inline void hoist_move(MoveList& moves, const Move& priority) {
 struct Searcher {
     TranspositionTable* tt{nullptr};
     std::uint64_t       nodes{0};
+    std::uint64_t       cutoffs{0};            // DIAG #1 : beta cutoffs totaux
+    std::uint64_t       first_move_cutoffs{0}; // DIAG #1 : cutoffs ou le 1er coup coupe (qualite ordering)
+    std::uint64_t       pvs_researches{0};     // DIAG #1 : re-recherches full-window PVS (instabilite valeurs)
+    std::uint64_t       moves_searched{0};     // DIAG #1 : coups reellement cherches (coups/noeud)
     // Root depth of the current iterative-deepening iteration. Set by
     // run_root_window before recursing. Used to bound forcing extensions:
     // total extensions accumulated on a path = (depth + ply) - root_depth_.
@@ -960,6 +964,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // the opponent to capture (`next` is already the post-move position).
         if (do_lmr && params.no_reduce_forcing && leaves_forced_capture(next))
             do_lmr = false;
+        ++moves_searched;                       // DIAG #1 (passif : n'affecte pas la recherche)
         if (params.use_pvs && move_idx > 0) {
             // Principal Variation Search: once a PV move has raised alpha,
             // scout the remaining moves with a zero-width window (optionally
@@ -975,6 +980,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             }
             if (score > alpha && score < beta) {
                 // Genuine PV candidate — establish its exact score.
+                ++pvs_researches;               // DIAG #1
                 score = -negamax(next, new_depth, ply + 1, -beta, -alpha);
             }
         } else if (do_lmr) {
@@ -1001,6 +1007,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         }
         if (best > alpha) alpha = best;
         if (alpha >= beta) {
+            ++cutoffs; if (move_idx == 0) ++first_move_cutoffs;   // DIAG #1
             // Beta cutoff: reward the move that produced it. Captures aren't
             // tracked because the legal-move generator already orders them
             // implicitly (every legal move at a capture node has the same
@@ -1383,6 +1390,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.best_move = best_overall;
     res.score     = best_score;
     res.nodes     = s.nodes;
+    res.cutoffs            = s.cutoffs;
+    res.first_move_cutoffs = s.first_move_cutoffs;
+    res.pvs_researches     = s.pvs_researches;
+    res.moves_searched     = s.moves_searched;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
     return res;
 }
