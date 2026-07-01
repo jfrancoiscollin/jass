@@ -1,0 +1,17 @@
+=== VALIDATION : jass_tests (defauts byte-identiques) ===
+  ⚠️ jass_tests : [FAIL] /root/jass/tests/test_scan_book.cpp:132: e.load_book(path)
+[FAIL] /root/jass/tests/test_scan_book.cpp:133: expected e.book_size() == b.size()
+10 / 6486 assertions FAILED.
+=== node-EBF leviers Scan : 120 FEN @ d12 ===
+baseline : 120 FEN, median nodes=75858
+
+        config | node_ratio accord_bm  (vs baseline)
+  single_reply |      2.302     0.692
+  lmr_asym_1_3 |      0.756     0.767
+          both |      1.574     0.717
+
+LECTURE : lmr_asym ratio<1 (hors bruit) ET accord~1 => REDUIT l'arbre sans changer les decisions => candidat EBF
+  gratuit => A/B Elo movetime + balayer (nonpv,pv). single_reply : ratio~1 (peu de noeuds, EXTENSION largeur-1 cheap)
+  + accord<1 sur les lignes forcees = il cherche plus profond la (= combos) => sa valeur = A/B MOVETIME (WIN test #1,
+  3 bras : baseline vs single_reply vs ext_forcing LARGE=neutre 0,473). Si single_reply>baseline & >ext_forcing => BAKE.
+=== FIN 0516 ===
