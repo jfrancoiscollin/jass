@@ -1,0 +1,2 @@
+=== CONTRÔLE éval-vs-recherche — bras RECHERCHE (Scan depth 12) ===
+=== build jass (mêmes flags que 0523 : ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO) ===
