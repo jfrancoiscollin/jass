@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0525-scan-static-eval-localizer",
+  "snapshot_at": "2026-07-01T19:02:03+00:00",
+  "started_at": "2026-07-01T18:56:55+00:00",
+  "elapsed_seconds": 308,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4041354       1       05:08  0.0  0.0 bash\n4041356 4041354       05:08  0.0  0.0 bash\n4041831 4041356       04:06  756 22.2 python3\n"
+}
