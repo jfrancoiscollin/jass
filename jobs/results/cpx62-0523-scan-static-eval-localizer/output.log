@@ -1,0 +1,11 @@
+=== LOCALISEUR ÉVAL-vs-RECHERCHE — bras STATIQUE (Scan depth 0) ===
+=== build jass (flags champion : ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO — NUM_EXTRAS cohérent train<->play) ===
+=== Phase 1 : relabel corpus au SCAN STATIQUE (depth 0, 400000 pos, 16 threads) ===
+ABORT relabel
+  usage: relabel_with_scan.py [-h] --in IN_PATH --out OUT_PATH --scan SCAN_PATH
+                              [--depth DEPTH] [--max-records MAX_RECORDS]
+                              [--start START] [--timeout TIMEOUT]
+                              [--progress-every PROGRESS_EVERY]
+                              [--newgame-every NEWGAME_EVERY]
+                              [--keep-skipped-original]
+  relabel_with_scan.py: error: unrecognized arguments: --threads 16
