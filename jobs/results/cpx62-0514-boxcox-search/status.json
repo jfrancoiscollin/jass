@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0514-boxcox-search",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-01T05:52:47+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4019786
+  "ended_at": "2026-07-01T06:02:58+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

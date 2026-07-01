@@ -1,0 +1,32 @@
+=== Box-Cox shape search : 120 FEN @ d12 ===
+reference lineaire : 120 FEN OK, median nodes=75858
+
+  ld lidx  mul | node_ratio accord_bm  (vs lineaire ; ratio<1 = reduit l'arbre)
+  50    0   80 |      0.650     0.633
+   0  100   80 |      0.652     0.650
+  50  100   40 |      0.657     0.633
+ 100   50   40 |      0.660     0.650
+  50  100   80 |      0.665     0.650
+ 100    0   80 |      0.665     0.650
+ 100   50   80 |      0.665     0.650
+ 100  100   40 |      0.665     0.650
+ 100  100   80 |      0.665     0.650
+ 150    0   40 |      0.665     0.650
+ 150    0   80 |      0.665     0.650
+ 150   50   40 |      0.665     0.650
+ 150   50   80 |      0.665     0.650
+ 150  100   40 |      0.665     0.650
+ 150  100   80 |      0.665     0.650
+  50   50   80 |      0.670     0.650
+   0   50   80 |      0.688     0.625
+  50   50   40 |      0.690     0.675
+ 100    0   40 |      0.697     0.658
+   0  100   40 |      0.703     0.725
+   0    0   80 |      0.822     0.692
+  50    0   40 |      0.851     0.733
+   0   50   40 |      0.855     0.767
+   0    0   40 |      1.062     0.800
+
+AUCUNE forme ne domine le lineaire (ratio<0.92 & accord>0.90) sur d12 => l'EBF est STRUCTUREL, prouve sur toute
+  la famille Box-Cox (pas juste 5 muls a la main) => la forme LMR n'est definitivement pas le levier. Clore.
+=== FIN 0514 ===
