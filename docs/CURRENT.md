@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-30** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-01** (verdicts en tête).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
@@ -93,6 +93,24 @@
 - **C (0,603) DÉPASSE même la baseline-à-movetime (0,519, 0451)** ⇒ indice que ce n'est pas qu'un « d11 qui rattrape le
   movetime ». **MAIS** ⚠️ à confirmer : 0451 prévient qu'à movetime la profondeur (d14-16) trouve déjà les combos.
 - **`ext_forcing` implémenté** (`search.cpp`/`search_params.hpp`, gated OFF) ; check local : changeait 12/13 combos dilf à d11.
+
+## 🔬 BATCH LEVIERS 2026-07-01 (4 négatifs, 1 lead) — méthodo node-EBF exact
+> Après réouverture (mémos Box-Cox + Scan lus dans rhalbersma/scan). Tous mesurés proprement (node-EBF exact / A/B N propre).
+
+| levier | verdict |
+|---|---|
+| **Box-Cox** (forme LMR, `lmr_formula=2`, PR #323) | ❌ **AUCUNE forme ne domine** le linéaire (ratio<0,92 & accord>0,90 sur d12) → EBF structurel *sur la MAGNITUDE de réduction*, prouvé sur toute la famille |
+| **hier-l2** (backoff, PR #322) | ❌ 0440 : baseline 0,279 vs hierA 0,239 / hierB 0,236 / hierC 0,275 → n'aide pas (pires) |
+| **asym labels** (0511, robust masters) | ❌ 0440=0,275 ≈ OFF(0,279) ≈ base(0,302) → ne bouge pas l'éval (comme 0486/0489). (OFF arm 0512 a crashé rc=9.) |
+| **single_reply** (Scan #1, PR #324) | ⏳ 2,3× nœuds @depth fixe (cherche les combos forcés en profondeur, accord 0,69) → valeur = **WIN test movetime (0519)** |
+| **🎯 LMR asym pv/non-pv** (Scan #2, PR #324) | ✅ **node_ratio 0,756 = −24% de nœuds EXACT** (nonpv=1,pv=3) — 1er vrai réducteur d'EBF côté recherche (> conthist −9%). Accord 0,767 (23% décisions changées) → **Elo à valider (0518)** |
+
+- **Clé** : le Box-Cox teste la *magnitude* de réduction (dead) ; l'**asymétrie pv/non-pv** teste *où* réduire (−24%). L'axe qui
+  compte = **pv/non-pv**, pas la forme. Réduire dès le 2e coup aux nœuds cut (comme Scan) coupe l'arbre 24%.
+- **Tests décisifs en cours** : **0518** (LMR-asym : le −24% est-il gratuit ? Elo≥baseline ⇒ 1er vrai gain EBF recherche ⇒
+  baker + re-mesure EBF vs Scan) ; **0519** (single_reply WIN : > baseline ET > ext_forcing-large 0,473 ⇒ forcing gratuit ⇒
+  baker, récupère 0485/résout 0435). ⚠️ MCP github DOWN ⇒ bake (PR) en attente de re-auth ; tests OK (search-params).
+- `jass_tests` "FAIL" = bug env `test_scan_book` (load_book), pas les edits #324 (build OK, node-EBF tourne).
 
 ## 🏁 CLÔTURE CHANTIER RECHERCHE/EBF (2026-06-30) — exploré à fond ; 1 gain (conthist) ; l'EBF est éval-bound
 > Bilan final du chantier "battre le gap movetime vs Scan par la recherche" (memo EBF v2). Verdict : **l'EBF est largement
