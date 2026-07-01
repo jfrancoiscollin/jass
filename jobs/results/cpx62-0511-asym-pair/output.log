@@ -1,0 +1,22 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] train: 1 × 3000000 lignes @ 4min/M ≈ 12.0 min
+  [preflight] self-play ASYMETRIQUE punisher/victim (forcing-ext §4) : quiet-only + ballots + masters + fit + juges (echelle 3M): ≈ 300 min
+  [preflight] TOTAL estimé ≈ 316.0 min  (cap 3000 min)
+  [preflight] OK — sous le cap, lancement.
+=== #6 masters (repo master-2000.jnnw, DB-independant) = 371449 positions ===
+=== expert_games.db ABSENT -> #2 ballots : FALLBACK seeds dilf+lidraughts (masters deja garantis ci-dessus) ===
+  fallback seeds : dilf=305 lidraughts=400000 both=400305
+  seed-file = /root/cw-asym-rm3m/seeds_both.jnnw (400305 positions) ; masters = /root/cw-asym-rm3m/masters.jnnw
+=== gen self-play ASYMETRIQUE 3000000 (--quiet-only, ballots frac 60%, punisher ext_forcing=1 vs victim egdbmix-OFF) ===
+3000000
+  self-play quiet = 3000000 positions
+  + masters-naturels = 371449 positions (frequence naturelle ~11%)
+  corpus total = 3371449
+
+================= VERDICT (asym robust-masters 0494 vs 0486 OFF) =================
+recette : gen ASYMETRIQUE (punisher ext_forcing=1 vs victim OFF) + quiet-only + seeds=dilf+lidraughts + masters=OUI-repo (masters DB-independants: master-2000.jnnw)
+0440 (asym-clean, 0492) = 0.275  IC95=[0.231,0.323]  (n=305)   [base egdbmix = 0.302]
+vs_egdbmix (self-play) = 0.3056
+ATTENTION : seeds=dilf+lidraughts (DB experte absente !) => PAS a egalite avec 0486 (BALLOTS). Comparer surtout a 0489 (meme
+          fallback) et a la base 0.302. Re-emettre sur une box avec expert_games.db pour le verdict propre.
+===========================================

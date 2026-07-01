@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0511-asym-pair",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-06-30T17:00:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 3988059
+  "ended_at": "2026-07-01T05:52:43+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
