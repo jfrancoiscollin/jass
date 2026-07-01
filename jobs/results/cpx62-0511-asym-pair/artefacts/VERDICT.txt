@@ -1,0 +1,5 @@
+recette : gen ASYMETRIQUE (punisher ext_forcing=1 vs victim OFF) + quiet-only + seeds=dilf+lidraughts + masters=OUI-repo (masters DB-independants: master-2000.jnnw)
+0440 (asym-clean, 0492) = 0.275  IC95=[0.231,0.323]  (n=305)   [base egdbmix = 0.302]
+vs_egdbmix (self-play) = 0.3056
+ATTENTION : seeds=dilf+lidraughts (DB experte absente !) => PAS a egalite avec 0486 (BALLOTS). Comparer surtout a 0489 (meme
+          fallback) et a la base 0.302. Re-emettre sur une box avec expert_games.db pour le verdict propre.
