@@ -114,14 +114,15 @@
   règle gravée pour ouvrir la gate NNUE. QUESTION RESTANTE : la distillation Scan a-t-elle visé l'éval STATIQUE de Scan
   (in-class) ou son score de RECHERCHE (contaminé, mur statique-vs-combo) ? = le dernier point à clarifier avant NNUE.
 
-## 🚀 EN TEST (2026-07-01 soir) — LOCALISEUR éval-vs-recherche : distillation STATIQUE de Scan (0523/0524)
+## 🚀 EN TEST (2026-07-01 soir) — LOCALISEUR éval-vs-recherche : distillation STATIQUE de Scan (0525/0526)
 > Exécute la QUESTION RESTANTE ci-dessus (« Par curiosité va y », JFC). Le port `src/scan_eval.cpp` EXISTE mais n'a JAMAIS été
 > fitté sur l'éval STATIQUE de Scan : toutes nos distillations (0073-0086/0147-0149) visaient son score de RECHERCHE (d10 = contaminé).
+> ⚠️ 1re tentative 0523/0524 morte (rc=7 : `relabel_with_scan` n'a pas de `--threads`) → **relancé 0525/0526** (relabel parallélisé par shards, static passé d0→**d1** pour émettre un score Scan fiable ; d1 reste aveugle aux sacrifices).
 
-- **cpx62-0523 (STATIQUE, d0)** : relabel corpus (`0328`, 400k) au Scan **depth 0** (en dames, d0 ne résout que les prises
-  FORCÉES → jamais le SACRIFICE → vraiment statique, aveugle aux combos) → fit le port v3 (features déjà matchées à Scan) →
+- **cpx62-0525 (STATIQUE, d1)** : relabel corpus (`0328`, 400k, **shards //**) au Scan **depth 1** (quasi-statique : 1 ply + quiescence forcée
+  → aveugle aux SACRIFICES multi-plis = les combos de 0440) → fit le port v3 (features déjà matchées à Scan) →
   JOUE **jass-search + Scan-static-eval vs Scan** sur la jauge **0440** (d11, no-DB).
-- **ccx33-0524 (CONTRÔLE, d12)** : jumeau exact, relabel au **score de RECHERCHE** (d12) → static-vs-search apples-to-apples
+- **ccx33-0526 (CONTRÔLE, d12)** : jumeau exact, relabel au **score de RECHERCHE** (d12) → static-vs-search apples-to-apples
   (reproduit proprement 0147 sur le corpus/pipeline courant).
 - **DÉCIDEUR** : conv ~Scan(0,95) ⇒ **gap = ÉVAL** (notre fit/point-fixe) → re-distiller/enrichir l'éval (pas encore NNUE) ;
   conv ~baseline(0,30-0,52) ≪ Scan ⇒ **gap = RECHERCHE** (jass-search < Scan même AVEC son éval) → avec le faisceau plateau,
