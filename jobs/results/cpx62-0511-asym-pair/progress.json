@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0511-asym-pair",
-  "snapshot_at": "2026-07-01T05:42:25+00:00",
+  "snapshot_at": "2026-07-01T05:47:36+00:00",
   "started_at": "2026-06-30T17:00:03+00:00",
-  "elapsed_seconds": 45742,
+  "elapsed_seconds": 46053,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3988059       1    12:42:22  0.0  0.0 bash\n3988061 3988059    12:42:22  0.0  0.0 bash\n4018888 3988061       01:33  0.0  0.0 bash\n4018889 4018888       01:33  5.2  0.0 python3\n4018890 4018889       01:33 66.5  0.5 jass\n4018892 4018889       01:32 29.4  0.9 scan_linux\n4018895 4018889       01:32  0.5  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3988059       1    12:47:32  0.0  0.0 bash\n3988061 3988059    12:47:32  0.0  0.0 bash\n4018888 3988061       06:43  0.0  0.0 bash\n4018889 4018888       06:43  5.4  0.0 python3\n4018890 4018889       06:43 66.4  0.5 jass\n4018892 4018889       06:43 29.7  0.9 scan_linux\n4018895 4018889       06:42  0.4  0.0 jass\n"
 }
