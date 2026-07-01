@@ -1,0 +1,34 @@
+=== LOCALISEUR ÉVAL-vs-RECHERCHE — bras STATIQUE (Scan depth 1) ===
+=== build jass (ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO — NUM_EXTRAS cohérent train<->play) ===
+=== Phase 1 : relabel corpus PARALLÈLE (Scan depth 1, 400000 pos) ===
+  8 shards //, 50000 pos/shard
+  merged 332992 records depuis 8 shards
+  garde-fou : 332992 pos ; scores non-nuls 321993/332992 (96.7%) ; min -9998 max 9999 med 4
+=== Phase 2 : dump-eval-features ===
+=== Phase 3 : fit éval Scan-portée v3 sur le SCORE QUASI-STATIQUE de Scan ===
+  QUALITÉ DU FIT (notre linéaire peut-il matcher l'éval quasi-statique de Scan ?) :
+    L-BFGS  l2=1e-05  max_iter=200  (pure)
+      train_loss=2.567207  iters=200  (304.70s)
+
+=== Phase 4 : JOUE jass-search + Scan-STATIC-eval vs Scan sur 0440 (depth 11, no-DB) ===
+    baselines : notre champion egdbmix = 0,302 ; movetime baseline = 0,519 (0451) ; Scan = 0,95
+      game 610: Scan=W Jass=B → D (25-move rule, 113 plies)  Jass +0.5  [521s]
+    
+    === Jass vs Scan, depth 11, 610 games ===
+      Jass=70  Scan=486  Draws=54
+      Jass score rate: 0.159 (97.0 / 610)
+      ELO estimate:    -289 (95% CI ≈ ±32)
+
+=== ANALYSE : conversion du camp AU TRAIT (identique à 0440) ===
+  parties analysees      : 610  (sans coup legal au depart : 0)
+  JASS(+Scan-static-eval) au trait : 0.261 (79.5/305)
+  SCAN au trait                    : 0.943 (287.5/305)
+  ECART jass - scan : -0.682
+
+================= LECTURE (LOCALISEUR) =================
+  jass(+Scan-static-eval) ~ Scan (0,9+)  => avec l'éval de Scan, NOTRE recherche convertit comme Scan => gap=ÉVAL
+     (notre fit/point-fixe) => re-distiller/enrichir l'éval (pas encore NNUE).
+  jass(+Scan-static-eval) ~ baseline (0,30-0,52) << Scan => jass-search ne convertit PAS même avec une éval Scan-dérivée
+     => gap=RECHERCHE => avec le faisceau plateau, condition de la gate NNUE remplie (preuve).
+  Croiser avec ccx33-0526 (depth 12 = score de RECHERCHE) : static>>search => la contamination-recherche plombait le fit.
+=======================================================
