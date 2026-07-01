@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0518-lmrasym-elo",
+  "script": "jobs/queue/cpx62-0518-lmrasym-elo.sh",
+  "pid": 4032382,
+  "started_at": "2026-07-01T11:11:05+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
