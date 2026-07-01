@@ -102,15 +102,19 @@
 | **Box-Cox** (forme LMR, `lmr_formula=2`, PR #323) | ❌ **AUCUNE forme ne domine** le linéaire (ratio<0,92 & accord>0,90 sur d12) → EBF structurel *sur la MAGNITUDE de réduction*, prouvé sur toute la famille |
 | **hier-l2** (backoff, PR #322) | ❌ 0440 : baseline 0,279 vs hierA 0,239 / hierB 0,236 / hierC 0,275 → n'aide pas (pires) |
 | **asym labels** (0511, robust masters) | ❌ 0440=0,275 ≈ OFF(0,279) ≈ base(0,302) → ne bouge pas l'éval (comme 0486/0489). (OFF arm 0512 a crashé rc=9.) |
-| **single_reply** (Scan #1, PR #324) | ⏳ 2,3× nœuds @depth fixe (cherche les combos forcés en profondeur, accord 0,69) → valeur = **WIN test movetime (0519)** |
-| **🎯 LMR asym pv/non-pv** (Scan #2, PR #324) | ✅ **node_ratio 0,756 = −24% de nœuds EXACT** (nonpv=1,pv=3) — 1er vrai réducteur d'EBF côté recherche (> conthist −9%). Accord 0,767 (23% décisions changées) → **Elo à valider (0518)** |
+| **single_reply** (Scan #1, PR #324) | ⚠️ **0519 : parité vs baseline** (0,487-0,535, penche+ @0,1s) MAIS **bat nettement ext_forcing large** (0,54 vs 0,26) → thèse « étroit≫large » du mémo CONFIRMÉE, mais pas de WIN net |
+| **LMR asym pv/non-pv** (Scan #2, PR #324) | −24% nœuds EXACT (0516) MAIS **0518 : Elo ~parité** (asym_2_4=0,491, asym_1_3=0,477) → le −24% nette parité à movetime (profondeur gagnée ≈ coût sur-réduction). **Efficacité, pas gain de force** (comme conthist) |
 
 - **Clé** : le Box-Cox teste la *magnitude* de réduction (dead) ; l'**asymétrie pv/non-pv** teste *où* réduire (−24%). L'axe qui
   compte = **pv/non-pv**, pas la forme. Réduire dès le 2e coup aux nœuds cut (comme Scan) coupe l'arbre 24%.
-- **Tests décisifs en cours** : **0518** (LMR-asym : le −24% est-il gratuit ? Elo≥baseline ⇒ 1er vrai gain EBF recherche ⇒
-  baker + re-mesure EBF vs Scan) ; **0519** (single_reply WIN : > baseline ET > ext_forcing-large 0,473 ⇒ forcing gratuit ⇒
-  baker, récupère 0485/résout 0435). ⚠️ MCP github DOWN ⇒ bake (PR) en attente de re-auth ; tests OK (search-params).
-- `jass_tests` "FAIL" = bug env `test_scan_book` (load_book), pas les edits #324 (build OK, node-EBF tourne).
+- **Bilan leviers Scan (0518/0519 FAITS)** : les deux mécanismes de Scan **marchent** (implémentés/lus dans sa source) mais
+  isolément = **efficacité (−24% nœuds) sans gain de force mesurable** ; aucun n'est négatif ; single_reply valide « étroit≫large ».
+  **En cours** : 0520 (COMBO single_reply+asym ensemble — compose-t-il ?) + 0521 (EBF vs Scan : le croisement d15 recule-t-il ?).
+- **PISTES ÉVAL (question JFC 2026-07-01)** : distillation Scan = **DÉJÀ fait massivement** (0073-0086/0147-0149, plafond) ;
+  from-scratch bootstrap = **DÉJÀ fait, plat** (0481/0482 ~0,25-0,29). ⇒ pas de re-start. Mur gravé : éval linéaire STATIQUE
+  ne peut encoder les combos résolubles par la recherche ⇒ une partie du gap EST la recherche. **Diagnostic manquant = PORTER
+  l'éval Scan (open-source) dans NOTRE recherche** : jass-search+Scan-eval ≈ Scan ⇒ gap=éval (re-distiller avec features Scan) ;
+  < Scan ⇒ gap=recherche ⇒ ou NNUE avec preuve. C'est le seul test qui LOCALISE le gap (éval vs recherche). Non lancé (choix JFC).
 
 ## 🏁 CLÔTURE CHANTIER RECHERCHE/EBF (2026-06-30) — exploré à fond ; 1 gain (conthist) ; l'EBF est éval-bound
 > Bilan final du chantier "battre le gap movetime vs Scan par la recherche" (memo EBF v2). Verdict : **l'EBF est largement
