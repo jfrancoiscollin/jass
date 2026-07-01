@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0517-hier-l2-test",
-  "snapshot_at": "2026-07-01T08:12:48+00:00",
+  "snapshot_at": "2026-07-01T08:17:51+00:00",
   "started_at": "2026-07-01T06:08:06+00:00",
-  "elapsed_seconds": 7482,
+  "elapsed_seconds": 7785,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4025151       1    02:04:41  0.0  0.0 bash\n4025153 4025151    02:04:41  0.0  0.0 bash\n4029859 4025153       08:24  0.0  0.0 bash\n4029860 4029859       08:24  5.1  0.0 python3\n4029861 4029860       08:24 67.9  0.5 jass\n4029863 4029860       08:24 28.4  0.9 scan_linux\n4029866 4029860       08:24  0.3  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4025151       1    02:09:44  0.0  0.0 bash\n4025153 4025151    02:09:44  0.0  0.0 bash\n4030210 4025153       04:22  129 10.1 python3\n"
 }
