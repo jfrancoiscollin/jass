@@ -1,0 +1,12 @@
+=== CONTRÔLE éval-vs-recherche — bras RECHERCHE (Scan depth 12) ===
+=== build jass (mêmes flags que 0523 : ENDGAME+KING_MOBILITY+SCAN_PARITY+TEMPO) ===
+=== Phase 1 : relabel corpus au SCORE DE RECHERCHE de Scan (depth 12, 400000 pos, 8 threads) ===
+    (depth 12 => relabel LENT : ~horizon combinatoire ; c'est le point : montrer ce que la contamination donne)
+ABORT relabel
+  usage: relabel_with_scan.py [-h] --in IN_PATH --out OUT_PATH --scan SCAN_PATH
+                              [--depth DEPTH] [--max-records MAX_RECORDS]
+                              [--start START] [--timeout TIMEOUT]
+                              [--progress-every PROGRESS_EVERY]
+                              [--newgame-every NEWGAME_EVERY]
+                              [--keep-skipped-original]
+  relabel_with_scan.py: error: unrecognized arguments: --threads 8

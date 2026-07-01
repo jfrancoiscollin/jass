@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0524-scan-search-eval-control",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 7,
   "started_at": "2026-07-01T18:31:24+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3032920
+  "ended_at": "2026-07-01T18:36:26+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
