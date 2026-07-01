@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0520-scan-combo-ab",
+  "script": "jobs/queue/cpx62-0520-scan-combo-ab.sh",
+  "pid": 4037452,
+  "started_at": "2026-07-01T16:44:04+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
