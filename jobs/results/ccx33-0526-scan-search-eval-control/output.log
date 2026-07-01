@@ -1,0 +1,28 @@
+=== CONTRÔLE éval-vs-recherche — bras RECHERCHE (Scan depth 12) ===
+=== build jass (mêmes flags que 0525) ===
+=== Phase 1 : relabel corpus PARALLÈLE (Scan depth 12, 400000 pos) ===
+    (depth 12 => ~23 ms/pos ; parallélisé pour tenir en ~15-30 min)
+  8 shards //, 50000 pos/shard
+  merged 396613 records depuis 8 shards
+  garde-fou : 396613 pos ; non-nuls 378905/396613 (95.5%) ; min -9998 max 9999 med 0
+=== Phase 2 : dump-eval-features ===
+=== Phase 3 : fit éval Scan-portée v3 sur le SCORE DE RECHERCHE ===
+  QUALITÉ DU FIT (résidu sur le score de RECHERCHE) :
+    L-BFGS  l2=1e-05  max_iter=200  (pure)
+      train_loss=20.774880  iters=200  (383.24s)
+
+=== Phase 4 : JOUE jass-search + Scan-SEARCH-eval vs Scan sur 0440 (depth 11, no-DB) ===
+      game 610: Scan=W Jass=B → W (no legal move from Jass-player, 83 plies)  Jass +0.0  [405s]
+    
+    === Jass vs Scan, depth 11, 610 games ===
+      Jass=54  Scan=518  Draws=38
+      Jass score rate: 0.120 (73.0 / 610)
+      ELO estimate:    -347 (95% CI ≈ ±32)
+
+=== ANALYSE : conversion du camp AU TRAIT (identique à 0440) ===
+  parties analysees      : 475  (sans coup legal au depart : 0)
+  JASS(+Scan-search-eval) au trait : 0.179 (42.5/237)
+  SCAN au trait                    : 0.956 (227.5/238)
+  ECART jass - scan : -0.777
+
+  LECTURE : à croiser avec cpx62-0525 (bras statique). Voir son bloc LECTURE.
