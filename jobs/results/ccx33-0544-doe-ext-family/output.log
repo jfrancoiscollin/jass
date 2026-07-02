@@ -1,0 +1,57 @@
+=== build jass depuis main (qs_sacs baké ON) + JASS_TIME_BREAKDOWN (search-profile) ===
+  HEAD main : 76eb23203 runner: start ccx33-0544-doe-ext-family
+design=16 runs ; sample=900 combos ; bins=[3, 5, 7, 9, 11]
+  echantillon : 900 combos, profondeur fixe D=13 (deterministe)
+
+=== 16 runs en parallele (profondeur fixe, deterministe) ===
+DONE run 2
+DONE run 3
+DONE run 1
+DONE run 0
+DONE run 7
+DONE run 6
+DONE run 4
+DONE run 5
+DONE run 11
+DONE run 10
+DONE run 8
+DONE run 9
+DONE run 15
+DONE run 14
+DONE run 12
+DONE run 13
+  runs termines : 16/16
+
+=== ANALYSE : estimateur apparie position-par-position (effets principaux + 10 interactions 2FI) ===
+  BASELINE (defauts bakes, run 0) : detection=0.604  nodes~176,414  (M=900 positions)
+  Niveaux +1 = extensions/reductions ACTIVEES (ext_forcing, single_reply, lmr asym, iid, probcut).
+  PAYOFF = detection ; COUT = log(nodes). Bonferroni 15 tests : |t|>2.94 ; * = |t|>1.96.
+
+  --- classe par PAYOFF (|t_detection|) ---
+  terme                     d_detect   t_det    cout logN     t_N
+  [MAIN] ext_forcing              +0.0294    +4.2***   +2.3278  +138.3
+  [2FI ] single_reply*probcut     +0.0092    +2.0  *   +0.0567   +12.5
+  [2FI ] single_reply*lmr_asym    -0.0086    -1.9      -0.0497   -10.8
+  [MAIN] single_reply             +0.0114    +1.8      +1.1910  +129.6
+  [2FI ] lmr_asym*iid             +0.0064    +1.5      -0.0596   -13.3
+  [2FI ] single_reply*iid         +0.0050    +1.1      -0.0019    -0.4
+  [2FI ] iid*probcut              -0.0047    -1.0      +0.0015    +0.3
+  [2FI ] ext_forcing*iid          +0.0036    +0.8      -0.0010    -0.2
+  [2FI ] ext_forcing*probcut      +0.0033    +0.7      +0.0182    +4.0
+  [2FI ] lmr_asym*probcut         -0.0028    -0.6      +0.0197    +4.6
+  [2FI ] ext_forcing*lmr_asym     -0.0028    -0.6      -0.0042    -0.9
+  [MAIN] iid                      -0.0025    -0.6      -0.0042    -1.0
+  [2FI ] ext_forcing*single_reply +0.0031    +0.5      +0.3844   +49.0
+  [MAIN] lmr_asym                 +0.0011    +0.2      -0.2413   -54.3
+  [MAIN] probcut                  +0.0006    +0.1      -0.0653   -12.2
+
+  === coin optimal predit (modele detection = mains + 2FI significatifs, recherche sur 32 coins) ===
+  contrainte cout : log-nodes du coin <= baseline +0.6 (~1 ply @EBF1.8) pour rester net a temps fixe
+  detection predite au coin optimal (dans budget) = 0.604  (baseline 0.604, gain -0.001)
+  cout log-nodes predit vs baseline = +0.000
+  NB : aucun coin ne bat la baseline en detection DANS le budget noeud => les extensions
+  n'apportent rien de net a temps fixe (gain detection paye trop cher en profondeur).
+  leviers ACTIVES au coin optimal : aucun (=defauts)
+  SPEC coin optimal predit : ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,lmr_first_full_nonpv=4,iid_min_depth=0,probcut_min_depth=0
+  => si gain detection : confirmer ce coin (et/ou combine avec le coin de 0543) en PARTIES (~4600).
+=== fin DOE ext-family ===
