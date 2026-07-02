@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0531-combo-scaleup",
-  "snapshot_at": "2026-07-02T08:00:27+00:00",
+  "snapshot_at": "2026-07-02T08:05:27+00:00",
   "started_at": "2026-07-02T07:03:48+00:00",
-  "elapsed_seconds": 3399,
+  "elapsed_seconds": 3699,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4053761       1       56:38  0.0  0.0 bash\n4053763 4053761       56:38  0.0  0.0 bash\n4054462 4053763       54:34  0.0  0.0 python3\n4054463 4053763       54:34  0.0  0.0 tee\n4056987 4054462       06:32 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4053761       1    01:01:39  0.0  0.0 bash\n4053763 4053761    01:01:39  0.0  0.0 bash\n4054462 4053763       59:34  0.0  0.0 python3\n4054463 4053763       59:34  0.0  0.0 tee\n4057577 4054462       02:23 99.9  0.5 jass\n"
 }
