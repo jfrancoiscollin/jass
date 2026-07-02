@@ -1,0 +1,3 @@
+=== A/B quiescence forçante (qs_forcing_depth) ===
+=== (1) DÉTECTION par tempi (move-match, baseline vs qs=2 vs qs=3) ===
+  200 combos (≤40/bin)
