@@ -1,0 +1,139 @@
+=== build jass depuis main (qs_sacs BAKED ON) ===
+  HEAD main : 17c333f0f runner: start cpx62-0542-post-bake-sweep
+
+############ SWEEP post-bake : 14 bras vs baseline baké, mt0.25s, dilf n=305 ############
+
+=== BRAS sac_recurse  (A=qs_sacs_depth0_only=0  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 15
+DONE 3
+DONE 2
+DONE 10
+DONE 6
+DONE 14
+DONE 11
+DONE 0
+DONE 7
+DONE 4
+DONE 5
+DONE 1
+DONE 13
+DONE 12
+DONE 8
+DONE 9
+  sac_recurse      games= 610  A= 260 B= 262 D=  88  rate=0.498+-0.040  elo~-1
+
+=== BRAS threat_ext  (A=qs_threat_ext=1  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 3
+DONE 14
+DONE 2
+DONE 15
+DONE 10
+DONE 11
+DONE 4
+DONE 0
+DONE 6
+DONE 7
+DONE 5
+DONE 1
+DONE 9
+DONE 12
+DONE 13
+DONE 8
+  threat_ext       games= 610  A= 254 B= 256 D= 100  rate=0.498+-0.040  elo~-1
+
+=== BRAS threat+recurse  (A=qs_threat_ext=1,qs_sacs_depth0_only=0  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 3
+DONE 10
+DONE 15
+DONE 11
+DONE 6
+DONE 7
+DONE 2
+DONE 4
+DONE 0
+DONE 14
+DONE 1
+DONE 5
+DONE 12
+DONE 13
+DONE 8
+DONE 9
+  threat+recurse   games= 610  A= 255 B= 270 D=  85  rate=0.488+-0.040  elo~-9
+
+=== BRAS razor_off  (A=razor_max_depth=0  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 6
+DONE 3
+DONE 10
+DONE 2
+DONE 5
+DONE 14
+DONE 1
+DONE 4
+DONE 7
+DONE 11
+DONE 15
+DONE 12
+DONE 0
+DONE 9
+DONE 8
+DONE 13
+  razor_off        games= 610  A= 263 B= 254 D=  93  rate=0.507+-0.040  elo~+5
+
+=== BRAS razor_deep  (A=razor_max_depth=6  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 3
+DONE 14
+DONE 11
+DONE 10
+DONE 15
+DONE 2
+DONE 6
+DONE 1
+DONE 0
+DONE 12
+DONE 7
+DONE 4
+DONE 5
+DONE 8
+DONE 9
+DONE 13
+  razor_deep       games= 610  A= 277 B= 250 D=  83  rate=0.522+-0.040  elo~+15
+
+=== BRAS rfp_loose  (A=rfp_margin=140  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 11
+DONE 7
+DONE 3
+DONE 0
+DONE 14
+DONE 10
+DONE 2
+DONE 4
+DONE 6
+DONE 5
+DONE 1
+DONE 15
+DONE 13
+DONE 8
+DONE 12
+DONE 9
+  rfp_loose        games= 583  A= 256 B= 237 D=  90  rate=0.516+-0.041  elo~+11
+
+=== BRAS rfp_shallow  (A=rfp_max_depth=3  vs  B=baseline baké)  @ mt0.25s dilf ===
+DONE 3
+DONE 10
+DONE 4
+DONE 11
+DONE 2
+DONE 14
+DONE 7
+DONE 1
+DONE 5
+DONE 0
+DONE 6
+DONE 15
+DONE 9
+DONE 13
+DONE 12
+DONE 8
+  rfp_shallow      games= 556  A= 239 B= 224 D=  93  rate=0.513+-0.042  elo~+9
+
+=== BRAS rfp_off  (A=rfp_max_depth=0  vs  B=baseline baké)  @ mt0.25s dilf ===
