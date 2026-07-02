@@ -1,0 +1,22 @@
+=== VALIDATION générateur de combinaisons gradué ===
+=== (1) self-test du classifieur pur (scale-free, sans moteur) ===
+gen_combinations self-test: ALL PASS
+=== build jass (egdb ON) ===
+=== (2) génère la suite GRADUÉE depuis dilf (oracle Scan d18 + egdb, max 200 candidats) ===
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+scanned=200 kept=48
+  D_min= 2 tempi : 12 combos
+  D_min= 3 tempi : 36 combos
+  D_min= 4 tempi : 0 combos
+  D_min= 5 tempi : 0 combos
+  D_min= 6 tempi : 0 combos
+  D_min= 7 tempi : 0 combos
+  D_min= 8 tempi : 0 combos
+  D_min= 9 tempi : 0 combos
+  D_min=10 tempi : 0 combos
+  D_min=11 tempi : 0 combos
+  D_min=12 tempi : 0 combos
+  suite écrite : 48 combos gradués
+
+=== (3) TEST DE DÉTECTION jass (par bin D_min, élagage ON vs OFF, temps-agnostique) ===
