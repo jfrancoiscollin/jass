@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0528-combo-gen-validate
+# id: cpx62-0529-combo-gen-validate
 # description: VALIDATION du générateur de combinaisons GRADUÉ (tools/gen_combinations.py, demande JFC 2026-07-01).
 # Prouve la machinerie AVANT de scaler : (1) self-test du classifieur pur ; (2) tourne le générateur sur les combinaisons
 # CONNUES dilf (305, vraie vérité-terrain) avec oracle Scan-deep d18 + egdb -> suite GRADUÉE par D_min (2..12 temps) +
@@ -10,7 +10,7 @@
 set -uo pipefail
 cd /root/jass
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/ccx33-0528-combo-gen-validate/artefacts"; mkdir -p "$ART"
+ART="/root/jass/jobs/results/cpx62-0529-combo-gen-validate/artefacts"; mkdir -p "$ART"
 RES="$ART/RESULTS.txt"; : > "$RES"; say(){ echo "$@" | tee -a "$RES"; }
 W=/root/cw-combogen; rm -rf "$W"; mkdir -p "$W"
 SCAN_BIN=/root/jass-scan/scan_linux
