@@ -185,6 +185,17 @@ struct SearchParams {
     // reply keeps the tree narrow → cheap. 0 = off (byte-identical : plain static leaf).
     int qs_forcing_depth = 0;
 
+    // Promotion QUIESCENCE (gated; qs_promo_depth = 0 disables). Companion to
+    // forcing quiescence for POSITIONAL sacrifices whose payoff is a PROMOTION a
+    // few quiet moves after the forced captures resolve: a static leaf shows a man
+    // still one/two rows short of the crown (undervalued) instead of the king it
+    // is about to become. When > 0, at a calm leaf we also follow quiet MAN
+    // advances that promote now OR land within qs_promo_depth rows of the promotion
+    // row (men only move forward → every quiet man move is progress), bounded to
+    // this many consecutive promo plies, so the king materialises in the qsearch
+    // line and the eval sees its value. 0 = off (byte-identical).
+    int qs_promo_depth = 0;
+
 
     // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
@@ -285,6 +296,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "iid_reduction")        p.iid_reduction        = v;
     else if (key == "no_reduce_forcing")    p.no_reduce_forcing    = v;
     else if (key == "qs_forcing_depth")     p.qs_forcing_depth     = v;
+    else if (key == "qs_promo_depth")       p.qs_promo_depth       = v;
     else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
