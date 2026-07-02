@@ -1,0 +1,31 @@
+=== build jass (32-pat, egdb ON) ===
+=== #2 ballots depuis data/expert_games.db (ply 6-12, déséquilibrées, miroir) ===
+  ballots : 27404 positions
+=== forge seed matériel pur (gen 500000 eval-défaut -> réétiquette signe matériel -> fit) ===
+500000
+  réétiquette matériel : n=500000 (+=179984 -=206750 nul=113266)
+  vérif seed : eval(blanc+1h)=525cp  eval(noir-1h)=-525cp  (attendu >0 et <0)
+  seed matériel OK -> pilote gen 1
+
+================= GÉNÉRATION 1 (pilote=seed-matériel-pur, recette forte) =================
+  gen self-play 400000 : asym punisher[ext_forcing=1,forcing_ext_cap=6]/victim + quiet-only + ballots
+400000
+  self-play (après quiet-only) : 400000 positions
+=== #6 parties maîtres -> positions quiètes (résultat réel, fréquence naturelle) ===
+  maîtres : 4159220 positions
+=== mix egdb-finale (gen-egdb-wld, <=7 pièces exactes) ===
+  egdb-finale : 200000 positions
+=== corpus gen1 = self-play + maîtres + egdb ===
+  concat -> 4759220 : selfplay.jnnw=400000, masters.jnnw=4159220, egdb.jnnw=200000
+=== fit train_stream (32cf color-fold men-only) -> champion-gen1 ===
+  vs_egdbmix (self-play arch, d9) = 0.4722
+=== juge 0440 vs Scan (d11, no-DB) ===
+  0440 gen1 : JASS-au-trait=0.293 (n=305)  SCAN-au-trait=0.946 (n=305)
+
+================= VALIDATION 1 TOUR — VERDICT =================
+  Composants exercés : seed-matériel[OK] · ballots[OK] ·
+    gen asym+quiet-only[OK 400000pos] · maîtres[OK] · egdb[OK] · fit[OK] · juge[OK]
+  ⚠️ gen-1 depuis seed matériel = FAIBLE attendu (0440 bas) : on valide la MACHINERIE, pas la force.
+  Si tous composants OK + 0440 produit + vs_egdbmix sensé => orchestration VALIDÉE => monter la CHAÎNE (KGEN~10-20,
+    2-box split-gen, auto-stop). Sinon => corriger le composant fautif avant d'enchaîner.
+===========================================================
