@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0531-combo-scaleup",
+  "script": "jobs/queue/cpx62-0531-combo-scaleup.sh",
+  "pid": 4053761,
+  "started_at": "2026-07-02T07:03:48+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
