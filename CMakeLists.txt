@@ -245,6 +245,7 @@ add_library(jass_lib STATIC
     src/pattern_network.cpp
     src/pattern_jass_bridge.cpp
     src/scan_eval.cpp
+    src/scan_sacs.cpp
     pattern_jass/src/pattern.cpp
     pattern_jass/src/weights.cpp
     "${NNUE_DEFAULT_DATA_CPP}"

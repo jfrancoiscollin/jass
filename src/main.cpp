@@ -25,6 +25,7 @@
 #include "endgame.hpp"
 #include "scan_book.hpp"
 #include "scan_eval.hpp"
+#include "scan_sacs.hpp"
 #include "search.hpp"
 #include "tournament.hpp"
 
@@ -2851,6 +2852,24 @@ int run_benchmark_scan_eval_mode(int argc, char** argv) {
 // build with -DJASS_TIME_BREAKDOWN=ON (else the counters stay 0). Guides the NPS axis:
 // optimise the hot bucket instead of guessing. (Eval defaults to handcrafted; the
 // SEARCH buckets — movegen/ordering/tt — are eval-independent.)
+
+// --dump-sacs : read FENs from stdin, print Scan's ported add_sacs (fidelity check
+// vs tools/scan_oracle). Output per line : "SACS <n> <from-to> ...".
+static int run_dump_sacs_mode(int, char**) {
+    jass::Engine e; e.use_book(false);
+    std::string line;
+    while (std::getline(std::cin, line)) {
+        if (line.empty()) continue;
+        if (!e.set_position_fen(line)) { std::cout << "SACS bad-fen\n"; continue; }
+        jass::MoveList sacs; jass::scan_add_sacs(e.position(), sacs);
+        std::cout << "SACS " << sacs.size();
+        for (std::size_t i = 0; i < sacs.size(); ++i)
+            std::cout << " " << int(sacs[i].from) << "-" << int(sacs[i].to);
+        std::cout << "\n" << std::flush;
+    }
+    return 0;
+}
+
 int run_search_profile_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: jass --search-profile <FEN> <depth> [movetime_ms=0] "
@@ -3974,6 +3993,7 @@ int main(int argc, char** argv) {
         else if (a == "--benchmark-scan-eval")      return run_benchmark_scan_eval_mode(argc, argv);
         else if (a == "--depth-at-movetime")        return run_depth_at_movetime_mode(argc, argv);
         else if (a == "--search-profile")           return run_search_profile_mode(argc, argv);
+        else if (a == "--dump-sacs")                return run_dump_sacs_mode(argc, argv);
         else if (a == "--benchmark-pattern-jass-nnue-skel") return run_benchmark_pattern_jass_nnue_skel_mode(argc, argv);
         else if (a == "--gen-scan-book")            return run_gen_scan_book_mode(argc, argv);
         else if (a == "--book-audit")               return run_book_audit_mode(argc, argv);
