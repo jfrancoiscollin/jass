@@ -204,6 +204,19 @@ struct SearchParams {
     // Cheap (1 ply, gated on being under threat), low blow-up risk.
     bool qs_threat_ext = false;
 
+    // Selective SAC quiescence (gated; false = off = byte-identical). Ported from
+    // Scan (src/gen.cpp::add_sacs, via src/scan_sacs.cpp — validated bit-for-bit).
+    // At a calm leaf, after the stand-pat, generate Scan's SELECTIVE sacrifices (a
+    // handful of positionally-gated man sacs, NOT all forcing sacs) and search them.
+    // Gated exactly like Scan : only for a men-only board (no king anywhere) and
+    // when NOT under threat (the threat case is covered by qs_threat_ext). The
+    // selectivity is the point — a naive "all sacs" quiescence explodes the tree.
+    bool qs_sacs = false;
+    // Explosion guard : generate sacs only at the FIRST quiescence ply (default).
+    // Scan itself recurses sacs, but bounded ; we start conservative and relax only
+    // once node-EBF confirms it stays flat.
+    bool qs_sacs_depth0_only = true;
+
 
     // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
@@ -306,6 +319,8 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "qs_forcing_depth")     p.qs_forcing_depth     = v;
     else if (key == "qs_promo_depth")       p.qs_promo_depth       = v;
     else if (key == "qs_threat_ext")        p.qs_threat_ext        = (v != 0);
+    else if (key == "qs_sacs")              p.qs_sacs              = (v != 0);
+    else if (key == "qs_sacs_depth0_only")  p.qs_sacs_depth0_only  = (v != 0);
     else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
