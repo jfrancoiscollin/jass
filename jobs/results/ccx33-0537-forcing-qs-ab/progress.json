@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0537-forcing-qs-ab",
-  "snapshot_at": "2026-07-02T17:35:35+00:00",
+  "snapshot_at": "2026-07-02T17:41:05+00:00",
   "started_at": "2026-07-02T17:30:05+00:00",
-  "elapsed_seconds": 330,
+  "elapsed_seconds": 660,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3067904       1       05:29  0.0  0.0 bash\n3067906 3067904       05:29  0.0  0.0 bash\n3068328 3067906       05:18  0.0  0.0 python3\n3068329 3067906       05:18  0.0  0.0 tee\n3068358 3068328       00:11  100  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3067904       1       10:59  0.0  0.0 bash\n3067906 3067904       10:59  0.0  0.0 bash\n3068328 3067906       10:48  0.0  0.0 python3\n3068329 3067906       10:48  0.0  0.0 tee\n3068470 3068328       00:27 99.9  0.5 jass\n"
 }
