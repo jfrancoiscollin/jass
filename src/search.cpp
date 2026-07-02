@@ -226,7 +226,8 @@ struct Searcher {
     bool                                  was_null{false};
 
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
-    int quiescence (const Position& pos,            int ply, int alpha, int beta);
+    int quiescence (const Position& pos,            int ply, int alpha, int beta,
+                    int forcing_left = 0);
 
     // Wrap the leaf eval so the rest of the code doesn't have to branch.
     // When `mlpq_nnue` is set, the per-ply accumulator is up-to-date
@@ -388,7 +389,17 @@ inline void order_moves(MoveList& moves, const Searcher& s, int ply,
 // available" by rule, so the implementation is unusually direct: if there
 // are captures we must play one; otherwise the position is calm and we
 // return the static eval.
-int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
+// A position where the side to move has ONLY captures — i.e. the previous move
+// forced the reply (FMJD majority-capture rule). Used by forcing quiescence to
+// recognise a sacrifice / combination starter (mirror of negamax's lambda).
+static bool qs_leaves_forced_capture(const Position& child) {
+    MoveList cml;
+    gen_moves(child, cml);
+    return !cml.empty() && cml[0].is_capture();
+}
+
+int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
+                         int forcing_left) {
     if (stopped) return 0;
     ++nodes;
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
@@ -400,13 +411,37 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta) {
     // generate_legal_moves either returns *all* maximum-length captures or
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
-    if (!moves[0].is_capture()) return eval_leaf(pos, ply);
+    if (!moves[0].is_capture()) {
+        const int stand = eval_leaf(pos, ply);
+        // Forcing quiescence (params.qs_forcing_depth>0) : a CALM leaf may still
+        // hide a shot — a quiet SACRIFICE that leaves the opponent with only
+        // forced captures. Standard qsearch (captures-only) never tries it, so a
+        // combination whose sac falls at the horizon is invisible. Here we also
+        // stand-pat-search those forcing sacs (bounded by forcing_left consecutive
+        // sac plies). forcing_left==0 → return the static eval exactly as before
+        // (byte-identical when qs_forcing_depth=0). stand>=beta → stand-pat cutoff.
+        if (forcing_left <= 0 || stand >= beta) return stand;
+        int best = stand;
+        if (best > alpha) alpha = best;
+        for (const auto& m : moves) {                    // all quiet here
+            const Position child = after_timed(pos, m);
+            if (!qs_leaves_forced_capture(child)) continue;   // only forcing sacs
+            push_accumulator(ply, pos, m, child);
+            const int score = -quiescence(child, ply + 1, -beta, -alpha,
+                                          forcing_left - 1);
+            if (score > best) best = score;
+            if (best > alpha) alpha = best;
+            if (alpha >= beta) break;                    // beta cut-off
+        }
+        return best;
+    }
 
     int best = -INF_SCORE;
     for (const auto& m : moves) {
         const Position next  = after_timed(pos, m);
         push_accumulator(ply, pos, m, next);
-        const int      score = -quiescence(next, ply + 1, -beta, -alpha);
+        // Captures are forced (cheap) — they do NOT consume the forcing budget.
+        const int      score = -quiescence(next, ply + 1, -beta, -alpha, forcing_left);
         if (score > best) best = score;
         if (best > alpha) alpha = best;
         if (alpha >= beta) break;  // beta cut-off
@@ -497,7 +532,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
-    if (depth <= 0)    return quiescence(pos, ply, alpha, beta);
+    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth);
 
     // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
     // all want it; compute at most once. A "tactical" node (a forced capture
@@ -576,7 +611,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         const int eval   = static_eval();
         const int margin = params.razor_margin * depth;
         if (eval + margin <= alpha) {
-            const int q = quiescence(pos, ply, alpha, beta);
+            const int q = quiescence(pos, ply, alpha, beta, params.qs_forcing_depth);
             if (q <= alpha) return q;
         }
     }
