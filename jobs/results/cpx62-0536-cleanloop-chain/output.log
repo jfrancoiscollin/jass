@@ -1,0 +1,12 @@
+=== build jass (32-pat, egdb ON) ===
+  (expert_games.db absent -> ballots sautés, fallback dilf+lidraughts)
+  fallback seeds : dilf=305 lidraughts=400000
+=== forge seed matériel pur (gen 500000 eval-défaut -> réétiquette signe matériel -> fit) ===
+500000
+  réétiquette matériel : n=500000 (+=181334 -=207317 nul=111349)
+  vérif seed : eval(blanc+1h)=388cp  eval(noir-1h)=-388cp  (attendu >0 et <0)
+  seed matériel OK -> pilote gen 1
+  (pas d'expert_games.db sur cette box -> SELF-PLAY PUR, sans maîtres — fidèle à Scan)
+  egdb-finale (une fois) : 200000
+
+================= GÉNÉRATION 1 / 15 (pilote=seed-matériel) =================
