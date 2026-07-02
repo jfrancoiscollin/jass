@@ -1,0 +1,57 @@
+=== build jass depuis main (qs_sacs baké ON) + JASS_TIME_BREAKDOWN (search-profile) ===
+  HEAD main : 75fb80e59 runner: start cpx62-0543-doe-resv-nodes
+design=16 runs ; sample=900 combos across tempi bins [3, 5, 7, 9, 11]
+  
+  echantillon : 900 combos, profondeur fixe D=13 (deterministe)
+
+=== 16 runs en parallele (1 config/coeur, profondeur fixe, deterministe) ===
+DONE run 0
+DONE run 12
+DONE run 10
+DONE run 6
+DONE run 9
+DONE run 3
+DONE run 5
+DONE run 15
+DONE run 8
+DONE run 4
+DONE run 2
+DONE run 14
+DONE run 1
+DONE run 13
+DONE run 11
+DONE run 7
+  runs termines : 16/16
+
+=== ANALYSE : estimateur apparie position-par-position (effets principaux + 10 interactions 2FI) ===
+  BASELINE (defauts bakes, run 0) : detection=0.604  nodes~176,414  (M=900 positions)
+  Les niveaux +1 = MOINS de pruning (rfp court/large, razor off, multicut profond, no-reduce).
+  PAYOFF = detection (relacher aide-t-il a trouver les combos ?) ; COUT = log(nodes).
+  Seuil signif. Bonferroni 15 tests : |t|>2.94 (alpha=0.05/15) ; * = |t|>1.96.
+
+  --- classe par PAYOFF (|t_detection|) ---
+  terme                   d_detect   t_det    cout logN     t_N
+  [2FI ] razor*multicut         +0.0064    +2.0  *   +0.0014    +0.8
+  [2FI ] rfp_depth*razor        -0.0058    -1.2      +0.0061    +1.7
+  [2FI ] rfp_depth*multicut     -0.0036    -1.1      -0.0018    -1.0
+  [2FI ] rfp_margin*noreduce    -0.0064    -1.1      +0.0099    +2.5
+  [2FI ] razor*noreduce         -0.0033    -1.1      +0.0412   +21.0
+  [MAIN] razor                  -0.0031    -1.0      +0.0866   +36.3
+  [2FI ] rfp_depth*rfp_margin   -0.0028    -0.9      -0.0036    -2.1
+  [2FI ] multicut*noreduce      -0.0044    -0.8      +0.0535   +13.6
+  [MAIN] rfp_depth              +0.0025    +0.8      +0.0050    +2.9
+  [MAIN] multicut               +0.0036    +0.7      +0.3247   +69.3
+  [2FI ] rfp_margin*razor       +0.0017    +0.5      +0.0048    +2.8
+  [MAIN] rfp_margin             -0.0028    -0.5      +0.0599   +14.7
+  [MAIN] noreduce               +0.0033    +0.4      +0.8820   +81.0
+  [2FI ] rfp_margin*multicut    +0.0006    +0.1      +0.0074    +2.0
+  [2FI ] rfp_depth*noreduce     +0.0000    +0.0      -0.0001    -0.0
+
+  === coin optimal predit (modele detection = mains + 2FI significatifs, recherche sur 32 coins) ===
+  AUCUN effet/interaction ne releve la detection de facon signif. (Bonferroni) => les defauts
+  bakes sont deja optimaux sur ces 5 leviers. Conclusion (que l'OFAT ne donnait pas proprement) :
+  le gain combo est deja capte par qs_sacs ; le pruning n'est pas le levier. Chercher ailleurs.
+  leviers RELACHES au coin optimal : aucun (=defauts)
+  SPEC coin optimal predit : rfp_max_depth=5,rfp_margin=100,razor_max_depth=4,multicut_min_depth=6,no_reduce_forcing=0
+  => job suivant : CONFIRMER ce coin vs baseline bake en PARTIES (~4600 pour >=20 Elo @80%).
+=== fin DOE Res V ===
