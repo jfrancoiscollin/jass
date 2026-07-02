@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0527-cleanloop-gen1-validate",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-07-01T22:12:53+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3035780
+  "ended_at": "2026-07-02T06:27:16+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

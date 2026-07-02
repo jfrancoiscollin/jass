@@ -1,0 +1,11 @@
+=== build jass (32-pat, egdb ON) ===
+=== #2 ballots depuis data/expert_games.db (ply 6-12, déséquilibrées, miroir) ===
+  ballots : 27404 positions
+=== forge seed matériel pur (gen 1200000 eval-défaut -> réétiquette signe matériel -> fit) ===
+1200000
+  réétiquette matériel : n=1200000 (+=435204 -=497673 nul=267123)
+  vérif seed : eval(blanc+1h)=284cp  eval(noir-1h)=-284cp  (attendu >0 et <0)
+  seed matériel OK -> pilote gen 1
+
+================= GÉNÉRATION 1 (pilote=seed-matériel-pur, recette forte) =================
+  gen self-play 3000000 : asym punisher[ext_forcing=1,forcing_ext_cap=6]/victim + quiet-only + ballots
