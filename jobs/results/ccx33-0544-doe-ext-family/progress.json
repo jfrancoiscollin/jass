@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0544-doe-ext-family",
-  "snapshot_at": "2026-07-02T23:49:05+00:00",
+  "snapshot_at": "2026-07-02T23:54:15+00:00",
   "started_at": "2026-07-02T21:13:05+00:00",
-  "elapsed_seconds": 9360,
+  "elapsed_seconds": 9670,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3072054       1    02:36:00  0.0  0.0 bash\n3072056 3072054    02:36:00  0.0  0.0 bash\n3072528 3072056    02:35:49  0.0  0.0 bash\n3072531 3072528    02:35:49  0.0  0.0 python3\n3089877 3072531       00:08  100  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3072054       1    02:41:10  0.0  0.0 bash\n3072056 3072054    02:41:10  0.0  0.0 bash\n3072528 3072056    02:40:59  0.0  0.0 bash\n3072531 3072528    02:40:59  0.0  0.0 python3\n3090001 3072531       00:01  100  0.4 jass\n"
 }
