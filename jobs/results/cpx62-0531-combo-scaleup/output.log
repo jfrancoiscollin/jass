@@ -1,0 +1,24 @@
+=== SCALE-UP générateur de combinaisons (gradué par tempi) ===
+gen_combinations self-test: ALL PASS
+=== build jass (egdb ON) ===
+  corpus Scan-selfplay : 1193458 positions ; 16 shards //, limite 600/shard, per-bin 8/shard, deep 16
+=== génère les combos gradués (parallèle, source Scan-vs-Scan milieu 14-40p) ===
+  suite : 403 combos gradués
+  répartition par tempi :
+sort: separator must be exactly one character long: ''
+Try 'sort --help' for more information.
+
+=== TEST DE DÉTECTION jass par bin de tempi (élagage ON vs OFF, temps-agnostique) ===
+  403 combos testés
+  tempi    n  det@T(ON)  det@T(OFF)  det@T+2(ON)  det@20(ON)  det@20(OFF)
+      3  126       0.61        0.61         0.67        0.87         0.83
+      5   84       0.42        0.40         0.40        0.56         0.64
+      7   69       0.35        0.35         0.45        0.59         0.62
+      9   46       0.39        0.35         0.48        0.59         0.63
+     11   78       0.45        0.44         0.47        0.47         0.50
+
+================= LECTURE =================
+  Objectif JFC : det ~1.00 par bin de tempi à d>=tempi (+ marge) => moteur capte les combos de N temps quasi à coup sûr.
+  det<1 à d=20 AVEC OFF>ON => trou d'élagage (à réparer). det<1 même OFF => détection tactique manquante (comme 0529).
+  Suite gradée réutilisable : artefacts/combos_graded.fen (curriculum contrôlé par tempi + jauge de détection).
+===========================================
