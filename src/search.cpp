@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "bd_time.hpp"
+#include "board.hpp"
 #include "egdb_bridge.hpp"
 #include "endgame.hpp"
 #include "eval.hpp"
@@ -227,7 +228,7 @@ struct Searcher {
 
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta,
-                    int forcing_left = 0);
+                    int forcing_left = 0, int promo_left = 0);
 
     // Wrap the leaf eval so the rest of the code doesn't have to branch.
     // When `mlpq_nnue` is set, the per-ply accumulator is up-to-date
@@ -398,8 +399,24 @@ static bool qs_leaves_forced_capture(const Position& child) {
     return !cml.empty() && cml[0].is_capture();
 }
 
+// A quiet MAN move that makes progress toward promotion — it crowns now, or the
+// man lands within `rows` rows of its promotion row (white row 0, black row 9).
+// Men only ever move forward, so every quiet man move advances ; we follow only
+// those near the crown (bounded) so a sac-for-promotion realises the king inside
+// the qsearch line. Captures and king moves never qualify.
+static bool qs_promo_progress(const Position& pos, const Move& m, int rows) {
+    if (m.is_capture()) return false;
+    if (m.promotes)     return true;
+    const Color us = pos.side_to_move();
+    const Bitboard men = (us == Color::White) ? pos.white_men() : pos.black_men();
+    if (!((men >> (static_cast<int>(m.from) - 1)) & 1ULL)) return false;  // king / not a man
+    const int r = row_of(m.to);
+    const int dist = (us == Color::White) ? r : (9 - r);
+    return dist <= rows;
+}
+
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
-                         int forcing_left) {
+                         int forcing_left, int promo_left) {
     if (stopped) return 0;
     ++nodes;
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
@@ -413,22 +430,26 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     // tells us whether the position is calm.
     if (!moves[0].is_capture()) {
         const int stand = eval_leaf(pos, ply);
-        // Forcing quiescence (params.qs_forcing_depth>0) : a CALM leaf may still
-        // hide a shot — a quiet SACRIFICE that leaves the opponent with only
-        // forced captures. Standard qsearch (captures-only) never tries it, so a
-        // combination whose sac falls at the horizon is invisible. Here we also
-        // stand-pat-search those forcing sacs (bounded by forcing_left consecutive
-        // sac plies). forcing_left==0 → return the static eval exactly as before
-        // (byte-identical when qs_forcing_depth=0). stand>=beta → stand-pat cutoff.
-        if (forcing_left <= 0 || stand >= beta) return stand;
+        // Forcing + promotion quiescence : a CALM leaf may still hide a shot (a
+        // quiet SACRIFICE leaving the opponent only forced captures — invisible to
+        // captures-only qsearch) OR a PROMOTION a few quiet moves away (the static
+        // leaf undervalues a near-crown man). We stand-pat-search those forcing
+        // sacs (bounded by forcing_left) and promotion advances (bounded by
+        // promo_left). Both budgets 0 → return the static eval exactly as before
+        // (byte-identical when qs_forcing_depth=qs_promo_depth=0). stand>=beta →
+        // stand-pat cutoff.
+        if ((forcing_left <= 0 && promo_left <= 0) || stand >= beta) return stand;
         int best = stand;
         if (best > alpha) alpha = best;
         for (const auto& m : moves) {                    // all quiet here
-            const Position child = after_timed(pos, m);
-            if (!qs_leaves_forced_capture(child)) continue;   // only forcing sacs
+            const Position child   = after_timed(pos, m);
+            const bool     is_sac  = forcing_left > 0 && qs_leaves_forced_capture(child);
+            const bool     is_promo= promo_left   > 0 && qs_promo_progress(pos, m, promo_left);
+            if (!is_sac && !is_promo) continue;
             push_accumulator(ply, pos, m, child);
             const int score = -quiescence(child, ply + 1, -beta, -alpha,
-                                          forcing_left - 1);
+                                          is_sac   ? forcing_left - 1 : forcing_left,
+                                          is_promo ? promo_left  - 1 : promo_left);
             if (score > best) best = score;
             if (best > alpha) alpha = best;
             if (alpha >= beta) break;                    // beta cut-off
@@ -440,8 +461,9 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     for (const auto& m : moves) {
         const Position next  = after_timed(pos, m);
         push_accumulator(ply, pos, m, next);
-        // Captures are forced (cheap) — they do NOT consume the forcing budget.
-        const int      score = -quiescence(next, ply + 1, -beta, -alpha, forcing_left);
+        // Captures are forced (cheap) — they do NOT consume either budget.
+        const int      score = -quiescence(next, ply + 1, -beta, -alpha,
+                                           forcing_left, promo_left);
         if (score > best) best = score;
         if (best > alpha) alpha = best;
         if (alpha >= beta) break;  // beta cut-off
@@ -532,7 +554,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
-    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth);
+    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth);
 
     // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
     // all want it; compute at most once. A "tactical" node (a forced capture
@@ -611,7 +633,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         const int eval   = static_eval();
         const int margin = params.razor_margin * depth;
         if (eval + margin <= alpha) {
-            const int q = quiescence(pos, ply, alpha, beta, params.qs_forcing_depth);
+            const int q = quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth);
             if (q <= alpha) return q;
         }
     }
