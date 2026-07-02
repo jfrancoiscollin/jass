@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0543-doe-resv-nodes",
+  "script": "jobs/queue/cpx62-0543-doe-resv-nodes.sh",
+  "pid": 4085011,
+  "started_at": "2026-07-02T21:04:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}

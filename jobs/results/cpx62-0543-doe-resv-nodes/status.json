@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0543-doe-resv-nodes",
+  "state": "running",
+  "started_at": "2026-07-02T21:04:03+00:00",
+  "host": "ubuntu-32gb-hel1-1",
+  "pid": 4085011
+}
