@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0529-combo-gen-validate",
+  "script": "jobs/queue/cpx62-0529-combo-gen-validate.sh",
+  "pid": 4051053,
+  "started_at": "2026-07-02T05:29:46+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
