@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0538-promo-qs-ab",
-  "snapshot_at": "2026-07-02T18:16:08+00:00",
+  "snapshot_at": "2026-07-02T18:21:51+00:00",
   "started_at": "2026-07-02T17:45:18+00:00",
-  "elapsed_seconds": 1850,
+  "elapsed_seconds": 2193,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4073810       1       30:49  0.0  0.0 bash\n4073812 4073810       30:49  0.0  0.0 bash\n4074249 4073812       30:39  0.0  0.0 python3\n4074250 4073812       30:39  0.0  0.0 tee\n4075439 4074249       00:43 99.9  0.4 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4073810       1       36:33  0.0  0.0 bash\n4073812 4073810       36:33  0.0  0.0 bash\n4075607 4073812       04:56  0.0  0.0 bash\n4075608 4075607       04:56  0.0  0.0 timeout\n4075609 4075608       04:56  5.1  0.0 python3\n4075610 4075609       04:56 68.7  0.5 jass\n4075612 4075609       04:56 27.6  0.9 scan_linux\n4075615 4075609       04:55  0.4  0.0 jass\n"
 }
