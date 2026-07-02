@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0534-combo-gen-balanced",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-02T14:54:24+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4067682
+  "ended_at": "2026-07-02T15:10:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

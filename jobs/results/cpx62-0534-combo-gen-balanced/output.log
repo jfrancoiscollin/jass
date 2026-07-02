@@ -1,0 +1,18 @@
+=== génération ÉQUILIBRÉE de combos (matériau de base, gradué par tempi) ===
+gen_combinations self-test: ALL PASS
+  corpus 1193458 pos ; 16 shards //, limite 4000/shard, per-bin 40/shard (équilibré), deep 16
+  suite : 2795 combos (matériau de base)
+  répartition ÉQUILIBRÉE par tempi :
+     3 tempi : 640 combos
+     5 tempi : 607 combos
+     7 tempi : 547 combos
+     9 tempi : 435 combos
+    11 tempi : 566 combos
+    TOTAL : 2795
+
+================= SUITE DU PLAN (base d'apprentissage combos) =================
+  1/3 [CE JOB] : matériau = combos vérifiés balancés par tempi (artefacts/combos_balanced.fen).
+  2/3 : assembler la BASE = combos (concentrés, label attaquant-gagne) + corpus 0328 (contraste résultat) + précurseurs.
+  3/3 : fm_fitcheck (FM réduit-il le résidu sur cette base ?) -> si oui, fit PJTW v4 (linéaire+FM) -> juge 0440+détection.
+  Honnête : base-résultat SEULE = plate (0329) ; le pari NON-tenté = concentration combos + FM (interactions de motifs).
+===========================================================================
