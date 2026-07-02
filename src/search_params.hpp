@@ -40,6 +40,8 @@ struct SearchParams {
     // aggressive LMR/LMP/RFP all hurt, 0264; less LMP / time-mgmt also hurt, 0268.)
     int lmr_min_depth        = 3;
     int lmr_first_full_moves = 4;
+    int lmr_first_full_pv    = 4;   // LMR pv/non-pv asymmetry (Scan : non-PV réduit dès le 2e coup,
+    int lmr_first_full_nonpv = 4;   // PV dès le 4e). Réduit le 1er coup d'index >= ce seuil. Les deux=4 => uniforme legacy.
     int lmr_base             = 0;
     int lmr_depth_div        = 6;
     int lmr_idx_div          = 8;
@@ -48,6 +50,21 @@ struct SearchParams {
     // clamped to >= 0). Reduces good moves less, bad moves at the base rate — a
     // standard tree-shrinker. history_max=16384 → div ~4000-8000 ≈ up to ~2-4 plies.
     int lmr_hist_div         = 0;
+
+    // Logarithmic LMR shape (opt-in ; lmr_formula=0 = linear = legacy default,
+    // BYTE-IDENTICAL). When lmr_formula=1 the base reduction is Stockfish-like :
+    //   R = lmr_log_base + log(d)*log(move_idx) * lmr_log_mul/100
+    // softer at shallow depth / early moves, more aggressive for late moves at
+    // high depth → attacks the effective branching factor (EBF) where the tree
+    // is most expensive. improving/clamp/history-softening applied AFTER, as for
+    // the linear path. lmr_log_mul is the coefficient ×100 (40 = 0.40 ≈ /2.5).
+    // EBF chantier 2026-06-29 (memo JFC) — ⚠️ A/B vs 0264/0268 (jass a GAGNÉ +Elo
+    // en réduisant MOINS) : décider à TEMPS FIXE + 0 régression Elo.
+    int lmr_formula  = 0;     // 0 = linear (legacy) ; 1 = logarithmic
+    int lmr_log_base = 0;     // additive base offset for the log formula
+    int lmr_log_mul  = 40;    // R coefficient ×100 (40 = 0.40 ≈ divide by 2.5)
+    int lmr_bc_ld    = 100;   // Box-Cox (lmr_formula=2) DEPTH exponent ×100 (100=λ1, 50=√, 0=log, <0=récip)
+    int lmr_bc_lidx  = 100;   // Box-Cox INDEX exponent ×100
 
     // Late move pruning (LMP): first late-quiet index to skip at depth 1/2/3.
     int lmp_d1 = 4;
@@ -101,6 +118,26 @@ struct SearchParams {
     // man (Move::promotes) — these are sharp, tactically dense lines.
     bool ext_promotion = false;
 
+    // Forcing extension (gated, default off). Extend by 1 ply any QUIET move
+    // that leaves the opponent only captures (a sacrifice / combination
+    // starter — FMJD majority rule makes the reply forced). Makes a
+    // sac->capture->regain line resolve to full effective depth regardless of
+    // the nominal horizon, so fixed-depth tactics (jauge 0440) are not cut by
+    // the leaf. DISTINCT from no_reduce_forcing (which only skips LMR/LMP);
+    // this ADDS depth, and also implies the no-reduce/no-LMP exemption for the
+    // extended move so the extension is not defeated by pruning. Untested
+    // lever (0436/0451 isolated pruning/non-reduction, NEVER an extension).
+    bool ext_forcing = false;
+    // Anti-explosion cap for ext_forcing : max TOTAL extensions accumulated on a
+    // single search path (forcing-ext SPEC §3.1 garde-fou). 0 = no cap (only the
+    // MAX_PLY backstop). When >0, a forcing extension is skipped once the path has
+    // already accumulated this many extensions, bounding the cost of pathological
+    // ultra-forcing positions.
+    int forcing_ext_cap = 0;
+    // Single-reply extension (Scan) : un nœud à EXACTEMENT 1 coup légal est cherché +1 ply
+    // (branchement=1 => GRATUIT en largeur). Version ÉTROITE de ext_forcing (qui est large/cher). default off.
+    bool ext_single_reply = false;
+
     // --- 1b : raffinements search incrémentaux (gated, neutres par défaut) ---
 
     // Improving heuristic. Track the node's static eval and compare to the
@@ -120,7 +157,7 @@ struct SearchParams {
     // on beta cutoffs and added to the quiet-move ordering score. Captures
     // "after they go there, this reply is good" patterns the flat history
     // misses. ~+15-30 ELO typical.
-    bool use_conthist = false;
+    bool use_conthist = true;   // baké 2026-06-30 : -9% noeuds @d12 (node-EBF exact 0507) + Elo-neutre (0505/0508 n=610)
 
     // Internal Iterative Deepening (gated; iid_min_depth = 0 disables). At a
     // deep node with no TT move, run a reduced-depth search first to populate
@@ -137,6 +174,49 @@ struct SearchParams {
     // touching speed elsewhere. Costs one extra movegen per would-be-reduced
     // late quiet move (only when this is on).
     int no_reduce_forcing = 0;   // 0 = off ; 1 = don't reduce/prune forcing quiets
+
+    // Forcing QUIESCENCE (gated; qs_forcing_depth = 0 disables). Standard
+    // quiescence only plays out mandatory CAPTURE chains, so a combination whose
+    // SACRIFICE (a quiet, material-losing move that leaves the opponent with only
+    // forced captures) falls at/below the horizon is invisible — qsearch returns
+    // the static eval without ever trying the sac. This lets the calm-leaf qsearch
+    // ALSO try such forcing sacs (bounded to this many consecutive sac plies), so a
+    // shot resolves at the horizon regardless of the main search depth. The forced
+    // reply keeps the tree narrow → cheap. 0 = off (byte-identical : plain static leaf).
+    int qs_forcing_depth = 0;
+
+    // Promotion QUIESCENCE (gated; qs_promo_depth = 0 disables). Companion to
+    // forcing quiescence for POSITIONAL sacrifices whose payoff is a PROMOTION a
+    // few quiet moves after the forced captures resolve: a static leaf shows a man
+    // still one/two rows short of the crown (undervalued) instead of the king it
+    // is about to become. When > 0, at a calm leaf we also follow quiet MAN
+    // advances that promote now OR land within qs_promo_depth rows of the promotion
+    // row (men only move forward → every quiet man move is progress), bounded to
+    // this many consecutive promo plies, so the king materialises in the qsearch
+    // line and the eval sees its value. 0 = off (byte-identical).
+    int qs_promo_depth = 0;
+
+    // Threat EXTENSION in quiescence (gated; false = off = byte-identical). Ported
+    // from Scan (src/search.cpp::qs) : at the FIRST quiescence ply, if the position
+    // is calm for us but the OPPONENT has a capture available (is_threat = we are
+    // under threat of being captured), the static eval is unreliable (a shot is
+    // looming) — so run a 1-ply search instead of standing pat, resolving the threat.
+    // Cheap (1 ply, gated on being under threat), low blow-up risk.
+    bool qs_threat_ext = false;
+
+    // Selective SAC quiescence (gated; false = off = byte-identical). Ported from
+    // Scan (src/gen.cpp::add_sacs, via src/scan_sacs.cpp — validated bit-for-bit).
+    // At a calm leaf, after the stand-pat, generate Scan's SELECTIVE sacrifices (a
+    // handful of positionally-gated man sacs, NOT all forcing sacs) and search them.
+    // Gated exactly like Scan : only for a men-only board (no king anywhere) and
+    // when NOT under threat (the threat case is covered by qs_threat_ext). The
+    // selectivity is the point — a naive "all sacs" quiescence explodes the tree.
+    bool qs_sacs = false;
+    // Explosion guard : generate sacs only at the FIRST quiescence ply (default).
+    // Scan itself recurses sacs, but bounded ; we start conservative and relax only
+    // once node-EBF confirms it stays flat.
+    bool qs_sacs_depth0_only = true;
+
 
     // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
@@ -203,10 +283,17 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "singular_margin")      p.singular_margin      = v;
     else if (key == "lmr_min_depth")        p.lmr_min_depth        = v;
     else if (key == "lmr_first_full_moves") p.lmr_first_full_moves = v;
+    else if (key == "lmr_first_full_pv")    p.lmr_first_full_pv    = v;
+    else if (key == "lmr_first_full_nonpv") p.lmr_first_full_nonpv = v;
     else if (key == "lmr_base")             p.lmr_base             = v;
     else if (key == "lmr_depth_div")        p.lmr_depth_div        = v;
     else if (key == "lmr_idx_div")          p.lmr_idx_div          = v;
     else if (key == "lmr_hist_div")         p.lmr_hist_div         = v;
+    else if (key == "lmr_formula")          p.lmr_formula          = v;
+    else if (key == "lmr_log_base")         p.lmr_log_base         = v;
+    else if (key == "lmr_log_mul")          p.lmr_log_mul          = v;
+    else if (key == "lmr_bc_ld")            p.lmr_bc_ld            = v;
+    else if (key == "lmr_bc_lidx")          p.lmr_bc_lidx          = v;
     else if (key == "lmp_d1")               p.lmp_d1               = v;
     else if (key == "lmp_d2")               p.lmp_d2               = v;
     else if (key == "lmp_d3")               p.lmp_d3               = v;
@@ -221,11 +308,19 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "probcut_margin")       p.probcut_margin       = v;
     else if (key == "probcut_reduction")    p.probcut_reduction    = v;
     else if (key == "ext_promotion")        p.ext_promotion        = (v != 0);
+    else if (key == "ext_forcing")          p.ext_forcing          = (v != 0);
+    else if (key == "forcing_ext_cap")      p.forcing_ext_cap      = v;
+    else if (key == "ext_single_reply")     p.ext_single_reply     = (v != 0);
     else if (key == "use_improving")        p.use_improving        = (v != 0);
     else if (key == "use_conthist")         p.use_conthist         = (v != 0);
     else if (key == "iid_min_depth")        p.iid_min_depth        = v;
     else if (key == "iid_reduction")        p.iid_reduction        = v;
     else if (key == "no_reduce_forcing")    p.no_reduce_forcing    = v;
+    else if (key == "qs_forcing_depth")     p.qs_forcing_depth     = v;
+    else if (key == "qs_promo_depth")       p.qs_promo_depth       = v;
+    else if (key == "qs_threat_ext")        p.qs_threat_ext        = (v != 0);
+    else if (key == "qs_sacs")              p.qs_sacs              = (v != 0);
+    else if (key == "qs_sacs_depth0_only")  p.qs_sacs_depth0_only  = (v != 0);
     else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
