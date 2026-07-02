@@ -11,6 +11,23 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-01** (verdicts en tête).
 
+## 🔬 VERDICT quiescence sacs (2026-07-02) — le NAÏF explose, la SÉLECTIVITÉ de Scan est requise (briefing)
+> Suite au briefing « porter la sac-quiescence de Scan ». Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La
+> quiescence de jass est CAPTURES-ONLY (`search.cpp` : `if(!moves[0].is_capture()) return eval_leaf`) → elle stand-pat AVANT
+> le sac → **structurellement aveugle** aux combos au horizon. Deux approches testées :
+
+- **forcing-qs NAÏF** (`qs_forcing_depth`, `leaves_forced_capture` = TOUS les sacs qui forcent une reprise) — A/B `0537` :
+  0440 à **profondeur FIXE d11 : 0,318 → 0,425** (+0,11, voir les sacs AIDE) **MAIS node-EBF EXPLOSE ~6×** (ratios 5,3-9,9)
+  → à movetime l'explosion mange la profondeur → **détection movetime NEUTRE**. Confirme le briefing : combos↑ SANS sélectivité
+  = explosion = gain non-transférable. **`promo-qs`** (`0538`, partiel) = bruité/neutre → OFF.
+- **⇒ SÉLECTIVITÉ = la pièce** : port FIDÈLE de Scan `add_sacs` (sélecteur positionnel bitboard — 0-2 sacs/position, pas tous)
+  dans `src/scan_sacs.cpp`. jass (dense 1-50, shifts parité) ≠ Scan (sparse 64-bit `<<6/<<7`) → conversion vers le layout
+  Scan + `add_sacs` VERBATIM + remap. **VALIDÉ bit-à-bit 40/40 dilf + 600/600 varié** (oracle `tools/scan_oracle`). Câblé
+  (`qs_sacs`, gaté men-only+no-threat, depth0-only). Byte-identique OFF, 0 crash, **coût-nœuds borné ~1,1-2×** (vs 6× naïf).
+- **A/B décisif `cpx62-0539`** (branche `claude/scan-sac-quiescence`, jamais main) : **0440 (combos↑ ?) + node-EBF exact
+  (explosion ?)** — le make-or-break : *combos↑ SANS explosion* = le canal exact où Scan gagne, sans NNUE. EN COURS.
+
+
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
 > Fit sur (pool self-play **+ 4M positions egdb-finale exactes**, phase-weighté → ne touche que la banque EG).
