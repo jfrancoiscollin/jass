@@ -1,0 +1,9 @@
+=== SCALE-UP générateur de combinaisons (gradué par tempi) ===
+gen_combinations self-test: ALL PASS
+=== build jass (egdb ON) ===
+  corpus Scan-selfplay : 1193458 positions ; 16 shards //, limite 600/shard, per-bin 8/shard, deep 16
+=== génère les combos gradués (parallèle, source Scan-vs-Scan milieu 14-40p) ===
+  suite : 403 combos gradués
+  répartition par tempi :
+
+=== TEST DE DÉTECTION jass par bin de tempi (élagage ON vs OFF, temps-agnostique) ===
