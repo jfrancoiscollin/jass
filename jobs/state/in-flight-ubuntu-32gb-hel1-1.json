@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0538-promo-qs-ab",
+  "script": "jobs/queue/cpx62-0538-promo-qs-ab.sh",
+  "pid": 4073810,
+  "started_at": "2026-07-02T17:45:18+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
