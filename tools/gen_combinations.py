@@ -74,10 +74,16 @@ def classify_combo(net_traj: list[int], first_move_is_capture: bool,
     if not net_traj or len(net_traj) < 2:
         return ComboVerdict(False, 0, 0, False, 0, "no line")
     start = net_traj[0]
-    tempi = min(len(net_traj) - 1, max_tempi)
-    end = net_traj[tempi]
+    line_len = min(len(net_traj) - 1, max_tempi)
+    end = net_traj[line_len]
     gain = end - start
-    dipped = min(net_traj[1:tempi + 1]) < start
+    dipped = min(net_traj[1:line_len + 1]) < start
+    # combination LENGTH in tempi = the ply at which the net gain is first REALISED
+    # (material won and kept), NOT the full played-out line. This is the "N temps"
+    # JFC grades by (a sac→recapture combo lands when the material comes back). D_min
+    # (the oracle's detection depth) is kept as separate metadata.
+    tempi = next((k for k in range(1, line_len + 1) if net_traj[k] >= start + gain_thresh),
+                 line_len)
     sacrificed = dipped or (not first_move_is_capture and gain >= gain_thresh)
     d_hits = sorted(d for d, hit in move_by_depth.items() if hit)
     d_min = d_hits[0] if d_hits else (max(move_by_depth) if move_by_depth else tempi)
@@ -86,8 +92,8 @@ def classify_combo(net_traj: list[int], first_move_is_capture: bool,
     if not sacrificed:
         return ComboVerdict(False, tempi, gain, dipped, d_min,
                             "won material with a plain capture (not a combination)")
-    if not (2 <= d_min <= max_tempi):
-        return ComboVerdict(False, tempi, gain, dipped, d_min, f"D_min {d_min} out of [2,{max_tempi}]")
+    if not (2 <= tempi <= max_tempi):
+        return ComboVerdict(False, tempi, gain, dipped, d_min, f"tempi {tempi} out of [2,{max_tempi}]")
     return ComboVerdict(True, tempi, gain, sacrificed, d_min, "ok")
 
 
@@ -155,17 +161,21 @@ class ScanOracle:
         except Exception: pass
 
 
-def analyse_position(oracle: ScanOracle, fen: str, max_tempi: int) -> ComboVerdict:
+def analyse_position(oracle: ScanOracle, fen: str, max_tempi: int,
+                     with_dmin: bool = False) -> ComboVerdict:
     """Full pipeline for one candidate FEN : forced line -> material trajectory,
     then D_min via per-depth move-match, then classify."""
     net_traj, first_cap = oracle.forced_line(fen, max_tempi)
     if len(net_traj) < 2:
         return ComboVerdict(False, 0, 0, False, 0, "no oracle line")
     combo_first = oracle.best_move_at(fen, oracle.deep)      # the deep line's 1st move
+    # D_min (oracle detection depth) is METADATA since we grade by tempi ; the 12
+    # per-depth probes are the cost bottleneck, so skip them unless with_dmin.
     move_by_depth = {}
-    for d in range(1, max_tempi + 1):
-        bm = oracle.best_move_at(fen, d)
-        move_by_depth[d] = (bm is not None and combo_first is not None and bm == combo_first)
+    if with_dmin:
+        for d in range(1, max_tempi + 1):
+            bm = oracle.best_move_at(fen, d)
+            move_by_depth[d] = (bm is not None and combo_first is not None and bm == combo_first)
     v = classify_combo(net_traj, first_cap, move_by_depth, max_tempi)
     v.first_move = combo_first or ""
     return v
@@ -181,18 +191,24 @@ def iter_fens_from_file(path: str):
             yield b
 
 
-def iter_fens_from_jnnw(path: str, max_records: int = 0):
+def iter_fens_from_jnnw(path: str, max_records: int = 0, start: int = 0,
+                        piece_lo: int = 0, piece_hi: int = 50):
+    """Yield FENs from a JNNW corpus in [start, start+max_records), optionally
+    filtered to a piece-count window (for midgame-combo candidates). `start`
+    enables sharding across parallel generator instances."""
     raw = open(path, 'rb').read()
     if raw[:4] != b'JNNW':
         raise SystemExit(f'{path}: not JNNW')
-    n = struct.unpack_from('<I', raw, 4)[0]
-    if max_records:
-        n = min(n, max_records)
+    total = struct.unpack_from('<I', raw, 4)[0]
+    end = total if not max_records else min(start + max_records, total)
     REC = 38
-    for i in range(n):
+    for i in range(start, end):
         o = 8 + i * REC
         wm, wk, bm, bk = struct.unpack_from('<QQQQ', raw, o)
         stm = raw[o + 32]
+        pc = bin(wm).count('1') + bin(wk).count('1') + bin(bm).count('1') + bin(bk).count('1')
+        if not (piece_lo <= pc <= piece_hi):
+            continue
         sl = lambda bb: [s + 1 for s in range(50) if (bb >> s) & 1]
         W = [str(s) for s in sl(wm)] + [f"K{s}" for s in sl(wk)]
         B = [str(s) for s in sl(bm)] + [f"K{s}" for s in sl(bk)]
@@ -208,7 +224,8 @@ def _self_test():
     v = classify_combo([0, -1, -1, 1, 1], first_move_is_capture=False,
                         move_by_depth={1: False, 2: False, 3: False, 4: True, 5: True},
                         max_tempi=12)
-    assert v.is_combo and v.tempi == 4 and v.gain == 1 and v.sacrificed and v.d_min == 4, v
+    # gain realised at ply 3 (net back to +1) => tempi=3 ; oracle sees it at d4 => d_min=4.
+    assert v.is_combo and v.tempi == 3 and v.gain == 1 and v.sacrificed and v.d_min == 4, v
     # plain capture-up (won a hanging man, no sac) : NOT a combination.
     v = classify_combo([0, 1, 1], first_move_is_capture=True,
                         move_by_depth={1: True, 2: True}, max_tempi=12)
@@ -220,11 +237,11 @@ def _self_test():
     # deep 11-tempi combo : D_min at the edge of the window.
     v = classify_combo([0, -2] + [-2] * 9 + [2], first_move_is_capture=False,
                         move_by_depth={d: (d >= 11) for d in range(1, 13)}, max_tempi=12)
-    assert v.is_combo and v.d_min == 11 and v.gain == 2, v
+    assert v.is_combo and v.tempi == 11 and v.d_min == 11 and v.gain == 2, v
     # king-gain via promotion sac counts (KING_VAL) : start 0 -> sac -1 -> +3 (a king).
     v = classify_combo([0, -1, 3], first_move_is_capture=False,
                         move_by_depth={2: True}, max_tempi=12)
-    assert v.is_combo and v.gain == 3, v
+    assert v.is_combo and v.gain == 3 and v.tempi == 2, v
     print("gen_combinations self-test: ALL PASS")
 
 
@@ -237,6 +254,12 @@ def main(argv=None):
     ap.add_argument('--fens', help='candidate FENs, one per line')
     ap.add_argument('--jnnw', help='candidate positions from a JNNW corpus')
     ap.add_argument('--max-records', type=int, default=0)
+    ap.add_argument('--start', type=int, default=0, help='JNNW shard start offset (parallel gen)')
+    ap.add_argument('--with-dmin', action='store_true',
+                    help='also probe the oracle at each depth for D_min metadata (slow ; grading '
+                         'is by tempi regardless)')
+    ap.add_argument('--piece-lo', type=int, default=0, help='min pieces (midgame candidate filter)')
+    ap.add_argument('--piece-hi', type=int, default=50, help='max pieces')
     ap.add_argument('--deep', type=int, default=DEEP_DEFAULT, help='oracle ground-truth depth')
     ap.add_argument('--max-tempi', type=int, default=MAXTEMPI_DEFAULT, help='grade combos 2..this')
     ap.add_argument('--per-bin', type=int, default=0, help='stop once every D_min bin has this many (0=all candidates)')
@@ -249,7 +272,8 @@ def main(argv=None):
     if not (args.scan and args.jass and (args.fens or args.jnnw)):
         ap.error('need --scan --jass and one of --fens/--jnnw (or --self-test)')
 
-    cand = iter_fens_from_file(args.fens) if args.fens else iter_fens_from_jnnw(args.jnnw, args.max_records)
+    cand = (iter_fens_from_file(args.fens) if args.fens else
+            iter_fens_from_jnnw(args.jnnw, args.max_records, args.start, args.piece_lo, args.piece_hi))
     oracle = ScanOracle(args.scan, args.jass, deep=args.deep)
     bins: dict[int, list] = {n: [] for n in range(2, args.max_tempi + 1)}
     out = open(args.out_fens, 'w') if args.out_fens else None
@@ -259,12 +283,12 @@ def main(argv=None):
             if args.limit and scanned >= args.limit:
                 break
             scanned += 1
-            v = analyse_position(oracle, fen, args.max_tempi)
+            v = analyse_position(oracle, fen, args.max_tempi, with_dmin=args.with_dmin)
             if not v.is_combo:
                 continue
-            if args.per_bin and len(bins[v.d_min]) >= args.per_bin:
+            if args.per_bin and len(bins[v.tempi]) >= args.per_bin:
                 continue
-            bins[v.d_min].append(fen); kept += 1
+            bins[v.tempi].append(fen); kept += 1
             if out:
                 out.write(f"{fen}  # D_min={v.d_min} gain={v.gain} tempi={v.tempi} "
                           f"sac={v.sacrificed} win={v.first_move}\n"); out.flush()
@@ -275,7 +299,7 @@ def main(argv=None):
         if out: out.close()
     print(f"scanned={scanned} kept={kept}")
     for n in range(2, args.max_tempi + 1):
-        print(f"  D_min={n:2d} tempi : {len(bins[n])} combos")
+        print(f"  {n:2d} tempi : {len(bins[n])} combos")
     return 0
 
 
