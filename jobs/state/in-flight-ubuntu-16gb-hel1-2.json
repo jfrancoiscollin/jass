@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0530-cleanloop-gen1-lean",
-  "script": "jobs/queue/ccx33-0530-cleanloop-gen1-lean.sh",
-  "pid": 3057335,
-  "started_at": "2026-07-02T06:27:19+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
