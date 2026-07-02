@@ -175,6 +175,17 @@ struct SearchParams {
     // late quiet move (only when this is on).
     int no_reduce_forcing = 0;   // 0 = off ; 1 = don't reduce/prune forcing quiets
 
+    // Forcing QUIESCENCE (gated; qs_forcing_depth = 0 disables). Standard
+    // quiescence only plays out mandatory CAPTURE chains, so a combination whose
+    // SACRIFICE (a quiet, material-losing move that leaves the opponent with only
+    // forced captures) falls at/below the horizon is invisible — qsearch returns
+    // the static eval without ever trying the sac. This lets the calm-leaf qsearch
+    // ALSO try such forcing sacs (bounded to this many consecutive sac plies), so a
+    // shot resolves at the horizon regardless of the main search depth. The forced
+    // reply keeps the tree narrow → cheap. 0 = off (byte-identical : plain static leaf).
+    int qs_forcing_depth = 0;
+
+
     // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
     // depth; if at least `multicut_cuts` of them fail high, the node almost
@@ -273,6 +284,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "iid_min_depth")        p.iid_min_depth        = v;
     else if (key == "iid_reduction")        p.iid_reduction        = v;
     else if (key == "no_reduce_forcing")    p.no_reduce_forcing    = v;
+    else if (key == "qs_forcing_depth")     p.qs_forcing_depth     = v;
     else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
