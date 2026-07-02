@@ -1,0 +1,22 @@
+=== build jass depuis main (qs_sacs BAKED ON par defaut) ===
+  HEAD main : 8780a15bf runner: start ccx33-0541-qs-sacs-bake-confirm
+  sanity dump-sacs (defaut ON) : 
+
+=== head-to-head  A=defaut(qs_sacs ON)  vs  B=qs_sacs=0   @ movetime 0.3s, dilf n=305 x1pair ===
+DONE 1
+DONE 0
+DONE 2
+DONE 7
+DONE 3
+DONE 6
+DONE 5
+DONE 4
+
+=== agrege (A=qs_sacs ON, B=qs_sacs OFF) ===
+  (shard 0 sans resultat: [Errno 2] No such file or directory: '/root/jass/jobs/results/ccx33-0541-qs-sacs-bake-confirm/artefacts/progress.0')
+  (shard 1 sans resultat: [Errno 2] No such file or directory: '/root/jass/jobs/results/ccx33-0541-qs-sacs-bake-confirm/artefacts/progress.1')
+  (shard 2 sans resultat: [Errno 2] No such file or directory: '/root/jass/jobs/results/ccx33-0541-qs-sacs-bake-confirm/artefacts/progress.2')
+  games=160  A(ON)=74  B(OFF)=66  D=20
+  A(ON) score-rate = 0.525 +-0.077   elo(ON-OFF) ~ +17
+  => tendance + mais dans le bruit
+=== fin confirm bake qs_sacs ===
