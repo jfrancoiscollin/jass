@@ -1,0 +1,6 @@
+=== build jass depuis main (qs_sacs BAKED ON) ===
+  HEAD main : 17c333f0f runner: start cpx62-0542-post-bake-sweep
+
+############ SWEEP post-bake : 14 bras vs baseline baké, mt0.25s, dilf n=305 ############
+
+=== BRAS sac_recurse  (A=qs_sacs_depth0_only=0  vs  B=baseline baké)  @ mt0.25s dilf ===
