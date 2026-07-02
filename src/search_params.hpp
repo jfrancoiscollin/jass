@@ -196,6 +196,14 @@ struct SearchParams {
     // line and the eval sees its value. 0 = off (byte-identical).
     int qs_promo_depth = 0;
 
+    // Threat EXTENSION in quiescence (gated; false = off = byte-identical). Ported
+    // from Scan (src/search.cpp::qs) : at the FIRST quiescence ply, if the position
+    // is calm for us but the OPPONENT has a capture available (is_threat = we are
+    // under threat of being captured), the static eval is unreliable (a shot is
+    // looming) — so run a 1-ply search instead of standing pat, resolving the threat.
+    // Cheap (1 ply, gated on being under threat), low blow-up risk.
+    bool qs_threat_ext = false;
+
 
     // Multi-cut pruning (gated; multicut_min_depth = 0 disables). At a deep
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
@@ -297,6 +305,7 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "no_reduce_forcing")    p.no_reduce_forcing    = v;
     else if (key == "qs_forcing_depth")     p.qs_forcing_depth     = v;
     else if (key == "qs_promo_depth")       p.qs_promo_depth       = v;
+    else if (key == "qs_threat_ext")        p.qs_threat_ext        = (v != 0);
     else if (key == "multicut_min_depth")   p.multicut_min_depth   = v;
     else if (key == "multicut_reduction")   p.multicut_reduction   = v;
     else if (key == "multicut_moves")       p.multicut_moves       = v;
