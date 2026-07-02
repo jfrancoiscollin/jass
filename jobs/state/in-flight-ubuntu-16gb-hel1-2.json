@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0540-qs-sacs-movetime",
-  "script": "jobs/queue/ccx33-0540-qs-sacs-movetime.sh",
-  "pid": 3070115,
-  "started_at": "2026-07-02T18:55:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

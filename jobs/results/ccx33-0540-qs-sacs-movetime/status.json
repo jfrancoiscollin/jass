@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0540-qs-sacs-movetime",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 4,
   "started_at": "2026-07-02T18:55:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3070115
+  "ended_at": "2026-07-02T19:00:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
