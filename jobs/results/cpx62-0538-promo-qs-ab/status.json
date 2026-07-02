@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0538-promo-qs-ab",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-07-02T17:45:18+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4073810
+  "ended_at": "2026-07-02T18:27:08+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
