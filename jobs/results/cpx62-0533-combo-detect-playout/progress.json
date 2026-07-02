@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0533-combo-detect-playout",
+  "snapshot_at": "2026-07-02T14:06:14+00:00",
+  "started_at": "2026-07-02T14:01:10+00:00",
+  "elapsed_seconds": 304,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4065851       1       05:03  0.0  0.0 bash\n4065853 4065851       05:03  0.0  0.0 bash\n4066418 4065853       04:51  0.0  0.0 python3\n4066419 4065853       04:51  0.0  0.0 tee\n4066420 4066418       04:51  0.5  0.9 scan_linux\n4066423 4066418       04:51  0.0  0.0 jass\n4066425 4066418       04:51  3.6  0.4 jass\n4066427 4066418       04:51 34.2  0.5 jass\n4066430 4066418       04:51 61.7  0.5 jass\n"
+}
