@@ -1,0 +1,4 @@
+=== build jass (32-pat, egdb ON) ===
+  (expert_games.db absent -> ballots sautés, fallback dilf+lidraughts)
+  fallback seeds : dilf=305 lidraughts=400000
+=== forge seed matériel pur (gen 500000 eval-défaut -> réétiquette signe matériel -> fit) ===
