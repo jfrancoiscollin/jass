@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0539-qs-sacs-ab",
-  "script": "jobs/queue/cpx62-0539-qs-sacs-ab.sh",
-  "pid": 4076798,
-  "started_at": "2026-07-02T18:48:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
