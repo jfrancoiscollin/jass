@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0532-cleanloop-gen1-lean2",
-  "snapshot_at": "2026-07-02T15:34:05+00:00",
+  "snapshot_at": "2026-07-02T15:39:06+00:00",
   "started_at": "2026-07-02T13:54:05+00:00",
-  "elapsed_seconds": 6000,
+  "elapsed_seconds": 6301,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3063611       1    01:39:59  0.0  0.0 bash\n3063613 3063611    01:39:59  0.0  0.0 bash\n3064694 3063613    01:17:27 99.9  0.5 jass\n3064695 3063613    01:17:27 99.9  0.5 jass\n3064697 3063613    01:17:27 99.9  0.5 jass\n3064698 3063613    01:17:27 99.9  0.5 jass\n3064700 3063613    01:17:27 99.9  0.5 jass\n3064701 3063613    01:17:27 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3063611       1    01:45:00  0.0  0.0 bash\n3063613 3063611    01:45:00  0.0  0.0 bash\n3066394 3063613       04:29 39.6  0.3 python3\n3066395 3066394       04:28 46.3  0.0 jass\n"
 }
