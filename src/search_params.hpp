@@ -211,7 +211,9 @@ struct SearchParams {
     // Gated exactly like Scan : only for a men-only board (no king anywhere) and
     // when NOT under threat (the threat case is covered by qs_threat_ext). The
     // selectivity is the point — a naive "all sacs" quiescence explodes the tree.
-    bool qs_sacs = false;
+    // BAKED ON (2026-07-02) : verdict détection combos 0.58->0.67 (d11) et 0.61->0.65
+    // (movetime 0.3s, transfère), node-EBF borné ~1.19x médian (vs 5-10x du forcing naïf).
+    bool qs_sacs = true;
     // Explosion guard : generate sacs only at the FIRST quiescence ply (default).
     // Scan itself recurses sacs, but bounded ; we start conservative and relax only
     // once node-EBF confirms it stays flat.
