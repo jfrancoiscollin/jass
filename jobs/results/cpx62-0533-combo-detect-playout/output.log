@@ -1,0 +1,21 @@
+=== DÉTECTION COMBOS v2 (playout) ===
+  suite : 403 combos
+  403 combos ; oracle Scan d13 ; test à d20
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+Traceback (most recent call last):
+  File "<stdin>", line 39, in <module>
+  File "<stdin>", line 20, in playout_wins
+  File "/root/jass/tools/calibrate_vs_scan.py", line 313, in go
+    lines = self._read_until(lambda l: l.startswith("bestmove")
+                                      or l.startswith("error"),
+                             timeout_s=timeout_s)
+  File "/root/jass/tools/calibrate_vs_scan.py", line 230, in _read_until
+    raise TimeoutError(f"{self.label}: no match in {timeout_s}s")
+TimeoutError: Jass: no match in 60.0s
+
+================= LECTURE =================
+  PLAYOUT ON >> exact ON  => 0529/0531 sous-estimaient (jass gagne via un AUTRE coup) : moins grave qu'il semblait.
+  PLAYOUT extF >> PLAYOUT ON => l'EXTENSION forçante récupère les combos => levier recherche réel (baker au jeu).
+  PLAYOUT reste bas partout => vraie cécité tactique (au-delà de l'extension/élagage) => piste recherche + curriculum.
+===========================================
