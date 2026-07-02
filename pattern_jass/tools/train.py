@@ -426,15 +426,25 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
 
 def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                         logistic, n_cols, batch, sw_all=None,
-                        hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0):
+                        hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0,
+                        prior_mean=None, prior_prec=None):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
     whole set. Lets the fit scale to 10-40M rows on a fixed RAM budget — same
     optimum (the gradient is exact, only the assembly is streamed). Pure L2 only
     (anchors/freq-reg index the whole table and are unsupported here). `sw_all`
-    (per-row, mean≈1 over tr_idx) re-weights the data term (phase densification)."""
+    (per-row, mean≈1 over tr_idx) re-weights the data term (phase densification).
+
+    Optional SEQUENTIAL-BAYESIAN prior (both None = OFF = byte-identical L2) : when
+    `prior_mean` (length n_cols) and `prior_prec` (length n_cols, per-weight
+    precision) are given, the base ridge `0.5·l2·‖w‖²` is REPLACED by the Gaussian
+    prior MAP term `0.5·Σ prec_i·(w_i−μ_i)²` and the optimiser is warm-started at μ.
+    Carries the previous champion forward as a per-bucket precision-weighted prior
+    (anti-forgetting of rare buckets ; see train_stream --prior-mean). Composes with
+    hier_l2 (still added on top)."""
     N = len(tr_idx); eps = 1e-12
+    use_prior = prior_mean is not None and prior_prec is not None
     # --- Hierarchical shrinkage (backoff) : penalise each pattern bucket's DEVIATION
     #     from its parent pattern mean (λ_h·Σ(w_b−μ_p)²) instead of toward 0, so rare
     #     buckets inherit the pattern mean rather than collapsing to "neutral". The
@@ -468,8 +478,15 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
             else:
                 cs += float(np.sum(ce))
             grad += Xc.T @ resid                      # accumulate XT@(sw·resid)
-        loss = cs / N + 0.5 * l2 * float(np.dot(w, w))
-        grad = grad / N + l2 * w
+        if use_prior:
+            diff = w - prior_mean
+            reg = 0.5 * float(np.dot(prior_prec * diff, diff))   # 0.5·Σ prec_i·(w_i−μ_i)²
+            greg = prior_prec * diff
+        else:
+            reg = 0.5 * l2 * float(np.dot(w, w))
+            greg = l2 * w
+        loss = cs / N + reg
+        grad = grad / N + greg
         if _hier:
             for _blk in (0, pat_n):                     # mg block, eg block
                 _wb  = w[_blk:_blk + pat_n]
@@ -481,7 +498,7 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                 grad[_blk:_blk + pat_n] += hier_l2 * _dev
         return loss, grad
 
-    w0 = np.zeros(n_cols, dtype=np.float64)
+    w0 = prior_mean.copy() if use_prior else np.zeros(n_cols, dtype=np.float64)
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
                    options={'maxiter': max_iter, 'maxcor': 5})
     return res.x, float(res.fun), int(res.nit)
