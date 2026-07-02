@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0534-combo-gen-balanced",
+  "script": "jobs/queue/cpx62-0534-combo-gen-balanced.sh",
+  "pid": 4067682,
+  "started_at": "2026-07-02T14:54:24+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
