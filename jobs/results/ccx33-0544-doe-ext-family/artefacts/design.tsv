@@ -1,0 +1,16 @@
+0	-1	-1	-1	-1	-1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,lmr_first_full_nonpv=4,iid_min_depth=0,probcut_min_depth=0
+1	-1	-1	-1	1	1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,lmr_first_full_nonpv=4,iid_min_depth=6,probcut_min_depth=5
+2	-1	-1	1	-1	1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,lmr_first_full_nonpv=2,iid_min_depth=0,probcut_min_depth=5
+3	-1	-1	1	1	-1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,lmr_first_full_nonpv=2,iid_min_depth=6,probcut_min_depth=0
+4	-1	1	-1	-1	1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=1,lmr_first_full_nonpv=4,iid_min_depth=0,probcut_min_depth=5
+5	-1	1	-1	1	-1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=1,lmr_first_full_nonpv=4,iid_min_depth=6,probcut_min_depth=0
+6	-1	1	1	-1	-1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=1,lmr_first_full_nonpv=2,iid_min_depth=0,probcut_min_depth=0
+7	-1	1	1	1	1	ext_forcing=0,forcing_ext_cap=0,ext_single_reply=1,lmr_first_full_nonpv=2,iid_min_depth=6,probcut_min_depth=5
+8	1	-1	-1	-1	1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=0,lmr_first_full_nonpv=4,iid_min_depth=0,probcut_min_depth=5
+9	1	-1	-1	1	-1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=0,lmr_first_full_nonpv=4,iid_min_depth=6,probcut_min_depth=0
+10	1	-1	1	-1	-1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=0,lmr_first_full_nonpv=2,iid_min_depth=0,probcut_min_depth=0
+11	1	-1	1	1	1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=0,lmr_first_full_nonpv=2,iid_min_depth=6,probcut_min_depth=5
+12	1	1	-1	-1	-1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=1,lmr_first_full_nonpv=4,iid_min_depth=0,probcut_min_depth=0
+13	1	1	-1	1	1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=1,lmr_first_full_nonpv=4,iid_min_depth=6,probcut_min_depth=5
+14	1	1	1	-1	1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=1,lmr_first_full_nonpv=2,iid_min_depth=0,probcut_min_depth=5
+15	1	1	1	1	-1	ext_forcing=1,forcing_ext_cap=6,ext_single_reply=1,lmr_first_full_nonpv=2,iid_min_depth=6,probcut_min_depth=0
