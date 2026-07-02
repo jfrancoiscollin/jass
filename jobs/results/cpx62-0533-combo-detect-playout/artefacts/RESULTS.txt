@@ -1,0 +1,2 @@
+=== DÉTECTION COMBOS v2 (playout) ===
+  suite : 403 combos
