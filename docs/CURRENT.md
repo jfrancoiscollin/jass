@@ -11,6 +11,21 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
 
+## ⚖️ VERDICT gen2 = NEUTRE (2026-07-03) — diagnostic pd10 en cours ; pd6 = suspect n°1
+> **gen2** (`cpx62-0550`, pd6, 3M, pilote+prior gen1) jugé (2440 parties d9 dilf, SE ajustée nulles) :
+> • `[gen2-vs-gen1]` rate **0.4934 ±0.0181** (elo −5, IC contient 0,50) = **NEUTRE** par §gates → **gen2 NON promu**.
+> • `[gen2-vs-egdbmix]` 0.5008 (**+1** — gen1 était **+14**, donc gen2 a **PERDU** le gain de gen1).
+> Signal fort : gen2(pd6) retombe au niveau egdbmix ⇒ **pd6 a-t-il affaibli les données ?** (pilote pd6 = punit moins).
+> §gates INTERDIT de conclure « plateau » sans le témoin. **pd6 mesuré ULTRA-rapide** : gen2 3M en ~20min (~50× pd10).
+>
+> **BRAS TÉMOIN pd10** (`cpx62-0552`, en cours) : ~600k pd10, **même pilote/prior gen1**, juge cand-T vs gen1. →
+> **cand-T COMPOSE** (borne basse IC>0,50) alors que gen2(pd6) non ⇒ **pd6 coupable** → chaîne à **pd8/pd10** (retry gate NEUTRE).
+> **cand-T aussi ≤ gen1** ⇒ **plateau robuste à la profondeur** → figer gen1 → **phase EBF**.
+>
+> **BUG INFRA corrigé** : le runner **ne committe PAS les champions des jobs rapides** (champion gen2 PERDU ; gen1 en 15h l'avait) →
+> **fix = commit JOB-SIDE** (plumbing git dans le job) appliqué au témoin, **à baker gen3+**. (Télémétrie monitor idem : new-file-per-cycle gen3+.)
+> **Feeder** `ccx33-0551` (pd8 1M + salvaged 682k → `feed-pooled` ~1,68M) : **données PROFONDES prêtes pour gen3** si pd6 coupable.
+
 ## 🏆 PROMOTION gen1 (2026-07-03) — 1re éval combo-aware, +14 Elo vs egdbmix → nouveau champion
 > **`champion-gen1-combo`** (`jobs/results/cpx62-0545-selfplay-gen1-combo/artefacts/champion-gen1-combo.pjtw.gz`) est
 > le **nouveau champion**. Première éval entraînée sur du self-play **combo-aware** (qs_sacs baké au jeu+label), fit
