@@ -1,0 +1,18 @@
+=== build jass (qs_sacs baké, 32-pat) ===
+  feed-pooled : 1682336 pos (pd8+pd10 salvaged, pilote gen1) ; combos : 1239648
+
+=== POOL feed-pooled + combos -> fit prior gen1 ===
+  concat -> 2921984 : feed.jnnw=1682336, combos.jnnw=1239648
+    target=WDL  win=1888688 draw=324504 loss=708792 (11.1% draws)  (6.6s)
+  L-BFGS  loss=logistic  l2=3e-05  max_iter=25  chunk=1,000,000  (~25 disk passes over data+feat)
+  prior : champion=/root/cw-fpfit/gen1_prior.pjtw (scale=1000)  λ=0.25 decay=1.0  prec[pat] med=3.137e-05 max=1.860e-02 prec[ext]=2.500e-01  warm-start at μ
+    train_loss=0.614442  iters=25  (346.2s)
+  champion-feedpool committé JOB-SIDE
+
+=== JUGE cand-feed (profond) @ d9, dilf ===
+  [feedpool-vs-gen1] games=2440 A=1000 B=1056 D=384  rate=0.4885+-0.0182  elo~-8
+  [feedpool-vs-egdbmix] games=2440 A=932 B=1068 D=440  rate=0.4721+-0.0179  elo~-19
+
+  => feedpool-vs-gen1 borne basse IC >0.50 (COMPOSE) alors que gen2(pd6)=NEUTRE => PROFONDEUR = le levier => gen3 pd8+.
+     Sinon (aussi <=gen1 a ~volume comparable) => PLATEAU robuste => figer gen1, phase EBF (baker F1 d abord).
+=== fin feedpool-fit ===
