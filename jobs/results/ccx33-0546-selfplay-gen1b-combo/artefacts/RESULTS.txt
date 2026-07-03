@@ -1,0 +1,1 @@
+=== build jass depuis main (qs_sacs baké ON, 32-pat) ===
