@@ -1,0 +1,17 @@
+=== build jass (qs_sacs bake, 32-pat) ===
+  HEAD main : 50eec0bd2 runner: start ccx33-0551-gen1M-d8-feed
+  pilote = gen1 ; play_depth=8 ; cible=1000000
+
+=== seed-file (dilf + lidraughts) ===
+  seed-file : dilf=305 lidraughts=300000
+
+================= GEN 1M (pilote=gen1, play_depth 8, asym) =================
+1000000
+  self-play pd8 : 1000000 pos
+
+=== POOL : ccx33 1M(pd8) + salvaged(682k) -> feed pour cpx62 ===
+  salvaged tire : 682336 pos
+  concat -> 1682336 : sp.jnnw=1000000, salvaged.jnnw=682336
+  feed-pooled.jnnw.gz : 1682336 pos, 17M
+  => pret a etre feed a cpx62 (pool fit).
+=== fin feeder ccx33 pd8 ===
