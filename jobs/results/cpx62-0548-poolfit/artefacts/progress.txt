@@ -1,0 +1,3 @@
+14:00:08Z [gen] positions~0/3000000  debit~0/s  ETA~-1s
+14:02:08Z [gen] positions~4304/3000000  debit~35/s  ETA~85591s
+14:04:08Z [gen] positions~10568/3000000  debit~44/s  ETA~67941s
