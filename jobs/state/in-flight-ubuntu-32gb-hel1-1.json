@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0548-poolfit",
-  "script": "jobs/queue/cpx62-0548-poolfit.sh",
-  "pid": 4139397,
-  "started_at": "2026-07-03T13:59:48+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

@@ -1,0 +1,9 @@
+=== build jass depuis main (qs_sacs baké ON, 32-pat) ===
+  HEAD main : ebd5ebccc runner: start cpx62-0548-poolfit
+  sanity qs_sacs (defaut ON) : 
+
+=== seed-file (dilf combos + lidraughts) ===
+  seed-file : dilf=305 lidraughts=300000
+  combo-enrich : 1239648 positions (0464)
+
+================= GENERATION 1 (pilote=champion egdbmix, asym CONSERVE) =================

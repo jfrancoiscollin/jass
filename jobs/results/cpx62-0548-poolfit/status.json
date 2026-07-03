@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0548-poolfit",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-07-03T13:59:48+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4139397
+  "ended_at": "2026-07-03T15:56:07+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
