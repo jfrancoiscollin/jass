@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0549-salvage-feeder",
+  "script": "jobs/queue/ccx33-0549-salvage-feeder.sh",
+  "pid": 3114800,
+  "started_at": "2026-07-03T15:50:12+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
