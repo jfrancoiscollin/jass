@@ -9,24 +9,27 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-01** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
 
-## 🔬 VERDICT quiescence sacs (2026-07-02) — le NAÏF explose, la SÉLECTIVITÉ de Scan est requise (briefing)
-> Suite au briefing « porter la sac-quiescence de Scan ». Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La
-> quiescence de jass est CAPTURES-ONLY (`search.cpp` : `if(!moves[0].is_capture()) return eval_leaf`) → elle stand-pat AVANT
-> le sac → **structurellement aveugle** aux combos au horizon. Deux approches testées :
+## ✅ VERDICT (2026-07-03) — qs_sacs BAKÉ + côté RECHERCHE CLOS (2 DOE) ; self-play combo-aware en cours
+> Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La quiescence de jass était CAPTURES-ONLY → **aveugle**
+> aux combos au horizon. Résolu et **BAKÉ sur main** (`qs_sacs=true` par défaut, commit `a1cfe78c`).
 
-- **forcing-qs NAÏF** (`qs_forcing_depth`, `leaves_forced_capture` = TOUS les sacs qui forcent une reprise) — A/B `0537` :
-  0440 à **profondeur FIXE d11 : 0,318 → 0,425** (+0,11, voir les sacs AIDE) **MAIS node-EBF EXPLOSE ~6×** (ratios 5,3-9,9)
-  → à movetime l'explosion mange la profondeur → **détection movetime NEUTRE**. Confirme le briefing : combos↑ SANS sélectivité
-  = explosion = gain non-transférable. **`promo-qs`** (`0538`, partiel) = bruité/neutre → OFF.
-- **⇒ SÉLECTIVITÉ = la pièce** : port FIDÈLE de Scan `add_sacs` (sélecteur positionnel bitboard — 0-2 sacs/position, pas tous)
-  dans `src/scan_sacs.cpp`. jass (dense 1-50, shifts parité) ≠ Scan (sparse 64-bit `<<6/<<7`) → conversion vers le layout
-  Scan + `add_sacs` VERBATIM + remap. **VALIDÉ bit-à-bit 40/40 dilf + 600/600 varié** (oracle `tools/scan_oracle`). Câblé
-  (`qs_sacs`, gaté men-only+no-threat, depth0-only). Byte-identique OFF, 0 crash, **coût-nœuds borné ~1,1-2×** (vs 6× naïf).
-- **A/B décisif `cpx62-0539`** (branche `claude/scan-sac-quiescence`, jamais main) : **0440 (combos↑ ?) + node-EBF exact
-  (explosion ?)** — le make-or-break : *combos↑ SANS explosion* = le canal exact où Scan gagne, sans NNUE. EN COURS.
-
+- **Le naïf explose, la sélectivité de Scan transfère.** forcing-qs naïf (`0537`) : 0440 fixe 0,32→0,43 MAIS node-EBF
+  ×5-10 → neutre à movetime. Port FIDÈLE de `add_sacs` de Scan (`src/scan_sacs.cpp`, **validé bit-à-bit 640/640** vs oracle) :
+  détection combos **d11 fixe 0,58→0,67**, **movetime 0,3s 0,61→0,65 (TRANSFÈRE)**, node-EBF **borné ~1,19× médian**.
+  ⇒ **BAKÉ** (`qs_sacs`, gaté men-only+no-threat, depth0-only). Mesuré par DÉTECTION par-position (pas 3660 parties — reproche
+  efficacité JFC), branche `claude/scan-sac-quiescence` mergée.
+- **DOE factoriels (remplacent l'OFAT — reproche JFC « on fait du OFAT, monte un DOE + calcul de taille »).** 2^(5-1) Res V,
+  réponse DÉTERMINISTE (`--search-profile` prof. fixe : détection=payoff, log-nodes=coût), analyse appariée 900 combos,
+  effets principaux **+ 10 interactions 2FI**, coin optimal sur 32 coins. **`0543` pruning** (rfp/razor/multicut/no_reduce) =
+  **négatif propre** : aucun effet détection signif., relâcher = pur coût (t jusqu'à 81). **`0544` extensions** (ext_forcing/
+  single_reply/lmr_asym/iid/probcut) = **ext_forcing aide (d+0,029 t=4,2) MAIS ×10 nœuds ≈ −4 plies** → rejeté par la
+  contrainte de budget-nœud. **⇒ côté RECHERCHE CLOS : qs_sacs capte TOUT le gain combo ; les 10 autres leviers n'aident pas
+  net.** Bonus force (pas combo) : `lmr_asym`/`probcut` **économisent des nœuds** détection-neutre → candidats Elo pour plus tard.
+- **Passe self-play combo-aware `cpx62-0545` EN COURS** : 3M, pilote=champion, **prior séquentiel** (#326, bit self-desc
+  strippé), **enrichissement combo** (`combos.jnnw` 0464), **asymétrie CONSERVÉE** (antidote au mislabeling des combos sous-
+  exécutés). Juge gen1 vs champion (Elo). Prochaine passe recherche (allégée, jugée Elo) APRÈS la nouvelle éval (co-adaptation).
 
 ## 🏆 CHAMPION COURANT (promu 2026-06-24) — `champion-egdbmix` (bitbase-mix)
 > **Nouveau meilleur 32cf** : `jobs/results/ccx33-0454-egdb-mix/artefacts/champion-egdbmix.pjtw.gz`.
