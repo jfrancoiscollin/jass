@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0546-selfplay-gen1b-combo",
-  "script": "jobs/queue/ccx33-0546-selfplay-gen1b-combo.sh",
-  "pid": 3093757,
-  "started_at": "2026-07-03T05:37:47+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
