@@ -1,0 +1,6 @@
+=== build jass depuis main (ARCHI COMPLETE : qs_sacs + qs_threat_ext + F1 NMP sound) ===
+  HEAD main : 31701d221 runner: start cpx62-0556-gen2M-mixdepth
+  sanity qs_sacs : 
+  seed-file : dilf=305 lidraughts=300000
+
+=== PHASE pd8 : 1200000 pos @ pd8 (x16 shards) ===
