@@ -139,14 +139,28 @@ NSP=$(python3 -c "import struct;print(struct.unpack('<I',open('$W/selfplay.jnnw'
 say "  self-play (quiet-only, qs_sacs ON) : ${NSP} pos"
 [ "${NSP:-0}" -ge 500000 ] || { say "ABORT: corpus self-play trop petit ($NSP)"; exit 7; }
 
-# ---------- COMMIT du corpus cpx62 (audit/reuse) ----------
+# ---------- COMMIT du corpus cpx62 (reuse pour le pool + reproductibilite) ----------
 gzip -c "$W/selfplay.jnnw" > "$ART/corpus-cpx62.jnnw.gz"
 say "  corpus cpx62 committe : $(du -h "$ART/corpus-cpx62.jnnw.gz" | cut -f1)"
 
-# ---------- POOL : attendre + tirer le corpus du feeder ccx33-0547 ----------
+fit_and_judge(){ local corpus="$1" tag="$2"   # -> fit (prior) + juge vs champion, commit champion-$tag
+  "$J" --dump-eval-features "$corpus" "$W/feat_$tag" >"$W/feat_$tag.log" 2>&1 || { say "ABORT dump feat $tag"; exit 8; }
+  say ""; say "=== FIT [$tag] train_stream (PRIOR SEQUENTIEL, visit=$PRIOR_VISIT decay=$PRIOR_DECAY) ==="
+  fit "$corpus" "$W/feat_$tag" "$W/$tag.pjtw"; rm -f "$W/feat_$tag"
+  grep -iE 'prior|iter|loss' "$W/$tag.log" | tail -5 | sed 's/^/  /' | tee -a "$RES"
+  gzip -c "$W/$tag.pjtw" > "$ART/champion-$tag.pjtw.gz"; say "  champion-$tag committe"
+  say "=== JUGE [$tag] vs champion egdbmix @ d$JUDGE_DEPTH, dilf x${JUDGE_PAIRS}pair ==="
+  pjudge "$W/$tag.pjtw" "$CHAMP" | tee -a "$RES"; }
+
+# ========== FIT #1 : cpx62 3M SEUL + combos — RESULTAT IMMEDIAT, on N'ATTEND PAS ccx33 (choix JFC) ==========
+say ""; say "############ FIT #1 : cpx62 3M seul (+combos) — premier resultat, sans attendre ccx33 ############"
+concat "$W/corpus_solo.jnnw" "$W/selfplay.jnnw" "$W/combos.jnnw" | tee -a "$RES"
+fit_and_judge "$W/corpus_solo.jnnw" "gen1-cpx62"
+rm -f "$W/corpus_solo.jnnw"
+
+# ========== FIT #2 : POOL cpx62 + ccx33 + combos (attend le feeder ; fallback = on garde juste le #1) ==========
 CCX33_CORPUS=jobs/results/ccx33-0547-gendata/artefacts/corpus-gen1b.jnnw.gz
-say ""
-say "=== POOL : attente du corpus feeder ccx33 ($CCX33_CORPUS) ==="
+say ""; say "############ FIT #2 : POOL — attente du corpus feeder ccx33 ($CCX33_CORPUS) ############"
 GOT=""; DEADLINE=$((SECONDS+18000))   # attend jusqu'a 5h
 while [ "$SECONDS" -lt "$DEADLINE" ]; do
   git fetch origin main --quiet 2>/dev/null || true
@@ -159,23 +173,12 @@ done
 if [ -n "$GOT" ]; then
   NCX=$(python3 -c "import struct;print(struct.unpack('<I',open('$W/ccx33.jnnw','rb').read(8)[4:8])[0])" 2>/dev/null || echo 0)
   say "  corpus ccx33 recu : ${NCX} pos -> POOL cpx62+ccx33+combos"
-  concat "$W/corpus.jnnw" "$W/selfplay.jnnw" "$W/ccx33.jnnw" "$W/combos.jnnw" | tee -a "$RES"
+  concat "$W/corpus_pool.jnnw" "$W/selfplay.jnnw" "$W/ccx33.jnnw" "$W/combos.jnnw" | tee -a "$RES"
+  fit_and_judge "$W/corpus_pool.jnnw" "gen1-pooled"
+  say ""; say "  => COMPARER : gen1-cpx62 (3M) vs gen1-pooled (~7M) vs champion. Le pool ajoute-t-il de la puissance ?"
 else
-  say "  ⚠ feeder ccx33 indisponible apres 5h -> FALLBACK fit cpx62 seul (3M+combos, non poole)"
-  concat "$W/corpus.jnnw" "$W/selfplay.jnnw" "$W/combos.jnnw" | tee -a "$RES"
+  say "  ⚠ feeder ccx33 indisponible apres 5h -> pas de FIT #2 ; on garde le resultat #1 (cpx62 seul)."
 fi
-"$J" --dump-eval-features "$W/corpus.jnnw" "$W/feat" >"$W/feat.log" 2>&1 || { say "ABORT dump feat"; exit 8; }
-say ""
-say "=== fit train_stream (PRIOR SEQUENTIEL vers champion, visit=$PRIOR_VISIT decay=$PRIOR_DECAY) ==="
-fit "$W/corpus.jnnw" "$W/feat" "$W/gen1.pjtw"; rm -f "$W/feat"
-grep -iE 'prior|iter|loss' "${W}/gen1.log" | tail -6 | sed 's/^/  /' | tee -a "$RES"
-gzip -c "$W/gen1.pjtw" > "$ART/champion-gen1-pooled.pjtw.gz"
-say "  nouveau champion gen1-POOLED -> $ART/champion-gen1-pooled.pjtw.gz"
-
-# ---------- JUGE vs champion (le test Elo) ----------
-say ""
-say "=== JUGE : gen1 (new) vs champion egdbmix @ depth $JUDGE_DEPTH, dilf x${JUDGE_PAIRS}pair ==="
-pjudge "$W/gen1.pjtw" "$CHAMP" | tee -a "$RES"
 say ""
 say "  => rate>0.5 hors-IC = la passe combo-aware ameliore l'eval => on chaine (gen2+). Sinon read negatif propre."
-say "=== fin self-play gen1 combo ==="
+say "=== fin poolfit (fit #1 immediat + fit #2 poole) ==="
