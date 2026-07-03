@@ -1,0 +1,25 @@
+=== build jass depuis main (qs_sacs baké ON, 32-pat) ===
+  HEAD main : 766929dca runner: start cpx62-0545-selfplay-gen1-combo
+  sanity qs_sacs (defaut ON) : 
+
+=== seed-file (dilf combos + lidraughts) ===
+  seed-file : dilf=305 lidraughts=300000
+  combo-enrich : 1239648 positions (0464)
+
+================= GENERATION 1 (pilote=champion egdbmix, asym CONSERVE) =================
+3000000
+  self-play (quiet-only, qs_sacs ON) : 3000000 pos
+  concat -> 4239648 : selfplay.jnnw=3000000, combos.jnnw=1239648
+
+=== fit train_stream (PRIOR SEQUENTIEL vers champion, visit=0.25 decay=1.0) ===
+    target=WDL  win=2396565 draw=577456 loss=1265627 (13.6% draws)  (10.5s)
+  L-BFGS  loss=logistic  l2=3e-05  max_iter=25  chunk=1,000,000  (~25 disk passes over data+feat)
+  prior : champion=/root/cw-sp1/champ_prior.pjtw (scale=1000)  λ=0.25 decay=1.0  prec[pat] med=3.094e-05 max=2.245e-02 prec[ext]=2.500e-01  warm-start at μ
+    train_loss=0.584370  iters=25  (487.1s)
+  nouveau champion gen1 -> /root/jass/jobs/results/cpx62-0545-selfplay-gen1-combo/artefacts/champion-gen1-combo.pjtw.gz
+
+=== JUGE : gen1 (new) vs champion egdbmix @ depth 9, dilf x4pair ===
+  new-vs-champion : games=2440  A(new)=1032 B(champ)=936 D=472  rate=0.5197+-0.0198  elo~+14
+
+  => rate>0.5 hors-IC = la passe combo-aware ameliore l'eval => on chaine (gen2+). Sinon read negatif propre.
+=== fin self-play gen1 combo ===
