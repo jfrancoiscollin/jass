@@ -202,7 +202,10 @@ struct SearchParams {
     // under threat of being captured), the static eval is unreliable (a shot is
     // looming) — so run a 1-ply search instead of standing pat, resolving the threat.
     // Cheap (1 ply, gated on being under threat), low blow-up risk.
-    bool qs_threat_ext = false;
+    // BAKED ON (2026-07-03, JFC) : complete l'architecture quiescence de Scan (qs_sacs +
+    // threat-ext ENSEMBLE, comme Scan en prod). L'A/B 0554 (detection + node-EBF + Elo)
+    // sert de verification a posteriori.
+    bool qs_threat_ext = true;
 
     // Selective SAC quiescence (gated; false = off = byte-identical). Ported from
     // Scan (src/gen.cpp::add_sacs, via src/scan_sacs.cpp — validated bit-for-bit).
