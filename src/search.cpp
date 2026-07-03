@@ -710,6 +710,12 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         if (depth >= NMP_MIN_DEPTH
             && !was_null
             && !is_mate_score(beta)
+            && !tactical                        // FIX F1 : jamais de null-move a un noeud en
+                                                //   CAPTURE FORCEE. Decliner une capture obligatoire
+                                                //   est illegal aux dames ; sur un noeud post-sacrifice
+                                                //   static_eval>=beta passe trivialement -> cutoff qui
+                                                //   masque la reprise forcee = la refutation du sac.
+                                                //   RFP/razor ont deja ce garde ; le NMP l'avait perdu.
             && !(eg && params.eg_no_nmp)) {     // endgame regime: NMP off (zugzwang)
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
