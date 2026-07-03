@@ -1,0 +1,10 @@
+=== SALVAGE feeder 0547 : harvest /root/cw-feeder/sp.jnnw.* ===
+  fichiers trouves :
+    3258578 /root/cw-feeder/sp.jnnw.1
+    3192914 /root/cw-feeder/sp.jnnw.2
+    3266786 /root/cw-feeder/sp.jnnw.3
+    3242162 /root/cw-feeder/sp.jnnw.4
+    3250370 /root/cw-feeder/sp.jnnw.5
+    3233954 /root/cw-feeder/sp.jnnw.6
+    3258578 /root/cw-feeder/sp.jnnw.7
+    3225746 /root/cw-feeder/sp.jnnw.8
