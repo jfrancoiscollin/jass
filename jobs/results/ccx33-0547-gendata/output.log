@@ -1,0 +1,5 @@
+=== build jass depuis main (qs_sacs bake ON, 32-pat) ===
+  HEAD main : f70b5e84a runner: start ccx33-0547-gendata
+  seed-file : dilf=305 lidraughts=300000
+
+=== GENERATION 3M (pilote=champion, asym CONSERVEE, combo-seeded) ===
