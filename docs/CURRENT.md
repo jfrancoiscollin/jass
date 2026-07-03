@@ -20,7 +20,17 @@
 > l'éval progresse, sans NNUE. Confirmation = le **chaînage gen2** (piloté par gen1).
 > **CALIBRATION critique** : le self-play à **play_depth 10 est intenable** (box ~19h/3M, PC ~52h/3M). ⇒ gen2+ passent
 > à **play_depth 6** (~10× plus rapide). Gen jobs : **moniteur de volume + checkpoint incrémental** (récup si kill).
-> gen2 = `cpx62-0550-gen2-pd6` (pilote+prior gen1, pd6).
+> gen2 = `cpx62-0550-gen2-pd6` (pilote+prior gen1, pd6). Verdict attendu = **gen2 vs gen1** (la chaîne compose-t-elle ?).
+>
+> **ÉTAT COURANT (2026-07-03 ~18h)** : les 2 box génèrent avec **gen1 comme pilote** + qs_sacs.
+> • **cpx62-0550** gen2 (pd6, 3M, fit prior gen1 → juge vs gen1 + vs egdbmix).
+> • **ccx33-0551** feeder (**pd8, 1M**) → POOL avec le **salvaged 682k** (récupéré du feeder 0547 tué, `ccx33-0549`)
+>   → `feed-pooled` ~1,68M **à feed à cpx62** ensuite (pool fit). Corpus diversifié en profondeur (pd6+pd8+pd10-salvaged).
+> • **asym punisher CONSERVÉ** en gen (choix JFC) ; ext_forcing symétrique-en-gen = idée valide (distillation) mais non
+>   retenue pour l'instant. • **Bug infra** : le runner ne re-committe pas les fichiers modifiés → moniteur/checkpoint
+>   figés à leur 1re version → **fix dès gen3 : écrire un NOUVEAU fichier par cycle** (progress-NNN / checkpoint-NNN).
+> • **Phase EBF** (réduire ~1,8→~1,25 vs Scan, DOE node-EBF, candidats lmr_asym/probcut) = **APRÈS** le plateau de la
+>   chaîne éval (co-adaptation pruning↔éval + éviter la confusion d'attribution ; recherche gelée pendant la chaîne).
 
 ## ✅ VERDICT (2026-07-03) — qs_sacs BAKÉ + côté RECHERCHE CLOS (2 DOE) ; self-play combo-aware en cours
 > Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La quiescence de jass était CAPTURES-ONLY → **aveugle**
