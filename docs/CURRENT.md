@@ -11,6 +11,17 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
 
+## 🏆 PROMOTION gen1 (2026-07-03) — 1re éval combo-aware, +14 Elo vs egdbmix → nouveau champion
+> **`champion-gen1-combo`** (`jobs/results/cpx62-0545-selfplay-gen1-combo/artefacts/champion-gen1-combo.pjtw.gz`) est
+> le **nouveau champion**. Première éval entraînée sur du self-play **combo-aware** (qs_sacs baké au jeu+label), fit
+> **prior-séquentiel** ancré à egdbmix (λ=0.25) → downside borné. Juge vs egdbmix (2440 parties, d9, dilf) :
+> **rate 0.520, elo ~+14, SIGNIFICATIF** (SE ajustée aux nulles → borne basse IC 0.502 > 0.50). egdbmix **archivé**
+> (réversible). ⇒ **Première preuve concrète que la boucle marche** : recherche voit les combos → self-play punit →
+> l'éval progresse, sans NNUE. Confirmation = le **chaînage gen2** (piloté par gen1).
+> **CALIBRATION critique** : le self-play à **play_depth 10 est intenable** (box ~19h/3M, PC ~52h/3M). ⇒ gen2+ passent
+> à **play_depth 6** (~10× plus rapide). Gen jobs : **moniteur de volume + checkpoint incrémental** (récup si kill).
+> gen2 = `cpx62-0550-gen2-pd6` (pilote+prior gen1, pd6).
+
 ## ✅ VERDICT (2026-07-03) — qs_sacs BAKÉ + côté RECHERCHE CLOS (2 DOE) ; self-play combo-aware en cours
 > Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La quiescence de jass était CAPTURES-ONLY → **aveugle**
 > aux combos au horizon. Résolu et **BAKÉ sur main** (`qs_sacs=true` par défaut, commit `a1cfe78c`).
