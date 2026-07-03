@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0553-feedpool-fit",
+  "snapshot_at": "2026-07-03T21:31:03+00:00",
+  "started_at": "2026-07-03T21:25:41+00:00",
+  "elapsed_seconds": 322,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4154916       1       05:21  0.0  0.0 bash\n4154918 4154916       05:21  0.0  0.0 bash\n4155559 4154918       05:07  124  9.7 python3\n"
+}
