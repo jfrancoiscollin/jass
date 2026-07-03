@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0555-prior-lambda-sweep",
-  "snapshot_at": "2026-07-03T21:52:03+00:00",
+  "snapshot_at": "2026-07-03T21:57:18+00:00",
   "started_at": "2026-07-03T21:46:59+00:00",
-  "elapsed_seconds": 304,
+  "elapsed_seconds": 619,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4156275       1       05:03  0.0  0.0 bash\n4156277 4156275       05:03  0.0  0.0 bash\n4156928 4156277       04:49  123 10.6 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4156275       1       10:18  0.0  0.0 bash\n4156277 4156275       10:18  0.0  0.0 bash\n4157295 4156277       03:00  124 10.7 python3\n"
 }
