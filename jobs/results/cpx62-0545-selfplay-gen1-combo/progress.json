@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0545-selfplay-gen1-combo",
-  "snapshot_at": "2026-07-03T13:44:00+00:00",
+  "snapshot_at": "2026-07-03T13:49:03+00:00",
   "started_at": "2026-07-02T22:18:52+00:00",
-  "elapsed_seconds": 55508,
+  "elapsed_seconds": 55811,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4101535       1    15:25:07  0.0  0.0 bash\n4101537 4101535    15:25:07  0.0  0.0 bash\n4102208 4101537    15:24:46 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4101535       1    15:30:10  0.0  0.0 bash\n4101537 4101535    15:30:10  0.0  0.0 bash\n4138610 4101537       02:59  119 13.3 python3\n"
 }
