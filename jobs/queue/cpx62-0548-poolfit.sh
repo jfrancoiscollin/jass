@@ -71,11 +71,29 @@ open(out,'wb').write(b'JNNW'+struct.pack('<I',tot)+body)
 print("  concat -> "+str(tot)+" : "+", ".join(f"{k}={v}" for k,v in parts))
 PY
 }
+# moniteur de volume : echantillonne la taille des shards en cours -> positions ~ (octets-8)/38,
+# ecrit dans $ART/progress.txt (committe par le runner au heartbeat) => volume + debit + ETA visibles en git.
+mon_start(){ local prefix="$1" tag="$2" target="$3"
+  ( T0=$SECONDS; while :; do
+      P=$(python3 -c "import glob,os
+t=0
+for f in glob.glob('$prefix.*'):
+    try: t+=max(0,(os.path.getsize(f)-8)//38)
+    except: pass
+print(t)" 2>/dev/null || echo 0)
+      DT=$((SECONDS-T0)); RATE=$(( P/(DT>0?DT:1) ))
+      ETA=$(( RATE>0 ? (target-P)/RATE : -1 ))
+      echo "$(date -u +%H:%M:%SZ) [$tag] positions~${P}/${target}  debit~${RATE}/s  ETA~${ETA}s" >> "$ART/progress.txt"
+      sleep 120
+    done ) & MON_PID=$!; }
+mon_stop(){ kill "$MON_PID" 2>/dev/null || true; MON_PID=""; }
 gen_strong(){ local pilot="$1" nn="$2" out="$3"; local per=$(( (nn+NCPU-1)/NCPU ))
+  mon_start "$out" "gen" "$nn"
   for s in $(seq 1 "$NCPU"); do "$J" --gen-data-wdl "$per" "$out.$s" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$((RANDOM*RANDOM+s))" \
       --nnue "$pilot" --asym-punisher-params "$FORCE_SPEC" --quiet-only \
       --seed-file "$SEEDFILE" --seed-frac "$SEED_FRAC" --random-open-plies "$OPEN_PLIES" --explore-eps "$EXPLORE_EPS" \
       >/dev/null 2>&1 & done; wait
+  mon_stop
   merge "$out"; }
 fit(){ env JASS_PATTERNS_DIR="$GEOM32" python3 pattern_jass/tools/train_stream.py --data "$1" --feat "$2" \
     --color-fold --tempo-stage --loss logistic --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
