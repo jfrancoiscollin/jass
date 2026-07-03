@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0547-gendata",
-  "script": "jobs/queue/ccx33-0547-gendata.sh",
-  "pid": 3094447,
-  "started_at": "2026-07-03T05:48:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
