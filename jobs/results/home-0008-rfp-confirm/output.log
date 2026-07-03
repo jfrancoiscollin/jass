@@ -1,0 +1,6 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] sweep RFP 6 candidats @ 500ms, 4pairs (×16): ≈ 70 min
+  [preflight] TOTAL estimé ≈ 74 min  (cap 110 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass SIMPLE (Release, hc ; defaults = combo baké) ===
+=== sweep RFP 6 (hc, vs combo baké, parallèle ×16) ===
