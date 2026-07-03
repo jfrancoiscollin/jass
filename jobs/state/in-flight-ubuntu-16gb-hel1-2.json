@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0554-f2-threatext-ab",
+  "script": "jobs/queue/ccx33-0554-f2-threatext-ab.sh",
+  "pid": 3121918,
+  "started_at": "2026-07-03T21:34:51+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
