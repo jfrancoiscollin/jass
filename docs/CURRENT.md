@@ -26,6 +26,17 @@
 > **fix = commit JOB-SIDE** (plumbing git dans le job) appliqué au témoin, **à baker gen3+**. (Télémétrie monitor idem : new-file-per-cycle gen3+.)
 > **Feeder** `ccx33-0551` (pd8 1M + salvaged 682k → `feed-pooled` ~1,68M) : **données PROFONDES prêtes pour gen3** si pd6 coupable.
 
+## 🔍 AUDIT repo (2026-07-03, F1-F5) — statut
+> • **F1** (trou soundness NMP sans `!tactical` — décline captures forcées, masque réfutations de sac) : **FIX VALIDÉ**
+>   (jass_tests 100% ; byte-identical au défaut car NMP off ; corrige les coups faux avec NMP-on). Préservé en **patch**
+>   (`docs/patches/F1-nmp-tactical.patch`, search.cpp de main INCHANGÉ) → **À BAKER avant la phase EBF** (le DOE EBF va
+>   ré-activer le NMP → le trou polluerait le verdict). LATENT au défaut (eg_no_nmp=true).
+> • **F3** (quiet-only au gen) : **VÉRIFIÉ GREEN** — `--quiet-only` sur les 4 jobs de la chaîne (0545/0550/0551/0552),
+>   gen2-vs-témoin **iso-config** (identiques sauf play_depth + volume) → comparaison valide, pas de « syndrome −700 Elo ».
+> • **F4** (draw-rate pd6 vs pd10 = explication mécanique possible du NEUTRE gen2) : à lire sur les dumps au verdict 0552.
+> • **F2** (`qs_threat_ext` — moitié manquante de la quiescence Scan, jamais bakée) : A/B en file **au dégel recherche (EBF)**.
+> • **F5** (dédup `opponent_can_capture` ×2 dans la qs calme) : micro-perf opportuniste, noté.
+
 ## 🏆 PROMOTION gen1 (2026-07-03) — 1re éval combo-aware, +14 Elo vs egdbmix → nouveau champion
 > **`champion-gen1-combo`** (`jobs/results/cpx62-0545-selfplay-gen1-combo/artefacts/champion-gen1-combo.pjtw.gz`) est
 > le **nouveau champion**. Première éval entraînée sur du self-play **combo-aware** (qs_sacs baké au jeu+label), fit
