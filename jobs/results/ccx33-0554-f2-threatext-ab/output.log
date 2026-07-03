@@ -1,0 +1,13 @@
+=== build jass depuis main (F1 bake + JASS_TIME_BREAKDOWN) ===
+  HEAD main : 230d7a5be runner: start ccx33-0554-f2-threatext-ab
+  (build OK => F1 compile bien sur main)
+
+=== (1) DETECTION combos + node-EBF EXACT (D13, qs_threat_ext on vs off, ~900 combos) ===
+  echantillon=900
+  M=900  detection off=0.594 on=0.607  (delta +0.012)
+  node-EBF (log-nodes) : ratio on/off = 1.187 (surcout noeuds)
+
+=== (2) Elo TEMPS FIXE movetime 0.3s (qs_threat_ext=1 vs off), dilf ===
+  Elo threat_ext ON vs OFF : games=610 rate=0.4705+-0.0361 elo~-21
+  GATE : detection>= ET Elo borne basse>0.50 ET surcout noeuds raisonnable => BAKER qs_threat_ext.
+=== fin F2 A/B ===
