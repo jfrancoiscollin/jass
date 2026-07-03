@@ -1,0 +1,14 @@
+=== SALVAGE feeder 0547 : harvest /root/cw-feeder/sp.jnnw.* ===
+  fichiers trouves :
+    3258578 /root/cw-feeder/sp.jnnw.1
+    3192914 /root/cw-feeder/sp.jnnw.2
+    3266786 /root/cw-feeder/sp.jnnw.3
+    3242162 /root/cw-feeder/sp.jnnw.4
+    3250370 /root/cw-feeder/sp.jnnw.5
+    3233954 /root/cw-feeder/sp.jnnw.6
+    3258578 /root/cw-feeder/sp.jnnw.7
+    3225746 /root/cw-feeder/sp.jnnw.8
+  SALVAGED 682336 positions : sp.jnnw.1=85751, sp.jnnw.2=84023, sp.jnnw.3=85967, sp.jnnw.4=85319, sp.jnnw.5=85535, sp.jnnw.6=85103, sp.jnnw.7=85751, sp.jnnw.8=84887
+  corpus-gen1b-salvaged.jnnw.gz : 682336 positions, 6.7M
+  => corpus recupere, poolable (a cabler dans un fit poole si on veut).
+=== fin salvage ===
