@@ -32,6 +32,32 @@
 > • **Phase EBF** (réduire ~1,8→~1,25 vs Scan, DOE node-EBF, candidats lmr_asym/probcut) = **APRÈS** le plateau de la
 >   chaîne éval (co-adaptation pruning↔éval + éviter la confusion d'attribution ; recherche gelée pendant la chaîne).
 
+## 🔒 GATES DE LA CHAÎNE gen-N (gravées 2026-07-03, AVANT le verdict gen2 — décision MÉCANIQUE)
+> **Juge standard** (= gen1, comparabilité) : **2440+ parties, d9, openings dilf, eval-pur no-DB, vs champion précédent** ;
+> rate + Elo + **BORNE BASSE IC ajustée aux nulles**. Recherche **GELÉE** pendant la chaîne (hash binaire + params search
+> consignés → gel VÉRIFIÉ, pas supposé). But de graver *avant* le verdict : neutraliser l'asymétrie post-succès (promouvoir
+> gen2 sur un signal faible / re-rouler jusqu'au heads). La décision devient automatique.
+>
+> **COMPOSITION (gen-N vs gen-N−1)** :
+> • **COMPOSE** = borne basse IC(rate) **> 0,50** (= critère promo gen1) → **PROMOTION** gen-N, enchaîner gen-N+1.
+> • **NEUTRE** = IC contient 0,50, rate ∈ [0,48 ; 0,52] → **1 retry** autorisé, APRÈS diagnostic témoin pd10 (↓). 2 NEUTRES consécutifs = PLATEAU.
+> • **RÉGRESSE** = borne haute IC **< 0,50** → **STOP**, pas de promo, diagnostic obligatoire. **Jamais retenté à l'identique.**
+>
+> **GARDE-FOUS anti-mirage (à CHAQUE promotion, hors juge)** — gagner le juge mais rater un garde-fou = **NON promu** :
+> • **0440 movetime 0,3s** (eval-pur) : gen-N **≥** gen-N−1 (pas de régression combo réelle).
+> • **Self-play GÉNÉRALISTE** (openings équilibrés ≠ dilf) : gen-N **≥ 0,48** vs gen-N−1 (pas de sur-spécialisation dilf).
+> • **Finale vs Scan** : conversion **≥** gen-N−1 − bruit (l'acquis egdbmix 0,900 ne s'érode pas ; prior λ protège mais VÉRIFIER).
+>
+> **DIAGNOSTIC pd10 OBLIGATOIRE** : si NEUTRE/RÉGRESSE, **INTERDIT** de conclure « plateau » tant que le **bras témoin pd10**
+> (compute-égal, même pilote/qs_sacs/asym/λ) n'a pas tranché *profondeur-du-pilote vs chaîne-plafonne*. (Risque n°1 = bascule
+> pd6 : un pilote pd6 punit moins bien.)
+>
+> **PLATEAU** = 2 gen consécutives non-COMPOSE **APRÈS** diagnostic témoin → **figer champion** (dernier COMPOSE) → **phase EBF**
+> (DOE node-EBF, candidats lmr_asym/probcut) → **re-boucler éval APRÈS** (alternance éval↔recherche, chacune gèle l'autre).
+> Le plateau **n'est PAS une fin** — c'est l'alternance.
+>
+> **BUDGET** : chaîne **≤ 6 générations** OU plateau, premier atteint. Au-delà = décision explicite JFC (pas d'inertie).
+
 ## ✅ VERDICT (2026-07-03) — qs_sacs BAKÉ + côté RECHERCHE CLOS (2 DOE) ; self-play combo-aware en cours
 > Une COMBINAISON = coup quiet de SACRIFICE → reprise forcée. La quiescence de jass était CAPTURES-ONLY → **aveugle**
 > aux combos au horizon. Résolu et **BAKÉ sur main** (`qs_sacs=true` par défaut, commit `a1cfe78c`).
