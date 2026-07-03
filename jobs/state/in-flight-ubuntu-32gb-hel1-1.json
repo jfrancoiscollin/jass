@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0553-feedpool-fit",
+  "script": "jobs/queue/cpx62-0553-feedpool-fit.sh",
+  "pid": 4154916,
+  "started_at": "2026-07-03T21:25:41+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
