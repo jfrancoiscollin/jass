@@ -11,6 +11,21 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
 
+## 🌙 NUIT 03→04/07 — artefacts du plateau ÉLIMINÉS un à un ; F2 BAKÉ ; gen 2M mixte en cours
+> **Diagnostics du NEUTRE gen2 (tous à volume/juge standard)** :
+> • **Profondeur** ❌ : cand-feed (2,9M profond pd8/pd10) = **−8** vs gen1 ≈ gen2 (pd6, −5). Deep ≈ shallow.
+> • **Témoin pd10 600k** = −57 (volume-starved, non concluant seul — le feedpool-fit le remplace).
+> • **Prior** ❌ : sweep λ (0555) — λ=0.10 → **−5**, λ=0.25 → −8, λ=0.40 → −7. **Insensible au prior** : pas de sur-ancrage.
+> • **Archi** : **F2 `qs_threat_ext` BAKÉ ON** (décision JFC — complète la quiescence de Scan : qs_sacs + threat-ext
+>   ENSEMBLE, comme Scan en prod). L'A/B 0554 (détection + node-EBF + Elo) sert de **vérification a posteriori**.
+>   **F1 déjà baké** (NMP `!tactical`). F5 (dédup micro-perf) en attente — pas d'édit de code de nuit sans validation.
+> ⇒ Si l'A/B 0554 ne montre rien de net non plus : le plateau de la recette actuelle à gen1 est **robuste**
+>   (profondeur+volume+prior+archi) → la marge est dans la RECHERCHE (phase EBF), pas dans une gen de plus.
+>
+> **GEN NUIT `cpx62-0556`** (JFC) : **2M mix 60% pd8 / 20% pd9 / 20% pd10**, pilote gen1, **archi COMPLÈTE**
+> (qs_sacs + threat_ext + F1). Gen-only → **fit au matin** sur cette base. Infra durcie : progress numérotés par phase,
+> **phases et corpus committés JOB-SIDE** (un kill ne perd que la phase en cours).
+
 ## ⚖️ VERDICT gen2 = NEUTRE (2026-07-03) — diagnostic pd10 en cours ; pd6 = suspect n°1
 > **gen2** (`cpx62-0550`, pd6, 3M, pilote+prior gen1) jugé (2440 parties d9 dilf, SE ajustée nulles) :
 > • `[gen2-vs-gen1]` rate **0.4934 ±0.0181** (elo −5, IC contient 0,50) = **NEUTRE** par §gates → **gen2 NON promu**.
