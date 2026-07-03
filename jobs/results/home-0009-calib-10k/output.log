@@ -1,0 +1,25 @@
+  [preflight] build ×1 ≈ 4 min
+  [preflight] calibration 10k self-play iso-box (play_depth 10, x16): ≈ 3 min
+  [preflight] TOTAL estimé ≈ 7 min  (cap 180 min)
+  [preflight] OK — sous le cap, lancement.
+=== build jass (32-pat, qs_sacs baké — ISO box ; egdb OFF, PC sans bitbase) ===
+  HEAD main : d664f33c1 runner: start home-0009-calib-10k
+  sanity qs_sacs (doit lister des SACS) : 
+  CPU : 16 coeurs ; modele : AMD Ryzen 7 PRO 4750U with Radeon Graphics
+seed:305
+
+=== GÉNÉRATION 10k chronométrée (16 shards x 625, iso-config box) ===
+
+================= CALIBRATION 10k =================
+  positions : 10,000  en 633s  (16 coeurs)
+  debit total   : 16 pos/s
+  debit /coeur  : 1.0 pos/s/coeur
+  --> PC, 3M    : 52h45m
+  --> extrapolation box (meme vitesse/coeur) :
+        cpx62 (16c) 3M ~ 52h45m
+        ccx33 ( 8c) 3M ~ 105h30m
+  (leger surestime : inclut init une-fois ; vrai 3M un poil plus rapide)
+  => si box 'devrait' faire 3M en quelques h -> les 15h de 0545 = HANG.
+==================================================
+  (erreurs gen eventuelles : /root/cw-calib/gen.*.err)
+=== fin calibration ===
