@@ -443,6 +443,16 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
     if (!moves[0].is_capture()) {
+        // F5 : opponent_can_capture(pos) est demandé par DEUX gates de cette branche
+        // calme (threat-ext puis sacs) — memoïsé paresseusement : calculé au plus une
+        // fois, et seulement si un gate le demande (sémantique et coût inchangés
+        // quand les deux briques sont off).
+        int under_threat_memo = -1;   // -1 = pas encore calculé
+        auto under_threat = [&]() -> bool {
+            if (under_threat_memo < 0)
+                under_threat_memo = opponent_can_capture(pos) ? 1 : 0;
+            return under_threat_memo == 1;
+        };
         // Threat extension (Scan) : at the first qs ply, if we are calm but the
         // opponent has a capture ready (we are under threat), the static eval is
         // unreliable — resolve it with a 1-ply look instead of standing pat. We do
@@ -451,7 +461,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         // main search has per-ply invariants that a mid-quiescence re-entry breaks.
         // Gated by threat_left (only the entry ply carries a budget → byte-identical
         // when off) and a ply cap (quiescence has no MAX_PLY guard of its own).
-        if (threat_left > 0 && ply < MAX_PLY - 4 && opponent_can_capture(pos)) {
+        if (threat_left > 0 && ply < MAX_PLY - 4 && under_threat()) {
             int best = -INF_SCORE;
             for (const auto& m : moves) {                // our quiet moves
                 const Position child = after_timed(pos, m);
@@ -470,7 +480,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         // point : a naive "all forcing sacs" quiescence explodes the tree.
         const bool sacs_on = sac_left > 0
                           && (pos.white_kings() | pos.black_kings()) == 0
-                          && !opponent_can_capture(pos);
+                          && !under_threat();
         // Forcing + promotion quiescence : a CALM leaf may still hide a quiet
         // SACRIFICE (forced reply) or a near PROMOTION. Stand-pat-search those
         // (bounded by forcing_left / promo_left / sac_left). All budgets 0 → return
