@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0555-prior-lambda-sweep",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-03T21:46:59+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 4156275
+  "ended_at": "2026-07-03T22:02:41+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

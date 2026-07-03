@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0555-prior-lambda-sweep",
-  "script": "jobs/queue/cpx62-0555-prior-lambda-sweep.sh",
-  "pid": 4156275,
-  "started_at": "2026-07-03T21:46:59+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
