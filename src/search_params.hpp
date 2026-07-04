@@ -206,6 +206,9 @@ struct SearchParams {
     // BAKED ON (2026-07-03, JFC) : complete l'architecture quiescence de Scan (qs_sacs +
     // threat-ext ENSEMBLE, comme Scan en prod). L'A/B 0554 (detection + node-EBF + Elo)
     // sert de verification a posteriori.
+    // CONFIRME AU JEU (2026-07-04, 0565) : sur le defaut coin corner+nmp, threat_ext=1 vs =0
+    // => +108 Elo movetime (IC [0.627,0.674], 1220 games). Co-adaptation : coutait -21 a l'ancien
+    // defaut (0554), paie +108 une fois l'EBF reduit par le coin (budget noeuds libere). Defaut ON confirme.
     bool qs_threat_ext = true;
 
     // Selective SAC quiescence (gated; false = off = byte-identical). Ported from
