@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0556-gen2M-mixdepth",
-  "script": "jobs/queue/cpx62-0556-gen2M-mixdepth.sh",
-  "pid": 4158201,
-  "started_at": "2026-07-03T22:34:00+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

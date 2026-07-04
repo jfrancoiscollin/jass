@@ -1,0 +1,22 @@
+=== build jass depuis main (ARCHI COMPLETE : qs_sacs + qs_threat_ext + F1 NMP sound) ===
+  HEAD main : 31701d221 runner: start cpx62-0556-gen2M-mixdepth
+  sanity qs_sacs : 
+  seed-file : dilf=305 lidraughts=300000
+
+=== PHASE pd8 : 1200000 pos @ pd8 (x16 shards) ===
+  phase pd8 : 1200000 pos
+  phase pd8 committee job-side
+
+=== PHASE pd9 : 400000 pos @ pd9 (x16 shards) ===
+  phase pd9 : 400000 pos
+  phase pd9 committee job-side
+
+=== PHASE pd10 : 400000 pos @ pd10 (x16 shards) ===
+  phase pd10 : 400000 pos
+  phase pd10 committee job-side
+
+=== MERGE final : corpus-mix2M (60% pd8 / 20% pd9 / 20% pd10, archi complete, pilote gen1) ===
+  total : 2000000 pos
+  corpus-mix2M.jnnw.gz committe JOB-SIDE (20M)
+  => PRET pour le fit de demain matin (archi complete : qs_sacs + threat_ext + F1).
+=== fin gen2M mixdepth ===
