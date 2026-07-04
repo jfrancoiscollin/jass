@@ -1,0 +1,12 @@
+=== MATRICE vs SCAN — gen1 (moteur COIN) — HEAD c8267e321 queue: ccx33-0572-doe-featuregroup — DOE feature-group v2 (fix bug 0569 : mkdir build dir avant redirect cmake.log) ; force vs Scan d9 ===
+  eval=gen1 ; openings=60 (dilf subset) ; pairs=1 => ~120 games/cellule
+
+=== lancement des 8 cellules en parallele ===
+  cellule d7 lancee (pid 4518)
+  cellule d9 lancee (pid 4522)
+  cellule d11 lancee (pid 4526)
+  cellule d13 lancee (pid 4530)
+  cellule mt0.1 lancee (pid 4534)
+  cellule mt0.3 lancee (pid 4538)
+  cellule mt1.0 lancee (pid 4542)
+  cellule nps_j0.6_s0.3 lancee (pid 4546)
