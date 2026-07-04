@@ -1,0 +1,6 @@
+=== build jass depuis main (archi complete : qs_sacs + threat_ext + F1 + F5) ===
+  HEAD main : c7295d373 runner: start cpx62-0558-fit-matin-mix2M
+  mix2M=2000000 supp=300000 combos=1239648
+
+=== corpus = mix2M + supp-pd10 + combos -> fit prior gen1 (lambda=0.25) ===
+  concat -> 3539648 : mix.jnnw=2000000, supp.jnnw=300000, combos.jnnw=1239648
