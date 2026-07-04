@@ -1,0 +1,8 @@
+=== E1 famine learning-curve — HEAD main 25df6c7ca queue: cpx62-0575-famine-learningcurve — E1 juge de paix these famine : holdout log-loss 8cf vs 32cf @ {0.5,1,2}M (code depuis develop). Gate 8cf<=32cf@2M => famine prouvee => E2 ===
+fatal: invalid object name 'origin/develop'.
+fatal: invalid object name 'origin/develop'.
+fatal: ambiguous argument 'origin/develop': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+  code develop overlay : 
+ABORT: holdout-frac absent (develop pas overlay)
