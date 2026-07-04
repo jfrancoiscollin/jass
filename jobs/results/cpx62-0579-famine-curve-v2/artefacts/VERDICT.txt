@@ -1,0 +1,12 @@
+=== VERDICT E1 v2 famine curve (val FIXE) : holdout log-loss (plus BAS=meilleur) ===
+      train        8cf       32cf   ecart(32-8)   gagnant
+     500000    0.61092    0.61053      -0.00039      32cf
+    1000000    0.61040    0.61027      -0.00013      32cf
+    1500000   0.610868       None  (incomplet)
+    2000000       None       None  (incomplet)
+
+courbe (le volume aide-t-il ? val FIXE => comparable) :
+    8cf : 500k=0.61092  1000k=0.61040  1500k=0.61087   (delta -0.00005)
+   32cf : 500k=0.61053  1000k=0.61027   (delta -0.00026)
+
+Note : courbe qui DESCEND nettement avec le volume => le volume aide (pro-famine) ; PLATE => sature (anti-tir).
