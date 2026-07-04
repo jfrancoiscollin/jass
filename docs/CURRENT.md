@@ -25,6 +25,19 @@
 > **GEN NUIT `cpx62-0556`** (JFC) : **2M mix 60% pd8 / 20% pd9 / 20% pd10**, pilote gen1, **archi COMPLÈTE**
 > (qs_sacs + threat_ext + F1). Gen-only → **fit au matin** sur cette base. Infra durcie : progress numérotés par phase,
 > **phases et corpus committés JOB-SIDE** (un kill ne perd que la phase en cours).
+>
+> **MàJ 02h15 CEST** :
+> • **F5 BAKÉ** (`b60920cf`) : dédup `opponent_can_capture` memoïsée (chemin chaud depuis threat_ext ON). Validé
+>   **NODE-IDENTICAL 32 runs** (8 pos × 4 configs) + jass_tests 100%. **Audit F1-F5 : CLOS** (F4 = diagnostic moot,
+>   corpus pd6 jamais committés + profondeur déjà innocentée). **L'architecture recherche est COMPLÈTE.**
+> • **Verdict A/B 0554 (a posteriori du bake F2)** : détection +0,012 ; nœuds **×1,19** ; **Elo temps fixe −21**
+>   (0,4705 ±0,036, n.s., 610 parties). **Au gate strict : ÉCHOUE pour le JEU** (profil ext_forcing : gain fixe mangé
+>   par le coût à temps égal). **Pour la GEN à prof. fixe : inoffensif/labels plus précis** → la nuit n'est pas
+>   compromise. **DÉCISION MATIN (JFC)** : retirer `qs_threat_ext` du défaut *jeu* (reco) ou garder ; option = ON en gen only.
+> • **Gen 0556** : pd8 1,2M **FINI+committé** (~250/s) ; pd9 en cours (~113/s) ; moniteur numéroté **fonctionne**.
+>   Corpus complet attendu ~05h30-06h30 CEST.
+> • **`ccx33-0557` queué** : supplément **300k pd10** (même recette, job-side) → épaissit la tranche profonde du pool
+>   au matin, optionnel.
 
 ## ⚖️ VERDICT gen2 = NEUTRE (2026-07-03) — diagnostic pd10 en cours ; pd6 = suspect n°1
 > **gen2** (`cpx62-0550`, pd6, 3M, pilote+prior gen1) jugé (2440 parties d9 dilf, SE ajustée nulles) :
