@@ -41,7 +41,8 @@ struct SearchParams {
     int lmr_min_depth        = 3;
     int lmr_first_full_moves = 4;
     int lmr_first_full_pv    = 4;   // LMR pv/non-pv asymmetry (Scan : non-PV réduit dès le 2e coup,
-    int lmr_first_full_nonpv = 4;   // PV dès le 4e). Réduit le 1er coup d'index >= ce seuil. Les deux=4 => uniforme legacy.
+    int lmr_first_full_nonpv = 2;   // PV dès le 4e). Réduit le 1er coup d'index >= ce seuil. Les deux=4 => uniforme legacy.
+                                    // BAKÉ 2 (2026-07-04, 0562) : composante du coin EBF corner+nmp = +49 Elo movetime sur gen1.
     int lmr_base             = 0;
     int lmr_depth_div        = 6;
     int lmr_idx_div          = 8;
@@ -110,7 +111,7 @@ struct SearchParams {
     // non-PV nodes, if a (forced) capture leads to a reduced-depth score
     // >= beta + probcut_margin, cut. NB draughts captures are forced, so
     // this only fires at tactical nodes — value uncertain, hence opt-in.
-    int probcut_min_depth = 0;   // 0 = off
+    int probcut_min_depth = 5;   // 0 = off ; BAKÉ 5 (2026-07-04, 0562, coin corner+nmp +49 Elo movetime gen1)
     int probcut_margin    = 150;
     int probcut_reduction = 4;
 
@@ -227,7 +228,7 @@ struct SearchParams {
     // non-PV quiet node, search the first `multicut_moves` moves at reduced
     // depth; if at least `multicut_cuts` of them fail high, the node almost
     // certainly fails high — cut. Speculative, hence opt-in.
-    int multicut_min_depth = 6;   // 0 = off ; ON=6 depuis 0336 (porteur principal du gain recherche)
+    int multicut_min_depth = 4;   // 0 = off ; BAKÉ 4 (2026-07-04, 0562, coin corner+nmp +49 Elo movetime gen1 ; était 6 depuis 0336)
     int multicut_reduction = 4;
     int multicut_moves     = 8;   // 8 (was 6) — 0335 mc_easy = plus gros gain du sweep
     int multicut_cuts      = 2;   // 2 (was 3) — déclenchement plus facile (0335/0336)
@@ -259,7 +260,8 @@ struct SearchParams {
     // endgame needs → kept ON) and eg_no_lmp ~0 (kept ON). eg_pieces=0 disables
     // the whole regime (true no-op : popcount short-circuited).
     int  eg_pieces  = 40;         // 0 = off ; else popcount threshold (<=). 40 = always.
-    bool eg_no_nmp  = true;       // disable null-move pruning in the endgame regime
+    bool eg_no_nmp  = false;      // disable null-move pruning in the endgame regime
+                                  // BAKÉ false (2026-07-04, 0562) : NMP réactivé en finale (sound via F1 !tactical), coin corner+nmp +49 Elo movetime gen1.
     bool eg_no_lmp  = false;      // disable late-move pruning in the endgame regime
     bool eg_no_lmr  = false;      // disable late-move reductions in the endgame regime
 
