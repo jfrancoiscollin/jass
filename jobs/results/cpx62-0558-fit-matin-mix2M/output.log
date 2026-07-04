@@ -1,0 +1,17 @@
+=== build jass depuis main (archi complete : qs_sacs + threat_ext + F1 + F5) ===
+  HEAD main : c7295d373 runner: start cpx62-0558-fit-matin-mix2M
+  mix2M=2000000 supp=300000 combos=1239648
+
+=== corpus = mix2M + supp-pd10 + combos -> fit prior gen1 (lambda=0.25) ===
+  concat -> 3539648 : mix.jnnw=2000000, supp.jnnw=300000, combos.jnnw=1239648
+  prior : champion=/root/cw-fitmatin/gen1_prior.pjtw (scale=1000)  λ=0.25 decay=1.0  prec[pat] med=3.113e-05 max=2.069e-02 prec[ext]=2.500e-01  warm-start at μ
+    train_loss=0.598156  iters=25  (415.3s)
+  champion-mix2M committe JOB-SIDE
+
+=== JUGE (config ERE-GEN1, threat_ext=0 des 2 cotes) ===
+  [mix2M-vs-gen1] games=2440 A=928 B=1052 D=460  rate=0.4746+-0.0178  elo~-18  (juge ere-gen1: threat_ext=0)
+  [mix2M-vs-egdbmix] games=2440 A=980 B=1004 D=456  rate=0.4951+-0.0179  elo~-3  (juge ere-gen1: threat_ext=0)
+
+  => mix2M-vs-gen1 borne basse IC >0.50 (COMPOSE) => la donnee complete-archi+mix-profondeur DEBLOQUE la chaine
+     => promouvoir cand-mix, gen3. Sinon (<=gen1) => plateau CONFIRME sur archi complete => phase EBF.
+=== fin fit-matin mix2M ===
