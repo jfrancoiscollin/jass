@@ -9,7 +9,39 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
+
+## ⚖️ VERDICT EBF movetime `cpx62-0560` (2026-07-04) — AUCUN levier ne paie au temps réel ; coin en re-confirmation
+> Confirmation Elo temps-fixe des leviers EBF vs baseline **ère-gen1** (threat_ext=0), movetime 0,3s, dilf, eval gen1.
+> **RESULTS/RANKING rendus VIDES par le bug runner** (ne re-committe pas les fichiers modifiés) → verdict **reconstruit
+> depuis les `prog_*.N`** (une ligne RESULT/shard). Résultat :
+> • **probcut** 0,476 (elo −16, IC [0,425 ; 0,528]) — **parité**, penche −.
+> • **nmp** (eg_no_nmp=0, sound via F1) 0,450 (elo −35, IC [0,383 ; 0,517]) — **parité**, penche −.
+> • **corner** (probcut+lmr_asym+multicut) 0,543 (elo **+30**, IC [0,411 ; 0,674]) — **parité mais SOUS-DIMENSIONNÉ
+>   (47 games seulement)**.
+> • **corner+nmp** 0,460 (elo −28, IC [0,391 ; 0,528]) — **parité**, penche −.
+> ⇒ **Aucun bras >0,5 hors-IC : les économies de nœuds du DOE 0559 ne se convertissent PAS en Elo au movetime sur gen1.**
+> La profondeur gagnée ne vaut pas la détection perdue à cette config. **Seul le coin (+30) intrigue** mais sur 47 games
+> (IC énorme) = non concluant. Déséquilibre de games (probcut 318 vs corner 47) suspect → shards qui plantent ?
+>
+> **RE-CONFIRMATION `cpx62-0561-corner-confirm`** (lancée) : 2 bras (corner, corner+nmp), **PAIRS=2 → ~600 games/bras**
+> (IC resserré ~±0,04), **capture stderr+rc+compte de crashs par shard** (diagnostique les 47 games du coin — soupçon
+> `multicut_min_depth=4` qui crash), **RESULTS/RANKING committés JOB-SIDE**. Critère : corner borne basse IC>0,50
+> ⇒ **premier levier search qui paie au jeu** → baker → re-test threat_ext dessus. Sinon ⇒ **on referme la phase EBF**.
+
+## 🎯 PLAN ÉVAL (2026-07-04) — la fourche capacité/labels ; diagnostic eval-vs-Scan AVANT tout refit
+> Rappel : **gen1 = optimum de fit saturé** (profondeur, volume, prior, archi complète tous éliminés ; **mix2M RÉGRESSE
+> −18** = ajouter de la donnée sur l'archi complète a EMPIRÉ l'eval). ⇒ **ne pas refitter à l'aveugle.** La question eval
+> est une fourche : **capacité** (le jeu de features plafonne, changer l'archi) **vs labels** (cibles self-play = notre
+> propre eval à prof. limitée → circularité).
+> **STEP recommandé = diagnostic, pas un fit** : comparer **static-eval jass vs static-eval Scan** (0 nœud, eval-seul)
+> sur un jeu de positions partagé ; régresser `eval_jass` contre `eval_scan`, sortir le **résidu par phase/région/feature**.
+> Orthogonal à la recherche, cheap, tourne sur **ccx33 (idle) en parallèle du coin**. Routage :
+> • écart faible ⇒ notre retard est *search* → **valide le pivot EBF**, on arrête de creuser l'eval.
+> • écart concentré (endgame/une phase) ⇒ **labels** → re-label EGDB-exact (WLD) + refit ciblé (plus haut plafond).
+> • écart diffus + mix2M régresse ⇒ **overfit/capacité** → **DOE feature-group** (endgame×king_mob×tempo×scan_parity, 2^4,
+>   holdout) → quel morceau d'archi paie / est net-négatif (explique la régression mix2M).
+> Pré-requis : static-eval Scan scriptable en batch (sources dispo, `add_sacs` porté bit-for-bit → commande eval Scan). **EN ATTENTE feu vert JFC.**
 
 ## 🧱 PLATEAU DÉCLARÉ à gen1 (2026-07-04) — pivot RECHERCHE (EBF) ; chaîne éval close sur la recette actuelle
 > **Décision mécanique par les gates §1.2** (2 non-COMPOSE après diagnostics complets) :
@@ -23,9 +55,9 @@
 > • **NMP-on REJETÉ par la guarde-détection FIXE** (fait chuter la détection combos à prof. fixe malgré F1 sound) —
 >   MAIS la guarde est *à profondeur fixe*, conservatrice pour un levier qui échange détection-par-prof contre PROFONDEUR
 >   à temps fixe → **à re-juger au MOVETIME**.
-> • **Confirmation Elo movetime `cpx62-0560`** en cours : probcut / NMP-on / coin DOE / coin+NMP, chacun sur la config
->   ère-gen1 (threat_ext=0), movetime 0,3s. Un bras >0,5 hors-IC ⇒ baker au jeu. Puis re-test threat_ext sur le coin gagnant
->   (co-adaptation : sa valeur jeu dépend du budget nœuds libéré par l'EBF).
+> • **Confirmation Elo movetime `cpx62-0560` = FINIE (voir bloc verdict en tête)** : aucun bras >0,5 hors-IC. probcut −16,
+>   nmp −35, corner+nmp −28 (tous parité, penchent −) ; **corner +30 mais 47 games** → re-confirmé par `cpx62-0561`.
+>   Puis, *si* le coin paie, re-test threat_ext dessus (co-adaptation : sa valeur jeu dépend du budget nœuds libéré par l'EBF).
 
 ## 🌙 NUIT 03→04/07 — artefacts du plateau ÉLIMINÉS un à un ; F2 BAKÉ ; gen 2M mixte en cours
 > **Diagnostics du NEUTRE gen2 (tous à volume/juge standard)** :
