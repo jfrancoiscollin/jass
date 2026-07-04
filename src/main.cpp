@@ -553,9 +553,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::uint64_t bbs[4];
         std::uint8_t  stm;
         std::int32_t  score;
+        int           ply;     // ply at which this position was sampled (label-hygiene instrumentation)
     };
     std::vector<Sample> game_samples;
     game_samples.reserve(64);
+    // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
+    //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
+    //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
+    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -595,6 +600,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         // path treats unresolved games as drawn.
         int outcome_white = 0;
         bool game_ended_by_loss = false;
+        int  last_eps_ply = -1;     // ply du dernier coup d'exploration eps de cette partie (instrumentation FIX #1)
+        bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move) le remet a false
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
         // (blind → stumbles into shots). Random per game so neither colour is systematically favoured.
@@ -608,6 +615,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 outcome_white = (e.position().side_to_move() == Color::White)
                               ? -1 : +1;
                 game_ended_by_loss = true;
+                hit_ply_cap = false;
                 break;
             }
             // Terminate-at-TB: the moment the game reaches an egdb-resolved
@@ -619,12 +627,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // <3 pieces) — never the over-claiming in-memory tables.
             if (jass::egdb::available()) {
                 const jass::EndgameResult tb = jass::egdb::probe(e.position());
-                if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; break; }
-                if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; break; }
-                if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; break; }
+                if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; hit_ply_cap = false; break; }
+                if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; hit_ply_cap = false; break; }
+                if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; hit_ply_cap = false; break; }
             }
             if (e.position().halfmove_clock() >= FIFTY_MOVE_PLIES) {
                 // 25-move rule: declare a draw.
+                hit_ply_cap = false;
                 break;
             }
 
@@ -662,6 +671,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 s.bbs[3] = pos.black_kings();
                 s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
                 s.score  = static_cast<std::int32_t>(r.score);
+                s.ply    = ply;
                 game_samples.push_back(s);
 
                 // L1 multi-extraction (Stockfish `gensfen`-style). Amortize
@@ -717,6 +727,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         ps.score  = (depth_from_root & 1)
                                       ? -static_cast<std::int32_t>(r.score)
                                       :  static_cast<std::int32_t>(r.score);
+                        ps.ply    = ply;   // meme ply-racine (PV extraite du sample racine)
                         game_samples.push_back(ps);
                         ++taken;
                     }
@@ -748,9 +759,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (explore_eps > 0 && !ml.empty()
                 && static_cast<int>(rng() % 100) < explore_eps) {
                 play_mv = ml[rng() % ml.size()];
+                last_eps_ply = ply;   // instrumentation FIX #1 : dernier coup d'exploration de la partie
             }
             if (!e.apply_move(play_mv)) break;
         }
+        if (hit_ply_cap) ++stat_plycap_games;   // partie terminee par max_plies (issue=nulle par defaut)
 
         // Flush this game's samples with the resolved WDL label. WDL is
         // computed from each sample's STM perspective: +1 means "the side
@@ -762,6 +775,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 wdl = outcome_white * sample_stm_sign;
             }
             const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
+            // instrumentation (MEASURE-ONLY) : ce sample est-il contamine par l'exploration ?
+            //   sample.ply <= last_eps_ply => sa partie a deraille APRES lui par un coup eps => label biaise (FIX #1)
+            ++stat_total_samples;
+            if (s.ply <= last_eps_ply) ++stat_contaminated;
 
             f.write(reinterpret_cast<const char*>(s.bbs), 32);
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
@@ -783,6 +800,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     f.close();
 
     std::cout << "wrote " << generated << " WDL records to " << out_path << "\n";
+    // === LABEL-HYGIENE STATS (MEASURE-ONLY, briefing §7.0) ===
+    {
+        const double pc  = game_count > 0 ? 100.0 * static_cast<double>(stat_plycap_games) / game_count : 0.0;
+        const double con = stat_total_samples > 0 ? 100.0 * static_cast<double>(stat_contaminated) / stat_total_samples : 0.0;
+        std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
+                  << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
+                  << " (" << con << "%)  [FIX#2 si plycap>8-10% ; FIX#1 filtre post-eps]\n";
+    }
     return 0;
 }
 
