@@ -11,19 +11,23 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
 
-## 🚧 PHASE EBF SE FERME (2026-07-04) — aucun gain search robuste ; pivot ÉVAL lancé
-> **Résolution du sign-flip du coin.** 0560 → corner +30 (47g, mirage) ; 0561 → corner+nmp **+39 hors-IC (248g)** MAIS
-> capture pourrie (RESULTS fragmenté, prog snapshots périmés) et il **contredit son propre −28** de 0560. Relance PROPRE
-> `cpx62-0562-cornernmp-clean` (1 bras, PAIRS=4, capture blindée VERDICT job-side) : **provisoire −30 (341g, IC [0,409 ;
-> 0,506])**, en écho quasi-exact au −28 de 0560. ⇒ **le +39 était du BRUIT.** Trois mesures propres du coin = −28/−30/(+39
-> réfuté). **Aucun levier EBF (probcut, nmp, coin) ne se convertit en force au jeu sur gen1.** Verdict 0562 final scellera
-> la fermeture de la phase EBF. **La marge n'est ni dans la recherche (EBF) ni dans un fit de plus → front ÉVAL.**
+## 🏆 COIN EBF corner+nmp BAKÉ (2026-07-04) — +49 Elo movetime, 1er levier search qui paie ; eval-oracle à refaire
+> **Le coin PAIE — c'était PAS du bruit.** Résolution du sign-flip : 0560 corner +30 (47g) / 0561 corner+nmp +39 (248g,
+> capture douteuse) / **0562-clean corner+nmp = +49 Elo, IC [0,5396 ; 0,5991], 872 games, 16/16 shards, crashs=0 →
+> GAGNE hors-IC franc.** ⚠️ **Piège évité de justesse** : le « −30 provisoire » que j'avais lu était un **snapshot prog
+> périmé de git** (le bug capture, encore) — l'agrégat **job-side live sur 872g donne +49**. Les 3 lectures se réordonnent :
+> −28 (173g bruit) / +39 (248g) / **+49 (872g, propre)** = signal réel et robuste.
+> **BAKÉ (commit 4bda84da7)** dans `search_params.hpp` : `probcut_min_depth 0→5`, `lmr_first_full_nonpv 4→2`,
+> `multicut_min_depth 6→4`, `eg_no_nmp true→false` (NMP finale réactivé, sound via F1). **Premier gain RECHERCHE de la
+> campagne.** Mesuré comme delta pur (baseline ère-gen1 threat_ext=0 des 2 côtés). Défaut `qs_threat_ext` inchangé (=true).
+> **Next** : re-tester `qs_threat_ext` au JEU sur ce nouveau défaut (le coin a libéré du budget nœuds — plan JFC) ;
+> décomposer NMP-vs-coin non demandé (baké le combo). Post-bake : confirmer le build main + jass_tests.
 >
-> **PIVOT ÉVAL lancé `ccx33-0563-eval-oracle-scan`** (diagnostic, pas un fit) : jass static gen1 (`--eval-position`, d0)
-> vs Scan static (relabel_with_scan d1, book off) sur ~4000 positions de corpus-mix2M (toutes phases). Sort Pearson +
-> **Spearman**, fit linéaire, **résidu par phase/|score|**, + **ancres de circularité** (jass-vs-label-selfplay vs
-> scan-vs-label). Routage : correl haute+plat ⇒ retard=search (valide EBF, stop eval) · résidu concentré finale ⇒ **labels
-> EGDB** · résidu diffus ⇒ **capacité/DOE feature-group** · jass-vs-label≫jass-vs-scan ⇒ **circularité**. VERDICT job-side.
+> **EVAL-ORACLE `ccx33-0563` = INVALIDE tel quel** (à refaire). jass static vs Scan static d1 sur 3969 pos : Pearson
+> **0,035**, Spearman 0,030 (≈0). MAIS ancre **scan-vs-label-selfplay = 0,047 (≈0)** = impossible pour un moteur fort →
+> **Scan à d1 n'a pas émis de vraie eval** (pas d'`info score=` à profondeur si faible → 0/défaut). Côté jass sain
+> (**jass-vs-label = 0,534**). ⇒ contaminé côté Scan. **À RELANCER en Scan d~6** (eval-dominant mais scores réels).
+> La fourche capacité/labels reste **non tranchée**.
 >
 > **Infra durcie ce matin.** (1) Ma ref locale `origin/main` était 22 commits en retard (fetch ne faisait pas avancer le
 > tracking) → forcé `+refs/heads/main:...`. (2) Bug capture runner (RESULTS fragmenté / prog périmés) → tous les jobs
