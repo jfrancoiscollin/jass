@@ -1,0 +1,20 @@
+=== VERDICT DOE feature-group v4 — reponse rate vs gen1 @ d9 ===
+configs valides : 8/8
+      config  rate_vs_gen1
+  A1B1C0D0        0.5125
+  A1B0C1D0        0.5000
+  A1B1C1D1        0.4500
+  A1B0C0D1        0.4208
+  A0B1C0D1        0.3417
+  A0B0C0D0        0.3333
+  A0B1C1D0        0.3333
+  A0B0C1D1        0.3208
+
+EFFET PRINCIPAL (moyenne rate ON - OFF ; >0 => le groupe AIDE le fit, <0 => NUIT) :
+       ENDGAME : ON 0.4708 vs OFF 0.3323  effet +0.1386  [AIDE]
+      KING_MOB : ON 0.4094 vs OFF 0.3937  effet +0.0156  [AIDE]
+   SCAN_PARITY : ON 0.4010 vs OFF 0.4021  effet -0.0010  [neutre]
+         TEMPO : ON 0.3833 vs OFF 0.4198  effet -0.0364  [NUIT (a pruner ?)]
+
+Res IV : effets principaux propres, interactions 2-fact. confondues par paires.
+Un facteur NUIT (effet<0) = feature qui degrade l'encodage => candidat a retirer (explique mix2M -18 ?).
