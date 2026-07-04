@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0577-famine-learningcurve",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 7,
   "started_at": "2026-07-04T17:15:07+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 14065
+  "ended_at": "2026-07-04T17:20:18+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

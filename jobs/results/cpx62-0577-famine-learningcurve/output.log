@@ -1,0 +1,20 @@
+=== E1 famine learning-curve — HEAD main b48498cb4 queue: cpx62-0577-famine-learningcurve — E1 relance (fix : git fetch refspec explicite +refs/heads/develop:refs/remotes/origin/develop, sinon git show origin/develop echoue => overlay vide) ===
+  code develop overlay : 2bb21d4f8 gen_patterns: ajoute v3/8cf aux choices --variant (emit --variant v3 rewrite patterns.py a 8 bandes ; teste : NUM_PATTERNS=8 a l import)
+diff --git a/pattern_jass/tools/gen_patterns.py b/pattern_jass/tools/gen_patterns.py
+index 9537f1765..af5209654 100644
+--- a/pattern_jass/tools/gen_patterns.py
++++ b/pattern_jass/tools/gen_patterns.py
+@@ -297,8 +297,9 @@ def _sub_count(path: Path, n: int):
+ def main():
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
+-    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
+-                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
++    ap.add_argument("--variant", choices=["v3", "8cf", "v4", "v5", "v6", "v7"], default="v4",
++                    help="v3/8cf=8 vertical bands only (Scan subset, famine curve), "
++                         "v4=32 (sweet spot), v5=40 (diag blocks), "
+                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
+     ap.add_argument("--lr-close", action="store_true",
+                     help="close the set under {rot180, LR} so reflection folds ALL "
+  geom : 8cf NUM_PATTERNS= ; 32cf NUM_PATTERNS=
+ABORT: geom counts / != 8/32
