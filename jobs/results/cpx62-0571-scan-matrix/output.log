@@ -1,0 +1,29 @@
+=== MATRICE vs SCAN — gen1 (moteur COIN) — HEAD c8267e321 queue: ccx33-0572-doe-featuregroup — DOE feature-group v2 (fix bug 0569 : mkdir build dir avant redirect cmake.log) ; force vs Scan d9 ===
+  eval=gen1 ; openings=60 (dilf subset) ; pairs=1 => ~120 games/cellule
+
+=== lancement des 8 cellules en parallele ===
+  cellule d7 lancee (pid 4518)
+  cellule d9 lancee (pid 4522)
+  cellule d11 lancee (pid 4526)
+  cellule d13 lancee (pid 4530)
+  cellule mt0.1 lancee (pid 4534)
+  cellule mt0.3 lancee (pid 4538)
+  cellule mt1.0 lancee (pid 4542)
+  cellule nps_j0.6_s0.3 lancee (pid 4546)
+
+=== RESULTATS (score-rate + Elo estime, gen1 vs Scan) ===
+  cellule            rate    elo     type
+  d7                0.113   -359    prof.fixe=QUALITE-eval
+  d9                0.125   -338    prof.fixe=QUALITE-eval
+  d11               0.192   -250    prof.fixe=QUALITE-eval
+  d13               0.229   -211    prof.fixe=QUALITE-eval
+  mt0.1             0.250   -191    movetime=FORCE-reelle
+  mt0.3             0.250   -191    movetime=FORCE-reelle
+  mt1.0             0.300   -147    movetime=FORCE-reelle
+  nps_j0.6_s0.3     0.292   -154    NPS-comp=eval-isolee
+
+  Lecture : rate(prof.fixe) >> rate(movetime) => VITESSE-limite (eval trop lente, optimiser) ;
+            rate(prof.fixe) deja bas          => QUALITE d'eval (capacite, cf DOE 0569 / eval-oracle).
+            NPS-comp ~ prof.fixe              => confirme que le handicap movetime est bien la vitesse.
+  RESULTS committe job-side ✓
+=== fin matrice vs Scan ===

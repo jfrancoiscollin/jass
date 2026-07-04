@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0571-scan-matrix",
-  "script": "jobs/queue/cpx62-0571-scan-matrix.sh",
-  "pid": 4061,
-  "started_at": "2026-07-04T14:10:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
