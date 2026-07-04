@@ -1,0 +1,45 @@
+=== E1 v2 famine curve (val fixe 400000) — HEAD main bdd1b2cce queue: cpx62-0579-famine-curve-v2 — E1 propre (val set FIXE 400k, train croissant {0.5-2}M, holdout-frac calcule, chunk 500k fix OOM). Courbe apprentissage 8cf vs 32cf sans confusion de val ===
+  code develop : 2bb21d4f8 gen_patterns: ajoute v3/8cf aux choices --variant (emit --variant v3 rewrite patterns.py a 8 bandes ; teste : NUM_PATTERNS=8 a l import)
+diff --git a/pattern_jass/tools/gen_patterns.py b/pattern_jass/tools/gen_patterns.py
+index 9537f1765..af5209654 100644
+--- a/pattern_jass/tools/gen_patterns.py
++++ b/pattern_jass/tools/gen_patterns.py
+@@ -297,8 +297,9 @@ def _sub_count(path: Path, n: int):
+ def main():
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
+-    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
+-                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
++    ap.add_argument("--variant", choices=["v3", "8cf", "v4", "v5", "v6", "v7"], default="v4",
++                    help="v3/8cf=8 vertical bands only (Scan subset, famine curve), "
++                         "v4=32 (sweet spot), v5=40 (diag blocks), "
+                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
+     ap.add_argument("--lr-close", action="store_true",
+                     help="close the set under {rot180, LR} so reflection folds ALL "
+  geom : 8cf=8 32cf=32
+3239648
+  pool=3239648 (val fixe=400000 ; train dispo=2839648)
+
+=== fits (val FIXE 400000, from-scratch) ===
+  vol=500000 8cf : holdout_logloss=0.610920 (frac=0.4444444444444444)
+  vol=500000 32cf : holdout_logloss=0.610530 (frac=0.4444444444444444)
+  vol=1000000 8cf : holdout_logloss=0.610400 (frac=0.2857142857142857)
+  vol=1000000 32cf : holdout_logloss=0.610268 (frac=0.2857142857142857)
+  vol=1500000 8cf : holdout_logloss=0.610868 (frac=0.21052631578947367)
+  vol=1500000 32cf : NA  (train_stream.py: error: unrecognized arguments: --holdout-frac 0.210526315789473)
+  vol=2000000 8cf : NA  (train_stream.py: error: unrecognized arguments: --holdout-frac 0.166666666666666)
+  vol=2000000 32cf : NA  (train_stream.py: error: unrecognized arguments: --holdout-frac 0.166666666666666)
+=== VERDICT E1 v2 famine curve (val FIXE) : holdout log-loss (plus BAS=meilleur) ===
+      train        8cf       32cf   ecart(32-8)   gagnant
+     500000    0.61092    0.61053      -0.00039      32cf
+    1000000    0.61040    0.61027      -0.00013      32cf
+    1500000   0.610868       None  (incomplet)
+    2000000       None       None  (incomplet)
+
+courbe (le volume aide-t-il ? val FIXE => comparable) :
+    8cf : 500k=0.61092  1000k=0.61040  1500k=0.61087   (delta -0.00005)
+   32cf : 500k=0.61053  1000k=0.61027   (delta -0.00026)
+
+Note : courbe qui DESCEND nettement avec le volume => le volume aide (pro-famine) ; PLATE => sature (anti-tir).
+  VERDICT committe ✓
+=== fin E1 v2 ===
