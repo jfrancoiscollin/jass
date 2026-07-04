@@ -1,1 +1,8 @@
 === build jass depuis main (archi complete) ===
+  shards: crashs/erreurs=0  muets=0 / 16
+  corner+nmp   games= 248 A=114 B=86 D=48  rate=0.5565+-0.0554  elo~+39  IC=[0.5010,0.6119]  => GAGNE (paie hors-IC)
+
+=== CLASSEMENT (score-rate vs baseline ere-gen1 ; >0.5 hors-IC = paie en force) ===
+  0.5565 +-0.0554  elo~+39  corner+nmp    probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4,eg_no_nmp=0
+  => corner hors-IC>0.5 : premier levier search qui paie => baker. Sinon : referme la phase EBF, retour eval.
+=== fin confirmation coin ===
