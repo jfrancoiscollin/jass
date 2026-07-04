@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0571-scan-matrix",
-  "snapshot_at": "2026-07-04T15:20:03+00:00",
+  "snapshot_at": "2026-07-04T15:25:14+00:00",
   "started_at": "2026-07-04T14:10:03+00:00",
-  "elapsed_seconds": 4200,
+  "elapsed_seconds": 4511,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   4061       1    01:09:59  0.0  0.0 bash\n   4063    4061    01:09:59  0.0  0.0 bash\n   4542    4063    01:09:49  0.0  0.0 bash\n   4545    4542    01:09:49  0.2  0.0 python3\n   4554    4545    01:09:49 50.3  0.5 jass\n   4578    4545    01:09:49 49.5  0.9 scan_linux\n   4604    4545    01:09:49  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n   4061       1    01:15:11  0.0  0.0 bash\n   4063    4061    01:15:11  0.0  0.0 bash\n   4542    4063    01:15:01  0.0  0.0 bash\n   4545    4542    01:15:01  0.2  0.0 python3\n   4554    4545    01:15:01 50.3  0.5 jass\n   4578    4545    01:15:01 49.5  0.9 scan_linux\n   4604    4545    01:15:00  0.0  0.0 jass\n"
 }
