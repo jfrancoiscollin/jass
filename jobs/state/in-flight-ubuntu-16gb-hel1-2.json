@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0559-doe-ebf",
+  "script": "jobs/queue/ccx33-0559-doe-ebf.sh",
+  "pid": 3139170,
+  "started_at": "2026-07-04T06:37:51+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
