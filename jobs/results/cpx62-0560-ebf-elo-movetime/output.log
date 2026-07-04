@@ -1,0 +1,19 @@
+=== build jass depuis main (archi complete) ===
+  baseline = ERE-GEN1 (qs_threat_ext=0) ; movetime 0.3s ; eval gen1
+
+=== BRAS probcut  (A=qs_threat_ext=0,probcut_min_depth=5  vs  B=qs_threat_ext=0)  @ mt0.3s dilf ===
+  probcut      games= 496 A=207 B=210 D=79  rate=0.4970+-0.0403  elo~-2  parite/perd
+
+=== BRAS nmp  (A=qs_threat_ext=0,eg_no_nmp=0  vs  B=qs_threat_ext=0)  @ mt0.3s dilf ===
+  nmp          games= 585 A=227 B=265 D=93  rate=0.4675+-0.0371  elo~-23  parite/perd
+
+=== BRAS corner  (A=qs_threat_ext=0,probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4  vs  B=qs_threat_ext=0)  @ mt0.3s dilf ===
+  corner       games= 225 A=99 B=80 D=46  rate=0.5422+-0.0580  elo~+29  parite/perd
+
+=== BRAS corner+nmp  (A=qs_threat_ext=0,probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4,eg_no_nmp=0  vs  B=qs_threat_ext=0)  @ mt0.3s dilf ===
+  corner+nmp   games= 610 A=237 B=274 D=99  rate=0.4697+-0.0362  elo~-21  parite/perd
+
+=== CLASSEMENT (score-rate vs baseline ere-gen1 ; >0.5 hors-IC = paie en force) ===
+  0.4697 +-0.0362  elo~-21  corner+nmp    probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4,eg_no_nmp=0
+  => le(s) bras gagnant(s) => baker au JEU. (Ensuite : re-tester threat_ext=1 sur le coin gagnant.)
+=== fin confirmation EBF movetime ===
