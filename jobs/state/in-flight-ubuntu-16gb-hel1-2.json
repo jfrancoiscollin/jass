@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0580-relabel-sanity",
+  "script": "jobs/queue/ccx33-0580-relabel-sanity.sh",
+  "pid": 3207783,
+  "started_at": "2026-07-04T22:38:52+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
