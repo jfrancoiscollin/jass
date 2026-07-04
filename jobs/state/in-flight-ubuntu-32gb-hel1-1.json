@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0575-famine-learningcurve",
-  "script": "jobs/queue/cpx62-0575-famine-learningcurve.sh",
-  "pid": 13347,
-  "started_at": "2026-07-04T16:49:47+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
