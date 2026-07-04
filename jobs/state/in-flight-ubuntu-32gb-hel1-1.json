@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0562-cornernmp-clean",
-  "script": "jobs/queue/cpx62-0562-cornernmp-clean.sh",
-  "pid": 4185597,
-  "started_at": "2026-07-04T10:09:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
