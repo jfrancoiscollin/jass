@@ -1,0 +1,1 @@
+0.5565	0.0554	+39	corner+nmp	probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4,eg_no_nmp=0
