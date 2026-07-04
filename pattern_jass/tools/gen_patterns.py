@@ -297,8 +297,9 @@ def _sub_count(path: Path, n: int):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
-    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
-                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
+    ap.add_argument("--variant", choices=["v3", "8cf", "v4", "v5", "v6", "v7"], default="v4",
+                    help="v3/8cf=8 vertical bands only (Scan subset, famine curve), "
+                         "v4=32 (sweet spot), v5=40 (diag blocks), "
                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
     ap.add_argument("--lr-close", action="store_true",
                     help="close the set under {rot180, LR} so reflection folds ALL "
