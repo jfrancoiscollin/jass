@@ -1,0 +1,22 @@
+=== build jass depuis main (ARCHI COMPLETE + COIN BAKE : probcut5/lmr2/multicut4/nmp-finale) ===
+  HEAD main : 03931096f runner: start cpx62-0566-regen-mix-oncoin
+  confirme coin actif : 4/4 params-cle
+  seed-file : dilf=305 lidraughts=300000
+
+=== PHASE pd8 : 1200000 pos @ pd8 (x16 shards, recherche=coin bake) ===
+  phase pd8 : 1200000 pos
+  phase pd8 committee job-side
+
+=== PHASE pd9 : 400000 pos @ pd9 (x16 shards, recherche=coin bake) ===
+  phase pd9 : 400000 pos
+  phase pd9 committee job-side
+
+=== PHASE pd10 : 400000 pos @ pd10 (x16 shards, recherche=coin bake) ===
+  phase pd10 : 400000 pos
+  phase pd10 committee job-side
+
+=== MERGE final : corpus-regen-mix2M (60/20/20 pd8/9/10, recherche=coin bake, pilote gen1) ===
+  total : 2000000 pos
+  corpus committe JOB-SIDE (20M)
+  => PRET pour le FIT (prior gen1, juge vs gen1 dans le meme build coin => mesure pure de l'eval).
+=== fin regen-mix on coin ===

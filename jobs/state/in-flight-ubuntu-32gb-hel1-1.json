@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0566-regen-mix-oncoin",
-  "script": "jobs/queue/cpx62-0566-regen-mix-oncoin.sh",
-  "pid": 4189908,
-  "started_at": "2026-07-04T11:26:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
