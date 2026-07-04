@@ -11,6 +11,22 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-03** (verdicts en tête).
 
+## 🧱 PLATEAU DÉCLARÉ à gen1 (2026-07-04) — pivot RECHERCHE (EBF) ; chaîne éval close sur la recette actuelle
+> **Décision mécanique par les gates §1.2** (2 non-COMPOSE après diagnostics complets) :
+> • gen2 (3M pd6) −5 **NEUTRE** ; cand-feed (2,9M profond) −8 ; **mix2M (3,5M, ARCHI COMPLÈTE, juge ère-gen1) −18
+>   RÉGRESSE** (borne haute 0,492 < 0,50). **Tous les artefacts éliminés** : profondeur, volume, prior, archi complète.
+> ⇒ **gen1 = optimum robuste de la recette actuelle.** La chaîne éval ne compose plus → **la marge est dans la RECHERCHE.**
+> Prochaine relance éval seulement APRÈS un gain de recherche (alternance des gates) OU un changement de recette.
+>
+> **Phase EBF ouverte** (`ccx33-0559`, DOE node-EBF Res V, eval gen1) :
+> • **probcut** = économiseur SÛR (−6,4% nœuds, t=−15,8, détection neutre) → candidat bake.
+> • **NMP-on REJETÉ par la guarde-détection FIXE** (fait chuter la détection combos à prof. fixe malgré F1 sound) —
+>   MAIS la guarde est *à profondeur fixe*, conservatrice pour un levier qui échange détection-par-prof contre PROFONDEUR
+>   à temps fixe → **à re-juger au MOVETIME**.
+> • **Confirmation Elo movetime `cpx62-0560`** en cours : probcut / NMP-on / coin DOE / coin+NMP, chacun sur la config
+>   ère-gen1 (threat_ext=0), movetime 0,3s. Un bras >0,5 hors-IC ⇒ baker au jeu. Puis re-test threat_ext sur le coin gagnant
+>   (co-adaptation : sa valeur jeu dépend du budget nœuds libéré par l'EBF).
+
 ## 🌙 NUIT 03→04/07 — artefacts du plateau ÉLIMINÉS un à un ; F2 BAKÉ ; gen 2M mixte en cours
 > **Diagnostics du NEUTRE gen2 (tous à volume/juge standard)** :
 > • **Profondeur** ❌ : cand-feed (2,9M profond pd8/pd10) = **−8** vs gen1 ≈ gen2 (pd6, −5). Deep ≈ shallow.
