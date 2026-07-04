@@ -1,0 +1,12 @@
+=== VERDICT cpx62-0562 corner+nmp CLEAN (capture blindee, agrege prog LIVE) ===
+bras   : corner+nmp = qs_threat_ext=0,probcut_min_depth=5,lmr_first_full_nonpv=2,multicut_min_depth=4,eg_no_nmp=0
+config : movetime 0.3s ; PAIRS 4 ; dilf ; eval gen1 ; baseline qs_threat_ext=0
+shards : 16/16 avec RESULT ; crashs/erreurs=0 ; muets=0
+games  : 872  (A=419 wins  D=155 nulles  B=298)
+rate   : 0.5694 +- 0.0297  (draw-adjusted SE)
+elo    : +49
+IC95   : [0.5396, 0.5991]
+=> GAGNE hors-IC (borne basse > 0.50)
+
+RAPPEL historique corner+nmp : 0560=-28 (173g) ; 0561=+39 hors-IC (248g, capture douteuse).
+Ce run tranche : si GAGNE hors-IC ET coherent => baker au jeu. Si PARITE/sign-flip => bruit, referme EBF, pivot eval.
