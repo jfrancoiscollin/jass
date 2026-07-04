@@ -1,0 +1,16 @@
+shard 0 rc=0 : RESULT 83 26 44
+shard 1 rc=0 : RESULT 3 6 10
+shard 2 rc=0 : RESULT 89 25 39
+shard 3 rc=0 : RESULT 4 3 14
+shard 4 rc=0 : RESULT 77 39 37
+shard 5 rc=0 : RESULT 4 5 13
+shard 6 rc=0 : RESULT 84 28 41
+shard 7 rc=0 : RESULT 3 4 13
+shard 8 rc=0 : RESULT 15 2 6
+shard 9 rc=0 : RESULT 2 3 17
+shard 10 rc=0 : RESULT 12 5 4
+shard 11 rc=0 : RESULT 5 1 19
+shard 12 rc=0 : RESULT 16 1 7
+shard 13 rc=0 : RESULT 4 2 15
+shard 14 rc=0 : RESULT 13 2 6
+shard 15 rc=0 : RESULT 5 3 13
