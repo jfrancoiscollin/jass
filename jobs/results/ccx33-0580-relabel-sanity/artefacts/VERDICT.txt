@@ -1,1 +1,30 @@
 === SONDE deep-relabel combos (d14, elagage-off, qs_sacs bake) — HEAD 61a88c65e queue: ccx33-0580-relabel-sanity — sonde-gate deep-relabel : jass deep search (d14 elagage-off qs_sacs) recupere-t-il les combos que le self-play rate (23%) ? gate du levier label-quality ===
+  suite : 2795 combos (trait=gagnant par construction) ; eval=gen1
+=== deep-relabel // (8 shards) ===
+import sys,struct,glob
+pre,nsh,band=sys.argv[1],int(sys.argv[2]),int(sys.argv[3]); REC=38
+win=draw=loss=tot=0; scores=[]
+for s in range(nsh):
+    try: b=open(f"{pre}.{s}.jnnw",'rb').read()
+    except: continue
+    if len(b)<8 or b[:4]!=b'JNNW': continue
+    n=struct.unpack('<I',b[4:8])[0]; body=b[8:]
+    for i in range(n):
+        sc=struct.unpack('<i',body[i*REC+33:i*REC+37])[0]  # STM-POV cp (deep-relabel l'a reecrit)
+        scores.append(sc); tot+=1
+        if sc>band: win+=1
+        elif sc<-band: loss+=1
+        else: draw+=1
+if not tot: print("  AUCUNE SORTIE (deep-relabel a echoue)"); raise SystemExit
+scores.sort()
+print(f"=== VERDICT : deep-relabel de {tot} combos (trait=gagnant par construction) ===")
+print(f"  marques GAGNANTS (STM-score>{band})  : {win}/{tot} = {win/tot:.3f}")
+print(f"  marques nuls                         : {draw}/{tot} = {draw/tot:.3f}")
+print(f"  marques PERDANTS (faux)              : {loss}/{tot} = {loss/tot:.3f}")
+print(f"  score STM median = {scores[tot//2]} cp")
+print("")
+print(f"  RAPPEL : notre self-play convertit ~23% de ces combos (offense d9, dumps 0571).")
+r=win/tot
+if r>=0.60: print(f"  => deep-relabel recupere {r:.0%} (>> 23%) : le mecanisme CORRIGE le biais tactique. GO le vrai run (relabel-fit-judge).")
+elif r>=0.40: print(f"  => deep-relabel recupere {r:.0%} (> 23% mais modere) : correction partielle. Vrai run justifie, gain a mesurer.")
+else: print(f"  => deep-relabel {r:.0%} ~ self-play : la profondeur ne recupere pas les combos => approche a revoir (depth/params).")
