@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0567-conversion-vs-scan-oncoin",
+  "script": "jobs/queue/ccx33-0567-conversion-vs-scan-oncoin.sh",
+  "pid": 3175537,
+  "started_at": "2026-07-04T12:52:12+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}

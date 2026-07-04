@@ -1,0 +1,1 @@
+=== CHECK CONVERSION vs Scan sur le coin (movetime 2.0s, oracle Scan d13) ===
