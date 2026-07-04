@@ -11,6 +11,30 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
 
+## 🚧 PHASE EBF SE FERME (2026-07-04) — aucun gain search robuste ; pivot ÉVAL lancé
+> **Résolution du sign-flip du coin.** 0560 → corner +30 (47g, mirage) ; 0561 → corner+nmp **+39 hors-IC (248g)** MAIS
+> capture pourrie (RESULTS fragmenté, prog snapshots périmés) et il **contredit son propre −28** de 0560. Relance PROPRE
+> `cpx62-0562-cornernmp-clean` (1 bras, PAIRS=4, capture blindée VERDICT job-side) : **provisoire −30 (341g, IC [0,409 ;
+> 0,506])**, en écho quasi-exact au −28 de 0560. ⇒ **le +39 était du BRUIT.** Trois mesures propres du coin = −28/−30/(+39
+> réfuté). **Aucun levier EBF (probcut, nmp, coin) ne se convertit en force au jeu sur gen1.** Verdict 0562 final scellera
+> la fermeture de la phase EBF. **La marge n'est ni dans la recherche (EBF) ni dans un fit de plus → front ÉVAL.**
+>
+> **PIVOT ÉVAL lancé `ccx33-0563-eval-oracle-scan`** (diagnostic, pas un fit) : jass static gen1 (`--eval-position`, d0)
+> vs Scan static (relabel_with_scan d1, book off) sur ~4000 positions de corpus-mix2M (toutes phases). Sort Pearson +
+> **Spearman**, fit linéaire, **résidu par phase/|score|**, + **ancres de circularité** (jass-vs-label-selfplay vs
+> scan-vs-label). Routage : correl haute+plat ⇒ retard=search (valide EBF, stop eval) · résidu concentré finale ⇒ **labels
+> EGDB** · résidu diffus ⇒ **capacité/DOE feature-group** · jass-vs-label≫jass-vs-scan ⇒ **circularité**. VERDICT job-side.
+>
+> **Infra durcie ce matin.** (1) Ma ref locale `origin/main` était 22 commits en retard (fetch ne faisait pas avancer le
+> tracking) → forcé `+refs/heads/main:...`. (2) Bug capture runner (RESULTS fragmenté / prog périmés) → tous les jobs
+> passent au **VERDICT atomique committé JOB-SIDE une fois** (0562/0563). (3) **Git server n'accepte QUE `main`** en push
+> (refs non-main rejetées) — établi par test.
+>
+> **Cleanup dépôt.** La **branche désignée `claude/pattern-i-nnue-skeleton-tGSrb`** = fork vestigial (13→24/06, 338 vieux
+> commits jamais mergés, 8556 derrière main, HEAD de **PR #317** « record roulant » périmé). **PR #317 FERMÉE** (record
+> repris par `docs/CURRENT.md` sur main). Suppression de branche **bloquée par un ruleset** (« restrict deletions ») → la
+> branche reste inerte, sans conséquence (le runner ne lit que main). Reset impossible d'ici (git server main-only).
+
 ## ⚖️ VERDICT EBF movetime `cpx62-0560` (2026-07-04) — AUCUN levier ne paie au temps réel ; coin en re-confirmation
 > Confirmation Elo temps-fixe des leviers EBF vs baseline **ère-gen1** (threat_ext=0), movetime 0,3s, dilf, eval gen1.
 > **RESULTS/RANKING rendus VIDES par le bug runner** (ne re-committe pas les fichiers modifiés) → verdict **reconstruit
@@ -41,7 +65,7 @@
 > • écart concentré (endgame/une phase) ⇒ **labels** → re-label EGDB-exact (WLD) + refit ciblé (plus haut plafond).
 > • écart diffus + mix2M régresse ⇒ **overfit/capacité** → **DOE feature-group** (endgame×king_mob×tempo×scan_parity, 2^4,
 >   holdout) → quel morceau d'archi paie / est net-négatif (explique la régression mix2M).
-> Pré-requis : static-eval Scan scriptable en batch (sources dispo, `add_sacs` porté bit-for-bit → commande eval Scan). **EN ATTENTE feu vert JFC.**
+> Pré-requis : static-eval Scan scriptable en batch (sources dispo, `add_sacs` porté bit-for-bit → hub `level depth/go think`). **LANCÉ = `ccx33-0563` (voir bloc de tête).**
 
 ## 🧱 PLATEAU DÉCLARÉ à gen1 (2026-07-04) — pivot RECHERCHE (EBF) ; chaîne éval close sur la recette actuelle
 > **Décision mécanique par les gates §1.2** (2 non-COMPOSE après diagnostics complets) :
