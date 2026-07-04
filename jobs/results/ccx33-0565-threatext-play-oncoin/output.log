@@ -1,0 +1,16 @@
+=== build jass depuis main (coin bake inclus) — HEAD 5e812ebad queue: ccx33-0565-threatext-play-oncoin — re-test qs_threat_ext AU JEU sur le defaut bake (coin corner+nmp) ; A=ext1 vs B=ext0, mt0.3 PAIRS4 dilf gen1, capture blindee ===
+  confirme coin actif : 2 /2 params-cle vus
+  A=qs_threat_ext=1  vs  B=qs_threat_ext=0  (coin des 2 cotes) ; mt0.3s PAIRS=4 dilf eval gen1
+  16 shards lances @ 11:19:44Z
+  finis @ 12:51:59Z
+=== VERDICT ccx33-0565 qs_threat_ext AU JEU sur le defaut BAKE (coin corner+nmp) ===
+A = qs_threat_ext=1  vs  B = qs_threat_ext=0   (coin des 2 cotes)
+config : movetime 0.3s ; PAIRS 4 ; dilf ; eval gen1
+shards : 4/8 avec RESULT ; crashs=8 ; muets=4
+games  : 1220  (A=680 wins  D=227 nulles  B=313)
+rate A : 0.6504 +- 0.0239  elo +108  IC [0.6265, 0.6743]
+=> threat_ext=1 PAIE hors-IC => CONFIRMER defaut ON (le coin a rentabilise threat_ext)
+
+RAPPEL : A/B 0554 (ancien defaut, pre-coin) => threat_ext ON = -21 Elo au jeu. Ici on teste sur EBF reduit.
+  VERDICT committe job-side ✓
+=== fin 0565 ===
