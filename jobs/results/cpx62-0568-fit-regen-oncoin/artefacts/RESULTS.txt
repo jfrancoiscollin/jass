@@ -1,0 +1,7 @@
+=== build jass depuis main (moteur COIN : corner+nmp + threat_ext, tous bakes) ===
+  HEAD main : 78e4e924e runner: start cpx62-0568-fit-regen-oncoin
+  confirme moteur coin : 3/3 params-cle
+  regen=2000000 combos=1239648
+
+=== corpus = regen-mix2M + combos -> fit prior gen1 (lambda=0.25) ===
+  concat -> 3239648 : regen.jnnw=2000000, combos.jnnw=1239648
