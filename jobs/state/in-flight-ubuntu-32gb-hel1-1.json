@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0574-doe-featuregroup-v4",
+  "script": "jobs/queue/cpx62-0574-doe-featuregroup-v4.sh",
+  "pid": 8406,
+  "started_at": "2026-07-04T16:19:08+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
