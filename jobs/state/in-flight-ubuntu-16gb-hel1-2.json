@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0576-eval-oracle-d6",
-  "script": "jobs/queue/ccx33-0576-eval-oracle-d6.sh",
-  "pid": 3188510,
-  "started_at": "2026-07-04T16:52:25+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
