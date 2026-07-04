@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0578-famine-learningcurve",
+  "snapshot_at": "2026-07-04T19:51:51+00:00",
+  "started_at": "2026-07-04T19:46:51+00:00",
+  "elapsed_seconds": 300,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  16803       1       05:00  0.0  0.0 bash\n  16805   16803       05:00  0.0  0.0 bash\n  17556   16805       00:46  0.0  0.0 bash\n  17557   17556       00:46  0.0  0.0 bash\n  17558   17556       00:46  0.0  0.0 tee\n  17559   17556       00:46  0.0  0.0 grep\n  17560   17556       00:46  0.0  0.0 awk\n  17561   17557       00:46  167 11.8 python3\n"
+}
