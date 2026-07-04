@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0557-gen-pd10-supp",
-  "script": "jobs/queue/ccx33-0557-gen-pd10-supp.sh",
-  "pid": 3127246,
-  "started_at": "2026-07-04T00:13:17+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
