@@ -1,0 +1,16 @@
+0	-1	-1	-1	-1	-1	eg_no_nmp=1,lmr_first_full_nonpv=4,probcut_min_depth=0,multicut_min_depth=6,rfp_max_depth=5
+1	-1	-1	-1	1	1	eg_no_nmp=1,lmr_first_full_nonpv=4,probcut_min_depth=0,multicut_min_depth=4,rfp_max_depth=7
+2	-1	-1	1	-1	1	eg_no_nmp=1,lmr_first_full_nonpv=4,probcut_min_depth=5,multicut_min_depth=6,rfp_max_depth=7
+3	-1	-1	1	1	-1	eg_no_nmp=1,lmr_first_full_nonpv=4,probcut_min_depth=5,multicut_min_depth=4,rfp_max_depth=5
+4	-1	1	-1	-1	1	eg_no_nmp=1,lmr_first_full_nonpv=2,probcut_min_depth=0,multicut_min_depth=6,rfp_max_depth=7
+5	-1	1	-1	1	-1	eg_no_nmp=1,lmr_first_full_nonpv=2,probcut_min_depth=0,multicut_min_depth=4,rfp_max_depth=5
+6	-1	1	1	-1	-1	eg_no_nmp=1,lmr_first_full_nonpv=2,probcut_min_depth=5,multicut_min_depth=6,rfp_max_depth=5
+7	-1	1	1	1	1	eg_no_nmp=1,lmr_first_full_nonpv=2,probcut_min_depth=5,multicut_min_depth=4,rfp_max_depth=7
+8	1	-1	-1	-1	1	eg_no_nmp=0,lmr_first_full_nonpv=4,probcut_min_depth=0,multicut_min_depth=6,rfp_max_depth=7
+9	1	-1	-1	1	-1	eg_no_nmp=0,lmr_first_full_nonpv=4,probcut_min_depth=0,multicut_min_depth=4,rfp_max_depth=5
+10	1	-1	1	-1	-1	eg_no_nmp=0,lmr_first_full_nonpv=4,probcut_min_depth=5,multicut_min_depth=6,rfp_max_depth=5
+11	1	-1	1	1	1	eg_no_nmp=0,lmr_first_full_nonpv=4,probcut_min_depth=5,multicut_min_depth=4,rfp_max_depth=7
+12	1	1	-1	-1	-1	eg_no_nmp=0,lmr_first_full_nonpv=2,probcut_min_depth=0,multicut_min_depth=6,rfp_max_depth=5
+13	1	1	-1	1	1	eg_no_nmp=0,lmr_first_full_nonpv=2,probcut_min_depth=0,multicut_min_depth=4,rfp_max_depth=7
+14	1	1	1	-1	1	eg_no_nmp=0,lmr_first_full_nonpv=2,probcut_min_depth=5,multicut_min_depth=6,rfp_max_depth=7
+15	1	1	1	1	-1	eg_no_nmp=0,lmr_first_full_nonpv=2,probcut_min_depth=5,multicut_min_depth=4,rfp_max_depth=5
