@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0572-doe-featuregroup",
-  "script": "jobs/queue/ccx33-0572-doe-featuregroup.sh",
-  "pid": 3180270,
-  "started_at": "2026-07-04T14:15:46+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
