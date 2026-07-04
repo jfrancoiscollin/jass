@@ -22,6 +22,15 @@ consumer).
 | Extending the engine     | [docs/EXTENDING.md](docs/EXTENDING.md) |
 | Domain glossary          | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
 
+> **Current focus (2026):** closing the strength gap to **Scan**. The active
+> evaluation is a **Scan-style linear pattern network** trained by self-play +
+> exact-endgame mix + combination mining; the search now sees combinations
+> (Scan's selective sacrifice quiescence, ported bit-for-bit). NNUE is
+> deliberately **frozen** until the linear class is proven exhausted. The live
+> campaign state — current champion, verdicts, decision gates — is tracked in
+> **[docs/CURRENT.md](docs/CURRENT.md)** (the single source of truth), with the
+> GitOps job runner under `jobs/`.
+
 ## Highlights
 
 - **Rules**: full FMJD movegen — quiet moves, captures in all four
@@ -36,77 +45,74 @@ consumer).
   extension** with a half-depth verification search, **Late-Move
   Reduction (LMR)** on quiet moves beyond the first few, **Null
   Move Pruning (NMP)** with depth-scaled reduction guarded against
-  zugzwang-like low-piece endgames, **Reverse Futility Pruning (RFP)**
+  zugzwang-like low-piece endgames *and forced-capture (tactical) nodes*
+  (declining a mandatory capture is illegal, so a null move there would
+  mask sacrifice refutations), **Reverse Futility Pruning (RFP)**
   at shallow depths in quiet positions (draughts mandates the longest
   capture chain so the "quiet position" test is exact), adaptive
   aspiration windows, **time-aware iteration skipping** (don't start
   the next ID iteration when it would obviously not finish before the
   deadline), lazy SMP for multi-thread scaling, FMJD draw handling
   (25-move rule + 2-fold repetition), endgame bitbase (KvK and KKvK
-  via retrograde analysis), Zobrist-keyed opening book, principal
-  variation extracted from the TT, and a quiescence search that plays
-  mandatory capture chains out at the leaves.
-- **Evaluation — trained NNUE shipped by default**:
-  - The native + WASM binaries embed a **JNNM v2** MLP (200 → 64 → 32 → 1,
-    ReLU, STM-relative *V2 dense* input encoding) trained on ~100 k
-    self-play positions labelled by a depth-8 search. Score rate
-    **0.639** vs the handcrafted eval at depth 5 (≈ +99 ELO) at the
-    time it was trained.
-  - The runtime supports **two input encodings**: V2 dense (200 feat)
-    and **HalfMen-lite** (450 feat, Cycle-6c — symmetric per-piece
-    indicator features designed to give the MLP more capacity to
-    learn piece-relative patterns).
-  - The C++ MLP loader is **runtime-dimensioned** (Cycle-4a): any
-    `H1 × H2` topology (any multiple of the SIMD tile size) loads
-    without recompiling. Quantised `MLPNetworkQ` (JNNQ format) and
-    its AVX2 + WASM-SIMD128 paths inherit this.
-  - The handcrafted eval (material + PSQT + king centralisation +
-    rear-diagonal support + tempo) and a `LinearNetwork` are still
-    available; the engine picks via the `INetwork*` interface.
-  - **Int8 quantisation** (`MLPNetworkQ`, JNNQ format) is opt-in via
-    `--nnue path.bin` and was measured **at strict parity** with the
-    float32 reference (16-16-4 / 36 games at depth 5) on the shipped
-    64-32 MLP.
-  - The **calibration target** is Scan (Fabien Letouzey, GPL3,
-    ~2500 FMJD-equivalent). `tools/calibrate_vs_scan.py` plays Jass
-    against Scan via the HUB protocol and reports the ELO delta. The
-    NNUE pipeline (gen-data-wdl → train_v3 → quantize_mlp → calibrate)
-    is wired end-to-end and driven by the Hetzner GitOps runner — see
-    [`infra/README.md`](infra/README.md).
-- **SIMD acceleration of the int8 forward pass**:
-  - Native x86 → AVX2 (`_mm256_maddubs_epi16` + `_mm256_madd_epi16`):
-    +20 % per node vs the float32 MLP.
-  - Browser → WASM SIMD128 (`wasm_i16x8_extmul_*` +
-    `wasm_i32x4_extadd_pairwise_*`): direct gain for the Draught
-    Master web app.
-  - Both paths share the same dot-product shape; CMake gates each
-    with a CheckCXXCompilerFlag + `-msimd128` for Emscripten.
+  via retrograde analysis, plus an optional external EGDB mix),
+  Zobrist-keyed opening book, and principal variation extracted from
+  the TT.
+- **Combination-aware quiescence** (ported faithfully from Scan,
+  validated bit-for-bit against a Scan oracle): beyond playing the
+  mandatory capture chains out at the leaves, it resolves **selective
+  sacrifices** (`qs_sacs` — Scan's positional `add_sacs` generator, a
+  handful of gated man-sacs rather than *all* forcing sacs, whose
+  selectivity is what keeps the tree from exploding) and does a
+  **threat extension** (`qs_threat_ext` — when a calm leaf is *under
+  threat*, a 1-ply search instead of an unreliable stand-pat). Together
+  these let the search see **combinations** (quiet sacrifice → forced
+  recapture → net gain) that a captures-only quiescence is structurally
+  blind to — the channel where Scan historically out-searched us.
+- **Evaluation — Scan-style *linear pattern* evaluation (the active class)**:
+  - The strongest eval is a **structured linear pattern network** (PJTW format,
+    Scan-flavoured): 32 overlapping board patterns, phase-split (mid/endgame),
+    colour-folded, plus a dense vector of hand-designed extras (king mobility,
+    tempo, endgame features). Loaded with `--pattern path.pjtw`.
+  - It is trained by **self-play** (`--gen-data-wdl`, WDL-labelled, quiet-only),
+    fit with **`pattern_jass/tools/train_stream.py`** (chunked L-BFGS, logistic
+    loss) using a **sequential Bayesian prior** that anchors each new fit to the
+    previous champion (anti-forgetting), and enriched with an **exact endgame
+    mix** (retrograde WLD) and a **combo-mined** corpus.
+  - **The project's north star is Scan** (Fabien Letouzey, GPL3, ~2500
+    FMJD-equivalent). `tools/calibrate_vs_scan.py` plays Jass vs Scan over the
+    HUB protocol; `tools/jass_vs_jass_arch.py` runs eval-vs-eval matches. The
+    whole cycle (gen-data → fit → judge) is driven by the GitOps runner.
+  - **⛔ Graved rule — no NNUE yet.** A handcrafted eval and an MLP/NNUE path
+    exist in the tree (`INetwork` interface, `--nnue`), but development is
+    deliberately confined to the **linear class until it is proven exhausted**
+    (best-linear-fit reached *and* still below Scan). Rationale: ~8.5M linear
+    weights vs Scan's ~2.1M and we have not yet matched it → the linear class
+    is far from its ceiling; the gap is fit/search quality, not capacity.
+  - The live campaign state (current champion, verdicts, gates) lives in
+    [`docs/CURRENT.md`](docs/CURRENT.md).
 - **Training & book pipelines**:
-  - `--gen-data` produces a self-play dataset with labels from a
-    depth-8 search; **`--gen-data-wdl`** (Cycle-1) adds the game's
-    win-draw-loss outcome to each record (38 B JNNW format), used by
-    the blended-target trainer below.
-  - `tools/train.py` (NumPy lstsq) fits the `LinearNetwork`,
-    `tools/train_mlp.py` (PyTorch + Adam, early-stop) fits a single
-    fixed-arch MLP, and **`tools/train_v3.py`** (Cycle-2) compares
-    several MLP architectures on a JNNW dataset with a blended
-    score-and-WDL MSE loss and reports which one generalises best.
-    Supports both V2 and HalfMen-lite input encodings via
-    `--encoding {v2,halfmen}`.
-  - `tools/quantize_mlp.py` does post-training int8 quantisation
-    with 99.9-pct activation calibration; the JNNQ header carries
-    the runtime hidden dims so any trained topology loads back.
-  - `tools/calibrate_vs_scan.py` plays Jass vs Scan over the HUB
-    protocol and reports a Jass-side ELO estimate — the absolute
-    strength yardstick the project is tuning against.
+  - **`--gen-data-wdl`** produces a self-play dataset, each record (38 B
+    JNNW format) carrying the game's win-draw-loss outcome; `--quiet-only`
+    drops tactically-unstable forced-capture positions, `--asym-punisher-params`
+    manufactures the "shot reached → punished" signal, and a seed-file mixes
+    combination-rich openings.
+  - **`pattern_jass/tools/train_stream.py`** fits the linear pattern network
+    (chunked L-BFGS, logistic loss, colour-fold, phase-split) with a
+    **sequential Bayesian prior** (`--prior-mean champion.pjtw`) that anchors
+    each generation to the last champion. Exact-endgame (retrograde WLD) and
+    combo-mined corpora are blended in.
+  - **`tools/jass_vs_jass_arch.py`** runs eval-vs-eval matches (the standard
+    judge); **`tools/calibrate_vs_scan.py`** plays Jass vs Scan over HUB — the
+    absolute strength yardstick. Search levers are A/B-tested with exact
+    node-EBF (`--search-profile`) and factorial DOEs.
+  - The legacy handcrafted-eval / MLP trainers (`tools/train.py`,
+    `tools/train_v3.py`, `tools/quantize_mlp.py`) remain in the tree but are
+    off the active path (see the frozen-NNUE note above).
   - `--build-book` consumes a FEN list and writes a **JBOK** binary
     book (`PackedMove`-keyed, 16 B per entry); `--book path.bok`
     loads it at startup. **`tools/merge_jbok.py`** merges several
     partial JBOKs into one (used to parallelise `--build-book` at
     the shell level since the C++ side is single-threaded).
-  - Mobile-friendly GitHub Actions workflows (`train-nnue`,
-    `benchmark-nnue`, `benchmark-nnue-vs-nnue`, `build-book`,
-    `gen-data-wdl`) trigger the whole pipeline from a tap.
 - **Hetzner GitOps runner** (see [`infra/README.md`](infra/README.md)):
   a single Hetzner cloud machine (CCX-class) bootstrapped from
   `infra/bootstrap.sh` polls the repo every 5 min, runs the scripts
@@ -121,7 +127,8 @@ consumer).
     `--build-book`, `--benchmark-nnue`, `--benchmark-nnue-vs-nnue`,
     `--gen-data`, `--tournament`, `--smoke`,
   - WebAssembly ES6 module exposing a `Game` JS class via Embind
-    (`./wasm/build.sh`) — the embedded NNUE is active out of the box,
+    (`./wasm/build.sh`) — plays out of the box with the built-in eval; a
+    trained pattern network can be supplied for full strength,
   - a self-play tournament harness for regression testing
     (`./build/jass --tournament 4 6 1`).
 - **Test suite**: 672 unit-test assertions, all passing locally;
