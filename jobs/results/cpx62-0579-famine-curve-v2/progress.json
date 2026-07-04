@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0579-famine-curve-v2",
+  "snapshot_at": "2026-07-04T22:09:50+00:00",
+  "started_at": "2026-07-04T22:04:11+00:00",
+  "elapsed_seconds": 339,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  19109       1       05:39  0.0  0.0 bash\n  19111   19109       05:39  0.0  0.0 bash\n  19775   19111       00:31  188  9.3 python3\n"
+}
