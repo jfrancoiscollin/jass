@@ -1,0 +1,4 @@
+  => score-rate vs Scan (d9) = 0.000
+
+=== ANALYSE DOE (effets principaux sur score-rate vs Scan) ===
+  trop peu de configs valides (2/8) — DOE non concluant
