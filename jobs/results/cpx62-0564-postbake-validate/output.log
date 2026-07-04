@@ -1,0 +1,31 @@
+=== POST-BAKE VALIDATE coin corner+nmp — HEAD c4e6cf17c queue: cpx62-0564-postbake-validate — build+tests depuis main apres bake du coin (filet securite, le runner build depuis main) ===
+-- params bakés dans le source main --
+      int lmr_first_full_nonpv = 2;   // PV dès le 4e). Réduit le 1er coup d'index >= ce seuil. Les deux=4 => uniforme legacy.
+      int probcut_min_depth = 5;   // 0 = off ; BAKÉ 5 (2026-07-04, 0562, coin corner+nmp +49 Elo movetime gen1)
+      int multicut_min_depth = 4;   // 0 = off ; BAKÉ 4 (2026-07-04, 0562, coin corner+nmp +49 Elo movetime gen1 ; était 6 depuis 0336)
+      bool eg_no_nmp  = false;      // disable null-move pruning in the endgame regime
+
+=== 1. build jass (archi complete) ===
+  BUILD jass : OK
+
+=== 2. tests ===
+  jass_tests : FAIL ❌
+    [FAIL] /root/jass/tests/test_scan_book.cpp:58: fd >= 0
+    [FAIL] /root/jass/tests/test_scan_book.cpp:62: a.save(path)
+    [FAIL] /root/jass/tests/test_scan_book.cpp:64: b.load(path)
+    [FAIL] /root/jass/tests/test_scan_book.cpp:65: expected b.size() == n
+    [FAIL] /root/jass/tests/test_scan_book.cpp:66: b.contains(zobrist_hash(Position::start_position()))
+    [FAIL] /root/jass/tests/test_scan_book.cpp:73: fd >= 0
+    [FAIL] /root/jass/tests/test_scan_book.cpp:126: fd >= 0
+    [FAIL] /root/jass/tests/test_scan_book.cpp:129: b.save(path)
+    [FAIL] /root/jass/tests/test_scan_book.cpp:132: e.load_book(path)
+    [FAIL] /root/jass/tests/test_scan_book.cpp:133: expected e.book_size() == b.size()
+    10 / 6486 assertions FAILED.
+
+=== 3. sanity runtime (le coin ne crashe pas en recherche) ===
+  --eval-position (gen1) sur pos test : 153
+  (params du coin = defauts effectifs car membres-initialiseurs du struct ; build OK => bake actif)
+
+=== VERDICT POST-BAKE : voir BUILD/tests ci-dessus ===
+  VALIDATE committe job-side ✓
+=== fin 0564 ===
