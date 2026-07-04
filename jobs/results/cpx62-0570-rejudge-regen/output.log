@@ -1,0 +1,11 @@
+=== RE-JUGE champion-regen vs gen1 (moteur COIN par defaut) — HEAD 27d6658d8 0569 DOE feature-group : RANKING job-side ===
+  confirme coin : 3/3 params-cle ; juge d9 dilf x4
+
+=== JUGE (moteur COIN par defaut, meme build des 2 cotes) ===
+  [regen-vs-gen1] games=2440 A=1008 B=988 D=444  rate=0.5041+-0.0179  elo~+3  IC=[0.4862,0.5220]  => NEUTRE (IC contient 0.50)
+  [regen-vs-egdbmix] games=2440 A=932 B=1016 D=492  rate=0.4828+-0.0177  elo~-12  IC=[0.4651,0.5005]  => NEUTRE (IC contient 0.50)
+
+  => regen-vs-gen1 COMPOSE => la boucle vertueuse a rouvert le plateau => promo cand-regen (nouveau champion EVAL).
+  => NEUTRE/REGRESSE => meme un meilleur pilote ne compose pas => plateau = CAPACITE (cf DOE 0569).
+  VERDICT committe job-side ✓
+=== fin re-juge regen ===
