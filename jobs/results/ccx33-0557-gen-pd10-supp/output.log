@@ -1,0 +1,11 @@
+=== build jass depuis main (ARCHI COMPLETE : qs_sacs + qs_threat_ext + F1 NMP sound) ===
+  HEAD main : 01eb3cf8d runner: start ccx33-0557-gen-pd10-supp
+  sanity qs_sacs : 
+  seed-file : dilf=305 lidraughts=300000
+
+=== PHASE pd10supp : 300000 pos @ pd10 (x8 shards) ===
+  phase pd10supp : 300000 pos
+  phase pd10supp committee job-side
+
+  => supplement pd10 committe (phase-pd10supp.jnnw.gz) — POOLABLE demain avec corpus-mix2M (optionnel).
+=== fin supplement pd10 ccx33 ===
