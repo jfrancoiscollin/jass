@@ -1,0 +1,7 @@
+=== VERDICT E1 famine learning-curve : log-loss HOLDOUT (plus BAS = meilleur) ===
+     volume        8cf       32cf   gagnant   ecart(32-8)
+     500000    0.60961    0.60888      32cf      -0.00073
+    1000000    0.61140    0.61112      32cf      -0.00028
+    2000000   0.611071       None  (incomplet)
+
+(Bonus : la pente des courbes vs volume estime le croisement ou 32cf redevient rentable.)
