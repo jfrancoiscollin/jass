@@ -1,0 +1,38 @@
+=== E1 famine learning-curve — HEAD main ac678c491 queue: cpx62-0578-famine-learningcurve — E1 relance (fix check geom : PYTHONPATH au lieu de JASS_PATTERNS_DIR pour un python nu ; le fit train_stream respecte bien JASS_PATTERNS_DIR) ===
+  code develop overlay : 2bb21d4f8 gen_patterns: ajoute v3/8cf aux choices --variant (emit --variant v3 rewrite patterns.py a 8 bandes ; teste : NUM_PATTERNS=8 a l import)
+diff --git a/pattern_jass/tools/gen_patterns.py b/pattern_jass/tools/gen_patterns.py
+index 9537f1765..af5209654 100644
+--- a/pattern_jass/tools/gen_patterns.py
++++ b/pattern_jass/tools/gen_patterns.py
+@@ -297,8 +297,9 @@ def _sub_count(path: Path, n: int):
+ def main():
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
+-    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
+-                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
++    ap.add_argument("--variant", choices=["v3", "8cf", "v4", "v5", "v6", "v7"], default="v4",
++                    help="v3/8cf=8 vertical bands only (Scan subset, famine curve), "
++                         "v4=32 (sweet spot), v5=40 (diag blocks), "
+                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
+     ap.add_argument("--lr-close", action="store_true",
+                     help="close the set under {rot180, LR} so reflection folds ALL "
+  geom : 8cf NUM_PATTERNS=8 ; 32cf NUM_PATTERNS=32
+  pool shuffle : 3239648 positions
+  pool = 3239648 positions (shuffle)
+
+=== fits (from-scratch, holdout=0.2) ===
+  vol=500000 arch=8cf : holdout_logloss=0.609612
+  vol=500000 arch=32cf : holdout_logloss=0.608884
+  vol=1000000 arch=8cf : holdout_logloss=0.611401
+  vol=1000000 arch=32cf : holdout_logloss=0.611118
+  vol=2000000 arch=8cf : holdout_logloss=0.611071
+  vol=2000000 arch=32cf : holdout_logloss=NA
+=== VERDICT E1 famine learning-curve : log-loss HOLDOUT (plus BAS = meilleur) ===
+     volume        8cf       32cf   gagnant   ecart(32-8)
+     500000    0.60961    0.60888      32cf      -0.00073
+    1000000    0.61140    0.61112      32cf      -0.00028
+    2000000   0.611071       None  (incomplet)
+
+(Bonus : la pente des courbes vs volume estime le croisement ou 32cf redevient rentable.)
+  VERDICT committe job-side ✓
+=== fin E1 famine learning-curve ===
