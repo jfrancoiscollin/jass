@@ -393,7 +393,16 @@ def train_stream(args):
     #     gradient (only the assembly is streamed). ----------------------------- #
     print(f'L-BFGS  loss={args.loss}  l2={args.l2}  max_iter={args.max_iter}  '
           f'chunk={chunk:,}  (~{args.max_iter} disk passes over data+feat)')
-    tr_idx = np.arange(N, dtype=np.int64)
+    # --holdout-frac F : fit on the first (1-F)*N rows, evaluate log-loss on the
+    #   last F*N rows (held out, never seen at fit). Both are CONTIGUOUS ranges so
+    #   build_fn (which seeks memmaps by lo:hi) works unchanged. F=0 => arange(N)
+    #   = byte-identical to before. Prune/remap stay computed over full N (bucket
+    #   selection only, identical across compared archs — the WEIGHTS are train-only).
+    hold_frac = float(getattr(args, 'holdout_frac', 0.0) or 0.0)
+    train_N = int(round(N * (1.0 - hold_frac))) if hold_frac > 0.0 else N
+    if hold_frac > 0.0:
+        print(f'holdout : frac={hold_frac} -> fit on {train_N:,} rows, val on {N-train_N:,} rows')
+    tr_idx = np.arange(train_N, dtype=np.int64)
     # Hierarchical-shrinkage grouping : slot -> parent pattern id (-1 = unseen fallback).
     slot_pattern = None
     if args.hier_l2 > 0.0:
@@ -420,6 +429,20 @@ def train_stream(args):
         pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
         prior_mean=prior_mean, prior_prec=prior_prec)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
+
+    # --- HOLDOUT log-loss : same forward pass (build_fn + sigmoid CE) as the fit,
+    #     on the held-out tail rows [train_N, N), at the fitted weights. Pure data
+    #     cross-entropy (no L2/prior term) => a clean generalisation estimate. ---- #
+    if hold_frac > 0.0 and train_N < N:
+        _eps = 1e-12; _vl = 0.0; _nv = 0
+        for i in range(train_N, N, chunk):
+            _sel = np.arange(i, min(i + chunk, N), dtype=np.int64)
+            _z = build_fn(_sel) @ w_float
+            _p = 0.5 * (np.tanh(0.5 * _z) + 1.0)
+            _yc = y_all[_sel]
+            _vl += float(-np.sum(_yc * np.log(_p + _eps) + (1.0 - _yc) * np.log(1.0 - _p + _eps)))
+            _nv += len(_sel)
+        print(f'HOLDOUT_LOGLOSS {_vl/max(_nv,1):.6f}  (frac={hold_frac} n_val={_nv})')
 
     # --- Un-prune to the TB-sized training block, then fold-EXPAND to the full 17M
     #     v3 table and write a standard PJTW v3 (byte-compatible with the C++ loader). #
@@ -509,6 +532,10 @@ def main(argv=None):
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--scale', type=int, default=1000, help='quantisation factor')
+    ap.add_argument('--holdout-frac', type=float, default=0.0,
+                    help='fraction (0..1) of the tail rows held out from the fit to report a '
+                         'HOLDOUT_LOGLOSS generalisation estimate. 0 = off (byte-identical). '
+                         'Data must be pre-shuffled for the split to be representative.')
     ap.add_argument('--chunk', type=int, default=500000,
                     help='rows/chunk read from disk per gradient sub-step.')
     ap.add_argument('--prune', dest='prune', action='store_true', default=True,

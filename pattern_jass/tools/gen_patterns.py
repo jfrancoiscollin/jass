@@ -162,6 +162,12 @@ def build(variant="v4"):
         pats = build_v6()
     elif variant == "v7":
         pats = build_v7()
+    elif variant in ("v3", "8cf"):
+        # 8cf : the 8 v3 VERTICAL bands ONLY (= Scan's vertical-band subset). A
+        # strict subset of v4's geometry (v4 = these 8 + diagonals/horiz/squares).
+        # Used by the famine learning-curve (8cf vs 32cf at growing volume).
+        pats = [(vband(r0, c0), f"v_{half}_{c0}")
+                for half, r0 in (("top", 0), ("bot", 4)) for c0 in range(4)]
     else:
         pats = _build_v4_v5(variant)
     # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
