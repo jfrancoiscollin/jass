@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0570-rejudge-regen",
-  "script": "jobs/queue/cpx62-0570-rejudge-regen.sh",
-  "pid": 2951,
-  "started_at": "2026-07-04T13:52:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
