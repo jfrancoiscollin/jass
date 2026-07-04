@@ -31,8 +31,24 @@
 > **réduire la concurrence des jobs ccx33** (8 shards sur 16gb = trop). JFC : pas de re-run, on bake+documente.
 >
 > **BILAN : moteur nettement renforcé, 2 gains empilés bakés sur main** (coin +49, threat_ext +108). Le PLATEAU disait « la
-> marge est dans la recherche » → livrée. **Next eval** : re-gen sur ce moteur (0566) → fit → juge vs gen1 (produit le vrai
-> prochain champion EVAL) ; + conversion vs Scan (0567) ; + eval-oracle d6.
+> marge est dans la recherche » → livrée.
+>
+> **⚖️ VERDICT BOUCLE VERTUEUSE (0568 fit → 0570 re-juge blindé) : regen NEUTRE, ne recompose PAS.** Fit prior gen1 sur
+> corpus-regen-mix2M (2M généré par le pilote coin) + combos, jugé dans le moteur COIN par défaut vs gen1 (2440 games) :
+> **regen-vs-gen1 rate 0,5041, elo +3, IC [0,486 ; 0,522] = NEUTRE** ; regen-vs-egdbmix −12 (NEUTRE penche −). ⇒ **même un
+> pilote nettement plus fort (meilleurs labels) ne bat PAS gen1.** cand-regen **NON promu**, gen1 reste champion. (Note : le
+> verdict 0568 avait été perdu au bug capture — 0568 blindait le champion mais pas le RESULTS — d'où le re-juge 0570.)
+> **CONCLUSION FORTE** : profondeur + volume + prior + archi-complète + **meilleurs-labels** tous éliminés ⇒ le plateau
+> gen1 est un **plafond de CAPACITÉ** (le jeu de features linéaire ne peut pas représenter plus), pas un problème de
+> données/labels/recherche. **La marge eval est dans la CAPACITÉ FEATURES.**
+>
+> **CONVERSION vs Scan (0567)** : NEW(coin) 0,587 vs OLD(gen1) 0,580 = pas de transfert du gain recherche à cette métrique
+> (les 2 saturent les combos à 2s ; le +49/+108 est du gain full-game à 0,3s, pas de la vue tactique brute).
+>
+> **PIVOT CAPACITÉ lancé (2026-07-04)** : (1) **`cpx62-0571-scan-matrix`** — gen1 vs Scan en matrice (prof.fixe=qualité eval,
+> movetime=force réelle, NPS-comp=isole vitesse) + dump parties → **où on décroche vs Scan** (eval-limité vs vitesse-limité).
+> (2) **`ccx33-0572-doe-featuregroup`** — DOE 2^(4-1) ENDGAME×KING_MOB×SCAN_PARITY×TEMPO, force vs Scan → **quel groupe paie/nuit**
+> (0569 avait un bug mkdir, corrigé). (3) eval-oracle d6 à refaire (d1 dégénéré). Les 3 localisent la capacité manquante.
 >
 > **EVAL-ORACLE `ccx33-0563` = INVALIDE tel quel** (à refaire). jass static vs Scan static d1 sur 3969 pos : Pearson
 > **0,035**, Spearman 0,030 (≈0). MAIS ancre **scan-vs-label-selfplay = 0,047 (≈0)** = impossible pour un moteur fort →
