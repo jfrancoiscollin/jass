@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0563-eval-oracle-scan",
+  "script": "jobs/queue/ccx33-0563-eval-oracle-scan.sh",
+  "pid": 3159839,
+  "started_at": "2026-07-04T10:54:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
