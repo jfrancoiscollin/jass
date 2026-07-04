@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0560-ebf-elo-movetime",
-  "script": "jobs/queue/cpx62-0560-ebf-elo-movetime.sh",
-  "pid": 4177455,
-  "started_at": "2026-07-04T07:28:26+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
