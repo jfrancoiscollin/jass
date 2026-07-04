@@ -1,0 +1,8 @@
+{
+  "job_id": "ccx33-0567-conversion-vs-scan-oncoin",
+  "snapshot_at": "2026-07-04T12:57:27+00:00",
+  "started_at": "2026-07-04T12:52:12+00:00",
+  "elapsed_seconds": 315,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3175537       1       05:14  0.0  0.0 bash\n3175539 3175537       05:14  0.0  0.0 bash\n3175972 3175539       05:03  0.4  0.0 python3\n3175973 3175539       05:03  0.0  0.0 tee\n3175974 3175972       05:03  3.0  0.9 scan_linux\n3175977 3175972       05:02  0.0  0.0 jass\n3175979 3175972       05:02 48.4  0.5 jass\n3175981 3175972       05:02 48.2  0.5 jass\n"
+}
