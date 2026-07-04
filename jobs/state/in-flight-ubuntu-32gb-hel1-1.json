@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0561-corner-confirm",
+  "script": "jobs/queue/cpx62-0561-corner-confirm.sh",
+  "pid": 4181722,
+  "started_at": "2026-07-04T08:41:45+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
