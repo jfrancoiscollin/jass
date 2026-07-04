@@ -1,0 +1,32 @@
+  subsample fit : 600000 pos (corpus 2000000, step 3)
+=== DOE FEATURE-GROUP 2^(4-1) Res IV — reponse = score-rate vs Scan @ d9 (qualite eval) ===
+  facteurs : A=ENDGAME B=KING_MOB C=SCAN_PARITY D=TEMPO (D=ABC)
+
+--- config A0B0C0D0 : ENDGAME=OFF KING_MOB=OFF SCAN_PARITY=OFF TEMPO=OFF ---
+  => score-rate vs Scan (d9) = 0.000
+
+--- config A1B0C0D1 : ENDGAME=ON KING_MOB=OFF SCAN_PARITY=OFF TEMPO=ON ---
+  => score-rate vs Scan (d9) = 0.000
+
+--- config A0B1C0D1 : ENDGAME=OFF KING_MOB=ON SCAN_PARITY=OFF TEMPO=ON ---
+  => score-rate vs Scan (d9) = 0.000
+
+--- config A1B1C0D0 : ENDGAME=ON KING_MOB=ON SCAN_PARITY=OFF TEMPO=OFF ---
+  => score-rate vs Scan (d9) = 0.083
+
+--- config A0B0C1D1 : ENDGAME=OFF KING_MOB=OFF SCAN_PARITY=ON TEMPO=ON ---
+  => score-rate vs Scan (d9) = 0.000
+
+--- config A1B0C1D0 : ENDGAME=ON KING_MOB=OFF SCAN_PARITY=ON TEMPO=OFF ---
+  => score-rate vs Scan (d9) = 0.056
+
+--- config A0B1C1D0 : ENDGAME=OFF KING_MOB=ON SCAN_PARITY=ON TEMPO=OFF ---
+  => score-rate vs Scan (d9) = 0.000
+
+--- config A1B1C1D1 : ENDGAME=ON KING_MOB=ON SCAN_PARITY=ON TEMPO=ON ---
+  => score-rate vs Scan (d9) = 0.000
+
+=== ANALYSE DOE (effets principaux sur score-rate vs Scan) ===
+  trop peu de configs valides (2/8) — DOE non concluant
+  RESULTS committe job-side ✓
+=== fin DOE feature-group ===
