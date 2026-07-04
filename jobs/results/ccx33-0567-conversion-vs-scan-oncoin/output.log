@@ -1,0 +1,19 @@
+=== CHECK CONVERSION vs Scan sur le coin (movetime 2.0s, oracle Scan d13) ===
+  suite : 2795 combos ; eval gen1 ; sans EGDB
+  confirme coin dans le build (defaut NEW) : 2/2 params-cle
+  150 combos (<=30/bin tempi) ; oracle Scan d13 ; movetime 2.0s
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+tempi    n |  NEW(coin)  OLD(gen1)
+    3   30 |      0.567      0.533
+    5   30 |      0.700      0.733
+    7   30 |      0.600      0.633
+    9   30 |      0.433      0.433
+   11   30 |      0.633      0.567
+  TOT  150 |      0.587      0.580
+
+=== VERDICT conversion : NEW(coin) 0.587 vs OLD(gen1) 0.580 ; delta +0.007 +- 0.112 (95%) ===
+=> delta non-significatif : conversion inchangee (le gain self-play ne se lit pas ici, ou n<).
+Reference historique 0440 : jass ~0.25 vs Scan ~0.95. Oracle Scan-deep = plafond ~1.0 par construction.
+  RESULTS committe job-side ✓
+=== fin 0567 (rc python=0) ===

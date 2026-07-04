@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0567-conversion-vs-scan-oncoin",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-04T12:52:12+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3175537
+  "ended_at": "2026-07-04T13:02:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
