@@ -45,10 +45,28 @@
 > **CONVERSION vs Scan (0567)** : NEW(coin) 0,587 vs OLD(gen1) 0,580 = pas de transfert du gain recherche à cette métrique
 > (les 2 saturent les combos à 2s ; le +49/+108 est du gain full-game à 0,3s, pas de la vue tactique brute).
 >
-> **PIVOT CAPACITÉ lancé (2026-07-04)** : (1) **`cpx62-0571-scan-matrix`** — gen1 vs Scan en matrice (prof.fixe=qualité eval,
-> movetime=force réelle, NPS-comp=isole vitesse) + dump parties → **où on décroche vs Scan** (eval-limité vs vitesse-limité).
-> (2) **`ccx33-0572-doe-featuregroup`** — DOE 2^(4-1) ENDGAME×KING_MOB×SCAN_PARITY×TEMPO, force vs Scan → **quel groupe paie/nuit**
-> (0569 avait un bug mkdir, corrigé). (3) eval-oracle d6 à refaire (d1 dégénéré). Les 3 localisent la capacité manquante.
+> **PIVOT CAPACITÉ → ENCODAGE (2026-07-04)** — recadrage JFC, important.
+> **MATRICE vs Scan `cpx62-0571` (gen1, dilf) :** profondeur fixe d7/9/11/13 = **0,113 / 0,125 / 0,192 / 0,229** ;
+> movetime 0,1/0,3/1,0 = **0,250 / 0,250 / 0,300** ; NPS-comp j0,6/s0,3 = **0,292**. Lecture : **on est EVAL-limités, PAS
+> vitesse-limités** — à profondeur ÉGALE on se fait écraser (0,11–0,23) et le NPS-comp ne décolle pas (donner + de temps
+> n'aide quasi rien). La recherche compense partiellement (d7→d13 : 0,11→0,23) mais le trou d'eval est profond.
+> (Caveat : dilf = combos tactiques = notre point faible → chiffres absolus pessimistes ; pattern relatif tient.)
+>
+> **RECADRAGE JFC (décisif) : ce n'est PAS la capacité/géométrie, c'est l'ENCODAGE/FIT.** Notre géométrie 32cf **⊇** celle de
+> Scan 8cf, et l'eval de Scan est **linéaire dans cette base** → **les bons poids EXISTENT dans notre espace** (Scan = preuve
+> d'existence). Un fit linéaire chez nous *peut* égaler Scan par construction. Donc le mur n'est pas « on ne peut pas
+> représenter » mais « **on n'apprend pas les bons poids qui existent** ». La matrice (0,11–0,23 à prof. égale avec un espace
+> superset) le confirme : **déficit d'ENCODAGE, pas de capacité.** Causes probables : (a) target WDL self-play trop pauvre
+> (regen-NEUTRE = changer le pilote ne suffit pas, c'est le TYPE de cible) ; (b) couverture d'espace (le self-play n'active
+> que nos features vues → le reste sous-entraîné/prior-dominé).
+> **DISTILLATION DEPUIS SCAN : EXCLUE (JFC).** Nous rendrait dérivés de Scan (⊥ autonomie self-play). Le levier encodage
+> doit rester autonome. (La règle gravée la listait ; JFC l'annule.)
+>
+> **PROCHAIN PROBE : DOE feature-group PROPRE sur cpx62.** But sous le recadrage encodage : **quel groupe de features
+> AIDE vs NUIT au fit** (en pruner un net-négatif = meilleur encodage / explique mix2M −18). ⚠️ 3 échecs (0569 mkdir,
+> 0572 `--prune`, 0573 réponse-vs-Scan = **effet PLANCHER** : fit-from-scratch réduit perd tout vs Scan → 0,000, aucune
+> discrimination). v4 : réponse **vs gen1** (binaires séparés par config → pas de mismatch cross-arch, pas de plancher),
+> capture blindée (VERDICT écrit en fin uniquement). eval-oracle d6 aussi à refaire.
 >
 > **EVAL-ORACLE `ccx33-0563` = INVALIDE tel quel** (à refaire). jass static vs Scan static d1 sur 3969 pos : Pearson
 > **0,035**, Spearman 0,030 (≈0). MAIS ancre **scan-vs-label-selfplay = 0,047 (≈0)** = impossible pour un moteur fort →
