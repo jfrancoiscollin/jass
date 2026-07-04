@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0558-fit-matin-mix2M",
+  "snapshot_at": "2026-07-04T06:40:22+00:00",
+  "started_at": "2026-07-04T06:35:20+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n4174795       1       05:01  0.0  0.0 bash\n4174797 4174795       05:01  0.0  0.0 bash\n4175296 4174797       04:48  120 11.2 python3\n"
+}
