@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0559-doe-ebf",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-04T06:37:51+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3139170
+  "ended_at": "2026-07-04T06:52:55+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
