@@ -10,3 +10,18 @@
   cellule mt0.3 lancee (pid 4538)
   cellule mt1.0 lancee (pid 4542)
   cellule nps_j0.6_s0.3 lancee (pid 4546)
+
+=== RESULTATS (score-rate + Elo estime, gen1 vs Scan) ===
+  cellule            rate    elo     type
+  d7                0.113   -359    prof.fixe=QUALITE-eval
+  d9                0.125   -338    prof.fixe=QUALITE-eval
+  d11               0.192   -250    prof.fixe=QUALITE-eval
+  d13               0.229   -211    prof.fixe=QUALITE-eval
+  mt0.1             0.250   -191    movetime=FORCE-reelle
+  mt0.3             0.250   -191    movetime=FORCE-reelle
+  mt1.0             0.300   -147    movetime=FORCE-reelle
+  nps_j0.6_s0.3     0.292   -154    NPS-comp=eval-isolee
+
+  Lecture : rate(prof.fixe) >> rate(movetime) => VITESSE-limite (eval trop lente, optimiser) ;
+            rate(prof.fixe) deja bas          => QUALITE d'eval (capacite, cf DOE 0569 / eval-oracle).
+            NPS-comp ~ prof.fixe              => confirme que le handicap movetime est bien la vitesse.
