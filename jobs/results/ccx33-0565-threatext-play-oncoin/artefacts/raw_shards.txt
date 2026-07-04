@@ -1,0 +1,8 @@
+shard 0 rc=0 : RESULT 167 54 84
+shard 1 rc=1 : <muet>
+shard 2 rc=0 : RESULT 163 57 85
+shard 3 rc=1 : <muet>
+shard 4 rc=0 : RESULT 181 58 66
+shard 5 rc=1 : <muet>
+shard 6 rc=0 : RESULT 169 58 78
+shard 7 rc=1 : <muet>
