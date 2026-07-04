@@ -11,7 +11,7 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
 
-## 🏆 COIN EBF corner+nmp BAKÉ (2026-07-04) — +49 Elo movetime, 1er levier search qui paie ; eval-oracle à refaire
+## 🏆 DEUX GAINS RECHERCHE BAKÉS (2026-07-04) — coin corner+nmp +49 ET threat_ext-sur-coin +108 ; eval-oracle à refaire
 > **Le coin PAIE — c'était PAS du bruit.** Résolution du sign-flip : 0560 corner +30 (47g) / 0561 corner+nmp +39 (248g,
 > capture douteuse) / **0562-clean corner+nmp = +49 Elo, IC [0,5396 ; 0,5991], 872 games, 16/16 shards, crashs=0 →
 > GAGNE hors-IC franc.** ⚠️ **Piège évité de justesse** : le « −30 provisoire » que j'avais lu était un **snapshot prog
@@ -19,9 +19,20 @@
 > −28 (173g bruit) / +39 (248g) / **+49 (872g, propre)** = signal réel et robuste.
 > **BAKÉ (commit 4bda84da7)** dans `search_params.hpp` : `probcut_min_depth 0→5`, `lmr_first_full_nonpv 4→2`,
 > `multicut_min_depth 6→4`, `eg_no_nmp true→false` (NMP finale réactivé, sound via F1). **Premier gain RECHERCHE de la
-> campagne.** Mesuré comme delta pur (baseline ère-gen1 threat_ext=0 des 2 côtés). Défaut `qs_threat_ext` inchangé (=true).
-> **Next** : re-tester `qs_threat_ext` au JEU sur ce nouveau défaut (le coin a libéré du budget nœuds — plan JFC) ;
-> décomposer NMP-vs-coin non demandé (baké le combo). Post-bake : confirmer le build main + jass_tests.
+> campagne.** Mesuré comme delta pur (baseline ère-gen1 threat_ext=0 des 2 côtés). **Build main validé** (0564 : build OK,
+> runtime OK ; les 10 test_scan_book FAIL = `mkstemp("/tmp")` refusé par le runner = environnemental, sans rapport).
+>
+> **2e GAIN — `qs_threat_ext` CONFIRMÉ AU JEU (0565) = +108 Elo sur le coin.** A/B sur le défaut baké (coin des 2 côtés) :
+> threat_ext=1 vs =0 → **rate 0,6504, elo +108, IC [0,627 ; 0,674], 1220 games → PAIE hors-IC franc.** **Co-adaptation
+> confirmée en beauté** (hypothèse JFC) : threat_ext **coûtait −21** à l'ancien défaut (0554), **paie +108** une fois l'EBF
+> réduit par le coin (budget nœuds libéré) = swing ~+130. threat_ext **déjà baké ON** → verdict **valide le défaut**, rien à
+> changer (commentaire source doc-maj 0a492bb34). ⚠️ **Alerte infra** : 4/8 shards ont **crashé (OOM ccx33 16gb, 8 process
+> jass concurrents)** — le +108 tient sur 1220 games non-biaisés (openings round-robin, ampleur+IC sans ambiguïté), mais
+> **réduire la concurrence des jobs ccx33** (8 shards sur 16gb = trop). JFC : pas de re-run, on bake+documente.
+>
+> **BILAN : moteur nettement renforcé, 2 gains empilés bakés sur main** (coin +49, threat_ext +108). Le PLATEAU disait « la
+> marge est dans la recherche » → livrée. **Next eval** : re-gen sur ce moteur (0566) → fit → juge vs gen1 (produit le vrai
+> prochain champion EVAL) ; + conversion vs Scan (0567) ; + eval-oracle d6.
 >
 > **EVAL-ORACLE `ccx33-0563` = INVALIDE tel quel** (à refaire). jass static vs Scan static d1 sur 3969 pos : Pearson
 > **0,035**, Spearman 0,030 (≈0). MAIS ancre **scan-vs-label-selfplay = 0,047 (≈0)** = impossible pour un moteur fort →
