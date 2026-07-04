@@ -1,0 +1,27 @@
+=== VERDICT ccx33-0563 EVAL-vs-SCAN (isole l'eval de la recherche) ===
+positions appariees : 3969 ; jass=static(gen1,d0) ; scan=static(d6,book off) ; STM-POV cp
+
+CORRELATION globale : Pearson r=0.0387  Spearman rho=0.0286
+fit s_jass ~ 0.003*s_scan + -12.2  ; residu RMS global = 139 cp
+
+RESIDU RMS par PHASE (nb pieces) — ou jass s'ecarte de Scan :
+  finale <=8       : n= 719  residu RMS=   152 cp  correl_locale=0.018
+  milieu-fin 9-16  : n=1006  residu RMS=   200 cp  correl_locale=0.073
+  milieu 17-24     : n= 972  residu RMS=   123 cp  correl_locale=0.062
+  ouverture >=25   : n=1272  residu RMS=    64 cp  correl_locale=-0.025
+
+RESIDU RMS par |s_scan| (equilibre vs decisif) :
+  |scan|<=50 equilibre   : n= 931  residu RMS=   142 cp
+  51-150                 : n= 946  residu RMS=   139 cp
+  151-400                : n=1134  residu RMS=   139 cp
+  >400 decisif           : n= 958  residu RMS=   136 cp
+
+ANCRES (label = score self-play stocke dans le corpus, STM-POV) :
+  correl jass-vs-label-selfplay : Pearson 0.5342   (jass suit-il SA cible ?)
+  correl scan-vs-label-selfplay : Pearson 0.0302   (Scan suit-il notre cible ?)
+
+ROUTAGE :
+  Pearson>~0.90 & residu faible & plat par phase => retard = SEARCH => valide pivot EBF, stop eval.
+  residu concentre finale/une phase            => LABELS => re-label EGDB-exact + refit cible.
+  correl basse / residu diffus                 => CAPACITE/overfit => DOE feature-group.
+  jass-vs-label >> jass-vs-scan                 => circularite (on fit notre propre vue, pas Scan).
