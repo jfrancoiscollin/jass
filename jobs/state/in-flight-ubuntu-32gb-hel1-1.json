@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0587-fix4-egdb-iso",
+  "script": "jobs/queue/cpx62-0587-fix4-egdb-iso.sh",
+  "pid": 34727,
+  "started_at": "2026-07-05T11:25:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
