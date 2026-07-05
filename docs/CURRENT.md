@@ -11,24 +11,30 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
-## 🎯 FRONT ORDERING (2026-07-05) — anchor 0597 VERT (gap réel) ; port history-prob Scan codé (develop) ; DOE en attente de gates
-> **Levier : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`) — gratuit en nœuds par construction (immunisé au tueur
-> « coût mange le gain » qui a tué qs/ext_forcing). Le diagnostic source-contre-source confirme 3 écarts vs jass :
-> E1 (jass=additif depth² non borné vs EMA bornée oublieuse), E2 (jass=bonus sur beta-cutoff seul vs update bidirectionnel
-> sur score>alpha), E3 (jass=captures non triées vs triées par history).
+## 🎯 FRONT ORDERING (2026-07-05) — le port history-prob NE BAKE PAS ; notre ordering est DÉJÀ optimal (fmc 0.91) ; confirm P1nc en vol
+> **Levier testé : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`, gratuit en nœuds). Diagnostic source-contre-source
+> confirmé (E1 additif-non-borné vs EMA, E2 beta-cutoff-seul vs bidirectionnel, E3 captures non triées). **Codé sur `develop`
+> (2edfbe84)** : `hist_mode={legacy|prob}` gaté (legacy byte-identical), init 2048, good/bad shift-5, update fin-de-nœud, E3,
+> flags `hist_pure`/`hist_order_captures`. Gates passés : `0597` (anchor), `0598` (build : legacy byte-identical ✓, perft ✓).
 >
-> **`cpx62-0597` ANCHOR VERT** : survie-1er-choix (accord d1↔d11) **jass 0.340 < Scan 0.431 (−0.091 ; finale −0.184)** →
-> jass sélectionne le bon coup profond au 1er essai MOINS souvent que Scan → arbre plus gros → **le levier existe** (pas
-> mort-né). Accord-top1 jass-vs-Scan d11 = 0.394 (on diverge). *(Nuance : survie = teinté eval-marge, pas cutoff pur ; le
-> DOE mesurera le `first_move_cutoffs` LITTÉRAL — déjà instrumenté, search.cpp:1134 — + node-EBF + Elo.)*
+> **❌ VERDICT DOE `cpx62-0599`** — le levier NE PAIE PAS :
+> - **(A) first-move-cutoff LITTÉRAL** : baseline **déjà 0.911** (d9) / 0.908 (d12) — **quasi-optimal** (un moteur bien ordonné
+>   plafonne ~0.90-0.92). Le prob ne le bouge pas (P1≈0, P2 +0.007). **Notre ordering de cut-node est DÉJÀ excellent.**
+> - **(B) node-EBF** : wash (P1nc −8% à d12 mais +13% à d9 ; P2 pire). Pas de gain net gratuit.
+> - **(C) Elo movetime** (6 cellules, n=236) : **toutes NEUTRE**. P1/P1nc penchent +15/+30 mais sous-résolus ; P2 ≈0.
 >
-> **CODÉ sur `develop` (commit 2edfbe84)** : `hist_mode={legacy|prob}` gaté (legacy byte-identical), EMA init 2048 /
-> good`(4096-h)>>5` / bad`h>>5`, update fin-de-nœud bidirectionnel (good best_move + bad essayés-avant), E3 captures,
-> flags `hist_pure` (P1) / `hist_order_captures`. Compile propre (rc=0 vs arbre develop).
+> **⚡ RECADRAGE MAJEUR** : le briefing prédisait « jass ordonne moins bien que Scan » — le **métrique littéral le RÉFUTE**
+> (fmc déjà 0.91). Le gap de 0597 (survie 0.34<0.43) n'était donc **PAS de l'ordering** mais de l'**EVAL-MARGE** : notre coup
+> préféré à d1 survit moins souvent à d11 (stabilité de l'éval avec la profondeur ; accord-top1 d11 vs Scan = seulement 0.39).
+> C'est le résidu le plus subtil — choisir le coup *exactement* le meilleur aussi fiablement que Scan — **pas adressable par
+> l'ordering** (déjà optimal) **ni par le travail éval grossier** (géométrie/labels/parité-ranking déjà faits).
 >
-> **GATES avant bake (dans l'ordre)** : 0597 ✅ (gap réel) → **`0598` build+test** (jass_tests/perft/**byte-identical
-> legacy**/smoke-prob) → **DOE P1/P2/P3** (P1=prob pur, P2=prob+machinerie jass, P3=legacy+E3). Bake SSI first-move-cutoff↑
-> ET node-EBF↓ ET Elo(movetime+généraliste)≥. Sinon consigner : l'ordering n'était pas le goulot, le front search se ferme.
+> **Reste 1 fil** : P1nc (prob-pur sans E3) penche +30 à mt0.3 mais neutre → **`cpx62-0600`** (en vol) tranche à ~1200 games/
+> cellule (dilf + généraliste). Si hors-IC>0.5 des 2 côtés → bake `hist_mode=1,hist_pure=1` (gain gratuit). Sinon → **front
+> ordering CLOS**. ⇒ avec eval-parité (0591), labels-épuisés (0590), quiescence-morte (0593), ordering-optimal (0599), les
+> leviers search par knob-tuning sont **tapés** ; le résidu −150 vs Scan est de l'**eval-marge** (move-selection fine).
+
+## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
 
 ## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
 > **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
