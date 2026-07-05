@@ -1,0 +1,21 @@
+=== ordering + top-1 jass vs Scan — HEAD a2ad427bc queue 0597 ordering+top1 jass vs Scan: survie du 1er choix (proxy cutoff cross-engine) + accord top-1 par phase ===
+  Scan=/root/jass-scan/scan_linux ; N=1500 ; d_shallow=1 d_deep=11
+  echantillon : 1500 ([375, 375, 375, 375] par bande)
+
+=== query jd1/jd11 + sd1/sd11 sur 1500 positions (16 shards) ===
+  reponses : 1500 / 1500  (echecs shards : 0)
+
+  [SURVIE DU 1er CHOIX] = accord(bestmove@d1, bestmove@d11) — proxy cross-engine du cutoff-au-1er-coup :
+  GLOBAL         n= 1500 | survie-1er-choix jass=0.340 scan=0.431 (ecart=-0.091) | accord-top1 deep=0.394 shallow=0.295
+  finale<=12     n=  375 | survie-1er-choix jass=0.301 scan=0.485 (ecart=-0.184) | accord-top1 deep=0.483 shallow=0.333
+  milieu13-20    n=  375 | survie-1er-choix jass=0.368 scan=0.445 (ecart=-0.077) | accord-top1 deep=0.467 shallow=0.405
+  milieu21-28    n=  375 | survie-1er-choix jass=0.323 scan=0.363 (ecart=-0.040) | accord-top1 deep=0.349 shallow=0.272
+  ouverture>=29  n=  375 | survie-1er-choix jass=0.368 scan=0.432 (ecart=-0.064) | accord-top1 deep=0.277 shallow=0.168
+
+  ===== ROUTAGE =====
+  jass survie MOINS que Scan (ecart -0.091) => notre coup immediat (ordering/eval) est le bon coup profond
+  MOINS souvent que Scan => on gaspille des noeuds sur de mauvais 1ers coups => arbre plus gros / moins profond
+  => LEVIER ORDERING/eval-marge REEL. Piste : meilleure selection du 1er coup (eval au coup, history/SEE ordering).
+  accord-top1 deep global=0.394 : a quel point on joue les MEMES coups que Scan a d11 (bas => on diverge).
+  RESULTS committe ✓
+=== fin ordering+top1 ===
