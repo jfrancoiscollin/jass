@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0590-p2-recut",
-  "script": "jobs/queue/ccx33-0590-p2-recut.sh",
-  "pid": 3222616,
-  "started_at": "2026-07-05T12:13:13+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

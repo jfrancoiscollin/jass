@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0590-p2-recut",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T12:13:13+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3222616
+  "ended_at": "2026-07-05T12:18:27+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
