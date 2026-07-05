@@ -1,0 +1,9 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
+  HEAD main : bb7bfaa3d runner: start ccx33-0596-tb-regen-app
+  moteur coin : 3/3 params-cle ; NUM_PATTERNS=32 ; egdb=/root/egdb_extracted/app
+  combos=1239648
+  seed-file : dilf=305 lidraughts=300000
+
+=== GEN PHASE pd8 : 1200000 pos @ pd8 +tb-relabel (x8 shards, coin bake) ===
+  phase pd8 : 1200000 pos ; LABELHYG plycap_games=6/9038 (0.0663864%)  contaminated_samples=121806/150000 (81.204%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=on)
+  ❌ tb_relabel=0 sur shard1 phase pd8 => EGDB n'agit pas => ABORT (fail-fast)

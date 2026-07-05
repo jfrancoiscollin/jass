@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0596-tb-regen-app",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 5,
   "started_at": "2026-07-05T16:52:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3246952
+  "ended_at": "2026-07-05T18:39:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
