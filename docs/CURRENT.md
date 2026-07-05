@@ -11,7 +11,33 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
 
-## 🧬 FRONT ACTUEL : QUALITÉ DES LABELS WDL (2026-07-04) — pas la géométrie, pas le volume, l'ENCODAGE/LABEL
+## ❌ LEVIER LABEL-QUALITY RÉFUTÉ (2026-07-05) — l'hygiène de label DÉGRADE l'eval ; batterie sanity-gen adoptée
+> **Branche `develop`** = code (reset sur main HEAD ; git server accepte main+develop ; runner build main ; jobs overlay develop au runtime).
+>
+> **VERDICT DÉCISIF `cpx62-0582` : les 4 fixes label-hygiène RÉGRESSENT l'eval de −25 Elo** (match from-scratch nouveau vs
+> ancien pipeline, IC [0,446 ; 0,482], hors-IC, 2440 games). **La « contamination 85% » était une MAUVAISE INTERPRÉTATION** :
+> le label = **issue RÉELLE de la partie jouée (retour Monte-Carlo)**, non-biaisé (le code le disait : « the played-out
+> result stays truthful »). L'exploration eps produit V^μ (léger décalage de politique à eps=5%), et surtout de la
+> **COUVERTURE off-policy utile**. FIX#1 (retirer eps) a **détruit cette couverture** → distribution rétrécie → −25.
+> ⇒ **On n'adopte PAS les fixes ; l'exploration reste.** Le WDL de nos parties n'est PAS le problème. Le « secret de Scan »
+> n'est pas la propreté one-shot du label → plus probablement **itération générationnelle + échelle** (E3). (Nuance : FIX#2
+> adjudication vise un VRAI biais — les fausses nulles ply-cap 19% — noyé dans le bundle ; isolable si besoin.)
+>
+> **BRIEFING sanity-gen (JFC) — PRINCIPE ADOPTÉ** : « un gen se vérifie comme un DATASET, pas comme un programme ». Le
+> bug ply-cap a vécu car on vérifiait « le code tourne », jamais « la distribution dit la vérité ». Piliers : P1 manifest
+> (flags→effets>0), P2 audit arbitre, P3 holdout par partie, C1 gen-témoin figé, D1 calibration. (Note : l'exemple fondateur
+> du briefing — les 85% — est justement le contre-exemple, mais les checks restent bons et P3 a trouvé un vrai bug.)
+>
+> **⚠️ P3 : FUITE dans E1** — `train_stream --holdout-frac` retient la QUEUE ; **E1 v2 (0579) shufflait les positions** →
+> positions d'une même partie réparties train+val = **fuite same-game** → log-loss optimiste → **le verdict « courbe plate »
+> (famine réfutée) est SUSPECT**. (Comparaison 8cf-vs-32cf tient — même fuite des 2 côtés ; le « volume n'aide pas » non.)
+>
+> **DEUX JOBS EN VOL** : `ccx33-0583` **P2 audit arbitre** (désaccord label-partie vs deep-arbitre d14 par phase = mesure
+> DIRECTE de vérité des labels, le « 23% » chiffré, jamais faite) ; `cpx62-0584` **P3 E1-clean** (holdout PROPRE = val sur
+> shard gen SÉPARÉ, sans fuite → la courbe plate famine tient-elle ?). Ces deux tranchent le socle factuel avant de choisir
+> la direction (label-quality mort → itération-échelle E3 ? ou autre).
+
+## 🧬 FRONT ANTÉRIEUR : QUALITÉ DES LABELS WDL (2026-07-04) — pas la géométrie, pas le volume, l'ENCODAGE/LABEL
 > **Branche `develop`** = branche de code (reset sur main HEAD ; le git server accepte main+develop, le runner build main ;
 > les jobs overlay le code develop au runtime). **Distillation EXCLUE** (JFC) · **deep-relabel EXCLU** (auto-distillation, §6).
 >
