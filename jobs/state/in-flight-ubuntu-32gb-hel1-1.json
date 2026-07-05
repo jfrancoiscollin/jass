@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0599-ordering-doe",
+  "script": "jobs/queue/cpx62-0599-ordering-doe.sh",
+  "pid": 50690,
+  "started_at": "2026-07-05T18:02:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
