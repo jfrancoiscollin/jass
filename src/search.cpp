@@ -339,11 +339,34 @@ struct Searcher {
     }
 };
 
+// Probabilistic history (Scan sort.cpp) : EMA de P(coup bon) dans [0,PROB_ONE).
+constexpr int PROB_ONE  = 4096;
+constexpr int PROB_HALF = 2048;
+inline void hist_good(int& h, int shift) noexcept { h += (PROB_ONE - h) >> shift; }
+inline void hist_bad (int& h, int shift) noexcept { h -= h >> shift; }
+
 // Score used to sort the move list. Larger = tried first.
 inline int order_score(const Searcher& s, const Move& m, int ply,
                        const Move& tt_move, bool tt_hit,
                        const Move& prev_move) noexcept {
     if (tt_hit && m == tt_move) return 1'000'000;
+    // ---- Mode prob (Scan) : estimateur EMA ; TT en tete, puis (sauf hist_pure)
+    //      killers/countermove au-dessus, puis history-prob ; captures triees si E3. ----
+    if (s.params.hist_mode == 1) {
+        if (m.is_capture())
+            return s.params.hist_order_captures ? s.history[m.from][m.to] : 0;
+        if (!s.params.hist_pure) {
+            if (m == s.killers[static_cast<std::size_t>(ply)][0]) return 800'000;
+            if (m == s.killers[static_cast<std::size_t>(ply)][1]) return 700'000;
+            if (prev_move.from != 0) {
+                const Move& cm = s.countermove
+                    [static_cast<std::size_t>(prev_move.from)]
+                    [static_cast<std::size_t>(prev_move.to)];
+                if (cm.from != 0 && m == cm) return 650'000;
+            }
+        }
+        return s.history[m.from][m.to];   // P1 pur = estimateur seul
+    }
     if (m.is_capture())          return 0;            // captures: keep generation order
     if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
     if (m == s.killers[static_cast<std::size_t>(ply)][1])  return   700'000;
@@ -1019,6 +1042,10 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // Quiet moves actually searched (for the history malus on a beta cutoff).
     std::array<Move, 64> quiets_searched;
     int n_quiets_searched = 0;
+    // Mode prob : on retient TOUS les coups essayes dans l'ordre (captures incluses, E3) pour la
+    // mise a jour EMA bidirectionnelle de fin de noeud (good best_move + bad les essayes-avant).
+    std::array<Move, 64> tried_moves;
+    int n_tried = 0;
     for (const auto& m : moves) {
         // LMP : skip late quiet moves at shallow non-PV nodes. When the
         // improving heuristic is on and we are NOT improving, prune one step
@@ -1124,6 +1151,9 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // were tried and failed (history malus). Captures are never tracked.
         if (!m.is_capture() && n_quiets_searched < static_cast<int>(quiets_searched.size()))
             quiets_searched[static_cast<std::size_t>(n_quiets_searched++)] = m;
+        // Mode prob : ordre d'essai complet (captures incluses) pour l'EMA de fin de noeud.
+        if (params.hist_mode == 1 && n_tried < static_cast<int>(tried_moves.size()))
+            tried_moves[static_cast<std::size_t>(n_tried++)] = m;
 
         if (score > best) {
             best      = score;
@@ -1146,7 +1176,8 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 // ~history_max and decays large OLD cutoffs toward it, so stale
                 // history stops dominating the ordering. history_max=0 = legacy
                 // unbounded += bonus (byte-identical default).
-                {
+                // Mode prob : l'history est mise a jour par l'EMA de fin de noeud, PAS ici (sinon double).
+                if (params.hist_mode == 0) {
                     int& h = history[m.from][m.to];
                     h += (params.history_max > 0)
                        ? hbonus - h * hbonus / params.history_max
@@ -1155,7 +1186,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 // History malus (opt-in) : penalise the quiet moves that were
                 // tried before this cutoff and failed, so they sink in the
                 // ordering. Same gravity rule, with a negative delta.
-                if (params.hist_malus > 0) {
+                if (params.hist_mode == 0 && params.hist_malus > 0) {
                     const int hmal = hbonus * params.hist_malus / 100;
                     for (int qi = 0; qi < n_quiets_searched; ++qi) {
                         const Move& qm = quiets_searched[static_cast<std::size_t>(qi)];
@@ -1186,6 +1217,17 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             break;
         }
         ++move_idx;
+    }
+
+    // Mode prob (Scan) : mise a jour EMA de FIN DE NOEUD. Si best_move a releve alpha au-dela de
+    // l'entree (score>alpha_orig) et >1 coup legal : good(best_move) + bad(tous les essayes AVANT lui,
+    // captures incluses = E3). Signal bidirectionnel ~2-3x plus dense que le beta-cutoff-seul du legacy.
+    if (params.hist_mode == 1 && best_move.from != 0 && best > alpha_orig && moves.size() > 1) {
+        for (int ti = 0; ti < n_tried; ++ti) {
+            const Move& tm = tried_moves[static_cast<std::size_t>(ti)];
+            if (tm == best_move) { hist_good(history[best_move.from][best_move.to], params.prob_shift); break; }
+            hist_bad(history[tm.from][tm.to], params.prob_shift);
+        }
     }
 
     { BD_TIME(path_check); hash_path.pop_back(); }
@@ -1318,6 +1360,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     Searcher s;
     s.tt        = &tt;
     s.params    = limits.params;
+    // Mode prob (Scan) : la table history est une probabilite, init a PROB_HALF (P=0,5), pas 0.
+    if (s.params.hist_mode == 1)
+        for (auto& row : s.history) row.fill(PROB_HALF);
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
