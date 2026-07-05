@@ -1,0 +1,17 @@
+=== P3 E1-clean : overlay develop (holdout-frac + 8cf) ===
+=== gen 16 shards @ pd6 (~350000/shard) — shard0=VAL, reste=TRAIN ===
+  VAL=350000 (shard separe, parties disjointes) ; train pool=5250000
+=== fits (val PROPRE = shard separe) ===
+  V=500000 8cf : holdout=NA
+  V=500000 32cf : holdout=NA
+  V=1000000 8cf : holdout=NA
+  V=1000000 32cf : holdout=NA
+  V=2000000 8cf : holdout=NA
+  V=2000000 32cf : holdout=NA
+=== VERDICT P3 E1-clean : holdout log-loss (val PROPRE = shard separe, pas de fuite) ===
+      train        8cf       32cf       ecart
+
+
+Comparer a 0579 (shufflé/fuite) : si la courbe DESCEND ici alors qu'elle etait plate en 0579 =>
+  la fuite masquait l'effet du volume => le verdict famine etait un ARTEFACT. Si toujours plate => tient.
+  VERDICT committe ✓
