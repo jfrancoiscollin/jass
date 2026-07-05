@@ -11,6 +11,31 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
+## 🔎 A4-bis ABLATION SEARCH FIXED-DEPTH (2026-07-05, `ccx33-0592`) — le déficit par-nœud est la QUIESCENCE
+> **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
+> `--jass-search-params` (merge sur coin). Résultats (rate jass, ±IC95, ~240 g/cellule) :
+>
+> | cellule | rate | Elo | lecture |
+> |---|---|---|---|
+> | base d7 / d9 / d11 | 0.114 / 0.127 / 0.195 | −356 / −335 / −246 | re-confirme la courbe 0571 |
+> | **qsstrong d9** (`qs_forcing_depth=6,qs_promo_depth=6`) | **0.267** | **−175** | **DOUBLE le rate — quiescence faible !** |
+> | **noreduce d9** (LMR/LMP/razor/probcut OFF) | **0.267** | **−175** | on prune/réduit TROP (prof. eff. < nominale) |
+> | softlmr d9 | 0.136 | −322 | marginal (dans l'IC) |
+> | histlmr d9 (`lmr_hist_div=6000`) | 0.127 | −335 | nul |
+> | allon d9 (combiné) | 0.254 | −187 | ≈ qsstrong seul (pas additif) |
+>
+> **⇒ VERDICT : le déficit par-nœud est dominé par la QUIESCENCE.** Ajouter forcing+promo quiescence (`qs_*_depth=6`)
+> **réduit le gap fixed-depth de moitié** (−335 → −175, hors-IC franc). Notre quiescence par défaut est **sous-puissante** →
+> feuilles tactiques mal résolues → on saigne ~160 Elo/nœud. `noreduce` double aussi le rate, mais c'est le trade-off
+> vitesse/précision (à prof. fixe le pruning ne fait que nuire ; en temps réel il achète de la profondeur) — pas un
+> levier gratuit. **La quiescence, elle, améliore la PRÉCISION des feuilles et le forcing/promo qs est ÉTROIT (peu de
+> nœuds)** → candidate à un vrai gain net.
+>
+> **⇒ ACTION (prochaine manche)** : tester `qs_forcing_depth`/`qs_promo_depth` au **MOVETIME** (jass-vs-jass A/B vs coin baké +
+> anchor vs Scan) — le gain fixed-depth doit survivre au coût-nœud. Si ça paie à temps réel → **bake** (ce serait le 3e gain
+> search, après coin +49 et threat_ext +108). C'est le levier le plus prometteur identifié à ce jour. (⚠️ `qs_threat_ext`
+> est déjà baké ON ; ici on ajoute forcing+promo qs, distincts.)
+
 ## 🎯 A4 EVAL-ORACLE (2026-07-05, `ccx33-0591`) — EVAL À PARITÉ AVEC SCAN ; le retard est le SEARCH, pas l'encodage
 > **Re-mesure eval-vs-Scan en RANG (Spearman), join par BITBOARDS.** Corrige le `r=0.04` de 0576 : cause = **désalignement
 > d'index** (relabel_with_scan SKIP des positions → join par indice corrompu ; POV OK, Scan sign-correct x1). Après fix
@@ -26,17 +51,17 @@
 >
 > Sanity jass vs matériel r=+0.974 (eval bien-formée). **jass-static et Scan-static ORDONNENT les positions quasi à
 > l'identique** (ρ jass-scan 0.92-0.955) et suivent l'oracle d12 à 0.94-0.99. **Le gap eval Scan−jass est minuscule
-> (+0.026 global), max en finale (+0.038) — pile là où tb-relabel (+18) agit.**
+> (+0.026 global), max en finale (+0.038) — la seule phase avec un vrai résidu eval (mais on n'a pas d'outil qui marche pour l'attaquer : cf tb-relabel PHANTOM ci-dessous).**
 >
 > **⇒ VERDICT : l'hypothèse « CAPACITÉ/encodage » de 0576 est RÉFUTÉE (artefact d'alignement).** Notre eval statique
 > 32cf est à ~PARITÉ avec Scan en rang. **Le retard vs Scan n'est PAS l'eval → c'est le SEARCH.** Ça **valide le front
-> EBF** (déjà +49 coin + +108 threat_ext). Le résidu eval (+0.026) est petit et concentré en finale, traité par tb-relabel.
+> EBF** (déjà +49 coin + +108 threat_ext). Le résidu eval (+0.026) est petit et concentré en finale, SANS outil qui marche (tb-relabel n'a jamais tiré, cf bloc PHANTOM).
 > *(Nuance honnête : mesure au niveau POSITION, pas top-1 move-ordering — un ρ 0.93 peut masquer des écarts au coup de
 > décision ; la direction est nette et cohérente avec nos gains search, mais le test définitif serait le top-1.)*
 >
 > **CONVERGENCE 0590+0591** : la carte des labels (0590 : biais actionnable = finale, déjà traité) ET l'eval-oracle (0591 :
 > eval à parité) pointent TOUTES DEUX **hors de l'eval, vers le SEARCH**. Le programme se recentre : **épuiser les leviers
-> SEARCH/EBF** (là où on gagne réellement) ; côté eval, ne reste que tb-relabel finale (0589 en cours) et un résidu de fit
+> SEARCH/EBF** (là où on gagne réellement) ; côté eval, ne reste qu'un résidu finale sans outil fonctionnel et un résidu de fit
 > marginal. Fin de la chasse géométrie/labels/capacité.
 
 ## 🗺️ P2 RE-CUT : CARTE DU BIAIS PAR PHASE (2026-07-05, `ccx33-0590`) — biais actionnable = FINALE ; ouverture = variance
@@ -58,35 +83,33 @@
 > jamais compté. « Le 24% conflate biais et variance » est donc FAUX : le 24% est du biais, la variance est ailleurs.
 >
 > **⇒ ROUTAGE (mémo §2, gravé)** :
-> - **Finale = biais C1** → **tb-relabel le traite déjà (+18, 0587)**. Cohérent. Levier finale = ÉPUISÉ par la TB.
+> - **Finale = biais C1** → seule phase avec biais label réel, MAIS l'outil visé (tb-relabel/EGDB) **ne charge pas** (0587/0589 : `tb_relabel=0` ; cf bloc PHANTOM) → biais finale **non traité à ce jour**.
 > - **Ouverture + milieu 13-20 = variance** → **axe label FERMÉ**. Leviers = couverture (A2 eps) / volume / itération E3. ⛔ jamais relabel-arbitre (auto-distillation).
 > - **Milieu 21-28 = biais MODESTE** (C1 6-12%, sensible au seuil) → seul candidat label résiduel, **faible reward** ; remède = **E3 (meilleur pilote)** ou multi-rollout doux ciblé. ⛔ pas de relabel-arbitre.
 >
-> **Conclusion stratégique** : après tb-relabel, le **front label est quasi-épuisé** — le biais actionnable était concentré
-> en finale (traité) ; le reste est variance saine (à ne pas toucher, leçon −25) ou biais mid-late modeste (E3). ⇒ le plateau
+> **Conclusion stratégique** : le **front label est quasi-épuisé** — le biais actionnable est concentré
+> en finale (biais réel mais SANS outil fonctionnel — EGDB ne charge pas) ; le reste est variance saine (à ne pas toucher, leçon −25) ou biais mid-late modeste (E3). ⇒ le plateau
 > n'est plus principalement un problème de LABELS → bascule vers **capacité/encodage (A4)** et **itération/échelle (E3)**.
 >
 > *(Gap : contrôle erreur-arbitre TB N/A — `egdb-relabel` a échoué sur ccx33 (init db). Moins porteur que craint : l'ouverture
 > est déjà 91% C3=arbitre-INDÉCIS, pas arbitre-faux. Re-run possible sur cpx62 (EGDB prouvé en 0587) si on veut le chiffre.)*
 
-## ✅ FIX#4 TB-RELABEL = +18 Elo hors-IC (2026-07-05, `cpx62-0587`) — le SEUL levier label qui gagne
-> **VERDICT `cpx62-0587` (EGDB isolé, 3 bras vs baseline A, d9 dilf, 2440 games/bras)** :
-> - **B (+TB-relabel)** : rate **0.5254±0.0174 → ~+18 Elo, HORS-IC → AIDE, à GARDER.**
-> - **C (+adjud FIX#2)** : rate 0.5025±0.0175 → +2 Elo, parité (pas d'effet net isolé).
+## ❌ FIX#4 TB-RELABEL — LE « +18 » ÉTAIT UN PHANTOM (correction 2026-07-05, `cpx62-0589`) : EGDB ne charge PAS
+> **CORRECTION D'UNE ERREUR.** J'avais promu 0587 comme « FIX#4 tb-relabel = +18 Elo, seul levier label qui gagne ».
+> **C'était faux.** La re-lecture des logs le prouve : **`tb_relabel=0` sur TOUS les bras de 0587 (y compris B «+TB»)**
+> ET sur les 3 phases de 0589. **Le relabel par-sample n'a JAMAIS tiré un seul échantillon.** J'avais inféré le mécanisme
+> du différentiel B-vs-C sans vérifier le compteur — erreur.
+> - **0587** : B a battu A de +18 hors-IC, MAIS avec `tb_relabel=0` → le +18 n'est PAS du tb-relabel. Reste noise (un match
+>   à 2σ ≈ 5% de faux positif, variance de seeds sur fits from-scratch) ou TB-terminate-en-play — non départageable.
+> - **0589 (manche prod, 2M, fit prior gen1)** : `tb_relabel=0` partout, champion-tbregen **RÉGRESSE −37 vs gen1** (hors-IC),
+>   neutre vs champregen. Le lever ne compose pas — et surtout il n'a jamais agi.
+> - **0590** : `--egdb-relabel` a échoué explicitement (init KO). **Trois échecs EGDB indépendants (ccx33 + cpx62 ×2)**
+>   ⇒ **l'EGDB ne charge pas au runtime sur les box** (data présente mais `egdb::init` échoue / DB inutilisable).
 >
-> **Pourquoi c'est réel et pas un artefact EGDB muet** : le différentiel B≠C EST la signature qu'EGDB a bien tiré. Adjud
-> (FIX#2, ne touche pas l'EGDB) = parité ; TB (FIX#4, dépend de l'EGDB) = +18. Si l'EGDB avait échoué en silence,
-> tb-relabel serait un no-op et B se serait effondré sur A comme C. Le signal est différentiel → EGDB actif.
->
-> **Cadrage** : ceci NE contredit PAS 0582. La « pureté générique » (retirer eps, filtrer, relabel deep) reste MORTE (−25).
-> Ce qui gagne ici est **ciblé** : réécrire le WDL des positions **finale** avec la valeur EXACTE de la base tablebase —
-> exactement le biais que P2 (arbitre d14) a mesuré à **31% de désaccord en finale** (0585). Un seul levier label survit,
-> et c'est le seul qui vise un biais MESURÉ, pas une hygiène spéculative.
->
-> **⇒ ACTION** : replier **FIX#4 tb-relabel** dans le package gen de PRODUCTION (le gagnant asym/quiet-only/enrichment/
-> TB-terminate reste intact — tb-relabel s'ajoute côté labels finale). Regénérer le corpus champion avec labels finale
-> exacts, refit, re-match. C'est la prochaine vraie manche eval. (P3 diag 0588 en vol pour clore le socle famine, hors
-> chemin critique.)
+> **⇒ CONSÉQUENCES** : (1) tb-relabel/EGDB n'est **PAS** un levier confirmé — le +18 est retiré du tableau. (2) On NE
+> promeut PAS champion-tbregen. (3) gen1 **reste le champion**. (4) Le biais finale (0590 C1) est réel mais on n'a
+> **aucun outil qui marche** pour l'attaquer tant que l'EGDB ne charge pas. (5) Si on veut ce lever un jour : d'abord
+> **réparer/diagnostiquer l'install EGDB** (pourquoi `egdb::init` échoue sur `/root/egdb_extracted`) — sinon inutile.
 
 ## ❌ LEVIER LABEL-QUALITY RÉFUTÉ (2026-07-05) — l'hygiène de label DÉGRADE l'eval ; batterie sanity-gen adoptée
 > **Branche `develop`** = code (reset sur main HEAD ; git server accepte main+develop ; runner build main ; jobs overlay develop au runtime).
