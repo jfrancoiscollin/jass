@@ -1,0 +1,1 @@
+=== MINI-VALIDATION DECISIVE (from-scratch + verif oracle) — overlay develop ===
