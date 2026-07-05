@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0602-siblings-corpus",
-  "script": "jobs/queue/ccx33-0602-siblings-corpus.sh",
-  "pid": 3254696,
-  "started_at": "2026-07-05T20:35:59+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
