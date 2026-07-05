@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0591-a4-encoding-rankloss",
-  "script": "jobs/queue/ccx33-0591-a4-encoding-rankloss.sh",
-  "pid": 3223820,
-  "started_at": "2026-07-05T13:05:33+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
