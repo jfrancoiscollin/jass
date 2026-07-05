@@ -3,3 +3,9 @@
 
 === A/B jass-vs-jass au MOVETIME (side A=qs vs side B=coin, gen1) ===
   -- f6p6_mt02 (mt=0.2 : qs_forcing_depth=6,qs_promo_depth=6) --
+  [f6p6_mt05] mt=0.5 A(qs)=166 B(coin)=375 D=91 n=632  rate_A=0.3347+-0.0337  elo~-119  IC=[0.301,0.368]  => NUIT — hors-IC<0.5  (qs_forcing_depth=6,qs_promo_depth=6)
+
+  GATE : une cellule rate_A>0.5 hors-IC => la quiescence forcing/promo PAIE au temps reel => BAKE le meilleur spec
+  (3e gain search). Si NEUTRE partout => le +160 fixed-depth ne survit pas au cout-noeud => la qs ne change pas la
+  force reelle (le pruning nous redonne la profondeur perdue) => rester sur les autres leviers search/EBF.
+  Robustesse TC : comparer f6p6 @ mt0.05 / 0.2 / 0.5 (si le gain croit avec le temps => qs + profondeur composent).
