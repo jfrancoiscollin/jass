@@ -126,3 +126,10 @@ index 69bece58b..05e86e5fc 100644
   new : 300000 pos ; LABELHYG plycap_games=157/923 (17.0098%)  contaminated_samples=541/19291 (2.80442%)  dropped_post_eps=541  adjudicated=598  tb_relabel=0 (drop_post_eps=on decay_plies=20 adjud_material=3 hold=10 pair_openings=on tb_relabel=off)
 
 === FITS (prior gen1 lambda=0.25) ===
+  eval_old fitte
+  eval_new fitte
+
+=== MATCH head-to-head : eval_NEW vs eval_OLD (d9 dilf) ===
+  [new-vs-old] games=1830 A=759 B=639 D=432  rate=0.5328+-0.0200  elo~+23  IC=[0.5128,0.5528]
+  => NOUVEAU > ANCIEN hors-IC : l'hygiene de label PAIE => integrer les fixes au gen, GO E2
+=== fin mini-validation ===
