@@ -1,0 +1,42 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
+  HEAD main : 13990cf4a runner: start cpx62-0589-tb-regen-prod
+  moteur coin : 3/3 params-cle ; NUM_PATTERNS=32 ; egdb=/root/egdb_extracted
+  combos=1239648
+  seed-file : dilf=305 lidraughts=300000
+
+=== GEN PHASE pd8 : 1200000 pos @ pd8 +tb-relabel (x16 shards, coin bake) ===
+  phase pd8 : 1200000 pos ; LABELHYG plycap_games=587/3706 (15.8392%)  contaminated_samples=63861/75000 (85.148%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=on)
+  ⚠ tb_relabel absent/0 sur shard1 (verifier egdb)
+  phase pd8 committee job-side
+
+=== GEN PHASE pd9 : 400000 pos @ pd9 +tb-relabel (x16 shards, coin bake) ===
+  phase pd9 : 400000 pos ; LABELHYG plycap_games=183/1190 (15.3782%)  contaminated_samples=21562/25000 (86.248%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=on)
+  ⚠ tb_relabel absent/0 sur shard1 (verifier egdb)
+  phase pd9 committee job-side
+
+=== GEN PHASE pd10 : 400000 pos @ pd10 +tb-relabel (x16 shards, coin bake) ===
+  phase pd10 : 400000 pos ; LABELHYG plycap_games=177/1191 (14.8615%)  contaminated_samples=21520/25000 (86.08%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=on)
+  ⚠ tb_relabel absent/0 sur shard1 (verifier egdb)
+  phase pd10 committee job-side
+
+=== MERGE corpus tb-regen 2M ===
+  corpus tb-regen : 2000000 pos
+  corpus committe job-side (20M)
+
+=== FIT prior gen1 (lambda=0.25) sur corpus tb-regen + combos ===
+  concat -> 3239648 : tbregen.jnnw=2000000, combos.jnnw=1239648
+  prior : champion=/root/cw-tbregen/gen1_prior.pjtw (scale=1000)  λ=0.25 decay=1.0  prec[pat] med=3.123e-05 max=2.225e-02 prec[ext]=2.500e-01  warm-start at μ
+    train_loss=0.610699  iters=25  (380.4s)
+  champion-tbregen committe job-side
+
+=== JUGE (moteur COIN par defaut, meme build des 2 cotes, d9 dilf x4) ===
+  [candtb-vs-gen1] games=2440 A=824 B=1080 D=536  rate=0.4475+-0.0174  elo~-37  IC=[0.4301,0.4649]  => REGRESSE (hors-IC)
+  [candtb-vs-champregen] games=2440 A=956 B=988 D=496  rate=0.4934+-0.0177  elo~-5  IC=[0.4757,0.5111]  => NEUTRE (IC contient 0.50)
+
+  GATE (1) candtb-vs-gen1 : borne basse IC>0.50 => tb-relabel a debloque le plateau au scale (plain-regen etait
+     NEUTRE 0.5041 en 0570) => PROMO champion-tbregen (nouveau champion EVAL), chaine gen suivante.
+  (2) candtb-vs-champregen : marge de tb-relabel au-dessus du plain regen (meme package, seul tb ajoute).
+  Sinon (NEUTRE/REGRESSE vs gen1) => tb-relabel gagne en iso-volume (0587) mais ne compose pas au scale avec prior
+     gen1 => diagnostiquer (dose tb en finale / prior ecrase le signal finale) avant de conclure.
+  VERDICT committe ✓
+=== fin manche prod tb-relabel ===
