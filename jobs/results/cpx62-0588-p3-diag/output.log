@@ -1,0 +1,38 @@
+=== P3 DIAG : overlay develop + build ===
+  develop=6b9ad9b0b ; train_stream a holdout-frac: 2
+  geom 8cf NUM_PATTERNS=8
+=== gen 4 shards ~200000 ===
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  VALN=200000  POOLN=600000
+data 500000
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  V=300000  FRAC=0.4  data=500000
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+=== dump-features + fit 8cf (FULL LOG capturé) ===
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  dump rc=0 (wrote 500000 × 120 Scan-style extras to /root/cw-p3diag/feat)
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  fit 8cf rc=2 ; HOLDOUT_LOGLOSS = ABSENT
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+=== derniere 20 lignes du fit log (LE diagnostic) ===
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  usage: train_stream.py [-h] --data DATA --feat FEAT --out OUT
+                         [--loss {logistic,ls}] [--target {wdl,value}]
+                         [--value-scale VALUE_SCALE] [--full-fold |
+                         --color-fold] [--tempo-stage] [--phase-lo PHASE_LO]
+                         [--phase-hi PHASE_HI] [--l2 L2] [--hier-l2 HIER_L2]
+                         [--prior-mean PRIOR_MEAN]
+                         [--prior-visit-scale PRIOR_VISIT_SCALE]
+                         [--prior-decay PRIOR_DECAY] [--max-iter MAX_ITER]
+                         [--scale SCALE] [--chunk CHUNK] [--prune] [--no-prune]
+                         [--prune-min-visits PRUNE_MIN_VISITS] [--king-patterns]
+  train_stream.py: error: unrecognized arguments: --holdout-frac 0.4
+fatal: could not open '/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt' for reading: No such file or directory
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+  ⚠ commit echoue
+/root/jass/jobs/results/cpx62-0588-p3-diag/artefacts/VERDICT.txt: No such file or directory (os error 2)
+=== fin diag ===
