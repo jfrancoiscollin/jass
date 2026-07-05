@@ -1646,6 +1646,128 @@ jass::Position position_from_record(const char* rec) {
 }
 }  // namespace
 
+// --gen-siblings <parents.jnnw> <out.jnnw> [depth=9] [--nnue PATH] [--m-min CP=15]
+//                [--max-parents N] [--max-pairs-per-parent K=16] [--seed S=1]
+//   Piste (a) "depth-consistency training". Pour chaque parent QUIET (noeud sans capture),
+//   recherche chaque enfant legal a profondeur fixe (eval-pur, PAS de DB => echelles comparables).
+//   Valeur parent-POV d'un coup = -score(enfant). Emet les PAIRES ordonnees (better > worse) dont
+//   la marge parent-POV >= m_min (cp). Sortie JNNW : records PAR DEUX (2k=better, 2k+1=worse) ;
+//   score[2k] = marge (cp), wdl[2k] = pair_src (0=deep). Le trainer lit les couples consecutifs.
+int run_gen_siblings_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --gen-siblings <parents.jnnw> <out.jnnw> [depth=9] "
+                     "[--nnue PATH] [--m-min CP] [--max-parents N] [--max-pairs-per-parent K]\n";
+        return 2;
+    }
+    const std::string in_path  = argv[2];
+    const std::string out_path = argv[3];
+    int depth = 9;
+    if (argc > 4 && argv[4][0] != '-') depth = parse_int_or(argv[4], 9);
+    std::string nnue_path; int m_min = 15; long max_parents = -1; int max_pairs = 16;
+    for (int i = 4; i < argc; ++i) {
+        const std::string a = argv[i];
+        if      (a == "--nnue" && i + 1 < argc)                 nnue_path = argv[++i];
+        else if (a == "--m-min" && i + 1 < argc)                m_min = parse_int_or(argv[++i], 15);
+        else if (a == "--max-parents" && i + 1 < argc)          max_parents = parse_int_or(argv[++i], -1);
+        else if (a == "--max-pairs-per-parent" && i + 1 < argc) max_pairs = parse_int_or(argv[++i], 16);
+    }
+
+    std::unique_ptr<INetwork> custom_nnue;
+    if (!nnue_path.empty()) {
+        const bool is_pjtw = nnue_path.size() >= 5
+                          && nnue_path.compare(nnue_path.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        custom_nnue = is_pjtw ? jass::load_eval_network(nnue_path, &err)
+                              : load_network(nnue_path.c_str());
+        if (!custom_nnue) { std::cerr << "error: cannot load eval from " << nnue_path << " (" << err << ")\n"; return 1; }
+    }
+    jass::Engine e; e.use_book(false);
+    if (custom_nnue) e.set_nnue(custom_nnue.get());
+
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) { std::cerr << "error: not JNNW\n"; return 1; }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    // Echantillonnage uniforme par PAS (le corpus est ordonne par partie) ; ~3x de marge pour les
+    // noeuds de capture/sans-fratrie ecartes.
+    const std::size_t stride = (max_parents > 0)
+        ? std::max<std::size_t>(1, nrec / (static_cast<std::size_t>(max_parents) * 3 + 1)) : 1;
+    std::vector<char> out;                 // emitted pair records (38B each)
+    long parents_seen = 0, parents_used = 0, pairs = 0, cap_nodes = 0;
+    long phase_pairs[4] = {0,0,0,0};
+    double margin_sum = 0;
+
+    for (std::size_t pi = 0; pi < nrec; pi += stride) {
+        if (max_parents >= 0 && parents_used >= max_parents) break;
+        const char* rec = buf.data() + pi * 38;
+        const jass::Position parent = position_from_record(rec);
+        jass::MoveList ml; jass::generate_legal_moves(parent, ml);
+        if (ml.size() < 2) continue;
+        ++parents_seen;
+        if (ml[0].is_capture()) { ++cap_nodes; continue; }   // capture node : ordre force
+
+        struct Ch { std::int32_t pv; std::uint64_t bbs[4]; std::uint8_t stm; };
+        std::vector<Ch> ch; ch.reserve(ml.size());
+        for (std::size_t mi = 0; mi < ml.size(); ++mi) {
+            const jass::Position c = parent.after(ml[mi]);
+            e.set_position(c);
+            jass::SearchLimits lim; lim.max_depth = depth;
+            const jass::SearchResult r = e.search(lim);
+            Ch x;
+            x.pv = -static_cast<std::int32_t>(r.score);      // parent-POV
+            x.bbs[0] = c.white_men();  x.bbs[1] = c.white_kings();
+            x.bbs[2] = c.black_men();  x.bbs[3] = c.black_kings();
+            x.stm = (c.side_to_move() == jass::Color::White) ? 0u : 1u;
+            ch.push_back(x);
+        }
+        std::sort(ch.begin(), ch.end(), [](const Ch& a, const Ch& b){ return a.pv > b.pv; });
+
+        // phase du parent (nb pieces)
+        const int pcs = static_cast<int>(popcount(parent.whites() | parent.blacks()));
+        const int band = pcs <= 12 ? 0 : (pcs <= 20 ? 1 : (pcs <= 28 ? 2 : 3));
+
+        int emitted_here = 0;
+        auto emit = [&](const Ch& x, std::int32_t score, std::int8_t wdl){
+            char r[38] = {0};
+            std::memcpy(r,      &x.bbs[0], 8); std::memcpy(r + 8,  &x.bbs[1], 8);
+            std::memcpy(r + 16, &x.bbs[2], 8); std::memcpy(r + 24, &x.bbs[3], 8);
+            r[32] = static_cast<char>(x.stm);
+            std::memcpy(r + 33, &score, 4);
+            r[37] = static_cast<char>(wdl);
+            out.insert(out.end(), r, r + 38);
+        };
+        for (std::size_t a = 0; a < ch.size() && emitted_here < max_pairs; ++a) {
+            for (std::size_t b = a + 1; b < ch.size() && emitted_here < max_pairs; ++b) {
+                const std::int32_t margin = ch[a].pv - ch[b].pv;
+                if (margin < m_min) break;                   // b trie desc : rien de plus grand ensuite
+                emit(ch[a], margin, 0);                       // better : marge + src=deep
+                emit(ch[b], 0, 0);                            // worse
+                ++pairs; ++emitted_here; ++phase_pairs[band]; margin_sum += margin;
+            }
+        }
+        if (emitted_here > 0) ++parents_used;
+    }
+
+    std::ofstream o(out_path, std::ios::binary);
+    if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
+    const std::uint32_t nout = static_cast<std::uint32_t>(out.size() / 38);
+    o.write("JNNW", 4); o.write(reinterpret_cast<const char*>(&nout), 4);
+    o.write(out.data(), static_cast<std::streamsize>(out.size())); o.close();
+
+    std::cout << "GENSIB parents_seen=" << parents_seen << " quiet_used=" << parents_used
+              << " cap_nodes=" << cap_nodes << " pairs=" << pairs
+              << " records=" << nout << " depth=" << depth << " m_min=" << m_min
+              << " margin_mean=" << (pairs ? margin_sum / static_cast<double>(pairs) : 0.0)
+              << " phase[fin/13-20/21-28/ouv]=" << phase_pairs[0] << "/" << phase_pairs[1]
+              << "/" << phase_pairs[2] << "/" << phase_pairs[3]
+              << " -> " << out_path << "\n";
+    return 0;
+}
+
 int run_egdb_relabel_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n";
@@ -4117,6 +4239,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
+        else if (a == "--gen-siblings")             return run_gen_siblings_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);
