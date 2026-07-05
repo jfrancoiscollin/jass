@@ -1,0 +1,24 @@
+=== DOE ordering history-prob — HEAD main 3007b7e85 queue 0599 DOE ordering hist-prob: fmc littéral + node-EBF + Elo movetime (P1/P1nc/P2 vs legacy) + preuve book-fails preexistants ===
+  [preambule] jass_tests BASE : 10 / 6486 assertions FAILED ; dont test_scan_book=10 => echecs book-I/O PRE-EXISTANTS (hors ordering) confirmes
+  PROB build OK ; profil FEN=39 ; Elo openings=60 pairs=2
+
+=== (A) first-move-cutoff (cut1/cutoffs) + (B) node-EBF (nodes) — search-profile @ d9 & d12 ===
+  config   | d9 nodes(ratio)    d12 nodes(ratio)   | d9 fmc  d12 fmc
+  baseline |    11504(1.000)       50680(1.000)   | 0.911  0.908 
+  P1       |    12889(1.120)       48627(0.959)   | 0.909  0.908 
+  P1nc     |    13044(1.134)       46663(0.921)   | 0.907  0.908 
+  P2       |    12404(1.078)       51491(1.016)   | 0.918  0.913 
+  (node-EBF ratio<1 = arbre plus PETIT = meilleur ordering GRATUIT ; fmc plus haut = 1er coup coupe plus souvent)
+
+=== (C) Elo movetime A/B (side A=config vs side B=legacy, dilf) ===
+  [P1 mt0.1] A=101 B(legacy)=91 D=44 n=236 rate_A=0.5212+-0.0575 elo~+15 => neutre
+  [P1 mt0.3] A=103 B(legacy)=92 D=41 n=236 rate_A=0.5233+-0.0579 elo~+16 => neutre
+  [P1nc mt0.1] A=104 B(legacy)=97 D=35 n=236 rate_A=0.5148+-0.0588 elo~+10 => neutre
+  [P1nc mt0.3] A=106 B(legacy)=86 D=44 n=236 rate_A=0.5424+-0.0573 elo~+30 => neutre
+  [P2 mt0.1] A=96 B(legacy)=98 D=42 n=236 rate_A=0.4958+-0.0578 elo~-3 => neutre
+  [P2 mt0.3] A=101 B(legacy)=94 D=41 n=236 rate_A=0.5148+-0.0580 elo~+10 => neutre
+
+  GATE : un config avec fmc↑ ET node-EBF ratio<1 ET Elo≥0.5 (hors-IC) => candidat => controle generaliste puis BAKE.
+  fmc↑ + nodes↓ mais Elo≈ => l'ordering se resserre sans payer en jeu (le goulot n'etait pas la) => consigner, front clos.
+  RESULTS committe ✓
+=== fin DOE ordering ===
