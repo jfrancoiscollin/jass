@@ -94,7 +94,7 @@
 > *(Gap : contrôle erreur-arbitre TB N/A — `egdb-relabel` a échoué sur ccx33 (init db). Moins porteur que craint : l'ouverture
 > est déjà 91% C3=arbitre-INDÉCIS, pas arbitre-faux. Re-run possible sur cpx62 (EGDB prouvé en 0587) si on veut le chiffre.)*
 
-## ❌ FIX#4 TB-RELABEL — LE « +18 » ÉTAIT UN PHANTOM (correction 2026-07-05, `cpx62-0589`) : EGDB ne charge PAS
+## ❌ FIX#4 TB-RELABEL — LE « +18 » ÉTAIT UN PHANTOM (2026-07-05) : bug de CHEMIN EGDB (`/app`), réparable (0594)
 > **CORRECTION D'UNE ERREUR.** J'avais promu 0587 comme « FIX#4 tb-relabel = +18 Elo, seul levier label qui gagne ».
 > **C'était faux.** La re-lecture des logs le prouve : **`tb_relabel=0` sur TOUS les bras de 0587 (y compris B «+TB»)**
 > ET sur les 3 phases de 0589. **Le relabel par-sample n'a JAMAIS tiré un seul échantillon.** J'avais inféré le mécanisme
@@ -103,13 +103,19 @@
 >   à 2σ ≈ 5% de faux positif, variance de seeds sur fits from-scratch) ou TB-terminate-en-play — non départageable.
 > - **0589 (manche prod, 2M, fit prior gen1)** : `tb_relabel=0` partout, champion-tbregen **RÉGRESSE −37 vs gen1** (hors-IC),
 >   neutre vs champregen. Le lever ne compose pas — et surtout il n'a jamais agi.
-> - **0590** : `--egdb-relabel` a échoué explicitement (init KO). **Trois échecs EGDB indépendants (ccx33 + cpx62 ×2)**
->   ⇒ **l'EGDB ne charge pas au runtime sur les box** (data présente mais `egdb::init` échoue / DB inutilisable).
+> - **0590** : `--egdb-relabel` a échoué explicitement (init KO). **Trois échecs EGDB indépendants (ccx33 + cpx62 ×2)**.
 >
-> **⇒ CONSÉQUENCES** : (1) tb-relabel/EGDB n'est **PAS** un levier confirmé — le +18 est retiré du tableau. (2) On NE
-> promeut PAS champion-tbregen. (3) gen1 **reste le champion**. (4) Le biais finale (0590 C1) est réel mais on n'a
-> **aucun outil qui marche** pour l'attaquer tant que l'EGDB ne charge pas. (5) Si on veut ce lever un jour : d'abord
-> **réparer/diagnostiquer l'install EGDB** (pourquoi `egdb::init` échoue sur `/root/egdb_extracted`) — sinon inutile.
+> **🔧 CAUSE RACINE TROUVÉE (2026-07-05) — un CHEMIN faux.** Les fichiers DB (`db2.idx1`, `db5.idx1`… base WLD **6-pièces**)
+> sont dans le SOUS-DOSSIER **`/root/egdb_extracted/app`**, pas dans le parent `/root/egdb_extracted`. Mes jobs 0587/0589/0590
+> pointaient sur le parent → `egdb_identify()` ne trouve rien → `init` échoue en silence → `available()=false` → `tb_relabel=0`
+> et `egdb-relabel echoue`. Les vieux jobs qui marchaient (0286/0287/0295/0319) utilisaient tous `/app`. **`ccx33-0594`**
+> (queué) prouve le fix par un A/B de chemin (parent=échec vs `/app`=`egdb-resolved>0`).
+>
+> **⇒ CONSÉQUENCES** : (1) tb-relabel n'a JAMAIS été testé avec un EGDB fonctionnel — le +18 (0587) reste un **phantom**
+> (noise), MAIS le lever lui-même est **non-réfuté** (jamais exécuté). (2) On NE promeut PAS champion-tbregen ; **gen1 reste
+> le champion**. (3) Le biais finale (0590 C1) est réel ; une fois `/app` confirmé (0594), on peut re-tester tb-relabel
+> **proprement** avec `JASS_EGDB_PATH=/root/egdb_extracted/app`. (4) **⚠️ Couverture 6-pièces** : la base ne couvre que
+> les finales ≤6 pièces → tb-relabel n'adresse qu'une **fraction** du biais finale ≤12 de 0590. À doser avant de sur-investir.
 
 ## ❌ LEVIER LABEL-QUALITY RÉFUTÉ (2026-07-05) — l'hygiène de label DÉGRADE l'eval ; batterie sanity-gen adoptée
 > **Branche `develop`** = code (reset sur main HEAD ; git server accepte main+develop ; runner build main ; jobs overlay develop au runtime).
