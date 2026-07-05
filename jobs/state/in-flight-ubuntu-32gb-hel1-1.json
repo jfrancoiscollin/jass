@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0584-e1-clean",
-  "script": "jobs/queue/cpx62-0584-e1-clean.sh",
-  "pid": 30010,
-  "started_at": "2026-07-05T09:12:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
