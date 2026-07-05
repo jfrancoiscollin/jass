@@ -1,0 +1,11 @@
+=== siblings-corpus (piste a etape 1) — HEAD main cffa6776b runner: heartbeat cpx62-0600-ordering-p1nc-confirm ===
+  ⚠ mode absent ?
+  corpus=2000000 -> 8 shards de ~250000
+=== gen-siblings x8 (d9, m_min=15, ~6250 parents/shard) ===
+  MERGE : 821496 records = 410748 paires
+  MANIFEST : parents_seen=53806 quiet_used=50000 cap_nodes=0 (0% captures)
+    pairs=410748 ; margin_mean~2766cp ; phase[fin/13-20/21-28/ouv]=[116923, 126211, 97884, 69730] (finale%=28)
+  corpus committe job-side (3.3M)
+  RESULTS committe ✓
+  => prochaine etape (apres lecture 0600/0601) : trainer rank-loss + G1 (survie held-out).
+=== fin siblings-corpus ===
