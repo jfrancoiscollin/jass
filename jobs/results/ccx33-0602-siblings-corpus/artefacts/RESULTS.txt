@@ -1,1 +1,13 @@
 === siblings-corpus (piste a etape 1) — HEAD main cffa6776b runner: heartbeat cpx62-0600-ordering-p1nc-confirm ===
+  GENSIB parents_seen=6782 quiet_used=6250 cap_nodes=0 pairs=52221 records=104442 depth=9 m_min=15 margin_mean=2631.76 phase[fin/13-20/21-28/ouv]=14934/16037/12331/8919 -> /root/cw-sib/pairs.0.jnnw
+  GENSIB parents_seen=6699 quiet_used=6250 cap_nodes=0 pairs=51255 records=102510 depth=9 m_min=15 margin_mean=2781.97 phase[fin/13-20/21-28/ouv]=14571/15600/12400/8684 -> /root/cw-sib/pairs.1.jnnw
+  GENSIB parents_seen=6738 quiet_used=6250 cap_nodes=0 pairs=50994 records=101988 depth=9 m_min=15 margin_mean=2754.89 phase[fin/13-20/21-28/ouv]=14162/15716/12125/8991 -> /root/cw-sib/pairs.2.jnnw
+  GENSIB parents_seen=6776 quiet_used=6250 cap_nodes=0 pairs=52406 records=104812 depth=9 m_min=15 margin_mean=2693.84 phase[fin/13-20/21-28/ouv]=14108/16912/12474/8912 -> /root/cw-sib/pairs.3.jnnw
+  GENSIB parents_seen=6697 quiet_used=6250 cap_nodes=0 pairs=51556 records=103112 depth=9 m_min=15 margin_mean=2713.86 phase[fin/13-20/21-28/ouv]=14203/16434/12113/8806 -> /root/cw-sib/pairs.4.jnnw
+  GENSIB parents_seen=6687 quiet_used=6250 cap_nodes=0 pairs=50563 records=101126 depth=9 m_min=15 margin_mean=2899.21 phase[fin/13-20/21-28/ouv]=15400/15088/11743/8332 -> /root/cw-sib/pairs.5.jnnw
+  GENSIB parents_seen=6683 quiet_used=6250 cap_nodes=0 pairs=50522 records=101044 depth=9 m_min=15 margin_mean=2891.44 phase[fin/13-20/21-28/ouv]=15250/15236/11759/8277 -> /root/cw-sib/pairs.6.jnnw
+  GENSIB parents_seen=6744 quiet_used=6250 cap_nodes=0 pairs=51231 records=102462 depth=9 m_min=15 margin_mean=2764.46 phase[fin/13-20/21-28/ouv]=14295/15188/12939/8809 -> /root/cw-sib/pairs.7.jnnw
+  MERGE : 821496 records = 410748 paires
+  MANIFEST : parents_seen=53806 quiet_used=50000 cap_nodes=0 (0% captures)
+    pairs=410748 ; margin_mean~2766cp ; phase[fin/13-20/21-28/ouv]=[116923, 126211, 97884, 69730] (finale%=28)
+  corpus committe job-side (3.3M)
