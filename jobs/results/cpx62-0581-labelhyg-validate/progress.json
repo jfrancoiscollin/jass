@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0581-labelhyg-validate",
+  "snapshot_at": "2026-07-05T07:47:03+00:00",
+  "started_at": "2026-07-05T07:41:25+00:00",
+  "elapsed_seconds": 338,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  26737       1       05:37  0.0  0.0 bash\n  26739   26737       05:37  0.0  0.0 bash\n  27333   26739       00:09  298  2.1 python3\n"
+}
