@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0595-tb-regen-app",
+  "script": "jobs/queue/ccx33-0595-tb-regen-app.sh",
+  "pid": 3245879,
+  "started_at": "2026-07-05T16:08:18+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
