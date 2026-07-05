@@ -337,6 +337,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
+    int          explore_decay_plies = 0;    // --explore-decay-plies D : FIX#1 label-hygiene.
+                                            //      eps(ply)=explore_eps*max(0,1-ply/D) => confine
+                                            //      l'exploration au debut (0 = pas de decroissance).
+    bool         drop_post_eps     = false;  // --drop-post-eps : FIX#1. n'emet PAS les samples
+                                            //      ply<=last_eps_ply (label contamine par un eps posterieur).
     std::string  search_spec;                // --search-params : applied to PLAY+LABEL search
                                             //      (e.g. pruning OFF so self-play PUNISHES shots
                                             //      → labels teach shot-safety, cf Scan recipe)
@@ -392,6 +397,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-eps" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_eps = v;
+        } else if (a == "--explore-decay-plies" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) explore_decay_plies = v;
+        } else if (a == "--drop-post-eps") {
+            drop_post_eps = true;
         } else if (a == "--search-params" && i + 1 < argc) {
             search_spec = argv[++i];
         } else if (a == "--search-params-play" && i + 1 < argc) {
@@ -560,7 +570,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
     //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
-    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0;
+    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -756,10 +766,16 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // because the label is the eventual game outcome (MC return), not a
             // bootstrapped value, so the played-out result stays truthful.
             Move play_mv = r.best_move;
-            if (explore_eps > 0 && !ml.empty()
-                && static_cast<int>(rng() % 100) < explore_eps) {
+            // FIX#1 : eps effectif decroissant (confine l'exploration au debut de partie).
+            //   D=0 => eps constant (legacy) ; D>0 => eps*max(0,1-ply/D), nul des ply>=D.
+            //   Compare en millièmes pour garder la granularite de la decroissance.
+            const double eps_frac = (explore_decay_plies > 0)
+                ? explore_eps * std::max(0.0, 1.0 - static_cast<double>(ply) / explore_decay_plies)
+                : static_cast<double>(explore_eps);
+            if (eps_frac > 0.0 && !ml.empty()
+                && static_cast<double>(rng() % 100000) < eps_frac * 1000.0) {
                 play_mv = ml[rng() % ml.size()];
-                last_eps_ply = ply;   // instrumentation FIX #1 : dernier coup d'exploration de la partie
+                last_eps_ply = ply;   // dernier coup d'exploration de la partie (FIX#1 filtre + instrumentation)
             }
             if (!e.apply_move(play_mv)) break;
         }
@@ -775,10 +791,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 wdl = outcome_white * sample_stm_sign;
             }
             const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
-            // instrumentation (MEASURE-ONLY) : ce sample est-il contamine par l'exploration ?
-            //   sample.ply <= last_eps_ply => sa partie a deraille APRES lui par un coup eps => label biaise (FIX #1)
+            // ce sample est-il contamine par l'exploration ?
+            //   sample.ply <= last_eps_ply => sa partie a deraille APRES lui par un coup eps => label biaise (FIX#1)
+            const bool contaminated = (s.ply <= last_eps_ply);
             ++stat_total_samples;
-            if (s.ply <= last_eps_ply) ++stat_contaminated;
+            if (contaminated) ++stat_contaminated;
+            // FIX#1 : si --drop-post-eps, on NE l'emet PAS (label pourri) — sinon emission inchangee (MEASURE-ONLY).
+            if (drop_post_eps && contaminated) { ++stat_dropped; continue; }
 
             f.write(reinterpret_cast<const char*>(s.bbs), 32);
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
@@ -806,7 +825,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         const double con = stat_total_samples > 0 ? 100.0 * static_cast<double>(stat_contaminated) / stat_total_samples : 0.0;
         std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
                   << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
-                  << " (" << con << "%)  [FIX#2 si plycap>8-10% ; FIX#1 filtre post-eps]\n";
+                  << " (" << con << "%)  dropped_post_eps=" << stat_dropped
+                  << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
+                  << " decay_plies=" << explore_decay_plies << ")\n";
     }
     return 0;
 }
