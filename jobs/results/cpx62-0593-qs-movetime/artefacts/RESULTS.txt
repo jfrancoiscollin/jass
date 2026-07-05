@@ -1,0 +1,5 @@
+=== qs-movetime (suite 0592) — HEAD cd0783d9b queue 0593 qs-movetime: forcing/promo quiescence bake-gate au temps reel (suite 0592) ===
+  eval=gen1 (2 cotes) ; moteur coin=3/3 ; ~640 g/cellule ; side B=coin (spec vide)
+
+=== A/B jass-vs-jass au MOVETIME (side A=qs vs side B=coin, gen1) ===
+  -- f6p6_mt02 (mt=0.2 : qs_forcing_depth=6,qs_promo_depth=6) --
