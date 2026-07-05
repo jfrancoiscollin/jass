@@ -1,1 +1,11 @@
 === MINI-VALIDATION DECISIVE (from-scratch + verif oracle) — overlay develop ===
+  => accord ancien=1.000  nouveau=1.000  (pas + juste)
+
+=== (B) FITS FROM-SCRATCH (pas de prior => isole l'effet label) ===
+  eval_old (from-scratch) OK
+  eval_new (from-scratch) OK
+
+=== MATCH eval_NEW vs eval_OLD (from-scratch, d9 dilf) ===
+  [new-vs-old from-scratch] games=2440 A=892 B=1068 D=480  rate=0.4639+-0.0177  elo~-25  IC=[0.4462,0.4817]
+  => NOUVEAU<ANCIEN hors-IC : l'hygiene degrade (investiguer)
+=== fin mini-validation decisive ===
