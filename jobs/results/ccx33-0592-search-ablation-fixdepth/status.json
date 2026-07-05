@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0592-search-ablation-fixdepth",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T13:58:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3242827
+  "ended_at": "2026-07-05T14:35:06+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

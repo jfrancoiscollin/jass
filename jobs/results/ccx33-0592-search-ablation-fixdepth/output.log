@@ -1,0 +1,34 @@
+=== ablation search fixed-depth vs Scan — HEAD c858e7ac3 runner: heartbeat cpx62-0589-tb-regen-prod ===
+  eval=gen1 ; openings=60 ; ~240 games/cellule ; coin=3/3
+
+=== lancement des 8 cellules en parallele (1 coeur/cellule) ===
+  cellule base_d7 lancee (d7 coin) pid 3243268
+  cellule base_d9 lancee (d9 coin) pid 3243272
+  cellule base_d11 lancee (d11 coin) pid 3243276
+  cellule qsstrong_d9 lancee (d9 qs_forcing_depth=6,qs_promo_depth=6) pid 3243280
+  cellule softlmr_d9 lancee (d9 lmr_first_full_nonpv=4,lmr_min_depth=6) pid 3243284
+  cellule histlmr_d9 lancee (d9 lmr_hist_div=6000) pid 3243288
+  cellule noreduce_d9 lancee (d9 lmr_min_depth=99,lmp_max_depth=0,razor_max_depth=0,probcut_min_depth=0) pid 3243292
+  cellule allon_d9 lancee (d9 qs_forcing_depth=6,qs_promo_depth=6,lmr_hist_div=6000,lmr_first_full_nonpv=4) pid 3243296
+
+=== RESULTATS (rate + Elo + IC95 ~, gen1 vs Scan) ===
+  cellule           depth  rate     Elo    IC95(rate)   spec
+  base_d7           d7    0.114    -356   +-0.040     coin
+  base_d9           d9    0.127    -335   +-0.042     coin
+  base_d11          d11   0.195    -246   +-0.050     coin
+  qsstrong_d9       d9    0.267    -175   +-0.056     qs_forcing_depth=6,qs_promo_depth=6
+  softlmr_d9        d9    0.136    -322   +-0.043     lmr_first_full_nonpv=4,lmr_min_depth=6
+  histlmr_d9        d9    0.127    -335   +-0.042     lmr_hist_div=6000
+  noreduce_d9       d9    0.267    -175   +-0.056     lmr_min_depth=99,lmp_max_depth=0,razor_max_depth=0,probcut_min_depth=0
+  allon_d9          d9    0.254    -187   +-0.055     qs_forcing_depth=6,qs_promo_depth=6,lmr_hist_div=6000,lmr_first_full_nonpv=4
+
+  LECTURE (comparer chaque *_d9 a base_d9) :
+  - une variante d9 dont le rate depasse base_d9 hors-IC => CE composant (qs/reductions/ordering) avait du
+    HEADROOM vs Scan a prof. fixe => c'est LE levier search a attaquer (DOE cible dessus).
+  - qsstrong>base => quiescence faible (feuilles tactiques) ; softlmr/noreduce>base => on reduit/prune TROP
+    (prof. effective < nominale) ; histlmr>base => ordering-aware reduction paie ; allon = plafond combine.
+  - si AUCUNE ne bouge => le -338 n'est PAS dans ces boutons => qualite eval-en-arbre / ordering de base =>
+    prochaine etape = decomposition ordering (first-move-cutoff rate vs Scan) ou eval sur feuilles tactiques.
+  - courbe base d7/d9/d11 : gap retrecit avec la profondeur => levier EBF/profondeur valide quoi qu'il arrive.
+  RESULTS committe ✓
+=== fin ablation search fixed-depth ===

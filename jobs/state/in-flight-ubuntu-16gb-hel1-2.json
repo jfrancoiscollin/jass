@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0592-search-ablation-fixdepth",
-  "script": "jobs/queue/ccx33-0592-search-ablation-fixdepth.sh",
-  "pid": 3242827,
-  "started_at": "2026-07-05T13:58:05+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
