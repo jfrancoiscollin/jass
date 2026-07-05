@@ -1,0 +1,14 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
+  HEAD main : 13990cf4a runner: start cpx62-0589-tb-regen-prod
+  moteur coin : 3/3 params-cle ; NUM_PATTERNS=32 ; egdb=/root/egdb_extracted
+  combos=1239648
+  seed-file : dilf=305 lidraughts=300000
+
+=== GEN PHASE pd8 : 1200000 pos @ pd8 +tb-relabel (x16 shards, coin bake) ===
+  [candtb-vs-champregen] games=2440 A=956 B=988 D=496  rate=0.4934+-0.0177  elo~-5  IC=[0.4757,0.5111]  => NEUTRE (IC contient 0.50)
+
+  GATE (1) candtb-vs-gen1 : borne basse IC>0.50 => tb-relabel a debloque le plateau au scale (plain-regen etait
+     NEUTRE 0.5041 en 0570) => PROMO champion-tbregen (nouveau champion EVAL), chaine gen suivante.
+  (2) candtb-vs-champregen : marge de tb-relabel au-dessus du plain regen (meme package, seul tb ajoute).
+  Sinon (NEUTRE/REGRESSE vs gen1) => tb-relabel gagne en iso-volume (0587) mais ne compose pas au scale avec prior
+     gen1 => diagnostiquer (dose tb en finale / prior ecrase le signal finale) avant de conclure.
