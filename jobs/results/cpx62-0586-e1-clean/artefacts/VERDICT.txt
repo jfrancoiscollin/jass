@@ -1,0 +1,6 @@
+=== VERDICT P3 E1-clean : holdout log-loss (val PROPRE = shard separe, pas de fuite) ===
+      train        8cf       32cf       ecart
+
+
+Comparer a 0579 (shufflé/fuite) : si la courbe DESCEND ici alors qu'elle etait plate en 0579 =>
+  la fuite masquait l'effet du volume => le verdict famine etait un ARTEFACT. Si toujours plate => tient.
