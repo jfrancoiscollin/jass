@@ -11,7 +11,24 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
-## 🎯 FRONT ORDERING (2026-07-05) — le port history-prob NE BAKE PAS ; notre ordering est DÉJÀ optimal (fmc 0.91) ; confirm P1nc en vol
+## ✅ FRONT ORDERING (2026-07-05) — RENVERSEMENT : `hist_mode=1,hist_pure=1` (prob-pur Scan) BAKE, +20 à +43 Elo movetime
+> **Le port history-prob de Scan PAIE** (revirement vs conclusion préliminaire 0599 sous-résolue). Confirm haut-N `cpx62-0600`
+> (P1nc = `hist_mode=1,hist_pure=1` = EMA prob SANS killers/CM/conthist, vs legacy) — **4/4 cellules GAGNENT hors-IC** :
+> dilf mt0.1 +20, dilf mt0.3 +34, gen mt0.1 +27, gen mt0.3 +43 (n=740-1190). Gate passé (dilf ET généraliste, 2 mt).
+>
+> **Ce que ça prouve** : la thèse Scan « la qualité de l'ESTIMATEUR gagne, pas la machinerie » — l'EMA probabiliste SEULE
+> (sort.cpp) bat notre pile complète killers+countermove+conthist+history-additif de **+20 à +43**. Mécanisme : PAS le
+> first-move-cutoff (déjà 0.911, cf 0599) mais le **node-EBF** (−8% à d12) → plus de profondeur/temps → +Elo. **Gratuit**
+> (ordering, zéro touche éval/labels). Le gain croît avec le temps (mt0.3>mt0.1) = signature d'un vrai gain qui compose.
+> ⚠️ Leçon méthodo : 0599 (n=236) l'avait déclaré « neutre/clos » à tort — le confirm haut-N (n≈1000) a révélé le vrai effet.
+>
+> **⟹ 3e GAIN SEARCH bakable** (après coin +49, threat_ext +108). Codé sur `develop` (2edfbe84, byte-identical legacy à
+> hist_mode=0). **BAKE = passer les défauts search_params.hpp à `hist_mode=1, hist_pure=1`.** En attente : `cpx62-0601`
+> (Scan-pur = P1nc **+E3** `hist_order_captures=1`) tranche si E3 ajoute → spec final P1nc ou P1. Puis bake + go JFC.
+>
+> *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
+
+## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
 > **Levier testé : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`, gratuit en nœuds). Diagnostic source-contre-source
 > confirmé (E1 additif-non-borné vs EMA, E2 beta-cutoff-seul vs bidirectionnel, E3 captures non triées). **Codé sur `develop`
 > (2edfbe84)** : `hist_mode={legacy|prob}` gaté (legacy byte-identical), init 2048, good/bad shift-5, update fin-de-nœud, E3,
