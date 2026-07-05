@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0603-qs-on-ordering",
-  "snapshot_at": "2026-07-05T21:41:45+00:00",
+  "snapshot_at": "2026-07-05T21:46:46+00:00",
   "started_at": "2026-07-05T21:11:32+00:00",
-  "elapsed_seconds": 1813,
+  "elapsed_seconds": 2114,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3255991       1       30:13  0.0  0.0 bash\n3255993 3255991       30:13  0.0  0.0 bash\n3256863 3255993       22:00  0.2  0.0 python3\n3256867 3256863       22:00 50.4  0.5 jass\n3256887 3256863       22:00 49.3  0.5 jass\n3256903 3256863       22:00  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3255991       1       35:14  0.0  0.0 bash\n3255993 3255991       35:14  0.0  0.0 bash\n3258063 3255993       03:51  0.8  0.0 python3\n3258068 3258063       03:51 49.1  0.5 jass\n3258084 3258063       03:50 49.7  0.5 jass\n3258100 3258063       03:50  0.0  0.0 jass\n"
 }
