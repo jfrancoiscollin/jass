@@ -1,0 +1,7 @@
+  C OK
+
+=== MATCHS vs baseline A (d9 dilf) ===
+  [B(+TB)-vs-A] games=2440 A=1008 B=884 D=548  rate=0.5254+-0.0174  elo~+18  => AIDE hors-IC (garder)
+  [C(+adjud)-vs-A] games=2440 A=960 B=948 D=532  rate=0.5025+-0.0175  elo~+2  => parite (pas d'effet net)
+
+  => B ou C > 0.5 hors-IC => fix cible le VRAI biais finale (P2 31%) => hygiene gratuite a garder.
