@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0594-egdb-fix-retest",
+  "script": "jobs/queue/ccx33-0594-egdb-fix-retest.sh",
+  "pid": 3245043,
+  "started_at": "2026-07-05T15:53:04+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
