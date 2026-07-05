@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0597-ordering-top1",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T17:04:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 47737
+  "ended_at": "2026-07-05T17:10:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
