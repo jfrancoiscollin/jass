@@ -93,6 +93,16 @@ struct SearchParams {
     // (more cutoffs → smaller tree). 100 = malus equal to the bonus magnitude.
     int hist_malus = 0;
 
+    // ---- Probabilistic history ordering (port de Scan sort.cpp ; 0=legacy=byte-identical) ----
+    // hist_mode=1 : la table history[from][to] devient une EMA de P(coup bon) dans [0,PROB_ONE),
+    //   init a PROB_HALF (2048), good: h += (4096-h)>>prob_shift, bad: h -= h>>prob_shift. Mise a jour
+    //   BIDIRECTIONNELLE sur score>alpha_orig (le best_move final) + malus sur TOUS les coups essayes-avant.
+    //   Estimateur adaptatif qui oublie vite (contre l'additif depth^2 non borne du legacy).
+    int hist_mode  = 0;    // 0=legacy (additif) ; 1=prob (EMA Scan)
+    int prob_shift = 5;    // vitesse EMA (Scan=5 ; balayable 4-6)
+    int hist_pure  = 0;    // (P1) mode prob : 1 => IGNORER killers/countermove/conthist au scoring (estimateur seul)
+    int hist_order_captures = 0;  // (E3) 1 => trier AUSSI les captures par history (au lieu de l'ordre de generation)
+
     // Aspiration window initial half-width (cp).
     int aspiration_initial = 50;
 
@@ -310,6 +320,10 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "lmp_max_depth")        p.lmp_max_depth        = v;
     else if (key == "history_max")          p.history_max          = v;
     else if (key == "hist_malus")           p.hist_malus           = v;
+    else if (key == "hist_mode")            p.hist_mode            = v;
+    else if (key == "prob_shift")           p.prob_shift           = v;
+    else if (key == "hist_pure")            p.hist_pure            = v;
+    else if (key == "hist_order_captures")  p.hist_order_captures  = v;
     else if (key == "aspiration_initial")   p.aspiration_initial   = v;
     else if (key == "use_pvs")              p.use_pvs              = (v != 0);
     else if (key == "razor_max_depth")      p.razor_max_depth      = v;
