@@ -1,0 +1,128 @@
+=== MINI-VALIDATION label-hygiene — overlay code develop ===
+  develop : 6b9ad9b0b gen FIX#3+#4 label-hygiene : --pair-openings (chaque ouverture jouee 2x rep0/1, couleur punisher echangee => biais couleur/role annule dans la paire) + --tb-relabel (labels EGDB EXACTS par-sample au flush, biais 0, no-op si egdb absent). game_count compte les games reels (denominateur ply-cap correct sous pairing). Teste : tous fixes ensemble, ply-cap 17%, contamination 3%, tb_relabel=0 sans egdb (safe). Defauts off. Build OK.
+diff --git a/src/main.cpp b/src/main.cpp
+index 69bece58b..05e86e5fc 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -345,6 +345,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+     int          adjud_material    = 0;      // --adjud-material M : FIX#2. avance materielle NETTE (men-equiv,
+                                             //      dame=3) >= M tenue adjud_hold_plies => win (0 = off).
+     int          adjud_hold_plies  = 10;     // --adjud-hold-plies H : plies consecutifs d'avance requis.
++    bool         pair_openings     = false;  // --pair-openings : FIX#3. chaque ouverture jouee 2x, couleur
++                                            //      punisher echangee => biais couleur/role s'annule dans la paire.
++    bool         tb_relabel        = false;  // --tb-relabel : FIX#4. au flush, remplace le label WDL-partie par
++                                            //      la valeur EGDB EXACTE des positions qui tombent dans la TB (biais 0).
+     std::string  search_spec;                // --search-params : applied to PLAY+LABEL search
+                                             //      (e.g. pruning OFF so self-play PUNISHES shots
+                                             //      → labels teach shot-safety, cf Scan recipe)
+@@ -411,6 +415,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+         } else if (a == "--adjud-hold-plies" && i + 1 < argc) {
+             const int v = parse_int_or(argv[++i], -1);
+             if (v >= 0) adjud_hold_plies = v;
++        } else if (a == "--pair-openings") {
++            pair_openings = true;
++        } else if (a == "--tb-relabel") {
++            tb_relabel = true;
+         } else if (a == "--search-params" && i + 1 < argc) {
+             search_spec = argv[++i];
+         } else if (a == "--search-params-play" && i + 1 < argc) {
+@@ -579,7 +587,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+     // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
+     //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
+     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
+-    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0, stat_adjudicated = 0;
++    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0, stat_adjudicated = 0, stat_tb_relabel = 0;
+ 
+     int generated  = 0;
+     int game_count = 0;
+@@ -590,9 +598,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+     jass::egdb::ensure_initialised();
+ 
+     while (generated < n) {
+-        ++game_count;
+         e.new_game();
+-        game_samples.clear();
+ 
+         // Endgame seeding : start this game from a random seed position instead
+         // of the FMJD start (then the random opening plies add diversity around it).
+@@ -614,6 +620,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+             e.apply_move(ml[rng() % ml.size()]);
+         }
+ 
++        // FIX#3 : jouer l'ouverture 2x (rep 0/1) avec la couleur punisher ECHANGEE => le biais
++        // couleur/role s'annule dans la paire. reps=1 si --pair-openings absent (retro-compatible).
++        const Position opening_pos = e.position();
++        const int reps = pair_openings ? 2 : 1;
++        for (int rep = 0; rep < reps && generated < n; ++rep) {
++        ++game_count;   // compte les GAMES reellement jouees (2/paire sous --pair-openings) => denominateur ply-cap correct
++        e.set_position(opening_pos);
++        game_samples.clear();
++
+         // Game outcome from the final position: +1 = white won, -1 = black
+         // won, 0 = draw. Initialised to "draw" because the ply-cap exit
+         // path treats unresolved games as drawn.
+@@ -624,8 +639,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+         int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
+         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
+         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
+-        // (blind → stumbles into shots). Random per game so neither colour is systematically favoured.
+-        const bool punisher_is_white = (rng() & 1u) != 0u;
++        // (blind → stumbles into shots). FIX#3 : si --pair-openings, punisher=white au rep 0, black au rep 1
++        // (roles echanges sur l'ouverture identique) ; sinon random par partie (comportement historique).
++        const bool punisher_is_white = pair_openings ? (rep == 0) : ((rng() & 1u) != 0u);
+ 
+         for (int ply = 0; ply < max_plies; ++ply) {
+             MoveList ml;
+@@ -820,6 +836,22 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+                 const int sample_stm_sign = (s.stm == 0) ? +1 : -1;
+                 wdl = outcome_white * sample_stm_sign;
+             }
++            // FIX#4 : label EGDB EXACT par-sample (biais 0, autonome = notre propre TB). Si la position
++            // du sample tombe dans la tablebase => on remplace le WDL-partie par la valeur VRAIE (STM-POV).
++            // No-op si --tb-relabel absent ou EGDB indisponible => emission inchangee.
++            if (tb_relabel && jass::egdb::available()) {
++                Position sp{};
++                sp.set_side_to_move(s.stm ? Color::Black : Color::White);
++                for (Bitboard b = static_cast<Bitboard>(s.bbs[0]); b; ) sp.add_piece(pop_lsb(b), Piece::WhiteMan);
++                for (Bitboard b = static_cast<Bitboard>(s.bbs[1]); b; ) sp.add_piece(pop_lsb(b), Piece::WhiteKing);
++                for (Bitboard b = static_cast<Bitboard>(s.bbs[2]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackMan);
++                for (Bitboard b = static_cast<Bitboard>(s.bbs[3]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackKing);
++                const jass::EndgameResult tb = jass::egdb::probe(sp);
++                if      (tb == jass::EndgameResult::WhiteWin) { wdl = (s.stm == 0) ? +1 : -1; ++stat_tb_relabel; }
++                else if (tb == jass::EndgameResult::BlackWin) { wdl = (s.stm == 0) ? -1 : +1; ++stat_tb_relabel; }
++                else if (tb == jass::EndgameResult::Draw)     { wdl = 0;                       ++stat_tb_relabel; }
++                // Unknown => on garde le wdl de la partie
++            }
+             const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
+             // ce sample est-il contamine par l'exploration ?
+             //   sample.ply <= last_eps_ply => sa partie a deraille APRES lui par un coup eps => label biaise (FIX#1)
+@@ -836,6 +868,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+             ++generated;
+             if (generated >= n) break;
+         }
++        }   // fin boucle rep (FIX#3 : rep 0/1 sur l'ouverture identique, roles echanges)
+ 
+         if ((game_count % 50) == 0) {
+             std::cout << "  played " << game_count << " games, "
+@@ -857,9 +890,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
+                   << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
+                   << " (" << con << "%)  dropped_post_eps=" << stat_dropped
+                   << "  adjudicated=" << stat_adjudicated
++                  << "  tb_relabel=" << stat_tb_relabel
+                   << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
+                   << " decay_plies=" << explore_decay_plies
+-                  << " adjud_material=" << adjud_material << " hold=" << adjud_hold_plies << ")\n";
++                  << " adjud_material=" << adjud_material << " hold=" << adjud_hold_plies
++                  << " pair_openings=" << (pair_openings ? "on" : "off")
++                  << " tb_relabel=" << (tb_relabel ? "on" : "off") << ")\n";
+     }
+     return 0;
+ }
+
+=== GEN old : 300000 pos @ pd6 () ===
+  old : 300000 pos ; LABELHYG plycap_games=146/856 (17.0561%)  contaminated_samples=15863/18750 (84.6027%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=off)
+
+=== GEN new : 300000 pos @ pd6 (--explore-decay-plies 20 --drop-post-eps --adjud-material 3 --adjud-hold-plies 10 --pair-openings) ===
+  new : 300000 pos ; LABELHYG plycap_games=157/923 (17.0098%)  contaminated_samples=541/19291 (2.80442%)  dropped_post_eps=541  adjudicated=598  tb_relabel=0 (drop_post_eps=on decay_plies=20 adjud_material=3 hold=10 pair_openings=on tb_relabel=off)
+
+=== FITS (prior gen1 lambda=0.25) ===
