@@ -11,7 +11,7 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
-## 🔎 A4-bis ABLATION SEARCH FIXED-DEPTH (2026-07-05, `ccx33-0592`) — le déficit par-nœud est la QUIESCENCE
+## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
 > **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
 > `--jass-search-params` (merge sur coin). Résultats (rate jass, ±IC95, ~240 g/cellule) :
 >
@@ -31,10 +31,14 @@
 > levier gratuit. **La quiescence, elle, améliore la PRÉCISION des feuilles et le forcing/promo qs est ÉTROIT (peu de
 > nœuds)** → candidate à un vrai gain net.
 >
-> **⇒ ACTION (prochaine manche)** : tester `qs_forcing_depth`/`qs_promo_depth` au **MOVETIME** (jass-vs-jass A/B vs coin baké +
-> anchor vs Scan) — le gain fixed-depth doit survivre au coût-nœud. Si ça paie à temps réel → **bake** (ce serait le 3e gain
-> search, après coin +49 et threat_ext +108). C'est le levier le plus prometteur identifié à ce jour. (⚠️ `qs_threat_ext`
-> est déjà baké ON ; ici on ajoute forcing+promo qs, distincts.)
+> **❌ VERDICT MOVETIME (`cpx62-0593`) : la quiescence NE BAKE PAS.** Testée au temps réel (jass-vs-jass A/B vs coin,
+> 632 g/cellule), TOUTES les variantes NUISENT hors-IC : f6p6 −125 (mt0.2), −161 (mt0.05), −119 (mt0.5) ; f4p4 −92 ;
+> f6-seul −128. **Le +160 fixed-depth était un mirage** : la quiescence coûte trop de nœuds → on perd plus en profondeur
+> qu'on ne gagne en précision de feuille (le variant le plus léger f4p4 = le moins mauvais → problème de COÛT confirmé).
+> **⇒ Enseignement** : nos feuilles SONT tactiquement faibles (0592 réel), mais les soigner en DÉPENSANT des nœuds LOSE →
+> notre équilibre vitesse/précision est **déjà bien réglé**, on ne laisse pas d'Elo facile côté qs/pruning. Le vrai levier
+> restant = améliorer la précision par nœud **SANS coûter de profondeur** : **ordering** (ordonner mieux → élaguer plus sûr
+> → plus profond, gratuit) ou **eval plus rapide**. C'est la piste search suivante (décompo ordering : first-move-cutoff vs Scan).
 
 ## 🎯 A4 EVAL-ORACLE (2026-07-05, `ccx33-0591`) — EVAL À PARITÉ AVEC SCAN ; le retard est le SEARCH, pas l'encodage
 > **Re-mesure eval-vs-Scan en RANG (Spearman), join par BITBOARDS.** Corrige le `r=0.04` de 0576 : cause = **désalignement
