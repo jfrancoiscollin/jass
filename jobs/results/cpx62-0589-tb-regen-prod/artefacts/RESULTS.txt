@@ -1,0 +1,7 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
+  HEAD main : 13990cf4a runner: start cpx62-0589-tb-regen-prod
+  moteur coin : 3/3 params-cle ; NUM_PATTERNS=32 ; egdb=/root/egdb_extracted
+  combos=1239648
+  seed-file : dilf=305 lidraughts=300000
+
+=== GEN PHASE pd8 : 1200000 pos @ pd8 +tb-relabel (x16 shards, coin bake) ===
