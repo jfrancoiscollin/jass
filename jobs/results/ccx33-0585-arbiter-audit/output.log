@@ -1,0 +1,23 @@
+=== P2 AUDIT ARBITRE (champion+coin d14) — HEAD 00783d2c9 queue: cpx62-0586-e1-clean — re-run P3 (fix : ne pas restaurer train_stream avant les fits => plus de holdout NA) ===
+  echantillon : 800 pos ([200, 200, 200, 200] par bande phase)
+=== deep-relabel arbitre (d14, params coin defaut) ===
+positions appariees : 800 ; arbitre = champion+coin d-search, draw-band 50
+distribution LABEL (wdl-partie) : win=299 draw=165 loss=336
+distribution ARBITRE (deep sign): win=229 draw=357 loss=214
+
+MATRICE label(ligne) x arbitre(col)  [W/D/L] :
+  label=+1 : arb+1= 175  arb0= 110  arb-1=  14
+  label=+0 : arb+1=  29  arb0=  98  arb-1=  38
+  label=-1 : arb+1=  25  arb0= 149  arb-1= 162
+
+DESACCORD (arbitre decisif, label != arbitre) : 106/443 = 0.239
+par PHASE (bande pieces) :
+      finale<=12 : desaccord 46/148 = 0.311
+           13-20 : desaccord 24/146 = 0.164
+           21-28 : desaccord 22/95 = 0.232
+   ouverture>=29 : desaccord 14/54 = 0.259
+
+UNCONVERTED (arbitre decide gagnant/perdant mais label ne suit pas) : 106/443 = 0.239
+  => c'est la mesure directe du '23%' : fraction des positions ou le label ment sur l'issue reelle.
+  VERDICT committe ✓
+=== fin audit arbitre ===
