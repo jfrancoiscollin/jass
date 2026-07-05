@@ -1,0 +1,16 @@
+=== qs sur ordering bake (co-adaptation) — HEAD main 9c8811e4c runner: heartbeat cpx62-0601-ordering-scanpure-confirm ===
+  confirme bake ordering present : 2/2
+  build OK (defaut = ordering prob-pur des 2 cotes) ; ~720 games/cellule
+
+=== A/B : defaut+qs (side A) vs defaut (side B), les 2 avec ordering prob-pur baké ===
+  [f6p6 mt0.1] A(+qs)=107 B(defaut)=111 D=49 n=267 rate_A=0.4925+-0.0542 elo~-5 IC=[0.438,0.547] => neutre
+  [f6p6 mt0.3] A(+qs)=104 B(defaut)=279 D=62 n=445 rate_A=0.3034+-0.0390 elo~-144 IC=[0.264,0.342] => MORTE hors-IC<0.5
+  [f4p4 mt0.1] A(+qs)=13 B(defaut)=62 D=14 n=89 rate_A=0.2247+-0.0763 elo~-215 IC=[0.148,0.301] => MORTE hors-IC<0.5
+  [f4p4 mt0.3] A(+qs)=103 B(defaut)=119 D=45 n=267 rate_A=0.4700+-0.0546 elo~-21 IC=[0.415,0.525] => neutre
+  [f6 mt0.1] A(+qs)=0 B(defaut)=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
+  [f6 mt0.3] A(+qs)=142 B(defaut)=176 D=38 n=356 rate_A=0.4522+-0.0488 elo~-33 IC=[0.403,0.501] => neutre
+
+  GATE : une cellule hors-IC>0.5 => la qs co-adapte a l'ordering ameliore => bake. Sinon => qs reste morte => clos.
+  Rappel 0593 (sur l'ancien defaut) : f6p6 -125/-119, f4p4 -92, f6 -128 (tous hors-IC<0.5).
+  RESULTS committe ✓
+=== fin qs-on-ordering ===
