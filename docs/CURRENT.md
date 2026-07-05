@@ -11,6 +11,38 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
 
+## 🧬 FRONT ACTUEL : QUALITÉ DES LABELS WDL (2026-07-04) — pas la géométrie, pas le volume, l'ENCODAGE/LABEL
+> **Branche `develop`** = branche de code (reset sur main HEAD ; le git server accepte main+develop, le runner build main ;
+> les jobs overlay le code develop au runtime). **Distillation EXCLUE** (JFC) · **deep-relabel EXCLU** (auto-distillation, §6).
+>
+> **Thèse FAMINE (briefing JFC) RÉFUTÉE par E1.** `cpx62-0579` learning-curve 8cf vs 32cf, **val FIXE** (protocole propre) :
+> 8cf ≈ 32cf **indistinguables** (écart ~0,0004, 32cf marginalement mieux) ET **courbe log-loss PLATE** avec le volume
+> (8cf δ−0,00005 ; 32cf δ−0,00026) → **saturé → PAS de famine** (le volume brut n'aide pas). La prédiction falsifiable
+> (8cf meilleur à petit volume) échoue. Outillage : `train_stream --holdout-frac`, `gen_patterns` variant 8cf/v3
+> (**8cf ⊂ 32cf confirmé géométriquement** → ⊇ de JFC vrai).
+>
+> **LA VRAIE CAUSE — mesurée : biais de LABEL, pas volume.** En scopant le gen loop : **84,6% des labels WDL sont
+> CONTAMINÉS** par l'exploration mid-game (un coup eps postérieur fait dériver la partie → le sample hérite d'une issue
+> fausse), et **19% des parties finissent au ply-cap** (gagnées mais piétinent → fausses nulles). ⇒ la log-loss sature sur
+> un signal **pourri** : en rajouter (volume) n'aide pas → E1 plat. **Ce n'est pas plus de labels qu'il faut, c'est des
+> labels JUSTES** — le vrai secret de Scan sous « WDL massif itéré » (des labels corrects via jeu fort + itération).
+> Pourquoi le WDL marche pour Scan pas nous : nos labels sont **biaisés-faux sur les positions tactiques** (self-play
+> convertit 23% des combos → position gagnante étiquetée « pas gagnant », biais systématique que le volume ne moyenne pas).
+>
+> **4 FIXES LABEL-HYGIÈNE codés+testés+committés sur develop** (autonomes, zéro distillation, défauts off = rétro-compat) :
+> • **FIX#1** `--explore-decay-plies` + `--drop-post-eps` → contamination **85% → 3%** (~3% yield perdu).
+> • **FIX#2** `--adjud-material`/`--adjud-hold-plies` (adjudication matérielle conservatrice, jamais par score eval) →
+>   ply-cap **19-24% → 17%** (~199 parties adjugées). Couplé : retirer eps monte le ply-cap → FIX#2 devient nécessaire.
+> • **FIX#3** `--pair-openings` (chaque ouverture 2×, couleur/rôle punisher échangés → biais 1er ordre annulé dans la paire).
+> • **FIX#4** `--tb-relabel` (labels EGDB EXACTS par-sample, biais 0 ; no-op sans egdb → dépendance infra à régler).
+>
+> **TEST DÉCISIF EN VOL** : `cpx62-0581-labelhyg-validate` (mini-validation §7.5) — gen ANCIEN pipeline vs NOUVEAU (fixes),
+> fit chacun prior gen1, **match eval-nouveau vs eval-ancien**. Gate : nouveau ≥ ancien ⇒ **les labels propres produisent
+> un meilleur eval** ⇒ on intègre les fixes au gen et on va vers un gros gen propre. **C'est LE verdict du levier label-quality.**
+>
+> **Synthèse du fil** : ni géométrie (⊇ prouvé), ni volume brut (E1 plat) → **encodage via la qualité du label** (biais de
+> contamination 85% tué). Le tir volume massif (E2) n'a de sens qu'APRÈS avoir des labels propres (sinon on multiplie le bruit).
+
 ## 🏆 DEUX GAINS RECHERCHE BAKÉS (2026-07-04) — coin corner+nmp +49 ET threat_ext-sur-coin +108 ; eval-oracle à refaire
 > **Le coin PAIE — c'était PAS du bruit.** Résolution du sign-flip : 0560 corner +30 (47g) / 0561 corner+nmp +39 (248g,
 > capture douteuse) / **0562-clean corner+nmp = +49 Elo, IC [0,5396 ; 0,5991], 872 games, 16/16 shards, crashs=0 →
