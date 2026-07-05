@@ -1,1 +1,44 @@
 === P2 RE-CUT instrumente (arbitre d14 + TB) — HEAD d02c5dde4 queue 0590 p2-recut: instrumented re-audit, per-sample CSV, phase x class C1/C2/C3 + TB arbiter-error control ===
+  HAVE_TB=1 (controle erreur-arbitre) ; N=1600 (400/bande) ; arbitre pur d14 (deep-relabel sans --egdb)
+  echantillon : 1600 pos ([400, 400, 400, 400] par bande phase)
+=== deep-relabel arbitre (d14, params coin defaut, SANS egdb) ===
+  ⚠ egdb-relabel echoue -> TB N/A
+
+=== RE-CUT : CSV per-sample + phase x classe aux seuils bruts {25,50,100} ===
+  CSV : 1600 lignes -> p2-recut.csv
+  |arb_score| percentiles : p50=65 p75=134 p90=330 p95=29989 max=29998
+  (seuil T en unites brutes du score ; si 100~=1 pion alors T=25/50/100 ~ 0.25/0.50/1.0 pion)
+
+  ---- SEUIL brut T=25 ----
+          phase |    n   C1   C2 |   C3 |  agD  agN | desaccord(C1+C2)/arb-dec
+     finale<=12 |  400   99   13 |   12 |  229   47 | 112/341=0.33
+    milieu13-20 |  400   42   22 |   49 |  263   24 | 64/327=0.20
+    milieu21-28 |  400   47   45 |   88 |  187   33 | 92/279=0.33
+  ouverture>=29 |  400   26   48 |  123 |  173   30 | 74/247=0.30
+          TOTAL | 1600  214  128 |  272 |  852  134 | 342/1194=0.286
+     => desaccord = C1(214)+C2(128) = BIAIS ; C3(272) = variance (hors desaccord) ; C4 (bord de seuil)=0 en recompute propre
+
+  ---- SEUIL brut T=50 ----
+          phase |    n   C1   C2 |   C3 |  agD  agN | desaccord(C1+C2)/arb-dec
+     finale<=12 |  400   81    9 |   24 |  221   65 | 90/311=0.29
+    milieu13-20 |  400   35   21 |   67 |  246   31 | 56/302=0.19
+    milieu21-28 |  400   26   27 |  148 |  145   54 | 53/198=0.27
+  ouverture>=29 |  400   10   14 |  245 |   85   46 | 24/109=0.22
+          TOTAL | 1600  152   71 |  484 |  697  196 | 223/920=0.242
+     => desaccord = C1(152)+C2(71) = BIAIS ; C3(484) = variance (hors desaccord) ; C4 (bord de seuil)=0 en recompute propre
+
+  ---- SEUIL brut T=100 ----
+          phase |    n   C1   C2 |   C3 |  agD  agN | desaccord(C1+C2)/arb-dec
+     finale<=12 |  400   29    4 |   67 |  183  117 | 33/216=0.15
+    milieu13-20 |  400   15    9 |  135 |  190   51 | 24/214=0.11
+    milieu21-28 |  400    4    5 |  235 |   80   76 | 9/89=0.10
+  ouverture>=29 |  400    2    5 |  311 |   28   54 | 7/35=0.20
+          TOTAL | 1600   50   23 |  748 |  481  298 | 73/554=0.132
+     => desaccord = C1(50)+C2(23) = BIAIS ; C3(748) = variance (hors desaccord) ; C4 (bord de seuil)=0 en recompute propre
+
+  (controle erreur-arbitre TB : N/A — HAVE_TB=0)
+
+  ROUTAGE (mini-memo §2) : finale C1-dominee => biais (coherent tb-relabel +18) ; ouverture C3-dominee => axe
+  label FERME (variance saine + erreur-arbitre) ; milieu 21-28 C1 substantiel => biais milieu actionnable (E3 /
+  multi-rollout doux, JAMAIS relabel-arbitre). Conclure sur les 2 seuils.
+  CSV committe job-side
