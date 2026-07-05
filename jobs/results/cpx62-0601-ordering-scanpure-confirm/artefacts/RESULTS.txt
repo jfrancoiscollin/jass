@@ -1,0 +1,5 @@
+=== head-to-head Scan-pur (hist_mode=1,hist_pure=1,hist_order_captures=1) vs legacy — HEAD main a12aeee6f runner: finalize cpx62-0600-ordering-p1nc-confirm (completed, rc=0) ===
+  generaliste : 74 openings >=38 pieces (hors-dilf)
+  build OK ; dilf=120 gen=74 ; ~1200 games/cellule
+
+=== A/B Scan-pur vs legacy (haut-N) ===
