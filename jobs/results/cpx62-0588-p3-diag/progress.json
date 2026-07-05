@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0588-p3-diag",
-  "snapshot_at": "2026-07-05T12:03:53+00:00",
+  "snapshot_at": "2026-07-05T12:09:03+00:00",
   "started_at": "2026-07-05T11:46:06+00:00",
-  "elapsed_seconds": 1067,
+  "elapsed_seconds": 1377,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  36333       1       17:46  0.0  0.0 bash\n  36335   36333       17:46  0.0  0.0 bash\n  36790   36335       17:34 99.9  0.5 jass\n  36791   36335       17:34 99.9  0.5 jass\n  36792   36335       17:34 99.9  0.5 jass\n  36793   36335       17:34 99.9  0.5 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  36333       1       22:56  0.0  0.0 bash\n  36335   36333       22:56  0.0  0.0 bash\n  36790   36335       22:44 99.9  0.5 jass\n  36791   36335       22:44 99.9  0.5 jass\n  36792   36335       22:44 99.9  0.5 jass\n  36793   36335       22:44 99.9  0.5 jass\n"
 }
