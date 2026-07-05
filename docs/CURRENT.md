@@ -146,7 +146,7 @@
 > **Synthèse du fil** : ni géométrie (⊇ prouvé), ni volume brut (E1 plat) → **encodage via la qualité du label** (biais de
 > contamination 85% tué). Le tir volume massif (E2) n'a de sens qu'APRÈS avoir des labels propres (sinon on multiplie le bruit).
 
-## 🏆 DEUX GAINS RECHERCHE BAKÉS (2026-07-04) — coin corner+nmp +49 ET threat_ext-sur-coin +108 ; eval-oracle à refaire
+## 🏆 DEUX GAINS RECHERCHE BAKÉS (2026-07-04) — coin corner+nmp +49 ET threat_ext-sur-coin +108 ; eval-oracle FAIT (→ 0591, parité)
 > **Le coin PAIE — c'était PAS du bruit.** Résolution du sign-flip : 0560 corner +30 (47g) / 0561 corner+nmp +39 (248g,
 > capture douteuse) / **0562-clean corner+nmp = +49 Elo, IC [0,5396 ; 0,5991], 872 games, 16/16 shards, crashs=0 →
 > GAGNE hors-IC franc.** ⚠️ **Piège évité de justesse** : le « −30 provisoire » que j'avais lu était un **snapshot prog
@@ -237,7 +237,7 @@
 > `multicut_min_depth=4` qui crash), **RESULTS/RANKING committés JOB-SIDE**. Critère : corner borne basse IC>0,50
 > ⇒ **premier levier search qui paie au jeu** → baker → re-test threat_ext dessus. Sinon ⇒ **on referme la phase EBF**.
 
-## 🎯 PLAN ÉVAL (2026-07-04) — la fourche capacité/labels ; diagnostic eval-vs-Scan AVANT tout refit
+## 🎯 PLAN ÉVAL (2026-07-04) — la fourche capacité/labels ; diagnostic eval-vs-Scan FAIT (→ 0591 : parité, gap=search)
 > Rappel : **gen1 = optimum de fit saturé** (profondeur, volume, prior, archi complète tous éliminés ; **mix2M RÉGRESSE
 > −18** = ajouter de la donnée sur l'archi complète a EMPIRÉ l'eval). ⇒ **ne pas refitter à l'aveugle.** La question eval
 > est une fourche : **capacité** (le jeu de features plafonne, changer l'archi) **vs labels** (cibles self-play = notre
