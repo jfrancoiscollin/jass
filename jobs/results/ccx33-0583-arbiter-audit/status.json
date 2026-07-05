@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0583-arbiter-audit",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T09:12:10+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3219163
+  "ended_at": "2026-07-05T09:17:10+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
