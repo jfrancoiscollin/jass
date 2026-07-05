@@ -11,6 +11,34 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
+## 🎯 A4 EVAL-ORACLE (2026-07-05, `ccx33-0591`) — EVAL À PARITÉ AVEC SCAN ; le retard est le SEARCH, pas l'encodage
+> **Re-mesure eval-vs-Scan en RANG (Spearman), join par BITBOARDS.** Corrige le `r=0.04` de 0576 : cause = **désalignement
+> d'index** (relabel_with_scan SKIP des positions → join par indice corrompu ; POV OK, Scan sign-correct x1). Après fix
+> (Pearson scan-vs-oracle 0.04→0.88), le tableau est net (5964 pos, oracle = self-search d12) :
+>
+> | phase | ρ jass-oracle | ρ scan-oracle | gap Scan−jass | ρ jass-scan |
+> |---|---|---|---|---|
+> | GLOBAL | +0.952 | +0.978 | **+0.026** | +0.934 |
+> | finale ≤12 | +0.944 | +0.982 | +0.038 | +0.932 |
+> | milieu 13-20 | +0.965 | +0.991 | +0.026 | +0.955 |
+> | milieu 21-28 | +0.949 | +0.980 | +0.031 | +0.935 |
+> | ouverture ≥29 | +0.950 | +0.958 | +0.008 | +0.921 |
+>
+> Sanity jass vs matériel r=+0.974 (eval bien-formée). **jass-static et Scan-static ORDONNENT les positions quasi à
+> l'identique** (ρ jass-scan 0.92-0.955) et suivent l'oracle d12 à 0.94-0.99. **Le gap eval Scan−jass est minuscule
+> (+0.026 global), max en finale (+0.038) — pile là où tb-relabel (+18) agit.**
+>
+> **⇒ VERDICT : l'hypothèse « CAPACITÉ/encodage » de 0576 est RÉFUTÉE (artefact d'alignement).** Notre eval statique
+> 32cf est à ~PARITÉ avec Scan en rang. **Le retard vs Scan n'est PAS l'eval → c'est le SEARCH.** Ça **valide le front
+> EBF** (déjà +49 coin + +108 threat_ext). Le résidu eval (+0.026) est petit et concentré en finale, traité par tb-relabel.
+> *(Nuance honnête : mesure au niveau POSITION, pas top-1 move-ordering — un ρ 0.93 peut masquer des écarts au coup de
+> décision ; la direction est nette et cohérente avec nos gains search, mais le test définitif serait le top-1.)*
+>
+> **CONVERGENCE 0590+0591** : la carte des labels (0590 : biais actionnable = finale, déjà traité) ET l'eval-oracle (0591 :
+> eval à parité) pointent TOUTES DEUX **hors de l'eval, vers le SEARCH**. Le programme se recentre : **épuiser les leviers
+> SEARCH/EBF** (là où on gagne réellement) ; côté eval, ne reste que tb-relabel finale (0589 en cours) et un résidu de fit
+> marginal. Fin de la chasse géométrie/labels/capacité.
+
 ## 🗺️ P2 RE-CUT : CARTE DU BIAIS PAR PHASE (2026-07-05, `ccx33-0590`) — biais actionnable = FINALE ; ouverture = variance
 > **Re-cut instrumenté de l'audit P2** (1600 pos, arbitre d14 pur, per-sample CSV committé → re-cut à tout seuil). Sépare
 > le désaccord en **C1** (label nul / arbitre décisif = *unconverted*, BIAIS), **C2** (signe inversé, BIAIS), **C3**
