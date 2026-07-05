@@ -1,0 +1,24 @@
+=== A3 isolation FIX#4(TB)/FIX#2(adjud) — build EGDB, code develop ===
+  egdb data : /root/egdb_extracted ; NUM_PATTERNS=32
+
+=== GEN A : 500000 (egdb=0 ) ===
+  A : 500000 pos ; LABELHYG plycap_games=226/1408 (16.0511%)  contaminated_samples=26733/31250 (85.5456%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=off)
+
+=== GEN B : 500000 (egdb=1 --tb-relabel) ===
+  B : 500000 pos ; LABELHYG plycap_games=227/1434 (15.8298%)  contaminated_samples=26556/31250 (84.9792%)  dropped_post_eps=0  adjudicated=0  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=0 hold=10 pair_openings=off tb_relabel=on)
+
+=== GEN C : 500000 (egdb=0 --adjud-material 3 --adjud-hold-plies 10) ===
+  C : 500000 pos ; LABELHYG plycap_games=173/1764 (9.80726%)  contaminated_samples=25853/31250 (82.7296%)  dropped_post_eps=0  adjudicated=1255  tb_relabel=0 (drop_post_eps=off decay_plies=0 adjud_material=3 hold=10 pair_openings=off tb_relabel=off)
+
+=== FITS from-scratch ===
+  A OK
+  B OK
+  C OK
+
+=== MATCHS vs baseline A (d9 dilf) ===
+  [B(+TB)-vs-A] games=2440 A=1008 B=884 D=548  rate=0.5254+-0.0174  elo~+18  => AIDE hors-IC (garder)
+  [C(+adjud)-vs-A] games=2440 A=960 B=948 D=532  rate=0.5025+-0.0175  elo~+2  => parite (pas d'effet net)
+
+  => B ou C > 0.5 hors-IC => fix cible le VRAI biais finale (P2 31%) => hygiene gratuite a garder.
+  VERDICT committe ✓
+=== fin isolation fix4/fix2 ===
