@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0594-egdb-fix-retest",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T15:53:04+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3245043
+  "ended_at": "2026-07-05T15:58:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

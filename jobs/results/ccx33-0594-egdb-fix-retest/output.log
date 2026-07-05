@@ -1,0 +1,37 @@
+=== EGDB FIX + RETEST — HEAD ab9dccb23 runner: heartbeat cpx62-0593-qs-movetime ===
+  structure /root/egdb_extracted :
+    total 12
+    drwxr-xr-x   3 root root 4096 Jun 16 12:49 .
+    drwx------ 129 root root 4096 Jul  5 15:53 ..
+    drwxr-xr-x   2 root root 4096 Jun 16 12:52 app
+      --- app/ ---
+    db2.cpr1
+    db2.idx1
+    db3.cpr1
+    db3.idx1
+    db4.cpr1
+    db4.idx1
+    db5.cpr1
+    db5.idx1
+    db6-0303.cpr1
+    db6-0303.idx1
+    db6-0312.cpr1
+    db6-0312.idx1
+  fichiers DB attendus dans app/ : 79 *.idx1 ; taille app/=4.8G
+  echantillon=300000 pos ; <=6 pieces (couverts par la base)=37687 (12.56%)
+
+=== A/B CHEMIN : egdb-relabel (init -> egdb_identify -> egdb_open) ===
+  [MAUVAIS] db_dir=/root/egdb_extracted (mon bug 0587/0589/0590) :
+    rc=1
+    error: egdb::init failed for '/root/egdb_extracted' (built without -DJASS_EGDB, or no DB there)
+  [BON] db_dir=/root/egdb_extracted/app :
+    rc=0
+    egdb-relabel: 300000 records, 42673 egdb-resolved (16153 decisive, 26520 draw), 9854 labels changed, 2747 stalls (won/lost recorded draw) → /root/cw-egdbfix/out_right.jnnw
+
+=== VERDICT FIX ===
+  ✅ EGDB REPARE : /app resout 42673 positions (dont 9854 labels changes, 2747 stalls=finales gagnees/perdues
+     etiquetees nulles = le VRAI biais finale). Le bug etait bien le chemin (/app manquant). Le mauvais chemin a rc=1.
+  => On peut re-tester tb-relabel proprement (gen avec JASS_EGDB_PATH=/root/egdb_extracted/app) : la manche 0589 est a refaire avec /app.
+     Rappel couverture : base 6-pieces => tb-relabel ne corrige QUE les finales <=6 pieces (fraction du biais 0590 <=12).
+  RESULTS committe ✓
+=== fin egdb fix+retest ===
