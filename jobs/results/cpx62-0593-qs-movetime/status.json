@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0593-qs-movetime",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T15:41:35+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 44023
+  "ended_at": "2026-07-05T16:27:50+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
