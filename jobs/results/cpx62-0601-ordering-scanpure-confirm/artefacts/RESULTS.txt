@@ -3,3 +3,7 @@
   build OK ; dilf=120 gen=74 ; ~1200 games/cellule
 
 === A/B Scan-pur vs legacy (haut-N) ===
+  [gen mt0.3] A(Scan-pur)=307 B(legacy)=271 D=162 n=740 rate_A=0.5243+-0.0318 elo~+17 IC=[0.493,0.556] => neutre
+
+  GATE : rate_A>0.5 hors-IC DILF ET generaliste => ordering Scan-pur bat le notre => BAKE.
+  neutre => parite d'ordering (notre fmc deja 0.91, 0599) => front ordering CLOS. (0600 fait le meme test SANS E3.)
