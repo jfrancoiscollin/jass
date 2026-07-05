@@ -1,0 +1,8 @@
+{
+  "job_id": "ccx33-0591-a4-encoding-rankloss",
+  "snapshot_at": "2026-07-05T13:10:55+00:00",
+  "started_at": "2026-07-05T13:05:33+00:00",
+  "elapsed_seconds": 322,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3223820       1       05:22  0.0  0.0 bash\n3223822 3223820       05:22  0.0  0.0 bash\n3224291 3223822       04:08  0.1  0.0 bash\n3240662 3224291       00:00  0.0  0.0 bash\n3240663 3240662       00:00 93.7  0.8 jass\n3240664 3240662       00:00  0.0  0.0 head\n"
+}
