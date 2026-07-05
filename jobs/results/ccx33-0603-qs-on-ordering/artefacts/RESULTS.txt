@@ -1,0 +1,4 @@
+  [f6 mt0.3] A(+qs)=142 B(defaut)=176 D=38 n=356 rate_A=0.4522+-0.0488 elo~-33 IC=[0.403,0.501] => neutre
+
+  GATE : une cellule hors-IC>0.5 => la qs co-adapte a l'ordering ameliore => bake. Sinon => qs reste morte => clos.
+  Rappel 0593 (sur l'ancien defaut) : f6p6 -125/-119, f4p4 -92, f6 -128 (tous hors-IC<0.5).
