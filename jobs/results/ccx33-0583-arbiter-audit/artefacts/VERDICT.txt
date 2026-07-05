@@ -1,1 +1,44 @@
 === P2 AUDIT ARBITRE (champion+coin d14) — HEAD 508a49218 runner: start cpx62-0584-e1-clean ===
+=== deep-relabel arbitre (d14, params coin defaut) ===
+import struct,sys,collections
+REC=38
+orig=open(sys.argv[1],'rb').read(); no=struct.unpack('<I',orig[4:8])[0]; ob=orig[8:]
+deep=open(sys.argv[2],'rb').read(); nd=struct.unpack('<I',deep[4:8])[0]; db=deep[8:]
+band=int(sys.argv[3]); m=min(no,nd)
+def pc(r):
+    wm,wk,bm,bk=struct.unpack('<QQQQ',r[:32]); return bin(wm).count('1')+bin(wk).count('1')+bin(bm).count('1')+bin(bk).count('1')
+conf=collections.Counter(); phase_dis=collections.defaultdict(lambda:[0,0]); sc_hist=collections.Counter()
+lab_hist=collections.Counter()
+for i in range(m):
+    ro=ob[i*REC:(i+1)*REC]; rd=db[i*REC:(i+1)*REC]
+    wdl=struct.unpack('<b',ro[37:38])[0]            # label = issue partie (STM-POV)
+    sc=struct.unpack('<i',rd[33:37])[0]             # arbitre = deep-score (STM-POV, reecrit)
+    arb = 1 if sc>band else (-1 if sc<-band else 0)
+    lab_hist[wdl]+=1; sc_hist[arb]+=1; conf[(wdl,arb)]+=1
+    p=pc(ro); band_i=0 if p<=12 else (1 if p<=20 else (2 if p<=28 else 3))
+    # desaccord = arbitre DECISIF mais label different (on juge la ou l'arbitre a un avis)
+    if arb!=0:
+        phase_dis[band_i][1]+=1
+        if arb!=wdl: phase_dis[band_i][0]+=1
+print(f"positions appariees : {m} ; arbitre = champion+coin d-search, draw-band {band}")
+print(f"distribution LABEL (wdl-partie) : win={lab_hist[1]} draw={lab_hist[0]} loss={lab_hist[-1]}")
+print(f"distribution ARBITRE (deep sign): win={sc_hist[1]} draw={sc_hist[0]} loss={sc_hist[-1]}")
+print("")
+print("MATRICE label(ligne) x arbitre(col)  [W/D/L] :")
+for wl in (1,0,-1):
+    print(f"  label={wl:+d} : arb+1={conf[(wl,1)]:4d}  arb0={conf[(wl,0)]:4d}  arb-1={conf[(wl,-1)]:4d}")
+# desaccord global sur positions ou l'arbitre est decisif
+dec=sum(v for (w,a),v in conf.items() if a!=0); dis=sum(v for (w,a),v in conf.items() if a!=0 and a!=w)
+print("")
+print(f"DESACCORD (arbitre decisif, label != arbitre) : {dis}/{dec} = {dis/dec:.3f}" if dec else "  (arbitre jamais decisif ?!)")
+print("par PHASE (bande pieces) :")
+names={0:'finale<=12',1:'13-20',2:'21-28',3:'ouverture>=29'}
+for bi in range(4):
+    d,t=phase_dis[bi]
+    print(f"  {names[bi]:>14} : desaccord {d}/{t} = {d/t:.3f}" if t else f"  {names[bi]:>14} : (aucune decisive)")
+print("")
+# le finding cle : gagnes-par-arbitre mais label PAS gagnant (unconverted / le 23%)
+unconv = conf[(0,1)]+conf[(-1,1)] + conf[(0,-1)]+conf[(1,-1)]
+arb_dec = sc_hist[1]+sc_hist[-1]
+print(f"UNCONVERTED (arbitre decide gagnant/perdant mais label ne suit pas) : {unconv}/{arb_dec} = {unconv/arb_dec:.3f}" if arb_dec else "")
+print("  => c'est la mesure directe du '23%' : fraction des positions ou le label ment sur l'issue reelle.")
