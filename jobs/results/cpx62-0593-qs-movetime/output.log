@@ -1,0 +1,21 @@
+=== qs-movetime (suite 0592) — HEAD cd0783d9b queue 0593 qs-movetime: forcing/promo quiescence bake-gate au temps reel (suite 0592) ===
+  eval=gen1 (2 cotes) ; moteur coin=3/3 ; ~640 g/cellule ; side B=coin (spec vide)
+
+=== A/B jass-vs-jass au MOVETIME (side A=qs vs side B=coin, gen1) ===
+  -- f6p6_mt02 (mt=0.2 : qs_forcing_depth=6,qs_promo_depth=6) --
+  [f6p6_mt02] mt=0.2 A(qs)=168 B(coin)=386 D=78 n=632  rate_A=0.3275+-0.0339  elo~-125  IC=[0.294,0.361]  => NUIT — hors-IC<0.5  (qs_forcing_depth=6,qs_promo_depth=6)
+  -- f4p4_mt02 (mt=0.2 : qs_forcing_depth=4,qs_promo_depth=4) --
+  [f4p4_mt02] mt=0.2 A(qs)=190 B(coin)=354 D=88 n=632  rate_A=0.3703+-0.0347  elo~-92  IC=[0.336,0.405]  => NUIT — hors-IC<0.5  (qs_forcing_depth=4,qs_promo_depth=4)
+  -- f6_mt02 (mt=0.2 : qs_forcing_depth=6) --
+  [f6_mt02] mt=0.2 A(qs)=166 B(coin)=389 D=77 n=632  rate_A=0.3236+-0.0338  elo~-128  IC=[0.290,0.357]  => NUIT — hors-IC<0.5  (qs_forcing_depth=6)
+  -- f6p6_mt005 (mt=0.05 : qs_forcing_depth=6,qs_promo_depth=6) --
+  [f6p6_mt005] mt=0.05 A(qs)=143 B(coin)=416 D=73 n=632  rate_A=0.2840+-0.0326  elo~-161  IC=[0.251,0.317]  => NUIT — hors-IC<0.5  (qs_forcing_depth=6,qs_promo_depth=6)
+  -- f6p6_mt05 (mt=0.5 : qs_forcing_depth=6,qs_promo_depth=6) --
+  [f6p6_mt05] mt=0.5 A(qs)=166 B(coin)=375 D=91 n=632  rate_A=0.3347+-0.0337  elo~-119  IC=[0.301,0.368]  => NUIT — hors-IC<0.5  (qs_forcing_depth=6,qs_promo_depth=6)
+
+  GATE : une cellule rate_A>0.5 hors-IC => la quiescence forcing/promo PAIE au temps reel => BAKE le meilleur spec
+  (3e gain search). Si NEUTRE partout => le +160 fixed-depth ne survit pas au cout-noeud => la qs ne change pas la
+  force reelle (le pruning nous redonne la profondeur perdue) => rester sur les autres leviers search/EBF.
+  Robustesse TC : comparer f6p6 @ mt0.05 / 0.2 / 0.5 (si le gain croit avec le temps => qs + profondeur composent).
+  RESULTS committe ✓
+=== fin qs-movetime ===
