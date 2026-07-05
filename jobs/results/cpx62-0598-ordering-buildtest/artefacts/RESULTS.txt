@@ -1,0 +1,22 @@
+=== ordering build+test — HEAD main 64c674c42 runner: heartbeat ccx33-0596-tb-regen-app ===
+  develop=2edfbe843
+  BASE build OK
+  PROB build OK (jass + jass_tests)
+
+=== (1) jass_tests (build PROB) ===
+  ✗ jass_tests FAIL
+
+=== (2) perft BASE vs PROB (startpos d1..7) ===
+  perft(7) BASE=1049442 PROB=1049442
+  ✓ perft identique
+
+=== (3) legacy byte-identical : PROB(hist_mode=0 defaut) vs BASE, nodes @ d9/d11 ===
+  positions comparees=20 ; divergentes=0
+  ✓ legacy byte-identical (chemin d'origine intact)
+
+=== (4) smoke prob (hist_mode=1) : tourne + effet sur l'arbre ===
+    [hist_mode=1,prob_shift=5] nodes=nodes=30301 (legacy=nodes=28391)
+    [hist_mode=1,hist_pure=1,hist_order_captures=1] nodes=nodes=21284 (legacy=nodes=28391)
+  ✓ prob tourne sans crash (2/2 specs) ; arbre modifie sur 2/2
+
+==> ❌ GATE ROUGE : corriger avant DOE.
