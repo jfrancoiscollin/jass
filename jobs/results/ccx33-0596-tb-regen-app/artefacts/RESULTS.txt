@@ -1,0 +1,1 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
