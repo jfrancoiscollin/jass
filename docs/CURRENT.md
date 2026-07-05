@@ -11,6 +11,25 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
+## 🎯 FRONT ORDERING (2026-07-05) — anchor 0597 VERT (gap réel) ; port history-prob Scan codé (develop) ; DOE en attente de gates
+> **Levier : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`) — gratuit en nœuds par construction (immunisé au tueur
+> « coût mange le gain » qui a tué qs/ext_forcing). Le diagnostic source-contre-source confirme 3 écarts vs jass :
+> E1 (jass=additif depth² non borné vs EMA bornée oublieuse), E2 (jass=bonus sur beta-cutoff seul vs update bidirectionnel
+> sur score>alpha), E3 (jass=captures non triées vs triées par history).
+>
+> **`cpx62-0597` ANCHOR VERT** : survie-1er-choix (accord d1↔d11) **jass 0.340 < Scan 0.431 (−0.091 ; finale −0.184)** →
+> jass sélectionne le bon coup profond au 1er essai MOINS souvent que Scan → arbre plus gros → **le levier existe** (pas
+> mort-né). Accord-top1 jass-vs-Scan d11 = 0.394 (on diverge). *(Nuance : survie = teinté eval-marge, pas cutoff pur ; le
+> DOE mesurera le `first_move_cutoffs` LITTÉRAL — déjà instrumenté, search.cpp:1134 — + node-EBF + Elo.)*
+>
+> **CODÉ sur `develop` (commit 2edfbe84)** : `hist_mode={legacy|prob}` gaté (legacy byte-identical), EMA init 2048 /
+> good`(4096-h)>>5` / bad`h>>5`, update fin-de-nœud bidirectionnel (good best_move + bad essayés-avant), E3 captures,
+> flags `hist_pure` (P1) / `hist_order_captures`. Compile propre (rc=0 vs arbre develop).
+>
+> **GATES avant bake (dans l'ordre)** : 0597 ✅ (gap réel) → **`0598` build+test** (jass_tests/perft/**byte-identical
+> legacy**/smoke-prob) → **DOE P1/P2/P3** (P1=prob pur, P2=prob+machinerie jass, P3=legacy+E3). Bake SSI first-move-cutoff↑
+> ET node-EBF↓ ET Elo(movetime+généraliste)≥. Sinon consigner : l'ordering n'était pas le goulot, le front search se ferme.
+
 ## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
 > **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
 > `--jass-search-params` (merge sur coin). Résultats (rate jass, ±IC95, ~240 g/cellule) :
