@@ -98,9 +98,9 @@ struct SearchParams {
     //   init a PROB_HALF (2048), good: h += (4096-h)>>prob_shift, bad: h -= h>>prob_shift. Mise a jour
     //   BIDIRECTIONNELLE sur score>alpha_orig (le best_move final) + malus sur TOUS les coups essayes-avant.
     //   Estimateur adaptatif qui oublie vite (contre l'additif depth^2 non borne du legacy).
-    int hist_mode  = 0;    // 0=legacy (additif) ; 1=prob (EMA Scan)
+    int hist_mode  = 1;    // BAKÉ 1 (2026-07-05, 0600 : P1nc +20..+43 Elo movetime hors-IC dilf+généraliste). 0=legacy (additif) ; 1=prob (EMA Scan)
     int prob_shift = 5;    // vitesse EMA (Scan=5 ; balayable 4-6)
-    int hist_pure  = 0;    // (P1) mode prob : 1 => IGNORER killers/countermove/conthist au scoring (estimateur seul)
+    int hist_pure  = 1;    // BAKÉ 1 (2026-07-05, 0600) : EMA prob SEULE (sans killers/CM/conthist au scoring) bat la machinerie complete. (P1) 0=legacy
     int hist_order_captures = 0;  // (E3) 1 => trier AUSSI les captures par history (au lieu de l'ordre de generation)
 
     // Aspiration window initial half-width (cp).
