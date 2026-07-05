@@ -12,3 +12,7 @@
 
 === (C) Elo movetime A/B (side A=config vs side B=legacy, dilf) ===
   [P1 mt0.1] A=101 B(legacy)=91 D=44 n=236 rate_A=0.5212+-0.0575 elo~+15 => neutre
+  [P2 mt0.3] A=101 B(legacy)=94 D=41 n=236 rate_A=0.5148+-0.0580 elo~+10 => neutre
+
+  GATE : un config avec fmc↑ ET node-EBF ratio<1 ET Elo≥0.5 (hors-IC) => candidat => controle generaliste puis BAKE.
+  fmc↑ + nodes↓ mais Elo≈ => l'ordering se resserre sans payer en jeu (le goulot n'etait pas la) => consigner, front clos.
