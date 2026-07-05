@@ -30,6 +30,23 @@
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
+## 🧪 PISTE (a) RANK-LOSS SUR FRATRIES (comparison training / Bonanza-MMTO) — cible l'ÉVAL-MARGE (le résidu mesuré)
+> **Cible** : le défaut mesuré = éval-marge (0591 rang-position à parité ; 0597/0599 survie-1er-choix 0.34<0.43 Scan, départage
+> mal les coups-sœurs). Le fit WDL ne pénalise pas une inversion de sœurs → **objectif mal aligné**. La rank-loss sur fratries
+> la vise directement. **Statut : méthode championne du monde au shogi (Bonanza 2006 / MMTO 2013, éval linéaire ~40M params),
+> jamais portée aux dames.** NON-circulaire vs 0443 (on apprend des ORDRES relatifs, pas des valeurs).
+>
+> **DOE prévu C/M/S/MS** : M=préférences MAÎTRES (coup joué = préféré ; oracle EXTERNE, zéro biais-de-nulles ; recycle le
+> corpus masters par son canal riche) ; S=préférences RECHERCHE-PROFONDE propre (TB-ancré en finale). **G1 = juge de paix**
+> (survie held-out 0.34→0.43, quasi-gratuit ; si plat sur les 2 bras → clause d'échec, pivot produit).
+>
+> **CODÉ (develop)** : `--gen-siblings` (bras S, `874bf36`) + `--played-moves` master mode (bras M Bonanza, `3713b77`).
+> **Corpus S validé** (`0602` : 50k parents → 410k paires, finale ~28%). **REGEN avec bake ordering en vol** (`0604` : oracle
+> d9 = prob-pur, plus profond → meilleures paires). **RESTE** : trainer rank-loss (`rank_finetune.py`, option-b : L-BFGS
+> `λ·L_pair + anchor·‖w−champion‖²`, garde-fou POV Python-vs-C++) + G1. Bras M : + extracteur PDN + vérif `expert_games.db`.
+> **Préambule (briefing)** : lire `0601` (E3) + `0584` (volume-vs-rank : le volume est la voie « prouvée-Scan », la rank-loss
+> le raccourci — cumulables) avant d'engager le fit.
+
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
 > **Levier testé : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`, gratuit en nœuds). Diagnostic source-contre-source
 > confirmé (E1 additif-non-borné vs EMA, E2 beta-cutoff-seul vs bidirectionnel, E3 captures non triées). **Codé sur `develop`
@@ -53,9 +70,7 @@
 > ordering CLOS**. ⇒ avec eval-parité (0591), labels-épuisés (0590), quiescence-morte (0593), ordering-optimal (0599), les
 > leviers search par knob-tuning sont **tapés** ; le résidu −150 vs Scan est de l'**eval-marge** (move-selection fine).
 
-## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
-
-## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, mais la CURE ne bake pas (coût-nœud)
+## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, cure rejetée au movetime (0593), RE-TEST co-adaptation en vol (0603)
 > **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
 > `--jass-search-params` (merge sur coin). Résultats (rate jass, ±IC95, ~240 g/cellule) :
 >
@@ -142,7 +157,12 @@
 > *(Gap : contrôle erreur-arbitre TB N/A — `egdb-relabel` a échoué sur ccx33 (init db). Moins porteur que craint : l'ouverture
 > est déjà 91% C3=arbitre-INDÉCIS, pas arbitre-faux. Re-run possible sur cpx62 (EGDB prouvé en 0587) si on veut le chiffre.)*
 
-## ⚠️ FIX#4 TB-RELABEL — « +18 » PHANTOM ; EGDB ✅ RÉPARÉ (0594, chemin `/app`) ; manche à REFAIRE proprement
+## ❌ FIX#4 TB-RELABEL-EN-GEN — ABANDONNÉ (0596) ; « +18 » PHANTOM ; EGDB OK via `--egdb-relabel` mais PAS via le gen
+> **⛔ ABANDON (2026-07-05, `ccx33-0596`)** : la manche tb-relabel refaite avec le chemin `/app` a ENCORE donné `tb_relabel=0`
+> (fail-fast pd8). Cause : le gen utilise `ensure_initialised()` via `JASS_EGDB_PATH` (env) qui **ne charge pas**, alors que
+> `--egdb-relabel` via `egdb::init(dir)` (arg) **charge** (0594 : 42 673 résolus). 3 tentatives ratées (0587/0589/0596) pour
+> un levier SECONDAIRE (≤6 pièces). **On abandonne le tb-relabel-EN-GEN.** Reframe : si on veut des labels TB-exacts un jour
+> (ex. sous-corpus TB-finale du bras S), on passe par `--egdb-relabel` POST-gen (chemin prouvé). Ne plus y revenir en gen.
 > **CORRECTION D'UNE ERREUR.** J'avais promu 0587 comme « FIX#4 tb-relabel = +18 Elo, seul levier label qui gagne ».
 > **C'était faux.** La re-lecture des logs le prouve : **`tb_relabel=0` sur TOUS les bras de 0587 (y compris B «+TB»)**
 > ET sur les 3 phases de 0589. **Le relabel par-sample n'a JAMAIS tiré un seul échantillon.** J'avais inféré le mécanisme
