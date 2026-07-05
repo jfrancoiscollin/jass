@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0605-scan-matrix-reanchor",
-  "snapshot_at": "2026-07-05T23:30:03+00:00",
+  "snapshot_at": "2026-07-05T23:35:05+00:00",
   "started_at": "2026-07-05T21:52:00+00:00",
-  "elapsed_seconds": 5883,
+  "elapsed_seconds": 6185,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  61553       1    01:38:02  0.0  0.0 bash\n  61555   61553    01:38:02  0.0  0.0 bash\n  62189   61555    01:37:52  0.0  0.0 bash\n  62193   62189    01:37:52  0.2  0.0 python3\n  62197   62193    01:37:52 50.8  0.5 jass\n  62207   62193    01:37:52 49.0  0.9 scan_linux\n  62215   62193    01:37:52  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  61553       1    01:43:05  0.0  0.0 bash\n  61555   61553    01:43:05  0.0  0.0 bash\n  62189   61555    01:42:54  0.0  0.0 bash\n  62193   62189    01:42:54  0.2  0.0 python3\n  62197   62193    01:42:54 50.8  0.5 jass\n  62207   62193    01:42:54 49.0  0.9 scan_linux\n  62215   62193    01:42:54  0.0  0.0 jass\n"
 }
