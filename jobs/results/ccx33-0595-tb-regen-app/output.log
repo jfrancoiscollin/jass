@@ -1,0 +1,6 @@
+=== MANCHE PROD tb-relabel : build EGDB (code gen=develop), moteur COIN ===
+  HEAD main : 332983322 runner: start ccx33-0595-tb-regen-app
+  moteur coin : 3/3 params-cle ; NUM_PATTERNS=32 ; egdb=/root/egdb_extracted/app
+  combos=1239648
+  EGDB probe (combos) : 0 egdb-resolved (0 decisive
+ABORT EGDB ne resout rien sur /root/egdb_extracted/app (init KO) : egdb-relabel: 1239648 records, 0 egdb-resolved (0 decisive, 0 draw), 0 labels changed, 0 stalls (won/lost recorded draw) → /root/cw-tbregenapp/_probe.jnnw
