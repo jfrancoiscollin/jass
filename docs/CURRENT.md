@@ -23,9 +23,10 @@
 > ⚠️ Leçon méthodo : 0599 (n=236) l'avait déclaré « neutre/clos » à tort — le confirm haut-N (n≈1000) a révélé le vrai effet.
 >
 > **⟹ 3e GAIN SEARCH bakable** (après coin +49, threat_ext +108). Codé sur `develop` (2edfbe84, byte-identical legacy à
-> hist_mode=0). **✅ BAKÉ sur develop (`5027966`)** : défauts `hist_mode=1, hist_pure=1` (compile rc=0). Le code prob + le défaut vivent
-> ENSEMBLE sur develop (main.search.cpp n'a pas le code) → les jobs l'utilisent via overlay-develop. Promotion develop→main
-> = décision JFC (pour en faire le défaut d'un build main brut). `cpx62-0601` (P1nc +E3) dira si `hist_order_captures=1` ajoute.
+> hist_mode=0). **✅ BAKÉ ET PROMU SUR MAIN (`9422fc02`)** : défauts `hist_mode=1, hist_pure=1` + code prob-history sur MAIN (diff propre,
+> que mes ajouts, compile rc=0 vs main ; main==develop sur les 2 fichiers). **Un build main brut (défaut runner) utilise
+> maintenant l'ordering prob-pur.** (Les autres changements develop — gen-siblings/label-hygiene/rank-loss — restent sur
+> develop, non promus, encore expérimentaux.) `cpx62-0601` (P1nc +E3) dira si `hist_order_captures=1` ajoute au +30.
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
