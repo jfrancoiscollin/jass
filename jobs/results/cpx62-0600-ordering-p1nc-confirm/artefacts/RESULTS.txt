@@ -1,0 +1,4 @@
+  [gen mt0.3] A(P1nc)=328 B(legacy)=236 D=176 n=740 rate_A=0.5622+-0.0311 elo~+43 IC=[0.531,0.593] => GAGNE hors-IC
+
+  GATE : rate_A>0.5 hors-IC sur DILF ET generaliste => prob-pur PAIE (gratuit) => BAKE hist_mode=1,hist_pure=1.
+  neutre => le +30 de 0599 etait du bruit => front ORDERING CLOS (fmc deja 0.91, cf 0599).
