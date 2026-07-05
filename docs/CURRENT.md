@@ -11,6 +11,36 @@
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
 > (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
 
+## 🗺️ P2 RE-CUT : CARTE DU BIAIS PAR PHASE (2026-07-05, `ccx33-0590`) — biais actionnable = FINALE ; ouverture = variance
+> **Re-cut instrumenté de l'audit P2** (1600 pos, arbitre d14 pur, per-sample CSV committé → re-cut à tout seuil). Sépare
+> le désaccord en **C1** (label nul / arbitre décisif = *unconverted*, BIAIS), **C2** (signe inversé, BIAIS), **C3**
+> (label décisif / arbitre ~nul = VARIANCE, HORS désaccord). **Hypothèse d'asymétrie du mémo CONFIRMÉE**, robuste T={25,50,100} :
+>
+> | phase (T=50) | C1 | C2 | C3 var | lecture |
+> |---|---|---|---|---|
+> | **finale ≤12** | **81** | 9 | 24 | **C1-dominé → BIAIS** (~20% des pos) |
+> | milieu 13-20 | 35 | 21 | 67 | mixte, variance montante |
+> | milieu 21-28 | 26 | 27 | **148** | variance domine ; biais modeste (C1 6-12% selon seuil) |
+> | **ouverture ≥29** | 10 | 14 | **245** | **C3 écrase → VARIANCE, axe label FERMÉ** |
+>
+> **Méta décisif** : monter T (arbitre franchement décisif) effondre le désaccord total 0.286→0.242→0.132 et gonfle la
+> variance C3 272→484→748. ⇒ le gros du « 24% » est de l'arbitre marginal ; le **cœur de biais robuste** (T=100, clairement
+> décisif) = 73 pos, **finale-lourd** (C1 finale=29/50). Le désaccord P2 = **C1+C2 = 100% biais par construction** (métrique
+> exigeait arbitre-décisif → exclut la variance) ; la variance C3 (484 à T=50, 30% du sample) vit dans un bucket que P2 n'a
+> jamais compté. « Le 24% conflate biais et variance » est donc FAUX : le 24% est du biais, la variance est ailleurs.
+>
+> **⇒ ROUTAGE (mémo §2, gravé)** :
+> - **Finale = biais C1** → **tb-relabel le traite déjà (+18, 0587)**. Cohérent. Levier finale = ÉPUISÉ par la TB.
+> - **Ouverture + milieu 13-20 = variance** → **axe label FERMÉ**. Leviers = couverture (A2 eps) / volume / itération E3. ⛔ jamais relabel-arbitre (auto-distillation).
+> - **Milieu 21-28 = biais MODESTE** (C1 6-12%, sensible au seuil) → seul candidat label résiduel, **faible reward** ; remède = **E3 (meilleur pilote)** ou multi-rollout doux ciblé. ⛔ pas de relabel-arbitre.
+>
+> **Conclusion stratégique** : après tb-relabel, le **front label est quasi-épuisé** — le biais actionnable était concentré
+> en finale (traité) ; le reste est variance saine (à ne pas toucher, leçon −25) ou biais mid-late modeste (E3). ⇒ le plateau
+> n'est plus principalement un problème de LABELS → bascule vers **capacité/encodage (A4)** et **itération/échelle (E3)**.
+>
+> *(Gap : contrôle erreur-arbitre TB N/A — `egdb-relabel` a échoué sur ccx33 (init db). Moins porteur que craint : l'ouverture
+> est déjà 91% C3=arbitre-INDÉCIS, pas arbitre-faux. Re-run possible sur cpx62 (EGDB prouvé en 0587) si on veut le chiffre.)*
+
 ## ✅ FIX#4 TB-RELABEL = +18 Elo hors-IC (2026-07-05, `cpx62-0587`) — le SEUL levier label qui gagne
 > **VERDICT `cpx62-0587` (EGDB isolé, 3 bras vs baseline A, d9 dilf, 2440 games/bras)** :
 > - **B (+TB-relabel)** : rate **0.5254±0.0174 → ~+18 Elo, HORS-IC → AIDE, à GARDER.**
