@@ -1,0 +1,14 @@
+=== head-to-head Scan-pur (hist_mode=1,hist_pure=1,hist_order_captures=1) vs legacy — HEAD main a12aeee6f runner: finalize cpx62-0600-ordering-p1nc-confirm (completed, rc=0) ===
+  generaliste : 74 openings >=38 pieces (hors-dilf)
+  build OK ; dilf=120 gen=74 ; ~1200 games/cellule
+
+=== A/B Scan-pur vs legacy (haut-N) ===
+  [dilf mt0.1] A(Scan-pur)=512 B(legacy)=468 D=210 n=1190 rate_A=0.5185+-0.0258 elo~+13 IC=[0.493,0.544] => neutre
+  [gen mt0.1] A(Scan-pur)=333 B(legacy)=258 D=149 n=740 rate_A=0.5507+-0.0320 elo~+35 IC=[0.519,0.583] => GAGNE hors-IC
+  [dilf mt0.3] A(Scan-pur)=527 B(legacy)=436 D=227 n=1190 rate_A=0.5382+-0.0255 elo~+27 IC=[0.513,0.564] => GAGNE hors-IC
+  [gen mt0.3] A(Scan-pur)=307 B(legacy)=271 D=162 n=740 rate_A=0.5243+-0.0318 elo~+17 IC=[0.493,0.556] => neutre
+
+  GATE : rate_A>0.5 hors-IC DILF ET generaliste => ordering Scan-pur bat le notre => BAKE.
+  neutre => parite d'ordering (notre fmc deja 0.91, 0599) => front ordering CLOS. (0600 fait le meme test SANS E3.)
+  RESULTS committe ✓
+=== fin head-to-head scan-pur ===
