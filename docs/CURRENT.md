@@ -9,7 +9,26 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-04** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
+
+## ✅ FIX#4 TB-RELABEL = +18 Elo hors-IC (2026-07-05, `cpx62-0587`) — le SEUL levier label qui gagne
+> **VERDICT `cpx62-0587` (EGDB isolé, 3 bras vs baseline A, d9 dilf, 2440 games/bras)** :
+> - **B (+TB-relabel)** : rate **0.5254±0.0174 → ~+18 Elo, HORS-IC → AIDE, à GARDER.**
+> - **C (+adjud FIX#2)** : rate 0.5025±0.0175 → +2 Elo, parité (pas d'effet net isolé).
+>
+> **Pourquoi c'est réel et pas un artefact EGDB muet** : le différentiel B≠C EST la signature qu'EGDB a bien tiré. Adjud
+> (FIX#2, ne touche pas l'EGDB) = parité ; TB (FIX#4, dépend de l'EGDB) = +18. Si l'EGDB avait échoué en silence,
+> tb-relabel serait un no-op et B se serait effondré sur A comme C. Le signal est différentiel → EGDB actif.
+>
+> **Cadrage** : ceci NE contredit PAS 0582. La « pureté générique » (retirer eps, filtrer, relabel deep) reste MORTE (−25).
+> Ce qui gagne ici est **ciblé** : réécrire le WDL des positions **finale** avec la valeur EXACTE de la base tablebase —
+> exactement le biais que P2 (arbitre d14) a mesuré à **31% de désaccord en finale** (0585). Un seul levier label survit,
+> et c'est le seul qui vise un biais MESURÉ, pas une hygiène spéculative.
+>
+> **⇒ ACTION** : replier **FIX#4 tb-relabel** dans le package gen de PRODUCTION (le gagnant asym/quiet-only/enrichment/
+> TB-terminate reste intact — tb-relabel s'ajoute côté labels finale). Regénérer le corpus champion avec labels finale
+> exacts, refit, re-match. C'est la prochaine vraie manche eval. (P3 diag 0588 en vol pour clore le socle famine, hors
+> chemin critique.)
 
 ## ❌ LEVIER LABEL-QUALITY RÉFUTÉ (2026-07-05) — l'hygiène de label DÉGRADE l'eval ; batterie sanity-gen adoptée
 > **Branche `develop`** = code (reset sur main HEAD ; git server accepte main+develop ; runner build main ; jobs overlay develop au runtime).
