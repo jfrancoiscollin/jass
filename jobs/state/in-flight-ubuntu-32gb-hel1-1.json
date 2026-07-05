@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0600-ordering-p1nc-confirm",
+  "script": "jobs/queue/cpx62-0600-ordering-p1nc-confirm.sh",
+  "pid": 55104,
+  "started_at": "2026-07-05T19:47:33+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
