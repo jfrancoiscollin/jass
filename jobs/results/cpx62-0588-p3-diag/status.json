@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0588-p3-diag",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 1,
   "started_at": "2026-07-05T11:46:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 36333
+  "ended_at": "2026-07-05T12:14:07+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
