@@ -94,7 +94,7 @@
 > *(Gap : contrôle erreur-arbitre TB N/A — `egdb-relabel` a échoué sur ccx33 (init db). Moins porteur que craint : l'ouverture
 > est déjà 91% C3=arbitre-INDÉCIS, pas arbitre-faux. Re-run possible sur cpx62 (EGDB prouvé en 0587) si on veut le chiffre.)*
 
-## ❌ FIX#4 TB-RELABEL — LE « +18 » ÉTAIT UN PHANTOM (2026-07-05) : bug de CHEMIN EGDB (`/app`), réparable (0594)
+## ⚠️ FIX#4 TB-RELABEL — « +18 » PHANTOM ; EGDB ✅ RÉPARÉ (0594, chemin `/app`) ; manche à REFAIRE proprement
 > **CORRECTION D'UNE ERREUR.** J'avais promu 0587 comme « FIX#4 tb-relabel = +18 Elo, seul levier label qui gagne ».
 > **C'était faux.** La re-lecture des logs le prouve : **`tb_relabel=0` sur TOUS les bras de 0587 (y compris B «+TB»)**
 > ET sur les 3 phases de 0589. **Le relabel par-sample n'a JAMAIS tiré un seul échantillon.** J'avais inféré le mécanisme
@@ -116,6 +116,13 @@
 > le champion**. (3) Le biais finale (0590 C1) est réel ; une fois `/app` confirmé (0594), on peut re-tester tb-relabel
 > **proprement** avec `JASS_EGDB_PATH=/root/egdb_extracted/app`. (4) **⚠️ Couverture 6-pièces** : la base ne couvre que
 > les finales ≤6 pièces → tb-relabel n'adresse qu'une **fraction** du biais finale ≤12 de 0590. À doser avant de sur-investir.
+>
+> **✅ EGDB CONFIRMÉ RÉPARÉ (`ccx33-0594`)** : A/B de chemin décisif — `egdb-relabel` sur le parent = `init failed` (rc=1) ;
+> sur **`/root/egdb_extracted/app`** = rc=0, **42 673/300k positions résolues** (16 153 décisives, 26 520 nulles), **9 854
+> labels changés (23% des résolues)**, **2 747 stalls** (finales gagnées/perdues étiquetées nulles = le biais finale 0590,
+> réel et corrigeable). Base 4,8 Go, db2→db6 (≤6 pièces). **egdb-relabel fonctionne.** ⇒ **TODO** : refaire la manche
+> tb-relabel avec `JASS_EGDB_PATH=/root/egdb_extracted/app` — mais c'est un levier LABEL (secondaire vs SEARCH, cf 0591/0592),
+> à couverture ≤6 pièces ⇒ gain attendu modeste ; à lancer si on veut fermer le résidu finale, pas prioritaire sur la quiescence.
 
 ## ❌ LEVIER LABEL-QUALITY RÉFUTÉ (2026-07-05) — l'hygiène de label DÉGRADE l'eval ; batterie sanity-gen adoptée
 > **Branche `develop`** = code (reset sur main HEAD ; git server accepte main+develop ; runner build main ; jobs overlay develop au runtime).
