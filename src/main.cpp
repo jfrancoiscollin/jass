@@ -1664,12 +1664,25 @@ int run_gen_siblings_mode(int argc, char** argv) {
     int depth = 9;
     if (argc > 4 && argv[4][0] != '-') depth = parse_int_or(argv[4], 9);
     std::string nnue_path; int m_min = 15; long max_parents = -1; int max_pairs = 16;
+    std::string moves_path;   // --played-moves : BRAS M (Bonanza). Binaire (from:u8,to:u8) par parent, ALIGNE
+                              // sur les records d'entree. Si present : PAS de recherche — le coup joue = prefere,
+                              // toutes les autres sœurs legales = dominees (src=MASTER). max_pairs/m_min ignores.
     for (int i = 4; i < argc; ++i) {
         const std::string a = argv[i];
         if      (a == "--nnue" && i + 1 < argc)                 nnue_path = argv[++i];
         else if (a == "--m-min" && i + 1 < argc)                m_min = parse_int_or(argv[++i], 15);
         else if (a == "--max-parents" && i + 1 < argc)          max_parents = parse_int_or(argv[++i], -1);
         else if (a == "--max-pairs-per-parent" && i + 1 < argc) max_pairs = parse_int_or(argv[++i], 16);
+        else if (a == "--played-moves" && i + 1 < argc)         moves_path = argv[++i];
+    }
+    const bool master_mode = !moves_path.empty();
+    std::vector<std::pair<std::uint8_t,std::uint8_t>> played;   // BRAS M : coup joue par parent
+    if (master_mode) {
+        std::ifstream mf(moves_path, std::ios::binary);
+        if (!mf) { std::cerr << "error: cannot open --played-moves " << moves_path << "\n"; return 1; }
+        std::vector<char> mb((std::istreambuf_iterator<char>(mf)), std::istreambuf_iterator<char>());
+        for (std::size_t k = 0; k + 1 < mb.size(); k += 2)
+            played.emplace_back(static_cast<std::uint8_t>(mb[k]), static_cast<std::uint8_t>(mb[k+1]));
     }
 
     std::unique_ptr<INetwork> custom_nnue;
@@ -1694,15 +1707,28 @@ int run_gen_siblings_mode(int argc, char** argv) {
 
     // Echantillonnage uniforme par PAS (le corpus est ordonne par partie) ; ~3x de marge pour les
     // noeuds de capture/sans-fratrie ecartes.
-    const std::size_t stride = (max_parents > 0)
-        ? std::max<std::size_t>(1, nrec / (static_cast<std::size_t>(max_parents) * 3 + 1)) : 1;
+    // Master mode : pas de sous-echantillonnage (aligne sur --played-moves), stride=1.
+    const std::size_t stride = (master_mode || max_parents <= 0)
+        ? 1 : std::max<std::size_t>(1, nrec / (static_cast<std::size_t>(max_parents) * 3 + 1));
     std::vector<char> out;                 // emitted pair records (38B each)
-    long parents_seen = 0, parents_used = 0, pairs = 0, cap_nodes = 0;
+    long parents_seen = 0, parents_used = 0, pairs = 0, cap_nodes = 0, no_match = 0;
     long phase_pairs[4] = {0,0,0,0};
     double margin_sum = 0;
 
+    struct Ch { std::int32_t pv; std::uint64_t bbs[4]; std::uint8_t stm; std::uint8_t from, to; };
+    auto emit = [&](std::vector<char>& o, const Ch& x, std::int32_t score, std::int8_t wdl){
+        char r[38] = {0};
+        std::memcpy(r,      &x.bbs[0], 8); std::memcpy(r + 8,  &x.bbs[1], 8);
+        std::memcpy(r + 16, &x.bbs[2], 8); std::memcpy(r + 24, &x.bbs[3], 8);
+        r[32] = static_cast<char>(x.stm);
+        std::memcpy(r + 33, &score, 4);
+        r[37] = static_cast<char>(wdl);
+        o.insert(o.end(), r, r + 38);
+    };
+
     for (std::size_t pi = 0; pi < nrec; pi += stride) {
         if (max_parents >= 0 && parents_used >= max_parents) break;
+        if (master_mode && pi >= played.size()) break;
         const char* rec = buf.data() + pi * 38;
         const jass::Position parent = position_from_record(rec);
         jass::MoveList ml; jass::generate_legal_moves(parent, ml);
@@ -1710,43 +1736,50 @@ int run_gen_siblings_mode(int argc, char** argv) {
         ++parents_seen;
         if (ml[0].is_capture()) { ++cap_nodes; continue; }   // capture node : ordre force
 
-        struct Ch { std::int32_t pv; std::uint64_t bbs[4]; std::uint8_t stm; };
         std::vector<Ch> ch; ch.reserve(ml.size());
         for (std::size_t mi = 0; mi < ml.size(); ++mi) {
             const jass::Position c = parent.after(ml[mi]);
-            e.set_position(c);
-            jass::SearchLimits lim; lim.max_depth = depth;
-            const jass::SearchResult r = e.search(lim);
             Ch x;
-            x.pv = -static_cast<std::int32_t>(r.score);      // parent-POV
+            x.from = static_cast<std::uint8_t>(ml[mi].from);
+            x.to   = static_cast<std::uint8_t>(ml[mi].to);
             x.bbs[0] = c.white_men();  x.bbs[1] = c.white_kings();
             x.bbs[2] = c.black_men();  x.bbs[3] = c.black_kings();
             x.stm = (c.side_to_move() == jass::Color::White) ? 0u : 1u;
+            if (!master_mode) {                              // BRAS S : recherche profonde -> valeur parent-POV
+                e.set_position(c);
+                jass::SearchLimits lim; lim.max_depth = depth;
+                const jass::SearchResult r = e.search(lim);
+                x.pv = -static_cast<std::int32_t>(r.score);
+            } else x.pv = 0;
             ch.push_back(x);
         }
-        std::sort(ch.begin(), ch.end(), [](const Ch& a, const Ch& b){ return a.pv > b.pv; });
 
-        // phase du parent (nb pieces)
         const int pcs = static_cast<int>(popcount(parent.whites() | parent.blacks()));
         const int band = pcs <= 12 ? 0 : (pcs <= 20 ? 1 : (pcs <= 28 ? 2 : 3));
-
         int emitted_here = 0;
-        auto emit = [&](const Ch& x, std::int32_t score, std::int8_t wdl){
-            char r[38] = {0};
-            std::memcpy(r,      &x.bbs[0], 8); std::memcpy(r + 8,  &x.bbs[1], 8);
-            std::memcpy(r + 16, &x.bbs[2], 8); std::memcpy(r + 24, &x.bbs[3], 8);
-            r[32] = static_cast<char>(x.stm);
-            std::memcpy(r + 33, &score, 4);
-            r[37] = static_cast<char>(wdl);
-            out.insert(out.end(), r, r + 38);
-        };
-        for (std::size_t a = 0; a < ch.size() && emitted_here < max_pairs; ++a) {
-            for (std::size_t b = a + 1; b < ch.size() && emitted_here < max_pairs; ++b) {
-                const std::int32_t margin = ch[a].pv - ch[b].pv;
-                if (margin < m_min) break;                   // b trie desc : rien de plus grand ensuite
-                emit(ch[a], margin, 0);                       // better : marge + src=deep
-                emit(ch[b], 0, 0);                            // worse
-                ++pairs; ++emitted_here; ++phase_pairs[band]; margin_sum += margin;
+
+        if (master_mode) {
+            // BRAS M (Bonanza) : le coup joue = prefere ; toutes les autres sœurs = dominees. src=1 (MASTER), pas de marge.
+            const std::uint8_t pf = played[pi].first, pt = played[pi].second;
+            int best = -1;
+            for (std::size_t k = 0; k < ch.size(); ++k) if (ch[k].from == pf && ch[k].to == pt) { best = static_cast<int>(k); break; }
+            if (best < 0) { ++no_match; continue; }           // coup joue non trouve (capture/parse) : ignorer
+            for (std::size_t k = 0; k < ch.size(); ++k) {
+                if (static_cast<int>(k) == best) continue;
+                emit(out, ch[static_cast<std::size_t>(best)], 0, 1);   // prefere (src=MASTER)
+                emit(out, ch[k], 0, 1);                                 // domine
+                ++pairs; ++emitted_here; ++phase_pairs[band];
+            }
+        } else {
+            std::sort(ch.begin(), ch.end(), [](const Ch& a, const Ch& b){ return a.pv > b.pv; });
+            for (std::size_t a = 0; a < ch.size() && emitted_here < max_pairs; ++a) {
+                for (std::size_t b = a + 1; b < ch.size() && emitted_here < max_pairs; ++b) {
+                    const std::int32_t margin = ch[a].pv - ch[b].pv;
+                    if (margin < m_min) break;               // b trie desc : rien de plus grand ensuite
+                    emit(out, ch[a], margin, 0);              // better : marge + src=deep
+                    emit(out, ch[b], 0, 0);                   // worse
+                    ++pairs; ++emitted_here; ++phase_pairs[band]; margin_sum += margin;
+                }
             }
         }
         if (emitted_here > 0) ++parents_used;
@@ -1758,8 +1791,9 @@ int run_gen_siblings_mode(int argc, char** argv) {
     o.write("JNNW", 4); o.write(reinterpret_cast<const char*>(&nout), 4);
     o.write(out.data(), static_cast<std::streamsize>(out.size())); o.close();
 
-    std::cout << "GENSIB parents_seen=" << parents_seen << " quiet_used=" << parents_used
-              << " cap_nodes=" << cap_nodes << " pairs=" << pairs
+    std::cout << "GENSIB mode=" << (master_mode ? "MASTER" : "DEEP")
+              << " parents_seen=" << parents_seen << " quiet_used=" << parents_used
+              << " cap_nodes=" << cap_nodes << " no_match=" << no_match << " pairs=" << pairs
               << " records=" << nout << " depth=" << depth << " m_min=" << m_min
               << " margin_mean=" << (pairs ? margin_sum / static_cast<double>(pairs) : 0.0)
               << " phase[fin/13-20/21-28/ouv]=" << phase_pairs[0] << "/" << phase_pairs[1]
