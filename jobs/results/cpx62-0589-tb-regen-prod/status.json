@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0589-tb-regen-prod",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-05T12:14:10+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 37680
+  "ended_at": "2026-07-05T14:06:34+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
