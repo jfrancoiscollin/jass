@@ -1,0 +1,1 @@
+=== P2 RE-CUT instrumente (arbitre d14 + TB) — HEAD d02c5dde4 queue 0590 p2-recut: instrumented re-audit, per-sample CSV, phase x class C1/C2/C3 + TB arbiter-error control ===
