@@ -342,6 +342,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      l'exploration au debut (0 = pas de decroissance).
     bool         drop_post_eps     = false;  // --drop-post-eps : FIX#1. n'emet PAS les samples
                                             //      ply<=last_eps_ply (label contamine par un eps posterieur).
+    int          adjud_material    = 0;      // --adjud-material M : FIX#2. avance materielle NETTE (men-equiv,
+                                            //      dame=3) >= M tenue adjud_hold_plies => win (0 = off).
+    int          adjud_hold_plies  = 10;     // --adjud-hold-plies H : plies consecutifs d'avance requis.
     std::string  search_spec;                // --search-params : applied to PLAY+LABEL search
                                             //      (e.g. pruning OFF so self-play PUNISHES shots
                                             //      → labels teach shot-safety, cf Scan recipe)
@@ -402,6 +405,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (v >= 0) explore_decay_plies = v;
         } else if (a == "--drop-post-eps") {
             drop_post_eps = true;
+        } else if (a == "--adjud-material" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) adjud_material = v;
+        } else if (a == "--adjud-hold-plies" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) adjud_hold_plies = v;
         } else if (a == "--search-params" && i + 1 < argc) {
             search_spec = argv[++i];
         } else if (a == "--search-params-play" && i + 1 < argc) {
@@ -570,7 +579,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
     //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
-    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0;
+    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0, stat_adjudicated = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -611,7 +620,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int outcome_white = 0;
         bool game_ended_by_loss = false;
         int  last_eps_ply = -1;     // ply du dernier coup d'exploration eps de cette partie (instrumentation FIX #1)
-        bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move) le remet a false
+        bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move/adjud) le remet a false
+        int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
         // (blind → stumbles into shots). Random per game so neither colour is systematically favoured.
@@ -640,6 +650,26 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; hit_ply_cap = false; break; }
                 if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; hit_ply_cap = false; break; }
                 if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; hit_ply_cap = false; break; }
+            }
+            // FIX#2 : adjudication materielle conservatrice. Une avance NETTE (men + 3*kings) >= adjud_material
+            // tenue adjud_hold_plies consecutifs => win (les parties gagnees qui piétinent jusqu'au ply-cap
+            // sont sinon etiquetees "nulle" a tort : 27-31% mesure). JAMAIS par score d'eval (circularite).
+            if (adjud_material > 0) {
+                const Position& mp = e.position();
+                const int white_mat = static_cast<int>(popcount(mp.white_men())) + 3 * static_cast<int>(popcount(mp.white_kings()));
+                const int black_mat = static_cast<int>(popcount(mp.black_men())) + 3 * static_cast<int>(popcount(mp.black_kings()));
+                const int net = white_mat - black_mat;
+                if (net >= adjud_material || net <= -adjud_material) {
+                    if (++adjud_counter >= adjud_hold_plies) {
+                        outcome_white = (net > 0) ? +1 : -1;
+                        game_ended_by_loss = true;   // resolu (decisif) — chemin de flush WDL standard
+                        hit_ply_cap = false;
+                        ++stat_adjudicated;
+                        break;
+                    }
+                } else {
+                    adjud_counter = 0;   // avance perdue (recapture) => reset
+                }
             }
             if (e.position().halfmove_clock() >= FIFTY_MOVE_PLIES) {
                 // 25-move rule: declare a draw.
@@ -826,8 +856,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
                   << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
                   << " (" << con << "%)  dropped_post_eps=" << stat_dropped
+                  << "  adjudicated=" << stat_adjudicated
                   << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
-                  << " decay_plies=" << explore_decay_plies << ")\n";
+                  << " decay_plies=" << explore_decay_plies
+                  << " adjud_material=" << adjud_material << " hold=" << adjud_hold_plies << ")\n";
     }
     return 0;
 }
