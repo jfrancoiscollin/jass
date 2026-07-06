@@ -1,0 +1,22 @@
+=== PISTE (a) G1 — HEAD main 5dd3863b6 queue 0611 G1 (candidat header-copie + survie decode robuste) — fit valide (pairwise +0.258), reste la survie held-out ===
+  gen1 + pairs(411323) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 822646 × 120 Scan-style extras to /root/cw-rankg1e/feat
+
+=== rank_finetune λ=0.3 (POV gate + grad-check + pairwise-acc) ===
+  champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True
+  design : X (822646, 34012464) ; paires=411323
+  [POV gate] Spearman(X·w0 , jass-eval black-POV) = 0.9994 (n=80)
+  pairwise-acc champion (avant fit) = 0.4143 ; cols visitées=345956
+  [grad-check] OK
+  fit : loss 0.21080->0.18841 ; pairwise-acc 0.4143->0.6725 (delta +0.2582)
+  écrit /root/cw-rankg1e/cand.pjtw (header copié du champion, scale=1000, 345956 buckets ajustés)
+  survie sample : 800
+
+=== G1 : survie-1er-choix (d1==d11) champion vs candidat ===
+  survie[champ] = 0.3438 (n=800)
+  survie[cand] = 0.2121 (n=962)
+
+  GATE G1 : survie[cand] > survie[champ] hors bruit (vers 0.43) => éval-marge APPRENABLE => scale (G2/G3/G4).
+  survie plate => clause d'échec propre (résidu -133/-161 acté = prix des marges).
+  RESULTS committe ✓
+=== fin G1 ===
