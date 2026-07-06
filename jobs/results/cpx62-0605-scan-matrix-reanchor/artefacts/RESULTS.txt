@@ -1,0 +1,15 @@
+
+=== RÉSULTATS calibrate (rate / Elo, gen1 vs Scan) ===
+  d9 : rate=0.144 elo=-310
+  mt03 : rate=0.284 elo=-161
+  mt10 : rate=0.318 elo=-133
+  nps : rate=0.316 elo=-134
+
+=== cellule survie (jass d1 vs d11, après calibrate) ===
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+  File "<stdin>", line 5, in surv
+IndexError: list index out of range
+
+  LECTURE : d9 & survie ~INCHANGÉS = invariants OK ; movetime ~-110..-160 = +30 transféré (référence re-ancrée).
+  Si d9 ou survie BOUGENT sans fit => quelque chose d'incompris => STOP avant rank-loss, investiguer.
