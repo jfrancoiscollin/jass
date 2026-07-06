@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0626-mmto-elo-confirm2",
+  "script": "jobs/queue/cpx62-0626-mmto-elo-confirm2.sh",
+  "pid": 102992,
+  "started_at": "2026-07-06T17:32:50+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
