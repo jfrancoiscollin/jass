@@ -26,7 +26,7 @@
 > hist_mode=0). **✅ BAKÉ ET PROMU SUR MAIN (`9422fc02`)** : défauts `hist_mode=1, hist_pure=1` + code prob-history sur MAIN (diff propre,
 > que mes ajouts, compile rc=0 vs main ; main==develop sur les 2 fichiers). **Un build main brut (défaut runner) utilise
 > maintenant l'ordering prob-pur.** (Les autres changements develop — gen-siblings/label-hygiene/rank-loss — restent sur
-> develop, non promus, encore expérimentaux.) `cpx62-0601` (P1nc +E3) dira si `hist_order_captures=1` ajoute au +30.
+> develop, non promus, encore expérimentaux.) `cpx62-0601` : E3 (`hist_order_captures=1`) N'AJOUTE RIEN (2/4 hors-IC, P1nc≥Scan-pur sur 3/4) → P1nc sans E3 = spec final. Ordering RÉGLÉ.
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
@@ -44,7 +44,7 @@
 > **Corpus S validé** (`0602` : 50k parents → 410k paires, finale ~28%). **REGEN avec bake ordering en vol** (`0604` : oracle
 > d9 = prob-pur, plus profond → meilleures paires). **RESTE** : trainer rank-loss (`rank_finetune.py`, option-b : L-BFGS
 > `λ·L_pair + anchor·‖w−champion‖²`, garde-fou POV Python-vs-C++) + G1. Bras M : + extracteur PDN + vérif `expert_games.db`.
-> **Préambule (briefing)** : lire `0601` (E3) + `0584` (volume-vs-rank : le volume est la voie « prouvée-Scan », la rank-loss
+> **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597). **Préambule restant** : statut `0584` (volume-vs-rank : le volume est la voie « prouvée-Scan », la rank-loss
 > le raccourci — cumulables) avant d'engager le fit.
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
@@ -70,7 +70,7 @@
 > ordering CLOS**. ⇒ avec eval-parité (0591), labels-épuisés (0590), quiescence-morte (0593), ordering-optimal (0599), les
 > leviers search par knob-tuning sont **tapés** ; le résidu −150 vs Scan est de l'**eval-marge** (move-selection fine).
 
-## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, cure rejetée au movetime (0593), RE-TEST co-adaptation en vol (0603)
+## 🔎 A4-bis ABLATION SEARCH (2026-07-05, `0592`+`0593`) — déficit par-nœud = QUIESCENCE, cure MORTE au movetime (0593) et NE CO-ADAPTE PAS à l'ordering baké (0603 : −144/−215) → front qs CLOS
 > **On a localisé le −338 (jass vs Scan à d9).** 8 cellules vs Scan à profondeur fixe, gen1, moteur coin, variantes via
 > `--jass-search-params` (merge sur coin). Résultats (rate jass, ±IC95, ~240 g/cellule) :
 >
