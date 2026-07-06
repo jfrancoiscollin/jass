@@ -1,1 +1,37 @@
 === MMTO v5 Scan self-play haut-volume — HEAD main eaa028294 runner: finalize ccx33-0625-mmto-scan-teacher (completed, rc=0) ===
+  wrote /root/cw-mmtosp/.pp-0.jnnw (7480 strong-side quiet parents; decisive-games=138, draws-kept=32)
+  wrote /root/cw-mmtosp/.pp-1.jnnw (7176 strong-side quiet parents; decisive-games=132, draws-kept=32)
+  wrote /root/cw-mmtosp/.pp-2.jnnw (7247 strong-side quiet parents; decisive-games=123, draws-kept=38)
+  wrote /root/cw-mmtosp/.pp-3.jnnw (6715 strong-side quiet parents; decisive-games=118, draws-kept=32)
+  wrote /root/cw-mmtosp/.pp-4.jnnw (8092 strong-side quiet parents; decisive-games=151, draws-kept=33)
+  wrote /root/cw-mmtosp/.pp-5.jnnw (7617 strong-side quiet parents; decisive-games=119, draws-kept=47)
+  wrote /root/cw-mmtosp/.pp-6.jnnw (7512 strong-side quiet parents; decisive-games=139, draws-kept=33)
+  wrote /root/cw-mmtosp/.pp-7.jnnw (7629 strong-side quiet parents; decisive-games=133, draws-kept=37)
+  parents Scan self-play : 59468
+
+=== MMTO gen-siblings --leaf-mode (prof=Scan fort, --nnue gen1, depth=5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7433 quiet_used=7433 cap_nodes=0 no_match=0 ws_already_top=0 pairs=83186 records=166372 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=38712/16481/14817/13176 -> /root/cw-mmtosp/pairs_0.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7430 quiet_used=7430 cap_nodes=0 no_match=0 ws_already_top=0 pairs=82973 records=165946 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=40027/15049/14732/13165 -> /root/cw-mmtosp/pairs_1.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7432 quiet_used=7432 cap_nodes=0 no_match=0 ws_already_top=0 pairs=84151 records=168302 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=39847/15635/15572/13097 -> /root/cw-mmtosp/pairs_2.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7430 quiet_used=7430 cap_nodes=0 no_match=0 ws_already_top=0 pairs=82072 records=164144 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=38881/15660/15522/12009 -> /root/cw-mmtosp/pairs_3.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7424 quiet_used=7424 cap_nodes=0 no_match=0 ws_already_top=0 pairs=82896 records=165792 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=39218/15429/15814/12435 -> /root/cw-mmtosp/pairs_4.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7433 quiet_used=7433 cap_nodes=0 no_match=0 ws_already_top=0 pairs=84273 records=168546 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=42591/14323/14862/12497 -> /root/cw-mmtosp/pairs_5.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7430 quiet_used=7430 cap_nodes=0 no_match=0 ws_already_top=0 pairs=83424 records=166848 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=39594/16071/15064/12695 -> /root/cw-mmtosp/pairs_6.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7430 quiet_used=7430 cap_nodes=0 no_match=0 ws_already_top=0 pairs=85164 records=170328 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=41801/15807/15682/11874 -> /root/cw-mmtosp/pairs_7.jnnw
+  MMTO paires (positions+prof Scan, feuilles-PV) : 668139
+  dump : wrote 1336278 × 120 Scan-style extras to /root/cw-mmtosp/feat
+
+=== rank_finetune MMTO Scan-selfplay --leaf-pov anchor=0.05 ===
+  [0.05] pairwise-acc champion (avant fit) = 0.6792 ; cols visitées=229546
+  [0.05] fit : loss 0.17661->0.17245 ; pairwise-acc 0.6792->0.6927 (delta +0.0136)
+  [0.05] candidat committé
+
+=== rank_finetune MMTO Scan-selfplay --leaf-pov anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.6792 ; cols visitées=229546
+  [0.1] fit : loss 0.17661->0.17304 ; pairwise-acc 0.6792->0.6919 (delta +0.0127)
+  [0.1] candidat committé
+
+  DIAGNOSTIC : pré-fit pairwise-acc + delta. Positions Scan + prof Scan + volume 59468 (vs 44k maîtres).
+  Si delta net (>> +0.002 des maîtres) => le trio volume+distribution+prof Scan débloque la marge => scale + A/B + boucle externe.
+  Si toujours ~0 => l'éval linéaire à-travers-recherche est MAXÉE (le search capte déjà tout), marge close définitivement.
+  => next : A/B Elo spmmto_{0.05,0.1} vs gen1 (cpx62).
