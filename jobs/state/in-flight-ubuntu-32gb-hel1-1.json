@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0613-rank-anchor-sweep",
+  "script": "jobs/queue/cpx62-0613-rank-anchor-sweep.sh",
+  "pid": 81993,
+  "started_at": "2026-07-06T07:32:59+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
