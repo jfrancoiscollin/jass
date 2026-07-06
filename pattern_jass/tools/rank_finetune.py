@@ -51,6 +51,11 @@ def main():
     ap.add_argument('--king-patterns',action='store_true'); ap.add_argument('--tempo-stage',action='store_true')
     ap.add_argument('--phase-lo',type=int,default=8); ap.add_argument('--phase-hi',type=int,default=40)
     ap.add_argument('--verify-jass',default=''); ap.add_argument('--verify-n',type=int,default=60)
+    # MMTO (--gen-siblings --leaf-mode) : les 2 records d'une paire sont des FEUILLES-PV qui peuvent avoir des STM
+    # differents (parites de PV differentes). X·w etant black-POV (fold bitboard-only), la valeur est correcte, mais le
+    # SIGNE de la comparaison doit venir du stm du PARENT S (constant par paire), stocke dans le champ score par gen-siblings.
+    ap.add_argument('--leaf-pov',action='store_true',
+                    help='MMTO : derive le signe de la paire du stm parent (champ score), pas du stm du record-feuille')
     a=ap.parse_args()
     sys.path.insert(0,a.tools)
     import patterns, train                                   # noqa
@@ -67,8 +72,10 @@ def main():
     raw=Path(a.pairs).read_bytes(); assert raw[:4]==b'JNNW'; nrec=struct.unpack('<I',raw[4:8])[0]; body=raw[8:]
     REC=38; N=nrec
     wm=np.empty(N,np.uint64);wk=np.empty(N,np.uint64);bm=np.empty(N,np.uint64);bk=np.empty(N,np.uint64);stm=np.empty(N,np.int64)
+    pov_S=np.empty(N,np.int64)                               # MMTO : stm parent (champ score) — utilise si --leaf-pov
     for i in range(N):
         o=i*REC; a4=struct.unpack('<QQQQ',body[o:o+32]); wm[i],wk[i],bm[i],bk[i]=a4; stm[i]=body[o+32]
+        pov_S[i]=struct.unpack('<i',body[o+33:o+37])[0]
     mmf,ncol_feat=TS.open_feat(a.feat,N)                     # saute le header FEAT (12o) + valide cnt==N
     feat=np.asarray(mmf,dtype=np.float64)                    # (N, k)
     assert ncol_feat==n_ext, f'extras {ncol_feat}!={n_ext} (champion) => mauvaise config eval-features'
@@ -108,7 +115,13 @@ def main():
     # ---- paires : d = sign·((X_worse − X_better)·w) ; sign=+1 si enfant Noir (stm==1) ----
     P=N//2
     Xb=X[0:N:2]; Xw=X[1:N:2]                                  # better (2k), worse (2k+1)
-    sgn=np.where(stm[0:N:2]==1,1.0,-1.0)                      # STM partagé par la paire
+    if a.leaf_pov:
+        # MMTO : signe depuis le stm PARENT S (champ score) ; +1 si S==White(0) — équivalent exact du static
+        # (static : stm_record=stm_enfant=opposé de S ; where(stm_enfant==Black) <=> where(S==White)).
+        sgn=np.where(pov_S[0:N:2]==0,1.0,-1.0)
+        print(f'[leaf-pov] signe dérivé du stm parent (champ score) ; S=White frac={float((pov_S[0:N:2]==0).mean()):.3f}',flush=True)
+    else:
+        sgn=np.where(stm[0:N:2]==1,1.0,-1.0)                  # STM partagé par la paire (enfants immédiats)
     D=(Xw-Xb).multiply(sgn[:,None]).tocsr()                  # (P, ncol) ; d = D·w
     # REGULARISATION anti-overfit : n'ajuster que les buckets vus dans >= min_pairs paires (chaque colonne
     # de D = 1 nnz/paire qui la touche => bincount(indices) = nb de paires par colonne).
