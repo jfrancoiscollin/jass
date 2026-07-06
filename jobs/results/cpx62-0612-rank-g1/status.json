@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0612-rank-g1",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-06T07:22:42+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 81013
+  "ended_at": "2026-07-06T07:27:44+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
