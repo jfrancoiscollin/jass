@@ -42,8 +42,14 @@
 >
 > **CODÉ (develop)** : `--gen-siblings` (bras S, `874bf36`) + `--played-moves` master mode (bras M Bonanza, `3713b77`).
 > **Corpus S validé** (`0602` : 50k parents → 410k paires, finale ~28%). **REGEN avec bake ordering en vol** (`0604` : oracle
-> d9 = prob-pur, plus profond → meilleures paires). **RESTE** : trainer rank-loss (`rank_finetune.py`, option-b : L-BFGS
-> `λ·L_pair + anchor·‖w−champion‖²`, garde-fou POV Python-vs-C++) + G1. Bras M : + extracteur PDN + vérif `expert_games.db`.
+> d9 = prob-pur, plus profond → meilleures paires ; corpus 400k prêt `0607`).
+> **✅ PIPELINE + FIT VALIDÉS (`0606→0612`)** : `rank_finetune.py` codé, **POV gate=0.9994** (X·w0==eval C++), grad-check OK,
+> loader champion robuste (gen1 = v3 plein-espace PJSW, 17M buckets, king=off, n_ext=120). **Le fit APPREND** : pairwise-acc
+> train **0.41→0.67 (+0.258)** — le comparison training de Bonanza marche sur notre eval linéaire (point technique dur franchi).
+> **❌ MAIS G1 bras-S à 50k NÉGATIF** : survie held-out **0.344→0.255** (overfitting/dégradation ; median 13 paires/bucket donc
+> pas un manque de support → anchor trop faible OU **semi-circularité** du d9-self-oracle). **`0613` sweep anchor+min-pairs** en
+> vol tranche : sauvable (survie>0.344 pour un anchor) → scale 400k ; sinon → **pivot bras M** (oracle externe maîtres,
+> non-circulaire — variante validée au shogi). **Reste bras M** : extracteur PDN + vérif `expert_games.db`.
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597). **Préambule restant** : statut `0584` (volume-vs-rank : le volume est la voie « prouvée-Scan », la rank-loss
 > le raccourci — cumulables) avant d'engager le fit.
 
