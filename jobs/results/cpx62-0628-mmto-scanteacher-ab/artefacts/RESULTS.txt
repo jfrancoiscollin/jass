@@ -4,3 +4,4 @@
 
 === CONFIRM haut-N MMTO(anchor0.1) vs gen1 (dilf+gen, mt 0.2 et 0.3) ===
   -- movetime 0.2 --
+  [MMTO vs gen1 | gen mt0.2] A(mmto)=454 B(gen1)=340 D=262 n=1056 rate_A=0.5540+-0.0259 elo~+38 IC=[0.528,0.580] => GAGNE hors-IC
