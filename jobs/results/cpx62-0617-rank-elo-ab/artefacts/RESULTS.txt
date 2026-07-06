@@ -24,3 +24,8 @@
 
 === A/B ELO candidat vs gen1 (mt0.2, dilf + generaliste) ===
   -- anchor 0.01 --
+  [cand_1.0 gen] A(cand)=192 B(gen1)=203 D=133 n=528 rate_A=0.4896+-0.0369 elo~-7 IC=[0.453,0.526] => neutre
+
+  GATE : un candidat rate_A>0.5 hors-IC => la SURVIE était le mauvais proxy, le rank-loss MARCHE => scale (G2/G3/G4).
+  tous neutres/négatifs => clause d'échec CONFIRMÉE par la vraie métrique (Elo) => piste rank-loss CLOSE.
+  (anchor=1.0 ≈ champion : contrôle de sanité, doit sortir ~0.500)
