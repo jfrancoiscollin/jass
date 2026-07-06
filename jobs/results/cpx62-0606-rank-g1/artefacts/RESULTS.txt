@@ -1,0 +1,7 @@
+=== PISTE (a) G1 — HEAD main 262fc9663 queue 0606 G1 juge de paix: rank-finetune (3 gates auto) + survie candidat vs champion (piste-a Bonanza) ===
+  gen1 + pairs(411323) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 822646 × 120 Scan-style extras to /root/cw-rankg1/feat
+
+=== rank_finetune λ=0.3 (POV gate + grad-check + pairwise-acc) ===
+  /root/cw-rankg1/gen1.pjtw: not a PJTW v3 file (magic/ver)
+  => rank_finetune a AVORTÉ (rc=1) — un gate a échoué (voir ci-dessus). Pas de G1.
