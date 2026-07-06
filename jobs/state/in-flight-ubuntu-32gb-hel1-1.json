@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0614-master-prefs-corpus",
-  "script": "jobs/queue/cpx62-0614-master-prefs-corpus.sh",
-  "pid": 83911,
-  "started_at": "2026-07-06T08:08:42+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0614-master-prefs-corpus",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-06T08:08:42+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 83911
+  "ended_at": "2026-07-06T08:13:43+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
