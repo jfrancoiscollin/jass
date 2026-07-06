@@ -30,7 +30,7 @@
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
-## 🔒 PISTE (a) RANK-LOSS STATIQUE SUR FRATRIES — CLOSE PAR L'ELO (0617/0619 : −847 destructif) ; pivot → MMTO à travers la recherche
+## 🧪 PISTE (a) RANK-LOSS FRATRIES — STATIQUE CLOSE (−847), MMTO À-TRAVERS-RECHERCHE OUVERTE & LÉGÈREMENT + (généraliste +23 hors-IC)
 > **Cible** : le défaut mesuré = éval-marge (0591 rang-position à parité ; 0597/0599 survie-1er-choix 0.34<0.43 Scan, départage
 > mal les coups-sœurs). Le fit WDL ne pénalise pas une inversion de sœurs → **objectif mal aligné**. La rank-loss sur fratries
 > la vise directement. **Statut : méthode championne du monde au shogi (Bonanza 2006 / MMTO 2013, éval linéaire ~40M params),
@@ -63,10 +63,26 @@
 > était bien un proxy trompeur — mais dans le mauvais sens : elle SOUS-estimait le désastre. **Clause d'échec confirmée par la
 > VRAIE métrique (Elo). Programme sur +187 Elo search bakés ; résidu −133/−161 acté = prix des marges.** (NB gremlin d'archivage runner :
 > cellules dilf + entêtes perdues dans RESULTS des 2 runs — cellules gen complètes et concordantes, verdict robuste.)
-> **➡️ SUITE (briefing Scan-prof JFC)** : le −847 dit que le VERROU est la MÉTHODE STATIQUE (pas seulement le prof faible ni l'absence
-> de marges). Corpus Scan-prof asym PLAYED en génération (`0618`, ccx33) — utile pour la CONFIRMATION phase-1 ET surtout pour **MMTO
-> (phase 2 : fit À TRAVERS LA RECHERCHE, features des feuilles-PV)**, le seul variant qui ne force pas la feuille-éval à réordonner les
-> enfants immédiats. PLAYED statique (sans marges) devrait échouer comme les maîtres → cap sur CHILD-SCORED (marges) / MMTO.
+>
+> ## ✅ MMTO À-TRAVERS-RECHERCHE (Hoki-Kaneko) — la MÉTHODE change tout : PAS destructif, petit gain généraliste RÉPLIQUÉ
+> **Codé (`develop`)** : `gen-siblings --leaf-mode` émet la **feuille-PV** de chaque enfant (identité negamax : valeur minimax
+> couleur-fixe d'un coup = éval couleur-fixe de sa feuille-PV) → le fit apprend **à travers la recherche**, pas sur l'éval des enfants
+> immédiats. **Bug POV attrapé & corrigé** (`--leaf-pov`) : les feuilles-PV tombent à parités mixtes → le signe par-record de
+> rank_finetune était faux (pré-fit pairwise-acc contaminé 0.307<0.5) ; fix = stocker le stm PARENT (champ score) et en dériver le signe.
+> **DÉCOUVERTE CLÉ (`0621`)** : le champion **à travers la recherche d5** classe DÉJÀ le coup maître au-dessus des sœurs à **0.686**
+> (vs 0.503 au niveau feuille statique) → **le search compense déjà l'éval-marge**. C'est pourquoi le statique détruit (−847) et MMTO
+> a peu de marge : le fit ne bouge que **+0.0014** (30k maîtres).
+> **A/B Elo — petit gain RÉEL sur généraliste** : candidat MMTO 30k-maîtres vs gen1 (même binaire+params bakés) → **généraliste +33
+> (n=528, `0622`) puis +23 hors-IC (n=1056, `0626`)** — RÉPLIQUE, pas du bruit ; dilf ≈neutre. Gain-éval **gratuit** (l'éval seule change).
+> **Leviers de qualité (idée JFC) — le prof compte** : `0624` +volume (44k, plafond DB maîtres) ne débloque PAS le fit (delta reste
+> +0.0029). Mais `0625` **prof Scan** (mêmes positions maîtres, coup Scan au lieu du coup humain-2000) **DOUBLE le mouvement du fit
+> (+0.0071 vs +0.0029, pré-fit 0.694)** → la QUALITÉ DU PROF était un frein (moins de bruit d'étiquette). **⟹ escalade qualité** :
+> `0627` (en vol, ccx33) = positions **self-play Scan** (on-distribution, volume illimité) + **prof Scan** + ~72k parents.
+> **A/B en attente** : `0628` (candidat prof-Scan vs gen1), `0627` (combo complet). NB gremlin runner : RESULTS multi-cellules tronqué
+> (cellules récupérées d'`output.log`).
+> **LECTURE** : MMTO n'est PAS clos (contrairement au statique) — petit gain généraliste réel + le prof-Scan amplifie le fit. Le juge
+> reste l'**Elo** : si prof-Scan/self-play-Scan battent gen1 plus nettement hors-IC (surtout croissant avec mt) → marge réelle récupérable
+> → boucle externe MMTO + scale. Si ça plafonne au petit +20 → l'éval linéaire à-travers-recherche est quasi-maxée (résidu vs Scan = force brute de l'éval).
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
