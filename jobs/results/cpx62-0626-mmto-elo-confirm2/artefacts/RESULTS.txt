@@ -1,2 +1,5 @@
   [MMTO vs gen1 | gen mt0.2] A(mmto)=439 B(gen1)=370 D=247 n=1056 rate_A=0.5327+-0.0263 elo~+23 IC=[0.506,0.559] => GAGNE hors-IC
   [MMTO vs gen1 | gen mt0.3] A(mmto)=440 B(gen1)=370 D=246 n=1056 rate_A=0.5331+-0.0263 elo~+23 IC=[0.507,0.559] => GAGNE hors-IC
+
+  GATE : MMTO rate_A>0.5 hors-IC (là où statique=−847) => marge réelle récupérable => boucle externe MMTO (0624).
+  neutre => piste MMTO close : le search capte déjà l'ordre maître (pré-fit 0.686), pas de marge à récupérer.
