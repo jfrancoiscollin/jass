@@ -1,0 +1,26 @@
+=== PISTE (a) A/B ELO — juge de paix final — HEAD main b52b246b0 queue 0617 A/B Elo bras M vs gen1 — juge de paix final rank-loss (survie mauvais proxy ou piste close) ===
+  gen1 + master-pairs(414571) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 829142 × 120 Scan-style extras to /root/cw-eloab/feat
+
+=== rank_finetune bras M anchor=0.01 (min-pairs=5, lam=0.3) ===
+  [0.01] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [0.01] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.01] fit : loss 0.20839->0.19867 ; pairwise-acc 0.5027->0.6227 (delta +0.1200)
+  [0.01] écrit /root/cw-eloab/cand_0.01.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+
+=== rank_finetune bras M anchor=0.1 (min-pairs=5, lam=0.3) ===
+  [0.1] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [0.1] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.1] fit : loss 0.20839->0.20418 ; pairwise-acc 0.5027->0.6093 (delta +0.1066)
+  [0.1] écrit /root/cw-eloab/cand_0.1.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+
+=== rank_finetune bras M anchor=1.0 (min-pairs=5, lam=0.3) ===
+  [1.0] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [1.0] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [1.0] fit : loss 0.20839->0.20751 ; pairwise-acc 0.5027->0.5597 (delta +0.0570)
+  [1.0] écrit /root/cw-eloab/cand_1.0.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+  generaliste : 33 openings >=38 pieces (hors-dilf)
+  openings : dilf=48 gen=33 ; ~768 games/cellule ; mt=0.2
+
+=== A/B ELO candidat vs gen1 (mt0.2, dilf + generaliste) ===
+  -- anchor 0.01 --
