@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0618-scanprof-played-corpus",
-  "snapshot_at": "2026-07-06T13:24:03+00:00",
+  "snapshot_at": "2026-07-06T13:29:05+00:00",
   "started_at": "2026-07-06T11:33:05+00:00",
-  "elapsed_seconds": 6658,
+  "elapsed_seconds": 6960,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3271220       1    01:50:57  0.0  0.0 bash\n3271222 3271220    01:50:57  0.0  0.0 bash\n3271679 3271222    01:50:44  0.6  0.0 python3\n3271684 3271222    01:50:44  0.6  0.0 python3\n3271695 3271679    01:50:38 89.7  0.9 scan_linux\n3271705 3271684    01:50:38 89.8  0.9 scan_linux\n3271718 3271679    01:50:38  9.5  0.9 scan_linux\n3271729 3271684    01:50:38  9.5  0.9 scan_linux\n3271742 3271679    01:50:38  0.0  0.0 jass\n3271748 3271684    01:50:38  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3271220       1    01:55:59  0.0  0.0 bash\n3271222 3271220    01:55:59  0.0  0.0 bash\n3271679 3271222    01:55:46  0.6  0.0 python3\n3271695 3271679    01:55:40 89.7  0.9 scan_linux\n3271718 3271679    01:55:40  9.5  0.9 scan_linux\n3271742 3271679    01:55:40  0.0  0.0 jass\n"
 }
