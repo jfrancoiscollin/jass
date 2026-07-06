@@ -194,6 +194,11 @@ def main(argv=None) -> int:
                         white, black = scan_weak, scan; strong_color = "B"
                     r = cv.play_game(white, black, referee, opening,
                                      max_plies=args.max_plies)
+                elif args.strong_movetime is not None:
+                    # SYMÉTRIQUE-MOVETIME (parties ÉQUILIBRÉES fort-vs-fort) : les 2 côtés jouent à strong-movetime,
+                    # strong_color=None => on extrait LES 2 CÔTÉS (2× de data/partie ; positions contestées à égalité).
+                    r = cv.play_game(scan, scan, referee, opening,
+                                     movetime=args.strong_movetime, max_plies=args.max_plies)
                 else:
                     r = cv.play_game(scan, scan, referee, opening,
                                      depth=sd, max_plies=args.max_plies)
