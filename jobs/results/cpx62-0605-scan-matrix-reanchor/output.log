@@ -1,0 +1,29 @@
+=== RE-ANCRAGE vs Scan (main frais) — HEAD 131d56e18 runner: finalize cpx62-0601-ordering-scanpure-confirm (completed, rc=0) ===
+  bake ordering present : 2/2 ; coin : 3/3
+
+  === PRÉDICTIONS PRÉ-ENGAGÉES (0571 baseline -> main frais) ===
+   d9 fixe   : 0.127/-335  -> ~INCHANGÉ (ordering ne touche pas l'éval-par-nœud) [invariant]
+   mt0.3     : 0.250/-191  -> ~-150..-160 (+30 transféré)
+   mt1.0     : 0.300/-147  -> ~-110..-120 (gain croît avec t)
+   NPS-comp  : 0.292/-154  -> légère amélioration ; RÉSIDU = éval-marge propre
+   survie    : 0.340 (Scan 0.431) -> ~INCHANGÉ (propriété éval, pas search) [invariant, baseline G1]
+
+=== lancement cellules calibrate (parallèle, SEULES => movetime non-biaisé) ===
+
+=== RÉSULTATS calibrate (rate / Elo, gen1 vs Scan) ===
+  d9 : rate=0.144 elo=-310
+  mt03 : rate=0.284 elo=-161
+  mt10 : rate=0.318 elo=-133
+  nps : rate=0.316 elo=-134
+  survie sample : 800
+
+=== cellule survie (jass d1 vs d11, après calibrate) ===
+Traceback (most recent call last):
+  File "<stdin>", line 8, in <module>
+  File "<stdin>", line 5, in surv
+IndexError: list index out of range
+
+  LECTURE : d9 & survie ~INCHANGÉS = invariants OK ; movetime ~-110..-160 = +30 transféré (référence re-ancrée).
+  Si d9 ou survie BOUGENT sans fit => quelque chose d'incompris => STOP avant rank-loss, investiguer.
+  RESULTS committe ✓
+=== fin re-ancrage ===
