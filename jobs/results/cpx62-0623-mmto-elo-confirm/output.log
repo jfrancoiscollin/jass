@@ -1,0 +1,3 @@
+=== A/B Elo MMTO vs gen1 — HEAD main 26ce96760 queue 0623 confirm haut-N MMTO vs gen1 (cpx62) — resout 0622 mitige (dilf neutre / gen +33) ; 2 mt, dilf+gen ===
+  generaliste : 66 openings
+/root/jass/jobs/queue/cpx62-0623-mmto-elo-confirm.sh: line 59: MT: unbound variable
