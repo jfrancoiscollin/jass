@@ -1,0 +1,40 @@
+=== PISTE (a) A/B ELO — juge de paix final — HEAD main b52b246b0 queue 0617 A/B Elo bras M vs gen1 — juge de paix final rank-loss (survie mauvais proxy ou piste close) ===
+  gen1 + master-pairs(414571) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 829142 × 120 Scan-style extras to /root/cw-eloab/feat
+
+=== rank_finetune bras M anchor=0.01 (min-pairs=5, lam=0.3) ===
+  [0.01] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [0.01] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.01] fit : loss 0.20839->0.19867 ; pairwise-acc 0.5027->0.6227 (delta +0.1200)
+  [0.01] écrit /root/cw-eloab/cand_0.01.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+
+=== rank_finetune bras M anchor=0.1 (min-pairs=5, lam=0.3) ===
+  [0.1] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [0.1] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.1] fit : loss 0.20839->0.20418 ; pairwise-acc 0.5027->0.6093 (delta +0.1066)
+  [0.1] écrit /root/cw-eloab/cand_0.1.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+
+=== rank_finetune bras M anchor=1.0 (min-pairs=5, lam=0.3) ===
+  [1.0] buckets : 304124 visités ; 187318 gardés (>= 5 paires) ; paires/bucket median=10.0
+  [1.0] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [1.0] fit : loss 0.20839->0.20751 ; pairwise-acc 0.5027->0.5597 (delta +0.0570)
+  [1.0] écrit /root/cw-eloab/cand_1.0.pjtw (header copié du champion, scale=1000, 187318 buckets ajustés)
+  generaliste : 33 openings >=38 pieces (hors-dilf)
+  openings : dilf=48 gen=33 ; ~768 games/cellule ; mt=0.2
+
+=== A/B ELO candidat vs gen1 (mt0.2, dilf + generaliste) ===
+  -- anchor 0.01 --
+  [cand_0.01 dilf] A(cand)=71 B(gen1)=647 D=34 n=752 rate_A=0.1170+-0.0217 elo~-351 IC=[0.095,0.139] => PERD hors-IC
+  [cand_0.01 gen] A(cand)=1 B(gen1)=523 D=4 n=528 rate_A=0.0057+-0.0052 elo~-897 IC=[0.000,0.011] => PERD hors-IC
+  -- anchor 0.1 --
+  [cand_0.1 dilf] A(cand)=137 B(gen1)=532 D=83 n=752 rate_A=0.2374+-0.0280 elo~-203 IC=[0.209,0.265] => PERD hors-IC
+  [cand_0.1 gen] A(cand)=62 B(gen1)=409 D=57 n=528 rate_A=0.1714+-0.0289 elo~-274 IC=[0.142,0.200] => PERD hors-IC
+  -- anchor 1.0 --
+  [cand_1.0 dilf] A(cand)=238 B(gen1)=349 D=165 n=752 rate_A=0.4262+-0.0311 elo~-52 IC=[0.395,0.457] => PERD hors-IC
+  [cand_1.0 gen] A(cand)=192 B(gen1)=203 D=133 n=528 rate_A=0.4896+-0.0369 elo~-7 IC=[0.453,0.526] => neutre
+
+  GATE : un candidat rate_A>0.5 hors-IC => la SURVIE était le mauvais proxy, le rank-loss MARCHE => scale (G2/G3/G4).
+  tous neutres/négatifs => clause d'échec CONFIRMÉE par la vraie métrique (Elo) => piste rank-loss CLOSE.
+  (anchor=1.0 ≈ champion : contrôle de sanité, doit sortir ~0.500)
+  RESULTS committe ✓
+=== fin A/B Elo ===
