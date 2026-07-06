@@ -1,0 +1,21 @@
+=== PISTE (a) G1 — HEAD main 6cf167633 runner: heartbeat ccx33-0607-siblings-corpus-400k ===
+  gen1 + pairs(411323) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 822646 × 120 Scan-style extras to /root/cw-rankg1c/feat
+
+=== rank_finetune λ=0.3 (POV gate + grad-check + pairwise-acc) ===
+  champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True
+  design : X (822646, 34012464) ; paires=411323
+  [POV gate] Spearman(X·w0 , jass-eval black-POV) = 0.9994 (n=80)
+  Traceback (most recent call last):
+    File "/root/jass/pattern_jass/tools/rank_finetune.py", line 157, in <module>
+      if __name__=='__main__': main()
+                               ~~~~^^
+    File "/root/jass/pattern_jass/tools/rank_finetune.py", line 114, in main
+      Ds=D[:,used].toarray()                                    # (P, |used|) dense (sparse en pratique)
+    File "/root/.local/lib/python3.14/site-packages/scipy/sparse/_compressed.py", line 1005, in toarray
+      out = self._process_toarray_args(order, out)
+    File "/root/.local/lib/python3.14/site-packages/scipy/sparse/_base.py", line 1523, in _process_toarray_args
+      return np.zeros(self.shape, dtype=self.dtype, order=order)
+             ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  numpy._core._exceptions._ArrayMemoryError: Unable to allocate 1.04 TiB for an array with shape (411323, 345956) and data type float64
+  => rank_finetune a AVORTÉ (rc=1) — un gate a échoué (voir ci-dessus). Pas de G1.
