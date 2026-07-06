@@ -14,3 +14,4 @@
   generaliste : 66 openings
 
 === A/B cand_final (it3) vs gen1 (généraliste=signal, dilf=garde-fou) ===
+  [cand_final vs gen1 | dilf mt0.2] A=621 B=639 D=260 n=1520 rate_A=0.4941+-0.0229 elo~-4 IC=[0.471,0.517] => neutre
