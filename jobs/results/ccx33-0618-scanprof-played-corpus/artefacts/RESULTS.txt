@@ -1,0 +1,36 @@
+  wrote /root/cw-scanprof/.pp-0.jnnw (6702 strong-side quiet parents; decisive-games=131, draws-kept=33)
+  wrote /root/cw-scanprof/.hp-0.jnnw (685 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-1.jnnw (7134 strong-side quiet parents; decisive-games=145, draws-kept=36)
+  wrote /root/cw-scanprof/.hp-1.jnnw (968 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-2.jnnw (6726 strong-side quiet parents; decisive-games=136, draws-kept=33)
+  wrote /root/cw-scanprof/.hp-2.jnnw (751 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-3.jnnw (7169 strong-side quiet parents; decisive-games=141, draws-kept=34)
+  wrote /root/cw-scanprof/.hp-3.jnnw (705 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-4.jnnw (6774 strong-side quiet parents; decisive-games=119, draws-kept=38)
+  wrote /root/cw-scanprof/.hp-4.jnnw (469 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-5.jnnw (6934 strong-side quiet parents; decisive-games=128, draws-kept=37)
+  wrote /root/cw-scanprof/.hp-5.jnnw (484 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-6.jnnw (6538 strong-side quiet parents; decisive-games=127, draws-kept=38)
+  wrote /root/cw-scanprof/.hp-6.jnnw (919 held-out parents by opening hash)
+  wrote /root/cw-scanprof/.pp-7.jnnw (5337 strong-side quiet parents; decisive-games=112, draws-kept=32)
+  wrote /root/cw-scanprof/.hp-7.jnnw (1126 held-out parents by opening hash)
+  agrégé : parties décisives=1039 ; nulles-tenues=281
+
+=== concat ===
+  train : 53314 parents (53314 moves)
+  holdout : 6107 parents (6107 moves)
+
+=== gen-siblings --played-moves (train + holdout) ===
+  train GENSIB mode=MASTER parents_seen=53297 quiet_used=53297 cap_nodes=0 no_match=0 pairs=603672 records=1207344 depth=0 m_min=15 margin_mean=0 phase[fin/13-20/21-28/ouv]=297382/107259/110888/88143 -> /root/cw-scanprof/pairs.jnnw
+  holdout GENSIB mode=MASTER parents_seen=6103 quiet_used=6103 cap_nodes=0 no_match=0 pairs=66955 records=133910 depth=0 m_min=15 margin_mean=0 phase[fin/13-20/21-28/ouv]=30760/13498/11358/11339 -> /root/cw-scanprof/ho_pairs.jnnw
+  paires : train=603672 ; holdout=66955
+
+=== MANIFEST ===
+  book=false (2 côtés)   : appliqué par ScanEngine (set-param book=false au handshake)
+  asym-movetime          : fort=0.3 s / faible=0.03 s (ratio 10.0×)
+  extraction côté FORT   : garantie code (skip si side!=strong_color) ; quiet-only ('x' exclu) ; skip-book=8
+  filtre décisif         : décisives=1039 + nulles-tenues=281 (frac=0.2)
+  holdout PAR PARTIE     : md5(ouverture)%10==0 -> train=53314 / holdout=6107 parents (disjoints par ouverture)
+  volumes                : 53314 parents -> 603672 paires (train) ; 6107 -> 66955 (holdout)
+  corpus train committe (2.8M)
+  holdout committe
