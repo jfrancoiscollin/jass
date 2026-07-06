@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0632-mmto-external-loop",
-  "script": "jobs/queue/cpx62-0632-mmto-external-loop.sh",
-  "pid": 112162,
-  "started_at": "2026-07-06T21:56:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

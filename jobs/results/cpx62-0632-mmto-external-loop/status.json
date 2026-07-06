@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0632-mmto-external-loop",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-06T21:56:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 112162
+  "ended_at": "2026-07-06T23:40:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
