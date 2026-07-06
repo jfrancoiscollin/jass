@@ -1786,10 +1786,17 @@ int run_gen_siblings_mode(int argc, char** argv) {
                 for (std::size_t k = 0; k < ch.size(); ++k) v_top = std::max(v_top, ch[k].pv);
                 if (v_top - v_star <= ws_margin) { ++ws_already_top; continue; }
             }
+            // En leaf-mode (MMTO) : les feuilles-PV peuvent tomber a des PARITES differentes -> stm-feuille != stm-enfant.
+            // X·w etant en BLACK-POV (fold bitboard-only), la valeur minimax black-POV = eval black-POV de la feuille (OK),
+            // mais le SIGNE de la comparaison depend du stm du PARENT S (constant par parent), pas du stm de la feuille.
+            // On stocke donc S dans le champ score pour que rank_finetune --leaf-pov derive le signe de S (et non du record).
+            const std::int32_t sc = leaf_mode
+                ? static_cast<std::int32_t>(parent.side_to_move() == jass::Color::White ? 0 : 1)
+                : 0;
             for (std::size_t k = 0; k < ch.size(); ++k) {
                 if (static_cast<int>(k) == best) continue;
-                emit(out, ch[static_cast<std::size_t>(best)], 0, 1);   // prefere (src=MASTER)
-                emit(out, ch[k], 0, 1);                                 // domine
+                emit(out, ch[static_cast<std::size_t>(best)], sc, 1);   // prefere (src=MASTER), score=stm parent (leaf)
+                emit(out, ch[k], sc, 1);                                 // domine
                 ++pairs; ++emitted_here; ++phase_pairs[band];
             }
         } else {
