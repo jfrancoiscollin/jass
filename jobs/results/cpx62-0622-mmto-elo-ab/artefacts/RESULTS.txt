@@ -4,3 +4,7 @@
 
 === A/B Elo MMTO(anchor0.1) vs gen1 (mt0.2) ===
   [MMTO vs gen1 | dilf] A(mmto)=292 B(gen1)=318 D=142 n=752 rate_A=0.4827+-0.0322 elo~-12 IC=[0.451,0.515] => neutre
+  [MMTO vs gen1 | gen] A(mmto)=233 B(gen1)=183 D=112 n=528 rate_A=0.5473+-0.0376 elo~+33 IC=[0.510,0.585] => GAGNE hors-IC
+
+  GATE : MMTO rate_A>0.5 hors-IC (là où statique=−847) => la recherche débloque un reste de marge => boucle externe 0623.
+  neutre => piste MMTO close : le search capte déjà l'ordre maître (pré-fit 0.686), pas de marge à récupérer.
