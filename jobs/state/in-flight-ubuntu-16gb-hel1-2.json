@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0629-mmto-scanselfplay-ab",
+  "script": "jobs/queue/ccx33-0629-mmto-scanselfplay-ab.sh",
+  "pid": 3287338,
+  "started_at": "2026-07-06T20:16:18+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
