@@ -1,1 +1,13 @@
 === siblings-corpus (piste a etape 1) — HEAD main 41b3a19f0 runner: finalize cpx62-0606-rank-g1 (completed, rc=0) ===
+  GENSIB mode=DEEP parents_seen=53745 quiet_used=50000 cap_nodes=0 no_match=0 pairs=414154 records=828308 depth=9 m_min=15 margin_mean=2657.6 phase[fin/13-20/21-28/ouv]=116393/128285/99173/70303 -> /root/cw-sib7/pairs.0.jnnw
+  GENSIB mode=DEEP parents_seen=53902 quiet_used=50000 cap_nodes=0 no_match=0 pairs=413248 records=826496 depth=9 m_min=15 margin_mean=2775.67 phase[fin/13-20/21-28/ouv]=118785/126446/97717/70300 -> /root/cw-sib7/pairs.1.jnnw
+  GENSIB mode=DEEP parents_seen=53956 quiet_used=50000 cap_nodes=0 no_match=0 pairs=412257 records=824514 depth=9 m_min=15 margin_mean=2723.58 phase[fin/13-20/21-28/ouv]=114866/127511/98762/71118 -> /root/cw-sib7/pairs.2.jnnw
+  GENSIB mode=DEEP parents_seen=53958 quiet_used=50000 cap_nodes=0 no_match=0 pairs=417893 records=835786 depth=9 m_min=15 margin_mean=2679.94 phase[fin/13-20/21-28/ouv]=114476/131212/101431/70774 -> /root/cw-sib7/pairs.3.jnnw
+  GENSIB mode=DEEP parents_seen=53823 quiet_used=50000 cap_nodes=0 no_match=0 pairs=415089 records=830178 depth=9 m_min=15 margin_mean=2727.34 phase[fin/13-20/21-28/ouv]=115773/130743/99517/69056 -> /root/cw-sib7/pairs.4.jnnw
+  GENSIB mode=DEEP parents_seen=53706 quiet_used=50000 cap_nodes=0 no_match=0 pairs=406714 records=813428 depth=9 m_min=15 margin_mean=2853.82 phase[fin/13-20/21-28/ouv]=122503/124312/95237/64662 -> /root/cw-sib7/pairs.5.jnnw
+  GENSIB mode=DEEP parents_seen=53893 quiet_used=50000 cap_nodes=0 no_match=0 pairs=408984 records=817968 depth=9 m_min=15 margin_mean=2802.57 phase[fin/13-20/21-28/ouv]=120294/125479/95782/67429 -> /root/cw-sib7/pairs.6.jnnw
+  GENSIB mode=DEEP parents_seen=53876 quiet_used=50000 cap_nodes=0 no_match=0 pairs=411132 records=822264 depth=9 m_min=15 margin_mean=2720.95 phase[fin/13-20/21-28/ouv]=115120/125319/100499/70194 -> /root/cw-sib7/pairs.7.jnnw
+  MERGE : 6598942 records = 3299471 paires
+  MANIFEST : parents_seen=0 quiet_used=0 cap_nodes=0 (0% captures)
+    pairs=0 ; margin_mean~0cp ; phase[fin/13-20/21-28/ouv]=[0, 0, 0, 0] (finale%=0)
+  corpus committe job-side (25M)
