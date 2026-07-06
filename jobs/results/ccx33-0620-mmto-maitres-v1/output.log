@@ -1,0 +1,31 @@
+=== MMTO v1 maîtres — HEAD main 8904c4050 queue 0620 MMTO v1 maitres (ccx33) — feuilles-PV a travers la recherche vs 0619 statique (-847) : test du verrou methode ===
+  ✓ expert_games.db (123M)
+  ✓ build develop OK ; NUM_PATTERNS=32
+
+=== extraction maîtres (>= 30000 parents, quiets, skip-book=8, elo>=2000) ===
+  extraction : 30000 parents de 400 parties ; parse-fails=0
+  parents=30000 ; moves=30000
+  split : 8 shards (~3750 parents/shard)
+
+=== MMTO gen-siblings --leaf-mode (depth=5, --nnue gen1, WS off = même support que 0619) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3747 quiet_used=3747 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34362 records=68724 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7955/6017/8394/11996 -> /root/cw-mmto/pairs_6.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34791 records=69582 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7026/6831/10299/10635 -> /root/cw-mmto/pairs_7.jnnw
+  MMTO pairs concat : 564172 records (282086 paires)
+  MMTO paires (feuilles-PV) : 282086
+  dump-eval-features : wrote 564172 × 120 Scan-style extras to /root/cw-mmto/feat
+
+=== rank_finetune MMTO anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.3066 ; cols visitées=187440
+  [0.1] fit : loss 0.28617->0.23989 ; pairwise-acc 0.3066->0.4482 (delta +0.1415)
+  [0.1] candidat MMTO committé
+
+=== rank_finetune MMTO anchor=0.3 ===
+  [0.3] pairwise-acc champion (avant fit) = 0.3066 ; cols visitées=187440
+  [0.3] fit : loss 0.28617->0.25875 ; pairwise-acc 0.3066->0.3746 (delta +0.0679)
+  [0.3] candidat MMTO committé
+
+  => next : 0621 (cpx62) A/B Elo mmto_{0.1,0.3} vs gen1 (harnais 0619 robuste).
+  LECTURE : MMTO bat gen1 hors-IC (là où statique=−847) => la MÉTHODE (statique) était le verrou => boucle externe 0622.
+            MMTO échoue aussi => l'éval linéaire n'exploite pas l'ordre maître même à travers la recherche => marge close.
+  RESULTS committe ✓
+=== fin MMTO v1 ===
