@@ -1,0 +1,25 @@
+=== MMTO v2 (POV fix) — HEAD main 9362963d7 queue 0621 MMTO v2 POV fix (ccx33) — corrige la contamination 0620 (signe par-record des feuilles-PV) ; diagnostic pre-fit pairwise-acc ===
+  ✓ build develop + parents=30000 réutilisés (0620) ; NUM_PATTERNS=32
+  split 8 shards (~3750/shard)
+
+=== MMTO gen-siblings --leaf-mode (depth=5, --nnue gen1, stm parent stocké) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34791 records=69582 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7026/6831/10299/10635 -> /root/cw-mmto2/pairs_7.jnnw
+  MMTO pairs : 282086 paires
+  MMTO paires (feuilles-PV) : 282086
+  dump : wrote 564172 × 120 Scan-style extras to /root/cw-mmto2/feat
+
+=== rank_finetune MMTO --leaf-pov anchor=0.1 ===
+  [0.1] [POV gate] Spearman(X·w0 , jass-eval black-POV) = 0.9989 (n=60)
+  [0.1] [leaf-pov] signe dérivé du stm parent (champ score) ; S=White frac=0.505
+  [0.1] pairwise-acc champion (avant fit) = 0.6862 ; cols visitées=187440
+  [0.1] fit : loss 0.17429->0.17242 ; pairwise-acc 0.6862->0.6876 (delta +0.0014)
+  [0.1] candidat committé
+
+=== rank_finetune MMTO --leaf-pov anchor=0.3 ===
+  [0.3] ABORT (gate) : fit : loss 0.17429->0.17324 ; pairwise-acc 0.6862->0.6867 (delta +0.0005) ABORT pairwise-acc n a PAS monté (0.6862->0.6867) => signe de la loss faux ou λ inutile 
+
+  DIAGNOSTIC : pré-fit pairwise-acc (champion à travers la recherche vs coups maîtres) ;
+    0620 buggé = 0.307 (POV cassé). Ici, avec --leaf-pov : ≥0.5 attendu (fix OK) ; >0.5 = search agree masters.
+  => next : 0622 (cpx62) A/B Elo mmto2_{0.1,0.3} vs gen1 (harnais 0619).
+  RESULTS committe ✓
+=== fin MMTO v2 ===

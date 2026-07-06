@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0621-mmto-maitres-v2-povfix",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-06T16:24:35+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3278703
+  "ended_at": "2026-07-06T16:29:35+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
