@@ -1,0 +1,15 @@
+=== PISTE (a) G1 — HEAD main 02703addc queue 0608 G1 (re-run avec loader champion robuste + full-fold) — rank_finetune 3 gates + survie (piste-a) ===
+  gen1 + pairs(411323) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 822646 × 120 Scan-style extras to /root/cw-rankg1b/feat
+
+=== rank_finetune λ=0.3 (POV gate + grad-check + pairwise-acc) ===
+  champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True
+  Traceback (most recent call last):
+    File "/root/jass/pattern_jass/tools/rank_finetune.py", line 157, in <module>
+      if __name__=='__main__': main()
+                               ~~~~^^
+    File "/root/jass/pattern_jass/tools/rank_finetune.py", line 73, in main
+      ncol_feat=feat.size//N; feat=feat.reshape(N,ncol_feat)
+                                   ~~~~~~~~~~~~^^^^^^^^^^^^^
+  ValueError: cannot reshape array of size 98717523 into shape (822646,120)
+  => rank_finetune a AVORTÉ (rc=1) — un gate a échoué (voir ci-dessus). Pas de G1.
