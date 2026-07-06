@@ -1,0 +1,12 @@
+=== siblings-corpus (piste a etape 1) — HEAD main 41b3a19f0 runner: finalize cpx62-0606-rank-g1 (completed, rc=0) ===
+  bake ordering present (oracle d9 = prob-pur) : 2/2
+  ⚠ mode absent ?
+  corpus=2000000 -> 8 shards de ~250000
+=== gen-siblings x8 (d9, m_min=15, ~50000 parents/shard) ===
+  MERGE : 6598942 records = 3299471 paires
+  MANIFEST : parents_seen=0 quiet_used=0 cap_nodes=0 (0% captures)
+    pairs=0 ; margin_mean~0cp ; phase[fin/13-20/21-28/ouv]=[0, 0, 0, 0] (finale%=0)
+  corpus committe job-side (25M)
+  RESULTS committe ✓
+  => prochaine etape (apres lecture 0600/0601) : trainer rank-loss + G1 (survie held-out).
+=== fin siblings-corpus ===
