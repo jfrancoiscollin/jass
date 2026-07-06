@@ -1,2 +1,2 @@
-=== BRAS M master-prefs — HEAD main 025fd546b queue 0614 bras M master-prefs corpus (oracle externe non-circulaire, coups maitres >=2000) — pivot apres echec bras S ===
+=== BRAS M master-prefs — HEAD main cfac1a090 0614 : expert_games.db absent ===
   ❌ ABORT : /root/jass/data/expert_games.db absent sur la box (0014 non persisté). Bras M nécessite un re-fetch.
