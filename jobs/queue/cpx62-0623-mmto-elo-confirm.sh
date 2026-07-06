@@ -56,7 +56,7 @@ for i in range(0,n,step):
     if len(out)>=K: break
 open(sys.argv[2],'w').write("\n".join(out)+"\n"); print(f"  generaliste : {len(out)} openings")
 PY
-say "  build OK ; openings dilf=$(wc -l<"$W/dilf.fen") gen=$(wc -l<"$W/gen.fen") ; ~$((NOPEN*PAIRS*2)) games/cellule ; mt=$MT"
+say "  build OK ; openings dilf=$(wc -l<"$W/dilf.fen") gen=$(wc -l<"$W/gen.fen") ; ~$((NOPEN*PAIRS*2)) games/cellule ; mt=0.2+0.3"
 
 cell(){ local oset="$1" openf="$2" mt="$3"; local pref="$W/x_${oset}_${mt}"
   rm -f "${pref}".*
