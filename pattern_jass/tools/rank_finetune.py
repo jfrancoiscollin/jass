@@ -111,19 +111,19 @@ def main():
     sgn=np.where(stm[0:N:2]==1,1.0,-1.0)                      # STM partagé par la paire
     D=(Xw-Xb).multiply(sgn[:,None]).tocsr()                  # (P, ncol) ; d = D·w
     used=np.unique(D.indices)                                 # colonnes visitées
-    Ds=D[:,used].toarray()                                    # (P, |used|) dense (sparse en pratique)
+    Ds=D[:,used].tocsr()                                      # (P, |used|) SPARSE (jamais densifié : 411k×346k)
     w0s=w0[used].copy()
     s=a.rank_scale
     def pacc(ws):
-        d=Ds.dot(ws); return float((d>0).mean())
+        d=np.asarray(Ds.dot(ws)).ravel(); return float((d>0).mean())
     acc0=pacc(w0s)
     print(f'pairwise-acc champion (avant fit) = {acc0:.4f} ; cols visitées={used.size}',flush=True)
 
     def lg(ws):
-        d=Ds.dot(ws)                                          # (P,)
+        d=np.asarray(Ds.dot(ws)).ravel()                     # (P,)
         z=s*d; sig=0.5*(np.tanh(0.5*z)+1.0)
         loss=a.lam*np.mean(-np.log(np.clip(sig,1e-12,1.0))) + 0.5*a.anchor*np.dot(ws-w0s,ws-w0s)
-        g=a.lam*(Ds.T.dot((sig-1.0)*s)/P) + a.anchor*(ws-w0s)
+        g=a.lam*(np.asarray(Ds.T.dot((sig-1.0)*s)).ravel()/P) + a.anchor*(ws-w0s)
         return loss,g
 
     # ---- GARDE-FOU 2 : grad-check différences-finies ----
