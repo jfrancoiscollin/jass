@@ -15,3 +15,4 @@
 
 === A/B cand_final (it3) vs gen1 (généraliste=signal, dilf=garde-fou) ===
   [cand_final vs gen1 | dilf mt0.2] A=621 B=639 D=260 n=1520 rate_A=0.4941+-0.0229 elo~-4 IC=[0.471,0.517] => neutre
+  [cand_final vs gen1 | dilf mt0.3] A=615 B=620 D=285 n=1520 rate_A=0.4984+-0.0227 elo~-1 IC=[0.476,0.521] => neutre
