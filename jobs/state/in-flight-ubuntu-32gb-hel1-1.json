@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0606-rank-g1",
-  "script": "jobs/queue/cpx62-0606-rank-g1.sh",
-  "pid": 74978,
-  "started_at": "2026-07-06T05:33:39+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
