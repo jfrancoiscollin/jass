@@ -1,0 +1,28 @@
+=== BOUCLE EXTERNE MMTO — HEAD main 67971e4f8 queue 0632 boucle externe MMTO (cpx62 libre) — re-gen feuilles avec eval candidate + re-fit 3 iters sur corpus 0625, puis A/B : le multiplicateur en attente ===
+  ✓ build + corpus parents=43912 (maîtres 0624 + prof Scan 0625) ; anchor=0.05
+
+=== ITÉRATION 1 : feuilles depuis gen1.pjtw → fit (ancre gen1) ===
+  it pairs : 414577
+  it1 : paires=414577 ; pairwise-acc 0.6944->0.7014 (delta +0.0070)
+
+=== ITÉRATION 2 : feuilles depuis cand_1.pjtw → fit (ancre gen1) ===
+  it pairs : 414577
+  it2 : paires=414577 ; pairwise-acc 0.6862->0.7118 (delta +0.0256)
+
+=== ITÉRATION 3 : feuilles depuis cand_2.pjtw → fit (ancre gen1) ===
+  it pairs : 414577
+  it3 : paires=414577 ; pairwise-acc 0.6846->0.7120 (delta +0.0274)
+
+  => convergence : pré-fit pairwise-acc doit MONTER et delta RÉTRÉCIR à travers it1→it3.
+  generaliste : 66 openings
+
+=== A/B cand_final (it3) vs gen1 (généraliste=signal, dilf=garde-fou) ===
+  [cand_final vs gen1 | gen mt0.2] A=461 B=336 D=259 n=1056 rate_A=0.5592+-0.0260 elo~+41 IC=[0.533,0.585] => GAGNE hors-IC
+  [cand_final vs gen1 | dilf mt0.2] A=621 B=639 D=260 n=1520 rate_A=0.4941+-0.0229 elo~-4 IC=[0.471,0.517] => neutre
+  [cand_final vs gen1 | gen mt0.3] A=488 B=331 D=237 n=1056 rate_A=0.5743+-0.0262 elo~+52 IC=[0.548,0.601] => GAGNE hors-IC
+  [cand_final vs gen1 | dilf mt0.3] A=615 B=620 D=285 n=1520 rate_A=0.4984+-0.0227 elo~-1 IC=[0.476,0.521] => neutre
+
+  GATE : cand_final généraliste > +47 hors-IC => la boucle externe MULTIPLIE (gratuit, même corpus) => itérer + scaler.
+         plateau ~+47 => one-shot suffit sur ce corpus => le gisement est dans le VOLUME/qualité data (0630/0631), pas les itérations.
+  RESULTS committe ✓
+=== fin boucle externe ===
