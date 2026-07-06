@@ -3,3 +3,4 @@
   build OK ; openings dilf=48 gen=33 ; ~768 games/cellule ; mt=0.2
 
 === A/B Elo MMTO(anchor0.1) vs gen1 (mt0.2) ===
+  [MMTO vs gen1 | dilf] A(mmto)=292 B(gen1)=318 D=142 n=752 rate_A=0.4827+-0.0322 elo~-12 IC=[0.451,0.515] => neutre
