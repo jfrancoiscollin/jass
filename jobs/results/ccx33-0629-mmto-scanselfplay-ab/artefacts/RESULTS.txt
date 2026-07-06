@@ -1,3 +1,6 @@
 === A/B Elo MMTO vs gen1 — HEAD main cf3b599d7 runner: heartbeat cpx62-0628-mmto-scanteacher-ab ===
   [MMTO vs gen1 | gen mt0.2] A(mmto)=163 B(gen1)=129 D=104 n=396 rate_A=0.5429+-0.0421 elo~+30 IC=[0.501,0.585] => GAGNE hors-IC
   [MMTO vs gen1 | gen mt0.3] A(mmto)=235 B(gen1)=160 D=133 n=528 rate_A=0.5710+-0.0364 elo~+50 IC=[0.535,0.607] => GAGNE hors-IC
+
+  GATE : MMTO rate_A>0.5 hors-IC (là où statique=−847) => marge réelle récupérable => boucle externe MMTO (0624).
+  neutre => piste MMTO close : le search capte déjà l'ordre maître (pré-fit 0.686), pas de marge à récupérer.
