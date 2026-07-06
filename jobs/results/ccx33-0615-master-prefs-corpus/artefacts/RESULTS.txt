@@ -1,1 +1,12 @@
 === BRAS M master-prefs — HEAD main fa1b8a810 queue 0615 bras M corpus sur CCX33 (db expert_games peut-etre la-bas, filesystems separes) ===
+  ✓ expert_games.db présent (123M)
+  jeux >=2000 : 596
+
+=== extraction master (>= 100000 parents, quiets, skip-book=8) ===
+  extraction : 43912 parents (coups quiets) de 596 parties ; parse-fails=0
+  parents.jnnw=43912 ; moves.bin=43912
+
+=== gen-siblings --played-moves (bras M) ===
+  GENSIB mode=MASTER parents_seen=43874 quiet_used=43873 cap_nodes=0 no_match=1 pairs=414571 records=829142 depth=0 m_min=15 margin_mean=0 phase[fin/13-20/21-28/ouv]=87444/78200/105805/143122 -> /root/cw-mpref5/mpairs.jnnw
+  master-pref paires : 414571
+  corpus committe (2.0M)
