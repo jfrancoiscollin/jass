@@ -1,0 +1,5 @@
+=== A/B Elo MMTO vs gen1 — HEAD main 5836a28f8 queue 0622 A/B Elo MMTO v2 vs gen1 (cpx62) — juge de paix confirmatoire piste MMTO ===
+  generaliste : 33 openings
+  build OK ; openings dilf=48 gen=33 ; ~768 games/cellule ; mt=0.2
+
+=== A/B Elo MMTO(anchor0.1) vs gen1 (mt0.2) ===
