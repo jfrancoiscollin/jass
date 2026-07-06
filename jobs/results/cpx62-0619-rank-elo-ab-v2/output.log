@@ -1,0 +1,31 @@
+=== A/B ELO v2 (juge de paix robuste) — HEAD main 526745a5a runner: start ccx33-0618-scanprof-played-corpus ===
+  gen1 + master-pairs(414571) prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 829142 × 120 Scan-style extras to /root/cw-eloab2/feat
+
+=== rank_finetune bras M anchor=0.01 ===
+  [0.01] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.01] fit : loss 0.20839->0.19867 ; pairwise-acc 0.5027->0.6227 (delta +0.1200)
+
+=== rank_finetune bras M anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [0.1] fit : loss 0.20839->0.20418 ; pairwise-acc 0.5027->0.6093 (delta +0.1066)
+
+=== rank_finetune bras M anchor=1.0 ===
+  [1.0] pairwise-acc champion (avant fit) = 0.5027 ; cols visitées=187318
+  [1.0] fit : loss 0.20839->0.20751 ; pairwise-acc 0.5027->0.5597 (delta +0.0570)
+  generaliste : 33 openings
+  openings : dilf=48 gen=33 ; ~768 games/cellule ; mt=0.2
+
+=== A/B ELO candidat vs gen1 (mt0.2, dilf + generaliste) — un candidat = 2 cellules ===
+  [anchor 0.01 | dilf] A=77 B=643 D=32 n=752 rate_A=0.1237+-0.0223 elo~-340 IC=[0.101,0.146] => PERD hors-IC
+  [anchor 0.01 | gen] A=3 B=523 D=2 n=528 rate_A=0.0076+-0.0069 elo~-847 IC=[0.001,0.014] => PERD hors-IC
+  [anchor 0.1 | dilf] A=141 B=532 D=79 n=752 rate_A=0.2400+-0.0282 elo~-200 IC=[0.212,0.268] => PERD hors-IC
+  [anchor 0.1 | gen] A=58 B=409 D=61 n=528 rate_A=0.1676+-0.0284 elo~-278 IC=[0.139,0.196] => PERD hors-IC
+  [anchor 1.0 | dilf] A=245 B=343 D=164 n=752 rate_A=0.4348+-0.0313 elo~-46 IC=[0.404,0.466] => PERD hors-IC
+  [anchor 1.0 | gen] A=190 B=226 D=112 n=528 rate_A=0.4659+-0.0377 elo~-24 IC=[0.428,0.504] => neutre
+
+  GATE : un candidat rate_A>0.5 hors-IC => la SURVIE était le mauvais proxy, le rank-loss MARCHE => scale (G2/G3/G4).
+  tous neutres/négatifs => clause d'échec CONFIRMÉE par l'Elo => piste rank-loss CLOSE (résidu -133/-161 acté = prix des marges).
+  (anchor 1.0 ≈ champion = contrôle sanité, doit sortir ~0.500 ; 0617 l'avait donné 0.490 sur gen)
+  RESULTS committe ✓
+=== fin A/B Elo v2 ===
