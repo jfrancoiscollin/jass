@@ -1,1 +1,6 @@
 === MMTO v4 teacher-Scan — HEAD main 99223590b queue 0625 MMTO teacher-Scan (ccx33) — prof=coup Scan surhumain (vs 2000-humain) sur parents maitres, pipeline MMTO leaf-pov : test qualite du prof ===
+  [0.1] candidat committé
+
+  DIAGNOSTIC : pré-fit pairwise-acc = accord champion-à-travers-recherche vs COUP SCAN (prof surhumain fiable).
+  vs 0621 (prof 2000 = 0.686). Si le prof Scan donne un fit plus fort / un delta plus net => la qualité du prof était le frein.
+  => next : A/B Elo scanmmto_{0.05,0.1} vs gen1 (cpx62, harnais 0619).
