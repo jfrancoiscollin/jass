@@ -30,7 +30,7 @@
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
-## 🧪 PISTE (a) RANK-LOSS FRATRIES — STATIQUE CLOSE (−847), MMTO À-TRAVERS-RECHERCHE OUVERTE & LÉGÈREMENT + (généraliste +23 hors-IC)
+## ✅ PISTE (a) — MMTO À-TRAVERS-RECHERCHE PAIE : +47 Elo généraliste mt0.3 (gratuit, croissant), la qualité du prof Scan translate (+23→+47) ; SCALE en cours (statique close −847)
 > **Cible** : le défaut mesuré = éval-marge (0591 rang-position à parité ; 0597/0599 survie-1er-choix 0.34<0.43 Scan, départage
 > mal les coups-sœurs). Le fit WDL ne pénalise pas une inversion de sœurs → **objectif mal aligné**. La rank-loss sur fratries
 > la vise directement. **Statut : méthode championne du monde au shogi (Bonanza 2006 / MMTO 2013, éval linéaire ~40M params),
@@ -72,17 +72,25 @@
 > **DÉCOUVERTE CLÉ (`0621`)** : le champion **à travers la recherche d5** classe DÉJÀ le coup maître au-dessus des sœurs à **0.686**
 > (vs 0.503 au niveau feuille statique) → **le search compense déjà l'éval-marge**. C'est pourquoi le statique détruit (−847) et MMTO
 > a peu de marge : le fit ne bouge que **+0.0014** (30k maîtres).
-> **A/B Elo — petit gain RÉEL sur généraliste** : candidat MMTO 30k-maîtres vs gen1 (même binaire+params bakés) → **généraliste +33
-> (n=528, `0622`) puis +23 hors-IC (n=1056, `0626`)** — RÉPLIQUE, pas du bruit ; dilf ≈neutre. Gain-éval **gratuit** (l'éval seule change).
-> **Leviers de qualité (idée JFC) — le prof compte** : `0624` +volume (44k, plafond DB maîtres) ne débloque PAS le fit (delta reste
-> +0.0029). Mais `0625` **prof Scan** (mêmes positions maîtres, coup Scan au lieu du coup humain-2000) **DOUBLE le mouvement du fit
-> (+0.0071 vs +0.0029, pré-fit 0.694)** → la QUALITÉ DU PROF était un frein (moins de bruit d'étiquette). **⟹ escalade qualité** :
-> `0627` (en vol, ccx33) = positions **self-play Scan** (on-distribution, volume illimité) + **prof Scan** + ~72k parents.
-> **A/B en attente** : `0628` (candidat prof-Scan vs gen1), `0627` (combo complet). NB gremlin runner : RESULTS multi-cellules tronqué
-> (cellules récupérées d'`output.log`).
-> **LECTURE** : MMTO n'est PAS clos (contrairement au statique) — petit gain généraliste réel + le prof-Scan amplifie le fit. Le juge
-> reste l'**Elo** : si prof-Scan/self-play-Scan battent gen1 plus nettement hors-IC (surtout croissant avec mt) → marge réelle récupérable
-> → boucle externe MMTO + scale. Si ça plafonne au petit +20 → l'éval linéaire à-travers-recherche est quasi-maxée (résidu vs Scan = force brute de l'éval).
+> **✅✅ A/B Elo — GAIN RÉEL ET CROISSANT, la QUALITÉ DU PROF se traduit en Elo** (même binaire+params bakés, éval seule change ; dilf=garde-fou indépendant, généraliste=signal représentatif) :
+>
+> | candidat éval | prof | généraliste mt0.2 | généraliste mt0.3 | dilf |
+> |---|---|---|---|---|
+> | MMTO 30k (`0626`) | humain 2000 | +23 hors-IC | +23 (plat) | +8/+12 neutre |
+> | MMTO 44k (`0628`) | **Scan** | **+38 hors-IC** | **+47 hors-IC** | +5/+6 neutre |
+>
+> **PREMIER VRAI GAIN-ÉVAL de la campagne** : +47 Elo généraliste mt0.3, **GRATUIT** (éval seule), **CROÎT avec le movetime** (+38→+47 =
+> signature d'un gain qui COMPOSE avec la profondeur, comme le bake ordering — le humain était plat = douteux). **dilf neutre = pas de
+> régression** (garde-fou passé). **⟹ la qualité du prof (humain→Scan) fait +23→+47.**
+> **Escalade data-qualité (idée JFC) — le fit monte monotone ×10** : delta pairwise-acc `0621` humain-30k **+0.0014** → `0624` humain-44k
+> +0.0029 → `0625` **prof-Scan**-44k +0.0071 → `0627` **positions+prof Scan** 59k **+0.0136**. Chaque marche de qualité double le fit.
+> **EN VOL/QUEUE** : `0629` (A/B du combo `0627` +0.0136, ccx33) ; **`0630` (LANCÉ)** = **self-play Scan MIXTE** équilibrées (fort-vs-fort,
+> positions contestées, 2 côtés=prof) + déséquilibrées (conversion) **~100-120k** — scale-up + spectre large (idée JFC).
+> **LECTURE** : MMTO à-travers-recherche est le PREMIER levier éval qui paie (statique détruisait −847). Gain gratuit, croissant, robuste
+> hors-IC sur positions réelles. Prochaine étape : scaler (0630 → 200-300k si ça monte) puis, si le meilleur candidat tient sur un set LARGE
+> (dilf+généraliste+openings Scan équilibrées, sans régression) → **BAKE éval candidat**. Plafond éventuel = éval linéaire maxée (résidu vs Scan = force brute).
+> **Méthodo** : dilf ne pilote plus (garde-fou anti-régression/anti-circularité), généraliste pilote ; set large ajouté au moment du bake.
+> NB gremlin runner : RESULTS multi-cellules tronqué → cellules lues d'`output.log`.
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
