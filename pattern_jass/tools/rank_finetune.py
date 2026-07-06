@@ -46,7 +46,7 @@ def main():
     ap.add_argument('--feat',required=True); ap.add_argument('--out',required=True)
     ap.add_argument('--tools',required=True)
     ap.add_argument('--lam',type=float,default=0.3); ap.add_argument('--anchor',type=float,default=1e-3)
-    ap.add_argument('--rank-scale',type=float,default=1.0); ap.add_argument('--max-iter',type=int,default=60)
+    ap.add_argument('--min-pairs',type=int,default=1); ap.add_argument('--rank-scale',type=float,default=1.0); ap.add_argument('--max-iter',type=int,default=60)
     ap.add_argument('--full-fold',action='store_true'); ap.add_argument('--color-fold',action='store_true')
     ap.add_argument('--king-patterns',action='store_true'); ap.add_argument('--tempo-stage',action='store_true')
     ap.add_argument('--phase-lo',type=int,default=8); ap.add_argument('--phase-hi',type=int,default=40)
@@ -110,8 +110,12 @@ def main():
     Xb=X[0:N:2]; Xw=X[1:N:2]                                  # better (2k), worse (2k+1)
     sgn=np.where(stm[0:N:2]==1,1.0,-1.0)                      # STM partagé par la paire
     D=(Xw-Xb).multiply(sgn[:,None]).tocsr()                  # (P, ncol) ; d = D·w
-    used=np.unique(D.indices)                                 # colonnes visitées
-    Ds=D[:,used].tocsr()                                      # (P, |used|) SPARSE (jamais densifié : 411k×346k)
+    # REGULARISATION anti-overfit : n'ajuster que les buckets vus dans >= min_pairs paires (chaque colonne
+    # de D = 1 nnz/paire qui la touche => bincount(indices) = nb de paires par colonne).
+    colcnt=np.bincount(D.indices,minlength=D.shape[1])
+    used=np.flatnonzero(colcnt>=a.min_pairs)
+    print(f'buckets : {np.count_nonzero(colcnt)} visités ; {used.size} gardés (>= {a.min_pairs} paires) ; paires/bucket median={np.median(colcnt[colcnt>0]):.1f}',flush=True)
+    Ds=D[:,used].tocsr()                                      # (P, |used|) SPARSE (jamais densifié)
     w0s=w0[used].copy()
     s=a.rank_scale
     def pacc(ws):
