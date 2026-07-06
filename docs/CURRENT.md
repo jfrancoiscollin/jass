@@ -30,7 +30,7 @@
 >
 > *(Note : hist_pure=1 DÉSACTIVE conthist — baké 0508 comme −9% nœuds Elo-neutre — mais l'EMA le remplace mieux, d'où le +30 net.)*
 
-## 🧪 PISTE (a) RANK-LOSS SUR FRATRIES (comparison training / Bonanza-MMTO) — cible l'ÉVAL-MARGE (le résidu mesuré)
+## 🔒 PISTE (a) RANK-LOSS STATIQUE SUR FRATRIES — CLOSE PAR L'ELO (0617/0619 : −847 destructif) ; pivot → MMTO à travers la recherche
 > **Cible** : le défaut mesuré = éval-marge (0591 rang-position à parité ; 0597/0599 survie-1er-choix 0.34<0.43 Scan, départage
 > mal les coups-sœurs). Le fit WDL ne pénalise pas une inversion de sœurs → **objectif mal aligné**. La rank-loss sur fratries
 > la vise directement. **Statut : méthode championne du monde au shogi (Bonanza 2006 / MMTO 2013, éval linéaire ~40M params),
@@ -53,11 +53,20 @@
 > **⚠️ HYPOTHÈSE MÉTRIQUE** : le fit apprend (pairwise↑) sans bouger la survie → **la survie (accord d1↔d11) mesure la
 > depth-stability, PAS la qualité de jeu** ; une éval affinée peut mieux jouer tout en étant moins depth-stable. **Le seul vrai
 > juge = l'Elo.**
-> **🎲 `0617` JUGE DE PAIX FINAL (EN VOL, cpx62)** : A/B Elo DIRECT `pattern-a=candidat bras M {anchor 0.01,0.1,1.0}` vs
-> `pattern-b=gen1`, **même binaire + mêmes search-params bakés** (seule l'éval diffère), dilf+généraliste mt0.2 ~1600 games/cand
-> (anchor 1.0≈champion = contrôle de sanité ~0.500). Fits refaits ✓ (pairwise 0.62/0.61/0.56) ; A/B en cours. **GATE pré-engagé** :
-> un candidat bat gen1 **hors-IC** → la survie était le mauvais proxy, le rank-loss MARCHE → scale (G2/G3/G4). Tous neutres/négatifs
-> → **clause d'échec confirmée par la VRAIE métrique** → **piste rank-loss CLOSE** (programme sur +187 Elo search bakés ; résidu −133/−161 acté = prix des marges).
+> **🔒 VERDICT ELO — PISTE CLOSE (`0617`+`0619`, cpx62)** : A/B Elo DIRECT candidat bras M vs gen1 (même binaire + search-params
+> bakés, seule l'éval diffère, mt0.2). **Le rank-loss statique n'est pas neutre : il DÉTRUIT l'Elo, monotone avec l'ampleur du
+> fit** — anchor **0.01 (plus gros mouvement, pairwise 0.62) = −847 Elo (rate 0.008)** ; anchor **0.1 = −278** ; anchor **1.0≈champion
+> (contrôle) = −24 neutre** (0617 l'avait donné −7, deux runs indépendants concordent sur le contrôle). Plus la rank-loss bouge les
+> poids, pire ça joue. **Le pairwise-acc↑ (0.50→0.62) était de l'OVERFIT** à l'objectif de paires qui décalibre l'éval (les buckets
+> ajustés s'éloignent de leur valeur WDL calibrée → éval incohérente). **⟹ l'objectif rank-loss STATIQUE (réordonner les enfants
+> immédiats au niveau de la feuille-éval) est FONDAMENTALEMENT MAL ALIGNÉ avec la force de jeu de notre éval linéaire.** La survie
+> était bien un proxy trompeur — mais dans le mauvais sens : elle SOUS-estimait le désastre. **Clause d'échec confirmée par la
+> VRAIE métrique (Elo). Programme sur +187 Elo search bakés ; résidu −133/−161 acté = prix des marges.** (NB gremlin d'archivage runner :
+> cellules dilf + entêtes perdues dans RESULTS des 2 runs — cellules gen complètes et concordantes, verdict robuste.)
+> **➡️ SUITE (briefing Scan-prof JFC)** : le −847 dit que le VERROU est la MÉTHODE STATIQUE (pas seulement le prof faible ni l'absence
+> de marges). Corpus Scan-prof asym PLAYED en génération (`0618`, ccx33) — utile pour la CONFIRMATION phase-1 ET surtout pour **MMTO
+> (phase 2 : fit À TRAVERS LA RECHERCHE, features des feuilles-PV)**, le seul variant qui ne force pas la feuille-éval à réordonner les
+> enfants immédiats. PLAYED statique (sans marges) devrait échouer comme les maîtres → cap sur CHILD-SCORED (marges) / MMTO.
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
