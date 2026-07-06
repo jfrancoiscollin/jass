@@ -1667,6 +1667,12 @@ int run_gen_siblings_mode(int argc, char** argv) {
     std::string moves_path;   // --played-moves : BRAS M (Bonanza). Binaire (from:u8,to:u8) par parent, ALIGNE
                               // sur les records d'entree. Si present : PAS de recherche — le coup joue = prefere,
                               // toutes les autres sœurs legales = dominees (src=MASTER). max_pairs/m_min ignores.
+    // --leaf-mode : MMTO (Hoki-Kaneko). Pour CHAQUE enfant, recherche a `depth` (quiescence incluse) et emet la
+    //   position FEUILLE de la PV a la place de l'enfant immediat. La valeur minimax couleur-fixe d'un coup = l'eval
+    //   couleur-fixe de sa feuille-PV (identite negamax), donc rank_finetune (qui signe chaque record par son stm)
+    //   apprend a travers la RECHERCHE, pas sur l'eval-feuille des enfants immediats. En master+leaf : filtre working-set
+    //   (ne garder que si le coup-prof n'est PAS deja en tete de la recherche, avec marge --ws-margin cp).
+    bool leaf_mode = false; int ws_margin = 10;
     for (int i = 4; i < argc; ++i) {
         const std::string a = argv[i];
         if      (a == "--nnue" && i + 1 < argc)                 nnue_path = argv[++i];
@@ -1674,6 +1680,8 @@ int run_gen_siblings_mode(int argc, char** argv) {
         else if (a == "--max-parents" && i + 1 < argc)          max_parents = parse_int_or(argv[++i], -1);
         else if (a == "--max-pairs-per-parent" && i + 1 < argc) max_pairs = parse_int_or(argv[++i], 16);
         else if (a == "--played-moves" && i + 1 < argc)         moves_path = argv[++i];
+        else if (a == "--leaf-mode")                            leaf_mode = true;
+        else if (a == "--ws-margin" && i + 1 < argc)            ws_margin = parse_int_or(argv[++i], 10);
     }
     const bool master_mode = !moves_path.empty();
     std::vector<std::pair<std::uint8_t,std::uint8_t>> played;   // BRAS M : coup joue par parent
@@ -1712,6 +1720,7 @@ int run_gen_siblings_mode(int argc, char** argv) {
         ? 1 : std::max<std::size_t>(1, nrec / (static_cast<std::size_t>(max_parents) * 3 + 1));
     std::vector<char> out;                 // emitted pair records (38B each)
     long parents_seen = 0, parents_used = 0, pairs = 0, cap_nodes = 0, no_match = 0;
+    long ws_already_top = 0;               // MMTO working-set : coup-prof deja en tete (rien a apprendre)
     long phase_pairs[4] = {0,0,0,0};
     double margin_sum = 0;
 
@@ -1742,15 +1751,21 @@ int run_gen_siblings_mode(int argc, char** argv) {
             Ch x;
             x.from = static_cast<std::uint8_t>(ml[mi].from);
             x.to   = static_cast<std::uint8_t>(ml[mi].to);
-            x.bbs[0] = c.white_men();  x.bbs[1] = c.white_kings();
-            x.bbs[2] = c.black_men();  x.bbs[3] = c.black_kings();
-            x.stm = (c.side_to_move() == jass::Color::White) ? 0u : 1u;
-            if (!master_mode) {                              // BRAS S : recherche profonde -> valeur parent-POV
+            jass::Position emit_pos = c;                     // par defaut : enfant immediat
+            if (leaf_mode || !master_mode) {                 // besoin d'une recherche (BRAS S ordering, ou MMTO leaf)
                 e.set_position(c);
                 jass::SearchLimits lim; lim.max_depth = depth;
                 const jass::SearchResult r = e.search(lim);
-                x.pv = -static_cast<std::int32_t>(r.score);
+                x.pv = -static_cast<std::int32_t>(r.score);   // valeur parent-POV du coup
+                if (leaf_mode) {                              // MMTO : position emise = FEUILLE de la PV
+                    jass::Position leaf = c;
+                    for (const auto& m : r.pv) leaf = leaf.after(m);
+                    emit_pos = leaf;
+                }
             } else x.pv = 0;
+            x.bbs[0] = emit_pos.white_men();  x.bbs[1] = emit_pos.white_kings();
+            x.bbs[2] = emit_pos.black_men();  x.bbs[3] = emit_pos.black_kings();
+            x.stm = (emit_pos.side_to_move() == jass::Color::White) ? 0u : 1u;
             ch.push_back(x);
         }
 
@@ -1764,6 +1779,13 @@ int run_gen_siblings_mode(int argc, char** argv) {
             int best = -1;
             for (std::size_t k = 0; k < ch.size(); ++k) if (ch[k].from == pf && ch[k].to == pt) { best = static_cast<int>(k); break; }
             if (best < 0) { ++no_match; continue; }           // coup joue non trouve (capture/parse) : ignorer
+            if (leaf_mode) {
+                // MMTO working-set : si la recherche prefere DEJA le coup-prof (avec marge), rien a apprendre -> skip.
+                const std::int32_t v_star = ch[static_cast<std::size_t>(best)].pv;
+                std::int32_t v_top = v_star;
+                for (std::size_t k = 0; k < ch.size(); ++k) v_top = std::max(v_top, ch[k].pv);
+                if (v_top - v_star <= ws_margin) { ++ws_already_top; continue; }
+            }
             for (std::size_t k = 0; k < ch.size(); ++k) {
                 if (static_cast<int>(k) == best) continue;
                 emit(out, ch[static_cast<std::size_t>(best)], 0, 1);   // prefere (src=MASTER)
@@ -1792,9 +1814,12 @@ int run_gen_siblings_mode(int argc, char** argv) {
     o.write(out.data(), static_cast<std::streamsize>(out.size())); o.close();
 
     std::cout << "GENSIB mode=" << (master_mode ? "MASTER" : "DEEP")
+              << (leaf_mode ? "+LEAF(MMTO)" : "")
               << " parents_seen=" << parents_seen << " quiet_used=" << parents_used
-              << " cap_nodes=" << cap_nodes << " no_match=" << no_match << " pairs=" << pairs
+              << " cap_nodes=" << cap_nodes << " no_match=" << no_match
+              << " ws_already_top=" << ws_already_top << " pairs=" << pairs
               << " records=" << nout << " depth=" << depth << " m_min=" << m_min
+              << " ws_margin=" << ws_margin
               << " margin_mean=" << (pairs ? margin_sum / static_cast<double>(pairs) : 0.0)
               << " phase[fin/13-20/21-28/ouv]=" << phase_pairs[0] << "/" << phase_pairs[1]
               << "/" << phase_pairs[2] << "/" << phase_pairs[3]
