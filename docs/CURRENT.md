@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-05** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-06** (verdicts en tête).
 
 ## ✅ FRONT ORDERING (2026-07-05) — RENVERSEMENT : `hist_mode=1,hist_pure=1` (prob-pur Scan) BAKE, +20 à +43 Elo movetime
 > **Le port history-prob de Scan PAIE** (revirement vs conclusion préliminaire 0599 sous-résolue). Confirm haut-N `cpx62-0600`
@@ -44,14 +44,21 @@
 > **Corpus S validé** (`0602` : 50k parents → 410k paires, finale ~28%). **REGEN avec bake ordering en vol** (`0604` : oracle
 > d9 = prob-pur, plus profond → meilleures paires ; corpus 400k prêt `0607`).
 > **✅ PIPELINE + FIT VALIDÉS (`0606→0612`)** : `rank_finetune.py` codé, **POV gate=0.9994** (X·w0==eval C++), grad-check OK,
-> loader champion robuste (gen1 = v3 plein-espace PJSW, 17M buckets, king=off, n_ext=120). **Le fit APPREND** : pairwise-acc
-> train **0.41→0.67 (+0.258)** — le comparison training de Bonanza marche sur notre eval linéaire (point technique dur franchi).
-> **❌ MAIS G1 bras-S à 50k NÉGATIF** : survie held-out **0.344→0.255** (overfitting/dégradation ; median 13 paires/bucket donc
-> pas un manque de support → anchor trop faible OU **semi-circularité** du d9-self-oracle). **`0613` sweep anchor+min-pairs** en
-> vol tranche : sauvable (survie>0.344 pour un anchor) → scale 400k ; sinon → **pivot bras M** (oracle externe maîtres,
-> non-circulaire — variante validée au shogi). **Reste bras M** : extracteur PDN + vérif `expert_games.db`.
-> **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597). **Préambule restant** : statut `0584` (volume-vs-rank : le volume est la voie « prouvée-Scan », la rank-loss
-> le raccourci — cumulables) avant d'engager le fit.
+> loader champion robuste (gen1 = v3 plein-espace PJSW, 17M buckets, king=off, n_ext=120). **Le fit APPREND fort sur les 2 bras** :
+> pairwise-acc train **bras S 0.41→0.67**, **bras M (maîtres ≥2000) 0.50→0.62/0.68** — le comparison training de Bonanza marche
+> sur notre éval linéaire (point technique dur franchi).
+> **❌ MAIS G1 *survie* PLATE SUR LES 2 BRAS** : bras S survie held-out **0.344→0.255** (`0612`, quel que soit l'anchor `0613`) ;
+> bras M **≈champion** (`0616` : champ 0.344 ; cand 0.001=0.270, 0.01=0.320, 0.1=0.328, 1.0=0.346 — aucun gain hors bruit).
+> L'oracle externe non-circulaire (maîtres) ne sauve PAS la survie → ce n'est pas la semi-circularité du bras S qui bloquait.
+> **⚠️ HYPOTHÈSE MÉTRIQUE** : le fit apprend (pairwise↑) sans bouger la survie → **la survie (accord d1↔d11) mesure la
+> depth-stability, PAS la qualité de jeu** ; une éval affinée peut mieux jouer tout en étant moins depth-stable. **Le seul vrai
+> juge = l'Elo.**
+> **🎲 `0617` JUGE DE PAIX FINAL (EN VOL, cpx62)** : A/B Elo DIRECT `pattern-a=candidat bras M {anchor 0.01,0.1,1.0}` vs
+> `pattern-b=gen1`, **même binaire + mêmes search-params bakés** (seule l'éval diffère), dilf+généraliste mt0.2 ~1600 games/cand
+> (anchor 1.0≈champion = contrôle de sanité ~0.500). Fits refaits ✓ (pairwise 0.62/0.61/0.56) ; A/B en cours. **GATE pré-engagé** :
+> un candidat bat gen1 **hors-IC** → la survie était le mauvais proxy, le rank-loss MARCHE → scale (G2/G3/G4). Tous neutres/négatifs
+> → **clause d'échec confirmée par la VRAIE métrique** → **piste rank-loss CLOSE** (programme sur +187 Elo search bakés ; résidu −133/−161 acté = prix des marges).
+> **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
 > **Levier testé : porter l'history PROBABILISTE de Scan** (EMA `sort.cpp`, gratuit en nœuds). Diagnostic source-contre-source
