@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0629-mmto-scanselfplay-ab",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-06T20:16:18+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3287338
+  "ended_at": "2026-07-06T23:32:53+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
