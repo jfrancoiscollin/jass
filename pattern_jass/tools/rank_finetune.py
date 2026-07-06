@@ -14,6 +14,22 @@ from pathlib import Path
 import numpy as np, scipy.sparse as sp
 from scipy.optimize import fmin_l_bfgs_b
 
+def _load_champion(path):
+    """Loader v3 ROBUSTE : accepte les 2 magics (PJTW=train, PJSW=scan-eval), masque les bits marqueurs
+    de version (SELFDESC 0x200 / KING 0x100), lit n_ext + king DU HEADER. Layout = header(20o) + int32
+    [pat_mg|pat_eg|ext_mg|ext_eg]. Retourne (w_float, scale, n_pat, n_ext, king)."""
+    import struct as _st
+    raw = Path(path).read_bytes()
+    magic, ver, scale, n_pat, n_ext = _st.unpack_from('<IIIII', raw, 0)
+    if magic not in (0x57544A50, 0x57534A50):
+        sys.exit(f'{path}: magic inconnu {magic:#x} (attendu PJTW/PJSW)')
+    if (ver & 0xFF) != 3:
+        sys.exit(f'{path}: version base {ver & 0xFF}!=3 (ver={ver})')
+    king = bool(ver & 0x100)
+    total = 2 * (n_pat + n_ext)
+    arr = np.frombuffer(raw, dtype='<i4', offset=20, count=total).astype(np.float64) / float(scale)
+    return arr, int(scale), int(n_pat), int(n_ext), king
+
 def _rec_fen(wm,wk,bm,bk,stm):
     Wl=[];Bl=[]
     for sq in range(1,51):
@@ -38,14 +54,14 @@ def main():
     a=ap.parse_args()
     sys.path.insert(0,a.tools)
     import patterns, train                                   # noqa
-    from train import build_sparse_X_phased, build_extras_phased, load_v3_weights_float, write_weights_v3, phase_wmg
+    from train import build_sparse_X_phased, build_extras_phased, write_weights_v3, phase_wmg
     import train_stream as TS
     fold='color' if a.color_fold else ('full' if a.full_fold else 'color')
     folder=TS.Folder(fold)
 
     # ---- 1. champion weights (aligné [pat_mg|pat_eg|ext_mg|ext_eg]) ----
-    w0,scale_c,n_pat,n_ext=load_v3_weights_float(a.champion)
-    print(f'champion : n_pat={n_pat:,} n_ext={n_ext} scale={scale_c} ; fold={fold} king={a.king_patterns} tempo={a.tempo_stage}',flush=True)
+    w0,scale_c,n_pat,n_ext,king=_load_champion(a.champion)   # king/n_ext LUS DU HEADER (auto)
+    print(f'champion : n_pat={n_pat:,} n_ext={n_ext} scale={scale_c} king={king} ; fold={fold} tempo={a.tempo_stage}',flush=True)
 
     # ---- 2. lire paires + features, construire X (mêmes conventions que train_stream) ----
     raw=Path(a.pairs).read_bytes(); assert raw[:4]==b'JNNW'; nrec=struct.unpack('<I',raw[4:8])[0]; body=raw[8:]
@@ -56,7 +72,7 @@ def main():
     feat=np.fromfile(a.feat,dtype='<f4')
     ncol_feat=feat.size//N; feat=feat.reshape(N,ncol_feat)
     assert ncol_feat==n_ext, f'extras {ncol_feat}!={n_ext} (champion) => mauvaise config eval-features'
-    pb=(bm|bk) if a.king_patterns else bm; pw=(wm|wk) if a.king_patterns else wm
+    pb=(bm|bk) if king else bm; pw=(wm|wk) if king else wm
     cols,signs=folder.cols_signs(pb,pw)
     if a.tempo_stage: wmg=TS._tempo_wmg_bb(wm,bm)
     else:
@@ -135,7 +151,7 @@ def main():
     pe=(w[n_pat:2*n_pat]*scale_c).round().astype(np.int64)
     em=(w[2*n_pat:2*n_pat+n_ext]*scale_c).round().astype(np.int64)
     ee=(w[2*n_pat+n_ext:]*scale_c).round().astype(np.int64)
-    write_weights_v3(Path(a.out),pm,pe,em,ee,scale_c,king=a.king_patterns)
+    write_weights_v3(Path(a.out),pm,pe,em,ee,scale_c,king=king)
     print(f'écrit {a.out} (scale={scale_c}, {used.size} buckets ajustés)',flush=True)
 
 if __name__=='__main__': main()
