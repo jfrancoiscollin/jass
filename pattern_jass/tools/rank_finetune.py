@@ -145,13 +145,13 @@ def main():
     if acc1 < acc0 + 1e-3:
         sys.exit(f'ABORT pairwise-acc n a PAS monté ({acc0:.4f}->{acc1:.4f}) => signe de la loss faux ou λ inutile')
 
-    # ---- écrire les poids fine-tunés ----
+    # ---- écrire : COPIER le header EXACT du champion (magic PJSW/PJTW, ver, scale, n_pat, n_ext) + poids fine-tunés ----
+    #      => candidat byte-identique au format gen1 (jass le charge à l'identique ; pas de magic PJTW->PJSW mismatch).
     w=w0.copy(); w[used]=ws
-    pm=(w[0:n_pat]*scale_c).round().astype(np.int64)
-    pe=(w[n_pat:2*n_pat]*scale_c).round().astype(np.int64)
-    em=(w[2*n_pat:2*n_pat+n_ext]*scale_c).round().astype(np.int64)
-    ee=(w[2*n_pat+n_ext:]*scale_c).round().astype(np.int64)
-    write_weights_v3(Path(a.out),pm,pe,em,ee,scale_c,king=king)
-    print(f'écrit {a.out} (scale={scale_c}, {used.size} buckets ajustés)',flush=True)
+    wint=np.clip((w*scale_c).round(),-(2**31),2**31-1).astype('<i4')
+    hdr=Path(a.champion).read_bytes()[:20]
+    with open(a.out,'wb') as f:
+        f.write(hdr); f.write(wint.tobytes())
+    print(f'écrit {a.out} (header copié du champion, scale={scale_c}, {used.size} buckets ajustés)',flush=True)
 
 if __name__=='__main__': main()
