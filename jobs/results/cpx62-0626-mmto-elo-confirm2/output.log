@@ -1,0 +1,16 @@
+=== A/B Elo MMTO vs gen1 — HEAD main 3286bfd42 runner: heartbeat ccx33-0625-mmto-scan-teacher ===
+  generaliste : 66 openings
+  build OK ; openings dilf=96 gen=66 ; ~1536 games/cellule ; mt=0.2+0.3
+
+=== CONFIRM haut-N MMTO(anchor0.1) vs gen1 (dilf+gen, mt 0.2 et 0.3) ===
+  -- movetime 0.2 --
+  [MMTO vs gen1 | dilf mt0.2] A(mmto)=647 B(gen1)=610 D=263 n=1520 rate_A=0.5122+-0.0229 elo~+8 IC=[0.489,0.535] => neutre
+  [MMTO vs gen1 | gen mt0.2] A(mmto)=439 B(gen1)=370 D=247 n=1056 rate_A=0.5327+-0.0263 elo~+23 IC=[0.506,0.559] => GAGNE hors-IC
+  -- movetime 0.3 --
+  [MMTO vs gen1 | dilf mt0.3] A(mmto)=654 B(gen1)=601 D=265 n=1520 rate_A=0.5174+-0.0228 elo~+12 IC=[0.495,0.540] => neutre
+  [MMTO vs gen1 | gen mt0.3] A(mmto)=440 B(gen1)=370 D=246 n=1056 rate_A=0.5331+-0.0263 elo~+23 IC=[0.507,0.559] => GAGNE hors-IC
+
+  GATE : MMTO rate_A>0.5 hors-IC (là où statique=−847) => marge réelle récupérable => boucle externe MMTO (0624).
+  neutre => piste MMTO close : le search capte déjà l'ordre maître (pré-fit 0.686), pas de marge à récupérer.
+  RESULTS committe ✓
+=== fin A/B MMTO ===
