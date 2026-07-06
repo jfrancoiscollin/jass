@@ -1,2 +1,3 @@
   [anchor 0.01 | gen] A=3 B=523 D=2 n=528 rate_A=0.0076+-0.0069 elo~-847 IC=[0.001,0.014] => PERD hors-IC
   [anchor 0.1 | gen] A=58 B=409 D=61 n=528 rate_A=0.1676+-0.0284 elo~-278 IC=[0.139,0.196] => PERD hors-IC
+  [anchor 1.0 | gen] A=190 B=226 D=112 n=528 rate_A=0.4659+-0.0377 elo~-24 IC=[0.428,0.504] => neutre
