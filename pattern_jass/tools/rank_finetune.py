@@ -69,8 +69,8 @@ def main():
     wm=np.empty(N,np.uint64);wk=np.empty(N,np.uint64);bm=np.empty(N,np.uint64);bk=np.empty(N,np.uint64);stm=np.empty(N,np.int64)
     for i in range(N):
         o=i*REC; a4=struct.unpack('<QQQQ',body[o:o+32]); wm[i],wk[i],bm[i],bk[i]=a4; stm[i]=body[o+32]
-    feat=np.fromfile(a.feat,dtype='<f4')
-    ncol_feat=feat.size//N; feat=feat.reshape(N,ncol_feat)
+    mmf,ncol_feat=TS.open_feat(a.feat,N)                     # saute le header FEAT (12o) + valide cnt==N
+    feat=np.asarray(mmf,dtype=np.float64)                    # (N, k)
     assert ncol_feat==n_ext, f'extras {ncol_feat}!={n_ext} (champion) => mauvaise config eval-features'
     pb=(bm|bk) if king else bm; pw=(wm|wk) if king else wm
     cols,signs=folder.cols_signs(pb,pw)
