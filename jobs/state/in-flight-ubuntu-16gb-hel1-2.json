@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0618-scanprof-played-corpus",
+  "script": "jobs/queue/ccx33-0618-scanprof-played-corpus.sh",
+  "pid": 3271220,
+  "started_at": "2026-07-06T11:33:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
