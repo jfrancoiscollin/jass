@@ -1,0 +1,53 @@
+=== MMTO v4 teacher-Scan — HEAD main 99223590b queue 0625 MMTO teacher-Scan (ccx33) — prof=coup Scan surhumain (vs 2000-humain) sur parents maitres, pipeline MMTO leaf-pov : test qualite du prof ===
+  ✓ build + Scan + parents=43912 ; NUM_PATTERNS=32 ; Scan-teacher mt=0.2
+
+=== Scan score les parents (coup Scan = prof, ×8 shards) ===
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  [Scan init] init eval
+  [Scan] bb-size=0 (no bitbases — FAIR comparison)
+  shard 0: quiet=5489 cap=0 fail=0
+  shard 1: quiet=5489 cap=0 fail=0
+  shard 2: quiet=5488 cap=1 fail=0
+  shard 3: quiet=5489 cap=0 fail=0
+  shard 4: quiet=5489 cap=0 fail=0
+  shard 5: quiet=5489 cap=0 fail=0
+  shard 6: quiet=5489 cap=0 fail=0
+  shard 7: quiet=5489 cap=0 fail=0
+  scan-moves : 43912 (aligné parents)
+  coups Scan quiets exploitables : 43911 / 43912
+  split 8 shards
+
+=== MMTO gen-siblings --leaf-mode (prof=Scan, --nnue gen1, depth=5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=5484 quiet_used=5484 cap_nodes=0 no_match=0 ws_already_top=0 pairs=51976 records=103952 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=10144/9187/12350/20295 -> /root/cw-mmtoscan/pairs_7.jnnw
+  MMTO pairs : 414577 paires
+  MMTO paires (prof Scan, feuilles-PV) : 414577
+  dump : wrote 829154 × 120 Scan-style extras to /root/cw-mmtoscan/feat
+
+=== rank_finetune MMTO teacher-Scan --leaf-pov anchor=0.05 ===
+  [0.05] pairwise-acc champion (avant fit) = 0.6943 ; cols visitées=214214
+  [0.05] fit : loss 0.17384->0.16949 ; pairwise-acc 0.6943->0.7014 (delta +0.0071)
+  [0.05] candidat committé
+
+=== rank_finetune MMTO teacher-Scan --leaf-pov anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.6943 ; cols visitées=214214
+  [0.1] fit : loss 0.17384->0.17033 ; pairwise-acc 0.6943->0.7000 (delta +0.0058)
+  [0.1] candidat committé
+
+  DIAGNOSTIC : pré-fit pairwise-acc = accord champion-à-travers-recherche vs COUP SCAN (prof surhumain fiable).
+  vs 0621 (prof 2000 = 0.686). Si le prof Scan donne un fit plus fort / un delta plus net => la qualité du prof était le frein.
+  => next : A/B Elo scanmmto_{0.05,0.1} vs gen1 (cpx62, harnais 0619).
+  RESULTS committe ✓
+=== fin MMTO teacher-Scan ===

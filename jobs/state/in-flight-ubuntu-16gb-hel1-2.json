@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0625-mmto-scan-teacher",
-  "script": "jobs/queue/ccx33-0625-mmto-scan-teacher.sh",
-  "pid": 3281197,
-  "started_at": "2026-07-06T17:26:14+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
