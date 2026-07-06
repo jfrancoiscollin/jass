@@ -1,2 +1,33 @@
 === MMTO v1 maîtres — HEAD main 8904c4050 queue 0620 MMTO v1 maitres (ccx33) — feuilles-PV a travers la recherche vs 0619 statique (-847) : test du verrou methode ===
   ✓ expert_games.db (123M)
+  ✓ build develop OK ; NUM_PATTERNS=32
+
+=== extraction maîtres (>= 30000 parents, quiets, skip-book=8, elo>=2000) ===
+  extraction : 30000 parents de 400 parties ; parse-fails=0
+  parents=30000 ; moves=30000
+
+=== MMTO gen-siblings --leaf-mode (depth=5, --nnue gen1, WS off = même support que 0619) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3749 quiet_used=3749 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35304 records=70608 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=8032/6440/9205/11627 -> /root/cw-mmto/pairs_0.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35094 records=70188 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=9429/6069/8562/11034 -> /root/cw-mmto/pairs_1.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3748 quiet_used=3748 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34724 records=69448 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=8254/7426/6841/12203 -> /root/cw-mmto/pairs_2.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3746 quiet_used=3746 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35749 records=71498 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=6164/6082/8934/14569 -> /root/cw-mmto/pairs_3.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3749 quiet_used=3749 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35276 records=70552 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=6386/6697/8895/13298 -> /root/cw-mmto/pairs_4.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3748 quiet_used=3748 cap_nodes=0 no_match=0 ws_already_top=0 pairs=36786 records=73572 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7106/7846/8986/12848 -> /root/cw-mmto/pairs_5.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3747 quiet_used=3747 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34362 records=68724 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7955/6017/8394/11996 -> /root/cw-mmto/pairs_6.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34791 records=69582 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7026/6831/10299/10635 -> /root/cw-mmto/pairs_7.jnnw
+  MMTO paires (feuilles-PV) : 282086
+  dump-eval-features : wrote 564172 × 120 Scan-style extras to /root/cw-mmto/feat
+
+=== rank_finetune MMTO anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.3066 ; cols visitées=187440
+  [0.1] fit : loss 0.28617->0.23989 ; pairwise-acc 0.3066->0.4482 (delta +0.1415)
+  [0.1] candidat MMTO committé
+
+=== rank_finetune MMTO anchor=0.3 ===
+  [0.3] pairwise-acc champion (avant fit) = 0.3066 ; cols visitées=187440
+  [0.3] fit : loss 0.28617->0.25875 ; pairwise-acc 0.3066->0.3746 (delta +0.0679)
+  [0.3] candidat MMTO committé
+
+  => next : 0621 (cpx62) A/B Elo mmto_{0.1,0.3} vs gen1 (harnais 0619 robuste).
+  LECTURE : MMTO bat gen1 hors-IC (là où statique=−847) => la MÉTHODE (statique) était le verrou => boucle externe 0622.
+            MMTO échoue aussi => l'éval linéaire n'exploite pas l'ordre maître même à travers la recherche => marge close.
