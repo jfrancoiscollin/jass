@@ -1,0 +1,6 @@
+=== A/B Elo MMTO vs gen1 — HEAD main f229b2061 runner: finalize cpx62-0626-mmto-elo-confirm2 (completed, rc=0) ===
+  generaliste : 66 openings
+  build OK ; openings dilf=96 gen=66 ; ~1536 games/cellule ; mt=0.2+0.3
+
+=== CONFIRM haut-N MMTO(anchor0.1) vs gen1 (dilf+gen, mt 0.2 et 0.3) ===
+  -- movetime 0.2 --
