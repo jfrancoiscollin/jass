@@ -1,0 +1,32 @@
+=== MMTO v5 Scan self-play haut-volume — HEAD main eaa028294 runner: finalize ccx33-0625-mmto-scan-teacher (completed, rc=0) ===
+  ✓ build + Scan + seeds ; NUM_PATTERNS=32 ; prof Scan mt=0.3 (vs faible 0.03)
+
+=== Scan self-play asym (book=false, fort mt0.3 vs faible mt0.03, 1300×8 parties) ===
+  wrote /root/cw-mmtosp/.pp-6.jnnw (7512 strong-side quiet parents; decisive-games=139, draws-kept=33)
+  wrote /root/cw-mmtosp/.pp-7.jnnw (7629 strong-side quiet parents; decisive-games=133, draws-kept=37)
+  parents Scan = 59468 (prof = coup Scan côté fort)
+  parents Scan self-play : 59468
+  split 8 shards
+
+=== MMTO gen-siblings --leaf-mode (prof=Scan fort, --nnue gen1, depth=5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7430 quiet_used=7430 cap_nodes=0 no_match=0 ws_already_top=0 pairs=85164 records=170328 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=41801/15807/15682/11874 -> /root/cw-mmtosp/pairs_7.jnnw
+  MMTO pairs : 668139 paires
+  MMTO paires (positions+prof Scan, feuilles-PV) : 668139
+  dump : wrote 1336278 × 120 Scan-style extras to /root/cw-mmtosp/feat
+
+=== rank_finetune MMTO Scan-selfplay --leaf-pov anchor=0.05 ===
+  [0.05] pairwise-acc champion (avant fit) = 0.6792 ; cols visitées=229546
+  [0.05] fit : loss 0.17661->0.17245 ; pairwise-acc 0.6792->0.6927 (delta +0.0136)
+  [0.05] candidat committé
+
+=== rank_finetune MMTO Scan-selfplay --leaf-pov anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.6792 ; cols visitées=229546
+  [0.1] fit : loss 0.17661->0.17304 ; pairwise-acc 0.6792->0.6919 (delta +0.0127)
+  [0.1] candidat committé
+
+  DIAGNOSTIC : pré-fit pairwise-acc + delta. Positions Scan + prof Scan + volume 59468 (vs 44k maîtres).
+  Si delta net (>> +0.002 des maîtres) => le trio volume+distribution+prof Scan débloque la marge => scale + A/B + boucle externe.
+  Si toujours ~0 => l'éval linéaire à-travers-recherche est MAXÉE (le search capte déjà tout), marge close définitivement.
+  => next : A/B Elo spmmto_{0.05,0.1} vs gen1 (cpx62).
+  RESULTS committe ✓
+=== fin MMTO Scan self-play ===
