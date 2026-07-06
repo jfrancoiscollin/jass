@@ -1,0 +1,37 @@
+=== PISTE (a) G1 — HEAD main acd2341bd queue 0613 anchor sweep (0.001..1.0, min-pairs=5) : bras-S salvageable par regularisation, ou pivot bras M ? ===
+  gen1 + pairs(411323) + corpus prets ; NUM_PATTERNS=32
+  dump-eval-features : wrote 822646 × 120 Scan-style extras to /root/cw-anchsweep/feat
+
+=== rank_finetune anchor=0.001 (min-pairs=5, lam=0.3) ===
+  [0.001] buckets : 345956 visités ; 256208 gardés (>= 5 paires) ; paires/bucket median=13.0
+  [0.001] pairwise-acc champion (avant fit) = 0.4143 ; cols visitées=256208
+  [0.001] fit : loss 0.21080->0.18842 ; pairwise-acc 0.4143->0.6724 (delta +0.2581)
+  [0.001] écrit /root/cw-anchsweep/cand_0.001.pjtw (header copié du champion, scale=1000, 256208 buckets ajustés)
+
+=== rank_finetune anchor=0.01 (min-pairs=5, lam=0.3) ===
+  [0.01] buckets : 345956 visités ; 256208 gardés (>= 5 paires) ; paires/bucket median=13.0
+  [0.01] pairwise-acc champion (avant fit) = 0.4143 ; cols visitées=256208
+  [0.01] fit : loss 0.21080->0.19585 ; pairwise-acc 0.4143->0.6428 (delta +0.2285)
+  [0.01] écrit /root/cw-anchsweep/cand_0.01.pjtw (header copié du champion, scale=1000, 256208 buckets ajustés)
+
+=== rank_finetune anchor=0.1 (min-pairs=5, lam=0.3) ===
+  [0.1] buckets : 345956 visités ; 256208 gardés (>= 5 paires) ; paires/bucket median=13.0
+  [0.1] pairwise-acc champion (avant fit) = 0.4143 ; cols visitées=256208
+  [0.1] fit : loss 0.21080->0.20389 ; pairwise-acc 0.4143->0.6276 (delta +0.2133)
+  [0.1] écrit /root/cw-anchsweep/cand_0.1.pjtw (header copié du champion, scale=1000, 256208 buckets ajustés)
+
+=== rank_finetune anchor=1.0 (min-pairs=5, lam=0.3) ===
+  [1.0] buckets : 345956 visités ; 256208 gardés (>= 5 paires) ; paires/bucket median=13.0
+  [1.0] pairwise-acc champion (avant fit) = 0.4143 ; cols visitées=256208
+  [1.0] fit : loss 0.21080->0.20919 ; pairwise-acc 0.4143->0.4923 (delta +0.0780)
+  [1.0] écrit /root/cw-anchsweep/cand_1.0.pjtw (header copié du champion, scale=1000, 256208 buckets ajustés)
+
+=== G1 : survie-1er-choix (d1==d11) champion vs candidats (par anchor) ===
+  survie[champ] = 0.3438 (n=800)
+  survie[cand_0.001] = 0.2550 (n=800)
+  survie[cand_0.01] = 0.2188 (n=800)
+  survie[cand_0.1] = 0.3275 (n=800)
+  survie[cand_1.0] = 0.3563 (n=800)
+
+  GATE G1 : survie[cand] > survie[champ] hors bruit (vers 0.43) => éval-marge APPRENABLE => scale (G2/G3/G4).
+  survie plate => clause d'échec propre (résidu -133/-161 acté = prix des marges).
