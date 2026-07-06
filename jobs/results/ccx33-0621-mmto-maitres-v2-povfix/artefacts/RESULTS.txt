@@ -1,1 +1,28 @@
 === MMTO v2 (POV fix) — HEAD main 9362963d7 queue 0621 MMTO v2 POV fix (ccx33) — corrige la contamination 0620 (signe par-record des feuilles-PV) ; diagnostic pre-fit pairwise-acc ===
+  ✓ build develop + parents=30000 réutilisés (0620) ; NUM_PATTERNS=32
+
+=== MMTO gen-siblings --leaf-mode (depth=5, --nnue gen1, stm parent stocké) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3749 quiet_used=3749 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35304 records=70608 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=8032/6440/9205/11627 -> /root/cw-mmto2/pairs_0.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35094 records=70188 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=9429/6069/8562/11034 -> /root/cw-mmto2/pairs_1.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3748 quiet_used=3748 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34724 records=69448 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=8254/7426/6841/12203 -> /root/cw-mmto2/pairs_2.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3746 quiet_used=3746 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35749 records=71498 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=6164/6082/8934/14569 -> /root/cw-mmto2/pairs_3.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3749 quiet_used=3749 cap_nodes=0 no_match=0 ws_already_top=0 pairs=35276 records=70552 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=6386/6697/8895/13298 -> /root/cw-mmto2/pairs_4.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3748 quiet_used=3748 cap_nodes=0 no_match=0 ws_already_top=0 pairs=36786 records=73572 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7106/7846/8986/12848 -> /root/cw-mmto2/pairs_5.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3747 quiet_used=3747 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34362 records=68724 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7955/6017/8394/11996 -> /root/cw-mmto2/pairs_6.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3745 quiet_used=3745 cap_nodes=0 no_match=0 ws_already_top=0 pairs=34791 records=69582 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=7026/6831/10299/10635 -> /root/cw-mmto2/pairs_7.jnnw
+  MMTO paires (feuilles-PV) : 282086
+  dump : wrote 564172 × 120 Scan-style extras to /root/cw-mmto2/feat
+
+=== rank_finetune MMTO --leaf-pov anchor=0.1 ===
+  [0.1] [POV gate] Spearman(X·w0 , jass-eval black-POV) = 0.9989 (n=60)
+  [0.1] [leaf-pov] signe dérivé du stm parent (champ score) ; S=White frac=0.505
+  [0.1] pairwise-acc champion (avant fit) = 0.6862 ; cols visitées=187440
+  [0.1] fit : loss 0.17429->0.17242 ; pairwise-acc 0.6862->0.6876 (delta +0.0014)
+  [0.1] candidat committé
+
+=== rank_finetune MMTO --leaf-pov anchor=0.3 ===
+  [0.3] ABORT (gate) : fit : loss 0.17429->0.17324 ; pairwise-acc 0.6862->0.6867 (delta +0.0005) ABORT pairwise-acc n a PAS monté (0.6862->0.6867) => signe de la loss faux ou λ inutile 
+
+  DIAGNOSTIC : pré-fit pairwise-acc (champion à travers la recherche vs coups maîtres) ;
+    0620 buggé = 0.307 (POV cassé). Ici, avec --leaf-pov : ≥0.5 attendu (fix OK) ; >0.5 = search agree masters.
+  => next : 0622 (cpx62) A/B Elo mmto2_{0.1,0.3} vs gen1 (harnais 0619).
