@@ -1,0 +1,26 @@
+=== MMTO v6 mixte (équilibrées + déséquilibrées) — HEAD main 23918acde runner: finalize ccx33-0630-mmto-scan-mixed-highvol (completed, rc=0) ===
+  ✓ build+Scan+seeds ; NP=32
+
+=== gen A ÉQUILIBRÉES (sym mt0.3, 600×8) ===
+=== gen B DÉSÉQUILIBRÉES (asym mt0.3/0.03, 500×8) ===
+  A wrote /root/cw-mmtomix2/.ap-7.jnnw (39073 strong-side quiet parents; decisive-games=47, draws-kept=289)
+  combiné = 309140 parents (équilibrées=309140, déséquilibrées=0)
+  parents combinés : 309140
+  split 8
+
+=== MMTO gen-siblings --leaf-mode (prof Scan mixte, --nnue gen1, d5) ===
+  MMTO pairs : 3534845
+  MMTO paires (mixte, feuilles-PV) : 3534845
+  dump : wrote 7069690 × 120 Scan-style extras to /root/cw-mmtomix2/feat
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.05 ===
+/root/jass/jobs/queue/ccx33-0631-mmto-scan-mixed-v2.sh: line 126: 3316808 Killed                  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/rank_finetune.py --champion "$W/gen1.pjtw" --pairs "$W/pairs.jnnw" --feat "$W/feat" --out "$W/mixmmto2_$A.pjtw" --tools pattern_jass/tools --lam "$LAM" --anchor "$A" --min-pairs 5 --rank-scale 1.0 --max-iter 60 --full-fold --tempo-stage --leaf-pov --verify-jass "$J" --verify-n 60 > "$W/ft_$A.log" 2>&1
+  [0.05] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.1 ===
+/root/jass/jobs/queue/ccx33-0631-mmto-scan-mixed-v2.sh: line 126: 3316850 Killed                  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/rank_finetune.py --champion "$W/gen1.pjtw" --pairs "$W/pairs.jnnw" --feat "$W/feat" --out "$W/mixmmto2_$A.pjtw" --tools pattern_jass/tools --lam "$LAM" --anchor "$A" --min-pairs 5 --rank-scale 1.0 --max-iter 60 --full-fold --tempo-stage --leaf-pov --verify-jass "$J" --verify-n 60 > "$W/ft_$A.log" 2>&1
+  [0.1] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+  => next : COUPLER parents 0630+0631 (~200-240k) pour un gros fit si volume paie ; + A/B standalone mixmmto2.
+  RESULTS committe ✓
+=== fin MMTO mixte ===
