@@ -1,0 +1,21 @@
+=== GATE DE BAKE MMTO cand_it3 (+52) — HEAD 430e86b34 queue 0636 gate bake haut-N (cpx62) — re-mesure d9+mt0.3+survie a gros N : resserrer +34/+46 et lever le doute mt0.3 avant bake ===
+  ✓ build + gen1 + cand_it3 ; référence gen1 d9-vs-Scan = −310/−335 (0605), survie=0.340 (0597)
+
+=== cellules vs Scan (gen1 baseline vs cand_it3) ===
+
+  === vs SCAN (rate/Elo) — la cellule d9 est l'ÉVAL-PURE ===
+   d9    : gen1=0.124/-340   cand_it3=0.137/-320   (gen1 réf ≈ −310/−335)
+   mt0.3 : gen1=0.283/-162   cand_it3=0.271/-172   (gen1 réf ≈ −161)
+  survie sample : 800
+
+=== SURVIE (d1==d11 ; diagnostic depth-stability ; baseline gen1=0.340) ===
+  survie[gen1] = 0.3425 (n=800)
+  survie[cand_it3] = 0.3337 (n=800)
+
+  === GATE DE BAKE ===
+  (1) d9-vs-Scan : cand_it3 Elo > gen1 (−310) hors-bruit => l'ÉVAL-PAR-NŒUD a progressé (pas juste style) => feu vert éval.
+  (2) mt0.3-vs-Scan : cand_it3 doit être ≥ gen1 (le +52 généraliste doit transférer vs Scan).
+  (3) survie : devrait BAISSER (vs 0.340) si l'hypothèse depth-stability est juste — diagnostic, pas bloquant.
+  Si (1)+(2) OK + A/B broad sans régression (0632: généraliste +52, dilf neutre) => BAKE cand_it3 comme nouvelle éval champion.
+  RESULTS committe ✓
+=== fin gate de bake ===
