@@ -337,6 +337,18 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
+    int          explore_decay_plies = 0;    // --explore-decay-plies D : FIX#1 label-hygiene.
+                                            //      eps(ply)=explore_eps*max(0,1-ply/D) => confine
+                                            //      l'exploration au debut (0 = pas de decroissance).
+    bool         drop_post_eps     = false;  // --drop-post-eps : FIX#1. n'emet PAS les samples
+                                            //      ply<=last_eps_ply (label contamine par un eps posterieur).
+    int          adjud_material    = 0;      // --adjud-material M : FIX#2. avance materielle NETTE (men-equiv,
+                                            //      dame=3) >= M tenue adjud_hold_plies => win (0 = off).
+    int          adjud_hold_plies  = 10;     // --adjud-hold-plies H : plies consecutifs d'avance requis.
+    bool         pair_openings     = false;  // --pair-openings : FIX#3. chaque ouverture jouee 2x, couleur
+                                            //      punisher echangee => biais couleur/role s'annule dans la paire.
+    bool         tb_relabel        = false;  // --tb-relabel : FIX#4. au flush, remplace le label WDL-partie par
+                                            //      la valeur EGDB EXACTE des positions qui tombent dans la TB (biais 0).
     std::string  search_spec;                // --search-params : applied to PLAY+LABEL search
                                             //      (e.g. pruning OFF so self-play PUNISHES shots
                                             //      → labels teach shot-safety, cf Scan recipe)
@@ -392,6 +404,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-eps" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_eps = v;
+        } else if (a == "--explore-decay-plies" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) explore_decay_plies = v;
+        } else if (a == "--drop-post-eps") {
+            drop_post_eps = true;
+        } else if (a == "--adjud-material" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) adjud_material = v;
+        } else if (a == "--adjud-hold-plies" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) adjud_hold_plies = v;
+        } else if (a == "--pair-openings") {
+            pair_openings = true;
+        } else if (a == "--tb-relabel") {
+            tb_relabel = true;
         } else if (a == "--search-params" && i + 1 < argc) {
             search_spec = argv[++i];
         } else if (a == "--search-params-play" && i + 1 < argc) {
@@ -553,9 +580,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::uint64_t bbs[4];
         std::uint8_t  stm;
         std::int32_t  score;
+        int           ply;     // ply at which this position was sampled (label-hygiene instrumentation)
     };
     std::vector<Sample> game_samples;
     game_samples.reserve(64);
+    // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
+    //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
+    //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
+    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0, stat_adjudicated = 0, stat_tb_relabel = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -566,9 +598,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     jass::egdb::ensure_initialised();
 
     while (generated < n) {
-        ++game_count;
         e.new_game();
-        game_samples.clear();
 
         // Endgame seeding : start this game from a random seed position instead
         // of the FMJD start (then the random opening plies add diversity around it).
@@ -590,15 +620,28 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             e.apply_move(ml[rng() % ml.size()]);
         }
 
+        // FIX#3 : jouer l'ouverture 2x (rep 0/1) avec la couleur punisher ECHANGEE => le biais
+        // couleur/role s'annule dans la paire. reps=1 si --pair-openings absent (retro-compatible).
+        const Position opening_pos = e.position();
+        const int reps = pair_openings ? 2 : 1;
+        for (int rep = 0; rep < reps && generated < n; ++rep) {
+        ++game_count;   // compte les GAMES reellement jouees (2/paire sous --pair-openings) => denominateur ply-cap correct
+        e.set_position(opening_pos);
+        game_samples.clear();
+
         // Game outcome from the final position: +1 = white won, -1 = black
         // won, 0 = draw. Initialised to "draw" because the ply-cap exit
         // path treats unresolved games as drawn.
         int outcome_white = 0;
         bool game_ended_by_loss = false;
+        int  last_eps_ply = -1;     // ply du dernier coup d'exploration eps de cette partie (instrumentation FIX #1)
+        bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move/adjud) le remet a false
+        int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
-        // (blind → stumbles into shots). Random per game so neither colour is systematically favoured.
-        const bool punisher_is_white = (rng() & 1u) != 0u;
+        // (blind → stumbles into shots). FIX#3 : si --pair-openings, punisher=white au rep 0, black au rep 1
+        // (roles echanges sur l'ouverture identique) ; sinon random par partie (comportement historique).
+        const bool punisher_is_white = pair_openings ? (rep == 0) : ((rng() & 1u) != 0u);
 
         for (int ply = 0; ply < max_plies; ++ply) {
             MoveList ml;
@@ -608,6 +651,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 outcome_white = (e.position().side_to_move() == Color::White)
                               ? -1 : +1;
                 game_ended_by_loss = true;
+                hit_ply_cap = false;
                 break;
             }
             // Terminate-at-TB: the moment the game reaches an egdb-resolved
@@ -619,12 +663,33 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // <3 pieces) — never the over-claiming in-memory tables.
             if (jass::egdb::available()) {
                 const jass::EndgameResult tb = jass::egdb::probe(e.position());
-                if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; break; }
-                if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; break; }
-                if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; break; }
+                if (tb == jass::EndgameResult::WhiteWin) { outcome_white = +1; game_ended_by_loss = true; hit_ply_cap = false; break; }
+                if (tb == jass::EndgameResult::BlackWin) { outcome_white = -1; game_ended_by_loss = true; hit_ply_cap = false; break; }
+                if (tb == jass::EndgameResult::Draw)     { outcome_white =  0; game_ended_by_loss = false; hit_ply_cap = false; break; }
+            }
+            // FIX#2 : adjudication materielle conservatrice. Une avance NETTE (men + 3*kings) >= adjud_material
+            // tenue adjud_hold_plies consecutifs => win (les parties gagnees qui piétinent jusqu'au ply-cap
+            // sont sinon etiquetees "nulle" a tort : 27-31% mesure). JAMAIS par score d'eval (circularite).
+            if (adjud_material > 0) {
+                const Position& mp = e.position();
+                const int white_mat = static_cast<int>(popcount(mp.white_men())) + 3 * static_cast<int>(popcount(mp.white_kings()));
+                const int black_mat = static_cast<int>(popcount(mp.black_men())) + 3 * static_cast<int>(popcount(mp.black_kings()));
+                const int net = white_mat - black_mat;
+                if (net >= adjud_material || net <= -adjud_material) {
+                    if (++adjud_counter >= adjud_hold_plies) {
+                        outcome_white = (net > 0) ? +1 : -1;
+                        game_ended_by_loss = true;   // resolu (decisif) — chemin de flush WDL standard
+                        hit_ply_cap = false;
+                        ++stat_adjudicated;
+                        break;
+                    }
+                } else {
+                    adjud_counter = 0;   // avance perdue (recapture) => reset
+                }
             }
             if (e.position().halfmove_clock() >= FIFTY_MOVE_PLIES) {
                 // 25-move rule: declare a draw.
+                hit_ply_cap = false;
                 break;
             }
 
@@ -662,6 +727,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 s.bbs[3] = pos.black_kings();
                 s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
                 s.score  = static_cast<std::int32_t>(r.score);
+                s.ply    = ply;
                 game_samples.push_back(s);
 
                 // L1 multi-extraction (Stockfish `gensfen`-style). Amortize
@@ -717,6 +783,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         ps.score  = (depth_from_root & 1)
                                       ? -static_cast<std::int32_t>(r.score)
                                       :  static_cast<std::int32_t>(r.score);
+                        ps.ply    = ply;   // meme ply-racine (PV extraite du sample racine)
                         game_samples.push_back(ps);
                         ++taken;
                     }
@@ -745,12 +812,20 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // because the label is the eventual game outcome (MC return), not a
             // bootstrapped value, so the played-out result stays truthful.
             Move play_mv = r.best_move;
-            if (explore_eps > 0 && !ml.empty()
-                && static_cast<int>(rng() % 100) < explore_eps) {
+            // FIX#1 : eps effectif decroissant (confine l'exploration au debut de partie).
+            //   D=0 => eps constant (legacy) ; D>0 => eps*max(0,1-ply/D), nul des ply>=D.
+            //   Compare en millièmes pour garder la granularite de la decroissance.
+            const double eps_frac = (explore_decay_plies > 0)
+                ? explore_eps * std::max(0.0, 1.0 - static_cast<double>(ply) / explore_decay_plies)
+                : static_cast<double>(explore_eps);
+            if (eps_frac > 0.0 && !ml.empty()
+                && static_cast<double>(rng() % 100000) < eps_frac * 1000.0) {
                 play_mv = ml[rng() % ml.size()];
+                last_eps_ply = ply;   // dernier coup d'exploration de la partie (FIX#1 filtre + instrumentation)
             }
             if (!e.apply_move(play_mv)) break;
         }
+        if (hit_ply_cap) ++stat_plycap_games;   // partie terminee par max_plies (issue=nulle par defaut)
 
         // Flush this game's samples with the resolved WDL label. WDL is
         // computed from each sample's STM perspective: +1 means "the side
@@ -761,7 +836,30 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 const int sample_stm_sign = (s.stm == 0) ? +1 : -1;
                 wdl = outcome_white * sample_stm_sign;
             }
+            // FIX#4 : label EGDB EXACT par-sample (biais 0, autonome = notre propre TB). Si la position
+            // du sample tombe dans la tablebase => on remplace le WDL-partie par la valeur VRAIE (STM-POV).
+            // No-op si --tb-relabel absent ou EGDB indisponible => emission inchangee.
+            if (tb_relabel && jass::egdb::available()) {
+                Position sp{};
+                sp.set_side_to_move(s.stm ? Color::Black : Color::White);
+                for (Bitboard b = static_cast<Bitboard>(s.bbs[0]); b; ) sp.add_piece(pop_lsb(b), Piece::WhiteMan);
+                for (Bitboard b = static_cast<Bitboard>(s.bbs[1]); b; ) sp.add_piece(pop_lsb(b), Piece::WhiteKing);
+                for (Bitboard b = static_cast<Bitboard>(s.bbs[2]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackMan);
+                for (Bitboard b = static_cast<Bitboard>(s.bbs[3]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackKing);
+                const jass::EndgameResult tb = jass::egdb::probe(sp);
+                if      (tb == jass::EndgameResult::WhiteWin) { wdl = (s.stm == 0) ? +1 : -1; ++stat_tb_relabel; }
+                else if (tb == jass::EndgameResult::BlackWin) { wdl = (s.stm == 0) ? -1 : +1; ++stat_tb_relabel; }
+                else if (tb == jass::EndgameResult::Draw)     { wdl = 0;                       ++stat_tb_relabel; }
+                // Unknown => on garde le wdl de la partie
+            }
             const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
+            // ce sample est-il contamine par l'exploration ?
+            //   sample.ply <= last_eps_ply => sa partie a deraille APRES lui par un coup eps => label biaise (FIX#1)
+            const bool contaminated = (s.ply <= last_eps_ply);
+            ++stat_total_samples;
+            if (contaminated) ++stat_contaminated;
+            // FIX#1 : si --drop-post-eps, on NE l'emet PAS (label pourri) — sinon emission inchangee (MEASURE-ONLY).
+            if (drop_post_eps && contaminated) { ++stat_dropped; continue; }
 
             f.write(reinterpret_cast<const char*>(s.bbs), 32);
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
@@ -770,6 +868,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             ++generated;
             if (generated >= n) break;
         }
+        }   // fin boucle rep (FIX#3 : rep 0/1 sur l'ouverture identique, roles echanges)
 
         if ((game_count % 50) == 0) {
             std::cout << "  played " << game_count << " games, "
@@ -783,6 +882,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     f.close();
 
     std::cout << "wrote " << generated << " WDL records to " << out_path << "\n";
+    // === LABEL-HYGIENE STATS (MEASURE-ONLY, briefing §7.0) ===
+    {
+        const double pc  = game_count > 0 ? 100.0 * static_cast<double>(stat_plycap_games) / game_count : 0.0;
+        const double con = stat_total_samples > 0 ? 100.0 * static_cast<double>(stat_contaminated) / stat_total_samples : 0.0;
+        std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
+                  << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
+                  << " (" << con << "%)  dropped_post_eps=" << stat_dropped
+                  << "  adjudicated=" << stat_adjudicated
+                  << "  tb_relabel=" << stat_tb_relabel
+                  << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
+                  << " decay_plies=" << explore_decay_plies
+                  << " adjud_material=" << adjud_material << " hold=" << adjud_hold_plies
+                  << " pair_openings=" << (pair_openings ? "on" : "off")
+                  << " tb_relabel=" << (tb_relabel ? "on" : "off") << ")\n";
+    }
     return 0;
 }
 
@@ -1531,6 +1645,194 @@ jass::Position position_from_record(const char* rec) {
     return p;
 }
 }  // namespace
+
+// --gen-siblings <parents.jnnw> <out.jnnw> [depth=9] [--nnue PATH] [--m-min CP=15]
+//                [--max-parents N] [--max-pairs-per-parent K=16] [--seed S=1]
+//   Piste (a) "depth-consistency training". Pour chaque parent QUIET (noeud sans capture),
+//   recherche chaque enfant legal a profondeur fixe (eval-pur, PAS de DB => echelles comparables).
+//   Valeur parent-POV d'un coup = -score(enfant). Emet les PAIRES ordonnees (better > worse) dont
+//   la marge parent-POV >= m_min (cp). Sortie JNNW : records PAR DEUX (2k=better, 2k+1=worse) ;
+//   score[2k] = marge (cp), wdl[2k] = pair_src (0=deep). Le trainer lit les couples consecutifs.
+int run_gen_siblings_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --gen-siblings <parents.jnnw> <out.jnnw> [depth=9] "
+                     "[--nnue PATH] [--m-min CP] [--max-parents N] [--max-pairs-per-parent K]\n";
+        return 2;
+    }
+    const std::string in_path  = argv[2];
+    const std::string out_path = argv[3];
+    int depth = 9;
+    if (argc > 4 && argv[4][0] != '-') depth = parse_int_or(argv[4], 9);
+    std::string nnue_path; int m_min = 15; long max_parents = -1; int max_pairs = 16;
+    std::string moves_path;   // --played-moves : BRAS M (Bonanza). Binaire (from:u8,to:u8) par parent, ALIGNE
+                              // sur les records d'entree. Si present : PAS de recherche — le coup joue = prefere,
+                              // toutes les autres sœurs legales = dominees (src=MASTER). max_pairs/m_min ignores.
+    // --leaf-mode : MMTO (Hoki-Kaneko). Pour CHAQUE enfant, recherche a `depth` (quiescence incluse) et emet la
+    //   position FEUILLE de la PV a la place de l'enfant immediat. La valeur minimax couleur-fixe d'un coup = l'eval
+    //   couleur-fixe de sa feuille-PV (identite negamax), donc rank_finetune (qui signe chaque record par son stm)
+    //   apprend a travers la RECHERCHE, pas sur l'eval-feuille des enfants immediats. En master+leaf : filtre working-set
+    //   (ne garder que si le coup-prof n'est PAS deja en tete de la recherche, avec marge --ws-margin cp).
+    bool leaf_mode = false; int ws_margin = 10;
+    for (int i = 4; i < argc; ++i) {
+        const std::string a = argv[i];
+        if      (a == "--nnue" && i + 1 < argc)                 nnue_path = argv[++i];
+        else if (a == "--m-min" && i + 1 < argc)                m_min = parse_int_or(argv[++i], 15);
+        else if (a == "--max-parents" && i + 1 < argc)          max_parents = parse_int_or(argv[++i], -1);
+        else if (a == "--max-pairs-per-parent" && i + 1 < argc) max_pairs = parse_int_or(argv[++i], 16);
+        else if (a == "--played-moves" && i + 1 < argc)         moves_path = argv[++i];
+        else if (a == "--leaf-mode")                            leaf_mode = true;
+        else if (a == "--ws-margin" && i + 1 < argc)            ws_margin = parse_int_or(argv[++i], 10);
+    }
+    const bool master_mode = !moves_path.empty();
+    std::vector<std::pair<std::uint8_t,std::uint8_t>> played;   // BRAS M : coup joue par parent
+    if (master_mode) {
+        std::ifstream mf(moves_path, std::ios::binary);
+        if (!mf) { std::cerr << "error: cannot open --played-moves " << moves_path << "\n"; return 1; }
+        std::vector<char> mb((std::istreambuf_iterator<char>(mf)), std::istreambuf_iterator<char>());
+        for (std::size_t k = 0; k + 1 < mb.size(); k += 2)
+            played.emplace_back(static_cast<std::uint8_t>(mb[k]), static_cast<std::uint8_t>(mb[k+1]));
+    }
+
+    std::unique_ptr<INetwork> custom_nnue;
+    if (!nnue_path.empty()) {
+        const bool is_pjtw = nnue_path.size() >= 5
+                          && nnue_path.compare(nnue_path.size() - 5, 5, ".pjtw") == 0;
+        std::string err;
+        custom_nnue = is_pjtw ? jass::load_eval_network(nnue_path, &err)
+                              : load_network(nnue_path.c_str());
+        if (!custom_nnue) { std::cerr << "error: cannot load eval from " << nnue_path << " (" << err << ")\n"; return 1; }
+    }
+    jass::Engine e; e.use_book(false);
+    if (custom_nnue) e.set_nnue(custom_nnue.get());
+
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) { std::cerr << "error: not JNNW\n"; return 1; }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    // Echantillonnage uniforme par PAS (le corpus est ordonne par partie) ; ~3x de marge pour les
+    // noeuds de capture/sans-fratrie ecartes.
+    // Master mode : pas de sous-echantillonnage (aligne sur --played-moves), stride=1.
+    const std::size_t stride = (master_mode || max_parents <= 0)
+        ? 1 : std::max<std::size_t>(1, nrec / (static_cast<std::size_t>(max_parents) * 3 + 1));
+    std::vector<char> out;                 // emitted pair records (38B each)
+    long parents_seen = 0, parents_used = 0, pairs = 0, cap_nodes = 0, no_match = 0;
+    long ws_already_top = 0;               // MMTO working-set : coup-prof deja en tete (rien a apprendre)
+    long phase_pairs[4] = {0,0,0,0};
+    double margin_sum = 0;
+
+    struct Ch { std::int32_t pv; std::uint64_t bbs[4]; std::uint8_t stm; std::uint8_t from, to; };
+    auto emit = [&](std::vector<char>& o, const Ch& x, std::int32_t score, std::int8_t wdl){
+        char r[38] = {0};
+        std::memcpy(r,      &x.bbs[0], 8); std::memcpy(r + 8,  &x.bbs[1], 8);
+        std::memcpy(r + 16, &x.bbs[2], 8); std::memcpy(r + 24, &x.bbs[3], 8);
+        r[32] = static_cast<char>(x.stm);
+        std::memcpy(r + 33, &score, 4);
+        r[37] = static_cast<char>(wdl);
+        o.insert(o.end(), r, r + 38);
+    };
+
+    for (std::size_t pi = 0; pi < nrec; pi += stride) {
+        if (max_parents >= 0 && parents_used >= max_parents) break;
+        if (master_mode && pi >= played.size()) break;
+        const char* rec = buf.data() + pi * 38;
+        const jass::Position parent = position_from_record(rec);
+        jass::MoveList ml; jass::generate_legal_moves(parent, ml);
+        if (ml.size() < 2) continue;
+        ++parents_seen;
+        if (ml[0].is_capture()) { ++cap_nodes; continue; }   // capture node : ordre force
+
+        std::vector<Ch> ch; ch.reserve(ml.size());
+        for (std::size_t mi = 0; mi < ml.size(); ++mi) {
+            const jass::Position c = parent.after(ml[mi]);
+            Ch x;
+            x.from = static_cast<std::uint8_t>(ml[mi].from);
+            x.to   = static_cast<std::uint8_t>(ml[mi].to);
+            jass::Position emit_pos = c;                     // par defaut : enfant immediat
+            if (leaf_mode || !master_mode) {                 // besoin d'une recherche (BRAS S ordering, ou MMTO leaf)
+                e.set_position(c);
+                jass::SearchLimits lim; lim.max_depth = depth;
+                const jass::SearchResult r = e.search(lim);
+                x.pv = -static_cast<std::int32_t>(r.score);   // valeur parent-POV du coup
+                if (leaf_mode) {                              // MMTO : position emise = FEUILLE de la PV
+                    jass::Position leaf = c;
+                    for (const auto& m : r.pv) leaf = leaf.after(m);
+                    emit_pos = leaf;
+                }
+            } else x.pv = 0;
+            x.bbs[0] = emit_pos.white_men();  x.bbs[1] = emit_pos.white_kings();
+            x.bbs[2] = emit_pos.black_men();  x.bbs[3] = emit_pos.black_kings();
+            x.stm = (emit_pos.side_to_move() == jass::Color::White) ? 0u : 1u;
+            ch.push_back(x);
+        }
+
+        const int pcs = static_cast<int>(popcount(parent.whites() | parent.blacks()));
+        const int band = pcs <= 12 ? 0 : (pcs <= 20 ? 1 : (pcs <= 28 ? 2 : 3));
+        int emitted_here = 0;
+
+        if (master_mode) {
+            // BRAS M (Bonanza) : le coup joue = prefere ; toutes les autres sœurs = dominees. src=1 (MASTER), pas de marge.
+            const std::uint8_t pf = played[pi].first, pt = played[pi].second;
+            int best = -1;
+            for (std::size_t k = 0; k < ch.size(); ++k) if (ch[k].from == pf && ch[k].to == pt) { best = static_cast<int>(k); break; }
+            if (best < 0) { ++no_match; continue; }           // coup joue non trouve (capture/parse) : ignorer
+            if (leaf_mode) {
+                // MMTO working-set : si la recherche prefere DEJA le coup-prof (avec marge), rien a apprendre -> skip.
+                const std::int32_t v_star = ch[static_cast<std::size_t>(best)].pv;
+                std::int32_t v_top = v_star;
+                for (std::size_t k = 0; k < ch.size(); ++k) v_top = std::max(v_top, ch[k].pv);
+                if (v_top - v_star <= ws_margin) { ++ws_already_top; continue; }
+            }
+            // En leaf-mode (MMTO) : les feuilles-PV peuvent tomber a des PARITES differentes -> stm-feuille != stm-enfant.
+            // X·w etant en BLACK-POV (fold bitboard-only), la valeur minimax black-POV = eval black-POV de la feuille (OK),
+            // mais le SIGNE de la comparaison depend du stm du PARENT S (constant par parent), pas du stm de la feuille.
+            // On stocke donc S dans le champ score pour que rank_finetune --leaf-pov derive le signe de S (et non du record).
+            const std::int32_t sc = leaf_mode
+                ? static_cast<std::int32_t>(parent.side_to_move() == jass::Color::White ? 0 : 1)
+                : 0;
+            for (std::size_t k = 0; k < ch.size(); ++k) {
+                if (static_cast<int>(k) == best) continue;
+                emit(out, ch[static_cast<std::size_t>(best)], sc, 1);   // prefere (src=MASTER), score=stm parent (leaf)
+                emit(out, ch[k], sc, 1);                                 // domine
+                ++pairs; ++emitted_here; ++phase_pairs[band];
+            }
+        } else {
+            std::sort(ch.begin(), ch.end(), [](const Ch& a, const Ch& b){ return a.pv > b.pv; });
+            for (std::size_t a = 0; a < ch.size() && emitted_here < max_pairs; ++a) {
+                for (std::size_t b = a + 1; b < ch.size() && emitted_here < max_pairs; ++b) {
+                    const std::int32_t margin = ch[a].pv - ch[b].pv;
+                    if (margin < m_min) break;               // b trie desc : rien de plus grand ensuite
+                    emit(out, ch[a], margin, 0);              // better : marge + src=deep
+                    emit(out, ch[b], 0, 0);                   // worse
+                    ++pairs; ++emitted_here; ++phase_pairs[band]; margin_sum += margin;
+                }
+            }
+        }
+        if (emitted_here > 0) ++parents_used;
+    }
+
+    std::ofstream o(out_path, std::ios::binary);
+    if (!o) { std::cerr << "error: cannot write " << out_path << "\n"; return 1; }
+    const std::uint32_t nout = static_cast<std::uint32_t>(out.size() / 38);
+    o.write("JNNW", 4); o.write(reinterpret_cast<const char*>(&nout), 4);
+    o.write(out.data(), static_cast<std::streamsize>(out.size())); o.close();
+
+    std::cout << "GENSIB mode=" << (master_mode ? "MASTER" : "DEEP")
+              << (leaf_mode ? "+LEAF(MMTO)" : "")
+              << " parents_seen=" << parents_seen << " quiet_used=" << parents_used
+              << " cap_nodes=" << cap_nodes << " no_match=" << no_match
+              << " ws_already_top=" << ws_already_top << " pairs=" << pairs
+              << " records=" << nout << " depth=" << depth << " m_min=" << m_min
+              << " ws_margin=" << ws_margin
+              << " margin_mean=" << (pairs ? margin_sum / static_cast<double>(pairs) : 0.0)
+              << " phase[fin/13-20/21-28/ouv]=" << phase_pairs[0] << "/" << phase_pairs[1]
+              << "/" << phase_pairs[2] << "/" << phase_pairs[3]
+              << " -> " << out_path << "\n";
+    return 0;
+}
 
 int run_egdb_relabel_mode(int argc, char** argv) {
     if (argc < 4) {
@@ -4003,6 +4305,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
+        else if (a == "--gen-siblings")             return run_gen_siblings_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);

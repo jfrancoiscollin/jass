@@ -110,6 +110,31 @@ def main(argv=None) -> int:
                     help="weaker side's Scan depth (strong=--depth); asymmetric self-play")
     ap.add_argument("--depth-jitter", type=int, default=0,
                     help="per-game random depth reduction in [0, J] on the strong side")
+    # ASYMMETRY BY MOVETIME (Scan-prof briefing phase 0): strong side plays with a
+    # long move-time, weak side with a very short one. Overrides depth-based asym
+    # when both are set. The STRONG side's moves are the only ones extracted as
+    # preferences (the weak side is deliberately degraded → its moves are noise).
+    ap.add_argument("--strong-movetime", type=float, default=None,
+                    help="strong side Scan move-time (s); enables movetime asymmetry")
+    ap.add_argument("--weak-movetime", type=float, default=None,
+                    help="weak side Scan move-time (s); pair with --strong-movetime")
+    # PREFERENCE EXTRACTION (bras-M format): for every STRONG-side quiet ply out of
+    # book, emit (parent JNNW record, played from/to) — consumed downstream by
+    # `jass --gen-siblings --played-moves` to build (played ≻ sibling) pairs.
+    ap.add_argument("--pref-parents", type=Path, default=None,
+                    help="output JNNW of parent positions (strong side to move)")
+    ap.add_argument("--pref-moves", type=Path, default=None,
+                    help="output raw 2-byte from/to per parent (aligned with --pref-parents)")
+    ap.add_argument("--holdout-parents", type=Path, default=None,
+                    help="optional by-game holdout split of parents (md5(opening)%%mod==0)")
+    ap.add_argument("--holdout-moves", type=Path, default=None,
+                    help="optional by-game holdout split of moves")
+    ap.add_argument("--holdout-mod", type=int, default=10,
+                    help="1/mod of games (by opening hash) routed to holdout")
+    ap.add_argument("--skip-book", type=int, default=8,
+                    help="skip the first N plies (book/theory) when extracting prefs")
+    ap.add_argument("--keep-draw-frac", type=float, default=0.2,
+                    help="fraction of DRAWN games to keep (decisive-first filter)")
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--nshards", type=int, default=1,
                     help="total parallel shards (all must share the SAME --seed)")
@@ -124,32 +149,56 @@ def main(argv=None) -> int:
         return 1
     print(f"scan-selfplay: {len(seeds)} seeds (>= {args.min_pieces}p), Scan depth {args.depth}")
 
+    import hashlib
+    mt_asym = args.strong_movetime is not None and args.weak_movetime is not None
+    pref = args.pref_parents is not None and args.pref_moves is not None
     scan = cv.ScanEngine(args.scan, bb_size=0)
-    # Asymmetric-strength self-play (diversity): a SECOND Scan at --weak-depth.
-    scan_weak = cv.ScanEngine(args.scan, bb_size=0) if args.weak_depth else None
+    # Asymmetric-strength self-play (diversity): a SECOND Scan, weaker by depth OR movetime.
+    scan_weak = (cv.ScanEngine(args.scan, bb_size=0)
+                 if (args.weak_depth or mt_asym) else None)
     if scan_weak is not None:
-        print(f"  diversity: strong depth {args.depth} vs weak depth {args.weak_depth} "
-              f"(strong side randomized per game)")
+        if mt_asym:
+            print(f"  asym-movetime: strong mt {args.strong_movetime}s vs weak mt "
+                  f"{args.weak_movetime}s (strong side randomized per game)")
+        else:
+            print(f"  asym-depth: strong depth {args.depth} vs weak depth {args.weak_depth} "
+                  f"(strong side randomized per game)")
+    if pref:
+        print(f"  pref-extract: strong-side quiet plies, skip-book={args.skip_book}, "
+              f"keep-draw-frac={args.keep_draw_frac}, holdout 1/{args.holdout_mod} by opening")
     referee = cv.Referee(args.jass)
     records = bytearray()
     n_pos = 0
+    # preference buffers (train + optional by-game holdout)
+    tr_par, tr_mov, ho_par, ho_mov = bytearray(), bytearray(), bytearray(), bytearray()
+    n_tr = n_ho = n_dec = n_drawkept = 0
     wmap = {"W": 1, "D": 0, "L": -1}
     try:
         for g, opening in enumerate(seeds):
             # per-game depth jitter on the strong side
             sd = args.depth - (rng.randint(0, args.depth_jitter) if args.depth_jitter else 0)
             sd = max(2, sd)
+            strong_color = None  # None => symmetric (extract all sides)
             try:
                 if scan_weak is not None:
                     # assign strong/weak to the two sides, randomized per game
-                    scan.default_depth = sd
-                    scan_weak.default_depth = args.weak_depth
-                    if rng.random() < 0.5:
-                        white, black = scan, scan_weak
+                    if mt_asym:
+                        scan.default_movetime = args.strong_movetime; scan.default_depth = None
+                        scan_weak.default_movetime = args.weak_movetime; scan_weak.default_depth = None
                     else:
-                        white, black = scan_weak, scan
+                        scan.default_depth = sd; scan.default_movetime = None
+                        scan_weak.default_depth = args.weak_depth; scan_weak.default_movetime = None
+                    if rng.random() < 0.5:
+                        white, black = scan, scan_weak; strong_color = "W"
+                    else:
+                        white, black = scan_weak, scan; strong_color = "B"
                     r = cv.play_game(white, black, referee, opening,
                                      max_plies=args.max_plies)
+                elif args.strong_movetime is not None:
+                    # SYMÉTRIQUE-MOVETIME (parties ÉQUILIBRÉES fort-vs-fort) : les 2 côtés jouent à strong-movetime,
+                    # strong_color=None => on extrait LES 2 CÔTÉS (2× de data/partie ; positions contestées à égalité).
+                    r = cv.play_game(scan, scan, referee, opening,
+                                     movetime=args.strong_movetime, max_plies=args.max_plies)
                 else:
                     r = cv.play_game(scan, scan, referee, opening,
                                      depth=sd, max_plies=args.max_plies)
@@ -167,8 +216,40 @@ def main(argv=None) -> int:
                 wdl = ow if side == "W" else -ow
                 records += fen_to_record(fen, wdl)
                 n_pos += 1
+
+            # ---- preference extraction (strong-side quiet plies, decisive-first) ----
+            if pref:
+                decisive = r.outcome in ("W", "L")
+                keep = decisive or (rng.random() < args.keep_draw_frac)
+                if keep:
+                    if decisive: n_dec += 1
+                    else: n_drawkept += 1
+                    hold = (int(hashlib.md5(opening.encode()).hexdigest(), 16)
+                            % max(1, args.holdout_mod) == 0) and args.holdout_parents
+                    for k, mv_str in enumerate(r.moves):
+                        parent = r.fens[k]
+                        side = parent.split(":", 1)[0].strip()
+                        if strong_color is not None and side != strong_color:
+                            continue
+                        if k < args.skip_book:
+                            continue
+                        if "x" in mv_str:  # quiet-only (captures = trivial/forced)
+                            continue
+                        try:
+                            frm, to = (int(x) for x in mv_str.split("-"))
+                        except Exception:
+                            continue
+                        if not (1 <= frm <= 50 and 1 <= to <= 50):
+                            continue
+                        rec = fen_to_record(parent, 0)
+                        if hold:
+                            ho_par += rec; ho_mov += bytes([frm, to]); n_ho += 1
+                        else:
+                            tr_par += rec; tr_mov += bytes([frm, to]); n_tr += 1
+
             if (g + 1) % 50 == 0:
-                print(f"  {g+1}/{len(seeds)} games, {n_pos} positions", flush=True)
+                print(f"  {g+1}/{len(seeds)} games, {n_pos} positions"
+                      + (f", prefs tr={n_tr} ho={n_ho}" if pref else ""), flush=True)
     finally:
         try: scan.close()
         except Exception: pass
@@ -184,6 +265,20 @@ def main(argv=None) -> int:
         f.write(struct.pack("<I", n_pos))
         f.write(records)
     print(f"wrote {args.out} ({n_pos} positions from {len(seeds)} Scan self-play games)")
+
+    if pref:
+        def _write_pref(par_path, mov_path, par_buf, mov_buf, n):
+            par_path.parent.mkdir(parents=True, exist_ok=True)
+            with par_path.open("wb") as f:
+                f.write(b"JNNW"); f.write(struct.pack("<I", n)); f.write(par_buf)
+            mov_path.write_bytes(bytes(mov_buf))
+        _write_pref(args.pref_parents, args.pref_moves, tr_par, tr_mov, n_tr)
+        print(f"wrote {args.pref_parents} ({n_tr} strong-side quiet parents; "
+              f"decisive-games={n_dec}, draws-kept={n_drawkept})")
+        if args.holdout_parents and args.holdout_moves:
+            _write_pref(args.holdout_parents, args.holdout_moves, ho_par, ho_mov, n_ho)
+            print(f"wrote {args.holdout_parents} ({n_ho} held-out parents by opening hash)")
+
     return 0 if n_pos else 1
 
 
