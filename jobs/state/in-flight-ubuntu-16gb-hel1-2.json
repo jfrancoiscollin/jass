@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0637-reanchor-gen2mmto",
-  "script": "jobs/queue/ccx33-0637-reanchor-gen2mmto.sh",
-  "pid": 3331041,
-  "started_at": "2026-07-07T15:24:13+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
