@@ -23,3 +23,6 @@
 
 === MMTO gen-siblings --leaf-mode (ancre=gen2-mmto, WS ON margin=10, d5) ===
   [progress] 2400/10400 parties, 52109 parents (côté fort), 7253s écoulés, ETA 24176s (~402 min)
+  candidat gen3 committé ✓
+
+  => next : A/B Elo gen3 vs gen2-mmto (cpx62) — généraliste(signal)+dilf(garde-fou) mt0.2+0.3.
