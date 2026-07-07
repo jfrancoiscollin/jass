@@ -19,3 +19,7 @@
   [progress] 2400/10400 parties, 52109 parents (côté fort), 6652s écoulés, ETA 22173s (~369 min)
   [progress] 2400/10400 parties, 52109 parents (côté fort), 6649s écoulés, ETA 22163s (~369 min)
   [progress] 2400/10400 parties, 52109 parents (côté fort), 7257s écoulés, ETA 24190s (~403 min)
+  parents conversion (asym Scan) : 57889
+
+=== MMTO gen-siblings --leaf-mode (ancre=gen2-mmto, WS ON margin=10, d5) ===
+  [progress] 2400/10400 parties, 52109 parents (côté fort), 7253s écoulés, ETA 24176s (~402 min)
