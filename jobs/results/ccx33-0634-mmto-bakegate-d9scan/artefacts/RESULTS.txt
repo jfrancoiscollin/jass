@@ -1,0 +1,7 @@
+  survie[cand_it3] = 0.3337 (n=800)
+
+  === GATE DE BAKE ===
+  (1) d9-vs-Scan : cand_it3 Elo > gen1 (−310) hors-bruit => l'ÉVAL-PAR-NŒUD a progressé (pas juste style) => feu vert éval.
+  (2) mt0.3-vs-Scan : cand_it3 doit être ≥ gen1 (le +52 généraliste doit transférer vs Scan).
+  (3) survie : devrait BAISSER (vs 0.340) si l'hypothèse depth-stability est juste — diagnostic, pas bloquant.
+  Si (1)+(2) OK + A/B broad sans régression (0632: généraliste +52, dilf neutre) => BAKE cand_it3 comme nouvelle éval champion.
