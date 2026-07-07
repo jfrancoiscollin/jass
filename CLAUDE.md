@@ -24,6 +24,7 @@ Quand un job tourne, fournir des **premières estimations EN CONTINU** dès que 
 - A/B : committer **chaque cellule dès qu'elle finit** + un tally courant.
 - Génération : logger/committer « N/total parties, X paires, ETA » tous les K.
 - Côté reporting à JFC : dès qu'un partiel existe, sortir une **première estimation** plutôt que « ça tourne encore ».
+- **📌 `docs/CURRENT.md` TENU À JOUR AU FUR ET À MESURE (JFC — 2026-07-07)** : dès qu'un job finalise avec un résultat, mettre à jour le bloc concerné de CURRENT (et le verdict en tête si bake/étape majeure) — **pas seulement en fin de campagne**. CURRENT doit refléter l'état réel à tout instant.
 
 ### 3. 🧪 SMOKE TEST DES FORMATS DE REPORTING AVANT LANCEMENT (JFC — 2026-07-07)
 Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-liée, cellules perdues, format écriture ≠ lecture — ça nous a coûté plusieurs runs), TOUJOURS **smoke-tester AVANT de queuer** :
