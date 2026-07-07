@@ -1,1 +1,2 @@
   [conv/gen2 a0.05 vs gen2-mmto | gen mt0.3] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
+  [conv/gen2 a0.05 vs gen2-mmto | gen mt0.3] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
