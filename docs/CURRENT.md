@@ -118,6 +118,12 @@
 > NB gremlin runner : RESULTS multi-cellules tronqué → cellules lues d'`output.log`.
 >
 > ## 📋 NEXT STEPS À FAIRE — ne pas oublier (roadmap post-bake MMTO)
+> **⭐ PIPELINE GEN MMTO : CHUNKÉ + FITS SÉQUENTIELS PAR PALIERS (idée JFC 2026-07-07)** — au lieu d'un gros bloc gen (8h) puis UN fit (OOM) :
+> **(A) courbe de volume** sur un corpus fini (ex. `0640` sur les 218k de 0638) = fits séquentiels sur préfixes cumulatifs {50k,100k,150k,200k},
+> chacun ancré champion + candidat + delta → répond « le volume paie-t-il ? » (delta monte ou plateaue) mémoire-safe (maxpp bas, préfixe borné), sans OOM.
+> **(B) pipeline chunké producteur-consommateur** pour les FUTURES gens : gen en chunks ~50k (plusieurs `scan_selfplay_gen` courts, chacun committe son chunk)
+> + boucle de fit qui consomme chaque chunk dès committé → **premier candidat à ~2h au lieu de 8h**, courbe en direct, jamais d'OOM final, gen/fit se chevauchent
+> (ccx33 génère pendant que cpx62 fitte). ⚠️ `scan_selfplay_gen` écrit les parents en FIN de shard (pas de checkpoint) → chunker = plusieurs appels courts, pas un long.
 > **0. Hygiène post-bake** : re-ancrer la matrice vs Scan (d9/mt0.3/mt1.0/NPS) avec le nouveau champion ; re-baseline tous les A/B sur lui.
 > **1. Prochaine ronde MMTO** ancrée au NOUVEAU champion (re-itérer le même corpus a déjà convergé → besoin de data FRAÎCHE) : plus de maîtres,
 > et/ou **prof Scan sur positions de CONVERSION + filtre working-set ACTIVÉ** (n'entraîner que là où le champion désaccorde). Le search décide la voie :
