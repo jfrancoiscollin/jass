@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0639-mmto-conv-gen2-refit",
+  "script": "jobs/queue/cpx62-0639-mmto-conv-gen2-refit.sh",
+  "pid": 158040,
+  "started_at": "2026-07-07T21:02:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
