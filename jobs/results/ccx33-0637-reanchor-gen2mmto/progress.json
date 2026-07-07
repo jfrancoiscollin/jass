@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0637-reanchor-gen2mmto",
-  "snapshot_at": "2026-07-07T17:17:15+00:00",
+  "snapshot_at": "2026-07-07T17:22:18+00:00",
   "started_at": "2026-07-07T15:24:13+00:00",
-  "elapsed_seconds": 6782,
+  "elapsed_seconds": 7085,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3331041       1    01:53:02  0.0  0.0 bash\n3331043 3331041    01:53:02  0.0  0.0 bash\n3331507 3331043    01:52:49  0.0  0.0 bash\n3331511 3331507    01:52:49  0.1  0.0 python3\n3331518 3331511    01:52:49 50.8  0.5 jass\n3331523 3331511    01:52:49 49.1  0.9 scan_linux\n3331537 3331511    01:52:49  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n3331041       1    01:58:05  0.0  0.0 bash\n3331043 3331041    01:58:05  0.0  0.0 bash\n3331507 3331043    01:57:52  0.0  0.0 bash\n3331511 3331507    01:57:52  0.1  0.0 python3\n3331518 3331511    01:57:52 50.9  0.5 jass\n3331523 3331511    01:57:52 48.9  0.9 scan_linux\n3331537 3331511    01:57:52  0.0  0.0 jass\n"
 }
