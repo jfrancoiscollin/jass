@@ -18,7 +18,20 @@
 - ⚠️ `rank_finetune` **OOM au-delà de ~1.5M paires sur ccx33** → cap paires / subsample, gros corpus sur cpx62.
 - Les jobs `calibrate_vs_scan` / A/B ne committent le RESULTS **qu'à la fin** (pas de partiel fiable) ; cellules multi-parts souvent tronquées dans RESULTS → **lire `output.log`** au finalize.
 
-### 2. Autres règles gravées
+### 2. 📊 PROGRESS AU FIL DE L'EAU (JFC — 2026-07-07)
+Quand un job tourne, fournir des **premières estimations EN CONTINU** dès que possible — surtout pour les jobs d'estimation sur des **PARTIES** ou des **DONNÉES**. À défaut de streaming, donner des **estimations de durée RESTANTE**. Concrètement, CONCEVOIR les jobs pour :
+- Émettre un progress **incrémental committé à intervalles** (compteurs : parties jouées / positions / paires générées, rate A/B provisoire, ETA) — **pas uniquement au finalize**. (progress.json / RESULTS partiel / `--progress-file` de `jass_vs_jass_arch`.)
+- A/B : committer **chaque cellule dès qu'elle finit** + un tally courant.
+- Génération : logger/committer « N/total parties, X paires, ETA » tous les K.
+- Côté reporting à JFC : dès qu'un partiel existe, sortir une **première estimation** plutôt que « ça tourne encore ».
+
+### 3. 🧪 SMOKE TEST DES FORMATS DE REPORTING AVANT LANCEMENT (JFC — 2026-07-07)
+Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-liée, cellules perdues, format écriture ≠ lecture — ça nous a coûté plusieurs runs), TOUJOURS **smoke-tester AVANT de queuer** :
+- Faire tourner une **version minuscule** (peu de games/positions) OU vérifier explicitement que l'**écriture ET la lecture/parsing** des fichiers de reporting **round-trip** (le parser lit bien ce que le job écrit : mêmes clés, même format, mêmes N attendus).
+- `bash -n` (syntaxe) + `py_compile` des heredocs + test du couple **write → read** sur un mini-échantillon.
+- **Ne queuer qu'après** le round-trip write→read validé.
+
+### 4. Autres règles gravées
 - **⛔ AUCUN NNUE / réseau / changement de classe** tant que le linéaire n'est pas poussé à fond (cf SCAN_METHODOLOGY_GAP §0).
 - **Code sur `develop`** (jamais main pour le code) ; **queue de jobs sur `main`**. Le runner exécute les jobs `jobs/queue/<box>-NNNN-*.sh` par prefix de box.
 - **Bake (éval ou search) = promotion délibérée sur `main`, uniquement sur go explicite de JFC.** Réversible (archiver l'ancien champion).
