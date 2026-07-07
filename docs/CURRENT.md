@@ -84,12 +84,20 @@
 > régression** (garde-fou passé). **⟹ la qualité du prof (humain→Scan) fait +23→+47.**
 > **Escalade data-qualité (idée JFC) — le fit monte monotone ×10** : delta pairwise-acc `0621` humain-30k **+0.0014** → `0624` humain-44k
 > +0.0029 → `0625` **prof-Scan**-44k +0.0071 → `0627` **positions+prof Scan** 59k **+0.0136**. Chaque marche de qualité double le fit.
-> **EN VOL/QUEUE** : `0629` (A/B du combo `0627` +0.0136, ccx33) ; **`0630` (LANCÉ)** = **self-play Scan MIXTE** équilibrées (fort-vs-fort,
-> positions contestées, 2 côtés=prof) + déséquilibrées (conversion) **~100-120k** — scale-up + spectre large (idée JFC).
-> **LECTURE** : MMTO à-travers-recherche est le PREMIER levier éval qui paie (statique détruisait −847). Gain gratuit, croissant, robuste
-> hors-IC sur positions réelles. Prochaine étape : scaler (0630 → 200-300k si ça monte) puis, si le meilleur candidat tient sur un set LARGE
-> (dilf+généraliste+openings Scan équilibrées, sans régression) → **BAKE éval candidat**. Plafond éventuel = éval linéaire maxée (résidu vs Scan = force brute).
-> **Méthodo** : dilf ne pilote plus (garde-fou anti-régression/anti-circularité), généraliste pilote ; set large ajouté au moment du bake.
+> **✅ BOUCLE EXTERNE MMTO CONFIRMÉE (`0632`, multiplicateur idée JFC)** : re-gen feuilles avec éval candidate + re-fit, 3 iters sur corpus 0625
+> (positions maîtres + prof Scan). Post-fit pairwise **0.7014→0.7118→0.7120** (converge it3). A/B cand3 vs gen1 : **généraliste +41/+52 (mt0.2/0.3)**
+> vs +38/+47 one-shot → **la boucle ajoute ~+5 Elo gratuit et converge** ; dilf −4/−1 neutre (propre). ⟹ boucle = vrai levier, modeste, à garder.
+> **⚠️ `0629` combo A/B** : généraliste +30/+50 (en-famille) MAIS dilf +155/+123 = ARTEFACT (N petits/incohérents 380/760, job time-capé) — le dilf
+> propre de 0632 (N=1520) est neutre → re-run 0629 propre requis.
+> **❌ `0630` scale mixte** : génération OK **308k parents ÉQUILIBRÉS + 3.5M paires** MAIS (a) régime B déséquilibré=0 (l'équilibré sur-produit ~116
+> parents/partie × toutes nulles × 2 côtés → consomme tout le temps) ; (b) **fit OOM** sur ccx33 (matrice features ~13GB). Corpus committé/récupérable.
+> **EN COURS** : `0633` (cpx62) re-fit du 308k équilibré sous-éch. 120k+maxpp8 (~1M paires, mémoire-safe) — **teste enfin le payoff du VOLUME** (bat-il +52 ?) ;
+> `0631` (ccx33) gen complémentaire (va OOM au fit pareil, parents récupérables pour couplage).
+> **LECTURE** : MMTO à-travers-recherche = **PREMIER levier éval qui paie** (statique détruisait −847). Gain gratuit +52 généraliste mt0.3, croissant,
+> dilf neutre, **boucle externe confirmée (+5)**. Reste : payoff volume (0633), ré-fit mémoire-safe, corriger l'équilibre A/B du mix.
+> **Chemin bake** : meilleur candidat sur set LARGE {dilf garde-fou + généraliste + openings-Scan} **+ d9-vs-Scan** (cellule éval-pure figée −310 ; si elle
+> BOUGE = preuve que l'éval-par-nœud a progressé, pas le style) **+ survie en diagnostic** (devrait BAISSER si hypothèse depth-stability juste). Sans régression → **BAKE éval**.
+> **Méthodo** : dilf = garde-fou (anti-régression/anti-circularité), généraliste pilote ; **fit mémoire-safe** (cap paires/subsample, cpx62 pour gros corpus).
 > NB gremlin runner : RESULTS multi-cellules tronqué → cellules lues d'`output.log`.
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
