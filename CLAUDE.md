@@ -14,7 +14,8 @@
 **Repères de durée mesurés (à ré-ancrer au fil du temps) :**
 - `calibrate_vs_scan` (d9 + mt0.3 + survie, N~1300 games) ≈ **2h** ; la cellule **mt1.0 = goulot ~4h** ; **movetime + gros-N = très lent** (0636 : 5h+).
 - A/B `jass_vs_jass_arch` 4 cellules, N~1500/cellule, mt0.2-0.3 : ≈ **1h45 sur cpx62**, ≈ **2×** sur ccx33 (8 cœurs).
-- MMTO gen-siblings `--leaf-mode` + fit (~50-100k parents) ≈ **5-15 min** ; gros self-play Scan (~10k parties) ≈ **2-5h**.
+- MMTO gen-siblings `--leaf-mode` + fit (~50-100k parents) ≈ **5-15 min**.
+- **⚠️ Self-play Scan — YIELD ré-ancré (0638, ma sur-estimation ×3)** : asym-conversion mt0.3/0.03 ≈ **~20 parents/partie** (PAS 5,7), ~45 s/partie effectif (8 shards) → **10400 parties ≈ ~8h, ~200k+ parents** ; équilibré fort-vs-fort ≈ **~116 parents/partie** (0630). **DIMENSIONNER PERG PAR LE YIELD** : parties = parents_cible ÷ (parents/partie) (ex. 60k parents asym ≈ **~3000 parties ≈ ~2h**, pas 10400). `scan_selfplay_gen` écrit les pref **SEULEMENT en fin de shard** (aucun checkpoint, aucun kill propre mid-run) → **bien sizer PERG AVANT de lancer**.
 - ⚠️ `rank_finetune` **OOM au-delà de ~1.5M paires sur ccx33** → cap paires / subsample, gros corpus sur cpx62.
 - Les jobs `calibrate_vs_scan` / A/B ne committent le RESULTS **qu'à la fin** (pas de partiel fiable) ; cellules multi-parts souvent tronquées dans RESULTS → **lire `output.log`** au finalize.
 
