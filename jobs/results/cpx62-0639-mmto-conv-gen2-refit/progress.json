@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0639-mmto-conv-gen2-refit",
-  "snapshot_at": "2026-07-07T22:05:58+00:00",
+  "snapshot_at": "2026-07-07T22:11:03+00:00",
   "started_at": "2026-07-07T21:02:03+00:00",
-  "elapsed_seconds": 3835,
+  "elapsed_seconds": 4140,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 158040       1    01:03:54  0.0  0.0 bash\n 158041  158040    01:03:54  0.0  0.0 bash\n 161245  158041       10:16  0.1  0.0 python3\n 161264  161245       10:15 46.0  0.5 jass\n 161295  161245       10:15 46.7  0.5 jass\n 161327  161245       10:15  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 158040       1    01:08:59  0.0  0.0 bash\n 158041  158040    01:08:59  0.0  0.0 bash\n 161245  158041       15:21  0.1  0.0 python3\n 161264  161245       15:20 46.2  0.5 jass\n 161295  161245       15:20 46.7  0.5 jass\n 161327  161245       15:20  0.0  0.0 jass\n"
 }
