@@ -162,6 +162,12 @@ def build(variant="v4"):
         pats = build_v6()
     elif variant == "v7":
         pats = build_v7()
+    elif variant in ("v3", "8cf"):
+        # 8cf : the 8 v3 VERTICAL bands ONLY (= Scan's vertical-band subset). A
+        # strict subset of v4's geometry (v4 = these 8 + diagonals/horiz/squares).
+        # Used by the famine learning-curve (8cf vs 32cf at growing volume).
+        pats = [(vband(r0, c0), f"v_{half}_{c0}")
+                for half, r0 in (("top", 0), ("bot", 4)) for c0 in range(4)]
     else:
         pats = _build_v4_v5(variant)
     # validate (12 distinct squares, in 1..50, and globally no duplicate pattern)
@@ -291,8 +297,9 @@ def _sub_count(path: Path, n: int):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--emit", action="store_true", help="rewrite pattern.hpp + patterns.py")
-    ap.add_argument("--variant", choices=["v4", "v5", "v6", "v7"], default="v4",
-                    help="v4=32 (sweet spot), v5=40 (diag blocks), "
+    ap.add_argument("--variant", choices=["v3", "8cf", "v4", "v5", "v6", "v7"], default="v4",
+                    help="v3/8cf=8 vertical bands only (Scan subset, famine curve), "
+                         "v4=32 (sweet spot), v5=40 (diag blocks), "
                          "v6=diagonal-dense, v7=region-specialised (Scan route)")
     ap.add_argument("--lr-close", action="store_true",
                     help="close the set under {rot180, LR} so reflection folds ALL "
