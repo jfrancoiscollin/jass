@@ -99,6 +99,25 @@
 > BOUGE = preuve que l'éval-par-nœud a progressé, pas le style) **+ survie en diagnostic** (devrait BAISSER si hypothèse depth-stability juste). Sans régression → **BAKE éval**.
 > **Méthodo** : dilf = garde-fou (anti-régression/anti-circularité), généraliste pilote ; **fit mémoire-safe** (cap paires/subsample, cpx62 pour gros corpus).
 > NB gremlin runner : RESULTS multi-cellules tronqué → cellules lues d'`output.log`.
+>
+> ## 📋 NEXT STEPS À FAIRE — ne pas oublier (roadmap post-bake MMTO)
+> **0. Hygiène post-bake** : re-ancrer la matrice vs Scan (d9/mt0.3/mt1.0/NPS) avec le nouveau champion ; re-baseline tous les A/B sur lui.
+> **1. Prochaine ronde MMTO** ancrée au NOUVEAU champion (re-itérer le même corpus a déjà convergé → besoin de data FRAÎCHE) : plus de maîtres,
+> et/ou **prof Scan sur positions de CONVERSION + filtre working-set ACTIVÉ** (n'entraîner que là où le champion désaccorde). Le search décide la voie :
+> si d9 a bougé → marge-éval encore ouverte ; sinon le gain est search-interaction, pas éval-par-nœud.
+> **2. ⭐ ALTERNANCE WDL(ou TD-leaf)↔MMTO — recette couplée à retenir (idée JFC)** : WDL et MMTO sont **orthogonaux** — WDL calibre les VALEURS
+> absolues (que le search élague : LMR/futility/probcut), MMTO pose le RANG à travers la recherche. Le plateau WDL (gen1) était l'objectif-rang MANQUANT,
+> que MMTO fournit. **Un seul gros self-play du champion fort nourrit LES DEUX** : résultats→targets WDL, préférences→paires MMTO.
+> **Séquence** : `champion fort → self-play frais → re-fit WDL (recalibre) → re-MMTO PAR-DESSUS (repose le rang) → bake → re-ancre`.
+> ⚠️ **MMTO toujours en DERNIÈRE couche** (le WDL re-fitte tout → lave les ~200k buckets MMTO ; MMTO est cheap à ré-appliquer).
+>   **Spécifs à caler (demande JFC)** :
+>   - **Volume** : self-play **~1-2M positions** (échelle WDL, cf corpus-mix2M) → WDL sur tout ; MMTO sur le sous-ensemble quiet+contesté **~200-500k parents → ~1-2M paires** (cap mémoire : subsample + maxpp, fit sur cpx62 ; le 3.5M a OOM).
+>   - **Profondeurs** : self-play/teacher = **jass-mt-long (0.5-2s)** ou d12-15 fixe ; **leaf-depth MMTO D=5-6** (quiescence incluse), tester d6-8 pour feuilles + propres ; WDL = outcome (ou relabel valeur-deep / TD-leaf).
+>   - **Prior (anchor)** : ancrer au **champion COURANT** (WDL frais, pas stale) ; **sweep anchor {0, 0.01, 0.05, 0.1}** — **anchor≈0 pour tirer PLEINEMENT parti de la nouvelle gen sans la biaiser** (intuition JFC), **jouable car le d9-vs-Scan DÉTECTE la décalibration** si anchor trop faible. (λ = poids rank-loss, reste > 0.) MMTO à-travers-recherche tolère un anchor bien plus faible que le statique (qui faisait −847 à anchor 0.01).
+> **3. ⭐ AUTONOMIE (endgame, phase 3 briefing)** : swap prof Scan → **jass-mt-long** (le champion lui-même, prof au-dessus de l'élève-d5) → self-play → préférences → MMTO → champion + fort → … Le prof s'améliore AVEC l'élève (contraire du plateau WDL). **Scan = amorce, la boucle autonome = moteur.** Critère d'indépendance : un cycle complet SANS data Scan.
+> **4. Co-adaptation search** : une meilleure éval rouvre-t-elle la **quiescence** (0603-style) / l'ordering ? Re-check ciblé après bake.
+> **5. Itérer {MMTO meilleure-data → bake → re-ancre} TANT QUE d9-vs-Scan bouge.** Figé → éval linéaire maxée → là seulement la question NNUE (règle gravée).
+> **6. Dettes** : gremlin troncature RESULTS ; OOM fit (cap/subsample) ; bug mix (équilibré sur-produit ~116 parents/partie → étouffe le déséquilibré).
 > **RÉFÉRENCE RE-ANCRÉE (`0605`)** : vs Scan sur main frais (+187 search) = **d9 −310, mt0.3 −161, mt1.0 −133, NPS-comp −134** (prédictions confirmées, +30 ordering transféré ; gap ~−133/−161, résidu = éval-marge). **Baseline G1 survie = 0.340** (0597).
 
 ## 🔎 DOE ORDERING 0599 (préliminaire SOUS-RÉSOLU, n=236 — SUPERSÉDÉ par 0600 ci-dessus qui bake P1nc)
