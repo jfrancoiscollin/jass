@@ -3,3 +3,8 @@
   [conv/gen2 a0.05 vs gen2-mmto | dilf mt0.3] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
 
   GATE : généraliste > 0 hors-IC => la conversion-Scan ajoute sur gen2-mmto => on cumule (0638 gros corpus confirmera/amplifiera).
+  RESULTS committe ✓
+=== fin ronde conv/gen2 ===
+  [conv/gen2 a0.05 vs gen2-mmto | dilf mt0.3] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
+
+  GATE : généraliste > 0 hors-IC => la conversion-Scan ajoute sur gen2-mmto => on cumule (0638 gros corpus confirmera/amplifiera).
