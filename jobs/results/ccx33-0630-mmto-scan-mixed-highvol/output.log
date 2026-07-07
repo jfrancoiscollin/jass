@@ -1,0 +1,26 @@
+=== MMTO v6 mixte (équilibrées + déséquilibrées) — HEAD main 4655c68b8 runner: finalize ccx33-0629-mmto-scanselfplay-ab (completed, rc=0) ===
+  ✓ build+Scan+seeds ; NP=32
+
+=== gen A ÉQUILIBRÉES (sym mt0.3, 600×8) ===
+=== gen B DÉSÉQUILIBRÉES (asym mt0.3/0.03, 500×8) ===
+  A wrote /root/cw-mmtomix/.ap-7.jnnw (43064 strong-side quiet parents; decisive-games=43, draws-kept=326)
+  combiné = 308279 parents (équilibrées=308279, déséquilibrées=0)
+  parents combinés : 308279
+  split 8
+
+=== MMTO gen-siblings --leaf-mode (prof Scan mixte, --nnue gen1, d5) ===
+  MMTO pairs : 3523716
+  MMTO paires (mixte, feuilles-PV) : 3523716
+  dump : wrote 7047432 × 120 Scan-style extras to /root/cw-mmtomix/feat
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.05 ===
+/root/jass/jobs/queue/ccx33-0630-mmto-scan-mixed-highvol.sh: line 126: 3305387 Killed                  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/rank_finetune.py --champion "$W/gen1.pjtw" --pairs "$W/pairs.jnnw" --feat "$W/feat" --out "$W/mixmmto_$A.pjtw" --tools pattern_jass/tools --lam "$LAM" --anchor "$A" --min-pairs 5 --rank-scale 1.0 --max-iter 60 --full-fold --tempo-stage --leaf-pov --verify-jass "$J" --verify-n 60 > "$W/ft_$A.log" 2>&1
+  [0.05] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.1 ===
+/root/jass/jobs/queue/ccx33-0630-mmto-scan-mixed-highvol.sh: line 126: 3305434 Killed                  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/rank_finetune.py --champion "$W/gen1.pjtw" --pairs "$W/pairs.jnnw" --feat "$W/feat" --out "$W/mixmmto_$A.pjtw" --tools pattern_jass/tools --lam "$LAM" --anchor "$A" --min-pairs 5 --rank-scale 1.0 --max-iter 60 --full-fold --tempo-stage --leaf-pov --verify-jass "$J" --verify-n 60 > "$W/ft_$A.log" 2>&1
+  [0.1] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+  => next : A/B Elo mixmmto_{0.05,0.1} vs gen1. Spectre large : le delta monte-t-il encore vs 0627 (+0.0136) ?
+  RESULTS committe ✓
+=== fin MMTO mixte ===
