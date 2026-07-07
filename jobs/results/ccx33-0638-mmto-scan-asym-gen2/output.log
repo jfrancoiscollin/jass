@@ -1,0 +1,37 @@
+=== RONDE MMTO #2 (ancre gen2-mmto, Scan asym conversion) — HEAD 1b0bfcf20 runner: heartbeat cpx62-0636-mmto-bakegate-hin ===
+  ✓ build+Scan+gen2-mmto ; NP=32 ; prof Scan mt0.3 vs 0.03 ; WS_margin=10 (ON) ; anchor=0.05
+
+=== gen Scan asym conversion (1300×8 parties) — progress au fil ===
+  [progress] 0/10400 parties, 0 parents, 600s
+  [progress] 400/10400 parties, 8296 parents (côté fort), 1205s écoulés, ETA 30125s (~502 min)
+  [progress] 400/10400 parties, 8296 parents (côté fort), 1809s écoulés, ETA 45225s (~753 min)
+  [progress] 800/10400 parties, 16696 parents (côté fort), 2414s écoulés, ETA 28968s (~482 min)
+  [progress] 800/10400 parties, 16696 parents (côté fort), 3019s écoulés, ETA 36228s (~603 min)
+  [progress] 1200/10400 parties, 25517 parents (côté fort), 3624s écoulés, ETA 27783s (~463 min)
+  [progress] 1600/10400 parties, 34203 parents (côté fort), 4229s écoulés, ETA 23259s (~387 min)
+  [progress] 1600/10400 parties, 34203 parents (côté fort), 4834s écoulés, ETA 26587s (~443 min)
+  [progress] 2000/10400 parties, 43623 parents (côté fort), 5439s écoulés, ETA 22843s (~380 min)
+  [progress] 2000/10400 parties, 43623 parents (côté fort), 6044s écoulés, ETA 25384s (~423 min)
+  [progress] 2400/10400 parties, 52109 parents (côté fort), 6649s écoulés, ETA 22163s (~369 min)
+  [progress] 2400/10400 parties, 52109 parents (côté fort), 7253s écoulés, ETA 24176s (~402 min)
+  parents conversion = 57608
+  parents conversion (asym Scan) : 57608
+
+=== MMTO gen-siblings --leaf-mode (ancre=gen2-mmto, WS ON margin=10, d5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7199 quiet_used=2734 cap_nodes=0 no_match=0 ws_already_top=4465 pairs=33460 records=66920 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=18883/5223/5665/3689 -> /root/cw-mmto-r2/pairs_7.jnnw
+  working-set : 21302 parents entraînés ; 36280 déjà d'accord (skippés)
+  MMTO pairs : 257724
+  MMTO paires (working-set, feuilles-PV) : 257724
+  dump : wrote 515448 × 120 Scan-style extras to /root/cw-mmto-r2/feat
+
+=== rank_finetune ancré gen2-mmto --leaf-pov anchor=0.05 ===
+  pairwise-acc champion (avant fit) = 0.6058 ; cols visitées=155178
+  fit : loss 0.18532->0.18001 ; pairwise-acc 0.6058->0.6477 (delta +0.0419)
+  candidat gen3 committé ✓
+
+  => next : A/B Elo gen3 vs gen2-mmto (cpx62) — généraliste(signal)+dilf(garde-fou) mt0.2+0.3.
+  RESULTS committe ✓
+=== fin ronde MMTO 2 ===
+2) — généraliste(signal)+dilf(garde-fou) mt0.2+0.3.
+  RESULTS committe ✓
+=== fin ronde MMTO 2 ===
