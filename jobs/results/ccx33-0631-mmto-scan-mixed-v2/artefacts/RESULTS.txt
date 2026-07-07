@@ -1,0 +1,10 @@
+  MMTO paires (mixte, feuilles-PV) : 3534845
+  dump : wrote 7069690 × 120 Scan-style extras to /root/cw-mmtomix2/feat
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.05 ===
+  [0.05] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.1 ===
+  [0.1] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+  => next : COUPLER parents 0630+0631 (~200-240k) pour un gros fit si volume paie ; + A/B standalone mixmmto2.
