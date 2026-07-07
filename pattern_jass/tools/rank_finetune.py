@@ -54,6 +54,8 @@ def main():
     # MMTO (--gen-siblings --leaf-mode) : les 2 records d'une paire sont des FEUILLES-PV qui peuvent avoir des STM
     # differents (parites de PV differentes). X·w etant black-POV (fold bitboard-only), la valeur est correcte, mais le
     # SIGNE de la comparaison doit venir du stm du PARENT S (constant par paire), stocke dans le champ score par gen-siblings.
+    ap.add_argument('--chunk',type=int,default=0,
+                    help='fit STREAMÉ par chunks de PAIRES (0=full-batch RAM ; >0=streamé exact, évite OOM sur gros corpus). Gradient identique au full-batch (somme sur paires découpée).')
     ap.add_argument('--leaf-pov',action='store_true',
                     help='MMTO : derive le signe de la paire du stm parent (champ score), pas du stm du record-feuille')
     a=ap.parse_args()
@@ -77,8 +79,81 @@ def main():
         o=i*REC; a4=struct.unpack('<QQQQ',body[o:o+32]); wm[i],wk[i],bm[i],bk[i]=a4; stm[i]=body[o+32]
         pov_S[i]=struct.unpack('<i',body[o+33:o+37])[0]
     mmf,ncol_feat=TS.open_feat(a.feat,N)                     # saute le header FEAT (12o) + valide cnt==N
-    feat=np.asarray(mmf,dtype=np.float64)                    # (N, k)
     assert ncol_feat==n_ext, f'extras {ncol_feat}!={n_ext} (champion) => mauvaise config eval-features'
+
+    # ================= FIT STREAMÉ (--chunk) : gradient EXACT chunké par paires, sans OOM =================
+    if a.chunk and a.chunk>0:
+        ncol=w0.size; P=N//2; s=a.rank_scale; CH=int(a.chunk)
+        def _foldX(r0,r1):
+            wm_c=wm[r0:r1];wk_c=wk[r0:r1];bm_c=bm[r0:r1];bk_c=bk[r0:r1]
+            pb_c=(bm_c|bk_c) if king else bm_c; pw_c=(wm_c|wk_c) if king else wm_c
+            cols_c,signs_c=folder.cols_signs(pb_c,pw_c)
+            if a.tempo_stage: wmg_c=TS._tempo_wmg_bb(wm_c,bm_c)
+            else:
+                pc=np.minimum(TS._piece_count_bb(wm_c,wk_c,bm_c,bk_c),40).astype(np.float64); wmg_c=phase_wmg(pc,a.phase_lo,a.phase_hi)
+            weg_c=1.0-wmg_c
+            Xp=build_sparse_X_phased(cols_c,wmg_c,weg_c,n_pat,signs_c)
+            Xe=build_extras_phased(np.asarray(mmf[r0:r1],dtype=np.float64),wmg_c,weg_c)
+            return sp.hstack([Xp,Xe],format='csr').astype(np.float64)
+        def _Dchunk(lo,hi):
+            m2=2*(hi-lo); Xc=_foldX(2*lo,2*hi); Xb=Xc[0:m2:2]; Xw=Xc[1:m2:2]
+            if a.leaf_pov: sg=np.where(pov_S[2*lo:2*hi:2]==0,1.0,-1.0)
+            else:          sg=np.where(stm[2*lo:2*hi:2]==1,1.0,-1.0)
+            return (Xw-Xb).multiply(sg[:,None]).tocsr()
+        # POV gate (échantillon de records, X construit à la volée)
+        if a.verify_jass:
+            idx=np.linspace(0,N-1,min(a.verify_n,N)).astype(int)
+            eb=np.array([float(_foldX(int(i),int(i)+1).dot(w0)[0]) for i in idx])
+            cpp=[]
+            for i in idx:
+                fen=_rec_fen(int(wm[i]),int(wk[i]),int(bm[i]),int(bk[i]),int(stm[i]))
+                try:
+                    out=subprocess.run([a.verify_jass,'--eval-position',a.champion,fen],capture_output=True,text=True,timeout=20).stdout
+                    cpp.append(float(out.strip().split()[0]))
+                except Exception: cpp.append(float('nan'))
+            cpp=np.array(cpp); cbl=np.where(stm[idx]==1,cpp,-cpp); m=~np.isnan(cbl)
+            def spear(x,y):
+                xr=np.argsort(np.argsort(x)); yr=np.argsort(np.argsort(y)); return np.corrcoef(xr,yr)[0,1]
+            rho=spear(eb[m],cbl[m]); print(f'[POV gate] Spearman(X·w0 , jass-eval) = {rho:.4f} (n={int(m.sum())}) [streamé]',flush=True)
+            if not (rho>0.95): sys.exit(f'ABORT POV gate rho={rho:.3f}<0.95')
+        if a.leaf_pov: print(f'[leaf-pov] signe stm parent ; S=White frac={float((pov_S[0:N:2]==0).mean()):.3f}',flush=True)
+        colcnt=np.zeros(ncol,dtype=np.int64)                 # pass 1 : nb paires/colonne (streamé)
+        for lo in range(0,P,CH):
+            Dc=_Dchunk(lo,min(lo+CH,P)); colcnt+=np.bincount(Dc.indices,minlength=ncol)
+        used=np.flatnonzero(colcnt>=a.min_pairs); w0s=w0[used].copy()
+        print(f'buckets : {int(np.count_nonzero(colcnt))} visités ; {used.size} gardés (>= {a.min_pairs} paires) [STREAMÉ chunk={CH}]',flush=True)
+        def lgp(ws):                                         # loss+grad EXACT (somme chunkée), sur colonnes used
+            wf=np.zeros(ncol); wf[used]=ws; nll=0.0; gf=np.zeros(ncol)
+            for lo in range(0,P,CH):
+                Dc=_Dchunk(lo,min(lo+CH,P)); d=np.asarray(Dc.dot(wf)).ravel()
+                z=s*d; sig=0.5*(np.tanh(0.5*z)+1.0); nll+=float(np.sum(-np.log(np.clip(sig,1e-12,1.0))))
+                gf+=np.asarray(Dc.T.dot((sig-1.0)*s)).ravel()
+            return a.lam*(nll/P)+0.5*a.anchor*float(np.dot(ws-w0s,ws-w0s)), a.lam*(gf[used]/P)+a.anchor*(ws-w0s)
+        def paccp(ws):
+            wf=np.zeros(ncol); wf[used]=ws; pos=0; tot=0
+            for lo in range(0,P,CH):
+                Dc=_Dchunk(lo,min(lo+CH,P)); d=np.asarray(Dc.dot(wf)).ravel(); pos+=int((d>0).sum()); tot+=d.size
+            return pos/tot if tot else 0.0
+        acc0=paccp(w0s); print(f'pairwise-acc champion (avant fit) = {acc0:.4f} ; cols visitées={used.size}',flush=True)
+        rng=np.random.default_rng(0); test=rng.choice(used.size,size=min(5,used.size),replace=False)
+        L0,g=lgp(w0s); eps=1e-4; ok=True
+        for t in test:
+            wp=w0s.copy(); wp[t]+=eps; wmn=w0s.copy(); wmn[t]-=eps
+            num=(lgp(wp)[0]-lgp(wmn)[0])/(2*eps)
+            if abs(num-g[t])>1e-3*(1+abs(g[t])): ok=False; print(f'  grad-check FAIL col{t}: num={num:.4e} ana={g[t]:.4e}')
+        print(f'[grad-check] {"OK" if ok else "FAIL"} [streamé]',flush=True)
+        if not ok: sys.exit('ABORT grad-check')
+        ws,fval,info=fmin_l_bfgs_b(lambda w:lgp(w),w0s,maxiter=a.max_iter,pgtol=1e-6)
+        acc1=paccp(ws)
+        print(f'fit : loss {L0:.5f}->{fval:.5f} ; pairwise-acc {acc0:.4f}->{acc1:.4f} (delta {acc1-acc0:+.4f})',flush=True)
+        if acc1 < acc0 + 1e-3: sys.exit(f'ABORT pairwise-acc n a PAS monté ({acc0:.4f}->{acc1:.4f})')
+        w=w0.copy(); w[used]=ws
+        wint=np.clip((w*scale_c).round(),-(2**31),2**31-1).astype('<i4')
+        with open(a.out,'wb') as f: f.write(Path(a.champion).read_bytes()[:20]); f.write(wint.tobytes())
+        print(f'écrit {a.out} (header copié du champion, scale={scale_c}, {used.size} buckets ajustés) [streamé]',flush=True)
+        return
+
+    feat=np.asarray(mmf,dtype=np.float64)                    # (N, k)
     pb=(bm|bk) if king else bm; pw=(wm|wk) if king else wm
     cols,signs=folder.cols_signs(pb,pw)
     if a.tempo_stage: wmg=TS._tempo_wmg_bb(wm,bm)
