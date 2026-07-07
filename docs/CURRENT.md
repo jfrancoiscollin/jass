@@ -20,8 +20,13 @@
 > éval-pure figée à travers +187 de search a enfin bougé — pas du style/interaction-search) ; **généraliste +52 hors-IC mt0.3** (croissant avec mt),
 > **dilf neutre** (garde-fou, pas de régression) ; **survie 0.343→0.334 ↓** (prédiction depth-stability confirmée). mt0.3-vs-Scan = bruit petit-N
 > (−14/−25 non-signif., contredit par le +52 jass-vs-jass) ; **`0636` re-mesure haut-N en cours** pour resserrer. **⟹ +187 search + ce gain-éval COMPOSENT.**
-> **Prochaine étape** : re-ancrer la matrice vs Scan sur gen2-mmto (combien du résidu −133/−161 fermé ?), puis prochaine ronde MMTO ancrée gen2-mmto
-> + le couplage WDL↔MMTO (cf **📋 NEXT STEPS** plus bas : 8-10M positions, d8-d10, anchor→0 garde-fou-d9).
+> **✅ RÉFÉRENCE RE-ANCRÉE sur gen2-mmto (`0637`, vs Scan)** : **d9 −310→−276 (+34 fermé, éval-pure)** ; mt0.3 −161→**−155** (+6) ; mt1.0 −133→**−128** (+5) ;
+> NPS −134→**−129** (+5). ⟹ **l'éval-par-nœud a nettement progressé (+34 d9)** mais le gap-Scan à MOVETIME ne se ferme que de **+5-6** (le search profond
+> dilue déjà l'éval-marge, cf pré-fit 0.686) → **résidu vs Scan encore gros (−128 à −155)**, il faudra plusieurs rondes. **C'est la nouvelle baseline de la campagne.**
+> **🔄 RONDE MMTO #2 EN COURS (`0638`, ccx33)** : ancrée gen2-mmto, sur **self-play Scan ASYMÉTRIQUE PUR (conversion)** — les maîtres plafonnent/pauvres,
+> l'équilibré-Scan régresse (0633), le pur-asym évite le bug de starvation du mix (⚠️ **NON résolu** : équilibré sur-produit ~116 parents/partie → étouffe l'asym).
+> Prof = coup Scan côté fort ; **working-set ON** (n'entraîner que là où gen2-mmto désaccorde de Scan) → candidat **gen3**. A/B généraliste+dilf ensuite (cpx62).
+> **Suite** : itérer les rondes + le couplage WDL↔MMTO (cf **📋 NEXT STEPS** plus bas : 8-10M positions, **d8-d10**, anchor→0 garde-fou-d9).
 
 ## ✅ FRONT ORDERING (2026-07-05) — RENVERSEMENT : `hist_mode=1,hist_pure=1` (prob-pur Scan) BAKE, +20 à +43 Elo movetime
 > **Le port history-prob de Scan PAIE** (revirement vs conclusion préliminaire 0599 sous-résolue). Confirm haut-N `cpx62-0600`
