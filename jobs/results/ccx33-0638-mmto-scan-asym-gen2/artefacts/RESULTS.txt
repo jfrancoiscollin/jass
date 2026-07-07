@@ -26,3 +26,26 @@
   candidat gen3 committé ✓
 
   => next : A/B Elo gen3 vs gen2-mmto (cpx62) — généraliste(signal)+dilf(garde-fou) mt0.2+0.3.
+  RESULTS committe ✓
+=== fin ronde MMTO 2 ===
+  parents conversion (asym Scan) : 57608
+
+=== MMTO gen-siblings --leaf-mode (ancre=gen2-mmto, WS ON margin=10, d5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7197 quiet_used=2687 cap_nodes=0 no_match=0 ws_already_top=4510 pairs=31687 records=63374 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=16506/5629/5721/3831 -> /root/cw-mmto-r2/pairs_0.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7200 quiet_used=2671 cap_nodes=0 no_match=0 ws_already_top=4529 pairs=31712 records=63424 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=17313/5799/5016/3584 -> /root/cw-mmto-r2/pairs_1.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7200 quiet_used=2734 cap_nodes=0 no_match=0 ws_already_top=4466 pairs=33650 records=67300 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=19470/5048/5185/3947 -> /root/cw-mmto-r2/pairs_2.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7199 quiet_used=2549 cap_nodes=0 no_match=0 ws_already_top=4650 pairs=30856 records=61712 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=17050/5033/5366/3407 -> /root/cw-mmto-r2/pairs_3.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7193 quiet_used=2611 cap_nodes=0 no_match=0 ws_already_top=4582 pairs=31649 records=63298 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=17395/5196/5601/3457 -> /root/cw-mmto-r2/pairs_4.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7195 quiet_used=2684 cap_nodes=0 no_match=0 ws_already_top=4511 pairs=32891 records=65782 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=18838/5124/5109/3820 -> /root/cw-mmto-r2/pairs_5.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7199 quiet_used=2632 cap_nodes=0 no_match=0 ws_already_top=4567 pairs=31819 records=63638 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=17938/5452/5065/3364 -> /root/cw-mmto-r2/pairs_6.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=7199 quiet_used=2734 cap_nodes=0 no_match=0 ws_already_top=4465 pairs=33460 records=66920 depth=5 m_min=15 ws_margin=10 margin_mean=0 phase[fin/13-20/21-28/ouv]=18883/5223/5665/3689 -> /root/cw-mmto-r2/pairs_7.jnnw
+  working-set : 21302 parents entraînés ; 36280 déjà d'accord (skippés)
+  MMTO paires (working-set, feuilles-PV) : 257724
+  dump : wrote 515448 × 120 Scan-style extras to /root/cw-mmto-r2/feat
+
+=== rank_finetune ancré gen2-mmto --leaf-pov anchor=0.05 ===
+  pairwise-acc champion (avant fit) = 0.6058 ; cols visitées=155178
+  fit : loss 0.18532->0.18001 ; pairwise-acc 0.6058->0.6477 (delta +0.0419)
+  candidat gen3 committé ✓
+
+  => next : A/B Elo gen3 vs gen2-mmto (cpx62) — généraliste(signal)+dilf(garde-fou) mt0.2+0.3.
