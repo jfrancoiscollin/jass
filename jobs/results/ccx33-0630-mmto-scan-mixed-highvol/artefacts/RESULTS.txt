@@ -1,1 +1,11 @@
 === MMTO v6 mixte (équilibrées + déséquilibrées) — HEAD main 4655c68b8 runner: finalize ccx33-0629-mmto-scanselfplay-ab (completed, rc=0) ===
+  MMTO paires (mixte, feuilles-PV) : 3523716
+  dump : wrote 7047432 × 120 Scan-style extras to /root/cw-mmtomix/feat
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.05 ===
+  [0.05] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+=== rank_finetune MMTO mixte --leaf-pov anchor=0.1 ===
+  [0.1] ABORT (gate) : champion : n_pat=17,006,112 n_ext=120 scale=1000 king=False ; fold=full tempo=True 
+
+  => next : A/B Elo mixmmto_{0.05,0.1} vs gen1. Spectre large : le delta monte-t-il encore vs 0627 (+0.0136) ?
