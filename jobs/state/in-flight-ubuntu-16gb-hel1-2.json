@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0631-mmto-scan-mixed-v2",
+  "script": "jobs/queue/ccx33-0631-mmto-scan-mixed-v2.sh",
+  "pid": 3305625,
+  "started_at": "2026-07-07T03:40:10+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
