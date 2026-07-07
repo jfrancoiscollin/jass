@@ -6,3 +6,4 @@
   [progress] 800/10400 parties, 16696 parents (côté fort), 2414s écoulés, ETA 28968s (~482 min)
   [progress] 800/10400 parties, 16696 parents (côté fort), 3019s écoulés, ETA 36228s (~603 min)
   [progress] 800/10400 parties, 16696 parents (côté fort), 3019s écoulés, ETA 36228s (~603 min)
+  [progress] 1200/10400 parties, 25517 parents (côté fort), 3624s écoulés, ETA 27783s (~463 min)
