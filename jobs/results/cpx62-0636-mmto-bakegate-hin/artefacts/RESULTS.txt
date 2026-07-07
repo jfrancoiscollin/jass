@@ -1,0 +1,4 @@
+=== GATE DE BAKE MMTO cand_it3 (+52) — HEAD 430e86b34 queue 0636 gate bake haut-N (cpx62) — re-mesure d9+mt0.3+survie a gros N : resserrer +34/+46 et lever le doute mt0.3 avant bake ===
+  ✓ build + gen1 + cand_it3 ; référence gen1 d9-vs-Scan = −310/−335 (0605), survie=0.340 (0597)
+
+=== cellules vs Scan (gen1 baseline vs cand_it3) ===
