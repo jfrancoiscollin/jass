@@ -1,2 +1,4 @@
   [cand_final vs gen1 | dilf mt0.2] A=581 B=635 D=304 n=1520 rate_A=0.4822+-0.0225 elo~-12 IC=[0.460,0.505] => neutre
-  [cand_final vs gen1 | dilf mt0.3] A=556 B=689 D=275 n=1520 rate_A=0.4562+-0.0226 elo~-30 IC=[0.434,0.479] => PERD hors-IC
+
+  GATE : généraliste > +52 hors-IC => le VOLUME équilibré paie => scaler + coupler (0631). ~+52 => plateau volume, le gisement est ailleurs.
+         plateau ~+47 => one-shot suffit sur ce corpus => le gisement est dans le VOLUME/qualité data (0630/0631), pas les itérations.
