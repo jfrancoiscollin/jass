@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0635-mmto-bakegate-d9scan",
+  "script": "jobs/queue/cpx62-0635-mmto-bakegate-d9scan.sh",
+  "pid": 129367,
+  "started_at": "2026-07-07T10:05:22+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
