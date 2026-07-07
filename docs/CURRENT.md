@@ -9,7 +9,19 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-06** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-07** (verdicts en tête).
+
+## 🏆 BAKE ÉVAL (2026-07-07) — champion `gen2-mmto` : PREMIER GAIN-ÉVAL de la campagne (après +187 search)
+> **cand_it3 (boucle externe MMTO, `0632`) BAKÉ comme éval champion** : `jobs/results/BAKE-gen2-mmto/artefacts/champion-gen2-mmto.pjtw.gz`
+> (= gen1 + MMTO à-travers-recherche, positions maîtres + prof Scan, boucle externe 3 iters convergée). **Référence future de tous les jobs
+> (self-play/A-B/calibrate) = gen2-mmto ; gen1 archivé (bake réversible).** *(L'éval EMBARQUÉE du binaire reste legacy Cycle-8, non touchée
+> — les jobs passent `--pattern` explicite ; si un binaire nu doit un jour utiliser gen2-mmto, re-embed = follow-up.)*
+> **Preuves (gate `0634`/`0635`, 2 runs indépendants)** : **d9-vs-Scan −310→−276/−295 (+34/+46) = l'éval-PAR-NŒUD a PROGRESSÉ** (la cellule
+> éval-pure figée à travers +187 de search a enfin bougé — pas du style/interaction-search) ; **généraliste +52 hors-IC mt0.3** (croissant avec mt),
+> **dilf neutre** (garde-fou, pas de régression) ; **survie 0.343→0.334 ↓** (prédiction depth-stability confirmée). mt0.3-vs-Scan = bruit petit-N
+> (−14/−25 non-signif., contredit par le +52 jass-vs-jass) ; **`0636` re-mesure haut-N en cours** pour resserrer. **⟹ +187 search + ce gain-éval COMPOSENT.**
+> **Prochaine étape** : re-ancrer la matrice vs Scan sur gen2-mmto (combien du résidu −133/−161 fermé ?), puis prochaine ronde MMTO ancrée gen2-mmto
+> + le couplage WDL↔MMTO (cf **📋 NEXT STEPS** plus bas : 8-10M positions, d8-d10, anchor→0 garde-fou-d9).
 
 ## ✅ FRONT ORDERING (2026-07-05) — RENVERSEMENT : `hist_mode=1,hist_pure=1` (prob-pur Scan) BAKE, +20 à +43 Elo movetime
 > **Le port history-prob de Scan PAIE** (revirement vs conclusion préliminaire 0599 sous-résolue). Confirm haut-N `cpx62-0600`
