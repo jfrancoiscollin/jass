@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0645-couplage-genA-ccx33",
-  "script": "jobs/queue/ccx33-0645-couplage-genA-ccx33.sh",
-  "pid": 3360765,
-  "started_at": "2026-07-08T12:00:53+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
