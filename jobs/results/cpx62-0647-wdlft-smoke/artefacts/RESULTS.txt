@@ -16,3 +16,4 @@
     fit : logloss(data) 0.630187->0.570193 (delta -0.059993) ; mean|Δw|=0.00001 sur 242490 cols
     écrit /root/cw-wdlft-smoke/ft_1.pjtw (header copié du champion, scale=1000, 242490 buckets ajustés)
     charge OK : RESULT 0 18 0
+    charge OK : RESULT 0 18 0
