@@ -1,1 +1,2 @@
   [progress asym] 0/7840 parties, 0 positions, 600s
+  [progress asym] 800/7840 parties, 102522 positions, 22674 prefs, 1204s, ETA ~176 min
