@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0644-couplage-smoke",
+  "script": "jobs/queue/cpx62-0644-couplage-smoke.sh",
+  "pid": 178493,
+  "started_at": "2026-07-08T11:24:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
