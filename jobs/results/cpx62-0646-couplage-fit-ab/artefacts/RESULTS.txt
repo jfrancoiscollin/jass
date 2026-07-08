@@ -5,3 +5,7 @@
   [anchor 0 vs gen2-mmto | generaliste mt] A=274 B=457 D=325 n=1056 rate_A=0.4134+-0.0245 elo~-61 IC=[0.389,0.438] => PERD hors-IC
   [anchor 0p01 vs gen2-mmto | generaliste mt] A=305 B=457 D=294 n=1056 rate_A=0.4280+-0.0252 elo~-50 IC=[0.403,0.453] => PERD hors-IC
   [anchor 0p05 vs gen2-mmto | generaliste mt] A=328 B=429 D=299 n=1056 rate_A=0.4522+-0.0254 elo~-33 IC=[0.427,0.478] => PERD hors-IC
+
+  GATE : un candidat rate_A>0.5 hors-IC => le COUPLAGE WDL<->MMTO AJOUTE sur gen2-mmto (levier orthogonal).
+  => si oui : confirmer le meilleur anchor (mt0.3 + dilf) + gate d9-vs-Scan, puis bake candidat gen3-wdlmmto.
+  => si neutre partout : le fresh-WDL-base n'ajoute pas non plus ; conclusion sur le pipeline linéaire.
