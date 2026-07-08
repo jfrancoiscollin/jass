@@ -1,2 +1,3 @@
   [anchor=0.3] fit : logloss(data) 0.605065->0.552723 (delta -0.052342) ; mean|Δw|=0.00001 sur 484170 cols 
   [base wdlft anchor 0p03 vs gen2-mmto | generaliste mt] A=266 B=493 D=297 n=1056 rate_A=0.3925+-0.0247 elo~-76 IC=[0.368,0.417] => PERD hors-IC
+  [base wdlft anchor 0p1 vs gen2-mmto | generaliste mt] A=276 B=464 D=316 n=1056 rate_A=0.4110+-0.0247 elo~-63 IC=[0.386,0.436] => PERD hors-IC
