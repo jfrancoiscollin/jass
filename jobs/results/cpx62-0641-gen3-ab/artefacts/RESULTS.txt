@@ -3,3 +3,4 @@
   openings généralistes : 66 ; ~1056 games/cellule
 
 === A/B gen3 vs gen2-mmto (généraliste, mt0.2 + mt0.3) ===
+  [gen3 vs gen2-mmto | generaliste mt0.2] A=64 B=876 D=116 n=1056 rate_A=0.1155+-0.0165 elo~-354 IC=[0.099,0.132] => PERD hors-IC
