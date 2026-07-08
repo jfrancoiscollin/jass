@@ -1,0 +1,5 @@
+=== RE-A/B gen3 vs gen2-mmto (généraliste, arch fixé) — HEAD ba8f4885a queue 0641 re-A/B gen3 vs gen2-mmto (cpx62, generaliste, arch fixe) — 0639 avait n=0 (bug harnais dilf/vides) ; verdict la conversion ajoute-t-elle sur gen2-mmto ===
+  generaliste : 66 openings
+  openings généralistes : 66 ; ~1056 games/cellule
+
+=== A/B gen3 vs gen2-mmto (généraliste, mt0.2 + mt0.3) ===
