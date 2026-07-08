@@ -17,3 +17,9 @@
     écrit /root/cw-wdlft-smoke/ft_1.pjtw (header copié du champion, scale=1000, 242490 buckets ajustés)
     charge OK : RESULT 0 18 0
     charge OK : RESULT 0 18 0
+
+================= SMOKE VERDICT =================
+  Si pour chaque anchor : POV gate>0.95 + grad-check OK + logloss DESCEND + charge OK => outil VALIDÉ.
+  z-stats std : si |z/T| raisonnable (~1-6) => T=1 ok ; sinon relever --logit-scale au run complet.
+  mean|Δw| par anchor => calibre la plage du re-couplage (anchor petit = bouge trop ? grand = fige).
+================================================
