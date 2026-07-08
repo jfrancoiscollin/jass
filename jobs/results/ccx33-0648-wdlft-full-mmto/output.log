@@ -1,0 +1,14 @@
+=== PISTE 1 FULL (MMTO-last, anchor=0.1) — HEAD bfad564d7 runner: start ccx33-0648-wdlft-full-mmto ===
+BUILD FAIL
+    357 |     for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+        |                                               ^~~~~~~~~~~~
+  /root/jass/src/scan_eval.cpp:361:50: error: ‘BUCKETS_PER_PATTERN’ is not a member of ‘pattern_jass’
+    361 |             offsets[i] + (idx[i] % pattern_jass::BUCKETS_PER_PATTERN);
+        |                                                  ^~~~~~~~~~~~~~~~~~~
+  /root/jass/src/scan_eval.cpp:395:55: error: ‘NUM_PATTERNS’ is not a member of ‘pattern_jass’
+    395 |             for (std::size_t p = 0; p < pattern_jass::NUM_PATTERNS; ++p) {
+        |                                                       ^~~~~~~~~~~~
+  gmake[3]: *** [CMakeFiles/jass_lib.dir/build.make:202: CMakeFiles/jass_lib.dir/src/scan_eval.cpp.o] Error 1
+  gmake[2]: *** [CMakeFiles/Makefile2:87: CMakeFiles/jass_lib.dir/all] Error 2
+  gmake[1]: *** [CMakeFiles/Makefile2:120: CMakeFiles/jass.dir/rule] Error 2
+  gmake: *** [Makefile:147: jass] Error 2
