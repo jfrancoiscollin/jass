@@ -1,0 +1,22 @@
+=== RONDE MMTO conv/gen2 (refit rapide) — HEAD 4faec8604 0642 progress gen (1200/9600) ===
+  ✓ build + corpus 0627 conversion parents=57608 ; ancre=gen2-mmto ; WS_margin=-1000000000 (ON)
+
+=== MMTO gen-siblings --leaf-mode (ancre gen2-mmto, WS ON, d5) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=3599 quiet_used=3599 cap_nodes=0 no_match=0 ws_already_top=0 pairs=39968 records=79936 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=19008/7449/7257/6254 -> /root/cw-conv-wsoff/pairs_9.jnnw
+  MMTO pairs : 651160
+  MMTO paires (WS, feuilles-PV gen2) : 651160
+  dump : wrote 1302320 × 120 Scan-style extras to /root/cw-conv-wsoff/feat
+
+=== rank_finetune ancre gen2-mmto --leaf-pov anchor=0.05 ===
+  [0.05] pairwise-acc champion (avant fit) = 0.6990 ; cols visitées=224406
+  [0.05] fit : loss 0.17145->0.17002 ; pairwise-acc 0.6990->0.7011 (delta +0.0021)
+  generaliste : 66 openings
+
+=== A/B cand(anchor0.05) vs gen2-mmto — généraliste=signal + dilf=garde-fou ===
+  [conv-wsoff a0.05 vs gen2-mmto | gen mt0.2] A=368 B=418 D=270 n=1056 rate_A=0.4763+-0.0260 elo~-16 IC=[0.450,0.502] => neutre
+  [conv-wsoff a0.05 vs gen2-mmto | gen mt0.3] A=366 B=385 D=305 n=1056 rate_A=0.4910+-0.0254 elo~-6 IC=[0.466,0.516] => neutre
+  [conv-wsoff a0.05 vs gen2-mmto | dilf mt0.3] A=623 B=610 D=287 n=1520 rate_A=0.5043+-0.0226 elo~+3 IC=[0.482,0.527] => neutre
+
+  GATE : généraliste > 0 hors-IC => la conversion-Scan ajoute sur gen2-mmto => on cumule (0638 gros corpus confirmera/amplifiera).
+  RESULTS committe ✓
+=== fin ronde conv/gen2 ===
