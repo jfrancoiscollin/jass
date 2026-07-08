@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0644-couplage-smoke",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-08T11:24:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 178493
+  "ended_at": "2026-07-08T11:29:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
