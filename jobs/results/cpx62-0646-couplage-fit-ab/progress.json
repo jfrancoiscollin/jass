@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0646-couplage-fit-ab",
-  "snapshot_at": "2026-07-08T15:24:37+00:00",
+  "snapshot_at": "2026-07-08T15:29:39+00:00",
   "started_at": "2026-07-08T14:53:06+00:00",
-  "elapsed_seconds": 1891,
+  "elapsed_seconds": 2193,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 186981       1       31:31  0.0  0.0 bash\n 186983  186981       31:31  0.0  0.0 bash\n 187767  186983       22:22  136 27.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 186981       1       36:32  0.0  0.0 bash\n 186983  186981       36:32  0.0  0.0 bash\n 187767  186983       27:23  136 22.1 python3\n"
 }
