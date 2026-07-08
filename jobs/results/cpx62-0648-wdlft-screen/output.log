@@ -1,0 +1,21 @@
+=== PISTE 1 SCREEN wdl_finetune ancré gen2-mmto — HEAD bfad564d7 runner: start ccx33-0648-wdlft-full-mmto ===
+3039097
+  ✓ build+geom(NP=32)+gen2 ; WDL corpus mergé = 3039097
+
+=== fit wdl_finetune ancré gen2-mmto, sweep anchor {0.03 0.1 0.3} (chunk 1000000, iter 25) ===
+  [anchor=0.03] fit : logloss(data) 0.605065->0.538650 (delta -0.066415) ; mean|Δw|=0.00003 sur 484170 cols 
+  [anchor=0.1] fit : logloss(data) 0.605065->0.546217 (delta -0.058847) ; mean|Δw|=0.00001 sur 484170 cols 
+  [anchor=0.3] fit : logloss(data) 0.605065->0.552723 (delta -0.052342) ; mean|Δw|=0.00001 sur 484170 cols 
+  generaliste : 66 openings
+  openings généralistes ≥38p : 66
+
+=== A/B bases wdlft vs gen2-mmto (généraliste mt0.2) ===
+  [base wdlft anchor 0p03 vs gen2-mmto | generaliste mt] A=266 B=493 D=297 n=1056 rate_A=0.3925+-0.0247 elo~-76 IC=[0.368,0.417] => PERD hors-IC
+  [base wdlft anchor 0p1 vs gen2-mmto | generaliste mt] A=276 B=464 D=316 n=1056 rate_A=0.4110+-0.0247 elo~-63 IC=[0.386,0.436] => PERD hors-IC
+  [base wdlft anchor 0p3 vs gen2-mmto | generaliste mt] A=335 B=444 D=277 n=1056 rate_A=0.4484+-0.0257 elo~-36 IC=[0.423,0.474] => PERD hors-IC
+
+  GATE : une base wdlft rate_A>0.5 hors-IC => la calibration WDL ancrée gen2-mmto AIDE (sans MMTO).
+  => re-MMTO du meilleur anchor (MMTO last) + confirm mt0.3+dilf + d9-vs-Scan puis bake. (ccx33-0648 fait déjà le full anchor=0.1.)
+  => neutre/négatif partout => la calibration WDL n'ajoute pas ; piste 1 morte, conclure sur le linéaire.
+  RESULTS committé ✓
+=== fin screen piste 1 ===
