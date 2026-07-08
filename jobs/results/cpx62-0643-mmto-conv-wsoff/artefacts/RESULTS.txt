@@ -1,1 +1,4 @@
   [conv-wsoff a0.05 vs gen2-mmto | gen mt0.3] A=366 B=385 D=305 n=1056 rate_A=0.4910+-0.0254 elo~-6 IC=[0.466,0.516] => neutre
+  [conv-wsoff a0.05 vs gen2-mmto | dilf mt0.3] A=623 B=610 D=287 n=1520 rate_A=0.5043+-0.0226 elo~+3 IC=[0.482,0.527] => neutre
+
+  GATE : généraliste > 0 hors-IC => la conversion-Scan ajoute sur gen2-mmto => on cumule (0638 gros corpus confirmera/amplifiera).
