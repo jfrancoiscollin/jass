@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0645-couplage-genA-cpx62",
+  "script": "jobs/queue/cpx62-0645-couplage-genA-cpx62.sh",
+  "pid": 180103,
+  "started_at": "2026-07-08T11:59:37+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
