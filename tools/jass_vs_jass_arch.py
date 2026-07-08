@@ -61,7 +61,7 @@ def main(argv):
                    search_params=args.search_params_b)
     referee = Referee(args.jass_a)   # play_game needs a Referee (apply_move/legality), NOT a JassEngine
     if args.openings_file:
-        openings = [ln.split("#", 1)[0].strip() for ln in open(args.openings_file)]
+        openings = [o for o in (ln.split("#", 1)[0].strip() for ln in open(args.openings_file)) if o]  # filtre les vides (lignes # / vides) -> sinon set_position_fen("") hang
         openings = [o for o in openings if o]
     else:
         openings = opening_pool_via_jass(args.jass_a)
