@@ -1,2 +1,3 @@
 === RONDE MMTO VOLUME (ancre gen2-mmto, Scan asym conversion) — HEAD da459ffff runner: heartbeat cpx62-0641-gen3-ab ===
   [progress] 0/9600 parties, 0 parents, 600s
+  [progress] 400/9600 parties, 12042 parents (côté fort), 1205s écoulés, ETA 27715s (~461 min)
