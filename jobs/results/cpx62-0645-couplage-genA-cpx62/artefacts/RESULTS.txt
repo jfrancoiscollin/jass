@@ -12,3 +12,8 @@
   [progress asym] 6400/7840 parties, 809981 positions, 173473 prefs, 7248s, ETA ~27 min
   [progress asym] 7200/7840 parties, 913771 positions, 195972 prefs, 7852s, ETA ~11 min
   [progress asym] 7200/7840 parties, 913771 positions, 195972 prefs, 8456s, ETA ~12 min
+  WDL ASYM positions = 995056 (8483s)
+  WDL corpus cpx62 (BAL+ASYM) = 2027927 positions
+  prefs ASYM parents cpx62 = 214352
+
+  => cpx62 gen fait : WDL=2027927 prefs=214352 committés. Attend ccx33 (0645-ccx33) puis fit/A-B.
