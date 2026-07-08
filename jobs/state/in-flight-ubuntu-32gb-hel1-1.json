@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0648-wdlft-screen",
+  "script": "jobs/queue/cpx62-0648-wdlft-screen.sh",
+  "pid": 199747,
+  "started_at": "2026-07-08T20:16:40+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
