@@ -126,6 +126,7 @@
 > NB gremlin runner : RESULTS multi-cellules tronqué → cellules lues d'`output.log`.
 >
 > ## 📋 NEXT STEPS À FAIRE — ne pas oublier (roadmap post-bake MMTO)
+> **⭐⭐ PLAN DEMAIN (JFC 2026-07-08) — SI 0648 FLAT/NÉG, 2 pistes // : (cpx62) CHAÎNE ITÉRATIVE LONGUE façon-Scan (anchor GLISSANT au champion(t) + pilote qualitativement meilleur chaque tour = distribution mobile, la condition jamais testée ; gate compose-vs-sature 5 tours) — spec complète : [`docs/MEMO_CHAINE_ITERATIVE_LONGUE.md`](MEMO_CHAINE_ITERATIVE_LONGUE.md) (sur develop) ; (ccx33) DOE SEARCH sur gen2-mmto (convertir gain d9 +34/+46 → force movetime). Déclencheur = verdict 0648.**
 > **⭐ PIPELINE GEN MMTO : CHUNKÉ + FITS SÉQUENTIELS PAR PALIERS (idée JFC 2026-07-07)** — au lieu d'un gros bloc gen (8h) puis UN fit (OOM) :
 > **(A) courbe de volume** sur un corpus fini (ex. `0640` sur les 218k de 0638) = fits séquentiels sur préfixes cumulatifs {50k,100k,150k,200k},
 > chacun ancré champion + candidat + delta → répond « le volume paie-t-il ? » (delta monte ou plateaue) mémoire-safe (maxpp bas, préfixe borné), sans OOM.
