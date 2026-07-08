@@ -12,3 +12,4 @@
   [progress asym] 2850/3920 parties, 359010 positions, 79048 prefs, 6643s, ETA ~41 min
   [progress asym] 3200/3920 parties, 404016 positions, 88030 prefs, 7247s, ETA ~27 min
   [progress asym] 3500/3920 parties, 442477 positions, 96567 prefs, 7851s, ETA ~15 min
+  [progress asym] 3600/3920 parties, 455553 positions, 99505 prefs, 8455s, ETA ~12 min
