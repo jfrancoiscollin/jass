@@ -2,3 +2,4 @@
   [progress asym] 800/7840 parties, 102522 positions, 22674 prefs, 1204s, ETA ~176 min
   [progress asym] 1600/7840 parties, 203016 positions, 43979 prefs, 1808s, ETA ~117 min
   [progress asym] 1600/7840 parties, 203016 positions, 43979 prefs, 2412s, ETA ~156 min
+  [progress asym] 2400/7840 parties, 303639 positions, 65993 prefs, 3023s, ETA ~114 min
