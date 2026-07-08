@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0647-wdlft-smoke",
+  "snapshot_at": "2026-07-08T18:17:23+00:00",
+  "started_at": "2026-07-08T18:12:07+00:00",
+  "elapsed_seconds": 316,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 196356       1       05:15  0.0  0.0 bash\n 196358  196356       05:15  0.0  0.0 bash\n 197384  196358       00:19  1.1  0.0 python3\n 197385  197384       00:19 50.1  0.4 jass\n 197387  197384       00:19 48.6  0.4 jass\n 197389  197384       00:19  0.2  0.0 jass\n"
+}
