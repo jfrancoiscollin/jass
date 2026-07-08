@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0642-mmto-scan-conv-vol",
-  "script": "jobs/queue/ccx33-0642-mmto-scan-conv-vol.sh",
-  "pid": 3352912,
-  "started_at": "2026-07-08T05:50:22+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
