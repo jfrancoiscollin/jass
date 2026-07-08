@@ -17,6 +17,7 @@
 - MMTO gen-siblings `--leaf-mode` + fit (~50-100k parents) ≈ **5-15 min**.
 - **⚠️ Self-play Scan — YIELD ré-ancré (0638, ma sur-estimation ×3)** : asym-conversion mt0.3/0.03 ≈ **~20 parents/partie** (PAS 5,7), ~45 s/partie effectif (8 shards) → **10400 parties ≈ ~8h, ~200k+ parents** ; équilibré fort-vs-fort ≈ **~116 parents/partie** (0630). **DIMENSIONNER PERG PAR LE YIELD** : parties = parents_cible ÷ (parents/partie) (ex. 60k parents asym ≈ **~3000 parties ≈ ~2h**, pas 10400). `scan_selfplay_gen` écrit les pref **SEULEMENT en fin de shard** (aucun checkpoint, aucun kill propre mid-run) → **bien sizer PERG AVANT de lancer**.
 - ✅ `rank_finetune --chunk N` = **fit STREAMÉ (gradient EXACT chunké, byte-identique au full-batch, vérifié)** → **plus d'OOM** quel que soit le volume (jusqu'aux millions de paires). L'ancien OOM (~1.5M paires ccx33) est levé. (Full-batch `--chunk 0` reste le défaut pour les petits corpus.)
+- ⚠️ **BUG ENGINE connu (2026-07-07)** : `go movetime` OVERSHOOT 2-3.5× en **endgame-dames** (position triviale à depth-fixe mais l'itératif explose ; PAS la granularité du node-check, testé 0x3FF→0xFF sans effet — cause exacte = TM-skip/quiescence/aspiration en endgame, à creuser). Contourné : harnais A/B durci (catch timeout → nulle). Vrai fix search.cpp = à faire (délicat, = bake search).
 - Les jobs `calibrate_vs_scan` / A/B ne committent le RESULTS **qu'à la fin** (pas de partiel fiable) ; cellules multi-parts souvent tronquées dans RESULTS → **lire `output.log`** au finalize.
 
 ### 2. 📊 PROGRESS AU FIL DE L'EAU (JFC — 2026-07-07)
