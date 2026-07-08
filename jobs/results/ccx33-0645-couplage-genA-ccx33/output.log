@@ -1,0 +1,30 @@
+=== COUPLAGE Phase-A GEN ccx33 (⅓) — HEAD 0d60b1767 runner: start cpx62-0645-couplage-genA-cpx62 ===
+  ✓ build+Scan+geom (NP=32) ; seeds=2000000 ; NSH=8 PERG=490 (BAL base=32, ASYM base=40, /48)
+
+=== BAL équilibré d10 jitter2 (prefs OFF) : 490×8 ===
+  WDL BAL positions = 515284 (215s, 65333 parties/h)
+
+=== ASYM mt0.3/0.03 (WDL + prefs) : 490×8 ===
+  [progress asym] 0/3920 parties, 0 positions, 600s
+  [progress asym] 400/3920 parties, 50506 positions, 11062 prefs, 1204s, ETA ~176 min
+  [progress asym] 800/3920 parties, 100854 positions, 22090 prefs, 1809s, ETA ~117 min
+  [progress asym] 800/3920 parties, 100854 positions, 22090 prefs, 2413s, ETA ~156 min
+  [progress asym] 1200/3920 parties, 151947 positions, 33165 prefs, 3017s, ETA ~113 min
+  [progress asym] 1600/3920 parties, 201521 positions, 43649 prefs, 3622s, ETA ~87 min
+  [progress asym] 1700/3920 parties, 214109 positions, 46241 prefs, 4226s, ETA ~91 min
+  [progress asym] 2000/3920 parties, 252216 positions, 54140 prefs, 4830s, ETA ~77 min
+  [progress asym] 2400/3920 parties, 302594 positions, 64765 prefs, 5434s, ETA ~57 min
+  [progress asym] 2700/3920 parties, 340214 positions, 74253 prefs, 6039s, ETA ~45 min
+  [progress asym] 2850/3920 parties, 359010 positions, 79048 prefs, 6643s, ETA ~41 min
+  [progress asym] 3200/3920 parties, 404016 positions, 88030 prefs, 7247s, ETA ~27 min
+  [progress asym] 3500/3920 parties, 442477 positions, 96567 prefs, 7851s, ETA ~15 min
+  [progress asym] 3600/3920 parties, 455553 positions, 99505 prefs, 8455s, ETA ~12 min
+  WDL ASYM positions = 495886 (8581s)
+1011170
+  WDL corpus ccx33 (BAL+ASYM) = 1011170 positions
+109312
+  prefs ASYM parents ccx33 = 109312
+
+  => ccx33 gen fait : WDL=1011170 prefs=109312 committés. Attend cpx62 (0645-cpx62) puis fit/A-B.
+  RESULTS committé ✓
+=== fin gen ccx33 ===
