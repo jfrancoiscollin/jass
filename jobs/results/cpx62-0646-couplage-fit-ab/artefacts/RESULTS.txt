@@ -3,3 +3,4 @@
   wrote /root/cw-cpl-fit/wdlbase.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 387.6s]
   [anchor=0.05] pairwise-acc champion (avant fit) = 0.6474 ; cols visitées=362476 fit : loss 0.18683->0.17482 ; pairwise-acc 0.6474->0.6806 (delta +0.0332) 
   [anchor 0 vs gen2-mmto | generaliste mt] A=274 B=457 D=325 n=1056 rate_A=0.4134+-0.0245 elo~-61 IC=[0.389,0.438] => PERD hors-IC
+  [anchor 0p01 vs gen2-mmto | generaliste mt] A=305 B=457 D=294 n=1056 rate_A=0.4280+-0.0252 elo~-50 IC=[0.403,0.453] => PERD hors-IC
