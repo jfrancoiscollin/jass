@@ -1,0 +1,3 @@
+    target=WDL  win=719298 draw=1594159 loss=725640 (52.5% draws)  (6.7s)
+    train_loss=0.549145  iters=25  (380.4s)
+  wrote /root/cw-cpl-fit/wdlbase.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 387.6s]
