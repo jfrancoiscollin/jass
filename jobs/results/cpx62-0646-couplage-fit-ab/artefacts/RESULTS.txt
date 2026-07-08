@@ -1,3 +1,4 @@
     target=WDL  win=719298 draw=1594159 loss=725640 (52.5% draws)  (6.7s)
     train_loss=0.549145  iters=25  (380.4s)
   wrote /root/cw-cpl-fit/wdlbase.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 387.6s]
+  [anchor=0.05] pairwise-acc champion (avant fit) = 0.6474 ; cols visitées=362476 fit : loss 0.18683->0.17482 ; pairwise-acc 0.6474->0.6806 (delta +0.0332) 
