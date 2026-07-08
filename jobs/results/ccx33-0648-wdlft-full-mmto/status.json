@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0648-wdlft-full-mmto",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 6,
   "started_at": "2026-07-08T20:16:05+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3374538
+  "ended_at": "2026-07-08T22:04:56+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
