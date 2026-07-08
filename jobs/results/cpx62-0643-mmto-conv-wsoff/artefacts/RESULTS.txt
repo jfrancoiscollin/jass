@@ -1,0 +1,1 @@
+  [conv-wsoff a0.05 vs gen2-mmto | gen mt0.3] A=366 B=385 D=305 n=1056 rate_A=0.4910+-0.0254 elo~-6 IC=[0.466,0.516] => neutre
