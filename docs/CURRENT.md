@@ -9,7 +9,7 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-07** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-08** (verdicts en tête).
 
 ## 🏆 BAKE ÉVAL (2026-07-07) — champion `gen2-mmto` : PREMIER GAIN-ÉVAL de la campagne (après +187 search)
 > **cand_it3 (boucle externe MMTO, `0632`) BAKÉ comme éval champion** : `jobs/results/BAKE-gen2-mmto/artefacts/champion-gen2-mmto.pjtw.gz`
@@ -19,14 +19,18 @@
 > **Preuves (gate `0634`/`0635`, 2 runs indépendants)** : **d9-vs-Scan −310→−276/−295 (+34/+46) = l'éval-PAR-NŒUD a PROGRESSÉ** (la cellule
 > éval-pure figée à travers +187 de search a enfin bougé — pas du style/interaction-search) ; **généraliste +52 hors-IC mt0.3** (croissant avec mt),
 > **dilf neutre** (garde-fou, pas de régression) ; **survie 0.343→0.334 ↓** (prédiction depth-stability confirmée). mt0.3-vs-Scan = bruit petit-N
-> (−14/−25 non-signif., contredit par le +52 jass-vs-jass) ; **`0636` re-mesure haut-N en cours** pour resserrer. **⟹ +187 search + ce gain-éval COMPOSENT.**
+> (−14/−25 non-signif., contredit par le +52 jass-vs-jass) ; `0636` (re-mesure haut-N) était redondant → **TUÉ** (kill GitOps). **⟹ +187 search + ce gain-éval COMPOSENT.**
 > **✅ RÉFÉRENCE RE-ANCRÉE sur gen2-mmto (`0637`, vs Scan)** : **d9 −310→−276 (+34 fermé, éval-pure)** ; mt0.3 −161→**−155** (+6) ; mt1.0 −133→**−128** (+5) ;
 > NPS −134→**−129** (+5). ⟹ **l'éval-par-nœud a nettement progressé (+34 d9)** mais le gap-Scan à MOVETIME ne se ferme que de **+5-6** (le search profond
 > dilue déjà l'éval-marge, cf pré-fit 0.686) → **résidu vs Scan encore gros (−128 à −155)**, il faudra plusieurs rondes. **C'est la nouvelle baseline de la campagne.**
-> **🔄 RONDE MMTO #2 EN COURS (`0638`, ccx33)** : ancrée gen2-mmto, sur **self-play Scan ASYMÉTRIQUE PUR (conversion)** — les maîtres plafonnent/pauvres,
-> l'équilibré-Scan régresse (0633), le pur-asym évite le bug de starvation du mix (⚠️ **NON résolu** : équilibré sur-produit ~116 parents/partie → étouffe l'asym).
-> Prof = coup Scan côté fort ; **working-set ON** (n'entraîner que là où gen2-mmto désaccorde de Scan) → candidat **gen3**. A/B généraliste+dilf ensuite (cpx62).
-> **Suite** : itérer les rondes + le couplage WDL↔MMTO (cf **📋 NEXT STEPS** plus bas : 8-10M positions, **d8-d10**, anchor→0 garde-fou-d9).
+> **❌ RONDE MMTO #2 (`0638`→`0641`) : gen3 (conversion Scan + WORKING-SET ON) = −354/−341 Elo vs gen2-mmto** — WS-ON DÉCALIBRE (le +0.042
+> pairwise était trompeur, cf leçon rank-loss statique −847). **⟹ WS-OFF obligatoire** (0629 conversion WS-OFF = +50 ; les cas d'accord régularisent).
+> `0642` (WS-ON à l'échelle) TUÉ. **`0643` (recette CORRIGÉE : corpus 0638 re-fit WS-OFF ancré gen2, fit streamé) en test** — tranche « WS-OFF sauve /
+> conversion mauvais teacher ». **gen2-mmto reste champion.** Plafond volume seed-pool corpus-mix2M (min-pieces 40 → ~57k ; min-pieces 32 débloque).
+> **⚙️ OUTILLAGE bâti cette session** : `rank_finetune --chunk` = **fit streamé EXACT** (byte-identique full-batch, plus d'OOM, jusqu'aux millions) ;
+> **kill GitOps** (`jobs/state/kill-in-flight-<host>`) ; harnais A/B durci (arch filtre ouvertures vides + `play_game` catch timeout→nulle) ; pipeline
+> **chunké + fits par paliers** (courbe de volume). ⚠️ **bug engine** : `go movetime` overshoot 2-3.5× en endgame-dames (contourné harnais ; vrai fix search = à faire).
+> **Suite** : recette WS-OFF confirmée (0643) → itérer + couplage WDL↔MMTO (cf **📋 NEXT STEPS** : 8-10M, **d8-d10**, anchor→0 garde-fou-d9, **fit streamé**).
 
 ## ✅ FRONT ORDERING (2026-07-05) — RENVERSEMENT : `hist_mode=1,hist_pure=1` (prob-pur Scan) BAKE, +20 à +43 Elo movetime
 > **Le port history-prob de Scan PAIE** (revirement vs conclusion préliminaire 0599 sous-résolue). Confirm haut-N `cpx62-0600`
@@ -124,12 +128,7 @@
 > **(B) pipeline chunké producteur-consommateur** pour les FUTURES gens : gen en chunks ~50k (plusieurs `scan_selfplay_gen` courts, chacun committe son chunk)
 > + boucle de fit qui consomme chaque chunk dès committé → **premier candidat à ~2h au lieu de 8h**, courbe en direct, jamais d'OOM final, gen/fit se chevauchent
 > (ccx33 génère pendant que cpx62 fitte). ⚠️ `scan_selfplay_gen` écrit les parents en FIN de shard (pas de checkpoint) → chunker = plusieurs appels courts, pas un long.
-> **⚠️ FINDING (2026-07-08) — WORKING-SET ON = DESTRUCTEUR** : ronde MMTO conversion ancrée gen2-mmto AVEC working-set ON (n'entraîner que
-> le sous-ensemble de désaccord) → **gen3 = −354/−341 Elo vs gen2-mmto** (`0641`, gagne 12%). Le +0.042 pairwise était TROMPEUR (comme
-> le rank-loss statique −847). Cause : sans les cas d'ACCORD (régularisateurs), le fit décalibre. **⟹ WS-OFF obligatoire** (0629 conversion
-> WS-OFF = +50). `0642` (WS-ON à l'échelle) TUÉ. `0643` (corpus 0638 re-fit **WS-OFF** ancré gen2, streamé) en test. **gen2-mmto reste champion.**
-> Leçon re-confirmée : le delta pairwise ≠ Elo ; SEUL l'A/B juge.
->
+> *(FINDING WS-ON destructeur gen3=−354 : cf bloc BAKE ÉVAL en tête. WS-OFF obligatoire pour toutes les rondes.)*
 > **0. Hygiène post-bake** : re-ancrer la matrice vs Scan (d9/mt0.3/mt1.0/NPS) avec le nouveau champion ; re-baseline tous les A/B sur lui.
 > **1. Prochaine ronde MMTO** ancrée au NOUVEAU champion (re-itérer le même corpus a déjà convergé → besoin de data FRAÎCHE) : plus de maîtres,
 > et/ou **prof Scan sur positions de CONVERSION + filtre working-set ACTIVÉ** (n'entraîner que là où le champion désaccorde). Le search décide la voie :
