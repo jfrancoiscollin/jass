@@ -1,1 +1,2 @@
 === COUPLAGE Phase-A GEN ccx33 (⅓) — HEAD 0d60b1767 runner: start cpx62-0645-couplage-genA-cpx62 ===
+  [progress asym] 0/3920 parties, 0 positions, 600s
