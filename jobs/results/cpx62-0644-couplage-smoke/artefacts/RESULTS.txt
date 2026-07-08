@@ -1,0 +1,29 @@
+=== SMOKE COUPLAGE WDL<->MMTO — HEAD 81f0d0223 queue 0644 SMOKE couplage WDL<->MMTO (cpx62) : valide tous les joints tiny avant Phase-A (gen BAL+ASYM -> merge -> fit WDL -> MMTO ancre wdlbase -> charge) ===
+  ✓ build+Scan+geom (NP=32) ; seeds=2000000
+
+=== (1) gen BAL équilibré d10 jitter2 (prefs OFF) : 8×16 ===
+  WDL BAL positions = 16739
+
+=== (2) gen ASYM mt0.3/0.03 (WDL + prefs) : 8×16 ===
+  WDL ASYM positions = 16218
+  (3) WDL corpus mergé (BAL+ASYM) = 32957 positions
+  prefs ASYM parents (côté fort) = 3480
+
+=== (4) fit WDL frais : train_stream --target wdl --color-fold --tempo-stage --l2 3e-5 (chunk 200000) ===
+  L-BFGS  loss=logistic  l2=3e-05  max_iter=6  chunk=200,000  (~6 disk passes over data+feat)
+    train_loss=0.627415  iters=6  (1.2s)
+  wrote /root/cw-couplage-smoke/wdlbase.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 1.8s]
+  wdlbase.pjtw = 136049876 bytes
+
+=== (5) MMTO gen-siblings --leaf-mode WS-OFF (ancre=wdlbase, d5) + rank_finetune anchor=0 ===
+  MMTO paires (feuilles-PV, WS-OFF) = 39732
+  pairwise-acc champion (avant fit) = 0.6540 ; cols visitées=68916
+  fit : loss 0.18675->0.15362 ; pairwise-acc 0.6540->0.7457 (delta +0.0917)
+
+=== (6) round-trip : jass charge wdlbase + gen3 (mini A/B 1 paire) ===
+  A/B charge OK : RESULT 0 18 0
+
+================= SMOKE VERDICT =================
+  WDL corpus=32957 (BAL 16739 + ASYM 16218) | prefs parents=3480 | MMTO paires=39732
+  Tous les joints traversés (gen BAL+ASYM -> merge -> fit WDL -> MMTO -> charge). Prêt pour Phase-A si counts>0 & pas de FAIL.
+================================================
