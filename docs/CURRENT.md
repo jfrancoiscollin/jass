@@ -124,6 +124,12 @@
 > **(B) pipeline chunké producteur-consommateur** pour les FUTURES gens : gen en chunks ~50k (plusieurs `scan_selfplay_gen` courts, chacun committe son chunk)
 > + boucle de fit qui consomme chaque chunk dès committé → **premier candidat à ~2h au lieu de 8h**, courbe en direct, jamais d'OOM final, gen/fit se chevauchent
 > (ccx33 génère pendant que cpx62 fitte). ⚠️ `scan_selfplay_gen` écrit les parents en FIN de shard (pas de checkpoint) → chunker = plusieurs appels courts, pas un long.
+> **⚠️ FINDING (2026-07-08) — WORKING-SET ON = DESTRUCTEUR** : ronde MMTO conversion ancrée gen2-mmto AVEC working-set ON (n'entraîner que
+> le sous-ensemble de désaccord) → **gen3 = −354/−341 Elo vs gen2-mmto** (`0641`, gagne 12%). Le +0.042 pairwise était TROMPEUR (comme
+> le rank-loss statique −847). Cause : sans les cas d'ACCORD (régularisateurs), le fit décalibre. **⟹ WS-OFF obligatoire** (0629 conversion
+> WS-OFF = +50). `0642` (WS-ON à l'échelle) TUÉ. `0643` (corpus 0638 re-fit **WS-OFF** ancré gen2, streamé) en test. **gen2-mmto reste champion.**
+> Leçon re-confirmée : le delta pairwise ≠ Elo ; SEUL l'A/B juge.
+>
 > **0. Hygiène post-bake** : re-ancrer la matrice vs Scan (d9/mt0.3/mt1.0/NPS) avec le nouveau champion ; re-baseline tous les A/B sur lui.
 > **1. Prochaine ronde MMTO** ancrée au NOUVEAU champion (re-itérer le même corpus a déjà convergé → besoin de data FRAÎCHE) : plus de maîtres,
 > et/ou **prof Scan sur positions de CONVERSION + filtre working-set ACTIVÉ** (n'entraîner que là où le champion désaccorde). Le search décide la voie :
