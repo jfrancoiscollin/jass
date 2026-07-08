@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0646-couplage-fit-ab",
+  "script": "jobs/queue/cpx62-0646-couplage-fit-ab.sh",
+  "pid": 186981,
+  "started_at": "2026-07-08T14:53:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
