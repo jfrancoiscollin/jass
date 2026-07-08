@@ -1,0 +1,34 @@
+=== SMOKE wdl_finetune (piste 1) — HEAD 9e07ce311 runner: finalize cpx62-0646-couplage-fit-ab (completed, rc=0) ===
+200000
+  ✓ build+geom(NP=32)+gen2 ; slice WDL = 200000 positions
+
+=== sweep anchor {0.1 1 10} : POV gate + z-stats + logloss + jass-charge ===
+  [anchor=0.1]
+    [z-stats champion] z0/T : min=-6.14 max=+5.69 std=2.03  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9992 (n=40)
+    buckets : 242490 visités ; 242490 gardés (>= 1) [STREAMÉ chunk=200000]
+    fit : logloss(data) 0.630187->0.559304 (delta -0.070882) ; mean|Δw|=0.00004 sur 242490 cols
+    écrit /root/cw-wdlft-smoke/ft_0p1.pjtw (header copié du champion, scale=1000, 242490 buckets ajustés)
+    charge OK : RESULT 0 18 0
+  [anchor=1]
+    [z-stats champion] z0/T : min=-6.14 max=+5.69 std=2.03  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9992 (n=40)
+    buckets : 242490 visités ; 242490 gardés (>= 1) [STREAMÉ chunk=200000]
+    fit : logloss(data) 0.630187->0.570193 (delta -0.059993) ; mean|Δw|=0.00001 sur 242490 cols
+    écrit /root/cw-wdlft-smoke/ft_1.pjtw (header copié du champion, scale=1000, 242490 buckets ajustés)
+    charge OK : RESULT 0 18 0
+  [anchor=10]
+    [z-stats champion] z0/T : min=-6.14 max=+5.69 std=2.03  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9992 (n=40)
+    buckets : 242490 visités ; 242490 gardés (>= 1) [STREAMÉ chunk=200000]
+    fit : logloss(data) 0.630187->0.600298 (delta -0.029889) ; mean|Δw|=0.00000 sur 242490 cols
+    écrit /root/cw-wdlft-smoke/ft_10.pjtw (header copié du champion, scale=1000, 242490 buckets ajustés)
+    charge OK : RESULT 0 18 0
+
+================= SMOKE VERDICT =================
+  Si pour chaque anchor : POV gate>0.95 + grad-check OK + logloss DESCEND + charge OK => outil VALIDÉ.
+  z-stats std : si |z/T| raisonnable (~1-6) => T=1 ok ; sinon relever --logit-scale au run complet.
+  mean|Δw| par anchor => calibre la plage du re-couplage (anchor petit = bouge trop ? grand = fige).
+================================================
+  RESULTS committé ✓
+=== fin smoke wdlft ===
