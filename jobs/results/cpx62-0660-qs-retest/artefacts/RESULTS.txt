@@ -1,0 +1,6 @@
+=== RE-TEST QUIESCENCE gen2-mmto (profondeur fixe d9) — HEAD 254b1786b queue 0660 re-test quiescence gen2-mmto (cpx62) : d9-vs-Scan default/qs6/qsmax (le gap par-noeud se ferme-t-il ?) + self-play A/B qs fort — profondeur fixe ===
+  generaliste : 36 openings
+  openings ≥38p : 36 ; build+Scan+gen2 ✓
+
+=== (1) d9-vs-Scan : gap gen2-mmto default vs qs6 vs qsmax (le levier direct) ===
+  [d9-vs-Scan | default                                                      ] Jass=32 Scan=480 D=64 n=576 rate=0.111+-0.041 elo~-361
