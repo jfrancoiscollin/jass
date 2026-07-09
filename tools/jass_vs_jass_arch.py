@@ -74,9 +74,17 @@ def main(argv):
     t0 = time.time()
     for opening, a_is_white in specs:
         white, black = (a, b) if a_is_white else (b, a)
-        r = play_game(white, black, referee, opening,
-                      depth=(None if args.movetime else args.depth),
-                      movetime=args.movetime, max_plies=args.max_plies)
+        try:
+            r = play_game(white, black, referee, opening,
+                          depth=(None if args.movetime else args.depth),
+                          movetime=args.movetime, max_plies=args.max_plies)
+        except Exception as exc:  # noqa: BLE001
+            # ROBUSTESSE : un coup qui timeout (overshoot movetime-endgame) ou un moteur qui
+            # deraille NE DOIT PAS crasher le shard (= perte de toutes les games restantes).
+            # Compter nulle + continuer. (Sinon un seul mauvais game fait chuter n / peut hang.)
+            print(f"  game skipped ({exc})", file=sys.stderr, flush=True)
+            draws += 1
+            continue
         if r.outcome == "D":
             draws += 1
         elif (r.outcome == "W" and a_is_white) or (r.outcome == "L" and not a_is_white):
@@ -96,6 +104,9 @@ def main(argv):
         rate = (a_wins + 0.5 * draws) / g if g else 0.0
         print(f"  shard {args.shard}/{args.nshards}  games={g}  A={a_wins} B={b_wins} D={draws}  ({time.time()-t0:.0f}s)")
         print(f"  A score rate: {rate:.3f}   elo(A-B) ~ {estimate_elo(rate):+.0f}")
+    for eng in (a, b, referee):
+        try: eng.close()
+        except Exception: pass
     return 0
 
 
