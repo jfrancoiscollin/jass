@@ -6,3 +6,4 @@
   [d9-vs-Scan | default                                                      ] Jass=32 Scan=480 D=64 n=576 rate=0.111+-0.041 elo~-361
   [d9-vs-Scan | qs6      qs_forcing_depth=6,qs_promo_depth=6                 ] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
   [d9-vs-Scan | qsmax    qs_forcing_depth=6,qs_promo_depth=6,qs_threat_ext=1,qs_sacs=1] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
+  [self-play d9 | qs6    vs default qs_forcing_depth=6,qs_promo_depth=6                 ] A=288 B=152 D=136 n=576 rate_A=0.618+-0.041 elo~+84 => qs fort AJOUTE hors-IC
