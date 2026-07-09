@@ -1,0 +1,5 @@
+=== PISTE 1 FULL (MMTO-last, anchor=0.3) — HEAD bd07fcf42 queue 0656 CHAÎNE tour1c FIT (cpx62) : MMTO last sur prefs d14/d8 (teacher tres fort + weak realiste) -> champion(1c) -> A/B vs gen2-mmto (verdict escalade) ===
+  ✓ build+geom(NP=32)+gen2 ; WDL tour-1 = 328880
+
+=== (1) wdl_finetune ancré gen2-mmto anchor=0.3 (chunk 1000000, iter 25) ===
+  [POV gate] Spearman(X·w0 , jass-eval) = 0.9997 (n=60) fit : logloss(data) 0.549353->0.537163 (delta -0.012190) ; mean|Δw|=0.00002 sur 316384 cols 
