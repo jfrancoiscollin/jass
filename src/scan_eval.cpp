@@ -366,8 +366,27 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
     // Dense extras (king PST, material, mobility, balance).
     std::array<float, NUM_EXTRAS> extras{};
     compute_extras(pos, extras);
+    // The extras dot is dominated by ZEROS : the king-PST block [0..99] is a
+    // one-hot with ≤ a handful of set squares (kings), so ~96 of the 120 terms
+    // are w·0. Summing only the NON-ZERO terms in ASCENDING index order is
+    // byte-identical (x+0.0 == x) : iterate the king squares (ascending bit →
+    // ascending index, black [0..49] then white [50..99]) for the PST one-hots,
+    // then the dense tail [100..NUM_EXTRAS). Skips the ~96 zero FMAs per node.
     double ext_mg = 0.0, ext_eg = 0.0;
-    for (std::size_t e = 0; e < NUM_EXTRAS; ++e) {
+    for (Bitboard b = pos.black_kings(); b; ) {
+        const std::size_t e =
+            static_cast<std::size_t>(EXTRA_BK_PST_BASE + square_to_bit(pop_lsb(b)));
+        ext_mg += static_cast<double>(w_.ext_mg[e]);   // extras[e] == 1
+        ext_eg += static_cast<double>(w_.ext_eg[e]);
+    }
+    for (Bitboard b = pos.white_kings(); b; ) {
+        const std::size_t e =
+            static_cast<std::size_t>(EXTRA_WK_PST_BASE + square_to_bit(pop_lsb(b)));
+        ext_mg += static_cast<double>(w_.ext_mg[e]);
+        ext_eg += static_cast<double>(w_.ext_eg[e]);
+    }
+    for (std::size_t e = static_cast<std::size_t>(EXTRA_BLACK_MEN);
+         e < static_cast<std::size_t>(NUM_EXTRAS); ++e) {
         const double x = static_cast<double>(extras[e]);
         ext_mg += static_cast<double>(w_.ext_mg[e]) * x;
         ext_eg += static_cast<double>(w_.ext_eg[e]) * x;
