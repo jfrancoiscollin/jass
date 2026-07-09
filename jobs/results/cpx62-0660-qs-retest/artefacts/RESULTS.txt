@@ -7,3 +7,8 @@
   [d9-vs-Scan | qs6      qs_forcing_depth=6,qs_promo_depth=6                 ] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
   [d9-vs-Scan | qsmax    qs_forcing_depth=6,qs_promo_depth=6,qs_threat_ext=1,qs_sacs=1] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
   [self-play d9 | qs6    vs default qs_forcing_depth=6,qs_promo_depth=6                 ] A=288 B=152 D=136 n=576 rate_A=0.618+-0.041 elo~+84 => qs fort AJOUTE hors-IC
+  [self-play d9 | qsmax  vs default qs_forcing_depth=6,qs_promo_depth=6,qs_threat_ext=1,qs_sacs=1] A=288 B=152 D=136 n=576 rate_A=0.618+-0.041 elo~+84 => qs fort AJOUTE hors-IC
+
+  LECTURE : (1) rate d9-vs-Scan qs6/qsmax > default => la qs forte ferme le gap par-nœud AVEC gen2 (co-adaptation OK).
+  (2) self-play qs fort >0.5 hors-IC => la qs forte améliore le choix de coup de gen2 à prof fixe.
+  ⚠ RAPPEL : gain à PROFONDEUR FIXE ; la conversion en MOVETIME est un 2e test (0593 = mort au mt ; résidu = NPS -134).
