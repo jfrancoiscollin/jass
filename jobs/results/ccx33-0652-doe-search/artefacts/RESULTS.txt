@@ -4,3 +4,4 @@
   [lmr_log    lmr_formula=1           ] A=408 B=394 D=254 n=1056 rate_A=0.5066+-0.0263 elo~+5 IC=[0.480,0.533] => neutre
   [nmp_r3     nmp_r_base=3            ] A=406 B=397 D=253 n=1056 rate_A=0.5043+-0.0263 elo~+3 IC=[0.478,0.531] => neutre
   [lmp6       lmp_max_depth=6         ] A=360 B=411 D=285 n=1056 rate_A=0.4759+-0.0257 elo~-17 IC=[0.450,0.502] => neutre
+  [asp30      aspiration_initial=30   ] A=415 B=363 D=278 n=1056 rate_A=0.5246+-0.0258 elo~+17 IC=[0.499,0.550] => neutre
