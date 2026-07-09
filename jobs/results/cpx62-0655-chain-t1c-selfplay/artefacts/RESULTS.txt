@@ -2,3 +2,7 @@
   ✓ build+gen2 ; seeds=2000000 ; PERG=200×16 strong d14 vs weak d8 (jitter 1)
 
 === gen champion self-asym : 200×16 parties ===
+  WDL positions = 328880 (486s, 23655 parties/h)
+  prefs côté-fort = 95143 parents
+
+  => tour 1 self-play FINI : WDL=328880 prefs=95143. Timing réel ci-dessus = ancre pour resize. Next : fit wdl_finetune ancré gen2 anchor 0.3 + MMTO last + gate Elo.
