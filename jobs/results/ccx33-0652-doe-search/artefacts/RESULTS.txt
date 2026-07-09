@@ -1,3 +1,4 @@
 === DOE SEARCH gen2-mmto (OAT knobs, mt0.2 généraliste) — HEAD 5dd8cab24 queue 0652 DOE SEARCH gen2-mmto (ccx33) : OAT knobs (LMR/NMP/ProbCut/LMP/aspiration/RFP) vs défaut, mt0.2 généraliste — convertir gain d9 en movetime. build retry ===
   [baseline                           ] A=101 B=94 D=69 n=264 rate_A=0.5133+-0.0518 elo~+9 IC=[0.461,0.565] => neutre
   [lmr_ddiv4  lmr_depth_div=4         ] A=373 B=404 D=279 n=1056 rate_A=0.4853+-0.0259 elo~-10 IC=[0.459,0.511] => neutre
+  [lmr_log    lmr_formula=1           ] A=408 B=394 D=254 n=1056 rate_A=0.5066+-0.0263 elo~+5 IC=[0.480,0.533] => neutre
