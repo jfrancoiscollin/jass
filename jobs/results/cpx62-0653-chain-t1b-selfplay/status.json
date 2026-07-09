@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0653-chain-t1b-selfplay",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-09T10:10:46+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 223471
+  "ended_at": "2026-07-09T10:15:50+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
