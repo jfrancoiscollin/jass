@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0652-doe-search",
-  "script": "jobs/queue/ccx33-0652-doe-search.sh",
-  "pid": 3387286,
-  "started_at": "2026-07-09T06:08:01+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

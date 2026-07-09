@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0652-doe-search",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-09T06:08:01+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 3387286
+  "ended_at": "2026-07-09T12:01:37+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

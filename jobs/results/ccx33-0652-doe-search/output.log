@@ -1,0 +1,19 @@
+=== DOE SEARCH gen2-mmto (OAT knobs, mt0.2 généraliste) — HEAD 5dd8cab24 queue 0652 DOE SEARCH gen2-mmto (ccx33) : OAT knobs (LMR/NMP/ProbCut/LMP/aspiration/RFP) vs défaut, mt0.2 généraliste — convertir gain d9 en movetime. build retry ===
+  ✓ build+gen2 (NCPU=8)
+  generaliste : 66 openings
+  openings ≥38p : 66
+
+=== OAT DOE search (side A = gen2-mmto+knob vs side B = gen2-mmto défaut, mt0.2) ===
+  [baseline                           ] A=101 B=94 D=69 n=264 rate_A=0.5133+-0.0518 elo~+9 IC=[0.461,0.565] => neutre
+  [lmr_ddiv4  lmr_depth_div=4         ] A=373 B=404 D=279 n=1056 rate_A=0.4853+-0.0259 elo~-10 IC=[0.459,0.511] => neutre
+  [lmr_log    lmr_formula=1           ] A=408 B=394 D=254 n=1056 rate_A=0.5066+-0.0263 elo~+5 IC=[0.480,0.533] => neutre
+  [nmp_r3     nmp_r_base=3            ] A=406 B=397 D=253 n=1056 rate_A=0.5043+-0.0263 elo~+3 IC=[0.478,0.531] => neutre
+  [probcut5   probcut_min_depth=5     ] A=373 B=402 D=281 n=1056 rate_A=0.4863+-0.0258 elo~-10 IC=[0.460,0.512] => neutre
+  [lmp6       lmp_max_depth=6         ] A=360 B=411 D=285 n=1056 rate_A=0.4759+-0.0257 elo~-17 IC=[0.450,0.502] => neutre
+  [asp30      aspiration_initial=30   ] A=415 B=363 D=278 n=1056 rate_A=0.5246+-0.0258 elo~+17 IC=[0.499,0.550] => neutre
+  [rfp7       rfp_max_depth=7         ] A=391 B=380 D=285 n=1056 rate_A=0.5052+-0.0258 elo~+4 IC=[0.479,0.531] => neutre
+
+  GATE : un knob rate_A>0.5 hors-IC => il convertit le gain éval-par-nœud en force MOVETIME => confirm mt0.3+dilf + baker search.
+  (baseline doit être ~0.5 : sanity harnais symétrique.) Neutre partout => la marge movetime n'est pas dans ces knobs (OAT étendre / combos).
+  RESULTS committé ✓
+=== fin DOE search ===
