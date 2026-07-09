@@ -1,0 +1,9 @@
+=== ÉTAPE 0 HEADROOM : jass(gen2-mmto) mt-long vs Scan-mt0.2 — HEAD 82c5b3853 kill-in-flight ccx33 : 0657 DOE r2 hung (129min sans heartbeat) — liberer ccx33 ===
+  generaliste : 36 openings
+  openings ≥38p : 36
+  ✓ build+Scan+gen2 ; contournement overshoot = timeout x5 (harnais develop)
+
+=== cellule mt-10s (48 openings ~96 games) ===
+  [jass(gen2) mt10s vs Scan-mt0.2] Jass=16 Scan=51 Draws=5 n=72 rate=0.257+-0.115 elo~-184 => headroom<0 (sous le prof)
+
+=== cellule mt-30s (32 openings ~64 games) ===
