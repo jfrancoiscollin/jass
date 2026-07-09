@@ -6,3 +6,6 @@
   [lmp6       lmp_max_depth=6         ] A=360 B=411 D=285 n=1056 rate_A=0.4759+-0.0257 elo~-17 IC=[0.450,0.502] => neutre
   [asp30      aspiration_initial=30   ] A=415 B=363 D=278 n=1056 rate_A=0.5246+-0.0258 elo~+17 IC=[0.499,0.550] => neutre
   [rfp7       rfp_max_depth=7         ] A=391 B=380 D=285 n=1056 rate_A=0.5052+-0.0258 elo~+4 IC=[0.479,0.531] => neutre
+
+  GATE : un knob rate_A>0.5 hors-IC => il convertit le gain éval-par-nœud en force MOVETIME => confirm mt0.3+dilf + baker search.
+  (baseline doit être ~0.5 : sanity harnais symétrique.) Neutre partout => la marge movetime n'est pas dans ces knobs (OAT étendre / combos).
