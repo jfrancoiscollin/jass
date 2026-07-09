@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0658-headroom-pretest",
-  "snapshot_at": "2026-07-09T17:49:54+00:00",
+  "snapshot_at": "2026-07-09T17:54:57+00:00",
   "started_at": "2026-07-09T17:06:59+00:00",
-  "elapsed_seconds": 2575,
+  "elapsed_seconds": 2878,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 237336       1       42:55  0.0  0.0 bash\n 237338  237336       42:55  0.0  0.0 bash\n 237976  237338       42:42  0.0  0.0 python3\n 237979  237338       42:42  0.0  0.0 python3\n 237998  237976       42:42 97.8  0.5 jass\n 238018  237979       42:42 97.9  0.5 jass\n 238035  237979       42:42  1.9  0.9 scan_linux\n 238046  237976       42:42  2.0  0.9 scan_linux\n 238078  237979       42:42  0.0  0.0 jass\n 238088  237976       42:42  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 237336       1       47:58  0.0  0.0 bash\n 237338  237336       47:58  0.0  0.0 bash\n 237976  237338       47:46  0.0  0.0 python3\n 237998  237976       47:45 97.8  0.5 jass\n 238046  237976       47:45  2.0  0.9 scan_linux\n 238088  237976       47:45  0.0  0.0 jass\n"
 }
