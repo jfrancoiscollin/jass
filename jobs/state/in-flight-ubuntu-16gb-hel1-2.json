@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0649-wdlft-full-retry",
+  "script": "jobs/queue/ccx33-0649-wdlft-full-retry.sh",
+  "pid": 3383631,
+  "started_at": "2026-07-09T05:17:05+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
