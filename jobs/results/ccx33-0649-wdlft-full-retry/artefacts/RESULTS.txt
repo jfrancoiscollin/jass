@@ -1,0 +1,22 @@
+=== PISTE 1 FULL (MMTO-last, anchor=0.1) — HEAD a63d7ab42 runner: start ccx33-0649-wdlft-full-retry ===
+BUILD FAIL (j=4)
+        |   ^~~~
+  /usr/include/c++/13/cmath:442:3: note: candidate: ‘constexpr long double pattern_jass::std::sqrt(long double)’
+    442 |   sqrt(long double __x)
+        |   ^~~~
+  /root/jass/src/scan_eval.cpp:100:7: warning: ‘float pattern_jass::jass::scan_eval::{anonymous}::lr_balance(pattern_jass::Bitboard)’ defined but not used [-Wunused-function]
+    100 | float lr_balance(Bitboard men) noexcept {
+        |       ^~~~~~~~~~
+  /root/jass/src/scan_eval.cpp:81:10: warning: ‘pattern_jass::Bitboard pattern_jass::jass::scan_eval::{anonymous}::man_attacks(pattern_jass::Bitboard, pattern_jass::Bitboard)’ defined but not used [-Wunused-function]
+     81 | Bitboard man_attacks(Bitboard men, Bitboard empty) noexcept {
+        |          ^~~~~~~~~~~
+  /root/jass/src/scan_eval.cpp:68:10: warning: ‘pattern_jass::Bitboard pattern_jass::jass::scan_eval::{anonymous}::king_reach(pattern_jass::Bitboard, pattern_jass::Bitboard)’ defined but not used [-Wunused-function]
+     68 | Bitboard king_reach(Bitboard kings, Bitboard empty) noexcept {
+        |          ^~~~~~~~~~
+  /root/jass/src/scan_eval.cpp:55:5: warning: ‘int pattern_jass::jass::scan_eval::{anonymous}::king_slide_mobility(pattern_jass::Bitboard, pattern_jass::Bitboard)’ defined but not used [-Wunused-function]
+     55 | int king_slide_mobility(Bitboard kings, Bitboard empty) noexcept {
+        |     ^~~~~~~~~~~~~~~~~~~
+  gmake[3]: *** [CMakeFiles/jass_lib.dir/build.make:202: CMakeFiles/jass_lib.dir/src/scan_eval.cpp.o] Error 1
+  gmake[2]: *** [CMakeFiles/Makefile2:87: CMakeFiles/jass_lib.dir/all] Error 2
+  gmake[1]: *** [CMakeFiles/Makefile2:120: CMakeFiles/jass.dir/rule] Error 2
+  gmake: *** [Makefile:147: jass] Error 2
