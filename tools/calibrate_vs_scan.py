@@ -515,29 +515,27 @@ def play_game(white: object, black: object,
     while ply < max_plies:
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
-        # ROBUSTESSE : un moteur qui DÉPASSE son temps (overshoot movetime en endgame-dames,
-        # cf bug time-management) peut ne pas répondre avant le timeout du pipe → TimeoutError.
-        # Avant, ça propageait et ÉCROULAIT tout le shard (RESULT jamais imprimé → n=0). On
-        # l'attrape ici : la partie est adjugée NULLE (rare, neutre) et le shard CONTINUE.
-        try:
-            if isinstance(current, JassEngine):
-                d = jass_depth if jass_depth is not None else depth
-                mt = jass_movetime if jass_movetime is not None else movetime
-                mv = current.go(depth=d, movetime=mt)
-            else:
-                scan_pos, scan_moves = referee.scan_pos()
-                # Per-engine defaults let two Scan instances of DIFFERENT strength
-                # (e.g. strong depth-9 vs weak depth-5) face off in one game — used by
-                # scan_selfplay_gen to force decisive, diverse self-play positions.
-                d = scan_depth if scan_depth is not None else (
-                    getattr(current, "default_depth", None) or depth)
-                mt = scan_movetime if scan_movetime is not None else (
-                    getattr(current, "default_movetime", None) or movetime)
-                mv = current.go_from(scan_pos, scan_moves,
-                                     depth=d, movetime=mt)
-        except TimeoutError:
-            return GameResult("D", ply, "engine timeout (overshoot) from " + current.label,
-                              moves=moves_log, fens=fens_log)
+        if isinstance(current, JassEngine):
+            # Per-engine defaults (like the Scan branch below) let two JassEngine
+            # instances of DIFFERENT strength (strong vs weak depth/movetime) face
+            # off in one game — used by scan_selfplay_gen --player-jass for
+            # CHAMPION self-asym (moving-distribution chain, autonomous teacher).
+            d = jass_depth if jass_depth is not None else (
+                getattr(current, "default_depth", None) or depth)
+            mt = jass_movetime if jass_movetime is not None else (
+                getattr(current, "default_movetime", None) or movetime)
+            mv = current.go(depth=d, movetime=mt)
+        else:
+            scan_pos, scan_moves = referee.scan_pos()
+            # Per-engine defaults let two Scan instances of DIFFERENT strength
+            # (e.g. strong depth-9 vs weak depth-5) face off in one game — used by
+            # scan_selfplay_gen to force decisive, diverse self-play positions.
+            d = scan_depth if scan_depth is not None else (
+                getattr(current, "default_depth", None) or depth)
+            mt = scan_movetime if scan_movetime is not None else (
+                getattr(current, "default_movetime", None) or movetime)
+            mv = current.go_from(scan_pos, scan_moves,
+                                 depth=d, movetime=mt)
         if mv is None or (mv.frm == 0 and mv.to == 0):
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
