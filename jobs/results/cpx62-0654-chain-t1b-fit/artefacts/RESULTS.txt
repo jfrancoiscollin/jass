@@ -1,0 +1,5 @@
+=== PISTE 1 FULL (MMTO-last, anchor=0.3) — HEAD dba4b68a9 0652 DOE cellule lmp6 ===
+  ✓ build+geom(NP=32)+gen2 ; WDL tour-1 = 318346
+
+=== (1) wdl_finetune ancré gen2-mmto anchor=0.3 (chunk 1000000, iter 25) ===
+  [POV gate] Spearman(X·w0 , jass-eval) = 0.9996 (n=60) fit : logloss(data) 0.545244->0.533905 (delta -0.011339) ; mean|Δw|=0.00002 sur 312830 cols 
