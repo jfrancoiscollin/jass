@@ -1,0 +1,1 @@
+  [jass(gen2) mt10s vs Scan-mt0.2] Jass=16 Scan=51 Draws=5 n=72 rate=0.257+-0.115 elo~-184 => headroom<0 (sous le prof)
