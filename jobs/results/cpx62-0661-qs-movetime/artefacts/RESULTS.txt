@@ -1,0 +1,1 @@
+  [self-play mt0.2 | qs6_mt02   qsA vs default | qs_forcing_depth=6,qs_promo_depth=6                 ] A=67 B=724 D=73 n=864 rate_A=0.120+-0.033 elo~-346 => qs fort MEURT/PERD hors-IC
