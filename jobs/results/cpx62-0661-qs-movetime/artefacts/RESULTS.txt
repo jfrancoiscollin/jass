@@ -1,3 +1,6 @@
   [self-play mt0.2 | qs6_mt02   qsA vs default | qs_forcing_depth=6,qs_promo_depth=6                 ] A=67 B=724 D=73 n=864 rate_A=0.120+-0.033 elo~-346 => qs fort MEURT/PERD hors-IC
   [self-play mt0.3 | qs6_mt03   qsA vs default | qs_forcing_depth=6,qs_promo_depth=6                 ] A=82 B=703 D=79 n=864 rate_A=0.141+-0.033 elo~-314 => qs fort MEURT/PERD hors-IC
   [self-play mt0.3 | qsmax_mt03 qsA vs default | qs_forcing_depth=6,qs_promo_depth=6,qs_threat_ext=1,qs_sacs=1] A=68 B=721 D=75 n=864 rate_A=0.122+-0.033 elo~-343 => qs fort MEURT/PERD hors-IC
+
+  GATE : qs fort rate_A>0.5 hors-IC à mt => le +84 fixed-depth SURVIT au movetime => gain search BAKEABLE (intégrer au champion).
+  neutre/pire => la qs profonde meurt au mt (coût-temps, 0593 re-confirmé avec gen2) => le résidu movetime est la VITESSE (NPS -134), pas la qs.
