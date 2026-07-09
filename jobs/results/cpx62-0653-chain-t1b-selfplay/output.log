@@ -1,0 +1,11 @@
+=== CHAÎNE tour 1 SELF-PLAY (pilote=gen2-mmto, self-asym d12/d6) — HEAD 77e50ecf5 runner: heartbeat ccx33-0652-doe-search ===
+  ✓ build+gen2 ; seeds=2000000 ; PERG=200×16 strong d12 vs weak d6 (jitter 1)
+
+=== gen champion self-asym : 200×16 parties ===
+  WDL positions = 318346 (209s, 54857 parties/h)
+93880
+  prefs côté-fort = 93880 parents
+
+  => tour 1 self-play FINI : WDL=318346 prefs=93880. Timing réel ci-dessus = ancre pour resize. Next : fit wdl_finetune ancré gen2 anchor 0.3 + MMTO last + gate Elo.
+  RESULTS committé ✓
+=== fin tour1 self-play ===
