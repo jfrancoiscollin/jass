@@ -306,7 +306,9 @@ class JassEngine(EngineProc):
         self._drain()  # re-align: discard any stale buffered output first
         if movetime is not None:
             self._send(f"go movetime {int(round(movetime * 1000))}")
-            timeout_s = movetime * 3.0 + 5.0
+            # x5 (au lieu de x3) : tolère le bug overshoot movetime-endgame (2-3.5x) aux longs
+            # mt (headroom / prof-soi-long) — jass finit son coup au lieu d'un faux-timeout.
+            timeout_s = movetime * 5.0 + 10.0
         else:
             self._send(f"go depth {depth}")
             timeout_s = 60.0
