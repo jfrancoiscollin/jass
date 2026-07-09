@@ -92,8 +92,15 @@ def load_seeds(path: Path, min_pieces: int, rng: random.Random, n: int,
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--scan", required=True, help="Scan binary")
+    ap.add_argument("--scan", required=False, default=None, help="Scan binary (player, unless --player-jass-bin)")
     ap.add_argument("--jass", required=True, help="jass binary (neutral referee)")
+    # CHAMPION self-play (chaîne itérative longue : pilote = champion(t), distribution MOBILE) : le PLAYER
+    # devient jass avec le pattern champion, pas Scan. asym par depth/movetime = TEACHER autonome (côté fort =
+    # recherche plus profonde que la feuille d5). Le referee reste --jass. Scan devient inutile.
+    ap.add_argument("--player-jass-bin", default=None,
+                    help="jass binary to use as the PLAYER (champion self-play) instead of Scan")
+    ap.add_argument("--player-pattern", default=None,
+                    help="pattern (.pjtw) the jass player uses (the champion), with --player-jass-bin")
     ap.add_argument("--seeds", required=True, type=Path, help="JNNW to sample opening seeds from")
     ap.add_argument("--out", required=True, type=Path, help="output JNNW")
     ap.add_argument("--games", type=int, default=2000)
@@ -152,10 +159,21 @@ def main(argv=None) -> int:
     import hashlib
     mt_asym = args.strong_movetime is not None and args.weak_movetime is not None
     pref = args.pref_parents is not None and args.pref_moves is not None
-    scan = cv.ScanEngine(args.scan, bb_size=0)
-    # Asymmetric-strength self-play (diversity): a SECOND Scan, weaker by depth OR movetime.
-    scan_weak = (cv.ScanEngine(args.scan, bb_size=0)
-                 if (args.weak_depth or mt_asym) else None)
+    if args.player_jass_bin:
+        # CHAMPION self-play : le player = jass + pattern champion (distribution mobile).
+        def _mk_player():
+            return cv.JassEngine(args.player_jass_bin, pattern_path=args.player_pattern)
+        scan = _mk_player()
+        scan_weak = (_mk_player() if (args.weak_depth or mt_asym) else None)
+        print(f"  player=JASS(champion) pattern={args.player_pattern}")
+    else:
+        if not args.scan:
+            print("error: --scan required unless --player-jass-bin is set", file=sys.stderr)
+            return 1
+        scan = cv.ScanEngine(args.scan, bb_size=0)
+        # Asymmetric-strength self-play (diversity): a SECOND Scan, weaker by depth OR movetime.
+        scan_weak = (cv.ScanEngine(args.scan, bb_size=0)
+                     if (args.weak_depth or mt_asym) else None)
     if scan_weak is not None:
         if mt_asym:
             print(f"  asym-movetime: strong mt {args.strong_movetime}s vs weak mt "
