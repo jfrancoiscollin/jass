@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0651-chain-t1-fit",
-  "script": "jobs/queue/cpx62-0651-chain-t1-fit.sh",
-  "pid": 215950,
-  "started_at": "2026-07-09T06:06:22+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

@@ -1,0 +1,22 @@
+=== PISTE 1 FULL (MMTO-last, anchor=0.3) — HEAD b5e9fca80 queue 0651 CHAÎNE tour1 FIT (cpx62) : wdl_finetune ancré gen2 anchor0.3 + MMTO last sur data champion-driven 0650 -> champion(1) -> A/B vs gen2-mmto ===
+  ✓ build+geom(NP=32)+gen2 ; WDL tour-1 = 383506
+
+=== (1) wdl_finetune ancré gen2-mmto anchor=0.3 (chunk 1000000, iter 25) ===
+  [POV gate] Spearman(X·w0 , jass-eval) = 0.9998 (n=60) fit : logloss(data) 0.551666->0.536080 (delta -0.015585) ; mean|Δw|=0.00002 sur 322250 cols 
+111060
+  prefs tour-1 = 111060 parents
+
+=== (2) MMTO last : gen-siblings --leaf-mode WS-OFF ancré wdlbase' (d5) + rank_finetune anchor=0.05 ===
+2688306
+  MMTO paires = 1344153
+  pairwise-acc champion (avant fit) = 0.7561 ; cols visitées=281758 fit : loss 0.16784->0.15760 ; pairwise-acc 0.7561->0.7625 (delta +0.0064) 
+  generaliste : 66 openings
+  openings ≥38p : 66
+
+=== (3) A/B gen3-chain-t1 vs gen2-mmto (généraliste) ===
+  [gen3-chain-t1 vs gen2-mmto | generaliste mt0.2] A=256 B=561 D=239 n=1056 rate_A=0.3556+-0.0251 elo~-103 IC=[0.331,0.381] => PERD hors-IC
+  [gen3-chain-t1 vs gen2-mmto | generaliste mt0.3] A=247 B=544 D=265 n=1056 rate_A=0.3594+-0.0247 elo~-100 IC=[0.335,0.384] => PERD hors-IC
+
+  GATE : gen3-chain-t1 >0.5 hors-IC => le pipeline MMTO-last sur base WDL-calibrée-ancrée AJOUTE sur gen2-mmto => confirm dilf + d9-vs-Scan + bake.
+  RESULTS committé ✓
+=== fin piste 1 full ===
