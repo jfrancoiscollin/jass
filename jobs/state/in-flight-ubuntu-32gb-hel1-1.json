@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0655-chain-t1c-selfplay",
-  "script": "jobs/queue/cpx62-0655-chain-t1c-selfplay.sh",
-  "pid": 228463,
-  "started_at": "2026-07-09T11:38:49+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
