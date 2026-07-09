@@ -3,3 +3,4 @@
 
 === (1) wdl_finetune ancré gen2-mmto anchor=0.3 (chunk 1000000, iter 25) ===
   [POV gate] Spearman(X·w0 , jass-eval) = 0.9996 (n=60) fit : logloss(data) 0.545244->0.533905 (delta -0.011339) ; mean|Δw|=0.00002 sur 312830 cols 
+  [gen3-chain-t1b vs gen2-mmto | generaliste mt0.2] A=303 B=513 D=240 n=1056 rate_A=0.4006+-0.0258 elo~-70 IC=[0.375,0.426] => PERD hors-IC
