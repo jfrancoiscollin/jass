@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0656-chain-t1c-fit",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-09T14:50:10+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 232835
+  "ended_at": "2026-07-09T15:58:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
