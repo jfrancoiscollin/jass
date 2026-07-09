@@ -5,3 +5,4 @@
 === (1) d9-vs-Scan : gap gen2-mmto default vs qs6 vs qsmax (le levier direct) ===
   [d9-vs-Scan | default                                                      ] Jass=32 Scan=480 D=64 n=576 rate=0.111+-0.041 elo~-361
   [d9-vs-Scan | qs6      qs_forcing_depth=6,qs_promo_depth=6                 ] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
+  [d9-vs-Scan | qsmax    qs_forcing_depth=6,qs_promo_depth=6,qs_threat_ext=1,qs_sacs=1] Jass=24 Scan=344 D=32 n=400 rate=0.100+-0.049 elo~-382
