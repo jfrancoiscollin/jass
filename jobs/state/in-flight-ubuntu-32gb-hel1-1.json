@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0660-qs-retest",
-  "script": "jobs/queue/cpx62-0660-qs-retest.sh",
-  "pid": 241291,
-  "started_at": "2026-07-09T18:20:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
