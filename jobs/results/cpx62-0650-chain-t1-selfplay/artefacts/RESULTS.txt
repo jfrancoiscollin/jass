@@ -1,0 +1,8 @@
+=== CHAÎNE tour 1 SELF-PLAY (pilote=gen2-mmto, self-asym d8/d3) — HEAD a97cc29ff queue 0650 CHAÎNE tour1 self-play (cpx62) : gen2-mmto self-asym d8/d3 (distribution mobile) -> WDL+prefs, modeste+monitor pour ancrage timing ===
+  ✓ build+gen2 ; seeds=2000000 ; PERG=250×16 strong d8 vs weak d3 (jitter 1)
+
+=== gen champion self-asym : 250×16 parties ===
+  WDL positions = 383506 (46s, 306382 parties/h)
+  prefs côté-fort = 111060 parents
+
+  => tour 1 self-play FINI : WDL=383506 prefs=111060. Timing réel ci-dessus = ancre pour resize. Next : fit wdl_finetune ancré gen2 anchor 0.3 + MMTO last + gate Elo.
