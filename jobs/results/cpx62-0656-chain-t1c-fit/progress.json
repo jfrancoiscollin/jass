@@ -1,0 +1,8 @@
+{
+  "job_id": "cpx62-0656-chain-t1c-fit",
+  "snapshot_at": "2026-07-09T14:55:12+00:00",
+  "started_at": "2026-07-09T14:50:10+00:00",
+  "elapsed_seconds": 302,
+  "artefacts": [],
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 232835       1       05:02  0.0  0.0 bash\n 232837  232835       05:02  0.0  0.0 bash\n 233555  232837       02:24  138 11.3 python3\n"
+}
