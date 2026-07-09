@@ -1,0 +1,4 @@
+=== CHAÎNE tour 1 SELF-PLAY (pilote=gen2-mmto, self-asym d14/d8) — HEAD 60afaabf6 runner: finalize cpx62-0654-chain-t1b-fit (completed, rc=0) ===
+  ✓ build+gen2 ; seeds=2000000 ; PERG=200×16 strong d14 vs weak d8 (jitter 1)
+
+=== gen champion self-asym : 200×16 parties ===
