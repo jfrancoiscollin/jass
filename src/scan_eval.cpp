@@ -85,25 +85,48 @@ Bitboard man_attacks(Bitboard men, Bitboard empty) noexcept {
          | (shift_nw(men) & shift_se(empty));
 }
 
+// Per-row / per-column / left-right square masks (bit = square_to_bit). Built
+// once at static init from the FMJD layout, so the eval's position-sum features
+// (tempo advancement, left/right balance, men skew) become a handful of masked
+// POPCOUNTS instead of a pop_lsb loop over every man each node. Integer sums →
+// BYTE-IDENTICAL to the per-man loops, just far fewer ops in the midgame.
+struct EvalMasks {
+    std::array<Bitboard, 10> row{};
+    std::array<Bitboard, 10> col{};
+    Bitboard left{0};
+    Bitboard right{0};
+    EvalMasks() noexcept {
+        for (int s = 1; s <= 50; ++s) {
+            const Square sq = static_cast<Square>(s);
+            const Bitboard bit = Bitboard{1} << square_to_bit(sq);
+            row[static_cast<std::size_t>(row_of(sq))] |= bit;
+            col[static_cast<std::size_t>(col_of(sq))] |= bit;
+            (col_of(sq) < 5 ? left : right) |= bit;
+        }
+    }
+};
+const EvalMasks g_emasks;
+
 // Scan's tempo-based game stage : wmg = tempo / 300, tempo = total MEN advancement
 // (Σ white-men row + Σ black-men (9−row)). Both fully-developed sides at the FMJD
 // start = 300 → wmg = 1 (full midgame). Men advance / get captured → tempo drops →
 // wmg → 0 (endgame). This is Scan's phase DRIVER (vs jass's piece-count). Men-only.
 double tempo_wmg(const Position& pos) noexcept {
-    long tempo = 0;
-    for (Bitboard b = pos.white_men(); b; ) tempo += row_of(pop_lsb(b));
-    for (Bitboard b = pos.black_men(); b; ) tempo += 9 - row_of(pop_lsb(b));
+    const Bitboard wm = pos.white_men(), bm = pos.black_men();
+    // Σ_white row + Σ_black (9−row) = Σ_r r·(pc(wm&row_r) − pc(bm&row_r)) + 9·pc(bm).
+    long tempo = 9L * popcount(bm);
+    for (int r = 1; r < 10; ++r) {
+        tempo += static_cast<long>(r)
+               * (popcount(wm & g_emasks.row[static_cast<std::size_t>(r)])
+                  - popcount(bm & g_emasks.row[static_cast<std::size_t>(r)]));
+    }
     const double w = static_cast<double>(tempo) / 300.0;
     return w < 0.0 ? 0.0 : (w > 1.0 ? 1.0 : w);
 }
 
 float lr_balance(Bitboard men) noexcept {
-    int left = 0, right = 0;
-    for (Bitboard b = men; b; ) {
-        const Square s = pop_lsb(b);
-        (col_of(s) < 5 ? left : right) += 1;
-    }
-    return static_cast<float>(left - right);
+    return static_cast<float>(popcount(men & g_emasks.left)
+                              - popcount(men & g_emasks.right));
 }
 
 }  // namespace
@@ -204,8 +227,11 @@ void compute_extras(const Position& pos,
 #ifdef JASS_SCAN_PARITY
     // Scan parity : absolute men-skew (lopsided wings) + king material split.
     auto skew_abs = [](Bitboard men) -> float {
+        // Σ(2·col − 9) = Σ_c (2c−9)·popcount(men & col_c). Same integer sum.
         long s = 0;
-        for (Bitboard b = men; b; ) { const int c = col_of(pop_lsb(b)); s += 2 * c - 9; }
+        for (int c = 0; c < 10; ++c)
+            s += static_cast<long>(2 * c - 9)
+               * popcount(men & g_emasks.col[static_cast<std::size_t>(c)]);
         return static_cast<float>(s < 0 ? -s : s);
     };
     out[EXTRA_BK_SKEWABS] = skew_abs(pos.black_men());
