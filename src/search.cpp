@@ -193,6 +193,8 @@ struct Searcher {
     bool                                  has_deadline{false};
     const std::atomic<bool>*              stop_flag{nullptr};
     bool                                  stopped{false};
+    // Deterministic hard node cap (0 = unlimited), copied from SearchLimits.
+    std::uint64_t                         max_nodes{0};
 
     // Wall time at which the current root iteration started, used by the
     // iterative-deepening loop to decide whether to skip the next iteration
@@ -332,6 +334,10 @@ struct Searcher {
             return true;
         }
         if (has_deadline && std::chrono::steady_clock::now() >= deadline) {
+            stopped = true;
+            return true;
+        }
+        if (max_nodes && nodes >= max_nodes) {
             stopped = true;
             return true;
         }
@@ -1320,6 +1326,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         s.deadline = std::chrono::steady_clock::now()
                    + std::chrono::milliseconds(limits.movetime_ms);
     }
+    s.max_nodes = limits.max_nodes;
 
     // ---------------------------------------------------------------------
     // Lazy SMP fan-out
@@ -1339,9 +1346,11 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         for (int i = 1; i < limits.threads; ++i) {
             helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
                                   max_depth = limits.max_depth,
+                                  max_nodes = limits.max_nodes,
                                   nnue_for_helpers, params_for_helpers]() {
                 SearchLimits hlim;
                 hlim.max_depth = max_depth;
+                hlim.max_nodes = max_nodes;  // helpers respect the same node cap
                 hlim.stop_flag = &helper_stop;
                 hlim.threads   = 1;  // critical: helpers must not fork further
                 hlim.nnue      = nnue_for_helpers;

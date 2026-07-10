@@ -327,6 +327,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          pv_extract       = 0;      // additional samples to harvest along the PV
     int          movetime_ms      = 0;      // >0 → play moves by wall-clock (Scan-style
                                             //      self-play); play_depth becomes a cap
+    std::uint64_t play_max_nodes  = 0;      // --play-max-nodes N : DETERMINISTIC hard node cap
+                                            //      on the PLAY+LABEL search (0 = unlimited). Bounds a
+                                            //      flat/near-zero eval where alpha-beta collapses and a
+                                            //      fixed-depth search would explode (from-scratch tour-0).
     std::string  label_depth_spec;          // "endgame=16,deep-eg=20" → deeper LABEL
                                             //      search by phase (empty = eval_depth)
     std::string  play_depth_spec;           // "endgame=12,deep-eg=14" → deeper PLAY
@@ -390,6 +394,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--movetime" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) movetime_ms = v;
+        } else if (a == "--play-max-nodes" && i + 1 < argc) {
+            const long long v = std::atoll(argv[++i]);
+            if (v > 0) play_max_nodes = static_cast<std::uint64_t>(v);
         } else if (a == "--label-depth-by-phase" && i + 1 < argc) {
             label_depth_spec = argv[++i];
         } else if (a == "--play-depth-by-phase" && i + 1 < argc) {
@@ -719,6 +726,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 SearchLimits lim;
                 lim.max_depth = this_label_depth;
                 lim.params    = label_params;   // gen-label slot (only sets `score` ; WDL-logistic ignores it)
+                lim.max_nodes = play_max_nodes;   // deterministic bound (flat-eval safety)
                 const SearchResult r = e.search(lim);
                 Sample s;
                 s.bbs[0] = pos.white_men();
@@ -805,6 +813,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 (e.position().side_to_move() == Color::White) == punisher_is_white;
             lim.params    = (asym_mode && stm_is_punisher) ? punisher_params : play_params;
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
+            lim.max_nodes = play_max_nodes;   // deterministic bound (flat-eval safety)
             const SearchResult r = e.search(lim);
             // Epsilon-random exploration : with probability explore_eps%, play a
             // uniform-random legal move instead of the search best. Visits states
