@@ -1,0 +1,24 @@
+=== TOUR-0 DURCI (cap-noeuds 60000 + timeout/shard 3600) — HEAD d53f4ae54 0669 (tour-0 durci) + 0670 (boost Scan-d14) : re-queue avec fix deadlock monitor+wait ===
+  garde-fou archi ✓ : g_emasks + has_any_capture + max_nodes + --play-max-nodes
+zero.pjtw : n_pat=17006112 n_ext=120 scale=1000 bytes=136049876
+  zero.pjtw eval start = 0 (doit être ~0)
+  ✓ build+geom(NP=32)+zero.pjtw ; seeds=2000000
+
+=== self-play eval=0 : play d10, qs pleine, cap-noeuds 60000, adjud 2/10, timeout/shard 3600s, 4000×16 ===
+  shards ayant ecrit : 16/16 (les autres = cules au timeout, le cap devrait tous les faire finir)
+  WDL positions = 64000
+  WDL signal : win=25104 draw=3209 loss=35687 (5% nulles — si >90% le pur-zéro amorce mal)
+
+=== fit WDL frais STREAMÉ (train_stream --target wdl --chunk 1000000 --color-fold --l2 3e-5) ===
+    target=WDL  win=25104 draw=3209 loss=35687 (5.0% draws)  (0.1s)
+    train_loss=0.316613  iters=25  (7.1s)
+  wrote /root/cw-scratch-t0d/eval1.pjtw  (v3, 34,012,464 weights, 136,049,876 bytes)  [total 7.7s]
+  generaliste : 66 openings
+
+=== GATE : eval(1) vs eval(0)=zero (prof fixe d9, qs pleine, généraliste) — ZÉRO Scan ===
+  [eval(1) vs eval(0)=zero | d9 qs-pleine généraliste] W=1056 L=0 D=0 n=1056 rate=1.000+-0.030 elo~+0 => eval(1) DÉCOLLE (bat zero hors-IC)
+
+  => eval(1) ≫ zero hors-IC : le matériel + 1re structure appris PAR NOUS (zéro prof) => TOUR 1 (adjud 3/16, gate vs champion tour-0).
+  => ABORT/n<plancher : harnais/self-play casse (PAS un verdict) ; ≈ zero : amorce molle => monter eps/cap/adjud.
+  RESULTS committé ✓
+=== fin tour 0 durci ===
