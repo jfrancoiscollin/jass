@@ -40,6 +40,42 @@ Tour t → t+1 :
 5. Itérer TANT QUE ça compose (pairwise held-out ↑ ET Elo ↑). Repère de succès : dépasser gen2-mmto SANS
    avoir jamais touché Scan = autonomie de fait.
 
+## ⭐ TROIS ENGAGEMENTS CHIFFRÉS (JFC 2026-07-10) — ce qui FAIT ou CASSE les tours intermédiaires
+
+### E1. adjud-material DOIT S'ESTOMPER avec les tours (le paramètre décisif)
+`adjud-material` **bootstrappe le matériel** au tour 0 (éval aveugle), MAIS tant qu'il **tranche les parties**,
+les labels restent **biaisés-matériel** → le savoir POSITIONNEL (ce qui fait la différence après T2-3) exige
+des **issues de jeu RÉELLES**. Donc **resserrage progressif puis OFF**, pré-engagé :
+| Tour | ADJM (seuil) | ADJH (hold) | esprit |
+|---|---|---|---|
+| T0 | 2 | 10 | bootstrap matériel, éval aveugle |
+| T1 | 3 | 16 | l'éval commence à convertir → exiger + d'avance, tenue + longue |
+| T2 | 4 | 24 | quasi-fin du filet matériel |
+| **T3+** | **OFF** | — | **issues réelles uniquement** (positionnel) |
+**Fade ÉVAL-DRIVEN, pas calendaire** : chaque tour, mesurer la **conversion-self** de champion(t) = depuis des
+positions matériel-up (ex. +2 hommes), gagne-t-il en **playout SANS adjud** ? Si conversion **< ~60%**, **NE PAS
+desserrer** (tenir le palier — l'éval ne sait pas encore convertir, retirer le filet = labels-nulles inexploitables).
+Ce mini-run conversion se committe chaque tour et **décide du palier adjud du tour suivant**.
+
+### E2. drop-post-eps vs la leçon −25 (hypothèse, PAS acquis)
+0665 embarque `--drop-post-eps` (hygiène), que la **leçon 0582 couverture>pureté (−25)** avait enterré. Hypothèse
+from-scratch : **labels adjudiqués = la pureté re-compte** (le bruit post-eps pollue davantage quand l'issue est
+tranchée par le matériel) → drop-post-eps **peut** se justifier ICI. Mais c'est une **hypothèse**. **Pré-engagement :
+si T2-3 saturent tôt** (le compose faiblit vite), **1er suspect = re-tester l'A/B couverture** (drop-post-eps ON vs
+OFF, eps-frac ↑) DANS ce régime, AVANT d'incriminer autre chose. Ne présumer ni que la leçon −25 tient, ni qu'elle
+tombe — la trancher par un A/B dédié au régime from-scratch.
+
+### E3. DISCIPLINE DE COURBE — gate compose-vs-sature PRÉ-ENGAGÉ (anti « encore un tour »)
+- **Métrique PILOTE** (décide de continuer) : **Elo champion(t) vs champion(t−1)**, prof fixe **d9**, généraliste+dilf,
+  N calibré pour **IC ~±25 Elo**. « Compose » = champion(t) bat champion(t−1) **hors-IC**.
+- **RÈGLE D'ARRÊT** : **2 tours consécutifs SANS compose hors-IC ⟹ CLÔTURE** (1 tour plat = bruit possible ;
+  2 = plateau réel). Bake du dernier champion qui composait.
+- **THERMOMÈTRE EXTERNE (ne PILOTE JAMAIS)** : **d9-vs-Scan** Elo, tracké chaque tour = progrès absolu vers Scan.
+  On le REGARDE (rattrape-t-on ?) mais il **ne gate pas** la boucle — on ne distille pas Scan, la boucle est
+  champion-vs-champion. (Séparer thermomètre externe / pilote interne = ne pas re-piloter sur Scan par la bande.)
+- **CAP DUR** : **≤ 6-8 tours** quoi qu'il arrive (borne anti-boucle-infinie).
+- **BUT** : dépasser gen2-mmto **sans jamais toucher Scan** = autonomie de fait.
+
 ## GARDE-FOUS (leçons câblées)
 Elo-first (G1) · WS-OFF (gen3 −354) · through-search jamais statique (−847) · ancré/warm jamais refit-zéro
 passé tour 0 (0645) · holdout par partie (P3) · manifest flag⇒effet (+18 phantom) · **couverture eps
