@@ -1,0 +1,6 @@
+=== CHAIN overnight (d10 fixe, cap 1000000, MAXTOURS 6) — nproc=16 df=271603Mo ===
+  garde-fou archi ✓
+  openings gate : 66
+  ✓ build+geom(NP=32) ; champion(0)=eval(1) ; seeds=2000000
+
+=== TOUR 1 : self-play champion(t-1), adjud 3/16, d10, cap 1000000, 16000×16 ===
