@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0668-boost-gen2-scan-d14",
+  "script": "jobs/queue/ccx33-0668-boost-gen2-scan-d14.sh",
+  "pid": 80166,
+  "started_at": "2026-07-10T16:55:46+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
