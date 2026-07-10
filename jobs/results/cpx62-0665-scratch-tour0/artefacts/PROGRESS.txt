@@ -1,0 +1,1 @@
+[+10min] self-play : ~2749712 octets shards (~72360 pos brutes), sp-0: 
