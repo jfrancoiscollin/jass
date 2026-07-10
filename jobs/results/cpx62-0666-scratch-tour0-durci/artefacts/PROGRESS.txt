@@ -3,3 +3,4 @@
 [+30min] self-play : 16/16 shards ecrits, ~64003 pos, sp-0: LABELHYG plycap_games=73/2481 (2.94236%)  contaminated_samples=4787/87
 [+40min] self-play : 16/16 shards ecrits, ~64003 pos, sp-0: LABELHYG plycap_games=73/2481 (2.94236%)  contaminated_samples=4787/87
 [+50min] self-play : 16/16 shards ecrits, ~64003 pos, sp-0: LABELHYG plycap_games=73/2481 (2.94236%)  contaminated_samples=4787/87
+[+60min] self-play : 16/16 shards ecrits, ~64003 pos, sp-0: LABELHYG plycap_games=73/2481 (2.94236%)  contaminated_samples=4787/87
