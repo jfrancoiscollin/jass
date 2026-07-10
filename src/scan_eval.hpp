@@ -198,10 +198,17 @@ inline constexpr std::uint32_t V_VERMASK     = 0x000000FFU;
 inline constexpr std::uint32_t V_SELFDESC_BIT= 0x00000200U;
 inline constexpr std::uint32_t V_KING_BIT    = 0x00000100U;
 
+// One pattern bucket's (midgame, endgame) weight pair. Stored INTERLEAVED so
+// that `pat[col].mg` and `pat[col].eg` — always read together in the eval loop —
+// share a single 8-byte-aligned cache line. The previous layout (two separate
+// 17M-entry int32 vectors) cost TWO random cache-line misses per pattern on the
+// memory-latency-bound gather; the interleaved pair halves that to one. The disk
+// format is unchanged (still [pat_mg | pat_eg] blocks) — the loader interleaves.
+struct PatPair { std::int32_t mg = 0, eg = 0; };
+
 struct ScanWeights {
     std::uint32_t scale = 1000;
-    std::vector<std::int32_t> pat_mg;   // size n_pat
-    std::vector<std::int32_t> pat_eg;   // size n_pat
+    std::vector<PatPair> pat;           // size n_pat, pat[i] = {mg_i, eg_i}
     std::array<std::int32_t, NUM_EXTRAS> ext_mg{};
     std::array<std::int32_t, NUM_EXTRAS> ext_eg{};
     // Optional Factorization-Machine term (PJTW v4). fm_rank=0 → none. The
@@ -233,7 +240,7 @@ public:
 
     std::uint32_t scale() const noexcept { return w_.scale; }
     std::size_t   count() const noexcept {
-        return 2 * (w_.pat_mg.size() + NUM_EXTRAS);
+        return 2 * (w_.pat.size() + NUM_EXTRAS);
     }
 
 private:
