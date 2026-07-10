@@ -51,4 +51,14 @@ private:
 // implementation lands in the next milestone.
 void generate_legal_moves(const Position& pos, MoveList& out);
 
+// Cheap capture-EXISTENCE predicate : true iff `us` has at least one capture
+// available in `pos` (== generate_legal_moves would return capture chains).
+// Answers the boolean WITHOUT generating the move list (in particular without
+// the wasted quiet generation) — for the hot "does this leave a forced reply /
+// give check" tests in search. `us` defaults to the side to move.
+bool has_any_capture(const Position& pos, Color us) noexcept;
+inline bool has_any_capture(const Position& pos) noexcept {
+    return has_any_capture(pos, pos.side_to_move());
+}
+
 }  // namespace jass
