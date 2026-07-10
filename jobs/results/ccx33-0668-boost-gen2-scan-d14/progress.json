@@ -1,8 +1,8 @@
 {
   "job_id": "ccx33-0668-boost-gen2-scan-d14",
-  "snapshot_at": "2026-07-10T17:48:25+00:00",
+  "snapshot_at": "2026-07-10T17:53:35+00:00",
   "started_at": "2026-07-10T16:55:46+00:00",
-  "elapsed_seconds": 3159,
+  "elapsed_seconds": 3469,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  80166       1       52:39  0.0  0.0 bash\n  80168   80166       52:39  0.0  0.0 bash\n  80648   80168       52:22  0.0  0.0 bash\n  81859   80648       02:00  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n  80166       1       57:49  0.0  0.0 bash\n  80168   80166       57:49  0.0  0.0 bash\n  80648   80168       57:32  0.0  0.0 bash\n  81859   80648       07:10  0.0  0.0 sleep\n"
 }
