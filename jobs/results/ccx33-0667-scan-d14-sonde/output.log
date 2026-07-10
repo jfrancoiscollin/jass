@@ -1,0 +1,18 @@
+=== SONDE Scan-d14 (rate reel ccx33 8 coeurs) — HEAD 1ec026341 runner: heartbeat cpx62-0666-scratch-tour0-durci — nproc=8 ===
+  Scan ✓ : /root/jass-scan/scan_linux
+  garde-fou archi ✓
+  build jass ✓ (-j2 mem-safe)
+  seeds=2000000
+
+=== micro-run : scan_selfplay_gen --depth 14, 3 parties × 2 shards, timeout 1500s ===
+  elapsed=11s  shards_finis=2/2  parties_finies≈6  parents=552
+  => Scan-d14 : ~1.8s/partie (wall, 2 shards), yield ~92.0 parents/partie
+  => plein regime 8 shards : ~7855 parties/h, ~722618 parents/h
+  => POUR 60000 parents cibles : ~652 parties, ETA self-play ~0.1h (+ gen-siblings+fit+gate)
+    sp-0:   pref-extract: strong-side quiet plies, skip-book=8, keep-draw-frac=0.2, holdout 1/10 by opening
+    sp-0: wrote /root/cw-sonde-d14/.sp-0.jnnw (445 positions from 3 Scan self-play games)
+    sp-0: wrote /root/cw-sonde-d14/.pp-0.jnnw (322 strong-side quiet parents; decisive-games=1, draws-kept=2)
+
+  => rate/ETA ci-dessus fondent le sizing du job boost gen2-mmto (0668). GO JFC requis avant de le lancer.
+  RESULTS committé ✓
+=== fin sonde Scan-d14 ===
