@@ -1,1 +1,0 @@
-kill 0666 : self-play STUCK +96min (timeout inefficace SIGTERM ignore + boucle externe gen-data illimitee sous eval plate). Fix garde interne.
