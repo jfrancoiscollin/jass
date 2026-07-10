@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0666-scratch-tour0-durci",
-  "snapshot_at": "2026-07-10T17:33:35+00:00",
+  "snapshot_at": "2026-07-10T17:38:36+00:00",
   "started_at": "2026-07-10T16:24:17+00:00",
-  "elapsed_seconds": 4158,
+  "elapsed_seconds": 4459,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 289192       1    01:09:18  0.0  0.0 bash\n 289194  289192    01:09:18  0.0  0.0 bash\n 289705  289194    01:09:04  0.0  0.0 bash\n 292088  289705       08:41  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 289192       1    01:14:18  0.0  0.0 bash\n 289194  289192    01:14:18  0.0  0.0 bash\n 289705  289194    01:14:05  0.0  0.0 bash\n 292478  289705       03:38  0.0  0.0 sleep\n"
 }
