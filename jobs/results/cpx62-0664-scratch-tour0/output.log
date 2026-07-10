@@ -1,0 +1,6 @@
+=== FROM-SCRATCH tour 0 (eval=0, zéro prof/Scan) — HEAD fd357265c runner: finalize cpx62-0663-forcing-threat-retest (completed, rc=0) ===
+zero.pjtw : n_pat=17006112 n_ext=120 scale=1000 bytes=136049876
+  zero.pjtw eval start = 0 (doit être ~0)
+  ✓ build+geom(NP=32)+zero.pjtw ; seeds=2000000
+
+=== self-play eval=0 : play d14, qs pleine, eps 30 decay 30, adjud-mat 2/10, quiet-only, 100000×16 ===
