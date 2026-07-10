@@ -5,6 +5,29 @@
 
 ## ⛔ RÈGLES OPÉRATIONNELLES JFC — non négociables
 
+## ✅✅ CHECK-LIST PRÉ-LANCEMENT COMPLÈTE — À VÉRIFIER À CHAQUE JOB (JFC 2026-07-10, « trop de gâchis »)
+> **Rien ne part sans avoir coché CES 12 points, dans cet ordre. Trop de compute gâché (0664 sur-sizé, 0665 mis-sizé nproc PUIS hung 2h11, 0659 timeout culé n=0, 0657 hung). Chaque point vient d'une bourde réelle payée en heures.** Coller le résultat des checks dans le rapport à JFC.
+>
+> **A. SIZING (ne pas gâcher par le volume)**
+> 1. **`nproc` RÉEL de la box cible** connu (volume = `PERG × nproc`). Ancres : cpx62 ≈ **32**, ccx33 ≈ **8**. *(bourde 0665 : supposé 16, réel 32 → volume ×2.)*
+> 2. **RATE mesuré sur la box réelle** (micro-sonde `PERG=200`/1 shard, OU lu d'un PROGRESS/RESULTS comparable récent). Mesuré, pas déduit. Ancre self-play gen-data-wdl d10+qs ≈ **~300 kept/min/shard** (cpx62).
+> 3. **ETA CHIFFRÉE** = `volume ÷ rate` + build + fit + gate, **sortie à JFC avec le nproc + rate qui la fondent**.
+> 4. **SIZER LÉGER** (retour < ~30-45 min par défaut ; escalade sur demande explicite seulement).
+>
+> **B. ROBUSTESSE RUNTIME (ne pas gâcher par un hang / une traîne)**
+> 5. **`timeout` PAR SHARD sur TOUTE génération/A-B parallèle** — un shard bloqué ne DOIT jamais geler le job entier (0665/0657 hung). Le job doit atteindre fit/gate avec ce qui a fini.
+> 6. **`timeout` CALIBRÉ sur la box LENTE** = `temps_shard_sain × ~1.3` (marge). **Trop court = cellules culées à n=0** (0659 sur ccx33 : baseline n=0). Trop long = on subit la traîne. Calculer depuis le rate (point 2), pas copier d'une box rapide.
+> 7. **MONITOR de progress committé /~10 min** (compteurs + ETA restante). Jamais dark (0665 tour-0 dark 89 min avant kill).
+> 8. **Savoir si l'outil écrit INCRÉMENTAL ou EN FIN DE SHARD** : `gen-data-wdl`/`scan_selfplay_gen` écrivent **en fin de shard** → aucun harvest partiel, aucun kill propre mid-run → **sizer JUSTE + timeout** (points 4-6).
+>
+> **C. REPORTING (ne pas gâcher le run par un bug de report)**
+> 9. **SMOKE-TEST write→read round-trip** sur mini-échantillon : le parser lit ce que le job écrit (mêmes clés/format/N). `bash -n` + `py_compile` des heredocs.
+> 10. **n=0 (ou n < plancher) = ÉCHEC, PAS « neutre »** : tout parseur A/B/gate doit **crier ABORT/INCONCLUANT** si une cellule n'a pas produit ≥ N_min parties (0659 a rapporté « neutre » sur n=0 = faux signal). **Baseline symétrique doit sortir ~0.5 avec n>0** (sanity harnais) sinon le job est cassé.
+>
+> **D. ARCHI + GO**
+> 11. **GARDE-FOU ARCHI** : pull explicite `scan_eval/search/movegen` d'une ref connue + `arch_assert` (g_emasks + has_any_capture) AVANT `cmake` (cf §4).
+> 12. **GO EXPLICITE JFC** sur (ETA chiffrée + sizing) — seulement ensuite queuer.
+
 ### 1. ⏱️ TIMING AVANT LANCEMENT (répété plusieurs fois par JFC — 2026-07-07)
 **AVANT de queuer TOUT job (ou batch de jobs) sur les box (cpx62 / ccx33), TOUJOURS, dans cet ordre :**
 1. **Pré-estimer le runtime**, ANCRÉ sur la durée réelle `start→finalize` d'un job COMPARABLE déjà tourné — jamais « au doigt mouillé ».
