@@ -11,7 +11,15 @@
 2. **Faire VALIDER l'estimation + le sizing par JFC AVANT de queuer.** Ne rien lancer sans (pré-estimation chiffrée + go explicite).
 3. **Sizer LÉGER par défaut** (retour rapide < ~30-45 min) ; n'escalader le N / volume / movetime que sur demande explicite.
 
+**✅ CHECK-LIST PRÉ-LANCEMENT MÉCANIQUE (obligatoire, dans l'ordre — 2026-07-10, après ma bourde 0665) :**
+> Bourde 0665 : sizé `PERG=45000` en supposant « ×16 cœurs ≈ 720k », or **cpx62 = ~32 cœurs → 1,4M réel** → ETA annoncée 45-70 min vs ~3,5h réel. La cause = **volume/durée jamais calibrés sur la box réelle**. Cette check-list rend l'étape non-sautable :
+> 1. **CONNAÎTRE `nproc` de la box cible** (le volume total = `PERG × nproc`, jamais un nproc supposé). Ancres : **cpx62 ≈ 32 cœurs**, **ccx33 ≈ 8-16 cœurs** (vérifier).
+> 2. **MICRO-CALIBRER le rate sur la box réelle** avant le vrai run : soit un job-sonde minuscule (`PERG=200`, 1 shard, mesurer sec→pos), soit lire le rate d'un PROGRESS/RESULTS d'un job COMPARABLE récent. **Rate mesuré, pas déduit.**
+> 3. **CALCULER l'ETA chiffrée** = `volume_total ÷ rate_mesuré` (+ build + fit + gate), et la sortir à JFC **avec le nproc et le rate qui la fondent**.
+> 4. **VALIDER avec JFC** (go explicite) — seulement ensuite queuer.
+
 **Repères de durée mesurés (à ré-ancrer au fil du temps) :**
+- **Self-play `--gen-data-wdl` d10 + qs pleine (0665, cpx62 ~32 cœurs)** : ≈ **~7,3k pos KEPT/min au total** (≈ ~230 pos/min/shard) → 720k ≈ ~98 min, 1,4M ≈ ~3,2h. **DIMENSIONNER `PERG` par ce rate × nproc réel.** Le monitor PROGRESS committe l'octet-count des shards /10 min (rate live).
 - `calibrate_vs_scan` (d9 + mt0.3 + survie, N~1300 games) ≈ **2h** ; la cellule **mt1.0 = goulot ~4h** ; **movetime + gros-N = très lent** (0636 : 5h+).
 - A/B `jass_vs_jass_arch` 4 cellules, N~1500/cellule, mt0.2-0.3 : ≈ **1h45 sur cpx62**, ≈ **2×** sur ccx33 (8 cœurs).
 - MMTO gen-siblings `--leaf-mode` + fit (~50-100k parents) ≈ **5-15 min**.
