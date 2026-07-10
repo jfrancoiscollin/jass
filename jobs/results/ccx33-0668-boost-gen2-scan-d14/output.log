@@ -1,0 +1,5 @@
+=== BOOST gen2-mmto MMTO-prof-fort (Scan-d14) — HEAD 4c65cefc3 0666 progress +30min (16/16 shards, ~64003 pos) — nproc=8 ===
+  Scan ✓ + garde-fou archi ✓
+  ✓ build+geom(NP=32) ; ancre=gen2-mmto ; seeds=2000000
+
+=== A. self-play Scan-d14 : 100 parties×8, min-pieces 32, timeout/shard 3000s ===
