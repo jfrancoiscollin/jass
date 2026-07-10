@@ -1,0 +1,15 @@
+=== VALIDATION Elo du gain NPS (NEW opts vs OLD clean, même éval) — HEAD f830fec16 queue 0662 validation NPS->Elo (cpx62) : A/B NEW(opts +13-15% NPS) vs OLD(clean) même eval gen2-mmto au movetime ===
+  main scan_eval = NPS-opt ✓
+  ✓ build NEW (opts NPS)
+  ✓ build OLD (clean pré-NPS)
+  generaliste : 66 openings
+  openings ≥38p : 66
+
+=== A/B NEW(opts NPS) vs OLD(clean), même éval gen2-mmto, au movetime ===
+  [NEW(opts) vs OLD(clean) | mt0.2 | même éval gen2] A=517 B=452 D=351 n=1320 rate_NEW=0.525+-0.027 elo~+17 => neutre
+  [NEW(opts) vs OLD(clean) | mt0.3 | même éval gen2] A=499 B=433 D=388 n=1320 rate_NEW=0.525+-0.027 elo~+17 => neutre
+
+  GATE : NEW>0.5 hors-IC => les +13-15% NPS byte-identiques se convertissent en Elo movetime (prémisse validée).
+  neutre => le NPS ne paie pas au movetime (surprenant) ; PERD => anomalie à investiguer (ne devrait pas, byte-identique).
+  RESULTS committé ✓
+=== fin validation NPS ===
