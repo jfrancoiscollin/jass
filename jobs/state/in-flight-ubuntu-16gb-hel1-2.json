@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0667-scan-d14-sonde",
+  "script": "jobs/queue/ccx33-0667-scan-d14-sonde.sh",
+  "pid": 79225,
+  "started_at": "2026-07-10T16:29:29+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}

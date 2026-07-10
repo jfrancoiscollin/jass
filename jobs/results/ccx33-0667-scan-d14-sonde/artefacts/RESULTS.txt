@@ -1,0 +1,2 @@
+=== SONDE Scan-d14 (rate reel ccx33 8 coeurs) — HEAD 1ec026341 runner: heartbeat cpx62-0666-scratch-tour0-durci — nproc=8 ===
+  Scan ✓ : /root/jass-scan/scan_linux
