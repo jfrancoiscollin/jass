@@ -1,1 +1,1 @@
-kill 0670 : boucle sur la generation (6x "generation finie", RESULTS vide, +86min, jamais gen-siblings/fit). Bug post-gen a investiguer.
+RE-kill 0670 : runner ccx33 semble hung (no heartbeat >1h). A consommer si le runner revient.
