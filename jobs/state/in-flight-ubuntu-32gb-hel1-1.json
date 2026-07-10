@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0665-scratch-tour0",
+  "script": "jobs/queue/cpx62-0665-scratch-tour0.sh",
+  "pid": 275770,
+  "started_at": "2026-07-10T11:03:17+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
