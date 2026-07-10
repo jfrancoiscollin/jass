@@ -4,3 +4,4 @@
   [extf_nored   ext_forcing=1,no_reduce_forcing=1           ] A=305 B=531 D=220 n=1056 rate_A=0.3930+-0.0260 elo~-76 IC=[0.367,0.419] => PERD hors-IC
   [qs_forcing   qs_forcing_depth=4                          ] A=147 B=761 D=148 n=1056 rate_A=0.2093+-0.0218 elo~-231 IC=[0.187,0.231] => PERD hors-IC
   [qs_threat    qs_threat_ext=1                             ] A=413 B=386 D=257 n=1056 rate_A=0.5128+-0.0262 elo~+9 IC=[0.487,0.539] => neutre
+  [combo        ext_forcing=1,qs_forcing_depth=4,qs_threat_ext=1] A=162 B=748 D=146 n=1056 rate_A=0.2225+-0.0224 elo~-217 IC=[0.200,0.245] => PERD hors-IC
