@@ -1,0 +1,1 @@
+  [NEW(opts) vs OLD(clean) | mt0.2 | même éval gen2] A=517 B=452 D=351 n=1320 rate_NEW=0.525+-0.027 elo~+17 => neutre
