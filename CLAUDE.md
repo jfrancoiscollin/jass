@@ -9,7 +9,7 @@
 > **Rien ne part sans avoir coché CES 12 points, dans cet ordre. Trop de compute gâché (0664 sur-sizé, 0665 mis-sizé nproc PUIS hung 2h11, 0659 timeout culé n=0, 0657 hung). Chaque point vient d'une bourde réelle payée en heures.** Coller le résultat des checks dans le rapport à JFC.
 >
 > **A. SIZING (ne pas gâcher par le volume)**
-> 1. **`nproc` RÉEL de la box cible** connu (volume = `PERG × nproc`). Ancres : cpx62 ≈ **32**, ccx33 ≈ **8**. *(bourde 0665 : supposé 16, réel 32 → volume ×2.)*
+> 1. **`nproc` RÉEL de la box cible** connu (volume = `PERG × nproc`). Ancres MESURÉES : cpx62 = **16** (0666 imprime `×16`), ccx33 = **8**. *(NB : j'ai flotté 16↔32 sur cpx62 par sur-inférence d'un ratio shard bruité ; la VALEUR IMPRIMÉE par le job `NCPU=$(nproc)` fait foi, pas une déduction.)*
 > 2. **RATE mesuré sur la box réelle** (micro-sonde `PERG=200`/1 shard, OU lu d'un PROGRESS/RESULTS comparable récent). Mesuré, pas déduit. Ancre self-play gen-data-wdl d10+qs ≈ **~300 kept/min/shard** (cpx62).
 > 3. **ETA CHIFFRÉE** = `volume ÷ rate` + build + fit + gate, **sortie à JFC avec le nproc + rate qui la fondent**.
 > 4. **SIZER LÉGER** (retour < ~30-45 min par défaut ; escalade sur demande explicite seulement).
