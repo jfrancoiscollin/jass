@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0659-doe-search-r2b",
+  "script": "jobs/queue/ccx33-0659-doe-search-r2b.sh",
+  "pid": 73577,
+  "started_at": "2026-07-10T10:44:59+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
