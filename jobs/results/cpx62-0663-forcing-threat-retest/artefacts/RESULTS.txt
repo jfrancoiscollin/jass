@@ -1,1 +1,2 @@
   [baseline                                                 ] A=409 B=362 D=285 n=1056 rate_A=0.5223+-0.0257 elo~+15 IC=[0.497,0.548] => neutre
+  [ext_forcing  ext_forcing=1                               ] A=301 B=523 D=232 n=1056 rate_A=0.3949+-0.0259 elo~-74 IC=[0.369,0.421] => PERD hors-IC
