@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0659-doe-search-r2b",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-10T10:44:59+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 73577
+  "ended_at": "2026-07-10T13:27:31+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
