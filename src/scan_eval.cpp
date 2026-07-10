@@ -177,51 +177,60 @@ void compute_extras(const Position& pos,
     // Endgame king-interaction (Direction B). central = how central each king sits
     // (0 edge .. 9 centre) ; prox = how close each king is to the enemy (9 adjacent
     // .. 0 far, Chebyshev on row/col). Few kings in endgames -> cheap; gated.
-    auto central = [](Square s) -> float {
-        const float r = static_cast<float>(row_of(s));
-        const float c = static_cast<float>(col_of(s));
-        return (4.5f - std::fabs(r - 4.5f)) + (4.5f - std::fabs(c - 4.5f));
-    };
-    auto min_dist = [](Square ks, Bitboard targets) -> int {
-        const int kr = row_of(ks), kc = col_of(ks);
-        int best = 9;
-        for (Bitboard b = targets; b; ) {
-            const Square t = pop_lsb(b);
-            const int d = std::max(std::abs(row_of(t) - kr), std::abs(col_of(t) - kc));
-            if (d < best) best = d;
+    // These features are king-only : with NO king on the board every output equals
+    // 0 (== the out.fill above), so skip the whole block then — BYTE-IDENTICAL. The
+    // vast majority of nodes (opening / midgame) are king-less, so this is a win.
+    if (pos.black_kings() | pos.white_kings()) {
+        auto central = [](Square s) -> float {
+            const float r = static_cast<float>(row_of(s));
+            const float c = static_cast<float>(col_of(s));
+            return (4.5f - std::fabs(r - 4.5f)) + (4.5f - std::fabs(c - 4.5f));
+        };
+        auto min_dist = [](Square ks, Bitboard targets) -> int {
+            const int kr = row_of(ks), kc = col_of(ks);
+            int best = 9;
+            for (Bitboard b = targets; b; ) {
+                const Square t = pop_lsb(b);
+                const int d = std::max(std::abs(row_of(t) - kr), std::abs(col_of(t) - kc));
+                if (d < best) best = d;
+            }
+            return best;
+        };
+        const Bitboard whites = pos.white_men() | pos.white_kings();
+        const Bitboard blacks = pos.black_men() | pos.black_kings();
+        float bk_c = 0, wk_c = 0, bk_p = 0, wk_p = 0;
+        for (Bitboard b = pos.black_kings(); b; ) {
+            const Square s = pop_lsb(b);
+            bk_c += central(s);
+            if (whites) bk_p += static_cast<float>(9 - min_dist(s, whites));
         }
-        return best;
-    };
-    const Bitboard whites = pos.white_men() | pos.white_kings();
-    const Bitboard blacks = pos.black_men() | pos.black_kings();
-    float bk_c = 0, wk_c = 0, bk_p = 0, wk_p = 0;
-    for (Bitboard b = pos.black_kings(); b; ) {
-        const Square s = pop_lsb(b);
-        bk_c += central(s);
-        if (whites) bk_p += static_cast<float>(9 - min_dist(s, whites));
+        for (Bitboard b = pos.white_kings(); b; ) {
+            const Square s = pop_lsb(b);
+            wk_c += central(s);
+            if (blacks) wk_p += static_cast<float>(9 - min_dist(s, blacks));
+        }
+        out[EXTRA_BK_CENTRAL] = bk_c;  out[EXTRA_WK_CENTRAL] = wk_c;
+        out[EXTRA_BK_PROX]    = bk_p;  out[EXTRA_WK_PROX]    = wk_p;
     }
-    for (Bitboard b = pos.white_kings(); b; ) {
-        const Square s = pop_lsb(b);
-        wk_c += central(s);
-        if (blacks) wk_p += static_cast<float>(9 - min_dist(s, blacks));
-    }
-    out[EXTRA_BK_CENTRAL] = bk_c;  out[EXTRA_WK_CENTRAL] = wk_c;
-    out[EXTRA_BK_PROX]    = bk_p;  out[EXTRA_WK_PROX]    = wk_p;
 #endif
 
 #ifdef JASS_KING_MOBILITY
     // Scan's king_mob (audit-faithful) : split each king's empty slide squares
     // into SAFE (not attacked by an enemy man) and DENIED (attacked → the king
     // would be capturable there). The denial count is the confinement gradient.
-    const Bitboard empty_km = pos.empties();
-    const Bitboard watt = man_attacks(pos.white_men(), empty_km);  // squares attacked by WHITE men
-    const Bitboard batt = man_attacks(pos.black_men(), empty_km);  // squares attacked by BLACK men
-    const Bitboard bkr  = king_reach(pos.black_kings(), empty_km);
-    const Bitboard wkr  = king_reach(pos.white_kings(), empty_km);
-    out[EXTRA_BK_SAFEMOB] = static_cast<float>(popcount(bkr & ~watt));
-    out[EXTRA_WK_SAFEMOB] = static_cast<float>(popcount(wkr & ~batt));
-    out[EXTRA_BK_DENIED]  = static_cast<float>(popcount(bkr & watt));
-    out[EXTRA_WK_DENIED]  = static_cast<float>(popcount(wkr & batt));
+    // King-only again : no king → all four outputs are 0 (== out.fill), so skip
+    // the block AND its two man_attacks() sweeps (≈16 shifts) — BYTE-IDENTICAL.
+    if (pos.black_kings() | pos.white_kings()) {
+        const Bitboard empty_km = pos.empties();
+        const Bitboard watt = man_attacks(pos.white_men(), empty_km);  // squares attacked by WHITE men
+        const Bitboard batt = man_attacks(pos.black_men(), empty_km);  // squares attacked by BLACK men
+        const Bitboard bkr  = king_reach(pos.black_kings(), empty_km);
+        const Bitboard wkr  = king_reach(pos.white_kings(), empty_km);
+        out[EXTRA_BK_SAFEMOB] = static_cast<float>(popcount(bkr & ~watt));
+        out[EXTRA_WK_SAFEMOB] = static_cast<float>(popcount(wkr & ~batt));
+        out[EXTRA_BK_DENIED]  = static_cast<float>(popcount(bkr & watt));
+        out[EXTRA_WK_DENIED]  = static_cast<float>(popcount(wkr & batt));
+    }
 #endif
 
 #ifdef JASS_SCAN_PARITY
@@ -339,8 +348,7 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
 
     ScanWeights w;
     w.scale = scale ? scale : 1U;
-    w.pat_mg.resize(n_pat);
-    w.pat_eg.resize(n_pat);
+    w.pat.resize(n_pat);
 
     const unsigned char* p = raw.data() + V3_HEADER;
     auto next = [&p]() noexcept {
@@ -348,8 +356,9 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
         p += 4;
         return v;
     };
-    for (std::uint32_t i = 0; i < n_pat; ++i) w.pat_mg[i] = next();
-    for (std::uint32_t i = 0; i < n_pat; ++i) w.pat_eg[i] = next();
+    // Disk order is [all mg][all eg]; interleave into pat[i].{mg,eg}. Same values.
+    for (std::uint32_t i = 0; i < n_pat; ++i) w.pat[i].mg = next();
+    for (std::uint32_t i = 0; i < n_pat; ++i) w.pat[i].eg = next();
     for (int e = 0; e < NUM_EXTRAS; ++e) w.ext_mg[static_cast<std::size_t>(e)] = next();
     for (int e = 0; e < NUM_EXTRAS; ++e) w.ext_eg[static_cast<std::size_t>(e)] = next();
 
@@ -378,16 +387,36 @@ int ScanEvalNetwork::evaluate(const Position& pos) const noexcept {
 
 int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
                                        const std::uint32_t* idx) const noexcept {
-    constexpr auto offsets = pattern_jass::pattern_offsets();
-    double pat_mg = 0.0, pat_eg = 0.0;
+    static constexpr auto offsets = pattern_jass::pattern_offsets();
+    // The 32 gather columns depend only on `idx` (no memory latency), so compute
+    // them ALL first, then software-prefetch the weight lines a few patterns ahead
+    // of the summation — this hides the DRAM latency of the random 17M-entry gather
+    // (the eval's dominant cost). The int32 sums are accumulated in int64 (exact:
+    // ≤32 terms, |Σ|<2^36) and converted once → BYTE-IDENTICAL to the double loop.
+    constexpr bool kHashIsNoop =
+        (pattern_jass::BUCKETS_PER_PATTERN
+         == pattern_jass::POW3[pattern_jass::PATTERN_SIZE]);
+    std::array<std::size_t, pattern_jass::NUM_PATTERNS> cols{};
     for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
-        // Bucket hashing : reduce the full base-3 index mod PATTERN_HASH (no-op
-        // when PATTERN_HASH == POW3[SIZE]). offsets[i] = i * BUCKETS_PER_PATTERN.
-        const std::size_t col =
-            offsets[i] + (idx[i] % pattern_jass::BUCKETS_PER_PATTERN);
-        pat_mg += static_cast<double>(w_.pat_mg[col]);
-        pat_eg += static_cast<double>(w_.pat_eg[col]);
+        // Bucket hashing : reduce the base-3 index mod PATTERN_HASH. When
+        // PATTERN_HASH == POW3[PATTERN_SIZE] the index is provably < the modulus
+        // (base-3 PATTERN_SIZE index) → the mod is a no-op, elided at compile time.
+        const std::uint32_t r =
+            kHashIsNoop ? idx[i] : (idx[i] % pattern_jass::BUCKETS_PER_PATTERN);
+        cols[i] = offsets[i] + r;
     }
+    constexpr std::size_t PF = 4;   // prefetch distance (patterns ahead)
+    for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
+        __builtin_prefetch(&w_.pat[cols[i]]);
+    std::int64_t smg = 0, seg = 0;
+    for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+        if (i + PF < pattern_jass::NUM_PATTERNS)
+            __builtin_prefetch(&w_.pat[cols[i + PF]]);
+        const PatPair& pw = w_.pat[cols[i]];   // mg+eg adjacent → 1 cache line
+        smg += pw.mg;
+        seg += pw.eg;
+    }
+    double pat_mg = static_cast<double>(smg), pat_eg = static_cast<double>(seg);
 
     // Dense extras (king PST, material, mobility, balance).
     std::array<float, NUM_EXTRAS> extras{};
