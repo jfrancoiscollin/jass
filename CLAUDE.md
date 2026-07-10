@@ -48,6 +48,14 @@ Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-lié
 - **Bake (éval ou search) = promotion délibérée sur `main`, uniquement sur go explicite de JFC.** Réversible (archiver l'ancien champion).
 - Commits vers main/develop via plumbing `read-tree origin/<ref>` + `commit-tree` + `push` (cf `commit_to_main` dans les jobs).
 - Champion éval courant : voir le bloc en tête de `docs/CURRENT.md` (au 2026-07-07 : **gen2-mmto**).
+- **🛡️ GARDE-FOU ARCHI (obligatoire dans TOUT job qui build — JFC 2026-07-10)** : ne JAMAIS s'appuyer sur l'arbre de base du runner pour les fichiers perf-critiques (silencieusement stale possible). **Pull explicitement `scan_eval.cpp/.hpp`, `search.cpp`, `movegen.cpp/.hpp` d'une ref connue** (`git show origin/develop:<f> > <f>`) **PUIS assert les opts AVANT `cmake`.** 0659 s'appuyait sur l'arbre de base (OK car main==develop ce jour-là, mais fragile) ; 0665 pull explicite (bon patron). Snippet à coller juste avant le build :
+  ```bash
+  arch_assert(){  # à appeler après les pull develop, avant cmake
+    grep -q "g_emasks"        src/scan_eval.cpp || { say "ABORT archi: scan_eval SANS opts NPS (g_emasks)"; restore_src; exit 5; }
+    grep -q "has_any_capture" src/search.cpp    || { say "ABORT archi: search SANS has_any_capture"; restore_src; exit 5; }
+    grep -q "has_any_capture" src/movegen.cpp   || { say "ABORT archi: movegen SANS has_any_capture"; restore_src; exit 5; }
+    say "  garde-fou archi ✓ : scan_eval=g_emasks (dot creux+popcount) + has_any_capture (search+movegen) = NPS-opt"; }
+  ```
 
 ### 3. Style de collaboration
 - JFC pilote au tour par tour, en français, statuts courts. Répondre concis, chiffres d'abord.
