@@ -7,3 +7,4 @@
 [+70min] self-play : ~19362704 octets shards (~509544 pos brutes), sp-0:   pla
 [+80min] self-play : ~22120592 octets shards (~582120 pos brutes), sp-0:   pla
 [+90min] self-play : ~24944144 octets shards (~656424 pos brutes), sp-0:   playe
+[+100min] self-play : ~27332762 octets shards (~719283 pos brutes), sp-0:   played 
