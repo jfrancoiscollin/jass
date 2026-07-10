@@ -1,0 +1,8 @@
+  garde-fou archi ✓ : g_emasks + has_any_capture + max_nodes + --play-max-nodes
+  zero.pjtw eval start = 0 (doit être ~0)
+  ✓ build+geom(NP=32)+zero.pjtw ; seeds=2000000
+
+=== self-play eval=0 : play d10, qs pleine, cap-noeuds 60000, adjud 2/10, timeout/shard 3600s, 4000×16 ===
+  shards ayant ecrit : 16/16 (les autres = cules au timeout, le cap devrait tous les faire finir)
+  WDL positions = 64000
+  WDL signal : win=25104 draw=3209 loss=35687 (5% nulles — si >90% le pur-zéro amorce mal)
