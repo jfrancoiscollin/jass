@@ -1,1 +1,2 @@
 [+10min] self-play : ~2749712 octets shards (~72360 pos brutes), sp-0: 
+[+20min] self-play : ~5532224 octets shards (~145584 pos brutes), sp-0:   played 4350 games, 7018 / 45000 pos
