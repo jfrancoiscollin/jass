@@ -1,2 +1,5 @@
 === DOE SEARCH gen2-mmto (OAT knobs, mt0.2 généraliste) — HEAD 1d2960c7f runner: finalize ccx33-0657-doe-search-r2 (completed, rc=0) ===
   ✓ BUILD OK (-j2 mem-safe)
+  ✓ build+gen2 (NCPU=8)
+  generaliste : 66 openings
+  openings ≥38p : 66
