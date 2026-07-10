@@ -12,3 +12,4 @@
 [+120min] self-play : ~27360128 octets shards (~720003 pos brutes), sp-0: LABELHYG plycap_games=909/27749 (3.27579%)  contaminated_samples=52577/97577 (53
 [+131min] self-play : ~27360128 octets shards (~720003 pos brutes), sp-0: LABELHYG plycap_games=909/27749 (3.27579%)  contaminated_samples=52577/97577 (53
 [+141min] self-play : ~27360128 octets shards (~720003 pos brutes), sp-0: LABELHYG plycap_games=909/27749 (3.27579%)  contaminated_samples=52577/97577 (53
+[+151min] self-play : ~27360128 octets shards (~720003 pos brutes), sp-0: LABELHYG plycap_games=909/27749 (3.27579%)  contaminated_samples=52577/97577 (53
