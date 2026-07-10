@@ -275,4 +275,44 @@ void generate_legal_moves(const Position& pos, MoveList& out) {
     generate_quiet_moves(pos, out);
 }
 
+bool has_any_capture(const Position& pos, Color us) noexcept {
+    const Bitboard friend_bb = pos.pieces_of(us);
+    const Bitboard enemy     = pos.pieces_of(opposite(us));
+    const Bitboard occ       = friend_bb | enemy;
+    const Bitboard empty     = ~occ & PLAYABLE_BB;
+    const Bitboard men       = pos.men_of(us);
+
+    // Man captures (FMJD men capture along ALL 4 diagonals) : a man at s can
+    // capture iff there is an enemy at s+d and an EMPTY landing at s+2d, for
+    // some diagonal d. `shift_d` translates a whole SET one step in dir d (with
+    // brick-layout edge masking), so `shift_d(shift_d(men) & enemy) & empty` is
+    // the set of empty landing squares reachable by a first jump in dir d.
+    if (((shift_nw(shift_nw(men) & enemy) & empty)
+       | (shift_ne(shift_ne(men) & enemy) & empty)
+       | (shift_sw(shift_sw(men) & enemy) & empty)
+       | (shift_se(shift_se(men) & enemy) & empty)) != 0)
+        return true;
+
+    // King captures : slide through empties along each ray; the first PIECE hit,
+    // if it is an ENEMY with an empty square immediately beyond, is capturable.
+    Bitboard kings = pos.kings_of(us);
+    while (kings) {
+        const Square from = pop_lsb(kings);
+        for (Dir d : ALL_DIRS) {
+            const KingRay& ray = king_ray(from, d);
+            for (std::uint8_t i = 0; i < ray.length; ++i) {
+                const Square sc = ray.squares[i];
+                if (test(friend_bb, sc)) break;            // own piece blocks the ray
+                if (test(enemy, sc)) {                      // enemy on the ray
+                    const KingRay& lr = king_ray(sc, d);
+                    if (lr.length > 0 && !test(occ, lr.squares[0])) return true;
+                    break;                                  // backed enemy / edge: no capture this dir
+                }
+                // empty square : keep sliding
+            }
+        }
+    }
+    return false;
+}
+
 }  // namespace jass

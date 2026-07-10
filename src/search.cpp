@@ -339,34 +339,11 @@ struct Searcher {
     }
 };
 
-// Probabilistic history (Scan sort.cpp) : EMA de P(coup bon) dans [0,PROB_ONE).
-constexpr int PROB_ONE  = 4096;
-constexpr int PROB_HALF = 2048;
-inline void hist_good(int& h, int shift) noexcept { h += (PROB_ONE - h) >> shift; }
-inline void hist_bad (int& h, int shift) noexcept { h -= h >> shift; }
-
 // Score used to sort the move list. Larger = tried first.
 inline int order_score(const Searcher& s, const Move& m, int ply,
                        const Move& tt_move, bool tt_hit,
                        const Move& prev_move) noexcept {
     if (tt_hit && m == tt_move) return 1'000'000;
-    // ---- Mode prob (Scan) : estimateur EMA ; TT en tete, puis (sauf hist_pure)
-    //      killers/countermove au-dessus, puis history-prob ; captures triees si E3. ----
-    if (s.params.hist_mode == 1) {
-        if (m.is_capture())
-            return s.params.hist_order_captures ? s.history[m.from][m.to] : 0;
-        if (!s.params.hist_pure) {
-            if (m == s.killers[static_cast<std::size_t>(ply)][0]) return 800'000;
-            if (m == s.killers[static_cast<std::size_t>(ply)][1]) return 700'000;
-            if (prev_move.from != 0) {
-                const Move& cm = s.countermove
-                    [static_cast<std::size_t>(prev_move.from)]
-                    [static_cast<std::size_t>(prev_move.to)];
-                if (cm.from != 0 && m == cm) return 650'000;
-            }
-        }
-        return s.history[m.from][m.to];   // P1 pur = estimateur seul
-    }
     if (m.is_capture())          return 0;            // captures: keep generation order
     if (m == s.killers[static_cast<std::size_t>(ply)][0])  return   800'000;
     if (m == s.killers[static_cast<std::size_t>(ply)][1])  return   700'000;
@@ -419,9 +396,7 @@ inline void order_moves(MoveList& moves, const Searcher& s, int ply,
 // forced the reply (FMJD majority-capture rule). Used by forcing quiescence to
 // recognise a sacrifice / combination starter (mirror of negamax's lambda).
 static bool qs_leaves_forced_capture(const Position& child) {
-    MoveList cml;
-    gen_moves(child, cml);
-    return !cml.empty() && cml[0].is_capture();
+    return has_any_capture(child);   // capture-existence, no full movegen
 }
 
 // A quiet MAN move that makes progress toward promotion — it crowns now, or the
@@ -444,12 +419,8 @@ static bool qs_promo_progress(const Position& pos, const Move& m, int rows) {
 // to move is under THREAT of being captured (Scan's is_threat). Flip the side to
 // move and generate captures.
 static bool opponent_can_capture(const Position& pos) {
-    Position flipped = pos;
-    flipped.set_side_to_move(pos.side_to_move() == Color::White ? Color::Black
-                                                                : Color::White);
-    MoveList m;
-    gen_moves(flipped, m);                       // all-captures-or-all-quiet
-    return !m.empty() && m[0].is_capture();
+    // The opponent's captures in `pos` — no position copy / stm flip / movegen.
+    return has_any_capture(pos, opposite(pos.side_to_move()));
 }
 
 int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
@@ -466,16 +437,6 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
     if (!moves[0].is_capture()) {
-        // F5 : opponent_can_capture(pos) est demandé par DEUX gates de cette branche
-        // calme (threat-ext puis sacs) — memoïsé paresseusement : calculé au plus une
-        // fois, et seulement si un gate le demande (sémantique et coût inchangés
-        // quand les deux briques sont off).
-        int under_threat_memo = -1;   // -1 = pas encore calculé
-        auto under_threat = [&]() -> bool {
-            if (under_threat_memo < 0)
-                under_threat_memo = opponent_can_capture(pos) ? 1 : 0;
-            return under_threat_memo == 1;
-        };
         // Threat extension (Scan) : at the first qs ply, if we are calm but the
         // opponent has a capture ready (we are under threat), the static eval is
         // unreliable — resolve it with a 1-ply look instead of standing pat. We do
@@ -484,7 +445,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         // main search has per-ply invariants that a mid-quiescence re-entry breaks.
         // Gated by threat_left (only the entry ply carries a budget → byte-identical
         // when off) and a ply cap (quiescence has no MAX_PLY guard of its own).
-        if (threat_left > 0 && ply < MAX_PLY - 4 && under_threat()) {
+        if (threat_left > 0 && ply < MAX_PLY - 4 && opponent_can_capture(pos)) {
             int best = -INF_SCORE;
             for (const auto& m : moves) {                // our quiet moves
                 const Position child = after_timed(pos, m);
@@ -503,7 +464,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
         // point : a naive "all forcing sacs" quiescence explodes the tree.
         const bool sacs_on = sac_left > 0
                           && (pos.white_kings() | pos.black_kings()) == 0
-                          && !under_threat();
+                          && !opponent_can_capture(pos);
         // Forcing + promotion quiescence : a CALM leaf may still hide a quiet
         // SACRIFICE (forced reply) or a near PROMOTION. Stand-pat-search those
         // (bounded by forcing_left / promo_left / sac_left). All budgets 0 → return
@@ -743,12 +704,6 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         if (depth >= NMP_MIN_DEPTH
             && !was_null
             && !is_mate_score(beta)
-            && !tactical                        // FIX F1 : jamais de null-move a un noeud en
-                                                //   CAPTURE FORCEE. Decliner une capture obligatoire
-                                                //   est illegal aux dames ; sur un noeud post-sacrifice
-                                                //   static_eval>=beta passe trivialement -> cutoff qui
-                                                //   masque la reprise forcee = la refutation du sac.
-                                                //   RFP/razor ont deja ce garde ; le NMP l'avait perdu.
             && !(eg && params.eg_no_nmp)) {     // endgame regime: NMP off (zugzwang)
             const Bitboard all = pos.white_men() | pos.white_kings()
                                | pos.black_men() | pos.black_kings();
@@ -1033,19 +988,13 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // is deterministic and must not be reduced/pruned away. Ablation 0446
     // isolated LMR+LMP as the mechanisms hiding such lines at fixed depth.
     auto leaves_forced_capture = [&](const Position& child) -> bool {
-        MoveList cml;
-        gen_moves(child, cml);
-        return !cml.empty() && cml[0].is_capture();
+        return has_any_capture(child);   // capture-existence, no full movegen
     };
 
     int move_idx = 0;
     // Quiet moves actually searched (for the history malus on a beta cutoff).
     std::array<Move, 64> quiets_searched;
     int n_quiets_searched = 0;
-    // Mode prob : on retient TOUS les coups essayes dans l'ordre (captures incluses, E3) pour la
-    // mise a jour EMA bidirectionnelle de fin de noeud (good best_move + bad les essayes-avant).
-    std::array<Move, 64> tried_moves;
-    int n_tried = 0;
     for (const auto& m : moves) {
         // LMP : skip late quiet moves at shallow non-PV nodes. When the
         // improving heuristic is on and we are NOT improving, prune one step
@@ -1151,9 +1100,6 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         // were tried and failed (history malus). Captures are never tracked.
         if (!m.is_capture() && n_quiets_searched < static_cast<int>(quiets_searched.size()))
             quiets_searched[static_cast<std::size_t>(n_quiets_searched++)] = m;
-        // Mode prob : ordre d'essai complet (captures incluses) pour l'EMA de fin de noeud.
-        if (params.hist_mode == 1 && n_tried < static_cast<int>(tried_moves.size()))
-            tried_moves[static_cast<std::size_t>(n_tried++)] = m;
 
         if (score > best) {
             best      = score;
@@ -1176,8 +1122,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 // ~history_max and decays large OLD cutoffs toward it, so stale
                 // history stops dominating the ordering. history_max=0 = legacy
                 // unbounded += bonus (byte-identical default).
-                // Mode prob : l'history est mise a jour par l'EMA de fin de noeud, PAS ici (sinon double).
-                if (params.hist_mode == 0) {
+                {
                     int& h = history[m.from][m.to];
                     h += (params.history_max > 0)
                        ? hbonus - h * hbonus / params.history_max
@@ -1186,7 +1131,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
                 // History malus (opt-in) : penalise the quiet moves that were
                 // tried before this cutoff and failed, so they sink in the
                 // ordering. Same gravity rule, with a negative delta.
-                if (params.hist_mode == 0 && params.hist_malus > 0) {
+                if (params.hist_malus > 0) {
                     const int hmal = hbonus * params.hist_malus / 100;
                     for (int qi = 0; qi < n_quiets_searched; ++qi) {
                         const Move& qm = quiets_searched[static_cast<std::size_t>(qi)];
@@ -1217,17 +1162,6 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
             break;
         }
         ++move_idx;
-    }
-
-    // Mode prob (Scan) : mise a jour EMA de FIN DE NOEUD. Si best_move a releve alpha au-dela de
-    // l'entree (score>alpha_orig) et >1 coup legal : good(best_move) + bad(tous les essayes AVANT lui,
-    // captures incluses = E3). Signal bidirectionnel ~2-3x plus dense que le beta-cutoff-seul du legacy.
-    if (params.hist_mode == 1 && best_move.from != 0 && best > alpha_orig && moves.size() > 1) {
-        for (int ti = 0; ti < n_tried; ++ti) {
-            const Move& tm = tried_moves[static_cast<std::size_t>(ti)];
-            if (tm == best_move) { hist_good(history[best_move.from][best_move.to], params.prob_shift); break; }
-            hist_bad(history[tm.from][tm.to], params.prob_shift);
-        }
     }
 
     { BD_TIME(path_check); hash_path.pop_back(); }
@@ -1360,9 +1294,6 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     Searcher s;
     s.tt        = &tt;
     s.params    = limits.params;
-    // Mode prob (Scan) : la table history est une probabilite, init a PROB_HALF (P=0,5), pas 0.
-    if (s.params.hist_mode == 1)
-        for (auto& row : s.history) row.fill(PROB_HALF);
     s.hash_path = game_history;
     s.hash_path.push_back(root_hash);  // root is an ancestor for its children
     s.stop_flag = limits.stop_flag;
