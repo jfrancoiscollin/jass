@@ -2,3 +2,4 @@
 [+20min] self-play : ~29808 pos, sp-0: 
 [+30min] self-play : ~45360 pos, sp-0: 
 [+40min] self-play : ~61560 pos, sp-0: 
+[+50min] self-play : ~77544 pos, sp-0: 
