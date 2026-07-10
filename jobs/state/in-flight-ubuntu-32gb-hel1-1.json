@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0673-scratch-tour1-wdl",
+  "script": "jobs/queue/cpx62-0673-scratch-tour1-wdl.sh",
+  "pid": 299075,
+  "started_at": "2026-07-10T20:40:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
