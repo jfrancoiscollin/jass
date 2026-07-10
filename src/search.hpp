@@ -39,6 +39,13 @@ struct SearchLimits {
     int         max_depth   = 6;
     std::size_t tt_mb       = 1;     // transposition table size in megabytes
     int         movetime_ms = 0;     // wall-clock cap; 0 = unlimited
+    // Hard node cap: abandon the search once this many nodes are visited.
+    // 0 = unlimited. Unlike `movetime_ms` this is DETERMINISTIC (no wall-clock,
+    // no endgame movetime-overshoot) — the right bound for a flat/near-zero eval
+    // where alpha-beta pruning collapses and a fixed-depth search would explode
+    // (e.g. from-scratch self-play with a zero-weights eval). Polled by
+    // check_stop() every 1024 nodes, so it fires within ~1024 nodes of the cap.
+    std::uint64_t max_nodes = 0;
     // External stop signal. If non-null and set to true while the search is
     // running, the current iteration is abandoned and the result of the
     // last completed iteration is returned.
