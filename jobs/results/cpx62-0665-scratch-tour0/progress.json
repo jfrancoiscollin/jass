@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0665-scratch-tour0",
-  "snapshot_at": "2026-07-10T14:09:39+00:00",
+  "snapshot_at": "2026-07-10T14:14:43+00:00",
   "started_at": "2026-07-10T11:03:17+00:00",
-  "elapsed_seconds": 11182,
+  "elapsed_seconds": 11486,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 275770       1    03:06:21  0.0  0.0 bash\n 275772  275770    03:06:21  0.0  0.0 bash\n 276443  275772    03:06:08  0.0  0.0 bash\n 285435  276443       04:58  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 275770       1    03:11:25  0.0  0.0 bash\n 275772  275770    03:11:25  0.0  0.0 bash\n 276443  275772    03:11:12  0.0  0.0 bash\n 285709  276443       00:00  0.0  0.0 git\n 285710  285709       00:00  4.0  0.0 ssh\n"
 }
