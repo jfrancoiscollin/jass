@@ -1,0 +1,8 @@
+=== TOUR-1 WDL ANCRE (champion=eval(1), adjud 3/16, cap 1000000) — HEAD a49ee8794 0671 queue tour-1 from-scratch WDL ancre (eval(2) vs eval(1)) sur cpx62 — nproc=16 ===
+  garde-fou archi ✓
+  ✓ build+geom(NP=32) ; champion=eval(1) ; seeds=2000000
+  eval(1) sanity = -278 (doit etre != 0, eval(1) voit le materiel)
+
+=== self-play eval(1) : play d10, qs pleine, cap 1000000, adjud 3/16, 16000×16 ===
+  WDL positions = 0
+ABORT WDL faible (0)
