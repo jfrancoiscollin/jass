@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0666-scratch-tour0-durci",
+  "script": "jobs/queue/cpx62-0666-scratch-tour0-durci.sh",
+  "pid": 289192,
+  "started_at": "2026-07-10T16:24:17+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
