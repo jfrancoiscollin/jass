@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0673-scratch-tour1-wdl",
-  "state": "running",
+  "state": "failed",
+  "exit_code": -1,
   "started_at": "2026-07-10T20:40:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 299075
+  "ended_at": "2026-07-10T20:51:23+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
