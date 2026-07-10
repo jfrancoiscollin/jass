@@ -1,0 +1,6 @@
+=== TOUR-0 DURCI (cap-noeuds 60000 + timeout/shard 3600) — HEAD c5a1885be 0666 queue tour-0 from-scratch DURCI (cap-noeuds + timeout/shard + gate n=0=ABORT) sur cpx62 ===
+  garde-fou archi ✓ : g_emasks + has_any_capture + max_nodes + --play-max-nodes
+  zero.pjtw eval start = 0 (doit être ~0)
+  ✓ build+geom(NP=32)+zero.pjtw ; seeds=2000000
+
+=== self-play eval=0 : play d10, qs pleine, cap-noeuds 60000, adjud 2/10, timeout/shard 3600s, 4000×16 ===
