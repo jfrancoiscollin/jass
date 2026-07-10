@@ -47,6 +47,20 @@ préservée (−25)** — ici c'est LE moteur du bootstrap · confirm haut-N (05
 distincts) · bug movetime-endgame contourné (juger à prof fixe) · fit streamé exact (--chunk, pas d'OOM) ·
 NPS +13-15% baké (self-play/A-B plus rapides).
 
+## ⭐ QUIESCENCE PLEINE DÈS LE TOUR 0 (insight JFC — co-adaptation bâtie dedans)
+Le mismatch qs de gen2-mmto (0660/0661 : +84 fixed-depth mais −340 movetime, ne co-adapte pas) venait de ce
+que gen2-mmto a été entraîné sur un search à qs FAIBLE. From-scratch, on active la **qs PLEINE dès le tour 0**
+(`qs_forcing_depth=6,qs_promo_depth=6` via `--search-params`, éventuellement +qs_threat_ext/qs_sacs) sur TOUT
+le pipeline (self-play, labels WDL, MMTO-self, gate). Conséquences :
+- l'éval s'entraîne sur des feuilles **qs-résolues** → elle apprend la valeur POSITIONNELLE de positions
+  tactiquement CALMES (la qs gère la tactique) = le bon découpage eval/search d'un moteur fort ;
+- **co-adaptation eval↔search bâtie dedans** dès la 1re brique (pas d'ajout après coup) ;
+- au fixed-depth du build, la qs pleine est un PUR gain (+84 mesuré, zéro coût-temps).
+- ⟹ **ré-ouvre la question movetime** : une fois l'éval co-adaptée, re-tester full-qs vs default au movetime
+  AVEC cette éval (pourrait payer là où gen2-mmto mourait −340). Test de fin de chaîne.
+Détail à câbler : gen-siblings (MMTO leaf) + le gate A/B doivent AUSSI passer `--search-params` qs-pleine
+(cohérence : toutes les feuilles/parties du pipeline sous la même qs).
+
 ## TOUR 0 (première marche, à lancer après 0662/0663)
 zero.pjtw (header gen2 + corps 0) → gen-data-wdl self-play eps-élevé d10-14 (~1-3M positions, jass rapide
 ~qq min) → train_stream --target wdl frais → eval(1). **Gate : eval(1) bat eval=0 hors-IC** (le matériel
