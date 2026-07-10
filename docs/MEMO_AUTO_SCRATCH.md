@@ -76,6 +76,27 @@ tombe — la trancher par un A/B dédié au régime from-scratch.
 - **CAP DUR** : **≤ 6-8 tours** quoi qu'il arrive (borne anti-boucle-infinie).
 - **BUT** : dépasser gen2-mmto **sans jamais toucher Scan** = autonomie de fait.
 
+### E4. SIZING PAR COUVERTURE DE BUCKETS (mesuré 2026-07-10, corpus-mix2M)
+Chaque position active **32 buckets** (1/pattern) sur 17M ; distribution **Zipf** (support réel ≈ **~740k buckets** sur 17M, le reste jamais vu). Métrique de sizing = **cov20/cov30** = % des 32 activations d'une position tombant dans un bucket vu ≥20/≥30 fois (⟹ SE ~1/√K sur le poids). **Courbe mesurée** :
+| N positions | cov20 | cov30 |
+|---|---|---|
+| 100k | 61% | 50% |
+| 200k | 76% | 67% |
+| **500k** | **89%** | 84% |
+| **1M** | **94%** | **91%** |
+| 2M | 96% | 95% |
+**RÈGLE** : **tours de travail (positionnel) = viser ~500k-1M positions/fit** (genou à 500k ≈ cov20 89% ; 1M = 94/91%). Au-delà de ~1-2M = rendement décroissant (traîne Zipf que la **L2 gère**, inutile de viser 100%). **`--color-fold` ≈ double l'effectif/bucket** (symétrie) → l'intégrer (~250-500k brut suffit alors pour cov20~89%). **Tour-0 = EXCEPTION** : le matériel vit dans les **extras DENSES** (toujours bien estimés), pas dans les buckets → 64k suffit pour le gate « bat zero » (0669 : 5% nulles = signal décisif OK). ⚠️ mesuré sur corpus Scan-ish ; le from-scratch (eps + ouvertures random) **étale plus** → **re-mesurer sur les vraies données du tour**.
+**CENSUS AUTO DANS LES JOBS (JFC)** : chaque job from-scratch committe cov20/cov30 après merge du self-play (snippet ci-dessous) → sizing **auto-vérifié**, on voit tour par tour si le volume suffit. Snippet (après `merge_jnnw` → `$W/wdl.jnnw`) :
+```python
+# census couverture buckets : committe cov20/cov30 dans RESULTS
+import numpy as np,struct,sys; sys.path.insert(0,'pattern_jass/tools'); import patterns as P
+b=open("$W/wdl.jnnw",'rb').read(); n=struct.unpack('<I',b[4:8])[0]; REC=38
+a=np.frombuffer(b[8:8+n*REC],dtype=np.uint8).reshape(n,REC); bb=a[:,0:32].copy().view('<u8').reshape(n,4)
+cols=P.flat_feature_columns(P.extract_indices(bb[:,2],bb[:,0])).astype(np.int32); flat=cols.ravel()
+c=np.bincount(flat,minlength=P.TOTAL_BUCKETS)
+print(f"  COUVERTURE : N={n} buckets_vus={int((c>0).sum())} cov20={float((c>=20)[flat].mean())*100:.1f}% cov30={float((c>=30)[flat].mean())*100:.1f}%")
+```
+
 ## GARDE-FOUS (leçons câblées)
 Elo-first (G1) · WS-OFF (gen3 −354) · through-search jamais statique (−847) · ancré/warm jamais refit-zéro
 passé tour 0 (0645) · holdout par partie (P3) · manifest flag⇒effet (+18 phantom) · **couverture eps
