@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0662-nps-ab",
+  "script": "jobs/queue/cpx62-0662-nps-ab.sh",
+  "pid": 260522,
+  "started_at": "2026-07-10T05:36:49+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
