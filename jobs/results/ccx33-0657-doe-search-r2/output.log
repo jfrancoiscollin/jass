@@ -1,0 +1,15 @@
+=== DOE SEARCH gen2-mmto (OAT knobs, mt0.2 généraliste) — HEAD 4c55c3b05 runner: heartbeat cpx62-0662-nps-ab ===
+  ✓ build+gen2 (NCPU=8)
+  generaliste : 66 openings
+  openings ≥38p : 66
+
+=== OAT DOE search (side A = gen2-mmto+knob vs side B = gen2-mmto défaut, mt0.2) ===
+  [baseline                           ] A=576 B=631 D=377 n=1584 rate_A=0.4826+-0.0215 elo~-12 IC=[0.461,0.504] => neutre
+  [asp30hn    aspiration_initial=30   ] A=590 B=577 D=417 n=1584 rate_A=0.5041+-0.0211 elo~+3 IC=[0.483,0.525] => neutre
+  [asp20      aspiration_initial=20   ] A=585 B=598 D=401 n=1584 rate_A=0.4959+-0.0213 elo~-3 IC=[0.475,0.517] => neutre
+  [combo      aspiration_initial=30,lmr_formula=1,nmp_r_base=3] A=601 B=590 D=393 n=1584 rate_A=0.5035+-0.0214 elo~+2 IC=[0.482,0.525] => neutre
+
+  GATE : un knob rate_A>0.5 hors-IC => il convertit le gain éval-par-nœud en force MOVETIME => confirm mt0.3+dilf + baker search.
+  (baseline doit être ~0.5 : sanity harnais symétrique.) Neutre partout => la marge movetime n'est pas dans ces knobs (OAT étendre / combos).
+  RESULTS committé ✓
+=== fin DOE search ===
