@@ -52,3 +52,4 @@ Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-lié
 ### 3. Style de collaboration
 - JFC pilote au tour par tour, en français, statuts courts. Répondre concis, chiffres d'abord.
 - Ne pas re-pinger « ça tourne encore » sans info neuve. Sortir le verdict au finalize.
+- **🕑 REPORTING EN HEURE FRANÇAISE (Europe/Paris) — JFC 2026-07-10** : toutes les heures/ETA sorties à JFC en **heure française** (CET/CEST, gérer l'été = UTC+2). Les fichiers/commits/in-flight sont en UTC → **convertir en heure FR avant d'afficher** (préciser « FR » si ambigu). Ne pas rapporter d'heures brutes UTC.
