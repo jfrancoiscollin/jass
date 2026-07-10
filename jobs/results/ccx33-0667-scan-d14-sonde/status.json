@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0667-scan-d14-sonde",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-10T16:29:29+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 79225
+  "ended_at": "2026-07-10T16:34:45+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
