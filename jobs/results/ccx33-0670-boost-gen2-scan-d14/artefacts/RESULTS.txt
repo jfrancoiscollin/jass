@@ -1,0 +1,4 @@
+=== BOOST gen2-mmto MMTO-prof-fort (Scan-d14) — HEAD 14b0d8eec runner: start ccx33-0670-boost-gen2-scan-d14 — nproc=8 ===
+  Scan ✓ + garde-fou archi ✓
+  parents Scan-d14 concat = 5380 (moves 5380)
+  parents = 5380
