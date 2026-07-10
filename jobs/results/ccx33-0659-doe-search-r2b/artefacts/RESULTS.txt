@@ -7,3 +7,6 @@
   [asp30hn    aspiration_initial=30   ] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
   [asp20      aspiration_initial=20   ] A=62 B=45 D=25 n=132 rate_A=0.5644+-0.0760 elo~+45 IC=[0.488,0.640] => neutre
   [combo      aspiration_initial=30,lmr_formula=1,nmp_r_base=3] A=0 B=0 D=0 n=0 rate_A=0.0000+-1.9600 elo~+0 IC=[-1.960,1.960] => neutre
+
+  GATE : un knob rate_A>0.5 hors-IC => il convertit le gain éval-par-nœud en force MOVETIME => confirm mt0.3+dilf + baker search.
+  (baseline doit être ~0.5 : sanity harnais symétrique.) Neutre partout => la marge movetime n'est pas dans ces knobs (OAT étendre / combos).
