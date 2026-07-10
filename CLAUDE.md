@@ -17,7 +17,7 @@
 > **B. ROBUSTESSE RUNTIME (ne pas gâcher par un hang / une traîne)**
 > 5. **`timeout` PAR SHARD sur TOUTE génération/A-B parallèle** — un shard bloqué ne DOIT jamais geler le job entier (0665/0657 hung). Le job doit atteindre fit/gate avec ce qui a fini.
 > 6. **`timeout` CALIBRÉ sur la box LENTE** = `temps_shard_sain × ~1.3` (marge). **Trop court = cellules culées à n=0** (0659 sur ccx33 : baseline n=0). Trop long = on subit la traîne. Calculer depuis le rate (point 2), pas copier d'une box rapide.
-> 7. **MONITOR de progress committé /~10 min** (compteurs + ETA restante). Jamais dark (0665 tour-0 dark 89 min avant kill).
+> 7. **MONITOR de progress committé /~10 min** (compteurs + ETA restante). Jamais dark (0665 tour-0 dark 89 min avant kill). **⚠️ PIÈGE MONITOR+`wait` (bug 0665/0666/0668, prouvé rc=124) : un `wait` NU attend TOUS les enfants, MONITOR COMPRIS → le monitor boucle jusqu'à `.stopmon` posé APRÈS le `wait` = DEADLOCK circulaire (la génération FINIT mais le job ne dépasse jamais le `wait`). FIX OBLIGATOIRE : collecter les PID des shards (`pids+=($!)`) et `wait "${pids[@]}"` — jamais `wait` nu quand un monitor tourne en fond.**
 > 8. **Savoir si l'outil écrit INCRÉMENTAL ou EN FIN DE SHARD** : `gen-data-wdl`/`scan_selfplay_gen` écrivent **en fin de shard** → aucun harvest partiel, aucun kill propre mid-run → **sizer JUSTE + timeout** (points 4-6).
 >
 > **C. REPORTING (ne pas gâcher le run par un bug de report)**
