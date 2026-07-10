@@ -1,0 +1,6 @@
+=== FROM-SCRATCH tour 0 (eval=0, zéro prof/Scan) re-size d10 léger + monitor — HEAD 37811e288 runner: heartbeat ccx33-0659-doe-search-r2b ===
+zero.pjtw : n_pat=17006112 n_ext=120 scale=1000 bytes=136049876
+  zero.pjtw eval start = 0 (doit être ~0)
+  ✓ build+geom(NP=32)+zero.pjtw ; seeds=2000000
+
+=== self-play eval=0 : play d10, qs pleine, eps 30 decay 30, adjud-mat 2/10, quiet-only, 45000×16 ===
