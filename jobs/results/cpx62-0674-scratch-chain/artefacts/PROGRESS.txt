@@ -53,3 +53,4 @@
 [T4] self-play ~35424 pos
 [T4] self-play ~53784 pos
 [T4] self-play ~72360 pos
+[T4] self-play ~92016 pos
