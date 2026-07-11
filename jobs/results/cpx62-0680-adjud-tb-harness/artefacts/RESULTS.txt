@@ -1,0 +1,33 @@
+=== ADJUD-TB-HARNESS (§2 juge + baseline materielle) — nproc=16 df=461140Mo ===
+  garde-fou archi ✓
+
+=== selfcheck TB (garde #1 : le juge) ===
+    egdb unknown (out of slice): 1020
+    egdb != our in-mem table   : 826  (informational — our tables are heuristic, not truth)
+    KvK-no-capture NOT draw    : 0  (hard invariant)
+    RESULT: invariant OK. Authoritative validation = egdb native example test.
+  selfcheck ✓ (juge sain)
+
+=== dilf sur la box ===
+  dilf import+primitives ✓ (0253227)
+
+=== micro-calib gen-egdb-wld (N=2000) ===
+  rate≈1000 pos/s → N=200000 (budget 900s, plafond 200000) ; ETA gen≈200s
+  gen-egdb-wld: wrote 2000 / 2000 (1132 decisive, 868 draw) in 3677 tries → /root/cw-adjtb/probe.jnnw
+
+=== echantillon TB uniforme N=200000 (WLD-exact <=7 pieces) ===
+  gen-egdb-wld: wrote 200000 / 200000 (111998 decisive, 88002 draw) in 372747 tries → /root/cw-adjtb/pool.jnnw
+
+=== BASELINE : 'avance nette >= M => WIN' notee vs TB (juge) ===
+  echantillon : n=200000  (decisive=111998  draw=88002)  ; pont dilf : 400/400 FEN->GameState->primitive OK
+  M(men-eq)   fire%   prec%  faux-WIN(draw)
+          2   71.64  67.483           46480   (fires=143289)
+          3   59.75  73.068           32142   (fires=119493)
+          4   43.16  81.235           16180   (fires=86330)
+          6   23.56  87.995            5656   (fires=47115)
+          8   12.64  97.974             512   (fires=25272)
+         12    2.21  99.977               1   (fires=4415)
+  LECTURE : prec% = quand la marge materielle tire, taux d'accord avec la TB ; faux-WIN = |net|>=M mais TB=DRAW
+           = EXACTEMENT ce que les vetos P2/P3/P4 devront couvrir. La marge admissible (>=99.9%) fonde le 1er cran.
+
+=== fin adjud-tb-harness (37s) ===
