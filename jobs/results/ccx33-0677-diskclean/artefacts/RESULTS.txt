@@ -1,1 +1,19 @@
 === DISKCLEAN ccx33 — ubuntu-16gb-hel1-2 2026-07-11T13:19:40Z ===
+  AVANT : used=69G avail=76G (48%)
+  gros /root/* (top 12) :
+    24K	/root/jass-geom32-spclean
+    280K	/root/egex
+    412K	/root/mt
+    1.3M	/root/egdb_intl
+    3.6M	/root/ie
+    51M	/root/jass-scan
+    85M	/root/jass-scan-src
+    936M	/root/cw-boost-d14b
+    4.8G	/root/egdb_extracted
+    11G	/root/jass-sacbranch-mt
+    20G	/root/jass
+    29G	/root/egdb_mtc
+  cw-* stale (>2h, supprimés) : 0
+  APRÈS : used=58G avail=87G (41%)
+  => 88083 Mo libres.
+  ✓ disque sain
