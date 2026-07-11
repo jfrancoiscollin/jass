@@ -45,3 +45,4 @@
 [T3] self-play ~150768 pos
 [T3] self-play ~169560 pos
 [T3] self-play ~188352 pos
+[T3] self-play ~207360 pos
