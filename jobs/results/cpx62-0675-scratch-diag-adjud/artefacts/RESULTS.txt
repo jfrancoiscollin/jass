@@ -1,0 +1,3 @@
+  WDL positions = 256000
+  WDL 27% nulles (adjud TENU => devrait etre bas comme T2 26%)
+  COUVERTURE cov20=82.1% cov30=76.0%
