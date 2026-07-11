@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0680-adjud-tb-harness",
+  "script": "jobs/queue/cpx62-0680-adjud-tb-harness.sh",
+  "pid": 347983,
+  "started_at": "2026-07-11T18:17:30+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
