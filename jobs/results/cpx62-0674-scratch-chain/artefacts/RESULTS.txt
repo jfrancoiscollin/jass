@@ -9,3 +9,4 @@
   [T2 eval(t) vs champion(t-1) | d9] W=336 L=96 D=96 n=528 rate=0.7273+-0.0426 elo~+170 IC=[0.685,0.770] => COMPOSE
   WDL positions = 256000
   WDL 39% nulles (E1 conversion) ; COUVERTURE cov20=82.3% cov30=76.4%
+  [T3 GATE] n=0 < 200 => ABORT/INCONCLUANT
