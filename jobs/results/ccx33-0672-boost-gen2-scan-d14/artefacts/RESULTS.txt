@@ -2,3 +2,5 @@
   disque /root libre = 78244 Mo
   parents Scan-d14 concat = 44827 (moves 44827)
   parents = 44827
+  MMTO paires = 484445
+  MMTO paires (feuilles-PV gen2, WS-OFF) : 484445
