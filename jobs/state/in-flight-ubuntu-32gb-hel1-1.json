@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0674-scratch-chain",
-  "script": "jobs/queue/cpx62-0674-scratch-chain.sh",
-  "pid": 300073,
-  "started_at": "2026-07-10T20:51:27+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
