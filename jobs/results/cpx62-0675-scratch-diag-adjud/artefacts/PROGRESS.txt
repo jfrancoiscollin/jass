@@ -9,3 +9,4 @@
 [+90min] self-play ~155520 pos
 [+100min] self-play ~173448 pos
 [+110min] self-play ~190728 pos
+[+120min] self-play ~208008 pos
