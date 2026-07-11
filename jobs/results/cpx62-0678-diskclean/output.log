@@ -1,0 +1,21 @@
+=== DISKCLEAN cpx62 — ubuntu-32gb-hel1-1 2026-07-11T15:58:06Z ===
+  AVANT : used=312G avail=265G (55%)
+  gros /root/* (top 12) :
+    6.0G	/root/cw-cpl-fit
+    6.8G	/root/cw-freshmix
+    11G	/root/jass-sacbranch
+    12G	/root/cw-mk0440-62
+    16G	/root/cw-gate
+    17G	/root/cw-gate2a
+    17G	/root/cw-prod
+    18G	/root/cw-gate2b
+    19G	/root/cw-iterloop
+    19G	/root/cw-iterloop-3e5
+    29G	/root/egdb_mtc
+    79G	/root/jass
+  cw-* stale (>2h, supprimés) : 125
+  APRÈS : used=126G avail=451G (22%)
+  => 461409 Mo libres.
+  ✓ disque sain
+  RESULTS committé ✓
+=== fin diskclean ===
