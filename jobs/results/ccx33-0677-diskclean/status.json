@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0677-diskclean",
+  "state": "running",
+  "started_at": "2026-07-11T13:19:40+00:00",
+  "host": "ubuntu-16gb-hel1-2",
+  "pid": 2371
+}
