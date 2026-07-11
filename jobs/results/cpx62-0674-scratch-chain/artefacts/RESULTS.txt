@@ -12,3 +12,4 @@
   [T3 GATE] n=0 < 200 => ABORT/INCONCLUANT
   WDL positions = 256000
   WDL 37% nulles (E1 conversion) ; COUVERTURE cov20=82.2% cov30=76.4%
+  [T4 GATE] n=0 < 200 => ABORT/INCONCLUANT
