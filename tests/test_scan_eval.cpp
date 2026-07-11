@@ -35,8 +35,7 @@ Position parse(std::string_view fen) {
 ScanWeights zero_weights(std::uint32_t scale) {
     ScanWeights w;
     w.scale = scale;
-    w.pat_mg.assign(pattern_jass::TOTAL_BUCKETS, 0);
-    w.pat_eg.assign(pattern_jass::TOTAL_BUCKETS, 0);
+    w.pat.assign(pattern_jass::TOTAL_BUCKETS, {});   // PatPair{mg=0, eg=0} (layout entrelacé)
     // ext_mg / ext_eg are std::array, value-initialised to 0.
     return w;
 }
@@ -160,10 +159,10 @@ void test_v3_file_roundtrip() {
     JASS_CHECK(w.has_value());
     if (w) {
         JASS_CHECK_EQ(static_cast<int>(w->scale), 1000);
-        JASS_CHECK_EQ(static_cast<int>(w->pat_mg.size()),
+        JASS_CHECK_EQ(static_cast<int>(w->pat.size()),
                       static_cast<int>(n_pat));
-        JASS_CHECK_EQ(w->pat_mg[7], 123);
-        JASS_CHECK_EQ(w->pat_eg[9], -456);
+        JASS_CHECK_EQ(w->pat[7].mg, 123);
+        JASS_CHECK_EQ(w->pat[9].eg, -456);
         JASS_CHECK_EQ(w->ext_mg[EXTRA_WHITE_MOB], 11);
         JASS_CHECK_EQ(w->ext_eg[EXTRA_BLACK_MEN], 22);
     }
@@ -222,9 +221,9 @@ void test_update_all_matches_extract() {
 void test_evaluate_with_idx_matches_evaluate() {
     ScanWeights w = zero_weights(1000);
     for (std::size_t i = 0; i < pattern_jass::TOTAL_BUCKETS; i += 7919)
-        w.pat_mg[i] = static_cast<std::int32_t>((i % 251) - 125);
+        w.pat[i].mg = static_cast<std::int32_t>((i % 251) - 125);
     for (std::size_t i = 0; i < pattern_jass::TOTAL_BUCKETS; i += 6271)
-        w.pat_eg[i] = static_cast<std::int32_t>((i % 199) - 99);
+        w.pat[i].eg = static_cast<std::int32_t>((i % 199) - 99);
     ScanEvalNetwork net(std::move(w));
     const char* fens[] = {
         "B:W26,29,31,32,38,42,43,46,47,K48:B3,5,9,11,12,14,16,18,K22,K25",
