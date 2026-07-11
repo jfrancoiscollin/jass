@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0679-diag-gate",
+  "script": "jobs/queue/cpx62-0679-diag-gate.sh",
+  "pid": 345797,
+  "started_at": "2026-07-11T17:09:53+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
