@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0679-diag-gate",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-11T17:09:53+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 345797
+  "ended_at": "2026-07-11T17:30:13+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
