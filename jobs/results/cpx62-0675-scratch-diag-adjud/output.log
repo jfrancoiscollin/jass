@@ -1,0 +1,18 @@
+=== TOUR-DIAG adjud tenu 4/24 depuis T2 (tranche a/b) — nproc=16 df=271080Mo ===
+  garde-fou archi ✓
+  ✓ build+geom(NP=32) ; champion=T2 (current) ; seeds=2000000 ; champ eval=-37
+
+=== self-play T2, adjud MAINTENU 4/24, d10, cap 1000000, 16000×16 ===
+  WDL positions = 256000
+  WDL 27% nulles (adjud TENU => devrait etre bas comme T2 26%)
+  COUVERTURE cov20=82.1% cov30=76.0%
+
+=== fit WDL ancre T2 (wdl_finetune --anchor 0.05) ===
+  logloss champion (data) = 0.406817
+  fit : logloss(data) 0.406817->0.399780 (delta -0.007037) ; mean|Δw|=0.00004 sur 735810 cols
+  openings : 66
+
+=== GATE : cand(adjud-tenu) vs T2 (champion-current) d9 ===
+  [DIAG GATE] n=0 < 200 => ABORT/INCONCLUANT
+  RESULTS committé ✓
+=== fin tour-diag ===
