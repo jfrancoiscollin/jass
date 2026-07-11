@@ -1,3 +1,4 @@
 [+10min] self-play ~15120 pos
 [+20min] self-play ~34344 pos
 [+30min] self-play ~50976 pos
+[+40min] self-play ~68688 pos
