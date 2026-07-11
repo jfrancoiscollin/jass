@@ -1,0 +1,8 @@
+=== DIAG-GATE cand(adjud-tenu 4/24) vs T2 — nproc=16 NSH=8 df=461408Mo ===
+  garde-fou archi ✓
+  ✓ build(NP=32) ; cand eval=5 champ eval=-37 ; openings=160
+
+=== GATE cand(adjud-tenu 4/24) vs T2 (champion-current) | d9 qs6 | 160op x1 x2 sur 8 shards ===
+  [cand(adjud-tenu 4/24) vs T2 | d9] W=120 L=110 D=88 n=318 (8 shards) rate=0.5157+-0.0550 elo~+11 IC=[0.461,0.571]
+  => in-IC (ambigu) : refaire haut-N (doubler openings)
+=== fin diag-gate (1171 s) ===
