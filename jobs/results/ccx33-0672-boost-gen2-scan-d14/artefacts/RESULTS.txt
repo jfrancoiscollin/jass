@@ -4,3 +4,4 @@
   parents = 44827
   MMTO paires = 484445
   MMTO paires (feuilles-PV gen2, WS-OFF) : 484445
+  [boost-d14 vs gen2-mmto | gen mt0.2] A=347 B=415 D=294 n=1056 rate_A=0.4678+-0.0255 elo~-22 IC=[0.442,0.493] => PERD hors-IC
