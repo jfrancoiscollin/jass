@@ -20,3 +20,4 @@
 [T1] self-play ~164592 pos
 [T1] self-play ~181440 pos
 [T1] self-play ~197856 pos
+[T1] self-play ~214488 pos
