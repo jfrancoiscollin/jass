@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0680-adjud-tb-harness",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-11T18:17:30+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 347983
+  "ended_at": "2026-07-11T18:22:30+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
