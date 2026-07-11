@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0675-scratch-diag-adjud",
-  "snapshot_at": "2026-07-11T14:41:03+00:00",
+  "snapshot_at": "2026-07-11T14:46:15+00:00",
   "started_at": "2026-07-11T12:08:27+00:00",
-  "elapsed_seconds": 9156,
+  "elapsed_seconds": 9468,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 335065       1    02:32:35  0.0  0.0 bash\n 335067  335065    02:32:35  0.0  0.0 bash\n 335739  335067    02:32:22  0.0  0.0 bash\n 335754  335067    02:32:22  0.0  0.0 timeout\n 335764  335754    02:32:22 99.9  0.7 jass\n 342117  335739       01:25  0.0  0.0 sleep\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 335065       1    02:37:47  0.0  0.0 bash\n 335067  335065    02:37:47  0.0  0.0 bash\n 342117       1       06:37  0.0  0.0 sleep\n 342425  335067       00:01  0.0  0.0 git\n 342426  342425       00:01  1.9  0.0 ssh\n"
 }
