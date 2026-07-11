@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0672-boost-gen2-scan-d14",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-11T13:09:32+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 1583
+  "ended_at": "2026-07-11T13:14:33+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }

@@ -1,0 +1,5 @@
+ABORT 0672 : une autre instance tourne deja (lock detenu) — double-execution evitee
+  parents Scan-d14 concat = 44827 (moves 44827)
+  parents = 44827
+
+=== B. gen-siblings --leaf-mode WS-OFF (ancre gen2-mmto, d5, ws-margin -1000000000) ===
