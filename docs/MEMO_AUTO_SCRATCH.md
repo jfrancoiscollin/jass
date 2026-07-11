@@ -73,8 +73,17 @@ tombe — la trancher par un A/B dédié au régime from-scratch.
 - **THERMOMÈTRE EXTERNE (ne PILOTE JAMAIS)** : **d9-vs-Scan** Elo, tracké chaque tour = progrès absolu vers Scan.
   On le REGARDE (rattrape-t-on ?) mais il **ne gate pas** la boucle — on ne distille pas Scan, la boucle est
   champion-vs-champion. (Séparer thermomètre externe / pilote interne = ne pas re-piloter sur Scan par la bande.)
-- **CAP DUR** : **≤ 6-8 tours** quoi qu'il arrive (borne anti-boucle-infinie).
+- **CAP DUR** : **≤ 6-8 tours** quoi qu'il arrive **À PROFONDEUR DONNÉE** (borne anti-boucle-infinie par palier — PAS un cap global, cf E5).
 - **BUT** : dépasser gen2-mmto **sans jamais toucher Scan** = autonomie de fait.
+
+### E5. ⭐ RAMPE DU PROF — MONTER LA PROFONDEUR DE GEN AVANT DE CLÔTURER (JFC 2026-07-11, DÉCISIF)
+**Le carburant de la boucle = l'ÉCART statique↔recherche** (gap éval / αβ). À profondeur de gen FIXE, chaque tour **CONSOMME** ce gap : l'éval absorbe ce que d10 révèle jusqu'à `d10(éval) ≈ éval` ⟹ « plateau ». **MAIS ce n'est PAS un plafond** — c'est juste que **le prof (d10) a été rattrapé** (cf `0621` : le gap statique↔recherche est le carburant, chaque tour le consomme). **Monter le prof RE-CRÉE du gap enseignable.** ⟹ **RÈGLE CORRIGÉE (surclasse le « 2-plateaux = STOP » de E3)** :
+- **Quand les tours cessent de composer à profondeur D, NE PAS conclure « plateau/clôture » — MONTER LE PROF d'abord.** La rampe naturelle : **gen d10 → d12 → d14 → movetime** (mt0.5 → mt1.0 → mt2.0). Chaque montée re-crée de l'écart → la compose repart.
+- **E3 (2-plateaux) devient un déclencheur DE MONTÉE, pas de clôture** : 2 tours sans compose à profondeur D ⟹ **grimper D d'un cran** (pas STOP), repartir du même champion au prof supérieur.
+- **CLÔTURE seulement quand ça plateau au SOMMET de la rampe** (movetime long épuisé) = vrai plafond de la classe linéaire, cette fois mérité.
+- C'est **exactement la rampe qu'un Scan a gravie sur des années** : PAS N tours à profondeur fixe, mais une **profondeur de gen qui grandit avec l'élève**. l'élève monte, le prof monte avec.
+- ⚠️ movetime : bug overshoot endgame connu → soit durcir le harnais, soit **utiliser le cap-noeuds comme amplificateur déterministe** (monter `--play-max-nodes` = prof plus profond, sans overshoot) en alternative/complément de la profondeur fixe.
+- **Coût** : chaque montée = gen plus lente (d14 ≫ d10). Compute illimité (JFC) ⟹ acceptable tant que ça fait grimper l'éval.
 
 ### E4. SIZING PAR COUVERTURE DE BUCKETS (mesuré 2026-07-10, corpus-mix2M)
 Chaque position active **32 buckets** (1/pattern) sur 17M ; distribution **Zipf** (support réel ≈ **~740k buckets** sur 17M, le reste jamais vu). Métrique de sizing = **cov20/cov30** = % des 32 activations d'une position tombant dans un bucket vu ≥20/≥30 fois (⟹ SE ~1/√K sur le poids). **Courbe mesurée** :
