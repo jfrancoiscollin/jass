@@ -1,2 +1,4 @@
 === BOOST gen2-mmto MMTO-prof-fort (Scan-d14) — HEAD d60027555 0675 diag self-play ~104328 pos — nproc=8 ===
   disque /root libre = 78244 Mo
+  parents Scan-d14 concat = 44827 (moves 44827)
+  parents = 44827
