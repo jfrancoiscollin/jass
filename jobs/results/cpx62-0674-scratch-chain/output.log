@@ -1,0 +1,40 @@
+=== CHAIN overnight (d10 fixe, cap 1000000, MAXTOURS 6) — nproc=16 df=271603Mo ===
+  garde-fou archi ✓
+  openings gate : 66
+  ✓ build+geom(NP=32) ; champion(0)=eval(1) ; seeds=2000000
+
+=== TOUR 1 : self-play champion(t-1), adjud 3/16, d10, cap 1000000, 16000×16 ===
+  WDL positions = 0
+  TOUR 1 ABORT : WDL faible (0) — STOP chain
+  ⟹ TOUR 1 = REGRESS (plateau 1/2) : champion NON promu.
+
+=== TOUR 2 : self-play champion(t-1), adjud 4/24, d10, cap 1000000, 16000×16 ===
+  WDL positions = 256000
+  WDL 26% nulles (E1 conversion) ; COUVERTURE cov20=82.6% cov30=76.7%
+  fit WDL ancre (wdl_finetune --anchor 0.05 --color-fold)
+    fit : logloss(data) 0.430252->0.402194 (delta -0.028058) ; mean|Δw|=0.00004 sur 717506 cols
+  GATE : eval(t=2) vs champion(t-1) d9
+  [T2 eval(t) vs champion(t-1) | d9] W=336 L=96 D=96 n=528 rate=0.7273+-0.0426 elo~+170 IC=[0.685,0.770] => COMPOSE
+  ⟹ TOUR 2 COMPOSE : champion promu (eval grimpe), on continue.
+
+=== TOUR 3 : self-play champion(t-1), adjud 0/10, d10, cap 1000000, 16000×16 ===
+  WDL positions = 256000
+  WDL 39% nulles (E1 conversion) ; COUVERTURE cov20=82.3% cov30=76.4%
+  fit WDL ancre (wdl_finetune --anchor 0.05 --color-fold)
+    fit : logloss(data) 0.486859->0.451310 (delta -0.035549) ; mean|Δw|=0.00003 sur 725456 cols
+  GATE : eval(t=3) vs champion(t-1) d9
+  [T3 GATE] n=0 < 200 => ABORT/INCONCLUANT
+  ⟹ TOUR 3 = REGRESS (plateau 1/2) : champion NON promu.
+
+=== TOUR 4 : self-play champion(t-1), adjud 0/10, d10, cap 1000000, 16000×16 ===
+  WDL positions = 256000
+  WDL 37% nulles (E1 conversion) ; COUVERTURE cov20=82.2% cov30=76.4%
+  fit WDL ancre (wdl_finetune --anchor 0.05 --color-fold)
+    fit : logloss(data) 0.483164->0.448551 (delta -0.034613) ; mean|Δw|=0.00004 sur 728576 cols
+  GATE : eval(t=4) vs champion(t-1) d9
+  [T4 GATE] n=0 < 200 => ABORT/INCONCLUANT
+  ⟹ TOUR 4 = REGRESS (plateau 2/2) : champion NON promu.
+  ⟹ 2 tours sans compose consecutifs => STOP chain (E3).
+
+=== CHAIN FINIE : dernier champion promu = champion-current.pjtw.gz (le plus haut atteint sans prof/Scan) ===
+  RESULTS committé ✓
