@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0678-diskclean",
-  "script": "jobs/queue/cpx62-0678-diskclean.sh",
-  "pid": 344808,
-  "started_at": "2026-07-11T15:58:06+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

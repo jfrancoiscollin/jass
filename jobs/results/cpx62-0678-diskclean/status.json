@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0678-diskclean",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-11T15:58:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 344808
+  "ended_at": "2026-07-11T16:03:23+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
