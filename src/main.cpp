@@ -1498,6 +1498,61 @@ int run_perft_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --dump-legal <fen-in> <out> : batch legal-move emitter. Reads one Hub FEN per
+// input line and writes, 1:1 by line order, that position's legal moves so an
+// external tool (the dilf EngineProtocol backing, for adjudication-predicate
+// scoring) can enumerate moves without linking the C++ engine. Per output line,
+// space-separated move tokens: quiet = "from>to", capture = "from>to*c1,c2,..."
+// (captured squares, FMJD 1..50, order-independent), "+" suffix if the move
+// promotes. An EMPTY line means a terminal position (no legal move = stm loses).
+// A bad FEN emits a single "?" token on its line. Deterministic, no eval, no DB.
+// -----------------------------------------------------------------------------
+int run_dump_legal_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-legal <fen-in> <out>\n";
+        return 1;
+    }
+    std::ifstream in(argv[2]);
+    if (!in) { std::cerr << "error: cannot open " << argv[2] << "\n"; return 1; }
+    std::ofstream out(argv[3]);
+    if (!out) { std::cerr << "error: cannot open " << argv[3] << "\n"; return 1; }
+    std::string line;
+    std::uint64_t nlines = 0, nterminal = 0, nbad = 0;
+    while (std::getline(in, line)) {
+        // Strip a trailing CR (CRLF inputs) so from_fen sees a clean string.
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        ++nlines;
+        auto pos = Position::from_fen(line);
+        if (!pos) { out << "?\n"; ++nbad; continue; }
+        MoveList ml;
+        generate_legal_moves(*pos, ml);
+        if (ml.empty()) ++nterminal;
+        bool first = true;
+        for (const auto& m : ml) {
+            if (!first) out << ' ';
+            first = false;
+            out << static_cast<int>(m.from) << '>' << static_cast<int>(m.to);
+            if (m.is_capture()) {
+                out << '*';
+                bool fc = true;
+                for (int b = 0; b < NUM_SQUARES; ++b) {
+                    if ((m.captured >> b) & 1ULL) {
+                        if (!fc) out << ',';
+                        out << (b + 1);
+                        fc = false;
+                    }
+                }
+            }
+            if (m.promotes) out << '+';
+        }
+        out << '\n';
+    }
+    std::cerr << "dump-legal: " << nlines << " positions (" << nterminal
+              << " terminal, " << nbad << " bad-fen) → " << argv[3] << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --egdb-selfcheck <db_dir> [samples] [cache_mb] : the #1 validation gate for
 // the external bitbase bridge. Opens the egdb_intl DB at <db_dir> and, on a
 // random sample of kings-only positions that jass's own in-memory tables also
@@ -4311,6 +4366,7 @@ int main(int argc, char** argv) {
         else if (a == "--build-book")               return run_build_book_mode(argc, argv);
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
+        else if (a == "--dump-legal")               return run_dump_legal_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
