@@ -6,3 +6,4 @@
 === TOUR 1 : self-play champion(t-1), adjud 3/16, d10, cap 1000000, 16000×16 ===
   WDL positions = 256000
   WDL 26% nulles (E1 conversion) ; COUVERTURE cov20=82.6% cov30=76.7%
+  [T2 eval(t) vs champion(t-1) | d9] W=336 L=96 D=96 n=528 rate=0.7273+-0.0426 elo~+170 IC=[0.685,0.770] => COMPOSE
