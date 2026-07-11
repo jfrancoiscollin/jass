@@ -13,3 +13,7 @@
   WDL positions = 256000
   WDL 37% nulles (E1 conversion) ; COUVERTURE cov20=82.2% cov30=76.4%
   [T4 GATE] n=0 < 200 => ABORT/INCONCLUANT
+  ⟹ TOUR 4 = REGRESS (plateau 2/2) : champion NON promu.
+  ⟹ 2 tours sans compose consecutifs => STOP chain (E3).
+
+=== CHAIN FINIE : dernier champion promu = champion-current.pjtw.gz (le plus haut atteint sans prof/Scan) ===
