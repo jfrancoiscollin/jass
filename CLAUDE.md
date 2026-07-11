@@ -25,6 +25,7 @@
 > DFA=$(df -Pm /root|awk 'NR==2{print $4}'); [ "${DFA:-0}" -gt 3000 ] || { say "ABORT disque <3Go"; exit 3; }
 > ```
 > Les jobs qui MEURENT laissent leur `cw-*` (le `rm -rf "$W"` de fin ne tourne pas) → ça s'accumule → disque plein. L'auto-clean au start de chaque job vide les stale au fil de l'eau. Jobs de maintenance `NNNN-diskclean` à re-queuer si pression disque.
+> 8ter. **📄 RES/PROG DANS `$W` (HORS ARBRE GIT), JAMAIS DANS `$ART` (bug reporting résolu 2026-07-11 : 0670 RESULTS vide, 0674 lag, 0675 verdict PERDU).** Le runner tourne les jobs en DÉTACHÉ ; un job long traverse ~N ticks du runner (/5min) et **chaque tick fait une sync git (`reset --hard origin/main`) qui RÉINITIALISE l'arbre de travail** → un `RESULTS.txt` écrit dans `$ART` (=`jobs/results/.../`, DANS le repo) est **remis à la dernière version committée** → les `say()` post-census sont EFFACÉS avant le commit final. **FIX** : `RES="$W/RESULTS.txt"; PROG="$W/PROGRESS.txt"` (dans le scratch `$W`, HORS repo) ; `commit_to_main` fait `git hash-object "$RES"` qui marche sur n'importe quel chemin → committe au bon `$rel` sans que le fichier-source soit clobbé. **+ ceinture-bretelles** : mettre le verdict-clé dans le **message de commit** (`commit_to_main ... "0675 FIN gate=$(cat $W/.verdict) rate=..."`) — les messages ne sont JAMAIS clobbés.
 >
 > **C. REPORTING (ne pas gâcher le run par un bug de report)**
 > 9. **SMOKE-TEST write→read round-trip** sur mini-échantillon : le parser lit ce que le job écrit (mêmes clés/format/N). `bash -n` + `py_compile` des heredocs.
