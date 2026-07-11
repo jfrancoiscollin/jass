@@ -19,6 +19,12 @@
 > 6. **`timeout` CALIBRÉ sur la box LENTE** = `temps_shard_sain × ~1.3` (marge). **Trop court = cellules culées à n=0** (0659 sur ccx33 : baseline n=0). Trop long = on subit la traîne. Calculer depuis le rate (point 2), pas copier d'une box rapide.
 > 7. **MONITOR de progress committé /~10 min** (compteurs + ETA restante). Jamais dark (0665 tour-0 dark 89 min avant kill). **⚠️ PIÈGE MONITOR+`wait` (bug 0665/0666/0668, prouvé rc=124) : un `wait` NU attend TOUS les enfants, MONITOR COMPRIS → le monitor boucle jusqu'à `.stopmon` posé APRÈS le `wait` = DEADLOCK circulaire (la génération FINIT mais le job ne dépasse jamais le `wait`). FIX OBLIGATOIRE : collecter les PID des shards (`pids+=($!)`) et `wait "${pids[@]}"` — jamais `wait` nu quand un monitor tourne en fond.**
 > 8. **Savoir si l'outil écrit INCRÉMENTAL ou EN FIN DE SHARD** : `gen-data-wdl`/`scan_selfplay_gen` écrivent **en fin de shard** → aucun harvest partiel, aucun kill propre mid-run → **sizer JUSTE + timeout** (points 4-6).
+> 8bis. **🧹 HYGIÈNE DISQUE OBLIGATOIRE (ccx33 rempli à 100% le 2026-07-11 → runner MORT + 0670 bouclait + reset password KO → 2h de récup en rescue).** ccx33 = **152 Go seulement** (cpx62 = 640 Go). **En tête de CHAQUE job** : (a) **garde `df`** (abort si `/root` libre < ~3-5 Go) ; (b) **auto-clean des scratch stale** — coller après le `W=…` :
+> ```bash
+> find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true  # vire les cw-* >3h (jamais le sien, protégé par mtime)
+> DFA=$(df -Pm /root|awk 'NR==2{print $4}'); [ "${DFA:-0}" -gt 3000 ] || { say "ABORT disque <3Go"; exit 3; }
+> ```
+> Les jobs qui MEURENT laissent leur `cw-*` (le `rm -rf "$W"` de fin ne tourne pas) → ça s'accumule → disque plein. L'auto-clean au start de chaque job vide les stale au fil de l'eau. Jobs de maintenance `NNNN-diskclean` à re-queuer si pression disque.
 >
 > **C. REPORTING (ne pas gâcher le run par un bug de report)**
 > 9. **SMOKE-TEST write→read round-trip** sur mini-échantillon : le parser lit ce que le job écrit (mêmes clés/format/N). `bash -n` + `py_compile` des heredocs.
