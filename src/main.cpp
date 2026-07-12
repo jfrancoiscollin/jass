@@ -1553,6 +1553,85 @@ int run_dump_legal_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --replay-moves <games.txt> <parents.jnnw> <moves.bin> : elite-game -> master
+// preference corpus. Reads one game per input line (space-separated move tokens,
+// e.g. "32-28 19x28 33x22 ..."; only the FIRST and LAST square of each token are
+// used, so "16x27x38" -> from=16,to=38). Replays each game from the start
+// position; for every ply whose (from,to) matches a legal move it writes the
+// PARENT position as a 38-byte JNNW record AND the played (from,to) as 2 bytes to
+// moves.bin, kept 1:1 aligned. Feeds `--gen-siblings --played-moves` (Bonanza
+// master arm): the elite move = preferred, all legal siblings = dominated. A ply
+// with no legal match desynchronises the game -> that game is truncated there
+// (logged). No search, no eval, no DB. Deterministic.
+// -----------------------------------------------------------------------------
+int run_replay_moves_mode(int argc, char** argv) {
+    if (argc < 5) {
+        std::cerr << "usage: jass --replay-moves <games.txt> <parents.jnnw> <moves.bin>\n";
+        return 1;
+    }
+    std::ifstream in(argv[2]);
+    if (!in) { std::cerr << "error: cannot open " << argv[2] << "\n"; return 1; }
+    std::ofstream pout(argv[3], std::ios::binary);
+    std::ofstream mout(argv[4], std::ios::binary);
+    if (!pout || !mout) { std::cerr << "error: cannot open output\n"; return 1; }
+
+    auto encode = [](const jass::Position& p, char r[38]) {
+        std::memset(r, 0, 38);
+        const std::uint64_t bbs[4] = { p.white_men(), p.white_kings(),
+                                       p.black_men(), p.black_kings() };
+        std::memcpy(r,      &bbs[0], 8); std::memcpy(r + 8,  &bbs[1], 8);
+        std::memcpy(r + 16, &bbs[2], 8); std::memcpy(r + 24, &bbs[3], 8);
+        r[32] = static_cast<char>(p.side_to_move() == jass::Color::White ? 0u : 1u);
+        // bytes 33..37 (score/wdl) left zero — unused by master mode.
+    };
+
+    std::vector<char> precs;                 // buffered parent records
+    std::vector<unsigned char> mrecs;        // buffered (from,to) pairs
+    std::uint64_t games = 0, plies = 0, desync = 0, gtrunc = 0;
+    std::string line;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        // tokenize on whitespace
+        std::vector<std::string> toks; std::string t;
+        for (char c : line) { if (std::isspace(static_cast<unsigned char>(c))) { if (!t.empty()) { toks.push_back(t); t.clear(); } } else t.push_back(c); }
+        if (!t.empty()) toks.push_back(t);
+        if (toks.empty()) continue;
+        ++games;
+        jass::Position pos = jass::Position::start_position();
+        bool truncated = false;
+        for (const std::string& tok : toks) {
+            // extract integer runs; from = first, to = last
+            int from = -1, to = -1; std::string num;
+            auto flush = [&]() { if (!num.empty()) { int v = std::atoi(num.c_str()); if (from < 0) from = v; to = v; num.clear(); } };
+            for (char c : tok) { if (c >= '0' && c <= '9') num.push_back(c); else flush(); }
+            flush();
+            if (from < 1 || from > 50 || to < 1 || to > 50) { continue; }  // annotation/garbage token: skip
+            jass::MoveList ml; jass::generate_legal_moves(pos, ml);
+            int match = -1;
+            for (std::size_t k = 0; k < ml.size(); ++k)
+                if (static_cast<int>(ml[k].from) == from && static_cast<int>(ml[k].to) == to) { match = static_cast<int>(k); break; }
+            if (match < 0) { ++desync; truncated = true; break; }  // move not legal here -> truncate game
+            char r[38]; encode(pos, r);
+            precs.insert(precs.end(), r, r + 38);
+            mrecs.push_back(static_cast<unsigned char>(from));
+            mrecs.push_back(static_cast<unsigned char>(to));
+            pos = pos.after(ml[static_cast<std::size_t>(match)]);
+            ++plies;
+        }
+        if (truncated) ++gtrunc;
+    }
+    const std::uint32_t count = static_cast<std::uint32_t>(precs.size() / 38);
+    pout.write("JNNW", 4);
+    pout.write(reinterpret_cast<const char*>(&count), 4);
+    pout.write(precs.data(), static_cast<std::streamsize>(precs.size()));
+    mout.write(reinterpret_cast<const char*>(mrecs.data()), static_cast<std::streamsize>(mrecs.size()));
+    std::cerr << "replay-moves: " << games << " games, " << plies << " plies emitted ("
+              << gtrunc << " games truncated, " << desync << " desync plies) → "
+              << argv[3] << " + " << argv[4] << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --egdb-selfcheck <db_dir> [samples] [cache_mb] : the #1 validation gate for
 // the external bitbase bridge. Opens the egdb_intl DB at <db_dir> and, on a
 // random sample of kings-only positions that jass's own in-memory tables also
@@ -4367,6 +4446,7 @@ int main(int argc, char** argv) {
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
         else if (a == "--dump-legal")               return run_dump_legal_mode(argc, argv);
+        else if (a == "--replay-moves")             return run_replay_moves_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
