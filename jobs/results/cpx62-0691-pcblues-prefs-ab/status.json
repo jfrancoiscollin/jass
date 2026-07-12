@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0691-pcblues-prefs-ab",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-12T20:11:04+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 375923
+  "ended_at": "2026-07-12T20:54:02+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
