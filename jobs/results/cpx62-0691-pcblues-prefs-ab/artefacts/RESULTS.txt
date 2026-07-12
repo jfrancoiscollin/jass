@@ -4,3 +4,6 @@
   ✓ build ; openings=160 (dilf_combinations — disjoint du fit PC Blues)
 
 === GATE pcbprefs_0.05 vs gen2-mmto | d9 qs6 | 160op x1 x2 sur 8 shards ===
+  [pcbprefs_0.1 vs gen2-mmto | d9]
+  W=72 L=190 D=56 n=318 (8 shards) rate=0.3145+-0.0550 elo~-135 IC=[0.260,0.369]
+  => PERD hors-IC => le fit prefs degrade => revoir anchor/volume avant phase 2
