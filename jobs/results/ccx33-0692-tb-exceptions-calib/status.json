@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0692-tb-exceptions-calib",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-12T21:41:40+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 61514
+  "ended_at": "2026-07-12T21:46:42+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
