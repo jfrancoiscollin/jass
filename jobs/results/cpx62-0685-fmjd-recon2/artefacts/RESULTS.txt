@@ -1,4 +1,4 @@
-=== RECON-2 toernooibase endpoints — 2026-07-12T10:02:47Z ===
+=== RECON-2 toernooibase endpoints — 2026-07-12T10:07:49Z ===
 
 === A. /opvraag/keuze1nieuw.php + liens ===
   keuze1nieuw.php : 26322o
