@@ -1,0 +1,39 @@
+=== ADJUD MINE EXCEPTIONS (§3) — nproc=16 df=461555Mo ===
+  garde-fou archi ✓
+  dilf import ✓
+  rate≈1000 pos/s → N=300000
+  gen-egdb-wld: wrote 300000 / 300000 (168069 decisive, 131931 draw) in 558407 tries → /root/cw-adjmine/pool.jnnw
+
+=== minage : |net|>=M, WIN-ahead vs DRAW (exceptions), features engine-free ===
+  sous-ensemble |net|>=2 : n=214786  (WIN-ahead=145047  DRAW=69567  LOSS-ahead=172)  base draw-rate=32.39%
+  --- conditions candidates (cond => DRAW) : precision + couverture du set DRAW ---
+    def_has_king                                         fire= 80911 prec(DRAW)= 59.39%  cov(draw-set)= 69.1%
+    def_bare_king (dame nue seule)                       fire= 60963 prec(DRAW)= 56.17%  cov(draw-set)= 49.2%
+    def_has_king & ahead_men_only                        fire=  2144 prec(DRAW)=  6.53%  cov(draw-set)=  0.2%
+    def_bare_king & ahead_men_only                       fire=  2144 prec(DRAW)=  6.53%  cov(draw-set)=  0.2%
+    def_has_king & ahead_men_only & mpd>=2               fire=  1183 prec(DRAW)=  9.30%  cov(draw-set)=  0.2%
+    def_has_king & ahead_men_only & mpd>=3               fire=   605 prec(DRAW)= 13.39%  cov(draw-set)=  0.1%
+    def_has_king & ahead_men_only & mpd>=4               fire=   285 prec(DRAW)= 17.19%  cov(draw-set)=  0.1%
+    def_bare_king & ahead_men_only & mpd>=3              fire=   605 prec(DRAW)= 13.39%  cov(draw-set)=  0.1%
+    npieces<=4                                           fire=105192 prec(DRAW)= 44.51%  cov(draw-set)= 67.3%
+    npieces<=5                                           fire=154598 prec(DRAW)= 36.67%  cov(draw-set)= 81.5%
+    def_has_king & npieces<=5                            fire= 54081 prec(DRAW)= 72.54%  cov(draw-set)= 56.4%
+    def_kings>=1 & ahead_kings==0 & absnet<=3            fire=  2144 prec(DRAW)=  6.53%  cov(draw-set)=  0.2%
+    def_bare_king & absnet<=3 (dame nue vs petit avantage) fire= 28048 prec(DRAW)= 78.65%  cov(draw-set)= 31.7%
+    def_bare_king & ahead_men_only & absnet<=3 & mpd>=3  fire=   605 prec(DRAW)= 13.39%  cov(draw-set)=  0.1%
+  --- distributions par classe (moyennes) WIN vs DRAW ---
+    npieces    WIN=  4.80  DRAW=  4.29
+    mpd        WIN=  5.90  DRAW=  7.64
+    absnet     WIN=  5.67  DRAW=  3.38
+    A_men      WIN=  1.56  DRAW=  0.82
+    A_k        WIN=  1.96  DRAW=  1.90
+    D_men      WIN=  1.05  DRAW=  0.79
+    D_k        WIN=  0.23  DRAW=  0.78
+    def_has_king   WIN= 22.6%  DRAW= 69.1%
+    ahead_has_king WIN= 88.5%  DRAW= 94.9%
+    ahead_men_only WIN= 11.5%  DRAW=  5.1%
+    def_bare_king  WIN= 18.4%  DRAW= 49.2%
+  LECTURE : une condition a prec(DRAW)>=99.9% avec cov non-negligeable = candidat prédicat P4.x (veto forteresse).
+
+=== fin adjud-mine (24s) ===
+  RESULTS committé ✓
