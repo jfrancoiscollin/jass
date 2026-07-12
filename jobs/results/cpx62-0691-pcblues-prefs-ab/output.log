@@ -1,0 +1,16 @@
+=== 0689 GATE pcbprefs vs gen2-mmto — nproc=16 NSH=8 df=460957Mo ===
+  candidats presents : 0.05 0.1
+=== build jass (main) ===
+  ✓ build ; openings=160 (dilf_combinations — disjoint du fit PC Blues)
+
+=== GATE pcbprefs_0.05 vs gen2-mmto | d9 qs6 | 160op x1 x2 sur 8 shards ===
+  [pcbprefs_0.05 vs gen2-mmto | d9]
+  W=53 L=213 D=52 n=318 (8 shards) rate=0.2484+-0.0550 elo~-192 IC=[0.193,0.303]
+  => PERD hors-IC => le fit prefs degrade => revoir anchor/volume avant phase 2
+
+=== GATE pcbprefs_0.1 vs gen2-mmto | d9 qs6 | 160op x1 x2 sur 8 shards ===
+  [pcbprefs_0.1 vs gen2-mmto | d9]
+  W=72 L=190 D=56 n=318 (8 shards) rate=0.3145+-0.0550 elo~-135 IC=[0.260,0.369]
+  => PERD hors-IC => le fit prefs degrade => revoir anchor/volume avant phase 2
+  RESULTS committe ✓
+=== fin 0689 ===
