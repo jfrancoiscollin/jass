@@ -1,0 +1,6 @@
+=== 0689 GATE pcbprefs vs gen2-mmto — nproc=16 NSH=8 df=460957Mo ===
+  candidats presents : 0.05 0.1
+=== build jass (main) ===
+  ✓ build ; openings=160 (dilf_combinations — disjoint du fit PC Blues)
+
+=== GATE pcbprefs_0.05 vs gen2-mmto | d9 qs6 | 160op x1 x2 sur 8 shards ===
