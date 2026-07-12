@@ -1,0 +1,21 @@
+# thermometre pcblues-thermo-v1 : 224 positions figees
+=== build jass (main, 32-pat extras champion, SANS egdb) ===
+=== match gen2-mmto vs Scan depuis 224 positions (depth 11, no-DB, timeout 4h) ===
+      game 448: Scan=W Jass=B → W (no legal move from Jass-player, 32 plies)  Jass +0.0  [272s]
+    
+    === Jass vs Scan, depth 11, 448 games ===
+      Jass=34  Scan=378  Draws=36
+      Jass score rate: 0.116 (52.0 / 448)
+      ELO estimate:    -353 (95% CI ≈ ±38)
+
+=== ANALYSE : conversion du camp AU TRAIT (qui a la combinaison) — harnais 0440 ===
+  parties analysees      : 448  (positions sans coup legal au depart : 0)
+  JASS au trait (convertit la combinaison) : 0.136 (30.5/224)
+  SCAN au trait (convertit la combinaison) : 0.904 (202.5/224)
+  ECART jass - scan : -0.768  => jass convertit MOINS = trou tactique
+
+================= LECTURE =================
+  Ce run = T0 du thermometre PC Blues (gen2-mmto). Re-passer le MEME set fige sur chaque
+  champion from-scratch (T2, T3...) => courbe de conversion tactique SANS contamination
+  (les positions ne servent jamais a l'entrainement).
+===========================================

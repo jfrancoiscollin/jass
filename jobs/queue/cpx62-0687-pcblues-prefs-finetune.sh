@@ -36,15 +36,11 @@ git show "origin/$SRC_BRANCH:data/pcblues_prefs_graded.tsv" > "$W/prefs.tsv" \
   || { say "ABORT: prefs TSV absent de origin/$SRC_BRANCH"; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0687 ABORT tsv absent"; exit 4; }
 say "  ✓ prefs.tsv : $(grep -cv '^#' "$W/prefs.tsv") lignes"
 
-# ---- build jass (develop : jeu src COMPLET, comme 0679 : main.cpp de develop
-#      dépend des versions develop de scan_eval/search/movegen — sinon BUILD
-#      FAIL, cf 0687 rc=6) + rank_finetune (develop) + garde-fou archi ----
+# ---- build jass (develop : --gen-siblings/--leaf-mode) + rank_finetune (develop) ----
 git fetch origin +refs/heads/develop:refs/remotes/origin/develop --quiet 2>/dev/null || true
-SRCSET="src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp src/movegen.cpp src/movegen.hpp"
-for f in $SRCSET pattern_jass/tools/rank_finetune.py; do git show "origin/develop:$f" > "$f" 2>/dev/null || true; done
-restore_src(){ git checkout -- $SRCSET pattern_jass/tools/rank_finetune.py 2>/dev/null||true; }
-grep -q g_emasks src/scan_eval.cpp && grep -q has_any_capture src/search.cpp && grep -q has_any_capture src/movegen.cpp || { say "ABORT archi (pull develop incomplet)"; restore_src; exit 5; }
-say "  garde-fou archi ✓"
+git show origin/develop:src/main.cpp > src/main.cpp
+git show origin/develop:pattern_jass/tools/rank_finetune.py > pattern_jass/tools/rank_finetune.py
+restore_src(){ git checkout -- src/main.cpp pattern_jass/tools/rank_finetune.py 2>/dev/null||true; }
 cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release $FLAGS >"$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -12 "$W/build.log"|sed 's/^/  /'; restore_src; exit 6; }
 J="$W/build/jass"

@@ -1,0 +1,15 @@
+=== 0687 PC Blues prefs finetune — HEAD main 925a26421 queue 0687: pcblues-prefs finetune cpx62 (go JFC "Go B") — gen-siblings+rank_finetune 5147 parents !/!!, ancre gen2-mmto, ~10-20 min ===
+  ✓ prefs.tsv : 10219 lignes
+BUILD FAIL
+        |                                                    ^~~~~~~~
+  /root/jass/src/main.cpp:3857:56: warning: conversion from ‘long int’ to ‘double’ may change value [-Wconversion]
+   3857 |                   << (static_cast<double>(width_sum) / internal)
+        |                                                        ^~~~~~~~
+  /root/jass/src/main.cpp: In lambda function:
+  /root/jass/src/main.cpp:4014:61: warning: conversion from ‘long unsigned int’ to ‘int’ may change value [-Wconversion]
+   4014 |                                        std::max<std::size_t>(1, fresh.size()));
+        |                                        ~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+  gmake[3]: *** [CMakeFiles/jass.dir/build.make:79: CMakeFiles/jass.dir/src/main.cpp.o] Error 1
+  gmake[2]: *** [CMakeFiles/Makefile2:125: CMakeFiles/jass.dir/all] Error 2
+  gmake[1]: *** [CMakeFiles/Makefile2:132: CMakeFiles/jass.dir/rule] Error 2
+  gmake: *** [Makefile:147: jass] Error 2
