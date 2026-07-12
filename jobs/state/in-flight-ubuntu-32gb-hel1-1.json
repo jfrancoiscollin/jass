@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0686-fmjd-results-recon",
-  "script": "jobs/queue/cpx62-0686-fmjd-results-recon.sh",
-  "pid": 364019,
-  "started_at": "2026-07-12T10:23:12+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
