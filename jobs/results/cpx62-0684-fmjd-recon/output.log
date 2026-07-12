@@ -1,0 +1,25 @@
+=== FMJD/TOERNOOIBASE RECON (depuis la box) — 2026-07-12T09:46:58Z ===
+
+=== 1. joignabilite (curl -I, timeout 20s) ===
+  toernooibase : HTTP 200 (1320o)  https://toernooibase.kndb.nl/
+  results_fmjd : HTTP 302 (0o)  https://results.fmjd.org/
+  www_fmjd : HTTP 200 (54040o)  https://www.fmjd.org/
+  pdn_fmjd : HTTP 200 (2790o)  https://pdn.fmjd.org/
+
+=== 2. endpoints PDN/export/download reperes ===
+  -- home_pdn_fmjd.html --
+    href="https://github.com/wiegerw/pdn"
+    href="https://wiegerw.github.io/pdn/"
+    href="https://wiegerw.github.io/pdn/pdf/pdn_standard.pdf"
+  -- home_www_fmjd.html --
+    href="http://pdn.fmjd.org/"
+  (extraits pages -> artefacts *.head pour lecture structure)
+
+=== 3. sondes fetch PDN (best-effort) ===
+  probe 200 () : https://pdn.fmjd.org/
+  probe 404 () : https://results.fmjd.org/api/tournaments
+  aucune PDN recuperee par sonde directe (probablement compte-gate / applet JS).
+  => le fetcher devra : soit un compte toernooibase (Bouma), soit parser l'applet (endpoint oerterp.php?wed=...&view=PDN).
+
+=== VERDICT RECON : hotes joignables=3/4 ; PDN directe=NON ===
+=== fin recon (1s) ===

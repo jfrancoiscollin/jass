@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDN - Portable Draughts Notation</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .fmjd-logo {
+            max-width: 200px;
+            margin: 20px 0;
+        }
+
+        .links {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .links a {
+            display: block;
+            color: #007bff;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 5px;
+        }
+
+        .links a:hover {
+            color: #0056b3;
+            background-color: #e9ecef;
+            border-radius: 3px;
+        }
+
+        .description {
+            text-align: justify;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PDN - Portable Draughts Notation</h1>
+            <a href="https://fmjd.org" target="_blank"><img src="https://fmjd.org/logos/logo1.svg" alt="FMJD Logo" class="fmjd-logo"></a>
+        </div>
+
+        <div class="description">
+            <p>This document defines the official portable draughts notation standard, PDN 3.0. <br>
+                The goal of this document is to give a formal definition of PDN.</p>
+        </div>
+
+        <div class="links">
+            <h2>Documentation Links</h2>
+            <a href="https://github.com/wiegerw/pdn" target="_blank">📁 GitHub Repository</a>
+            <a href="https://wiegerw.github.io/pdn/" target="_blank">🌐 HTML Documentation</a>
+            <a href="https://wiegerw.github.io/pdn/pdf/pdn_standard.pdf" target="_blank">📄 PDF Documentation</a>
+        </div>
+
+        <div class="footer">
+            <p>Special thanks to <strong>Wieger Wesselink</strong> for developing and maintaining the PDN documentation.</p>
+            <p>Under the auspices of <a href="https://www.fmjd.org" target="_blank">FMJD</a> (World Draughts Federation)</p>
+        </div>
+    </div>
+</body>
+</html> 
