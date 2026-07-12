@@ -1,0 +1,79 @@
+=== RECON-2 toernooibase endpoints — 2026-07-12T10:12:55Z ===
+
+=== A. /opvraag/keuze1nieuw.php + liens ===
+  keuze1nieuw.php : 26322o
+    action="/applet/oerterpapplet2.0/login.php?taal=0&noheader=1&refererURL=%2Fopvraag%2Fkeuze1nieuw.php"
+    href="../applet/oerterpapplet2.0/get/inputapp/startapp.php"
+    href='/short.php'
+
+=== B. oerterp.php?wed=529323 view=0..9 (cherche PDN) ===
+  view=0 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=1 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=2 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=3 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=4 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=5 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=6 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=7 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=8 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=9 : 10689o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=pdn : 10695o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+  view=PDN : 10695o  pdn-lines=0
+0
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 43: [: 0
+0: integer expected
+
+=== C. endpoints export plausibles ===
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/opvraag/pdn.php?wed=529323
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 56: [: 0
+0: integer expected
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/pdn.php?wed=529323
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 56: [: 0
+0: integer expected
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/applet/oerterpapplet2.0/pdn.php?wed=529323
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 56: [: 0
+0: integer expected
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/opvraag/partij.php?wed=529323
+/root/jass/jobs/queue/cpx62-0685-fmjd-recon2.sh: line 56: [: 0
+0: integer expected
+
+=== VERDICT : PDN pas trouvee en direct (applet JS / compte-gate) => cracker l'applet coûteux ; REPLI Bouma (C) recommandé ===
+  (pages sauvees en artefacts pour lecture structure)
+=== fin recon2 (2s) ===
