@@ -1,0 +1,15 @@
+=== ADJUD P1 SCORING (percee->WIN) — nproc=16 df=461533Mo ===
+  garde-fou archi ✓ (dump-legal + P1)
+  dilf+adjud imports ✓
+  rate≈1000 pos/s → N=200000
+  gen-egdb-wld: wrote 200000 / 200000 (111998 decisive, 88002 draw) in 372747 tries → /root/cw-adjp1/pool.jnnw
+
+=== notation P1 (percee->WIN) vs TB, les 2 camps, sweep max_d ===
+  n=200000 (decisive=111998)  candidats (pos,side)=67969  dump=110454 FEN
+  P1 (max_d<=2): fire=24718 (12.359% du pool) PRECISION(WIN)=75.042%  cov(win-set)=16.56%  (justes=18549)  [admission >=99.9%]
+  P1 (max_d<=3): fire=31015 (15.508% du pool) PRECISION(WIN)=75.857%  cov(win-set)=21.01%  (justes=23527)  [admission >=99.9%]
+  P1 (max_d<=4): fire=35073 (17.537% du pool) PRECISION(WIN)=76.526%  cov(win-set)=23.96%  (justes=26840)  [admission >=99.9%]
+  LECTURE : P1>=99.9% => l'escalier a un ETAGE VERDICTS (adjudique des WIN hors-TB) ; sinon predicats=vetos seulement.
+
+=== fin adjud-p1-score (28s) ===
+  RESULTS committé ✓
