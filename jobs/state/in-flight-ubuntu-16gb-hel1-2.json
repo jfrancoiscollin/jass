@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0693-tb-exceptions-mine",
-  "script": "jobs/queue/ccx33-0693-tb-exceptions-mine.sh",
-  "pid": 62490,
-  "started_at": "2026-07-12T21:51:48+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
