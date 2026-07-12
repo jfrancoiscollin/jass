@@ -1,0 +1,472 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<title>Toernooibase</title>
+	<style>
+	.goog-te-banner-frame.skiptranslate {
+		display: none !important;
+	} 
+	body {
+		top: 0px !important; 
+	}
+	</style>
+</head>
+<link href="https://fonts.googleapis.com/css?family=Alegreya+Sans" rel="stylesheet">
+<body>
+<center>
+<table border="0" align=center  valign="top">
+<tr>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../opvraag/keuze1nieuw.php><font color=#A02A00>HOME</font></a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../opvraag/laatstingevoerd.php>LAATST INGEVOERD</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../rating/ratingsort.php?Jr=27&Pr=1&sorting=2>RATINGS</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../opvraag/alletoernooiena.php>TOERNOOIEN</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../opvraag/nieuwsarchiefnieuw.php?Pag=0>ACTUEEL</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../applet/zoekvenster.php?Jr=27>PARTIJEN</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../posities/opvraag/zoek_auteurs.php>POSITIES</a></span></b>&nbsp;|</td>
+		<td><b><span style="font-weight: bold; text-decoration: none; font-size: 16px;"><a data-ajax="false" href=../opvraag/links.php>LINKS</a></span></b>&nbsp;|</td>
+<td>
+			<div id="google_translate_element"></div>
+		<script type="text/javascript">
+			function googleTranslateElementInit() {
+				new google.translate.TranslateElement({pageLanguage: 'nl', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+			}
+		</script>
+		<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+		</td>
+</tr>
+</table>
+<hr align=center width="930">
+	</body>
+</html>
+<html>
+<head>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+$(function() {
+	loadJSElements();
+});
+
+function loadJSElements()
+{
+	//addthis.init();
+}
+</script><link href="https://fonts.googleapis.com/css?family=Alegreya+Sans" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="../stijla.css">
+<style>
+
+#Wrapper{
+    background:url(../Afbeeldingen/Nieuwelooks/Laatstingevoerd.jpg); 
+    width:300px; 
+    height:125px;
+    opacity: 1.0; 
+    filter: alpha(opacity=100);
+
+
+}
+#Wrapper:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper2{
+    background:url(../Afbeeldingen/Nieuwelooks/Toernooien.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper2:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+			
+#Wrapper3{
+    background:url(../Afbeeldingen/Nieuwelooks/Partijen.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper3:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper4{
+    background:url(../Afbeeldingen/Nieuwelooks/Overige.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper4:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper5{
+    background:url(../Afbeeldingen/Nieuwelooks/Rating.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper5:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper6{
+    background:url(../Afbeeldingen/Nieuwelooks/Actueel.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper6:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper7{
+    background:url(../Afbeeldingen/Nieuwelooks/Posities.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper7:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Wrapper8{
+    background:url(../Afbeeldingen/Nieuwelooks/Links.jpg); 
+    width:300px; 
+    height:125px;
+	opacity: 1.0; 
+    filter: alpha(opacity=100);
+}
+#Wrapper8:hover {
+    opacity: 0.7; /* css standard */
+    filter: alpha(opacity=70); /* internet explorer */
+			}
+
+#Content{
+    background-color:rgba(0,107,125,0.8); 
+    width:100%; 
+    height:100%;
+	
+	
+}
+
+#Content2{
+    background-color:rgba(160,42,0,0.8); 
+    width:100%; 
+    height:100%;
+}	
+a:link   { color: black;  text-decoration: none; }
+a:visited { color: black;  text-decoration: none;}
+a:hover { color: black; text-decoration: underline;}
+
+
+</style>
+ <style type="text/css"  media="all">
+        p {
+            margin:0px;
+        }
+        <!--  this is where you paste the CSS provided by the form below -->
+        rss_box {
+            width: 195px;
+            background-color: #ffffff;
+        }
+        .rss_title, rss_title a {
+            margin: 0px 0;
+            padding: 0;
+        }
+        .rss_items {
+            list-style:none;
+            margin:0;
+            padding:0;
+        }
+        .rss_item  {
+            font-size: 9 pt;
+            margin-bottom: 0.4em;;
+        }
+        .rss_item a:link, .rss_item a:visited, .rss_item a:active {
+        }
+        .rss_item a:hover {
+        }
+        .rss_date {
+            font-size: xx-small;
+        }
+        .addthis_toolbox { height: 1px; }
+    </style>
+
+
+    <title>Homepage Toernooibase</title>
+</head>
+
+
+<body bgcolor="#000080" style="align:center">
+<center>
+
+<table align="center">
+<td valign=top>
+	<table>
+	<tr>
+	<td align=center height="125" width="300"><a href=../opvraag/laatstingevoerd.php><div id="Wrapper"><div id="Content">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>LAATST INGEVOERD</u></font></span></div></div></a>
+	</td>
+	</tr>
+	<tr>
+	<td align=center height="125" width="300"><a href=alletoernooiena.php><div id="Wrapper2"><div id="Content2">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>TOERNOOIEN</u></font></span></div></div></a>
+	</td>
+	</tr>
+	<tr>
+	<td height="125" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+	 &nbsp;&nbsp;>&nbsp;&nbsp;<a href=/nc/invoer.html target=_blank><font color=#A02A00>Uitslagendienst KNDB</font></a><br>
+	 &nbsp;&nbsp;>&nbsp;&nbsp;<a href=alletoernooiena.php>Alle toernooien</a>
+	 <br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=toernooienprov.php?&se=27&jeu=1>Jeugddammen</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=toernooienprov.php?id=1&se=27>Nederland</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=toernooienprov.php?id=16&se=27>Buitenland</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=alletoernooiena.php>Per provincie</a>
+
+</span>
+	</td>
+	</tr>
+	<tr>
+	<td align=center height="125" width="300"><a href=../applet/zoekvenster.php?Jr=18><div id="Wrapper3"><div id="Content">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>PARTIJEN</u></font></span></div></div></a>
+	</td>
+	</tr>
+	<tr>
+	<td height="125" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+
+&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/zoekvenster.php?Jr=18>Zoekvenster partijen</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/oerterpapplet2.0/search/findGamePosition.php?taal=0>Partij Positie Zoeker</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/oerterpapplet2.0/viewsemilive/make_selection_live_games.php target=_blank>Livegames</a></span></td></tr>
+	<tr>
+	<td align=center height="125" width="300"><a href=../opvraag/keuze1nieuw.php><div id="Wrapper4"><div id="Content2">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>OVERIG</u></font></span></div></div></a>
+	</td>
+	</tr>
+		<tr>
+	<td height="140" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+&nbsp;&nbsp;>&nbsp;&nbsp;<a href=mededelingen.php>Mededelingen</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/showaankon.php>Live-agenda</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=dumpstore.php?taal=0>Dumpstore</a>
+
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/nieuws3.php?compr=workshops&view=&comprim=workshops>Workshops</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/oerterpapplet2.0/get/animatedgif/creategif.php target=_blank>A-GIF Tool</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href='/short.php' target="werk">Maak korte link <font color="red">(new)</font></a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/Disclaimer.pdf>Disclaimer</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/PrivacystatementToernooibase.pdf>Privacystatement</a>
+</span>
+	</td>
+	</tr>
+	</table>
+	</td>
+<td valign=top>
+	<table>
+	<tr>
+	<td align=center height="125" width="300"><div id="Wrapper5"><a href=../rating/ratingsort.php?Jr=27&Pr=1&sorting=2><div id="Content2">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>RATINGS</u></font></span></div></div></a>
+	</td>
+	</tr>
+	<tr>
+	<td align=center height="125" width="300"><div id="Wrapper6"><a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0><div id="Content">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>ACTUEEL</u></font></span></div></div></a>
+	</td>
+	</tr>
+	<tr>
+	<td height="125" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css?family=Alegreya+Sans" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="../stijla.css">
+<title>NIEUWS</title>
+</head>
+
+<body> 
+<span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+
+&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0>Toernooibase omgeturnd naar seizoen</a>.....</span>
+<span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0>Toernooibase gedeeltelijk omgeturnd naar</a>.....</span>
+<span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0>Ratinghistorie: top drie</a>.....</span>
+
+
+
+
+</body>
+</html>
+	
+
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=http://www.kndb.nl/ target=_blank>KNDB Nieuws</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=http://www.fmjd.org/ target=_blank>FMJD Nieuws</a>
+
+</span>
+	</td>
+	</tr>
+	<tr>
+	<td align=center height="125" width="300"><a href=../posities/opvraag/zoek_auteurs.php><div id="Wrapper7"><div id="Content2">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>POSITIES</u></font></span></div></div></a>
+	</td>
+	</tr>
+<tr>
+	<td height="125" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../posities/opvraag/applet.php?taal=0&idapplet=210788&sel=6>Laatst ingevoerde positie</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../posities/opvraag/zoek_auteurs.php?taal=0>Auteur</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../posities/opvraag/zoek_bron.php?taal=0>Bron</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../posities/opvraag/zoeken.php?taal=0>Zoeken positie</a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../applet/oerterpapplet2.0/motiefmijn/search.php?taal=0 target=_blank><font color=#A02A00>MotiefMijn</font></a><br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../posities/opvraag/zoek_boek.php?taal=0><font color=#A02A00>Boeken/tijdschriften/damrubrieken</font></a></span>	</td>
+	</tr>
+	<tr>
+	<td align=center height="125" width="300"><div id="Wrapper8"><a href=../opvraag/links.php><div id="Content">
+  <span style="font-weight: bold; text-decoration: none; font-size: 28px;"><font color="#FFFFFF"><br><u>LINKS</u></font></span></div></div></a>
+	</td>
+	</tr>
+		<tr>
+	<td height="140" width="300" valign="top" bgcolor="#EEECE8">
+	 <span style="font-weight: normal; text-decoration: none; font-size: 15px;">
+&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../beheer/info.php>Info Toernooibase (beheer)</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href="https://www.youtube.com/channel/UCqKleKbdpi4LNHdpybthYrQ" target=_blank>Youtube Toernooibase</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=https://www.facebook.com/Toernooibase target=_blank>Facebook Toernooibase</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/kalender.php><font color=#A02A00>Kalender Toernooibase</font></a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=../opvraag/kalenderdamz.php?keus=0><font color=#A02A00>DamZ! kalender</font></a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=https://foto.kndb.nl/ target=_blank>Fotoarchief KNDB</a>
+<br>&nbsp;&nbsp;>&nbsp;&nbsp;<a href=http://dammen.startpagina.nl/ target=_blank>Andere nuttige links</a></span>
+	</td>
+	</tr>
+	</table>
+	</td>
+<center>
+	<td valign=top>
+	<table>
+	<tr><td valign=top>&nbsp;&nbsp;<img src=../Afbeeldingen/Ukrain.jpg></td><td valign=top>&nbsp;&nbsp;<b>Stop the war!</b></td></tr><tr><td>&nbsp;&nbsp;>&nbsp;&nbsp;<b><a href=../opvraag/kalender.php><font color=#A02A00>Kalender Toernooibase</font></a></b></td></tr></table><table></table>	<table>
+	<tr>
+	<td colspan="2" width="300" height="70" bgcolor="#EEECE8">
+	<script>
+	(function () {
+		var cx = '002928449491503396502:_dlhmupvx6w';
+		var gcse = document.createElement('script');
+		gcse.type = 'text/javascript';
+		gcse.async = true;
+		gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+		'//cse.google.com/cse.js?cx=' + cx;
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(gcse, s);
+	})();
+	</script>
+	<gcse:search webSearchQueryAddition="inurl:standen"></gcse:search>
+	</td>
+	</tr>
+	<tr>
+	<td width="148" height="20" bgcolor="#EEECE8">
+	&nbsp;&nbsp;<a href=keuze1nieuwE.php?taal=1><img src=../Afbeeldingen/taalengels.gif width=30 height=14 border=0></a>&nbsp;&nbsp;&nbsp;
+	<a href=keuze1nieuw.php?taal=0><img src=../Afbeeldingen/taalned.gif width=30 height=14 border=0></a>&nbsp;&nbsp;&nbsp;
+	<a href=../opvraag/TBfeed6.php target=blank><img src=../Afbeeldingen/RSS.png border=0 alt=RSS-feed></a>
+	</td>
+	<td width="148" height="20" bgcolor="#EEECE8">
+	
+	</td>
+	</tr>
+	</table>
+	<table>
+	<tr>
+	<td width="145" height="160" bgcolor="#EEECE8" valign="top" id="pnlLogin">
+			<br>
+		<form method="post" action="/applet/oerterpapplet2.0/login.php?taal=0&noheader=1&refererURL=%2Fopvraag%2Fkeuze1nieuw.php">
+		<input type="hidden" name="Submit" value="1">
+		<input type="hidden" name="switch" value="1">
+		<small>Gebruikersnaam:</small>
+		<br>
+		<input type="text" size=15 name="LoginNaam"><br>
+		<small>Wachtwoord:</small>
+		<br>
+		<input type="password" size=15 name="LoginPassword"><br>
+		<input type="submit" value="Inloggen"></form>
+			</td>
+	<td width="150" height="160" bgcolor="#EEECE8" valign="top">
+	<a href="../applet/oerterpapplet2.0/get/inputapp/startapp.php" target="_top"><img src="../applet/oerterpapplet2.0/ipad-oerterp-icon.png" width="117" height="117"></a>	<span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+	<br>
+	<a href="../applet/oerterpapplet2.0/get/inputapp/startapp.php" target="_top">Partij Digitaal Noteren</a></span>	
+	</td>
+	</tr>
+	</table>
+		<table>
+		<tr>
+			<td align="left" valign="top" height="13" width="300" bgcolor="#006B7D">
+				<span style="font-weight: normal; text-decoration: none; font-size: 12pt;"><font color="#FFFFFF">&nbsp;&nbsp;TOP 10 RATING</font></span>
+			</td>
+		</tr>
+	</table>
+	<!--start rating table-->
+	<table>
+		<tr>
+			<td width="300" bgcolor="#EEECE8">
+				<table align=center width="280">
+					<tr>
+						<td style=background-color:#A02A00><font color=#FFFFFF><span style="font-weight: normal; text-decoration: none; font-size: 14px;"><b>&nbsp;&nbsp;Pl.</b></span></td>
+						<td style=background-color:#A02A00><font color=#FFFFFF><span style="font-weight: normal; text-decoration: none; font-size: 14px;"><b>&nbsp;&nbsp;Naam</b></span></td>
+						<td style=background-color:#A02A00><font color=#FFFFFF><span style="font-weight: normal; text-decoration: none; font-size: 14px;">&nbsp;&nbsp;<b>Lft.</b></span></td>
+						<td style=background-color:#A02A00><font color=#FFFFFF><span style="font-weight: normal; text-decoration: none; font-size: 14px;">&nbsp;&nbsp;<b>Virt.</b></span></td>
+						<td style=background-color:#A02A00><font color=#FFFFFF><span style="font-weight: normal; text-decoration: none; font-size: 14px;">&nbsp;&nbsp;<b>+/-</b></span></td>
+					</tr>
+					<tr style="background-color:#FFFFFF; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>1</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/WSDV Wageningen.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=6060>Groenendijk</a></b></td><td>&nbsp;&nbsp;27&nbsp;</td><td>&nbsp;&nbsp;<b>1572</b></td><td align=right><b><font color=red>-2&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#CCCCCC; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>2</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/WSDV Wageningen.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=2245>Shvartsman</a></b></td><td>&nbsp;&nbsp;58&nbsp;</td><td>&nbsp;&nbsp;<b>1530</b></td><td align=right><b><font color=green>+2&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#FFFFFF; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>3</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/DamCombinatie Fryslan.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=522>Valneris</a></b></td><td>&nbsp;&nbsp;58&nbsp;</td><td>&nbsp;&nbsp;<b>1519</b></td><td align=right><b><font color=green>+2&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#CCCCCC; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>4</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/Hijken DTC.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=3881>Sipma</a></b></td><td>&nbsp;&nbsp;33&nbsp;</td><td>&nbsp;&nbsp;<b>1500</b></td><td align=right><b><font color=green>+1&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#FFFFFF; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>5</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/WSDV Wageningen.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=13097>Harmsma</a></b></td><td>&nbsp;&nbsp;21&nbsp;</td><td>&nbsp;&nbsp;<b>1499</b></td><td align=right><b><font color=green>+4&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#CCCCCC; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>6</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/DV VBI Huissen.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=3590>Mbongo</a></b></td><td>&nbsp;&nbsp;40&nbsp;</td><td>&nbsp;&nbsp;<b>1477</b></td><td align=right><b><font color=green>+2&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#FFFFFF; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>7</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/Denk en Zet Westerhaar.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=16071>Boxum</a></b></td><td>&nbsp;&nbsp;17&nbsp;</td><td>&nbsp;&nbsp;<b>1458</b></td><td align=right><b><font color=red>-1&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#CCCCCC; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>8</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/DIOS-Achterhoek.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=4625>Vipulis</a></b></td><td>&nbsp;&nbsp;53&nbsp;</td><td>&nbsp;&nbsp;<b>1430</b></td><td align=right><b><font color=red>-2&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#FFFFFF; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>9</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/DamCombinatie Fryslan.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=2027>Meijer</a></b></td><td>&nbsp;&nbsp;65&nbsp;</td><td>&nbsp;&nbsp;<b>1415</b></td><td align=right><b><font color=green>+13&nbsp;&nbsp;</font></b></td></tr><tr style="background-color:#CCCCCC; font-weight: normal; text-decoration: none; font-size: 14px;"><td align=right><b>10</b>&nbsp;<img src="../Afbeeldingen/blank.gif "><font color=black><b>-&nbsp;</b>&nbsp;&nbsp;</font></td><td><img src="../Clublogos/DamCombinatie Fryslan.gif " onError="this.src='../Afbeeldingen/Logoprov/kndblogo.jpg'" width=16 height=12>&nbsp;<b><a href=../rating/detailsrating.php?taal=&nr=9997>Terweijden</a></b></td><td>&nbsp;&nbsp;24&nbsp;</td><td>&nbsp;&nbsp;<b>1400</b></td><td align=right><b><font color=red>-1&nbsp;&nbsp;</font></b></td></tr>					</table>
+			</td>
+		</tr>
+		</table><!--end rating table-->
+		<table>
+			<table width="305" valign="top">
+				<tr>
+					<td valign="top" height="13" width="305" bgcolor="#006B7D">
+						<span style="font-weight: normal; text-decoration: none; font-size: 12pt;"><font color="#FFFFFF">
+								&nbsp;&nbsp;ACTUEEL</font></span>
+					</td>
+				</tr>
+			</table>
+			<table width="305" bgcolor="#EEECE8" valign="top" align="center">
+				<tr>
+					<td width="305" bgcolor="#EEECE8">
+						<html>
+<head>
+<link href="https://fonts.googleapis.com/css?family=Alegreya+Sans" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="../stijla.css">
+<title>NIEUWS</title>
+</head>
+
+<body> 
+</td></tr><tr><td align=center width=305 bgcolor=#EEECE8>&nbsp;<a href=nieuwsfoto.php?paad=nieuws2212><img src=../invoer/nieuwsgr/nieuws2212.jpg border=0 ALIGN=center></a></td></tr><tr><td width=305 bgcolor=#EEECE8><br><span style="font-weight: bold; text-decoration: none; font-size: 14px;"><font color="#A02A00">
+01-07-2026</font></span><span style="font-weight: bold; text-decoration: none; font-size: 14px;">
+
+<b>Toernooibase omgeturnd naar seizoen 2026/2027</b><br></span><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+Zoals gebruikelijk is er rond 1 juli een aanpassing in Toernooibase. Het nieuwe seizoen 2026/2027 begint dan, en dat betekent dat allerlei selectiemenus zijn aangepast. Alle toernooien van 2026, die onder 2025/2026 vallen, zijn nu via dit seizoen op te vragen.</br><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0><font color=#006B7D>>>>>>Lees meer</font></a></span></br><br><span style="font-weight: bold; text-decoration: none; font-size: 14px;"><font color="#A02A00">
+12-04-2026</font></span><span style="font-weight: bold; text-decoration: none; font-size: 14px;">
+
+<b>Toernooibase gedeeltelijk omgeturnd naar seizoen 2026/2027</b><br></span><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+Omdat de eerste (zomer)toernooien welke consequenties hebben op de KNDB-rating na 1 juli 2026 zich aandienen/ingevoerd worden, is Toernooibase gedeeltelijk omgezet naar seizoen 2026/2027. Dit betekent dat er in menus een extra optie seizoen 2026/2027 is aangebracht.</br><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0><font color=#006B7D>>>>>>Lees meer</font></a></span></br><br><span style="font-weight: bold; text-decoration: none; font-size: 14px;"><font color="#A02A00">
+06-04-2026</font></span><span style="font-weight: bold; text-decoration: none; font-size: 14px;">
+
+<b>Ratinghistorie: top drie ongewijzigd!</b><br></span><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+In dit weekend heb ik weer eens een nieuwe berekening gemaakt van de historische ratings.Vanaf 1880 tot 1992 heb ik vanuit alle aanwezige uitslagen, die voldoenaan de criteria van de KNDB-rating (speeltempo, zwaarte toernooi -bijv.</br><span style="font-weight: normal; text-decoration: none; font-size: 14px;">
+<a href=../opvraag/nieuwsarchiefnieuw.php?Pag=0><font color=#006B7D>>>>>>Lees meer</font></a></span></br>
+
+
+
+
+</body>
+</html>
+					</td>
+				</tr>
+			</table>
+			</td>
+		</table>
+	</center>
+	</body>
+	
