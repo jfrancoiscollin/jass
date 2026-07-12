@@ -1,0 +1,49 @@
+=== RECON-3 results.fmjd.org (DraughtArbiter) — 2026-07-12T10:23:12Z ===
+
+=== A. results.fmjd.org (suivi 302) ===
+  redirections -> viewpage.php?page_id=1  ; landing 674980o
+  liens (php/html/asp/tournament/game/pdn) :
+    href="https://fmjd.org/downloads/DA/Dra_import.pdf"
+    href="https://fmjd.org/downloads/DA/dra_sort_criteria_2020.pdf"
+    href="https://fmjd.org/downloads/DA/FMJD_games_at_web.pdf"
+    href="https://fmjd.org/downloads/DA/manual_FMJD_Draughts_Arbiter_Pro_version_2.pdf"
+    href="https://fmjd.org/downloads/DA/team_classyfication.pdf"
+    href='https://results.fmjd.org/'
+    href="https://results.fmjd.org/downloads/DraughtsArbiterPro-installer5.44.3.zip"
+    href='https://results.fmjd.org/engine/style.css'
+    href='https://results.fmjd.org/engine/tooltips2.css'
+    href="https://www.fmjd.org/downloads/DA/64_mikromatch.pdf"
+    href="https://www.fmjd.org/downloads/DA/dra_lid.pdf"
+    href="https://www.fmjd.org/downloads/DA/dra_updates.pdf"
+    href="https://www.fmjd.org/downloads/DA/manual_fr_FMJD_Draughts_Arbiter_Pro_version_2.pdf"
+    href='https://www.php-fusion.co.uk'
+    href='http://www.fsf.org/licensing/licenses/agpl-3.0.html'
+    href='lostpassword.php'
+    href='register.php'
+    href='viewpage.php?page_id=1'
+    href='viewpage.php?page_id=2'
+
+=== B. 1er lien tournoi -> parties/PDN ===
+  tournoi: https://results.fmjd.org/
+  liens PDN/game dans le tournoi :
+    href="https://fmjd.org/downloads/DA/Dra_import.pdf"
+    href="https://fmjd.org/downloads/DA/dra_sort_criteria_2020.pdf"
+    href="https://fmjd.org/downloads/DA/FMJD_games_at_web.pdf"
+    href="https://fmjd.org/downloads/DA/manual_FMJD_Draughts_Arbiter_Pro_version_2.pdf"
+    href="https://fmjd.org/downloads/DA/team_classyfication.pdf"
+    href="https://results.fmjd.org/downloads/DraughtsArbiterPro-installer5.44.3.zip"
+    href="https://www.fmjd.org/downloads/DA/64_mikromatch.pdf"
+    href="https://www.fmjd.org/downloads/DA/dra_lid.pdf"
+    href="https://www.fmjd.org/downloads/DA/dra_updates.pdf"
+    href="https://www.fmjd.org/downloads/DA/manual_fr_FMJD_Draughts_Arbiter_Pro_version_2.pdf"
+
+=== C. endpoints PDN plausibles ===
+  404 pdn-lines=0
+0 : https://results.fmjd.org/games.pdn
+  404 pdn-lines=0
+0 : https://results.fmjd.org/pdn/
+  000000 pdn-lines=0
+0 : https://dra.fmjd.org/
+
+=== VERDICT : pas de PDN ouvert repéré ici non plus => repli Bouma (C) confirmé. (lire artefacts pour structure fine) ===
+=== fin recon3 (2s) ===
