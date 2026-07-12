@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0689-pcblues-prefs-ab",
-  "script": "jobs/queue/cpx62-0689-pcblues-prefs-ab.sh",
-  "pid": 374462,
-  "started_at": "2026-07-12T19:33:34+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
