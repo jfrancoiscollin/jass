@@ -5,3 +5,4 @@
   [3/6] shard n=500000 kept=116492 (draw=116169 loss=2 win=321) | ACC_total=350105 | seen=1500000 density=0.2334 | rate=33333pos/s ETA_rest=0.8min
   [4/6] shard n=500000 kept=116839 (draw=116545 loss=2 win=292) | ACC_total=466944 | seen=2000000 density=0.2335 | rate=32258pos/s ETA_rest=0.5min
   [5/6] shard n=500000 kept=116600 (draw=116301 loss=7 win=292) | ACC_total=583544 | seen=2500000 density=0.2334 | rate=31646pos/s ETA_rest=0.3min
+  [6/6] shard n=500000 kept=116641 (draw=116354 loss=5 win=282) | ACC_total=700185 | seen=3000000 density=0.2334 | rate=30928pos/s ETA_rest=0.0min
