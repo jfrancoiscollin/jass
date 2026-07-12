@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0687-pcblues-prefs-finetune
+# id: cpx62-0690-pcblues-prefs-finetune
 # description: PC BLUES PREFS FINETUNE (go JFC "Go B" 2026-07-12). Le corpus PC Blues raffiné par dilf fournit 5665
 # préférences POSITIVES certifiées (!/!! annotés par Piens/Boom/Groeneveld — le prof humain élite, vue externe comme 0464)
 # sur des positions vérifiées par re-jeu FMJD. Ici : parents = positions des coups !/!! (quiets hors-prise, comme 0624),
@@ -11,10 +11,10 @@
 set -uo pipefail
 cd /root/jass
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/cpx62-0687-pcblues-prefs-finetune/artefacts"; mkdir -p "$ART"
-ARTREL="jobs/results/cpx62-0687-pcblues-prefs-finetune/artefacts"
+ART="/root/jass/jobs/results/cpx62-0690-pcblues-prefs-finetune/artefacts"; mkdir -p "$ART"
+ARTREL="jobs/results/cpx62-0690-pcblues-prefs-finetune/artefacts"
 RES="$ART/RESULTS.txt"; : > "$RES"; say(){ echo "$@" | tee -a "$RES"; }
-W=/root/cw-pcbprefs; rm -rf "$W"; mkdir -p "$W"; GEOM=/root/jass-geom32-pcbprefs
+W=/root/cw-pcbprefs2; rm -rf "$W"; mkdir -p "$W"; GEOM=/root/jass-geom32-pcbprefs2
 CHAMP_GZ=jobs/results/BAKE-gen2-mmto/artefacts/champion-gen2-mmto.pjtw.gz
 SRC_BRANCH=claude/pcblues-corpus-extraction-2i92bj
 FLAGS="-DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
