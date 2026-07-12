@@ -1,0 +1,16 @@
+=== 0692 C4 calib TB-exceptions — HEAD main b408e64dc queue ccx33-0692 : C4 calibration TB-exceptions (rate gen-egdb-wld + densite exceptions, pour validation volume minage) ===
+  egdb : /root/egdb_extracted/app
+=== build jass JASS_EGDB=ON ===
+=== gen-egdb-wld N=300000 maxp=7 (calibration timee) ===
+  gen : gen-egdb-wld: wrote 300000 / 300000 (167924 decisive, 132076 draw) in 558914 tries → /root/cw-tbcalib/cal.jnnw
+  elapsed_gen_s=11
+  records=300000  written/req=300000/300000  yield_write=1.0000
+  decisive=167924 (0.560)  draw=132076 (0.440)
+  EXC_draw_despite_adv=70069 (0.2336)
+  EXC_loss_despite_adv=0 (0.0000)
+  EXC_win_despite_defic=161 (0.0005)
+  EXC_total=70230 density=0.2341
+  RATE_pos_per_s=27272.7
+  EXTRAP mine=1000000: wall≈0.6min (0.01h)  exceptions≈234,100
+  EXTRAP mine=5000000: wall≈3.1min (0.05h)  exceptions≈1,170,500
+  EXTRAP mine=10000000: wall≈6.1min (0.10h)  exceptions≈2,341,000
