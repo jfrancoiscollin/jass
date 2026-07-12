@@ -1,0 +1,3 @@
+=== 0693 C4 minage TB-exceptions — MINE_N=3000000 SHARD=500000 — HEAD 76c7f77f6 queue ccx33-0693 : C4 minage exceptions TB (MINE_N=3M, sharde, corpus par shard) ===
+  egdb : /root/egdb_extracted/app
+  [1/6] shard n=500000 kept=116874 (draw=116553 loss=7 win=314) | ACC_total=116874 | seen=500000 density=0.2337 | rate=50000pos/s ETA_rest=0.8min
