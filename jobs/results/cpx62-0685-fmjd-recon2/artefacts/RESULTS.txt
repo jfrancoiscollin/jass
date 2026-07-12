@@ -1,0 +1,47 @@
+=== RECON-2 toernooibase endpoints — 2026-07-12T10:02:47Z ===
+
+=== A. /opvraag/keuze1nieuw.php + liens ===
+  keuze1nieuw.php : 26322o
+    action="/applet/oerterpapplet2.0/login.php?taal=0&noheader=1&refererURL=%2Fopvraag%2Fkeuze1nieuw.php"
+    href="../applet/oerterpapplet2.0/get/inputapp/startapp.php"
+    href='/short.php'
+
+=== B. oerterp.php?wed=529323 view=0..9 (cherche PDN) ===
+  view=0 : 10689o  pdn-lines=0
+0
+  view=1 : 10689o  pdn-lines=0
+0
+  view=2 : 10689o  pdn-lines=0
+0
+  view=3 : 10689o  pdn-lines=0
+0
+  view=4 : 10689o  pdn-lines=0
+0
+  view=5 : 10689o  pdn-lines=0
+0
+  view=6 : 10689o  pdn-lines=0
+0
+  view=7 : 10689o  pdn-lines=0
+0
+  view=8 : 10689o  pdn-lines=0
+0
+  view=9 : 10689o  pdn-lines=0
+0
+  view=pdn : 10695o  pdn-lines=0
+0
+  view=PDN : 10695o  pdn-lines=0
+0
+
+=== C. endpoints export plausibles ===
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/opvraag/pdn.php?wed=529323
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/pdn.php?wed=529323
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/applet/oerterpapplet2.0/pdn.php?wed=529323
+  404 pdn-lines=0
+0 : https://toernooibase.kndb.nl/opvraag/partij.php?wed=529323
+
+=== VERDICT : PDN pas trouvee en direct (applet JS / compte-gate) => cracker l'applet coûteux ; REPLI Bouma (C) recommandé ===
+  (pages sauvees en artefacts pour lecture structure)
+=== fin recon2 (2s) ===
