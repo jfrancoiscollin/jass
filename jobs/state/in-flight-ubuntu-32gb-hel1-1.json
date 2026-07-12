@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0681-adjud-p2p3-score",
-  "script": "jobs/queue/cpx62-0681-adjud-p2p3-score.sh",
-  "pid": 359384,
-  "started_at": "2026-07-12T08:09:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
