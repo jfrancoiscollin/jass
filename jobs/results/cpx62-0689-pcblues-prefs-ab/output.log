@@ -1,0 +1,4 @@
+=== 0689 GATE pcbprefs vs gen2-mmto — nproc=16 NSH=8 df=461540Mo ===
+  (candidat 0.05 absent — 0687 pas fini ou fit fail)
+  (candidat 0.1 absent — 0687 pas fini ou fit fail)
+ABORT: aucun candidat 0687 sur main — requeuer apres 0687
