@@ -1,0 +1,16 @@
+=== ADJUD P2/P3 SCORING (§2 harnais, vetos) — nproc=16 df=461585Mo ===
+  garde-fou archi ✓ (dump-legal présent)
+  dilf+adjud imports ✓
+  rate≈1000 pos/s → N=150000
+  gen-egdb-wld: wrote 150000 / 150000 (83991 decisive, 66009 draw) in 279438 tries → /root/cw-adjp2p3/pool.jnnw
+
+=== scoring P2/P3 vs TB ===
+  echantillon n=150000 ; candidats P3=63287 P2=21422 (dump 167952 FEN)
+  P3 veto (dame enfermee, margin=4): fire=193 PRECISION=38.860%  (vetos justes=75)
+           faux-WIN|net>=4-avec-dame ciblés=12161, attrapés=75 => recall=0.62%  [admission >=99.9%]
+  P2 draw (max_mob<=1): fire=0 => INCONCLUANT
+  P2 draw (max_mob<=2): fire=453 (0.302% du pool) PRECISION=48.344%  (draws justes=219)  [admission >=99.9%]
+  P2 draw (max_mob<=3): fire=3924 (2.616% du pool) PRECISION=45.209%  (draws justes=1774)  [admission >=99.9%]
+  LECTURE : un predicat >=99.9% de precision est ADMIS comme cran de l'escalier ; sinon rejeté/raffiné.
+
+=== fin adjud-p2p3-score (29s) ===
