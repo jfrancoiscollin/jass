@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0685-fmjd-recon2",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-12T10:12:55+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 363494
+  "ended_at": "2026-07-12T10:18:02+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
