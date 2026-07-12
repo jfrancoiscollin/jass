@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0691-pcblues-prefs-ab",
-  "snapshot_at": "2026-07-12T20:43:02+00:00",
+  "snapshot_at": "2026-07-12T20:48:39+00:00",
   "started_at": "2026-07-12T20:11:04+00:00",
-  "elapsed_seconds": 1918,
+  "elapsed_seconds": 2255,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 375923       1       31:58  0.0  0.0 bash\n 375925  375923       31:58  0.0  0.0 bash\n 376899  375925       14:01  0.0  0.0 timeout\n 376903  375925       14:01  0.0  0.0 timeout\n 376908  376903       14:01  0.1  0.0 python3\n 376912  376899       14:01  0.1  0.0 python3\n 376917  376908       14:01 38.8  0.5 jass\n 376922  376912       14:01 36.0  0.5 jass\n 376930  376908       14:00 61.0  0.5 jass\n 376934  376912       14:00 63.6  0.5 jass\n 376946  376908       14:00  0.0  0.0 jass\n 376950  376912       14:00  0.0  0.0 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 375923       1       37:35  0.0  0.0 bash\n 375925  375923       37:35  0.0  0.0 bash\n 376903  375925       19:37  0.0  0.0 timeout\n 376908  376903       19:37  0.1  0.0 python3\n 376917  376908       19:37 38.2  0.5 jass\n 376930  376908       19:37 61.5  0.5 jass\n 376946  376908       19:37  0.0  0.0 jass\n"
 }
