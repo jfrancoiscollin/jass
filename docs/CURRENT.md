@@ -27,8 +27,17 @@
 P2 draw (mobilité faible) **prec 45-48%** — ≪ 99,9%. Diagnostic : en finale creuse, « dame piégée » reste souvent
 gagnante et « peu de coups » est souvent décisif → priors écrits-main faux.
 
-**➡️ Pivot (mémo §3, la « boucle vertueuse »)** : **MINER le corpus des faux-WIN** (|net|≥M & TB=nulle : ~16k, dont
-12k avec dame) et laisser la DONNÉE dire ce qui sépare nulle vs gain (features dilf) → prédicats **data-driven** (0682).
+**➡️ Minage (0682)** : les nulles-exceptions = **finales de dames** (`def_has_king` 22,6%→69,1% WIN→DRAW). Aucun cran
+engine-free ≥99,9% (best 78,6%). **A1 veto `def_has_king` mesuré = recall 69%** des nulles.
+
+**Verdict 0683 — P1 percée→WIN REJETÉ** (prec 75-76% ≪ 99,9%). **CONCLUSION 3× confirmée : aucun prédicat structurel
+(matériel/géométrie) n'atteint le seuil verdict** — la vérité y est TB-profonde (raison d'être des TB). **⇒ programme
+prédicats = VETOS SEULEMENT** : escalier = TB-exact (≤7pc, outillé) + rungs veto (`def_has_king` &co, coût nul), **pas
+d'étage verdicts**. Pivot productif = mémo §B (TB-direct en gen) + veto `def_has_king`.
+
+**Track parallèle livré — PROF DE PRÉFÉRENCES ÉLITE (mémo D)** : pipeline `clean_pdn.py` + jass **`--replay-moves`** →
+`--gen-siblings --played-moves` (master : coup-élite préféré, sœurs dominées) → `rank_finetune`. Testé bout-en-bout, WDL
+jeté (préférences only). Acquisition : bulk Bouma OU fetcher FMJD (recon 0684 : joignabilité box).
 
 ## 🔬 DIAGNOSTIC 2026-06-23 — on perd vs Scan par COMBINAISONS en milieu de partie (pas finale, pas profondeur)
 > 📋 Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md). Match eval-pur no-DB, champion 3e-5 vs Scan (0435).
