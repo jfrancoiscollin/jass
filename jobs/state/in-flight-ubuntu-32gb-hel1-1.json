@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0687-pcblues-prefs-finetune",
+  "script": "jobs/queue/cpx62-0687-pcblues-prefs-finetune.sh",
+  "pid": 372686,
+  "started_at": "2026-07-12T18:25:50+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
