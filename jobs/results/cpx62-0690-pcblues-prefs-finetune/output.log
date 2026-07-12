@@ -1,0 +1,31 @@
+=== 0687 PC Blues prefs finetune — HEAD main 483f5f7e7 queue 0690+0691: pcblues-prefs finetune (BUILD FIX du 0687 rc=6) + gate — pull develop src complet ; Go B déjà validé, infra corrigée, est ~10-20 min ===
+  ✓ prefs.tsv : 10219 lignes
+  garde-fou archi ✓
+  ✓ build develop OK ; NUM_PATTERNS=32 ; anchor = gen2-mmto
+
+=== parents depuis prefs !/!! (quiets ; captures skippées, notées) ===
+  parents=5147 (captures skippées=518, négatives différées=4554, invalides=0)
+  split : 16 shards (~322 parents/shard)
+
+=== gen-siblings --leaf-mode (d=5, --nnue gen2-mmto, WS off) ===
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=322 quiet_used=322 cap_nodes=0 no_match=0 ws_already_top=0 pairs=2953 records=5906 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=425/877/1239/412 -> /root/cw-pcbprefs2/pairs_8.jnnw
+  GENSIB mode=MASTER+LEAF(MMTO) parents_seen=322 quiet_used=322 cap_nodes=0 no_match=0 ws_already_top=0 pairs=2826 records=5652 depth=5 m_min=15 ws_margin=-1000000000 margin_mean=0 phase[fin/13-20/21-28/ouv]=739/1044/818/225 -> /root/cw-pcbprefs2/pairs_9.jnnw
+  pairs concat : 90908 records (45454 paires)
+  paires (joué-!/!! ≻ sibling, feuilles-PV) : 45454
+  dump-eval-features : wrote 90908 × 120 Scan-style extras to /root/cw-pcbprefs2/feat
+
+=== rank_finetune pcblues-prefs anchor=0.05 ===
+  [0.05] pairwise-acc champion (avant fit) = 0.6162 ; cols visitées=94968
+  [0.05] fit : loss 0.24229->0.20139 ; pairwise-acc 0.6162->0.6286 (delta +0.0124)
+  [0.05] candidat committé
+
+=== rank_finetune pcblues-prefs anchor=0.1 ===
+  [0.1] pairwise-acc champion (avant fit) = 0.6162 ; cols visitées=94968
+  [0.1] fit : loss 0.24229->0.21019 ; pairwise-acc 0.6162->0.6210 (delta +0.0048)
+  [0.1] candidat committé
+
+  => next : A/B Elo pcbprefs_{0.05,0.1} vs gen2-mmto (mt0.2, sizing léger, à valider JFC).
+  LECTURE : hors-IC positif => le prof humain élite (!/!!) ajoute au-delà de gen2-mmto (là où Scan-d14 = PERD, 0672).
+            plat/négatif => le signal !/!! est déjà capté par la recherche ; passer aux NÉGATIVES ?/?? (phase 2).
+  RESULTS committe ✓
+=== fin 0687 ===
