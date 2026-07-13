@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0696-b1-seed-ab",
-  "snapshot_at": "2026-07-13T07:40:41+00:00",
+  "snapshot_at": "2026-07-13T07:46:02+00:00",
   "started_at": "2026-07-13T07:35:42+00:00",
-  "elapsed_seconds": 299,
+  "elapsed_seconds": 620,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391080       1       04:59  0.0  0.0 bash\n 391082  391080       04:59  0.0  0.0 bash\n 391881  391082       00:27 94.4 11.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 391080       1       10:20  0.0  0.0 bash\n 391082  391080       10:20  0.0  0.0 bash\n 391881  391082       05:48  160 13.5 python3\n"
 }
