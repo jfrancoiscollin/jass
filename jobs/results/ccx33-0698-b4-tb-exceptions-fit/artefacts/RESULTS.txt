@@ -4,3 +4,11 @@
 
 === gen normales TB (--gen-egdb-wld 150000) + équilibrage ===
   contingent : exc=100000 + norm=100000 = 200000 (dédup ⊥ ok)
+
+=== fit wdl_finetune ancré gen2-mmto anchor=0.05 sur contingent (200000) ===
+  ✓ fit : logloss champion (data) = 0.825468 fit : logloss(data) 0.825468->0.615749 (delta -0.209718) ; mean|Δw|=0.00022 sur 16990 cols 
+  généraliste openings ≥38p : 66
+  finale openings ≤10p : 96
+
+=== GATE candB4 vs gen2-mmto : généraliste mt0.2+0.3 + FINALE mt0.2 ===
+  [general      mt0.2] n=0<600 => INCONCLUANT
