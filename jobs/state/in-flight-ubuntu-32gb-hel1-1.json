@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0696-b1-seed-ab",
-  "script": "jobs/queue/cpx62-0696-b1-seed-ab.sh",
-  "pid": 391080,
-  "started_at": "2026-07-13T07:35:42+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
