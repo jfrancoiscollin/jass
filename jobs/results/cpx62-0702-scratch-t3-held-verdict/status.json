@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0702-scratch-t3-held-verdict",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-13T17:15:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 403170
+  "ended_at": "2026-07-13T18:30:53+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

@@ -1,0 +1,12 @@
+=== 0702 CONCLURE 0675 : gate cand(adjud-tenu 4/24, fit deja paye) vs T2 | d9 qs6 — nproc=16 NSH=8 df=461504Mo ===
+  garde-fou archi ✓ : scan_eval=g_emasks + has_any_capture (search+movegen) = NPS-opt
+  ✓ build+geom(NP=32 v4) ; T2=champion-current (eval start=-37) ; cand=fit-0675-adjud-tenu (eval start=5)
+  ✓ openings=300 (dilf_combinations — la source n>0 de 0689/0691, FIX du n=0 de 0675) ; plan=300 x2 x2col ~1200 games
+
+=== GATE cand(adjud-tenu 4/24) vs T2 (champion-current) | d9 qs6 | 300op x2 x2 sur 8 shards ===
+
+=== VERDICT 0675 (rendu via 0702) ===
+  [cand(adjud-tenu 4/24) vs T2 | d9] W=448 L=442 D=310 n=1200 rate=0.5025+-0.0283 elo~+2 IC=[0.474,0.531]
+  => in-IC (ambigu) : IC chevauche 0.5 => refaire en haut-N (plus d'openings/pairs) pour trancher (a) vs (b).
+  RESULTS committé ✓
+=== fin 0702 ===
