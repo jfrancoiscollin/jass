@@ -1,0 +1,9 @@
+=== harnais P2-blocage — HEAD ea895491d queue ccx33-0701 : harnais P2-blocage GEN ELARGI (PERG=8000 ~x20, pour puissance stat sur la precision) — NCPU=8 df=87850Mo ===
+  ✓ build egdb + dilf import OK ; egdb=/root/egdb_extracted/app
+
+=== self-play gen2-mmto 8000×8 (max-plies 160, min-pieces 12) ===
+  positions générées : 4245433
+
+=== prédicat blocage_structurel (dilf) -> fires ===
+  positions men-only testées (dédup) : 2965301
+  FIRES blocage_structurel : 67  (≤7p=19  >7p=48)
