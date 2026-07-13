@@ -8,3 +8,4 @@
 
 === OAT DOE (side A = gen2-mmto+knob vs side B = défaut, mt0.2) ===
   [baseline                                             ] A=371 B=402 D=283 n=1056 rate_A=0.4853+-0.0258 elo~-10 IC=[0.460,0.511] => neutre
+  [pcm100   probcut_margin=100                          ] A=378 B=436 D=242 n=1056 rate_A=0.4725+-0.0264 elo~-19 IC=[0.446,0.499] => A PERD hors-IC
