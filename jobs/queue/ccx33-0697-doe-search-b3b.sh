@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: cpx62-0697-doe-search-b3b
+# id: ccx33-0697-doe-search-b3b
 # description: B3b — RE-DOE COIN DES CUTS sur gen2-mmto (mémo BOOST, go JFC "Go b3"). Hypothèse (inchangée) : une MEILLEURE
 # éval (gen2-mmto, d9 +34/+46 vs Scan) TOLÈRE une recherche plus AGRESSIVE → chercher plus PROFOND à temps fixe → convertir
 # le gain éval-par-nœud (+34 d9 encore stocké aux 3/4 ; movetime +5-6 seulement) en Elo MOVETIME. 0657 a déjà tué asp30/
@@ -14,8 +14,8 @@
 set -uo pipefail
 cd /root/jass
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/cpx62-0697-doe-search-b3b/artefacts"; mkdir -p "$ART"
-ARTREL="jobs/results/cpx62-0697-doe-search-b3b/artefacts"
+ART="/root/jass/jobs/results/ccx33-0697-doe-search-b3b/artefacts"; mkdir -p "$ART"
+ARTREL="jobs/results/ccx33-0697-doe-search-b3b/artefacts"
 W=/root/cw-doe-b3b
 # --- checklist 8bis : hygiène disque (clean stale cw-* >3h sauf le sien, garde df) ---
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
@@ -26,7 +26,7 @@ DFA=$(df -Pm /root|awk 'NR==2{print $4}'); [ "${DFA:-0}" -gt 3000 ] || { echo "A
 FLAGS="-DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
 GEN2_GZ=jobs/results/BAKE-gen2-mmto/artefacts/champion-gen2-mmto.pjtw.gz
 CORPUS_GZ=jobs/results/cpx62-0556-gen2M-mixdepth/artefacts/corpus-mix2M.jnnw.gz
-NOPEN=96; PAIRS=8; ABMT=0.2; SHARD_TIMEOUT=2400; MIN_N=600
+NOPEN=96; PAIRS=8; ABMT=0.2; SHARD_TIMEOUT=3600; MIN_N=600
 # DOE OAT (nom:params) — leviers NON couverts par 0657, direction agressive + sanity
 CELLS=(
   "baseline:"                                                            # sanity ~0.5
