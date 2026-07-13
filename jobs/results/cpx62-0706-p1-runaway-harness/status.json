@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0706-p1-runaway-harness",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-13T19:56:03+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 410217
+  "ended_at": "2026-07-13T23:53:02+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
