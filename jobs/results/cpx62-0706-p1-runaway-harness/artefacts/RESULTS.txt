@@ -7,3 +7,9 @@
 === prédicat p1_runaway_win (adjud/predicates, max_d=3) — teste white ET black -> fires ===
   positions testées (dédup) : 5359050
   FIRES p1_runaway_win : 829908  (≤7p=133914  >7p=695994)
+  === GATE P1-percée (precision = P(WIN-pour-le-camp-designe | fire)) ===
+  fires totaux=829908 (≤7p=133914, >7p=695994)
+  precision ≤7p (TB EXACT) : 85.01%  (WIN 113842 / nulle 5986 / LOSS 14086 sur 133914)
+  precision >7p (deep-relabel d14+egdb) : 79.21%  (WIN 551264 / nulle 75581 / LOSS 69149 sur 695994)
+  VERDICT ≤7p : VETO (85.01% < 99,9% : la percee ment 20072 fois => P1 rejete comme verdict ; l'etage verdicts TOMBE => pile L3 minimale TB+d14-cap+escalier+vetos)
+
