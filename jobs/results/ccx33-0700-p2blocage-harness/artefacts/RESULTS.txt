@@ -7,3 +7,11 @@
 === prédicat blocage_structurel (dilf) -> fires ===
   positions men-only testées (dédup) : 149393
   FIRES blocage_structurel : 2  (≤7p=1  >7p=1)
+  arbitre TB ≤7p : NULLE 0 / 1 (exact)
+  arbitre playout >7p (gen2-vs-gen2 mt1.0) : NULLES 4 / 6 parties (draw-rate=0.6667)
+  === GATE P2-blocage (precision = P(NULLE|fire)) ===
+  fires totaux=2 (≤7p=1, >7p=1)
+  precision ≤7p (TB exact) : 0.00%  (0/1)
+  precision >7p (playout, draw-rate agrégé) : 66.67%  (4/6 parties)
+  ≤7p : n=1 < 30 → puissance insuffisante pour trancher 99,9% (élargir gen)
+
