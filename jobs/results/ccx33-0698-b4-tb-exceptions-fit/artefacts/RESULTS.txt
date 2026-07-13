@@ -12,3 +12,8 @@
 
 === GATE candB4 vs gen2-mmto : généraliste mt0.2+0.3 + FINALE mt0.2 ===
   [general      mt0.2] n=0<600 => INCONCLUANT
+  [general      mt0.3] n=0<600 => INCONCLUANT
+  [FINALE       mt0.2] A=618 B=614 D=304 n=1536 rate=0.5013+-0.0224 elo~+1 IC=[0.479,0.524] => neutre
+
+  LECTURE : candB4 GAGNE (surtout FINALE) hors-IC => les exceptions-TB colmatent la finale => baker (go JFC).
+  neutre => vérité pure sans coût (anchor) mais pas de gain mesurable ; PERD => écarter (peu probable avec anchor).
