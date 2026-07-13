@@ -1,0 +1,10 @@
+=== B3b DOE SEARCH gen2-mmto (OAT knobs agressifs, mt0.2 généraliste) — HEAD 78818ff87 runner: start ccx33-0697-doe-search-b3b ===
+  box: NCPU=8 df=88913Mo ; cellules=4 PAIRS=8 NOPEN=96 timeout/shard=3600s
+  src divergents pull develop : src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp 
+  garde-fou archi ✓ (g_emasks + has_any_capture)
+  ✓ build+gen2 (NCPU=8)
+  généraliste : 66 openings
+  openings ≥38p : 66
+
+=== OAT DOE (side A = gen2-mmto+knob vs side B = défaut, mt0.2) ===
+  [baseline                                             ] A=371 B=402 D=283 n=1056 rate_A=0.4853+-0.0258 elo~-10 IC=[0.460,0.511] => neutre
