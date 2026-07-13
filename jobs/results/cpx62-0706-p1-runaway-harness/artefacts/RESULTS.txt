@@ -1,0 +1,9 @@
+=== harnais P1-percée — HEAD ce189ad99 redirige P1 sur cpx62 (16 coeurs, plus rapide) : queue cpx62-0706 + retire ccx33-0705 (non demarre). egdb cpx62=/root/egdb_extracted. — NCPU=16 df=461479Mo ===
+  ✓ build egdb + p1 import OK ; egdb=/root/egdb_extracted/app
+
+=== self-play gen2 12000×16 (max-plies 200, min-pieces 4 = fire-targeting endgames) ===
+  positions générées : 5382096
+
+=== prédicat p1_runaway_win (adjud/predicates, max_d=3) — teste white ET black -> fires ===
+  positions testées (dédup) : 5359050
+  FIRES p1_runaway_win : 829908  (≤7p=133914  >7p=695994)
