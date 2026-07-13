@@ -11,3 +11,13 @@ results/*/artefacts.src/
 # Re-include them here so reap commits actually carry the logs.
 !results/*/output.log
 !results/*/artefacts/*.log
+# churn évité). Les jobs ne consomment que des *.gz (champions/corpora) + de
+# rares *.jnnw — tous deux GARDÉS. status.json / output.log / RESULTS.txt /
+# *.fen / *.tsv / *.gz / *.jnnw restent committés (observabilité + consommation).
+results/*/artefacts/*.feat
+results/*/artefacts/feat*
+results/*/artefacts/*.bin
+results/*/artefacts/*.jpat
+results/*/artefacts/*.pjtw
+results/*/artefacts/*.pt
+results/*/artefacts/*.npz
