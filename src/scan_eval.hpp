@@ -209,6 +209,19 @@ struct PatPair { std::int32_t mg = 0, eg = 0; };
 struct ScanWeights {
     std::uint32_t scale = 1000;
     std::vector<PatPair> pat;           // size n_pat, pat[i] = {mg_i, eg_i}
+    // B2 V1 — optional in-memory dense compaction (env JASS_DENSE_REMAP=1).
+    // When `remap` is non-empty the gather runs `pat[remap[col]]` instead of
+    // `pat[col]` : `pat` then holds only the DISTINCT non-zero weight pairs
+    // (slot 0 = {0,0}) and `remap` (size = original n_pat) maps every bucket
+    // column to its dense slot. Byte-identical (dense[remap[col]] == old
+    // pat[col]) ; purely re-indexes, disk format unchanged. Diagnostic step
+    // for the cache-footprint hypothesis (136 MB → ~68 MB remap + few MB pat).
+    std::vector<std::uint32_t> remap;   // empty = not compacted (or palette fits uint8)
+    // When the champion's DISTINCT weight pairs ≤ 256 (Scan-style quantised
+    // weights collapse to a tiny palette), the remap is stored as uint8 — a
+    // ~17 MB table (vs 68 MB uint32, 136 MB dense) that can fit L3. `remap8`
+    // takes precedence over `remap` when non-empty.
+    std::vector<std::uint8_t>  remap8;  // uint8 palette remap (≤256 slots)
     std::array<std::int32_t, NUM_EXTRAS> ext_mg{};
     std::array<std::int32_t, NUM_EXTRAS> ext_eg{};
     // Optional Factorization-Machine term (PJTW v4). fm_rank=0 → none. The
@@ -224,6 +237,10 @@ struct ScanWeights {
 
 std::optional<ScanWeights> load_scan_weights(const std::string& path,
                                              std::string* err = nullptr);
+
+// B2 V1 — in-memory dense compaction (see ScanWeights::remap). Byte-identical
+// eval ; used by load (env JASS_DENSE_REMAP=1) and the --eval-selfcheck harness.
+void compact_scan_weights(ScanWeights& w);
 
 class ScanEvalNetwork : public INetwork {
 public:
