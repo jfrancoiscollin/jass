@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0706-p1-runaway-harness",
-  "snapshot_at": "2026-07-13T20:12:03+00:00",
+  "snapshot_at": "2026-07-13T20:17:06+00:00",
   "started_at": "2026-07-13T19:56:03+00:00",
-  "elapsed_seconds": 960,
+  "elapsed_seconds": 1263,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 410217       1       15:59  0.0  0.0 bash\n 410219  410217       15:59  0.0  0.0 bash\n 411384  410219       02:51 99.9  1.1 python3\n 411385  410219       02:51  0.0  0.0 tee\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 410217       1       21:03  0.0  0.0 bash\n 410219  410217       21:03  0.0  0.0 bash\n 411384  410219       07:55 99.9  1.9 python3\n 411385  410219       07:55  0.0  0.0 tee\n"
 }
