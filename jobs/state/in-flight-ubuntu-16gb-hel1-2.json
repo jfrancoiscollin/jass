@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0700-p2blocage-harness",
-  "script": "jobs/queue/ccx33-0700-p2blocage-harness.sh",
-  "pid": 92451,
-  "started_at": "2026-07-13T14:21:43+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
