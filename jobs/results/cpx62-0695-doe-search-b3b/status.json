@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0695-doe-search-b3b",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 6,
   "started_at": "2026-07-13T07:30:32+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 390416
+  "ended_at": "2026-07-13T07:35:38+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
