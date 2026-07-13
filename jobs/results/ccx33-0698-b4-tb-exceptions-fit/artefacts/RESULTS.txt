@@ -1,0 +1,6 @@
+=== B4 contingent exceptions-TB — HEAD main ce8e6efb4 queue ccx33-0698 : B4 contingent exceptions-TB (200k equilibre + fit ancre gen2 + gate general+FINALE) — NCPU=8 df=88699Mo ===
+  egdb: /root/egdb_extracted/app ; src divergents pull: src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp 
+  ✓ build+geom(NP=32)+gen2 ; exceptions=700185
+
+=== gen normales TB (--gen-egdb-wld 150000) + équilibrage ===
+  contingent : exc=100000 + norm=100000 = 200000 (dédup ⊥ ok)
