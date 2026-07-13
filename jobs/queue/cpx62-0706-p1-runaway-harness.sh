@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0705-p1-runaway-harness
+# id: cpx62-0706-p1-runaway-harness
 # description: HARNAIS NOTATION P1-PERCÉE (dernier candidat de l'etage verdicts, go JFC 2026-07-13). Apres la mort de
 # P2 (0701 : blocage_structurel prec 5,26% ≤7p — un test STATIQUE ne monte pas a 99,9%), P1 echappe au theoreme : la
 # percee n'est pas une propriete statique subtile, c'est une COURSE DE TEMPI calculee EXACTEMENT (run droit + intercept
@@ -12,11 +12,11 @@
 # TB-exact (repare la sous-puissance 0701 n=19). Build JASS_EGDB=ON, dilf clone. Robustesse 12-pts. AUCUN NNUE.
 set -uo pipefail
 cd /root/jass
-exec 9>/root/.jass-0705.lock
-if ! flock -n 9; then echo "ABORT 0705 : instance deja active"; exit 0; fi
+exec 9>/root/.jass-0706.lock
+if ! flock -n 9; then echo "ABORT 0706 : instance deja active"; exit 0; fi
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/ccx33-0705-p1-runaway-harness/artefacts"; mkdir -p "$ART"
-ARTREL="jobs/results/ccx33-0705-p1-runaway-harness/artefacts"
+ART="/root/jass/jobs/results/cpx62-0706-p1-runaway-harness/artefacts"; mkdir -p "$ART"
+ARTREL="jobs/results/cpx62-0706-p1-runaway-harness/artefacts"
 W=/root/cw-p1run
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 rm -rf "$W"; mkdir -p "$W"
@@ -60,15 +60,16 @@ restore_src(){ git checkout -- src pattern_jass/src tools/scan_selfplay_gen.py p
 grep -q "g_emasks" src/scan_eval.cpp && grep -q "has_any_capture" src/search.cpp || { say "ABORT archi"; restore_src; exit 5; }
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl >"$W/clone.log" 2>&1
 EGDIR=""; for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }; done
-[ -n "$EGDIR" ] || { say "ABORT egdb"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 ABORT egdb"; exit 4; }
+[ -n "$EGDIR" ] || { say "ABORT egdb"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 ABORT egdb"; exit 4; }
+export JASS_EGDB_PATH="$EGDIR"   # cpx62 : egdb sous /root/egdb_extracted (ceinture-bretelles runtime)
 cmake -S . -B "$W/build" $FLAGS_EGDB >"$W/cmake.log" 2>&1 && grep -q "EXTERNAL EGDB ENABLED" "$W/cmake.log" \
-  || { say "ABORT cmake"; tail -8 "$W/cmake.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 ABORT cmake"; exit 6; }
-cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -10 "$W/build.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 ABORT build"; exit 6; }
+  || { say "ABORT cmake"; tail -8 "$W/cmake.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 ABORT cmake"; exit 6; }
+cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -10 "$W/build.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 ABORT build"; exit 6; }
 J="$W/build/jass"
 [ -s pattern_jass/tools/adjud/predicates.py ] || { say "ABORT: pull adjud/predicates.py a echoue (dir manquant?)"; restore_src; exit 5; }
 if [ -d "$DILF/.git" ]; then git -C "$DILF" pull --quiet 2>/dev/null||true; else git clone --depth=1 https://github.com/jfrancoiscollin/dilf.git "$DILF" >"$W/dilf.log" 2>&1; fi
 PYTHONPATH="$DILF:pattern_jass/tools" python3 -c "from adjud.predicates import p1_runaway_win, ahead_side; from pedagogy.game import GameState; from scripts.pcblues.rules import RulesEngine; print('p1 import OK')" >"$W/imp.log" 2>&1 \
-  || { say "ABORT import p1/dilf : $(cat "$W/imp.log"|tail -2)"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 ABORT p1 import"; exit 7; }
+  || { say "ABORT import p1/dilf : $(cat "$W/imp.log"|tail -2)"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 ABORT p1 import"; exit 7; }
 git show "origin/main:$GEN2_GZ" | gunzip > "$W/gen2.pjtw" || { say "ABORT gen2"; restore_src; exit 4; }
 git show "origin/main:$SEEDS_GZ" | gunzip > "$W/seeds.jnnw" || { say "ABORT seeds"; restore_src; exit 4; }
 say "  ✓ build egdb + p1 import OK ; egdb=$EGDIR"
@@ -126,7 +127,7 @@ print(f"  FIRES p1_runaway_win : {fires}  (≤7p={len(rec7)}  >7p={len(big)})")
 PY
 N7=$(python3 -c "import struct;print(struct.unpack('<I',open('$W/fires7.jnnw','rb').read(8)[4:8])[0])" 2>/dev/null||echo 0)
 NBIG=$(python3 -c "import struct;print(struct.unpack('<I',open('$W/firesBig.jnnw','rb').read(8)[4:8])[0])" 2>/dev/null||echo 0)
-commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 fires : 7p=$N7 big=$NBIG" >/dev/null 2>&1 || true
+commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 fires : 7p=$N7 big=$NBIG" >/dev/null 2>&1 || true
 
 # --- arbitre ≤7p : egdb-relabel EXACT (LE GATE) ---
 if [ "$N7" -gt 0 ] 2>/dev/null; then
@@ -181,9 +182,9 @@ PY
 # --- artefacts + commit ---
 cp "$W/fires7_rel.jnnw" "$ART/p1_fires7_relabeled.jnnw" 2>/dev/null || true
 cp "$W/firesBig_rel.jnnw" "$ART/p1_firesBig_relabeled.jnnw" 2>/dev/null || true
-commit_to_main "$ART/p1_fires7_relabeled.jnnw" "$ARTREL/p1_fires7_relabeled.jnnw" "0705 P1 fires ≤7p TB-relabeled" >/dev/null 2>&1 || true
+commit_to_main "$ART/p1_fires7_relabeled.jnnw" "$ARTREL/p1_fires7_relabeled.jnnw" "0706 P1 fires ≤7p TB-relabeled" >/dev/null 2>&1 || true
 restore_src
-say ""; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0705 FIN harnais P1-percée : precision P(WIN|fire) — $([ "$N7" -ge 30 ] 2>/dev/null && echo 'gate ≤7p' || echo 'sous-puissant')" \
+say ""; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0706 FIN harnais P1-percée : precision P(WIN|fire) — $([ "$N7" -ge 30 ] 2>/dev/null && echo 'gate ≤7p' || echo 'sous-puissant')" \
   && say "  ✓ RESULTS committé" || say "  ⚠ commit échoue"
-say "=== 0705 FINI ==="
+say "=== 0706 FINI ==="
 rm -rf "$W"
