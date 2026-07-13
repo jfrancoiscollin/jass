@@ -1,0 +1,82 @@
+{
+  "n_positions": 224,
+  "depths": [
+    7,
+    9,
+    11,
+    13
+  ],
+  "scan_depths": [
+    7,
+    9,
+    11
+  ],
+  "ref_depth": 11,
+  "jass_detection": {
+    "7": {
+      "rate": 0.3616,
+      "n": 224
+    },
+    "9": {
+      "rate": 0.317,
+      "n": 224
+    },
+    "11": {
+      "rate": 0.3125,
+      "n": 224
+    },
+    "13": {
+      "rate": 0.3259,
+      "n": 224
+    }
+  },
+  "scan_detection": {
+    "7": {
+      "rate": 0.3438,
+      "n": 224
+    },
+    "9": {
+      "rate": 0.3616,
+      "n": 224
+    },
+    "11": {
+      "rate": 0.3527,
+      "n": 224
+    }
+  },
+  "jass_sequence": {
+    "1": {
+      "rate": 0.3125,
+      "n": 224
+    },
+    "2": {
+      "rate": 0.7232,
+      "n": 224
+    },
+    "3": {
+      "rate": 0.8125,
+      "n": 224
+    }
+  },
+  "scan_sequence": {
+    "1": {
+      "rate": 0.3527,
+      "n": 224
+    },
+    "2": {
+      "rate": 0.7545,
+      "n": 224
+    },
+    "3": {
+      "rate": 0.8795,
+      "n": 224
+    }
+  },
+  "conversion_0688": {
+    "jass": 0.136,
+    "scan": 0.904,
+    "depth": 11,
+    "note": "reference 0688 (camp au trait)"
+  },
+  "reading": "DETECTION BASSE ET PLATE (d7=0.362 ~ d13=0.326) => pathologie ordering/pruning plus profonde (lignes jamais explorees, meme sans reduction) => O inutile, REDIAGNOSTIC."
+}
