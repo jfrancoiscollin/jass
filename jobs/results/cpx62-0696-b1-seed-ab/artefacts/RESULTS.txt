@@ -6,3 +6,6 @@
 
 === [A] gen self-asym : 1050×16 parties (pool=100000) ===
   [A] WDL positions = 1616246 (130s)
+
+=== [B] gen self-asym : 1050×16 parties (pool=128992) ===
+  [B] WDL positions = 1441983 (119s)
