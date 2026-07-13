@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0698-b4-tb-exceptions-fit",
-  "script": "jobs/queue/ccx33-0698-b4-tb-exceptions-fit.sh",
-  "pid": 87275,
-  "started_at": "2026-07-13T12:40:15+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
