@@ -1,0 +1,15 @@
+=== revalidation TB oracles E1/E2 — HEAD 5314d56ff runner: finalize ccx33-0698-b4-tb-exceptions-fit (completed, rc=0) — df=88218Mo ===
+  ✓ build egdb (/root/egdb_extracted/app) ; oracles=390
+  TB-eligible ≤7p convertis : 193
+
+=== --egdb-relabel (WLD exact STM-POV) sur 193 positions ≤7p ===
+  egdb-relabel: 193 records, 190 egdb-resolved (168 decisive, 22 draw), 168 labels changed, 168 stalls (won/lost recorded draw) → /root/cw-oracrev/tb_rel.jnnw
+  TB revalidation : verified=170  quarantine=23  (sur 193 ≤7p)
+    cid_endgame: 114/127 accord TB
+    cid_locks: 0/1 accord TB
+    dubois: 56/65 accord TB
+  ACCORD verdict-livre vs TB (non-null) : 133/156 = 85.3%
+
+  >7p (197 locks/finales profondes) = revalidation search-d14 = FOLLOW-UP (harnais verdict à écrire).
+  ✓ RESULTS committé
+=== 0699 FINI ===
