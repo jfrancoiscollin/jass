@@ -1,0 +1,18 @@
+{
+  "game_id": 64,
+  "opening": "B:W15,31,41:B21",
+  "jass_is_white": false,
+  "outcome": "W",
+  "reason": "no legal move from Jass-player",
+  "plies": 2,
+  "jass_score": 0.0,
+  "moves": [
+    "21-26",
+    "41-37"
+  ],
+  "fens": [
+    "B:W15,31,41:B21",
+    "W:W15,31,41:B26",
+    "B:W15,31,37:B26"
+  ]
+}
