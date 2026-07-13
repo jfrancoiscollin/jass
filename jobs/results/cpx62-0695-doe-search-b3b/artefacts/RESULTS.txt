@@ -1,0 +1,18 @@
+=== B3b DOE SEARCH gen2-mmto (OAT knobs agressifs, mt0.2 généraliste) — HEAD f1f9697fe runner: start cpx62-0695-doe-search-b3b ===
+  box: NCPU=16 df=461469Mo ; cellules=4 PAIRS=8 NOPEN=96 timeout/shard=2400s
+  garde-fou archi ✓ (g_emasks + has_any_capture)
+  build tentative 1 échouée, retry...
+  build tentative 2 échouée, retry...
+BUILD FAIL :
+  /root/jass/src/scan_eval.cpp:31:22: error: ‘struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:60:11: error: ‘struct jass::scan_eval::ScanWeights’ has no member named ‘remap8’
+  /root/jass/src/scan_eval.cpp:61:11: error: ‘struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:63:11: error: ‘struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:459:13: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap8’
+  /root/jass/src/scan_eval.cpp:464:36: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap8’
+  /root/jass/src/scan_eval.cpp:467:40: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap8’
+  /root/jass/src/scan_eval.cpp:468:27: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap8’
+  /root/jass/src/scan_eval.cpp:475:20: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:482:36: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:485:40: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
+  /root/jass/src/scan_eval.cpp:486:27: error: ‘const struct jass::scan_eval::ScanWeights’ has no member named ‘remap’
