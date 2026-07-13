@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0703-thermo-detection",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-13T17:49:29+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 100258
+  "ended_at": "2026-07-13T17:54:36+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
