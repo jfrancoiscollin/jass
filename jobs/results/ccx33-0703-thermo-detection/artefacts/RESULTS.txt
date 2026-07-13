@@ -1,0 +1,21 @@
+=== 0703 PROFIL DETECTION thermometre PC Blues (levier D) — nproc=8 NSH=8 df=87811Mo ===
+  garde-fou archi ✓ : scan_eval=g_emasks + has_any_capture (search+movegen)
+=== build jass (main-champion 32-pat extras, SANS egdb) ===
+  ✓ build ; champion=gen2-mmto ; thermometre=224 positions ; Scan=/root/jass-scan/scan_linux (bb-size 0, FAIR)
+
+=== detection jass(d7,9,11,13) + Scan(d7,9,11) + sequence K=3 @d11 sur 224 pos, 8 shards ===
+  positions profilees : 224 / 224
+  positions eligibles (>=1 coup certifie) : 224
+  --- DETECTION 1er coup (bestmove == m1 certifie) ---
+    budget |           jass |           Scan
+  d     7 |    0.362 (224) |    0.344 (224)
+  d     9 |    0.317 (224) |    0.362 (224)
+  d    11 |    0.312 (224) |    0.353 (224)
+  d    13 |    0.326 (224) |              -
+  --- DETECTION-SEQUENCE (K premiers coups suivis, @d11) ---
+  K= 1     | jass    0.312 (224) | Scan    0.353 (224)
+  K= 2     | jass    0.723 (224) | Scan    0.754 (224)
+  K= 3     | jass    0.812 (224) | Scan    0.879 (224)
+  --- LECTURE PRE-ENGAGEE ---
+  => DETECTION BASSE ET PLATE (d7=0.362 ~ d13=0.326) => pathologie ordering/pruning plus profonde (lignes jamais explorees, meme sans reduction) => O inutile, REDIAGNOSTIC.
+  profil -> /root/jass/jobs/results/ccx33-0703-thermo-detection/artefacts/thermo_detection_profile.json
