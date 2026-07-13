@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0696-b1-seed-ab",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-13T07:35:42+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 391080
+  "ended_at": "2026-07-13T09:18:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }

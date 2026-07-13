@@ -1,0 +1,27 @@
+=== B1 étape-0 ensemencement — HEAD 75fc5eb23 runner: finalize cpx62-0695-doe-search-b3b (failed, rc=6) ===
+  src divergents pull develop : src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp 
+  garde-fou archi OK (g_emasks + has_any_capture)
+  ✓ build+geom(NP=32)+gen2 ; std seeds=2000000 ; combos=16160
+  poolA base=100000  poolB base_keep=96744+combos=32248 (combos=25.0% du pool B)
+
+=== [A] fit wdl_finetune ancré gen2-mmto anchor=0.05 ===
+  [A] fit : logloss(data) 0.534150->0.520618 (delta -0.013533) ; mean|Δw|=0.00005 sur 456542 cols 
+
+=== [B] fit wdl_finetune ancré gen2-mmto anchor=0.05 ===
+  [B] fit : logloss(data) 0.542430->0.523611 (delta -0.018819) ; mean|Δw|=0.00004 sur 453506 cols 
+  généraliste : 66 openings
+
+=== A/B compose (généraliste) : candB vs candA [décisif] + candB vs gen2-mmto [ancre] ===
+  [candB_vs_candA | mt0.2] A=411 B=400 D=245 n=1056 rate_A=0.5052+-0.0264 elo~+4 IC=[0.479,0.532] => neutre
+  [candB_vs_candA | mt0.3] A=383 B=443 D=230 n=1056 rate_A=0.4716+-0.0266 elo~-20 IC=[0.445,0.498] => A PERD hors-IC
+  [candB_vs_gen2 | mt0.2] A=310 B=508 D=238 n=1056 rate_A=0.4062+-0.0259 elo~-66 IC=[0.380,0.432] => A PERD hors-IC
+
+  GATE étape-0 : candB>candA hors-IC => l'ensemencement (25% combos pcblues) AJOUTE => scale B1 step-2 (go JFC).
+
+=== thermomètre-224 candB (baseline gen2-mmto au trait=0.136) ===
+  parties analysées : 448 (sans coup légal au départ : 0)
+  candB au trait (convertit) : 0.094 (21.0/224)  | baseline gen2-mmto=0.136
+  SCAN au trait (convertit)  : 0.904 (202.5/224)
+  DELTA candB - gen2-mmto (au trait) : -0.042  => candB convertit MOINS
+  ✓ RESULTS committé
+=== 0696 B1 étape-0 FINI ===
