@@ -3,3 +3,4 @@
 [+30min] gate cand(adjud-tenu) vs T2 : W=270 D=192 L=259 n=721
 [+40min] gate cand(adjud-tenu) vs T2 : W=324 D=231 L=319 n=874
 [+50min] gate cand(adjud-tenu) vs T2 : W=399 D=276 L=392 n=1067
+[+60min] gate cand(adjud-tenu) vs T2 : W=432 D=294 L=432 n=1158
