@@ -23,3 +23,9 @@
   [candB_vs_gen2 | mt0.2] A=310 B=508 D=238 n=1056 rate_A=0.4062+-0.0259 elo~-66 IC=[0.380,0.432] => A PERD hors-IC
 
   GATE étape-0 : candB>candA hors-IC => l'ensemencement (25% combos pcblues) AJOUTE => scale B1 step-2 (go JFC).
+
+=== thermomètre-224 candB (baseline gen2-mmto au trait=0.136) ===
+  parties analysées : 448 (sans coup légal au départ : 0)
+  candB au trait (convertit) : 0.094 (21.0/224)  | baseline gen2-mmto=0.136
+  SCAN au trait (convertit)  : 0.904 (202.5/224)
+  DELTA candB - gen2-mmto (au trait) : -0.042  => candB convertit MOINS
