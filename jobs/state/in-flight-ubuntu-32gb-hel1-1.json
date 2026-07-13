@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0695-doe-search-b3b",
+  "script": "jobs/queue/cpx62-0695-doe-search-b3b.sh",
+  "pid": 390416,
+  "started_at": "2026-07-13T07:30:32+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
