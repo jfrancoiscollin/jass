@@ -1,0 +1,21 @@
+=== B4 contingent exceptions-TB — HEAD main ce8e6efb4 queue ccx33-0698 : B4 contingent exceptions-TB (200k equilibre + fit ancre gen2 + gate general+FINALE) — NCPU=8 df=88699Mo ===
+  egdb: /root/egdb_extracted/app ; src divergents pull: src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp 
+  ✓ build+geom(NP=32)+gen2 ; exceptions=700185
+
+=== gen normales TB (--gen-egdb-wld 150000) + équilibrage ===
+  contingent : exc=100000 + norm=100000 = 200000 (dédup ⊥ ok)
+
+=== fit wdl_finetune ancré gen2-mmto anchor=0.05 sur contingent (200000) ===
+  ✓ fit : logloss champion (data) = 0.825468 fit : logloss(data) 0.825468->0.615749 (delta -0.209718) ; mean|Δw|=0.00022 sur 16990 cols 
+  généraliste openings ≥38p : 66
+  finale openings ≤10p : 96
+
+=== GATE candB4 vs gen2-mmto : généraliste mt0.2+0.3 + FINALE mt0.2 ===
+  [general      mt0.2] n=0<600 => INCONCLUANT
+  [general      mt0.3] n=0<600 => INCONCLUANT
+  [FINALE       mt0.2] A=618 B=614 D=304 n=1536 rate=0.5013+-0.0224 elo~+1 IC=[0.479,0.524] => neutre
+
+  LECTURE : candB4 GAGNE (surtout FINALE) hors-IC => les exceptions-TB colmatent la finale => baker (go JFC).
+  neutre => vérité pure sans coût (anchor) mais pas de gain mesurable ; PERD => écarter (peu probable avec anchor).
+  ✓ RESULTS committé
+=== 0698 B4 FINI ===
