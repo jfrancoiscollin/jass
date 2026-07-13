@@ -1,0 +1,9 @@
+=== harnais P2-blocage — HEAD 2c7027706 runner: finalize ccx33-0699-oracle-tb-reval (completed, rc=0) — NCPU=8 df=88203Mo ===
+  ✓ build egdb + dilf import OK ; egdb=/root/egdb_extracted/app
+
+=== self-play gen2-mmto 400×8 (max-plies 160, min-pieces 12) ===
+  positions générées : 214518
+
+=== prédicat blocage_structurel (dilf) -> fires ===
+  positions men-only testées (dédup) : 149393
+  FIRES blocage_structurel : 2  (≤7p=1  >7p=1)
