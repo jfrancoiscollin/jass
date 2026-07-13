@@ -19,3 +19,7 @@
 
 === A/B compose (généraliste) : candB vs candA [décisif] + candB vs gen2-mmto [ancre] ===
   [candB_vs_candA | mt0.2] A=411 B=400 D=245 n=1056 rate_A=0.5052+-0.0264 elo~+4 IC=[0.479,0.532] => neutre
+  [candB_vs_candA | mt0.3] A=383 B=443 D=230 n=1056 rate_A=0.4716+-0.0266 elo~-20 IC=[0.445,0.498] => A PERD hors-IC
+  [candB_vs_gen2 | mt0.2] A=310 B=508 D=238 n=1056 rate_A=0.4062+-0.0259 elo~-66 IC=[0.380,0.432] => A PERD hors-IC
+
+  GATE étape-0 : candB>candA hors-IC => l'ensemencement (25% combos pcblues) AJOUTE => scale B1 step-2 (go JFC).
