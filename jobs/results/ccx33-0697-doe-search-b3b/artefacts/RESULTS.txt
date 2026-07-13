@@ -11,3 +11,6 @@
   [pcm100   probcut_margin=100                          ] A=378 B=436 D=242 n=1056 rate_A=0.4725+-0.0264 elo~-19 IC=[0.446,0.499] => A PERD hors-IC
   [single   ext_single_reply=1                          ] A=405 B=407 D=244 n=1056 rate_A=0.4991+-0.0264 elo~-1 IC=[0.473,0.525] => neutre
   [triple   aspiration_initial=30,lmr_formula=1,probcut_margin=100] A=398 B=392 D=266 n=1056 rate_A=0.5028+-0.0261 elo~+2 IC=[0.477,0.529] => neutre
+
+  GATE : un knob rate_A>0.5 hors-IC => convertit éval→movetime => confirm haut-N (mt0.3+dilf) + baker search.
+  baseline ~0.5 = sanity harnais ; INCONCLUANT (n<600) ≠ neutre.
