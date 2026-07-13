@@ -1,0 +1,8 @@
+=== B1 étape-0 ensemencement — HEAD 75fc5eb23 runner: finalize cpx62-0695-doe-search-b3b (failed, rc=6) ===
+  src divergents pull develop : src/main.cpp src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/search.hpp 
+  garde-fou archi OK (g_emasks + has_any_capture)
+  ✓ build+geom(NP=32)+gen2 ; std seeds=2000000 ; combos=16160
+  poolA base=100000  poolB base_keep=96744+combos=32248 (combos=25.0% du pool B)
+
+=== [A] gen self-asym : 1050×16 parties (pool=100000) ===
+  [A] WDL positions = 1616246 (130s)
