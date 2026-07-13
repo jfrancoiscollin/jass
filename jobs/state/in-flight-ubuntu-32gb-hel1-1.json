@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0702-scratch-t3-held-verdict",
-  "script": "jobs/queue/cpx62-0702-scratch-t3-held-verdict.sh",
-  "pid": 403170,
-  "started_at": "2026-07-13T17:15:06+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
