@@ -1,0 +1,6 @@
+=== harnais P1-percée — HEAD c6310cd88 queue ccx33-0704 : harnais notation P1-percee (dernier candidat etage-verdicts) — p1_runaway_win 2 camps, precision P(WIN|fire) ≤7p TB-exact + >7p deep-relabel d14 (arbitre-au-cap), fire-targeting endgames — NCPU=8 df=87801Mo ===
+/root/jass/jobs/queue/ccx33-0704-p1-runaway-harness.sh: line 56: pattern_jass/tools/adjud/__init__.py: No such file or directory
+/root/jass/jobs/queue/ccx33-0704-p1-runaway-harness.sh: line 56: pattern_jass/tools/adjud/predicates.py: No such file or directory
+/root/jass/jobs/queue/ccx33-0704-p1-runaway-harness.sh: line 56: pattern_jass/tools/adjud/engine.py: No such file or directory
+ABORT import p1/dilf :   File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'adjud'

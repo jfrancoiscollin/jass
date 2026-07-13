@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0704-p1-runaway-harness",
-  "script": "jobs/queue/ccx33-0704-p1-runaway-harness.sh",
-  "pid": 104413,
-  "started_at": "2026-07-13T19:45:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}
