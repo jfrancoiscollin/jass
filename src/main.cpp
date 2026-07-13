@@ -2254,6 +2254,116 @@ int run_gen_egdb_wld_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --eval-selfcheck <champion.pjtw> <positions.jnnw> [n=200000]
+// B2 V1 : prove the in-memory dense compaction (ScanWeights::remap) is
+// BYTE-IDENTICAL to the dense gather, and microbench both. Loads the scan
+// weights once, makes a dense copy and a compacted copy, evaluates every
+// position both ways (asserts equality), then times each gather separately
+// (eval-only throughput). No search : isolates the gather cost.
+// -----------------------------------------------------------------------------
+int run_eval_selfcheck_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --eval-selfcheck <champion.pjtw> <positions.jnnw> "
+                     "[n=200000]\n";
+        return 2;
+    }
+    const std::string pjtw = argv[2], jnnw_path = argv[3];
+    const long nmax = (argc > 4) ? static_cast<long>(parse_int_or(argv[4], 200000))
+                                 : 200000;
+    std::string err;
+    auto wopt = jass::scan_eval::load_scan_weights(pjtw, &err);
+    if (!wopt) {
+        std::cerr << "error: load_scan_weights('" << pjtw << "'): " << err
+                  << " (--eval-selfcheck requires a PJTW v3/v4 scan eval)\n";
+        return 1;
+    }
+    jass::scan_eval::ScanWeights wfull = *wopt;   // dense (as on disk)
+    jass::scan_eval::ScanWeights wden  = *wopt;   // → compacted copy
+    const std::size_t n_pat_full = wfull.pat.size();
+    jass::scan_eval::compact_scan_weights(wden);
+    const std::size_t n_dense = wden.pat.size();
+    const std::size_t remap_bytes = wden.remap.size() * sizeof(std::uint32_t)
+                                  + wden.remap8.size() * sizeof(std::uint8_t);
+    const char* remap_kind = !wden.remap8.empty() ? "uint8-palette"
+                           : !wden.remap.empty()  ? "uint32" : "none";
+    const double mem_full = static_cast<double>(n_pat_full) * sizeof(jass::scan_eval::PatPair);
+    const double mem_den  = static_cast<double>(n_dense) * sizeof(jass::scan_eval::PatPair)
+                          + static_cast<double>(remap_bytes);
+    jass::scan_eval::ScanEvalNetwork net_full(std::move(wfull));
+    jass::scan_eval::ScanEvalNetwork net_den (std::move(wden));
+
+    std::ifstream f(jnnw_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << jnnw_path << "\n"; return 1; }
+    char magic[4]; std::uint32_t count32 = 0;
+    f.read(magic, 4); f.read(reinterpret_cast<char*>(&count32), 4);
+    if (!f || std::memcmp(magic, "JNNW", 4) != 0) {
+        std::cerr << "error: " << jnnw_path << " is not JNNW\n"; return 1;
+    }
+    const long total = std::min<long>(nmax, static_cast<long>(count32));
+
+    std::vector<Position> positions;
+    positions.reserve(static_cast<std::size_t>(total));
+    for (long i = 0; i < total; ++i) {
+        std::uint64_t bbs[4]; std::uint8_t stm_byte; std::int32_t score; std::int8_t wdl;
+        f.read(reinterpret_cast<char*>(bbs), 32);
+        f.read(reinterpret_cast<char*>(&stm_byte), 1);
+        f.read(reinterpret_cast<char*>(&score), 4);
+        f.read(reinterpret_cast<char*>(&wdl), 1);
+        if (!f) break;
+        Position pos{};
+        pos.set_side_to_move(stm_byte == 0 ? Color::White : Color::Black);
+        for (Bitboard b = bbs[0]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) pos.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) pos.add_piece(pop_lsb(b), Piece::BlackKing);
+        positions.push_back(std::move(pos));
+    }
+    const long n = static_cast<long>(positions.size());
+    if (n == 0) { std::cerr << "error: no positions read\n"; return 1; }
+
+    // Correctness : eval both ways, assert identical.
+    long mismatch = 0; int shown = 0;
+    for (long i = 0; i < n; ++i) {
+        const int a = net_full.evaluate(positions[static_cast<std::size_t>(i)]);
+        const int b = net_den.evaluate(positions[static_cast<std::size_t>(i)]);
+        if (a != b) {
+            ++mismatch;
+            if (shown < 5) { std::cerr << "  MISMATCH pos " << i << " : dense=" << a
+                                       << " compact=" << b << "\n"; ++shown; }
+        }
+    }
+
+    using clock = std::chrono::steady_clock;
+    int sink = 0;
+    for (long i = 0; i < n; ++i) sink ^= net_full.evaluate(positions[static_cast<std::size_t>(i)]);
+    const auto t0 = clock::now();
+    for (long i = 0; i < n; ++i) sink ^= net_full.evaluate(positions[static_cast<std::size_t>(i)]);
+    const auto t1 = clock::now();
+    for (long i = 0; i < n; ++i) sink ^= net_den.evaluate(positions[static_cast<std::size_t>(i)]);
+    const auto t2 = clock::now();
+    for (long i = 0; i < n; ++i) sink ^= net_den.evaluate(positions[static_cast<std::size_t>(i)]);
+    const auto t3 = clock::now();
+    const double s_full = std::chrono::duration<double>(t1 - t0).count();
+    const double s_den  = std::chrono::duration<double>(t3 - t2).count();
+    const double eps_full = s_full > 0 ? n / s_full : 0.0;
+    const double eps_den  = s_den  > 0 ? n / s_den  : 0.0;
+
+    std::cout << "eval-selfcheck: n=" << n << " sink=" << (sink & 1) << "\n"
+              << "  BYTE-ID : mismatches=" << mismatch
+              << (mismatch == 0 ? "  => IDENTICAL (byte-id OK)"
+                                : "  => *** DIVERGENCE ***") << "\n"
+              << "  pat_full=" << n_pat_full << " (" << mem_full / 1e6 << " MB)"
+              << "  pat_dense=" << n_dense << " remap=" << remap_kind
+              << " (" << mem_den / 1e6 << " MB, shrink ×"
+              << (mem_den > 0 ? mem_full / mem_den : 0.0) << ")\n"
+              << "  NPS eval-only : dense=" << eps_full / 1e6 << " M/s"
+              << "  compact=" << eps_den / 1e6 << " M/s"
+              << "  ratio=" << (eps_full > 0 ? eps_den / eps_full : 0.0)
+              << " (>1 = compaction plus rapide)\n";
+    return mismatch == 0 ? 0 : 1;
+}
+
+// -----------------------------------------------------------------------------
 // --egdb-mtc-probe <wld_dir> <mtc_dir> [n=20000] [cache_mb=1024]
 // Validate the MTC database reading + reveal the distance-to-conversion
 // distribution (for designing the conversion-gradient target). For N random
@@ -4452,6 +4562,7 @@ int main(int argc, char** argv) {
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
         else if (a == "--gen-siblings")             return run_gen_siblings_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
+        else if (a == "--eval-selfcheck")           return run_eval_selfcheck_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
         else if (a == "--egdb-mtc-regret")          return run_egdb_mtc_regret_mode(argc, argv);
         else if (a == "--egdb-conversion-test")     return run_egdb_conversion_test_mode(argc, argv);

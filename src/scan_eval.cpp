@@ -19,8 +19,50 @@
 #include <array>
 #include <cstring>
 #include <fstream>
+#include <unordered_map>
 
 namespace jass::scan_eval {
+
+// B2 V1 — compact `pat` in place : dense[0] = {0,0}, then one slot per DISTINCT
+// non-zero (mg,eg) pair ; build remap[col] → slot so the gather can run
+// `pat[remap[col]]` byte-identically. Purely re-indexes (no value change).
+void compact_scan_weights(ScanWeights& w) {
+    const std::size_t n = w.pat.size();
+    if (n == 0 || !w.remap.empty()) return;
+    std::vector<PatPair> dense;
+    dense.push_back({0, 0});                       // slot 0 = zero pair
+    std::unordered_map<std::uint64_t, std::uint32_t> slot;
+    slot.reserve(n / 4 + 16);
+    std::vector<std::uint32_t> remap(n, 0);
+    for (std::size_t i = 0; i < n; ++i) {
+        const PatPair& p = w.pat[i];
+        if (p.mg == 0 && p.eg == 0) { remap[i] = 0; continue; }
+        const std::uint64_t key =
+            (static_cast<std::uint64_t>(static_cast<std::uint32_t>(p.mg)) << 32)
+            | static_cast<std::uint32_t>(p.eg);
+        auto it = slot.find(key);
+        if (it == slot.end()) {
+            const std::uint32_t s = static_cast<std::uint32_t>(dense.size());
+            dense.push_back(p);
+            slot.emplace(key, s);
+            remap[i] = s;
+        } else {
+            remap[i] = it->second;
+        }
+    }
+    w.pat.swap(dense);
+    // Palette ≤ 256 → store the remap as uint8 (~17 MB, L3-friendly) ; else
+    // keep the uint32 remap (~68 MB). Both are byte-identical re-indexings.
+    if (w.pat.size() <= 256) {
+        std::vector<std::uint8_t> r8(n);
+        for (std::size_t i = 0; i < n; ++i)
+            r8[i] = static_cast<std::uint8_t>(remap[i]);
+        w.remap8.swap(r8);
+        w.remap.clear();
+    } else {
+        w.remap.swap(remap);
+    }
+}
 
 namespace {
 
@@ -373,6 +415,13 @@ std::optional<ScanWeights> load_scan_weights(const std::string& path,
         const unsigned char* fp = raw.data() + lin_bytes + 12;
         std::memcpy(w.fm_v.data(), fp, n_fm * sizeof(float));
     }
+    // B2 V1 — optional in-memory dense compaction (env JASS_DENSE_REMAP=1).
+    // Re-index the 17M-entry pat table to keep only DISTINCT non-zero weight
+    // pairs (slot 0 = {0,0}), with remap[col] → slot. Byte-identical eval ;
+    // the file on disk is untouched. Diagnostic for the cache hypothesis.
+    if (const char* e = std::getenv("JASS_DENSE_REMAP"); e && e[0] == '1') {
+        compact_scan_weights(w);
+    }
     return w;
 }
 
@@ -406,15 +455,55 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
         cols[i] = offsets[i] + r;
     }
     constexpr std::size_t PF = 4;   // prefetch distance (patterns ahead)
-    for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
-        __builtin_prefetch(&w_.pat[cols[i]]);
     std::int64_t smg = 0, seg = 0;
-    for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
-        if (i + PF < pattern_jass::NUM_PATTERNS)
-            __builtin_prefetch(&w_.pat[cols[i + PF]]);
-        const PatPair& pw = w_.pat[cols[i]];   // mg+eg adjacent → 1 cache line
-        smg += pw.mg;
-        seg += pw.eg;
+    if (!w_.remap8.empty()) {
+        // B2 V1 palette path : uint8 remap (~17 MB, L3-friendly) → compact pat.
+        // Two prefetched passes ; byte-identical (pat[remap8[col]] == old pat[col]).
+        std::array<std::size_t, pattern_jass::NUM_PATTERNS> slots{};
+        for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
+            __builtin_prefetch(&w_.remap8[cols[i]]);
+        for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+            if (i + PF < pattern_jass::NUM_PATTERNS)
+                __builtin_prefetch(&w_.remap8[cols[i + PF]]);
+            slots[i] = w_.remap8[cols[i]];
+        }
+        for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+            const PatPair& pw = w_.pat[slots[i]];   // palette ≤256 → cache-resident
+            smg += pw.mg;
+            seg += pw.eg;
+        }
+    } else if (!w_.remap.empty()) {
+        // B2 V1 dense path : two prefetched passes — resolve slots via the
+        // (uint32, ~half-size) remap gather, then read the compact `pat`. Both
+        // levels stay prefetchable ; result is byte-identical to the dense loop
+        // (dense[remap[col]] == old pat[col]).
+        std::array<std::size_t, pattern_jass::NUM_PATTERNS> slots{};
+        for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
+            __builtin_prefetch(&w_.remap[cols[i]]);
+        for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+            if (i + PF < pattern_jass::NUM_PATTERNS)
+                __builtin_prefetch(&w_.remap[cols[i + PF]]);
+            slots[i] = w_.remap[cols[i]];
+        }
+        for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
+            __builtin_prefetch(&w_.pat[slots[i]]);
+        for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+            if (i + PF < pattern_jass::NUM_PATTERNS)
+                __builtin_prefetch(&w_.pat[slots[i + PF]]);
+            const PatPair& pw = w_.pat[slots[i]];
+            smg += pw.mg;
+            seg += pw.eg;
+        }
+    } else {
+        for (std::size_t i = 0; i < PF && i < pattern_jass::NUM_PATTERNS; ++i)
+            __builtin_prefetch(&w_.pat[cols[i]]);
+        for (std::size_t i = 0; i < pattern_jass::NUM_PATTERNS; ++i) {
+            if (i + PF < pattern_jass::NUM_PATTERNS)
+                __builtin_prefetch(&w_.pat[cols[i + PF]]);
+            const PatPair& pw = w_.pat[cols[i]];   // mg+eg adjacent → 1 cache line
+            smg += pw.mg;
+            seg += pw.eg;
+        }
     }
     double pat_mg = static_cast<double>(smg), pat_eg = static_cast<double>(seg);
 
