@@ -9,3 +9,13 @@
 
 === [B] gen self-asym : 1050×16 parties (pool=128992) ===
   [B] WDL positions = 1441983 (119s)
+
+=== [A] fit wdl_finetune ancré gen2-mmto anchor=0.05 ===
+  [A] fit : logloss(data) 0.534150->0.520618 (delta -0.013533) ; mean|Δw|=0.00005 sur 456542 cols 
+
+=== [B] fit wdl_finetune ancré gen2-mmto anchor=0.05 ===
+  [B] fit : logloss(data) 0.542430->0.523611 (delta -0.018819) ; mean|Δw|=0.00004 sur 453506 cols 
+  généraliste : 66 openings
+
+=== A/B compose (généraliste) : candB vs candA [décisif] + candB vs gen2-mmto [ancre] ===
+  [candB_vs_candA | mt0.2] A=411 B=400 D=245 n=1056 rate_A=0.5052+-0.0264 elo~+4 IC=[0.479,0.532] => neutre
