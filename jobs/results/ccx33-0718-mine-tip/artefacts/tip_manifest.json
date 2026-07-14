@@ -1,0 +1,23 @@
+{
+  "certified_input": 27533,
+  "decisive": 24301,
+  "win_for_advantaged": 18446,
+  "pool_v2": 18045,
+  "eval_set": 0,
+  "strata_pieces": {
+    "8": 8434,
+    "9": 5256,
+    "10": 4355
+  },
+  "strata_value_margin": {
+    "0": 12789,
+    "1": 5256
+  },
+  "palier_hint": {
+    "p3_marge+1_mince": 5256,
+    "p4_marge0_egal": 12789,
+    "p1_marge>=2_net": 0
+  },
+  "thermo_disjoint": true,
+  "eval_disjoint_from_training": true
+}
