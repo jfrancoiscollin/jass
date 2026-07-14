@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0716-refit-anchor",
-  "snapshot_at": "2026-07-14T16:34:17+00:00",
+  "snapshot_at": "2026-07-14T16:40:03+00:00",
   "started_at": "2026-07-14T15:56:22+00:00",
-  "elapsed_seconds": 2275,
+  "elapsed_seconds": 2621,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 446822       1       37:55  0.0  0.0 bash\n 446824  446822       37:55  0.0  0.0 bash\n 448590  446824       06:18  161 28.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 446822       1       43:40  0.0  0.0 bash\n 446824  446822       43:40  0.0  0.0 bash\n 448590  446824       12:03  164 28.0 python3\n"
 }
