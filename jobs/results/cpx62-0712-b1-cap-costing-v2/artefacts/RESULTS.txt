@@ -1,0 +1,16 @@
+=== CHIFFRAGE B1 v2 (seeds milieu + pilote bootstrap) — HEAD 4f3e8eaab runner: finalize cpx62-0711-b3-convself-gate-v2 (completed, rc=0) — NCPU=16 df=461368Mo ===
+=== build jass egdb ===
+  ouvertures milieu (>= 36pc) : 248 ; échantillon finales (<= 12pc) coût_d14 : 200
+  ✓ build egdb + gen2 + bootstrap ; pilote=BOOTSTRAP ; ouvertures=248 ; egdb=/root/egdb_extracted/app
+
+=== témoin self-play BOOTSTRAP (248 ouvertures milieu, 16 shards, d10 cap200) ===
+  parties=248  cappées=0  plycap_rate=0.0000  coût/partie=0.4309s
+
+=== coût_d14 (deep-relabel d14+egdb sur 200 finales ≤12pc) ===
+  coût_d14/pos = 0.0247s (sur 200 positions ≤12pc)
+
+=== VERDICT CHIFFRAGE B1 v2 (surcoût ≤ +25% ?) ===
+  plycap_rate=0.0000 (0 caps)  coût/partie=0.431s  coût_d14/pos=0.025s
+  SURCOÛT/tour = 0.0000×0.025/0.431 = 0.0%
+  ⚠ plycap bas (0.000) même pilote bootstrap+seeds milieu → l'arbitre coûte peu MAIS le mensonge ply-cap est aussi plus rare qu'estimé (~19% était young-eval fade-adjud). Surcoût=0.0%.
+  => ADMIS (0.0% ≤ 25%) : INTÉGRER --cap-arbiter d14
