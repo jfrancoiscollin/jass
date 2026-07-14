@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0721-f1-adjud",
-  "script": "jobs/queue/cpx62-0721-f1-adjud.sh",
-  "pid": 462744,
-  "started_at": "2026-07-14T22:16:05+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}

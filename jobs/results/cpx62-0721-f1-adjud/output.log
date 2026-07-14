@@ -1,0 +1,29 @@
+=== F1 ADJUD (labels on-policy vs d14+egdb, MÊME sous-échantillon) — HEAD 027c5f2e8 queue cpx62-0721 : F1 adjud — MÊME sous-échantillon fitté 2× (labels on-policy vs d14+egdb) + micro-sonde auto-size, ~1h30-2h SANS gen — NCPU=16 df=461281Mo ===
+=== build jass egdb ===
+  ✓ build egdb + bootstrap + corpus T1 + jauge conv_self v2 sous-éch (400 pos)
+
+=== micro-sonde rate d14+egdb (600 pos milieu) ===
+600
+  sonde : 600 pos en 20s → 0.03333333333333333s/pos (1 thread) → N_EFF=80000 (budget 2700s×16 shards, cap [20000,80000])
+  ETA relabel ≈ 2.8 min (80000 pos / 16 shards)
+sub: 80000
+
+--- (A) fit CONTROL on-policy (N=80000, labels d9 bruts) ---
+  [ON-POLICY] conv_self=0.4659 (n=249) | gate vs bootstrap : rate=0.4492 n=600 elo=-35
+
+=== relabel ADJUD d14+egdb sur 80000 pos (16 shards) ===
+/root/jass/jobs/queue/cpx62-0721-f1-adjud.sh: line 170: 464430 Killed                     timeout "$TOSH" "$J" --deep-relabel "$W/sh.$s.jnnw" "$W/sh_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/rel.$s.log" 2>&1
+/root/jass/jobs/queue/cpx62-0721-f1-adjud.sh: line 170: 464431 Killed                     timeout "$TOSH" "$J" --deep-relabel "$W/sh.$s.jnnw" "$W/sh_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/rel.$s.log" 2>&1
+adjud relabeled: 70000
+  labels changés par l'adjud : 46965/70000 = 67.1%  (mesure directe de la corruption on-policy)
+
+--- (B) fit ADJUD (N=70000, labels d14+egdb VRAIS) ---
+  [ADJUD] conv_self=0.4540 (n=315) | gate vs bootstrap : rate=0.5025 n=600 elo=+2
+
+=== VERDICT F1 ADJUD ===
+  labels changés par adjud = 67.1%
+  ON-POLICY : conv_self=0.4659  gate_elo=-35
+  ADJUD     : conv_self=0.4540  gate_elo=+2
+  => ~ adjud AIDE partiellement (conv -0.012, elo +37) — signal réel mais pas franc ; augmenter N (relabel plus profond/large) ou combiner avec up-weight gymnase.
+  ✓ RESULTS committé
+=== 0721 FINI ===
