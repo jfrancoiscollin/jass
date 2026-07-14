@@ -1,0 +1,16 @@
+{
+  "eval_set": 1600,
+  "training": 52682,
+  "eval_par_palier": {
+    "p1_net": 400,
+    "p2_moyen": 400,
+    "p3_mince": 400,
+    "p4_egal": 400
+  },
+  "train_par_palier": {
+    "p1_net": 28658,
+    "p2_moyen": 5291,
+    "p3_mince": 6052,
+    "p4_egal": 12681
+  }
+}
