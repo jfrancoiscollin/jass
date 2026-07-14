@@ -1,0 +1,26 @@
+=== F-ANCHOR (refit corpus T1 committé, SANS regen) — HEAD fbc1ccb4f queue cpx62-0716 : F-anchor (refit corpus T1 committe SANS regen, anchor 0.15/0.30 full+oracle vs controle 0.05=-27) — NCPU=16 df=461312Mo ===
+=== build jass (v4, sans egdb) ===
+  corpus T1=3406685 ; oracle(GYM+CAP)=17089
+  ✓ build + bootstrap + corpus T1 committé (sans regen) ; contrôle 0715 full@0.05 = elo −27 conv 0.5469
+
+--- refit full15 (data=full.jnnw anchor=0.15) ---
+    fit : logloss(data) 0.917509->0.714940 (delta -0.202569) ; mean|Δw|=0.00001 sur 2210316 cols
+  [full15] |Δw| EXTRA max=0.2230 mean=0.0066 | patterns nz=26
+  [full15] conv_self=0.3111 (n=90) | généraliste vs bootstrap : rate=0.1567 n=600 elo=-292
+
+--- refit full30 (data=full.jnnw anchor=0.30) ---
+    fit : logloss(data) 0.917509->0.734412 (delta -0.183097) ; mean|Δw|=0.00000 sur 2210316 cols
+  [full30] |Δw| EXTRA max=0.1390 mean=0.0049 | patterns nz=13
+  [full30] conv_self=0.3778 (n=90) | généraliste vs bootstrap : rate=0.2200 n=600 elo=-220
+
+--- refit oracle15 (data=oracle.jnnw anchor=0.15) ---
+    fit : logloss(data) 0.445724->0.389925 (delta -0.055799) ; mean|Δw|=0.00018 sur 180930 cols
+  [oracle15] |Δw| EXTRA max=0.0500 mean=0.0020 | patterns nz=6514
+  [oracle15] conv_self=0.2889 (n=90) | généraliste vs bootstrap : rate=0.4517 n=600 elo=-34
+
+=== VERDICT F-ANCHOR ===
+  contrôle 0715 full@0.05 : conv 0.5469 elo −27
+  full15    : conv 0.3111  elo -292
+  full30    : conv 0.3778  elo -220
+  oracle15  : conv 0.2889  elo -34
+  => anchor N'AIDE PAS (≤ −27) => l'érosion n'était pas le lever principal => F1 adjud (ii) / D2 ventilation.
