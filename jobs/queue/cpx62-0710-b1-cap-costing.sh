@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-0709-b1-cap-costing
+# id: cpx62-0710-b1-cap-costing
 # description: CHIFFRAGE B1 (L3 bloquant 3, LE GATE AVANT INTÉGRATION) — l'arbitre-d14-au-cap remplace le label
 # ply-cap menteur (~19% nulle par épuisement) par deep-relabel d14+egdb. Mémo : chiffrer le surcoût AVANT d'intégrer.
 # Mesure : (1) cap_costing.py = self-play témoin gen2 d10 cap200 -> plycap_rate + coût/partie + JNNW des finales cappées ;
@@ -8,12 +8,12 @@
 # arbitre ciblé |matériel| ambigu. Build egdb, dilf non requis. AUCUN NNUE. AUCUNE intégration ici (chiffrage seul).
 set -uo pipefail
 cd /root/jass
-exec 9>/root/.jass-0709.lock
-if ! flock -n 9; then echo "ABORT 0709 : instance deja active"; exit 0; fi
+exec 9>/root/.jass-0710.lock
+if ! flock -n 9; then echo "ABORT 0710 : instance deja active"; exit 0; fi
 NCPU=$(nproc); export TMPDIR=/root/jass/.compile-tmp; mkdir -p "$TMPDIR"
-ART="/root/jass/jobs/results/ccx33-0709-b1-cap-costing/artefacts"; mkdir -p "$ART"
-ARTREL="jobs/results/ccx33-0709-b1-cap-costing/artefacts"
-W=/root/cw-0709
+ART="/root/jass/jobs/results/cpx62-0710-b1-cap-costing/artefacts"; mkdir -p "$ART"
+ARTREL="jobs/results/cpx62-0710-b1-cap-costing/artefacts"
+W=/root/cw-0710
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 rm -rf "$W"; mkdir -p "$W"
 RES="$W/RESULTS.txt"; : > "$RES"; say(){ echo "$@" | tee -a "$RES"; }
@@ -55,11 +55,12 @@ grep -q "g_emasks" src/scan_eval.cpp || { say "ABORT archi"; restore_src; exit 5
 python3 -m py_compile tools/cap_costing.py || { say "ABORT py_compile"; restore_src; exit 5; }
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl >"$W/clone.log" 2>&1
 EGDIR=""; for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }; done
-[ -n "$EGDIR" ] || { say "ABORT egdb"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0709 ABORT egdb"; exit 4; }
+[ -n "$EGDIR" ] || { say "ABORT egdb"; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0710 ABORT egdb"; exit 4; }
+export JASS_EGDB_PATH="$EGDIR"   # cpx62 egdb runtime (ceinture-bretelles)
 
 say "=== build jass egdb ==="
 cmake -S . -B "$W/build" $FLAGS_EGDB >"$W/cmake.log" 2>&1 && grep -q "EXTERNAL EGDB ENABLED" "$W/cmake.log" || { say "ABORT cmake"; tail -8 "$W/cmake.log"|sed 's/^/  /'; restore_src; exit 6; }
-cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -10 "$W/build.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0709 BUILD FAIL"; exit 6; }
+cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -10 "$W/build.log"|sed 's/^/  /'; restore_src; commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0710 BUILD FAIL"; exit 6; }
 J="$W/build/jass"
 git show "origin/main:$GEN2_GZ" | gunzip > "$W/gen2.pjtw" || { say "ABORT gen2"; restore_src; exit 4; }
 grep -v '^[[:space:]]*#' data/dilf_combinations.fen | sed 's/#.*//' | awk 'NF' > "$W/open.fen"
@@ -128,8 +129,8 @@ else:
     print(f"  => DÉPASSE ({pct:.1f}% > {thr:.0f}%) : fallback d12 OU arbitre ciblé |matériel| ambigu (les gains nets clairs -> adjud matérielle, moins chère). Re-chiffrer.")
 PY
 cp "$W/caps.jnnw" "$ART/cap_finals.jnnw" 2>/dev/null || true
-commit_to_main "$ART/cap_finals.jnnw" "$ARTREL/cap_finals.jnnw" "0709 finales cappées (chiffrage)" >/dev/null 2>&1||true
+commit_to_main "$ART/cap_finals.jnnw" "$ARTREL/cap_finals.jnnw" "0710 finales cappées (chiffrage)" >/dev/null 2>&1||true
 restore_src
-commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0709 FIN chiffrage B1 : plycap=$PLYCAP coutd14=$COSTD14 desaccord=$DISAG" && say "  ✓ RESULTS committé" || say "  ⚠ commit"
-say "=== 0709 FINI ==="
+commit_to_main "$RES" "$ARTREL/RESULTS.txt" "0710 FIN chiffrage B1 : plycap=$PLYCAP coutd14=$COSTD14 desaccord=$DISAG" && say "  ✓ RESULTS committé" || say "  ⚠ commit"
+say "=== 0710 FINI ==="
 rm -rf "$W"
