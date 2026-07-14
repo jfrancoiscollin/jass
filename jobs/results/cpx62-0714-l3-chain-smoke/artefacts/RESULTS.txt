@@ -1,0 +1,38 @@
+=== SMOKE CHAÎNE L3 (T0=bootstrap → T1) — HEAD 0f391b824 CURRENT 2026-07-14 : 4 bloquants L3 CODE COMPLET (B4/B3/B1/B2 + integration gen) ; B3-v2 ADMIS (gen2 convertit 62% = trou 0703) ; B1 cheap+rare ; smoke chaine L3 0714 queue — NCPU=16 df=461364Mo ===
+=== build jass egdb (v4) ===
+--like /root/cw-0714/gen2.pjtw : magic=0x57544a50 ver=515 scale=1000 n_pat=17,006,112 n_ext=120
+écrit /root/cw-0714/bootstrap.pjtw : 136,049,876 o (attendu 136,049,876 ✓)
+  matériel black-POV : homme=±1.0 dame=±3.0(+centre 0.2) mob=±0.05 ; patterns=0 ; scale=1000
+  ✓ build egdb ; champion(0)=bootstrap ; pool=148 ; egdb=/root/egdb_extracted/app
+
+=== conv_self(bootstrap) — jauge de conversion T0 (défenseur-fixe gen2) ===
+  conv_self(bootstrap) = 0.5000 (n=66)
+
+=== gen tour-1 : bootstrap + gymnase(seed-frac 0.18) + cap-arbiter d14 — 2500×16 ===
+  positions générées : 3406685 ; parties gymnase (pool) : 294 ; cap-arbiter fires : 106
+  WDL 0% nulles (post cap-arbiter)
+
+=== fit WDL ancré bootstrap (wdl_finetune --anchor 0.05) → cand(T1) ===
+  logloss champion (data) = 0.917509
+  fit : logloss(data) 0.917509->0.692818 (delta -0.224692) ; mean|Δw|=0.00002 sur 2210316 cols
+
+=== conv_self(cand T1) — la conversion a-t-elle monté ? ===
+  conv_self(cand) = 0.5645 (n=62)  [bootstrap était 0.5000]
+
+=== GATE compose : cand(T1) vs bootstrap(T0) | d9 qs6 | 300op x2 ===
+  === MANIFEST L3 (T0→T1) ===
+    positions = 3406685
+    pool_games = 294
+    cap_arbiter_fires = 106
+    conv_self_bootstrap = 0.5
+    conv_self_cand = 0.5645
+    conv_self_delta = 0.0645
+    gate_n = 1200
+    gate_rate = 0.4358
+    gate_elo = -45
+    gate_ic = [0.408, 0.464]
+  === SMOKE VERDICT ===
+    compteurs (positions>0, pool>0, gate n≥800) : True
+    conv_self : bootstrap 0.5 → cand 0.5645 (Δ+0.0645)
+    gate compose cand vs bootstrap : rate=0.4358 IC=[0.408,0.464] elo~-45
+    => MACHINERIE OK mais cand NE COMPOSE PAS hors-IC (rate 0.436) : gen/fit à ajuster (volume smoke faible OK)
