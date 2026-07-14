@@ -1,0 +1,9 @@
+=== CHIFFRAGE B1 arbitre-d14-au-cap — HEAD abd21e799 0709 FIN chiffrage B1 : plycap=0.0033 coutd14=0.6419 desaccord=0.0000 — NCPU=16 df=461369Mo ===
+=== build jass egdb ===
+  ✓ build egdb + gen2 ; egdb=/root/egdb_extracted/app ; games=1500 d10 cap200
+
+=== témoin self-play gen2 (1500 parties, 16 shards) -> plycap_rate + coût/partie ===
+  parties=1500  cappées=0  plycap_rate=0.0000  coût/partie=0.1927s  (finales collectées=0)
+
+=== VERDICT CHIFFRAGE B1 (surcoût ≤ +25% ?) ===
+  INCONCLUANT : coût/partie ou coût_d14 non mesuré — relancer
