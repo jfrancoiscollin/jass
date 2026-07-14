@@ -1,0 +1,11 @@
+=== G2 MINAGE POOL CONVERSION + G3 gel conv_self — HEAD 92a95c2cf runner: heartbeat cpx62-0716-refit-anchor — NCPU=8 df=88211Mo ===
+=== build jass egdb ===
+
+=== extract candidats (HORS-TB N_TB+1..+3, avantage ≥1) du corpus T1 ===
+{"candidates": 48000, "piece_range": [8, 10], "min_adv": 1}
+
+=== certif d14+egdb sur 48000 candidats (8 shards) ===
+
+=== filter (WIN-camp-avantagé) + G3 (∩thermo=∅, ∩eval=∅) + carve set conv_self FIGÉ (400) ===
+{"certified_input": 48000, "decisive": 40280, "win_for_advantaged": 38992, "pool_v2": 38592, "eval_set": 400, "strata_pieces": {"8": 10864, "9": 15281, "10": 12847}, "thermo_disjoint": true, "eval_disjoint_from_training": true}
+  pool_v2=38592 positions ; conv_self_eval_set=400 positions (FIGÉ, disjoint)
