@@ -1,0 +1,13 @@
+=== GATE B3 conv_self — HEAD 41dc0e3a8 runner: finalize cpx62-0707-b4-bootstrap-gate (completed, rc=0) — NCPU=16 df=461269Mo ===
+=== build jass (v4) ===
+  ✓ build ; openings=305 ; games=306 depth=8 lead=3
+
+=== conv_self sharded (16) : zero vs gen2-mmto ===
+  zero      : games=306 reached=304 conv=268 draw=0 cap=0 conv_self=0.8816
+  gen2-mmto : games=306 reached=253 conv=190 draw=45 cap=0 conv_self=0.7510
+
+=== VERDICT GATE B3 (monotonie conv_self) ===
+  conv_self : zero=0.8816 (n_reached=304)  <  gen2-mmto=0.7510 (n_reached=253) ?  => NON ✗
+  => ÉCHEC — conv_self non monotone : instrument cassé, corriger avant T-0
+  ✓ RESULTS committé
+=== 0708 FINI ===

@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0708-b3-convself-gate",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-14T00:04:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 421395
+  "ended_at": "2026-07-14T00:09:43+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
