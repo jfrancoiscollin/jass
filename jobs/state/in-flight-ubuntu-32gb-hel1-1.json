@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0714-l3-chain-smoke",
+  "script": "jobs/queue/cpx62-0714-l3-chain-smoke.sh",
+  "pid": 431952,
+  "started_at": "2026-07-14T07:14:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
