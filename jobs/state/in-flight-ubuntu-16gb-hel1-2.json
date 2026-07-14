@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0709-b1-cap-costing",
-  "script": "jobs/queue/ccx33-0709-b1-cap-costing.sh",
-  "pid": 121255,
-  "started_at": "2026-07-14T06:29:02+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

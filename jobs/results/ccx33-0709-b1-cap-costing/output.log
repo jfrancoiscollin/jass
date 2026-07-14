@@ -1,0 +1,17 @@
+=== CHIFFRAGE B1 arbitre-d14-au-cap — HEAD 54613b9fc CURRENT 2026-07-14 : P1 VETO (85% <99.9%, etage verdicts tombe) => pile L3 minimale TB+d14-cap+escalier+vetos ; 4 bloquants L3 en livraison (B4/B3 gates queues, B1 chiffrage queue, B2 apres) — NCPU=8 df=88258Mo ===
+=== build jass egdb ===
+  ✓ build egdb + gen2 ; egdb=/root/egdb_extracted/app ; games=1500 d10 cap200
+
+=== témoin self-play gen2 (1500 parties, 8 shards) -> plycap_rate + coût/partie ===
+  parties=1500  cappées=5  plycap_rate=0.0033  coût/partie=0.5546s  (finales collectées=5)
+
+=== deep-relabel d14 + egdb sur 5 finales cappées (coût + désaccord vs nulle) ===
+  coût_d14/pos=0.6419s  ;  DÉSACCORD (finale décisive ≠ nulle) = 0.0000  (= le mensonge ply-cap corrigé)
+
+=== VERDICT CHIFFRAGE B1 (surcoût ≤ +25% ?) ===
+  plycap_rate=0.0033  coût/partie=0.555s  coût_d14/pos=0.642s
+  SURCOÛT/tour = plycap×coût_d14/coût_partie = 0.0033×0.642/0.555 = 0.4%
+  désaccord (mensonge corrigé) = 0.0000
+  => ADMIS (0.4% ≤ 25%) : INTÉGRER l'arbitre-d14-au-cap (flag --cap-arbiter d14) à la gen L3.
+  ✓ RESULTS committé
+=== 0709 FINI ===
