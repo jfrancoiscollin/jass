@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0710-b1-cap-costing",
-  "script": "jobs/queue/cpx62-0710-b1-cap-costing.sh",
-  "pid": 427364,
-  "started_at": "2026-07-14T06:32:03+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
