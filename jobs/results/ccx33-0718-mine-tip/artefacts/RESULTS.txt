@@ -1,0 +1,15 @@
+=== G4-TIP MINAGE p3/p4 ON-DISTRIBUTION — HEAD 8c4159c80 queue ccx33-0718 : minage tip p3/p4 on-distribution (27.5k cand) + gel eval stratifié v2 400/palier (~15min) — NCPU=8 df=88199Mo ===
+=== build jass egdb ===
+
+=== extract TIP (marge-VALEUR ≤1 = p4_egal/p3_mince, HORS-TB 8..10, balaye 3,4M pos) ===
+{"candidates": 27533, "piece_range": [8, 10], "min_adv": 0}
+
+=== certif d14+egdb sur 27533 candidats tip (8 shards) ===
+
+=== filter --value-adv (WIN camp valeur-avantagé + marge0→gagnant) ===
+{"certified_input": 27533, "decisive": 24301, "win_for_advantaged": 18446, "pool_v2": 18045, "eval_set": 0, "strata_pieces": {"8": 8434, "9": 5256, "10": 4355}, "strata_value_margin": {"0": 12789, "1": 5256}, "palier_hint": {"p3_marge+1_mince": 5256, "p4_marge0_egal": 12789, "p1_marge>=2_net": 0}, "thermo_disjoint": true, "eval_disjoint_from_training": true}
+  tip certifié (WIN camp-avantagé) = 18045 positions
+
+=== fusion (train+evals+tip) dédup canon → re-carve stratifié 400/palier ===
+{"eval_set": 1600, "training": 52682, "eval_par_palier": {"p1_net": 400, "p2_moyen": 400, "p3_mince": 400, "p4_egal": 400}, "train_par_palier": {"p1_net": 28658, "p2_moyen": 5291, "p3_mince": 6052, "p4_egal": 12681}}
+  ✓ DISJONCTION eval(1600) ∩ train(52682) = 0
