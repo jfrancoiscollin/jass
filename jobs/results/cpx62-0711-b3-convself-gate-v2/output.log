@@ -1,0 +1,14 @@
+=== GATE B3 v2 conv_self défenseur-fixe — HEAD e071bc96b queue cpx62-0712 : chiffrage B1 v2 (seeds milieu corpus-mix2M + pilote bootstrap + cout_d14 decouple) — corrige 0710 (0 caps sur openings tactiques) — NCPU=16 df=461369Mo ===
+=== build jass (v4) ===
+  pool positions gagnées (|Δ|>=3) : 300
+  ✓ build ; pool=300 ; défenseur FIXE=gen2-mmto ; depth=10
+
+=== conv_self (champion convertit vs défenseur FIXE gen2) : zero vs gen2 ===
+  champion=zero : pos=300 win=159 draw=4 loss=137 conv_self=0.5300
+  champion=gen2 : pos=300 win=187 draw=18 loss=95 conv_self=0.6233
+
+=== VERDICT GATE B3 v2 (monotonie conv_self, défenseur fixe) ===
+  conv_self : zero=0.5300 (n=300)  <  gen2=0.6233 (n=300) ? => OUI ✓
+  => ADMIS — conv_self monotone (défenseur-fixe corrige le confound self-play) : instrument valide, pilote l escalier
+  ✓ RESULTS committé
+=== 0711 FINI ===
