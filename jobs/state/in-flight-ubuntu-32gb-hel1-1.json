@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0708-b3-convself-gate",
+  "script": "jobs/queue/cpx62-0708-b3-convself-gate.sh",
+  "pid": 421395,
+  "started_at": "2026-07-14T00:04:06+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
