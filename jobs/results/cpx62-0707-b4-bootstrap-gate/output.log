@@ -1,0 +1,30 @@
+=== GATE B4 bootstrap — HEAD 68845d3a5 runner: finalize cpx62-0706-p1-runaway-harness (completed, rc=0) — NCPU=16 df=461269Mo ===
+=== build jass (v4, flags gen2) ===
+--like /root/cw-0707/gen2.pjtw : magic=0x57544a50 ver=515 scale=1000 n_pat=17,006,112 n_ext=120
+écrit /root/cw-0707/bootstrap.pjtw : 136,049,876 o (attendu 136,049,876 ✓)
+  matériel black-POV : homme=±1.0 dame=±3.0(+centre 0.2) mob=±0.05 ; patterns=0 ; scale=1000
+  ✓ bootstrap.pjtw + zero.pjtw régénérés (build-matched)
+
+=== eval-position étalons (ordre matériel monotone attendu, black-POV) ===
+    +0.000  symétrique 20v20 (~0)
+  +500.000  blanc +5 hommes
+  -500.000  noir +5 hommes
+  -195.000  1 dame blanche vs 5 hommes noirs
+  +150.000  5 hommes blancs vs 1 dame noire
+  MONOTONIE matériel (blanc+5 < sym < noir+5, |sym|<1) : ÉCHEC ✗
+
+=== A/B bootstrap vs zero (d9 qs6, doit écraser ~1.000) ===
+  bootstrap vs zero : W=236 L=1 D=3 n=240 rate=0.9896 (attendu ~1.000)
+
+=== jass_tests ===
+    [FAIL] /root/jass/tests/test_scan_book.cpp:132: e.load_book(path)
+    [FAIL] /root/jass/tests/test_scan_book.cpp:133: expected e.book_size() == b.size()
+    10 / 6486 assertions FAILED.
+
+=== VERDICT GATE B4 ===
+  crush zero (rate≥0.95) : True (rate=0.9896)
+  ordre matériel monotone : False
+  jass_tests : FAIL
+  => ÉCHEC — crush=True(rate=0.9896) eval_monotone=False tests=FAIL : corriger avant T-0
+  ✓ RESULTS committé
+=== 0707 FINI ===

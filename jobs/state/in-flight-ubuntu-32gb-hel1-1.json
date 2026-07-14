@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0707-b4-bootstrap-gate",
-  "script": "jobs/queue/cpx62-0707-b4-bootstrap-gate.sh",
-  "pid": 420204,
-  "started_at": "2026-07-13T23:53:09+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
