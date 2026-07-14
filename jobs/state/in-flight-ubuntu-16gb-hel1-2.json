@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0717-mine-pool",
+  "script": "jobs/queue/ccx33-0717-mine-pool.sh",
+  "pid": 127883,
+  "started_at": "2026-07-14T16:22:49+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
