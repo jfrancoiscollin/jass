@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0714-l3-chain-smoke",
-  "snapshot_at": "2026-07-14T07:41:53+00:00",
+  "snapshot_at": "2026-07-14T07:47:03+00:00",
   "started_at": "2026-07-14T07:14:03+00:00",
-  "elapsed_seconds": 1670,
+  "elapsed_seconds": 1980,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431952       1       27:49  0.0  0.0 bash\n 431954  431952       27:49  0.0  0.0 bash\n 433197  431954       15:38  163 14.8 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 431952       1       32:59  0.0  0.0 bash\n 431954  431952       32:59  0.0  0.0 bash\n 433197  431954       20:48  165 13.1 python3\n"
 }
