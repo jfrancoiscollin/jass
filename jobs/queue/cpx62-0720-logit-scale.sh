@@ -113,9 +113,11 @@ git show "origin/main:$GEN2_GZ" | gunzip > "$W/gen2.pjtw" || { say "ABORT gen2";
 python3 pattern_jass/tools/make_bootstrap_eval.py --out "$W/bootstrap.pjtw" --like "$W/gen2.pjtw" >/dev/null
 grep -v '^[[:space:]]*#' data/dilf_combinations.fen | sed 's/#.*//' | awk 'NF' | head -"$NOPEN" > "$W/open.fen"
 git show "origin/main:$CORPUS_GZ" | gunzip > "$W/full.jnnw" || { say "ABORT corpus T1"; restore_src; exit 4; }
-git show "origin/main:$EVALSTRAT" > "$W/conv_pool.fen" || { say "ABORT eval strat v2"; restore_src; exit 4; }
+git show "origin/main:$EVALSTRAT" > "$W/eval_strat_full.fen" || { say "ABORT eval strat v2"; restore_src; exit 4; }
+# sous-échantillon ÉQUILIBRÉ par palier (1 non-# sur 4 ≈ 400 pos, l'ordre est par palier) — diagnostic, pas jauge pleine
+grep -vE '^\s*#' "$W/eval_strat_full.fen" | awk 'NR%4==1' > "$W/conv_pool.fen"
 "$J" --dump-eval-features "$W/full.jnnw" "$W/feat" >"$W/dump.log" 2>&1 || { say "ABORT dump-features"; restore_src; exit 6; }
-NCP=$(grep -cvE '^\s*#' "$W/conv_pool.fen"); say "  ✓ build + bootstrap + corpus T1 + jauge conv_self v2 ($NCP pos, FIGÉE disjointe)"
+NCP=$(grep -cvE '^\s*#' "$W/conv_pool.fen"); say "  ✓ build + bootstrap + corpus T1 + jauge conv_self v2 sous-éch. ($NCP pos, FIGÉE disjointe)"
 # baseline conversion du bootstrap lui-même (repère)
 read BCS BCN < <(conv_self "boot" "$W/bootstrap.pjtw")
 say "  [bootstrap] conv_self baseline = $BCS (n=$BCN)"
