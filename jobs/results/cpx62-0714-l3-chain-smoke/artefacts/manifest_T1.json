@@ -1,0 +1,15 @@
+{
+  "positions": 3406685,
+  "pool_games": 294,
+  "cap_arbiter_fires": 106,
+  "conv_self_bootstrap": 0.5,
+  "conv_self_cand": 0.5645,
+  "conv_self_delta": 0.0645,
+  "gate_n": 1200,
+  "gate_rate": 0.4358,
+  "gate_elo": -45,
+  "gate_ic": [
+    0.408,
+    0.464
+  ]
+}
