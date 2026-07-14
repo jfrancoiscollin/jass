@@ -1,0 +1,32 @@
+=== DIAG ANCHOR (T1 λ-énorme, corpus T1 committé SANS regen) — HEAD 035d75558 CURRENT: 0718 FINI (tip gras p4×6.7 p3×3.4, training v2 52682, eval v2 figé 1600) + anchor DIAG en cours (0719, D1-i suspendu) — NCPU=16 df=461297Mo ===
+=== build jass (v4, sans egdb) ===
+  ✓ build + bootstrap + corpus T1 committé (sans regen)
+
+--- SANITÉ : gate bootstrap vs bootstrap (attendu ~0.500) ---
+  [SANITÉ] boot-vs-boot rate=0.5000 n=600 elo=-0  ✓ harness SAIN
+
+--- refit full1 (data=full.jnnw anchor=1.0) ---
+    [z-stats champion] z0/T : min=-5.25 max=+11.35 std=2.63  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9988 (n=80)
+  [full1] |Δw| EXTRA max=0.0660 mean=0.0026 | patterns nz=4 | ‖Δw‖tot=0.3151
+  [full1] gate vs bootstrap : rate=0.2983 n=600 elo=-149
+
+--- refit full10 (data=full.jnnw anchor=10) ---
+    [z-stats champion] z0/T : min=-5.25 max=+11.35 std=2.63  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9988 (n=80)
+  [full10] |Δw| EXTRA max=0.0110 mean=0.0004 | patterns nz=0 | ‖Δw‖tot=0.0475
+  [full10] gate vs bootstrap : rate=0.5225 n=600 elo=+16
+
+--- refit full100 (data=full.jnnw anchor=100) ---
+    [z-stats champion] z0/T : min=-5.25 max=+11.35 std=2.63  (|z/T|>>6 partout => σ saturée, augmenter --logit-scale)
+    [POV gate] Spearman(X·w0 , jass-eval) = 0.9988 (n=80)
+  [full100] |Δw| EXTRA max=0.0020 mean=0.0000 | patterns nz=0 | ‖Δw‖tot=0.0053
+  [full100] gate vs bootstrap : rate=0.5125 n=600 elo=+9
+
+=== VERDICT DIAG ANCHOR ===
+  SANITÉ boot-vs-boot = 0.5
+  contrôle connu : full@0.05=−27 · full@0.15=−292 · full@0.30=−220
+  full1    (λ=1) : elo -149  (n=600)
+  full10   (λ=10) : elo +16  (n=600)
+  full100  (λ=100) : elo +9  (n=600)
+  => ✓ RÉFÉRENCE SAINE : Elo→~0 quand λ↑ (monotone en poids ET Elo aux extrêmes). La vallée 0.15/0.30 = H-B (non-convexité RÉELLE : matériel distordu SANS compensation-patterns), PAS un bug. ⟹ D1-(i) réhabilité en partie (l'anchor lâche laisse la data bouger le matériel) mais l'anchor n'est pas un levier de GAIN. Piste réelle = (ii) adjud + (iii) gymnase. Documenter T4 (anchor global vs data/N).
