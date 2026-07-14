@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0720-logit-scale",
-  "snapshot_at": "2026-07-14T21:01:32+00:00",
+  "snapshot_at": "2026-07-14T21:07:02+00:00",
   "started_at": "2026-07-14T19:59:25+00:00",
-  "elapsed_seconds": 3727,
+  "elapsed_seconds": 4057,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 457389       1    01:02:06  0.0  0.0 bash\n 457391  457389    01:02:06  0.0  0.0 bash\n 460402  457391       01:10  125 14.9 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 457389       1    01:07:37  0.0  0.0 bash\n 457391  457389    01:07:37  0.0  0.0 bash\n 460402  457391       06:40  155 29.4 python3\n"
 }
