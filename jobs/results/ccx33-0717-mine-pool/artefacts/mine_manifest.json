@@ -1,0 +1,14 @@
+{
+  "certified_input": 48000,
+  "decisive": 40280,
+  "win_for_advantaged": 38992,
+  "pool_v2": 38592,
+  "eval_set": 400,
+  "strata_pieces": {
+    "8": 10864,
+    "9": 15281,
+    "10": 12847
+  },
+  "thermo_disjoint": true,
+  "eval_disjoint_from_training": true
+}
