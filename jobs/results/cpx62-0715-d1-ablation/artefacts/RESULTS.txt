@@ -1,0 +1,26 @@
+=== D1 FIT-ABLATION (test H1) — HEAD b25f5314e queue cpx62-0715 : D1 fit-ablation (test H1) — regen labellise T1 committe + 3 fits (full/oracle/onp) + conv_self + generaliste vs bootstrap -> verdict H1 — NCPU=16 df=461355Mo ===
+=== build jass egdb (v4) ===
+  ✓ build egdb + bootstrap + pool=148 ; egdb=/root/egdb_extracted/app
+
+=== regen T1 labellisé (bootstrap + gymnase + cap-arbiter + --label-src-out) — 2500×16 ===
+  corpus=3406685 ; ONP=3389596 GYM=1349 CAP=15740 ; oracle(GYM+CAP)=17089 on-policy=3389596
+
+=== ablation : 3 fits (anchor 0.05) + conv_self + généraliste vs bootstrap ===
+
+--- variante full ---
+  [full] conv_self=0.5469 (n=64) | généraliste vs bootstrap : rate=0.4608 n=600 elo=-27
+  [full] |Δw| patterns: mean=0.00000 nz_moved=551 | EXTRA: mean=0.0104 max=0.4050
+
+--- variante oracle ---
+  [oracle] conv_self=0.5385 (n=65) | généraliste vs bootstrap : rate=0.4625 n=600 elo=-26
+  [oracle] |Δw| patterns: mean=0.00000 nz_moved=25196 | EXTRA: mean=0.0037 max=0.0700
+
+--- variante onp ---
+  [onp] conv_self=0.6296 (n=54) | généraliste vs bootstrap : rate=0.4333 n=600 elo=-47
+  [onp] |Δw| patterns: mean=0.00000 nz_moved=572 | EXTRA: mean=0.0104 max=0.4070
+
+=== VERDICT D1 (H1 : on-policy jeune sans adjud = bruit) ===
+  full   : conv_self=0.5469 elo=-27
+  oracle : conv_self=0.5385 elo=-26  (GYM+CAP seuls)
+  onp    : conv_self=0.6296 elo=-47  (on-policy seul)
+  => AMBIGU (oracle -26, onp -47) => trancher à JFC (regarder D3 |Δw| + ventilation)
