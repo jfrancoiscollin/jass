@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0719-anchor-diag",
-  "snapshot_at": "2026-07-14T17:57:21+00:00",
+  "snapshot_at": "2026-07-14T18:02:53+00:00",
   "started_at": "2026-07-14T17:41:39+00:00",
-  "elapsed_seconds": 942,
+  "elapsed_seconds": 1274,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452332       1       15:41  0.0  0.0 bash\n 452334  452332       15:41  0.0  0.0 bash\n 453429  452334       03:12  146 24.7 python3\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 452332       1       21:14  0.0  0.0 bash\n 452334  452332       21:14  0.0  0.0 bash\n 453429  452334       08:44  160 26.2 python3\n"
 }
