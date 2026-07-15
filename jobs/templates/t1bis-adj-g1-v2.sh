@@ -22,7 +22,7 @@ TIP_CERTS_JSONL="${TIP_CERTS_JSONL:-}"
 MIN_PROTECTED_TIP_RATE="${MIN_PROTECTED_TIP_RATE:-0.0}"
 ALLOW_MTC_SKIP="${ALLOW_MTC_SKIP:-0}"
 
-L3_REF="claude/pcblues-corpus-extraction-2i92bj"
+L3_REF="develop"   # scan_selfplay_gen promu (blob 1a19b30c), fin dependance branche corpus
 L3_SCAN_BLOB="1a19b30cded45281a628d2f9b631f2719d7fbc51"
 
 exec 9>"/root/.jass-${JOB_ID}.lock"
