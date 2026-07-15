@@ -17,8 +17,10 @@ tools/relabel_with_scan.py to add Scan's eval score and `--target score`.
 from __future__ import annotations
 
 import argparse
+import os
 import random
 import struct
+import subprocess
 import sys
 from pathlib import Path
 
@@ -58,6 +60,47 @@ def fen_to_record(fen: str, wdl_stm: int) -> bytes:
             + struct.pack("<B", 0 if side == "W" else 1)
             + struct.pack("<i", 0)
             + struct.pack("<b", wdl_stm))
+
+
+def mirror_fen(fen: str) -> str:
+    """B2 pairing — position couleurs ÉCHANGÉES (rotation 180° FMJD : case s→51-s,
+    W↔B, STM flip). Donne une position DISTINCTE (convertir ET défendre l'équivalent)."""
+    try:
+        stm, wp, bp = fen.split(":")
+    except ValueError:
+        return fen
+    def flip(part):
+        body = part[1:] if part[:1] in ("W", "B") else part
+        out = []
+        for t in body.split(","):
+            t = t.strip()
+            if not t:
+                continue
+            k = t[0] == "K"
+            num = int(t[1:] if k else t)
+            out.append(("K" if k else "") + str(51 - num))
+        return out
+    nw = flip(bp)  # ancien noir -> nouveau blanc (miroir)
+    nb = flip(wp)
+    ns = "B" if stm.strip()[:1] == "W" else "W"
+    return f"{ns}:W{','.join(nw)}:B{','.join(nb)}"
+
+
+def load_pool(path: Path, rng: random.Random, n_pairs: int,
+              shard: int = 0, nshards: int = 1) -> list[str]:
+    """B2 — charge le pool gymnase (FEN) et retourne jusqu'à 2·n_pairs graines : chaque
+    position jouée en PAIRE (originale + miroir couleurs). Sharding disjoint (stripe) car
+    le self-play est déterministe → deux shards sur la même graine = parties identiques."""
+    fens = [ln.split("#", 1)[0].strip() for ln in open(path, encoding="utf-8")]
+    fens = [f for f in fens if f]
+    rng.shuffle(fens)                       # identique sur tous les shards (rng partagé)
+    if nshards > 1:
+        fens = fens[shard::nshards]         # stripe disjointe
+    out = []
+    for f in fens[:max(1, n_pairs)]:
+        out.append(f)
+        out.append(mirror_fen(f))
+    return out
 
 
 def load_seeds(path: Path, min_pieces: int, rng: random.Random, n: int,
@@ -146,6 +189,17 @@ def main(argv=None) -> int:
     ap.add_argument("--nshards", type=int, default=1,
                     help="total parallel shards (all must share the SAME --seed)")
     ap.add_argument("--shard", type=int, default=0, help="this shard's index in [0,nshards)")
+    # ---- L3 : gymnase de conversion (B2) + arbitre-au-cap (B1). Défauts OFF = comportement identique. ----
+    ap.add_argument("--seed-pool", type=Path, default=None,
+                    help="B2: FEN pool de positions GAGNÉES (gymnase conversion, ex. data/conversion_pool.fen)")
+    ap.add_argument("--seed-frac", type=float, default=0.0,
+                    help="B2: fraction des parties démarrées sur le pool (chaque graine jouée en PAIRE couleurs)")
+    ap.add_argument("--cap-arbiter", choices=["none", "d14"], default="none",
+                    help="B1: adjuger les nulles d'ÉPUISEMENT (ply-cap + 25-move) par deep-relabel d14+egdb au lieu de nulle")
+    ap.add_argument("--egdb-dir", default=None, help="répertoire egdb pour --cap-arbiter (TB-exact si atteignable)")
+    ap.add_argument("--arb-depth", type=int, default=14, help="profondeur de l'arbitre-au-cap")
+    ap.add_argument("--label-src-out", type=Path, default=None,
+                    help="D1: sidecar 1 octet/position aligné au JNNW (0=ONP on-policy, 1=GYM gymnase, 2=CAP arbitre)")
     args = ap.parse_args(argv)
 
     rng = random.Random(args.seed)
@@ -154,6 +208,16 @@ def main(argv=None) -> int:
     if not seeds:
         print("error: no seed positions found", file=sys.stderr)
         return 1
+    n_pool_seeds = 0   # D1: nombre de parties gymnase EN TÊTE de `seeds` (tag GYM vs ONP)
+    if args.seed_pool and args.seed_frac > 0:
+        pool_games = round(len(seeds) * args.seed_frac)
+        seeds = seeds[:max(0, len(seeds) - pool_games)]                 # réduit l'on-policy d'autant
+        pool_seeds = load_pool(args.seed_pool, rng, max(1, pool_games // 2),
+                               shard=args.shard, nshards=args.nshards)
+        seeds = pool_seeds + seeds                                      # gymnase en tête
+        n_pool_seeds = len(pool_seeds)
+        print(f"  seed-pool (B2): {len(pool_seeds)} parties gymnase (paires) + "
+              f"{len(seeds) - len(pool_seeds)} on-policy (frac~{args.seed_frac})")
     print(f"scan-selfplay: {len(seeds)} seeds (>= {args.min_pieces}p), Scan depth {args.depth}")
 
     import hashlib
@@ -186,7 +250,9 @@ def main(argv=None) -> int:
               f"keep-draw-frac={args.keep_draw_frac}, holdout 1/{args.holdout_mod} by opening")
     referee = cv.Referee(args.jass)
     records = bytearray()
+    labels = bytearray()   # D1: 1 octet/position aligné à `records` (0=ONP, 1=GYM, 2=CAP)
     n_pos = 0
+    exhaust_games = []   # B1: (final_fen, [(k,fen) échantillonnés]) des nulles d'épuisement à adjuger
     # preference buffers (train + optional by-game holdout)
     tr_par, tr_mov, ho_par, ho_mov = bytearray(), bytearray(), bytearray(), bytearray()
     n_tr = n_ho = n_dec = n_drawkept = 0
@@ -223,17 +289,27 @@ def main(argv=None) -> int:
             except Exception as exc:  # noqa: BLE001 — keep going on a flaky game
                 print(f"  game {g}: {exc}", file=sys.stderr)
                 continue
-            ow = wmap.get(r.outcome, 0)
-            for k, fen in enumerate(r.fens):
-                if k % args.sample_every:
-                    continue
-                try:
-                    side = fen.split(":", 1)[0].strip()
-                except Exception:
-                    continue
-                wdl = ow if side == "W" else -ow
-                records += fen_to_record(fen, wdl)
-                n_pos += 1
+            _reason = getattr(r, "reason", "") or ""
+            _exhaust = (args.cap_arbiter != "none" and r.outcome == "D" and r.fens
+                        and (_reason.startswith("ply cap") or _reason.startswith("25-move")))
+            if _exhaust:
+                # B1 : ne PAS étiqueter nulle ; bufferiser pour adjuger la finale par d14+egdb
+                kept = [(k, fen) for k, fen in enumerate(r.fens) if not (k % args.sample_every)]
+                exhaust_games.append((r.fens[-1], kept))
+            else:
+                _tag = 1 if g < n_pool_seeds else 0   # D1: GYM (partie gymnase) vs ONP (on-policy)
+                ow = wmap.get(r.outcome, 0)
+                for k, fen in enumerate(r.fens):
+                    if k % args.sample_every:
+                        continue
+                    try:
+                        side = fen.split(":", 1)[0].strip()
+                    except Exception:
+                        continue
+                    wdl = ow if side == "W" else -ow
+                    records += fen_to_record(fen, wdl)
+                    labels.append(_tag)
+                    n_pos += 1
 
             # ---- preference extraction (strong-side quiet plies, decisive-first) ----
             if pref:
@@ -277,12 +353,57 @@ def main(argv=None) -> int:
         try: referee.close()
         except Exception: pass
 
+    # ---- B1 : arbitre-au-cap — adjuge les finales d'ÉPUISEMENT par deep-relabel d14+egdb ----
+    # (TB-exact si atteignable, sinon signe d14) et relabelle TOUTE la partie avec l'issue vraie,
+    # au lieu de « nulle par épuisement » (le mensonge ~19% que la position gagnée n'a pas été convertie).
+    if args.cap_arbiter == "d14" and exhaust_games:
+        finals = b"".join(fen_to_record(fg[0], 0) for fg in exhaust_games)
+        tin = f"{args.out}.caps.{args.shard}.in"
+        tout = f"{args.out}.caps.{args.shard}.out"
+        Path(tin).write_bytes(b"JNNW" + struct.pack("<I", len(exhaust_games)) + finals)
+        cmd = [args.jass, "--deep-relabel", tin, tout, str(args.arb_depth)]
+        if args.egdb_dir:
+            cmd += ["--egdb", args.egdb_dir]
+        ok = False
+        try:
+            subprocess.run(cmd, capture_output=True, timeout=len(exhaust_games) * 30 + 120)
+            ok = Path(tout).exists()
+        except Exception as exc:  # noqa: BLE001
+            print(f"  cap-arbiter FAIL ({exc}); fallback nulle", file=sys.stderr)
+        rel = Path(tout).read_bytes() if ok else b""
+        cap_fires = cap_decisive = cap_draw = 0
+        for gi, (final_fen, kept) in enumerate(exhaust_games):
+            wdl_stm = (struct.unpack_from("<b", rel, 8 + gi * REC + 37)[0]
+                       if ok and 8 + gi * REC + REC <= len(rel) else 0)
+            fside = final_fen.split(":", 1)[0].strip()[:1]
+            ow = wdl_stm if fside == "W" else -wdl_stm   # issue partie en blanc-POV
+            cap_fires += 1
+            cap_decisive += (wdl_stm != 0)
+            cap_draw += (wdl_stm == 0)
+            for k, fen in kept:
+                side = fen.split(":", 1)[0].strip()
+                records += fen_to_record(fen, ow if side == "W" else -ow)
+                labels.append(2)   # D1: CAP (arbitre-au-cap, label TB/d14)
+                n_pos += 1
+        for p in (tin, tout):
+            try: os.remove(p)
+            except OSError: pass
+        print(f"  cap-arbiter d{args.arb_depth}: {cap_fires} nulles d'épuisement adjugées "
+              f"({cap_decisive} décisives = mensonge corrigé, {cap_draw} confirmées nulles)", flush=True)
+
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("wb") as f:
         f.write(b"JNNW")
         f.write(struct.pack("<I", n_pos))
         f.write(records)
     print(f"wrote {args.out} ({n_pos} positions from {len(seeds)} Scan self-play games)")
+    if args.label_src_out:
+        assert len(labels) == n_pos, f"label/record désalignés: {len(labels)} != {n_pos}"
+        Path(args.label_src_out).write_bytes(bytes(labels))
+        import collections as _c
+        dist = dict(_c.Counter(labels))
+        print(f"wrote {args.label_src_out} ({len(labels)} label bytes ; ONP/GYM/CAP = "
+              f"{dist.get(0,0)}/{dist.get(1,0)}/{dist.get(2,0)})")
 
     if pref:
         def _write_pref(par_path, mov_path, par_buf, mov_buf, n):
