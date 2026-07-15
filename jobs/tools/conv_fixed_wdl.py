@@ -2,7 +2,7 @@
 """Measure conversion against a fixed defender on deeply labelled JNNW positions.
 
 Unlike the historical ``tools/conv_self.py`` heuristic, this runner does not
-infer the advantaged side from piece counts.  The winning side comes from the
+infer the advantaged side from piece counts. The winning side comes from the
 record's d14+EGDB WDL label, so equal-material and king-heavy positions are
 measured correctly.
 """
@@ -90,7 +90,9 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
             else:
                 n_loss += 1
     finally:
-        champion.close(); defender.close(); referee.close()
+        champion.close()
+        defender.close()
+        referee.close()
 
     return {
         "conv_fixed_wdl": None if n_pos == 0 else round(n_win / n_pos, 6),
@@ -122,8 +124,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--nshards", type=int, default=1)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
-    if args.shards if False else False:  # pragma: no cover - parser typo guard kept impossible
-        return 2
     if args.nshards <= 0 or not 0 <= args.shard < args.nshards:
         parser.error("require 0 <= shard < nshards")
     try:
