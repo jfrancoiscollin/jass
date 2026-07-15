@@ -1,0 +1,58 @@
+=== DOE 2x2 LABELS × GYMNASE — HEAD 5cd2fee34 DOE 2×2 labels × gymnase sur corpus strictement apparié (#329) — NCPU=16 df=461261Mo ===
+  config: base=120000 gym G1/G4 conv=200/palier gate=300 openings×1 pairs
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.004s
+
+OK
+{
+  "base_records": 2,
+  "gym_unique_records": 2,
+  "gym_multiplier_high": 3,
+  "ordered_unique_position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564",
+  "base_onp_record_sha256": "f4a5dd8349eca78647318292cadabb4c6937e34e1078bc3f72acb9bc3e5d9651",
+  "base_adj_record_sha256": "ee30a6d27c74c92c2703fafa3c71adb311c714cd9a5a62cb50a4a80ca8db25e8",
+  "gym_record_sha256": "49da29ac26e4cc15f7015ed240e981197c854be9c98ba13d9d1cacf694b58ddb",
+  "cells": {
+    "onp_g1": {
+      "records": 4,
+      "record_sha256": "58c7bd22b327c0826431d00ed7aedca001e58be74d888fed7400e39ddaf2fe3b",
+      "position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564"
+    },
+    "adj_g1": {
+      "records": 4,
+      "record_sha256": "ab70332e63e34a9025f398e67159e73e0e3e07a5940ae53dd61acc3a4906c096",
+      "position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564"
+    },
+    "onp_g3": {
+      "records": 8,
+      "record_sha256": "9f0f3dbabca5e869667a7cec7b255ef96f1acc4e05f56000e39678372627786f",
+      "position_sha256": "42263405777e35eddf3fa6442a2b8e3369c020555a6785bcca29f5fd2c9f1674"
+    },
+    "adj_g3": {
+      "records": 8,
+      "record_sha256": "2f000df625aa0ca3b32f50c1096c593cedde50ad2d49cb80c9407c883accb623",
+      "position_sha256": "42263405777e35eddf3fa6442a2b8e3369c020555a6785bcca29f5fd2c9f1674"
+    }
+  }
+}
+{"verified_cells": ["adj_g1", "adj_g3", "onp_g1", "onp_g3"], "unique_positions": 4}
+{"records": 9, "shards": 4, "counts": [2, 2, 2, 3]}
+{"records": 9, "counts": [2, 2, 2, 3], "position_sha256": "962c44bc002b399f484892338f955265435f2507da4d49b7e84d65b3a6dcc301"}
+{"input": 3, "kept_decisive": 2, "dropped_draw": 1, "position_sha256": "857746f4f5dc42a6977cbe79b49fc88a8a8bbae42f56d7c9dc5361864a6b9847"}
+{"records": 6, "shards": 2, "counts": [3, 3]}
+{"records": 2, "labels_changed": 2, "changed_pct": 100.0, "decisive": 1, "position_sha256": "31912dfe00a52e19cb70b341cfa88c0183941f56351a7f1da7f2a72c35e7c668"}
+{"input": 5, "eligible": 3, "selected": 2, "excluded_positions": 1, "duplicate_positions_skipped": 1, "position_sha256": "857746f4f5dc42a6977cbe79b49fc88a8a8bbae42f56d7c9dc5361864a6b9847"}
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+  source pin: main=5cd2fee3429b278fbe635740b97010d4ee2b76cb develop=43ec5e14fff970d1e4b778c2821a49670ddac6c5
+=== build jass develop-pinned + EGDB ===
+=== prepare unique, disjoint base and deeply labelled gym/eval ===
+{"records": 52682, "position_sha256": "cd21f0e572f018c0b2a26151e5a8f2fdafc47164625b82101850f2ce20112807"}
+{"input": 3406685, "eligible": 3317794, "selected": 120000, "excluded_positions": 52682, "duplicate_positions_skipped": 88764, "position_sha256": "f57aa0a2516c636d871d27e168bfca7b42ba0dcd4cb562f58055847f7a57d108"}
+/root/jass/jobs/queue/cpx62-0723-doe-labels-gym-2x2.sh: line 105: 477221 Killed                     timeout "$timeout_s" "$J" --deep-relabel "$W/${prefix}_src.$tag.jnnw" "$W/${prefix}_rel.$tag.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/${prefix}_rel.$tag.log" 2>&1
+/root/jass/jobs/queue/cpx62-0723-doe-labels-gym-2x2.sh: line 105: 477225 Killed                     timeout "$timeout_s" "$J" --deep-relabel "$W/${prefix}_src.$tag.jnnw" "$W/${prefix}_rel.$tag.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/${prefix}_rel.$tag.log" 2>&1
+ABORT: base: 2 relabel shards failed/timed out
