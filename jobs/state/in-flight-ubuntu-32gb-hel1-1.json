@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0725-grab-convdiag",
+  "script": "jobs/queue/cpx62-0725-grab-convdiag.sh",
+  "pid": 480839,
+  "started_at": "2026-07-15T11:38:03+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
