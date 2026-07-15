@@ -72,10 +72,22 @@ commit_to_main(){
   return 1
 }
 
+COPIED_FROM_DEVELOP=()
+copy_from_develop(){
+  local f="$1"
+  mkdir -p "$(dirname "$f")"
+  git show "origin/develop:$f" > "$f" || return 1
+  COPIED_FROM_DEVELOP+=("$f")
+}
 restore_src(){
-  git checkout -- src pattern_jass/src tools/calibrate_vs_scan.py tools/jass_vs_jass_arch.py \
-    pattern_jass/tools/wdl_finetune.py pattern_jass/tools/train_stream.py \
-    pattern_jass/tools/make_bootstrap_eval.py 2>/dev/null || true
+  local f
+  for f in "${COPIED_FROM_DEVELOP[@]}"; do
+    if git cat-file -e "origin/main:$f" 2>/dev/null; then
+      git checkout -- "$f" 2>/dev/null || true
+    else
+      rm -f "$f"
+    fi
+  done
 }
 
 relabel_strict(){ # input output prefix timeout
@@ -186,10 +198,10 @@ git fetch origin +refs/heads/develop:refs/remotes/origin/develop --quiet 2>/dev/
 DEVSHA=$(git rev-parse origin/develop)
 MAINSHA=$(git rev-parse origin/main)
 DIVERGED=$(git diff --name-only origin/main origin/develop -- src pattern_jass/src)
-for f in $DIVERGED; do git show "origin/develop:$f" > "$f" || die "copy develop $f"; done
+for f in $DIVERGED; do copy_from_develop "$f" || die "copy develop $f"; done
 for f in tools/calibrate_vs_scan.py tools/jass_vs_jass_arch.py pattern_jass/tools/wdl_finetune.py \
          pattern_jass/tools/train_stream.py pattern_jass/tools/make_bootstrap_eval.py; do
-  git show "origin/develop:$f" > "$f" || die "$f absent de develop"
+  copy_from_develop "$f" || die "$f absent de develop"
 done
 say "  source pin: main=$MAINSHA develop=$DEVSHA"
 
