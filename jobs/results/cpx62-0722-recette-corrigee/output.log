@@ -1,0 +1,42 @@
+=== RECETTE CORRIGÉE L3 (adjud-full + gymnase, positions APPARIÉES) — HEAD f76868ebc queue cpx62-0722 : recette corrigée L3 (adjud-full + gymnase up-weight, positions APPARIÉES, tools develop pinné) — 3 cellules, ~1h SANS gen — NCPU=16 df=461272Mo ===
+  develop pinné SHA=43ec5e14fff970d1e4b778c2821a49670ddac6c5 (tools L3 consolidés)
+=== build jass egdb ===
+  ✓ build egdb + bootstrap + corpus T1 + jauge conv (400) + gymnase FEN (52682)
+
+=== sous-échantillon 120000 + relabel d14+egdb (16 shards) — CORPUS APPARIÉ ===
+sous-échantillon: 120000
+/root/jass/jobs/queue/cpx62-0722-recette-corrigee.sh: line 134: 472884 Killed                     timeout "$TOSH" "$J" --deep-relabel "$W/sh.$s.jnnw" "$W/sh_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/rel.$s.log" 2>&1
+/root/jass/jobs/queue/cpx62-0722-recette-corrigee.sh: line 134: 472885 Killed                     timeout "$TOSH" "$J" --deep-relabel "$W/sh.$s.jnnw" "$W/sh_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/rel.$s.log" 2>&1
+  shard 1: ÉCHEC (relabel manquant/incomplet) → EXCLU des 2 fits
+  shard 2: ÉCHEC (relabel manquant/incomplet) → EXCLU des 2 fits
+  shards réussis : 14/16 | positions APPARIÉES = 105000
+  labels changés par l'adjud (PAR-SHARD, aligné) : 64565/105000 = 61.5%
+
+=== gymnase JNNW (52682 FEN → pack → relabel d14+egdb) ===
+gym packé: 52682
+/root/jass/jobs/queue/cpx62-0722-recette-corrigee.sh: line 197: 472957 Killed                     timeout 2000 "$J" --deep-relabel "$W/gs.$s.jnnw" "$W/gs_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/grel.$s.log" 2>&1
+/root/jass/jobs/queue/cpx62-0722-recette-corrigee.sh: line 197: 472972 Killed                     timeout 2000 "$J" --deep-relabel "$W/gs.$s.jnnw" "$W/gs_rel.$s.jnnw" "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb 2048 > "$W/grel.$s.log" 2>&1
+  gymnase certifié décisif : 31383/46097
+mix: 230532
+
+--- cellules @0.05 : on-policy / adjud-W0 / adjud-W4 (gymnase 31383 ×4) ---
+
+  · fit onpolicy (N=105000)
+  [onpolicy] conv_self=0.4883 (n=299) | gate vs bootstrap : rate=0.4342 n=600 elo=-46
+
+  · fit adjudW0 (N=105000)
+  [adjudW0] conv_self=0.4578 (n=225) | gate vs bootstrap : rate=0.5050 n=600 elo=+3
+
+  · fit adjudWhi (N=230532)
+  [adjudWhi] conv_self=0.4473 (n=275) | gate vs bootstrap : rate=0.4950 n=600 elo=-3
+
+=== VERDICT RECETTE CORRIGÉE ===
+  labels changés par adjud (valide) = 61.5%
+  onpolicy  : conv_self=0.4883  gate_elo=-46 (rate 0.434)
+  adjudW0   : conv_self=0.4578  gate_elo=+3 (rate 0.505)
+  adjudWhi  : conv_self=0.4473  gate_elo=-3 (rate 0.495)
+  → effet-LABEL (adjud-W0 vs on-policy, MÊMES positions) : conv -0.031  elo +49
+  → effet-GYMNASE (W4 vs W0) : conv -0.011  elo -6
+  => ✗ gymnase up-weight ne monte pas conv (+-0.011) même à W4 ⟹ bootstrap-fort = plafond à 1 tour → pivot CAMPAGNE multi-tours / repenser le départ.
+  ✓ RESULTS committé
+=== 0722 FINI ===
