@@ -1,0 +1,21 @@
+{
+  "mtc_env": "JASS_EGDB_MTC_PATH",
+  "mtc_path": "",
+  "mtc_active": false,
+  "mtc_readable": false,
+  "mtc_entries": 0,
+  "cache_check": {
+    "ok": true,
+    "aggregate_mb": 8192,
+    "budget_mb": 21928,
+    "cache_mb": 512,
+    "procs": 16,
+    "mem_mb": 31326,
+    "reasons": []
+  },
+  "concurrent_smoke_ok": null,
+  "audit_ok": false,
+  "reasons": [
+    "JASS_EGDB_MTC_PATH non défini"
+  ]
+}

@@ -1,7 +1,0 @@
-{
-  "job_id": "cpx62-0728-t1bis-adj-g1-v2",
-  "script": "jobs/queue/cpx62-0728-t1bis-adj-g1-v2.sh",
-  "pid": 497106,
-  "started_at": "2026-07-15T20:53:02+00:00",
-  "host": "ubuntu-32gb-hel1-1"
-}
