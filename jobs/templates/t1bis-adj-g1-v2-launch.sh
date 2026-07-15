@@ -20,6 +20,41 @@ SHARD_TIMEOUT="${SHARD_TIMEOUT:-7000}"
 W="/root/cw-$JOB_ID"
 mkdir -p "$W"
 
+# Durcissement runtime du runner principal. Le remplacement est volontairement
+# vérifié : si le template diverge, on échoue avant tout calcul scientifique.
+python3 - <<'PY'
+from pathlib import Path
+
+path = Path("jobs/templates/t1bis-adj-g1-v2.sh")
+text = path.read_text(encoding="utf-8")
+
+old_set = "set -euo pipefail"
+new_set = "set -Eeuo pipefail"
+if text.count(old_set) != 1:
+    raise SystemExit(f"template inattendu: set -euo pipefail occurrences={text.count(old_set)}")
+text = text.replace(old_set, new_set, 1)
+
+old_diag = '''say(){ echo "$*" | tee -a "$RES"; }
+die(){ say "ABORT: $*"; exit 1; }
+'''
+new_diag = '''say(){ echo "$*" | tee -a "$RES"; }
+die(){ say "ABORT: $*"; exit 1; }
+trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a "$RES"; exit "$rc"' ERR
+'''
+if text.count(old_diag) != 1:
+    raise SystemExit(f"template inattendu: bloc diagnostic occurrences={text.count(old_diag)}")
+text = text.replace(old_diag, new_diag, 1)
+
+old_openings = '''grep -v '^[[:space:]]*#' data/dilf_combinations.fen | sed 's/#.*//' | awk 'NF' | head -"$NOPEN" > "$W/open.fen"'''
+new_openings = '''awk -v limit="$NOPEN" '\n  /^[[:space:]]*#/ { next }\n  {\n    sub(/#.*/, "")\n    if (NF) {\n      print\n      count++\n      if (count >= limit) exit\n    }\n  }\n' data/dilf_combinations.fen > "$W/open.fen"\n[ "$(wc -l < "$W/open.fen")" -eq "$NOPEN" ] || die "openings insuffisantes: $(wc -l < "$W/open.fen")/$NOPEN"'''
+if text.count(old_openings) != 1:
+    raise SystemExit(f"template inattendu: pipeline openings occurrences={text.count(old_openings)}")
+text = text.replace(old_openings, new_openings, 1)
+
+path.write_text(text, encoding="utf-8")
+PY
+bash -n jobs/templates/t1bis-adj-g1-v2.sh
+
 # Manifests techniques initiaux : JSON valide, mais n=0 => promotion rejetée si
 # le worker n'a pas fini. Écriture atomique du vrai résultat ensuite.
 cat > "$W/gate_parent.json" <<'JSON'
