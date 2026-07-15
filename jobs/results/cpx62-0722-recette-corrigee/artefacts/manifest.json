@@ -1,0 +1,30 @@
+{
+  "dev_sha": "43ec5e14fff970d1e4b778c2821a49670ddac6c5",
+  "n_matched": 105000,
+  "n_gym": 31383,
+  "gym_w": 4,
+  "labels_changed_pct": 61.5,
+  "cells": {
+    "onpolicy": {
+      "conv": 0.4883,
+      "cn": 299,
+      "rate": 0.4342,
+      "gn": 600,
+      "elo": -46
+    },
+    "adjudW0": {
+      "conv": 0.4578,
+      "cn": 225,
+      "rate": 0.505,
+      "gn": 600,
+      "elo": 3
+    },
+    "adjudWhi": {
+      "conv": 0.4473,
+      "cn": 275,
+      "rate": 0.495,
+      "gn": 600,
+      "elo": -3
+    }
+  }
+}
