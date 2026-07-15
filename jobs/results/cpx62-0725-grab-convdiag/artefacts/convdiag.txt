@@ -1,0 +1,105 @@
+=== cw-0724 présent ? ===
+OUI. contenu conv_* :
+-rw-r--r-- 1 root root 989 Jul 15 10:46 /root/cw-0724/conv_onp_g1.0.json
+-rw-r--r-- 1 root root 216 Jul 15 10:46 /root/cw-0724/conv_onp_g1.1.json
+-rw-r--r-- 1 root root 992 Jul 15 10:46 /root/cw-0724/conv_onp_g1.10.json
+-rw-r--r-- 1 root root 222 Jul 15 10:46 /root/cw-0724/conv_onp_g1.11.json
+-rw-r--r-- 1 root root 221 Jul 15 10:46 /root/cw-0724/conv_onp_g1.12.json
+-rw-r--r-- 1 root root 222 Jul 15 10:47 /root/cw-0724/conv_onp_g1.13.json
+-rw-r--r-- 1 root root 992 Jul 15 10:46 /root/cw-0724/conv_onp_g1.14.json
+-rw-r--r-- 1 root root 992 Jul 15 10:46 /root/cw-0724/conv_onp_g1.15.json
+-rw-r--r-- 1 root root 221 Jul 15 10:46 /root/cw-0724/conv_onp_g1.2.json
+-rw-r--r-- 1 root root 989 Jul 15 10:46 /root/cw-0724/conv_onp_g1.3.json
+
+=== errors[:8] par shard (onp_g1) ===
+--- conv_onp_g1.0.json ---
+  n_pos=0 n_win=0 n_loss=0 n_draw=0 n_errors=28
+   ERR: pos 0: [Errno 32] Broken pipe
+   ERR: pos 16: [Errno 32] Broken pipe
+   ERR: pos 32: [Errno 32] Broken pipe
+   ERR: pos 48: [Errno 32] Broken pipe
+   ERR: pos 64: [Errno 32] Broken pipe
+   ERR: pos 80: [Errno 32] Broken pipe
+   ERR: pos 96: [Errno 32] Broken pipe
+   ERR: pos 112: [Errno 32] Broken pipe
+--- conv_onp_g1.10.json ---
+  n_pos=0 n_win=0 n_loss=0 n_draw=0 n_errors=27
+   ERR: pos 10: [Errno 32] Broken pipe
+   ERR: pos 26: [Errno 32] Broken pipe
+   ERR: pos 42: [Errno 32] Broken pipe
+   ERR: pos 58: [Errno 32] Broken pipe
+   ERR: pos 74: [Errno 32] Broken pipe
+   ERR: pos 90: [Errno 32] Broken pipe
+   ERR: pos 106: [Errno 32] Broken pipe
+   ERR: pos 122: [Errno 32] Broken pipe
+--- conv_onp_g1.11.json ---
+  n_pos=27 n_win=16 n_loss=11 n_draw=0 n_errors=0
+--- conv_onp_g1.12.json ---
+  n_pos=27 n_win=22 n_loss=5 n_draw=0 n_errors=0
+--- conv_onp_g1.13.json ---
+  n_pos=27 n_win=16 n_loss=10 n_draw=1 n_errors=0
+--- conv_onp_g1.14.json ---
+  n_pos=0 n_win=0 n_loss=0 n_draw=0 n_errors=27
+   ERR: pos 14: [Errno 32] Broken pipe
+   ERR: pos 30: [Errno 32] Broken pipe
+   ERR: pos 46: [Errno 32] Broken pipe
+   ERR: pos 62: [Errno 32] Broken pipe
+   ERR: pos 78: [Errno 32] Broken pipe
+   ERR: pos 94: [Errno 32] Broken pipe
+   ERR: pos 110: [Errno 32] Broken pipe
+   ERR: pos 126: [Errno 32] Broken pipe
+--- conv_onp_g1.15.json ---
+  n_pos=0 n_win=0 n_loss=0 n_draw=0 n_errors=27
+   ERR: pos 15: [Errno 32] Broken pipe
+   ERR: pos 31: [Errno 32] Broken pipe
+   ERR: pos 47: [Errno 32] Broken pipe
+   ERR: pos 63: [Errno 32] Broken pipe
+   ERR: pos 79: [Errno 32] Broken pipe
+   ERR: pos 95: [Errno 32] Broken pipe
+   ERR: pos 111: [Errno 32] Broken pipe
+   ERR: pos 127: [Errno 32] Broken pipe
+--- conv_onp_g1.1.json ---
+  n_pos=28 n_win=21 n_loss=6 n_draw=1 n_errors=0
+--- conv_onp_g1.2.json ---
+  n_pos=28 n_win=17 n_loss=11 n_draw=0 n_errors=0
+--- conv_onp_g1.3.json ---
+  n_pos=0 n_win=0 n_loss=0 n_draw=0 n_errors=28
+   ERR: pos 3: [Errno 32] Broken pipe
+   ERR: pos 19: [Errno 32] Broken pipe
+   ERR: pos 35: [Errno 32] Broken pipe
+   ERR: pos 51: [Errno 32] Broken pipe
+   ERR: pos 67: [Errno 32] Broken pipe
+   ERR: pos 83: [Errno 32] Broken pipe
+   ERR: pos 99: [Errno 32] Broken pipe
+   ERR: pos 115: [Errno 32] Broken pipe
+--- conv_onp_g1.4.json ---
+  n_pos=27 n_win=19 n_loss=6 n_draw=2 n_errors=0
+--- conv_onp_g1.5.json ---
+  n_pos=27 n_win=22 n_loss=4 n_draw=1 n_errors=0
+--- conv_onp_g1.6.json ---
+  n_pos=27 n_win=18 n_loss=9 n_draw=0 n_errors=0
+--- conv_onp_g1.7.json ---
+  n_pos=27 n_win=21 n_loss=5 n_draw=1 n_errors=0
+--- conv_onp_g1.8.json ---
+  n_pos=12 n_win=10 n_loss=2 n_draw=0 n_errors=15
+   ERR: pos 200: Jass: stdout closed
+   ERR: pos 216: [Errno 32] Broken pipe
+   ERR: pos 232: [Errno 32] Broken pipe
+   ERR: pos 248: [Errno 32] Broken pipe
+   ERR: pos 264: [Errno 32] Broken pipe
+   ERR: pos 280: [Errno 32] Broken pipe
+   ERR: pos 296: [Errno 32] Broken pipe
+   ERR: pos 312: [Errno 32] Broken pipe
+--- conv_onp_g1.9.json ---
+  n_pos=27 n_win=13 n_loss=14 n_draw=0 n_errors=0
+
+=== tail d'un log conv shard (si présent) ===
+--- conv_onp_g1.0.log ---
+Exception ignored while finalizing file <_io.TextIOWrapper name=6 encoding='UTF-8'>:
+Traceback (most recent call last):
+  File "/root/jass/jobs/tools/conv_fixed_wdl.py", line 130, in main
+    result = measure(args)
+BrokenPipeError: [Errno 32] Broken pipe
+{"conv_fixed_wdl": null, "n_pos": 0, "n_win": 0, "n_draw": 0, "n_loss": 0, "n_skipped_draw_label": 0, "n_errors": 28, "errors": ["pos 0: [Errno 32] Broken pipe", "pos 16: [Errno 32] Broken pipe", "pos 32: [Errno 32] Broken pipe", "pos 48: [Errno 32] Broken pipe", "pos 64: [Errno 32] Broken pipe", "pos 80: [Errno 32] Broken pipe", "pos 96: [Errno 32] Broken pipe", "pos 112: [Errno 32] Broken pipe", "pos 128: [Errno 32] Broken pipe", "pos 144: [Errno 32] Broken pipe", "pos 160: [Errno 32] Broken pipe", "pos 176: [Errno 32] Broken pipe", "pos 192: [Errno 32] Broken pipe", "pos 208: [Errno 32] Broken pipe", "pos 224: [Errno 32] Broken pipe", "pos 240: [Errno 32] Broken pipe", "pos 256: [Errno 32] Broken pipe", "pos 272: [Errno 32] Broken pipe", "pos 288: [Errno 32] Broken pipe", "pos 304: [Errno 32] Broken pipe"], "depth": 10, "movetime": null, "shard": 0, "nshards": 16}
+--- conv_onp_g1.1.log ---
+{"conv_fixed_wdl": 0.75, "n_pos": 28, "n_win": 21, "n_draw": 1, "n_loss": 6, "n_skipped_draw_label": 0, "n_errors": 0, "errors": [], "depth": 10, "movetime": null, "shard": 1, "nshards": 16}
