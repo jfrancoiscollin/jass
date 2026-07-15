@@ -1,0 +1,139 @@
+{
+  "corpus_manifest": {
+    "base_records": 120000,
+    "gym_unique_records": 35849,
+    "gym_multiplier_high": 4,
+    "ordered_unique_position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b",
+    "base_onp_record_sha256": "7f18426bb9d84603e4a14dc826ff4e24d9674433ccc6f2a160bf86ee30d474d5",
+    "base_adj_record_sha256": "44b027ff6997e01e254d6a81ea253c13c3c78ee73a8984028a63c2dcdb4a903c",
+    "gym_record_sha256": "b3724b42a6d81cbea418f0aa69c8378dfeac75c0275f6ab7e4bc0fa6c7a00a96",
+    "cells": {
+      "onp_g1": {
+        "records": 155849,
+        "record_sha256": "c2332d4ad47dbc4a66c3d1b5f12e101863352e197ebbf8d6bd92e431b63112fe",
+        "position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b"
+      },
+      "adj_g1": {
+        "records": 155849,
+        "record_sha256": "a11e7d47974d42a8ca8456d0aabb6942319ac0da7fb757dfa19e8a6aa35a8205",
+        "position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b"
+      },
+      "onp_g4": {
+        "records": 263396,
+        "record_sha256": "c68839bf669baf8c179279e0f21c449bdace97ed3b015238be42a4928eea96d9",
+        "position_sha256": "0d5f91fd91ee6c9da51db8f5ddf39fca60a27dae8dfe6e65669965656c802f93"
+      },
+      "adj_g4": {
+        "records": 263396,
+        "record_sha256": "6287230042ea2a43633f86093c09cf7b273b707cbaa7f83d4c61e7d9b9068ed6",
+        "position_sha256": "0d5f91fd91ee6c9da51db8f5ddf39fca60a27dae8dfe6e65669965656c802f93"
+      }
+    },
+    "main_sha": "cebfa1b9042675da949271b48f53b6d3989dae3e",
+    "develop_sha": "43ec5e14fff970d1e4b778c2821a49670ddac6c5",
+    "n_target": 120000,
+    "gym_weight_high": 4,
+    "conv_per_palier": 200
+  },
+  "cells": {
+    "onp_g1": {
+      "conv": 0.672986,
+      "conv_n": 422,
+      "gate_rate": 0.488333,
+      "gate_n": 600,
+      "gate_elo": -8.11,
+      "gate_ci": [
+        0.453698,
+        0.522969
+      ]
+    },
+    "adj_g1": {
+      "conv": 0.671362,
+      "conv_n": 426,
+      "gate_rate": 0.526667,
+      "gate_n": 600,
+      "gate_elo": 18.55,
+      "gate_ci": [
+        0.492007,
+        0.561326
+      ]
+    },
+    "onp_g4": {
+      "conv": 0.662679,
+      "conv_n": 418,
+      "gate_rate": 0.458333,
+      "gate_n": 600,
+      "gate_elo": -29.02,
+      "gate_ci": [
+        0.423769,
+        0.492898
+      ]
+    },
+    "adj_g4": {
+      "conv": 0.662679,
+      "conv_n": 418,
+      "gate_rate": 0.523333,
+      "gate_n": 600,
+      "gate_elo": 16.23,
+      "gate_ci": [
+        0.488658,
+        0.558008
+      ]
+    }
+  },
+  "direct_contrasts": {
+    "label_g1": {
+      "a": "adj_g1",
+      "b": "onp_g1",
+      "rate": 0.510833,
+      "n": 600,
+      "elo": 7.53,
+      "ci": [
+        0.476081,
+        0.545586
+      ]
+    },
+    "label_g4": {
+      "a": "adj_g4",
+      "b": "onp_g4",
+      "rate": 0.533333,
+      "n": 600,
+      "elo": 23.2,
+      "ci": [
+        0.498634,
+        0.568033
+      ]
+    },
+    "gym_onp": {
+      "a": "onp_g4",
+      "b": "onp_g1",
+      "rate": 0.495833,
+      "n": 600,
+      "elo": -2.9,
+      "ci": [
+        0.461071,
+        0.530595
+      ]
+    },
+    "gym_adj": {
+      "a": "adj_g4",
+      "b": "adj_g1",
+      "rate": 0.508333,
+      "n": 600,
+      "elo": 5.79,
+      "ci": [
+        0.473309,
+        0.543358
+      ]
+    }
+  },
+  "effects": {
+    "conv_label_g1": -0.0016239999999999588,
+    "conv_label_high": 0.0,
+    "conv_gym_onp": -0.010306999999999955,
+    "conv_gym_adj": -0.008682999999999996,
+    "conv_interaction": 0.0016239999999999588,
+    "elo_interaction_label_difference": 15.669999999999998,
+    "elo_interaction_gym_difference": 8.69
+  }
+}
