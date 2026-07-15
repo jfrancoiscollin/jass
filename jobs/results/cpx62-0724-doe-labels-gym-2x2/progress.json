@@ -1,8 +1,8 @@
 {
   "job_id": "cpx62-0724-doe-labels-gym-2x2",
-  "snapshot_at": "2026-07-15T10:36:54+00:00",
+  "snapshot_at": "2026-07-15T10:42:03+00:00",
   "started_at": "2026-07-15T10:08:57+00:00",
-  "elapsed_seconds": 1677,
+  "elapsed_seconds": 1986,
   "artefacts": [],
-  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477662       1       27:56  0.0  0.0 bash\n 477664  477662       27:56  0.0  0.0 bash\n 478418  477664       24:08  0.0  0.0 timeout\n 478423  478418       24:08 99.8  1.7 jass\n"
+  "ps_session": "    PID    PPID     ELAPSED %CPU %MEM COMMAND\n 477662       1       33:05  0.0  0.0 bash\n 477664  477662       33:05  0.0  0.0 bash\n 479375  477664       01:06  494  4.2 python3\n"
 }
