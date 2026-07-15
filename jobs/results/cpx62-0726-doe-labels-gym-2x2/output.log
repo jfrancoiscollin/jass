@@ -1,0 +1,119 @@
+=== DOE 2x2 LABELS × GYMNASE — HEAD cebfa1b90 runner: finalize cpx62-0725-grab-convdiag (completed, rc=0) — NCPU=16 df=459481Mo ===
+  config: base=120000 gym G1/G4 conv=200/palier gate=300 openings×1 pairs
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 0.005s
+
+OK
+{
+  "base_records": 2,
+  "gym_unique_records": 2,
+  "gym_multiplier_high": 3,
+  "ordered_unique_position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564",
+  "base_onp_record_sha256": "f4a5dd8349eca78647318292cadabb4c6937e34e1078bc3f72acb9bc3e5d9651",
+  "base_adj_record_sha256": "ee30a6d27c74c92c2703fafa3c71adb311c714cd9a5a62cb50a4a80ca8db25e8",
+  "gym_record_sha256": "49da29ac26e4cc15f7015ed240e981197c854be9c98ba13d9d1cacf694b58ddb",
+  "cells": {
+    "onp_g1": {
+      "records": 4,
+      "record_sha256": "58c7bd22b327c0826431d00ed7aedca001e58be74d888fed7400e39ddaf2fe3b",
+      "position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564"
+    },
+    "adj_g1": {
+      "records": 4,
+      "record_sha256": "ab70332e63e34a9025f398e67159e73e0e3e07a5940ae53dd61acc3a4906c096",
+      "position_sha256": "a7450c7122cf94b5eec81e7dd1e99470c92bf246f6e3703d05918e8a2c714564"
+    },
+    "onp_g3": {
+      "records": 8,
+      "record_sha256": "9f0f3dbabca5e869667a7cec7b255ef96f1acc4e05f56000e39678372627786f",
+      "position_sha256": "42263405777e35eddf3fa6442a2b8e3369c020555a6785bcca29f5fd2c9f1674"
+    },
+    "adj_g3": {
+      "records": 8,
+      "record_sha256": "2f000df625aa0ca3b32f50c1096c593cedde50ad2d49cb80c9407c883accb623",
+      "position_sha256": "42263405777e35eddf3fa6442a2b8e3369c020555a6785bcca29f5fd2c9f1674"
+    }
+  }
+}
+{"verified_cells": ["adj_g1", "adj_g3", "onp_g1", "onp_g3"], "unique_positions": 4}
+{"records": 9, "shards": 4, "counts": [2, 2, 2, 3]}
+{"records": 9, "counts": [2, 2, 2, 3], "position_sha256": "962c44bc002b399f484892338f955265435f2507da4d49b7e84d65b3a6dcc301"}
+{"input": 3, "kept_decisive": 2, "dropped_draw": 1, "position_sha256": "857746f4f5dc42a6977cbe79b49fc88a8a8bbae42f56d7c9dc5361864a6b9847"}
+{"records": 6, "shards": 2, "counts": [3, 3]}
+{"records": 2, "labels_changed": 2, "changed_pct": 100.0, "decisive": 1, "position_sha256": "31912dfe00a52e19cb70b341cfa88c0183941f56351a7f1da7f2a72c35e7c668"}
+{"input": 5, "eligible": 3, "selected": 2, "excluded_positions": 1, "duplicate_positions_skipped": 1, "position_sha256": "857746f4f5dc42a6977cbe79b49fc88a8a8bbae42f56d7c9dc5361864a6b9847"}
+..
+----------------------------------------------------------------------
+Ran 2 tests in 0.000s
+
+OK
+  source pin: main=cebfa1b9042675da949271b48f53b6d3989dae3e develop=43ec5e14fff970d1e4b778c2821a49670ddac6c5
+=== build jass develop-pinned + EGDB ===
+=== prepare unique, disjoint base and deeply labelled gym/eval ===
+{"records": 52682, "position_sha256": "cd21f0e572f018c0b2a26151e5a8f2fdafc47164625b82101850f2ce20112807"}
+{"input": 3406685, "eligible": 3317794, "selected": 120000, "excluded_positions": 52682, "duplicate_positions_skipped": 88764, "position_sha256": "f57aa0a2516c636d871d27e168bfca7b42ba0dcd4cb562f58055847f7a57d108"}
+{"records": 120000, "labels_changed": 73714, "changed_pct": 61.428333333333335, "decisive": 78764, "position_sha256": "f57aa0a2516c636d871d27e168bfca7b42ba0dcd4cb562f58055847f7a57d108"}
+{"records": 52682, "labels_changed": 35849, "changed_pct": 68.04791010212217, "decisive": 35849, "position_sha256": "cd21f0e572f018c0b2a26151e5a8f2fdafc47164625b82101850f2ce20112807"}
+{"input": 52682, "kept_decisive": 35849, "dropped_draw": 16833, "position_sha256": "c466954e16d9a49d7f3e16cafa44b4127e236a091afab61fc58e7de850381111"}
+{"selected": 800, "groups": {"p1_net": 400, "p2_moyen": 400, "p4_egal": 400, "p3_mince": 400}}
+{"records": 800, "position_sha256": "8c50788ff594a9056e1c97ee17718ba3c2cf7226fcad3aaf22227e5ab5d0696e"}
+{"records": 800, "labels_changed": 436, "changed_pct": 54.5, "decisive": 436, "position_sha256": "8c50788ff594a9056e1c97ee17718ba3c2cf7226fcad3aaf22227e5ab5d0696e"}
+{"input": 800, "kept_decisive": 436, "dropped_draw": 364, "position_sha256": "d3ce0932ca4e280a824ebd758b8cad92e5eda884065139ddd4e1446e6ec07794"}
+{
+  "base_records": 120000,
+  "gym_unique_records": 35849,
+  "gym_multiplier_high": 4,
+  "ordered_unique_position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b",
+  "base_onp_record_sha256": "7f18426bb9d84603e4a14dc826ff4e24d9674433ccc6f2a160bf86ee30d474d5",
+  "base_adj_record_sha256": "44b027ff6997e01e254d6a81ea253c13c3c78ee73a8984028a63c2dcdb4a903c",
+  "gym_record_sha256": "b3724b42a6d81cbea418f0aa69c8378dfeac75c0275f6ab7e4bc0fa6c7a00a96",
+  "cells": {
+    "onp_g1": {
+      "records": 155849,
+      "record_sha256": "c2332d4ad47dbc4a66c3d1b5f12e101863352e197ebbf8d6bd92e431b63112fe",
+      "position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b"
+    },
+    "adj_g1": {
+      "records": 155849,
+      "record_sha256": "a11e7d47974d42a8ca8456d0aabb6942319ac0da7fb757dfa19e8a6aa35a8205",
+      "position_sha256": "0d10c29dffea51f0da36b2b946a53fabd56ed1113611c189a8144676f52ac57b"
+    },
+    "onp_g4": {
+      "records": 263396,
+      "record_sha256": "c68839bf669baf8c179279e0f21c449bdace97ed3b015238be42a4928eea96d9",
+      "position_sha256": "0d5f91fd91ee6c9da51db8f5ddf39fca60a27dae8dfe6e65669965656c802f93"
+    },
+    "adj_g4": {
+      "records": 263396,
+      "record_sha256": "6287230042ea2a43633f86093c09cf7b273b707cbaa7f83d4c61e7d9b9068ed6",
+      "position_sha256": "0d5f91fd91ee6c9da51db8f5ddf39fca60a27dae8dfe6e65669965656c802f93"
+    }
+  }
+}
+{"verified_cells": ["adj_g1", "adj_g4", "onp_g1", "onp_g4"], "unique_positions": 155849}
+=== fit 4 cells ===
+  fit onp_g1 N=155849
+  fit adj_g1 N=155849
+  fit onp_g4 N=263396
+  fit adj_g4 N=263396
+=== cell metrics: WDL-grounded conversion + gate vs bootstrap ===
+CELL onp_g1 conv=0.672986 conv_n=422 gate_rate=0.488333 gate_n=600 gate_elo=-8.11 gate_ci=[0.453698,0.522969]
+CELL adj_g1 conv=0.671362 conv_n=426 gate_rate=0.526667 gate_n=600 gate_elo=18.55 gate_ci=[0.492007,0.561326]
+CELL onp_g4 conv=0.662679 conv_n=418 gate_rate=0.458333 gate_n=600 gate_elo=-29.02 gate_ci=[0.423769,0.492898]
+CELL adj_g4 conv=0.662679 conv_n=418 gate_rate=0.523333 gate_n=600 gate_elo=16.23 gate_ci=[0.488658,0.558008]
+=== direct factorial contrasts (A named first) ===
+CONTRAST label_g1 A=adj_g1 B=onp_g1 rate=0.510833 n=600 elo=7.53 ci=[0.476081,0.545586]
+CONTRAST label_g4 A=adj_g4 B=onp_g4 rate=0.533333 n=600 elo=23.20 ci=[0.498634,0.568033]
+CONTRAST gym_onp A=onp_g4 B=onp_g1 rate=0.495833 n=600 elo=-2.90 ci=[0.461071,0.530595]
+CONTRAST gym_adj A=adj_g4 B=adj_g1 rate=0.508333 n=600 elo=5.79 ci=[0.473309,0.543358]
+=== DOE VERDICT ===
+  effet LABEL à G1      : conv -0.0016 | direct Elo +7.5
+  effet LABEL à G4      : conv +0.0000 | direct Elo +23.2
+  effet GYMNASE sous ONP: conv -0.0103 | direct Elo -2.9
+  effet GYMNASE sous ADJ: conv -0.0087 | direct Elo +5.8
+  interaction conv      : +0.0016
+  interaction Elo       : label-diff +15.7 | gym-diff +8.7
+  => ✗ PAS D'INTERACTION UTILE démontrée : ne pas lancer la campagne combinée ; reconsidérer poids gym ou point de départ.
+  ✓ RESULTS committé
+=== 0726 FINI ===
