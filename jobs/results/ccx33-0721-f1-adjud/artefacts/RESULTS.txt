@@ -1,0 +1,22 @@
+=== F1 ADJUD (labels on-policy vs d14+egdb, MÊME sous-échantillon) — HEAD 60b09523f queue ccx33-0721 : F1 adjud re-ciblé sur ccx33 (cpx62 muet) — labels on-policy vs d14+egdb, auto-size nproc=8 — NCPU=8 df=88165Mo ===
+=== build jass egdb ===
+  ✓ build egdb + bootstrap + corpus T1 + jauge conv_self v2 sous-éch (400 pos)
+
+=== micro-sonde rate d14+egdb (600 pos milieu) ===
+  sonde : 600 pos en 17s → 0.028333333333333332s/pos (1 thread) → N_EFF=80000 (budget 2700s×8 shards, cap [20000,80000])
+  ETA relabel ≈ 4.7 min (80000 pos / 8 shards)
+
+--- (A) fit CONTROL on-policy (N=80000, labels d9 bruts) ---
+  [ON-POLICY] conv_self=0.4887 (n=397) | gate vs bootstrap : rate=0.4392 n=600 elo=-42
+
+=== relabel ADJUD d14+egdb sur 80000 pos (8 shards) ===
+  labels changés par l'adjud : 53787/80000 = 67.2%  (mesure directe de la corruption on-policy)
+
+--- (B) fit ADJUD (N=80000, labels d14+egdb VRAIS) ---
+  [ADJUD] conv_self=0.4484 (n=397) | gate vs bootstrap : rate=0.5192 n=600 elo=+13
+
+=== VERDICT F1 ADJUD ===
+  labels changés par adjud = 67.2%
+  ON-POLICY : conv_self=0.4887  gate_elo=-42
+  ADJUD     : conv_self=0.4484  gate_elo=+13
+  => ~ adjud AIDE partiellement (conv -0.040, elo +55) — signal réel mais pas franc ; augmenter N (relabel plus profond/large) ou combiner avec up-weight gymnase.
