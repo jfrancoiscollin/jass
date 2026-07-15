@@ -60,10 +60,14 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
     import calibrate_vs_scan as cv  # type: ignore
 
     records = read_records(args.pool_jnnw)
-    champion = cv.JassEngine(args.jass, pattern_path=args.pattern)
-    defender = cv.JassEngine(args.jass, pattern_path=args.defender_pattern)
-    referee = cv.Referee(args.jass)
-    n_pos = n_win = n_draw = n_loss = n_skipped = 0
+
+    def _fresh():
+        return (cv.JassEngine(args.jass, pattern_path=args.pattern),
+                cv.JassEngine(args.jass, pattern_path=args.defender_pattern),
+                cv.Referee(args.jass))
+
+    champion, defender, referee = _fresh()
+    n_pos = n_win = n_draw = n_loss = n_skipped = n_restarts = 0
     errors: list[str] = []
     try:
         for index, rec in enumerate(records):
@@ -78,6 +82,18 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
             try:
                 play_args = {"movetime": args.movetime} if args.movetime else {"depth": args.depth}
                 result = cv.play_game(white, black, referee, fen, max_plies=args.max_plies, **play_args)
+            except (BrokenPipeError, EOFError, OSError, TimeoutError) as exc:
+                # Un moteur est mort (crash / race egdb au startup) — on le RELANCE pour ne
+                # perdre QUE la position fautive au lieu de casser tout le reste du shard (cascade 0724).
+                errors.append(f"pos {index}: moteur mort ({exc}) - restart")
+                for _e in (champion, defender, referee):
+                    try: _e.close()
+                    except Exception: pass
+                try:
+                    champion, defender, referee = _fresh(); n_restarts += 1
+                except Exception as exc2:  # noqa: BLE001
+                    errors.append(f"pos {index}: restart FAIL ({exc2})")
+                continue
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"pos {index}: {exc}")
                 continue
@@ -102,6 +118,7 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
         "n_loss": n_loss,
         "n_skipped_draw_label": n_skipped,
         "n_errors": len(errors),
+        "n_restarts": n_restarts,
         "errors": errors[:20],
         "depth": args.depth,
         "movetime": args.movetime,
