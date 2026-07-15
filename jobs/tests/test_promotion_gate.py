@@ -1,73 +1,128 @@
 #!/usr/bin/env python3
-"""Tests §11.2 — promotion (régimes young/established)."""
+"""Tests promotion inter-tours v3.2."""
 from __future__ import annotations
-import importlib.util, unittest
+
+import importlib.util
+import unittest
 from pathlib import Path
 
-M = Path(__file__).resolve().parents[1] / "tools" / "promotion_gate.py"
-spec = importlib.util.spec_from_file_location("promotion_gate", M); P = importlib.util.module_from_spec(spec); spec.loader.exec_module(P)
+MODULE = Path(__file__).resolve().parents[1] / "tools" / "promotion_gate.py"
+SPEC = importlib.util.spec_from_file_location("promotion_gate", MODULE)
+P = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+SPEC.loader.exec_module(P)
 
-# helpers : construit un match à taux ~r sur n games (draws=0)
-def match(r, n):
-    a = round(r * n); b = n - a; return {"wins_a": a, "draws": 0, "wins_b": b}
+
+def match(rate: float, n: int) -> dict:
+    wins = round(rate * n)
+    return {"wins_a": wins, "draws": 0, "wins_b": n - wins}
 
 
 class YoungTests(unittest.TestCase):
     def test_neutral_passes(self):
-        # ~0.50 sur 600 → ci_high > 0.5 → pas de régression établie → promote
-        man = P.young_gate(match(0.50, 600), match(0.50, 600), "T1-bis")
-        self.assertEqual(man["promotion_decision"], "promote")
-        self.assertEqual(man["scientific_status"], "continue_probe")
+        manifest = P.young_gate(match(0.50, 600), match(0.50, 600), "T1-bis")
+        self.assertEqual(manifest["promotion_decision"], "promote")
+        self.assertEqual(manifest["scientific_status"], "continue_probe")
 
     def test_reject_if_cihigh_below_half_vs_parent(self):
-        # ~0.40 sur 600 → ci_high ~0.44 < 0.5 → régression établie vs parent
-        man = P.young_gate(match(0.40, 600), match(0.52, 600), "T2")
-        self.assertEqual(man["vs_parent"]["decision"], "reject")
-        self.assertEqual(man["promotion_decision"], "reject")
-        self.assertEqual(man["scientific_status"], "stop_regression")
+        manifest = P.young_gate(match(0.40, 600), match(0.52, 600), "T2")
+        self.assertEqual(manifest["vs_parent"]["decision"], "reject")
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_regression")
 
     def test_reject_if_cihigh_below_half_vs_fixed(self):
-        man = P.young_gate(match(0.55, 600), match(0.40, 600), "T2")
-        self.assertEqual(man["vs_fixed_reference"]["decision"], "reject")
-        self.assertEqual(man["promotion_decision"], "reject")
+        manifest = P.young_gate(match(0.55, 600), match(0.40, 600), "T2")
+        self.assertEqual(manifest["vs_fixed_reference"]["decision"], "reject")
+        self.assertEqual(manifest["promotion_decision"], "reject")
 
     def test_manifest_has_both_comparisons(self):
-        man = P.young_gate(match(0.5, 400), match(0.5, 400), "T1-bis")
-        self.assertIn("vs_parent", man); self.assertIn("vs_fixed_reference", man)
-        self.assertIn("conversion", man); self.assertIn("scientific_status", man)
+        manifest = P.young_gate(match(0.5, 400), match(0.5, 400), "T1-bis")
+        self.assertIn("vs_parent", manifest)
+        self.assertIn("vs_fixed_reference", manifest)
+        self.assertIn("conversion", manifest)
+        self.assertIn("scientific_status", manifest)
 
     def test_only_probe_tours_allowed_young(self):
-        man = P.young_gate(match(0.5, 400), match(0.5, 400), "T4")
-        self.assertEqual(man["promotion_decision"], "reject")
-        self.assertEqual(man["scientific_status"], "stop_technical")
+        manifest = P.young_gate(match(0.5, 400), match(0.5, 400), "T4")
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_technical")
 
     def test_t3_completes_probe(self):
-        man = P.young_gate(match(0.52, 600), match(0.52, 600), "T3")
-        self.assertEqual(man["scientific_status"], "complete_probe")
+        manifest = P.young_gate(match(0.52, 600), match(0.52, 600), "T3")
+        self.assertEqual(manifest["scientific_status"], "complete_probe")
+        self.assertEqual(manifest["promotion_decision"], "promote")
 
-    def test_n_zero_is_technical(self):
-        man = P.young_gate({"rate": None, "ci_low": None, "ci_high": None, "n": 0},
-                           match(0.5, 400), "T1-bis")
-        self.assertEqual(man["scientific_status"], "stop_technical")
+    def test_n_zero_is_technical_and_rejects(self):
+        manifest = P.young_gate(
+            {"rate": None, "ci_low": None, "ci_high": None, "n": 0},
+            match(0.5, 400),
+            "T1-bis",
+        )
+        self.assertEqual(manifest["vs_parent"]["decision"], "technical")
+        self.assertEqual(manifest["scientific_status"], "stop_technical")
+        self.assertEqual(manifest["promotion_decision"], "reject")
+
+    def test_missing_interval_is_technical_and_rejects(self):
+        manifest = P.young_gate(
+            {"rate": 0.5, "ci_low": None, "ci_high": None, "n": 600},
+            match(0.5, 600),
+            "T2",
+        )
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_technical")
+
+    def test_missing_conversion_stays_null_not_fake_zero(self):
+        manifest = P.young_gate(match(0.5, 600), match(0.5, 600), "T1-bis")
+        self.assertIsNone(manifest["conversion"]["p1_net"])
+        self.assertIsNone(manifest["conversion"]["p4_egal"])
 
 
 class EstablishedTests(unittest.TestCase):
     def test_requires_conversion_window(self):
-        # non-régressif mais conversion insuffisante → reject
-        man = P.established_gate(match(0.52, 600), match(0.52, 600), "T4",
-                                 conversion_window=[0.66, 0.66], conv_min_delta=0.02, window=2)
-        self.assertEqual(man["promotion_decision"], "reject")
+        manifest = P.established_gate(
+            match(0.52, 600),
+            match(0.52, 600),
+            "T4",
+            conversion_window=[0.66, 0.66],
+            conv_min_delta=0.02,
+            window=2,
+        )
+        self.assertEqual(manifest["promotion_decision"], "reject")
 
     def test_promotes_when_conversion_rises(self):
-        man = P.established_gate(match(0.52, 600), match(0.52, 600), "T4",
-                                 conversion_window=[0.64, 0.68], conv_min_delta=0.02, window=2)
-        self.assertEqual(man["promotion_decision"], "promote")
+        manifest = P.established_gate(
+            match(0.52, 600),
+            match(0.52, 600),
+            "T4",
+            conversion_window=[0.64, 0.68],
+            conv_min_delta=0.02,
+            window=2,
+        )
+        self.assertEqual(manifest["promotion_decision"], "promote")
 
     def test_regression_blocks_established(self):
-        man = P.established_gate(match(0.40, 600), match(0.55, 600), "T4",
-                                 conversion_window=[0.60, 0.70], conv_min_delta=0.02, window=2)
-        self.assertEqual(man["promotion_decision"], "reject")
-        self.assertEqual(man["scientific_status"], "stop_regression")
+        manifest = P.established_gate(
+            match(0.40, 600),
+            match(0.55, 600),
+            "T4",
+            conversion_window=[0.60, 0.70],
+            conv_min_delta=0.02,
+            window=2,
+        )
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_regression")
+
+    def test_incomplete_generalist_gate_blocks_established(self):
+        manifest = P.established_gate(
+            {"n": 0, "rate": None, "ci_low": None, "ci_high": None},
+            match(0.55, 600),
+            "T4",
+            conversion_window=[0.60, 0.70],
+            conv_min_delta=0.02,
+            window=2,
+        )
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_technical")
 
 
 if __name__ == "__main__":
