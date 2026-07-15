@@ -1,0 +1,7 @@
+{
+  "job_id": "ccx33-0721-f1-adjud",
+  "script": "jobs/queue/ccx33-0721-f1-adjud.sh",
+  "pid": 143756,
+  "started_at": "2026-07-15T06:44:18+00:00",
+  "host": "ubuntu-16gb-hel1-2"
+}
