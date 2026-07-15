@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0726-doe-labels-gym-2x2",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-15T11:44:06+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 481197
+  "ended_at": "2026-07-15T14:40:02+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
