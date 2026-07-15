@@ -1,0 +1,25 @@
+[Unit]
+Description=Jass GitOps runner v3
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/srv/jass/code
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=-/etc/jass-runner/runner-v3.env
+EnvironmentFile=-/etc/jass-runner/secrets.env
+ExecStart=/usr/bin/python3 /srv/jass/code/infra/runner_v3.py
+KillMode=process
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=5
+ProtectSystem=full
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths=/srv/jass/code /srv/jass/control /var/lib/jass-runner
+
+[Install]
+WantedBy=multi-user.target

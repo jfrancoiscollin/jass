@@ -1,0 +1,29 @@
+name: runner-v3
+
+on:
+  push:
+    paths:
+      - 'infra/runner_v3*.py'
+      - 'infra/tests/test_runner_v3.py'
+      - 'infra/jass-runner-v3.*'
+      - '.github/workflows/runner-v3.yml'
+  pull_request:
+    paths:
+      - 'infra/runner_v3*.py'
+      - 'infra/tests/test_runner_v3.py'
+      - 'infra/jass-runner-v3.*'
+      - '.github/workflows/runner-v3.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile runner modules
+        run: python -m py_compile infra/runner_v3*.py infra/tests/test_runner_v3.py
+      - name: Run runner v3 tests
+        run: python -m unittest infra/tests/test_runner_v3.py
