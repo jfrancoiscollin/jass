@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Jass GitOps runner v3 every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=jass-runner-v3.service
+
+[Install]
+WantedBy=timers.target
