@@ -1,0 +1,11 @@
+validated smoke: 20260715T231411Z-282c4f81 282c4f8129028c1affa3196fd6a776f589af7518
+From github.com:jfrancoiscollin/jass
+ * branch                develop    -> FETCH_HEAD
+HEAD is now at 282c4f812 Runner v3: split develop code, GitOps control and external results
+Running timer as unit: jass-runner-v3-cutover-1784157828.timer
+Will run service as unit: jass-runner-v3-cutover-1784157828.service
+scheduled transient cutover unit: jass-runner-v3-cutover-1784157828
+NEXT                        LEFT LAST PASSED UNIT                                    ACTIVATES
+Wed 2026-07-15 23:31:48 UTC 7min -         - jass-runner-v3-cutover-1784157828.timer jass-runner-v3-cutover-1784157828.service
+
+1 timers listed.

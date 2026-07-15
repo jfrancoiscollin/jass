@@ -1,0 +1,6 @@
+scheduled_at=2026-07-15T23:23:48+00:00
+host=ubuntu-32gb-hel1-1
+code_sha=282c4f8129028c1affa3196fd6a776f589af7518
+legacy_timer_enabled=enabled
+v3_timer_enabled=disabled
+cutover_delay=8min
