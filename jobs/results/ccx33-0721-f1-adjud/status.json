@@ -1,7 +1,8 @@
 {
   "job_id": "ccx33-0721-f1-adjud",
-  "state": "running",
+  "state": "completed",
+  "exit_code": 0,
   "started_at": "2026-07-15T06:44:18+00:00",
-  "host": "ubuntu-16gb-hel1-2",
-  "pid": 143756
+  "ended_at": "2026-07-15T08:21:40+00:00",
+  "host": "ubuntu-16gb-hel1-2"
 }
