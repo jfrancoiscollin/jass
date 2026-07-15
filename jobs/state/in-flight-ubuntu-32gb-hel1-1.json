@@ -1,0 +1,7 @@
+{
+  "job_id": "cpx62-0723-doe-labels-gym-2x2",
+  "script": "jobs/queue/cpx62-0723-doe-labels-gym-2x2.sh",
+  "pid": 476550,
+  "started_at": "2026-07-15T09:52:23+00:00",
+  "host": "ubuntu-32gb-hel1-1"
+}
