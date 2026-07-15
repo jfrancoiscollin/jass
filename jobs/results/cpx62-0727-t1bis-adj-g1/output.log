@@ -1,0 +1,4 @@
+=== T1-bis ADJ+G1 (cpx62-0727-t1bis-adj-g1) — HEAD 9fdfbceee runner: start cpx62-0727-t1bis-adj-g1 — NCPU=16 df=461209Mo ===
+{"ok": true, "aggregate_mb": 8192, "budget_mb": 21928, "cache_mb": 512, "procs": 16, "mem_mb": 31326, "reasons": []}
+  [✓] §13 : cache OK + tests Phase 0 verts
+ABORT: scan_selfplay_gen sans --label-src-out

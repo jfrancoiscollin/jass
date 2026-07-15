@@ -1,7 +1,8 @@
 {
   "job_id": "cpx62-0727-t1bis-adj-g1",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 1,
   "started_at": "2026-07-15T20:22:19+00:00",
-  "host": "ubuntu-32gb-hel1-1",
-  "pid": 495987
+  "ended_at": "2026-07-15T20:27:23+00:00",
+  "host": "ubuntu-32gb-hel1-1"
 }
