@@ -93,6 +93,16 @@ class JnnwDoeTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from("<b", rows[0], 37)[0], -1)
         self.assertEqual(struct.unpack_from("<b", rows[1], 37)[0], 0)
 
+    def test_keep_decisive_drops_draw_labels(self) -> None:
+        src = self.root / "src.jnnw"
+        out = self.root / "out.jnnw"
+        D._write(src, [record(1, wdl=1), record(2, wdl=0), record(3, wdl=-1)])
+        D.cmd_keep_decisive(argparse.Namespace(input=str(src), output=str(out)))
+        _, body = D._read(out)
+        rows = list(D._records(body))
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(r[37] != 0 for r in rows))
+
     def test_build_cells_has_same_unique_positions_and_only_expected_factors(self) -> None:
         onp = self.root / "onp.jnnw"
         adj = self.root / "adj.jnnw"

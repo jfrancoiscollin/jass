@@ -273,6 +273,26 @@ def cmd_assert_decisive(args: argparse.Namespace) -> None:
     print(json.dumps({"records": n, "decisive": n}))
 
 
+def cmd_keep_decisive(args: argparse.Namespace) -> None:
+    """Garde uniquement les enregistrements décisifs (WDL != 0).
+
+    Remplace l'ancien contrat assert-decisive : le pool 0718 contient des gains
+    > 50 coups que le relabel d14+egdb (draw-band 50) marque NULLE (~40 % mesuré 0722),
+    donc asserter-tout-décisif aborterait. On FILTRE plutôt vers le décisif.
+    """
+    n, body = _read(args.input)
+    kept = [rec for rec in _records(body) if rec[37] != 0]
+    if not kept:
+        raise ValueError(f"{args.input}: aucun enregistrement décisif après filtrage")
+    _write(args.output, kept)
+    print(json.dumps({
+        "input": n,
+        "kept_decisive": len(kept),
+        "dropped_draw": n - len(kept),
+        "position_sha256": _sha_records(kept, positions_only=True),
+    }))
+
+
 def cmd_build_cells(args: argparse.Namespace) -> None:
     if args.gym_mult < 2:
         raise ValueError("gym multiplier must be >= 2")
@@ -400,6 +420,10 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("assert-decisive")
     p.add_argument("--input", required=True)
     p.set_defaults(func=cmd_assert_decisive)
+
+    p = sub.add_parser("keep-decisive")
+    p.add_argument("--input", required=True); p.add_argument("--output", required=True)
+    p.set_defaults(func=cmd_keep_decisive)
 
     p = sub.add_parser("build-cells")
     p.add_argument("--base-onp", required=True); p.add_argument("--base-adj", required=True)
