@@ -1,0 +1,8 @@
+2026-07-16T13:16:43+00:00 capturing preflight
+2026-07-16T13:16:44+00:00 validating private control-repository access
+ERROR: Repository not found.
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+2026-07-16T13:16:45+00:00 ABORT: cannot read private jass-control repository

@@ -1,0 +1,3 @@
+source=jobs/queue/ccx33-0735a-runner-v3-bootstrap.sh
+source_sha256=58f859b796e156bdd91e07395211586319ff9c2bef437988fbacc0a4e18ea6b4
+patched_sha256=00144b66e36ce32dd2a2de47c31df870e6a24dd7f9fa0890cb891fb6ca14ee18
