@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0738a-r2-handoff-keygen-v3",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 1,
   "started_at": "2026-07-16T14:20:00+00:00",
+  "ended_at": "2026-07-16T14:25:20+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 175395
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0738a-r2-handoff-keygen-v3/artefacts.src"
 }
