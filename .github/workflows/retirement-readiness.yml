@@ -1,0 +1,52 @@
+name: retirement-readiness
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - '.github/workflows/**'
+      - 'infra/**'
+      - 'jobs/templates/**'
+      - 'jobs/tools/**'
+      - 'src/**'
+      - 'pattern_jass/src/**'
+      - 'CMakeLists.txt'
+      - 'Makefile'
+      - 'pyproject.toml'
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/**'
+      - 'infra/**'
+      - 'jobs/templates/**'
+      - 'jobs/tools/**'
+      - 'src/**'
+      - 'pattern_jass/src/**'
+      - 'CMakeLists.txt'
+      - 'Makefile'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile guard
+        run: python -m py_compile jobs/tools/check_retirement_readiness.py
+      - name: Reject new active legacy dependencies
+        run: |
+          python jobs/tools/check_retirement_readiness.py \
+            --baseline jobs/tools/retirement_baseline.json \
+            --out retirement-readiness.json
+      - name: Publish report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retirement-readiness
+          path: retirement-readiness.json
