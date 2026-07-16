@@ -1,0 +1,8 @@
+starting host bootstrap as transient unit: jass-runner-v3-ccx33-bootstrap-1784207494
+Running as unit: jass-runner-v3-ccx33-bootstrap-1784207494.service; invocation ID: ca83eb67ed1f4ecf98df2fd8ec3a8db2
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 6.309s
+CPU time consumed: 4.846s
+Memory peak: 292.0K
+Memory swap peak: 0B

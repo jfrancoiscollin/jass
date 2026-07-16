@@ -1,7 +1,9 @@
 {
   "job_id": "ccx33-0735a-runner-v3-bootstrap",
-  "state": "running",
+  "state": "failed",
+  "exit_code": 1,
   "started_at": "2026-07-16T13:11:34+00:00",
+  "ended_at": "2026-07-16T13:16:40+00:00",
   "host": "ubuntu-16gb-hel1-2",
-  "pid": 173452
+  "artefacts_server_path": "/root/jass/jobs/results/ccx33-0735a-runner-v3-bootstrap/artefacts.src"
 }
