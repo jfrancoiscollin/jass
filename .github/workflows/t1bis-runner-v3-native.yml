@@ -1,0 +1,37 @@
+name: t1bis-runner-v3-native
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'jobs/templates/t1bis-adj-g1-runner-v3-native.sh'
+      - 'jobs/templates/t1bis-adj-g1-runner-v3-smoke.sh'
+      - 'jobs/tools/fetch_t1bis_inputs.py'
+      - 'jobs/tests/test_t1bis_runner_v3_native.py'
+      - '.github/workflows/t1bis-runner-v3-native.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'jobs/templates/t1bis-adj-g1-runner-v3-native.sh'
+      - 'jobs/templates/t1bis-adj-g1-runner-v3-smoke.sh'
+      - 'jobs/tools/fetch_t1bis_inputs.py'
+      - 'jobs/tests/test_t1bis_runner_v3_native.py'
+      - '.github/workflows/t1bis-runner-v3-native.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile input verifier
+        run: python -m py_compile jobs/tools/fetch_t1bis_inputs.py jobs/tests/test_t1bis_runner_v3_native.py
+      - name: Validate shell syntax
+        run: |
+          bash -n jobs/templates/t1bis-adj-g1-runner-v3-native.sh
+          bash -n jobs/templates/t1bis-adj-g1-runner-v3-smoke.sh
+      - name: Run native launcher tests
+        run: python -m unittest jobs/tests/test_t1bis_runner_v3_native.py
