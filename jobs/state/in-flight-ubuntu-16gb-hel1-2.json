@@ -1,7 +1,0 @@
-{
-  "job_id": "ccx33-0735e-runner-v3-bootstrap-v3",
-  "script": "jobs/queue/ccx33-0735e-runner-v3-bootstrap-v3.sh",
-  "pid": 174574,
-  "started_at": "2026-07-16T13:42:52+00:00",
-  "host": "ubuntu-16gb-hel1-2"
-}

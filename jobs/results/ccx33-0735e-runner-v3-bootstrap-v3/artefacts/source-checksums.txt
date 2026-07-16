@@ -1,0 +1,2 @@
+58f859b796e156bdd91e07395211586319ff9c2bef437988fbacc0a4e18ea6b4  jobs/queue/ccx33-0735a-runner-v3-bootstrap.sh
+e398d2d4f1f9dd951a88626e61d5fcb962635a5e027dcec3549fc7f85bd78e6c  jobs/results/ccx33-0735e-runner-v3-bootstrap-v3/artefacts.src/bootstrap-v3.sh

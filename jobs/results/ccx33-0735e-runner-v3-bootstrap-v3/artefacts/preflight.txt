@@ -1,0 +1,6 @@
+host=ubuntu-16gb-hel1-2
+legacy_timer_enabled=enabled
+legacy_timer_active=active
+v3_timer_enabled=not-found
+v3_timer_active=inactive
+root_main_sha=030397dacbd79c50130fbae4d37cea18460d1253
