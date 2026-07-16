@@ -22,7 +22,7 @@ OUT="$ROOT/jobs/results/$JOB_ID/artefacts.src"
 CODE_DIR="/srv/jass/code"
 CONTROL_DIR="/srv/jass/control"
 CONTROL_URL="git@github.com:jfrancoiscollin/jass-control.git"
-SMOKE_ID="ccx33-0735b-v3-smoke"
+SMOKE_ID="ccx33-0735c-v3-smoke"
 SMOKE_STATUS="$CONTROL_DIR/status/${SMOKE_ID}.json"
 mkdir -p "$OUT"
 exec > >(tee -a "$OUT/host-bootstrap.log") 2>&1
