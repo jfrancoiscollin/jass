@@ -3,7 +3,9 @@
 """Jass GitOps runner v3: develop code, separate control plane, external results."""
 from __future__ import annotations
 
+import json
 import os
+import shlex
 import shutil
 import signal
 import socket
@@ -38,6 +40,30 @@ from runner_v3_git import (
     remove_worktree,
 )
 from runner_v3_store import prepare_run_dir, result_store
+
+
+# Only small, explicitly scientific JSON artefacts are copied into the GitOps
+# status.  Full logs, weights and corpora stay in object storage.  This keeps
+# jass-control useful to reviewers without turning it into a result store or
+# risking publication of arbitrary job output.
+STATUS_SUMMARY_NAMES = frozenset({
+    "attempt-diagnostic.json",
+    "c0-decision.json",
+    "mtc-audit.json",
+    "mtc-verification.json",
+    "mtc_audit.json",
+    "p3-holdout-decision.json",
+    "p3-holdout-manifest.json",
+    "p3-power.json",
+    "promotion.json",
+    "scientific-summary.json",
+    "teacher-confirmation-decision.json",
+    "teacher-smoke-decision.json",
+    "teacher-smoke-precheck.json",
+    "teacher-summary.json",
+})
+STATUS_SUMMARY_MAX_FILE_BYTES = 64 * 1024
+STATUS_SUMMARY_MAX_TOTAL_BYTES = 256 * 1024
 
 
 def bootstrap_dirs(cfg: Config) -> None:
@@ -136,12 +162,18 @@ def start_job(cfg: Config, script: Path) -> dict:
         ]) + "\n",
         encoding="utf-8",
     )
+    # The EXIT trap records the shell status even when the job script exits
+    # early or receives a catchable signal.  A genuinely absent file now means
+    # that the wrapper itself vanished (SIGKILL, host loss, cgroup kill, ...),
+    # which is surfaced as a diagnostic instead of an opaque ``-1``.
     wrapper = (
         "set +e; "
-        f"exec >{raw_log} 2>&1; "
-        f"echo $$ > {wrapper_pid}; "
-        f"source {env_file}; cd {workspace}; "
-        f"bash {script_copy}; rc=$?; echo $rc > {exit_code}; exit $rc"
+        f"exit_file={shlex.quote(str(exit_code))}; "
+        "trap 'rc=$?; printf \"%s\\n\" \"$rc\" > \"$exit_file\"' EXIT; "
+        f"exec >{shlex.quote(str(raw_log))} 2>&1; "
+        f"echo $$ > {shlex.quote(str(wrapper_pid))}; "
+        f"source {shlex.quote(str(env_file))}; cd {shlex.quote(str(workspace))}; "
+        f"bash {shlex.quote(str(script_copy))}"
     )
     proc = subprocess.Popen(
         ["bash", "-c", wrapper], cwd=workspace,
@@ -172,6 +204,102 @@ def wrapper_pid(info: dict) -> int:
         return int((Path(info["run_dir"]) / "wrapper.pid").read_text().strip())
     except (OSError, ValueError):
         return int(info.get("pid", -1))
+
+
+def process_observation(info: dict, pid: int) -> dict:
+    """Return a small, non-secret process snapshot for failure attribution."""
+    observation = {
+        "observed_at": utcnow(),
+        "pid": pid,
+        "alive": pid > 0 and alive(pid),
+    }
+    if pid <= 0:
+        return observation
+    status = Path(f"/proc/{pid}/status")
+    allowed = {"Name", "State", "PPid", "Threads", "VmPeak", "VmRSS", "VmHWM"}
+    try:
+        values = {}
+        for line in status.read_text(encoding="utf-8", errors="replace").splitlines():
+            key, separator, value = line.partition(":")
+            if separator and key in allowed:
+                values[key] = value.strip()
+        observation["proc_status"] = values
+    except OSError:
+        pass
+    return observation
+
+
+def record_process_observation(info: dict) -> dict:
+    observation = process_observation(info, wrapper_pid(info))
+    write_json(Path(info["run_dir"]) / "runner-process-observation.json", observation)
+    return observation
+
+
+def read_exit_code(info: dict) -> tuple[int, str | None]:
+    path = Path(info["run_dir"]) / "exit_code"
+    try:
+        raw = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return -1, "missing_exit_code"
+    try:
+        return int(raw), None
+    except ValueError:
+        return -1, "invalid_exit_code"
+
+
+def write_attempt_diagnostic(info: dict, reason: str) -> None:
+    run_dir = Path(info["run_dir"])
+    previous = read_json(run_dir / "runner-process-observation.json")
+    write_json(run_dir / "artefacts" / "attempt-diagnostic.json", {
+        "schema": 1,
+        "job_id": info.get("job_id"),
+        "attempt_id": info.get("attempt_id"),
+        "host": info.get("host"),
+        "code_sha": info.get("code_sha"),
+        "classification": "wrapper_terminated_without_exit_status",
+        "reason": reason,
+        "last_process_observation": previous,
+        "reaped_at": utcnow(),
+    })
+
+
+def artefact_status_payload(artefact_dir: Path) -> dict:
+    """List artefacts and inline an allow-list of small JSON summaries."""
+    payload: dict[str, object] = {"artefacts": []}
+    if not artefact_dir.exists():
+        return payload
+    root = artefact_dir.resolve()
+    summaries: dict[str, object] = {}
+    total = 0
+    for path in sorted(artefact_dir.rglob("*")):
+        if not path.is_file():
+            continue
+        try:
+            resolved = path.resolve()
+            resolved.relative_to(root)
+            size = path.stat().st_size
+        except (OSError, ValueError):
+            continue
+        relative = str(path.relative_to(artefact_dir))
+        payload["artefacts"].append({"path": relative, "size_bytes": size})
+        if (
+            path.name not in STATUS_SUMMARY_NAMES
+            or size <= 0
+            or size > STATUS_SUMMARY_MAX_FILE_BYTES
+            or total + size > STATUS_SUMMARY_MAX_TOTAL_BYTES
+        ):
+            continue
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(value, (dict, list)):
+            continue
+        summaries[relative] = value
+        total += size
+    if summaries:
+        payload["scientific_summaries"] = summaries
+    return payload
 
 
 def queue_pending_upload(cfg: Config, info: dict, rc: int,
@@ -214,10 +342,9 @@ def reap_finished_job(cfg: Config) -> bool:
     pid = wrapper_pid(info)
     if pid > 0 and alive(pid):
         return False
-    try:
-        rc = int((Path(info["run_dir"]) / "exit_code").read_text().strip())
-    except (OSError, ValueError):
-        rc = -1
+    rc, exit_error = read_exit_code(info)
+    if exit_error:
+        write_attempt_diagnostic(info, exit_error)
     final_state = "completed" if rc == 0 else "failed"
     uri, upload_error = publish_run(cfg, info, rc, final_state)
     status = {
@@ -229,6 +356,7 @@ def reap_finished_job(cfg: Config) -> bool:
     }
     if upload_error:
         status["upload_error"] = upload_error
+    status.update(artefact_status_payload(Path(info["run_dir"]) / "artefacts"))
     publish_status(cfg, status)
     finalize_control_script(cfg, Path(info["claimed_script"]), info["job_id"])
     remove_worktree(cfg, Path(info["workspace"]))
@@ -253,14 +381,16 @@ def retry_pending_uploads(cfg: Config) -> int:
             payload.update({"last_error": str(exc), "last_attempt_at": utcnow()})
             write_json(pending, payload)
             continue
-        publish_status(cfg, {
+        status = {
             "job_id": info["job_id"], "attempt_id": info["attempt_id"],
             "state": payload["final_state"], "exit_code": rc,
             "started_at": info.get("started_at"), "ended_at": utcnow(),
             "host": info.get("host"), "code_ref": info.get("code_ref"),
             "code_sha": info.get("code_sha"), "result_uri": uri,
             "upload_recovered": True,
-        })
+        }
+        status.update(artefact_status_payload(Path(info["run_dir"]) / "artefacts"))
+        publish_status(cfg, status)
         pending.unlink()
         if not cfg.keep_local_results:
             shutil.rmtree(Path(info["run_dir"]), ignore_errors=True)
@@ -270,20 +400,14 @@ def retry_pending_uploads(cfg: Config) -> int:
 
 def heartbeat(cfg: Config, info: dict) -> None:
     run_dir = Path(info["run_dir"])
+    record_process_observation(info)
     snapshot = {
         "job_id": info["job_id"], "attempt_id": info["attempt_id"],
         "state": "running", "snapshot_at": utcnow(),
         "started_at": info.get("started_at"), "host": info.get("host"),
-        "code_sha": info.get("code_sha"), "artefacts": [],
+        "code_sha": info.get("code_sha"),
     }
-    artefact_dir = run_dir / "artefacts"
-    if artefact_dir.exists():
-        for path in sorted(artefact_dir.rglob("*")):
-            if path.is_file():
-                snapshot["artefacts"].append({
-                    "path": str(path.relative_to(artefact_dir)),
-                    "size_bytes": path.stat().st_size,
-                })
+    snapshot.update(artefact_status_payload(run_dir / "artefacts"))
     publish_status(cfg, snapshot)
 
 

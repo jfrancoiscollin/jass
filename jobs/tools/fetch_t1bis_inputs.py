@@ -169,7 +169,11 @@ def inventory_map(inventory: dict) -> dict[str, dict]:
     return result
 
 
-def verify_result_identity(prefix: str, manifest: dict) -> None:
+def verify_result_identity(
+    prefix: str,
+    manifest: dict,
+    expected_state: str = "completed",
+) -> None:
     job_id = str(manifest.get("job_id", ""))
     attempt_id = str(manifest.get("attempt_id", ""))
     if not job_id or not attempt_id:
@@ -179,8 +183,18 @@ def verify_result_identity(prefix: str, manifest: dict) -> None:
         raise RuntimeError(
             f"previous run prefix does not match manifest identity: expected suffix {expected_suffix}"
         )
-    if manifest.get("state") != "completed" or int(manifest.get("exit_code", -1)) != 0:
-        raise RuntimeError("previous runner-v3 result is not completed with exit_code=0")
+    if expected_state not in {"completed", "failed"}:
+        raise RuntimeError(f"unsupported expected result state: {expected_state!r}")
+    state = manifest.get("state")
+    exit_code = int(manifest.get("exit_code", -1))
+    if state != expected_state:
+        raise RuntimeError(
+            f"previous runner-v3 result state is {state!r}, expected {expected_state!r}"
+        )
+    if expected_state == "completed" and exit_code != 0:
+        raise RuntimeError("completed runner-v3 result must have exit_code=0")
+    if expected_state == "failed" and exit_code == 0:
+        raise RuntimeError("failed runner-v3 result must have a non-zero exit_code")
 
 
 def fetch_promoted_parent(

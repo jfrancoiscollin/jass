@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests §11.4 — garde cache×processus + audit MTC."""
 from __future__ import annotations
-import importlib.util, os, unittest
+import importlib.util, os, tempfile, unittest
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
@@ -42,23 +42,93 @@ class MtcAuditTests(unittest.TestCase):
             if old is not None: os.environ["JASS_EGDB_MTC_PATH"] = old
 
     def test_present_readable_env_ok(self):
-        d = Path("/tmp/p0/_mtc_fixture"); d.mkdir(parents=True, exist_ok=True)
-        os.environ["JASS_EGDB_MTC_PATH"] = str(d)
-        try:
-            rep = MT.audit(512, 16, 32000, smoke_ok=True)
-            self.assertTrue(rep["mtc_active"]); self.assertTrue(rep["mtc_readable"])
-            self.assertTrue(rep["audit_ok"])
-        finally:
-            os.environ.pop("JASS_EGDB_MTC_PATH", None)
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td); (d / "db2.idx_mtc").write_bytes(b"fixture")
+            os.environ["JASS_EGDB_MTC_PATH"] = str(d)
+            try:
+                rep = MT.audit(
+                    512, 16, 32000, smoke_ok=True, require_smoke=True,
+                    smoke_procs=2,
+                )
+                self.assertTrue(rep["mtc_active"]); self.assertTrue(rep["mtc_readable"])
+                self.assertTrue(rep["audit_ok"])
+                self.assertEqual(rep["mtc_entries"], 1)
+                self.assertEqual(rep["mtc_total_bytes"], 7)
+                self.assertEqual(len(rep["mtc_inventory_sha256"]), 64)
+                self.assertEqual(rep["audit_level"], "complete")
+                self.assertEqual(rep["concurrent_smoke_procs"], 2)
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
+
+    def test_required_smoke_cannot_be_skipped(self):
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td); (d / "db2.idx_mtc").write_bytes(b"fixture")
+            os.environ["JASS_EGDB_MTC_PATH"] = str(d)
+            try:
+                rep = MT.audit(
+                    512, 16, 32000, smoke_ok=None, require_smoke=True,
+                    smoke_procs=2,
+                )
+                self.assertFalse(rep["audit_ok"])
+                self.assertIn("requis", " ".join(rep["reasons"]))
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
+
+    def test_required_smoke_records_real_concurrency(self):
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td); (d / "db2.idx_mtc").write_bytes(b"fixture")
+            os.environ["JASS_EGDB_MTC_PATH"] = str(d)
+            try:
+                rep = MT.audit(
+                    512, 16, 32000, smoke_ok=True, require_smoke=True,
+                    smoke_procs=1,
+                )
+                self.assertFalse(rep["audit_ok"])
+                self.assertIn("deux processus", " ".join(rep["reasons"]))
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
+
+    def test_empty_mtc_directory_fails(self):
+        with tempfile.TemporaryDirectory() as td:
+            os.environ["JASS_EGDB_MTC_PATH"] = td
+            try:
+                rep = MT.audit(512, 16, 32000, smoke_ok=True)
+                self.assertFalse(rep["audit_ok"])
+                self.assertEqual(rep["mtc_entries"], 0)
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
 
     def test_bad_cache_fails_audit(self):
-        d = Path("/tmp/p0/_mtc_fixture"); d.mkdir(parents=True, exist_ok=True)
-        os.environ["JASS_EGDB_MTC_PATH"] = str(d)
-        try:
-            rep = MT.audit(2048, 16, 32000, smoke_ok=True)   # cache trop gros
-            self.assertFalse(rep["audit_ok"])
-        finally:
-            os.environ.pop("JASS_EGDB_MTC_PATH", None)
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td); (d / "db2.idx_mtc").write_bytes(b"fixture")
+            os.environ["JASS_EGDB_MTC_PATH"] = str(d)
+            try:
+                rep = MT.audit(2048, 16, 32000, smoke_ok=True)   # cache trop gros
+                self.assertFalse(rep["audit_ok"])
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
+
+    def test_recorded_audit_verifies_same_host_path_and_inventory(self):
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td); target = d / "db2.idx_mtc"; target.write_bytes(b"fixture")
+            os.environ["JASS_EGDB_MTC_PATH"] = str(d)
+            try:
+                recorded = MT.audit(
+                    512, 16, 32000, smoke_ok=True, require_smoke=True,
+                    smoke_procs=2,
+                )
+                verified = MT.verify_recorded_audit(
+                    recorded, str(d), expected_host=recorded["host"]
+                )
+                self.assertTrue(verified["verification_ok"])
+                target.write_bytes(b"changed-size")
+                changed = MT.verify_recorded_audit(
+                    recorded, str(d), expected_host=recorded["host"]
+                )
+                self.assertFalse(changed["verification_ok"])
+                self.assertIn("inventory differs", " ".join(changed["reasons"]))
+            finally:
+                os.environ.pop("JASS_EGDB_MTC_PATH", None)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ def fetch_files(
     prefix: str,
     selections: list[tuple[str, str]],
     out_dir: Path,
+    expected_state: str = "completed",
 ) -> dict:
     if not selections:
         raise RuntimeError("at least one result file must be selected")
@@ -36,10 +37,13 @@ def fetch_files(
     ):
         raise RuntimeError("duplicate remote path or local output name")
 
+    if expected_state not in {"completed", "failed"}:
+        raise RuntimeError(f"unsupported expected result state: {expected_state!r}")
     prefix = prefix.rstrip("/")
-    base.remote_bytes(rclone, prefix + "/_SUCCESS")
+    marker = "_SUCCESS" if expected_state == "completed" else "_FAILED"
+    base.remote_bytes(rclone, prefix + "/" + marker)
     manifest, manifest_raw = base.remote_json(rclone, prefix + "/manifest.json")
-    base.verify_result_identity(prefix, manifest)
+    base.verify_result_identity(prefix, manifest, expected_state=expected_state)
     inventory, inventory_raw = base.remote_json(rclone, prefix + "/inventory.json")
     checksums_raw = base.remote_bytes(rclone, prefix + "/checksums.sha256")
     checksums = base.parse_checksums(checksums_raw)
@@ -87,6 +91,9 @@ def fetch_files(
         "job_id": manifest["job_id"],
         "attempt_id": manifest["attempt_id"],
         "code_sha": manifest.get("code_sha"),
+        "host": manifest.get("host"),
+        "result_state": manifest.get("state"),
+        "exit_code": manifest.get("exit_code"),
         "files": report_files,
     }
 
@@ -107,6 +114,12 @@ def main(argv=None) -> int:
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--report", type=Path)
     parser.add_argument("--rclone-bin", default=os.environ.get("RCLONE_BIN", "rclone"))
+    parser.add_argument(
+        "--expected-state",
+        choices=("completed", "failed"),
+        default="completed",
+        help="verify _SUCCESS/exit 0 or _FAILED/non-zero before reading payloads",
+    )
     args = parser.parse_args(argv)
     try:
         report = fetch_files(
@@ -114,6 +127,7 @@ def main(argv=None) -> int:
             prefix=args.prefix,
             selections=[parse_selection(item) for item in args.file],
             out_dir=args.out_dir,
+            expected_state=args.expected_state,
         )
         if args.report:
             args.report.parent.mkdir(parents=True, exist_ok=True)
