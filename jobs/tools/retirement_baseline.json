@@ -1,0 +1,6 @@
+{
+  "legacy_findings": 0,
+  "root_tool_references": 0,
+  "source": "cpx62-0750d-pr335-zero-gate-fix-v1",
+  "policy": "Final retirement baseline: active legacy and root-tool dependencies must remain zero."
+}
