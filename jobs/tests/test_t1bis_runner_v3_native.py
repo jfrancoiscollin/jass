@@ -124,6 +124,8 @@ else:
         for token in blocked:
             self.assertNotIn(token, text)
         self.assertIn("fetch_t1bis_inputs.py", text)
+        self.assertIn("jobs/tools/calibrate_vs_scan.py", text)
+        self.assertNotIn("--calibrate-tool tools/", text)
         self.assertIn('GAMES="${GAMES:-300}"', text)
         self.assertIn('PLAYD="${PLAYD:-10}"', text)
         self.assertIn('ARB_DEPTH="${ARB_DEPTH:-14}"', text)

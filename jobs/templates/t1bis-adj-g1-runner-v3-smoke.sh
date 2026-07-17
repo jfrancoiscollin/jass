@@ -20,7 +20,7 @@ trap 'rc=$?; printf "exit_code=%s\n" "$rc" > "$ART/smoke-runtime.txt"; exit "$rc
 python3 -m py_compile \
   jobs/tools/fetch_t1bis_inputs.py \
   tools/scan_selfplay_gen.py \
-  tools/calibrate_vs_scan.py \
+  jobs/tools/calibrate_vs_scan.py \
   jobs/tools/run_jass_gate_bounded.py
 python3 jobs/tests/test_run_jass_gate.py > "$W/test-run-gate.log" 2>&1
 
