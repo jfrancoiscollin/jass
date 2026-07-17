@@ -58,3 +58,16 @@ emscripten_temp/
 __pycache__/
 *.pyc
 
+
+# Generated experiment data is externalized to the runner-v3 object store.
+/jobs/results/**/artefacts/
+/jobs/results/**/artefacts.src/
+*.pjtw
+*.pjtw.gz
+*.jnnw
+*.jnnw.gz
+*.fen.gz
+*.parquet
+*.onnx
+*.pt
+*.pth
