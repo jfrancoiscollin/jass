@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pattern", required=True)
     parser.add_argument("--defender-pattern", required=True)
     parser.add_argument("--pool-jnnw", required=True)
-    parser.add_argument("--calibrate-tool", default="tools/calibrate_vs_scan.py")
+    parser.add_argument("--calibrate-tool", default="jobs/tools/calibrate_vs_scan.py")
     parser.add_argument("--depth", type=int, default=10)
     parser.add_argument("--movetime", type=float)
     parser.add_argument("--max-plies", type=int, default=260)
