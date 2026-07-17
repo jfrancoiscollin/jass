@@ -263,7 +263,7 @@ for stratum in p1_net p2_moyen p3_mince p4_egal; do
   for shard in $(seq 0 $((NSH_CONV-1))); do
     out="$W/$stratum.conv.$shard.json"; inputs+=("$out")
     timeout "$SHARD_TIMEOUT" python3 jobs/tools/conv_fixed_wdl.py --jass "$J" --pattern "$W/candidate.pjtw" \
-      --defender-pattern "$W/gen2.pjtw" --pool-jnnw "$W/$stratum.dec.jnnw" --calibrate-tool tools/calibrate_vs_scan.py \
+      --defender-pattern "$W/gen2.pjtw" --pool-jnnw "$W/$stratum.dec.jnnw" --calibrate-tool jobs/tools/calibrate_vs_scan.py \
       --depth "$CONV_DEPTH" --max-plies 260 --shard "$shard" --nshards "$NSH_CONV" --out "$out" > "$W/$stratum.conv.$shard.log" 2>&1 &
     pids+=("$!")
   done

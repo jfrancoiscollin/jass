@@ -1,6 +1,6 @@
 {
-  "legacy_findings": 146,
-  "root_tool_references": 58,
-  "source": "cpx62-0747f-retirement-readiness-audit-v2",
-  "policy": "Temporary no-regression ceiling. The final retirement gate runs with --require-zero."
+  "legacy_findings": 0,
+  "root_tool_references": 0,
+  "source": "cpx62-0750d-pr335-zero-gate-fix-v1",
+  "policy": "Final retirement baseline: active legacy and root-tool dependencies must remain zero."
 }

@@ -663,7 +663,7 @@ def main(argv):
     p.add_argument("--dump-games-dir", metavar="DIR", default=None,
                    help="if set, dumps one JSON per game with the full move "
                         "history + outcome metadata. Required input to "
-                        "tools/analyze_loss_by_pieces.py for post-hoc "
+                        "the post-hoc loss-by-piece analyzer for "
                         "diagnostic of where jass wins/loses by piece count.")
     p.add_argument("--jass-threads", type=int, default=1,
                    help="Lazy SMP : number of threads for the jass player "
