@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pattern-a", required=True)
     parser.add_argument("--pattern-b", required=True)
     parser.add_argument("--openings-file", required=True)
-    parser.add_argument("--harness", default="tools/jass_vs_jass_arch.py")
+    parser.add_argument("--harness", default="jobs/tools/jass_vs_jass_arch.py")
     parser.add_argument("--search-params", default="qs_forcing_depth=6,qs_promo_depth=6")
     parser.add_argument("--depth", type=int, default=9)
     parser.add_argument("--pairs", type=int, default=1)

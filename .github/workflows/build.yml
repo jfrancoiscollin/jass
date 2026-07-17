@@ -8,7 +8,7 @@
 #                      `example.html` as a workflow artifact and stages a
 #                      Pages bundle.
 #   4. deploy-pages  — Publishes the staged bundle to GitHub Pages on
-#                      pushes to `main` only. Requires Settings → Pages →
+#                      pushes to `develop` only. Requires Settings → Pages →
 #                      "Source: GitHub Actions" to be enabled once.
 
 name: build
@@ -134,13 +134,13 @@ jobs:
           path: _site
 
   # ---------------------------------------------------------------------------
-  # GitHub Pages deploy: only on `main` pushes. The demo URL is then
+  # GitHub Pages deploy: only on `develop` pushes. The demo URL is then
   # printed at the end of the run and shown in the Environments panel.
   # ---------------------------------------------------------------------------
   deploy-pages:
     name: Deploy demo to GitHub Pages
     needs: wasm
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     permissions:
       pages: write
