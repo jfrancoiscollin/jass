@@ -156,6 +156,46 @@ class ResultTests(unittest.TestCase):
             self.assertTrue(data.startswith(b"...[truncated]..."))
             self.assertTrue(data.endswith(b"x" * 10))
 
+    def test_status_inlines_only_allowlisted_small_json(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "nested").mkdir()
+            (root / "nested/teacher-smoke-decision.json").write_text(
+                json.dumps({"scientific_status": "confirm_b1", "winner": "B1"})
+            )
+            (root / "secret.json").write_text(json.dumps({"token": "do-not-copy"}))
+            (root / "promotion.json").write_text("not-json")
+            payload = R.artefact_status_payload(root)
+            self.assertEqual(len(payload["artefacts"]), 3)
+            self.assertEqual(
+                payload["scientific_summaries"][
+                    "nested/teacher-smoke-decision.json"
+                ]["winner"],
+                "B1",
+            )
+            self.assertNotIn("secret.json", payload["scientific_summaries"])
+            self.assertNotIn("promotion.json", payload["scientific_summaries"])
+
+    def test_missing_exit_code_creates_diagnostic(self):
+        with tempfile.TemporaryDirectory() as td:
+            run_dir = Path(td)
+            (run_dir / "artefacts").mkdir()
+            info = {
+                "run_dir": str(run_dir),
+                "job_id": "job",
+                "attempt_id": "attempt",
+                "host": "host",
+                "code_sha": "a" * 40,
+            }
+            self.assertEqual(R.read_exit_code(info), (-1, "missing_exit_code"))
+            R.write_attempt_diagnostic(info, "missing_exit_code")
+            diagnostic = read_json(run_dir / "artefacts/attempt-diagnostic.json")
+            self.assertEqual(diagnostic["reason"], "missing_exit_code")
+            self.assertEqual(
+                diagnostic["classification"],
+                "wrapper_terminated_without_exit_status",
+            )
+
 
 class JsonTests(unittest.TestCase):
     def test_atomic_json(self):
@@ -204,6 +244,8 @@ class EndToEndFilesystemTests(unittest.TestCase):
                 "#!/usr/bin/env bash\nset -euo pipefail\n"
                 'cd "$JASS_CODE_DIR"\n'
                 'echo ok > "$JASS_ARTEFACT_DIR/result.txt"\n'
+                'echo \'{"scientific_status":"complete_probe"}\' '
+                '> "$JASS_ARTEFACT_DIR/scientific-summary.json"\n'
             )
             control = self.seed_repo(
                 root,
@@ -250,6 +292,11 @@ class EndToEndFilesystemTests(unittest.TestCase):
             self.assertTrue(R.reap_finished_job(c))
             status = read_json(status_path(c, "smoke"))
             self.assertEqual(status["state"], "completed")
+            self.assertEqual(
+                status["scientific_summaries"]["scientific-summary.json"]
+                ["scientific_status"],
+                "complete_probe",
+            )
             published = root / "published/smoke" / info["attempt_id"]
             self.assertTrue((published / "_SUCCESS").exists())
             self.assertEqual(

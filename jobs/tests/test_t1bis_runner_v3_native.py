@@ -98,6 +98,8 @@ else:
         decision: str = "promote",
         status: str = "continue_probe",
         declared_sha: bool = True,
+        result_state: str = "completed",
+        exit_code: int = 0,
     ) -> tuple[Path, bytes]:
         job_id = "ccx33-0756-t1bis-adj-g1-native-full-v2"
         attempt_id = "20260717T074749Z-6d90e72d"
@@ -121,8 +123,8 @@ else:
         manifest = {
             "job_id": job_id,
             "attempt_id": attempt_id,
-            "state": "completed",
-            "exit_code": 0,
+            "state": result_state,
+            "exit_code": exit_code,
             "code_sha": "6d90e72ded1cd01055be197817123fe9740c0816",
         }
         (prefix / "manifest.json").write_text(
@@ -148,12 +150,15 @@ else:
 
         checksum_lines = []
         for path in sorted(prefix.rglob("*")):
-            if path.is_file() and path.name not in {"checksums.sha256", "_SUCCESS"}:
+            if path.is_file() and path.name not in {
+                "checksums.sha256", "_SUCCESS", "_FAILED"
+            }:
                 checksum_lines.append(
                     f"{digest(path.read_bytes())}  {path.relative_to(prefix)}\n"
                 )
         (prefix / "checksums.sha256").write_text("".join(checksum_lines), encoding="utf-8")
-        (prefix / "_SUCCESS").write_text("2026-07-17T09:04:46+00:00\n", encoding="utf-8")
+        marker = "_SUCCESS" if result_state == "completed" else "_FAILED"
+        (prefix / marker).write_text("2026-07-17T09:04:46+00:00\n", encoding="utf-8")
         return prefix, payload
 
     def run_fetcher(self, *args: str) -> subprocess.CompletedProcess:
@@ -328,6 +333,36 @@ else:
                 "--out-dir", str(root / "selected"),
             )
             self.assertNotEqual(result.returncode, 0)
+
+    def test_generic_result_fetch_can_verify_failed_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            failed, _ = self.build_previous_run(
+                root, result_state="failed", exit_code=-1
+            )
+            rclone = self.fake_rclone(root)
+            out = root / "selected"
+            result = self.run_result_fetcher(
+                "--rclone-bin", str(rclone),
+                "--prefix", str(failed),
+                "--expected-state", "failed",
+                "--file", "manifest.json=failed-manifest.json",
+                "--out-dir", str(out),
+                "--report", str(root / "report.json"),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            report = json.loads((root / "report.json").read_text())
+            self.assertEqual(report["result_state"], "failed")
+            self.assertEqual(report["exit_code"], -1)
+
+            rejected = self.run_result_fetcher(
+                "--rclone-bin", str(rclone),
+                "--prefix", str(failed),
+                "--expected-state", "completed",
+                "--file", "manifest.json",
+                "--out-dir", str(root / "wrong-state"),
+            )
+            self.assertNotEqual(rejected.returncode, 0)
 
     def test_launchers_are_native_and_shell_valid(self) -> None:
         for script in (FULL, SMOKE, NEXT):

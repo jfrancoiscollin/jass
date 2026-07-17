@@ -210,7 +210,7 @@ def do_reannotate(a):
     zéro re-minage, l'info est dans le FEN. Émet un manifest de strates marge-valeur."""
     import collections as _c
     rows = []
-    for ln in open(a.pool, encoding="utf-8"):
+    for ln in Path(a.pool).read_text(encoding="utf-8").splitlines():
         if ln.startswith("#"):
             continue
         fen = ln.split("#", 1)[0].strip()
@@ -257,7 +257,7 @@ def do_carve(a):
     Sortie : eval-set stratifié + pool training amputé (disjonction dure)."""
     import collections as _c
     rows = []
-    for ln in open(a.pool, encoding="utf-8"):
+    for ln in Path(a.pool).read_text(encoding="utf-8").splitlines():
         if ln.startswith("#"):
             continue
         fen = ln.split("#", 1)[0].strip()
@@ -271,7 +271,8 @@ def do_carve(a):
     eval_rows = []
     eval_canon = set()
     for pal, lst in by_pal.items():
-        take = min(a.per_palier, len(lst) // 2)   # ≤ moitié d'un palier réservé au témoin
+        available = len(lst) if a.holdout_only else len(lst) // 2
+        take = min(a.per_palier, available)
         step = max(1, len(lst) // max(1, take))
         for fen, m in lst[::step][:take]:
             eval_rows.append((fen, m, pal))
@@ -285,6 +286,7 @@ def do_carve(a):
     wr(a.out_eval, eval_rows, "conv_self_eval_set STRATIFIÉ (disjoint du training, N/palier)")
     wr(a.out_train, train_rows, "conversion_pool training (amputé du témoin stratifié)")
     man = {"eval_set": len(eval_rows), "training": len(train_rows),
+           "holdout_only": bool(a.holdout_only),
            "eval_par_palier": {p: sum(1 for _, _, q in eval_rows if q == p) for p in
                                ("p1_net", "p2_moyen", "p3_mince", "p4_egal")},
            "train_par_palier": {p: sum(1 for _, _, q in train_rows if q == p) for p in
@@ -302,6 +304,11 @@ def main(argv=None) -> int:
     cv = sub.add_parser("carve")
     cv.add_argument("--pool", required=True)
     cv.add_argument("--per-palier", type=int, default=200)
+    cv.add_argument(
+        "--holdout-only",
+        action="store_true",
+        help="use up to all fresh positions; the source pool will never train a model",
+    )
     cv.add_argument("--out-eval", required=True)
     cv.add_argument("--out-train", required=True)
     cv.add_argument("--manifest", default=None)

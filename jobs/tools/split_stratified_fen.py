@@ -17,7 +17,13 @@ STRATA = ("p1_net", "p2_moyen", "p3_mince", "p4_egal")
 PALIER_RE = re.compile(r"(?:^|\s)palier=(p1_net|p2_moyen|p3_mince|p4_egal)(?:\s|$)")
 
 
-def split_lines(lines: list[str]) -> dict[str, list[str]]:
+def split_lines(
+    lines: list[str], required_strata: tuple[str, ...] = STRATA
+) -> dict[str, list[str]]:
+    if not required_strata or any(item not in STRATA for item in required_strata):
+        raise ValueError("required_strata must be a non-empty subset of supported strata")
+    if len(set(required_strata)) != len(required_strata):
+        raise ValueError("required_strata contains duplicates")
     groups: dict[str, list[str]] = defaultdict(list)
     for line_number, raw in enumerate(lines, 1):
         stripped = raw.strip()
@@ -31,10 +37,13 @@ def split_lines(lines: list[str]) -> dict[str, list[str]]:
         if not match:
             raise ValueError(f"line {line_number}: missing/invalid palier metadata")
         groups[match.group(1)].append(fen)
-    for stratum in STRATA:
+    unexpected = sorted(set(groups) - set(required_strata))
+    if unexpected:
+        raise ValueError(f"unexpected strata for this gauge: {unexpected}")
+    for stratum in required_strata:
         if not groups.get(stratum):
             raise ValueError(f"required stratum {stratum} is empty")
-    return {stratum: groups[stratum] for stratum in STRATA}
+    return {stratum: groups[stratum] for stratum in required_strata}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -42,9 +51,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--input", required=True)
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--manifest", required=True)
+    parser.add_argument(
+        "--required-strata",
+        nargs="+",
+        choices=STRATA,
+        default=list(STRATA),
+    )
     args = parser.parse_args(argv)
     try:
-        groups = split_lines(Path(args.input).read_text(encoding="utf-8").splitlines())
+        groups = split_lines(
+            Path(args.input).read_text(encoding="utf-8").splitlines(),
+            tuple(args.required_strata),
+        )
         out_dir = Path(args.out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         files = {}

@@ -41,6 +41,21 @@ class SplitStratifiedFenTests(unittest.TestCase):
                 "B:W5:B6 # palier=p3_mince",
             ])
 
+    def test_can_require_only_fresh_p3_p4_holdout(self):
+        groups = M.split_lines([
+            "B:W5:B6 # palier=p3_mince",
+            "B:W7:B8 # palier=p4_egal",
+        ], ("p3_mince", "p4_egal"))
+        self.assertEqual(set(groups), {"p3_mince", "p4_egal"})
+
+    def test_rejects_unexpected_stratum_in_partial_gauge(self):
+        with self.assertRaises(ValueError):
+            M.split_lines([
+                "W:W1:B2 # palier=p1_net",
+                "B:W5:B6 # palier=p3_mince",
+                "B:W7:B8 # palier=p4_egal",
+            ], ("p3_mince", "p4_egal"))
+
 
 if __name__ == "__main__":
     unittest.main()
