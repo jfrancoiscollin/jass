@@ -184,9 +184,15 @@ for test in \
 done
 python3 jobs/tests/test_run_jass_gate.py > "$W/test_run_jass_gate.log" 2>&1 || die "test gate rouge"
 
+# T1BIS_INPUTS_PREFIX : override optionnel du bundle d'inputs R2 (défaut = v1).
+# Sert aux sondes qui changent UNE entrée figée (ex. fork (c) : départ affaibli)
+# sans toucher au bundle v1 immuable des sondes T1-bis/T2/T3.
+INPUTS_PREFIX_ARGS=()
+[ -n "${T1BIS_INPUTS_PREFIX:-}" ] && INPUTS_PREFIX_ARGS=(--remote-prefix "$T1BIS_INPUTS_PREFIX")
 python3 jobs/tools/fetch_t1bis_inputs.py \
   --out-dir "$INPUTS" \
   --report "$ART/verified-inputs.json" \
+  "${INPUTS_PREFIX_ARGS[@]}" \
   > "$W/fetch-inputs.log" 2>&1 || die "entrées R2 absentes ou non vérifiables"
 
 for f in parent.pjtw.gz fixed.pjtw.gz gen2.pjtw.gz seeds.jnnw.gz g1_pool.fen gauge.fen; do
