@@ -13,17 +13,52 @@ Régimes :
       et si la conversion monte sur la fenêtre pré-engagée.
 
 Le module est volontairement pur : il transforme des W/D/L ou statistiques
-pré-calculées en un manifest JSON reproductible.
+pré-calculées en un manifest JSON reproductible. En CLI runner-v3, il ajoute
+les SHA-256 réels des poids candidat, parent et référence fixe depuis le
+répertoire de travail afin que le tour suivant puisse vérifier sa filiation.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
 YOUNG_TOURS = ("T1-bis", "T2", "T3")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def attach_weight_hashes(conversion: dict | None, weights_dir: Path | None) -> dict | None:
+    """Return a copy of conversion enriched with exact weight payload hashes.
+
+    When ``weights_dir`` is supplied, all three files are mandatory. This is
+    intentionally fail-closed: a promotion manifest with placeholder lineage
+    must not be emitted by a runner-v3 scientific job.
+    """
+    if weights_dir is None:
+        return conversion
+    result = dict(conversion or {})
+    mapping = {
+        "_candidate_sha": "candidate.pjtw",
+        "_parent_sha": "parent.pjtw",
+        "_fixed_reference_sha": "fixed.pjtw",
+    }
+    for field, name in mapping.items():
+        path = weights_dir / name
+        if not path.is_file() or path.stat().st_size <= 0:
+            raise RuntimeError(f"missing weight file for promotion lineage: {path}")
+        result[field] = sha256_file(path)
+    return result
 
 
 def ci_from_wdl(a: int, d: int, b: int, z: float = 1.96) -> dict:
@@ -227,6 +262,11 @@ def _manifest(
     }
 
 
+def _default_weights_dir() -> Path | None:
+    result_dir = os.environ.get("JASS_RESULT_DIR")
+    return Path(result_dir) / "work" if result_dir else None
+
+
 def _cli(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--regime", required=True, choices=["young", "established"])
@@ -239,12 +279,18 @@ def _cli(argv=None) -> int:
     parser.add_argument("--out")
     parser.add_argument("--conv-min-delta", type=float, default=0.02)
     parser.add_argument("--conv-window", type=int, default=2)
+    parser.add_argument(
+        "--weights-dir",
+        type=Path,
+        default=_default_weights_dir(),
+        help="directory containing candidate.pjtw, parent.pjtw and fixed.pjtw",
+    )
     args = parser.parse_args(argv)
 
     data = json.loads(Path(args.input).read_text())
     vs_parent = data["vs_parent"]
     vs_fixed = data["vs_fixed_reference"]
-    conversion = data.get("conversion")
+    conversion = attach_weight_hashes(data.get("conversion"), args.weights_dir)
     if args.regime == "young":
         manifest = young_gate(vs_parent, vs_fixed, args.tour, conversion)
     else:
