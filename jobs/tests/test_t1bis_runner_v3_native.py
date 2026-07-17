@@ -128,6 +128,9 @@ else:
             json.dumps(manifest, indent=2), encoding="utf-8"
         )
 
+        # Forme reelle d'un run_dir : le launcher cree un job.lock VIDE que
+        # l'inventaire du runner liste avec size_bytes=0 (bug T2 des runs 0758).
+        (prefix / "job.lock").write_bytes(b"")
         inventory_files = []
         for path in sorted(prefix.rglob("*")):
             if path.is_file():

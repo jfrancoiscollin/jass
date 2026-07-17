@@ -161,7 +161,9 @@ def inventory_map(inventory: dict) -> dict[str, dict]:
         size = int(item.get("size_bytes", 0))
         if not path or path.startswith("/") or ".." in Path(path).parts:
             raise RuntimeError(f"unsafe result path: {path!r}")
-        if path in result or len(digest) != 64 or size <= 0:
+        # size == 0 est legal dans un run_dir reel (ex. job.lock du launcher) ;
+        # les objets requis sont verifies non-vides plus bas.
+        if path in result or len(digest) != 64 or size < 0:
             raise RuntimeError(f"invalid result inventory metadata: {path!r}")
         result[path] = {"sha256": digest, "size_bytes": size}
     return result
@@ -217,6 +219,8 @@ def fetch_promoted_parent(
         meta = files.get(required)
         if meta is None:
             raise RuntimeError(f"{required} absent from previous result inventory")
+        if meta["size_bytes"] <= 0:
+            raise RuntimeError(f"{required} is empty in previous result inventory")
         if checksums.get(required) != meta["sha256"]:
             raise RuntimeError(f"{required} digest differs between inventory and checksums")
 
