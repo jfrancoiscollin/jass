@@ -2,7 +2,9 @@
 """Tests promotion inter-tours v3.2."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -75,6 +77,40 @@ class YoungTests(unittest.TestCase):
         manifest = P.young_gate(match(0.5, 600), match(0.5, 600), "T1-bis")
         self.assertIsNone(manifest["conversion"]["p1_net"])
         self.assertIsNone(manifest["conversion"]["p4_egal"])
+
+
+class LineageTests(unittest.TestCase):
+    def test_exact_weight_hashes_are_injected(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            payloads = {
+                "candidate.pjtw": b"candidate",
+                "parent.pjtw": b"parent",
+                "fixed.pjtw": b"fixed",
+            }
+            for name, payload in payloads.items():
+                (root / name).write_bytes(payload)
+            conversion = P.attach_weight_hashes({"global": 0.667}, root)
+            manifest = P.young_gate(
+                match(0.51, 600), match(0.51, 600), "T2", conversion
+            )
+            self.assertEqual(
+                manifest["candidate_sha"], hashlib.sha256(b"candidate").hexdigest()
+            )
+            self.assertEqual(
+                manifest["parent_sha"], hashlib.sha256(b"parent").hexdigest()
+            )
+            self.assertEqual(
+                manifest["fixed_reference_sha"], hashlib.sha256(b"fixed").hexdigest()
+            )
+
+    def test_missing_weight_file_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "candidate.pjtw").write_bytes(b"candidate")
+            (root / "parent.pjtw").write_bytes(b"parent")
+            with self.assertRaises(RuntimeError):
+                P.attach_weight_hashes({}, root)
 
 
 class EstablishedTests(unittest.TestCase):
