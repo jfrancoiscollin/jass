@@ -38,7 +38,7 @@ produit ni un signal de conversion différent ni un généraliste non-régressif
 
 ## Décision
 
-- **Fork (c) au départ 0.3× : CLOS (stop_regression).** `cpx62-0775-forkc-t1-v1` reste
+- **Fork (c) au départ 0.3× : CLOS (stop_regression).** `cpx62-0775-forkc-t1-v1` (ANNULÉ, script retiré) reste
   préparé mais non soumis (son propre pré-check C0 le clean-stoppe de toute façon).
 - Leviers « départ » restants théoriques : un départ **zéro** pur (encore plus loin du
   fort — a priori pire) ou un scaling **intermédiaire** (0.6×) ; mais le mécanisme

@@ -8,9 +8,11 @@ Ordre et conditions :
 
 1. `cpx62-0774-forkc-c0-v1.sh` — diagnostic court : policy strong/weak,
    refit du même corpus T1 depuis weak, gate absolu et conversion p3/p4.
-2. `cpx62-0775-forkc-t1-v1.sh` — **uniquement si** le résultat de 0774 porte
-   `c0-decision.json.scientific_status=proceed_t1`. Le tour impose le troisième
-   gate contre le T0 fort historique.
+2. ~~`cpx62-0775-forkc-t1-v1.sh`~~ — **ANNULÉ (2026-07-17).** Le C0 `cpx62-0774`
+   a rendu `scientific_status=stop_regression` (refit-faible vs fort elo −32.5,
+   ci_high 0.493 < 0.5 ; hard-conv delta −0.011). Fork (c) au départ 0.3× est
+   clos → le tour T1-C ne sera pas lancé. Script retiré du jeu préparé.
+   Détail : `docs/forkc_c0_verdict_20260717.md`.
 3. `ccx33-0776-teacher-mine-t3-v1.sh` — indépendant du fork C : reconstruit les
    trajectoires T3 historiques par transitions légales, certifie les siblings
    et produit les corpus B1/B2/B3 appariés.

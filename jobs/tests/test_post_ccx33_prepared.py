@@ -13,19 +13,24 @@ TEMPLATES = (
     ROOT / "jobs/templates/mtc-audit-runner-v3.sh",
     ROOT / "jobs/templates/p3-blind-holdout-runner-v3.sh",
 )
-FORK_C_T1 = (
-    ROOT
-    / "jobs/prepared/forkc-teacher-20260717/cpx62-0775-forkc-t1-v1.sh"
-)
+# Fork C T1 (cpx62-0775) ANNULÉ le 2026-07-17 : le C0 a rendu stop_regression
+# (cf docs/forkc_c0_verdict_20260717.md). Le script est retiré du jeu préparé.
 
 
 class PostCcx33PreparedTests(unittest.TestCase):
     def test_all_scripts_are_shell_valid_and_outside_queue(self):
         scripts = sorted(PREPARED.glob("*.sh"))
         self.assertEqual(len(scripts), 5)
-        for script in (*TEMPLATES, *scripts, FORK_C_T1):
+        for script in (*TEMPLATES, *scripts):
             subprocess.run(["bash", "-n", str(script)], check=True)
             self.assertNotIn("/jobs/queue/", str(script))
+
+    def test_fork_c_t1_is_cancelled(self):
+        removed = (
+            ROOT
+            / "jobs/prepared/forkc-teacher-20260717/cpx62-0775-forkc-t1-v1.sh"
+        )
+        self.assertFalse(removed.exists(), "fork C T1 doit rester annulé (C0 stop_regression)")
 
     def test_mtc_audit_is_concurrent_and_fail_closed(self):
         text = TEMPLATES[2].read_text(encoding="utf-8")
@@ -51,15 +56,6 @@ class PostCcx33PreparedTests(unittest.TestCase):
         self.assertIn("conversion_confirmation_gate.py confirm", text)
         self.assertIn("--verify-manifest", text)
         self.assertIn("CACHE_PROCS=$((PAR_CONV * 3))", text)
-
-    def test_fork_c_t1_requires_c0_and_same_host_mtc(self):
-        text = FORK_C_T1.read_text(encoding="utf-8")
-        self.assertIn("FORKC_C0_RUN_PREFIX", text)
-        self.assertIn("MTC_AUDIT_RUN_PREFIX", text)
-        self.assertIn("ALLOW_MTC_SKIP=0", text)
-        self.assertIn("--verify-manifest", text)
-        self.assertIn("mtc.get('host') != socket.gethostname()", text)
-
 
 if __name__ == "__main__":
     unittest.main()
