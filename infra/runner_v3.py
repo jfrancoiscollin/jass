@@ -96,6 +96,12 @@ def start_job(cfg: Config, script: Path) -> dict:
     run_dir = cfg.spool_root / "runs" / job_id / attempt_id
     artefact_dir = run_dir / "artefacts"
     artefact_dir.mkdir(parents=True, exist_ok=True)
+    # PrivateTmp=true + Type=oneshot: once the runner service exits, systemd
+    # tears down the private /tmp mount while the detached job keeps running,
+    # so anything using /tmp (gcc, cmake try-compile, tempfile) fails with
+    # ENOENT. Point TMPDIR at a per-attempt directory that always exists.
+    tmp_dir = run_dir / "tmp"
+    tmp_dir.mkdir(parents=True, exist_ok=True)
     script_copy = run_dir / "job.sh"
     shutil.copy2(script, script_copy)
     script_copy.chmod(0o755)
@@ -126,6 +132,7 @@ def start_job(cfg: Config, script: Path) -> dict:
             f"export JASS_ATTEMPT_ID={attempt_id}",
             f"export JASS_RESULT_DIR={run_dir}",
             f"export JASS_ARTEFACT_DIR={artefact_dir}",
+            f"export TMPDIR={tmp_dir}",
         ]) + "\n",
         encoding="utf-8",
     )
