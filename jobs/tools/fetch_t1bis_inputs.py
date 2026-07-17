@@ -84,6 +84,13 @@ def resolve_prefix(cli_prefix: str | None) -> str:
     return base + "/inputs/t1bis-adj-g1/v1"
 
 
+def resolve_manifest_name(success: dict) -> str:
+    name = str(success.get("manifest_name") or "manifest.json")
+    if not name or Path(name).name != name or name in {".", "..", "_SUCCESS"}:
+        raise RuntimeError(f"unsafe manifest name in _SUCCESS: {name!r}")
+    return name
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--remote-prefix")
@@ -102,7 +109,8 @@ def main(argv: list[str] | None = None) -> int:
     if success.get("version") != "v1":
         raise RuntimeError(f"unsupported T1-bis input version: {success.get('version')!r}")
 
-    manifest_raw = run_capture([args.rclone_bin, "cat", prefix + "/manifest.json"])
+    manifest_name = resolve_manifest_name(success)
+    manifest_raw = run_capture([args.rclone_bin, "cat", prefix + "/" + manifest_name])
     manifest_hash = hashlib.sha256(manifest_raw).hexdigest()
     if manifest_hash != success.get("manifest_sha256"):
         raise RuntimeError("manifest digest differs from _SUCCESS")
@@ -148,6 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         "state": "verified",
         "remote_prefix": prefix,
         "source_commit": manifest.get("source_commit"),
+        "manifest_name": manifest_name,
         "manifest_sha256": manifest_hash,
         "files": files,
         "objects": verified,
