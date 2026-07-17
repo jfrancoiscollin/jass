@@ -90,9 +90,9 @@ run_pids(){
 merge_jnnw(){ python3 - "$1" "$2" <<'PY'
 import glob,re,struct,sys
 out,prefix=sys.argv[1:]
-def key(p):
-    m=re.search(r'\.(\d+)(?:\.jnnw)?$',p); return int(m.group(1)) if m else 10**9
-files=sorted(glob.glob(prefix+'*'),key=key)
+rx=re.compile(re.escape(prefix)+r'(\d+)(?:\.jnnw)?$')
+matched=sorted((int(m.group(1)),p) for p in glob.glob(prefix+'*') if (m:=rx.fullmatch(p)))
+files=[p for _,p in matched]
 if not files: raise SystemExit('aucun shard JNNW')
 body=bytearray(); total=0
 for path in files:
@@ -109,9 +109,9 @@ PY
 merge_bytes(){ python3 - "$1" "$2" <<'PY'
 import glob,re,sys
 out,prefix=sys.argv[1:]
-def key(p):
-    m=re.search(r'\.(\d+)$',p); return int(m.group(1)) if m else 10**9
-files=sorted(glob.glob(prefix+'*'),key=key)
+rx=re.compile(re.escape(prefix)+r'(\d+)$')
+matched=sorted((int(m.group(1)),p) for p in glob.glob(prefix+'*') if (m:=rx.fullmatch(p)))
+files=[p for _,p in matched]
 if not files: raise SystemExit('aucun shard sidecar')
 open(out,'wb').write(b''.join(open(p,'rb').read() for p in files))
 PY
