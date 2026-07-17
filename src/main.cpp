@@ -1553,6 +1553,48 @@ int run_dump_legal_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --dump-children <fen-in> <jsonl-out> : deterministic legal successor dump.
+// One JSON array is emitted per input FEN, preserving line alignment.  This is
+// intentionally eval-free: conversion_teacher.py uses it both to reconstruct
+// historical sample-every=1 game boundaries and to enumerate counterfactual
+// siblings before applying the same external oracle to every child.
+// -----------------------------------------------------------------------------
+int run_dump_children_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-children <fen-in> <jsonl-out>\n";
+        return 1;
+    }
+    std::ifstream in(argv[2]);
+    if (!in) { std::cerr << "error: cannot open " << argv[2] << "\n"; return 1; }
+    std::ofstream out(argv[3]);
+    if (!out) { std::cerr << "error: cannot open " << argv[3] << "\n"; return 1; }
+    std::string line;
+    std::uint64_t nlines = 0, nchildren = 0, nbad = 0;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        ++nlines;
+        auto pos = Position::from_fen(line);
+        if (!pos) { out << "null\n"; ++nbad; continue; }
+        MoveList ml;
+        generate_legal_moves(*pos, ml);
+        out << '[';
+        for (std::size_t i = 0; i < ml.size(); ++i) {
+            if (i) out << ',';
+            const auto& move = ml[i];
+            out << "{\"move\":\"" << static_cast<int>(move.from)
+                << (move.is_capture() ? 'x' : '-') << static_cast<int>(move.to)
+                << "\",\"capture\":" << (move.is_capture() ? "true" : "false")
+                << ",\"fen\":\"" << pos->after(move).to_fen() << "\"}";
+            ++nchildren;
+        }
+        out << "]\n";
+    }
+    std::cerr << "dump-children: " << nlines << " positions, " << nchildren
+              << " children, " << nbad << " bad-fen -> " << argv[3] << "\n";
+    return nbad == 0 ? 0 : 2;
+}
+
+// -----------------------------------------------------------------------------
 // --replay-moves <games.txt> <parents.jnnw> <moves.bin> : elite-game -> master
 // preference corpus. Reads one game per input line (space-separated move tokens,
 // e.g. "32-28 19x28 33x22 ..."; only the FIRST and LAST square of each token are
@@ -1791,6 +1833,7 @@ jass::Position position_from_record(const char* rec) {
 
 // --gen-siblings <parents.jnnw> <out.jnnw> [depth=9] [--nnue PATH] [--m-min CP=15]
 //                [--max-parents N] [--max-pairs-per-parent K=16] [--seed S=1]
+//                [--played-moves good.bin] [--dominated-moves bad.bin]
 //   Piste (a) "depth-consistency training". Pour chaque parent QUIET (noeud sans capture),
 //   recherche chaque enfant legal a profondeur fixe (eval-pur, PAS de DB => echelles comparables).
 //   Valeur parent-POV d'un coup = -score(enfant). Emet les PAIRES ordonnees (better > worse) dont
@@ -1810,12 +1853,14 @@ int run_gen_siblings_mode(int argc, char** argv) {
     std::string moves_path;   // --played-moves : BRAS M (Bonanza). Binaire (from:u8,to:u8) par parent, ALIGNE
                               // sur les records d'entree. Si present : PAS de recherche — le coup joue = prefere,
                               // toutes les autres sœurs legales = dominees (src=MASTER). max_pairs/m_min ignores.
+    std::string dominated_path; // Teacher causal: un seul mauvais coup explicite par parent. Garantit que B2/B3
+                                // utilisent exactement les memes parents et paires (pas toutes les fratries).
     // --leaf-mode : MMTO (Hoki-Kaneko). Pour CHAQUE enfant, recherche a `depth` (quiescence incluse) et emet la
     //   position FEUILLE de la PV a la place de l'enfant immediat. La valeur minimax couleur-fixe d'un coup = l'eval
     //   couleur-fixe de sa feuille-PV (identite negamax), donc rank_finetune (qui signe chaque record par son stm)
     //   apprend a travers la RECHERCHE, pas sur l'eval-feuille des enfants immediats. En master+leaf : filtre working-set
     //   (ne garder que si le coup-prof n'est PAS deja en tete de la recherche, avec marge --ws-margin cp).
-    bool leaf_mode = false; int ws_margin = 10;
+    bool leaf_mode = false; int ws_margin = 10; bool working_set_filter = true;
     for (int i = 4; i < argc; ++i) {
         const std::string a = argv[i];
         if      (a == "--nnue" && i + 1 < argc)                 nnue_path = argv[++i];
@@ -1823,17 +1868,44 @@ int run_gen_siblings_mode(int argc, char** argv) {
         else if (a == "--max-parents" && i + 1 < argc)          max_parents = parse_int_or(argv[++i], -1);
         else if (a == "--max-pairs-per-parent" && i + 1 < argc) max_pairs = parse_int_or(argv[++i], 16);
         else if (a == "--played-moves" && i + 1 < argc)         moves_path = argv[++i];
+        else if (a == "--dominated-moves" && i + 1 < argc)      dominated_path = argv[++i];
         else if (a == "--leaf-mode")                            leaf_mode = true;
         else if (a == "--ws-margin" && i + 1 < argc)            ws_margin = parse_int_or(argv[++i], 10);
+        else if (a == "--keep-all-pairs")                       working_set_filter = false;
     }
     const bool master_mode = !moves_path.empty();
     std::vector<std::pair<std::uint8_t,std::uint8_t>> played;   // BRAS M : coup joue par parent
+    std::vector<std::pair<std::uint8_t,std::uint8_t>> dominated;
+    if (!dominated_path.empty() && !master_mode) {
+        std::cerr << "error: --dominated-moves requires --played-moves\n";
+        return 2;
+    }
     if (master_mode) {
         std::ifstream mf(moves_path, std::ios::binary);
         if (!mf) { std::cerr << "error: cannot open --played-moves " << moves_path << "\n"; return 1; }
         std::vector<char> mb((std::istreambuf_iterator<char>(mf)), std::istreambuf_iterator<char>());
+        if ((mb.size() % 2) != 0) {
+            std::cerr << "error: --played-moves has a truncated move byte\n";
+            return 1;
+        }
         for (std::size_t k = 0; k + 1 < mb.size(); k += 2)
             played.emplace_back(static_cast<std::uint8_t>(mb[k]), static_cast<std::uint8_t>(mb[k+1]));
+    }
+    if (!dominated_path.empty()) {
+        std::ifstream mf(dominated_path, std::ios::binary);
+        if (!mf) { std::cerr << "error: cannot open --dominated-moves " << dominated_path << "\n"; return 1; }
+        std::vector<char> mb((std::istreambuf_iterator<char>(mf)), std::istreambuf_iterator<char>());
+        if ((mb.size() % 2) != 0) {
+            std::cerr << "error: --dominated-moves has a truncated move byte\n";
+            return 1;
+        }
+        for (std::size_t k = 0; k + 1 < mb.size(); k += 2)
+            dominated.emplace_back(static_cast<std::uint8_t>(mb[k]), static_cast<std::uint8_t>(mb[k+1]));
+        if (dominated.size() != played.size()) {
+            std::cerr << "error: played/dominated move counts differ (" << played.size()
+                      << " != " << dominated.size() << ")\n";
+            return 1;
+        }
     }
 
     std::unique_ptr<INetwork> custom_nnue;
@@ -1852,9 +1924,25 @@ int run_gen_siblings_mode(int argc, char** argv) {
     if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
     char hdr[8];
     if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) { std::cerr << "error: not JNNW\n"; return 1; }
+    std::uint32_t declared_nrec = 0;
+    std::memcpy(&declared_nrec, hdr + 4, 4);
     std::vector<char> buf((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
     f.close();
+    if ((buf.size() % 38) != 0) {
+        std::cerr << "error: truncated JNNW body\n";
+        return 1;
+    }
     const std::size_t nrec = buf.size() / 38;
+    if (declared_nrec != nrec) {
+        std::cerr << "error: JNNW header/body count mismatch (" << declared_nrec
+                  << " != " << nrec << ")\n";
+        return 1;
+    }
+    if (!dominated_path.empty() && dominated.size() != nrec) {
+        std::cerr << "error: explicit teacher move count differs from parent records ("
+                  << dominated.size() << " != " << nrec << ")\n";
+        return 1;
+    }
 
     // Echantillonnage uniforme par PAS (le corpus est ordonne par partie) ; ~3x de marge pour les
     // noeuds de capture/sans-fratrie ecartes.
@@ -1922,11 +2010,22 @@ int run_gen_siblings_mode(int argc, char** argv) {
             int best = -1;
             for (std::size_t k = 0; k < ch.size(); ++k) if (ch[k].from == pf && ch[k].to == pt) { best = static_cast<int>(k); break; }
             if (best < 0) { ++no_match; continue; }           // coup joue non trouve (capture/parse) : ignorer
-            if (leaf_mode) {
+            int explicit_bad = -1;
+            if (!dominated.empty()) {
+                const std::uint8_t df = dominated[pi].first, dt = dominated[pi].second;
+                for (std::size_t k = 0; k < ch.size(); ++k)
+                    if (ch[k].from == df && ch[k].to == dt) { explicit_bad = static_cast<int>(k); break; }
+                if (explicit_bad < 0 || explicit_bad == best) { ++no_match; continue; }
+            }
+            if (leaf_mode && working_set_filter) {
                 // MMTO working-set : si la recherche prefere DEJA le coup-prof (avec marge), rien a apprendre -> skip.
                 const std::int32_t v_star = ch[static_cast<std::size_t>(best)].pv;
                 std::int32_t v_top = v_star;
-                for (std::size_t k = 0; k < ch.size(); ++k) v_top = std::max(v_top, ch[k].pv);
+                if (explicit_bad >= 0) {
+                    v_top = std::max(v_top, ch[static_cast<std::size_t>(explicit_bad)].pv);
+                } else {
+                    for (std::size_t k = 0; k < ch.size(); ++k) v_top = std::max(v_top, ch[k].pv);
+                }
                 if (v_top - v_star <= ws_margin) { ++ws_already_top; continue; }
             }
             // En leaf-mode (MMTO) : les feuilles-PV peuvent tomber a des PARITES differentes -> stm-feuille != stm-enfant.
@@ -1938,6 +2037,7 @@ int run_gen_siblings_mode(int argc, char** argv) {
                 : 0;
             for (std::size_t k = 0; k < ch.size(); ++k) {
                 if (static_cast<int>(k) == best) continue;
+                if (explicit_bad >= 0 && static_cast<int>(k) != explicit_bad) continue;
                 emit(out, ch[static_cast<std::size_t>(best)], sc, 1);   // prefere (src=MASTER), score=stm parent (leaf)
                 emit(out, ch[k], sc, 1);                                 // domine
                 ++pairs; ++emitted_here; ++phase_pairs[band];
@@ -4556,6 +4656,7 @@ int main(int argc, char** argv) {
         else if (a == "--build-book-from-moves")    return run_build_book_from_moves_mode(argc, argv);
         else if (a == "--perft")                    return run_perft_mode(argc, argv);
         else if (a == "--dump-legal")               return run_dump_legal_mode(argc, argv);
+        else if (a == "--dump-children")            return run_dump_children_mode(argc, argv);
         else if (a == "--replay-moves")             return run_replay_moves_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);

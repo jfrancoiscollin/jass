@@ -22,6 +22,8 @@ GYM_MIN_POS="${GYM_MIN_POS:?quota minimum de positions G1 pré-engagé}"
 TIP_CERTS_JSONL="${TIP_CERTS_JSONL:-}"
 MIN_PROTECTED_TIP_RATE="${MIN_PROTECTED_TIP_RATE:-0.0}"
 ALLOW_MTC_SKIP="${ALLOW_MTC_SKIP:-0}"
+ABSOLUTE_INPUTS_PREFIX="${ABSOLUTE_INPUTS_PREFIX:-}"
+REQUIRE_ABSOLUTE_REFERENCE="${REQUIRE_ABSOLUTE_REFERENCE:-0}"
 
 NSH_GEN="$NSH_GEN_TOTAL"
 NSH_RELABEL="$NSH_RELABEL_TOTAL"
@@ -59,6 +61,7 @@ W="$JASS_RESULT_DIR/work"
 ART="$JASS_ARTEFACT_DIR"
 GEOM="$JASS_RESULT_DIR/geom"
 INPUTS="$JASS_RESULT_DIR/inputs"
+ABS_INPUTS="$JASS_RESULT_DIR/absolute-inputs"
 mkdir -p "$W" "$ART" "$GEOM" "$INPUTS"
 exec 9>"$JASS_RESULT_DIR/job.lock"
 flock -n 9 || { echo "ABORT: instance active" >&2; exit 3; }
@@ -127,12 +130,13 @@ finalize(){
     wait "$GATE_WORKER_PID" 2>/dev/null || true
   fi
   [ -f "$RES" ] && cp "$RES" "$ART/RESULTS.txt"
-  for f in gate_parent.json gate_fixed.json promotion_input.json open.fen; do
+  for f in gate_parent.json gate_fixed.json gate_absolute.json promotion_input.json open.fen; do
     [ -f "$W/$f" ] && cp "$W/$f" "$ART/$f"
   done
   for f in candidate.pjtw gen.jnnw deep.jnnw adj.jnnw; do
     [ -s "$W/$f" ] && gzip -c "$W/$f" > "$ART/$f.gz"
   done
+  [ -s "$W/trajectories.jsonl" ] && gzip -n -c "$W/trajectories.jsonl" > "$ART/trajectories.jsonl.gz"
   if [ -d "$W" ]; then
     (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
   fi
@@ -152,7 +156,8 @@ finalize(){
   # Le runner v3 publie tout JASS_RESULT_DIR au finalize : purger les données
   # lourdes de travail (build ~1 GiB, seeds, shards, dumps) une fois les logs
   # tarés et les artefacts copiés, pour garder l'upload R2 léger.
-  rm -rf "$W/build" "$W/gate-parent" "$W/gate-fixed" "$W/strata" "$INPUTS" 2>/dev/null || true
+  rm -rf "$W/build" "$W/gate-parent" "$W/gate-fixed" "$W/gate-absolute" \
+    "$W/strata" "$INPUTS" "$ABS_INPUTS" 2>/dev/null || true
   find "$W" -maxdepth 1 -type f -size +1M -delete 2>/dev/null || true
   exit "$rc"
 }
@@ -173,13 +178,14 @@ python3 -m py_compile \
   jobs/tools/conv_fixed_wdl.py \
   jobs/tools/run_jass_gate_bounded.py
 
-EXPECTED_SCAN_BLOB="1a19b30cded45281a628d2f9b631f2719d7fbc51"
+EXPECTED_SCAN_BLOB="f6b7b15b76895863bc453f11f3ebdd651911c4e9"
 ACTUAL_SCAN_BLOB="$(git rev-parse HEAD:tools/scan_selfplay_gen.py)"
 [ "$ACTUAL_SCAN_BLOB" = "$EXPECTED_SCAN_BLOB" ] || die "générateur scientifique inattendu: $ACTUAL_SCAN_BLOB"
 
 for test in \
   test_oracle_cert test_promotion_gate test_probe_mining test_cache_guard \
-  test_apply_label_policy test_aggregate_conv_shards test_split_stratified_fen; do
+  test_apply_label_policy test_aggregate_conv_shards test_split_stratified_fen \
+  test_scan_trajectory; do
   python3 "jobs/tests/$test.py" > "$W/$test.log" 2>&1 || die "test rouge: $test"
 done
 python3 jobs/tests/test_run_jass_gate.py > "$W/test_run_jass_gate.log" 2>&1 || die "test gate rouge"
@@ -204,6 +210,23 @@ gunzip -c "$INPUTS/gen2.pjtw.gz" > "$W/gen2.pjtw"
 gunzip -c "$INPUTS/seeds.jnnw.gz" > "$W/seeds.jnnw"
 cp "$INPUTS/g1_pool.fen" "$W/g1_pool.fen"
 cp "$INPUTS/gauge.fen" "$W/gauge.fen"
+
+# Fork diagnostics may pin a third, historically strong reference.  It is
+# fetched through the same immutable-manifest verifier as the primary bundle;
+# no unverified weight path is accepted by the scientific runner.
+if [ -n "$ABSOLUTE_INPUTS_PREFIX" ]; then
+  mkdir -p "$ABS_INPUTS"
+  python3 jobs/tools/fetch_t1bis_inputs.py \
+    --remote-prefix "$ABSOLUTE_INPUTS_PREFIX" \
+    --out-dir "$ABS_INPUTS" \
+    --report "$ART/verified-absolute-inputs.json" \
+    > "$W/fetch-absolute-inputs.log" 2>&1 || die "référence absolue absente ou non vérifiable"
+  [ -s "$ABS_INPUTS/parent.pjtw.gz" ] || die "parent de référence absolue absent"
+  gunzip -c "$ABS_INPUTS/parent.pjtw.gz" > "$W/absolute.pjtw"
+fi
+if [ "$REQUIRE_ABSOLUTE_REFERENCE" = 1 ] && [ ! -s "$W/absolute.pjtw" ]; then
+  die "REQUIRE_ABSOLUTE_REFERENCE=1 sans ABSOLUTE_INPUTS_PREFIX vérifié"
+fi
 
 python3 jobs/tools/cache_guard.py --cache-mb "$CACHE_MB_RELABEL" --procs "$PAR_RELABEL" > "$ART/cache_relabel.json" || die "cache relabel"
 python3 jobs/tools/cache_guard.py --cache-mb "$CACHE_MB_CONV" --procs "$((PAR_CONV*3))" > "$ART/cache_conv.json" || die "cache conversion"
@@ -244,6 +267,7 @@ cat > "$W/gate_parent.json" <<'JSON'
 {"wins_a":0,"draws":0,"wins_b":0,"n":0,"rate":null,"ci_low":null,"ci_high":null,"complete":false}
 JSON
 cp "$W/gate_parent.json" "$W/gate_fixed.json"
+[ -s "$W/absolute.pjtw" ] && cp "$W/gate_parent.json" "$W/gate_absolute.json"
 (
   set -Eeuo pipefail
   for _ in $(seq 1 "$GATE_WAIT_SECONDS"); do
@@ -280,6 +304,25 @@ cp "$W/gate_parent.json" "$W/gate_fixed.json"
       --work-dir "$W/gate-fixed" --out "$W/gate_fixed.new.json"
     mv "$W/gate_fixed.new.json" "$W/gate_fixed.json"
   fi
+  if [ -s "$W/absolute.pjtw" ]; then
+    if cmp -s "$W/parent.pjtw" "$W/absolute.pjtw"; then
+      cp "$W/gate_parent.json" "$W/gate_absolute.json"
+    elif cmp -s "$W/fixed.pjtw" "$W/absolute.pjtw"; then
+      cp "$W/gate_fixed.json" "$W/gate_absolute.json"
+    else
+      python3 jobs/tools/run_jass_gate_bounded.py \
+        --jass "$J" \
+        --pattern-a "$W/candidate.pjtw" \
+        --pattern-b "$W/absolute.pjtw" \
+        --openings-file "$W/open.fen" \
+        --search-params "$QS" \
+        --depth "$DEPTH" --pairs "$PAIRS" \
+        --nshards "$NSH_GATE" --max-parallel "$PAR_GATE" \
+        --timeout "$SHARD_TIMEOUT" \
+        --work-dir "$W/gate-absolute" --out "$W/gate_absolute.new.json"
+      mv "$W/gate_absolute.new.json" "$W/gate_absolute.json"
+    fi
+  fi
 ) > "$W/gate-worker.log" 2>&1 &
 GATE_WORKER_PID=$!
 
@@ -293,7 +336,8 @@ for shard in $(seq 0 $((NSH_GEN-1))); do
     --seed 72800 --nshards "$NSH_GEN" --shard "$shard" \
     --seed-pool "$W/g1_pool.fen" --seed-frac "$SEEDFRAC" \
     --cap-arbiter d14 --egdb-dir "$EGDIR" --arb-depth "$ARB_DEPTH" \
-    --label-src-out "$W/lab.$shard" > "$W/sp.$shard.log" 2>&1 &
+    --label-src-out "$W/lab.$shard" --trajectory-out "$W/traj.$shard.jsonl" \
+    > "$W/sp.$shard.log" 2>&1 &
   pids+=("$!")
   if [ "${#pids[@]}" -ge "$PAR_GEN" ]; then
     run_pids generation-batch "${pids[@]}"
@@ -306,6 +350,18 @@ for shard in $(seq 0 $((NSH_GEN-1))); do
 done
 NPOS="$(merge_jnnw "$W/gen.jnnw" "$W/sp.")"
 merge_bytes "$W/source.tags" "$W/lab."
+python3 - "$W/trajectories.jsonl" "$W/traj." "$NSH_GEN" <<'PY'
+from pathlib import Path
+import sys
+out, prefix, nshards = Path(sys.argv[1]), sys.argv[2], int(sys.argv[3])
+with out.open('wb') as dst:
+    for shard in range(nshards):
+        path = Path(f'{prefix}{shard}.jsonl')
+        if not path.is_file(): raise SystemExit(f'trajectory shard absent: {path}')
+        data = path.read_bytes()
+        if data and not data.endswith(b'\n'): raise SystemExit(f'trajectory JSONL tronqué: {path}')
+        dst.write(data)
+PY
 [ "$(wc -c < "$W/source.tags")" -eq "$NPOS" ] || die "sidecar source désaligné"
 GYM_POS="$(python3 - "$W/source.tags" <<'PY'
 from pathlib import Path
@@ -336,6 +392,16 @@ run_pids relabel "${pids[@]}"
 for shard in $(seq 0 $((NSH_RELABEL-1))); do [ -s "$W/rr.$shard.jnnw" ] || die "relabel shard $shard absent"; done
 merge_jnnw "$W/deep.jnnw" "$W/rr." >/dev/null
 [ "$(jnnw_count "$W/deep.jnnw")" -eq "$NPOS" ] || die "relabel incomplet"
+
+say "=== mining passif WIN→DRAW/LOSS (strictement hors boucle) ==="
+ENGINE_SHA="$(git rev-parse HEAD)"
+WEIGHTS_SHA="$(sha256sum "$W/parent.pjtw" | awk '{print $1}')"
+python3 jobs/tools/probe_mining.py \
+  --trajectories "$W/trajectories.jsonl" --oracle-jnnw "$W/deep.jnnw" \
+  --jass "$J" --work-dir "$W/mining-passive" --probe-tour "$TOUR" \
+  --engine-sha "$ENGINE_SHA" --weights-sha "$WEIGHTS_SHA" --cap-per-parent 1 \
+  --out-events "$ART/mining-events.json" --out-summary "$ART/mining-summary.json" \
+  > "$W/mining-passive.log" 2>&1 || die "mining passif incomplet"
 
 POLICY_ARGS=(--original "$W/gen.jnnw" --relabelled "$W/deep.jnnw" --source-tags "$W/source.tags" --out "$W/adj.jnnw" --manifest "$ART/label_policy.json" --min-protected-tip-rate "$MIN_PROTECTED_TIP_RATE")
 if [ -n "$TIP_CERTS_JSONL" ]; then POLICY_ARGS+=(--certificates "$TIP_CERTS_JSONL"); fi
@@ -394,11 +460,19 @@ fi
 GATE_WORKER_PID=""
 [ -s "$W/gate_parent.json" ] || die "gate_parent.json absent"
 [ -s "$W/gate_fixed.json" ] || die "gate_fixed.json absent"
-python3 - "$W/gate_parent.json" "$W/gate_fixed.json" "$ART/conversion.json" "$W/promotion_input.json" <<'PY'
+if [ "$REQUIRE_ABSOLUTE_REFERENCE" = 1 ]; then
+  [ -s "$W/gate_absolute.json" ] || die "gate_absolute.json absent"
+fi
+python3 - "$W/gate_parent.json" "$W/gate_fixed.json" "$W/gate_absolute.json" \
+  "$ART/conversion.json" "$W/promotion_input.json" "$REQUIRE_ABSOLUTE_REFERENCE" <<'PY'
 import json,sys
-p,f,c,out=sys.argv[1:]; conv=json.load(open(c))
-json.dump({'vs_parent':json.load(open(p)),'vs_fixed_reference':json.load(open(f)),'conversion':conv},open(out,'w'),indent=2)
+p,f,a,c,out,require=sys.argv[1:]; conv=json.load(open(c))
+payload={'vs_parent':json.load(open(p)),'vs_fixed_reference':json.load(open(f)),'conversion':conv}
+if require == '1': payload['vs_absolute_reference']=json.load(open(a))
+json.dump(payload,open(out,'w'),indent=2)
 PY
-python3 jobs/tools/promotion_gate.py --regime young --tour "$TOUR" --input "$W/promotion_input.json" --out "$ART/promotion.json" || die "promotion rejetée/technique"
+PROMOTION_ARGS=(--regime young --tour "$TOUR" --input "$W/promotion_input.json" --out "$ART/promotion.json")
+[ "$REQUIRE_ABSOLUTE_REFERENCE" = 1 ] && PROMOTION_ARGS+=(--require-absolute-reference)
+python3 jobs/tools/promotion_gate.py "${PROMOTION_ARGS[@]}" || die "promotion rejetée/technique"
 
 say "=== $JOB_ID terminé : pipeline natif, entrées R2 vérifiées, aucun faux PASS possible ==="

@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 FETCHER = ROOT / "jobs/tools/fetch_t1bis_inputs.py"
+RESULT_FETCHER = ROOT / "jobs/tools/fetch_result_files.py"
 FULL = ROOT / "jobs/templates/t1bis-adj-g1-runner-v3-native.sh"
 SMOKE = ROOT / "jobs/templates/t1bis-adj-g1-runner-v3-smoke.sh"
 NEXT = ROOT / "jobs/templates/probe-adj-g1-next-tour-runner-v3.sh"
@@ -162,6 +163,13 @@ else:
             stderr=subprocess.PIPE,
         )
 
+    def run_result_fetcher(self, *args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [sys.executable, str(RESULT_FETCHER), *args],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
     def test_fetcher_accepts_verified_set_and_rejects_tamper(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -280,6 +288,47 @@ else:
             self.assertNotEqual(result.returncode, 0)
             self.assertIn(b"download verification failed", result.stderr)
 
+    def test_generic_result_fetch_is_verified_and_selective(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            previous, _ = self.build_previous_run(root)
+            rclone = self.fake_rclone(root)
+            out = root / "selected"
+            result = self.run_result_fetcher(
+                "--rclone-bin", str(rclone),
+                "--prefix", str(previous),
+                "--file", "artefacts/promotion.json=promotion.json",
+                "--out-dir", str(out),
+                "--report", str(root / "report.json"),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode())
+            self.assertTrue((out / "promotion.json").is_file())
+            report = json.loads((root / "report.json").read_text())
+            self.assertEqual(report["state"], "verified")
+            self.assertEqual(len(report["files"]), 1)
+
+            (previous / "artefacts/promotion.json").write_text("tampered")
+            rejected = self.run_result_fetcher(
+                "--rclone-bin", str(rclone),
+                "--prefix", str(previous),
+                "--file", "artefacts/promotion.json",
+                "--out-dir", str(root / "rejected"),
+            )
+            self.assertNotEqual(rejected.returncode, 0)
+
+    def test_generic_result_fetch_rejects_duplicate_local_names(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            previous, _ = self.build_previous_run(root)
+            result = self.run_result_fetcher(
+                "--rclone-bin", str(self.fake_rclone(root)),
+                "--prefix", str(previous),
+                "--file", "artefacts/promotion.json=same.json",
+                "--file", "artefacts/candidate.pjtw.gz=same.json",
+                "--out-dir", str(root / "selected"),
+            )
+            self.assertNotEqual(result.returncode, 0)
+
     def test_launchers_are_native_and_shell_valid(self) -> None:
         for script in (FULL, SMOKE, NEXT):
             subprocess.run(["bash", "-n", str(script)], check=True)
@@ -304,6 +353,9 @@ else:
         self.assertIn('CONV_DEPTH="${CONV_DEPTH:-10}"', text)
         self.assertIn('NOPEN="${NOPEN:-300}"', text)
         self.assertIn('DEPTH="${DEPTH:-9}"', text)
+        self.assertIn("--trajectory-out", text)
+        self.assertIn("ABSOLUTE_INPUTS_PREFIX", text)
+        self.assertIn("--require-absolute-reference", text)
 
         next_text = NEXT.read_text(encoding="utf-8")
         self.assertIn("PROBE_PARENT_RUN_PREFIX", next_text)

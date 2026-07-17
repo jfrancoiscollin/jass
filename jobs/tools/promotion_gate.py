@@ -58,6 +58,9 @@ def attach_weight_hashes(conversion: dict | None, weights_dir: Path | None) -> d
         if not path.is_file() or path.stat().st_size <= 0:
             raise RuntimeError(f"missing weight file for promotion lineage: {path}")
         result[field] = sha256_file(path)
+    absolute = weights_dir / "absolute.pjtw"
+    if absolute.is_file() and absolute.stat().st_size > 0:
+        result["_absolute_reference_sha"] = sha256_file(absolute)
     return result
 
 
@@ -116,6 +119,9 @@ def young_gate(
     vs_fixed: dict,
     tour: str,
     conversion: dict | None = None,
+    *,
+    vs_absolute: dict | None = None,
+    require_absolute: bool = False,
 ) -> dict:
     reasons: list[str] = []
     if tour not in YOUNG_TOURS:
@@ -125,6 +131,10 @@ def young_gate(
     fixed_stats = _match_stats(vs_fixed)
     parent_decision = _young_decision_one(parent_stats)
     fixed_decision = _young_decision_one(fixed_stats)
+    absolute_stats = _match_stats(vs_absolute) if vs_absolute is not None else None
+    absolute_decision = (
+        _young_decision_one(absolute_stats) if absolute_stats is not None else None
+    )
 
     if parent_decision == "technical":
         reasons.append("vs_parent incomplet : n=0 ou intervalle absent")
@@ -141,12 +151,28 @@ def young_gate(
             f"(ci_high={fixed_stats['ci_high']} < 0.5)"
         )
 
+    if require_absolute and absolute_stats is None:
+        reasons.append("référence absolue requise mais comparaison absente")
+    elif absolute_decision == "technical":
+        reasons.append("vs_absolute_reference incomplet : n=0 ou intervalle absent")
+    elif absolute_decision == "reject":
+        reasons.append(
+            "RÉGRESSION établie vs référence absolue "
+            f"(ci_high={absolute_stats['ci_high']} < 0.5)"
+        )
+
     technical = (
         tour not in YOUNG_TOURS
         or parent_decision == "technical"
         or fixed_decision == "technical"
+        or (require_absolute and absolute_stats is None)
+        or absolute_decision == "technical"
     )
-    regression = parent_decision == "reject" or fixed_decision == "reject"
+    regression = (
+        parent_decision == "reject"
+        or fixed_decision == "reject"
+        or absolute_decision == "reject"
+    )
     promote = not technical and not regression
 
     if technical:
@@ -169,6 +195,8 @@ def young_gate(
         status,
         reasons,
         conversion,
+        absolute_stats=absolute_stats,
+        absolute_decision=absolute_decision,
     )
 
 
@@ -239,9 +267,12 @@ def _manifest(
     status: str,
     reasons: list[str],
     conversion: dict | None,
+    *,
+    absolute_stats: dict | None = None,
+    absolute_decision: str | None = None,
 ) -> dict:
     conv = conversion or {}
-    return {
+    result = {
         "regime": regime,
         "tour": tour,
         "candidate_sha": conv.get("_candidate_sha", "..."),
@@ -260,6 +291,15 @@ def _manifest(
         "scientific_status": status,
         "reasons": reasons,
     }
+    if absolute_stats is not None:
+        result["absolute_reference_sha"] = conv.get(
+            "_absolute_reference_sha", "..."
+        )
+        result["vs_absolute_reference"] = {
+            **absolute_stats,
+            "decision": absolute_decision,
+        }
+    return result
 
 
 def _default_weights_dir() -> Path | None:
@@ -280,6 +320,11 @@ def _cli(argv=None) -> int:
     parser.add_argument("--conv-min-delta", type=float, default=0.02)
     parser.add_argument("--conv-window", type=int, default=2)
     parser.add_argument(
+        "--require-absolute-reference",
+        action="store_true",
+        help="fail closed unless vs_absolute_reference is complete and non-regressive",
+    )
+    parser.add_argument(
         "--weights-dir",
         type=Path,
         default=_default_weights_dir(),
@@ -292,7 +337,14 @@ def _cli(argv=None) -> int:
     vs_fixed = data["vs_fixed_reference"]
     conversion = attach_weight_hashes(data.get("conversion"), args.weights_dir)
     if args.regime == "young":
-        manifest = young_gate(vs_parent, vs_fixed, args.tour, conversion)
+        manifest = young_gate(
+            vs_parent,
+            vs_fixed,
+            args.tour,
+            conversion,
+            vs_absolute=data.get("vs_absolute_reference"),
+            require_absolute=args.require_absolute_reference,
+        )
     else:
         manifest = established_gate(
             vs_parent,
