@@ -17,6 +17,9 @@ tools/relabel_with_scan.py to add Scan's eval score and `--target score`.
 from __future__ import annotations
 
 import argparse
+import gzip
+import hashlib
+import json
 import os
 import random
 import struct
@@ -29,6 +32,46 @@ sys.path.insert(0, str(ROOT / "tools"))
 import calibrate_vs_scan as cv  # noqa: E402
 
 REC = 38
+
+
+def trajectory_record(*, game_index: int, shard: int, opening: str,
+                      seed_source: str, outcome: str, reason: str,
+                      fens: list[str], moves: list[str]) -> dict:
+    """Build the stable, replayable sidecar consumed by conversion mining.
+
+    The JNNW stream intentionally remains unchanged.  This sidecar carries the
+    missing game boundaries and played actions, so a future teacher never has
+    to guess whether two adjacent binary records belong to the same game.
+    """
+    payload = json.dumps(
+        {"opening": opening, "fens": fens, "moves": moves},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    trajectory_hash = hashlib.sha256(payload).hexdigest()
+    source_game_id = hashlib.sha256(
+        f"{shard}:{game_index}:{opening}".encode("utf-8")
+    ).hexdigest()[:24]
+    return {
+        "schema": 1,
+        "source_game_id": source_game_id,
+        "game_index": game_index,
+        "shard": shard,
+        "seed_source": seed_source,
+        "opening": opening,
+        "outcome": outcome,
+        "reason": reason,
+        "fens": list(fens),
+        "moves": list(moves),
+        "trajectory_hash": trajectory_hash,
+    }
+
+
+def open_trajectory_output(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix == ".gz":
+        return gzip.open(path, "wt", encoding="utf-8")
+    return path.open("w", encoding="utf-8")
 
 
 def _sqs(bb: int) -> list[int]:
@@ -200,6 +243,8 @@ def main(argv=None) -> int:
     ap.add_argument("--arb-depth", type=int, default=14, help="profondeur de l'arbitre-au-cap")
     ap.add_argument("--label-src-out", type=Path, default=None,
                     help="D1: sidecar 1 octet/position aligné au JNNW (0=ONP on-policy, 1=GYM gymnase, 2=CAP arbitre)")
+    ap.add_argument("--trajectory-out", type=Path, default=None,
+                    help="JSONL(.gz) replayable: one complete game with boundaries, FENs and played moves per line")
     args = ap.parse_args(argv)
 
     rng = random.Random(args.seed)
@@ -220,7 +265,6 @@ def main(argv=None) -> int:
               f"{len(seeds) - len(pool_seeds)} on-policy (frac~{args.seed_frac})")
     print(f"scan-selfplay: {len(seeds)} seeds (>= {args.min_pieces}p), Scan depth {args.depth}")
 
-    import hashlib
     mt_asym = args.strong_movetime is not None and args.weak_movetime is not None
     pref = args.pref_parents is not None and args.pref_moves is not None
     if args.player_jass_bin:
@@ -257,6 +301,8 @@ def main(argv=None) -> int:
     tr_par, tr_mov, ho_par, ho_mov = bytearray(), bytearray(), bytearray(), bytearray()
     n_tr = n_ho = n_dec = n_drawkept = 0
     wmap = {"W": 1, "D": 0, "L": -1}
+    trajectory_handle = (open_trajectory_output(args.trajectory_out)
+                         if args.trajectory_out else None)
     try:
         for g, opening in enumerate(seeds):
             # per-game depth jitter on the strong side
@@ -290,6 +336,20 @@ def main(argv=None) -> int:
                 print(f"  game {g}: {exc}", file=sys.stderr)
                 continue
             _reason = getattr(r, "reason", "") or ""
+            if trajectory_handle is not None:
+                row = trajectory_record(
+                    game_index=g,
+                    shard=args.shard,
+                    opening=opening,
+                    seed_source="GYM" if g < n_pool_seeds else "ONP",
+                    outcome=r.outcome,
+                    reason=_reason,
+                    fens=r.fens,
+                    moves=r.moves,
+                )
+                trajectory_handle.write(
+                    json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n"
+                )
             _exhaust = (args.cap_arbiter != "none" and r.outcome == "D" and r.fens
                         and (_reason.startswith("ply cap") or _reason.startswith("25-move")))
             if _exhaust:
@@ -352,6 +412,8 @@ def main(argv=None) -> int:
             except Exception: pass
         try: referee.close()
         except Exception: pass
+        if trajectory_handle is not None:
+            trajectory_handle.close()
 
     # ---- B1 : arbitre-au-cap — adjuge les finales d'ÉPUISEMENT par deep-relabel d14+egdb ----
     # (TB-exact si atteignable, sinon signe d14) et relabelle TOUTE la partie avec l'issue vraie,
@@ -404,6 +466,8 @@ def main(argv=None) -> int:
         dist = dict(_c.Counter(labels))
         print(f"wrote {args.label_src_out} ({len(labels)} label bytes ; ONP/GYM/CAP = "
               f"{dist.get(0,0)}/{dist.get(1,0)}/{dist.get(2,0)})")
+    if args.trajectory_out:
+        print(f"wrote {args.trajectory_out} (replayable trajectory sidecar)")
 
     if pref:
         def _write_pref(par_path, mov_path, par_buf, mov_buf, n):

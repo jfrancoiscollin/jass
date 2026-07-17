@@ -78,6 +78,27 @@ class YoungTests(unittest.TestCase):
         self.assertIsNone(manifest["conversion"]["p1_net"])
         self.assertIsNone(manifest["conversion"]["p4_egal"])
 
+    def test_required_absolute_reference_is_fail_closed(self):
+        manifest = P.young_gate(
+            match(0.5, 600),
+            match(0.5, 600),
+            "T1-bis",
+            require_absolute=True,
+        )
+        self.assertEqual(manifest["promotion_decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_technical")
+
+    def test_absolute_regression_blocks_fork(self):
+        manifest = P.young_gate(
+            match(0.52, 600),
+            match(0.52, 600),
+            "T1-bis",
+            vs_absolute=match(0.40, 600),
+            require_absolute=True,
+        )
+        self.assertEqual(manifest["vs_absolute_reference"]["decision"], "reject")
+        self.assertEqual(manifest["scientific_status"], "stop_regression")
+
 
 class LineageTests(unittest.TestCase):
     def test_exact_weight_hashes_are_injected(self):
@@ -87,6 +108,7 @@ class LineageTests(unittest.TestCase):
                 "candidate.pjtw": b"candidate",
                 "parent.pjtw": b"parent",
                 "fixed.pjtw": b"fixed",
+                "absolute.pjtw": b"absolute",
             }
             for name, payload in payloads.items():
                 (root / name).write_bytes(payload)
@@ -102,6 +124,10 @@ class LineageTests(unittest.TestCase):
             )
             self.assertEqual(
                 manifest["fixed_reference_sha"], hashlib.sha256(b"fixed").hexdigest()
+            )
+            self.assertEqual(
+                conversion["_absolute_reference_sha"],
+                hashlib.sha256(b"absolute").hexdigest(),
             )
 
     def test_missing_weight_file_is_fail_closed(self):
