@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Check active code for dependencies that block retirement of the legacy branch.
 
-The historical repository intentionally contains old queue scripts, results, tests and
-migration documentation.  Those are evidence, not executable production code, and
-must not be counted as active dependencies.  This guard scans only active runtime and
-CI surfaces and emits a deterministic JSON report.
+Historical queues, results, documentation and retired one-shot templates are evidence,
+not executable production surfaces. The guard scans only CI, runner-v3, current job
+templates/tools and build/runtime code, then emits a deterministic JSON report.
 """
 from __future__ import annotations
 
@@ -13,7 +12,6 @@ import argparse
 import json
 import re
 import subprocess
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -45,12 +43,22 @@ EXCLUDED_PREFIXES = (
     "jobs/archive/",
     "infra/control-plane-seed/",
 )
-# These files implement or test the policy itself and necessarily mention blocked
-# spellings.  Their runtime behaviour is covered by runner-v3 unit tests.
 POLICY_IMPLEMENTATION_FILES = {
     "infra/runner_v3.py",
     "infra/tests/test_runner_v3.py",
     "jobs/tools/check_retirement_readiness.py",
+}
+# Numbered templates are immutable records of completed historical experiments. They
+# are not selected by runner-v3 and must not block branch retirement merely because
+# they preserve the original absolute paths. Deprecated T1-bis launchers are likewise
+# superseded by the native runner-v3 path.
+RETIRED_TEMPLATE_RX = re.compile(r"^jobs/templates/\d{4}[a-z]?-.*\.sh$")
+RETIRED_TEMPLATE_NAMES = {
+    "jobs/templates/t1bis-adj-g1-v2-launch.sh",
+    "jobs/templates/t1bis-adj-g1-v2.sh",
+    "jobs/templates/t1bis-adj-g1.sh",
+    "jobs/templates/t1bis-adj-g1-runner-v3.sh",
+    "jobs/templates/wdl-loop-portable.sh",
 }
 TEXT_SUFFIXES = {
     ".c", ".cc", ".cpp", ".h", ".hpp", ".cmake", ".ini", ".json",
@@ -60,14 +68,14 @@ TEXT_SUFFIXES = {
 
 
 def tracked_files(repo: Path) -> list[str]:
-    raw = subprocess.check_output(
-        ["git", "-C", str(repo), "ls-files", "-z"],
-    )
+    raw = subprocess.check_output(["git", "-C", str(repo), "ls-files", "-z"])
     return [item.decode("utf-8", "surrogateescape") for item in raw.split(b"\0") if item]
 
 
 def is_active(path: str) -> bool:
     if path in POLICY_IMPLEMENTATION_FILES:
+        return False
+    if path in RETIRED_TEMPLATE_NAMES or RETIRED_TEMPLATE_RX.match(path):
         return False
     if path in ACTIVE_ROOT_FILES:
         return True
@@ -91,7 +99,6 @@ def scan(repo: Path) -> tuple[list[Finding], list[Finding]]:
     legacy: list[Finding] = []
     root_tools: list[Finding] = []
     legacy_patterns = patterns()
-    # Match executable references, not prose such as "move tools/ to jobs/tools/".
     root_tool_rx = re.compile(
         r"(?:python3?|PYTHONPATH=|--calibrate-tool\s+|['\"])(tools/[A-Za-z0-9_.\-/]+)"
     )
@@ -156,6 +163,8 @@ def main(argv: list[str] | None = None) -> int:
         "legacy_findings": [asdict(item) for item in legacy],
         "root_tool_references": [asdict(item) for item in root_tools],
         "excluded_prefixes": list(EXCLUDED_PREFIXES),
+        "retired_template_names": sorted(RETIRED_TEMPLATE_NAMES),
+        "retired_numbered_templates": True,
     }
     rendered = json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     if args.out:
