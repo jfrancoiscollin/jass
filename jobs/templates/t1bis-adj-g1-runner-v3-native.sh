@@ -149,6 +149,11 @@ finalize(){
     printf 'parallel_gate=%s\n' "$PAR_GATE"
     printf 'exit_code=%s\n' "$rc"
   } > "$ART/runtime-profile.txt"
+  # Le runner v3 publie tout JASS_RESULT_DIR au finalize : purger les données
+  # lourdes de travail (build ~1 GiB, seeds, shards, dumps) une fois les logs
+  # tarés et les artefacts copiés, pour garder l'upload R2 léger.
+  rm -rf "$W/build" "$W/gate-parent" "$W/gate-fixed" "$W/strata" "$INPUTS" 2>/dev/null || true
+  find "$W" -maxdepth 1 -type f -size +1M -delete 2>/dev/null || true
   exit "$rc"
 }
 trap finalize EXIT
@@ -159,7 +164,7 @@ say "=== $JOB_ID / $TOUR — préflight natif runner-v3 ==="
 python3 -m py_compile \
   jobs/tools/fetch_t1bis_inputs.py \
   tools/scan_selfplay_gen.py \
-  tools/calibrate_vs_scan.py \
+  jobs/tools/calibrate_vs_scan.py \
   jobs/tools/oracle_cert.py \
   jobs/tools/apply_label_policy.py \
   jobs/tools/aggregate_conv_shards.py \
@@ -351,7 +356,7 @@ for stratum in p1_net p2_moyen p3_mince p4_egal; do
   for shard in $(seq 0 $((NSH_CONV-1))); do
     out="$W/$stratum.conv.$shard.json"; inputs+=("$out")
     timeout "$SHARD_TIMEOUT" python3 jobs/tools/conv_fixed_wdl.py --jass "$J" --pattern "$W/candidate.pjtw" \
-      --defender-pattern "$W/gen2.pjtw" --pool-jnnw "$W/$stratum.dec.jnnw" --calibrate-tool tools/calibrate_vs_scan.py \
+      --defender-pattern "$W/gen2.pjtw" --pool-jnnw "$W/$stratum.dec.jnnw" --calibrate-tool jobs/tools/calibrate_vs_scan.py \
       --depth "$CONV_DEPTH" --max-plies 260 --shard "$shard" --nshards "$NSH_CONV" --out "$out" > "$W/$stratum.conv.$shard.log" 2>&1 &
     pids+=("$!")
     if [ "${#pids[@]}" -ge "$PAR_CONV" ]; then
