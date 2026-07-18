@@ -1,259 +1,259 @@
-# L3-PURE — lignée autonome Scan-like centrée sur la conversion
+# L3-PURE — spécification de la lignée autonome et plan DoE
 
-> **Date : 2026-07-18**
-> **Statut : plan scientifique pré-engagé ; première PR C0**
-> **Document de départ :** `docs/archives/codex_review_v3_2.md`
-> **Classe de modèle :** évaluation linéaire patterns ; aucun NNUE
-> **Règle cardinale :** aucun professeur externe dans la génération ou le fit
-> **État et résultats L3 :** [L3_CURRENT.md](L3_CURRENT.md)
-> **Mémoire des expériences closes :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
+> **Version : 4.0 — 18 juillet 2026**
+> **Statut : revue complète des paramètres ; fork C1-Q1 préparé, non lancé**
+> **Ancienne version :** [L3_PURE_PLAN_C0_20260718.md](archives/l3/L3_PURE_PLAN_C0_20260718.md)
+> **État et résultats :** [L3_CURRENT.md](L3_CURRENT.md)
+> **Mémoire des résultats et portes closes :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
 ## 0. Décision
 
-La prochaine lignée est `L3-PURE`. Elle repart d'une évaluation matérielle,
-joue contre elle-même, attache à chaque position le résultat terminal de sa
-propre partie et recommence. Scan, Gen2, les parties de maîtres, les labels
-d14, MMTO et les positions fixes de gymnase ne fournissent ni coup, ni position,
-ni label, ni adversaire d'entraînement.
+La cible reste une lignée linéaire autonome, sans professeur externe :
+graine matérielle, autojeu, résultat terminal WDL, fit, puis nouvelle
+génération. Scan, Gen2, les maîtres, d14 et MMTO peuvent mesurer la lignée mais
+ne fournissent ni position, ni coup, ni score, ni résultat d'entraînement.
 
-Le problème de conversion est traité comme un problème de **trajectoire**. Une
-évaluation n'apprend pas « le bon premier coup » : chaque état successif de la
-partie est un nouvel exemple, et la recherche choisit un coup en comparant la
-valeur de ses successeurs. Si un avantage se dissipe au deuxième ou au dixième
-coup, les états correspondants doivent réapparaître dans le corpus avec leur
-résultat final réel.
+En revanche, la recette C0 n'est plus considérée comme optimale par défaut.
+Elle est un point reproductible. Les gains et pertes observés sur Gen2 ou sur
+les anciennes lignées sont des **priors** : ils réduisent l'espace à explorer,
+mais ne ferment pas un paramètre dont l'effet peut dépendre d'une évaluation
+jeune, de sa distribution et de son budget de recherche.
 
-## 1. Pourquoi cette expérience reste ouverte
+La stratégie n'est donc ni « tout activer », ni balayer 63 nombres. Elle est :
 
-Les essais historiques ne constituent pas l'exécution complète de cette recette :
+1. supprimer les couplages accidentels ;
+2. figer la totalité de la configuration ;
+3. tester des mécanismes par blocs causaux sur une lignée L3 native ;
+4. confirmer le gagnant depuis G0 avec une seconde graine ;
+5. seulement ensuite engager la campagne longue.
 
-| Essai | Ce qui a réellement été exécuté | Limite pour la question L3-PURE |
+## 1. Ce qui est appris des campagnes précédentes
+
+Les faits suivants restent acquis :
+
+- une boucle from-scratch peut apprendre : `0674` a composé à T2 ;
+- T1-bis→T3 a été stable, mais la conversion est restée autour de 66–67 % ;
+- fork C a produit de la divergence sans force ni conversion et a été rejeté ;
+- les gymnases statiques, teachers causaux et re-fits de Gen2 n'ont pas déplacé
+  le plafond de conversion dans leurs protocoles ;
+- la quiescence forcing profonde et les extensions larges ont coûté de la force
+  au movetime sur l'ancien champion ;
+- la géométrie riche peut payer au scale, mais elle est affamée à petit volume ;
+- une baisse de loss ou une hausse de divergence ne suffit jamais à promouvoir.
+
+Ce que ces faits **ne démontrent pas** : que le fingerprint de recherche de
+Gen2 est optimal pour les trajectoires d'une lignée partie de matériel seul,
+que 8 % d'exploration est le bon niveau, que L2=3e-5 est optimal, ou que le
+rapport homme/dame initial 1:3 donne le meilleur curriculum.
+
+## 2. Contrat scientifique invariant
+
+Ces choix définissent l'expérience et ne sont pas des facteurs de tuning :
+
+- cible d'entraînement : résultat terminal WDL de la partie réellement jouée ;
+- perte : logistique WDL ; aucune cible score, ranking ou préférence ;
+- terminaison EGDB exacte seulement après atteinte naturelle de la tablebase ;
+- partie au ply-cap entièrement censurée ;
+- aucune adjudication matérielle, deep relabel, TB relabel par sample ou MMTO ;
+- aucune position externe, partie humaine, politique ou poids Scan/Gen2 ;
+- paires d'ouvertures, provenance par partie et holdout par ouverture complète ;
+- aucun PV extrait : seules les positions réellement jouées sont entraînées ;
+- aucun `drop-post-eps` : une continuation après exploration est un retour MC
+  réel et fait partie de la trajectoire à apprendre ;
+- symétrie couleur ; aucun full-fold par translation ;
+- aucun anchor vers le parent ; le warm-start est une initialisation numérique ;
+- chaque cellule publie code, données, seeds, paramètres, compteurs et SHA.
+
+Une violation donne le statut `invalid_science`, indépendamment du code retour.
+
+## 3. Revue de la surface de paramètres
+
+| Surface | Décision L3 | Motif et condition de réouverture |
 |---|---|---|
-| `0481`, `0482` | jobs from-scratch terminés en échec | pas de lignée ni d'artefacts complets |
-| `0532` | une génération avec 400 k autojeu, 4,16 M positions de maîtres et 200 k EGDB | corpus non autonome |
-| `0536` | chaîne pure prévue sur 15 générations | échec pendant G1 |
-| `0674` | quatre tours autonomes à d10 ; T2 +170 Elo puis T3/T4 en retrait | profondeur fixe, arrêt précoce, fit ancré au parent |
-| T1-bis → T3 | labels d14+EGDB et G1 ; conversion ≈ 66–67 % | stable mais plat ; autre mécanisme de labels |
-| fork C C0 | divergence politique sans conversion ; −32,5 Elo | rejeté, ne teste pas une lignée pure longue |
-| teacher `0777` | aucune cellule B1/B2/B3 à +2 points | professeur causal clos faute de signal |
+| 63 paramètres de recherche | **tous épinglés** dans chaque run | le C0 n'explicitait que 5 clés et héritait 58 valeurs du code ; le runner v4 publie la map résolue complète |
+| score JNNW / profondeur de label | **zéro, sans recherche de score** | le fit WDL ignore le score ; l'ancienne recherche de label réutilisait la même TT et influençait donc le coup joué de façon cachée |
+| captures obligatoires en quiescence | **invariant ON** | règle de jeu, pas un facteur |
+| menace et sacrifices sélectifs | **DoE immédiat C1-Q1** | anciens gains sur une autre éval = prior, pas verdict L3 |
+| récursion des sacrifices, forcing, promotion | **DoE C1-Q2** | facteurs conditionnels et plus coûteux ; testés après les effets menace×sacs |
+| PVS, RFP, NMP, singular, LMR, LMP, history, razor, ProbCut, MultiCut, improving, conthist, IID | **profil puis ablations par mécanisme** | pas de sweep de marges avant preuve que le mécanisme s'active et aide L3 |
+| profondeur fixe, cap de nœuds, profondeur par phase | **DoE budget B** | la bonne politique d'autojeu dépend du rapport qualité/coût sur l'éval jeune |
+| huit plies aléatoires, epsilon 8 %, décroissance 60 | **DoE exploration X** | paramètres directement spécifiques à la couverture de la nouvelle lignée |
+| échantillonnage ≈1 ply sur 4 | **à instrumenter puis tester** | pondération temporelle implicite ; ne change qu'après ajout d'un flag et d'un RNG dédié |
+| graine homme=1, dame=3 | **baseline, pas optimum déclaré** | écran ultérieur du ratio dame {2,5; 3; 4} depuis G0 |
+| centre/mobilité à zéro | **figé au premier écran** | évite de confondre le rapport matériel avec des heuristiques hand-set |
+| max_plies=260 | **fixe tant que censure <0,5 %** | augmenter seulement si le taux de parties censurées devient matériel |
+| L2=3e-5 | **DoE fit F** | dépend du volume, de la géométrie et du régime de visite |
+| corpus 100 % frais | **baseline ; replay à tester** | croiser L2 avec replay 0/25 % après stabilisation de la génération |
+| max_iter, chunk, pruning des buckets, quantification | **paramètres techniques** | augmenter max_iter si non-convergence ; exiger équivalence avant toute optimisation de coût |
+| color-fold, tempo-stage, MG/EG | **figés pendant les écrans initiaux** | phase/tempo ne se rouvrent que sur résidu holdout localisé et couverture suffisante |
+| géométrie 8cf | **figée pour les écrans, non close à long terme** | comparer 8cf/32cf dans un fork depuis G0 quand le volume cumulé nourrit réellement 32cf |
+| king-patterns | **différé** | uniquement si un résidu roi mesuré persiste au scale |
+| frontière mobile | **attendre le verdict C0** | si signal : dose-réponse séparée ; sinon retrait, sans contaminer les DoE de recherche |
+| quiet-only, PV extraction, adjudication, teacher | **OFF par contrat** | changeraient la population ou la vérité des trajectoires |
 
-Les gymnases statiques, les doses G4, MMTO par tour et le professeur causal ne
-sont donc pas répétés. L'expérience encore manquante est une boucle WDL
-autonome, assez longue, avec montée du budget de recherche et un curriculum
-mobile issu exclusivement des échecs de la lignée elle-même.
+## 4. D0 — hygiène causale avant tout DoE
 
-## 2. Contrat scientifique non négociable
+Deux corrections précèdent les comparaisons :
 
-### 2.1 Graine et représentation
+1. **Fingerprint complet.** Les 63 clés reconnues par
+   `apply_search_param` sont présentes dans la chaîne de chaque run. Une clé
+   ajoutée au moteur fait échouer le test tant qu'elle n'est pas épinglée.
+2. **WDL sans recherche de score.** `--wdl-zero-score` écrit `score=0` et ne
+   lance pas la recherche de label. Le compteur `label_score_searches=0` est
+   exigé dans chaque shard.
 
-- géométrie `8cf`, sous-ensemble vertical Scan-like, figée pendant la lignée ;
-- squelette structurel matériel/dames/extras disponible dès le départ ;
-- graine : homme = 1, dame = 3 ; tous les patterns, bonus de centre et mobilité à 0 ;
-- phases MG/EG conservées ;
-- aucun poids copié depuis Scan, Gen2 ou un autre champion.
+La seconde correction est volontairement commune à toutes les cellules C1.
+Elle ne prétend pas améliorer Elo : elle supprime un budget de recherche
+irrégulier et une précharge TT invisible alors que sa sortie n'entre pas dans
+la loss. C1 est donc un fork de C0, pas une continuation comparable bit à bit.
 
-Le choix `8cf` minimise la complexité d'échantillonnage. `0579` n'a pas montré
-d'écart utile de log-loss entre 8cf et 32cf au régime mesuré. Un changement de
-géométrie, s'il devient nécessaire, fera l'objet d'un fork séparé et ne sera pas
-introduit au milieu de la lignée.
+## 5. C1-Q — DoE séquentiel de quiescence
 
-### 2.2 Vérité des labels
+### 5.1 Q1 : plan factoriel menace × sacrifices
 
-Labels d'entraînement autorisés :
+Toutes les cellules partent de G0 matériel identique, graine `271828`, sans
+frontière, avec deux générations de 150 k records à d8.
 
-1. absence de coup légal ;
-2. nul de règle effectivement détecté par le moteur ;
-3. résultat EGDB exact après qu'une partie a atteint naturellement la tablebase.
+| Cellule | `qs_threat_ext` | `qs_sacs` | `qs_sacs_depth0_only` | forcing | promo |
+|---|---:|---:|---:|---:|---:|
+| `Q00_CAPTURE` | 0 | 0 | 1 | 0 | 0 |
+| `Q10_THREAT` | 1 | 0 | 1 | 0 | 0 |
+| `Q01_SACS` | 0 | 1 | 1 | 0 | 0 |
+| `Q11_THREAT_SACS` | 1 | 1 | 1 | 0 | 0 |
 
-Labels interdits :
+C'est un 2×2 complet : il estime l'effet principal de la menace, celui des
+sacrifices sélectifs et leur interaction. `Q11` reprend la quiescence du C0,
+mais dans le nouveau contrat sans recherche de score et avec fingerprint
+complet.
 
-- score de recherche d14/d16 ;
-- adjudication matérielle ;
-- deep relabel ;
-- MMTO/ranking ;
-- résultat Scan, Gen2 ou partie humaine ;
-- transformation d'une partie arrêtée au ply-cap en nul.
+Q1 est un **screen**, pas une promotion. À volume égal, chaque cellule publie
+le débit et le coût. Si les quatre cellules sont plates, la cellule la plus
+simple `Q00` devient la baseline provisoire ; on ne conserve pas un mécanisme
+plus coûteux sans signal L3.
 
-Les parties au ply-cap sont **censurées** : tous leurs samples sont exclus. EGDB
-peut terminer une partie naturellement atteinte, mais aucune position EGDB
-aléatoire n'est injectée dans le corpus. EGDB joue ici le rôle de règle exacte,
-pas celui de professeur.
+### 5.2 Q2 : profondeur et quiescence calme
 
-### 2.3 Fit
+Q2 part de la meilleure cellule Q1 et ne se lance qu'après son verdict :
 
-- régression logistique WDL uniquement ; le champ score du JNNW n'est pas une cible ;
-- split train/holdout par ouverture complète, jamais par ligne aléatoire ;
-- symétrie couleur ;
-- démarrage de l'optimiseur aux poids du student précédent ;
-- L2 ordinaire vers zéro, **aucun ridge ou anchor vers le parent** ;
-- corpus frais à chaque génération pour C0.
+- base Q1 ;
+- `qs_forcing_depth=1` ;
+- `qs_promo_depth=1` ;
+- forcing 1 + promo 1 ;
+- si `qs_sacs=1` a un signal : un bras `qs_sacs_depth0_only=0`.
 
-Le warm-start assure la continuité numérique sans transformer le parent en
-cible. La mémoire explicite par replay de parties anciennes sera testée dans une
-PR ultérieure, séparément du signal causal de la frontière.
+Un niveau supérieur {2, 4} n'est testé que si le niveau 1 améliore la
+conversion sans coût prohibitif. Cela évite de répéter directement les
+variantes profondes historiquement négatives.
 
-### 2.4 Exploration
+## 6. DoE suivants, dans cet ordre
 
-L'exploration est nécessaire à la couverture, mais ne doit pas casser la
-conversion tardive :
+### 6.1 B — budget et sélectivité de la recherche
 
-- huit plies d'ouverture aléatoires issus des règles ;
-- epsilon initial de 8 % ;
-- décroissance linéaire jusqu'à zéro au ply 60 ;
-- aucun `drop-post-eps` : les continuations restent jouées et apprises ;
-- aucun coup exploratoire après la zone de décroissance.
+Sur la baseline Q confirmée :
 
-### 2.5 Empreinte de recherche C0
+1. profiler activations, nœuds, profondeur atteinte et débit sur positions L3 ;
+2. comparer profondeur fixe, cap déterministe de nœuds et rampe par phase à
+   compute apparié ;
+3. ablater les mécanismes spéculatifs par paquets cohérents
+   (razor/ProbCut/MultiCut), puis NMP et réduction tardive ;
+4. ne tuner les marges que si l'ablation montre un effet causal.
 
-La recherche de jeu et la recherche de score utilisent le même fingerprint,
-passé explicitement au moteur ; elles n'héritent pas de futurs changements des
-valeurs par défaut :
+Les anciens OAT LMR/NMP/ProbCut restent des priors négatifs. Ils empêchent un
+nouveau balayage aveugle, pas cette unique revue native et instrumentée.
 
-```text
-qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0
-```
+### 6.2 X — exploration
 
-Les chaînes de captures obligatoires de la quiescence restent toujours jouées.
-Seuls les sacrifices sélectifs et l'extension de menace, déjà validés au
-movetime, sont actifs. La quiescence forcing profonde et la poursuite des
-promotions calmes restent désactivées : leurs variantes historiques ont perdu
-plus de force par coût en nœuds qu'elles n'ont gagné en précision de feuille.
+Plan de screening demi-factoriel, avec un point central :
 
-Le runner publie la chaîne exacte, son SHA-256, sa portée
-`play_and_label` et le SHA du code dans les manifests. Changer un seul de ces
-paramètres constitue un fork scientifique distinct ; aucune modification n'est
-permise au milieu d'un bras ou entre les bras A et B.
+- plies d'ouverture {4, 8} ;
+- epsilon initial {4 %, 8 %} ;
+- fin de décroissance {30, 60} ;
+- centre/contrôle : recette courante.
 
-## 3. Frontière mobile de conversion
+Les sorties exigées sont couverture, diversité par ouverture, taux de
+conversion, censure et force. L'exploration n'est pas jugée sur le nombre de
+positions uniques seul.
 
-Après une génération, on examine uniquement ses propres samples WDL. Une
-position entre dans la frontière v1 si :
+### 6.3 M/F — graine, régularisation et mémoire
 
-- elle a été réellement atteinte par la lignée ;
-- il reste 8 à 24 pièces ;
-- un camp possède un avantage matériel de 1 à 3 unités ;
-- ce camp n'a pas gagné la partie, ou a effectivement converti dans la petite
-  fraction témoin.
+- ratio dame de G0 : {2,5; 3; 4}, autres termes à zéro ;
+- L2 : {1e-5; 3e-5; 1e-4} en échelle logarithmique ;
+- replay : {0; 25 %} croisé avec L2 après un premier tri ;
+- convergence de l'optimiseur obligatoire ; `max_iter` n'est pas un levier
+  scientifique si la solution n'a pas convergé.
 
-Le mineur conserve au maximum un exemple par partie et par type, stratifie par
-marge et phase, déduplique, puis ajoute le miroir couleur. Les champs score et
-WDL des records de départ sont remis à zéro. Quand la position est rejouée à la
-génération suivante, sa continuation doit produire un **nouveau résultat
-terminal** ; l'ancien résultat sert uniquement à sélectionner la difficulté.
+Le gagnant final est reconfirmé depuis G0 avec la graine indépendante
+`161803`, afin d'éviter de sélectionner une fluctuation de trajectoire.
 
-Ce mécanisme diffère du gymnase G4 :
+### 6.4 Représentation et frontière
 
-- distribution courante et mobile ;
-- aucune position externe ou certifiée d14 ;
-- aucun label réutilisé ;
-- quota modéré de parties, pas de duplication massive de positions courtes ;
-- renouvellement complet à chaque génération.
+8cf reste la géométrie des écrans. 32cf ne devient éligible qu'après publication
+des visites par bucket et d'un volume cumulé suffisant ; le comparatif repart
+de G0 et utilise le même budget d'optimisation. Aucun changement de géométrie
+n'est fait au milieu d'une lignée.
 
-La v1 cible les avantages matériellement observables, donc surtout P2/P3. La
-frontière P4 matériel-égal exigera une estimation interne par plusieurs rollouts
-stochastiques ; elle est volontairement hors de cette première PR afin de ne pas
-confondre le test C0.
+La frontière mobile attend C0. Un signal C0 déclenche un DoE de dose
+{0, 10, 25, 40 %}. Un résultat plat ou négatif la retire de la recette ; il ne
+bloque pas l'autojeu pur.
 
-## 4. C0 pré-engagé : causalité de la frontière
+## 7. Mesure et règle de décision
 
-Deux bras partent du même fichier matériel, des mêmes seeds et des mêmes budgets.
+Chaque candidat est évalué selon trois vues séparées :
 
-| Génération | Bras A — contrôle | Bras B — frontière mobile |
-|---|---|---|
-| G1 | autojeu standard | autojeu standard identique ; minage de F1 après le fit |
-| G2 | autojeu standard | 75 % standard + 25 % départs depuis F1 ; minage de F2 |
-| G3 | autojeu standard | 75 % standard + 25 % départs depuis F2 |
+1. **conversion fixe** : même pool WDL-grounded, même défenseur, global et P1–P4 ;
+2. **common-search** : poids comparés sous le même fingerprint, pour isoler ce
+   que l'évaluation a appris ;
+3. **native-search à temps égal** : système complet avec sa propre recherche,
+   pour mesurer le produit réellement jouable.
 
-Paramètres de travail :
+Le holdout, la loss et la divergence sont des diagnostics, jamais des gates.
 
-- 500 k positions éligibles par bras et génération ;
-- d8 en G1/G2, d10 en G3 ;
-- `max_plies=260`, terminaison EGDB exacte, ply-cap exclu ;
-- holdout 1/10 par ouverture ;
-- `color-fold`, WDL logistic, L2 `3e-5`, 25 itérations maximum ;
-- checkpoints par génération et artefacts reprenables.
+Pour avancer d'un screen vers une confirmation :
 
-C0 ne décide pas de la viabilité finale de L3-PURE. Il répond seulement à :
+- chaîne et manifests complets, aucun shard manquant ;
+- pas de régression établie en common-search (`ci_high < 0,5` rejette) ;
+- gain de conversion ponctuel d'au moins +0,02, ou coût réduit d'au moins 20 %
+  à conversion et force non régressives ;
+- effet cohérent sur P3, sans effondrement d'une autre strate.
 
-```text
-à budget et graine identiques, rejouer une frontière mobile auto-générée
-améliore-t-il la pente de conversion par rapport à l'autojeu ordinaire ?
-```
+Pour promouvoir après confirmation :
 
-Signal attendu pour conserver le mécanisme :
+- gain de conversion ≥ +0,02 avec IC bootstrap apparié au-dessus de zéro ;
+- non-régression généraliste à haut N et au movetime ;
+- effet retrouvé avec la seconde graine ;
+- aucune sélection a posteriori de seuil ou de cellule.
 
-- delta de conversion B−A ≥ +0,03 à G3 ;
-- amélioration visible de P3 mince ;
-- absence de régression généraliste établie de B contre A.
+Une amélioration seulement en native-search est classée **gain de recherche**.
+Une amélioration qui subsiste en common-search est classée **gain
+d'apprentissage**. Les deux sont utiles, mais ne racontent pas la même chose.
 
-Si ce signal manque, la frontière v1 est retirée, mais la lignée pure A n'est
-pas déclarée morte après trois générations.
+## 8. Campagne longue
 
-## 5. Campagne longue après C0
+Après les DoE, une seule recette confirmée entre dans la lignée longue :
 
-Le student poursuit les générations tant que les invariants techniques et le
-fit restent sains. Le champion reste le meilleur modèle ayant satisfait les
-gates conversion et non-régression.
-
-| Palier | Générations | Budget de jeu |
+| Palier | Générations | Budget indicatif |
 |---|---:|---:|
-| P1 | G1–G4 | d8 |
-| P2 | G5–G8 | d10 |
-| P3 | G9–G12 | d12 |
-| P4 | G13–G16 | d14 ou plafond de nœuds équivalent |
-| confirmation | meilleure recette | seconde graine indépendante |
+| P1 | G1–G4 | budget Q/B confirmé |
+| P2 | G5–G8 | +1 palier de nœuds ou d8→d10 |
+| P3 | G9–G12 | d10→d12 ou équivalent |
+| P4 | G13–G16 | d14 ou plafond apparié |
+| confirmation | reprise depuis G0 | seconde graine |
 
-Une génération plate ne bloque pas le student. Deux générations plates
-déclenchent la montée du budget, pas l'arrêt. Une régression catastrophique
-provoque un rollback ; une fluctuation incluse dans l'intervalle de confiance
-ne détruit pas la trajectoire.
+Une génération plate ne suffit pas à arrêter. L'arrêt de plafond exige le
+budget maximal, quatre générations sans pente et deux graines indépendantes.
 
-Arrêt scientifique seulement si :
+## 9. Première PR du fork
 
-- le budget maximal a été atteint ;
-- quatre générations consécutives n'ont plus de pente conversion/force ;
-- deux graines indépendantes convergent vers le même plafond.
+La première PR C1 fournit :
 
-## 6. Mesures et promotions
+- `--wdl-zero-score` et son compteur d'activation ;
+- le runner v4 avec les 63 paramètres épinglés et manifest schema 2 ;
+- le plan Q1 2×2, quatre wrappers préparés hors queue ;
+- les gardes `FULL_RUN_APPROVED`, volume/générations pré-enregistrés, absence de
+  frontière et absence de teacher ;
+- les tests de syntaxe, matrice factorielle, couverture des 63 clés et manifests ;
+- l'archivage des versions C0 de la spec et du current.
 
-Les thermomètres Scan et Gen2 sont autorisés uniquement en évaluation externe.
-Ils ne pilotent pas les données.
-
-Jalons :
-
-1. **signal causal** : +3 points contre le contrôle C0 ;
-2. **convertisseur crédible** : conversion globale ≥ 75 %, P3 en hausse nette ;
-3. **convertisseur mature** : conversion globale ≥ 85 %, sans régression contre
-   le champion ni contre la référence Gen2 figée.
-
-Chaque rapport doit publier : provenance des records, taux de ply-cap et samples
-exclus, W/D/L, couverture, part standard/frontière, split par ouverture,
-holdout log-loss, conversion P1–P4 et gates généralistes avec intervalles de
-confiance.
-
-## 7. Première PR d'implémentation
-
-Cette PR fournit les fondations C0 suivantes :
-
-- `--drop-plycap` dans `--gen-data-wdl` ;
-- sidecar `JSM1` par sample : identifiants partie/ouverture et provenance seed ;
-- merge et split holdout par ouverture ;
-- mineur de frontière mobile avec labels de sortie neutralisés ;
-- `train_stream --warm-start` sans modification de l'objectif L2 ;
-- `train_stream --holdout-count` pour un tail holdout exact ;
-- runner-v3 d'un bras C0 sur trois générations ;
-- deux wrappers préparés A/B, hors queue.
-
-Restent explicitement hors de cette PR : league student/parent/champion, replay
-inter-générations, rollout multi-échantillon pour P4, comparaison C0 haut-N et
-orchestrateur G1–G16. Ils doivent être ajoutés après revue des invariants de ce
-premier incrément.
-
-## 8. Jobs préparés
-
-- `ccx33-l3-pure-c0-a-v1` : contrôle autojeu pur ;
-- `cpx62-l3-pure-c0-b-v1` : même chaîne avec frontière à 25 % en G2/G3.
-
-Ils restent sous `jobs/prepared/l3-pure-c0-20260718/`. Les merger ne lance aucun
-calcul. Après merge de la PR moteur, leurs copies GitOps devront être figées sur
-le SHA exact dans `jass-control/queue/pending/`.
+Merger cette PR ne lance aucun job. Avant copie GitOps : build réel sur chaque
+box, micro-calibration de chaque profil, ETA, disque, timeout, SHA exact et go
+explicite.
