@@ -45,6 +45,14 @@ class L3PurePreparedTests(unittest.TestCase):
         self.assertNotIn("Scan", text)
         self.assertNotIn("master", text.lower())
 
+    def test_warm_start_begins_with_previous_student_only(self):
+        text = TEMPLATE.read_text()
+        self.assertIn('warm_start_args=()', text)
+        self.assertIn('if [ "$generation" -gt 1 ]; then', text)
+        self.assertIn('warm_start_args=(--warm-start "$PILOT")', text)
+        self.assertIn('"${warm_start_args[@]}" --holdout-count', text)
+        self.assertNotIn('--warm-start "$PILOT" --holdout-count', text)
+
 
 if __name__ == "__main__":
     unittest.main()

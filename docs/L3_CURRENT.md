@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 2026-07-18**
-> **Statut scientifique : `implementation_review`**
+> **Statut scientifique : `technical_fix_pending`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Mémoire du projet et portes closes :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
@@ -12,10 +12,9 @@ ce qu'une décision explicite la modifie.
 
 ## 1. État en une phrase
 
-La première PR C0 est en revue : elle implémente les fondations d'une lignée
-8cf partie d'une graine matérielle, entraînée uniquement sur les WDL terminaux
-de son propre autojeu, et prépare un A/B entre autojeu ordinaire et frontière
-mobile de conversion. Aucun job L3 n'est encore soumis.
+Les fondations C0 sont mergées. Les micro-calibrations `0785/0786` ont validé
+la génération mais avorté au premier fit ; `0787` a isolé un loader Python qui
+rejetait à tort la version v3 auto-descriptive (`0x203`) du seed matériel.
 
 ## 2. Identité de l'expérience active
 
@@ -23,14 +22,14 @@ mobile de conversion. Aucun job L3 n'est encore soumis.
 |---|---|
 | Lignée | `L3-PURE` |
 | Expérience | `C0 — causalité de la frontière mobile` |
-| Phase | revue d'implémentation et pré-calibration |
-| PR | [#344](https://github.com/jfrancoiscollin/jass/pull/344) |
-| Branche | `agent/l3-pure-c0-foundations` |
-| Référence code | à figer après merge |
+| Phase | correction technique après micro-calibration |
+| PR | [#344](https://github.com/jfrancoiscollin/jass/pull/344), mergée |
+| Branche | `develop` |
+| Référence code testée | `f1edbebfd392e5b2502947694f3ee204e8fda13b` |
 | Champion externe de contrôle | `gen2-mmto`, figé ; évaluation seulement |
 | Référence de conversion historique | T3 `ccx33`, figée ; évaluation seulement |
 | Jobs actifs | aucun |
-| Dernière décision | préparer C0 A/B, ne rien queuer avant revue et calibration |
+| Dernière décision | corriger le loader et la séquence G1/G2/G3, puis rejouer seulement les micro-calibrations |
 
 ## 3. Invariants à vérifier à chaque run
 
@@ -58,13 +57,13 @@ avec un code de sortie nul.
 | sidecar `JSM1` | implémenté | tests merge/split synthétiques verts |
 | split holdout par ouverture | implémenté | paires d'ouverture conservées dans le même fold |
 | mineur de frontière | implémenté | sorties score/WDL à zéro ; aucun input teacher |
-| `train_stream --warm-start` | implémenté | même optimum L2 que le départ zéro dans le test jouet |
+| `train_stream --warm-start` | correction en cours | loader strict `ver == 3` incompatible avec les PJTW v3 auto-descriptifs `0x203` |
 | `--holdout-count` | implémenté | tail holdout exact après split |
 | runner v3 d'un bras | préparé | garde nproc/disque/timeout/progress/manifests |
 | bras A `ccx33` | préparé hors queue | micro-calibration requise |
 | bras B `cpx62` | préparé hors queue | micro-calibration requise |
-| build CMake + link | à valider | CI GitHub ou box |
-| smoke moteur JNNW↔JSM1 | à valider | vérifier alignement sur une vraie partie |
+| build CMake + link | validé sur les deux boxes | `0785/0786` atteignent génération et fit |
+| smoke moteur JNNW↔JSM1 | validé | 3 200 records éligibles par bras, ply-cap 0 % |
 | évaluation haut-N A/B | hors PR C0 actuelle | à préparer après production des G3 |
 
 ## 5. Jobs préparés
@@ -89,6 +88,21 @@ pas une autorisation de lancement. Avant GitOps, publier pour chaque box :
 6. go JFC explicite et `FULL_RUN_APPROVED=1`.
 
 ## 6. Résultats C0
+
+### 6.0 Micro-calibration et diagnostic
+
+| Job | Box | Résultat utile | Verdict |
+|---|---|---|---|
+| `ccx33-0785-l3cal-a` | ccx33, `nproc=8` | 3 200 records en 3 s ; ply-cap 0 % | abort fit, `fit_path_ok=false` |
+| `cpx62-0786-l3cal-b` | cpx62, `nproc=16` | 3 200 records en 4 s ; ply-cap 0 % | abort fit, `fit_path_ok=false` |
+| `cpx62-0787-l3diag` | cpx62, `nproc=16` | 500 samples / 19 parties ; ply-cap 0 % | seed jouable C++, rejeté par `load_v3_weights_float` |
+
+Cause exacte : `make_bootstrap_eval.py` écrit un PJTW valide de magic
+`0x57544A50`, version `0x203` (base v3 + bit auto-descriptif). Le loader Python
+comparait le mot complet à `3`. Ce même défaut aurait aussi empêché G2/G3 de
+charger les students v3 produits par `train_stream`. La réparation conserve G0
+comme seed de jeu, démarre le fit G1 à zéro, puis warm-starte G2/G3 depuis le
+student précédent conformément au §2.3.
 
 ### 6.1 Santé technique par génération
 
@@ -150,6 +164,8 @@ Le mécanisme de frontière est conservé si, à budget égal :
 |---|---|---|---|
 | 2026-07-18 | choix d'une nouvelle lignée sans professeur externe | ouvrir `L3-PURE` | `L3_PURE_PLAN.md` |
 | 2026-07-18 | fondations C0 proposées | PR brouillon, jobs hors queue | PR #344 |
+| 2026-07-18 | micro-calibrations A/B | génération saine, fit invalide ; aucun résultat scientifique | `0785`, `0786` |
+| 2026-07-18 | diagnostic du fit | corriger le décodage de version et réserver le warm-start aux students précédents | `0787` |
 
 Chaque nouvelle ligne doit indiquer un fait observé, la décision qu'il entraîne
 et le manifest ou SHA qui permet de le reproduire. Les discussions et pistes
@@ -157,6 +173,7 @@ non exécutées n'entrent pas dans ce tableau.
 
 ## 9. Prochaine action unique
 
-Faire relire la PR #344 par Claude Code, résoudre ses remarques, obtenir un
-build/smoke moteur vert, puis micro-calibrer les deux bras. Aucun déplacement
-vers `jass-control/queue/pending/` avant ces quatre étapes.
+Valider et merger le correctif loader/séquence de warm-start, puis rejouer les
+deux micro-calibrations. Aucun full run ni déplacement des jobs longs vers
+`jass-control/queue/pending/` avant deux calibrations intégralement vertes et un
+nouveau go JFC explicite.

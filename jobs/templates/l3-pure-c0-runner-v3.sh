@@ -225,13 +225,20 @@ for generation in $(seq 1 "$NGEN"); do
 
   "$J" --dump-eval-features "$W/g${generation}.fit.jnnw" \
     "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
+  # G0 is a rule-derived playing seed, not a learned student.  G1 therefore
+  # starts the optimiser at zero; only G2/G3 continue numerically from the
+  # preceding student, as required by L3_PURE_PLAN.md section 2.3.
+  warm_start_args=()
+  if [ "$generation" -gt 1 ]; then
+    warm_start_args=(--warm-start "$PILOT")
+  fi
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
     python3 pattern_jass/tools/train_stream.py \
       --data "$W/g${generation}.fit.jnnw" \
       --feat "$W/g${generation}.feat" \
       --out "$W/g${generation}.pjtw" \
       --target wdl --loss logistic --color-fold --tempo-stage \
-      --warm-start "$PILOT" --holdout-count "$HOLDOUT_COUNT" \
+      "${warm_start_args[@]}" --holdout-count "$HOLDOUT_COUNT" \
       --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
       > "$W/g${generation}-train.log" 2>&1
   [ -s "$W/g${generation}.pjtw" ] || die "G$generation student missing"

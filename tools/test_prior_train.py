@@ -14,7 +14,9 @@ Covers the correctness-critical pieces:
       to the same optimum as the zero-started fit.
 """
 import os
+import struct
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -23,7 +25,38 @@ from scipy.optimize import minimize
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'pattern_jass' / 'tools'))
 import patterns                                             # noqa: E402
-from train import colorfold_maps, CF_BUCKETS, train_lbfgs_chunked  # noqa: E402
+from train import (CF_BUCKETS, PJTW_SELFDESC_BIT, WEIGHTS_MAGIC,
+                   colorfold_maps, load_v3_weights_float,
+                   train_lbfgs_chunked)  # noqa: E402
+
+
+def test_self_describing_v3_loader():
+    """The Python continuation loader accepts the v3 files emitted today."""
+    n_pat, n_ext, scale = 2, 1, 1000
+    weights = np.arange(2 * (n_pat + n_ext), dtype='<i4')
+    with tempfile.TemporaryDirectory() as td:
+        path = Path(td) / 'selfdesc-v3.pjtw'
+        path.write_bytes(
+            struct.pack('<IIIII', WEIGHTS_MAGIC,
+                        3 | PJTW_SELFDESC_BIT, scale, n_pat, n_ext)
+            + weights.tobytes())
+        loaded, got_scale, got_n_pat, got_n_ext = load_v3_weights_float(str(path))
+        assert got_scale == scale
+        assert got_n_pat == n_pat and got_n_ext == n_ext
+        assert np.array_equal(loaded, weights.astype(np.float64) / scale)
+
+        bad = Path(td) / 'selfdesc-v4.pjtw'
+        bad.write_bytes(
+            struct.pack('<IIIII', WEIGHTS_MAGIC,
+                        4 | PJTW_SELFDESC_BIT, scale, n_pat, n_ext)
+            + weights.tobytes())
+        try:
+            load_v3_weights_float(str(bad))
+        except SystemExit:
+            pass
+        else:
+            raise AssertionError('v3 loader accepted a self-describing v4 file')
+    print('  [ok] loader accepts self-describing v3 and rejects v4')
 
 
 def test_colorfold_foldback_roundtrip():
@@ -124,6 +157,7 @@ def test_warm_start_keeps_plain_l2_objective():
 
 
 if __name__ == '__main__':
+    test_self_describing_v3_loader()
     test_colorfold_foldback_roundtrip()
     test_prior_off_matches_plain_l2()
     test_prior_uniform_prec_equals_l2()

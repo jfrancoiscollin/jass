@@ -606,7 +606,10 @@ def load_v3_weights_float(path: str):
     (scale, n_pat, n_ext). Used as the anchor prior for fine-tuning."""
     raw = Path(path).read_bytes()
     magic, ver, scale, n_pat, n_ext = struct.unpack_from('<IIIII', raw, 0)
-    if magic != WEIGHTS_MAGIC or ver != WEIGHTS_VERSION_V3:
+    known_version_bits = 0xFF | PJTW_SELFDESC_BIT | PJTW_KING_BIT
+    if (magic != WEIGHTS_MAGIC
+            or (ver & 0xFF) != WEIGHTS_VERSION_V3
+            or (ver & ~known_version_bits) != 0):
         raise SystemExit(f'{path}: not a PJTW v3 file (magic/ver)')
     total = 2 * (n_pat + n_ext)
     arr = np.frombuffer(raw, dtype='<i4', offset=20, count=total).astype(np.float64)
