@@ -280,7 +280,6 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 |---|---|---|---|
 | forcing extensions au jeu | fixed-depth positif, movetime neutre puis −74/−217 | brûle le budget nœuds | gain NPS structurel rendant le coût négligeable, puis haut-N |
 | quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | Q2 L3 repart à profondeur 1 après Q1 ; aucun retour direct aux profondeurs historiques sans signal |
-| menace × sacrifices sélectifs (écran C1-Q1) | `0806` factoriel 2×2 : effets menace −0,003, sacs −0,002, interaction +0,0002 ; conversion des 4 cellules ~0,67 ; gates common-search ~0,50 | aucun effet sur conversion ni force dans la lignée pure ; `q1_no_lead` | mécanisme de recherche co-adaptatif hors quiescence, ou signal sur une lignée plus mûre |
 | LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | une ablation native L3 après profil d'activation ; pas un autre sweep fin de marges |
 | offer-no-reduce | détection Jass≈Scan, conversion très différente | attaque la détection, qui n'est pas le goulot | nouvelle mesure montrant un déficit de détection |
 | géométrie pour l'ordering | first-move cutoff ~0,91 | ordering déjà bon ; history prob a capté le gain restant | régression mesurée du node-EBF sur un nouveau moteur |
