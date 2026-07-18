@@ -44,6 +44,7 @@ les deux bras complets appariés C0 sont lancés sur ccx33 et cpx62.
 - holdout par ouverture complète ;
 - score et WDL des seeds de frontière neutralisés avant leur rejeu ;
 - provenance, seeds, SHA, compteurs et exclusions publiés dans les manifests.
+- fingerprint de quiescence identique pour le jeu et le label, explicitement publié.
 
 Toute violation rend le run `invalid_science`, même si le processus termine
 avec un code de sortie nul.
@@ -59,6 +60,7 @@ avec un code de sortie nul.
 | `train_stream --warm-start` | validé | #346 accepte la base v3 auto-descriptive ; G1 zéro-init, G2/G3 depuis le student précédent |
 | `--holdout-count` | implémenté | tail holdout exact après split |
 | runner v3 d'un bras | préparé | garde nproc/disque/timeout/progress/manifests |
+| fingerprint quiescence | explicité pour les futurs runs | chaîne, SHA-256, portée et code SHA publiés ; aucune modification des jobs en cours |
 | bras A `ccx33` | en cours | calibration `0788` intégralement verte |
 | bras B `cpx62` | en cours | calibration `0789` verte, mineur de frontière inclus |
 | build CMake + link | validé sur les deux boxes | `0785/0786` atteignent génération et fit |
@@ -75,6 +77,18 @@ avec un code de sortie nul.
 Paramètres appariés : mêmes seeds, 8 shards, d8/d8/d10, huit plies
 d'ouverture aléatoires, epsilon 8 % décroissant à zéro au ply 60,
 `max_plies=260`, holdout 1/10 par ouverture, L2 `3e-5`.
+
+Empreinte effective des jobs `0790/0791` sur le SHA calibré `c80c6792` :
+
+```text
+qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0
+```
+
+Ces deux jobs héritent encore de ces mêmes valeurs depuis `SearchParams{}` et
+restent donc causalement appariés ; ils ne doivent pas être redémarrés. À partir
+du prochain run ou rerun sur un nouveau SHA, le runner passe explicitement la
+chaîne au moteur et la publie avec son SHA-256 dans `l3-run-config.json` et
+`l3-pure-manifest.json`.
 
 Les recalibrations `0788/0789` projettent chacune environ **1,14 h** à partir
 d'un débit d8 agrégé de 64 k records/min. Le tour G3 à d10 peut prolonger cette
