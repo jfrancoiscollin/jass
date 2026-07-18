@@ -8,6 +8,7 @@ set -euo pipefail
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$REPO_ROOT"
 CODE_SHA="${CODE_SHA:-6bfc700fcf4dd512e3383bc04abbdce2b382e688}"
+HARNESS_SHA="${HARNESS_SHA:-$(git rev-parse HEAD)}"
 JASS_JOB_ID="${JASS_JOB_ID:-ccx33-cvh-p3-postfix-common}"
 : "${GEN2_A:?absolute or repo-relative bare Gen2 PJTW required}"
 : "${GEN2_Z:?lambda=0 PJTW copy required}"
@@ -53,17 +54,24 @@ cleanup(){
   touch "$W/.stopmon" 2>/dev/null || true
   if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi
   git -C "$REPO_ROOT" worktree remove --force "$W/src" >/dev/null 2>&1 || true
+  git -C "$REPO_ROOT" worktree remove --force "$W/harness" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 say "=== $JASS_JOB_ID ==="
-say "code_sha=$CODE_SHA nproc=$NCPU shards=$SHARDS approved_eta_min=$APPROVED_ETA_MIN"
+say "code_sha=$CODE_SHA harness_sha=$HARNESS_SHA nproc=$NCPU shards=$SHARDS approved_eta_min=$APPROVED_ETA_MIN"
 say "nps_n=$NPS_N depths=$NPS_DEPTHS common_openings=$COMMON_OPENINGS common_depth=$COMMON_DEPTH"
 
 git cat-file -e "$CODE_SHA^{commit}" 2>/dev/null || git fetch origin "$CODE_SHA"
+git cat-file -e "$HARNESS_SHA^{commit}" 2>/dev/null || git fetch origin "$HARNESS_SHA"
 git worktree add --detach "$W/src" "$CODE_SHA" >/dev/null
+git worktree add --detach "$W/harness" "$HARNESS_SHA" >/dev/null
+H="$W/harness"
 grep -q 'Cheap gate pre-check from popcounts only' "$W/src/src/conversion_head.cpp" || {
   say "ABORT architecture guard: 6bfc pre-gate absent"; exit 4; }
+for f in "$H/tools/cvh_nps_ab.py" "$H/jobs/tools/cvh_followup_verdict.py" "$H/tools/jass_vs_jass_arch.py"; do
+  [[ -f "$f" ]] || { say "ABORT harness missing $f at $HARNESS_SHA"; exit 4; }
+done
 
 cp "$A_SRC" "$W/A.pjtw"
 cp "$Z_SRC" "$W/Z.pjtw"; cp "$Z_SRC.cvh" "$W/Z.pjtw.cvh"
@@ -87,9 +95,10 @@ cmake -S "$W/src" -B "$W/build" -DCMAKE_BUILD_TYPE=Release >"$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || {
   say "BUILD FAIL"; tail -30 "$W/build.log" | tee -a "$RES"; exit 6; }
 J="$W/build/jass"
-python3 -m py_compile "$W/src/tools/cvh_nps_ab.py" "$W/src/jobs/tools/cvh_followup_verdict.py"
+python3 -m py_compile "$H/tools/cvh_nps_ab.py" "$H/jobs/tools/cvh_followup_verdict.py"
+sha256sum "$H/tools/cvh_nps_ab.py" "$H/jobs/tools/cvh_followup_verdict.py" "$H/tools/jass_vs_jass_arch.py" | tee -a "$RES"
 
-SMOKE=(python3 "$W/src/tools/cvh_nps_ab.py" --jass "$J"
+SMOKE=(python3 "$H/tools/cvh_nps_ab.py" --jass "$J"
   --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw"
   --positions "$NPS_SRC" --filter offgate --n 2 --depths 4 --warmup 0)
 [[ -z "$SEARCH_PARAMS" ]] || SMOKE+=(--search-params "$SEARCH_PARAMS")
@@ -107,9 +116,9 @@ say "--- paired fixed-depth speed ---"
 COMMON_NPS=(--jass "$J" --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw"
   --positions "$NPS_SRC" --n "$NPS_N" --depths "$NPS_DEPTHS" --seed 314159)
 [[ -z "$SEARCH_PARAMS" ]] || COMMON_NPS+=(--search-params "$SEARCH_PARAMS")
-python3 "$W/src/tools/cvh_nps_ab.py" "${COMMON_NPS[@]}" --filter offgate --out "$W/nps-general.json" | tee -a "$RES"
-python3 "$W/src/tools/cvh_nps_ab.py" "${COMMON_NPS[@]}" --filter p3 --out "$W/nps-p3.json" | tee -a "$RES"
-if ! python3 "$W/src/jobs/tools/cvh_followup_verdict.py" nps-gate \
+python3 "$H/tools/cvh_nps_ab.py" "${COMMON_NPS[@]}" --filter offgate --out "$W/nps-general.json" | tee -a "$RES"
+python3 "$H/tools/cvh_nps_ab.py" "${COMMON_NPS[@]}" --filter p3 --out "$W/nps-p3.json" | tee -a "$RES"
+if ! python3 "$H/jobs/tools/cvh_followup_verdict.py" nps-gate \
     --general "$W/nps-general.json" --p3 "$W/nps-p3.json" --out "$W/nps-verdict.json" | tee -a "$RES"; then
   say "STOP: NPS gate failed; common-search not run"
   cp "$W"/*.json "$RES" "$OUT_DIR"/ 2>/dev/null || true
@@ -132,7 +141,7 @@ say "--- common-search C10(A) vs Gen2(B): expected_games=$EXPECTED_GAMES ---"
   while [[ ! -e "$W/.stopmon" ]]; do
     sleep 600
     [[ -e "$W/.stopmon" ]] && break
-    python3 "$W/src/jobs/tools/cvh_followup_verdict.py" aggregate-match "$W"/common.*.log \
+    python3 "$H/jobs/tools/cvh_followup_verdict.py" aggregate-match "$W"/common.*.log \
       --out "$W/common-partial.json" >"$PROG" 2>/dev/null || true
     cp "$PROG" "$OUT_DIR/PROGRESS.txt" 2>/dev/null || true
   done
@@ -140,7 +149,7 @@ say "--- common-search C10(A) vs Gen2(B): expected_games=$EXPECTED_GAMES ---"
 
 pids=(); rcs=0
 for s in $(seq 0 $((SHARDS-1))); do
-  cmd=(python3 "$W/src/tools/jass_vs_jass_arch.py" --jass-a "$J" --pattern-a "$W/C10.pjtw"
+  cmd=(python3 "$H/tools/jass_vs_jass_arch.py" --jass-a "$J" --pattern-a "$W/C10.pjtw"
        --jass-b "$J" --pattern-b "$W/A.pjtw" --depth "$COMMON_DEPTH" --pairs 1
        --max-plies 220 --shard "$s" --nshards "$SHARDS" --quiet
        --openings-file "$W/common-openings.fen" --progress-file "$W/common.$s.progress")
@@ -151,9 +160,9 @@ for pid in "${pids[@]}"; do wait "$pid" || rcs=1; done
 touch "$W/.stopmon"; wait "$MON_PID" 2>/dev/null || true; unset MON_PID
 [[ "$rcs" -eq 0 ]] || { say "ABORT common-search shard failure/timeout"; exit 7; }
 
-python3 "$W/src/jobs/tools/cvh_followup_verdict.py" aggregate-match "$W"/common.*.log \
+python3 "$H/jobs/tools/cvh_followup_verdict.py" aggregate-match "$W"/common.*.log \
   --out "$W/common-match.json" | tee -a "$RES"
-if ! python3 "$W/src/jobs/tools/cvh_followup_verdict.py" match-gate \
+if ! python3 "$H/jobs/tools/cvh_followup_verdict.py" match-gate \
     --match "$W/common-match.json" --stage common_search --min-n "$COMMON_MIN_N" \
     --min-rate "$COMMON_MIN_RATE" --out "$W/common-verdict.json" | tee -a "$RES"; then
   say "STOP: common-search regression; do not run movetime"
