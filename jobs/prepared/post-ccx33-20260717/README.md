@@ -20,5 +20,5 @@ maintenant le préfixe exact du C0 0774 et celui de l'audit MTC 0779. Il s'arrê
 proprement si C0 n'autorise pas `proceed_t1` et échoue techniquement si l'audit
 MTC n'est pas complet ou vient d'un autre hôte.
 
-Voir `docs/post_ccx33_execution_20260717.md` pour les seuils pré-engagés et la
+Voir `docs/archives/post_ccx33_execution_20260717.md` pour les seuils pré-engagés et la
 matrice de décision.

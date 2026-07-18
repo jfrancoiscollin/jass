@@ -1126,7 +1126,7 @@ def main():
                     help='(scan-eval) the FULL symmetry stack : colour + rot180 + '
                          'translation + reflection. Folds 17M -> ~1.0M weights '
                          '(~Scan scale). Exact symmetries (rot180∘cs, LR) preserved; '
-                         'translation is approximate. cf docs/SYMMETRY_SHARING.md.')
+                         'translation is approximate. cf docs/archives/SYMMETRY_SHARING.md.')
     ap.add_argument('--trans-fold', action='store_true',
                     help='(scan-eval) Phase-3 : --rot-fold PLUS translation tying (the '
                          '7 translate-classes share tables). Folds 17M->~1.2M weights '
@@ -1141,10 +1141,10 @@ def main():
                          '(horiz orphans fall back to colour-fold). Ties ~3.5x more '
                          'weights than men-only (17M->4.9M). Expanded to a standard '
                          '17M v3 .pjtw (C++ unchanged). Supersedes --color-fold; '
-                         'composes with --prune. cf docs/SYMMETRY_SHARING.md.')
+                         'composes with --prune. cf docs/archives/SYMMETRY_SHARING.md.')
     ap.add_argument('--color-fold', action='store_true',
                     help='(scan-eval) COLOUR-ANTISYMMETRY weight-sharing (Scan brick, '
-                         'cf docs/SYMMETRY_SHARING.md). Encode each pattern with a '
+                         'cf docs/archives/SYMMETRY_SHARING.md). Encode each pattern with a '
                          'SIGNED balanced-ternary index (black=+1, white=-1, empty=0) '
                          'and train one antisymmetric weight per |index| : a config '
                          'and its colour-swap SHARE a weight (W[swap]=-W). Halves the '

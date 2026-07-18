@@ -1,5 +1,5 @@
 > ⚠️ **ARCHIVE — NE PAS PRENDRE COMME CONSIGNE ACTIVE.** Doc historique (ère pré-fit-volume / NNUE).
-> Source de vérité unique = [CURRENT.md](../CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
+> Source de vérité unique = [CURRENT.md](../L3_CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
 > DIAGNOSTIC_VS_SCAN, BIAIS_FIT_VOLUME, PROGRESSION_LITTERATURE). Conservé pour l'historique seulement. _(Classé archive 2026-06-24.)_
 
 # Programme « pattern compétitif » — notes & items de suivi
@@ -703,7 +703,7 @@ Triangulation (toutes les mesures **vs v15**, l'ancre faible) :
 
 Tentation : champion ≈ v15 ≈ 0 vs Scan à profondeur égale ⇒ « c'est la recherche
 de jass qui est faible ». **Réfuté par le code.** La recherche de jass possède
-**déjà** tout l'arsenal moderne (cf. [ARCHITECTURE.md](../ARCHITECTURE.md) §*A
+**déjà** tout l'arsenal moderne (cf. [ARCHITECTURE.md](ARCHITECTURE.md) §*A
 move's life inside the search*) : TT, iterative deepening, **aspiration, PVS,
 LMR, LMP, null-move, IID, extensions singulières/promotion, multi-cut**, killers,
 history, countermoves, **quiescence** (résout les prises forcées). **Il n'y a

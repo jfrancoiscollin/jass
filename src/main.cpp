@@ -1097,7 +1097,7 @@ int run_gen_tdleaf_mode(int argc, char** argv) {
 // the `score` field replaced by `nnue.evaluate(pos)` from a user-supplied
 // network. The bitboards / STM / WDL fields are passed through unchanged.
 //
-// Used for G2 of docs/SCAN_METHODOLOGY_GAP.md (knowledge distillation):
+// Used for G2 of docs/archives/SCAN_METHODOLOGY_GAP.md (knowledge distillation):
 // take the depth-20 self-play 1M dataset (noisy score labels from search)
 // and rewrite it with v7's outputs as labels (a network that's known to
 // generalise). If a pattern net trained on these cleaner labels still
@@ -3950,7 +3950,7 @@ int run_benchmark_search_params_mode(int argc, char** argv) {
 //   eval_final = handcrafted(pos) + residual_nnue(pos)
 // A = hybrid(residual.bin), B = vanilla NNUE (ex: v15). Mesure si entraîner
 // le MÊME archi sur le résidu (label - handcrafted) bat le vanilla à
-// profondeur fixe — gate Option H. Cf docs/PARADIGM_SHIFT_OPTIONS.md §H.
+// profondeur fixe — gate Option H. Cf docs/archives/PARADIGM_SHIFT_OPTIONS.md §H.
 // -----------------------------------------------------------------------------
 int run_benchmark_nnue_hybrid_mode(int argc, char** argv) {
     if (argc < 4) {

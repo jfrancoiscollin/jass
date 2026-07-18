@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0063-h2-volume-scaleup-kitchen-sink
-# description: H2 du docs/SCAN_METHODOLOGY_GAP.md. Scale-up volume self-
+# description: H2 du docs/archives/SCAN_METHODOLOGY_GAP.md. Scale-up volume self-
 #              play : 10 iter × 200K records depth 6 (vs 20K depth 4 en
 #              G4-diag/G5-diag). Tout le reste identique : base-3 hybrid
 #              + extras + phase split, pure BCE WDL, LBFGS, 1 seed.
@@ -193,7 +193,7 @@ echo "    v5 d6 / d10:       $R_V5_D6 / $R_V5_D10"
 [ -n "$R_V6_D10" ] && echo "    v6 d10:            $R_V6_D10"
 [ -n "$R_V7_D10" ] && echo "    v7 d10:            $R_V7_D10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H2) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §H2) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    VOLUME WAS A FACTOR — scale-up débloque vs G4-diag à 200K total."
     echo "    Suite : H2-prod (1M+/iter) ou combiner avec H1/H3."

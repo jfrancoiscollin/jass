@@ -91,5 +91,5 @@ PY
 echo "----------------------------------------------------------"
 echo "  Lecture : si movegen_capture% >> quiet% → attaquer la DFS captures (audit #1/#2)."
 echo "  Si quiet% domine en finale → movegen rois (audit #5) ; sinon priorité = captures partout."
-echo "  Cf docs/MOVEGEN_OPTIM.md pour le plan priorisé + garde-fou perft."
+echo "  Cf docs/archives/MOVEGEN_OPTIM.md pour le plan priorisé + garde-fou perft."
 echo "=========================================================="

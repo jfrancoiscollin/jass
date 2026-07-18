@@ -12,7 +12,7 @@ Ordre et conditions :
    a rendu `scientific_status=stop_regression` (refit-faible vs fort elo −32.5,
    ci_high 0.493 < 0.5 ; hard-conv delta −0.011). Fork (c) au départ 0.3× est
    clos → le tour T1-C ne sera pas lancé. Script retiré du jeu préparé.
-   Détail : `docs/forkc_c0_verdict_20260717.md`.
+   Détail : `docs/archives/forkc_c0_verdict_20260717.md`.
 3. `ccx33-0776-teacher-mine-t3-v1.sh` — indépendant du fork C : reconstruit les
    trajectoires T3 historiques par transitions légales, certifie les siblings
    et produit les corpus B1/B2/B3 appariés.

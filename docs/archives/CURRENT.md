@@ -1,5 +1,10 @@
 # CURRENT — source de vérité active (programme « battre Scan »)
 
+> **ARCHIVE FIGÉE AU 2026-07-18 — NE PLUS METTRE À JOUR.**
+> L'état actif vit dans [`../L3_CURRENT.md`](../L3_CURRENT.md) ; la synthèse
+> consolidée des résultats et portes closes vit dans
+> [`../PROJECT_RESULTS.md`](../PROJECT_RESULTS.md).
+
 > # ⛔⛔ RÈGLE GRAVÉE DANS LE MARBRE (2026-06-23, JFC) — AUCUN NNUE ⛔⛔
 > **ZÉRO NNUE, ZÉRO réseau, ZÉRO changement de classe TANT QUE la classe LINÉAIRE n'est pas POUSSÉE À FOND.**
 > Justification empirique : on a **8,5M poids vs 2,1M pour Scan** et on ne l'a **même pas égalé** → la classe linéaire
@@ -9,10 +14,10 @@
 
 > **1 page, à jour à CHAQUE verdict.** Le détail vit ailleurs : [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md) (système
 > actif), [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 (faits/chronologie), [SCAN_METHODOLOGY_GAP.md](SCAN_METHODOLOGY_GAP.md)
-> (règles permanentes), [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-07-17** (verdicts en tête).
+> (règles permanentes), [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-07-17** (verdicts en tête).
 
 ## 🧭 2026-07-18 — DÉCISION PROGRAMME : NOUVELLE LIGNÉE AUTONOME `L3-PURE`, SANS PROFESSEUR EXTERNE
-> Après les plateaux T1-bis→T3, fork C et teacher `0777`, la direction retenue n'est plus un nouveau re-fit oracle ni un sparring piloté par Scan. Le plan actif est [`L3_PURE_PLAN.md`](L3_PURE_PLAN.md) : graine matérielle homme=1/dame=3, géométrie 8cf figée, autojeu uniquement, labels WDL terminaux, ply-caps exclus, fit logistic warm-starté **sans anchor parent**, et curriculum de conversion mobile miné uniquement dans les échecs de la lignée. Premier incrément C0 : bras A autojeu pur vs bras B identique + frontière mobile en G2/G3. Les jobs restent préparés hors queue jusqu'à revue Claude Code, micro-calibration, ETA et go JFC explicite. Scan/Gen2 restent des thermomètres d'évaluation seulement, jamais des sources d'entraînement.
+> Après les plateaux T1-bis→T3, fork C et teacher `0777`, la direction retenue n'est plus un nouveau re-fit oracle ni un sparring piloté par Scan. Le plan actif est [`L3_PURE_PLAN.md`](../L3_PURE_PLAN.md) : graine matérielle homme=1/dame=3, géométrie 8cf figée, autojeu uniquement, labels WDL terminaux, ply-caps exclus, fit logistic warm-starté **sans anchor parent**, et curriculum de conversion mobile miné uniquement dans les échecs de la lignée. Premier incrément C0 : bras A autojeu pur vs bras B identique + frontière mobile en G2/G3. Les jobs restent préparés hors queue jusqu'à revue Claude Code, micro-calibration, ETA et go JFC explicite. Scan/Gen2 restent des thermomètres d'évaluation seulement, jamais des sources d'entraînement.
 
 ## ✅ 2026-07-17 — MIGRATION RUNNER V3 BOUCLÉE + T1-bis NATIF « PROMOTE » (1er tour vert de la chaîne L3 sous v3)
 > **Infra (jass-control + R2, PR #332/#335/#336 mergées)** : runner v3 LIVE sur les 2 boxes (code=develop figé par SHA, queue/état GitOps `jass-control`, résultats R2). **Snapshot historique vérifié dans R2** (`historical/jass-snapshots/main-3b0ebd8d__develop-9ff75ca6`, 8,54 GiB / 35 339 blobs uniques, `_SUCCESS` JSON + manifests sha256, reupload v6 `cpx62-0744g`) ; **inputs T1-bis publiés + vérifiés** (`inputs/t1bis-adj-g1/v1`, manifest rôles + sha256). Garde CI `retirement-readiness` actif (baseline zéro) — prérequis du retrait de la branche primaire.
@@ -1443,5 +1448,5 @@ ccx33 **gen pure** (0415+). **Queue cpx62 (auto-enchaînée)** : `0408` GATE 2a 
   champions committés. Se lance une fois le socle 60M là.
 
 **Object store** : dormant, **non bloquant jusqu'à ~70-80M** (git porte ; `.git`≈1,7 Go). Diagnostic + activation →
-[OBJSTORE_SETUP.md](archives/OBJSTORE_SETUP.md). **Acquis** : `train_stream` (+king) livré · pruning lossless vérifié · gen pure
+[OBJSTORE_SETUP.md](OBJSTORE_SETUP.md). **Acquis** : `train_stream` (+king) livré · pruning lossless vérifié · gen pure
 (pilote figé) remplace le théâtre de mesure de 0405.

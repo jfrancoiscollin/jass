@@ -398,7 +398,7 @@ class HybridPatternModel(PatternModel):
     (~100 / ~300) gives the trainer a reasonable starting point: the
     patterns only have to learn the residual positional corrections
     rather than the absolute piece values from scratch (cf.
-    docs/SCAN_ARCHITECTURE_NOTES.md §6).
+    docs/archives/SCAN_ARCHITECTURE_NOTES.md §6).
     """
     def __init__(self, patterns: list[list[int]],
                  base: int = 5,
@@ -575,7 +575,7 @@ def _train_lbfgs(
 ) -> "PatternModel":
     """G1 path: full-batch L-BFGS on the convex pattern loss.
 
-    Rationale (cf. docs/SCAN_METHODOLOGY_GAP.md §G1): the loss
+    Rationale (cf. docs/archives/SCAN_METHODOLOGY_GAP.md §G1): the loss
     `λ·MSE + (1-λ)·BCE` is globally convex in pattern weights (linear
     embedding lookups + scalar bias/skeleton params). Adam on minibatches
     oscillates around the minimum on this kind of objective; L-BFGS with
@@ -972,7 +972,7 @@ def main(argv: list[str]) -> int:
                         "patterns, handled by king_value skeleton). base=3 "
                         "requires --hybrid (otherwise kings are lost).")
     p.add_argument("--optimizer", choices=["adam", "lbfgs"], default="adam",
-                   help="G1 of docs/SCAN_METHODOLOGY_GAP.md. lbfgs runs "
+                   help="G1 of docs/archives/SCAN_METHODOLOGY_GAP.md. lbfgs runs "
                         "full-batch L-BFGS on the convex loss (much better "
                         "fit than Adam for linear pattern models). "
                         "Ignores --weight-decay (LBFGS doesn't support it) "
@@ -999,7 +999,7 @@ def main(argv: list[str]) -> int:
     args = p.parse_args(argv)
     if args.pattern_base == 3 and not args.hybrid:
         p.error("--pattern-base 3 requires --hybrid (king info would "
-                "otherwise be lost; cf. docs/SCAN_ARCHITECTURE_NOTES.md §1)")
+                "otherwise be lost; cf. docs/archives/SCAN_ARCHITECTURE_NOTES.md §1)")
     if args.extras and not args.hybrid:
         p.error("--extras (G3a king PST + balance) requires --hybrid")
     if args.phase_split and not args.hybrid:
@@ -1042,7 +1042,7 @@ def main(argv: list[str]) -> int:
 
     # D1 hybrid: extract material / king count diffs from bitboards.
     # These are the structural skeleton features added to the patterns
-    # (JPAT v2, cf. docs/SCAN_ARCHITECTURE_NOTES.md §6). Sign-flip for
+    # (JPAT v2, cf. docs/archives/SCAN_ARCHITECTURE_NOTES.md §6). Sign-flip for
     # STM=Black so they match the white-POV target sign.
     mat_diff_t  = None
     king_diff_t = None

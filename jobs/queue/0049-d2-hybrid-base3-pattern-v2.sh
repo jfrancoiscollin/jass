@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0049-d2-hybrid-base3-pattern-v2
-# description: Diagnostic D2 du docs/SCAN_ARCHITECTURE_NOTES.md. Re-train
+# description: Diagnostic D2 du docs/archives/SCAN_ARCHITECTURE_NOTES.md. Re-train
 #              pattern v2 SUR LE MÊME dataset que 0048 (depth20-1M.bin),
 #              avec hybrid skeleton (D1 acquis : 6/54 vs v5 d6) ET
 #              encoding base-3 Scan-aligned (kings folded dans patterns,
@@ -116,7 +116,7 @@ echo "    0046 Phase 1 pure pattern     : 0/18 hc, 0/54 d6, 0/54 d10"
 echo "    Smoke 1-epoch hybrid base-3   : 4/18 vs hc (preuve format)"
 echo "    Scan archi reference          : base-3 + hybrid + années tuning"
 echo
-echo "  Decision (per docs/SCAN_ARCHITECTURE_NOTES.md §D2) :"
+echo "  Decision (per docs/archives/SCAN_ARCHITECTURE_NOTES.md §D2) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.30) }'; then
     echo "    ARCHI VIABLE — base-3 + hybrid Scan-aligned débloque."
     echo "    Suite : Phase 2 self-play, ou scaler dataset (quiet+pv-extract"

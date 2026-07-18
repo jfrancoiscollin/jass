@@ -121,7 +121,7 @@ linear model.  Loading a trained file replaces those weights wholesale.
 To make the search itself use the trained network (rather than the
 handcrafted `evaluate()`), swap the call in
 [`src/search.cpp`](../src/search.cpp) — see
-[`docs/EXTENDING.md`](../docs/EXTENDING.md) recipe #4 for the
+[`docs/archives/EXTENDING.md`](../docs/archives/EXTENDING.md) recipe #4 for the
 mechanical change.
 
 ---

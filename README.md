@@ -13,23 +13,23 @@ full games, exposes a HUB-flavoured CLI for desktop GUIs and a WebAssembly
 module for browsers (the **Draught Master** web app is the primary
 consumer).
 
-| Topic                  | Where to read                      |
-|------------------------|------------------------------------|
-| Architecture & data flow | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| HUB CLI reference        | [docs/HUB.md](docs/HUB.md)         |
-| JavaScript / WASM API    | [docs/WASM.md](docs/WASM.md)       |
-| C++ API (header by header) | [docs/API.md](docs/API.md)       |
-| Extending the engine     | [docs/EXTENDING.md](docs/EXTENDING.md) |
-| Domain glossary          | [docs/GLOSSARY.md](docs/GLOSSARY.md) |
+| Active project document | Purpose |
+|-------------------------|---------|
+| [L3_PURE_PLAN.md](docs/L3_PURE_PLAN.md) | normative specification of the autonomous lineage |
+| [L3_CURRENT.md](docs/L3_CURRENT.md) | live lineage state and result tables |
+| [PROJECT_RESULTS.md](docs/PROJECT_RESULTS.md) | consolidated evidence and closed-door ledger |
 
-> **Current focus (2026):** closing the strength gap to **Scan**. The active
-> evaluation is a **Scan-style linear pattern network** trained by self-play +
-> exact-endgame mix + combination mining; the search now sees combinations
-> (Scan's selective sacrifice quiescence, ported bit-for-bit). NNUE is
-> deliberately **frozen** until the linear class is proven exhausted. The live
-> campaign state — current champion, verdicts, decision gates — is tracked in
-> **[docs/CURRENT.md](docs/CURRENT.md)** (the single source of truth), with the
-> GitOps job runner under `jobs/`.
+The former architecture, API, HUB, WASM and research notes are preserved under
+[`docs/archives/`](docs/archives/). They are historical references; code and
+tests are authoritative for current technical behaviour.
+
+> **Current focus (2026):** `L3-PURE`, a new Scan-like linear lineage built
+> without an external teacher. It starts from material only, learns from the
+> terminal WDL of its own games and tests a moving conversion frontier mined
+> from its own failures. Scan and the historical `gen2-mmto` champion are
+> evaluation thermometers only. The live state is tracked in
+> **[docs/L3_CURRENT.md](docs/L3_CURRENT.md)**, with the GitOps runner under
+> `jobs/`. NNUE remains outside the active programme.
 
 ## Highlights
 
@@ -73,11 +73,10 @@ consumer).
     Scan-flavoured): 32 overlapping board patterns, phase-split (mid/endgame),
     colour-folded, plus a dense vector of hand-designed extras (king mobility,
     tempo, endgame features). Loaded with `--pattern path.pjtw`.
-  - It is trained by **self-play** (`--gen-data-wdl`, WDL-labelled, quiet-only),
-    fit with **`pattern_jass/tools/train_stream.py`** (chunked L-BFGS, logistic
-    loss) using a **sequential Bayesian prior** that anchors each new fit to the
-    previous champion (anti-forgetting), and enriched with an **exact endgame
-    mix** (retrograde WLD) and a **combo-mined** corpus.
+  - The historical champion used several self-play, exact-endgame and MMTO
+    stages. The active L3 experiment instead uses **terminal-WDL self-play
+    only**, censors unresolved ply-cap games, and warm-starts L-BFGS from the
+    previous student **without anchoring the objective to it**.
   - **The project's north star is Scan** (Fabien Letouzey, GPL3, ~2500
     FMJD-equivalent). `tools/calibrate_vs_scan.py` plays Jass vs Scan over the
     HUB protocol; `tools/jass_vs_jass_arch.py` runs eval-vs-eval matches. The
@@ -88,8 +87,8 @@ consumer).
     (best-linear-fit reached *and* still below Scan). Rationale: ~8.5M linear
     weights vs Scan's ~2.1M and we have not yet matched it → the linear class
     is far from its ceiling; the gap is fit/search quality, not capacity.
-  - The live campaign state (current champion, verdicts, gates) lives in
-    [`docs/CURRENT.md`](docs/CURRENT.md).
+  - The live lineage state, verdicts and gates live in
+    [`docs/L3_CURRENT.md`](docs/L3_CURRENT.md).
 - **Training & book pipelines**:
   - **`--gen-data-wdl`** produces a self-play dataset, each record (38 B
     JNNW format) carrying the game's win-draw-loss outcome; `--quiet-only`
@@ -97,10 +96,9 @@ consumer).
     manufactures the "shot reached → punished" signal, and a seed-file mixes
     combination-rich openings.
   - **`pattern_jass/tools/train_stream.py`** fits the linear pattern network
-    (chunked L-BFGS, logistic loss, colour-fold, phase-split) with a
-    **sequential Bayesian prior** (`--prior-mean champion.pjtw`) that anchors
-    each generation to the last champion. Exact-endgame (retrograde WLD) and
-    combo-mined corpora are blended in.
+    (chunked L-BFGS, logistic loss, colour-fold, phase-split). It supports both
+    the legacy Bayesian prior and L3's `--warm-start`, which changes only the
+    optimiser initialisation and keeps ordinary zero-centred L2.
   - **`tools/jass_vs_jass_arch.py`** runs eval-vs-eval matches (the standard
     judge); **`tools/calibrate_vs_scan.py`** plays Jass vs Scan over HUB — the
     absolute strength yardstick. Search levers are A/B-tested with exact
@@ -248,7 +246,7 @@ fen
 quit
 ```
 
-The full command grammar is in [docs/HUB.md](docs/HUB.md).
+The full command grammar is in [docs/archives/HUB.md](docs/archives/HUB.md).
 
 ### Build & host the WASM module
 
@@ -276,7 +274,7 @@ const best = g.bestMove(6);         // → {from, to, …, score, depth, nodes}
 g.delete();                         // free the wrapped C++ object
 ```
 
-Full reference: [docs/WASM.md](docs/WASM.md).
+Full reference: [docs/archives/WASM.md](docs/archives/WASM.md).
 
 ## Continuous integration & WASM hosting
 
@@ -702,7 +700,7 @@ wget -O jobs/results/0014-fetch-master-games/artefacts.src/master-1600.jnnw \
 
 If you want to add a new opening line, plug a new endgame into the
 bitbase, tweak the evaluation, swap the NNUE weights, or add a HUB
-command, the recipes are in [docs/EXTENDING.md](docs/EXTENDING.md).
+command, the recipes are in [docs/archives/EXTENDING.md](docs/archives/EXTENDING.md).
 
 When sending a patch:
 

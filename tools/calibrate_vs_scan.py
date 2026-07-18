@@ -619,7 +619,7 @@ def main(argv):
     # eval). The standard comparison is FIXED DEPTH (--depth / --jass-depth +
     # --scan-depth) OR NPS-COMPENSATED movetime: give the slower engine more time
     # in proportion to the NPS gap (e.g. jass 2x slower → --jass-movetime 1.0
-    # --scan-movetime 0.5). See docs/SCAN_METHODOLOGY_GAP.md.
+    # --scan-movetime 0.5). See docs/archives/SCAN_METHODOLOGY_GAP.md.
     p.add_argument("--jass-movetime", type=float, default=None,
                    help="per-move time budget (SECONDS) for the Jass side only — "
                         "use with --scan-movetime to NPS-compensate (fair).")
@@ -712,7 +712,7 @@ def main(argv):
         print("  ⚠️  EQUAL fixed-time vs Scan is NOT a fair eval comparison "
               "(jass NPS << Scan → fewer plies). Standard = --depth/--jass-depth "
               "+--scan-depth, or NPS-compensated --jass-movetime/--scan-movetime. "
-              "See docs/SCAN_METHODOLOGY_GAP.md.", flush=True)
+              "See docs/archives/SCAN_METHODOLOGY_GAP.md.", flush=True)
     budget_str = (f"depth {args.depth}" if args.depth is not None
                   else (f"jass_mt={args.jass_movetime}s/scan_mt={args.scan_movetime}s"
                         if (args.jass_movetime or args.scan_movetime) is not None

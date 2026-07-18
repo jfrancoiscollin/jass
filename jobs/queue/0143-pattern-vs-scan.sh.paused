@@ -34,7 +34,7 @@ SCAN_DIR=/root/jass/.scan
 [ -x "$SCAN_DIR/scan_linux" ] || { rm -rf "$SCAN_DIR"; git clone --depth 1 https://github.com/rhalbersma/scan "$SCAN_DIR"; chmod +x "$SCAN_DIR/scan_linux"; }
 SCAN="$SCAN_DIR/scan_linux"
 
-# FAIRNESS (cf docs/PATTERN_PROGRAM_NOTES.md §B) : tant qu'on n'a pas nos
+# FAIRNESS (cf docs/archives/PATTERN_PROGRAM_NOTES.md §B) : tant qu'on n'a pas nos
 # bitbases 2-6, on bench Scan SANS les siennes (--scan-bb-size 0, explicite →
 # garanti par calibrate_vs_scan), pour isoler éval+search. Le bench "handicap"
 # (Scan avec bb-size=6) ne sera lancé QUE quand on aura téléchargé/implémenté

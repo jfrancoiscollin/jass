@@ -1,12 +1,12 @@
 > ⚠️ **ARCHIVE — NE PAS PRENDRE COMME CONSIGNE ACTIVE.** Doc historique (ère pré-fit-volume / NNUE).
-> Source de vérité unique = [CURRENT.md](../CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
+> Source de vérité unique = [CURRENT.md](../L3_CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
 > DIAGNOSTIC_VS_SCAN, BIAIS_FIT_VOLUME, PROGRESSION_LITTERATURE). Conservé pour l'historique seulement. _(Classé archive 2026-06-24.)_
 
 # Arbre de décision — programme « battre Scan »
 
 > **Doc VIVANT.** À chaque verdict de job, on **élague** (✂️ une branche morte,
 > avec sa raison) ou on **active** (🟢) la branche à explorer. Lire avec
-> [JOURNAL_DE_BORD.md](../JOURNAL_DE_BORD.md) (ancres + faits) et
+> [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) (ancres + faits) et
 > [ROADMAP.md](ROADMAP.md). Mise à jour : **2026-06-15** (campagne finales + recherche 0249-0263).
 >
 > **Légende** : 🟢 chemin actif · 🔵 branche ouverte (à explorer) · ✂️ élaguée
@@ -56,7 +56,7 @@
 
 ## 🟢 Branche ACTIVE 2026-06-17 — fermer le verrou finale DANS le linéaire
 
-📍 **Position** : audit Scan fait ([SCAN_EVAL_DIFF.md](../SCAN_EVAL_DIFF.md)) → même classe que
+📍 **Position** : audit Scan fait ([SCAN_EVAL_DIFF.md](SCAN_EVAL_DIFF.md)) → même classe que
 Scan ; le gap = **features rois manquantes + équilibre de phase**, PAS la capacité (0309/0310 :
 conflit de phase, pas saturation — le linéaire fitte la finale à 3.03). On combine, sur données
 finale-enrichies (0313/0314) : **(a) features rois** (`king_mob`/`endg`, 0311 — endg baké), **(b)

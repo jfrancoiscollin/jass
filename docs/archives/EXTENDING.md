@@ -12,7 +12,7 @@ green after each one — that's the engine's only contract that matters.
 Goal: teach the book a new starting line so the engine plays it without
 searching.
 
-1. Open [`src/book.cpp`](../src/book.cpp).
+1. Open [`src/book.cpp`](../../src/book.cpp).
 2. Add a flat list of `(from, to)` pairs to `OPENING_LINES`. Each line
    is replayed from the standard initial position, so step 1 must be a
    move legal at the start, step 2 a move legal after step 1, and so
@@ -28,7 +28,7 @@ const std::vector<std::vector<Step>> OPENING_LINES = {
 
 3. Run `cmake --build build -j && ./build/jass_tests`.
 4. Optionally, add a probe assertion in
-   [`tests/test_book.cpp`](../tests/test_book.cpp).
+   [`tests/test_book.cpp`](../../tests/test_book.cpp).
 
 ---
 
@@ -44,14 +44,14 @@ Adding `(3, 1)` requires:
 1. Decide on an encoding. For 3 white kings + 1 black king, with
    `wk1 < wk2 < wk3`, you need ~50³ × 50 × 2 / 6 ≈ 100k slots; a
    500 KB byte table is fine.
-2. In [`src/bitbase.cpp`](../src/bitbase.cpp), add a new
+2. In [`src/bitbase.cpp`](../../src/bitbase.cpp), add a new
    `class ThreeVsOneBitbase` modelled on `TwoVsOneBitbase`:
    - Index function `(wk1, wk2, wk3, bk, stm) → flat index`.
    - `make_pos`, `child_result`, `build` mirroring the existing class.
      The `child_result` step needs an extra branch: a (3,1) parent's
      children may be (3,1) again or transition to (2,1) after a black
      capture, then to known-terminal cases.
-3. In [`src/endgame.cpp`](../src/endgame.cpp), add the dispatch:
+3. In [`src/endgame.cpp`](../../src/endgame.cpp), add the dispatch:
 
 ```cpp
 if ((wk == 3 && bk == 1) || (wk == 1 && bk == 3)) {
@@ -60,7 +60,7 @@ if ((wk == 3 && bk == 1) || (wk == 1 && bk == 3)) {
 ```
 
 4. Add a couple of tests in
-   [`tests/test_endgame.cpp`](../tests/test_endgame.cpp).
+   [`tests/test_endgame.cpp`](../../tests/test_endgame.cpp).
 
 The 16-move drawing rule is still not modelled — see the caveat in
 [ARCHITECTURE.md](ARCHITECTURE.md#endgame-bitbase-build-flow).
@@ -71,16 +71,16 @@ The 16-move drawing rule is still not modelled — see the caveat in
 
 Goal: add, e.g., a "king-on-long-diagonal" bonus.
 
-1. In [`src/eval.cpp`](../src/eval.cpp):
+1. In [`src/eval.cpp`](../../src/eval.cpp):
    - Add a constant for the term's weight.
    - Either bake it into the relevant PSQT table at construction time
      (if it depends only on the piece's square and kind) or compute
      it as a runtime function called from `evaluate(pos)`.
    - Add a corresponding contribution to `evaluate_nnue`'s default
-     weights in [`src/nnue.cpp`](../src/nnue.cpp), so the two stay
+     weights in [`src/nnue.cpp`](../../src/nnue.cpp), so the two stay
      in rough agreement.
 2. Add a discriminating test in
-   [`tests/test_search.cpp`](../tests/test_search.cpp): show that two
+   [`tests/test_search.cpp`](../../tests/test_search.cpp): show that two
    positions identical except for the new term have the expected
    ordering.
 
@@ -118,7 +118,7 @@ The `LinearNetwork` shown above is the smallest concrete `INetwork`
 `MLPNetworkQ` — a quantized multi-layer network (HalfMen 450-feature
 input, hidden layers, clipped-ReLU, int8/int16 weights) with an
 incremental Layer-1 accumulator implemented in
-[`src/nnue_accumulator.{hpp,cpp}`](../src/nnue_accumulator.hpp) and
+[`src/nnue_accumulator.{hpp,cpp}`](../../src/nnue_accumulator.hpp) and
 wired into the search via `SearchState::accumulators`. A
 `PatternNetwork` (Scan-style sum of local pattern scores) also
 implements `INetwork`; the search picks the right path at runtime via
@@ -131,10 +131,10 @@ accumulator fast path).
 
 Goal: extend the CLI with, e.g., a new `pondering` flag.
 
-1. In [`src/hub.hpp`](../src/hub.hpp), declare a new `cmd_*` member
+1. In [`src/hub.hpp`](../../src/hub.hpp), declare a new `cmd_*` member
    on `HubFrontEnd` and update the comment block at the top with the
    new command's syntax.
-2. In [`src/hub.cpp`](../src/hub.cpp):
+2. In [`src/hub.cpp`](../../src/hub.cpp):
    - Add a new branch to the `dispatch(...)` if/else chain.
    - Implement the body. Use `emit_ok()` / `emit_error()` for
      responses; if you need to write multiple lines, hold
@@ -143,7 +143,7 @@ Goal: extend the CLI with, e.g., a new `pondering` flag.
    - If the command needs to interact with a running search, set
      `stop_flag_` and call `wait_for_worker()` before doing so.
 3. Add a session-style test in
-   [`tests/test_hub.cpp`](../tests/test_hub.cpp): pipe the command
+   [`tests/test_hub.cpp`](../../tests/test_hub.cpp): pipe the command
    through `drive_session(...)` and assert the expected substring
    appears in the output.
 
@@ -152,7 +152,7 @@ Goal: extend the CLI with, e.g., a new `pondering` flag.
 ## 6. Add a search heuristic (e.g., null-move pruning)
 
 The current search is linear and easy to follow:
-[`src/search.cpp`](../src/search.cpp). The principal hooks:
+[`src/search.cpp`](../../src/search.cpp). The principal hooks:
 
 - `Searcher::negamax` is the per-node entry point. Every new
   pruning/extension idea attaches here.
@@ -175,7 +175,7 @@ search tests must remain green.
 
 Goal: extend the JavaScript API.
 
-1. In [`src/wasm_api.cpp`](../src/wasm_api.cpp):
+1. In [`src/wasm_api.cpp`](../../src/wasm_api.cpp):
    - Add a new method to the `Game` C++ class that returns either a
      primitive (`int`, `bool`, `std::string`) or `emscripten::val`
      (for arrays / objects).
@@ -194,11 +194,11 @@ native build is unaffected.
    `"test_framework.hpp"` and define one or more `void test_*()`
    functions plus a single `void run_<topic>_tests()` at the bottom.
 2. Declare the runner in
-   [`tests/test_framework.hpp`](../tests/test_framework.hpp).
+   [`tests/test_framework.hpp`](../../tests/test_framework.hpp).
 3. Call it from
-   [`tests/test_main.cpp`](../tests/test_main.cpp).
+   [`tests/test_main.cpp`](../../tests/test_main.cpp).
 4. Add the new file to `add_executable(jass_tests …)` in
-   [`CMakeLists.txt`](../CMakeLists.txt).
+   [`CMakeLists.txt`](../../CMakeLists.txt).
 
 `JASS_CHECK(cond)` and `JASS_CHECK_EQ(a, b)` are the two assertion
 macros. Failure prints file:line and the source text of the
