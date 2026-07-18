@@ -2,9 +2,11 @@
 
 > **Date : 2026-07-18**
 > **Statut : plan scientifique pré-engagé ; première PR C0**
-> **Document de départ :** `docs/codex_review_v3_2.md`
+> **Document de départ :** `docs/archives/codex_review_v3_2.md`
 > **Classe de modèle :** évaluation linéaire patterns ; aucun NNUE
 > **Règle cardinale :** aucun professeur externe dans la génération ou le fit
+> **État et résultats L3 :** [L3_CURRENT.md](L3_CURRENT.md)
+> **Mémoire des expériences closes :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
 ## 0. Décision
 

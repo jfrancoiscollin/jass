@@ -160,7 +160,7 @@ struct SearchParams {
     // search features (conthist was -11, left off); consistent with the standard
     // +15-30 Elo. Not SPRT-significant at that budget, but a standard technique
     // with a positive, coherent signal; regressions would surface in the vs-Scan
-    // validation. cf docs/ROADMAP.md.
+    // validation. cf docs/archives/ROADMAP.md.
     bool use_improving = true;
 
     // Continuation history. A second history table keyed by the opponent's

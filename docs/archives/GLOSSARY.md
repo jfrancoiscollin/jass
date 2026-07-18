@@ -9,7 +9,7 @@ mostly in `search.cpp` and around it.
 **Bitbase / endgame tablebase.** A precomputed table indexed by
 position that gives the theoretical result (WIN / LOSS / DRAW)
 without searching. Jass currently includes a 2-vs-1 kings bitbase
-built by retrograde analysis ([`src/bitbase.cpp`](../src/bitbase.cpp)).
+built by retrograde analysis ([`src/bitbase.cpp`](../../src/bitbase.cpp)).
 
 **Capture.** A jump over an enemy piece to land on the empty square
 beyond. Captures are mandatory in international draughts: when one is
@@ -42,7 +42,7 @@ often determines who wins.
 **Majority rule (max-capture rule).** When several capture sequences
 are available, only the longest (counted in number of pieces
 captured) are legal. Jass enforces this in
-[`src/movegen.cpp`](../src/movegen.cpp).
+[`src/movegen.cpp`](../../src/movegen.cpp).
 
 **Man.** A piece that has not yet reached the promotion row. Men move
 one diagonal square forward at a time; they may capture in all four
@@ -61,12 +61,12 @@ move-generator correctness. Jass matches the FMJD reference values
 opposite side's home rank. Crucially, a man that *passes through* the
 promotion row mid-multijump but ends elsewhere does **not** promote
 (see the dedicated test in
-[`tests/test_movegen.cpp`](../tests/test_movegen.cpp)).
+[`tests/test_movegen.cpp`](../../tests/test_movegen.cpp)).
 
 **PSQT.** Piece-Square Table — a per-(piece-kind, square) constant
 contribution to the static evaluation. Jass uses three PSQTs:
 white-man advancement, black-man advancement, king centralisation
-([`src/eval.cpp`](../src/eval.cpp)).
+([`src/eval.cpp`](../../src/eval.cpp)).
 
 **25-move rule.** Under FMJD, a game is drawn after 25 consecutive
 moves (50 plies) without a capture or a man move. Jass tracks the
@@ -94,7 +94,7 @@ search returns a score inside it.
 **History heuristic.** A `[from][to]` table accumulating a
 `depth²` bonus every time a quiet move causes a beta cutoff. Quiet
 moves with the highest history are tried first within their bucket.
-See [`src/search.cpp`](../src/search.cpp).
+See [`src/search.cpp`](../../src/search.cpp).
 
 **Iterative deepening.** Running the search at depth 1, then 2, then
 3, etc., reusing earlier-iteration results (TT entries, best-move
@@ -115,7 +115,7 @@ indicating one side has a forced win. The exact value encodes the
 ply distance: `+MATE_SCORE − N` means "the side to move wins in N
 plies". The TT translates these to a ply-independent encoding before
 storing so an entry produced at one ply is reusable at any other
-([`src/search.cpp`](../src/search.cpp)).
+([`src/search.cpp`](../../src/search.cpp)).
 
 **Movegen.** Move generator. In Jass: a single
 `generate_legal_moves(pos, out)` function that returns either all
@@ -131,7 +131,7 @@ evaluation networks pioneered by computer shogi and now common in
 chess. Designed for sparse incremental updates on the input layer
 and clipped-ReLU hidden layers. Jass ships an NNUE-*lite* framework
 (single linear layer, batch evaluation only) — see
-[`src/nnue.hpp`](../src/nnue.hpp).
+[`src/nnue.hpp`](../../src/nnue.hpp).
 
 **Principal variation (PV).** The line of play the engine expects
 both sides to follow from the searched position. Jass extracts the
@@ -148,7 +148,7 @@ misjudges leaves where the very next move would change material.
 
 **Static eval.** The evaluation of a position based on the position
 alone, without searching ahead. In Jass: material + PSQT + support
-bonus + tempo (`evaluate(pos)` in [`src/eval.cpp`](../src/eval.cpp)).
+bonus + tempo (`evaluate(pos)` in [`src/eval.cpp`](../../src/eval.cpp)).
 
 **Transposition table (TT).** A hash table indexed by Zobrist hash
 that caches the result of previously searched positions. Lets the

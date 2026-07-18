@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0055-g4-diag-pattern-self-play
-# description: G4-diag du docs/SCAN_METHODOLOGY_GAP.md (post-révision
+# description: G4-diag du docs/archives/SCAN_METHODOLOGY_GAP.md (post-révision
 #              coût). Self-play TD-leaf style pour pattern v2 hybrid
 #              base-3 + extras + phase split. 10 itérations, 20K
 #              records par iter (low-volume diagnostic).
@@ -209,7 +209,7 @@ echo "    G2 distill v7         : 0/54 vs v5 d10"
 echo "    G3a king PST+balance  : 0/54 vs v5 d10"
 echo "    G3b phase split skel  : 0/54 vs v5 d10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G4-diag) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §G4-diag) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.20) }'; then
     echo "    SELF-PLAY UNLOCK — méthodo Scan-aligned débloque. Suite :"
     echo "    G4-prod (~€10-20, ~1 semaine) avec 100K-300K games/iter,"

@@ -13,7 +13,7 @@
 //
 // with EVERY feature stored in TWO weight banks (midgame / endgame) and
 // interpolated by the game stage (piece count / 40), exactly like Scan
-// (cf docs/SCAN_ARCHITECTURE_NOTES.md §3, docs/PATTERN_PROGRAM_NOTES.md §A).
+// (cf docs/archives/SCAN_ARCHITECTURE_NOTES.md §3, docs/archives/PATTERN_PROGRAM_NOTES.md §A).
 //
 // Consistency contract :
 //   * `compute_extras()` is the SINGLE source of truth for the dense
@@ -54,7 +54,7 @@ namespace jass::scan_eval {
 // a king square reads as empty ; the king's value is carried by the king-PST +
 // king-mobility extras). With -DJASS_KING_PATTERNS the occupancy becomes
 // men|kings, so a king counts as a "piece" on its square EXACTLY like Scan
-// (base-3 amalgamating man+king, cf docs/SCAN_ARCHITECTURE_NOTES.md §1) — NOT
+// (base-3 amalgamating man+king, cf docs/archives/SCAN_ARCHITECTURE_NOTES.md §1) — NOT
 // base-5 (that was jass v2 : king buckets near-empty, worse). A king-aware
 // build MUST be paired with a king-aware eval : train with
 // `pattern_jass/tools/train.py --king-patterns`.
@@ -125,7 +125,7 @@ inline constexpr int EXTRAS_AFTER_KMOB = EXTRAS_AFTER_ENDGAME;
 //    (Scan uses |skew_W|−|skew_B| ; jass had only a binary left/right balance).
 //  * KING MATERIAL : has-a-king bool + extra-king count (2nd+ king worth less),
 //    per side — Scan weights the first king and surplus kings separately; jass had
-//    king value only implicit in the PST. See docs/SCAN_EVAL_DIFF.md.
+//    king value only implicit in the PST. See docs/archives/SCAN_EVAL_DIFF.md.
 #ifdef JASS_SCAN_PARITY
 inline constexpr int EXTRA_BK_SKEWABS = EXTRAS_AFTER_KMOB + 0;  // |skew| of black men
 inline constexpr int EXTRA_WK_SKEWABS = EXTRAS_AFTER_KMOB + 1;  // |skew| of white men
@@ -147,7 +147,7 @@ inline constexpr int MAX_PIECES = 40;
 // low-piece positions instead of being pulled 0.25 by every midgame position —
 // the phase CONFLICT 0310 measured (endgame fits far better when not co-fit
 // with midgame). A king-mobility/phase build MUST be evaluated AND trained with
-// the SAME endpoints (train.py --phase-lo/--phase-hi). Cf docs/SCAN_EVAL_DIFF.md.
+// the SAME endpoints (train.py --phase-lo/--phase-hi). Cf docs/archives/SCAN_EVAL_DIFF.md.
 #ifndef JASS_PHASE_LO
 #define JASS_PHASE_LO 0
 #endif

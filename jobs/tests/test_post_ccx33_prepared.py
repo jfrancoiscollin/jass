@@ -14,7 +14,7 @@ TEMPLATES = (
     ROOT / "jobs/templates/p3-blind-holdout-runner-v3.sh",
 )
 # Fork C T1 (cpx62-0775) ANNULÉ le 2026-07-17 : le C0 a rendu stop_regression
-# (cf docs/forkc_c0_verdict_20260717.md). Le script est retiré du jeu préparé.
+# (cf docs/archives/forkc_c0_verdict_20260717.md). Le script est retiré du jeu préparé.
 
 
 class PostCcx33PreparedTests(unittest.TestCase):

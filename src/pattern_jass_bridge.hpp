@@ -35,7 +35,7 @@ public:
     // Build with an NNUE skeleton instead of handcrafted. The pattern
     // weights then learn the residual on top of the NNUE prediction
     // (Option I — pattern hybride sur NNUE, cf
-    // docs/PARADIGM_SHIFT_OPTIONS.md). The bridge owns `skeleton`.
+    // docs/archives/PARADIGM_SHIFT_OPTIONS.md). The bridge owns `skeleton`.
     PatternJassNetwork(std::vector<std::int32_t> weights, std::uint32_t scale,
                        std::unique_ptr<INetwork> skeleton);
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0053-g3a-pattern-king-pst-balance
-# description: G3a du docs/SCAN_METHODOLOGY_GAP.md (révision 2026-05-28).
+# description: G3a du docs/archives/SCAN_METHODOLOGY_GAP.md (révision 2026-05-28).
 #              Re-train pattern v2 hybrid base-3 sur le même dataset que
 #              0048 (depth20-1M.bin), avec en plus le squelette Scan-aligned
 #              **complet** (modulo phase split MG/EG qui est G3b) :
@@ -135,7 +135,7 @@ echo "    0049 D2 hybrid base-3 Adam   : 0/18 hc, 1.5/54 d6, 0/54 d10"
 echo "    0051 G1 LBFGS base-5         : 0/18 hc, 0/54 d6, 0/54 d10"
 echo "    0052 G2 distill v7 base-5    : 0/18 hc, 0/54 d6, 0/54 d10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G3) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §G3) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.30) }'; then
     echo "    FEATURE ENGINEERING WAS THE BOTTLENECK — archi pattern viable."
     echo "    On a maintenant une baseline saine pour G4 (self-play TD-leaf)."

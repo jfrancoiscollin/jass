@@ -39,10 +39,10 @@
 >
 > **À LIRE AVANT DE (RE)CHERCHER.** Registre court et tenu à jour à chaque
 > verdict. Ancres mesurées + faits établis (à ne pas re-litiger) + index des
-> jobs. Pour l'analyse détaillée → [PATTERN_PROGRAM_NOTES.md](archives/PATTERN_PROGRAM_NOTES.md).
+> jobs. Pour l'analyse détaillée → [PATTERN_PROGRAM_NOTES.md](PATTERN_PROGRAM_NOTES.md).
 > Pour ce qui est **codé** → [ARCHITECTURE.md](ARCHITECTURE.md).
 > Pour **comment on en est arrivé là** → [§6 Historique](#6-historique-du-projet--le-cheminement-0001--0202).
-> Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](archives/ARBRE_DECISION.md).
+> Pour **quel chemin prendre selon quel verdict** → [ARBRE_DECISION.md](ARBRE_DECISION.md).
 >
 > Mise à jour : **2026-06-17** (audit Scan : même classe, gap = features rois ;
 > `endgame_mse` trompeur → métrique conversion exacte ; MTC-in-search ; flotte +PC perso).
@@ -175,7 +175,7 @@ combo recherche) → 0335 (combo gelé vs Scan depth-égale).
 > finale-rois** — Scan capture la conversion via ses patterns ; puis l'**équilibre
 > d'entraînement** finale/midgame ; puis la **recherche**). **INTERDIT de reproposer
 > FM/MLP** tant que la voie linéaire n'est pas *prouvée épuisée* (= on a trouvé et
-> corrigé ce qui manque, pas « le loop plafonne »). Détail : [ARBRE_DECISION.md](archives/ARBRE_DECISION.md).
+> corrigé ce qui manque, pas « le loop plafonne »). Détail : [ARBRE_DECISION.md](ARBRE_DECISION.md).
 
 **Faits établis (à ne pas re-litiger) :**
 
@@ -734,7 +734,7 @@ correcte. Multi-cycles.
 
 ### Phase 10 — Exécution recette Scan & le RÉ-ANCRAGE (0194-0202)
 Détaillé en [§3](#3-index-des-jobs-récents) et dans
-[PATTERN_PROGRAM_NOTES.md](archives/PATTERN_PROGRAM_NOTES.md). En bref : WDL plafonne 0.22
+[PATTERN_PROGRAM_NOTES.md](PATTERN_PROGRAM_NOTES.md). En bref : WDL plafonne 0.22
 (label, pas data) ; **ré-ancrage 0199 : champion ≈ v15 ≈ 0 vs Scan** (le 0.39
 était flatté) ; **deep-relabel d12 = 0.306** (levier confirmé, teacher-free) ;
 **0201 : l'eval est le gap** (la recherche est complète, la vitesse secondaire).

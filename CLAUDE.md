@@ -1,7 +1,9 @@
 # CLAUDE.md — instructions permanentes (lues à CHAQUE session, en premier)
 
-> **Source de vérité technique = [`docs/CURRENT.md`](docs/CURRENT.md)** (lire en premier à chaque session).
-> Règles de méthode permanentes = [`docs/SCAN_METHODOLOGY_GAP.md`](docs/SCAN_METHODOLOGY_GAP.md).
+> **État vivant L3 = [`docs/L3_CURRENT.md`](docs/L3_CURRENT.md)** (lire en premier à chaque session).
+> Spécification normative = [`docs/L3_PURE_PLAN.md`](docs/L3_PURE_PLAN.md).
+> Résultats acquis et portes closes = [`docs/PROJECT_RESULTS.md`](docs/PROJECT_RESULTS.md).
+> Les autres Markdown de `docs/archives/` sont historiques et ne doivent plus être mis à jour.
 
 ## ⛔ RÈGLES OPÉRATIONNELLES JFC — non négociables
 
@@ -64,7 +66,7 @@ Quand un job tourne, fournir des **premières estimations EN CONTINU** dès que 
 - A/B : committer **chaque cellule dès qu'elle finit** + un tally courant.
 - Génération : logger/committer « N/total parties, X paires, ETA » tous les K.
 - Côté reporting à JFC : dès qu'un partiel existe, sortir une **première estimation** plutôt que « ça tourne encore ».
-- **📌 `docs/CURRENT.md` TENU À JOUR AU FUR ET À MESURE (JFC — 2026-07-07)** : dès qu'un job finalise avec un résultat, mettre à jour le bloc concerné de CURRENT (et le verdict en tête si bake/étape majeure) — **pas seulement en fin de campagne**. CURRENT doit refléter l'état réel à tout instant.
+- **📌 `docs/L3_CURRENT.md` TENU À JOUR AU FUR ET À MESURE** : dès qu'un job L3 finalise, renseigner ses compteurs, résultats et décision — **pas seulement en fin de campagne**. Un résultat qui clôt ou rouvre une famille doit aussi mettre à jour `docs/PROJECT_RESULTS.md`.
 
 ### 3. 🧪 SMOKE TEST DES FORMATS DE REPORTING AVANT LANCEMENT (JFC — 2026-07-07)
 Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-liée, cellules perdues, format écriture ≠ lecture — ça nous a coûté plusieurs runs), TOUJOURS **smoke-tester AVANT de queuer** :
@@ -77,7 +79,7 @@ Pour éviter les **erreurs de reporting** (troncature RESULTS, variable non-lié
 - **Code sur `develop`** (jamais main pour le code) ; **queue de jobs sur `main`**. Le runner exécute les jobs `jobs/queue/<box>-NNNN-*.sh` par prefix de box.
 - **Bake (éval ou search) = promotion délibérée sur `main`, uniquement sur go explicite de JFC.** Réversible (archiver l'ancien champion).
 - Commits vers main/develop via plumbing `read-tree origin/<ref>` + `commit-tree` + `push` (cf `commit_to_main` dans les jobs).
-- Champion éval courant : voir le bloc en tête de `docs/CURRENT.md` (au 2026-07-07 : **gen2-mmto**).
+- Champion historique de référence : **gen2-mmto**. Student/champion L3 courant : voir `docs/L3_CURRENT.md`.
 - **🛡️ GARDE-FOU ARCHI (obligatoire dans TOUT job qui build — JFC 2026-07-10)** : ne JAMAIS s'appuyer sur l'arbre de base du runner pour les fichiers perf-critiques (silencieusement stale possible). **Pull explicitement `scan_eval.cpp/.hpp`, `search.cpp`, `movegen.cpp/.hpp` d'une ref connue** (`git show origin/develop:<f> > <f>`) **PUIS assert les opts AVANT `cmake`.** 0659 s'appuyait sur l'arbre de base (OK car main==develop ce jour-là, mais fragile) ; 0665 pull explicite (bon patron). Snippet à coller juste avant le build :
   ```bash
   arch_assert(){  # à appeler après les pull develop, avant cmake

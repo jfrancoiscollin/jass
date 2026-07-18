@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0047-d3-pattern-v2-on-quiet-data
-# description: Diagnostic D3 (cf. docs/SCAN_ARCHITECTURE_NOTES.md §6).
+# description: Diagnostic D3 (cf. docs/archives/SCAN_ARCHITECTURE_NOTES.md §6).
 #              Re-train pattern v2 avec EXACTEMENT la même recipe Phase 1
 #              que 0046 — mais sur le dataset quiet-only 200K de 0043
 #              (au lieu du depth20-1M sans filtre de 0010).
@@ -106,7 +106,7 @@ echo "    0046 (Phase 1, sale 1M)              : 0/54 vs v5 d6, 0/54 vs v5 d10"
 echo "    0025a-7 (no Phase 1, sale 1M)        : 3/54 vs v5 d6, 0/54 vs v5 d10"
 echo "    0043 MLPNetworkQ (quiet 200K)        : 0.472 vs v5 d6, 0.639 vs v5 d10"
 echo
-echo "  Decision (per docs/SCAN_ARCHITECTURE_NOTES.md §D3) :"
+echo "  Decision (per docs/archives/SCAN_ARCHITECTURE_NOTES.md §D3) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.20) }'; then
     echo "    DATA WAS THE BOTTLENECK — data quality débloque l'archi pattern."
     echo "    Suite : appliquer quiet+pv-extract sur le set d'entraînement"

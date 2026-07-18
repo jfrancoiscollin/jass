@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0057-g5-scan-geometry-test
-# description: G5 du docs/SCAN_METHODOLOGY_GAP.md (hypothèse H1).
+# description: G5 du docs/archives/SCAN_METHODOLOGY_GAP.md (hypothèse H1).
 #              Reproduit la self-play loop de G4-diag (0055) MAIS avec
 #              la géométrie pattern v3 Scan-inspired : 8 patterns ×
 #              12 squares en strips verticaux (vs 16 × 8 blocs 4×4 en
@@ -195,7 +195,7 @@ echo
 echo "  Reference v2 geometry (G4-diag 0055) :"
 echo "    iter 10 final vs v6 d10 : 0/54 (FLAT)"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H1) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §H1) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    GEOMETRY WAS THE BOTTLENECK — v3 verticaux unlock vs v2 blocs."
     echo "    Suite : G5-prod (volume + géométrie v3 = vrai Scan)."

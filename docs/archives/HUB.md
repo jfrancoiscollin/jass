@@ -118,7 +118,7 @@ Defaults:
 - `go movetime <ms>` → search as deep as time allows.
 - A tournament-style budget (`wtime/btime/[winc/binc/movestogo]`) is
   converted to a per-move `movetime` via the formula in
-  [`src/timemgr.cpp`](../src/timemgr.cpp).
+  [`src/timemgr.cpp`](../../src/timemgr.cpp).
 
 Examples:
 

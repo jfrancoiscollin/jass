@@ -3,7 +3,7 @@
 # description: v7 production run. Extrapolation directe de 0045 (v6
 #              500K) à 1M complet avec la même recipe quiet+pv-extract.
 #              ROI le plus clair restant sur l'axe data (pattern axis
-#              gelé après 0049, cf. docs/SCAN_METHODOLOGY_GAP.md).
+#              gelé après 0049, cf. docs/archives/SCAN_METHODOLOGY_GAP.md).
 #
 #              v6 (0045 500K) faisait +39 ELO vs v5 d10. Extrapolation
 #              naïve à 1M : +50-80 ELO vs v5 d10 si le gain est linéaire

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0054-g3b-phase-split-skeleton
-# description: G3b du docs/SCAN_METHODOLOGY_GAP.md. Re-train pattern v2
+# description: G3b du docs/archives/SCAN_METHODOLOGY_GAP.md. Re-train pattern v2
 #              hybrid base-3 + extras (G3a) AVEC phase split MG/EG sur le
 #              squelette uniquement (bias, man, king, balance, king_pst).
 #              Patterns restent mono-phase en v5.
@@ -129,7 +129,7 @@ echo "    0051 G1 LBFGS           : 0/18 hc, 0/54 d6, 0/54 d10"
 echo "    0052 G2 distillation v7 : 0/18 hc, 0/54 d6, 0/54 d10"
 echo "    0053 G3a king PST+bal   : 0/18 hc, 0/54 d6, 0/54 d10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G3b, post-révision) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §G3b, post-révision) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.30) }'; then
     echo "    PHASE AWARENESS WAS THE BOTTLENECK — archi viable, baseline"
     echo "    pour G4 self-play TD-leaf."

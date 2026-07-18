@@ -71,7 +71,7 @@ PY
 require_ready(){
   if ! configured; then
     log "NON CONFIGURÉ (JASS_OBJSTORE_REMOTE / RCLONE_CONF_B64 absents) → no-op."
-    log "Voir docs/OBJSTORE_SETUP.md pour activer. (sortie 0 : ne casse aucun job)"
+    log "Voir docs/archives/OBJSTORE_SETUP.md pour activer. (sortie 0 : ne casse aucun job)"
     exit 0
   fi
   bootstrap_rclone || { log "rclone indisponible → no-op (exit 0)"; exit 0; }
@@ -90,7 +90,7 @@ case "$cmd" in
     if configured; then
       bootstrap_rclone && ensure_conf && { echo "connectivité:"; rclone_cmd lsd "$(remote_path)" 2>&1 | head -5 || echo "  (échec lsd — vérifier credentials/egress)"; }
     else
-      echo "ÉTAT       : DORMANT (non configuré). Toutes les commandes no-op. Voir docs/OBJSTORE_SETUP.md."
+      echo "ÉTAT       : DORMANT (non configuré). Toutes les commandes no-op. Voir docs/archives/OBJSTORE_SETUP.md."
     fi
     ;;
   push)

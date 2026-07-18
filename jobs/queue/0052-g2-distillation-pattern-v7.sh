@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0052-g2-distillation-pattern-v7
-# description: G2 du docs/SCAN_METHODOLOGY_GAP.md. Teste si l'archi
+# description: G2 du docs/archives/SCAN_METHODOLOGY_GAP.md. Teste si l'archi
 #              pattern peut imiter une eval qui marche (v7), en remplaçant
 #              les labels score depth-20 bruités par des labels propres =
 #              `v7.evaluate(pos)` (knowledge distillation).
@@ -138,7 +138,7 @@ echo "  References (pattern v2 supervised paths) :"
 echo "    0048 D1 hybrid base-5 Adam (score labels)  : 0/18 hc, 6/54 d6, 0/54 d10"
 echo "    0051 G1 LBFGS (score labels)               : 0/18 hc, 0/54 d6, 0/54 d10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G2) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §G2) :"
 if   awk -v r="$RATE_V6_D10" 'BEGIN { exit !(r >= 0.40) }'; then
     echo "    LABEL WAS THE BOTTLENECK — patterns peuvent représenter une"
     echo "    eval qui marche. Suite G3 (feature engineering complet :"

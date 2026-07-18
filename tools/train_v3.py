@@ -628,7 +628,7 @@ def main(argv):
     # `jass --rewrite-scores-with-handcrafted`) so the network learns
     # the RESIDUAL (label - handcrafted). At eval time the C++ hybrid
     # network adds the handcrafted skeleton back. Cf
-    # docs/PARADIGM_SHIFT_OPTIONS.md §H. Use with --lambda 1.0 to keep a
+    # docs/archives/PARADIGM_SHIFT_OPTIONS.md §H. Use with --lambda 1.0 to keep a
     # clean residual target (the WDL term is not skeleton-relative).
     if args.skeleton_data is not None:
         print(f"loading skeleton {args.skeleton_data} (handcrafted) …")

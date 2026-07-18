@@ -1,8 +1,8 @@
 # Phase Pattern-2 — pattern jass minimaliste
 
-> Documenté `docs/ROADMAP.md:362`. Cible : valider que le pipeline
+> Documenté `docs/archives/ROADMAP.md:362`. Cible : valider que le pipeline
 > pattern éprouvé sur Othello (Phase Pattern-1, cf
-> `docs/OTHELLO_POC_VERDICT.md`) se transpose proprement sur draughts
+> `docs/archives/OTHELLO_POC_VERDICT.md`) se transpose proprement sur draughts
 > 50-square avec des **8 features Scan-geometry mais code from scratch**.
 >
 > **Gate 2** : pattern jass ≥ 55% vs handcrafted (eval_basic-équivalent
@@ -42,7 +42,7 @@ white_man=2). Total 8 × 3¹⁰ = **472 392 buckets**.
 | 7 | col_right  | 5, 10, 15, 20, 25, 30, 35, 40, 45, 50  | colonne droite |
 
 **Choix design** :
-- **Kings exclus** (comme Scan, cf `docs/SCAN_ARCHITECTURE_NOTES.md`
+- **Kings exclus** (comme Scan, cf `docs/archives/SCAN_ARCHITECTURE_NOTES.md`
   §3 fin) — kings via PST hors-pattern dans une étape ultérieure.
 - **Pas de MG/EG split** pour v1 — ajout possible si Gate 2 marginal.
 - Patterns horizontaux + verticaux ≠ Scan (qui fait des verticaux

@@ -114,10 +114,10 @@ caller
 Deux représentations cohabitent ; `Engine::load_book` auto-détecte le format
 au chargement (magic) et route le probe.
 
-- **Classique `Book`** ([book.cpp](../src/book.cpp), format **JBOK**) : table
+- **Classique `Book`** ([book.cpp](../../src/book.cpp), format **JBOK**) : table
   zobrist→**un coup**. Construit par `--build-book` (search d'une liste de FEN)
   ou `--build-book-from-moves` (fréquences master). Probe **déterministe**.
-- **`ScanBook` — à la Scan** ([scan_book.cpp](../src/scan_book.cpp), format
+- **`ScanBook` — à la Scan** ([scan_book.cpp](../../src/scan_book.cpp), format
   **JBK2**) : table zobrist→**score negamax remonté** de TOUTE position d'un
   arbre d'ouverture. Probe = classe les coups par la valeur (negamax) de leur
   *enfant*, garde ceux à ≤ `margin` du meilleur, **tirage softmax** (température
@@ -130,7 +130,7 @@ au chargement (magic) et route le probe.
   jass+livre vs jass-sans-livre (méthode 0029, indépendant de l'éval) +
   vs Scan (ccx33-0307).
 
-`Position::after(Move)` (in [position.cpp](../src/position.cpp)):
+`Position::after(Move)` (in [position.cpp](../../src/position.cpp)):
 - removes the moving piece from its origin square,
 - removes every captured piece in `Move::captures`,
 - places the piece on `Move::to`, upgrading a man to a king if
@@ -190,7 +190,7 @@ lever, not a missing-feature gap.
 ## Threading model (lazy SMP)
 
 When `SearchLimits.threads > 1` the search spawns `threads - 1` helper
-threads inside [search.cpp](../src/search.cpp).  Each helper invokes
+threads inside [search.cpp](../../src/search.cpp).  Each helper invokes
 `jass::search(pos, hlim, tt, history)` again with `threads = 1` and a
 shared `helper_stop` atomic.  Helpers don't return a result; they just
 populate the (shared) transposition table for the main thread to reuse.
@@ -219,7 +219,7 @@ Synchronisation:
 
 ## Endgame bitbase build flow
 
-The 2-vs-1 kings tablebase ([bitbase.cpp](../src/bitbase.cpp)) is built
+The 2-vs-1 kings tablebase ([bitbase.cpp](../../src/bitbase.cpp)) is built
 lazily on the first probe via `std::call_once`, so the cost is paid
 only by sessions that actually reach an endgame.
 
@@ -262,13 +262,13 @@ which also revealed the in-memory 2v1/3v1 tables over-claim wins).
 
 ### External egdb bitbase (Kingsrow WLD 2→7, gated `-DJASS_EGDB`)
 
-[egdb_bridge.cpp](../src/egdb_bridge.cpp) links Ed Gilbert's `egdb_intl` to
+[egdb_bridge.cpp](../../src/egdb_bridge.cpp) links Ed Gilbert's `egdb_intl` to
 serve **exact** win/loss/draw for ≤7-piece positions. Seam:
 
 - `egdb::init(dir, cache_mb)` opens the driver; `egdb::probe(pos)` converts the
   jass `Position` to the gapped `EGDB_POSITION` bitboards (`spread50_to_egdb`,
   bit-for-bit validated) and looks up the WLD.
-- `probe_endgame` ([endgame.cpp](../src/endgame.cpp)) consults egdb **first**,
+- `probe_endgame` ([endgame.cpp](../../src/endgame.cpp)) consults egdb **first**,
   falling back to the in-memory tables on `Unknown`.
 - **<3-piece guard**: egdb's `db2` slice returns a spurious decisive for some
   bare KvK; `probe()` declines below 3 pieces so the exact in-memory `KvK=Draw`
@@ -278,7 +278,7 @@ Validation = the **native egdb example self-test** (164/164), not the in-memory
 tables (a shallow heuristic). `jass --egdb-selfcheck <dir> <n>` asserts the one
 airtight invariant (KvK-no-capture = Draw); see BITBASE_INTEGRATION.md.
 
-**Terminate-at-TB** ([main.cpp](../src/main.cpp) `run_gen_data_wdl_mode`): when a
+**Terminate-at-TB** ([main.cpp](../../src/main.cpp) `run_gen_data_wdl_mode`): when a
 self-play game reaches an egdb-resolved (≤7-piece) position, the game ends with
 the EXACT egdb result instead of being played out. Without this, ~50% of decisive
 endgames stall to the FMJD draw rule and get mislabelled as draws (job 0295),
@@ -342,14 +342,14 @@ evaluate(pos)                         [eval.cpp]
 just the moving piece's square; everything else is a flat per-piece
 table that fits inside a constexpr-built array.
 
-`evaluate_nnue(pos)` ([nnue.cpp](../src/nnue.cpp)) is the same shape
+`evaluate_nnue(pos)` ([nnue.cpp](../../src/nnue.cpp)) is the same shape
 but expressed as a (square × piece-kind) weight matrix that can be
 loaded from disk for a trained network.
 
 ### NNUE forms and encodings
 
 Three `INetwork` implementations live side by side in
-[nnue.hpp](../src/nnue.hpp):
+[nnue.hpp](../../src/nnue.hpp):
 
 | Class            | Format | Where it's used                          |
 |------------------|--------|------------------------------------------|
@@ -374,8 +374,8 @@ without recompiling.
 ### Scan-style pattern eval (`ScanEvalNetwork`, PJTW v3) — the main line
 
 The current eval line is a **linear pattern model** in the spirit of Scan
-(Letouzey), implemented in [scan_eval.cpp](../src/scan_eval.cpp) +
-[pattern_jass/](../pattern_jass/). It is what the WDL self-play loop trains.
+(Letouzey), implemented in [scan_eval.cpp](../../src/scan_eval.cpp) +
+[pattern_jass/](../../pattern_jass/). It is what the WDL self-play loop trains.
 
 ```
 evaluate(pos) =  Σ_p  W_pat[ phase, offset_p + index_p(men) ]      (32→54 patterns)
@@ -452,7 +452,7 @@ closes the geometry under `{rot180, LR}` (32→54 patterns) so the fold ties
 
 ## Training & calibration pipeline (Cycles 1–6c)
 
-The training side lives in [`tools/`](../tools) and is driven by:
+The training side lives in [`tools/`](../../tools) and is driven by:
 
 ```
                 ┌──────────────────────────────┐
@@ -523,7 +523,7 @@ preserving bitboards/STM/WDL):
 for the eval-vs-search diagnostic: how many extra plies does Jass need to match
 Scan at a fixed Scan depth.
 
-The Hetzner GitOps runner in [`infra/`](../infra/README.md) ties all
+The Hetzner GitOps runner in [`infra/`](../../infra/README.md) ties all
 of these together: long-running gen-data / training / calibration
 jobs are committed as scripts under `jobs/queue/`, the runner picks
 them up, runs them on a Hetzner CCX host, and commits results back

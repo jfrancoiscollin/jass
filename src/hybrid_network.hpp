@@ -9,7 +9,7 @@
 // adding the handcrafted skeleton back at eval time reconstructs the full
 // prediction. The skeleton carries material + PSQT (cheap, already correct)
 // and the NNUE only has to learn the positional correction — a strictly
-// easier target at identical capacity. Cf docs/PARADIGM_SHIFT_OPTIONS.md §H.
+// easier target at identical capacity. Cf docs/archives/PARADIGM_SHIFT_OPTIONS.md §H.
 //
 // Both `jass::evaluate` (handcrafted) and `INetwork::evaluate` return the
 // score from the side-to-move point of view, so the sum is consistent.

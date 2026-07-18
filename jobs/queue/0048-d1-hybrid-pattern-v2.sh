@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0048-d1-hybrid-pattern-v2
-# description: Diagnostic D1 du PATTERN_ROADMAP / docs/SCAN_ARCHITECTURE_NOTES.md.
+# description: Diagnostic D1 du PATTERN_ROADMAP / docs/archives/SCAN_ARCHITECTURE_NOTES.md.
 #              Re-train pattern v2 SUR LE MÊME dataset (depth20-1M.bin
 #              de 0010, identique 0046/0025a-7), MAIS avec le squelette
 #              structurel hybrid : pattern eval = bias + man_value *
@@ -118,7 +118,7 @@ echo "    0047 (Phase 1 pure pattern, quiet)    : 0/18 vs hc, 0/54 vs v5 d10"
 echo "    0025a-7 (pure WDL pattern v2)         : 0/18 vs hc, 0/54 vs v5 d10, 3/54 d6"
 echo "    Smoke 2-epoch 5K hybrid               : 4/18 vs hc (preuve concept)"
 echo
-echo "  Decision (per docs/SCAN_ARCHITECTURE_NOTES.md §D1) :"
+echo "  Decision (per docs/archives/SCAN_ARCHITECTURE_NOTES.md §D1) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.30) }'; then
     echo "    ARCHI HYBRID VIABLE — squelette structurel débloque les patterns."
     echo "    Suite : Phase 2 (self-play loop pattern hybrid), ou D2 (base-3)"

@@ -639,7 +639,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // reductions/pruning risk discarding the single precise winning line for
     // little node saving. The gated flags let an A/B disable NMP (zugzwang),
     // LMP and/or LMR below `eg_pieces` pieces (same popcount phase axis as
-    // pattern_jass --phase-weight). Cf docs/ROADMAP.md (VERDICT FINALES).
+    // pattern_jass --phase-weight). Cf docs/archives/ROADMAP.md (VERDICT FINALES).
     const bool eg = params.eg_pieces > 0
                  && popcount(pos.occupied()) <= params.eg_pieces;
 
