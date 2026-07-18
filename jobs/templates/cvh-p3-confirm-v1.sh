@@ -4,7 +4,9 @@
 # after both common-search and movetime non-regression gates pass.
 # TEMPLATE ONLY: queue only after measured ETA and explicit JFC go.
 set -euo pipefail
-cd /root/jass
+
+REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+cd "$REPO_ROOT"
 
 CODE_SHA="${CODE_SHA:-6bfc700fcf4dd512e3383bc04abbdce2b382e688}"
 JASS_JOB_ID="${JASS_JOB_ID:-ccx33-cvh-p3-confirm}"
@@ -44,12 +46,12 @@ if x.get('stage')!='movetime' or x.get('pass') is not True:
 print('prior movetime pass verified')
 PY
 
-W="/root/cw-${JASS_JOB_ID}"; OUT_DIR="${OUT_DIR:-/root/jass/jobs/results/${JASS_JOB_ID}/artefacts}"
+W="/root/cw-${JASS_JOB_ID}"; OUT_DIR="${OUT_DIR:-$REPO_ROOT/jobs/results/${JASS_JOB_ID}/artefacts}"
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 DFA=$(df -Pm /root | awk 'NR==2{print $4}'); [[ "${DFA:-0}" -gt 3000 ]] || { echo "ABORT disk <3GB" >&2; exit 3; }
 rm -rf "$W"; mkdir -p "$W" "$OUT_DIR"; RES="$W/RESULTS.txt"; PROG="$W/PROGRESS.txt"; : >"$RES"; : >"$PROG"
 say(){ echo "$*" | tee -a "$RES"; }
-cleanup(){ touch "$W/.stopmon" 2>/dev/null || true; if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi; git -C /root/jass worktree remove --force "$W/src" >/dev/null 2>&1 || true; }
+cleanup(){ touch "$W/.stopmon" 2>/dev/null || true; if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi; git -C "$REPO_ROOT" worktree remove --force "$W/src" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 say "=== $JASS_JOB_ID code=$CODE_SHA nproc=$NCPU shards=$SHARDS approved_eta_min=$APPROVED_ETA_MIN ==="
 say "confirm_n=$CONFIRM_N min_paired_n=$CONFIRM_MIN_N depth=$CONFIRM_DEPTH min_delta=$CONFIRM_MIN_DELTA"
@@ -121,7 +123,8 @@ for p in glob.glob(f'{w}/{cell}.*.json'):
     try:
         x=json.load(open(p)); n+=x.get('n_pos',0); wins+=x.get('n_win',0)
     except Exception: pass
-print(f'{cell}: completed_shards={len(glob.glob(f"{w}/{cell}.*.json"))}/{shards} n={n} wins={wins}')
+completed=len(glob.glob(f'{w}/{cell}.*.json'))
+print(f'{cell}: completed_shards={completed}/{shards} n={n} wins={wins}')
 PY
       cp "$PROG" "$OUT_DIR/PROGRESS.txt" 2>/dev/null || true
     done
