@@ -61,9 +61,9 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
     return [
         sys.executable,
         args.harness,
-        "--jass-a", args.jass,
+        "--jass-a", args.jass_a,
         "--pattern-a", args.pattern_a,
-        "--jass-b", args.jass,
+        "--jass-b", args.jass_b,
         "--pattern-b", args.pattern_b,
         "--search-params-a", args.search_params,
         "--search-params-b", args.search_params,
@@ -124,6 +124,8 @@ def run_gate(args: argparse.Namespace) -> dict:
     logs = [out_dir / f"gate.{shard}.log" for shard in range(args.nshards)]
     result = parse_result_files(logs, args.nshards)
     result.update({
+        "jass_a": args.jass_a,
+        "jass_b": args.jass_b,
         "pattern_a": args.pattern_a,
         "pattern_b": args.pattern_b,
         "depth": args.depth,
@@ -137,7 +139,12 @@ def run_gate(args: argparse.Namespace) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--jass", required=True)
+    parser.add_argument(
+        "--jass",
+        help="single binary for same-architecture matches (backward-compatible shorthand)",
+    )
+    parser.add_argument("--jass-a", help="side A binary for cross-architecture matches")
+    parser.add_argument("--jass-b", help="side B binary for cross-architecture matches")
     parser.add_argument("--pattern-a", required=True)
     parser.add_argument("--pattern-b", required=True)
     parser.add_argument("--openings-file", required=True)
@@ -152,6 +159,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    args.jass_a = args.jass_a or args.jass
+    args.jass_b = args.jass_b or args.jass
+    if not args.jass_a or not args.jass_b:
+        parser.error("provide --jass, or both --jass-a and --jass-b")
     try:
         result = run_gate(args)
         Path(args.out).write_text(json.dumps(result, indent=2), encoding="utf-8")

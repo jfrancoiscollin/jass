@@ -61,9 +61,11 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
 
     records = read_records(args.pool_jnnw)
 
+    defender_jass = args.defender_jass or args.jass
+
     def _fresh():
         return (cv.JassEngine(args.jass, pattern_path=args.pattern),
-                cv.JassEngine(args.jass, pattern_path=args.defender_pattern),
+                cv.JassEngine(defender_jass, pattern_path=args.defender_pattern),
                 cv.Referee(args.jass))
 
     champion, defender, referee = _fresh()
@@ -122,6 +124,8 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
         "errors": errors[:20],
         "depth": args.depth,
         "movetime": args.movetime,
+        "jass": args.jass,
+        "defender_jass": defender_jass,
         "shard": args.shard,
         "nshards": args.nshards,
     }
@@ -130,6 +134,10 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--jass", required=True)
+    parser.add_argument(
+        "--defender-jass",
+        help="optional second binary when the fixed defender uses another pattern geometry",
+    )
     parser.add_argument("--pattern", required=True)
     parser.add_argument("--defender-pattern", required=True)
     parser.add_argument("--pool-jnnw", required=True)
