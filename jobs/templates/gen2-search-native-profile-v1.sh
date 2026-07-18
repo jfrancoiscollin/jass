@@ -40,7 +40,11 @@ trap 'rc=$?; set +e; cp "$W/RESULTS.txt" "$ART/RESULTS.txt" 2>/dev/null; exit "$
 say "=== $JASS_JOB_ID code=$(git rev-parse HEAD) eta=${APPROVED_ETA_MIN}min ==="
 
 python3 -m py_compile jobs/tools/gen2_p3_decision_verdict.py
-cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release > "$W/cmake.log" 2>&1
+python3 pattern_jass/tools/gen_patterns.py --variant v4 --emit > "$W/geometry.log" 2>&1
+grep -q 'NUM_PATTERNS set to 32' "$W/geometry.log" || { say "ABORT: Gen2 32cf geometry not generated"; exit 4; }
+cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release \
+  -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON \
+  > "$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$BUILD_JOBS" --target jass > "$W/build.log" 2>&1
 J="$W/build/jass"
 awk -v limit="$NOPEN" '/^[[:space:]]*#/ {next} {sub(/#.*/,""); if (NF) {print; n++; if(n>=limit) exit}}' \
