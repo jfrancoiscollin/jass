@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "jobs" / "tools"))
 
+import cvh_freeze_p3 as freezer  # noqa: E402
 import cvh_nps_ab as nps  # noqa: E402
 import cvh_followup_verdict as verdict  # noqa: E402
 
@@ -43,6 +44,25 @@ def test_sample_filters_distinguish_p3_and_offgate(tmp_path: Path) -> None:
     off_samples = nps.load_samples(path, 1, 1, "offgate")
     assert p3_samples[0].margin == 1
     assert off_samples[0].margin == 0
+
+
+def test_freezer_keeps_only_certified_material_leader_wins(tmp_path: Path) -> None:
+    wm = sum(1 << i for i in range(20, 24))
+    bm = sum(1 << i for i in range(0, 5))
+    # White to move. Negative WDL means Black wins, which is the 5-vs-4 leader.
+    leader_win = rec(wm, 0, bm, 0, stm=0, wdl=-1)
+    trailing_win = rec(wm, 0, bm, 0, stm=0, wdl=1)
+    assert freezer.is_certified_leader_winning_p3(leader_win) is True
+    assert freezer.is_certified_leader_winning_p3(trailing_win) is False
+
+    source = tmp_path / "source.jnnw"
+    out = tmp_path / "frozen.jnnw"
+    write_jnnw(source, [leader_win, leader_win, trailing_win])
+    report = freezer.freeze(source, out, n=1, seed=7)
+    assert report["source_records"] == 3
+    assert report["eligible_unique"] == 1
+    assert report["selected"] == 1
+    assert freezer.read_jnnw(out) == [leader_win]
 
 
 def test_match_aggregation_and_gate(tmp_path: Path) -> None:
