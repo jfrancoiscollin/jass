@@ -10,6 +10,8 @@ Covers the correctness-critical pieces:
       (the refactor did not change the default path) ;
   (3) prior reduces to plain L2 when prec=l2 (uniform) and μ=0 ;
   (4) a strong prior (huge precision) pulls the solution to μ.
+  (5) warm-start changes only x0: with the same plain-L2 objective it converges
+      to the same optimum as the zero-started fit.
 """
 import os
 import sys
@@ -107,9 +109,24 @@ def test_strong_prior_pulls_to_mu():
     print('  [ok] strong prior pulls the solution to μ')
 
 
+def test_warm_start_keeps_plain_l2_objective():
+    build_fn, tr_idx, y, _X, nc = _toy_problem(seed=8)
+    l2 = 1e-2
+    w_zero, _, _ = train_lbfgs_chunked(
+        build_fn, tr_idx, y, l2, 300, True, nc, 128)
+    initial = np.linspace(-3.0, 3.0, nc)
+    w_warm, _, _ = train_lbfgs_chunked(
+        build_fn, tr_idx, y, l2, 300, True, nc, 128,
+        initial_mean=initial)
+    assert np.allclose(w_zero, w_warm, atol=2e-4), \
+        f'warm-start changed plain-L2 optimum : max|Δ|={np.abs(w_zero-w_warm).max():.2e}'
+    print('  [ok] warm-start converges to the same plain-L2 optimum')
+
+
 if __name__ == '__main__':
     test_colorfold_foldback_roundtrip()
     test_prior_off_matches_plain_l2()
     test_prior_uniform_prec_equals_l2()
     test_strong_prior_pulls_to_mu()
+    test_warm_start_keeps_plain_l2_objective()
     print('ALL PRIOR TESTS PASS')
