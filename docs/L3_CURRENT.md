@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 2026-07-18**
-> **Statut scientifique : `technical_fix_pending`**
+> **Statut scientifique : `c0_full_running`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Mémoire du projet et portes closes :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
@@ -12,9 +12,8 @@ ce qu'une décision explicite la modifie.
 
 ## 1. État en une phrase
 
-Les fondations C0 sont mergées. Les micro-calibrations `0785/0786` ont validé
-la génération mais avorté au premier fit ; `0787` a isolé un loader Python qui
-rejetait à tort la version v3 auto-descriptive (`0x203`) du seed matériel.
+Le correctif #346 et les recalibrations `0788/0789` sont verts de bout en bout ;
+les deux bras complets appariés C0 sont lancés sur ccx33 et cpx62.
 
 ## 2. Identité de l'expérience active
 
@@ -22,14 +21,14 @@ rejetait à tort la version v3 auto-descriptive (`0x203`) du seed matériel.
 |---|---|
 | Lignée | `L3-PURE` |
 | Expérience | `C0 — causalité de la frontière mobile` |
-| Phase | correction technique après micro-calibration |
-| PR | [#344](https://github.com/jfrancoiscollin/jass/pull/344), mergée |
+| Phase | exécution des deux bras complets C0 |
+| PR | [#344](https://github.com/jfrancoiscollin/jass/pull/344) + correctif [#346](https://github.com/jfrancoiscollin/jass/pull/346), mergées |
 | Branche | `develop` |
-| Référence code testée | `f1edbebfd392e5b2502947694f3ee204e8fda13b` |
+| Référence code calibrée | `c80c6792df1801ae6c0797700ce5333f3f20c1f3` |
 | Champion externe de contrôle | `gen2-mmto`, figé ; évaluation seulement |
 | Référence de conversion historique | T3 `ccx33`, figée ; évaluation seulement |
-| Jobs actifs | aucun |
-| Dernière décision | corriger le loader et la séquence G1/G2/G3, puis rejouer seulement les micro-calibrations |
+| Jobs actifs | `ccx33-0790-l3-pure-c0-a-v1`, `cpx62-0791-l3-pure-c0-b-v1` |
+| Dernière décision | calibrations vertes + go JFC : lancer les deux bras complets appariés |
 
 ## 3. Invariants à vérifier à chaque run
 
@@ -57,11 +56,11 @@ avec un code de sortie nul.
 | sidecar `JSM1` | implémenté | tests merge/split synthétiques verts |
 | split holdout par ouverture | implémenté | paires d'ouverture conservées dans le même fold |
 | mineur de frontière | implémenté | sorties score/WDL à zéro ; aucun input teacher |
-| `train_stream --warm-start` | correction en cours | loader strict `ver == 3` incompatible avec les PJTW v3 auto-descriptifs `0x203` |
+| `train_stream --warm-start` | validé | #346 accepte la base v3 auto-descriptive ; G1 zéro-init, G2/G3 depuis le student précédent |
 | `--holdout-count` | implémenté | tail holdout exact après split |
 | runner v3 d'un bras | préparé | garde nproc/disque/timeout/progress/manifests |
-| bras A `ccx33` | préparé hors queue | micro-calibration requise |
-| bras B `cpx62` | préparé hors queue | micro-calibration requise |
+| bras A `ccx33` | en cours | calibration `0788` intégralement verte |
+| bras B `cpx62` | en cours | calibration `0789` verte, mineur de frontière inclus |
 | build CMake + link | validé sur les deux boxes | `0785/0786` atteignent génération et fit |
 | smoke moteur JNNW↔JSM1 | validé | 3 200 records éligibles par bras, ply-cap 0 % |
 | évaluation haut-N A/B | hors PR C0 actuelle | à préparer après production des G3 |
@@ -70,15 +69,19 @@ avec un code de sortie nul.
 
 | Bras | Job | Générations | Autojeu frais | Particularité | État |
 |---|---|---:|---:|---|---|
-| A | `ccx33-l3-pure-c0-a-v1` | 3 | 500 k / génération | contrôle pur | hors queue |
-| B | `cpx62-l3-pure-c0-b-v1` | 3 | 500 k / génération | 25 % frontière en G2/G3 | hors queue |
+| A | `ccx33-0790-l3-pure-c0-a-v1` | 3 | 500 k / génération | contrôle pur | lancé |
+| B | `cpx62-0791-l3-pure-c0-b-v1` | 3 | 500 k / génération | 25 % frontière en G2/G3 | lancé |
 
 Paramètres appariés : mêmes seeds, 8 shards, d8/d8/d10, huit plies
 d'ouverture aléatoires, epsilon 8 % décroissant à zéro au ply 60,
 `max_plies=260`, holdout 1/10 par ouverture, L2 `3e-5`.
 
-L'ETA provisoire est de 14–18 h par bras à partir de l'ancre `0665`. Elle n'est
-pas une autorisation de lancement. Avant GitOps, publier pour chaque box :
+Les recalibrations `0788/0789` projettent chacune environ **1,14 h** à partir
+d'un débit d8 agrégé de 64 k records/min. Le tour G3 à d10 peut prolonger cette
+estimation ; le timeout conservateur reste de 6 h par shard. Le go JFC et
+`FULL_RUN_APPROVED=1` ont été donnés après les deux calibrations vertes.
+
+Avant tout futur GitOps, publier pour chaque box :
 
 1. `nproc` réellement mesuré ;
 2. débit d'une micro-sonde avec la recette exacte ;
@@ -96,6 +99,8 @@ pas une autorisation de lancement. Avant GitOps, publier pour chaque box :
 | `ccx33-0785-l3cal-a` | ccx33, `nproc=8` | 3 200 records en 3 s ; ply-cap 0 % | abort fit, `fit_path_ok=false` |
 | `cpx62-0786-l3cal-b` | cpx62, `nproc=16` | 3 200 records en 4 s ; ply-cap 0 % | abort fit, `fit_path_ok=false` |
 | `cpx62-0787-l3diag` | cpx62, `nproc=16` | 500 samples / 19 parties ; ply-cap 0 % | seed jouable C++, rejeté par `load_v3_weights_float` |
+| `ccx33-0788-l3cal-a-v2` | ccx33, `nproc=8` | 3 200 records en 3 s ; ply-cap 0 % | `status=ok`, fit/reload v3 OK |
+| `cpx62-0789-l3cal-b-v2` | cpx62, `nproc=16` | 3 200 records en 3 s ; ply-cap 0 % | `status=ok`, fit/reload v3 + mineur OK |
 
 Cause exacte : `make_bootstrap_eval.py` écrit un PJTW valide de magic
 `0x57544A50`, version `0x203` (base v3 + bit auto-descriptif). Le loader Python
@@ -166,6 +171,7 @@ Le mécanisme de frontière est conservé si, à budget égal :
 | 2026-07-18 | fondations C0 proposées | PR brouillon, jobs hors queue | PR #344 |
 | 2026-07-18 | micro-calibrations A/B | génération saine, fit invalide ; aucun résultat scientifique | `0785`, `0786` |
 | 2026-07-18 | diagnostic du fit | corriger le décodage de version et réserver le warm-start aux students précédents | `0787` |
+| 2026-07-18 | correctif et recalibrations verts | lancer les deux bras complets après go JFC | #346, `0788`, `0789` |
 
 Chaque nouvelle ligne doit indiquer un fait observé, la décision qu'il entraîne
 et le manifest ou SHA qui permet de le reproduire. Les discussions et pistes
@@ -173,7 +179,6 @@ non exécutées n'entrent pas dans ce tableau.
 
 ## 9. Prochaine action unique
 
-Valider et merger le correctif loader/séquence de warm-start, puis rejouer les
-deux micro-calibrations. Aucun full run ni déplacement des jobs longs vers
-`jass-control/queue/pending/` avant deux calibrations intégralement vertes et un
-nouveau go JFC explicite.
+Suivre `0790/0791` génération par génération, publier les compteurs de santé et
+mettre à jour ce registre à chaque finalisation. Ne préparer l'évaluation haut-N
+qu'après deux G3 techniquement valides.
