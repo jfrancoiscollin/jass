@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_merged`**
+> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_generated_verdict_running`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -13,8 +13,11 @@ vs 305 disponibles) a été relancé corrigé en `0795` (NOPEN=300, assert de ga
 `n=2·NOPEN`) : le verdict C0 pré-engagé est **`retire_frontier_v1_flat`** — la
 frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
 −0,070, toutes IC recouvrant 0) et le bras A pur est à parité avec `gen2-mmto`.
-La revue des paramètres L3 (#351) est mergée ; le fork C1-Q1 reste préparé hors
-queue.
+La revue des paramètres L3 (#351) est mergée. Le fork **C1-Q1 a été calibré,
+lancé et complété** : après un bug de manifest du runner v4 (corrigé, cf §5),
+les quatre cellules v2 sont `completed` avec leurs students G1/G2 manifestés ;
+le **verdict factoriel `cpx62-0806-c1q1-verdict` tourne** (conversion P1-P4 ×4 +
+gates common-search vs Q00 + effets 2×2 + écran Q1 pré-engagé).
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -105,25 +108,33 @@ inutilisée.
 | 8cf | fixe pendant les écrans ; 32cf rouvert seulement au scale |
 | frontière mobile | **close** : verdict C0 `0795` plat (Δglobal −0,023, P3 −0,070) → v1 retirée |
 
-## 5. Fork préparé : C1-Q1
+## 5. Fork C1-Q1 : calibré, lancé, complété
 
 Les quatre cellules sont un factoriel 2×2 menace×sacrifices. Elles partent
-toutes de G0, utilisent la graine `271828`, deux générations de 150 k records,
-d8, 8cf, aucun teacher et aucune frontière.
+toutes de G0, graine `271828`, deux générations de 150 k records, d8, 8cf,
+aucun teacher et aucune frontière.
 
-| Cellule | Box préparée | Menace | Sacs sélectifs | État |
-|---|---|---:|---:|---|
-| `Q00_CAPTURE` | ccx33 | 0 | 0 | wrapper hors queue |
-| `Q10_THREAT` | cpx62 | 1 | 0 | wrapper hors queue |
-| `Q01_SACS` | cpx62 | 0 | 1 | wrapper hors queue |
-| `Q11_THREAT_SACS` | ccx33 | 1 | 1 | wrapper hors queue |
+**Calibration (0796/0797)** : sur les deux box, `--wdl-zero-score` et
+`--search-params-play` (63 clés) validés, invariant `label_score_searches=0`
+prouvé par shard, fit OK. Rate cpx62 **64 k/min**, ccx33 **48 k/min** →
+~17-18 min/cellule.
+
+**Bug runner v4 (corrigé, develop `e6787b8ac`)** : le manifest final comptait
+`glob("g*.pjtw.gz")` contre `ngen`, mais `g0-material.pjtw.gz` (graine de jeu)
+matchait aussi → 3 ≠ 2 → les quatre cellules v1 (`0798/0799/0800/0801`) ont
+aborté sur `missing generation model artifacts` **après** avoir produit des
+students G1/G2 sains. Filtre corrigé en `g[1-9]*.pjtw.gz` ; re-run v2 propre.
+
+| Cellule | Job v2 | Box | Menace | Sacs | État |
+|---|---|---|---:|---:|---|
+| `Q00_CAPTURE` | `ccx33-0802-c1q1-q00-v2` | ccx33 | 0 | 0 | complet, manifest ✓ |
+| `Q10_THREAT` | `cpx62-0804-c1q1-q10-v2` | cpx62 | 1 | 0 | complet, manifest ✓ |
+| `Q01_SACS` | `cpx62-0805-c1q1-q01-v2` | cpx62 | 0 | 1 | complet, manifest ✓ |
+| `Q11_THREAT_SACS` | `ccx33-0803-c1q1-q11-v2` | ccx33 | 1 | 1 | complet, manifest ✓ |
 
 Forcing, promotion et récursion des sacrifices restent à zéro/`depth0_only`
-pendant Q1. Ils ne sont pas déclarés mauvais : ils sont réservés au bloc Q2
-pour ne pas confondre cinq facteurs dans le premier écran.
-
-Aucun wrapper ne contient `FULL_RUN_APPROVED=1`. Une merge de la PR ne crée
-aucune entrée GitOps et ne lance aucun calcul.
+pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
+écran). Verdict factoriel en cours : `cpx62-0806-c1q1-verdict`.
 
 ## 6. Trame de résultats C1-Q1
 
@@ -180,9 +191,13 @@ depuis G0 avec la seconde graine `161803`.
 
 ## 8. Prochaines actions
 
-1. ✅ `0792` diagnostiqué (`not enough fixed openings`) et relancé en `0795` :
-   verdict C0 `retire_frontier_v1_flat` obtenu et enregistré (§2bis) ;
+1. ✅ `0792` diagnostiqué et relancé en `0795` : verdict C0
+   `retire_frontier_v1_flat` obtenu et enregistré (§2bis) ;
 2. ✅ PR C1-Q1 (#351) revue et mergée ;
-3. après merge seulement, micro-calibrer les quatre profils sur chaque box ;
-4. calculer ETA, disque et timeout, puis demander le go explicite ;
-5. exécuter Q1 ; publier la matrice common/native avant tout Q2.
+3. ✅ micro-calibration des deux box (0796/0797) : flags neufs validés, rate
+   cpx62 64 k/min, ccx33 48 k/min ;
+4. ✅ bug manifest runner v4 corrigé (`e6787b8ac`) ; les quatre cellules v2
+   `completed` avec manifests ;
+5. ⏳ verdict factoriel `cpx62-0806-c1q1-verdict` en cours (conversion P1-P4 ×4,
+   gates common-search, effets 2×2, écran Q1) ; enregistrer §6.1-6.4 + §7 au
+   finalize, puis décider Q2 ou passage au bloc suivant.
