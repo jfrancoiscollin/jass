@@ -278,7 +278,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                                if ct.board_key(str(row["fen"])) == ct.board_key(str(rerank["fen"])))
             baseline_row = next(row for row in chosen
                                 if ct.board_key(str(row["fen"])) == bkey)
-            baseline_result = baseline[index]
+            baseline_source_result = baseline[index]
+            baseline_replay_result = str(baseline_row["conversion"])
             rerank_result = str(rerank_eval["conversion"])
             winning_alts = [row for row in chosen
                             if row["conversion"] == "win" and ct.board_key(str(row["fen"])) != bkey]
@@ -286,7 +287,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             split = split_name(parent_id, args.holdout_mod)
             quiet_pair = True
             good = winning_alts[0] if winning_alts else None
-            pair_eligible = baseline_result != "win" and good is not None and quiet_pair
+            pair_eligible = baseline_replay_result != "win" and good is not None and quiet_pair
             event: dict[str, object] = {
                 "schema": 1,
                 "index": index,
@@ -294,10 +295,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 "split": split,
                 "parent_fen": parent_fen,
                 "leader": leader,
-                "baseline_result": baseline_result,
+                "baseline_result": baseline_source_result,
+                "baseline_source_result": baseline_source_result,
                 "baseline_move": str(baseline_child["move"]),
                 "baseline_child_fen": str(baseline_child["fen"]),
-                "baseline_child_replay": str(baseline_row["conversion"]),
+                "baseline_child_replay": baseline_replay_result,
+                "baseline_replay_result": baseline_replay_result,
                 "decision_score": decision.score,
                 "decision_depth": decision.depth,
                 "decision_nodes": decision.nodes,
@@ -310,8 +313,8 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 "rerank_child_fen": str(rerank["fen"]),
                 "rerank_result": rerank_result,
                 "rerank_changed_move": ct.board_key(str(rerank["fen"])) != bkey,
-                "rescue_available": baseline_result != "win" and bool(winning_alts),
-                "regression": baseline_result == "win" and rerank_result != "win",
+                "rescue_available": baseline_replay_result != "win" and bool(winning_alts),
+                "regression": baseline_replay_result == "win" and rerank_result != "win",
                 "hard_pair_eligible": pair_eligible,
             }
             if pair_eligible and good is not None:
@@ -325,8 +328,10 @@ def run(args: argparse.Namespace) -> dict[str, object]:
                 buf["parents"].append(record)
                 buf["good"] += bytes([gf, gt])
                 buf["bad"] += bytes([bf, bt])
-                buf["pairs"].append(ct.fen_to_record(str(good["fen"]), -1))
-                buf["pairs"].append(ct.fen_to_record(str(baseline_child["fen"]), 1))
+                # Immediate pairs are diagnostic only; B3 leaf pairs are generated
+                # from parent+move assets. Keep WDL neutral to avoid implying labels.
+                buf["pairs"].append(ct.fen_to_record(str(good["fen"]), 0))
+                buf["pairs"].append(ct.fen_to_record(str(baseline_child["fen"]), 0))
             events.append(event)
     finally:
         for engine in (root, verifier, champion, defender, apply_ref, game_ref):
@@ -352,13 +357,13 @@ def run(args: argparse.Namespace) -> dict[str, object]:
 
     diffs = [
         (1 if event["rerank_result"] == "win" else 0)
-        - (1 if event["baseline_result"] == "win" else 0)
+        - (1 if event["baseline_replay_result"] == "win" else 0)
         for event in events
     ]
     paired = paired_stats(diffs)
-    failures = [event for event in events if event["baseline_result"] != "win"]
+    failures = [event for event in events if event["baseline_replay_result"] != "win"]
     rescues = sum(bool(event["rescue_available"]) for event in failures)
-    rerank_rescues = sum(event["baseline_result"] != "win"
+    rerank_rescues = sum(event["baseline_replay_result"] != "win"
                          and event["rerank_result"] == "win" for event in events)
     summary: dict[str, object] = {
         "schema": 1,
@@ -368,7 +373,12 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "baseline_inputs": [str(path) for path in args.baseline_json],
         "pattern_sha256": sha256_file(args.pattern),
         "processed": len(events),
-        "baseline_wins": sum(event["baseline_result"] == "win" for event in events),
+        "source_baseline_wins": sum(event["baseline_source_result"] == "win" for event in events),
+        "baseline_wins": sum(event["baseline_replay_result"] == "win" for event in events),
+        "baseline_replay_mismatches": sum(
+            event["baseline_source_result"] != event["baseline_replay_result"]
+            for event in events
+        ),
         "rerank_wins": sum(event["rerank_result"] == "win" for event in events),
         "changed_move": sum(bool(event["rerank_changed_move"]) for event in events),
         "failures": len(failures),
