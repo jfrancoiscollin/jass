@@ -42,6 +42,10 @@ CHUNK="${CHUNK:-500000}"
 FRONTIER_MAX="${FRONTIER_MAX:-4000}"
 SHARD_TIMEOUT="${SHARD_TIMEOUT:-21600}"
 JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-8}"
+# Normative C0 search fingerprint. Keep play and label search identical and do
+# not inherit mutable engine defaults; any change requires a separate fork.
+L3_SEARCH_PARAMS="qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0"
+readonly L3_SEARCH_PARAMS
 RES="$W/RESULTS.txt"
 PROG="$W/PROGRESS.txt"
 : > "$RES"
@@ -109,6 +113,33 @@ NPROC="$(nproc)"
 FREE_MB="$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2 {print $4}')"
 [ "${FREE_MB:-0}" -ge 5000 ] || die "less than 5 GiB free on result filesystem"
 say "preflight: nproc=$NPROC nshards=$NSHARDS free_mb=$FREE_MB timeout_per_shard=${SHARD_TIMEOUT}s"
+CODE_SHA="$(git rev-parse HEAD)"
+SEARCH_PARAMS_SHA256="$(printf '%s' "$L3_SEARCH_PARAMS" | sha256sum | awk '{print $1}')"
+say "search_fingerprint: scope=play_and_label params=$L3_SEARCH_PARAMS sha256=$SEARCH_PARAMS_SHA256"
+python3 - "$ART/l3-run-config.json" "$ARM" "$CODE_SHA" "$L3_SEARCH_PARAMS" \
+  "$SEARCH_PARAMS_SHA256" <<'PY'
+import hashlib, json, sys
+from pathlib import Path
+spec = sys.argv[4]
+payload = {
+  "schema": 1,
+  "lineage": "L3-PURE",
+  "experiment": "C0",
+  "arm": sys.argv[2],
+  "code_sha": sys.argv[3],
+  "search_params_scope": "play_and_label",
+  "search_params": spec,
+  "search_params_map": {
+    key: int(value) for key, value in
+    (token.split("=", 1) for token in spec.split(","))
+  },
+  "search_params_sha256": sys.argv[5],
+  "search_params_inherited_defaults": False,
+}
+assert hashlib.sha256(spec.encode()).hexdigest() == sys.argv[5]
+Path(sys.argv[1]).write_text(
+    json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
 python3 -m py_compile \
   tools/selfplay_frontier.py \
   pattern_jass/tools/train.py \
@@ -189,6 +220,7 @@ for generation in $(seq 1 "$NGEN"); do
     timeout "$SHARD_TIMEOUT" "$J" --gen-data-wdl \
       "$PER_SHARD" "$data" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
       --nnue "$PILOT" \
+      --search-params "$L3_SEARCH_PARAMS" \
       --random-open-plies "$RANDOM_OPEN_PLIES" \
       --explore-eps "$EXPLORE_EPS" \
       --explore-decay-plies "$EXPLORE_DECAY_PLIES" \
@@ -265,7 +297,8 @@ for generation in $(seq 1 "$NGEN"); do
   say "G$generation complete: holdout=$HOLDOUT_COUNT frontier=$([ -n "$FRONTIER" ] && echo on || echo off)"
 done
 
-python3 - "$ART" "$ARM" "$NGEN" "$FRESH" "$FRONTIER_FRAC" <<'PY'
+python3 - "$ART" "$ARM" "$NGEN" "$FRESH" "$FRONTIER_FRAC" \
+  "$L3_SEARCH_PARAMS" "$SEARCH_PARAMS_SHA256" "$CODE_SHA" <<'PY'
 import hashlib,json,sys
 from pathlib import Path
 root=Path(sys.argv[1]); arm=sys.argv[2]; ngen=int(sys.argv[3])
@@ -285,6 +318,15 @@ payload={
   "mmto":False,
   "parent_anchor":False,
   "plycap_policy":"drop_game_samples",
+  "code_sha":sys.argv[8],
+  "search_params_scope":"play_and_label",
+  "search_params":sys.argv[6],
+  "search_params_map":{
+    key:int(value) for key,value in
+    (token.split("=",1) for token in sys.argv[6].split(","))
+  },
+  "search_params_sha256":sys.argv[7],
+  "search_params_inherited_defaults":False,
 }
 for p in sorted(root.glob("g*.pjtw.gz")):
   payload.setdefault("champion_sha256",{})[p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
