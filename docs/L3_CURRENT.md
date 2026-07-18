@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_generated_verdict_running`**
+> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_training_complete; 0806_legacy_verdict_diagnostic_only; corrected_verdict_v2_prepared_not_run`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -15,9 +15,11 @@ frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
 −0,070, toutes IC recouvrant 0) et le bras A pur est à parité avec `gen2-mmto`.
 La revue des paramètres L3 (#351) est mergée. Le fork **C1-Q1 a été calibré,
 lancé et complété** : après un bug de manifest du runner v4 (corrigé, cf §5),
-les quatre cellules v2 sont `completed` avec leurs students G1/G2 manifestés ;
-le **verdict factoriel `cpx62-0806-c1q1-verdict` tourne** (conversion P1-P4 ×4 +
-gates common-search vs Q00 + effets 2×2 + écran Q1 pré-engagé).
+les quatre cellules v2 sont `completed` avec leurs students G1/G2 manifestés.
+L'audit du job de verdict `cpx62-0806-c1q1-verdict` a toutefois trouvé un écart
+entre son script et le contrat §7 : son résultat éventuel reste **diagnostique**
+et ne peut ni sélectionner un lead, ni autoriser Q2. Un verdict v2, sans nouvel
+entraînement, est préparé pour réévaluer les quatre G2 immuables.
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -134,9 +136,30 @@ students G1/G2 sains. Filtre corrigé en `g[1-9]*.pjtw.gz` ; re-run v2 propre.
 
 Forcing, promotion et récursion des sacrifices restent à zéro/`depth0_only`
 pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
-écran). Verdict factoriel en cours : `cpx62-0806-c1q1-verdict`.
+écran).
+
+### 5.1 Réserve sur le verdict `0806`
+
+Laisser `0806` terminer est utile pour le diagnostic, mais son agrégateur ne
+constitue pas le verdict normatif Q1 :
+
+- ses gates « common » passent seulement `qs_forcing_depth=6,qs_promo_depth=6`
+  et héritent 61 clés, alors que Q1 exige 63 clés explicites et forcing/promo à
+  zéro ;
+- la vue native-search à temps égal manque ;
+- les sorties de conversion ne conservent pas l'issue par position, donc les IC
+  bootstrap appariés et les effets factoriels appariés sont impossibles ;
+- l'écran inline ne vérifie ni P3/les autres strates, ni la branche coût −20 %.
+
+La correction v2 réutilise strictement les G2 de `0802/0804/0805/0803`, relance
+seulement les évaluations, publie les deux fingerprints par match et interdit
+tout enchaînement automatique vers Q2.
 
 ## 6. Trame de résultats C1-Q1
+
+Les nombres produits par `0806` doivent être rangés, s'ils sont publiés, sous
+le label `legacy_diagnostic`. Seul le verdict schema 2 complet peut remplir les
+colonnes normatives ci-dessous.
 
 ### 6.1 Santé de génération
 
@@ -172,9 +195,12 @@ pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
 
 | Vue | Comparaison | N | Rate | IC95 | Elo | Verdict |
 |---|---|---:|---:|---:|---:|---|
-| common-search | meilleur vs Q00 | — | — | — | — | — |
-| common-search | meilleur vs Q11 | — | — | — | — | — |
-| native movetime | meilleur vs contrôle | — | — | — | — | — |
+| common-search | Q10 vs Q00 | — | — | — | — | — |
+| common-search | Q01 vs Q00 | — | — | — | — | — |
+| common-search | Q11 vs Q00 | — | — | — | — | — |
+| native movetime | Q10 vs Q00 | — | — | — | — | — |
+| native movetime | Q01 vs Q00 | — | — | — | — | — |
+| native movetime | Q11 vs Q00 | — | — | — | — | — |
 
 ## 7. Gates pré-engagés
 
@@ -184,7 +210,9 @@ Un lead passe en confirmation seulement si :
 - `label_score_searches=0` dans chaque shard ;
 - pas de régression établie en common-search ;
 - gain conversion ponctuel ≥ +0,02, ou coût −20 % à force/conversion tenues ;
-- P3 ne se dégrade pas sans compensation démontrée.
+- aucune régression établie sur P1–P4, P3 explicitement inclus, d'après l'IC
+  bootstrap apparié ;
+- vues common-search et native-search à temps égal toutes deux publiées.
 
 La promotion finale exige l'IC de conversion au-dessus de zéro et la réplication
 depuis G0 avec la seconde graine `161803`.
@@ -198,6 +226,9 @@ depuis G0 avec la seconde graine `161803`.
    cpx62 64 k/min, ccx33 48 k/min ;
 4. ✅ bug manifest runner v4 corrigé (`e6787b8ac`) ; les quatre cellules v2
    `completed` avec manifests ;
-5. ⏳ verdict factoriel `cpx62-0806-c1q1-verdict` en cours (conversion P1-P4 ×4,
-   gates common-search, effets 2×2, écran Q1) ; enregistrer §6.1-6.4 + §7 au
-   finalize, puis décider Q2 ou passage au bloc suivant.
+5. ⏳ laisser `cpx62-0806-c1q1-verdict` terminer, mais archiver sa conclusion
+   sous `legacy_diagnostic` : elle ne satisfait pas le contrat Q1 ;
+6. ⏳ faire relire puis merger la correction du verdict v2 ; après calibration,
+   copier le wrapper préparé en GitOps avec le SHA mergé et le go explicite ;
+7. ⏳ exécuter le verdict v2 sur les quatre G2 existants, remplir §6 et décider
+   d'une **confirmation** du lead éventuel. Ne pas lancer Q2 automatiquement.

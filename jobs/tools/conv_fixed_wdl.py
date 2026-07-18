@@ -4,11 +4,13 @@
 Unlike the historical ``tools/conv_self.py`` heuristic, this runner does not
 infer the advantaged side from piece counts. The winning side comes from the
 record's d14+EGDB WDL label, so equal-material and king-heavy positions are
-measured correctly.
+measured correctly. Schema 2 retains one outcome per source index so downstream
+comparisons can use paired confidence intervals.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import struct
 import sys
@@ -59,18 +61,30 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
     sys.path.insert(0, str(Path(args.calibrate_tool).resolve().parent))
     import calibrate_vs_scan as cv  # type: ignore
 
-    records = read_records(args.pool_jnnw)
-
+    pool_path = Path(args.pool_jnnw)
+    records = read_records(pool_path)
+    pool_sha256 = hashlib.sha256(pool_path.read_bytes()).hexdigest()
     defender_jass = args.defender_jass or args.jass
 
     def _fresh():
-        return (cv.JassEngine(args.jass, pattern_path=args.pattern),
-                cv.JassEngine(defender_jass, pattern_path=args.defender_pattern),
-                cv.Referee(args.jass))
+        return (
+            cv.JassEngine(
+                args.jass,
+                pattern_path=args.pattern,
+                search_params=args.search_params,
+            ),
+            cv.JassEngine(
+                defender_jass,
+                pattern_path=args.defender_pattern,
+                search_params=args.defender_search_params,
+            ),
+            cv.Referee(args.jass),
+        )
 
     champion, defender, referee = _fresh()
-    n_pos = n_win = n_draw = n_loss = n_skipped = n_restarts = 0
+    n_pos = n_win = n_draw = n_loss = n_skipped = n_errors = n_restarts = 0
     errors: list[str] = []
+    position_results: list[dict[str, int | str]] = []
     try:
         for index, rec in enumerate(records):
             if index % args.nshards != args.shard:
@@ -78,54 +92,84 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
             winner = winning_side(rec)
             if winner is None:
                 n_skipped += 1
+                position_results.append({"index": index, "result": "skipped_draw_label"})
                 continue
             fen = record_to_fen(rec)
             white, black = (champion, defender) if winner == "W" else (defender, champion)
             try:
-                play_args = {"movetime": args.movetime} if args.movetime else {"depth": args.depth}
-                result = cv.play_game(white, black, referee, fen, max_plies=args.max_plies, **play_args)
+                play_args = (
+                    {"movetime": args.movetime}
+                    if args.movetime is not None
+                    else {"depth": args.depth}
+                )
+                result = cv.play_game(
+                    white, black, referee, fen, max_plies=args.max_plies, **play_args
+                )
             except (BrokenPipeError, EOFError, OSError, TimeoutError) as exc:
-                # Un moteur est mort (crash / race egdb au startup) — on le RELANCE pour ne
-                # perdre QUE la position fautive au lieu de casser tout le reste du shard (cascade 0724).
+                # Restart all engines so one failure costs exactly one source position.
+                n_errors += 1
                 errors.append(f"pos {index}: moteur mort ({exc}) - restart")
-                for _e in (champion, defender, referee):
-                    try: _e.close()
-                    except Exception: pass
+                position_results.append({"index": index, "result": "error"})
+                for engine in (champion, defender, referee):
+                    try:
+                        engine.close()
+                    except Exception:  # noqa: BLE001
+                        pass
                 try:
-                    champion, defender, referee = _fresh(); n_restarts += 1
-                except Exception as exc2:  # noqa: BLE001
-                    errors.append(f"pos {index}: restart FAIL ({exc2})")
+                    champion, defender, referee = _fresh()
+                    n_restarts += 1
+                except Exception as restart_exc:  # noqa: BLE001
+                    errors.append(f"pos {index}: restart FAIL ({restart_exc})")
+                    raise OSError("engine restart failed") from restart_exc
                 continue
             except Exception as exc:  # noqa: BLE001
+                n_errors += 1
                 errors.append(f"pos {index}: {exc}")
+                position_results.append({"index": index, "result": "error"})
                 continue
+
             n_pos += 1
-            champion_won = (winner == "W" and result.outcome == "W") or (winner == "B" and result.outcome == "L")
+            champion_won = (
+                (winner == "W" and result.outcome == "W")
+                or (winner == "B" and result.outcome == "L")
+            )
             if result.outcome == "D":
                 n_draw += 1
+                outcome = "draw"
             elif champion_won:
                 n_win += 1
+                outcome = "win"
             else:
                 n_loss += 1
+                outcome = "loss"
+            position_results.append({"index": index, "result": outcome})
     finally:
         champion.close()
         defender.close()
         referee.close()
 
     return {
+        "schema": 2,
         "conv_fixed_wdl": None if n_pos == 0 else round(n_win / n_pos, 6),
         "n_pos": n_pos,
         "n_win": n_win,
         "n_draw": n_draw,
         "n_loss": n_loss,
         "n_skipped_draw_label": n_skipped,
-        "n_errors": len(errors),
+        "n_errors": n_errors,
         "n_restarts": n_restarts,
         "errors": errors[:20],
-        "depth": args.depth,
+        "position_results": position_results,
+        "depth": None if args.movetime is not None else args.depth,
         "movetime": args.movetime,
         "jass": args.jass,
         "defender_jass": defender_jass,
+        "pattern": args.pattern,
+        "defender_pattern": args.defender_pattern,
+        "search_params": args.search_params,
+        "defender_search_params": args.defender_search_params,
+        "pool_jnnw": str(pool_path),
+        "pool_sha256": pool_sha256,
         "shard": args.shard,
         "nshards": args.nshards,
     }
@@ -140,10 +184,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--pattern", required=True)
     parser.add_argument("--defender-pattern", required=True)
+    parser.add_argument("--search-params", help="candidate's fully resolved fingerprint")
+    parser.add_argument(
+        "--defender-search-params", help="fixed defender's fully resolved fingerprint"
+    )
     parser.add_argument("--pool-jnnw", required=True)
     parser.add_argument("--calibrate-tool", default="jobs/tools/calibrate_vs_scan.py")
-    parser.add_argument("--depth", type=int, default=10)
-    parser.add_argument("--movetime", type=float)
+    budget = parser.add_mutually_exclusive_group()
+    budget.add_argument("--depth", type=int, default=10)
+    budget.add_argument("--movetime", type=float)
     parser.add_argument("--max-plies", type=int, default=260)
     parser.add_argument("--shard", type=int, default=0)
     parser.add_argument("--nshards", type=int, default=1)
@@ -156,7 +205,9 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    Path(args.out).write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+    Path(args.out).write_text(
+        json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     print(json.dumps(result, ensure_ascii=False))
     return 0
 
