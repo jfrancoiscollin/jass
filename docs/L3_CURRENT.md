@@ -1,17 +1,20 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_generation_complete_highn_failed; c1_q1_pr_prepared`**
+> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_merged`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
 ## 1. État en une phrase
 
-Les deux chaînes C0 A/B ont produit G1–G3 et leurs artefacts complets. Le job
-haut-N `0792` a échoué techniquement avant tout verdict scientifique. La revue
-des paramètres L3 est terminée et le fork C1-Q1 est préparé en PR, sans job
-lancé.
+Le job haut-N `0792` (échec technique `not enough fixed openings`, 750 requis
+vs 305 disponibles) a été relancé corrigé en `0795` (NOPEN=300, assert de gate
+`n=2·NOPEN`) : le verdict C0 pré-engagé est **`retire_frontier_v1_flat`** — la
+frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
+−0,070, toutes IC recouvrant 0) et le bras A pur est à parité avec `gen2-mmto`.
+La revue des paramètres L3 (#351) est mergée ; le fork C1-Q1 reste préparé hors
+queue.
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -19,18 +22,54 @@ lancé.
 |---|---|---|---|---|---|
 | A — `ccx33-0790-l3-pure-c0-a-v1` | `8fc4eacb` | 10:42:49 | 11:09:08 | complet, rc=0 | G0, G1–G3, corpus+sidecars, splits, manifest |
 | B — `cpx62-0791-l3-pure-c0-b-v1` | `c80c6792` | 10:41:16 | 11:02:30 | complet, rc=0 | mêmes artefacts + frontières G1/G2 |
-| haut-N — `cpx62-0792-l3-pure-c0-highn-v1` | `b954ef97` | 11:39:10 | 11:44:18 | échec, rc=1 | inputs vérifiés et holdouts seulement ; aucun verdict |
+| haut-N — `cpx62-0792-l3-pure-c0-highn-v1` | `b954ef97` | 11:39:10 | 11:44:18 | échec, rc=1 | `not enough fixed openings` (750 requis vs 305 dispo) ; aucun verdict |
+| haut-N v2 — `cpx62-0795-l3-pure-c0-highn-v2` | `2e8228b7` | 14:27:57 | ~15:35 | complet, rc=0 | 3 gates + conversion P1–P4 + `c0-highn-verdict.json` |
 
 URIs publiées :
 
 - A : `r2:jass-data/runs/ccx33-0790-l3-pure-c0-a-v1/20260718T104245Z-8fc4eacb` ;
 - B : `r2:jass-data/runs/cpx62-0791-l3-pure-c0-b-v1/20260718T104110Z-c80c6792` ;
-- haut-N échoué :
-  `r2:jass-data/runs/cpx62-0792-l3-pure-c0-highn-v1/20260718T113904Z-b954ef97`.
+- haut-N v2 (verdict) :
+  `r2:jass-data/runs/cpx62-0795-l3-pure-c0-highn-v2/…-2e8228b7`.
 
-Les statuts GitOps prouvent la complétude technique des chaînes, pas la force
-des modèles. `0792` n'a publié ni `gate-B-vs-A.json`, ni conversion P1–P4, ni
-`c0-highn-verdict.json`. C0 n'a donc encore **aucun verdict A/B**.
+Diagnostic de l'échec `0792` : le job exigeait 750 ouvertures fixes mais
+`data/dilf_combinations.fen` n'en contient que 305 (bug de sizing, non
+scientifique). `0795` relance à l'identique avec **NOPEN=300** et un assert de
+gate **dynamique `n=2·NOPEN`** ; les entrées, gauge, gates et critères §7 sont
+inchangés. Seul le gate généraliste passe à 600 parties (au lieu de 1500) ; la
+conversion P1–P4 (issue du gauge, pas des ouvertures) garde sa puissance.
+
+## 2bis. Verdict C0 pré-engagé — `retire_frontier_v1_flat`
+
+Décision §7 exécutée : **frontière plate, bras A sain → retirer la frontière
+mobile v1, poursuivre l'hypothèse de lignée pure.** Critères :
+`global_delta_at_least_0_03=false`, `p3_visible_improvement=false`,
+`generalist_regression_established=false`.
+
+**Conversion (part des positions à avantage matériel converties en gain) :**
+
+| Stratum | A-G3 | B-G3 | B−A | IC (diff. Wilson conservatrice) |
+|---|---:|---:|---:|---|
+| global | 0,674 | 0,651 | **−0,023** | [−0,086 ; +0,040] |
+| P1 net | 0,836 | 0,833 | −0,003 | [−0,079 ; +0,074] |
+| P2 moyen | 0,584 | 0,540 | −0,045 | [−0,179 ; +0,092] |
+| P3 mince | 0,547 | 0,478 | **−0,070** | [−0,213 ; +0,076] |
+| P4 égal | 0,513 | 0,539 | +0,026 | [−0,154 ; +0,205] |
+
+**Force généraliste (600 parties/gate, d9) :**
+
+| Gate | Rate | IC95 | Lecture |
+|---|---:|---:|---|
+| B vs A | 0,555 | [0,515 ; 0,595] | B ≥ A → **pas de régression** |
+| A vs `gen2-mmto` | 0,497 | [0,457 ; 0,537] | **parité** avec le champion établi |
+| B vs `gen2-mmto` | 0,470 | [0,430 ; 0,510] | légèrement sous le champion |
+
+Holdout WDL log-loss : A-G3 **0,451**, B-G3 **0,435** (deux G3 sains).
+
+Lecture : la conversion pure reproduit le plateau (~0,67 global) sans le casser
+à 3 générations, mais le bras A atteint déjà la **parité avec `gen2-mmto`** —
+la lignée pure est viable. La frontière mobile v1 est un **levier mort** (comme
+fork-a/fork-c/teacher avant). Prochain axe = C1-Q1 (quiescence), sans frontière.
 
 ## 3. Réserve découverte pendant la revue des paramètres
 
@@ -64,7 +103,7 @@ inutilisée.
 | ouverture aléatoire / epsilon / décroissance | DoE exploration |
 | homme:dame, L2, replay | DoE graine/fit |
 | 8cf | fixe pendant les écrans ; 32cf rouvert seulement au scale |
-| frontière mobile | verdict C0 haut-N requis avant dose-réponse |
+| frontière mobile | **close** : verdict C0 `0795` plat (Δglobal −0,023, P3 −0,070) → v1 retirée |
 
 ## 5. Fork préparé : C1-Q1
 
@@ -141,8 +180,9 @@ depuis G0 avec la seconde graine `161803`.
 
 ## 8. Prochaines actions
 
-1. diagnostiquer et relancer `0792` sans changer ses inputs ni ses gates ;
-2. faire revoir la PR C1-Q1 ;
+1. ✅ `0792` diagnostiqué (`not enough fixed openings`) et relancé en `0795` :
+   verdict C0 `retire_frontier_v1_flat` obtenu et enregistré (§2bis) ;
+2. ✅ PR C1-Q1 (#351) revue et mergée ;
 3. après merge seulement, micro-calibrer les quatre profils sur chaque box ;
 4. calculer ETA, disque et timeout, puis demander le go explicite ;
 5. exécuter Q1 ; publier la matrice common/native avant tout Q2.

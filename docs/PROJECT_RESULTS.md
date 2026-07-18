@@ -67,10 +67,14 @@ sont pas des facteurs de DoE.
    d'une graine matérielle, sans labels externes ni anchor parent, peut-elle
    apprendre la conversion par ses propres trajectoires complètes ?
 7. C0 A/B a produit deux chaînes G1–G3 complètes. Son job haut-N `0792` a
-   échoué avant les gates : il n'existe encore aucun verdict scientifique sur
-   la frontière. La revue C1 a en parallèle identifié deux dettes de méthode :
-   seulement 5/63 paramètres explicités et une recherche de score inutilisée
-   qui préchargeait la TT avant le coup joué.
+   échoué avant les gates (bug de sizing `not enough fixed openings`), relancé
+   corrigé en `0795` : verdict pré-engagé **`retire_frontier_v1_flat`**. La
+   frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
+   −0,070, IC recouvrant 0) ; le bras A pur atteint la **parité avec
+   `gen2-mmto`** (0,497) depuis une graine matérielle en trois générations. La
+   revue C1 a en parallèle identifié deux dettes de méthode : seulement 5/63
+   paramètres explicités et une recherche de score inutilisée qui préchargeait
+   la TT avant le coup joué.
 
 ## 3. Chronologie scientifique condensée
 
@@ -192,10 +196,15 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
 - C0 L3-PURE `0790/0791` : les deux bras ont terminé G1–G3 avec rc=0 et
   publié modèles, corpus, sidecars, splits et manifests ; B a aussi publié les
   frontières G1/G2. C'est un succès d'exécution, pas encore un verdict.
-- Le job haut-N `0792` a échoué avec rc=1 après vérification des inputs et
-  extraction des holdouts, avant de produire les trois gates et la conversion
-  P1–P4. Il est `failed_technical_no_verdict`; ses résultats partiels ne
-  doivent pas être interprétés comme une cellule plate.
+- Le job haut-N `0792` a échoué avec rc=1 sur `not enough fixed openings`
+  (750 requis vs 305 dans `data/dilf_combinations.fen`), avant de produire les
+  gates. Relancé à l'identique en `0795` (NOPEN=300, assert de gate dynamique
+  `n=2·NOPEN`, gauge et critères §7 inchangés). **Verdict C0 :
+  `retire_frontier_v1_flat`** — conversion B−A globale −0,023, P3 mince −0,070,
+  toutes IC recouvrant 0 ; gate généraliste B vs A 0,555 (pas de régression) ;
+  A vs `gen2-mmto` 0,497 (parité), B vs `gen2-mmto` 0,470. Holdout log-loss
+  A 0,451 / B 0,435. La frontière mobile v1 est un levier mort ; la lignée pure
+  reproduit le plateau (~0,67) tout en atteignant la parité avec le champion.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
@@ -285,6 +294,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | prédicats statiques de verdict | P1 85,01 % exact ; P2 sous-puissant/faux positifs | loin des 99,9 % requis | preuve exacte ou oracle de règle |
 | TB exceptions dans l'éval | B4 finale +1 Elo neutre | corpus exact ne transfère pas via ce fit | autre objectif ou représentation, fork séparé |
 | chaîne autour de gen2-mmto | 0650–0656 asymptote négative | professeur interne plus faible que le point Scan-tuné | lignée indépendante ne partant pas de gen2 |
+| frontière mobile v1 (25 % seeds G2/G3) | C0 `0795` : Δconv global −0,023, P3 −0,070, IC recouvrant 0 ; B vs A 0,555 | pas de gain de conversion à budget apparié | autre mécanisme de curriculum que le re-seed de frontière matérielle |
 
 ## 6. Résultats supersédés ou invalides
 
