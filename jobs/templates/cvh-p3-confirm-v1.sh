@@ -63,7 +63,7 @@ git worktree add --detach "$W/src" "$CODE_SHA" >/dev/null
 git worktree add --detach "$W/harness" "$HARNESS_SHA" >/dev/null
 H="$W/harness"
 grep -q 'Cheap gate pre-check from popcounts only' "$W/src/src/conversion_head.cpp" || { say "ABORT architecture guard"; exit 4; }
-for f in "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py"; do
+for f in "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" "$H/jobs/tools/cvh_freeze_p3.py"; do
   [[ -f "$f" ]] || { say "ABORT harness missing $f at $HARNESS_SHA"; exit 4; }
 done
 cp "$A_SRC" "$W/A.pjtw"; cp "$C10_SRC" "$W/C10.pjtw"; cp "$C10_SRC.cvh" "$W/C10.pjtw.cvh"
@@ -72,40 +72,12 @@ export TMPDIR="$W/tmp"; mkdir -p "$TMPDIR"
 cmake -S "$W/src" -B "$W/build" -DCMAKE_BUILD_TYPE=Release >"$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -30 "$W/build.log"|tee -a "$RES"; exit 6; }
 J="$W/build/jass"
-python3 -m py_compile "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py"
-sha256sum "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" | tee -a "$RES"
+python3 -m py_compile "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" "$H/jobs/tools/cvh_freeze_p3.py"
+sha256sum "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" "$H/jobs/tools/cvh_freeze_p3.py" | tee -a "$RES"
 
-# Freeze an independent P3 subset where the material leader is certified as the
-# winner. This matches the auxiliary target and ensures conv_fixed_wdl assigns
-# the candidate to the leader rather than to a materially trailing winner.
-python3 - "$POOL_SRC" "$W/p3-confirm.jnnw" "$CONFIRM_N" <<'PY'
-import random,struct,sys
-src,out,n=sys.argv[1],sys.argv[2],int(sys.argv[3]); raw=open(src,'rb').read()
-if len(raw)<8 or raw[:4]!=b'JNNW': raise SystemExit('bad JNNW')
-cnt=struct.unpack_from('<I',raw,4)[0]; body=raw[8:]; rec=38
-if len(body)!=cnt*rec: raise SystemExit('truncated JNNW')
-keep=[]
-for i in range(cnt):
-    r=body[i*rec:(i+1)*rec]
-    wm,wk,bm,bk=struct.unpack_from('<QQQQ',r,0)
-    stm=r[32]
-    wdl=struct.unpack_from('<b',r,37)[0]
-    pieces=sum(x.bit_count() for x in (wm,wk,bm,bk))
-    white_value=wm.bit_count()+3*wk.bit_count()
-    black_value=bm.bit_count()+3*bk.bit_count()
-    margin=abs(black_value-white_value)
-    if wdl == 0 or margin != 1 or not (8 <= pieces < 20):
-        continue
-    leader=1 if black_value > white_value else 0
-    winner=stm if wdl > 0 else 1-stm
-    if winner == leader:
-        keep.append(r)
-if len(keep)<n: raise SystemExit(f'need {n} certified leader-winning P3 records, found {len(keep)}')
-rng=random.Random(141421); rng.shuffle(keep); keep=keep[:n]
-open(out,'wb').write(b'JNNW'+struct.pack('<I',len(keep))+b''.join(keep))
-print(f'frozen certified leader-winning P3 subset n={len(keep)}')
-PY
-sha256sum "$W/p3-confirm.jnnw" | tee -a "$RES"
+python3 "$H/jobs/tools/cvh_freeze_p3.py" \
+  --source "$POOL_SRC" --out "$W/p3-confirm.jnnw" --n "$CONFIRM_N" --seed 141421 \
+  --manifest "$W/p3-confirm-manifest.json" | tee -a "$RES"
 
 # Tiny write/read smoke for both cells.
 python3 - "$W/p3-confirm.jnnw" "$W/smoke.jnnw" <<'PY'
