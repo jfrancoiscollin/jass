@@ -5,7 +5,8 @@
 # TEMPLATE ONLY: do not copy to jobs/queue without measured ETA and explicit JFC go.
 set -euo pipefail
 
-cd /root/jass
+REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+cd "$REPO_ROOT"
 CODE_SHA="${CODE_SHA:-6bfc700fcf4dd512e3383bc04abbdce2b382e688}"
 JASS_JOB_ID="${JASS_JOB_ID:-ccx33-cvh-p3-postfix-common}"
 : "${GEN2_A:?absolute or repo-relative bare Gen2 PJTW required}"
@@ -41,7 +42,7 @@ done
 [[ ! -e "$A_SRC.cvh" ]] || { echo "ABORT A must be bare (no .cvh)" >&2; exit 2; }
 
 W="/root/cw-${JASS_JOB_ID}"
-OUT_DIR="${OUT_DIR:-/root/jass/jobs/results/${JASS_JOB_ID}/artefacts}"
+OUT_DIR="${OUT_DIR:-$REPO_ROOT/jobs/results/${JASS_JOB_ID}/artefacts}"
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 DFA=$(df -Pm /root | awk 'NR==2{print $4}')
 [[ "${DFA:-0}" -gt 3000 ]] || { echo "ABORT disk <3GB" >&2; exit 3; }
@@ -51,7 +52,7 @@ say(){ echo "$*" | tee -a "$RES"; }
 cleanup(){
   touch "$W/.stopmon" 2>/dev/null || true
   if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi
-  git -C /root/jass worktree remove --force "$W/src" >/dev/null 2>&1 || true
+  git -C "$REPO_ROOT" worktree remove --force "$W/src" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -88,12 +89,11 @@ cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || {
 J="$W/build/jass"
 python3 -m py_compile "$W/src/tools/cvh_nps_ab.py" "$W/src/jobs/tools/cvh_followup_verdict.py"
 
-# Reporting round-trip smoke: tiny paired benchmark must parse, contain all cells,
-# and preserve exact A/Z moves before the real measurement.
-python3 "$W/src/tools/cvh_nps_ab.py" --jass "$J" \
-  --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw" \
-  --positions "$NPS_SRC" --filter offgate --n 2 --depths 4 --warmup 0 \
-  ${SEARCH_PARAMS:+--search-params "$SEARCH_PARAMS"} --out "$W/smoke-nps.json" >/dev/null
+SMOKE=(python3 "$W/src/tools/cvh_nps_ab.py" --jass "$J"
+  --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw"
+  --positions "$NPS_SRC" --filter offgate --n 2 --depths 4 --warmup 0)
+[[ -z "$SEARCH_PARAMS" ]] || SMOKE+=(--search-params "$SEARCH_PARAMS")
+"${SMOKE[@]}" --out "$W/smoke-nps.json" >/dev/null
 python3 - "$W/smoke-nps.json" <<'PY'
 import json,sys
 x=json.load(open(sys.argv[1]))
@@ -104,7 +104,7 @@ print('smoke write/read OK')
 PY
 
 say "--- paired fixed-depth speed ---"
-COMMON_NPS=(--jass "$J" --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw" \
+COMMON_NPS=(--jass "$J" --cell A="$W/A.pjtw" --cell Z="$W/Z.pjtw" --cell C10="$W/C10.pjtw"
   --positions "$NPS_SRC" --n "$NPS_N" --depths "$NPS_DEPTHS" --seed 314159)
 [[ -z "$SEARCH_PARAMS" ]] || COMMON_NPS+=(--search-params "$SEARCH_PARAMS")
 python3 "$W/src/tools/cvh_nps_ab.py" "${COMMON_NPS[@]}" --filter offgate --out "$W/nps-general.json" | tee -a "$RES"
@@ -116,7 +116,6 @@ if ! python3 "$W/src/jobs/tools/cvh_followup_verdict.py" nps-gate \
   exit 3
 fi
 
-# Deterministic, pre-sized opening subset. One colour-swapped pair per opening.
 python3 - "$OPEN_SRC" "$W/common-openings.fen" "$COMMON_OPENINGS" <<'PY'
 import random,sys
 src,out,n=sys.argv[1],sys.argv[2],int(sys.argv[3])
@@ -129,7 +128,6 @@ PY
 EXPECTED_GAMES=$((2 * COMMON_OPENINGS))
 say "--- common-search C10(A) vs Gen2(B): expected_games=$EXPECTED_GAMES ---"
 
-# Incremental monitor; explicit shard PID waits avoid monitor/wait deadlock.
 (
   while [[ ! -e "$W/.stopmon" ]]; do
     sleep 600
