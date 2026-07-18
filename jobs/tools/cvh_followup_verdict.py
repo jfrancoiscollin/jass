@@ -3,7 +3,8 @@
 """Aggregate and gate the Gen2-MMTO CVH follow-up campaign.
 
 The tool is intentionally fail-closed: missing cells, too-small samples, parsing
-errors and empty intersections are errors rather than neutral outcomes.
+errors, engine skips and empty intersections are errors rather than neutral
+outcomes.
 """
 from __future__ import annotations
 
@@ -42,8 +43,12 @@ def score_stats(a_wins: int, draws: int, b_wins: int) -> dict[str, float | int]:
 
 
 def last_result(path: Path) -> tuple[int, int, int]:
+    text = path.read_text(encoding="utf-8", errors="replace")
+    skipped = sum("game skipped (" in line for line in text.splitlines())
+    if skipped:
+        raise ValueError(f"{path}: {skipped} engine game(s) skipped")
     found: tuple[int, int, int] | None = None
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in text.splitlines():
         match = RESULT_RE.match(line.strip())
         if match:
             found = tuple(int(match.group(i)) for i in range(1, 4))
@@ -146,9 +151,16 @@ def merge_position_results(paths: Iterable[Path]) -> dict[int, str]:
     merged: dict[int, str] = {}
     for path in paths:
         data = load_json(path)
+        n_errors = int(data.get("n_errors", 0))
+        n_restarts = int(data.get("n_restarts", 0))
+        if n_errors != 0 or n_restarts != 0:
+            raise ValueError(
+                f"{path}: engine errors={n_errors}, restarts={n_restarts}"
+            )
         rows = data.get("position_results")
         if not isinstance(rows, list):
             raise ValueError(f"{path}: missing position_results")
+        valid = 0
         for row in rows:
             if not isinstance(row, dict):
                 continue
@@ -159,6 +171,10 @@ def merge_position_results(paths: Iterable[Path]) -> dict[int, str]:
             if index in merged:
                 raise ValueError(f"duplicate position index {index}")
             merged[index] = str(result)
+            valid += 1
+        n_pos = int(data.get("n_pos", valid))
+        if valid != n_pos:
+            raise ValueError(f"{path}: valid outcomes={valid} != n_pos={n_pos}")
     return merged
 
 
