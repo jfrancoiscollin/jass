@@ -298,7 +298,8 @@ int run_gen_data_mode(int argc, char** argv) {
 // Per-record format (38 bytes, magic "JNNW"):
 //   32 B  uint64×4 bitboards   (white_men, white_kings, black_men, black_kings)
 //    1 B  uint8    stm         (0 = white to move, 1 = black to move)
-//    4 B  int32    score       (centipawn, STM-POV, depth-eval search)
+//    4 B  int32    score       (centipawn, STM-POV, depth-eval search; or zero
+//                               with --wdl-zero-score)
 //    1 B  int8     wdl         (+1 / 0 / -1, STM-POV at sample time)
 //
 // Used by the WDL training pipeline (`tools/scout_wdl.py` and
@@ -324,6 +325,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
     const char*  nnue_path        = nullptr;
     bool         quiet_only       = false;  // skip positions with mandatory captures
+    bool         wdl_zero_score    = false;  // --wdl-zero-score: WDL-only mode. Store score=0
+                                            // and skip the otherwise unused label search,
+                                            // preventing hidden TT priming of the play search.
     int          pv_extract       = 0;      // additional samples to harvest along the PV
     int          movetime_ms      = 0;      // >0 → play moves by wall-clock (Scan-style
                                             //      self-play); play_depth becomes a cap
@@ -392,6 +396,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             nnue_path = argv[++i];
         } else if (a == "--quiet-only") {
             quiet_only = true;
+        } else if (a == "--wdl-zero-score") {
+            wdl_zero_score = true;
         } else if (a == "--pv-extract" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) pv_extract = v;
@@ -446,6 +452,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             positional.push_back(argv[i]);
         }
     }
+    if (wdl_zero_score && pv_extract > 0) {
+        std::cerr << "error: --wdl-zero-score is incompatible with --pv-extract\n";
+        return 2;
+    }
     const std::array<int, NUM_PHASES> label_depth =
         parse_depth_by_phase(label_depth_spec, "--label-depth-by-phase");
     const std::array<int, NUM_PHASES> play_depth_by_phase =
@@ -492,6 +502,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
+              << " wdl_zero_score=" << (wdl_zero_score ? "true" : "false")
               << " pv_extract=" << pv_extract
               << " movetime_ms=" << movetime_ms
               << " drop_plycap=" << (drop_plycap ? "true" : "false")
@@ -623,7 +634,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
     long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0,
               stat_dropped = 0, stat_plycap_dropped = 0, stat_adjudicated = 0,
-              stat_tb_relabel = 0;
+              stat_tb_relabel = 0, stat_label_score_searches = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -756,18 +767,22 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 // Default (no spec) = eval_depth everywhere (back-compatible).
                 const int phase_ovr = label_depth[phase_index_of(popcount(pos.occupied()))];
                 const int this_label_depth = (phase_ovr > 0) ? phase_ovr : eval_depth;
-                SearchLimits lim;
-                lim.max_depth = this_label_depth;
-                lim.params    = label_params;   // gen-label slot (only sets `score` ; WDL-logistic ignores it)
-                lim.max_nodes = play_max_nodes;   // deterministic bound (flat-eval safety)
-                const SearchResult r = e.search(lim);
+                SearchResult label_result;
+                if (!wdl_zero_score) {
+                    SearchLimits lim;
+                    lim.max_depth = this_label_depth;
+                    lim.params    = label_params;   // gen-label slot: score only
+                    lim.max_nodes = play_max_nodes; // deterministic bound (flat-eval safety)
+                    label_result = e.search(lim);
+                    ++stat_label_score_searches;
+                }
                 Sample s;
                 s.bbs[0] = pos.white_men();
                 s.bbs[1] = pos.white_kings();
                 s.bbs[2] = pos.black_men();
                 s.bbs[3] = pos.black_kings();
                 s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
-                s.score  = static_cast<std::int32_t>(r.score);
+                s.score  = wdl_zero_score ? 0 : static_cast<std::int32_t>(label_result.score);
                 s.ply    = ply;
                 game_samples.push_back(s);
 
@@ -775,7 +790,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 // the depth-`eval_depth` search over multiple labels by
                 // harvesting positions along the principal variation. By
                 // negamax definition, the score at PV ply k from THAT
-                // position's STM POV is (-1)^k * r.score, so we can attach
+                // position's STM POV is (-1)^k * label_result.score, so we can attach
                 // exact labels to extracted positions without re-searching.
                 //
                 // Caveats applied here:
@@ -793,15 +808,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 //     same; the position itself isn't on the played
                 //     trajectory but it's on the engine's best line, so
                 //     WDL is a reasonable proxy. Documented limitation.
-                if (pv_extract > 0 && !r.pv.empty()) {
+                if (!wdl_zero_score && pv_extract > 0 && !label_result.pv.empty()) {
                     constexpr int PV_STRIDE        = 2;
                     constexpr int PV_MIN_EFF_DEPTH = 8;
                     Position pv_pos = pos;
                     int      taken  = 0;
                     for (std::size_t k = 0;
-                         k < r.pv.size() && taken < pv_extract;
+                         k < label_result.pv.size() && taken < pv_extract;
                          ++k) {
-                        pv_pos = pv_pos.after(r.pv[k]);
+                        pv_pos = pv_pos.after(label_result.pv[k]);
                         const int depth_from_root = static_cast<int>(k) + 1;
                         const int eff_depth = this_label_depth - depth_from_root;
                         if (eff_depth < PV_MIN_EFF_DEPTH) break;
@@ -822,8 +837,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         ps.bbs[3] = pv_pos.black_kings();
                         ps.stm    = (pv_pos.side_to_move() == Color::White) ? 0 : 1;
                         ps.score  = (depth_from_root & 1)
-                                      ? -static_cast<std::int32_t>(r.score)
-                                      :  static_cast<std::int32_t>(r.score);
+                                      ? -static_cast<std::int32_t>(label_result.score)
+                                      :  static_cast<std::int32_t>(label_result.score);
                         ps.ply    = ply;   // meme ply-racine (PV extraite du sample racine)
                         game_samples.push_back(ps);
                         ++taken;
@@ -955,6 +970,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                   << "  dropped_plycap_samples=" << stat_plycap_dropped
                   << "  adjudicated=" << stat_adjudicated
                   << "  tb_relabel=" << stat_tb_relabel
+                  << "  label_score_searches=" << stat_label_score_searches
                   << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
                   << " drop_plycap=" << (drop_plycap ? "on" : "off")
                   << " decay_plies=" << explore_decay_plies
@@ -4765,9 +4781,11 @@ int main(int argc, char** argv) {
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
+                "                                   --wdl-zero-score skips the\n"
+                "                                   unused score-label search.\n"
                 "                                   --random-open-plies K : K random\n"
                 "                                   opening plies (default 4). --explore-eps E :\n"
                 "                                   play E%% of plies as a random legal move\n"

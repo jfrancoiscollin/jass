@@ -1,6 +1,6 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Périmètre :** du bring-up initial aux verdicts `ccx33` / fork C / teacher du 17–18 juillet 2026
+> **Périmètre :** du bring-up initial à C0 L3-PURE et à la revue des paramètres du 18 juillet 2026
 > **Mis à jour :** 2026-07-18
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
@@ -28,6 +28,19 @@ de vérité, classe de cible, distribution, budget, mécanisme ou erreur démont
 dans le run précédent. Augmenter seulement le volume ou changer une seed ne
 suffit pas quand le mécanisme a déjà été testé à puissance adéquate.
 
+### 1.1 Portée des portes closes pour L3
+
+Un verdict obtenu sur Gen2 ou une ancienne lignée ferme la **répétition du même
+protocole**. Il ne prouve pas qu'un paramètre co-adaptatif de recherche,
+d'exploration ou de fit est optimal pour une évaluation jeune partie de
+matériel seul. L3 autorise une seule réouverture native, pré-enregistrée et
+instrumentée, par blocs de mécanismes. Cette exception ne permet ni un nouveau
+sweep aveugle de marges, ni de sélectionner les cellules après lecture.
+
+Inversement, les invariants de vérité — terminal WDL, censure ply-cap, absence
+de teacher et séparation train/holdout — ne dépendent pas de la lignée et ne
+sont pas des facteurs de DoE.
+
 ## 2. Résumé exécutif
 
 1. Le moteur, les règles FMJD, le movegen et l'alpha-bêta sont fonctionnels et
@@ -53,6 +66,11 @@ suffit pas quand le mécanisme a déjà été testé à puissance adéquate.
    nouvelle question ouverte est différente : une lignée autonome partie
    d'une graine matérielle, sans labels externes ni anchor parent, peut-elle
    apprendre la conversion par ses propres trajectoires complètes ?
+7. C0 A/B a produit deux chaînes G1–G3 complètes. Son job haut-N `0792` a
+   échoué avant les gates : il n'existe encore aucun verdict scientifique sur
+   la frontière. La revue C1 a en parallèle identifié deux dettes de méthode :
+   seulement 5/63 paramètres explicités et une recherche de score inutilisée
+   qui préchargeait la TT avant le coup joué.
 
 ## 3. Chronologie scientifique condensée
 
@@ -171,6 +189,13 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
 - Teacher causal `0777` : B1 −0,010, B2 +0,007, B3 −0,019 contre A sur la
   hard-conversion, tous sous le seuil +0,02. Verdict `complete_no_signal` ;
   aucune confirmation P3 n'a été autorisée.
+- C0 L3-PURE `0790/0791` : les deux bras ont terminé G1–G3 avec rc=0 et
+  publié modèles, corpus, sidecars, splits et manifests ; B a aussi publié les
+  frontières G1/G2. C'est un succès d'exécution, pas encore un verdict.
+- Le job haut-N `0792` a échoué avec rc=1 après vérification des inputs et
+  extraction des holdouts, avant de produire les trois gates et la conversion
+  P1–P4. Il est `failed_technical_no_verdict`; ses résultats partiels ne
+  doivent pas être interprétés comme une cellule plate.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
@@ -206,7 +231,11 @@ différences au sein d'un protocole apparié portent une causalité.
 | MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
 | EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
 
-## 5. Portes closes
+## 5. Portes closes à protocole causal identique
+
+Les lignes suivantes interdisent la répétition à l'identique. Les paramètres
+marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
+§1.1 ; le résultat L3 deviendra alors le nouveau verdict de référence.
 
 ### 5.1 Modèle et représentation
 
@@ -215,7 +244,7 @@ différences au sein d'un protocole apparié portent une causalité.
 | plus gros MLP/NNUE historique | v9/v11 overfit ; v11 0,009 vs Scan | capacité seule sans nouvelle méthode ne paie pas | nouvelle cible et protocole, après décision explicite de changer de classe |
 | NNUE maintenant | décision JFC | hors périmètre tant que L3 linéaire n'est pas exécutée | preuve de plafond L3 + go explicite |
 | pattern standalone sans squelette | 0118–0127 | s'effondre ; hybride seul viable | nouvelle représentation complète, pas un nouveau seed |
-| enrichir la géométrie | 54 patterns <32 ; `0579` 8cf≈32cf en log-loss | pas de gain utile, coût d'échantillonnage supérieur | signal causal sur un holdout que 8cf ne peut représenter |
+| enrichir la géométrie à petit volume ou en cours de lignée | 54 patterns <32 ; 32cf affamée à petit N, mais gagnante dans d'autres gates au scale | changement prématuré confond capacité et couverture | fork 8cf/32cf depuis G0 après seuil de visites publié et budget d'optimisation apparié |
 | élaguer les patterns | −31 Elo, zéro vitesse | lose-lose | nouveau hot-path mesuré, pas une intuition mémoire |
 | king-aware par défaut | gate final `0409` en faveur de men-only | gain ancien non transféré au régime scale | A/B au scale sur recette L3 figée, dans un fork séparé |
 
@@ -241,8 +270,8 @@ différences au sein d'un protocole apparié portent une causalité.
 | Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
 |---|---|---|---|
 | forcing extensions au jeu | fixed-depth positif, movetime neutre puis −74/−217 | brûle le budget nœuds | gain NPS structurel rendant le coût négligeable, puis haut-N |
-| quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | algorithme sélectif moins coûteux, profil nœuds exact |
-| LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | changement de recherche causal, pas un autre sweep fin |
+| quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | Q2 L3 repart à profondeur 1 après Q1 ; aucun retour direct aux profondeurs historiques sans signal |
+| LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | une ablation native L3 après profil d'activation ; pas un autre sweep fin de marges |
 | offer-no-reduce | détection Jass≈Scan, conversion très différente | attaque la détection, qui n'est pas le goulot | nouvelle mesure montrant un déficit de détection |
 | géométrie pour l'ordering | first-move cutoff ~0,91 | ordering déjà bon ; history prob a capté le gain restant | régression mesurée du node-EBF sur un nouveau moteur |
 
@@ -271,23 +300,29 @@ différences au sein d'un protocole apparié portent une causalité.
 | « training loss/pairwise accuracy suffit » | réfuté par rank statique −847, PC Blues −135 et WS-ON −354 |
 | « T1 promote implique une lignée gagnante » | régime jeune = non-régression seulement ; T1→T3 est plat |
 | « divergence de politique implique apprentissage » | fork C diverge 13,7 % mais perd en force et conversion |
+| « #350 épingle toute la recherche C0 » | faux : 5 clés de quiescence explicites, 58 valeurs encore héritées de `SearchParams{}` |
+| « la profondeur de label est un no-op pur en WDL » | sa sortie score est ignorée, mais la recherche partage la TT avec le play et peut donc modifier la trajectoire |
 
 ## 7. Questions encore ouvertes
 
 Une seule famille est active : `L3-PURE`.
 
-1. Une lignée 8cf partie de matériel seul, entraînée sur ses résultats terminaux
-   sans adjudication ni anchor, apprend-elle une politique de conversion ?
-2. Une frontière mobile extraite de ses propres échecs améliore-t-elle la pente
-   par rapport à l'autojeu ordinaire ? C'est le C0 A/B.
-3. Si C0 est plat, l'autojeu pur A compose-t-il sur une rampe longue d8→d14 ?
-   Trois générations ne suffisent pas à déclarer un plafond.
-4. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
-   un ensemble de rollouts internes stochastiques, dans une PR ultérieure.
+1. C0 : la frontière mobile améliore-t-elle A à haut N ? Les chaînes sont
+   complètes, mais `0792` doit être réparé avant tout verdict.
+2. C1-Q : menace, sacrifices sélectifs, forcing et promotion modifient-ils la
+   pente d'une lignée L3 native, après suppression de la recherche de score ?
+3. Quel budget de jeu, niveau d'exploration, rapport homme/dame, L2 et replay
+   maximisent la conversion sans régression ? Ces facteurs sont séquencés, pas
+   balayés dans un plan combinatoire unique.
+4. Une recette confirmée compose-t-elle sur une rampe longue avec deux graines ?
+5. Quand 8cf est nourrie, un fork 32cf depuis G0 apporte-t-il un résidu
+   représentable supplémentaire ?
+6. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
+   un ensemble de rollouts internes stochastiques.
 
 Ne sont pas des questions actives : « remettre du Scan », « refaire MMTO sur
-gen2 », « resserrer l'anchor », « grossir G4 », « changer de géométrie pendant
-la lignée » ou « essayer un autre sweep de knobs search ».
+gen2 », « resserrer l'anchor », « grossir G4 », changer de géométrie au milieu
+d'une lignée ou refaire un sweep fin non instrumenté des anciens knobs.
 
 ### 7.1 Exécutions incomplètes qui ne valent pas verdict
 
@@ -302,6 +337,9 @@ la lignée » ou « essayer un autre sweep de knobs search ».
   professeur externe — pas présenté comme scientifiquement réfuté.
 - Le rollout interne multi-échantillon pour P4 matériel-égal n'est pas encore
   implémenté.
+- `0792` est un échec technique sans verdict : rc=1, aucun fichier de gate,
+  de conversion ou de verdict final. La cause doit être lue dans ses logs R2
+  avant un rerun avec les mêmes inputs et critères.
 
 ## 8. Règles méthodologiques héritées
 
@@ -313,7 +351,11 @@ la lignée » ou « essayer un autre sweep de knobs search ».
   neutre ;
 - séparer train, holdout et jauges par partie/ouverture ;
 - ne jamais promouvoir sur loss, pairwise accuracy ou divergence seules ;
-- pinner code, inputs, référence fixe et seeds par SHA ;
+- pinner code, inputs, référence fixe, seeds et **toutes** les clés de
+  configuration par SHA ; un fingerprint partiel ne peut pas déclarer
+  `inherited_defaults=false` ;
+- supprimer ou isoler tout calcul dont la sortie est ignorée mais dont l'état
+  mutable (TT, history, RNG) peut influencer la politique ;
 - publier les compteurs qui prouvent qu'un flag a réellement agi ;
 - micro-calibrer nproc, débit, disque et timeout sur chaque box ;
 - écrire résultats/progress hors de l'arbre Git puis les publier explicitement ;
@@ -324,7 +366,7 @@ la lignée » ou « essayer un autre sweep de knobs search ».
 
 ## 9. Infrastructure et provenance durable
 
-Le runner v3, `jass-control` et R2 sont les sources d'exécution. Les incidents
+Les runners v3/v4, `jass-control` et R2 sont les sources d'exécution. Les incidents
 suivants ont déjà coûté des runs et ne doivent pas réapparaître : cache EGDB
 agrégé trop grand, moteurs morts suivis de `BrokenPipe`, `PrivateTmp` démonté,
 glob de merge attrapant les logs, fichier RESULTS réinitialisé par Git, attente
@@ -350,6 +392,8 @@ mis à jour.
 | plan historique de migration runner v3 | [RUNNER_V3_MIGRATION.md](archives/infra/RUNNER_V3_MIGRATION.md) |
 | anciens jobs fork C + teacher | [README.md](archives/jobs/prepared/forkc-teacher-20260717/README.md) |
 | anciens jobs post-ccx33 | [README.md](archives/jobs/prepared/post-ccx33-20260717/README.md) |
+| ancienne spec L3 C0 | [L3_PURE_PLAN_C0_20260718.md](archives/l3/L3_PURE_PLAN_C0_20260718.md) |
+| ancien current L3 C0 en cours | [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md) |
 | ancien benchmark GitHub NNUE | [benchmark-nnue.yml](../archive/workflows/benchmark-nnue.yml) |
 | boucle from-scratch historique | [MEMO_AUTO_SCRATCH.md](archives/MEMO_AUTO_SCRATCH.md) |
 | chaîne itérative historique | [MEMO_CHAINE_ITERATIVE_LONGUE.md](archives/MEMO_CHAINE_ITERATIVE_LONGUE.md) |
