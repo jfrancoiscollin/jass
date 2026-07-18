@@ -104,6 +104,20 @@ class LayoutTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 R.validate_job_script(c, script)
 
+    def test_job_accepts_neighbour_root_jass_installs(self):
+        # /root/jass-scan (binaire Scan) et /root/jass-runner ne sont PAS le
+        # clone de code legacy /root/jass : ils ne doivent pas être rejetés.
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            c = cfg(root)
+            script = root / "job.sh"
+            script.write_text(
+                'cd "$JASS_CODE_DIR"\n'
+                'SCAN_BIN=/root/jass-scan/scan_linux\n'
+                '"$SCAN_BIN" --version\n'
+            )
+            R.validate_job_script(c, script)
+
     def test_job_accepts_v3_environment(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

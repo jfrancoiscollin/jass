@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import shutil
 import signal
@@ -106,7 +107,11 @@ def candidate_jobs(cfg: Config) -> list[Path]:
 def validate_job_script(cfg: Config, script: Path) -> None:
     text = script.read_text(encoding="utf-8", errors="replace")
     forbidden = []
-    if not cfg.allow_legacy_job_paths and "/root/jass" in text:
+    # Interdit le clone de code legacy /root/jass (les jobs doivent utiliser
+    # $JASS_CODE_DIR), MAIS pas les installs voisines légitimes /root/jass-scan
+    # (binaire Scan) ni /root/jass-runner : ne matche /root/jass que comme
+    # composant de chemin (suivi de /, guillemet, espace ou fin), pas /root/jass-*.
+    if not cfg.allow_legacy_job_paths and re.search(r"/root/jass(?![\w-])", text):
         forbidden.append("hard-coded /root/jass")
     for token in ("origin/main", "HEAD:main", "refs/heads/main"):
         if token in text:
