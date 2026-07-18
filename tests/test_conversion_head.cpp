@@ -162,6 +162,42 @@ void test_binary_roundtrip_and_rejection() {
     std::remove(tmpl.c_str());
 }
 
+// Python<->C++ numeric parity lock. The SAME positions and golden feature
+// vectors are asserted in pattern_jass/tests/test_conversion_head.py against the
+// Python extractor. If either side drifts (a shift mask, a row/col convention, a
+// mobility rule), one test fails and the mismatch is caught before an offline
+// head is applied to differently-computed runtime features.
+void test_python_parity_golden() {
+    struct Case {
+        std::string_view fen;
+        std::array<int, NUM_FEATURES> golden;
+        int sign;
+        int margin;
+        int total;
+    };
+    // Feature order: total, leader_men, leader_kings, defender_men,
+    // defender_kings, leader_mob, defender_mob, mob_diff, leader_king_cent,
+    // defender_king_cent, leader_adv, defender_adv, leader_near_promo,
+    // defender_near_promo, leader_lr, defender_lr.
+    const std::array<Case, 3> cases{{
+        {"W:WK28,21,22,23:BK7,11,12,13,16",
+         {9, 4, 1, 3, 1, 7, 13, -6, 3, 8, 9, 15, 0, 0, 2, 1}, 1, 1, 9},
+        {"W:WK8,26,27,28,29,30,31:BK40,11,12,13,14,15",
+         {13, 6, 1, 5, 1, 11, 14, -3, 5, 3, 23, 10, 0, 0, 2, 1}, -1, 1, 13},
+        {"W:WK28,6,7,21,22:BK10,41,42,16,17",
+         {10, 4, 1, 4, 1, 10, 13, -3, 2, 8, 22, 26, 2, 2, 4, 4}, 0, 0, 10},
+    }};
+    for (const Case& c : cases) {
+        const Features f = compute_features(parse(c.fen));
+        JASS_CHECK_EQ(f.leader_sign_black, c.sign);
+        JASS_CHECK_EQ(f.material_margin, c.margin);
+        JASS_CHECK_EQ(f.total_pieces, c.total);
+        for (std::size_t i = 0; i < NUM_FEATURES; ++i) {
+            JASS_CHECK_EQ(static_cast<int>(f.value[i]), c.golden[i]);
+        }
+    }
+}
+
 }  // namespace
 
 void run_conversion_head_tests() {
@@ -169,4 +205,5 @@ void run_conversion_head_tests() {
     test_leader_relative_features();
     test_delta_is_bounded_and_signed();
     test_binary_roundtrip_and_rejection();
+    test_python_parity_golden();
 }

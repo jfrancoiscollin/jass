@@ -82,3 +82,34 @@ def test_rejects_wrong_feature_order() -> None:
         assert "feature_names" in str(exc)
     else:
         raise AssertionError("wrong feature order accepted")
+
+
+# --- Python<->C++ numeric parity lock -------------------------------------- #
+# Golden feature vectors for three fixed positions. The SAME positions and the
+# SAME golden values are asserted in tests/test_conversion_head.cpp against the
+# C++ compute_features(). If either extractor drifts (a shift bit-mask, a row/col
+# convention, a mobility rule), one side fails and the mismatch is caught before
+# any offline-fitted head is applied to differently-computed runtime features.
+# Squares are 1..50 (bit = square-1); FEN mirror is in the C++ test.
+PARITY_GOLDEN = {
+    # W:WK28,21,22,23:BK7,11,12,13,16
+    "A_black_leader": (
+        dict(wm=(21, 22, 23), wk=(28,), bm=(11, 12, 13, 16), bk=(7,)),
+        [9, 4, 1, 3, 1, 7, 13, -6, 3, 8, 9, 15, 0, 0, 2, 1], 1, 1, 9),
+    # W:WK8,26,27,28,29,30,31:BK40,11,12,13,14,15
+    "B_white_leader": (
+        dict(wm=(26, 27, 28, 29, 30, 31), wk=(8,), bm=(11, 12, 13, 14, 15), bk=(40,)),
+        [13, 6, 1, 5, 1, 11, 14, -3, 5, 3, 23, 10, 0, 0, 2, 1], -1, 1, 13),
+    # W:WK28,6,7,21,22:BK10,41,42,16,17
+    "C_tie_promo_lr": (
+        dict(wm=(6, 7, 21, 22), wk=(28,), bm=(41, 42, 16, 17), bk=(10,)),
+        [10, 4, 1, 4, 1, 10, 13, -3, 2, 8, 22, 26, 2, 2, 4, 4], 0, 0, 10),
+}
+
+
+def test_python_c_parity_golden() -> None:
+    for name, (p, feats, sign, margin, total) in PARITY_GOLDEN.items():
+        X, s, m, t = ch.extract_features(bb(*p["wm"]), bb(*p["wk"]),
+                                         bb(*p["bm"]), bb(*p["bk"]))
+        assert list(X[0]) == [float(v) for v in feats], f"{name}: feature mismatch"
+        assert int(s[0]) == sign and int(m[0]) == margin and int(t[0]) == total, name
