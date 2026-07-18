@@ -634,7 +634,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
     long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0,
               stat_dropped = 0, stat_plycap_dropped = 0, stat_adjudicated = 0,
-              stat_tb_relabel = 0, stat_label_score_searches = 0;
+              stat_tb_relabel = 0, stat_label_score_searches = 0,
+              stat_random_open_moves = 0, stat_play_plies = 0,
+              stat_eps_events = 0, stat_eps_changed_best = 0,
+              stat_games_with_eps = 0;
 
     int generated  = 0;
     int game_count = 0;
@@ -669,6 +672,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             generate_legal_moves(e.position(), ml);
             if (ml.empty()) break;
             e.apply_move(ml[rng() % ml.size()]);
+            ++stat_random_open_moves;
         }
 
         // FIX#3 : jouer l'ouverture 2x (rep 0/1) avec la couleur punisher ECHANGEE => le biais
@@ -686,6 +690,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int outcome_white = 0;
         bool game_ended_by_loss = false;
         int  last_eps_ply = -1;     // ply du dernier coup d'exploration eps de cette partie (instrumentation FIX #1)
+        bool game_had_eps = false;   // au moins un tirage epsilon dans cette partie
         bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move/adjud) le remet a false
         int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
@@ -863,6 +868,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
             lim.max_nodes = play_max_nodes;   // deterministic bound (flat-eval safety)
             const SearchResult r = e.search(lim);
+            ++stat_play_plies;
             // Epsilon-random exploration : with probability explore_eps%, play a
             // uniform-random legal move instead of the search best. Visits states
             // the greedy policy never reaches (off-policy μ widening) ; safe here
@@ -878,10 +884,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (eps_frac > 0.0 && !ml.empty()
                 && static_cast<double>(rng() % 100000) < eps_frac * 1000.0) {
                 play_mv = ml[rng() % ml.size()];
+                ++stat_eps_events;
+                game_had_eps = true;
+                if (play_mv != r.best_move) ++stat_eps_changed_best;
                 last_eps_ply = ply;   // dernier coup d'exploration de la partie (FIX#1 filtre + instrumentation)
             }
             if (!e.apply_move(play_mv)) break;
         }
+        if (game_had_eps) ++stat_games_with_eps;
         if (hit_ply_cap) ++stat_plycap_games;   // partie terminee par max_plies (issue=nulle par defaut)
 
         // A ply-cap is censoring, not evidence for a draw.  Legacy jobs retain
@@ -978,6 +988,20 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                   << " pair_openings=" << (pair_openings ? "on" : "off")
                   << " tb_relabel=" << (tb_relabel ? "on" : "off") << ")\n";
     }
+    // Stable machine-readable counters for L3 exploration DoE aggregation.
+    // Counts, rather than only configured percentages, prove that the policy
+    // perturbation actually fired and quantify its realised dose.
+    std::cout << "EXPLORATION"
+              << " random_open_plies=" << random_open_plies
+              << " explore_eps=" << explore_eps
+              << " decay_plies=" << explore_decay_plies
+              << " openings=" << opening_count
+              << " games=" << game_count
+              << " random_open_moves=" << stat_random_open_moves
+              << " play_plies=" << stat_play_plies
+              << " eps_events=" << stat_eps_events
+              << " eps_changed_best=" << stat_eps_changed_best
+              << " games_with_eps=" << stat_games_with_eps << "\n";
     return 0;
 }
 

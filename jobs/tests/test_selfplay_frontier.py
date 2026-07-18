@@ -113,6 +113,40 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertEqual(payload["external_teacher_inputs"], 0)
             self.assertEqual(payload["selected_kind"]["failed_conversion"], 1)
 
+    def test_profile_reports_diversity_and_material_coverage(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31, 32), bm=bits(10), stm=0, wdl=1),
+                record(wm=bits(33, 34), bm=bits(11), stm=0, wdl=0),
+                record(wm=bits(30), bm=bits(9), stm=1, wdl=-1),
+            ]
+            rows = [
+                SF.Meta(1, 10, 0),
+                SF.Meta(2, 10, 0),
+                SF.Meta(3, 20, 0),
+            ]
+            data, meta = self.write_pair(root, "raw", records, rows)
+            manifest = root / "profile.json"
+            rc = SF.do_profile(Namespace(
+                data=str(data), meta=str(meta), manifest=str(manifest),
+            ))
+            self.assertEqual(rc, 0)
+            payload = json.loads(manifest.read_text())
+            self.assertTrue(payload["diagnostic_only"])
+            self.assertEqual(payload["records"], 3)
+            self.assertEqual(payload["games"], 3)
+            self.assertEqual(payload["openings"], 2)
+            self.assertEqual(payload["unique_positions"], 3)
+            self.assertEqual(payload["material_stratum_records"]["p3_thin"], 2)
+            self.assertEqual(payload["material_stratum_records"]["p4_equal"], 1)
+            self.assertEqual(
+                payload["record_level_conversion"]["p3_thin"]["converted_records"], 1)
+            self.assertEqual(
+                payload["record_level_conversion_unit"],
+                "correlated_position_record_not_gate",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

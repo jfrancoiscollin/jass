@@ -3,7 +3,7 @@
 """Game-aware dataset utilities for the autonomous L3-PURE self-play loop.
 
 The tool consumes only Jass self-play records and the aligned ``JSM1`` sidecar
-emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has three operations:
+emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has four operations:
 
 ``merge``
     Merge independent shards while namespacing game/opening identifiers.
@@ -19,6 +19,12 @@ emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has three operations:
     only outcome used for selection is the actual terminal WDL already present
     in JNNW.  Output seed records have score and WDL zeroed, so no target can
     leak into the next game; their continuations must earn a fresh terminal WDL.
+
+``profile``
+    Publish distribution diagnostics for one merged self-play corpus: realised
+    opening/game diversity, unique positions, phase/material coverage and a
+    record-level conversion diagnostic.  The latter is explicitly not a gate:
+    records from the same game are correlated.
 
 This is deliberately not an oracle miner: no Scan, deep relabel, master game,
 fixed gymnasium or external teacher is accepted as input.
@@ -215,6 +221,122 @@ def _piece_band(pieces: int) -> str:
     return "late_midgame"
 
 
+def _phase_band(pieces: int) -> str:
+    if pieces >= 30:
+        return "opening"
+    if pieces >= 22:
+        return "midgame"
+    if pieces >= 15:
+        return "late_midgame"
+    if pieces >= 8:
+        return "endgame"
+    return "deep_endgame"
+
+
+def _material_stratum(margin: int) -> str:
+    if margin == 0:
+        return "p4_equal"
+    if margin == 1:
+        return "p3_thin"
+    if margin <= 3:
+        return "p2_medium"
+    return "p1_clear"
+
+
+def _count_summary(values: Counter) -> dict:
+    if not values:
+        return {"min": 0, "max": 0, "mean": 0.0}
+    counts = list(values.values())
+    return {
+        "min": min(counts),
+        "max": max(counts),
+        "mean": sum(counts) / len(counts),
+    }
+
+
+def do_profile(args: argparse.Namespace) -> int:
+    records, rows = read_pair(Path(args.data), Path(args.meta))
+    unique_positions: set[bytes] = set()
+    unique_by_stratum: dict[str, set[bytes]] = defaultdict(set)
+    records_by_game: Counter = Counter()
+    records_by_opening: Counter = Counter()
+    wdl_counts: Counter = Counter()
+    winner_counts: Counter = Counter()
+    phase_counts: Counter = Counter()
+    stratum_counts: Counter = Counter()
+    source_counts: Counter = Counter()
+    conversion_total: Counter = Counter()
+    conversion_wins: Counter = Counter()
+
+    for record, row in zip(records, rows):
+        position = record[:33]
+        unique_positions.add(position)
+        records_by_game[row.game_id] += 1
+        records_by_opening[row.opening_id] += 1
+        source_counts["frontier" if row.seeded else "standard"] += 1
+
+        wdl = struct.unpack_from("<b", record, 37)[0]
+        wdl_counts[{1: "win", 0: "draw", -1: "loss"}[wdl]] += 1
+        winner = _winner(record)
+        winner_counts[winner if winner is not None else "draw"] += 1
+
+        advantaged, margin, pieces = _material(record)
+        phase_counts[_phase_band(pieces)] += 1
+        stratum = _material_stratum(margin)
+        stratum_counts[stratum] += 1
+        unique_by_stratum[stratum].add(position)
+        if advantaged is not None:
+            conversion_total[stratum] += 1
+            if winner == advantaged:
+                conversion_wins[stratum] += 1
+
+    conversion = {}
+    for stratum in ("p1_clear", "p2_medium", "p3_thin"):
+        total = conversion_total[stratum]
+        won = conversion_wins[stratum]
+        conversion[stratum] = {
+            "records": total,
+            "converted_records": won,
+            "rate": won / total if total else None,
+        }
+
+    data_path = Path(args.data)
+    meta_path = Path(args.meta)
+    total_records = len(records)
+    _manifest(args.manifest, {
+        "schema": 1,
+        "operation": "profile_selfplay",
+        "diagnostic_only": True,
+        "input": {
+            "data": str(data_path),
+            "meta": str(meta_path),
+            "data_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+            "meta_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+        },
+        "records": total_records,
+        "games": len(records_by_game),
+        "openings": len(records_by_opening),
+        "unique_positions": len(unique_positions),
+        "duplicate_position_records": total_records - len(unique_positions),
+        "unique_position_ratio": (
+            len(unique_positions) / total_records if total_records else 0.0
+        ),
+        "records_per_game": _count_summary(records_by_game),
+        "records_per_opening": _count_summary(records_by_opening),
+        "wdl_stm": dict(sorted(wdl_counts.items())),
+        "terminal_winner": dict(sorted(winner_counts.items())),
+        "phase_records": dict(sorted(phase_counts.items())),
+        "material_stratum_records": dict(sorted(stratum_counts.items())),
+        "material_stratum_unique_positions": {
+            key: len(value) for key, value in sorted(unique_by_stratum.items())
+        },
+        "record_level_conversion": conversion,
+        "record_level_conversion_unit": "correlated_position_record_not_gate",
+        "source_records": dict(sorted(source_counts.items())),
+    })
+    return 0
+
+
 def _zero_targets(record: bytes) -> bytes:
     return record[:33] + struct.pack("<i", 0) + struct.pack("<b", 0)
 
@@ -375,6 +497,12 @@ def build_parser() -> argparse.ArgumentParser:
                       help="calibration share of successfully converted positions")
     mine.add_argument("--seed", type=int, default=1)
     mine.set_defaults(func=do_mine)
+
+    profile = sub.add_parser("profile", help="profile self-play coverage and diversity")
+    profile.add_argument("--data", required=True)
+    profile.add_argument("--meta", required=True)
+    profile.add_argument("--manifest", required=True)
+    profile.set_defaults(func=do_profile)
     return parser
 
 
