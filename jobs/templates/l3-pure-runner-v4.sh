@@ -401,7 +401,12 @@ payload.update({
   "parent_anchor": False,
   "plycap_policy": "drop_game_samples",
 })
+# Only the per-generation students g1..gN ; the g0-material playing seed also
+# matches g*.pjtw.gz but is NOT a learned generation model.
+import re
 for path in sorted(root.glob("g*.pjtw.gz")):
+  if not re.fullmatch(r"g[1-9][0-9]*\.pjtw\.gz", path.name):
+    continue
   payload.setdefault("champion_sha256", {})[path.name] = hashlib.sha256(
       path.read_bytes()).hexdigest()
 if len(payload.get("champion_sha256", {})) != ngen:
