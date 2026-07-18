@@ -225,15 +225,14 @@ for f in chunk-*; do
 done; wait
 python3 tools/merge_jbok.py --out book.bok partial-*.bok
 
-# --- Head-to-head comparison of two networks ---
+# --- Legacy NNUE diagnostic (outside the active L3 programme) ---
 ./build/jass --benchmark-nnue-vs-nnue netA.bin netB.bin 5 5
 ```
 
-All of the above are also wired as one-tap GitHub Actions workflows
-(`train-nnue`, `benchmark-nnue`, `build-book`, `gen-data-wdl`) — see
-"Continuous integration" below. For long-running multi-day datasets the
-**Hetzner GitOps runner** in [`infra/`](infra/README.md) is what
-actually drives the pipeline in practice.
+The old hosted NNUE benchmark wrapper is archived: its fixed-depth, low-N
+protocol is not a scientific gate for L3. The CLI remains available for legacy
+diagnostics. For long-running datasets, the **GitOps runner v3** in
+[`infra/`](infra/README.md) drives the active pipeline.
 
 ### A short HUB session
 
@@ -278,9 +277,9 @@ Full reference: [docs/archives/WASM.md](docs/archives/WASM.md).
 
 ## Continuous integration & WASM hosting
 
-The repository ships **four** workflows; one runs on every commit, the
-other three are manual triggers designed to be invoked from the
-GitHub mobile UI.
+The repository ships automatic CI and explicit manual/control-plane workflows.
+Only `build.yml` and `retirement-readiness.yml` are general merge gates; the
+other workflows are scoped utilities or orchestration entry points.
 
 ### `build.yml` — on every push & PR
 
@@ -298,14 +297,6 @@ Generates a self-play dataset (`--gen-data`) and trains either the
 `LinearNetwork` (NumPy lstsq) or the `MLPNetwork` (PyTorch + Adam).
 Inputs: `records` (10k / 100k / 1M) and `model` (linear / mlp).
 Uploads `nnue.bin` as the `nnue-weights` artefact.
-
-### `benchmark-nnue.yml` — workflow_dispatch
-
-Runs a colour-swap tournament. With just `weights_path` set it pits
-the network against the handcrafted eval (`--benchmark-nnue`); add
-`weights_b_path` to compare two NNUE networks head-to-head
-(`--benchmark-nnue-vs-nnue`). Reports score rate and uploads the
-result.
 
 ### `build-book.yml` — workflow_dispatch
 
@@ -338,17 +329,18 @@ jass/
 │   └── nnue_default_data.cpp.in   template that CMake fills with nnue.bin's bytes
 ├── .github/workflows/
 │   ├── build.yml          native + WASM build, GitHub Pages deploy
+│   ├── retirement-readiness.yml  guards the runner-v3 retirement gates
+│   ├── runner-v3.yml      control-plane runner entry point
+│   ├── t1bis-runner-v3-native.yml  historical native campaign wrapper
 │   ├── train-nnue.yml     workflow_dispatch: --gen-data + trainer
-│   ├── benchmark-nnue.yml workflow_dispatch: --benchmark-nnue[-vs-nnue]
 │   ├── build-book.yml     workflow_dispatch: --build-book from FEN list
-│   └── gen-data-wdl.yml   workflow_dispatch: matrix-sharded WDL self-play
-├── docs/                  reference documentation
-│   ├── ARCHITECTURE.md    module map and data-flow
-│   ├── HUB.md             CLI command reference
-│   ├── WASM.md            JS / WebAssembly API
-│   ├── API.md             C++ header reference
-│   ├── EXTENDING.md       recipes (new bitbase, eval term, book line, …)
-│   └── GLOSSARY.md        draughts and engine terms
+│   ├── gen-data-wdl.yml   workflow_dispatch: matrix-sharded WDL self-play
+│   └── sync-labels.yml    repository label synchronisation
+├── docs/                  exactly three active scientific documents
+│   ├── L3_PURE_PLAN.md    normative L3 specification
+│   ├── L3_CURRENT.md      current L3 execution and result ledger
+│   ├── PROJECT_RESULTS.md consolidated history and closed doors
+│   └── archives/          frozen historical documentation
 ├── positions (2).fen      77 560-position FEN list (Hub-style) staged at
 │                          repo root for an opening-book build via
 │                          `--build-book` / `jobs/queue/0013-build-book.sh`
