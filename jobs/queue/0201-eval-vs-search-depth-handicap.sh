@@ -4,7 +4,7 @@
 # vs Scan à profondeur ÉGALE (d9/d11). À profondeur égale, avec un alpha-beta
 # sain + quiescence, la qualité du coup est gouvernée par l'EVAL des feuilles
 # (la recherche de jass est déjà complète : TT/ID/aspiration/PVS/LMR/null-move/
-# IID/singular/multicut/quiescence — cf docs/ARCHITECTURE.md). Reste à CHIFFRER :
+# IID/singular/multicut/quiescence — cf docs/archives/ARCHITECTURE.md). Reste à CHIFFRER :
 # de combien de plies de RAB jass a-t-il besoin pour égaler Scan ? Peu (+1-2) =
 # léger déficit d'efficacité/extensions ; beaucoup (+4-6) ou jamais = c'est
 # l'EVAL qui est loin, la profondeur ne compense pas.

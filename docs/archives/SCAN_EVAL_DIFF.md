@@ -14,7 +14,7 @@
 > **échoué** (0460/0462) car elle ne couvre que les shots déjà vus ⇒ levier courant = **vérité tactique EXTERNE** (`0464`).
 > Pistes LEAD 1-5 ci-dessous = **soldées ou N/A**. Détail → [DIAGNOSTIC_VS_SCAN.md](DIAGNOSTIC_VS_SCAN.md) §SAGA 2026-06-25.
 
-> Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](archives/ARBRE_DECISION.md) (même classe que
+> Rédigé **2026-06-17** sous le [PRINCIPE DIRECTEUR](ARBRE_DECISION.md) (même classe que
 > Scan → on doit l'égaler DEDANS ; le gap = ce qui MANQUE, pas la capacité). Audit
 > source-à-source des trois moteurs pour localiser l'ingrédient manquant. À lire avec
 > [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) §0 et [EGDB_SELFPLAY_PLAN.md](EGDB_SELFPLAY_PLAN.md).

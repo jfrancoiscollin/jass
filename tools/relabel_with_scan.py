@@ -3,7 +3,7 @@
 # Copyright (c) 2026 Jean-François Collin
 """
 Relabel a JNNW dataset using Scan as the eval oracle (paradigm shift G —
-distillation depuis Scan, cf. docs/PARADIGM_SHIFT_OPTIONS.md option G).
+distillation depuis Scan, cf. docs/archives/PARADIGM_SHIFT_OPTIONS.md option G).
 
 For each position in the input JNNW, query Scan via the HUB v2 protocol
 (`pos pos=… ; level depth=N ; go think`), parse the deepest `info` line

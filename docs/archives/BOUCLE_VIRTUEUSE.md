@@ -3,7 +3,7 @@
 > **Référence du système actif** : comment on fait *monter* notre archi linéaire-patterns par
 > auto-amélioration itérée, façon Scan, en distribué sur nos boxes. À lire avec [CURRENT.md](CURRENT.md)
 > (état 1 page), [SCAN_ARCHITECTURE_NOTES.md §5](SCAN_ARCHITECTURE_NOTES.md) (recette Scan reconstituée)
-> et [ARBRE_DECISION.md](archives/ARBRE_DECISION.md) (principe). MAJ : **2026-06-20**.
+> et [ARBRE_DECISION.md](ARBRE_DECISION.md) (principe). MAJ : **2026-06-20**.
 
 ## 0. Le pivot — on ne se compare PLUS à Scan (jusqu'au plateau)
 

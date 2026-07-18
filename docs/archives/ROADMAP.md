@@ -1,12 +1,12 @@
 > ⚠️ **ARCHIVE — NE PAS PRENDRE COMME CONSIGNE ACTIVE.** Doc historique (ère pré-fit-volume / NNUE).
-> Source de vérité unique = [CURRENT.md](../CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
+> Source de vérité unique = [CURRENT.md](../L3_CURRENT.md) (+ docs système : BOUCLE_VIRTUEUSE, SCAN_METHODOLOGY_GAP,
 > DIAGNOSTIC_VS_SCAN, BIAIS_FIT_VOLUME, PROGRESSION_LITTERATURE). Conservé pour l'historique seulement. _(Classé archive 2026-06-24.)_
 
 # jass — feuille de route post-bibliographie
 
 > 🧭 **Décision en cours → voir [ARBRE_DECISION.md](ARBRE_DECISION.md)** (arbre
 > vivant : quel chemin selon quel verdict ; branches élaguées vs à explorer) et
-> [JOURNAL_DE_BORD.md](../JOURNAL_DE_BORD.md) (ancres + faits établis). Ce
+> [JOURNAL_DE_BORD.md](JOURNAL_DE_BORD.md) (ancres + faits établis). Ce
 > document-ci est la feuille de route *historique* (2026-05-24).
 
 > ⚠️ **AVERTISSEMENT 2026-06-06 — chiffres « vs Scan d10 » INVALIDÉS.** Les
@@ -26,12 +26,12 @@
 
 ---
 
-## ⭐ NEXT STEPS ACTIFS — 2026-06-20 (roadmap vivante : [CURRENT.md](../CURRENT.md) · [BOUCLE_VIRTUEUSE.md](../BOUCLE_VIRTUEUSE.md))
+## ⭐ NEXT STEPS ACTIFS — 2026-06-20 (roadmap vivante : [CURRENT.md](../L3_CURRENT.md) · [BOUCLE_VIRTUEUSE.md](BOUCLE_VIRTUEUSE.md))
 
 > **État** : on a trouvé LA limitation = le **FIT-VOLUME** (on fittait ≤2M depuis le début → archi affamée). Les
 > deux leviers réels : **jeu profond ≥10** (issues véridiques) + **scaler le fit** (`--minibatch` 15M → `train_stream`
 > 100M). Conséquence : **une grande partie de nos verdicts éval/archi sont CONFONDUS** (cf
-> [BIAIS_FIT_VOLUME.md](../BIAIS_FIT_VOLUME.md)) — il NE FAUT PLUS les utiliser pour trancher.
+> [BIAIS_FIT_VOLUME.md](BIAIS_FIT_VOLUME.md)) — il NE FAUT PLUS les utiliser pour trancher.
 
 > ## ⏱️ SÉQUENCE GATÉE — le TIMING est critique (ne pas décider à tort)
 > Chaque étape **conditionne** la suivante. Décider hors-ordre = re-trancher sur du confondu. **À ne PAS faire avant la gate.**
@@ -175,7 +175,7 @@ NOTRE data.
 
 ### VERDICT GÉOMÉTRIE (2026-06-14) — ✂️ levier MORT, on passe aux rois + data
 > ⚠️ **CONFONDU (2026-06-20)** : ce verdict a été établi sur des fits **≤2M** (archi affamée) → il **ne ferme PLUS**
-> la piste géométrie. À **re-juger au scale** (color-fold, 30M+). Cf [BIAIS_FIT_VOLUME.md](../BIAIS_FIT_VOLUME.md) #1 et la
+> la piste géométrie. À **re-juger au scale** (color-fold, 30M+). Cf [BIAIS_FIT_VOLUME.md](BIAIS_FIT_VOLUME.md) #1 et la
 > SÉQUENCE GATÉE en tête de roadmap. **Ne pas s'appuyer sur ce qui suit pour décider.**
 
 Le jalon géométrie est **clos, négatif**, sous 3 angles convergents :

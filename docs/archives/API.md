@@ -625,4 +625,4 @@ Full command grammar: [HUB.md](HUB.md).
 - `MoveList` is reused across calls in hot paths to avoid allocation.
 - All tests live under `tests/` and are linked into a single
   `jass_tests` executable. The test framework macros are in
-  [`tests/test_framework.hpp`](../tests/test_framework.hpp).
+  [`tests/test_framework.hpp`](../../tests/test_framework.hpp).

@@ -28,7 +28,7 @@ int PatternJassNetwork::evaluate(const Position& pos) const noexcept {
     // Where skeleton is either :
     //   - handcrafted (default, Option F, Scan-style §3)
     //   - NNUE (when constructed with --benchmark-pattern-jass-nnue-skel,
-    //     Option I in docs/PARADIGM_SHIFT_OPTIONS.md)
+    //     Option I in docs/archives/PARADIGM_SHIFT_OPTIONS.md)
     const int skeleton_cp = skeleton_
         ? skeleton_->evaluate(pos)
         : ::jass::evaluate(pos);

@@ -177,7 +177,7 @@ echo "  References :"
 echo "    v5 reference vs handcrafted: 0.852"
 echo "    Cycle 9 100K (no quiet filter) vs v5 d10: 0.500 (tie)"
 echo
-echo "  Decision (per docs/ROADMAP.md Phase 0) :"
+echo "  Decision (per docs/archives/ROADMAP.md Phase 0) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r > 0.55) }'; then
     echo "    STRONG GAIN — quiet filter est LA réponse. Généraliser :"
     echo "    régénérer le corpus 1M complet avec --quiet-only, retrain."

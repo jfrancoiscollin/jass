@@ -124,7 +124,7 @@ void test_probe_3v1_unknown_when_men_present() {
 // zero piece cap, every probe Unknown, and probe_endgame must fall through to
 // the in-memory kings-only logic exactly as before. (The real-flavour
 // behaviour is validated on a host that has the library + DBs; see
-// docs/BITBASE_INTEGRATION.md.)
+// docs/archives/BITBASE_INTEGRATION.md.)
 void test_egdb_stub_is_inert() {
     JASS_CHECK(egdb::init("/nonexistent/path", 16) == false);
     JASS_CHECK(egdb::available() == false);

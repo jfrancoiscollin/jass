@@ -14,7 +14,7 @@ any other browser front-end.
 `.github/workflows/build.yml` builds the WASM on every push, uploads
 the artefacts under the workflow-artefact name `jass-wasm`, and
 optionally publishes a demo site to GitHub Pages on `main`. See the
-[CI section of the README](README.md#continuous-integration--wasm-hosting).
+[CI section of the README](../../README.md#continuous-integration--wasm-hosting).
 
 ### Locally
 
@@ -135,7 +135,7 @@ import createJass from './jass.js';
 })();
 ```
 
-The bundled [`wasm/example.html`](../wasm/example.html) ships exactly
+The bundled [`wasm/example.html`](../../wasm/example.html) ships exactly
 this kind of demo: it loads the module, prints the start position,
 asks the engine for a move at depth 6 and shows the result with
 elapsed time.

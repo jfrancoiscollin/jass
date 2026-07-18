@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0051-g1-lbfgs-d1-hybrid
-# description: G1 du docs/SCAN_METHODOLOGY_GAP.md. Re-train pattern v2
+# description: G1 du docs/archives/SCAN_METHODOLOGY_GAP.md. Re-train pattern v2
 #              hybrid base-5 (recipe D1 = 0048) SUR LE MÊME dataset
 #              (depth20-1M.bin de 0010), MAIS avec L-BFGS full-batch
 #              au lieu d'Adam minibatch.
@@ -18,7 +18,7 @@
 #   * early stopping patience 5 (best-val checkpoint restoré)
 #   * lbfgs_max_iter 20 par outer step (~600 inner iters total)
 #
-# Decision gate (per docs/SCAN_METHODOLOGY_GAP.md §G1) :
+# Decision gate (per docs/archives/SCAN_METHODOLOGY_GAP.md §G1) :
 #   rate vs v5 d10 ≥ 0.10 → Adam était en cause, continuer G2 (distillation)
 #                          avec LBFGS comme optimizer default pattern.
 #   ∈ (0.05, 0.10)        → progrès marginal, LBFGS pas décisif, faire G2
@@ -117,7 +117,7 @@ echo "    0046 Phase 1 pure pattern   : 0/18 hc, 0/54 d6, 0/54 d10"
 echo "    0048 D1 hybrid base-5 Adam  : 0/18 hc, 6/54 d6, 0/54 d10"
 echo "    0049 D2 hybrid base-3 Adam  : 0/18 hc, 1.5/54 d6, 0/54 d10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §G1) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §G1) :"
 if   awk -v r="$RATE_V5_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    ADAM WAS THE BOTTLENECK — LBFGS débloque significativement."
     echo "    Suite : G2 (distillation depuis v6) avec LBFGS comme default."

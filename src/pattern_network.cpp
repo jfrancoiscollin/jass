@@ -86,7 +86,7 @@ constexpr std::array<std::array<std::uint8_t, 8>, 16> V2_PATTERNS = {{
 // each. Geometry = (6 rows × 2 col-within-row) — captures forward-push
 // dynamics that 4×4 blocks (v2) miss. Approximates the verticals Scan
 // extracts via Perm_0/Perm_1 + 4-column bit-shifts (cf.
-// docs/SCAN_ARCHITECTURE_NOTES.md §3) without reproducing the exact
+// docs/archives/SCAN_ARCHITECTURE_NOTES.md §3) without reproducing the exact
 // bitboard tricks (those depend on Scan's sparse layout, different
 // from jass's bitboard convention).
 //

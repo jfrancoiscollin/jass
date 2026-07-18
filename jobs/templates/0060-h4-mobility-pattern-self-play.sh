@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # id: 0060-h4-mobility-pattern-self-play
-# description: H4 du docs/SCAN_METHODOLOGY_GAP.md. Ajoute le king
+# description: H4 du docs/archives/SCAN_METHODOLOGY_GAP.md. Ajoute le king
 #              mobility feature (Scan-aligned, MG/EG split) à l'archi
 #              pattern hybrid + extras + phase split. JPAT v6.
 #
@@ -197,7 +197,7 @@ echo "    v5 d6 / d10:       $R_V5_D6 / $R_V5_D10"
 [ -n "$R_V6_D10" ] && echo "    v6 d10:            $R_V6_D10"
 [ -n "$R_V7_D10" ] && echo "    v7 d10:            $R_V7_D10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H4) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §H4) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    MOBILITY WAS THE MISSING FEATURE — unlock pattern axis."
     echo "    Suite : scale-up (H2 volume) ou production training."

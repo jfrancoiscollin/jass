@@ -8,7 +8,7 @@
 # morceau ne se "volatilise" sans qu'on le voie, et donne le point de réassemblage.
 #
 # Usage :
-#   tools/corpus_manifest.sh                 # imprime le manifeste + écrit docs/CORPUS_30M_MANIFEST.md
+#   tools/corpus_manifest.sh                 # imprime le manifeste + écrit docs/archives/CORPUS_30M_MANIFEST.md
 #   tools/corpus_manifest.sh assemble OUT    # décompresse+fusionne tous les shards en UN .jnnw (OUT)
 #
 # Format JNNW : 4o magic 'JNNW' + 4o uint32 LE (n_records) + body (REC=38o/record).
@@ -48,7 +48,7 @@ PY
 fi
 
 # --- mode manifeste ---
-DOC="docs/CORPUS_30M_MANIFEST.md"
+DOC="docs/archives/CORPUS_30M_MANIFEST.md"
 TOTN=0; TOTB=0; ROWS=""
 for s in "${SHARDS[@]}"; do
   n=$(count_of "$s"); [ -z "$n" ] && n=-1

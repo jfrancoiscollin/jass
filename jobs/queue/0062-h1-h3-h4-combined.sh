@@ -220,7 +220,7 @@ echo "    v5 d6 / d10:       $R_V5_D6 / $R_V5_D10"
 [ -n "$R_V6_D10" ] && echo "    v6 d10:            $R_V6_D10"
 [ -n "$R_V7_D10" ] && echo "    v7 d10:            $R_V7_D10"
 echo
-echo "  Decision (per docs/SCAN_METHODOLOGY_GAP.md §H4) :"
+echo "  Decision (per docs/archives/SCAN_METHODOLOGY_GAP.md §H4) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    MOBILITY WAS THE MISSING FEATURE — unlock pattern axis."
     echo "    Suite : scale-up (H2 volume) ou production training."

@@ -231,7 +231,7 @@ echo "    v5 d6 / d10:       $R_V5_D6 / $R_V5_D10"
 [ -n "$R_V6_D10" ] && echo "    v6 d10:            $R_V6_D10"
 [ -n "$R_V7_D10" ] && echo "    v7 d10:            $R_V7_D10"
 echo
-echo "  Decision (H1+H3 combined, per docs/SCAN_METHODOLOGY_GAP.md) :"
+echo "  Decision (H1+H3 combined, per docs/archives/SCAN_METHODOLOGY_GAP.md) :"
 if [ -n "$R_V6_D10" ] && awk -v r="$R_V6_D10" 'BEGIN { exit !(r >= 0.10) }'; then
     echo "    COMBO UNLOCK — H1 (géométrie v3) + H3 (bootstrap master) ensemble"
     echo "    débloquent l'archi pattern. Isoler ensuite : H3 seul vs H1 seul"

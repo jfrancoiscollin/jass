@@ -26,7 +26,7 @@
 // The seam keeps the adaptation (board mapping, result mapping, side-to-move,
 // lifecycle, thread-safety, noexcept wrapping) in ONE translation unit so the
 // rest of the engine never sees `egdb_intl` types. See
-// docs/BITBASE_INTEGRATION.md for the full plan and the open verification
+// docs/archives/BITBASE_INTEGRATION.md for the full plan and the open verification
 // items (the bit-layout mapping is the #1 thing to confirm against the
 // egdb_intl headers before trusting a single probe).
 

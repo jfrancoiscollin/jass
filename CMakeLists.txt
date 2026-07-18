@@ -124,7 +124,7 @@ endif()
 
 # King-mobility / confinement extras (Scan's king_mob) : separate king-slide
 # mobility per side + trapped-king count = the structural conversion gradient.
-# See src/scan_eval.hpp + docs/SCAN_EVAL_DIFF.md (LEAD 1).
+# See src/scan_eval.hpp + docs/archives/SCAN_EVAL_DIFF.md (LEAD 1).
 option(JASS_KING_MOBILITY "Add king-mobility/confinement extras (Scan king_mob, +4 extras)" OFF)
 if(JASS_KING_MOBILITY)
     add_compile_definitions(JASS_KING_MOBILITY=1)
@@ -147,7 +147,7 @@ endif()
 
 # Drawish-material draw-scaling (Scan's one non-linear eval term) : shrink the
 # score toward a draw in unwinnable K-vs-few / near-equal endgames. Play-time
-# only (not trained). See src/scan_eval.cpp + docs/SCAN_EVAL_DIFF.md.
+# only (not trained). See src/scan_eval.cpp + docs/archives/SCAN_EVAL_DIFF.md.
 option(JASS_DRAWISH_SCALING "Scale eval toward draw in drawish material endgames (Scan)" OFF)
 if(JASS_DRAWISH_SCALING)
     add_compile_definitions(JASS_DRAWISH_SCALING=1)
@@ -176,7 +176,7 @@ endif()
 # static `egdb_intl` lib (no prebuilt lib needed; the build job clones the repo
 # the same way the Scan jobs do). A prebuilt lib is still accepted via
 # -DJASS_EGDB_LIB + -DJASS_EGDB_INCLUDE_DIR. The DB *data* files are downloaded
-# separately on the host (edgilbert.org). See docs/BITBASE_INTEGRATION.md.
+# separately on the host (edgilbert.org). See docs/archives/BITBASE_INTEGRATION.md.
 option(JASS_EGDB "Link Kingsrow egdb_intl for full endgame WLD lookups" OFF)
 if(JASS_EGDB)
     add_compile_definitions(JASS_EGDB=1)

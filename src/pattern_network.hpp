@@ -44,7 +44,7 @@
 //     int32[5^K] weights (row-major over the base-5 state index)
 //
 // Version 2 (D1 hybrid, pattern + material/king skeleton — cf.
-// docs/SCAN_ARCHITECTURE_NOTES.md §6):
+// docs/archives/SCAN_ARCHITECTURE_NOTES.md §6):
 //   [0..4)   magic         = "JPAT"
 //   [4..8)   uint32 version = 2
 //   [8..12)  uint32 num_patterns
@@ -68,7 +68,7 @@
 //     int32[encoding_base^K] weights
 //
 // Version 4 (G3a feature engineering — Scan-aligned king PST + balance,
-// mono-phase; cf. docs/SCAN_METHODOLOGY_GAP.md §G3). Strict additive
+// mono-phase; cf. docs/archives/SCAN_METHODOLOGY_GAP.md §G3). Strict additive
 // extension of v3 (header grows AFTER encoding_base, then patterns):
 //   [0..4)    magic         = "JPAT"
 //   [4..8)    uint32 version = 4
@@ -101,7 +101,7 @@
 //
 // Version 6 (H4 king mobility — Scan-aligned king_mob feature, mono-
 // component "free squares around kings", MG/EG split; cf.
-// docs/SCAN_METHODOLOGY_GAP.md §H4). Strict additive extension of v5
+// docs/archives/SCAN_METHODOLOGY_GAP.md §H4). Strict additive extension of v5
 // (mobility weights appended after king_pst_eg):
 //   [0..445)   identical to v5 header
 //   [445..449) int32  mobility_mg
@@ -151,7 +151,7 @@
 // (it would be v5/G3b).
 //
 // Version 8 (paradigm shift A — pattern embeddings + MLP end-to-end ;
-// cf. docs/PARADIGM_SHIFT_OPTIONS.md option A, jobs 0067/0068). Replaces
+// cf. docs/archives/PARADIGM_SHIFT_OPTIONS.md option A, jobs 0067/0068). Replaces
 // the per-pattern scalar weight lookup with a per-pattern EMBEDDING
 // table (base^K float32 vectors of size embed_dim), concatenated across
 // patterns and fed to a dedicated MLP (input dim = N×embed_dim, hidden
@@ -230,8 +230,8 @@ public:
     // organised as vertical strips (6 rows × 2 col-within-row). Captures
     // forward-push dynamics that v2's 4×4 blocks miss — closer to the
     // verticals Scan extracts via Perm_0/Perm_1 (cf.
-    // docs/SCAN_ARCHITECTURE_NOTES.md §3). Used by G5-diag of
-    // docs/SCAN_METHODOLOGY_GAP.md §H1 to test if pattern geometry was
+    // docs/archives/SCAN_ARCHITECTURE_NOTES.md §3). Used by G5-diag of
+    // docs/archives/SCAN_METHODOLOGY_GAP.md §H1 to test if pattern geometry was
     // the bottleneck of the supervised chain G1→G4-diag. ~4.25M
     // weights in base-3 (~17 MB JPAT).
     static PatternNetwork default_v3();
