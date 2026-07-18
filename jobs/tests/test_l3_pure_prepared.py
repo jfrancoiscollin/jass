@@ -53,6 +53,19 @@ class L3PurePreparedTests(unittest.TestCase):
         self.assertIn('"${warm_start_args[@]}" --holdout-count', text)
         self.assertNotIn('--warm-start "$PILOT" --holdout-count', text)
 
+    def test_quiescence_fingerprint_is_explicit_and_manifested(self):
+        text = TEMPLATE.read_text()
+        expected = (
+            "qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,"
+            "qs_forcing_depth=0,qs_promo_depth=0"
+        )
+        self.assertIn(f'L3_SEARCH_PARAMS="{expected}"', text)
+        self.assertEqual(text.count('--search-params "$L3_SEARCH_PARAMS"'), 1)
+        self.assertIn('"search_params_scope":"play_and_label"', text)
+        self.assertIn('"search_params_inherited_defaults":False', text)
+        self.assertIn('l3-run-config.json', text)
+        self.assertIn('search_params_sha256', text)
+
 
 if __name__ == "__main__":
     unittest.main()

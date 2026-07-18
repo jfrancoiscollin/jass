@@ -103,6 +103,27 @@ conversion tardive :
 - aucun `drop-post-eps` : les continuations restent jouées et apprises ;
 - aucun coup exploratoire après la zone de décroissance.
 
+### 2.5 Empreinte de recherche C0
+
+La recherche de jeu et la recherche de score utilisent le même fingerprint,
+passé explicitement au moteur ; elles n'héritent pas de futurs changements des
+valeurs par défaut :
+
+```text
+qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0
+```
+
+Les chaînes de captures obligatoires de la quiescence restent toujours jouées.
+Seuls les sacrifices sélectifs et l'extension de menace, déjà validés au
+movetime, sont actifs. La quiescence forcing profonde et la poursuite des
+promotions calmes restent désactivées : leurs variantes historiques ont perdu
+plus de force par coût en nœuds qu'elles n'ont gagné en précision de feuille.
+
+Le runner publie la chaîne exacte, son SHA-256, sa portée
+`play_and_label` et le SHA du code dans les manifests. Changer un seul de ces
+paramètres constitue un fork scientifique distinct ; aucune modification n'est
+permise au milieu d'un bras ou entre les bras A et B.
+
 ## 3. Frontière mobile de conversion
 
 Après une génération, on examine uniquement ses propres samples WDL. Une
