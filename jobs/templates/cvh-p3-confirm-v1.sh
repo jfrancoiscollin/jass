@@ -75,8 +75,9 @@ J="$W/build/jass"
 python3 -m py_compile "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py"
 sha256sum "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" | tee -a "$RES"
 
-# Freeze an independent, decisive P3 subset. The source index is intentionally
-# re-based inside this new JNNW; A and C10 consume the exact same frozen bytes.
+# Freeze an independent P3 subset where the material leader is certified as the
+# winner. This matches the auxiliary target and ensures conv_fixed_wdl assigns
+# the candidate to the leader rather than to a materially trailing winner.
 python3 - "$POOL_SRC" "$W/p3-confirm.jnnw" "$CONFIRM_N" <<'PY'
 import random,struct,sys
 src,out,n=sys.argv[1],sys.argv[2],int(sys.argv[3]); raw=open(src,'rb').read()
@@ -85,15 +86,24 @@ cnt=struct.unpack_from('<I',raw,4)[0]; body=raw[8:]; rec=38
 if len(body)!=cnt*rec: raise SystemExit('truncated JNNW')
 keep=[]
 for i in range(cnt):
-    r=body[i*rec:(i+1)*rec]; wm,wk,bm,bk=struct.unpack_from('<QQQQ',r,0)
-    pieces=sum(x.bit_count() for x in (wm,wk,bm,bk))
-    margin=abs((bm.bit_count()+3*bk.bit_count())-(wm.bit_count()+3*wk.bit_count()))
+    r=body[i*rec:(i+1)*rec]
+    wm,wk,bm,bk=struct.unpack_from('<QQQQ',r,0)
+    stm=r[32]
     wdl=struct.unpack_from('<b',r,37)[0]
-    if margin==1 and 8<=pieces<20 and wdl!=0: keep.append(r)
-if len(keep)<n: raise SystemExit(f'need {n} decisive P3 records, found {len(keep)}')
+    pieces=sum(x.bit_count() for x in (wm,wk,bm,bk))
+    white_value=wm.bit_count()+3*wk.bit_count()
+    black_value=bm.bit_count()+3*bk.bit_count()
+    margin=abs(black_value-white_value)
+    if wdl == 0 or margin != 1 or not (8 <= pieces < 20):
+        continue
+    leader=1 if black_value > white_value else 0
+    winner=stm if wdl > 0 else 1-stm
+    if winner == leader:
+        keep.append(r)
+if len(keep)<n: raise SystemExit(f'need {n} certified leader-winning P3 records, found {len(keep)}')
 rng=random.Random(141421); rng.shuffle(keep); keep=keep[:n]
 open(out,'wb').write(b'JNNW'+struct.pack('<I',len(keep))+b''.join(keep))
-print(f'frozen decisive P3 subset n={len(keep)}')
+print(f'frozen certified leader-winning P3 subset n={len(keep)}')
 PY
 sha256sum "$W/p3-confirm.jnnw" | tee -a "$RES"
 
