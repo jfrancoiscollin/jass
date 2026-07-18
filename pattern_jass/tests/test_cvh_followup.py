@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+from __future__ import annotations
+
+import json
+import struct
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "jobs" / "tools"))
+
+import cvh_nps_ab as nps  # noqa: E402
+import cvh_followup_verdict as verdict  # noqa: E402
+
+
+def rec(wm: int, wk: int, bm: int, bk: int, stm: int = 0, wdl: int = 0) -> bytes:
+    return struct.pack("<QQQQBiB", wm, wk, bm, bk, stm, 0, wdl & 0xFF)
+
+
+def write_jnnw(path: Path, records: list[bytes]) -> None:
+    path.write_bytes(b"JNNW" + struct.pack("<I", len(records)) + b"".join(records))
+
+
+def test_sample_filters_distinguish_p3_and_offgate(tmp_path: Path) -> None:
+    # P3: black 5 men vs white 4 men, 9 pieces.
+    p3 = rec(sum(1 << i for i in range(20, 24)), 0,
+             sum(1 << i for i in range(0, 5)), 0)
+    # Off-gate: equal material, 8 pieces.
+    off = rec(sum(1 << i for i in range(24, 28)), 0,
+              sum(1 << i for i in range(5, 9)), 0)
+    path = tmp_path / "x.jnnw"
+    write_jnnw(path, [p3, off])
+
+    p3_samples = nps.load_samples(path, 1, 1, "p3")
+    off_samples = nps.load_samples(path, 1, 1, "offgate")
+    assert p3_samples[0].margin == 1
+    assert off_samples[0].margin == 0
+
+
+def test_match_aggregation_and_gate(tmp_path: Path) -> None:
+    a = tmp_path / "a.log"
+    b = tmp_path / "b.log"
+    a.write_text("noise\nRESULT 10 20 10\n", encoding="utf-8")
+    b.write_text("RESULT 12 18 10\n", encoding="utf-8")
+    report = verdict.aggregate_match([a, b])
+    assert report["n"] == 80
+    assert report["rate"] > 0.5
+    gate = verdict.match_gate(report, "common_search", min_n=64, min_rate=0.49)
+    assert gate["pass"] is True
+
+
+def test_nps_gate_fails_closed_on_az_mismatch() -> None:
+    cells = {
+        "A": {"searches": 10, "errors": 0, "nps_ratio_vs_a": 1.0},
+        "Z": {"searches": 10, "errors": 0, "nps_ratio_vs_a": 1.0},
+        "C10": {"searches": 10, "errors": 0, "nps_ratio_vs_a": 0.99},
+    }
+    general = {"cells": cells, "az_common_searches": 10, "az_move_mismatches": 1}
+    p3 = {"cells": cells, "az_common_searches": 10, "az_move_mismatches": 0}
+    try:
+        verdict.nps_gate(general, p3, 0.98, 0.99, 1.01)
+    except ValueError as exc:
+        assert "A/Z" in str(exc)
+    else:
+        raise AssertionError("A/Z mismatch accepted")
+
+
+def test_paired_confirmation_requires_positive_lower_bound(tmp_path: Path) -> None:
+    base = tmp_path / "base.json"
+    cand = tmp_path / "cand.json"
+    # 500 paired positions: baseline wins 250, candidate wins the same 250 plus 20.
+    base_rows = []
+    cand_rows = []
+    for i in range(500):
+        base_rows.append({"index": i, "result": "win" if i < 250 else "draw"})
+        cand_rows.append({"index": i, "result": "win" if i < 270 else "draw"})
+    base.write_text(json.dumps({"position_results": base_rows}), encoding="utf-8")
+    cand.write_text(json.dumps({"position_results": cand_rows}), encoding="utf-8")
+    report = verdict.confirmation_gate([base], [cand], min_n=400, min_delta=0.02)
+    assert report["paired_n"] == 500
+    assert report["delta"] == 0.04
+    assert report["ci95_low"] > 0
+    assert report["pass"] is True
