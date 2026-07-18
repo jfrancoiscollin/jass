@@ -16,6 +16,9 @@ import time
 from pathlib import Path
 
 
+LEGACY_SEARCH_PARAMS = "qs_forcing_depth=6,qs_promo_depth=6"
+
+
 def parse_result_files(paths: list[Path], expected_shards: int) -> dict:
     if len(paths) != expected_shards:
         raise ValueError(f"got {len(paths)} shard logs, expected {expected_shards}")
@@ -57,17 +60,23 @@ def parse_result_files(paths: list[Path], expected_shards: int) -> dict:
     }
 
 
+def resolve_search_params(args: argparse.Namespace) -> None:
+    """Resolve legacy shared and explicit per-side fingerprints in one place."""
+    shared = args.search_params or LEGACY_SEARCH_PARAMS
+    args.search_params_a = args.search_params_a or shared
+    args.search_params_b = args.search_params_b or shared
+
+
 def command_for(args: argparse.Namespace, shard: int) -> list[str]:
-    return [
+    command = [
         sys.executable,
         args.harness,
         "--jass-a", args.jass_a,
         "--pattern-a", args.pattern_a,
         "--jass-b", args.jass_b,
         "--pattern-b", args.pattern_b,
-        "--search-params-a", args.search_params,
-        "--search-params-b", args.search_params,
-        "--depth", str(args.depth),
+        "--search-params-a", args.search_params_a,
+        "--search-params-b", args.search_params_b,
         "--pairs", str(args.pairs),
         "--max-plies", str(args.max_plies),
         "--shard", str(shard),
@@ -75,6 +84,11 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
         "--quiet",
         "--openings-file", args.openings_file,
     ]
+    if args.movetime is not None:
+        command.extend(["--movetime", str(args.movetime)])
+    else:
+        command.extend(["--depth", str(args.depth)])
+    return command
 
 
 def run_gate(args: argparse.Namespace) -> dict:
@@ -128,7 +142,10 @@ def run_gate(args: argparse.Namespace) -> dict:
         "jass_b": args.jass_b,
         "pattern_a": args.pattern_a,
         "pattern_b": args.pattern_b,
-        "depth": args.depth,
+        "search_params_a": args.search_params_a,
+        "search_params_b": args.search_params_b,
+        "depth": None if args.movetime is not None else args.depth,
+        "movetime": args.movetime,
         "pairs": args.pairs,
         "nshards": args.nshards,
         "max_parallel": max_parallel,
@@ -149,8 +166,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pattern-b", required=True)
     parser.add_argument("--openings-file", required=True)
     parser.add_argument("--harness", default="jobs/tools/jass_vs_jass_arch.py")
-    parser.add_argument("--search-params", default="qs_forcing_depth=6,qs_promo_depth=6")
-    parser.add_argument("--depth", type=int, default=9)
+    parser.add_argument(
+        "--search-params",
+        help="shared fingerprint (legacy shorthand; defaults to historical 6/6)",
+    )
+    parser.add_argument("--search-params-a", help="resolved fingerprint for side A")
+    parser.add_argument("--search-params-b", help="resolved fingerprint for side B")
+    budget = parser.add_mutually_exclusive_group()
+    budget.add_argument("--depth", type=int, default=9)
+    budget.add_argument("--movetime", type=float, help="equal seconds per move on both sides")
     parser.add_argument("--pairs", type=int, default=1)
     parser.add_argument("--max-plies", type=int, default=160)
     parser.add_argument("--nshards", type=int, default=16)
@@ -163,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     args.jass_b = args.jass_b or args.jass
     if not args.jass_a or not args.jass_b:
         parser.error("provide --jass, or both --jass-a and --jass-b")
+    resolve_search_params(args)
     try:
         result = run_gate(args)
         Path(args.out).write_text(json.dumps(result, indent=2), encoding="utf-8")
