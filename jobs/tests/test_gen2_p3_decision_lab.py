@@ -43,6 +43,12 @@ def test_baseline_fail_closed() -> None:
         good = root / "good.json"
         good.write_text(json.dumps({"n_errors": 0, "position_results": [{"index": 2, "result": "win"}]}))
         check(lab.load_baseline([good]) == {2: "win"}, "baseline load")
+        try:
+            lab.load_baseline([good], "different-pool")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("baseline pool mismatch accepted")
         bad = root / "bad.json"
         bad.write_text(json.dumps({"n_errors": 1, "position_results": []}))
         try:
@@ -97,6 +103,7 @@ def test_templates() -> None:
         check("/root/jass" not in text, f"legacy path in {path.name}")
         check("jobs/queue" not in text, f"queue reference in {path.name}")
         check("JFC_GO" in text and "FULL_RUN_APPROVED" in text, f"approval guard missing in {path.name}")
+        check("gen_patterns.py --variant v4 --emit" in text, f"32cf geometry not pinned in {path.name}")
         subprocess.run(["bash", "-n", str(path)], check=True)
 
 
@@ -104,6 +111,7 @@ def test_replay_is_the_paired_baseline() -> None:
     source = (ROOT / "jobs/tools/gen2_p3_decision_lab.py").read_text(encoding="utf-8")
     check('event["baseline_replay_result"]' in source, "paired baseline does not use replay")
     check('"baseline_replay_mismatches"' in source, "historical/replay drift not published")
+    check("engine.new_game()" in source, "sibling searches do not reset engine state")
 
 
 def main() -> None:
