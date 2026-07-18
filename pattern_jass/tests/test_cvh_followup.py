@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import struct
+import subprocess
 import sys
 from pathlib import Path
 
@@ -82,3 +83,15 @@ def test_paired_confirmation_requires_positive_lower_bound(tmp_path: Path) -> No
     assert report["delta"] == 0.04
     assert report["ci95_low"] > 0
     assert report["pass"] is True
+
+
+def test_job_templates_are_valid_bash() -> None:
+    for name in (
+        "cvh-p3-postfix-nps-common-v1.sh",
+        "cvh-p3-movetime-v1.sh",
+        "cvh-p3-confirm-v1.sh",
+    ):
+        subprocess.run(
+            ["bash", "-n", str(ROOT / "jobs" / "templates" / name)],
+            check=True,
+        )
