@@ -346,6 +346,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      l'exploration au debut (0 = pas de decroissance).
     bool         drop_post_eps     = false;  // --drop-post-eps : FIX#1. n'emet PAS les samples
                                             //      ply<=last_eps_ply (label contamine par un eps posterieur).
+    bool         drop_plycap       = false;  // --drop-plycap : n'emet AUCUN sample d'une partie
+                                            //      non resolue a max_plies (jamais de faux label DRAW).
+    const char*  sample_meta_path  = nullptr; // --sample-meta-out : sidecar JSM1 aligne 1:1,
+                                             //      (game_id, opening_id, seeded) par record.
     int          adjud_material    = 0;      // --adjud-material M : FIX#2. avance materielle NETTE (men-equiv,
                                             //      dame=3) >= M tenue adjud_hold_plies => win (0 = off).
     int          adjud_hold_plies  = 10;     // --adjud-hold-plies H : plies consecutifs d'avance requis.
@@ -416,6 +420,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if (v >= 0) explore_decay_plies = v;
         } else if (a == "--drop-post-eps") {
             drop_post_eps = true;
+        } else if (a == "--drop-plycap") {
+            drop_plycap = true;
+        } else if (a == "--sample-meta-out" && i + 1 < argc) {
+            sample_meta_path = argv[++i];
         } else if (a == "--adjud-material" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) adjud_material = v;
@@ -485,7 +493,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
               << " pv_extract=" << pv_extract
-              << " movetime_ms=" << movetime_ms;
+              << " movetime_ms=" << movetime_ms
+              << " drop_plycap=" << (drop_plycap ? "true" : "false")
+              << " sample_meta=" << (sample_meta_path ? sample_meta_path : "(off)");
     {
         bool any = false;
         for (int p = 0; p < NUM_PHASES; ++p) {
@@ -520,6 +530,23 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     f.write(magic, 4);
     std::uint32_t count_placeholder = 0;
     f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
+
+    // Optional aligned metadata.  JSM1 is intentionally tiny and independent
+    // from JNNW so all existing readers remain byte-compatible:
+    //   4B magic + u32 count + count * (u64 game_id, u64 opening_id, u8 seeded).
+    // `opening_id` groups the two repetitions created by --pair-openings, which
+    // lets the Python splitter keep colour/role pairs in the same holdout fold.
+    std::ofstream sample_meta;
+    if (sample_meta_path) {
+        sample_meta.open(sample_meta_path, std::ios::binary);
+        if (!sample_meta) {
+            std::cerr << "error: cannot open " << sample_meta_path << " for writing\n";
+            return 1;
+        }
+        const char meta_magic[4] = {'J', 'S', 'M', '1'};
+        sample_meta.write(meta_magic, 4);
+        sample_meta.write(reinterpret_cast<const char*>(&count_placeholder), 4);
+    }
 
     // Splitmix-style scrambling of the user-provided seed so two
     // shards launched with seeds 1 and 2 yield trajectories that are
@@ -594,10 +621,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // Label-hygiene instrumentation (MEASURE-ONLY, ne change PAS l'emission) :
     //   #ply-cap  = parties terminees par la limite max_plies (issue=nulle par defaut => FIX #2)
     //   #post-eps = samples situes A/AVANT le dernier coup d'exploration eps (label contamine => FIX #1)
-    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0, stat_dropped = 0, stat_adjudicated = 0, stat_tb_relabel = 0;
+    long long stat_plycap_games = 0, stat_contaminated = 0, stat_total_samples = 0,
+              stat_dropped = 0, stat_plycap_dropped = 0, stat_adjudicated = 0,
+              stat_tb_relabel = 0;
 
     int generated  = 0;
     int game_count = 0;
+    std::uint64_t opening_count = 0;
 
     // Load the egdb tablebase if JASS_EGDB_PATH is set (no-op otherwise). Used by
     // the terminate-at-TB rule below so won/lost endgames get their EXACT result
@@ -606,10 +636,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 
     while (generated < n) {
         e.new_game();
+        ++opening_count;
+        bool opening_from_seed = false;
 
         // Endgame seeding : start this game from a random seed position instead
         // of the FMJD start (then the random opening plies add diversity around it).
         if (!seeds.empty() && static_cast<int>(rng() % 100) < seed_frac) {
+            opening_from_seed = true;
             const SeedPos& sp = seeds[rng() % seeds.size()];
             Position p{};
             p.set_side_to_move(sp.stm ? Color::Black : Color::White);
@@ -836,6 +869,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         }
         if (hit_ply_cap) ++stat_plycap_games;   // partie terminee par max_plies (issue=nulle par defaut)
 
+        // A ply-cap is censoring, not evidence for a draw.  Legacy jobs retain
+        // the historical label unless they opt in; L3-PURE enables this flag and
+        // keeps playing new games until it has N eligible records.
+        if (drop_plycap && hit_ply_cap) {
+            stat_total_samples += static_cast<long long>(game_samples.size());
+            stat_plycap_dropped += static_cast<long long>(game_samples.size());
+            continue;
+        }
+
         // Flush this game's samples with the resolved WDL label. WDL is
         // computed from each sample's STM perspective: +1 means "the side
         // to move at sample time eventually won".
@@ -874,6 +916,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
             f.write(reinterpret_cast<const char*>(&s.score), 4);
             f.write(reinterpret_cast<const char*>(&wdl_byte), 1);
+            if (sample_meta.is_open()) {
+                const std::uint64_t game_id = static_cast<std::uint64_t>(game_count);
+                const std::uint8_t seeded = opening_from_seed ? 1u : 0u;
+                sample_meta.write(reinterpret_cast<const char*>(&game_id), 8);
+                sample_meta.write(reinterpret_cast<const char*>(&opening_count), 8);
+                sample_meta.write(reinterpret_cast<const char*>(&seeded), 1);
+            }
             ++generated;
             if (generated >= n) break;
         }
@@ -889,6 +938,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     const std::uint32_t count32 = static_cast<std::uint32_t>(generated);
     f.write(reinterpret_cast<const char*>(&count32), 4);
     f.close();
+    if (sample_meta.is_open()) {
+        sample_meta.seekp(4, std::ios::beg);
+        sample_meta.write(reinterpret_cast<const char*>(&count32), 4);
+        sample_meta.close();
+    }
 
     std::cout << "wrote " << generated << " WDL records to " << out_path << "\n";
     // === LABEL-HYGIENE STATS (MEASURE-ONLY, briefing §7.0) ===
@@ -898,9 +952,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
                   << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
                   << " (" << con << "%)  dropped_post_eps=" << stat_dropped
+                  << "  dropped_plycap_samples=" << stat_plycap_dropped
                   << "  adjudicated=" << stat_adjudicated
                   << "  tb_relabel=" << stat_tb_relabel
                   << " (drop_post_eps=" << (drop_post_eps ? "on" : "off")
+                  << " drop_plycap=" << (drop_plycap ? "on" : "off")
                   << " decay_plies=" << explore_decay_plies
                   << " adjud_material=" << adjud_material << " hold=" << adjud_hold_plies
                   << " pair_openings=" << (pair_openings ? "on" : "off")
@@ -4709,13 +4765,17 @@ int main(int argc, char** argv) {
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --random-open-plies K : K random\n"
                 "                                   opening plies (default 4). --explore-eps E :\n"
                 "                                   play E%% of plies as a random legal move\n"
                 "                                   (off-policy μ widening).\n"
+                "                                   --drop-plycap excludes every sample from\n"
+                "                                   games unresolved at max_plies instead of\n"
+                "                                   fabricating a DRAW label. --sample-meta-out\n"
+                "                                   writes aligned JSM1 game/opening provenance.\n"
                 "                                   --play-depth-by-phase\n"
                 "                                   \"endgame=12,deep-eg=14\" PLAYS\n"
                 "                                   those phases at a DEEPER search\n"

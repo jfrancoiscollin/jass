@@ -427,7 +427,7 @@ def train_lbfgs(X: sp.csr_matrix, y: np.ndarray, l2: float,
 def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                         logistic, n_cols, batch, sw_all=None,
                         hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0,
-                        prior_mean=None, prior_prec=None):
+                        prior_mean=None, prior_prec=None, initial_mean=None):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
@@ -442,9 +442,19 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     prior MAP term `0.5·Σ prec_i·(w_i−μ_i)²` and the optimiser is warm-started at μ.
     Carries the previous champion forward as a per-bucket precision-weighted prior
     (anti-forgetting of rare buckets ; see train_stream --prior-mean). Composes with
-    hier_l2 (still added on top)."""
+    hier_l2 (still added on top).
+
+    `initial_mean` is deliberately weaker: it only supplies the optimiser's starting
+    point.  The objective remains the ordinary zero-centred L2 objective.  This is
+    useful for autonomous lineages that want continuity between generations without
+    turning the previous evaluator into a teacher or a ridge target.
+    """
     N = len(tr_idx); eps = 1e-12
     use_prior = prior_mean is not None and prior_prec is not None
+    if use_prior and initial_mean is not None:
+        raise ValueError("initial_mean and prior_mean/prior_prec are mutually exclusive")
+    if initial_mean is not None and len(initial_mean) != n_cols:
+        raise ValueError(f"initial_mean has {len(initial_mean)} weights, expected {n_cols}")
     # --- Hierarchical shrinkage (backoff) : penalise each pattern bucket's DEVIATION
     #     from its parent pattern mean (λ_h·Σ(w_b−μ_p)²) instead of toward 0, so rare
     #     buckets inherit the pattern mean rather than collapsing to "neutral". The
@@ -498,7 +508,12 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                 grad[_blk:_blk + pat_n] += hier_l2 * _dev
         return loss, grad
 
-    w0 = prior_mean.copy() if use_prior else np.zeros(n_cols, dtype=np.float64)
+    if use_prior:
+        w0 = prior_mean.copy()
+    elif initial_mean is not None:
+        w0 = np.asarray(initial_mean, dtype=np.float64).copy()
+    else:
+        w0 = np.zeros(n_cols, dtype=np.float64)
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
                    options={'maxiter': max_iter, 'maxcor': 5})
     return res.x, float(res.fun), int(res.nit)
