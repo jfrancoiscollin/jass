@@ -44,8 +44,10 @@ Pour chaque position que Gen2 n'a pas convertie :
 2. énumérer tous les enfants légaux ;
 3. rechercher chaque enfant au budget de vérification ;
 4. conserver les trois meilleurs enfants vérifiés et l'enfant baseline ;
-5. jouer chacun contre le même défenseur fixe ;
-6. publier l'événement complet et, pour les décisions calmes, une paire
+5. rejouer aussi l'enfant baseline sous exactement le même protocole ;
+6. comparer la seconde passe à ce replay baseline apparié, tout en publiant
+   l'écart éventuel avec le résultat historique de la position parente ;
+7. publier l'événement complet et, pour les décisions calmes, une paire
    `bon frère > frère baseline` utilisable par MMTO.
 
 Gate exploratoire :
