@@ -238,8 +238,8 @@ les cellules repartent de G0, utilisent Q00, deux générations de 150 k, d8,
 | `X_LLH` | 4 | 4 % | 60 | cpx62 | préparé hors queue |
 | `X_HLL` | 8 | 4 % | 30 | cpx62 | préparé hors queue |
 | `X_LHL` | 4 | 8 % | 30 | cpx62 | préparé hors queue |
-| `X_HHH_CONTROL` | 8 | 8 % | 60 | ccx33 | contrôle courant, préparé |
-| `X_CENTER` | 6 | 6 % | 45 | ccx33 | centre, préparé |
+| `X_HHH_CONTROL` | 8 | 8 % | 60 | cpx62 | contrôle courant, préparé |
+| `X_CENTER` | 6 | 6 % | 45 | cpx62 | centre, préparé |
 
 Le runner v5 publie par génération deux diagnostics supplémentaires :
 

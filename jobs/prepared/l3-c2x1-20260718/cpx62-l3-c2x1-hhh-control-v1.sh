@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# id: ccx33-l3-c2x1-hhh-control-v1
+# id: cpx62-l3-c2x1-hhh-control-v1
 # description: L3-PURE C2-X1 current-recipe control HHH (open=8, epsilon=8%, decay=60)
 # expected_duration: pending exact-profile micro-calibration; do not queue without explicit go
 set -Eeuo pipefail
@@ -13,4 +13,3 @@ export BASE_SEED=271828
 export SHARD_TIMEOUT=21600
 export JASS_BUILD_JOBS=8
 exec bash jobs/templates/l3-pure-x1-runner-v5.sh
-
