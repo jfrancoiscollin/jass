@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_generated_verdict_running`**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead (quiescence flat)`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -16,8 +16,8 @@ frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
 La revue des paramètres L3 (#351) est mergée. Le fork **C1-Q1 a été calibré,
 lancé et complété** : après un bug de manifest du runner v4 (corrigé, cf §5),
 les quatre cellules v2 sont `completed` avec leurs students G1/G2 manifestés ;
-le **verdict factoriel `cpx62-0806-c1q1-verdict` tourne** (conversion P1-P4 ×4 +
-gates common-search vs Q00 + effets 2×2 + écran Q1 pré-engagé).
+le **verdict factoriel `0806` rend `q1_no_lead`** : menace/sacs/interaction
+tous nuls, plateau ~0,67 inchangé (§6.2-6.4).
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -134,11 +134,16 @@ students G1/G2 sains. Filtre corrigé en `g[1-9]*.pjtw.gz` ; re-run v2 propre.
 
 Forcing, promotion et récursion des sacrifices restent à zéro/`depth0_only`
 pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
-écran). Verdict factoriel en cours : `cpx62-0806-c1q1-verdict`.
+écran). Verdict factoriel `cpx62-0806-c1q1-verdict` : **`q1_no_lead`** (§6.2-6.4/§7).
 
 ## 6. Trame de résultats C1-Q1
 
 ### 6.1 Santé de génération
+
+Les 8 chaînes G1/G2 (4 cellules v2 seed-271828 `0802-0805` + 4 réplications
+seed-161803 `0807-0810`) sont `completed` avec `label_score_searches=0` prouvé
+par shard, holdout>0 et manifests ; compteurs détaillés dans chaque
+`l3-pure-manifest.json`.
 
 | Cellule | G | Statut | Records | Ply-cap | Holdout N | Log-loss | Records/min | SHA modèle |
 |---|---:|---|---:|---:|---:|---:|---:|---|
@@ -153,28 +158,31 @@ pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
 
 ### 6.2 Conversion fixe
 
-| Cellule G2 | Global | P1 | P2 | P3 | P4 | N | IC |
-|---|---:|---:|---:|---:|---:|---:|---|
-| Q00 | — | — | — | — | — | — | — |
-| Q10 | — | — | — | — | — | — | — |
-| Q01 | — | — | — | — | — | — | — |
-| Q11 | — | — | — | — | — | — | — |
+Source : `cpx62-0806-c1q1-verdict` (jauge figée, défenseur gen2 ; verdict complet,
+exit 143 = SIGTERM au cleanup post-écriture, données intègres).
+
+| Cellule G2 | Global | P1 | P2 | P3 mince | P4 | N |
+|---|---:|---:|---:|---:|---:|---:|
+| Q00 (capture) | 0,671 | 0,836 | 0,584 | 0,520 | 0,539 | 861 |
+| Q10 (menace) | 0,668 | 0,835 | 0,569 | 0,511 | 0,557 | 861 |
+| Q01 (sacs) | 0,669 | 0,841 | 0,589 | 0,492 | 0,539 | 861 |
+| Q11 (menace+sacs) | 0,666 | 0,833 | 0,559 | 0,506 | 0,574 | 862 |
 
 ### 6.3 Effets factoriels
 
-| Effet | Estimation | IC apparié | Lecture |
-|---|---:|---:|---|
-| menace | — | — | — |
-| sacs | — | — | — |
-| interaction menace×sacs | — | — | — |
+| Effet | Estimation (global) | Lecture |
+|---|---:|---|
+| menace | **−0,003** | nul (bruit) |
+| sacs | **−0,002** | nul (bruit) |
+| interaction menace×sacs | **+0,0002** | nul |
 
-### 6.4 Force
+### 6.4 Force — gates common-search vs Q00
 
-| Vue | Comparaison | N | Rate | IC95 | Elo | Verdict |
-|---|---|---:|---:|---:|---:|---|
-| common-search | meilleur vs Q00 | — | — | — | — | — |
-| common-search | meilleur vs Q11 | — | — | — | — | — |
-| native movetime | meilleur vs contrôle | — | — | — | — | — |
+| Comparaison | N | Rate | IC95 | Lecture |
+|---|---:|---:|---:|---|
+| Q10 vs Q00 | 600 | 0,502 | [0,462 ; 0,542] | identiques |
+| Q01 vs Q00 | 600 | 0,511 | [0,471 ; 0,551] | identiques |
+| Q11 vs Q00 | 600 | 0,503 | [0,463 ; 0,542] | identiques |
 
 ## 7. Gates pré-engagés
 
@@ -189,6 +197,12 @@ Un lead passe en confirmation seulement si :
 La promotion finale exige l'IC de conversion au-dessus de zéro et la réplication
 depuis G0 avec la seconde graine `161803`.
 
+**Verdict Q1 (0806) : `q1_no_lead`.** Aucune cellule ne bat Q00 de ≥+0,02 ;
+effets menace/sacs/interaction tous nuls (≤0,003) ; gates common-search tous
+~0,50. L'écran quiescence est **plat** — la lignée pure atteint le même plateau
+~0,67 quel que soit le réglage menace×sacs. La réplication seconde-graine
+`161803` (cellules `0807-0810`, générées) confirmerait le nul si nécessaire.
+
 ## 8. Prochaines actions
 
 1. ✅ `0792` diagnostiqué et relancé en `0795` : verdict C0
@@ -198,6 +212,7 @@ depuis G0 avec la seconde graine `161803`.
    cpx62 64 k/min, ccx33 48 k/min ;
 4. ✅ bug manifest runner v4 corrigé (`e6787b8ac`) ; les quatre cellules v2
    `completed` avec manifests ;
-5. ⏳ verdict factoriel `cpx62-0806-c1q1-verdict` en cours (conversion P1-P4 ×4,
-   gates common-search, effets 2×2, écran Q1) ; enregistrer §6.1-6.4 + §7 au
-   finalize, puis décider Q2 ou passage au bloc suivant.
+5. ✅ verdict factoriel `0806` : **`q1_no_lead`** (quiescence plate, §6.2-6.4/§7) ;
+6. réplication seconde-graine `161803` (`0807-0810`) générée sur ccx33 ; verdict
+   de confirmation s2 optionnel (nul décisif) ;
+7. décider le prochain bloc de leviers L3 (Q2 non prioritaire vu le nul Q1).
