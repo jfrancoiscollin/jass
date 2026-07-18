@@ -57,6 +57,8 @@ STATUS_SUMMARY_NAMES = frozenset({
     "p3-power.json",
     "promotion.json",
     "scientific-summary.json",
+    "sparring-smoke-decision.json",
+    "sparring-decision.json",
     "teacher-confirmation-decision.json",
     "teacher-smoke-decision.json",
     "teacher-smoke-precheck.json",
