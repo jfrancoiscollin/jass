@@ -14,6 +14,12 @@ sys.path.insert(0, str(ROOT / "jobs" / "tools"))
 import cvh_nps_ab as nps  # noqa: E402
 import cvh_followup_verdict as verdict  # noqa: E402
 
+TEMPLATES = (
+    "cvh-p3-postfix-nps-common-v1.sh",
+    "cvh-p3-movetime-v1.sh",
+    "cvh-p3-confirm-v1.sh",
+)
+
 
 def rec(wm: int, wk: int, bm: int, bk: int, stm: int = 0, wdl: int = 0) -> bytes:
     return struct.pack("<QQQQBiB", wm, wk, bm, bk, stm, 0, wdl & 0xFF)
@@ -86,12 +92,20 @@ def test_paired_confirmation_requires_positive_lower_bound(tmp_path: Path) -> No
 
 
 def test_job_templates_are_valid_bash() -> None:
-    for name in (
-        "cvh-p3-postfix-nps-common-v1.sh",
-        "cvh-p3-movetime-v1.sh",
-        "cvh-p3-confirm-v1.sh",
-    ):
+    for name in TEMPLATES:
         subprocess.run(
             ["bash", "-n", str(ROOT / "jobs" / "templates" / name)],
             check=True,
         )
+
+
+def test_job_templates_pin_engine_and_harness_separately() -> None:
+    for name in TEMPLATES:
+        text = (ROOT / "jobs" / "templates" / name).read_text(encoding="utf-8")
+        assert "CODE_SHA=" in text
+        assert "HARNESS_SHA=" in text
+        assert 'worktree add --detach "$W/src" "$CODE_SHA"' in text
+        assert 'worktree add --detach "$W/harness" "$HARNESS_SHA"' in text
+        assert "/root/jass" not in text
+        assert "$W/src/tools/cvh_" not in text
+        assert "$W/src/jobs/tools/cvh_" not in text
