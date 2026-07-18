@@ -1,6 +1,6 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Périmètre :** du bring-up initial à C0 L3-PURE et à la revue des paramètres du 18 juillet 2026
+> **Périmètre :** du bring-up initial au verdict C1-Q1 et à la préparation C2-X1 du 18 juillet 2026
 > **Mis à jour :** 2026-07-18
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
@@ -75,6 +75,11 @@ sont pas des facteurs de DoE.
    revue C1 a en parallèle identifié deux dettes de méthode : seulement 5/63
    paramètres explicités et une recherche de score inutilisée qui préchargeait
    la TT avant le coup joué.
+8. C1-Q1 a fermé contract-grade la quiescence dans le régime L3 jeune :
+   menace, sacrifices et interaction sont plats ; Q01 gagne légèrement en
+   recherche native sans convertir. Q00 devient la baseline, Q2 n'est pas
+   déclenché. Le bloc suivant pré-enregistré est C2-X1 sur la distribution
+   d'exploration autonome.
 
 ## 3. Chronologie scientifique condensée
 
@@ -279,7 +284,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
 |---|---|---|---|
 | forcing extensions au jeu | fixed-depth positif, movetime neutre puis −74/−217 | brûle le budget nœuds | gain NPS structurel rendant le coût négligeable, puis haut-N |
-| quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | Q2 L3 repart à profondeur 1 après Q1 ; aucun retour direct aux profondeurs historiques sans signal |
+| quiescence forcing plus profonde | −92 à −231 selon variante | profondeur perdue > précision gagnée | Q2 non déclenché après Q1 plat ; réouverture seulement sur signal d'une lignée plus mûre |
 | menace × sacrifices sélectifs (écran C1-Q1) | verdict contract-grade `0812` (63 clés, bootstrap apparié, common+native) : effets menace +0,001 / sacs −0,004 / interaction +0,011, tous IC franchissant 0 ; aucun Δconversion ≥ +0,02 ; gates ≈ 0,5 | `q1_no_lead` — aucun effet sur conversion ni force dans la lignée pure | mécanisme de recherche co-adaptatif hors quiescence, ou signal sur une lignée plus mûre |
 | LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | une ablation native L3 après profil d'activation ; pas un autre sweep fin de marges |
 | offer-no-reduce | détection Jass≈Scan, conversion très différente | attaque la détection, qui n'est pas le goulot | nouvelle mesure montrant un déficit de détection |
@@ -318,22 +323,22 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 
 Une seule famille est active : `L3-PURE`.
 
-1. C0 : la frontière mobile améliore-t-elle A à haut N ? Les chaînes sont
-   complètes, mais `0792` doit être réparé avant tout verdict.
-2. C1-Q : menace, sacrifices sélectifs, forcing et promotion modifient-ils la
-   pente d'une lignée L3 native, après suppression de la recherche de score ?
-3. Quel budget de jeu, niveau d'exploration, rapport homme/dame, L2 et replay
-   maximisent la conversion sans régression ? Ces facteurs sont séquencés, pas
-   balayés dans un plan combinatoire unique.
-4. Une recette confirmée compose-t-elle sur une rampe longue avec deux graines ?
-5. Quand 8cf est nourrie, un fork 32cf depuis G0 apporte-t-il un résidu
+1. C2-X1 : quelle distribution d'ouverture/epsilon/décroissance augmente la
+   conversion, notamment P3, sans régression ? Le screen demi-factoriel à cinq
+   cellules est pré-enregistré, pas encore exécuté.
+2. Après X1, quel budget de jeu, rapport homme/dame, L2 et replay maximisent la
+   conversion sans régression ? Ces facteurs restent séquencés, pas combinés
+   dans un sweep unique.
+3. Une recette confirmée compose-t-elle sur une rampe longue avec deux graines ?
+4. Quand 8cf est nourrie, un fork 32cf depuis G0 apporte-t-il un résidu
    représentable supplémentaire ?
-6. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
+5. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
    un ensemble de rollouts internes stochastiques.
 
 Ne sont pas des questions actives : « remettre du Scan », « refaire MMTO sur
 gen2 », « resserrer l'anchor », « grossir G4 », changer de géométrie au milieu
-d'une lignée ou refaire un sweep fin non instrumenté des anciens knobs.
+d'une lignée, relancer Q2 sans nouveau signal ou refaire un sweep fin non
+instrumenté des anciens knobs.
 
 ### 7.1 Exécutions incomplètes qui ne valent pas verdict
 
@@ -348,9 +353,9 @@ d'une lignée ou refaire un sweep fin non instrumenté des anciens knobs.
   professeur externe — pas présenté comme scientifiquement réfuté.
 - Le rollout interne multi-échantillon pour P4 matériel-égal n'est pas encore
   implémenté.
-- `0792` est un échec technique sans verdict : rc=1, aucun fichier de gate,
-  de conversion ou de verdict final. La cause doit être lue dans ses logs R2
-  avant un rerun avec les mêmes inputs et critères.
+- `0792` reste historiquement un échec technique sans verdict. Sa cause
+  (`NOPEN=750` pour 305 ouvertures disponibles) a été corrigée sans changer
+  les gates dans `0795`, qui fournit désormais le verdict C0 autoritaire.
 
 ## 8. Règles méthodologiques héritées
 
@@ -377,7 +382,7 @@ d'une lignée ou refaire un sweep fin non instrumenté des anciens knobs.
 
 ## 9. Infrastructure et provenance durable
 
-Les runners v3/v4, `jass-control` et R2 sont les sources d'exécution. Les incidents
+Les runners v3 à v5, `jass-control` et R2 sont les sources d'exécution. Les incidents
 suivants ont déjà coûté des runs et ne doivent pas réapparaître : cache EGDB
 agrégé trop grand, moteurs morts suivis de `BrokenPipe`, `PrivateTmp` démonté,
 glob de merge attrapant les logs, fichier RESULTS réinitialisé par Git, attente
@@ -404,6 +409,7 @@ mis à jour.
 | anciens jobs fork C + teacher | [README.md](archives/jobs/prepared/forkc-teacher-20260717/README.md) |
 | anciens jobs post-ccx33 | [README.md](archives/jobs/prepared/post-ccx33-20260717/README.md) |
 | ancienne spec L3 C0 | [L3_PURE_PLAN_C0_20260718.md](archives/l3/L3_PURE_PLAN_C0_20260718.md) |
+| spec L3 v4.1 avant C2-X1 | [L3_PURE_PLAN_V4_1_20260718.md](archives/l3/L3_PURE_PLAN_V4_1_20260718.md) |
 | ancien current L3 C0 en cours | [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md) |
 | ancien benchmark GitHub NNUE | [benchmark-nnue.yml](../archive/workflows/benchmark-nnue.yml) |
 | boucle from-scratch historique | [MEMO_AUTO_SCRATCH.md](archives/MEMO_AUTO_SCRATCH.md) |

@@ -1,25 +1,19 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead (verdict v2 contract-grade, 0812)`**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_prepared_not_launched`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
 
 ## 1. État en une phrase
 
-Le job haut-N `0792` (échec technique `not enough fixed openings`, 750 requis
-vs 305 disponibles) a été relancé corrigé en `0795` (NOPEN=300, assert de gate
-`n=2·NOPEN`) : le verdict C0 pré-engagé est **`retire_frontier_v1_flat`** — la
-frontière mobile v1 n'améliore pas la conversion (Δglobal −0,023, P3 mince
-−0,070, toutes IC recouvrant 0) et le bras A pur est à parité avec `gen2-mmto`.
-La revue des paramètres L3 (#351) est mergée. Le fork **C1-Q1 a été calibré,
-lancé et complété** : après un bug de manifest du runner v4 (corrigé, cf §5),
-les quatre cellules v2 sont `completed` avec leurs students G1/G2 manifestés.
-L'audit du job de verdict `cpx62-0806-c1q1-verdict` a toutefois trouvé un écart
-entre son script et le contrat §7 : son résultat éventuel reste **diagnostique**
-et ne peut ni sélectionner un lead, ni autoriser Q2. Un verdict v2, sans nouvel
-entraînement, est préparé pour réévaluer les quatre G2 immuables.
+C0 a retiré la frontière mobile v1 et validé la viabilité de l'autojeu pur.
+C1-Q1 est maintenant clos contract-grade : `0812` donne `q1_no_lead`, donc
+Q00 devient la baseline et Q2 n'est pas déclenché. Le prochain bloc
+pré-enregistré est **C2-X1**, un screen d'exploration à cinq cellules ; son
+runner, ses métriques et ses wrappers sont préparés hors queue, sans job lancé.
+Le track Gen2-MMTO « tête P3 » reste parallèle et ne modifie pas L3.
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -74,7 +68,8 @@ Holdout WDL log-loss : A-G3 **0,451**, B-G3 **0,435** (deux G3 sains).
 Lecture : la conversion pure reproduit le plateau (~0,67 global) sans le casser
 à 3 générations, mais le bras A atteint déjà la **parité avec `gen2-mmto`** —
 la lignée pure est viable. La frontière mobile v1 est un **levier mort** (comme
-fork-a/fork-c/teacher avant). Prochain axe = C1-Q1 (quiescence), sans frontière.
+fork-a/fork-c/teacher avant). C1-Q1 a ensuite clos la quiescence ; le prochain
+axe est C2-X1 sur la distribution d'exploration, toujours sans frontière.
 
 ## 3. Réserve découverte pendant la revue des paramètres
 
@@ -102,10 +97,10 @@ inutilisée.
 | vérité terminale, EGDB naturelle, censure ply-cap, provenance, holdout par ouverture | invariant |
 | recherche de score JNNW | supprimée dans C1 |
 | 63 paramètres de recherche | entièrement épinglés |
-| menace / sacrifices sélectifs | DoE C1-Q1 immédiat |
-| forcing, promotion, récursion des sacs | C1-Q2 conditionnel |
-| pruning/réductions/history et budget | profil + ablations après Q |
-| ouverture aléatoire / epsilon / décroissance | DoE exploration |
+| menace / sacrifices sélectifs | **clos** : C1-Q1 `q1_no_lead` |
+| forcing, promotion, récursion des sacs | Q2 non déclenché |
+| pruning/réductions/history et budget | profil + ablations après C2-X1 |
+| ouverture aléatoire / epsilon / décroissance | **C2-X1 prochain bloc** |
 | homme:dame, L2, replay | DoE graine/fit |
 | 8cf | fixe pendant les écrans ; 32cf rouvert seulement au scale |
 | frontière mobile | **close** : verdict C0 `0795` plat (Δglobal −0,023, P3 −0,070) → v1 retirée |
@@ -134,9 +129,8 @@ students G1/G2 sains. Filtre corrigé en `g[1-9]*.pjtw.gz` ; re-run v2 propre.
 | `Q01_SACS` | `cpx62-0805-c1q1-q01-v2` | cpx62 | 0 | 1 | complet, manifest ✓ |
 | `Q11_THREAT_SACS` | `ccx33-0803-c1q1-q11-v2` | ccx33 | 1 | 1 | complet, manifest ✓ |
 
-Forcing, promotion et récursion des sacrifices restent à zéro/`depth0_only`
-pendant Q1, réservés au bloc Q2 (ne pas confondre cinq facteurs au premier
-écran).
+Forcing, promotion et récursion des sacrifices sont restés à zéro/`depth0_only`
+pendant Q1. Faute de lead, Q2 n'est ni préparé ni autorisé.
 
 ### 5.1 Réserve sur le verdict `0806`
 
@@ -233,7 +227,42 @@ conversion ≥ +0,02 ; gates common et native ≈ 0,5 ; `gain_classification` : 
 (menace × sacrifices sélectifs) est **confirmée levier mort**, contract-grade —
 le plateau ~0,67 tient. Q2 non déclenché.
 
-## 8. Prochaines actions
+## 8. Bloc préparé : C2-X1 exploration
+
+Le design est un demi-factoriel résolution III (`C=AB`) plus centre. Toutes
+les cellules repartent de G0, utilisent Q00, deux générations de 150 k, d8,
+8cf, graine `271828`, aucun teacher et aucune frontière.
+
+| Cellule | Ouverture | Epsilon | Décroissance | Box wrapper | État |
+|---|---:|---:|---:|---|---|
+| `X_LLH` | 4 | 4 % | 60 | cpx62 | préparé hors queue |
+| `X_HLL` | 8 | 4 % | 30 | cpx62 | préparé hors queue |
+| `X_LHL` | 4 | 8 % | 30 | cpx62 | préparé hors queue |
+| `X_HHH_CONTROL` | 8 | 8 % | 60 | ccx33 | contrôle courant, préparé |
+| `X_CENTER` | 6 | 6 % | 45 | ccx33 | centre, préparé |
+
+Le runner v5 publie par génération deux diagnostics supplémentaires :
+
+- dose réalisée : coups d'ouverture, plies, événements epsilon, changements du
+  meilleur coup et parties touchées ;
+- profil du corpus : jeux/ouvertures/positions uniques, WDL, phases et P1–P4.
+
+La conversion calculée dans le corpus est marquée diagnostique (records
+corrélés). Le verdict utilisera après génération une jauge fixe, des résultats
+appariés et `X_HHH_CONTROL` comme référence. Aucun job d'évaluation n'est
+préparé avec des URIs fictives ; il sera ajouté une fois les cinq G2 publiés.
+
+### 8.1 Trame de résultats C2-X1
+
+| Cellule | G | Records | Epsilon réalisé | Positions uniques | P3 records | Ply-cap | Log-loss | SHA |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| X_LLH | 1–2 | — | — | — | — | — | — | — |
+| X_HLL | 1–2 | — | — | — | — | — | — | — |
+| X_LHL | 1–2 | — | — | — | — | — | — | — |
+| X_HHH_CONTROL | 1–2 | — | — | — | — | — | — | — |
+| X_CENTER | 1–2 | — | — | — | — | — | — | — |
+
+## 9. Prochaines actions
 
 1. ✅ `0792` diagnostiqué et relancé en `0795` : verdict C0
    `retire_frontier_v1_flat` obtenu et enregistré (§2bis) ;
@@ -246,5 +275,9 @@ le plateau ~0,67 tient. Q2 non déclenché.
 6. ✅ verdict v2 (#352) relu et mergé (pin `88ab7eb5`) ;
 7. ✅ verdict v2 `0812` exécuté sur les quatre G2 existants → **`q1_no_lead`**
    (§6.2-6.4/§7). Aucun lead, pas de confirmation, Q2 non déclenché.
-8. → quiescence close ; prochain levier L3 hors quiescence (DoE exploration /
-   graine-fit) à décider. En parallèle, track gen2-mmto (tête P3) sur ccx33.
+8. ✅ quiescence close ; Q00 retenu, Q2 non déclenché ;
+9. → faire revoir puis merger la PR C2-X1 ; aucun job n'est lancé par la merge ;
+10. micro-calibrer les cinq profils sur leur box, publier débit/ETA/disque,
+    épingler le SHA et demander le go explicite ;
+11. lancer seulement après go, puis préparer l'évaluation sur les cinq URIs G2.
+    En parallèle, le track Gen2-MMTO (tête P3) reste indépendant sur ccx33.
