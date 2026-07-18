@@ -177,6 +177,19 @@ Features compute_features(const Position& pos) noexcept {
 
 double delta_cp_black(const Position& pos, const Model& model) noexcept {
     if (model.lambda_cp == 0.0F) return 0.0;
+    // Cheap gate pre-check from popcounts only: the phase/margin gate depends on
+    // material, so short-circuit BEFORE the full 16-feature extraction (mobility
+    // king-slides are the dominant cost). Byte-identical delta for gated
+    // positions; the discarded path used to compute all features then return 0.
+    {
+        const int bm = popcount(pos.black_men()), bk = popcount(pos.black_kings());
+        const int wm = popcount(pos.white_men()), wk = popcount(pos.white_kings());
+        const int diff = (bm + 3 * bk) - (wm + 3 * wk);
+        if (diff == 0) return 0.0;
+        const int margin = diff < 0 ? -diff : diff;
+        const int total = bm + bk + wm + wk;
+        if (gate_for(total, margin, model) == 0.0F) return 0.0;
+    }
     const Features features = compute_features(pos);
     if (features.leader_sign_black == 0) return 0.0;
     const float gate = gate_for(features.total_pieces, features.material_margin, model);
