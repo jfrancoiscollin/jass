@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_verdict_retire_frontier_v1_flat; c1_q1_training_complete; 0806_legacy_verdict_diagnostic_only; corrected_verdict_v2_prepared_not_run`**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead (verdict v2 contract-grade, 0812)`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -174,33 +174,42 @@ colonnes normatives ci-dessous.
 | Q11 | G1 | — | — | — | — | — | — | — |
 | Q11 | G2 | — | — | — | — | — | — | — |
 
-### 6.2 Conversion fixe
+### 6.2 Conversion fixe — Δ appariés vs Q00 (bootstrap 10 000, IC 95 %)
 
-| Cellule G2 | Global | P1 | P2 | P3 | P4 | N | IC |
-|---|---:|---:|---:|---:|---:|---:|---|
-| Q00 | — | — | — | — | — | — | — |
-| Q10 | — | — | — | — | — | — | — |
-| Q01 | — | — | — | — | — | — | — |
-| Q11 | — | — | — | — | — | — | — |
+Source : `cpx62-0812-c1q1-verdict-v2` (verdict schema 2, exit 143 = SIGTERM au
+cleanup ~2 h ; `c1q1-verdict.json` intact, récupéré via `0814`). Défenseur gen2
+fixe. `n` appariés : global 861, P1 365, P2 202, **P3 179**, P4 115.
+
+| Δ vs Q00 | Global | P1 net | P2 moyen | **P3 mince** | P4 égal |
+|---|---:|---:|---:|---:|---:|
+| Q10 (menace) | −0,010 [−0,031;+0,009] | +0,005 | −0,030 | −0,039 [−0,095;+0,017] | +0,017 |
+| Q01 (sacs) | −0,015 [−0,035;+0,005] | +0,000 | −0,045 | −0,006 [−0,056;+0,045] | −0,026 |
+| Q11 (m+s) | −0,003 [−0,024;+0,017] | +0,003 | −0,054 | +0,034 [−0,028;+0,095] | +0,009 |
+
+Tous les Δ ont un IC apparié recouvrant 0 ; aucune cellule n'atteint +0,02 en
+global. Le seul point positif (Q11 P3 +0,034) reste non significatif.
 
 ### 6.3 Effets factoriels
 
-| Effet | Estimation | IC apparié | Lecture |
+| Effet (global) | Estimation | IC apparié 95 % | Lecture |
 |---|---:|---:|---|
-| menace | — | — | — |
-| sacs | — | — | — |
-| interaction menace×sacs | — | — | — |
+| menace | +0,0006 | [−0,015 ; +0,017] | nul |
+| sacs | −0,0041 | [−0,018 ; +0,010] | nul |
+| interaction menace×sacs | +0,011 | [−0,002 ; +0,024] | nul (IC franchit 0) |
 
 ### 6.4 Force
 
-| Vue | Comparaison | N | Rate | IC95 | Elo | Verdict |
+| Vue | Comparaison | N | Rate | IC95 | Elo | Lecture |
 |---|---|---:|---:|---:|---:|---|
-| common-search | Q10 vs Q00 | — | — | — | — | — |
-| common-search | Q01 vs Q00 | — | — | — | — | — |
-| common-search | Q11 vs Q00 | — | — | — | — | — |
-| native movetime | Q10 vs Q00 | — | — | — | — | — |
-| native movetime | Q01 vs Q00 | — | — | — | — | — |
-| native movetime | Q11 vs Q00 | — | — | — | — | — |
+| common-search (Q00 fingerprint) | Q10 vs Q00 | 600 | 0,485 | [0,445;0,525] | −10 | ≈ |
+| common-search | Q01 vs Q00 | 600 | 0,519 | [0,479;0,559] | +13 | ≈ |
+| common-search | Q11 vs Q00 | 600 | 0,517 | [0,478;0,557] | +12 | ≈ |
+| native movetime 0,1 s | Q10 vs Q00 | 600 | 0,500 | [0,460;0,540] | 0 | ≈ |
+| native movetime 0,1 s | Q01 vs Q00 | 600 | **0,541** | [0,501;0,581] | +28 | souffle `search_gain` |
+| native movetime 0,1 s | Q11 vs Q00 | 600 | 0,507 | [0,468;0,547] | +5 | ≈ |
+
+Q01 montre un léger `search_gain` à movetime natif (0,541, IC>0,5) mais **sans
+conversion** (Δ global −0,015) → ne passe pas l'écran.
 
 ## 7. Gates pré-engagés
 
@@ -217,6 +226,13 @@ Un lead passe en confirmation seulement si :
 La promotion finale exige l'IC de conversion au-dessus de zéro et la réplication
 depuis G0 avec la seconde graine `161803`.
 
+**Verdict Q1 contract-grade (`0812`) : `q1_no_lead`, `selected_lead: null`.**
+Effets menace/sacs/interaction tous nuls (IC appariés franchissant 0) ; aucun Δ
+conversion ≥ +0,02 ; gates common et native ≈ 0,5 ; `gain_classification` : Q01
+`search_gain`, Q10/Q11 `no_established_strength_gain`. La quiescence
+(menace × sacrifices sélectifs) est **confirmée levier mort**, contract-grade —
+le plateau ~0,67 tient. Q2 non déclenché.
+
 ## 8. Prochaines actions
 
 1. ✅ `0792` diagnostiqué et relancé en `0795` : verdict C0
@@ -226,9 +242,9 @@ depuis G0 avec la seconde graine `161803`.
    cpx62 64 k/min, ccx33 48 k/min ;
 4. ✅ bug manifest runner v4 corrigé (`e6787b8ac`) ; les quatre cellules v2
    `completed` avec manifests ;
-5. ⏳ laisser `cpx62-0806-c1q1-verdict` terminer, mais archiver sa conclusion
-   sous `legacy_diagnostic` : elle ne satisfait pas le contrat Q1 ;
-6. ⏳ faire relire puis merger la correction du verdict v2 ; après calibration,
-   copier le wrapper préparé en GitOps avec le SHA mergé et le go explicite ;
-7. ⏳ exécuter le verdict v2 sur les quatre G2 existants, remplir §6 et décider
-   d'une **confirmation** du lead éventuel. Ne pas lancer Q2 automatiquement.
+5. ✅ `0806` archivé `legacy_diagnostic` (non-contractuel) ;
+6. ✅ verdict v2 (#352) relu et mergé (pin `88ab7eb5`) ;
+7. ✅ verdict v2 `0812` exécuté sur les quatre G2 existants → **`q1_no_lead`**
+   (§6.2-6.4/§7). Aucun lead, pas de confirmation, Q2 non déclenché.
+8. → quiescence close ; prochain levier L3 hors quiescence (DoE exploration /
+   graine-fit) à décider. En parallèle, track gen2-mmto (tête P3) sur ccx33.
