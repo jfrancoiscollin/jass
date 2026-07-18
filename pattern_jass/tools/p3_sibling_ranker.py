@@ -110,7 +110,25 @@ def fit(args: argparse.Namespace) -> dict[str, object]:
     train = [row for row in events if row["split"] == "train"]
     holdout = [row for row in events if row["split"] == "holdout"]
     if len(train) < args.min_train or len(holdout) < args.min_holdout:
-        raise ValueError(f"insufficient split train={len(train)} holdout={len(holdout)}")
+        report: dict[str, object] = {
+            "schema": 1,
+            "mode": args.mode,
+            "events": str(args.events),
+            "train": {"n": len(train), "accuracy": 0.0, "log_loss": 99.0, "mean_margin": 0.0},
+            "holdout": {"n": len(holdout), "accuracy": 0.0, "log_loss": 99.0, "mean_margin": 0.0},
+            "verify_train_accuracy": verify_accuracy(train),
+            "verify_holdout_accuracy": verify_accuracy(holdout),
+            "signal": False,
+            "reason": "insufficient_parent_split",
+            "gates": {
+                "min_train": args.min_train,
+                "min_holdout": args.min_holdout,
+                "min_accuracy": args.min_accuracy,
+                "log_loss_below_intercept": math.log(2.0),
+            },
+        }
+        args.out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return report
 
     train_children = ([str(row["good_child_fen"]) for row in train]
                       + [str(row["bad_child_fen"]) for row in train])
@@ -139,7 +157,7 @@ def fit(args: argparse.Namespace) -> dict[str, object]:
     signal = (hold_metrics["n"] >= args.min_holdout
               and hold_metrics["accuracy"] >= args.min_accuracy
               and hold_metrics["log_loss"] < math.log(2.0))
-    report: dict[str, object] = {
+    report = {
         "schema": 1,
         "mode": args.mode,
         "events": str(args.events),
