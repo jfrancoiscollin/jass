@@ -65,12 +65,13 @@ trap 'rc=$?; set +e; cp "$W/RESULTS.txt" "$ART/RESULTS.txt" 2>/dev/null; find "$
 say "=== $JASS_JOB_ID code=$(git rev-parse HEAD) eta=${APPROVED_ETA_MIN}min ==="
 
 python3 -m py_compile pattern_jass/tools/rank_finetune.py jobs/tools/gen2_p3_decision_verdict.py
+python3 pattern_jass/tools/gen_patterns.py --variant v4 --emit > "$W/geometry.log" 2>&1
+grep -q 'NUM_PATTERNS set to 32' "$W/geometry.log" || { say "ABORT: Gen2 32cf geometry not generated"; exit 4; }
 cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release \
   -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON \
   > "$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$BUILD_JOBS" --target jass > "$W/build.log" 2>&1
 J="$W/build/jass"
-python3 pattern_jass/tools/gen_patterns.py --emit --variant v4 >/dev/null 2>&1 || true
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
 
 say "=== leaf-mode hard pairs ==="
@@ -121,11 +122,17 @@ for anchor in $ANCHORS; do
     --movetime "$MOVETIME" --pairs 1 --nshards "$NSH_GATE" --max-parallel "$PAR_GATE" \
     --timeout "$SHARD_TIMEOUT" --work-dir "$W/mt-a${tag}" --out "$W/mt-a${tag}.json" \
     > "$W/mt-a${tag}.log" 2>&1
-  if python3 jobs/tools/gen2_p3_decision_verdict.py candidate \
+  set +e
+  python3 jobs/tools/gen2_p3_decision_verdict.py candidate \
       --input "$W/conv-a${tag}.json" --baseline "$BASELINE_P3_JSON" \
       --depth-gate "$W/depth-a${tag}.json" --movetime-gate "$W/mt-a${tag}.json" \
-      --out "$ART/verdict-a${tag}.json" | tee -a "$W/RESULTS.txt"; then
+      --out "$ART/verdict-a${tag}.json" | tee -a "$W/RESULTS.txt"
+  VRC=${PIPESTATUS[0]}
+  set -e
+  if [[ "$VRC" -eq 0 ]]; then
     passed=$((passed+1))
+  elif [[ "$VRC" -ne 3 ]]; then
+    say "ABORT: candidate verdict technical failure rc=$VRC"; exit "$VRC"
   fi
   cp "$W/conv-a${tag}.json" "$W/depth-a${tag}.json" "$W/mt-a${tag}.json" "$ART/"
 done
