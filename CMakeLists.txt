@@ -222,7 +222,7 @@ file(READ "${NNUE_BIN_PATH}" NNUE_HEX HEX)
 string(LENGTH "${NNUE_HEX}" NNUE_HEX_LEN)
 math(EXPR NNUE_BYTE_COUNT "${NNUE_HEX_LEN} / 2")
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," NNUE_BYTES "${NNUE_HEX}")
-string(REGEX REPLACE ",$" "" NNUE_BYTES "${NNUE_HEX}")
+string(REGEX REPLACE ",$" "" NNUE_BYTES "${NNUE_BYTES}")
 
 set(NNUE_DEFAULT_DATA_CPP "${CMAKE_BINARY_DIR}/generated/nnue_default_data.cpp")
 configure_file(
@@ -245,7 +245,6 @@ add_library(jass_lib STATIC
     src/pattern_network.cpp
     src/pattern_jass_bridge.cpp
     src/scan_eval.cpp
-    src/conversion_head.cpp
     src/scan_sacs.cpp
     pattern_jass/src/pattern.cpp
     pattern_jass/src/weights.cpp
@@ -263,10 +262,6 @@ add_library(jass_lib STATIC
     src/tournament.cpp
     src/hub.cpp
 )
-# Keep the historical loader implementation but rename only that translation
-# unit's public token. src/conversion_head.cpp exposes the wrapper symbol.
-set_source_files_properties(src/scan_eval.cpp PROPERTIES
-    COMPILE_DEFINITIONS "load_eval_network=load_eval_network_base")
 target_include_directories(jass_lib PUBLIC src)
 target_link_libraries(jass_lib PRIVATE jass_warnings jass_simd)
 
@@ -321,7 +316,6 @@ add_executable(jass_tests
     tests/test_nnue.cpp
     tests/test_hub.cpp
     tests/test_scan_eval.cpp
-    tests/test_conversion_head.cpp
 )
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)
