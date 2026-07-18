@@ -54,12 +54,14 @@ def sha256_file(path: str | Path) -> str:
     return h.hexdigest()
 
 
-def load_baseline(paths: Iterable[Path]) -> dict[int, str]:
+def load_baseline(paths: Iterable[Path], expected_pool_sha256: str | None = None) -> dict[int, str]:
     merged: dict[int, str] = {}
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8"))
         if int(data.get("n_errors", 0)) != 0:
             raise ValueError(f"{path}: baseline contains engine errors")
+        if expected_pool_sha256 is not None and data.get("pool_sha256") != expected_pool_sha256:
+            raise ValueError(f"{path}: baseline pool SHA does not match the current pool")
         rows = data.get("position_results")
         if not isinstance(rows, list):
             raise ValueError(f"{path}: missing position_results")
@@ -100,6 +102,10 @@ def search_reply(engine: cv.JassEngine, fen: str, *, depth: int | None,
                  movetime: float | None) -> SearchReply:
     if (depth is None) == (movetime is None):
         raise ValueError("exactly one of depth or movetime is required")
+    # Fair sibling comparison: clear game/search state before every independent
+    # root. Otherwise the preceding sibling can prime the shared TT and make the
+    # ranking depend on enumeration order.
+    engine.new_game()
     engine.set_position_fen(fen)
     engine._drain()
     if movetime is not None:
@@ -181,7 +187,8 @@ def normalize_move(move: str) -> tuple[int, int]:
 
 def run(args: argparse.Namespace) -> dict[str, object]:
     records = conv.read_records(args.pool_jnnw)
-    baseline = load_baseline(args.baseline_json)
+    pool_sha256 = sha256_file(args.pool_jnnw)
+    baseline = load_baseline(args.baseline_json, pool_sha256)
     out_dir = Path(args.out_dir)
     work = Path(args.work_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -369,7 +376,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "schema": 1,
         "scope": args.scope,
         "pool": str(args.pool_jnnw),
-        "pool_sha256": sha256_file(args.pool_jnnw),
+        "pool_sha256": pool_sha256,
         "baseline_inputs": [str(path) for path in args.baseline_json],
         "pattern_sha256": sha256_file(args.pattern),
         "processed": len(events),
