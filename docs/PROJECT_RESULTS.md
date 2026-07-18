@@ -350,6 +350,7 @@ mis à jour.
 | plan historique de migration runner v3 | [RUNNER_V3_MIGRATION.md](archives/infra/RUNNER_V3_MIGRATION.md) |
 | anciens jobs fork C + teacher | [README.md](archives/jobs/prepared/forkc-teacher-20260717/README.md) |
 | anciens jobs post-ccx33 | [README.md](archives/jobs/prepared/post-ccx33-20260717/README.md) |
+| ancien benchmark GitHub NNUE | [benchmark-nnue.yml](../archive/workflows/benchmark-nnue.yml) |
 | boucle from-scratch historique | [MEMO_AUTO_SCRATCH.md](archives/MEMO_AUTO_SCRATCH.md) |
 | chaîne itérative historique | [MEMO_CHAINE_ITERATIVE_LONGUE.md](archives/MEMO_CHAINE_ITERATIVE_LONGUE.md) |
 
@@ -357,10 +358,11 @@ Les détails techniques API, architecture, HUB, WASM et extension sont égalemen
 conservés sous `docs/archives/`. Ils décrivent l'état du code au moment de leur
 rédaction et peuvent être périmés ; le code et les tests restent autoritaires.
 
-Les ZIP NNUE historiques non référencés (`3`, `4`, `5`, `7`) sont conservés
-sous `archive/nnue-weights/`. Le ZIP `nnue-weights 2.zip` reste volontairement
-à la racine tant que `.github/workflows/benchmark-nnue.yml` l'utilise comme
-entrée par défaut. Les autres Markdown hors `docs/` sont des points d'entrée
-du dépôt, des obligations de contribution/licence ou des README attachés à un
-composant encore présent ; ils ne sont donc pas des documents scientifiques
-actifs concurrents.
+Les cinq ZIP NNUE historiques (`2`, `3`, `4`, `5`, `7`) sont conservés sous
+`archive/nnue-weights/` et aucun ZIP ne reste à la racine. Le workflow GitHub
+qui consommait le ZIP `2` est lui aussi archivé : il mesurait seulement un
+tournoi NNUE fixed-depth à très faible N, incompatible avec les gates movetime,
+haut-N et manifests du programme actif. Les autres Markdown hors `docs/` sont
+des points d'entrée du dépôt, des obligations de contribution/licence ou des
+README attachés à un composant encore présent ; ils ne sont donc pas des
+documents scientifiques actifs concurrents.

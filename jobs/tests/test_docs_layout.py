@@ -8,7 +8,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
 ACTIVE = {"L3_PURE_PLAN.md", "L3_CURRENT.md", "PROJECT_RESULTS.md"}
-ACTIVE_ROOT_ZIPS = {"nnue-weights 2.zip"}
+ARCHIVED_NNUE_ZIPS = {
+    "nnue-weights-2.zip",
+    "nnue-weights-3.zip",
+    "nnue-weights-4.zip",
+    "nnue-weights-5.zip",
+    "nnue-weights-7.zip",
+}
 
 
 class DocsLayoutTests(unittest.TestCase):
@@ -44,12 +50,14 @@ class DocsLayoutTests(unittest.TestCase):
         self.assertIn("ARCHIVE FIGÉE", archived_current)
         self.assertIn("../L3_CURRENT.md", archived_current)
 
-    def test_no_orphan_zip_at_repo_root(self):
-        actual = {path.name for path in ROOT.glob("*.zip")}
-        self.assertEqual(actual, ACTIVE_ROOT_ZIPS)
-        benchmark = (ROOT / ".github/workflows/benchmark-nnue.yml").read_text()
-        for name in ACTIVE_ROOT_ZIPS:
-            self.assertIn(f'default: "{name}"', benchmark)
+    def test_legacy_nnue_artifacts_are_archived(self):
+        self.assertEqual(list(ROOT.glob("*.zip")), [])
+        archived = {
+            path.name for path in (ROOT / "archive/nnue-weights").glob("*.zip")
+        }
+        self.assertEqual(archived, ARCHIVED_NNUE_ZIPS)
+        self.assertFalse((ROOT / ".github/workflows/benchmark-nnue.yml").exists())
+        self.assertTrue((ROOT / "archive/workflows/benchmark-nnue.yml").exists())
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+# ARCHIVE FIGÉE — ancien wrapper NNUE, hors programme L3 et non exécuté depuis
+# ce chemin. À reconstruire avec un protocole movetime/haut-N avant réactivation.
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Trigger-on-demand workflow that pits a trained NNUE network against
 # either the handcrafted evaluation (single-weights mode) or another
