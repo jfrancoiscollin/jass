@@ -25,7 +25,7 @@ extern int g_assertions;
 inline std::string jass_tmp_template(const char* name) {
     const char* td = std::getenv("TMPDIR");
     std::string dir = (td != nullptr && td[0] != '\0') ? std::string(td)
-                                                        : std::string("/tmp");
+                                                         : std::string("/tmp");
     if (!dir.empty() && dir.back() == '/') dir.pop_back();
     if (::access(dir.c_str(), W_OK) != 0) dir = "/tmp";
     return dir + "/" + name + "_XXXXXX";
@@ -67,3 +67,4 @@ void run_tournament_tests();
 void run_nnue_tests();
 void run_hub_tests();
 void run_scan_eval_tests();
+void run_conversion_head_tests();
