@@ -1,3 +1,6 @@
+> **ARCHIVE FIGÉE — migration achevée.** Ce document conserve le plan de
+> bascule initial ; il ne décrit pas la procédure opérationnelle courante.
+
 # Runner v3 migration: `develop` code, separate control plane, external results
 
 This migration is intentionally staged. Do not delete or strip `main` until the

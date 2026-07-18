@@ -1,3 +1,6 @@
+> **ARCHIVE FIGÉE — campagne close ou supersédée.** Les scripts historiques
+> restent dans `jobs/prepared/post-ccx33-20260717/` pour traçabilité uniquement.
+
 # Jobs préparés — suite de `ccx33`
 
 Ces scripts restent hors de `jobs/queue/` et de

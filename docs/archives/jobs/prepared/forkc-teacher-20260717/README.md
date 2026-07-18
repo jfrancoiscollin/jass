@@ -1,3 +1,6 @@
+> **ARCHIVE FIGÉE — campagne close.** Les scripts historiques restent dans
+> `jobs/prepared/forkc-teacher-20260717/` pour traçabilité uniquement.
+
 # Jobs préparés — fork C + teacher causal
 
 Ces scripts sont volontairement hors de `jobs/queue/` et du control-plane

@@ -347,9 +347,20 @@ mis à jour.
 | spec de la sonde T1-bis→T3 | [codex_review_v3_2.md](archives/codex_review_v3_2.md) |
 | résultat fork C | [forkc_c0_verdict_20260717.md](archives/forkc_c0_verdict_20260717.md) |
 | suite post-ccx33 | [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md) |
+| plan historique de migration runner v3 | [RUNNER_V3_MIGRATION.md](archives/infra/RUNNER_V3_MIGRATION.md) |
+| anciens jobs fork C + teacher | [README.md](archives/jobs/prepared/forkc-teacher-20260717/README.md) |
+| anciens jobs post-ccx33 | [README.md](archives/jobs/prepared/post-ccx33-20260717/README.md) |
 | boucle from-scratch historique | [MEMO_AUTO_SCRATCH.md](archives/MEMO_AUTO_SCRATCH.md) |
 | chaîne itérative historique | [MEMO_CHAINE_ITERATIVE_LONGUE.md](archives/MEMO_CHAINE_ITERATIVE_LONGUE.md) |
 
 Les détails techniques API, architecture, HUB, WASM et extension sont également
 conservés sous `docs/archives/`. Ils décrivent l'état du code au moment de leur
 rédaction et peuvent être périmés ; le code et les tests restent autoritaires.
+
+Les ZIP NNUE historiques non référencés (`3`, `4`, `5`, `7`) sont conservés
+sous `archive/nnue-weights/`. Le ZIP `nnue-weights 2.zip` reste volontairement
+à la racine tant que `.github/workflows/benchmark-nnue.yml` l'utilise comme
+entrée par défaut. Les autres Markdown hors `docs/` sont des points d'entrée
+du dépôt, des obligations de contribution/licence ou des README attachés à un
+composant encore présent ; ils ne sont donc pas des documents scientifiques
+actifs concurrents.
