@@ -57,6 +57,17 @@ def test_match_aggregation_and_gate(tmp_path: Path) -> None:
     assert gate["pass"] is True
 
 
+def test_match_aggregation_rejects_skipped_engine_game(tmp_path: Path) -> None:
+    path = tmp_path / "bad.log"
+    path.write_text("game skipped (TimeoutError)\nRESULT 0 1 0\n", encoding="utf-8")
+    try:
+        verdict.aggregate_match([path])
+    except ValueError as exc:
+        assert "skipped" in str(exc)
+    else:
+        raise AssertionError("engine skip accepted as draw")
+
+
 def test_nps_gate_fails_closed_on_az_mismatch() -> None:
     cells = {
         "A": {"searches": 10, "errors": 0, "nps_ratio_vs_a": 1.0},
@@ -89,6 +100,20 @@ def test_paired_confirmation_requires_positive_lower_bound(tmp_path: Path) -> No
     assert report["delta"] == 0.04
     assert report["ci95_low"] > 0
     assert report["pass"] is True
+
+
+def test_paired_confirmation_rejects_engine_errors(tmp_path: Path) -> None:
+    base = tmp_path / "base.json"
+    cand = tmp_path / "cand.json"
+    row = [{"index": 0, "result": "win"}]
+    base.write_text(json.dumps({"n_errors": 1, "n_pos": 1, "position_results": row}), encoding="utf-8")
+    cand.write_text(json.dumps({"n_errors": 0, "n_pos": 1, "position_results": row}), encoding="utf-8")
+    try:
+        verdict.confirmation_gate([base], [cand], min_n=1, min_delta=0.0)
+    except ValueError as exc:
+        assert "engine errors" in str(exc)
+    else:
+        raise AssertionError("confirmation accepted an engine error")
 
 
 def test_job_templates_are_valid_bash() -> None:
