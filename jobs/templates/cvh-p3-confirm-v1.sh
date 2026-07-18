@@ -9,6 +9,7 @@ REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 cd "$REPO_ROOT"
 
 CODE_SHA="${CODE_SHA:-6bfc700fcf4dd512e3383bc04abbdce2b382e688}"
+HARNESS_SHA="${HARNESS_SHA:-$(git rev-parse HEAD)}"
 JASS_JOB_ID="${JASS_JOB_ID:-ccx33-cvh-p3-confirm}"
 : "${GEN2_A:?bare Gen2 PJTW required}"
 : "${GEN2_C10:?lambda=10 PJTW copy required}"
@@ -51,21 +52,28 @@ find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf
 DFA=$(df -Pm /root | awk 'NR==2{print $4}'); [[ "${DFA:-0}" -gt 3000 ]] || { echo "ABORT disk <3GB" >&2; exit 3; }
 rm -rf "$W"; mkdir -p "$W" "$OUT_DIR"; RES="$W/RESULTS.txt"; PROG="$W/PROGRESS.txt"; : >"$RES"; : >"$PROG"
 say(){ echo "$*" | tee -a "$RES"; }
-cleanup(){ touch "$W/.stopmon" 2>/dev/null || true; if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi; git -C "$REPO_ROOT" worktree remove --force "$W/src" >/dev/null 2>&1 || true; }
+cleanup(){ touch "$W/.stopmon" 2>/dev/null || true; if [[ -n "${MON_PID:-}" ]]; then wait "$MON_PID" 2>/dev/null || true; fi; git -C "$REPO_ROOT" worktree remove --force "$W/src" >/dev/null 2>&1 || true; git -C "$REPO_ROOT" worktree remove --force "$W/harness" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
-say "=== $JASS_JOB_ID code=$CODE_SHA nproc=$NCPU shards=$SHARDS approved_eta_min=$APPROVED_ETA_MIN ==="
+say "=== $JASS_JOB_ID code=$CODE_SHA harness=$HARNESS_SHA nproc=$NCPU shards=$SHARDS approved_eta_min=$APPROVED_ETA_MIN ==="
 say "confirm_n=$CONFIRM_N min_paired_n=$CONFIRM_MIN_N depth=$CONFIRM_DEPTH min_delta=$CONFIRM_MIN_DELTA"
 
 git cat-file -e "$CODE_SHA^{commit}" 2>/dev/null || git fetch origin "$CODE_SHA"
+git cat-file -e "$HARNESS_SHA^{commit}" 2>/dev/null || git fetch origin "$HARNESS_SHA"
 git worktree add --detach "$W/src" "$CODE_SHA" >/dev/null
+git worktree add --detach "$W/harness" "$HARNESS_SHA" >/dev/null
+H="$W/harness"
 grep -q 'Cheap gate pre-check from popcounts only' "$W/src/src/conversion_head.cpp" || { say "ABORT architecture guard"; exit 4; }
+for f in "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py"; do
+  [[ -f "$f" ]] || { say "ABORT harness missing $f at $HARNESS_SHA"; exit 4; }
+done
 cp "$A_SRC" "$W/A.pjtw"; cp "$C10_SRC" "$W/C10.pjtw"; cp "$C10_SRC.cvh" "$W/C10.pjtw.cvh"
 cmp -s "$W/A.pjtw" "$W/C10.pjtw" || { say "ABORT A/C10 PJTW differ"; exit 4; }
 export TMPDIR="$W/tmp"; mkdir -p "$TMPDIR"
 cmake -S "$W/src" -B "$W/build" -DCMAKE_BUILD_TYPE=Release >"$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$NCPU" --target jass >"$W/build.log" 2>&1 || { say "BUILD FAIL"; tail -30 "$W/build.log"|tee -a "$RES"; exit 6; }
 J="$W/build/jass"
-python3 -m py_compile "$W/src/jobs/tools/conv_fixed_wdl.py" "$W/src/jobs/tools/cvh_followup_verdict.py"
+python3 -m py_compile "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py"
+sha256sum "$H/jobs/tools/conv_fixed_wdl.py" "$H/jobs/tools/cvh_followup_verdict.py" | tee -a "$RES"
 
 # Freeze an independent, decisive P3 subset. The source index is intentionally
 # re-based inside this new JNNW; A and C10 consume the exact same frozen bytes.
@@ -97,7 +105,7 @@ open(sys.argv[2],'wb').write(b'JNNW'+struct.pack('<I',4)+body)
 PY
 for cell in A C10; do
   patt="$W/${cell}.pjtw"
-  cmd=(python3 "$W/src/jobs/tools/conv_fixed_wdl.py" --jass "$J" --pattern "$patt"
+  cmd=(python3 "$H/jobs/tools/conv_fixed_wdl.py" --jass "$J" --pattern "$patt"
        --defender-pattern "$W/A.pjtw" --pool-jnnw "$W/smoke.jnnw" --depth 4
        --max-plies 80 --out "$W/smoke-${cell}.json")
   [[ -z "$SEARCH_PARAMS" ]] || cmd+=(--search-params "$SEARCH_PARAMS" --defender-search-params "$SEARCH_PARAMS")
@@ -130,7 +138,7 @@ PY
     done
   ) & MON_PID=$!
   for s in $(seq 0 $((SHARDS-1))); do
-    cmd=(python3 "$W/src/jobs/tools/conv_fixed_wdl.py" --jass "$J" --pattern "$patt"
+    cmd=(python3 "$H/jobs/tools/conv_fixed_wdl.py" --jass "$J" --pattern "$patt"
          --defender-pattern "$W/A.pjtw" --pool-jnnw "$W/p3-confirm.jnnw"
          --depth "$CONFIRM_DEPTH" --max-plies "$MAX_PLIES" --shard "$s" --nshards "$SHARDS"
          --out "$W/${cell}.$s.json")
@@ -144,7 +152,7 @@ PY
 run_cell A "$W/A.pjtw"
 run_cell C10 "$W/C10.pjtw"
 
-if ! python3 "$W/src/jobs/tools/cvh_followup_verdict.py" confirm \
+if ! python3 "$H/jobs/tools/cvh_followup_verdict.py" confirm \
     --baseline "$W"/A.*.json --candidate "$W"/C10.*.json \
     --min-n "$CONFIRM_MIN_N" --min-delta "$CONFIRM_MIN_DELTA" \
     --out "$W/confirmation-verdict.json" | tee -a "$RES"; then
