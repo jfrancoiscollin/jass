@@ -19,6 +19,7 @@ class ContractTest(unittest.TestCase):
             "--drop-plycap", "--pair-openings", "FRONTIER_FRAC:-0",
             "--egdb-relabel", "low\" -le 2", "WIN_WEIGHT:-1", "DRAW_WEIGHT:-2",
             "LOSS_WEIGHT:-4", "prepare_imbalance2_training.py reweight",
+            "egdb-resolved", "TB teacher was not exact for every position",
         ):
             self.assertIn(token, RUNNER)
         self.assertIn("for logical in $(seq 0 17)", RUNNER)
