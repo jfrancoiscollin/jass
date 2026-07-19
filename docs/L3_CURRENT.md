@@ -1,7 +1,7 @@
 # L3-PURE — état courant et registre de résultats
 
-> **Mis à jour : 18 juillet 2026**
-> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_prepared_not_launched`**
+> **Mis à jour : 19 juillet 2026**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; gen2_p3_sibling_no_actionable_signal`**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -9,11 +9,17 @@
 ## 1. État en une phrase
 
 C0 a retiré la frontière mobile v1 et validé la viabilité de l'autojeu pur.
-C1-Q1 est maintenant clos contract-grade : `0812` donne `q1_no_lead`, donc
-Q00 devient la baseline et Q2 n'est pas déclenché. Le prochain bloc
-pré-enregistré est **C2-X1**, un screen d'exploration à cinq cellules ; son
-runner, ses métriques et ses wrappers sont préparés hors queue, sans job lancé.
-Le track Gen2-MMTO « tête P3 » reste parallèle et ne modifie pas L3.
+C1-Q1 est clos contract-grade : `0812` donne `q1_no_lead`, donc Q00 devient la
+baseline et Q2 n'est pas déclenché. **C2-X1 est maintenant clos aussi** : le
+verdict `0824` (`l3_x1_verdict.py`, cinq cellules, n_paired global 860) donne
+`x1_no_lead` — les facteurs d'exploration (plies d'ouverture, epsilon,
+décroissance) sont tous plats, IC straddle 0, aucune cellule n'atteint Δ+0,02.
+Le plateau de conversion ~0,67 a désormais résisté à frontière, fork, teacher,
+quiescence, head statique P3, décisions-sibling P3 **et** dose d'exploration.
+Le track Gen2-MMTO « tête P3 » est lui aussi négatif : l'autopsie D0 `0822`
+donne `no_actionable_sibling_signal` (recovery 37,4 % < 50 %, Δ pairé +0,035
+IC [−0,022 ; +0,093]). Les leviers restants sont **la régularisation/mémoire du
+fit (M/F)** et **la capacité de représentation (32cf)**.
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -248,9 +254,26 @@ Le runner v5 publie par génération deux diagnostics supplémentaires :
 - profil du corpus : jeux/ouvertures/positions uniques, WDL, phases et P1–P4.
 
 La conversion calculée dans le corpus est marquée diagnostique (records
-corrélés). Le verdict utilisera après génération une jauge fixe, des résultats
-appariés et `X_HHH_CONTROL` comme référence. Aucun job d'évaluation n'est
-préparé avec des URIs fictives ; il sera ajouté une fois les cinq G2 publiés.
+corrélés). Le verdict utilise après génération une jauge fixe, des résultats
+appariés et `X_HHH_CONTROL` comme référence.
+
+### 8.0 Verdict C2-X1 — `x1_no_lead`
+
+Les cinq cellules ont été générées (`cpx62-0817..0821`, tous rc=0, deux
+générations chacune, G2 publiés). Le job d'évaluation `cpx62-0824`
+(`l3-pure-x1-verdict-v1.sh` + `l3_x1_verdict.py`, pin `42caa2e6`) a produit le
+verdict contract-complete en 47 min de science ; teardown SIGTERM 143 (comme
+`0812`), verdict intact, récupéré par `cpx62-0825`.
+
+`n` appariés : global **860**. Effets factoriels aliasés (Δconversion, bootstrap
+10 000, IC 95 %) : A (ouverture) −0,0023 [−0,017 ; +0,013] ; B (epsilon) +0,0023
+[−0,012 ; +0,017] ; C (décroissance) +0,0012 [−0,012 ; +0,015] ; courbure
+centre-vs-coins +0,0041 [−0,012 ; +0,021]. **Tous nuls.**
+
+Conversion globale par cellule : CONTROL 0,671 · X_LLH 0,671 · X_HLL 0,667 ·
+X_LHL 0,672 · X_CENTER 0,674. Aucun coin n'atteint Δ+0,02 ; gates common/native
+≈ 0,5. **`x1_no_lead`** : l'exploration (dose et calendrier) est un **levier
+mort**, le plateau ~0,67 tient. Aucune confirmation lancée.
 
 ### 8.1 Trame de résultats C2-X1
 

@@ -1,6 +1,6 @@
 # Jass — synthèse consolidée des résultats du projet
 
-> **Périmètre :** du bring-up initial au verdict C1-Q1 et à la préparation C2-X1 du 18 juillet 2026
+> **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
 > **Mis à jour :** 2026-07-18
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
@@ -278,6 +278,8 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | PC Blues prefs/seed fit | −135 ; seed neutre/négatif | QA riche, mais mauvais canal d'éval | usage comme thermomètre/recherche, pas fit identique |
 | G4/gymnase fixe | `0726` conversion −0,009 à −0,010 | répétition statique ne convertit pas | curriculum mobile réellement différent, testé par C0 |
 | teacher causal B1/B2/B3 v1 | 0777 sous +0,02 | aucun signal | nouvelle information causale ou nouveau canal, pas plus de N sur mêmes cellules |
+| dose/calendrier d'exploration (écran C2-X1) | verdict `0824` (`l3_x1_verdict.py`, 5 cellules, n appariés 860, bootstrap 10 000) : effets A −0,002 / B +0,002 / C +0,001 / courbure +0,004, tous IC franchissant 0 ; aucun coin Δconv ≥ +0,02 ; gates ≈ 0,5 | `x1_no_lead` — plies d'ouverture, epsilon et décroissance ne déplacent pas la conversion ; plateau ~0,67 | nouveau facteur de trajectoire causalement différent, ou signal sur une lignée plus mûre |
+| décisions-sibling P3 gen2 (autopsie D0) | `0822` `no_actionable_sibling_signal` : recovery 37,4 % < 50 %, Δ pairé +0,035 IC [−0,022 ; +0,093] straddle 0, n=339 | rejouer un meilleur sibling au leader P3 ne récupère pas assez de failures ; cohérent avec l'échec du head statique CVH1 (`better_fit_no_play_signal`) | mécanisme de décision P3 causalement différent, gate indépendant |
 
 ### 5.3 Recherche
 
