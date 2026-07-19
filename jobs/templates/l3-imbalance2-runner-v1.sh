@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# L3-IMBALANCE2: stage runner for games starting at n men vs n+2 men, n=1..18.
+set -Eeuo pipefail
+
+: "${JASS_CODE_DIR:?runner v3 must provide JASS_CODE_DIR}"
+: "${JASS_RESULT_DIR:?runner v3 must provide JASS_RESULT_DIR}"
+: "${JASS_ARTEFACT_DIR:?runner v3 must provide JASS_ARTEFACT_DIR}"
+: "${JASS_JOB_ID:?runner v3 must provide JASS_JOB_ID}"
+: "${EXPECTED_CODE_SHA:?pin the merged jass SHA}"
+: "${PHASE:?set PHASE=P1, P2, P3 or P4}"
+
+cd "$JASS_CODE_DIR"
+W="$JASS_RESULT_DIR/work"
+ART="$JASS_ARTEFACT_DIR"
+GEOM="$JASS_RESULT_DIR/geom8"
+POOLS="$W/imbalance2-pools"
+mkdir -p "$W" "$ART" "$GEOM" "$POOLS"
+exec 9>"$JASS_RESULT_DIR/job.lock"
+flock -n 9 || { echo "ABORT: another instance is active" >&2; exit 3; }
+
+case "$PHASE" in
+  P1) START_GEN=1;  END_GEN=4;  PLAY_DEPTH=8 ;;
+  P2) START_GEN=5;  END_GEN=8;  PLAY_DEPTH=10 ;;
+  P3) START_GEN=9;  END_GEN=12; PLAY_DEPTH=12 ;;
+  P4) START_GEN=13; END_GEN=16; PLAY_DEPTH=14 ;;
+  *) echo "ABORT: invalid PHASE=$PHASE" >&2; exit 2 ;;
+esac
+
+FRESH="${FRESH:-500000}"
+NSHARDS="${NSHARDS:-18}"
+PAR_GEN="${PAR_GEN:-8}"
+MAXPLIES="${MAXPLIES:-260}"
+LABEL_DEPTH="${LABEL_DEPTH:-4}"
+RANDOM_OPEN_PLIES="${RANDOM_OPEN_PLIES:-8}"
+EXPLORE_EPS="${EXPLORE_EPS:-8}"
+EXPLORE_DECAY_PLIES="${EXPLORE_DECAY_PLIES:-60}"
+HOLDOUT_MOD="${HOLDOUT_MOD:-10}"
+BASE_SEED="${BASE_SEED:-271828}"
+MAXIT="${MAXIT:-25}"
+L2="${L2:-3e-5}"
+CHUNK="${CHUNK:-500000}"
+SHARD_TIMEOUT="${SHARD_TIMEOUT:-21600}"
+JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-8}"
+TRAIN_SEEDS_PER_STRATUM="${TRAIN_SEEDS_PER_STRATUM:-4096}"
+BENCH_PER_STRATUM="${BENCH_PER_STRATUM:-24}"
+FRONTIER_FRAC="${FRONTIER_FRAC:-0}"
+
+EXPECTED_SEARCH_OVERRIDES="qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0"
+L3_SEARCH_OVERRIDES="${L3_SEARCH_OVERRIDES:-$EXPECTED_SEARCH_OVERRIDES}"
+L3_BASE_SEARCH_PARAMS="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=1,qs_sacs=1,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
+L3_SEARCH_PARAMS="$(python3 - "$L3_BASE_SEARCH_PARAMS" "$L3_SEARCH_OVERRIDES" <<'PY'
+import sys
+base, overrides = sys.argv[1:]
+order=[]; values={}
+for token in base.split(','):
+    k,v=token.split('=',1); order.append(k); values[k]=v
+if len(order) != 63 or len(set(order)) != 63:
+    raise SystemExit('expected 63 unique search keys')
+for token in overrides.split(','):
+    k,v=token.split('=',1)
+    if k not in values: raise SystemExit(f'unknown override {k}')
+    int(v); values[k]=v
+print(','.join(f'{k}={values[k]}' for k in order))
+PY
+)"
+
+RES="$W/RESULTS.txt"
+PROG="$W/PROGRESS.txt"
+: > "$RES"; : > "$PROG"
+say(){ echo "$*" | tee -a "$RES"; }
+die(){ say "ABORT: $*"; exit 1; }
+run_pids(){ local label="$1"; shift; local fail=0 p; for p in "$@"; do wait "$p" || fail=$((fail+1)); done; [ "$fail" -eq 0 ] || die "$label: $fail failed process(es)"; }
+fetch_input(){
+  local src="$1" dst="$2"
+  if [ -f "$src" ]; then cp "$src" "$dst"
+  elif [[ "$src" == r2:* ]]; then command -v rclone >/dev/null || die "rclone missing"; rclone copyto "$src" "$dst"
+  else die "unsupported or missing input: $src"; fi
+}
+finalize(){
+  rc=$?; trap - EXIT; set +e
+  [ -f "$RES" ] && cp "$RES" "$ART/RESULTS.txt"
+  [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
+  if [ -d "$W" ]; then (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true; fi
+  rm -rf "$W/build" 2>/dev/null || true
+  exit "$rc"
+}
+trap finalize EXIT
+trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a "$RES"; exit "$rc"' ERR
+
+say "=== $JASS_JOB_ID — L3-IMBALANCE2 $PHASE G${START_GEN}-G${END_GEN} d${PLAY_DEPTH} ==="
+[ -z "$(git branch --show-current)" ] || die "runner code worktree must be detached"
+[ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
+[ "${FULL_RUN_APPROVED:-0}" = 1 ] || die "FULL_RUN_APPROVED=1 missing"
+[ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
+[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 records/generation"
+[ "$NSHARDS" -eq 18 ] || die "requires one shard for each of the 18 strata"
+[ "$PAR_GEN" -eq 8 ] || die "cpx62 contract requires PAR_GEN=8"
+[ "$MAXPLIES" -eq 260 ] || die "requires MAXPLIES=260"
+[ "$LABEL_DEPTH" -eq 4 ] || die "zero-score label argument must remain 4"
+[ "$RANDOM_OPEN_PLIES" -eq 8 ] || die "same P1 exploration recipe requires 8 opening plies"
+[ "$EXPLORE_EPS" -eq 8 ] || die "same P1 exploration recipe requires epsilon=8"
+[ "$EXPLORE_DECAY_PLIES" -eq 60 ] || die "same P1 exploration recipe requires decay=60"
+[ "$HOLDOUT_MOD" -eq 10 ] || die "requires holdout-mod=10"
+[ "$BASE_SEED" -eq 271828 ] || die "primary seed must be 271828"
+[ "$MAXIT" -eq 25 ] || die "requires max-iter=25"
+[ "$L2" = 3e-5 ] || die "requires L2=3e-5"
+[ "$CHUNK" -eq 500000 ] || die "requires chunk=500000"
+[ "$FRONTIER_FRAC" -eq 0 ] || die "frontier records forbidden"
+[ "$L3_SEARCH_OVERRIDES" = "$EXPECTED_SEARCH_OVERRIDES" ] || die "Q00 fingerprint required"
+[ "$(nproc)" -ge "$PAR_GEN" ] || die "not enough CPUs"
+MEM_MB="$(awk '/MemTotal:/ {printf "%d", $2/1024}' /proc/meminfo)"
+[ "${MEM_MB:-0}" -ge 30000 ] || die "approved only on cpx62 32 GiB"
+[ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2 {print $4}')" -ge 20000 ] || die "less than 20 GiB free"
+if [ "$PHASE" != P1 ]; then
+  : "${PARENT_MODEL_URI:?P2-P4 require previous phase final model URI/path}"
+  : "${PARENT_MODEL_SHA256:?P2-P4 require previous phase final model SHA256}"
+fi
+
+python3 -m py_compile jobs/tools/make_imbalance2_pools.py jobs/tools/imbalance2_scan_gate.py \
+  tools/selfplay_frontier.py jobs/tools/aggregate_l3_exploration.py \
+  pattern_jass/tools/train_stream.py pattern_jass/tools/make_bootstrap_eval.py
+python3 jobs/tests/test_l3_imbalance2_prepared.py > "$W/test-contract.log" 2>&1 || die "imbalance2 contract tests failed"
+python3 jobs/tests/test_imbalance2_tools.py > "$W/test-tools.log" 2>&1 || die "imbalance2 tool tests failed"
+
+python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
+cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
+NPAT="$(PYTHONPATH="$GEOM" python3 -c 'import patterns; print(patterns.TOTAL_BUCKETS)')"
+[ "$NPAT" -eq 4251528 ] || die "8cf geometry mismatch"
+
+FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
+[ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl > "$W/clone-egdb.log" 2>&1
+EGDIR=""
+for dir in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$dir"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$dir"; break; }; done
+[ -n "$EGDIR" ] || die "exact EGDB unavailable"
+export JASS_EGDB_PATH="$EGDIR"
+cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1
+grep -q "EXTERNAL EGDB ENABLED" "$W/cmake.log" || die "build has no exact EGDB"
+cmake --build "$W/build" -j"$JASS_BUILD_JOBS" --target jass > "$W/build.log" 2>&1
+J="$W/build/jass"
+
+python3 jobs/tools/make_imbalance2_pools.py --out-dir "$POOLS" \
+  --train-per-stratum "$TRAIN_SEEDS_PER_STRATUM" --bench-per-stratum "$BENCH_PER_STRATUM" \
+  --seed "$BASE_SEED" > "$W/pools.log" 2>&1
+cp "$POOLS/manifest.json" "$ART/imbalance2-pools-manifest.json"
+gzip -n -c "$POOLS/benchmark-a.jnnw" > "$ART/benchmark-a.jnnw.gz"
+gzip -n -c "$POOLS/benchmark-b.jnnw" > "$ART/benchmark-b.jnnw.gz"
+cp "$POOLS/benchmark-a.json" "$ART/benchmark-a.json"
+cp "$POOLS/benchmark-b.json" "$ART/benchmark-b.json"
+
+if [ "$PHASE" = P1 ]; then
+  python3 pattern_jass/tools/make_bootstrap_eval.py --out "$W/g0-material.pjtw" \
+    --n-pat "$NPAT" --n-ext 120 --men 1 --king 3 --king-center 0 --mobility 0 \
+    > "$W/g0-material.log" 2>&1
+  PILOT="$W/g0-material.pjtw"
+  gzip -n -c "$PILOT" > "$ART/g0-material.pjtw.gz"
+else
+  fetch_input "$PARENT_MODEL_URI" "$W/parent.pjtw.gz"
+  echo "$PARENT_MODEL_SHA256  $W/parent.pjtw.gz" | sha256sum -c -
+  gzip -dc "$W/parent.pjtw.gz" > "$W/parent.pjtw"
+  PILOT="$W/parent.pjtw"
+fi
+[ -s "$PILOT" ] || die "pilot missing"
+
+BASE_PER_SHARD=$((FRESH / NSHARDS))
+REMAINDER=$((FRESH % NSHARDS))
+[ $((BASE_PER_SHARD * NSHARDS + REMAINDER)) -eq "$FRESH" ] || die "record allocation bug"
+
+for generation in $(seq "$START_GEN" "$END_GEN"); do
+  say "--- $PHASE G$generation play=d$PLAY_DEPTH pilot=$(basename "$PILOT") ---"
+  pids=(); merge_args=()
+  for shard in $(seq 0 17); do
+    low=$((shard + 1)); high=$((low + 2))
+    target="$BASE_PER_SHARD"; [ "$shard" -lt "$REMAINDER" ] && target=$((target + 1))
+    seed_file="$(printf '%s/train-%02dv%02d.jnnw' "$POOLS" "$low" "$high")"
+    data="$W/g${generation}.s${shard}.jnnw"; meta="$W/g${generation}.s${shard}.jsm"; log="$W/g${generation}.s${shard}.log"
+    seed=$((BASE_SEED + generation * 10000 + shard))
+    timeout "$SHARD_TIMEOUT" "$J" --gen-data-wdl "$target" "$data" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
+      --nnue "$PILOT" --search-params-play "$L3_SEARCH_PARAMS" --wdl-zero-score \
+      --seed-file "$seed_file" --seed-frac 100 --random-open-plies "$RANDOM_OPEN_PLIES" \
+      --explore-eps "$EXPLORE_EPS" --explore-decay-plies "$EXPLORE_DECAY_PLIES" \
+      --pair-openings --drop-plycap --sample-meta-out "$meta" > "$log" 2>&1 &
+    pids+=("$!"); merge_args+=(--pair "$data" "$meta")
+    if [ "${#pids[@]}" -ge "$PAR_GEN" ]; then run_pids "G$generation batch" "${pids[@]}"; pids=(); fi
+  done
+  [ "${#pids[@]}" -eq 0 ] || run_pids "G$generation final batch" "${pids[@]}"
+  for log in "$W/g${generation}.s"*.log; do grep -q 'label_score_searches=0' "$log" || die "zero-score proof missing: $log"; grep -q 'seed_frac=100%' "$log" || die "seed-only proof missing: $log"; done
+
+  python3 tools/selfplay_frontier.py merge "${merge_args[@]}" --out-data "$W/g${generation}.raw.jnnw" \
+    --out-meta "$W/g${generation}.raw.jsm" --manifest "$ART/g${generation}-merge.json" > "$W/g${generation}-merge.log" 2>&1
+  python3 jobs/tools/aggregate_l3_exploration.py --log "$W"/g${generation}.s*.log \
+    --expected-random-open "$RANDOM_OPEN_PLIES" --expected-eps "$EXPLORE_EPS" --expected-decay "$EXPLORE_DECAY_PLIES" \
+    --manifest "$ART/g${generation}-exploration.json" > "$W/g${generation}-exploration.log" 2>&1
+  python3 tools/selfplay_frontier.py profile --data "$W/g${generation}.raw.jnnw" --meta "$W/g${generation}.raw.jsm" \
+    --manifest "$ART/g${generation}-profile.json" > "$W/g${generation}-profile.log" 2>&1
+  python3 tools/selfplay_frontier.py split --data "$W/g${generation}.raw.jnnw" --meta "$W/g${generation}.raw.jsm" \
+    --out-data "$W/g${generation}.fit.jnnw" --out-meta "$W/g${generation}.fit.jsm" \
+    --holdout-mod "$HOLDOUT_MOD" --seed "$BASE_SEED" --manifest "$ART/g${generation}-split.json" > "$W/g${generation}-split.log" 2>&1
+  HOLDOUT_COUNT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["holdout_records"])' "$ART/g${generation}-split.json")"
+  [ "$HOLDOUT_COUNT" -gt 0 ] || die "empty holdout"
+  "$J" --dump-eval-features "$W/g${generation}.fit.jnnw" "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
+  warm=(--warm-start "$PILOT")
+  [ "$PHASE" = P1 ] && [ "$generation" -eq 1 ] && warm=()
+  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/train_stream.py \
+    --data "$W/g${generation}.fit.jnnw" --feat "$W/g${generation}.feat" --out "$W/g${generation}.pjtw" \
+    --target wdl --loss logistic --color-fold --tempo-stage "${warm[@]}" --holdout-count "$HOLDOUT_COUNT" \
+    --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" > "$W/g${generation}-train.log" 2>&1
+  [ -s "$W/g${generation}.pjtw" ] || die "G$generation student missing"
+  gzip -n -c "$W/g${generation}.pjtw" > "$ART/g${generation}.pjtw.gz"
+  gzip -n -c "$W/g${generation}.raw.jnnw" > "$ART/g${generation}-selfplay.jnnw.gz"
+  gzip -n -c "$W/g${generation}.raw.jsm" > "$ART/g${generation}-selfplay.jsm.gz"
+  PILOT="$W/g${generation}.pjtw"
+  say "G$generation complete: stratum-starts=18 records=$FRESH holdout=$HOLDOUT_COUNT"
+done
+
+python3 - "$ART" "$PHASE" "$START_GEN" "$END_GEN" "$PLAY_DEPTH" "$L3_SEARCH_PARAMS" "$EXPECTED_CODE_SHA" <<'PY'
+import hashlib,json,sys
+from pathlib import Path
+art=Path(sys.argv[1]); phase=sys.argv[2]; start=int(sys.argv[3]); end=int(sys.argv[4]); depth=int(sys.argv[5]); search=sys.argv[6]; sha=sys.argv[7]
+students={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(art.glob('g*.pjtw.gz'))}
+payload={
+ 'schema':1,'lineage':'L3-IMBALANCE2','phase':phase,'generation_range':[start,end],
+ 'play_depth':depth,'code_sha':sha,'positions_per_generation':500000,
+ 'start_strata':[f'{n}v{n+2}' for n in range(1,19)],
+ 'start_distribution':'exact one shard per stratum; seed_frac=100',
+ 'trajectory_policy':'retain complete actually-played trajectories',
+ 'scan_used_for_training':False,'terminal_wdl_only':True,'drop_plycap_game_samples':True,
+ 'material_adjudication':False,'tb_relabel':False,'deep_relabel':False,'frontier':False,
+ 'geometry':'8cf','search_params':search,'search_params_count':len(search.split(',')),
+ 'automatic_next_job':None,'promotion_authorized':False,'student_sha256':students,
+ 'next_action':'run two-pool Scan equivalence gate before authorizing the next phase',
+}
+(art/f'l3-imbalance2-{phase.lower()}-manifest.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+PY
+say "=== L3-IMBALANCE2 $PHASE complete; run Scan gate, no automatic continuation ==="
