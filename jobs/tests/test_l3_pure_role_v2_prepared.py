@@ -26,6 +26,8 @@ class L3PureRoleV2PreparedTest(unittest.TestCase):
             "patch_l3_pure_role_v2_runner.py",
             "g*-role-v2-reweight.json",
             'manifest["lineage"] = "L3-PURE-ROLE-V2"',
+            'manifest["promotion_authorized"] = False',
+            'manifest["automatic_next_job"] = None',
             '"holdout_weighted": False',
             '"per_move_criticality_relabel": False',
         ):
