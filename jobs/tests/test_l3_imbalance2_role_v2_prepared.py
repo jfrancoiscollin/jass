@@ -93,6 +93,8 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             "Contrat d’exécution ccx33",
             "PROBE=1",
             "FRESH=54000",
+            "L3-PURE",
+            "docs/L3_ROLE_V2_DUAL_LINEAGE_PLAN.md",
             "A/B apparié",
             "Aucun palier, merge scientifique ou benchmark externe",
         ):
