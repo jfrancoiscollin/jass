@@ -1,6 +1,6 @@
 # L3-PURE role-aware V2 — paired tests
 
-This directory prepares two independent paired A/B tests for the original balanced-start L3 lineage.
+This directory prepares two independent paired A/B tests for the original balanced-start L3 lineage. These are comparison jobs, not promotion jobs.
 
 ## ccx33 primary pair
 
@@ -24,4 +24,4 @@ Within each pair, the initial model, search parameters, seeds, generation count 
 
 G1 self-play is directly matched because both arms start from the same material seed. From G2 onward, trajectories may diverge because G1 students differ; that divergence is part of the treatment effect, not a configuration mismatch.
 
-Both tests use Q00_CAPTURE, two generations, 150,000 source records per generation, eight shards and no moving frontier. They are not promotion jobs and must not be queued without explicit approval.
+Both tests use Q00_CAPTURE, two generations, 150,000 source records per generation, eight shards and no moving frontier. They must not be queued without explicit approval. A separate reviewed evaluation/gate is required before any promotion decision.
