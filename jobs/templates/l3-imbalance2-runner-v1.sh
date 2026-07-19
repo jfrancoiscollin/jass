@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# L3-IMBALANCE2: stage runner for games starting at n men vs n+2 men, n=1..18.
+# L3-IMBALANCE2: stage runner for starts n men vs n+2 men, n=1..18.
 set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?runner v3 must provide JASS_CODE_DIR}"
@@ -42,8 +42,12 @@ L2="${L2:-3e-5}"
 CHUNK="${CHUNK:-500000}"
 SHARD_TIMEOUT="${SHARD_TIMEOUT:-21600}"
 JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-8}"
-TRAIN_SEEDS_PER_STRATUM="${TRAIN_SEEDS_PER_STRATUM:-4096}"
+TRAIN_SEEDS_PER_SIDE="${TRAIN_SEEDS_PER_SIDE:-2048}"
 BENCH_PER_STRATUM="${BENCH_PER_STRATUM:-24}"
+PLATEAU_PER_STRATUM="${PLATEAU_PER_STRATUM:-8}"
+WIN_WEIGHT="${WIN_WEIGHT:-1}"
+DRAW_WEIGHT="${DRAW_WEIGHT:-2}"
+LOSS_WEIGHT="${LOSS_WEIGHT:-4}"
 FRONTIER_FRAC="${FRONTIER_FRAC:-0}"
 
 EXPECTED_SEARCH_OVERRIDES="qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,qs_forcing_depth=0,qs_promo_depth=0"
@@ -93,19 +97,20 @@ say "=== $JASS_JOB_ID — L3-IMBALANCE2 $PHASE G${START_GEN}-G${END_GEN} d${PLAY
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ "${FULL_RUN_APPROVED:-0}" = 1 ] || die "FULL_RUN_APPROVED=1 missing"
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
-[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 records/generation"
-[ "$NSHARDS" -eq 18 ] || die "requires one shard for each of the 18 strata"
+[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 source records/generation"
+[ "$NSHARDS" -eq 18 ] || die "requires 18 logical material strata"
 [ "$PAR_GEN" -eq 8 ] || die "cpx62 contract requires PAR_GEN=8"
 [ "$MAXPLIES" -eq 260 ] || die "requires MAXPLIES=260"
 [ "$LABEL_DEPTH" -eq 4 ] || die "zero-score label argument must remain 4"
-[ "$RANDOM_OPEN_PLIES" -eq 8 ] || die "same P1 exploration recipe requires 8 opening plies"
-[ "$EXPLORE_EPS" -eq 8 ] || die "same P1 exploration recipe requires epsilon=8"
-[ "$EXPLORE_DECAY_PLIES" -eq 60 ] || die "same P1 exploration recipe requires decay=60"
+[ "$RANDOM_OPEN_PLIES" -eq 8 ] || die "same P1 rollout recipe requires 8 opening plies"
+[ "$EXPLORE_EPS" -eq 8 ] || die "same P1 rollout recipe requires epsilon=8"
+[ "$EXPLORE_DECAY_PLIES" -eq 60 ] || die "same P1 rollout recipe requires decay=60"
 [ "$HOLDOUT_MOD" -eq 10 ] || die "requires holdout-mod=10"
 [ "$BASE_SEED" -eq 271828 ] || die "primary seed must be 271828"
 [ "$MAXIT" -eq 25 ] || die "requires max-iter=25"
 [ "$L2" = 3e-5 ] || die "requires L2=3e-5"
 [ "$CHUNK" -eq 500000 ] || die "requires chunk=500000"
+[ "$WIN_WEIGHT" = 1 ] && [ "$DRAW_WEIGHT" = 2 ] && [ "$LOSS_WEIGHT" = 4 ] || die "requires material-up weights win/draw/loss=1/2/4"
 [ "$FRONTIER_FRAC" -eq 0 ] || die "frontier records forbidden"
 [ "$L3_SEARCH_OVERRIDES" = "$EXPECTED_SEARCH_OVERRIDES" ] || die "Q00 fingerprint required"
 [ "$(nproc)" -ge "$PAR_GEN" ] || die "not enough CPUs"
@@ -117,9 +122,10 @@ if [ "$PHASE" != P1 ]; then
   : "${PARENT_MODEL_SHA256:?P2-P4 require previous phase final model SHA256}"
 fi
 
-python3 -m py_compile jobs/tools/make_imbalance2_pools.py jobs/tools/imbalance2_scan_gate.py \
-  tools/selfplay_frontier.py jobs/tools/aggregate_l3_exploration.py \
-  pattern_jass/tools/train_stream.py pattern_jass/tools/make_bootstrap_eval.py
+python3 -m py_compile jobs/tools/make_imbalance2_pools.py jobs/tools/prepare_imbalance2_training.py \
+  jobs/tools/imbalance2_scan_gate.py tools/selfplay_frontier.py \
+  jobs/tools/aggregate_l3_exploration.py pattern_jass/tools/train_stream.py \
+  pattern_jass/tools/make_bootstrap_eval.py
 python3 jobs/tests/test_l3_imbalance2_prepared.py > "$W/test-contract.log" 2>&1 || die "imbalance2 contract tests failed"
 python3 jobs/tests/test_imbalance2_tools.py > "$W/test-tools.log" 2>&1 || die "imbalance2 tool tests failed"
 
@@ -149,13 +155,18 @@ cmake --build "$W/build" -j"$JASS_BUILD_JOBS" --target jass > "$W/build.log" 2>&
 J="$W/build/jass"
 
 python3 jobs/tools/make_imbalance2_pools.py --out-dir "$POOLS" \
-  --train-per-stratum "$TRAIN_SEEDS_PER_STRATUM" --bench-per-stratum "$BENCH_PER_STRATUM" \
+  --train-per-side "$TRAIN_SEEDS_PER_SIDE" --bench-per-stratum "$BENCH_PER_STRATUM" \
+  --plateau-per-stratum "$PLATEAU_PER_STRATUM" \
   --seed "$BASE_SEED" > "$W/pools.log" 2>&1
 cp "$POOLS/manifest.json" "$ART/imbalance2-pools-manifest.json"
 gzip -n -c "$POOLS/benchmark-a.jnnw" > "$ART/benchmark-a.jnnw.gz"
 gzip -n -c "$POOLS/benchmark-b.jnnw" > "$ART/benchmark-b.jnnw.gz"
 cp "$POOLS/benchmark-a.json" "$ART/benchmark-a.json"
 cp "$POOLS/benchmark-b.json" "$ART/benchmark-b.json"
+for pool in a b; do
+  gzip -n -c "$POOLS/plateau-${pool}.jnnw" > "$ART/plateau-${pool}.jnnw.gz"
+  cp "$POOLS/plateau-${pool}.json" "$ART/plateau-${pool}.json"
+done
 
 if [ "$PHASE" = P1 ]; then
   python3 pattern_jass/tools/make_bootstrap_eval.py --out "$W/g0-material.pjtw" \
@@ -171,33 +182,62 @@ else
 fi
 [ -s "$PILOT" ] || die "pilot missing"
 
-BASE_PER_SHARD=$((FRESH / NSHARDS))
+BASE_PER_STRATUM=$((FRESH / NSHARDS))
 REMAINDER=$((FRESH % NSHARDS))
-[ $((BASE_PER_SHARD * NSHARDS + REMAINDER)) -eq "$FRESH" ] || die "record allocation bug"
+[ $((BASE_PER_STRATUM * NSHARDS + REMAINDER)) -eq "$FRESH" ] || die "record allocation bug"
 
 for generation in $(seq "$START_GEN" "$END_GEN"); do
   say "--- $PHASE G$generation play=d$PLAY_DEPTH pilot=$(basename "$PILOT") ---"
-  pids=(); merge_args=()
-  for shard in $(seq 0 17); do
-    low=$((shard + 1)); high=$((low + 2))
-    target="$BASE_PER_SHARD"; [ "$shard" -lt "$REMAINDER" ] && target=$((target + 1))
-    seed_file="$(printf '%s/train-%02dv%02d.jnnw' "$POOLS" "$low" "$high")"
-    data="$W/g${generation}.s${shard}.jnnw"; meta="$W/g${generation}.s${shard}.jsm"; log="$W/g${generation}.s${shard}.log"
-    seed=$((BASE_SEED + generation * 10000 + shard))
-    timeout "$SHARD_TIMEOUT" "$J" --gen-data-wdl "$target" "$data" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
-      --nnue "$PILOT" --search-params-play "$L3_SEARCH_PARAMS" --wdl-zero-score \
-      --seed-file "$seed_file" --seed-frac 100 --random-open-plies "$RANDOM_OPEN_PLIES" \
-      --explore-eps "$EXPLORE_EPS" --explore-decay-plies "$EXPLORE_DECAY_PLIES" \
-      --pair-openings --drop-plycap --sample-meta-out "$meta" > "$log" 2>&1 &
-    pids+=("$!"); merge_args+=(--pair "$data" "$meta")
-    if [ "${#pids[@]}" -ge "$PAR_GEN" ]; then run_pids "G$generation batch" "${pids[@]}"; pids=(); fi
+  pids=(); merge_args=(); rollout_logs=(); part=0
+  for logical in $(seq 0 17); do
+    low=$((logical + 1)); high=$((low + 2))
+    target_stratum="$BASE_PER_STRATUM"; [ "$logical" -lt "$REMAINDER" ] && target_stratum=$((target_stratum + 1))
+    target_w=$(( (target_stratum + 1) / 2 )); target_b=$(( target_stratum - target_w ))
+    for adv in W B; do
+      target="$target_w"; [ "$adv" = B ] && target="$target_b"
+      data="$W/g${generation}.p${part}.jnnw"; meta="$W/g${generation}.p${part}.jsm"
+      log="$W/g${generation}.p${part}.log"; report="$ART/g${generation}-p${part}-outcome.json"
+      seed=$((BASE_SEED + generation * 100000 + part))
+      merge_args+=(--pair "$data" "$meta")
+      if [ "$low" -le 2 ]; then
+        (
+          raw="$W/g${generation}.p${part}.tb-raw.jnnw"; labelled="$W/g${generation}.p${part}.tb-labelled.jnnw"
+          python3 jobs/tools/prepare_imbalance2_training.py static --low "$low" --high "$high" \
+            --advantaged-side "$adv" --count "$target" --seed "$seed" --out-data "$raw" \
+            --out-meta "$meta" --report "$ART/g${generation}-p${part}-tb-source.json"
+          "$J" --egdb-relabel "$raw" "$EGDIR" "$labelled" 128
+          python3 jobs/tools/prepare_imbalance2_training.py encode --input "$labelled" --output "$data" \
+            --advantaged-side "$adv" --report "$report"
+          echo "tb_teacher_exact=1 stratum=${low}v${high} total_pieces=$((low+high)) records=$target"
+        ) > "$log" 2>&1 &
+      else
+        rollout_logs+=("$log")
+        seed_file="$(printf '%s/train-%02dv%02d-up%s.jnnw' "$POOLS" "$low" "$high" "$adv")"
+        (
+          "$J" --gen-data-wdl "$target" "$data.tmp" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
+            --nnue "$PILOT" --search-params-play "$L3_SEARCH_PARAMS" --wdl-zero-score \
+            --seed-file "$seed_file" --seed-frac 100 --random-open-plies "$RANDOM_OPEN_PLIES" \
+            --explore-eps "$EXPLORE_EPS" --explore-decay-plies "$EXPLORE_DECAY_PLIES" \
+            --pair-openings --drop-plycap --sample-meta-out "$meta"
+          python3 jobs/tools/prepare_imbalance2_training.py encode --input "$data.tmp" --output "$data" \
+            --advantaged-side "$adv" --report "$report"
+          rm -f "$data.tmp"
+        ) > "$log" 2>&1 &
+      fi
+      pids+=("$!"); part=$((part + 1))
+      if [ "${#pids[@]}" -ge "$PAR_GEN" ]; then run_pids "G$generation batch" "${pids[@]}"; pids=(); fi
+    done
   done
   [ "${#pids[@]}" -eq 0 ] || run_pids "G$generation final batch" "${pids[@]}"
-  for log in "$W/g${generation}.s"*.log; do grep -q 'label_score_searches=0' "$log" || die "zero-score proof missing: $log"; grep -q 'seed_frac=100%' "$log" || die "seed-only proof missing: $log"; done
+  for log in "$W/g${generation}.p"*.log; do
+    if grep -q 'tb_teacher_exact=1' "$log"; then continue; fi
+    grep -q 'label_score_searches=0' "$log" || die "zero-score proof missing: $log"
+    grep -q 'seed_frac=100%' "$log" || die "seed-only proof missing: $log"
+  done
 
   python3 tools/selfplay_frontier.py merge "${merge_args[@]}" --out-data "$W/g${generation}.raw.jnnw" \
     --out-meta "$W/g${generation}.raw.jsm" --manifest "$ART/g${generation}-merge.json" > "$W/g${generation}-merge.log" 2>&1
-  python3 jobs/tools/aggregate_l3_exploration.py --log "$W"/g${generation}.s*.log \
+  python3 jobs/tools/aggregate_l3_exploration.py --log "${rollout_logs[@]}" \
     --expected-random-open "$RANDOM_OPEN_PLIES" --expected-eps "$EXPLORE_EPS" --expected-decay "$EXPLORE_DECAY_PLIES" \
     --manifest "$ART/g${generation}-exploration.json" > "$W/g${generation}-exploration.log" 2>&1
   python3 tools/selfplay_frontier.py profile --data "$W/g${generation}.raw.jnnw" --meta "$W/g${generation}.raw.jsm" \
@@ -207,19 +247,23 @@ for generation in $(seq "$START_GEN" "$END_GEN"); do
     --holdout-mod "$HOLDOUT_MOD" --seed "$BASE_SEED" --manifest "$ART/g${generation}-split.json" > "$W/g${generation}-split.log" 2>&1
   HOLDOUT_COUNT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["holdout_records"])' "$ART/g${generation}-split.json")"
   [ "$HOLDOUT_COUNT" -gt 0 ] || die "empty holdout"
-  "$J" --dump-eval-features "$W/g${generation}.fit.jnnw" "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
+  python3 jobs/tools/prepare_imbalance2_training.py reweight --input "$W/g${generation}.fit.jnnw" \
+    --output "$W/g${generation}.weighted.jnnw" --holdout-count "$HOLDOUT_COUNT" \
+    --win-weight "$WIN_WEIGHT" --draw-weight "$DRAW_WEIGHT" --loss-weight "$LOSS_WEIGHT" \
+    --seed $((BASE_SEED + generation)) --report "$ART/g${generation}-reweight.json"
+  "$J" --dump-eval-features "$W/g${generation}.weighted.jnnw" "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
   warm=(--warm-start "$PILOT")
   [ "$PHASE" = P1 ] && [ "$generation" -eq 1 ] && warm=()
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/train_stream.py \
-    --data "$W/g${generation}.fit.jnnw" --feat "$W/g${generation}.feat" --out "$W/g${generation}.pjtw" \
+    --data "$W/g${generation}.weighted.jnnw" --feat "$W/g${generation}.feat" --out "$W/g${generation}.pjtw" \
     --target wdl --loss logistic --color-fold --tempo-stage "${warm[@]}" --holdout-count "$HOLDOUT_COUNT" \
     --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" > "$W/g${generation}-train.log" 2>&1
   [ -s "$W/g${generation}.pjtw" ] || die "G$generation student missing"
   gzip -n -c "$W/g${generation}.pjtw" > "$ART/g${generation}.pjtw.gz"
-  gzip -n -c "$W/g${generation}.raw.jnnw" > "$ART/g${generation}-selfplay.jnnw.gz"
-  gzip -n -c "$W/g${generation}.raw.jsm" > "$ART/g${generation}-selfplay.jsm.gz"
+  gzip -n -c "$W/g${generation}.raw.jnnw" > "$ART/g${generation}-source.jnnw.gz"
+  gzip -n -c "$W/g${generation}.raw.jsm" > "$ART/g${generation}-source.jsm.gz"
   PILOT="$W/g${generation}.pjtw"
-  say "G$generation complete: stratum-starts=18 records=$FRESH holdout=$HOLDOUT_COUNT"
+  say "G$generation complete: strata=18 source_records=$FRESH weights=1/2/4 tb_teacher=1v3,2v4 holdout=$HOLDOUT_COUNT"
 done
 
 python3 - "$ART" "$PHASE" "$START_GEN" "$END_GEN" "$PLAY_DEPTH" "$L3_SEARCH_PARAMS" "$EXPECTED_CODE_SHA" <<'PY'
@@ -228,25 +272,29 @@ from pathlib import Path
 art=Path(sys.argv[1]); phase=sys.argv[2]; start=int(sys.argv[3]); end=int(sys.argv[4]); depth=int(sys.argv[5]); search=sys.argv[6]; sha=sys.argv[7]
 students={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(art.glob('g*.pjtw.gz'))}
 payload={
- 'schema':1,'lineage':'L3-IMBALANCE2','phase':phase,'generation_range':[start,end],
- 'play_depth':depth,'code_sha':sha,'positions_per_generation':500000,
+ 'schema':2,'lineage':'L3-IMBALANCE2','phase':phase,'generation_range':[start,end],
+ 'play_depth':depth,'code_sha':sha,'source_positions_per_generation':500000,
  'start_strata':[f'{n}v{n+2}' for n in range(1,19)],
- 'start_distribution':'exact one shard per stratum; seed_frac=100',
- 'trajectory_policy':'retain complete actually-played trajectories',
- 'scan_used_for_training':False,'terminal_wdl_only':True,'drop_plycap_game_samples':True,
- 'material_adjudication':False,'tb_relabel':False,'deep_relabel':False,'frontier':False,
+ 'start_distribution':'exact per-stratum budget split by initial advantaged colour',
+ 'trajectory_policy':'rollout trajectories retained for >=7 pieces; static exact TB teacher for 1v3 and 2v4',
+ 'scan_used_for_training':False,'gen2_used_for_training':False,'terminal_wdl_rollouts':True,
+ 'tb_teacher':{'strata':['1v3','2v4'],'max_total_pieces':6,'source':'exact_external_EGDB_WLD'},
+ 'drop_plycap_game_samples':True,'material_adjudication':False,'deep_relabel':False,'frontier':False,
  'geometry':'8cf','search_params':search,'search_params_count':len(search.split(',')),
+ 'score_field_semantics':'material_up_outcome_code_-1_0_1_no_search',
  'recipe':{
    'bootstrap':{'men':1,'king':3,'king_center':0,'mobility':0},
-   'fresh_corpus_only':True,'random_open_plies':8,'epsilon_percent':8,
-   'explore_decay_plies':60,'pair_openings':True,'holdout_mod':10,
+   'fresh_corpus_only':True,'random_open_plies_rollouts':8,'epsilon_percent_rollouts':8,
+   'explore_decay_plies_rollouts':60,'pair_openings':True,'holdout_mod':10,
    'fit':{'target':'wdl','loss':'logistic','color_fold':True,'tempo_stage':True,
-          'l2':3e-5,'max_iter':25,'chunk':500000},
+          'l2':3e-5,'max_iter':25,'chunk':500000,
+          'material_up_outcome_resampling':{'win':1,'draw':2,'loss':4,'output_count_unchanged':True}},
    'warm_start':'G2_plus_or_phase_parent','primary_seed':271828,
  },
  'automatic_next_job':None,'promotion_authorized':False,'student_sha256':students,
- 'next_action':'run two-pool Scan equivalence gate before authorizing the next phase',
+ 'external_benchmark_policy':'Gen2-MMTO lower and Scan upper only after a documented plateau',
+ 'next_action':'assess plateau; do not run external benchmark without PLATEAU_APPROVED and immutable evidence',
 }
 (art/f'l3-imbalance2-{phase.lower()}-manifest.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 PY
-say "=== L3-IMBALANCE2 $PHASE complete; run Scan gate, no automatic continuation ==="
+say "=== L3-IMBALANCE2 $PHASE complete; assess plateau, no automatic continuation or external benchmark ==="
