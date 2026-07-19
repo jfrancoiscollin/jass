@@ -13,6 +13,7 @@ BENCH_PER_STRATUM="${BENCH_PER_STRATUM:-24}"; BASE_SEED="${BASE_SEED:-271828}"
 GLOBAL_POINT_MARGIN="${GLOBAL_POINT_MARGIN:-0.03}"; GLOBAL_CI_MARGIN="${GLOBAL_CI_MARGIN:-0.05}"
 STRATUM_POINT_MARGIN="${STRATUM_POINT_MARGIN:-0.10}"; MIN_PER_STRATUM="${MIN_PER_STRATUM:-20}"
 SEARCH_PARAMS="${SEARCH_PARAMS:?fully resolved Q00 fingerprint required}"
+EGDB_CACHE_MB="${JASS_EGDB_CACHE_MB:-128}"
 RES="$W/RESULTS.txt"; : > "$RES"; say(){ echo "$*" | tee -a "$RES"; }; die(){ say "ABORT: $*"; exit 1; }
 fetch_input(){ local src="$1" dst="$2"; if [ -f "$src" ]; then cp "$src" "$dst"; elif [[ "$src" == r2:* ]]; then rclone copyto "$src" "$dst"; else die "missing input $src"; fi; }
 finalize(){ rc=$?; trap - EXIT; set +e; cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true; exit "$rc"; }; trap finalize EXIT
@@ -26,8 +27,14 @@ finalize(){ rc=$?; trap - EXIT; set +e; cp "$RES" "$ART/RESULTS.txt" 2>/dev/null
 [ -x "$SCAN_BIN" ] || die "Scan binary missing"
 fetch_input "$CANDIDATE_MODEL_URI" "$W/candidate.pjtw.gz"; echo "$CANDIDATE_MODEL_SHA256  $W/candidate.pjtw.gz" | sha256sum -c -
 gzip -dc "$W/candidate.pjtw.gz" > "$W/candidate.pjtw"
+[ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl > "$W/clone-egdb.log" 2>&1
+EGDIR=""
+for dir in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$dir"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$dir"; break; }; done
+[ -n "$EGDIR" ] || die "exact EGDB unavailable"
+export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$EGDB_CACHE_MB"
 FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
 cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1
+grep -q "EXTERNAL EGDB ENABLED" "$W/cmake.log" || die "build has no exact EGDB"
 cmake --build "$W/build" -j8 --target jass > "$W/build.log" 2>&1
 J="$W/build/jass"
 python3 jobs/tools/make_imbalance2_pools.py --out-dir "$W/pools" --train-per-stratum 1 \
