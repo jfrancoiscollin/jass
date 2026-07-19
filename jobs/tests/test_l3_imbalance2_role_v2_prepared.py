@@ -50,11 +50,12 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         for token in (
             "PHASE=P1 PROBE=1",
             "FRESH=54000 NSHARDS=18 PAR_GEN=8",
-            "SHARD_TIMEOUT=21600 JASS_BUILD_JOBS=8",
+            "JASS_BUILD_JOBS=8",
             "l3-imbalance2-runner-v2.sh",
             "non-promotable",
         ):
             self.assertIn(token, probe)
+        self.assertNotIn("SHARD_TIMEOUT", probe)
 
         p1 = (PREP / "ccx33-l3-imbalance2-role-v2-p1.sh").read_text()
         self.assertIn("PHASE=P1", p1)
@@ -62,11 +63,12 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         self.assertNotIn("PARENT_MODEL_URI", p1)
         for token in (
             "FRESH=500000 NSHARDS=18 PAR_GEN=8",
-            "SHARD_TIMEOUT=21600 JASS_BUILD_JOBS=8",
+            "JASS_BUILD_JOBS=8",
             "l3-imbalance2-runner-v2.sh",
             "do not queue without explicit go",
         ):
             self.assertIn(token, p1)
+        self.assertNotIn("SHARD_TIMEOUT", p1)
 
         for phase in range(2, 5):
             text = (PREP / f"ccx33-l3-imbalance2-role-v2-p{phase}.sh").read_text()
@@ -75,6 +77,7 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             self.assertIn("PARENT_MODEL_SHA256", text)
             self.assertIn("PAR_GEN=8", text)
             self.assertIn("JASS_BUILD_JOBS=8", text)
+            self.assertNotIn("SHARD_TIMEOUT", text)
             self.assertIn("l3-imbalance2-runner-v2.sh", text)
 
         gate = (PREP / "ccx33-l3-imbalance2-role-v2-scan-gate.sh").read_text()
