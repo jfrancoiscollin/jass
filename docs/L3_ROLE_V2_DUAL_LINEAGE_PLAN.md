@@ -54,7 +54,7 @@ Two independent A/B pairs are prepared.
 - treatment: Q00, seed `161803`, role-aware V2 corpus;
 - two generations, 150,000 source records/generation, eight shards.
 
-Within each box, every self-play parameter and seed is identical. The sole experimental factor is the post-split resampling policy. Across boxes, the second seed provides an independent replication rather than a duplicate hardware-only rerun.
+Within each box, the initial model, search settings, seeds and volume contract are identical. G1 self-play is directly matched. From G2 onward, trajectories may diverge because the treatment creates a different G1 student; this is part of the causal treatment effect. Across boxes, the second seed provides an independent replication rather than a duplicate hardware-only rerun.
 
 ## 5. Required analysis
 
