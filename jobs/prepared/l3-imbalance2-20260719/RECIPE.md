@@ -3,7 +3,8 @@
 La campagne couvre les départs `n v n+2`, `n=1..18`, avec pions simples et
 couleurs avantagées équilibrées.
 
-- `1v3` et `2v4` : professeur WDL EGDB exact, corpus statique frais ;
+- `1v3` et `2v4` : professeur WDL EGDB exact, corpus statique frais ; le runner
+  exige que 100 % des positions soient comptées `egdb-resolved` ;
 - `3v5` à `18v20` : rollouts autonomes selon la recette P1 de #358 ;
 - objectif du camp avantagé : victoire/nulle/défaite pondérées `1/2/4` par
   rééchantillonnage déterministe du train set, holdout intact ;
