@@ -144,7 +144,7 @@ def main() -> int:
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, object] = {
-        "schema": 3,
+        "schema": 2,
         "lineage": "L3-IMBALANCE2",
         "seed": args.seed,
         "training_seed": args.seed,
