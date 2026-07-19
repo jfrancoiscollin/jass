@@ -8,9 +8,17 @@ set -Eeuo pipefail
 : "${PHASE:?set PHASE=P1, P2, P3 or P4}"
 
 # Backward-compatible switch consumed only by prepare_imbalance2_training.py.
-# The V1 runner remains frozen; this wrapper validates and upgrades its manifest
-# after every generation has emitted a role-aware report.
+# The V1 runner remains scientifically unchanged; this wrapper validates and
+# upgrades its manifest after every generation has emitted a role-aware report.
 export IMBALANCE2_REWEIGHT_POLICY=role-aware-v2
+[ "${PLATEAU_PER_STRATUM:-}" = 64 ] || {
+  echo "ABORT: role-aware V2 requires PLATEAU_PER_STRATUM=64" >&2
+  exit 2
+}
+[ "${IMBALANCE2_PLATEAU_SEED:-}" = 161803 ] || {
+  echo "ABORT: role-aware V2 requires independent IMBALANCE2_PLATEAU_SEED=161803" >&2
+  exit 2
+}
 mkdir -p "$JASS_RESULT_DIR"
 python3 jobs/tests/test_l3_imbalance2_role_v2_prepared.py \
   > "$JASS_RESULT_DIR/role-v2-contract.log" 2>&1
@@ -61,11 +69,24 @@ for path in reports:
 if domain_records <= 0:
     raise SystemExit("role-aware-v2: exact-domain corpus is empty")
 
+pools_path = art / "imbalance2-pools-manifest.json"
+if not pools_path.exists():
+    raise SystemExit("role-aware-v2: pool manifest missing")
+pools = json.loads(pools_path.read_text())
+if pools.get("plateau_seed") != 161803:
+    raise SystemExit("role-aware-v2: plateau seed is not the independent seed 161803")
+if pools.get("plateau_per_stratum") != 64 or pools.get("plateau_records_per_pool") != 1152:
+    raise SystemExit("role-aware-v2: A64/B64 pool size contract is not 64 x 18")
+for name in ("plateau-a.jnnw", "plateau-b.jnnw"):
+    item = pools.get("files", {}).get(name, {})
+    if item.get("records") != 1152 or not item.get("sha256"):
+        raise SystemExit(f"role-aware-v2: invalid immutable pool entry {name}")
+
 manifest = art / f"l3-imbalance2-{phase.lower()}-manifest.json"
 if not manifest.exists():
     raise SystemExit(f"role-aware-v2: base manifest missing: {manifest}")
 payload = json.loads(manifest.read_text())
-payload["schema"] = 3
+payload["schema"] = 4
 payload["lineage"] = "L3-IMBALANCE2-ROLE-V2"
 payload["parent_recipe"] = "L3-IMBALANCE2 V1 exact-TB lineage"
 payload["training_semantics"] = {
@@ -80,6 +101,16 @@ payload["training_semantics"] = {
     "per_move_criticality_relabel": False,
     "deep_teacher_used_for_weighting": False,
 }
+payload["plateau_assessment_pools"] = {
+    "protocol": "independent_common_A64_B64",
+    "seed": 161803,
+    "per_stratum": 64,
+    "records_per_pool": 1152,
+    "pool_a_sha256": pools["files"]["plateau-a.jnnw"]["sha256"],
+    "pool_b_sha256": pools["files"]["plateau-b.jnnw"]["sha256"],
+    "external_references_used": False,
+    "intended_comparison": "historical P1 V1 G1-G4 and role-aware P1 V2 G1-G4",
+}
 fit = payload.setdefault("recipe", {}).setdefault("fit", {})
 fit.pop("material_up_outcome_resampling", None)
 fit["role_domain_resampling"] = payload["training_semantics"]
@@ -93,7 +124,7 @@ payload["role_weighting_totals"] = {
 manifest.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 summary = {
-    "schema": 1,
+    "schema": 2,
     "lineage": payload["lineage"],
     "phase": phase,
     "generation_reports": [path.name for path in reports],
@@ -101,12 +132,16 @@ summary = {
     "resampled_training_buckets": dict(sorted(resampled.items())),
     "exact_domain_records": domain_records,
     "outside_domain_anchor_records": anchor_records,
+    "plateau_assessment_pools": payload["plateau_assessment_pools"],
     "manifest": manifest.name,
+    "promotion_authorized": False,
+    "automatic_next_job": None,
 }
 (art / f"l3-imbalance2-role-v2-{phase.lower()}-summary.json").write_text(
     json.dumps(summary, indent=2, sort_keys=True) + "\n"
 )
 PY
 
-printf '%s\n' "role-aware-v2 manifest validated: exact two-men/equal-kings conversion+resilience matrix" \
+printf '%s\n' \
+  "role-aware-v2 manifest validated: exact two-men/equal-kings matrix + independent A64/B64 pools" \
   | tee -a "$JASS_ARTEFACT_DIR/RESULTS.txt"
