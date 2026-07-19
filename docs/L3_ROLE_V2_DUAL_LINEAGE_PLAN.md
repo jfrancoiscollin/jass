@@ -40,7 +40,7 @@ The historical runner `l3-pure-runner-v4.sh` remains unchanged and continues to 
 
 ## 4. Paired generalist tests
 
-Two independent A/B pairs are prepared.
+Two independent A/B pairs are prepared. These are comparison jobs, not promotion jobs.
 
 ### ccx33 primary pair
 
@@ -68,7 +68,7 @@ For each pair, compare:
 - draw and win rate for the disadvantaged side;
 - regression on balanced-position pools.
 
-A treatment is not promotable merely because defensive outcomes improve. Conversion, general strength and the untouched holdout must remain non-regressed.
+A treatment is not promotable merely because defensive outcomes improve. Conversion, general strength and the untouched holdout must remain non-regressed. A separate reviewed evaluation/gate is required before any promotion decision.
 
 ## 6. Execution order
 
