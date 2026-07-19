@@ -81,7 +81,7 @@ fetch_lineage(){
     --file artefacts/g3.pjtw.gz=g3.pjtw.gz \
     --file artefacts/g4.pjtw.gz=g4.pjtw.gz \
     --file artefacts/l3-imbalance2-p1-manifest.json=lineage-manifest.json \
-    "$@" --out-dir "$out" --report "$ART/verified-$label-source.json" \
+    --out-dir "$out" --report "$ART/verified-$label-source.json" \
     > "$W/fetch-$label.log" 2>&1
   python3 - "$ART/verified-$label-source.json" "$expected_job" <<'PY'
 import json,sys
@@ -241,6 +241,7 @@ for lineage in ('v1','v2'):
     },indent=2,sort_keys=True)+'\n')
 PY
 
+tar -C "$REPORTS" -czf "$ART/candidate-only-a64-b64-reports.tar.gz" .
 python3 jobs/tools/imbalance2_plateau.py --manifest "$W/v1-plateau-manifest.json" \
   --out "$ART/v1-p1-a64-b64-plateau.json" --bootstrap "$BOOTSTRAP" --seed "$PLATEAU_SEED" \
   > "$W/v1-plateau.log"
