@@ -22,55 +22,20 @@ set -Eeuo pipefail
 
 BASE_RUNNER="$JASS_CODE_DIR/jobs/templates/l3-pure-runner-v4.sh"
 PATCHED_RUNNER="$JASS_RESULT_DIR/l3-pure-role-v2-patched-runner.sh"
+PATCHER="$JASS_CODE_DIR/jobs/tools/patch_l3_pure_role_v2_runner.py"
 [ -f "$BASE_RUNNER" ] || { echo "ABORT: frozen L3-PURE runner missing" >&2; exit 2; }
 
 python3 -m py_compile \
   "$JASS_CODE_DIR/jobs/tools/prepare_imbalance2_training.py" \
+  "$PATCHER" \
   "$JASS_CODE_DIR/jobs/tests/test_l3_pure_role_v2_prepared.py"
 python3 "$JASS_CODE_DIR/jobs/tests/test_l3_pure_role_v2_prepared.py" \
   > "$JASS_RESULT_DIR/l3-pure-role-v2-contract.log" 2>&1
 
 # Generate an auditable, job-local derivative of runner-v4. The source runner is
-# not edited: two exact replacements insert the role-aware resampling between
-# split and feature extraction, then point the trainer at the weighted corpus.
-python3 - "$BASE_RUNNER" "$PATCHED_RUNNER" <<'PY'
-from pathlib import Path
-import sys
-
-source_path = Path(sys.argv[1])
-out_path = Path(sys.argv[2])
-text = source_path.read_text(encoding="utf-8")
-
-needle_dump = '''  "$J" --dump-eval-features "$W/g${generation}.fit.jnnw" \\
-    "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
-'''
-replacement_dump = '''  IMBALANCE2_REWEIGHT_POLICY=role-aware-v2 python3 \\
-    jobs/tools/prepare_imbalance2_training.py reweight \\
-      --input "$W/g${generation}.fit.jnnw" \\
-      --output "$W/g${generation}.weighted.jnnw" \\
-      --holdout-count "$HOLDOUT_COUNT" \\
-      --win-weight 1 --draw-weight 2 --loss-weight 4 \\
-      --seed $((BASE_SEED + generation)) \\
-      --report "$ART/g${generation}-role-v2-reweight.json"
-  TRAIN_DATA="$W/g${generation}.weighted.jnnw"
-  "$J" --dump-eval-features "$TRAIN_DATA" \\
-    "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
-'''
-needle_train = '''      --data "$W/g${generation}.fit.jnnw" \\
-'''
-replacement_train = '''      --data "$TRAIN_DATA" \\
-'''
-
-if text.count(needle_dump) != 1:
-    raise SystemExit("frozen runner dump-feature insertion point changed")
-if text.count(needle_train) != 1:
-    raise SystemExit("frozen runner train-data insertion point changed")
-text = text.replace(needle_dump, replacement_dump)
-text = text.replace(needle_train, replacement_train)
-out_path.write_text(text, encoding="utf-8")
-out_path.chmod(0o755)
-PY
-
+# not edited: the tested patcher inserts role-aware resampling after split and
+# points feature extraction plus training at the weighted corpus.
+python3 "$PATCHER" --input "$BASE_RUNNER" --output "$PATCHED_RUNNER"
 bash -n "$PATCHED_RUNNER"
 bash "$PATCHED_RUNNER"
 
