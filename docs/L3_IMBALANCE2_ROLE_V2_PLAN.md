@@ -1,6 +1,6 @@
 # L3-IMBALANCE2 — pondération rôle/domaine V2
 
-Statut : **protocole préparé, aucun job scientifique lancé**.
+Statut : **protocole préparé pour ccx33, aucun job scientifique lancé**.
 
 ## 1. Objet
 
@@ -81,7 +81,39 @@ Le wrapper `jobs/templates/l3-imbalance2-runner-v2.sh` :
 4. remplace dans le manifeste final la sémantique V1 par la matrice rôle/domaine V2 ;
 5. publie un résumé agrégé des buckets conversion, résilience et ancres.
 
-## 7. Expérience recommandée
+## 7. Contrat d’exécution ccx33
+
+La cible de cette PR est la box **ccx33** : 8 vCPU et 16 GiB RAM.
+
+Paramètres de box préenregistrés :
+
+- `PAR_GEN=8` ;
+- `JASS_BUILD_JOBS=8` ;
+- `SHARD_TIMEOUT=21600` ;
+- au moins 14 GiB RAM détectés par le runner ;
+- au moins 20 GiB libres dans `JASS_RESULT_DIR` ;
+- suivi de `min_mem_available_mb` toutes les 20 secondes.
+
+Avant P1 complet, un wrapper de sonde obligatoire est fourni :
+
+```text
+ccx33-l3-imbalance2-role-v2-probe.sh
+```
+
+La sonde exécute seulement la première génération P1 avec `PROBE=1` et `FRESH=54000`, soit exactement 3 000 records par strate logique. Elle conserve les gardes EGDB, Q00, pondération et architecture, mais elle est explicitement **non scientifique et non promotable**.
+
+Le passage à P1 complet exige une vérification manuelle de :
+
+- l’absence d’OOM et de timeout ;
+- la mémoire minimale disponible ;
+- la vitesse de production ;
+- la résolution EGDB à 100 % pour `1 v 3` et `2 v 4` ;
+- la présence des rapports `deterministic_role_domain_resample` ;
+- l’intégrité du holdout et du manifeste V2.
+
+Aucune durée de P1–P4 n’est annoncée avant cette micro-calibration ccx33.
+
+## 8. Expérience recommandée
 
 La comparaison la plus propre est un A/B apparié :
 
@@ -100,7 +132,7 @@ Mesures prioritaires :
 
 Le benchmark Gen2-MMTO / Scan reste interdit avant plateau, comme dans V1.
 
-## 8. Décision
+## 9. Décision
 
 La V2 ne remplace V1 que si elle démontre au minimum :
 
