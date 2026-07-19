@@ -36,8 +36,10 @@ avant d’émettre un échantillon. Ces deux strates sont donc traitées comme u
 
 1. des positions fraîches et équilibrées sont générées à chaque génération ;
 2. `jass --egdb-relabel` écrit le WDL exact de la tablebase ;
-3. chaque position constitue une unité d’ouverture indépendante pour le split ;
-4. aucune recherche, évaluation Scan ou évaluation Gen2 ne fournit la cible.
+3. le runner exige que le compteur `egdb-resolved` soit égal au nombre total de
+   positions et invalide le job au premier état non résolu ;
+4. chaque position constitue une unité d’ouverture indépendante pour le split ;
+5. aucune recherche, évaluation Scan ou évaluation Gen2 ne fournit la cible.
 
 Les strates `3 v 5` à `18 v 20` restent en autojeu terminal WDL selon la recette
 P1. L’EGDB continue d’y intervenir uniquement lorsqu’une trajectoire l’atteint
