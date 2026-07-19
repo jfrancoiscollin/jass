@@ -124,6 +124,8 @@ class L3PureRoleV2PreparedTest(unittest.TestCase):
             "do not share runners, manifests or promotion decisions",
             "jobs/templates/l3-imbalance2-runner-v2.sh",
             "jobs/templates/l3-pure-role-v2-runner-v1.sh",
+            "promotion_authorized=false",
+            "automatic_next_job=null",
             "comparison jobs, not promotion jobs",
             "ccx33 primary pair",
             "cpx62 replication pair",
