@@ -24,7 +24,9 @@ The specialist starts every game in a predefined `n v n+2` stratum. Its dedicate
 jobs/templates/l3-imbalance2-runner-v2.sh
 ```
 
-Prepared jobs target ccx33 and include a reduced non-promotable probe before full P1. P2–P4 require an immutable parent URI and SHA-256. The external Gen2/Scan gate remains plateau-only.
+Prepared training jobs target ccx33 and include a reduced non-promotable probe before full P1. P2–P4 require an immutable parent URI and SHA-256. The external Gen2/Scan gate remains plateau-only.
+
+P1 publishes independent common pools with 64 positions per stratum, 1,152 positions per pool and plateau seed `161803`. A cpx62 comparison job then evaluates both the historical V1 P1 G1–G4 and the new role-aware V2 P1 G1–G4 on the exact same A64/B64 bytes. This candidate-only re-assess remains non-promotable and cannot authorize P2 automatically.
 
 ## 3. Generalist integration — L3-PURE-ROLE-V2
 
@@ -73,9 +75,12 @@ A treatment is not promotable merely because defensive outcomes improve. Convers
 ## 6. Execution order
 
 1. review and merge the code PR;
-2. run the ccx33 specialist probe;
-3. run one generalist A/B pair only after explicit approval;
-4. inspect domain density and memory before starting the second pair;
-5. do not launch a later phase or external gate automatically.
+2. run the ccx33 specialist probe and verify A64/B64 publication;
+3. run specialist P1 role-aware V2 G1–G4 only after explicit approval;
+4. run the cpx62 common-pool V1/V2 P1 comparison using immutable source prefixes;
+5. review the V1 plateau, V2 plateau and paired V2−V1 reports before authorizing any P2;
+6. run one generalist A/B pair only after a separate explicit approval;
+7. inspect domain density and memory before starting the second generalist pair;
+8. do not launch a later phase or external gate automatically.
 
 The future critical-defence V3 — deep teacher, unique drawing move and move-level credit — remains outside this PR.
