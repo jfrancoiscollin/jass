@@ -36,7 +36,7 @@ jobs/templates/l3-pure-role-v2-runner-v1.sh
 
 It reuses the frozen Q00 C1-Q1 self-play runner and changes only the post-split training corpus. A position is reweighted only after self-play naturally reaches the exact `±2 men, equal kings` domain. Earlier balanced positions and later positions outside the domain remain anchors of weight `1`.
 
-The historical runner `l3-pure-runner-v4.sh` remains unchanged and continues to train on the unweighted fit corpus.
+The historical runner `l3-pure-runner-v4.sh` remains unchanged and continues to train on the unweighted fit corpus. Treatment manifests explicitly set `promotion_authorized=false` and `automatic_next_job=null`.
 
 ## 4. Paired generalist tests
 
