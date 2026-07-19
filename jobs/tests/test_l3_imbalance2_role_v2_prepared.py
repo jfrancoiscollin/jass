@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNNER = (ROOT / "jobs/templates/l3-imbalance2-runner-v2.sh").read_text()
 TOOL = (ROOT / "jobs/tools/prepare_imbalance2_training.py").read_text()
 DOC = (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
+RECIPE = (ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720/RECIPE.md").read_text()
 PREP = ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720"
 
 
@@ -99,6 +100,11 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             "Aucun palier, merge scientifique ou benchmark externe",
         ):
             self.assertIn(token, DOC)
+        for token in (
+            "runner et des wrappers séparés",
+            "jamais leurs manifests ni leurs décisions de promotion",
+        ):
+            self.assertIn(token, RECIPE)
 
 
 if __name__ == "__main__":
