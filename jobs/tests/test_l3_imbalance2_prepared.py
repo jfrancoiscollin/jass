@@ -45,6 +45,9 @@ class ContractTest(unittest.TestCase):
         self.assertIn("STOP_LINEAGE_SCAN_EQUIVALENT", GATE)
         self.assertIn("a['pass'] and b['pass']", GATE)
         self.assertIn("automatic_next_job':None", GATE)
+        self.assertIn("candidate-selfplay_vs_scan-selfplay", GATE)
+        self.assertIn("DEPTH:-10", GATE)
+        self.assertIn("MAXPLIES:-400", GATE)
 
     def test_doc_contract(self):
         for n in (1, 6, 12, 18):
