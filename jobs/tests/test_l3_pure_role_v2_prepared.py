@@ -16,6 +16,7 @@ ROLE = ROLE_PATH.read_text()
 PATCHER_TEXT = PATCHER.read_text()
 TOOL = (ROOT / "jobs/tools/prepare_imbalance2_training.py").read_text()
 PREP = ROOT / "jobs/prepared/l3-pure-role-v2-20260720"
+DOC = (ROOT / "docs/L3_ROLE_V2_DUAL_LINEAGE_PLAN.md").read_text()
 
 
 class L3PureRoleV2PreparedTest(unittest.TestCase):
@@ -113,6 +114,18 @@ class L3PureRoleV2PreparedTest(unittest.TestCase):
             "G1 self-play is directly matched",
         ):
             self.assertIn(token, recipe)
+
+    def test_dual_lineage_doc_keeps_decisions_separate(self):
+        for token in (
+            "do not share runners, manifests or promotion decisions",
+            "jobs/templates/l3-imbalance2-runner-v2.sh",
+            "jobs/templates/l3-pure-role-v2-runner-v1.sh",
+            "ccx33 primary pair",
+            "cpx62 replication pair",
+            "From G2 onward, trajectories may diverge",
+            "do not launch a later phase or external gate automatically",
+        ):
+            self.assertIn(token, DOC)
 
 
 if __name__ == "__main__":
