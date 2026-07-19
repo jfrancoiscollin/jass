@@ -106,12 +106,14 @@ class L3PureRoleV2PreparedTest(unittest.TestCase):
         recipe = (PREP / "RECIPE.md").read_text()
         for token in (
             "paired A/B tests",
+            "comparison jobs, not promotion jobs",
             "common seed: `271828`",
             "common seed: `161803`",
             "Only the post-split training corpus differs",
             "exactly two men of difference and equal king counts",
             "final holdout remains untouched",
             "G1 self-play is directly matched",
+            "separate reviewed evaluation/gate",
         ):
             self.assertIn(token, recipe)
 
