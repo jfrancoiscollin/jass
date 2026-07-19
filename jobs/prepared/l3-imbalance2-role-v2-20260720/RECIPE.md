@@ -1,12 +1,30 @@
-# Prepared jobs — L3-IMBALANCE2 role-aware V2
+# Prepared jobs — L3-IMBALANCE2 role-aware V2 — ccx33
 
-Ces wrappers reproduisent la lignée V1 en ne modifiant que le rééchantillonnage :
+Cible d’exécution scientifique de cette variante : **ccx33, 8 vCPU, 16 GiB RAM**.
 
-- domaine courant exact : `|Δ hommes| = 2` et nombre de dames égal ;
+La recette scientifique V1 est inchangée ; seul le rééchantillonnage devient dépendant du rôle et du domaine courant :
+
+- domaine exact : `|Δ hommes| = 2` et nombre de dames égal ;
 - camp au trait à `+2` : victoire/nulle/défaite = `1/2/4` ;
 - camp au trait à `-2` : victoire/nulle/défaite = `4/2/1` ;
 - hors domaine : poids `1` ;
 - holdout final intact ;
 - aucun relabel profond de criticité.
 
-Ordre : P1, puis P2/P3/P4 uniquement avec URI et SHA-256 immuables du parent. Le gate final reste soumis à un plateau interne approuvé. Aucun wrapper ne chaîne automatiquement le suivant.
+## Contrat ccx33
+
+- `PAR_GEN=8` ;
+- `JASS_BUILD_JOBS=8` ;
+- `SHARD_TIMEOUT=21600` ;
+- garde runner : au moins 14 GiB RAM et 20 GiB libres ;
+- suivi de `min_mem_available_mb` dans les artefacts.
+
+## Ordre obligatoire
+
+1. Exécuter `ccx33-l3-imbalance2-role-v2-probe.sh` : une génération P1 réduite à 54 000 records, strictement non promotable.
+2. Vérifier la mémoire minimale disponible, le débit, l’absence d’OOM, la voie EGDB et les rapports V2.
+3. Lancer P1 complet uniquement après go explicite.
+4. P2, P3 et P4 exigent l’URI et le SHA-256 immuables du parent précédent.
+5. Le gate final reste interdit avant plateau interne approuvé.
+
+Aucun wrapper ne chaîne automatiquement le suivant et aucun job scientifique n’est lancé par la PR.
