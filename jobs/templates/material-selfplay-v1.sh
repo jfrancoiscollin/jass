@@ -116,7 +116,7 @@ PY
 say "stage=selfplay-scan"; SCAN_LINE="$(run_engine scan)"; say "  SCAN: $SCAN_LINE"
 say "stage=selfplay-gen2"; JASS_LINE="$(run_engine jass)"; say "  GEN2: $JASS_LINE"
 
-python3 - "$ART/scan-wdl.json" "$ART/gen2-wdl.json" "$ART/material-selfplay-summary.json" "$ART/c0-decision.json" "$BIG" "$SMALL" "$DEPTH" <<'PY'
+python3 - "$ART/scan-wdl.json" "$ART/jass-wdl.json" "$ART/material-selfplay-summary.json" "$ART/c0-decision.json" "$BIG" "$SMALL" "$DEPTH" <<'PY'
 import json,sys
 scan=json.load(open(sys.argv[1])); gen2=json.load(open(sys.argv[2]))
 summ={"experiment":f"material-selfplay-{sys.argv[5]}v{sys.argv[6]}","depth":int(sys.argv[7]),
