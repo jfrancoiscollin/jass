@@ -1,8 +1,8 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 19 juillet 2026**
-> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; gen2_p3_head_and_sibling_dead; 32cf_no_go_data_limited`**
-> **Levier fit M/F (L2) en cours d'évaluation (`0831`) ; capacité 32cf close par diagnostic de visites-bucket (`0828`/`0832` : coverage 8cf 5,9 %→9,0 %, data-limité).**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette figée; P1 baseline + P1 imbalance2 lancées`**
+> **DoE clos (tous no_lead → recette par défaut : 8cf, Q00, exploration 8/8/60, L2=3e-5).** Deux campagnes longues P1 (G1-G4 d8) publiées : **baseline** (`0842`) et **imbalance2** 2-pions (`0847`). Assess plateau imbalance2 (`0849`) : sous-puissant (n=144/pool), inconclusif.
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -18,9 +18,13 @@ décroissance) sont tous plats, IC straddle 0, aucune cellule n'atteint Δ+0,02.
 Le plateau de conversion ~0,67 a désormais résisté à frontière, fork, teacher,
 quiescence, head statique P3, décisions-sibling P3 **et** dose d'exploration.
 Le track Gen2-MMTO « tête P3 » est lui aussi négatif : l'autopsie D0 `0822`
-donne `no_actionable_sibling_signal` (recovery 37,4 % < 50 %, Δ pairé +0,035
-IC [−0,022 ; +0,093]). Les leviers restants sont **la régularisation/mémoire du
-fit (M/F)** et **la capacité de représentation (32cf)**.
+donne `no_actionable_sibling_signal`. **Le DoE est désormais clos sur tous les
+axes** : M/F (L2) `screen_no_lead` (`0831` : L2=3e-5 déjà optimal), capacité
+32cf `NO-GO` data-limité (`0828`/`0832`). Tout renvoie la **recette par défaut**,
+qui est donc **figée**. On est passé à la **campagne longue** : deux lignées P1
+(G1-G4 d8) publiées — **baseline** (`0842`) et **imbalance2** 2-pions (`0847`) —
+détaillées au §10. Assess plateau imbalance2 sous-puissant (n=144) → re-assess
+gros pools avant décision P2/redesign.
 
 ## 2. C0 — faits d'exécution publiés
 
@@ -305,3 +309,45 @@ mort**, le plateau ~0,67 tient. Aucune confirmation lancée.
     épingler le SHA et demander le go explicite ;
 11. lancer seulement après go, puis préparer l'évaluation sur les cinq URIs G2.
     En parallèle, le track Gen2-MMTO (tête P3) reste indépendant sur ccx33.
+
+## 10. Campagne longue P1 — baseline + imbalance2 (19 juillet)
+
+Le DoE ayant tout renvoyé `no_lead`, la **recette par défaut est figée** (G0
+matériel 1/3, Q00 63 clés, exploration 8/8/60, WDL terminal, L2=3e-5, 8cf, seed
+271828). Deux campagnes longues P1 (palier d8, G1-G4, 500 k records/gén) partent
+de G0 matériel, sans teacher/frontière/MMTO, sans promotion automatique.
+
+### 10.1 P1 baseline — `cpx62-0842` (PR #358, pin `337ccbdc`)
+G1-G4 publiés proprement (exit 0, **16,4 min**, cpx62). 500 k records/gén,
+~19,3 k games/gén stable G1→G4. Premier palier de la lignée générale ; sert de
+référence de pente avant l'escalade P2-P4 (d10→d14). Manifest schema 4 +
+`recipe_sha256`.
+
+### 10.2 P1 imbalance2 — `ccx33-0847` (PR #359, pin `a91531dd`)
+Lignée **spécialisée 2 pions d'écart** (18 strates 1v3…18v20 ; teacher EGDB
+exact 100 %-resolved pour 1v3/2v4 ; pénalité d'échec du camp avantagé
+W/D/L = 1/2/4 ; holdout non pondéré ; ni Gen2 ni Scan dans l'entraînement).
+Publiée sur ccx33 (16 Go — garde mémoire relâchée 30→14 Go, sonde mémoire :
+**~22 Go libres au pire**, aucun OOM ; bug merge id-48-bit corrigé). **51,3 min.**
+
+Pente 2L+D du camp avantagé (self-play d'entraînement, n=500 k/gén) :
+
+| | G1 | G2 | G3 | G4 |
+|---|---|---|---|---|
+| W % | 49,19 | 50,15 | 50,49 | 50,67 |
+| coût 2L+D | 0,6599 | 0,6597 | 0,6551 | **0,6509** |
+
+Amélioration G1→G4 = **−0,009 < 0,02** → **near-flat à d8** sur le diagnostic
+d'entraînement.
+
+### 10.3 Assess plateau imbalance2 — `cpx62-0849` (sous-puissant)
+Jeu G1-G4 sur pools tenus plateau-a/b (candidate self-play d10, Q00) →
+`imbalance2_plateau`. Verdict **`STILL_IMPROVING_OR_UNSTABLE`** mais **inconclusif
+faute de puissance** : n=**144**/pool, IC appariés **±0,19**, coût qui saute
+0,78→1,03 entre générations = bruit (échoue sur l'étendue-3, pas sur une pente).
+**Enseignement à confirmer** : sur positions tenues, le coût 2L+D du camp à
++2 pions est **~0,9-1,0** (niveau nulle) — bien pire que les 0,65 du self-play
+d'entraînement ; la lignée ne généralise pas la conversion aux positions fixes
+(surtout strates profondes). **À rejouer sur pools plus gros**
+(`PLATEAU_PER_STRATUM=64`, n~1150/pool, IC ~±0,05) pour un verdict puissant avant
+de décider P2 (escalade d10) ou redesign.
