@@ -61,10 +61,12 @@ palier suivant.
 
 ## 4. Règle d’arrêt : équivalence W/D/L avec Scan
 
-Après chaque palier, le candidat et Scan jouent séparément le côté avantagé
-contre le **même défenseur fixe**, sur les mêmes positions et au même budget de
-recherche. Le benchmark utilise deux pools indépendants A et B, chacun équilibré
-sur les dix-huit strates et sur les couleurs.
+Après chaque palier, le candidat joue les deux couleurs contre lui-même et Scan
+joue les deux couleurs contre lui-même, sur les **mêmes positions**, à d10 et
+avec un cap de 400 plies. Cette procédure reproduit le protocole du benchmark
+matériel `0841` ; les résultats sont repliés du point de vue du camp avantagé.
+Le benchmark utilise deux pools indépendants A et B, chacun équilibré sur les
+dix-huit strates et sur les couleurs.
 
 Un pool passe lorsque :
 
