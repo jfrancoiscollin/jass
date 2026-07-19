@@ -1,7 +1,8 @@
 # L3-PURE — état courant et registre de résultats
 
 > **Mis à jour : 19 juillet 2026**
-> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; gen2_p3_sibling_no_actionable_signal`**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; gen2_p3_head_and_sibling_dead; 32cf_no_go_data_limited`**
+> **Levier fit M/F (L2) en cours d'évaluation (`0831`) ; capacité 32cf close par diagnostic de visites-bucket (`0828`/`0832` : coverage 8cf 5,9 %→9,0 %, data-limité).**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)

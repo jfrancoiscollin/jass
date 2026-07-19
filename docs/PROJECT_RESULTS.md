@@ -270,6 +270,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | NNUE maintenant | décision JFC | hors périmètre tant que L3 linéaire n'est pas exécutée | preuve de plafond L3 + go explicite |
 | pattern standalone sans squelette | 0118–0127 | s'effondre ; hybride seul viable | nouvelle représentation complète, pas un nouveau seed |
 | enrichir la géométrie à petit volume ou en cours de lignée | 54 patterns <32 ; 32cf affamée à petit N, mais gagnante dans d'autres gates au scale | changement prématuré confond capacité et couverture | fork 8cf/32cf depuis G0 après seuil de visites publié et budget d'optimisation apparié |
+| passer à 32cf sur la lignée L3 courante (précondition §6.4 mesurée) | visites/bucket publiées : `0828` 300k → coverage 8cf **5,9 %** ; `0832` cumulatif 1,5M (5 cellules X1) → **9,0 %**, croissance **sous-linéaire** (5× données → 1,5× couverture), ge_100 = 1,0 %, Gini 0,85 | 8cf est **data-limité, pas capacité-limité** : la lignée ne remplit pas sa géométrie actuelle ; 32cf (4× buckets) tomberait à ~2-3 % de couverture → encore plus affamé. Précondition visites+volume **mesurée et NON franchie** → **32cf NO-GO** | un curriculum/volume qui remplit réellement 8cf d'abord (mécanisme causalement différent), puis re-mesure des visites |
 | élaguer les patterns | −31 Elo, zéro vitesse | lose-lose | nouveau hot-path mesuré, pas une intuition mémoire |
 | king-aware par défaut | gate final `0409` en faveur de men-only | gain ancien non transféré au régime scale | A/B au scale sur recette L3 figée, dans un fork séparé |
 
