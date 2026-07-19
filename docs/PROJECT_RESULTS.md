@@ -198,6 +198,17 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
 - Teacher causal `0777` : B1 −0,010, B2 +0,007, B3 −0,019 contre A sur la
   hard-conversion, tous sous le seuil +0,02. Verdict `complete_no_signal` ;
   aucune confirmation P3 n'a été autorisée.
+- **Track parallèle gen2-mmto « tête de conversion P3 » (0811–0822), clos
+  négatif.** Deux mécanismes distincts testés sur le champion gelé, tous deux
+  morts : (1) **tête statique CVH1** — sidecar `.cvh` bornée, P3-gated ; offline
+  +0,016, screen `0813` +0,022 (n=180) prometteur, mais confirmation haut-N
+  `0815` A 0,478 vs C10 0,490 → Δ **+0,012 (n=1255) < +0,020**, IC apparié
+  recouvrant 0 → `better_fit_no_play_signal` (un meilleur fit offline ne se joue
+  pas) ; (2) **décisions-sibling P3** — autopsie D0 `0822`
+  `no_actionable_sibling_signal` (recovery 37,4 % < 50 %, Δ pairé +0,035 IC
+  [−0,022 ; +0,093], n=339). La correction P3 sur gen2, statique **ou** par
+  re-décision, ne déplace pas la conversion jouée. Ce track n'a jamais modifié
+  L3 et est refermé.
 - C0 L3-PURE `0790/0791` : les deux bras ont terminé G1–G3 avec rc=0 et
   publié modèles, corpus, sidecars, splits et manifests ; B a aussi publié les
   frontières G1/G2. C'est un succès d'exécution, pas encore un verdict.
@@ -279,6 +290,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | G4/gymnase fixe | `0726` conversion −0,009 à −0,010 | répétition statique ne convertit pas | curriculum mobile réellement différent, testé par C0 |
 | teacher causal B1/B2/B3 v1 | 0777 sous +0,02 | aucun signal | nouvelle information causale ou nouveau canal, pas plus de N sur mêmes cellules |
 | dose/calendrier d'exploration (écran C2-X1) | verdict `0824` (`l3_x1_verdict.py`, 5 cellules, n appariés 860, bootstrap 10 000) : effets A −0,002 / B +0,002 / C +0,001 / courbure +0,004, tous IC franchissant 0 ; aucun coin Δconv ≥ +0,02 ; gates ≈ 0,5 | `x1_no_lead` — plies d'ouverture, epsilon et décroissance ne déplacent pas la conversion ; plateau ~0,67 | nouveau facteur de trajectoire causalement différent, ou signal sur une lignée plus mûre |
+| tête de conversion statique P3 gen2 (CVH1) | offline +0,016 ; screen `0813` +0,022 (n=180) prometteur ; confirmation haut-N `0815` A 0,478 vs C10 0,490 → **Δ +0,012 (n=1255) < +0,020** ; bootstrap apparié IC recouvrant 0 | `not_confirmed_flat` / `better_fit_no_play_signal` — un meilleur fit offline de la correction ne se traduit pas en conversion jouée ; le head statique gelé sur gen2 est un levier mort | canal de correction P3 non-statique (décision réelle), nouveau gate indépendant |
 | décisions-sibling P3 gen2 (autopsie D0) | `0822` `no_actionable_sibling_signal` : recovery 37,4 % < 50 %, Δ pairé +0,035 IC [−0,022 ; +0,093] straddle 0, n=339 | rejouer un meilleur sibling au leader P3 ne récupère pas assez de failures ; cohérent avec l'échec du head statique CVH1 (`better_fit_no_play_signal`) | mécanisme de décision P3 causalement différent, gate indépendant |
 
 ### 5.3 Recherche
