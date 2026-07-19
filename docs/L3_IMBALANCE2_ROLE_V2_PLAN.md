@@ -83,16 +83,17 @@ Le wrapper `jobs/templates/l3-imbalance2-runner-v2.sh` :
 
 ## 7. Contrat d’exécution ccx33
 
-La cible de cette PR est la box **ccx33** : 8 vCPU et 16 GiB RAM.
+La cible de cette lignée spécialiste est la box **ccx33** : 8 vCPU et 16 GiB RAM.
 
-Paramètres de box préenregistrés :
+Paramètres et gardes préenregistrés :
 
 - `PAR_GEN=8` ;
 - `JASS_BUILD_JOBS=8` ;
-- `SHARD_TIMEOUT=21600` ;
 - au moins 14 GiB RAM détectés par le runner ;
 - au moins 20 GiB libres dans `JASS_RESULT_DIR` ;
 - suivi de `min_mem_available_mb` toutes les 20 secondes.
+
+Le runner spécialiste V1 ne place pas actuellement chaque processus sous une commande `timeout`. Les wrappers V2 n’annoncent donc pas une protection qui n’est pas réellement appliquée. Une absence de progression doit être détectée via les logs et le suivi de progression.
 
 Avant P1 complet, un wrapper de sonde obligatoire est fourni :
 
@@ -104,7 +105,7 @@ La sonde exécute seulement la première génération P1 avec `PROBE=1` et `FRES
 
 Le passage à P1 complet exige une vérification manuelle de :
 
-- l’absence d’OOM et de timeout ;
+- l’absence d’OOM ou de processus bloqué ;
 - la mémoire minimale disponible ;
 - la vitesse de production ;
 - la résolution EGDB à 100 % pour `1 v 3` et `2 v 4` ;
@@ -132,7 +133,11 @@ Mesures prioritaires :
 
 Le benchmark Gen2-MMTO / Scan reste interdit avant plateau, comme dans V1.
 
-## 9. Décision
+## 9. Généralisation L3-PURE
+
+La même règle de calcul est aussi utilisée par un runner séparé pour la L3 initiale équilibrée. Cette intégration et ses A/B ccx33/cpx62 sont décrits dans `docs/L3_ROLE_V2_DUAL_LINEAGE_PLAN.md`. Les deux lignées partagent l’outil de calcul, mais gardent des runners, manifests et décisions de promotion indépendants.
+
+## 10. Décision
 
 La V2 ne remplace V1 que si elle démontre au minimum :
 
