@@ -123,6 +123,15 @@ python3 -m py_compile jobs/tools/make_imbalance2_pools.py jobs/tools/imbalance2_
 python3 jobs/tests/test_l3_imbalance2_prepared.py > "$W/test-contract.log" 2>&1 || die "imbalance2 contract tests failed"
 python3 jobs/tests/test_imbalance2_tools.py > "$W/test-tools.log" 2>&1 || die "imbalance2 tool tests failed"
 
+for source in src/scan_eval.cpp src/search.cpp src/movegen.cpp; do
+  git show "HEAD:$source" > "$W/expected-$(basename "$source")"
+  cmp -s "$source" "$W/expected-$(basename "$source")" || die "$source differs from pinned HEAD"
+done
+grep -q "g_emasks" src/scan_eval.cpp || die "scan_eval missing g_emasks"
+grep -q "has_any_capture" src/search.cpp || die "search missing has_any_capture"
+grep -q "has_any_capture" src/movegen.cpp || die "movegen missing has_any_capture"
+say "architecture guard: pinned sources + g_emasks + has_any_capture OK"
+
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
 NPAT="$(PYTHONPATH="$GEOM" python3 -c 'import patterns; print(patterns.TOTAL_BUCKETS)')"
@@ -227,6 +236,14 @@ payload={
  'scan_used_for_training':False,'terminal_wdl_only':True,'drop_plycap_game_samples':True,
  'material_adjudication':False,'tb_relabel':False,'deep_relabel':False,'frontier':False,
  'geometry':'8cf','search_params':search,'search_params_count':len(search.split(',')),
+ 'recipe':{
+   'bootstrap':{'men':1,'king':3,'king_center':0,'mobility':0},
+   'fresh_corpus_only':True,'random_open_plies':8,'epsilon_percent':8,
+   'explore_decay_plies':60,'pair_openings':True,'holdout_mod':10,
+   'fit':{'target':'wdl','loss':'logistic','color_fold':True,'tempo_stage':True,
+          'l2':3e-5,'max_iter':25,'chunk':500000},
+   'warm_start':'G2_plus_or_phase_parent','primary_seed':271828,
+ },
  'automatic_next_job':None,'promotion_authorized':False,'student_sha256':students,
  'next_action':'run two-pool Scan equivalence gate before authorizing the next phase',
 }
