@@ -11,6 +11,12 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 POOLS = ROOT / "jobs/tools/make_imbalance2_pools.py"
 COMPARE = ROOT / "jobs/tools/imbalance2_lineage_compare.py"
+COMPARE_RUNNER = ROOT / "jobs/templates/l3-imbalance2-p1-compare-v1.sh"
+COMPARE_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-imbalance2-role-v2-20260720"
+    / "cpx62-l3-imbalance2-p1-v1-v2-a64-compare.sh"
+)
 
 
 class IndependentPlateauPoolsTest(unittest.TestCase):
@@ -43,6 +49,7 @@ class IndependentPlateauPoolsTest(unittest.TestCase):
             root = Path(tmp)
             a = self.run_pools(root / "a", 161803)
             b = self.run_pools(root / "b", 314159)
+            self.assertEqual(a["schema"], 2)
             self.assertEqual(a["training_seed"], 271828)
             self.assertEqual(a["plateau_seed"], 161803)
             self.assertEqual(a["plateau_records_per_pool"], 72)
@@ -157,6 +164,17 @@ class PairedLineageComparisonTest(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not perfectly paired", result.stderr)
+
+
+class PreparedShellSyntaxTest(unittest.TestCase):
+    def test_comparison_runner_and_wrapper_parse(self):
+        for path in (COMPARE_RUNNER, COMPARE_WRAPPER):
+            subprocess.run(
+                ["bash", "-n", str(path)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
 
 if __name__ == "__main__":
