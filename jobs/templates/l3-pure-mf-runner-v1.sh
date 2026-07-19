@@ -199,7 +199,7 @@ payload = {
   "schema": 3,
   "runner_version": 1,
   "lineage": "L3-PURE",
-  "experiment": sys.argv[21],
+  "experiment": sys.argv[20],
   "variant": sys.argv[2],
   "code_sha": sys.argv[3],
   "generations": int(sys.argv[7]),
