@@ -46,7 +46,9 @@ def write_jsm1(path: Path, count: int, seed: int) -> None:
         handle.write(struct.pack("<I", count))
         for index in range(count):
             digest = hashlib.sha256(f"{seed}:{index}".encode()).digest()
-            identifier = struct.unpack_from("<Q", digest)[0]
+            # Keep local ids in the 48-bit namespace: selfplay_frontier.py merge
+            # reserves the top 16 bits for the per-part shard index.
+            identifier = struct.unpack_from("<Q", digest)[0] & ((1 << 48) - 1)
             handle.write(struct.pack("<QQB", identifier, identifier, 1))
 
 
