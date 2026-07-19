@@ -9,6 +9,7 @@ set -Eeuo pipefail
 : "${EXPECTED_CODE_SHA:?wrapper must pin the reviewed develop SHA}"
 N_PLAY="${N_PLAY:-10}"; NSHARDS="${NSHARDS:-5}"; DEPTH="${DEPTH:-10}"
 BIG="${BIG:-20}"; SMALL="${SMALL:-18}"; MAXPLIES="${MAXPLIES:-400}"
+EGDB_CACHE_MB="${JASS_EGDB_CACHE_MB:-128}"
 SCAN_BIN="${SCAN_BIN:-/root/jass-scan/scan_linux}"
 CORPUS_PREFIXES=(
   "r2:jass-data/runs/cpx62-0817-l3-c2x1-hhh-control-v1/20260718T221711Z-7a35084f"
@@ -34,7 +35,11 @@ say "=== $JASS_JOB_ID — fixed-material self-play (${BIG}v${SMALL}) Scan vs gen
 ACTUAL_SHA="$(git rev-parse HEAD)"; [ "$ACTUAL_SHA" = "$EXPECTED_CODE_SHA" ] || die "code SHA $ACTUAL_SHA != $EXPECTED_CODE_SHA"
 NPROC="$(nproc)"; FREE_MB="$(df -Pm "$JASS_RESULT_DIR"|awk 'NR==2{print $4}')"; [ "${FREE_MB:-0}" -ge 5000 ] || die "<5GiB free"
 [ "$NSHARDS" -le "$NPROC" ] || die "NSHARDS=$NSHARDS exceeds nproc=$NPROC"
-say "preflight: nproc=$NPROC free_mb=$FREE_MB nshards=$NSHARDS depth=$DEPTH"
+MEM_MB="$(awk '/MemTotal:/ {print int($2/1024)}' /proc/meminfo)"
+EGDB_PROCS=$((NSHARDS * 3))
+EGDB_TOTAL_MB=$((EGDB_PROCS * EGDB_CACHE_MB))
+[ "$EGDB_TOTAL_MB" -le $((MEM_MB * 60 / 100)) ] || die "EGDB cache budget ${EGDB_TOTAL_MB}MiB exceeds 60% of RAM ${MEM_MB}MiB"
+say "preflight: nproc=$NPROC free_mb=$FREE_MB mem_mb=$MEM_MB nshards=$NSHARDS depth=$DEPTH egdb_cache_mb=$EGDB_CACHE_MB egdb_cache_total_mb=$EGDB_TOTAL_MB"
 
 python3 -m py_compile tools/calibrate_vs_scan.py tools/selfplay_material_wdl.py \
   tools/sample_material_fen.py jobs/tools/fetch_result_files.py jobs/tools/fetch_t1bis_inputs.py
@@ -48,6 +53,7 @@ FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl > "$W/clone-egdb.log" 2>&1
 EGDIR=""; for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }; done
 [ -n "$EGDIR" ] || die "EGDB unavailable"; export JASS_EGDB_PATH="$EGDIR"
+export JASS_EGDB_CACHE_MB="$EGDB_CACHE_MB"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant v4 > "$W/gen-v4.log" 2>&1
 cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1; grep -q 'EXTERNAL EGDB ENABLED' "$W/cmake.log" || die "no EGDB"
 cmake --build "$W/build" -j"${JASS_BUILD_JOBS:-8}" --target jass > "$W/build.log" 2>&1 || die "jass build"
