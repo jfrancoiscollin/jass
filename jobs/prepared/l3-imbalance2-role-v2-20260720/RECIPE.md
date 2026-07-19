@@ -28,6 +28,6 @@ Le runner spécialiste ne place pas actuellement chaque processus sous une comma
 4. P2, P3 et P4 exigent l’URI et le SHA-256 immuables du parent précédent.
 5. Le gate final reste interdit avant plateau interne approuvé.
 
-La L3 initiale équilibrée utilise des wrappers et un runner séparés dans `jobs/prepared/l3-pure-role-v2-20260720/`. Les deux lignées partagent seulement l’outil de calcul des poids.
+La L3 initiale équilibrée utilise un runner et des wrappers séparés dans `jobs/prepared/l3-pure-role-v2-20260720/`. Les deux lignées partagent seulement l’outil de calcul des poids, jamais leurs manifests ni leurs décisions de promotion.
 
 Aucun wrapper ne chaîne automatiquement le suivant et aucun job scientifique n’est lancé par la PR.
