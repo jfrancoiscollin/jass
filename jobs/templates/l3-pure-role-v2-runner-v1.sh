@@ -96,6 +96,8 @@ manifest["lineage"] = "L3-PURE-ROLE-V2"
 manifest["parent_lineage"] = "L3-PURE C1-Q1 Q00_CAPTURE"
 manifest["execution_box"] = box
 manifest["replication_kind"] = run_kind
+manifest["promotion_authorized"] = False
+manifest["automatic_next_job"] = None
 manifest["role_weighting"] = {
     "policy": "role-aware-v2",
     "activation": "per-position abs(men_gap)==2 and equal king counts",
@@ -122,6 +124,8 @@ summary = {
     "execution_box": box,
     "replication_kind": run_kind,
     "base_seed": manifest.get("base_seed"),
+    "promotion_authorized": False,
+    "automatic_next_job": None,
     "generation_reports": [path.name for path in reports],
     "exact_domain_records": domain_records,
     "outside_domain_anchor_records": anchor_records,
