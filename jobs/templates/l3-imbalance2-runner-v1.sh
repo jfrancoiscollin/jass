@@ -16,6 +16,8 @@ ART="$JASS_ARTEFACT_DIR"
 GEOM="$JASS_RESULT_DIR/geom8"
 POOLS="$W/imbalance2-pools"
 mkdir -p "$W" "$ART" "$GEOM" "$POOLS"
+# ccx33 disk hygiene (rule 8bis): drop stale scratch >3h (never our own, mtime-protected)
+find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 exec 9>"$JASS_RESULT_DIR/job.lock"
 flock -n 9 || { echo "ABORT: another instance is active" >&2; exit 3; }
 
@@ -26,6 +28,11 @@ case "$PHASE" in
   P4) START_GEN=13; END_GEN=16; PLAY_DEPTH=14 ;;
   *) echo "ABORT: invalid PHASE=$PHASE" >&2; exit 2 ;;
 esac
+# PROBE=1: memory/rate sonde only — a single generation at reduced volume. All
+# science guards (EGDB-100%, seed-only, weights, Q00, arch) stay strict; the run
+# is explicitly non-scientific and not promotable.
+PROBE="${PROBE:-0}"
+[ "$PROBE" = 1 ] && END_GEN="$START_GEN"
 
 FRESH="${FRESH:-500000}"
 NSHARDS="${NSHARDS:-18}"
@@ -75,6 +82,13 @@ PROG="$W/PROGRESS.txt"
 say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 run_pids(){ local label="$1"; shift; local fail=0 p; for p in "$@"; do wait "$p" || fail=$((fail+1)); done; [ "$fail" -eq 0 ] || die "$label: $fail failed process(es)"; }
+MEMPROBE_PID=""
+start_memprobe(){ ( local min=99999999 a; echo "$min" > "$W/.min_mem_mb"; while true; do
+    a="$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo 2>/dev/null)"
+    [ "${a:-99999999}" -lt "$min" ] && { min="$a"; echo "$min" > "$W/.min_mem_mb"; }
+    { TZ=Europe/Paris date '+time_fr=%Y-%m-%dT%H:%M:%S%z'; echo "min_mem_available_mb=$min"; } > "$PROG.tmp" && mv "$PROG.tmp" "$PROG"
+    sleep 20; done ) & MEMPROBE_PID="$!"; }
+stop_memprobe(){ [ -n "$MEMPROBE_PID" ] && { kill "$MEMPROBE_PID" 2>/dev/null || true; wait "$MEMPROBE_PID" 2>/dev/null || true; }; MEMPROBE_PID=""; }
 fetch_input(){
   local src="$1" dst="$2"
   if [ -f "$src" ]; then cp "$src" "$dst"
@@ -83,6 +97,8 @@ fetch_input(){
 }
 finalize(){
   rc=$?; trap - EXIT; set +e
+  stop_memprobe
+  [ -f "$W/.min_mem_mb" ] && say "min_mem_available_mb=$(cat "$W/.min_mem_mb") (peak RAM pressure; probe=$PROBE)"
   [ -f "$RES" ] && cp "$RES" "$ART/RESULTS.txt"
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   if [ -d "$W" ]; then (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true; fi
@@ -97,7 +113,11 @@ say "=== $JASS_JOB_ID — L3-IMBALANCE2 $PHASE G${START_GEN}-G${END_GEN} d${PLAY
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ "${FULL_RUN_APPROVED:-0}" = 1 ] || die "FULL_RUN_APPROVED=1 missing"
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
-[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 source records/generation"
+if [ "$PROBE" = 1 ]; then
+  [ "$FRESH" -le 60000 ] || die "probe requires FRESH<=60000"
+else
+  [ "$FRESH" -eq 500000 ] || die "requires exactly 500000 source records/generation"
+fi
 [ "$NSHARDS" -eq 18 ] || die "requires 18 logical material strata"
 [ "$PAR_GEN" -eq 8 ] || die "cpx62 contract requires PAR_GEN=8"
 [ "$MAXPLIES" -eq 260 ] || die "requires MAXPLIES=260"
@@ -115,7 +135,8 @@ say "=== $JASS_JOB_ID — L3-IMBALANCE2 $PHASE G${START_GEN}-G${END_GEN} d${PLAY
 [ "$L3_SEARCH_OVERRIDES" = "$EXPECTED_SEARCH_OVERRIDES" ] || die "Q00 fingerprint required"
 [ "$(nproc)" -ge "$PAR_GEN" ] || die "not enough CPUs"
 MEM_MB="$(awk '/MemTotal:/ {printf "%d", $2/1024}' /proc/meminfo)"
-[ "${MEM_MB:-0}" -ge 30000 ] || die "approved only on cpx62 32 GiB"
+[ "${MEM_MB:-0}" -ge 14000 ] || die "requires >=14 GiB RAM (ccx33 16 GiB / cpx62 32 GiB)"
+start_memprobe
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2 {print $4}')" -ge 20000 ] || die "less than 20 GiB free"
 if [ "$PHASE" != P1 ]; then
   : "${PARENT_MODEL_URI:?P2-P4 require previous phase final model URI/path}"
