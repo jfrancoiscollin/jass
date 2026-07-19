@@ -230,7 +230,13 @@ for generation in $(seq "$START_GEN" "$END_GEN"); do
   done
   [ "${#pids[@]}" -eq 0 ] || run_pids "G$generation final batch" "${pids[@]}"
   for log in "$W/g${generation}.p"*.log; do
-    if grep -q 'tb_teacher_exact=1' "$log"; then continue; fi
+    if grep -q 'tb_teacher_exact=1' "$log"; then
+      expected="$(sed -n 's/.*records=\([0-9][0-9]*\).*/\1/p' "$log" | tail -1)"
+      [ -n "$expected" ] || die "TB record count proof missing: $log"
+      grep -q "egdb-relabel: ${expected} records, ${expected} egdb-resolved" "$log" \
+        || die "TB teacher was not exact for every position: $log"
+      continue
+    fi
     grep -q 'label_score_searches=0' "$log" || die "zero-score proof missing: $log"
     grep -q 'seed_frac=100%' "$log" || die "seed-only proof missing: $log"
   done
