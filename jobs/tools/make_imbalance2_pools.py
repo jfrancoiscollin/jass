@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import struct
 from pathlib import Path
@@ -123,16 +124,33 @@ def main() -> int:
     p.add_argument("--bench-per-stratum", type=int, default=24)
     p.add_argument("--plateau-per-stratum", type=int, default=8)
     p.add_argument("--seed", type=int, default=271828)
+    p.add_argument(
+        "--plateau-seed",
+        type=int,
+        default=None,
+        help=(
+            "independent seed for plateau A/B pools; defaults to "
+            "IMBALANCE2_PLATEAU_SEED or --seed"
+        ),
+    )
     args = p.parse_args()
     if args.train_per_side <= 0 or args.bench_per_stratum <= 0 or args.plateau_per_stratum <= 0:
         p.error("pool sizes must be positive")
 
+    plateau_seed = args.plateau_seed
+    if plateau_seed is None:
+        plateau_seed = int(os.environ.get("IMBALANCE2_PLATEAU_SEED", args.seed))
+
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, object] = {
-        "schema": 2,
+        "schema": 3,
         "lineage": "L3-IMBALANCE2",
         "seed": args.seed,
+        "training_seed": args.seed,
+        "plateau_seed": plateau_seed,
+        "plateau_per_stratum": args.plateau_per_stratum,
+        "plateau_records_per_pool": len(STRATA) * args.plateau_per_stratum,
         "strata": [f"{a}v{b}" for a, b in STRATA],
         "training_semantics": "rollout seeds are split by initial advantaged colour",
         "files": {},
@@ -155,7 +173,7 @@ def main() -> int:
             }
 
     for label, seed_offset in (("a", 15485863), ("b", 179424673)):
-        recs, metas = build_benchmark(args.plateau_per_stratum, args.seed + seed_offset)
+        recs, metas = build_benchmark(args.plateau_per_stratum, plateau_seed + seed_offset)
         validate(recs, metas)
         name = f"plateau-{label}.jnnw"
         sha = write_jnnw(out / name, recs)
@@ -166,6 +184,7 @@ def main() -> int:
             "sha256": sha,
             "metadata": meta_name,
             "independent_plateau_pool": label.upper(),
+            "plateau_seed": plateau_seed,
             "external_reference_forbidden": True,
         }
 
