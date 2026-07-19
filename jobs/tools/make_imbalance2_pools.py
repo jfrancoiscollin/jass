@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Create deterministic men-only pools for the L3-IMBALANCE2 lineage.
-
-Every starting position belongs to exactly one material stratum n men versus
-n+2 men, for n=1..18.  Training files are emitted one stratum per file so the
-runner can allocate an exact record budget to every stratum.  Two independent
-benchmark pools are emitted for the Scan-equivalence stop gate.
-"""
+"""Create deterministic men-only start and benchmark pools for L3-IMBALANCE2."""
 from __future__ import annotations
 
 import argparse
@@ -18,7 +12,7 @@ from pathlib import Path
 MAGIC = b"JNNW"
 REC = struct.Struct("<QQQQBiB")
 STRATA = tuple((n, n + 2) for n in range(1, 19))
-SAFE_SQUARES = tuple(range(6, 46))  # no uncrowned man on a promotion row
+SAFE_SQUARES = tuple(range(6, 46))
 
 
 def bits(squares: list[int]) -> int:
@@ -33,10 +27,17 @@ def fen_of(wm: list[int], bm: list[int], stm: int) -> str:
     return f"{side}:W{','.join(map(str, sorted(wm)))}:B{','.join(map(str, sorted(bm)))}"
 
 
-def make_position(rng: random.Random, low: int, high: int, serial: int) -> tuple[bytes, dict[str, object]]:
-    # Balance both the advantaged colour and side to move exactly over a pool.
-    advantaged = "W" if serial % 2 == 0 else "B"
-    stm = (serial // 2) % 2
+def make_position(
+    rng: random.Random,
+    low: int,
+    high: int,
+    serial: int,
+    advantaged: str | None = None,
+) -> tuple[bytes, dict[str, object]]:
+    advantaged = advantaged or ("W" if serial % 2 == 0 else "B")
+    if advantaged not in ("W", "B"):
+        raise ValueError("advantaged must be W or B")
+    stm = serial % 2 if advantaged else (serial // 2) % 2
     squares = list(SAFE_SQUARES)
     rng.shuffle(squares)
     white_n = high if advantaged == "W" else low
@@ -64,16 +65,38 @@ def write_jnnw(path: Path, records: list[bytes]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def build_pool(per_stratum: int, seed: int) -> tuple[list[bytes], list[dict[str, object]]]:
+def build_benchmark(per_stratum: int, seed: int) -> tuple[list[bytes], list[dict[str, object]]]:
     records: list[bytes] = []
     metadata: list[dict[str, object]] = []
     for low, high in STRATA:
         rng = random.Random((seed << 8) ^ (low * 0x9E3779B1))
         for serial in range(per_stratum):
-            rec, meta = make_position(rng, low, high, serial)
+            # Four-cycle balances advantaged colour and side to move.
+            advantaged = "W" if serial % 2 == 0 else "B"
+            rec, meta = make_position(rng, low, high, serial // 2, advantaged)
             meta["index"] = len(records)
             records.append(rec)
             metadata.append(meta)
+    return records, metadata
+
+
+def build_training_side(
+    low: int, high: int, count: int, seed: int, advantaged: str
+) -> tuple[list[bytes], list[dict[str, object]]]:
+    rng = random.Random((seed << 8) ^ (low * 0x9E3779B1) ^ (0 if advantaged == "W" else 0xA5A5A5A5))
+    records: list[bytes] = []
+    metadata: list[dict[str, object]] = []
+    seen: set[bytes] = set()
+    serial = 0
+    while len(records) < count:
+        rec, meta = make_position(rng, low, high, serial, advantaged)
+        serial += 1
+        if rec[:33] in seen:
+            continue
+        seen.add(rec[:33])
+        meta["index"] = len(records)
+        records.append(rec)
+        metadata.append(meta)
     return records, metadata
 
 
@@ -96,46 +119,68 @@ def validate(records: list[bytes], metadata: list[dict[str, object]]) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out-dir", required=True)
-    p.add_argument("--train-per-stratum", type=int, default=4096)
+    p.add_argument("--train-per-side", type=int, default=2048)
     p.add_argument("--bench-per-stratum", type=int, default=24)
+    p.add_argument("--plateau-per-stratum", type=int, default=8)
     p.add_argument("--seed", type=int, default=271828)
     args = p.parse_args()
-    if args.train_per_stratum <= 0 or args.bench_per_stratum <= 0:
+    if args.train_per_side <= 0 or args.bench_per_stratum <= 0 or args.plateau_per_stratum <= 0:
         p.error("pool sizes must be positive")
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, object] = {
-        "schema": 1,
+        "schema": 2,
         "lineage": "L3-IMBALANCE2",
         "seed": args.seed,
         "strata": [f"{a}v{b}" for a, b in STRATA],
-        "training_semantics": "games_start_in_stratum; complete played trajectories are retained",
+        "training_semantics": "rollout seeds are split by initial advantaged colour",
         "files": {},
     }
 
     for low, high in STRATA:
-        records, meta = build_pool(args.train_per_stratum, args.seed + low * 1009)
-        # build_pool contains all strata; select the requested one for a shard file.
-        chosen = [(r, m) for r, m in zip(records, meta, strict=True) if m["stratum"] == f"{low}v{high}"]
-        recs = [r for r, _ in chosen]
-        metas = [dict(m, index=i) for i, (_, m) in enumerate(chosen)]
+        for advantaged in ("W", "B"):
+            recs, metas = build_training_side(
+                low, high, args.train_per_side, args.seed + low * 1009, advantaged
+            )
+            validate(recs, metas)
+            name = f"train-{low:02d}v{high:02d}-up{advantaged}.jnnw"
+            sha = write_jnnw(out / name, recs)
+            (out / f"{name}.json").write_text(json.dumps(metas, indent=2) + "\n", encoding="utf-8")
+            manifest["files"][name] = {
+                "records": len(recs),
+                "sha256": sha,
+                "stratum": f"{low}v{high}",
+                "advantaged_side": advantaged,
+            }
+
+    for label, seed_offset in (("a", 15485863), ("b", 179424673)):
+        recs, metas = build_benchmark(args.plateau_per_stratum, args.seed + seed_offset)
         validate(recs, metas)
-        name = f"train-{low:02d}v{high:02d}.jnnw"
+        name = f"plateau-{label}.jnnw"
         sha = write_jnnw(out / name, recs)
-        (out / f"{name}.json").write_text(json.dumps(metas, indent=2) + "\n", encoding="utf-8")
-        manifest["files"][name] = {"records": len(recs), "sha256": sha, "stratum": f"{low}v{high}"}
+        meta_name = f"plateau-{label}.json"
+        (out / meta_name).write_text(json.dumps(metas, indent=2) + "\n", encoding="utf-8")
+        manifest["files"][name] = {
+            "records": len(recs),
+            "sha256": sha,
+            "metadata": meta_name,
+            "independent_plateau_pool": label.upper(),
+            "external_reference_forbidden": True,
+        }
 
     for label, seed_offset in (("a", 104729), ("b", 130363)):
-        recs, metas = build_pool(args.bench_per_stratum, args.seed + seed_offset)
+        recs, metas = build_benchmark(args.bench_per_stratum, args.seed + seed_offset)
         validate(recs, metas)
         name = f"benchmark-{label}.jnnw"
         sha = write_jnnw(out / name, recs)
         meta_name = f"benchmark-{label}.json"
         (out / meta_name).write_text(json.dumps(metas, indent=2) + "\n", encoding="utf-8")
         manifest["files"][name] = {
-            "records": len(recs), "sha256": sha,
-            "metadata": meta_name, "independent_pool": label.upper(),
+            "records": len(recs),
+            "sha256": sha,
+            "metadata": meta_name,
+            "independent_pool": label.upper(),
         }
 
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
