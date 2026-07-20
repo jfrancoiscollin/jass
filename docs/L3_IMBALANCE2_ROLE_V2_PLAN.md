@@ -156,7 +156,7 @@ Il exige les préfixes immuables et les identifiants exacts des deux jobs source
 
 - le re-assess plateau V1 G1→G4 ;
 - le plateau V2 G1→G4 ;
-- les deltas appariés V2−V1 pour G1, G2, G3 et G4 ;
+- les deltas appariés **A/B apparié** V2−V1 pour G1, G2, G3 et G4 (bootstrap A/B apparié 10 000) ;
 - les résultats séparés sur A64 et B64 ;
 - les rapports bruts candidate-only ;
 - une recommandation de revue non exécutable automatiquement.
