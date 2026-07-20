@@ -16,6 +16,7 @@ CURRENT = ROOT / "docs/L3_CURRENT.md"
 RESULTS = ROOT / "docs/PROJECT_RESULTS.md"
 ARCHIVED_PLAN = ROOT / "docs/archives/l3/L3_PURE_PLAN_V4_1_20260718.md"
 D1_ARCHIVE = ROOT / "docs/archives/l3/D1_RC4_NO_GO_20260720.md"
+ROLES = ROOT / "docs/L3_LINEAGE_ROLES_AND_MATURITY.md"
 
 EXPECTED = {
     "X_LLH": (4, 4, 60),
@@ -133,23 +134,26 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_active_docs_record_closed_d1_and_prepared_d1x(self):
+    def test_active_docs_separate_generalist_and_specialist_tracks(self):
         plan = PLAN.read_text()
         current = CURRENT.read_text()
         results = RESULTS.read_text()
+        roles = ROLES.read_text()
         self.assertIn("Version : 5.0", plan)
         self.assertIn("C2-X1 — exploration immédiate", plan)
         self.assertIn("Q2 n'est pas déclenché", plan)
         self.assertIn("c2_x1_no_lead", current)
-        self.assertIn("stop_before_p3_redesign", current)
-        self.assertIn("d0_causal_profile_ready", current)
         self.assertIn("d1_rc4_no_go", current)
+        self.assertIn("d1x_rc4_autopsy_ready", current)
         self.assertIn("D1-A RC4 — verdict final `D1_RC4_NO_GO`", current)
-        self.assertIn("d1x_rc4_autopsy_prepared_not_launched", current)
-        self.assertIn("D1-X — autopsie RC4 préparée, non lancée", current)
+        self.assertIn("D1-X — autopsie RC4 terminée", current)
+        self.assertIn("la seule lignée destinée à produire une évaluation généraliste", roles)
+        self.assertIn("ne sont pas des lignées candidates au remplacement généraliste", roles)
+        self.assertIn("L3-PURE-MATURITY", roles)
         self.assertIn("C2-X1 : quelle distribution", results)
         self.assertTrue(ARCHIVED_PLAN.is_file())
         self.assertTrue(D1_ARCHIVE.is_file())
+        self.assertTrue(ROLES.is_file())
 
 
 if __name__ == "__main__":
