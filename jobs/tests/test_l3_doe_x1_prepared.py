@@ -15,6 +15,7 @@ PLAN = ROOT / "docs/L3_PURE_PLAN.md"
 CURRENT = ROOT / "docs/L3_CURRENT.md"
 RESULTS = ROOT / "docs/PROJECT_RESULTS.md"
 ARCHIVED_PLAN = ROOT / "docs/archives/l3/L3_PURE_PLAN_V4_1_20260718.md"
+D1_ARCHIVE = ROOT / "docs/archives/l3/D1_RC4_NO_GO_20260720.md"
 
 EXPECTED = {
     "X_LLH": (4, 4, 60),
@@ -132,7 +133,7 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_active_docs_record_closed_x1_completed_d0_and_prepared_d1(self):
+    def test_active_docs_record_closed_d1_and_prepared_d1x(self):
         plan = PLAN.read_text()
         current = CURRENT.read_text()
         results = RESULTS.read_text()
@@ -140,14 +141,15 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         self.assertIn("C2-X1 — exploration immédiate", plan)
         self.assertIn("Q2 n'est pas déclenché", plan)
         self.assertIn("c2_x1_no_lead", current)
-        self.assertIn("P2 d10", current)
         self.assertIn("stop_before_p3_redesign", current)
         self.assertIn("d0_causal_profile_ready", current)
-        self.assertIn("D0 causal — `cpx62-0871`", current)
-        self.assertIn("d1_rc4_representation_screen_prepared_not_launched", current)
-        self.assertIn("D1-A RC4 — préparé, non lancé", current)
+        self.assertIn("d1_rc4_no_go", current)
+        self.assertIn("D1-A RC4 — verdict final `D1_RC4_NO_GO`", current)
+        self.assertIn("d1x_rc4_autopsy_prepared_not_launched", current)
+        self.assertIn("D1-X — autopsie RC4 préparée, non lancée", current)
         self.assertIn("C2-X1 : quelle distribution", results)
         self.assertTrue(ARCHIVED_PLAN.is_file())
+        self.assertTrue(D1_ARCHIVE.is_file())
 
 
 if __name__ == "__main__":
