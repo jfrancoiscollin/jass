@@ -169,10 +169,11 @@ class D1XTests(unittest.TestCase):
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
         text = RUNNER.read_text()
-        for forbidden in ("train_stream.py", "--tournament", "--gen-data-wdl", "SCAN_BIN", "automatic_next_job="):
+        for forbidden in ("train_stream.py", "--tournament", "--gen-data-wdl", "SCAN_BIN"):
             self.assertNotIn(forbidden, text)
         self.assertIn("D1X_AUTOPSY_GO", text)
         self.assertIn("search_pilot_authorized=false", text)
+        self.assertIn("automatic_next_job=null", text)
 
 
 if __name__ == "__main__":
