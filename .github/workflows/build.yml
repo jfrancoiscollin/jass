@@ -8,8 +8,13 @@
 #                      `example.html` as a workflow artifact and stages a
 #                      Pages bundle.
 #   4. deploy-pages  — Publishes the staged bundle to GitHub Pages on
-#                      pushes to `develop` only. Requires Settings → Pages →
-#                      "Source: GitHub Actions" to be enabled once.
+#                      pushes to `develop`, and only when the repository
+#                      variable DEPLOY_DEMO_PAGES == 'true'. It stays off by
+#                      default so the pipeline is green without GitHub Pages
+#                      configured. To turn the live demo on: set the repo
+#                      variable DEPLOY_DEMO_PAGES=true (Settings → Secrets and
+#                      variables → Actions → Variables). The configure-pages
+#                      step then enables Pages automatically on first run.
 
 name: build
 
@@ -140,7 +145,10 @@ jobs:
   deploy-pages:
     name: Deploy demo to GitHub Pages
     needs: wasm
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    # Off by default: only deploys on develop pushes AND when the repo variable
+    # DEPLOY_DEMO_PAGES is set to 'true'. Without it the job is skipped (neutral),
+    # so the pipeline never goes red just because Pages is not configured.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.DEPLOY_DEMO_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -149,5 +157,12 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # Enables Pages on first run so a fresh repo does not need the one-time
+      # Settings → Pages toggle before the deploy can succeed.
+      - name: Enable & configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - id: deploy
         uses: actions/deploy-pages@v4
