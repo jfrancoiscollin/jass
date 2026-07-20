@@ -44,7 +44,7 @@ finalize(){
   [ -f "$RES" ] && cp "$RES" "$ART/RESULTS.txt"
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   [ -d "$W" ] && (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$INPUTS" "$W/raw" "$W/clean" 2>/dev/null || true
+  rm -rf "$INPUTS" "$W/raw" "$W/raw-p2" "$W/clean" 2>/dev/null || true
   exit "$rc"
 }
 trap finalize EXIT
@@ -93,9 +93,9 @@ for path,expected,state in ((p1,p1id,'failed'),(p2,p2id,'failed'),(ref,refid,'co
     payload=json.load(open(path))
     if payload.get('job_id') != expected:
         raise SystemExit(f"source job mismatch {payload.get('job_id')} != {expected}")
-    if payload.get('state') != state:
-        raise SystemExit(f"source state mismatch {payload.get('state')} != {state}")
-    checks.append({'job_id':expected,'state':state,'result_uri':payload.get('result_uri')})
+    if payload.get('result_state') != state:
+        raise SystemExit(f"source state mismatch {payload.get('result_state')} != {state}")
+    checks.append({'job_id':expected,'state':state,'prefix':payload.get('prefix'),'code_sha':payload.get('code_sha')})
 json.dump({'schema':1,'sources':checks,'replayed_games':0},open(out,'w'),indent=2,sort_keys=True)
 PY
 
