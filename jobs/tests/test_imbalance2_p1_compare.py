@@ -51,7 +51,7 @@ class IndependentPlateauPoolsTest(unittest.TestCase):
             root = Path(tmp)
             a = self.run_pools(root / "a", 161803)
             b = self.run_pools(root / "b", 314159)
-            self.assertEqual(a["schema"], 3)
+            self.assertEqual(a["schema"], 2)
             self.assertEqual(a["training_seed"], 271828)
             self.assertEqual(a["plateau_seed"], 161803)
             self.assertEqual(a["plateau_records_per_pool"], 72)
