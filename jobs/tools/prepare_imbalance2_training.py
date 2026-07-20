@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import struct
 from collections import Counter
@@ -14,6 +15,8 @@ MAGIC = b"JNNW"
 REC_SIZE = 38
 REC = struct.Struct("<QQQQBiB")
 SAFE_SQUARES = tuple(range(6, 46))
+ROLE_POLICY_ENV = "IMBALANCE2_REWEIGHT_POLICY"
+ROLE_POLICY_V2 = "role-aware-v2"
 
 
 def read_jnnw(path: Path) -> list[bytearray]:
@@ -122,8 +125,41 @@ def encode_outcomes(args: argparse.Namespace) -> int:
     return 0
 
 
-def reweight(args: argparse.Namespace) -> int:
-    records = read_jnnw(Path(args.input))
+def record_role_bucket(rec: bytes | bytearray) -> str:
+    """Classify one record for role-aware V2 weighting.
+
+    The specialist domain is exact: two MEN of difference and equal king counts.
+    WDL is stored from side-to-move POV, so the role/outcome pair can be read
+    without game-history state. Positions outside the exact domain are anchors.
+    """
+    wm, wk, bm, bk = struct.unpack_from("<QQQQ", rec, 0)
+    stm = rec[32]
+    wdl = struct.unpack_from("<b", rec, 37)[0]
+    if stm not in (0, 1) or wdl not in (-1, 0, 1):
+        raise ValueError("invalid STM/WDL record")
+    nwm, nwk = wm.bit_count(), wk.bit_count()
+    nbm, nbk = bm.bit_count(), bk.bit_count()
+    if abs(nwm - nbm) != 2 or nwk != nbk:
+        return "anchor_outside_exact_2men_equal_kings"
+    up_colour = 0 if nwm > nbm else 1
+    role = "up" if stm == up_colour else "down"
+    outcome = {1: "win", 0: "draw", -1: "loss"}[wdl]
+    return f"{role}_{outcome}"
+
+
+def role_bucket_weight(bucket: str, expected: float, draw: float, upset: float) -> float:
+    if bucket.startswith("anchor_"):
+        return expected
+    if bucket in ("up_draw", "down_draw"):
+        return draw
+    if bucket in ("up_win", "down_loss"):
+        return expected
+    if bucket in ("up_loss", "down_win"):
+        return upset
+    raise ValueError(f"unknown role bucket: {bucket}")
+
+
+def _validate_reweight(args: argparse.Namespace, records: list[bytearray]) -> tuple[int, int]:
     n = len(records)
     if not 0 <= args.holdout_count < n:
         raise ValueError("invalid holdout count")
@@ -131,9 +167,15 @@ def reweight(args: argparse.Namespace) -> int:
     codes = [struct.unpack_from("<i", rec, 33)[0] for rec in records[:train_n]]
     if any(code not in (-1, 0, 1) for code in codes):
         raise ValueError("score field is not a material-up outcome code")
-    class_weight = {1: args.win_weight, 0: args.draw_weight, -1: args.loss_weight}
     if not (0 < args.win_weight < args.draw_weight < args.loss_weight):
         raise ValueError("require 0 < win_weight < draw_weight < loss_weight")
+    return n, train_n
+
+
+def reweight_material_up_v1(args: argparse.Namespace, records: list[bytearray]) -> int:
+    n, train_n = _validate_reweight(args, records)
+    codes = [struct.unpack_from("<i", rec, 33)[0] for rec in records[:train_n]]
+    class_weight = {1: args.win_weight, 0: args.draw_weight, -1: args.loss_weight}
     weights = [class_weight[code] for code in codes]
     rng = random.Random(args.seed)
     sampled = rng.choices(range(train_n), weights=weights, k=train_n)
@@ -146,6 +188,7 @@ def reweight(args: argparse.Namespace) -> int:
     report = {
         "schema": 1,
         "mode": "deterministic_weighted_resample",
+        "policy": "material-up-v1",
         "records_total": n,
         "training_records": train_n,
         "holdout_records_untouched": args.holdout_count,
@@ -160,6 +203,69 @@ def reweight(args: argparse.Namespace) -> int:
     }
     Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     return 0
+
+
+def reweight_role_v2(args: argparse.Namespace, records: list[bytearray]) -> int:
+    n, train_n = _validate_reweight(args, records)
+    buckets = [record_role_bucket(rec) for rec in records[:train_n]]
+    weights = [
+        role_bucket_weight(bucket, args.win_weight, args.draw_weight, args.loss_weight)
+        for bucket in buckets
+    ]
+    rng = random.Random(args.seed)
+    sampled = rng.choices(range(train_n), weights=weights, k=train_n)
+    out = [records[index] for index in sampled]
+    if args.holdout_count:
+        out.extend(records[train_n:])
+    write_jnnw(Path(args.output), out)
+    source_counts = Counter(buckets)
+    sampled_counts = Counter(buckets[index] for index in sampled)
+    domain_records = sum(count for bucket, count in source_counts.items() if not bucket.startswith("anchor_"))
+    if domain_records == 0:
+        raise ValueError("role-aware-v2 found no exact two-men/equal-kings training record")
+    report = {
+        "schema": 2,
+        "mode": "deterministic_role_domain_resample",
+        "policy": ROLE_POLICY_V2,
+        "records_total": n,
+        "training_records": train_n,
+        "holdout_records_untouched": args.holdout_count,
+        "domain": {
+            "men_gap": 2,
+            "equal_king_counts": True,
+            "classification": "per_position_current_material_and_side_to_move",
+            "records": domain_records,
+            "outside_domain_anchor_records": train_n - domain_records,
+        },
+        "weight_semantics": {
+            "expected_result": args.win_weight,
+            "draw": args.draw_weight,
+            "upset_result": args.loss_weight,
+            "matrix_side_to_move_pov": {
+                "up": {"win": args.win_weight, "draw": args.draw_weight, "loss": args.loss_weight},
+                "down": {"win": args.loss_weight, "draw": args.draw_weight, "loss": args.win_weight},
+            },
+            "outside_domain_anchor": args.win_weight,
+        },
+        "source_training_buckets": dict(sorted(source_counts.items())),
+        "resampled_training_buckets": dict(sorted(sampled_counts.items())),
+        "score_field_used_for_weighting": False,
+        "wdl_field_semantics": "side_to_move_pov_-1_0_1",
+        "per_move_criticality_relabel": False,
+        "seed": args.seed,
+    }
+    Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    return 0
+
+
+def reweight(args: argparse.Namespace) -> int:
+    records = read_jnnw(Path(args.input))
+    policy = os.environ.get(ROLE_POLICY_ENV, "material-up-v1")
+    if policy == "material-up-v1":
+        return reweight_material_up_v1(args, records)
+    if policy == ROLE_POLICY_V2:
+        return reweight_role_v2(args, records)
+    raise ValueError(f"unsupported {ROLE_POLICY_ENV}={policy}")
 
 
 def main() -> int:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import struct
 import subprocess
 import sys
@@ -76,18 +77,94 @@ class OutcomeWeightTest(unittest.TestCase):
                 "--output", f"{tmp}/coded.jnnw", "--advantaged-side", "W",
                 "--report", f"{tmp}/coded.json",
             ], check=True, capture_output=True, text=True)
+            v1_env = dict(os.environ)
+            v1_env.pop("IMBALANCE2_REWEIGHT_POLICY", None)
             subprocess.run([
                 sys.executable, str(PREP), "reweight", "--input", f"{tmp}/coded.jnnw",
                 "--output", f"{tmp}/weighted.jnnw", "--holdout-count", "3",
                 "--win-weight", "1", "--draw-weight", "2", "--loss-weight", "4",
                 "--seed", "11", "--report", f"{tmp}/weighted.json",
-            ], check=True, capture_output=True, text=True)
+            ], check=True, capture_output=True, text=True, env=v1_env)
             report = json.loads(Path(f"{tmp}/weighted.json").read_text())
             self.assertEqual(report["weights_material_up_pov"], {"win": 1.0, "draw": 2.0, "loss": 4.0})
             sampled = report["resampled_training_counts"]
             self.assertGreater(sampled["loss"], sampled["draw"])
             self.assertGreater(sampled["draw"], sampled["win"])
             self.assertEqual(report["holdout_records_untouched"], 3)
+
+    def test_role_aware_v2_rewards_conversion_failures_and_defensive_successes(self):
+        prep = load(PREP, "imbalance_prepare_role_v2")
+
+        def bb(*squares: int) -> int:
+            value = 0
+            for square in squares:
+                value |= 1 << (square - 1)
+            return value
+
+        def rec(stm: int, wdl: int, wm: int, bm: int, wk: int = 0, bk: int = 0) -> bytearray:
+            return bytearray(struct.pack("<QQQQBi", wm, wk, bm, bk, stm, 0) + struct.pack("<b", wdl))
+
+        # White is currently +2 men in the six in-domain buckets.
+        prototypes = [
+            rec(0, 1, bb(10, 11, 12), bb(30)),
+            rec(0, 0, bb(10, 11, 12), bb(30)),
+            rec(0, -1, bb(10, 11, 12), bb(30)),
+            rec(1, -1, bb(10, 11, 12), bb(30)),
+            rec(1, 0, bb(10, 11, 12), bb(30)),
+            rec(1, 1, bb(10, 11, 12), bb(30)),
+            rec(0, 1, bb(10, 11), bb(30, 31)),
+        ]
+        expected_buckets = [
+            "up_win", "up_draw", "up_loss", "down_loss", "down_draw", "down_win",
+            "anchor_outside_exact_2men_equal_kings",
+        ]
+        self.assertEqual([prep.record_role_bucket(item) for item in prototypes], expected_buckets)
+        self.assertEqual(
+            [prep.role_bucket_weight(bucket, 1.0, 2.0, 4.0) for bucket in expected_buckets],
+            [1.0, 2.0, 4.0, 1.0, 2.0, 4.0, 1.0],
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            records = [bytearray(item) for item in prototypes for _ in range(80)]
+            holdout = 7
+            source = Path(tmp) / "coded.jnnw"
+            prep.write_jnnw(source, records)
+            env = dict(os.environ, IMBALANCE2_REWEIGHT_POLICY="role-aware-v2")
+            command = [
+                sys.executable, str(PREP), "reweight", "--input", str(source),
+                "--output", f"{tmp}/weighted-a.jnnw", "--holdout-count", str(holdout),
+                "--win-weight", "1", "--draw-weight", "2", "--loss-weight", "4",
+                "--seed", "19", "--report", f"{tmp}/weighted-a.json",
+            ]
+            subprocess.run(command, check=True, capture_output=True, text=True, env=env)
+            command[command.index(f"{tmp}/weighted-a.jnnw")] = f"{tmp}/weighted-b.jnnw"
+            command[command.index(f"{tmp}/weighted-a.json")] = f"{tmp}/weighted-b.json"
+            subprocess.run(command, check=True, capture_output=True, text=True, env=env)
+
+            report = json.loads(Path(f"{tmp}/weighted-a.json").read_text())
+            self.assertEqual(report["mode"], "deterministic_role_domain_resample")
+            self.assertEqual(report["policy"], "role-aware-v2")
+            self.assertEqual(report["domain"]["men_gap"], 2)
+            self.assertTrue(report["domain"]["equal_king_counts"])
+            self.assertFalse(report["score_field_used_for_weighting"])
+            self.assertFalse(report["per_move_criticality_relabel"])
+            self.assertEqual(report["holdout_records_untouched"], holdout)
+            self.assertEqual(
+                report["weight_semantics"]["matrix_side_to_move_pov"],
+                {
+                    "up": {"win": 1.0, "draw": 2.0, "loss": 4.0},
+                    "down": {"win": 4.0, "draw": 2.0, "loss": 1.0},
+                },
+            )
+            sampled = report["resampled_training_buckets"]
+            expected_total = sampled["up_win"] + sampled["down_loss"]
+            draw_total = sampled["up_draw"] + sampled["down_draw"]
+            upset_total = sampled["up_loss"] + sampled["down_win"]
+            self.assertGreater(upset_total, draw_total)
+            self.assertGreater(draw_total, expected_total)
+            self.assertEqual(Path(f"{tmp}/weighted-a.jnnw").read_bytes(), Path(f"{tmp}/weighted-b.jnnw").read_bytes())
+            weighted = prep.read_jnnw(Path(f"{tmp}/weighted-a.jnnw"))
+            self.assertEqual(weighted[-holdout:], records[-holdout:])
 
 
 class GateAggregationTest(unittest.TestCase):
