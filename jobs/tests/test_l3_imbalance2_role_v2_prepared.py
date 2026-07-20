@@ -7,10 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER = (ROOT / "jobs/templates/l3-imbalance2-runner-v2.sh").read_text()
 COMPARE_RUNNER = (ROOT / "jobs/templates/l3-imbalance2-p1-compare-v1.sh").read_text()
+REFERENCE_RUNNER = (ROOT / "jobs/templates/l3-imbalance2-difficulty-reference-v1.sh").read_text()
 TOOL = (ROOT / "jobs/tools/prepare_imbalance2_training.py").read_text()
 POOL_TOOL = (ROOT / "jobs/tools/make_imbalance2_pools.py").read_text()
 COMPARE_TOOL = (ROOT / "jobs/tools/imbalance2_lineage_compare.py").read_text()
-DOC = (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
+REFERENCE_TOOL = (ROOT / "jobs/tools/imbalance2_difficulty_reference.py").read_text()
+DOC = (
+    (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
+    + (ROOT / "docs/L3_IMBALANCE2_DIFFICULTY_REFERENCE.md").read_text()
+)
 RECIPE = (ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720/RECIPE.md").read_text()
 PREP = ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720"
 
@@ -55,11 +60,12 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         ):
             self.assertIn(token, POOL_TOOL)
 
-    def test_prepared_wrappers_include_ccx33_lineage_and_cpx62_comparison(self):
+    def test_prepared_wrappers_include_ccx33_lineage_and_cpx62_analysis(self):
         expected = {f"ccx33-l3-imbalance2-role-v2-p{i}.sh" for i in range(1, 5)} | {
             "ccx33-l3-imbalance2-role-v2-probe.sh",
             "ccx33-l3-imbalance2-role-v2-scan-gate.sh",
             "cpx62-l3-imbalance2-p1-v1-v2-a64-compare.sh",
+            "cpx62-l3-imbalance2-a64-b64-difficulty-reference.sh",
         }
         actual = {path.name for path in PREP.glob("*.sh")}
         self.assertEqual(expected, actual)
@@ -117,12 +123,24 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         ):
             self.assertIn(token, compare)
 
+        reference = (PREP / "cpx62-l3-imbalance2-a64-b64-difficulty-reference.sh").read_text()
+        for token in (
+            "V2_P1_PREFIX",
+            "EXPECTED_V2_JOB_ID",
+            "SCAN_BIN",
+            "REFERENCE_GO=1",
+            "DEPTH=10 MAXPLIES=400 NSHARDS=8 PAR=8",
+            "PLATEAU_PER_STRATUM=64 PLATEAU_SEED=161803 EXACT_MAX_PIECES=6",
+            "l3-imbalance2-difficulty-reference-v1.sh",
+        ):
+            self.assertIn(token, reference)
+
         gate = (PREP / "ccx33-l3-imbalance2-role-v2-scan-gate.sh").read_text()
         self.assertIn("PLATEAU_APPROVED=1", gate)
         self.assertIn("NSHARDS=8 PAR=8", gate)
         self.assertIn("l3-imbalance2-scan-gate-v1.sh", gate)
 
-    def test_comparison_is_candidate_only_paired_and_non_promotable(self):
+    def test_comparison_is_paired_stratified_and_non_promotable(self):
         for token in (
             "historical P1 V1 and new role-aware P1 V2",
             "plateau-a.jnnw.gz",
@@ -139,12 +157,36 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         for token in (
             '"same_pools": True',
             '"same_search_budget": True',
-            '"external_references_used": False',
+            '"difficulty_reference_used_for_reporting"',
+            '"difficulty_reference_used_in_lead_rule": False',
+            '"metric": "stratum_equal_weight_material_up_failure_cost_2loss_plus_draw"',
             '"promotion_authorized": False',
             '"automatic_next_job": None',
             '"V2_CLEAR_LEAD_AT_P1"',
+            "stratified_bootstrap",
         ):
             self.assertIn(token, COMPARE_TOOL)
+
+    def test_difficulty_reference_uses_exact_tb_then_scan(self):
+        for token in (
+            "exact EGDB WDL for 1v3/2v4",
+            "Scan d10 self-play for 3v5..18v20",
+            "EXACT_MAX_PIECES",
+            "egdb-resolved",
+            "--engine scan",
+            "scan-bb-size 0",
+            "REFERENCE_PROFILE_READY",
+            "training_input':False",
+        ):
+            self.assertIn(token, REFERENCE_RUNNER)
+        for token in (
+            '"exact_tb_strata": ["1v3", "2v4"]',
+            '"scan_reference_is_exact": False',
+            '"reference_used_for_training": False',
+            '"reference_used_for_weighting": False',
+            '"macro_equal_stratum_failure_cost"',
+        ):
+            self.assertIn(token, REFERENCE_TOOL)
 
     def test_doc_states_equivalence_scope_and_combined_p1_campaign(self):
         for token in (
@@ -161,6 +203,10 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             "1 152 positions par pool",
             "0847",
             "18 432",
+            "1v3",
+            "2v4",
+            "Scan",
+            "macro-moyenne par strate",
             "Aucun palier, merge scientifique ou benchmark externe",
         ):
             self.assertIn(token, DOC)
@@ -169,6 +215,7 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             "jamais leurs manifests ni leurs décisions de promotion",
             "A64/B64",
             "re-assess V1",
+            "référence de difficulté",
         ):
             self.assertIn(token, RECIPE)
 
