@@ -8,12 +8,13 @@
 > **Statut scientifique :** `c0_retire_frontier_v1_flat; c1_q1_no_lead;
 > c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette_figee;
 > p1_v2_no_clear_lead; p2_no_clear_improvement_or_unstable;
-> stop_before_p3_redesign; d0_diagnostic_prepared_not_launched`.
+> stop_before_p3_redesign; d0_causal_profile_ready;
+> d1_rc4_representation_screen_prepared_not_launched`.
 
 ## 1. Décision active
 
-La lignée autonome est viable, mais le déficit de conversion n’est toujours pas
-résorbé. Tous les écrans DoE ont renvoyé `no_lead`; la recette reste donc figée :
+La lignée autonome est viable, mais le déficit de conversion n’est pas résorbé.
+Tous les écrans DoE ont renvoyé `no_lead`; la recette générale reste figée :
 
 - géométrie `8cf` ;
 - Q00, 63 paramètres de recherche explicitement épinglés ;
@@ -21,135 +22,64 @@ résorbé. Tous les écrans DoE ont renvoyé `no_lead`; la recette reste donc fi
 - labels WDL terminaux, ply-caps exclus ;
 - fit logistic, `L2=3e-5` ;
 - aucun teacher, aucune frontière mobile, aucun MMTO dans le train ;
-- aucune NNUE : la classe linéaire reste la seule classe autorisée.
+- classe d’évaluation linéaire et interprétable.
 
 La branche spécialiste retenue est `L3-IMBALANCE2-ROLE-V2`. Elle pondère par
-position et par rôle uniquement dans le domaine exact `|Δ hommes|=2` avec autant
-de dames : côté `+2`, W/D/L=`1/2/4`; côté `−2`, W/D/L=`4/2/1`; hors domaine,
-poids `1`. Scan et Gen2 restent des thermomètres, jamais des données de train.
+position et rôle dans le domaine courant `|Δ hommes|=2` avec autant de dames :
+côté `+2`, W/D/L=`1/2/4`; côté `−2`, W/D/L=`4/2/1`; hors domaine, poids `1`.
+Scan et Gen2 restent des thermomètres, jamais des données de train.
 
-**Décision définitive après P2 : arrêter avant P3 et redessiner le mécanisme.**
-La consolidation appariée G4→G8 ne montre aucune amélioration large ou
-significative. Une nouvelle hausse de profondeur avec la même recette ne serait
-pas justifiée. `promotion_authorized=false`, `p3_authorized=false` et aucun job
-suivant n’est chaîné.
+**Décision définitive après P2 d10 : arrêter avant P3 et redessiner le
+mécanisme.** La consolidation G4→G8 ne montre aucun progrès large ou significatif.
+`promotion_authorized=false`, `p3_authorized=false` et aucun job n’est chaîné.
+**P3 n’est pas autorisé.**
 
-Le prochain bloc préparé est **D0**, un diagnostic causal sans entraînement :
-30 positions sentinelles, G4/G8/Scan aux profondeurs d8/d10/d12/d14, traces de
-recherche et recommandations d’hypothèses. Il reste non lancé et ne peut pas
-autoriser automatiquement D1.
+D0 est maintenant terminé. Le prochain bloc préparé est **D1-A RC4**, un écran
+contrôle contre quatre interactions linéaires conditionnées par le rôle matériel.
+Il n’utilise aucun nouveau self-play pour l’entraînement et ne peut pas autoriser
+D1-B automatiquement.
 
-## 2. Campagnes longues publiées
+## 2. Campagnes et diagnostics publiés
 
 | Campagne | Job | Palier | Résultat durable |
 |---|---|---|---|
 | baseline générale | `cpx62-0842` | P1, G1–G4 d8 | saine, référence de pente |
-| imbalance2 V1 | `ccx33-0847` | P1, G1–G4 d8 | near-flat sur le diagnostic de train |
-| role-aware V2 | `ccx33-0852` | P1, G1–G4 d8 | attribution de crédit plus propre, pas de lead établi |
-| comparaison V1/V2 | `0853` récupéré par `0857` | A64/B64 d10 | `V2_NO_CLEAR_LEAD_AT_P1` |
-| role-aware V2 | `ccx33-0859` | P2, G5–G8 d10 | chaîne complète, aucune promotion automatique |
-| assess P2 | `0864` récupéré par `0869` | A64/B64 d10 | `STILL_IMPROVING_OR_UNSTABLE`, plateau non confirmé |
-| difficulté matérielle | `cpx62-0862` | EGDB + Scan d10 | référence W/D/L propre aux 18 strates |
-| consolidation P2 | `ccx33-0870` | G4→G8, A64/B64 | `P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE`; arrêt avant P3 |
+| imbalance2 V1 | `ccx33-0847` | P1, G1–G4 d8 | near-flat |
+| role-aware V2 | `ccx33-0852` | P1, G1–G4 d8 | crédit plus propre, pas de lead établi |
+| comparaison V1/V2 | `0853→0857` | A64/B64 d10 | `V2_NO_CLEAR_LEAD_AT_P1` |
+| role-aware V2 | `ccx33-0859` | P2, G5–G8 d10 | chaîne complète, aucune promotion |
+| assess P2 | `0864→0869` | A64/B64 d10 | instable, plateau non confirmé |
+| difficulté matérielle | `cpx62-0862` | EGDB + Scan d10 | référence des 18 strates |
+| consolidation P2 | `ccx33-0870` | G4→G8 | arrêt avant P3 |
+| diagnostic causal | `cpx62-0871` | 30 sentinelles, 360 recherches | `D0_CAUSAL_PROFILE_READY` |
 
-## 3. P1 powered — V1 contre role-aware V2
+## 3. Verdict P1 powered — V1 contre role-aware V2
 
-La comparaison `0853→0857` réutilise les mêmes octets A64/B64, 64 positions par
-strate, soit 1 152 positions par pool avant exclusion. Une position
-`plateau-a:1100` a déclenché le watchdog moteur; elle a été retirée
-symétriquement de V1/V2 et de G1–G4, laissant `n=1151` sur A et `n=1152` sur B.
+La comparaison powered utilise les mêmes A64/B64. Après exclusion symétrique de
+`plateau-a:1100`, elle conserve `n=1151` sur A et `n=1152` sur B.
 
-À G4 :
-
-| coût `2L+D`, côté initialement avantagé | pool A | pool B | global |
+| coût `2L+D` à G4 | pool A | pool B | global |
 |---|---:|---:|---:|
 | V1 | 0,951 | 0,965 | **0,958** |
 | V2 role-aware | 0,963 | 0,929 | **0,946** |
 
-Delta V2−V1 : **−0,013**, IC95 apparié **[−0,061 ; +0,035]**. L’effet est sous
-le seuil pré-engagé de `0,02` et non significatif. La V2 a été conservée comme
-décision de programme, car sa sémantique est préférable et aucune régression
-n’est établie; ce choix n’est pas une preuve de supériorité.
+Delta V2−V1 : **−0,013**, IC95 **[−0,061 ; +0,035]**. L’effet est sous le seuil
+`0,02` et non significatif. V2 a été conservée comme décision de programme pour
+sa sémantique, pas comme preuve de supériorité.
 
-## 4. P2 d10 — faits d’exécution
+## 4. Verdict définitif P2 — G4 contre G8
 
-`ccx33-0859` a entraîné G5–G8 à d10, 500 000 records par génération, depuis le
-G4 immuable de `0852`. La chaîne est saine et publie ses quatre modèles, ses
-manifests, les buckets role-aware et les pools A64/B64 inchangés.
+`ccx33-0870` a appliqué la même exclusion symétrique à G4–G8 et joint la référence
+EGDB/Scan uniquement pour l’interprétation.
 
-L’assess `0864` a produit toutes les parties mais a rencontré le même timeout sur
-`plateau-a:1100`. La récupération contractuelle `ccx33-0869` a retiré cette
-position de G5–G8 de façon symétrique : quatre lignes retirées au total, `n=1151`
-sur A et `n=1152` sur B.
-
-### 4.1 Coût P2 par génération
-
-| Pool | G5 | G6 | G7 | G8 | lecture |
-|---|---:|---:|---:|---:|---|
-| A | 0,9175 | 0,9531 | 0,9600 | **0,9835** | dégradation nette |
-| B | 0,9375 | 0,8767 | 0,9019 | **0,9184** | petit mieux final, instable |
-
-Pool A : amélioration G5→G8 = **−0,0660** au sens du rapport (donc coût en hausse
-0,066), IC95 du delta **[0,000 ; 0,133]**, dernière plage-3 `0,0304`.
-
-Pool B : amélioration G5→G8 = **+0,0191**, IC95 **[−0,0868 ; +0,0460]**,
-dernière plage-3 `0,0417`, juste au-dessus du seuil `0,04`.
-
-Verdict P2 interne : **`STILL_IMPROVING_OR_UNSTABLE`**, plateau non confirmé.
-Ces chiffres ne montrent pas que d10 a amélioré la conversion; ils montrent une
-forte dépendance au pool et aucun signal stable autorisant P3.
-
-## 5. Référence de difficulté par quantité de matériel
-
-`cpx62-0862` mesure les mêmes A64/B64 sans intervenir dans le train ni dans les
-règles causales :
-
-- `1v3` et `2v4` : WDL **exacte EGDB**, 128 positions chacune ;
-- `3v5…18v20` : autojeu **Scan d10**, référence empirique et explicitement non
-  exacte, 128 positions par strate.
-
-| Strate | Source | W | D | L | coût `2L+D` |
-|---|---|---:|---:|---:|---:|
-| 1v3 | EGDB exacte | 0,5547 | 0,4453 | 0,0000 | **0,4453** |
-| 2v4 | EGDB exacte | 0,5781 | 0,4141 | 0,0078 | **0,4297** |
-| 3v5 | Scan d10 | 0,4844 | 0,4766 | 0,0391 | **0,5547** |
-| 6v8 | Scan d10 | 0,4766 | 0,4609 | 0,0625 | **0,5859** |
-| 9v11 | Scan d10 | 0,4062 | 0,4844 | 0,1094 | **0,7031** |
-| 18v20 | Scan d10 | 0,4922 | 0,3828 | 0,1250 | **0,6328** |
-
-Macro EGDB des deux petites strates : **0,4375**. Macro Scan sur les seize
-strates supérieures : **0,6138**. Macro égale sur les dix-huit strates :
-**0,5942**.
-
-La difficulté n’est donc pas monotone avec le nombre de pièces et un taux global
-brut est insuffisant. Le verdict principal reste la macro-moyenne à poids égal
-par strate, avec le détail W/D/L et les deux pools séparés.
-
-## 6. Consolidation définitive G4→G8 — `ccx33-0870`
-
-Le job `0870`, pin `0e657bba`, a consommé les rapports bruts de `0853` et `0864`
-ainsi que la référence `0862`; il n’a rejoué aucune partie. Il a vérifié que les
-clés et les strates étaient identiques avant nettoyage, puis a retiré l’unique
-position autorisée `plateau-a:1100` de toutes les générations G4–G8. Cette
-position appartient à la strate `18v20`.
-
-### 6.1 Verdict principal
-
-| Mesure G4→G8 | Résultat | Lecture |
+| Mesure | Résultat | Lecture |
 |---|---:|---|
-| delta macro égal par strate | **+0,0053** | légère dégradation, pas un gain |
-| IC95 bootstrap stratifié | **[−0,0426 ; +0,0526]** | contient largement zéro |
+| delta macro égal par strate | **+0,0053** | légère dégradation |
+| IC95 bootstrap stratifié | **[−0,0426 ; +0,0526]** | contient zéro |
 | strates non dégradées | **9 / 18** | sous le seuil 12/18 |
 | delta pool A | **+0,0209** | dégradation |
 | delta pool B | **−0,0104** | légère amélioration |
-| plateau P2 confirmé | **non** | instabilité persistante |
-
-Le signe positif signifie que le coût `2L+D` augmente entre G4 et G8. Le seuil
-de gain exigeait au contraire un delta ≤`−0,02`, une borne haute IC95 ≤0, aucun
-pool dégradé, au moins 12/18 strates non dégradées et aucune grosse régression
-locale. Plusieurs critères échouent simultanément.
-
-Verdict contractuel :
+| plateau confirmé | **non** | instabilité persistante |
 
 ```text
 P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE
@@ -159,60 +89,116 @@ p3_authorized=false
 automatic_next_job=null
 ```
 
-La référence EGDB/Scan a été jointe aux rapports pour l’interprétation, mais n’a
-pas été utilisée dans la règle de décision.
+## 5. D0 causal — `cpx62-0871`
 
-## 7. D0 — diagnostic causal préparé, non lancé
+D0 a réutilisé les artefacts immuables `0852`, `0853`, `0859`, `0862` et `0864`.
+Il a sélectionné 30 positions sentinelles puis analysé G4, G8 et Scan aux
+profondeurs 8, 10, 12 et 14, soit **360 recherches statiques**.
 
-Le runner `l3-imbalance2-d0-diagnostic-v1.sh` consomme uniquement les artefacts
-immuables de `0852`, `0853`, `0859`, `0862` et `0864`. Il ne crée aucun modèle et
-ne rejoue aucune partie complète.
+Exécution :
 
-Il sélectionne 30 positions uniques :
+- début : `2026-07-20T19:33:15Z` ;
+- fin : `2026-07-20T19:38:41Z` ;
+- durée : 5 min 26 s ;
+- exit code : 0 ;
+- résultat : `D0_CAUSAL_PROFILE_READY`.
 
-- 10 régressions G4→G8 ;
-- 10 déficits persistants à la référence EGDB/Scan ;
-- 10 cas issus des strates ayant la plus forte divergence A/B.
+Profil d’hypothèses :
 
-Chaque sentinelle est analysée par G4, G8 et Scan aux profondeurs 8, 10, 12 et 14,
-soit **360 recherches statiques**. Le rapport conserve coup, score, profondeur,
-nœuds, PV et trace HUB lorsque le moteur les expose. Les catégories produites
-— horizon de recherche, représentation/objectif, crédit/distribution ou cause
-mixte — restent des hypothèses et non des preuves.
+| Hypothèse | Cas |
+|---|---:|
+| `REPRESENTATION_OR_OBJECTIVE_CANDIDATE` | **7 / 30** |
+| `SEARCH_AND_EVAL_MIXED` | **23 / 30** |
+| `SEARCH_HORIZON_CANDIDATE` | **0 / 30** |
+| `TRAINING_CREDIT_OR_DISTRIBUTION_CANDIDATE` | **0 / 30** |
 
-Wrappers interchangeables :
+Ces catégories sont des heuristiques diagnostiques, pas des preuves causales.
+L’absence de cas pur d’horizon ne justifie pas de modifier d’abord la recherche.
+
+Artefact :
 
 ```text
-jobs/prepared/l3-imbalance2-d0-20260720/ccx33-l3-imbalance2-d0-diagnostic.sh
-jobs/prepared/l3-imbalance2-d0-20260720/cpx62-l3-imbalance2-d0-diagnostic.sh
+r2:jass-data/runs/cpx62-0871-l3-imbalance2-d0-diagnostic/20260720T193310Z-bced44e7
 ```
 
-Un seul wrapper doit être lancé selon la box libre. Quel que soit le résultat :
+## 6. D1-A RC4 — préparé, non lancé
+
+Question : quatre gradients linéaires conditionnés par le rôle courant peuvent-ils
+améliorer la conversion sans modifier la recherche ni les données ?
+
+Le contrôle et RC4 sont refittés depuis zéro sur les **mêmes octets** du corpus
+`g4-source` de `0852`, après le même split et la même pondération role-aware V2.
+Aucun nouveau self-play n’est généré pour le train et Scan n’est pas un teacher.
+
+RC4 ajoute, uniquement lorsque l’écart courant est exactement de deux hommes avec
+le même nombre de dames :
+
+1. delta de mobilité sûre ;
+2. confinement du défenseur ;
+3. marge de course à promotion ;
+4. pression d’échange immédiate.
+
+L’implémentation expérimentale est appliquée à une copie isolée du SHA mergé. Le
+bras contrôle reste byte-identique à la source revue et le code de production ne
+reçoit pas ces features tant qu’elles ne sont pas validées.
+
+### 6.1 Évaluation
+
+- nouveaux pools indépendants **C64/D64** ;
+- seed `314159`, 18 strates, 64 positions par strate et par pool ;
+- d10, `maxplies=400`, mêmes positions et même budget ;
+- mesure principale : macro-moyenne égale par strate du coût `2L+D` ;
+- replay d14 des 30 sentinelles D0 ;
+- garde généraliste de 64 paires à d8 ;
+- garde de débit RC4/contrôle ≥ `0,95`.
+
+### 6.2 Gate préenregistré
+
+Le volet principal exige simultanément :
+
+- delta RC4−contrôle ≤ `−0,020` ;
+- borne haute IC95 ≤ `0` ;
+- aucun pool C/D dégradé ;
+- au moins 12/18 strates non dégradées ;
+- pire régression locale ≤ `0,10`.
+
+Le gate mécanistique exige au moins 4/7 sentinelles représentation/objectif
+corrigées vers le coup Scan d14 et au plus deux nouvelles divergences.
+
+Un échec produit `D1_RC4_NO_GO`. Un succès produit seulement
+`D1_RC4_SCREEN_PASS_REVIEW_D1B`. Dans les deux cas :
 
 ```text
-d1_authorized=false
-training_authorized=false
+d1b_authorized=false
+training_continuation_authorized=false
 promotion_authorized=false
 automatic_next_job=null
 ```
 
-## 8. Prochaines actions
+Wrappers interchangeables, un seul à exécuter :
 
-1. faire relire et merger la PR D0 après CI verte ;
-2. renseigner le SHA mergé et lancer un seul wrapper sur ccx33 ou cpx62 ;
-3. examiner les 30 sentinelles et les proportions d’hypothèses ;
-4. choisir **un seul changement causal** pour D1 : recherche, représentation, ou
-   cible/distribution ;
-5. préparer ensuite un pilote court contrôle/V3 sur de nouveaux pools C64/D64 ;
+```text
+jobs/prepared/l3-imbalance2-d1-rc4-20260720/ccx33-l3-imbalance2-d1-rc4.sh
+jobs/prepared/l3-imbalance2-d1-rc4-20260720/cpx62-l3-imbalance2-d1-rc4.sh
+```
+
+## 7. Prochaines actions
+
+1. faire relire et merger la PR D1-RC4 après CI verte ;
+2. renseigner le SHA mergé et lancer un seul wrapper sur la première box libre ;
+3. examiner le verdict C64/D64, les sentinelles, le débit et le garde généraliste ;
+4. n’envisager D1-B qu’après une nouvelle décision humaine explicite ;
+5. si RC4 échoue, préparer un pilote **search-only** séparé ;
 6. ne jamais relancer P3 à recette role-aware V2 identique.
 
-## 9. Artefacts de référence
+## 8. Artefacts de référence
 
-- P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/...` ;
-- P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/...` ;
+- P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/20260720T073236Z-61839d1d` ;
+- P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/20260720T105918Z-a0d2f238` ;
 - référence : `r2:jass-data/runs/cpx62-0862-l3-imbalance2-a64-b64-difficulty-reference/20260720T130310Z-59940065` ;
 - récupération P2 : `r2:jass-data/runs/ccx33-0869-p2-plateau-recover/20260720T152038Z-566943ea` ;
-- consolidation finale : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba`.
+- consolidation : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba` ;
+- D0 : `r2:jass-data/runs/cpx62-0871-l3-imbalance2-d0-diagnostic/20260720T193310Z-bced44e7`.
 
-Les URI exactes et SHA des modèles restent dans les manifests R2 et les statuts
-GitOps. Aucun résultat volumineux n’est re-committé dans Git.
+Les URI exactes et SHA restent dans les manifests R2 et les statuts GitOps. Aucun
+résultat volumineux n’est re-committé dans Git.

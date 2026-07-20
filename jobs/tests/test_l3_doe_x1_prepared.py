@@ -132,7 +132,7 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_active_docs_record_closed_x1_and_prepared_d0(self):
+    def test_active_docs_record_closed_x1_completed_d0_and_prepared_d1(self):
         plan = PLAN.read_text()
         current = CURRENT.read_text()
         results = RESULTS.read_text()
@@ -142,8 +142,10 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         self.assertIn("c2_x1_no_lead", current)
         self.assertIn("P2 d10", current)
         self.assertIn("stop_before_p3_redesign", current)
-        self.assertIn("d0_diagnostic_prepared_not_launched", current)
-        self.assertIn("D0 — diagnostic causal préparé", current)
+        self.assertIn("d0_causal_profile_ready", current)
+        self.assertIn("D0 causal — `cpx62-0871`", current)
+        self.assertIn("d1_rc4_representation_screen_prepared_not_launched", current)
+        self.assertIn("D1-A RC4 — préparé, non lancé", current)
         self.assertIn("C2-X1 : quelle distribution", results)
         self.assertTrue(ARCHIVED_PLAN.is_file())
 
