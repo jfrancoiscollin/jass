@@ -12,7 +12,10 @@ TOOL = (ROOT / "jobs/tools/prepare_imbalance2_training.py").read_text()
 POOL_TOOL = (ROOT / "jobs/tools/make_imbalance2_pools.py").read_text()
 COMPARE_TOOL = (ROOT / "jobs/tools/imbalance2_lineage_compare.py").read_text()
 REFERENCE_TOOL = (ROOT / "jobs/tools/imbalance2_difficulty_reference.py").read_text()
-DOC = (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
+DOC = (
+    (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
+    + (ROOT / "docs/L3_IMBALANCE2_DIFFICULTY_REFERENCE.md").read_text()
+)
 RECIPE = (ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720/RECIPE.md").read_text()
 PREP = ROOT / "jobs/prepared/l3-imbalance2-role-v2-20260720"
 
