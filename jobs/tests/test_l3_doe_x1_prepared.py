@@ -132,15 +132,16 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_three_active_docs_record_the_same_next_block(self):
+    def test_active_docs_record_closed_x1_and_current_long_campaign(self):
         plan = PLAN.read_text()
         current = CURRENT.read_text()
         results = RESULTS.read_text()
         self.assertIn("Version : 5.0", plan)
         self.assertIn("C2-X1 — exploration immédiate", plan)
         self.assertIn("Q2 n'est pas déclenché", plan)
-        self.assertIn("c2_x1_prepared_not_launched", current)
-        self.assertIn("Bloc préparé : C2-X1", current)
+        self.assertIn("c2_x1_no_lead", current)
+        self.assertIn("P2 d10", current)
+        self.assertIn("P3 n’est pas autorisé", current)
         self.assertIn("C2-X1 : quelle distribution", results)
         self.assertTrue(ARCHIVED_PLAN.is_file())
 

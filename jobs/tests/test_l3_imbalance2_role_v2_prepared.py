@@ -8,10 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNNER = (ROOT / "jobs/templates/l3-imbalance2-runner-v2.sh").read_text()
 COMPARE_RUNNER = (ROOT / "jobs/templates/l3-imbalance2-p1-compare-v1.sh").read_text()
 REFERENCE_RUNNER = (ROOT / "jobs/templates/l3-imbalance2-difficulty-reference-v1.sh").read_text()
+CONSOLIDATE_RUNNER = (ROOT / "jobs/templates/l3-imbalance2-p2-consolidate-v1.sh").read_text()
 TOOL = (ROOT / "jobs/tools/prepare_imbalance2_training.py").read_text()
 POOL_TOOL = (ROOT / "jobs/tools/make_imbalance2_pools.py").read_text()
 COMPARE_TOOL = (ROOT / "jobs/tools/imbalance2_lineage_compare.py").read_text()
 REFERENCE_TOOL = (ROOT / "jobs/tools/imbalance2_difficulty_reference.py").read_text()
+CLEAN_TOOL = (ROOT / "jobs/tools/imbalance2_symmetric_exclusion.py").read_text()
+PROGRESS_TOOL = (ROOT / "jobs/tools/imbalance2_phase_progress.py").read_text()
 DOC = (
     (ROOT / "docs/L3_IMBALANCE2_ROLE_V2_PLAN.md").read_text()
     + (ROOT / "docs/L3_IMBALANCE2_DIFFICULTY_REFERENCE.md").read_text()
@@ -66,6 +69,7 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             "ccx33-l3-imbalance2-role-v2-scan-gate.sh",
             "cpx62-l3-imbalance2-p1-v1-v2-a64-compare.sh",
             "cpx62-l3-imbalance2-a64-b64-difficulty-reference.sh",
+            "cpx62-l3-imbalance2-p2-consolidate.sh",
         }
         actual = {path.name for path in PREP.glob("*.sh")}
         self.assertEqual(expected, actual)
@@ -135,6 +139,18 @@ class RoleAwareV2ContractTest(unittest.TestCase):
         ):
             self.assertIn(token, reference)
 
+        consolidate = (PREP / "cpx62-l3-imbalance2-p2-consolidate.sh").read_text()
+        for token in (
+            "P1_RAW_PREFIX",
+            "P2_RAW_PREFIX",
+            "REFERENCE_PREFIX",
+            "CONSOLIDATION_GO=1",
+            "MAX_EXCLUDED_POSITIONS=2",
+            "MIN_NONWORSE_STRATA=12",
+            "l3-imbalance2-p2-consolidate-v1.sh",
+        ):
+            self.assertIn(token, consolidate)
+
         gate = (PREP / "ccx33-l3-imbalance2-role-v2-scan-gate.sh").read_text()
         self.assertIn("PLATEAU_APPROVED=1", gate)
         self.assertIn("NSHARDS=8 PAR=8", gate)
@@ -187,6 +203,34 @@ class RoleAwareV2ContractTest(unittest.TestCase):
             '"macro_equal_stratum_failure_cost"',
         ):
             self.assertIn(token, REFERENCE_TOOL)
+
+    def test_p2_consolidation_is_paired_guarded_and_non_promotable(self):
+        for token in (
+            "candidate-only-a64-b64-reports.tar.gz",
+            "candidate-p2-reports.tar.gz",
+            "imbalance2_symmetric_exclusion.py",
+            "imbalance2_phase_progress.py",
+            "MAX_EXCLUDED_POSITIONS",
+            "G4",
+            "G8",
+            "'p3_authorized':False",
+            "replayed_games':0",
+        ):
+            self.assertIn(token, CONSOLIDATE_RUNNER)
+        for token in (
+            "union_of_allowed_error_positions_removed_from_every_report_set",
+            "keys_identical_before_cleaning",
+            "max-excluded-positions",
+        ):
+            self.assertIn(token, CLEAN_TOOL)
+        for token in (
+            "P2_CLEAR_BROAD_IMPROVEMENT",
+            "STOP_BEFORE_P3_REDESIGN",
+            '"p3_authorized": False',
+            '"difficulty_reference_used_in_decision_rule": False',
+            "minimum_nonworse_strata",
+        ):
+            self.assertIn(token, PROGRESS_TOOL)
 
     def test_doc_states_equivalence_scope_and_combined_p1_campaign(self):
         for token in (
