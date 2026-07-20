@@ -7,7 +7,8 @@
 >
 > **Statut scientifique :** `c0_retire_frontier_v1_flat; c1_q1_no_lead;
 > c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette_figee;
-> p1_v2_no_clear_lead; p2_complete_but_no_plateau; p3_not_authorized`.
+> p1_v2_no_clear_lead; p2_no_clear_improvement_or_unstable;
+> stop_before_p3_redesign`.
 
 ## 1. Décision active
 
@@ -27,9 +28,11 @@ position et par rôle uniquement dans le domaine exact `|Δ hommes|=2` avec auta
 de dames : côté `+2`, W/D/L=`1/2/4`; côté `−2`, W/D/L=`4/2/1`; hors domaine,
 poids `1`. Scan et Gen2 restent des thermomètres, jamais des données de train.
 
-**P3 n’est pas autorisé.** Le prochain verdict obligatoire est la consolidation
-appariée et stratifiée `G4→G8` sur les mêmes pools A64/B64. Même un résultat
-positif ne déclenche aucun job automatiquement.
+**Décision définitive après P2 : arrêter avant P3 et redessiner le mécanisme.**
+La consolidation appariée G4→G8 ne montre aucune amélioration large ou
+significative. Une nouvelle hausse de profondeur avec la même recette ne serait
+pas justifiée. `promotion_authorized=false`, `p3_authorized=false` et aucun job
+suivant n’est chaîné.
 
 ## 2. Campagnes longues publiées
 
@@ -42,6 +45,7 @@ positif ne déclenche aucun job automatiquement.
 | role-aware V2 | `ccx33-0859` | P2, G5–G8 d10 | chaîne complète, aucune promotion automatique |
 | assess P2 | `0864` récupéré par `0869` | A64/B64 d10 | `STILL_IMPROVING_OR_UNSTABLE`, plateau non confirmé |
 | difficulté matérielle | `cpx62-0862` | EGDB + Scan d10 | référence W/D/L propre aux 18 strates |
+| consolidation P2 | `ccx33-0870` | G4→G8, A64/B64 | `P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE`; arrêt avant P3 |
 
 ## 3. P1 powered — V1 contre role-aware V2
 
@@ -113,61 +117,69 @@ strates supérieures : **0,6138**. Macro égale sur les dix-huit strates :
 **0,5942**.
 
 La difficulté n’est donc pas monotone avec le nombre de pièces et un taux global
-brut est insuffisant. Le verdict principal doit rester la macro-moyenne à poids
-égal par strate, avec le détail W/D/L et les deux pools séparés.
+brut est insuffisant. Le verdict principal reste la macro-moyenne à poids égal
+par strate, avec le détail W/D/L et les deux pools séparés.
 
-## 6. Consolidation G4→G8 obligatoire
+## 6. Consolidation définitive G4→G8 — `ccx33-0870`
 
-Le runner `l3-imbalance2-p2-consolidate-v1.sh` consomme les rapports déjà publiés
-par `0853`, `0864` et la référence `0862`; il ne rejoue aucune partie.
+Le job `0870`, pin `0e657bba`, a consommé les rapports bruts de `0853` et `0864`
+ainsi que la référence `0862`; il n’a rejoué aucune partie. Il a vérifié que les
+clés et les strates étaient identiques avant nettoyage, puis a retiré l’unique
+position autorisée `plateau-a:1100` de toutes les générations G4–G8. Cette
+position appartient à la strate `18v20`.
 
-Politique d’erreur pré-engagée :
+### 6.1 Verdict principal
 
-1. les clés pool/index doivent être identiques avant nettoyage ;
-2. seule l’union des erreurs contenant le timeout explicitement autorisé peut
-   être retirée ;
-3. cette union est retirée de **toutes** les générations G4–G8 ;
-4. maximum deux positions et `0,1 %` du corpus ;
-5. toute ligne manquante, mauvais pool, mauvaise strate ou erreur non autorisée
-   fait échouer le job.
+| Mesure G4→G8 | Résultat | Lecture |
+|---|---:|---|
+| delta macro égal par strate | **+0,0053** | légère dégradation, pas un gain |
+| IC95 bootstrap stratifié | **[−0,0426 ; +0,0526]** | contient largement zéro |
+| strates non dégradées | **9 / 18** | sous le seuil 12/18 |
+| delta pool A | **+0,0209** | dégradation |
+| delta pool B | **−0,0104** | légère amélioration |
+| plateau P2 confirmé | **non** | instabilité persistante |
 
-Le verdict calcule :
+Le signe positif signifie que le coût `2L+D` augmente entre G4 et G8. Le seuil
+de gain exigeait au contraire un delta ≤`−0,02`, une borne haute IC95 ≤0, aucun
+pool dégradé, au moins 12/18 strates non dégradées et aucune grosse régression
+locale. Plusieurs critères échouent simultanément.
 
-- G4→G5, G4→G6, G4→G7 et G4→G8 ;
-- G5→G8 à l’intérieur de P2 ;
-- global micro, pools A/B, 18 strates et macro égale par strate ;
-- bootstrap apparié 10 000 et bootstrap stratifié ;
-- distance descriptive à la référence EGDB/Scan.
-
-Un `P2_CLEAR_BROAD_IMPROVEMENT` exige simultanément : amélioration macro d’au
-moins `0,02`, borne haute IC95 ≤0, aucun pool dégradé, au moins 12/18 strates non
-dégradées et aucune strate régressant de plus de `0,10`. La référence Scan/TB
-n’entre pas dans cette règle.
-
-Quel que soit le verdict :
+Verdict contractuel :
 
 ```text
+P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE
+recommendation_for_review=STOP_BEFORE_P3_REDESIGN
 promotion_authorized=false
 p3_authorized=false
 automatic_next_job=null
 ```
 
-## 7. Prochaines actions
+La référence EGDB/Scan a été jointe aux rapports pour l’interprétation, mais n’a
+pas été utilisée dans la règle de décision.
 
-1. merger la PR de consolidation après CI verte ;
-2. lancer **un seul** wrapper de consolidation, cpx62 ou ccx33 selon la box libre ;
-3. enregistrer le verdict G4→G8 dans ce document ;
-4. sans amélioration large et significative, arrêter avant P3 et redessiner le
-   mécanisme plutôt que d’augmenter encore la profondeur ;
-5. ne lancer un gate généraliste/Scan de continuation que si le signal interne
-   G4→G8 est clairement positif.
+## 7. Interprétation et prochaines actions
+
+1. **Clore l’escalade P1→P2 de la recette role-aware V2 actuelle.** D8→d10 et
+   quatre générations supplémentaires n’apportent aucun progrès robuste.
+2. **Ne pas lancer P3 d12 à recette identique.** Ce serait augmenter le coût sans
+   signal causal favorable et avec un pool déjà dégradé.
+3. **Conserver role-aware V2 comme instrumentation**, pas comme levier démontré :
+   sa sémantique de crédit reste meilleure, mais elle n’a battu ni V1 à P1 ni son
+   propre parent G4 après P2.
+4. **Redessiner le mécanisme à partir des profils par strate**, en distinguant au
+   minimum les positions théoriquement nulles de petite matière, la résilience
+   du camp faible et les strates où Scan convertit nettement mieux.
+5. Toute nouvelle campagne doit changer un élément causal réel — cible,
+   distribution, mécanisme de crédit ou représentation — et non seulement la
+   profondeur, le volume ou la seed.
 
 ## 8. Artefacts de référence
 
 - P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/...` ;
 - P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/...` ;
 - référence : `r2:jass-data/runs/cpx62-0862-l3-imbalance2-a64-b64-difficulty-reference/20260720T130310Z-59940065` ;
-- récupération P2 : `r2:jass-data/runs/ccx33-0869-p2-plateau-recover/20260720T152038Z-566943ea`.
+- récupération P2 : `r2:jass-data/runs/ccx33-0869-p2-plateau-recover/20260720T152038Z-566943ea` ;
+- consolidation finale : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba`.
 
 Les URI exactes et SHA des modèles restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
