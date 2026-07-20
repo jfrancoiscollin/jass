@@ -32,8 +32,8 @@ def pair_bootstrap(pair_scores: list[float], reps: int, seed: int) -> list[float
 def load_fens(path: Path) -> list[str]:
     fens = []
     for raw in path.read_text(encoding="utf-8").splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
+        line = raw.split("#", 1)[0].strip()
+        if not line:
             continue
         if line[0] not in "WB" or ":W" not in line or ":B" not in line:
             continue
