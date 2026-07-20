@@ -316,6 +316,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | TB exceptions dans l'éval | B4 finale +1 Elo neutre | corpus exact ne transfère pas via ce fit | autre objectif ou représentation, fork séparé |
 | chaîne autour de gen2-mmto | 0650–0656 asymptote négative | professeur interne plus faible que le point Scan-tuné | lignée indépendante ne partant pas de gen2 |
 | frontière mobile v1 (25 % seeds G2/G3) | C0 `0795` : Δconv global −0,023, P3 −0,070, IC recouvrant 0 ; B vs A 0,555 | pas de gain de conversion à budget apparié | autre mécanisme de curriculum que le re-seed de frontière matérielle |
+| pondération role-aware V2 vs globale V1 (imbalance2, @P1 d8) | `0853`→`0857` : pools communs A64/B64 (n=1151/1152, seed 161803, boot 10 k), ΔV2−V1 = −0,013 < 0,02, IC apparié [−0,061 ; +0,035] straddle 0 → `V2_NO_CLEAR_LEAD_AT_P1` ; les deux `STILL_IMPROVING_OR_UNSTABLE` | pas de lead **mesuré** à P1 ; **non close** — V2 retenue (crédit défensif explicite, sémantiquement préférable, décision JFC 20/07) et escaladée P2 | séparation ou plateau V1/V2 en profondeur P2-P4 (d10→d14) — escalade en cours |
 
 ## 6. Résultats supersédés ou invalides
 

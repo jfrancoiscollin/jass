@@ -1,8 +1,8 @@
 # L3-PURE — état courant et registre de résultats
 
-> **Mis à jour : 19 juillet 2026**
-> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette figée; P1 baseline + P1 imbalance2 lancées`**
-> **DoE clos (tous no_lead → recette par défaut : 8cf, Q00, exploration 8/8/60, L2=3e-5).** Deux campagnes longues P1 (G1-G4 d8) publiées : **baseline** (`0842`) et **imbalance2** 2-pions (`0847`). Assess plateau imbalance2 (`0849`) : sous-puissant (n=144/pool), inconclusif.
+> **Mis à jour : 20 juillet 2026**
+> **Statut scientifique : `c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette figée; P1 baseline+imbalance2+role-v2 publiées; v2_no_clear_lead_at_p1; décision JFC → P2 d10 avec role-aware V2`**
+> **DoE clos (tous no_lead → recette par défaut : 8cf, Q00, exploration 8/8/60, L2=3e-5).** Trois campagnes longues P1 (G1-G4 d8) publiées : **baseline** (`0842`), **imbalance2** V1 2-pions (`0847`) et **imbalance2 role-aware V2** (`0852`). Comparaison **powered A64/B64** (n=1151/1152) V1 vs V2 (`0853`→recovery `0857`) : **`V2_NO_CLEAR_LEAD_AT_P1`** (ΔV2−V1 = −0,013, ns, IC [−0,061 ; +0,035]), les deux `STILL_IMPROVING_OR_UNSTABLE`. **Décision JFC (20/07) : garder V2 (sémantiquement préférable) → escalade P2 (d10) avec role-aware V2.**
 > **Spécification normative :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **Ancien état C0 :** [L3_CURRENT_C0_RUNNING_20260718.md](archives/l3/L3_CURRENT_C0_RUNNING_20260718.md)
 > **Mémoire du projet :** [PROJECT_RESULTS.md](PROJECT_RESULTS.md)
@@ -351,3 +351,42 @@ d'entraînement ; la lignée ne généralise pas la conversion aux positions fix
 (surtout strates profondes). **À rejouer sur pools plus gros**
 (`PLATEAU_PER_STRATUM=64`, n~1150/pool, IC ~±0,05) pour un verdict puissant avant
 de décider P2 (escalade d10) ou redesign.
+
+### 10.4 P1 role-aware V2 + comparaison powered A64/B64 — `ccx33-0852`, `0853`→`0857` (PR #360, pin `61839d1d`)
+
+**Variante role-aware V2** (`ccx33-0852`, 51 min) : même lignée imbalance2 V1,
+mais la pondération d'échec est **par position / par rôle / par domaine courant**
+au lieu d'un multiplicateur global de partie. Domaine exact = écart de **2 pions
+simples + dames égales** ; hors domaine = ancre de poids 1 (supprime la
+contamination hors-domaine de V1). Matrice POV-trait préenregistrée : côté **+2**
+(conversion) W/D/L = 1/2/4 ; côté **−2** (résilience) W/D/L = 4/2/1. Rééchantillonnage
+déterministe, holdout intact. Buckets G1 : `down_win` 993→3618 (×3,6), `down_draw`
+23916→43097 (×1,8) — la politique sur-échantillonne bien les résistances du camp
+faible.
+
+**Comparaison V1 vs V2 sur pools communs indépendants A64/B64** (seed 161803 ≠ 271828
+d'entraînement, n=1152/pool, boot 10 k, min-effect 0,02) : `0853` a atteint les
+16/16 evals candidat (d10) mais est tombé à l'agrégation V2 — **une seule position**
+(pool-A idx 1100) déclenche le watchdog moteur `no match in 60.0s` (overshoot endgame
+connu), et `imbalance2_plateau` abort dur sur tout row `error`. Récupéré par `0857` :
+**exclusion symétrique** de cette position des 8 report-sets (pools appariés
+1151/1152), re-agrégation avec les tools **inchangés**.
+
+Verdict **`V2_NO_CLEAR_LEAD_AT_P1`** :
+
+| coût 2L+D (G4, côté avantagé) | pool-A (n=1151) | pool-B (n=1152) | **G4 global** |
+|---|---|---|---|
+| **V1** | 0,951 | 0,965 | **0,958** |
+| **V2 role-aware** | 0,963 | 0,929 | **0,946** |
+
+ΔV2−V1 = **−0,013** (V2 marginalement mieux, mais **< seuil 0,02**) ; IC95 apparié
+**[−0,061 ; +0,035] straddle 0** → non significatif. Les **deux** lignées =
+`STILL_IMPROVING_OR_UNSTABLE` (aucune ne plateau à P1 d8 ; pool-B V2 saute
+0,891→0,960→0,929). Conversion ~**coinflip** (+2 hommes gagne ~53 % / perd ~47 %) :
+le plateau de conversion n'est **pas** résorbé à P1.
+
+**Décision JFC (20/07)** : role-aware V2 est **sémantiquement préférable** (crédit
+défensif explicite, pas de contamination hors-domaine) même sans lead mesuré à P1 →
+**escalade P2 (G5-G8, d10) sur la lignée V2**, seedée sur `g4` de `0852`. Palier
+`p2_authorized` restait `false` dans les artefacts (aucune continuation automatique) ;
+le lancement P2 est une décision explicite.
