@@ -1,6 +1,6 @@
 # Prepared jobs — L3-IMBALANCE2 role-aware V2 — ccx33 + cpx62 analysis
 
-Cible d’entraînement scientifique de cette variante : **ccx33, 8 vCPU, 16 GiB RAM**. La comparaison P1 V1/V2 et la référence de difficulté sont préparées pour **cpx62**.
+Cible d’entraînement scientifique de cette variante : **ccx33, 8 vCPU, 16 GiB RAM**. Les analyses appariées sont préparées pour **cpx62**, avec des wrappers ccx33 équivalents sous `alternate-box/` lorsque la disponibilité des machines l’exige.
 
 La recette scientifique V1 est inchangée ; seul le rééchantillonnage devient dépendant du rôle et du domaine courant :
 
@@ -60,18 +60,39 @@ utilise exactement les mêmes pools A64/B64 et publie :
 
 Scan n’est jamais une donnée de train ou de pondération. Cette référence sert seulement à interpréter la difficulté intrinsèque : un `6v8` ne reçoit pas la même courbe attendue qu’un `18v20`. Le protocole détaillé se trouve dans `docs/L3_IMBALANCE2_DIFFICULTY_REFERENCE.md`.
 
+## Consolidation P2 G4→G8
+
+Le wrapper :
+
+```text
+cpx62-l3-imbalance2-p2-consolidate.sh
+```
+
+et son équivalent ccx33 sous `alternate-box/` rejouent **zéro partie**. Ils consomment les rapports bruts déjà publiés pour G4 et G5–G8, retirent symétriquement l’union des rares timeouts autorisés, puis calculent :
+
+- G4→G5, G4→G6, G4→G7 et G4→G8 ;
+- G5→G8 à l’intérieur de P2 ;
+- global, deux pools, dix-huit strates et macro égale par strate ;
+- bootstrap apparié et stratifié 10 000 ;
+- distance descriptive à la référence EGDB/Scan.
+
+La récupération fail-closed autorise au maximum deux positions et `0,1 %` du corpus. Les clés et strates doivent être identiques avant nettoyage. Une erreur autre que le watchdog explicitement autorisé, une ligne manquante ou un mauvais pool fait échouer le job.
+
+Un lead P2 exige une amélioration macro ≥`0,02`, une borne haute IC95 ≤0, aucun pool dégradé, au moins 12/18 strates non dégradées et aucune régression de strate >`0,10`. Même dans ce cas, `p3_authorized=false` : une décision humaine et des gates séparés restent obligatoires.
+
 ## Ordre obligatoire
 
 1. Exécuter `ccx33-l3-imbalance2-role-v2-probe.sh` : une génération P1 réduite à 54 000 records, strictement non promotable.
 2. Vérifier la mémoire minimale disponible, le débit, l’absence d’OOM ou de processus bloqué, la voie EGDB, les rapports V2 et les SHA A64/B64.
 3. Lancer `ccx33-l3-imbalance2-role-v2-p1.sh` uniquement après go explicite.
 4. Attendre la publication immuable de la nouvelle P1 V2.
-5. Lancer `cpx62-l3-imbalance2-a64-b64-difficulty-reference.sh` pour figer les références exactes/Scan par strate.
-6. Renseigner les préfixes et identifiants exacts de `0847` et de la V2, puis lancer `cpx62-l3-imbalance2-p1-v1-v2-a64-compare.sh`.
+5. Lancer le wrapper de référence sur cpx62 ou ccx33 pour figer les références exactes/Scan par strate.
+6. Renseigner les préfixes et identifiants exacts de `0847` et de la V2, puis lancer la comparaison P1 V1/V2.
 7. Joindre le profil de référence au comparateur pour la lecture absolue ; sa règle de lead reste candidate-only.
 8. Revoir `campaign-decision.json`; P2 reste interdit tant qu’une décision humaine n’est pas enregistrée.
-9. P2, P3 et P4 exigent ensuite l’URI et le SHA-256 immuables du parent précédent.
-10. Le gate final reste interdit avant plateau interne approuvé.
+9. Si P2 est explicitement autorisé, le lancer avec l’URI et le SHA-256 immuables du G4 parent.
+10. Après P2, lancer **un seul** wrapper de consolidation G4→G8 sur la box libre.
+11. P3 reste interdit tant que le rapport consolidé, les gates et une décision humaine ne l’autorisent pas.
 
 La L3 initiale équilibrée utilise un runner et des wrappers séparés dans `jobs/prepared/l3-pure-role-v2-20260720/`. Les deux lignées partagent seulement l’outil de calcul des poids, jamais leurs manifests ni leurs décisions de promotion.
 
