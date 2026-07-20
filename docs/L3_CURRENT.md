@@ -1,150 +1,135 @@
-# L3-PURE — état courant et registre de décision
+# L3 — état courant et registre de décision
 
-> **Mis à jour : 20 juillet 2026**  
+> **Mis à jour : 21 juillet 2026**  
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
-> [`archives/l3/`](archives/l3/) et le contrat normatif dans
-> [`L3_PURE_PLAN.md`](L3_PURE_PLAN.md).
-> 
-> **Statut scientifique :** `c0_retire_frontier_v1_flat; c1_q1_no_lead;
-> c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette_figee;
-> p1_v2_no_clear_lead; p2_no_clear_improvement_or_unstable;
-> stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
-> d1x_rc4_autopsy_prepared_not_launched`.
+> [`archives/l3/`](archives/l3/), le contrat généraliste dans
+> [`L3_PURE_PLAN.md`](L3_PURE_PLAN.md) et la séparation des rôles dans
+> [`L3_LINEAGE_ROLES_AND_MATURITY.md`](L3_LINEAGE_ROLES_AND_MATURITY.md).
+>
+> **Statut scientifique :** `c0_pure_at_gen2_practical_parity;
+> c0_retire_frontier_v1_flat; c1_q1_no_lead; c2_x1_no_lead;
+> c3_mf_no_lead; 32cf_no_go_data_limited; pure_maturity_experiment_open;
+> imbalance2_p1_v2_no_clear_lead; imbalance2_p2_no_clear_improvement_or_unstable;
+> imbalance2_stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
+> d1x_rc4_autopsy_ready`.
 
-## 1. Décision active
+## 1. Architecture du programme
 
-La lignée autonome est viable, mais le déficit de conversion n’est pas résorbé.
-La recette générale reste figée :
+### 1.1 `L3-PURE` — voie généraliste
+
+`L3-PURE` est la seule lignée destinée à produire une évaluation généraliste
+entièrement autonome et, si les gates de force sont franchis, un successeur à
+`gen2-mmto`.
+
+Le bras pur C0 A-G3 a été entraîné uniquement par autojeu, pendant trois
+générations de 500 000 records. Il a obtenu un score de **0,497 contre
+`gen2-mmto`**, soit une parité pratique dans le protocole `0795`. C’est un
+résultat majeur : il démontre qu’une lignée linéaire sans teacher peut rejoindre
+le champion historique avec un volume encore faible au regard de la géométrie
+8cf. Il ne prouve ni une supériorité, ni un plafond.
+
+Une extension de maturité contrôlée est donc scientifiquement ouverte. Elle doit
+séparer trois effets : générations supplémentaires, volume par fit et mémoire
+explicite par replay/cumul. Répéter seulement des générations de 500 000 records
+frais ne constitue pas automatiquement un entraînement cumulatif.
+
+### 1.2 `L3-IMBALANCE2` — laboratoire spécialiste
+
+`L3-IMBALANCE2` et `L3-IMBALANCE2-ROLE-V2` sont des expériences spécialisées sur
+les positions à exactement deux hommes d’écart. Elles ne sont pas candidates au
+remplacement généraliste de `L3-PURE` ou de `gen2-mmto`.
+
+La mention « référence V2 » signifie uniquement **référence interne du track
+spécialiste**. Ses pools, pondérations et gates mesurent conversion et résilience
+dans ce domaine borné ; ils ne fournissent pas un Elo généraliste.
+
+Au mieux, un spécialiste confirmé pourrait devenir plus tard un sidecar, un
+expert appelé par un routeur ou une composante de méta-évaluation combinée avec
+`L3-PURE`. Une telle combinaison exigerait une expérience séparée, une activation
+bornée, une garde de débit et une non-régression généraliste.
+
+## 2. Recette générale propre
+
+La recette générale Q00 reste figée pour les comparaisons propres :
 
 - géométrie `8cf` ;
-- Q00 et 63 paramètres de recherche explicitement épinglés ;
+- 63 paramètres de recherche explicitement épinglés ;
 - exploration `8 / 8 % / 60` ;
 - labels WDL terminaux, ply-caps exclus ;
 - fit logistic, `L2=3e-5` ;
 - aucun teacher, aucune frontière mobile, aucun MMTO dans le train ;
 - classe d’évaluation linéaire et interprétable.
 
-La branche spécialiste conservée comme référence est `L3-IMBALANCE2-ROLE-V2`.
-Elle pondère le domaine courant `|Δ hommes|=2` avec autant de dames : côté `+2`,
-W/D/L=`1/2/4`; côté `−2`, W/D/L=`4/2/1`; hors domaine, poids `1`. Scan et Gen2
-restent des thermomètres, jamais des données de train.
+Le modèle C0 A-G3 ayant démontré la parité est un parent historique valide, mais
+il appartient à l’ancien fingerprint partiellement implicite. La baseline
+propre `cpx62-0842` utilise Q00 et le fingerprint complet. Avant une campagne
+longue, un benchmark triangulaire doit choisir explicitement entre ces deux
+parents, avec `gen2-mmto` comme thermomètre figé.
 
-**P3 reste interdit.** La consolidation G4→G8 a produit
-`P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE`. Le pilote de représentation RC4 a ensuite
-produit **`D1_RC4_NO_GO`** : aucun gain de conversion, aucune sentinelle ciblée
-corrigée, débit sous le seuil et garde généraliste échouée.
+## 3. Campagnes et diagnostics publiés
 
-La prochaine action autorisée est **D1-X**, une autopsie read-only de RC4. Elle
-mesure l’activité réelle des quatre features, leurs poids et la dérive du refit,
-puis localise les régressions C64/D64 et généralistes. Elle ne peut autoriser ni
-entraînement, ni pilote search, ni promotion.
-
-## 2. Campagnes et diagnostics publiés
-
-| Campagne | Job | Palier | Résultat durable |
+| Track | Campagne | Job | Résultat durable |
 |---|---|---|---|
-| baseline générale | `cpx62-0842` | P1, G1–G4 d8 | saine, référence de pente |
-| imbalance2 V1 | `ccx33-0847` | P1, G1–G4 d8 | near-flat |
-| role-aware V2 | `ccx33-0852` | P1, G1–G4 d8 | crédit plus propre, pas de lead établi |
-| comparaison V1/V2 | `0853→0857` | A64/B64 d10 | `V2_NO_CLEAR_LEAD_AT_P1` |
-| role-aware V2 | `ccx33-0859` | P2, G5–G8 d10 | chaîne complète, aucune promotion |
-| assess P2 | `0864→0869` | A64/B64 d10 | instable, plateau non confirmé |
-| difficulté matérielle | `cpx62-0862` | EGDB + Scan d10 | référence des 18 strates |
-| consolidation P2 | `ccx33-0870` | G4→G8 | arrêt avant P3 |
-| diagnostic causal | `cpx62-0871` | 30 sentinelles, 360 recherches | `D0_CAUSAL_PROFILE_READY` |
-| représentation RC4 | `cpx62-0872` | contrôle/RC4, C64/D64 | **`D1_RC4_NO_GO`** |
+| généraliste | C0 pur A-G3 | `ccx33-0790` + gate `0795` | **0,497 vs Gen2, parité pratique** |
+| généraliste | frontière mobile C0 | `cpx62-0791` + gate `0795` | retirée, conversion −0,023 |
+| généraliste propre | baseline Q00 | `cpx62-0842` | G1–G4 saine, Elo vs Gen2 non mesuré |
+| spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
+| spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
+| spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
+| spécialiste | role-aware V2 P2 | `ccx33-0859` | G5–G8 complets, aucune promotion |
+| spécialiste | consolidation P2 | `ccx33-0870` | arrêt avant P3 |
+| spécialiste | diagnostic causal | `cpx62-0871` | `D0_CAUSAL_PROFILE_READY` |
+| spécialiste | représentation RC4 | `cpx62-0872` | **`D1_RC4_NO_GO`** |
+| spécialiste | autopsie RC4 | `cpx62-0874` | **`D1X_RC4_AUTOPSY_READY`** |
 
-## 3. Verdict P1 powered — V1 contre role-aware V2
+## 4. Couverture et maturité de `L3-PURE`
 
-La comparaison powered utilise les mêmes A64/B64. Après exclusion symétrique de
-`plateau-a:1100`, elle conserve `n=1151` sur A et `n=1152` sur B.
+Les audits publiés montrent que 8cf reste sous-alimentée :
 
-| coût `2L+D` à G4 | pool A | pool B | global |
-|---|---:|---:|---:|
-| V1 | 0,951 | 0,965 | **0,958** |
-| V2 role-aware | 0,963 | 0,929 | **0,946** |
+- 300 000 records : environ **5,9 %** de buckets visités ;
+- 1,5 million de records agrégés dans X1 : environ **9,0 %** ;
+- buckets avec au moins 100 visites : **1,0 %** ;
+- Gini des visites : environ **0,85**.
 
-Delta V2−V1 : **−0,013**, IC95 **[−0,061 ; +0,035]**. L’effet est sous le seuil
-`0,02` et non significatif. V2 a été conservée pour sa sémantique, pas comme
-preuve de supériorité.
+Le passage de 300 k à 1,5 M a accru la couverture de manière sous-linéaire. Cela
+ferme 32cf à court terme, mais ne ferme pas une expérience de maturité sur 8cf.
+Il faut néanmoins distinguer volume total généré et volume réellement présent
+dans un même fit.
 
-## 4. Verdict définitif P2 — G4 contre G8
+Le plan recommandé est décrit dans
+[`L3_LINEAGE_ROLES_AND_MATURITY.md`](L3_LINEAGE_ROLES_AND_MATURITY.md) :
 
-`ccx33-0870` a appliqué la même exclusion symétrique à G4–G8 et joint la référence
-EGDB/Scan uniquement pour l’interprétation.
+1. M0 : comparer C0 A-G3, baseline propre `0842` G4 et `gen2-mmto` ;
+2. M1 : depuis le parent retenu, comparer 500 k frais, 2 M frais et 2 M avec
+   mémoire historique explicite ;
+3. mesurer Elo, conversion, couverture, holdout et coût ;
+4. arrêter après deux étapes sans pente de force positive.
 
-| Mesure | Résultat | Lecture |
-|---|---:|---|
-| delta macro égal par strate | **+0,0053** | légère dégradation |
-| IC95 bootstrap stratifié | **[−0,0426 ; +0,0526]** | contient zéro |
-| strates non dégradées | **9 / 18** | sous le seuil 12/18 |
-| delta pool A | **+0,0209** | dégradation |
-| delta pool B | **−0,0104** | légère amélioration |
-| plateau confirmé | **non** | instabilité persistante |
+Aucune campagne longue ou promotion n’est autorisée automatiquement.
 
-```text
-P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE
-recommendation_for_review=STOP_BEFORE_P3_REDESIGN
-promotion_authorized=false
-p3_authorized=false
-automatic_next_job=null
-```
+## 5. Track spécialiste — verdicts actuels
 
-## 5. D0 causal — `cpx62-0871`
+### 5.1 P2 G4→G8
 
-D0 a réutilisé les artefacts immuables `0852`, `0853`, `0859`, `0862` et `0864`.
-Il a analysé 30 sentinelles avec G4, G8 et Scan aux profondeurs 8, 10, 12 et 14,
-soit **360 recherches statiques**.
+`ccx33-0870` a produit `P2_NO_CLEAR_IMPROVEMENT_OR_UNSTABLE` : delta macro
+`+0,0053`, IC95 `[−0,0426 ; +0,0526]`, 9/18 strates non dégradées. P3 à recette
+identique reste interdit.
 
-- début : `2026-07-20T19:33:15Z` ;
-- fin : `2026-07-20T19:38:41Z` ;
-- durée : 5 min 26 s ;
-- résultat : `D0_CAUSAL_PROFILE_READY`.
+### 5.2 D0 causal
 
-| Hypothèse | Cas |
-|---|---:|
-| `REPRESENTATION_OR_OBJECTIVE_CANDIDATE` | **7 / 30** |
-| `SEARCH_AND_EVAL_MIXED` | **23 / 30** |
-| `SEARCH_HORIZON_CANDIDATE` | **0 / 30** |
-| `TRAINING_CREDIT_OR_DISTRIBUTION_CANDIDATE` | **0 / 30** |
+`cpx62-0871` a analysé 30 sentinelles et 360 recherches :
 
-Ces catégories sont heuristiques. L’absence de cas pur d’horizon ne prouve pas
-que la recherche est hors cause, mais interdisait de modifier simultanément
-représentation et recherche.
+- `REPRESENTATION_OR_OBJECTIVE_CANDIDATE` : 7/30 ;
+- `SEARCH_AND_EVAL_MIXED` : 23/30 ;
+- cas purement search-horizon : 0/30 ;
+- cas training-credit/distribution : 0/30.
 
-## 6. D1-A RC4 — verdict final `D1_RC4_NO_GO`
+### 5.3 D1-A RC4 — verdict final `D1_RC4_NO_GO`
 
-D1-A a refitté contrôle et RC4 depuis zéro sur les mêmes octets du corpus G4 de
-`0852`, avec le même split, les mêmes labels, la même pondération role-aware V2
-et le même optimiseur. RC4 ajoutait quatre extras dans le domaine courant exact
-`|Δ hommes|=2`, dames égales : mobilité sûre, confinement du défenseur, marge de
-course à promotion et pression d’échange.
-
-Évaluation : C64/D64 indépendants, 18 strates × 64 positions par pool, d10,
-`maxplies=400`, replays d14 des 30 sentinelles, garde généraliste de 64 paires et
-garde de débit.
-
-Exécution :
-
-- début : `2026-07-20T20:22:16Z` ;
-- fin : `2026-07-20T20:32:52Z` ;
-- durée : 10 min 36 s ;
-- exit code : 0.
-
-| Gate | Résultat | Seuil | Verdict |
-|---|---:|---:|---|
-| delta macro RC4−contrôle | **+0,003038** | ≤ −0,020 | échec |
-| IC95 stratifié | **[−0,043403 ; +0,049913]** | borne haute ≤ 0 | échec |
-| strates non dégradées | **9 / 18** | ≥ 12 / 18 | échec |
-| sentinelles ciblées corrigées | **0 / 7** | ≥ 4 / 7 | échec |
-| nouvelles divergences | **0** | ≤ 2 | passe |
-| débit RC4/contrôle | **0,935302** | ≥ 0,95 | échec |
-| garde généraliste | **0,4140625** | ≥ 0,45 et IC non régressif | échec |
-
-Le signe positif du delta signifie une légère dégradation. RC4 ne corrige aucune
-sentinelle visée, ralentit le moteur d’environ 6,5 % et échoue la garde
-généraliste. La piste est close à protocole identique.
+RC4 a ajouté quatre extras spécialisés, sans gain : delta macro `+0,003038`,
+IC95 `[−0,043403 ; +0,049913]`, 9/18 strates non dégradées, 0/7 sentinelles
+corrigées, débit `0,935302` et garde généraliste `0,4140625`.
 
 ```text
 D1_RC4_NO_GO
@@ -158,55 +143,52 @@ automatic_next_job=null
 Mémo immuable :
 [`archives/l3/D1_RC4_NO_GO_20260720.md`](archives/l3/D1_RC4_NO_GO_20260720.md).
 
-## 7. D1-X — autopsie RC4 préparée, non lancée
+### 5.4 D1-X — autopsie RC4 terminée
 
-D1-X consomme les artefacts immuables de `0852` et `0872`. Il reconstruit
-uniquement l’extracteur expérimental RC4 afin de dumper les quatre features sur
-le corpus G4 et les pools C64/D64. Aucun poids n’est refitté et aucune partie
-n’est jouée.
-
-Il publie :
-
-1. taux d’activation et distribution de chaque feature ;
-2. poids MG/EG appris et dérive des poids communs contrôle→RC4 ;
-3. transitions W/D/L appariées et classement des 18 strates ;
-4. changements de coup/score sur les 30 sentinelles ;
-5. reconstruction des 64 paires généralistes et des cas les plus défavorables ;
-6. une classification causale et, au plus, un concept search-only à revoir.
-
-Wrappers interchangeables :
+`cpx62-0874` est terminé avec exit code 0. Le verdict est
+`D1X_RC4_AUTOPSY_READY` et la classification est :
 
 ```text
-jobs/prepared/l3-imbalance2-d1x-20260720/ccx33-l3-imbalance2-d1x-autopsy.sh
-jobs/prepared/l3-imbalance2-d1x-20260720/cpx62-l3-imbalance2-d1x-autopsy.sh
+RC4_ACTIVE_BUT_NONCAUSAL_FOR_CONVERSION
 ```
 
-Contrats :
+Le rapport complet est publié dans R2 :
 
 ```text
-training_authorized=false
-search_pilot_authorized=false
-promotion_authorized=false
-automatic_next_job=null
+r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6
 ```
 
-## 8. Prochaines actions
+D1-X recommande seulement la conception humaine d’un pilote search-only séparé
+`S1_ROLE_STABILITY_EXTENSION`. Il n’autorise ni implémentation automatique, ni
+entraînement, ni promotion.
 
-1. relire et merger la PR D1-X après CI verte ;
-2. épingler le SHA mergé et lancer un seul wrapper sur la première box libre ;
-3. décider, à partir de l’autopsie, si un pilote search-only est justifié ;
-4. si oui, préparer **un seul** mécanisme hors quiescence, avec nouveaux pools
-   E64/F64 et gates fixe-nœuds + movetime + généraliste + débit ;
-5. ne pas réutiliser RC4 et ne jamais relancer P3 à recette V2 identique.
+## 6. Prochaines actions séparées
 
-## 9. Artefacts de référence
+### Généraliste `L3-PURE`
 
+1. préparer le benchmark M0 C0 A-G3 / `0842` G4 / `gen2-mmto` ;
+2. choisir un parent généraliste immuable ;
+3. préparer l’écran M1 volume/mémoire sur 8cf ;
+4. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.
+
+### Spécialiste `L3-IMBALANCE2`
+
+1. relire le rapport D1-X ;
+2. décider humainement si un unique pilote search-only mérite une PR ;
+3. ne pas réutiliser RC4 ;
+4. ne pas relancer P3 à recette V2 identique ;
+5. ne jamais présenter un résultat spécialiste comme un remplacement généraliste.
+
+## 7. Artefacts de référence
+
+- C0 pur : jobs `ccx33-0790-l3-pure-c0-a-v1` et gate `0795` ;
+- baseline générale propre : `cpx62-0842` ;
 - P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/20260720T073236Z-61839d1d` ;
 - P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/20260720T105918Z-a0d2f238` ;
-- référence : `r2:jass-data/runs/cpx62-0862-l3-imbalance2-a64-b64-difficulty-reference/20260720T130310Z-59940065` ;
 - consolidation : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba` ;
 - D0 : `r2:jass-data/runs/cpx62-0871-l3-imbalance2-d0-diagnostic/20260720T193310Z-bced44e7` ;
-- D1-RC4 : `r2:jass-data/runs/cpx62-0872-l3-imbalance2-d1-rc4/20260720T202210Z-fa68634c`.
+- D1-RC4 : `r2:jass-data/runs/cpx62-0872-l3-imbalance2-d1-rc4/20260720T202210Z-fa68634c` ;
+- D1-X : `r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6`.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
