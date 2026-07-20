@@ -132,7 +132,7 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_active_docs_record_closed_x1_and_current_long_campaign(self):
+    def test_active_docs_record_closed_x1_and_prepared_d0(self):
         plan = PLAN.read_text()
         current = CURRENT.read_text()
         results = RESULTS.read_text()
@@ -141,7 +141,9 @@ class L3DoeX1PreparedTests(unittest.TestCase):
         self.assertIn("Q2 n'est pas déclenché", plan)
         self.assertIn("c2_x1_no_lead", current)
         self.assertIn("P2 d10", current)
-        self.assertIn("P3 n’est pas autorisé", current)
+        self.assertIn("stop_before_p3_redesign", current)
+        self.assertIn("d0_diagnostic_prepared_not_launched", current)
+        self.assertIn("D0 — diagnostic causal préparé", current)
         self.assertIn("C2-X1 : quelle distribution", results)
         self.assertTrue(ARCHIVED_PLAN.is_file())
 
