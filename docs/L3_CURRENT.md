@@ -8,7 +8,7 @@
 > **Statut scientifique :** `c0_retire_frontier_v1_flat; c1_q1_no_lead;
 > c2_x1_no_lead; c3_mf_no_lead; 32cf_no_go_data_limited; recette_figee;
 > p1_v2_no_clear_lead; p2_no_clear_improvement_or_unstable;
-> stop_before_p3_redesign`.
+> stop_before_p3_redesign; d0_diagnostic_prepared_not_launched`.
 
 ## 1. Décision active
 
@@ -33,6 +33,11 @@ La consolidation appariée G4→G8 ne montre aucune amélioration large ou
 significative. Une nouvelle hausse de profondeur avec la même recette ne serait
 pas justifiée. `promotion_authorized=false`, `p3_authorized=false` et aucun job
 suivant n’est chaîné.
+
+Le prochain bloc préparé est **D0**, un diagnostic causal sans entraînement :
+30 positions sentinelles, G4/G8/Scan aux profondeurs d8/d10/d12/d14, traces de
+recherche et recommandations d’hypothèses. Il reste non lancé et ne peut pas
+autoriser automatiquement D1.
 
 ## 2. Campagnes longues publiées
 
@@ -157,23 +162,51 @@ automatic_next_job=null
 La référence EGDB/Scan a été jointe aux rapports pour l’interprétation, mais n’a
 pas été utilisée dans la règle de décision.
 
-## 7. Interprétation et prochaines actions
+## 7. D0 — diagnostic causal préparé, non lancé
 
-1. **Clore l’escalade P1→P2 de la recette role-aware V2 actuelle.** D8→d10 et
-   quatre générations supplémentaires n’apportent aucun progrès robuste.
-2. **Ne pas lancer P3 d12 à recette identique.** Ce serait augmenter le coût sans
-   signal causal favorable et avec un pool déjà dégradé.
-3. **Conserver role-aware V2 comme instrumentation**, pas comme levier démontré :
-   sa sémantique de crédit reste meilleure, mais elle n’a battu ni V1 à P1 ni son
-   propre parent G4 après P2.
-4. **Redessiner le mécanisme à partir des profils par strate**, en distinguant au
-   minimum les positions théoriquement nulles de petite matière, la résilience
-   du camp faible et les strates où Scan convertit nettement mieux.
-5. Toute nouvelle campagne doit changer un élément causal réel — cible,
-   distribution, mécanisme de crédit ou représentation — et non seulement la
-   profondeur, le volume ou la seed.
+Le runner `l3-imbalance2-d0-diagnostic-v1.sh` consomme uniquement les artefacts
+immuables de `0852`, `0853`, `0859`, `0862` et `0864`. Il ne crée aucun modèle et
+ne rejoue aucune partie complète.
 
-## 8. Artefacts de référence
+Il sélectionne 30 positions uniques :
+
+- 10 régressions G4→G8 ;
+- 10 déficits persistants à la référence EGDB/Scan ;
+- 10 cas issus des strates ayant la plus forte divergence A/B.
+
+Chaque sentinelle est analysée par G4, G8 et Scan aux profondeurs 8, 10, 12 et 14,
+soit **360 recherches statiques**. Le rapport conserve coup, score, profondeur,
+nœuds, PV et trace HUB lorsque le moteur les expose. Les catégories produites
+— horizon de recherche, représentation/objectif, crédit/distribution ou cause
+mixte — restent des hypothèses et non des preuves.
+
+Wrappers interchangeables :
+
+```text
+jobs/prepared/l3-imbalance2-d0-20260720/ccx33-l3-imbalance2-d0-diagnostic.sh
+jobs/prepared/l3-imbalance2-d0-20260720/cpx62-l3-imbalance2-d0-diagnostic.sh
+```
+
+Un seul wrapper doit être lancé selon la box libre. Quel que soit le résultat :
+
+```text
+d1_authorized=false
+training_authorized=false
+promotion_authorized=false
+automatic_next_job=null
+```
+
+## 8. Prochaines actions
+
+1. faire relire et merger la PR D0 après CI verte ;
+2. renseigner le SHA mergé et lancer un seul wrapper sur ccx33 ou cpx62 ;
+3. examiner les 30 sentinelles et les proportions d’hypothèses ;
+4. choisir **un seul changement causal** pour D1 : recherche, représentation, ou
+   cible/distribution ;
+5. préparer ensuite un pilote court contrôle/V3 sur de nouveaux pools C64/D64 ;
+6. ne jamais relancer P3 à recette role-aware V2 identique.
+
+## 9. Artefacts de référence
 
 - P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/...` ;
 - P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/...` ;
