@@ -70,11 +70,15 @@ env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py
 env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py --data "$W/p1-g1.jnnw" "$W/p1-g2.jnnw" "$W/p1-g3.jnnw" "$W/p1-g4.jnnw" --out "$ART/p1-g1-g4-cumulative-coverage.json" > "$W/p1-cumulative.log" 2>&1
 
 printf 'stage=aggregate\n' > "$PROG"
-python3 jobs/tools/l3_pure_m0_coverage.py \
+if ! python3 jobs/tools/l3_pure_m0_coverage.py \
   --c0-generation "$ART/c0-g1-coverage.json" --c0-generation "$ART/c0-g2-coverage.json" --c0-generation "$ART/c0-g3-coverage.json" \
   --p1-generation "$ART/p1-g1-coverage.json" --p1-generation "$ART/p1-g2-coverage.json" --p1-generation "$ART/p1-g3-coverage.json" --p1-generation "$ART/p1-g4-coverage.json" \
   --c0-cumulative "$ART/c0-g1-g3-cumulative-coverage.json" --p1-cumulative "$ART/p1-g1-g4-cumulative-coverage.json" \
-  --out "$ART/m0-coverage-audit.json" --summary-out "$ART/JASS_CONTROL_SUMMARY.json" | tee -a "$RES"
+  --out "$ART/m0-coverage-audit.json" --summary-out "$ART/JASS_CONTROL_SUMMARY.json" > "$W/aggregate.log" 2>&1; then
+  cat "$W/aggregate.log" | tee -a "$RES"
+  die "M0 coverage aggregation failed"
+fi
+cat "$W/aggregate.log" | tee -a "$RES"
 python3 - "$ART/m0-coverage-audit.json" "$ART" <<'PY'
 import json,sys
 from pathlib import Path
