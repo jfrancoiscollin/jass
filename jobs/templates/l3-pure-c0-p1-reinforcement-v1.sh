@@ -78,8 +78,8 @@ cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8" -j"$JASS_BUILD_JOBS" --target jass > "$W/build8.log" 2>&1
 J8="$W/build8/jass"; [ -x "$J8" ] || die "missing jass binary"
 
-# M0 used the first 300 cleaned openings. Use the next 768 so the reinforcement is opening-independent.
-awk '/^[[:space:]]*#/ {next} {sub(/#.*/,""); if(NF) print}' data/dilf_combinations.fen | tail -n +301 | head -n "$NOPEN" > "$W/open-independent.fen"
+# M0 used the first 300 cleaned openings. Select the next 768 without a pipe that can trip pipefail.
+awk -v need="$NOPEN" 'BEGIN{seen=0;out=0} /^[[:space:]]*#/ {next} {sub(/#.*/,""); if(!NF) next; seen++; if(seen<=300) next; if(out<need){print; out++} if(out==need) exit}' data/dilf_combinations.fen > "$W/open-independent.fen"
 [ "$(wc -l < "$W/open-independent.fen")" -eq "$NOPEN" ] || die "not enough independent openings"
 sha256sum "$W/open-independent.fen" > "$ART/reinforcement-openings.sha256"
 
