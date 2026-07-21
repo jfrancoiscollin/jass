@@ -10,6 +10,9 @@ SOURCE="$JASS_CODE_DIR/jobs/templates/l3-imbalance2-top3-selfplay-v1.sh"
 TARGET="$JASS_RESULT_DIR/top3-selfplay-2m-expanded.sh"
 [ -f "$SOURCE" ] || { echo "ABORT: missing base TOP3 runner" >&2; exit 2; }
 
+python3 jobs/tests/test_l3_imbalance2_top3_2m_prepared.py \
+  > "$JASS_RESULT_DIR/top3-2m-contract.log" 2>&1
+
 python3 - "$SOURCE" "$TARGET" <<'PY'
 from pathlib import Path
 import sys
