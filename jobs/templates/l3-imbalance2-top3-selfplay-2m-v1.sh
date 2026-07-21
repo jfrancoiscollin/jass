@@ -5,6 +5,7 @@ set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?runner v3 must provide JASS_CODE_DIR}"
 : "${JASS_RESULT_DIR:?runner v3 must provide JASS_RESULT_DIR}"
+cd "$JASS_CODE_DIR"
 
 SOURCE="$JASS_CODE_DIR/jobs/templates/l3-imbalance2-top3-selfplay-v1.sh"
 TARGET="$JASS_RESULT_DIR/top3-selfplay-2m-expanded.sh"
