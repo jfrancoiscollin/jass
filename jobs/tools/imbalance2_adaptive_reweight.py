@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Deterministically resample L3-IMBALANCE2 training rows with W0 stratum weights.
 
-The terminal WDL label is never changed.  Only training-row sampling probability
+The terminal WDL label is never changed. Only training-row sampling probability
 changes inside the exact specialist domain: two men of difference and equal king
-counts.  Holdout rows are copied byte-for-byte and remain in their original order.
+counts. Holdout rows are copied byte-for-byte and remain in their original order.
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from typing import Any
 MAGIC = b"JNNW"
 REC_SIZE = 38
 EXPECTED_STRATA = tuple(f"{n}v{n + 2}" for n in range(1, 19))
+UNCALIBRATED_FIXED_STRATA = ("0v2",)
+HISTORICAL_FIXED_WEIGHTS = {"expected_result": 1.0, "draw": 2.0, "upset_result": 4.0}
 
 
 def read_jnnw(path: Path) -> list[bytearray]:
@@ -83,8 +85,8 @@ def classify(rec: bytes | bytearray) -> tuple[str | None, str]:
         return None, "anchor_outside_exact_2men_equal_kings"
     low, high = sorted((nwm, nbm))
     stratum = f"{low}v{high}"
-    if stratum not in EXPECTED_STRATA:
-        raise ValueError(f"specialist record outside 1v3..18v20: {stratum}")
+    if stratum not in EXPECTED_STRATA and stratum not in UNCALIBRATED_FIXED_STRATA:
+        raise ValueError(f"specialist record outside supported exact domain: {stratum}")
     up_colour = 0 if nwm > nbm else 1
     role = "up" if stm == up_colour else "down"
     outcome = {1: "win", 0: "draw", -1: "loss"}[wdl]
@@ -128,6 +130,10 @@ def main() -> int:
             if stratum is None:
                 weight, semantic = 1.0, "anchor"
                 stratum_key = "outside_domain"
+            elif stratum in UNCALIBRATED_FIXED_STRATA:
+                weight, semantic = bucket_weight(bucket, HISTORICAL_FIXED_WEIGHTS)
+                semantic = f"fixed_v2_{semantic}"
+                stratum_key = stratum
             else:
                 weight, semantic = bucket_weight(bucket, weights_by_stratum[stratum])
                 stratum_key = stratum
@@ -153,7 +159,7 @@ def main() -> int:
             sampled_by_stratum[stratum][semantic] += 1
         policy_sha = hashlib.sha256(args.policy.read_bytes()).hexdigest()
         report = {
-            "schema": 1,
+            "schema": 2,
             "protocol": "l3-imbalance2-w1-stratum-adaptive-resample",
             "policy": "w0-absolute-shrunk-stratum-weights",
             "teacher_calibrated_specialist_only": True,
@@ -169,6 +175,10 @@ def main() -> int:
             "source_by_stratum": {k: dict(sorted(v.items())) for k, v in sorted(source_by_stratum.items())},
             "resampled_by_stratum": {k: dict(sorted(v.items())) for k, v in sorted(sampled_by_stratum.items())},
             "weights_by_stratum": weights_by_stratum,
+            "uncalibrated_fixed_strata": {
+                stratum: HISTORICAL_FIXED_WEIGHTS for stratum in UNCALIBRATED_FIXED_STRATA
+            },
+            "uncalibrated_policy": "retain historical role-aware V2 1/2/4; do not extrapolate W0 oracle weights",
             "policy_sha256": policy_sha,
             "policy_decision": policy_payload["decision"],
             "policy_classification": policy_payload["classification"],

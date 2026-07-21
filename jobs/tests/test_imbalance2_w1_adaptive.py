@@ -95,6 +95,31 @@ class AdaptiveReweightTests(unittest.TestCase):
             self.assertFalse(payload["wdl_labels_changed"])
             self.assertEqual(set(payload["weights_by_stratum"]), {f"{n}v{n+2}" for n in range(1, 19)})
 
+    def test_zero_v_two_retains_historical_fixed_v2_weights(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rows = [
+                record(0, white_up=True, stm=0, wdl=1),
+                record(0, white_up=True, stm=0, wdl=0),
+                record(0, white_up=True, stm=0, wdl=-1),
+                record(1, white_up=True, stm=0, wdl=1),
+            ]
+            inp, out = root / "in.jnnw", root / "out.jnnw"
+            write_jnnw(inp, rows)
+            policy = root / "policy.json"; policy.write_text(json.dumps(policy_payload()), encoding="utf-8")
+            report = root / "report.json"
+            subprocess.run([
+                sys.executable, str(REWEIGHT), "--input", str(inp), "--output", str(out),
+                "--policy", str(policy), "--holdout-count", "1", "--seed", "17", "--report", str(report),
+            ], check=True, capture_output=True, text=True)
+            payload = json.loads(report.read_text())
+            self.assertEqual(payload["uncalibrated_fixed_strata"]["0v2"], {
+                "expected_result": 1.0, "draw": 2.0, "upset_result": 4.0,
+            })
+            self.assertEqual(payload["source_by_stratum"]["0v2"]["fixed_v2_expected_result"], 1)
+            self.assertEqual(payload["source_by_stratum"]["0v2"]["fixed_v2_draw"], 1)
+            self.assertEqual(payload["source_by_stratum"]["0v2"]["fixed_v2_upset_result"], 1)
+
     def test_rejects_density_only_or_unstable_policy(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
