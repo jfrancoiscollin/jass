@@ -6,15 +6,39 @@ import argparse
 import json
 from pathlib import Path
 
+# 8 patterns × 265,721 colour-antisymmetric canonical buckets/pattern.
+# The runtime PJTW expands to 4,251,528 raw buckets, but training coverage is
+# measured in this canonical colour-fold space.
+EXPECTED_NUM_PATTERNS = 8
+EXPECTED_COLORFOLD_BUCKETS_PER_PATTERN = 265_721
+EXPECTED_TRAINED_BUCKETS = 2_125_768
+
 
 def load_report(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if value.get("stage") != "l3_bucket_visits":
         raise ValueError(f"{path}: not an l3_bucket_visits report")
-    if value.get("geometry", {}).get("trained_buckets_total") != 4_251_528:
-        raise ValueError(f"{path}: unexpected 8cf trained bucket count")
+    geometry = value.get("geometry", {})
+    actual = (
+        geometry.get("num_patterns"),
+        geometry.get("buckets_per_pattern_colorfold"),
+        geometry.get("trained_buckets_total"),
+    )
+    expected = (
+        EXPECTED_NUM_PATTERNS,
+        EXPECTED_COLORFOLD_BUCKETS_PER_PATTERN,
+        EXPECTED_TRAINED_BUCKETS,
+    )
+    if actual != expected:
+        raise ValueError(f"{path}: unexpected 8cf colour-fold geometry {actual}, expected {expected}")
     if int(value.get("corpus", {}).get("total_records", 0)) <= 0:
         raise ValueError(f"{path}: empty corpus")
+    coverage = value.get("coverage", {})
+    visited = int(coverage.get("visited_buckets", -1))
+    fraction = float(coverage.get("coverage_fraction", -1.0))
+    expected_fraction = visited / EXPECTED_TRAINED_BUCKETS
+    if visited < 0 or abs(fraction - expected_fraction) > 1e-6:
+        raise ValueError(f"{path}: coverage fraction is inconsistent with colour-fold geometry")
     return value
 
 
@@ -56,9 +80,17 @@ def main(argv: list[str] | None = None) -> int:
     p1 = compact(p1_cum)
     leader = "P1_0842_G4" if p1["coverage_fraction"] > c0["coverage_fraction"] else "C0_A_G3"
     payload = {
-        "schema": 1,
+        "schema": 2,
         "protocol": "L3-PURE-MATURITY-M0-COVERAGE",
         "decision": "M0_COVERAGE_AUDIT_READY",
+        "coverage_space": {
+            "geometry": "8cf",
+            "fold": "color",
+            "num_patterns": EXPECTED_NUM_PATTERNS,
+            "canonical_buckets_per_pattern": EXPECTED_COLORFOLD_BUCKETS_PER_PATTERN,
+            "trained_buckets_total": EXPECTED_TRAINED_BUCKETS,
+            "raw_runtime_buckets_total": 4_251_528,
+        },
         "c0_a": {
             "per_generation": [compact(x) for x in c0_gens],
             "cumulative": c0,
@@ -80,6 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     summary = {
         "verdict": payload["decision"],
         "coverage_leader_diagnostic_only": leader,
+        "coverage_space": payload["coverage_space"],
         "c0_a_cumulative_records": c0["total_records"],
         "c0_a_coverage_fraction": c0["coverage_fraction"],
         "c0_a_ge_100": c0["ge_100"],
