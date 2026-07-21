@@ -51,7 +51,7 @@ NPROC="$(nproc)"; [ "$NPROC" -ge 16 ] || die "M0 triangle requires cpx62 >=16 CP
 FREE_MB="$(df -Pm "$JASS_RESULT_DIR"|awk 'NR==2{print $4}')"; [ "${FREE_MB:-0}" -ge 8000 ] || die "<8 GiB free"
 say "preflight: nproc=$NPROC free_mb=$FREE_MB views=3 matches_per_view=3 games_per_match=$((NOPEN*2))"
 monitor
-python3 -m py_compile jobs/tools/fetch_result_files.py jobs/tools/fetch_t1bis_inputs.py jobs/tools/run_jass_gate_bounded.py jobs/tools/l3_pure_m0_verdict.py
+python3 -m py_compile jobs/tools/fetch_result_files.py jobs/tools/fetch_t1bis_inputs.py jobs/tools/run_jass_gate_bounded.py jobs/tools/l3_pure_m0_sources.py jobs/tools/l3_pure_m0_verdict.py
 python3 jobs/tests/test_run_jass_gate.py > "$W/test-gate.log" 2>&1 || die "gate tests red"
 python3 jobs/tests/test_l3_pure_m0.py > "$W/test-m0.log" 2>&1 || die "M0 tests red"
 
@@ -65,25 +65,15 @@ python3 jobs/tools/fetch_result_files.py --prefix "$P1_PREFIX" \
   --file artefacts/g4.pjtw.gz=g4.pjtw.gz \
   --file artefacts/l3-pure-p1-manifest.json=manifest.json \
   --out-dir "$P1" --report "$ART/verified-p1-source.json" > "$W/fetch-p1.log" 2>&1 || die "P1 source unavailable"
-python3 - "$C0" "$P1" "$ART" "$EXPECTED_C0_JOB" "$EXPECTED_P1_JOB" <<'PY'
-import hashlib,json,sys
-from pathlib import Path
-c0,p1,art=map(Path,sys.argv[1:4]); c0job,p1job=sys.argv[4:6]
-c0m=json.loads((c0/'manifest.json').read_text()); p1m=json.loads((p1/'manifest.json').read_text())
-c0v=json.loads((art/'verified-c0-source.json').read_text()); p1v=json.loads((art/'verified-p1-source.json').read_text())
-if c0v.get('job_id')!=c0job or p1v.get('job_id')!=p1job: raise SystemExit('source job mismatch')
-if c0m.get('lineage')!='L3-PURE' or c0m.get('arm')!='A' or c0m.get('generations')!=3 or c0m.get('scientific_status')!='complete_generation_chain': raise SystemExit('invalid C0 A manifest')
-if p1m.get('experiment')!='L3-PURE-P1' or p1m.get('variant')!='FROZEN_BASELINE' or p1m.get('scientific_status')!='complete_p1_training': raise SystemExit('invalid P1 manifest')
-if p1m.get('recipe',{}).get('generations')!=4: raise SystemExit('P1 is not G1-G4')
-for root,man,name,key in ((c0,c0m,'g3.pjtw.gz','champion_sha256'),(p1,p1m,'g4.pjtw.gz','student_sha256')):
-    got=hashlib.sha256((root/name).read_bytes()).hexdigest()
-    if man.get(key,{}).get(name)!=got: raise SystemExit(f'{name} checksum mismatch')
-c0_search=c0m.get('search_params','')
-p1_search=p1m.get('search_params') or p1m.get('recipe',{}).get('search_params','')
-if len(c0_search.split(','))!=5: raise SystemExit('C0 fingerprint is not the reviewed five-key fingerprint')
-if len(p1_search.split(','))!=63: raise SystemExit('P1 Q00 fingerprint is not complete')
-(art/'m0-source-contract.json').write_text(json.dumps({'schema':1,'c0_job':c0job,'p1_job':p1job,'c0_search_params':c0_search,'p1_q00_search_params':p1_search,'gen2_search_params':'qs_forcing_depth=6,qs_promo_depth=6'},indent=2,sort_keys=True)+'\n')
-PY
+if ! python3 jobs/tools/l3_pure_m0_sources.py \
+  --c0-dir "$C0" --p1-dir "$P1" \
+  --verified-c0 "$ART/verified-c0-source.json" --verified-p1 "$ART/verified-p1-source.json" \
+  --expected-c0-job "$EXPECTED_C0_JOB" --expected-p1-job "$EXPECTED_P1_JOB" \
+  --out "$ART/m0-source-contract.json" > "$W/source-contract.log" 2>&1; then
+  cat "$W/source-contract.log" | tee -a "$RES"
+  die "M0 source contract validation failed"
+fi
+cat "$W/source-contract.log" | tee -a "$RES"
 gunzip -c "$C0/g3.pjtw.gz" > "$W/c0-a-g3.pjtw"
 gunzip -c "$P1/g4.pjtw.gz" > "$W/p1-0842-g4.pjtw"
 gunzip -c "$INPUTS/gen2.pjtw.gz" > "$W/gen2.pjtw"
@@ -120,11 +110,15 @@ set_stage native-equal-time
 run_view native movetime "$C0_SEARCH" "$Q00_SEARCH" "$HISTORICAL_SEARCH"
 
 set_stage aggregate-verdict
-python3 jobs/tools/l3_pure_m0_verdict.py \
+if ! python3 jobs/tools/l3_pure_m0_verdict.py \
   --historical-a-gen2 "$ART/historical-c0-a-vs-gen2.json" --historical-p1-gen2 "$ART/historical-p1-g4-vs-gen2.json" --historical-p1-a "$ART/historical-p1-g4-vs-c0-a.json" \
   --q00-a-gen2 "$ART/q00-c0-a-vs-gen2.json" --q00-p1-gen2 "$ART/q00-p1-g4-vs-gen2.json" --q00-p1-a "$ART/q00-p1-g4-vs-c0-a.json" \
   --native-a-gen2 "$ART/native-c0-a-vs-gen2.json" --native-p1-gen2 "$ART/native-p1-g4-vs-gen2.json" --native-p1-a "$ART/native-p1-g4-vs-c0-a.json" \
-  --out "$ART/m0-triangle-verdict.json" --summary-out "$ART/JASS_CONTROL_SUMMARY.json" | tee -a "$RES"
+  --out "$ART/m0-triangle-verdict.json" --summary-out "$ART/JASS_CONTROL_SUMMARY.json" > "$W/aggregate-verdict.log" 2>&1; then
+  cat "$W/aggregate-verdict.log" | tee -a "$RES"
+  die "M0 triangle verdict aggregation failed"
+fi
+cat "$W/aggregate-verdict.log" | tee -a "$RES"
 python3 - "$ART/m0-triangle-verdict.json" "$ART" <<'PY'
 import json,sys
 from pathlib import Path
