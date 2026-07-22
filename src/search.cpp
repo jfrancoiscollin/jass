@@ -376,8 +376,16 @@ inline void order_moves(MoveList& moves, const Searcher& s, int ply,
                         const Move& tt_move, bool tt_hit,
                         const Move& prev_move) {
     BD_TIME(move_ordering);
-    std::array<int, 256> scores;  // populated for [0, n) before any read
     const std::size_t n = moves.size();
+    // Keep the allocation-free hot path for normal branching, but never index
+    // past the fixed stack buffer when a pathological capture fan exceeds 256.
+    std::array<int, 256> stack_scores{};
+    std::vector<int> overflow_scores;
+    int* scores = stack_scores.data();
+    if (n > stack_scores.size()) {
+        overflow_scores.resize(n);
+        scores = overflow_scores.data();
+    }
     for (std::size_t i = 0; i < n; ++i) {
         scores[i] = order_score(s, moves[i], ply, tt_move, tt_hit, prev_move);
     }
