@@ -14,6 +14,7 @@
 #include "zobrist.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 #include <unistd.h>
@@ -22,6 +23,22 @@
 using namespace jass;
 
 namespace {
+
+std::string make_temp_file(const char* stem) {
+    const char* env_tmp = std::getenv("TMPDIR");
+    std::string root = (env_tmp != nullptr && *env_tmp != '\0') ? env_tmp : "/tmp";
+    if (!root.empty() && root.back() != '/') root.push_back('/');
+
+    std::string tmpl = root + stem + "_XXXXXX";
+    std::vector<char> writable(tmpl.begin(), tmpl.end());
+    writable.push_back('\0');
+
+    const int fd = mkstemp(writable.data());
+    JASS_CHECK(fd >= 0);
+    if (fd < 0) return {};
+    close(fd);
+    return std::string(writable.data());
+}
 
 // Build a one-ply book around the start position: insert the start node plus
 // every child, giving exactly one child a clearly better (negamax) value.
@@ -53,11 +70,8 @@ void test_scan_book_roundtrip() {
     seed_start_book(a);
     const std::size_t n = a.size();
 
-    char tmpl[] = "/tmp/jass_scanbook_XXXXXX";
-    const int fd = mkstemp(tmpl);
-    JASS_CHECK(fd >= 0);
-    if (fd >= 0) close(fd);
-    const std::string path = tmpl;
+    const std::string path = make_temp_file("jass_scanbook");
+    if (path.empty()) return;
 
     JASS_CHECK(a.save(path));
     ScanBook b;
@@ -68,11 +82,8 @@ void test_scan_book_roundtrip() {
 }
 
 void test_scan_book_rejects_bad_magic() {
-    char tmpl[] = "/tmp/jass_scanbook_bad_XXXXXX";
-    const int fd = mkstemp(tmpl);
-    JASS_CHECK(fd >= 0);
-    if (fd >= 0) close(fd);
-    const std::string path = tmpl;
+    const std::string path = make_temp_file("jass_scanbook_bad");
+    if (path.empty()) return;
 
     std::ofstream f(path, std::ios::binary);
     f << "JBOK....not a scan book....";
@@ -121,11 +132,8 @@ void test_engine_autodetects_scan_book() {
     ScanBook b;
     seed_start_book(b, /*gap_cp=*/500);
 
-    char tmpl[] = "/tmp/jass_scanbook_eng_XXXXXX";
-    const int fd = mkstemp(tmpl);
-    JASS_CHECK(fd >= 0);
-    if (fd >= 0) close(fd);
-    const std::string path = tmpl;
+    const std::string path = make_temp_file("jass_scanbook_eng");
+    if (path.empty()) return;
     JASS_CHECK(b.save(path));
 
     Engine e;
