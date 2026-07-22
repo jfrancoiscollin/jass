@@ -325,6 +325,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          random_seed      = 0;    // 0 → engine-fixed seed (legacy)
     const char*  nnue_path        = nullptr;
     bool         quiet_only       = false;  // skip positions with mandatory captures
+    bool         sample_initial   = false;  // always sample ply 0 (subject to quiet_only)
     bool         wdl_zero_score    = false;  // --wdl-zero-score: WDL-only mode. Store score=0
                                             // and skip the otherwise unused label search,
                                             // preventing hidden TT priming of the play search.
@@ -396,6 +397,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             nnue_path = argv[++i];
         } else if (a == "--quiet-only") {
             quiet_only = true;
+        } else if (a == "--sample-initial") {
+            sample_initial = true;
         } else if (a == "--wdl-zero-score") {
             wdl_zero_score = true;
         } else if (a == "--pv-extract" && i + 1 < argc) {
@@ -502,6 +505,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " seed=" << (random_seed > 0 ? std::to_string(random_seed) : "default")
               << " nnue=" << (nnue_path ? nnue_path : "(default embedded)")
               << " quiet_only=" << (quiet_only ? "true" : "false")
+              << " sample_initial=" << (sample_initial ? "true" : "false")
               << " wdl_zero_score=" << (wdl_zero_score ? "true" : "false")
               << " pv_extract=" << pv_extract
               << " movetime_ms=" << movetime_ms
@@ -762,9 +766,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // moves (never a mix), so `ml[0].is_capture()` is the
             // single-check tactical-position signal.
             const bool position_quiet = !ml[0].is_capture();
-            const bool sample_now     = (rng() & 3) == 0
-                                     && generated + static_cast<int>(game_samples.size()) < n
-                                     && (!quiet_only || position_quiet);
+            const bool selected_for_sample = (sample_initial && ply == 0)
+                                          || ((rng() & 3) == 0);
+            const bool sample_now = selected_for_sample
+                                 && generated + static_cast<int>(game_samples.size()) < n
+                                 && (!quiet_only || position_quiet);
             if (sample_now) {
                 const Position&    pos = e.position();
                 // Phase-dependent LABEL depth : spend deeper search where the
@@ -4805,7 +4811,7 @@ int main(int argc, char** argv) {
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
@@ -4814,6 +4820,8 @@ int main(int argc, char** argv) {
                 "                                   opening plies (default 4). --explore-eps E :\n"
                 "                                   play E%% of plies as a random legal move\n"
                 "                                   (off-policy μ widening).\n"
+                "                                   --sample-initial always keeps ply 0 of each\n"
+                "                                   played game (subject to --quiet-only).\n"
                 "                                   --drop-plycap excludes every sample from\n"
                 "                                   games unresolved at max_plies instead of\n"
                 "                                   fabricating a DRAW label. --sample-meta-out\n"

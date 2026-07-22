@@ -22,10 +22,13 @@ def main() -> int:
     assert "static --low" not in runner
     assert "JASS_EGDB=ON" not in runner
     assert "IMBALANCE2_REWEIGHT_POLICY=role-aware-v2" in runner
-    assert "run_eval g0" in runner and "run_eval g4" in runner
+    assert "run_eval g0" in runner and 'FINAL_MODEL="g${GENERATIONS}"' in runner
+    assert 'SEED_CLEAN="${SEED_CLEAN:-0}"' in runner
+    assert "--quiet-only --sample-initial" in runner
     assert "TOP3_SPECIALIZATION_SIGNAL" in runner
     assert "promotion_authorized':False" in runner
     assert "FRESH=500000" in wrapper
+    assert "SEED_CLEAN" not in wrapper
     assert "PAR_GEN=6" in wrapper
     assert "EVAL_PER_STRATUM=64" in wrapper
     print("ok")

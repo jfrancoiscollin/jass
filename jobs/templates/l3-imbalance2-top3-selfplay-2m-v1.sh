@@ -22,9 +22,8 @@ source, target = map(Path, sys.argv[1:])
 text = source.read_text(encoding="utf-8")
 replacements = [
     ('FRESH="${FRESH:-500000}"', 'FRESH="${FRESH:-2000000}"'),
-    ('[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 source records/generation"',
-     '[ "$FRESH" -eq 2000000 ] || die "requires exactly 2000000 source records/generation"'),
-    ("'source_positions_per_generation':500000", "'source_positions_per_generation':2000000"),
+    ('[ "$FRESH" -eq 500000 ] && [ "$GENERATIONS" -eq 4 ] || die "standard TOP3 requires 500000 records and four generations"',
+     '[ "$FRESH" -eq 2000000 ] && [ "$GENERATIONS" -eq 4 ] || die "standard TOP3 requires 2000000 records and four generations"'),
     ('L3-IMBALANCE2-TOP3 P1 G1-G4 d8 ===', 'L3-IMBALANCE2-TOP3 P1 G1-G4 d8 corpus=2M/gen ==='),
 ]
 for old, new in replacements:
@@ -32,7 +31,7 @@ for old, new in replacements:
     if count != 1:
         raise SystemExit(f"2M adapter: expected one occurrence of {old!r}, found {count}")
     text = text.replace(old, new)
-if 'requires exactly 500000 source records/generation' in text:
+if 'standard TOP3 requires 500000 records and four generations' in text:
     raise SystemExit('2M adapter: stale 500k guard remains')
 target.write_text(text, encoding="utf-8")
 PY

@@ -19,6 +19,8 @@ exec 9>"$JASS_RESULT_DIR/job.lock"
 flock -n 9 || { echo "ABORT: another instance is active" >&2; exit 3; }
 
 FRESH="${FRESH:-500000}"
+GENERATIONS="${GENERATIONS:-4}"
+SEED_CLEAN="${SEED_CLEAN:-0}"
 PAR_GEN="${PAR_GEN:-6}"
 MAXPLIES="${MAXPLIES:-260}"
 LABEL_DEPTH="${LABEL_DEPTH:-4}"
@@ -32,6 +34,8 @@ MAXIT="${MAXIT:-25}"
 L2="${L2:-3e-5}"
 CHUNK="${CHUNK:-500000}"
 JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-8}"
+GEN_SHARD_TIMEOUT="${GEN_SHARD_TIMEOUT:-43200}"
+EVAL_SHARD_TIMEOUT="${EVAL_SHARD_TIMEOUT:-7200}"
 TRAIN_SEEDS_PER_SIDE="${TRAIN_SEEDS_PER_SIDE:-2048}"
 EVAL_PER_STRATUM="${EVAL_PER_STRATUM:-64}"
 EVAL_SHARDS="${EVAL_SHARDS:-6}"
@@ -90,19 +94,29 @@ say "=== $JASS_JOB_ID — L3-IMBALANCE2-TOP3 P1 G1-G4 d8 ==="
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ "${FULL_RUN_APPROVED:-0}" = 1 ] || die "FULL_RUN_APPROVED=1 missing"
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
-[ "$FRESH" -eq 500000 ] || die "requires exactly 500000 source records/generation"
 [ "$PAR_GEN" -eq 6 ] || die "top3 requires six parallel producers"
 [ "$MAXPLIES" -eq 260 ] && [ "$LABEL_DEPTH" -eq 4 ] && [ "$PLAY_DEPTH" -eq 8 ] || die "play contract mismatch"
-[ "$RANDOM_OPEN_PLIES" -eq 8 ] && [ "$EXPLORE_EPS" -eq 8 ] && [ "$EXPLORE_DECAY_PLIES" -eq 60 ] || die "exploration contract mismatch"
 [ "$HOLDOUT_MOD" -eq 10 ] && [ "$BASE_SEED" -eq 271828 ] || die "split/seed contract mismatch"
 [ "$MAXIT" -eq 25 ] && [ "$L2" = 3e-5 ] && [ "$CHUNK" -eq 500000 ] || die "fit contract mismatch"
 [ "$EVAL_PER_STRATUM" -eq 64 ] && [ "$EVAL_SHARDS" -eq 6 ] && [ "$PAR_EVAL" -eq 4 ] || die "evaluation contract mismatch"
-[ "$WIN_WEIGHT" = 1 ] && [ "$DRAW_WEIGHT" = 2 ] && [ "$LOSS_WEIGHT" = 4 ] || die "requires fixed role-aware 1/2/4"
+[ "$SEED_CLEAN" = 0 ] || [ "$SEED_CLEAN" = 1 ] || die "SEED_CLEAN must be 0 or 1"
+if [ "$SEED_CLEAN" = 1 ]; then
+  [ "$FRESH" -eq 100000 ] && [ "$GENERATIONS" -eq 1 ] || die "seed-clean screen requires 100000 records and one generation"
+  [ "$RANDOM_OPEN_PLIES" -eq 0 ] && [ "$EXPLORE_EPS" -eq 0 ] && [ "$EXPLORE_DECAY_PLIES" -eq 0 ] || die "seed-clean exploration must be fully disabled"
+  [ "$WIN_WEIGHT" = 1 ] && [ "$DRAW_WEIGHT" = 1 ] && [ "$LOSS_WEIGHT" = 1 ] || die "seed-clean requires natural unweighted WDL"
+  [ "$GEN_SHARD_TIMEOUT" -ge 900 ] && [ "$EVAL_SHARD_TIMEOUT" -ge 900 ] || die "seed-clean shard timeouts are too short"
+else
+  [ "$FRESH" -eq 500000 ] && [ "$GENERATIONS" -eq 4 ] || die "standard TOP3 requires 500000 records and four generations"
+  [ "$RANDOM_OPEN_PLIES" -eq 8 ] && [ "$EXPLORE_EPS" -eq 8 ] && [ "$EXPLORE_DECAY_PLIES" -eq 60 ] || die "exploration contract mismatch"
+  [ "$WIN_WEIGHT" = 1 ] && [ "$DRAW_WEIGHT" = 2 ] && [ "$LOSS_WEIGHT" = 4 ] || die "requires fixed role-aware 1/2/4"
+fi
 [ "$L3_SEARCH_OVERRIDES" = "$EXPECTED_SEARCH_OVERRIDES" ] || die "Q00 fingerprint required"
 [ "$(nproc)" -ge 8 ] || die "ccx33 requires at least 8 CPUs"
 MEM_MB="$(awk '/MemTotal:/ {printf "%d", $2/1024}' /proc/meminfo)"
 [ "${MEM_MB:-0}" -ge 14000 ] || die "requires >=14 GiB RAM"
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2 {print $4}')" -ge 20000 ] || die "less than 20 GiB free"
+find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
+DFA="$(df -Pm /root | awk 'NR==2 {print $4}')"; [ "${DFA:-0}" -gt 3000 ] || die "disk below 3 GiB free"
 start_memprobe
 
 python3 -m py_compile jobs/tools/make_imbalance2_pools.py jobs/tools/prepare_imbalance2_training.py \
@@ -115,6 +129,9 @@ for source in src/scan_eval.cpp src/search.cpp src/movegen.cpp; do
   git show "HEAD:$source" > "$W/expected-$(basename "$source")"
   cmp -s "$source" "$W/expected-$(basename "$source")" || die "$source differs from pinned HEAD"
 done
+grep -q "g_emasks" src/scan_eval.cpp || die "architecture guard: scan_eval lacks g_emasks"
+grep -q "has_any_capture" src/search.cpp || die "architecture guard: search lacks has_any_capture"
+grep -q "has_any_capture" src/movegen.cpp || die "architecture guard: movegen lacks has_any_capture"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
 NPAT="$(PYTHONPATH="$GEOM" python3 -c 'import patterns; print(patterns.TOTAL_BUCKETS)')"
@@ -157,7 +174,14 @@ PILOT="$W/g0-material.pjtw"
 gzip -n -c "$PILOT" > "$ART/g0-material.pjtw.gz"
 
 BASE_PER_STRATUM=$((FRESH / 3)); REMAINDER=$((FRESH % 3))
-for generation in 1 2 3 4; do
+sampling_flags=()
+pair_flags=(--pair-openings)
+if [ "$SEED_CLEAN" = 1 ]; then
+  sampling_flags=(--quiet-only --sample-initial)
+  pair_flags=()
+fi
+for generation in $(seq 1 "$GENERATIONS"); do
+  { echo "stage=generation"; echo "generation=$generation"; echo "records_target=$FRESH"; } > "$PROG"
   say "--- TOP3 G$generation play=d$PLAY_DEPTH pilot=$(basename "$PILOT") ---"
   pids=(); merge_args=(); rollout_logs=(); part=0; logical=0
   for low in 16 17 18; do
@@ -172,11 +196,11 @@ for generation in 1 2 3 4; do
       seed_file="$(printf '%s/train-%02dv%02d-up%s.jnnw' "$POOLS" "$low" "$high" "$adv")"
       merge_args+=(--pair "$data" "$meta"); rollout_logs+=("$log")
       (
-        "$J" --gen-data-wdl "$target" "$data.tmp" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
+        timeout "$GEN_SHARD_TIMEOUT" "$J" --gen-data-wdl "$target" "$data.tmp" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" "$seed" \
           --nnue "$PILOT" --search-params-play "$L3_SEARCH_PARAMS" --wdl-zero-score \
           --seed-file "$seed_file" --seed-frac 100 --random-open-plies "$RANDOM_OPEN_PLIES" \
           --explore-eps "$EXPLORE_EPS" --explore-decay-plies "$EXPLORE_DECAY_PLIES" \
-          --pair-openings --drop-plycap --sample-meta-out "$meta"
+          "${pair_flags[@]}" --drop-plycap --sample-meta-out "$meta" "${sampling_flags[@]}"
         python3 jobs/tools/prepare_imbalance2_training.py encode --input "$data.tmp" --output "$data" \
           --advantaged-side "$adv" --report "$report"
         rm -f "$data.tmp"
@@ -202,10 +226,20 @@ for generation in 1 2 3 4; do
     --holdout-mod "$HOLDOUT_MOD" --seed "$BASE_SEED" --manifest "$ART/g${generation}-split.json" > "$W/g${generation}-split.log" 2>&1
   HOLDOUT_COUNT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["holdout_records"])' "$ART/g${generation}-split.json")"
   [ "$HOLDOUT_COUNT" -gt 0 ] || die "empty holdout"
-  python3 jobs/tools/prepare_imbalance2_training.py reweight --input "$W/g${generation}.fit.jnnw" \
-    --output "$W/g${generation}.weighted.jnnw" --holdout-count "$HOLDOUT_COUNT" \
-    --win-weight "$WIN_WEIGHT" --draw-weight "$DRAW_WEIGHT" --loss-weight "$LOSS_WEIGHT" \
-    --seed $((BASE_SEED + generation)) --report "$ART/g${generation}-reweight.json"
+  if [ "$SEED_CLEAN" = 1 ]; then
+    cp "$W/g${generation}.fit.jnnw" "$W/g${generation}.weighted.jnnw"
+    python3 - "$W/g${generation}.weighted.jnnw" "$HOLDOUT_COUNT" "$ART/g${generation}-reweight.json" <<'PY'
+import json,struct,sys
+from pathlib import Path
+raw=Path(sys.argv[1]).read_bytes(); n=struct.unpack_from('<I',raw,4)[0]
+Path(sys.argv[3]).write_text(json.dumps({'schema':1,'mode':'natural_unweighted_wdl','records':n,'holdout_records':int(sys.argv[2]),'resampling_applied':False},indent=2,sort_keys=True)+'\n')
+PY
+  else
+    python3 jobs/tools/prepare_imbalance2_training.py reweight --input "$W/g${generation}.fit.jnnw" \
+      --output "$W/g${generation}.weighted.jnnw" --holdout-count "$HOLDOUT_COUNT" \
+      --win-weight "$WIN_WEIGHT" --draw-weight "$DRAW_WEIGHT" --loss-weight "$LOSS_WEIGHT" \
+      --seed $((BASE_SEED + generation)) --report "$ART/g${generation}-reweight.json"
+  fi
   "$J" --dump-eval-features "$W/g${generation}.weighted.jnnw" "$W/g${generation}.feat" > "$W/g${generation}-features.log" 2>&1
   warm=(--warm-start "$PILOT"); [ "$generation" -eq 1 ] && warm=()
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" python3 pattern_jass/tools/train_stream.py \
@@ -224,7 +258,7 @@ run_eval(){
   local model_label="$1" pattern="$2" pool_label="$3"
   local pool="$POOLS/top3-${pool_label}.jnnw" meta="$POOLS/top3-${pool_label}.json" pids=() shard
   for shard in $(seq 0 $((EVAL_SHARDS - 1))); do
-    python3 jobs/tools/imbalance2_scan_gate.py run --engine candidate --jass "$J" --pattern "$pattern" \
+    timeout "$EVAL_SHARD_TIMEOUT" python3 jobs/tools/imbalance2_scan_gate.py run --engine candidate --jass "$J" --pattern "$pattern" \
       --pool "$pool" --meta "$meta" --search-params "$L3_SEARCH_PARAMS" --depth "$PLAY_DEPTH" --max-plies 400 \
       --shard "$shard" --nshards "$EVAL_SHARDS" --out "$ART/eval-${model_label}-${pool_label}-s${shard}.json" \
       > "$W/eval-${model_label}-${pool_label}-s${shard}.log" 2>&1 &
@@ -233,16 +267,18 @@ run_eval(){
   done
   [ "${#pids[@]}" -eq 0 ] || run_pids "eval $model_label/$pool_label final" "${pids[@]}"
 }
+{ echo "stage=evaluation"; echo "final_model=g${GENERATIONS}"; echo "paired_games_target=384"; } > "$PROG"
 run_eval g0 "$W/g0-material.pjtw" a
 run_eval g0 "$W/g0-material.pjtw" b
-run_eval g4 "$W/g4.pjtw" a
-run_eval g4 "$W/g4.pjtw" b
+FINAL_MODEL="g${GENERATIONS}"
+run_eval "$FINAL_MODEL" "$W/${FINAL_MODEL}.pjtw" a
+run_eval "$FINAL_MODEL" "$W/${FINAL_MODEL}.pjtw" b
 
-python3 - "$ART" <<'PY'
+python3 - "$ART" "$FINAL_MODEL" "$SEED_CLEAN" <<'PY'
 import json,random,sys
 from collections import defaultdict
 from pathlib import Path
-art=Path(sys.argv[1]); cats=('win','draw','loss'); cost={'win':0.0,'draw':1.0,'loss':2.0}
+art=Path(sys.argv[1]); final=sys.argv[2]; seed_clean=bool(int(sys.argv[3])); cats=('win','draw','loss'); cost={'win':0.0,'draw':1.0,'loss':2.0}
 def load(model):
     out={}; errors=[]
     for path in sorted(art.glob(f'eval-{model}-*-s*.json')):
@@ -258,31 +294,34 @@ def rates(rows,key):
     n=len(rows); return {c:sum(r[key]==c for r in rows)/n for c in cats}
 def interval(values):
     values=sorted(values); n=len(values); return [values[int(.025*(n-1))],values[int(.975*(n-1))]]
-g0,e0=load('g0'); g4,e4=load('g4'); keys=sorted(set(g0)|set(g4)); rows=[]
+g0,e0=load('g0'); student,e1=load(final); keys=sorted(set(g0)|set(student)); rows=[]
 for key in keys:
-    if key not in g0 or key not in g4: continue
-    rows.append({'pool':key[0],'index':key[1],'stratum':g4[key]['stratum'],'g0':g0[key]['outcome'],'g4':g4[key]['outcome']})
+    if key not in g0 or key not in student: continue
+    rows.append({'pool':key[0],'index':key[1],'stratum':student[key]['stratum'],'g0':g0[key]['outcome'],final:student[key]['outcome']})
 if len(rows)!=384: raise SystemExit(f'expected 384 paired rows, got {len(rows)}')
-r0=rates(rows,'g0'); r4=rates(rows,'g4')
-c0=sum(cost[r['g0']] for r in rows)/len(rows); c4=sum(cost[r['g4']] for r in rows)/len(rows)
+r0=rates(rows,'g0'); r1=rates(rows,final)
+c0=sum(cost[r['g0']] for r in rows)/len(rows); c1=sum(cost[r[final]] for r in rows)/len(rows)
 rng=random.Random(271828); win_delta=[]; cost_delta=[]
 for _ in range(5000):
     sample=[rows[rng.randrange(len(rows))] for _ in rows]
-    win_delta.append(sum(r['g4']=='win' for r in sample)/len(sample)-sum(r['g0']=='win' for r in sample)/len(sample))
-    cost_delta.append(sum(cost[r['g4']]-cost[r['g0']] for r in sample)/len(sample))
+    win_delta.append(sum(r[final]=='win' for r in sample)/len(sample)-sum(r['g0']=='win' for r in sample)/len(sample))
+    cost_delta.append(sum(cost[r[final]]-cost[r['g0']] for r in sample)/len(sample))
 strata={}; groups=defaultdict(list); pools=defaultdict(list)
 for row in rows: groups[row['stratum']].append(row); pools[row['pool']].append(row)
-for name in sorted(groups): strata[name]={'n':len(groups[name]),'g0':rates(groups[name],'g0'),'g4':rates(groups[name],'g4')}
-pool_report={name:{'n':len(group),'g0':rates(group,'g0'),'g4':rates(group,'g4')} for name,group in sorted(pools.items())}
-no_errors=not e0 and not e4
-signal=no_errors and r4['win']>=0.80 and all(v['g4']['win']>=0.75 for v in strata.values()) and c4<c0
-decision='TOP3_SPECIALIZATION_SIGNAL' if signal else 'TOP3_TARGET_NOT_REACHED'
-payload={'schema':1,'lineage':'L3-IMBALANCE2-TOP3','decision':decision,'pass':signal,'paired_games':len(rows),
+for name in sorted(groups): strata[name]={'n':len(groups[name]),'g0':rates(groups[name],'g0'),final:rates(groups[name],final)}
+pool_report={name:{'n':len(group),'g0':rates(group,'g0'),final:rates(group,final)} for name,group in sorted(pools.items())}
+no_errors=not e0 and not e1
+target_reached=no_errors and r1['win']>=0.80 and all(v[final]['win']>=0.75 for v in strata.values()) and c1<c0
+screen_signal=no_errors and (r1['win']-r0['win'])>=0.02 and c1<c0
+signal=screen_signal if seed_clean else target_reached
+decision='SEED_CLEAN_SCREEN_SIGNAL' if seed_clean and signal else ('SEED_CLEAN_SCREEN_NO_SIGNAL' if seed_clean else ('TOP3_SPECIALIZATION_SIGNAL' if signal else 'TOP3_TARGET_NOT_REACHED'))
+payload={'schema':1,'lineage':'L3-IMBALANCE2-TOP3','protocol':'seed-clean-screen' if seed_clean else 'standard-top3','final_model':final,'decision':decision,'pass':signal,'paired_games':len(rows),
  'hypothesis':'material-up win rate around 0.80-0.90 on 16v18,17v19,18v20',
- 'g0':r0,'g4':r4,'g4_in_80_90_band':0.80<=r4['win']<=0.90,'g4_minus_g0_win_rate':r4['win']-r0['win'],
- 'g4_minus_g0_win_rate_bootstrap_95':interval(win_delta),'failure_cost_2loss_plus_draw':{'g0':c0,'g4':c4,'delta':c4-c0,'bootstrap_95':interval(cost_delta)},
- 'strata':strata,'pools':pool_report,'errors':{'g0':e0,'g4':e4},
- 'criteria':{'global_g4_win_min':0.80,'each_stratum_g4_win_min':0.75,'g4_cost_below_g0':True,'max_errors':0},
+ 'g0':r0,final:r1,f'{final}_in_80_90_band':0.80<=r1['win']<=0.90,f'{final}_minus_g0_win_rate':r1['win']-r0['win'],
+ f'{final}_minus_g0_win_rate_bootstrap_95':interval(win_delta),'failure_cost_2loss_plus_draw':{'g0':c0,final:c1,'delta':c1-c0,'bootstrap_95':interval(cost_delta)},
+ 'strata':strata,'pools':pool_report,'errors':{'g0':e0,final:e1},
+ 'target_reached':target_reached,'screen_signal':screen_signal,
+ 'criteria':({'student_minus_g0_win_min':0.02,'student_cost_below_g0':True,'max_errors':0} if seed_clean else {f'global_{final}_win_min':0.80,f'each_stratum_{final}_win_min':0.75,f'{final}_cost_below_g0':True,'max_errors':0}),
  'promotion_authorized':False,'training_continuation_authorized':False,'automatic_next_job':None}
 (art/'top3-selfplay-decision.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 (art/f'VERDICT__{decision}').write_text(decision+'\n')
@@ -291,20 +330,21 @@ payload={'schema':1,'lineage':'L3-IMBALANCE2-TOP3','decision':decision,'pass':si
 print(decision)
 PY
 
-python3 - "$ART" "$EXPECTED_CODE_SHA" "$L3_SEARCH_PARAMS" <<'PY'
+python3 - "$ART" "$EXPECTED_CODE_SHA" "$L3_SEARCH_PARAMS" "$GENERATIONS" "$FRESH" "$RANDOM_OPEN_PLIES" "$EXPLORE_EPS" "$EXPLORE_DECAY_PLIES" "$SEED_CLEAN" <<'PY'
 import hashlib,json,sys
 from pathlib import Path
-art=Path(sys.argv[1]); sha=sys.argv[2]; search=sys.argv[3]
+art=Path(sys.argv[1]); sha=sys.argv[2]; search=sys.argv[3]; generations=int(sys.argv[4]); fresh=int(sys.argv[5]); random_open=int(sys.argv[6]); eps=int(sys.argv[7]); decay=int(sys.argv[8]); seed_clean=bool(int(sys.argv[9]))
 students={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(art.glob('g[1-4].pjtw.gz'))}
 decision=json.loads((art/'top3-selfplay-decision.json').read_text())
-payload={'schema':1,'lineage':'L3-IMBALANCE2-TOP3','phase':'P1','generation_range':[1,4],'play_depth':8,'code_sha':sha,
- 'source_positions_per_generation':500000,'start_strata':['16v18','17v19','18v20'],
+payload={'schema':1,'lineage':'L3-IMBALANCE2-TOP3','phase':'SEED_CLEAN_SCREEN' if seed_clean else 'P1','generation_range':[1,generations],'play_depth':8,'code_sha':sha,
+ 'source_positions_per_generation':fresh,'start_strata':['16v18','17v19','18v20'],
  'start_distribution':'equal per stratum and balanced initial advantaged colour','trajectory_policy':'terminal WDL self-play only; no static TB teacher',
  'external_teacher_used':False,'egdb_training_labels_used':False,'scan_used_for_training':False,'gen2_used_for_training':False,
  'geometry':'8cf','search_params':search,'search_params_count':len(search.split(',')),
- 'recipe':{'bootstrap':'G0 material men=1 king=3','fresh_corpus_only':True,'random_open_plies':8,'epsilon_percent':8,'explore_decay_plies':60,
+ 'recipe':{'bootstrap':'G0 material men=1 king=3','fresh_corpus_only':True,'random_open_plies':random_open,'epsilon_percent':eps,'explore_decay_plies':decay,
+ 'quiet_only':seed_clean,'sample_initial':seed_clean,'pair_openings':not seed_clean,'natural_unweighted_wdl':seed_clean,
  'fit':{'target':'wdl','loss':'logistic','color_fold':True,'tempo_stage':True,'l2':3e-5,'max_iter':25,'chunk':500000,
- 'role_aware_fixed_resampling':{'expected':1,'draw':2,'upset':4}},'primary_seed':271828},
+ 'role_aware_fixed_resampling':None if seed_clean else {'expected':1,'draw':2,'upset':4}},'primary_seed':271828},
  'evaluation':decision,'student_sha256':students,'promotion_authorized':False,'training_continuation_authorized':False,'automatic_next_job':None}
 (art/'l3-imbalance2-top3-p1-manifest.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
 PY

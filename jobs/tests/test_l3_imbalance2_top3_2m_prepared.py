@@ -21,8 +21,7 @@ def main() -> int:
     assert 'exec bash jobs/templates/l3-imbalance2-top3-selfplay-2m-v1.sh' in wrapper
     for token in (
         'FRESH="${FRESH:-2000000}"',
-        'requires exactly 2000000 source records/generation',
-        "'source_positions_per_generation':2000000",
+        'standard TOP3 requires 2000000 records and four generations',
         'corpus=2M/gen',
     ):
         assert token in adapter
