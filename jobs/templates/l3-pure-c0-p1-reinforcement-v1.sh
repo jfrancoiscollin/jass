@@ -50,9 +50,10 @@ say "=== $JASS_JOB_ID — L3-PURE strengthened direct C0/P1 confrontation ==="
 [ "$(nproc)" -ge 16 ] || die "requires cpx62 >=16 CPUs"
 [ "$(df -Pm "$JASS_RESULT_DIR"|awk 'NR==2{print $4}')" -ge 8000 ] || die "<8 GiB free"
 monitor
-python3 -m py_compile jobs/tools/fetch_result_files.py jobs/tools/l3_pure_m0_sources.py jobs/tools/run_jass_gate_bounded.py jobs/tools/l3_pure_c0_p1_reinforcement.py
+python3 -m py_compile jobs/tools/fetch_result_files.py jobs/tools/l3_pure_m0_sources.py jobs/tools/run_jass_gate_bounded.py jobs/tools/l3_pure_c0_p1_reinforcement.py jobs/tools/validate_opening_pool.py
 python3 jobs/tests/test_run_jass_gate.py > "$W/test-gate.log" 2>&1 || die "gate tests red"
 python3 jobs/tests/test_l3_pure_c0_p1_reinforcement.py > "$W/test-reinforcement.log" 2>&1 || die "reinforcement tests red"
+python3 jobs/tests/test_validate_opening_pool.py > "$W/test-openings.log" 2>&1 || die "opening-pool tests red"
 
 set_stage fetch-verified-sources
 python3 jobs/tools/fetch_result_files.py --prefix "$C0_PREFIX" \
@@ -82,9 +83,16 @@ cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8" -j"$JASS_BUILD_JOBS" --target jass > "$W/build8.log" 2>&1
 J8="$W/build8/jass"; [ -x "$J8" ] || die "missing jass binary"
 
-# M0 used the first 300 cleaned openings. Select the next 768 without a pipe that can trip pipefail.
-awk -v need="$NOPEN" 'BEGIN{seen=0;out=0} /^[[:space:]]*#/ {next} {sub(/#.*/,""); if(!NF) next; seen++; if(seen<=300) next; if(out<need){print; out++} if(out==need) exit}' data/dilf_combinations.fen > "$W/open-independent.fen"
-[ "$(wc -l < "$W/open-independent.fen")" -eq "$NOPEN" ] || die "not enough independent openings"
+# M0 consumed the complete 305-position DILF corpus. Build a deterministic,
+# synthetic and public pool from fresh random legal trajectories instead of
+# pretending that DILF contains another 768 positions (0888ter abort proof).
+OPENING_SEED=271828
+"$J8" --gen-opening-pool "$NOPEN" "$W/open-independent.fen" 8 32 20 "$OPENING_SEED" \
+  > "$W/opening-generation.log" 2>&1
+python3 jobs/tools/validate_opening_pool.py --pool "$W/open-independent.fen" \
+  --expected "$NOPEN" --exclude data/dilf_combinations.fen --generator-seed "$OPENING_SEED" \
+  --out "$ART/reinforcement-openings-manifest.json" > "$W/opening-validation.log" 2>&1 \
+  || die "independent opening-pool validation failed"
 sha256sum "$W/open-independent.fen" > "$ART/reinforcement-openings.sha256"
 
 run_gate(){ local label="$1"; shift; timeout 21600 python3 jobs/tools/run_jass_gate_bounded.py \

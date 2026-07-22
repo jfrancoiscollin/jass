@@ -43,6 +43,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <string_view>
 
@@ -2357,6 +2358,84 @@ int run_deep_relabel_mode(int argc, char** argv) {
     std::cout << "deep-relabel: " << nrec << " records, depth=" << depth
               << ", egdb-exact=" << egdb_exact << ", " << el << "s ("
               << (el > 0 ? nrec / el : 0.0) << " pos/s) → " << out_path << "\n";
+    return 0;
+}
+
+// Emit a deterministic pool of diverse, legal and quiet midgame positions.
+// Each candidate is reached by a fresh random legal trajectory from startpos;
+// only one position is retained per trajectory.  This is intended for paired
+// engine gates that need hundreds of reproducible openings without depending
+// on a small, hand-curated tactical corpus.
+// -----------------------------------------------------------------------------
+int run_gen_opening_pool_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --gen-opening-pool <count> <out.fen> "
+                     "[min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n";
+        return 2;
+    }
+    const int count = parse_int_or(argv[2], 768);
+    const char* out_path = argv[3];
+    const int min_ply = (argc > 4) ? parse_int_or(argv[4], 8) : 8;
+    const int max_ply = (argc > 5) ? parse_int_or(argv[5], 32) : 32;
+    const int min_pieces = (argc > 6) ? parse_int_or(argv[6], 20) : 20;
+    const std::uint64_t seed = (argc > 7)
+        ? static_cast<std::uint64_t>(std::stoull(argv[7]))
+        : 0x4F50454E494E4755ULL;
+    if (count <= 0 || min_ply < 0 || max_ply < min_ply
+        || min_pieces < 2 || min_pieces > 40) {
+        std::cerr << "error: invalid opening-pool bounds\n";
+        return 2;
+    }
+
+    std::ofstream out(out_path);
+    if (!out) {
+        std::cerr << "error: cannot open " << out_path << "\n";
+        return 1;
+    }
+    std::mt19937_64 rng(seed ? seed : 0x4F50454E494E4755ULL);
+    std::unordered_set<std::string> seen;
+    seen.reserve(static_cast<std::size_t>(count) * 2);
+    out << "# jass deterministic legal quiet opening pool\n"
+        << "# count=" << count << " min_ply=" << min_ply
+        << " max_ply=" << max_ply << " min_pieces=" << min_pieces
+        << " seed=" << seed << "\n";
+
+    const long long max_attempts = static_cast<long long>(count) * 200LL + 1000LL;
+    long long attempts = 0;
+    int written = 0;
+    while (written < count && attempts++ < max_attempts) {
+        Position pos = Position::start_position();
+        const int target_ply = min_ply + static_cast<int>(
+            rng() % static_cast<std::uint64_t>(max_ply - min_ply + 1));
+        bool terminal = false;
+        for (int ply = 0; ply < target_ply; ++ply) {
+            MoveList legal;
+            generate_legal_moves(pos, legal);
+            if (legal.empty()) { terminal = true; break; }
+            pos = pos.after(legal[rng() % legal.size()]);
+        }
+        if (terminal) continue;
+        const int pieces = static_cast<int>(
+            popcount(pos.white_men() | pos.white_kings()
+                   | pos.black_men() | pos.black_kings()));
+        if (pieces < min_pieces) continue;
+        MoveList legal;
+        generate_legal_moves(pos, legal);
+        if (legal.empty() || legal[0].is_capture()) continue;
+        const std::string fen = pos.to_fen();
+        if (!seen.insert(fen).second) continue;
+        out << fen << "  # synthetic-opening-" << written
+            << " ply=" << target_ply << " pieces=" << pieces << "\n";
+        ++written;
+    }
+    if (written != count) {
+        std::cerr << "error: generated " << written << "/" << count
+                  << " openings after " << attempts << " attempts\n";
+        return 1;
+    }
+    std::cout << "gen-opening-pool: wrote " << written
+              << " legal quiet unique positions to " << out_path
+              << " attempts=" << attempts << " seed=" << seed << "\n";
     return 0;
 }
 
@@ -4764,6 +4843,7 @@ int main(int argc, char** argv) {
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
         else if (a == "--gen-siblings")             return run_gen_siblings_mode(argc, argv);
+        else if (a == "--gen-opening-pool")          return run_gen_opening_pool_mode(argc, argv);
         else if (a == "--gen-egdb-wld")             return run_gen_egdb_wld_mode(argc, argv);
         else if (a == "--eval-selfcheck")           return run_eval_selfcheck_mode(argc, argv);
         else if (a == "--egdb-mtc-probe")           return run_egdb_mtc_probe_mode(argc, argv);
@@ -4811,6 +4891,9 @@ int main(int argc, char** argv) {
                 "  --gen-egdb-wld <N> <out.jnnw> <db_dir> [max_pieces=7] [cache_mb] [seed]\n"
                 "                                   emit N random quiet endgame positions\n"
                 "                                   labelled with the exact egdb WLD.\n"
+                "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
+                "                                   emit deterministic unique legal quiet\n"
+                "                                   midgame positions reached from startpos.\n"
                 "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"

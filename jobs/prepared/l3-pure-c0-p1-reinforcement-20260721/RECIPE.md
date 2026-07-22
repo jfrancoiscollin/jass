@@ -15,7 +15,11 @@ Ce job ne répète pas le triangle. Il augmente uniquement la puissance statisti
 
 ## Ouvertures
 
-M0 utilisait les 300 premières ouvertures nettoyées de `data/dilf_combinations.fen`. Le renforcement utilise les 768 suivantes, sans recouvrement.
+M0 utilisait les 305 positions nettoyées de `data/dilf_combinations.fen`.
+Le renforcement génère 768 positions synthétiques, légales, calmes et
+uniques par trajectoires aléatoires déterministes depuis la position initiale
+(`seed=271828`, plies 8–32, au moins 20 pièces). Le runner prouve l'absence de
+recouvrement exact avec DILF et publie le hash et le manifeste du pool.
 
 Chaque vue comprend 768 paires color-swapped, soit 1 536 parties. Les deux vues primaires totalisent 3 072 parties.
 
