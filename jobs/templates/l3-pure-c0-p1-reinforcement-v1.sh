@@ -13,6 +13,10 @@ PAR_GATE="${PAR_GATE:-12}"
 DEPTH="${DEPTH:-9}"
 MOVETIME="${MOVETIME:-0.3}"
 SHARD_TIMEOUT="${SHARD_TIMEOUT:-10800}"
+# Per-game wall-clock cap (s) → draw. Bounds the movetime-endgame overshoot so a
+# shard's games (<= NOPEN*2/nshards) finish well within SHARD_TIMEOUT instead of
+# accumulating to tens of hours (the 0894 15h hang).
+GAME_TIMEOUT="${GAME_TIMEOUT:-100}"
 CACHE_MB="${CACHE_MB:-128}"
 JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-8}"
 FULL_RUN_APPROVED="${FULL_RUN_APPROVED:-0}"
@@ -87,6 +91,7 @@ run_gate(){ local label="$1"; shift; timeout 21600 python3 jobs/tools/run_jass_g
   --jass "$J8" --pattern-a "$W/p1-0842-g4.pjtw" --pattern-b "$W/c0-a-g3.pjtw" \
   --search-params-a "$Q00_SEARCH" --search-params-b "$Q00_SEARCH" --openings-file "$W/open-independent.fen" \
   --pairs 1 --nshards "$NSH_GATE" --max-parallel "$PAR_GATE" --timeout "$SHARD_TIMEOUT" \
+  --game-timeout "$GAME_TIMEOUT" \
   --work-dir "$W/gate-$label" --out "$ART/$label.json" "$@" > "$W/$label.log" 2>&1 || { cat "$W/$label.log" | tee -a "$RES"; die "$label failed"; }; }
 
 set_stage q00-depth9-direct

@@ -38,6 +38,10 @@ def main(argv):
                         "equal-time A/B where one side has a costlier search (e.g. ext_forcing).")
     p.add_argument("--pairs", type=int, default=8, help="colour-swap pairs per opening")
     p.add_argument("--max-plies", type=int, default=160)
+    p.add_argument("--game-timeout", type=float, default=None,
+                   help="per-game wall-clock cap in seconds; a game exceeding it is scored a DRAW. "
+                        "Bounds the movetime-endgame overshoot bug (moves stay under the per-move "
+                        "timeout but accumulate) so the gate completes instead of running for hours.")
     p.add_argument("--shard", type=int, default=0, help="this shard index [0..nshards)")
     p.add_argument("--nshards", type=int, default=1, help="total shards (game-level parallelism)")
     p.add_argument("--quiet", action="store_true", help="only print the RESULT line")
@@ -77,7 +81,8 @@ def main(argv):
         try:
             r = play_game(white, black, referee, opening,
                           depth=(None if args.movetime else args.depth),
-                          movetime=args.movetime, max_plies=args.max_plies)
+                          movetime=args.movetime, max_plies=args.max_plies,
+                          game_timeout_s=args.game_timeout)
         except Exception as exc:  # noqa: BLE001
             # ROBUSTESSE : un coup qui timeout (overshoot movetime-endgame) ou un moteur qui
             # deraille NE DOIT PAS crasher le shard (= perte de toutes les games restantes).

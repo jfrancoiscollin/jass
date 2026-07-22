@@ -84,6 +84,9 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
         "--quiet",
         "--openings-file", args.openings_file,
     ]
+    game_timeout = getattr(args, "game_timeout", None)
+    if game_timeout is not None:
+        command.extend(["--game-timeout", str(game_timeout)])
     if args.movetime is not None:
         command.extend(["--movetime", str(args.movetime)])
     else:
@@ -180,6 +183,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--nshards", type=int, default=16)
     parser.add_argument("--max-parallel", type=int, required=True)
     parser.add_argument("--timeout", type=int, default=7000)
+    parser.add_argument("--game-timeout", type=float, default=None,
+                        help="forwarded to the harness: per-game wall-clock cap (s), exceeded → draw.")
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)

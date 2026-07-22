@@ -494,7 +494,8 @@ def play_game(white: object, black: object,
               scan_depth: int | None = None,
               jass_movetime: float | None = None,
               scan_movetime: float | None = None,
-              max_plies: int = 200) -> GameResult:
+              max_plies: int = 200,
+              game_timeout_s: float | None = None) -> GameResult:
     """Both engines must already be ready. They are addressed via
     duck-typed helpers (`go_jass(engine, depth)` for JassEngine,
     `go_scan(engine, scan_pos, moves, depth)` for ScanEngine).
@@ -514,7 +515,14 @@ def play_game(white: object, black: object,
     ply = 0
     moves_log: list[str] = []
     fens_log:  list[str] = [opening_fen]
+    game_deadline = (time.monotonic() + game_timeout_s) if game_timeout_s else None
     while ply < max_plies:
+        # Per-game wall-clock cap → draw. Bounds the movetime-endgame overshoot
+        # bug: individual moves stay under the per-move timeout but accumulate
+        # to tens of minutes, so cap the whole game instead of hanging the gate.
+        if game_deadline is not None and time.monotonic() > game_deadline:
+            return GameResult("D", ply, "game time cap",
+                              moves=moves_log, fens=fens_log)
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
         if isinstance(current, JassEngine):
