@@ -280,13 +280,33 @@ bras complet et joué uniquement les bras manquants. La matrice est complète :
 `standard_off/g0_g4`, `top3_off/g4_g0` et `top3_off/g4_g4`. Aucun bras
 `top3_on` ne contient d’anomalie et aucune erreur moteur n’a été observée.
 
-`home-0928quinquies` réutilise cette matrice sans rejouer une ligne, exige les
-trois identités authentifiées, joue seulement la garde équilibrée de 512
-parties, puis calcule les effets causaux et 10 000 bootstraps.
+`home-0928quinquies` a réutilisé cette matrice sans rejouer une ligne, exigé
+les trois identités authentifiées, puis joué la garde équilibrée de 512
+parties. Les quatre gardes passent. Le résultat final est :
 
-Sizing HOME : `nproc=16`, 5 504 parties, ETA conservatrice **35–70 min**, hard
-cap **120 min**, compilation `-j4`. Aucun verdict ne peut promouvoir, continuer
-ou queuer automatiquement.
+```text
+CONVERSION_2X2_G1_SCREEN_READY
+technical_status=derived_complete_3_ply_caps
+promotion_authorized=false
+continuation_authorized=false
+automatic_next_job=null
+```
+
+Les effets causaux sont nets. Par rapport au départ standard, le départ TOP3
+exclusif dégrade l’attaque de `−0,5352` (IC95
+`[−0,6055 ; −0,4674]`), la défense de `−0,6367`
+(`[−0,7201 ; −0,5534]`) et l’effet joint de `−0,2383`
+(`[−0,3125 ; −0,1654]`). Le reweight role-aware V2 dégrade aussi l’attaque
+de `−0,2513`, la défense de `−0,1003` et l’effet joint de `−0,1315`,
+avec des IC95 entièrement négatifs. Son interaction avec TOP3 est elle-même
+négative.
+
+La cellule propre `standard_off` conserve les gains causaux de L3-PURE :
+attaque `+0,1719`, défense `+0,6536`, effet joint `+0,0104`. La recette à
+retenir pour la maturité généraliste est donc **départ standard, sans reweight
+V2**. TOP3 exclusif et le reweight V2 sont fermés pour cette continuation.
+Cela attribue causalement l’échec 0890bis à la recette spécialiste et non à
+l’architecture linéaire ni au principe d’autojeu WDL.
 
 ## 6. Prochaines actions séparées
 
@@ -301,8 +321,8 @@ ou queuer automatiquement.
 ### Spécialiste `L3-IMBALANCE2`
 
 1. ne pas prolonger 0890bis ;
-2. si une attribution causale fine est nécessaire, préparer le DOE `2 × 2`
-   départ standard/TOP3 × reweighting off/on à volume identique ;
+2. considérer le DOE `2 × 2` comme terminé : TOP3 exclusif et reweight V2
+   sont causalement défavorables ;
 3. ne pas réutiliser RC4 ;
 4. ne pas relancer P3 à recette V2 identique ;
 5. ne jamais présenter un résultat spécialiste comme un remplacement généraliste.

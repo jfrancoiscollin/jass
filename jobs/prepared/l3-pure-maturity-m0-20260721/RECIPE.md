@@ -36,3 +36,8 @@ réduit seulement la concurrence à six shards (`PAR_GATE=2` pour chacun des
 trois matches) et la compilation à `-j4`, soit au plus douze moteurs simultanés
 sur les seize CPU HOME. Les hard caps sont de 90 minutes pour la couverture et
 de huit heures pour le triangle.
+
+Les reprises `home-0931` et `home-0932` sont scientifiquement identiques. Elles
+ajoutent uniquement le défaut explicite `JASS_OBJSTORE_REMOTE=r2:jass-data`
+requis par les templates sur HOME ; les identifiants initiaux restent figés
+comme provenance des lancements interrompus avant calcul.

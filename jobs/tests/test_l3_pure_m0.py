@@ -263,7 +263,7 @@ class M0SourceContractTests(unittest.TestCase):
 class M0PreparedContractTests(unittest.TestCase):
     def test_shell_files_are_valid_and_not_self_queued(self):
         scripts = [TRIANGLE, COVERAGE_RUNNER, *sorted(PREPARED.glob("*.sh"))]
-        self.assertEqual(len(scripts), 6)
+        self.assertEqual(len(scripts), 8)
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
             text = script.read_text(encoding="utf-8")
@@ -280,16 +280,24 @@ class M0PreparedContractTests(unittest.TestCase):
 
     def test_home_wrappers_change_only_execution_sizing(self):
         coverage = (
-            PREPARED / "home-0929-l3-pure-m0-coverage.sh"
+            PREPARED / "home-0931-l3-pure-m0-coverage-v2.sh"
         ).read_text(encoding="utf-8")
         triangle = (
-            PREPARED / "home-0930-l3-pure-m0-triangle.sh"
+            PREPARED / "home-0932-l3-pure-m0-triangle-v2.sh"
         ).read_text(encoding="utf-8")
         self.assertIn("timeout -k 60s 5400s", coverage)
+        self.assertIn(
+            'JASS_OBJSTORE_REMOTE="${JASS_OBJSTORE_REMOTE:-r2:jass-data}"',
+            coverage,
+        )
         self.assertIn("NOPEN=300 NSH_GATE=12 PAR_GATE=2 DEPTH=9", triangle)
         self.assertIn("NATIVE_MOVETIME=0.3", triangle)
         self.assertIn("JASS_BUILD_JOBS=4 SHARD_TIMEOUT=10800", triangle)
         self.assertIn("timeout -k 60s 28800s", triangle)
+        self.assertIn(
+            'JASS_OBJSTORE_REMOTE="${JASS_OBJSTORE_REMOTE:-r2:jass-data}"',
+            triangle,
+        )
 
     def test_runners_publish_gitops_summary_and_fail_closed(self):
         triangle = TRIANGLE.read_text(encoding="utf-8")
