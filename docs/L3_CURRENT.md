@@ -16,7 +16,7 @@
 > l3_pure_top3_causal_conversion_ready;
 > top3_specialist_recipe_failure_localized_factors_confounded;
 > conversion_2x2_g1_models_trained_matrix_single_cap;
-> conversion_2x2_g1_eval_recovery_prepared`.
+> conversion_2x2_g1_eval_recovery_0922quater_prepared`.
 
 ## 1. Architecture du programme
 
@@ -89,7 +89,7 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 | causal conversion | matrice TOP3 stable | `cpx62-0908` + salvage `0920` | **`SALVAGE_CAUSAL_CONVERSION_MATRIX_READY`** |
 | causal conversion | miroir L3-PURE | `cpx62-0921` | **`L3_PURE_CAUSAL_CONVERSION_MATRIX_READY`** |
 | autopsie recette | 0842 vs 0890bis, matrices 0908/0921 | analyse locale reproductible | **`TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED`** |
-| ablation recette | `0922bis` G1, départ standard/TOP3 × reweight off/on | 4 modèles entraînés; matrice interrompue par 1 ply-cap | **reprise eval-only `0922ter` préparée** |
+| ablation recette | `0922bis` G1, départ standard/TOP3 × reweight off/on | 4 modèles entraînés; matrice interrompue par 1 ply-cap | **reprise eval-only `0922quater` préparée** |
 
 ## 4. Couverture et maturité de `L3-PURE`
 
@@ -263,11 +263,15 @@ candidat. `0922bis` s’est arrêté après un unique cap déterministe à 400 p
 dans `standard_off/g0_g4` ; ce résultat technique ne constitue pas un verdict
 sur les modèles.
 
-`0922ter` réutilise les quatre modèles vérifiés depuis le résultat R2 de
+`0922quater` réutilise les quatre modèles vérifiés depuis le résultat R2 de
 `0922bis`, ne refait aucun entraînement, rejoue la matrice complète et adjugera
 uniquement ce cap épinglé comme nul. Le rapport calcule les effets principaux
 départ/reweighting et leur interaction avec 10 000 bootstraps appariés. Toute
 autre anomalie reste fail-closed.
+
+La première reprise `0922ter` a vérifié les modèles mais a échoué avant toute
+partie : le build d’évaluation n’avait pas réémis la géométrie `8cf`.
+`0922quater` rétablit explicitement cette étape avant compilation.
 
 Sizing mesuré CPX62 : `nproc=16`, 5 504 parties, ETA **12–18 min**, hard cap
 **30 min**. Matrice et garde : timeout 900 s/shard. Aucun verdict ne peut

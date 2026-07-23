@@ -234,6 +234,7 @@ done
 grep -q "g_emasks" src/scan_eval.cpp || die "architecture guard: scan_eval lacks g_emasks"
 grep -q "has_any_capture" src/search.cpp || die "architecture guard: search lacks has_any_capture"
 grep -q "has_any_capture" src/movegen.cpp || die "architecture guard: movegen lacks has_any_capture"
+python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
 FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
 cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$JASS_BUILD_JOBS" --target jass > "$W/build.log" 2>&1

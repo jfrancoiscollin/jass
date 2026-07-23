@@ -13,12 +13,16 @@ PREPARED = ROOT / "jobs/prepared/l3-conversion-2x2-20260723"
 WRAPPER = PREPARED / "cpx62-0922-l3-conversion-2x2-g1-screen-v1.sh"
 RETRY_WRAPPER = PREPARED / "cpx62-0922bis-l3-conversion-2x2-g1-screen-v1.sh"
 EVAL_WRAPPER = PREPARED / "cpx62-0922ter-l3-conversion-2x2-eval-only-v1.sh"
+EVAL_RETRY_WRAPPER = PREPARED / "cpx62-0922quater-l3-conversion-2x2-eval-only-v1.sh"
 RECIPE = PREPARED / "RECIPE.md"
 
 
 class Conversion2x2JobTests(unittest.TestCase):
     def test_shell_contracts(self):
-        for path in (RUNNER, EVAL_RUNNER, WRAPPER, RETRY_WRAPPER, EVAL_WRAPPER):
+        for path in (
+            RUNNER, EVAL_RUNNER, WRAPPER, RETRY_WRAPPER,
+            EVAL_WRAPPER, EVAL_RETRY_WRAPPER,
+        ):
             subprocess.run(["bash", "-n", str(path)], check=True)
 
     def test_eval_only_recovery_is_pinned_and_does_not_retrain(self):
@@ -32,6 +36,7 @@ class Conversion2x2JobTests(unittest.TestCase):
             "derived_complete_single_ply_cap",
             "--expected-state failed",
             "source-model-verification.json",
+            "gen_patterns.py --emit --variant 8cf",
             "NO_AUTOMATIC_CONTINUATION",
         ):
             self.assertIn(token, text)
@@ -91,6 +96,12 @@ class Conversion2x2JobTests(unittest.TestCase):
         eval_wrapper = EVAL_WRAPPER.read_text(encoding="utf-8")
         self.assertIn("cpx62-0922ter-l3-conversion-2x2-eval-only-v1", eval_wrapper)
         self.assertIn("timeout -k 60s 1800s", eval_wrapper)
+        eval_retry_wrapper = EVAL_RETRY_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn(
+            "cpx62-0922quater-l3-conversion-2x2-eval-only-v1",
+            eval_retry_wrapper,
+        )
+        self.assertIn("timeout -k 60s 1800s", eval_retry_wrapper)
         for prepared_wrapper in (wrapper, retry_wrapper):
             self.assertIn("timeout -k 60s 3600s", prepared_wrapper)
             self.assertIn("expected_duration: 30-45 min", prepared_wrapper)
