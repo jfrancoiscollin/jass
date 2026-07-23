@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 21 juillet 2026**  
+> **Mis à jour : 23 juillet 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -12,7 +12,7 @@
 > c3_mf_no_lead; 32cf_no_go_data_limited; pure_maturity_experiment_open;
 > imbalance2_p1_v2_no_clear_lead; imbalance2_p2_no_clear_improvement_or_unstable;
 > imbalance2_stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
-> d1x_rc4_autopsy_ready`.
+> d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready`.
 
 ## 1. Architecture du programme
 
@@ -82,6 +82,7 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 | spécialiste | diagnostic causal | `cpx62-0871` | `D0_CAUSAL_PROFILE_READY` |
 | spécialiste | représentation RC4 | `cpx62-0872` | **`D1_RC4_NO_GO`** |
 | spécialiste | autopsie RC4 | `cpx62-0874` | **`D1X_RC4_AUTOPSY_READY`** |
+| causal conversion | matrice TOP3 stable | `cpx62-0908` + salvage `0920` | **`SALVAGE_CAUSAL_CONVERSION_MATRIX_READY`** |
 
 ## 4. Couverture et maturité de `L3-PURE`
 
@@ -162,6 +163,34 @@ D1-X recommande seulement la conception humaine d’un pilote search-only sépar
 `S1_ROLE_STABILITY_EXTENSION`. Il n’autorise ni implémentation automatique, ni
 entraînement, ni promotion.
 
+### 5.5 Matrice causale de conversion TOP3 stable
+
+`cpx62-0908` a joué les 2 688 parties prévues sur les 384 mêmes positions +2
+stables. Son gate technique strict a échoué sur un unique cap à 400 plies.
+`cpx62-0920` n’a rejoué aucune partie : il a authentifié le tar brut, adjugé
+uniquement cette partie nulle, puis calculé la matrice et 10 000 bootstraps.
+Le gate zéro-cap original reste explicitement `FAILED`.
+
+W/D/L du point de vue du camp +2 :
+
+```text
+Scan/Scan 382/0/2    Scan/G4 384/0/0    G4/Scan 7/0/377
+G0/G0     342/0/42   G4/G0   210/0/174  G0/G4   356/0/28
+G4/G4     270/1/113
+```
+
+Le résultat causal principal est négatif pour l’apprentissage de conversion de
+G4 : effet d’attaque `G4/G0 − G0/G0 = −0,6875`, IC95
+`[−0,8021 ; −0,5677]`. L’effet joint G4 est aussi négatif
+(`−0,3724`, IC95 `[−0,4818 ; −0,2656]`). Scan domine G4 dans les deux rôles :
+attaque `+0,5911` et défense `+1,3724`, avec IC95 entièrement positifs.
+
+Cela ferme l’interprétation « G4 a appris une conversion seulement masquée par
+le harnais ». Sur ce domaine borné, la politique issue de l’autojeu G4 a
+dégradé le rôle attaquant par rapport à G0. Le fait que Scan partage une classe
+d’évaluation linéaire ne suffit donc pas : sa fonction apprise et sa
+co-adaptation recherche/évaluation restent causalement différentes.
+
 ## 6. Prochaines actions séparées
 
 ### Généraliste `L3-PURE`
@@ -188,7 +217,8 @@ entraînement, ni promotion.
 - consolidation : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba` ;
 - D0 : `r2:jass-data/runs/cpx62-0871-l3-imbalance2-d0-diagnostic/20260720T193310Z-bced44e7` ;
 - D1-RC4 : `r2:jass-data/runs/cpx62-0872-l3-imbalance2-d1-rc4/20260720T202210Z-fa68634c` ;
-- D1-X : `r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6`.
+- D1-X : `r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6` ;
+- matrice TOP3 0908 salvagée : `r2:jass-data/runs/cpx62-0920-salvage-0908-stable-top3-matrix-v1/20260723T133448Z-2ed34499`.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.

@@ -1,7 +1,7 @@
 # Jass — synthèse consolidée des résultats du projet
 
 > **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
-> **Mis à jour :** 2026-07-18
+> **Mis à jour :** 2026-07-23
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)
@@ -221,6 +221,16 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   A vs `gen2-mmto` 0,497 (parité), B vs `gen2-mmto` 0,470. Holdout log-loss
   A 0,451 / B 0,435. La frontière mobile v1 est un levier mort ; la lignée pure
   reproduit le plateau (~0,67) tout en atteignant la parité avec le champion.
+- **Matrice causale TOP3 stable `0908/0920` :** 2 688 parties sur 384 positions
+  +2 communes, d10. Le gate strict 0908 reste échoué sur un unique cap 400
+  plies ; 0920 l’a adjugé nul sans replay et a publié une sensibilité W/L.
+  G4/G4 vaut 270/1/113 (70,31 % W), mais le contraste apparié d’attaque
+  `G4/G0 − G0/G0` est massivement négatif : −0,6875, IC95
+  [−0,8021 ; −0,5677]. L’effet joint vaut −0,3724, IC95
+  [−0,4818 ; −0,2656]. Scan domine G4 en attaque (+0,5911) comme en défense
+  (+1,3724), IC95 entièrement positifs. Le plateau n’est donc pas une
+  conversion apprise mais cachée par l’agrégat : G4 a causalement dégradé le
+  rôle attaquant sur ce domaine.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
