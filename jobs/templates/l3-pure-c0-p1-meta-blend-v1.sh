@@ -15,6 +15,8 @@ MOVETIME="${MOVETIME:-0.3}"
 PAR_GATE="${PAR_GATE:-12}"
 GAME_TIMEOUT="${GAME_TIMEOUT:-100}"
 JASS_BUILD_JOBS="${JASS_BUILD_JOBS:-4}"
+SHARD_TIMEOUT="${SHARD_TIMEOUT:-10800}"
+GATE_TIMEOUT="${GATE_TIMEOUT:-14400}"
 FULL_RUN_APPROVED="${FULL_RUN_APPROVED:-0}"
 SCIENTIFIC_GO="${SCIENTIFIC_GO:-0}"
 ALPHAS=(0.25 0.50 0.75 0.875)
@@ -113,9 +115,9 @@ run_gate(){ local label="$1" pattern_a="$2" pattern_b="$3" openings="$4" nshards
   local opening_count expected_games
   opening_count="$(grep -cve '^[[:space:]]*$' "$openings")"
   expected_games="$((2 * opening_count))"
-  timeout 14400 python3 jobs/tools/run_jass_gate_bounded.py --jass "$J8" \
+  timeout "$GATE_TIMEOUT" python3 jobs/tools/run_jass_gate_bounded.py --jass "$J8" \
     --pattern-a "$pattern_a" --pattern-b "$pattern_b" --search-params-a "$Q00_SEARCH" --search-params-b "$Q00_SEARCH" \
-    --openings-file "$openings" --pairs 1 --nshards "$nshards" --max-parallel "$PAR_GATE" --timeout 10800 \
+    --openings-file "$openings" --pairs 1 --nshards "$nshards" --max-parallel "$PAR_GATE" --timeout "$SHARD_TIMEOUT" \
     --game-timeout "$GAME_TIMEOUT" --work-dir "$W/gate-$label" --out "$ART/$label.json" "$@" \
     > "$W/$label.log" 2>&1 || { cat "$W/$label.log"|tee -a "$RES"; die "$label failed"; }
   python3 - "$ART/$label.json" "$expected_games" <<'PY' || die "$label incomplete"

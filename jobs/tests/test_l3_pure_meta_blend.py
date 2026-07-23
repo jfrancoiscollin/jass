@@ -36,6 +36,10 @@ def main() -> int:
     assert "20260718T104245Z-8fc4eacb" in wrapper
     assert "20260719T175711Z-337ccbdc" in wrapper
     assert "PAR_GATE=12" in wrapper
+    assert "SHARD_TIMEOUT=1800 GATE_TIMEOUT=2700" in wrapper
+    assert "timeout --signal=TERM --kill-after=30 5400" in wrapper
+    assert 'timeout "$GATE_TIMEOUT"' in template
+    assert '--timeout "$SHARD_TIMEOUT"' in template
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)

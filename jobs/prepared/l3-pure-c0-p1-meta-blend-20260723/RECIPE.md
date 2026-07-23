@@ -20,3 +20,17 @@ parent the combined depth+movetime score must be at least 50.5% with the lower
 95% confidence bound above 50%.
 
 Promotion and automatic continuation are always forbidden.
+
+## Home runner calibration
+
+The `home-0923` replication keeps the scientific contract unchanged. A
+192-game calibration on the actual 16-CPU, 15-GiB WSL host measured:
+
+- build: 36 seconds;
+- depth 8: 64 games in 9 seconds (7.1111 games/s);
+- depth 9: 64 games in 10 seconds (6.4 games/s);
+- 0.3 seconds per move: 64 games in 170 seconds (0.3765 games/s).
+
+The resulting ETA for all 4,096 games is 55–70 minutes. The home wrapper uses
+an 1,800-second per-shard timeout, a 2,700-second per-gate timeout and a
+5,400-second whole-job hard cap.
