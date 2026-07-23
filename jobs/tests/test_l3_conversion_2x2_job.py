@@ -8,16 +8,35 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER = ROOT / "jobs/templates/l3-conversion-2x2-g1-screen-v1.sh"
+EVAL_RUNNER = ROOT / "jobs/templates/l3-conversion-2x2-eval-only-v1.sh"
 PREPARED = ROOT / "jobs/prepared/l3-conversion-2x2-20260723"
 WRAPPER = PREPARED / "cpx62-0922-l3-conversion-2x2-g1-screen-v1.sh"
 RETRY_WRAPPER = PREPARED / "cpx62-0922bis-l3-conversion-2x2-g1-screen-v1.sh"
+EVAL_WRAPPER = PREPARED / "cpx62-0922ter-l3-conversion-2x2-eval-only-v1.sh"
 RECIPE = PREPARED / "RECIPE.md"
 
 
 class Conversion2x2JobTests(unittest.TestCase):
     def test_shell_contracts(self):
-        for path in (RUNNER, WRAPPER, RETRY_WRAPPER):
+        for path in (RUNNER, EVAL_RUNNER, WRAPPER, RETRY_WRAPPER, EVAL_WRAPPER):
             subprocess.run(["bash", "-n", str(path)], check=True)
+
+    def test_eval_only_recovery_is_pinned_and_does_not_retrain(self):
+        text = EVAL_RUNNER.read_text(encoding="utf-8")
+        for token in (
+            "4992_matrix+512_balanced",
+            "SOURCE_ATTEMPT_ID=\"20260723T152652Z-03f7e50a\"",
+            "CAP_POSITION_ID=\"9bc75f637c4afd1d9ccb4ed29ea854d784ef32dbb6f5d58f67eb917c40c9b69f\"",
+            "expected exactly one technical shard",
+            "--salvage-candidate \"$CAP_CANDIDATE\"",
+            "derived_complete_single_ply_cap",
+            "--expected-state failed",
+            "source-model-verification.json",
+            "NO_AUTOMATIC_CONTINUATION",
+        ):
+            self.assertIn(token, text)
+        self.assertNotIn("--gen-data-wdl", text)
+        self.assertNotIn("train_stream.py", text)
 
     def test_fixed_sizing_and_pairwise_reuse(self):
         text = RUNNER.read_text(encoding="utf-8")
@@ -69,6 +88,9 @@ class Conversion2x2JobTests(unittest.TestCase):
         recipe = RECIPE.read_text(encoding="utf-8")
         self.assertIn("cpx62-0922-l3-conversion-2x2-g1-screen-v1", wrapper)
         self.assertIn("cpx62-0922bis-l3-conversion-2x2-g1-screen-v1", retry_wrapper)
+        eval_wrapper = EVAL_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("cpx62-0922ter-l3-conversion-2x2-eval-only-v1", eval_wrapper)
+        self.assertIn("timeout -k 60s 1800s", eval_wrapper)
         for prepared_wrapper in (wrapper, retry_wrapper):
             self.assertIn("timeout -k 60s 3600s", prepared_wrapper)
             self.assertIn("expected_duration: 30-45 min", prepared_wrapper)

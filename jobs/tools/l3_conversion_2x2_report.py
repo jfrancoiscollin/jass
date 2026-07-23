@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -46,6 +47,9 @@ def read_jsonl(paths: Iterable[Path]) -> list[dict[str, Any]]:
 
 def validated_arm(
     contract: matrix.PoolContract, root: Path, candidate: str, arm: str,
+    *,
+    salvage: dict[str, Any] | None = None,
+    adjudications: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     directory = root / ("common" if arm == "g0_g0" else candidate) / arm
     rows = read_jsonl(directory.glob("s*.jsonl"))
@@ -54,11 +58,66 @@ def validated_arm(
         row for row in by_id.values()
         if row.get("error") or str(row.get("reason", "")).lower() in matrix.CAP_REASONS
     ]
-    if failures or technical:
+    if failures:
         raise ValueError(
             f"{candidate}/{arm}: validation failures={failures[:8]} "
             f"technical_rows={len(technical)}"
         )
+    if technical:
+        if (
+            salvage is None
+            or candidate != salvage["candidate"]
+            or arm != salvage["arm"]
+            or len(technical) != 1
+        ):
+            raise ValueError(
+                f"{candidate}/{arm}: validation failures=[] "
+                f"technical_rows={len(technical)}"
+            )
+        cap = technical[0]
+        expected = {
+            "position_id": salvage["position_id"],
+            "cell": salvage["cell"],
+            "reason": "ply cap",
+            "plies": salvage["plies"],
+            "outcome_white": "D",
+            "outcome_plus2": "D",
+            "error": None,
+        }
+        mismatches = {
+            key: (cap.get(key), value)
+            for key, value in expected.items()
+            if cap.get(key) != value
+        }
+        if mismatches:
+            raise ValueError(
+                f"{candidate}/{arm}: pinned ply-cap mismatch {mismatches}"
+            )
+        raw_sha = hashlib.sha256(
+            (json.dumps(cap, sort_keys=True, separators=(",", ":")) + "\n").encode()
+        ).hexdigest()
+        by_id = copy.deepcopy(by_id)
+        by_id[salvage["position_id"]]["reason"] = matrix.SALVAGE_DRAW_REASON
+        _, derived_failures = matrix.validate_arm_rows(
+            contract,
+            arm,
+            list(by_id.values()),
+            additional_draw_reasons=frozenset({matrix.SALVAGE_DRAW_REASON}),
+        )
+        if derived_failures:
+            raise ValueError(
+                f"{candidate}/{arm}: adjudicated validation failed "
+                f"{derived_failures[:8]}"
+            )
+        if adjudications is not None:
+            adjudications.append({
+                "policy": "single pinned 400-ply cap adjudicated as draw; no replay",
+                **salvage,
+                "raw_row_sha256": raw_sha,
+                "raw_reason": "ply cap",
+                "derived_reason": matrix.SALVAGE_DRAW_REASON,
+                "changes_to_raw_games": 1,
+            })
     return by_id
 
 
@@ -249,15 +308,51 @@ def effect_signal(value: float, interval: list[float], threshold: float = 0.05) 
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     contract = matrix.load_pool_contract(args.pool, args.proof)
-    control = validated_arm(contract, args.matrix_root, "common", "g0_g0")
+    salvage_values = (
+        getattr(args, "salvage_candidate", None),
+        getattr(args, "salvage_arm", None),
+        getattr(args, "salvage_position_id", None),
+        getattr(args, "salvage_cell", None),
+    )
+    if any(salvage_values) and not all(salvage_values):
+        raise ValueError("single-ply-cap salvage parameters must be all-or-none")
+    salvage = None
+    if all(salvage_values):
+        salvage = {
+            "candidate": salvage_values[0],
+            "arm": salvage_values[1],
+            "position_id": salvage_values[2],
+            "cell": salvage_values[3],
+            "plies": getattr(args, "salvage_plies", 400),
+        }
+    adjudications: list[dict[str, Any]] = []
+    control = validated_arm(
+        contract,
+        args.matrix_root,
+        "common",
+        "g0_g0",
+        salvage=salvage,
+        adjudications=adjudications,
+    )
     ids = [position.position_id for position in contract.positions]
     candidate_arms = {
         candidate: {
-            arm: validated_arm(contract, args.matrix_root, candidate, arm)
+            arm: validated_arm(
+                contract,
+                args.matrix_root,
+                candidate,
+                arm,
+                salvage=salvage,
+                adjudications=adjudications,
+            )
             for arm in ARMS
         }
         for candidate in CANDIDATES
     }
+    if salvage is not None and len(adjudications) != 1:
+        raise ValueError(
+            f"expected exactly one pinned ply-cap adjudication, got {len(adjudications)}"
+        )
     endpoints = {
         candidate: candidate_endpoints(ids, control, candidate_arms[candidate])
         for candidate in CANDIDATES
@@ -297,7 +392,11 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "schema": 1,
         "decision": "CONVERSION_2X2_G1_SCREEN_READY",
-        "technical_status": "complete",
+        "technical_status": (
+            "derived_complete_single_ply_cap" if adjudications else "complete"
+        ),
+        "original_zero_cap_gate_ready": not bool(adjudications),
+        "adjudications": adjudications,
         "causal_unit": "one common stable TOP3 position",
         "source_corpus_reuse": {
             "standard_off_on_share_identical_G1_selfplay": True,
@@ -339,6 +438,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--balanced-floor", type=float, default=0.40)
     parser.add_argument("--bootstrap", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=271828)
+    parser.add_argument("--salvage-candidate", choices=CANDIDATES)
+    parser.add_argument("--salvage-arm", choices=ARMS)
+    parser.add_argument("--salvage-position-id")
+    parser.add_argument("--salvage-cell")
+    parser.add_argument("--salvage-plies", type=int, default=400)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 

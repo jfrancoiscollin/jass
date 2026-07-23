@@ -19,6 +19,56 @@ spec.loader.exec_module(report)
 
 
 class Conversion2x2ReportTests(unittest.TestCase):
+    def test_single_pinned_ply_cap_is_adjudicated_and_audited(self):
+        contract = synthetic_contract()
+        affected = contract.positions[170]
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp) / "standard_off/g0_g4"
+            directory.mkdir(parents=True)
+            handles = [
+                (directory / f"s{shard}.jsonl").open("w", encoding="utf-8")
+                for shard in range(16)
+            ]
+            try:
+                for position in contract.positions:
+                    row = result_row(position, "g0_g4", "D")
+                    if position.position_id == affected.position_id:
+                        row["reason"] = "ply cap"
+                        row["plies"] = 400
+                    handles[position.index % 16].write(
+                        __import__("json").dumps(row) + "\n"
+                    )
+            finally:
+                for handle in handles:
+                    handle.close()
+
+            with self.assertRaisesRegex(ValueError, "technical_rows=1"):
+                report.validated_arm(
+                    contract, Path(tmp), "standard_off", "g0_g4"
+                )
+
+            adjudications = []
+            rows = report.validated_arm(
+                contract,
+                Path(tmp),
+                "standard_off",
+                "g0_g4",
+                salvage={
+                    "candidate": "standard_off",
+                    "arm": "g0_g4",
+                    "position_id": affected.position_id,
+                    "cell": affected.cell,
+                    "plies": 400,
+                },
+                adjudications=adjudications,
+            )
+            self.assertEqual(
+                rows[affected.position_id]["reason"],
+                report.matrix.SALVAGE_DRAW_REASON,
+            )
+            self.assertEqual(len(adjudications), 1)
+            self.assertEqual(adjudications[0]["changes_to_raw_games"], 1)
+
     def test_factor_endpoints(self):
         cells = {
             "standard_off": {"attack_effect": 0.10},
@@ -114,12 +164,53 @@ class Conversion2x2ReportTests(unittest.TestCase):
                     bootstrap=100,
                     seed=271828,
                 ))
+                affected = contract.positions[170]
+                shard_path = (
+                    matrix_root
+                    / "standard_off/g0_g4"
+                    / f"s{affected.index % 16}.jsonl"
+                )
+                shard_rows = [
+                    __import__("json").loads(line)
+                    for line in shard_path.read_text(encoding="utf-8").splitlines()
+                ]
+                for row in shard_rows:
+                    if row["position_id"] == affected.position_id:
+                        row["reason"] = "ply cap"
+                        row["plies"] = 400
+                shard_path.write_text(
+                    "\n".join(
+                        __import__("json").dumps(row) for row in shard_rows
+                    ) + "\n",
+                    encoding="utf-8",
+                )
+                salvaged = report.build_report(SimpleNamespace(
+                    pool=root / "pool.fen",
+                    proof=root / "proof.jsonl",
+                    matrix_root=matrix_root,
+                    balanced_root=balanced_root,
+                    balanced_games=128,
+                    balanced_floor=0.40,
+                    bootstrap=100,
+                    seed=271828,
+                    salvage_candidate="standard_off",
+                    salvage_arm="g0_g4",
+                    salvage_position_id=affected.position_id,
+                    salvage_cell=affected.cell,
+                    salvage_plies=400,
+                ))
             finally:
                 report.matrix.load_pool_contract = original
             self.assertEqual(payload["decision"], "CONVERSION_2X2_G1_SCREEN_READY")
             self.assertTrue(payload["balanced_guard"]["pass"])
             self.assertEqual(payload["contract"]["positions"], 384)
             self.assertEqual(payload["candidate_endpoints"]["top3_on"]["attack_effect"], 0.0)
+            self.assertEqual(
+                salvaged["technical_status"],
+                "derived_complete_single_ply_cap",
+            )
+            self.assertFalse(salvaged["original_zero_cap_gate_ready"])
+            self.assertEqual(len(salvaged["adjudications"]), 1)
 
 
 if __name__ == "__main__":
