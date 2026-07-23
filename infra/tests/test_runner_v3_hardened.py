@@ -50,7 +50,8 @@ class HardenedLauncherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             pid_path = Path(td) / "runs/job/attempt/wrapper.pid"
             unit = H.transient_unit_name(pid_path)
-            command = H.systemd_run_command(unit, Path(td), "echo ok")
+            wrapper = "echo $$ > /tmp/pid; trap 'rc=$?' EXIT"
+            command = H.systemd_run_command(unit, Path(td), wrapper)
         joined = "\n".join(command)
         self.assertIn("--no-block", command)
         self.assertIn("--collect", command)
@@ -62,6 +63,10 @@ class HardenedLauncherTests(unittest.TestCase):
         self.assertFalse(any("StandardOutput" in item for item in command))
         self.assertNotIn("--scope", command)
         self.assertIn(unit, joined)
+        self.assertEqual(
+            command[-1],
+            "echo $$$$ > /tmp/pid; trap 'rc=$$?' EXIT",
+        )
 
     def test_unit_name_is_stable_and_bounded(self):
         path = Path("/var/lib/jass-runner/runs/job/attempt/wrapper.pid")

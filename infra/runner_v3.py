@@ -120,6 +120,36 @@ def validate_job_script(cfg: Config, script: Path) -> None:
         raise RuntimeError(f"{script.name}: forbidden legacy references: {', '.join(forbidden)}")
 
 
+RCLONE_JOB_ENV_NAMES = frozenset({
+    "RCLONE_BIN",
+    "RCLONE_CONF_B64",
+    "RCLONE_CONFIG",
+})
+
+
+def write_job_env(path: Path, values: dict[str, str]) -> None:
+    """Write the minimal job environment, including rclone credentials.
+
+    Transient systemd services do not inherit the runner process environment.
+    Forward only rclone's documented configuration variables, never the full
+    runner environment, and protect the resulting per-attempt file.
+    """
+    forwarded = {
+        name: value
+        for name, value in os.environ.items()
+        if name in RCLONE_JOB_ENV_NAMES or name.startswith("RCLONE_CONFIG_")
+    }
+    entries = {**values, **forwarded}
+    path.write_text(
+        "".join(
+            f"export {name}={shlex.quote(str(value))}\n"
+            for name, value in sorted(entries.items())
+        ),
+        encoding="utf-8",
+    )
+    path.chmod(0o600)
+
+
 def start_job(cfg: Config, script: Path) -> dict:
     validate_job_script(cfg, script)
     job_id = script.stem
@@ -158,17 +188,14 @@ def start_job(cfg: Config, script: Path) -> dict:
     exit_code = run_dir / "exit_code"
     wrapper_pid = run_dir / "wrapper.pid"
     env_file = run_dir / "job.env"
-    env_file.write_text(
-        "\n".join([
-            f"export JASS_CODE_DIR={workspace}",
-            f"export JASS_JOB_ID={job_id}",
-            f"export JASS_ATTEMPT_ID={attempt_id}",
-            f"export JASS_RESULT_DIR={run_dir}",
-            f"export JASS_ARTEFACT_DIR={artefact_dir}",
-            f"export TMPDIR={tmp_dir}",
-        ]) + "\n",
-        encoding="utf-8",
-    )
+    write_job_env(env_file, {
+        "JASS_CODE_DIR": str(workspace),
+        "JASS_JOB_ID": job_id,
+        "JASS_ATTEMPT_ID": attempt_id,
+        "JASS_RESULT_DIR": str(run_dir),
+        "JASS_ARTEFACT_DIR": str(artefact_dir),
+        "TMPDIR": str(tmp_dir),
+    })
     # The EXIT trap records the shell status even when the job script exits
     # early or receives a catchable signal.  A genuinely absent file now means
     # that the wrapper itself vanished (SIGKILL, host loss, cgroup kill, ...),

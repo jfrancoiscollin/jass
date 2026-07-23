@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 import sys
 import tempfile
 import time
 import unittest
 import warnings
 from pathlib import Path
+from unittest import mock
 
 warnings.simplefilter("ignore", ResourceWarning)
 HERE = Path(__file__).resolve().parents[1]
@@ -125,6 +128,30 @@ class LayoutTests(unittest.TestCase):
             script = root / "job.sh"
             script.write_text('cd "$JASS_CODE_DIR"\necho ok > "$JASS_ARTEFACT_DIR/x"\n')
             R.validate_job_script(c, script)
+
+    def test_job_env_forwards_only_rclone_configuration_and_is_private(self):
+        with tempfile.TemporaryDirectory() as td, mock.patch.dict(
+            os.environ,
+            {
+                "RCLONE_BIN": "/usr/bin/rclone",
+                "RCLONE_CONFIG_R2_TYPE": "s3",
+                "RCLONE_CONFIG_R2_SECRET_ACCESS_KEY": "secret with space",
+                "UNRELATED_SECRET": "must-not-leak",
+            },
+            clear=True,
+        ):
+            path = Path(td) / "job.env"
+            R.write_job_env(path, {"JASS_CODE_DIR": "/tmp/work with space"})
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("export RCLONE_CONFIG_R2_TYPE=s3\n", text)
+            self.assertIn(
+                "export RCLONE_CONFIG_R2_SECRET_ACCESS_KEY='secret with space'\n",
+                text,
+            )
+            self.assertIn("export JASS_CODE_DIR='/tmp/work with space'\n", text)
+            self.assertNotIn("UNRELATED_SECRET", text)
+            if os.name != "nt":
+                self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
 
 
 class ResultTests(unittest.TestCase):

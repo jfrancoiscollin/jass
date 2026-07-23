@@ -53,6 +53,11 @@ def transient_unit_name(wrapper_pid_path: Path) -> str:
     return f"jass-job-{digest}.service"
 
 
+def escape_systemd_exec_dollars(command: str) -> str:
+    """Preserve shell dollar expansion through systemd ExecStart parsing."""
+    return command.replace("$", "$$")
+
+
 def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
     """Return the smallest proven non-blocking transient-service command.
 
@@ -76,7 +81,7 @@ def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
         f"--property=WorkingDirectory={cwd}",
         "/usr/bin/bash",
         "-c",
-        wrapper,
+        escape_systemd_exec_dollars(wrapper),
     ]
 
 
