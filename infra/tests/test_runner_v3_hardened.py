@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -63,6 +64,49 @@ class HardenedLauncherTests(unittest.TestCase):
         self.assertTrue(first.startswith("jass-job-"))
         self.assertTrue(first.endswith(".service"))
         self.assertLess(len(first), 64)
+
+    def test_launch_contract_exists_before_systemd_starts_job(self):
+        class Client:
+            returncode = 0
+
+            def communicate(self):
+                return "", ""
+
+        with tempfile.TemporaryDirectory() as td:
+            run_dir = Path(td) / "runs/job/attempt"
+            run_dir.mkdir(parents=True)
+            metadata_path = run_dir / "metadata.json"
+            metadata_path.write_text(json.dumps({"job_id": "job"}))
+            pid_path = run_dir / "wrapper.pid"
+            raw_log = run_dir / "output.log.raw"
+            wrapper = (
+                f"exec >{raw_log} 2>&1; echo $$ > {pid_path}; "
+                f"source {run_dir / 'job.env'}; bash {run_dir / 'job.sh'}"
+            )
+
+            def fake_popen(command, **kwargs):
+                metadata = json.loads(metadata_path.read_text())
+                self.assertEqual(metadata["launcher"], "systemd-transient-service")
+                self.assertEqual(metadata["launcher_state"], "launching")
+                self.assertTrue(metadata["parent_runner_cgroup_isolated"])
+                self.assertTrue(metadata["systemd_unit"].startswith("jass-job-"))
+                report = json.loads((run_dir / "artefacts/runner-launch.json").read_text())
+                self.assertEqual(report["state"], "launching")
+                pid_path.write_text("4321\n")
+                return Client()
+
+            proc = H.launch_transient(
+                ["bash", "-c", wrapper],
+                {"cwd": str(Path(td)), "start_new_session": True},
+                fake_popen,
+            )
+            self.assertEqual(proc.pid, 4321)
+            metadata = json.loads(metadata_path.read_text())
+            self.assertEqual(metadata["launcher_state"], "running")
+            self.assertEqual(metadata["wrapper_pid"], 4321)
+            report = json.loads((run_dir / "artefacts/runner-launch.json").read_text())
+            self.assertEqual(report["state"], "running")
+            self.assertEqual(report["wrapper_pid"], 4321)
 
 
 if __name__ == "__main__":
