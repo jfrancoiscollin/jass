@@ -34,6 +34,7 @@ CAP_DISCOVERY_MODE="${CAP_DISCOVERY_MODE:-0}"
 MATRIX_RESUME_PREFIX="${MATRIX_RESUME_PREFIX:-}"
 MATRIX_RESUME_EXPECTED_CODE_SHA="${MATRIX_RESUME_EXPECTED_CODE_SHA:-}"
 MATRIX_RESUME_EXPECTED_JOB="${MATRIX_RESUME_EXPECTED_JOB:-}"
+MATRIX_RESUME_EXPECTED_STATE="${MATRIX_RESUME_EXPECTED_STATE:-failed}"
 EXPECTED_NPROC=16
 MIN_FREE_MB=10000
 case "$EXECUTION_PROFILE" in
@@ -73,6 +74,11 @@ CAP2_ARM="g4_g0"
 CAP2_POSITION_ID="62faf128aaa80be9acc6b552c938074312cb46dcca5060f84caa1d4c0f797dfd"
 CAP2_CELL="17v19|adv=W|stm=W"
 CAP2_SHARD=12
+CAP3_CANDIDATE="top3_off"
+CAP3_ARM="g4_g4"
+CAP3_POSITION_ID="6d7782f7d3ddab0970611d53076c6c573bd31e1052af225d2a8182c2f46cca98"
+CAP3_CELL="18v20|adv=B|stm=W"
+CAP3_SHARD=6
 CANDIDATES=(standard_off standard_on top3_off top3_on)
 MATRIX_ARMS=(g4_g0 g0_g4 g4_g4)
 
@@ -259,7 +265,8 @@ cp "$INPUTS/stable-top3.proof.jsonl" "$ART/stable-top3.proof.jsonl"
 cp "$INPUTS/pool-contract.json" "$ART/pool-contract.json"
 python3 - "$CAP_MANIFEST" \
   "$CAP1_CANDIDATE" "$CAP1_ARM" "$CAP1_POSITION_ID" "$CAP1_CELL" "$CAP1_SHARD" \
-  "$CAP2_CANDIDATE" "$CAP2_ARM" "$CAP2_POSITION_ID" "$CAP2_CELL" "$CAP2_SHARD" <<'PY'
+  "$CAP2_CANDIDATE" "$CAP2_ARM" "$CAP2_POSITION_ID" "$CAP2_CELL" "$CAP2_SHARD" \
+  "$CAP3_CANDIDATE" "$CAP3_ARM" "$CAP3_POSITION_ID" "$CAP3_CELL" "$CAP3_SHARD" <<'PY'
 import json, sys
 out=sys.argv[1]
 values=sys.argv[2:]
@@ -284,16 +291,16 @@ cp "$CAP_MANIFEST" "$ART/pinned-cap-adjudications.json"
 if [ -n "$MATRIX_RESUME_PREFIX" ]; then
   mkdir -p "$W/resume-source"
   python3 jobs/tools/fetch_result_files.py \
-    --prefix "$MATRIX_RESUME_PREFIX" --expected-state failed \
+    --prefix "$MATRIX_RESUME_PREFIX" --expected-state "$MATRIX_RESUME_EXPECTED_STATE" \
     --file artefacts/conversion-2x2-matrix-raw.tar.gz=matrix.tar.gz \
     --out-dir "$W/resume-source" --report "$ART/verified-matrix-resume-source.json" \
     > "$W/fetch-matrix-resume.log" 2>&1
   python3 - "$ART/verified-matrix-resume-source.json" \
     "$MATRIX_RESUME_PREFIX" "$MATRIX_RESUME_EXPECTED_CODE_SHA" \
-    "$MATRIX_RESUME_EXPECTED_JOB" <<'PY'
+    "$MATRIX_RESUME_EXPECTED_JOB" "$MATRIX_RESUME_EXPECTED_STATE" <<'PY'
 import json,sys
 report=json.load(open(sys.argv[1],encoding="utf-8"))
-assert report["state"]=="verified" and report["result_state"]=="failed"
+assert report["state"]=="verified" and report["result_state"]==sys.argv[5]
 assert report["prefix"]==sys.argv[2]
 assert report["code_sha"]==sys.argv[3]
 assert report["job_id"]==sys.argv[4]
@@ -517,10 +524,10 @@ report=json.load(open(sys.argv[1],encoding="utf-8"))
 training=json.load(open(sys.argv[2],encoding="utf-8"))
 cap_manifest=json.load(open(sys.argv[6],encoding="utf-8"))
 assert report["decision"]=="CONVERSION_2X2_G1_SCREEN_READY"
-assert report["technical_status"]=="derived_complete_2_ply_caps"
+assert report["technical_status"]=="derived_complete_3_ply_caps"
 assert report["original_zero_cap_gate_ready"] is False
 assert report["contract"]["positions"]==384 and report["contract"]["balanced_games_per_candidate"]==128
-assert len(report["adjudications"])==2
+assert len(report["adjudications"])==3
 assert {item["position_id"] for item in report["adjudications"]}=={
     item["position_id"] for item in cap_manifest["adjudications"]
 }
@@ -562,4 +569,4 @@ printf '%s\n' "promotion_authorized=false" > "$ART/PROMOTION_AUTHORIZED__FALSE"
 printf '%s\n' "training_continuation_authorized=false" > "$ART/TRAINING_CONTINUATION_AUTHORIZED__FALSE"
 printf '%s\n' "automatic_next_job=null" > "$ART/AUTOMATIC_NEXT_JOB__NULL"
 set_phase complete
-say "CONVERSION_2X2_G1_SCREEN_READY derived_ply_caps=2 promotion=false continuation=false automatic_next_job=null"
+say "CONVERSION_2X2_G1_SCREEN_READY derived_ply_caps=3 promotion=false continuation=false automatic_next_job=null"

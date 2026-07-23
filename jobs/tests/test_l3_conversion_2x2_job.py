@@ -18,6 +18,9 @@ HOME_EVAL_WRAPPER = PREPARED / "home-0928-l3-conversion-2x2-eval-only-v1.sh"
 HOME_DISCOVERY_WRAPPER = (
     PREPARED / "home-0928quater-resume-cap-discovery-v1.sh"
 )
+HOME_FINAL_WRAPPER = (
+    PREPARED / "home-0928quinquies-finalize-conversion-v1.sh"
+)
 RECIPE = PREPARED / "RECIPE.md"
 
 
@@ -26,7 +29,7 @@ class Conversion2x2JobTests(unittest.TestCase):
         for path in (
             RUNNER, EVAL_RUNNER, WRAPPER, RETRY_WRAPPER,
             EVAL_WRAPPER, EVAL_RETRY_WRAPPER, HOME_EVAL_WRAPPER,
-            HOME_DISCOVERY_WRAPPER,
+            HOME_DISCOVERY_WRAPPER, HOME_FINAL_WRAPPER,
         ):
             subprocess.run(["bash", "-n", str(path)], check=True)
 
@@ -37,10 +40,11 @@ class Conversion2x2JobTests(unittest.TestCase):
             "SOURCE_ATTEMPT_ID=\"20260723T152652Z-03f7e50a\"",
             "CAP1_POSITION_ID=\"9bc75f637c4afd1d9ccb4ed29ea854d784ef32dbb6f5d58f67eb917c40c9b69f\"",
             "CAP2_POSITION_ID=\"62faf128aaa80be9acc6b552c938074312cb46dcca5060f84caa1d4c0f797dfd\"",
+            "CAP3_POSITION_ID=\"6d7782f7d3ddab0970611d53076c6c573bd31e1052af225d2a8182c2f46cca98\"",
             "observed_shards==expected_shards",
             "--salvage-manifest \"$CAP_MANIFEST\"",
-            "derived_complete_2_ply_caps",
-            "len(report[\"adjudications\"])==2",
+            "derived_complete_3_ply_caps",
+            "len(report[\"adjudications\"])==3",
             "--expected-state failed",
             "source-model-verification.json",
             "scientific-summary.json",
@@ -128,6 +132,10 @@ class Conversion2x2JobTests(unittest.TestCase):
         self.assertIn("CAP_DISCOVERY_MODE=1", discovery_wrapper)
         self.assertIn("home-0928-l3-conversion-2x2-eval-only-v1", discovery_wrapper)
         self.assertIn("timeout -k 60s 5400s", discovery_wrapper)
+        final_wrapper = HOME_FINAL_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("MATRIX_RESUME_EXPECTED_STATE=completed", final_wrapper)
+        self.assertIn("home-0928quater-resume-cap-discovery-v1", final_wrapper)
+        self.assertIn("CAP_DISCOVERY_MODE=0", final_wrapper)
         for prepared_wrapper in (wrapper, retry_wrapper):
             self.assertIn("timeout -k 60s 3600s", prepared_wrapper)
             self.assertIn("expected_duration: 30-45 min", prepared_wrapper)

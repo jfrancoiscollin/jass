@@ -54,3 +54,8 @@ importe le tar brut vérifié de `home-0928`, réutilise chaque bras complet et 
 joue que les bras manquants. Ce mode découverte accepte uniquement des ply-caps
 propres à 400 plis (nul, aucune erreur moteur), publie leur inventaire complet
 sur les 4 992 lignes, et n’effectue ni adjudication ni calcul causal.
+
+L’inventaire complet a trouvé trois caps et aucune erreur moteur. Le finaliseur
+`home-0928quinquies` importe cette matrice complète, exige exactement les trois
+identités authentifiées, ne rejoue aucune des 4 992 lignes, joue seulement la
+garde équilibrée de 512 parties et calcule le rapport causal.

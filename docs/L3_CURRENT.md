@@ -15,8 +15,8 @@
 > d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
 > l3_pure_top3_causal_conversion_ready;
 > top3_specialist_recipe_failure_localized_factors_confounded;
-> conversion_2x2_g1_models_trained_matrix_three_caps_seen;
-> conversion_2x2_cap_discovery_resume_home_ready;
+> conversion_2x2_cap_discovery_complete_three_caps;
+> conversion_2x2_finalizer_home_ready;
 > pure_maturity_m0_home_ready`.
 
 ## 1. Architecture du programme
@@ -274,11 +274,15 @@ Le premier reste `standard_off/g0_g4`, shard 10, position `9bc75f...`.
 réentraînement. Il a validé les deux caps connus puis a échoué fermé sur un
 troisième shard technique dans `top3_off/g4_g4`, après 3 733/4 992 lignes.
 
-`home-0928quater` importe le tar brut vérifié de `home-0928`, réutilise chaque
-bras complet et ne joue que les bras manquants. Ce mode inventorie tous les
-ply-caps propres à 400 plis mais ne les adjuge pas et ne calcule aucun effet.
-Une reprise finale séparée ne sera construite qu’après fermeture de cet
-inventaire complet.
+`home-0928quater` a importé le tar brut vérifié de `home-0928`, réutilisé chaque
+bras complet et joué uniquement les bras manquants. La matrice est complète :
+4 992 lignes et exactement trois ply-caps propres à 400 plis, dans
+`standard_off/g0_g4`, `top3_off/g4_g0` et `top3_off/g4_g4`. Aucun bras
+`top3_on` ne contient d’anomalie et aucune erreur moteur n’a été observée.
+
+`home-0928quinquies` réutilise cette matrice sans rejouer une ligne, exige les
+trois identités authentifiées, joue seulement la garde équilibrée de 512
+parties, puis calcule les effets causaux et 10 000 bootstraps.
 
 Sizing HOME : `nproc=16`, 5 504 parties, ETA conservatrice **35–70 min**, hard
 cap **120 min**, compilation `-j4`. Aucun verdict ne peut promouvoir, continuer
