@@ -10,12 +10,13 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNNER = ROOT / "jobs/templates/l3-conversion-2x2-g1-screen-v1.sh"
 PREPARED = ROOT / "jobs/prepared/l3-conversion-2x2-20260723"
 WRAPPER = PREPARED / "cpx62-0922-l3-conversion-2x2-g1-screen-v1.sh"
+RETRY_WRAPPER = PREPARED / "cpx62-0922bis-l3-conversion-2x2-g1-screen-v1.sh"
 RECIPE = PREPARED / "RECIPE.md"
 
 
 class Conversion2x2JobTests(unittest.TestCase):
     def test_shell_contracts(self):
-        for path in (RUNNER, WRAPPER):
+        for path in (RUNNER, WRAPPER, RETRY_WRAPPER):
             subprocess.run(["bash", "-n", str(path)], check=True)
 
     def test_fixed_sizing_and_pairwise_reuse(self):
@@ -64,10 +65,13 @@ class Conversion2x2JobTests(unittest.TestCase):
 
     def test_wrapper_and_recipe(self):
         wrapper = WRAPPER.read_text(encoding="utf-8")
+        retry_wrapper = RETRY_WRAPPER.read_text(encoding="utf-8")
         recipe = RECIPE.read_text(encoding="utf-8")
         self.assertIn("cpx62-0922-l3-conversion-2x2-g1-screen-v1", wrapper)
-        self.assertIn("timeout -k 60s 3600s", wrapper)
-        self.assertIn("expected_duration: 30-45 min", wrapper)
+        self.assertIn("cpx62-0922bis-l3-conversion-2x2-g1-screen-v1", retry_wrapper)
+        for prepared_wrapper in (wrapper, retry_wrapper):
+            self.assertIn("timeout -k 60s 3600s", prepared_wrapper)
+            self.assertIn("expected_duration: 30-45 min", prepared_wrapper)
         self.assertIn("500 000 records", recipe)
         self.assertIn("hard cap 60 min", recipe)
         self.assertIn("non promotable", recipe)
