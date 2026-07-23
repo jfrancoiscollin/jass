@@ -15,8 +15,8 @@
 > d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
 > l3_pure_top3_causal_conversion_ready;
 > top3_specialist_recipe_failure_localized_factors_confounded;
-> conversion_2x2_g1_models_trained_matrix_two_pinned_caps;
-> conversion_2x2_g1_eval_recovery_home_0928_ready;
+> conversion_2x2_g1_models_trained_matrix_three_caps_seen;
+> conversion_2x2_cap_discovery_resume_home_ready;
 > pure_maturity_m0_home_ready`.
 
 ## 1. Architecture du programme
@@ -270,11 +270,15 @@ partie : le build d’évaluation n’avait pas réémis la géométrie `8cf`.
 déterministe à 400 plis dans `top3_off/g4_g0`, shard 12, position `62faf1...`.
 Le premier reste `standard_off/g0_g4`, shard 10, position `9bc75f...`.
 
-`home-0928` réutilise les quatre modèles vérifiés de `0922bis`, ne refait aucun
-entraînement, rejoue la matrice complète et exige exactement ces deux caps. Ils
-sont dérivés comme nuls sans replay ; leur disparition ou toute troisième
-anomalie fait échouer le job. Le rapport calcule les effets principaux
-départ/reweighting et leur interaction avec 10 000 bootstraps appariés.
+`home-0928` a réutilisé les quatre modèles vérifiés de `0922bis`, sans
+réentraînement. Il a validé les deux caps connus puis a échoué fermé sur un
+troisième shard technique dans `top3_off/g4_g4`, après 3 733/4 992 lignes.
+
+`home-0928quater` importe le tar brut vérifié de `home-0928`, réutilise chaque
+bras complet et ne joue que les bras manquants. Ce mode inventorie tous les
+ply-caps propres à 400 plis mais ne les adjuge pas et ne calcule aucun effet.
+Une reprise finale séparée ne sera construite qu’après fermeture de cet
+inventaire complet.
 
 Sizing HOME : `nproc=16`, 5 504 parties, ETA conservatrice **35–70 min**, hard
 cap **120 min**, compilation `-j4`. Aucun verdict ne peut promouvoir, continuer

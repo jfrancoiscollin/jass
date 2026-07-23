@@ -15,6 +15,9 @@ RETRY_WRAPPER = PREPARED / "cpx62-0922bis-l3-conversion-2x2-g1-screen-v1.sh"
 EVAL_WRAPPER = PREPARED / "cpx62-0922ter-l3-conversion-2x2-eval-only-v1.sh"
 EVAL_RETRY_WRAPPER = PREPARED / "cpx62-0922quater-l3-conversion-2x2-eval-only-v1.sh"
 HOME_EVAL_WRAPPER = PREPARED / "home-0928-l3-conversion-2x2-eval-only-v1.sh"
+HOME_DISCOVERY_WRAPPER = (
+    PREPARED / "home-0928quater-resume-cap-discovery-v1.sh"
+)
 RECIPE = PREPARED / "RECIPE.md"
 
 
@@ -23,6 +26,7 @@ class Conversion2x2JobTests(unittest.TestCase):
         for path in (
             RUNNER, EVAL_RUNNER, WRAPPER, RETRY_WRAPPER,
             EVAL_WRAPPER, EVAL_RETRY_WRAPPER, HOME_EVAL_WRAPPER,
+            HOME_DISCOVERY_WRAPPER,
         ):
             subprocess.run(["bash", "-n", str(path)], check=True)
 
@@ -117,6 +121,13 @@ class Conversion2x2JobTests(unittest.TestCase):
         self.assertIn('EXECUTION_PROFILE="${EXECUTION_PROFILE:-cpx62}"', eval_runner)
         self.assertIn("MIN_MEM_MB=14000", eval_runner)
         self.assertIn("MATRIX_SHARD_TIMEOUT=1800", eval_runner)
+        self.assertIn("CAP_DISCOVERY_MODE", eval_runner)
+        self.assertIn("matrix reuse:", eval_runner)
+        self.assertIn("CONVERSION_2X2_CAP_DISCOVERY_READY", eval_runner)
+        discovery_wrapper = HOME_DISCOVERY_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("CAP_DISCOVERY_MODE=1", discovery_wrapper)
+        self.assertIn("home-0928-l3-conversion-2x2-eval-only-v1", discovery_wrapper)
+        self.assertIn("timeout -k 60s 5400s", discovery_wrapper)
         for prepared_wrapper in (wrapper, retry_wrapper):
             self.assertIn("timeout -k 60s 3600s", prepared_wrapper)
             self.assertIn("expected_duration: 30-45 min", prepared_wrapper)

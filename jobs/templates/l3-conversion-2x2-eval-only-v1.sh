@@ -30,6 +30,10 @@ BALANCED_OPENINGS=64
 BALANCED_GAMES=128
 TOTAL_MATRIX_GAMES=$((384 * (1 + 4 * 3)))
 EXECUTION_PROFILE="${EXECUTION_PROFILE:-cpx62}"
+CAP_DISCOVERY_MODE="${CAP_DISCOVERY_MODE:-0}"
+MATRIX_RESUME_PREFIX="${MATRIX_RESUME_PREFIX:-}"
+MATRIX_RESUME_EXPECTED_CODE_SHA="${MATRIX_RESUME_EXPECTED_CODE_SHA:-}"
+MATRIX_RESUME_EXPECTED_JOB="${MATRIX_RESUME_EXPECTED_JOB:-}"
 EXPECTED_NPROC=16
 MIN_FREE_MB=10000
 case "$EXECUTION_PROFILE" in
@@ -173,6 +177,12 @@ say "=== $JASS_JOB_ID — L3 conversion 2x2 evaluation-only recovery ==="
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
 [ "${CONVERSION_2X2_EVAL_GO:-0}" = 1 ] || die "CONVERSION_2X2_EVAL_GO=1 missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "NO_AUTOMATIC_CONTINUATION=1 missing"
+[ "$CAP_DISCOVERY_MODE" = 0 ] || [ "$CAP_DISCOVERY_MODE" = 1 ] || die "invalid CAP_DISCOVERY_MODE"
+if [ "$CAP_DISCOVERY_MODE" = 1 ]; then
+  [ -n "$MATRIX_RESUME_PREFIX" ] || die "discovery requires MATRIX_RESUME_PREFIX"
+  [ -n "$MATRIX_RESUME_EXPECTED_CODE_SHA" ] || die "discovery requires resume code SHA"
+  [ -n "$MATRIX_RESUME_EXPECTED_JOB" ] || die "discovery requires resume job id"
+fi
 [ "$MATRIX_SHARD_TIMEOUT" -gt 0 ] && [ "$BALANCED_SHARD_TIMEOUT" -gt 0 ] || die "evaluation timeout drift"
 [ "$BOOTSTRAP" -eq 10000 ] && [ "$BALANCED_GAMES" -eq 128 ] || die "reporting contract drift"
 
@@ -271,6 +281,27 @@ open(out,"w",encoding="utf-8").write(json.dumps({
 },indent=2,sort_keys=True)+"\n")
 PY
 cp "$CAP_MANIFEST" "$ART/pinned-cap-adjudications.json"
+if [ -n "$MATRIX_RESUME_PREFIX" ]; then
+  mkdir -p "$W/resume-source"
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$MATRIX_RESUME_PREFIX" --expected-state failed \
+    --file artefacts/conversion-2x2-matrix-raw.tar.gz=matrix.tar.gz \
+    --out-dir "$W/resume-source" --report "$ART/verified-matrix-resume-source.json" \
+    > "$W/fetch-matrix-resume.log" 2>&1
+  python3 - "$ART/verified-matrix-resume-source.json" \
+    "$MATRIX_RESUME_PREFIX" "$MATRIX_RESUME_EXPECTED_CODE_SHA" \
+    "$MATRIX_RESUME_EXPECTED_JOB" <<'PY'
+import json,sys
+report=json.load(open(sys.argv[1],encoding="utf-8"))
+assert report["state"]=="verified" and report["result_state"]=="failed"
+assert report["prefix"]==sys.argv[2]
+assert report["code_sha"]==sys.argv[3]
+assert report["job_id"]==sys.argv[4]
+PY
+  tar -xzf "$W/resume-source/matrix.tar.gz" -C "$W"
+  [ -d "$MATRIX" ] || die "resume matrix archive missing matrix/"
+  say "resume: verified partial matrix imported from $MATRIX_RESUME_EXPECTED_JOB"
+fi
 
 set_phase architecture_build
 for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/movegen.cpp src/movegen.hpp; do
@@ -292,28 +323,46 @@ J="$W/build/jass"
 
 run_matrix_arm(){
   local candidate="$1" arm="$2" pattern="$3"
-  local dir="$MATRIX/$candidate/$arm" shard failed=0 pid pids=()
-  mkdir -p "$dir"
-  for shard in $(seq 0 15); do
-    timeout "$MATRIX_SHARD_TIMEOUT" python3 jobs/tools/stable_conversion_matrix.py run \
-      --pool "$INPUTS/stable-top3.fen" --proof "$INPUTS/stable-top3.proof.jsonl" \
-      --arm "$arm" --shard-index "$shard" --nshards 16 --depth 10 \
-      --max-plies 400 --game-timeout 120 --jass "$J" --scan "$SCAN_BIN" \
-      --scan-runtime-sha256 "$EXPECTED_SCAN_RUNTIME_SHA256" \
-      --g0 "$W/g0-material.pjtw" --g4 "$pattern" \
-      --search-params "$L3_SEARCH_PARAMS" --output "$dir/s${shard}.jsonl" \
-      --progress-file "$dir/s${shard}.progress.json" > "$dir/s${shard}.log" 2>&1 &
-    pids+=("$!")
-  done
-  ACTIVE_PIDS=("${pids[@]}")
-  for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
-  ACTIVE_PIDS=()
-  python3 - "$dir" "$candidate" "$arm" "$failed" "$CAP_MANIFEST" <<'PY'
+  local dir="$MATRIX/$candidate/$arm" shard failed=0 pid reused=0 pids=()
+  if python3 - "$dir" <<'PY' >/dev/null 2>&1
+import json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+progress=[json.load(open(root/f"s{i}.progress.json",encoding="utf-8")) for i in range(16)]
+rows=sum(1 for path in root.glob("s*.jsonl") for line in path.open(encoding="utf-8") if line.strip())
+assert rows==384
+assert all(item["completed"]==24 and item["expected"]==24 for item in progress)
+PY
+  then
+    reused=1
+    failed=-1
+    say "matrix reuse: $candidate/$arm 384 rows"
+  else
+    rm -rf "$dir"
+    mkdir -p "$dir"
+    for shard in $(seq 0 15); do
+      timeout "$MATRIX_SHARD_TIMEOUT" python3 jobs/tools/stable_conversion_matrix.py run \
+        --pool "$INPUTS/stable-top3.fen" --proof "$INPUTS/stable-top3.proof.jsonl" \
+        --arm "$arm" --shard-index "$shard" --nshards 16 --depth 10 \
+        --max-plies 400 --game-timeout 120 --jass "$J" --scan "$SCAN_BIN" \
+        --scan-runtime-sha256 "$EXPECTED_SCAN_RUNTIME_SHA256" \
+        --g0 "$W/g0-material.pjtw" --g4 "$pattern" \
+        --search-params "$L3_SEARCH_PARAMS" --output "$dir/s${shard}.jsonl" \
+        --progress-file "$dir/s${shard}.progress.json" > "$dir/s${shard}.log" 2>&1 &
+      pids+=("$!")
+    done
+    ACTIVE_PIDS=("${pids[@]}")
+    for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+    ACTIVE_PIDS=()
+  fi
+  python3 - "$dir" "$candidate" "$arm" "$failed" "$CAP_MANIFEST" \
+    "$CAP_DISCOVERY_MODE" "$reused" <<'PY'
 import json, sys
 from collections import Counter
 from pathlib import Path
 root, candidate, arm = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 failed, manifest_path = int(sys.argv[4]), Path(sys.argv[5])
+discovery, reused = sys.argv[6]=="1", sys.argv[7]=="1"
 manifest=json.load(open(manifest_path,encoding="utf-8"))
 expected=[
     item for item in manifest["adjudications"]
@@ -322,20 +371,31 @@ expected=[
 expected_by_id={item["position_id"]:item for item in expected}
 assert len(expected_by_id)==len(expected), expected
 expected_shards=Counter(item["shard"] for item in expected)
-assert failed==len(expected_shards), (candidate,arm,failed,expected_shards)
 progress=[json.load(open(root/f"s{i}.progress.json",encoding="utf-8")) for i in range(16)]
 assert all(item["completed"]==24 and item["expected"]==24 for item in progress), progress
 bad=[item for item in progress if item["errors_or_caps"]]
 observed_shards=Counter()
 for item in bad:
     observed_shards[item["shard"]]+=item["errors_or_caps"]
-assert observed_shards==expected_shards, (observed_shards,expected_shards)
+if discovery:
+    if not reused:
+        assert failed==len(observed_shards), (candidate,arm,failed,observed_shards)
+else:
+    assert failed in {-1,len(expected_shards)}, (candidate,arm,failed,expected_shards)
+    assert observed_shards==expected_shards, (observed_shards,expected_shards)
 rows=[]
 for path in sorted(root.glob("s*.jsonl")):
     rows += [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 caps=[row for row in rows if row.get("error") or row.get("reason") in {"ply cap","game time cap"}]
+assert len(rows)==384 and len(caps)==sum(observed_shards.values()), (len(rows),caps,observed_shards)
+if discovery:
+    for cap in caps:
+        assert cap["reason"]=="ply cap" and cap["plies"]==400, cap
+        assert cap["outcome_white"]=="D" and cap["outcome_plus2"]=="D", cap
+        assert cap["error"] is None, cap
+    raise SystemExit(0)
 observed_by_id={item["position_id"]:item for item in caps}
-assert len(rows)==384 and set(observed_by_id)==set(expected_by_id), (len(rows),caps,expected)
+assert set(observed_by_id)==set(expected_by_id), (caps,expected)
 for position_id,pinned in expected_by_id.items():
     cap=observed_by_id[position_id]
     assert cap["cell"]==pinned["cell"] and cap["shard"]==pinned["shard"], cap
@@ -352,6 +412,64 @@ for candidate in "${CANDIDATES[@]}"; do
     run_matrix_arm "$candidate" "$arm" "$W/$candidate.pjtw"
   done
 done
+
+if [ "$CAP_DISCOVERY_MODE" = 1 ]; then
+  set_phase cap_discovery_complete
+  python3 - "$MATRIX" "$ART/cap-discovery.json" "$ART/scientific-summary.json" <<'PY'
+import json,sys
+from pathlib import Path
+root,out,summary=map(Path,sys.argv[1:4])
+expected=[("common","g0_g0")]+[
+    (candidate,arm)
+    for candidate in ("standard_off","standard_on","top3_off","top3_on")
+    for arm in ("g4_g0","g0_g4","g4_g4")
+]
+arms={}
+technical=[]
+for candidate,arm in expected:
+    directory=root/candidate/arm
+    rows=[
+        json.loads(line)
+        for path in sorted(directory.glob("s*.jsonl"))
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert len(rows)==384,(candidate,arm,len(rows))
+    caps=[
+        row for row in rows
+        if row.get("error") or row.get("reason") in {"ply cap","game time cap"}
+    ]
+    assert all(
+        row.get("reason")=="ply cap"
+        and row.get("plies")==400
+        and row.get("outcome_white")=="D"
+        and row.get("outcome_plus2")=="D"
+        and row.get("error") is None
+        for row in caps
+    ),caps
+    arms[f"{candidate}/{arm}"]={"rows":len(rows),"technical_rows":len(caps)}
+    technical += [{"candidate":candidate,"arm":arm,"record":row} for row in caps]
+payload={
+    "schema":1,
+    "verdict":"CONVERSION_2X2_CAP_DISCOVERY_READY",
+    "matrix_rows":sum(item["rows"] for item in arms.values()),
+    "arms":arms,
+    "technical_rows":technical,
+    "promotion_authorized":False,
+    "training_continuation_authorized":False,
+    "automatic_next_job":None,
+}
+text=json.dumps(payload,indent=2,sort_keys=True)+"\n"
+out.write_text(text,encoding="utf-8")
+summary.write_text(text,encoding="utf-8")
+PY
+  printf '%s\n' "CONVERSION_2X2_CAP_DISCOVERY_READY" > "$ART/VERDICT__CONVERSION_2X2_CAP_DISCOVERY_READY"
+  printf '%s\n' "promotion_authorized=false" > "$ART/PROMOTION_AUTHORIZED__FALSE"
+  printf '%s\n' "training_continuation_authorized=false" > "$ART/TRAINING_CONTINUATION_AUTHORIZED__FALSE"
+  printf '%s\n' "automatic_next_job=null" > "$ART/AUTOMATIC_NEXT_JOB__NULL"
+  say "CONVERSION_2X2_CAP_DISCOVERY_READY matrix_rows=4992 promotion=false continuation=false"
+  exit 0
+fi
 
 set_phase balanced_guard_512_games
 python3 - data/dilf_combinations.fen "$W/balanced-64.fen" "$BALANCED_OPENINGS" "$BASE_SEED" <<'PY'

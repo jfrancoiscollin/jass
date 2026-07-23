@@ -48,3 +48,9 @@ plis : `standard_off/g0_g4`, shard 10, position `9bc75f...`, puis
 `top3_off/g4_g0`, shard 12, position `62faf1...`. `home-0928` exige ces deux
 caps, les dérive comme nulles sans rejouer, et échoue fermé si l'un disparaît
 ou si une troisième anomalie apparaît.
+
+Si une anomalie supplémentaire apparaît tardivement, `home-0928quater`
+importe le tar brut vérifié de `home-0928`, réutilise chaque bras complet et ne
+joue que les bras manquants. Ce mode découverte accepte uniquement des ply-caps
+propres à 400 plis (nul, aucune erreur moteur), publie leur inventaire complet
+sur les 4 992 lignes, et n’effectue ni adjudication ni calcul causal.
