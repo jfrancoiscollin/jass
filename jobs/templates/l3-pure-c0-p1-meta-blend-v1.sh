@@ -45,7 +45,8 @@ say "=== $JASS_JOB_ID — L3-PURE C0/P1 convex meta-eval ==="
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ "$SCREEN_NOPEN" -eq 128 ] && [ "$CONFIRM_NOPEN" -eq 256 ] || die "opening-count contract mismatch"
 [ "$SCREEN_DEPTH" -eq 8 ] && [ "$CONFIRM_DEPTH" -eq 9 ] && [ "$MOVETIME" = 0.3 ] || die "budget contract mismatch"
-[ "$(nproc)" -ge 16 ] || die "requires cpx62 >=16 CPUs"
+[ "$(nproc)" -ge 16 ] || die "requires >=16 CPUs"
+[ "$(awk '/MemTotal:/{print int($2/1024)}' /proc/meminfo)" -ge 14000 ] || die "requires >=14 GiB RAM"
 [ "$(df -Pm "$JASS_RESULT_DIR"|awk 'NR==2{print $4}')" -ge 8000 ] || die "<8 GiB free"
 monitor
 python3 -m py_compile tools/blend_pjtw.py jobs/tools/fetch_result_files.py jobs/tools/l3_pure_m0_sources.py \
@@ -85,6 +86,13 @@ FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl > "$W/clone.log" 2>&1
 EGDIR=""; for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }; done
 [ -n "$EGDIR" ] || die "EGDB unavailable"; export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB=128
+for src in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/movegen.cpp src/movegen.hpp; do
+  git show "$EXPECTED_CODE_SHA:$src" > "$src" || die "cannot pin $src from expected SHA"
+done
+grep -q "g_emasks" src/scan_eval.cpp || die "arch guard: scan_eval missing g_emasks"
+grep -q "has_any_capture" src/search.cpp || die "arch guard: search missing has_any_capture"
+grep -q "has_any_capture" src/movegen.cpp || die "arch guard: movegen missing has_any_capture"
+say "arch_guard=ok source_sha=$EXPECTED_CODE_SHA"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1
 cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8" -j"$JASS_BUILD_JOBS" --target jass > "$W/build8.log" 2>&1
@@ -102,11 +110,24 @@ python3 jobs/tools/validate_opening_pool.py --pool "$W/open-confirm.fen" --expec
   --generator-seed 141421 --out "$ART/confirm-openings-manifest.json" > "$W/validate-confirm.log" 2>&1 || die "confirm pool invalid"
 
 run_gate(){ local label="$1" pattern_a="$2" pattern_b="$3" openings="$4" nshards="$5"; shift 5
+  local opening_count expected_games
+  opening_count="$(grep -cve '^[[:space:]]*$' "$openings")"
+  expected_games="$((2 * opening_count))"
   timeout 14400 python3 jobs/tools/run_jass_gate_bounded.py --jass "$J8" \
     --pattern-a "$pattern_a" --pattern-b "$pattern_b" --search-params-a "$Q00_SEARCH" --search-params-b "$Q00_SEARCH" \
     --openings-file "$openings" --pairs 1 --nshards "$nshards" --max-parallel "$PAR_GATE" --timeout 10800 \
     --game-timeout "$GAME_TIMEOUT" --work-dir "$W/gate-$label" --out "$ART/$label.json" "$@" \
     > "$W/$label.log" 2>&1 || { cat "$W/$label.log"|tee -a "$RES"; die "$label failed"; }
+  python3 - "$ART/$label.json" "$expected_games" <<'PY' || die "$label incomplete"
+import json, sys
+report = json.load(open(sys.argv[1], encoding="utf-8"))
+expected = int(sys.argv[2])
+if report.get("complete") is not True or report.get("n") != expected:
+    raise SystemExit(
+        f"gate completeness mismatch: complete={report.get('complete')!r} "
+        f"n={report.get('n')!r} expected={expected}"
+    )
+PY
 }
 
 set_stage screen-blends-depth8

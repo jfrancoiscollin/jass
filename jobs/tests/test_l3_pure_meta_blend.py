@@ -9,6 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "jobs/tools/l3_pure_meta_blend.py"
+TEMPLATE = ROOT / "jobs/templates/l3-pure-c0-p1-meta-blend-v1.sh"
+HOME_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-pure-c0-p1-meta-blend-20260723"
+    / "home-0923-l3-pure-c0-p1-meta-blend-v1.sh"
+)
 
 
 def gate(rate: float, n: int = 400) -> dict:
@@ -17,6 +23,20 @@ def gate(rate: float, n: int = 400) -> dict:
 
 
 def main() -> int:
+    template = TEMPLATE.read_text()
+    wrapper = HOME_WRAPPER.read_text()
+    assert 'requires >=16 CPUs' in template
+    assert 'requires >=14 GiB RAM' in template
+    assert 'git show "$EXPECTED_CODE_SHA:$src"' in template
+    assert 'grep -q "g_emasks" src/scan_eval.cpp' in template
+    assert template.count('grep -q "has_any_capture"') == 2
+    assert 'report.get("n") != expected' in template
+    assert 'die "$label incomplete"' in template
+    assert "home-0923-l3-pure-c0-p1-meta-blend-v1" in wrapper
+    assert "20260718T104245Z-8fc4eacb" in wrapper
+    assert "20260719T175711Z-337ccbdc" in wrapper
+    assert "PAR_GATE=12" in wrapper
+
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         for alpha, c0, p1 in ((0.25, 0.48, 0.54), (0.5, 0.52, 0.53), (0.75, 0.51, 0.55)):
