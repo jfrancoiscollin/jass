@@ -192,11 +192,11 @@ python3 -m py_compile \
   jobs/tools/fetch_result_files.py \
   jobs/tools/jass_vs_jass_arch.py \
   tools/selfplay_frontier.py
-python3 jobs/tests/test_l3_conversion_2x2_report.py > "$W/test-2x2-report.log" 2>&1 \
+python3 -m unittest jobs.tests.test_l3_conversion_2x2_report -v > "$W/test-2x2-report.log" 2>&1 \
   || die "2x2 report round-trip tests failed"
-python3 jobs/tests/test_l3_conversion_2x2_job.py > "$W/test-2x2-job.log" 2>&1 \
+python3 -m unittest jobs.tests.test_l3_conversion_2x2_job -v > "$W/test-2x2-job.log" 2>&1 \
   || die "2x2 job contract tests failed"
-python3 jobs/tests/test_stable_conversion_matrix.py > "$W/test-matrix.log" 2>&1 \
+python3 -m unittest jobs.tests.test_stable_conversion_matrix -v > "$W/test-matrix.log" 2>&1 \
   || die "stable matrix tests failed"
 say "smoke: bash syntax + python compile + reporting/matrix round-trip OK"
 
