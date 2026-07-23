@@ -16,6 +16,7 @@ silently become a scientific draw.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import importlib.util
 import json
@@ -57,6 +58,7 @@ EXPECTED_CELLS = tuple(
     for stm in ("W", "B")
 )
 CAP_REASONS = {"game time cap", "ply cap"}
+SALVAGE_DRAW_REASON = "adjudicated draw at 400-ply cap"
 DRAW_REASONS = {"25-move rule", "3-fold repetition"}
 
 
@@ -859,9 +861,14 @@ def paired_deltas(
 
 
 def validate_arm_rows(
-    contract: PoolContract, arm: str, rows: Sequence[dict],
+    contract: PoolContract,
+    arm: str,
+    rows: Sequence[dict],
+    *,
+    additional_draw_reasons: frozenset[str] = frozenset(),
 ) -> tuple[dict[str, dict], list[str]]:
     failures: list[str] = []
+    accepted_draw_reasons = DRAW_REASONS | set(additional_draw_reasons)
     if len(rows) != POSITION_COUNT:
         failures.append(f"{arm}: strict floor expected {POSITION_COUNT} rows, got {len(rows)}")
     expected = {position.position_id: position for position in contract.positions}
@@ -948,7 +955,7 @@ def validate_arm_rows(
                 if row.get("outcome_plus2") != expected_plus2:
                     failures.append(f"{arm}:{position_id[:12]}: +2 perspective mismatch")
                 reason = str(row.get("reason", ""))
-                if reason in DRAW_REASONS | CAP_REASONS and outcome_white != "D":
+                if reason in accepted_draw_reasons | CAP_REASONS and outcome_white != "D":
                     failures.append(
                         f"{arm}:{position_id[:12]}: draw reason/result mismatch"
                     )
@@ -983,7 +990,7 @@ def validate_arm_rows(
                     failures.append(
                         f"{arm}:{position_id[:12]}: illegal move lacks technical error"
                     )
-                elif reason not in DRAW_REASONS | CAP_REASONS:
+                elif reason not in accepted_draw_reasons | CAP_REASONS:
                     failures.append(
                         f"{arm}:{position_id[:12]}: unrecognized result reason {reason!r}"
                     )
@@ -1003,6 +1010,7 @@ def aggregate_rows(
     bootstrap_samples: int = 5000,
     bootstrap_seed: int = 20260723,
     result_provenance: Sequence[dict] = (),
+    additional_draw_reasons: frozenset[str] = frozenset(),
 ) -> dict:
     failures: list[str] = []
     if set(rows_by_arm) != set(ARMS):
@@ -1011,7 +1019,12 @@ def aggregate_rows(
         )
     validated: dict[str, dict[str, dict]] = {}
     for arm in ARMS:
-        by_id, arm_failures = validate_arm_rows(contract, arm, rows_by_arm.get(arm, ()))
+        by_id, arm_failures = validate_arm_rows(
+            contract,
+            arm,
+            rows_by_arm.get(arm, ()),
+            additional_draw_reasons=additional_draw_reasons,
+        )
         validated[arm] = by_id
         failures.extend(arm_failures)
 
@@ -1174,6 +1187,194 @@ def aggregate_rows(
     return report
 
 
+def _sensitivity_snapshot(
+    validated: Mapping[str, Mapping[str, Mapping]],
+    contract: PoolContract,
+    affected: Position,
+) -> dict:
+    arm_stats = scoped_stats(validated["g4_g4"], contract.positions)
+    deltas = paired_deltas(validated, contract.positions, 0, 0)
+
+    def effects(scope: Mapping[str, Mapping]) -> dict:
+        return {
+            name: {
+                "estimate": value["estimate"],
+                "raw_sum": value["raw_sum"],
+                "n_pairs": value["n_pairs"],
+            }
+            for name, value in scope.items()
+        }
+
+    return {
+        "g4_g4": {
+            "global": arm_stats["global"],
+            "affected_stratum": {
+                "name": affected.stratum,
+                **arm_stats["strata"][affected.stratum],
+            },
+            "affected_cell": {
+                "name": affected.cell,
+                **arm_stats["cells"][affected.cell],
+            },
+        },
+        "paired_deltas": {
+            "global": effects(deltas["global"]),
+            "affected_stratum": {
+                "name": affected.stratum,
+                "effects": effects(deltas["strata"][affected.stratum]),
+            },
+            "affected_cell": {
+                "name": affected.cell,
+                "effects": effects(deltas["cells"][affected.cell]),
+            },
+        },
+    }
+
+
+def salvage_single_ply_cap(
+    contract: PoolContract,
+    rows_by_arm: Mapping[str, Sequence[dict]],
+    *,
+    expected_arm: str,
+    expected_position_id: str,
+    expected_cell: str,
+    expected_plies: int = MAX_PLIES,
+    bootstrap_samples: int = 10000,
+    bootstrap_seed: int = 271828,
+    result_provenance: Sequence[dict] = (),
+    source: Mapping | None = None,
+) -> dict:
+    """Derive a matrix after explicitly adjudicating one pinned ply cap as D.
+
+    The raw strict aggregation is always run first and must fail for exactly
+    the one expected cap.  The returned report never upgrades the original
+    zero-cap gate to passing.
+    """
+    strict = aggregate_rows(
+        contract, rows_by_arm,
+        bootstrap_samples=0,
+        bootstrap_seed=bootstrap_seed,
+        result_provenance=result_provenance,
+    )
+    expected_failure = "zero-error/zero-cap contract failed: 1 technical rows"
+    expected_technical = {
+        "arm": expected_arm,
+        "position_id": expected_position_id,
+        "reason": "ply cap",
+        "error": None,
+    }
+    if (
+        strict.get("technical_failures") != [expected_failure]
+        or strict.get("technical_rows") != [expected_technical]
+        or strict.get("errors") != 0
+        or strict.get("game_time_caps") != 0
+        or strict.get("ply_caps") != 1
+    ):
+        raise ValueError(
+            "raw matrix is not the exact single-ply-cap failure authorized "
+            f"for salvage: failures={strict.get('technical_failures')!r}, "
+            f"technical_rows={strict.get('technical_rows')!r}"
+        )
+    if expected_arm not in ARMS:
+        raise ValueError(f"invalid expected cap arm {expected_arm!r}")
+
+    positions = {position.position_id: position for position in contract.positions}
+    affected = positions.get(expected_position_id)
+    if affected is None or affected.cell != expected_cell:
+        raise ValueError("expected cap position/cell is absent from the pool contract")
+
+    derived_rows = copy.deepcopy(dict(rows_by_arm))
+    candidates = [
+        row for row in derived_rows[expected_arm]
+        if row.get("position_id") == expected_position_id
+    ]
+    if len(candidates) != 1:
+        raise ValueError("expected exactly one matching cap row")
+    cap = candidates[0]
+    if (
+        cap.get("reason") != "ply cap"
+        or cap.get("error") is not None
+        or cap.get("outcome_white") != "D"
+        or cap.get("outcome_plus2") != "D"
+        or cap.get("plies") != expected_plies
+        or cap.get("cell") != expected_cell
+    ):
+        raise ValueError("pinned cap row content differs from the authorized adjudication")
+    raw_row_sha256 = hashlib.sha256(
+        (json.dumps(cap, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    ).hexdigest()
+    cap["reason"] = SALVAGE_DRAW_REASON
+
+    matrix = aggregate_rows(
+        contract, derived_rows,
+        bootstrap_samples=bootstrap_samples,
+        bootstrap_seed=bootstrap_seed,
+        result_provenance=result_provenance,
+        additional_draw_reasons=frozenset({SALVAGE_DRAW_REASON}),
+    )
+    if not matrix["gate_ready"]:
+        raise ValueError(
+            "adjudicated matrix still fails structural/provenance validation: "
+            f"{matrix['technical_failures']!r}"
+        )
+    matrix["status"] = "salvage_only"
+    matrix["technical_status"] = "derived_complete"
+    matrix["derived_analysis_ready"] = True
+    matrix["gate_ready"] = False
+    matrix["original_zero_cap_gate_ready"] = False
+
+    validated = {
+        arm: {row["position_id"]: row for row in derived_rows[arm]}
+        for arm in ARMS
+    }
+    sensitivity = {}
+    for outcome in ("W", "L"):
+        scenario = copy.deepcopy(validated)
+        scenario_row = scenario[expected_arm][expected_position_id]
+        scenario_row["outcome_plus2"] = outcome
+        scenario_row["outcome_white"] = (
+            outcome if affected.advantaged == "W"
+            else {"W": "L", "L": "W"}[outcome]
+        )
+        sensitivity[f"cap_as_{'win' if outcome == 'W' else 'loss'}"] = (
+            _sensitivity_snapshot(scenario, contract, affected)
+        )
+
+    return {
+        "schema": 1,
+        "status": "salvage_complete",
+        "scientific_matrix_ready": True,
+        "original_gate": strict,
+        "adjudication": {
+            "policy": "single pinned 400-ply cap adjudicated as draw; no replay",
+            "arm": expected_arm,
+            "position_id": expected_position_id,
+            "cell": expected_cell,
+            "plies": expected_plies,
+            "raw_outcome_white": "D",
+            "raw_outcome_plus2": "D",
+            "raw_reason": "ply cap",
+            "raw_row_sha256": raw_row_sha256,
+            "derived_reason": SALVAGE_DRAW_REASON,
+            "changes_to_raw_games": 1,
+        },
+        "matrix": matrix,
+        "sensitivity": {
+            "description": (
+                "point-estimate endpoints if the single capped game is "
+                "assigned W or L to the materially advantaged (+2) side"
+            ),
+            **sensitivity,
+        },
+        "source": dict(source or {}),
+        "authorization": {
+            "training_continuation_authorized": False,
+            "promotion_authorized": False,
+            "automatic_next_job": None,
+        },
+    }
+
+
 def _parse_result_spec(spec: str) -> tuple[str, Path]:
     if "=" not in spec:
         raise ValueError(f"--result must be ARM=PATH, got {spec!r}")
@@ -1303,6 +1504,159 @@ def aggregate_command(args: argparse.Namespace) -> int:
     return 0 if report["gate_ready"] else 2
 
 
+def salvage_command(args: argparse.Namespace) -> int:
+    output = Path(args.output)
+    try:
+        if args.expected_per_arm != POSITION_COUNT:
+            raise ValueError(f"--expected-per-arm must remain {POSITION_COUNT}")
+        expected_tar_sha256 = args.expected_source_tar_sha256.lower()
+        if (
+            len(expected_tar_sha256) != 64
+            or any(char not in "0123456789abcdef" for char in expected_tar_sha256)
+        ):
+            raise ValueError("expected source tar SHA256 is malformed")
+
+        source_tar = Path(args.source_tar)
+        observed_tar_sha256 = sha256_file(source_tar)
+        if observed_tar_sha256 != expected_tar_sha256:
+            raise ValueError(
+                "source tar SHA256 mismatch: "
+                f"expected {expected_tar_sha256}, got {observed_tar_sha256}"
+            )
+        source_report_path = Path(args.source_verification_report)
+        source_report = json.loads(source_report_path.read_text(encoding="utf-8"))
+        expected_identity = (
+            args.expected_source_job_id,
+            args.expected_source_attempt_id,
+            args.expected_source_code_sha,
+        )
+        observed_identity = (
+            source_report.get("job_id"),
+            source_report.get("attempt_id"),
+            source_report.get("code_sha"),
+        )
+        if observed_identity != expected_identity:
+            raise ValueError(
+                f"failed source identity mismatch: {observed_identity!r}"
+            )
+        if (
+            source_report.get("prefix") != args.source_prefix.rstrip("/")
+            or source_report.get("result_state") != "failed"
+            or source_report.get("exit_code") == 0
+        ):
+            raise ValueError("source report is not the pinned failed 0908 result")
+        selected_files = {
+            item.get("path"): item for item in source_report.get("files", [])
+        }
+        tar_record = selected_files.get(args.source_artifact_path)
+        if (
+            not tar_record
+            or tar_record.get("sha256") != expected_tar_sha256
+            or tar_record.get("local_name") != source_tar.name
+        ):
+            raise ValueError("source report does not authenticate the pinned raw tar")
+
+        contract = load_pool_contract(Path(args.pool), Path(args.proof))
+        rows_by_arm: dict[str, list[dict]] = defaultdict(list)
+        provenance: list[dict] = []
+        for input_name in args.inputs:
+            path = Path(input_name)
+            rows = _load_jsonl(path)
+            file_arms = {row.get("arm") for row in rows}
+            if len(file_arms) != 1 or next(iter(file_arms)) not in ARMS:
+                raise ValueError(f"{path}: cannot infer exactly one valid arm")
+            arm = str(next(iter(file_arms)))
+            rows_by_arm[arm].extend(rows)
+            provenance.append({
+                "arm": arm,
+                "path": str(path),
+                "sha256": sha256_file(path),
+            })
+        if not provenance:
+            raise ValueError("at least one --inputs path is required")
+
+        source = {
+            "prefix": args.source_prefix.rstrip("/"),
+            "job_id": args.expected_source_job_id,
+            "attempt_id": args.expected_source_attempt_id,
+            "code_sha": args.expected_source_code_sha,
+            "result_state": "failed",
+            "raw_tar": {
+                "path": args.source_artifact_path,
+                "sha256": observed_tar_sha256,
+                "verification_report": {
+                    "path": str(source_report_path),
+                    "sha256": sha256_file(source_report_path),
+                },
+            },
+        }
+        report = salvage_single_ply_cap(
+            contract,
+            rows_by_arm,
+            expected_arm=args.expected_cap_arm,
+            expected_position_id=args.expected_cap_position_id,
+            expected_cell=args.expected_cap_cell,
+            expected_plies=args.expected_cap_plies,
+            bootstrap_samples=args.bootstrap_samples,
+            bootstrap_seed=args.bootstrap_seed,
+            result_provenance=provenance,
+            source=source,
+        )
+
+        run_config_path = Path(args.run_config)
+        run_config = json.loads(run_config_path.read_text(encoding="utf-8"))
+        budget = run_config.get("budget") or {}
+        timeouts = run_config.get("timeouts_seconds") or {}
+        configured_pool = run_config.get("pool") or {}
+        if (
+            run_config.get("arms") != list(ARMS)
+            or run_config.get("games_per_arm") != POSITION_COUNT
+            or budget.get("kind") != "fixed_depth"
+            or budget.get("depth") != DEPTH
+            or budget.get("max_plies") != MAX_PLIES
+            or timeouts.get("game") != int(GAME_TIMEOUT_S)
+            or run_config.get("nshards") != SHARD_COUNT
+            or configured_pool.get("pool_sha256") != contract.pool_sha256
+            or configured_pool.get("proof_sha256") != contract.proof_sha256
+        ):
+            raise ValueError("run config fixed matrix contract mismatch")
+        engines = report["matrix"]["inputs"]["engines"]
+        scan_config = run_config.get("scan") or {}
+        if (
+            engines.get("search_params")
+            != (run_config.get("evaluated_models") or {}).get("search_params_sha256")
+            or engines.get("scan") != scan_config.get("binary_sha256")
+            or engines.get("scan_runtime") != scan_config.get("runtime_sha256")
+            or engines.get("scan_hub_params") != SCAN_HUB_PARAMS_SHA256
+            or scan_config.get("hub_params") != SCAN_HUB_PARAMS
+            or scan_config.get("hub_params_sha256") != SCAN_HUB_PARAMS_SHA256
+        ):
+            raise ValueError("run config/result engine fingerprint mismatch")
+        report["source"]["run_config"] = {
+            "path": str(run_config_path),
+            "sha256": sha256_file(run_config_path),
+        }
+    except Exception as exc:
+        report = {
+            "schema": 1,
+            "status": "salvage_failure",
+            "scientific_matrix_ready": False,
+            "error": f"{type(exc).__name__}: {exc}",
+            "authorization": {
+                "training_continuation_authorized": False,
+                "promotion_authorized": False,
+                "automatic_next_job": None,
+            },
+        }
+    atomic_write_json(output, report)
+    print(json.dumps({
+        "status": report["status"],
+        "scientific_matrix_ready": report["scientific_matrix_ready"],
+        "output": str(output),
+    }, sort_keys=True))
+    return 0 if report["scientific_matrix_ready"] else 2
+
+
 def run_command(args: argparse.Namespace) -> int:
     try:
         contract = load_pool_contract(Path(args.pool), Path(args.proof))
@@ -1377,6 +1731,34 @@ def build_parser() -> argparse.ArgumentParser:
                            dest="bootstrap_seed", type=int, default=20260723)
     aggregate.add_argument("--output", "--out", dest="output", required=True)
     aggregate.set_defaults(func=aggregate_command)
+
+    salvage = sub.add_parser(
+        "salvage-single-ply-cap",
+        help="derive an auditable matrix by adjudicating one pinned ply cap as D",
+    )
+    salvage.add_argument("--pool", required=True)
+    salvage.add_argument("--proof", required=True)
+    salvage.add_argument("--inputs", nargs="+", required=True)
+    salvage.add_argument("--run-config", required=True)
+    salvage.add_argument("--source-tar", required=True)
+    salvage.add_argument("--source-verification-report", required=True)
+    salvage.add_argument("--source-prefix", required=True)
+    salvage.add_argument("--source-artifact-path", required=True)
+    salvage.add_argument("--expected-source-tar-sha256", required=True)
+    salvage.add_argument("--expected-source-job-id", required=True)
+    salvage.add_argument("--expected-source-attempt-id", required=True)
+    salvage.add_argument("--expected-source-code-sha", required=True)
+    salvage.add_argument("--expected-cap-arm", choices=ARMS, required=True)
+    salvage.add_argument("--expected-cap-position-id", required=True)
+    salvage.add_argument("--expected-cap-cell", required=True)
+    salvage.add_argument("--expected-cap-plies", type=int, default=MAX_PLIES)
+    salvage.add_argument("--expected-per-arm", type=int, default=POSITION_COUNT)
+    salvage.add_argument("--bootstrap-samples", "--bootstrap",
+                         dest="bootstrap_samples", type=int, default=10000)
+    salvage.add_argument("--bootstrap-seed", "--seed",
+                         dest="bootstrap_seed", type=int, default=271828)
+    salvage.add_argument("--output", "--out", dest="output", required=True)
+    salvage.set_defaults(func=salvage_command)
     return parser
 
 

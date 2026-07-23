@@ -338,6 +338,50 @@ class StableConversionMatrixTests(unittest.TestCase):
         self.assertTrue(any("terminal reason/result mismatch" in failure
                             for failure in terminal_mismatch["technical_failures"]))
 
+    def test_single_ply_cap_salvage_is_explicit_and_sensitivity_is_bounded(self):
+        contract = synthetic_contract()
+        rows = matrix_rows(contract)
+        affected = contract.positions[70]
+        cap = rows["g4_g4"][70]
+        cap["reason"] = "ply cap"
+        cap["plies"] = 400
+
+        report = SCM.salvage_single_ply_cap(
+            contract,
+            rows,
+            expected_arm="g4_g4",
+            expected_position_id=affected.position_id,
+            expected_cell=affected.cell,
+            bootstrap_samples=20,
+            bootstrap_seed=7,
+        )
+        self.assertEqual(report["status"], "salvage_complete")
+        self.assertTrue(report["scientific_matrix_ready"])
+        self.assertFalse(report["original_gate"]["gate_ready"])
+        self.assertFalse(report["matrix"]["gate_ready"])
+        self.assertTrue(report["matrix"]["derived_analysis_ready"])
+        self.assertEqual(
+            report["matrix"]["arms"]["g4_g4"]["global"]["termination_reasons"],
+            {"25-move rule": 383, SCM.SALVAGE_DRAW_REASON: 1},
+        )
+        as_win = report["sensitivity"]["cap_as_win"]["g4_g4"]["global"]
+        as_loss = report["sensitivity"]["cap_as_loss"]["g4_g4"]["global"]
+        self.assertEqual((as_win["W"], as_win["D"], as_win["L"]), (1, 383, 0))
+        self.assertEqual((as_loss["W"], as_loss["D"], as_loss["L"]), (0, 383, 1))
+        self.assertFalse(report["authorization"]["promotion_authorized"])
+
+        rows["scan_scan"][0]["reason"] = "ply cap"
+        rows["scan_scan"][0]["plies"] = 400
+        with self.assertRaisesRegex(ValueError, "exact single-ply-cap failure"):
+            SCM.salvage_single_ply_cap(
+                contract,
+                rows,
+                expected_arm="g4_g4",
+                expected_position_id=affected.position_id,
+                expected_cell=affected.cell,
+                bootstrap_samples=0,
+            )
+
     def test_pool_reader_enforces_exact_384_rows_and_12_by_32(self):
         rng = random.Random(1234)
         pool_lines, proof_lines = [], []
