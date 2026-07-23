@@ -111,10 +111,9 @@ python3 jobs/tools/validate_opening_pool.py --pool "$W/open-confirm.fen" --expec
   --exclude data/dilf_combinations.fen --exclude "$W/previous-reinforcement.fen" --exclude "$W/open-screen.fen" \
   --generator-seed 141421 --out "$ART/confirm-openings-manifest.json" > "$W/validate-confirm.log" 2>&1 || die "confirm pool invalid"
 
-run_gate(){ local label="$1" pattern_a="$2" pattern_b="$3" openings="$4" nshards="$5"; shift 5
-  local opening_count expected_games
-  opening_count="$(grep -cve '^[[:space:]]*$' "$openings")"
-  expected_games="$((2 * opening_count))"
+run_gate(){ local label="$1" pattern_a="$2" pattern_b="$3" openings="$4" nshards="$5" expected_openings="$6"; shift 6
+  local expected_games
+  expected_games="$((2 * expected_openings))"
   timeout "$GATE_TIMEOUT" python3 jobs/tools/run_jass_gate_bounded.py --jass "$J8" \
     --pattern-a "$pattern_a" --pattern-b "$pattern_b" --search-params-a "$Q00_SEARCH" --search-params-b "$Q00_SEARCH" \
     --openings-file "$openings" --pairs 1 --nshards "$nshards" --max-parallel "$PAR_GATE" --timeout "$SHARD_TIMEOUT" \
@@ -134,8 +133,8 @@ PY
 
 set_stage screen-blends-depth8
 for tag in "${TAGS[@]}"; do
-  run_gate "screen-$tag-vs-c0" "$W/blend-$tag.pjtw" "$W/c0-a-g3.pjtw" "$W/open-screen.fen" 8 --depth "$SCREEN_DEPTH"
-  run_gate "screen-$tag-vs-p1" "$W/blend-$tag.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-screen.fen" 8 --depth "$SCREEN_DEPTH"
+  run_gate "screen-$tag-vs-c0" "$W/blend-$tag.pjtw" "$W/c0-a-g3.pjtw" "$W/open-screen.fen" 8 "$SCREEN_NOPEN" --depth "$SCREEN_DEPTH"
+  run_gate "screen-$tag-vs-p1" "$W/blend-$tag.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-screen.fen" 8 "$SCREEN_NOPEN" --depth "$SCREEN_DEPTH"
 done
 python3 jobs/tools/l3_pure_meta_blend.py select --screen-dir "$ART" --alphas "${ALPHAS[@]}" \
   --out "$ART/meta-blend-selection.json" > "$W/select.log" 2>&1 || die "blend selection failed"
@@ -145,11 +144,11 @@ SELECTED_ALPHA="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])
 say "selected_blend=$SELECTED_TAG alpha_c0=$SELECTED_ALPHA"
 
 set_stage confirm-selected-depth9
-run_gate confirm-depth9-meta-vs-c0 "$W/blend-$SELECTED_TAG.pjtw" "$W/c0-a-g3.pjtw" "$W/open-confirm.fen" 16 --depth "$CONFIRM_DEPTH"
-run_gate confirm-depth9-meta-vs-p1 "$W/blend-$SELECTED_TAG.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-confirm.fen" 16 --depth "$CONFIRM_DEPTH"
+run_gate confirm-depth9-meta-vs-c0 "$W/blend-$SELECTED_TAG.pjtw" "$W/c0-a-g3.pjtw" "$W/open-confirm.fen" 16 "$CONFIRM_NOPEN" --depth "$CONFIRM_DEPTH"
+run_gate confirm-depth9-meta-vs-p1 "$W/blend-$SELECTED_TAG.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-confirm.fen" 16 "$CONFIRM_NOPEN" --depth "$CONFIRM_DEPTH"
 set_stage confirm-selected-movetime
-run_gate confirm-movetime-meta-vs-c0 "$W/blend-$SELECTED_TAG.pjtw" "$W/c0-a-g3.pjtw" "$W/open-confirm.fen" 16 --movetime "$MOVETIME"
-run_gate confirm-movetime-meta-vs-p1 "$W/blend-$SELECTED_TAG.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-confirm.fen" 16 --movetime "$MOVETIME"
+run_gate confirm-movetime-meta-vs-c0 "$W/blend-$SELECTED_TAG.pjtw" "$W/c0-a-g3.pjtw" "$W/open-confirm.fen" 16 "$CONFIRM_NOPEN" --movetime "$MOVETIME"
+run_gate confirm-movetime-meta-vs-p1 "$W/blend-$SELECTED_TAG.pjtw" "$W/p1-0842-g4.pjtw" "$W/open-confirm.fen" 16 "$CONFIRM_NOPEN" --movetime "$MOVETIME"
 
 set_stage aggregate-verdict
 python3 jobs/tools/l3_pure_meta_blend.py confirm --selection "$ART/meta-blend-selection.json" \

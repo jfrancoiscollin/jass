@@ -32,6 +32,9 @@ def main() -> int:
     assert template.count('grep -q "has_any_capture"') == 2
     assert 'report.get("n") != expected' in template
     assert 'die "$label incomplete"' in template
+    assert 'expected_games="$((2 * expected_openings))"' in template
+    assert '"$SCREEN_NOPEN" --depth "$SCREEN_DEPTH"' in template
+    assert '"$CONFIRM_NOPEN" --movetime "$MOVETIME"' in template
     assert "home-0923-l3-pure-c0-p1-meta-blend-v1" in wrapper
     assert "20260718T104245Z-8fc4eacb" in wrapper
     assert "20260719T175711Z-337ccbdc" in wrapper
