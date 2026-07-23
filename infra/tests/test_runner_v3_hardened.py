@@ -6,6 +6,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
@@ -44,16 +46,20 @@ class HardenedLauncherTests(unittest.TestCase):
             {"start_new_session": False},
         ))
 
-    def test_transient_unit_is_independent_and_unbounded(self):
+    def test_transient_unit_is_minimal_independent_and_unbounded(self):
         with tempfile.TemporaryDirectory() as td:
             pid_path = Path(td) / "runs/job/attempt/wrapper.pid"
             unit = H.transient_unit_name(pid_path)
             command = H.systemd_run_command(unit, Path(td), "echo ok")
         joined = "\n".join(command)
+        self.assertIn("--no-block", command)
         self.assertIn("--collect", command)
         self.assertIn("--property=Type=exec", command)
         self.assertIn("--property=KillMode=control-group", command)
-        self.assertIn("--property=RuntimeMaxSec=infinity", command)
+        self.assertIn("--property=ProtectSystem=false", command)
+        self.assertIn("--property=NoNewPrivileges=false", command)
+        self.assertFalse(any("RuntimeMaxSec" in item for item in command))
+        self.assertFalse(any("StandardOutput" in item for item in command))
         self.assertNotIn("--scope", command)
         self.assertIn(unit, joined)
 
@@ -92,6 +98,7 @@ class HardenedLauncherTests(unittest.TestCase):
                 self.assertTrue(metadata["systemd_unit"].startswith("jass-job-"))
                 report = json.loads((run_dir / "artefacts/runner-launch.json").read_text())
                 self.assertEqual(report["state"], "launching")
+                self.assertIn("--no-block", command)
                 pid_path.write_text("4321\n")
                 return Client()
 
@@ -107,6 +114,34 @@ class HardenedLauncherTests(unittest.TestCase):
             report = json.loads((run_dir / "artefacts/runner-launch.json").read_text())
             self.assertEqual(report["state"], "running")
             self.assertEqual(report["wrapper_pid"], 4321)
+
+    def test_launch_failure_is_published_and_claim_finalized(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            job_id = "cpx62-test"
+            run_dir = root / "runs" / job_id / "attempt"
+            (run_dir / "artefacts").mkdir(parents=True)
+            (run_dir / "metadata.json").write_text(json.dumps({
+                "job_id": job_id,
+                "attempt_id": "attempt",
+                "started_at": "2026-07-23T00:00:00+00:00",
+                "host": "host",
+                "code_sha": "abc",
+            }))
+            script = root / "queue/running/cpx62-test.sh"
+            script.parent.mkdir(parents=True)
+            script.write_text("#!/bin/sh\n")
+            cfg = SimpleNamespace(spool_root=root)
+            with mock.patch.object(H.R, "publish_status") as publish, \
+                 mock.patch.object(H.R, "finalize_control_script") as finalize:
+                H.record_launch_failure(cfg, script, RuntimeError("boom"))
+            status = publish.call_args.args[1]
+            self.assertEqual(status["state"], "failed")
+            self.assertEqual(status["phase"], "launch")
+            self.assertIn("boom", status["launch_diagnostic"]["exception"])
+            finalize.assert_called_once_with(cfg, script, job_id)
+            diagnostic = json.loads((run_dir / "artefacts/attempt-diagnostic.json").read_text())
+            self.assertEqual(diagnostic["classification"], "transient_service_launch_failed")
 
 
 if __name__ == "__main__":

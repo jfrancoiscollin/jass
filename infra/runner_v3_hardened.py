@@ -2,11 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Hardened entrypoint for runner v3.
 
-The five-minute runner is a short-lived oneshot service. A job must not remain
-inside that service's cgroup because a later timer activation, service reload or
-stop may signal the leftover process tree. This entrypoint preserves runner_v3
-semantics but intercepts the detached scientific-job launch and asks PID 1 to
-create an independent transient service for it.
+Scientific jobs run in independent transient systemd services.  They therefore
+cannot be killed when the five-minute oneshot runner service stops or starts its
+next tick.
 """
 from __future__ import annotations
 
@@ -56,25 +54,26 @@ def transient_unit_name(wrapper_pid_path: Path) -> str:
 
 
 def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
+    """Return the smallest proven non-blocking transient-service command.
+
+    The job wrapper already redirects stdin/stdout/stderr and records its PID,
+    so extra Standard* and scheduler properties only add compatibility risk.
+    Omitting RuntimeMaxSec means systemd's default infinity.
+    """
     binary = shutil.which("systemd-run") or "/usr/bin/systemd-run"
     return [
         binary,
         "--quiet",
+        "--no-block",
         "--collect",
         f"--unit={unit}",
         "--property=Type=exec",
         "--property=KillMode=control-group",
         "--property=TimeoutStopSec=120s",
-        "--property=RuntimeMaxSec=infinity",
-        "--property=Restart=no",
+        "--property=ProtectSystem=false",
         "--property=PrivateTmp=false",
-        "--property=Nice=10",
-        "--property=IOSchedulingClass=best-effort",
-        "--property=IOSchedulingPriority=5",
+        "--property=NoNewPrivileges=false",
         f"--property=WorkingDirectory={cwd}",
-        "--property=StandardInput=null",
-        "--property=StandardOutput=null",
-        "--property=StandardError=null",
         "/usr/bin/bash",
         "-c",
         wrapper,
@@ -98,19 +97,21 @@ def _wait_for_wrapper_pid(path: Path, unit: str, timeout: float = 30.0) -> int:
         capture_output=True,
         check=False,
     )
+    journal = subprocess.run(
+        ["journalctl", "-u", unit, "-n", "100", "--no-pager", "-o", "short-iso-precise"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     raise RuntimeError(
         f"{unit}: {last_error}; systemctl rc={status.returncode}: "
-        f"{status.stdout[-4000:]} {status.stderr[-2000:]}"
+        f"{status.stdout[-6000:]} {status.stderr[-2000:]}; "
+        f"journal: {journal.stdout[-10000:]} {journal.stderr[-2000:]}"
     )
 
 
 def persist_launch_contract(wrapper_pid_path: Path, report: dict[str, Any]) -> None:
-    """Publish the isolation contract before PID 1 may start the job.
-
-    ``systemd-run`` can start the transient unit before its client process
-    returns. Jobs are allowed to verify the launcher contract immediately, so
-    metadata and the audit artefact must exist before invoking systemd-run.
-    """
+    """Publish the isolation contract before PID 1 may start the job."""
     run_dir = wrapper_pid_path.parent
     metadata_path = run_dir / "metadata.json"
     metadata = R.read_json(metadata_path) or {}
@@ -143,7 +144,7 @@ def launch_transient(
     unit = transient_unit_name(wrapper_pid_path)
     command = systemd_run_command(unit, cwd, wrapper)
     report: dict[str, Any] = {
-        "schema": 2,
+        "schema": 3,
         "launcher": "systemd-transient-service",
         "state": "launching",
         "unit": unit,
@@ -152,13 +153,10 @@ def launch_transient(
         "kill_mode": "control-group",
         "runtime_max": "infinity",
         "parent_runner_cgroup_isolated": True,
+        "systemd_run_mode": "no-block-minimal",
     }
 
-    # Critical ordering: the transient service may execute immediately. Publish
-    # its contract before calling systemd-run so the job cannot observe stale
-    # metadata and fail spuriously at startup.
     persist_launch_contract(wrapper_pid_path, report)
-
     client = original_popen(
         command,
         stdin=subprocess.DEVNULL,
@@ -171,8 +169,8 @@ def launch_transient(
         report.update({
             "state": "launch_failed",
             "systemd_run_returncode": client.returncode,
-            "systemd_run_stdout_tail": stdout[-4000:],
-            "systemd_run_stderr_tail": stderr[-4000:],
+            "systemd_run_stdout_tail": stdout[-6000:],
+            "systemd_run_stderr_tail": stderr[-6000:],
         })
         persist_launch_contract(wrapper_pid_path, report)
         raise RuntimeError(
@@ -180,10 +178,56 @@ def launch_transient(
             f"{stdout[-4000:]} {stderr[-4000:]}"
         )
 
-    pid = _wait_for_wrapper_pid(wrapper_pid_path, unit)
+    try:
+        pid = _wait_for_wrapper_pid(wrapper_pid_path, unit)
+    except Exception as exc:
+        report.update({"state": "launch_failed", "launch_error": str(exc)[-16000:]})
+        persist_launch_contract(wrapper_pid_path, report)
+        raise
     report.update({"state": "running", "wrapper_pid": pid})
     persist_launch_contract(wrapper_pid_path, report)
     return SimpleNamespace(pid=pid, systemd_unit=unit)
+
+
+def latest_attempt_dir(cfg: Any, job_id: str) -> Path | None:
+    root = cfg.spool_root / "runs" / job_id
+    candidates = [path for path in root.iterdir() if path.is_dir()] if root.exists() else []
+    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
+
+
+def record_launch_failure(cfg: Any, script: Path, exc: Exception) -> None:
+    """Make launch failures terminal, visible and non-blocking for the queue."""
+    job_id = script.stem
+    run_dir = latest_attempt_dir(cfg, job_id)
+    metadata = R.read_json(run_dir / "metadata.json") if run_dir else None
+    launch = R.read_json(run_dir / "artefacts" / "runner-launch.json") if run_dir else None
+    diagnostic = {
+        "schema": 1,
+        "classification": "transient_service_launch_failed",
+        "exception_type": type(exc).__name__,
+        "exception": str(exc)[-20000:],
+        "launcher": launch,
+        "recorded_at": R.utcnow(),
+    }
+    if run_dir:
+        R.write_json(run_dir / "artefacts" / "attempt-diagnostic.json", diagnostic)
+    status = {
+        "job_id": job_id,
+        "attempt_id": (metadata or {}).get("attempt_id"),
+        "state": "failed",
+        "phase": "launch",
+        "exit_code": -1,
+        "started_at": (metadata or {}).get("started_at"),
+        "ended_at": R.utcnow(),
+        "host": (metadata or {}).get("host"),
+        "code_sha": (metadata or {}).get("code_sha"),
+        "launch_diagnostic": diagnostic,
+    }
+    try:
+        R.publish_status(cfg, status)
+    finally:
+        if script.exists():
+            R.finalize_control_script(cfg, script, job_id)
 
 
 def start_job_hardened(cfg: Any, script: Path) -> dict:
@@ -208,12 +252,18 @@ def start_job_hardened(cfg: Any, script: Path) -> dict:
     R.subprocess.Popen = intercept
     try:
         info = _ORIGINAL_START_JOB(cfg, script)
+    except Exception as exc:
+        R.subprocess.Popen = original_popen
+        record_launch_failure(cfg, script, exc)
+        raise
     finally:
         R.subprocess.Popen = original_popen
 
     unit = launch_state.get("unit")
     if not unit:
-        raise RuntimeError("job launch was not intercepted into a transient unit")
+        exc = RuntimeError("job launch was not intercepted into a transient unit")
+        record_launch_failure(cfg, script, exc)
+        raise exc
     info.update({
         "systemd_unit": unit,
         "launcher": "systemd-transient-service",
