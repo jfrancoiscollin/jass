@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Create a deterministic convex blend of two plain PJTW v3 evaluations.
+"""Create a deterministic convex blend of two PJTW v3 evaluations.
 
 The output weights are ``alpha_a * A + (1-alpha_a) * B`` rounded to the
-nearest integer (NumPy's deterministic ties-to-even rule). Both parents must
-have the exact same PJTW header and no trailing payload.
+nearest integer (NumPy's deterministic ties-to-even rule). Legacy v3 and
+self-describing v3 headers are accepted. Both parents must have the exact same
+PJTW header and no trailing payload.
 """
 from __future__ import annotations
 
@@ -17,6 +18,8 @@ from pathlib import Path
 import numpy as np
 
 HDR = 20
+VERSION_MASK = 0xFF
+KNOWN_VERSION_BITS = VERSION_MASK | 0x100 | 0x200
 
 
 def sha256(path: Path) -> str:
@@ -31,8 +34,10 @@ def load(path: Path) -> tuple[tuple[int, int, int, int, int], np.ndarray]:
     magic, version, _scale, n_pat, n_ext = header
     if magic != 0x57544A50:
         raise ValueError(f"{path}: bad PJTW magic 0x{magic:08x}")
-    if version != 3:
-        raise ValueError(f"{path}: PJTW version {version}; expected plain v3")
+    if version & ~KNOWN_VERSION_BITS:
+        raise ValueError(f"{path}: PJTW version {version} has unknown marker bits")
+    if (version & VERSION_MASK) != 3:
+        raise ValueError(f"{path}: PJTW version {version}; expected base v3")
     total = 2 * (n_pat + n_ext)
     expected = HDR + total * 4
     if len(raw) != expected:
