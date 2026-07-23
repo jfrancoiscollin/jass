@@ -14,7 +14,8 @@
 > imbalance2_stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
 > d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
 > l3_pure_top3_causal_conversion_ready;
-> top3_specialist_recipe_failure_localized_factors_confounded`.
+> top3_specialist_recipe_failure_localized_factors_confounded;
+> conversion_2x2_g1_prepared_not_queued`.
 
 ## 1. Architecture du programme
 
@@ -87,6 +88,7 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 | causal conversion | matrice TOP3 stable | `cpx62-0908` + salvage `0920` | **`SALVAGE_CAUSAL_CONVERSION_MATRIX_READY`** |
 | causal conversion | miroir L3-PURE | `cpx62-0921` | **`L3_PURE_CAUSAL_CONVERSION_MATRIX_READY`** |
 | autopsie recette | 0842 vs 0890bis, matrices 0908/0921 | analyse locale reproductible | **`TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED`** |
+| ablation recette | `0922` G1, départ standard/TOP3 × reweight off/on | préparée, non queuée | **`CONVERSION_2X2_G1_PREPARED`** |
 
 ## 4. Couverture et maturité de `L3-PURE`
 
@@ -243,9 +245,25 @@ automatic_next_job=null
 ```
 
 La seule ablation propre restante est un `2 × 2` départ standard/TOP3 ×
-reweighting off/on, à volume identique. Elle n’est pas encore préparée ni
-autorisée. Mémo immuable :
+reweighting off/on, à volume identique. Elle est préparée en 0922 mais reste
+non queuée. Mémo immuable :
 [`archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md`](archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md).
+
+### 5.7 Écran G1 `2 × 2` préparé
+
+`cpx62-0922-l3-conversion-2x2-g1-screen-v1` est préparé mais non queué. Les
+cellules off/on partagent exactement le même self-play et le même split :
+500 000 records standard alimentent `standard_off/standard_on`, et 500 000
+records TOP3 alimentent `top3_off/top3_on`.
+
+Le gate joue un contrôle G0/G0 commun et trois bras par candidat sur les 384
+positions stables de 0921, soit 4 992 parties, puis 128 parties équilibrées par
+candidat. Le rapport calcule les effets principaux départ/reweighting et leur
+interaction avec 10 000 bootstraps appariés.
+
+Sizing mesuré CPX62 : `nproc=16`, ETA **30–45 min**, hard cap **60 min**.
+Timeouts : génération 2 700 s/shard ; matrice et garde 900 s/shard. Aucun
+verdict ne peut promouvoir, continuer ou queuer automatiquement.
 
 ## 6. Prochaines actions séparées
 
