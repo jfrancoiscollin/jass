@@ -11,10 +11,17 @@ set -Eeuo pipefail
 : "${EXPECTED_JOB_ID:?pin the prepared 0908 job id}"
 : "${EXPECTED_CODE_SHA:?pin the reviewed develop merge SHA}"
 : "${SOURCE_0842_PREFIX:?pin the immutable 0842 result prefix}"
-: "${EVAL_0890BIS_PREFIX:?pin the immutable 0890bis result prefix}"
 : "${SCAN_BIN:?pin the reviewed Scan executable path}"
 : "${EXPECTED_SCAN_SHA256:?pin sha256 of the reviewed Scan executable}"
 : "${EXPECTED_SCAN_RUNTIME_SHA256:?pin canonical Scan binary/ini/eval/runtime fingerprint}"
+EVAL_SOURCE_MODE="${EVAL_SOURCE_MODE:-imbalance2-0890bis}"
+case "$EVAL_SOURCE_MODE" in
+  imbalance2-0890bis)
+    : "${EVAL_0890BIS_PREFIX:?pin the immutable 0890bis result prefix}"
+    ;;
+  pure-0842) ;;
+  *) echo "ABORT: unsupported EVAL_SOURCE_MODE=$EVAL_SOURCE_MODE" >&2; exit 2 ;;
+esac
 
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"
@@ -159,8 +166,13 @@ say "=== $JASS_JOB_ID -- stable TOP3 causal conversion matrix ==="
 [ "$POOL_POSITIONS" -eq 384 ] || die "matrix requires exactly 384 positions"
 [ "$NSHARDS" -eq 16 ] && [ "$PAR" -eq 16 ] || die "CPX62 matrix requires 16 shards / 16 parallel"
 [ "$GAME_TIMEOUT" -eq 120 ] || die "per-game timeout must remain 120s"
-[ "$SHARD_TIMEOUT" -eq 1200 ] || die "per-shard timeout must remain 1200s"
-[ "$GLOBAL_TIMEOUT" -eq 2100 ] || die "global cap must remain 2100s"
+if [ "$EVAL_SOURCE_MODE" = pure-0842 ]; then
+  [ "$SHARD_TIMEOUT" -eq 900 ] || die "0921 per-shard timeout must remain 900s"
+  [ "$GLOBAL_TIMEOUT" -eq 1200 ] || die "0921 global cap must remain 1200s"
+else
+  [ "$SHARD_TIMEOUT" -eq 1200 ] || die "per-shard timeout must remain 1200s"
+  [ "$GLOBAL_TIMEOUT" -eq 2100 ] || die "global cap must remain 2100s"
+fi
 [ "$JASS_BUILD_JOBS" -eq 4 ] || die "build must remain -j4"
 [ "$EXPECTED_SEARCH_SHA256" = 61cdaf50cc1948537990331d78f5b296dc6aee71cc7c2b98bcbd0969977619e1 ] \
   || die "unexpected 0890bis search fingerprint"
@@ -200,7 +212,11 @@ SCAN_RUNTIME_SHA256="$(
   || die "Scan runtime fingerprint mismatch"
 SCAN_RUNTIME_BIN="$SCAN_RUNTIME_DIR/scan_linux"
 say "preflight: nproc=$NPROC mem_mb=$MEM_MB free_mb=$FREE_MB build=-j$JASS_BUILD_JOBS scan_sha256=$SCAN_SHA256 scan_runtime_sha256=$SCAN_RUNTIME_SHA256"
-say "sizing: anchor_0862=2048_games/328s=6.24_games_s; volume=7x384=2688; projected_play=431s; ETA_total=12-22min; hard_cap=2100s"
+if [ "$EVAL_SOURCE_MODE" = pure-0842 ]; then
+  say "sizing: observed_0908=2688_games/320s_total; same matrix volume=2688; ETA_total=7-12min; hard_cap=1200s"
+else
+  say "sizing: anchor_0862=2048_games/328s=6.24_games_s; volume=7x384=2688; projected_play=431s; ETA_total=12-22min; hard_cap=2100s"
+fi
 
 set_phase smoke_tests
 bash -n "$0"
@@ -241,6 +257,142 @@ python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_0842_PREFIX" \
   --out-dir "$INPUTS" --report "$OUT/verified-0842-source.json" \
   > "$W/fetch-0842.log" 2>&1
 
+# Select the evaluated model lineage. 0908 defaults to the specialist 0890bis
+# source; 0921 uses the G0/G4 pair from the immutable pure 0842 lineage.
+if [ "$EVAL_SOURCE_MODE" = pure-0842 ]; then
+python3 jobs/tools/fetch_result_files.py --prefix "$SOURCE_0842_PREFIX" \
+  --file artefacts/l3-pure-p1-manifest.json=pure-eval-manifest.json \
+  --file artefacts/g0-material.pjtw.gz=pure-g0.pjtw.gz \
+  --file artefacts/g4.pjtw.gz=pure-g4.pjtw.gz \
+  --out-dir "$INPUTS" --report "$OUT/verified-pure-eval-source.json" \
+  > "$W/fetch-pure-eval.log" 2>&1
+
+python3 - "$OUT/verified-0842-source.json" "$OUT/verified-pure-eval-source.json" \
+  "$INPUTS" "$OUT/source-contract.json" "$W/search-params.txt" \
+  "$W/g0.pjtw" "$W/g4.pjtw" <<'PY'
+import gzip, hashlib, json, sys
+from pathlib import Path
+
+sreport_path, ereport_path, root_name, out_name, search_name, g0_name, g4_name = sys.argv[1:]
+root = Path(root_name)
+sreport = json.load(open(sreport_path, encoding="utf-8"))
+ereport = json.load(open(ereport_path, encoding="utf-8"))
+source_job = "cpx62-0842-l3-p1-frozen-v1"
+source_code = "337ccbdc4889732af43d3a4a713b8dac06f2a864"
+for report in (sreport, ereport):
+    if (report.get("job_id"), report.get("code_sha")) != (source_job, source_code):
+        raise SystemExit("0842 identity/code mismatch")
+
+source_expected = {
+    "0842-manifest.json": "672d28f14eb41cbf3a074adf407c6cd000726aadf0b9c6b756cf050c7719d9c5",
+    "0842-g1-profile.json": "c97d6fecff10443075d131ea528225114faa793d34c924bc40a56b20cfa47585",
+    "0842-g1.jnnw.gz": "a1f181ef61d06967a4f4a2e737faaf6f6bee3a80698a864bc1b1fd98f15ab604",
+    "0842-g1.jsm.gz": "2e30b630d748c54a2c889cd76c07ce90a9453a27b86542b8bcdd920daaa1a5f0",
+    "0842-g2-profile.json": "67ca0194070f7a23f5f46ed049938c5630bd08102f57e22f4b7db7e8c42677f7",
+    "0842-g2.jnnw.gz": "2ac958bc29af102cf32ef3c19ba3b04f74be683b203cc8e8685d201abf971ba0",
+    "0842-g2.jsm.gz": "05d300165196ef548f80cef83d6444f184bafb4aeff15435bc17ce4761b5062c",
+    "0842-g3-profile.json": "8321e219f327015bd569cc2866e006c151f24aa9968df8dafbc63601a74a9c43",
+    "0842-g3.jnnw.gz": "4ce6472bcf67cd8aaa9d830314bc2386edd763f8449b84511aa8c4ca64f1cc2e",
+    "0842-g3.jsm.gz": "fa88eb09a38bc3f17e3b8b99f773925d58d6e4fe7c70feab84db62ff20c450a3",
+    "0842-g4-profile.json": "4eaa0f1ad0207638678c4b65566aa8758766974e559f910ed38811daed1fb278",
+    "0842-g4.jnnw.gz": "f98e2c59cfca1304e414823271170bdc4955fc70b2937094adc14c5e11551f60",
+    "0842-g4.jsm.gz": "52e271f1482c93cfdb472c475680f922fd53bb56a5ce649f1e42c9bd4ed4d330",
+}
+eval_expected = {
+    "pure-eval-manifest.json": "672d28f14eb41cbf3a074adf407c6cd000726aadf0b9c6b756cf050c7719d9c5",
+    "pure-g0.pjtw.gz": "4e63338e95f703a080cb4f29f60f09c93d8109395c616736f0ef9d9ca0e56e8f",
+    "pure-g4.pjtw.gz": "e7eb9cd359d3418720e5e39484187d9d224ac9febd2b26e6302190454dd4e8e6",
+}
+def report_map(report):
+    return {row["local_name"]: row["sha256"] for row in report.get("files", [])}
+if report_map(sreport) != source_expected:
+    raise SystemExit("0842 pool source inventory differs from pinned SHA256 set")
+if report_map(ereport) != eval_expected:
+    raise SystemExit("0842 evaluated model inventory differs from pinned SHA256 set")
+
+manifest = json.loads((root / "pure-eval-manifest.json").read_text(encoding="utf-8"))
+recipe = manifest.get("recipe") or {}
+if (
+    manifest.get("code_sha") != source_code
+    or manifest.get("experiment") != "L3-PURE-P1"
+    or manifest.get("phase_complete") != "P1"
+    or recipe.get("lineage") != "L3-PURE"
+    or recipe.get("generations") != 4
+    or recipe.get("geometry") != "8cf"
+    or manifest.get("search_params_count") != 63
+):
+    raise SystemExit("0842 pure scientific manifest mismatch")
+if (
+    manifest.get("external_teacher_inputs") != 0
+    or manifest.get("training_sources") != ["selfplay_terminal_wdl"]
+    or not (recipe.get("truth") or {}).get("terminal_wdl_only")
+):
+    raise SystemExit("0842 is not the no-oracle terminal-WDL pure lineage")
+if manifest.get("student_sha256", {}).get("g4.pjtw.gz") != eval_expected["pure-g4.pjtw.gz"]:
+    raise SystemExit("0842 pure G4 digest differs inside scientific manifest")
+
+profile_proofs = {}
+for gen in range(1, 5):
+    profile = json.loads((root / f"0842-g{gen}-profile.json").read_text(encoding="utf-8"))
+    if profile.get("operation") != "profile_selfplay" or profile.get("records") != 500000:
+        raise SystemExit(f"0842 G{gen}: invalid profile shape/count")
+    sources = profile.get("source_records", {})
+    if sources.get("standard") != 500000 or sources.get("frontier", 0) != 0:
+        raise SystemExit(f"0842 G{gen}: corpus is not 100% standard self-play")
+    raw_data = gzip.decompress((root / f"0842-g{gen}.jnnw.gz").read_bytes())
+    raw_meta = gzip.decompress((root / f"0842-g{gen}.jsm.gz").read_bytes())
+    data_sha = hashlib.sha256(raw_data).hexdigest()
+    meta_sha = hashlib.sha256(raw_meta).hexdigest()
+    if profile.get("input", {}).get("data_sha256") != data_sha:
+        raise SystemExit(f"0842 G{gen}: decompressed JNNW/profile mismatch")
+    if profile.get("input", {}).get("meta_sha256") != meta_sha:
+        raise SystemExit(f"0842 G{gen}: decompressed JSM/profile mismatch")
+    profile_proofs[f"G{gen}"] = {
+        "records": 500000, "standard": 500000, "frontier": 0,
+        "raw_data_sha256": data_sha, "raw_meta_sha256": meta_sha,
+    }
+
+search = str(recipe.get("search_params", ""))
+search_sha = hashlib.sha256(search.encode()).hexdigest()
+expected_search = "61cdaf50cc1948537990331d78f5b296dc6aee71cc7c2b98bcbd0969977619e1"
+if search_sha != expected_search or manifest.get("search_params_sha256") != expected_search:
+    raise SystemExit("0842 pure search fingerprint SHA256 mismatch")
+g0_raw = gzip.decompress((root / "pure-g0.pjtw.gz").read_bytes())
+g4_raw = gzip.decompress((root / "pure-g4.pjtw.gz").read_bytes())
+if hashlib.sha256(g0_raw).hexdigest() != "4dd50bd836375d825234fa263a964a2b684e865c6513cd7813d5ff93dbe97864":
+    raise SystemExit("0842 pure G0 raw digest mismatch")
+if hashlib.sha256(g4_raw).hexdigest() != "93c76031be3a039aa08eec4a1d3166321d93d602ca78a139509f8c6e90de5e86":
+    raise SystemExit("0842 pure G4 raw digest mismatch")
+Path(g0_name).write_bytes(g0_raw)
+Path(g4_name).write_bytes(g4_raw)
+Path(search_name).write_text(search + "\n", encoding="utf-8")
+
+contract = {
+    "schema": 1,
+    "protocol": "stable-top3-causal-conversion-matrix",
+    "selection_source": {
+        "job_id": source_job, "code_sha": source_code,
+        "prefix": sreport["prefix"], "selected_sha256": source_expected,
+        "profiles": profile_proofs, "generation_recipe": recipe,
+        "outcome_used_for_selection": False,
+    },
+    "evaluated_models": {
+        "job_id": source_job, "code_sha": source_code,
+        "prefix": ereport["prefix"], "selected_sha256": eval_expected,
+        "lineage": "L3-PURE", "generation": "G4",
+        "geometry": "8cf", "search_params_count": 63,
+        "search_params_sha256": search_sha,
+        "g0_raw_sha256": hashlib.sha256(g0_raw).hexdigest(),
+        "g4_raw_sha256": hashlib.sha256(g4_raw).hexdigest(),
+    },
+    "scan_used_for_training": False,
+    "training_continuation_authorized": False,
+    "promotion_authorized": False,
+    "automatic_next_job": None,
+}
+Path(out_name).write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+else
 # Fetch only the evaluated G0/G4 and scientific manifest from immutable 0890bis.
 python3 jobs/tools/fetch_result_files.py --prefix "$EVAL_0890BIS_PREFIX" \
   --file artefacts/l3-imbalance2-top3-p1-manifest.json=0890bis-manifest.json \
@@ -369,6 +521,7 @@ contract = {
 }
 Path(out_name).write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
+fi
 
 SEARCH_PARAMS="$(cat "$W/search-params.txt")"
 [ "$(printf '%s' "$SEARCH_PARAMS" | sha256sum | awk '{print $1}')" = "$EXPECTED_SEARCH_SHA256" ] \

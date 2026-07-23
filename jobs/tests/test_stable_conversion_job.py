@@ -13,6 +13,10 @@ WRAPPER = ROOT / (
     "jobs/prepared/l3-top3-stable-conversion-20260722/"
     "cpx62-0908-l3-top3-stable-conversion-matrix-v1.sh"
 )
+PURE_WRAPPER = ROOT / (
+    "jobs/prepared/l3-pure-top3-conversion-20260723/"
+    "cpx62-0921-l3-pure-top3-stable-conversion-matrix-v1.sh"
+)
 MATRIX_TOOL = ROOT / "jobs/tools/stable_conversion_matrix.py"
 
 
@@ -21,6 +25,7 @@ class StableConversionJobContractTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.template = TEMPLATE.read_text(encoding="utf-8")
         cls.wrapper = WRAPPER.read_text(encoding="utf-8")
+        cls.pure_wrapper = PURE_WRAPPER.read_text(encoding="utf-8")
 
     def test_fixed_sizing_and_common_budget(self) -> None:
         for token in (
@@ -152,6 +157,29 @@ class StableConversionJobContractTest(unittest.TestCase):
             "--g0-pattern", "--g4-pattern", "--inputs",
         ):
             self.assertNotIn(stale, self.template)
+
+    def test_0921_pure_mirror_is_same_matrix_with_pinned_pure_g4(self) -> None:
+        for token in (
+            'EVAL_SOURCE_MODE="${EVAL_SOURCE_MODE:-imbalance2-0890bis}"',
+            "pure-0842",
+            "artefacts/g0-material.pjtw.gz=pure-g0.pjtw.gz",
+            "artefacts/g4.pjtw.gz=pure-g4.pjtw.gz",
+            "e7eb9cd359d3418720e5e39484187d9d224ac9febd2b26e6302190454dd4e8e6",
+            "93c76031be3a039aa08eec4a1d3166321d93d602ca78a139509f8c6e90de5e86",
+            'manifest.get("training_sources") != ["selfplay_terminal_wdl"]',
+            "observed_0908=2688_games/320s_total",
+            'SHARD_TIMEOUT" -eq 900',
+            'GLOBAL_TIMEOUT" -eq 1200',
+        ):
+            self.assertIn(token, self.template)
+        for token in (
+            "cpx62-0921-l3-pure-top3-stable-conversion-matrix-v1",
+            'export EVAL_SOURCE_MODE="pure-0842"',
+            "NSHARDS=16 PAR=16 GAME_TIMEOUT=120 SHARD_TIMEOUT=900 GLOBAL_TIMEOUT=1200",
+            "JASS_BUILD_JOBS=4",
+            "BOOTSTRAP=10000",
+        ):
+            self.assertIn(token, self.pure_wrapper)
 
 
 if __name__ == "__main__":
