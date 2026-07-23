@@ -55,8 +55,28 @@ def transient_unit_name(wrapper_pid_path: Path) -> str:
     return f"jass-job-{digest}.service"
 
 
-def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
+def bootstrap_wrapper_command(wrapper: str, wrapper_pid_path: Path, ready_path: Path) -> str:
+    pid = shlex.quote(str(wrapper_pid_path))
+    ready = shlex.quote(str(ready_path))
+    nested = shlex.quote(wrapper)
+    return (
+        f"printf '%s\\n' \"$$\" > {pid}; "
+        "i=0; "
+        f"while [ ! -f {ready} ]; do "
+        "i=$((i+1)); [ \"$i\" -lt 600 ] || exit 125; sleep 0.05; done; "
+        f"exec /usr/bin/bash -c {nested}"
+    )
+
+
+def systemd_run_command(
+    unit: str,
+    cwd: Path,
+    wrapper: str,
+    wrapper_pid_path: Path,
+    ready_path: Path,
+) -> list[str]:
     binary = shutil.which("systemd-run") or "/usr/bin/systemd-run"
+    bootstrap = bootstrap_wrapper_command(wrapper, wrapper_pid_path, ready_path)
     return [
         binary,
         "--quiet",
@@ -77,7 +97,7 @@ def systemd_run_command(unit: str, cwd: Path, wrapper: str) -> list[str]:
         "--property=StandardError=null",
         "/usr/bin/bash",
         "-c",
-        wrapper,
+        bootstrap,
     ]
 
 
@@ -104,6 +124,17 @@ def _wait_for_wrapper_pid(path: Path, unit: str, timeout: float = 30.0) -> int:
     )
 
 
+def _stop_unit(unit: str, original_popen: Callable[..., subprocess.Popen]) -> None:
+    client = original_popen(
+        ["systemctl", "stop", unit],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    client.communicate(timeout=30)
+
+
 def launch_transient(
     args: list[str] | tuple[str, ...],
     kwargs: dict[str, Any],
@@ -112,8 +143,11 @@ def launch_transient(
     wrapper = str(args[2])
     cwd = Path(kwargs.get("cwd") or ".").resolve()
     wrapper_pid_path = extract_wrapper_pid_path(wrapper)
+    ready_path = wrapper_pid_path.parent / "launcher.ready"
+    wrapper_pid_path.unlink(missing_ok=True)
+    ready_path.unlink(missing_ok=True)
     unit = transient_unit_name(wrapper_pid_path)
-    command = systemd_run_command(unit, cwd, wrapper)
+    command = systemd_run_command(unit, cwd, wrapper, wrapper_pid_path, ready_path)
     client = original_popen(
         command,
         stdin=subprocess.DEVNULL,
@@ -129,7 +163,7 @@ def launch_transient(
         )
     pid = _wait_for_wrapper_pid(wrapper_pid_path, unit)
     launch_report = {
-        "schema": 1,
+        "schema": 2,
         "launcher": "systemd-transient-service",
         "unit": unit,
         "wrapper_pid": pid,
@@ -137,14 +171,23 @@ def launch_transient(
         "kill_mode": "control-group",
         "runtime_max": "infinity",
         "parent_runner_cgroup_isolated": True,
+        "start_barrier": str(ready_path),
+        "job_released": False,
     }
     artefacts = wrapper_pid_path.parent / "artefacts"
     artefacts.mkdir(parents=True, exist_ok=True)
-    (artefacts / "runner-launch.json").write_text(
+    report_path = artefacts / "runner-launch.json"
+    report_path.write_text(
         json.dumps(launch_report, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    return SimpleNamespace(pid=pid, systemd_unit=unit)
+    return SimpleNamespace(
+        pid=pid,
+        systemd_unit=unit,
+        ready_path=ready_path,
+        report_path=report_path,
+        launch_report=launch_report,
+    )
 
 
 def start_job_hardened(cfg: Any, script: Path) -> dict:
@@ -162,29 +205,51 @@ def start_job_hardened(cfg: Any, script: Path) -> dict:
     def intercept(args: Any, *pargs: Any, **kwargs: Any):
         if is_runner_job_launch(args, kwargs):
             proc = launch_transient(args, kwargs, original_popen)
-            launch_state["unit"] = proc.systemd_unit
+            launch_state.update({
+                "unit": proc.systemd_unit,
+                "ready_path": proc.ready_path,
+                "report_path": proc.report_path,
+                "launch_report": proc.launch_report,
+            })
             return proc
         return original_popen(args, *pargs, **kwargs)
 
     R.subprocess.Popen = intercept
     try:
         info = _ORIGINAL_START_JOB(cfg, script)
+    except Exception:
+        unit = launch_state.get("unit")
+        if unit:
+            _stop_unit(unit, original_popen)
+        raise
     finally:
         R.subprocess.Popen = original_popen
 
     unit = launch_state.get("unit")
-    if not unit:
+    ready_path = launch_state.get("ready_path")
+    if not unit or not isinstance(ready_path, Path):
         raise RuntimeError("job launch was not intercepted into a transient unit")
-    info["systemd_unit"] = unit
-    R.write_json(R.in_flight_path(cfg), info)
-    metadata_path = Path(info["run_dir"]) / "metadata.json"
-    metadata = R.read_json(metadata_path) or {}
-    metadata.update({
-        "systemd_unit": unit,
-        "launcher": "systemd-transient-service",
-        "parent_runner_cgroup_isolated": True,
-    })
-    R.write_json(metadata_path, metadata)
+    try:
+        info["systemd_unit"] = unit
+        info["launcher"] = "systemd-transient-service"
+        info["parent_runner_cgroup_isolated"] = True
+        R.write_json(R.in_flight_path(cfg), info)
+        metadata_path = Path(info["run_dir"]) / "metadata.json"
+        metadata = R.read_json(metadata_path) or {}
+        metadata.update({
+            "systemd_unit": unit,
+            "launcher": "systemd-transient-service",
+            "parent_runner_cgroup_isolated": True,
+        })
+        R.write_json(metadata_path, metadata)
+        report = dict(launch_state["launch_report"])
+        report["job_released"] = True
+        report["released_at"] = R.utcnow()
+        R.write_json(launch_state["report_path"], report)
+        ready_path.write_text("ready\n", encoding="utf-8")
+    except Exception:
+        _stop_unit(unit, original_popen)
+        raise
     return info
 
 
