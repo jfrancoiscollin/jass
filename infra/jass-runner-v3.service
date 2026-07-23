@@ -9,9 +9,12 @@ Type=oneshot
 User=root
 WorkingDirectory=/srv/jass/code
 Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=JASS_JOB_LAUNCHER=systemd
 EnvironmentFile=-/etc/jass-runner/runner-v3.env
 EnvironmentFile=-/etc/jass-runner/secrets.env
-ExecStart=/usr/bin/python3 /srv/jass/code/infra/runner_v3.py
+ExecStart=/usr/bin/python3 /srv/jass/code/infra/runner_v3_hardened.py
+# The timer process remains short-lived. Scientific jobs are moved into their
+# own transient services/cgroups by runner_v3_hardened.py.
 KillMode=process
 Nice=10
 IOSchedulingClass=best-effort
