@@ -231,6 +231,14 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   (+1,3724), IC95 entièrement positifs. Le plateau n’est donc pas une
   conversion apprise mais cachée par l’agrégat : G4 a causalement dégradé le
   rôle attaquant sur ce domaine.
+- **Miroir causal L3-PURE `0921` :** protocole identique, 2 688/2 688 parties,
+  zéro erreur et zéro cap, avec le G4 pur de `0842`. G4/G0 vaut 374/0/10 et
+  l’effet d’attaque est positif : +0,1667, IC95 [+0,0990 ; +0,2344]. G0/G4
+  vaut 202/0/182 et l’effet de défense est +0,7292, IC95
+  [+0,6146 ; +0,8438]. G4/G4 reste proche de G0/G0 parce que les deux rôles
+  progressent simultanément. Le self-play WDL et l’architecture linéaire
+  savent donc apprendre la conversion ; la destruction du rôle attaquant est
+  localisée à la recette spécialiste 0890bis.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),

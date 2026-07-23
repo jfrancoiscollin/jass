@@ -12,7 +12,8 @@
 > c3_mf_no_lead; 32cf_no_go_data_limited; pure_maturity_experiment_open;
 > imbalance2_p1_v2_no_clear_lead; imbalance2_p2_no_clear_improvement_or_unstable;
 > imbalance2_stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
-> d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready`.
+> d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
+> l3_pure_top3_causal_conversion_ready`.
 
 ## 1. Architecture du programme
 
@@ -83,6 +84,7 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 | spécialiste | représentation RC4 | `cpx62-0872` | **`D1_RC4_NO_GO`** |
 | spécialiste | autopsie RC4 | `cpx62-0874` | **`D1X_RC4_AUTOPSY_READY`** |
 | causal conversion | matrice TOP3 stable | `cpx62-0908` + salvage `0920` | **`SALVAGE_CAUSAL_CONVERSION_MATRIX_READY`** |
+| causal conversion | miroir L3-PURE | `cpx62-0921` | **`L3_PURE_CAUSAL_CONVERSION_MATRIX_READY`** |
 
 ## 4. Couverture et maturité de `L3-PURE`
 
@@ -191,6 +193,27 @@ dégradé le rôle attaquant par rapport à G0. Le fait que Scan partage une cla
 d’évaluation linéaire ne suffit donc pas : sa fonction apprise et sa
 co-adaptation recherche/évaluation restent causalement différentes.
 
+Le miroir `cpx62-0921` remplace uniquement le G4 spécialiste 0890bis par le G4
+généraliste pur de `0842`. Il a terminé strictement les 2 688 parties, sans
+erreur ni cap :
+
+```text
+Scan/Scan 382/0/2    Scan/G4 384/0/0    G4/Scan 78/0/306
+G0/G0     342/0/42   G4/G0   374/0/10   G0/G4   202/0/182
+G4/G4     345/0/39
+```
+
+Contrairement au spécialiste, G4 pur améliore causalement les deux rôles :
+attaque `+0,1667`, IC95 `[+0,0990 ; +0,2344]`, et défense `+0,7292`, IC95
+`[+0,6146 ; +0,8438]`. Leur combinaison G4/G4 est proche de G0/G0
+(`+0,0156`, IC95 `[−0,0625 ; +0,0990]`) parce que l’attaquant et le défenseur
+sont renforcés simultanément. Scan reste supérieur, surtout en défense.
+
+La conclusion est donc localisée : l’architecture linéaire et le self-play WDL
+sans oracle peuvent apprendre la conversion. C’est la recette spécialiste
+0890bis qui a détruit le rôle attaquant ; elle ne doit pas être prolongée ni
+servir de preuve d’un échec général de L3-PURE.
+
 ## 6. Prochaines actions séparées
 
 ### Généraliste `L3-PURE`
@@ -219,6 +242,7 @@ co-adaptation recherche/évaluation restent causalement différentes.
 - D1-RC4 : `r2:jass-data/runs/cpx62-0872-l3-imbalance2-d1-rc4/20260720T202210Z-fa68634c` ;
 - D1-X : `r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6` ;
 - matrice TOP3 0908 salvagée : `r2:jass-data/runs/cpx62-0920-salvage-0908-stable-top3-matrix-v1/20260723T133448Z-2ed34499`.
+- miroir causal L3-PURE : `r2:jass-data/runs/cpx62-0921-l3-pure-top3-stable-conversion-matrix-v1/20260723T134611Z-fbf0c93e`.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
