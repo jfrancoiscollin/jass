@@ -15,8 +15,9 @@
 > d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
 > l3_pure_top3_causal_conversion_ready;
 > top3_specialist_recipe_failure_localized_factors_confounded;
-> conversion_2x2_g1_models_trained_matrix_single_cap;
-> conversion_2x2_g1_eval_recovery_0922quater_prepared`.
+> conversion_2x2_g1_models_trained_matrix_two_pinned_caps;
+> conversion_2x2_g1_eval_recovery_home_0928_ready;
+> pure_maturity_m0_home_ready`.
 
 ## 1. Architecture du programme
 
@@ -263,25 +264,28 @@ candidat. `0922bis` s’est arrêté après un unique cap déterministe à 400 p
 dans `standard_off/g0_g4` ; ce résultat technique ne constitue pas un verdict
 sur les modèles.
 
-`0922quater` réutilise les quatre modèles vérifiés depuis le résultat R2 de
-`0922bis`, ne refait aucun entraînement, rejoue la matrice complète et adjugera
-uniquement ce cap épinglé comme nul. Le rapport calcule les effets principaux
-départ/reweighting et leur interaction avec 10 000 bootstraps appariés. Toute
-autre anomalie reste fail-closed.
-
 La première reprise `0922ter` a vérifié les modèles mais a échoué avant toute
 partie : le build d’évaluation n’avait pas réémis la géométrie `8cf`.
-`0922quater` rétablit explicitement cette étape avant compilation.
+`0922quater` a rétabli cette étape, puis a authentifié un second cap
+déterministe à 400 plis dans `top3_off/g4_g0`, shard 12, position `62faf1...`.
+Le premier reste `standard_off/g0_g4`, shard 10, position `9bc75f...`.
 
-Sizing mesuré CPX62 : `nproc=16`, 5 504 parties, ETA **12–18 min**, hard cap
-**30 min**. Matrice et garde : timeout 900 s/shard. Aucun verdict ne peut
-promouvoir, continuer ou queuer automatiquement.
+`home-0928` réutilise les quatre modèles vérifiés de `0922bis`, ne refait aucun
+entraînement, rejoue la matrice complète et exige exactement ces deux caps. Ils
+sont dérivés comme nuls sans replay ; leur disparition ou toute troisième
+anomalie fait échouer le job. Le rapport calcule les effets principaux
+départ/reweighting et leur interaction avec 10 000 bootstraps appariés.
+
+Sizing HOME : `nproc=16`, 5 504 parties, ETA conservatrice **35–70 min**, hard
+cap **120 min**, compilation `-j4`. Aucun verdict ne peut promouvoir, continuer
+ou queuer automatiquement.
 
 ## 6. Prochaines actions séparées
 
 ### Généraliste `L3-PURE`
 
-1. préparer le benchmark M0 C0 A-G3 / `0842` G4 / `gen2-mmto` ;
+1. exécuter sur HOME l’audit de couverture M0 puis le triangle
+   C0 A-G3 / `0842` G4 / `gen2-mmto` ;
 2. choisir un parent généraliste immuable ;
 3. préparer l’écran M1 volume/mémoire sur 8cf ;
 4. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.

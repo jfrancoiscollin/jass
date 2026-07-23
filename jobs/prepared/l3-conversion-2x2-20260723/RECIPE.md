@@ -32,5 +32,19 @@ Sizing CPX62 :
 - ETA 30–45 min ; hard cap 60 min ;
 - timeout génération 2 700 s/shard, matrices et garde 900 s/shard.
 
-Le verdict technique est `CONVERSION_2X2_G1_SCREEN_READY`. Il n’autorise ni
+Le verdict technique est `CONVERSION_2X2_G1_SCREEN_READY`. Il n'autorise ni
 promotion, ni continuation, ni job automatique.
+
+## Reprise HOME
+
+Après retrait de CPX62/CCX33, l'évaluation seule est portée sur le runner
+`home-` sans réentraînement. Le profil HOME conserve les 16 shards, `-j4`, les
+modèles immuables de `0922bis`, le pool de 0921 et les 10 000 bootstraps. Seuls
+les gardes machine changent : minimum 14 000 MiB de RAM, timeouts shards
+1 800/1 200 s et hard cap global 120 min.
+
+Les deux reprises CPX ont authentifié exactement deux caps déterministes à 400
+plis : `standard_off/g0_g4`, shard 10, position `9bc75f...`, puis
+`top3_off/g4_g0`, shard 12, position `62faf1...`. `home-0928` exige ces deux
+caps, les dérive comme nulles sans rejouer, et échoue fermé si l'un disparaît
+ou si une troisième anomalie apparaît.

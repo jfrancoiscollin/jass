@@ -263,7 +263,7 @@ class M0SourceContractTests(unittest.TestCase):
 class M0PreparedContractTests(unittest.TestCase):
     def test_shell_files_are_valid_and_not_self_queued(self):
         scripts = [TRIANGLE, COVERAGE_RUNNER, *sorted(PREPARED.glob("*.sh"))]
-        self.assertEqual(len(scripts), 4)
+        self.assertEqual(len(scripts), 6)
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
             text = script.read_text(encoding="utf-8")
@@ -277,6 +277,19 @@ class M0PreparedContractTests(unittest.TestCase):
             self.assertIn("cpx62-0842-l3-p1-frozen-v1", text)
             self.assertIn("FULL_RUN_APPROVED=1", text)
             self.assertIn("SCIENTIFIC_GO=1", text)
+
+    def test_home_wrappers_change_only_execution_sizing(self):
+        coverage = (
+            PREPARED / "home-0929-l3-pure-m0-coverage.sh"
+        ).read_text(encoding="utf-8")
+        triangle = (
+            PREPARED / "home-0930-l3-pure-m0-triangle.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn("timeout -k 60s 5400s", coverage)
+        self.assertIn("NOPEN=300 NSH_GATE=12 PAR_GATE=2 DEPTH=9", triangle)
+        self.assertIn("NATIVE_MOVETIME=0.3", triangle)
+        self.assertIn("JASS_BUILD_JOBS=4 SHARD_TIMEOUT=10800", triangle)
+        self.assertIn("timeout -k 60s 28800s", triangle)
 
     def test_runners_publish_gitops_summary_and_fail_closed(self):
         triangle = TRIANGLE.read_text(encoding="utf-8")

@@ -27,3 +27,12 @@ m1_authorized=false
 promotion_authorized=false
 automatic_next_job=null
 ```
+
+## Portage HOME
+
+Les wrappers `home-0929` et `home-0930` conservent les sources, les 300
+ouvertures, les trois vues et les budgets scientifiques de M0. Le triangle
+réduit seulement la concurrence à six shards (`PAR_GATE=2` pour chacun des
+trois matches) et la compilation à `-j4`, soit au plus douze moteurs simultanés
+sur les seize CPU HOME. Les hard caps sont de 90 minutes pour la couverture et
+de huit heures pour le triangle.

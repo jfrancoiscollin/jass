@@ -49,8 +49,16 @@ def validated_arm(
     contract: matrix.PoolContract, root: Path, candidate: str, arm: str,
     *,
     salvage: dict[str, Any] | None = None,
+    salvages: list[dict[str, Any]] | None = None,
     adjudications: list[dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
+    if salvage is not None and salvages is not None:
+        raise ValueError("use salvage or salvages, not both")
+    pinned = list(salvages or ([salvage] if salvage is not None else []))
+    expected_caps = [
+        item for item in pinned
+        if item["candidate"] == candidate and item["arm"] == arm
+    ]
     directory = root / ("common" if arm == "g0_g0" else candidate) / arm
     rows = read_jsonl(directory.glob("s*.jsonl"))
     by_id, failures = matrix.validate_arm_rows(contract, arm, rows)
@@ -63,41 +71,60 @@ def validated_arm(
             f"{candidate}/{arm}: validation failures={failures[:8]} "
             f"technical_rows={len(technical)}"
         )
+    if len(technical) != len(expected_caps):
+        raise ValueError(
+            f"{candidate}/{arm}: validation failures=[] "
+            f"technical_rows={len(technical)} expected_pinned={len(expected_caps)}"
+        )
     if technical:
-        if (
-            salvage is None
-            or candidate != salvage["candidate"]
-            or arm != salvage["arm"]
-            or len(technical) != 1
-        ):
+        expected_by_id = {item["position_id"]: item for item in expected_caps}
+        if len(expected_by_id) != len(expected_caps):
+            raise ValueError(f"{candidate}/{arm}: duplicate pinned position")
+        observed_by_id = {item["position_id"]: item for item in technical}
+        if set(observed_by_id) != set(expected_by_id):
             raise ValueError(
-                f"{candidate}/{arm}: validation failures=[] "
-                f"technical_rows={len(technical)}"
+                f"{candidate}/{arm}: pinned position mismatch "
+                f"observed={sorted(observed_by_id)} expected={sorted(expected_by_id)}"
             )
-        cap = technical[0]
-        expected = {
-            "position_id": salvage["position_id"],
-            "cell": salvage["cell"],
-            "reason": "ply cap",
-            "plies": salvage["plies"],
-            "outcome_white": "D",
-            "outcome_plus2": "D",
-            "error": None,
-        }
-        mismatches = {
-            key: (cap.get(key), value)
-            for key, value in expected.items()
-            if cap.get(key) != value
-        }
-        if mismatches:
-            raise ValueError(
-                f"{candidate}/{arm}: pinned ply-cap mismatch {mismatches}"
-            )
-        raw_sha = hashlib.sha256(
-            (json.dumps(cap, sort_keys=True, separators=(",", ":")) + "\n").encode()
-        ).hexdigest()
         by_id = copy.deepcopy(by_id)
-        by_id[salvage["position_id"]]["reason"] = matrix.SALVAGE_DRAW_REASON
+        for position_id in sorted(expected_by_id):
+            cap = observed_by_id[position_id]
+            pinned_cap = expected_by_id[position_id]
+            expected = {
+                "position_id": pinned_cap["position_id"],
+                "cell": pinned_cap["cell"],
+                "reason": "ply cap",
+                "plies": pinned_cap["plies"],
+                "outcome_white": "D",
+                "outcome_plus2": "D",
+                "error": None,
+            }
+            if "shard" in pinned_cap:
+                expected["shard"] = pinned_cap["shard"]
+            mismatches = {
+                key: (cap.get(key), value)
+                for key, value in expected.items()
+                if cap.get(key) != value
+            }
+            if mismatches:
+                raise ValueError(
+                    f"{candidate}/{arm}: pinned ply-cap mismatch {mismatches}"
+                )
+            raw_sha = hashlib.sha256(
+                (
+                    json.dumps(cap, sort_keys=True, separators=(",", ":")) + "\n"
+                ).encode()
+            ).hexdigest()
+            by_id[position_id]["reason"] = matrix.SALVAGE_DRAW_REASON
+            if adjudications is not None:
+                adjudications.append({
+                    "policy": "pinned 400-ply cap adjudicated as draw; no replay",
+                    **pinned_cap,
+                    "raw_row_sha256": raw_sha,
+                    "raw_reason": "ply cap",
+                    "derived_reason": matrix.SALVAGE_DRAW_REASON,
+                    "changes_to_raw_games": 1,
+                })
         _, derived_failures = matrix.validate_arm_rows(
             contract,
             arm,
@@ -109,15 +136,6 @@ def validated_arm(
                 f"{candidate}/{arm}: adjudicated validation failed "
                 f"{derived_failures[:8]}"
             )
-        if adjudications is not None:
-            adjudications.append({
-                "policy": "single pinned 400-ply cap adjudicated as draw; no replay",
-                **salvage,
-                "raw_row_sha256": raw_sha,
-                "raw_reason": "ply cap",
-                "derived_reason": matrix.SALVAGE_DRAW_REASON,
-                "changes_to_raw_games": 1,
-            })
     return by_id
 
 
@@ -308,6 +326,7 @@ def effect_signal(value: float, interval: list[float], threshold: float = 0.05) 
 
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     contract = matrix.load_pool_contract(args.pool, args.proof)
+    salvage_manifest = getattr(args, "salvage_manifest", None)
     salvage_values = (
         getattr(args, "salvage_candidate", None),
         getattr(args, "salvage_arm", None),
@@ -316,22 +335,50 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     )
     if any(salvage_values) and not all(salvage_values):
         raise ValueError("single-ply-cap salvage parameters must be all-or-none")
-    salvage = None
+    if salvage_manifest is not None and any(salvage_values):
+        raise ValueError("salvage manifest and single-cap parameters are exclusive")
+    salvages: list[dict[str, Any]] = []
     if all(salvage_values):
-        salvage = {
+        salvages.append({
             "candidate": salvage_values[0],
             "arm": salvage_values[1],
             "position_id": salvage_values[2],
             "cell": salvage_values[3],
             "plies": getattr(args, "salvage_plies", 400),
-        }
+        })
+    if salvage_manifest is not None:
+        manifest = json.loads(Path(salvage_manifest).read_text(encoding="utf-8"))
+        if manifest.get("schema") != 1:
+            raise ValueError("salvage manifest schema must be 1")
+        items = manifest.get("adjudications")
+        if not isinstance(items, list) or not items:
+            raise ValueError("salvage manifest requires non-empty adjudications")
+        required = {"candidate", "arm", "position_id", "cell", "plies", "shard"}
+        for index, item in enumerate(items):
+            if not isinstance(item, dict) or not required.issubset(item):
+                raise ValueError(f"invalid salvage manifest entry {index}")
+            if item["candidate"] not in CANDIDATES or item["arm"] not in ARMS:
+                raise ValueError(f"invalid salvage target {index}")
+            if (
+                item["plies"] != 400
+                or not isinstance(item["shard"], int)
+                or not 0 <= item["shard"] < 16
+            ):
+                raise ValueError(f"invalid salvage cap contract {index}")
+            salvages.append({key: item[key] for key in sorted(required)})
+    identities = {
+        (item["candidate"], item["arm"], item["position_id"])
+        for item in salvages
+    }
+    if len(identities) != len(salvages):
+        raise ValueError("duplicate salvage manifest identity")
     adjudications: list[dict[str, Any]] = []
     control = validated_arm(
         contract,
         args.matrix_root,
         "common",
         "g0_g0",
-        salvage=salvage,
+        salvages=salvages,
         adjudications=adjudications,
     )
     ids = [position.position_id for position in contract.positions]
@@ -342,16 +389,17 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
                 args.matrix_root,
                 candidate,
                 arm,
-                salvage=salvage,
+                salvages=salvages,
                 adjudications=adjudications,
             )
             for arm in ARMS
         }
         for candidate in CANDIDATES
     }
-    if salvage is not None and len(adjudications) != 1:
+    if len(adjudications) != len(salvages):
         raise ValueError(
-            f"expected exactly one pinned ply-cap adjudication, got {len(adjudications)}"
+            f"expected {len(salvages)} pinned ply-cap adjudications, "
+            f"got {len(adjudications)}"
         )
     endpoints = {
         candidate: candidate_endpoints(ids, control, candidate_arms[candidate])
@@ -393,10 +441,19 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
         "schema": 1,
         "decision": "CONVERSION_2X2_G1_SCREEN_READY",
         "technical_status": (
-            "derived_complete_single_ply_cap" if adjudications else "complete"
+            "complete" if not adjudications else
+            "derived_complete_single_ply_cap" if len(adjudications) == 1 else
+            f"derived_complete_{len(adjudications)}_ply_caps"
         ),
         "original_zero_cap_gate_ready": not bool(adjudications),
         "adjudications": adjudications,
+        "adjudication_sensitivity_bounds": {
+            "raw_games_changed": len(adjudications),
+            "max_abs_candidate_endpoint_shift_per_adjudicated_game":
+                1.0 / len(ids),
+            "max_abs_any_factor_effect_shift_conservative":
+                len(adjudications) / len(ids),
+        },
         "causal_unit": "one common stable TOP3 position",
         "source_corpus_reuse": {
             "standard_off_on_share_identical_G1_selfplay": True,
@@ -443,6 +500,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--salvage-position-id")
     parser.add_argument("--salvage-cell")
     parser.add_argument("--salvage-plies", type=int, default=400)
+    parser.add_argument("--salvage-manifest", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 

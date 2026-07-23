@@ -24,13 +24,32 @@ exec 9>"$JASS_RESULT_DIR/job.lock"
 flock -n 9 || { echo "ABORT: another instance is active" >&2; exit 3; }
 
 BASE_SEED=271828
-MATRIX_SHARD_TIMEOUT=900
-BALANCED_SHARD_TIMEOUT=900
 JASS_BUILD_JOBS=4
 BOOTSTRAP=10000
 BALANCED_OPENINGS=64
 BALANCED_GAMES=128
 TOTAL_MATRIX_GAMES=$((384 * (1 + 4 * 3)))
+EXECUTION_PROFILE="${EXECUTION_PROFILE:-cpx62}"
+EXPECTED_NPROC=16
+MIN_FREE_MB=10000
+case "$EXECUTION_PROFILE" in
+  cpx62)
+    MATRIX_SHARD_TIMEOUT=900
+    BALANCED_SHARD_TIMEOUT=900
+    MIN_MEM_MB=30000
+    SIZING_NOTE="sizing: profile=cpx62 nproc=16 evaluation=4992_matrix+512_balanced; measured_0921=2688_games/363s; ETA=12-18min; hard_cap=30min"
+    ;;
+  home)
+    MATRIX_SHARD_TIMEOUT=1800
+    BALANCED_SHARD_TIMEOUT=1200
+    MIN_MEM_MB=14000
+    SIZING_NOTE="sizing: profile=home nproc=16 evaluation=4992_matrix+512_balanced; conservative ETA=35-70min; hard_cap=120min"
+    ;;
+  *)
+    echo "ABORT: unsupported EXECUTION_PROFILE=$EXECUTION_PROFILE" >&2
+    exit 2
+    ;;
+esac
 SOURCE_PREFIX="r2:jass-data/runs/cpx62-0922bis-l3-conversion-2x2-g1-screen-v1/20260723T152652Z-03f7e50a"
 SOURCE_JOB_ID="cpx62-0922bis-l3-conversion-2x2-g1-screen-v1"
 SOURCE_ATTEMPT_ID="20260723T152652Z-03f7e50a"
@@ -39,11 +58,17 @@ POOL_SHA256="dfdbc788b715c7faab1c2e1dc1a1a7a7f7016eb1c4920b3544deacf973b569d0"
 PROOF_SHA256="70daef6cd5a4c9c57d48c0afaaa4622092a25141b70fc8ce3a838e073b2a9e02"
 G0_SHA256="4dd50bd836375d825234fa263a964a2b684e865c6513cd7813d5ff93dbe97864"
 SEARCH_SHA256="61cdaf50cc1948537990331d78f5b296dc6aee71cc7c2b98bcbd0969977619e1"
-CAP_CANDIDATE="standard_off"
-CAP_ARM="g0_g4"
-CAP_POSITION_ID="9bc75f637c4afd1d9ccb4ed29ea854d784ef32dbb6f5d58f67eb917c40c9b69f"
-CAP_CELL="16v18|adv=B|stm=W"
-CAP_SHARD=10
+CAP_MANIFEST="$W/pinned-cap-adjudications.json"
+CAP1_CANDIDATE="standard_off"
+CAP1_ARM="g0_g4"
+CAP1_POSITION_ID="9bc75f637c4afd1d9ccb4ed29ea854d784ef32dbb6f5d58f67eb917c40c9b69f"
+CAP1_CELL="16v18|adv=B|stm=W"
+CAP1_SHARD=10
+CAP2_CANDIDATE="top3_off"
+CAP2_ARM="g4_g0"
+CAP2_POSITION_ID="62faf128aaa80be9acc6b552c938074312cb46dcca5060f84caa1d4c0f797dfd"
+CAP2_CELL="17v19|adv=W|stm=W"
+CAP2_SHARD=12
 CANDIDATES=(standard_off standard_on top3_off top3_on)
 MATRIX_ARMS=(g4_g0 g0_g4 g4_g4)
 
@@ -140,7 +165,7 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-say "=== $JASS_JOB_ID — 0922ter evaluation-only recovery ==="
+say "=== $JASS_JOB_ID — L3 conversion 2x2 evaluation-only recovery ==="
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ -z "$(git branch --show-current)" ] || die "code worktree must be detached"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
@@ -148,7 +173,7 @@ say "=== $JASS_JOB_ID — 0922ter evaluation-only recovery ==="
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
 [ "${CONVERSION_2X2_EVAL_GO:-0}" = 1 ] || die "CONVERSION_2X2_EVAL_GO=1 missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "NO_AUTOMATIC_CONTINUATION=1 missing"
-[ "$MATRIX_SHARD_TIMEOUT" -eq 900 ] && [ "$BALANCED_SHARD_TIMEOUT" -eq 900 ] || die "evaluation timeout drift"
+[ "$MATRIX_SHARD_TIMEOUT" -gt 0 ] && [ "$BALANCED_SHARD_TIMEOUT" -gt 0 ] || die "evaluation timeout drift"
 [ "$BOOTSTRAP" -eq 10000 ] && [ "$BALANCED_GAMES" -eq 128 ] || die "reporting contract drift"
 
 JOB_STARTED_EPOCH="$(date +%s)"
@@ -157,16 +182,16 @@ set_phase preflight
 
 find /root -maxdepth 1 -name 'cw-*' -type d -mmin +180 ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
 NPROC="$(nproc)"
-[ "$NPROC" -eq 16 ] || die "CPX62 nproc drift: expected 16, got $NPROC"
+[ "$NPROC" -eq "$EXPECTED_NPROC" ] || die "$EXECUTION_PROFILE nproc drift: expected $EXPECTED_NPROC, got $NPROC"
 MEM_MB="$(awk '/MemTotal:/ {printf "%d", $2/1024}' /proc/meminfo)"
-[ "${MEM_MB:-0}" -ge 30000 ] || die "requires CPX62 >=30 GiB"
+[ "${MEM_MB:-0}" -ge "$MIN_MEM_MB" ] || die "$EXECUTION_PROFILE requires at least $MIN_MEM_MB MiB RAM"
 FREE_MB="$(df -Pm /root | awk 'NR==2 {print $4}')"
-[ "${FREE_MB:-0}" -gt 10000 ] || die "free disk below 10 GiB"
+[ "${FREE_MB:-0}" -gt "$MIN_FREE_MB" ] || die "free disk below $MIN_FREE_MB MiB"
 [ -x "$SCAN_BIN" ] || die "Scan binary missing"
 [ "$(sha256sum "$SCAN_BIN" | awk '{print $1}')" = "$EXPECTED_SCAN_SHA256" ] || die "Scan SHA mismatch"
 [ "$(printf '%s' "$L3_SEARCH_PARAMS" | sha256sum | awk '{print $1}')" = "$SEARCH_SHA256" ] || die "search fingerprint mismatch"
-say "sizing: nproc=16 evaluation=4992_matrix+512_balanced; measured_0921=2688_games/363s; ETA=12-18min; hard_cap=30min"
-say "preflight: mem_mb=$MEM_MB free_mb=$FREE_MB shard_timeouts=${MATRIX_SHARD_TIMEOUT}s/${BALANCED_SHARD_TIMEOUT}s"
+say "$SIZING_NOTE"
+say "preflight: profile=$EXECUTION_PROFILE mem_mb=$MEM_MB free_mb=$FREE_MB shard_timeouts=${MATRIX_SHARD_TIMEOUT}s/${BALANCED_SHARD_TIMEOUT}s"
 
 set_phase smoke_tests
 bash -n "$0"
@@ -222,6 +247,30 @@ cp "$INPUTS/training-manifest.json" "$ART/2x2-training-manifest.json"
 cp "$INPUTS/stable-top3.fen" "$ART/stable-top3.fen"
 cp "$INPUTS/stable-top3.proof.jsonl" "$ART/stable-top3.proof.jsonl"
 cp "$INPUTS/pool-contract.json" "$ART/pool-contract.json"
+python3 - "$CAP_MANIFEST" \
+  "$CAP1_CANDIDATE" "$CAP1_ARM" "$CAP1_POSITION_ID" "$CAP1_CELL" "$CAP1_SHARD" \
+  "$CAP2_CANDIDATE" "$CAP2_ARM" "$CAP2_POSITION_ID" "$CAP2_CELL" "$CAP2_SHARD" <<'PY'
+import json, sys
+out=sys.argv[1]
+values=sys.argv[2:]
+items=[]
+for offset in range(0,len(values),5):
+    candidate,arm,position_id,cell,shard=values[offset:offset+5]
+    items.append({
+        "candidate":candidate,
+        "arm":arm,
+        "position_id":position_id,
+        "cell":cell,
+        "shard":int(shard),
+        "plies":400,
+    })
+open(out,"w",encoding="utf-8").write(json.dumps({
+    "schema":1,
+    "policy":"only these authenticated deterministic 400-ply caps are draws",
+    "adjudications":items,
+},indent=2,sort_keys=True)+"\n")
+PY
+cp "$CAP_MANIFEST" "$ART/pinned-cap-adjudications.json"
 
 set_phase architecture_build
 for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp src/movegen.cpp src/movegen.hpp; do
@@ -259,27 +308,40 @@ run_matrix_arm(){
   ACTIVE_PIDS=("${pids[@]}")
   for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
   ACTIVE_PIDS=()
-  if [ "$candidate/$arm" != "$CAP_CANDIDATE/$CAP_ARM" ]; then
-    [ "$failed" -eq 0 ] || die "matrix $candidate/$arm: $failed failed/timed-out process(es)"
-    return
-  fi
-  [ "$failed" -eq 1 ] || die "pinned-cap arm expected exactly one technical shard, got $failed"
-  python3 - "$dir" "$CAP_POSITION_ID" "$CAP_CELL" "$CAP_SHARD" <<'PY'
+  python3 - "$dir" "$candidate" "$arm" "$failed" "$CAP_MANIFEST" <<'PY'
 import json, sys
+from collections import Counter
 from pathlib import Path
-root, position_id, cell, expected_shard = Path(sys.argv[1]), sys.argv[2], sys.argv[3], int(sys.argv[4])
+root, candidate, arm = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+failed, manifest_path = int(sys.argv[4]), Path(sys.argv[5])
+manifest=json.load(open(manifest_path,encoding="utf-8"))
+expected=[
+    item for item in manifest["adjudications"]
+    if item["candidate"]==candidate and item["arm"]==arm
+]
+expected_by_id={item["position_id"]:item for item in expected}
+assert len(expected_by_id)==len(expected), expected
+expected_shards=Counter(item["shard"] for item in expected)
+assert failed==len(expected_shards), (candidate,arm,failed,expected_shards)
 progress=[json.load(open(root/f"s{i}.progress.json",encoding="utf-8")) for i in range(16)]
 assert all(item["completed"]==24 and item["expected"]==24 for item in progress), progress
 bad=[item for item in progress if item["errors_or_caps"]]
-assert len(bad)==1 and bad[0]["shard"]==expected_shard and bad[0]["errors_or_caps"]==1, bad
+observed_shards=Counter()
+for item in bad:
+    observed_shards[item["shard"]]+=item["errors_or_caps"]
+assert observed_shards==expected_shards, (observed_shards,expected_shards)
 rows=[]
 for path in sorted(root.glob("s*.jsonl")):
     rows += [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 caps=[row for row in rows if row.get("error") or row.get("reason") in {"ply cap","game time cap"}]
-assert len(rows)==384 and len(caps)==1, (len(rows),caps)
-cap=caps[0]
-assert cap["position_id"]==position_id and cap["cell"]==cell and cap["reason"]=="ply cap"
-assert cap["plies"]==400 and cap["outcome_plus2"]=="D" and cap["error"] is None, cap
+observed_by_id={item["position_id"]:item for item in caps}
+assert len(rows)==384 and set(observed_by_id)==set(expected_by_id), (len(rows),caps,expected)
+for position_id,pinned in expected_by_id.items():
+    cap=observed_by_id[position_id]
+    assert cap["cell"]==pinned["cell"] and cap["shard"]==pinned["shard"], cap
+    assert cap["reason"]=="ply cap" and cap["plies"]==400, cap
+    assert cap["outcome_white"]=="D" and cap["outcome_plus2"]=="D", cap
+    assert cap["error"] is None, cap
 PY
 }
 
@@ -326,27 +388,50 @@ python3 jobs/tools/l3_conversion_2x2_report.py \
   --matrix-root "$MATRIX" --balanced-root "$BALANCED" \
   --balanced-games "$BALANCED_GAMES" --balanced-floor 0.40 \
   --bootstrap "$BOOTSTRAP" --seed "$BASE_SEED" \
-  --salvage-candidate "$CAP_CANDIDATE" --salvage-arm "$CAP_ARM" \
-  --salvage-position-id "$CAP_POSITION_ID" --salvage-cell "$CAP_CELL" --salvage-plies 400 \
+  --salvage-manifest "$CAP_MANIFEST" \
   --output "$ART/conversion-2x2-g1-report.json" > "$W/report.log" 2>&1
 
 python3 - "$ART/conversion-2x2-g1-report.json" "$INPUTS/training-manifest.json" \
   "$W/g0-material.pjtw" "$ART/VERDICT__CONVERSION_2X2_G1_SCREEN_READY" "$RES" \
-  "$CAP_POSITION_ID" <<'PY'
+  "$CAP_MANIFEST" "$ART/scientific-summary.json" <<'PY'
 import hashlib, json, sys
 report=json.load(open(sys.argv[1],encoding="utf-8"))
 training=json.load(open(sys.argv[2],encoding="utf-8"))
+cap_manifest=json.load(open(sys.argv[6],encoding="utf-8"))
 assert report["decision"]=="CONVERSION_2X2_G1_SCREEN_READY"
-assert report["technical_status"]=="derived_complete_single_ply_cap"
+assert report["technical_status"]=="derived_complete_2_ply_caps"
 assert report["original_zero_cap_gate_ready"] is False
 assert report["contract"]["positions"]==384 and report["contract"]["balanced_games_per_candidate"]==128
-assert len(report["adjudications"])==1
-assert report["adjudications"][0]["position_id"]==sys.argv[6]
-assert report["adjudications"][0]["changes_to_raw_games"]==1
+assert len(report["adjudications"])==2
+assert {item["position_id"] for item in report["adjudications"]}=={
+    item["position_id"] for item in cap_manifest["adjudications"]
+}
+assert all(item["changes_to_raw_games"]==1 for item in report["adjudications"])
 assert report["provenance"]["engine"]["g0"]==hashlib.sha256(open(sys.argv[3],"rb").read()).hexdigest()
 for candidate, model in training["models"].items():
     assert report["provenance"]["candidate_g4"][candidate]==model["sha256"], candidate
 open(sys.argv[4],"w",encoding="utf-8").write(report["decision"]+"\n")
+summary={
+    "schema": 1,
+    "verdict": report["decision"],
+    "technical_status": report["technical_status"],
+    "original_zero_cap_gate_ready": report["original_zero_cap_gate_ready"],
+    "adjudications": report["adjudications"],
+    "adjudication_sensitivity_bounds":
+        report["adjudication_sensitivity_bounds"],
+    "candidate_endpoints": report["candidate_endpoints"],
+    "factor_effects": report["factor_effects"],
+    "factor_intervals_95": report["bootstrap"]["factor_intervals"],
+    "balanced_guard": report["balanced_guard"],
+    "factor_signals_abs_ge_0_05_ci_excludes_zero":
+        report["factor_signals_abs_ge_0_05_ci_excludes_zero"],
+    "promotion_authorized": False,
+    "training_continuation_authorized": False,
+    "automatic_next_job": None,
+}
+open(sys.argv[7],"w",encoding="utf-8").write(
+    json.dumps(summary,indent=2,sort_keys=True)+"\n"
+)
 with open(sys.argv[5],"a",encoding="utf-8") as out:
     out.write("decision="+report["decision"]+"\n")
     out.write("technical_status="+report["technical_status"]+"\n")
@@ -359,4 +444,4 @@ printf '%s\n' "promotion_authorized=false" > "$ART/PROMOTION_AUTHORIZED__FALSE"
 printf '%s\n' "training_continuation_authorized=false" > "$ART/TRAINING_CONTINUATION_AUTHORIZED__FALSE"
 printf '%s\n' "automatic_next_job=null" > "$ART/AUTOMATIC_NEXT_JOB__NULL"
 set_phase complete
-say "CONVERSION_2X2_G1_SCREEN_READY derived_single_cap=true promotion=false continuation=false automatic_next_job=null"
+say "CONVERSION_2X2_G1_SCREEN_READY derived_ply_caps=2 promotion=false continuation=false automatic_next_job=null"

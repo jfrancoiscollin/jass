@@ -199,6 +199,62 @@ class Conversion2x2ReportTests(unittest.TestCase):
                     salvage_cell=affected.cell,
                     salvage_plies=400,
                 ))
+                second = contract.positions[364]
+                second_shard = (
+                    matrix_root
+                    / "top3_off/g4_g0"
+                    / f"s{second.index % 16}.jsonl"
+                )
+                second_rows = [
+                    __import__("json").loads(line)
+                    for line in second_shard.read_text(encoding="utf-8").splitlines()
+                ]
+                for row in second_rows:
+                    if row["position_id"] == second.position_id:
+                        row["reason"] = "ply cap"
+                        row["plies"] = 400
+                second_shard.write_text(
+                    "\n".join(
+                        __import__("json").dumps(row) for row in second_rows
+                    ) + "\n",
+                    encoding="utf-8",
+                )
+                salvage_manifest = root / "salvages.json"
+                salvage_manifest.write_text(
+                    __import__("json").dumps({
+                        "schema": 1,
+                        "adjudications": [
+                            {
+                                "candidate": "standard_off",
+                                "arm": "g0_g4",
+                                "position_id": affected.position_id,
+                                "cell": affected.cell,
+                                "plies": 400,
+                                "shard": affected.index % 16,
+                            },
+                            {
+                                "candidate": "top3_off",
+                                "arm": "g4_g0",
+                                "position_id": second.position_id,
+                                "cell": second.cell,
+                                "plies": 400,
+                                "shard": second.index % 16,
+                            },
+                        ],
+                    }),
+                    encoding="utf-8",
+                )
+                multi_salvaged = report.build_report(SimpleNamespace(
+                    pool=root / "pool.fen",
+                    proof=root / "proof.jsonl",
+                    matrix_root=matrix_root,
+                    balanced_root=balanced_root,
+                    balanced_games=128,
+                    balanced_floor=0.40,
+                    bootstrap=100,
+                    seed=271828,
+                    salvage_manifest=salvage_manifest,
+                ))
             finally:
                 report.matrix.load_pool_contract = original
             self.assertEqual(payload["decision"], "CONVERSION_2X2_G1_SCREEN_READY")
@@ -211,6 +267,17 @@ class Conversion2x2ReportTests(unittest.TestCase):
             )
             self.assertFalse(salvaged["original_zero_cap_gate_ready"])
             self.assertEqual(len(salvaged["adjudications"]), 1)
+            self.assertEqual(
+                multi_salvaged["technical_status"],
+                "derived_complete_2_ply_caps",
+            )
+            self.assertEqual(len(multi_salvaged["adjudications"]), 2)
+            self.assertAlmostEqual(
+                multi_salvaged["adjudication_sensitivity_bounds"][
+                    "max_abs_any_factor_effect_shift_conservative"
+                ],
+                2 / 384,
+            )
 
 
 if __name__ == "__main__":
