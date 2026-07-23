@@ -80,6 +80,13 @@ class Move:
         sep = "x" if self.is_capture else "-"
         return f"{self.frm}{sep}{self.to}"
 
+    def jass_apply_str(self) -> str:
+        """Losslessly identify a move for Jass's HUB `apply` command."""
+        if not self.is_capture:
+            return self.jass_str()
+        captured = ",".join(str(square) for square in sorted(self.captures))
+        return f"{self.jass_str()} captures={captured}"
+
     def scan_str(self) -> str:
         """Scan's "from x to x captured x captured ..." notation.
         Per Scan's HUB v2 protocol the SECOND number is the destination;
@@ -107,6 +114,8 @@ def parse_jass_bestmove(line: str) -> Move:
     to  = int(m.group(3))
     caps_raw = m.group(4) or ""
     caps = tuple(int(s) for s in caps_raw.split(",")) if caps_raw else ()
+    if m.group(2) == "x" and not caps:
+        raise ValueError(f"Jass capture lacks captured-square identity: {line!r}")
     return Move(frm=frm, to=to, captures=caps)
 
 
@@ -118,7 +127,7 @@ def parse_scan_move(text: str) -> Move:
         a, b = text.split("-")
         return Move(int(a), int(b), ())
     parts = [int(p) for p in text.split("x")]
-    if len(parts) < 2:
+    if len(parts) < 3:
         raise ValueError(f"unparseable Scan move: {text!r}")
     return Move(frm=parts[0], to=parts[1], captures=tuple(parts[2:]))
 
@@ -170,6 +179,38 @@ def jass_fen_to_scan_pos(fen: str) -> str:
     for s in bm: chars[s] = "b"
     for s in bk: chars[s] = "B"
     return "".join(chars)
+
+
+def _advance_25_move_clock(counter: int, fen_before: str, move: Move) -> int:
+    """Advance the FMJD 25-move clock after ``move``.
+
+    Only a quiet king move advances the clock. A capture or any man move
+    resets it, including a move that promotes the man on its destination
+    square. Inspecting the origin in the pre-move FEN avoids having to infer
+    promotion from the destination row.
+    """
+    if move.is_capture:
+        return 0
+
+    side, white_men, _, black_men, _ = parse_jass_fen(fen_before)
+    if side == "W":
+        moved_man = move.frm in white_men
+    elif side == "B":
+        moved_man = move.frm in black_men
+    else:
+        raise ValueError(f"bad side to move in FEN: {fen_before!r}")
+
+    return 0 if moved_man else counter + 1
+
+
+def _repetition_key(fen: str) -> tuple:
+    """Canonical board+side key for FMJD repetition adjudication."""
+    side, white_men, white_kings, black_men, black_kings = parse_jass_fen(fen)
+    return (
+        side,
+        tuple(white_men), tuple(white_kings),
+        tuple(black_men), tuple(black_kings),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -282,7 +323,15 @@ class JassEngine(EngineProc):
         self._read_until(lambda l: l.startswith("ready"))
         if threads > 1:
             # Lazy SMP : fan out search across N threads via shared TT.
-            self._send(f"set-param name=threads value={threads}")
+            self._send(f"setoption threads {threads}")
+            configured = self._read_until(
+                lambda l: l == "ok" or l.startswith("error")
+            )
+            if configured[-1].startswith("error"):
+                self.close()
+                raise RuntimeError(
+                    f"{self.label}: could not set Jass threads={threads}"
+                )
         if no_book and not book_path:
             # Cleaner test of the eval — engines play their own moves
             # from the very first ply rather than parroting opening lines.
@@ -323,17 +372,51 @@ class JassEngine(EngineProc):
 
 class ScanEngine(EngineProc):
     """Adapter for Scan's HUB v2 protocol."""
+
+    RUNTIME_PARAMS = (
+        ("variant", "normal"),
+        ("book", "false"),
+        ("book-ply", "4"),
+        ("book-margin", "4"),
+        ("ponder", "false"),
+        ("threads", "1"),
+        ("tt-size", "24"),
+        ("bb-size", "0"),
+    )
+
+    @staticmethod
+    def _hub_params(lines: Iterable[str]) -> dict[str, str]:
+        params: dict[str, str] = {}
+        for line in lines:
+            match = re.match(r"^param name=(\S+) value=(\S+)(?:\s|$)", line)
+            if match:
+                params[match.group(1)] = match.group(2).strip('"')
+        return params
+
     def __init__(self, path: str, label: str = "Scan",
                  no_book: bool = True, bb_size: int = 0):
+        if not no_book or bb_size != 0:
+            raise ValueError(
+                "the pinned Scan runtime contract requires no_book=True and bb_size=0"
+            )
         # Scan loads `scan.ini` and `data/` from its working directory,
         # so we cd into its install dir before launching.
         scan_dir = str(Path(path).resolve().parent)
         super().__init__([path, "hub"], label, cwd=scan_dir)
         # Handshake: send "hub", read params until "wait".
-        self._send("hub")
-        self._read_until(lambda l: l.startswith("wait"))
-        if no_book:
-            self._send("set-param name=book value=false")
+        try:
+            self._send("hub")
+            first_hub = self._read_until(lambda l: l.startswith("wait"))
+        except BaseException:
+            self.close()
+            raise
+        expected_names = {name for name, _ in self.RUNTIME_PARAMS}
+        if set(self._hub_params(first_hub)) != expected_names:
+            self.close()
+            raise RuntimeError("unexpected Scan HUB parameter schema")
+        try:
+            for name, value in self.RUNTIME_PARAMS:
+                self._send(f"set-param name={name} value={value}")
         # Set bb-size EXPLICITLY (never inherit scan.ini's default) so the
         # comparison is reproducible and auditable, regardless of what the
         # shipped scan.ini says or whether bitbase files happen to be present:
@@ -344,16 +427,40 @@ class ScanEngine(EngineProc):
         #     NB the bitbase data is NOT bundled in the rhalbersma/scan git
         #     repo — it's a separate ~706 MiB download (hjetten's site), so
         #     bb_size>0 only has effect once those files are installed.
-        self._send(f"set-param name=bb-size value={bb_size}")
-        self._send("init")
-        init_lines = self._read_until(lambda l: l.startswith("ready"))
+            self._send("hub")
+            effective_lines = self._read_until(lambda l: l.startswith("wait"))
+        except BaseException:
+            self.close()
+            raise
+        if not any(
+            line.startswith("id name=Scan version=3.1")
+            for line in effective_lines
+        ):
+            self.close()
+            raise RuntimeError("unexpected Scan identity")
+        effective = self._hub_params(effective_lines)
+        expected = dict(self.RUNTIME_PARAMS)
+        if effective != expected:
+            self.close()
+            raise RuntimeError(
+                f"Scan effective parameters mismatch: {effective!r} != {expected!r}"
+            )
+        try:
+            self._send("init")
+            init_lines = self._read_until(
+                lambda l: l.startswith("ready") or l.startswith("error")
+            )
+        except BaseException:
+            self.close()
+            raise
+        if not init_lines[-1].startswith("ready"):
+            self.close()
+            raise RuntimeError(f"Scan init failed: {init_lines[-1]}")
         # Make the bench log show exactly what was configured/loaded.
         for ln in init_lines:
             if ln and not ln.startswith("ready"):
                 print(f"  [{self.label} init] {ln}")
-        print(f"  [{self.label}] bb-size={bb_size} "
-              + ("(no bitbases — FAIR comparison)" if bb_size == 0
-                 else "(WITH bitbases — handicap comparison)"))
+        print(f"  [{self.label}] pinned HUB params={effective}")
 
     def new_game(self) -> None:
         self._send("new-game")
@@ -410,7 +517,7 @@ class Referee:
         return lines[-1].removeprefix("fen ").strip()
 
     def apply_move(self, m: Move) -> bool:
-        self.j._send(f"apply {m.jass_str()}")
+        self.j._send(f"apply {m.jass_apply_str()}")
         lines = self.j._read_until(lambda l: l == "ok" or l.startswith("error"))
         if lines[-1].startswith("error"):
             return False
@@ -514,6 +621,7 @@ def play_game(white: object, black: object,
     ply = 0
     moves_log: list[str] = []
     fens_log:  list[str] = [opening_fen]
+    repetition_counts = {_repetition_key(opening_fen): 1}
     while ply < max_plies:
         current = white if side_to_move == "W" else black
         # Ask engine for its move.
@@ -544,6 +652,7 @@ def play_game(white: object, black: object,
             return GameResult(outcome, ply, "no legal move from " + current.label,
                               moves=moves_log, fens=fens_log)
         # Apply to referee (canonical state).
+        fen_before_move = fens_log[-1]
         if not referee.apply_move(mv):
             outcome = "L" if side_to_move == "W" else "W"
             return GameResult(outcome, ply, f"illegal move {mv.jass_str()} from {current.label}",
@@ -556,23 +665,38 @@ def play_game(white: object, black: object,
         # to do for the Scan players.
         for eng in (white, black):
             if isinstance(eng, JassEngine):
-                eng._send(f"apply {mv.jass_str()}")
-                eng._read_until(lambda l: l == "ok" or l.startswith("error"))
+                eng._send(f"apply {mv.jass_apply_str()}")
+                applied = eng._read_until(
+                    lambda l: l == "ok" or l.startswith("error")
+                )
+                if applied[-1].startswith("error"):
+                    raise RuntimeError(
+                        f"{eng.label}: exact move synchronization failed: "
+                        f"{mv.jass_apply_str()}"
+                    )
 
         ply += 1
         side_to_move = "B" if side_to_move == "W" else "W"
 
-        # 50-half-move rule (25-move rule in draughts): if 50 plies pass
-        # without an irreversible move, declare a draw. Captures and
-        # promotions reset the counter; we approximate by checking the
-        # move is a capture (resets) — promotions are harder to detect
-        # without inspecting the position.
-        if mv.is_capture:
-            halfmove_counter = 0
-        else:
-            halfmove_counter += 1
-        if halfmove_counter >= 50:
-            return GameResult("D", ply, "25-move rule",
+        # 50-half-move rule (25-move rule in draughts): only quiet king
+        # moves advance the counter; captures and all man moves reset it.
+        halfmove_counter = _advance_25_move_clock(
+            halfmove_counter, fen_before_move, mv)
+        position_key = _repetition_key(fens_log[-1])
+        repetition_counts[position_key] = repetition_counts.get(position_key, 0) + 1
+        threefold = repetition_counts[position_key] >= 3
+        if halfmove_counter >= 50 or threefold:
+            # Canonical ordering matches src/tournament.cpp: a side with no
+            # legal move has already lost; only a non-terminal position can be
+            # adjudicated drawn by the 25-move or repetition rule.
+            if not referee.has_legal_moves():
+                outcome = "L" if side_to_move == "W" else "W"
+                next_player = white if side_to_move == "W" else black
+                return GameResult(
+                    outcome, ply, "no legal move from " + next_player.label,
+                    moves=moves_log, fens=fens_log)
+            reason = "25-move rule" if halfmove_counter >= 50 else "3-fold repetition"
+            return GameResult("D", ply, reason,
                               moves=moves_log, fens=fens_log)
 
     return GameResult("D", ply, "ply cap",
@@ -667,7 +791,7 @@ def main(argv):
                         "diagnostic of where jass wins/loses by piece count.")
     p.add_argument("--jass-threads", type=int, default=1,
                    help="Lazy SMP : number of threads for the jass player "
-                        "(via HUB `set-param name=threads value=N`). Default "
+                        "(via HUB `setoption threads N`). Default "
                         "1. Use with --movetime to see SMP gain — fixed depth "
                         "saturates at the eval ceiling and doesn't surface "
                         "the depth-per-second advantage SMP gives.")

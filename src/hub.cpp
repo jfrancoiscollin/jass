@@ -59,9 +59,41 @@ std::optional<int> parse_int(std::string_view s) noexcept {
 std::optional<Move> parse_move(const Position& pos, std::string_view text) {
     text = trim(text);
 
+    // Endpoint-only spelling remains valid for interactive/backward
+    // compatibility. Orchestrators can additionally provide the exact
+    // captured-piece set as `captures=12,23,...`; this disambiguates legal
+    // multi-captures that share the same (from, to).
+    std::optional<Bitboard> exact_captured;
+    if (const auto space = text.find_first_of(" \t");
+        space != std::string_view::npos) {
+        const auto suffix = trim(text.substr(space + 1));
+        constexpr std::string_view prefix{"captures="};
+        if (!suffix.starts_with(prefix)) return std::nullopt;
+        auto values = suffix.substr(prefix.size());
+        if (values.empty() || values.find_first_of(" \t") != std::string_view::npos)
+            return std::nullopt;
+
+        Bitboard captured = 0;
+        while (!values.empty()) {
+            const auto comma = values.find(',');
+            const auto token = values.substr(0, comma);
+            const auto square = parse_int(token);
+            if (!square || *square < 1 || *square > 50)
+                return std::nullopt;
+            const auto sq = static_cast<Square>(*square);
+            if (test(captured, sq)) return std::nullopt;
+            set(captured, sq);
+            if (comma == std::string_view::npos) break;
+            values.remove_prefix(comma + 1);
+            if (values.empty()) return std::nullopt;
+        }
+        exact_captured = captured;
+        text = trim(text.substr(0, space));
+    }
+
     // Find the first separator; subsequent tokens (multi-jump path) are
     // discarded — we resolve the captured-piece set from the legal-move
-    // list based on (from, to) only.
+    // list. With `captures=`, the set must also match exactly.
     const auto sep = text.find_first_of("-x");
     if (sep == std::string_view::npos) return std::nullopt;
 
@@ -85,7 +117,9 @@ std::optional<Move> parse_move(const Position& pos, std::string_view text) {
     MoveList ml;
     generate_legal_moves(pos, ml);
     for (const auto& m : ml) {
-        if (m.from == *from_n && m.to == *to_n) return m;
+        if (m.from == *from_n && m.to == *to_n
+            && (!exact_captured || m.captured == *exact_captured))
+            return m;
     }
     return std::nullopt;
 }

@@ -31,8 +31,10 @@
 // Move format on input/output:
 //   - "from-to"  for quiet moves (e.g. "31-26")
 //   - "fromxto"  for captures    (e.g. "28x17")
-// Multi-jump captures are accepted as just "fromxto" (final landing only);
-// the engine resolves the captured-piece path against its legal-move list.
+//   - "fromxto captures=s1,s2,..." for an exact multi-jump identity
+// Endpoint-only captures remain accepted for backward compatibility.  When
+// several legal captures share the same endpoints, callers that need an
+// unambiguous move (referees and scientific harnesses) must provide captures=.
 
 #pragma once
 
@@ -123,10 +125,10 @@ private:
     void wait_for_worker();
 };
 
-// Parse a move string (`from-to` / `fromxto`) and return the matching
-// legal move from `pos`, if any. The first matching legal move is
-// returned in the rare case where two captures share the same (from, to)
-// but differ in their captured-piece path.
+// Parse a move string (`from-to` / `fromxto`) and return the matching legal
+// move from `pos`, if any. Endpoint-only input retains the legacy first-match
+// behaviour; appending `captures=s1,s2,...` requires that exact capture set
+// and unambiguously identifies multi-captures with shared endpoints.
 std::optional<Move> parse_move(const Position& pos, std::string_view text);
 
 // Format a move as `from-to` (quiet) or `fromxto` (capture).

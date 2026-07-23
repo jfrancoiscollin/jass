@@ -51,6 +51,25 @@ void test_parse_move_capture() {
     JASS_CHECK(test(m->captured, static_cast<Square>(22)));
 }
 
+void test_parse_move_capture_exact_set() {
+    // Two legal majority captures end on 43 but remove different sets:
+    // 34→12→21→43 captures {29,17,38}; 34→7→16→43 captures {29,11,38}.
+    const Position p = parse("W:WK34:B11,17,29,38");
+    const auto via_17 = parse_move(p, "34x43 captures=17,29,38");
+    const auto via_11 = parse_move(p, "34x43 captures=11,29,38");
+    JASS_CHECK(via_17.has_value());
+    JASS_CHECK(via_11.has_value());
+    JASS_CHECK(via_17->captured != via_11->captured);
+    JASS_CHECK(test(via_17->captured, static_cast<Square>(17)));
+    JASS_CHECK(!test(via_17->captured, static_cast<Square>(11)));
+    JASS_CHECK(test(via_11->captured, static_cast<Square>(11)));
+    JASS_CHECK(!test(via_11->captured, static_cast<Square>(17)));
+
+    // Exact orchestration fails closed on a missing/duplicate captured square.
+    JASS_CHECK(!parse_move(p, "34x43 captures=29,38").has_value());
+    JASS_CHECK(!parse_move(p, "34x43 captures=11,29,29,38").has_value());
+}
+
 void test_parse_move_multi_jump_takes_final_square() {
     // Multi-jump on a single line: parse_move keeps only the last token as
     // the destination. The captured squares are recovered from the legal-
@@ -216,6 +235,7 @@ void test_hub_setoption_threads() {
 void run_hub_tests() {
     test_parse_move_quiet_from_start();
     test_parse_move_capture();
+    test_parse_move_capture_exact_set();
     test_parse_move_multi_jump_takes_final_square();
     test_parse_move_rejects_garbage();
     test_format_move_quiet_and_capture();
