@@ -13,7 +13,8 @@
 > imbalance2_p1_v2_no_clear_lead; imbalance2_p2_no_clear_improvement_or_unstable;
 > imbalance2_stop_before_p3_redesign; d0_causal_profile_ready; d1_rc4_no_go;
 > d1x_rc4_autopsy_ready; top3_causal_conversion_matrix_ready;
-> l3_pure_top3_causal_conversion_ready`.
+> l3_pure_top3_causal_conversion_ready;
+> top3_specialist_recipe_failure_localized_factors_confounded`.
 
 ## 1. Architecture du programme
 
@@ -85,6 +86,7 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 | spécialiste | autopsie RC4 | `cpx62-0874` | **`D1X_RC4_AUTOPSY_READY`** |
 | causal conversion | matrice TOP3 stable | `cpx62-0908` + salvage `0920` | **`SALVAGE_CAUSAL_CONVERSION_MATRIX_READY`** |
 | causal conversion | miroir L3-PURE | `cpx62-0921` | **`L3_PURE_CAUSAL_CONVERSION_MATRIX_READY`** |
+| autopsie recette | 0842 vs 0890bis, matrices 0908/0921 | analyse locale reproductible | **`TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED`** |
 
 ## 4. Couverture et maturité de `L3-PURE`
 
@@ -214,6 +216,37 @@ sans oracle peuvent apprendre la conversion. C’est la recette spécialiste
 0890bis qui a détruit le rôle attaquant ; elle ne doit pas être prolongée ni
 servir de preuve d’un échec général de L3-PURE.
 
+### 5.6 Autopsie de la recette 0890bis
+
+L’autopsie des manifests, profils, poids G4 et résultats bruts appariés localise
+le problème dans le bundle de recette 0890bis, sans pouvoir encore séparer ses
+trois facteurs : départ exclusivement TOP3, volume `2 M/gen` et pondération
+role-aware `1/2/4`.
+
+Le corpus réel n’est pas majoritairement TOP3 : en G4, **72,59 %** des records
+ont au plus 14 pièces et seulement **0,081 %** en ont au moins 30. Avant
+resampling, seulement **5,765 %** du fit reste dans le domaine exact
+`±2 hommes, dames égales` ; après resampling, cette part atteint **8,038 %**.
+Les 94,235 % hors domaine sont conservés comme anchors.
+
+Les matrices 0908/0921 sont exactement appariées sur les 2 688 lignes et les
+contrôles G0/G0 et Scan/Scan sont identiques à 384/384. Remplacer seulement le
+G4 spécialiste par le G4 pur améliore 171 positions et en dégrade 7 en attaque
+contre G0 ; en défense contre G0, 171 s’améliorent et 17 se dégradent.
+
+Verdict :
+
+```text
+TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED
+0890bis_continuation_authorized=false
+automatic_next_job=null
+```
+
+La seule ablation propre restante est un `2 × 2` départ standard/TOP3 ×
+reweighting off/on, à volume identique. Elle n’est pas encore préparée ni
+autorisée. Mémo immuable :
+[`archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md`](archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md).
+
 ## 6. Prochaines actions séparées
 
 ### Généraliste `L3-PURE`
@@ -225,8 +258,9 @@ servir de preuve d’un échec général de L3-PURE.
 
 ### Spécialiste `L3-IMBALANCE2`
 
-1. relire le rapport D1-X ;
-2. décider humainement si un unique pilote search-only mérite une PR ;
+1. ne pas prolonger 0890bis ;
+2. si une attribution causale fine est nécessaire, préparer le DOE `2 × 2`
+   départ standard/TOP3 × reweighting off/on à volume identique ;
 3. ne pas réutiliser RC4 ;
 4. ne pas relancer P3 à recette V2 identique ;
 5. ne jamais présenter un résultat spécialiste comme un remplacement généraliste.
@@ -243,6 +277,8 @@ servir de preuve d’un échec général de L3-PURE.
 - D1-X : `r2:jass-data/runs/cpx62-0874-l3-imbalance2-d1x-autopsy/20260720T220921Z-a7301ac6` ;
 - matrice TOP3 0908 salvagée : `r2:jass-data/runs/cpx62-0920-salvage-0908-stable-top3-matrix-v1/20260723T133448Z-2ed34499`.
 - miroir causal L3-PURE : `r2:jass-data/runs/cpx62-0921-l3-pure-top3-stable-conversion-matrix-v1/20260723T134611Z-fbf0c93e`.
+- autopsie 0842/0890bis :
+  [`archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md`](archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md).
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.

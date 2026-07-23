@@ -239,6 +239,18 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   progressent simultanément. Le self-play WDL et l’architecture linéaire
   savent donc apprendre la conversion ; la destruction du rôle attaquant est
   localisée à la recette spécialiste 0890bis.
+- **Autopsie recette 0842/0890bis :**
+  `TOP3_SPECIALIST_RECIPE_FAILURE_LOCALIZED_FACTORS_CONFOUNDED`. Architecture,
+  recherche, bootstrap, exploration, fit et labels sont identiques. Le bundle
+  0890bis change simultanément les départs TOP3, le volume 500 k→2 M et le
+  reweighting `1/2/4`. En G4, 72,59 % de son corpus réel a ≤14 pièces et
+  seulement 5,765 % du fit pré-resampling reste dans le domaine exact ±2
+  hommes/dames égales (8,038 % après resampling). Les matrices brutes sont
+  appariées sur 2 688/2 688 lignes ; remplacer seulement le G4 spécialiste par
+  le G4 pur améliore 171 positions contre 7 régressions en attaque vs G0, et
+  171 contre 17 en défense. 0890bis reste fermé ; seule une ablation `2 × 2`
+  départ standard/TOP3 × reweighting off/on, à volume identique, peut attribuer
+  la cause fine.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
