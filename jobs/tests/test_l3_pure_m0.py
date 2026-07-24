@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 VERDICT = ROOT / "jobs/tools/l3_pure_m0_verdict.py"
 COVERAGE = ROOT / "jobs/tools/l3_pure_m0_coverage.py"
+BUCKET_VISITS = ROOT / "jobs/tools/l3_bucket_visits.py"
 SOURCES = ROOT / "jobs/tools/l3_pure_m0_sources.py"
 TRIANGLE = ROOT / "jobs/templates/l3-pure-m0-triangle-v1.sh"
 COVERAGE_RUNNER = ROOT / "jobs/templates/l3-pure-m0-coverage-v1.sh"
@@ -164,6 +165,12 @@ class M0VerdictTests(unittest.TestCase):
 
 
 class M0CoverageTests(unittest.TestCase):
+    def test_bucket_audit_has_no_scipy_or_trainer_runtime_dependency(self):
+        source = BUCKET_VISITS.read_text(encoding="utf-8")
+        self.assertNotIn("import scipy", source)
+        self.assertNotIn("import train_stream", source)
+        self.assertIn("class ColorFolder", source)
+
     def test_cli_aggregates_exact_generation_counts(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -263,7 +270,7 @@ class M0SourceContractTests(unittest.TestCase):
 class M0PreparedContractTests(unittest.TestCase):
     def test_shell_files_are_valid_and_not_self_queued(self):
         scripts = [TRIANGLE, COVERAGE_RUNNER, *sorted(PREPARED.glob("*.sh"))]
-        self.assertEqual(len(scripts), 8)
+        self.assertEqual(len(scripts), 9)
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
             text = script.read_text(encoding="utf-8")

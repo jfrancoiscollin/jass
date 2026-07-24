@@ -41,3 +41,8 @@ Les reprises `home-0931` et `home-0932` sont scientifiquement identiques. Elles
 ajoutent uniquement le défaut explicite `JASS_OBJSTORE_REMOTE=r2:jass-data`
 requis par les templates sur HOME ; les identifiants initiaux restent figés
 comme provenance des lancements interrompus avant calcul.
+
+`home-0935` conserve le contrat de couverture de `0931`. Le mesureur de buckets
+y lit directement le format JNNW et réimplémente uniquement le color-fold
+NumPy déjà figé, afin de ne pas charger le module d'entraînement SciPy absent
+du runtime HOME. Un test interdit désormais cette dépendance transitive.

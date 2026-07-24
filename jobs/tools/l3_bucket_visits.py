@@ -16,29 +16,92 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import struct
 import sys
 from pathlib import Path
 
 import numpy as np
 
 import patterns  # noqa: E402  (8cf geometry via PYTHONPATH)
-import train_stream as ts  # noqa: E402
+
+JNNW_HEADER_SIZE = 8
+JNNW_RECORD_SIZE = 38
+JNNW_DTYPE = np.dtype([
+    ("wm", "<u8"),
+    ("wk", "<u8"),
+    ("bm", "<u8"),
+    ("bk", "<u8"),
+    ("stm", "u1"),
+    ("score", "<i4"),
+    ("wdl", "i1"),
+])
+COLORFOLD_BUCKETS = (3 ** 12 - 1) // 2 + 1
+
+
+def open_jnnw(path: Path) -> tuple[np.memmap, int]:
+    """Read the packed JNNW geometry without importing the SciPy trainer."""
+    with path.open("rb") as handle:
+        header = handle.read(JNNW_HEADER_SIZE)
+    if len(header) != JNNW_HEADER_SIZE or header[:4] != b"JNNW":
+        raise SystemExit(f"{path}: invalid JNNW header")
+    count = struct.unpack_from("<I", header, 4)[0]
+    body = os.path.getsize(path) - JNNW_HEADER_SIZE
+    if body < 0 or body % JNNW_RECORD_SIZE:
+        raise SystemExit(f"{path}: invalid JNNW body size {body}")
+    derived = body // JNNW_RECORD_SIZE
+    if count != derived:
+        raise SystemExit(f"{path}: header count {count} != file-derived {derived}")
+    records = np.memmap(
+        path,
+        dtype=JNNW_DTYPE,
+        mode="r",
+        offset=JNNW_HEADER_SIZE,
+        shape=(count,),
+    )
+    return records, count
+
+
+class ColorFolder:
+    """Minimal colour-antisymmetric fold used by the coverage-only audit."""
+
+    def __init__(self) -> None:
+        unsigned = np.arange(3 ** 12, dtype=np.int64)
+        remaining = unsigned.copy()
+        signed = np.zeros_like(unsigned)
+        for cell_index in range(12):
+            cell = remaining % 3
+            remaining //= 3
+            signed += np.where(cell == 1, 1, np.where(cell == 2, -1, 0)) * (
+                3 ** cell_index
+            )
+        self.unsigned_to_canonical = np.abs(signed).astype(np.int64)
+        self.PAT_BUCKETS = COLORFOLD_BUCKETS
+        self.TB = self.PAT_BUCKETS * patterns.NUM_PATTERNS
+
+    def columns(self, black_men: np.ndarray, white_men: np.ndarray) -> np.ndarray:
+        indices = patterns.extract_indices(black_men, white_men)
+        canonical = self.unsigned_to_canonical[indices]
+        offsets = (
+            np.arange(patterns.NUM_PATTERNS, dtype=np.int64) * self.PAT_BUCKETS
+        )
+        return canonical + offsets[None, :]
 
 
 def compute(data_paths, chunk: int, top_k: int) -> dict:
-    folder = ts.Folder("color")
+    folder = ColorFolder()
     NP = patterns.NUM_PATTERNS
     CFB = folder.PAT_BUCKETS            # colour-folded buckets per pattern
     TB = folder.TB                      # NP * CFB = trained parameter space
     visits = np.zeros(TB, dtype=np.int64)
     total_records = 0
     for path in data_paths:
-        mm, n = ts.open_jnnw(str(path))
+        mm, n = open_jnnw(path)
         for i in range(0, n, chunk):
             rec = mm[i:i + chunk]
             bm = np.ascontiguousarray(rec["bm"])
             wm = np.ascontiguousarray(rec["wm"])
-            cols, _ = folder.cols_signs(bm, wm)     # (m, NP) int64 in [0, TB)
+            cols = folder.columns(bm, wm)           # (m, NP) int64 in [0, TB)
             visits += np.bincount(cols.ravel(), minlength=TB)
             total_records += len(rec)
     if total_records == 0:
