@@ -56,6 +56,7 @@ SPLIT_SEED=271828
 L2=3e-5
 MAXIT=1000
 LBFGS_MAXCOR=20
+LBFGS_GTOL=1e-3
 CHUNK=20000
 GEN_TIMEOUT=14400
 FIT_TIMEOUT=43200
@@ -233,17 +234,19 @@ fit_arm(){
       --target wdl --loss logistic --color-fold --tempo-stage --warm-start "$W/parent.pjtw" \
       --holdout-count "$holdout" --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
       --lbfgs-maxcor "$LBFGS_MAXCOR" \
+      --lbfgs-gtol "$LBFGS_GTOL" \
       --optimizer-report "$ART/$lower-optimizer.json" \
       > "$W/$lower-fit.log" 2> "$W/$lower-fit-time.log"
   [ -s "$W/$lower.pjtw" ] || die "$arm model missing"
   grep -q 'HOLDOUT_LOGLOSS' "$W/$lower-fit.log" || die "$arm holdout result missing"
   iters="$(sed -n 's/.*iters=\([0-9][0-9]*\).*/\1/p' "$W/$lower-fit.log" | tail -1)"
+  gzip -n -c "$W/$lower.pjtw" > "$ART/$lower-checkpoint.pjtw.gz"
   "$W/venv/bin/python" - "$ART/$lower-optimizer.json" <<'PY' || die "$arm optimiser did not converge"
 import json,sys
 p=json.load(open(sys.argv[1]))
 if not p.get("success"): raise SystemExit(1)
 PY
-  gzip -n -c "$W/$lower.pjtw" > "$ART/$lower.pjtw.gz"
+  cp "$ART/$lower-checkpoint.pjtw.gz" "$ART/$lower.pjtw.gz"
   rm -f "$W/$lower.feat"
 }
 fit_arm F500 f500

@@ -364,6 +364,11 @@ encore élevé (`2.170022328647e-02`). La reprise V2 `home-0942` conserve donc
 les tolérances SciPy, augmente l’historique de courbure L-BFGS de 5 à 20
 (dimension 8cf prunée compatible HOME) et autorise jusqu’à 1000 itérations,
 toujours avec `success=true` obligatoire.
+Le résultat 0943 est finalement `5.008773068760e-04` à 1000 itérations :
+la courbure renforcée réduit le gradient d’un facteur 43. Comme les poids PJTW
+sont quantifiés au millième, `home-0944` préenregistre `gtol=1e-3`, conserve
+`maxcor=20/maxiter=1000` et exige toujours une terminaison SciPy réussie. Les
+checkpoints sont désormais publiés même si un bras ultérieur échoue.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.

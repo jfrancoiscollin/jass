@@ -21,3 +21,7 @@ Le diagnostic 0941 mesure toutefois un gradient encore élevé (`2.17e-2`) à
 200 itérations. `home-0942` garde donc les tolérances intactes, utilise
 `maxcor=20` pour une meilleure information de courbure et un plafond de 1000.
 Atteindre ce nouveau plafond reste un échec. Aucun bras n’est promu.
+Le diagnostic 0943 observe finalement `5.0088e-4` après 1000 itérations, sous
+la résolution des poids sérialisés (`1/1000`). La reprise 0944 fixe donc
+explicitement `gtol=1e-3` pour les trois bras, sans changer l’objectif, et
+requiert toujours `success=true`.

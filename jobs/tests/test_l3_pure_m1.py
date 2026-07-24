@@ -9,6 +9,7 @@ TRAIN_TEMPLATE = ROOT / "jobs/templates/l3-pure-m1-train-v1.sh"
 TRAIN_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0937-l3-pure-m1-train-v1.sh"
 RESUME_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0939-l3-pure-m1-train-resume-v1.sh"
 RESUME_V2_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0942-l3-pure-m1-train-resume-v2.sh"
+RESUME_V3_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0944-l3-pure-m1-train-resume-v3.sh"
 
 
 class M1PreflightContractTests(unittest.TestCase):
@@ -34,7 +35,8 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertNotIn("jobs/queue", text)
 
     def test_m1_three_arm_training_contract(self):
-        for script in (TRAIN_TEMPLATE, TRAIN_WRAPPER, RESUME_WRAPPER, RESUME_V2_WRAPPER):
+        for script in (TRAIN_TEMPLATE, TRAIN_WRAPPER, RESUME_WRAPPER,
+                       RESUME_V2_WRAPPER, RESUME_V3_WRAPPER):
             subprocess.run(["bash", "-n", str(script)], check=True)
         text = TRAIN_TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("COMMON_RECORDS=500000", text)
@@ -53,7 +55,10 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertIn('if not p.get("success")', text)
         self.assertIn("MAXIT=1000", text)
         self.assertIn("LBFGS_MAXCOR=20", text)
+        self.assertIn("LBFGS_GTOL=1e-3", text)
         self.assertIn('--lbfgs-maxcor "$LBFGS_MAXCOR"', text)
+        self.assertIn('--lbfgs-gtol "$LBFGS_GTOL"', text)
+        self.assertIn("$lower-checkpoint.pjtw.gz", text)
         self.assertIn("M1_TRAINING_SCREEN_READY", text)
         self.assertNotIn("TOP3", text)
         self.assertNotIn("prepare_imbalance2_training.py reweight", text)
@@ -65,7 +70,7 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertIn("NO_AUTOMATIC_CONTINUATION=1", text)
 
     def test_resume_reuses_verified_failed_source(self):
-        for wrapper in (RESUME_WRAPPER, RESUME_V2_WRAPPER):
+        for wrapper in (RESUME_WRAPPER, RESUME_V2_WRAPPER, RESUME_V3_WRAPPER):
             text = wrapper.read_text(encoding="utf-8")
             self.assertIn("home-0937-l3-pure-m1-train-v1/20260724T030013Z-aefecfb1", text)
         template = TRAIN_TEMPLATE.read_text(encoding="utf-8")
