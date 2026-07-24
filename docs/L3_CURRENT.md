@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 23 juillet 2026**
+> **Mis à jour : 24 juillet 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -17,7 +17,7 @@
 > top3_specialist_recipe_failure_localized_factors_confounded;
 > conversion_2x2_cap_discovery_complete_three_caps;
 > conversion_2x2_finalizer_home_ready;
-> pure_maturity_m0_home_ready`.
+> pure_maturity_m0_complete_parent_c0_selected_for_m1`.
 
 ## 1. Architecture du programme
 
@@ -66,11 +66,10 @@ La recette générale Q00 reste figée pour les comparaisons propres :
 - aucun teacher, aucune frontière mobile, aucun MMTO dans le train ;
 - classe d’évaluation linéaire et interprétable.
 
-Le modèle C0 A-G3 ayant démontré la parité est un parent historique valide, mais
-il appartient à l’ancien fingerprint partiellement implicite. La baseline
-propre `cpx62-0842` utilise Q00 et le fingerprint complet. Avant une campagne
-longue, un benchmark triangulaire doit choisir explicitement entre ces deux
-parents, avec `gen2-mmto` comme thermomètre figé.
+Le benchmark M0 HOME est terminé. Sa revue humaine retient **C0 A-G3** comme
+parent immuable de M1. La génération M1 utilise néanmoins le fingerprint Q00
+complet : l’ancien fingerprint C0 reste une propriété historique du parent, pas
+une configuration héritée par les nouveaux bras.
 
 ## 3. Campagnes et diagnostics publiés
 
@@ -78,7 +77,8 @@ parents, avec `gen2-mmto` comme thermomètre figé.
 |---|---|---|---|
 | généraliste | C0 pur A-G3 | `ccx33-0790` + gate `0795` | **0,497 vs Gen2, parité pratique** |
 | généraliste | frontière mobile C0 | `cpx62-0791` + gate `0795` | retirée, conversion −0,023 |
-| généraliste propre | baseline Q00 | `cpx62-0842` | G1–G4 saine, Elo vs Gen2 non mesuré |
+| généraliste propre | baseline Q00 | `cpx62-0842` | G1–G4 saine, `+7 Elo` natif vs Gen2 |
+| maturité M0 | triangle C0/P1/Gen2 + couverture | `home-0934` / `home-0935` | **parent C0 retenu pour M1** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -106,11 +106,11 @@ ferme 32cf à court terme, mais ne ferme pas une expérience de maturité sur 8c
 Il faut néanmoins distinguer volume total généré et volume réellement présent
 dans un même fit.
 
-Le plan recommandé est décrit dans
+Le plan actif est décrit dans
 [`L3_LINEAGE_ROLES_AND_MATURITY.md`](L3_LINEAGE_ROLES_AND_MATURITY.md) :
 
-1. M0 : comparer C0 A-G3, baseline propre `0842` G4 et `gen2-mmto` ;
-2. M1 : depuis le parent retenu, comparer 500 k frais, 2 M frais et 2 M avec
+1. M0 : terminé ; C0 A-G3 est le parent immuable retenu ;
+2. M1 : comparer 500 k frais, 2 M frais et 2 M avec
    mémoire historique explicite ;
 3. mesurer Elo, conversion, couverture, holdout et coût ;
 4. arrêter après deux étapes sans pente de force positive.
@@ -312,10 +312,9 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. exécuter sur HOME l’audit de couverture M0 puis le triangle
-   C0 A-G3 / `0842` G4 / `gen2-mmto` ;
-2. choisir un parent généraliste immuable ;
-3. préparer l’écran M1 volume/mémoire sur 8cf ;
+1. parent M1 : C0 A-G3, immuable ;
+2. exécuter l’écran M1 `F500/F2M/R2M` sur 8cf et Q00 ;
+3. mesurer séparément force, conversion, couverture et convergence ;
 4. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.
 
 ### Spécialiste `L3-IMBALANCE2`
@@ -331,6 +330,10 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 - C0 pur : jobs `ccx33-0790-l3-pure-c0-a-v1` et gate `0795` ;
 - baseline générale propre : `cpx62-0842` ;
+- triangle M0 certifié :
+  `r2:jass-data/runs/home-0934-finalize-m0-triangle-v2/20260724T020401Z-922930bc` ;
+- couverture M0 :
+  `r2:jass-data/runs/home-0935-l3-pure-m0-coverage-v3/20260724T020913Z-952f46d0` ;
 - P1 V2 : `r2:jass-data/runs/ccx33-0852-l3-imbalance2-role-v2-p1/20260720T073236Z-61839d1d` ;
 - P2 V2 : `r2:jass-data/runs/ccx33-0859-l3-imbalance2-role-v2-p2/20260720T105918Z-a0d2f238` ;
 - consolidation : `r2:jass-data/runs/ccx33-0870-l3-imbalance2-p2-consolidate/20260720T175742Z-0e657bba` ;

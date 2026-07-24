@@ -1,7 +1,7 @@
 # L3-PURE-MATURITY — protocole exécutable M0
 
-> **Version 1.0 — 21 juillet 2026**  
-> **Statut :** M0 préparé pour cpx62 ; M1 interdit avant revue humaine.
+> **Version 1.1 — 24 juillet 2026**  
+> **Statut :** M0 terminé sur HOME ; revue humaine terminée, parent M1 = C0 A-G3.
 
 ## 1. Question
 
@@ -89,6 +89,32 @@ Avant cette PR : sélection humaine du parent, calibration du coût, validation 
 
 ```text
 m1_authorized=false
+promotion_authorized=false
+automatic_next_job=null
+```
+
+## 8. Verdict HOME et revue humaine
+
+Le triangle certifié `home-0934` réutilise sans replay les neuf sorties complètes
+de `home-0932`. En natif, C0 et P1 obtiennent chacun `0,510` contre Gen2
+(`+6,95 Elo`). P1 contre C0 obtient `0,4675`, soit `−22,62 Elo`, avec IC95
+`[0,4276 ; 0,5074]`. Les vues commune Q00 et historique ne montrent aucun
+avantage P1 : respectivement `0,4975` et `0,4900`.
+
+L’audit `home-0935` mesure une couverture cumulative de `9,48 %` pour C0 contre
+`10,06 %` pour P1. Ce gain de `0,58` point est diagnostique, malgré quatre
+corpus P1 contre trois corpus C0, et ne compense pas l’absence de gain de force.
+
+La règle automatique reste correctement `M0_PARENT_UNRESOLVED_MORE_N_OR_REVIEW`.
+La revue humaine choisit néanmoins **C0 A-G3** pour l’écran non promotable M1 :
+la vue primaire l’avantage directement, les deux vues secondaires sont
+cohérentes avec l’absence d’avantage P1, les deux parents sont égaux contre
+Gen2 en natif, et les trois corpus C0 fournissent exactement les 1,5 million de
+records historiques requis par `R2M`.
+
+```text
+human_review_parent=C0_A_G3
+m1_screen_authorized=true
 promotion_authorized=false
 automatic_next_job=null
 ```
