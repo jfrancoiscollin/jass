@@ -369,6 +369,10 @@ la courbure renforcée réduit le gradient d’un facteur 43. Comme les poids PJ
 sont quantifiés au millième, `home-0944` préenregistre `gtol=1e-3`, conserve
 `maxcor=20/maxiter=1000` et exige toujours une terminaison SciPy réussie. Les
 checkpoints sont désormais publiés même si un bras ultérieur échoue.
+`home-0944` est terminé avec succès : F500, F2M et R2M ont tous convergé et
+sont publiés. `home-0945` est l’évaluation non promotable préenregistrée :
+force Q00 et native contre C0, ancrage Q00 contre Gen2, puis conversion P1–P4
+contre le même défenseur Gen2 fixe.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.

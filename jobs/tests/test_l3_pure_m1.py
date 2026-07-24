@@ -10,6 +10,8 @@ TRAIN_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0937-l3-
 RESUME_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0939-l3-pure-m1-train-resume-v1.sh"
 RESUME_V2_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0942-l3-pure-m1-train-resume-v2.sh"
 RESUME_V3_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0944-l3-pure-m1-train-resume-v3.sh"
+EVAL_TEMPLATE = ROOT / "jobs/templates/l3-pure-m1-eval-v1.sh"
+EVAL_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0945-l3-pure-m1-eval-v1.sh"
 
 
 class M1PreflightContractTests(unittest.TestCase):
@@ -76,6 +78,19 @@ class M1PreflightContractTests(unittest.TestCase):
         template = TRAIN_TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("--expected-state failed", template)
         self.assertIn("verified-resume-source.json", template)
+
+    def test_m1_evaluation_contract(self):
+        for script in (EVAL_TEMPLATE, EVAL_WRAPPER):
+            subprocess.run(["bash", "-n", str(script)], check=True)
+        text = EVAL_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn("MODELS=(F500 F2M R2M)", text)
+        self.assertIn("run_gate_group q00 C0", text)
+        self.assertIn("run_gate_group native C0", text)
+        self.assertIn("run_gate_group q00 GEN2", text)
+        self.assertIn("fixed-defender-conversion", text)
+        self.assertIn("p1_net p2_moyen p3_mince p4_egal", text)
+        self.assertIn("M1_EVALUATION_READY_HUMAN_REVIEW", text)
+        self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
 
 
 if __name__ == "__main__":
