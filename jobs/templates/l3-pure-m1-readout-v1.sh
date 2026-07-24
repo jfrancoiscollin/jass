@@ -1,11 +1,30 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+: "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
+: "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${M1_EVAL_PREFIX:?}"
-REMOTE="${JASS_OBJSTORE_REMOTE:-r2:jass-data}"
-W="${JASS_RUN_DIR:-$PWD/.run}/work"
-ART="${JASS_RUN_DIR:-$PWD/.run}/artefacts"
+cd "$JASS_CODE_DIR"
+W="$JASS_RESULT_DIR/work"
+ART="$JASS_ARTEFACT_DIR"
 mkdir -p "$W" "$ART"
+
+[ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || {
+  echo "job id mismatch" >"$ART/PREFLIGHT_ERROR__JOB_ID_MISMATCH"
+  exit 1
+}
+[ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || {
+  echo "code SHA mismatch" >"$ART/PREFLIGHT_ERROR__CODE_SHA_MISMATCH"
+  exit 1
+}
+[ -z "$(git branch --show-current)" ] || {
+  echo "worktree must be detached" >"$ART/PREFLIGHT_ERROR__WORKTREE_NOT_DETACHED"
+  exit 1
+}
+[ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || {
+  echo "automatic continuation guard missing" >"$ART/PREFLIGHT_ERROR__AUTO_CONTINUATION_GUARD"
+  exit 1
+}
 
 python3 -m py_compile \
   jobs/tools/fetch_result_files.py \
