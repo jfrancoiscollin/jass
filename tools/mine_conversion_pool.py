@@ -44,7 +44,7 @@ def rec_to_fen(rec: bytes):
     wm, wk, bm, bk = struct.unpack_from("<QQQQ", rec, 0)
     stm = rec[32]
     Wl = [f"K{s}" for s in _sqs(wk)] + [str(s) for s in _sqs(wm)]
-    Bl = [f"K{s}" for s in _sqs(bm)] + [str(s) for s in _sqs(bk)]
+    Bl = [f"K{s}" for s in _sqs(bk)] + [str(s) for s in _sqs(bm)]
     fen = f"{'B' if stm else 'W'}:W{','.join(Wl)}:B{','.join(Bl)}"
     wp, bp = _pc(wm) + _pc(wk), _pc(bm) + _pc(bk)
     return fen, wp, bp, stm

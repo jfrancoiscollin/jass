@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import struct
 import tempfile
 import unittest
 from argparse import Namespace
@@ -15,6 +16,21 @@ SPEC.loader.exec_module(MP)
 
 
 class MineConversionPoolTests(unittest.TestCase):
+    def test_record_to_fen_preserves_black_piece_kinds(self):
+        record = struct.pack(
+            "<QQQQBib",
+            1 << (30 - 1),  # white man 30
+            1 << (31 - 1),  # white king 31
+            1 << (5 - 1),   # black man 5
+            1 << (6 - 1),   # black king 6
+            1,               # black to move
+            0,
+            1,
+        )
+        fen, white_pieces, black_pieces, stm = MP.rec_to_fen(record)
+        self.assertEqual(fen, "B:WK31,30:BK6,5")
+        self.assertEqual((white_pieces, black_pieces, stm), (2, 2, 1))
+
     def test_holdout_only_can_use_more_than_half_of_fresh_pool(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
