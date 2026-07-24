@@ -267,12 +267,18 @@ def main(argv=None) -> int:
 
     mt_asym = args.strong_movetime is not None and args.weak_movetime is not None
     pref = args.pref_parents is not None and args.pref_moves is not None
+    scan_peer = None
     if args.player_jass_bin:
         # CHAMPION self-play : le player = jass + pattern champion (distribution mobile).
         def _mk_player():
             return cv.JassEngine(args.player_jass_bin, pattern_path=args.player_pattern)
         scan = _mk_player()
         scan_weak = (_mk_player() if (args.weak_depth or mt_asym) else None)
+        # A stateful HUB engine cannot play both colours through the same
+        # process: play_game synchronizes every Jass player after each move,
+        # so aliasing white and black applies the move twice. Keep an
+        # independent peer for symmetric champion self-play.
+        scan_peer = (_mk_player() if scan_weak is None else None)
         print(f"  player=JASS(champion) pattern={args.player_pattern}")
     else:
         if not args.scan:
@@ -327,10 +333,10 @@ def main(argv=None) -> int:
                 elif args.strong_movetime is not None:
                     # SYMÉTRIQUE-MOVETIME (parties ÉQUILIBRÉES fort-vs-fort) : les 2 côtés jouent à strong-movetime,
                     # strong_color=None => on extrait LES 2 CÔTÉS (2× de data/partie ; positions contestées à égalité).
-                    r = cv.play_game(scan, scan, referee, opening,
+                    r = cv.play_game(scan, scan_peer or scan, referee, opening,
                                      movetime=args.strong_movetime, max_plies=args.max_plies)
                 else:
-                    r = cv.play_game(scan, scan, referee, opening,
+                    r = cv.play_game(scan, scan_peer or scan, referee, opening,
                                      depth=sd, max_plies=args.max_plies)
             except Exception as exc:  # noqa: BLE001 — keep going on a flaky game
                 print(f"  game {g}: {exc}", file=sys.stderr)
@@ -407,6 +413,9 @@ def main(argv=None) -> int:
     finally:
         try: scan.close()
         except Exception: pass
+        if scan_peer is not None:
+            try: scan_peer.close()
+            except Exception: pass
         if scan_weak is not None:
             try: scan_weak.close()
             except Exception: pass

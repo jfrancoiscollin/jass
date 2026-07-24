@@ -35,7 +35,7 @@ trap finalize EXIT
 trap 'rc=$?; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND"|tee -a "$RES"; exit "$rc"' ERR
 trap 'exit 143' TERM
 
-GAMES="${HOLDOUT_GAMES:-12000}"
+TOTAL_GAMES="${HOLDOUT_GAMES:-12000}"
 GEN_DEPTH=10; GEN_MAX_PLIES=220; GEN_MIN_PIECES=36
 GEN_SEED=950027; NSH_GEN=8; PAR_GEN=8; GEN_TIMEOUT=14400
 TARGET_PER_STRATUM=300; N_CAND_MAX=60000
@@ -56,6 +56,8 @@ MODELS=(C0 F500 AB_EXTRAS)
   die "automatic continuation guard missing"
 [ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
 [ "$(tr ',' '\n' <<<"$Q00"|wc -l)" -eq 63 ] || die "Q00 drift"
+[ "$((TOTAL_GAMES % NSH_GEN))" -eq 0 ] || die "TOTAL_GAMES must divide NSH_GEN"
+GAMES_PER_SHARD=$((TOTAL_GAMES / NSH_GEN))
 monitor
 
 jnnw_count(){ python3 - "$1" <<'PY'
@@ -133,7 +135,7 @@ pids=()
 for shard in $(seq 0 $((NSH_GEN-1))); do
   timeout "$GEN_TIMEOUT" python3 tools/scan_selfplay_gen.py \
     --jass "$J8" --player-jass-bin "$J8" --player-pattern "$W/C0.pjtw" \
-    --seeds "$W/seeds.jnnw" --out "$W/sp.$shard" --games "$GAMES" \
+    --seeds "$W/seeds.jnnw" --out "$W/sp.$shard" --games "$GAMES_PER_SHARD" \
     --max-plies "$GEN_MAX_PLIES" --min-pieces "$GEN_MIN_PIECES" \
     --sample-every 1 --depth "$GEN_DEPTH" --seed "$GEN_SEED" \
     --nshards "$NSH_GEN" --shard "$shard" \
@@ -188,13 +190,15 @@ for stratum in p3_mince p4_egal; do
     die "$stratum lost decisive labels on replay"
 done
 python3 - "$ART" "$W/fresh.jnnw" "$W/p3p4-candidates.jnnw" \
-  "$W/p3_mince.dec.jnnw" "$W/p4_egal.dec.jnnw" "$GEN_SEED" <<'PY'
+  "$W/p3_mince.dec.jnnw" "$W/p4_egal.dec.jnnw" "$GEN_SEED" \
+  "$TOTAL_GAMES" <<'PY'
 import hashlib,json,sys
 from pathlib import Path
 art=Path(sys.argv[1]); names=("fresh","candidates","p3","p4")
 paths=map(Path,sys.argv[2:6])
 payload={"schema":1,"blind_to_candidates":True,"generator_model":"C0",
- "generation_seed":int(sys.argv[6]),"old_gauge_excluded":True,
+ "generation_seed":int(sys.argv[6]),"total_games":int(sys.argv[7]),
+ "old_gauge_excluded":True,
  "sha256":{n:hashlib.sha256(p.read_bytes()).hexdigest()
            for n,p in zip(names,paths)}}
 (art/"holdout-provenance.json").write_text(
