@@ -359,6 +359,11 @@ cause `MAXITER` (ni OOM, ni timeout). La reprise `home-0939` réutilise les
 sources 0937 vérifiées par inventaire/checksum, porte le budget à 200 et exige
 désormais le statut `success` réel de SciPy avec rapport d’optimiseur ; elle ne
 régénère donc aucune position et ne relâche pas le critère de convergence.
+`home-0940/0941` montre que 0939 atteint 200 itérations avec un gradient infini
+encore élevé (`2.170022328647e-02`). La reprise V2 `home-0942` conserve donc
+les tolérances SciPy, augmente l’historique de courbure L-BFGS de 5 à 20
+(dimension 8cf prunée compatible HOME) et autorise jusqu’à 1000 itérations,
+toujours avec `success=true` obligatoire.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.

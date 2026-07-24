@@ -455,7 +455,7 @@ def train_stream(args):
         hier_l2=args.hier_l2, slot_pattern=slot_pattern,
         pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
         prior_mean=prior_mean, prior_prec=prior_prec, initial_mean=initial_mean,
-        optimizer_diagnostics=optimizer_diagnostics)
+        optimizer_diagnostics=optimizer_diagnostics, maxcor=args.lbfgs_maxcor)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
     print('OPTIMIZER ' + json.dumps(optimizer_diagnostics, sort_keys=True))
     if args.optimizer_report:
@@ -574,6 +574,8 @@ def main(argv=None):
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--optimizer-report', type=str, default=None,
                     help='optional JSON report with SciPy success/status/message and gradient norm')
+    ap.add_argument('--lbfgs-maxcor', type=int, default=5,
+                    help='L-BFGS correction history size; larger values use more RAM but improve curvature')
     ap.add_argument('--scale', type=int, default=1000, help='quantisation factor')
     holdout = ap.add_mutually_exclusive_group()
     holdout.add_argument('--holdout-frac', type=float, default=0.0,

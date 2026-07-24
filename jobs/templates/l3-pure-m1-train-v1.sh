@@ -54,7 +54,8 @@ BASE_SEED=314159
 HOLDOUT_MOD=10
 SPLIT_SEED=271828
 L2=3e-5
-MAXIT=200
+MAXIT=1000
+LBFGS_MAXCOR=20
 CHUNK=20000
 GEN_TIMEOUT=14400
 FIT_TIMEOUT=43200
@@ -231,6 +232,7 @@ fit_arm(){
       --data "$W/$lower.fit.jnnw" --feat "$W/$lower.feat" --out "$W/$lower.pjtw" \
       --target wdl --loss logistic --color-fold --tempo-stage --warm-start "$W/parent.pjtw" \
       --holdout-count "$holdout" --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
+      --lbfgs-maxcor "$LBFGS_MAXCOR" \
       --optimizer-report "$ART/$lower-optimizer.json" \
       > "$W/$lower-fit.log" 2> "$W/$lower-fit-time.log"
   [ -s "$W/$lower.pjtw" ] || die "$arm model missing"

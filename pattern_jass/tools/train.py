@@ -428,7 +428,7 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                         logistic, n_cols, batch, sw_all=None,
                         hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0,
                         prior_mean=None, prior_prec=None, initial_mean=None,
-                        optimizer_diagnostics=None):
+                        optimizer_diagnostics=None, maxcor=5):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
@@ -516,7 +516,7 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     else:
         w0 = np.zeros(n_cols, dtype=np.float64)
     res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B',
-                   options={'maxiter': max_iter, 'maxcor': 5})
+                   options={'maxiter': max_iter, 'maxcor': maxcor})
     if optimizer_diagnostics is not None:
         optimizer_diagnostics.update({
             "success": bool(res.success),
@@ -526,6 +526,7 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
             "function_evaluations": int(res.nfev),
             "gradient_inf_norm": float(np.max(np.abs(res.jac))),
             "max_iterations": int(max_iter),
+            "maxcor": int(maxcor),
         })
     return res.x, float(res.fun), int(res.nit)
 

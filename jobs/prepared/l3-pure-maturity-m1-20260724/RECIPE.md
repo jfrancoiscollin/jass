@@ -17,4 +17,7 @@ groupés par ouverture. La recette est WDL terminal, 8cf/Q00, départs standards
 sans TOP3 ni reweight V2. Après le diagnostic `home-0938` (`MAXITER` à 60),
 la reprise `home-0939` réutilise les sources fraîches 0937 vérifiées, porte le
 budget à 200 et exige le statut de convergence `success` fourni par SciPy.
+Le diagnostic 0941 mesure toutefois un gradient encore élevé (`2.17e-2`) à
+200 itérations. `home-0942` garde donc les tolérances intactes, utilise
+`maxcor=20` pour une meilleure information de courbure et un plafond de 1000.
 Atteindre ce nouveau plafond reste un échec. Aucun bras n’est promu.
