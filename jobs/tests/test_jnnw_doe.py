@@ -20,6 +20,19 @@ def record(square: int, *, stm: int = 0, score: int = 10, wdl: int = 1) -> bytes
     return struct.pack("<QQQQBib", 1 << (square - 1), 0, 1 << ((square + 10) - 1), 0, stm, score, wdl)
 
 
+def conversion_record(
+    *,
+    wm: int,
+    wk: int = 0,
+    bm: int,
+    bk: int = 0,
+    stm: int = 0,
+    score: int = 100,
+    wdl: int = 1,
+) -> bytes:
+    return struct.pack("<QQQQBib", wm, wk, bm, bk, stm, score, wdl)
+
+
 class JnnwDoeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -102,6 +115,57 @@ class JnnwDoeTests(unittest.TestCase):
         rows = list(D._records(body))
         self.assertEqual(len(rows), 2)
         self.assertTrue(all(r[37] != 0 for r in rows))
+
+    def test_select_fen_records_preserves_first_pass_labels(self) -> None:
+        source = self.root / "source.jnnw"
+        fen = self.root / "selected.fen"
+        out = self.root / "selected.jnnw"
+        rows = [record(1, score=111, wdl=-1), record(2, score=222, wdl=1)]
+        D._write(source, rows)
+        fen.write_text("W:W2:B12\nW:W1:B11\n", encoding="utf-8")
+        D.cmd_select_fen_records(
+            argparse.Namespace(source=str(source), fen=str(fen), output=str(out))
+        )
+        _, body = D._read(out)
+        self.assertEqual(list(D._records(body)), [rows[1], rows[0]])
+
+    def test_select_stable_conversion_requires_same_advantaged_winner(self) -> None:
+        reference = self.root / "reference.jnnw"
+        relabeled = self.root / "relabeled.jnnw"
+        out = self.root / "stable.jnnw"
+        report = self.root / "stable.json"
+
+        # White has a one-man material edge in every record.
+        positions = [
+            conversion_record(wm=0b11 << shift, bm=0b1 << (shift + 10), wdl=1)
+            for shift in range(4)
+        ]
+        second_pass = [
+            positions[0],                         # stable White win
+            positions[1][:37] + b"\x00",         # draw on replay
+            positions[2][:37] + b"\xff",         # winner flips to Black
+            positions[3],                         # stable White win
+        ]
+        D._write(reference, positions)
+        D._write(relabeled, second_pass)
+        D.cmd_select_stable_conversion(
+            argparse.Namespace(
+                reference=str(reference),
+                relabeled=str(relabeled),
+                stratum="p3_mince",
+                count=2,
+                output=str(out),
+                report=str(report),
+            )
+        )
+
+        _, body = D._read(out)
+        selected = list(D._records(body))
+        self.assertEqual(selected, [positions[0], positions[3]])
+        manifest = json.loads(report.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["stable_eligible"], 2)
+        self.assertEqual(manifest["dropped_draw"], 1)
+        self.assertEqual(manifest["dropped_winner_flip"], 1)
 
     def test_build_cells_has_same_unique_positions_and_only_expected_factors(self) -> None:
         onp = self.root / "onp.jnnw"

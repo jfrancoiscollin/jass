@@ -168,6 +168,109 @@ def cmd_fen_to_jnnw(args: argparse.Namespace) -> None:
     print(json.dumps({"records": len(records), "position_sha256": _sha_records(records, positions_only=True)}))
 
 
+def cmd_select_fen_records(args: argparse.Namespace) -> None:
+    """Select FEN positions from a labelled JNNW source without losing labels."""
+    _, body = _read(args.source)
+    source_by_position: dict[bytes, bytes] = {}
+    duplicate_source_positions = 0
+    for rec in _records(body):
+        key = _record_key(rec)
+        if key in source_by_position:
+            duplicate_source_positions += 1
+            continue
+        source_by_position[key] = rec
+
+    requested = [_record_key(_parse_fen(fen)) for fen, _ in _fen_rows(args.fen)]
+    if len(set(requested)) != len(requested):
+        raise ValueError("FEN selection contains duplicate positions")
+    missing = [key for key in requested if key not in source_by_position]
+    if missing:
+        raise ValueError(f"{len(missing)}/{len(requested)} FEN positions absent from source")
+
+    selected = [source_by_position[key] for key in requested]
+    _write(args.output, selected)
+    print(json.dumps({
+        "selected": len(selected),
+        "duplicate_source_positions": duplicate_source_positions,
+        "position_sha256": _sha_records(selected, positions_only=True),
+    }))
+
+
+def _winning_side(rec: bytes) -> str | None:
+    wdl = struct.unpack_from("<b", rec, 37)[0]
+    if wdl == 0:
+        return None
+    stm_side = "W" if rec[32] == 0 else "B"
+    return stm_side if wdl > 0 else ("B" if stm_side == "W" else "W")
+
+
+def _material_values(rec: bytes) -> tuple[int, int]:
+    wm, wk, bm, bk = struct.unpack_from("<QQQQ", rec, 0)
+    return wm.bit_count() + 3 * wk.bit_count(), bm.bit_count() + 3 * bk.bit_count()
+
+
+def cmd_select_stable_conversion(args: argparse.Namespace) -> None:
+    """Keep positions with the same decisive winner across two d14 passes."""
+    rn, rbody = _read(args.reference)
+    ln, lbody = _read(args.relabeled)
+    if rn != ln:
+        raise ValueError(f"reference has {rn} records, relabelled has {ln}")
+
+    stable: list[bytes] = []
+    dropped_draw = dropped_flip = dropped_margin = dropped_wrong_winner = 0
+    for idx, (ref, lab) in enumerate(zip(_records(rbody), _records(lbody))):
+        if _record_key(ref) != _record_key(lab):
+            raise ValueError(f"record {idx}: position mismatch")
+        ref_winner = _winning_side(ref)
+        lab_winner = _winning_side(lab)
+        if ref_winner is None or lab_winner is None:
+            dropped_draw += 1
+            continue
+        if ref_winner != lab_winner:
+            dropped_flip += 1
+            continue
+
+        white_value, black_value = _material_values(lab)
+        margin = abs(white_value - black_value)
+        if args.stratum == "p3_mince":
+            if margin != 1:
+                dropped_margin += 1
+                continue
+            advantaged = "W" if white_value > black_value else "B"
+            if lab_winner != advantaged:
+                dropped_wrong_winner += 1
+                continue
+        elif args.stratum == "p4_egal":
+            if margin != 0:
+                dropped_margin += 1
+                continue
+        else:
+            raise ValueError(f"unsupported conversion stratum: {args.stratum}")
+        stable.append(lab)
+
+    if len(stable) < args.count:
+        raise ValueError(
+            f"{args.stratum}: only {len(stable)} stable positions for requested {args.count}"
+        )
+    selected_idx = [math.floor(i * len(stable) / args.count) for i in range(args.count)]
+    selected = [stable[i] for i in selected_idx]
+    _write(args.output, selected)
+    report = {
+        "stratum": args.stratum,
+        "input": rn,
+        "stable_eligible": len(stable),
+        "selected": len(selected),
+        "dropped_draw": dropped_draw,
+        "dropped_winner_flip": dropped_flip,
+        "dropped_wrong_margin": dropped_margin,
+        "dropped_wrong_winner": dropped_wrong_winner,
+        "position_sha256": _sha_records(selected, positions_only=True),
+    }
+    if args.report:
+        Path(args.report).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report))
+
+
 def cmd_sample(args: argparse.Namespace) -> None:
     n, body = _read(args.input)
     excluded: set[bytes] = set()
@@ -395,6 +498,18 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("fen-to-jnnw")
     p.add_argument("--input", required=True); p.add_argument("--output", required=True)
     p.set_defaults(func=cmd_fen_to_jnnw)
+
+    p = sub.add_parser("select-fen-records")
+    p.add_argument("--source", required=True); p.add_argument("--fen", required=True)
+    p.add_argument("--output", required=True)
+    p.set_defaults(func=cmd_select_fen_records)
+
+    p = sub.add_parser("select-stable-conversion")
+    p.add_argument("--reference", required=True); p.add_argument("--relabeled", required=True)
+    p.add_argument("--stratum", choices=("p3_mince", "p4_egal"), required=True)
+    p.add_argument("--count", type=int, required=True); p.add_argument("--output", required=True)
+    p.add_argument("--report")
+    p.set_defaults(func=cmd_select_stable_conversion)
 
     p = sub.add_parser("sample")
     p.add_argument("--input", required=True); p.add_argument("--output", required=True)

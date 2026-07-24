@@ -38,7 +38,7 @@ trap 'exit 143' TERM
 TOTAL_GAMES="${HOLDOUT_GAMES:-12000}"
 GEN_DEPTH=10; GEN_MAX_PLIES=220; GEN_MIN_PIECES=36
 GEN_SEED=950027; NSH_GEN=8; PAR_GEN=8; GEN_TIMEOUT=14400
-TARGET_PER_STRATUM=300; N_CAND_MAX=60000
+TARGET_PER_STRATUM=300; REPLAY_CANDIDATES_PER_STRATUM=750; N_CAND_MAX=60000
 NSH_CONV=4; CONV_DEPTH=10; ARB_DEPTH=14; CACHE_MB=128
 NOPEN=200; NSH_GATE=8; PAR_GATE=2; FORCE_DEPTH=9; MOVETIME=0.1
 C0_SHA="13d9463f32d3378e8ce800c01590a93abcaeaca8ac50fcbbc6c6a79263b090be"
@@ -167,11 +167,12 @@ python3 tools/mine_conversion_pool.py filter \
   --out-pool "$W/certified-pool.fen" --out-eval "$W/unused-eval.fen" \
   --manifest "$ART/certification-manifest.json" > "$W/filter.log"
 python3 tools/mine_conversion_pool.py carve --pool "$W/certified-pool.fen" \
-  --per-palier "$TARGET_PER_STRATUM" --holdout-only \
-  --out-eval "$ART/independent-gauge.fen" \
+  --per-palier "$REPLAY_CANDIDATES_PER_STRATUM" --holdout-only \
+  --out-eval "$ART/independent-gauge-candidates.fen" \
   --out-train "$W/unused-train.fen" \
-  --manifest "$ART/independent-gauge-manifest.json" > "$W/carve.log"
-python3 - "$ART/independent-gauge-manifest.json" "$TARGET_PER_STRATUM" <<'PY'
+  --manifest "$ART/independent-gauge-candidates-manifest.json" > "$W/carve.log"
+python3 - "$ART/independent-gauge-candidates-manifest.json" \
+  "$REPLAY_CANDIDATES_PER_STRATUM" <<'PY'
 import json,sys
 p=json.load(open(sys.argv[1])); target=int(sys.argv[2])
 c=p["eval_par_palier"]
@@ -180,19 +181,24 @@ for s in ("p3_mince","p4_egal"):
         raise SystemExit(f"{s}: need {target}, got {c.get(s,0)}")
 PY
 python3 jobs/tools/split_stratified_fen.py \
-  --input "$ART/independent-gauge.fen" --out-dir "$W/strata" \
+  --input "$ART/independent-gauge-candidates.fen" --out-dir "$W/strata" \
   --manifest "$ART/gauge-strata.json" --required-strata p3_mince p4_egal \
   > "$W/split.log" 2>&1
 for stratum in p3_mince p4_egal; do
-  python3 jobs/tools/jnnw_doe.py fen-to-jnnw \
-    --input "$W/strata/$stratum.fen" --output "$W/$stratum.raw.jnnw" >/dev/null
+  python3 jobs/tools/jnnw_doe.py select-fen-records \
+    --source "$W/p3p4-certified.jnnw" --fen "$W/strata/$stratum.fen" \
+    --output "$W/$stratum.raw.jnnw" > "$W/$stratum-select.log"
   "$J32" --deep-relabel "$W/$stratum.raw.jnnw" "$W/$stratum.rel.jnnw" \
     "$ARB_DEPTH" --egdb "$EGDIR" --cache-mb "$CACHE_MB" \
     > "$W/$stratum-relabel.log" 2>&1
-  python3 jobs/tools/jnnw_doe.py keep-decisive \
-    --input "$W/$stratum.rel.jnnw" --output "$W/$stratum.dec.jnnw" >/dev/null
+  python3 jobs/tools/jnnw_doe.py select-stable-conversion \
+    --reference "$W/$stratum.raw.jnnw" --relabeled "$W/$stratum.rel.jnnw" \
+    --stratum "$stratum" --count "$TARGET_PER_STRATUM" \
+    --output "$W/$stratum.dec.jnnw" \
+    --report "$ART/$stratum-stability.json" > "$W/$stratum-stability.log"
   [ "$(jnnw_count "$W/$stratum.dec.jnnw")" -eq "$TARGET_PER_STRATUM" ] ||
-    die "$stratum lost decisive labels on replay"
+    die "$stratum stable selection count drift"
+  gzip -c "$W/$stratum.dec.jnnw" > "$ART/$stratum-stable.jnnw.gz"
 done
 python3 - "$ART" "$W/fresh.jnnw" "$W/p3p4-candidates.jnnw" \
   "$W/p3_mince.dec.jnnw" "$W/p4_egal.dec.jnnw" "$GEN_SEED" \
