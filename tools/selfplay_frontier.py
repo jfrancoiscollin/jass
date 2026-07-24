@@ -115,18 +115,34 @@ def do_merge(args: argparse.Namespace) -> int:
     meta_out: list[Meta] = []
     source_counts: Counter = Counter()
     shard_rows = []
+    renamespace_nested = bool(getattr(args, "renamespace_nested", False))
     for shard_index, (data_name, meta_name) in enumerate(args.pair, start=1):
         records, rows = read_pair(Path(data_name), Path(meta_name))
         if shard_index >= (1 << 16):
             raise ValueError("too many shards for 16-bit namespace")
         prefix = shard_index << 48
+        game_namespace: dict[int, int] = {}
+        opening_namespace: dict[int, int] = {}
         for record, row in zip(records, rows):
-            if row.game_id >= (1 << 48) or row.opening_id >= (1 << 48):
+            if renamespace_nested:
+                game_id = game_namespace.setdefault(row.game_id, len(game_namespace))
+                opening_id = opening_namespace.setdefault(row.opening_id, len(opening_namespace))
+            else:
+                game_id = row.game_id
+                opening_id = row.opening_id
+            if game_id >= (1 << 48) or opening_id >= (1 << 48):
                 raise ValueError("local game/opening id exceeds 48-bit namespace")
             records_out.append(record)
-            meta_out.append(Meta(prefix | row.game_id, prefix | row.opening_id, row.seeded))
+            meta_out.append(Meta(prefix | game_id, prefix | opening_id, row.seeded))
             source_counts["frontier" if row.seeded else "standard"] += 1
-        shard_rows.append({"data": data_name, "meta": meta_name, "records": len(records)})
+        shard_rows.append({
+            "data": data_name,
+            "meta": meta_name,
+            "records": len(records),
+            "nested_namespace_remapped": renamespace_nested,
+            "games": len(game_namespace) if renamespace_nested else None,
+            "openings": len(opening_namespace) if renamespace_nested else None,
+        })
     write_pair(Path(args.out_data), Path(args.out_meta), records_out, meta_out)
     _manifest(args.manifest, {
         "schema": 1,
@@ -470,6 +486,11 @@ def build_parser() -> argparse.ArgumentParser:
     merge.add_argument("--out-data", required=True)
     merge.add_argument("--out-meta", required=True)
     merge.add_argument("--manifest")
+    merge.add_argument(
+        "--renamespace-nested",
+        action="store_true",
+        help="remap existing 64-bit game/opening IDs per input while preserving equality groups",
+    )
     merge.set_defaults(func=do_merge)
 
     split = sub.add_parser("split", help="make an opening-level holdout tail")

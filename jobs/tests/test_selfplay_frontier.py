@@ -55,6 +55,36 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertNotEqual(rows[0].game_id, rows[1].game_id)
             self.assertEqual([row.seeded for row in rows], [0, 1])
 
+    def test_nested_merge_remaps_ids_but_preserves_opening_groups(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31), bm=bits(10), wdl=1),
+                record(wm=bits(32), bm=bits(11), wdl=0),
+                record(wm=bits(33), bm=bits(12), wdl=-1),
+            ]
+            nested = 7 << 48
+            a = self.write_pair(
+                root, "nested", records,
+                [
+                    SF.Meta(nested | 10, nested | 20, 0),
+                    SF.Meta(nested | 11, nested | 20, 0),
+                    SF.Meta(nested | 12, nested | 21, 0),
+                ],
+            )
+            out_data, out_meta = root / "all.jnnw", root / "all.jsm"
+            rc = SF.do_merge(Namespace(
+                pair=[[str(a[0]), str(a[1])]],
+                out_data=str(out_data), out_meta=str(out_meta), manifest=None,
+                renamespace_nested=True,
+            ))
+            self.assertEqual(rc, 0)
+            merged_records, rows = SF.read_pair(out_data, out_meta)
+            self.assertEqual(merged_records, records)
+            self.assertEqual(rows[0].opening_id, rows[1].opening_id)
+            self.assertNotEqual(rows[1].opening_id, rows[2].opening_id)
+            self.assertTrue(all(row.opening_id < (2 << 48) for row in rows))
+
     def test_split_keeps_paired_opening_together_and_in_tail(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

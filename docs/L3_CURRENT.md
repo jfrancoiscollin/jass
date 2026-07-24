@@ -345,5 +345,12 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 - autopsie 0842/0890bis :
   [`archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md`](archives/l3/TOP3_SPECIALIST_RECIPE_AUTOPSY_20260723.md).
 
+Le préflight HOME M1 `home-0936-l3-pure-m1-preflight-v1` est vert
+(`M1_PREFLIGHT_READY`). L’entraînement préenregistré suivant est
+`home-0937-l3-pure-m1-train-v1`; il conserve une tranche fraîche commune
+byte-identique entre F500/F2M/R2M et refuse toute convergence au plafond.
+L’évaluation à défenseur fixe et de force générale reste un job séparé, lancé
+seulement après publication vérifiée des trois modèles.
+
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
