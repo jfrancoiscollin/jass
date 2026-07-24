@@ -72,7 +72,12 @@ import glob,re,struct,sys
 out,prefix=sys.argv[1:]
 def key(path):
     m=re.search(r"\.(\d+)$",path); return int(m.group(1)) if m else 10**9
-files=sorted(glob.glob(prefix+"*"),key=key)
+files=[]
+for path in glob.glob(prefix+"*"):
+    suffix=path[len(prefix):]
+    if suffix.isdigit():
+        files.append(path)
+files.sort(key=key)
 if not files: raise SystemExit("no JNNW shards")
 body=bytearray(); total=0
 for path in files:
