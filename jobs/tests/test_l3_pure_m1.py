@@ -7,6 +7,7 @@ TEMPLATE = ROOT / "jobs/templates/l3-pure-m1-preflight-v1.sh"
 WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0936-l3-pure-m1-preflight-v1.sh"
 TRAIN_TEMPLATE = ROOT / "jobs/templates/l3-pure-m1-train-v1.sh"
 TRAIN_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0937-l3-pure-m1-train-v1.sh"
+RESUME_WRAPPER = ROOT / "jobs/prepared/l3-pure-maturity-m1-20260724/home-0939-l3-pure-m1-train-resume-v1.sh"
 
 
 class M1PreflightContractTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertNotIn("jobs/queue", text)
 
     def test_m1_three_arm_training_contract(self):
-        for script in (TRAIN_TEMPLATE, TRAIN_WRAPPER):
+        for script in (TRAIN_TEMPLATE, TRAIN_WRAPPER, RESUME_WRAPPER):
             subprocess.run(["bash", "-n", str(script)], check=True)
         text = TRAIN_TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("COMMON_RECORDS=500000", text)
@@ -47,7 +48,9 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertIn('"$W/hist-g3.jnnw" "$W/hist-g3.jsm"', text)
         self.assertEqual(text.count("--renamespace-nested"), 3)
         self.assertIn("--warm-start \"$W/parent.pjtw\"", text)
-        self.assertIn('[ "$iters" -lt "$MAXIT" ]', text)
+        self.assertIn("--optimizer-report", text)
+        self.assertIn('if not p.get("success")', text)
+        self.assertIn("MAXIT=200", text)
         self.assertIn("M1_TRAINING_SCREEN_READY", text)
         self.assertNotIn("TOP3", text)
         self.assertNotIn("prepare_imbalance2_training.py reweight", text)
@@ -57,6 +60,13 @@ class M1PreflightContractTests(unittest.TestCase):
         self.assertIn("home-0937-l3-pure-m1-train-v1", text)
         self.assertIn("ccx33-0790-l3-pure-c0-a-v1", text)
         self.assertIn("NO_AUTOMATIC_CONTINUATION=1", text)
+
+    def test_resume_reuses_verified_failed_source(self):
+        text = RESUME_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("home-0937-l3-pure-m1-train-v1/20260724T030013Z-aefecfb1", text)
+        template = TRAIN_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn("--expected-state failed", template)
+        self.assertIn("verified-resume-source.json", template)
 
 
 if __name__ == "__main__":

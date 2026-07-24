@@ -14,5 +14,7 @@ parent immuable C0 A-G3 : F500 reçoit la tranche fraîche commune de 500k,
 F2M reçoit cette même tranche plus 1,5M frais, et R2M reçoit cette même tranche
 plus exactement les corpus C0 G1-G3 et leurs sidecars JSM. Les splits sont
 groupés par ouverture. La recette est WDL terminal, 8cf/Q00, départs standards,
-sans TOP3 ni reweight V2. Atteindre le plafond L-BFGS de 60 itérations invalide
-le fit au lieu d’être accepté silencieusement. Aucun bras n’est promu.
+sans TOP3 ni reweight V2. Après le diagnostic `home-0938` (`MAXITER` à 60),
+la reprise `home-0939` réutilise les sources fraîches 0937 vérifiées, porte le
+budget à 200 et exige le statut de convergence `success` fourni par SciPy.
+Atteindre ce nouveau plafond reste un échec. Aucun bras n’est promu.

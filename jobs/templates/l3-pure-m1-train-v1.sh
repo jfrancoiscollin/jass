@@ -54,7 +54,7 @@ BASE_SEED=314159
 HOLDOUT_MOD=10
 SPLIT_SEED=271828
 L2=3e-5
-MAXIT=60
+MAXIT=200
 CHUNK=20000
 GEN_TIMEOUT=14400
 FIT_TIMEOUT=43200
@@ -149,10 +149,25 @@ generate_fresh(){
     --manifest "$ART/$label-merge.json" > "$W/$label-merge.log" 2>&1
 }
 
-phase generate-common-fresh-500k
-generate_fresh common "$COMMON_RECORDS" 10000
-phase generate-extra-fresh-1500k
-generate_fresh extra "$EXTRA_RECORDS" 100000
+if [ -n "${RESUME_SOURCE_PREFIX:-}" ]; then
+  phase recover-verified-fresh-source
+  python3 jobs/tools/fetch_result_files.py --prefix "$RESUME_SOURCE_PREFIX" \
+    --expected-state failed \
+    --file artefacts/common-fresh-500k.jnnw.gz=common.jnnw.gz \
+    --file artefacts/common-fresh-500k.jsm.gz=common.jsm.gz \
+    --file artefacts/extra-fresh-1500k.jnnw.gz=extra.jnnw.gz \
+    --file artefacts/extra-fresh-1500k.jsm.gz=extra.jsm.gz \
+    --out-dir "$SRC" --report "$ART/verified-resume-source.json" > "$W/fetch-resume.log" 2>&1
+  gunzip -c "$SRC/common.jnnw.gz" > "$W/common.raw.jnnw"
+  gunzip -c "$SRC/common.jsm.gz" > "$W/common.raw.jsm"
+  gunzip -c "$SRC/extra.jnnw.gz" > "$W/extra.raw.jnnw"
+  gunzip -c "$SRC/extra.jsm.gz" > "$W/extra.raw.jsm"
+else
+  phase generate-common-fresh-500k
+  generate_fresh common "$COMMON_RECORDS" 10000
+  phase generate-extra-fresh-1500k
+  generate_fresh extra "$EXTRA_RECORDS" 100000
+fi
 
 phase assemble-three-arms
 python3 tools/selfplay_frontier.py merge \
@@ -216,11 +231,16 @@ fit_arm(){
       --data "$W/$lower.fit.jnnw" --feat "$W/$lower.feat" --out "$W/$lower.pjtw" \
       --target wdl --loss logistic --color-fold --tempo-stage --warm-start "$W/parent.pjtw" \
       --holdout-count "$holdout" --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
+      --optimizer-report "$ART/$lower-optimizer.json" \
       > "$W/$lower-fit.log" 2> "$W/$lower-fit-time.log"
   [ -s "$W/$lower.pjtw" ] || die "$arm model missing"
   grep -q 'HOLDOUT_LOGLOSS' "$W/$lower-fit.log" || die "$arm holdout result missing"
   iters="$(sed -n 's/.*iters=\([0-9][0-9]*\).*/\1/p' "$W/$lower-fit.log" | tail -1)"
-  [ -n "$iters" ] && [ "$iters" -lt "$MAXIT" ] || die "$arm optimiser hit max-iter=$MAXIT"
+  "$W/venv/bin/python" - "$ART/$lower-optimizer.json" <<'PY' || die "$arm optimiser did not converge"
+import json,sys
+p=json.load(open(sys.argv[1]))
+if not p.get("success"): raise SystemExit(1)
+PY
   gzip -n -c "$W/$lower.pjtw" > "$ART/$lower.pjtw.gz"
   rm -f "$W/$lower.feat"
 }

@@ -24,6 +24,7 @@ FEAT (extras): magic 'FEAT', uint32 cnt, uint32 k(=NUM_EXTRAS), float32[cnt*k]
 """
 
 import argparse
+import json
 import os
 import struct
 import sys
@@ -447,13 +448,21 @@ def train_stream(args):
         print(f'warm-start : champion={args.warm_start} (scale={scale_c}) ; '
               'initialisation only, objective keeps ordinary zero-centred L2')
     t0 = time.time()
+    optimizer_diagnostics = {}
     w_float, train_loss, n_iter = train_lbfgs_chunked(
         build_fn, tr_idx, y_all, args.l2, args.max_iter,
         logistic, n_cols, chunk, sw_all=None,
         hier_l2=args.hier_l2, slot_pattern=slot_pattern,
         pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
-        prior_mean=prior_mean, prior_prec=prior_prec, initial_mean=initial_mean)
+        prior_mean=prior_mean, prior_prec=prior_prec, initial_mean=initial_mean,
+        optimizer_diagnostics=optimizer_diagnostics)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
+    print('OPTIMIZER ' + json.dumps(optimizer_diagnostics, sort_keys=True))
+    if args.optimizer_report:
+        Path(args.optimizer_report).write_text(
+            json.dumps(optimizer_diagnostics, indent=2, sort_keys=True) + '\n',
+            encoding='utf-8',
+        )
 
     # --- HOLDOUT log-loss : same forward pass (build_fn + sigmoid CE) as the fit,
     #     on the held-out tail rows [train_N, N), at the fitted weights. Pure data
@@ -563,6 +572,8 @@ def main(argv=None):
                          'ridge toward the champion (uniform l2, μ=champion). Only with --prior-mean.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
+    ap.add_argument('--optimizer-report', type=str, default=None,
+                    help='optional JSON report with SciPy success/status/message and gradient norm')
     ap.add_argument('--scale', type=int, default=1000, help='quantisation factor')
     holdout = ap.add_mutually_exclusive_group()
     holdout.add_argument('--holdout-frac', type=float, default=0.0,

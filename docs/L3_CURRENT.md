@@ -352,5 +352,13 @@ byte-identique entre F500/F2M/R2M et refuse toute convergence au plafond.
 L’évaluation à défenseur fixe et de force générale reste un job séparé, lancé
 seulement après publication vérifiée des trois modèles.
 
+`home-0937` a produit et publié les sources fraîches ainsi que les trois
+assemblages, puis s’est arrêté proprement parce que F500 atteignait le plafond
+L-BFGS de 60 itérations. Le diagnostic `home-0938` classe explicitement la
+cause `MAXITER` (ni OOM, ni timeout). La reprise `home-0939` réutilise les
+sources 0937 vérifiées par inventaire/checksum, porte le budget à 200 et exige
+désormais le statut `success` réel de SciPy avec rapport d’optimiseur ; elle ne
+régénère donc aucune position et ne relâche pas le critère de convergence.
+
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
