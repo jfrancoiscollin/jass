@@ -1,6 +1,6 @@
 # L3-PURE-MATURITY — protocole exécutable M0
 
-> **Version 1.1 — 24 juillet 2026**  
+> **Version 1.1 — 24 juillet 2026**
 > **Statut :** M0 terminé sur HOME ; revue humaine terminée, parent M1 = C0 A-G3.
 
 ## 1. Question
