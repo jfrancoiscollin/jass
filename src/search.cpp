@@ -933,7 +933,14 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
         if (d < LMR_MIN_DEPTH ||
             move_idx < (is_pv ? params.lmr_first_full_pv : params.lmr_first_full_nonpv)) return 0;
         int r;
-        if (params.lmr_formula == 1) {
+        if (params.lmr_formula == 3) {
+            // Frozen Scan 3.1 shape (diagnostic): one ply for every
+            // eligible late quiet, two plies for non-PV moves from index 4.
+            // The eligibility thresholds are supplied separately through
+            // lmr_min_depth / lmr_first_full_{pv,nonpv}.  This branch is
+            // opt-in and leaves the production formula byte-identical.
+            r = (!is_pv && move_idx >= 4) ? 2 : 1;
+        } else if (params.lmr_formula == 1) {
             // Logarithmic LMR shape (opt-in ; formula 0 = linear below = legacy,
             // byte-identical). Softer early, more aggressive for late moves at
             // high depth → lowers the effective branching factor. EBF chantier.

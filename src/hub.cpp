@@ -211,7 +211,11 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
     out_ << "bestmove " << format_move(r.best_move)
          << " score="   << r.score
          << " depth="   << r.depth
-         << " nodes="   << r.nodes;
+         << " nodes="   << r.nodes
+         << " cutoffs=" << r.cutoffs
+         << " cut1="    << r.first_move_cutoffs
+         << " research=" << r.pvs_researches
+         << " movessearched=" << r.moves_searched;
     // External orchestrators (e.g. the Jass-vs-Scan harness) need the
     // captured-square list to translate the move into other engines'
     // notation. `format_move` only emits the (from, to) endpoints, so

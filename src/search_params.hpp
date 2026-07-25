@@ -61,7 +61,7 @@ struct SearchParams {
     // the linear path. lmr_log_mul is the coefficient ×100 (40 = 0.40 ≈ /2.5).
     // EBF chantier 2026-06-29 (memo JFC) — ⚠️ A/B vs 0264/0268 (jass a GAGNÉ +Elo
     // en réduisant MOINS) : décider à TEMPS FIXE + 0 régression Elo.
-    int lmr_formula  = 0;     // 0 = linear (legacy) ; 1 = logarithmic
+    int lmr_formula  = 0;     // 0=linear ; 1=log ; 2=Box-Cox ; 3=frozen Scan 3.1 diagnostic
     int lmr_log_base = 0;     // additive base offset for the log formula
     int lmr_log_mul  = 40;    // R coefficient ×100 (40 = 0.40 ≈ divide by 2.5)
     int lmr_bc_ld    = 100;   // Box-Cox (lmr_formula=2) DEPTH exponent ×100 (100=λ1, 50=√, 0=log, <0=récip)
