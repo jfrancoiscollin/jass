@@ -41,7 +41,7 @@ trap finalize EXIT
 trap 'rc=$?; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND"|tee -a "$RES"; exit "$rc"' ERR
 trap 'exit 143' TERM
 
-NOPEN=500; OPENING_SEED=244949
+NOPEN=500; OPENING_CANDIDATES=2000; OPENING_SEED=244949
 NSH_GATE=16; PAR_GATE=4; FORCE_DEPTH=9; MOVETIME=0.1
 NSH_CONV=4; CONV_DEPTH=10; TARGET_PER_STRATUM=300
 CACHE_MB=128; BOOTSTRAP_SAMPLES=200000
@@ -201,10 +201,11 @@ for spec in \
   "$J8" --gen-opening-pool "$count" "$W/$name.fen" 8 32 20 "$seed" \
     > "$W/open-$name.log" 2>&1
 done
-"$J8" --gen-opening-pool "$NOPEN" "$W/open-m2.fen" 8 32 20 "$OPENING_SEED" \
+"$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
+  "$W/open-m2-candidates.fen" 8 32 20 "$OPENING_SEED" \
   > "$W/open-m2.log" 2>&1
-python3 jobs/tools/validate_opening_pool.py \
-  --pool "$W/open-m2.fen" --expected "$NOPEN" \
+python3 jobs/tools/select_independent_opening_pool.py \
+  --candidates "$W/open-m2-candidates.fen" --expected "$NOPEN" \
   --exclude data/dilf_combinations.fen \
   --exclude "$W/prior-reinforcement.fen" \
   --exclude "$W/prior-meta-screen.fen" \
@@ -212,7 +213,9 @@ python3 jobs/tools/validate_opening_pool.py \
   --exclude "$W/prior-f2m-confirm.fen" \
   --exclude "$W/prior-f2m-gen2.fen" \
   --generator-seed "$OPENING_SEED" \
-  --out "$ART/independent-openings-manifest.json" > "$W/validate-openings.log" 2>&1
+  --out "$W/open-m2.fen" \
+  --manifest "$ART/independent-openings-manifest.json" \
+  > "$W/select-openings.log" 2>&1
 
 stage exact-corpus-coverage
 env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py \

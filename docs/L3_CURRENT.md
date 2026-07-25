@@ -448,3 +448,9 @@ n'est automatique. Protocole :
 convergence en 236 itérations, log-loss holdout `0,444311`, modèle SHA-256
 `75ace3c0…`. L'écran indépendant `home-0967` est préenregistré avant les
 matchs : force M2/F2M, garde-fou Gen2, conversion P3/P4 et couverture exacte.
+
+`home-0967` s'est arrete avant tout match au controle du pool d'ouvertures.
+La relance `home-0970` garde exactement les bras, budgets et seed
+preenregistres, mais selectionne deterministiquement 500 ouvertures uniques
+et disjointes depuis 2 000 candidates. Les builds de 0967 avaient passe ;
+aucun verdict scientifique partiel n'est reutilise.

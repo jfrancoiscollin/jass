@@ -5,22 +5,29 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "jobs/templates/l3-pure-m2-eval-v1.sh"
-WRAPPER = (
+WRAPPERS = tuple(
     ROOT
     / "jobs/prepared/l3-pure-m2-20260725"
-    / "home-0967-l3-pure-m2-independent-eval-v1.sh"
+    / name
+    for name in (
+        "home-0967-l3-pure-m2-independent-eval-v1.sh",
+        "home-0970-l3-pure-m2-independent-eval-v2.sh",
+    )
 )
 
 
 class M2EvaluationJobTests(unittest.TestCase):
     def test_shell_contract(self):
-        for script in (TEMPLATE, WRAPPER):
+        for script in (TEMPLATE, *WRAPPERS):
             subprocess.run(["bash", "-n", str(script)], check=True)
 
     def test_independent_force_and_guardrail_contract(self):
         text = TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("NOPEN=500", text)
+        self.assertIn("OPENING_CANDIDATES=2000", text)
         self.assertIn("OPENING_SEED=244949", text)
+        self.assertIn("select_independent_opening_pool.py", text)
+        self.assertIn('--out "$W/open-m2.fen"', text)
         self.assertIn("run_gate q00 F2M", text)
         self.assertIn("run_gate q00 GEN2", text)
         self.assertIn("run_gate native F2M", text)
@@ -46,13 +53,19 @@ class M2EvaluationJobTests(unittest.TestCase):
 
     def test_nonpromotion_and_sources(self):
         text = TEMPLATE.read_text(encoding="utf-8")
-        wrapper = WRAPPER.read_text(encoding="utf-8")
+        wrappers = "\n".join(
+            wrapper.read_text(encoding="utf-8") for wrapper in WRAPPERS
+        )
         self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
         self.assertIn("AUTOMATIC_NEXT_JOB__NULL", text)
         self.assertIn("l3_m2_evaluation.py", text)
-        self.assertIn("home-0966bis", wrapper)
-        self.assertIn("home-0965", wrapper)
-        self.assertIn("home-0962", wrapper)
+        self.assertIn("home-0966bis", wrappers)
+        self.assertIn("home-0965", wrappers)
+        self.assertIn("home-0962", wrappers)
+        self.assertIn(
+            'EXPECTED_JOB_ID="home-0970-l3-pure-m2-independent-eval-v2"',
+            wrappers,
+        )
 
 
 if __name__ == "__main__":

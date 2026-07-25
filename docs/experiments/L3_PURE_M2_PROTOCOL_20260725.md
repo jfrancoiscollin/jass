@@ -70,3 +70,16 @@ garde-fous passent. Deux scores ponctuels positifs sans preuve dans les deux
 vues ouvrent seulement une confirmation indépendante. Sinon la recette d8
 est considérée comme plate et la prochaine expérience recommandée devient un
 bras causal d10 à volume constant. Aucune décision n'est automatique.
+
+## Incident 0967 et relance 0970
+
+`home-0967` a passe les sources immuables et les builds, puis s'est arrete
+avant tout match dans `validate_opening_pool.py` : le generateur avait produit
+un pool candidat ne satisfaisant pas directement la contrainte stricte
+d'unicite/disjonction. Aucun resultat M2 n'a donc ete mesure par 0967.
+
+`home-0970` conserve le protocole scientifique et la seed. La seule correction
+est technique : generer 2 000 candidats, les filtrer dans l'ordre de facon
+deterministe contre les doublons et tous les pools exclus, puis retenir les
+500 premiers. Le manifeste publie le hash du sur-echantillon, le hash des
+500 positions retenues et les compteurs de rejet.
