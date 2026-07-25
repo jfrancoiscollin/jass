@@ -399,3 +399,19 @@ autorisée qu’après ce readout : si les poids existants restent sous le
 plancher de conversion, la branche suivante sera une réplication
 Scan-faithful propre ; sinon la revue portera sur le candidat M1 et sa force
 générale. Aucune promotion ni continuation n’est automatique.
+
+`home-0962` confirme que le moteur réparé convertit avec tous les poids M1 :
+F500 atteint 98,00/99,33 %, F2M 97,33/98,33 % et R2M 99,67/97,33 % sur
+`p3_mince/p4_egal`, sans erreur. `home-0963` rejoue ensuite la force sur 400
+parties par vue et mesure les corpus exacts. F2M obtient 60,00 % Q00 et
+60,25 % native contre C0, puis 91,00 % Q00 contre Gen2. Sa couverture 8cf
+dépasse aussi C0 de 3 043 buckets visités et de 3 834 buckets vus au moins
+100 fois. R2M est positif mais moins fort ; F500 reste sous la couverture du
+parent. La règle préenregistrée sélectionne donc F2M pour une confirmation
+indépendante, sans le promouvoir.
+
+La confirmation suivante emploie 500 nouvelles ouvertures synthétiques
+appariées, sans recouvrement avec DILF ni les pools synthétiques antérieurs,
+soit 1 000 parties dans chaque vue. F2M doit avoir la borne basse à 95 % au
+dessus de 50 % contre C0 en Q00 et native, et ne pas présenter de régression
+établie contre R2M. Un succès ouvre seulement une revue humaine de promotion.
