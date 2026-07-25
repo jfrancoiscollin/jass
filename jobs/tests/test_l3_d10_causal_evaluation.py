@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 from jobs.tools.l3_d10_causal_evaluation import (
+    D10_OPENINGS_SHA256,
     DEPTH_CONFIRMED,
     DIRECTIONAL,
     PLATEAU,
@@ -119,6 +120,8 @@ class D10CausalEvaluationTests(unittest.TestCase):
                 "records": 500,
                 "unique_records": 500,
                 "overlap_records": 0,
+                "generator_seed": 314159,
+                "sha256": D10_OPENINGS_SHA256,
                 "excluded_sources": {"/tmp/prior-m2-independent.fen": 500},
             },
         )

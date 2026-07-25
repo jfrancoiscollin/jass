@@ -30,8 +30,10 @@ class D10CausalEvaluationJobTests(unittest.TestCase):
         text = TEMPLATE.read_text(encoding="utf-8")
         self.assertIn("prior-m2-candidates.fen", text)
         self.assertIn("M2_INDEPENDENT_OPENINGS_SHA", text)
+        self.assertIn("D10_INDEPENDENT_OPENINGS_SHA", text)
         self.assertIn('--exclude "$W/prior-m2-independent.fen"', text)
         self.assertIn("reconstructed M2 independent opening pool hash drift", text)
+        self.assertIn("D10 independent opening pool hash drift", text)
 
     def test_exact_corpora_and_conversion_controls(self):
         text = TEMPLATE.read_text(encoding="utf-8")

@@ -18,6 +18,9 @@ PROMOTION_SCALE = "D10_PROMOTION_AND_SCALE_REVIEW_READY"
 DEPTH_CONFIRMED = "D10_DEPTH_EFFECT_CONFIRMED_REVIEW"
 DIRECTIONAL = "D10_DIRECTIONAL_CONFIRMATION_REVIEW"
 PLATEAU = "D10_PLATEAU_OR_REGRESSION_REVIEW"
+D10_OPENINGS_SHA256 = (
+    "e41ae3875368112a99d3de2a1e6e40aa8d4d94d5cb66ed5280999a7a4e612965"
+)
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -105,6 +108,8 @@ def build_evaluation(
         openings.get("records") != 500
         or openings.get("unique_records") != 500
         or openings.get("overlap_records") != 0
+        or openings.get("generator_seed") != 314159
+        or openings.get("sha256") != D10_OPENINGS_SHA256
         or not any(str(path).endswith("prior-m2-independent.fen") for path in excluded)
     ):
         raise ValueError("D10 independent opening-pool contract mismatch")

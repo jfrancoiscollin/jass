@@ -67,7 +67,9 @@ Le readout `home-0972-l3-pure-d10-causal-independent-eval-v1` utilisera la
 seed 314159 et un nouveau pool d'ouvertures unique et disjoint de tous les
 pools M1/M2. Le pool indépendant M2 de `home-0970bis` est reconstruit
 déterministiquement et son SHA-256 est vérifié avant d'être ajouté aux
-exclusions :
+exclusions. Le préflight HOME reproduit son SHA-256 `9a0e46be…`, puis produit
+pour la seed 314159 un pool de 500 ouvertures uniques, sans recouvrement, au
+SHA-256 figé `e41ae387…` :
 
 - D10 contre M2 d8, 1 000 parties Q00 d9 et 1 000 parties native ;
 - D10 contre F2M, mêmes deux vues ;
