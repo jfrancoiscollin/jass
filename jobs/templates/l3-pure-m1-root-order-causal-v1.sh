@@ -11,7 +11,7 @@ set -Eeuo pipefail
 : "${EXPECTED_SCAN_SOURCE_COMMIT:?}"; : "${EXPECTED_EXACT_PJTW_SHA256:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; ART="$JASS_ARTEFACT_DIR"; IN="$JASS_RESULT_DIR/inputs"
-mkdir -p "$W" "$ART" "$IN" "$ART/replay" "$ART/conversion" "$W/source-traces"
+mkdir -p "$W" "$ART" "$IN" "$ART/replay" "$ART/conversion" "$W/source-traces" "$W/native-traces"
 RES="$W/RESULTS.txt"; PROG="$W/PROGRESS.txt"; STAGE="$W/stage.txt"
 : > "$RES"; echo preflight > "$STAGE"
 say(){ echo "$*" | tee -a "$RES"; }
@@ -31,7 +31,7 @@ finalize(){
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   (cd "$W" && find . -name '*.log' -type f -print0 |
     tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$W/build8-exact" "$W/build32" "$W/scan-source" "$IN"
+  rm -rf "$W/build8-exact" "$W/build32" "$W/baseline-code" "$W/scan-source" "$IN"
   exit "$rc"
 }
 trap finalize EXIT
@@ -48,6 +48,7 @@ MAX_PLIES=260
 BOOTSTRAP_SAMPLES=200000
 READOUT_SEED=961101
 CACHE_MB=128
+BASELINE_CODE_SHA="5f151c248cf1611c1d6695a1275d01a91fb9b424"
 PATCH="jobs/patches/scan-0960-root-trace.patch"
 P3_GAUGE_SHA="cd92710fec7934d113ccade22180d4cddf029b084dd20c8fa9e30ca686767c91"
 P4_GAUGE_SHA="0d925c4fbd7e7928bf6d86bd2cd40f796ee6805e0010e51d5d6483986da2a1ac"
@@ -186,15 +187,41 @@ for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do
 done
 [ -n "$EGDIR" ] || die "EGDB unavailable"
 export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
+mkdir -p "$W/baseline-code"
+git cat-file -e "$BASELINE_CODE_SHA^{commit}"
+git archive "$BASELINE_CODE_SHA" | tar -x -C "$W/baseline-code"
+python3 "$W/baseline-code/pattern_jass/tools/gen_patterns.py" \
+  --emit --variant v4 > "$W/gen32.log" 2>&1
+cmake -S "$W/baseline-code" -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
+cmake --build "$W/build32" -j4 --target jass > "$W/build32.log" 2>&1
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1
 cmake -S . -B "$W/build8-exact" $EXACT_FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8-exact" -j4 --target jass > "$W/build8.log" 2>&1
-python3 pattern_jass/tools/gen_patterns.py --emit --variant v4 > "$W/gen32.log" 2>&1
-cmake -S . -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
-cmake --build "$W/build32" -j4 --target jass > "$W/build32.log" 2>&1
+cmake --build "$W/build8-exact" -j4 --target jass_tests > "$W/build8-tests.log" 2>&1
+ctest --test-dir "$W/build8-exact" --output-on-failure > "$W/ctest8.log" 2>&1
 J8X="$W/build8-exact/jass"; J32="$W/build32/jass"
+[ "$("$J8X" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
+  die "equivalent king-capture paths were not deduplicated"
+[ "$("$J8X" --perft 1 'B:W13,23,25:B6,14,24,K45' | awk '{print $3}')" = 2 ] ||
+  die "tablebase-draw witness legal moves mismatch"
 
 export SCAN_TRACE_ROOT=1
+stage native-repaired-sentinel-trace
+pids=()
+for shard in $(seq 0 $((REPLAY_SHARDS-1))); do
+  timeout 7200 python3 jobs/tools/l3_internal_root_trace.py \
+    --sentinels "$ART/search-tree-sentinels.json" \
+    --jass "$J8X" --pattern "$W/SCAN_EXACT.pjtw" \
+    --search-params-file "$W/SCAN_VERIFY_THREAT.txt" \
+    --scan "$SCAN_TRACE" \
+    --shard "$shard" --nshards "$REPLAY_SHARDS" \
+    --out "$W/native-traces/root-trace-s${shard}.json" \
+    > "$W/native-trace-s${shard}.log" 2>&1 & pids+=("$!")
+done
+fail=0
+for pid in "${pids[@]}"; do wait "$pid" || fail=$((fail+1)); done
+[ "$fail" -eq 0 ] || die "$fail native repaired trace workers failed"
+
 stage sentinel-root-order-replay
 pids=()
 for shard in $(seq 0 $((REPLAY_SHARDS-1))); do
@@ -212,35 +239,38 @@ for pid in "${pids[@]}"; do wait "$pid" || fail=$((fail+1)); done
 [ "$fail" -eq 0 ] || die "$fail sentinel replay workers failed"
 
 stage full-gauge-root-order-conversion
-for stratum in "${STRATA[@]}"; do
-  pids=(); inputs=()
-  for shard in $(seq 0 $((NSHARDS-1))); do
-    out="$W/ROOT_ORDER-$stratum-s${shard}.json"; inputs+=("$out")
-    timeout 18000 python3 jobs/tools/conv_fixed_wdl.py \
-      --jass "$J8X" --defender-jass "$J32" \
-      --pattern "$W/SCAN_EXACT.pjtw" --defender-pattern "$W/GEN2.pjtw" \
-      --search-params "$(cat "$W/SCAN_VERIFY_THREAT.txt")" \
-      --defender-search-params "$(cat "$W/Q00.txt")" \
-      --root-order-scan "$SCAN_TRACE" \
-      --pool-jnnw "$W/$stratum.jnnw" \
-      --depth "$DEPTH" --defender-depth "$DEFENDER_DEPTH" \
-      --max-plies "$MAX_PLIES" --shard "$shard" --nshards "$NSHARDS" \
-      --out "$out" > "$W/ROOT_ORDER-$stratum-s${shard}.log" 2>&1 &
-    pids+=("$!")
+for arm in NATIVE_REPAIRED ROOT_ORDER; do
+  for stratum in "${STRATA[@]}"; do
+    pids=(); inputs=(); root_args=()
+    [ "$arm" != ROOT_ORDER ] || root_args=(--root-order-scan "$SCAN_TRACE")
+    for shard in $(seq 0 $((NSHARDS-1))); do
+      out="$W/$arm-$stratum-s${shard}.json"; inputs+=("$out")
+      timeout 18000 python3 jobs/tools/conv_fixed_wdl.py \
+        --jass "$J8X" --defender-jass "$J32" \
+        --pattern "$W/SCAN_EXACT.pjtw" --defender-pattern "$W/GEN2.pjtw" \
+        --search-params "$(cat "$W/SCAN_VERIFY_THREAT.txt")" \
+        --defender-search-params "$(cat "$W/Q00.txt")" \
+        "${root_args[@]}" \
+        --pool-jnnw "$W/$stratum.jnnw" \
+        --depth "$DEPTH" --defender-depth "$DEFENDER_DEPTH" \
+        --max-plies "$MAX_PLIES" --shard "$shard" --nshards "$NSHARDS" \
+        --out "$out" > "$W/$arm-$stratum-s${shard}.log" 2>&1 &
+      pids+=("$!")
+    done
+    fail=0
+    for pid in "${pids[@]}"; do wait "$pid" || fail=$((fail+1)); done
+    [ "$fail" -eq 0 ] || die "$arm/$stratum: $fail conversion workers failed"
+    python3 jobs/tools/aggregate_conv_shards.py \
+      --inputs "${inputs[@]}" --expected-shards "$NSHARDS" \
+      --expected-records "$TARGET_PER_STRATUM" --max-error-rate 0.02 \
+      --stratum "$stratum" --require-position-results \
+      --out "$ART/conversion/$arm-$stratum.json" \
+      > "$W/aggregate-$arm-$stratum.log" 2>&1
   done
-  fail=0
-  for pid in "${pids[@]}"; do wait "$pid" || fail=$((fail+1)); done
-  [ "$fail" -eq 0 ] || die "$stratum: $fail conversion workers failed"
-  python3 jobs/tools/aggregate_conv_shards.py \
-    --inputs "${inputs[@]}" --expected-shards "$NSHARDS" \
-    --expected-records "$TARGET_PER_STRATUM" --max-error-rate 0.02 \
-    --stratum "$stratum" --require-position-results \
-    --out "$ART/conversion/ROOT_ORDER-$stratum.json" \
-    > "$W/aggregate-$stratum.log" 2>&1
 done
 
 stage causal-root-order-readout
-mapfile -t source_traces < <(find "$W/source-traces" -name 'root-trace-s*.json' -print | sort)
+mapfile -t source_traces < <(find "$W/native-traces" -name 'root-trace-s*.json' -print | sort)
 mapfile -t replay_inputs < <(find "$ART/replay" -name 'root-order-s*.json' -print | sort)
 [ "${#source_traces[@]}" -eq 8 ] || die "missing 0960bis source traces"
 [ "${#replay_inputs[@]}" -eq "$REPLAY_SHARDS" ] || die "missing 0961 replay traces"

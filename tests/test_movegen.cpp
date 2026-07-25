@@ -166,6 +166,25 @@ void test_king_capture_multiple_landings() {
     JASS_CHECK_EQ(found, 4);
 }
 
+void test_king_equivalent_capture_paths_are_deduplicated() {
+    // Three geometrical routes produce the same semantic move
+    // 2x35 capturing {8,30}. FMJD/Scan expose that move once.
+    const Position p = parse("W:W40,43,K2:B8,18,29,30");
+    MoveList ml;
+    generate_legal_moves(p, ml);
+    JASS_CHECK_EQ(ml.size(), static_cast<std::size_t>(9));
+
+    int duplicate_class = 0;
+    for (const auto& m : ml) {
+        if (m.from == 2 && m.to == 35 && m.num_captures == 2
+            && test(m.captured, Square{8})
+            && test(m.captured, Square{30})) {
+            ++duplicate_class;
+        }
+    }
+    JASS_CHECK_EQ(duplicate_class, 1);
+}
+
 // -----------------------------------------------------------------------------
 // Position::after — sanity checks against captures
 // -----------------------------------------------------------------------------
@@ -257,6 +276,7 @@ void run_movegen_tests() {
     test_man_through_promotion_no_promote();
     test_man_promotes_at_end_of_capture();
     test_king_capture_multiple_landings();
+    test_king_equivalent_capture_paths_are_deduplicated();
     test_after_clears_captures_and_flips_stm();
     test_reach_all_dirs_matches_canonical();
     test_perft_start();

@@ -80,6 +80,9 @@ void emit_chain(CaptureCtx& ctx) {
     m.num_captures = ctx.captured_count;
     m.captured     = ctx.captured_bb;   // already maintained during the chain
     m.promotes = is_promotion_square(ctx.cur_sq, ctx.us);
+    for (const auto& existing : *ctx.out) {
+        if (existing == m) return;
+    }
     ctx.out->push(m);
 }
 

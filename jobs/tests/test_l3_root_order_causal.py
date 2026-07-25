@@ -1,7 +1,10 @@
 import unittest
 
 from jobs.tools.l3_root_order_causal_report import classify, paired_boolean
-from jobs.tools.l3_root_order_oracle import schedule_from_events
+from jobs.tools.l3_root_order_oracle import (
+    forced_move_from_schedule,
+    schedule_from_events,
+)
 
 
 class RootOrderCausalTests(unittest.TestCase):
@@ -34,6 +37,18 @@ class RootOrderCausalTests(unittest.TestCase):
             "1:31-27;2:31-27;3:31-27",
         )
 
+    def test_forced_schedule_requires_one_stable_move(self):
+        self.assertEqual(
+            forced_move_from_schedule("1:31x22x27;2:31x22x27", 2),
+            "31x22x27",
+        )
+        self.assertIsNone(
+            forced_move_from_schedule("1:31-26;2:31-26,31-27", 2)
+        )
+        self.assertIsNone(
+            forced_move_from_schedule("1:31-26;3:31-26", 3)
+        )
+
     def test_paired_boolean_detects_improvement(self):
         result = paired_boolean(
             [True] * 20,
@@ -47,12 +62,16 @@ class RootOrderCausalTests(unittest.TestCase):
     def test_classification_prefers_conversion_recovery(self):
         conversion = {
             "p3": {
+                "native_repaired": {"ci_low": 0.70},
                 "root_order": {"ci_low": 0.82},
-                "paired": {"delta": 0.3, "ci_low": 0.2},
+                "root_order_paired": {"delta": 0.3, "ci_low": 0.2},
+                "repair_paired": {"delta": 0.1, "ci_low": 0.0},
             },
             "p4": {
+                "native_repaired": {"ci_low": 0.70},
                 "root_order": {"ci_low": 0.81},
-                "paired": {"delta": 0.3, "ci_low": 0.2},
+                "root_order_paired": {"delta": 0.3, "ci_low": 0.2},
+                "repair_paired": {"delta": 0.1, "ci_low": 0.0},
             },
         }
         verdict = classify(
@@ -62,11 +81,30 @@ class RootOrderCausalTests(unittest.TestCase):
         )
         self.assertEqual(verdict, "ROOT_ORDER_REPLAY_RECOVERS_CONVERSION")
 
+    def test_classification_prefers_native_legality_recovery(self):
+        conversion = {
+            key: {
+                "native_repaired": {"ci_low": 0.9},
+                "root_order": {"ci_low": 0.9},
+                "root_order_paired": {"delta": 0.01, "ci_low": -0.01},
+                "repair_paired": {"delta": 0.5, "ci_low": 0.4},
+            }
+            for key in ("p3", "p4")
+        }
+        verdict = classify(
+            order_contract=True,
+            root_paired={"delta": 0.0, "ci_low": -0.1},
+            conversion=conversion,
+        )
+        self.assertEqual(verdict, "LEGALITY_REPAIR_RECOVERS_CONVERSION")
+
     def test_root_only_gain_does_not_claim_conversion(self):
         conversion = {
             key: {
+                "native_repaired": {"ci_low": 0.3},
                 "root_order": {"ci_low": 0.3},
-                "paired": {"delta": 0.02, "ci_low": -0.03},
+                "root_order_paired": {"delta": 0.02, "ci_low": -0.03},
+                "repair_paired": {"delta": 0.02, "ci_low": -0.03},
             }
             for key in ("p3", "p4")
         }

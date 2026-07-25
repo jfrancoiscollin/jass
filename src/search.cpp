@@ -91,26 +91,45 @@ RootOrderStatus apply_root_order(
     std::vector<std::string_view> keys;
     while (!selected.empty()) {
         const auto comma = selected.find(',');
-        keys.push_back(selected.substr(0, comma));
+        const auto key = selected.substr(0, comma);
+        if (key.empty()
+            || std::find(keys.begin(), keys.end(), key) != keys.end()) {
+            return RootOrderStatus::Invalid;
+        }
+        keys.push_back(key);
         if (comma == std::string_view::npos) break;
         selected.remove_prefix(comma + 1);
     }
-    if (keys.size() != moves.size()) return RootOrderStatus::Invalid;
+
+    // Different capture paths can encode the same legal move
+    // (same from/to/captured set). Scan exposes one semantic move while the
+    // current Jass generator may retain several equivalent Move entries.
+    // The oracle therefore orders semantic classes; duplicates remain in
+    // Jass and stay stable and adjacent inside their scheduled class.
+    std::vector<std::string> legal_keys;
+    legal_keys.reserve(moves.size());
+    for (const auto& move : moves) {
+        const std::string key = root_trace_move(move);
+        if (std::find(legal_keys.begin(), legal_keys.end(), key)
+            == legal_keys.end()) {
+            legal_keys.push_back(key);
+        }
+    }
+    if (keys.size() != legal_keys.size()) return RootOrderStatus::Invalid;
 
     MoveList reordered;
-    std::vector<bool> used(moves.size(), false);
     for (const auto key : keys) {
-        bool matched = false;
+        if (std::find(legal_keys.begin(), legal_keys.end(), key)
+            == legal_keys.end()) {
+            return RootOrderStatus::Invalid;
+        }
         for (std::size_t i = 0; i < moves.size(); ++i) {
-            if (!used[i] && root_trace_move(moves[i]) == key) {
+            if (root_trace_move(moves[i]) == key) {
                 reordered.push(moves[i]);
-                used[i] = true;
-                matched = true;
-                break;
             }
         }
-        if (!matched) return RootOrderStatus::Invalid;
     }
+    if (reordered.size() != moves.size()) return RootOrderStatus::Invalid;
     moves = std::move(reordered);
     return RootOrderStatus::Applied;
 }
@@ -1434,16 +1453,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         res.score = 0;
         return res;
     }
-    {
-        const EndgameResult eg = probe_endgame(pos);
-        if (eg == EndgameResult::Draw) {
-            res.score = 0;
-            return res;
-        }
-        // For WIN/LOSS at the root we still need to actually pick a move,
-        // so we don't short-circuit; the search will propagate the
-        // bitbase value up from the children at depth >= 1.
-    }
+    // A tablebase draw is not a terminal position. Search at least one ply so
+    // the engine returns an actual drawing move; returning the default 0-0
+    // here made the HUB client interpret every non-terminal TB draw as a
+    // resignation. WIN/LOSS already followed this path for the same reason.
 
     MoveList root_moves;
     gen_moves(pos, root_moves);

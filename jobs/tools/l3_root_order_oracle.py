@@ -35,6 +35,26 @@ def schedule_from_events(
     return ";".join(parts)
 
 
+def forced_move_from_schedule(schedule: str, max_depth: int) -> str | None:
+    """Return the sole legal move when every scheduled depth is forced."""
+    by_depth: dict[int, list[str]] = {}
+    for part in schedule.split(";"):
+        depth_text, separator, moves_text = part.partition(":")
+        if not separator or not depth_text.isdigit():
+            return None
+        moves = moves_text.split(",") if moves_text else []
+        depth = int(depth_text)
+        if depth in by_depth:
+            return None
+        by_depth[depth] = moves
+    if set(by_depth) != set(range(1, max_depth + 1)):
+        return None
+    moves = {rows[0] for rows in by_depth.values() if len(rows) == 1}
+    if len(moves) != 1 or any(len(rows) != 1 for rows in by_depth.values()):
+        return None
+    return moves.pop()
+
+
 def make_root_order_engine_class(cv: Any):
     class RootOrderJass(cv.JassEngine):
         """Jass whose root list is ordered by a passive traced Scan search."""
@@ -174,12 +194,48 @@ def make_root_order_engine_class(cv: Any):
             failures = int(fields.get("rootorderfail", "0"))
             self.schedule_applications += applications
             self.schedule_failures += failures
-            if schedule is not None and (applications < depth or failures):
+            move = self._cv.parse_jass_bestmove(last)
+            forced_move = (
+                forced_move_from_schedule(schedule, depth)
+                if schedule is not None
+                else None
+            )
+            forced_shortcut_valid = (
+                forced_move is not None
+                and applications == 0
+                and failures == 0
+                and move.scan_str() == forced_move
+            )
+            if schedule is not None and (
+                failures
+                or (applications < depth and not forced_shortcut_valid)
+            ):
+                jass_schedule = None
+                if any(
+                    line.startswith("info roottrace ") for line in lines
+                ):
+                    try:
+                        jass_schedule = schedule_from_events(
+                            parse_root_events(lines), depth
+                        )
+                    except (KeyError, TypeError, ValueError):
+                        jass_schedule = "UNPARSEABLE"
+                self._send("fen")
+                fen_lines = self._read_until(
+                    lambda line: line.startswith("fen ")
+                    or line.startswith("error")
+                )
+                current_fen = fen_lines[-1]
                 raise RuntimeError(
                     "root-order replay contract failed "
-                    f"applications={applications} failures={failures} depth={depth}"
+                    f"applications={applications} failures={failures} depth={depth} "
+                    f"jass_move={move.scan_str()} schedule={schedule} "
+                    f"jass_schedule={jass_schedule} "
+                    f"current_{current_fen} "
+                    f"scan_start={self._scan_start_pos} "
+                    f"scan_history={' '.join(self._scan_history)}"
                 )
-            return self._cv.parse_jass_bestmove(last)
+            return move
 
         def close(self) -> None:
             try:

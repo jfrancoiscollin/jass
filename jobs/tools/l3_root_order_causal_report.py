@@ -107,16 +107,27 @@ def classify(
     if not order_contract:
         return "ROOT_ORDER_REPLAY_CONTRACT_FAILED"
     if all(
+        row["native_repaired"]["ci_low"] >= 0.80
+        for row in conversion.values()
+    ):
+        return "LEGALITY_REPAIR_RECOVERS_CONVERSION"
+    if all(
         row["root_order"]["ci_low"] >= 0.80
         for row in conversion.values()
     ):
         return "ROOT_ORDER_REPLAY_RECOVERS_CONVERSION"
     if all(
-        row["paired"]["delta"] >= 0.10
-        and row["paired"]["ci_low"] > 0
+        row["root_order_paired"]["delta"] >= 0.10
+        and row["root_order_paired"]["ci_low"] > 0
         for row in conversion.values()
     ):
         return "ROOT_ORDER_CAUSAL_PARTIAL_RECOVERY"
+    if all(
+        row["repair_paired"]["delta"] >= 0.10
+        and row["repair_paired"]["ci_low"] > 0
+        for row in conversion.values()
+    ):
+        return "LEGALITY_REPAIR_CAUSAL_PARTIAL_RECOVERY"
     if root_paired["delta"] >= 0.10 and root_paired["ci_low"] > 0:
         return "ROOT_ORDER_EXPLAINS_ROOT_CHOICE_NOT_CONVERSION"
     return "ROOT_ORDER_NOT_DOMINANT_RECURSIVE_TRACE_REQUIRED"
@@ -206,16 +217,36 @@ def build_report(
         baseline = load_document(
             conversion_dir / f"BASE-{stratum}.json"
         )
+        native = load_document(
+            conversion_dir / f"NATIVE_REPAIRED-{stratum}.json"
+        )
         forced = load_document(
             conversion_dir / f"ROOT_ORDER-{stratum}.json"
+        )
+        native_low, native_high = wilson_interval(
+            int(native["n_win"]), int(native["n_pos"])
         )
         low, high = wilson_interval(
             int(forced["n_win"]), int(forced["n_pos"])
         )
         conversion[stratum] = {
-            "baseline": {
+            "old_baseline": {
                 key: baseline[key]
                 for key in ("n_pos", "n_win", "n_draw", "n_loss", "conversion")
+            },
+            "native_repaired": {
+                **{
+                    key: native[key]
+                    for key in (
+                        "n_pos",
+                        "n_win",
+                        "n_draw",
+                        "n_loss",
+                        "conversion",
+                    )
+                },
+                "ci_low": native_low,
+                "ci_high": native_high,
             },
             "root_order": {
                 **{
@@ -235,10 +266,16 @@ def build_report(
                 ),
                 "schedule_failures": forced.get("root_order_failures", 0),
             },
-            "paired": paired_conversion(
-                forced,
+            "repair_paired": paired_conversion(
+                native,
                 baseline,
                 seed=seed + 1000 + index,
+                bootstrap_samples=bootstrap_samples,
+            ),
+            "root_order_paired": paired_conversion(
+                forced,
+                native,
+                seed=seed + 1100 + index,
                 bootstrap_samples=bootstrap_samples,
             ),
         }
@@ -263,15 +300,17 @@ def build_report(
         conversion=conversion,
     )
     next_branch = {
+        "LEGALITY_REPAIR_RECOVERS_CONVERSION": "certify_legality_repair_then_resume_m1",
         "ROOT_ORDER_REPLAY_RECOVERS_CONVERSION": "port_scan_root_ordering_without_oracle",
         "ROOT_ORDER_CAUSAL_PARTIAL_RECOVERY": "port_scan_root_ordering_then_trace_recursive_residual",
+        "LEGALITY_REPAIR_CAUSAL_PARTIAL_RECOVERY": "certify_legality_repair_then_trace_residual",
         "ROOT_ORDER_EXPLAINS_ROOT_CHOICE_NOT_CONVERSION": "instrument_first_recursive_child",
         "ROOT_ORDER_NOT_DOMINANT_RECURSIVE_TRACE_REQUIRED": "instrument_first_recursive_child",
         "ROOT_ORDER_REPLAY_CONTRACT_FAILED": "repair_root_order_replay_contract",
     }[verdict]
     return {
         "schema": 1,
-        "protocol": "l3-pure-m1-root-order-causal-audit-v1",
+        "protocol": "l3-pure-m1-root-order-causal-audit-v2",
         "diagnostic_only": True,
         "order_contract_valid": order_contract,
         "oracle_totals": oracle_totals,
@@ -323,7 +362,7 @@ def main() -> int:
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     summary = {
-        "job": "0961",
+        "job": "0961bis",
         "verdict": report["localization"]["verdict"],
         "next_branch": report["localization"]["next_branch"],
         "d12_paired_best_match": report["d12_paired_best_match"],

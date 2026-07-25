@@ -154,6 +154,20 @@ void test_search_finds_forced_capture() {
     JASS_CHECK(is_mate_score(r.score));
 }
 
+void test_search_tablebase_draw_returns_a_legal_move() {
+    // K vs K is a known draw, but it is not terminal. The root search must
+    // return a legal move instead of the default 0-0/resignation sentinel.
+    const Position p = parse("W:WK28:BK1");
+    SearchLimits lim;
+    lim.max_depth = 2;
+    const SearchResult r = search(p, lim);
+
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    JASS_CHECK(list_contains(legal, r.best_move));
+    JASS_CHECK(r.best_move.from != NO_SQUARE);
+}
+
 void test_qsearch_avoids_horizon_effect() {
     // White man at 33 vs black man at 22. White's two quiet moves are
     //   - 33-28 (NW): leaves white *en prise* — black 22 must capture 28
@@ -280,6 +294,26 @@ void test_root_order_schedule_applies_and_fails_closed() {
     const SearchResult rejected = search(p, invalid);
     JASS_CHECK_EQ(rejected.root_order_applications, 1U);
     JASS_CHECK_EQ(rejected.root_order_failures, 1U);
+
+    // Regression witness from 0961: three geometrical routes used to emit
+    // 2x35 capturing 8,30 three times. Move generation now exposes the same
+    // nine semantic classes as Scan, and the class-order contract still
+    // accepts the position.
+    const Position duplicate_paths = parse("W:W40,43,K2:B8,18,29,30");
+    MoveList duplicate_legal;
+    generate_legal_moves(duplicate_paths, duplicate_legal);
+    JASS_CHECK_EQ(duplicate_legal.size(), 9U);
+
+    SearchLimits semantic;
+    semantic.max_depth = 2;
+    semantic.root_order_schedule =
+        "1:2x22x8x18,2x27x8x18,2x31x8x18,2x36x8x18,"
+        "2x35x8x30,2x33x8x29,2x38x8x29,2x42x8x29,2x47x8x29;"
+        "2:2x33x8x29,2x35x8x30,2x22x8x18,2x27x8x18,"
+        "2x31x8x18,2x36x8x18,2x38x8x29,2x42x8x29,2x47x8x29";
+    const SearchResult semantic_applied = search(duplicate_paths, semantic);
+    JASS_CHECK_EQ(semantic_applied.root_order_applications, 2U);
+    JASS_CHECK_EQ(semantic_applied.root_order_failures, 0U);
 }
 
 // 1b search refinements (continuation history, improving, IID, multi-cut).
@@ -336,6 +370,7 @@ void run_search_tests() {
     test_search_returns_legal_move_from_start();
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
+    test_search_tablebase_draw_returns_a_legal_move();
     test_qsearch_avoids_horizon_effect();
     test_search_score_reflects_material_lead();
     test_search_returns_pv_starting_with_best_move();
