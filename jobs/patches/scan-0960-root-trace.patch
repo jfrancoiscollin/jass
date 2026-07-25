@@ -1,0 +1,113 @@
+diff --git a/src/search.cpp b/src/search.cpp
+index f8bf52a..0000000 100644
+--- a/src/search.cpp
++++ b/src/search.cpp
+@@ -288,6 +288,23 @@ static double time_lag (double time);
+ 
+ static void local_update (Local & local, Move mv, Score sc, const Line & pv, Search_Global & sg);
+ 
++static thread_local int G_Root_Trace_Attempt = 0;
++
++static bool root_trace_enabled () {
++
++   static const bool enabled = [] () {
++      const char * value = std::getenv("SCAN_TRACE_ROOT");
++      return value != nullptr && std::string(value) != "0";
++   }();
++
++   return enabled;
++}
++
++static void emit_root_trace (const std::string & line) {
++
++   std::cout << "info roottrace " << line << std::endl;
++}
++
+ static Flag flag (Score sc, Score alpha, Score beta);
+ 
+ // functions
+@@ -956,6 +974,8 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+    assert(depth > 0 && depth <= Depth_Max);
+    assert(ply == Ply_Root);
+ 
++   if (root_trace_enabled()) G_Root_Trace_Attempt = 0;
++
+    Score last_score = m_sg->last_score();
+ 
+    // window loop
+@@ -972,6 +992,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+          Score beta  = last_score + Score(beta_margin);
+          assert(-score::Eval_Inf <= alpha && alpha < beta && beta <= +score::Eval_Inf);
+ 
++         if (root_trace_enabled()) G_Root_Trace_Attempt += 1;
+          search_root(node, list, alpha, beta, depth, ply, prune);
+          Score sc = m_sg->so().score;
+ 
+@@ -989,6 +1010,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+       }
+    }
+ 
++   if (root_trace_enabled()) G_Root_Trace_Attempt += 1;
+    search_root(node, list, -score::Inf, +score::Inf, depth, ply, prune);
+ }
+ 
+@@ -1020,7 +1041,32 @@ void Search_Local::search_root(const Node & node, const List & list, Score alpha,
+ 
+    local.list = list;
+ 
++   if (root_trace_enabled()) {
++      std::ostringstream line;
++      line << "event=begin"
++           << " depth=" << int(depth)
++           << " attempt=" << G_Root_Trace_Attempt
++           << " alpha=" << int(alpha)
++           << " beta=" << int(beta)
++           << " moves=" << list.size();
++      emit_root_trace(line.str());
++   }
++
+    move_loop(local);
++
++   if (root_trace_enabled()) {
++      std::ostringstream line;
++      line << "event=end"
++           << " depth=" << int(depth)
++           << " attempt=" << G_Root_Trace_Attempt
++           << " searched=" << local.j
++           << " bestmove=" << move::to_hub(local.move, node)
++           << " score=" << int(local.score)
++           << " alpha=" << int(alpha)
++           << " beta=" << int(beta)
++           << " complete=" << (local.score < local.beta ? 1 : 0);
++      emit_root_trace(line.str());
++   }
+ }
+ 
+ Score Search_Local::search(const Node & node, Score alpha, Score beta, Depth depth, Ply ply, bool prune, Move skip_move, Line & pv) {
+@@ -1226,10 +1272,26 @@ void Search_Local::move_loop(Local & local) {
+ 
+       if (mv != local.skip_move) {
+ 
++         Score alpha_before = std::max(local.alpha, local.score);
+          Line pv;
+          Score sc = search_move(mv, local, pv);
+ 
+          local_update(local, mv, sc, pv, *m_sg);
++
++         if (root_trace_enabled() && local.ply == Ply_Root) {
++            std::ostringstream line;
++            line << "event=move"
++                 << " depth=" << int(local.depth)
++                 << " attempt=" << G_Root_Trace_Attempt
++                 << " index=" << local.j
++                 << " move=" << move::to_hub(mv, local.node())
++                 << " alpha_before=" << int(alpha_before)
++                 << " beta=" << int(local.beta)
++                 << " score=" << int(sc)
++                 << " best=" << int(local.score)
++                 << " cutoff=" << (local.score >= local.beta ? 1 : 0);
++            emit_root_trace(line.str());
++         }
+       }
+    }
+ }

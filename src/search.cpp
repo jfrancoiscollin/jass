@@ -22,6 +22,9 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <thread>
 #include <tuple>
 #include <unordered_set>
@@ -29,6 +32,34 @@
 #include <vector>
 
 namespace jass {
+
+namespace {
+
+bool root_trace_enabled() noexcept {
+    static const bool enabled = [] {
+        const char* value = std::getenv("JASS_TRACE_ROOT");
+        return value != nullptr && std::string(value) != "0";
+    }();
+    return enabled;
+}
+
+std::string root_trace_move(const Move& move) {
+    std::ostringstream out;
+    out << static_cast<int>(move.from)
+        << (move.is_capture() ? 'x' : '-')
+        << static_cast<int>(move.to);
+    for (Bitboard captured = move.captured; captured;) {
+        out << 'x' << static_cast<int>(pop_lsb(captured));
+    }
+    return out.str();
+}
+
+void emit_root_trace(const std::string& line) {
+    std::cout << "info roottrace " << line << '\n';
+    std::cout.flush();
+}
+
+}  // namespace
 
 void breakdown_reset() noexcept {
 #ifdef JASS_TIME_BREAKDOWN
@@ -1439,6 +1470,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     // aspiration: the next iteration's initial window width adapts to
     // the volatility of the last few iteration scores.
     std::vector<int> score_history;
+    int root_trace_attempt = 0;
 
     // One iteration of the root loop, run inside the aspiration retry loop
     // below. Returns (best move, best score) found within [alpha, beta].
@@ -1447,10 +1479,23 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
         Move iter_best  = root_moves[0];
         int  iter_score = -INF_SCORE;
         int  cur_alpha  = alpha;
+        const int trace_attempt = ++root_trace_attempt;
+        int trace_index = 0;
         s.root_depth_   = depth;   // baseline for the forcing-extension accumulation cap
+        if (root_trace_enabled()) {
+            std::ostringstream line;
+            line << "event=begin depth=" << depth
+                 << " attempt=" << trace_attempt
+                 << " alpha=" << alpha
+                 << " beta=" << beta
+                 << " moves=" << root_moves.size();
+            emit_root_trace(line.str());
+        }
 
         for (const auto& m : root_moves) {
             if (s.stopped) break;
+            ++trace_index;
+            const int alpha_before = cur_alpha;
             const Position next  = after_timed(pos, m);
             s.push_accumulator(0, pos, m, next);
             const int      score = -s.negamax(next, depth - 1, 1,
@@ -1460,12 +1505,38 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                 iter_best  = m;
             }
             if (iter_score > cur_alpha) cur_alpha = iter_score;
+            if (root_trace_enabled()) {
+                std::ostringstream line;
+                line << "event=move depth=" << depth
+                     << " attempt=" << trace_attempt
+                     << " index=" << trace_index
+                     << " move=" << root_trace_move(m)
+                     << " alpha_before=" << alpha_before
+                     << " beta=" << beta
+                     << " score=" << score
+                     << " best=" << iter_score
+                     << " cutoff=" << (cur_alpha >= beta ? 1 : 0);
+                emit_root_trace(line.str());
+            }
             if (cur_alpha >= beta) break;  // beta cut-off (narrow window)
+        }
+        if (root_trace_enabled()) {
+            std::ostringstream line;
+            line << "event=end depth=" << depth
+                 << " attempt=" << trace_attempt
+                 << " searched=" << trace_index
+                 << " bestmove=" << root_trace_move(iter_best)
+                 << " score=" << iter_score
+                 << " alpha=" << alpha
+                 << " beta=" << beta
+                 << " complete=" << (!s.stopped && cur_alpha < beta ? 1 : 0);
+            emit_root_trace(line.str());
         }
         return {iter_best, iter_score};
     };
 
     for (int depth = 1; depth <= limits.max_depth; ++depth) {
+        root_trace_attempt = 0;
         // Honour an early stop request before spending any work on this
         // iteration. The previous iteration's `best_overall` is returned.
         if (depth > 1 && s.check_stop()) break;
