@@ -50,3 +50,23 @@ Un entraînement valide autorise seulement un écran M2 séparé :
 M2 ne sera promu que sur une pente de force positive, sans régression établie
 sur la conversion ni contre Gen2. Ni la promotion ni la continuation M3 ne
 sont automatiques.
+
+## Écran 0967 préenregistré
+
+`home-0967` utilise 500 nouvelles ouvertures uniques, appariées par couleur,
+sans recouvrement avec les pools précédents. Il produit 1 000 parties par vue
+pour M2 contre F2M et M2 contre Gen2 réparé :
+
+- profondeur 9 avec Q00 ;
+- cadence native à 0,1 seconde par coup.
+
+La conversion est rejouée sur les 300 positions corrigées de `p3_mince` et
+les 300 de `p4_egal`, contre le même défenseur Gen2. La couverture compare les
+corpus exacts F2M et M2, tous deux de 2 millions de positions.
+
+La promotion n'est recommandée à la revue humaine que si la borne basse à
+95 % de M2 contre F2M dépasse 50 % dans les deux vues et si tous les
+garde-fous passent. Deux scores ponctuels positifs sans preuve dans les deux
+vues ouvrent seulement une confirmation indépendante. Sinon la recette d8
+est considérée comme plate et la prochaine expérience recommandée devient un
+bras causal d10 à volume constant. Aucune décision n'est automatique.

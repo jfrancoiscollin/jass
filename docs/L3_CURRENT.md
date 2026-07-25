@@ -443,3 +443,8 @@ en 8cf/Q00 et WDL pur, sans replay, oracle, TOP3 ni reweight. L'entraînement
 n'autorise qu'une évaluation séparée ; aucune promotion ou continuation M3
 n'est automatique. Protocole :
 [`experiments/L3_PURE_M2_PROTOCOL_20260725.md`](experiments/L3_PURE_M2_PROTOCOL_20260725.md).
+
+`home-0966bis` termine l'entraînement M2 : 2 000 000 de positions fraîches,
+convergence en 236 itérations, log-loss holdout `0,444311`, modèle SHA-256
+`75ace3c0…`. L'écran indépendant `home-0967` est préenregistré avant les
+matchs : force M2/F2M, garde-fou Gen2, conversion P3/P4 et couverture exacte.
