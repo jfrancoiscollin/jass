@@ -2,8 +2,8 @@
 # id: home-0972-l3-pure-d10-causal-independent-eval-v1
 set -Eeuo pipefail
 : "${EXPECTED_CODE_SHA:?set reviewed merged SHA}"
-: "${EXPECTED_CANDIDATE_MODEL_SHA256:?set from completed 0971}"
-: "${EXPECTED_CANDIDATE_CORPUS_SHA256:?set from completed 0971}"
+export EXPECTED_CANDIDATE_MODEL_SHA256="18930613234b4a1a6a933393151a05dd68f71d1af749f058f37c5778bd77960f"
+export EXPECTED_CANDIDATE_CORPUS_SHA256="3351cb8aebd33c417de179d72f4483193ae67f05f723c520190ed2a118fc9297"
 export JASS_OBJSTORE_REMOTE="${JASS_OBJSTORE_REMOTE:-r2:jass-data}"
 export EXPECTED_JOB_ID="home-0972-l3-pure-d10-causal-independent-eval-v1"
 export EVAL_VARIANT="D10_CAUSAL"

@@ -53,8 +53,18 @@ class D10CausalEvaluationJobTests(unittest.TestCase):
         text = WRAPPER.read_text(encoding="utf-8")
         self.assertIn("home-0971-l3-pure-d10-causal-fresh2m-train-v1", text)
         self.assertIn("home-0970bis-l3-pure-m2-independent-eval-v3", text)
-        self.assertIn("EXPECTED_CANDIDATE_MODEL_SHA256", text)
-        self.assertIn("EXPECTED_CANDIDATE_CORPUS_SHA256", text)
+        self.assertIn(
+            'EXPECTED_CANDIDATE_MODEL_SHA256="'
+            "18930613234b4a1a6a933393151a05dd68f71d1af749f058f37c5778bd77960f"
+            '"',
+            text,
+        )
+        self.assertIn(
+            'EXPECTED_CANDIDATE_CORPUS_SHA256="'
+            "3351cb8aebd33c417de179d72f4483193ae67f05f723c520190ed2a118fc9297"
+            '"',
+            text,
+        )
         self.assertIn("OPENING_SEED_OVERRIDE=314159", text)
 
 

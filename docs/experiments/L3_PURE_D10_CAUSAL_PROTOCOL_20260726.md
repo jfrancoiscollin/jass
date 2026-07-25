@@ -61,6 +61,17 @@ Le job `home-0971-l3-pure-d10-causal-fresh2m-train-v1` doit :
 
 Un entraînement valide autorise seulement une évaluation séparée.
 
+`home-0971-l3-pure-d10-causal-fresh2m-train-v1` termine avec succès :
+
+- 2 000 000 positions, corpus SHA-256 `3351cb8a…` ;
+- split par ouverture : 1 802 842 train et 197 158 holdout ;
+- convergence L-BFGS en 16 itérations, gradient infini `9,2386e-4` ;
+- log-loss holdout `0,443257` ;
+- modèle D10 SHA-256 `18930613…`.
+
+Ce résultat autorise `home-0972`, mais ne constitue ni un verdict de force ni
+une promotion.
+
 ## Évaluation préenregistrée
 
 Le readout `home-0972-l3-pure-d10-causal-independent-eval-v1` utilisera la

@@ -467,3 +467,10 @@ fois. La recette d8/2M n'est donc pas poursuivie à l'identique. Le prochain
 bras causal conserve F2M, 8cf, WDL pur, 2M, seeds, exploration, split et fit,
 et change seulement la profondeur de jeu de d8 à d10. Protocole :
 [`experiments/L3_PURE_D10_CAUSAL_PROTOCOL_20260726.md`](experiments/L3_PURE_D10_CAUSAL_PROTOCOL_20260726.md).
+
+`home-0971` termine le bras d10 : exactement 2 000 000 positions fraîches,
+split par ouverture 1 802 842/197 158, convergence en 16 itérations,
+log-loss holdout `0,443257`, modèle SHA-256 `18930613…`. L'entraînement
+n'autorise qu'une évaluation. Le readout indépendant `home-0972` compare D10
+à M2 d8, F2M et Gen2 dans les deux vues, puis vérifie conversion et couverture
+sur un pool seed 314159 préflighté, unique et disjoint (SHA-256 `e41ae387…`).
