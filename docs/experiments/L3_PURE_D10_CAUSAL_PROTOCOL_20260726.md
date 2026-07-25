@@ -63,8 +63,11 @@ Un entraînement valide autorise seulement une évaluation séparée.
 
 ## Évaluation préenregistrée
 
-Le readout D10 utilisera un nouveau pool d'ouvertures unique et disjoint de
-tous les pools M1/M2 :
+Le readout `home-0972-l3-pure-d10-causal-independent-eval-v1` utilisera la
+seed 314159 et un nouveau pool d'ouvertures unique et disjoint de tous les
+pools M1/M2. Le pool indépendant M2 de `home-0970bis` est reconstruit
+déterministiquement et son SHA-256 est vérifié avant d'être ajouté aux
+exclusions :
 
 - D10 contre M2 d8, 1 000 parties Q00 d9 et 1 000 parties native ;
 - D10 contre F2M, mêmes deux vues ;
