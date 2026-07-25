@@ -73,6 +73,9 @@ struct SearchResult {
     std::uint64_t     first_move_cutoffs{0}; // DIAG #1
     std::uint64_t     pvs_researches{0};     // DIAG #1
     std::uint64_t     moves_searched{0};     // DIAG #1
+    std::uint64_t     scan_verify_probes{0};
+    std::uint64_t     scan_verify_cutoffs{0};
+    std::uint64_t     scan_threat_reentries{0};
     // Principal variation: the line of play the engine expects from this
     // point. `pv[0] == best_move`. Length is bounded by `MAX_PLY` and may
     // be shorter than the search depth if the TT walk terminates early

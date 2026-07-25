@@ -282,6 +282,21 @@ struct SearchParams {
     // 0 = off (default). 1 = apply ÷8/÷2 toward draw in won-but-drawish endgames.
     // The eval gap vs Scan is localized in the finale (0349) — this is candidate #1.
     int  drawish_scaling = 0;
+
+    // Frozen Scan 3.1 verification pruning (diagnostic, default off).
+    // At a non-PV node of depth >= 3, Scan searches the SAME position at
+    // 40% depth with a beta margin of 10 * depth.  A verified fail-high
+    // returns score-margin.  The constants are deliberately fixed so this
+    // switch tests one source-identical mechanism rather than opening a new
+    // tuning surface.
+    bool scan_verify_pruning = false;
+
+    // Frozen Scan 3.1 threat-node semantics (diagnostic, default off).
+    // At the first quiet qsearch ply under threat, Scan re-enters the main
+    // search on the SAME position at depth 1 and ply+1.  The historical
+    // qs_threat_ext path emulates the line inside quiescence; this switch
+    // tests Scan's exact node/window/TT semantics.
+    bool scan_threat_reentry = false;
 };
 
 // Apply a single "key=value" assignment to `p`. Unknown keys are ignored
@@ -356,6 +371,8 @@ inline bool apply_search_param(SearchParams& p, std::string_view tok) {
     else if (key == "eg_no_nmp")            p.eg_no_nmp            = (v != 0);
     else if (key == "eg_no_lmp")            p.eg_no_lmp            = (v != 0);
     else if (key == "eg_no_lmr")            p.eg_no_lmr            = (v != 0);
+    else if (key == "scan_verify_pruning")   p.scan_verify_pruning   = (v != 0);
+    else if (key == "scan_threat_reentry")   p.scan_threat_reentry   = (v != 0);
     // unknown key → silently ignored
     return true;
 }

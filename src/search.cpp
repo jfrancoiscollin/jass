@@ -134,6 +134,9 @@ struct Searcher {
     std::uint64_t       first_move_cutoffs{0}; // DIAG #1 : cutoffs ou le 1er coup coupe (qualite ordering)
     std::uint64_t       pvs_researches{0};     // DIAG #1 : re-recherches full-window PVS (instabilite valeurs)
     std::uint64_t       moves_searched{0};     // DIAG #1 : coups reellement cherches (coups/noeud)
+    std::uint64_t       scan_verify_probes{0};
+    std::uint64_t       scan_verify_cutoffs{0};
+    std::uint64_t       scan_threat_reentries{0};
     // Root depth of the current iterative-deepening iteration. Set by
     // run_root_window before recursing. Used to bound forcing extensions:
     // total extensions accumulated on a path = (depth + ply) - root_depth_.
@@ -228,6 +231,11 @@ struct Searcher {
     // the recursive negamax doesn't try another null move on top
     // (which would converge to nonsense at deep enough chains).
     bool                                  was_null{false};
+    // Scan's verification probe recursively searches the same position.
+    // This guard is the exact equivalent of Scan's `prune=false` argument:
+    // it prevents nested verification without disabling the rest of the
+    // frozen Scan search shape.
+    bool                                  suppress_scan_verify{false};
 
     int negamax    (const Position& pos, int depth, int ply, int alpha, int beta);
     int quiescence (const Position& pos,            int ply, int alpha, int beta,
@@ -451,6 +459,23 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
     // *all* quiet moves — never a mix. So a single check on the first move
     // tells us whether the position is calm.
     if (!moves[0].is_capture()) {
+        // Exact frozen Scan 3.1 threat semantics. Scan does not enumerate
+        // the quiet replies inside qsearch: it re-enters the main search on
+        // this same position at depth 1 and a phantom ply+1, with verification
+        // pruning disabled. Copy the accumulator because the board is
+        // unchanged. This branch is diagnostic and default-off.
+        if (params.scan_threat_reentry
+            && threat_left > 0
+            && ply < MAX_PLY - 4
+            && opponent_can_capture(pos)) {
+            ++scan_threat_reentries;
+            push_accumulator_null(ply);
+            const bool previous = suppress_scan_verify;
+            suppress_scan_verify = true;
+            const int score = negamax(pos, 1, ply + 1, alpha, beta);
+            suppress_scan_verify = previous;
+            return score;
+        }
         // Threat extension (Scan) : at the first qs ply, if we are calm but the
         // opponent has a capture ready (we are under threat), the static eval is
         // unreliable — resolve it with a 1-ply look instead of standing pat. We do
@@ -613,7 +638,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     MoveList moves;
     gen_moves(pos, moves);
     if (moves.empty()) return -MATE_SCORE + ply;
-    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth, params.qs_threat_ext ? 1 : 0, params.qs_sacs ? (params.qs_sacs_depth0_only ? 1 : 8) : 0);
+    if (depth <= 0)    return quiescence(pos, ply, alpha, beta, params.qs_forcing_depth, params.qs_promo_depth, (params.qs_threat_ext || params.scan_threat_reentry) ? 1 : 0, params.qs_sacs ? (params.qs_sacs_depth0_only ? 1 : 8) : 0);
 
     // Shared, lazily-computed static eval for this node. RFP / NMP / razoring
     // all want it; compute at most once. A "tactical" node (a forced capture
@@ -650,6 +675,34 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // pattern_jass --phase-weight). Cf docs/archives/ROADMAP.md (VERDICT FINALES).
     const bool eg = params.eg_pieces > 0
                  && popcount(pos.occupied()) <= params.eg_pieces;
+
+    // Frozen Scan 3.1 verification pruning. Unlike null move, Scan searches
+    // the same board/side with a narrow raised-beta window at 40% depth and
+    // a phantom ply+1. The probe is allowed only at non-PV eval nodes and
+    // cannot recurse into another verification probe (`prune=false` in Scan).
+    if (params.scan_verify_pruning
+        && !suppress_scan_verify
+        && (beta - alpha) == 1
+        && depth >= 3
+        // Scan 3.1 score::Eval_Inf is exactly 8000.
+        && std::abs(beta) <= 8000) {
+        const int margin = depth * 10;
+        const int new_beta = beta + margin;
+        const int new_depth = depth * 40 / 100;
+        if (new_depth > 0 && new_beta < INF_SCORE) {
+            ++scan_verify_probes;
+            push_accumulator_null(ply);
+            suppress_scan_verify = true;
+            const int score = negamax(
+                pos, new_depth, ply + 1, new_beta - 1, new_beta);
+            suppress_scan_verify = false;
+            if (stopped) return 0;
+            if (score >= new_beta) {
+                ++scan_verify_cutoffs;
+                return score - margin;
+            }
+        }
+    }
 
     // 2bis. Reverse Futility Pruning (a.k.a. static null move). When the
     //   position is quiet (no forced captures — recall draughts mandates
@@ -1518,6 +1571,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.first_move_cutoffs = s.first_move_cutoffs;
     res.pvs_researches     = s.pvs_researches;
     res.moves_searched     = s.moves_searched;
+    res.scan_verify_probes = s.scan_verify_probes;
+    res.scan_verify_cutoffs = s.scan_verify_cutoffs;
+    res.scan_threat_reentries = s.scan_threat_reentries;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
     return res;
 }

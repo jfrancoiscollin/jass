@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aggregate 0958 conversion interventions and multi-depth root traces."""
+"""Aggregate the 0959 Scan verification/threat-semantics diagnostic."""
 
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ try:
         paired_conversion,
     )
     from l3_scan_conversion_calibration import wilson_interval
-    from l3_search_variants import VARIANT_ORDER
+    from l3_scan_semantics_replay import DEPTHS, ENGINES
+    from l3_scan_semantics_variants import VARIANT_ORDER
 except ModuleNotFoundError:  # pragma: no cover
     from jobs.tools.l3_corrected_conversion_matrix import (
         SUMMARY_KEYS,
@@ -25,12 +26,16 @@ except ModuleNotFoundError:  # pragma: no cover
         paired_conversion,
     )
     from jobs.tools.l3_scan_conversion_calibration import wilson_interval
-    from jobs.tools.l3_search_variants import VARIANT_ORDER
+    from jobs.tools.l3_scan_semantics_replay import DEPTHS, ENGINES
+    from jobs.tools.l3_scan_semantics_variants import VARIANT_ORDER
 
 
-DEPTHS = (8, 10, 12)
-JASS_ENGINES = ("Q00", *VARIANT_ORDER)
-ENGINES = (*JASS_ENGINES, "SCAN_NATIVE")
+CONVERSION_DEPTHS = (10, 12)
+COUNTERS = (
+    "scan_verify_probes",
+    "scan_verify_cutoffs",
+    "scan_threat_reentries",
+)
 
 
 def load_replays(
@@ -39,7 +44,7 @@ def load_replays(
     rows: dict[tuple[str, str, int], dict[str, Any]] = {}
     for path in paths:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        if payload.get("protocol") != "l3-pure-m1-search-tree-audit-replay-v1":
+        if payload.get("protocol") != "l3-pure-m1-scan-node-semantics-replay-v1":
             raise ValueError(f"{path}: unexpected replay protocol")
         if tuple(payload.get("depths", [])) != DEPTHS:
             raise ValueError(f"{path}: depth ladder mismatch")
@@ -62,7 +67,7 @@ def load_replays(
     return rows
 
 
-def trace_summary(
+def trace_readout(
     sentinels: list[dict[str, Any]],
     rows: dict[tuple[str, str, int], dict[str, Any]],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -94,11 +99,14 @@ def trace_summary(
         }
         case["depths"] = {}
         for depth in DEPTHS:
-            scan_move = str(rows[(sid, "SCAN_NATIVE", depth)]["analysis"]["best_move"])
-            depth_row: dict[str, Any] = {"scan_best_move": scan_move, "jass": {}}
-            for engine in JASS_ENGINES:
+            scan = dict(rows[(sid, "SCAN_NATIVE", depth)]["analysis"])
+            depth_row: dict[str, Any] = {
+                "scan_best_move": scan["best_move"],
+                "scan_score": scan.get("score"),
+                "jass": {},
+            }
+            for engine in VARIANT_ORDER:
                 analysis = dict(rows[(sid, engine, depth)]["analysis"])
-                best_move = str(analysis["best_move"])
                 compact = {
                     key: analysis.get(key)
                     for key in (
@@ -110,15 +118,15 @@ def trace_summary(
                         "first_move_cutoffs",
                         "pvs_researches",
                         "moves_searched",
-                        "scan_verify_probes",
-                        "scan_verify_cutoffs",
-                        "scan_threat_reentries",
+                        *COUNTERS,
                         "elapsed_seconds",
                         "pv",
                         "raw_trace_sha256",
                     )
                 }
-                compact["matches_scan_move"] = best_move == scan_move
+                compact["matches_scan_move"] = (
+                    str(compact["best_move"]) == str(scan["best_move"])
+                )
                 depth_row["jass"][engine] = compact
                 buckets[(engine, depth, "all")].append(compact)
                 buckets[(engine, depth, str(sentinel["family"]))].append(compact)
@@ -129,93 +137,110 @@ def trace_summary(
         cases.append(case)
 
     summary: dict[str, Any] = {}
-    for engine in JASS_ENGINES:
+    labels = (
+        "all",
+        "jass_failure",
+        "shared_win_control",
+        *sorted({f"stratum:{s['stratum']}" for s in sentinels}),
+    )
+    for engine in VARIANT_ORDER:
         summary[engine] = {}
         for depth in DEPTHS:
             summary[engine][str(depth)] = {}
-            labels = (
-                "all",
-                "jass_failure",
-                "shared_win_control",
-                *sorted({f"stratum:{s['stratum']}" for s in sentinels}),
-            )
             for label in labels:
                 values = buckets[(engine, depth, label)]
                 matches = sum(bool(row["matches_scan_move"]) for row in values)
                 nodes = [
                     int(row["nodes"]) for row in values if row.get("nodes") is not None
                 ]
-                elapsed = [
-                    float(row["elapsed_seconds"])
-                    for row in values
-                    if row.get("elapsed_seconds") is not None
-                ]
-                summary[engine][str(depth)][label] = {
+                entry: dict[str, Any] = {
                     "n": len(values),
                     "scan_move_matches": matches,
                     "scan_move_match_rate": matches / len(values) if values else None,
                     "median_nodes": statistics.median(nodes) if nodes else None,
-                    "median_elapsed_seconds": (
-                        statistics.median(elapsed) if elapsed else None
-                    ),
                 }
+                for counter in COUNTERS:
+                    counts = [
+                        int(row[counter])
+                        for row in values
+                        if row.get(counter) is not None
+                    ]
+                    entry[f"total_{counter}"] = sum(counts)
+                    entry[f"median_{counter}"] = (
+                        statistics.median(counts) if counts else None
+                    )
+                summary[engine][str(depth)][label] = entry
     return summary, cases
 
 
 def classify(
-    conversion: dict[str, dict[str, dict[str, Any]]],
-    comparisons: dict[str, dict[str, dict[str, Any]]],
+    conversion: dict[str, dict[str, dict[str, dict[str, Any]]]],
+    paired: dict[str, dict[str, dict[str, dict[str, Any]]]],
     strata: list[str],
 ) -> dict[str, Any]:
-    for arm in VARIANT_ORDER:
-        if all(float(conversion[arm][s]["ci_low"]) >= 0.80 for s in strata):
-            return {
-                "verdict": "SEARCH_ALIGNMENT_RECOVERS_CONVERSION",
-                "localized_arm": arm,
-                "reason": (
-                    f"{arm} crosses the preregistered 80% Wilson lower bound "
-                    "on both corrected strata."
-                ),
-                "next_branch_requiring_human_review": "confirm_full_gauge_and_patch_minimal_mechanism",
-            }
+    for depth in CONVERSION_DEPTHS:
+        ds = str(depth)
+        for arm in ("SCAN_VERIFY", "SCAN_VERIFY_THREAT"):
+            if all(float(conversion[ds][arm][s]["ci_low"]) >= 0.80 for s in strata):
+                return {
+                    "verdict": "SCAN_NODE_SEMANTICS_RECOVERS_CONVERSION",
+                    "localized_arm": arm,
+                    "localized_depth": depth,
+                    "reason": (
+                        f"{arm} d{depth} crosses the preregistered 80% "
+                        "Wilson lower bound on both strata."
+                    ),
+                    "next_branch_requiring_human_review": (
+                        "confirm_minimal_patch_and_general_strength"
+                    ),
+                }
 
-    for arm in VARIANT_ORDER:
-        deltas = [comparisons[s][f"{arm}_vs_Q00"] for s in strata]
-        if all(
-            float(row["delta"]) >= 0.10 and float(row["ci_low"]) > 0.0
-            for row in deltas
-        ):
-            label = {
-                "NO_FORWARD": "JASS_FORWARD_PRUNING_DOMINANT",
-                "SCAN_EXT_QS": "SCAN_EXTENSION_QUIESCENCE_DOMINANT",
-                "SCAN_LMR": "SCAN_LMR_SHAPE_DOMINANT",
-                "FULL_WIDTH": "SELECTIVE_MAIN_SEARCH_DOMINANT",
-            }[arm]
-            return {
-                "verdict": label,
-                "localized_arm": arm,
-                "reason": (
-                    f"{arm} improves paired conversion by at least 10 points "
-                    "with a positive 95% interval on both strata."
-                ),
-                "next_branch_requiring_human_review": "isolate_minimal_search_patch",
-            }
+    labels = {
+        "SCAN_VERIFY": "SCAN_VERIFICATION_PRUNING_DOMINANT",
+        "SCAN_VERIFY_THREAT": "SCAN_THREAT_NODE_SEMANTICS_DOMINANT",
+    }
+    for depth in CONVERSION_DEPTHS:
+        ds = str(depth)
+        for arm in ("SCAN_VERIFY", "SCAN_VERIFY_THREAT"):
+            rows = [paired[ds][s][f"{arm}_vs_SCAN_CORE"] for s in strata]
+            if all(
+                float(row["delta"]) >= 0.10 and float(row["ci_low"]) > 0.0
+                for row in rows
+            ):
+                return {
+                    "verdict": labels[arm],
+                    "localized_arm": arm,
+                    "localized_depth": depth,
+                    "reason": (
+                        f"{arm} d{depth} improves paired conversion by at "
+                        "least 10 points with positive 95% intervals on both strata."
+                    ),
+                    "next_branch_requiring_human_review": (
+                        "confirm_minimal_patch_and_general_strength"
+                    ),
+                }
 
-    averages = {
-        arm: sum(float(conversion[arm][s]["conversion"]) for s in strata)
+    means = {
+        (depth, arm): sum(
+            float(conversion[str(depth)][arm][s]["conversion"]) for s in strata
+        )
         / len(strata)
+        for depth in CONVERSION_DEPTHS
         for arm in VARIANT_ORDER
     }
-    best = max(averages, key=averages.get)
+    best_depth, best_arm = max(means, key=means.get)
     return {
-        "verdict": "MISSING_SCAN_SEARCH_MECHANISM_OR_DEPTH_SEMANTICS",
+        "verdict": "SCAN_INTERNAL_NODE_SEMANTICS_REQUIRED",
         "localized_arm": None,
-        "best_diagnostic_arm": best,
+        "best_diagnostic_arm": best_arm,
+        "best_diagnostic_depth": best_depth,
         "reason": (
-            "No preregistered Jass ablation/alignment arm produces a robust "
-            "paired conversion gain on both strata."
+            "Neither exact verification pruning nor exact threat re-entry "
+            "produces a robust paired conversion gain on both strata."
         ),
-        "next_branch_requiring_human_review": "instrument_scan_verification_pruning_and_node_semantics",
+        "next_branch_requiring_human_review": (
+            "instrument_native_scan_internal_nodes_tt_bounds_and_terminal_returns"
+        ),
     }
 
 
@@ -229,59 +254,71 @@ def build_report(
     seed: int,
 ) -> dict[str, Any]:
     sentinels_payload = json.loads(sentinels_path.read_text(encoding="utf-8"))
-    if (
-        sentinels_payload.get("protocol")
-        != "l3-pure-m1-search-tree-audit-sentinels-v1"
+    if sentinels_payload.get("protocol") != (
+        "l3-pure-m1-search-tree-audit-sentinels-v1"
     ):
         raise ValueError("unexpected sentinel protocol")
     sentinels = list(sentinels_payload.get("sentinels", []))
     if len(sentinels) != 48:
-        raise ValueError("0958 requires 48 sentinels")
+        raise ValueError("0959 requires 48 sentinels")
+    traces, cases = trace_readout(sentinels, load_replays(replay_paths))
 
-    replay = load_replays(replay_paths)
-    traces, cases = trace_summary(sentinels, replay)
+    documents: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    conversion: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    for depth in CONVERSION_DEPTHS:
+        ds = str(depth)
+        documents[ds] = {}
+        conversion[ds] = {}
+        for model in VARIANT_ORDER:
+            documents[ds][model] = {}
+            conversion[ds][model] = {}
+            for stratum in strata:
+                document = load_document(
+                    conversion_dir / f"{model}-D{depth}-{stratum}.json"
+                )
+                documents[ds][model][stratum] = document
+                low, high = wilson_interval(
+                    int(document["n_win"]), int(document["n_pos"])
+                )
+                conversion[ds][model][stratum] = {
+                    **{key: document[key] for key in SUMMARY_KEYS},
+                    "ci_low": low,
+                    "ci_high": high,
+                }
 
-    documents: dict[str, dict[str, dict[str, Any]]] = {}
-    conversion: dict[str, dict[str, dict[str, Any]]] = {}
-    for model in JASS_ENGINES:
-        documents[model] = {}
-        conversion[model] = {}
-        for stratum in strata:
-            document = load_document(conversion_dir / f"{model}-{stratum}.json")
-            documents[model][stratum] = document
-            low, high = wilson_interval(
-                int(document["n_win"]), int(document["n_pos"])
-            )
-            conversion[model][stratum] = {
-                **{key: document[key] for key in SUMMARY_KEYS},
-                "ci_low": low,
-                "ci_high": high,
-            }
-
-    comparisons: dict[str, dict[str, dict[str, Any]]] = {}
-    for stratum_index, stratum in enumerate(strata):
-        comparisons[stratum] = {}
-        for arm_index, arm in enumerate(VARIANT_ORDER):
-            comparisons[stratum][f"{arm}_vs_Q00"] = paired_conversion(
-                documents[arm][stratum],
-                documents["Q00"][stratum],
-                seed=seed + stratum_index * 100 + arm_index,
-                bootstrap_samples=bootstrap_samples,
-            )
+    comparisons: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    for depth_index, depth in enumerate(CONVERSION_DEPTHS):
+        ds = str(depth)
+        comparisons[ds] = {}
+        for stratum_index, stratum in enumerate(strata):
+            comparisons[ds][stratum] = {}
+            for arm_index, arm in enumerate(("SCAN_VERIFY", "SCAN_VERIFY_THREAT")):
+                comparisons[ds][stratum][f"{arm}_vs_SCAN_CORE"] = (
+                    paired_conversion(
+                        documents[ds][arm][stratum],
+                        documents[ds]["SCAN_CORE"][stratum],
+                        seed=(
+                            seed
+                            + depth_index * 1000
+                            + stratum_index * 100
+                            + arm_index
+                        ),
+                        bootstrap_samples=bootstrap_samples,
+                    )
+                )
 
     localization = classify(conversion, comparisons, strata)
     return {
         "schema": 1,
-        "verdict": "SEARCH_TREE_AUDIT_READY_HUMAN_REVIEW",
+        "verdict": "SCAN_NODE_SEMANTICS_AUDIT_READY_HUMAN_REVIEW",
         "localization": localization,
         "protocol": {
-            "design": "full_gauge_search_intervention_plus_paired_root_trace",
+            "design": "paired_full_gauge_plus_root_trace",
             "fixed_eval": "SCAN_3_1_EXACT_RAW_PORT",
             "fixed_defender": "GEN2_Q00_D10",
-            "conversion_depth": 10,
+            "conversion_depths": list(CONVERSION_DEPTHS),
             "trace_depths": list(DEPTHS),
             "sentinel_count": len(sentinels),
-            "sentinel_selection": "balanced_by_stratum_side_and_failure_control",
             "paired_unit": "source_position_index",
             "bootstrap_samples": bootstrap_samples,
         },
@@ -302,7 +339,7 @@ def main() -> int:
     parser.add_argument("--conversion-dir", type=Path, required=True)
     parser.add_argument("--strata", nargs="+", required=True)
     parser.add_argument("--bootstrap-samples", type=int, default=200_000)
-    parser.add_argument("--seed", type=int, default=958_101)
+    parser.add_argument("--seed", type=int, default=959_101)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--summary-out", type=Path)
     args = parser.parse_args()

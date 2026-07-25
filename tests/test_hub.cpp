@@ -141,6 +141,9 @@ void test_hub_apply_then_go_yields_bestmove() {
     JASS_CHECK(contains(out, "bestmove"));
     JASS_CHECK(contains(out, "pv="));
     JASS_CHECK(contains(out, "cutoffs="));
+    JASS_CHECK(contains(out, "scanverify="));
+    JASS_CHECK(contains(out, "scanverifycuts="));
+    JASS_CHECK(contains(out, "scanthreat="));
     JASS_CHECK(contains(out, "cut1="));
     JASS_CHECK(contains(out, "research="));
     JASS_CHECK(contains(out, "movessearched="));
