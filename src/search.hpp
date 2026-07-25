@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace jass { class TranspositionTable; }
@@ -62,6 +63,10 @@ struct SearchLimits {
     // Tunable search parameters (pruning/reduction/extension constants +
     // PVS toggle). Default = behaviour-neutral baseline.
     SearchParams params{};
+    // Diagnostic-only root ordering schedule. Format:
+    // "1:31-26,31-27;2:31-27,31-26". Every depth must list every
+    // legal root move exactly once. Empty preserves production ordering.
+    std::string root_order_schedule;
 };
 
 struct SearchResult {
@@ -76,6 +81,8 @@ struct SearchResult {
     std::uint64_t     scan_verify_probes{0};
     std::uint64_t     scan_verify_cutoffs{0};
     std::uint64_t     scan_threat_reentries{0};
+    std::uint64_t     root_order_applications{0};
+    std::uint64_t     root_order_failures{0};
     // Principal variation: the line of play the engine expects from this
     // point. `pv[0] == best_move`. Length is bounded by `MAX_PLY` and may
     // be shorter than the search depth if the TT walk terminates early

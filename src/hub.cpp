@@ -218,7 +218,9 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
          << " movessearched=" << r.moves_searched
          << " scanverify=" << r.scan_verify_probes
          << " scanverifycuts=" << r.scan_verify_cutoffs
-         << " scanthreat=" << r.scan_threat_reentries;
+         << " scanthreat=" << r.scan_threat_reentries
+         << " rootorder=" << r.root_order_applications
+         << " rootorderfail=" << r.root_order_failures;
     // External orchestrators (e.g. the Jass-vs-Scan harness) need the
     // captured-square list to translate the move into other engines'
     // notation. `format_move` only emits the (from, to) endpoints, so
@@ -328,6 +330,7 @@ void HubFrontEnd::cmd_go(std::string_view args) {
 
     SearchLimits lim;
     lim.params = params_;   // honour --search-params (default = compiled defaults)
+    lim.root_order_schedule = root_order_schedule_;
     TimeBudget   tb;
     bool async      = false;
     bool depth_set  = false;
@@ -409,6 +412,12 @@ void HubFrontEnd::cmd_setoption(std::string_view args) {
             return;
         }
         threads_ = *n;
+        emit_ok();
+        return;
+    }
+    if (name == "rootorder") {
+        root_order_schedule_ = std::string{rest};
+        if (root_order_schedule_ == "none") root_order_schedule_.clear();
         emit_ok();
         return;
     }

@@ -262,6 +262,26 @@ void test_search_depth_increases() {
     JASS_CHECK(r_hi.nodes > r_lo.nodes);
 }
 
+void test_root_order_schedule_applies_and_fails_closed() {
+    const Position p = parse("W:W31:B20");
+
+    SearchLimits valid;
+    valid.max_depth = 2;
+    valid.root_order_schedule =
+        "1:31-26,31-27;2:31-27,31-26";
+    const SearchResult applied = search(p, valid);
+    JASS_CHECK_EQ(applied.root_order_applications, 2U);
+    JASS_CHECK_EQ(applied.root_order_failures, 0U);
+
+    SearchLimits invalid;
+    invalid.max_depth = 2;
+    invalid.root_order_schedule =
+        "1:31-26;2:31-27,31-26";
+    const SearchResult rejected = search(p, invalid);
+    JASS_CHECK_EQ(rejected.root_order_applications, 1U);
+    JASS_CHECK_EQ(rejected.root_order_failures, 1U);
+}
+
 // 1b search refinements (continuation history, improving, IID, multi-cut).
 // `SearchLimits{}` already contains the tuned production SearchParams defaults;
 // assigning `SearchParams{}` explicitly must therefore leave the search identical.
@@ -321,6 +341,7 @@ void run_search_tests() {
     test_search_returns_pv_starting_with_best_move();
     test_search_with_multiple_threads();
     test_search_depth_increases();
+    test_root_order_schedule_applies_and_fails_closed();
     test_explicit_default_params_match_searchlimits_default();
     test_1b_each_feature_searches_correctly();
 }

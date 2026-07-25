@@ -72,9 +72,12 @@ def validate_events(events: list[dict[str, object]]) -> None:
     for event in events:
         key = (int(event["depth"]), int(event["attempt"]))
         attempts.setdefault(key, []).append(event)
-    expected_depths = set(range(1, MAX_DEPTH + 1))
+    max_depth = max(depth for depth, _ in attempts)
+    expected_depths = set(range(1, max_depth + 1))
     if {depth for depth, _ in attempts} != expected_depths:
-        raise ValueError("root trace does not cover every depth 1..12")
+        raise ValueError(
+            f"root trace does not cover every depth 1..{max_depth}"
+        )
     for key, rows in attempts.items():
         if rows[0]["event"] != "begin" or rows[-1]["event"] != "end":
             raise ValueError(f"incomplete root attempt {key}")

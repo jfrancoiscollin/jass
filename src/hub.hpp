@@ -99,6 +99,7 @@ private:
     std::atomic<bool> stop_flag_{false};
     std::thread       worker_;
     int               threads_{1};
+    std::string       root_order_schedule_;
 
     void dispatch(std::string_view line);
 

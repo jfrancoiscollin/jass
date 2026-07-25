@@ -25,6 +25,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <thread>
 #include <tuple>
 #include <unordered_set>
@@ -57,6 +58,61 @@ std::string root_trace_move(const Move& move) {
 void emit_root_trace(const std::string& line) {
     std::cout << "info roottrace " << line << '\n';
     std::cout.flush();
+}
+
+enum class RootOrderStatus {
+    None,
+    Applied,
+    Invalid,
+};
+
+RootOrderStatus apply_root_order(
+    MoveList& moves, std::string_view schedule, int depth
+) {
+    if (schedule.empty()) return RootOrderStatus::None;
+
+    std::string_view selected;
+    while (!schedule.empty()) {
+        const auto semi = schedule.find(';');
+        const auto part = schedule.substr(0, semi);
+        const auto colon = part.find(':');
+        if (colon == std::string_view::npos) return RootOrderStatus::Invalid;
+        int parsed_depth = 0;
+        for (const char ch : part.substr(0, colon)) {
+            if (ch < '0' || ch > '9') return RootOrderStatus::Invalid;
+            parsed_depth = parsed_depth * 10 + (ch - '0');
+        }
+        if (parsed_depth == depth) selected = part.substr(colon + 1);
+        if (semi == std::string_view::npos) break;
+        schedule.remove_prefix(semi + 1);
+    }
+    if (selected.empty()) return RootOrderStatus::Invalid;
+
+    std::vector<std::string_view> keys;
+    while (!selected.empty()) {
+        const auto comma = selected.find(',');
+        keys.push_back(selected.substr(0, comma));
+        if (comma == std::string_view::npos) break;
+        selected.remove_prefix(comma + 1);
+    }
+    if (keys.size() != moves.size()) return RootOrderStatus::Invalid;
+
+    MoveList reordered;
+    std::vector<bool> used(moves.size(), false);
+    for (const auto key : keys) {
+        bool matched = false;
+        for (std::size_t i = 0; i < moves.size(); ++i) {
+            if (!used[i] && root_trace_move(moves[i]) == key) {
+                reordered.push(moves[i]);
+                used[i] = true;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) return RootOrderStatus::Invalid;
+    }
+    moves = std::move(reordered);
+    return RootOrderStatus::Applied;
 }
 
 }  // namespace
@@ -1471,11 +1527,21 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     // the volatility of the last few iteration scores.
     std::vector<int> score_history;
     int root_trace_attempt = 0;
+    std::uint64_t root_order_applications = 0;
+    std::uint64_t root_order_failures = 0;
 
     // One iteration of the root loop, run inside the aspiration retry loop
     // below. Returns (best move, best score) found within [alpha, beta].
     auto run_root_window = [&](int depth, int alpha, int beta)
         -> std::pair<Move, int> {
+        const RootOrderStatus order_status = apply_root_order(
+            root_moves, limits.root_order_schedule, depth
+        );
+        if (order_status == RootOrderStatus::Applied) {
+            ++root_order_applications;
+        } else if (order_status == RootOrderStatus::Invalid) {
+            ++root_order_failures;
+        }
         Move iter_best  = root_moves[0];
         int  iter_score = -INF_SCORE;
         int  cur_alpha  = alpha;
@@ -1645,6 +1711,8 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     res.scan_verify_probes = s.scan_verify_probes;
     res.scan_verify_cutoffs = s.scan_verify_cutoffs;
     res.scan_threat_reentries = s.scan_threat_reentries;
+    res.root_order_applications = root_order_applications;
+    res.root_order_failures = root_order_failures;
     res.pv        = extract_pv(pos, tt, std::max(res.depth, 1));
     return res;
 }

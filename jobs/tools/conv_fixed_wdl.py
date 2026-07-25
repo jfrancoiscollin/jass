@@ -60,6 +60,12 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
     # Lazy import keeps pure record helpers unit-testable without engine tools.
     sys.path.insert(0, str(Path(args.calibrate_tool).resolve().parent))
     import calibrate_vs_scan as cv  # type: ignore
+    if getattr(args, "root_order_scan", None):
+        from l3_root_order_oracle import make_root_order_engine_class
+
+        root_order_engine = make_root_order_engine_class(cv)
+    else:
+        root_order_engine = None
 
     pool_path = Path(args.pool_jnnw)
     records = read_records(pool_path)
@@ -72,11 +78,19 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
     )
 
     def _fresh():
-        champion = cv.JassEngine(
-            args.jass,
-            pattern_path=args.pattern,
-            search_params=args.search_params,
-        )
+        if root_order_engine is None:
+            champion = cv.JassEngine(
+                args.jass,
+                pattern_path=args.pattern,
+                search_params=args.search_params,
+            )
+        else:
+            champion = root_order_engine(
+                args.jass,
+                scan_path=args.root_order_scan,
+                pattern_path=args.pattern,
+                search_params=args.search_params,
+            )
         defender = cv.JassEngine(
             defender_jass,
             pattern_path=args.defender_pattern,
@@ -166,6 +180,17 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
         "n_skipped_draw_label": n_skipped,
         "n_errors": n_errors,
         "n_restarts": n_restarts,
+        "root_order_scan": getattr(args, "root_order_scan", None),
+        "root_order_schedule_queries": getattr(
+            champion, "schedule_queries", 0
+        ),
+        "root_order_schedule_terminal_queries": getattr(
+            champion, "schedule_terminal_queries", 0
+        ),
+        "root_order_applications": getattr(
+            champion, "schedule_applications", 0
+        ),
+        "root_order_failures": getattr(champion, "schedule_failures", 0),
         "errors": errors[:20],
         "position_results": position_results,
         "depth": None if args.movetime is not None else args.depth,
@@ -199,6 +224,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--pool-jnnw", required=True)
     parser.add_argument("--calibrate-tool", default="jobs/tools/calibrate_vs_scan.py")
+    parser.add_argument(
+        "--root-order-scan",
+        help="instrumented Scan binary used only as a root-order oracle",
+    )
     budget = parser.add_mutually_exclusive_group()
     budget.add_argument("--depth", type=int, default=10)
     budget.add_argument("--movetime", type=float)

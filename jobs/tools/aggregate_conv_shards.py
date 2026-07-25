@@ -24,6 +24,7 @@ METADATA_KEYS = (
     "defender_pattern",
     "search_params",
     "defender_search_params",
+    "root_order_scan",
     "pool_jnnw",
     "pool_sha256",
 )
@@ -113,6 +114,10 @@ def aggregate(
         "n_skipped_draw_label": 0,
         "n_errors": 0,
         "n_restarts": 0,
+        "root_order_schedule_queries": 0,
+        "root_order_schedule_terminal_queries": 0,
+        "root_order_applications": 0,
+        "root_order_failures": 0,
     }
     errors: list[str] = []
     first_payload = shards[0][0]
