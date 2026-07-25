@@ -56,6 +56,9 @@ sont pas des facteurs de DoE.
    **+52 Elo généraliste** contre gen1 à mt0.3, et **+34 Elo** sur la cellule
    d9 contre Scan. Le déficit restant contre Scan est toutefois encore de
    l'ordre de **−128 à −155 Elo au movetime** selon la cellule mesurée.
+   Depuis le gate réparé `home-0965`, **F2M est le champion général courant** :
+   `57,25 %` contre Gen2 en Q00 et `58,60 %` en cadence native, avec les deux
+   bornes basses à 95 % au-dessus de 50 %.
 5. Le problème de conversion est maintenant séparé de la simple détection :
    Jass trouve souvent les premières idées comme Scan, mais réalise mal
    l'avantage. Sur le thermomètre PC Blues, la conversion mesurée était

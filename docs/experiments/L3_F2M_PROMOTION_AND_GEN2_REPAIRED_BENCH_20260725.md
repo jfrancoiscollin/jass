@@ -50,3 +50,20 @@ F2M n’est recommandé comme nouveau champion général que si la borne basse �
 95 % dépasse `50 %` dans les deux vues. Sinon Gen2 conserve son titre par
 incumbence. Le résultat n’autorise automatiquement ni promotion générale ni
 lancement de M2.
+
+## Verdict 0965 et décision humaine
+
+`home-0965` a terminé sur 500 nouvelles ouvertures, soit 1 000 parties par
+vue, avec le moteur réparé construit depuis le même SHA des deux côtés :
+
+- Q00 : `562-21-417`, score F2M `57,25 %`,
+  IC95 `[54,22 ; 60,28]`, environ `+50,7 Elo` ;
+- cadence native : `580-12-408`, score F2M `58,60 %`,
+  IC95 `[55,57 ; 61,63]`, environ `+60,4 Elo`.
+
+Les deux bornes basses dépassent 50 %. Après revue humaine et autorisation
+explicite, **F2M devient le champion général courant**. `gen2-mmto` reste le
+champion historique figé et un garde-fou externe.
+
+F2M devient aussi le parent immuable de M2. Le protocole M2 est décrit dans
+[`L3_PURE_M2_PROTOCOL_20260725.md`](L3_PURE_M2_PROTOCOL_20260725.md).
