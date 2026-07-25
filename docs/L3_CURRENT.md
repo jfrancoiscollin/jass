@@ -457,3 +457,13 @@ aucun verdict scientifique partiel n'est reutilise.
 
 Le claim `home-0970` sur snapshot de controle stale a ete rejete par le
 garde-fou SHA avant tout match. `home-0970bis` est le run autoritatif.
+
+`home-0970bis` termine avec le verdict
+`M2_PLATEAU_OR_REGRESSION_REVIEW`. M2 marque 50,60 % Q00 et 49,05 % native
+contre F2M : aucune pente de force n'est établie. Les garde-fous passent :
+56,30/58,80 % contre Gen2, conversion P3/P4 à 99,00/98,67 %, et couverture
+utile en hausse de 2 075 buckets visités et 352 buckets vus au moins 100
+fois. La recette d8/2M n'est donc pas poursuivie à l'identique. Le prochain
+bras causal conserve F2M, 8cf, WDL pur, 2M, seeds, exploration, split et fit,
+et change seulement la profondeur de jeu de d8 à d10. Protocole :
+[`experiments/L3_PURE_D10_CAUSAL_PROTOCOL_20260726.md`](experiments/L3_PURE_D10_CAUSAL_PROTOCOL_20260726.md).

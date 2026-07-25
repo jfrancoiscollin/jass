@@ -49,7 +49,8 @@ trap 'exit 143' TERM
 TOTAL_RECORDS=2000000
 PRODUCERS=12
 LABEL_DEPTH=4
-PLAY_DEPTH=8
+PLAY_DEPTH="${PLAY_DEPTH_OVERRIDE:-8}"
+EXPERIMENT_VARIANT="${EXPERIMENT_VARIANT:-M2_D8_FRESH2M}"
 MAXPLIES=260
 BASE_SEED=1618033
 HOLDOUT_MOD=10
@@ -64,13 +65,21 @@ FIT_TIMEOUT=43200
 
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
-say "=== $JASS_JOB_ID — L3-PURE M2 fresh-2M from F2M ==="
+say "=== $JASS_JOB_ID — L3-PURE $EXPERIMENT_VARIANT fresh-2M from F2M ==="
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "worktree must be detached"
 [ "${FULL_RUN_APPROVED:-0}" = 1 ] || die "FULL_RUN_APPROVED=1 missing"
 [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "SCIENTIFIC_GO=1 missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "NO_AUTOMATIC_CONTINUATION=1 missing"
+case "$EXPERIMENT_VARIANT:$PLAY_DEPTH" in
+  M2_D8_FRESH2M:8) ;;
+  D10_CAUSAL_FRESH2M:10)
+    [ "${D10_CAUSAL_APPROVED:-0}" = 1 ] || die "D10_CAUSAL_APPROVED=1 missing"
+    : "${PLATEAU_PREFIX:?}"; : "${EXPECTED_PLATEAU_JOB:?}"
+    ;;
+  *) die "unsupported experiment variant/depth: $EXPERIMENT_VARIANT/$PLAY_DEPTH" ;;
+esac
 [ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')" -ge 12000 ] || die "need 12 GiB free"
 [ "$(awk '/MemAvailable:/{print int($2/1024)}' /proc/meminfo)" -ge 3500 ] || die "need 3.5 GiB available RAM"
@@ -128,6 +137,29 @@ payload = {
 )
 PY
 
+if [ "$EXPERIMENT_VARIANT" = D10_CAUSAL_FRESH2M ]; then
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$PLATEAU_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=plateau-summary.json \
+    --out-dir "$SRC" --report "$ART/verified-plateau-source.json" \
+    > "$W/fetch-plateau.log" 2>&1
+  python3 - "$SRC/plateau-summary.json" "$ART/verified-plateau-source.json" \
+    "$EXPECTED_PLATEAU_JOB" <<'PY'
+import json, sys
+summary_path, report_path, expected_job = sys.argv[1:]
+summary = json.load(open(summary_path))
+report = json.load(open(report_path))
+if report.get("job_id") != expected_job or report.get("result_state") != "completed":
+    raise SystemExit("M2 plateau source identity/state mismatch")
+if summary.get("verdict") != "M2_PLATEAU_OR_REGRESSION_REVIEW":
+    raise SystemExit("D10 requires the certified M2 plateau verdict")
+if summary.get("recommendation") != "stop_same_recipe_and_prepare_d10_causal_arm":
+    raise SystemExit("M2 plateau did not route to the D10 causal arm")
+if not summary.get("all_guardrails_pass"):
+    raise SystemExit("M2 plateau guardrails did not pass")
+PY
+fi
+
 phase isolated-runtime-build-and-tests
 python3 -m venv "$W/venv"
 "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
@@ -174,10 +206,13 @@ done
 python3 tools/selfplay_frontier.py merge "${pairs[@]}" \
   --out-data "$W/m2.raw.jnnw" --out-meta "$W/m2.raw.jsm" \
   --manifest "$ART/m2-fresh-2m-merge.json" > "$W/m2-merge.log" 2>&1
-python3 - "$W/m2.raw.jnnw" "$W/m2.raw.jsm" "$ART/m2-corpus-contract.json" <<'PY'
+python3 - "$W/m2.raw.jnnw" "$W/m2.raw.jsm" "$ART/m2-corpus-contract.json" \
+  "$PLAY_DEPTH" "$EXPERIMENT_VARIANT" <<'PY'
 import hashlib, json, struct, sys
 from pathlib import Path
-data_path, meta_path, out = map(Path, sys.argv[1:])
+data_path, meta_path, out = map(Path, sys.argv[1:4])
+play_depth = int(sys.argv[4])
+experiment_variant = sys.argv[5]
 data = data_path.read_bytes()
 meta = meta_path.read_bytes()
 if data[:4] != b"JNNW" or struct.unpack_from("<I", data, 4)[0] != 2_000_000:
@@ -198,6 +233,9 @@ payload = {
     "geometry": "8cf",
     "search": "Q00",
     "base_seed": 1_618_033,
+    "play_depth": play_depth,
+    "experiment_variant": experiment_variant,
+    "paired_randomization_with_m2_d8": experiment_variant == "D10_CAUSAL_FRESH2M",
 }
 out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 PY
@@ -241,10 +279,10 @@ cp "$ART/m2-checkpoint.pjtw.gz" "$ART/m2.pjtw.gz"
 
 phase publish-training-screen
 "$W/venv/bin/python" - "$W" "$ART" "$EXPECTED_CODE_SHA" \
-  "$EXPECTED_PARENT_MODEL_SHA256" <<'PY'
+  "$EXPECTED_PARENT_MODEL_SHA256" "$PLAY_DEPTH" "$EXPERIMENT_VARIANT" <<'PY'
 import hashlib, json, pathlib, re, sys
 w, art = map(pathlib.Path, sys.argv[1:3])
-code, parent_sha = sys.argv[3:]
+code, parent_sha, play_depth, experiment_variant = sys.argv[3:]
 log = (w / "m2-fit.log").read_text()
 timing = (w / "m2-fit-time.log").read_text()
 corpus = json.load(open(art / "m2-corpus-contract.json"))
@@ -259,6 +297,8 @@ payload = {
     "training_records": corpus["records"],
     "training_corpus_sha256": corpus["jnnw_sha256"],
     "fresh_only": True,
+    "play_depth": int(play_depth),
+    "experiment_variant": experiment_variant,
     "holdout_records": split["holdout_records"],
     "iterations": int(re.search(r"iters=(\d+)", log).group(1)),
     "holdout_logloss": float(re.search(r"HOLDOUT_LOGLOSS\s+([0-9.]+)", log).group(1)),
@@ -274,5 +314,12 @@ serialized = json.dumps(payload, indent=2, sort_keys=True) + "\n"
 (art / "PROMOTION_AUTHORIZED__FALSE").write_text("PROMOTION_AUTHORIZED__FALSE\n")
 (art / "AUTOMATIC_NEXT_JOB__NULL").write_text("AUTOMATIC_NEXT_JOB__NULL\n")
 PY
+if [ "$EXPERIMENT_VARIANT" = D10_CAUSAL_FRESH2M ]; then
+  cp "$ART/m2.pjtw.gz" "$ART/d10.pjtw.gz"
+  cp "$ART/m2-training-summary.json" "$ART/d10-training-summary.json"
+  cp "$ART/m2-corpus-contract.json" "$ART/d10-corpus-contract.json"
+  cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/d10-fresh-2m.jnnw.gz"
+  cp "$ART/m2-fresh-2m.jsm.gz" "$ART/d10-fresh-2m.jsm.gz"
+fi
 phase complete
-say "M2_TRAINING_SCREEN_READY evaluation=true promotion=false automatic_next_job=null"
+say "M2_TRAINING_SCREEN_READY variant=$EXPERIMENT_VARIANT play_depth=$PLAY_DEPTH evaluation=true promotion=false automatic_next_job=null"
