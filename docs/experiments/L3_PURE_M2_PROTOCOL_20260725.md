@@ -29,6 +29,12 @@ M2 est un test de continuation de la recette qui a produit F2M :
 - NumPy `1.26.4` et SciPy `1.14.1` dans un venv isolé ;
 - optimisation L-BFGS jusqu'à convergence, maximum 1 000 itérations.
 
+Le premier essai `home-0966` s'est arrêté avant la génération : la suite de
+tests du contrat stub sans EGDB avait été exécutée par erreur dans le build
+scientifique avec EGDB activé. `home-0966bis` sépare désormais le build de
+tests sans EGDB du binaire de production avec EGDB. Aucun corpus ni résultat
+scientifique de 0966 n'est réutilisé.
+
 Le corpus JNNW/JSM est archivé avant le fit. Un échec du fit conserve ainsi
 les données coûteuses et, s'il existe, le checkpoint.
 

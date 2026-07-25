@@ -38,7 +38,7 @@ finalize(){
   [ -f "$RES" ] && cp "$RES" "$ART/RESULTS.txt"
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$W/build" "$W/venv" "$W"/*.feat 2>/dev/null || true
+  rm -rf "$W/build" "$W/test-build" "$W/venv" "$W"/*.feat 2>/dev/null || true
   exit "$rc"
 }
 trap finalize EXIT
@@ -135,13 +135,18 @@ python3 -m venv "$W/venv"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
 [ "$(PYTHONPATH="$GEOM" python3 -c 'import patterns; print(patterns.TOTAL_BUCKETS)')" -eq 4251528 ] || die "8cf mismatch"
+# The unit suite contains explicit stub-contract tests and must run in the
+# default build without the external EGDB bridge.
+cmake -S . -B "$W/test-build" -DCMAKE_BUILD_TYPE=Release > "$W/cmake-tests.log" 2>&1
+cmake --build "$W/test-build" -j4 --target jass_tests > "$W/build-tests.log" 2>&1
+ctest --test-dir "$W/test-build" --output-on-failure > "$W/ctest.log" 2>&1
+# The scientific binary is a distinct production build with EGDB enabled.
 FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
 [ -d /root/egdb_intl ] || git clone --depth 1 https://github.com/eygilbert/egdb_intl /root/egdb_intl > "$W/clone.log" 2>&1
 EGDIR=""; for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }; done
 [ -n "$EGDIR" ] || die "EGDB unavailable"; export JASS_EGDB_PATH="$EGDIR"
 cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1
-cmake --build "$W/build" -j4 > "$W/build.log" 2>&1
-ctest --test-dir "$W/build" --output-on-failure > "$W/ctest.log" 2>&1
+cmake --build "$W/build" -j4 --target jass > "$W/build.log" 2>&1
 J="$W/build/jass"; [ -x "$J" ] || die "jass binary missing"
 [ "$("$J" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "king-capture dedup witness failed"

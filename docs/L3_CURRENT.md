@@ -81,7 +81,7 @@ une configuration héritée par les nouveaux bras.
 | maturité M0 | triangle C0/P1/Gen2 + couverture | `home-0934` / `home-0935` | **parent C0 retenu pour M1** |
 | maturité M1 | F500/F2M/R2M + confirmation | `home-0963` / `home-0964` | **F2M champion L3-PURE** |
 | champion général | F2M vs Gen2, moteur réparé symétrique | `home-0965` | **F2M nouveau champion général** |
-| maturité M2 | 2M frais depuis F2M | `home-0966` | entraînement préenregistré, sans promotion automatique |
+| maturité M2 | 2M frais depuis F2M | `home-0966bis` | relance après séparation des builds test/EGDB, sans promotion automatique |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |

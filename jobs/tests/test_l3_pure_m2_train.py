@@ -10,11 +10,16 @@ WRAPPER = (
     / "jobs/prepared/l3-pure-m2-20260725"
     / "home-0966-l3-pure-m2-f2m-fresh2m-train-v1.sh"
 )
+RETRY_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-pure-m2-20260725"
+    / "home-0966bis-l3-pure-m2-f2m-fresh2m-train-v1.sh"
+)
 
 
 class M2TrainingContractTests(unittest.TestCase):
     def test_shell_contract(self):
-        for script in (TEMPLATE, WRAPPER):
+        for script in (TEMPLATE, WRAPPER, RETRY_WRAPPER):
             subprocess.run(["bash", "-n", str(script)], check=True)
 
     def test_fresh_two_million_from_f2m(self):
@@ -65,9 +70,17 @@ class M2TrainingContractTests(unittest.TestCase):
 
     def test_repaired_engine_witnesses_and_tests(self):
         text = TEMPLATE.read_text(encoding="utf-8")
-        self.assertIn("ctest --test-dir", text)
+        self.assertIn('cmake -S . -B "$W/test-build" -DCMAKE_BUILD_TYPE=Release', text)
+        self.assertIn('ctest --test-dir "$W/test-build"', text)
+        self.assertIn('cmake -S . -B "$W/build" $FLAGS', text)
+        self.assertIn('cmake --build "$W/build" -j4 --target jass', text)
+        self.assertNotIn('ctest --test-dir "$W/build"', text)
         self.assertIn("W:W40,43,K2:B8,18,29,30", text)
         self.assertIn("B:W13,23,25:B6,14,24,K45", text)
+
+    def test_retry_has_new_identity(self):
+        text = RETRY_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("home-0966bis-l3-pure-m2-f2m-fresh2m-train-v1", text)
 
 
 if __name__ == "__main__":
