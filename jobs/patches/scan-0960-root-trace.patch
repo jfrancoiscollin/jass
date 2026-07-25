@@ -26,10 +26,10 @@ index f8bf52a..0000000 100644
  static Flag flag (Score sc, Score alpha, Score beta);
  
  // functions
-@@ -317,6 +334,45 @@ void search(Search_Output & so, const Node & node, const Search_Input & si) {
+@@ -317,4 +334,42 @@ void search(Search_Output & so, const Node & node, const Search_Input & si) {
        Move mv = list[0];
        Score sc = quick_score(node);
- 
+-
 +      if (root_trace_enabled()) {
 +
 +         for (int d = 1; d <= si.depth; d++) {
@@ -70,9 +70,7 @@ index f8bf52a..0000000 100644
 +      }
 +
        so.new_best_move(mv, sc);
-       return;
-    }
-@@ -956,6 +1013,8 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+@@ -956,6 +1012,8 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
     assert(depth > 0 && depth <= Depth_Max);
     assert(ply == Ply_Root);
  
@@ -81,7 +79,7 @@ index f8bf52a..0000000 100644
     Score last_score = m_sg->last_score();
  
     // window loop
-@@ -972,6 +1031,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+@@ -972,6 +1030,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
           Score beta  = last_score + Score(beta_margin);
           assert(-score::Eval_Inf <= alpha && alpha < beta && beta <= +score::Eval_Inf);
  
@@ -89,7 +87,7 @@ index f8bf52a..0000000 100644
           search_root(node, list, alpha, beta, depth, ply, prune);
           Score sc = m_sg->so().score;
  
-@@ -989,6 +1049,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
+@@ -989,6 +1048,7 @@ void Search_Local::search_asp(const Node & node, const List & list, Depth depth,
        }
     }
  
@@ -97,7 +95,7 @@ index f8bf52a..0000000 100644
     search_root(node, list, -score::Inf, +score::Inf, depth, ply, prune);
  }
  
-@@ -1020,7 +1080,32 @@ void Search_Local::search_root(const Node & node, const List & list, Score alpha,
+@@ -1020,7 +1079,32 @@ void Search_Local::search_root(const Node & node, const List & list, Score alpha,
  
     local.list = list;
  
@@ -130,7 +128,7 @@ index f8bf52a..0000000 100644
  }
  
  Score Search_Local::search(const Node & node, Score alpha, Score beta, Depth depth, Ply ply, bool prune, Move skip_move, Line & pv) {
-@@ -1226,10 +1311,26 @@ void Search_Local::move_loop(Local & local) {
+@@ -1226,10 +1310,26 @@ void Search_Local::move_loop(Local & local) {
  
        if (mv != local.skip_move) {
  
