@@ -177,8 +177,9 @@ cmake -S . -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
 cmake --build "$W/build32" -j4 --target jass > "$W/build32.log" 2>&1
 mkdir -p "$W/fixed-defender-code"
 git archive "$FIXED_DEFENDER_CODE_SHA" | tar -x -C "$W/fixed-defender-code"
-python3 "$W/fixed-defender-code/pattern_jass/tools/gen_patterns.py" \
-  --emit --variant v4 > "$W/gen32fixed.log" 2>&1
+(cd "$W/fixed-defender-code" &&
+  python3 pattern_jass/tools/gen_patterns.py --emit --variant v4) \
+  > "$W/gen32fixed.log" 2>&1
 cmake -S "$W/fixed-defender-code" -B "$W/build32fixed" $FLAGS \
   > "$W/cmake32fixed.log" 2>&1
 cmake --build "$W/build32fixed" -j4 --target jass > "$W/build32fixed.log" 2>&1

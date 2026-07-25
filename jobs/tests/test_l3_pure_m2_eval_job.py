@@ -50,6 +50,7 @@ class M2EvaluationJobTests(unittest.TestCase):
         self.assertIn('J32FIXED="$W/build32fixed/jass"', text)
         self.assertIn('--defender-jass "$J32FIXED"', text)
         self.assertIn("FIXED_DEFENDER_CODE_SHA", text)
+        self.assertIn('(cd "$W/fixed-defender-code" &&', text)
 
     def test_nonpromotion_and_sources(self):
         text = TEMPLATE.read_text(encoding="utf-8")
