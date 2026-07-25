@@ -415,3 +415,16 @@ appariées, sans recouvrement avec DILF ni les pools synthétiques antérieurs,
 soit 1 000 parties dans chaque vue. F2M doit avoir la borne basse à 95 % au
 dessus de 50 % contre C0 en Q00 et native, et ne pas présenter de régression
 établie contre R2M. Un succès ouvre seulement une revue humaine de promotion.
+
+`home-0964` confirme F2M sur 1 000 parties indépendantes par vue : `60,35 %`
+Q00 et `59,95 %` native contre C0, avec les deux bornes basses à 95 % au-dessus
+de `57 %`. F2M et R2M restent statistiquement équivalents en confrontation
+directe. Après autorisation humaine explicite, **F2M devient le champion de la
+lignée L3-PURE et le parent prévu de M2**. Gen2-mmto reste provisoirement le
+champion général historique.
+
+Le protocole suivant rejoue F2M 8cf contre Gen2-mmto 32cf en construisant les
+deux moteurs depuis le même SHA réparé. Il emploie un nouveau pool indépendant
+et exige une borne basse à 95 % au-dessus de 50 % en Q00 et native pour
+recommander F2M comme champion général. Détails :
+[`experiments/L3_F2M_PROMOTION_AND_GEN2_REPAIRED_BENCH_20260725.md`](experiments/L3_F2M_PROMOTION_AND_GEN2_REPAIRED_BENCH_20260725.md).
