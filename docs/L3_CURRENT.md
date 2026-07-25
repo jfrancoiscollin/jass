@@ -374,5 +374,13 @@ sont publiés. `home-0945` est l’évaluation non promotable préenregistrée :
 force Q00 et native contre C0, ancrage Q00 contre Gen2, puis conversion P1–P4
 contre le même défenseur Gen2 fixe.
 
+Correctif du 25 juillet 2026 : les volets conversion de `home-0945` et
+`home-0949` sont supersédés. Le gauge FEN historique a été produit avec les
+pions et dames noirs intervertis lors de l’export JNNW → FEN. Les poids
+entraînés, les ablations et le triangle de force M0 ne sont pas invalidés.
+`home-0954` fournit le gauge JNNW stable corrigé ; `home-0955` rejoue C0, P1,
+F500, F2M, R2M, AB_MAT, AB_KING et AB_EXTRAS sur exactement ces mêmes
+positions et le même défenseur Gen2.
+
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
