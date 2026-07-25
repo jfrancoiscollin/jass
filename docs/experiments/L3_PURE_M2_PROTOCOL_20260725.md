@@ -83,3 +83,9 @@ est technique : generer 2 000 candidats, les filtrer dans l'ordre de facon
 deterministe contre les doublons et tous les pools exclus, puis retenir les
 500 premiers. Le manifeste publie le hash du sur-echantillon, le hash des
 500 positions retenues et les compteurs de rejet.
+
+Le premier claim de `home-0970` a utilise un snapshot de controle anterieur
+au dernier pin SHA et s'est arrete immediatement au garde-fou
+`code SHA mismatch`, avant tout calcul. `home-0970bis` est la relance
+autoritative sur le SHA qui contient a la fois la selection robuste et la
+generation v4 du defenseur historique dans son propre arbre source.

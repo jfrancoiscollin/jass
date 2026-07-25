@@ -12,6 +12,7 @@ WRAPPERS = tuple(
     for name in (
         "home-0967-l3-pure-m2-independent-eval-v1.sh",
         "home-0970-l3-pure-m2-independent-eval-v2.sh",
+        "home-0970bis-l3-pure-m2-independent-eval-v3.sh",
     )
 )
 
@@ -65,6 +66,10 @@ class M2EvaluationJobTests(unittest.TestCase):
         self.assertIn("home-0962", wrappers)
         self.assertIn(
             'EXPECTED_JOB_ID="home-0970-l3-pure-m2-independent-eval-v2"',
+            wrappers,
+        )
+        self.assertIn(
+            'EXPECTED_JOB_ID="home-0970bis-l3-pure-m2-independent-eval-v3"',
             wrappers,
         )
 

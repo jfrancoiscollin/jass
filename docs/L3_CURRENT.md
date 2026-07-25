@@ -454,3 +454,6 @@ La relance `home-0970` garde exactement les bras, budgets et seed
 preenregistres, mais selectionne deterministiquement 500 ouvertures uniques
 et disjointes depuis 2 000 candidates. Les builds de 0967 avaient passe ;
 aucun verdict scientifique partiel n'est reutilise.
+
+Le claim `home-0970` sur snapshot de controle stale a ete rejete par le
+garde-fou SHA avant tout match. `home-0970bis` est le run autoritatif.
