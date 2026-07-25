@@ -198,7 +198,8 @@ python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 
 cmake -S . -B "$W/build8-exact" $EXACT_FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8-exact" -j4 --target jass > "$W/build8.log" 2>&1
 cmake --build "$W/build8-exact" -j4 --target jass_tests > "$W/build8-tests.log" 2>&1
-ctest --test-dir "$W/build8-exact" --output-on-failure > "$W/ctest8.log" 2>&1
+env -u JASS_EGDB_PATH -u JASS_EGDB_CACHE_MB \
+  ctest --test-dir "$W/build8-exact" --output-on-failure > "$W/ctest8.log" 2>&1
 J8X="$W/build8-exact/jass"; J32="$W/build32/jass"
 [ "$("$J8X" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "equivalent king-capture paths were not deduplicated"
