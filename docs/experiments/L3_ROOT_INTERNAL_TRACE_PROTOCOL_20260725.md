@@ -29,6 +29,10 @@ d’environnement. Jass utilise les poids Scan exacts et le bras
 `SCAN_VERIFY_THREAT` de 0959. TT, historique et état de partie sont remis à
 zéro entre les sentinelles.
 
+Le raccourci natif de Scan lorsqu’un seul coup est légal est également tracé
+comme une tentative synthétique à chaque profondeur. Cela rend le contrat
+total sans changer la décision du moteur.
+
 ## Règle de localisation
 
 Pour chaque racine, le readout sélectionne la dernière tentative de fenêtre
