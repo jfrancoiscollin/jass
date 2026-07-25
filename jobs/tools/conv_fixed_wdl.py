@@ -65,21 +65,29 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
     records = read_records(pool_path)
     pool_sha256 = hashlib.sha256(pool_path.read_bytes()).hexdigest()
     defender_jass = args.defender_jass or args.jass
+    defender_depth = (
+        getattr(args, "defender_depth", None)
+        if getattr(args, "defender_depth", None) is not None
+        else args.depth
+    )
 
     def _fresh():
-        return (
-            cv.JassEngine(
-                args.jass,
-                pattern_path=args.pattern,
-                search_params=args.search_params,
-            ),
-            cv.JassEngine(
-                defender_jass,
-                pattern_path=args.defender_pattern,
-                search_params=args.defender_search_params,
-            ),
-            cv.Referee(args.jass),
+        champion = cv.JassEngine(
+            args.jass,
+            pattern_path=args.pattern,
+            search_params=args.search_params,
         )
+        defender = cv.JassEngine(
+            defender_jass,
+            pattern_path=args.defender_pattern,
+            search_params=args.defender_search_params,
+        )
+        # play_game dispatches by engine instance, so defaults preserve the
+        # asymmetric budget when champion/defender swap colours.
+        if args.movetime is None:
+            champion.default_depth = args.depth
+            defender.default_depth = defender_depth
+        return champion, defender, cv.Referee(args.jass)
 
     champion, defender, referee = _fresh()
     n_pos = n_win = n_draw = n_loss = n_skipped = n_errors = n_restarts = 0
@@ -161,6 +169,7 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
         "errors": errors[:20],
         "position_results": position_results,
         "depth": None if args.movetime is not None else args.depth,
+        "defender_depth": None if args.movetime is not None else defender_depth,
         "movetime": args.movetime,
         "jass": args.jass,
         "defender_jass": defender_jass,
@@ -193,6 +202,11 @@ def main(argv: list[str] | None = None) -> int:
     budget = parser.add_mutually_exclusive_group()
     budget.add_argument("--depth", type=int, default=10)
     budget.add_argument("--movetime", type=float)
+    parser.add_argument(
+        "--defender-depth",
+        type=int,
+        help="fixed-defender depth; defaults to --depth (ignored with --movetime)",
+    )
     parser.add_argument("--max-plies", type=int, default=260)
     parser.add_argument("--shard", type=int, default=0)
     parser.add_argument("--nshards", type=int, default=1)

@@ -266,12 +266,37 @@ void compute_extras(const Position& pos,
         const Bitboard empty_km = pos.empties();
         const Bitboard watt = man_attacks(pos.white_men(), empty_km);  // squares attacked by WHITE men
         const Bitboard batt = man_attacks(pos.black_men(), empty_km);  // squares attacked by BLACK men
+#ifdef JASS_SCAN_EXACT_EVAL
+        // Scan 3.1 iterates over kings and counts every reachable square for
+        // every king.  The normal Jass feature intentionally uses a union,
+        // which differs only when two friendly kings can reach the same square.
+        // Keep that learned-feature contract unchanged outside the exact-port
+        // diagnostic build.
+        int bk_safe = 0, wk_safe = 0, bk_denied = 0, wk_denied = 0;
+        for (Bitboard b = pos.black_kings(); b; ) {
+            const Square sq = pop_lsb(b);
+            const Bitboard reach = king_reach(Bitboard{1} << square_to_bit(sq), empty_km);
+            bk_safe += popcount(reach & ~watt);
+            bk_denied += popcount(reach & watt);
+        }
+        for (Bitboard b = pos.white_kings(); b; ) {
+            const Square sq = pop_lsb(b);
+            const Bitboard reach = king_reach(Bitboard{1} << square_to_bit(sq), empty_km);
+            wk_safe += popcount(reach & ~batt);
+            wk_denied += popcount(reach & batt);
+        }
+        out[EXTRA_BK_SAFEMOB] = static_cast<float>(bk_safe);
+        out[EXTRA_WK_SAFEMOB] = static_cast<float>(wk_safe);
+        out[EXTRA_BK_DENIED]  = static_cast<float>(bk_denied);
+        out[EXTRA_WK_DENIED]  = static_cast<float>(wk_denied);
+#else
         const Bitboard bkr  = king_reach(pos.black_kings(), empty_km);
         const Bitboard wkr  = king_reach(pos.white_kings(), empty_km);
         out[EXTRA_BK_SAFEMOB] = static_cast<float>(popcount(bkr & ~watt));
         out[EXTRA_WK_SAFEMOB] = static_cast<float>(popcount(wkr & ~batt));
         out[EXTRA_BK_DENIED]  = static_cast<float>(popcount(bkr & watt));
         out[EXTRA_WK_DENIED]  = static_cast<float>(popcount(wkr & batt));
+#endif
     }
 #endif
 
@@ -565,7 +590,7 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
         pu_black += 0.5 * fm;
     }
 
-#ifdef JASS_DRAWISH_SCALING
+#if defined(JASS_DRAWISH_SCALING) && !defined(JASS_SCAN_EXACT_EVAL)
     // Drawish-material draw-scaling (Scan, Normal variant) — the one non-linear
     // term Scan has that the linear net cannot learn. When the side AHEAD has too
     // little to win and the DEFENDER has a king, shrink the score toward a draw:
@@ -586,11 +611,44 @@ int ScanEvalNetwork::evaluate_with_idx(const Position& pos,
 #endif
 
     const double cp_black = pu_black * 100.0;
+#ifdef JASS_SCAN_EXACT_EVAL
+    // Scan first rounds its WHITE-POV blended score with floor(x + 0.5),
+    // then applies the integer drawish-material division, and only afterwards
+    // flips to side-to-move POV.  Reproduce that order exactly for the frozen
+    // raw-weight diagnostic.  (Normal PJTW builds retain the historical
+    // truncating black-POV path below.)
+    int scan_white = static_cast<int>(std::floor(-cp_black + 0.5));
+#ifdef JASS_DRAWISH_SCALING
+    {
+        const int nwm = popcount(pos.white_men()), nwk = popcount(pos.white_kings());
+        const int nbm = popcount(pos.black_men()), nbk = popcount(pos.black_kings());
+        if (scan_white > 0 && nbk != 0) {
+            if (nwm + nwk <= 3) {
+                scan_white /= 8;
+            } else if (nwk == nbk && std::abs(nwm - nbm) <= 1) {
+                scan_white /= 2;
+            }
+        } else if (scan_white < 0 && nwk != 0) {
+            if (nbm + nbk <= 3) {
+                scan_white /= 8;
+            } else if (nwk == nbk && std::abs(nwm - nbm) <= 1) {
+                scan_white /= 2;
+            }
+        }
+    }
+#endif
+    const int scan_stm =
+        (pos.side_to_move() == Color::White) ? scan_white : -scan_white;
+    if (scan_stm >  20000) return  20000;
+    if (scan_stm < -20000) return -20000;
+    return scan_stm;
+#else
     const double cp_stm   = (pos.side_to_move() == Color::Black) ? cp_black : -cp_black;
 
     if (cp_stm >  20000.0) return  20000;
     if (cp_stm < -20000.0) return -20000;
     return static_cast<int>(cp_stm);
+#endif
 }
 
 std::unique_ptr<ScanEvalNetwork> load_scan_eval_network(const std::string& path,

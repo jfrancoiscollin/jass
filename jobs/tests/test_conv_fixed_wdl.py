@@ -39,10 +39,13 @@ class ConvFixedWdlTests(unittest.TestCase):
 
     def test_measure_records_fingerprints_and_position_outcomes(self) -> None:
         opened: list[tuple[str, str | None, str | None]] = []
+        observed_depths: list[dict[str, int | None]] = []
 
         class Engine:
             def __init__(self, binary, *, pattern_path=None, search_params=None, **_):
                 opened.append((binary, pattern_path, search_params))
+                self.binary = binary
+                self.default_depth = None
 
             def close(self):
                 pass
@@ -58,7 +61,15 @@ class ConvFixedWdlTests(unittest.TestCase):
         fake = types.ModuleType("calibrate_vs_scan")
         fake.JassEngine = Engine
         fake.Referee = Referee
-        fake.play_game = lambda *_a, **_k: SimpleNamespace(outcome=next(outcomes))
+        def play_game(white, black, *_a, **_k):
+            observed_depths.append(
+                {
+                    white.binary: white.default_depth,
+                    black.binary: black.default_depth,
+                }
+            )
+            return SimpleNamespace(outcome=next(outcomes))
+        fake.play_game = play_game
         previous = sys.modules.get("calibrate_vs_scan")
         sys.modules["calibrate_vs_scan"] = fake
         try:
@@ -82,7 +93,8 @@ class ConvFixedWdlTests(unittest.TestCase):
                     nshards=1,
                     shard=0,
                     movetime=None,
-                    depth=10,
+                    depth=12,
+                    defender_depth=10,
                     max_plies=260,
                 )
                 report = C.measure(args)
@@ -95,6 +107,15 @@ class ConvFixedWdlTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(report["defender_jass"], "jass-32cf")
+            self.assertEqual(report["depth"], 12)
+            self.assertEqual(report["defender_depth"], 10)
+            self.assertEqual(
+                observed_depths,
+                [
+                    {"jass-8cf": 12, "jass-32cf": 10},
+                    {"jass-8cf": 12, "jass-32cf": 10},
+                ],
+            )
             self.assertEqual(report["schema"], 2)
             self.assertEqual(report["n_pos"], 2)
             self.assertEqual(report["n_win"], 1)

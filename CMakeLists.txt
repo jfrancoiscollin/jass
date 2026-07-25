@@ -154,6 +154,18 @@ if(JASS_DRAWISH_SCALING)
     message(STATUS "Jass: DRAWISH SCALING ENABLED")
 endif()
 
+# Diagnostic-only parity mode for loading an exact port of Scan's raw
+# `data/eval` weights.  This does not change the learned PJTW format; it only
+# makes the two remaining runtime details match Scan exactly:
+#   * king safe/denied mobility is summed per king (overlaps count twice);
+#   * score rounding and drawish scaling follow Scan's integer order.
+# Pair with KING_MOBILITY, SCAN_PARITY, TEMPO_STAGE and DRAWISH_SCALING.
+option(JASS_SCAN_EXACT_EVAL "Match Scan 3.1 runtime details for exact-eval diagnostics" OFF)
+if(JASS_SCAN_EXACT_EVAL)
+    add_compile_definitions(JASS_SCAN_EXACT_EVAL=1)
+    message(STATUS "Jass: SCAN EXACT-EVAL diagnostic runtime ENABLED")
+endif()
+
 # Phase ramp endpoints (pieces) for the mg/eg blend. Empty = default 0/40 (=
 # legacy pieces/40). A sharper ramp (e.g. 10/24) specialises the endgame bank
 # (cf 0310 phase conflict). MUST match train.py --phase-lo/--phase-hi.
