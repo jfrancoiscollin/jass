@@ -384,3 +384,18 @@ positions et le même défenseur Gen2.
 
 Les SHA, inventaires et checksums restent dans les manifests R2 et les statuts
 GitOps. Aucun résultat volumineux n’est re-committé dans Git.
+
+Le diagnostic causal `home-0961ter` clôt ensuite le faux plafond de
+conversion : avec les poids Scan exacts et le défenseur Gen2 historique
+inchangé, la réparation de légalité/terminaison fait passer `p3_mince` de
+38,00 % à 99,00 % et `p4_egal` de 35,33 % à 98,00 %. L’ordre racine Scan
+n’ajoute plus que +1,00 et +2,01 points. Le moteur, et non l’architecture
+linéaire, était la cause dominante du déficit mesuré.
+
+La reprise M1 doit donc d’abord rejouer sur le moteur réparé les poids déjà
+produits C0/P1/F500/F2M/R2M et les ablations, appariés à la matrice 0955 et
+avec un défenseur historique figé. Une nouvelle génération de données n’est
+autorisée qu’après ce readout : si les poids existants restent sous le
+plancher de conversion, la branche suivante sera une réplication
+Scan-faithful propre ; sinon la revue portera sur le candidat M1 et sa force
+générale. Aucune promotion ni continuation n’est automatique.

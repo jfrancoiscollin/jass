@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Corrected retrospective M1 matrix on the immutable stable 0954 JNNW gauge.
+# Repaired-engine M1 matrix on the immutable stable 0954 JNNW gauge.
+# The 0955 engine and outcomes remain the fixed paired baseline.
 # Diagnostic only: no promotion and no automatic continuation.
 set -Eeuo pipefail
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${GAUGE_PREFIX:?}"; : "${C0_PREFIX:?}"; : "${P1_PREFIX:?}"
 : "${M1_PREFIX:?}"; : "${ABLATION_PREFIX:?}"
+: "${LEGALITY_PREFIX:?}"; : "${BASELINE_MATRIX_PREFIX:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; ART="$JASS_ARTEFACT_DIR"; IN="$JASS_RESULT_DIR/inputs"
 mkdir -p "$W" "$ART" "$IN" "$ART/conversion"
@@ -28,7 +30,7 @@ finalize(){
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   (cd "$W" && find . -name '*.log' -type f -print0 |
     tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$W/build8" "$W/build32" "$IN"
+  rm -rf "$W/build8" "$W/build32" "$W/baseline-code" "$IN"
   exit "$rc"
 }
 trap finalize EXIT
@@ -38,6 +40,8 @@ trap 'exit 143' TERM
 NSH_CONV=4; PAR_MODEL_GROUPS=2; CONV_DEPTH=10; CACHE_MB=128
 NOPEN=200; NSH_GATE=8; PAR_GATE=2; FORCE_DEPTH=9; MOVETIME=0.1
 TARGET_PER_STRATUM=300; BOOTSTRAP_SAMPLES=200000; MATRIX_SEED=955001
+REPAIR_CODE_SHA="f4ff6548fe9aa46ee4d5161473d8d1ddb8471e7c"
+BASELINE_MATRIX_CODE_SHA="038a2001854f2805bc0045acd56c617826e5ff15"
 MODELS=(C0 P1 F500 F2M R2M AB_MAT AB_KING AB_EXTRAS)
 STRATA=(p3_mince p4_egal)
 C0_SHA="13d9463f32d3378e8ce800c01590a93abcaeaca8ac50fcbbc6c6a79263b090be"
@@ -79,6 +83,36 @@ wait_all(){
 }
 
 stage fetch-and-verify-immutable-inputs
+python3 jobs/tools/fetch_result_files.py --prefix "$LEGALITY_PREFIX" \
+  --file artefacts/JASS_CONTROL_SUMMARY.json=legality-summary.json \
+  --out-dir "$IN" --report "$ART/verified-legality-repair.json" \
+  > "$W/fetch-legality.log" 2>&1
+baseline_files=()
+for model in "${MODELS[@]}"; do
+  for stratum in "${STRATA[@]}"; do
+    baseline_files+=(--file \
+      "artefacts/conversion/$model-$stratum.json=baseline-$model-$stratum.json")
+  done
+done
+python3 jobs/tools/fetch_result_files.py --prefix "$BASELINE_MATRIX_PREFIX" \
+  --file artefacts/corrected-conversion-matrix.json=baseline-matrix.json \
+  "${baseline_files[@]}" --out-dir "$IN" \
+  --report "$ART/verified-baseline-matrix.json" \
+  > "$W/fetch-baseline-matrix.log" 2>&1
+python3 - "$IN/legality-summary.json" "$ART/verified-legality-repair.json" \
+  "$ART/verified-baseline-matrix.json" "$REPAIR_CODE_SHA" \
+  "$BASELINE_MATRIX_CODE_SHA" <<'PY'
+import json,sys
+summary,repair,baseline,repair_sha,baseline_sha=sys.argv[1:]
+summary=json.load(open(summary)); repair=json.load(open(repair))
+baseline=json.load(open(baseline))
+if summary.get("verdict")!="LEGALITY_REPAIR_RECOVERS_CONVERSION":
+    raise SystemExit("legality repair certificate verdict mismatch")
+if repair.get("result_state")!="completed" or repair.get("code_sha")!=repair_sha:
+    raise SystemExit("legality repair certificate identity mismatch")
+if baseline.get("result_state")!="completed" or baseline.get("code_sha")!=baseline_sha:
+    raise SystemExit("baseline matrix identity mismatch")
+PY
 python3 jobs/tools/fetch_t1bis_inputs.py --out-dir "$IN" \
   --report "$ART/verified-fixed-inputs.json" > "$W/fetch-fixed.log" 2>&1
 python3 jobs/tools/fetch_result_files.py --prefix "$GAUGE_PREFIX" \
@@ -187,10 +221,21 @@ export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1
 cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
 cmake --build "$W/build8" -j4 --target jass > "$W/build8.log" 2>&1
-python3 pattern_jass/tools/gen_patterns.py --emit --variant v4 > "$W/gen32.log" 2>&1
-cmake -S . -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
+cmake --build "$W/build8" -j4 --target jass_tests > "$W/build8-tests.log" 2>&1
+env -u JASS_EGDB_PATH -u JASS_EGDB_CACHE_MB \
+  ctest --test-dir "$W/build8" --output-on-failure > "$W/ctest8.log" 2>&1
+mkdir -p "$W/baseline-code"
+git cat-file -e "$BASELINE_MATRIX_CODE_SHA^{commit}"
+git archive "$BASELINE_MATRIX_CODE_SHA" | tar -x -C "$W/baseline-code"
+python3 "$W/baseline-code/pattern_jass/tools/gen_patterns.py" \
+  --emit --variant v4 > "$W/gen32.log" 2>&1
+cmake -S "$W/baseline-code" -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
 cmake --build "$W/build32" -j4 --target jass > "$W/build32.log" 2>&1
 J8="$W/build8/jass"; J32="$W/build32/jass"
+[ "$("$J8" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
+  die "equivalent king-capture paths were not deduplicated"
+[ "$("$J8" --perft 1 'B:W13,23,25:B6,14,24,K45' | awk '{print $3}')" = 2 ] ||
+  die "tablebase-draw witness legal moves mismatch"
 
 run_conv(){
   local model="$1" stratum="$2" pool="$3"
@@ -278,10 +323,19 @@ python3 jobs/tools/l3_corrected_conversion_matrix.py \
   --preservation-stratum p3_mince --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
   --seed "$MATRIX_SEED" "${FINAL_ARGS[@]}" \
   --out "$ART/corrected-conversion-matrix.json" \
+  --summary-out "$ART/corrected-conversion-summary.json"
+stage repaired-engine-causal-readout
+python3 jobs/tools/l3_repaired_engine_matrix.py \
+  --new-dir "$ART/conversion" --baseline-dir "$IN" \
+  --new-matrix "$ART/corrected-conversion-matrix.json" \
+  --repair-summary "$IN/legality-summary.json" \
+  --models "${MODELS[@]}" --strata "${STRATA[@]}" \
+  --m1-arms F500 F2M R2M --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
+  --seed 962001 --out "$ART/repaired-engine-matrix.json" \
   --summary-out "$ART/JASS_CONTROL_SUMMARY.json"
-printf '%s\n' M1_CORRECTED_CONVERSION_MATRIX_READY_HUMAN_REVIEW \
-  > "$ART/VERDICT__M1_CORRECTED_CONVERSION_MATRIX_READY_HUMAN_REVIEW"
+printf '%s\n' M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW \
+  > "$ART/VERDICT__M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW"
 printf '%s\n' PROMOTION_AUTHORIZED__FALSE > "$ART/PROMOTION_AUTHORIZED__FALSE"
 printf '%s\n' AUTOMATIC_NEXT_JOB__NULL > "$ART/AUTOMATIC_NEXT_JOB__NULL"
 stage complete
-say "M1_CORRECTED_CONVERSION_MATRIX_READY_HUMAN_REVIEW promotion=false candidate=${CANDIDATE:-NONE}"
+say "M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW promotion=false candidate=${CANDIDATE:-NONE}"

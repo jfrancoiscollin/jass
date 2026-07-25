@@ -77,3 +77,36 @@ Un contrat d’ordre incomplet produit `ROOT_ORDER_REPLAY_CONTRACT_FAILED`.
 - Scan ne fournit ni score, ni poids, ni coup sélectionné à Jass.
 - Aucun entraînement, aucune promotion, aucune continuation automatique.
 - `artefacts/` et `metadata.json` locaux préservés.
+
+## Verdict certifié
+
+`home-0961ter-l3-pure-m1-legality-root-order-causal-v1`, code
+`f4ff6548fe9aa46ee4d5161473d8d1ddb8471e7c`, est terminé avec le verdict
+`LEGALITY_REPAIR_RECOVERS_CONVERSION`.
+
+Face au défenseur Gen2 historique inchangé, l’attaquant Scan-exact réparé
+obtient :
+
+- `p3_mince` : 297 victoires, 0 nulle, 3 défaites, soit 99,00 % ;
+- `p4_egal` : 294 victoires, 0 nulle, 6 défaites, soit 98,00 %.
+
+Les témoins antérieurs étaient respectivement à 38,00 % et 35,33 %. Les gains
+appariés de la réparation sont donc de +61,00 et +62,67 points, sans aucune
+régression de position gagnante vers une non-victoire.
+
+L’ordre racine Scan porte les deux strates à 299/299 victoires valides. Son
+effet résiduel est seulement de +1,00 point sur `p3_mince` et +2,01 points sur
+`p4_egal`, avec zéro échec de planning. La cause dominante du faux plafond
+était donc la légalité/terminaison du moteur Jass, pas l’ordre racine.
+
+Archive immuable :
+`r2:jass-data/runs/home-0961ter-l3-pure-m1-legality-root-order-causal-v1/20260725T132947Z-f4ff6548`.
+
+## Reprise M1
+
+La prochaine mesure rejoue la matrice C0/P1/F500/F2M/R2M et les trois
+ablations sur la jauge 0954. Seul l’attaquant reçoit la réparation certifiée ;
+le défenseur Gen2 reste compilé depuis le code historique 0955. Les résultats
+sont appariés position par position au registre 0955. Ce protocole distingue
+ainsi la capacité réelle des poids M1 à convertir de l’effet moteur maintenant
+mesuré. Il reste non promotable et sans continuation automatique.

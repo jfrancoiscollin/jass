@@ -26,6 +26,13 @@ class M1CorrectedMatrixContractTests(unittest.TestCase):
         self.assertIn("run_force q00 C0", text)
         self.assertIn("run_force native C0", text)
         self.assertIn("run_force q00 GEN2", text)
+        self.assertIn("LEGALITY_PREFIX", text)
+        self.assertIn("BASELINE_MATRIX_PREFIX", text)
+        self.assertIn("BASELINE_MATRIX_CODE_SHA", text)
+        self.assertIn("LEGALITY_REPAIR_RECOVERS_CONVERSION", text)
+        self.assertIn("env -u JASS_EGDB_PATH -u JASS_EGDB_CACHE_MB", text)
+        self.assertIn("l3_repaired_engine_matrix.py", text)
+        self.assertIn("M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW", text)
         self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
         self.assertIn("AUTOMATIC_NEXT_JOB__NULL", text)
 
