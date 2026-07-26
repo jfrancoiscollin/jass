@@ -676,3 +676,20 @@ La seule suite autorisée par la règle de décision est la **confirmation
 indépendante de `L2_1E5`** sur un nouveau pool, sans changer le modèle. Tant
 qu'elle n'a pas eu lieu, `L2=3e-5` reste le réglage retenu, aucune promotion
 n'est autorisée et le croisement replay `0/25 %` reste fermé.
+
+Cette confirmation est préinscrite en deux jobs : le préflight `home-0988`
+certifie un pool de 1 000 ouvertures, seed `2718281`, disjoint des treize pools
+déjà dépensés dont celui de l'écran ; puis `home-0989` joue quatre cellules de
+2 000 parties contre le contrôle et F2M, cumulées à 3 000 avec `home-0987`.
+Seuls des moteurs 8cf y participent.
+
+**Sa puissance est annoncée avant le run, et défavorable.** Établir la
+supériorité à `n=2000` exige environ **52,2 %** sur la cellule fraîche et
+**52,6 %** pour que le cumul Q00 franchisse le seuil, alors que `home-0987`
+mesure `L2_1E5` à 50,15 % en Q00. Le résultat attendu si l'écran se reproduit
+est donc `L2_1E5_DIRECTION_REPLICATED_REVIEW`, pas une confirmation. L'exercice
+est exécuté parce que la règle n'autorise que lui et parce qu'un cumul à 3 000
+parties tranche si le `+10 Elo` natif est réel ou s'il relève du bruit de
+`movetime`, mesuré à 1,55 pp entre `home-0986` et `home-0987` sur le même
+modèle. Détail :
+[`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).

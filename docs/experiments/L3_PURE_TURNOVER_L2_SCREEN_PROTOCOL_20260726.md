@@ -221,6 +221,68 @@ Le préfixe immuable est :
 r2:jass-data/runs/home-0987-l3-pure-turnover-l2-independent-eval-v2/20260726T164809Z-fa8cd0b1
 ```
 
+## Confirmation indépendante de `L2_1E5` — préinscription
+
+Préenregistré le 26 juillet 2026, **après** le verdict `home-0987` mais **avant**
+toute partie de confirmation. Le modèle candidat est figé depuis `home-0985` et
+n'est pas ré-entraîné : le seul facteur qui change est l'échantillon
+d'évaluation.
+
+### Chaîne réservée
+
+1. `home-0988-l3-pure-turnover-l2-confirm-preflight-v1` authentifie le
+   certificat `home-0987`, vérifie les identités des trois modèles immuables
+   (`L2_1E5` `27cf9bed…`, contrôle `L2_3E5` `b2c79b36…`, F2M `be675b6c…`),
+   construit le moteur 8cf, puis génère **deux fois** un pool de 1 000
+   ouvertures depuis 4 000 candidats, seed `2718281`, disjoint des treize pools
+   déjà dépensés — y compris le pool `e7b89a5e…` de l'écran lui-même. Aucun fit,
+   aucune partie.
+2. `home-0989-l3-pure-turnover-l2-confirmation-v1` joue quatre cellules de
+   2 000 parties : `L2_1E5` contre le contrôle `L2_3E5` et contre F2M, en Q00 d9
+   et en cadence native `mt0,1`. Il cumule ensuite avec les cellules de 1 000
+   parties de `home-0987` pour un readout à 3 000 parties par cellule.
+
+Seuls des moteurs 8cf participent : le candidat, le contrôle et F2M vivent tous
+en 8cf. Aucun moteur 32cf ni défenseur figé n'est construit, donc le témoin de
+garde qui a arrêté `home-0986` est hors périmètre.
+
+### Règle de décision
+
+`L2_1E5` est **confirmé** seulement si, contre le contrôle `L2_3E5`, les bornes
+basses à 95 % dépassent 50 % **à la fois sur les 2 000 parties fraîches et sur
+le cumul de 3 000**, en Q00 **et** en natif, sans régression établie contre F2M
+dans aucune des deux lectures.
+
+- si ces conditions sont réunies et que la supériorité sur F2M est elle aussi
+  établie dans les deux vues et les deux lectures :
+  `L2_1E5_CHAMPION_CONFIRMATION_REVIEW_READY` ;
+- sinon, si elles sont réunies : `L2_1E5_EFFECT_CONFIRMED_HUMAN_REVIEW` ;
+- sinon, si les deux estimations ponctuelles fraîches restent au-dessus de 50 %
+  sans borne basse qui franchisse le seuil :
+  `L2_1E5_DIRECTION_REPLICATED_REVIEW` ;
+- dans tous les autres cas : `L2_1E5_DIRECTION_NOT_REPLICATED_RETAIN_3E5`.
+
+Dans **tous** les cas, `promotion_authorized=false` et
+`automatic_next_job=null`. Un effet confirmé ne promeut rien : il autorise
+seulement le croisement replay `0/25 %` au L2 retenu.
+
+### Puissance annoncée avant le run
+
+Cette confirmation est déclarée **peu susceptible d'aboutir**, et ce constat est
+publié avant les parties pour qu'il ne puisse pas être réinterprété après coup.
+Avec `n=2000`, établir la supériorité exige un taux frais d'environ **52,2 %**,
+et environ **52,6 %** pour que le cumul Q00 franchisse le seuil. Or `home-0987`
+mesure `L2_1E5` à **50,15 %** en Q00. Si le run frais reproduit simplement les
+taux de l'écran, le résultat attendu est
+`L2_1E5_DIRECTION_REPLICATED_REVIEW`, pas une confirmation.
+
+L'exercice est néanmoins exécuté parce que la règle de décision n'autorise que
+lui, et parce qu'un cumul à 3 000 parties tranche proprement si le `+10 Elo`
+natif de l'écran est réel ou s'il relève du bruit de `movetime` — écart mesuré à
+**1,55 pp** entre `home-0986` et `home-0987` sur cette même vue, pour le même
+modèle. Quelle que soit l'issue, le réglage retenu reste `L2=3e-5` tant qu'aucun
+lead n'est confirmé.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à
