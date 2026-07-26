@@ -186,6 +186,41 @@ niveaux L2, le corpus, le split, le pool indépendant, les identités de modèle
 et la règle de décision sont inchangés ; seul le périmètre du témoin de garde
 est corrigé.
 
+## Résultat de l'écran
+
+`home-0987` termine avec exit code 0 et
+`TURNOVER_L2_SCREEN_DIRECTIONAL_CONFIRMATION_REVIEW`. Les douze étapes sont
+complètes, `confirmed_leads` est vide et `directional_arms=["L2_1E5"]`.
+
+```text
+primaire vs L2_3E5_CONTROL, n=1000 par cellule
+  L2_1E5  q00     50,15 %  490-23-487  +1,04 Elo   IC95 [47,09 ; 53,21]
+  L2_1E5  native  51,45 %  507-15-478  +10,08 Elo  IC95 [48,38 ; 54,52]
+  L2_1E4  q00     47,45 %  469-11-520  -17,73 Elo  IC95 [44,37 ; 50,53]
+  L2_1E4  native  46,40 %  456-16-528  -25,06 Elo  IC95 [43,33 ; 49,47]
+
+gardes, L2_1E5 seul
+  vs F2M   q00 52,60 %  native 51,60 %
+  vs GEN2  q00 60,80 %  native 58,05 %
+  conversion P3 98,33 % (contrôle 98,00 %, delta +0,33 pp)
+  conversion P4 98,33 % (contrôle 99,00 %, delta -0,67 pp)
+```
+
+`L2_1E4` est rejeté : sa régression native est établie. `L2_1E5` place ses
+quatre estimations ponctuelles au-dessus du contrôle sans qu'aucune borne basse
+Wilson ne franchisse 50 % ; il tombe donc exactement dans la clause
+directionnelle de la règle de décision. Ses huit garde-fous passent.
+
+Conformément à cette règle, **`L2=3e-5` reste retenu** et la seule suite
+autorisée est une confirmation indépendante de `L2_1E5` sur un nouveau pool, à
+modèle inchangé. Le croisement replay `0/25 %` reste fermé jusque-là.
+
+Le préfixe immuable est :
+
+```text
+r2:jass-data/runs/home-0987-l3-pure-turnover-l2-independent-eval-v2/20260726T164809Z-fa8cd0b1
+```
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à

@@ -21,7 +21,8 @@
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
 > turnover_1to1_effect_confirmed; replay25_dose_closed;
-> turnover_l2_screen_trained_readout_next`.
+> turnover_l2_1e4_rejected;
+> turnover_l2_1e5_directional_confirmation_next`.
 
 ## 1. Architecture du programme
 
@@ -92,6 +93,7 @@ une configuration héritée par les nouveaux bras.
 | causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
 | confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | **effet confirmé contre M2 ; pas de supériorité établie sur F2M** |
 | dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **dose 25/75 close : mieux que M2, moins bien que TURNOVER 50/50** |
+| régularisation | écran L2 `{1e-5, 3e-5, 1e-4}` à corpus fixe | `home-0984bis`/`0985` / relance `0987` | **`1e-4` rejeté (régression native établie) ; `1e-5` directionnel, confirmation requise** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -643,3 +645,34 @@ périmètre du témoin est ramené à celui du template éprouvé de `home-0983`
 **Aucun verdict scientifique n'est tiré de cet échec** et ses cellules
 primaires ne sont pas réutilisées : `home-0987` refait le readout entier à
 entrées, pool et règle de décision inchangés.
+
+`home-0987` termine avec `TURNOVER_L2_SCREEN_DIRECTIONAL_CONFIRMATION_REVIEW`,
+douze étapes complètes et tous les garde-fous verts. Cellules primaires contre
+le contrôle `L2=3e-5`, 1 000 parties chacune :
+
+| bras | Q00 d9 | natif mt0,1 |
+|---|---|---|
+| `L2_1E5` | **50,15 %** (490-23-487, +1,0 Elo, IC95 `[47,09 ; 53,21]`) | **51,45 %** (507-15-478, +10,1 Elo, IC95 `[48,38 ; 54,52]`) |
+| `L2_1E4` | 47,45 % (469-11-520, −17,7 Elo) | 46,40 % (456-16-528, −25,1 Elo, IC95 `[43,33 ; 49,47]`) |
+
+`L2_1E4` est **rejeté** : sa régression native est établie. `L2_1E5` sort les
+deux estimations ponctuelles au-dessus de 50 %, mais **aucune borne basse ne
+franchit 50 %** : le résultat est donc directionnel, pas un lead confirmé
+(`confirmed_leads=[]`).
+
+Les cellules de garde, ouvertes pour `L2_1E5` seul, ne montrent aucune
+régression : `52,60 / 51,60 %` contre F2M et `60,80 / 58,05 %` contre Gen2 en
+Q00/natif. La conversion reste saturée et appariée au contrôle : P3 `98,33 %`
+contre `98,00 %` (delta `+0,33 pp`, IC `[−1,33 ; +2,00]`) et P4 `98,33 %`
+contre `99,00 %` (delta `−0,67 pp`, IC `[−2,67 ; +1,00]`). Les huit garde-fous
+`L2_1E5` passent.
+
+Contrôle de reproductibilité utile : la cellule Q00 de `L2_1E5` est identique
+au bit près à celle de `home-0986` (490-23-487), la vue Q00 étant à profondeur
+fixe ; seule la vue native, pilotée par `movetime`, diffère. Le harnais est
+donc déterministe là où il doit l'être.
+
+La seule suite autorisée par la règle de décision est la **confirmation
+indépendante de `L2_1E5`** sur un nouveau pool, sans changer le modèle. Tant
+qu'elle n'a pas eu lieu, `L2=3e-5` reste le réglage retenu, aucune promotion
+n'est autorisée et le croisement replay `0/25 %` reste fermé.

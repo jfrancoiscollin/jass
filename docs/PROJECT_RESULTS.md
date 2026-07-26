@@ -294,6 +294,17 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   immuable `L2=3e-5` (loss holdout 0,444060, `b2c79b36…`). Les losses sont des
   diagnostics ; seul le readout `0986` décide, et un lead confirmé ne
   promeut rien — il n'autorise que le croisement replay `0/25 %`.
+- **Écran L2 tranché par `0987` :** `home-0986` étant tombé sur un bug de
+  harnais (témoin de garde appliqué au défenseur figé), la relance `0987`
+  conclut `TURNOVER_L2_SCREEN_DIRECTIONAL_CONFIRMATION_REVIEW`.
+  **`L2=1e-4` est rejeté** : 47,45 % Q00 et 46,40 % natif contre le contrôle,
+  régression native établie (IC95 `[43,33 ; 49,47]`). **`L2=1e-5` est
+  directionnel** : 50,15 % Q00 et 51,45 % natif, quatre estimations positives
+  mais aucune borne basse au-dessus de 50 %. Ses gardes sont saines
+  (52,60/51,60 % contre F2M, 60,80/58,05 % contre Gen2, conversion P3/P4
+  appariée au contrôle). **`L2=3e-5` reste donc le réglage retenu** tant qu'une
+  confirmation indépendante de `1e-5` n'a pas eu lieu ; le croisement replay
+  `0/25 %` reste fermé et aucune promotion n'est autorisée.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
