@@ -77,6 +77,8 @@ Une borne basse à 95 % au-dessus de 50 % contre D10 dans les deux vues,
 accompagnée de garde-fous valides contre F2M, Gen2 et la conversion, est
 nécessaire pour conclure à un effet causal fort. Un signal seulement
 directionnel ouvre une confirmation indépendante. Un nouveau plateau ferme
-la simple escalade de profondeur et fait passer au facteur suivant
-préenregistré — distribution multi-profondeur ou replay/volume — sans
-promotion implicite.
+la simple escalade de profondeur et active uniquement le facteur de
+distribution 5:1 préenregistré dans
+[`L3_PURE_DEPTH_MIX_PROTOCOL_20260726.md`](L3_PURE_DEPTH_MIX_PROTOCOL_20260726.md).
+Replay et volume restent des facteurs ultérieurs séparés, sans promotion
+implicite.

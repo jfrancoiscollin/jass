@@ -85,6 +85,80 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertNotEqual(rows[1].opening_id, rows[2].opening_id)
             self.assertTrue(all(row.opening_id < (2 << 48) for row in rows))
 
+    def test_mix_is_exact_deterministic_aligned_and_preserves_opening_ids(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            d10_records = [
+                record(wm=bits(31 + (index % 10)), bm=bits(10), score=index, wdl=1)
+                for index in range(12)
+            ]
+            d12_records = [
+                record(wm=bits(31 + (index % 10)), bm=bits(11), score=100 + index, wdl=-1)
+                for index in range(12)
+            ]
+            d10_rows = [
+                SF.Meta(index // 2, 100 + index // 4, 0) for index in range(12)
+            ]
+            d12_rows = [
+                SF.Meta(index // 2, 100 + index // 4, 0) for index in range(12)
+            ]
+            d10 = self.write_pair(root, "d10", d10_records, d10_rows)
+            d12 = self.write_pair(root, "d12", d12_records, d12_rows)
+
+            outputs = []
+            for suffix in ("a", "b"):
+                out_data = root / f"mix-{suffix}.jnnw"
+                out_meta = root / f"mix-{suffix}.jsm"
+                manifest = root / f"mix-{suffix}.json"
+                rc = SF.do_mix(Namespace(
+                    source=[
+                        ["D10", str(d10[0]), str(d10[1]), "5"],
+                        ["D12", str(d12[0]), str(d12[1]), "1"],
+                    ],
+                    target_records=6,
+                    seed=271828,
+                    out_data=str(out_data),
+                    out_meta=str(out_meta),
+                    manifest=str(manifest),
+                ))
+                self.assertEqual(rc, 0)
+                outputs.append((out_data.read_bytes(), out_meta.read_bytes()))
+                payload = json.loads(manifest.read_text())
+                self.assertEqual(payload["records"], 6)
+                self.assertEqual(
+                    [source["selected_records"] for source in payload["sources"]],
+                    [5, 1],
+                )
+                self.assertEqual(
+                    payload["opening_id_policy"],
+                    "preserved_across_sources_for_common_holdout_fold",
+                )
+                records_out, rows_out = SF.read_pair(out_data, out_meta)
+                self.assertEqual(len(records_out), len(rows_out))
+                self.assertEqual(len(records_out), 6)
+                self.assertTrue(all(row.opening_id in {100, 101, 102} for row in rows_out))
+                self.assertEqual(len({row.game_id >> 56 for row in rows_out}), 2)
+            self.assertEqual(outputs[0], outputs[1])
+
+    def test_mix_rejects_a_quota_larger_than_its_source(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pair = self.write_pair(
+                root,
+                "tiny",
+                [record(wm=bits(31), bm=bits(10), wdl=1)],
+                [SF.Meta(1, 1, 0)],
+            )
+            with self.assertRaisesRegex(ValueError, "quota"):
+                SF.do_mix(Namespace(
+                    source=[["TINY", str(pair[0]), str(pair[1]), "1"]],
+                    target_records=2,
+                    seed=1,
+                    out_data=str(root / "out.jnnw"),
+                    out_meta=str(root / "out.jsm"),
+                    manifest=None,
+                ))
+
     def test_split_keeps_paired_opening_together_and_in_tail(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

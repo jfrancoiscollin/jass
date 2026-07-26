@@ -3,10 +3,16 @@
 """Game-aware dataset utilities for the autonomous L3-PURE self-play loop.
 
 The tool consumes only Jass self-play records and the aligned ``JSM1`` sidecar
-emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has four operations:
+emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has five operations:
 
 ``merge``
     Merge independent shards while namespacing game/opening identifiers.
+
+``mix``
+    Build an exact-size, deterministic weighted mixture of aligned JNNW/JSM1
+    corpora.  Sampling is uniform at record level, while opening identifiers
+    are preserved across sources so a subsequent ``split`` still assigns every
+    occurrence of a paired opening to the same fold.
 
 ``split``
     Put complete opening groups (including ``--pair-openings`` repetitions) in
@@ -150,6 +156,227 @@ def do_merge(args: argparse.Namespace) -> int:
         "records": len(records_out),
         "shards": shard_rows,
         "source_records": dict(sorted(source_counts.items())),
+    })
+    return 0
+
+
+def _counted_file_count(path: Path, magic: bytes, record_size: int) -> int:
+    with path.open("rb") as stream:
+        header = stream.read(8)
+    if len(header) != 8 or header[:4] != magic:
+        raise ValueError(f"{path}: expected {magic.decode('ascii')} header")
+    count = struct.unpack_from("<I", header, 4)[0]
+    expected = 8 + count * record_size
+    actual = path.stat().st_size
+    if actual != expected:
+        raise ValueError(f"{path}: size {actual} != {expected} for {count} records")
+    return count
+
+
+def _splitmix64(value: int) -> int:
+    value = (value + 0x9E3779B97F4A7C15) & ((1 << 64) - 1)
+    value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9 & ((1 << 64) - 1)
+    value = (value ^ (value >> 27)) * 0x94D049BB133111EB & ((1 << 64) - 1)
+    return value ^ (value >> 31)
+
+
+def _sample_indices(population: int, sample: int, seed: int) -> set[int]:
+    """Return an exact deterministic sample using Floyd's O(sample) algorithm."""
+    if not 0 <= sample <= population:
+        raise ValueError(f"sample {sample} outside population {population}")
+    selected: set[int] = set()
+    state = seed & ((1 << 64) - 1)
+
+    def randbelow(bound: int) -> int:
+        nonlocal state
+        if bound <= 0:
+            raise ValueError("randbelow bound must be positive")
+        modulus = 1 << 64
+        limit = modulus - modulus % bound
+        while True:
+            state = _splitmix64(state)
+            if state < limit:
+                return state % bound
+
+    for upper in range(population - sample, population):
+        candidate = randbelow(upper + 1)
+        selected.add(upper if candidate in selected else candidate)
+    if len(selected) != sample:
+        raise AssertionError("deterministic sampler returned the wrong cardinality")
+    return selected
+
+
+def _weighted_quotas(total: int, weights: list[int]) -> list[int]:
+    if total < 1:
+        raise ValueError("--target-records must be positive")
+    if not weights or any(weight <= 0 for weight in weights):
+        raise ValueError("mix weights must be positive integers")
+    denominator = sum(weights)
+    quotas = [total * weight // denominator for weight in weights]
+    missing = total - sum(quotas)
+    order = sorted(
+        range(len(weights)),
+        key=lambda index: (-(total * weights[index] % denominator), index),
+    )
+    for index in order[:missing]:
+        quotas[index] += 1
+    return quotas
+
+
+def _source_mix_seed(seed: int, label: str, index: int) -> int:
+    payload = struct.pack("<QQ", seed & ((1 << 64) - 1), index)
+    payload += label.encode("utf-8")
+    return int.from_bytes(hashlib.blake2b(payload, digest_size=8).digest(), "little")
+
+
+def do_mix(args: argparse.Namespace) -> int:
+    """Create a memory-bounded exact weighted mix while preserving JSM alignment."""
+    sources = []
+    labels: set[str] = set()
+    for source_index, spec in enumerate(args.source, start=1):
+        label, data_name, meta_name, weight_text = spec
+        if label in labels:
+            raise ValueError(f"duplicate mix source label: {label}")
+        labels.add(label)
+        try:
+            weight = int(weight_text)
+        except ValueError as exc:
+            raise ValueError(f"{label}: invalid integer weight {weight_text!r}") from exc
+        data_path, meta_path = Path(data_name), Path(meta_name)
+        data_count = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
+        meta_count = _counted_file_count(meta_path, META_MAGIC, META_REC)
+        if data_count != meta_count:
+            raise ValueError(f"{label}: data/meta count mismatch: {data_count} != {meta_count}")
+        sources.append({
+            "index": source_index,
+            "label": label,
+            "data": data_path,
+            "meta": meta_path,
+            "weight": weight,
+            "records": data_count,
+        })
+
+    target = args.target_records
+    quotas = _weighted_quotas(target, [source["weight"] for source in sources])
+    for source, quota in zip(sources, quotas):
+        if quota > source["records"]:
+            raise ValueError(
+                f"{source['label']}: quota {quota} exceeds {source['records']} records"
+            )
+        source["quota"] = quota
+
+    out_data, out_meta = Path(args.out_data), Path(args.out_meta)
+    out_data.parent.mkdir(parents=True, exist_ok=True)
+    out_meta.parent.mkdir(parents=True, exist_ok=True)
+    data_tmp = out_data.with_name(out_data.name + ".tmp")
+    meta_tmp = out_meta.with_name(out_meta.name + ".tmp")
+    data_header = JNNW_MAGIC + struct.pack("<I", target)
+    meta_header = META_MAGIC + struct.pack("<I", target)
+    output_data_hash = hashlib.sha256(data_header)
+    output_meta_hash = hashlib.sha256(meta_header)
+    source_manifests = []
+    opening_sets: dict[str, set[int]] = {}
+    selected_total = 0
+
+    try:
+        with data_tmp.open("wb") as data_out, meta_tmp.open("wb") as meta_out:
+            data_out.write(data_header)
+            meta_out.write(meta_header)
+            for source, quota in zip(sources, quotas):
+                count = source["records"]
+                sample_size = min(quota, count - quota)
+                sampled = _sample_indices(
+                    count,
+                    sample_size,
+                    _source_mix_seed(args.seed, source["label"], source["index"]),
+                )
+                sampled_are_included = quota <= count - quota
+                data_hash = hashlib.sha256()
+                meta_hash = hashlib.sha256()
+                source_openings: set[int] = set()
+                selected_openings: set[int] = set()
+                game_namespace: dict[int, int] = {}
+                selected = 0
+                with source["data"].open("rb") as data_in, source["meta"].open("rb") as meta_in:
+                    data_source_header = data_in.read(8)
+                    meta_source_header = meta_in.read(8)
+                    data_hash.update(data_source_header)
+                    meta_hash.update(meta_source_header)
+                    for row_index in range(count):
+                        record = data_in.read(JNNW_REC)
+                        meta_raw = meta_in.read(META_REC)
+                        if len(record) != JNNW_REC or len(meta_raw) != META_REC:
+                            raise ValueError(f"{source['label']}: truncated aligned pair")
+                        data_hash.update(record)
+                        meta_hash.update(meta_raw)
+                        game_id, opening_id, seeded = struct.unpack("<QQB", meta_raw)
+                        source_openings.add(opening_id)
+                        chosen = row_index in sampled
+                        if not sampled_are_included:
+                            chosen = not chosen
+                        if not chosen:
+                            continue
+                        local_game = game_namespace.setdefault(game_id, len(game_namespace))
+                        if local_game >= (1 << 56):
+                            raise ValueError(f"{source['label']}: too many games to namespace")
+                        namespaced_game = source["index"] << 56 | local_game
+                        output_meta = struct.pack("<QQB", namespaced_game, opening_id, seeded)
+                        data_out.write(record)
+                        meta_out.write(output_meta)
+                        output_data_hash.update(record)
+                        output_meta_hash.update(output_meta)
+                        selected_openings.add(opening_id)
+                        selected += 1
+                if selected != quota:
+                    raise AssertionError(
+                        f"{source['label']}: selected {selected} records, expected {quota}"
+                    )
+                selected_total += selected
+                opening_sets[source["label"]] = source_openings
+                source_manifests.append({
+                    "label": source["label"],
+                    "data": str(source["data"]),
+                    "meta": str(source["meta"]),
+                    "weight": source["weight"],
+                    "input_records": count,
+                    "selected_records": selected,
+                    "selected_fraction": selected / count if count else 0.0,
+                    "input_data_sha256": data_hash.hexdigest(),
+                    "input_meta_sha256": meta_hash.hexdigest(),
+                    "input_openings": len(source_openings),
+                    "selected_openings": len(selected_openings),
+                    "output_games": len(game_namespace),
+                })
+        if selected_total != target:
+            raise AssertionError(f"mix selected {selected_total} records, expected {target}")
+        data_tmp.replace(out_data)
+        meta_tmp.replace(out_meta)
+    finally:
+        if data_tmp.exists():
+            data_tmp.unlink()
+        if meta_tmp.exists():
+            meta_tmp.unlink()
+
+    overlaps = {}
+    for left_index, left in enumerate(sources):
+        for right in sources[left_index + 1:]:
+            key = f"{left['label']}__{right['label']}"
+            overlaps[key] = len(opening_sets[left["label"]] & opening_sets[right["label"]])
+    _manifest(args.manifest, {
+        "schema": 1,
+        "operation": "weighted_aligned_mix",
+        "selection": "exact_uniform_record_sample_splitmix64_floyd",
+        "seed": args.seed,
+        "target_records": target,
+        "records": selected_total,
+        "sources": source_manifests,
+        "opening_id_policy": "preserved_across_sources_for_common_holdout_fold",
+        "game_id_policy": "source_namespaced",
+        "source_opening_id_overlaps": overlaps,
+        "subsequent_split_unit": "opening_id",
+        "out_data_sha256": output_data_hash.hexdigest(),
+        "out_meta_sha256": output_meta_hash.hexdigest(),
+        "external_teacher_inputs": 0,
     })
     return 0
 
@@ -492,6 +719,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="remap existing 64-bit game/opening IDs per input while preserving equality groups",
     )
     merge.set_defaults(func=do_merge)
+
+    mix = sub.add_parser("mix", help="build an exact weighted aligned JNNW/JSM1 mix")
+    mix.add_argument(
+        "--source",
+        nargs=4,
+        action="append",
+        required=True,
+        metavar=("LABEL", "DATA", "META", "WEIGHT"),
+    )
+    mix.add_argument("--target-records", type=int, required=True)
+    mix.add_argument("--seed", type=int, required=True)
+    mix.add_argument("--out-data", required=True)
+    mix.add_argument("--out-meta", required=True)
+    mix.add_argument("--manifest")
+    mix.set_defaults(func=do_mix)
 
     split = sub.add_parser("split", help="make an opening-level holdout tail")
     split.add_argument("--data", required=True)
