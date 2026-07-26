@@ -280,6 +280,20 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   réellement en 156 itérations sur 2M records (`gradient_inf_norm=0,0008835`,
   loss holdout 0,444145) et publie le modèle `289047ff…`, sans promotion.
   `0983` est le readout indépendant réservé contre M2, TURNOVER, F2M et Gen2.
+- **REPLAY25 clos par `0983` :** sur 1 000 parties indépendantes par cellule,
+  REPLAY25 marque 51,25/53,90 % contre M2 en Q00/native, mais 46,90/49,00 %
+  contre TURNOVER 50/50. La régression Q00 face à TURNOVER est établie
+  (IC95 `[43,83 ; 49,97]`) et le modèle reste plat face à F2M (50,05/49,65 %).
+  Le dosage 25/75 améliore donc le corpus 100 % frais sans rejoindre le 50/50 :
+  **la dose de replay est close, aucune promotion.**
+- **Écran L2 `0984→0986` :** à corpus, parent, split, recherche et objectif
+  constants, `0984bis` certifie le corpus TURNOVER et un pool indépendant de
+  500 ouvertures (`e7b89a5e…`), puis `0985` fitte réellement `L2=1e-5`
+  (375 itérations, loss holdout 0,444361, `27cf9bed…`) et `L2=1e-4`
+  (170 itérations, loss holdout 0,446187, `0b710b80…`) face au contrôle
+  immuable `L2=3e-5` (loss holdout 0,444060, `b2c79b36…`). Les losses sont des
+  diagnostics ; seul le readout `0986` décide, et un lead confirmé ne
+  promeut rien — il n'autorise que le croisement replay `0/25 %`.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),

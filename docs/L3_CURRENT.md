@@ -21,7 +21,7 @@
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
 > turnover_1to1_effect_confirmed; replay25_dose_closed;
-> turnover_l2_screen_preflight_next`.
+> turnover_l2_screen_trained_readout_next`.
 
 ## 1. Architecture du programme
 
@@ -325,10 +325,18 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. parent M1 : C0 A-G3, immuable ;
-2. exécuter l’écran M1 `F500/F2M/R2M` sur 8cf et Q00 ;
-3. mesurer séparément force, conversion, couverture et convergence ;
-4. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.
+1. champion général courant : F2M, immuable tant qu'aucun gate n'est franchi ;
+   Gen2-mmto reste la référence historique figée ;
+2. exécuter le readout `home-0986` de l'écran L2 `{1e-5, 3e-5, 1e-4}` sur le
+   corpus TURNOVER 50/50, puis clore ou confirmer le facteur L2 selon la règle
+   de décision préenregistrée ;
+3. ne croiser le replay `0/25 %` au L2 retenu qu'après cette clôture ;
+4. traiter les losses holdout, normes de gradient et amplitudes de poids comme
+   des diagnostics, jamais comme des critères de sélection ;
+5. mesurer séparément force, conversion, couverture et convergence ;
+6. ne pas rouvrir la profondeur seule : d8, d10 et d12 sont clos, et le mix
+   d10/d12 reste interdit faute de garde-fous tous verts ;
+7. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.
 
 ### Spécialiste `L3-IMBALANCE2`
 
@@ -596,3 +604,31 @@ du split reste à 919 896 KiB. Le nouveau pool indépendant contient 500
 ouvertures, seed `1836313`, SHA-256 `e7b89a5e…`, sans recouvrement. Le
 certificat autorise uniquement `home-0985`, qui fitte `L2=1e-5` et `L2=1e-4`
 en parallèle face au contrôle immuable `L2=3e-5`.
+
+`home-0985` termine avec `TURNOVER_L2_TRAINING_SCREEN_READY`. Les deux bras
+convergent réellement sur le corpus TURNOVER certifié (2 000 000 records,
+split 1 800 796 / 199 204, seed `577215`), sans nouvelle génération ni entrée
+teacher :
+
+| bras | L2 | itérations | `gradient_inf_norm` | loss holdout | modèle SHA-256 |
+|---|---:|---:|---:|---:|---|
+| `L2_1E5` | `1e-5` | 375 | `0,00092379` | `0,444361` | `27cf9bed…` |
+| `L2_3E5_CONTROL` | `3e-5` | 204 | — | `0,444060` | `b2c79b36…` |
+| `L2_1E4` | `1e-4` | 170 | `0,00074504` | `0,446187` | `0b710b80…` |
+
+Les deux optimiseurs sortent en `CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL`
+sous `gtol=1e-3`, avec des pics de 1 411 344 et 1 431 056 KiB de RSS, conformes
+au budget HOME de deux optimiseurs concurrents. Le classement des losses place
+le contrôle `3e-5` devant `1e-5` puis `1e-4`, mais **ces losses sont des
+diagnostics et ne sélectionnent rien** : seule la force mesurée sur le pool
+indépendant décide. Le résultat conserve `promotion_authorized=false` et
+`automatic_next_job=null`. Prefixe immuable :
+`r2:jass-data/runs/home-0985-l3-pure-turnover-l2-train-v1/20260726T123823Z-ad067a4b`.
+
+Le readout `home-0986` est donc le seul job autorisé par ce certificat. Il
+compare d'abord chaque candidat au contrôle TURNOVER sur le pool indépendant
+`1836313` (500 ouvertures, SHA-256 `e7b89a5e…`), en Q00 d9 et en cadence
+native ; les cellules de garde F2M/Gen2 et P3/P4 ne s'ouvrent que pour les
+candidats dont les deux estimations ponctuelles dépassent 50 %. Si aucun ne
+franchit ce filtre préenregistré, `L2=3e-5` est retenu et le facteur L2 est
+clos.

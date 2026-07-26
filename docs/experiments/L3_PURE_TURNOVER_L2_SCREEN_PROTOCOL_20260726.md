@@ -139,6 +139,32 @@ r2:jass-data/runs/home-0984bis-l3-pure-turnover-l2-preflight-v2/20260726T122615Z
 
 Le certificat ouvre uniquement l'entraînement `home-0985`, sans promotion.
 
+`home-0985` termine ensuite avec `TURNOVER_L2_TRAINING_SCREEN_READY` et exit
+code 0. Les deux bras convergent réellement sous `gtol=1e-3` :
+
+```text
+L2_1E5  iterations=375  gradient_inf_norm=0.000923790306928623
+        holdout_logloss=0.444361  max_rss_kib=1411344
+        sha256=27cf9bedf20d00bbcc106a52ad183990f8df131362c4590fc319cc708464ff49
+L2_1E4  iterations=170  gradient_inf_norm=0.0007450357165352047
+        holdout_logloss=0.446187  max_rss_kib=1431056
+        sha256=0b710b80ab11fbcdcf4904adaeeb48166f0449c8c0c0fbf063a12c182372884b
+```
+
+Le corpus, le split (`1 800 796 / 199 204`, seed `577215`) et le parent F2M sont
+inchangés ; `new_generation_performed=false` et `external_teacher_inputs=0`.
+Le contrôle `L2=3e-5` conserve sa loss holdout de `0,444060`. Ce classement des
+losses n'ordonne rien : la règle de décision ci-dessus reste seule applicable.
+
+Le préfixe immuable est :
+
+```text
+r2:jass-data/runs/home-0985-l3-pure-turnover-l2-train-v1/20260726T123823Z-ad067a4b
+```
+
+Le déclencheur du readout `home-0986` est donc satisfait, sans modification des
+niveaux L2, du corpus, du pool ni de la règle de décision.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à
