@@ -8,7 +8,7 @@ TEMPLATE = ROOT / "jobs/templates/l3-pure-turnover-confirmation-v1.sh"
 WRAPPER = (
     ROOT
     / "jobs/prepared/l3-pure-turnover-20260726"
-    / "home-0979-l3-pure-turnover-confirmation-v1.sh"
+    / "home-0980-l3-pure-turnover-confirmation-v2.sh"
 )
 PROTOCOL = (
     ROOT
@@ -51,6 +51,14 @@ class L3PureTurnoverConfirmationJobTests(unittest.TestCase):
         self.assertIn("run_gate q00 F2M", text)
         self.assertIn("run_gate native M2", text)
         self.assertIn("run_gate native F2M", text)
+        self.assertIn(
+            'local view="$1" opponent="$2"\n  local pattern="$W/$opponent.pjtw"',
+            text,
+        )
+        self.assertNotIn(
+            'local view="$1" opponent="$2" pattern="$W/$opponent.pjtw"',
+            text,
+        )
         self.assertIn("prior-turnover-independent.fen", text)
         self.assertIn("l3_turnover_confirmation.py", text)
         self.assertNotIn("conv_fixed_wdl.py", text)
@@ -61,6 +69,7 @@ class L3PureTurnoverConfirmationJobTests(unittest.TestCase):
         for value in (
             "home-0977-l3-pure-turnover1to1-train-v1",
             "home-0978-l3-pure-turnover1to1-independent-eval-v1",
+            "home-0980-l3-pure-turnover-confirmation-v2",
             "home-0966bis-l3-pure-m2-f2m-fresh2m-train-v1",
             "home-0944-l3-pure-m1-train-resume-v3",
             "c34f25f0dddf8865e90a4f149bcca0f4b40ccb32d0b5e1aff5fde6a604e92251",

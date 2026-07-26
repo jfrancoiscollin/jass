@@ -89,7 +89,7 @@ une configuration héritée par les nouveaux bras.
 | causal profondeur | d10 frais, volume constant | `home-0971` / `home-0972` | **plateau : 48,80/51,00 % vs F2M** |
 | causal profondeur | d12 frais, volume constant | `home-0973` / `home-0974bis` | **régression Q00 établie : 45,85 %, −28,9 Elo vs F2M** |
 | causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
-| confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` | préenregistré ; 2 000 parties/cellule, aucune promotion automatique |
+| confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | `0979` échoue avant toute partie ; relance identique préparée |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -515,8 +515,10 @@ Q00/native, soit quatre estimations positives, mais aucune borne basse à 95 %
 au-dessus de 50 %. P3/P4 restent à 98/99 % et la couverture dépasse les deux
 contrôles.
 
-La seule suite autorisée est `home-0979`, confirmation indépendante du même
+La seule suite autorisée est la confirmation indépendante du même
 modèle sur 1 000 nouvelles ouvertures appariées, soit 2 000 parties par cellule
 contre M2 et F2M dans les deux vues. Le readout consolide ensuite 3 000 parties
-par cellule. Protocole :
+par cellule. `home-0979` a échoué techniquement avant la première partie sur une
+déclaration Bash incompatible avec `set -u`; `home-0980` est la relance propre
+avec protocole et pool inchangés. Protocole :
 [`experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md).

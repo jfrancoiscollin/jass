@@ -94,3 +94,16 @@ HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Le build est limité à
 Le pic attendu reste très inférieur à la RAM disponible. Le run exécute
 8 000 parties, sans fit, sans couverture et sans conversion ; ETA publiée :
 **40 à 55 minutes**.
+
+## Incident d'exécution sans donnée scientifique
+
+`home-0979` a authentifié les entrées, compilé le moteur et reconstruit le pool
+au SHA attendu, puis a échoué avant la première partie : sous `set -u`, la
+variable locale `opponent` était référencée dans la même déclaration Bash que
+son initialisation. Les deux workers Q00 ont donc produit zéro résultat.
+
+La correction sépare l'initialisation de `opponent` et celle de `pattern`, avec
+un test de régression dédié. La relance propre porte l'identifiant
+`home-0980-l3-pure-turnover-confirmation-v2`. Le modèle, le pool, les seuils et
+les quatre cellules restent strictement inchangés ; aucune donnée de `0979`
+n'est reprise.

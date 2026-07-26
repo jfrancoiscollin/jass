@@ -320,7 +320,8 @@ wait_all(){
   [ "$fail" -eq 0 ] || die "$label: $fail workers failed"
 }
 run_gate(){
-  local view="$1" opponent="$2" pattern="$W/$opponent.pjtw"
+  local view="$1" opponent="$2"
+  local pattern="$W/$opponent.pjtw"
   local args=()
   [ "$view" = q00 ] && args=(--depth "$FORCE_DEPTH") ||
     args=(--movetime "$MOVETIME")
