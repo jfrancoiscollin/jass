@@ -22,6 +22,11 @@ PREFLIGHT_RETRY_WRAPPER = (
     / "jobs/prepared/l3-pure-turnover-l2-20260726"
     / "home-0984bis-l3-pure-turnover-l2-preflight-v2.sh"
 )
+TRAIN_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-pure-turnover-l2-20260726"
+    / "home-0985-l3-pure-turnover-l2-train-v1.sh"
+)
 
 
 def embedded_python(path: Path) -> list[str]:
@@ -138,10 +143,15 @@ class TurnoverL2PreflightTests(unittest.TestCase):
             EVAL,
             PREFLIGHT_WRAPPER,
             PREFLIGHT_RETRY_WRAPPER,
+            TRAIN_WRAPPER,
         ):
             subprocess.run(["bash", "-n", str(script)], check=True)
             blocks = embedded_python(script)
-            if script not in (PREFLIGHT_WRAPPER, PREFLIGHT_RETRY_WRAPPER):
+            if script not in (
+                PREFLIGHT_WRAPPER,
+                PREFLIGHT_RETRY_WRAPPER,
+                TRAIN_WRAPPER,
+            ):
                 self.assertGreaterEqual(len(blocks), 3)
             for index, block in enumerate(blocks):
                 compile(block, f"{script}:heredoc-{index}", "exec")
@@ -257,6 +267,20 @@ class TurnoverL2PreflightTests(unittest.TestCase):
             "force-row completeness is W/D/L arithmetic",
             retry,
         )
+
+    def test_training_wrapper_pins_completed_preflight(self):
+        text = TRAIN_WRAPPER.read_text(encoding="utf-8")
+        for value in (
+            "home-0985-l3-pure-turnover-l2-train-v1",
+            "home-0984bis-l3-pure-turnover-l2-preflight-v2/"
+            "20260726T122615Z-5ef14ffe",
+            "home-0977-l3-pure-turnover1to1-train-v1/"
+            "20260726T071254Z-336bb984",
+            "home-0944-l3-pure-m1-train-resume-v3/"
+            "20260724T052619Z-faddc80a",
+            "NO_AUTOMATIC_CONTINUATION=1",
+        ):
+            self.assertIn(value, text)
 
 
 if __name__ == "__main__":

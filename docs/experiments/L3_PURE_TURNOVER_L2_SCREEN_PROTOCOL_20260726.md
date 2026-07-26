@@ -125,6 +125,20 @@ intentionnellement le booléen brut `complete`. La relance `home-0984bis`
 contrôle donc la complétude par `n=1000` et `wins_a+draws+wins_b=1000` pour
 chacune des huit cellules. Aucun critère scientifique ni budget n'est modifié.
 
+`home-0984bis` termine ensuite avec `TURNOVER_L2_PREFLIGHT_READY`. Le split
+reproduit contient 1 800 796 records train et 199 204 holdout ; son pic est
+919 896 KiB de RSS. Les mini-fits `1e-5` et `1e-4` passent dans l'environnement
+NumPy 1.26.4/SciPy 1.14.1. Le pool indépendant final est :
+
+```text
+seed=1836313
+records=500
+sha256=e7b89a5e3feade8919c8a498f424084deb0a2128c1712c9ca0a9547cf22b6df2
+r2:jass-data/runs/home-0984bis-l3-pure-turnover-l2-preflight-v2/20260726T122615Z-5ef14ffe
+```
+
+Le certificat ouvre uniquement l'entraînement `home-0985`, sans promotion.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à

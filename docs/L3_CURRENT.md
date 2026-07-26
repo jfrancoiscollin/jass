@@ -588,3 +588,11 @@ job. Ce préflight authentifie ensuite le corpus, le split, le contrôle
 `L2=3e-5`, l'environnement SciPy et le nouveau pool indépendant avant tout fit.
 Protocole :
 [`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).
+
+`home-0984bis` termine avec `TURNOVER_L2_PREFLIGHT_READY`. Le split TURNOVER
+est reconstruit deux fois à l'identique (1 800 796 train / 199 204 holdout),
+NumPy 1.26.4 et SciPy 1.14.1 sont isolés, les deux mini-fits passent et le pic
+du split reste à 919 896 KiB. Le nouveau pool indépendant contient 500
+ouvertures, seed `1836313`, SHA-256 `e7b89a5e…`, sans recouvrement. Le
+certificat autorise uniquement `home-0985`, qui fitte `L2=1e-5` et `L2=1e-4`
+en parallèle face au contrôle immuable `L2=3e-5`.
