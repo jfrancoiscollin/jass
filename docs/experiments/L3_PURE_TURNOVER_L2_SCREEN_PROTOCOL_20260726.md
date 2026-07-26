@@ -101,6 +101,23 @@ promotion_authorized=false
 automatic_next_job=null
 ```
 
+## Déclencheur observé
+
+`home-0983` a terminé avec exit code 0 et
+`REPLAY25_DOSE_CLOSED_REVIEW`. Les huit cellules de force contiennent chacune
+1 000 parties complètes. La cellule primaire REPLAY25/TURNOVER Q00 établit la
+régression attendue (`46,90 %`, IC95 `[43,83 ; 49,97]`) ; le résultat conserve
+`promotion_authorized=false` et `automatic_next_job=null`.
+
+Le préfixe immuable est :
+
+```text
+r2:jass-data/runs/home-0983-l3-pure-replay25-independent-eval-v1/20260726T112309Z-42b9af7e
+```
+
+Le déclencheur du préflight `home-0984` est donc satisfait. Cette observation
+ne modifie ni les niveaux L2, ni le corpus, ni la règle de décision ci-dessus.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à

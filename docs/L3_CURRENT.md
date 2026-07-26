@@ -20,7 +20,8 @@
 > pure_maturity_m0_complete_parent_c0_selected_for_m1;
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
-> turnover_1to1_effect_confirmed; replay25_preflight_next`.
+> turnover_1to1_effect_confirmed; replay25_dose_closed;
+> turnover_l2_screen_preflight_next`.
 
 ## 1. Architecture du programme
 
@@ -90,7 +91,7 @@ une configuration héritée par les nouveaux bras.
 | causal profondeur | d12 frais, volume constant | `home-0973` / `home-0974bis` | **régression Q00 établie : 45,85 %, −28,9 Elo vs F2M** |
 | causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
 | confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | **effet confirmé contre M2 ; pas de supériorité établie sur F2M** |
-| dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **REPLAY25 25/75 préenregistré ; préflight suivant** |
+| dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **dose 25/75 close : mieux que M2, moins bien que TURNOVER 50/50** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -561,19 +562,24 @@ uniquement le fit `home-0982`, sans promotion ni continuation automatique.
 en 156 itérations (`gradient_inf_norm=0,0008835 < gtol=0,001`), avec une loss
 holdout de 0,444145 et 1 414 848 KiB de RSS. Le modèle exact est
 `289047ff33c93f518ec8c853fb1c1ac8f7e3a4e52299277b314f0ac712022950`.
-Le readout `home-0983`, préparé avant ce résultat puis épinglé sur ce hash,
-réutilise le pool indépendant certifié de 500 ouvertures et compare REPLAY25
-à M2, TURNOVER 50/50, F2M et Gen2 dans les deux vues. Il réévalue aussi P3/P4
-avec défenseur fixe et la couverture exacte. Les quatre verdicts possibles
-restent ceux du protocole préenregistré ; même une revue champion conserve
-`promotion_authorized=false`.
+Le readout `home-0983` conclut `REPLAY25_DOSE_CLOSED_REVIEW`. Sur 1 000 parties
+indépendantes par cellule, REPLAY25 marque 51,25/53,90 % contre M2 en
+Q00/native, mais seulement 46,90/49,00 % contre TURNOVER 50/50. La régression
+Q00 face à TURNOVER est établie : IC95 `[43,83 ; 49,97]`. Face à F2M, il reste
+plat à 50,05/49,65 % ; la garde Gen2 reste positive à 56,95/58,35 %.
 
-La branche conditionnelle suivante est également figée avant le verdict final
-de `home-0983`. Si, et seulement si, celui-ci conclut
-`REPLAY25_DOSE_CLOSED_REVIEW` avec un résultat complet et des identités
-authentifiées, le facteur suivant sera un écran L2 `{1e-5, 3e-5, 1e-4}` sur
-l'unique corpus TURNOVER 50/50, sans nouvelle génération ni changement de
-replay. Le booléen agrégé `all_guardrails_pass` peut être faux dans cette
-branche, car il inclut la non-régression scientifique qui motive justement la
-clôture de REPLAY25. Protocole :
+La conversion reste saturée (97,67 % sur P3 et 99,33 % sur P4). La couverture
+est supérieure à M2 (209 626 contre 206 565 buckets visités), mais légèrement
+inférieure à TURNOVER (210 381). Le dosage 25/75 améliore donc bien le modèle
+100 % frais sans rejoindre le dosage 50/50 et sans dépasser F2M. Le résultat
+complet est publié sous :
+`r2:jass-data/runs/home-0983-l3-pure-replay25-independent-eval-v1/20260726T112309Z-42b9af7e`.
+Il conserve `promotion_authorized=false` et `automatic_next_job=null`.
+
+La branche conditionnelle figée avant ce verdict est donc ouverte. Le facteur
+suivant est l'écran L2 `{1e-5, 3e-5, 1e-4}` sur l'unique corpus TURNOVER 50/50,
+sans nouvelle génération ni changement de replay. Le préflight
+`home-0984-l3-pure-turnover-l2-preflight-v1` authentifie le résultat complet,
+le corpus, le split, le contrôle `L2=3e-5`, l'environnement SciPy et le nouveau
+pool indépendant avant tout fit. Protocole :
 [`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).

@@ -7,6 +7,11 @@ ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "jobs/templates/l3-pure-turnover-l2-preflight-v1.sh"
 TRAIN = ROOT / "jobs/templates/l3-pure-turnover-l2-train-v1.sh"
 EVAL = ROOT / "jobs/templates/l3-pure-turnover-l2-eval-v1.sh"
+PREFLIGHT_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-pure-turnover-l2-20260726"
+    / "home-0984-l3-pure-turnover-l2-preflight-v1.sh"
+)
 
 
 def embedded_python(path: Path) -> list[str]:
@@ -27,10 +32,11 @@ def embedded_python(path: Path) -> list[str]:
 
 class TurnoverL2PreflightTests(unittest.TestCase):
     def test_shell_and_embedded_python_contracts(self):
-        for script in (TEMPLATE, TRAIN, EVAL):
+        for script in (TEMPLATE, TRAIN, EVAL, PREFLIGHT_WRAPPER):
             subprocess.run(["bash", "-n", str(script)], check=True)
             blocks = embedded_python(script)
-            self.assertGreaterEqual(len(blocks), 3)
+            if script != PREFLIGHT_WRAPPER:
+                self.assertGreaterEqual(len(blocks), 3)
             for index, block in enumerate(blocks):
                 compile(block, f"{script}:heredoc-{index}", "exec")
 
@@ -102,6 +108,22 @@ class TurnoverL2PreflightTests(unittest.TestCase):
         self.assertIn('die "need 8 GiB free"', text)
         self.assertIn('die "need 3.5 GiB available RAM"', text)
         self.assertNotIn("--gen-selfplay", text)
+
+    def test_preflight_wrapper_pins_completed_trigger_and_controls(self):
+        text = PREFLIGHT_WRAPPER.read_text(encoding="utf-8")
+        for value in (
+            "home-0984-l3-pure-turnover-l2-preflight-v1",
+            "home-0983-l3-pure-replay25-independent-eval-v1/"
+            "20260726T112309Z-42b9af7e",
+            "home-0981ter-l3-pure-replay25-preflight-v1/"
+            "20260726T104130Z-01873c15",
+            "home-0977-l3-pure-turnover1to1-train-v1/"
+            "20260726T071254Z-336bb984",
+            "home-0980-l3-pure-turnover-confirmation-v2/"
+            "20260726T085020Z-aef92679",
+            "NO_AUTOMATIC_CONTINUATION=1",
+        ):
+            self.assertIn(value, text)
 
 
 if __name__ == "__main__":
