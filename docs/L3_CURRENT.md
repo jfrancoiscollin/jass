@@ -557,9 +557,13 @@ indépendant passent. La couverture compte 209 626 buckets visités et 28 166
 à fréquence ≥100. Le split culmine à 920 180 KiB de RSS. Le certificat autorise
 uniquement le fit `home-0982`, sans promotion ni continuation automatique.
 
-`home-0982` est lancé sur HOME. Le readout `home-0983` est préparé avant son
-résultat : il réutilise le pool indépendant certifié de 500 ouvertures et
-compare REPLAY25 à M2, TURNOVER 50/50, F2M et Gen2 dans les deux vues. Il
-réévalue aussi P3/P4 avec défenseur fixe et la couverture exacte. Les quatre
-verdicts possibles restent ceux du protocole préenregistré ; même une revue
-champion conserve `promotion_authorized=false`.
+`home-0982` termine avec `REPLAY25_TRAINING_SCREEN_READY`. Son L-BFGS converge
+en 156 itérations (`gradient_inf_norm=0,0008835 < gtol=0,001`), avec une loss
+holdout de 0,444145 et 1 414 848 KiB de RSS. Le modèle exact est
+`289047ff33c93f518ec8c853fb1c1ac8f7e3a4e52299277b314f0ac712022950`.
+Le readout `home-0983`, préparé avant ce résultat puis épinglé sur ce hash,
+réutilise le pool indépendant certifié de 500 ouvertures et compare REPLAY25
+à M2, TURNOVER 50/50, F2M et Gen2 dans les deux vues. Il réévalue aussi P3/P4
+avec défenseur fixe et la couverture exacte. Les quatre verdicts possibles
+restent ceux du protocole préenregistré ; même une revue champion conserve
+`promotion_authorized=false`.

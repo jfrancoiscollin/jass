@@ -103,6 +103,16 @@ exécute huit cellules de force : quatre adversaires en Q00 d9 et les mêmes
 quatre à cadence native. Les contrôles de conversion et couverture sont les
 artefacts immuables du readout TURNOVER ; seul REPLAY25 est recalculé.
 
+`home-0982` termine ensuite avec
+`REPLAY25_TRAINING_SCREEN_READY`. Le fit utilise exactement les 2 000 000
+records certifiés, converge en 156 itérations (`gradient_inf_norm=0,0008835`
+pour `gtol=0,001`) et donne une loss holdout de `0,444145`. Le pic RSS est
+1 414 848 KiB. Le modèle exact est
+`289047ff33c93f518ec8c853fb1c1ac8f7e3a4e52299277b314f0ac712022950`;
+son résultat immuable est
+`r2:jass-data/runs/home-0982-l3-pure-replay25-train-v1/20260726T104933Z-87012934`.
+Ce certificat autorise uniquement le readout `home-0983`.
+
 ## Règles de décision préenregistrées
 
 - **Revue champion** : bornes basses à 95 % au-dessus de 50 % contre M2,

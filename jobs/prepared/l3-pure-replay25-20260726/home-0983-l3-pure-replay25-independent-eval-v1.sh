@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # id: home-0983-l3-pure-replay25-independent-eval-v1
-# Draft until the exact completed home-0982 model/result prefix is pinned.
+# Exact independent readout of the completed home-0982 REPLAY25 fit.
 set -Eeuo pipefail
 : "${EXPECTED_CODE_SHA:?set reviewed merged SHA}"
-: "${TRAIN_PREFIX:?set completed home-0982 result prefix}"
-: "${EXPECTED_CANDIDATE_MODEL_SHA256:?set completed home-0982 model SHA}"
-: "${EXPECTED_CANDIDATE_CORPUS_SHA256:?set completed home-0982 corpus SHA}"
 export JASS_OBJSTORE_REMOTE="${JASS_OBJSTORE_REMOTE:-r2:jass-data}"
 export EXPECTED_JOB_ID="home-0983-l3-pure-replay25-independent-eval-v1"
+export TRAIN_PREFIX="r2:jass-data/runs/home-0982-l3-pure-replay25-train-v1/20260726T104933Z-87012934"
 export EXPECTED_TRAIN_JOB="home-0982-l3-pure-replay25-train-v1"
+export EXPECTED_CANDIDATE_MODEL_SHA256="289047ff33c93f518ec8c853fb1c1ac8f7e3a4e52299277b314f0ac712022950"
+export EXPECTED_CANDIDATE_CORPUS_SHA256="29c5b99d15da160132c6ede388065844b53503aebf8e44cac6d76f99ffdde56e"
 export PREFLIGHT_PREFIX="r2:jass-data/runs/home-0981ter-l3-pure-replay25-preflight-v1/20260726T104130Z-01873c15"
 export EXPECTED_PREFLIGHT_JOB="home-0981ter-l3-pure-replay25-preflight-v1"
 export TURNOVER_TRAIN_PREFIX="r2:jass-data/runs/home-0977-l3-pure-turnover1to1-train-v1/20260726T071254Z-336bb984"

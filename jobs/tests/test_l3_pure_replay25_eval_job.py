@@ -79,14 +79,22 @@ class Replay25EvalJobTests(unittest.TestCase):
         self.assertIn('NSH_GATE=16', text)
         self.assertIn('PAR_GATE=4', text)
 
-    def test_wrapper_is_draft_until_training_is_completed(self):
+    def test_wrapper_pins_completed_training(self):
         text = WRAPPER.read_text(encoding="utf-8")
         self.assertIn(
-            ': "${TRAIN_PREFIX:?set completed home-0982 result prefix}"',
+            'export TRAIN_PREFIX="r2:jass-data/runs/'
+            'home-0982-l3-pure-replay25-train-v1/'
+            '20260726T104933Z-87012934"',
             text,
         )
         self.assertIn(
-            ': "${EXPECTED_CANDIDATE_MODEL_SHA256:?set completed home-0982 model SHA}"',
+            'export EXPECTED_CANDIDATE_MODEL_SHA256="'
+            '289047ff33c93f518ec8c853fb1c1ac8f7e3a4e52299277b314f0ac712022950"',
+            text,
+        )
+        self.assertIn(
+            'export EXPECTED_CANDIDATE_CORPUS_SHA256="'
+            '29c5b99d15da160132c6ede388065844b53503aebf8e44cac6d76f99ffdde56e"',
             text,
         )
         self.assertIn(

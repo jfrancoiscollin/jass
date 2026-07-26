@@ -275,6 +275,11 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   l'équivalence : TURNOVER n'est pas un nouveau champion. La mémoire temporelle
   est néanmoins un levier causal confirmé ; le facteur suivant préenregistré
   est REPLAY25, 500k positions époque F2M + 1,5M époque M2 à volume constant.
+- **REPLAY25 `0981→0983` :** le préflight autoritatif `0981ter` certifie le mix
+  25/75, son split par ouverture et le pool indépendant. `0982` converge
+  réellement en 156 itérations sur 2M records (`gradient_inf_norm=0,0008835`,
+  loss holdout 0,444145) et publie le modèle `289047ff…`, sans promotion.
+  `0983` est le readout indépendant réservé contre M2, TURNOVER, F2M et Gen2.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
