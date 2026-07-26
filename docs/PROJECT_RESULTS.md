@@ -1,7 +1,7 @@
 # Jass — synthèse consolidée des résultats du projet
 
 > **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
-> **Mis à jour :** 2026-07-23
+> **Mis à jour :** 2026-07-26
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)
@@ -254,6 +254,15 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   171 contre 17 en défense. 0890bis reste fermé ; seule une ablation `2 × 2`
   départ standard/TOP3 × reweighting off/on, à volume identique, peut attribuer
   la cause fine.
+- **Maturité F2M/M2 `0964→0974bis` :** F2M est confirmé puis promu humainement
+  champion L3-PURE et général ; il bat Gen2 à 57,25 % Q00 et 58,60 % native.
+  Une continuation M2 d8 sur 2M positions fraîches est plate contre F2M
+  (50,60/49,05 %). Les bras appariés d10 et d12 ne créent aucune pente :
+  d10 fait 48,80/51,00 %, d12 45,85/46,95 %. À d12, la régression Q00 est
+  établie (−28,9 Elo) alors que la loss holdout s'améliore. L'escalade de
+  profondeur fraîche est donc close ; le mix d10/d12 reste interdit par son
+  garde-fou strict. Le facteur actif suivant est le turnover temporel 1:1 à
+  volume constant, pas davantage de profondeur.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
@@ -349,6 +358,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | TB exceptions dans l'éval | B4 finale +1 Elo neutre | corpus exact ne transfère pas via ce fit | autre objectif ou représentation, fork séparé |
 | chaîne autour de gen2-mmto | 0650–0656 asymptote négative | professeur interne plus faible que le point Scan-tuné | lignée indépendante ne partant pas de gen2 |
 | frontière mobile v1 (25 % seeds G2/G3) | C0 `0795` : Δconv global −0,023, P3 −0,070, IC recouvrant 0 ; B vs A 0,555 | pas de gain de conversion à budget apparié | autre mécanisme de curriculum que le re-seed de frontière matérielle |
+| continuation fraîche F2M, d8→d10→d12 à 2M | `0970bis` 50,60/49,05 %, `0972` 48,80/51,00 %, `0974bis` 45,85/46,95 % contre F2M Q00/native ; d12 Q00 −28,9 Elo établi malgré loss 0,427862 | plus de profondeur sur 2M frais n'améliore pas la force et finit par rétrécir la distribution | changer un seul facteur de distribution/mémoire à volume et d8 constants |
 | pondération role-aware V2 vs globale V1 (imbalance2, @P1 d8) | `0853`→`0857` : pools communs A64/B64 (n=1151/1152, seed 161803, boot 10 k), ΔV2−V1 = −0,013 < 0,02, IC apparié [−0,061 ; +0,035] straddle 0 → `V2_NO_CLEAR_LEAD_AT_P1` ; les deux `STILL_IMPROVING_OR_UNSTABLE` | pas de lead **mesuré** à P1 ; **non close** — V2 retenue (crédit défensif explicite, sémantiquement préférable, décision JFC 20/07) et escaladée P2 | séparation ou plateau V1/V2 en profondeur P2-P4 (d10→d14) — escalade en cours |
 
 ## 6. Résultats supersédés ou invalides

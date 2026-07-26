@@ -50,7 +50,7 @@ class D10CausalTrainingContractTests(unittest.TestCase):
         self.assertIn("d10.pjtw.gz", template)
         self.assertIn("d10-fresh-2m.jnnw.gz", template)
         self.assertIn("d10-fresh-2m.jsm.gz", template)
-        self.assertIn('"play_depth": int(play_depth)', template)
+        self.assertIn('"play_depth": corpus["play_depth"]', template)
         self.assertIn('"experiment_variant": experiment_variant', template)
         self.assertIn("PROMOTION_AUTHORIZED__FALSE", template)
         self.assertIn("AUTOMATIC_NEXT_JOB__NULL", template)

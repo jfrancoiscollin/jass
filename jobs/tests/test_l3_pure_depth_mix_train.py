@@ -44,7 +44,10 @@ class L3PureDepthMixTrainingTests(unittest.TestCase):
         self.assertIn('get("selected_records") != 333_333', text)
         self.assertIn("opening identities are not sufficiently aligned", text)
         self.assertIn('"depth_distribution_records": (', text)
-        self.assertIn('"historical_replay_records": 0', text)
+        self.assertIn(
+            '"historical_replay_records": 1_000_000 if is_turnover else 0',
+            text,
+        )
 
     def test_trigger_is_fail_closed_on_flat_d12_only(self):
         text = TEMPLATE.read_text(encoding="utf-8")

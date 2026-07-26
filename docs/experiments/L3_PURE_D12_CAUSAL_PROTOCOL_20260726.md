@@ -121,3 +121,36 @@ scellement avait avancé `develop` à
 cette tentative n'est réutilisable. La relance réservée est
 `home-0974bis-l3-pure-d12-causal-independent-eval-v1`, avec les mêmes
 entrées scientifiques et le SHA de code corrigé `4d10d40d...`.
+
+## Verdict final 0974bis
+
+La relance autoritative `home-0974bis` a terminé avec le code 0. Son préfixe
+immuable est
+`r2:jass-data/runs/home-0974bis-l3-pure-d12-causal-independent-eval-v1/20260726T054944Z-4d10d40d`
+et son verdict est `D12_PLATEAU_OR_REGRESSION_REVIEW`.
+
+| Match D12 | Q00 | native |
+|---|---:|---:|
+| contre D10 | 48,50 %, −10,43 Elo | 49,05 %, −6,60 Elo |
+| contre F2M | **45,85 %, −28,90 Elo** | 46,95 %, −21,22 Elo |
+| contre Gen2 | 53,70 %, +25,76 Elo | 56,15 %, +42,95 Elo |
+
+La régression Q00 contre F2M est établie : IC95 `[42,79 % ; 48,91 %]`.
+La conversion reste saturée à 99,00 % sur P3 et P4. La couverture recule face
+à D10 de 2 688 buckets visités et de 160 buckets vus au moins 100 fois.
+
+Le seul garde-fou faux est
+`f2m_q00_regression_not_established`; tous les garde-fous techniques,
+conversion, couverture et Gen2 passent. Par conséquent
+`all_guardrails_pass=false`, `promotion_authorized=false` et
+`automatic_next_job=null`.
+
+Ce résultat ferme la simple escalade monoprofondeur d8 → d10 → d12. Il
+n'autorise pas le mix d10/d12 préenregistré : son déclencheur strict exigeait
+**tous** les garde-fous d12 valides. La loss holdout s'améliore pourtant de
+`0,444311` à d8, `0,443257` à d10 puis `0,427862` à d12, tandis que la force
+stagne puis régresse. Le résidu est donc un problème de transfert/distribution,
+pas une justification pour pousser encore la profondeur.
+
+Le facteur suivant est préenregistré séparément dans
+[`L3_PURE_TURNOVER_PROTOCOL_20260726.md`](L3_PURE_TURNOVER_PROTOCOL_20260726.md).

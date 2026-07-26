@@ -159,6 +159,50 @@ class SelfplayFrontierTests(unittest.TestCase):
                     manifest=None,
                 ))
 
+    def test_mix_can_namespace_unrelated_opening_ids_by_source(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31), bm=bits(10), score=1, wdl=1),
+                record(wm=bits(32), bm=bits(11), score=2, wdl=-1),
+            ]
+            parent = self.write_pair(
+                root,
+                "parent",
+                records,
+                [SF.Meta(1, 7, 0), SF.Meta(2, 8, 0)],
+            )
+            fresh = self.write_pair(
+                root,
+                "fresh",
+                records,
+                [SF.Meta(1, 7, 0), SF.Meta(2, 8, 0)],
+            )
+            out_data, out_meta = root / "mix.jnnw", root / "mix.jsm"
+            manifest = root / "mix.json"
+            rc = SF.do_mix(Namespace(
+                source=[
+                    ["PARENT", str(parent[0]), str(parent[1]), "1"],
+                    ["FRESH", str(fresh[0]), str(fresh[1]), "1"],
+                ],
+                target_records=4,
+                seed=141421,
+                out_data=str(out_data),
+                out_meta=str(out_meta),
+                manifest=str(manifest),
+                namespace_openings=True,
+            ))
+            self.assertEqual(rc, 0)
+            _, rows = SF.read_pair(out_data, out_meta)
+            self.assertEqual({row.opening_id >> 56 for row in rows}, {1, 2})
+            self.assertEqual(len({row.opening_id for row in rows}), 4)
+            payload = json.loads(manifest.read_text())
+            self.assertEqual(
+                payload["opening_id_policy"],
+                "source_namespaced_for_independent_temporal_corpora",
+            )
+            self.assertEqual(payload["source_opening_id_overlaps"]["PARENT__FRESH"], 2)
+
     def test_split_keeps_paired_opening_together_and_in_tail(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

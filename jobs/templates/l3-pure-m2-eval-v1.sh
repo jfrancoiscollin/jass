@@ -102,6 +102,18 @@ case "$EVAL_VARIANT" in
       [ "$OPENING_SEED" != 424243 ] ||
       die "depth-mix evaluation requires a fresh opening seed"
     ;;
+  TURNOVER)
+    CANDIDATE_LABEL=TURNOVER
+    : "${EXPECTED_CANDIDATE_JOB:?}"
+    : "${D8_M2_PREFIX:?}"; : "${EXPECTED_M2_D8_JOB:?}"
+    : "${EXPECTED_M2_D8_CODE_SHA:?}"
+    : "${M2_EVAL_PREFIX:?}"; : "${EXPECTED_M2_EVAL_JOB:?}"
+    : "${D12_EVAL_PREFIX:?}"; : "${EXPECTED_D12_EVAL_JOB:?}"
+    : "${EXPECTED_D12_OPENING_SHA256:?}"; : "${EXPECTED_OPENING_SHA256:?}"
+    [ "$OPENING_SEED" != 244949 ] && [ "$OPENING_SEED" != 314159 ] &&
+      [ "$OPENING_SEED" != 424243 ] ||
+      die "turnover evaluation requires a fresh opening seed"
+    ;;
   *) die "unsupported evaluation variant: $EVAL_VARIANT" ;;
 esac
 [ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
@@ -122,16 +134,20 @@ wait_all(){
 }
 
 stage fetch-and-verify-immutable-inputs
+candidate_corpus_artifact=artefacts/m2-fresh-2m.jnnw.gz
+[ "$EVAL_VARIANT" != TURNOVER ] ||
+  candidate_corpus_artifact=artefacts/turnover1to1.jnnw.gz
 python3 jobs/tools/fetch_result_files.py --prefix "$M2_PREFIX" \
   --file artefacts/m2.pjtw.gz=m2.pjtw.gz \
-  --file artefacts/m2-fresh-2m.jnnw.gz=m2.jnnw.gz \
+  --file "$candidate_corpus_artifact"=m2.jnnw.gz \
   --file artefacts/JASS_CONTROL_SUMMARY.json=m2-training.json \
   --out-dir "$IN" --report "$ART/verified-m2.json" > "$W/fetch-m2.log" 2>&1
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   python3 jobs/tools/fetch_result_files.py --prefix "$D8_M2_PREFIX" \
     --file artefacts/m2.pjtw.gz=d8-m2.pjtw.gz \
     --file artefacts/m2-fresh-2m.jnnw.gz=d8-m2.jnnw.gz \
     --file artefacts/JASS_CONTROL_SUMMARY.json=d8-m2-training.json \
+    --file artefacts/m2-corpus-contract.json=d8-m2-corpus-contract.json \
     --out-dir "$IN" --report "$ART/verified-d8-m2.json" \
     > "$W/fetch-d8-m2.log" 2>&1
   python3 jobs/tools/fetch_result_files.py --prefix "$M2_EVAL_PREFIX" \
@@ -178,6 +194,13 @@ elif [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
     --out-dir "$IN" --report "$ART/verified-d12-evaluation.json" \
     > "$W/fetch-d12-evaluation.log" 2>&1
 fi
+if [ "$EVAL_VARIANT" = TURNOVER ]; then
+  python3 jobs/tools/fetch_result_files.py --prefix "$D12_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d12-evaluation.json \
+    --file artefacts/independent-openings-manifest.json=d12-openings.json \
+    --out-dir "$IN" --report "$ART/verified-d12-evaluation.json" \
+    > "$W/fetch-d12-evaluation.log" 2>&1
+fi
 python3 jobs/tools/fetch_result_files.py --prefix "$M1_PREFIX" \
   --file artefacts/f2m.pjtw.gz=f2m.pjtw.gz \
   --file artefacts/common-fresh-500k.jnnw.gz=f2m-common.jnnw.gz \
@@ -202,7 +225,7 @@ gunzip -c "$IN/m2.pjtw.gz" > "$W/$CANDIDATE_LABEL.pjtw"
 gunzip -c "$IN/f2m.pjtw.gz" > "$W/F2M.pjtw"
 gunzip -c "$IN/gen2.pjtw.gz" > "$W/GEN2.pjtw"
 gunzip -c "$IN/m2.jnnw.gz" > "$W/$CANDIDATE_LABEL.jnnw"
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   gunzip -c "$IN/d8-m2.pjtw.gz" > "$W/M2.pjtw"
   gunzip -c "$IN/d8-m2.jnnw.gz" > "$W/M2.jnnw"
   cp "$IN/M2-p3_mince.json" "$ART/conversion/M2-p3_mince.json"
@@ -237,7 +260,7 @@ cp "$IN/F2M-p4_egal.json" "$ART/conversion/F2M-p4_egal.json"
   die "$CANDIDATE_LABEL corpus hash drift"
 [ "$(jnnw_count "$W/$CANDIDATE_LABEL.jnnw")" -eq 2000000 ] ||
   die "$CANDIDATE_LABEL corpus count drift"
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   [ "$(sha256sum "$W/M2.pjtw"|awk '{print $1}')" = "$D8_M2_SHA" ] ||
     die "D8 M2 hash drift"
   [ "$(sha256sum "$W/M2.jnnw"|awk '{print $1}')" = "$D8_M2_CORPUS_SHA" ] ||
@@ -311,7 +334,19 @@ if variant == "DEPTH_MIX" and (
     or training.get("new_generation_performed") is not False
 ):
     raise SystemExit("depth-mix training contract mismatch")
-if variant in {"D12_CAUSAL", "DEPTH_MIX"} and (
+if variant == "TURNOVER" and (
+    training.get("experiment_variant") != "TURNOVER_1_1"
+    or training.get("play_depth") != 8
+    or training.get("training_records") != 2_000_000
+    or training.get("fresh_only") is not False
+    or training.get("historical_replay_records") != 1_000_000
+    or training.get("fresh_records") != 1_000_000
+    or training.get("temporal_distribution_records")
+    != {"fresh_m2": 1_000_000, "parent_f2m": 1_000_000}
+    or training.get("new_generation_performed") is not False
+):
+    raise SystemExit("turnover training contract mismatch")
+if variant in {"D12_CAUSAL", "DEPTH_MIX", "TURNOVER"} and (
     report.get("job_id") != expected_candidate_job
 ):
     raise SystemExit("candidate training source job mismatch")
@@ -435,7 +470,98 @@ if (
 if openings.get("sha256") != d12_opening_sha:
     raise SystemExit("D12 independent opening manifest hash mismatch")
 PY
+elif [ "$EVAL_VARIANT" = TURNOVER ]; then
+  python3 - "$IN/d8-m2-training.json" "$IN/d8-m2-corpus-contract.json" \
+    "$IN/m2-evaluation.json" \
+    "$IN/m2-openings.json" "$IN/d12-evaluation.json" "$IN/d12-openings.json" \
+    "$ART/verified-d8-m2.json" "$ART/verified-m2-evaluation.json" \
+    "$ART/verified-d12-evaluation.json" "$EXPECTED_M2_D8_JOB" \
+    "$EXPECTED_M2_EVAL_JOB" "$EXPECTED_D12_EVAL_JOB" \
+    "$EXPECTED_D12_OPENING_SHA256" "$EXPECTED_M2_D8_CODE_SHA" <<'PY'
+import json, sys
+
+(
+    m2, m2_contract, m2_evaluation, m2_openings, d12_evaluation, d12_openings,
+    m2_report, m2_eval_report, d12_eval_report,
+) = (json.load(open(path)) for path in sys.argv[1:10])
+(
+    m2_job, m2_eval_job, d12_eval_job, d12_opening_sha, m2_code_sha,
+) = sys.argv[10:]
+for report, expected_job, label in (
+    (m2_report, m2_job, "M2 training"),
+    (m2_eval_report, m2_eval_job, "M2 evaluation"),
+    (d12_eval_report, d12_eval_job, "D12 evaluation"),
+):
+    if (
+        report.get("result_state") != "completed"
+        or report.get("job_id") != expected_job
+    ):
+        raise SystemExit(f"{label} source identity/state mismatch")
+if (
+    m2.get("code_sha") != m2_code_sha
+    or m2.get("model_sha256")
+    != "75ace3c0ad2ffa2b71a9b9073c3c1d1545164e3a5a048e411e91adba23ec3b45"
+    or m2.get("training_corpus_sha256")
+    != "ee8d685cea331940403da82830d7b4cc045fe50acc1e5764d23f0467d4f7ffb8"
+    or m2.get("fresh_only") is not True
+    or m2.get("training_records") != 2_000_000
+    or m2_contract.get("jnnw_sha256")
+    != "ee8d685cea331940403da82830d7b4cc045fe50acc1e5764d23f0467d4f7ffb8"
+    or m2_contract.get("jsm_sha256")
+    != "42b184456375bb581192651262f3981879bd04e5ee3162a6186883c2f8f66729"
+    or m2_contract.get("records") != 2_000_000
+    or m2_contract.get("parent") != "F2M"
+    or m2_contract.get("fresh_only") is not True
+    or m2_contract.get("historical_replay_records") != 0
+    or m2_contract.get("base_seed") != 1_618_033
+    or m2_contract.get("starts") != "standard"
+    or m2_contract.get("top3") is not False
+    or m2_contract.get("role_reweight_v2") is not False
+    or m2_contract.get("geometry") != "8cf"
+    or m2_contract.get("search") != "Q00"
+):
+    raise SystemExit("M2 d8 legacy fresh-only control certificate mismatch")
+if (
+    m2_evaluation.get("verdict") != "M2_PLATEAU_OR_REGRESSION_REVIEW"
+    or m2_evaluation.get("recommendation")
+    != "stop_same_recipe_and_prepare_d10_causal_arm"
+    or m2_evaluation.get("all_guardrails_pass") is not True
+    or m2_evaluation.get("training_summary", {}).get("model_sha256")
+    != m2.get("model_sha256")
+):
+    raise SystemExit("M2 plateau certificate mismatch")
+if m2_openings.get("sha256") != (
+    "9a0e46be89655ada7317440e3539b8583ab3d7fe83e400475ae817e77396313c"
+):
+    raise SystemExit("M2 independent opening manifest hash mismatch")
+failed = sorted(
+    key for key, value in d12_evaluation.get("guardrails", {}).items() if not value
+)
+if (
+    d12_evaluation.get("verdict") != "D12_PLATEAU_OR_REGRESSION_REVIEW"
+    or d12_evaluation.get("recommendation")
+    != "stop_single_depth_escalation_and_prepare_distribution_factor"
+    or d12_evaluation.get("all_guardrails_pass") is not False
+    or failed != ["f2m_q00_regression_not_established"]
+):
+    raise SystemExit("D12 depth-factor closure certificate mismatch")
+if d12_openings.get("sha256") != d12_opening_sha:
+    raise SystemExit("D12 independent opening manifest hash mismatch")
+PY
 fi
+python3 -m py_compile jobs/tools/l3_turnover_evaluation.py \
+  tools/selfplay_frontier.py
+if [ "$EVAL_VARIANT" = TURNOVER ]; then
+  python3 -m unittest jobs.tests.test_l3_turnover_evaluation \
+    > "$W/test-turnover-evaluation.log" 2>&1
+fi
+for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
+  src/movegen.cpp src/movegen.hpp; do
+  git show "${EXPECTED_CODE_SHA}:$source" > "$source"
+done
+grep -q "g_emasks" src/scan_eval.cpp || die "8cf build lacks g_emasks"
+grep -q "has_any_capture" src/search.cpp || die "search lacks has_any_capture"
+grep -q "has_any_capture" src/movegen.cpp || die "movegen lacks has_any_capture"
 git diff --quiet "$CHAMPION_CODE_SHA" HEAD -- src pattern_jass/tools ||
   die "engine semantics changed since the symmetric F2M/Gen2 benchmark"
 git diff --quiet "$MATRIX_CODE_SHA" HEAD -- src pattern_jass/tools ||
@@ -505,7 +631,8 @@ if [ "$EVAL_VARIANT" != M2_STANDARD ]; then
     "$M2_INDEPENDENT_OPENINGS_SHA" ] ||
     die "reconstructed M2 independent opening pool hash drift"
 fi
-if [ "$EVAL_VARIANT" = D12_CAUSAL ] || [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
+if [ "$EVAL_VARIANT" = D12_CAUSAL ] || [ "$EVAL_VARIANT" = DEPTH_MIX ] ||
+  [ "$EVAL_VARIANT" = TURNOVER ]; then
   "$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
     "$W/prior-d10-candidates.fen" 8 32 20 314159 \
     > "$W/open-prior-d10.log" 2>&1
@@ -526,7 +653,7 @@ if [ "$EVAL_VARIANT" = D12_CAUSAL ] || [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
     "$D10_INDEPENDENT_OPENINGS_SHA" ] ||
     die "reconstructed D10 independent opening pool hash drift"
 fi
-if [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
+if [ "$EVAL_VARIANT" = DEPTH_MIX ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   "$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
     "$W/prior-d12-candidates.fen" 8 32 20 424243 \
     > "$W/open-prior-d12.log" 2>&1
@@ -562,9 +689,10 @@ opening_args=(
 )
 [ "$EVAL_VARIANT" = M2_STANDARD ] ||
   opening_args+=(--exclude "$W/prior-m2-independent.fen")
-[ "$EVAL_VARIANT" != D12_CAUSAL ] && [ "$EVAL_VARIANT" != DEPTH_MIX ] ||
+[ "$EVAL_VARIANT" != D12_CAUSAL ] && [ "$EVAL_VARIANT" != DEPTH_MIX ] &&
+  [ "$EVAL_VARIANT" != TURNOVER ] ||
   opening_args+=(--exclude "$W/prior-d10-independent.fen")
-[ "$EVAL_VARIANT" != DEPTH_MIX ] ||
+[ "$EVAL_VARIANT" != DEPTH_MIX ] && [ "$EVAL_VARIANT" != TURNOVER ] ||
   opening_args+=(--exclude "$W/prior-d12-independent.fen")
 python3 jobs/tools/select_independent_opening_pool.py "${opening_args[@]}" \
   --generator-seed "$OPENING_SEED" --out "$W/open-eval.fen" \
@@ -582,6 +710,10 @@ elif [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
   [ "$(sha256sum "$W/open-eval.fen"|awk '{print $1}')" = \
     "$EXPECTED_OPENING_SHA256" ] ||
     die "depth-mix independent opening pool hash drift"
+elif [ "$EVAL_VARIANT" = TURNOVER ]; then
+  [ "$(sha256sum "$W/open-eval.fen"|awk '{print $1}')" = \
+    "$EXPECTED_OPENING_SHA256" ] ||
+    die "turnover independent opening pool hash drift"
 fi
 
 stage exact-corpus-coverage
@@ -592,7 +724,7 @@ env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py
   --data "$W/$CANDIDATE_LABEL.jnnw" \
   --out "$ART/coverage/$CANDIDATE_LABEL-coverage.json" \
   > "$W/coverage-$CANDIDATE_LABEL.log" 2>&1
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py \
     --data "$W/M2.jnnw" \
     --out "$ART/coverage/M2-coverage.json" > "$W/coverage-M2.log" 2>&1
@@ -629,7 +761,7 @@ run_gate(){
 }
 stage force-q00
 run_gate q00 F2M & p_f2m=$!; run_gate q00 GEN2 & p_gen2=$!
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   run_gate q00 M2 & p_control=$!
   wait_all "Q00 force wave" "$p_f2m" "$p_gen2" "$p_control"
 elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
@@ -644,7 +776,7 @@ else
 fi
 stage force-native
 run_gate native F2M & p_f2m=$!; run_gate native GEN2 & p_gen2=$!
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" = D10_CAUSAL ] || [ "$EVAL_VARIANT" = TURNOVER ]; then
   run_gate native M2 & p_control=$!
   wait_all "native force wave" "$p_f2m" "$p_gen2" "$p_control"
 elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
@@ -726,6 +858,23 @@ elif [ "$EVAL_VARIANT" = DEPTH_MIX ]; then
     --summary-out "$ART/JASS_CONTROL_SUMMARY.json" \
     > "$W/aggregate.log" 2>&1
   VERDICT_SOURCE="$ART/depth-mix-evaluation.json"
+elif [ "$EVAL_VARIANT" = TURNOVER ]; then
+  python3 jobs/tools/l3_turnover_evaluation.py \
+    --force-dir "$ART/force" --conversion-dir "$ART/conversion" \
+    --coverage-dir "$ART/coverage" \
+    --training-summary "$IN/m2-training.json" \
+    --m2-training-summary "$IN/d8-m2-training.json" \
+    --m2-corpus-contract "$IN/d8-m2-corpus-contract.json" \
+    --m2-evaluation "$IN/m2-evaluation.json" \
+    --d12-evaluation "$IN/d12-evaluation.json" \
+    --opening-manifest "$ART/independent-openings-manifest.json" \
+    --expected-opening-seed "$OPENING_SEED" \
+    --expected-opening-sha256 "$EXPECTED_OPENING_SHA256" \
+    --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
+    --out "$ART/turnover-evaluation.json" \
+    --summary-out "$ART/JASS_CONTROL_SUMMARY.json" \
+    > "$W/aggregate.log" 2>&1
+  VERDICT_SOURCE="$ART/turnover-evaluation.json"
 else
   python3 jobs/tools/l3_m2_evaluation.py \
     --force-dir "$ART/force" --conversion-dir "$ART/conversion" \

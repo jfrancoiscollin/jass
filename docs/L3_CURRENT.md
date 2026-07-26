@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 24 juillet 2026**
+> **Mis à jour : 26 juillet 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -17,7 +17,10 @@
 > top3_specialist_recipe_failure_localized_factors_confounded;
 > conversion_2x2_cap_discovery_complete_three_caps;
 > conversion_2x2_finalizer_home_ready;
-> pure_maturity_m0_complete_parent_c0_selected_for_m1`.
+> pure_maturity_m0_complete_parent_c0_selected_for_m1;
+> f2m_general_champion; m2_d8_plateau; d10_plateau;
+> d12_q00_regression; depth_mix_trigger_blocked;
+> turnover_1to1_preregistered`.
 
 ## 1. Architecture du programme
 
@@ -82,6 +85,10 @@ une configuration héritée par les nouveaux bras.
 | maturité M1 | F500/F2M/R2M + confirmation | `home-0963` / `home-0964` | **F2M champion L3-PURE** |
 | champion général | F2M vs Gen2, moteur réparé symétrique | `home-0965` | **F2M nouveau champion général** |
 | maturité M2 | 2M frais depuis F2M | `home-0966bis` | relance après séparation des builds test/EGDB, sans promotion automatique |
+| maturité M2 | readout d8 frais | `home-0970bis` | **plateau : 50,60/49,05 % vs F2M Q00/native** |
+| causal profondeur | d10 frais, volume constant | `home-0971` / `home-0972` | **plateau : 48,80/51,00 % vs F2M** |
+| causal profondeur | d12 frais, volume constant | `home-0973` / `home-0974bis` | **régression Q00 établie : 45,85 %, −28,9 Elo vs F2M** |
+| causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | préenregistré ; aucun job encore lancé |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -482,3 +489,19 @@ couverture recule de 4 864 buckets visités face à M2. Le prochain bras causal
 est donc d12 pur à 2M, toujours depuis F2M avec les mêmes seeds ; seul le
 facteur profondeur change. Protocole :
 [`experiments/L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md`](experiments/L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md).
+
+`home-0974bis` conclut `D12_PLATEAU_OR_REGRESSION_REVIEW`. D12 fait
+48,50/49,05 % contre D10 et 45,85/46,95 % contre F2M en Q00/native. La
+régression Q00 contre F2M est établie (IC95 supérieur 48,91 %), alors que la
+loss holdout tombe à 0,427862 et que P3/P4 restent à 99 %. La profondeur
+monoprofondeur améliore donc le fit offline sans transférer en force. Le mix
+d10/d12 `0975/0976` reste interdit : son déclencheur exigeait tous les
+garde-fous verts.
+
+Le facteur suivant est le turnover temporel à volume constant : 1M positions
+de l'époque F2M + 1M positions fraîches de M2, même parent, d8, 8cf, Q00, WDL,
+split et fit. Le corpus a été reconstruit deux fois bit-identique, avec des IDs
+d'ouverture namespacés par source ; SHA JNNW `9b7db67a…`, JSM `acf3bbf4…`.
+Sa couverture diagnostique est 210 381 buckets visités et 28 160 à fréquence
+≥100. Protocole :
+[`experiments/L3_PURE_TURNOVER_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_PROTOCOL_20260726.md).

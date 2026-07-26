@@ -94,6 +94,18 @@ case "$EXPERIMENT_VARIANT:$PLAY_DEPTH" in
     : "${D12_EVAL_PREFIX:?}"; : "${EXPECTED_D12_EVAL_JOB:?}"
     : "${EXPECTED_MIX_CORPUS_SHA256:?}"; : "${EXPECTED_MIX_META_SHA256:?}"
     ;;
+  TURNOVER_1_1:8)
+    [ "${TURNOVER_APPROVED:-0}" = 1 ] || die "TURNOVER_APPROVED=1 missing"
+    : "${M2_D8_PREFIX:?}"; : "${EXPECTED_M2_D8_JOB:?}"
+    : "${EXPECTED_M2_D8_CODE_SHA:?}"
+    : "${EXPECTED_M2_D8_MODEL_SHA256:?}"; : "${EXPECTED_M2_D8_CORPUS_SHA256:?}"
+    : "${EXPECTED_M2_D8_META_SHA256:?}"
+    : "${M2_EVAL_PREFIX:?}"; : "${EXPECTED_M2_EVAL_JOB:?}"
+    : "${D12_EVAL_PREFIX:?}"; : "${EXPECTED_D12_EVAL_JOB:?}"
+    : "${EXPECTED_F2M_CORPUS_SHA256:?}"; : "${EXPECTED_F2M_META_SHA256:?}"
+    : "${EXPECTED_TURNOVER_CORPUS_SHA256:?}"
+    : "${EXPECTED_TURNOVER_META_SHA256:?}"
+    ;;
   *) die "unsupported experiment variant/depth: $EXPERIMENT_VARIANT/$PLAY_DEPTH" ;;
 esac
 [ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
@@ -103,10 +115,20 @@ esac
 monitor
 
 phase verify-reviewed-f2m-parent
-python3 jobs/tools/fetch_result_files.py \
-  --prefix "$M1_PREFIX" \
-  --file artefacts/f2m.pjtw.gz=f2m.pjtw.gz \
-  --file artefacts/JASS_CONTROL_SUMMARY.json=m1-training-summary.json \
+m1_files=(
+  --file artefacts/f2m.pjtw.gz=f2m.pjtw.gz
+  --file artefacts/JASS_CONTROL_SUMMARY.json=m1-training-summary.json
+)
+if [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  m1_files+=(
+    --file artefacts/common-fresh-500k.jnnw.gz=f2m-common.jnnw.gz
+    --file artefacts/common-fresh-500k.jsm.gz=f2m-common.jsm.gz
+    --file artefacts/extra-fresh-1500k.jnnw.gz=f2m-extra.jnnw.gz
+    --file artefacts/extra-fresh-1500k.jsm.gz=f2m-extra.jsm.gz
+  )
+fi
+python3 jobs/tools/fetch_result_files.py --prefix "$M1_PREFIX" \
+  "${m1_files[@]}" \
   --out-dir "$SRC" --report "$ART/verified-m1-source.json" > "$W/fetch-m1.log" 2>&1
 python3 jobs/tools/fetch_result_files.py \
   --prefix "$CHAMPION_PREFIX" \
@@ -147,11 +169,10 @@ payload = {
     "m1_source_job": m1_job,
     "champion_certificate_job": champion_job,
     "human_promotion_reviewed": True,
-    "training_mode": (
-        "certified_fresh_depth_mix"
-        if experiment_variant == "D10_D12_MIX_5_1"
-        else "fresh_selfplay_only"
-    ),
+    "training_mode": {
+        "D10_D12_MIX_5_1": "certified_fresh_depth_mix",
+        "TURNOVER_1_1": "certified_temporal_turnover_mix",
+    }.get(experiment_variant, "fresh_selfplay_only"),
 }
 (art / "m2-parent-contract.json").write_text(
     json.dumps(payload, indent=2, sort_keys=True) + "\n"
@@ -302,12 +323,112 @@ if (
 ):
     raise SystemExit("depth-mix trigger was not satisfied by the D12 evaluation")
 PY
+elif [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$M2_D8_PREFIX" \
+    --file artefacts/m2-training-summary.json=m2-d8-training-summary.json \
+    --file artefacts/m2-corpus-contract.json=m2-d8-corpus-contract.json \
+    --file artefacts/m2-fresh-2m.jnnw.gz=m2-d8.jnnw.gz \
+    --file artefacts/m2-fresh-2m.jsm.gz=m2-d8.jsm.gz \
+    --out-dir "$SRC" --report "$ART/verified-m2-d8-source.json" \
+    > "$W/fetch-m2-d8.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$M2_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=m2-evaluation-summary.json \
+    --out-dir "$SRC" --report "$ART/verified-m2-evaluation-source.json" \
+    > "$W/fetch-m2-evaluation.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$D12_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d12-evaluation-summary.json \
+    --out-dir "$SRC" --report "$ART/verified-d12-evaluation-source.json" \
+    > "$W/fetch-d12-evaluation.log" 2>&1
+  python3 - "$SRC" "$ART" "$EXPECTED_M2_D8_JOB" "$EXPECTED_M2_EVAL_JOB" \
+    "$EXPECTED_D12_EVAL_JOB" "$EXPECTED_M2_D8_MODEL_SHA256" \
+    "$EXPECTED_M2_D8_CORPUS_SHA256" "$EXPECTED_M2_D8_META_SHA256" \
+    "$EXPECTED_PARENT_MODEL_SHA256" "$EXPECTED_M2_D8_CODE_SHA" <<'PY'
+import json, sys
+from pathlib import Path
+
+src, art = map(Path, sys.argv[1:3])
+(
+    m2_job, m2_eval_job, d12_eval_job, m2_model_sha, m2_corpus_sha,
+    m2_meta_sha, parent_sha, m2_code_sha,
+) = sys.argv[3:]
+for report_name, expected_job in (
+    ("verified-m2-d8-source.json", m2_job),
+    ("verified-m2-evaluation-source.json", m2_eval_job),
+    ("verified-d12-evaluation-source.json", d12_eval_job),
+):
+    report = json.load(open(art / report_name))
+    if report.get("job_id") != expected_job or report.get("result_state") != "completed":
+        raise SystemExit(f"{report_name}: identity/state mismatch")
+
+training = json.load(open(src / "m2-d8-training-summary.json"))
+contract = json.load(open(src / "m2-d8-corpus-contract.json"))
+m2_evaluation = json.load(open(src / "m2-evaluation-summary.json"))
+d12_evaluation = json.load(open(src / "d12-evaluation-summary.json"))
+if (
+    training.get("verdict") != "M2_TRAINING_SCREEN_READY"
+    or training.get("parent") != "F2M"
+    or training.get("parent_model_sha256") != parent_sha
+    or training.get("code_sha") != m2_code_sha
+    or training.get("model_sha256") != m2_model_sha
+    or training.get("training_corpus_sha256") != m2_corpus_sha
+    or training.get("training_records") != 2_000_000
+    or training.get("fresh_only") is not True
+    or contract.get("jnnw_sha256") != m2_corpus_sha
+    or contract.get("jsm_sha256") != m2_meta_sha
+    or contract.get("records") != 2_000_000
+    or contract.get("parent") != "F2M"
+    or contract.get("fresh_only") is not True
+    or contract.get("historical_replay_records") != 0
+    or contract.get("base_seed") != 1_618_033
+    or contract.get("starts") != "standard"
+    or contract.get("top3") is not False
+    or contract.get("role_reweight_v2") is not False
+    or contract.get("geometry") != "8cf"
+    or contract.get("search") != "Q00"
+):
+    raise SystemExit("M2 d8 legacy fresh-only control contract mismatch")
+if (
+    m2_evaluation.get("verdict") != "M2_PLATEAU_OR_REGRESSION_REVIEW"
+    or m2_evaluation.get("recommendation")
+    != "stop_same_recipe_and_prepare_d10_causal_arm"
+    or m2_evaluation.get("all_guardrails_pass") is not True
+    or m2_evaluation.get("training_summary", {}).get("model_sha256") != m2_model_sha
+):
+    raise SystemExit("M2 plateau certificate mismatch")
+failed = sorted(
+    key for key, value in d12_evaluation.get("guardrails", {}).items() if not value
+)
+if (
+    d12_evaluation.get("verdict") != "D12_PLATEAU_OR_REGRESSION_REVIEW"
+    or d12_evaluation.get("recommendation")
+    != "stop_single_depth_escalation_and_prepare_distribution_factor"
+    or d12_evaluation.get("all_guardrails_pass") is not False
+    or failed != ["f2m_q00_regression_not_established"]
+):
+    raise SystemExit("depth factor was not closed exactly as preregistered")
+PY
 fi
 
 phase isolated-runtime-build-and-tests
 python3 -m venv "$W/venv"
 "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
   numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1
+python3 -m py_compile tools/selfplay_frontier.py jobs/tools/l3_turnover_evaluation.py
+python3 jobs/tests/test_selfplay_frontier.py > "$W/test-frontier.log" 2>&1
+if [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  "$W/venv/bin/python" -m unittest jobs.tests.test_l3_turnover_evaluation \
+    > "$W/test-turnover-evaluation.log" 2>&1
+fi
+for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
+  src/movegen.cpp src/movegen.hpp; do
+  git show "${EXPECTED_CODE_SHA}:$source" > "$source"
+done
+grep -q "g_emasks" src/scan_eval.cpp || die "8cf build lacks g_emasks"
+grep -q "has_any_capture" src/search.cpp || die "search lacks has_any_capture"
+grep -q "has_any_capture" src/movegen.cpp || die "movegen lacks has_any_capture"
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen-patterns.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
 [ "$(PYTHONPATH="$GEOM" python3 -c 'import patterns; print(patterns.TOTAL_BUCKETS)')" -eq 4251528 ] || die "8cf mismatch"
@@ -382,6 +503,62 @@ minimum_openings = min(
 if overlap < 0.95 * minimum_openings:
     raise SystemExit("D10/D12 opening identities are not sufficiently aligned")
 PY
+elif [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  phase construct-certified-turnover-1to1
+  gunzip -c "$SRC/f2m-common.jnnw.gz" > "$W/f2m-common.jnnw"
+  gunzip -c "$SRC/f2m-common.jsm.gz" > "$W/f2m-common.jsm"
+  gunzip -c "$SRC/f2m-extra.jnnw.gz" > "$W/f2m-extra.jnnw"
+  gunzip -c "$SRC/f2m-extra.jsm.gz" > "$W/f2m-extra.jsm"
+  python3 tools/selfplay_frontier.py merge \
+    --pair "$W/f2m-common.jnnw" "$W/f2m-common.jsm" \
+    --pair "$W/f2m-extra.jnnw" "$W/f2m-extra.jsm" \
+    --renamespace-nested \
+    --out-data "$W/f2m.raw.jnnw" --out-meta "$W/f2m.raw.jsm" \
+    --manifest "$ART/f2m-reconstruction.json" > "$W/f2m-reconstruction.log" 2>&1
+  gunzip -c "$SRC/m2-d8.jnnw.gz" > "$W/m2-d8.jnnw"
+  gunzip -c "$SRC/m2-d8.jsm.gz" > "$W/m2-d8.jsm"
+  [ "$(sha256sum "$W/f2m.raw.jnnw" | awk '{print $1}')" = \
+    "$EXPECTED_F2M_CORPUS_SHA256" ] || die "F2M reconstructed corpus hash drift"
+  [ "$(sha256sum "$W/f2m.raw.jsm" | awk '{print $1}')" = \
+    "$EXPECTED_F2M_META_SHA256" ] || die "F2M reconstructed metadata hash drift"
+  [ "$(sha256sum "$W/m2-d8.jnnw" | awk '{print $1}')" = \
+    "$EXPECTED_M2_D8_CORPUS_SHA256" ] || die "M2 d8 corpus hash drift"
+  [ "$(sha256sum "$W/m2-d8.jsm" | awk '{print $1}')" = \
+    "$EXPECTED_M2_D8_META_SHA256" ] || die "M2 d8 metadata hash drift"
+  python3 tools/selfplay_frontier.py mix \
+    --source PARENT "$W/f2m.raw.jnnw" "$W/f2m.raw.jsm" 1 \
+    --source FRESH "$W/m2-d8.jnnw" "$W/m2-d8.jsm" 1 \
+    --target-records "$TOTAL_RECORDS" --seed 141421 --namespace-openings \
+    --out-data "$W/m2.raw.jnnw" --out-meta "$W/m2.raw.jsm" \
+    --manifest "$ART/m2-turnover-mix.json" > "$W/m2-turnover-mix.log" 2>&1
+  python3 - "$ART/m2-turnover-mix.json" \
+    "$EXPECTED_F2M_CORPUS_SHA256" "$EXPECTED_F2M_META_SHA256" \
+    "$EXPECTED_M2_D8_CORPUS_SHA256" "$EXPECTED_M2_D8_META_SHA256" \
+    "$EXPECTED_TURNOVER_CORPUS_SHA256" "$EXPECTED_TURNOVER_META_SHA256" <<'PY'
+import json, sys
+
+manifest = json.load(open(sys.argv[1]))
+parent_data, parent_meta, fresh_data, fresh_meta, mix_data, mix_meta = sys.argv[2:]
+sources = {source["label"]: source for source in manifest.get("sources", [])}
+if (
+    manifest.get("operation") != "weighted_aligned_mix"
+    or manifest.get("selection") != "exact_uniform_record_sample_splitmix64_floyd"
+    or manifest.get("seed") != 141421
+    or manifest.get("records") != 2_000_000
+    or sources.get("PARENT", {}).get("selected_records") != 1_000_000
+    or sources.get("FRESH", {}).get("selected_records") != 1_000_000
+    or sources.get("PARENT", {}).get("input_data_sha256") != parent_data
+    or sources.get("PARENT", {}).get("input_meta_sha256") != parent_meta
+    or sources.get("FRESH", {}).get("input_data_sha256") != fresh_data
+    or sources.get("FRESH", {}).get("input_meta_sha256") != fresh_meta
+    or manifest.get("out_data_sha256") != mix_data
+    or manifest.get("out_meta_sha256") != mix_meta
+    or manifest.get("opening_id_policy")
+    != "source_namespaced_for_independent_temporal_corpora"
+    or manifest.get("external_teacher_inputs") != 0
+):
+    raise SystemExit("turnover manifest/hash contract mismatch")
+PY
 else
   phase generate-fresh-2m
   base=$((TOTAL_RECORDS / PRODUCERS)); rem=$((TOTAL_RECORDS % PRODUCERS))
@@ -415,6 +592,7 @@ experiment_variant = sys.argv[5]
 data = data_path.read_bytes()
 meta = meta_path.read_bytes()
 is_depth_mix = experiment_variant == "D10_D12_MIX_5_1"
+is_turnover = experiment_variant == "TURNOVER_1_1"
 if data[:4] != b"JNNW" or struct.unpack_from("<I", data, 4)[0] != 2_000_000:
     raise SystemExit("M2 JNNW count/header mismatch")
 if meta[:4] != b"JSM1":
@@ -425,21 +603,34 @@ payload = {
     "jnnw_sha256": hashlib.sha256(data).hexdigest(),
     "jsm_sha256": hashlib.sha256(meta).hexdigest(),
     "parent": "F2M",
-    "fresh_only": True,
-    "historical_replay_records": 0,
+    "fresh_only": not is_turnover,
+    "historical_replay_records": 1_000_000 if is_turnover else 0,
+    "fresh_records": 1_000_000 if is_turnover else 2_000_000,
     "starts": "standard",
     "top3": False,
     "role_reweight_v2": False,
     "geometry": "8cf",
     "search": "Q00",
-    "base_seed": None if is_depth_mix else 1_618_033,
+    "base_seed": None if (is_depth_mix or is_turnover) else 1_618_033,
     "play_depth": None if is_depth_mix else play_depth,
     "depth_distribution_records": (
         {"d10": 1_666_667, "d12": 333_333} if is_depth_mix else None
     ),
-    "new_generation_performed": not is_depth_mix,
+    "temporal_distribution_records": (
+        {"fresh_m2": 1_000_000, "parent_f2m": 1_000_000}
+        if is_turnover else None
+    ),
+    "new_generation_performed": not (is_depth_mix or is_turnover),
     "source_corpora_fresh_only": True,
-    "mix_seed": 271_828 if is_depth_mix else None,
+    "mix_seed": 141_421 if is_turnover else (271_828 if is_depth_mix else None),
+    "opening_id_policy": (
+        "source_namespaced_for_independent_temporal_corpora"
+        if is_turnover
+        else (
+            "preserved_across_sources_for_common_holdout_fold"
+            if is_depth_mix else "producer_namespaced"
+        )
+    ),
     "experiment_variant": experiment_variant,
     "paired_randomization_with_m2_d8": experiment_variant in {
         "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M"
@@ -451,8 +642,13 @@ payload = {
 out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 PY
 # Publish the expensive corpus before fitting so a fit incident is recoverable.
-gzip -n -c "$W/m2.raw.jnnw" > "$ART/m2-fresh-2m.jnnw.gz"
-gzip -n -c "$W/m2.raw.jsm" > "$ART/m2-fresh-2m.jsm.gz"
+if [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  gzip -n -c "$W/m2.raw.jnnw" > "$ART/turnover1to1.jnnw.gz"
+  gzip -n -c "$W/m2.raw.jsm" > "$ART/turnover1to1.jsm.gz"
+else
+  gzip -n -c "$W/m2.raw.jnnw" > "$ART/m2-fresh-2m.jnnw.gz"
+  gzip -n -c "$W/m2.raw.jsm" > "$ART/m2-fresh-2m.jsm.gz"
+fi
 
 phase split-by-opening-and-fit
 python3 tools/selfplay_frontier.py split \
@@ -509,8 +705,13 @@ payload = {
     "training_corpus_sha256": corpus["jnnw_sha256"],
     "training_meta_sha256": corpus["jsm_sha256"],
     "fresh_only": corpus["fresh_only"],
+    "historical_replay_records": corpus["historical_replay_records"],
+    "fresh_records": corpus["fresh_records"],
     "play_depth": corpus["play_depth"],
     "depth_distribution_records": corpus["depth_distribution_records"],
+    "temporal_distribution_records": corpus["temporal_distribution_records"],
+    "mix_seed": corpus["mix_seed"],
+    "opening_id_policy": corpus["opening_id_policy"],
     "new_generation_performed": corpus["new_generation_performed"],
     "experiment_variant": experiment_variant,
     "holdout_records": split["holdout_records"],
@@ -546,6 +747,10 @@ elif [ "$EXPERIMENT_VARIANT" = D10_D12_MIX_5_1 ]; then
   cp "$ART/m2-corpus-contract.json" "$ART/depth-mix5to1-corpus-contract.json"
   cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/depth-mix5to1.jnnw.gz"
   cp "$ART/m2-fresh-2m.jsm.gz" "$ART/depth-mix5to1.jsm.gz"
+elif [ "$EXPERIMENT_VARIANT" = TURNOVER_1_1 ]; then
+  cp "$ART/m2.pjtw.gz" "$ART/turnover1to1.pjtw.gz"
+  cp "$ART/m2-training-summary.json" "$ART/turnover1to1-training-summary.json"
+  cp "$ART/m2-corpus-contract.json" "$ART/turnover1to1-corpus-contract.json"
 fi
 phase complete
 say "M2_TRAINING_SCREEN_READY variant=$EXPERIMENT_VARIANT evaluation=true promotion=false automatic_next_job=null"

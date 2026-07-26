@@ -231,6 +231,7 @@ def _source_mix_seed(seed: int, label: str, index: int) -> int:
 
 def do_mix(args: argparse.Namespace) -> int:
     """Create a memory-bounded exact weighted mix while preserving JSM alignment."""
+    namespace_openings = bool(getattr(args, "namespace_openings", False))
     sources = []
     labels: set[str] = set()
     for source_index, spec in enumerate(args.source, start=1):
@@ -296,6 +297,7 @@ def do_mix(args: argparse.Namespace) -> int:
                 source_openings: set[int] = set()
                 selected_openings: set[int] = set()
                 game_namespace: dict[int, int] = {}
+                opening_namespace: dict[int, int] = {}
                 selected = 0
                 with source["data"].open("rb") as data_in, source["meta"].open("rb") as meta_in:
                     data_source_header = data_in.read(8)
@@ -320,7 +322,19 @@ def do_mix(args: argparse.Namespace) -> int:
                         if local_game >= (1 << 56):
                             raise ValueError(f"{source['label']}: too many games to namespace")
                         namespaced_game = source["index"] << 56 | local_game
-                        output_meta = struct.pack("<QQB", namespaced_game, opening_id, seeded)
+                        output_opening = opening_id
+                        if namespace_openings:
+                            local_opening = opening_namespace.setdefault(
+                                opening_id, len(opening_namespace)
+                            )
+                            if local_opening >= (1 << 56):
+                                raise ValueError(
+                                    f"{source['label']}: too many openings to namespace"
+                                )
+                            output_opening = source["index"] << 56 | local_opening
+                        output_meta = struct.pack(
+                            "<QQB", namespaced_game, output_opening, seeded
+                        )
                         data_out.write(record)
                         meta_out.write(output_meta)
                         output_data_hash.update(record)
@@ -370,7 +384,11 @@ def do_mix(args: argparse.Namespace) -> int:
         "target_records": target,
         "records": selected_total,
         "sources": source_manifests,
-        "opening_id_policy": "preserved_across_sources_for_common_holdout_fold",
+        "opening_id_policy": (
+            "source_namespaced_for_independent_temporal_corpora"
+            if namespace_openings
+            else "preserved_across_sources_for_common_holdout_fold"
+        ),
         "game_id_policy": "source_namespaced",
         "source_opening_id_overlaps": overlaps,
         "subsequent_split_unit": "opening_id",
@@ -733,6 +751,14 @@ def build_parser() -> argparse.ArgumentParser:
     mix.add_argument("--out-data", required=True)
     mix.add_argument("--out-meta", required=True)
     mix.add_argument("--manifest")
+    mix.add_argument(
+        "--namespace-openings",
+        action="store_true",
+        help=(
+            "namespace opening IDs by source when corpora do not share paired "
+            "opening identities"
+        ),
+    )
     mix.set_defaults(func=do_mix)
 
     split = sub.add_parser("split", help="make an opening-level holdout tail")

@@ -88,3 +88,19 @@ profondeur/distribution ; le facteur suivant devra être préenregistré
 séparément (replay/turnover ou volume), jamais ajouté à ce bras.
 
 Aucune promotion ni continuation n'est automatique.
+
+## Statut après 0974bis
+
+**Déclencheur non satisfait — bras interdit et non lancé.**
+
+`home-0974bis` conclut bien `D12_PLATEAU_OR_REGRESSION_REVIEW` et recommande
+d'arrêter l'escalade monoprofondeur, mais
+`all_guardrails_pass=false` : D12 subit une régression Q00 établie contre F2M
+(45,85 %, IC95 `[42,79 % ; 48,91 %]`). Le contrat ci-dessus exigeait tous les
+garde-fous valides. Les brouillons `home-0975/0976` restent donc non publiés et
+ne constituent pas des jobs exécutables autorisés.
+
+Le programme ne modifie pas ce seuil après lecture. Il ferme le facteur
+profondeur/distribution d10-d12 et ouvre un facteur temporel distinct à volume
+constant, décrit dans
+[`L3_PURE_TURNOVER_PROTOCOL_20260726.md`](L3_PURE_TURNOVER_PROTOCOL_20260726.md).
