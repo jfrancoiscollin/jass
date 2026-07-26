@@ -567,3 +567,10 @@ réutilise le pool indépendant certifié de 500 ouvertures et compare REPLAY25
 avec défenseur fixe et la couverture exacte. Les quatre verdicts possibles
 restent ceux du protocole préenregistré ; même une revue champion conserve
 `promotion_authorized=false`.
+
+La branche conditionnelle suivante est également figée avant le verdict final
+de `home-0983`. Si, et seulement si, celui-ci conclut
+`REPLAY25_DOSE_CLOSED_REVIEW` avec tous ses garde-fous valides, le facteur
+suivant sera un écran L2 `{1e-5, 3e-5, 1e-4}` sur l'unique corpus TURNOVER
+50/50, sans nouvelle génération ni changement de replay. Protocole :
+[`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).
