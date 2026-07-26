@@ -632,3 +632,14 @@ native ; les cellules de garde F2M/Gen2 et P3/P4 ne s'ouvrent que pour les
 candidats dont les deux estimations ponctuelles dépassent 50 %. Si aucun ne
 franchit ce filtre préenregistré, `L2=3e-5` est retenu et le facteur L2 est
 clos.
+
+`home-0986` s'est arrêté techniquement à l'étape
+`build-guard-and-fixed-defender-engines`, après avoir pourtant construit les
+deux moteurs 32cf sans erreur. Le témoin `--perft 1` du roi-capture est le test
+de non-régression de `5f5a7e7b` (déduplication des chaînes de capture) ; le
+template l'appliquait aussi au défenseur figé `J32FIXED`, antérieur de 47
+commits à ce correctif, donc incapable de le satisfaire par construction. Le
+périmètre du témoin est ramené à celui du template éprouvé de `home-0983`.
+**Aucun verdict scientifique n'est tiré de cet échec** et ses cellules
+primaires ne sont pas réutilisées : `home-0987` refait le readout entier à
+entrées, pool et règle de décision inchangés.

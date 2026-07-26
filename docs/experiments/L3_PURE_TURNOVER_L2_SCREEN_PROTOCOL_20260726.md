@@ -165,6 +165,27 @@ r2:jass-data/runs/home-0985-l3-pure-turnover-l2-train-v1/20260726T123823Z-ad067a
 Le déclencheur du readout `home-0986` est donc satisfait, sans modification des
 niveaux L2, du corpus, du pool ni de la règle de décision.
 
+`home-0986` s'est arrêté techniquement à l'étape
+`build-guard-and-fixed-defender-engines`, sur
+`ABORT: guard engine king-capture witness failed`. Les deux moteurs 32cf
+avaient pourtant été construits sans erreur. Le témoin
+`--perft 1 'W:W40,43,K2:B8,18,29,30' == 9` est le test de non-régression
+introduit par `5f5a7e7b`, qui déduplique les chaînes de capture dans
+`emit_chain` ; le template l'appliquait aussi au défenseur figé
+`J32FIXED`, construit depuis `FIXED_DEFENDER_CODE_SHA=038a2001`, soit 47
+commits avant ce correctif. Ce binaire retourne donc un perft différent par
+construction et le job ne pouvait pas aboutir. Le template éprouvé
+`l3-pure-replay25-eval-v1.sh`, validé par `home-0983`, témoigne `J8` et `J32`
+et exclut `J32FIXED`, qui n'y sert que de `--defender-jass` ; le correctif
+rétablit exactement ce périmètre.
+
+Conformément à la discipline du programme, **aucun verdict scientifique n'est
+tiré de cet échec technique**. Ses quatre cellules primaires étaient complètes,
+mais elles ne sont pas réutilisées : `home-0987` refait le readout entier. Les
+niveaux L2, le corpus, le split, le pool indépendant, les identités de modèles
+et la règle de décision sont inchangés ; seul le périmètre du témoin de garde
+est corrigé.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à
