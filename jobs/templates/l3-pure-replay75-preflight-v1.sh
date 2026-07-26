@@ -507,10 +507,10 @@ if (
     or split.get("train_records", 0) + split.get("holdout_records", 0)
     != 2_000_000
     or coverage.get("corpus", {}).get("total_records") != 2_000_000
-    or openings.get("records") != 500
-    or openings.get("unique_records") != 500
+    or openings.get("records") != 1_250
+    or openings.get("unique_records") != 1_250
     or openings.get("overlap_records") != 0
-    or openings.get("generator_seed") != 1_836_311
+    or openings.get("generator_seed") != 3_141_593
 ):
     raise SystemExit("preflight output contract mismatch")
 
@@ -541,7 +541,7 @@ payload = {
     "split_manifest": split,
     "coverage": coverage,
     "evaluation_openings": {
-        "seed": 1_836_311,
+        "seed": 3_141_593,
         "sha256": sha(art / "replay75-eval-openings.fen"),
         "candidate_sha256": sha(w / "open-candidates-a.fen"),
         "manifest": openings,
