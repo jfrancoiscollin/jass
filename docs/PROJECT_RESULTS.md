@@ -263,6 +263,15 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   profondeur fraîche est donc close ; le mix d10/d12 reste interdit par son
   garde-fou strict. Le facteur actif suivant est le turnover temporel 1:1 à
   volume constant, pas davantage de profondeur.
+- **Turnover temporel `0977→0978` :** à parent, d8, 8cf et volume 2M constants,
+  remplacer 1M positions M2 par 1M positions de l'époque F2M produit quatre
+  estimations positives : 52,20/51,05 % contre M2 et 52,10/51,15 % contre F2M
+  en Q00/native. Conversion P3/P4 : 98/99 % ; couverture : 210 381 buckets
+  visités et 28 160 vus au moins 100 fois, au-dessus des deux contrôles.
+  Aucune borne basse à 95 % ne dépasse encore 50 % : le résultat est un signal
+  directionnel, pas une promotion. `0979` est préenregistré pour confirmer le
+  même modèle sur un pool disjoint haut-N, puis consolider 3 000 parties par
+  cellule.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),

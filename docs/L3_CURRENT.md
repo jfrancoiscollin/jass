@@ -20,7 +20,7 @@
 > pure_maturity_m0_complete_parent_c0_selected_for_m1;
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
-> turnover_1to1_preregistered`.
+> turnover_1to1_directional_confirmation_pending`.
 
 ## 1. Architecture du programme
 
@@ -88,7 +88,8 @@ une configuration héritée par les nouveaux bras.
 | maturité M2 | readout d8 frais | `home-0970bis` | **plateau : 50,60/49,05 % vs F2M Q00/native** |
 | causal profondeur | d10 frais, volume constant | `home-0971` / `home-0972` | **plateau : 48,80/51,00 % vs F2M** |
 | causal profondeur | d12 frais, volume constant | `home-0973` / `home-0974bis` | **régression Q00 établie : 45,85 %, −28,9 Elo vs F2M** |
-| causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | préenregistré ; aucun job encore lancé |
+| causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
+| confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` | préenregistré ; 2 000 parties/cellule, aucune promotion automatique |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -505,3 +506,17 @@ d'ouverture namespacés par source ; SHA JNNW `9b7db67a…`, JSM `acf3bbf4…`.
 Sa couverture diagnostique est 210 381 buckets visités et 28 160 à fréquence
 ≥100. Protocole :
 [`experiments/L3_PURE_TURNOVER_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_PROTOCOL_20260726.md).
+
+`home-0977` converge en 204 itérations (loss holdout `0,444060`) et produit le
+modèle `b2c79b36…`. `home-0978` conclut
+`TURNOVER_DIRECTIONAL_CONFIRMATION_REVIEW`, avec tous les garde-fous verts.
+TURNOVER fait 52,20/51,05 % contre M2 et 52,10/51,15 % contre F2M en
+Q00/native, soit quatre estimations positives, mais aucune borne basse à 95 %
+au-dessus de 50 %. P3/P4 restent à 98/99 % et la couverture dépasse les deux
+contrôles.
+
+La seule suite autorisée est `home-0979`, confirmation indépendante du même
+modèle sur 1 000 nouvelles ouvertures appariées, soit 2 000 parties par cellule
+contre M2 et F2M dans les deux vues. Le readout consolide ensuite 3 000 parties
+par cellule. Protocole :
+[`experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md).

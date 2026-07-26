@@ -120,3 +120,25 @@ build, l'ETA de `home-0977` est **45–70 minutes**. `home-0974bis`, readout de
 taille identique (6 000 parties plus conversion/couverture), a duré 37 min ;
 l'ETA de `home-0978` est **35–55 minutes**. Total séquentiel attendu :
 **1 h 20 à 2 h 05**.
+
+## Résultats exécutés
+
+`home-0977` a terminé en environ 36 minutes. Le fit converge en 204 itérations,
+avec une loss holdout de `0,444060`, un pic RSS de 1 406 684 KiB et le modèle
+SHA-256
+`b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16`.
+
+`home-0978` a terminé en environ 35 minutes. Les scores TURNOVER sont :
+
+- contre M2 : 52,20 % Q00 (+15,3 Elo), 51,05 % native (+7,3 Elo) ;
+- contre F2M : 52,10 % Q00 (+14,6 Elo), 51,15 % native (+8,0 Elo) ;
+- contre Gen2 : 58,70 % Q00 et 61,10 % native.
+
+P3/P4 valent 98/99 %, tous les garde-fous sont verts, et la couverture vaut
+210 381 buckets visités / 28 160 à fréquence ≥100. Les quatre estimations
+principales sont positives mais sous-résolues : aucune borne basse à 95 % ne
+dépasse 50 %. Le verdict est donc
+`TURNOVER_DIRECTIONAL_CONFIRMATION_REVIEW`.
+
+La confirmation indépendante est préenregistrée séparément dans
+[`L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md`](L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md).
