@@ -82,3 +82,33 @@ distribution 5:1 préenregistré dans
 [`L3_PURE_DEPTH_MIX_PROTOCOL_20260726.md`](L3_PURE_DEPTH_MIX_PROTOCOL_20260726.md).
 Replay et volume restent des facteurs ultérieurs séparés, sans promotion
 implicite.
+
+## Exécution certifiée et scellement de l'évaluation
+
+`home-0973-l3-pure-d12-causal-fresh2m-train-v1` a terminé avec le code 0
+sur le SHA `d48969904c74c4c2f662d92c368a2d65a35e862c`. Le corpus contient
+exactement 2 000 000 positions fraîches :
+
+- SHA JNNW :
+  `45cc916a0d398efd48aadb322c7e1be86db49b6d18d7626edf5f3f3d493ea802` ;
+- SHA JSM :
+  `7fd7d5a627ec07b2a6dc82d049ffdba4c96a9f8aff4c399e02d52999aa9f08d3` ;
+- SHA modèle D12 :
+  `2541774af6ecdb832e4cb99723cc95880b7d940c042da32e7d4b270ac2464263` ;
+- split par ouverture : 1 802 975 positions train et 197 025 holdout ;
+- L-BFGS : convergence après 338 itérations, norme infinie du gradient
+  `0,0007086893` sous `gtol=0,001`, logloss holdout `0,427862`.
+
+Le préfixe immuable est
+`r2:jass-data/runs/home-0973-l3-pure-d12-causal-fresh2m-train-v1/20260726T001956Z-d4896990`.
+Aucune promotion ni continuation n'a été autorisée par l'entraînement.
+
+Le pool indépendant de `home-0974` a ensuite été pré-calculé depuis le SHA
+`199b02f95496e2b9ba378f953251c02948536f19`. Les reconstructions des pools
+M2 et D10 reproduisent respectivement leurs SHA certifiés
+`9a0e46be89655ada7317440e3539b8583ab3d7fe83e400475ae817e77396313c`
+et
+`e41ae3875368112a99d3de2a1e6e40aa8d4d94d5cb66ed5280999a7a4e612965`.
+Après exclusion de ces pools et de tous les pools historiques prescrits, le
+seed `424243` produit 500 positions uniques, sans chevauchement, de SHA
+`0f7af083406063719717190cab7f983bee6d0f49b552f42ca4d05d81dce7cf7f`.

@@ -76,23 +76,34 @@ class D12CausalEvaluationJobTests(unittest.TestCase):
         self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
         self.assertIn("AUTOMATIC_NEXT_JOB__NULL", text)
 
-    def test_wrapper_pins_controls_but_waits_for_d12_hashes(self):
+    def test_wrapper_pins_certified_d12_inputs(self):
         text = WRAPPER.read_text(encoding="utf-8")
         self.assertIn("home-0971-l3-pure-d10-causal-fresh2m-train-v1", text)
         self.assertIn("home-0972-l3-pure-d10-causal-independent-eval-v1", text)
         self.assertIn("home-0973-l3-pure-d12-causal-fresh2m-train-v1", text)
         self.assertIn(
-            ': "${EXPECTED_CANDIDATE_MODEL_SHA256:?set after completed 0973}"',
+            'export EXPECTED_CANDIDATE_MODEL_SHA256="'
+            '2541774af6ecdb832e4cb99723cc95880b7d940c042da32e7d4b270ac2464263"',
             text,
         )
         self.assertIn(
-            ': "${EXPECTED_CANDIDATE_CORPUS_SHA256:?set after completed 0973}"',
+            'export EXPECTED_CANDIDATE_CORPUS_SHA256="'
+            '45cc916a0d398efd48aadb322c7e1be86db49b6d18d7626edf5f3f3d493ea802"',
             text,
         )
         self.assertIn(
-            ': "${EXPECTED_OPENING_SHA256:?set after independent-pool preflight}"',
+            'export EXPECTED_OPENING_SHA256="'
+            '0f7af083406063719717190cab7f983bee6d0f49b552f42ca4d05d81dce7cf7f"',
             text,
         )
+        self.assertIn(
+            "r2:jass-data/runs/"
+            "home-0973-l3-pure-d12-causal-fresh2m-train-v1/"
+            "20260726T001956Z-d4896990",
+            text,
+        )
+        self.assertNotIn("set after completed 0973", text)
+        self.assertNotIn("set after independent-pool preflight", text)
 
 
 if __name__ == "__main__":
