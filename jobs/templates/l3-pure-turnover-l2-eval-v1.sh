@@ -403,7 +403,12 @@ if [ "${#ELIGIBLE[@]}" -gt 0 ]; then
     > "$W/build32fixed.log" 2>&1
   J32="$W/build32/jass"
   J32FIXED="$W/build32fixed/jass"
-  for jass in "$J32" "$J32FIXED"; do
+  # Only the current-code guard engine carries the post-5f5a7e7b movegen
+  # invariant. J32FIXED is the deliberately frozen defender at
+  # FIXED_DEFENDER_CODE_SHA, which predates the capture-chain dedup fix and
+  # therefore returns a different perft by construction; witnessing it here
+  # would fail every run. It is only ever used as --defender-jass below.
+  for jass in "$J32"; do
     [ "$("$jass" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
       die "guard engine king-capture witness failed"
   done
