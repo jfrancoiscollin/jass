@@ -20,7 +20,7 @@
 > pure_maturity_m0_complete_parent_c0_selected_for_m1;
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
-> turnover_1to1_directional_confirmation_pending`.
+> turnover_1to1_effect_confirmed; replay25_preflight_next`.
 
 ## 1. Architecture du programme
 
@@ -89,7 +89,8 @@ une configuration héritée par les nouveaux bras.
 | causal profondeur | d10 frais, volume constant | `home-0971` / `home-0972` | **plateau : 48,80/51,00 % vs F2M** |
 | causal profondeur | d12 frais, volume constant | `home-0973` / `home-0974bis` | **régression Q00 établie : 45,85 %, −28,9 Elo vs F2M** |
 | causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
-| confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | `0979` échoue avant toute partie ; relance identique préparée |
+| confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | **effet confirmé contre M2 ; pas de supériorité établie sur F2M** |
+| dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **REPLAY25 25/75 préenregistré ; préflight suivant** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -522,3 +523,19 @@ par cellule. `home-0979` a échoué techniquement avant la première partie sur 
 déclaration Bash incompatible avec `set -u`; `home-0980` est la relance propre
 avec protocole et pool inchangés. Protocole :
 [`experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_CONFIRMATION_PROTOCOL_20260726.md).
+
+`home-0980` termine avec
+`TURNOVER_EFFECT_CONFIRMED_HUMAN_REVIEW`. Sur le pool frais, TURNOVER marque
+53,775 % Q00 (`1056-39-905`, +26,28 Elo, IC95 `[51,61 ; 55,94]`) et 53,20 %
+natif (`1047-34-919`, +22,27 Elo, IC95 `[51,03 ; 55,37]`) contre M2 : la
+supériorité est établie dans les deux vues. Face à F2M, les scores sont
+50,35/50,90 % ; aucune régression n'est établie, mais aucune supériorité non
+plus. Le cumul des deux pools confirme l'effet contre M2 à 53,25 % Q00 et
+52,483 % natif sur 3 000 parties par cellule. TURNOVER n'est donc pas promu.
+
+Ce résultat clôt la recette M2 100 % fraîche telle quelle et identifie la
+mémoire temporelle comme levier causal. Le test suivant garde F2M, 2M records,
+d8, 8cf/Q00, WDL et `L2=3e-5`, mais dose le replay à 25 % : 500k positions de
+l'époque F2M et 1,5M de l'époque M2. Le préflight reproductible `home-0981`
+doit précéder le fit `home-0982` et le readout `home-0983`. Protocole :
+[`experiments/L3_PURE_REPLAY25_PROTOCOL_20260726.md`](experiments/L3_PURE_REPLAY25_PROTOCOL_20260726.md).

@@ -263,15 +263,18 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   profondeur fraîche est donc close ; le mix d10/d12 reste interdit par son
   garde-fou strict. Le facteur actif suivant est le turnover temporel 1:1 à
   volume constant, pas davantage de profondeur.
-- **Turnover temporel `0977→0978` :** à parent, d8, 8cf et volume 2M constants,
+- **Turnover temporel `0977→0980` :** à parent, d8, 8cf et volume 2M constants,
   remplacer 1M positions M2 par 1M positions de l'époque F2M produit quatre
   estimations positives : 52,20/51,05 % contre M2 et 52,10/51,15 % contre F2M
   en Q00/native. Conversion P3/P4 : 98/99 % ; couverture : 210 381 buckets
   visités et 28 160 vus au moins 100 fois, au-dessus des deux contrôles.
-  Aucune borne basse à 95 % ne dépasse encore 50 % : le résultat est un signal
-  directionnel, pas une promotion. `0979` est préenregistré pour confirmer le
-  même modèle sur un pool disjoint haut-N, puis consolider 3 000 parties par
-  cellule.
+  La confirmation indépendante `0980` établit ensuite la supériorité sur M2 :
+  53,775 % Q00 (+26,28 Elo) et 53,20 % native (+22,27 Elo), avec les deux bornes
+  basses à 95 % au-dessus de 50 %. Le cumul atteint 53,25/52,483 % sur 3 000
+  parties par cellule. Face à F2M, 50,35/50,90 % reste compatible avec
+  l'équivalence : TURNOVER n'est pas un nouveau champion. La mémoire temporelle
+  est néanmoins un levier causal confirmé ; le facteur suivant préenregistré
+  est REPLAY25, 500k positions époque F2M + 1,5M époque M2 à volume constant.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
