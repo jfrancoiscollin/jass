@@ -118,6 +118,13 @@ r2:jass-data/runs/home-0983-l3-pure-replay25-independent-eval-v1/20260726T112309
 Le déclencheur du préflight `home-0984` est donc satisfait. Cette observation
 ne modifie ni les niveaux L2, ni le corpus, ni la règle de décision ci-dessus.
 
+Le premier claim `home-0984` s'est arrêté pendant l'authentification, avant
+tout split, build, mini-fit ou génération de pool. Le résumé agrégé de
+`home-0983` conserve `n`, `wins_a`, `draws` et `wins_b`, mais omet
+intentionnellement le booléen brut `complete`. La relance `home-0984bis`
+contrôle donc la complétude par `n=1000` et `wins_a+draws+wins_b=1000` pour
+chacune des huit cellules. Aucun critère scientifique ni budget n'est modifié.
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à

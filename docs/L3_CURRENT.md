@@ -579,7 +579,12 @@ Il conserve `promotion_authorized=false` et `automatic_next_job=null`.
 La branche conditionnelle figée avant ce verdict est donc ouverte. Le facteur
 suivant est l'écran L2 `{1e-5, 3e-5, 1e-4}` sur l'unique corpus TURNOVER 50/50,
 sans nouvelle génération ni changement de replay. Le préflight
-`home-0984-l3-pure-turnover-l2-preflight-v1` authentifie le résultat complet,
-le corpus, le split, le contrôle `L2=3e-5`, l'environnement SciPy et le nouveau
-pool indépendant avant tout fit. Protocole :
+`home-0984` s'est fermé avant tout split, build ou fit : le résumé compact des
+cellules de force publie `n` et W/D/L, mais pas le booléen brut `complete`.
+`home-0984bis` corrige uniquement ce contrat en exigeant `n=1000` et
+`W+D+L=1000` dans chacune des huit cellules. Un test exécute désormais le
+contrat sur le schéma réel et vérifie aussi qu'une cellule tronquée ferme le
+job. Ce préflight authentifie ensuite le corpus, le split, le contrôle
+`L2=3e-5`, l'environnement SciPy et le nouveau pool indépendant avant tout fit.
+Protocole :
 [`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).

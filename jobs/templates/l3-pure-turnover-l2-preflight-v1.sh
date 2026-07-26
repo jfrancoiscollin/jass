@@ -153,9 +153,17 @@ for report_name, expected_job in zip(reports, jobs):
 
 evaluation = json.load(open(src / "replay25-evaluation.json"))
 force = evaluation.get("force", {})
+
+def complete_force_cell(cell):
+    counts = [cell.get(key) for key in ("wins_a", "draws", "wins_b")]
+    return (
+        cell.get("n") == 1_000
+        and all(isinstance(value, int) and value >= 0 for value in counts)
+        and sum(counts) == 1_000
+    )
+
 complete_force = all(
-    force.get(f"{view}_vs_{opponent}", {}).get("n") == 1_000
-    and force.get(f"{view}_vs_{opponent}", {}).get("complete") is True
+    complete_force_cell(force.get(f"{view}_vs_{opponent}", {}))
     for view in ("q00", "native")
     for opponent in ("M2", "TURNOVER", "F2M", "GEN2")
 )
