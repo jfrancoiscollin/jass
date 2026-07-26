@@ -78,6 +78,11 @@ case "$EXPERIMENT_VARIANT:$PLAY_DEPTH" in
     [ "${D10_CAUSAL_APPROVED:-0}" = 1 ] || die "D10_CAUSAL_APPROVED=1 missing"
     : "${PLATEAU_PREFIX:?}"; : "${EXPECTED_PLATEAU_JOB:?}"
     ;;
+  D12_CAUSAL_FRESH2M:12)
+    [ "${D12_CAUSAL_APPROVED:-0}" = 1 ] || die "D12_CAUSAL_APPROVED=1 missing"
+    : "${D10_EVAL_PREFIX:?}"; : "${EXPECTED_D10_EVAL_JOB:?}"
+    : "${EXPECTED_D10_MODEL_SHA256:?}"
+    ;;
   *) die "unsupported experiment variant/depth: $EXPERIMENT_VARIANT/$PLAY_DEPTH" ;;
 esac
 [ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
@@ -158,6 +163,35 @@ if summary.get("recommendation") != "stop_same_recipe_and_prepare_d10_causal_arm
 if not summary.get("all_guardrails_pass"):
     raise SystemExit("M2 plateau guardrails did not pass")
 PY
+elif [ "$EXPERIMENT_VARIANT" = D12_CAUSAL_FRESH2M ]; then
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$D10_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d10-evaluation-summary.json \
+    --out-dir "$SRC" --report "$ART/verified-d10-evaluation-source.json" \
+    > "$W/fetch-d10-evaluation.log" 2>&1
+  python3 - "$SRC/d10-evaluation-summary.json" \
+    "$ART/verified-d10-evaluation-source.json" \
+    "$EXPECTED_D10_EVAL_JOB" "$EXPECTED_D10_MODEL_SHA256" <<'PY'
+import json, sys
+summary_path, report_path, expected_job, expected_model = sys.argv[1:]
+summary = json.load(open(summary_path))
+report = json.load(open(report_path))
+if report.get("job_id") != expected_job or report.get("result_state") != "completed":
+    raise SystemExit("D10 evaluation source identity/state mismatch")
+if summary.get("verdict") != "D10_PLATEAU_OR_REGRESSION_REVIEW":
+    raise SystemExit("D12 requires the certified D10 plateau verdict")
+if summary.get("recommendation") != "stop_d10_and_prepare_d12_or_d10_d12_mix":
+    raise SystemExit("D10 plateau did not route to the next depth factor")
+if not summary.get("all_guardrails_pass"):
+    raise SystemExit("D10 plateau guardrails did not pass")
+training = summary.get("training_summary", {})
+if (
+    training.get("model_sha256") != expected_model
+    or training.get("experiment_variant") != "D10_CAUSAL_FRESH2M"
+    or training.get("play_depth") != 10
+):
+    raise SystemExit("D10 evaluation training identity mismatch")
+PY
 fi
 
 phase isolated-runtime-build-and-tests
@@ -235,7 +269,12 @@ payload = {
     "base_seed": 1_618_033,
     "play_depth": play_depth,
     "experiment_variant": experiment_variant,
-    "paired_randomization_with_m2_d8": experiment_variant == "D10_CAUSAL_FRESH2M",
+    "paired_randomization_with_m2_d8": experiment_variant in {
+        "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M"
+    },
+    "paired_randomization_with_depth_controls": experiment_variant in {
+        "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M"
+    },
 }
 out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 PY
@@ -320,6 +359,12 @@ if [ "$EXPERIMENT_VARIANT" = D10_CAUSAL_FRESH2M ]; then
   cp "$ART/m2-corpus-contract.json" "$ART/d10-corpus-contract.json"
   cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/d10-fresh-2m.jnnw.gz"
   cp "$ART/m2-fresh-2m.jsm.gz" "$ART/d10-fresh-2m.jsm.gz"
+elif [ "$EXPERIMENT_VARIANT" = D12_CAUSAL_FRESH2M ]; then
+  cp "$ART/m2.pjtw.gz" "$ART/d12.pjtw.gz"
+  cp "$ART/m2-training-summary.json" "$ART/d12-training-summary.json"
+  cp "$ART/m2-corpus-contract.json" "$ART/d12-corpus-contract.json"
+  cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/d12-fresh-2m.jnnw.gz"
+  cp "$ART/m2-fresh-2m.jsm.gz" "$ART/d12-fresh-2m.jsm.gz"
 fi
 phase complete
 say "M2_TRAINING_SCREEN_READY variant=$EXPERIMENT_VARIANT play_depth=$PLAY_DEPTH evaluation=true promotion=false automatic_next_job=null"

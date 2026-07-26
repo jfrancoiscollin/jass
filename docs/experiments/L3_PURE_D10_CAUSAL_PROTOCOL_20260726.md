@@ -97,3 +97,15 @@ d'abord d12 ou un mix d10/d12 à volume constant, puis seulement le
 volume/replay cumulatif.
 
 Aucune promotion n'est automatique.
+
+## Verdict
+
+`home-0972` termine avec `D10_PLATEAU_OR_REGRESSION_REVIEW`, tous les
+garde-fous valides. D10 marque 47,50 % Q00 et 50,70 % native contre M2 d8,
+48,80 % Q00 et 51,00 % native contre F2M, puis 56,70 % et 58,40 % contre
+Gen2. La conversion reste à 99,33 %/98,67 %, mais la couverture recule de
+4 864 buckets visités et 494 buckets `ge100` face à M2.
+
+La profondeur d10 seule n'est donc pas retenue. Le facteur suivant est un bras
+d12 pur à volume constant, décrit dans
+[`L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md`](L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md).

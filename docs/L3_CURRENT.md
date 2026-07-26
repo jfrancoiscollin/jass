@@ -474,3 +474,11 @@ log-loss holdout `0,443257`, modèle SHA-256 `18930613…`. L'entraînement
 n'autorise qu'une évaluation. Le readout indépendant `home-0972` compare D10
 à M2 d8, F2M et Gen2 dans les deux vues, puis vérifie conversion et couverture
 sur un pool seed 314159 préflighté, unique et disjoint (SHA-256 `e41ae387…`).
+
+`home-0972` conclut `D10_PLATEAU_OR_REGRESSION_REVIEW`, avec tous les
+garde-fous valides. D10 fait 47,50/50,70 % contre M2 d8 et 48,80/51,00 %
+contre F2M en Q00/native. La conversion reste à 99,33/98,67 %, mais la
+couverture recule de 4 864 buckets visités face à M2. Le prochain bras causal
+est donc d12 pur à 2M, toujours depuis F2M avec les mêmes seeds ; seul le
+facteur profondeur change. Protocole :
+[`experiments/L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md`](experiments/L3_PURE_D12_CAUSAL_PROTOCOL_20260726.md).
