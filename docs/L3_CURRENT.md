@@ -570,7 +570,10 @@ restent ceux du protocole préenregistré ; même une revue champion conserve
 
 La branche conditionnelle suivante est également figée avant le verdict final
 de `home-0983`. Si, et seulement si, celui-ci conclut
-`REPLAY25_DOSE_CLOSED_REVIEW` avec tous ses garde-fous valides, le facteur
-suivant sera un écran L2 `{1e-5, 3e-5, 1e-4}` sur l'unique corpus TURNOVER
-50/50, sans nouvelle génération ni changement de replay. Protocole :
+`REPLAY25_DOSE_CLOSED_REVIEW` avec un résultat complet et des identités
+authentifiées, le facteur suivant sera un écran L2 `{1e-5, 3e-5, 1e-4}` sur
+l'unique corpus TURNOVER 50/50, sans nouvelle génération ni changement de
+replay. Le booléen agrégé `all_guardrails_pass` peut être faux dans cette
+branche, car il inclut la non-régression scientifique qui motive justement la
+clôture de REPLAY25. Protocole :
 [`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).

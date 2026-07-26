@@ -12,7 +12,9 @@ Le bras ne devient exécutable que si
 `home-0983-l3-pure-replay25-independent-eval-v1` termine avec :
 
 - `verdict=REPLAY25_DOSE_CLOSED_REVIEW` ;
-- tous les garde-fous valides ;
+- un résultat complet, des identités authentifiées et toutes les cellules
+  attendues ; `all_guardrails_pass` peut être faux parce que ce champ inclut
+  précisément la non-régression scientifique que REPLAY25 vient d'échouer ;
 - `promotion_authorized=false` et `automatic_next_job=null`.
 
 Un incident technique ou un verdict différent interdit ce lancement et impose
@@ -65,10 +67,12 @@ recherche.
 2. `home-0985-l3-pure-turnover-l2-train-v1` réutilise le corpus et le split
    certifiés, fait un seul feature dump et fitte `L2_1E5` et `L2_1E4` avec au
    plus deux optimiseurs concurrents. Les deux doivent converger réellement.
-3. `home-0986-l3-pure-turnover-l2-independent-eval-v1` compare chaque candidat
-   au contrôle TURNOVER, à F2M et à Gen2 sur le même nouveau pool, en Q00 d9 et
-   cadence native. Il mesure aussi P3/P4 avec défenseur fixe et vérifie toutes
-   les identités.
+3. `home-0986-l3-pure-turnover-l2-independent-eval-v1` commence par comparer
+   chaque candidat au contrôle TURNOVER sur le même nouveau pool, en Q00 d9 et
+   cadence native. Seuls les candidats dont les deux estimations ponctuelles
+   dépassent 50 % ouvrent les cellules de garde contre F2M et Gen2 ainsi que
+   P3/P4 avec défenseur fixe. Si aucun ne franchit ce filtre préenregistré,
+   l'écran se ferme sans dépenser ces cellules secondaires.
 
 Les losses holdout, normes de gradient et amplitudes de poids sont des
 diagnostics, jamais des critères de sélection.

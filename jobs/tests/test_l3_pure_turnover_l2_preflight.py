@@ -1,0 +1,108 @@
+from pathlib import Path
+import subprocess
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[2]
+TEMPLATE = ROOT / "jobs/templates/l3-pure-turnover-l2-preflight-v1.sh"
+TRAIN = ROOT / "jobs/templates/l3-pure-turnover-l2-train-v1.sh"
+EVAL = ROOT / "jobs/templates/l3-pure-turnover-l2-eval-v1.sh"
+
+
+def embedded_python(path: Path) -> list[str]:
+    blocks: list[str] = []
+    current: list[str] | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if current is None and "<<'PY'" in line:
+            current = []
+        elif current is not None and line == "PY":
+            blocks.append("\n".join(current))
+            current = None
+        elif current is not None:
+            current.append(line)
+    if current is not None:
+        raise AssertionError(f"{path}: unterminated Python heredoc")
+    return blocks
+
+
+class TurnoverL2PreflightTests(unittest.TestCase):
+    def test_shell_and_embedded_python_contracts(self):
+        for script in (TEMPLATE, TRAIN, EVAL):
+            subprocess.run(["bash", "-n", str(script)], check=True)
+            blocks = embedded_python(script)
+            self.assertGreaterEqual(len(blocks), 3)
+            for index, block in enumerate(blocks):
+                compile(block, f"{script}:heredoc-{index}", "exec")
+
+    def test_fixed_corpus_split_and_l2_levels(self):
+        text = TEMPLATE.read_text(encoding="utf-8")
+        for value in (
+            "9b7db67a87025baf9115c72512312ac13ace076cef700c54ff1862f4ab240a2d",
+            "acf3bbf4a28e7b44a1077df06bca9658cd4b189fc4cf11ee7f56720661626682",
+            "b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16",
+            "336bb98451a205266d6646c4d801027af4b30294",
+            "SPLIT_SEED=577215",
+            "L2_1E5:1e-5",
+            "L2_1E4:1e-4",
+            "--max-iter 2",
+            "--lbfgs-maxcor 20",
+            "--lbfgs-gtol 1e-3",
+        ):
+            self.assertIn(value, text)
+        self.assertNotIn("--gen-selfplay", text)
+
+    def test_trigger_and_independent_pool_fail_closed(self):
+        text = TEMPLATE.read_text(encoding="utf-8")
+        for value in (
+            "REPLAY25_DOSE_CLOSED_REVIEW",
+            "regression_not_established",
+            "OPENING_SEED=1836313",
+            "--exclude \"$IN/prior-replay25.fen\"",
+            "TURNOVER_L2_PREFLIGHT_READY",
+            "PROMOTION_AUTHORIZED__FALSE",
+            "AUTOMATIC_NEXT_JOB__NULL",
+            "NO_AUTOMATIC_CONTINUATION",
+        ):
+            self.assertIn(value, text)
+        self.assertNotIn(
+            'evaluation.get("all_guardrails_pass") is not True',
+            text,
+        )
+
+    def test_home_resource_contract(self):
+        text = TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn('cmake --build "$W/test-build" -j4', text)
+        self.assertIn('cmake --build "$W/build" -j4', text)
+        self.assertIn('"max_parallel_fits": 2', text)
+        self.assertIn('[ "$(nproc)" -ge 16 ]', text)
+
+    def test_training_uses_one_feature_dump_and_two_converged_fits(self):
+        text = TRAIN.read_text(encoding="utf-8")
+        self.assertEqual(text.count("--dump-eval-features"), 1)
+        self.assertIn("run_fit turnover-l2-1e5 1e-5 &", text)
+        self.assertIn("run_fit turnover-l2-1e4 1e-4 &", text)
+        self.assertIn('--max-iter "$MAXIT"', text)
+        self.assertIn('--optimizer-report "$ART/$name-optimizer.json"', text)
+        self.assertIn("TURNOVER_L2_TRAINING_SCREEN_READY", text)
+        self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
+        self.assertNotIn("--gen-selfplay", text)
+
+    def test_evaluation_is_staged_and_fail_closed(self):
+        text = EVAL.read_text(encoding="utf-8")
+        primary = text.index('stage "primary-$view-vs-turnover"')
+        eligibility = text.index('mapfile -t ELIGIBLE')
+        secondary = text.index("if [ \"${#ELIGIBLE[@]}\" -gt 0 ]; then")
+        self.assertLess(primary, eligibility)
+        self.assertLess(eligibility, secondary)
+        self.assertIn('if all(rate > 0.5 for rate in rates):', text)
+        self.assertIn("TURNOVER_L2_", text)
+        self.assertIn("PROMOTION_AUTHORIZED__FALSE", text)
+        self.assertIn("AUTOMATIC_NEXT_JOB__NULL", text)
+        self.assertIn("NO_AUTOMATIC_CONTINUATION", text)
+        self.assertIn('die "need 8 GiB free"', text)
+        self.assertIn('die "need 3.5 GiB available RAM"', text)
+        self.assertNotIn("--gen-selfplay", text)
+
+
+if __name__ == "__main__":
+    unittest.main()
