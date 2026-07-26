@@ -548,3 +548,11 @@ schéma : le nombre de records de couverture est publié sous
 `corpus.total_records`, pas à la racine. Aucun verdict scientifique n'est tiré
 de ces échecs techniques. `home-0981ter` corrige uniquement ce chemin de champ
 et constitue la relance autoritative du même préflight.
+
+`home-0981ter` conclut `REPLAY25_PREFLIGHT_READY`. Le mix bit-reproductible
+contient exactement 500 000 records époque F2M et 1 500 000 époque M2
+(JNNW `29c5b99d…`, JSM `5ea8c5a6…`) ; le split par ouverture est
+1 799 835/200 165. NumPy 1.26.4, SciPy 1.14.1, build, tests, mini-fit et pool
+indépendant passent. La couverture compte 209 626 buckets visités et 28 166
+à fréquence ≥100. Le split culmine à 920 180 KiB de RSS. Le certificat autorise
+uniquement le fit `home-0982`, sans promotion ni continuation automatique.

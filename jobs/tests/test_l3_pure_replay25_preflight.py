@@ -136,7 +136,14 @@ class L3PureReplay25PreflightTests(unittest.TestCase):
         self.assertNotIn("--gen-data-wdl", text)
         wrapper = TRAIN_WRAPPER.read_text(encoding="utf-8")
         self.assertIn(
-            ': "${PREFLIGHT_PREFIX:?set completed home-0981 result prefix}"',
+            'export PREFLIGHT_PREFIX="r2:jass-data/runs/'
+            "home-0981ter-l3-pure-replay25-preflight-v1/"
+            '20260726T104130Z-01873c15"',
+            wrapper,
+        )
+        self.assertIn(
+            'export EXPECTED_PREFLIGHT_JOB="'
+            'home-0981ter-l3-pure-replay25-preflight-v1"',
             wrapper,
         )
         self.assertIn(

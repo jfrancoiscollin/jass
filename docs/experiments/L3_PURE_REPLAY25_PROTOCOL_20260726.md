@@ -78,6 +78,12 @@ ni TOP3, ni reweight V2, ni changement de géométrie, profondeur ou volume.
 Un préflight incomplet, non reproductible ou dont le mini-fit échoue interdit
 le train.
 
+Exécution : `home-0981` s'est fermé au garde-fou SHA et `home-0981bis` a exposé
+un chemin de champ de couverture erroné au certificat final, tous deux sans
+verdict scientifique. La relance autoritative `home-0981ter` termine
+`REPLAY25_PREFLIGHT_READY` avec JNNW `29c5b99d…`, JSM `5ea8c5a6…`, split
+1 799 835/200 165, mini-fit vert et pool indépendant SHA `a0af38e8…`.
+
 ## Entraînement et évaluation réservés
 
 Après préflight vert seulement :
