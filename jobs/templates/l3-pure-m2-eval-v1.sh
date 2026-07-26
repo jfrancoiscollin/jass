@@ -59,6 +59,8 @@ CHAMPION_CODE_SHA="0c1e04a9574fcd87977f62fe5bd6d71c60c72265"
 FIXED_DEFENDER_CODE_SHA="038a2001854f2805bc0045acd56c617826e5ff15"
 D8_M2_SHA="75ace3c0ad2ffa2b71a9b9073c3c1d1545164e3a5a048e411e91adba23ec3b45"
 D8_M2_CORPUS_SHA="ee8d685cea331940403da82830d7b4cc045fe50acc1e5764d23f0467d4f7ffb8"
+D10_SHA="18930613234b4a1a6a933393151a05dd68f71d1af749f058f37c5778bd77960f"
+D10_CORPUS_SHA="3351cb8aebd33c417de179d72f4483193ae67f05f723c520190ed2a118fc9297"
 M2_INDEPENDENT_OPENINGS_SHA="9a0e46be89655ada7317440e3539b8583ab3d7fe83e400475ae817e77396313c"
 D10_INDEPENDENT_OPENINGS_SHA="e41ae3875368112a99d3de2a1e6e40aa8d4d94d5cb66ed5280999a7a4e612965"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
@@ -76,6 +78,15 @@ case "$EVAL_VARIANT" in
     CANDIDATE_LABEL=D10
     : "${D8_M2_PREFIX:?}"; : "${M2_EVAL_PREFIX:?}"
     [ "$OPENING_SEED" != 244949 ] || die "D10 evaluation requires a fresh opening seed"
+    ;;
+  D12_CAUSAL)
+    CANDIDATE_LABEL=D12
+    : "${EXPECTED_CANDIDATE_JOB:?}"
+    : "${D10_TRAIN_PREFIX:?}"; : "${EXPECTED_D10_TRAIN_JOB:?}"
+    : "${D10_EVAL_PREFIX:?}"; : "${EXPECTED_D10_EVAL_JOB:?}"
+    : "${EXPECTED_OPENING_SHA256:?}"
+    [ "$OPENING_SEED" != 244949 ] && [ "$OPENING_SEED" != 314159 ] ||
+      die "D12 evaluation requires a fresh opening seed"
     ;;
   *) die "unsupported evaluation variant: $EVAL_VARIANT" ;;
 esac
@@ -116,6 +127,20 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
     --file artefacts/conversion/M2-p4_egal.json=M2-p4_egal.json \
     --out-dir "$IN" --report "$ART/verified-m2-evaluation.json" \
     > "$W/fetch-m2-evaluation.log" 2>&1
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  python3 jobs/tools/fetch_result_files.py --prefix "$D10_TRAIN_PREFIX" \
+    --file artefacts/d10.pjtw.gz=d10.pjtw.gz \
+    --file artefacts/d10-fresh-2m.jnnw.gz=d10.jnnw.gz \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d10-training.json \
+    --out-dir "$IN" --report "$ART/verified-d10-training.json" \
+    > "$W/fetch-d10-training.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py --prefix "$D10_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d10-evaluation.json \
+    --file artefacts/independent-openings-manifest.json=d10-openings.json \
+    --file artefacts/conversion/D10-p3_mince.json=D10-p3_mince.json \
+    --file artefacts/conversion/D10-p4_egal.json=D10-p4_egal.json \
+    --out-dir "$IN" --report "$ART/verified-d10-evaluation.json" \
+    > "$W/fetch-d10-evaluation.log" 2>&1
 fi
 python3 jobs/tools/fetch_result_files.py --prefix "$M1_PREFIX" \
   --file artefacts/f2m.pjtw.gz=f2m.pjtw.gz \
@@ -146,6 +171,11 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
   gunzip -c "$IN/d8-m2.jnnw.gz" > "$W/M2.jnnw"
   cp "$IN/M2-p3_mince.json" "$ART/conversion/M2-p3_mince.json"
   cp "$IN/M2-p4_egal.json" "$ART/conversion/M2-p4_egal.json"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  gunzip -c "$IN/d10.pjtw.gz" > "$W/D10.pjtw"
+  gunzip -c "$IN/d10.jnnw.gz" > "$W/D10.jnnw"
+  cp "$IN/D10-p3_mince.json" "$ART/conversion/D10-p3_mince.json"
+  cp "$IN/D10-p4_egal.json" "$ART/conversion/D10-p4_egal.json"
 fi
 gunzip -c "$IN/f2m-common.jnnw.gz" > "$W/F2M-common.jnnw"
 gunzip -c "$IN/f2m-extra.jnnw.gz" > "$W/F2M-extra.jnnw"
@@ -168,6 +198,13 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
   [ "$(sha256sum "$W/M2.jnnw"|awk '{print $1}')" = "$D8_M2_CORPUS_SHA" ] ||
     die "D8 M2 corpus hash drift"
   [ "$(jnnw_count "$W/M2.jnnw")" -eq 2000000 ] || die "D8 M2 corpus count drift"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  [ "$(sha256sum "$W/D10.pjtw"|awk '{print $1}')" = "$D10_SHA" ] ||
+    die "D10 control hash drift"
+  [ "$(sha256sum "$W/D10.jnnw"|awk '{print $1}')" = "$D10_CORPUS_SHA" ] ||
+    die "D10 control corpus hash drift"
+  [ "$(jnnw_count "$W/D10.jnnw")" -eq 2000000 ] ||
+    die "D10 control corpus count drift"
 fi
 [ $(( $(jnnw_count "$W/F2M-common.jnnw") + $(jnnw_count "$W/F2M-extra.jnnw") )) -eq 2000000 ] ||
   die "F2M corpus count drift"
@@ -181,12 +218,12 @@ done
 python3 - "$IN/m2-training.json" "$IN/champion-benchmark.json" \
   "$IN/m1-matrix.json" "$ART/verified-m2.json" \
   "$ART/verified-champion.json" "$ART/verified-m1-matrix.json" \
-  "$EVAL_VARIANT" "$M2_SHA" <<'PY'
+  "$EVAL_VARIANT" "$M2_SHA" "${EXPECTED_CANDIDATE_JOB:-}" <<'PY'
 import json,sys
 training,champion,matrix,report,champ_report,matrix_report=(
     json.load(open(p)) for p in sys.argv[1:7]
 )
-variant, expected_sha = sys.argv[7:]
+variant, expected_sha, expected_candidate_job = sys.argv[7:]
 if report.get("result_state")!="completed":
     raise SystemExit("M2 source is not completed")
 if champ_report.get("result_state")!="completed":
@@ -202,6 +239,13 @@ if variant == "D10_CAUSAL" and (
     or training.get("play_depth") != 10
 ):
     raise SystemExit("D10 training variant/depth mismatch")
+if variant == "D12_CAUSAL" and (
+    training.get("experiment_variant") != "D12_CAUSAL_FRESH2M"
+    or training.get("play_depth") != 12
+):
+    raise SystemExit("D12 training variant/depth mismatch")
+if variant == "D12_CAUSAL" and report.get("job_id") != expected_candidate_job:
+    raise SystemExit("D12 training source job mismatch")
 if champion.get("verdict")!="F2M_NEW_GENERAL_CHAMPION_HUMAN_REVIEW":
     raise SystemExit("F2M champion certificate mismatch")
 if matrix.get("verdict")!="M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW":
@@ -227,6 +271,47 @@ if evaluation.get("recommendation") != "stop_same_recipe_and_prepare_d10_causal_
     raise SystemExit("M2 evaluation did not authorize the D10 causal arm")
 if openings.get("sha256") != "9a0e46be89655ada7317440e3539b8583ab3d7fe83e400475ae817e77396313c":
     raise SystemExit("M2 independent opening manifest hash mismatch")
+PY
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  python3 - "$IN/d10-training.json" "$IN/d10-evaluation.json" \
+    "$IN/d10-openings.json" "$ART/verified-d10-training.json" \
+    "$ART/verified-d10-evaluation.json" "$EXPECTED_D10_TRAIN_JOB" \
+    "$EXPECTED_D10_EVAL_JOB" <<'PY'
+import json, sys
+training, evaluation, openings, training_report, evaluation_report = (
+    json.load(open(path)) for path in sys.argv[1:6]
+)
+expected_training_job, expected_evaluation_job = sys.argv[6:]
+if (
+    training_report.get("result_state") != "completed"
+    or training_report.get("job_id") != expected_training_job
+):
+    raise SystemExit("D10 training source identity/state mismatch")
+if (
+    evaluation_report.get("result_state") != "completed"
+    or evaluation_report.get("job_id") != expected_evaluation_job
+):
+    raise SystemExit("D10 evaluation source identity/state mismatch")
+if (
+    training.get("model_sha256") !=
+    "18930613234b4a1a6a933393151a05dd68f71d1af749f058f37c5778bd77960f"
+    or training.get("training_corpus_sha256") !=
+    "3351cb8aebd33c417de179d72f4483193ae67f05f723c520190ed2a118fc9297"
+    or training.get("experiment_variant") != "D10_CAUSAL_FRESH2M"
+    or training.get("play_depth") != 10
+):
+    raise SystemExit("D10 training certificate mismatch")
+if (
+    evaluation.get("verdict") != "D10_PLATEAU_OR_REGRESSION_REVIEW"
+    or evaluation.get("recommendation") !=
+    "stop_d10_and_prepare_d12_or_d10_d12_mix"
+    or not evaluation.get("all_guardrails_pass")
+):
+    raise SystemExit("D12 evaluation requires the certified D10 plateau")
+if openings.get("sha256") != (
+    "e41ae3875368112a99d3de2a1e6e40aa8d4d94d5cb66ed5280999a7a4e612965"
+):
+    raise SystemExit("D10 independent opening manifest hash mismatch")
 PY
 fi
 git diff --quiet "$CHAMPION_CODE_SHA" HEAD -- src pattern_jass/tools ||
@@ -278,7 +363,7 @@ for spec in \
   "$J8" --gen-opening-pool "$count" "$W/$name.fen" 8 32 20 "$seed" \
     > "$W/open-$name.log" 2>&1
 done
-if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
+if [ "$EVAL_VARIANT" != M2_STANDARD ]; then
   "$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
     "$W/prior-m2-candidates.fen" 8 32 20 244949 \
     > "$W/open-prior-m2.log" 2>&1
@@ -298,6 +383,27 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
     "$M2_INDEPENDENT_OPENINGS_SHA" ] ||
     die "reconstructed M2 independent opening pool hash drift"
 fi
+if [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  "$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
+    "$W/prior-d10-candidates.fen" 8 32 20 314159 \
+    > "$W/open-prior-d10.log" 2>&1
+  python3 jobs/tools/select_independent_opening_pool.py \
+    --candidates "$W/prior-d10-candidates.fen" --expected "$NOPEN" \
+    --exclude data/dilf_combinations.fen \
+    --exclude "$W/prior-reinforcement.fen" \
+    --exclude "$W/prior-meta-screen.fen" \
+    --exclude "$W/prior-meta-confirm.fen" \
+    --exclude "$W/prior-f2m-confirm.fen" \
+    --exclude "$W/prior-f2m-gen2.fen" \
+    --exclude "$W/prior-m2-independent.fen" \
+    --generator-seed 314159 \
+    --out "$W/prior-d10-independent.fen" \
+    --manifest "$W/prior-d10-independent.json" \
+    > "$W/select-prior-d10.log" 2>&1
+  [ "$(sha256sum "$W/prior-d10-independent.fen"|awk '{print $1}')" = \
+    "$D10_INDEPENDENT_OPENINGS_SHA" ] ||
+    die "reconstructed D10 independent opening pool hash drift"
+fi
 "$J8" --gen-opening-pool "$OPENING_CANDIDATES" \
   "$W/open-candidates.fen" 8 32 20 "$OPENING_SEED" \
   > "$W/open-candidate.log" 2>&1
@@ -310,8 +416,10 @@ opening_args=(
   --exclude "$W/prior-f2m-confirm.fen"
   --exclude "$W/prior-f2m-gen2.fen"
 )
-[ "$EVAL_VARIANT" != D10_CAUSAL ] ||
+[ "$EVAL_VARIANT" = M2_STANDARD ] ||
   opening_args+=(--exclude "$W/prior-m2-independent.fen")
+[ "$EVAL_VARIANT" != D12_CAUSAL ] ||
+  opening_args+=(--exclude "$W/prior-d10-independent.fen")
 python3 jobs/tools/select_independent_opening_pool.py "${opening_args[@]}" \
   --generator-seed "$OPENING_SEED" --out "$W/open-eval.fen" \
   --manifest "$ART/independent-openings-manifest.json" \
@@ -320,6 +428,10 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
   [ "$(sha256sum "$W/open-eval.fen"|awk '{print $1}')" = \
     "$D10_INDEPENDENT_OPENINGS_SHA" ] ||
     die "D10 independent opening pool hash drift"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  [ "$(sha256sum "$W/open-eval.fen"|awk '{print $1}')" = \
+    "$EXPECTED_OPENING_SHA256" ] ||
+    die "D12 independent opening pool hash drift"
 fi
 
 stage exact-corpus-coverage
@@ -334,12 +446,17 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
   env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py \
     --data "$W/M2.jnnw" \
     --out "$ART/coverage/M2-coverage.json" > "$W/coverage-M2.log" 2>&1
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  env PYTHONPATH="$GEOM:pattern_jass/tools" python3 jobs/tools/l3_bucket_visits.py \
+    --data "$W/D10.jnnw" \
+    --out "$ART/coverage/D10-coverage.json" > "$W/coverage-D10.log" 2>&1
 fi
 
 run_gate(){
   local view="$1" opponent="$2" jb="$J8" pattern="$W/F2M.pjtw"; local args=()
   [ "$opponent" = GEN2 ] && { jb="$J32"; pattern="$W/GEN2.pjtw"; }
   [ "$opponent" = M2 ] && pattern="$W/M2.pjtw"
+  [ "$opponent" = D10 ] && pattern="$W/D10.pjtw"
   [ "$view" = q00 ] && args=(--depth "$FORCE_DEPTH") || args=(--movetime "$MOVETIME")
   timeout 21600 python3 jobs/tools/run_jass_gate_bounded.py \
     --jass-a "$J8" --jass-b "$jb" \
@@ -355,16 +472,22 @@ run_gate(){
 stage force-q00
 run_gate q00 F2M & p_f2m=$!; run_gate q00 GEN2 & p_gen2=$!
 if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
-  run_gate q00 M2 & p_m2=$!
-  wait_all "Q00 force wave" "$p_f2m" "$p_gen2" "$p_m2"
+  run_gate q00 M2 & p_control=$!
+  wait_all "Q00 force wave" "$p_f2m" "$p_gen2" "$p_control"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  run_gate q00 D10 & p_control=$!
+  wait_all "Q00 force wave" "$p_f2m" "$p_gen2" "$p_control"
 else
   wait_all "Q00 force wave" "$p_f2m" "$p_gen2"
 fi
 stage force-native
 run_gate native F2M & p_f2m=$!; run_gate native GEN2 & p_gen2=$!
 if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
-  run_gate native M2 & p_m2=$!
-  wait_all "native force wave" "$p_f2m" "$p_gen2" "$p_m2"
+  run_gate native M2 & p_control=$!
+  wait_all "native force wave" "$p_f2m" "$p_gen2" "$p_control"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  run_gate native D10 & p_control=$!
+  wait_all "native force wave" "$p_f2m" "$p_gen2" "$p_control"
 else
   wait_all "native force wave" "$p_f2m" "$p_gen2"
 fi
@@ -406,6 +529,21 @@ if [ "$EVAL_VARIANT" = D10_CAUSAL ]; then
     --summary-out "$ART/JASS_CONTROL_SUMMARY.json" \
     > "$W/aggregate.log" 2>&1
   VERDICT_SOURCE="$ART/d10-causal-evaluation.json"
+elif [ "$EVAL_VARIANT" = D12_CAUSAL ]; then
+  python3 jobs/tools/l3_d12_causal_evaluation.py \
+    --force-dir "$ART/force" --conversion-dir "$ART/conversion" \
+    --coverage-dir "$ART/coverage" \
+    --training-summary "$IN/m2-training.json" \
+    --d10-training-summary "$IN/d10-training.json" \
+    --d10-evaluation "$IN/d10-evaluation.json" \
+    --opening-manifest "$ART/independent-openings-manifest.json" \
+    --expected-opening-seed "$OPENING_SEED" \
+    --expected-opening-sha256 "$EXPECTED_OPENING_SHA256" \
+    --bootstrap-samples "$BOOTSTRAP_SAMPLES" \
+    --out "$ART/d12-causal-evaluation.json" \
+    --summary-out "$ART/JASS_CONTROL_SUMMARY.json" \
+    > "$W/aggregate.log" 2>&1
+  VERDICT_SOURCE="$ART/d12-causal-evaluation.json"
 else
   python3 jobs/tools/l3_m2_evaluation.py \
     --force-dir "$ART/force" --conversion-dir "$ART/conversion" \

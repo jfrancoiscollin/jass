@@ -66,6 +66,12 @@ continuation n'est automatique.
 Après un entraînement valide, un job séparé utilisera un nouveau pool unique
 et disjoint pour comparer D12 à D10, F2M et Gen2 en Q00 d9 et en cadence
 native. Il répétera les jauges P3/P4 à défenseur fixe et la couverture exacte.
+Le readout réservé est
+`home-0974-l3-pure-d12-causal-independent-eval-v1`, avec le seed de candidats
+`424243`. Avant publication, son pool de 500 ouvertures doit être reconstruit,
+vérifié sans chevauchement avec les pools indépendants M2 et D10, puis son SHA
+doit être épinglé avec les SHA exacts du modèle et du corpus produits par
+`home-0973`.
 
 Une borne basse à 95 % au-dessus de 50 % contre D10 dans les deux vues,
 accompagnée de garde-fous valides contre F2M, Gen2 et la conversion, est
