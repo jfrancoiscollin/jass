@@ -51,6 +51,21 @@ replay historique, fenêtre glissante, oracle, teacher, TOP3, reweight V2,
 changement de géométrie, changement de régularisation et mélange avec
 L3-IMBALANCE2.
 
+## Preflight mécanique pleine échelle
+
+Avant le résultat d12, l'implémentation a été exécutée deux fois sur 2 millions
+de lignes réelles du corpus d10 certifié, utilisé comme les deux entrées
+uniquement pour tester la mécanique (ce n'est pas le futur corpus
+scientifique). Chaque exécution a :
+
+- sélectionné exactement 1 666 667 + 333 333 lignes ;
+- conservé l'alignement JNNW/JSM de 38 187 ouvertures communes ;
+- produit les mêmes SHA bit-à-bit aux deux passages ;
+- pris environ 25 secondes et 102 Mo de RSS maximale sur HOME.
+
+Le futur preflight d10+d12 reste obligatoire pour épingler ses propres SHA et
+vérifier un recouvrement d'identifiants d'ouverture d'au moins 95 %.
+
 ## Exécution réservée
 
 Si et seulement si le déclencheur est satisfait :
