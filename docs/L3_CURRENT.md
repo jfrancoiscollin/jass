@@ -21,8 +21,8 @@
 > f2m_general_champion; m2_d8_plateau; d10_plateau;
 > d12_q00_regression; depth_mix_trigger_blocked;
 > turnover_1to1_effect_confirmed; replay25_dose_closed;
-> turnover_l2_1e4_rejected;
-> turnover_l2_1e5_directional_confirmation_next`.
+> turnover_l2_1e4_rejected; turnover_l2_1e5_not_replicated;
+> l2_factor_closed_on_3e5; replay_cross_next`.
 
 ## 1. Architecture du programme
 
@@ -93,7 +93,8 @@ une configuration héritée par les nouveaux bras.
 | causal temporel | turnover 1M F2M + 1M M2 frais | `home-0977` / `home-0978` | **signal positif dans 4/4 vues ; confirmation indépendante requise** |
 | confirmation temporelle | même modèle TURNOVER, nouveau pool haut-N | `home-0979` / relance `home-0980` | **effet confirmé contre M2 ; pas de supériorité établie sur F2M** |
 | dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **dose 25/75 close : mieux que M2, moins bien que TURNOVER 50/50** |
-| régularisation | écran L2 `{1e-5, 3e-5, 1e-4}` à corpus fixe | `home-0984bis`/`0985` / relance `0987` | **`1e-4` rejeté (régression native établie) ; `1e-5` directionnel, confirmation requise** |
+| régularisation | écran L2 `{1e-5, 3e-5, 1e-4}` à corpus fixe | `home-0984bis`/`0985` / relance `0987` | **`1e-4` rejeté (régression native établie) ; `1e-5` directionnel** |
+| régularisation | confirmation indépendante de `L2_1E5` | `home-0988` / `home-0989` | **non répliquée, vues inversées : facteur L2 clos sur `3e-5`** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -329,10 +330,9 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 1. champion général courant : F2M, immuable tant qu'aucun gate n'est franchi ;
    Gen2-mmto reste la référence historique figée ;
-2. exécuter le readout `home-0986` de l'écran L2 `{1e-5, 3e-5, 1e-4}` sur le
-   corpus TURNOVER 50/50, puis clore ou confirmer le facteur L2 selon la règle
-   de décision préenregistrée ;
-3. ne croiser le replay `0/25 %` au L2 retenu qu'après cette clôture ;
+2. facteur L2 **clos** : `1e-4` rejeté, `1e-5` non répliqué, `L2=3e-5` retenu ;
+3. croisement replay `0/25 %` au L2 retenu : c'est le prochain bras à
+   préenregistrer ;
 4. traiter les losses holdout, normes de gradient et amplitudes de poids comme
    des diagnostics, jamais comme des critères de sélection ;
 5. mesurer séparément force, conversion, couverture et convergence ;
@@ -693,3 +693,30 @@ parties tranche si le `+10 Elo` natif est réel ou s'il relève du bruit de
 `movetime`, mesuré à 1,55 pp entre `home-0986` et `home-0987` sur le même
 modèle. Détail :
 [`experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md`](experiments/L3_PURE_TURNOVER_L2_SCREEN_PROTOCOL_20260726.md).
+
+`home-0988` certifie le pool `71dc575e…` (1 000 ouvertures, seed `2718281`,
+recouvrement nul sur treize pools dont celui de l'écran) et `home-0989` conclut
+**`L2_1E5_DIRECTION_NOT_REPLICATED_RETAIN_3E5`**. Le facteur L2 est **clos sur
+`L2=3e-5`** ; le croisement replay `0/25 %` s'ouvre à ce réglage.
+
+**Les deux vues se sont inversées entre l'écran et la confirmation**, à modèle
+strictement identique et sur des pools disjoints :
+
+| vue, contre le contrôle | `home-0987` n=1000 | `home-0989` frais n=2000 | cumul n=3000 |
+|---|---|---|---|
+| Q00 | 50,15 % (+1,0 Elo) | **53,02 %** (+21,1 Elo, établie) | 52,07 %, IC95 `[50,30 ; 53,84]`, établie |
+| native | 51,45 % (+10,1 Elo) | **49,68 %** (−2,3 Elo) | 50,27 %, IC95 `[48,49 ; 52,04]` |
+
+La règle exigeant les deux vues sur le frais **et** le cumul, la native ferme le
+dossier. La vue Q00 étant déterministe à profondeur fixe, l'écart Q00 de 2,87 pp
+entre les deux runs mesure la **variance d'échantillonnage entre pools**, pas du
+bruit moteur : à `n=1000`, une lecture mono-vue de l'ordre de `±10 Elo` ne porte
+pas de décision. C'est le repère méthodologique le plus réutilisable de la
+campagne.
+
+Hors question causale, `L2_1E5` établit sa supériorité **contre F2M dans les
+deux vues** sur le cumul (52,42 % et 52,63 %, bornes basses 50,64 et 50,86).
+Les cellules F2M sont des garde-fous de non-régression, pas un test de
+promotion : le candidat et son contrôle se tiennent à égalité tout en dominant
+leur parent commun. Exploiter ce constat exigerait une expérience séparée et
+préenregistrée ; rien ici ne l'autorise.

@@ -283,6 +283,76 @@ natif de l'écran est réel ou s'il relève du bruit de `movetime` — écart me
 modèle. Quelle que soit l'issue, le réglage retenu reste `L2=3e-5` tant qu'aucun
 lead n'est confirmé.
 
+## Résultat de la confirmation
+
+`home-0988` certifie le pool `71dc575e…` : 1 000 ouvertures uniques, seed
+`2718281`, recouvrement nul avec les treize pools exclus, dont le pool
+`e7b89a5e…` de l'écran lui-même. `home-0989` termine ensuite avec exit code 0 et
+**`L2_1E5_DIRECTION_NOT_REPLICATED_RETAIN_3E5`**.
+
+```text
+frais n=2000 (pool 71dc575e)
+  q00     vs contrôle  53,02 %  1042-37-921  +21,05 Elo  IC95 [50,86 ; 55,19]  supériorité ÉTABLIE
+  native  vs contrôle  49,68 %   972-43-985   -2,26 Elo  IC95 [47,51 ; 51,84]
+  q00     vs F2M       52,33 %  1034-25-941  +16,17 Elo  IC95 [50,15 ; 54,50]  supériorité ÉTABLIE
+  native  vs F2M       53,15 %  1043-40-917  +21,92 Elo  IC95 [50,99 ; 55,31]  supériorité ÉTABLIE
+
+cumulé n=3000 (avec home-0987)
+  q00     vs contrôle  52,07 %  1532-60-1408  +14,37 Elo  IC95 [50,30 ; 53,84]  supériorité ÉTABLIE
+  native  vs contrôle  50,27 %  1479-58-1463   +1,85 Elo  IC95 [48,49 ; 52,04]
+  q00     vs F2M       52,42 %  1555-35-1410  +16,81 Elo  IC95 [50,64 ; 54,19]  supériorité ÉTABLIE
+  native  vs F2M       52,63 %  1552-54-1394  +18,32 Elo  IC95 [50,86 ; 54,40]  supériorité ÉTABLIE
+```
+
+La règle préenregistrée exige la supériorité contre le contrôle **dans les deux
+vues, à la fois sur le frais et sur le cumul**. La vue native ne la fournit pas,
+et son estimation ponctuelle fraîche passe même sous 50 %. Le facteur L2 est
+donc **clos sur `L2=3e-5`**, sans promotion.
+
+### Les deux vues se sont inversées
+
+C'est le fait marquant du run. Entre l'écran et la confirmation, sur des pools
+disjoints et à modèle strictement identique :
+
+| vue | `home-0987` (n=1000) | `home-0989` frais (n=2000) |
+|---|---|---|
+| Q00 | 50,15 % (+1,0 Elo, rien) | **53,02 %** (+21,1 Elo, établie) |
+| native | 51,45 % (+10,1 Elo, « prometteur ») | **49,68 %** (−2,3 Elo, rien) |
+
+La vue qui portait tout le signal directionnel de l'écran est exactement celle
+qui s'effondre, et la vue plate devient la plus forte. La prédiction de
+puissance publiée avant le run — « l'écran ne se confirmera pas » — est vérifiée,
+mais par un chemin qu'elle n'avait pas prévu : le verdict attendu était
+`DIRECTION_REPLICATED`, l'observé est `DIRECTION_NOT_REPLICATED`.
+
+Cette inversion n'est pas un défaut du harnais. La vue Q00 est déterministe à
+profondeur fixe — ses cellules `home-0986`/`home-0987` étaient identiques au bit
+près sur un même pool — donc l'écart Q00 de 2,87 pp entre les deux runs mesure
+la **variance d'échantillonnage entre pools d'ouvertures**, pas du bruit moteur.
+Conclusion opérationnelle : à `n=1000`, une lecture mono-vue de l'ordre de
+`±10 Elo` ne porte pas de décision.
+
+### Observation hors question causale
+
+Sur le cumul de 3 000 parties, `L2_1E5` établit sa supériorité **contre F2M dans
+les deux vues** (52,42 % et 52,63 %, bornes basses 50,64 et 50,86), et il en va
+de même sur les 2 000 parties fraîches. Cela ne fait pas de lui un candidat
+champion : les cellules F2M sont des **garde-fous de non-régression**, pas le
+test préenregistré d'une promotion, et la question causale de cet écran était
+`L2_1E5` contre son contrôle `L2_3E5` — à laquelle la réponse est « pas de lead ».
+
+Le fait notable est plutôt que le candidat **et** son contrôle descendent tous
+deux de F2M sur le corpus TURNOVER et se tiennent à égalité entre eux tout en
+dominant leur parent. Toute exploitation de ce constat exigerait une expérience
+séparée et préenregistrée, avec son propre pool. Rien ici ne l'autorise :
+`promotion_authorized=false`, `automatic_next_job=null`.
+
+Le préfixe immuable est :
+
+```text
+r2:jass-data/runs/home-0989-l3-pure-turnover-l2-confirmation-v1/20260726T201002Z-42f2db33
+```
+
 ## Budget HOME
 
 HOME fournit 16 CPU logiques et environ 15,6 Go de RAM. Les builds restent à

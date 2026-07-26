@@ -305,6 +305,22 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   appariée au contrôle). **`L2=3e-5` reste donc le réglage retenu** tant qu'une
   confirmation indépendante de `1e-5` n'a pas eu lieu ; le croisement replay
   `0/25 %` reste fermé et aucune promotion n'est autorisée.
+- **Facteur L2 clos par `0988→0989` :** la confirmation indépendante de
+  `L2_1E5` sur un pool neuf (`71dc575e…`, 1 000 ouvertures, recouvrement nul
+  sur treize pools dont celui de l'écran) conclut
+  `L2_1E5_DIRECTION_NOT_REPLICATED_RETAIN_3E5`. **Les deux vues s'inversent** à
+  modèle identique : la Q00 passe de 50,15 % à 53,02 % (supériorité établie) et
+  la native de 51,45 % à 49,68 %. La règle exigeant les deux vues sur le frais
+  et sur le cumul, **`L2=3e-5` est retenu et le facteur L2 est clos**. La Q00
+  étant déterministe à profondeur fixe, son écart de 2,87 pp entre deux pools
+  mesure la variance d'échantillonnage : **à `n=1000`, une lecture mono-vue de
+  l'ordre de `±10 Elo` ne porte pas de décision** — c'est le repère
+  méthodologique le plus réutilisable de la campagne. Hors question causale,
+  `L2_1E5` domine F2M dans les deux vues sur le cumul de 3 000 parties
+  (52,42 % et 52,63 %) ; les cellules F2M sont des garde-fous, pas un test de
+  promotion, et le candidat comme son contrôle dominent leur parent commun.
+  Le croisement replay `0/25 %` au L2 retenu est le prochain bras à
+  préenregistrer.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
