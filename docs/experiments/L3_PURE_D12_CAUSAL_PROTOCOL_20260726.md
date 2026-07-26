@@ -112,3 +112,12 @@ et
 Après exclusion de ces pools et de tous les pools historiques prescrits, le
 seed `424243` produit 500 positions uniques, sans chevauchement, de SHA
 `0f7af083406063719717190cab7f983bee6d0f49b552f42ca4d05d81dce7cf7f`.
+
+La première publication, `home-0974-l3-pure-d12-causal-independent-eval-v1`,
+a échoué avant tout calcul : le garde-fou a constaté que le wrapper
+épingle `199b02f95496e2b9ba378f953251c02948536f19`, alors que le commit de
+scellement avait avancé `develop` à
+`4d10d40d7286a0f9c7c0f087403a9b5999806a48`. Aucun résultat partiel de
+cette tentative n'est réutilisable. La relance réservée est
+`home-0974bis-l3-pure-d12-causal-independent-eval-v1`, avec les mêmes
+entrées scientifiques et le SHA de code corrigé `4d10d40d...`.

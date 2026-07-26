@@ -8,7 +8,7 @@ TEMPLATE = ROOT / "jobs/templates/l3-pure-m2-eval-v1.sh"
 WRAPPER = (
     ROOT
     / "jobs/prepared/l3-pure-d12-causal-20260726"
-    / "home-0974-l3-pure-d12-causal-independent-eval-v1.sh"
+    / "home-0974bis-l3-pure-d12-causal-independent-eval-v1.sh"
 )
 
 
@@ -78,6 +78,16 @@ class D12CausalEvaluationJobTests(unittest.TestCase):
 
     def test_wrapper_pins_certified_d12_inputs(self):
         text = WRAPPER.read_text(encoding="utf-8")
+        self.assertIn(
+            'export EXPECTED_CODE_SHA="'
+            '4d10d40d7286a0f9c7c0f087403a9b5999806a48"',
+            text,
+        )
+        self.assertIn(
+            'export EXPECTED_JOB_ID="'
+            'home-0974bis-l3-pure-d12-causal-independent-eval-v1"',
+            text,
+        )
         self.assertIn("home-0971-l3-pure-d10-causal-fresh2m-train-v1", text)
         self.assertIn("home-0972-l3-pure-d10-causal-independent-eval-v1", text)
         self.assertIn("home-0973-l3-pure-d12-causal-fresh2m-train-v1", text)
