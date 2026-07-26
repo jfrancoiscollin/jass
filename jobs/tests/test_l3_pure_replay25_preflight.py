@@ -11,6 +11,11 @@ WRAPPER = (
     / "jobs/prepared/l3-pure-replay25-20260726"
     / "home-0981-l3-pure-replay25-preflight-v1.sh"
 )
+RELAUNCH_WRAPPER = (
+    ROOT
+    / "jobs/prepared/l3-pure-replay25-20260726"
+    / "home-0981ter-l3-pure-replay25-preflight-v1.sh"
+)
 TRAIN_WRAPPER = (
     ROOT
     / "jobs/prepared/l3-pure-replay25-20260726"
@@ -37,7 +42,13 @@ def embedded_python(path: Path) -> list[str]:
 
 class L3PureReplay25PreflightTests(unittest.TestCase):
     def test_shell_and_embedded_python_contracts(self):
-        for script in (TEMPLATE, TRAIN_TEMPLATE, WRAPPER, TRAIN_WRAPPER):
+        for script in (
+            TEMPLATE,
+            TRAIN_TEMPLATE,
+            WRAPPER,
+            RELAUNCH_WRAPPER,
+            TRAIN_WRAPPER,
+        ):
             subprocess.run(["bash", "-n", str(script)], check=True)
         for template in (TEMPLATE, TRAIN_TEMPLATE):
             blocks = embedded_python(template)
@@ -80,6 +91,11 @@ class L3PureReplay25PreflightTests(unittest.TestCase):
             wrapper,
         )
         self.assertIn("home-0980-l3-pure-turnover-confirmation-v2", wrapper)
+        relaunch = RELAUNCH_WRAPPER.read_text(encoding="utf-8")
+        self.assertIn(
+            'export EXPECTED_JOB_ID="home-0981ter-l3-pure-replay25-preflight-v1"',
+            relaunch,
+        )
 
     def test_runtime_roundtrip_and_independent_pool_are_measured(self):
         text = TEMPLATE.read_text(encoding="utf-8")
@@ -91,6 +107,10 @@ class L3PureReplay25PreflightTests(unittest.TestCase):
         self.assertIn("prior-turnover-confirmation.fen", text)
         self.assertIn("opening candidates are not byte-identical", text)
         self.assertIn("selected evaluation pool is not byte-identical", text)
+        self.assertIn(
+            'coverage.get("corpus", {}).get("total_records") != 2_000_000',
+            text,
+        )
         self.assertIn("home_training_eta_minutes", text)
         self.assertIn("home_evaluation_eta_minutes", text)
 

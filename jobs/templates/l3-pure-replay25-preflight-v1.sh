@@ -473,7 +473,7 @@ if (
     or split.get("holdout_records", 0) <= 0
     or split.get("train_records", 0) + split.get("holdout_records", 0)
     != 2_000_000
-    or coverage.get("records") != 2_000_000
+    or coverage.get("corpus", {}).get("total_records") != 2_000_000
     or openings.get("records") != 500
     or openings.get("unique_records") != 500
     or openings.get("overlap_records") != 0

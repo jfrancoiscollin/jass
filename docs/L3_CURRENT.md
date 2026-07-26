@@ -539,3 +539,12 @@ d8, 8cf/Q00, WDL et `L2=3e-5`, mais dose le replay à 25 % : 500k positions de
 l'époque F2M et 1,5M de l'époque M2. Le préflight reproductible `home-0981`
 doit précéder le fit `home-0982` et le readout `home-0983`. Protocole :
 [`experiments/L3_PURE_REPLAY25_PROTOCOL_20260726.md`](experiments/L3_PURE_REPLAY25_PROTOCOL_20260726.md).
+
+Le premier claim `home-0981` est arrêté avant calcul par son garde-fou SHA :
+le préfixe court était correct, mais pas le SHA complet épinglé. La relance
+`home-0981bis` exécute correctement mix, split, build, tests, mini-fit,
+couverture et pool indépendant, puis expose au dernier certificat un écart de
+schéma : le nombre de records de couverture est publié sous
+`corpus.total_records`, pas à la racine. Aucun verdict scientifique n'est tiré
+de ces échecs techniques. `home-0981ter` corrige uniquement ce chemin de champ
+et constitue la relance autoritative du même préflight.
