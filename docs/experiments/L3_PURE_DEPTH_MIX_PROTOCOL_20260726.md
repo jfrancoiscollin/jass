@@ -61,8 +61,9 @@ Si et seulement si le déclencheur est satisfait :
 2. le job archive les deux sidecars sources, le manifeste du mix, le split, le
    rapport optimiseur, la loss holdout, la RAM et le modèle ;
 3. `home-0976-l3-pure-d10-d12-mix5to1-independent-eval-v1` utilise un nouveau
-   pool indépendant et compare MIX à D10, D12, F2M et Gen2 dans les vues Q00
-   d9 et native, puis répète conversion P3/P4 à défenseur fixe et couverture.
+   pool indépendant de 500 ouvertures (`seed=577217`), disjoint des pools M2,
+   D10 et D12, et compare MIX à D10, D12, F2M et Gen2 dans les vues Q00 d9 et
+   native, puis répète conversion P3/P4 à défenseur fixe et couverture.
 
 Le test primaire est MIX contre les deux bras purs D10 et D12. Une conclusion
 forte demande une borne basse à 95 % au-dessus de 50 % contre les deux contrôles
