@@ -65,7 +65,7 @@ FIT_TIMEOUT=43200
 
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
-say "=== $JASS_JOB_ID — L3-PURE $EXPERIMENT_VARIANT fresh-2M from F2M ==="
+say "=== $JASS_JOB_ID — L3-PURE $EXPERIMENT_VARIANT 2M training corpus from F2M ==="
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "worktree must be detached"
@@ -82,6 +82,17 @@ case "$EXPERIMENT_VARIANT:$PLAY_DEPTH" in
     [ "${D12_CAUSAL_APPROVED:-0}" = 1 ] || die "D12_CAUSAL_APPROVED=1 missing"
     : "${D10_EVAL_PREFIX:?}"; : "${EXPECTED_D10_EVAL_JOB:?}"
     : "${EXPECTED_D10_MODEL_SHA256:?}"
+    ;;
+  D10_D12_MIX_5_1:0)
+    [ "${DEPTH_MIX_APPROVED:-0}" = 1 ] || die "DEPTH_MIX_APPROVED=1 missing"
+    : "${D10_TRAIN_PREFIX:?}"; : "${EXPECTED_D10_TRAIN_JOB:?}"
+    : "${EXPECTED_D10_MODEL_SHA256:?}"; : "${EXPECTED_D10_CORPUS_SHA256:?}"
+    : "${EXPECTED_D10_META_SHA256:?}"
+    : "${D12_TRAIN_PREFIX:?}"; : "${EXPECTED_D12_TRAIN_JOB:?}"
+    : "${EXPECTED_D12_MODEL_SHA256:?}"; : "${EXPECTED_D12_CORPUS_SHA256:?}"
+    : "${EXPECTED_D12_META_SHA256:?}"
+    : "${D12_EVAL_PREFIX:?}"; : "${EXPECTED_D12_EVAL_JOB:?}"
+    : "${EXPECTED_MIX_CORPUS_SHA256:?}"; : "${EXPECTED_MIX_META_SHA256:?}"
     ;;
   *) die "unsupported experiment variant/depth: $EXPERIMENT_VARIANT/$PLAY_DEPTH" ;;
 esac
@@ -104,11 +115,12 @@ python3 jobs/tools/fetch_result_files.py \
   --out-dir "$SRC" --report "$ART/verified-champion-source.json" > "$W/fetch-champion.log" 2>&1
 gunzip -c "$SRC/f2m.pjtw.gz" > "$W/parent-f2m.pjtw"
 python3 - "$SRC" "$W/parent-f2m.pjtw" "$ART" "$EXPECTED_M1_JOB" \
-  "$EXPECTED_CHAMPION_JOB" "$EXPECTED_PARENT_MODEL_SHA256" <<'PY'
+  "$EXPECTED_CHAMPION_JOB" "$EXPECTED_PARENT_MODEL_SHA256" \
+  "$EXPERIMENT_VARIANT" <<'PY'
 import hashlib, json, sys
 from pathlib import Path
 src, model, art = map(Path, sys.argv[1:4])
-m1_job, champion_job, expected_sha = sys.argv[4:]
+m1_job, champion_job, expected_sha, experiment_variant = sys.argv[4:]
 m1_report = json.load(open(art / "verified-m1-source.json"))
 champion_report = json.load(open(art / "verified-champion-source.json"))
 m1 = json.load(open(src / "m1-training-summary.json"))
@@ -135,7 +147,11 @@ payload = {
     "m1_source_job": m1_job,
     "champion_certificate_job": champion_job,
     "human_promotion_reviewed": True,
-    "training_mode": "fresh_selfplay_only",
+    "training_mode": (
+        "certified_fresh_depth_mix"
+        if experiment_variant == "D10_D12_MIX_5_1"
+        else "fresh_selfplay_only"
+    ),
 }
 (art / "m2-parent-contract.json").write_text(
     json.dumps(payload, indent=2, sort_keys=True) + "\n"
@@ -192,6 +208,100 @@ if (
 ):
     raise SystemExit("D10 evaluation training identity mismatch")
 PY
+elif [ "$EXPERIMENT_VARIANT" = D10_D12_MIX_5_1 ]; then
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$D10_TRAIN_PREFIX" \
+    --file artefacts/d10-training-summary.json=d10-training-summary.json \
+    --file artefacts/d10-corpus-contract.json=d10-corpus-contract.json \
+    --file artefacts/d10-fresh-2m.jnnw.gz=d10-fresh-2m.jnnw.gz \
+    --file artefacts/d10-fresh-2m.jsm.gz=d10-fresh-2m.jsm.gz \
+    --out-dir "$SRC" --report "$ART/verified-d10-training-source.json" \
+    > "$W/fetch-d10-training.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$D12_TRAIN_PREFIX" \
+    --file artefacts/d12-training-summary.json=d12-training-summary.json \
+    --file artefacts/d12-corpus-contract.json=d12-corpus-contract.json \
+    --file artefacts/d12-fresh-2m.jnnw.gz=d12-fresh-2m.jnnw.gz \
+    --file artefacts/d12-fresh-2m.jsm.gz=d12-fresh-2m.jsm.gz \
+    --out-dir "$SRC" --report "$ART/verified-d12-training-source.json" \
+    > "$W/fetch-d12-training.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py \
+    --prefix "$D12_EVAL_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=d12-evaluation-summary.json \
+    --out-dir "$SRC" --report "$ART/verified-d12-evaluation-source.json" \
+    > "$W/fetch-d12-evaluation.log" 2>&1
+  python3 - "$SRC" "$ART" \
+    "$EXPECTED_D10_TRAIN_JOB" "$EXPECTED_D12_TRAIN_JOB" "$EXPECTED_D12_EVAL_JOB" \
+    "$EXPECTED_D10_MODEL_SHA256" "$EXPECTED_D10_CORPUS_SHA256" \
+    "$EXPECTED_D10_META_SHA256" "$EXPECTED_D12_MODEL_SHA256" \
+    "$EXPECTED_D12_CORPUS_SHA256" "$EXPECTED_D12_META_SHA256" \
+    "$EXPECTED_PARENT_MODEL_SHA256" <<'PY'
+import json, sys
+from pathlib import Path
+
+src, art = map(Path, sys.argv[1:3])
+(
+    d10_job, d12_job, eval_job,
+    d10_model_sha, d10_corpus_sha, d10_meta_sha,
+    d12_model_sha, d12_corpus_sha, d12_meta_sha,
+    parent_sha,
+) = sys.argv[3:]
+
+for report_name, expected_job in (
+    ("verified-d10-training-source.json", d10_job),
+    ("verified-d12-training-source.json", d12_job),
+    ("verified-d12-evaluation-source.json", eval_job),
+):
+    report = json.load(open(art / report_name))
+    if report.get("job_id") != expected_job or report.get("result_state") != "completed":
+        raise SystemExit(f"{report_name}: identity/state mismatch")
+
+d10 = json.load(open(src / "d10-training-summary.json"))
+d12 = json.load(open(src / "d12-training-summary.json"))
+d10_contract = json.load(open(src / "d10-corpus-contract.json"))
+d12_contract = json.load(open(src / "d12-corpus-contract.json"))
+evaluation = json.load(open(src / "d12-evaluation-summary.json"))
+
+def check_training(summary, contract, variant, depth, model_sha, corpus_sha, meta_sha):
+    if (
+        summary.get("verdict") != "M2_TRAINING_SCREEN_READY"
+        or summary.get("parent") != "F2M"
+        or summary.get("parent_model_sha256") != parent_sha
+        or summary.get("model_sha256") != model_sha
+        or summary.get("training_corpus_sha256") != corpus_sha
+        or summary.get("experiment_variant") != variant
+        or summary.get("play_depth") != depth
+        or contract.get("experiment_variant") != variant
+        or contract.get("parent") != "F2M"
+        or contract.get("records") != 2_000_000
+        or contract.get("fresh_only") is not True
+        or contract.get("play_depth") != depth
+        or contract.get("jnnw_sha256") != corpus_sha
+        or contract.get("jsm_sha256") != meta_sha
+        or contract.get("historical_replay_records") != 0
+        or contract.get("top3") is not False
+        or contract.get("role_reweight_v2") is not False
+    ):
+        raise SystemExit(f"{variant}: training/corpus contract mismatch")
+
+check_training(
+    d10, d10_contract, "D10_CAUSAL_FRESH2M", 10,
+    d10_model_sha, d10_corpus_sha, d10_meta_sha,
+)
+check_training(
+    d12, d12_contract, "D12_CAUSAL_FRESH2M", 12,
+    d12_model_sha, d12_corpus_sha, d12_meta_sha,
+)
+if (
+    evaluation.get("verdict") != "D12_PLATEAU_OR_REGRESSION_REVIEW"
+    or evaluation.get("recommendation")
+    != "stop_single_depth_escalation_and_prepare_distribution_factor"
+    or evaluation.get("all_guardrails_pass") is not True
+    or evaluation.get("training_summary", {}).get("model_sha256") != d12_model_sha
+    or evaluation.get("d10_training_summary", {}).get("model_sha256") != d10_model_sha
+):
+    raise SystemExit("depth-mix trigger was not satisfied by the D12 evaluation")
+PY
 fi
 
 phase isolated-runtime-build-and-tests
@@ -219,27 +329,82 @@ J="$W/build/jass"; [ -x "$J" ] || die "jass binary missing"
 [ "$("$J" --perft 1 'B:W13,23,25:B6,14,24,K45' | awk '{print $3}')" = 2 ] ||
   die "tablebase-root witness failed"
 
-phase generate-fresh-2m
-base=$((TOTAL_RECORDS / PRODUCERS)); rem=$((TOTAL_RECORDS % PRODUCERS))
-pairs=(); ACTIVE=()
-for shard in $(seq 0 $((PRODUCERS-1))); do
-  count="$base"; [ "$shard" -lt "$rem" ] && count=$((count+1))
-  data="$W/m2-s$shard.jnnw"; meta="$W/m2-s$shard.jsm"; log="$W/m2-s$shard.log"
-  timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" "$data" \
-    "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" $((BASE_SEED+shard)) \
-    --nnue "$W/parent-f2m.pjtw" --search-params-play "$Q00" --wdl-zero-score \
-    --random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 \
-    --pair-openings --drop-plycap --sample-meta-out "$meta" > "$log" 2>&1 &
-  ACTIVE+=("$!"); pairs+=(--pair "$data" "$meta")
-done
-failed=0; for pid in "${ACTIVE[@]}"; do wait "$pid" || failed=$((failed+1)); done; ACTIVE=()
-[ "$failed" -eq 0 ] || die "M2 generation: $failed producer failures"
-for log in "$W"/m2-s*.log; do
-  grep -q 'label_score_searches=0' "$log" || die "score-label search in $log"
-done
-python3 tools/selfplay_frontier.py merge "${pairs[@]}" \
-  --out-data "$W/m2.raw.jnnw" --out-meta "$W/m2.raw.jsm" \
-  --manifest "$ART/m2-fresh-2m-merge.json" > "$W/m2-merge.log" 2>&1
+if [ "$EXPERIMENT_VARIANT" = D10_D12_MIX_5_1 ]; then
+  phase construct-certified-d10-d12-mix
+  gunzip -c "$SRC/d10-fresh-2m.jnnw.gz" > "$W/d10.jnnw"
+  gunzip -c "$SRC/d10-fresh-2m.jsm.gz" > "$W/d10.jsm"
+  gunzip -c "$SRC/d12-fresh-2m.jnnw.gz" > "$W/d12.jnnw"
+  gunzip -c "$SRC/d12-fresh-2m.jsm.gz" > "$W/d12.jsm"
+  [ "$(sha256sum "$W/d10.jnnw" | awk '{print $1}')" = "$EXPECTED_D10_CORPUS_SHA256" ] ||
+    die "D10 corpus hash drift after decompression"
+  [ "$(sha256sum "$W/d10.jsm" | awk '{print $1}')" = "$EXPECTED_D10_META_SHA256" ] ||
+    die "D10 metadata hash drift after decompression"
+  [ "$(sha256sum "$W/d12.jnnw" | awk '{print $1}')" = "$EXPECTED_D12_CORPUS_SHA256" ] ||
+    die "D12 corpus hash drift after decompression"
+  [ "$(sha256sum "$W/d12.jsm" | awk '{print $1}')" = "$EXPECTED_D12_META_SHA256" ] ||
+    die "D12 metadata hash drift after decompression"
+  python3 tools/selfplay_frontier.py mix \
+    --source D10 "$W/d10.jnnw" "$W/d10.jsm" 5 \
+    --source D12 "$W/d12.jnnw" "$W/d12.jsm" 1 \
+    --target-records "$TOTAL_RECORDS" --seed 271828 \
+    --out-data "$W/m2.raw.jnnw" --out-meta "$W/m2.raw.jsm" \
+    --manifest "$ART/m2-depth-mix.json" > "$W/m2-mix.log" 2>&1
+  python3 - "$ART/m2-depth-mix.json" \
+    "$EXPECTED_D10_CORPUS_SHA256" "$EXPECTED_D10_META_SHA256" \
+    "$EXPECTED_D12_CORPUS_SHA256" "$EXPECTED_D12_META_SHA256" \
+    "$EXPECTED_MIX_CORPUS_SHA256" "$EXPECTED_MIX_META_SHA256" <<'PY'
+import json, sys
+manifest = json.load(open(sys.argv[1]))
+d10_data, d10_meta, d12_data, d12_meta, mix_data, mix_meta = sys.argv[2:]
+sources = {source["label"]: source for source in manifest.get("sources", [])}
+if (
+    manifest.get("operation") != "weighted_aligned_mix"
+    or manifest.get("selection") != "exact_uniform_record_sample_splitmix64_floyd"
+    or manifest.get("seed") != 271828
+    or manifest.get("records") != 2_000_000
+    or sources.get("D10", {}).get("selected_records") != 1_666_667
+    or sources.get("D12", {}).get("selected_records") != 333_333
+    or sources.get("D10", {}).get("input_data_sha256") != d10_data
+    or sources.get("D10", {}).get("input_meta_sha256") != d10_meta
+    or sources.get("D12", {}).get("input_data_sha256") != d12_data
+    or sources.get("D12", {}).get("input_meta_sha256") != d12_meta
+    or manifest.get("out_data_sha256") != mix_data
+    or manifest.get("out_meta_sha256") != mix_meta
+    or manifest.get("opening_id_policy")
+    != "preserved_across_sources_for_common_holdout_fold"
+    or manifest.get("external_teacher_inputs") != 0
+):
+    raise SystemExit("depth-mix manifest/hash contract mismatch")
+overlap = manifest.get("source_opening_id_overlaps", {}).get("D10__D12", 0)
+minimum_openings = min(
+    sources["D10"]["input_openings"], sources["D12"]["input_openings"]
+)
+if overlap < 0.95 * minimum_openings:
+    raise SystemExit("D10/D12 opening identities are not sufficiently aligned")
+PY
+else
+  phase generate-fresh-2m
+  base=$((TOTAL_RECORDS / PRODUCERS)); rem=$((TOTAL_RECORDS % PRODUCERS))
+  pairs=(); ACTIVE=()
+  for shard in $(seq 0 $((PRODUCERS-1))); do
+    count="$base"; [ "$shard" -lt "$rem" ] && count=$((count+1))
+    data="$W/m2-s$shard.jnnw"; meta="$W/m2-s$shard.jsm"; log="$W/m2-s$shard.log"
+    timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" "$data" \
+      "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" $((BASE_SEED+shard)) \
+      --nnue "$W/parent-f2m.pjtw" --search-params-play "$Q00" --wdl-zero-score \
+      --random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 \
+      --pair-openings --drop-plycap --sample-meta-out "$meta" > "$log" 2>&1 &
+    ACTIVE+=("$!"); pairs+=(--pair "$data" "$meta")
+  done
+  failed=0; for pid in "${ACTIVE[@]}"; do wait "$pid" || failed=$((failed+1)); done; ACTIVE=()
+  [ "$failed" -eq 0 ] || die "M2 generation: $failed producer failures"
+  for log in "$W"/m2-s*.log; do
+    grep -q 'label_score_searches=0' "$log" || die "score-label search in $log"
+  done
+  python3 tools/selfplay_frontier.py merge "${pairs[@]}" \
+    --out-data "$W/m2.raw.jnnw" --out-meta "$W/m2.raw.jsm" \
+    --manifest "$ART/m2-fresh-2m-merge.json" > "$W/m2-merge.log" 2>&1
+fi
 python3 - "$W/m2.raw.jnnw" "$W/m2.raw.jsm" "$ART/m2-corpus-contract.json" \
   "$PLAY_DEPTH" "$EXPERIMENT_VARIANT" <<'PY'
 import hashlib, json, struct, sys
@@ -249,6 +414,7 @@ play_depth = int(sys.argv[4])
 experiment_variant = sys.argv[5]
 data = data_path.read_bytes()
 meta = meta_path.read_bytes()
+is_depth_mix = experiment_variant == "D10_D12_MIX_5_1"
 if data[:4] != b"JNNW" or struct.unpack_from("<I", data, 4)[0] != 2_000_000:
     raise SystemExit("M2 JNNW count/header mismatch")
 if meta[:4] != b"JSM1":
@@ -266,14 +432,20 @@ payload = {
     "role_reweight_v2": False,
     "geometry": "8cf",
     "search": "Q00",
-    "base_seed": 1_618_033,
-    "play_depth": play_depth,
+    "base_seed": None if is_depth_mix else 1_618_033,
+    "play_depth": None if is_depth_mix else play_depth,
+    "depth_distribution_records": (
+        {"d10": 1_666_667, "d12": 333_333} if is_depth_mix else None
+    ),
+    "new_generation_performed": not is_depth_mix,
+    "source_corpora_fresh_only": True,
+    "mix_seed": 271_828 if is_depth_mix else None,
     "experiment_variant": experiment_variant,
     "paired_randomization_with_m2_d8": experiment_variant in {
         "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M"
     },
     "paired_randomization_with_depth_controls": experiment_variant in {
-        "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M"
+        "D10_CAUSAL_FRESH2M", "D12_CAUSAL_FRESH2M", "D10_D12_MIX_5_1"
     },
 }
 out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
@@ -335,8 +507,11 @@ payload = {
     "model_sha256": hashlib.sha256((w / "m2.pjtw").read_bytes()).hexdigest(),
     "training_records": corpus["records"],
     "training_corpus_sha256": corpus["jnnw_sha256"],
-    "fresh_only": True,
-    "play_depth": int(play_depth),
+    "training_meta_sha256": corpus["jsm_sha256"],
+    "fresh_only": corpus["fresh_only"],
+    "play_depth": corpus["play_depth"],
+    "depth_distribution_records": corpus["depth_distribution_records"],
+    "new_generation_performed": corpus["new_generation_performed"],
     "experiment_variant": experiment_variant,
     "holdout_records": split["holdout_records"],
     "iterations": int(re.search(r"iters=(\d+)", log).group(1)),
@@ -365,6 +540,12 @@ elif [ "$EXPERIMENT_VARIANT" = D12_CAUSAL_FRESH2M ]; then
   cp "$ART/m2-corpus-contract.json" "$ART/d12-corpus-contract.json"
   cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/d12-fresh-2m.jnnw.gz"
   cp "$ART/m2-fresh-2m.jsm.gz" "$ART/d12-fresh-2m.jsm.gz"
+elif [ "$EXPERIMENT_VARIANT" = D10_D12_MIX_5_1 ]; then
+  cp "$ART/m2.pjtw.gz" "$ART/depth-mix5to1.pjtw.gz"
+  cp "$ART/m2-training-summary.json" "$ART/depth-mix5to1-training-summary.json"
+  cp "$ART/m2-corpus-contract.json" "$ART/depth-mix5to1-corpus-contract.json"
+  cp "$ART/m2-fresh-2m.jnnw.gz" "$ART/depth-mix5to1.jnnw.gz"
+  cp "$ART/m2-fresh-2m.jsm.gz" "$ART/depth-mix5to1.jsm.gz"
 fi
 phase complete
-say "M2_TRAINING_SCREEN_READY variant=$EXPERIMENT_VARIANT play_depth=$PLAY_DEPTH evaluation=true promotion=false automatic_next_job=null"
+say "M2_TRAINING_SCREEN_READY variant=$EXPERIMENT_VARIANT evaluation=true promotion=false automatic_next_job=null"
