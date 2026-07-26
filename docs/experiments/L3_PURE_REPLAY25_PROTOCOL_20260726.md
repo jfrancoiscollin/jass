@@ -97,6 +97,12 @@ Après préflight vert seulement :
 Chaque cellule de force utilise 500 ouvertures avec couleurs appariées, soit
 1 000 parties. Les contrôles partagent exactement le même nouveau pool.
 
+L'implémentation exécutable de `home-0983` authentifie les certificats M2,
+TURNOVER et F2M, utilise le pool SHA `a0af38e8…` construit au préflight, puis
+exécute huit cellules de force : quatre adversaires en Q00 d9 et les mêmes
+quatre à cadence native. Les contrôles de conversion et couverture sont les
+artefacts immuables du readout TURNOVER ; seul REPLAY25 est recalculé.
+
 ## Règles de décision préenregistrées
 
 - **Revue champion** : bornes basses à 95 % au-dessus de 50 % contre M2,

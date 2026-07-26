@@ -556,3 +556,10 @@ contient exactement 500 000 records époque F2M et 1 500 000 époque M2
 indépendant passent. La couverture compte 209 626 buckets visités et 28 166
 à fréquence ≥100. Le split culmine à 920 180 KiB de RSS. Le certificat autorise
 uniquement le fit `home-0982`, sans promotion ni continuation automatique.
+
+`home-0982` est lancé sur HOME. Le readout `home-0983` est préparé avant son
+résultat : il réutilise le pool indépendant certifié de 500 ouvertures et
+compare REPLAY25 à M2, TURNOVER 50/50, F2M et Gen2 dans les deux vues. Il
+réévalue aussi P3/P4 avec défenseur fixe et la couverture exacte. Les quatre
+verdicts possibles restent ceux du protocole préenregistré ; même une revue
+champion conserve `promotion_authorized=false`.
