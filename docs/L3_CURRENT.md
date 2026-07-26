@@ -22,7 +22,8 @@
 > d12_q00_regression; depth_mix_trigger_blocked;
 > turnover_1to1_effect_confirmed; replay25_dose_closed;
 > turnover_l2_1e4_rejected; turnover_l2_1e5_not_replicated;
-> l2_factor_closed_on_3e5; replay_cross_next`.
+> l2_factor_closed_on_3e5; views_agree_no_view_effect;
+> screens_underpowered_below_17_elo; replay_dose_75_next`.
 
 ## 1. Architecture du programme
 
@@ -95,6 +96,7 @@ une configuration héritée par les nouveaux bras.
 | dose mémoire | 500k époque F2M + 1,5M époque M2 | `home-0981→0983` | **dose 25/75 close : mieux que M2, moins bien que TURNOVER 50/50** |
 | régularisation | écran L2 `{1e-5, 3e-5, 1e-4}` à corpus fixe | `home-0984bis`/`0985` / relance `0987` | **`1e-4` rejeté (régression native établie) ; `1e-5` directionnel** |
 | régularisation | confirmation indépendante de `L2_1E5` | `home-0988` / `home-0989` | **non répliquée, vues inversées : facteur L2 clos sur `3e-5`** |
+| méthodologie | accord des vues + puissance, 65 cellules déjà publiées | analyse locale, aucune partie neuve | **vues équivalentes (`p≈0,88`) ; écrans `n=1000` aveugles sous ~17 Elo** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -720,3 +722,31 @@ Les cellules F2M sont des garde-fous de non-régression, pas un test de
 promotion : le candidat et son contrôle se tiennent à égalité tout en dominant
 leur parent commun. Exploiter ce constat exigerait une expérience séparée et
 préenregistrée ; rien ici ne l'autorise.
+
+### Accord des vues et puissance réelle — relecture transversale
+
+L'inversion Q00/native a motivé une analyse rétrospective sur les **65 cellules
+de force déjà publiées** (`home-0963` à `home-0989`), sans jouer une seule
+partie neuve :
+[`experiments/L3_VIEW_AGREEMENT_AND_POWER_20260726.md`](experiments/L3_VIEW_AGREEMENT_AND_POWER_20260726.md).
+
+- Sur 31 matchups mesurés dans les deux vues, `r = +0,885` et
+  `chi2/ddl = 0,787` (`p ≈ 0,88`) : **aucun effet de vue n'est détectable**.
+  Les deux vues estiment la même force ; leur divergence est du bruit.
+- La vue native **ne se reproduit pas** à entrées identiques : `1,55` et
+  `1,90 pp` d'écart entre `home-0986` et `home-0987` sur les mêmes modèles et
+  le même pool, quand la Q00 est identique au bit près. Son indéterminisme
+  `movetime` injecte à lui seul autant de bruit que le tirage des parties.
+- Exiger la supériorité **dans chaque vue séparément** double donc le plancher
+  de bruit sans ajouter d'information. Additionner les vues resserre
+  l'intervalle d'un facteur `√2` à compute identique.
+- **Nos écrans à `n=1000` par cellule et par vue n'établissent qu'un effet de
+  2,5 à 3 %, soit 17 à 21 Elo.** Les verdicts `M2_PLATEAU`, `D10_PLATEAU`,
+  `REPLAY25_DOSE_CLOSED` et `L2_NOT_REPLICATED` signifient donc « aucun lead
+  détectable à cette puissance », **pas** « aucun effet ». Un gain de 1 %
+  (~7 Elo) exige environ 4 800 parties par cellule, vues additionnées.
+
+Vérification importante : sur les 6 000 parties disponibles, vues additionnées,
+`L2_1E5` contre son contrôle reste à 51,17 %, IC95 `[49,91 ; 52,42]`,
+**non établie**. L'estimateur le plus puissant confirme la clôture du facteur L2
+au lieu de la fragiliser.
