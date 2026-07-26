@@ -62,6 +62,7 @@ class Replay25EvalJobTests(unittest.TestCase):
             "REPLAY25-coverage.json",
             "--require-position-results",
             "l3_replay25_evaluation.py",
+            'fixed.get("state") != "verified"',
             "PROMOTION_AUTHORIZED__FALSE",
             "AUTOMATIC_NEXT_JOB__NULL",
         ):

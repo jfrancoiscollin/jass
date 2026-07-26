@@ -306,13 +306,18 @@ if (
     or matrix.get("verdict") != "M1_REPAIRED_ENGINE_MATRIX_READY_HUMAN_REVIEW"
 ):
     raise SystemExit("champion/matrix certificate mismatch")
-for name in (
-    "verified-gauge.json",
-    "verified-m1-matrix.json",
-    "verified-fixed-inputs.json",
-):
+for name in ("verified-gauge.json", "verified-m1-matrix.json"):
     if json.load(open(art / name)).get("result_state") != "completed":
         raise SystemExit(f"{name}: source is not completed")
+fixed = json.load(open(art / "verified-fixed-inputs.json"))
+gen2 = [item for item in fixed.get("objects", []) if item.get("role") == "gen2_pattern"]
+if (
+    fixed.get("state") != "verified"
+    or len(gen2) != 1
+    or gen2[0].get("sha256")
+    != "01cc3ea59e9cc3ced1910d4d9054f88f92c1c4d9d220d5f28b0ebaaad33681a0"
+):
+    raise SystemExit("fixed Gen2 input certificate mismatch")
 PY
 
 python3 -m py_compile jobs/tools/l3_replay25_evaluation.py
