@@ -106,7 +106,7 @@ python3 jobs/tools/fetch_result_files.py --prefix "$DOSE_PREFLIGHT_PREFIX" \
   --out-dir "$IN" --report "$ART/verified-dose-preflight.json" \
   > "$W/fetch-dose-preflight.log" 2>&1
 python3 jobs/tools/fetch_result_files.py --prefix "$L2_CONFIRM_PREFLIGHT_PREFIX" \
-  --file artefacts/turnover-succession-openings.fen=prior-l2-confirm.fen \
+  --file artefacts/turnover-l2-confirm-openings.fen=prior-l2-confirm.fen \
   --out-dir "$IN" --report "$ART/verified-l2-confirm-preflight.json" \
   > "$W/fetch-prior-l2-confirm.log" 2>&1
 python3 jobs/tools/fetch_result_files.py --prefix "$L2_PREFLIGHT_PREFIX" \
