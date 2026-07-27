@@ -82,3 +82,98 @@ Débits mesurés sur cette box : `d9` = **89 parties/min/cellule**,
 Plus ~12 min de build. **ETA ≈ 1 h 25 à 1 h 35.** Plafonds par cellule :
 40 min (A), 60 min (C), 90 min (B) — larges, pour qu'un plafond signale une
 anomalie et non un sous-dimensionnement.
+
+## Résultat — `home-1002`, 17h51-18h57 FR
+
+`SCAN_CALIBRATION_MATRIX_EQUIVALENCE_BOUNDED_ONLY`. Treize cellules sur treize
+utilisables, aucune au plafond.
+
+### Rangée A — notre `d9` contre la profondeur de Scan
+
+| Scan | n | W-N-D | score | Elo |
+|---|---:|---|---:|---:|
+| `d3` | 1000 | 427-127-446 | **`0,490`** | `−7` |
+| `d5` | 1000 | 255-103-642 | `0,306` | `−142` |
+| `d6` | 1000 | 207-93-700 | `0,254` | `−187` |
+| `d7` | 1000 | 185-75-740 | `0,223` | `−217` |
+| `d9` | 1000 | 160-77-763 | `0,199` | `−242` |
+
+**Notre profondeur 9 vaut la profondeur 3 de Scan.** À `n=1000`,
+`0,490` d'intervalle `[0,459 ; 0,521]` : la parité avec `Scan d3` n'est pas
+rejetée. Le verdict formel dit « sous la plus faible profondeur testée » parce
+que `0,490 < 0,5`, mais le croisement est à un cheveu de `d3` — il faudrait
+`d2` pour l'encadrer proprement.
+
+**Six plies de handicap.** C'est le chiffre demandé, et il est brutal.
+
+### Rangée B — l'échange se fait-il un ply pour un ply ?
+
+| Scan | score `d9` (A) | score `d11` (B) | écart |
+|---|---:|---:|---:|
+| `d5` | `0,306` | `0,380` | `+7,4 pp` (`z=+3,5`) |
+| `d7` | `0,223` | `0,289` | `+6,6 pp` (`z=+3,4`) |
+| `d9` | `0,199` | `0,242` | `+4,3 pp` (`z=+2,3`) |
+
+Deux plies de plus chez nous valent `+4` à `+7 pp`, soit **`2,2` à
+`3,7 pp` par ply**. Deux plies de plus chez Scan coûtent `−2,6 pp/ply`
+(pente identique sur les deux rangées, `−2,67` et `−2,63`).
+
+**Nos plies valent au moins autant que les siens.** L'écart est donc un
+**décalage fixe de profondeur**, pas un écart qui se creuse : allonger la
+réflexion des deux côtés ne devrait pas nous enfoncer davantage. C'est la
+bonne nouvelle du run.
+
+**Défaut de conception à porter à mon compte** : la rangée B commence à
+`Scan d5` alors que la rangée A descendait à `d3`. Elle ne peut donc pas
+croiser, et son équivalence propre reste non mesurée. Il aurait fallu
+descendre les deux rangées au même plancher.
+
+### Rangée C — la cadence
+
+| Scan | n | W-N-D | score | Elo |
+|---|---:|---|---:|---:|
+| `mt0.02` | 200 | 49-20-131 | `0,295` | `−151` |
+| `mt0.05` | 200 | 47-15-138 | `0,273` | `−170` |
+| `mt0.1` | 200 | 44-15-141 | `0,258` | `−184` |
+| `mt0.2` | 200 | 50-9-141 | `0,273` | `−170` |
+
+**La courbe est plate.** Donner à Scan **dix fois moins de temps** qu'à nous ne
+nous rapporte que `+2,2 pp` (erreur-type `4,5 pp`, `z=+0,5`) : rien. À
+`0,02 s` par coup, Scan nous bat encore à `70 %`.
+
+L'équivalence en cadence n'est donc pas seulement non mesurée, elle est
+**hors d'atteinte de la plage testée**, et de très loin.
+
+### À armes égales — la réponse directe
+
+| régime | W-N-D | score | Elo | IC95 |
+|---|---|---:|---:|---|
+| `d9` contre `d9` | 160-77-763 | `0,199` | `−242` | `[−270 ; −216]` |
+| `d11` contre `d11` | 186-71-743 | `0,222` | `−218` | `[−245 ; −193]` |
+| `mt0.2` contre `mt0.2` | 50-9-141 | `0,273` | `−170` | `[−229 ; −119]` |
+
+### Le déficit est de l'évaluation, pas de la vitesse
+
+On fait **mieux à temps égal** (`−170`) qu'**à profondeur égale** (`−242`).
+Autrement dit, pour un budget de temps donné nous obtenons plus de profondeur
+effective que Scan : notre vitesse par nœud n'est pas le goulot, elle nous
+rapporte même du terrain.
+
+C'est l'inverse de la légende qu'affichait `cpx62-0571` (« rate(prof. fixe)
+>> rate(movetime) ⟹ vitesse-limité ») et cela confirme la lecture déjà retenue
+dans `PROJECT_RESULTS` : **le résidu contre Scan est de la marge
+d'évaluation**. Un moteur qui perd `70 %` face à un adversaire réfléchissant
+`0,02 s` par coup ne perd pas par manque de nœuds.
+
+### Ce que ce run ne dit pas
+
+- Il ne mesure **que TURNOVER**. Le contrôle `gen2-mmto` est dans `home-1001`,
+  à `n=40`, trop faible pour départager les deux contre Scan.
+- Les gains de la lignée (`+52 Elo` pour `gen2-mmto`, `+13,7` pour TURNOVER)
+  ont tous été mesurés **Jass contre Jass**. Ils sont réels et ils restent
+  petits devant un écart de `−170` à `−240`.
+- La platitude de la rangée C admet une explication mécanique non testée : un
+  plancher de profondeur ou de temps côté Scan qui rendrait `mt0.02`
+  inopérant. Les durées de cellule varient bien avec la cadence de Scan
+  (`8,1 s/partie` à `mt0.02` contre `13,9 s` à `mt0.2`), donc le paramètre est
+  honoré — mais cela ne prouve pas qu'il n'y a pas de plancher.

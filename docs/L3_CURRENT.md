@@ -357,9 +357,20 @@ l’architecture linéaire ni au principe d’autojeu WDL.
    `n=40`, ce qui n'établit rien : `home-0996` les sépare de ~`62 Elo` en
    tête-à-tête, invisible à cette taille. Protocole et suites :
    [`L3_SCAN_ANCHOR_REPRODUCTION_20260727.md`](experiments/L3_SCAN_ANCHOR_REPRODUCTION_20260727.md).
-9. **`−128 à −155 Elo` contre Scan = plancher contaminé**, pas une valeur :
-   mesuré à travers le coup nul. À ne plus citer comme référence.
-10. **G2** reste ouvert et prêt (`home-0999`→`1001` de la chaîne G2 sont à
+9. **position réelle contre Scan mesurée** (`home-1002`, `n=1000` par cellule
+   de profondeur, `n=200` par cellule de cadence) : notre `d9` vaut le **`d3`
+   de Scan** (`0,490`, IC95 `[0,459 ; 0,521]`), soit **six plies de
+   handicap** ; à armes égales `d9/d9` = `−242 Elo`, `d11/d11` = `−218`,
+   `mt0.2/mt0.2` = `−170`. Nos plies valent autant que les siens
+   (`+2,2 à 3,7 pp/ply` contre `−2,6`), donc l'écart est un **décalage fixe**
+   et non un écart qui se creuse. Donner dix fois moins de temps à Scan ne
+   rapporte rien (`+2,2 pp`, `z=+0,5`) : **le résidu est de la marge
+   d'évaluation, pas de la vitesse** — on fait mieux à temps égal qu'à
+   profondeur égale.
+   [`L3_SCAN_CALIBRATION_MATRIX_20260727.md`](experiments/L3_SCAN_CALIBRATION_MATRIX_20260727.md).
+10. **`−128 à −155 Elo` contre Scan = plancher contaminé**, pas une valeur :
+    mesuré à travers le coup nul. À ne plus citer comme référence.
+11. **G2** reste ouvert et prêt (`home-0999`→`1001` de la chaîne G2 sont à
     renuméroter, les numéros ayant servi ici).
 
 ### Spécialiste `L3-IMBALANCE2`
