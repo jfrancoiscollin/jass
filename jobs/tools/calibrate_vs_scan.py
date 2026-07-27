@@ -216,6 +216,16 @@ def _repetition_key(fen: str) -> tuple:
 # ---------------------------------------------------------------------------
 # Engine adapters
 # ---------------------------------------------------------------------------
+class EngineFailure(RuntimeError):
+    """An engine failed to answer a search it was asked to run.
+
+    Raised, never scored. An engine that errors out or times out is not a
+    side that has run out of moves, and turning one into the other silently
+    manufactures a result: a broken binary would read as a crushing defeat
+    and be published as strength. The cell must abort loudly instead
+    (project rule: n=0 is a failure, not a neutral outcome)."""
+
+
 class EngineProc:
     """Common subprocess plumbing.
 
@@ -290,6 +300,38 @@ class EngineProc:
             self.proc.kill()
 
 
+def jass_argv(path: str, no_book: bool = True, no_nnue: bool = False,
+              nnue_path: str | None = None,
+              pattern_path: str | None = None,
+              book_path: str | None = None,
+              search_params: str | None = None,
+              enforce_no_book: bool = False) -> list[str]:
+    """Command line for a Jass player. Split out of `JassEngine` so the
+    book/eval/search wiring can be asserted without spawning a binary."""
+    argv = [path]
+    if pattern_path:
+        # Play with a pattern eval (PJTW) — lets us benchmark a pattern
+        # engine vs Scan. Takes precedence over nnue.
+        argv += ["--pattern", pattern_path]
+    elif no_nnue:
+        argv.append("--no-nnue")
+    elif nnue_path:
+        argv += ["--nnue", nnue_path]
+    if search_params:
+        # Override the HUB engine's search constants (LMR/pruning/etc.)
+        # WITHOUT a rebuild — tune search vs Scan in one build.
+        argv += ["--search-params", search_params]
+    if book_path:
+        # Load a custom JBOK book (e.g. the 77K-position book from 0013).
+        # When set, no_book is ignored — the user explicitly opted in to a
+        # book, presumably for a "fair-comparison" calibration where Scan
+        # also has its book enabled.
+        argv += ["--book", book_path]
+    elif no_book and enforce_no_book:
+        argv.append("--no-book")
+    return argv
+
+
 class JassEngine(EngineProc):
     """Adapter for Jass's HUB-flavoured protocol."""
     def __init__(self, path: str, label: str = "Jass",
@@ -298,25 +340,12 @@ class JassEngine(EngineProc):
                  pattern_path: str | None = None,
                  book_path: str | None = None,
                  search_params: str | None = None,
-                 threads: int = 1):
-        argv = [path]
-        if pattern_path:
-            # Play with a pattern eval (PJTW) — lets us benchmark a pattern
-            # engine vs Scan. Takes precedence over nnue.
-            argv += ["--pattern", pattern_path]
-        elif no_nnue: argv.append("--no-nnue")
-        elif nnue_path:
-            argv += ["--nnue", nnue_path]
-        if search_params:
-            # Override the HUB engine's search constants (LMR/pruning/etc.)
-            # WITHOUT a rebuild — tune search vs Scan in one build.
-            argv += ["--search-params", search_params]
-        if book_path:
-            # Load a custom JBOK book (e.g. the 77K-position book from 0013).
-            # When set, no_book is ignored — the user explicitly opted in to a
-            # book, presumably for a "fair-comparison" calibration where Scan
-            # also has its book enabled.
-            argv += ["--book", book_path]
+                 threads: int = 1,
+                 enforce_no_book: bool = False):
+        argv = jass_argv(path, no_book=no_book, no_nnue=no_nnue,
+                         nnue_path=nnue_path, pattern_path=pattern_path,
+                         book_path=book_path, search_params=search_params,
+                         enforce_no_book=enforce_no_book)
         super().__init__(argv, label)
         # Handshake
         self._send("hello")
@@ -332,12 +361,13 @@ class JassEngine(EngineProc):
                 raise RuntimeError(
                     f"{self.label}: could not set Jass threads={threads}"
                 )
-        if no_book and not book_path:
-            # Cleaner test of the eval — engines play their own moves
-            # from the very first ply rather than parroting opening lines.
-            # The default Jass build has a tiny hard-coded book but it
-            # doesn't bias scout-class results materially.
-            pass
+        # `no_book` alone is a declaration of intent, not an effect: until
+        # `--no-book` existed the Jass side always consulted its built-in
+        # book while Scan ran `book=off`. `enforce_no_book` is what actually
+        # removes that asymmetry, and it is opt-in so that a run stays
+        # comparable with the gates published before the flag existed.
+        self.book_disabled = bool(no_book and enforce_no_book
+                                  and not book_path)
 
     def new_game(self) -> None:
         # Reset state — `position startpos` does that.
@@ -366,7 +396,7 @@ class JassEngine(EngineProc):
                                  timeout_s=timeout_s)
         last = lines[-1]
         if last.startswith("error"):
-            return None
+            raise EngineFailure(f"{self.label}: {last}")
         return parse_jass_bestmove(last)
 
 
@@ -486,14 +516,15 @@ class ScanEngine(EngineProc):
             lines = self._read_until(lambda l: l.startswith("done")
                                               or l.startswith("error"),
                                      timeout_s=timeout_s)
-        except TimeoutError:
-            return None
+        except TimeoutError as exc:
+            raise EngineFailure(
+                f"{self.label}: no `done` within {timeout_s:.1f}s") from exc
         last = lines[-1]
         if last.startswith("error"):
-            return None
+            raise EngineFailure(f"{self.label}: {last}")
         m = DONE_RE.search(last)
         if not m:
-            return None
+            raise EngineFailure(f"{self.label}: unparsable reply {last!r}")
         return parse_scan_move(m.group(1))
 
 
@@ -663,6 +694,13 @@ def play_game(white: object, black: object,
             mv = current.go_from(scan_pos, scan_moves,
                                  depth=d, movetime=mt)
         if mv is None or (mv.frm == 0 and mv.to == 0):
+            # "No move" is only credible when the referee agrees the position
+            # is terminal. Otherwise the engine failed to search, and scoring
+            # that as a loss would publish a broken binary as a weak one.
+            if referee.has_legal_moves():
+                raise EngineFailure(
+                    f"{current.label}: returned no move at ply {ply} in a "
+                    f"position with legal moves ({fens_log[-1]})")
             # No legal move (terminal — current side loses).
             outcome = "L" if side_to_move == "W" else "W"
             return GameResult(outcome, ply, "no legal move from " + current.label,
@@ -811,6 +849,13 @@ def main(argv):
                         "1. Use with --movetime to see SMP gain — fixed depth "
                         "saturates at the eval ceiling and doesn't surface "
                         "the depth-per-second advantage SMP gives.")
+    p.add_argument("--jass-no-book", action="store_true",
+                   help="run the jass player with --no-book, so both sides "
+                        "play every ply from search. Off by default: Scan has "
+                        "been run book=off for a long time while Jass kept its "
+                        "built-in book, and every published gate carries that "
+                        "asymmetry. Turning this on changes the engine, so it "
+                        "must be an explicit protocol choice, not a default.")
     p.add_argument("--jass-search-params", metavar="SPEC", default=None,
                    help="override the jass player's search constants via a "
                         "\"k=v,k=v\" spec (e.g. \"multicut_min_depth=6,"
@@ -876,7 +921,9 @@ def main(argv):
         print(f"opening pool: {len(openings)} positions")
     eval_desc = (f"pattern={args.jass_pattern}" if args.jass_pattern
                  else f"nnue={args.nnue or ('(handcrafted)' if args.no_nnue else '(default)')}")
-    print(f"jass setup:   {eval_desc}  book={args.jass_book or '(default/none)'}")
+    jass_book_desc = (args.jass_book if args.jass_book
+                      else ("off" if args.jass_no_book else "built-in"))
+    print(f"jass setup:   {eval_desc}  book={jass_book_desc}")
     print(f"scan setup:   book={args.scan_book}  bb-size={args.scan_bb_size}")
 
     jass = JassEngine(args.jass, label="Jass-player",
@@ -884,7 +931,8 @@ def main(argv):
                       pattern_path=args.jass_pattern,
                       book_path=args.jass_book,
                       search_params=args.jass_search_params,
-                      threads=args.jass_threads)
+                      threads=args.jass_threads,
+                      enforce_no_book=args.jass_no_book)
     scan = ScanEngine(args.scan, label="Scan-player",
                       no_book=(args.scan_book == "off"),
                       bb_size=args.scan_bb_size)

@@ -4858,7 +4858,8 @@ int main(int argc, char** argv) {
                             "--benchmark-nnue-vs-nnue a.bin b.bin [d p]|"
                             "--build-book fens.txt out.bok [depth]|"
                             "--build-book-from-moves pairs.txt out.bok|"
-                            "--no-nnue|--nnue path|--book path|--version|--help]\n"
+                            "--no-nnue|--nnue path|--book path|--no-book|"
+                            "--version|--help]\n"
                 "Default: read HUB-style commands from stdin.\n"
                 "  --smoke                          run a self-contained demo\n"
                 "  --tournament [da db pairs]       play a colour-swap match\n"
@@ -4955,6 +4956,7 @@ int main(int argc, char** argv) {
     std::unique_ptr<NetworkServerClient> nnue_server;
     const INetwork* nnue_ptr = default_nnue();  // embedded shipped weights
     const char*     book_path = nullptr;
+    bool            disable_book = false;           // --no-book
     const char*     search_params_spec = nullptr;  // --search-params "k=v,k=v"
     int             tt_mb_override = 0;             // --tt-mb N (0 = default 16)
     for (int i = 1; i < argc; ++i) {
@@ -4991,6 +4993,11 @@ int main(int argc, char** argv) {
             nnue_ptr = nnue_owned.get();
         } else if (a == "--book" && i + 1 < argc) {
             book_path = argv[++i];
+        } else if (a == "--no-book") {
+            // Play every ply from search. Scan is habitually driven with
+            // `book=off` in our calibration harnesses; without this the Jass
+            // side kept its built-in book and the match was asymmetric.
+            disable_book = true;
         } else if (a == "--search-params" && i + 1 < argc) {
             // Override the HUB engine's search constants (LMR/pruning/etc.)
             // from a "k=v,k=v" spec — lets calibrate_vs_scan tune search vs
@@ -5014,6 +5021,11 @@ int main(int argc, char** argv) {
             std::cerr << "error: cannot load book from " << book_path << "\n";
             return 2;
         }
+    }
+    // After load_book so that `--book X --no-book` is an explicit, if odd,
+    // "load it but do not consult it" rather than a silent contradiction.
+    if (disable_book) {
+        hub.use_book(false);
     }
     return hub.run();
 }

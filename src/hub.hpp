@@ -86,6 +86,11 @@ public:
     // file at `path`. Returns false on I/O error or bad format.
     bool load_book(std::string_view path);
 
+    // Toggle book consultation. The built-in book is small but it is
+    // consulted unconditionally, so a harness that runs Scan with
+    // `book=off` has no way to make the match symmetric without this.
+    void use_book(bool yes) noexcept { engine_.use_book(yes); }
+
 private:
     Engine        engine_;
     SearchParams  params_{};   // applied to every `go` (see set_search_params)
