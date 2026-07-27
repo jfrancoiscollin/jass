@@ -48,10 +48,10 @@ lecture ne se répète pas à l'identique et ne permettrait pas de lire une pent
 
 ## Chaîne réservée
 
-1. **`home-0997`** — préflight : authentifie la porte de succession et
+1. **`home-0999`** — préflight : authentifie la porte de succession et
    l'identité de TURNOVER, reconstruit le corpus source, certifie un pool
    indépendant neuf, disjoint des seize pools déjà dépensés.
-2. **`home-0998`** — génération + fit : 12 shards produisent 1 M positions
+2. **`home-1000`** — génération + fit : 12 shards produisent 1 M positions
    fraîches depuis TURNOVER à d8 (`--gen-data-wdl`, `LABEL_DEPTH=4`,
    `--random-open-plies 8 --explore-eps 8 --explore-decay-plies 60`,
    `--pair-openings --drop-plycap`), mix 1:1 avec 1 M du corpus parent, split,
@@ -66,11 +66,11 @@ génération ≈ **17 min**, fit ≈ **33 min**, sur la même box HOME 16 CPU.
 
 | étape | volume | ETA |
 |---|---|---|
-| préflight `0997` | pool 1500 + authentification | 6-10 min |
-| génération `0998` | 1 M positions, 12 shards | ~9 min |
-| mix + split `0998` | 2 M records | ~6 min |
-| fit `0998` | 2 M records, ~200 itérations | ~33 min |
-| readout `0999` | 4 cellules × 3000 parties/vue | ~80-110 min |
+| préflight `0999` | pool 1500 + authentification | 6-10 min |
+| génération `1000` | 1 M positions, 12 shards | ~9 min |
+| mix + split `1000` | 2 M records | ~6 min |
+| fit `1000` | 2 M records, ~200 itérations | ~33 min |
+| readout `1001` | 4 cellules × 3000 parties/vue | ~80-110 min |
 
 Total ≈ **2 h 20 à 2 h 50**, dont une seule heure avant de savoir si le modèle
 converge.
