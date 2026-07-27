@@ -726,6 +726,39 @@ promotion : le candidat et son contrôle se tiennent à égalité tout en domina
 leur parent commun. Exploiter ce constat exigerait une expérience séparée et
 préenregistrée ; rien ici ne l'autorise.
 
+### Outillage et bras préparés — SPRT et TURNOVER G2
+
+Deux chantiers préparés le 27 juillet, non lancés.
+
+**Test séquentiel.** `jobs/tools/l3_sprt.py` + 19 tests, avec les modèles
+trinomial et pentanomial. Méthodologie et réglages :
+[`experiments/L3_SPRT_METHODOLOGY_20260727.md`](experiments/L3_SPRT_METHODOLOGY_20260727.md).
+Mesure honnête : à hypothèses et taux d'erreur identiques, le gain typique est
+**×1,8**, pas ×2-3, et il n'explose que si la vérité est loin des deux
+hypothèses. Le SPRT peut même être plus lent quand la vérité tombe entre H0 et
+H1, ce qui impose un plafond `n_max` obligatoire. Surtout, un SPRT `0 vs +5` est
+**plus exigeant** que notre critère actuel de borne basse : l'adopter resserrera
+les verdicts autant qu'il réduira les coûts. Il n'est branché sur aucun gate ;
+le brancher est une décision de protocole.
+
+**TURNOVER G2.** Le gain de `+13,77 Elo` de TURNOVER vient d'**une seule
+génération**. Palier ou pente reste indécidé, et c'est la question ouverte au
+meilleur rapport information/coût : la recette et les corpus existent, un seul
+run répond. Protocole :
+[`experiments/L3_PURE_TURNOVER_G2_PROTOCOL_20260727.md`](experiments/L3_PURE_TURNOVER_G2_PROTOCOL_20260727.md).
+G2 rejoue G1 décalé d'un cran — parent TURNOVER, 1 M échantillonné de son propre
+corpus plus 1 M généré depuis lui — ce qui rend la recette auto-similaire et
+donne un sens à la lecture d'une pente. ETA totale ~2 h 20 à 2 h 50, ancrée sur
+les durées mesurées de `home-0966bis` (génération 2 M ≈ 17 min, fit ≈ 33 min).
+
+Rappel de cadrage pour la suite : la profondeur est **close et négative**
+(d12 en régression établie), et « plus de volume frais » est exactement ce qui a
+plafonné avec `M2`. Le fit tourne à **~4,3 observations par paramètre libre**
+(418 070 colonnes ajustées pour 1 801 803 lignes, 208 914 buckets visités sur
+2 125 768), ce qui borne mécaniquement les gains et désigne le volume à dose de
+mémoire constante, puis la génération dirigée par la couverture, comme les
+leviers suivants.
+
 ### Axe de dose replay clos, et succession de champion ouverte
 
 La chaîne `home-0990→0993` a prolongé l'axe de dose au-delà de 50 %, seul point
