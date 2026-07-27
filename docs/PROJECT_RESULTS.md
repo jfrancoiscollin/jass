@@ -56,9 +56,13 @@ sont pas des facteurs de DoE.
    **+52 Elo généraliste** contre gen1 à mt0.3, et **+34 Elo** sur la cellule
    d9 contre Scan. Le déficit restant contre Scan est toutefois encore de
    l'ordre de **−128 à −155 Elo au movetime** selon la cellule mesurée.
-   Depuis le gate réparé `home-0965`, **F2M est le champion général courant** :
-   `57,25 %` contre Gen2 en Q00 et `58,60 %` en cadence native, avec les deux
-   bornes basses à 95 % au-dessus de 50 %.
+   Le gate réparé `home-0965` avait fait de F2M le champion général
+   (`57,25 %` contre Gen2 en Q00, `58,60 %` en cadence native). Depuis la porte
+   `home-0996` du 27 juillet 2026, **TURNOVER remplace F2M comme champion
+   général courant** : `51,98 %` contre F2M sur `n=6000` à vues additionnées,
+   `+13,73 Elo`, IC95 `[50,72 ; 53,23]`, avec cinq garde-fous sur cinq verts.
+   Consolidé sur quatre pools indépendants, l'écart vaut `+11,24 Elo` sur
+   17 000 parties. F2M devient le champion précédent, archivé et restaurable.
 5. Le problème de conversion est maintenant séparé de la simple détection :
    Jass trouve souvent les premières idées comme Scan, mais réalise mal
    l'avantage. Sur le thermomètre PC Blues, la conversion mesurée était

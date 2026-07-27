@@ -25,7 +25,7 @@
 > l2_factor_closed_on_3e5; views_agree_no_view_effect;
 > screens_underpowered_below_17_elo;
 > replay_dose_axis_closed_optimum_50;
-> turnover50_beats_f2m_established_awaiting_human_review`.
+> turnover50_promoted_general_champion`.
 
 ## 1. Architecture du programme
 
@@ -100,7 +100,7 @@ une configuration héritée par les nouveaux bras.
 | régularisation | confirmation indépendante de `L2_1E5` | `home-0988` / `home-0989` | **non répliquée, vues inversées : facteur L2 clos sur `3e-5`** |
 | méthodologie | accord des vues + puissance, 65 cellules déjà publiées | analyse locale, aucune partie neuve | **vues équivalentes (`p≈0,88`) ; écrans `n=1000` aveugles sous ~17 Elo** |
 | dose mémoire | dose 75 % + readout à vues additionnées, `n=5000` | `home-0991→0993` | **axe clos, optimum intérieur à 50 % ; `TURNOVER` bat F2M, `+13,8 Elo` établi** |
-| champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **succession RECOMMANDÉE : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes** |
+| champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **TURNOVER promu champion général** : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -334,8 +334,10 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. champion général courant : F2M, immuable tant qu'aucun gate n'est franchi ;
-   Gen2-mmto reste la référence historique figée ;
+1. champion général courant : **TURNOVER**, promu le 27 juillet 2026 après la
+   porte `home-0996` ; F2M devient le champion précédent, archivé dans
+   l'object store et restaurable ; Gen2-mmto reste la référence historique
+   figée ;
 2. facteur L2 **clos** : `1e-4` rejeté, `1e-5` non répliqué, `L2=3e-5` retenu ;
 3. croisement replay `0/25 %` au L2 retenu : c'est le prochain bras à
    préenregistrer ;
@@ -461,8 +463,9 @@ recommander F2M comme champion général. Détails :
 `home-0965` passe ce gate : F2M marque `57,25 %` en Q00
 (`562-21-417`, IC95 `[54,22 ; 60,28]`) et `58,60 %` en cadence native
 (`580-12-408`, IC95 `[55,57 ; 61,63]`). Après revue humaine explicite,
-**F2M remplace Gen2-mmto comme champion général courant**. Gen2 reste la
-référence historique figée.
+**F2M remplace Gen2-mmto comme champion général**. Gen2 reste la
+référence historique figée. *(F2M a lui-même été remplacé par TURNOVER le
+27 juillet 2026, cf. `home-0996`.)*
 
 M2 repart de F2M avec 2 millions de positions entièrement fraîches, toujours
 en 8cf/Q00 et WDL pur, sans replay, oracle, TOP3 ni reweight. L'entraînement

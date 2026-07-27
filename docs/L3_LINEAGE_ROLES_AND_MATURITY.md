@@ -93,8 +93,10 @@ Deux étapes consécutives sans pente de force positive ferment la continuation 
 
 ## 4. Lecture de programme
 
-- F2M a passé le gate de force réparé `home-0965` dans les deux vues et est
-  désormais le champion général courant ; `gen2-mmto` reste le champion
-  historique figé et un garde-fou externe.
+- F2M a passé le gate de force réparé `home-0965` dans les deux vues et a été
+  champion général jusqu'au 27 juillet 2026. **TURNOVER l'a remplacé** après la
+  porte de succession `home-0996` ; F2M devient le champion précédent, archivé
+  et restaurable. `gen2-mmto` reste le champion historique figé et un garde-fou
+  externe.
 - `L3-PURE` est la voie générale et mérite une expérience de maturité contrôlée.
 - `L3-IMBALANCE2` reste un laboratoire spécialiste indépendant ; son éventuelle valeur future réside dans une combinaison bornée avec `L3-PURE`, pas dans son remplacement.
