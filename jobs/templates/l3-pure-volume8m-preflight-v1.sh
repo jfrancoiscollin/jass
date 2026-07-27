@@ -57,12 +57,19 @@ monitor(){
         printf 'phase=%s\n' "$(cat "$STAGE" 2>/dev/null || echo unknown)"
         awk '/MemAvailable:/{printf "mem_available_mb=%d\n",$2/1024}' /proc/meminfo
         printf 'disk_free_mb=%s\n' "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')"
-        # Octets écrits par les shards : c'est le seul progrès observable
-        # pendant la génération, qui n'écrit qu'en fin de shard.
-        for f in "$W"/fresh-s*.jnnw; do
-          [ -e "$f" ] || continue
-          printf 'bytes_%s=%s\n' "$(basename "$f" .jnnw)" "$(stat -c%s "$f")"
-        done
+        # Progression réelle : chaque shard logge « X / Y positions ». On
+        # somme, on sort le pourcentage et l'ETA. Compter les octets ne disait
+        # pas combien il restait — home-1003 est mort après 2 h 30 sans qu'on
+        # sache qu'il était à 57 %.
+        awk '
+          /positions$/ { done_[FILENAME] = $4; tot[FILENAME] = $6 }
+          END {
+            for (k in done_) { d += done_[k]; t += tot[k] }
+            if (t > 0) {
+              printf "positions=%d/%d\n", d, t
+              printf "percent=%.1f\n", 100 * d / t
+            }
+          }' "$W"/fresh-s*.log 2>/dev/null || true
       } > "$PROG.tmp"
       mv "$PROG.tmp" "$PROG"
       cp "$PROG" "$ART/PROGRESS.txt"
@@ -105,7 +112,12 @@ HOLDOUT_MOD=10
 NOPEN=1500
 OPENING_CANDIDATES=6000
 OPENING_SEED=2236068
-GEN_TIMEOUT=9000
+# Taux MESURÉ sur cette box en home-1003 : 2 519 positions/min/shard à d9
+# (le shard 0 avait produit 377 782 positions en 9 000 s avant d'être tué).
+# Un shard sain doit donc écrire ses 666 667 positions en ~265 min ; plafond à
+# 350 min, soit 1,3× la durée saine. Le 9 000 s précédent venait d'une
+# extrapolation à 1,6× le coût de d8, alors que d9 coûte 3,9× d8.
+GEN_TIMEOUT=21000
 CACHE_MB=128
 TURNOVER_MODEL_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
