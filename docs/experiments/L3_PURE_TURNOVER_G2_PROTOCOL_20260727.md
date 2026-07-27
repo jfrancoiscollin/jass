@@ -56,7 +56,7 @@ lecture ne se répète pas à l'identique et ne permettrait pas de lire une pent
    `--random-open-plies 8 --explore-eps 8 --explore-decay-plies 60`,
    `--pair-openings --drop-plycap`), mix 1:1 avec 1 M du corpus parent, split,
    puis fit `L2=3e-5`. L'optimiseur **doit converger réellement**.
-3. **`home-0999`** — readout à vues additionnées contre **TURNOVER** (le parent,
+3. **`home-1001`** — readout à vues additionnées contre **TURNOVER** (le parent,
    question causale) et contre **F2M** (contrôle de continuité de la pente).
 
 ## Sizing, ancré sur des durées mesurées
