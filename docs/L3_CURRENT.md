@@ -100,6 +100,7 @@ une configuration héritée par les nouveaux bras.
 | régularisation | confirmation indépendante de `L2_1E5` | `home-0988` / `home-0989` | **non répliquée, vues inversées : facteur L2 clos sur `3e-5`** |
 | méthodologie | accord des vues + puissance, 65 cellules déjà publiées | analyse locale, aucune partie neuve | **vues équivalentes (`p≈0,88`) ; écrans `n=1000` aveugles sous ~17 Elo** |
 | dose mémoire | dose 75 % + readout à vues additionnées, `n=5000` | `home-0991→0993` | **axe clos, optimum intérieur à 50 % ; `TURNOVER` bat F2M, `+13,8 Elo` établi** |
+| champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **succession RECOMMANDÉE : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -725,6 +726,46 @@ Les cellules F2M sont des garde-fous de non-régression, pas un test de
 promotion : le candidat et son contrôle se tiennent à égalité tout en dominant
 leur parent commun. Exploiter ce constat exigerait une expérience séparée et
 préenregistrée ; rien ici ne l'autorise.
+
+### Porte de succession — recommandation acquise, promotion en attente
+
+`home-0996` termine avec **`TURNOVER_SUCCESSION_RECOMMENDED_HUMAN_REVIEW`**,
+onze étapes complètes et **cinq garde-fous sur cinq verts**, sur le pool neuf
+`eb129db1…` (1500 ouvertures, disjoint de quinze pools).
+
+| cellule | n | score | Elo | IC95 | |
+|---|---:|---:|---:|---|---|
+| **primaire vs F2M** | 6000 | **51,98 %** | **+13,73** | `[50,72 ; 53,23]` | **établie** |
+| garde vs Gen2 | 6000 | 58,83 % | +62,03 | `[57,60 ; 60,07]` | aucune régression |
+| conversion P3 | 300 | 98,00 % | — | — | plancher OK |
+| conversion P4 | 300 | 99,00 % | — | — | plancher OK |
+
+Deux faits méritent d'être relevés. D'abord **la réplication** : `home-0993`
+mesurait `51,98 %` sur `n=5000` et `home-0996` mesure `51,98 %` sur `n=6000`,
+sur deux pools disjoints — identiques à la deuxième décimale. Ensuite
+**l'accord des vues** : `51,93 %` en Q00 contre `52,02 %` en natif, soit
+`0,09 pp` d'écart, ce qui valide sur données fraîches l'étude d'accord des vues.
+
+Consolidation de toutes les mesures du couple, **quatre pools indépendants** :
+
+```text
+0978  q00 n=1000 52,10 %   native n=1000 51,15 %
+0980  q00 n=2000 50,35 %   native n=2000 50,90 %
+0993  q00 n=2500 52,72 %   native n=2500 51,24 %
+0996  q00 n=3000 51,93 %   native n=3000 52,02 %
+------------------------------------------------------------
+CUMUL n=17 000   51,62 %   8642-266-8092   +11,24 Elo
+                 IC95 [50,87 ; 52,36]      demi-IC 0,745 pp
+```
+
+Huit mesures sur huit sont positives. Le **SPRT accepte H1** à `H1=+5` comme à
+`H1=+8` (`LLR = +6,26` et `+8,30`) : le critère séquentiel, plus exigeant que
+notre borne basse habituelle, conclut lui aussi.
+
+**Rien n'est promu.** La porte recommande ; la succession est une promotion
+délibérée réservée à une revue humaine explicite. Procédure prête et non
+exécutée :
+[`experiments/L3_TURNOVER_BAKE_PROCEDURE_20260727.md`](experiments/L3_TURNOVER_BAKE_PROCEDURE_20260727.md).
 
 ### Outillage et bras préparés — SPRT et TURNOVER G2
 
