@@ -30,6 +30,7 @@
 #include "tournament.hpp"
 
 #include <algorithm>
+#include <utility>
 #include <array>
 #include <charconv>
 #include <chrono>
@@ -347,6 +348,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
+    int          explore_topk    = 0;       // --explore-topk K : on an exploration ply,
+                                            //      pick uniformly among the K best-ranked
+                                            //      legal moves instead of uniformly among
+                                            //      ALL of them. K=0 keeps the legacy
+                                            //      uniform draw. See the eps branch below
+                                            //      for why the distinction matters.
     int          explore_decay_plies = 0;    // --explore-decay-plies D : FIX#1 label-hygiene.
                                             //      eps(ply)=explore_eps*max(0,1-ply/D) => confine
                                             //      l'exploration au debut (0 = pas de decroissance).
@@ -425,6 +432,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-eps" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_eps = v;
+        } else if (a == "--explore-topk" && i + 1 < argc) {
+            const int v = std::atoi(argv[++i]);
+            if (v >= 0) explore_topk = v;
         } else if (a == "--explore-decay-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_decay_plies = v;
@@ -642,7 +652,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               stat_tb_relabel = 0, stat_label_score_searches = 0,
               stat_random_open_moves = 0, stat_play_plies = 0,
               stat_eps_events = 0, stat_eps_changed_best = 0,
-              stat_games_with_eps = 0;
+              stat_games_with_eps = 0, stat_topk_ranked_plies = 0;
+
+    // Table dédiée au classement top-k : la garder hors de celle du moteur
+    // évite que la passe de classement pollue l'ordonnancement de la partie.
+    TranspositionTable rank_tt;
+    if (explore_topk > 0) rank_tt.resize_mb(16);
 
     int generated  = 0;
     int game_count = 0;
@@ -890,7 +905,46 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 : static_cast<double>(explore_eps);
             if (eps_frac > 0.0 && !ml.empty()
                 && static_cast<double>(rng() % 100000) < eps_frac * 1000.0) {
-                play_mv = ml[rng() % ml.size()];
+                // --explore-topk K : draw among the K best moves rather than
+                // among all of them. A uniform draw over ~8-10 legal moves is a
+                // blunder nine times out of ten, so it widens the state
+                // distribution toward positions-after-a-mistake — states a
+                // strong opponent never reaches, and not where the evaluation
+                // margin is lost. Ranking first keeps the perturbation on
+                // plausible lines, which is where resolution is missing.
+                //
+                // The root search returns only its best move, so the ranking is
+                // a separate shallow pass over the children: alpha-beta bounds
+                // from the main search would order fail-low moves arbitrarily.
+                // It costs one reduced search per exploration ply, i.e. a few
+                // percent of the run at the usual eps.
+                if (explore_topk > 0 && ml.size() > 1) {
+                    const int rank_depth = std::max(1, lim.max_depth - 2);
+                    std::vector<std::pair<int, Move>> ranked;
+                    ranked.reserve(ml.size());
+                    for (const auto& cand : ml) {
+                        SearchLimits rl;
+                        rl.max_depth = rank_depth;
+                        rl.params    = lim.params;
+                        rl.nnue      = e.nnue();
+                        // Negamax: the child is scored from the opponent's
+                        // point of view, so flip it back to the mover's.
+                        const SearchResult cr =
+                            search(e.position().after(cand), rl, rank_tt);
+                        ranked.emplace_back(-cr.score, cand);
+                    }
+                    std::stable_sort(ranked.begin(), ranked.end(),
+                                     [](const auto& a2, const auto& b2) {
+                                         return a2.first > b2.first;
+                                     });
+                    const std::size_t k =
+                        std::min<std::size_t>(static_cast<std::size_t>(explore_topk),
+                                              ranked.size());
+                    play_mv = ranked[rng() % k].second;
+                    ++stat_topk_ranked_plies;
+                } else {
+                    play_mv = ml[rng() % ml.size()];
+                }
                 ++stat_eps_events;
                 game_had_eps = true;
                 if (play_mv != r.best_move) ++stat_eps_changed_best;
@@ -1001,6 +1055,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     std::cout << "EXPLORATION"
               << " random_open_plies=" << random_open_plies
               << " explore_eps=" << explore_eps
+              << " explore_topk=" << explore_topk
+              << " topk_ranked_plies=" << stat_topk_ranked_plies
               << " decay_plies=" << explore_decay_plies
               << " openings=" << opening_count
               << " games=" << game_count
@@ -4895,7 +4951,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
