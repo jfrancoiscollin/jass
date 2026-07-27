@@ -116,6 +116,40 @@ Conséquence à porter au dossier : **le `−128 à −155` historique est un
 plancher, pas une valeur.** Il a été mesuré sur ce moteur, qui perdait toute
 partie atteignant une racine nulle.
 
+## Deuxième tir — `home-1000`, 16h11-16h20 FR
+
+Le correctif moteur prend : les nulles apparaissent enfin dans les parties
+(`25-move rule`, `3-fold repetition`), là où `0999` n'en produisait aucune.
+
+| cellule | parties | nulles | forfaits Jass |
+|---|---:|---:|---:|
+| `gen2-mt030` | 26 | 3 | 23 |
+| `gen2-d9` | 28 | 4 | 23 |
+| `turnover-d9` | 26 | 1 | 24 |
+| `turnover-mt030` | 2 | 1 | 1 |
+
+Deux choses restent, et elles ne sont pas de même nature.
+
+**Une régression que j'ai introduite.** Les quatre cellules avortent sur
+`Scan-player: unparsable reply 'done'`. Un `done` **nu** est la façon dont Scan
+dit « je n'ai pas de coup » : la position est terminale pour lui, ce qui est une
+fin de partie normale et un point pour Jass. L'ancien code renvoyait `None`, la
+boucle interrogeait l'arbitre et concluait juste. En durcissant le parseur le
+matin même j'ai transformé ce chemin correct en avortement. Corrigé : `done` nu
+redevient « pas de coup », `error`, timeout et réponse réellement illisible
+lèvent toujours. Quatre tests couvrent les quatre cas.
+
+**Un fait qui n'est plus un artefact.** Les forfaits Jass restants sont
+désormais *confirmés par l'arbitre*, dont la légalité passe par `--perft 1` et
+non plus par la recherche : quand le job dit « no legal move from Jass-player »,
+la génération de coups le confirme. Jass est donc réellement balayé dans ~23
+parties sur 26, `gen2-mmto` comme TURNOVER. Le score partiel de `gen2-mt030`
+tombe vers `0,06`, très en dessous de son plancher `0,17`.
+
+Il reste donc quelque chose, et ce n'est plus le coup nul. Le prochain tir
+publie les **dumps de parties** — deux runs ont déjà été perdus faute de
+pouvoir rejouer une partie coup par coup.
+
 ## Règle de décision, révisée après `home-0999`
 
 Les ancres ne peuvent plus servir de cible bilatérale : elles sont contaminées

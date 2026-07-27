@@ -524,6 +524,13 @@ class ScanEngine(EngineProc):
             raise EngineFailure(f"{self.label}: {last}")
         m = DONE_RE.search(last)
         if not m:
+            if last.strip() == "done":
+                # A bare `done` is how Scan says "I have no move": the position
+                # is terminal for the side to move. That is a legitimate game
+                # end, not a protocol failure — the caller confirms it against
+                # the referee's move generator before scoring it. Raising here
+                # aborted every cell of home-0999 and home-1000.
+                return None
             raise EngineFailure(f"{self.label}: unparsable reply {last!r}")
         return parse_scan_move(m.group(1))
 

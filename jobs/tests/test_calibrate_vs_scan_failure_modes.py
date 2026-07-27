@@ -80,6 +80,34 @@ class NoMoveRaisesTest(unittest.TestCase):
         self.assertIn("no legal move", result.reason)
 
 
+class ScanReplyTest(unittest.TestCase):
+    """`done` alone is Scan saying "no move", not a broken engine."""
+
+    def _scan(self, reply):
+        eng = cvs.ScanEngine.__new__(cvs.ScanEngine)
+        eng.label = "Scan-player"
+        eng._drain = lambda: None
+        eng._send = lambda line: None
+        eng._read_until = lambda pred, timeout_s=None: [reply]
+        return eng
+
+    def test_bare_done_reports_no_move(self):
+        self.assertIsNone(
+            self._scan("done").go_from("W" + "e" * 50, [], depth=4))
+
+    def test_done_with_a_move_is_parsed(self):
+        mv = self._scan("done move=28-32").go_from("W" + "e" * 50, [], depth=4)
+        self.assertEqual((mv.frm, mv.to), (28, 32))
+
+    def test_garbage_still_aborts(self):
+        with self.assertRaises(cvs.EngineFailure):
+            self._scan("donezo whatever").go_from("W" + "e" * 50, [], depth=4)
+
+    def test_error_still_aborts(self):
+        with self.assertRaises(cvs.EngineFailure):
+            self._scan("error bad pos").go_from("W" + "e" * 50, [], depth=4)
+
+
 class RefereeLegalityTest(unittest.TestCase):
     """The referee must decide legality from movegen, not from a search.
 

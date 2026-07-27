@@ -204,6 +204,7 @@ run_cell(){
     --jass "$engine" --scan "$SCAN_BIN" --jass-pattern "$model" \
     "${extra[@]}" --jass-threads 1 --scan-book off --scan-bb-size 0 \
     --openings-file "$W/open.fen" --pairs "$PAIRS" \
+    --dump-games-dir "$W/games-$name" \
     --max-plies "$MAX_PLIES" "$@" > "$W/cell-$name.log" 2>&1
   rc=$?
   end=$(date +%s)
@@ -391,6 +392,10 @@ print()
 print(f"  verdict={verdict}")
 PY
 cp "$W"/cell-*.timing "$ART/cells/" 2>/dev/null || true
+# Les dumps sont la seule facon d'autopsier une partie apres coup, et deux
+# runs ont deja ete perdus faute de les avoir. 160 parties tiennent largement
+# dans une archive.
+(cd "$W" && tar czf "$ART/games.tar.gz" games-* 2>/dev/null) || true
 VERDICT=$(ls "$ART" | sed -n 's/^VERDICT__//p' | head -1)
 stage complete
 say "$VERDICT promotion=false automatic_next_job=null"
