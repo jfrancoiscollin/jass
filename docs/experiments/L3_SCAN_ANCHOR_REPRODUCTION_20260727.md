@@ -223,3 +223,53 @@ Cellules plafonnées à `50 min`, deux builds (8cf puis v4) avant le jeu.
 
 **ETA ≈ 55 à 70 min.** `n=40` donne une erreur-type de `7,9 pp` : c'est un
 diagnostic de harnais, pas une mesure de force, et il est dimensionné comme tel.
+
+## Résultat — `home-1001`, 16h59-17h13 FR
+
+`SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR`. Quatre cellules sur quatre
+complètes, `40/40` parties chacune.
+
+| cellule | n | W-N-D | score | Elo | IC95 Elo |
+|---|---:|---|---:|---:|---|
+| `gen2-mt030` | 40 | 5-5-30 | `0,188` | `−255` | `[−459 ; −140]` |
+| `turnover-mt030` | 40 | 6-4-30 | `0,200` | `−241` | `[−434 ; −128]` |
+| `gen2-d9` | 40 | 2-8-30 | `0,150` | `−301` | `[−555 ; −181]` |
+| `turnover-d9` | 40 | 4-4-32 | `0,150` | `−301` | `[−555 ; −181]` |
+
+**Le `0,050` est mort.** TURNOVER passe de `0,050` (`−512 Elo`) à `0,200`
+(`−241 Elo`) au même régime : environ `270 Elo` d'artefact retirés, sans
+toucher au modèle.
+
+**Les deux planchers tiennent**, et l'ancre historique `mt0.3` (`0,290`) est
+**dans** l'intervalle de confiance de `gen2-mt030` (`[0,067 ; 0,308]`). Aucun
+écart résiduel n'est établi contre l'ancre — ce qui ne veut pas dire qu'il n'y
+en a pas : à `n=40` l'intervalle fait ±126 Elo, il ne pouvait rien exclure.
+
+**TURNOVER et gen2-mmto sont indiscernables contre Scan** : `+1,3 pp` à
+`mt0.3` (erreur-type `8,8 pp`), `0,0 pp` à `d9` (erreur-type `8,0 pp`). C'est
+la puissance qui manque, pas le signal : `home-0996` établit TURNOVER à
+`58,8 %` contre GEN2 en tête-à-tête, soit ~`+62 Elo`, et cette taille
+d'échantillon ne peut pas voir `62 Elo`. Le job n'a jamais eu vocation à les
+départager — c'est un diagnostic de harnais.
+
+### Une métrique que j'ai mal conçue
+
+La « part de forfaits » sort à `0,75-0,80`, et c'est **exactement le taux de
+défaites** : aux dames, perdre *c'est* n'avoir plus de coup légal. Le compteur
+est donc redondant, pas diagnostique. Ce qui trahissait vraiment `0999`, c'est
+l'**absence totale de nulles** : 0 sur 26 alors qu'on en a `5/40` et `8/40`
+ici. C'est ce ratio-là qu'il faut surveiller.
+
+### Débits mesurés, pour la matrice
+
+`mt0.3` = **`4,0` parties/min/cellule** ; `d9` = **`89` parties/min/cellule**.
+
+| n/cellule | `mt0.3` | `d9` |
+|---:|---:|---:|
+| 200 | 50 min | 2 min |
+| 400 | 100 min | 5 min |
+| 1000 | 251 min | 11 min |
+
+Les cellules à profondeur fixe sont quasi gratuites ; seul le movetime coûte.
+Une matrice utile doit donc être large en profondeur et parcimonieuse en
+cadence.

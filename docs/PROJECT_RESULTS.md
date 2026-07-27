@@ -166,6 +166,15 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   gardant la jauge dilf neutre.
 - Le gain d9 ne s'est transféré que de +5–6 Elo au movetime contre Scan :
   nouvelle référence environ mt0.3 −155, mt1.0 −128, NPS-comp −129.
+  **⚠️ Ces chiffres sont des planchers contaminés, pas des valeurs** (constaté
+  le 27 juillet 2026, `home-1001`). Ils ont été mesurés sur un moteur dont
+  `search()` rendait un coup nul sur toute racine nulle par répétition ou par
+  horloge de 50 plies ; le client HUB lisait ce coup nul comme un abandon, et
+  Jass perdait donc toute partie atteignant une telle position. Le défaut est
+  asymétrique — Scan ne fait rien de tel — et corrigé depuis (`f7949784`). Sur
+  le moteur réparé, `gen2-mmto` mesure `−255 Elo` à `mt0.3` sur un pool réduit,
+  intervalle de confiance `[−459 ; −140]` : compatible avec l'ancre, mais
+  celle-ci ne doit plus être citée comme référence de campagne.
 - Une deuxième ronde MMTO working-set ON a régressé de **−354/−341 Elo**.
   WS-OFF l'a ramenée au neutre mais sans gain : le levier a plafonné.
 - Refaire une base WDL fraîche puis MMTO a perdu −33 à −61 Elo. Un fine-tune
@@ -355,7 +364,7 @@ Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 | Objet | Valeur consolidée | Usage futur |
 |---|---|---|
 | `gen2-mmto` | +52 Elo vs gen1 mt0.3 ; d9-vs-Scan +34 | référence fixe externe, jamais professeur de L3 |
-| écart gen2-mmto vs Scan | environ −155 mt0.3 / −128 mt1.0 | thermomètre absolu, pas cible de fit |
+| écart gen2-mmto vs Scan | environ −155 mt0.3 / −128 mt1.0, **plancher contaminé par le coup nul (cf §3.4)** | thermomètre absolu, pas cible de fit |
 | PC Blues 224 | Jass 0,136 vs Scan 0,904 | thermomètre tactique figé |
 | T3 `ccx33` | conversion globale 0,669 | référence de conversion historique |
 | T3 P1/P2/P3/P4 | 0,841 / 0,609 / 0,489 / 0,513 | diagnostic par strate |

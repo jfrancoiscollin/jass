@@ -347,14 +347,20 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 6. ne pas rouvrir la profondeur seule : d8, d10 et d12 sont clos, et le mix
    d10/d12 reste interdit faute de garde-fous tous verts ;
 7. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante ;
-8. **calibration contre Scan suspendue** tant que `home-0999` n'a pas tranché.
-   `home-0997ter`/`home-0998` donnent TURNOVER à `0,050` (~`−512 Elo`) alors
-   que l'ancre publiée est `−155 Elo` à `mt0.3` pour `gen2-mmto` et que la
-   lignée a gagné ~60-70 Elo depuis : `home-0999` remesure `gen2-mmto`
-   lui-même, protocole `0571`, pour savoir si c'est le harnais ou le résultat
-   qui est faux. Protocole et règle de décision :
+8. **calibration contre Scan débloquée** : `home-1001` a rendu
+   `SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR`. Le `0,050` de
+   `home-0997/0998` était un artefact moteur — `search()` rendait un coup nul
+   sur toute racine nulle par répétition ou horloge, et le client HUB lisait
+   ça comme un abandon. Corrigé (`f7949784`), TURNOVER passe à `0,200`
+   (`−241 Elo`) à `mt0.3` et gen2-mmto à `0,188` (`−255`), les deux planchers
+   historiques tenus. Les deux modèles sont indiscernables contre Scan à
+   `n=40`, ce qui n'établit rien : `home-0996` les sépare de ~`62 Elo` en
+   tête-à-tête, invisible à cette taille. Protocole et suites :
    [`L3_SCAN_ANCHOR_REPRODUCTION_20260727.md`](experiments/L3_SCAN_ANCHOR_REPRODUCTION_20260727.md).
-   La matrice de calibration complète et **G2** attendent ce verdict.
+9. **`−128 à −155 Elo` contre Scan = plancher contaminé**, pas une valeur :
+   mesuré à travers le coup nul. À ne plus citer comme référence.
+10. **G2** reste ouvert et prêt (`home-0999`→`1001` de la chaîne G2 sont à
+    renuméroter, les numéros ayant servi ici).
 
 ### Spécialiste `L3-IMBALANCE2`
 
