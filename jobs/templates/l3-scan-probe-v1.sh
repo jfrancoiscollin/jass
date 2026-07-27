@@ -128,7 +128,13 @@ J8="$W/build8/jass"
 stage build-probe-opening-pool
 "$J8" --gen-opening-pool "$NOPEN" "$W/open-probe.fen" 8 32 20 "$OPENING_SEED" \
   > "$W/open-probe.log" 2>&1
-[ "$(wc -l < "$W/open-probe.fen")" -eq "$NOPEN" ] || die "probe pool count drift"
+# --gen-opening-pool écrit deux lignes d'en-tête commentées et annote chaque
+# position après un '#'. calibrate_vs_scan strippe tout après '#' et ignore les
+# lignes vides : on compte donc les positions comme lui, pas avec wc -l.
+NPOS=$(awk '{sub(/#.*/,""); gsub(/^[ \t]+|[ \t]+$/,""); if (length) n++} END {print n+0}' \
+  "$W/open-probe.fen")
+[ "$NPOS" -eq "$NOPEN" ] || die "probe pool count drift: $NPOS != $NOPEN"
+say "  pool sonde ✓ : $NPOS positions"
 
 # Une cellule = un régime. Chaque cellule tourne en parallèle des autres, mais
 # joue ses parties séquentiellement : c'est le comportement réel de l'outil.
