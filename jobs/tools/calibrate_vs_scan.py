@@ -534,6 +534,7 @@ class ScanEngine(EngineProc):
 class Referee:
     def __init__(self, jass_path: str):
         self.j = JassEngine(jass_path, label="Referee", no_book=True)
+        self._jass_path = jass_path
         self._scan_history: list[str] = []
         self._start_scan_pos: str = ""
 
@@ -559,13 +560,25 @@ class Referee:
         return self._start_scan_pos, self._scan_history
 
     def has_legal_moves(self) -> bool:
-        # Heuristic: a search at depth 1 returns a default (0-0) bestmove
-        # when no legal moves exist; Jass's HUB emits "bestmove 0-0".
-        self.j._send("go depth 1")
-        lines = self.j._read_until(lambda l: l.startswith("bestmove"))
-        last = lines[-1]
-        # Jass's format_move emits "0-0" for the default-constructed Move.
-        return not last.startswith("bestmove 0-0")
+        """Legality straight from move generation, never from search.
+
+        This used to ask the referee for `go depth 1` and read a `bestmove
+        0-0` as "no legal move". The referee is the same binary as the
+        player, so any bug that made the player return a null move made the
+        referee agree — and the guard that is supposed to catch a failed
+        engine confirmed the failure instead. That is exactly how a drawn
+        root (repetition, 50-ply) was scored as a lost game for years.
+        `--perft 1` counts generated moves in a fresh process and shares no
+        code path with the search.
+        """
+        out = subprocess.run(
+            [self._jass_path, "--perft", "1", self.current_fen()],
+            capture_output=True, text=True, timeout=60)
+        m = re.search(r"perft\(1\)\s*=\s*(\d+)", out.stdout)
+        if not m:
+            raise EngineFailure(
+                f"referee perft failed: {out.stdout!r} {out.stderr!r}")
+        return int(m.group(1)) > 0
 
     def close(self) -> None:
         self.j.close()

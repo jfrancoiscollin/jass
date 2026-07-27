@@ -84,27 +84,30 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
-NOPEN=40
+NOPEN=20
 PAIRS=1
 GAMES_PER_CELL=$((NOPEN * 2 * PAIRS))
-MIN_GAMES=60
-CELL_TIMEOUT=2400
+MIN_GAMES=30
+CELL_TIMEOUT=3000
 MAX_PLIES=200
 MOVETIME=0.3
 FIXED_DEPTH=9
-# Pool historique : les 40 premières positions de combinaison DILF, filtrées
+# Pool historique : les 20 premières positions de combinaison DILF, filtrées
 # exactement comme `0571` (`grep -vE '^\s*(#|$)' | head -N`).
 DILF="data/dilf_combinations.fen"
 DILF_SHA="f0f1ff5e60d0b44d23a1190843cb72d5385eaf87d5757e2f24166d484cb90849"
-POOL_SHA="eefdc36680e4a35a422642a62c421d386c0b033aa715a8fd4c24e031a6012fe9"
+POOL_SHA="764cef5c414d93d94e012d40e9d0c6086c9bd805d1da0315c7e44fd2f4b7e1d1"
 TURNOVER_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
 GEN2_GZ_SHA="01cc3ea59e9cc3ced1910d4d9054f88f92c1c4d9d220d5f28b0ebaaad33681a0"
-# Bandes de reproduction pour le bras GEN2, fixées AVANT le run. Ancres
-# publiées : mt0.3 = -155 Elo (score ~0,290), d9 = -276 Elo (score ~0,170).
-# n=80 par cellule => erreur-type 5,6 pp ; la bande est l'ancre ±2 erreurs-types
-# élargie à 3 pour absorber le changement de box, de code et de pool.
-GEN2_MT_LO=0.12; GEN2_MT_HI=0.46
-GEN2_D9_LO=0.02; GEN2_D9_HI=0.34
+# PLANCHERS pour le bras GEN2, fixés AVANT le run — et volontairement
+# UNILATÉRAUX. Les ancres publiées (mt0.3 = -155 Elo, score ~0,290 ; d9 = -276,
+# score ~0,170) ont été mesurées sur un moteur qui rendait un coup nul sur toute
+# racine nulle et perdait donc la partie : ce sont des PLANCHERS, pas des
+# valeurs. Un moteur réparé doit faire mieux, et le dépassement ne contredit
+# rien. Seul l'effondrement sous le plancher signe un harnais encore cassé.
+# n=40 par cellule => erreur-type 7,9 pp ; plancher = ancre - 1,5 erreur-type.
+GEN2_MT_FLOOR=0.17
+GEN2_D9_FLOOR=0.05
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
@@ -218,7 +221,7 @@ say "  quatre cellules jouées"
 
 stage publish-anchor-verdict
 python3 - "$W" "$ART" "$EXPECTED_CODE_SHA" "$GAMES_PER_CELL" "$MIN_GAMES" \
-  "$GEN2_MT_LO" "$GEN2_MT_HI" "$GEN2_D9_LO" "$GEN2_D9_HI" "$POOL_SHA" <<'PY'
+  "$GEN2_MT_FLOOR" "$GEN2_D9_FLOOR" "$POOL_SHA" <<'PY'
 import json
 import math
 import pathlib
@@ -228,16 +231,20 @@ import sys
 w, art = map(pathlib.Path, sys.argv[1:3])
 code_sha = sys.argv[3]
 games_per_cell, min_games = int(sys.argv[4]), int(sys.argv[5])
-mt_lo, mt_hi, d9_lo, d9_hi = (float(x) for x in sys.argv[6:10])
-pool_sha = sys.argv[10]
+mt_floor, d9_floor = float(sys.argv[6]), float(sys.argv[7])
+pool_sha = sys.argv[8]
 
-# Ancres publiées dans PROJECT_RESULTS §3.4 pour gen2-mmto contre Scan.
+# Ancres publiées dans PROJECT_RESULTS §3.4 pour gen2-mmto contre Scan. Elles
+# ont été mesurées sur un moteur qui perdait toute partie atteignant une racine
+# nulle : ce sont des planchers, pas des valeurs cibles.
 ANCHORS = {"gen2-mt030": -155.0, "gen2-d9": -276.0}
-BANDS = {"gen2-mt030": (mt_lo, mt_hi), "gen2-d9": (d9_lo, d9_hi)}
+FLOORS = {"gen2-mt030": mt_floor, "gen2-d9": d9_floor}
+REGIMES = {"mt030": ("gen2-mt030", "turnover-mt030"),
+           "d9": ("gen2-d9", "turnover-d9")}
 
 
 def elo(rate):
-    if rate <= 0.0 or rate >= 1.0:
+    if rate is None or rate <= 0.0 or rate >= 1.0:
         return None
     return -400.0 * math.log10(1.0 / rate - 1.0)
 
@@ -254,9 +261,11 @@ for timing in sorted(w.glob("cell-*.timing")):
         tuple(int(g) for g in tally.groups()) if tally else (0, 0, 0))
     games = wins + losses + draws
     rate = float(rate_m.group(1)) if rate_m else None
-    # Une cellule qui n'a pas produit son plancher de parties est un ÉCHEC, pas
-    # un résultat faible : le harnais lève désormais sur un moteur qui ne rend
-    # pas de coup, donc un rc non nul veut dire que quelque chose est cassé.
+    # Le motif qui a trahi le bug du coup nul : une cellule où presque chaque
+    # partie finit par « no legal move from Jass-player » n'est pas une série
+    # de défaites, c'est un moteur qui abandonne. On le compte pour qu'il ne
+    # puisse plus passer inaperçu.
+    forfeits = len(re.findall(r"no legal move from Jass", log))
     usable = rc == 0 and games >= min_games and rate is not None
     cells[name] = {
         "return_code": rc,
@@ -265,59 +274,78 @@ for timing in sorted(w.glob("cell-*.timing")):
         "games_started": int(played[-1]) if played else 0,
         "games_scored": games,
         "wins": wins, "draws": draws, "losses": losses,
+        "jass_forfeits": forfeits,
+        "forfeit_share": round(forfeits / games, 3) if games else None,
         "score_rate": rate,
-        "elo": round(elo(rate), 1) if rate is not None else None,
+        "elo": round(elo(rate), 1) if elo(rate) is not None else None,
         "elo_ci95": round(800.0 / math.sqrt(games), 1) if games else None,
         "usable": usable,
     }
 
 anchor_checks = {}
-for name, (lo, hi) in BANDS.items():
+for name, floor in FLOORS.items():
     c = cells.get(name)
     if not c or not c["usable"]:
-        anchor_checks[name] = {"reproduced": None, "reason": "cell unusable"}
+        anchor_checks[name] = {"at_or_above_floor": None,
+                               "reason": "cell unusable"}
         continue
-    inside = lo <= c["score_rate"] <= hi
     anchor_checks[name] = {
-        "reproduced": inside,
-        "band": [lo, hi],
+        "at_or_above_floor": c["score_rate"] >= floor,
+        "floor": floor,
         "observed_rate": c["score_rate"],
-        "historical_elo": ANCHORS[name],
+        "historical_elo_floor": ANCHORS[name],
         "observed_elo": c["elo"],
     }
 
-decided = [v["reproduced"] for v in anchor_checks.values()]
+# Le contraste intra-job ne dépend d'aucune ancre : même binaire, même pool,
+# même Scan, même cadence. C'est lui qui dit si le 0,050 était propre à
+# TURNOVER ou commun aux deux modèles.
+contrast = {}
+for regime, (a, b) in REGIMES.items():
+    ca, cb = cells.get(a), cells.get(b)
+    if not (ca and cb and ca["usable"] and cb["usable"]):
+        contrast[regime] = None
+        continue
+    contrast[regime] = {
+        "gen2_rate": ca["score_rate"],
+        "turnover_rate": cb["score_rate"],
+        "turnover_minus_gen2_pp": round(
+            100.0 * (cb["score_rate"] - ca["score_rate"]), 2),
+    }
+
+decided = [v["at_or_above_floor"] for v in anchor_checks.values()]
 if any(v is None for v in decided):
     verdict = "SCAN_ANCHOR_INCONCLUSIVE_CELL_FAILED"
 elif all(decided):
-    verdict = "SCAN_HARNESS_REPRODUCES_HISTORICAL_ANCHOR"
+    verdict = "SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR"
 elif not any(decided):
-    verdict = "SCAN_HARNESS_CONTRADICTS_HISTORICAL_ANCHOR"
+    verdict = "SCAN_HARNESS_STILL_BROKEN_ANCHOR_BELOW_FLOOR"
 else:
     verdict = "SCAN_ANCHOR_PARTIAL_HUMAN_REVIEW"
 
 payload = {
-    "schema": 1,
+    "schema": 2,
     "verdict": verdict,
     "code_sha": code_sha,
     "protocol": {
         "reproduces": "cpx62-0571 / 0637 (gen2-mmto vs Scan)",
-        "openings": "DILF combinations, first 40, sha256=" + pool_sha,
+        "openings": "DILF combinations, first 20, sha256=" + pool_sha,
         "games_per_cell": games_per_cell,
         "min_games_per_cell": min_games,
         "egdb": False,
         "scan_book": "off",
         "scan_bb_size": 0,
         "jass_book": "built-in (unchanged from the historical runs)",
+        "anchors_are_floors_not_targets": True,
     },
     "cells": cells,
     "anchor_checks": anchor_checks,
+    "within_job_contrast": contrast,
     "reading": {
-        "SCAN_HARNESS_REPRODUCES_HISTORICAL_ANCHOR":
-            "harness sound; TURNOVER's own cells are then a real measurement",
-        "SCAN_HARNESS_CONTRADICTS_HISTORICAL_ANCHOR":
-            "every vs-Scan number produced after 0637 is void, including "
-            "home-0997/0998",
+        "SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR":
+            "the null-move fix holds; read within_job_contrast for TURNOVER",
+        "SCAN_HARNESS_STILL_BROKEN_ANCHOR_BELOW_FLOOR":
+            "a second defect remains; no vs-Scan number is usable yet",
     },
     "promotion_authorized": False,
     "automatic_next_job": None,
@@ -329,7 +357,7 @@ serialized = json.dumps(payload, indent=2, sort_keys=True) + "\n"
 (art / "PROMOTION_AUTHORIZED__FALSE").write_text("PROMOTION_AUTHORIZED__FALSE\n")
 (art / "AUTOMATIC_NEXT_JOB__NULL").write_text("AUTOMATIC_NEXT_JOB__NULL\n")
 
-print("  cellule           n     W-D-L        score    Elo      etat")
+print("  cellule           n     W-D-L        score    Elo     forfaits  etat")
 for name, c in sorted(cells.items()):
     if c["usable"]:
         state = "ok"
@@ -341,15 +369,24 @@ for name, c in sorted(cells.items()):
         state = f"n<{min_games}"
     print(f"  {name:16s} {c['games_scored']:>3}  "
           f"{c['wins']:>3}-{c['draws']:>3}-{c['losses']:>3}  "
-          f"{str(c['score_rate']):>6}  {str(c['elo']):>7}  {state}")
+          f"{str(c['score_rate']):>6}  {str(c['elo']):>7}  "
+          f"{str(c['forfeit_share']):>8}  {state}")
 print()
 for name, chk in sorted(anchor_checks.items()):
-    if chk["reproduced"] is None:
-        print(f"  ancre {name}: INDECIDABLE ({chk['reason']})")
+    if chk["at_or_above_floor"] is None:
+        print(f"  plancher {name}: INDECIDABLE ({chk['reason']})")
     else:
-        print(f"  ancre {name}: historique {chk['historical_elo']:+.0f} Elo, "
-              f"observe {chk['observed_elo']:+.1f} Elo "
-              f"({'reproduite' if chk['reproduced'] else 'CONTREDITE'})")
+        print(f"  plancher {name}: historique {chk['historical_elo_floor']:+.0f} Elo "
+              f"(score >= {chk['floor']}), observe {chk['observed_elo']:+.1f} Elo "
+              f"({'tenu' if chk['at_or_above_floor'] else 'ENFONCE'})")
+print()
+for regime, c in sorted(contrast.items()):
+    if c is None:
+        print(f"  contraste {regime}: indisponible")
+    else:
+        print(f"  contraste {regime}: gen2 {c['gen2_rate']:.3f} vs "
+              f"turnover {c['turnover_rate']:.3f} "
+              f"({c['turnover_minus_gen2_pp']:+.2f} pp)")
 print()
 print(f"  verdict={verdict}")
 PY

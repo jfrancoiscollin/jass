@@ -41,9 +41,9 @@ bras dans ce job.
 
 | élément | valeur | d'où |
 |---|---|---|
-| pool | 40 premières combinaisons DILF | `0571` en prenait 60 de la même façon |
+| pool | 20 premières combinaisons DILF | `0571` en prenait 60 de la même façon |
 | appariement | `--pairs 1`, couleurs échangées | `0571` |
-| parties | 80 par cellule | `0571` en jouait 120 |
+| parties | 40 par cellule | `0571` en jouait 120 |
 | plafond de coups | 200 (défaut) | `0571` |
 | Scan | livre `off`, `bb-size 0`, binaire figé `a634cbb4…` | contrat de runtime `home-0925` |
 | EGDB | **désactivée** | l'historique n'en avait pas, et Scan tourne sans bitbase |
@@ -60,28 +60,93 @@ le nombre de buckets ne correspond pas à la géométrie compilée, et `--patter
 sort en code 2 dans ce cas. Le job exige donc les quatre chargements — chaque
 moteur accepte son modèle et **refuse** celui de l'autre — avant de jouer.
 
-## Règle de décision, fixée avant le run
+## Ce que le premier tir a trouvé — `home-0999`, 27 juillet, 15h08-15h18 FR
 
-Ancres publiées : `mt0.3` → `−155 Elo` (score ~`0,290`), `d9` → `−276 Elo`
-(score ~`0,170`). À `n=80`, l'erreur-type est de `5,6 pp` ; la bande retenue
-est l'ancre ±3 erreurs-types, élargie pour absorber le changement de box, de
-code et de pool.
+Verdict `SCAN_ANCHOR_INCONCLUSIVE_CELL_FAILED`, quatre cellules sur quatre
+avortées. Le résultat n'est pas dans le verdict, il est dans les parties jouées
+avant l'avortement :
 
-| cellule | bande de score |
-|---|---|
-| `gen2-mt030` | `[0,12 ; 0,46]` |
-| `gen2-d9` | `[0,02 ; 0,34]` |
+| cellule | parties | motif de fin |
+|---|---:|---|
+| `gen2-mt030` | 26 | **26 × « no legal move from Jass-player »** |
+| `gen2-d9` | 28 | 26 idem, 1 ply cap, 1 côté Scan |
+| `turnover-d9` | 26 | 25 idem, 1 ply cap |
+| `turnover-mt030` | 2 | 2 idem |
 
-- **`SCAN_HARNESS_REPRODUCES_HISTORICAL_ANCHOR`** — les deux cellules GEN2
-  tombent dans leur bande. Le harnais est sain, et le `0,050` de TURNOVER est
-  un vrai résultat qu'il faudra expliquer et non un artefact.
-- **`SCAN_HARNESS_CONTRADICTS_HISTORICAL_ANCHOR`** — aucune n'y tombe. Toute
-  mesure contre Scan postérieure à `0637` est nulle, `home-0997/0998`
-  comprises, et la calibration attend une réparation du harnais.
-- **`SCAN_ANCHOR_PARTIAL_HUMAN_REVIEW`** — une seule reproduit.
-- **`SCAN_ANCHOR_INCONCLUSIVE_CELL_FAILED`** — une cellule sous le plancher de
-  60 parties, ou en échec. `n` insuffisant est un **échec**, jamais un
-  résultat faible.
+**`gen2-mmto` meurt exactement comme TURNOVER.** Le `0,050` n'était donc pas un
+résultat sur le champion : les deux modèles s'effondrent à l'identique, ce qui
+disqualifie le modèle comme explication et désigne le moteur.
+
+### La cause, reproduite en une commande
+
+`search()` portait trois court-circuits de nulle à la racine qui retournaient
+**sans jamais choisir de coup**. `5f5a7e7b` en a réparé un — le tablebase. Il
+en restait deux :
+
+```cpp
+for (auto h : game_history) if (h == root_hash) { res.score = 0; return res; }
+if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES)   { res.score = 0; return res; }
+```
+
+`res.best_move` reste construit par défaut, le HUB émet `bestmove 0-0`, et tout
+client HUB lit ça comme « plus de coup légal », c'est-à-dire un abandon :
+
+```text
+position fen W:WK50:BK1 ; go depth 6   -> bestmove 50-44 ...
+apply 50-45 / 1-6 / 45-50 / 6-1
+go depth 6                             -> bestmove 0-0 score=0 depth=0 nodes=0
+```
+
+Une **seule** répétition suffit — la règle en demande trois, le moteur abandonne
+à la première. En manœuvre de dames c'est quasi systématique.
+
+Pourquoi ça n'avait jamais crevé les yeux : en Jass-contre-Jass les deux camps
+abandonnent symétriquement, donc les portes L3-PURE mesurent quand même une
+force *relative* juste et `home-0996` reste valide. Contre Scan, seul Jass
+abandonne, et l'asymétrie est totale.
+
+### Correctif
+
+Le score d'une racine nulle reste `0` — c'est la règle — mais il est désormais
+forcé **après** la recherche au lieu de la remplacer, donc le coup vient
+toujours du jeu. Deux témoins C++ : racine répétée et horloge à 50 plies
+rendent chacune un coup légal.
+
+Conséquence à porter au dossier : **le `−128 à −155` historique est un
+plancher, pas une valeur.** Il a été mesuré sur ce moteur, qui perdait toute
+partie atteignant une racine nulle.
+
+## Règle de décision, révisée après `home-0999`
+
+Les ancres ne peuvent plus servir de cible bilatérale : elles sont contaminées
+dans une direction connue. Un moteur réparé doit faire **mieux** qu'elles, et
+un dépassement ne contredit rien. La règle devient donc unilatérale.
+
+| cellule | plancher de score | ancre |
+|---|---|---|
+| `gen2-mt030` | `≥ 0,17` | `−155 Elo` (score ~`0,290`) |
+| `gen2-d9` | `≥ 0,05` | `−276 Elo` (score ~`0,170`) |
+
+À `n=40`, l'erreur-type est de `7,9 pp` ; le plancher est l'ancre moins une
+erreur-type et demie.
+
+- **`SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR`** — les deux cellules GEN2
+  tiennent leur plancher. Le correctif du coup nul tient, et on lit alors le
+  contraste intra-job.
+- **`SCAN_HARNESS_STILL_BROKEN_ANCHOR_BELOW_FLOOR`** — un second défaut reste,
+  aucun chiffre contre Scan n'est utilisable.
+- **`SCAN_ANCHOR_PARTIAL_HUMAN_REVIEW`** — une seule tient.
+- **`SCAN_ANCHOR_INCONCLUSIVE_CELL_FAILED`** — cellule sous le plancher de 30
+  parties, ou en échec. `n` insuffisant est un échec, jamais un résultat faible.
+
+Le job publie aussi, et c'est ce qui porte vraiment : le **contraste
+intra-job** `turnover − gen2` par régime. Il ne dépend d'aucune ancre — même
+binaire, même pool, même Scan, même cadence — et c'est lui qui dira si un écart
+subsiste entre les deux modèles une fois le moteur réparé.
+
+Chaque cellule publie en plus sa **part de forfaits** (`no legal move from
+Jass`). C'est le motif qui a trahi le bug ; il devient une métrique de sortie
+pour qu'il ne puisse plus passer inaperçu.
 
 Dans tous les cas `promotion_authorized=false`, `automatic_next_job=null`.
 
@@ -113,9 +178,14 @@ pas un défaut par défaut. `home-0999` tourne donc livre allumé, comme `0571` 
 
 ## Sizing
 
-Quatre cellules en parallèle, deux processus moteur chacune, sur 16 CPU. Débit
-mesuré en `0997ter` sur cette box : `mt0.5/mt0.5` = `1,93` parties/min, d'où
-`mt0.3` ≈ `3,1` parties/min et 80 parties ≈ `26 min`. Chaque cellule est
-plafonnée à `40 min`, deux builds (8cf puis v4) précèdent le jeu.
+Quatre cellules en parallèle, deux processus moteur chacune, sur 16 CPU. Les
+débits mesurés jusqu'ici sont **inutilisables** : ils ont été relevés sur des
+parties qui se terminaient par forfait au bout de quelques dizaines de coups.
+Une partie réparée va au bout — `~120` demi-coups à `mt0.3` des deux côtés, soit
+`~70 s`, donc `40` parties ≈ `~50 min` sur la cellule la plus lente. Les
+cellules `d9` sont nettement plus rapides.
 
-**ETA ≈ 45 à 60 min**, mur d'horloge dominé par la cellule la plus lente.
+Cellules plafonnées à `50 min`, deux builds (8cf puis v4) avant le jeu.
+
+**ETA ≈ 55 à 70 min.** `n=40` donne une erreur-type de `7,9 pp` : c'est un
+diagnostic de harnais, pas une mesure de force, et il est dimensionné comme tel.

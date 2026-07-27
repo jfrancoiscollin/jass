@@ -1439,24 +1439,22 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     // replacement targets without losing their probe usefulness.
     tt.new_search();
 
-    // Top-level draw checks: they short-circuit the entire iterative
-    // deepening because the same draw would otherwise be re-derived inside
-    // negamax for every depth.
+    // A drawn root scores 0, but it is NOT terminal and must still yield a
+    // move: 2-fold is only the engine's internal simplification (the game
+    // needs 3-fold), and even at the 50-ply threshold the caller adjudicates,
+    // not us. These two checks used to `return res` before a move was ever
+    // picked, so the HUB emitted `bestmove 0-0` — which every HUB client reads
+    // as "no legal move", i.e. a resignation. Against an opponent that does no
+    // such thing it lost the game outright: it is what collapsed every
+    // Jass-vs-Scan cell of home-0997/0998/0999, on both colours and on every
+    // model. The tablebase branch was fixed in 5f5a7e7b; these are the same
+    // bug and fire far more often. The score is therefore forced to 0 AFTER
+    // the search rather than instead of it.
     const ZobristHash root_hash = zobrist_hash(pos);
+    bool root_is_drawn = pos.halfmove_clock() >= FIFTY_MOVE_PLIES;
     for (auto h : game_history) {
-        if (h == root_hash) {
-            res.score = 0;
-            return res;
-        }
+        if (h == root_hash) { root_is_drawn = true; break; }
     }
-    if (pos.halfmove_clock() >= FIFTY_MOVE_PLIES) {
-        res.score = 0;
-        return res;
-    }
-    // A tablebase draw is not a terminal position. Search at least one ply so
-    // the engine returns an actual drawing move; returning the default 0-0
-    // here made the HUB client interpret every non-terminal TB draw as a
-    // resignation. WIN/LOSS already followed this path for the same reason.
 
     MoveList root_moves;
     gen_moves(pos, root_moves);
@@ -1715,7 +1713,8 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     stop_helpers();
 
     res.best_move = best_overall;
-    res.score     = best_score;
+    // The move comes from the search; the score comes from the rules.
+    res.score     = root_is_drawn ? 0 : best_score;
     res.nodes     = s.nodes;
     res.cutoffs            = s.cutoffs;
     res.first_move_cutoffs = s.first_move_cutoffs;

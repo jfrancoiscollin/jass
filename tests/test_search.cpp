@@ -16,7 +16,9 @@
 #include "movegen.hpp"
 #include "position.hpp"
 #include "search.hpp"
+#include "tt.hpp"
 #include "types.hpp"
+#include "zobrist.hpp"
 
 #include <algorithm>
 #include <string_view>
@@ -164,6 +166,41 @@ void test_search_tablebase_draw_returns_a_legal_move() {
 
     MoveList legal;
     generate_legal_moves(p, legal);
+    JASS_CHECK(list_contains(legal, r.best_move));
+    JASS_CHECK(r.best_move.from != NO_SQUARE);
+}
+
+void test_repeated_root_returns_a_legal_move() {
+    // Same bug as the tablebase root, and far more common: a root already
+    // present in `game_history` used to return before a move was ever
+    // picked, so the HUB emitted `bestmove 0-0`. Against an opponent that
+    // does not resign on repetitions this lost the game outright — it is
+    // what made every Jass-vs-Scan cell of home-0997/0998/0999 collapse.
+    const Position p = parse("W:WK50:BK1");
+    TranspositionTable tt;
+    SearchLimits lim;
+    lim.max_depth = 2;
+    const std::vector<ZobristHash> history{zobrist_hash(p)};
+    const SearchResult r = search(p, lim, tt, history);
+
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    JASS_CHECK(!legal.empty());
+    JASS_CHECK(list_contains(legal, r.best_move));
+    JASS_CHECK(r.best_move.from != NO_SQUARE);
+}
+
+void test_fifty_move_root_returns_a_legal_move() {
+    Position p = parse("W:WK50:BK1");
+    p.set_halfmove_clock(FIFTY_MOVE_PLIES);
+    TranspositionTable tt;
+    SearchLimits lim;
+    lim.max_depth = 2;
+    const SearchResult r = search(p, lim, tt, {});
+
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    JASS_CHECK(!legal.empty());
     JASS_CHECK(list_contains(legal, r.best_move));
     JASS_CHECK(r.best_move.from != NO_SQUARE);
 }
@@ -371,6 +408,8 @@ void run_search_tests() {
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
     test_search_tablebase_draw_returns_a_legal_move();
+    test_repeated_root_returns_a_legal_move();
+    test_fifty_move_root_returns_a_legal_move();
     test_qsearch_avoids_horizon_effect();
     test_search_score_reflects_material_lead();
     test_search_returns_pv_starting_with_best_move();

@@ -8,6 +8,7 @@ every caller and honoured by none.
 """
 import pathlib
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
@@ -77,6 +78,39 @@ class NoMoveRaisesTest(unittest.TestCase):
                                "W:W31:B20", depth=4)
         self.assertEqual(result.outcome, "L")
         self.assertIn("no legal move", result.reason)
+
+
+class RefereeLegalityTest(unittest.TestCase):
+    """The referee must decide legality from movegen, not from a search.
+
+    Referee and player are the same binary: when the player returned a null
+    move on a drawn root, a search-based referee agreed and the guard
+    confirmed the bug instead of catching it.
+    """
+
+    def _referee(self, perft_output, exit_code=0):
+        tmp = tempfile.mkdtemp()
+        stub = pathlib.Path(tmp) / "jass"
+        stub.write_text("#!/bin/sh\ncat <<'EOF'\n%s\nEOF\nexit %d\n"
+                        % (perft_output, exit_code))
+        stub.chmod(0o755)
+        ref = cvs.Referee.__new__(cvs.Referee)
+        ref._jass_path = str(stub)
+        ref.current_fen = lambda: "W:W31:B20"
+        return ref
+
+    def test_positive_perft_means_legal_moves_exist(self):
+        ref = self._referee("perft(1) = 9   1773049 nodes/s  (5.0e-06s)")
+        self.assertTrue(ref.has_legal_moves())
+
+    def test_zero_perft_means_the_position_is_terminal(self):
+        ref = self._referee("perft(1) = 0   0 nodes/s  (8.0e-07s)")
+        self.assertFalse(ref.has_legal_moves())
+
+    def test_unreadable_perft_aborts_rather_than_guessing(self):
+        ref = self._referee("segfault", exit_code=1)
+        with self.assertRaises(cvs.EngineFailure):
+            ref.has_legal_moves()
 
 
 class JassArgvTest(unittest.TestCase):
