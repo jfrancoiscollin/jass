@@ -23,7 +23,9 @@
 > turnover_1to1_effect_confirmed; replay25_dose_closed;
 > turnover_l2_1e4_rejected; turnover_l2_1e5_not_replicated;
 > l2_factor_closed_on_3e5; views_agree_no_view_effect;
-> screens_underpowered_below_17_elo; replay_dose_75_next`.
+> screens_underpowered_below_17_elo;
+> replay_dose_axis_closed_optimum_50;
+> turnover50_beats_f2m_established_awaiting_human_review`.
 
 ## 1. Architecture du programme
 
@@ -97,6 +99,7 @@ une configuration héritée par les nouveaux bras.
 | régularisation | écran L2 `{1e-5, 3e-5, 1e-4}` à corpus fixe | `home-0984bis`/`0985` / relance `0987` | **`1e-4` rejeté (régression native établie) ; `1e-5` directionnel** |
 | régularisation | confirmation indépendante de `L2_1E5` | `home-0988` / `home-0989` | **non répliquée, vues inversées : facteur L2 clos sur `3e-5`** |
 | méthodologie | accord des vues + puissance, 65 cellules déjà publiées | analyse locale, aucune partie neuve | **vues équivalentes (`p≈0,88`) ; écrans `n=1000` aveugles sous ~17 Elo** |
+| dose mémoire | dose 75 % + readout à vues additionnées, `n=5000` | `home-0991→0993` | **axe clos, optimum intérieur à 50 % ; `TURNOVER` bat F2M, `+13,8 Elo` établi** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -722,6 +725,42 @@ Les cellules F2M sont des garde-fous de non-régression, pas un test de
 promotion : le candidat et son contrôle se tiennent à égalité tout en dominant
 leur parent commun. Exploiter ce constat exigerait une expérience séparée et
 préenregistrée ; rien ici ne l'autorise.
+
+### Axe de dose replay clos, et succession de champion ouverte
+
+La chaîne `home-0990→0993` a prolongé l'axe de dose au-delà de 50 %, seul point
+vierge : le croisement `{0 ; 25 %}` du plan était déjà mesuré à `L2=3e-5` par
+`M2`, `REPLAY25` et `TURNOVER`. Protocole complet :
+[`experiments/L3_PURE_REPLAY_DOSE_AXIS_20260727.md`](experiments/L3_PURE_REPLAY_DOSE_AXIS_20260727.md).
+
+Premier écran dimensionné par une analyse de puissance : vues **additionnées**,
+2 500 parties par cellule et par vue, `n=5000` par matchup, seuil **1,386 pp
+≈ 9,6 Elo**. Résultats sur le pool `17544078…` :
+
+| matchup | n | score | Elo | IC95 | |
+|---|---:|---:|---:|---|---|
+| `REPLAY75` vs F2M | 5000 | 50,11 % | +0,8 | `[48,74 ; 51,48]` | non établi |
+| `REPLAY75` vs `TURNOVER` | 5000 | 47,77 % | −15,5 | `[46,39 ; 49,15]` | **régression établie** |
+| **`TURNOVER` vs F2M** | 5000 | **51,98 %** | **+13,8** | `[50,61 ; 53,35]` | **supériorité établie** |
+
+**L'axe de dose est clos avec un optimum intérieur à 50 %** : la courbe monte de
+0 à 50 % puis redescend. Le bras 75 % avait pourtant la meilleure loss holdout
+des quatre (`0,443431`) — il ré-apprend simplement les données de son parent,
+converge en 6 itérations et n'est pas distinguable de F2M en force. La loss ne
+prédit toujours pas la force.
+
+**`TURNOVER` établit sa supériorité sur le champion F2M**, dans une cellule
+préenregistrée et dimensionnée pour cela. Les six mesures indépendantes de ce
+couple, sur trois pools disjoints, se consolident à `51,42 %`, `+9,89 Elo`,
+IC95 `[50,50 ; 52,35]` sur 11 000 parties — diagnostic de soutien, non
+préenregistré. `home-0980` n'avait rien conclu parce qu'il mesurait ce même
+effet très en deçà de son seuil de détection d'alors : **le signal était là, la
+puissance manquait.**
+
+Rien n'est promu. Une succession de champion est une promotion délibérée, sur go
+humain explicite, et exigerait les cellules non jouées ici : garde Gen2,
+conversion P3/P4 à défenseur figé, couverture par bucket, pool indépendant
+supplémentaire.
 
 ### Accord des vues et puissance réelle — relecture transversale
 

@@ -321,6 +321,23 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   promotion, et le candidat comme son contrôle dominent leur parent commun.
   Le croisement replay `0/25 %` au L2 retenu est le prochain bras à
   préenregistrer.
+- **Axe de dose replay clos par `0991→0993` :** le croisement `{0 ; 25 %}` du
+  plan était déjà mesuré à `L2=3e-5` ; l'axe n'était vierge qu'au-delà de 50 %.
+  Le bras `REPLAY75` (1,5M époque F2M + 0,5M époque M2) **régresse contre la
+  dose 50 %** : `47,77 %`, IC95 `[46,39 ; 49,15]` sur `n=5000`. La courbe monte
+  de 0 à 50 % puis redescend : **l'optimum est intérieur, à 50 %**. `REPLAY75`
+  avait pourtant la meilleure loss holdout des quatre doses — il converge en
+  6 itérations en ré-apprenant les données de son parent et n'est pas
+  distinguable de F2M (`50,11 %`).
+- **`TURNOVER` dépasse le champion F2M :** premier bras `L3-PURE` à établir sa
+  supériorité sur le champion en titre, dans une cellule préenregistrée et
+  dimensionnée pour cela — `51,98 %`, `+13,77 Elo`, IC95 `[50,61 ; 53,35]` sur
+  `n=5000` à vues additionnées. Les six mesures indépendantes du couple, sur
+  trois pools disjoints, se consolident à `51,42 %`, `+9,89 Elo`, IC95
+  `[50,50 ; 52,35]` sur 11 000 parties. `home-0980` n'avait rien conclu faute de
+  puissance, pas faute de signal. **Aucune promotion n'est autorisée** : une
+  succession de champion exige une revue humaine et les cellules non jouées ici
+  (garde Gen2, conversion P3/P4, couverture, pool supplémentaire).
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
