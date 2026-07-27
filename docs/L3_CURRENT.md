@@ -346,7 +346,15 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 5. mesurer séparément force, conversion, couverture et convergence ;
 6. ne pas rouvrir la profondeur seule : d8, d10 et d12 sont clos, et le mix
    d10/d12 reste interdit faute de garde-fous tous verts ;
-7. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante.
+7. ne pas passer à 32cf tant que la couverture 8cf reste insuffisante ;
+8. **calibration contre Scan suspendue** tant que `home-0999` n'a pas tranché.
+   `home-0997ter`/`home-0998` donnent TURNOVER à `0,050` (~`−512 Elo`) alors
+   que l'ancre publiée est `−155 Elo` à `mt0.3` pour `gen2-mmto` et que la
+   lignée a gagné ~60-70 Elo depuis : `home-0999` remesure `gen2-mmto`
+   lui-même, protocole `0571`, pour savoir si c'est le harnais ou le résultat
+   qui est faux. Protocole et règle de décision :
+   [`L3_SCAN_ANCHOR_REPRODUCTION_20260727.md`](experiments/L3_SCAN_ANCHOR_REPRODUCTION_20260727.md).
+   La matrice de calibration complète et **G2** attendent ce verdict.
 
 ### Spécialiste `L3-IMBALANCE2`
 
