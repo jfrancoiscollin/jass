@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import struct
 import sys
 from collections import Counter, defaultdict
@@ -141,6 +142,48 @@ def write_pair(data_path: Path, meta_path: Path,
         for row in rows
     )
     meta_path.write_bytes(META_MAGIC + struct.pack("<I", count) + meta_body)
+
+
+def _atomic_write_bytes(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    try:
+        temporary.write_bytes(payload)
+        temporary.replace(path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _atomic_write_text(path: Path, payload: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    try:
+        temporary.write_text(payload, encoding="utf-8")
+        temporary.replace(path)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _write_pair_atomic(
+    data_path: Path,
+    meta_path: Path,
+    records: list[bytes],
+    rows: list[Meta],
+) -> None:
+    if len(records) != len(rows):
+        raise ValueError("data/meta output count mismatch")
+    count = len(records)
+    data_payload = JNNW_MAGIC + struct.pack("<I", count) + b"".join(records)
+    meta_body = b"".join(
+        struct.pack("<QQB", row.game_id, row.opening_id, row.seeded)
+        for row in rows
+    )
+    _atomic_write_bytes(data_path, data_payload)
+    _atomic_write_bytes(
+        meta_path, META_MAGIC + struct.pack("<I", count) + meta_body
+    )
 
 
 def _manifest(path: str | None, payload: dict) -> None:
@@ -662,10 +705,390 @@ def _rot50(value: int) -> int:
 
 def mirror_record(record: bytes) -> bytes:
     """Rotate 180 degrees, swap colours and flip side-to-move."""
+    return _mirror_position(record) + struct.pack("<i", 0) + struct.pack("<b", 0)
+
+
+def _mirror_position(record: bytes) -> bytes:
     wm, wk, bm, bk = struct.unpack_from("<QQQQ", record, 0)
     stm = record[32]
-    mirrored = struct.pack("<QQQQB", _rot50(bm), _rot50(bk), _rot50(wm), _rot50(wk), 1 - stm)
-    return mirrored + struct.pack("<i", 0) + struct.pack("<b", 0)
+    return struct.pack(
+        "<QQQQB", _rot50(bm), _rot50(bk), _rot50(wm), _rot50(wk), 1 - stm
+    )
+
+
+def _mirror_record_preserve_targets(record: bytes) -> bytes:
+    """Mirror a replay record while preserving its STM-POV score and WDL."""
+    return _mirror_position(record) + record[33:]
+
+
+def _canonical_position(record: bytes) -> bytes:
+    position = record[:33]
+    return min(position, _mirror_position(record))
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _load_split_contract(
+    split_path: Path, records: list[bytes], rows: list[Meta]
+) -> tuple[dict, int]:
+    try:
+        split = json.loads(split_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{split_path}: unreadable split manifest") from exc
+    required = {
+        "schema": 1,
+        "operation": "split",
+        "split_unit": "opening_id",
+        "tail_is_holdout": True,
+    }
+    for key, expected in required.items():
+        if split.get(key) != expected:
+            raise ValueError(
+                f"{split_path}: incompatible {key}: "
+                f"{split.get(key)!r} != {expected!r}"
+            )
+    total = len(records)
+    train_count = split.get("train_records")
+    holdout_count = split.get("holdout_records")
+    if (
+        not isinstance(train_count, int)
+        or not isinstance(holdout_count, int)
+        or train_count < 0
+        or holdout_count < 0
+        or train_count + holdout_count != total
+        or split.get("records") != total
+    ):
+        raise ValueError(f"{split_path}: split record counts do not match inputs")
+    train_openings = {row.opening_id for row in rows[:train_count]}
+    holdout_openings = {row.opening_id for row in rows[train_count:]}
+    overlap = train_openings & holdout_openings
+    if overlap:
+        raise ValueError(
+            f"{split_path}: {len(overlap)} opening IDs leak across train/holdout"
+        )
+    if (
+        split.get("train_openings") != len(train_openings)
+        or split.get("holdout_openings") != len(holdout_openings)
+    ):
+        raise ValueError(f"{split_path}: split opening counts do not match inputs")
+    return split, train_count
+
+
+def _hard_category(candidate: Candidate) -> tuple[str, int, int]:
+    return _phase_band(candidate.pieces), candidate.margin, candidate.pieces
+
+
+def _category_name(category: tuple[str, int, int]) -> str:
+    phase, margin, pieces = category
+    return f"{phase}|margin={margin}|pieces={pieces}"
+
+
+def _hard_round_robin(
+    candidates: list[Candidate], limit: int, seed: int
+) -> list[Candidate]:
+    buckets: dict[tuple[str, int, int], list[Candidate]] = defaultdict(list)
+    for candidate in candidates:
+        buckets[_hard_category(candidate)].append(candidate)
+    for values in buckets.values():
+        values.sort(key=lambda row: _candidate_hash(row, seed))
+    selected: list[Candidate] = []
+    ordered_keys = sorted(buckets)
+    offset = 0
+    while len(selected) < limit:
+        progressed = False
+        for key in ordered_keys:
+            values = buckets[key]
+            if offset < len(values):
+                selected.append(values[offset])
+                progressed = True
+                if len(selected) == limit:
+                    break
+        if not progressed:
+            break
+        offset += 1
+    return selected
+
+
+def _wdl_label(record: bytes) -> str:
+    wdl = struct.unpack_from("<b", record, 37)[0]
+    return {-1: "loss", 0: "draw", 1: "win"}[wdl]
+
+
+def _distribution(candidates: list[Candidate]) -> dict:
+    return {
+        "phase": dict(
+            sorted(Counter(_phase_band(row.pieces) for row in candidates).items())
+        ),
+        "material_margin": {
+            str(key): value
+            for key, value in sorted(
+                Counter(row.margin for row in candidates).items()
+            )
+        },
+        "piece_count": {
+            str(key): value
+            for key, value in sorted(
+                Counter(row.pieces for row in candidates).items()
+            )
+        },
+        "wdl_stm": dict(
+            sorted(Counter(_wdl_label(row.record) for row in candidates).items())
+        ),
+    }
+
+
+def do_mine_hard(args: argparse.Namespace) -> int:
+    if args.signal != "failed_conversion":
+        raise ValueError("--signal must be failed_conversion for hard-mining v1")
+    if not args.one_per_game:
+        raise ValueError("--one-per-game is mandatory for hard-mining v1")
+    if not args.colour_mirror:
+        raise ValueError("--colour-mirror is mandatory for hard-mining v1")
+    if args.max_records < 2 or args.max_records % 2:
+        raise ValueError("--max-records must be an even integer >= 2")
+    if not re.fullmatch(r"[0-9a-f]{40}", args.code_sha):
+        raise ValueError("--code-sha must be a full lowercase 40-hex commit SHA")
+
+    paths = {
+        "data": Path(args.data),
+        "meta": Path(args.meta),
+        "split_manifest": Path(args.split_manifest),
+        "hard_replay": Path(args.out_replay),
+        "hard_replay_meta": Path(args.out_meta),
+        "hard_seeds": Path(args.out_seeds),
+        "manifest": Path(args.manifest),
+    }
+    resolved = [path.resolve() for path in paths.values()]
+    if len(set(resolved)) != len(resolved):
+        raise ValueError("all input and output paths must be distinct")
+    for name in ("hard_replay", "hard_replay_meta", "hard_seeds", "manifest"):
+        if paths[name].exists():
+            raise ValueError(f"refusing to overwrite existing output: {paths[name]}")
+
+    records, rows = read_pair(paths["data"], paths["meta"])
+    split, train_count = _load_split_contract(
+        paths["split_manifest"], records, rows
+    )
+    holdout_count = len(records) - train_count
+    if train_count == 0 or holdout_count == 0:
+        raise ValueError("hard-mining requires non-empty train and holdout partitions")
+
+    signal_candidates: list[Candidate] = []
+    for index, (record, row) in enumerate(
+        zip(records[:train_count], rows[:train_count])
+    ):
+        stm = record[32]
+        wdl = struct.unpack_from("<b", record, 37)[0]
+        if stm not in (0, 1):
+            raise ValueError(f"train record {index}: invalid side-to-move {stm}")
+        if wdl not in (-1, 0, 1):
+            raise ValueError(f"train record {index}: invalid WDL {wdl}")
+        if row.seeded not in (0, 1):
+            raise ValueError(f"train meta record {index}: invalid seeded flag")
+        advantaged, margin, pieces = _material(record)
+        if advantaged is None or _winner(record) == advantaged:
+            continue
+        signal_candidates.append(
+            Candidate(record, row, "failed_conversion", margin, pieces)
+        )
+
+    # First enforce the game-level independence unit, then deduplicate colour-
+    # canonical positions across games. Both tie-breaks are deterministic.
+    by_game: dict[int, Candidate] = {}
+    for candidate in signal_candidates:
+        previous = by_game.get(candidate.meta.game_id)
+        if previous is None or _candidate_hash(
+            candidate, args.seed
+        ) < _candidate_hash(previous, args.seed):
+            by_game[candidate.meta.game_id] = candidate
+    one_per_game = list(by_game.values())
+
+    by_position: dict[bytes, Candidate] = {}
+    for candidate in one_per_game:
+        key = _canonical_position(candidate.record)
+        previous = by_position.get(key)
+        if previous is None or _candidate_hash(
+            candidate, args.seed
+        ) < _candidate_hash(previous, args.seed):
+            by_position[key] = candidate
+    eligible = list(by_position.values())
+
+    base_limit = args.max_records // 2
+    selected = _hard_round_robin(eligible, base_limit, args.seed)
+    if not selected:
+        raise ValueError("no failed-conversion candidate found in train partition")
+
+    replay_records: list[bytes] = []
+    replay_meta: list[Meta] = []
+    for candidate in selected:
+        replay_records.extend(
+            (candidate.record, _mirror_record_preserve_targets(candidate.record))
+        )
+        replay_meta.extend((candidate.meta, candidate.meta))
+    seed_records = [_zero_targets(record) for record in replay_records]
+
+    holdout_openings = {row.opening_id for row in rows[train_count:]}
+    selected_openings = {row.opening_id for row in replay_meta}
+    leaked_openings = selected_openings & holdout_openings
+    if leaked_openings:
+        raise ValueError(
+            f"selected output leaks {len(leaked_openings)} holdout openings"
+        )
+    if len({_canonical_position(record) for record in replay_records}) != len(
+        selected
+    ):
+        raise ValueError("internal error: colour-canonical output dedup failed")
+
+    _write_pair_atomic(
+        paths["hard_replay"],
+        paths["hard_replay_meta"],
+        replay_records,
+        replay_meta,
+    )
+    seed_payload = (
+        JNNW_MAGIC
+        + struct.pack("<I", len(seed_records))
+        + b"".join(seed_records)
+    )
+    _atomic_write_bytes(paths["hard_seeds"], seed_payload)
+
+    # Read every output back before publishing the manifest, which is the
+    # completion marker for consumers.
+    checked_replay, checked_meta = read_pair(
+        paths["hard_replay"], paths["hard_replay_meta"]
+    )
+    seed_count, seed_body = _read_counted(
+        paths["hard_seeds"], JNNW_MAGIC, JNNW_REC
+    )
+    checked_seeds = [
+        seed_body[index * JNNW_REC:(index + 1) * JNNW_REC]
+        for index in range(seed_count)
+    ]
+    if checked_replay != replay_records or checked_meta != replay_meta:
+        raise ValueError("hard replay read-back verification failed")
+    if checked_seeds != seed_records:
+        raise ValueError("hard seed read-back verification failed")
+    if any(record[33:] != source[33:] for record, source in zip(
+        checked_replay, replay_records
+    )):
+        raise ValueError("hard replay targets were not preserved")
+    if any(record[33:] != b"\0\0\0\0\0" for record in checked_seeds):
+        raise ValueError("hard seed targets were not zeroed")
+
+    candidate_categories = Counter(
+        _category_name(_hard_category(row)) for row in signal_candidates
+    )
+    eligible_categories = Counter(
+        _category_name(_hard_category(row)) for row in eligible
+    )
+    selected_categories = Counter(
+        _category_name(_hard_category(row)) for row in selected
+    )
+    payload = {
+        "schema": 1,
+        "operation": "mine-hard",
+        "signal": "failed_conversion",
+        "signal_definition": (
+            "material advantage observed; terminal outcome non-winning "
+            "for advantaged side"
+        ),
+        "code_sha": args.code_sha,
+        "seed": args.seed,
+        "max_records_including_colour_mirrors": args.max_records,
+        "one_per_game": True,
+        "colour_mirror": True,
+        "selection_scope": "train_only",
+        "holdout_records_examined_for_signal": 0,
+        "quota_policy": (
+            "deterministic round-robin over "
+            "(phase, exact material margin, exact piece count)"
+        ),
+        "external_teacher_inputs": 0,
+        "input": {
+            "data": str(paths["data"]),
+            "data_sha256": _sha256(paths["data"]),
+            "meta": str(paths["meta"]),
+            "meta_sha256": _sha256(paths["meta"]),
+            "split_manifest": str(paths["split_manifest"]),
+            "split_manifest_sha256": _sha256(paths["split_manifest"]),
+            "records": len(records),
+        },
+        "split": {
+            "schema": split["schema"],
+            "split_unit": split["split_unit"],
+            "seed": split.get("seed"),
+            "holdout_mod": split.get("holdout_mod"),
+            "train_records": train_count,
+            "holdout_records": holdout_count,
+            "tail_is_holdout": True,
+            "verified_opening_disjoint": True,
+            "selected_holdout_opening_overlap": 0,
+        },
+        "candidates": {
+            "signal_records": len(signal_candidates),
+            "games": len(by_game),
+            "after_one_per_game": len(one_per_game),
+            "after_canonical_dedup": len(eligible),
+            "by_category": dict(sorted(candidate_categories.items())),
+            "eligible_by_category": dict(sorted(eligible_categories.items())),
+        },
+        "selection": {
+            "base_positions": len(selected),
+            "output_records": len(replay_records),
+            "unique_games": len({row.meta.game_id for row in selected}),
+            "unique_openings": len({row.meta.opening_id for row in selected}),
+            "unique_canonical_positions": len(
+                {_canonical_position(row.record) for row in selected}
+            ),
+            "by_category": dict(sorted(selected_categories.items())),
+            "distribution": _distribution(selected),
+        },
+        "deduplication": {
+            "one_per_game_dropped": len(signal_candidates) - len(one_per_game),
+            "canonical_position_dropped": len(one_per_game) - len(eligible),
+        },
+        "targets": {
+            "hard_replay_original_wdl_and_score_preserved": True,
+            "hard_seeds_score_zero": all(
+                struct.unpack_from("<i", record, 33)[0] == 0
+                for record in checked_seeds
+            ),
+            "hard_seeds_wdl_zero": all(
+                struct.unpack_from("<b", record, 37)[0] == 0
+                for record in checked_seeds
+            ),
+            "hard_seeds_zero_target_records": len(checked_seeds),
+        },
+        "outputs": {
+            "hard_replay": {
+                "path": str(paths["hard_replay"]),
+                "sha256": _sha256(paths["hard_replay"]),
+                "records": len(checked_replay),
+            },
+            "hard_replay_meta": {
+                "path": str(paths["hard_replay_meta"]),
+                "sha256": _sha256(paths["hard_replay_meta"]),
+                "records": len(checked_meta),
+            },
+            "hard_seeds": {
+                "path": str(paths["hard_seeds"]),
+                "sha256": _sha256(paths["hard_seeds"]),
+                "records": len(checked_seeds),
+            },
+        },
+    }
+    _atomic_write_text(
+        paths["manifest"],
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+    )
+    print(json.dumps(payload, sort_keys=True, ensure_ascii=False))
+    return 0
 
 
 def _round_robin(candidates: list[Candidate], limit: int, seed: int) -> list[Candidate]:
@@ -847,6 +1270,26 @@ def build_parser() -> argparse.ArgumentParser:
                       help="calibration share of successfully converted positions")
     mine.add_argument("--seed", type=int, default=1)
     mine.set_defaults(func=do_mine)
+
+    hard = sub.add_parser(
+        "mine-hard",
+        help="mine train-only failed conversions into replay and zero-target seeds",
+    )
+    hard.add_argument("--data", required=True)
+    hard.add_argument("--meta", required=True)
+    hard.add_argument("--split-manifest", required=True)
+    hard.add_argument("--out-replay", required=True)
+    hard.add_argument("--out-meta", required=True)
+    hard.add_argument("--out-seeds", required=True)
+    hard.add_argument("--manifest", required=True)
+    hard.add_argument("--max-records", type=int, required=True,
+                      help="maximum total output count including colour mirrors")
+    hard.add_argument("--seed", type=int, required=True)
+    hard.add_argument("--signal", choices=("failed_conversion",), required=True)
+    hard.add_argument("--one-per-game", action="store_true")
+    hard.add_argument("--colour-mirror", action="store_true")
+    hard.add_argument("--code-sha", required=True)
+    hard.set_defaults(func=do_mine_hard)
 
     profile = sub.add_parser("profile", help="profile self-play coverage and diversity")
     profile.add_argument("--data", required=True)
