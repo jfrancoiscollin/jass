@@ -239,11 +239,17 @@ grep -q "root_is_drawn"   src/search.cpp    || { restore_src; die "engine predat
 # uniforme et produirait un corpus qui n'a rien à voir avec ce qu'on croit.
 grep -q "explore_topk"   src/main.cpp || { restore_src; die "engine has no --explore-topk"; }
 grep -q "explore_margin" src/main.cpp || { restore_src; die "engine has no --explore-margin"; }
-# Le classement doit tourner à la profondeur de JEU. La forme réduite
-# `lim.max_depth - 2` classait moins profond qu'on ne joue, ce qui laisse entrer
-# dans le top-k des coups que la recherche de jeu rejette.
-grep -q "lim.max_depth - 2" src/main.cpp &&
-  { restore_src; die "archi: le classement top-k est revenu à la profondeur réduite"; }
+grep -q "split_selfplay_rngs" src/main.cpp ||
+  { restore_src; die "engine has no --split-selfplay-rngs (PR 384)"; }
+# Les invariants top-k vivent dans un helper testé (PR 384) : classement de
+# l'enfant à play_depth-1, historique de répétition transmis, coups
+# sémantiquement égaux dédupliqués. Le job refuse de tourner sur un binaire qui
+# les aurait perdus — la profondeur EFFECTIVE est re-vérifiée après génération
+# sur ce que le moteur a réellement imprimé, pas sur la présence du fichier.
+git show "$EXPECTED_CODE_SHA:src/selfplay_exploration.hpp" > src/selfplay_exploration.hpp ||
+  { restore_src; die "selfplay_exploration.hpp absent du commit épinglé"; }
+grep -q "select_topk_exploration_move" src/main.cpp ||
+  { restore_src; die "main.cpp n'utilise pas le helper top-k (PR 384)"; }
 say "  garde-fou archi ✓ : g_emasks + has_any_capture + root_is_drawn + topk/margin à profondeur de jeu"
 
 phase fetch-and-authenticate-parent
@@ -300,6 +306,7 @@ while read -r pd pn pper ptot pto phealthy; do
       --random-open-plies 8 --explore-eps "$EXPLORE_EPS" \
       --explore-decay-plies "$EXPLORE_DECAY" \
       --explore-topk "$TOPK" --explore-margin "$MARGIN" \
+      --split-selfplay-rngs \
       --pair-openings --drop-plycap --sample-meta-out "$W/gen-s$shard.jsm" \
       < /dev/null > "$W/gen-s$shard.log" 2>&1 &
     pids+=("$!")
@@ -323,6 +330,19 @@ TOPK_PLIES=$(sum_key topk_ranked_plies)
 EPS_EVENTS=$(sum_key eps_events)
 [ "$TOPK_PLIES" -gt 0 ] || die "no ply ranked — the top-k flag did not fire"
 [ "$EPS_EVENTS" -gt 0 ] || die "no exploration event — eps did not fire"
+# Profondeur de classement EFFECTIVE, relue de ce que le moteur a imprimé. Le
+# contrat est play_depth-1 ; c'est la seule des trois corrections de PR 384 qui
+# soit observable de l'extérieur, donc c'est celle qu'on asserte.
+RANK_DEPTHS=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^topk_rank_depth=/) {split($i,a,"="); print a[2]}}' \
+  "$ART/exploration.txt" | sort -u | tr '\n' ' ')
+SPLIT_RNG=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^split_selfplay_rngs=/) {split($i,a,"="); print a[2]}}' \
+  "$ART/exploration.txt" | sort -u | tr -d ' \n')
+[ "$SPLIT_RNG" = "1" ] || die "les flux RNG séparés ne sont pas actifs (=$SPLIT_RNG)"
+while read -r pd pn pper ptot pto phealthy; do
+  grep -qw "$((pd - 1))" <<<"$RANK_DEPTHS" ||
+    die "profondeur de classement attendue $((pd - 1)) pour d$pd, observées : $RANK_DEPTHS"
+done < "$W/plan.txt"
+say "  invariants top-k ✓ : classement à {$RANK_DEPTHS}, RNG séparés"
 
 # Le mix RÉALISÉ, compté sur les fichiers écrits — pas celui du plan. Un shard
 # tué par son timeout rend moins de records que prévu, et le corpus glisse vers
@@ -446,7 +466,8 @@ parent, depth_mix = sys.argv[9], sys.argv[10]
 depth_report = json.load(open(art / "depth-mix.json"))
 
 keys = ("eps_events", "eps_changed_best", "play_plies", "games",
-        "topk_ranked_plies", "margin_singleton_plies")
+        "topk_ranked_plies", "margin_singleton_plies",
+        "topk_duplicate_candidates")
 counts = {k: 0 for k in keys}
 for line in (art / "exploration.txt").read_text().splitlines():
     for tok in line.split():
@@ -489,7 +510,9 @@ payload = {
         "explore_decay_plies": decay,
         "explore_topk": topk,
         "explore_margin": margin,
-        "ranking_depth": "play depth (never reduced)",
+        "ranking_depth": "play_depth - 1 (PR 384 invariant, asserted on the "
+                         "engine's own topk_rank_depth counter)",
+        "split_selfplay_rngs": True,
     },
     "exploration": counts,
     "coverage": {

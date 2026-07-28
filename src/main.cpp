@@ -27,6 +27,7 @@
 #include "scan_eval.hpp"
 #include "scan_sacs.hpp"
 #include "search.hpp"
+#include "selfplay_exploration.hpp"
 #include "tournament.hpp"
 
 #include <algorithm>
@@ -362,6 +363,17 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      drop a piece, and top-k without a margin
                                             //      would play them two times out of three.
                                             //      M=0 disables the filter.
+    bool         split_selfplay_rngs = false; // --split-selfplay-rngs : draw openings,
+                                            //      sampling, exploration and role from
+                                            //      SEPARATE streams derived from the same
+                                            //      seed. Off by default so historical jobs
+                                            //      reproduce bit for bit. REQUIRED for a
+                                            //      paired A/B: with one shared stream, an
+                                            //      arm that consumes a different number of
+                                            //      draws (top-k ranks, uniform does not)
+                                            //      desynchronises every later opening, and
+                                            //      the arms stop being paired on the very
+                                            //      thing that was supposed to be held equal.
     int          explore_decay_plies = 0;    // --explore-decay-plies D : FIX#1 label-hygiene.
                                             //      eps(ply)=explore_eps*max(0,1-ply/D) => confine
                                             //      l'exploration au debut (0 = pas de decroissance).
@@ -446,6 +458,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-margin" && i + 1 < argc) {
             const int v = std::atoi(argv[++i]);
             if (v >= 0) explore_margin = v;
+        } else if (a == "--split-selfplay-rngs") {
+            split_selfplay_rngs = true;
         } else if (a == "--explore-decay-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_decay_plies = v;
@@ -593,7 +607,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         ? static_cast<std::uint64_t>(static_cast<std::uint32_t>(random_seed))
               * std::uint64_t{0x9E3779B97F4A7C15}
         : std::uint64_t{0x5eed5eed5eed5eed};
-    std::mt19937_64 rng(seed_value);
+    // Un seul flux par défaut (`rng` est un alias du flux legacy), quatre flux
+    // indépendants sous --split-selfplay-rngs. Les usages sont routés par rôle
+    // ci-dessous : `streams.opening()`, `.sampling()`, `.exploration()`,
+    // `.role()`. En mode legacy les quatre renvoient le MÊME générateur, donc
+    // la séquence historique est reproduite au bit près.
+    jass::selfplay::SelfplayRngStreams streams(seed_value, split_selfplay_rngs);
+    std::mt19937_64& rng = streams.opening();
 
     // Endgame seeding (--seed-file / --seed-frac) : load seed positions. With
     // probability seed_frac%, a game STARTS from a random seed (e.g. an endgame
@@ -664,7 +684,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               stat_random_open_moves = 0, stat_play_plies = 0,
               stat_eps_events = 0, stat_eps_changed_best = 0,
               stat_games_with_eps = 0, stat_topk_ranked_plies = 0,
-              stat_margin_singleton = 0;
+              stat_margin_singleton = 0,
+              stat_topk_duplicates = 0;
+    // Profondeur EFFECTIVE du classement, relevée depuis le helper plutôt que
+    // recalculée ici : le certificat d'un job doit pouvoir asserter
+    // `play_depth - 1` sur ce que le binaire a vraiment fait.
+    int stat_topk_rank_depth = 0;
     // Distribution des issues EMISES. Le défaut de racine nulle d'avant
     // 9c1d1e8e a vidé trois corpus de leurs nulles (4,8 % au lieu de 20,3 %)
     // sans qu'aucun compteur ne bouge : tous portaient sur les labels écrits,
@@ -739,7 +764,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
         // (blind → stumbles into shots). FIX#3 : si --pair-openings, punisher=white au rep 0, black au rep 1
         // (roles echanges sur l'ouverture identique) ; sinon random par partie (comportement historique).
-        const bool punisher_is_white = pair_openings ? (rep == 0) : ((rng() & 1u) != 0u);
+        const bool punisher_is_white =
+            pair_openings ? (rep == 0) : ((streams.role()() & 1u) != 0u);
 
         for (int ply = 0; ply < max_plies; ++ply) {
             MoveList ml;
@@ -805,7 +831,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // single-check tactical-position signal.
             const bool position_quiet = !ml[0].is_capture();
             const bool selected_for_sample = (sample_initial && ply == 0)
-                                          || ((rng() & 3) == 0);
+                                          || ((streams.sampling()() & 3) == 0);
             const bool sample_now = selected_for_sample
                                  && generated + static_cast<int>(game_samples.size()) < n
                                  && (!quiet_only || position_quiet);
@@ -926,7 +952,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 ? explore_eps * std::max(0.0, 1.0 - static_cast<double>(ply) / explore_decay_plies)
                 : static_cast<double>(explore_eps);
             if (eps_frac > 0.0 && !ml.empty()
-                && static_cast<double>(rng() % 100000) < eps_frac * 1000.0) {
+                && static_cast<double>(streams.exploration()() % 100000)
+                       < eps_frac * 1000.0) {
                 // --explore-topk K : draw among the K best moves rather than
                 // among all of them. A uniform draw over ~8-10 legal moves is a
                 // blunder nine times out of ten, so it widens the state
@@ -939,60 +966,34 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 // a separate pass over the children: alpha-beta bounds from the
                 // main search would order fail-low moves arbitrarily.
                 //
-                // The ranking runs at the PLAY depth, never below it. Ranking
-                // shallower than one plays lets a move the play-depth search
-                // would reject into the top-k, and measures the margin on
-                // noisier scores than the ones that decide the game. Stockfish's
-                // gensfen clamps the same way — `random_multi_pv_depth =
-                // max(search_depth_max, random_multi_pv_depth)` — and it is the
-                // one point on which this implementation used to differ (it
-                // ranked at play_depth-2). The alignment costs roughly a fifth
-                // of the run instead of a few percent; that is the price of the
-                // ranking being about the same moves the game is played with.
+                // The child is searched at play_depth-1, NOT at play_depth. A
+                // root search at depth d evaluates each of its children with
+                // d-1 plies; restarting a root search FROM the child at depth d
+                // would give it one ply more than the policy ever had. Both of
+                // this file's earlier versions were wrong here in opposite
+                // directions — d-2 was one ply short, d was one ply long — and
+                // the invariant now lives in one tested helper (PR 384).
+                //
+                // The helper also fixes two silent defects: the ranking search
+                // received no repetition history, and semantically identical
+                // moves (Move compares capture SETS, and draughts reaches the
+                // same capture by several orders) could occupy more than one
+                // top-k slot, quietly biasing the uniform draw toward one move.
                 if (explore_topk > 0 && ml.size() > 1) {
-                    const int rank_depth = std::max(1, lim.max_depth);
-                    std::vector<std::pair<int, Move>> ranked;
-                    ranked.reserve(ml.size());
-                    for (const auto& cand : ml) {
-                        SearchLimits rl;
-                        rl.max_depth = rank_depth;
-                        rl.params    = lim.params;
-                        rl.nnue      = e.nnue();
-                        // Same deterministic node bound as the play search: a
-                        // flat eval must not be able to run the ranking away.
-                        rl.max_nodes = lim.max_nodes;
-                        // Negamax: the child is scored from the opponent's
-                        // point of view, so flip it back to the mover's.
-                        const SearchResult cr =
-                            search(e.position().after(cand), rl, rank_tt);
-                        ranked.emplace_back(-cr.score, cand);
+                    const jass::selfplay::TopKChoice choice =
+                        jass::selfplay::select_topk_exploration_move(
+                            e, ml, lim, explore_topk, explore_margin,
+                            rank_tt, streams.exploration());
+                    play_mv = choice.move;
+                    stat_topk_duplicates +=
+                        static_cast<long long>(choice.duplicate_candidates);
+                    if (choice.ranked) {
+                        ++stat_topk_ranked_plies;
+                        stat_topk_rank_depth = choice.child_search_depth;
                     }
-                    std::stable_sort(ranked.begin(), ranked.end(),
-                                     [](const auto& a2, const auto& b2) {
-                                         return a2.first > b2.first;
-                                     });
-                    std::size_t k =
-                        std::min<std::size_t>(static_cast<std::size_t>(explore_topk),
-                                              ranked.size());
-                    // Margin gate: top-k is a CAP, the margin is the real
-                    // filter. It makes the perturbation position-dependent —
-                    // wide open in a quiet position where the top moves are
-                    // within a few centipawns, collapsed to the single best in
-                    // a tactical one where everything else loses material.
-                    if (explore_margin > 0) {
-                        const int best_score = ranked[0].first;
-                        std::size_t within = 1;
-                        while (within < k
-                               && ranked[within].first >= best_score - explore_margin) {
-                            ++within;
-                        }
-                        if (within == 1) ++stat_margin_singleton;
-                        k = within;
-                    }
-                    play_mv = ranked[rng() % k].second;
-                    ++stat_topk_ranked_plies;
+                    if (choice.margin_singleton) ++stat_margin_singleton;
                 } else {
-                    play_mv = ml[rng() % ml.size()];
+                    play_mv = ml[streams.exploration()() % ml.size()];
                 }
                 ++stat_eps_events;
                 game_had_eps = true;
@@ -1122,6 +1123,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " explore_margin=" << explore_margin
               << " topk_ranked_plies=" << stat_topk_ranked_plies
               << " margin_singleton_plies=" << stat_margin_singleton
+              << " topk_duplicate_candidates=" << stat_topk_duplicates
+              << " topk_rank_depth=" << stat_topk_rank_depth
+              << " split_selfplay_rngs=" << (split_selfplay_rngs ? 1 : 0)
               << " decay_plies=" << explore_decay_plies
               << " openings=" << opening_count
               << " games=" << game_count

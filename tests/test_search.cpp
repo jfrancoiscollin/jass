@@ -16,6 +16,7 @@
 #include "movegen.hpp"
 #include "position.hpp"
 #include "search.hpp"
+#include "selfplay_exploration.hpp"
 #include "tt.hpp"
 #include "types.hpp"
 #include "zobrist.hpp"
@@ -168,6 +169,129 @@ void test_search_tablebase_draw_returns_a_legal_move() {
     generate_legal_moves(p, legal);
     JASS_CHECK(list_contains(legal, r.best_move));
     JASS_CHECK(r.best_move.from != NO_SQUARE);
+}
+
+// ---------------------------------------------------------------------------
+// Top-K exploration invariants (PR 384). Each of these pins a defect that
+// shipped and was invisible in the published counters.
+// ---------------------------------------------------------------------------
+
+void test_topk_child_depth_is_one_ply_below_play_depth() {
+    // A root search at depth d evaluates its children with d-1 plies. Ranking
+    // a child with a fresh root search at d gives it one ply MORE than the
+    // policy ever had; at d-2 it gets one less. Both shipped at some point.
+    JASS_CHECK(jass::selfplay::topk_child_search_depth(8) == 7);
+    JASS_CHECK(jass::selfplay::topk_child_search_depth(9) == 8);
+    // search() iterates from depth one, so the horizon is clamped there.
+    JASS_CHECK(jass::selfplay::topk_child_search_depth(1) == 1);
+    JASS_CHECK(jass::selfplay::topk_child_search_depth(0) == 1);
+}
+
+void test_topk_dedupes_semantically_equal_moves() {
+    // Move compares captured squares as a SET, and international draughts
+    // reaches the same capture by several orders, so generate_legal_moves can
+    // emit equal Moves. Without dedup one move takes several top-k slots and
+    // the uniform draw is silently biased toward it.
+    MoveList legal;
+    Move a{}; a.from = static_cast<Square>(31); a.to = static_cast<Square>(27);
+    Move b{}; b.from = static_cast<Square>(32); b.to = static_cast<Square>(28);
+    legal.push(a);
+    legal.push(a);   // same move reached by another path
+    legal.push(b);
+    const std::vector<Move> unique = jass::selfplay::unique_semantic_moves(legal);
+    JASS_CHECK(unique.size() == 2);
+    JASS_CHECK(unique[0] == a);
+    JASS_CHECK(unique[1] == b);
+}
+
+void test_topk_child_history_includes_the_current_root() {
+    // The ranking search must see the predecessors AND the position it is
+    // descending from, otherwise a candidate that returns to an earlier
+    // position is not scored as a repetition.
+    Engine e;
+    const std::vector<ZobristHash> before = e.hash_history();
+    const std::vector<ZobristHash> history = jass::selfplay::topk_child_history(e);
+    JASS_CHECK(history.size() == before.size() + 1);
+    JASS_CHECK(history.back() == zobrist_hash(e.position()));
+}
+
+void test_topk_margin_collapses_to_the_best_move() {
+    // The margin is the real filter; top-k is only a cap. With a stub ranking
+    // that spreads the scores far apart, a tight margin must leave exactly one
+    // eligible move — and say so, because the counter is how a job proves the
+    // guard bit.
+    Engine e;
+    MoveList legal;
+    generate_legal_moves(e.position(), legal);
+    JASS_CHECK(legal.size() > 2);
+
+    TranspositionTable tt;
+    SearchLimits lim;
+    lim.max_depth = 4;
+    std::mt19937_64 rng(12345);
+
+    // Stub search: score by from-square so the ordering is deterministic and
+    // the gaps are far wider than the margin under test.
+    int call = 0;
+    auto stub = [&call](const Position&, const SearchLimits&,
+                        TranspositionTable&, const std::vector<ZobristHash>&) {
+        SearchResult r;
+        r.score = -1000 * (call++);   // negated by the caller => descending
+        return r;
+    };
+    const auto choice = jass::selfplay::select_topk_exploration_move_with(
+        e, legal, lim, 3, /*margin=*/50, tt, rng, stub);
+    JASS_CHECK(choice.ranked);
+    JASS_CHECK(choice.eligible_candidates == 1);
+    JASS_CHECK(choice.margin_singleton);
+    JASS_CHECK(choice.child_search_depth == 3);
+}
+
+void test_topk_wide_margin_keeps_the_whole_cap() {
+    Engine e;
+    MoveList legal;
+    generate_legal_moves(e.position(), legal);
+    TranspositionTable tt;
+    SearchLimits lim;
+    lim.max_depth = 6;
+    std::mt19937_64 rng(999);
+    // All candidates score identically: nothing is separated, so the cap rules.
+    auto stub = [](const Position&, const SearchLimits&,
+                   TranspositionTable&, const std::vector<ZobristHash>&) {
+        SearchResult r;
+        r.score = 0;
+        return r;
+    };
+    const auto choice = jass::selfplay::select_topk_exploration_move_with(
+        e, legal, lim, 3, /*margin=*/50, tt, rng, stub);
+    JASS_CHECK(choice.eligible_candidates == 3);
+    JASS_CHECK(!choice.margin_singleton);
+    JASS_CHECK(choice.child_search_depth == 5);
+}
+
+void test_split_rngs_keep_openings_independent_of_exploration() {
+    // The point of the split, and the reason a paired A/B needs it: one arm
+    // ranks (consuming exploration draws) and the other does not. On a shared
+    // stream that desynchronises every later opening, so the two arms stop
+    // being paired on the one thing held equal.
+    jass::selfplay::SelfplayRngStreams a(4242, /*split=*/true);
+    jass::selfplay::SelfplayRngStreams b(4242, /*split=*/true);
+    for (int i = 0; i < 37; ++i) (void)b.exploration()();   // arm B explores more
+    JASS_CHECK(a.opening()() == b.opening()());
+    JASS_CHECK(a.role()() == b.role()());
+
+    // Legacy mode is one shared stream — the historical sequence, bit for bit,
+    // and therefore also the historical coupling.
+    jass::selfplay::SelfplayRngStreams c(4242, /*split=*/false);
+    jass::selfplay::SelfplayRngStreams d(4242, /*split=*/false);
+    (void)d.exploration()();
+    JASS_CHECK(c.opening()() != d.opening()());
+
+    // The four split streams must not be the same sequence offset by a step.
+    jass::selfplay::SelfplayRngStreams s(7, /*split=*/true);
+    const auto o = s.opening()(), sa = s.sampling()(),
+               x = s.exploration()(), r = s.role()();
+    JASS_CHECK(o != sa && o != x && o != r && sa != x && sa != r && x != r);
 }
 
 void test_repeated_root_returns_a_legal_move() {
@@ -408,6 +532,12 @@ void run_search_tests() {
     test_search_no_legal_moves_returns_mate();
     test_search_finds_forced_capture();
     test_search_tablebase_draw_returns_a_legal_move();
+    test_topk_child_depth_is_one_ply_below_play_depth();
+    test_topk_dedupes_semantically_equal_moves();
+    test_topk_child_history_includes_the_current_root();
+    test_topk_margin_collapses_to_the_best_move();
+    test_topk_wide_margin_keeps_the_whole_cap();
+    test_split_rngs_keep_openings_independent_of_exploration();
     test_repeated_root_returns_a_legal_move();
     test_fifty_move_root_returns_a_legal_move();
     test_qsearch_avoids_horizon_effect();
