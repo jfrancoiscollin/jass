@@ -668,8 +668,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
     // évite que la passe de classement pollue l'ordonnancement de la partie.
+    // 64 MB rather than 16 : the ranking now runs at the play depth, and the
+    // children of one root transpose into each other heavily, so the table is
+    // what keeps the pass affordable.
     TranspositionTable rank_tt;
-    if (explore_topk > 0) rank_tt.resize_mb(16);
+    if (explore_topk > 0) rank_tt.resize_mb(64);
 
     int generated  = 0;
     int game_count = 0;
@@ -926,12 +929,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 // plausible lines, which is where resolution is missing.
                 //
                 // The root search returns only its best move, so the ranking is
-                // a separate shallow pass over the children: alpha-beta bounds
-                // from the main search would order fail-low moves arbitrarily.
-                // It costs one reduced search per exploration ply, i.e. a few
-                // percent of the run at the usual eps.
+                // a separate pass over the children: alpha-beta bounds from the
+                // main search would order fail-low moves arbitrarily.
+                //
+                // The ranking runs at the PLAY depth, never below it. Ranking
+                // shallower than one plays lets a move the play-depth search
+                // would reject into the top-k, and measures the margin on
+                // noisier scores than the ones that decide the game. Stockfish's
+                // gensfen clamps the same way — `random_multi_pv_depth =
+                // max(search_depth_max, random_multi_pv_depth)` — and it is the
+                // one point on which this implementation used to differ (it
+                // ranked at play_depth-2). The alignment costs roughly a fifth
+                // of the run instead of a few percent; that is the price of the
+                // ranking being about the same moves the game is played with.
                 if (explore_topk > 0 && ml.size() > 1) {
-                    const int rank_depth = std::max(1, lim.max_depth - 2);
+                    const int rank_depth = std::max(1, lim.max_depth);
                     std::vector<std::pair<int, Move>> ranked;
                     ranked.reserve(ml.size());
                     for (const auto& cand : ml) {
@@ -939,6 +951,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         rl.max_depth = rank_depth;
                         rl.params    = lim.params;
                         rl.nnue      = e.nnue();
+                        // Same deterministic node bound as the play search: a
+                        // flat eval must not be able to run the ranking away.
+                        rl.max_nodes = lim.max_nodes;
                         // Negamax: the child is scored from the opponent's
                         // point of view, so flip it back to the mover's.
                         const SearchResult cr =
