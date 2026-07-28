@@ -83,6 +83,24 @@ class TopkCausalAbTemplateTests(unittest.TestCase):
         self.assertIn('"promotion_authorized": False', self.text)
         self.assertIn('"automatic_next_job": None', self.text)
 
+    def test_split_guard_compares_contract_not_treatment_outcomes(self):
+        self.assertIn(
+            'for key in ("split_unit", "holdout_mod", "seed", "tail_is_holdout")',
+            self.text,
+        )
+        self.assertNotIn(
+            'for key in ("split_unit", "holdout_mod", "seed", "train_openings"',
+            self.text,
+        )
+        self.assertIn(
+            '"opening_counts_are_treatment_outcomes": True',
+            self.text,
+        )
+        self.assertIn(
+            '"$ART/paired-split-check.json"',
+            self.text,
+        )
+
     def test_embedded_python_parses(self):
         blocks = re.findall(
             r"<<'PY'\n(.*?)\nPY(?:\n|$)",
