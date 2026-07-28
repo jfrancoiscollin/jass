@@ -266,6 +266,23 @@ python3 tools/selfplay_frontier.py split \
 env PYTHONPATH="$GEOM:pattern_jass/tools" \
   python3 jobs/tools/l3_bucket_visits.py --data "$W/topk.raw.jnnw" \
   --out "$ART/topk-coverage.json" > "$W/coverage.log" 2>&1
+# Canari sur les DONNÉES, pas sur le code. Les gardes `grep root_is_drawn`
+# n'auraient jamais vu le défaut de racine nulle si la cause avait été autre :
+# elles vérifient une cause connue. Celle-ci vérifie le SYMPTÔME — un corpus
+# d'où les nulles ont disparu — et attrape donc aussi la prochaine cause.
+# Repères mesurés à d8, même graine et même parent : moteur cassé 4,8 % de
+# nulles, moteur réparé 20,3 %.
+python3 jobs/tools/assert_corpus_wdl.py --data "$W/topk.raw.jnnw" \
+  --out "$ART/corpus-wdl.json" > "$W/corpus-wdl.log" 2>&1 ||
+  die "corpus WDL aberrant — voir $ART/corpus-wdl.json"
+WDL_SHARES=$(python3 - "$ART/corpus-wdl.json" <<'PY'
+import json
+import sys
+s = json.load(open(sys.argv[1]))["shares"]
+print(f"{s['loss']:.3f} L / {s['draw']:.3f} N / {s['win']:.3f} W")
+PY
+)
+say "  canari WDL ✓ : $WDL_SHARES"
 gzip -n -c "$W/topk.raw.jnnw" > "$ART/topk4m.jnnw.gz"
 gzip -n -c "$W/topk.raw.jsm"  > "$ART/topk4m.jsm.gz"
 

@@ -351,7 +351,7 @@ l’architecture linéaire ni au principe d’autojeu WDL.
    `SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR`. Le `0,050` de
    `home-0997/0998` était un artefact moteur — `search()` rendait un coup nul
    sur toute racine nulle par répétition ou horloge, et le client HUB lisait
-   ça comme un abandon. Corrigé (`f7949784`), TURNOVER passe à `0,200`
+   ça comme un abandon. Corrigé (`9c1d1e8e`), TURNOVER passe à `0,200`
    (`−241 Elo`) à `mt0.3` et gen2-mmto à `0,188` (`−255`), les deux planchers
    historiques tenus. Les deux modèles sont indiscernables contre Scan à
    `n=40`, ce qui n'établit rien : `home-0996` les sépare de ~`62 Elo` en
@@ -385,15 +385,52 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 13. ⚠️ **Le verdict préenregistré `VOLUME8M_BELOW_TURNOVER_VOLUME_AXIS_CLOSED`
     dit plus que ce que le run mesure.** VOL8M s'écarte de la recette TURNOVER
     sur **quatre** facteurs déclarés, pas un : volume `12 M` vs `2 M`, ratio
-    frais/mémoire `67/33` vs `50/50`, profondeur de jeu `9` vs `8`, et surtout
-    **la moitié mémoire — 4 M records, un tiers du corpus — a été étiquetée par
-    le moteur d'AVANT le correctif de racine nulle** (`f7949784`), donc toute
-    partie atteignant une nulle par répétition y est enregistrée comme une
-    défaite. Ce seul confond suffit à expliquer `−15 Elo`. **Ce run ne sépare
-    pas « le volume n'aide pas » de « un tiers du corpus est mal étiqueté ».**
-    L'axe volume est clos *au sens du contrat préenregistré* ; scientifiquement
-    il reste à trancher par un 12 M **100 % post-correctif**, ou à défaut par
-    un ré-étiquetage de la moitié mémoire.
+    frais/mémoire `67/33` vs `50/50`, profondeur de jeu `9` vs `8`, et
+    l'étiquetage de la moitié mémoire (point 15). **Ce run ne sépare pas
+    « le volume n'aide pas » du reste.** L'axe est clos *au sens du contrat
+    préenregistré* ; scientifiquement il reste à trancher par un 12 M dont tout
+    le corpus vient du moteur réparé.
+15. 🔬 **Défaut d'étiquetage pré-`9c1d1e8e` — mécanisme mesuré, et RECTIFICATION
+    de ce que j'en avais écrit le 28 juillet.**
+    *Mécanisme exact.* Avant `9c1d1e8e`, `search()` renvoyait un coup **nul** dès
+    que la racine répétait une position déjà vue. En self-play `--gen-data-wdl`,
+    `Engine::apply_move` rejette ce coup (il n'est pas dans la liste légale), la
+    boucle de jeu **casse**, `hit_ply_cap` reste vrai, et `--drop-plycap` — actif
+    dans toute la chaîne L3-PURE — **jette la partie entière**. Les répétitions
+    arrivent dans les positions de manœuvre : ce sont donc **les nulles qui
+    disparaissaient du corpus**.
+    *Mesure directe* (binaire pré-fix contre post-fix, mêmes graine, parent,
+    profondeur `d8` et options, 3000 records, `--drop-plycap`) :
+
+    | | défaites | **nulles** | victoires |
+    |---|---:|---:|---:|
+    | moteur cassé | 47,8 % | **4,8 %** | 47,4 % |
+    | moteur réparé | 39,5 % | **20,3 %** | 40,2 % |
+
+    Facteur **4,2** sur les nulles. Le corpus cassé est décisif à 97,6 %.
+    *Ce que j'avais écrit et qui est FAUX, dans les deux sens.* (a) Le défaut
+    ne « compte pas les nulles en défaites » — il **supprime les parties**, et
+    l'étiquette des parties gardées reste correcte. (b) Surtout, il **n'est pas
+    propre à VOL8M** : `M1` (`home-0944`, 24 juillet), `M2` (`home-0966bis`,
+    25 juillet) et **TURNOVER lui-même** (`home-0977`, 26 juillet,
+    `new_generation_performed=false`, corpus = 1 M `fresh_m2` + 1 M
+    `parent_f2m`) précèdent tous le correctif du 27 juillet 16h10 FR. **VOL8M
+    est à 67 % post-correctif ; TURNOVER est à 100 % pré-correctif.** VOL8M a
+    donc *moins* du défaut, pas plus — mon « un tiers du corpus mal étiqueté
+    explique les −15 Elo » ne tient pas.
+    *Le confond qui reste, formulé correctement.* VOL8M mélange **deux
+    calibrations de nulles incompatibles** (8 M à ~20 %, 4 M à ~5 %) là où
+    TURNOVER en a une seule, homogène quoique fausse ; et la porte est jouée par
+    le moteur réparé. C'est testable, et ce n'est pas ce qui a été testé.
+16. 🛡️ **Garde anti-récidive : `jobs/tools/assert_corpus_wdl.py`.** Les gardes
+    de l'époque portaient toutes sur le **code** (`grep root_is_drawn`) : elles
+    vérifient une cause connue et n'auraient rien vu si la cause avait été
+    autre. Le nouveau canari porte sur les **données** — il refuse tout corpus
+    dont la part de nulles sort de `[0,10 ; 0,60]` ou dont les victoires et
+    défaites s'écartent de plus de 10 points. Validé sur les deux corpus réels :
+    rejette le cassé (`rc=6`, 4,8 %), accepte le réparé (20,3 %). Câblé dans
+    `l3-pure-explore-topk-v1.sh` ; **à propager** — sur 23 templates qui
+    appellent `--gen-data-wdl`, 2 seulement avaient la garde de code.
 14. **Conséquence immédiate pour le run top-k** : le volume n'ayant pas payé,
     aucun champion n'est baké, et le parent du self-play top-k reste
     **TURNOVER**.

@@ -107,7 +107,7 @@ Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 # Les readouts antérieurs asseyaient leur comparabilité sur un `git diff` contre
 # la SHA du champion réparé. Ce garde-fou ne peut plus tenir : le moteur a
-# changé depuis (correctif racine-nulle f7949784, --explore-topk, --explore-
+# changé depuis (correctif racine-nulle 9c1d1e8e, --explore-topk, --explore-
 # margin). Les deux bras partagent le MÊME binaire, donc la comparaison interne
 # reste propre ; c'est la comparabilité avec les portes d'AVANT le correctif qui
 # est rompue, et il vaut mieux l'assumer que de la maquiller.
@@ -300,7 +300,7 @@ payload = {
     ),
     "engine_note": (
         "Both arms share one binary, so the comparison is internally clean, but "
-        "the engine changed since the pre-f7949784 gates (drawn-root fix) and "
+        "the engine changed since the pre-9c1d1e8e gates (drawn-root fix) and "
         "this readout is not byte-comparable with them."
     ),
     "promotion_authorized": False,

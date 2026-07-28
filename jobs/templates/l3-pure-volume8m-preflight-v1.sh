@@ -18,7 +18,7 @@
 #     aucun bucket de plus. Choix explicite de JFC.
 #
 # ⚠️ La mémoire porte des labels produits par le moteur AVANT le correctif de la
-# racine nulle (`f7949784`) : les parties atteignant une nulle par répétition y
+# racine nulle (`9c1d1e8e`) : les parties atteignant une nulle par répétition y
 # ont été comptées PERDUES. La moitié fraîche, elle, est générée par le moteur
 # réparé. C'est une raison de plus de ne pas sur-pondérer la mémoire, et ça doit
 # être lu comme un facteur du run, pas comme un détail.

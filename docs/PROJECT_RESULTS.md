@@ -171,7 +171,7 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   `search()` rendait un coup nul sur toute racine nulle par répétition ou par
   horloge de 50 plies ; le client HUB lisait ce coup nul comme un abandon, et
   Jass perdait donc toute partie atteignant une telle position. Le défaut est
-  asymétrique — Scan ne fait rien de tel — et corrigé depuis (`f7949784`). Sur
+  asymétrique — Scan ne fait rien de tel — et corrigé depuis (`9c1d1e8e`). Sur
   le moteur réparé, `gen2-mmto` mesure `−255 Elo` à `mt0.3` sur un pool réduit,
   intervalle de confiance `[−459 ; −140]` : compatible avec l'ancre, mais
   celle-ci ne doit plus être citée comme référence de campagne.
@@ -408,7 +408,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 
 | Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
 |---|---|---|---|
-| plus de volume brut | couverture saturée ; multiples runs plats. **Rouverte puis refermée par `1004`→`1008` (28 juillet 2026)** : la condition de réouverture a été honorée — couverture pré-enregistrée mesurée sur 12 M records, `13,548 %` de buckets contre `9,8 %`, **41,67 observations par paramètre libre contre 4,3**, Gini `0,91`, fit convergé, holdout `0,440449` contre `0,444060`. Force jouée contre TURNOVER, pool neuf de 1500 ouvertures, vues additionnées : **`0,4785`, `−14,95 Elo`, IC95 `[−23,5 ; −6,4]`, `n = 6000`** (`q00` `1360-142-1498` ; `native` `1352-176-1472`). L'IC exclut zéro | le volume achète la couverture et la densité, **pas la force** — et ici il la fait perdre. ⚠️ **Le run ne l'établit pas proprement** : VOL8M s'écarte de la recette TURNOVER sur quatre facteurs (volume `12 M`/`2 M`, frais/mémoire `67/33`/`50/50`, jeu `d9`/`d8`, et **4 M de la moitié mémoire étiquetés par le moteur d'avant le correctif de racine nulle `f7949784`**, donc nulles par répétition comptées en défaites). Le confond d'étiquetage suffit seul à expliquer `−15 Elo` | **12 M `100 %` post-correctif** (ou ré-étiquetage de la moitié mémoire) ; à volume égal et étiquetage égal, rien d'autre ne change |
+| plus de volume brut | couverture saturée ; multiples runs plats. **Rouverte puis refermée par `1004`→`1008` (28 juillet 2026)** : la condition de réouverture a été honorée — couverture pré-enregistrée mesurée sur 12 M records, `13,548 %` de buckets contre `9,8 %`, **41,67 observations par paramètre libre contre 4,3**, Gini `0,91`, fit convergé, holdout `0,440449` contre `0,444060`. Force jouée contre TURNOVER, pool neuf de 1500 ouvertures, vues additionnées : **`0,4785`, `−14,95 Elo`, IC95 `[−23,5 ; −6,4]`, `n = 6000`** (`q00` `1360-142-1498` ; `native` `1352-176-1472`). L'IC exclut zéro | le volume achète la couverture et la densité, **pas la force** — et ici il la fait perdre. ⚠️ **Le run ne l'établit pas proprement** : VOL8M s'écarte de la recette TURNOVER sur quatre facteurs (volume `12 M`/`2 M`, frais/mémoire `67/33`/`50/50`, jeu `d9`/`d8`, et l'étiquetage de la moitié mémoire — cf §5.2 bis). Le confond n'est PAS celui que cette ligne affirmait au premier jet : VOL8M est à 67 % post-correctif quand TURNOVER est à 100 % pré-correctif, donc VOL8M a *moins* du défaut. Ce qui reste est un mélange de deux calibrations de nulles incompatibles | **12 M entièrement post-correctif** ; à volume égal et calibration homogène, rien d'autre ne change |
 | phase-weight | −210 Elo sur bons labels | décalibre le jeu global | nouvelle loss normalisée avec preuve mathématique et A/B isolé |
 | label-depth par phase en WDL | no-op sur la cible, TT polluée, −80 | mauvais canal | cible score explicitement utilisée et TT séparée |
 | hygiène `drop-post-eps` comme cure | bundle de fixes −25 Elo | le WDL joué est un vrai retour MC ; « contamination » mal interprétée | preuve directe de biais, pas simple présence d'epsilon |
@@ -423,6 +423,47 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | dose/calendrier d'exploration (écran C2-X1) | verdict `0824` (`l3_x1_verdict.py`, 5 cellules, n appariés 860, bootstrap 10 000) : effets A −0,002 / B +0,002 / C +0,001 / courbure +0,004, tous IC franchissant 0 ; aucun coin Δconv ≥ +0,02 ; gates ≈ 0,5 | `x1_no_lead` — plies d'ouverture, epsilon et décroissance ne déplacent pas la conversion ; plateau ~0,67 | nouveau facteur de trajectoire causalement différent, ou signal sur une lignée plus mûre |
 | tête de conversion statique P3 gen2 (CVH1) | offline +0,016 ; screen `0813` +0,022 (n=180) prometteur ; confirmation haut-N `0815` A 0,478 vs C10 0,490 → **Δ +0,012 (n=1255) < +0,020** ; bootstrap apparié IC recouvrant 0 | `not_confirmed_flat` / `better_fit_no_play_signal` — un meilleur fit offline de la correction ne se traduit pas en conversion jouée ; le head statique gelé sur gen2 est un levier mort | canal de correction P3 non-statique (décision réelle), nouveau gate indépendant |
 | décisions-sibling P3 gen2 (autopsie D0) | `0822` `no_actionable_sibling_signal` : recovery 37,4 % < 50 %, Δ pairé +0,035 IC [−0,022 ; +0,093] straddle 0, n=339 | rejouer un meilleur sibling au leader P3 ne récupère pas assez de failures ; cohérent avec l'échec du head statique CVH1 (`better_fit_no_play_signal`) | mécanisme de décision P3 causalement différent, gate indépendant |
+
+### 5.2 bis Défaut d'étiquetage pré-`9c1d1e8e` — les nulles supprimées du corpus
+
+Avant `9c1d1e8e` (27 juillet 2026, 16h10 FR), `search()` renvoyait un coup
+**nul** dès que la racine répétait une position déjà jouée. En self-play
+`--gen-data-wdl`, `Engine::apply_move` rejette ce coup, la boucle de jeu casse,
+`hit_ply_cap` reste vrai, et `--drop-plycap` — actif dans toute la chaîne
+L3-PURE — jette la **partie entière**. Les répétitions naissent dans les
+positions de manœuvre : ce sont donc les **nulles** qui disparaissaient.
+
+Mesuré en rejouant le binaire pré-fix contre le post-fix, mêmes graine, parent,
+profondeur `d8` et options, 3000 records, `--drop-plycap` :
+
+| | défaites | **nulles** | victoires |
+|---|---:|---:|---:|
+| moteur cassé | 47,8 % | **4,8 %** | 47,4 % |
+| moteur réparé | 39,5 % | **20,3 %** | 40,2 % |
+
+Facteur **4,2** sur les nulles ; le corpus cassé est décisif à 97,6 %. L'effet
+est invisible dans tous les compteurs publiés à l'époque.
+
+**Corpus touchés** — tout ce qui a été généré avant le 27 juillet 16h10 FR :
+`M1` (`home-0944`), `M2` (`home-0966bis`), et **TURNOVER lui-même**
+(`home-0977`, `new_generation_performed=false`, corpus = 1 M `fresh_m2` + 1 M
+`parent_f2m`). Le champion courant est donc entraîné à 100 % sur des données
+d'où les nulles avaient été filtrées. VOL8M, à 67 % post-correctif, en a
+**moins** — c'est l'inverse de ce qui avait été écrit le 28 juillet au premier
+jet, et la correction vaut rectification de la ligne « plus de volume brut ».
+
+**Ce que le défaut n'est pas** : il ne mislabellise rien. Les parties gardées
+portent l'étiquette juste ; ce sont des parties entières qui manquent. C'est un
+biais de **sélection**, pas d'étiquetage — d'où l'absence totale de signal dans
+les contrôles d'étiquetage existants.
+
+**Garde anti-récidive** : `jobs/tools/assert_corpus_wdl.py` refuse un corpus
+dont la part de nulles sort de `[0,10 ; 0,60]` ou dont victoires et défaites
+s'écartent de plus de 10 points. Elle porte sur les **données**, pas sur le
+code, donc elle attrape aussi la prochaine cause inconnue produisant le même
+symptôme. Validée sur les deux corpus réels : rejet du cassé (`rc=6`), acceptation
+du réparé. Les gardes `grep root_is_drawn` ne couvraient que 2 des 23 templates
+appelant `--gen-data-wdl`, et n'auraient de toute façon vu qu'une cause connue.
 
 ### 5.3 Recherche
 
