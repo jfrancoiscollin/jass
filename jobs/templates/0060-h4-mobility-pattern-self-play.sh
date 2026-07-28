@@ -104,6 +104,15 @@ for iter in $(seq 1 "$NUM_ITERS"); do
     for p in "${pids[@]}"; do wait "$p" || fail=$((fail + 1)); done
     [ "$fail" -eq 0 ] || { echo "ABORT iter $iter : $fail shards failed"; exit 4; }
 
+    # Canari WDL (propagation 2026-07-28) — cf jobs/tools/assert_corpus_wdl.py.
+    # Ce template pré-L3 ne passe pas par `selfplay_frontier.py merge` : la garde
+    # est rappelée ici, par itération, sur les shards de l'itération courante.
+    for _shard_data in "$ART"/iter${iter}-shard*.bin; do
+        [ -e "$_shard_data" ] || continue
+        python3 jobs/tools/assert_corpus_wdl.py --data "$_shard_data" ||
+            { echo "ABORT iter $iter : corpus WDL aberrant dans $_shard_data"; exit 6; }
+    done
+
     python3 - <<PY
 import struct
 from pathlib import Path

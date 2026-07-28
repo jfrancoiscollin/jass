@@ -665,6 +665,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               stat_eps_events = 0, stat_eps_changed_best = 0,
               stat_games_with_eps = 0, stat_topk_ranked_plies = 0,
               stat_margin_singleton = 0;
+    // Distribution des issues EMISES. Le défaut de racine nulle d'avant
+    // 9c1d1e8e a vidé trois corpus de leurs nulles (4,8 % au lieu de 20,3 %)
+    // sans qu'aucun compteur ne bouge : tous portaient sur les labels écrits,
+    // aucun sur leur distribution. Celui-ci sort dans CHAQUE log de génération,
+    // donc aussi dans les templates trop anciens pour passer par le canari de
+    // fusion. Ne bloque rien — il rend le symptôme impossible à manquer.
+    long long stat_wdl_loss = 0, stat_wdl_draw = 0, stat_wdl_win = 0;
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
     // évite que la passe de classement pollue l'ordonnancement de la partie.
@@ -1040,6 +1047,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // FIX#1 : si --drop-post-eps, on NE l'emet PAS (label pourri) — sinon emission inchangee (MEASURE-ONLY).
             if (drop_post_eps && contaminated) { ++stat_dropped; continue; }
 
+            // Compté ici, au point d'écriture : c'est la distribution REELLEMENT
+            // émise, après tous les filtres, pas celle qu'on croit produire.
+            if      (wdl_byte < 0) ++stat_wdl_loss;
+            else if (wdl_byte > 0) ++stat_wdl_win;
+            else                   ++stat_wdl_draw;
+
             f.write(reinterpret_cast<const char*>(s.bbs), 32);
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
             f.write(reinterpret_cast<const char*>(&s.score), 4);
@@ -1077,6 +1090,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     {
         const double pc  = game_count > 0 ? 100.0 * static_cast<double>(stat_plycap_games) / game_count : 0.0;
         const double con = stat_total_samples > 0 ? 100.0 * static_cast<double>(stat_contaminated) / stat_total_samples : 0.0;
+        const long long wdl_n = stat_wdl_loss + stat_wdl_draw + stat_wdl_win;
+        const auto pct = [wdl_n](long long k) {
+            return wdl_n > 0 ? 100.0 * static_cast<double>(k) / static_cast<double>(wdl_n) : 0.0;
+        };
+        std::cout << "WDLDIST records=" << wdl_n
+                  << "  loss=" << stat_wdl_loss << " (" << pct(stat_wdl_loss) << "%)"
+                  << "  draw=" << stat_wdl_draw << " (" << pct(stat_wdl_draw) << "%)"
+                  << "  win="  << stat_wdl_win  << " (" << pct(stat_wdl_win)  << "%)\n";
         std::cout << "LABELHYG plycap_games=" << stat_plycap_games << "/" << game_count
                   << " (" << pc << "%)  contaminated_samples=" << stat_contaminated << "/" << stat_total_samples
                   << " (" << con << "%)  dropped_post_eps=" << stat_dropped

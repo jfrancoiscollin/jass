@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import struct
+import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,6 +51,41 @@ JNNW_MAGIC = b"JNNW"
 JNNW_REC = 38
 META_MAGIC = b"JSM1"
 META_REC = 17  # game_id:u64, opening_id:u64, seeded:u8
+
+
+
+def _load_canary():
+    """`assert_corpus_wdl` vit sous `jobs/tools`, qui n'est pas un package.
+    On l'importe par chemin plutôt que d'en dupliquer les seuils : une garde
+    définie à deux endroits finit toujours par diverger."""
+    import importlib.util
+    path = Path(__file__).resolve().parent.parent / "jobs" / "tools" / "assert_corpus_wdl.py"
+    spec = importlib.util.spec_from_file_location("assert_corpus_wdl", path)
+    if spec is None or spec.loader is None:
+        raise SystemExit(f"canari WDL introuvable à {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _wdl_report(records, args) -> dict | None:
+    if getattr(args, "no_wdl_check", False):
+        return None
+    canary = _load_canary()
+    counts = canary.histogram_from_records(records)
+
+    def opt(name, fallback):
+        # argparse laisse None quand l'option n'est pas passée ; `getattr` seul
+        # renverrait ce None et écraserait le défaut du canari.
+        value = getattr(args, name, None)
+        return fallback if value is None else value
+
+    return canary.evaluate(
+        counts,
+        min_draw_share=opt("wdl_min_draw_share", canary.DEFAULT_MIN_DRAW_SHARE),
+        max_draw_share=opt("wdl_max_draw_share", canary.DEFAULT_MAX_DRAW_SHARE),
+        max_side_skew=opt("wdl_max_side_skew", canary.DEFAULT_MAX_SIDE_SKEW),
+    )
 
 
 @dataclass(frozen=True)
@@ -150,13 +186,25 @@ def do_merge(args: argparse.Namespace) -> int:
             "openings": len(opening_namespace) if renamespace_nested else None,
         })
     write_pair(Path(args.out_data), Path(args.out_meta), records_out, meta_out)
+    # Canari WDL au point de passage. Tous les templates L3 fusionnent leurs
+    # shards ici, donc la garde s'applique sans qu'aucun d'eux ait à y penser.
+    # Elle porte sur les DONNÉES : elle aurait vu le défaut de racine nulle
+    # (4,8 % de nulles au lieu de 20,3 %) sans rien savoir de sa cause.
+    # Les corpus dont la distribution est légitimement asymétrique — la lignée
+    # IMBALANCE2 part d'un avantage matériel — passent un plancher explicite.
+    wdl = _wdl_report(records_out, args)
     _manifest(args.manifest, {
         "schema": 1,
         "operation": "merge",
         "records": len(records_out),
         "shards": shard_rows,
         "source_records": dict(sorted(source_counts.items())),
+        "wdl_canary": wdl,
     })
+    if wdl is not None and not wdl["ok"]:
+        for problem in wdl["problems"]:
+            print(f"CORPUS_WDL_ABORT: {problem}", file=sys.stderr)
+        raise SystemExit(6)
     return 0
 
 
@@ -736,6 +784,19 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="remap existing 64-bit game/opening IDs per input while preserving equality groups",
     )
+    merge.add_argument("--wdl-min-draw-share", type=float, default=None,
+                       help="plancher de nulles du corpus fusionné (défaut 0,10). "
+                            "À abaisser EXPLICITEMENT pour une lignée dont "
+                            "l'asymétrie est voulue (IMBALANCE2 part d'un "
+                            "avantage matériel, ses nulles sont rares par "
+                            "construction)")
+    merge.add_argument("--wdl-max-draw-share", type=float, default=None,
+                       help="plafond de nulles (défaut 0,60)")
+    merge.add_argument("--wdl-max-side-skew", type=float, default=None,
+                       help="écart max victoires/défaites (défaut 0,10)")
+    merge.add_argument("--no-wdl-check", action="store_true",
+                       help="désactive le canari. Réservé à l'archéologie sur "
+                            "un corpus historique déjà connu comme défectueux")
     merge.set_defaults(func=do_merge)
 
     mix = sub.add_parser("mix", help="build an exact weighted aligned JNNW/JSM1 mix")

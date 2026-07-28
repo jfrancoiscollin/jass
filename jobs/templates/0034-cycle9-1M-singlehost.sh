@@ -85,6 +85,17 @@ done
 WALL=$(( $(date +%s) - START ))
 [ "$fail" -eq 0 ] || { echo "ABORT: $fail/$NSHARDS shards failed"; exit 4; }
 
+# Canari WDL (propagation 2026-07-28). Ces templates pré-L3 ne passent pas par
+# `selfplay_frontier.py merge`, où la garde est câblée pour la chaîne L3. On la
+# rappelle donc ici, sur les shards produits. Elle refuse un corpus vidé de ses
+# nulles — le symptôme du défaut de racine nulle d'avant 9c1d1e8e (4,8 % de
+# nulles au lieu de 20,3 %), et de toute cause future qui ferait la même chose.
+for _shard_data in "$ART"/shard-*.bin; do
+    [ -e "$_shard_data" ] || continue
+    python3 jobs/tools/assert_corpus_wdl.py --data "$_shard_data" ||
+        { echo "ABORT: corpus WDL aberrant dans $_shard_data"; exit 6; }
+done
+
 echo
 echo "=== merging $NSHARDS shards into cycle9-1M.bin ==="
 python3 - <<PY

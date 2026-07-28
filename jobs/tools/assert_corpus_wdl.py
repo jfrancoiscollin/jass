@@ -38,6 +38,63 @@ WDL_OFFSET = 37
 COUNT_OFFSET = 4
 
 
+DEFAULT_MIN_DRAW_SHARE = 0.10
+DEFAULT_MAX_DRAW_SHARE = 0.60
+DEFAULT_MAX_SIDE_SKEW = 0.10
+
+
+def evaluate(counts: dict[int, int],
+             min_draw_share: float = DEFAULT_MIN_DRAW_SHARE,
+             max_draw_share: float = DEFAULT_MAX_DRAW_SHARE,
+             max_side_skew: float = DEFAULT_MAX_SIDE_SKEW) -> dict:
+    """Juge un histogramme d'issues. Partagé avec `selfplay_frontier.py merge`,
+    pour que la garde soit la MÊME au point de passage et en ligne de commande."""
+    n = sum(counts.values())
+    if n == 0:
+        raise ValueError("zéro record — échec, pas un corpus vide neutre")
+    share = {k: counts.get(k, 0) / n for k in (-1, 0, 1)}
+    skew = abs(share[1] - share[-1])
+    problems = []
+    if share[0] < min_draw_share:
+        problems.append(
+            f"part de nulles {share[0]:.4f} sous le plancher {min_draw_share} — "
+            "signature du défaut de racine nulle (corpus cassé mesuré à 0,048)"
+        )
+    if share[0] > max_draw_share:
+        problems.append(
+            f"part de nulles {share[0]:.4f} au-dessus du plafond {max_draw_share}"
+        )
+    if skew > max_side_skew:
+        problems.append(
+            f"déséquilibre victoires/défaites {skew:.4f} au-dessus de "
+            f"{max_side_skew} — le self-play devrait être symétrique"
+        )
+    return {
+        "records": n,
+        "counts": {"loss": counts.get(-1, 0), "draw": counts.get(0, 0),
+                   "win": counts.get(1, 0)},
+        "shares": {"loss": round(share[-1], 6), "draw": round(share[0], 6),
+                   "win": round(share[1], 6)},
+        "side_skew": round(skew, 6),
+        "thresholds": {"min_draw_share": min_draw_share,
+                       "max_draw_share": max_draw_share,
+                       "max_side_skew": max_side_skew},
+        "ok": not problems,
+        "problems": problems,
+    }
+
+
+def histogram_from_records(records) -> dict[int, int]:
+    """Histogramme depuis des records bruts en mémoire (chemin `merge`)."""
+    counts = collections.Counter()
+    for rec in records:
+        counts[struct.unpack_from("<b", rec, WDL_OFFSET)[0]] += 1
+    unexpected = set(counts) - {-1, 0, 1}
+    if unexpected:
+        raise ValueError(f"étiquettes WDL hors domaine {sorted(unexpected)}")
+    return dict(counts)
+
+
 def histogram(path: Path) -> tuple[int, dict[int, int]]:
     """Compte les issues d'un `.jnnw`. Le nombre de records est dans l'en-tête."""
     blob = path.read_bytes()
@@ -65,53 +122,26 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data", required=True, type=Path, help="corpus .jnnw")
-    p.add_argument("--min-draw-share", type=float, default=0.10,
+    p.add_argument("--min-draw-share", type=float, default=DEFAULT_MIN_DRAW_SHARE,
                    help="plancher de nulles (défaut 0,10 ; cassé=0,048 réparé=0,203)")
-    p.add_argument("--max-draw-share", type=float, default=0.60,
+    p.add_argument("--max-draw-share", type=float, default=DEFAULT_MAX_DRAW_SHARE,
                    help="plafond de nulles — un corpus qui ne décide jamais "
                         "n'apprend rien non plus")
-    p.add_argument("--max-side-skew", type=float, default=0.10,
+    p.add_argument("--max-side-skew", type=float, default=DEFAULT_MAX_SIDE_SKEW,
                    help="écart max toléré entre part de victoires et de défaites ; "
                         "le self-play est symétrique, un déséquilibre signale un "
                         "biais de couleur ou d'adjudication")
     p.add_argument("--out", type=Path, help="où écrire le rapport JSON")
     args = p.parse_args(argv)
 
-    n, counts = histogram(args.data)
-    share = {k: counts.get(k, 0) / n for k in (-1, 0, 1)}
-    skew = abs(share[1] - share[-1])
-
-    problems = []
-    if share[0] < args.min_draw_share:
-        problems.append(
-            f"part de nulles {share[0]:.4f} sous le plancher {args.min_draw_share} — "
-            "signature du défaut de racine nulle (corpus cassé mesuré à 0,048)"
-        )
-    if share[0] > args.max_draw_share:
-        problems.append(
-            f"part de nulles {share[0]:.4f} au-dessus du plafond {args.max_draw_share}"
-        )
-    if skew > args.max_side_skew:
-        problems.append(
-            f"déséquilibre victoires/défaites {skew:.4f} au-dessus de "
-            f"{args.max_side_skew} — le self-play devrait être symétrique"
-        )
-
-    report = {
-        "schema": 1,
-        "data": str(args.data),
-        "records": n,
-        "counts": {"loss": counts.get(-1, 0), "draw": counts.get(0, 0),
-                   "win": counts.get(1, 0)},
-        "shares": {"loss": round(share[-1], 6), "draw": round(share[0], 6),
-                   "win": round(share[1], 6)},
-        "side_skew": round(skew, 6),
-        "thresholds": {"min_draw_share": args.min_draw_share,
-                       "max_draw_share": args.max_draw_share,
-                       "max_side_skew": args.max_side_skew},
-        "ok": not problems,
-        "problems": problems,
-    }
+    _, counts = histogram(args.data)
+    try:
+        report = evaluate(counts, args.min_draw_share, args.max_draw_share,
+                          args.max_side_skew)
+    except ValueError as exc:
+        raise SystemExit(f"{args.data}: {exc}")
+    problems = report["problems"]
+    report = {"schema": 1, "data": str(args.data), **report}
     serialized = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.out:
         args.out.write_text(serialized, encoding="utf-8")

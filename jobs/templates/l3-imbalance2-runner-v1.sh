@@ -262,8 +262,15 @@ for generation in $(seq "$START_GEN" "$END_GEN"); do
     grep -q 'seed_frac=100%' "$log" || die "seed-only proof missing: $log"
   done
 
+  # Canari WDL : seuils ABAISSÉS EXPRÈS pour cette lignée. IMBALANCE2 génère
+  # depuis un avantage matériel de deux pions, où l'hypothèse de travail est
+  # 80-90 % de victoires : des nulles rares et une forte asymétrie sont ici le
+  # comportement ATTENDU, pas le symptôme du défaut de racine nulle. Les valeurs
+  # ci-dessous sont des garde-fous larges, pas une calibration — la vraie
+  # distribution de cette lignée n'a jamais été mesurée, et devra l'être.
   python3 tools/selfplay_frontier.py merge "${merge_args[@]}" --out-data "$W/g${generation}.raw.jnnw" \
-    --out-meta "$W/g${generation}.raw.jsm" --manifest "$ART/g${generation}-merge.json" > "$W/g${generation}-merge.log" 2>&1
+    --out-meta "$W/g${generation}.raw.jsm" --manifest "$ART/g${generation}-merge.json" > "$W/g${generation}-merge.log" 2>&1 \
+    --wdl-min-draw-share 0.02 --wdl-max-side-skew 0.60
   python3 jobs/tools/aggregate_l3_exploration.py --log "${rollout_logs[@]}" \
     --expected-random-open "$RANDOM_OPEN_PLIES" --expected-eps "$EXPLORE_EPS" --expected-decay "$EXPLORE_DECAY_PLIES" \
     --manifest "$ART/g${generation}-exploration.json" > "$W/g${generation}-exploration.log" 2>&1

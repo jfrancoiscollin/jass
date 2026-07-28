@@ -39,6 +39,10 @@ for s in shards:
     n=struct.unpack('<I',b[4:8])[0]; tot+=n; o.write(b[8:8+n*REC])
 o.seek(4); o.write(struct.pack('<I',tot)); o.close(); print("merged",tot)
 PY
+  # Canari WDL (propagation 2026-07-28) — cf jobs/tools/assert_corpus_wdl.py.
+  # Porte sur le corpus FUSIONNÉ que cette fonction vient d'écrire.
+  python3 jobs/tools/assert_corpus_wdl.py --data "$OUT.jnnw" ||
+    { echo "ABORT: corpus WDL aberrant dans $OUT.jnnw"; return 6; }
   rm -f "${OUT}-"*.jnnw
 }
 
