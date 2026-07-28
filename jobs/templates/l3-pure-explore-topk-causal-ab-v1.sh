@@ -330,14 +330,46 @@ for arm in uniform topk3; do
   gzip -n -c "$W/$arm.raw.jsm" > "$ART/$arm.jsm.gz"
 done
 
-python3 - "$ART/uniform-split.json" "$ART/topk3-split.json" <<'PY'
+python3 - "$ART/uniform-split.json" "$ART/topk3-split.json" \
+  "$ART/paired-split-check.json" <<'PY'
 import json
 import sys
 a, b = (json.load(open(p)) for p in sys.argv[1:3])
-for key in ("split_unit", "holdout_mod", "seed", "train_openings",
-            "holdout_openings", "tail_is_holdout"):
+for key in ("split_unit", "holdout_mod", "seed", "tail_is_holdout"):
     if a.get(key) != b.get(key):
         raise SystemExit(f"split mismatch for {key}: {a.get(key)} != {b.get(key)}")
+for arm, manifest in (("uniform", a), ("topk3", b)):
+    for key in ("train_openings", "holdout_openings", "train_records",
+                "holdout_records"):
+        if int(manifest.get(key, 0)) <= 0:
+            raise SystemExit(f"{arm}: split manifest has non-positive {key}")
+
+# With equal record budgets, the exploration policy can change game lengths and
+# therefore the number of openings required to reach the target. Opening counts
+# are a downstream treatment outcome, not a split parameter to force equal.
+payload = {
+    "schema": 1,
+    "same_split_contract": True,
+    "compared_contract_keys": [
+        "split_unit", "holdout_mod", "seed", "tail_is_holdout",
+    ],
+    "opening_counts_are_treatment_outcomes": True,
+    "uniform": {
+        key: a[key] for key in (
+            "train_openings", "holdout_openings",
+            "train_records", "holdout_records",
+        )
+    },
+    "topk3": {
+        key: b[key] for key in (
+            "train_openings", "holdout_openings",
+            "train_records", "holdout_records",
+        )
+    },
+}
+with open(sys.argv[3], "w", encoding="utf-8") as handle:
+    json.dump(payload, handle, indent=2, sort_keys=True)
+    handle.write("\n")
 PY
 
 for arm in uniform topk3; do
