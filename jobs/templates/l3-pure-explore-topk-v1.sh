@@ -9,8 +9,10 @@
 # personne de fort ne rencontre — alors que le déficit de `−242 Elo` contre Scan
 # se joue sur des lignes quasi optimales (`home-1002`).
 #
-# `--explore-topk 3` tire parmi les TROIS meilleurs coups au lieu de tous. Même
-# dose de perturbation, mais sur des coups plausibles.
+# `--explore-topk 3 --explore-margin 50` tire parmi les TROIS meilleurs coups
+# situés à au plus 50 centipawns du meilleur. Même dose de perturbation, mais
+# sur des coups plausibles, avec repli sur le seul meilleur coup si la position
+# est tactiquement tranchée.
 #
 # Deux bras, un seul facteur : UNIFORM contre TOPK3. Tout le reste est identique
 # — même parent, même volume, même profondeur, même graine d'ouverture, même
@@ -102,12 +104,13 @@ MAXPLIES=260
 EXPLORE_EPS=8
 EXPLORE_DECAY=60
 TOPK=3
+EXPLORE_MARGIN=50
 BASE_SEED=2718281        # identique aux deux bras : mêmes ouvertures tirées
 SPLIT_SEED=577215
 HOLDOUT_MOD=10
 # Taux mesuré en home-1003 : 2 519 positions/min/shard à d9. 333 334 positions
-# par shard => ~132 min sain ; +10,5 % mesuré pour le classement top-k => ~146
-# min sur ce bras. Plafond à 200 min, soit ~1,35x le bras le plus lent.
+# par shard => ~132 min sain ; le classement à la profondeur de jeu coûte +21 %
+# sur le micro-benchmark publié, soit ~160 min. Plafond à 200 min.
 GEN_TIMEOUT=12000
 FIT_TIMEOUT=7200
 L2=3e-5
@@ -133,6 +136,7 @@ grep -q "root_is_drawn" src/search.cpp || die "engine predates the drawn-root fi
 # Sans cette option le bras TOPK3 retomberait silencieusement sur le tirage
 # uniforme et le job comparerait deux fois la même chose.
 grep -q "explore_topk" src/main.cpp || die "engine has no --explore-topk"
+grep -q "explore_margin" src/main.cpp || die "engine has no --explore-margin"
 monitor
 
 phase fetch-and-authenticate-parent
@@ -194,7 +198,7 @@ gen_arm(){
 phase generate-both-arms-in-parallel
 gen_arm uniform &
 UPID=$!
-gen_arm topk3 --explore-topk "$TOPK" &
+gen_arm topk3 --explore-topk "$TOPK" --explore-margin "$EXPLORE_MARGIN" &
 TPID=$!
 wait "$UPID" || die "uniform arm failed"
 wait "$TPID" || die "topk3 arm failed"
@@ -210,11 +214,14 @@ for arm in uniform topk3; do
 done
 TOPK_PLIES=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^topk_ranked_plies=/) {split($i,a,"="); s+=a[2]}} END {print s+0}' \
   "$ART/exploration-topk3.txt")
+MARGIN_SINGLETONS=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^margin_singleton_plies=/) {split($i,a,"="); s+=a[2]}} END {print s+0}' \
+  "$ART/exploration-topk3.txt")
 UNIF_PLIES=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^topk_ranked_plies=/) {split($i,a,"="); s+=a[2]}} END {print s+0}' \
   "$ART/exploration-uniform.txt")
 [ "$TOPK_PLIES" -gt 0 ] || die "TOPK3 arm ranked no ply — the flag did not fire"
+[ "$MARGIN_SINGLETONS" -gt 0 ] || die "explore-margin never constrained TOPK3"
 [ "$UNIF_PLIES" -eq 0 ] || die "UNIFORM arm ranked plies — the arms are not distinct"
-say "  génération ✓ : topk_ranked_plies = $TOPK_PLIES (topk3) / $UNIF_PLIES (uniform)"
+say "  génération ✓ : topk_ranked_plies=$TOPK_PLIES, margin_singletons=$MARGIN_SINGLETONS"
 
 phase merge-split-and-fit-both-arms
 for arm in uniform topk3; do
@@ -270,7 +277,7 @@ say "  deux bras fittés et convergés"
 
 phase publish-certificate
 "$W/venv/bin/python" - "$W" "$ART" "$EXPECTED_CODE_SHA" "$RECORDS" \
-  "$PLAY_DEPTH" "$EXPLORE_EPS" "$EXPLORE_DECAY" "$TOPK" <<'PY'
+  "$PLAY_DEPTH" "$EXPLORE_EPS" "$EXPLORE_DECAY" "$TOPK" "$EXPLORE_MARGIN" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -279,14 +286,14 @@ import sys
 
 w, art = map(pathlib.Path, sys.argv[1:3])
 code_sha = sys.argv[3]
-records, play_depth, eps, decay, topk = (int(x) for x in sys.argv[4:9])
+records, play_depth, eps, decay, topk, margin = (int(x) for x in sys.argv[4:10])
 
 
 def counters(arm):
     """Somme les compteurs EXPLORATION de tous les shards du bras."""
     text = (art / f"exploration-{arm}.txt").read_text()
     keys = ("eps_events", "eps_changed_best", "play_plies",
-            "topk_ranked_plies", "games")
+            "topk_ranked_plies", "margin_singleton_plies", "games")
     out = {k: 0 for k in keys}
     for line in text.splitlines():
         for tok in line.split():
@@ -326,9 +333,13 @@ payload = {
     "code_sha": code_sha,
     "question": "does exploration noise on plausible moves beat uniform noise",
     "design": {
-        "single_factor": "explore_topk 0 (uniform) vs 3",
+        "single_factor": (
+            "exploration policy: uniform legal move vs top-3 within "
+            f"{margin} centipawns of best"
+        ),
         "records_per_arm": records, "play_depth": play_depth,
-        "explore_eps": eps, "explore_decay_plies": decay, "topk": topk,
+        "explore_eps": eps, "explore_decay_plies": decay,
+        "topk": topk, "explore_margin": margin,
         "identical_across_arms": ["parent", "seed", "openings", "volume",
                                   "depth", "L2", "warm start", "split seed"],
         "declared_deviation": "100% fresh, no replay memory, on BOTH arms — "
@@ -354,6 +365,7 @@ for arm, a in arms.items():
     e, c, f = a["exploration"], a["coverage"], a["fit"]
     print(f"  {arm:8s} eps={e['eps_rate_pct']}% sur {e['play_plies']} plies, "
           f"ranked={e['topk_ranked_plies']}, "
+          f"singletons={e['margin_singleton_plies']}, "
           f"coup changé {e['changed_best_share']}")
     print(f"           couverture {c['visited_pct']}% gini {c['gini']} "
           f"| fit {f['iterations']} it, holdout {f['holdout_logloss']}")
