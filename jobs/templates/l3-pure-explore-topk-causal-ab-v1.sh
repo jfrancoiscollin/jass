@@ -49,8 +49,8 @@ SPLIT_SEED=577215
 HOLDOUT_MOD=10
 RATE_D8=9804
 TOPK_COST_PCT=121
-GEN_TIMEOUT_UNIFORM=${GEN_TIMEOUT_UNIFORM:-2700}
-GEN_TIMEOUT_TOPK=${GEN_TIMEOUT_TOPK:-3300}
+GEN_TIMEOUT_UNIFORM=${GEN_TIMEOUT_UNIFORM:-4500}
+GEN_TIMEOUT_TOPK=${GEN_TIMEOUT_TOPK:-5400}
 FIT_TIMEOUT=${FIT_TIMEOUT:-7200}
 L2=3e-5
 MAXIT=1000
@@ -135,7 +135,9 @@ UNIFORM_HEALTHY_MIN=$(( (PER_SHARD + RATE_D8 - 1) / RATE_D8 ))
 TOPK_HEALTHY_MIN=$(( (UNIFORM_HEALTHY_MIN * TOPK_COST_PCT + 99) / 100 ))
 say "  sizing : nproc=$NCPU; 2 arms x $SHARDS shards; $RECORDS records/arm; d$PLAY_DEPTH"
 say "  sizing : $PER_SHARD records/shard; ~${UNIFORM_HEALTHY_MIN} min UNIFORM; ~${TOPK_HEALTHY_MIN} min TOPK3"
-say "  sizing : timeouts ${GEN_TIMEOUT_UNIFORM}s/${GEN_TIMEOUT_TOPK}s; generation ETA ~${TOPK_HEALTHY_MIN} min"
+TOTAL_HEALTHY_MIN=$((UNIFORM_HEALTHY_MIN + TOPK_HEALTHY_MIN))
+say "  sizing : sequential arms, at most $SHARDS producers; generation ETA ~${TOTAL_HEALTHY_MIN} min"
+say "  sizing : timeouts ${GEN_TIMEOUT_UNIFORM}s/${GEN_TIMEOUT_TOPK}s"
 cat > "$ART/generation-plan.txt" <<EOF
 arms=uniform,topk3
 records_per_arm=$RECORDS
@@ -146,8 +148,11 @@ rate_d8_records_per_min_per_shard=$RATE_D8
 topk_cost_factor=1.21
 uniform_healthy_min=$UNIFORM_HEALTHY_MIN
 topk3_healthy_min=$TOPK_HEALTHY_MIN
+total_healthy_min=$TOTAL_HEALTHY_MIN
 uniform_timeout_s=$GEN_TIMEOUT_UNIFORM
 topk3_timeout_s=$GEN_TIMEOUT_TOPK
+scheduling=sequential_arms
+max_concurrent_producers=$SHARDS
 EOF
 monitor
 
@@ -208,8 +213,10 @@ say "  build, tests and 8cf witness passed"
 gen_arm(){
   local arm="$1" timeout_s="$2"; shift 2
   local base=$((RECORDS / SHARDS)) rem=$((RECORDS % SHARDS))
-  local count shard failed=0 pid
+  local count shard failed=0 pid rc idx
   local pids=()
+  local shards=()
+  : > "$ART/producer-exits-$arm.txt"
   for shard in $(seq 0 $((SHARDS - 1))); do
     count="$base"; [ "$shard" -lt "$rem" ] && count=$((count + 1))
     timeout "$timeout_s" "$J" --gen-data-wdl "$count" \
@@ -221,19 +228,25 @@ gen_arm(){
       --pair-openings --drop-plycap --sample-meta-out "$W/$arm-s$shard.jsm" \
       < /dev/null > "$W/$arm-s$shard.log" 2>&1 &
     pids+=("$!")
+    shards+=("$shard")
   done
-  for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+  for idx in "${!pids[@]}"; do
+    pid="${pids[$idx]}"
+    shard="${shards[$idx]}"
+    if wait "$pid"; then rc=0; else rc=$?; fi
+    printf 'arm=%s shard=%s pid=%s rc=%s timeout_s=%s\n' \
+      "$arm" "$shard" "$pid" "$rc" "$timeout_s" |
+      tee -a "$ART/producer-exits-$arm.txt"
+    [ "$rc" -eq 0 ] || failed=$((failed + 1))
+  done
   [ "$failed" -eq 0 ] || die "$arm generation: $failed producer failures"
 }
 
-phase generate-paired-arms
-gen_arm uniform "$GEN_TIMEOUT_UNIFORM" &
-UPID=$!
+phase generate-paired-arms-sequential
+say "  resource guard: UNIFORM then TOPK3; max concurrent producers=$SHARDS"
+gen_arm uniform "$GEN_TIMEOUT_UNIFORM"
 gen_arm topk3 "$GEN_TIMEOUT_TOPK" \
-  --explore-topk "$TOPK" --explore-margin "$EXPLORE_MARGIN" &
-TPID=$!
-wait "$UPID" || die "UNIFORM arm failed"
-wait "$TPID" || die "TOPK3 arm failed"
+  --explore-topk "$TOPK" --explore-margin "$EXPLORE_MARGIN"
 
 for arm in uniform topk3; do
   for log in "$W/$arm"-s*.log; do

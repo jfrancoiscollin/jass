@@ -61,7 +61,8 @@ comparaison secondaire au parent comme une attribution propre au Top-K.
 
 ### 3.2 Exécution
 
-- génération parallèle sur la même machine, six shards par bras ;
+- génération séquentielle des bras sur la même machine, six shards concurrents
+  au maximum : UNIFORM puis TOPK3 ;
 - mêmes graines de shard et même suite d'ouvertures par index de partie ;
 - aucun mix d8/d9 dans ce DOE ;
 - split holdout identique et groupé par ouverture appariée ;
@@ -72,6 +73,14 @@ Implémentation autoritative :
 Le template historique monobras `l3-pure-explore-topk-v1.sh` n'est pas une
 implémentation de ce DOE et ne doit pas être utilisé pour en tirer une
 conclusion causale.
+
+Le lancement `home-1013` a montré que lancer simultanément les douze
+producteurs (deux bras × six shards) invalide le budget HOME mesuré sur six
+producteurs : les six shards UNIFORM ont été interrompus vers 113–115 k
+records sur 333 k, sans erreur moteur, avant le terme. L'ordonnancement
+séquentiel ne change aucun facteur scientifique entre les bras ; il restaure
+le régime de ressources mesuré, porte les délais par bras à 75/90 minutes et
+publie désormais le code de sortie de chaque producteur.
 
 ## 4. Gardes techniques
 

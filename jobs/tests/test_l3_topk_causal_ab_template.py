@@ -36,13 +36,39 @@ class TopkCausalAbTemplateTests(unittest.TestCase):
         )
         self.assertRegex(
             self.text,
-            r'gen_arm uniform "\$GEN_TIMEOUT_UNIFORM" &',
+            r'gen_arm uniform "\$GEN_TIMEOUT_UNIFORM"\n',
         )
         self.assertRegex(
             self.text,
             r'gen_arm topk3 "\$GEN_TIMEOUT_TOPK" \\\n'
-            r'  --explore-topk "\$TOPK" --explore-margin "\$EXPLORE_MARGIN" &',
+            r'  --explore-topk "\$TOPK" --explore-margin "\$EXPLORE_MARGIN"',
         )
+        self.assertNotIn("UPID=", self.text)
+        self.assertNotIn("TPID=", self.text)
+        self.assertNotIn('gen_arm uniform "$GEN_TIMEOUT_UNIFORM" &', self.text)
+        self.assertNotRegex(
+            self.text,
+            r'--explore-margin "\$EXPLORE_MARGIN" &',
+        )
+        self.assertLess(
+            self.text.index('gen_arm uniform "$GEN_TIMEOUT_UNIFORM"'),
+            self.text.index('gen_arm topk3 "$GEN_TIMEOUT_TOPK"'),
+        )
+        self.assertIn("scheduling=sequential_arms", self.text)
+        self.assertIn("max_concurrent_producers=$SHARDS", self.text)
+
+    def test_home_resource_guard_and_exit_codes_are_explicit(self):
+        self.assertIn(
+            "GEN_TIMEOUT_UNIFORM=${GEN_TIMEOUT_UNIFORM:-4500}",
+            self.text,
+        )
+        self.assertIn(
+            "GEN_TIMEOUT_TOPK=${GEN_TIMEOUT_TOPK:-5400}",
+            self.text,
+        )
+        self.assertIn('producer-exits-$arm.txt', self.text)
+        self.assertIn('if wait "$pid"; then rc=0; else rc=$?; fi', self.text)
+        self.assertIn("max concurrent producers=$SHARDS", self.text)
 
     def test_data_and_fit_guards_cover_both_arms(self):
         self.assertGreaterEqual(
