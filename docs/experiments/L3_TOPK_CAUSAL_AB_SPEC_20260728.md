@@ -1,7 +1,8 @@
 # L3-PURE — préenregistrement causal UNIFORM vs TOPK3
 
 > Date : 28 juillet 2026  
-> Statut : **spécification uniquement — aucun job n'est autorisé ni mis en file par ce document**
+> Statut : **implémentation prête — lancement HOME explicitement autorisé par
+> JFC le 28 juillet 2026 ; aucune promotion automatique**
 
 ## 1. Question
 
@@ -65,6 +66,12 @@ comparaison secondaire au parent comme une attribution propre au Top-K.
 - aucun mix d8/d9 dans ce DOE ;
 - split holdout identique et groupé par ouverture appariée ;
 - aucun job suivant lancé automatiquement.
+
+Implémentation autoritative :
+[`jobs/templates/l3-pure-explore-topk-causal-ab-v1.sh`](../../jobs/templates/l3-pure-explore-topk-causal-ab-v1.sh).
+Le template historique monobras `l3-pure-explore-topk-v1.sh` n'est pas une
+implémentation de ce DOE et ne doit pas être utilisé pour en tirer une
+conclusion causale.
 
 ## 4. Gardes techniques
 
