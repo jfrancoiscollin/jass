@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "code_sha": "1111111111111111111111111111111111111111",
+  "train_records": 9,
+  "records": [
+    {
+      "name": "game1_failed_a",
+      "game_id": 1,
+      "opening_id": 101,
+      "seeded": 0,
+      "white_men": [31, 32],
+      "black_men": [10],
+      "stm": 0,
+      "score": -900,
+      "wdl": -1
+    },
+    {
+      "name": "game1_failed_b",
+      "game_id": 1,
+      "opening_id": 101,
+      "seeded": 0,
+      "white_men": [33, 34],
+      "black_men": [11],
+      "stm": 0,
+      "score": 125,
+      "wdl": -1
+    },
+    {
+      "name": "game2_failed",
+      "game_id": 2,
+      "opening_id": 102,
+      "seeded": 0,
+      "white_men": [31, 32, 33],
+      "black_men": [10],
+      "stm": 0,
+      "score": 200,
+      "wdl": 0
+    },
+    {
+      "name": "game3_converted",
+      "game_id": 3,
+      "opening_id": 103,
+      "seeded": 0,
+      "white_men": [34, 35],
+      "black_men": [12],
+      "stm": 0,
+      "score": 800,
+      "wdl": 1
+    },
+    {
+      "name": "game4_failed_black",
+      "game_id": 4,
+      "opening_id": 104,
+      "seeded": 1,
+      "white_men": [31],
+      "black_men": [10, 11],
+      "stm": 1,
+      "score": -500,
+      "wdl": -1
+    },
+    {
+      "name": "game5_colour_duplicate_of_game2",
+      "game_id": 5,
+      "opening_id": 105,
+      "seeded": 1,
+      "white_men": [41],
+      "black_men": [18, 19, 20],
+      "stm": 1,
+      "score": 300,
+      "wdl": 0
+    },
+    {
+      "name": "game6_late_midgame_failed",
+      "game_id": 6,
+      "opening_id": 106,
+      "seeded": 0,
+      "white_men": [30, 31, 32, 33, 34, 35, 36, 37],
+      "black_men": [10, 11, 12, 13, 14, 15, 16],
+      "stm": 0,
+      "score": 50,
+      "wdl": 0
+    },
+    {
+      "name": "game7_equal_material",
+      "game_id": 7,
+      "opening_id": 107,
+      "seeded": 0,
+      "white_men": [29],
+      "black_men": [15],
+      "stm": 0,
+      "score": 0,
+      "wdl": 0
+    },
+    {
+      "name": "game8_black_converted",
+      "game_id": 8,
+      "opening_id": 108,
+      "seeded": 0,
+      "white_men": [28],
+      "black_men": [16, 17],
+      "stm": 1,
+      "score": 700,
+      "wdl": 1
+    },
+    {
+      "name": "holdout_failed_must_not_leak",
+      "game_id": 100,
+      "opening_id": 900,
+      "seeded": 0,
+      "white_men": [30, 31],
+      "black_men": [9],
+      "stm": 0,
+      "score": 100,
+      "wdl": 0
+    },
+    {
+      "name": "holdout_equal",
+      "game_id": 101,
+      "opening_id": 901,
+      "seeded": 0,
+      "white_men": [27],
+      "black_men": [18],
+      "stm": 1,
+      "score": 0,
+      "wdl": 0
+    }
+  ],
+  "expected": {
+    "signal_records": 6,
+    "after_one_per_game": 5,
+    "after_canonical_dedup": 4,
+    "selected_base_positions": 3,
+    "output_records": 6
+  }
+}
