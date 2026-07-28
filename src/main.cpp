@@ -354,6 +354,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      ALL of them. K=0 keeps the legacy
                                             //      uniform draw. See the eps branch below
                                             //      for why the distinction matters.
+    int          explore_margin  = 0;       // --explore-margin M : with --explore-topk,
+                                            //      keep only the moves within M centipawns
+                                            //      of the best. Rank alone says a move is
+                                            //      second, not that it is CLOSE: in a
+                                            //      forced position the 2nd and 3rd moves
+                                            //      drop a piece, and top-k without a margin
+                                            //      would play them two times out of three.
+                                            //      M=0 disables the filter.
     int          explore_decay_plies = 0;    // --explore-decay-plies D : FIX#1 label-hygiene.
                                             //      eps(ply)=explore_eps*max(0,1-ply/D) => confine
                                             //      l'exploration au debut (0 = pas de decroissance).
@@ -435,6 +443,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-topk" && i + 1 < argc) {
             const int v = std::atoi(argv[++i]);
             if (v >= 0) explore_topk = v;
+        } else if (a == "--explore-margin" && i + 1 < argc) {
+            const int v = std::atoi(argv[++i]);
+            if (v >= 0) explore_margin = v;
         } else if (a == "--explore-decay-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_decay_plies = v;
@@ -652,7 +663,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               stat_tb_relabel = 0, stat_label_score_searches = 0,
               stat_random_open_moves = 0, stat_play_plies = 0,
               stat_eps_events = 0, stat_eps_changed_best = 0,
-              stat_games_with_eps = 0, stat_topk_ranked_plies = 0;
+              stat_games_with_eps = 0, stat_topk_ranked_plies = 0,
+              stat_margin_singleton = 0;
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
     // évite que la passe de classement pollue l'ordonnancement de la partie.
@@ -937,9 +949,24 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                      [](const auto& a2, const auto& b2) {
                                          return a2.first > b2.first;
                                      });
-                    const std::size_t k =
+                    std::size_t k =
                         std::min<std::size_t>(static_cast<std::size_t>(explore_topk),
                                               ranked.size());
+                    // Margin gate: top-k is a CAP, the margin is the real
+                    // filter. It makes the perturbation position-dependent —
+                    // wide open in a quiet position where the top moves are
+                    // within a few centipawns, collapsed to the single best in
+                    // a tactical one where everything else loses material.
+                    if (explore_margin > 0) {
+                        const int best_score = ranked[0].first;
+                        std::size_t within = 1;
+                        while (within < k
+                               && ranked[within].first >= best_score - explore_margin) {
+                            ++within;
+                        }
+                        if (within == 1) ++stat_margin_singleton;
+                        k = within;
+                    }
                     play_mv = ranked[rng() % k].second;
                     ++stat_topk_ranked_plies;
                 } else {
@@ -1056,7 +1083,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " random_open_plies=" << random_open_plies
               << " explore_eps=" << explore_eps
               << " explore_topk=" << explore_topk
+              << " explore_margin=" << explore_margin
               << " topk_ranked_plies=" << stat_topk_ranked_plies
+              << " margin_singleton_plies=" << stat_margin_singleton
               << " decay_plies=" << explore_decay_plies
               << " openings=" << opening_count
               << " games=" << game_count
@@ -4951,7 +4980,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
