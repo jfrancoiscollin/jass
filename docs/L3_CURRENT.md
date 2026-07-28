@@ -372,6 +372,31 @@ l’architecture linéaire ni au principe d’autojeu WDL.
     mesuré à travers le coup nul. À ne plus citer comme référence.
 11. **G2** reste ouvert et prêt (`home-0999`→`1001` de la chaîne G2 sont à
     renuméroter, les numéros ayant servi ici).
+12. **Axe volume — VOL8M rendu, et il PERD** (`home-1008`, 09h44→10h19 FR le
+    28 juillet 2026). 12 M records (8 M frais `d9` + 4 M mémoire), fit convergé
+    (`home-1006`), couverture `13,5 %` contre `9,8 %`, densité **41,7 contre
+    4,3 observations par paramètre libre**, holdout `0,440449` contre
+    `0,444060` — et contre TURNOVER sur un pool neuf de 1500 ouvertures :
+    **`0,4785`, `−14,95 Elo`, IC95 `[−23,5 ; −6,4]`, `n = 6000`**, vues
+    additionnées (`q00` `1360-142-1498` = `−16,0` ; `native` `1352-176-1472` =
+    `−13,9`). L'intervalle **exclut zéro** : ce n'est pas un plat, c'est une
+    perte établie. **Quatrième confirmation que la loss holdout ne prédit pas
+    la force** — et la première où elle pointe franchement à l'envers.
+13. ⚠️ **Le verdict préenregistré `VOLUME8M_BELOW_TURNOVER_VOLUME_AXIS_CLOSED`
+    dit plus que ce que le run mesure.** VOL8M s'écarte de la recette TURNOVER
+    sur **quatre** facteurs déclarés, pas un : volume `12 M` vs `2 M`, ratio
+    frais/mémoire `67/33` vs `50/50`, profondeur de jeu `9` vs `8`, et surtout
+    **la moitié mémoire — 4 M records, un tiers du corpus — a été étiquetée par
+    le moteur d'AVANT le correctif de racine nulle** (`f7949784`), donc toute
+    partie atteignant une nulle par répétition y est enregistrée comme une
+    défaite. Ce seul confond suffit à expliquer `−15 Elo`. **Ce run ne sépare
+    pas « le volume n'aide pas » de « un tiers du corpus est mal étiqueté ».**
+    L'axe volume est clos *au sens du contrat préenregistré* ; scientifiquement
+    il reste à trancher par un 12 M **100 % post-correctif**, ou à défaut par
+    un ré-étiquetage de la moitié mémoire.
+14. **Conséquence immédiate pour le run top-k** : le volume n'ayant pas payé,
+    aucun champion n'est baké, et le parent du self-play top-k reste
+    **TURNOVER**.
 
 ### Spécialiste `L3-IMBALANCE2`
 

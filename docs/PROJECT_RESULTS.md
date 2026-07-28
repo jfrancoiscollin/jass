@@ -408,7 +408,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 
 | Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
 |---|---|---|---|
-| plus de volume brut | couverture saturée ; multiples runs plats | réduit surtout la variance, ne déplace pas le point fixe | métrique de famine/coverage pré-enregistrée |
+| plus de volume brut | couverture saturée ; multiples runs plats. **Rouverte puis refermée par `1004`→`1008` (28 juillet 2026)** : la condition de réouverture a été honorée — couverture pré-enregistrée mesurée sur 12 M records, `13,548 %` de buckets contre `9,8 %`, **41,67 observations par paramètre libre contre 4,3**, Gini `0,91`, fit convergé, holdout `0,440449` contre `0,444060`. Force jouée contre TURNOVER, pool neuf de 1500 ouvertures, vues additionnées : **`0,4785`, `−14,95 Elo`, IC95 `[−23,5 ; −6,4]`, `n = 6000`** (`q00` `1360-142-1498` ; `native` `1352-176-1472`). L'IC exclut zéro | le volume achète la couverture et la densité, **pas la force** — et ici il la fait perdre. ⚠️ **Le run ne l'établit pas proprement** : VOL8M s'écarte de la recette TURNOVER sur quatre facteurs (volume `12 M`/`2 M`, frais/mémoire `67/33`/`50/50`, jeu `d9`/`d8`, et **4 M de la moitié mémoire étiquetés par le moteur d'avant le correctif de racine nulle `f7949784`**, donc nulles par répétition comptées en défaites). Le confond d'étiquetage suffit seul à expliquer `−15 Elo` | **12 M `100 %` post-correctif** (ou ré-étiquetage de la moitié mémoire) ; à volume égal et étiquetage égal, rien d'autre ne change |
 | phase-weight | −210 Elo sur bons labels | décalibre le jeu global | nouvelle loss normalisée avec preuve mathématique et A/B isolé |
 | label-depth par phase en WDL | no-op sur la cible, TT polluée, −80 | mauvais canal | cible score explicitement utilisée et TT séparée |
 | hygiène `drop-post-eps` comme cure | bundle de fixes −25 Elo | le WDL joué est un vrai retour MC ; « contamination » mal interprétée | preuve directe de biais, pas simple présence d'epsilon |
@@ -513,7 +513,18 @@ instrumenté des anciens knobs.
 - `n=0`, cellule manquante ou manifest incomplet = échec technique, jamais
   neutre ;
 - séparer train, holdout et jauges par partie/ouverture ;
-- ne jamais promouvoir sur loss, pairwise accuracy ou divergence seules ;
+- ne jamais promouvoir sur loss, pairwise accuracy ou divergence seules —
+  **quatre confirmations** que la loss holdout ne prédit pas la force (rank
+  statique `−847`, PC Blues `−135`, WS-ON `−354`, et `1008` où VOL8M a la
+  meilleure loss des deux et perd de `−15 Elo`), plus REPLAY75 qui avait la
+  meilleure loss des quatre doses en étant le plus faible ;
+- ne comparer deux losses holdout que si elles viennent du **même** holdout :
+  celles de TURNOVER (`2 M`) et de VOL8M (`12 M`) portent sur des
+  distributions différentes et ne se citent pas l'une contre l'autre ;
+- un corpus qui change plusieurs facteurs à la fois ne peut pas clore l'axe
+  qu'il prétend tester : `1008` mélange volume, ratio, profondeur et un
+  étiquetage d'avant correctif moteur, donc son verdict nomme un facteur qu'il
+  n'isole pas ;
 - pinner code, inputs, référence fixe, seeds et **toutes** les clés de
   configuration par SHA ; un fingerprint partiel ne peut pas déclarer
   `inherited_defaults=false` ;
