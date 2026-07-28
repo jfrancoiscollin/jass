@@ -219,9 +219,17 @@ monitor
 phase pull-and-assert-perf-critical-sources
 # Ne jamais faire confiance à l'arbre de base du runner pour les fichiers
 # perf-critiques : ils peuvent être silencieusement stale.
+#
+# On tire de la SHA ÉPINGLÉE, pas de `origin/develop`. La règle gravée dit « une
+# ref connue » ; une branche n'en est pas une, elle bouge. Un push sur develop
+# pendant que le job vole lui ferait compiler autre chose que ce qu'il déclare —
+# c'est la famille de bourdes qui a tué home-1005, et le job asserte déjà
+# HEAD == EXPECTED_CODE_SHA juste au-dessus, donc tirer de cette SHA ne fait que
+# garantir que l'ARBRE correspond au commit, ce qui est tout l'objet du pull.
 for f in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
          src/movegen.cpp src/movegen.hpp src/main.cpp; do
-  git show "origin/develop:$f" > "$f" || die "cannot pull $f from origin/develop"
+  git show "$EXPECTED_CODE_SHA:$f" > "$f" ||
+    die "cannot pull $f from $EXPECTED_CODE_SHA"
 done
 grep -q "g_emasks"        src/scan_eval.cpp || { restore_src; die "archi: scan_eval sans g_emasks"; }
 grep -q "has_any_capture" src/search.cpp    || { restore_src; die "archi: search sans has_any_capture"; }
