@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# L3-PURE — le bruit d'exploration doit-il tomber sur un coup plausible ?
+# L3-PURE — self-play dont le bruit d'exploration tombe sur un coup PLAUSIBLE.
 #
 # Le self-play perturbe sa politique avec `--explore-eps 8 --explore-decay-plies
 # 60` : à chaque ply, avec une probabilité qui décroît de 8 % à zéro au ply 60,
@@ -9,20 +9,24 @@
 # personne de fort ne rencontre — alors que le déficit de `−242 Elo` contre Scan
 # se joue sur des lignes quasi optimales (`home-1002`).
 #
-# `--explore-topk 3` tire parmi les TROIS meilleurs coups au lieu de tous. Même
-# dose de perturbation, mais sur des coups plausibles.
+# `--explore-topk 3 --explore-margin 50` tire parmi les trois meilleurs coups,
+# et seulement parmi ceux qui tiennent dans un demi-pion du meilleur. Même dose
+# de perturbation, sur des coups plausibles.
 #
-# Deux bras, un seul facteur : UNIFORM contre TOPK3. Tout le reste est identique
-# — même parent, même volume, même profondeur, même graine d'ouverture, même
-# L2, même warm-start, même split. Les deux bras génèrent EN PARALLÈLE pour
-# subir des conditions machine identiques.
+# UN SEUL BRAS (décision JFC, pas d'A/B). Ce job produit un modèle ; il ne
+# mesure aucune force. La force se lit dans une porte séparée contre le parent.
 #
-# Écart déclaré, identique sur les deux bras : corpus 100 % frais, sans moitié
-# mémoire. Diluer de moitié un effet qu'on cherche à détecter serait se tirer
-# une balle dans le pied ; la comparaison porte bras contre bras, et l'absence
-# de mémoire ne les distingue pas. En contrepartie, aucun des deux n'est
-# directement comparable à TURNOVER, qui lui en avait — la cellule de
-# continuité doit se lire comme telle et non comme une causalité propre.
+# ⚠️ CONFONDS DÉCLARÉS — à lire avant d'interpréter la porte qui suivra. Ce
+# corpus s'écarte de la recette du parent sur PLUSIEURS facteurs, pas seulement
+# le top-k :
+#   1. top-k + marge au lieu du tirage uniforme — le facteur sous test ;
+#   2. volume `RECORDS` au lieu des 2 M du parent ;
+#   3. corpus 100 % frais, aucune moitié mémoire (le parent avait 50/50).
+# La profondeur de jeu est alignée sur celle du parent par défaut, précisément
+# pour ne pas en ajouter un quatrième. `home-1008` vient de montrer ce que coûte
+# un corpus qui bouge sur quatre axes : son verdict nomme le volume alors qu'il
+# ne l'isole pas. Une porte gagnante ici ne prouvera PAS que le top-k est la
+# cause ; une porte perdante ne l'innocentera pas non plus.
 #
 # Aucun verdict de promotion. Aucune continuation automatique.
 set -Eeuo pipefail
@@ -30,7 +34,10 @@ set -Eeuo pipefail
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${EXPECTED_JOB_ID:?}"
-: "${TURNOVER_TRAIN_PREFIX:?}"; : "${EXPECTED_TURNOVER_TRAIN_JOB:?}"
+# Le parent est paramétré : TURNOVER aujourd'hui, un champion baké plus tard,
+# sans réécrire le template.
+: "${PARENT_TRAIN_PREFIX:?}"; : "${EXPECTED_PARENT_TRAIN_JOB:?}"
+: "${PARENT_ARTEFACT:?}"; : "${PARENT_MODEL_SHA:?}"; : "${PARENT_NAME:?}"
 
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"
@@ -47,27 +54,68 @@ echo preflight > "$STAGE"
 say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 phase(){ echo "$1" > "$STAGE"; say "phase=$1"; }
+
+# Hygiène disque : les jobs qui meurent laissent leur scratch derrière eux et le
+# disque se remplit au fil des semaines (ccx33 saturé le 2026-07-11).
+find "$JASS_RESULT_DIR/.." -maxdepth 1 -name 'cw-*' -type d -mmin +180 \
+  ! -path "$W" -exec rm -rf {} + 2>/dev/null || true
+
+RECORDS=${RECORDS:-4000000}
+SHARDS=${SHARDS:-12}
+LABEL_DEPTH=4
+# Alignée sur la profondeur du parent par défaut : un confond de moins, et le
+# d8 est ~3,9x plus rapide que le d9 (mesuré home-1003/1004 : 117 647 contre
+# 30 223 positions/min sur 12 shards).
+PLAY_DEPTH=${PLAY_DEPTH:-8}
+MAXPLIES=260
+EXPLORE_EPS=8
+EXPLORE_DECAY=60
+TOPK=3
+MARGIN=50
+BASE_SEED=2718281
+SPLIT_SEED=577215
+HOLDOUT_MOD=10
+# Rate MESURÉ par shard, d8 et d9 (home-1003/1004), puis pénalité top-k
+# MESURÉE : 4000 records d9 en 52,2 s uniforme contre 63,0 s top-k sur la même
+# box, bras en parallèle, soit +21 %. Le timeout est le temps sain x1,3.
+RATE_D8=9804
+RATE_D9=2519
+if [ "$PLAY_DEPTH" -le 8 ]; then RATE="$RATE_D8"; else RATE="$RATE_D9"; fi
+PER_SHARD=$(( (RECORDS + SHARDS - 1) / SHARDS ))
+GEN_MIN_HEALTHY=$(( (PER_SHARD * 121) / (RATE * 100) ))
+GEN_TIMEOUT=${GEN_TIMEOUT:-$(( GEN_MIN_HEALTHY * 78 ))}   # 1,3x en secondes
+FIT_TIMEOUT=${FIT_TIMEOUT:-7200}
+L2=3e-5
+MAXIT=1000
+LBFGS_MAXCOR=20
+LBFGS_GTOL=1e-3
+CHUNK=20000
+Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
+
 MON=""
 monitor(){
   (
+    local t0; t0=$(date +%s)
     while true; do
       {
         printf 'time_fr=%s\n' "$(TZ=Europe/Paris date '+%Y-%m-%dT%H:%M:%S%z')"
         printf 'phase=%s\n' "$(cat "$STAGE" 2>/dev/null || echo unknown)"
+        printf 'elapsed_min=%d\n' "$(( ($(date +%s) - t0) / 60 ))"
         awk '/MemAvailable:/{printf "mem_available_mb=%d\n",$2/1024}' /proc/meminfo
         printf 'disk_free_mb=%s\n' "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')"
-        for arm in uniform topk3; do
-          awk -v a="$arm" '
-            /positions$/ { d[FILENAME] = $4; t[FILENAME] = $6 }
-            END {
-              for (k in d) { s += d[k]; u += t[k] }
-              if (u > 0) printf "%s_positions=%d/%d (%.1f%%)\n", a, s, u, 100 * s / u
-            }' "$W"/"$arm"-s*.log 2>/dev/null || true
-        done
-        for arm in uniform topk3; do
-          [ -f "$W/fit-$arm.log" ] &&
-            printf 'fit_%s_lines=%s\n' "$arm" "$(wc -l < "$W/fit-$arm.log")"
-        done
+        # `gen-data-wdl` imprime « X / Y positions » ; on somme les shards et on
+        # extrapole le restant sur le rythme observé depuis le début.
+        awk -v el="$(( ($(date +%s) - t0) / 60 ))" '
+          /positions$/ { d[FILENAME] = $4; t[FILENAME] = $6 }
+          END {
+            for (k in d) { s += d[k]; u += t[k] }
+            if (u > 0) {
+              printf "gen_positions=%d/%d (%.1f%%)\n", s, u, 100 * s / u
+              if (s > 0 && el > 0)
+                printf "gen_eta_remaining_min=%d\n", el * (u - s) / s
+            }
+          }' "$W"/gen-s*.log 2>/dev/null || true
+        [ -f "$W/fit.log" ] && printf 'fit_lines=%s\n' "$(wc -l < "$W/fit.log")"
       } > "$PROG.tmp"
       mv "$PROG.tmp" "$PROG"
       cp "$PROG" "$ART/PROGRESS.txt"
@@ -76,6 +124,7 @@ monitor(){
   ) &
   MON="$!"
 }
+restore_src(){ git checkout -- src/ 2>/dev/null || true; }
 finalize(){
   rc=$?
   trap - EXIT ERR TERM INT
@@ -94,30 +143,6 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
-RECORDS=2000000
-SHARDS=6                 # 6 par bras, deux bras en parallèle = 12 procs / 16 CPU
-LABEL_DEPTH=4
-PLAY_DEPTH=9
-MAXPLIES=260
-EXPLORE_EPS=8
-EXPLORE_DECAY=60
-TOPK=3
-BASE_SEED=2718281        # identique aux deux bras : mêmes ouvertures tirées
-SPLIT_SEED=577215
-HOLDOUT_MOD=10
-# Taux mesuré en home-1003 : 2 519 positions/min/shard à d9. 333 334 positions
-# par shard => ~132 min sain ; +10,5 % mesuré pour le classement top-k => ~146
-# min sur ce bras. Plafond à 200 min, soit ~1,35x le bras le plus lent.
-GEN_TIMEOUT=12000
-FIT_TIMEOUT=7200
-L2=3e-5
-MAXIT=1000
-LBFGS_MAXCOR=20
-LBFGS_GTOL=1e-3
-CHUNK=20000
-TURNOVER_MODEL_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
-Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
-
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "worktree must be detached"
@@ -125,32 +150,53 @@ Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=
   die "scientific authorization missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] ||
   die "automatic continuation guard missing"
-[ "$(nproc)" -ge 16 ] || die "HOME requires 16 logical CPUs"
-[ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')" -ge 15000 ] ||
-  die "need 15 GiB free"
+NCPU=$(nproc)
+[ "$NCPU" -ge 12 ] || die "HOME requires 12 logical CPUs, got $NCPU"
+DFA=$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')
+[ "${DFA:-0}" -ge 20000 ] || die "need 20 GiB free, got ${DFA}M"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
-grep -q "root_is_drawn" src/search.cpp || die "engine predates the drawn-root fix"
-# Sans cette option le bras TOPK3 retomberait silencieusement sur le tirage
-# uniforme et le job comparerait deux fois la même chose.
-grep -q "explore_topk" src/main.cpp || die "engine has no --explore-topk"
+say "  sizing : nproc=$NCPU shards=$SHARDS records=$RECORDS d$PLAY_DEPTH"
+say "  sizing : $PER_SHARD/shard à $RATE pos/min +21% top-k => ~${GEN_MIN_HEALTHY} min sain, timeout ${GEN_TIMEOUT}s"
 monitor
 
+phase pull-and-assert-perf-critical-sources
+# Ne jamais faire confiance à l'arbre de base du runner pour les fichiers
+# perf-critiques : ils peuvent être silencieusement stale.
+for f in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
+         src/movegen.cpp src/movegen.hpp src/main.cpp; do
+  git show "origin/develop:$f" > "$f" || die "cannot pull $f from origin/develop"
+done
+grep -q "g_emasks"        src/scan_eval.cpp || { restore_src; die "archi: scan_eval sans g_emasks"; }
+grep -q "has_any_capture" src/search.cpp    || { restore_src; die "archi: search sans has_any_capture"; }
+grep -q "has_any_capture" src/movegen.cpp   || { restore_src; die "archi: movegen sans has_any_capture"; }
+grep -q "root_is_drawn"   src/search.cpp    || { restore_src; die "engine predates the drawn-root fix"; }
+# Sans ces deux options le job retomberait silencieusement sur le tirage
+# uniforme et produirait un corpus qui n'a rien à voir avec ce qu'on croit.
+grep -q "explore_topk"   src/main.cpp || { restore_src; die "engine has no --explore-topk"; }
+grep -q "explore_margin" src/main.cpp || { restore_src; die "engine has no --explore-margin"; }
+# Le classement doit tourner à la profondeur de JEU. La forme réduite
+# `lim.max_depth - 2` classait moins profond qu'on ne joue, ce qui laisse entrer
+# dans le top-k des coups que la recherche de jeu rejette.
+grep -q "lim.max_depth - 2" src/main.cpp &&
+  { restore_src; die "archi: le classement top-k est revenu à la profondeur réduite"; }
+say "  garde-fou archi ✓ : g_emasks + has_any_capture + root_is_drawn + topk/margin à profondeur de jeu"
+
 phase fetch-and-authenticate-parent
-python3 jobs/tools/fetch_result_files.py --prefix "$TURNOVER_TRAIN_PREFIX" \
-  --file artefacts/turnover1to1.pjtw.gz=TURNOVER.pjtw.gz \
-  --out-dir "$IN" --report "$ART/verified-turnover.json" \
-  > "$W/fetch-turnover.log" 2>&1
-python3 - "$ART/verified-turnover.json" "$EXPECTED_TURNOVER_TRAIN_JOB" <<'PY'
+python3 jobs/tools/fetch_result_files.py --prefix "$PARENT_TRAIN_PREFIX" \
+  --file "artefacts/$PARENT_ARTEFACT=PARENT.pjtw.gz" \
+  --out-dir "$IN" --report "$ART/verified-parent.json" \
+  > "$W/fetch-parent.log" 2>&1
+python3 - "$ART/verified-parent.json" "$EXPECTED_PARENT_TRAIN_JOB" <<'PY'
 import json
 import sys
 report = json.load(open(sys.argv[1]))
 if report.get("job_id") != sys.argv[2] or report.get("result_state") != "completed":
     raise SystemExit(f"{sys.argv[1]}: source identity/state mismatch")
 PY
-gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
-[ "$(sha256sum "$W/TURNOVER.pjtw" | awk '{print $1}')" = "$TURNOVER_MODEL_SHA" ] ||
-  die "TURNOVER model hash drift"
-say "  parent ✓ : TURNOVER"
+gunzip -c "$IN/PARENT.pjtw.gz" > "$W/PARENT.pjtw"
+[ "$(sha256sum "$W/PARENT.pjtw" | awk '{print $1}')" = "$PARENT_MODEL_SHA" ] ||
+  die "parent model hash drift"
+say "  parent ✓ : $PARENT_NAME"
 
 phase build-engine-and-runtime
 python3 -m venv "$W/venv"
@@ -166,111 +212,99 @@ ctest --test-dir "$W/build" --output-on-failure > "$W/ctest.log" 2>&1
 J="$W/build/jass"
 [ "$("$J" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "king-capture witness failed"
-say "  moteur ✓ : 8cf, --explore-topk présent"
+say "  moteur ✓ : 8cf"
 
-# Un bras = une politique d'exploration. Tout le reste est passé à l'identique,
-# y compris la graine, pour que les deux bras partent des mêmes ouvertures.
-gen_arm(){
-  local arm="$1"; shift
-  local base=$((RECORDS / SHARDS)) rem=$((RECORDS % SHARDS)) count shard
-  local pids=()
-  for shard in $(seq 0 $((SHARDS - 1))); do
-    count="$base"; [ "$shard" -lt "$rem" ] && count=$((count + 1))
-    timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" \
-      "$W/$arm-s$shard.jnnw" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" \
-      $((BASE_SEED + shard)) \
-      --nnue "$W/TURNOVER.pjtw" --search-params-play "$Q00" --wdl-zero-score \
-      --random-open-plies 8 --explore-eps "$EXPLORE_EPS" \
-      --explore-decay-plies "$EXPLORE_DECAY" "$@" \
-      --pair-openings --drop-plycap --sample-meta-out "$W/$arm-s$shard.jsm" \
-      > "$W/$arm-s$shard.log" 2>&1 &
-    pids+=("$!")
-  done
-  local failed=0 pid
-  for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
-  [ "$failed" -eq 0 ] || die "$arm generation: $failed producer failures"
-}
+phase generate-fresh-corpus
+# Un timeout PAR SHARD : un shard bloqué ne doit jamais geler le job. Les PID
+# sont collectés explicitement — un `wait` nu attendrait aussi le monitor et
+# bloquerait le job pour toujours.
+pids=()
+base=$((RECORDS / SHARDS)); rem=$((RECORDS % SHARDS))
+for shard in $(seq 0 $((SHARDS - 1))); do
+  count="$base"; [ "$shard" -lt "$rem" ] && count=$((count + 1))
+  timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" \
+    "$W/gen-s$shard.jnnw" "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" \
+    $((BASE_SEED + shard)) \
+    --nnue "$W/PARENT.pjtw" --search-params-play "$Q00" --wdl-zero-score \
+    --random-open-plies 8 --explore-eps "$EXPLORE_EPS" \
+    --explore-decay-plies "$EXPLORE_DECAY" \
+    --explore-topk "$TOPK" --explore-margin "$MARGIN" \
+    --pair-openings --drop-plycap --sample-meta-out "$W/gen-s$shard.jsm" \
+    > "$W/gen-s$shard.log" 2>&1 &
+  pids+=("$!")
+done
+failed=0
+for pid in "${pids[@]}"; do wait "$pid" || failed=$((failed + 1)); done
+[ "$failed" -eq 0 ] || die "generation: $failed producer failures"
+for log in "$W"/gen-s*.log; do
+  grep -q 'label_score_searches=0' "$log" || die "score-label search in $log"
+done
 
-phase generate-both-arms-in-parallel
-gen_arm uniform &
-UPID=$!
-gen_arm topk3 --explore-topk "$TOPK" &
-TPID=$!
-wait "$UPID" || die "uniform arm failed"
-wait "$TPID" || die "topk3 arm failed"
-for arm in uniform topk3; do
-  for log in "$W/$arm"-s*.log; do
-    grep -q 'label_score_searches=0' "$log" || die "score-label search in $log"
-  done
-done
-# La perturbation a-t-elle réellement tiré, et à quelle dose ? Un bras TOPK3 qui
-# sortirait topk_ranked_plies=0 n'aurait pas testé ce qu'on croit tester.
-for arm in uniform topk3; do
-  cat "$W/$arm"-s*.log | grep '^EXPLORATION' > "$ART/exploration-$arm.txt"
-done
-TOPK_PLIES=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^topk_ranked_plies=/) {split($i,a,"="); s+=a[2]}} END {print s+0}' \
-  "$ART/exploration-topk3.txt")
-UNIF_PLIES=$(awk '{for(i=1;i<=NF;i++) if ($i ~ /^topk_ranked_plies=/) {split($i,a,"="); s+=a[2]}} END {print s+0}' \
-  "$ART/exploration-uniform.txt")
-[ "$TOPK_PLIES" -gt 0 ] || die "TOPK3 arm ranked no ply — the flag did not fire"
-[ "$UNIF_PLIES" -eq 0 ] || die "UNIFORM arm ranked plies — the arms are not distinct"
-say "  génération ✓ : topk_ranked_plies = $TOPK_PLIES (topk3) / $UNIF_PLIES (uniform)"
+# La perturbation a-t-elle réellement tiré, et à quelle dose ? Un job qui
+# sortirait topk_ranked_plies=0 aurait produit un corpus uniforme sans le dire.
+cat "$W"/gen-s*.log | grep '^EXPLORATION' > "$ART/exploration.txt"
+sum_key(){ awk -v k="$1" '{for(i=1;i<=NF;i++) if ($i ~ "^"k"=") {split($i,a,"="); s+=a[2]}} END {print s+0}' "$ART/exploration.txt"; }
+TOPK_PLIES=$(sum_key topk_ranked_plies)
+EPS_EVENTS=$(sum_key eps_events)
+[ "$TOPK_PLIES" -gt 0 ] || die "no ply ranked — the top-k flag did not fire"
+[ "$EPS_EVENTS" -gt 0 ] || die "no exploration event — eps did not fire"
+say "  génération ✓ : $EPS_EVENTS tirages eps, $TOPK_PLIES plies classées"
 
-phase merge-split-and-fit-both-arms
-for arm in uniform topk3; do
-  pairs=()
-  for shard in $(seq 0 $((SHARDS - 1))); do
-    pairs+=(--pair "$W/$arm-s$shard.jnnw" "$W/$arm-s$shard.jsm")
-  done
-  python3 tools/selfplay_frontier.py merge "${pairs[@]}" --renamespace-nested \
-    --out-data "$W/$arm.raw.jnnw" --out-meta "$W/$arm.raw.jsm" \
-    --manifest "$ART/$arm-merge.json" > "$W/$arm-merge.log" 2>&1
-  python3 tools/selfplay_frontier.py split \
-    --data "$W/$arm.raw.jnnw" --meta "$W/$arm.raw.jsm" \
-    --out-data "$W/$arm.fit.jnnw" --out-meta "$W/$arm.fit.jsm" \
-    --holdout-mod "$HOLDOUT_MOD" --seed "$SPLIT_SEED" \
-    --manifest "$ART/$arm-split.json" > "$W/$arm-split.log" 2>&1
-  env PYTHONPATH="$GEOM:pattern_jass/tools" \
-    python3 jobs/tools/l3_bucket_visits.py --data "$W/$arm.raw.jnnw" \
-    --out "$ART/$arm-coverage.json" > "$W/$arm-coverage.log" 2>&1
-  gzip -n -c "$W/$arm.raw.jnnw" > "$ART/$arm.jnnw.gz"
-  gzip -n -c "$W/$arm.raw.jsm"  > "$ART/$arm.jsm.gz"
+phase merge-split-and-fit
+pairs=()
+for shard in $(seq 0 $((SHARDS - 1))); do
+  pairs+=(--pair "$W/gen-s$shard.jnnw" "$W/gen-s$shard.jsm")
 done
-for arm in uniform topk3; do
-  HOLD=$("$W/venv/bin/python" -c \
-    'import json,sys; print(json.load(open(sys.argv[1]))["holdout_records"])' \
-    "$ART/$arm-split.json")
-  [ "$HOLD" -gt 0 ] || die "$arm holdout missing"
-  "$J" --dump-eval-features "$W/$arm.fit.jnnw" "$W/$arm.feat" \
-    > "$W/$arm-features.log" 2>&1
-  set +e
-  env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
-    timeout "$FIT_TIMEOUT" \
-    "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
-    --data "$W/$arm.fit.jnnw" --feat "$W/$arm.feat" --out "$W/$arm.pjtw" \
-    --target wdl --loss logistic --color-fold --tempo-stage \
-    --warm-start "$W/TURNOVER.pjtw" --holdout-count "$HOLD" \
-    --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
-    --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
-    --optimizer-report "$ART/$arm-optimizer.json" \
-    > "$W/fit-$arm.log" 2>&1
-  FIT_RC=$?
-  set -e
-  [ -s "$W/$arm.pjtw" ] && gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
-  [ "$FIT_RC" -eq 0 ] || die "$arm fit failed rc=$FIT_RC; checkpoint preserved"
-  "$W/venv/bin/python" - "$ART/$arm-optimizer.json" <<'PY' ||
+python3 tools/selfplay_frontier.py merge "${pairs[@]}" --renamespace-nested \
+  --out-data "$W/topk.raw.jnnw" --out-meta "$W/topk.raw.jsm" \
+  --manifest "$ART/merge.json" > "$W/merge.log" 2>&1
+python3 tools/selfplay_frontier.py split \
+  --data "$W/topk.raw.jnnw" --meta "$W/topk.raw.jsm" \
+  --out-data "$W/topk.fit.jnnw" --out-meta "$W/topk.fit.jsm" \
+  --holdout-mod "$HOLDOUT_MOD" --seed "$SPLIT_SEED" \
+  --manifest "$ART/split.json" > "$W/split.log" 2>&1
+env PYTHONPATH="$GEOM:pattern_jass/tools" \
+  python3 jobs/tools/l3_bucket_visits.py --data "$W/topk.raw.jnnw" \
+  --out "$ART/topk-coverage.json" > "$W/coverage.log" 2>&1
+gzip -n -c "$W/topk.raw.jnnw" > "$ART/topk4m.jnnw.gz"
+gzip -n -c "$W/topk.raw.jsm"  > "$ART/topk4m.jsm.gz"
+
+HOLD=$("$W/venv/bin/python" -c \
+  'import json,sys; print(json.load(open(sys.argv[1]))["holdout_records"])' \
+  "$ART/split.json")
+[ "$HOLD" -gt 0 ] || die "holdout missing"
+"$J" --dump-eval-features "$W/topk.fit.jnnw" "$W/topk.feat" \
+  > "$W/features.log" 2>&1
+set +e
+env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
+  timeout "$FIT_TIMEOUT" \
+  "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
+  --data "$W/topk.fit.jnnw" --feat "$W/topk.feat" --out "$W/topk4m.pjtw" \
+  --target wdl --loss logistic --color-fold --tempo-stage \
+  --warm-start "$W/PARENT.pjtw" --holdout-count "$HOLD" \
+  --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
+  --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
+  --optimizer-report "$ART/topk4m-optimizer.json" \
+  > "$W/fit.log" 2>&1
+FIT_RC=$?
+set -e
+# Le checkpoint part AVANT la porte de convergence : un fit non convergé reste
+# une donnée, et le perdre coûterait tout le temps de génération.
+[ -s "$W/topk4m.pjtw" ] && gzip -n -c "$W/topk4m.pjtw" > "$ART/topk4m.pjtw.gz"
+[ "$FIT_RC" -eq 0 ] || die "fit failed rc=$FIT_RC; checkpoint preserved"
+"$W/venv/bin/python" - "$ART/topk4m-optimizer.json" <<'PY' ||
 import json
 import sys
 if not json.load(open(sys.argv[1])).get("success"):
     raise SystemExit(1)
 PY
-    die "$arm optimiser did not converge"
-done
-say "  deux bras fittés et convergés"
+  die "optimiser did not converge"
+say "  fit ✓ convergé"
 
 phase publish-certificate
 "$W/venv/bin/python" - "$W" "$ART" "$EXPECTED_CODE_SHA" "$RECORDS" \
-  "$PLAY_DEPTH" "$EXPLORE_EPS" "$EXPLORE_DECAY" "$TOPK" <<'PY'
+  "$PLAY_DEPTH" "$EXPLORE_EPS" "$EXPLORE_DECAY" "$TOPK" "$MARGIN" \
+  "$PARENT_NAME" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -279,84 +313,99 @@ import sys
 
 w, art = map(pathlib.Path, sys.argv[1:3])
 code_sha = sys.argv[3]
-records, play_depth, eps, decay, topk = (int(x) for x in sys.argv[4:9])
+records, play_depth, eps, decay, topk, margin = (int(x) for x in sys.argv[4:10])
+parent = sys.argv[10]
 
+keys = ("eps_events", "eps_changed_best", "play_plies", "games",
+        "topk_ranked_plies", "margin_singleton_plies")
+counts = {k: 0 for k in keys}
+for line in (art / "exploration.txt").read_text().splitlines():
+    for tok in line.split():
+        k, _, v = tok.partition("=")
+        if k in counts:
+            counts[k] += int(v)
+counts["eps_rate_pct"] = (round(100.0 * counts["eps_events"] / counts["play_plies"], 3)
+                          if counts["play_plies"] else None)
+counts["changed_best_share"] = (round(counts["eps_changed_best"] / counts["eps_events"], 3)
+                                if counts["eps_events"] else None)
+counts["margin_singleton_share"] = (
+    round(counts["margin_singleton_plies"] / counts["topk_ranked_plies"], 3)
+    if counts["topk_ranked_plies"] else None)
 
-def counters(arm):
-    """Somme les compteurs EXPLORATION de tous les shards du bras."""
-    text = (art / f"exploration-{arm}.txt").read_text()
-    keys = ("eps_events", "eps_changed_best", "play_plies",
-            "topk_ranked_plies", "games")
-    out = {k: 0 for k in keys}
-    for line in text.splitlines():
-        for tok in line.split():
-            k, _, v = tok.partition("=")
-            if k in out:
-                out[k] += int(v)
-    out["eps_rate_pct"] = (round(100.0 * out["eps_events"] / out["play_plies"], 3)
-                           if out["play_plies"] else None)
-    out["changed_best_share"] = (round(out["eps_changed_best"] / out["eps_events"], 3)
-                                 if out["eps_events"] else None)
-    return out
-
-
-arms = {}
-for arm in ("uniform", "topk3"):
-    cov = json.load(open(art / f"{arm}-coverage.json"))
-    opt = json.load(open(art / f"{arm}-optimizer.json"))
-    log = (w / f"fit-{arm}.log").read_text(errors="replace")
-    m = re.search(r"HOLDOUT_LOGLOSS[ =:]+([0-9.]+)", log)
-    arms[arm] = {
-        "model_sha256": hashlib.sha256(
-            (w / f"{arm}.pjtw").read_bytes()).hexdigest(),
-        "exploration": counters(arm),
-        "coverage": {
-            "visited_buckets": cov["coverage"]["visited_buckets"],
-            "visited_pct": round(100.0 * cov["coverage"]["coverage_fraction"], 3),
-            "gini": cov["concentration"]["gini"],
-            "buckets_ge_100": cov["coverage"]["buckets_with_at_least"]["ge_100"],
-        },
-        "fit": {"iterations": opt.get("nit"), "converged": opt.get("success"),
-                "holdout_logloss": float(m.group(1)) if m else None},
-    }
+cov = json.load(open(art / "topk-coverage.json"))
+opt = json.load(open(art / "topk4m-optimizer.json"))
+log = (w / "fit.log").read_text(errors="replace")
+m = re.search(r"HOLDOUT_LOGLOSS[ =:]+([0-9.]+)", log)
 
 payload = {
     "schema": 1,
-    "verdict": "L3_PURE_EXPLORE_TOPK_ARMS_READY",
+    "verdict": "L3_PURE_EXPLORE_TOPK_MODEL_READY",
     "code_sha": code_sha,
-    "question": "does exploration noise on plausible moves beat uniform noise",
-    "design": {
-        "single_factor": "explore_topk 0 (uniform) vs 3",
-        "records_per_arm": records, "play_depth": play_depth,
-        "explore_eps": eps, "explore_decay_plies": decay, "topk": topk,
-        "identical_across_arms": ["parent", "seed", "openings", "volume",
-                                  "depth", "L2", "warm start", "split seed"],
-        "declared_deviation": "100% fresh, no replay memory, on BOTH arms — "
-                              "halving the exposure to the factor under test "
-                              "would only make it harder to detect; the cost "
-                              "is that neither arm is directly comparable to "
-                              "TURNOVER, which had memory",
+    "question": "does self-play whose exploration noise lands on plausible "
+                "moves produce a stronger model than the parent",
+    "model": {
+        "name": "TOPK4M",
+        "geometry": "8cf",
+        "parent": f"{parent} (warm start)",
+        "sha256": hashlib.sha256((w / "topk4m.pjtw").read_bytes()).hexdigest(),
     },
-    "arms": arms,
-    "readout_required": "TOPK3 vs UNIFORM, views summed, n=6000 — this job "
-                        "produces models, it does not measure strength",
+    "design": {
+        "single_arm": True,
+        "records": records,
+        "fresh_share_pct": 100.0,
+        "play_depth": play_depth,
+        "explore_eps": eps,
+        "explore_decay_plies": decay,
+        "explore_topk": topk,
+        "explore_margin": margin,
+        "ranking_depth": "play depth (never reduced)",
+    },
+    "exploration": counts,
+    "coverage": {
+        "visited_buckets": cov["coverage"]["visited_buckets"],
+        "visited_pct": round(100.0 * cov["coverage"]["coverage_fraction"], 3),
+        "gini": cov["concentration"]["gini"],
+        "buckets_ge_100": cov["coverage"]["buckets_with_at_least"]["ge_100"],
+    },
+    "fit": {
+        "iterations": opt.get("nit"),
+        "converged": opt.get("success"),
+        "holdout_logloss": float(m.group(1)) if m else None,
+    },
+    "confounds_declared": [
+        "explore-topk + margin instead of uniform noise — the factor under test",
+        f"volume {records} instead of the parent's 2M",
+        "100% fresh, no replay memory — the parent was 50/50",
+    ],
+    "confound_warning": (
+        "This corpus moves on three axes at once, so a gate result will not "
+        "attribute to top-k on its own. home-1008 is the cautionary case: its "
+        "preregistered verdict names the volume axis while changing four "
+        "factors, one of which was a mislabelled third of the corpus."
+    ),
+    "holdout_loss_is_a_diagnostic_not_a_selection_criterion": True,
+    "readout_required": (
+        f"TOPK4M vs {parent}, both views, views summed, n=6000 on a fresh "
+        "opening pool — this job produces a model, it does not measure strength"
+    ),
     "promotion_authorized": False,
     "automatic_next_job": None,
 }
 serialized = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+(art / "topk4m-certificate.json").write_text(serialized)
 (art / "JASS_CONTROL_SUMMARY.json").write_text(serialized)
-(art / "VERDICT__L3_PURE_EXPLORE_TOPK_ARMS_READY").write_text(
-    "L3_PURE_EXPLORE_TOPK_ARMS_READY\n")
+(art / "VERDICT__L3_PURE_EXPLORE_TOPK_MODEL_READY").write_text(
+    "L3_PURE_EXPLORE_TOPK_MODEL_READY\n")
 (art / "PROMOTION_AUTHORIZED__FALSE").write_text("PROMOTION_AUTHORIZED__FALSE\n")
 (art / "AUTOMATIC_NEXT_JOB__NULL").write_text("AUTOMATIC_NEXT_JOB__NULL\n")
 
-for arm, a in arms.items():
-    e, c, f = a["exploration"], a["coverage"], a["fit"]
-    print(f"  {arm:8s} eps={e['eps_rate_pct']}% sur {e['play_plies']} plies, "
-          f"ranked={e['topk_ranked_plies']}, "
-          f"coup changé {e['changed_best_share']}")
-    print(f"           couverture {c['visited_pct']}% gini {c['gini']} "
-          f"| fit {f['iterations']} it, holdout {f['holdout_logloss']}")
+c, cv, f = counts, payload["coverage"], payload["fit"]
+print(f"  eps {c['eps_rate_pct']}% sur {c['play_plies']} plies, "
+      f"{c['games']} parties")
+print(f"  classées {c['topk_ranked_plies']}, singletons de marge "
+      f"{c['margin_singleton_share']}, coup changé {c['changed_best_share']}")
+print(f"  couverture {cv['visited_pct']}% gini {cv['gini']} "
+      f"| fit {f['iterations']} it, holdout {f['holdout_logloss']}")
 PY
 phase complete
-say "L3_PURE_EXPLORE_TOPK_ARMS_READY promotion=false automatic_next_job=null"
+say "L3_PURE_EXPLORE_TOPK_MODEL_READY promotion=false automatic_next_job=null"
