@@ -120,6 +120,20 @@ diagnostics et ne sélectionnent jamais un modèle.
 Le préflight et le fit sont deux jobs distincts. Aucun second job n'est lancé
 automatiquement.
 
+### Portabilité de la pile scientifique
+
+Le fit exige des versions NumPy et SciPy complètes (`x.y.z`) fournies par le
+wrapper. Les deux bras utilisent le même environnement isolé et le certificat
+publie les versions Python, NumPy et SciPy réellement importées. Les valeurs
+par défaut historiques restent NumPy 1.26.4 et SciPy 1.14.1, mais un hôte dont
+la version de Python ne possède plus ces roues doit fournir de nouveaux pins
+explicites compatibles. Il n'existe aucun fallback implicite vers « latest ».
+
+Le SHA du préflight est authentifié séparément du SHA du job de fit. Une
+correction strictement opérationnelle du fit peut ainsi réutiliser un catalogue
+immuable déjà validé, à condition que son job, son attempt, son état, son SHA
+de code et tous ses hashes soient encore vérifiés.
+
 ## 6. Micro-smoke local
 
 Les fixtures locales vérifient :

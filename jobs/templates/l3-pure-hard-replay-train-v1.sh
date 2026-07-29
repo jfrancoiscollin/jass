@@ -11,7 +11,7 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${EXPECTED_JOB_ID:?}"; : "${ENGINE_REFERENCE_SHA:?}"
 : "${PREFLIGHT_PREFIX:?}"; : "${EXPECTED_PREFLIGHT_JOB:?}"
-: "${EXPECTED_PREFLIGHT_ATTEMPT:?}"
+: "${EXPECTED_PREFLIGHT_ATTEMPT:?}"; : "${EXPECTED_PREFLIGHT_CODE_SHA:?}"
 : "${HISTORY_PREFIX:?}"; : "${EXPECTED_HISTORY_JOB:?}"
 : "${EXPECTED_HISTORY_ATTEMPT:?}"; : "${EXPECTED_HISTORY_CODE_SHA:?}"
 : "${EXPECTED_HISTORY_STATE:?}"; : "${HISTORY_DATA_ARTEFACT:?}"
@@ -57,6 +57,8 @@ MAXIT=1000
 LBFGS_MAXCOR=20
 LBFGS_GTOL=1e-3
 CHUNK=20000
+NUMPY_VERSION=${NUMPY_VERSION:-1.26.4}
+SCIPY_VERSION=${SCIPY_VERSION:-1.14.1}
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 MON=""
 
@@ -121,6 +123,10 @@ trap 'exit 130' INT
 [ "$PLAY_DEPTH" -eq 8 ] || die "causal contract requires d8"
 [ "$SPLIT_SEED" -eq 577215 ] || die "split seed drift"
 [ "$HOLDOUT_MOD" -eq 10 ] || die "holdout ratio drift"
+[[ "$NUMPY_VERSION" =~ ^[0-9]+([.][0-9]+){2}$ ]] ||
+  die "NUMPY_VERSION must be an explicit x.y.z pin"
+[[ "$SCIPY_VERSION" =~ ^[0-9]+([.][0-9]+){2}$ ]] ||
+  die "SCIPY_VERSION must be an explicit x.y.z pin"
 [ "$FRESH_POLICY" = uniform ] || [ "$FRESH_POLICY" = topk3 ] ||
   die "FRESH_POLICY must be uniform or topk3"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
@@ -143,7 +149,8 @@ python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
   --out-dir "$IN" --report "$ART/verified-hard-preflight.json" \
   > "$W/fetch-hard-preflight.log" 2>&1
 python3 - "$ART/verified-hard-preflight.json" "$IN/hard-preflight.json" \
-  "$EXPECTED_PREFLIGHT_JOB" "$EXPECTED_PREFLIGHT_ATTEMPT" "$EXPECTED_CODE_SHA" \
+  "$EXPECTED_PREFLIGHT_JOB" "$EXPECTED_PREFLIGHT_ATTEMPT" \
+  "$EXPECTED_PREFLIGHT_CODE_SHA" \
   "$REPLAY_RECORDS" "$EXPECTED_HISTORY_JOB" "$EXPECTED_HISTORY_ATTEMPT" \
   "$EXPECTED_HISTORY_CODE_SHA" "$EXPECTED_HISTORY_STATE" "$HISTORY_ARM" <<'PY'
 import hashlib
@@ -276,7 +283,34 @@ gunzip -c "$IN/PARENT.pjtw.gz" > "$W/PARENT.pjtw"
 phase build-and-tests
 python3 -m venv "$W/venv"
 "$W/venv/bin/python" -m pip install --disable-pip-version-check \
-  --only-binary=:all: numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1
+  --only-binary=:all: "numpy==$NUMPY_VERSION" "scipy==$SCIPY_VERSION" \
+  > "$W/pip.log" 2>&1
+"$W/venv/bin/python" - "$ART/python-science-stack.json" \
+  "$NUMPY_VERSION" "$SCIPY_VERSION" <<'PY'
+import json
+import platform
+import sys
+
+import numpy
+import scipy
+
+expected_numpy, expected_scipy = sys.argv[2:]
+if numpy.__version__ != expected_numpy or scipy.__version__ != expected_scipy:
+    raise SystemExit(
+        "installed science stack differs from explicit pins: "
+        f"numpy={numpy.__version__} scipy={scipy.__version__}"
+    )
+payload = {
+    "schema": 1,
+    "python": platform.python_version(),
+    "numpy": numpy.__version__,
+    "scipy": scipy.__version__,
+    "pins_explicit": True,
+}
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    json.dump(payload, handle, indent=2, sort_keys=True)
+    handle.write("\n")
+PY
 python3 -m py_compile tools/selfplay_frontier.py \
   jobs/tools/l3_hard_replay_assembly.py
 python3 -m unittest jobs.tests.test_selfplay_hard_mining \
@@ -472,6 +506,7 @@ w, art = map(Path, sys.argv[1:3])
 code_sha, parent_name, parent_sha, fresh_policy = sys.argv[3:7]
 fresh_records, replay_records, holdout = map(int, sys.argv[7:10])
 assembly = json.load(open(art / "hard-replay-causal-assembly.json"))
+science_stack = json.load(open(art / "python-science-stack.json"))
 arms = {}
 for arm, name in (("control", "UNIFORM_REPLAY"), ("treatment", "HARD_REPLAY")):
     optimizer = json.load(open(art / f"{arm}-optimizer.json"))
@@ -509,6 +544,7 @@ payload = {
         "same_holdout": True,
     },
     "assembly": assembly,
+    "python_science_stack": science_stack,
     "arms": arms,
     "promotion_authorized": False,
     "automatic_next_job": None,
