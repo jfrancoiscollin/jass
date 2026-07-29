@@ -132,7 +132,9 @@ explicites compatibles. Il n'existe aucun fallback implicite vers « latest ».
 Le SHA du préflight est authentifié séparément du SHA du job de fit. Une
 correction strictement opérationnelle du fit peut ainsi réutiliser un catalogue
 immuable déjà validé, à condition que son job, son attempt, son état, son SHA
-de code et tous ses hashes soient encore vérifiés.
+de code et tous ses hashes soient encore vérifiés. L'assembleur reçoit donc
+deux identités distinctes : `code_sha` pour le code qui assemble et entraîne,
+et `hard_manifest_code_sha` pour authentifier le manifeste miné immuable.
 
 ## 6. Micro-smoke local
 

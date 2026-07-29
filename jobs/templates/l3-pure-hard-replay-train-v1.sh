@@ -447,6 +447,7 @@ python3 jobs/tools/l3_hard_replay_assembly.py \
   --hard-manifest "$IN/hard-mining-manifest.json" \
   --replay-records "$REPLAY_RECORDS" --fresh-records "$FRESH_RECORDS" \
   --uniform-seed "$UNIFORM_REPLAY_SEED" --code-sha "$EXPECTED_CODE_SHA" \
+  --hard-manifest-code-sha "$EXPECTED_PREFLIGHT_CODE_SHA" \
   --out-control-data "$W/control.fit.jnnw" \
   --out-control-meta "$W/control.fit.jsm" \
   --out-treatment-data "$W/treatment.fit.jnnw" \
