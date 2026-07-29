@@ -81,6 +81,7 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
         if root_order_engine is None:
             champion = cv.JassEngine(
                 args.jass,
+                label="candidate",
                 pattern_path=args.pattern,
                 search_params=args.search_params,
             )
@@ -88,11 +89,13 @@ def measure(args: argparse.Namespace) -> dict[str, object]:
             champion = root_order_engine(
                 args.jass,
                 scan_path=args.root_order_scan,
+                label="candidate",
                 pattern_path=args.pattern,
                 search_params=args.search_params,
             )
         defender = cv.JassEngine(
             defender_jass,
+            label="fixed-defender",
             pattern_path=args.defender_pattern,
             search_params=args.defender_search_params,
         )

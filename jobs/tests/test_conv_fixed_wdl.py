@@ -38,12 +38,20 @@ class ConvFixedWdlTests(unittest.TestCase):
         self.assertEqual(fen, "B:W1,5,K10:B20,K30")
 
     def test_measure_records_fingerprints_and_position_outcomes(self) -> None:
-        opened: list[tuple[str, str | None, str | None]] = []
+        opened: list[tuple[str, str | None, str | None, str | None]] = []
         observed_depths: list[dict[str, int | None]] = []
 
         class Engine:
-            def __init__(self, binary, *, pattern_path=None, search_params=None, **_):
-                opened.append((binary, pattern_path, search_params))
+            def __init__(
+                self,
+                binary,
+                *,
+                label=None,
+                pattern_path=None,
+                search_params=None,
+                **_,
+            ):
+                opened.append((binary, label, pattern_path, search_params))
                 self.binary = binary
                 self.default_depth = None
 
@@ -52,7 +60,7 @@ class ConvFixedWdlTests(unittest.TestCase):
 
         class Referee:
             def __init__(self, binary):
-                opened.append((binary, None, None))
+                opened.append((binary, "referee", None, None))
 
             def close(self):
                 pass
@@ -101,9 +109,14 @@ class ConvFixedWdlTests(unittest.TestCase):
             self.assertEqual(
                 opened[:3],
                 [
-                    ("jass-8cf", "a.pjtw", "full-candidate"),
-                    ("jass-32cf", "gen2.pjtw", "full-defender"),
-                    ("jass-8cf", None, None),
+                    ("jass-8cf", "candidate", "a.pjtw", "full-candidate"),
+                    (
+                        "jass-32cf",
+                        "fixed-defender",
+                        "gen2.pjtw",
+                        "full-defender",
+                    ),
+                    ("jass-8cf", "referee", None, None),
                 ],
             )
             self.assertEqual(report["defender_jass"], "jass-32cf")
