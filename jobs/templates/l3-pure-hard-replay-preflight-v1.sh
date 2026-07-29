@@ -10,8 +10,9 @@ set -Eeuo pipefail
 : "${EXPECTED_HISTORY_ATTEMPT:?}"; : "${EXPECTED_HISTORY_CODE_SHA:?}"
 : "${EXPECTED_HISTORY_STATE:?}"; : "${HISTORY_DATA_ARTEFACT:?}"
 : "${HISTORY_META_ARTEFACT:?}"; : "${HISTORY_SPLIT_ARTEFACT:?}"
-: "${HISTORY_DATA_GZ_SHA:?}"; : "${HISTORY_META_GZ_SHA:?}"
-: "${HISTORY_DATA_SHA:?}"; : "${HISTORY_META_SHA:?}"
+: "${HISTORY_AUTH_PREFIX:?}"; : "${EXPECTED_HISTORY_AUTH_JOB:?}"
+: "${EXPECTED_HISTORY_AUTH_ATTEMPT:?}"; : "${EXPECTED_HISTORY_AUTH_CODE_SHA:?}"
+: "${HISTORY_ARM:?}"
 
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"
@@ -85,6 +86,12 @@ trap 'exit 130' INT
   die "need 12 GiB free"
 monitor
 
+phase fetch-history-catalogue
+python3 jobs/tools/fetch_result_files.py --prefix "$HISTORY_AUTH_PREFIX" \
+  --file artefacts/JASS_CONTROL_SUMMARY.json=history-auth.json \
+  --out-dir "$IN" --report "$ART/verified-history-auth.json" \
+  > "$W/fetch-history-auth.log" 2>&1
+
 phase fetch-and-authenticate-history
 python3 jobs/tools/fetch_result_files.py --prefix "$HISTORY_PREFIX" \
   --expected-state "$EXPECTED_HISTORY_STATE" \
@@ -95,9 +102,22 @@ python3 jobs/tools/fetch_result_files.py --prefix "$HISTORY_PREFIX" \
   > "$W/fetch-history.log" 2>&1
 python3 - "$ART/verified-history-source.json" "$EXPECTED_HISTORY_JOB" \
   "$EXPECTED_HISTORY_ATTEMPT" "$EXPECTED_HISTORY_CODE_SHA" \
-  "$EXPECTED_HISTORY_STATE" "$HISTORY_DATA_GZ_SHA" "$HISTORY_META_GZ_SHA" <<'PY'
+  "$EXPECTED_HISTORY_STATE" "$ART/verified-history-auth.json" \
+  "$IN/history-auth.json" "$EXPECTED_HISTORY_AUTH_JOB" \
+  "$EXPECTED_HISTORY_AUTH_ATTEMPT" "$EXPECTED_HISTORY_AUTH_CODE_SHA" \
+  "$HISTORY_ARM" "$IN/history.jnnw.gz" "$IN/history.jsm.gz" \
+  "$IN/source-split.json" <<'PY'
+import hashlib
 import json
 import sys
+
+def digest(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
 report = json.load(open(sys.argv[1]))
 if (
     report.get("job_id") != sys.argv[2]
@@ -106,21 +126,54 @@ if (
     or report.get("result_state") != sys.argv[5]
 ):
     raise SystemExit("historical source identity/state mismatch")
+
+auth_report = json.load(open(sys.argv[6]))
+auth = json.load(open(sys.argv[7]))
+if (
+    auth_report.get("job_id") != sys.argv[8]
+    or auth_report.get("attempt_id") != sys.argv[9]
+    or auth_report.get("code_sha") != sys.argv[10]
+    or auth_report.get("result_state") != "completed"
+    or auth.get("verdict") != "L3_PURE_TOPK_1017_FIT_INPUTS_AUTHENTICATED"
+    or auth.get("source_job") != sys.argv[2]
+    or auth.get("source_attempt") != sys.argv[3]
+    or auth.get("source_code_sha") != sys.argv[4]
+    or auth.get("promotion") is not False
+    or auth.get("automatic_next_job") is not None
+):
+    raise SystemExit("historical catalogue certificate mismatch")
+
+arm_name = sys.argv[11]
+arm = auth.get("arms", {}).get(arm_name)
+if not isinstance(arm, dict) or arm.get("records") != 2_000_000:
+    raise SystemExit(f"historical catalogue arm mismatch: {arm_name}")
 expected = {
-    "history.jnnw.gz": sys.argv[6],
-    "history.jsm.gz": sys.argv[7],
+    "history.jnnw.gz": arm.get("data_gz_sha256"),
+    "history.jsm.gz": arm.get("meta_gz_sha256"),
 }
 actual = {row["local_name"]: row["sha256"] for row in report["files"]}
-for name, digest in expected.items():
-    if actual.get(name) != digest:
+for name, expected_digest in expected.items():
+    if actual.get(name) != expected_digest:
         raise SystemExit(f"historical compressed hash mismatch for {name}")
+if digest(sys.argv[12]) != expected["history.jnnw.gz"]:
+    raise SystemExit("downloaded historical JNNW gzip hash mismatch")
+if digest(sys.argv[13]) != expected["history.jsm.gz"]:
+    raise SystemExit("downloaded historical JSM1 gzip hash mismatch")
+if json.load(open(sys.argv[14])) != arm.get("split"):
+    raise SystemExit("historical source split differs from catalogue")
 PY
 gunzip -c "$IN/history.jnnw.gz" > "$W/history.raw.jnnw"
 gunzip -c "$IN/history.jsm.gz" > "$W/history.raw.jsm"
-[ "$(sha256sum "$W/history.raw.jnnw" | awk '{print $1}')" = "$HISTORY_DATA_SHA" ] ||
-  die "historical JNNW hash drift"
-[ "$(sha256sum "$W/history.raw.jsm" | awk '{print $1}')" = "$HISTORY_META_SHA" ] ||
-  die "historical JSM1 hash drift"
+HISTORY_DATA_SHA=$(sha256sum "$W/history.raw.jnnw" | awk '{print $1}')
+HISTORY_META_SHA=$(sha256sum "$W/history.raw.jsm" | awk '{print $1}')
+export HISTORY_DATA_SHA HISTORY_META_SHA
+python3 - "$IN/history-auth.json" "$HISTORY_ARM" "$HISTORY_DATA_SHA" <<'PY'
+import json
+import sys
+arm = json.load(open(sys.argv[1]))["arms"][sys.argv[2]]
+if arm.get("data_raw_sha256") != sys.argv[3]:
+    raise SystemExit("historical raw JNNW hash differs from catalogue")
+PY
 python3 jobs/tools/assert_corpus_wdl.py --data "$W/history.raw.jnnw" \
   --out "$ART/history-corpus-wdl.json" > "$W/history-wdl.log" 2>&1 ||
   die "historical WDL canary failed"
@@ -165,57 +218,82 @@ cmp -s "$W/hard-replay-a.jsm" "$W/hard-replay-b.jsm" ||
   die "hard replay metadata is not bit deterministic"
 cmp -s "$W/hard-seeds-a.jnnw" "$W/hard-seeds-b.jnnw" ||
   die "hard seeds are not bit deterministic"
-python3 - "$W/hard-replay-a.jnnw" "$ART/hard-mining-a.json" \
-  "$REPLAY_RECORDS" <<'PY'
+SELECTED_RECORDS=$(python3 - "$W/hard-replay-a.jnnw" \
+  "$ART/hard-mining-a.json" <<'PY'
 import json
 import struct
 import sys
-path, manifest_path, expected = sys.argv[1], sys.argv[2], int(sys.argv[3])
+path, manifest_path = sys.argv[1], sys.argv[2]
 with open(path, "rb") as stream:
     head = stream.read(8)
 if len(head) != 8 or head[:4] != b"JNNW":
     raise SystemExit("invalid hard replay header")
 count = struct.unpack_from("<I", head, 4)[0]
 manifest = json.load(open(manifest_path))
-if count != expected or manifest["selection"]["output_records"] != expected:
-    raise SystemExit(
-        f"insufficient hard replay capacity: selected={count} required={expected}"
-    )
+if count != manifest["selection"]["output_records"]:
+    raise SystemExit("hard replay count differs from mining manifest")
+print(count)
 PY
+)
+export SELECTED_RECORDS
+say "  hard replay capacity: selected=$SELECTED_RECORDS required=$REPLAY_RECORDS"
 
 phase publish-catalogue-and-certificate
 gzip -n -c "$W/hard-replay-a.jnnw" > "$ART/hard-replay.jnnw.gz"
 gzip -n -c "$W/hard-replay-a.jsm" > "$ART/hard-replay.jsm.gz"
 gzip -n -c "$W/hard-seeds-a.jnnw" > "$ART/hard-seeds.jnnw.gz"
 cp "$ART/hard-mining-a.json" "$ART/hard-mining-manifest.json"
-python3 - "$ART" "$EXPECTED_CODE_SHA" "$EXPECTED_HISTORY_JOB" \
-  "$EXPECTED_HISTORY_ATTEMPT" "$HISTORY_DATA_SHA" "$HISTORY_META_SHA" \
-  "$REPLAY_RECORDS" "$MINING_SEED" <<'PY'
+python3 - "$ART" "$IN/history-auth.json" "$IN/history.jnnw.gz" \
+  "$IN/history.jsm.gz" "$REPLAY_RECORDS" "$SELECTED_RECORDS" \
+  "$MINING_SEED" <<'PY'
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
-art = Path(sys.argv[1])
-code_sha, source_job, source_attempt, data_sha, meta_sha = sys.argv[2:7]
-records, seed = map(int, sys.argv[7:9])
+art, auth_path, data_gz, meta_gz = map(Path, sys.argv[1:5])
+required, selected, seed = map(int, sys.argv[5:8])
+ready = selected == required
+verdict = (
+    "L3_PURE_HARD_REPLAY_CATALOGUE_READY"
+    if ready
+    else "L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT"
+)
+auth = json.load(open(auth_path))
+arm_name = os.environ["HISTORY_ARM"]
+auth_arm = auth["arms"][arm_name]
 mining = json.load(open(art / "hard-mining-manifest.json"))
 split = json.load(open(art / "history-split.json"))
 payload = {
     "schema": 1,
-    "verdict": "L3_PURE_HARD_REPLAY_CATALOGUE_READY",
-    "code_sha": code_sha,
+    "verdict": verdict,
+    "code_sha": os.environ["EXPECTED_CODE_SHA"],
     "source": {
-        "job_id": source_job,
-        "attempt_id": source_attempt,
-        "data_sha256": data_sha,
-        "meta_sha256": meta_sha,
+        "job_id": os.environ["EXPECTED_HISTORY_JOB"],
+        "attempt_id": os.environ["EXPECTED_HISTORY_ATTEMPT"],
+        "code_sha": os.environ["EXPECTED_HISTORY_CODE_SHA"],
+        "state": os.environ["EXPECTED_HISTORY_STATE"],
+        "arm": arm_name,
+        "catalogue_job": os.environ["EXPECTED_HISTORY_AUTH_JOB"],
+        "catalogue_attempt": os.environ["EXPECTED_HISTORY_AUTH_ATTEMPT"],
+        "catalogue_code_sha": os.environ["EXPECTED_HISTORY_AUTH_CODE_SHA"],
+        "data_gz_sha256": hashlib.sha256(data_gz.read_bytes()).hexdigest(),
+        "meta_gz_sha256": hashlib.sha256(meta_gz.read_bytes()).hexdigest(),
+        "data_sha256": os.environ["HISTORY_DATA_SHA"],
+        "meta_sha256": os.environ["HISTORY_META_SHA"],
+        "catalogued_data_sha256": auth_arm["data_raw_sha256"],
+        "split_sha256": hashlib.sha256(
+            (art / "history-split.json").read_bytes()
+        ).hexdigest(),
         "split": split,
     },
     "selection": {
         "signal": "failed_conversion",
         "seed": seed,
-        "records": records,
+        "records": selected,
+        "required_records": required,
+        "capacity_sufficient": ready,
         "manifest": mining,
     },
     "outputs": {
@@ -226,7 +304,7 @@ payload = {
             "hard-seeds.jnnw.gz",
         )
     },
-    "training_authorized": True,
+    "training_authorized": ready,
     "promotion_authorized": False,
     "automatic_next_job": None,
     "external_teacher_inputs": 0,
@@ -234,13 +312,15 @@ payload = {
 (art / "JASS_CONTROL_SUMMARY.json").write_text(
     json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
 )
-(art / "VERDICT__L3_PURE_HARD_REPLAY_CATALOGUE_READY").touch()
+(art / f"VERDICT__{verdict}").touch()
 (art / "PROMOTION_AUTHORIZED__FALSE").touch()
 (art / "AUTOMATIC_NEXT_JOB__NULL").touch()
 print(
-    f"  hard replay catalogue: records={records} "
+    f"  hard replay catalogue: verdict={verdict} selected={selected} "
+    f"required={required} "
     f"candidates={mining['candidates']['signal_records']}"
 )
 PY
 phase complete
-say "L3_PURE_HARD_REPLAY_CATALOGUE_READY promotion=false automatic_next_job=null"
+VERDICT=$(ls "$ART" | sed -n 's/^VERDICT__//p' | head -1)
+say "$VERDICT promotion=false automatic_next_job=null"

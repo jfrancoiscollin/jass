@@ -16,10 +16,12 @@ class HardReplayPreflightTemplateTests(unittest.TestCase):
         self.assertIn('--expected-state "$EXPECTED_HISTORY_STATE"', self.text)
         self.assertIn('"$EXPECTED_HISTORY_ATTEMPT"', self.text)
         self.assertIn('"$EXPECTED_HISTORY_CODE_SHA"', self.text)
-        self.assertIn('"$HISTORY_DATA_GZ_SHA"', self.text)
-        self.assertIn('"$HISTORY_META_GZ_SHA"', self.text)
-        self.assertIn('"$HISTORY_DATA_SHA"', self.text)
-        self.assertIn('"$HISTORY_META_SHA"', self.text)
+        self.assertIn('"$HISTORY_AUTH_PREFIX"', self.text)
+        self.assertIn('"$EXPECTED_HISTORY_AUTH_ATTEMPT"', self.text)
+        self.assertIn('"$EXPECTED_HISTORY_AUTH_CODE_SHA"', self.text)
+        self.assertIn('"$HISTORY_ARM"', self.text)
+        self.assertIn("historical catalogue certificate mismatch", self.text)
+        self.assertIn("historical raw JNNW hash differs from catalogue", self.text)
         self.assertLess(
             self.text.index("phase reproduce-historical-split"),
             self.text.index("phase mine-hard-replay-twice"),
@@ -36,7 +38,9 @@ class HardReplayPreflightTemplateTests(unittest.TestCase):
         self.assertIn("mine_once a", self.text)
         self.assertIn("mine_once b", self.text)
         self.assertIn("hard replay is not bit deterministic", self.text)
-        self.assertIn("insufficient hard replay capacity", self.text)
+        self.assertIn("L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT", self.text)
+        self.assertIn('"capacity_sufficient": ready', self.text)
+        self.assertIn('"training_authorized": ready', self.text)
         self.assertIn('REPLAY_RECORDS=${REPLAY_RECORDS:-1000000}', self.text)
 
     def test_has_runtime_and_non_promotion_guards(self):
