@@ -27,6 +27,7 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
         for token in (
             "EXPECTED_PREFLIGHT_JOB",
             "EXPECTED_PREFLIGHT_ATTEMPT",
+            "EXPECTED_PREFLIGHT_CODE_SHA",
             "EXPECTED_HISTORY_JOB",
             "EXPECTED_HISTORY_ATTEMPT",
             "EXPECTED_HISTORY_CODE_SHA",
@@ -44,6 +45,19 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
             "historical raw JNNW hash differs from preflight certificate",
             self.text,
         )
+        self.assertIn(
+            'summary.get("code_sha") != code_sha',
+            self.text,
+        )
+
+    def test_science_stack_is_explicitly_pinned_and_certified(self):
+        self.assertIn("NUMPY_VERSION=${NUMPY_VERSION:-1.26.4}", self.text)
+        self.assertIn("SCIPY_VERSION=${SCIPY_VERSION:-1.14.1}", self.text)
+        self.assertIn('"numpy==$NUMPY_VERSION"', self.text)
+        self.assertIn('"scipy==$SCIPY_VERSION"', self.text)
+        self.assertIn("python-science-stack.json", self.text)
+        self.assertIn('"pins_explicit": True', self.text)
+        self.assertIn('"python_science_stack": science_stack', self.text)
 
     def test_generates_fresh_once_and_checks_policy_counters(self):
         self.assertIn('phase generate-common-fresh', self.text)
