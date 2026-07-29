@@ -24,6 +24,12 @@ Il épingle :
   `L3_PURE_TOPK_1017_FIT_INPUTS_AUTHENTICATED` ;
 - dose hard exacte de 1 000 000, sans réduction post-hoc.
 
+Résultat terminal : `home-1042` publie
+`L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`. La capacité authentifiée est
+58 908 records (29 454 positions canoniques miroirées) pour 1 000 000 requis.
+Le mining est déterministe, mais `training_authorized=false` : le template de
+fit reste préparé et **ne doit pas être instancié** avec ce certificat.
+
 Ordre obligatoire :
 
 ```text

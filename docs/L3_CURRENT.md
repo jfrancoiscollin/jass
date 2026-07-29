@@ -461,6 +461,18 @@ distinct : `home-1042` est uniquement le préflight du catalogue hard-replay.
 Il doit publier exactement 1 M de records déterministes avant d'autoriser un
 fit ; aucune réduction post-hoc de dose ni continuation automatique.
 
+`home-1042` termine avec
+**`L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`**. Le corpus UNIFORM de 2 M
+contient 325 233 records signal, mais `one-per-game` ramène la capacité à
+30 205 parties, la déduplication à 29 454 positions et le miroir couleur à
+**58 908 records**. Le mining répété est bit-identique ; ce n'est pas une
+panne. `training_authorized=false` et aucun fit n'est lancé. À rendement
+constant, la dose de 1 M demanderait environ 34 M records historiques
+comparables. Une réouverture doit donc préenregistrer une source post-correctif
+plus large ou un DOE de dose distinct, sans mélange pré-correctif ni réduction
+post-hoc. Détails :
+[`experiments/L3_HARD_REPLAY_PREFLIGHT_20260729.md`](experiments/L3_HARD_REPLAY_PREFLIGHT_20260729.md).
+
 ### Spécialiste `L3-IMBALANCE2`
 
 1. ne pas prolonger 0890bis ;

@@ -361,6 +361,14 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   `TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE`; **TURNOVER reste
   champion**. Le protocole signal passe donc au préflight hard-replay
   UNIFORM, un seul facteur causal.
+- **Le hard-replay 1 M est fermé par capacité (`home-1042`) :** sur les 2 M
+  records UNIFORM authentifiés, 325 233 portent le signal
+  `failed_conversion`, mais il ne reste que 29 454 positions canoniques après
+  `one-per-game` et déduplication, soit **58 908 records** avec miroir couleur.
+  La dose préenregistrée de 1 M n'est donc pas disponible :
+  `L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`,
+  `training_authorized=false`. Aucun fit n'est lancé et la dose n'est pas
+  réduite post-hoc.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),

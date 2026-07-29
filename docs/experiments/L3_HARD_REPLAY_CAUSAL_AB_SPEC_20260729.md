@@ -47,6 +47,16 @@ le préflight avec le verdict terminal
 `training_authorized=false`. Elle n'autorise ni une réduction post-hoc de la
 dose, ni le lancement du fit.
 
+### Résultat du premier préflight
+
+`home-1042` authentifie le bras UNIFORM de `home-1017` et mesure seulement
+58 908 records disponibles après `one-per-game`, déduplication canonique et
+miroir couleur (29 454 positions de base), contre 1 000 000 requis. Verdict :
+`L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`,
+`training_authorized=false`. Le DOE décrit ci-dessous n'a donc pas été lancé.
+Une source plus large ou un nouveau DOE de dose exigent un préenregistrement
+séparé ; ce document n'autorise pas à abaisser la dose après observation.
+
 ## 3. Bras causal
 
 | Paramètre | CONTROL | TREATMENT |
