@@ -7,13 +7,22 @@ Cette série implémente la PR 2 du mémo signal :
 2. `l3-pure-hard-replay-train-v1.sh` génère un million frais commun, assemble
    `UNIFORM_REPLAY` et `HARD_REPLAY`, puis fitte les deux bras.
 
-Les wrappers numérotés ne sont volontairement pas figés ici. Ils seront créés
-après le verdict terminal du gate TOPK3 afin d'authentifier :
+Le gate terminal `home-1040` rejette TOPK3 (`0,47205`, `-19,44 Elo` contre
+TURNOVER sur 10 000 parties). TURNOVER reste donc parent et le bras historique
+admissible est `UNIFORM`. Le premier wrapper concret est :
 
-- le parent effectivement baké ;
-- le SHA de code fusionné ;
-- le préfixe, la tentative et le certificat amont du corpus historique retenu ;
-- un identifiant HOME encore libre et non dupliqué.
+```text
+home-1042-l3-pure-hard-replay-preflight-uniform-v1
+```
+
+Il épingle :
+
+- code `9ba51abe2c03cc9b157229f05c05c50bb289468f` ;
+- source `home-1017`, tentative `20260728T123640Z-9e404854`, état `failed`
+  mais corpus UNIFORM complet ;
+- certificat `home-1021`, verdict
+  `L3_PURE_TOPK_1017_FIT_INPUTS_AUTHENTICATED` ;
+- dose hard exacte de 1 000 000, sans réduction post-hoc.
 
 Ordre obligatoire :
 
@@ -28,4 +37,6 @@ TOPK3 succession terminale
 
 Les deux templates exigent `FULL_RUN_APPROVED=1`, `SCIENTIFIC_GO=1` et
 `NO_AUTOMATIC_CONTINUATION=1`. Ils publient `promotion=false` et
-`automatic_next_job=null`. Aucun job n'est queué par ce répertoire.
+`automatic_next_job=null`. `home-1042` est data-only : aucun fit ne sera lancé
+si son certificat ne publie pas
+`L3_PURE_HARD_REPLAY_CATALOGUE_READY` avec `training_authorized=true`.

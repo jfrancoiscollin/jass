@@ -435,6 +435,32 @@ l’architecture linéaire ni au principe d’autojeu WDL.
     aucun champion n'est baké, et le parent du self-play top-k reste
     **TURNOVER**.
 
+### Porte de promotion TOPK3 close — TURNOVER conservé
+
+`home-1040-l3-pure-topk3-promotion-gate-v5` est le replay autoritatif complet
+du gate TOPK3. Sur 10 000 parties primaires fraîches et appariées, TOPK3 fait
+`4496-449-5055`, soit `0,47205` et `-19,44 Elo` contre TURNOVER. Les deux vues
+régressent séparément : Q00 `0,4716` (`-19,76 Elo`, IC90
+`[0,460240 ; 0,482960]`) et natif `0,4725` (`-19,13 Elo`, IC90
+`[0,461164 ; 0,483836]`).
+
+TOPK3 conserve la parité externe contre Gen2 (`0,578667`, `+55,12 Elo`),
+mais reste en dessous de TURNOVER sur la même garde (`0,597667`,
+`+68,75 Elo`). La conversion corrigée vaut `0,763333` sur P3 pour les deux
+bras et `0,743333` contre `0,760000` sur P4. Le verdict scellé est
+`TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE` : **TOPK3 n'est pas baké,
+TURNOVER reste champion**.
+
+Les runs `1028`, `1033`, `1036` et `1037` n'ont aucune valeur de verdict :
+le premier a échoué sur le défenseur de conversion pré-correctif, les trois
+autres avant science. Détails et artefact autoritatif :
+[`experiments/L3_TOPK3_PROMOTION_GATE_20260729.md`](experiments/L3_TOPK3_PROMOTION_GATE_20260729.md).
+
+La suite « qualité du signal » utilise donc le protocole TURNOVER/UNIFORM
+distinct : `home-1042` est uniquement le préflight du catalogue hard-replay.
+Il doit publier exactement 1 M de records déterministes avant d'autoriser un
+fit ; aucune réduction post-hoc de dose ni continuation automatique.
+
 ### Spécialiste `L3-IMBALANCE2`
 
 1. ne pas prolonger 0890bis ;

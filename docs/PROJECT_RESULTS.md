@@ -351,6 +351,16 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   puissance, pas faute de signal. **Aucune promotion n'est autorisée** : une
   succession de champion exige une revue humaine et les cellules non jouées ici
   (garde Gen2, conversion P3/P4, couverture, pool supplémentaire).
+- **TOPK3 ne remplace pas TURNOVER (`home-1040`) :** sur le gate complet,
+  frais et disjoint, TOPK3 fait `4496-449-5055` sur 10 000 parties, soit
+  `47,205 %` et `-19,44 Elo`. Q00 (`47,16 %`) et natif (`47,25 %`) régressent
+  séparément à IC90. TOPK3 reste supérieur à Gen2 (`57,8667 %`, `+55,12 Elo`)
+  mais moins que TURNOVER sur cette garde (`59,7667 %`, `+68,75 Elo`).
+  Conversion corrigée : P3 `0,763333`/`0,763333`, P4
+  `0,743333`/`0,760000` (TOPK3/TURNOVER). Verdict :
+  `TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE`; **TURNOVER reste
+  champion**. Le protocole signal passe donc au préflight hard-replay
+  UNIFORM, un seul facteur causal.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
