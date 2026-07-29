@@ -82,7 +82,7 @@ def _verify_hard_manifest(
     history_split: Path,
     hard_data: Path,
     hard_meta: Path,
-    code_sha: str,
+    manifest_code_sha: str,
     replay_records: int,
 ) -> None:
     outputs = manifest.get("outputs", {})
@@ -95,7 +95,7 @@ def _verify_hard_manifest(
         or manifest.get("external_teacher_inputs") != 0
         or manifest.get("one_per_game") is not True
         or manifest.get("colour_mirror") is not True
-        or manifest.get("code_sha") != code_sha
+        or manifest.get("code_sha") != manifest_code_sha
         or manifest.get("max_records_including_colour_mirrors") != replay_records
         or manifest.get("selection", {}).get("output_records") != replay_records
         or manifest.get("input", {}).get("data_sha256") != _sha256(history_data)
@@ -113,6 +113,10 @@ def _verify_hard_manifest(
 def assemble(args: argparse.Namespace) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", args.code_sha):
         raise ValueError("--code-sha must be a full lowercase 40-hex commit SHA")
+    if not re.fullmatch(r"[0-9a-f]{40}", args.hard_manifest_code_sha):
+        raise ValueError(
+            "--hard-manifest-code-sha must be a full lowercase 40-hex commit SHA"
+        )
     if args.replay_records < 2 or args.replay_records % 2:
         raise ValueError("--replay-records must be an even integer >= 2")
     if args.fresh_records < 2:
@@ -188,7 +192,7 @@ def assemble(args: argparse.Namespace) -> dict:
         history_split=paths["history_split"],
         hard_data=paths["hard_data"],
         hard_meta=paths["hard_meta"],
-        code_sha=args.code_sha,
+        manifest_code_sha=args.hard_manifest_code_sha,
         replay_records=args.replay_records,
     )
 
@@ -333,6 +337,7 @@ def assemble(args: argparse.Namespace) -> dict:
             "sampled_games": len({row.game_id for row in hard_rows}),
             "sampled_openings": len({row.opening_id for row in hard_rows}),
             "hard_manifest_sha256": _sha256(paths["hard_manifest"]),
+            "hard_manifest_code_sha": args.hard_manifest_code_sha,
             "hard_manifest": hard_manifest,
             "wdl_canary": treatment_wdl,
             "data_sha256": _sha256(paths["treatment_data"]),
@@ -376,6 +381,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fresh-records", type=int, required=True)
     parser.add_argument("--uniform-seed", type=int, required=True)
     parser.add_argument("--code-sha", required=True)
+    parser.add_argument("--hard-manifest-code-sha", required=True)
     parser.add_argument("--out-control-data", required=True)
     parser.add_argument("--out-control-meta", required=True)
     parser.add_argument("--out-treatment-data", required=True)

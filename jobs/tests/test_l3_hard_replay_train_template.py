@@ -42,6 +42,10 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
         )
         self.assertIn("hard replay preflight certificate mismatch", self.text)
         self.assertIn(
+            '--hard-manifest-code-sha "$EXPECTED_PREFLIGHT_CODE_SHA"',
+            self.text,
+        )
+        self.assertIn(
             "historical raw JNNW hash differs from preflight certificate",
             self.text,
         )

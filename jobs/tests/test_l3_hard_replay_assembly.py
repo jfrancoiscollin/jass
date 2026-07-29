@@ -151,6 +151,7 @@ class HardReplayAssemblyTests(unittest.TestCase):
             fresh_records=24,
             uniform_seed=314159,
             code_sha=self.fixture["code_sha"],
+            hard_manifest_code_sha=self.fixture["code_sha"],
             out_control_data=str(root / f"control{suffix}.jnnw"),
             out_control_meta=str(root / f"control{suffix}.jsm"),
             out_treatment_data=str(root / f"treatment{suffix}.jnnw"),
@@ -218,8 +219,33 @@ class HardReplayAssemblyTests(unittest.TestCase):
             self.assertFalse(first["promotion_authorized"])
             self.assertIsNone(first["automatic_next_job"])
             self.assertEqual(
+                first["treatment"]["hard_manifest_code_sha"],
+                self.fixture["code_sha"],
+            )
+            self.assertEqual(
                 first["common_holdout"], second["common_holdout"]
             )
+
+    def test_authenticates_manifest_sha_independently_from_fit_sha(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = self._prepare(root)
+            args = self._args(root, inputs, "-separate-sha")
+            args.code_sha = "2" * 40
+
+            result = assembly.assemble(args)
+
+            self.assertEqual(result["code_sha"], "2" * 40)
+            self.assertEqual(
+                result["treatment"]["hard_manifest_code_sha"],
+                self.fixture["code_sha"],
+            )
+
+            inputs = self._prepare(root / "wrong-manifest-sha")
+            args = self._args(root / "wrong-manifest-sha", inputs, "-bad-sha")
+            args.hard_manifest_code_sha = "3" * 40
+            with self.assertRaisesRegex(ValueError, "certificate mismatch"):
+                assembly.assemble(args)
 
     def test_fails_closed_on_hard_manifest_drift_and_existing_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
