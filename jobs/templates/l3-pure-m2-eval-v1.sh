@@ -56,7 +56,7 @@ P3_GAUGE_SHA="cd92710fec7934d113ccade22180d4cddf029b084dd20c8fa9e30ca686767c91"
 P4_GAUGE_SHA="0d925c4fbd7e7928bf6d86bd2cd40f796ee6805e0010e51d5d6483986da2a1ac"
 MATRIX_CODE_SHA="eacd90ab02b26f0619438ff1f65527d250d3c629"
 CHAMPION_CODE_SHA="0c1e04a9574fcd87977f62fe5bd6d71c60c72265"
-FIXED_DEFENDER_CODE_SHA="038a2001854f2805bc0045acd56c617826e5ff15"
+FIXED_DEFENDER_CODE_SHA="9c1d1e8eaaa5b9bbd86105f7f9807a3033784186"
 D8_M2_SHA="75ace3c0ad2ffa2b71a9b9073c3c1d1545164e3a5a048e411e91adba23ec3b45"
 D8_M2_CORPUS_SHA="ee8d685cea331940403da82830d7b4cc045fe50acc1e5764d23f0467d4f7ffb8"
 D10_SHA="18930613234b4a1a6a933393151a05dd68f71d1af749f058f37c5778bd77960f"
@@ -586,6 +586,8 @@ cmake -S . -B "$W/build32" $FLAGS > "$W/cmake32.log" 2>&1
 cmake --build "$W/build32" -j4 --target jass > "$W/build32.log" 2>&1
 mkdir -p "$W/fixed-defender-code"
 git archive "$FIXED_DEFENDER_CODE_SHA" | tar -x -C "$W/fixed-defender-code"
+grep -q "root_is_drawn" "$W/fixed-defender-code/src/search.cpp" ||
+  die "fixed defender predates drawn-root repair"
 (cd "$W/fixed-defender-code" &&
   python3 pattern_jass/tools/gen_patterns.py --emit --variant v4) \
   > "$W/gen32fixed.log" 2>&1
