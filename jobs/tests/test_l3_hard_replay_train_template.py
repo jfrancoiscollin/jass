@@ -30,10 +30,7 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
             "EXPECTED_HISTORY_JOB",
             "EXPECTED_HISTORY_ATTEMPT",
             "EXPECTED_HISTORY_CODE_SHA",
-            "HISTORY_DATA_GZ_SHA",
-            "HISTORY_META_GZ_SHA",
-            "HISTORY_DATA_SHA",
-            "HISTORY_META_SHA",
+            "HISTORY_ARM",
             "EXPECTED_PARENT_JOB",
             "PARENT_MODEL_SHA",
         ):
@@ -43,6 +40,10 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
             self.text,
         )
         self.assertIn("hard replay preflight certificate mismatch", self.text)
+        self.assertIn(
+            "historical raw JNNW hash differs from preflight certificate",
+            self.text,
+        )
 
     def test_generates_fresh_once_and_checks_policy_counters(self):
         self.assertIn('phase generate-common-fresh', self.text)

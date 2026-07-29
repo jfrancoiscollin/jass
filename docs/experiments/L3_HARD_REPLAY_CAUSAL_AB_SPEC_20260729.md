@@ -30,13 +30,22 @@ Le catalogue historique est immuable et authentifié par :
 - canari WDL valide ;
 - split par `opening_id` reproductible bit à bit.
 
+Le préflight ne reçoit pas de hashes bruts recopiés à la main. Il authentifie
+d'abord le certificat de catalogue amont, vérifie les hashes compressés des
+artefacts téléchargés, recalcule les hashes bruts et les inscrit dans son
+propre certificat. Le job de fit réauthentifie ensuite la même source contre
+ce certificat de préflight.
+
 Le split historique est construit avant le mining. Le mineur voit uniquement
 le préfixe train ; le holdout historique est exclu des deux bras et ne
 participe ni au signal, ni aux quotas, ni au fit.
 
 La dose complète exige exactement 1 000 000 de records hard après
 one-per-game, déduplication canonique et miroirs. Une capacité inférieure ferme
-le préflight. Elle n'autorise pas une réduction post-hoc de la dose.
+le préflight avec le verdict terminal
+`L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT` et
+`training_authorized=false`. Elle n'autorise ni une réduction post-hoc de la
+dose, ni le lancement du fit.
 
 ## 3. Bras causal
 

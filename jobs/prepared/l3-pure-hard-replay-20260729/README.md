@@ -12,7 +12,7 @@ après le verdict terminal du gate TOPK3 afin d'authentifier :
 
 - le parent effectivement baké ;
 - le SHA de code fusionné ;
-- le préfixe, la tentative et les hashes exacts du corpus historique retenu ;
+- le préfixe, la tentative et le certificat amont du corpus historique retenu ;
 - un identifiant HOME encore libre et non dupliqué.
 
 Ordre obligatoire :

@@ -16,8 +16,7 @@ set -Eeuo pipefail
 : "${EXPECTED_HISTORY_ATTEMPT:?}"; : "${EXPECTED_HISTORY_CODE_SHA:?}"
 : "${EXPECTED_HISTORY_STATE:?}"; : "${HISTORY_DATA_ARTEFACT:?}"
 : "${HISTORY_META_ARTEFACT:?}"; : "${HISTORY_SPLIT_ARTEFACT:?}"
-: "${HISTORY_DATA_GZ_SHA:?}"; : "${HISTORY_META_GZ_SHA:?}"
-: "${HISTORY_DATA_SHA:?}"; : "${HISTORY_META_SHA:?}"
+: "${HISTORY_ARM:?}"
 : "${PARENT_PREFIX:?}"; : "${EXPECTED_PARENT_JOB:?}"; : "${PARENT_ARTEFACT:?}"
 : "${PARENT_MODEL_SHA:?}"; : "${PARENT_NAME:?}"; : "${FRESH_POLICY:?}"
 
@@ -145,7 +144,8 @@ python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
   > "$W/fetch-hard-preflight.log" 2>&1
 python3 - "$ART/verified-hard-preflight.json" "$IN/hard-preflight.json" \
   "$EXPECTED_PREFLIGHT_JOB" "$EXPECTED_PREFLIGHT_ATTEMPT" "$EXPECTED_CODE_SHA" \
-  "$REPLAY_RECORDS" <<'PY'
+  "$REPLAY_RECORDS" "$EXPECTED_HISTORY_JOB" "$EXPECTED_HISTORY_ATTEMPT" \
+  "$EXPECTED_HISTORY_CODE_SHA" "$EXPECTED_HISTORY_STATE" "$HISTORY_ARM" <<'PY'
 import hashlib
 import json
 import sys
@@ -154,9 +154,11 @@ from pathlib import Path
 report = json.load(open(sys.argv[1]))
 summary = json.load(open(sys.argv[2]))
 job, attempt, code_sha, records = sys.argv[3], sys.argv[4], sys.argv[5], int(sys.argv[6])
+source = summary.get("source", {})
 if (
     report.get("job_id") != job
     or report.get("attempt_id") != attempt
+    or report.get("code_sha") != code_sha
     or report.get("result_state") != "completed"
     or summary.get("verdict") != "L3_PURE_HARD_REPLAY_CATALOGUE_READY"
     or summary.get("code_sha") != code_sha
@@ -164,6 +166,11 @@ if (
     or summary.get("training_authorized") is not True
     or summary.get("promotion_authorized") is not False
     or summary.get("automatic_next_job") is not None
+    or source.get("job_id") != sys.argv[7]
+    or source.get("attempt_id") != sys.argv[8]
+    or source.get("code_sha") != sys.argv[9]
+    or source.get("state") != sys.argv[10]
+    or source.get("arm") != sys.argv[11]
 ):
     raise SystemExit("hard replay preflight certificate mismatch")
 for name in ("hard-replay.jnnw.gz", "hard-replay.jsm.gz"):
@@ -184,9 +191,19 @@ python3 jobs/tools/fetch_result_files.py --prefix "$HISTORY_PREFIX" \
   > "$W/fetch-history.log" 2>&1
 python3 - "$ART/verified-history-source.json" "$EXPECTED_HISTORY_JOB" \
   "$EXPECTED_HISTORY_ATTEMPT" "$EXPECTED_HISTORY_CODE_SHA" \
-  "$EXPECTED_HISTORY_STATE" "$HISTORY_DATA_GZ_SHA" "$HISTORY_META_GZ_SHA" <<'PY'
+  "$EXPECTED_HISTORY_STATE" "$IN/hard-preflight.json" \
+  "$IN/history.jnnw.gz" "$IN/history.jsm.gz" "$IN/source-split.json" <<'PY'
+import hashlib
 import json
 import sys
+
+def digest(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
 report = json.load(open(sys.argv[1]))
 if (
     report.get("job_id") != sys.argv[2]
@@ -195,18 +212,43 @@ if (
     or report.get("result_state") != sys.argv[5]
 ):
     raise SystemExit("historical source identity/state mismatch")
-expected = {"history.jnnw.gz": sys.argv[6], "history.jsm.gz": sys.argv[7]}
+source = json.load(open(sys.argv[6])).get("source", {})
+expected = {
+    "history.jnnw.gz": source.get("data_gz_sha256"),
+    "history.jsm.gz": source.get("meta_gz_sha256"),
+}
 actual = {row["local_name"]: row["sha256"] for row in report["files"]}
-for name, digest in expected.items():
-    if actual.get(name) != digest:
+for name, expected_digest in expected.items():
+    if actual.get(name) != expected_digest:
         raise SystemExit(f"historical compressed hash mismatch for {name}")
+if digest(sys.argv[7]) != expected["history.jnnw.gz"]:
+    raise SystemExit("downloaded historical JNNW gzip hash mismatch")
+if digest(sys.argv[8]) != expected["history.jsm.gz"]:
+    raise SystemExit("downloaded historical JSM1 gzip hash mismatch")
+if json.load(open(sys.argv[9])) != source.get("split"):
+    raise SystemExit("historical source split differs from preflight certificate")
 PY
 gunzip -c "$IN/history.jnnw.gz" > "$W/history.raw.jnnw"
 gunzip -c "$IN/history.jsm.gz" > "$W/history.raw.jsm"
-[ "$(sha256sum "$W/history.raw.jnnw" | awk '{print $1}')" = "$HISTORY_DATA_SHA" ] ||
-  die "historical JNNW hash drift"
-[ "$(sha256sum "$W/history.raw.jsm" | awk '{print $1}')" = "$HISTORY_META_SHA" ] ||
-  die "historical JSM1 hash drift"
+python3 - "$IN/hard-preflight.json" "$W/history.raw.jnnw" \
+  "$W/history.raw.jsm" <<'PY'
+import hashlib
+import json
+import sys
+
+def digest(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+source = json.load(open(sys.argv[1]))["source"]
+if digest(sys.argv[2]) != source.get("data_sha256"):
+    raise SystemExit("historical raw JNNW hash differs from preflight certificate")
+if digest(sys.argv[3]) != source.get("meta_sha256"):
+    raise SystemExit("historical raw JSM1 hash differs from preflight certificate")
+PY
 python3 tools/selfplay_frontier.py split \
   --data "$W/history.raw.jnnw" --meta "$W/history.raw.jsm" \
   --out-data "$W/history.fit.jnnw" --out-meta "$W/history.fit.jsm" \
