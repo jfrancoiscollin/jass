@@ -1,0 +1,162 @@
+{
+  "code_sha": "1111111111111111111111111111111111111111",
+  "matcher_code_sha": "2222222222222222222222222222222222222222",
+  "source_temporal_id": "uniform-40m-20260729",
+  "train_records": 12,
+  "records": [
+    {
+      "role": "hard_thin",
+      "white_men": [1, 3, 5, 7],
+      "black_men": [42, 44, 46],
+      "stm": 0,
+      "score": 17,
+      "wdl": 0,
+      "game_id": 1,
+      "opening_id": 101,
+      "seeded": 0
+    },
+    {
+      "role": "control_thin",
+      "white_men": [2, 4, 6, 8],
+      "black_men": [41, 43, 45],
+      "stm": 0,
+      "score": 21,
+      "wdl": 1,
+      "game_id": 2,
+      "opening_id": 102,
+      "seeded": 0
+    },
+    {
+      "role": "control_thin",
+      "white_men": [9, 11, 13, 15],
+      "black_men": [36, 38, 40],
+      "stm": 0,
+      "score": 22,
+      "wdl": 1,
+      "game_id": 3,
+      "opening_id": 103,
+      "seeded": 0
+    },
+    {
+      "role": "control_thin",
+      "white_men": [10, 12, 14, 16],
+      "black_men": [35, 37, 39],
+      "stm": 0,
+      "score": 23,
+      "wdl": 1,
+      "game_id": 4,
+      "opening_id": 104,
+      "seeded": 0
+    },
+    {
+      "role": "hard_medium",
+      "white_men": [1, 2, 3, 4, 5, 6, 7],
+      "black_men": [40, 41, 42, 43, 44],
+      "stm": 0,
+      "score": 31,
+      "wdl": 0,
+      "game_id": 5,
+      "opening_id": 105,
+      "seeded": 0
+    },
+    {
+      "role": "control_medium",
+      "white_men": [2, 3, 4, 5, 6, 7, 8],
+      "black_men": [39, 40, 41, 42, 43],
+      "stm": 0,
+      "score": 32,
+      "wdl": 1,
+      "game_id": 6,
+      "opening_id": 106,
+      "seeded": 0
+    },
+    {
+      "role": "control_medium",
+      "white_men": [8, 9, 10, 11, 12, 13, 14],
+      "black_men": [34, 35, 36, 37, 38],
+      "stm": 0,
+      "score": 33,
+      "wdl": 1,
+      "game_id": 7,
+      "opening_id": 107,
+      "seeded": 0
+    },
+    {
+      "role": "control_medium",
+      "white_men": [9, 10, 11, 12, 13, 14, 15],
+      "black_men": [33, 34, 35, 36, 37],
+      "stm": 0,
+      "score": 34,
+      "wdl": 1,
+      "game_id": 8,
+      "opening_id": 108,
+      "seeded": 0
+    },
+    {
+      "role": "hard_clear",
+      "white_men": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "black_men": [40, 41, 42, 43, 44, 45, 46],
+      "stm": 0,
+      "score": 41,
+      "wdl": 0,
+      "game_id": 9,
+      "opening_id": 109,
+      "seeded": 0
+    },
+    {
+      "role": "control_clear",
+      "white_men": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "black_men": [39, 40, 41, 42, 43, 44, 45],
+      "stm": 0,
+      "score": 42,
+      "wdl": 1,
+      "game_id": 10,
+      "opening_id": 110,
+      "seeded": 0
+    },
+    {
+      "role": "control_clear",
+      "white_men": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      "black_men": [35, 36, 37, 38, 39, 40, 41],
+      "stm": 0,
+      "score": 43,
+      "wdl": 1,
+      "game_id": 11,
+      "opening_id": 111,
+      "seeded": 0
+    },
+    {
+      "role": "control_clear",
+      "white_men": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+      "black_men": [34, 35, 36, 37, 38, 39, 40],
+      "stm": 0,
+      "score": 44,
+      "wdl": 1,
+      "game_id": 12,
+      "opening_id": 112,
+      "seeded": 0
+    },
+    {
+      "role": "holdout",
+      "white_men": [17, 19, 21, 23],
+      "black_men": [28, 30, 32],
+      "stm": 0,
+      "score": 51,
+      "wdl": 0,
+      "game_id": 100,
+      "opening_id": 900,
+      "seeded": 0
+    },
+    {
+      "role": "holdout",
+      "white_men": [16, 18, 20, 22, 24, 26, 27],
+      "black_men": [31, 33, 35, 37, 39],
+      "stm": 0,
+      "score": 52,
+      "wdl": 0,
+      "game_id": 101,
+      "opening_id": 901,
+      "seeded": 0
+    }
+  ]
+}

@@ -445,7 +445,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--seed-file" && i + 1 < argc) {
             seed_path = argv[++i];
         } else if (a == "--seed-frac" && i + 1 < argc) {
-            seed_frac = parse_int_or(argv[++i], 0);
+            seed_frac = parse_int_or(argv[++i], -1);
         } else if (a == "--random-open-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) random_open_plies = v;
@@ -493,6 +493,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     }
     if (wdl_zero_score && pv_extract > 0) {
         std::cerr << "error: --wdl-zero-score is incompatible with --pv-extract\n";
+        return 2;
+    }
+    if (seed_frac < 0 || seed_frac > 100) {
+        std::cerr << "error: --seed-frac must be an integer in [0,100]\n";
+        return 2;
+    }
+    if (seed_frac > 0 && seed_path == nullptr) {
+        std::cerr << "error: --seed-frac requires --seed-file\n";
         return 2;
     }
     const std::array<int, NUM_PHASES> label_depth =
@@ -571,6 +579,69 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     }
     std::cout << '\n';
 
+    // Endgame/reverse seeding (--seed-file / --seed-frac). Validate the
+    // complete counted JNNW before creating the output file: a bad catalogue
+    // must fail closed without leaving a plausible-looking partial corpus.
+    struct SeedPos { std::uint64_t bbs[4]; std::uint8_t stm; };
+    std::vector<SeedPos> seeds;
+    if (seed_path) {
+        std::ifstream sf(seed_path, std::ios::binary | std::ios::ate);
+        if (!sf) {
+            std::cerr << "error: cannot open --seed-file " << seed_path << "\n";
+            return 1;
+        }
+        const std::streamoff file_size = sf.tellg();
+        if (file_size < 8) {
+            std::cerr << "error: --seed-file " << seed_path
+                      << " has a truncated JNNW header\n";
+            return 1;
+        }
+        sf.seekg(0, std::ios::beg);
+        char hdr[8];
+        if (!sf.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+            std::cerr << "error: --seed-file " << seed_path << " is not JNNW\n";
+            return 1;
+        }
+        std::uint32_t cnt = 0;
+        std::memcpy(&cnt, hdr + 4, 4);
+        constexpr std::uint64_t seed_record_bytes = 38;
+        const std::uint64_t expected_size =
+            std::uint64_t{8}
+            + static_cast<std::uint64_t>(cnt) * seed_record_bytes;
+        if (static_cast<std::uint64_t>(file_size) != expected_size) {
+            std::cerr << "error: --seed-file " << seed_path
+                      << " size/count mismatch: bytes=" << file_size
+                      << " expected=" << expected_size
+                      << " records=" << cnt << "\n";
+            return 1;
+        }
+        seeds.reserve(cnt);
+        for (std::uint32_t index = 0; index < cnt; ++index) {
+            char rec[38];
+            if (!sf.read(rec, sizeof(rec))) {
+                std::cerr << "error: --seed-file " << seed_path
+                          << " truncated at record " << index << "\n";
+                return 1;
+            }
+            SeedPos sp;
+            std::memcpy(sp.bbs, rec, 32);
+            sp.stm = static_cast<std::uint8_t>(rec[32]);
+            if (sp.stm > 1) {
+                std::cerr << "error: --seed-file " << seed_path
+                          << " invalid side-to-move at record " << index << "\n";
+                return 1;
+            }
+            seeds.push_back(sp);
+        }
+        if (seed_frac > 0 && seeds.empty()) {
+            std::cerr << "error: --seed-file " << seed_path
+                      << " is empty while --seed-frac is positive\n";
+            return 1;
+        }
+        std::cout << "seed-file: " << seeds.size()
+                  << " positions, seed_frac=" << seed_frac << "%\n";
+    }
+
     std::ofstream f(out_path, std::ios::binary);
     if (!f) {
         std::cerr << "error: cannot open " << out_path << " for writing\n";
@@ -614,31 +685,6 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // la séquence historique est reproduite au bit près.
     jass::selfplay::SelfplayRngStreams streams(seed_value, split_selfplay_rngs);
     std::mt19937_64& rng = streams.opening();
-
-    // Endgame seeding (--seed-file / --seed-frac) : load seed positions. With
-    // probability seed_frac%, a game STARTS from a random seed (e.g. an endgame
-    // sampled from the master) instead of the FMJD start → directly boosts the
-    // COVERAGE of under-represented phases (the endgame famine, Direction A).
-    struct SeedPos { std::uint64_t bbs[4]; std::uint8_t stm; };
-    std::vector<SeedPos> seeds;
-    if (seed_path) {
-        std::ifstream sf(seed_path, std::ios::binary);
-        if (!sf) { std::cerr << "error: cannot open --seed-file " << seed_path << "\n"; return 1; }
-        char hdr[8];
-        if (!sf.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
-            std::cerr << "error: --seed-file " << seed_path << " is not JNNW\n"; return 1;
-        }
-        std::uint32_t cnt = 0; std::memcpy(&cnt, hdr + 4, 4);
-        seeds.reserve(cnt);
-        char rec[38];
-        while (sf.read(rec, 38)) {
-            SeedPos sp; std::memcpy(sp.bbs, rec, 32);
-            sp.stm = static_cast<std::uint8_t>(rec[32]);
-            seeds.push_back(sp);
-        }
-        std::cout << "seed-file: " << seeds.size() << " positions, seed_frac=" << seed_frac << "%\n";
-        if (seeds.empty()) seed_frac = 0;
-    }
 
     // Load the user-supplied NNUE if any; keep the unique_ptr alive
     // across the whole function so the Engine can borrow the pointer.
@@ -697,6 +743,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // donc aussi dans les templates trop anciens pour passer par le canari de
     // fusion. Ne bloque rien — il rend le symptôme impossible à manquer.
     long long stat_wdl_loss = 0, stat_wdl_draw = 0, stat_wdl_win = 0;
+    long long stat_seeded_openings = 0, stat_standard_openings = 0;
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
     // évite que la passe de classement pollue l'ordonnancement de la partie.
@@ -733,6 +780,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             for (Bitboard b = static_cast<Bitboard>(sp.bbs[3]); b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
             e.set_position(p);
         }
+        if (opening_from_seed) ++stat_seeded_openings;
+        else                   ++stat_standard_openings;
 
         for (int i = 0; i < random_open_plies; ++i) {
             MoveList ml;
@@ -1128,6 +1177,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " split_selfplay_rngs=" << (split_selfplay_rngs ? 1 : 0)
               << " decay_plies=" << explore_decay_plies
               << " openings=" << opening_count
+              << " seeded_openings=" << stat_seeded_openings
+              << " standard_openings=" << stat_standard_openings
+              << " seed_catalogue_positions=" << seeds.size()
+              << " seed_frac=" << seed_frac
               << " games=" << game_count
               << " random_open_moves=" << stat_random_open_moves
               << " play_plies=" << stat_play_plies
