@@ -24,6 +24,7 @@ FEAT (extras): magic 'FEAT', uint32 cnt, uint32 k(=NUM_EXTRAS), float32[cnt*k]
 """
 
 import argparse
+import hashlib
 import json
 import os
 import struct
@@ -106,6 +107,358 @@ def open_feat(path: str, n_expected: int):
     mm = np.memmap(path, dtype='<f4', mode='r',
                    offset=FEAT_HEADER_SIZE, shape=(cnt, k))
     return mm, int(k)
+
+
+# --------------------------------------------------------------------------- #
+#  Optional per-row sample weights.  The contract is deliberately strict:
+#  a NumPy vector aligned 1:1 with JNNW, validated but never clipped,
+#  normalised on TRAIN rows only, and never applied to the holdout.
+# --------------------------------------------------------------------------- #
+_WEIGHT_QUANTILES = (
+    ("p00", 0.00), ("p01", 0.01), ("p05", 0.05), ("p25", 0.25),
+    ("p50", 0.50), ("p75", 0.75), ("p95", 0.95), ("p99", 0.99),
+    ("p100", 1.00),
+)
+
+
+def _sha256_file(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _atomic_write_json(path: str | Path, payload: dict) -> None:
+    target = Path(path)
+    if target.exists():
+        raise SystemExit(f"{target}: weights report already exists (no-clobber)")
+    serialized = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(
+        f".{target.name}.tmp-{os.getpid()}-{time.time_ns()}"
+    )
+    try:
+        with temporary.open("x", encoding="utf-8") as handle:
+            handle.write(serialized)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # os.replace would silently clobber a target created after the check
+        # above. A same-directory hard-link publishes the complete temporary
+        # inode atomically and fails if the target appeared concurrently.
+        os.link(temporary, target)
+    except FileExistsError as exc:
+        if target.exists():
+            raise SystemExit(
+                f"{target}: weights report already exists (no-clobber)"
+            ) from exc
+        raise SystemExit(
+            f"{target}: cannot create atomic weights-report temporary"
+        ) from exc
+    except OSError as exc:
+        raise SystemExit(
+            f"{target}: cannot atomically publish weights report: {exc}"
+        ) from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _validate_weights_report_target(args, weights_path: Path, report_path: str) -> Path:
+    target = Path(report_path)
+    target_resolved = target.resolve(strict=False)
+    protected = (
+        ("--sample-weights", weights_path),
+        ("--data", getattr(args, "data", None)),
+        ("--feat", getattr(args, "feat", None)),
+        ("--out", getattr(args, "out", None)),
+    )
+    for flag, protected_path in protected:
+        if protected_path is None:
+            continue
+        if target_resolved == Path(protected_path).resolve(strict=False):
+            raise SystemExit(
+                f"--weights-report must be distinct from {flag}: {target}"
+            )
+    if target.exists():
+        raise SystemExit(f"{target}: weights report already exists (no-clobber)")
+    return target
+
+
+def _weight_stats(values: np.ndarray) -> dict:
+    numeric = np.asarray(values, dtype=np.float64)
+    if numeric.ndim != 1 or len(numeric) == 0:
+        raise ValueError("weight statistics require a non-empty 1-D array")
+    total = float(np.sum(numeric, dtype=np.float64))
+    sum_squares = float(np.dot(numeric, numeric))
+    quantile_values = np.quantile(
+        numeric,
+        [probability for _, probability in _WEIGHT_QUANTILES],
+        method="linear",
+    )
+    return {
+        "count": int(len(numeric)),
+        "sum": total,
+        "sum_squares": sum_squares,
+        "mean": total / len(numeric),
+        "min": float(np.min(numeric)),
+        "max": float(np.max(numeric)),
+        "quantiles": {
+            name: float(value)
+            for (name, _), value in zip(_WEIGHT_QUANTILES, quantile_values)
+        },
+    }
+
+
+def _resolve_holdout(args, n_records: int) -> tuple[int, int]:
+    hold_frac = float(getattr(args, "holdout_frac", 0.0) or 0.0)
+    hold_count = int(getattr(args, "holdout_count", 0) or 0)
+    if not np.isfinite(hold_frac) or hold_frac < 0.0 or hold_frac >= 1.0:
+        raise SystemExit(
+            f"--holdout-frac must be finite and in [0,1), got {hold_frac}"
+        )
+    if hold_count < 0 or hold_count >= n_records:
+        raise SystemExit(
+            f"--holdout-count must be in [0,{max(0, n_records - 1)}], "
+            f"got {hold_count}"
+        )
+    if hold_count and hold_frac:
+        raise SystemExit("--holdout-count and --holdout-frac are mutually exclusive")
+    if hold_count:
+        train_n = n_records - hold_count
+        print(
+            f"holdout : exact tail count={hold_count:,} "
+            f"-> fit on {train_n:,} rows"
+        )
+    else:
+        train_n = (
+            int(round(n_records * (1.0 - hold_frac)))
+            if hold_frac > 0.0
+            else n_records
+        )
+        hold_count = n_records - train_n
+        if hold_frac > 0.0:
+            print(
+                f"holdout : frac={hold_frac} -> fit on {train_n:,} rows, "
+                f"val on {hold_count:,} rows"
+            )
+    if train_n <= 0:
+        raise SystemExit("holdout leaves an empty train split")
+    return train_n, hold_count
+
+
+def _load_sample_weights(
+    args,
+    n_records: int,
+    train_n: int,
+    hold_count: int,
+) -> tuple[np.ndarray | None, dict | None]:
+    weights_path = getattr(args, "sample_weights", None)
+    report_path = getattr(args, "weights_report", None)
+    weight_min = getattr(args, "weight_min", None)
+    weight_max = getattr(args, "weight_max", None)
+    normalization = getattr(args, "weight_normalization", "mean-train-1")
+
+    if not weights_path:
+        if report_path is not None or weight_min is not None or weight_max is not None:
+            raise SystemExit(
+                "--weight-min/--weight-max/--weights-report require "
+                "--sample-weights"
+            )
+        return None, None
+
+    missing = [
+        flag
+        for flag, value in (
+            ("--weight-min", weight_min),
+            ("--weight-max", weight_max),
+            ("--weights-report", report_path),
+        )
+        if value is None
+    ]
+    if missing:
+        raise SystemExit("--sample-weights requires " + ", ".join(missing))
+    if normalization != "mean-train-1":
+        raise SystemExit(
+            "--weight-normalization must be mean-train-1 when sample weights are used"
+        )
+
+    weight_min = float(weight_min)
+    weight_max = float(weight_max)
+    if (
+        not np.isfinite(weight_min)
+        or not np.isfinite(weight_max)
+        or weight_min <= 0.0
+        or weight_max < weight_min
+    ):
+        raise SystemExit(
+            "--weight-min/--weight-max must be finite with "
+            f"0 < min <= max, got {weight_min}/{weight_max}"
+        )
+    # Bounds describe float32 inputs.  Compare at that precision so a requested
+    # decimal such as 0.1 accepts its exact float32 representation.
+    bound_min32 = np.float32(weight_min)
+    bound_max32 = np.float32(weight_max)
+    if (
+        not np.isfinite(bound_min32)
+        or not np.isfinite(bound_max32)
+        or bound_min32 <= 0.0
+        or bound_max32 < bound_min32
+    ):
+        raise SystemExit("--weight-min/--weight-max are invalid at float32 precision")
+
+    path = Path(weights_path)
+    report_target = _validate_weights_report_target(args, path, report_path)
+    try:
+        raw = np.load(path, allow_pickle=False, mmap_mode="r")
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"{path}: cannot load sample weights: {exc}") from exc
+    if not isinstance(raw, np.ndarray) or raw.ndim != 1:
+        raise SystemExit(
+            f"{path}: sample weights must be a 1-D NumPy array, "
+            f"got shape={getattr(raw, 'shape', None)}"
+        )
+    if raw.dtype != np.dtype(np.float32):
+        raise SystemExit(
+            f"{path}: sample weights dtype must be float32 exactly, got {raw.dtype}"
+        )
+    if raw.shape != (n_records,):
+        raise SystemExit(
+            f"{path}: sample weights length {len(raw)} != data records {n_records}"
+        )
+    if not bool(np.all(np.isfinite(raw))):
+        raise SystemExit(f"{path}: sample weights contain NaN or infinity")
+    if not bool(np.all(raw > 0.0)):
+        raise SystemExit(f"{path}: sample weights must all be strictly positive")
+
+    observed_min = float(np.min(raw))
+    observed_max = float(np.max(raw))
+    if observed_min < float(bound_min32) or observed_max > float(bound_max32):
+        raise SystemExit(
+            f"{path}: observed weight range [{observed_min}, {observed_max}] "
+            f"outside validation bounds [{float(bound_min32)}, "
+            f"{float(bound_max32)}]; weights are never clipped"
+        )
+
+    raw_train = np.asarray(raw[:train_n], dtype=np.float64)
+    raw_train_mean = float(np.sum(raw_train, dtype=np.float64)) / train_n
+    if not np.isfinite(raw_train_mean) or raw_train_mean <= 0.0:
+        raise SystemExit(f"{path}: invalid mean over train sample weights")
+    normalization_factor = 1.0 / raw_train_mean
+    normalized_train = raw_train * normalization_factor
+    normalized_mean = float(np.sum(normalized_train, dtype=np.float64)) / train_n
+    if not np.isfinite(normalized_mean) or not np.isclose(
+        normalized_mean, 1.0, rtol=0.0, atol=1e-12
+    ):
+        raise SystemExit(
+            f"{path}: train-only normalization failed, mean={normalized_mean}"
+        )
+
+    # A constant positive vector becomes exactly the historical unweighted
+    # objective after normalisation.  Keep sw_all=None so even floating-point
+    # summation order remains byte-compatible with legacy fits.
+    uniform_after_normalization = bool(
+        float(np.min(raw_train)) == float(np.max(raw_train))
+    )
+    optimizer_sw_all = None
+    if not uniform_after_normalization:
+        optimizer_sw_all = np.asarray(raw, dtype=np.float64) * normalization_factor
+
+    normalized_stats = _weight_stats(normalized_train)
+    sum_weights = normalized_stats["sum"]
+    sum_squares = normalized_stats["sum_squares"]
+    ess = (sum_weights * sum_weights / sum_squares) if sum_squares > 0.0 else 0.0
+    report = {
+        "schema": 1,
+        "operation": "train_stream_sample_weights",
+        "source": {
+            "path": str(path),
+            "sha256": _sha256_file(path),
+            "dtype": str(raw.dtype),
+            "shape": [int(value) for value in raw.shape],
+        },
+        "aligned_inputs": {
+            "data_path": str(args.data),
+            "data_sha256": _sha256_file(args.data),
+            "feat_path": str(args.feat),
+            "feat_sha256": _sha256_file(args.feat),
+        },
+        "split": {
+            "records": int(n_records),
+            "train_records": int(train_n),
+            "holdout_records": int(hold_count),
+            "normalization_scope": "train_only",
+            "holdout_weighted": False,
+        },
+        "validation": {
+            "strictly_positive": True,
+            "bounds_scope": "all_rows",
+            "clipping_applied": False,
+            "requested_min": weight_min,
+            "requested_max": weight_max,
+            "float32_min": float(bound_min32),
+            "float32_max": float(bound_max32),
+            "observed_all_rows_min": observed_min,
+            "observed_all_rows_max": observed_max,
+        },
+        "normalization": {
+            "method": normalization,
+            "raw_train_mean": raw_train_mean,
+            "factor": normalization_factor,
+            "normalized_train_mean": normalized_mean,
+        },
+        "raw_train": _weight_stats(raw_train),
+        "normalized_train": normalized_stats,
+        "effective_sample_size": {
+            "kind": "kish_row_level",
+            "ess": ess,
+            "ess_fraction": ess / train_n,
+            "design_effect": train_n / ess if ess > 0.0 else None,
+        },
+        "optimizer": {
+            "sw_all_used": optimizer_sw_all is not None,
+            "uniform_after_normalization": uniform_after_normalization,
+        },
+    }
+    _atomic_write_json(report_target, report)
+    print(
+        "SAMPLE_WEIGHTS "
+        + json.dumps(
+            {
+                "ess": ess,
+                "ess_fraction": ess / train_n,
+                "holdout_weighted": False,
+                "normalization": normalization,
+                "report": str(report_target),
+                "sha256": report["source"]["sha256"],
+                "uniform": uniform_after_normalization,
+            },
+            sort_keys=True,
+        )
+    )
+    return optimizer_sw_all, report
+
+
+def _holdout_logloss(build_fn, y_all, model_weights, train_n, n_records, chunk):
+    """Unweighted tail cross-entropy; sample weights deliberately cannot enter."""
+    eps = 1e-12
+    total_loss = 0.0
+    total_rows = 0
+    for index in range(train_n, n_records, chunk):
+        selected = np.arange(index, min(index + chunk, n_records), dtype=np.int64)
+        logits = build_fn(selected) @ model_weights
+        probabilities = 0.5 * (np.tanh(0.5 * logits) + 1.0)
+        targets = y_all[selected]
+        total_loss += float(
+            -np.sum(
+                targets * np.log(probabilities + eps)
+                + (1.0 - targets) * np.log(1.0 - probabilities + eps)
+            )
+        )
+        total_rows += len(selected)
+    return total_loss / max(total_rows, 1), total_rows
 
 
 # --------------------------------------------------------------------------- #
@@ -290,6 +643,10 @@ def train_stream(args):
 
     chunk = int(args.chunk)
     TB = folder.TB
+    train_N, hold_count = _resolve_holdout(args, N)
+    sample_weights, _weights_report = _load_sample_weights(
+        args, N, train_N, hold_count
+    )
 
     # --- Pass A : stream once to build the tiny per-row arrays (wdl/stm/phase) and
     #     the prune visit-count remap. Bitboards + extras are NOT kept; only O(N)
@@ -399,30 +756,15 @@ def train_stream(args):
         Xext = build_extras_phased(extras, wmg, weg)
         return sp.hstack([Xpat, Xext], format='csr')      # [pat_mg|pat_eg|ext_mg|ext_eg]
 
-    # --- L-BFGS over the FULL dataset, streamed from disk each iteration. tr_idx is
-    #     arange(N) so train_lbfgs_chunked re-reads every chunk per gradient eval
-    #     (~max_iter disk passes). The accumulated gradient is the EXACT full-batch
-    #     gradient (only the assembly is streamed). ----------------------------- #
+    # --- L-BFGS over the TRAIN prefix, streamed from disk each iteration. tr_idx is
+    #     arange(train_N) so train_lbfgs_chunked re-reads every chunk per gradient
+    #     eval (~max_iter disk passes). The accumulated gradient is the EXACT
+    #     full-batch gradient (only the assembly is streamed). ------------------ #
     print(f'L-BFGS  loss={args.loss}  l2={args.l2}  max_iter={args.max_iter}  '
           f'chunk={chunk:,}  (~{args.max_iter} disk passes over data+feat)')
-    # --holdout-frac F : fit on the first (1-F)*N rows, evaluate log-loss on the
-    #   last F*N rows (held out, never seen at fit). Both are CONTIGUOUS ranges so
-    #   build_fn (which seeks memmaps by lo:hi) works unchanged. F=0 => arange(N)
-    #   = byte-identical to before. Prune/remap stay computed over full N (bucket
-    #   selection only, identical across compared archs — the WEIGHTS are train-only).
-    hold_frac = float(getattr(args, 'holdout_frac', 0.0) or 0.0)
-    hold_count = int(getattr(args, 'holdout_count', 0) or 0)
-    if hold_count < 0 or hold_count >= N:
-        raise SystemExit(f'--holdout-count must be in [0,{max(0, N-1)}], got {hold_count}')
-    if hold_count:
-        train_N = N - hold_count
-        print(f'holdout : exact tail count={hold_count:,} -> fit on {train_N:,} rows')
-    else:
-        train_N = int(round(N * (1.0 - hold_frac))) if hold_frac > 0.0 else N
-        hold_count = N - train_N
-        if hold_frac > 0.0:
-            print(f'holdout : frac={hold_frac} -> fit on {train_N:,} rows, '
-                  f'val on {hold_count:,} rows')
+    # The held-out tail is never passed to the optimiser. Prune/remap deliberately
+    # retain the historical full-N visit scan; only weights and normalisation are
+    # train-only. This preserves the legacy model path when weights are absent.
     tr_idx = np.arange(train_N, dtype=np.int64)
     # Hierarchical-shrinkage grouping : slot -> parent pattern id (-1 = unseen fallback).
     slot_pattern = None
@@ -451,7 +793,7 @@ def train_stream(args):
     optimizer_diagnostics = {}
     w_float, train_loss, n_iter = train_lbfgs_chunked(
         build_fn, tr_idx, y_all, args.l2, args.max_iter,
-        logistic, n_cols, chunk, sw_all=None,
+        logistic, n_cols, chunk, sw_all=sample_weights,
         hier_l2=args.hier_l2, slot_pattern=slot_pattern,
         pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
         prior_mean=prior_mean, prior_prec=prior_prec, initial_mean=initial_mean,
@@ -469,15 +811,10 @@ def train_stream(args):
     #     on the held-out tail rows [train_N, N), at the fitted weights. Pure data
     #     cross-entropy (no L2/prior term) => a clean generalisation estimate. ---- #
     if hold_count > 0 and train_N < N:
-        _eps = 1e-12; _vl = 0.0; _nv = 0
-        for i in range(train_N, N, chunk):
-            _sel = np.arange(i, min(i + chunk, N), dtype=np.int64)
-            _z = build_fn(_sel) @ w_float
-            _p = 0.5 * (np.tanh(0.5 * _z) + 1.0)
-            _yc = y_all[_sel]
-            _vl += float(-np.sum(_yc * np.log(_p + _eps) + (1.0 - _yc) * np.log(1.0 - _p + _eps)))
-            _nv += len(_sel)
-        print(f'HOLDOUT_LOGLOSS {_vl/max(_nv,1):.6f}  '
+        _holdout_loss, _nv = _holdout_logloss(
+            build_fn, y_all, w_float, train_N, N, chunk
+        )
+        print(f'HOLDOUT_LOGLOSS {_holdout_loss:.6f}  '
               f'(frac={_nv/max(N,1):.8f} n_val={_nv})')
 
     # --- Un-prune to the TB-sized training block, then fold-EXPAND to the full 17M
@@ -588,6 +925,17 @@ def main(argv=None):
     holdout.add_argument('--holdout-count', type=int, default=0,
                     help='exact number of tail rows held out. Intended for a game/opening-level '
                          'split assembled by tools/selfplay_frontier.py; avoids fractional rounding.')
+    ap.add_argument('--sample-weights', type=str, default=None,
+                    help='optional float32 .npy vector aligned 1:1 with --data rows')
+    ap.add_argument('--weight-normalization', choices=['mean-train-1'],
+                    default='mean-train-1',
+                    help='sample-weight normalisation, computed on train rows only')
+    ap.add_argument('--weight-min', type=float, default=None,
+                    help='required with --sample-weights: inclusive lower validation bound')
+    ap.add_argument('--weight-max', type=float, default=None,
+                    help='required with --sample-weights: inclusive upper validation bound')
+    ap.add_argument('--weights-report', type=str, default=None,
+                    help='required with --sample-weights: atomic JSON provenance/statistics report')
     ap.add_argument('--chunk', type=int, default=500000,
                     help='rows/chunk read from disk per gradient sub-step.')
     ap.add_argument('--prune', dest='prune', action='store_true', default=True,
