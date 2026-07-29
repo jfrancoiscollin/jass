@@ -57,6 +57,15 @@ miroir couleur (29 454 positions de base), contre 1 000 000 requis. Verdict :
 Une source plus large ou un nouveau DOE de dose exigent un préenregistrement
 séparé ; ce document n'autorise pas à abaisser la dose après observation.
 
+### Réouverture par source plus large
+
+La source `UNIFORM` 40M est préenregistrée dans
+`L3_HARD_REPLAY_LARGE_SOURCE_20260729.md`. Elle conserve parent, policy,
+profondeur et calibration post-correctif, avec de nouvelles graines. Son volume
+de 40M ajoute 17,8 % de marge à l'extrapolation ponctuelle de 33,95M issue de
+`home-1042`. Elle ne modifie ni la dose hard requise de 1M, ni le DOE de fit.
+Un nouveau préflight reste obligatoire après sa production.
+
 ## 3. Bras causal
 
 | Paramètre | CONTROL | TREATMENT |

@@ -42,6 +42,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import struct
 import sys
 from collections import Counter, defaultdict
@@ -69,11 +70,13 @@ def _load_canary():
     return module
 
 
-def _wdl_report(records, args) -> dict | None:
+def _wdl_report_from_counts(counts: dict[int, int], args) -> dict | None:
     if getattr(args, "no_wdl_check", False):
         return None
     canary = _load_canary()
-    counts = canary.histogram_from_records(records)
+    unexpected = set(counts) - {-1, 0, 1}
+    if unexpected:
+        raise ValueError(f"étiquettes WDL hors domaine {sorted(unexpected)}")
 
     def opt(name, fallback):
         # argparse laisse None quand l'option n'est pas passée ; `getattr` seul
@@ -87,6 +90,13 @@ def _wdl_report(records, args) -> dict | None:
         max_draw_share=opt("wdl_max_draw_share", canary.DEFAULT_MAX_DRAW_SHARE),
         max_side_skew=opt("wdl_max_side_skew", canary.DEFAULT_MAX_SIDE_SKEW),
     )
+
+
+def _wdl_report(records, args) -> dict | None:
+    if getattr(args, "no_wdl_check", False):
+        return None
+    canary = _load_canary()
+    return _wdl_report_from_counts(canary.histogram_from_records(records), args)
 
 
 @dataclass(frozen=True)
@@ -127,6 +137,23 @@ def read_pair(data_path: Path, meta_path: Path) -> tuple[list[bytes], list[Meta]
         for i in range(n_meta)
     ]
     return records, rows
+
+
+def iter_pair(data_path: Path, meta_path: Path):
+    """Iterate an aligned JNNW/JSM1 pair without materialising it in memory."""
+    n_data = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
+    n_meta = _counted_file_count(meta_path, META_MAGIC, META_REC)
+    if n_data != n_meta:
+        raise ValueError(f"data/meta count mismatch: {n_data} != {n_meta}")
+    with data_path.open("rb") as data_in, meta_path.open("rb") as meta_in:
+        data_in.seek(8)
+        meta_in.seek(8)
+        for index in range(n_data):
+            record = data_in.read(JNNW_REC)
+            meta_raw = meta_in.read(META_REC)
+            if len(record) != JNNW_REC or len(meta_raw) != META_REC:
+                raise ValueError(f"aligned pair truncated at record {index}")
+            yield index, record, Meta(*struct.unpack("<QQB", meta_raw))
 
 
 def write_pair(data_path: Path, meta_path: Path,
@@ -196,50 +223,98 @@ def _manifest(path: str | None, payload: dict) -> None:
 
 
 def do_merge(args: argparse.Namespace) -> int:
-    records_out: list[bytes] = []
-    meta_out: list[Meta] = []
     source_counts: Counter = Counter()
+    wdl_counts: Counter = Counter()
     shard_rows = []
     renamespace_nested = bool(getattr(args, "renamespace_nested", False))
+    sources = []
+    total = 0
     for shard_index, (data_name, meta_name) in enumerate(args.pair, start=1):
-        records, rows = read_pair(Path(data_name), Path(meta_name))
         if shard_index >= (1 << 16):
             raise ValueError("too many shards for 16-bit namespace")
-        prefix = shard_index << 48
-        game_namespace: dict[int, int] = {}
-        opening_namespace: dict[int, int] = {}
-        for record, row in zip(records, rows):
-            if renamespace_nested:
-                game_id = game_namespace.setdefault(row.game_id, len(game_namespace))
-                opening_id = opening_namespace.setdefault(row.opening_id, len(opening_namespace))
-            else:
-                game_id = row.game_id
-                opening_id = row.opening_id
-            if game_id >= (1 << 48) or opening_id >= (1 << 48):
-                raise ValueError("local game/opening id exceeds 48-bit namespace")
-            records_out.append(record)
-            meta_out.append(Meta(prefix | game_id, prefix | opening_id, row.seeded))
-            source_counts["frontier" if row.seeded else "standard"] += 1
-        shard_rows.append({
-            "data": data_name,
-            "meta": meta_name,
-            "records": len(records),
-            "nested_namespace_remapped": renamespace_nested,
-            "games": len(game_namespace) if renamespace_nested else None,
-            "openings": len(opening_namespace) if renamespace_nested else None,
-        })
-    write_pair(Path(args.out_data), Path(args.out_meta), records_out, meta_out)
+        data_path, meta_path = Path(data_name), Path(meta_name)
+        count = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
+        if _counted_file_count(meta_path, META_MAGIC, META_REC) != count:
+            raise ValueError(f"{data_name}: data/meta count mismatch")
+        sources.append((shard_index, data_name, meta_name, data_path, meta_path, count))
+        total += count
+
+    out_data, out_meta = Path(args.out_data), Path(args.out_meta)
+    out_data.parent.mkdir(parents=True, exist_ok=True)
+    out_meta.parent.mkdir(parents=True, exist_ok=True)
+    data_tmp = out_data.with_name(out_data.name + ".tmp")
+    meta_tmp = out_meta.with_name(out_meta.name + ".tmp")
+    try:
+        with data_tmp.open("wb") as data_out, meta_tmp.open("wb") as meta_out:
+            data_out.write(JNNW_MAGIC + struct.pack("<I", total))
+            meta_out.write(META_MAGIC + struct.pack("<I", total))
+            for (
+                shard_index,
+                data_name,
+                meta_name,
+                data_path,
+                meta_path,
+                count,
+            ) in sources:
+                prefix = shard_index << 48
+                game_namespace: dict[int, int] = {}
+                opening_namespace: dict[int, int] = {}
+                for _, record, row in iter_pair(data_path, meta_path):
+                    if renamespace_nested:
+                        game_id = game_namespace.setdefault(
+                            row.game_id, len(game_namespace)
+                        )
+                        opening_id = opening_namespace.setdefault(
+                            row.opening_id, len(opening_namespace)
+                        )
+                    else:
+                        game_id = row.game_id
+                        opening_id = row.opening_id
+                    if game_id >= (1 << 48) or opening_id >= (1 << 48):
+                        raise ValueError(
+                            "local game/opening id exceeds 48-bit namespace"
+                        )
+                    data_out.write(record)
+                    meta_out.write(
+                        struct.pack(
+                            "<QQB",
+                            prefix | game_id,
+                            prefix | opening_id,
+                            row.seeded,
+                        )
+                    )
+                    wdl_counts[struct.unpack_from("<b", record, 37)[0]] += 1
+                    source_counts[
+                        "frontier" if row.seeded else "standard"
+                    ] += 1
+                shard_rows.append({
+                    "data": data_name,
+                    "meta": meta_name,
+                    "records": count,
+                    "nested_namespace_remapped": renamespace_nested,
+                    "games": len(game_namespace) if renamespace_nested else None,
+                    "openings": (
+                        len(opening_namespace) if renamespace_nested else None
+                    ),
+                })
+        data_tmp.replace(out_data)
+        meta_tmp.replace(out_meta)
+    finally:
+        for temporary in (data_tmp, meta_tmp):
+            if temporary.exists():
+                temporary.unlink()
+
     # Canari WDL au point de passage. Tous les templates L3 fusionnent leurs
     # shards ici, donc la garde s'applique sans qu'aucun d'eux ait à y penser.
     # Elle porte sur les DONNÉES : elle aurait vu le défaut de racine nulle
     # (4,8 % de nulles au lieu de 20,3 %) sans rien savoir de sa cause.
     # Les corpus dont la distribution est légitimement asymétrique — la lignée
     # IMBALANCE2 part d'un avantage matériel — passent un plancher explicite.
-    wdl = _wdl_report(records_out, args)
+    wdl = _wdl_report_from_counts(dict(wdl_counts), args)
     _manifest(args.manifest, {
         "schema": 1,
         "operation": "merge",
-        "records": len(records_out),
+        "records": total,
         "shards": shard_rows,
         "source_records": dict(sorted(source_counts.items())),
         "wdl_canary": wdl,
@@ -498,25 +573,74 @@ def _opening_fold(opening_id: int, seed: int, mod: int) -> int:
 def do_split(args: argparse.Namespace) -> int:
     if args.holdout_mod < 2:
         raise ValueError("--holdout-mod must be >= 2")
-    records, rows = read_pair(Path(args.data), Path(args.meta))
-    train_records: list[bytes] = []
-    train_meta: list[Meta] = []
-    hold_records: list[bytes] = []
-    hold_meta: list[Meta] = []
+    data_path, meta_path = Path(args.data), Path(args.meta)
+    total = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
+    if _counted_file_count(meta_path, META_MAGIC, META_REC) != total:
+        raise ValueError("data/meta count mismatch")
+
+    # First pass: determine the fold of every opening and exact output counts.
+    # Only the opening-id set is retained, so 40M-record catalogues remain
+    # practical on HOME.
     fold_by_opening: dict[int, bool] = {}
-    for record, row in zip(records, rows):
-        hold = fold_by_opening.setdefault(
-            row.opening_id,
-            _opening_fold(row.opening_id, args.seed, args.holdout_mod) == 0,
-        )
-        target_records, target_meta = (
-            (hold_records, hold_meta) if hold else (train_records, train_meta)
-        )
-        target_records.append(record)
-        target_meta.append(row)
-    combined_records = train_records + hold_records
-    combined_meta = train_meta + hold_meta
-    write_pair(Path(args.out_data), Path(args.out_meta), combined_records, combined_meta)
+    train_count = 0
+    holdout_count = 0
+    with meta_path.open("rb") as meta_in:
+        meta_in.seek(8)
+        for index in range(total):
+            raw = meta_in.read(META_REC)
+            if len(raw) != META_REC:
+                raise ValueError(f"metadata truncated at record {index}")
+            _, opening_id, _ = struct.unpack("<QQB", raw)
+            hold = fold_by_opening.setdefault(
+                opening_id,
+                _opening_fold(opening_id, args.seed, args.holdout_mod) == 0,
+            )
+            if hold:
+                holdout_count += 1
+            else:
+                train_count += 1
+
+    out_data, out_meta = Path(args.out_data), Path(args.out_meta)
+    out_data.parent.mkdir(parents=True, exist_ok=True)
+    out_meta.parent.mkdir(parents=True, exist_ok=True)
+    data_tmp = out_data.with_name(out_data.name + ".tmp")
+    meta_tmp = out_meta.with_name(out_meta.name + ".tmp")
+    hold_data_tmp = out_data.with_name(out_data.name + ".hold.tmp")
+    hold_meta_tmp = out_meta.with_name(out_meta.name + ".hold.tmp")
+
+    # Second pass: write train directly, spool holdout, then append the spool.
+    try:
+        with (
+            data_tmp.open("wb") as train_data,
+            meta_tmp.open("wb") as train_meta,
+            hold_data_tmp.open("wb") as hold_data,
+            hold_meta_tmp.open("wb") as hold_meta,
+        ):
+            train_data.write(JNNW_MAGIC + struct.pack("<I", total))
+            train_meta.write(META_MAGIC + struct.pack("<I", total))
+            for _, record, row in iter_pair(data_path, meta_path):
+                raw_meta = struct.pack(
+                    "<QQB", row.game_id, row.opening_id, row.seeded
+                )
+                if fold_by_opening[row.opening_id]:
+                    hold_data.write(record)
+                    hold_meta.write(raw_meta)
+                else:
+                    train_data.write(record)
+                    train_meta.write(raw_meta)
+            hold_data.flush()
+            hold_meta.flush()
+            with hold_data_tmp.open("rb") as source:
+                shutil.copyfileobj(source, train_data, 1 << 20)
+            with hold_meta_tmp.open("rb") as source:
+                shutil.copyfileobj(source, train_meta, 1 << 20)
+        data_tmp.replace(out_data)
+        meta_tmp.replace(out_meta)
+    finally:
+        for temporary in (data_tmp, meta_tmp, hold_data_tmp, hold_meta_tmp):
+            if temporary.exists():
+                temporary.unlink()
+
     hold_openings = sum(fold_by_opening.values())
     _manifest(args.manifest, {
         "schema": 1,
@@ -524,9 +648,9 @@ def do_split(args: argparse.Namespace) -> int:
         "split_unit": "opening_id",
         "holdout_mod": args.holdout_mod,
         "seed": args.seed,
-        "records": len(records),
-        "train_records": len(train_records),
-        "holdout_records": len(hold_records),
+        "records": total,
+        "train_records": train_count,
+        "holdout_records": holdout_count,
         "train_openings": len(fold_by_opening) - hold_openings,
         "holdout_openings": hold_openings,
         "tail_is_holdout": True,
@@ -734,9 +858,7 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _load_split_contract(
-    split_path: Path, records: list[bytes], rows: list[Meta]
-) -> tuple[dict, int]:
+def _load_split_manifest(split_path: Path, total: int) -> tuple[dict, int]:
     try:
         split = json.loads(split_path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -753,7 +875,6 @@ def _load_split_contract(
                 f"{split_path}: incompatible {key}: "
                 f"{split.get(key)!r} != {expected!r}"
             )
-    total = len(records)
     train_count = split.get("train_records")
     holdout_count = split.get("holdout_records")
     if (
@@ -765,6 +886,40 @@ def _load_split_contract(
         or split.get("records") != total
     ):
         raise ValueError(f"{split_path}: split record counts do not match inputs")
+    return split, train_count
+
+
+def _split_opening_sets(
+    split_path: Path, meta_path: Path, total: int, train_count: int
+) -> tuple[set[int], set[int]]:
+    """Validate train/holdout opening isolation with bounded memory."""
+    if _counted_file_count(meta_path, META_MAGIC, META_REC) != total:
+        raise ValueError("data/meta count mismatch")
+    train_openings: set[int] = set()
+    holdout_openings: set[int] = set()
+    with meta_path.open("rb") as stream:
+        stream.seek(8)
+        for index in range(total):
+            raw = stream.read(META_REC)
+            if len(raw) != META_REC:
+                raise ValueError(f"metadata truncated at record {index}")
+            _, opening_id, seeded = struct.unpack("<QQB", raw)
+            if seeded not in (0, 1):
+                raise ValueError(f"meta record {index}: invalid seeded flag")
+            target = train_openings if index < train_count else holdout_openings
+            target.add(opening_id)
+    overlap = train_openings & holdout_openings
+    if overlap:
+        raise ValueError(
+            f"{split_path}: {len(overlap)} opening IDs leak across train/holdout"
+        )
+    return train_openings, holdout_openings
+
+
+def _load_split_contract(
+    split_path: Path, records: list[bytes], rows: list[Meta]
+) -> tuple[dict, int]:
+    split, train_count = _load_split_manifest(split_path, len(records))
     train_openings = {row.opening_id for row in rows[:train_count]}
     holdout_openings = {row.opening_id for row in rows[train_count:]}
     overlap = train_openings & holdout_openings
@@ -871,18 +1026,32 @@ def do_mine_hard(args: argparse.Namespace) -> int:
         if paths[name].exists():
             raise ValueError(f"refusing to overwrite existing output: {paths[name]}")
 
-    records, rows = read_pair(paths["data"], paths["meta"])
-    split, train_count = _load_split_contract(
-        paths["split_manifest"], records, rows
+    total = _counted_file_count(paths["data"], JNNW_MAGIC, JNNW_REC)
+    if _counted_file_count(paths["meta"], META_MAGIC, META_REC) != total:
+        raise ValueError("data/meta count mismatch")
+    split, train_count = _load_split_manifest(paths["split_manifest"], total)
+    train_openings, holdout_openings = _split_opening_sets(
+        paths["split_manifest"], paths["meta"], total, train_count
     )
-    holdout_count = len(records) - train_count
+    if (
+        split.get("train_openings") != len(train_openings)
+        or split.get("holdout_openings") != len(holdout_openings)
+    ):
+        raise ValueError(
+            f"{paths['split_manifest']}: split opening counts do not match inputs"
+        )
+    holdout_count = total - train_count
     if train_count == 0 or holdout_count == 0:
         raise ValueError("hard-mining requires non-empty train and holdout partitions")
 
-    signal_candidates: list[Candidate] = []
-    for index, (record, row) in enumerate(
-        zip(records[:train_count], rows[:train_count])
-    ):
+    # Keep at most one candidate per game while scanning.  On the 40M source
+    # this avoids retaining millions of correlated failed-conversion records.
+    signal_records = 0
+    candidate_categories: Counter = Counter()
+    by_game: dict[int, Candidate] = {}
+    for index, record, row in iter_pair(paths["data"], paths["meta"]):
+        if index >= train_count:
+            break
         stm = record[32]
         wdl = struct.unpack_from("<b", record, 37)[0]
         if stm not in (0, 1):
@@ -894,14 +1063,13 @@ def do_mine_hard(args: argparse.Namespace) -> int:
         advantaged, margin, pieces = _material(record)
         if advantaged is None or _winner(record) == advantaged:
             continue
-        signal_candidates.append(
-            Candidate(record, row, "failed_conversion", margin, pieces)
+        candidate = Candidate(
+            record, row, "failed_conversion", margin, pieces
         )
-
-    # First enforce the game-level independence unit, then deduplicate colour-
-    # canonical positions across games. Both tie-breaks are deterministic.
-    by_game: dict[int, Candidate] = {}
-    for candidate in signal_candidates:
+        signal_records += 1
+        candidate_categories[
+            _category_name(_hard_category(candidate))
+        ] += 1
         previous = by_game.get(candidate.meta.game_id)
         if previous is None or _candidate_hash(
             candidate, args.seed
@@ -933,7 +1101,6 @@ def do_mine_hard(args: argparse.Namespace) -> int:
         replay_meta.extend((candidate.meta, candidate.meta))
     seed_records = [_zero_targets(record) for record in replay_records]
 
-    holdout_openings = {row.opening_id for row in rows[train_count:]}
     selected_openings = {row.opening_id for row in replay_meta}
     leaked_openings = selected_openings & holdout_openings
     if leaked_openings:
@@ -981,9 +1148,6 @@ def do_mine_hard(args: argparse.Namespace) -> int:
     if any(record[33:] != b"\0\0\0\0\0" for record in checked_seeds):
         raise ValueError("hard seed targets were not zeroed")
 
-    candidate_categories = Counter(
-        _category_name(_hard_category(row)) for row in signal_candidates
-    )
     eligible_categories = Counter(
         _category_name(_hard_category(row)) for row in eligible
     )
@@ -1017,7 +1181,7 @@ def do_mine_hard(args: argparse.Namespace) -> int:
             "meta_sha256": _sha256(paths["meta"]),
             "split_manifest": str(paths["split_manifest"]),
             "split_manifest_sha256": _sha256(paths["split_manifest"]),
-            "records": len(records),
+            "records": total,
         },
         "split": {
             "schema": split["schema"],
@@ -1031,7 +1195,7 @@ def do_mine_hard(args: argparse.Namespace) -> int:
             "selected_holdout_opening_overlap": 0,
         },
         "candidates": {
-            "signal_records": len(signal_candidates),
+            "signal_records": signal_records,
             "games": len(by_game),
             "after_one_per_game": len(one_per_game),
             "after_canonical_dedup": len(eligible),
@@ -1050,7 +1214,7 @@ def do_mine_hard(args: argparse.Namespace) -> int:
             "distribution": _distribution(selected),
         },
         "deduplication": {
-            "one_per_game_dropped": len(signal_candidates) - len(one_per_game),
+            "one_per_game_dropped": signal_records - len(one_per_game),
             "canonical_position_dropped": len(one_per_game) - len(eligible),
         },
         "targets": {

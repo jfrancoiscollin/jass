@@ -7,6 +7,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from argparse import Namespace
 from pathlib import Path
 
@@ -48,6 +49,7 @@ class SelfplayFrontierTests(unittest.TestCase):
             rc = SF.do_merge(Namespace(
                 pair=[[str(a[0]), str(a[1])], [str(b[0]), str(b[1])]],
                 out_data=str(out_data), out_meta=str(out_meta), manifest=None,
+                no_wdl_check=True,
             ))
             self.assertEqual(rc, 0)
             records, rows = SF.read_pair(out_data, out_meta)
@@ -230,6 +232,60 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertEqual(payload["holdout_records"], 2)
             self.assertTrue(all(row.opening_id == opening_hold for row in split_rows[-2:]))
             self.assertTrue(all(row.opening_id == opening_train for row in split_rows[:2]))
+
+    def test_merge_and_split_stream_without_read_pair(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31), bm=bits(10), wdl=-1),
+                record(wm=bits(32), bm=bits(11), wdl=0),
+                record(wm=bits(33), bm=bits(12), wdl=1),
+                record(wm=bits(34), bm=bits(13), wdl=0),
+            ]
+            rows = [
+                SF.Meta(1, 101, 0),
+                SF.Meta(2, 102, 0),
+                SF.Meta(3, 103, 0),
+                SF.Meta(4, 104, 0),
+            ]
+            data, meta = self.write_pair(root, "source", records, rows)
+            merged_data, merged_meta = root / "merged.jnnw", root / "merged.jsm"
+            split_data, split_meta = root / "split.jnnw", root / "split.jsm"
+            split_manifest = root / "split.json"
+
+            with mock.patch.object(
+                SF, "read_pair", side_effect=AssertionError("materialised pair")
+            ):
+                self.assertEqual(
+                    SF.do_merge(Namespace(
+                        pair=[(str(data), str(meta))],
+                        out_data=str(merged_data),
+                        out_meta=str(merged_meta),
+                        manifest=None,
+                        renamespace_nested=True,
+                        no_wdl_check=False,
+                        wdl_min_draw_share=None,
+                        wdl_max_draw_share=None,
+                        wdl_max_side_skew=None,
+                    )),
+                    0,
+                )
+                self.assertEqual(
+                    SF.do_split(Namespace(
+                        data=str(merged_data),
+                        meta=str(merged_meta),
+                        out_data=str(split_data),
+                        out_meta=str(split_meta),
+                        holdout_mod=2,
+                        seed=7,
+                        manifest=str(split_manifest),
+                    )),
+                    0,
+                )
+
+            output_records, output_rows = SF.read_pair(split_data, split_meta)
+            self.assertEqual(len(output_records), 4)
+            self.assertEqual(len(output_rows), 4)
 
     def test_mine_uses_actual_wdl_but_zeros_seed_targets_and_mirrors(self):
         with tempfile.TemporaryDirectory() as td:

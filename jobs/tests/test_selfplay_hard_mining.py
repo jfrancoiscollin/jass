@@ -7,6 +7,7 @@ import struct
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from argparse import Namespace
 from pathlib import Path
 
@@ -294,6 +295,21 @@ class HardMiningV1Tests(unittest.TestCase):
             args.code_sha = "short"
             with self.assertRaisesRegex(ValueError, "40-hex"):
                 SF.do_mine_hard(args)
+
+    def test_streams_large_input_instead_of_calling_read_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _, _, data, meta, split = self.prepare(root)
+            args = self.arguments(root, data, meta, split)
+            original = SF.read_pair
+
+            def guarded_read_pair(data_path, meta_path):
+                if Path(data_path) == data:
+                    raise AssertionError("mine-hard materialised the source pair")
+                return original(Path(data_path), Path(meta_path))
+
+            with mock.patch.object(SF, "read_pair", side_effect=guarded_read_pair):
+                self.assertEqual(SF.do_mine_hard(args), 0)
 
 
 if __name__ == "__main__":
