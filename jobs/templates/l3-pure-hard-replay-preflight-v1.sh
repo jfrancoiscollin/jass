@@ -12,6 +12,7 @@ set -Eeuo pipefail
 : "${HISTORY_META_ARTEFACT:?}"; : "${HISTORY_SPLIT_ARTEFACT:?}"
 : "${HISTORY_AUTH_PREFIX:?}"; : "${EXPECTED_HISTORY_AUTH_JOB:?}"
 : "${EXPECTED_HISTORY_AUTH_ATTEMPT:?}"; : "${EXPECTED_HISTORY_AUTH_CODE_SHA:?}"
+: "${EXPECTED_HISTORY_AUTH_VERDICT:?}"; : "${EXPECTED_HISTORY_RECORDS:?}"
 : "${HISTORY_ARM:?}"
 
 cd "$JASS_CODE_DIR"
@@ -105,6 +106,7 @@ python3 - "$ART/verified-history-source.json" "$EXPECTED_HISTORY_JOB" \
   "$EXPECTED_HISTORY_STATE" "$ART/verified-history-auth.json" \
   "$IN/history-auth.json" "$EXPECTED_HISTORY_AUTH_JOB" \
   "$EXPECTED_HISTORY_AUTH_ATTEMPT" "$EXPECTED_HISTORY_AUTH_CODE_SHA" \
+  "$EXPECTED_HISTORY_AUTH_VERDICT" "$EXPECTED_HISTORY_RECORDS" \
   "$HISTORY_ARM" "$IN/history.jnnw.gz" "$IN/history.jsm.gz" \
   "$IN/source-split.json" <<'PY'
 import hashlib
@@ -134,7 +136,7 @@ if (
     or auth_report.get("attempt_id") != sys.argv[9]
     or auth_report.get("code_sha") != sys.argv[10]
     or auth_report.get("result_state") != "completed"
-    or auth.get("verdict") != "L3_PURE_TOPK_1017_FIT_INPUTS_AUTHENTICATED"
+    or auth.get("verdict") != sys.argv[11]
     or auth.get("source_job") != sys.argv[2]
     or auth.get("source_attempt") != sys.argv[3]
     or auth.get("source_code_sha") != sys.argv[4]
@@ -143,9 +145,10 @@ if (
 ):
     raise SystemExit("historical catalogue certificate mismatch")
 
-arm_name = sys.argv[11]
+expected_records = int(sys.argv[12])
+arm_name = sys.argv[13]
 arm = auth.get("arms", {}).get(arm_name)
-if not isinstance(arm, dict) or arm.get("records") != 2_000_000:
+if not isinstance(arm, dict) or arm.get("records") != expected_records:
     raise SystemExit(f"historical catalogue arm mismatch: {arm_name}")
 expected = {
     "history.jnnw.gz": arm.get("data_gz_sha256"),
@@ -155,11 +158,11 @@ actual = {row["local_name"]: row["sha256"] for row in report["files"]}
 for name, expected_digest in expected.items():
     if actual.get(name) != expected_digest:
         raise SystemExit(f"historical compressed hash mismatch for {name}")
-if digest(sys.argv[12]) != expected["history.jnnw.gz"]:
+if digest(sys.argv[14]) != expected["history.jnnw.gz"]:
     raise SystemExit("downloaded historical JNNW gzip hash mismatch")
-if digest(sys.argv[13]) != expected["history.jsm.gz"]:
+if digest(sys.argv[15]) != expected["history.jsm.gz"]:
     raise SystemExit("downloaded historical JSM1 gzip hash mismatch")
-if json.load(open(sys.argv[14])) != arm.get("split"):
+if json.load(open(sys.argv[16])) != arm.get("split"):
     raise SystemExit("historical source split differs from catalogue")
 PY
 gunzip -c "$IN/history.jnnw.gz" > "$W/history.raw.jnnw"
@@ -167,12 +170,16 @@ gunzip -c "$IN/history.jsm.gz" > "$W/history.raw.jsm"
 HISTORY_DATA_SHA=$(sha256sum "$W/history.raw.jnnw" | awk '{print $1}')
 HISTORY_META_SHA=$(sha256sum "$W/history.raw.jsm" | awk '{print $1}')
 export HISTORY_DATA_SHA HISTORY_META_SHA
-python3 - "$IN/history-auth.json" "$HISTORY_ARM" "$HISTORY_DATA_SHA" <<'PY'
+python3 - "$IN/history-auth.json" "$HISTORY_ARM" "$HISTORY_DATA_SHA" \
+  "$HISTORY_META_SHA" <<'PY'
 import json
 import sys
 arm = json.load(open(sys.argv[1]))["arms"][sys.argv[2]]
-if arm.get("data_raw_sha256") != sys.argv[3]:
-    raise SystemExit("historical raw JNNW hash differs from catalogue")
+if (
+    arm.get("data_raw_sha256") != sys.argv[3]
+    or arm.get("meta_raw_sha256") not in (None, sys.argv[4])
+):
+    raise SystemExit("historical raw JNNW/JSM1 hash differs from catalogue")
 PY
 python3 jobs/tools/assert_corpus_wdl.py --data "$W/history.raw.jnnw" \
   --out "$ART/history-corpus-wdl.json" > "$W/history-wdl.log" 2>&1 ||

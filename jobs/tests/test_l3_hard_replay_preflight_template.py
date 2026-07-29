@@ -19,9 +19,13 @@ class HardReplayPreflightTemplateTests(unittest.TestCase):
         self.assertIn('"$HISTORY_AUTH_PREFIX"', self.text)
         self.assertIn('"$EXPECTED_HISTORY_AUTH_ATTEMPT"', self.text)
         self.assertIn('"$EXPECTED_HISTORY_AUTH_CODE_SHA"', self.text)
+        self.assertIn('"$EXPECTED_HISTORY_AUTH_VERDICT"', self.text)
+        self.assertIn('"$EXPECTED_HISTORY_RECORDS"', self.text)
         self.assertIn('"$HISTORY_ARM"', self.text)
         self.assertIn("historical catalogue certificate mismatch", self.text)
-        self.assertIn("historical raw JNNW hash differs from catalogue", self.text)
+        self.assertIn(
+            "historical raw JNNW/JSM1 hash differs from catalogue", self.text
+        )
         self.assertLess(
             self.text.index("phase reproduce-historical-split"),
             self.text.index("phase mine-hard-replay-twice"),

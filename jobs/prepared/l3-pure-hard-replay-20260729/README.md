@@ -46,3 +46,16 @@ Les deux templates exigent `FULL_RUN_APPROVED=1`, `SCIENTIFIC_GO=1` et
 `automatic_next_job=null`. `home-1042` est data-only : aucun fit ne sera lancé
 si son certificat ne publie pas
 `L3_PURE_HARD_REPLAY_CATALOGUE_READY` avec `training_authorized=true`.
+
+La réouverture choisie produit une source `UNIFORM` post-correctif de 40M
+records sous :
+
+```text
+home-1044-l3-pure-hard-replay-large-source-v1
+```
+
+Le template `l3-pure-hard-replay-large-source-v1.sh` conserve strictement le
+parent TURNOVER et la policy UNIFORM d8/d4 de `home-1017`, mais utilise des
+graines fraîches disjointes. Les six producteurs HOME sont le plafond de
+concurrence. La source publie ses hashes, son split et son canari, puis s'arrête
+avec `automatic_next_job=null` ; le mining 1M restera un job séparé.

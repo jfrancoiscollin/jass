@@ -36,6 +36,8 @@ from pathlib import Path
 RECORD_BYTES = 38   # 32 bitboards + 1 stm + 4 score + 1 wdl
 WDL_OFFSET = 37
 COUNT_OFFSET = 4
+HEADER_BYTES = 8
+SCAN_RECORDS = 1 << 16
 
 
 DEFAULT_MIN_DRAW_SHARE = 0.10
@@ -96,22 +98,37 @@ def histogram_from_records(records) -> dict[int, int]:
 
 
 def histogram(path: Path) -> tuple[int, dict[int, int]]:
-    """Compte les issues d'un `.jnnw`. Le nombre de records est dans l'en-tête."""
-    blob = path.read_bytes()
-    if len(blob) < COUNT_OFFSET + 4:
+    """Compte les issues d'un `.jnnw` sans matérialiser le corpus.
+
+    Les sources de replay peuvent dépasser le gigaoctet. Le canari doit donc
+    garder une empreinte mémoire bornée au lieu d'appeler ``Path.read_bytes``.
+    """
+    size = path.stat().st_size
+    if size < HEADER_BYTES:
         raise SystemExit(f"{path}: fichier trop court pour un en-tête jnnw")
-    count = struct.unpack_from("<I", blob, COUNT_OFFSET)[0]
-    if count == 0:
-        raise SystemExit(f"{path}: zéro record — échec, pas un corpus vide neutre")
-    header = len(blob) - count * RECORD_BYTES
-    if header < 0 or (len(blob) - header) % RECORD_BYTES:
-        raise SystemExit(
-            f"{path}: taille incohérente — {len(blob)} octets pour {count} records "
-            f"de {RECORD_BYTES}"
-        )
-    counts = collections.Counter()
-    for i in range(count):
-        counts[struct.unpack_from("<b", blob, header + i * RECORD_BYTES + WDL_OFFSET)[0]] += 1
+    with path.open("rb") as stream:
+        header = stream.read(HEADER_BYTES)
+        if header[:COUNT_OFFSET] != b"JNNW":
+            raise SystemExit(f"{path}: magie jnnw invalide")
+        count = struct.unpack_from("<I", header, COUNT_OFFSET)[0]
+        if count == 0:
+            raise SystemExit(f"{path}: zéro record — échec, pas un corpus vide neutre")
+        expected_size = HEADER_BYTES + count * RECORD_BYTES
+        if size != expected_size:
+            raise SystemExit(
+                f"{path}: taille incohérente — {size} octets pour {count} records "
+                f"de {RECORD_BYTES} (attendu {expected_size})"
+            )
+        counts = collections.Counter()
+        remaining = count
+        while remaining:
+            batch_records = min(remaining, SCAN_RECORDS)
+            block = stream.read(batch_records * RECORD_BYTES)
+            if len(block) != batch_records * RECORD_BYTES:
+                raise SystemExit(f"{path}: corpus tronqué pendant le scan WDL")
+            for offset in range(WDL_OFFSET, len(block), RECORD_BYTES):
+                counts[struct.unpack_from("<b", block, offset)[0]] += 1
+            remaining -= batch_records
     unexpected = set(counts) - {-1, 0, 1}
     if unexpected:
         raise SystemExit(f"{path}: étiquettes WDL hors domaine {sorted(unexpected)}")
