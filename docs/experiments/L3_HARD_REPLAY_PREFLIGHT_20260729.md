@@ -1,7 +1,7 @@
 # L3-PURE — préflight hard-replay UNIFORM
 
-Date : 2026-07-29  
-Job : `home-1042-l3-pure-hard-replay-preflight-uniform-v1`  
+Date : 2026-07-29
+Job : `home-1042-l3-pure-hard-replay-preflight-uniform-v1`
 Verdict : `L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`
 
 ## Question bornée

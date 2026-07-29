@@ -1,7 +1,7 @@
 # L3-PURE — porte de promotion TOPK3
 
-Date : 2026-07-29  
-Verdict autoritatif : `TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE`  
+Date : 2026-07-29
+Verdict autoritatif : `TOPK3_PROMOTION_NOT_RECOMMENDED_POINT_ESTIMATE`
 Champion conservé : `TURNOVER`
 
 ## Contrat
