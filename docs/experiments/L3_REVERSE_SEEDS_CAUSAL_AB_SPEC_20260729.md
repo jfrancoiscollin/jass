@@ -62,8 +62,22 @@ Le contrôle utilise une priorité BLAKE2b déterministe au niveau partie puis
 position, à partir de `game_id`, position, `opening_id`, graine d'appariement et
 source temporelle. Le buffer borné conserve au plus une candidate par partie
 et strate, puis la sortie au plus une partie et une position canonique par
-racine sélectionnée. Une strate insuffisante ferme le préflight ; aucune
-fusion de bande ou réduction post-hoc n'est permise.
+racine sélectionnée.
+
+Le buffer initial est `quota + max(16, 25 % du quota)`. Si la déduplication
+globale des parties ou positions déjà attribuées à une strate précédente
+consomme cette marge, le matcher rescane uniquement la strate déficitaire avec
+un buffer doublé géométriquement. Les priorités BLAKE2b, exclusions, quotas et
+ordre des strates restent inchangés ; le manifeste consigne capacités initiale
+et finale ainsi que le nombre de rescans. Une strate réellement insuffisante
+ferme toujours le préflight : aucune fusion de bande ou réduction post-hoc
+n'est permise.
+
+Cette règle ferme l'incident opérationnel `cpx62-1079` : le buffer initial de
+la strate `deep_endgame / p3_thin` ne conservait plus que 36 002 contrôles
+utilisables après déduplication globale pour un quota de 37 339, soit un
+déficit de 1 337. Le diagnostic `cpx62-1080` a exclu un manque de source,
+de mémoire ou de disque ; aucune sortie partielle de 1079 n'est réutilisable.
 
 ## 4. Contrat self-play futur
 

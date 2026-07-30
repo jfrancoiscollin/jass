@@ -299,6 +299,104 @@ class ReverseSeedMatchingTests(unittest.TestCase):
             {-entry[1] for entry in heap},
         )
 
+    def test_adaptive_refill_recovers_from_cross_stratum_game_collisions(
+        self,
+    ) -> None:
+        stratum = (
+            self.fixture["source_temporal_id"],
+            "deep_endgame",
+            "deep_endgame",
+            "p3_thin",
+        )
+
+        def candidate(game_id: int) -> matching.RankedCandidate:
+            record = make_record(
+                {
+                    "white_men": [game_id, game_id + 20],
+                    "black_men": [50],
+                    "stm": 0,
+                    "score": 0,
+                    "wdl": 0,
+                }
+            )
+            return matching.RankedCandidate(
+                game_id,
+                game_id,
+                game_id,
+                record,
+                frontier.Meta(game_id, game_id + 1000, 0),
+            )
+
+        initial = {game_id: candidate(game_id) for game_id in range(1, 7)}
+        expanded = {game_id: candidate(game_id) for game_id in range(1, 13)}
+        refill_capacities: list[int] = []
+
+        selected, capacity, attempts, retained = (
+            matching._select_with_adaptive_refill(
+                initial_candidates=initial,
+                quota=4,
+                initial_capacity=6,
+                eligible_records=12,
+                blocked_games={1, 2, 3},
+                blocked_positions=set(),
+                refill=lambda requested: (
+                    refill_capacities.append(requested) or expanded
+                ),
+            )
+        )
+
+        self.assertEqual(refill_capacities, [12])
+        self.assertEqual(capacity, 12)
+        self.assertEqual(attempts, 1)
+        self.assertEqual(retained, 12)
+        self.assertEqual(
+            [row.meta.game_id for row in selected],
+            [4, 5, 6, 7],
+        )
+        self.assertTrue(
+            all(
+                matching._stratum(row.record, stratum[0]) == stratum
+                for row in selected
+            )
+        )
+
+    def test_adaptive_refill_still_fails_closed_when_population_exhausted(
+        self,
+    ) -> None:
+        row = self.fixture["records"][1]
+        record = make_record(row)
+        candidates = {
+            game_id: matching.RankedCandidate(
+                game_id,
+                game_id,
+                game_id,
+                record,
+                frontier.Meta(game_id, game_id + 1000, 0),
+            )
+            for game_id in (1, 2, 3)
+        }
+        refill_calls: list[int] = []
+
+        selected, capacity, attempts, retained = (
+            matching._select_with_adaptive_refill(
+                initial_candidates=candidates,
+                quota=3,
+                initial_capacity=4,
+                eligible_records=20,
+                blocked_games={1, 2},
+                blocked_positions=set(),
+                refill=lambda requested: (
+                    refill_calls.append(requested) or candidates
+                ),
+            )
+        )
+
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(capacity, 8)
+        self.assertEqual(attempts, 1)
+        self.assertEqual(retained, 3)
+        self.assertEqual(refill_calls, [8])
+
     def test_authentication_and_unseeded_source_are_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -20,6 +20,7 @@ import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -235,6 +236,137 @@ def _push_candidate(
         by_game[game_id] = candidate
 
 
+def _select_candidates(
+    candidates_by_game: dict[int, RankedCandidate],
+    quota: int,
+    blocked_games: set[int],
+    blocked_positions: set[bytes],
+) -> list[RankedCandidate]:
+    selected: list[RankedCandidate] = []
+    selected_games: set[int] = set()
+    selected_positions: set[bytes] = set()
+    ranked = sorted(
+        candidates_by_game.values(),
+        key=lambda row: (
+            row.game_priority,
+            row.priority,
+            row.source_index,
+        ),
+    )
+    for candidate in ranked:
+        canonical = frontier._canonical_position(candidate.record)
+        if (
+            candidate.meta.game_id in blocked_games
+            or candidate.meta.game_id in selected_games
+            or canonical in blocked_positions
+            or canonical in selected_positions
+        ):
+            continue
+        selected.append(candidate)
+        selected_games.add(candidate.meta.game_id)
+        selected_positions.add(canonical)
+        if len(selected) == quota:
+            break
+    return selected
+
+
+def _select_with_adaptive_refill(
+    *,
+    initial_candidates: dict[int, RankedCandidate],
+    quota: int,
+    initial_capacity: int,
+    eligible_records: int,
+    blocked_games: set[int],
+    blocked_positions: set[bytes],
+    refill: Callable[[int], dict[int, RankedCandidate]],
+) -> tuple[list[RankedCandidate], int, int, int]:
+    """Select a stratum, growing its deterministic reservoir only if needed.
+
+    The common path retains the preregistered 25% headroom.  A later stratum
+    can nevertheless lose more than that headroom when games already selected
+    for earlier strata also occur in this one.  In that case, rescan only this
+    stratum with geometrically larger bounded reservoirs.  The rank function,
+    exclusions and quota stay unchanged.
+    """
+
+    capacity = initial_capacity
+    candidates = initial_candidates
+    refill_attempts = 0
+    while True:
+        selected = _select_candidates(
+            candidates,
+            quota,
+            blocked_games,
+            blocked_positions,
+        )
+        if len(selected) == quota:
+            return selected, capacity, refill_attempts, len(candidates)
+
+        # Fewer retained games than the requested reservoir means the scan
+        # exhausted the eligible unique-game population.  Growing again cannot
+        # produce another game, so fail closed in the caller.
+        if (
+            (refill_attempts > 0 and len(candidates) < capacity)
+            or capacity >= eligible_records
+        ):
+            return selected, capacity, refill_attempts, len(candidates)
+
+        next_capacity = min(
+            eligible_records,
+            max(capacity * 2, capacity + quota - len(selected)),
+        )
+        if next_capacity <= capacity:
+            return selected, capacity, refill_attempts, len(candidates)
+        capacity = next_capacity
+        candidates = refill(capacity)
+        refill_attempts += 1
+
+
+def _refill_stratum_candidates(
+    *,
+    history_data: Path,
+    history_meta: Path,
+    train_count: int,
+    stratum: tuple[str, str, str, str],
+    source_temporal_id: str,
+    matching_seed: int,
+    treatment_games: set[int],
+    treatment_positions: set[bytes],
+    blocked_games: set[int],
+    blocked_positions: set[bytes],
+    capacity: int,
+) -> dict[int, RankedCandidate]:
+    heap: list[tuple[int, int]] = []
+    by_game: dict[int, RankedCandidate] = {}
+    for index, record, row in frontier.iter_pair(history_data, history_meta):
+        if index >= train_count:
+            break
+        if row.seeded not in (0, 1):
+            raise ValueError(f"history meta record {index}: invalid seeded flag")
+        if (
+            row.seeded
+            or row.game_id in treatment_games
+            or row.game_id in blocked_games
+        ):
+            continue
+        if _stratum(record, source_temporal_id) != stratum:
+            continue
+        canonical = frontier._canonical_position(record)
+        if canonical in treatment_positions or canonical in blocked_positions:
+            continue
+        candidate = RankedCandidate(
+            _game_priority(row.game_id, stratum, matching_seed),
+            _candidate_priority(
+                record, row, matching_seed, source_temporal_id
+            ),
+            index,
+            record,
+            row,
+        )
+        _push_candidate(heap, by_game, candidate, capacity)
+    return by_game
+
+
 def build_matched_catalogues(args: argparse.Namespace) -> dict:
     if not re.fullmatch(r"[0-9a-f]{40}", args.code_sha):
         raise ValueError("--code-sha must be a full lowercase 40-hex SHA")
@@ -368,35 +500,52 @@ def build_matched_catalogues(args: argparse.Namespace) -> dict:
     ] = {}
     used_games: set[int] = set()
     used_positions: set[bytes] = set()
+    final_capacities: dict[tuple[str, str, str, str], int] = {}
+    retained_unique_games: dict[tuple[str, str, str, str], int] = {}
+    refill_attempts_by_stratum: dict[tuple[str, str, str, str], int] = {}
     for stratum in sorted(quotas):
-        ranked = sorted(
-            candidates_by_game.get(stratum, {}).values(),
-            key=lambda row: (
-                row.game_priority,
-                row.priority,
-                row.source_index,
-            ),
+        selected, final_capacity, refill_attempts, retained_games = (
+            _select_with_adaptive_refill(
+                initial_candidates=candidates_by_game.get(stratum, {}),
+                quota=quotas[stratum],
+                initial_capacity=capacities[stratum],
+                eligible_records=eligible_records_by_stratum[stratum],
+                blocked_games=used_games,
+                blocked_positions=used_positions,
+                refill=lambda capacity, value=stratum: (
+                    _refill_stratum_candidates(
+                        history_data=paths["history_data"],
+                        history_meta=paths["history_meta"],
+                        train_count=train_count,
+                        stratum=value,
+                        source_temporal_id=args.source_temporal_id,
+                        matching_seed=args.matching_seed,
+                        treatment_games=treatment_games,
+                        treatment_positions=treatment_positions,
+                        blocked_games=used_games,
+                        blocked_positions=used_positions,
+                        capacity=capacity,
+                    )
+                ),
+            )
         )
-        selected: list[RankedCandidate] = []
-        for candidate in ranked:
-            canonical = frontier._canonical_position(candidate.record)
-            if (
-                candidate.meta.game_id in used_games
-                or canonical in used_positions
-            ):
-                continue
-            selected.append(candidate)
-            used_games.add(candidate.meta.game_id)
-            used_positions.add(canonical)
-            if len(selected) == quotas[stratum]:
-                break
+        final_capacities[stratum] = final_capacity
+        retained_unique_games[stratum] = retained_games
+        refill_attempts_by_stratum[stratum] = refill_attempts
         if len(selected) != quotas[stratum]:
             raise ValueError(
                 "matched-random capacity insufficient for "
                 f"{_stratum_name(stratum)}: selected={len(selected)} "
-                f"required={quotas[stratum]}"
+                f"required={quotas[stratum]} retained_unique_games="
+                f"{retained_games} final_capacity={final_capacity} "
+                f"refill_attempts={refill_attempts}"
             )
         selected_by_stratum[stratum] = selected
+        used_games.update(candidate.meta.game_id for candidate in selected)
+        used_positions.update(
+            frontier._canonical_position(candidate.record)
+            for candidate in selected
+        )
 
     offsets: Counter = Counter()
     control_records: list[bytes] = []
@@ -511,19 +660,31 @@ def build_matched_catalogues(args: argparse.Namespace) -> dict:
             "control_unique_games": len(used_games),
             "control_unique_canonical_positions": len(used_positions),
             "candidate_buffer_policy": (
-                "unique_game_quota_plus_max_16_or_25pct"
+                "unique_game_quota_plus_max_16_or_25pct_then_geometric_refill"
             ),
             "eligible_records_by_stratum": {
                 _stratum_name(key): value
                 for key, value in sorted(eligible_records_by_stratum.items())
             },
             "retained_unique_games_by_stratum": {
-                _stratum_name(key): len(value)
-                for key, value in sorted(candidates_by_game.items())
+                _stratum_name(key): value
+                for key, value in sorted(retained_unique_games.items())
+            },
+            "initial_buffer_capacity_by_stratum": {
+                _stratum_name(key): value
+                for key, value in sorted(capacities.items())
             },
             "buffer_capacity_by_stratum": {
                 _stratum_name(key): value
                 for key, value in sorted(capacities.items())
+            },
+            "final_buffer_capacity_by_stratum": {
+                _stratum_name(key): value
+                for key, value in sorted(final_capacities.items())
+            },
+            "adaptive_refill_attempts_by_stratum": {
+                _stratum_name(key): value
+                for key, value in sorted(refill_attempts_by_stratum.items())
             },
         },
         "matched_base_positions_by_stratum": dict(sorted(treatment_counts.items())),
