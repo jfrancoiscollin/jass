@@ -136,6 +136,13 @@ de code et tous ses hashes soient encore vérifiés. L'assembleur reçoit donc
 deux identités distinctes : `code_sha` pour le code qui assemble et entraîne,
 et `hard_manifest_code_sha` pour authentifier le manifeste miné immuable.
 
+La source historique 40M ne doit jamais être matérialisée en objets Python.
+L'assembleur vérifie ses en-têtes, son split et ses hashes en flux, calcule
+l'échantillon uniforme exact avec l'algorithme déterministe préenregistré, puis
+ne conserve en mémoire que la dose sélectionnée. Le manifeste final certifie
+`history.read_mode=streaming_exact_sample`. Cette contrainte de ressources ne
+change ni les indices tirés, ni leur ordre source, ni aucun facteur scientifique.
+
 ## 6. Micro-smoke local
 
 Les fixtures locales vérifient :
@@ -143,6 +150,7 @@ Les fixtures locales vérifient :
 - déterminisme bit à bit ;
 - authentification du manifeste hard ;
 - sampling uniforme exact dans le train historique ;
+- lecture streaming de la source historique, sans appel à `read_pair` ;
 - dose et volume exacts ;
 - tail holdout commun ;
 - absence de fuite d'ouverture ;
