@@ -73,8 +73,7 @@ monitor(){
 }
 
 restore_tree(){
-  git checkout -- src/ pattern_jass/tools/gen_patterns.py \
-    pattern_jass/tools/patterns.py 2>/dev/null || true
+  git checkout -- src/ pattern_jass/tools/patterns.py 2>/dev/null || true
 }
 finalize(){
   rc=$?
@@ -238,14 +237,28 @@ python3 -m venv "$W/venv"
 "$W/venv/bin/python" -m py_compile \
   jobs/tools/l3_failed_conversion_weights.py \
   pattern_jass/tools/train_stream.py
-# Reconstruct the historical feature dumper so an all-ones control is a strict
-# byte-level reproducibility witness, while the trainer itself remains current.
-for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
-  src/movegen.cpp src/movegen.hpp src/main.cpp \
-  pattern_jass/tools/gen_patterns.py; do
-  git show "$EXPECTED_SOURCE_CODE_SHA:$source" > "$source" ||
-    die "cannot reconstruct historical feature source $source"
-done
+# The current source must retain the exact historical 8cf feature geometry and
+# dump routine. This keeps the engine current while making byte reproduction a
+# meaningful test of the new all-ones trainer path.
+git diff --quiet "$EXPECTED_SOURCE_CODE_SHA" "$EXPECTED_CODE_SHA" -- \
+  src/scan_eval.cpp src/scan_eval.hpp pattern_jass/tools/gen_patterns.py ||
+  die "feature geometry changed since TURNOVER"
+python3 - "$EXPECTED_SOURCE_CODE_SHA" <<'PY'
+import subprocess
+import sys
+
+def extract(text):
+    start = text.index("int run_dump_eval_features_mode")
+    end = text.index("\nint ", start + 4)
+    return text[start:end]
+
+historical = subprocess.check_output(
+    ["git", "show", f"{sys.argv[1]}:src/main.cpp"], text=True
+)
+current = open("src/main.cpp", encoding="utf-8").read()
+if extract(historical) != extract(current):
+    raise SystemExit("feature dump routine changed since TURNOVER")
+PY
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf \
   > "$W/gen-patterns.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
@@ -323,6 +336,11 @@ if not bool(np.all(treatment[-tr["split"]["holdout_records"]:] == 1.0)):
 PY
 "$J" --dump-eval-features "$W/turnover.fit.jnnw" "$W/turnover.feat" \
   > "$W/features.log" 2>&1
+env PYTHONPATH="$GEOM:pattern_jass/tools" \
+  "$W/venv/bin/python" jobs/tools/l3_bucket_visits.py \
+  --data "$W/turnover.fit.jnnw" \
+  --out "$ART/common-training-coverage.json" \
+  > "$W/coverage.log" 2>&1
 say "  one shared feature matrix; aligned CONTROL/TREATMENT weights certified"
 
 fit_arm(){
@@ -410,6 +428,7 @@ for arm, name in (("control", "UNWEIGHTED"), ("treatment", "FAILED_X2")):
             float(match.group(1)) if match else None
         ),
     }
+coverage = json.load(open(art / "common-training-coverage.json"))
 payload = {
     "schema": 1,
     "verdict": "L3_PURE_FAILED_CONVERSION_WEIGHTS_CAUSAL_AB_ARMS_READY",
@@ -437,6 +456,17 @@ payload = {
         "control_reproduced_historical_model": (
             arms["UNWEIGHTED"]["model_sha256"] == source_model
         ),
+    },
+    "training_coverage": {
+        "common_to_both_arms": True,
+        "control_minus_treatment": {
+            "visited_buckets": 0,
+            "visited_pct": 0.0,
+            "gini": 0.0,
+            "buckets_ge_10": 0,
+            "buckets_ge_100": 0,
+        },
+        "common": coverage,
     },
     "arms": arms,
     "external_teacher_inputs": 0,

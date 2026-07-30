@@ -56,10 +56,11 @@ normalisation, quantiles et ESS.
 Le bras CONTROL passe un vecteur uniforme à l’interface sample-weights. Le
 trainer doit reconnaître ce vecteur comme uniforme et reprendre exactement le
 chemin historique `sw_all=None`. Le template
-`jobs/templates/l3-pure-failed-conversion-weights-causal-ab-v1.sh` reconstruit
-le feature dumper 8cf du SHA source, reproduit le split certifié puis exige que
-le modèle CONTROL soit byte-identique au modèle TURNOVER historique. Une
-dérive ferme le DOE avant de lancer le fit TREATMENT.
+`jobs/templates/l3-pure-failed-conversion-weights-causal-ab-v1.sh` vérifie que
+la géométrie et la routine du feature dumper 8cf sont identiques au SHA source,
+reproduit le split certifié puis exige que le modèle CONTROL soit
+byte-identique au modèle TURNOVER historique. Une dérive ferme le DOE avant de
+lancer le fit TREATMENT.
 
 Les deux optimiseurs doivent converger. La holdout commune est diagnostique
 seulement et ne sélectionne jamais un bras.
@@ -69,14 +70,32 @@ son corpus, son JSM1, son split et le warm-start F2M. Il dumpe les features une
 seule fois et réutilise exactement les mêmes données, features, warm-start et
 hyperparamètres pour les deux fits séquentiels. Le certificat terminal
 `L3_PURE_FAILED_CONVERSION_WEIGHTS_CAUSAL_AB_ARMS_READY` ne constitue pas un
-résultat de force.
+résultat de force. La couverture d’entraînement est calculée une seule fois ;
+elle est commune aux deux bras par construction et son delta causal vaut zéro.
 
-## Readout futur
+## Readout indépendant préenregistré
 
 Après deux fits valides seulement, le traitement sera joué directement contre
-le contrôle sur un pool frais, apparié et disjoint, en Q00 profondeur 9 et
-native 0,1 seconde par coup. W/D/L, Elo, IC90/IC95 et couverture seront
-publiés. Le seuil et la taille seront figés avant calcul.
+le contrôle sur 1 500 ouvertures fraîches uniques, couleurs appariées, soit
+3 000 parties en Q00 profondeur 9 et 3 000 parties en native 0,1 seconde par
+coup. Le pool, seed `1094001`, sera disjoint de DILF et des pools publiés par
+les readouts TOPK, hard replay et reverse seeds.
+
+Le score primaire additionne les W/D/L des deux vues avant de publier taux,
+Elo, IC90 et IC95. Les classes préenregistrées sont :
+
+- `ABOVE_UNWEIGHTED_IC95` si les deux vues ont un point estimate positif et
+  que la borne basse additionnée IC95 dépasse 0,5 ;
+- `ABOVE_UNWEIGHTED_IC90` avec la même règle à IC90 ;
+- `BELOW_UNWEIGHTED` si la borne haute additionnée IC90 est sous 0,5 ou si
+  une vue régresse à IC90 ;
+- `DIRECTIONAL` si le point estimate additionné est positif sans régression
+  de vue établie ;
+- `INCONCLUSIVE` sinon.
+
+La couverture d’entraînement est commune et son delta est exactement nul par
+construction. W/D/L, Elo, IC90/IC95 et couverture seront publiés. Aucun seuil
+ne sera modifié après les fits.
 
 ```json
 {
