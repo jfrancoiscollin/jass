@@ -438,7 +438,7 @@ gzip -n -c "$W/fresh.raw.jnnw" > "$ART/fresh-common.jnnw.gz"
 gzip -n -c "$W/fresh.raw.jsm" > "$ART/fresh-common.jsm.gz"
 
 phase assemble-causal-fit-corpora
-python3 jobs/tools/l3_hard_replay_assembly.py \
+python3 -m jobs.tools.l3_hard_replay_assembly \
   --history-data "$W/history.fit.jnnw" --history-meta "$W/history.fit.jsm" \
   --history-split-manifest "$ART/history-split.json" \
   --fresh-data "$W/fresh.fit.jnnw" --fresh-meta "$W/fresh.fit.jsm" \

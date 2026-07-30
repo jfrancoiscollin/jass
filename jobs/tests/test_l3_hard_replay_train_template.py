@@ -80,6 +80,12 @@ class HardReplayTrainTemplateTests(unittest.TestCase):
 
     def test_assembly_and_fits_share_one_holdout(self):
         self.assertIn("jobs/tools/l3_hard_replay_assembly.py", self.text)
+        self.assertIn(
+            "python3 -m jobs.tools.l3_hard_replay_assembly", self.text
+        )
+        self.assertNotIn(
+            "python3 jobs/tools/l3_hard_replay_assembly.py", self.text
+        )
         self.assertIn("--out-control-data", self.text)
         self.assertIn("--out-treatment-data", self.text)
         self.assertIn('"records"]["common_holdout"]', self.text)

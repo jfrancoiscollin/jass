@@ -143,6 +143,11 @@ ne conserve en mémoire que la dose sélectionnée. Le manifeste final certifie
 `history.read_mode=streaming_exact_sample`. Cette contrainte de ressources ne
 change ni les indices tirés, ni leur ordre source, ni aucun facteur scientifique.
 
+L'assembleur est lancé comme module depuis la racine du dépôt
+(`python3 -m jobs.tools.l3_hard_replay_assembly`). L'appel direct par chemin est
+interdit : Python remplacerait la racine dans `sys.path` par `jobs/tools` et
+l'import authentifié de `tools.selfplay_frontier` échouerait avant l'assemblage.
+
 ## 6. Micro-smoke local
 
 Les fixtures locales vérifient :
