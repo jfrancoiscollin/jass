@@ -1,8 +1,16 @@
 # L3-PURE — replay difficile causal v1
 
 Date : 2026-07-29
-Statut : implémentation et micro-smoke prêts ; aucun job lancé par cette PR
+Statut : DOE exécuté ; recette v1 close le 2026-07-30
 Portée : PR 2 du mémo `MEMO_CODEX_JASS_QUALITE_SIGNAL_20260728.md`
+
+Résultat autoritatif :
+[`L3_HARD_REPLAY_READOUT_20260730.md`](L3_HARD_REPLAY_READOUT_20260730.md).
+`HARD_REPLAY` fait `222-24-9754` sur 10 000 parties contre
+`UNIFORM_REPLAY`, soit 0,023400 et -648,20 Elo. Le verdict est
+`L3_PURE_HARD_REPLAY_BELOW_UNIFORM_REPLAY`. La recette
+`50 % fresh + 50 % failed_conversion` avec cibles historiques conservées est
+close ; elle ne doit pas être relancée à l'identique.
 
 ## 1. Question
 
