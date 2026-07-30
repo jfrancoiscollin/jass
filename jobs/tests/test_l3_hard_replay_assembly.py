@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from argparse import Namespace
 from pathlib import Path
+from unittest import mock
 
 from jobs.tools import l3_hard_replay_assembly as assembly
 from tools import selfplay_frontier as frontier
@@ -246,6 +247,30 @@ class HardReplayAssemblyTests(unittest.TestCase):
             args.hard_manifest_code_sha = "3" * 40
             with self.assertRaisesRegex(ValueError, "certificate mismatch"):
                 assembly.assemble(args)
+
+    def test_streams_history_instead_of_materialising_the_full_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = self._prepare(root)
+            args = self._args(root, inputs, "-streaming")
+            original_read_pair = frontier.read_pair
+
+            def guarded_read_pair(data_path, meta_path):
+                if Path(data_path) == inputs["history_data"]:
+                    raise AssertionError("historical source was materialised")
+                return original_read_pair(Path(data_path), Path(meta_path))
+
+            with mock.patch.object(
+                assembly.frontier, "read_pair", side_effect=guarded_read_pair
+            ):
+                result = assembly.assemble(args)
+
+            self.assertEqual(
+                result["history"]["read_mode"], "streaming_exact_sample"
+            )
+            self.assertEqual(
+                result["control"]["sampled_records"], args.replay_records
+            )
 
     def test_fails_closed_on_hard_manifest_drift_and_existing_outputs(self):
         with tempfile.TemporaryDirectory() as directory:

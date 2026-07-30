@@ -73,6 +73,31 @@ def _wdl_canary(records: list[bytes]) -> dict:
     return canary.evaluate(canary.histogram_from_records(records))
 
 
+def _stream_selected_pair(
+    data_path: Path,
+    meta_path: Path,
+    *,
+    train_count: int,
+    selected_indices: set[int],
+) -> tuple[list[bytes], list[frontier.Meta]]:
+    """Read only selected train rows while keeping memory proportional to the dose."""
+    if any(index < 0 or index >= train_count for index in selected_indices):
+        raise ValueError("uniform replay index outside historical train partition")
+    records: list[bytes] = []
+    rows: list[frontier.Meta] = []
+    for index, record, row in frontier.iter_pair(data_path, meta_path):
+        if index >= train_count:
+            break
+        if index in selected_indices:
+            records.append(record)
+            rows.append(row)
+    if len(records) != len(selected_indices):
+        raise ValueError(
+            "historical stream ended before the uniform replay sample was complete"
+        )
+    return records, rows
+
+
 def _verify_hard_manifest(
     manifest: dict,
     *,
@@ -151,12 +176,35 @@ def assemble(args: argparse.Namespace) -> dict:
         if paths[name].exists():
             raise ValueError(f"refusing to overwrite existing output: {paths[name]}")
 
-    history_records, history_rows = frontier.read_pair(
-        paths["history_data"], paths["history_meta"]
+    history_count = frontier._counted_file_count(
+        paths["history_data"], frontier.JNNW_MAGIC, frontier.JNNW_REC
     )
-    history_split, history_train_count = frontier._load_split_contract(
-        paths["history_split"], history_records, history_rows
+    history_meta_count = frontier._counted_file_count(
+        paths["history_meta"], frontier.META_MAGIC, frontier.META_REC
     )
+    if history_count != history_meta_count:
+        raise ValueError(
+            f"data/meta count mismatch: {history_count} != {history_meta_count}"
+        )
+    history_split, history_train_count = frontier._load_split_manifest(
+        paths["history_split"], history_count
+    )
+    history_train_openings, history_holdout_openings = (
+        frontier._split_opening_sets(
+            paths["history_split"],
+            paths["history_meta"],
+            history_count,
+            history_train_count,
+        )
+    )
+    if (
+        history_split.get("train_openings") != len(history_train_openings)
+        or history_split.get("holdout_openings") != len(history_holdout_openings)
+    ):
+        raise ValueError(
+            f"{paths['history_split']}: split opening counts do not match inputs"
+        )
+    del history_train_openings, history_holdout_openings
     if history_train_count < args.replay_records:
         raise ValueError(
             "historical train partition is smaller than the requested replay dose"
@@ -196,13 +244,15 @@ def assemble(args: argparse.Namespace) -> dict:
         replay_records=args.replay_records,
     )
 
-    uniform_indices = sorted(
-        frontier._sample_indices(
-            history_train_count, args.replay_records, args.uniform_seed
-        )
+    uniform_indices = frontier._sample_indices(
+        history_train_count, args.replay_records, args.uniform_seed
     )
-    uniform_records = [history_records[index] for index in uniform_indices]
-    uniform_rows = [history_rows[index] for index in uniform_indices]
+    uniform_records, uniform_rows = _stream_selected_pair(
+        paths["history_data"],
+        paths["history_meta"],
+        train_count=history_train_count,
+        selected_indices=uniform_indices,
+    )
 
     control_replay_rows = _namespace_rows(uniform_rows, 1)
     treatment_replay_rows = _namespace_rows(hard_rows, 1)
@@ -301,9 +351,10 @@ def assemble(args: argparse.Namespace) -> dict:
             "data_sha256": _sha256(paths["history_data"]),
             "meta_sha256": _sha256(paths["history_meta"]),
             "split_manifest_sha256": _sha256(paths["history_split"]),
-            "records": len(history_records),
+            "records": history_count,
             "train_records": history_train_count,
-            "holdout_records": len(history_records) - history_train_count,
+            "holdout_records": history_count - history_train_count,
+            "read_mode": "streaming_exact_sample",
             "holdout_examined_for_selection": False,
         },
         "fresh": {
