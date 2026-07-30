@@ -473,6 +473,23 @@ plus large ou un DOE de dose distinct, sans mélange pré-correctif ni réductio
 post-hoc. Détails :
 [`experiments/L3_HARD_REPLAY_PREFLIGHT_20260729.md`](experiments/L3_HARD_REPLAY_PREFLIGHT_20260729.md).
 
+La source UNIFORM 40 M a ensuite permis d'exécuter le DOE causal complet.
+`home-1076` établit une régression massive de `HARD_REPLAY` contre
+`UNIFORM_REPLAY` : Q00 `96-12-4892` (0,0204, -672,57 Elo), native
+`126-12-4862` (0,0264, -626,71 Elo), soit `222-24-9754` sur 10 000 parties,
+0,0234 et **-648,20 Elo** additionnés. Le verdict est
+`L3_PURE_HARD_REPLAY_BELOW_UNIFORM_REPLAY`.
+
+Les modèles et entrées sont authentifiés et les deux optimiseurs convergent.
+Le bras outcome-conditioned déplace toutefois le prior WDL assemblé à
+51,29 % wins contre 31,52 % losses STM (asymétrie 19,77 points), contre
+42,55 % / 42,19 % pour le contrôle. La couverture progresse de 194 334 à
+210 436 buckets, mais le signal de valeur s'effondre. La recette v1
+`50 % fresh + 50 % failed_conversion` avec cibles historiques conservées est
+donc close. La suite utilise les positions hard comme **reverse seeds
+zero-target appariés**, puis régénère les WDL par self-play. Détails :
+[`experiments/L3_HARD_REPLAY_READOUT_20260730.md`](experiments/L3_HARD_REPLAY_READOUT_20260730.md).
+
 ### Spécialiste `L3-IMBALANCE2`
 
 1. ne pas prolonger 0890bis ;

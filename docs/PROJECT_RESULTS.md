@@ -369,6 +369,18 @@ Sources détaillées : [JOURNAL_DE_BORD.md](archives/JOURNAL_DE_BORD.md),
   `L3_PURE_HARD_REPLAY_CATALOGUE_INSUFFICIENT`,
   `training_authorized=false`. Aucun fit n'est lancé et la dose n'est pas
   réduite post-hoc.
+- **Le replay `failed_conversion` 50/50 régresse fortement (`1068→1076`) :**
+  après réouverture sur une source UNIFORM 40 M, `HARD_REPLAY` fait
+  `222-24-9754` contre `UNIFORM_REPLAY` sur 10 000 parties fraîches et
+  appariées, soit `2,34 %` et `-648,20 Elo`. Q00 et natif régressent
+  séparément. Les optimiseurs convergent et les modèles sont authentifiés ;
+  le bras hard outcome-conditioned déplace le prior WDL assemblé à
+  51,29 % wins contre 31,52 % losses STM, soit 19,77 points d'asymétrie,
+  contre 0,37 point pour UNIFORM. La couverture augmente pourtant de
+  194 334 à 210 436 buckets. Verdict
+  `L3_PURE_HARD_REPLAY_BELOW_UNIFORM_REPLAY` : la recette brute avec cibles
+  historiques conservées est close. La suite est le reverse self-play
+  zero-target apparié, qui régénère les WDL terminales.
 
 Sources récentes : [codex_review_v3_2.md](archives/codex_review_v3_2.md),
 [post_ccx33_execution_20260717.md](archives/post_ccx33_execution_20260717.md),
