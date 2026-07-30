@@ -18,6 +18,9 @@ set -Eeuo pipefail
 : "${REVERSE_OPENINGS_PREFIX:?}"; : "${EXPECTED_REVERSE_OPENINGS_JOB:?}"
 : "${EXPECTED_REVERSE_OPENINGS_ATTEMPT:?}"
 : "${EXPECTED_REVERSE_OPENINGS_CODE_SHA:?}"
+: "${FAILED_OPENINGS_PREFIX:?}"; : "${EXPECTED_FAILED_OPENINGS_JOB:?}"
+: "${EXPECTED_FAILED_OPENINGS_ATTEMPT:?}"
+: "${EXPECTED_FAILED_OPENINGS_CODE_SHA:?}"
 
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"
@@ -74,7 +77,7 @@ trap 'exit 130' INT
 
 NOPEN="${NOPEN:-1500}"
 OPENING_CANDIDATES="${OPENING_CANDIDATES:-12000}"
-OPENING_SEED="${OPENING_SEED:-1094001}"
+OPENING_SEED="${OPENING_SEED:-1102001}"
 GAMES_PER_VIEW=$((NOPEN * 2))
 NSH_GATE=12
 PAR_GATE=12
@@ -94,7 +97,7 @@ Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')" -ge 8000 ] ||
   die "need 8 GiB free"
 [ "$NOPEN" -eq 1500 ] || die "readout power drift"
-[ "$OPENING_SEED" -eq 1094001 ] || die "opening seed drift"
+[ "$OPENING_SEED" -eq 1102001 ] || die "opening seed drift"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 grep -q "root_is_drawn" src/search.cpp || die "engine predates drawn-root fix"
 monitor
@@ -118,29 +121,38 @@ python3 jobs/tools/fetch_result_files.py --prefix "$REVERSE_OPENINGS_PREFIX" \
   --file artefacts/reverse-seed-readout-openings.fen=prior-reverse-openings.fen \
   --out-dir "$IN" --report "$ART/verified-reverse-openings.json" \
   > "$W/fetch-reverse-openings.log" 2>&1
+python3 jobs/tools/fetch_result_files.py --prefix "$FAILED_OPENINGS_PREFIX" \
+  --expected-state failed \
+  --file artefacts/failed-x2-readout-openings.fen=prior-failed-openings.fen \
+  --out-dir "$IN" --report "$ART/verified-failed-openings.json" \
+  > "$W/fetch-failed-openings.log" 2>&1
 
 python3 - "$ART/verified-arms.json" "$ART/verified-topk-openings.json" \
   "$ART/verified-hard-openings.json" "$ART/verified-reverse-openings.json" \
-  "$IN/arms-summary.json" "$EXPECTED_SOURCE_JOB" "$EXPECTED_SOURCE_ATTEMPT" \
+  "$ART/verified-failed-openings.json" "$IN/arms-summary.json" \
+  "$EXPECTED_SOURCE_JOB" "$EXPECTED_SOURCE_ATTEMPT" \
   "$EXPECTED_SOURCE_CODE_SHA" "$EXPECTED_TOPK_OPENINGS_JOB" \
   "$EXPECTED_TOPK_OPENINGS_ATTEMPT" "$EXPECTED_TOPK_OPENINGS_CODE_SHA" \
   "$EXPECTED_HARD_OPENINGS_JOB" "$EXPECTED_HARD_OPENINGS_ATTEMPT" \
   "$EXPECTED_HARD_OPENINGS_CODE_SHA" "$EXPECTED_REVERSE_OPENINGS_JOB" \
   "$EXPECTED_REVERSE_OPENINGS_ATTEMPT" "$EXPECTED_REVERSE_OPENINGS_CODE_SHA" \
+  "$EXPECTED_FAILED_OPENINGS_JOB" "$EXPECTED_FAILED_OPENINGS_ATTEMPT" \
+  "$EXPECTED_FAILED_OPENINGS_CODE_SHA" \
   "$EXPECTED_CONTROL_MODEL_SHA" "$EXPECTED_TREATMENT_MODEL_SHA" <<'PY'
 import json
 import sys
 
-arms_report, topk_report, hard_report, reverse_report, summary = (
-    json.load(open(path)) for path in sys.argv[1:6]
+arms_report, topk_report, hard_report, reverse_report, failed_report, summary = (
+    json.load(open(path)) for path in sys.argv[1:7]
 )
 (
     source_job, source_attempt, source_code,
     topk_job, topk_attempt, topk_code,
     hard_job, hard_attempt, hard_code,
     reverse_job, reverse_attempt, reverse_code,
+    failed_job, failed_attempt, failed_code,
     control_sha, treatment_sha,
-) = sys.argv[6:20]
+) = sys.argv[7:24]
 
 def require(condition, message):
     if not condition:
@@ -164,6 +176,14 @@ for report, identity, label in (
         and report.get("exit_code") == 0,
         f"{label} source identity/state mismatch",
     )
+require(
+    failed_report.get("job_id") == failed_job
+    and failed_report.get("attempt_id") == failed_attempt
+    and failed_report.get("code_sha") == failed_code
+    and failed_report.get("result_state") == "failed"
+    and failed_report.get("exit_code") == 1,
+    "failed-readout opening source identity/state mismatch",
+)
 design = summary.get("design", {})
 arms = summary.get("arms", {})
 require(
@@ -251,6 +271,7 @@ python3 jobs/tools/select_independent_opening_pool.py \
   --exclude "$IN/prior-topk-openings.fen" \
   --exclude "$IN/prior-hard-openings.fen" \
   --exclude "$IN/prior-reverse-openings.fen" \
+  --exclude "$IN/prior-failed-openings.fen" \
   --generator-seed "$OPENING_SEED" \
   --out "$ART/failed-x2-readout-openings.fen" \
   --manifest "$ART/failed-x2-readout-openings.json" \
@@ -270,7 +291,7 @@ if (
 ):
     raise SystemExit("fresh opening manifest mismatch")
 PY
-say "  selected $NOPEN openings disjoint from DILF, 1024, 1076 and 1091"
+say "  selected $NOPEN openings disjoint from DILF, 1024, 1076, 1091 and failed 1098"
 
 run_gate(){
   local view="$1"; local args=()
