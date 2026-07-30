@@ -97,6 +97,14 @@ La couverture d’entraînement est commune et son delta est exactement nul par
 construction. W/D/L, Elo, IC90/IC95 et couverture seront publiés. Aucun seuil
 ne sera modifié après les fits.
 
+Le certificat de fit conserve volontairement le rapport canonique complet
+`l3_bucket_visits` (`coverage`, `concentration`, `geometry`, `corpus`). Le
+readout normalise ce rapport vers sa vue compacte seulement après avoir
+vérifié le schéma, les 2 000 000 records, la cohérence du taux de couverture,
+la monotonie des seuils `ge_10`/`ge_100` et les bornes du Gini. Cette
+normalisation est une opération de certificat ; elle ne recalcule ni ne
+sélectionne aucun bras.
+
 ```json
 {
   "external_teacher_inputs": 0,

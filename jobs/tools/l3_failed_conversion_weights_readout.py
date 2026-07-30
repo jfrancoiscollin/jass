@@ -18,6 +18,62 @@ BELOW = "L3_PURE_FAILED_X2_BELOW_UNWEIGHTED"
 INCONCLUSIVE = "L3_PURE_FAILED_X2_VS_UNWEIGHTED_INCONCLUSIVE"
 
 
+def _compact_training_coverage(value: dict[str, Any]) -> dict[str, Any]:
+    """Normalize the certified shared-corpus coverage without weakening it.
+
+    The fit certificate embeds the canonical ``l3_bucket_visits`` report,
+    whereas older unit fixtures used the compact readout representation.
+    Accept both authenticated schemas and return the compact representation
+    used by independent-readout certificates.
+    """
+    compact_keys = (
+        "visited_buckets",
+        "visited_pct",
+        "gini",
+        "buckets_ge_10",
+        "buckets_ge_100",
+    )
+    if all(key in value for key in compact_keys):
+        return common.compact_coverage(value)
+
+    coverage = value.get("coverage", {})
+    concentration = value.get("concentration", {})
+    geometry = value.get("geometry", {})
+    corpus = value.get("corpus", {})
+    thresholds = coverage.get("buckets_with_at_least", {})
+    total_buckets = geometry.get("trained_buckets_total")
+    visited = coverage.get("visited_buckets")
+    fraction = coverage.get("coverage_fraction")
+    ge_10 = thresholds.get("ge_10")
+    ge_100 = thresholds.get("ge_100")
+    gini = concentration.get("gini")
+    if (
+        value.get("schema") != 1
+        or value.get("stage") != "l3_bucket_visits"
+        or corpus.get("total_records") != 2_000_000
+        or not isinstance(total_buckets, int)
+        or total_buckets <= 0
+        or not isinstance(visited, int)
+        or not 0 < visited <= total_buckets
+        or not isinstance(fraction, (int, float))
+        or not 0.0 < float(fraction) <= 1.0
+        or abs(float(fraction) - visited / total_buckets) > 1e-6
+        or not isinstance(ge_10, int)
+        or not isinstance(ge_100, int)
+        or not 0 <= ge_100 <= ge_10 <= visited
+        or not isinstance(gini, (int, float))
+        or not 0.0 <= float(gini) <= 1.0
+    ):
+        raise ValueError("canonical training coverage certificate mismatch")
+    return {
+        "visited_buckets": visited,
+        "visited_pct": 100.0 * float(fraction),
+        "gini": float(gini),
+        "buckets_ge_10": ge_10,
+        "buckets_ge_100": ge_100,
+    }
+
+
 def _validate_training(
     training: dict[str, Any],
     source_code_sha: str,
@@ -73,7 +129,7 @@ def _validate_training(
     coverage = training.get("training_coverage", {})
     if coverage.get("common_to_both_arms") is not True:
         raise ValueError("training coverage is not certified common")
-    compact = common.compact_coverage(coverage.get("common", {}))
+    compact = _compact_training_coverage(coverage.get("common", {}))
     delta = coverage.get("control_minus_treatment", {})
     if any(delta.get(key) != 0 for key in compact):
         raise ValueError("common-corpus training coverage delta is nonzero")

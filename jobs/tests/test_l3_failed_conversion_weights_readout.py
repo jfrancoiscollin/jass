@@ -23,6 +23,26 @@ def coverage(visited: int = 100_000) -> dict:
     }
 
 
+def canonical_coverage(visited: int = 100_000) -> dict:
+    total = 2_125_768
+    return {
+        "schema": 1,
+        "stage": "l3_bucket_visits",
+        "geometry": {"trained_buckets_total": total},
+        "corpus": {"total_records": 2_000_000},
+        "coverage": {
+            "visited_buckets": visited,
+            "coverage_fraction": round(visited / total, 6),
+            "buckets_with_at_least": {
+                "ge_1": visited,
+                "ge_10": visited // 2,
+                "ge_100": visited // 4,
+            },
+        },
+        "concentration": {"gini": 0.9},
+    }
+
+
 def trainer_weights(*, uniform: bool, sw_used: bool, ess: float) -> dict:
     return {
         "split": {"holdout_weighted": False},
@@ -184,6 +204,33 @@ class FailedConversionWeightsReadoutTests(unittest.TestCase):
         self.write_force("q00", 100, 0, 100)
         self.write_force("native", 100, 0, 100)
         with self.assertRaisesRegex(ValueError, "effective sample size"):
+            self.build()
+
+    def test_canonical_bucket_visit_coverage_is_normalized(self) -> None:
+        document = training()
+        document["training_coverage"]["common"] = canonical_coverage()
+        (self.root / "training.json").write_text(json.dumps(document))
+        self.write_force("q00", 104, 0, 96)
+        self.write_force("native", 103, 0, 97)
+        result = self.build()
+        normalized = result["training_coverage"]["common"]
+        self.assertEqual(normalized["visited_buckets"], 100_000)
+        self.assertAlmostEqual(
+            normalized["visited_pct"],
+            100.0 * round(100_000 / 2_125_768, 6),
+        )
+        self.assertEqual(normalized["buckets_ge_10"], 50_000)
+        self.assertEqual(normalized["buckets_ge_100"], 25_000)
+
+    def test_malformed_canonical_coverage_is_rejected(self) -> None:
+        document = training()
+        raw = canonical_coverage()
+        raw["coverage"]["buckets_with_at_least"]["ge_100"] = 60_000
+        document["training_coverage"]["common"] = raw
+        (self.root / "training.json").write_text(json.dumps(document))
+        self.write_force("q00", 100, 0, 100)
+        self.write_force("native", 100, 0, 100)
+        with self.assertRaisesRegex(ValueError, "coverage certificate"):
             self.build()
 
 
