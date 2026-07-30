@@ -137,6 +137,25 @@ Le probe consomme exclusivement le préflight catalogue authentifié via
 observables, compteurs moteur et durée. Sa fraction 100 % sert à mesurer le
 rendement des deux types de racines ; ce n'est pas le futur `SEED_FRAC`.
 
+### Incident opérationnel 1082
+
+`cpx62-1082-l3-pure-reverse-seed-operational-probe-v1` s'est arrêté avant le
+premier record. L'authentification des entrées, le build, CTest (6 644
+assertions) et le témoin moteur avaient réussi ; le premier
+`--gen-data-wdl` a refusé `PARENT.pjtw`. Le diagnostic 1083 a localisé l'arrêt
+en `probe-control`.
+
+La cause est une dérive de géométrie générée : TURNOVER est un modèle `8cf`,
+alors que le checkout porte par défaut les fichiers générés `v4`. Le template
+avait bien activé les quatre groupes de features CMake, mais n'appelait pas
+`gen_patterns.py --emit --variant 8cf` avant compilation. Ces options ne
+sélectionnent pas la géométrie PJTW.
+
+Le probe régénère désormais explicitement `8cf` avant CMake, puis exécute un
+smoke de chargement sans partie ni lecture WDL avant les deux bras. Toute
+future incompatibilité de modèle échoue ainsi avant la génération et avec un
+stade dédié. Aucune sortie de 1082 n'est réutilisable.
+
 ## 7. Interprétation et rewind différé
 
 Un gain futur démontrerait l'utilité des états de départ ciblés sous ce parent,

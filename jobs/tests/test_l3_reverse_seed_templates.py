@@ -99,6 +99,7 @@ class ReverseSeedProbeTemplateTests(unittest.TestCase):
         for token in (
             "PROBE_RECORDS=${PROBE_RECORDS:-200}",
             "PROBE_SEED_FRAC=${PROBE_SEED_FRAC:-100}",
+            "gen_patterns.py --emit --variant 8cf",
             'cmake --build "$W/build" -j4',
             '[ "$(nproc)" -eq 16 ]',
             "--random-open-plies 0",
@@ -115,6 +116,23 @@ class ReverseSeedProbeTemplateTests(unittest.TestCase):
         self.assertEqual(
             self.text.count('"$MAXPLIES" "$BASE_SEED"'),
             1,
+        )
+
+    def test_parent_geometry_is_loaded_before_either_probe_arm(self) -> None:
+        for token in (
+            "phase validate-parent-geometry",
+            '--gen-tdleaf "$W/PARENT.pjtw" 0 1',
+            "parent load smoke emitted an unexpected payload",
+            "parent geometry/load smoke: 8cf PASS",
+        ):
+            self.assertIn(token, self.text)
+        self.assertLess(
+            self.text.index("gen_patterns.py --emit --variant 8cf"),
+            self.text.index('cmake -S . -B "$W/build"'),
+        )
+        self.assertLess(
+            self.text.index("phase validate-parent-geometry"),
+            self.text.index("phase probe-control"),
         )
 
     def test_probe_authenticates_all_inputs_and_never_promotes(self) -> None:

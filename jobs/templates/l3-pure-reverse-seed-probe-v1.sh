@@ -264,6 +264,12 @@ python3 -m py_compile tools/selfplay_frontier.py \
   jobs/tools/l3_reverse_seed_matching.py
 python3 -m unittest jobs.tests.test_l3_reverse_seed_matching \
   > "$W/test-reverse-seeds.log" 2>&1
+# TURNOVER was trained with the historical 8cf geometry.  The repository
+# checkout intentionally carries the v4 generated files, so CMake flags alone
+# do not select a compatible PJTW layout: regenerate the geometry before
+# compiling every binary which must load the authenticated parent.
+python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf \
+  > "$W/gen8.log" 2>&1
 cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release \
   -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON \
   -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON \
@@ -273,6 +279,24 @@ ctest --test-dir "$W/build" --output-on-failure > "$W/ctest.log" 2>&1
 J="$W/build/jass"
 [ "$("$J" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "king-capture witness failed"
+
+phase validate-parent-geometry
+# n_games=0 makes --gen-tdleaf a load-only smoke: it exercises the same
+# load_eval_network PJTW dispatch as --gen-data-wdl without playing a game or
+# reading a WDL.  This fails before either probe arm if generated geometry and
+# parent weights ever drift again.
+"$J" --gen-tdleaf "$W/PARENT.pjtw" 0 1 \
+  "$W/parent-load-smoke.jnnw" 1 "$BASE_SEED" \
+  > "$W/parent-load-smoke.log" 2>&1
+python3 - "$W/parent-load-smoke.jnnw" <<'PY'
+import struct
+import sys
+raw = open(sys.argv[1], "rb").read()
+if raw != b"JNNW" + struct.pack("<I", 0):
+    raise SystemExit("parent load smoke emitted an unexpected payload")
+PY
+rm -f "$W/parent-load-smoke.jnnw" "$W/parent-load-smoke.jnnw.games"
+say "  parent geometry/load smoke: 8cf PASS"
 
 run_probe(){
   local arm="$1" seed_file="$2"
