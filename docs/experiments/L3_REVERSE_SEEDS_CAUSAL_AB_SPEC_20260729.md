@@ -188,7 +188,49 @@ Le certificat `ARMS_READY` n'est pas un verdict de force : un readout
 indépendant traitement contre contrôle, sur ouvertures fraîches appariées et
 vues Q00/native, est obligatoire avant toute conclusion.
 
-## 8. Interprétation et rewind différé
+## 8. Readout indépendant préenregistré
+
+`jobs/templates/l3-pure-reverse-seed-readout-v1.sh` ne peut être lancé
+qu'après un `L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY` complet. Il authentifie
+le préfixe source, les deux hashes modèles et leur convergence avant tout
+match.
+
+Le readout utilise :
+
+- 1 500 ouvertures uniques, soit 3 000 parties par vue et 6 000 parties au
+  total ;
+- les deux couleurs pour chaque ouverture ;
+- Q00 profondeur 9 puis cadence native 0,1 seconde par coup ;
+- un seul moteur 8cf réparé, les mêmes paramètres Q00 et le même pool pour les
+  deux modèles ;
+- la graine d'ouverture figée `1087001` ;
+- un pool disjoint de DILF et des pools publiés par les readouts `home-1024`
+  et `home-1076`.
+
+Le contraste primaire est le score traitement moins contrôle après addition
+des W/D/L bruts des deux vues. Les scores, Elo, IC90 et IC95 sont aussi publiés
+par vue. Les intervalles utilisent le second moment observé du score W/D/L ;
+le certificat signale que l'agrégat du gate ne permet pas de reconstruire la
+covariance des paires de couleurs.
+
+Les classes de verdict sont figées avant lecture des résultats :
+
+1. `ABOVE...IC95` si les deux vues ont un point estimé supérieur à 0,5 et si
+   la borne basse IC95 additionnée dépasse 0,5 ;
+2. `ABOVE...IC90` avec la même condition par vue et une borne basse IC90
+   additionnée supérieure à 0,5 ;
+3. `BELOW` si la borne haute IC90 additionnée est sous 0,5 ou si une vue
+   établit cette régression à IC90 ;
+4. `DIRECTIONAL` si le score additionné est supérieur à 0,5 sans régression
+   IC90 dans une vue ;
+5. `INCONCLUSIVE` sinon.
+
+La couverture d'entraînement et son delta sont publiés à titre explicatif.
+La holdout reste diagnostique et ne sélectionne jamais un bras. Le readout
+fixe `scientific_result=true`, `promotion_authorized=false` et
+`automatic_next_job=null`.
+
+## 9. Interprétation et rewind différé
 
 Un gain futur démontrerait l'utilité des états de départ ciblés sous ce parent,
 cette policy et cette dose. Il ne validerait pas automatiquement la formule de
