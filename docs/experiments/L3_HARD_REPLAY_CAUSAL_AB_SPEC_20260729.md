@@ -160,6 +160,14 @@ Les fixtures locales vérifient :
 - tail holdout commun ;
 - absence de fuite d'ouverture ;
 - canari WDL sur les corpus assemblés ;
+- garde de distribution WDL complète sur le frais brut et le contrôle
+  uniforme ;
+- histogramme WDL publié mais seulement diagnostique sur le traitement :
+  `failed_conversion` est sélectionné à partir de l'issue terminale, donc sa
+  part de nulles comme son équilibre W/L STM sont conditionnés par
+  construction ; le miroir couleur préserve ce WDL et ne peut pas le
+  rééquilibrer. Le domaine des labels, les hashes et le manifeste restent
+  vérifiés strictement ;
 - refus d'écraser une sortie ;
 - échec fermé sur manifeste, compte ou split divergent ;
 - contrat statique des deux templates et syntaxe Bash.
