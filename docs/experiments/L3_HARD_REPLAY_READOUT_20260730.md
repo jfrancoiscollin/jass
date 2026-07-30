@@ -1,7 +1,7 @@
 # L3-PURE — verdict du replay `failed_conversion` 50/50
 
-Date : 2026-07-30  
-Statut : axe causal exécuté et recette v1 close  
+Date : 2026-07-30
+Statut : axe causal exécuté et recette v1 close
 Parent : `TURNOVER` (`home-0977`), SHA256
 `b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16`
 
