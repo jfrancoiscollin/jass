@@ -59,3 +59,27 @@ parent TURNOVER et la policy UNIFORM d8/d4 de `home-1017`, mais utilise des
 graines fraîches disjointes. Les six producteurs HOME sont le plafond de
 concurrence. La source publie ses hashes, son split et son canari, puis s'arrête
 avec `automatic_next_job=null` ; le mining 1M restera un job séparé.
+
+## Readout indépendant après deux bras valides
+
+Uniquement après un certificat
+`L3_PURE_HARD_REPLAY_CAUSAL_AB_ARMS_READY`, le template
+`l3-pure-hard-replay-readout-v1.sh` compare directement les deux modèles
+convergés. Son wrapper doit épingler le préfixe, la tentative, le SHA de code
+source et les deux hashes modèles décompressés.
+
+Le calcul est préenregistré avant les matchs :
+
+- 2 500 ouvertures nouvelles, deux couleurs, Q00 d9 et native 0,1 s
+  (5 000 parties/vue, 10 000 additionnées) ;
+- W/D/L, taux, Elo, IC90 et IC95 ;
+- ouvertures disjointes de DILF et du pool immuable de `home-1024` ;
+- conversion P3/P4 appariée des deux bras contre le défenseur historique
+  corrigé `9c1d1e8e` ;
+- couverture d'apprentissage et profil de diversité/duplication de
+  l'assemblage ;
+- `promotion_authorized=false` et `automatic_next_job=null`.
+
+La holdout reste strictement diagnostique. Le verdict distingue supériorité
+IC95, supériorité IC90, tendance directionnelle, régression établie et résultat
+inconclusif ; il ne promeut aucun modèle.
