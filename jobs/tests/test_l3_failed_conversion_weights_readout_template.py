@@ -39,7 +39,7 @@ class FailedConversionWeightsReadoutTemplateTests(unittest.TestCase):
     def test_force_is_paired_two_view_and_preregistered_power(self) -> None:
         for literal in (
             'NOPEN="${NOPEN:-1500}"',
-            'OPENING_SEED="${OPENING_SEED:-1094001}"',
+            'OPENING_SEED="${OPENING_SEED:-1102001}"',
             "GAMES_PER_VIEW=$((NOPEN * 2))",
             "for view in q00 native",
             "--pairs 1",
@@ -55,9 +55,12 @@ class FailedConversionWeightsReadoutTemplateTests(unittest.TestCase):
             '--exclude "$IN/prior-topk-openings.fen"',
             '--exclude "$IN/prior-hard-openings.fen"',
             '--exclude "$IN/prior-reverse-openings.fen"',
+            '--exclude "$IN/prior-failed-openings.fen"',
             "EXPECTED_TOPK_OPENINGS_ATTEMPT",
             "EXPECTED_HARD_OPENINGS_ATTEMPT",
             "EXPECTED_REVERSE_OPENINGS_ATTEMPT",
+            "EXPECTED_FAILED_OPENINGS_ATTEMPT",
+            "--expected-state failed",
             "overlap_records",
         ):
             self.assertIn(literal, self.text)

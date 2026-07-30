@@ -78,8 +78,11 @@ elle est commune aux deux bras par construction et son delta causal vaut zéro.
 Après deux fits valides seulement, le traitement sera joué directement contre
 le contrôle sur 1 500 ouvertures fraîches uniques, couleurs appariées, soit
 3 000 parties en Q00 profondeur 9 et 3 000 parties en native 0,1 seconde par
-coup. Le pool, seed `1094001`, sera disjoint de DILF et des pools publiés par
-les readouts TOPK, hard replay et reverse seeds.
+coup. La première tentative, seed `1094001`, a terminé les cellules mais a
+échoué avant certificat ; aucune de ses sorties n’est réutilisable. La relance
+intégrale utilise donc la seed préenregistrée `1102001` et exclut explicitement
+le pool publié par cette tentative, en plus de DILF et des pools TOPK, hard
+replay et reverse seeds.
 
 Le score primaire additionne les W/D/L des deux vues avant de publier taux,
 Elo, IC90 et IC95. Les classes préenregistrées sont :
