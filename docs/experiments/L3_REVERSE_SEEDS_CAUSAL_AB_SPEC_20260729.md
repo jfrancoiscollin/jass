@@ -1,8 +1,8 @@
 # L3-PURE — reverse seeds contrôlés v1
 
 Date : 2026-07-29
-Statut : outillage data-only et micro-probe opérationnel ; aucun entraînement,
-match, bake, promotion ou job lancé par cette PR
+Statut : A/B scientifique préenregistré après probe opérationnel authentifié ;
+aucun match, bake ou promotion automatique
 Portée : PR 3 du mémo `MEMO_CODEX_JASS_QUALITE_SIGNAL_20260728.md`
 
 ## 1. Question causale
@@ -156,7 +156,39 @@ smoke de chargement sans partie ni lecture WDL avant les deux bras. Toute
 future incompatibilité de modèle échoue ainsi avant la génération et avec un
 stade dédié. Aucune sortie de 1082 n'est réutilisable.
 
-## 7. Interprétation et rewind différé
+Le probe corrigé 1084 et son readout authentifié 1085 ont mesuré, pour chaque
+bras, 200 records en 5 secondes (2 400 records/minute). Le contrôle a observé
+0 ply-cap sur 10 parties, le traitement 0 sur 15 ; tous les records sont
+seedés et aucun départ standard n'a été utilisé. La règle opérationnelle
+préenregistrée (`>=200` records/minute et `<=25 %` de ply-caps dans les deux
+bras) fixe donc `SEED_FRAC=100` pour l'expérience scientifique.
+
+## 7. A/B scientifique préenregistré
+
+`jobs/templates/l3-pure-reverse-seed-causal-ab-v1.sh` entraîne deux bras de
+2 M records frais chacun sur CPX62 :
+
+- contrôle : racines aléatoires appariées de la source train authentifiée ;
+- traitement : racines de failed-conversion de cette même source train.
+
+Les bras partagent TURNOVER, 8cf, Q00, label d4 WDL-only, jeu d8, epsilon
+UNIFORM, six graines de shards, `SEED_FRAC=100`, zéro replay historique,
+split par ouverture et hyperparamètres de fit. Les racines sont injectées avec
+`random-open-plies=0`, `sample-initial`, `pair-openings`,
+`split-selfplay-rngs` et `drop-plycap`. Ils sont générés séquentiellement afin
+de plafonner CPX62 à six producteurs. La graine de génération scientifique
+est disjointe de celle du probe opérationnel.
+
+Le job authentifie 1081, 1085 et le parent avant calcul, vérifie le chargement
+du modèle 8cf, applique le canari WDL aux deux corpus, publie couverture,
+convergence et hashes des modèles. Le taux de ply-cap complet reste soumis au
+seuil de 25 % qui a autorisé la dose 100 %. La holdout est diagnostique
+uniquement.
+Le certificat `ARMS_READY` n'est pas un verdict de force : un readout
+indépendant traitement contre contrôle, sur ouvertures fraîches appariées et
+vues Q00/native, est obligatoire avant toute conclusion.
+
+## 8. Interprétation et rewind différé
 
 Un gain futur démontrerait l'utilité des états de départ ciblés sous ce parent,
 cette policy et cette dose. Il ne validerait pas automatiquement la formule de
@@ -169,7 +201,7 @@ avec un `ply:u16` aligné par record. JSM1 ne doit pas être modifié.
 ```json
 {
   "probe_authorized": true,
-  "training_authorized": false,
+  "training_authorized": true,
   "promotion_authorized": false,
   "automatic_next_job": null,
   "external_teacher_inputs": 0
