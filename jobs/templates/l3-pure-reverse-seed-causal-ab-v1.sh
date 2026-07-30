@@ -4,7 +4,9 @@
 # Both arms are 100% fresh self-play from index-aligned catalogues drawn from
 # the same authenticated historical source.  They share parent, search policy,
 # depths, epsilon policy, volume, shard seeds, split and fit.  The only changed
-# factor is the root catalogue selection policy.
+# factor inside one stage is the root catalogue selection policy.  The
+# preregistered scale4m stage reuses the exact 2M design with a larger, fresh
+# RNG stream and must authenticate the positive 2M readout before generation.
 set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
@@ -34,6 +36,7 @@ say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 phase(){ echo "$1" > "$STAGE"; say "phase=$1"; }
 
+EXPERIMENT_STAGE=${EXPERIMENT_STAGE:-base2m}
 RECORDS=${RECORDS:-2000000}
 SHARDS=${SHARDS:-6}
 SEED_FRAC=${SEED_FRAC:-100}
@@ -42,9 +45,9 @@ PLAY_DEPTH=8
 MAXPLIES=260
 EXPLORE_EPS=8
 EXPLORE_DECAY=60
-# Disjoint from the operational probe (32452843): the probe read no WDL, but
-# the scientific corpora still use a fresh RNG stream.
-BASE_SEED=49979687
+# The base2m seed is disjoint from the operational probe (32452843).  The
+# scale4m seed is additionally disjoint from the completed base2m corpora.
+BASE_SEED=${BASE_SEED:-49979687}
 SPLIT_SEED=577215
 HOLDOUT_MOD=10
 GEN_TIMEOUT_CONTROL=${GEN_TIMEOUT_CONTROL:-18000}
@@ -57,6 +60,31 @@ LBFGS_GTOL=1e-3
 CHUNK=20000
 NUMPY_VERSION=${NUMPY_VERSION:-2.5.1}
 SCIPY_VERSION=${SCIPY_VERSION:-1.18.0}
+BASE_VERDICT="L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY"
+SCALE_VERDICT="L3_PURE_REVERSE_SEED_SCALE4M_CAUSAL_AB_ARMS_READY"
+case "$EXPERIMENT_STAGE" in
+  base2m)
+    EXPECTED_RECORDS=2000000
+    EXPECTED_BASE_SEED=49979687
+    EXPERIMENT_VERDICT="$BASE_VERDICT"
+    DISK_MIN_MB=20000
+    ;;
+  scale4m)
+    : "${SCALE_ARMS_PREFIX:?}"; : "${EXPECTED_SCALE_ARMS_JOB:?}"
+    : "${EXPECTED_SCALE_ARMS_ATTEMPT:?}"; : "${EXPECTED_SCALE_ARMS_CODE_SHA:?}"
+    : "${SCALE_READOUT_PREFIX:?}"; : "${EXPECTED_SCALE_READOUT_JOB:?}"
+    : "${EXPECTED_SCALE_READOUT_ATTEMPT:?}"
+    : "${EXPECTED_SCALE_READOUT_CODE_SHA:?}"
+    : "${EXPECTED_SCALE_CONTROL_SHA:?}"; : "${EXPECTED_SCALE_TREATMENT_SHA:?}"
+    EXPECTED_RECORDS=4000000
+    EXPECTED_BASE_SEED=74453917
+    EXPERIMENT_VERDICT="$SCALE_VERDICT"
+    DISK_MIN_MB=35000
+    ;;
+  *)
+    die "unsupported experiment stage: $EXPERIMENT_STAGE"
+    ;;
+esac
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 MON=""
@@ -119,7 +147,10 @@ trap 'exit 130' INT
   die "scientific authorization missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] ||
   die "automatic continuation guard missing"
-[ "$RECORDS" -eq 2000000 ] || die "causal contract requires 2M records/arm"
+[ "$RECORDS" -eq "$EXPECTED_RECORDS" ] ||
+  die "$EXPERIMENT_STAGE contract requires $EXPECTED_RECORDS records/arm"
+[ "$BASE_SEED" -eq "$EXPECTED_BASE_SEED" ] ||
+  die "$EXPERIMENT_STAGE generation seed drift"
 [ "$SHARDS" -eq 6 ] || die "causal contract requires 6 shards/arm"
 [ "$SEED_FRAC" -eq 100 ] || die "authenticated probe selected seed_frac=100"
 [ "$PLAY_DEPTH" -eq 8 ] && [ "$LABEL_DEPTH" -eq 4 ] ||
@@ -127,10 +158,106 @@ trap 'exit 130' INT
 [ "$(nproc)" -eq 16 ] || die "CPX62 causal job requires nproc=16"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 DFA=$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')
-[ "${DFA:-0}" -ge 20000 ] || die "need 20 GiB free"
+[ "${DFA:-0}" -ge "$DISK_MIN_MB" ] ||
+  die "need at least $DISK_MIN_MB MiB free"
 say "  CPX62: sequential arms, at most $SHARDS producers"
-say "  design: 2M/arm, 100% seeded, d8/Q00, zero historical replay"
+say "  design: stage=$EXPERIMENT_STAGE records=$RECORDS/arm, 100% seeded, d8/Q00, zero historical replay"
 monitor
+
+if [ "$EXPERIMENT_STAGE" = scale4m ]; then
+  phase authenticate-positive-base2m
+  python3 jobs/tools/fetch_result_files.py --prefix "$SCALE_ARMS_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=scale-base-arms.json \
+    --out-dir "$IN" --report "$ART/verified-scale-base-arms.json" \
+    > "$W/fetch-scale-base-arms.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py --prefix "$SCALE_READOUT_PREFIX" \
+    --file artefacts/JASS_CONTROL_SUMMARY.json=scale-base-readout.json \
+    --out-dir "$IN" --report "$ART/verified-scale-base-readout.json" \
+    > "$W/fetch-scale-base-readout.log" 2>&1
+  python3 - "$ART/verified-scale-base-arms.json" \
+    "$IN/scale-base-arms.json" "$ART/verified-scale-base-readout.json" \
+    "$IN/scale-base-readout.json" "$EXPECTED_SCALE_ARMS_JOB" \
+    "$EXPECTED_SCALE_ARMS_ATTEMPT" "$EXPECTED_SCALE_ARMS_CODE_SHA" \
+    "$EXPECTED_SCALE_READOUT_JOB" "$EXPECTED_SCALE_READOUT_ATTEMPT" \
+    "$EXPECTED_SCALE_READOUT_CODE_SHA" "$EXPECTED_SCALE_CONTROL_SHA" \
+    "$EXPECTED_SCALE_TREATMENT_SHA" "$PARENT_MODEL_SHA" <<'PY'
+import json
+import sys
+
+(
+    arms_report_path,
+    arms_summary_path,
+    readout_report_path,
+    readout_summary_path,
+    arms_job,
+    arms_attempt,
+    arms_code,
+    readout_job,
+    readout_attempt,
+    readout_code,
+    control_sha,
+    treatment_sha,
+    parent_sha,
+) = sys.argv[1:]
+arms_report = json.load(open(arms_report_path))
+arms = json.load(open(arms_summary_path))
+readout_report = json.load(open(readout_report_path))
+readout = json.load(open(readout_summary_path))
+
+def assert_result(report, job, attempt, code, label):
+    if (
+        report.get("job_id") != job
+        or report.get("attempt_id") != attempt
+        or report.get("code_sha") != code
+        or report.get("result_state") != "completed"
+        or report.get("exit_code") != 0
+    ):
+        raise SystemExit(f"{label} identity/state mismatch")
+
+assert_result(arms_report, arms_job, arms_attempt, arms_code, "base2m arms")
+assert_result(
+    readout_report,
+    readout_job,
+    readout_attempt,
+    readout_code,
+    "base2m readout",
+)
+design = arms.get("design", {})
+arm_models = arms.get("arms", {})
+if (
+    arms.get("verdict") != "L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY"
+    or arms.get("code_sha") != arms_code
+    or arms.get("parent", {}).get("model_sha256") != parent_sha
+    or design.get("records_per_arm") != 2_000_000
+    or design.get("single_factor") != "seed_root_selection_policy"
+    or design.get("same_parent") is not True
+    or design.get("same_search_policy") is not True
+    or design.get("same_shard_seeds") is not True
+    or design.get("same_split_contract") is not True
+    or design.get("same_fit") is not True
+    or arm_models.get("control", {}).get("model_sha256") != control_sha
+    or arm_models.get("treatment", {}).get("model_sha256") != treatment_sha
+    or arms.get("scientific_result") is not False
+    or arms.get("promotion_authorized") is not False
+    or arms.get("automatic_next_job", "missing") is not None
+):
+    raise SystemExit("base2m arms certificate mismatch")
+if (
+    readout.get("verdict")
+       != "L3_PURE_REVERSE_SEED_ABOVE_MATCHED_CONTROL_IC95"
+    or readout.get("source", {}).get("job_id") != arms_job
+    or readout.get("source", {}).get("attempt_id") != arms_attempt
+    or readout.get("source", {}).get("code_sha") != arms_code
+    or readout.get("models", {}).get("control_sha256") != control_sha
+    or readout.get("models", {}).get("treatment_sha256") != treatment_sha
+    or readout.get("force_views_summed", {}).get("ci95", [0])[0] <= 0.5
+    or readout.get("scientific_result") is not True
+    or readout.get("promotion_authorized") is not False
+    or readout.get("automatic_next_job", "missing") is not None
+):
+    raise SystemExit("positive base2m readout certificate mismatch")
+PY
+fi
 
 phase authenticate-probe-readout
 python3 jobs/tools/fetch_result_files.py --prefix "$PROBE_READOUT_PREFIX" \
@@ -490,9 +617,11 @@ done
 phase publish-certificate
 "$W/venv/bin/python" - "$W" "$ART" "$EXPECTED_CODE_SHA" "$RECORDS" \
   "$SEED_FRAC" "$PLAY_DEPTH" "$PARENT_NAME" "$PARENT_MODEL_SHA" \
-  "$IN" "$PROBE_READOUT_PREFIX" "$MATCHED_PREFIX" "$PARENT_PREFIX" <<'PY'
+  "$IN" "$PROBE_READOUT_PREFIX" "$MATCHED_PREFIX" "$PARENT_PREFIX" \
+  "$EXPERIMENT_STAGE" "$BASE_SEED" "$EXPERIMENT_VERDICT" <<'PY'
 import hashlib
 import json
+import os
 import pathlib
 import re
 import sys
@@ -502,6 +631,8 @@ records, seed_frac, depth = map(int, sys.argv[4:7])
 parent_name, parent_sha = sys.argv[7:9]
 inputs = pathlib.Path(sys.argv[9])
 probe_prefix, matched_prefix, parent_prefix = sys.argv[10:13]
+experiment_stage, base_seed, experiment_verdict = sys.argv[13:16]
+base_seed = int(base_seed)
 
 def sha256(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -541,8 +672,9 @@ for arm in ("control", "treatment"):
     }
 payload = {
     "schema": 1,
-    "verdict": "L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY",
+    "verdict": experiment_verdict,
     "code_sha": code_sha,
+    "experiment_stage": experiment_stage,
     "parent": {"name": parent_name, "model_sha256": parent_sha},
     "authenticated_inputs": {
         "probe_readout": {
@@ -576,6 +708,7 @@ payload = {
         "control": "matched_random_train_only_roots",
         "treatment": "failed_conversion_train_only_roots",
         "records_per_arm": records,
+        "generation_base_seed": base_seed,
         "seed_frac": seed_frac,
         "historical_replay_records": 0,
         "play_depth": depth,
@@ -600,10 +733,34 @@ payload = {
     "automatic_next_job": None,
     "external_teacher_inputs": 0,
 }
+if experiment_stage == "scale4m":
+    base_arms_report = json.load(open(art / "verified-scale-base-arms.json"))
+    base_readout_report = json.load(
+        open(art / "verified-scale-base-readout.json")
+    )
+    base_arms_summary = inputs / "scale-base-arms.json"
+    base_readout_summary = inputs / "scale-base-readout.json"
+    payload["authenticated_inputs"]["positive_base2m"] = {
+        "arms": {
+            "prefix": os.environ["SCALE_ARMS_PREFIX"],
+            "job_id": base_arms_report["job_id"],
+            "attempt_id": base_arms_report["attempt_id"],
+            "code_sha": base_arms_report["code_sha"],
+            "summary_sha256": sha256(base_arms_summary),
+        },
+        "readout": {
+            "prefix": os.environ["SCALE_READOUT_PREFIX"],
+            "job_id": base_readout_report["job_id"],
+            "attempt_id": base_readout_report["attempt_id"],
+            "code_sha": base_readout_report["code_sha"],
+            "summary_sha256": sha256(base_readout_summary),
+            "verdict": json.load(open(base_readout_summary))["verdict"],
+        },
+    }
 (art / "JASS_CONTROL_SUMMARY.json").write_text(
     json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
 )
-(art / "VERDICT__L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY").touch()
+(art / f"VERDICT__{experiment_verdict}").touch()
 (art / "SCIENTIFIC_RESULT__FALSE").touch()
 (art / "PROMOTION_AUTHORIZED__FALSE").touch()
 (art / "AUTOMATIC_NEXT_JOB__NULL").touch()
@@ -616,4 +773,4 @@ for arm, result in arms.items():
     )
 PY
 phase complete
-say "L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY promotion=false automatic_next_job=null"
+say "$EXPERIMENT_VERDICT promotion=false automatic_next_job=null"

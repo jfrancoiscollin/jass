@@ -52,6 +52,25 @@ class ReverseSeedReadoutTemplateTests(unittest.TestCase):
         ):
             self.assertIn(literal, self.text)
 
+    def test_scale4m_has_distinct_training_and_opening_contracts(self) -> None:
+        for literal in (
+            'READOUT_STAGE="${READOUT_STAGE:-base2m}"',
+            "scale4m)",
+            "L3_PURE_REVERSE_SEED_SCALE4M_CAUSAL_AB_ARMS_READY",
+            "EXPECTED_TRAINING_RECORDS=4000000",
+            "EXPECTED_OPENING_SEED=1113001",
+            'OPENING_STEM="reverse-seed-scale4m-readout-openings"',
+            "EXPECTED_REVERSE_OPENINGS_ATTEMPT",
+            "EXPECTED_FAILED_X2_OPENINGS_ATTEMPT",
+            "EXPECTED_BLEND_OPENINGS_ATTEMPT",
+            '--exclude "$IN/prior-reverse-openings.fen"',
+            '--exclude "$IN/prior-failed-x2-openings.fen"',
+            '--exclude "$IN/prior-blend-openings.fen"',
+            '--experiment-stage "$READOUT_STAGE"',
+            '--expected-records-per-arm "$EXPECTED_TRAINING_RECORDS"',
+        ):
+            self.assertIn(literal, self.text)
+
     def test_no_promotion_or_automatic_chaining(self) -> None:
         for literal in (
             "NO_AUTOMATIC_CONTINUATION",

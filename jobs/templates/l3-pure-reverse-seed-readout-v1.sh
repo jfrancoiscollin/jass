@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # L3-PURE — independent causal readout: failed-conversion roots versus matched
-# random roots. The two 2M fresh training arms are authenticated from the
+# random roots. The fresh training arms are authenticated from their
 # reverse-seed ARMS_READY certificate. Both models use one 8cf engine and the
-# same new paired openings in Q00 d9 and native 0.1 s/move.
+# same new paired openings in Q00 d9 and native 0.1 s/move. The scale4m mode
+# has a distinct opening seed and excludes all earlier signal readout pools.
 #
 # Raw W/D/L is summed across views before the primary score, Elo, IC90 and
 # IC95 are computed. Training holdout remains diagnostic only. This job cannot
@@ -75,7 +76,34 @@ trap 'exit 130' INT
 
 NOPEN="${NOPEN:-1500}"
 OPENING_CANDIDATES="${OPENING_CANDIDATES:-12000}"
+READOUT_STAGE="${READOUT_STAGE:-base2m}"
 OPENING_SEED="${OPENING_SEED:-1087001}"
+case "$READOUT_STAGE" in
+  base2m)
+    EXPECTED_TRAINING_VERDICT="L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY"
+    EXPECTED_TRAINING_RECORDS=2000000
+    EXPECTED_OPENING_SEED=1087001
+    OPENING_STEM="reverse-seed-readout-openings"
+    ;;
+  scale4m)
+    : "${REVERSE_OPENINGS_PREFIX:?}"; : "${EXPECTED_REVERSE_OPENINGS_JOB:?}"
+    : "${EXPECTED_REVERSE_OPENINGS_ATTEMPT:?}"
+    : "${EXPECTED_REVERSE_OPENINGS_CODE_SHA:?}"
+    : "${FAILED_X2_OPENINGS_PREFIX:?}"; : "${EXPECTED_FAILED_X2_OPENINGS_JOB:?}"
+    : "${EXPECTED_FAILED_X2_OPENINGS_ATTEMPT:?}"
+    : "${EXPECTED_FAILED_X2_OPENINGS_CODE_SHA:?}"
+    : "${BLEND_OPENINGS_PREFIX:?}"; : "${EXPECTED_BLEND_OPENINGS_JOB:?}"
+    : "${EXPECTED_BLEND_OPENINGS_ATTEMPT:?}"
+    : "${EXPECTED_BLEND_OPENINGS_CODE_SHA:?}"
+    EXPECTED_TRAINING_VERDICT="L3_PURE_REVERSE_SEED_SCALE4M_CAUSAL_AB_ARMS_READY"
+    EXPECTED_TRAINING_RECORDS=4000000
+    EXPECTED_OPENING_SEED=1113001
+    OPENING_STEM="reverse-seed-scale4m-readout-openings"
+    ;;
+  *)
+    die "unsupported readout stage: $READOUT_STAGE"
+    ;;
+esac
 GAMES_PER_VIEW=$((NOPEN * 2))
 NSH_GATE=12
 PAR_GATE=12
@@ -95,7 +123,8 @@ Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')" -ge 8000 ] ||
   die "need 8 GiB free"
 [ "$NOPEN" -eq 1500 ] || die "readout power drift"
-[ "$OPENING_SEED" -eq 1087001 ] || die "opening seed drift"
+[ "$OPENING_SEED" -eq "$EXPECTED_OPENING_SEED" ] ||
+  die "$READOUT_STAGE opening seed drift"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 grep -q "root_is_drawn" src/search.cpp || die "engine predates drawn-root fix"
 monitor
@@ -123,7 +152,8 @@ python3 - "$ART/verified-arms.json" "$ART/verified-topk-openings.json" \
   "$EXPECTED_TOPK_OPENINGS_ATTEMPT" "$EXPECTED_TOPK_OPENINGS_CODE_SHA" \
   "$EXPECTED_HARD_OPENINGS_JOB" "$EXPECTED_HARD_OPENINGS_ATTEMPT" \
   "$EXPECTED_HARD_OPENINGS_CODE_SHA" "$EXPECTED_CONTROL_MODEL_SHA" \
-  "$EXPECTED_TREATMENT_MODEL_SHA" <<'PY'
+  "$EXPECTED_TREATMENT_MODEL_SHA" "$EXPECTED_TRAINING_VERDICT" \
+  "$EXPECTED_TRAINING_RECORDS" "$READOUT_STAGE" <<'PY'
 import json
 import sys
 
@@ -133,7 +163,9 @@ arms_report, topk_report, hard_report, summary = (
 (
     source_job, source_attempt, source_code, topk_job, topk_attempt,
     topk_code, hard_job, hard_attempt, hard_code, control_sha, treatment_sha,
-) = sys.argv[5:16]
+    expected_verdict, expected_records, readout_stage,
+) = sys.argv[5:19]
+expected_records = int(expected_records)
 
 def require(condition, message):
     if not condition:
@@ -153,7 +185,7 @@ for report, identity, label in (
         f"{label} source identity/state mismatch",
     )
 require(
-    summary.get("verdict") == "L3_PURE_REVERSE_SEED_CAUSAL_AB_ARMS_READY"
+    summary.get("verdict") == expected_verdict
     and summary.get("code_sha") == source_code,
     "arms summary identity/verdict mismatch",
 )
@@ -162,7 +194,8 @@ require(
     summary.get("primary_contrast")
     == "HARD_SEED_SELFPLAY minus MATCHED_RANDOM_SEED_SELFPLAY"
     and design.get("single_factor") == "seed_root_selection_policy"
-    and design.get("records_per_arm") == 2_000_000
+    and summary.get("experiment_stage", "base2m") == readout_stage
+    and design.get("records_per_arm") == expected_records
     and design.get("seed_frac") == 100
     and design.get("historical_replay_records") == 0
     and design.get("same_parent") is True
@@ -187,6 +220,51 @@ for arm, expected in (("control", control_sha), ("treatment", treatment_sha)):
         f"{arm} optimizer did not converge",
     )
 PY
+
+if [ "$READOUT_STAGE" = scale4m ]; then
+  stage authenticate-prior-signal-openings
+  python3 jobs/tools/fetch_result_files.py --prefix "$REVERSE_OPENINGS_PREFIX" \
+    --file artefacts/reverse-seed-readout-openings.fen=prior-reverse-openings.fen \
+    --out-dir "$IN" --report "$ART/verified-reverse-openings.json" \
+    > "$W/fetch-reverse-openings.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py --prefix "$FAILED_X2_OPENINGS_PREFIX" \
+    --file artefacts/failed-x2-readout-openings.fen=prior-failed-x2-openings.fen \
+    --out-dir "$IN" --report "$ART/verified-failed-x2-openings.json" \
+    > "$W/fetch-failed-x2-openings.log" 2>&1
+  python3 jobs/tools/fetch_result_files.py --prefix "$BLEND_OPENINGS_PREFIX" \
+    --file artefacts/blend50-readout-openings.fen=prior-blend-openings.fen \
+    --out-dir "$IN" --report "$ART/verified-blend-openings.json" \
+    > "$W/fetch-blend-openings.log" 2>&1
+  python3 - "$ART/verified-reverse-openings.json" \
+    "$ART/verified-failed-x2-openings.json" \
+    "$ART/verified-blend-openings.json" \
+    "$EXPECTED_REVERSE_OPENINGS_JOB" "$EXPECTED_REVERSE_OPENINGS_ATTEMPT" \
+    "$EXPECTED_REVERSE_OPENINGS_CODE_SHA" \
+    "$EXPECTED_FAILED_X2_OPENINGS_JOB" \
+    "$EXPECTED_FAILED_X2_OPENINGS_ATTEMPT" \
+    "$EXPECTED_FAILED_X2_OPENINGS_CODE_SHA" \
+    "$EXPECTED_BLEND_OPENINGS_JOB" "$EXPECTED_BLEND_OPENINGS_ATTEMPT" \
+    "$EXPECTED_BLEND_OPENINGS_CODE_SHA" <<'PY'
+import json
+import sys
+
+reports = [json.load(open(path)) for path in sys.argv[1:4]]
+identities = [tuple(sys.argv[i:i + 3]) for i in range(4, 13, 3)]
+for report, identity, label in zip(
+    reports,
+    identities,
+    ("reverse", "failed-x2", "blend50"),
+):
+    if (
+        report.get("job_id") != identity[0]
+        or report.get("attempt_id") != identity[1]
+        or report.get("code_sha") != identity[2]
+        or report.get("result_state") != "completed"
+        or report.get("exit_code") != 0
+    ):
+        raise SystemExit(f"{label} opening source identity/state mismatch")
+PY
+fi
 
 gunzip -c "$IN/CONTROL.pjtw.gz" > "$W/CONTROL.pjtw"
 gunzip -c "$IN/TREATMENT.pjtw.gz" > "$W/TREATMENT.pjtw"
@@ -218,17 +296,27 @@ say "  one repaired 8cf engine built for both arms"
 stage select-fresh-disjoint-openings
 "$J8" --gen-opening-pool "$OPENING_CANDIDATES" "$W/open-candidates.fen" \
   8 32 20 "$OPENING_SEED" > "$W/open-candidates.log" 2>&1
+EXCLUDES=(
+  --exclude data/dilf_combinations.fen
+  --exclude "$IN/prior-topk-openings.fen"
+  --exclude "$IN/prior-hard-openings.fen"
+)
+if [ "$READOUT_STAGE" = scale4m ]; then
+  EXCLUDES+=(
+    --exclude "$IN/prior-reverse-openings.fen"
+    --exclude "$IN/prior-failed-x2-openings.fen"
+    --exclude "$IN/prior-blend-openings.fen"
+  )
+fi
 python3 jobs/tools/select_independent_opening_pool.py \
   --candidates "$W/open-candidates.fen" --expected "$NOPEN" \
-  --exclude data/dilf_combinations.fen \
-  --exclude "$IN/prior-topk-openings.fen" \
-  --exclude "$IN/prior-hard-openings.fen" \
+  "${EXCLUDES[@]}" \
   --generator-seed "$OPENING_SEED" \
-  --out "$ART/reverse-seed-readout-openings.fen" \
-  --manifest "$ART/reverse-seed-readout-openings.json" \
+  --out "$ART/$OPENING_STEM.fen" \
+  --manifest "$ART/$OPENING_STEM.json" \
   > "$W/select-openings.log" 2>&1
-cp "$ART/reverse-seed-readout-openings.fen" "$W/open-eval.fen"
-python3 - "$ART/reverse-seed-readout-openings.json" "$NOPEN" \
+cp "$ART/$OPENING_STEM.fen" "$W/open-eval.fen"
+python3 - "$ART/$OPENING_STEM.json" "$NOPEN" \
   "$OPENING_SEED" <<'PY'
 import json
 import sys
@@ -241,7 +329,7 @@ if (
 ):
     raise SystemExit("fresh opening manifest mismatch")
 PY
-say "  selected $NOPEN unique openings disjoint from DILF, 1024 and 1076"
+say "  selected $NOPEN unique openings for stage=$READOUT_STAGE"
 
 run_gate(){
   local view="$1"; local args=()
@@ -269,7 +357,7 @@ stage aggregate-preregistered-readout
 python3 -m jobs.tools.l3_reverse_seed_readout \
   --force-dir "$ART/force" \
   --training-summary "$IN/arms-summary.json" \
-  --opening-manifest "$ART/reverse-seed-readout-openings.json" \
+  --opening-manifest "$ART/$OPENING_STEM.json" \
   --expected-games-per-view "$GAMES_PER_VIEW" --expected-openings "$NOPEN" \
   --code-sha "$EXPECTED_CODE_SHA" \
   --source-job "$EXPECTED_SOURCE_JOB" \
@@ -277,6 +365,9 @@ python3 -m jobs.tools.l3_reverse_seed_readout \
   --source-code-sha "$EXPECTED_SOURCE_CODE_SHA" \
   --control-model-sha "$EXPECTED_CONTROL_MODEL_SHA" \
   --treatment-model-sha "$EXPECTED_TREATMENT_MODEL_SHA" \
+  --experiment-stage "$READOUT_STAGE" \
+  --expected-training-verdict "$EXPECTED_TRAINING_VERDICT" \
+  --expected-records-per-arm "$EXPECTED_TRAINING_RECORDS" \
   --out "$ART/reverse-seed-vs-matched-control-readout.json" \
   --summary-out "$ART/JASS_CONTROL_SUMMARY.json"
 VERDICT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["verdict"])' \

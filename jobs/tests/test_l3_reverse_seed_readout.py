@@ -94,7 +94,7 @@ class ReverseSeedReadoutTests(unittest.TestCase):
             )
         )
 
-    def build(self) -> dict:
+    def build(self, **kwargs) -> dict:
         return readout.build_readout(
             force_dir=self.force,
             training_summary_path=self.root / "training.json",
@@ -107,6 +107,7 @@ class ReverseSeedReadoutTests(unittest.TestCase):
             source_code_sha=SOURCE_SHA,
             expected_control_sha=CONTROL_SHA,
             expected_treatment_sha=TREATMENT_SHA,
+            **kwargs,
         )
 
     def test_directional_gain_and_coverage_are_reported(self) -> None:
@@ -138,6 +139,27 @@ class ReverseSeedReadoutTests(unittest.TestCase):
         self.write_force("native", 75, 0, 125)
         result = self.build()
         self.assertEqual(result["verdict"], readout.BELOW)
+
+    def test_scale4m_uses_separate_contract_and_verdict_namespace(self) -> None:
+        document = training()
+        document["verdict"] = (
+            "L3_PURE_REVERSE_SEED_SCALE4M_CAUSAL_AB_ARMS_READY"
+        )
+        document["experiment_stage"] = "scale4m"
+        document["design"]["records_per_arm"] = 4_000_000
+        (self.root / "training.json").write_text(json.dumps(document))
+        self.write_force("q00", 130, 0, 70)
+        self.write_force("native", 128, 0, 72)
+        result = self.build(
+            experiment_stage="scale4m",
+            expected_training_verdict=(
+                "L3_PURE_REVERSE_SEED_SCALE4M_CAUSAL_AB_ARMS_READY"
+            ),
+            expected_records_per_arm=4_000_000,
+        )
+        self.assertEqual(result["verdict"], readout.SCALE4M_ABOVE_95)
+        self.assertEqual(result["experiment_stage"], "scale4m")
+        self.assertEqual(result["protocol"]["records_per_arm"], 4_000_000)
 
     def test_source_hash_drift_is_rejected(self) -> None:
         document = training()
