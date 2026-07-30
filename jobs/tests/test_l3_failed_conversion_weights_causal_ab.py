@@ -78,6 +78,9 @@ class FailedConversionWeightsCausalAbTemplateTests(unittest.TestCase):
             '--feat "$W/turnover.feat"',
             '--warm-start "$W/F2M.pjtw"',
             '--holdout-count "$HOLDOUT"',
+            "common-training-coverage.json",
+            "l3_bucket_visits.py",
+            '"common_to_both_arms": True',
         ):
             self.assertIn(literal, self.text)
 
