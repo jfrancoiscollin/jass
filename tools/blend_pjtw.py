@@ -11,8 +11,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import struct
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -20,10 +22,29 @@ import numpy as np
 HDR = 20
 VERSION_MASK = 0xFF
 KNOWN_VERSION_BITS = VERSION_MASK | 0x100 | 0x200
+I32_MIN = -(2**31)
+I32_MAX = 2**31 - 1
 
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def atomic_write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp"
+    )
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def load(path: Path) -> tuple[tuple[int, int, int, int, int], np.ndarray]:
@@ -54,12 +75,29 @@ def blend(parent_a: Path, parent_b: Path, alpha_a: float, out: Path) -> dict:
     if header_a != header_b:
         raise ValueError(f"PJTW headers differ: {header_a} != {header_b}")
     alpha_b = 1.0 - alpha_a
-    merged = np.rint(alpha_a * weights_a + alpha_b * weights_b)
-    merged = merged.clip(-(2**31), 2**31 - 1).astype("<i4")
+    exact = alpha_a * weights_a + alpha_b * weights_b
+    rounded = np.rint(exact)
+    saturated_low = int(np.count_nonzero(rounded < I32_MIN))
+    saturated_high = int(np.count_nonzero(rounded > I32_MAX))
+    merged = rounded.clip(I32_MIN, I32_MAX).astype("<i4")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_bytes(struct.pack("<5I", *header_a) + merged.tobytes())
+    payload = struct.pack("<5I", *header_a) + merged.tobytes()
+    fd, tmp_name = tempfile.mkstemp(
+        dir=out.parent, prefix=f".{out.name}.", suffix=".tmp"
+    )
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, out)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
     changed_from_a = int(np.count_nonzero(merged.astype(np.int64) != weights_a.astype(np.int64)))
     changed_from_b = int(np.count_nonzero(merged.astype(np.int64) != weights_b.astype(np.int64)))
+    quantization_error = merged.astype(np.float64) - exact
     return {
         "schema": 1,
         "mode": "convex-weight-interpolation",
@@ -81,6 +119,22 @@ def blend(parent_a: Path, parent_b: Path, alpha_a: float, out: Path) -> dict:
         "weight_count": int(merged.size),
         "weights_changed_from_a": changed_from_a,
         "weights_changed_from_b": changed_from_b,
+        "saturation": {
+            "low": saturated_low,
+            "high": saturated_high,
+            "total": saturated_low + saturated_high,
+        },
+        "quantization": {
+            "rounding": "nearest-ties-to-even",
+            "max_abs_error": float(np.max(np.abs(quantization_error), initial=0.0)),
+            "mean_abs_error": float(np.mean(np.abs(quantization_error))),
+        },
+        "weight_ranges": {
+            "parent_a": [int(np.min(weights_a)), int(np.max(weights_a))],
+            "parent_b": [int(np.min(weights_b)), int(np.max(weights_b))],
+            "output": [int(np.min(merged)), int(np.max(merged))],
+        },
+        "atomic_write": True,
         "training_records": 0,
         "self_play_games": 0,
     }
@@ -100,8 +154,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"blend_pjtw: {exc}", file=sys.stderr)
         return 2
     if args.report:
-        args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        atomic_write_text(
+            args.report, json.dumps(report, indent=2, sort_keys=True) + "\n"
+        )
     print(json.dumps(report, sort_keys=True))
     return 0
 

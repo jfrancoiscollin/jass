@@ -37,6 +37,23 @@ def main() -> int:
         assert read_weights(out) == [2, 6, -4, 10, 50, -50]
         payload = json.loads(report.read_text())
         assert payload["alpha_a"] == 0.75 and payload["alpha_b"] == 0.25
+        assert payload["saturation"]["total"] == 0
+        assert payload["quantization"]["max_abs_error"] <= 0.5
+        assert payload["atomic_write"] is True
+        assert not list(root.glob(".out.pjtw.*.tmp"))
+
+        # A static linear evaluation is a dot product over the quantized
+        # weights.  The blended score therefore stays within the accumulated
+        # half-unit rounding bound of the convex parent score.
+        features = [1, -2, 0, 3, 1, -1]
+        wa = [0, 8, -8, 20, 100, -100]
+        wb = [8, 0, 8, -20, -100, 100]
+        wm = read_weights(out)
+        score_a = sum(x * w for x, w in zip(features, wa))
+        score_b = sum(x * w for x, w in zip(features, wb))
+        score_m = sum(x * w for x, w in zip(features, wm))
+        expected = 0.75 * score_a + 0.25 * score_b
+        assert abs(score_m - expected) <= 0.5 * sum(abs(x) for x in features)
 
         selfdesc = (0x57544A50, 3 | 0x200, 1000, 2, 1)
         write_model(a, [0, 8, -8, 20, 100, -100], header=selfdesc)
@@ -45,6 +62,24 @@ def main() -> int:
                         "--alpha-a", "0.25", "--out", str(out)], check=True)
         assert read_header(out) == selfdesc
         assert read_weights(out) == [6, 2, 4, -10, -50, 50]
+
+        # Failed writes must not replace an existing output.
+        original = out.read_bytes()
+        rc = subprocess.run(
+            [
+                sys.executable,
+                str(TOOL),
+                "--parent-a",
+                str(a),
+                "--parent-b",
+                str(b),
+                "--alpha-a",
+                "1.5",
+                "--out",
+                str(out),
+            ]
+        ).returncode
+        assert rc != 0 and out.read_bytes() == original
 
         bad = root / "bad.pjtw"
         write_model(bad, [1] * 8, header=(0x57544A50, 3, 1000, 3, 1))
