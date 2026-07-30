@@ -68,9 +68,42 @@ def _meta_digest(rows: list[frontier.Meta]) -> str:
     return digest.hexdigest()
 
 
-def _wdl_canary(records: list[bytes]) -> dict:
+def _wdl_canary(
+    records: list[bytes], *, require_raw_distribution: bool
+) -> dict:
     canary = frontier._load_canary()
-    return canary.evaluate(canary.histogram_from_records(records))
+    report = canary.evaluate(
+        canary.histogram_from_records(records),
+        min_draw_share=(
+            canary.DEFAULT_MIN_DRAW_SHARE if require_raw_distribution else 0.0
+        ),
+        max_draw_share=(
+            canary.DEFAULT_MAX_DRAW_SHARE if require_raw_distribution else 1.0
+        ),
+        max_side_skew=(
+            canary.DEFAULT_MAX_SIDE_SKEW if require_raw_distribution else 1.0
+        ),
+    )
+    report["distribution_gate_applied"] = require_raw_distribution
+    report["distribution_policy"] = (
+        "enforced_raw_or_uniform_selfplay"
+        if require_raw_distribution
+        else "diagnostic_only_outcome_conditioned_replay"
+    )
+    if not require_raw_distribution:
+        # ``failed_conversion`` is selected using the terminal outcome.  Its
+        # draw share and STM-POV win/loss balance are therefore intentionally
+        # not an unbiased self-play sample.  Colour mirroring removes colour
+        # bias but preserves the STM-POV target.  Publish all three shares as
+        # diagnostics; label-domain integrity remains enforced by
+        # ``histogram_from_records``.  The raw historical and fresh sources are
+        # independently protected by the ordinary distribution canary.
+        report["thresholds"] = {
+            "min_draw_share": None,
+            "max_draw_share": None,
+            "max_side_skew": None,
+        }
+    return report
 
 
 def _stream_selected_pair(
@@ -213,6 +246,14 @@ def assemble(args: argparse.Namespace) -> dict:
     fresh_records, fresh_rows = frontier.read_pair(
         paths["fresh_data"], paths["fresh_meta"]
     )
+    fresh_wdl = _wdl_canary(
+        fresh_records, require_raw_distribution=True
+    )
+    if not fresh_wdl["ok"]:
+        raise ValueError(
+            "assembled corpus WDL canary failed: "
+            + "; ".join(f"FRESH: {problem}" for problem in fresh_wdl["problems"])
+        )
     fresh_split, fresh_train_count = frontier._load_split_contract(
         paths["fresh_split"], fresh_records, fresh_rows
     )
@@ -296,10 +337,17 @@ def assemble(args: argparse.Namespace) -> dict:
     if treatment_train_openings & holdout_openings:
         raise ValueError("treatment train leaks into common holdout")
 
-    control_wdl = _wdl_canary(control_records)
-    treatment_wdl = _wdl_canary(treatment_records)
+    control_wdl = _wdl_canary(
+        control_records, require_raw_distribution=True
+    )
+    treatment_wdl = _wdl_canary(
+        treatment_records, require_raw_distribution=False
+    )
     if not control_wdl["ok"] or not treatment_wdl["ok"]:
-        problems = control_wdl["problems"] + treatment_wdl["problems"]
+        problems = [
+            *(f"UNIFORM_REPLAY: {problem}" for problem in control_wdl["problems"]),
+            *(f"HARD_REPLAY: {problem}" for problem in treatment_wdl["problems"]),
+        ]
         raise ValueError("assembled corpus WDL canary failed: " + "; ".join(problems))
 
     frontier._write_pair_atomic(
@@ -364,6 +412,7 @@ def assemble(args: argparse.Namespace) -> dict:
             "records": len(fresh_records),
             "train_records": fresh_train_count,
             "holdout_records": fresh_holdout_count,
+            "wdl_canary": fresh_wdl,
         },
         "common_holdout": {
             "data_payload_sha256": common_holdout_data_sha,

@@ -160,6 +160,28 @@ class HardReplayAssemblyTests(unittest.TestCase):
             manifest=str(root / f"assembly{suffix}.json"),
         )
 
+    def _replace_wdl(
+        self, data_path: Path, meta_path: Path, values: list[int]
+    ) -> None:
+        records, rows = frontier.read_pair(data_path, meta_path)
+        self.assertEqual(len(records), len(values))
+        records = [
+            record[:37] + struct.pack("<b", value)
+            for record, value in zip(records, values)
+        ]
+        frontier.write_pair(data_path, meta_path, records, rows)
+
+    def _refresh_hard_manifest_hash(self, inputs: dict[str, Path]) -> None:
+        payload = json.loads(
+            inputs["hard_manifest"].read_text(encoding="utf-8")
+        )
+        payload["outputs"]["hard_replay"]["sha256"] = assembly._sha256(
+            inputs["hard_data"]
+        )
+        inputs["hard_manifest"].write_text(
+            json.dumps(payload, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
     def test_assembles_deterministic_arms_with_a_bit_identical_common_tail(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -271,6 +293,59 @@ class HardReplayAssemblyTests(unittest.TestCase):
             self.assertEqual(
                 result["control"]["sampled_records"], args.replay_records
             )
+
+    def test_hard_outcome_conditioned_skew_is_diagnostic_not_a_false_abort(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = self._prepare(root)
+            self._replace_wdl(
+                inputs["hard_data"], inputs["hard_meta"], [1] * 6
+            )
+            self._refresh_hard_manifest_hash(inputs)
+
+            result = assembly.assemble(self._args(root, inputs, "-skew"))
+
+            treatment = result["treatment"]["wdl_canary"]
+            self.assertAlmostEqual(treatment["side_skew"], 0.2)
+            self.assertTrue(treatment["ok"])
+            self.assertFalse(treatment["distribution_gate_applied"])
+            self.assertEqual(
+                treatment["distribution_policy"],
+                "diagnostic_only_outcome_conditioned_replay",
+            )
+            self.assertEqual(
+                treatment["thresholds"],
+                {
+                    "min_draw_share": None,
+                    "max_draw_share": None,
+                    "max_side_skew": None,
+                },
+            )
+            control = result["control"]["wdl_canary"]
+            self.assertTrue(control["distribution_gate_applied"])
+            self.assertEqual(
+                control["distribution_policy"],
+                "enforced_raw_or_uniform_selfplay",
+            )
+
+    def test_fresh_raw_corpus_keeps_the_full_distribution_canary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = self._prepare(root)
+            self._replace_wdl(
+                inputs["hard_data"], inputs["hard_meta"], [1] * 6
+            )
+            self._refresh_hard_manifest_hash(inputs)
+            self._replace_wdl(
+                inputs["fresh_data"],
+                inputs["fresh_meta"],
+                [-1, 1] * 12,
+            )
+
+            with self.assertRaisesRegex(
+                ValueError, "FRESH: part de nulles"
+            ):
+                assembly.assemble(self._args(root, inputs, "-no-draws"))
 
     def test_fails_closed_on_hard_manifest_drift_and_existing_outputs(self):
         with tempfile.TemporaryDirectory() as directory:
