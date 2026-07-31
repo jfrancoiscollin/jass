@@ -500,6 +500,12 @@ class Folder:
             self.rf_canon, self.rf_sign = symmetry.build_canon(translate=True,
                                                                reflect=True)
             self.PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN   # canonical = 17M index space
+        elif mode == 'exact':
+            import symmetry
+            # SEULE la symétrie vraie du damier : rot180∘colour-swap. Voir
+            # symmetry.build_exact_canon pour pourquoi ce n'est pas build_canon.
+            self.rf_canon, self.rf_sign = symmetry.build_exact_canon()
+            self.PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN   # espace 17M, comprimé par --prune
         elif mode == 'color':
             self.cf_U2C, self.cf_U2S = colorfold_maps()
             self.PAT_BUCKETS = CF_BUCKETS
@@ -514,7 +520,7 @@ class Folder:
         """(n,NP) int64 columns in [0,TB) and (n,NP) float32 signs (or None)."""
         idx = patterns.extract_indices(black_men, white_men)
         NP = self.NP
-        if self.mode == 'full':
+        if self.rf_canon is not None:      # 'full' comme 'exact'
             cols = self.rf_canon[np.arange(NP)[None, :], idx]          # canonical 17M-space col
             signs = self.rf_sign[np.arange(NP)[None, :], idx].astype(np.float32)
         elif self.mode == 'color':
@@ -591,11 +597,26 @@ def project_champion_mean(path, folder, keep, PAT_N, E):
         srb = U2S[rep_b].astype(np.float64)
         canon_mg = (cm_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
         canon_eg = (ce_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
+    elif folder.mode == 'exact':
+        # Le champion précédent a été ajusté SANS cette contrainte : ses deux
+        # membres d'orbite ne coïncident pas. Prendre un représentant (comme le
+        # fait la branche 'color', légitime là où la contrainte est déjà
+        # satisfaite exactement) reviendrait à choisir arbitrairement une moitié
+        # et à jeter l'autre. On MOYENNE — c'est la projection orthogonale sur le
+        # sous-espace contraint, donc le point admissible le plus proche du
+        # champion, ce que « continuer depuis le champion » doit vouloir dire.
+        cc = folder.rf_canon.ravel()
+        sg = folder.rf_sign.ravel().astype(np.float64)
+        TBfull = NP * NB
+        cnt = np.bincount(cc, minlength=TBfull).astype(np.float64)
+        cnt[cnt == 0.0] = 1.0                               # colonnes non canoniques
+        canon_mg = np.bincount(cc, weights=sg * cm_full, minlength=TBfull) / cnt
+        canon_eg = np.bincount(cc, weights=sg * ce_full, minlength=TBfull) / cnt
     elif folder.mode == 'none':
         canon_mg, canon_eg = cm_full, ce_full               # canonical == full
     else:
         raise SystemExit(f'champion continuation unsupported for fold={folder.mode!r} '
-                         '(color/none only)')
+                         '(color/exact/none only)')
     # --- prune-align : dense slot s(1..K) -> canonical bucket keep[s-1] ; slot0=fallback(0) ---
     mu_pat_mg = np.zeros(PAT_N, dtype=np.float64)
     mu_pat_eg = np.zeros(PAT_N, dtype=np.float64)
@@ -629,7 +650,9 @@ def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
 # --------------------------------------------------------------------------- #
 def train_stream(args):
     t_start = time.time()
-    fold_mode = 'full' if args.full_fold else ('color' if args.color_fold else 'none')
+    fold_mode = ('full' if args.full_fold else
+                 'exact' if args.exact_fold else
+                 'color' if args.color_fold else 'none')
     folder = Folder(fold_mode)
 
     mm, N = open_jnnw(args.data)
@@ -873,6 +896,11 @@ def main(argv=None):
     fold.add_argument('--full-fold', action='store_true',
                       help='FULL symmetry fold (colour+rot180+translation+reflection); '
                            'expanded back to the standard 17M v3 .pjtw.')
+    fold.add_argument('--exact-fold', action='store_true',
+                      help="EXACT-only fold : groupe {id, rot180∘colour-swap}, la seule "
+                           "symétrie que les règles garantissent. 8cf -> 2 125 764 poids, "
+                           "le compte de Scan. N'impose PAS cs seule ni rot seule, que le "
+                           "module symmetry qualifie lui-même d'approximatives.")
     fold.add_argument('--color-fold', action='store_true',
                       help='colour-antisymmetry fold (17M->8.5M); expanded to 17M v3 .pjtw.')
     ap.add_argument('--tempo-stage', action='store_true',
@@ -896,12 +924,12 @@ def main(argv=None):
                          'per-weight precision = l2 + decay·λ·(visits/N) (extras: visits=N), warm-started '
                          'at μ. Carries acquired knowledge across generations (anti-forgetting of rare '
                          'buckets). OFF (default) = plain L2, byte-identical. Requires --prune ; '
-                         '--color-fold or none only.')
+                         '--color-fold, --exact-fold or none.')
     continuation.add_argument('--warm-start', type=str, default=None,
                     help='PJTW v3 of the previous student used ONLY as the L-BFGS starting point. '
                          'Unlike --prior-mean, this does not anchor the objective to the parent: '
                          'the ordinary --l2 penalty remains centred on zero. Requires --prune and '
-                         '--color-fold or no fold.')
+                         '--color-fold, --exact-fold or no fold.')
     ap.add_argument('--prior-visit-scale', type=float, default=0.25,
                     help='λ : prior evidence per accumulated visit (dimensionless ; ~0.25 balances the '
                          'prior against the logistic data-Fisher). Only with --prior-mean.')

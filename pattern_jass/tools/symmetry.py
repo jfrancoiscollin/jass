@@ -153,3 +153,56 @@ def build_canon(translate=False, reflect=False):
         canon_col[p] = best
         sign[p] = np.where(fix, 0, best_s).astype(np.int8)   # store-sign = σ_canonical
     return canon_col, sign
+
+
+def build_exact_canon():
+    """Fold sur la SEULE symétrie exacte : le groupe à deux éléments {id, rot∘cs}.
+
+    Même contrat que `build_canon` — (canon_col, sign) en espace 17M global, avec
+    `W_full[p][c] = sign[p][c] · w_canon[canon_col[p][c]]` — mais l'orbite ne
+    contient que l'identité et `rot180∘colour-swap`.
+
+    Pourquoi une fonction séparée plutôt qu'un drapeau de `build_canon` : le groupe
+    de `build_canon` est `{id, rot} × {id, cs}`, qui contient `cs` SEUL et `rot`
+    SEUL. Or le docstring de ce module le dit lui-même — ces deux-là sont
+    **approximatifs** (les pions ont une direction). Les imposer, c'est contraindre
+    le modèle par des égalités que le jeu ne garantit pas ; mesuré sur TURNOVER,
+    entraîné avec `--color-fold`, la contrainte `cs` est satisfaite à 0,0000 %
+    d'écart pendant que la symétrie EXACTE `rot∘cs` est violée à 25,8 %. On imposait
+    l'approximative et on laissait la vraie s'apprendre.
+
+    Ici on n'impose que ce qui est vrai. Le compte tombe sur 2 125 764 poids pour
+    la géométrie 8cf (8 patterns × 531441 / 2) — exactement celui de Scan, qui
+    obtient la même chose en n'ayant que 4 tables et des contributions ±1.
+
+    Les patterns orphelins de rot180 (aucun dans 8cf, possibles dans d'autres
+    variantes) ne sont pas pliés : leur orbite se réduit à l'identité, ce qui est
+    correct, simplement moins économe.
+    """
+    cs = colorswap_map()
+    rp, rotperm = rot_structure()
+    NP = P.NUM_PATTERNS
+    canon_col = np.empty((NP, NB), dtype=np.int64)
+    sign = np.empty((NP, NB), dtype=np.int8)
+    c = np.arange(NB, dtype=np.int64)
+    for p in range(NP):
+        cand = [(p, c, 1)]
+        if rp[p] >= 0:
+            cand.append((rp[p], cs[_reorder_all(rotperm[p])], -1))
+        g = [pp * NB + cc for (pp, cc, s) in cand]
+        best = g[0].copy()
+        best_s = np.full(NB, cand[0][2], dtype=np.int64)
+        for (pp, cc, s), gi in zip(cand[1:], g[1:]):
+            take = gi < best
+            best = np.where(take, gi, best)
+            best_s = np.where(take, s, best_s)
+        # Point fixe : si l'orbite ramène (p,c) sur lui-même avec le signe -1, la
+        # seule valeur possible est 0. N'arrive que si un pattern est son propre
+        # miroir ; en 8cf il n'y en a aucun, mais l'omettre serait un piège muet.
+        self_g = p * NB + c
+        fix = np.zeros(NB, dtype=bool)
+        for (pp, cc, s), gi in zip(cand, g):
+            fix |= (gi == self_g) & (s == -1)
+        canon_col[p] = best
+        sign[p] = np.where(fix, 0, best_s).astype(np.int8)
+    return canon_col, sign
