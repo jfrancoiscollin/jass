@@ -375,6 +375,14 @@ EndgameResult swap_winner(EndgameResult r) noexcept {
 
 }  // namespace
 
+void warm_kings_endgame_bitbases() {
+    // Same `ensure_built()` calls the probes make, just paid here instead of
+    // inside a search. `call_once` makes this idempotent, so a caller that
+    // warms twice — or races another thread — costs nothing extra.
+    two_vs_one().ensure_built();
+    three_vs_one().ensure_built();
+}
+
 EndgameResult probe_kings_endgame(const Position& pos) {
     if (pos.white_men() != 0 || pos.black_men() != 0) {
         return EndgameResult::Unknown;

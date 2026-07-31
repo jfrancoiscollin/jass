@@ -27,4 +27,23 @@ namespace jass {
 // position falls outside the compiled-in tables.
 EndgameResult probe_kings_endgame(const Position& pos);
 
+// Build every kings-only bitbase now, so no later probe can pay for it.
+//
+// The tables are built by retrograde analysis on first probe, under a
+// `std::call_once`. That probe happens inside `negamax`, so the build lands in
+// the middle of a search — and a `call_once` cannot be interrupted by the
+// deadline poll. Measured on the 3-kings-vs-3-kings position
+// `W:WK46,K47,K48:BK3,K4,K5`: the 3-vs-1 table costs 5,15 s to build and the
+// 2-vs-1 one 280 ms, so `go movetime 100` returned after 5,5 s — 55x its
+// budget, at depth 3, having visited 2048 nodes.
+//
+// This is why the overshoot only ever showed up in king endgames, why raising
+// the node-poll frequency from 0x3FF to 0xFF changed nothing, and why the A/B
+// harness saw a milder "2-3.5x": there the cost is paid by whichever move first
+// reaches such an endgame and is amortised over the rest of the game.
+//
+// Callers that run searches under a clock must call this before the clock
+// starts. It is idempotent and thread-safe.
+void warm_kings_endgame_bitbases();
+
 }  // namespace jass

@@ -3,6 +3,7 @@
 
 #include "hub.hpp"
 
+#include "bitbase.hpp"
 #include "bitboard.hpp"
 #include "eval.hpp"
 #include "nnue.hpp"
@@ -281,12 +282,28 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
 }
 
 void HubFrontEnd::cmd_hello() {
-    std::lock_guard lk{out_mutex_};
-    out_ << "id name=" << ENGINE_NAME
-         << " version="           << ENGINE_VERSION
-         << " author=\""          << ENGINE_AUTHOR << "\"\n"
-         << "ready\n";
-    out_.flush();
+    {
+        std::lock_guard lk{out_mutex_};
+        out_ << "id name=" << ENGINE_NAME
+             << " version="           << ENGINE_VERSION
+             << " author=\""          << ENGINE_AUTHOR << "\"\n"
+             << "ready\n";
+        out_.flush();
+    }
+    // Build the endgame bitbases now, on the handshake, so no `go` can pay for
+    // them. Left lazy they are built by the first probe that needs them, which
+    // happens INSIDE negamax under a `std::call_once` the deadline poll cannot
+    // interrupt: `go movetime 100` on `W:WK46,K47,K48:BK3,K4,K5` returned after
+    // 5,5 s, 55x its budget. See warm_kings_endgame_bitbases().
+    //
+    // Deliberately after the reply is flushed, not before: a client that waits
+    // on `ready` with a short handshake timeout must not sit through the build.
+    // The command loop is serial, so whatever arrives next is simply queued.
+    //
+    // Cost is one 5,4 s build per process, amortised over every game that
+    // process plays — for a gate shard of ~250 games that is ~20 ms a game,
+    // against a 5,4 s theft from a single game's clock today.
+    warm_kings_endgame_bitbases();
 }
 
 void HubFrontEnd::cmd_newgame() {

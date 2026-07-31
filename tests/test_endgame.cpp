@@ -6,10 +6,14 @@
 
 #include "test_framework.hpp"
 
+#include "bitbase.hpp"
 #include "egdb_bridge.hpp"
 #include "endgame.hpp"
 #include "position.hpp"
+#include "movegen.hpp"
 #include "search.hpp"
+
+#include <chrono>
 #include "tt.hpp"
 
 #include <string_view>
@@ -168,6 +172,44 @@ void test_egdb_bitboard_spread() {
     JASS_CHECK((egdb::spread50_to_egdb(all50) & gaps) == 0);
 }
 
+
+// A search under a deadline must respect it in a kings endgame. The 3-vs-1
+// bitbase used to be built by the first probe that needed it — inside negamax,
+// under a `std::call_once` the deadline poll cannot interrupt. `go movetime 100`
+// on this position returned after 5,5 s, 55x its budget, at depth 3 with 2048
+// nodes visited, and chose its move on that truncated search (score 164 where a
+// full search sees 0). Warming the tables first is what makes the clock hold.
+void test_deadline_holds_in_a_kings_endgame() {
+    warm_kings_endgame_bitbases();   // what the HUB does on `hello`
+
+    const Position p = parse("W:WK46,K47,K48:BK3,K4,K5");
+    TranspositionTable tt;
+    SearchLimits lim;
+    lim.max_depth   = MAX_PLY;
+    lim.movetime_ms = 100;
+
+    const auto t0 = std::chrono::steady_clock::now();
+    const SearchResult r = search(p, lim, tt, {});
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - t0).count();
+
+    // Generous bound: the point is to catch a 55x blow-up, not to police jitter.
+    JASS_CHECK(elapsed < 1000);
+    MoveList legal;
+    generate_legal_moves(p, legal);
+    JASS_CHECK(!legal.empty());
+    JASS_CHECK(r.best_move.from != NO_SQUARE);
+}
+
+// Warming is idempotent and must not change what the tables say.
+void test_warming_does_not_change_probe_results() {
+    const Position p = parse("W:WK45,K46,K47:BK5");
+    const EndgameResult before = probe_kings_endgame(p);
+    warm_kings_endgame_bitbases();
+    warm_kings_endgame_bitbases();
+    JASS_CHECK(probe_kings_endgame(p) == before);
+}
+
 }  // namespace
 
 void run_endgame_tests() {
@@ -183,4 +225,6 @@ void run_endgame_tests() {
     test_probe_kkkvk_immediate_capture_is_white_win();
     test_probe_kvkkk_immediate_capture_is_black_win();
     test_probe_3v1_unknown_when_men_present();
+    test_deadline_holds_in_a_kings_endgame();
+    test_warming_does_not_change_probe_results();
 }
