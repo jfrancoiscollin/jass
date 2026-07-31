@@ -83,14 +83,18 @@ class Aggregation(unittest.TestCase):
         self.assertEqual(r["moves_agreed"], 10)
 
     def test_ranks_by_cost_per_position_not_by_disagreement_rate(self):
-        """Un bucket où l'on diverge rarement mais très cher doit passer devant
-        un bucket où l'on diverge tout le temps pour presque rien."""
+        """Un bucket où l'on diverge rarement mais cher doit passer devant un
+        bucket où l'on diverge tout le temps pour presque rien.
+
+        Les coûts restent dans l'échelle ordinaire mesurée (0.00-1.00) : au-delà
+        du seuil de saturation l'échantillon changerait de famille, ce qui est
+        testé séparément."""
         a = M.Atlas()
-        for i in range(100):                       # divergence permanente, 1 pt
-            a.add("bavard", "W:W31:B12", agreed=False, cost=1.0)
-        for i in range(100):                       # 5 divergences à 100 pts
+        for _ in range(100):                       # divergence permanente, 0.02
+            a.add("bavard", "W:W31:B12", agreed=False, cost=0.02)
+        for i in range(100):                       # 5 divergences à 1.0
             a.add("rare", "W:W31:B12", agreed=i >= 5,
-                  cost=None if i >= 5 else 100.0)
+                  cost=None if i >= 5 else 1.0)
         r = a.report(min_positions=10)
         self.assertEqual([b["bucket"] for b in r["buckets_ranked"]],
                          ["rare", "bavard"])
@@ -113,6 +117,90 @@ class Aggregation(unittest.TestCase):
         self.assertEqual(row["disagreements"], 1)
         self.assertEqual(row["cost_sum"], 0.0)
         self.assertEqual(r["disagreements_judged"], 0)
+
+
+class SaturationIsNotCost(unittest.TestCase):
+    """L'échelle de Scan a été mesurée le 2026-07-31 : décimaux en unités-pion,
+    et un gain forcé sature à ~99.97. Sommer ça brut ferait qu'un désaccord sur
+    une position gagnée pèse plus de mille désaccords ordinaires."""
+
+    def test_a_forced_win_is_routed_to_the_conversion_family(self):
+        fam, cost, clipped = M.classify_sample(
+            {"cost": 99.93, "scan_score_best": 99.97, "scan_score_ours": 0.04})
+        self.assertEqual(fam, "conversion")
+        self.assertIsNone(cost)
+        self.assertFalse(clipped)
+
+    def test_an_ordinary_cost_is_clipped_not_dropped(self):
+        fam, cost, clipped = M.classify_sample({"cost": 4.0})
+        self.assertEqual(fam, "ordinaire")
+        self.assertEqual(cost, M.COST_CLIP)
+        self.assertTrue(clipped)
+        fam, cost, clipped = M.classify_sample({"cost": 0.04})
+        self.assertEqual((fam, cost, clipped), ("ordinaire", 0.04, False))
+
+    def test_saturation_is_detected_from_cost_alone_when_scores_are_absent(self):
+        """Le collecteur peut n'émettre que le coût ; l'échelle ordinaire ne
+        monte pas jusqu'à 50, donc un tel coût ne peut être qu'une saturation."""
+        self.assertEqual(M.classify_sample({"cost": 99.93})[0], "conversion")
+
+    def test_both_children_winning_is_not_a_conversion_miss(self):
+        rec = {"cost": 0.0, "scan_score_best": 99.97, "scan_score_ours": 99.97}
+        self.assertEqual(M.classify_sample(rec)[0], "conversion")
+        self.assertFalse(M.is_conversion_miss(rec))
+
+    def test_scan_wins_and_we_do_not_is_a_conversion_miss(self):
+        self.assertTrue(M.is_conversion_miss(
+            {"scan_score_best": 99.97, "scan_score_ours": 0.04}))
+
+    def test_one_won_endgame_does_not_outrank_a_real_blind_spot(self):
+        """LE test de non-régression. Avant la mesure, ce bucket-ci aurait été
+        classé premier sur la foi d'un seul désaccord à ~100."""
+        a = M.Atlas()
+        for _ in range(100):        # vrai point aveugle : cher, systématique
+            a.add("vrai_point_aveugle", "W:W31:B12", agreed=False, cost=0.5)
+        for i in range(100):        # une seule finale gagnée ratée
+            if i == 0:
+                a.add("contient_une_finale_gagnee", "W:WK46:B5", agreed=False,
+                      cost=None, family="conversion", conversion_miss=True)
+            else:
+                a.add("contient_une_finale_gagnee", "W:W31:B12", agreed=True,
+                      cost=None)
+        r = a.report(min_positions=10)
+        self.assertEqual(r["buckets_ranked"][0]["bucket"], "vrai_point_aveugle")
+        # Et la conversion ratée n'est pas perdue pour autant : elle est ailleurs.
+        self.assertEqual(r["conversion_misses"], 1)
+        self.assertEqual([c["bucket"] for c in r["conversion_family"]],
+                         ["contient_une_finale_gagnee"])
+
+    def test_conversion_positions_do_not_dilute_the_ordinary_denominator(self):
+        """Le biais inverse : un bucket plein de finales gagnées ne doit pas
+        voir son coût ordinaire divisé par des positions qui n'en font pas
+        partie."""
+        a = M.Atlas()
+        for _ in range(10):
+            a.add("b", "W:W31:B12", agreed=False, cost=1.0)
+        for _ in range(90):
+            a.add("b", "W:WK46:B5", agreed=True, cost=None, family="conversion")
+        row = a.report(min_positions=1)["buckets_ranked"][0]
+        self.assertEqual(row["ordinary_positions"], 10)
+        self.assertEqual(row["cost_per_position"], 1.0)   # 10/10, pas 10/100
+
+    def test_clipping_is_counted_and_published(self):
+        a = M.Atlas()
+        a.add("b", "W:W31:B12", agreed=False, cost=M.COST_CLIP, clipped=True)
+        a.add("b", "W:W31:B12", agreed=False, cost=0.1)
+        r = a.report(min_positions=1)
+        self.assertEqual(r["costs_clipped"], 1)
+        self.assertEqual(r["buckets_ranked"][0]["costs_clipped"], 1)
+
+    def test_a_conversion_disagreement_still_counts_as_judged(self):
+        """Sans ça, un corpus fait uniquement de conversions déclencherait le
+        garde-fou « Scan est muet » alors que Scan a parfaitement parlé."""
+        a = M.Atlas()
+        a.add("b", "W:WK46:B5", agreed=False, cost=None,
+              family="conversion", conversion_miss=True)
+        self.assertEqual(a.report(min_positions=1)["disagreements_judged"], 1)
 
 
 class CliFailsClosed(unittest.TestCase):

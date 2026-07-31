@@ -47,11 +47,38 @@ from collections import defaultdict
 from pathlib import Path
 
 # Les lignes `info` de Scan portent le score pendant la réflexion ; `done` ne
-# porte que le coup. Le format exact de Scan 3.1 n'a pas pu être vérifié hors
-# des box, donc le motif est tolérant ET la sortie du score est OBLIGATOIRE :
-# `ScanJudge.self_check()` refuse de démarrer si aucun score ne peut être lu.
-# Mieux vaut un abort au préflight qu'un atlas de zéros silencieux.
+# porte que `move=` et `ponder=`. VÉRIFIÉ sur le binaire épinglé le 2026-07-31
+# (`docs/experiments/L3_SCAN_SCORE_FORMAT_20260731.md`, verdict
+# SCAN_SCORE_PATTERN_WORKS 4/4) : le motif ci-dessous lit bien le format réel.
+# Le motif reste tolérant (`:` comme `=`, entiers comme décimaux) et la sortie du
+# score reste OBLIGATOIRE — mieux vaut un abort au préflight qu'un atlas de zéros
+# silencieux si un jour le binaire change.
 SCAN_SCORE_RE = re.compile(r"\bscore\s*[=:]\s*([+-]?\d+(?:\.\d+)?)")
+
+# ---------------------------------------------------------------------------
+# L'ÉCHELLE DE SCAN, ET POURQUOI ON NE SOMME PAS LES COÛTS BRUTS
+# ---------------------------------------------------------------------------
+# Mesuré le 2026-07-31 sur le runtime gelé : les scores sont des **décimaux en
+# unités-pion**, pas des centipions. Les positions ordinaires vivent dans
+# 0.00-0.10. Un gain forcé n'émet PAS un jeton « mat en N » : il **sature** à
+# ~99.97, atteint dès la profondeur 2 et constant ensuite.
+#
+# Sommer ça brut ferait qu'UN désaccord sur une position gagnée pèse plus de mille
+# désaccords ordinaires : l'atlas classerait « quel bucket contient une finale
+# gagnée » — ce qu'on sait déjà — au lieu de classer les points aveugles.
+#
+# D'où deux familles disjointes, décidées par JFC le 2026-07-31 :
+#
+#   • CONVERSION — au moins un des deux enfants est jugé gagné/perdu par Scan.
+#     Comptée en **taux de conversion ratée**, jamais en coût sommé. « Scan voit
+#     un gain, nous ne le prenons pas » est une erreur d'une autre nature qu'une
+#     évaluation tiède mal ordonnée ; les additionner les rend incomparables.
+#   • ORDINAIRE — tout le reste, coût **écrêté** à COST_CLIP. Un désaccord reste
+#     un désaccord ; son poids cesse d'être illimité. L'écrêtage est compté et
+#     publié : si beaucoup de coûts touchent le plafond, le plafond est mal placé
+#     et le rapport doit le dire plutôt que de le cacher.
+SATURATION_ABS = 50.0   # au-delà, Scan annonce un gain forcé (mesuré : 99.97)
+COST_CLIP = 1.0         # plafond du coût ordinaire, en unités-pion
 
 
 class ScanScoreUnreadable(RuntimeError):
@@ -65,6 +92,49 @@ def extract_scan_score(lines: list[str]) -> float | None:
         if m:
             return float(m.group(1))
     return None
+
+
+def classify_sample(rec: dict) -> tuple[str, float | None, bool]:
+    """Range un échantillon dans sa famille et rend son coût utilisable.
+
+    Rend `(famille, coût, écrêté)` où la famille vaut "conversion" ou
+    "ordinaire". Le coût rendu est déjà écrêté pour la famille ordinaire, et
+    vaut None pour la famille conversion (qui ne se compte pas en coût).
+
+    Deux niveaux d'information, parce que le collecteur peut être plus ou moins
+    bavard et qu'on ne veut pas d'un atlas qui dépend de sa verbosité :
+
+    - s'il fournit les DEUX scores jugés (`scan_score_best` = enfant de Scan,
+      `scan_score_ours` = le nôtre), on décide sur eux, ce qui distingue « les
+      deux coups gagnent » (pas un point aveugle) de « Scan gagne, nous non » ;
+    - s'il ne fournit que le coût, un |coût| au-delà du seuil ne peut venir que
+      d'une saturation d'un côté — l'échelle ordinaire ne monte pas si haut.
+    """
+    cost = rec.get("cost")
+    best, ours = rec.get("scan_score_best"), rec.get("scan_score_ours")
+    if best is not None and ours is not None:
+        if max(abs(best), abs(ours)) > SATURATION_ABS:
+            return "conversion", None, False
+    elif cost is not None and abs(cost) > SATURATION_ABS:
+        return "conversion", None, False
+    if cost is None:
+        return "ordinaire", None, False
+    clipped = max(-COST_CLIP, min(COST_CLIP, cost))
+    return "ordinaire", clipped, clipped != cost
+
+
+def is_conversion_miss(rec: dict) -> bool:
+    """Scan voit un gain que notre coup ne prend pas.
+
+    C'est l'événement qui compte dans la famille conversion. Quand les deux
+    enfants gagnent, ce n'est pas une conversion ratée : c'est un désaccord sans
+    conséquence, et le compter serait du bruit.
+    """
+    best, ours = rec.get("scan_score_best"), rec.get("scan_score_ours")
+    if best is not None and ours is not None:
+        return best > SATURATION_ABS >= ours
+    cost = rec.get("cost")
+    return cost is not None and cost > SATURATION_ABS
 
 
 # ---------------------------------------------------------------------------
@@ -148,60 +218,129 @@ class Atlas:
     def __init__(self) -> None:
         self.rows: dict[str, dict] = defaultdict(
             lambda: {"positions": 0, "disagreements": 0, "cost_sum": 0.0,
-                     "cost_max": 0.0, "worst_fen": None})
+                     "cost_max": 0.0, "worst_fen": None, "clipped": 0,
+                     # Famille conversion, tenue à part de bout en bout.
+                     "conv_positions": 0, "conv_disagreements": 0,
+                     "conv_misses": 0, "conv_worst_fen": None,
+                     "ordinary_positions": 0})
         self.judged = 0
         self.agreed = 0
+        self.clipped = 0
+        self.conversion_positions = 0
+        self.conversion_misses = 0
 
     def add(self, bucket: str, fen: str, agreed: bool,
-            cost: float | None) -> None:
+            cost: float | None, family: str = "ordinaire",
+            clipped: bool = False, conversion_miss: bool = False) -> None:
         row = self.rows[bucket]
         row["positions"] += 1
+        if family == "conversion":
+            row["conv_positions"] += 1
+            self.conversion_positions += 1
+        else:
+            row["ordinary_positions"] += 1
         if agreed:
             self.agreed += 1
             return
         row["disagreements"] += 1
+
+        if family == "conversion":
+            row["conv_disagreements"] += 1
+            # Un désaccord de conversion EST jugé : on sait que Scan a rendu un
+            # score des deux côtés. Ne pas le compter dans `judged` ferait
+            # croire au garde-fou de `main()` que Scan est muet.
+            self.judged += 1
+            if conversion_miss:
+                row["conv_misses"] += 1
+                self.conversion_misses += 1
+                if row["conv_worst_fen"] is None:
+                    row["conv_worst_fen"] = fen
+            return
+
         if cost is None:
             return
         self.judged += 1
+        if clipped:
+            row["clipped"] += 1
+            self.clipped += 1
         row["cost_sum"] += cost
         if cost > row["cost_max"]:
             row["cost_max"] = cost
             row["worst_fen"] = fen
 
     def report(self, min_positions: int) -> dict:
-        out = []
+        out, conversion = [], []
         for bucket, r in self.rows.items():
             n = r["positions"]
+            # Le dénominateur du coût est le nombre de positions ORDINAIRES : y
+            # mettre les positions de conversion diluerait le coût des buckets
+            # riches en finales gagnées, ce qui est exactement le biais inverse
+            # de celui qu'on corrige.
+            ordinary = r["ordinary_positions"]
             out.append({
                 "bucket": bucket,
                 "positions": n,
+                "ordinary_positions": ordinary,
                 "disagreements": r["disagreements"],
                 "disagreement_rate": round(r["disagreements"] / n, 4) if n else None,
                 "cost_sum": round(r["cost_sum"], 2),
-                # Coût MOYEN PAR POSITION du bucket, pas par désaccord : c'est
-                # ce qui classe les points aveugles. Un bucket où l'on est
-                # rarement en désaccord mais très cher compte autant qu'un
-                # bucket où l'on diverge souvent pour rien.
-                "cost_per_position": round(r["cost_sum"] / n, 3) if n else None,
+                # Coût MOYEN PAR POSITION ordinaire du bucket, pas par
+                # désaccord : c'est ce qui classe les points aveugles. Un bucket
+                # où l'on est rarement en désaccord mais très cher compte autant
+                # qu'un bucket où l'on diverge souvent pour rien.
+                "cost_per_position": (round(r["cost_sum"] / ordinary, 3)
+                                      if ordinary else None),
                 "cost_max": round(r["cost_max"], 2),
                 "worst_fen": r["worst_fen"],
-                # En dessous du plancher, on publie la ligne mais on refuse de
-                # la classer : trop peu de positions pour signifier quoi que ce
-                # soit. La rendre invisible serait pire — on croirait le bucket
-                # inexistant.
-                "ranked": n >= min_positions,
+                # Combien de coûts ont touché le plafond. Une part élevée veut
+                # dire que COST_CLIP est mal placé — on le publie au lieu de le
+                # laisser deviner.
+                "costs_clipped": r["clipped"],
+                # Classé seulement si assez de positions ORDINAIRES : un bucket
+                # fait de finales gagnées n'a rien à dire sur le coût ordinaire.
+                # En dessous du plancher on publie quand même la ligne — la
+                # rendre invisible ferait croire le bucket inexistant.
+                "ranked": ordinary >= min_positions,
             })
+            if r["conv_positions"]:
+                cd = r["conv_disagreements"]
+                conversion.append({
+                    "bucket": bucket,
+                    "positions": r["conv_positions"],
+                    "disagreements": cd,
+                    "misses": r["conv_misses"],
+                    # Taux, JAMAIS un coût sommé : c'est tout l'objet de la
+                    # séparation. Sur les désaccords, à quelle fréquence Scan
+                    # voit-il un gain que notre coup ne prend pas.
+                    "miss_rate_over_disagreements": (round(r["conv_misses"] / cd, 4)
+                                                     if cd else None),
+                    "miss_rate_over_positions": round(
+                        r["conv_misses"] / r["conv_positions"], 4),
+                    "worst_fen": r["conv_worst_fen"],
+                    "ranked": r["conv_positions"] >= min_positions,
+                })
         ranked = [r for r in out if r["ranked"]]
         ranked.sort(key=lambda r: -r["cost_per_position"])
+        conversion.sort(key=lambda r: -r["miss_rate_over_positions"])
         return {
             "schema": "l3_scan_blind_spot_atlas",
-            "version": 1,
+            "version": 2,
             "positions_seen": sum(r["positions"] for r in self.rows.values()),
             "moves_agreed": self.agreed,
             "disagreements_judged": self.judged,
             "min_positions_to_rank": min_positions,
             "buckets_ranked": ranked,
             "buckets_below_floor": [r for r in out if not r["ranked"]],
+            # --- famille conversion, tenue séparée ---------------------------
+            "conversion_family": conversion,
+            "conversion_positions": self.conversion_positions,
+            "conversion_misses": self.conversion_misses,
+            "saturation_threshold": SATURATION_ABS,
+            "cost_clip": COST_CLIP,
+            "costs_clipped": self.clipped,
+            "scale_note": ("scores Scan = unités-pion décimales ; gain forcé "
+                           "saturé ~99.97. Les positions saturées sont hors du "
+                           "classement de coût et comptées en taux."),
             "units": "scan_eval_units_not_elo",
             "scan_is_a_judge_not_ground_truth": True,
             "diagnostic_only": True,
@@ -230,8 +369,11 @@ def main(argv: list[str] | None = None) -> int:
             rec = json.loads(line)
             counts = parse_fen_counts(rec["fen"])
             counts["forced_capture"] = bool(rec.get("forced_capture"))
-            atlas.add(bucket_of(counts), rec["fen"],
-                      bool(rec["agreed"]), rec.get("cost"))
+            family, cost, clipped = classify_sample(rec)
+            atlas.add(bucket_of(counts), rec["fen"], bool(rec["agreed"]),
+                      cost, family=family, clipped=clipped,
+                      conversion_miss=(family == "conversion"
+                                       and is_conversion_miss(rec)))
 
     report = atlas.report(args.min_positions)
     if report["positions_seen"] == 0:
