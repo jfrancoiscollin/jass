@@ -1,0 +1,104 @@
+== handshake
+    > hub
+    < id name=Scan version=3.1 author="Fabien Letouzey" country=France
+    < param name=variant value=normal type=enum values="normal killer bt frisian losing"
+    < param name=book value=true type=bool
+    < param name=book-ply value=4 type=int min=0 max=20
+    < param name=book-margin value=4 type=int min=0 max=100
+    < param name=ponder value=false type=bool
+    < param name=threads value=1 type=int min=1 max=16
+    < param name=tt-size value=24 type=int min=16 max=30
+    < param name=bb-size value=0 type=int min=0 max=7
+    < wait
+    > set-param name=variant value=normal
+    > set-param name=book value=false
+    > set-param name=book-ply value=4
+    > set-param name=book-margin value=4
+    > set-param name=ponder value=false
+    > set-param name=threads value=1
+    > set-param name=tt-size value=24
+    > set-param name=bb-size value=0
+    > init
+    < init eval
+    < ready
+== position initiale
+    > new-game
+    > pos pos=Wbbbbbbbbbbbbbbbbbbbbeeeeeeeeeewwwwwwwwwwwwwwwwwwww
+    > level depth=10
+    > go think
+    < info depth=1 mean-depth=4.0 score=-0.12 nodes=5 pv=31-27
+    < info depth=1 mean-depth=4.0 score=-0.05 nodes=22 pv=32-28
+    < info depth=2 mean-depth=6.5 score=0.00 nodes=162 pv="32-28 18-23 37-32"
+    < info depth=3 mean-depth=4.3 score=0.00 nodes=244 pv="32-28 18-23"
+    < info depth=4 mean-depth=6.5 score=-0.04 nodes=596 pv="32-28 18-23 33-29 23x32x28 37x28x32"
+    < info depth=4 mean-depth=6.1 score=-0.03 nodes=1220 pv="31-26 19-24 36-31 14-19"
+    < info depth=5 mean-depth=7.0 score=0.01 nodes=2360 pv="31-26 19-24 36-31 14-19 41-36"
+    < info depth=6 mean-depth=7.6 score=0.00 nodes=3669 time=0.001 pv="31-26 19-24 36-31 14-19 41-36 10-14"
+    < info depth=7 mean-depth=8.9 score=0.00 nodes=7069 time=0.002 pv="31-26 19-24 36-31 14-19 41-36 10-14 47-41"
+    < info depth=8 mean-depth=9.7 score=-0.04 nodes=15587 time=0.003 pv="31-26 19-24 36-31 14-19 41-36 10-14 47-41 5-10"
+    < info depth=8 mean-depth=9.7 score=-0.01 nodes=21940 time=0.004 pv="31-27 17-21 37-31 21-26 32-28 26x37x31 41x32x37 11-17 46-41"
+    < info depth=9 mean-depth=11.0 score=-0.03 nodes=34089 time=0.005 pv="31-27 17-21 37-31 21-26 33-28 26x37x31 42x31x37 11-17 27-22 18x27x22 31x11x17x27 6x17x11 39-33 19-23 28x19x23 14x23x19 34-29 23x34x29 40x29x34"
+    < info depth=9 mean-depth=10.5 score=0.00 nodes=63935 time=0.009 pv="34-30 17-21 30-25 21-26 39-34 11-17 44-39 7-11 50-44"
+    < info depth=10 mean-depth=11.1 score=0.00 nodes=77378 time=0.010 nps=7.6 pv="34-30 17-21 30-25 21-26 39-34 11-17 44-39 7-11 50-44 1-7"
+    < done move=34-30 ponder=17-21
+== position milieu_calme
+    > new-game
+    > pos pos=Weeeeeeeeeeeeebbbbbbbeeeeeeeeeewwwwwwweeeeeeeeeeeee
+    > level depth=10
+    > go think
+    < info depth=1 mean-depth=1.0 score=0.04 nodes=1 pv=31-27
+    < info depth=1 mean-depth=1.0 score=0.06 nodes=5 pv=31-26
+    < info depth=2 mean-depth=2.1 score=0.00 nodes=20 pv="31-26 20-25"
+    < info depth=3 mean-depth=3.3 score=0.07 nodes=75 pv="31-26 20-25 32-27"
+    < info depth=3 mean-depth=3.4 score=0.18 nodes=167 pv="31-27 19-23 37-31"
+    < info depth=3 mean-depth=3.5 score=0.24 nodes=289 pv="32-28 19-24 31-27"
+    < info depth=4 mean-depth=5.2 score=0.15 nodes=418 pv="32-28 19-24 31-27 20-25"
+    < info depth=5 mean-depth=5.9 score=0.20 nodes=1020 pv="32-28 18-23 37-32 20-24 31-27"
+    < info depth=6 mean-depth=6.8 score=0.12 nodes=1457 pv="32-28 18-23 37-32 20-24 31-27 15-20"
+    < info depth=6 mean-depth=6.4 score=0.15 nodes=2873 pv="31-27 20-24 32-28 14-20 37-32 20-25"
+    < info depth=7 mean-depth=7.6 score=0.04 nodes=5075 time=0.001 pv="31-27 17-21 33-28 19-24"
+    < info depth=7 mean-depth=7.5 score=0.19 nodes=5542 time=0.001 pv="32-28 18-23 37-32 20-24 31-27"
+    < info depth=8 mean-depth=7.9 score=0.13 nodes=7308 time=0.002 pv="32-28 18-23 37-32 20-24 31-27 15-20 36-31 20-25"
+    < info depth=9 mean-depth=8.3 score=0.06 nodes=10134 time=0.002 pv="32-28 18-23 37-32 20-24 31-27 17-21 27-22 15-20 34-30"
+    < info depth=10 mean-depth=11.7 score=0.16 nodes=17912 time=0.003 pv="32-28 20-25 31-27 19-24 37-31 14-20 27-22 18x27x22 31x11x17x27 16x7x11"
+    < info depth=10 mean-depth=11.6 score=0.00 nodes=18621 time=0.004 pv="32-28 18-23 37-32 20-24 31-27 14-20 36-31 20-25 27-22 25-30 22x11x17 30x39x34 33x44x39 16x7x11"
+    < info depth=10 mean-depth=9.5 score=0.04 nodes=34847 time=0.006 pv="31-26 19-23 32-27 14-19 37-31 17-22 26-21 23-28 21-17 28x30x33x34 35x13x19x30 22x11x17 13x22x18"
+    < done move=31-26 ponder=19-23
+== position finale_dames
+    > new-game
+    > pos pos=WeeBBBeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeWWWee
+    > level depth=10
+    > go think
+    < info depth=1 mean-depth=2.2 score=-0.46 nodes=12 pv="46-10 5x19x10"
+    < info depth=1 mean-depth=2.4 score=-0.44 nodes=36 pv="46-32 5x46x32"
+    < info depth=1 mean-depth=2.3 score=0.00 nodes=43 pv=47-15
+    < info depth=1 mean-depth=2.2 score=0.01 nodes=46 pv=47-24
+    < info depth=1 mean-depth=2.3 score=0.02 nodes=81 pv="48-37 5x41x37 46x23x41"
+    < info depth=2 mean-depth=3.3 score=0.02 nodes=98 pv="48-37 5x41x37 46x23x41"
+    < info depth=3 mean-depth=4.5 score=0.00 nodes=227 pv="48-37 5x41x37 46x23x41 4-22"
+    < info depth=4 mean-depth=5.6 score=0.01 nodes=828 pv="48-37 5x41x37 46x23x41 4-22 47-24"
+    < info depth=5 mean-depth=6.0 score=0.01 nodes=1818 pv="48-37 5x41x37 46x23x41 4-22 47-24 3-21"
+    < info depth=6 mean-depth=6.5 score=0.01 nodes=3906 pv="48-37 5x41x37 46x23x41 4-22 47-36 22-33 36-13"
+    < info depth=7 mean-depth=7.2 score=0.01 nodes=8263 time=0.001 pv="48-37 5x41x37 46x23x41 4-22 47-36 22-33 36-13 3-21"
+    < info depth=8 mean-depth=7.7 score=0.01 nodes=20211 time=0.003 pv="48-37 5x41x37 46x23x41 4-22 47-15 3-8 15-38 8-2 38-42"
+    < info depth=9 mean-depth=8.2 score=0.01 nodes=42195 time=0.007 pv="48-37 5x41x37 46x23x41 4-22 47-15 3-8 15-4 22-33 4-27 8-2"
+    < info depth=10 mean-depth=8.9 score=0.01 nodes=78349 time=0.013 nps=6.2 pv="48-37 5x41x37 46x23x41 4-22 47-15 3-8 15-4 22-33 4-27 8-2 27-43"
+    < done move=48-37 ponder=5x41x37
+== position gain_force
+    > new-game
+    > pos pos=WeeeeBeeeeeeeeeeeeeeeeeeeeeeeeeweeeeeeeeeeeeeeWeeee
+    > level depth=10
+    > go think
+    < info depth=1 mean-depth=1.0 score=0.13 nodes=1 pv=31-27
+    < info depth=1 mean-depth=1.0 score=0.19 nodes=2 pv=31-26
+    < info depth=2 mean-depth=3.0 score=99.97 nodes=35 pv="31-26 5-10 46x5x10"
+    < info depth=3 mean-depth=3.0 score=99.97 nodes=61 pv="31-26 5-10 46x5x10"
+    < info depth=4 mean-depth=3.0 score=99.97 nodes=85 pv="31-26 5-10 46x5x10"
+    < info depth=5 mean-depth=3.0 score=99.97 nodes=104 pv="31-26 5-10 46x5x10"
+    < info depth=6 mean-depth=3.0 score=99.97 nodes=123 pv="31-26 5-10 46x5x10"
+    < info depth=7 mean-depth=3.0 score=99.97 nodes=142 pv="31-26 5-10 46x5x10"
+    < info depth=8 mean-depth=3.0 score=99.97 nodes=161 pv="31-26 5-10 46x5x10"
+    < info depth=9 mean-depth=3.0 score=99.97 nodes=180 pv="31-26 5-10 46x5x10"
+    < info depth=10 mean-depth=3.0 score=99.97 nodes=199 pv="31-26 5-10 46x5x10"
+    < done move=31-26 ponder=5-10
+    > quit
