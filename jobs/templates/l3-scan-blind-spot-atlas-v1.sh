@@ -76,7 +76,7 @@ PY
     done ) &
   MON="$!"
 }
-restore_src(){ git checkout -- src/ 2>/dev/null || true; }
+restore_src(){ git checkout -- src/ pattern_jass/ 2>/dev/null || true; }
 finalize(){
   rc=$?
   trap - EXIT ERR TERM INT
@@ -131,7 +131,28 @@ grep -q "root_is_drawn"   src/search.cpp    || { restore_src; die "engine predat
 grep -q "warm_kings_endgame_bitbases" src/hub.cpp ||
   { restore_src; die "engine predates the movetime endgame bake (16f8c151)"; }
 say "  garde-fou archi ✓"
-cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release > "$W/cmake.log" 2>&1
+
+# ⚠️ GÉOMÉTRIE DU PATTERN — la marche sur laquelle cpx62-1113 est tombé.
+# `pattern.hpp` est CHECKÉ EN 32 patterns dans l'arbre, mais tous les modèles de
+# la campagne L3 (dont TURNOVER) sont en **8cf**. Sans cette régénération le
+# binaire attend 531441×32 = 17 006 112 buckets et refuse un fichier qui en porte
+# 531441×8 = 4 251 528. Les templates 1008/1040 le font ; le mien l'avait omis.
+python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1 ||
+  { restore_src; die "génération des patterns 8cf en échec"; }
+grep -q 'NUM_PATTERNS  = 8;' pattern_jass/src/pattern.hpp ||
+  { restore_src; die "pattern.hpp n'est pas en 8 patterns après génération"; }
+say "  patterns 8cf régénérés ✓ (TOTAL_BUCKETS = 531441×8)"
+
+# Mêmes extras que les portes de la campagne : ENDGAME_FEATURES(110) + KING_
+# MOBILITY(+4) + SCAN_PARITY(+6) = 120, exactement le `n_ext` des .pjtw L3.
+# TEMPO_STAGE change le mélange de phase, donc l'éval elle-même.
+# EGDB reste OFF, délibérément : Scan tourne à `bb-size=0`, et donner une base
+# de finales au seul Jass ferait mesurer « nous avons une table » au lieu de
+# « notre éval juge bien », précisément dans les buckets de finale que l'atlas
+# est censé éclairer.
+cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON \
+  -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON \
+  > "$W/cmake.log" 2>&1
 cmake --build "$W/build" -j"$NCPU" --target jass > "$W/build.log" 2>&1
 JASS="$W/build/jass"
 [ -x "$JASS" ] || die "build sans binaire"
@@ -153,6 +174,16 @@ gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
   die "TURNOVER model hash drift"
 say "  champion TURNOVER ✓ hash conforme"
 
+# Le binaire sait-il seulement LIRE ce champion ? Deux secondes ici valent mieux
+# qu'un « collecteur en échec » cinq minutes plus loin : c'est exactement le
+# message qu'a rendu cpx62-1113, et il ne disait pas que la géométrie du pattern
+# était en cause.
+printf 'hello\nquit\n' | timeout 60 "$JASS" --pattern "$W/TURNOVER.pjtw" \
+  > "$W/pattern-load.log" 2>&1
+grep -q '^ready' "$W/pattern-load.log" ||
+  die "le binaire ne charge pas le champion : $(head -1 "$W/pattern-load.log")"
+say "  chargement du champion par le binaire ✓"
+
 stage smoke-test-round-trip
 # Règle 3/9 : le parser doit lire ce que le job écrit, vérifié sur un
 # échantillon minuscule AVANT d'engager le budget complet. Un round-trip cassé
@@ -173,10 +204,13 @@ say "  round-trip écriture→lecture ✓ ($(wc -l < "$W/smoke.jsonl") positions
 monitor
 stage collect
 say "  budget=${BUDGET_S}s/shard  play_depth=$PLAY_DEPTH  judge_depth=$JUDGE_DEPTH"
-# timeout par shard = budget × 1.3 (règle 6) : le collecteur s'arrête seul sur
-# son budget ; le timeout n'est là que si un moteur se fige, et il ne doit
-# jamais culer un shard sain.
-SHARD_TIMEOUT=$(( BUDGET_S * 13 / 10 ))
+# timeout par shard = budget + 10 min (règle 6). PAS un facteur multiplicatif :
+# le collecteur ne teste son budget qu'ENTRE deux parties, donc il dépasse
+# toujours d'au plus une partie. Un ×1.3 laisse 30 % du budget en marge, ce qui
+# est confortable à 1500 s mais absurde à 20 s — un essai à budget court a fait
+# tuer les deux shards par `timeout`, et un shard tué n'écrit jamais son résumé.
+# Une marge ABSOLUE dimensionne la vraie grandeur : la durée d'une partie.
+SHARD_TIMEOUT=$(( BUDGET_S + 600 ))
 pids=()
 for s in $(seq 1 "$SHARDS"); do
   (
@@ -202,16 +236,42 @@ cat "$W"/samples-s*.jsonl > "$W/samples.jsonl" 2>/dev/null || true
 NPOS=$(wc -l < "$W/samples.jsonl")
 [ "$NPOS" -gt 0 ] || die "zéro position collectée — échec, pas un atlas vide"
 say "  $NPOS positions collectées"
-# Garde-fou de signe agrégé sur TOUS les shards : un signe inversé rendrait un
-# atlas exactement à l'envers, sans rien casser de visible.
-python3 - "$W" <<'PY' | tee -a "$RES" || die "convention de signe suspecte — voir ci-dessus"
+# Garde-fou de signe. Un signe inversé rendrait un atlas exactement à l'envers,
+# sans rien casser de visible : c'est le seul défaut ici qui produit une
+# conclusion fausse sans symptôme.
+#
+# ⚠️ Il se calcule sur les ÉCHANTILLONS, pas sur les résumés des shards. Un shard
+# tué par `timeout` n'écrit jamais son résumé, mais son JSONL est flushé à chaque
+# partie et survit : lire les résumés faisait passer le garde-fou à VIDE (0/0)
+# pendant que les positions du shard mort, elles, partaient bien à l'agrégation.
+# Un garde-fou qui se tait quand les données manquent est pire que pas de
+# garde-fou — il donne l'air vérifié à ce qui ne l'est pas.
+python3 - "$W/samples.jsonl" "$SHARDS" "$W" <<'PY' | tee -a "$RES" || die "convention de signe suspecte ou corpus injugeable — voir ci-dessus"
 import glob, json, sys
-neg = judged = 0
-for f in glob.glob(sys.argv[1] + "/summary-s*.json"):
-    r = json.load(open(f)); neg += r["negative_costs"]; judged += r["judged"]
+path, shards, wdir = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+neg = judged = positions = 0
+for line in open(path, encoding="utf-8"):
+    line = line.strip()
+    if not line:
+        continue
+    positions += 1
+    cost = json.loads(line).get("cost")
+    if cost is None:
+        continue
+    judged += 1
+    neg += (cost < 0)
+finished = len(glob.glob(wdir + "/summary-s*.json"))
+print(f"  shards ayant écrit leur résumé : {finished}/{shards}")
+if finished < shards:
+    print(f"  ⚠️ {shards - finished} shard(s) tué(s) ou plantés — leurs positions "
+          "restent comptées, elles ont été écrites au fil de l'eau")
 share = neg / judged if judged else 0.0
-print(f"  coûts négatifs = {neg}/{judged} ({share:.1%})")
-if judged and share >= 0.25:
+print(f"  coûts négatifs = {neg}/{judged} jugés ({share:.1%}) sur {positions} positions")
+if judged == 0:
+    print("  ABORT: aucun désaccord jugé — la convention de signe n'a pas pu être "
+          "vérifiée, l'atlas serait publié sans contrôle")
+    raise SystemExit(1)
+if share >= 0.40:
     print("  ABORT: part de coûts négatifs incompatible avec la convention de signe")
     raise SystemExit(1)
 PY

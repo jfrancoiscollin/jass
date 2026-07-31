@@ -149,9 +149,15 @@ class SignConvention(unittest.TestCase):
 
     def test_the_guard_tolerates_a_few_negatives_and_rejects_a_majority(self):
         self.assertTrue(M.sign_convention_ok(1, 100))
-        self.assertTrue(M.sign_convention_ok(24, 100))
-        self.assertFalse(M.sign_convention_ok(25, 100))
-        self.assertFalse(M.sign_convention_ok(90, 100))
+        # Régime sain MESURÉ contre TURNOVER : 10,9 % et 17,6 %. Le seuil doit
+        # les laisser passer avec de la marge, sinon on abandonne un run de
+        # 25 minutes sur du bruit.
+        self.assertTrue(M.sign_convention_ok(11, 100))
+        self.assertTrue(M.sign_convention_ok(18, 100))
+        self.assertTrue(M.sign_convention_ok(39, 100))
+        self.assertFalse(M.sign_convention_ok(40, 100))
+        # Ce qu'une inversion produit vraiment : Scan préfère son coup partout.
+        self.assertFalse(M.sign_convention_ok(100, 100))
         # Rien de jugé : ce n'est pas au garde-fou de signe de crier.
         self.assertTrue(M.sign_convention_ok(0, 0))
 

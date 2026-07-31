@@ -70,10 +70,16 @@ def load_modules():
 
 
 # Part de coûts négatifs au-delà de laquelle on refuse de publier. Quelques
-# négatifs sont NORMAUX et sains : le juge est plus profond que le joueur, donc
-# il lui arrive de préférer notre coup à celui qu'il avait lui-même choisi moins
-# loin. Une majorité de négatifs, elle, ne peut pas être un résultat.
-MAX_NEGATIVE_COST_SHARE = 0.25
+# négatifs sont NORMAUX et sains : le juge est plus profond que le joueur (d10
+# contre d8), donc il lui arrive de préférer notre coup à celui qu'il avait
+# lui-même choisi moins loin.
+#
+# Seuil CALIBRÉ sur mesure, pas choisi au jugé : deux runs réels contre le
+# champion TURNOVER ont donné 10,9 % et 17,6 %. Une convention de signe inversée,
+# elle, donne ~100 % — Scan préfère son propre coup presque partout. 0,40 est
+# donc loin des deux, alors que le 0,25 initial n'était qu'à 1,4× du régime sain
+# et aurait pu culer un run de 25 minutes sur du bruit.
+MAX_NEGATIVE_COST_SHARE = 0.40
 
 
 def sign_convention_ok(negative: int, judged: int) -> bool:
