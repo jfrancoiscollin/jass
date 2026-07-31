@@ -142,6 +142,69 @@ le bake, mais l'écart attendu est négligeable devant leurs intervalles de
 confiance. Le correctif reste justifié pour lui-même : il supprime une violation
 de budget de 55× et une décision de jeu prise sur une recherche tronquée.
 
+## Et les données de self-play depuis le début ? (question JFC, 2026-07-31)
+
+La section ci-dessus ne parle que des **portes A/B**. Le self-play a un profil
+d'exposition différent, et il fallait le mesurer séparément.
+
+### L'immunité est structurelle, pas chanceuse
+
+`has_deadline` n'est armé **que** si `movetime_ms > 0` (`search.cpp:1491`). Sans
+deadline, le blocage `call_once` coûte du temps **mural**, mais la recherche
+atteint quand même la profondeur demandée : le résultat est **bit-à-bit
+identique**. Toute génération à profondeur fixe est donc hors d'atteinte du bug,
+par construction.
+
+Sur **176** scripts ayant jamais appelé `--gen-data-wdl` dans l'historique des
+deux dépôts, **166 génèrent à profondeur fixe**.
+
+### Les 10 exceptions, toutes dans l'ère bootstrap
+
+`0195`, `0196`, `0203`, `0204`, `0205`, `ccx33-0205b`, `cpx62-0214`,
+`ccx33-0215`, `cpx62-0228`, et le template `wdl-loop-portable` — génération sous
+`--movetime 30–60 ms`.
+
+⚠️ Le tri doit porter sur la **commande**, pas sur le fichier : `0254` et `0297`
+contiennent bien `--movetime`, mais dans leur **porte Scan** (`calibrate_vs_scan
+--movetime 0.5`), pas dans la ligne de génération. Les compter comme touchés
+aurait été faux.
+
+**Borne : ≤ 2 coups par processus générateur.** Il y a deux `once_flag`
+distincts (`bitbase.cpp:80` pour 2v1 à 280 ms, `bitbase.cpp:233` pour 3v1 à
+5,15 s) et `call_once` ne tire qu'une fois par processus. Pire cas, `0228` :
+8 générations × 16 shards = 128 processus → **≤ 256 coups sur ~2,4 M positions**.
+
+### Et ces coups-là ne sont pas de mauvaises étiquettes
+
+C'est le point décisif. La cible WDL est **le résultat de la partie telle qu'elle
+a été jouée** (retour Monte-Carlo, pas une valeur bootstrapée). Un coup plus
+faible ne rend pas l'étiquette fausse : la partie s'est réellement terminée
+ainsi. L'effet est un déplacement infime de la distribution hors-politique —
+exactement la perturbation qu'on **injecte délibérément** ailleurs (epsilon-
+exploration, bruit top-k).
+
+C'est une nature de défaut **différente** de celle du root nul (`9c1d1e8e`), qui
+lui **supprimait des parties** et biaisait donc la distribution des issues.
+
+### Les autres voies de génération
+
+- **Corpus L3 courants** (VOL8M, TURNOVER, TOPK, reverse-seed) : **0 sur 16**
+  jobs récents ne passe `--movetime`. Propres.
+- **Parents MMTO / `scan_selfplay_gen`** : `--strong-movetime` a **zéro appelant,
+  jamais** — le mode movetime asymétrique n'a servi dans aucun job. Les 7
+  templates en `--player-jass-bin` font jouer Jass à profondeur fixe
+  (`default_movetime = None`). Propres.
+
+### Ce qui n'est PAS établi
+
+Le « ≤ 2 coups par processus » est une **borne**, pas une mesure : il n'a pas été
+vérifié que ces processus atteignaient effectivement une finale à dames sondable.
+Le compte réel peut être zéro. Et la lignée `gen2-mmto` remonte à cette ère : si
+un artefact en porte une trace, c'est cet adversaire de référence — sans
+conséquence, puisqu'il sert de thermomètre **figé, identique pour tous les bras**.
+
+**Verdict : aucun corpus d'entraînement n'est à rejeter, aucun fit à refaire.**
+
 ## Rollback
 
 ```bash
