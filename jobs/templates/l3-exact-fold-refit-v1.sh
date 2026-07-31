@@ -151,8 +151,26 @@ restore_src
 
 stage python-runtime-and-selftests
 python3 -m venv "$W/venv"
-"$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
-  numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1 || die "pip en échec"
+# L'épinglage historique (numpy 1.26.4 / scipy 1.14.1, celui de home-0977) n'est
+# plus servi pour le Python de cpx62 : PyPI ne propose plus que numpy >= 2.3 en
+# roue pour cette version, et cpx62-1115 est mort là-dessus en cinq minutes.
+# On tente l'épinglage d'abord — s'il passe, on est byte-comparable à l'origine —
+# puis on retombe sur les versions courantes. Les DEUX bras partagent de toute
+# façon la pile numérique, donc la comparaison interne ne dépend pas de ce choix ;
+# seule la comparabilité avec l'artefact TURNOVER d'origine en dépend, et c'est
+# précisément pourquoi ce job a son propre bras de contrôle. Les versions
+# réellement résolues sont écrites dans le rapport.
+if "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
+     numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1; then
+  PINSTACK=historical
+else
+  "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
+    numpy scipy >> "$W/pip.log" 2>&1 || die "pip en échec — voir pip.log"
+  PINSTACK=current
+fi
+NPV=$("$W/venv/bin/python" -c 'import numpy,scipy;print(numpy.__version__,scipy.__version__)')
+say "  pile numérique : $PINSTACK (numpy/scipy $NPV)"
+printf '{"stack":"%s","numpy_scipy":"%s"}\n' "$PINSTACK" "$NPV" > "$ART/numeric-stack.json"
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" -m pytest \
   pattern_jass/tools/test_exact_fold.py -q > "$W/selftest.log" 2>&1 ||
   die "auto-tests du fold exact en échec — voir selftest.log"
