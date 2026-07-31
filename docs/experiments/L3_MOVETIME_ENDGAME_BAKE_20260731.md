@@ -9,8 +9,9 @@
 
 Un correctif de **recherche**, pas un modèle. Aucun champion ne change :
 TURNOVER reste le champion général courant. Ce que le bake enregistre, c'est
-que le comportement de recherche corrigé devient la référence, et que les
-mesures antérieures de vue native ne lui sont pas comparables.
+que le comportement de recherche corrigé devient la référence. Les mesures
+antérieures de vue native ne lui sont pas byte-comparables, mais l'écart est
+mesuré et négligeable — voir la section historique en fin de document.
 
 ## Le défaut
 
@@ -64,11 +65,21 @@ Position `W:WK46,K47,K48:BK3,K4,K5`, moteur avec TURNOVER.
 
 À `movetime 100` sur la position 3v3, le moteur rendait
 `depth=3 score=164` : il se croyait gagnant. Préchauffé, la même recherche
-atteint `depth=20 score=0`.
+atteint `depth=20 score=0`. Le défaut ne dégradait donc pas seulement la mesure,
+il dégradait le jeu.
 
-**Toute finale de dames jouée sous pendule était décidée sur une évaluation à
-profondeur 3.** Le défaut ne dégradait donc pas seulement la mesure, il
-dégradait le jeu.
+**Mais une seule fois par processus.** `std::call_once` construit la table au
+premier passage et tout le reste du processus est chaud. Mesuré sur le binaire
+pré-correctif, trois `go movetime 100` consécutifs dans le même processus :
+
+| | durée | profondeur | score |
+|---|---:|---:|---:|
+| `go` #1 | 3861 ms | 3 | 46 |
+| `go` #2 | 85 ms | 17 | 0 |
+| `go` #3 | 40 ms | 18 | 0 |
+
+Seul le **premier** coup, par processus moteur, qui descend dans une telle
+finale est décidé sur une recherche tronquée.
 
 ## Le correctif
 
@@ -101,26 +112,35 @@ Deux tests dans `tests/test_endgame.cpp` :
 - `test_warming_does_not_change_probe_results` — idempotence et invariance des
   sondes.
 
-## ⚠️ Ce que ce bake casse dans l'historique
+## Ce que ce bake casse dans l'historique — mesuré
 
-Toutes les mesures de **vue native** antérieures au 31 juillet 2026 ont été
-prises avec le défaut présent. Deux effets distincts, tous deux dans le même
-sens :
+Faible. Deux canaux étaient envisageables ; un seul a existé.
 
-1. dans les finales de dames sous pendule, le moteur jouait sur une recherche
-   tronquée à la profondeur 3 ;
-2. `jass_vs_jass_arch` attrape explicitement le dépassement et **compte la
-   partie comme nulle** (chemin `game skipped`, commentaire
-   « ROBUSTESSE : un coup qui timeout (overshoot movetime-endgame) »).
+**Canal 1 — jeu dégradé : réel, mais borné.** Le coup touché est le premier, par
+processus moteur, qui descend dans une finale de dames sondable. Les harnais
+construisent **deux moteurs par shard**, hors de la boucle de parties, et une
+cellule de porte tourne 12 à 16 shards : l'exposition maximale est donc de
+**~24 à 32 coups par cellule**, sur 3000 à 5000 parties — de l'ordre de
+**0,3 à 0,6 % des parties, un coup chacune**.
 
-Les portes concernées incluent `home-1040` (porte de promotion TOPK3, 10 000
-parties) et toute cellule native des campagnes de juillet. **Elles ne sont pas
-byte-comparables aux mesures postérieures à ce bake.** L'ampleur réelle de la
-contamination est quantifiée séparément — voir le décompte des parties sautées
-dans les logs des portes déjà tournées.
+**Canal 2 — nulles fabriquées : n'a jamais existé.** `jass_vs_jass_arch` attrape
+le dépassement et compte la partie comme nulle (chemin `game skipped`), mais ce
+chemin se déclenche sur le `--game-timeout`, réglé à **180 s**. Un blocage de
+5,4 s ne l'approche pas. Compté dans les archives de logs :
 
-Ce bake **n'invalide aucun verdict** de lui-même : il enregistre une rupture de
-comparabilité et ouvre la question de savoir lesquels méritent d'être rejoués.
+| Porte | `game skipped` |
+|---|---:|
+| `home-1040` (promotion TOPK3, 10 000 parties) | **0** |
+| `home-1008` (readout volume 8M) | **0** |
+| `home-1091` (reverse-seed 2M) | **0** |
+| `home-1108` (reverse-seed 4M) | **0** |
+| `home-1102` (poids d'échec ×2) | **0** |
+
+**Conclusion : aucun verdict n'est remis en cause, et aucun ne demande d'être
+rejoué.** Les mesures antérieures ne sont pas byte-comparables à celles d'après
+le bake, mais l'écart attendu est négligeable devant leurs intervalles de
+confiance. Le correctif reste justifié pour lui-même : il supprime une violation
+de budget de 55× et une décision de jeu prise sur une recherche tronquée.
 
 ## Rollback
 

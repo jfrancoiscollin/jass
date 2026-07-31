@@ -498,18 +498,20 @@ sous un `call_once` que la sonde de deadline ne peut pas interrompre : 5,15 s
 volées à l'horloge, `go movetime 100` rendu après **5558 ms (55×)**.
 
 Ce n'était pas qu'un bug de temps. Le moteur rendait `depth=3 score=164` — il se
-croyait gagnant — là où la version corrigée atteint `depth=20 score=0`. **Toute
-finale de dames jouée sous pendule était décidée sur une recherche tronquée à la
-profondeur 3.**
+croyait gagnant — là où la version corrigée atteint `depth=20 score=0`. Mais
+`call_once` ne se déclenche qu'**une fois par processus** : seul le premier coup
+qui descend dans une telle finale est touché, tout le reste du processus est
+chaud (`go` #1 = 3861 ms depth 3, #2 = 85 ms depth 17, #3 = 40 ms depth 18).
 
 Après correctif : `55,58× → 1,01×`. Déterminisme intact (`go depth 4` rend les
 mêmes `nodes=4314` et `bestmove 46-41`). Coût déplacé au handshake HUB, amorti à
 ~43 ms par partie sur un shard de porte.
 
-⚠️ **Rupture de comparabilité** : toute mesure de vue native antérieure au
-31 juillet 2026 a été prise avec le défaut, et `jass_vs_jass_arch` comptait les
-parties touchées comme **nulles**. Aucun verdict n'est invalidé par ce seul
-fait ; la question de savoir lesquels rejouer est ouverte. Procédure, mesures et
+✅ **Contamination historique mesurée, et faible.** Exposition maximale : 2 moteurs
+par shard × 12-16 shards = **≤ ~32 coups par cellule** sur 3000-5000 parties. Et
+le canal « nulles fabriquées » n'a jamais tiré : `game skipped` compté à **0** sur
+`home-1040`, `1008`, `1091`, `1108` et `1102`. **Aucun verdict n'est remis en
+cause et aucun ne demande d'être rejoué.** Procédure, mesures et
 rollback :
 [`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md).
 
