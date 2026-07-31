@@ -38,6 +38,9 @@
 > 12. **GO EXPLICITE JFC** sur (ETA chiffrée + sizing) — seulement ensuite queuer.
 
 ### 1. ⏱️ TIMING AVANT LANCEMENT (répété plusieurs fois par JFC — 2026-07-07)
+> **🖥️ BOX PAR DÉFAUT = `cpx62` (JFC 2026-07-31) — HOME est OUT.** Tout nouveau job se queue en `cpx62-NNNN-*.sh`. Le runner sélectionne par **prefix de nom de fichier**, donc un job nommé `home-*` ne sera jamais réclamé et restera en file indéfiniment (`home-1111` y est resté avant d'être renommé).
+> ⚠️ **Les ancres de rate ne se transportent pas d'une box à l'autre.** Les repères ci-dessous mesurés sur HOME (`home-1003/1004` : 9 804 pos/min/shard à d8, 2 519 à d9, sur 16 shards) valent pour HOME, pas pour cpx62. Sur cpx62, **re-mesurer** (micro-sonde ou PROGRESS d'un job cpx62 comparable) avant toute ETA — c'est le point 2 de la check-list, et le transport aveugle d'une ancre est exactement la bourde 0665.
+
 **AVANT de queuer TOUT job (ou batch de jobs) sur les box (cpx62 / ccx33), TOUJOURS, dans cet ordre :**
 1. **Pré-estimer le runtime**, ANCRÉ sur la durée réelle `start→finalize` d'un job COMPARABLE déjà tourné — jamais « au doigt mouillé ».
 2. **Faire VALIDER l'estimation + le sizing par JFC AVANT de queuer.** Ne rien lancer sans (pré-estimation chiffrée + go explicite).
