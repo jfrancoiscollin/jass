@@ -499,6 +499,22 @@ class ScanEngine(EngineProc):
                 depth: int | None = None,
                 movetime: float | None = None) -> Move | None:
         """Either depth or movetime (seconds) — exactly one."""
+        return self.go_from_verbose(starting_scan_pos, scan_moves,
+                                    depth=depth, movetime=movetime)[0]
+
+    def go_from_verbose(self, starting_scan_pos: str, scan_moves: list[str],
+                        depth: int | None = None,
+                        movetime: float | None = None
+                        ) -> tuple[Move | None, list[str]]:
+        """Comme `go_from`, mais rend AUSSI les lignes brutes de Scan.
+
+        Le coup seul suffit pour jouer une partie ; l'atlas de points aveugles a
+        besoin du **score**, que Scan ne met que sur ses lignes `info` et jamais
+        sur `done` (vérifié le 2026-07-31, cf
+        `docs/experiments/L3_SCAN_SCORE_FORMAT_20260731.md`). Plutôt que de
+        redupliquer le protocole HUB dans un second outil — deux implémentations
+        qui dérivent — on expose les lignes ici et `go_from` délègue, donc les
+        appelants historiques ne changent pas de comportement."""
         self._drain()  # re-align: discard any stale buffered output first
         if scan_moves:
             moves_str = " ".join(scan_moves)
@@ -530,9 +546,9 @@ class ScanEngine(EngineProc):
                 # end, not a protocol failure — the caller confirms it against
                 # the referee's move generator before scoring it. Raising here
                 # aborted every cell of home-0999 and home-1000.
-                return None
+                return None, lines
             raise EngineFailure(f"{self.label}: unparsable reply {last!r}")
-        return parse_scan_move(m.group(1))
+        return parse_scan_move(m.group(1)), lines
 
 
 # ---------------------------------------------------------------------------
