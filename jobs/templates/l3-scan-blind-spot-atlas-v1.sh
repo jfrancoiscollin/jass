@@ -69,7 +69,11 @@ for f in glob.glob(sys.argv[1] + "/prog-s*.json"):
 print(f"games={g}\npositions={p}\ndisagreements={d}\njudged={j}")
 if p: print(f"disagreement_rate={d/p:.4f}")
 PY
-        printf 'shards_finished=%s\n' "$(ls "$W"/done-s* 2>/dev/null | wc -l)"
+        # `ls` sur un motif sans correspondance sort en 2 et, sous `set -e`,
+        # déclenche le trap ERR : 1114 a écrit six « ABORT line=72 » dans un
+        # RESULTS de job RÉUSSI. Un abort mensonger dans un fichier de résultats
+        # est pire qu'un compteur manquant — `find` ne peut pas échouer ainsi.
+        printf 'shards_finished=%s\n' "$(find "$W" -maxdepth 1 -name 'done-s*' 2>/dev/null | wc -l)"
       } > "$PROG.tmp"
       mv "$PROG.tmp" "$PROG"; cp "$PROG" "$ART/PROGRESS.txt"
       sleep 300

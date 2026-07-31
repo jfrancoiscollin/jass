@@ -515,6 +515,42 @@ cause et aucun ne demande d'être rejoué.** Procédure, mesures et
 rollback :
 [`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md).
 
+### Atlas de points aveugles jugé par Scan — `cpx62-1114`, 1er août
+
+Première mesure de la campagne qui demande **où** la marge se perd, après quatre
+confirmations que la perte en holdout ne prédit pas la force. 4 988 997 positions,
+88 101 parties, 2 326 839 désaccords jugés, 27 min sur cpx62. Champion TURNOVER,
+`d8` en jeu, `d10` au jugement, Scan en **juge** (`bb-size=0`, sans livre).
+
+Quatre résultats :
+
+1. **96,7 % de la perte est dans le jeu `calme`.** Les captures forcées font 23 %
+   du corpus et **3,3 %** de la perte : quand la prise est forcée, on ne se
+   trompe pratiquement jamais.
+2. **87 % de la perte est avant la finale** (ouverture 39,3 % + milieu 47,5 % ;
+   finales 13,2 %). L'effort « features de finale » ne vise pas là où ça part.
+3. **Aucun point chaud.** Par masse ça paraît concentré (3 buckets = 50 %), mais
+   les buckets de tête sont simplement les plus **peuplés** et leur coût *par
+   position* est parmi les plus **bas** (0,064 pour le premier, qui pèse 30,6 %).
+   Le bucket le plus cher par position (0,349) ne fait que 1 777 positions. La
+   perte est **diffuse** : une erreur systématique de faible amplitude, étalée
+   sur tout le jeu positionnel calme.
+4. **0 conversion ratée sur 141 213 désaccords saturés** — la conversion n'est
+   pas notre problème. *(Limite : le dénominateur est « désaccords saturés », pas
+   « positions saturées » ; cf. la note d'expérience.)*
+
+⚠️ **Cet atlas n'a pas de contrôle et ne conclut donc rien sur la capacité.** Un
+profil diffus dans le jeu calme est aussi ce qu'on attendrait de l'écart de
+classe entre un linéaire et Scan, quel que soit notre modèle. **Le témoin Gen2,
+même protocole et même budget, est requis avant toute lecture** — c'est le
+différentiel TURNOVER − Gen2 qui distingue « nos points aveugles » de « ceux de
+la classe linéaire ». Rapport à l'arbitrage 32cf, dont la prémisse de clôture
+(« 8cf sous-alimenté ») a été falsifiée par `home-1004` : cet atlas est le premier
+élément neuf, mais il **ne tranche pas** sans le témoin. Décision à JFC.
+
+Détail, tableaux et limites :
+[`experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md).
+
 ### Reverse-seed, poids d'échec et BLEND50 — quatre verdicts du 30-31 juillet
 
 Suite directe de la clôture hard-replay : les positions d'échec de conversion
