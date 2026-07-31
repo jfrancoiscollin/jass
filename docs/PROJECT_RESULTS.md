@@ -523,6 +523,7 @@ loss holdout (§8).
 | LMR/NMP/ProbCut/LMP/aspiration OAT | 0657 haut-N neutre ; 0697 pcm100 −19 | knobs locaux épuisés dans ce régime | une ablation native L3 après profil d'activation ; pas un autre sweep fin de marges |
 | offer-no-reduce | détection Jass≈Scan, conversion très différente | attaque la détection, qui n'est pas le goulot | nouvelle mesure montrant un déficit de détection |
 | géométrie pour l'ordering | first-move cutoff ~0,91 | ordering déjà bon ; history prob a capté le gain restant | régression mesurée du node-EBF sur un nouveau moteur |
+| overshoot `go movetime` en finale de dames | **résolu, pas clos** : bitbase 3v1 construite dans `negamax` sous `call_once`, 5,15 s, `movetime 100` rendu à 5558 ms (**55×**) et à `depth=3 score=164` là où le correctif atteint `depth=20 score=0`. Correctif `16f8c151`, baké le 31 juillet | ce n'est pas une porte close mais un **défaut réparé** : le préchauffage des bitbases au handshake HUB ramène 55,58× à 1,01×, déterminisme intact | sans objet — mais ⚠️ **toute mesure de vue native antérieure au 31 juillet 2026 est prise avec le défaut**, et `jass_vs_jass_arch` comptait les parties touchées comme nulles. Voir [`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md) |
 
 ### 5.4 Conversion et lignées
 

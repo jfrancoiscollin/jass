@@ -490,6 +490,29 @@ donc close. La suite utilise les positions hard comme **reverse seeds
 zero-target appariés**, puis régénère les WDL par self-play. Détails :
 [`experiments/L3_HARD_REPLAY_READOUT_20260730.md`](experiments/L3_HARD_REPLAY_READOUT_20260730.md).
 
+### Bake search du 31 juillet — overshoot `go movetime` corrigé
+
+Le défaut ouvert depuis le 7 juillet est résolu et **baké** (`16f8c151`). La
+bitbase 3-dames-contre-1 était construite par rétro-analyse **dans `negamax`**,
+sous un `call_once` que la sonde de deadline ne peut pas interrompre : 5,15 s
+volées à l'horloge, `go movetime 100` rendu après **5558 ms (55×)**.
+
+Ce n'était pas qu'un bug de temps. Le moteur rendait `depth=3 score=164` — il se
+croyait gagnant — là où la version corrigée atteint `depth=20 score=0`. **Toute
+finale de dames jouée sous pendule était décidée sur une recherche tronquée à la
+profondeur 3.**
+
+Après correctif : `55,58× → 1,01×`. Déterminisme intact (`go depth 4` rend les
+mêmes `nodes=4314` et `bestmove 46-41`). Coût déplacé au handshake HUB, amorti à
+~43 ms par partie sur un shard de porte.
+
+⚠️ **Rupture de comparabilité** : toute mesure de vue native antérieure au
+31 juillet 2026 a été prise avec le défaut, et `jass_vs_jass_arch` comptait les
+parties touchées comme **nulles**. Aucun verdict n'est invalidé par ce seul
+fait ; la question de savoir lesquels rejouer est ouverte. Procédure, mesures et
+rollback :
+[`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md).
+
 ### Reverse-seed, poids d'échec et BLEND50 — quatre verdicts du 30-31 juillet
 
 Suite directe de la clôture hard-replay : les positions d'échec de conversion
