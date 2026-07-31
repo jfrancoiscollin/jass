@@ -164,9 +164,18 @@ def _validate_readout(readout: dict, stage: str, records: int, source: dict) -> 
         "stage2": "L3_PURE_REVERSE_SEED_ABOVE_MATCHED_CONTROL_IC95",
         "stage4": "L3_PURE_REVERSE_SEED_SCALE4M_BELOW_MATCHED_CONTROL",
     }[stage]
+    # `protocol.records_per_arm` n'existe que depuis le readout 4M : le readout
+    # 2M `home-1091` a été écrit la veille, sans ce champ. L'exiger des deux a
+    # fait échouer `cpx62-1110` en phase `compare`, après onze minutes et les
+    # vingt-quatre atlas. Le volume par bras est de toute façon porté par le
+    # certificat SOURCE, déjà validé contre `records` juste au-dessus — c'est
+    # lui qui fait foi. Le champ du readout reste vérifié quand il est présent,
+    # pour qu'un futur certificat qui le contredirait soit refusé.
+    readout_records = readout.get("protocol", {}).get("records_per_arm")
+    if readout_records is not None and readout_records != records:
+        raise ValueError(f"{stage}: readout records_per_arm {readout_records} != {records}")
     if (
         readout.get("verdict") != expected
-        or readout.get("protocol", {}).get("records_per_arm") != records
         or readout.get("protocol", {}).get("fresh_disjoint_openings") is not True
         or readout.get("force_views_summed", {}).get("n") != 6000
         or readout.get("scientific_result") is not True

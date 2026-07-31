@@ -495,6 +495,24 @@ symptôme. Validée sur les deux corpus réels : rejet du cassé (`rc=6`), accep
 du réparé. Les gardes `grep root_is_drawn` ne couvraient que 2 des 23 templates
 appelant `--gen-data-wdl`, et n'auraient de toute façon vu qu'une cause connue.
 
+### 5.2 ter Réemploi des positions d'échec de conversion — quatre portes closes
+
+Toutes mesurées en vues additionnées, `n = 6000`, pool neuf apparié, parent
+TURNOVER commun, un seul facteur par contraste.
+
+| Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |
+|---|---|---|---|
+| hard replay v1 (cibles historiques conservées) | `home-1076` : `222-24-9754` sur 10 000 parties, `0,0234`, **`−648,20 Elo`** | le bras outcome-conditioned déplace le prior WDL assemblé à `51,29 %` wins contre `31,52 %` losses STM — **19,77 points d'asymétrie** contre `42,55/42,19` pour le contrôle. Ce n'est pas un effet de recette, c'est un corpus dont le signal de valeur s'effondre. La couverture monte pourtant (194 334 → 210 436 buckets) : **la couverture ne protège pas de la décalibration** | source post-correctif plus large ou DOE de dose distinct, sans mélange pré-correctif ni réduction post-hoc. ⚠️ Le canari WDL (§5.2 bis) aurait refusé ce corpus : `max_side_skew` est à `0,10`, l'asymétrie mesurée à `0,1977` |
+| poids d'échec ×2 | `home-1102` : `2709-325-2966`, `0,4786`, **`−14,89 Elo`**, IC95 `[−23,46 ; −6,34]` | pondérer deux fois les positions d'échec dégrade, IC95 entièrement négatif | nouveau canal de correction, pas une autre dose du même poids |
+| reverse-seed, échelle 2M→4M | `home-1091` : `+12,51 Elo` IC95 `[+3,95 ; +21,10]` ; `home-1108` : `−16,28 Elo` IC95 `[−24,88 ; −7,71]` | à volume doublé le signe s'inverse et les IC95 sont disjoints. ⚠️ **Les deux résultats ne pèsent pas pareil** : à 2M seule la vue Q00 exclut zéro, la native la traverse ; à 4M les deux vues l'excluent. L'hypothèse la moins chère n'est donc pas « l'échelle inverse l'effet » mais « un positif mono-vue n'a pas répliqué » | réplication indépendante du 2M **avec les deux vues concordantes**, avant tout mécanisme d'échelle |
+| BLEND50 statique | `home-1105` : `2789-324-2887`, `0,4918`, `−5,68 Elo`, IC95 `[−14,23 ; +2,88]` | **`INCONCLUSIVE`, pas réfuté** — l'IC95 traverse zéro. La clôture est une **décision de programme** : à cette puissance on n'établit qu'un effet de l'ordre de `±8,5 Elo` | aucun fait nouveau requis pour rouvrir : rien n'a été réfuté. Une reprise doit seulement préenregistrer un `n` qui atteigne l'effet visé |
+
+Leçon transverse de ces quatre portes : **trois d'entre elles ont une couverture
+égale ou meilleure que leur contrôle et jouent plus mal.** La couverture reste
+un diagnostic de corpus, jamais un prédicteur de force — au même titre que la
+loss holdout (§8).
+
+
 ### 5.3 Recherche
 
 | Porte | Preuve principale | Pourquoi elle est close | Condition minimale de réouverture |

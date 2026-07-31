@@ -490,6 +490,58 @@ donc close. La suite utilise les positions hard comme **reverse seeds
 zero-target appariés**, puis régénère les WDL par self-play. Détails :
 [`experiments/L3_HARD_REPLAY_READOUT_20260730.md`](experiments/L3_HARD_REPLAY_READOUT_20260730.md).
 
+### Reverse-seed, poids d'échec et BLEND50 — quatre verdicts du 30-31 juillet
+
+Suite directe de la clôture hard-replay : les positions d'échec de conversion
+sont réutilisées comme **reverse seeds zero-target appariés**, dont le WDL est
+régénéré par self-play au lieu d'être hérité. Tous les chiffres ci-dessous sont
+en **vues additionnées, `n = 6000`**, sur pool neuf apparié.
+
+| Axe | Bras / readout | W-N-D traitement | Taux | Elo | IC95 Elo | Verdict |
+|---|---|---|---:|---:|---|---|
+| Reverse-seed 2M | `cpx62-1086` / `home-1091` | 2957-302-2741 | 0,5180 | **+12,51** | `[+3,95 ; +21,10]` | `ABOVE_MATCHED_CONTROL_IC95` |
+| Poids d'échec ×2 | `home-1096` / `home-1102` | 2709-325-2966 | 0,4786 | **−14,89** | `[−23,46 ; −6,34]` | `FAILED_X2_BELOW_UNWEIGHTED` |
+| BLEND50 statique | `cpx62-1104` / `home-1105` | 2789-324-2887 | 0,4918 | −5,68 | `[−14,23 ; +2,88]` | `BLEND50_VS_TURNOVER_INCONCLUSIVE` |
+| Reverse-seed 4M | `cpx62-1106` / `home-1108` | 2712-295-2993 | 0,4766 | **−16,28** | `[−24,88 ; −7,71]` | `SCALE4M_BELOW_MATCHED_CONTROL` |
+
+**Poids d'échec ×2 : négatif établi.** Pondérer deux fois les positions d'échec
+de conversion coûte `−14,9 Elo`, IC95 entièrement négatif. Ne pas répéter.
+
+**BLEND50 : `INCONCLUSIVE`, pas « négatif ».** L'IC95 traverse zéro. À
+`n = 6000` vues additionnées nous n'établissons qu'un effet de l'ordre de
+`±8,5 Elo` : le clore est une **décision de programme**, pas une réfutation.
+Un effet réel de quelques Elo resterait invisible à cette puissance.
+
+**L'inversion 2M → 4M, et une réserve sur sa lecture.** Le positif à 2M et le
+négatif à 4M ont des IC95 disjoints, l'inversion est donc réelle sur
+l'estimateur additionné. Mais **les deux résultats ne pèsent pas pareil vue par
+vue** : à 2M seule la Q00 exclut zéro (`+17,85`, IC95 `[+5,7 ; +30,0]`), la
+native le traverse (`+7,18`, IC95 `[−4,9 ; +19,3]`) ; à 4M **les deux vues**
+l'excluent négativement (`−13,32` et `−19,24`). Avant de chercher un mécanisme
+d'inversion lié à l'échelle, l'hypothèse la moins chère reste qu'un positif
+porté par une seule vue n'a pas survécu à la réplication — exactement ce que
+[`experiments/L3_VIEW_AGREEMENT_AND_POWER_20260726.md`](experiments/L3_VIEW_AGREEMENT_AND_POWER_20260726.md)
+dit de nos écrans. L'axe reverse-seed **à cette échelle** est clos ; la
+tendance 2M n'est pas reproduite.
+
+**Diagnostic `cpx62-1110` — échec technique, aucun résultat scientifique
+perdu.** Le diagnostic read-only de l'inversion est tombé en phase `compare`
+après onze minutes, `rc=2`, **après** avoir produit ses vingt-quatre atlas.
+Cause : dérive de schéma entre deux générations de certificats. Le readout 2M
+`home-1091`, écrit le 30 juillet, n'a pas de `protocol.records_per_arm` ; le
+readout 4M `home-1108`, écrit le lendemain, l'a ; et
+`l3_reverse_seed_scale_diagnostic.py` l'exigeait des deux. Les tests du tool ne
+l'ont pas vu parce que leur fixture fabrique un readout qui possède toujours le
+champ. Le volume par bras est de toute façon porté par le certificat **source**
+(`cpx62-1086.design.records_per_arm = 2000000`), déjà validé par le même tool.
+Corrigé : le champ du readout n'est plus exigé, seulement vérifié quand il est
+présent. Deux tests de régression ajoutés, et les quatre validations rejouées
+sur les certificats réels. Le job est re-lançable tel quel.
+
+⚠️ **Le log de l'étape `compare` part dans `$W/compare.log`, qui n'est pas
+publié** : l'échec était invisible depuis R2 et il a fallu rejouer les
+validations localement pour le localiser. À corriger dans le template.
+
 ### Spécialiste `L3-IMBALANCE2`
 
 1. ne pas prolonger 0890bis ;

@@ -154,6 +154,25 @@ class ReverseSeedScaleDiagnosticTests(unittest.TestCase):
             self.assertEqual(report["paired_prefix_diagnostics"]["stage4"]["4000000"]["records_per_arm"], 4_000_000)
             self.assertLess(report["model_geometry"]["treatment_minus_control"]["cosine_stage2_vs_stage4"], 0)
 
+    def test_accepts_readout_without_records_per_arm(self):
+        """`home-1091`, le readout 2M réel, n'a pas ce champ : il a été écrit la
+        veille de celui qui l'a introduit. Le volume par bras fait foi côté
+        certificat SOURCE, pas côté readout — c'est ce que `cpx62-1110` a
+        démontré en échouant en phase compare après onze minutes."""
+        r = readout("stage2", 2_000_000, "c" * 64, "d" * 64)
+        del r["protocol"]["records_per_arm"]
+        MODULE._validate_readout(
+            r, "stage2", 2_000_000,
+            source("stage2", 2_000_000, "b" * 64, "c" * 64, "d" * 64))
+
+    def test_rejects_readout_records_per_arm_that_contradicts_the_source(self):
+        r = readout("stage2", 2_000_000, "c" * 64, "d" * 64)
+        r["protocol"]["records_per_arm"] = 3_000_000
+        with self.assertRaises(ValueError):
+            MODULE._validate_readout(
+                r, "stage2", 2_000_000,
+                source("stage2", 2_000_000, "b" * 64, "c" * 64, "d" * 64))
+
     def test_rejects_readout_model_drift(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
