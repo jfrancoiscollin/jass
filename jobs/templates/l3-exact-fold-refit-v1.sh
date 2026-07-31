@@ -171,8 +171,8 @@ fi
 NPV=$("$W/venv/bin/python" -c 'import numpy,scipy;print(numpy.__version__,scipy.__version__)')
 say "  pile numérique : $PINSTACK (numpy/scipy $NPV)"
 printf '{"stack":"%s","numpy_scipy":"%s"}\n' "$PINSTACK" "$NPV" > "$ART/numeric-stack.json"
-env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" -m pytest \
-  pattern_jass/tools/test_exact_fold.py -q > "$W/selftest.log" 2>&1 ||
+env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" \
+  pattern_jass/tools/test_exact_fold.py -v > "$W/selftest.log" 2>&1 ||
   die "auto-tests du fold exact en échec — voir selftest.log"
 say "  venv + auto-tests du fold ✓"
 
