@@ -56,6 +56,12 @@ BASE_SEED=1618033
 HOLDOUT_MOD=10
 SPLIT_SEED=577215
 L2=3e-5
+# Drapeau de fold, paramétrable pour la reprise on-policy sous la symétrie
+# exacte. Défaut = --color-fold, donc comportement historique inchangé pour
+# tout appelant qui ne le définit pas.
+FOLD_FLAG="${FOLD_FLAG:---color-fold}"
+case "$FOLD_FLAG" in --color-fold|--exact-fold|--full-fold) ;; *)
+  echo "FOLD_FLAG invalide : $FOLD_FLAG" >&2; exit 2;; esac
 MAXIT=1000
 LBFGS_MAXCOR=20
 LBFGS_GTOL=1e-3
@@ -663,7 +669,7 @@ set +e
 env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
   /usr/bin/time -v timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
     --data "$W/m2.fit.jnnw" --feat "$W/m2.feat" --out "$W/m2.pjtw" \
-    --target wdl --loss logistic --color-fold --tempo-stage \
+    --target wdl --loss logistic "$FOLD_FLAG" --tempo-stage \
     --warm-start "$W/parent-f2m.pjtw" --holdout-count "$holdout" \
     --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
     --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
