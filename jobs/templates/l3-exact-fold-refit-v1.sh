@@ -206,7 +206,9 @@ fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold
     "$ART/$arm-optimizer.json" || die "fit $arm n'a pas convergé"
   gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
   local ll; ll=$(grep -o 'HOLDOUT_LOGLOSS[= ][0-9.]*' "$W/fit-$arm.log" | tail -1)
-  say "  $arm : convergé, $(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(f"{d[\"iterations\"]} itérations")' "$ART/$arm-optimizer.json"), ${ll:-holdout n/a}"
+  local it; it=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["iterations"])' \
+    "$ART/$arm-optimizer.json" 2>/dev/null || echo "?")
+  say "  $arm : convergé, $it itérations, ${ll:-holdout n/a}"
 }
 
 fit_arm control --color-fold
