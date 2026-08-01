@@ -133,9 +133,19 @@ for d in /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted; do
   ls "$d"/db*.idx1 >/dev/null 2>&1 && { EGDIR="$d"; break; }
 done
 if [ -n "$EGDIR" ]; then
+  [ -d /root/egdb_intl ] ||
+    die "base EGDB trouvée ($EGDIR) mais la bibliothèque /root/egdb_intl manque"
   FLAGS="$FLAGS -DJASS_EGDB=ON -DJASS_EGDB_SRC_DIR=/root/egdb_intl"
   export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
   say "  EGDB présent ($EGDIR) — comparable aux portes antérieures"
+elif [ "${REQUIRE_EGDB:-0}" = 1 ]; then
+  # Une porte de succession DOIT tourner avec la base, sinon son Elo n'est pas
+  # comparable aux portes de promotion antérieures et le chiffre ne peut pas
+  # servir à ce pour quoi on l'a demandé. Échouer ici coûte deux minutes ;
+  # découvrir l'absence dans le rapport coûte la porte entière — c'est ce qui
+  # s'est passé sur cpx62-1118 et 1121.
+  say "  chemins inspectés : /root/egdb_db /root/egdb_extracted/app /root/egdb_extracted"
+  die "REQUIRE_EGDB=1 mais aucune base trouvée sur $(hostname)"
 else
   say "  ⚠️ EGDB ABSENT — comparaison interne valide, Elo non comparable aux portes antérieures"
 fi
