@@ -868,16 +868,32 @@ Quatre résultats :
    « positions saturées » ; cf. la note d'expérience.)*
 
 ⚠️ **Cet atlas n'a pas de contrôle et ne conclut donc rien sur la capacité.** Un
-profil diffus dans le jeu calme est aussi ce qu'on attendrait de l'écart de
-classe entre un linéaire et Scan, quel que soit notre modèle. **Le témoin Gen2,
-même protocole et même budget, est requis avant toute lecture** — c'est le
-différentiel TURNOVER − Gen2 qui distingue « nos points aveugles » de « ceux de
-la classe linéaire ». Rapport à l'arbitrage 32cf, dont la prémisse de clôture
-(« 8cf sous-alimenté ») a été falsifiée par `home-1004` : cet atlas est le premier
+profil diffus dans le jeu calme peut être propre au modèle mesuré ou constituer
+un fond commun aux évaluations linéaires comparées à Scan. **Le témoin Gen2,
+même protocole et même budget, est requis avant toute lecture.** Son
+différentiel localisera les écarts de profil sous les géométries 8cf/32cf ; il
+ne séparera pas un effet de classe linéaire, puisque les deux bras restent
+linéaires. Rapport à l'arbitrage 32cf, dont la prémisse de clôture (« 8cf
+sous-alimenté ») a été falsifiée par `home-1004` : cet atlas est le premier
 élément neuf, mais il **ne tranche pas** sans le témoin. Décision à JFC.
 
 Détail, tableaux et limites :
 [`experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md).
+
+**Témoin préparé, non lancé — `cpx62-1142/1143/1144`.** Le protocole suivant
+remplace le témoin TURNOVER envisagé ci-dessus par le champion **EXACT (8cf)**,
+puis rejoue exactement le même atlas avec **Gen2 (32cf)** avant un readout
+différentiel descriptif. Les deux bras gardent `n_ext = 120`, le même binaire
+Scan, les mêmes profondeurs, seeds et budgets ; seul `n_pat` change avec le
+build (`8 * 3^12` contre `32 * 3^12`). Ce différentiel peut donc comparer la
+géométrie des profils d'erreur sous les deux représentations. Il ne permet ni
+une attribution aux features (constantes), ni une comparaison de classe
+linéaire/non-linéaire (deux bras linéaires), ni une ablation pure des poids
+(trajectoires d'entraînement différentes). Aucun job n'est soumis avant le go
+compute explicite de JFC.
+
+Préréglage, invariants et limites :
+[`experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md).
 
 ### Reverse-seed, poids d'échec et BLEND50 — quatre verdicts du 30-31 juillet
 

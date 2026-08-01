@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# L3 — atlas de points aveugles jugé par Scan, sur le champion TURNOVER.
+# L3 — atlas de points aveugles jugé par Scan, paramétré par modèle/géométrie.
 #
 # `home-1002` a établi que le résidu contre Scan est de la MARGE D'ÉVALUATION,
 # pas de la vitesse. Ce qu'on n'a jamais su, c'est *sur quelles positions* elle
@@ -16,8 +16,40 @@
 # donc un rendement plus faible que prévu rend un atlas plus court, jamais un
 # atlas faux.
 #
+# Deux valeurs seulement sont recevables :
+#
+#   --variant exact   champion EXACT, binaire 8cf
+#   --variant gen2    témoin historique Gen2, binaire 32cf
+#
+# Les deux invocations gardent le même protocole Scan et les mêmes 120 extras.
+# Le readout différentiel refuse toute dérive sur les autres dimensions.
 # Aucun modèle entraîné, aucune porte, aucune promotion. Scan est JUGE.
 set -Eeuo pipefail
+
+usage(){ echo "usage: $0 --variant {exact|gen2}" >&2; exit 2; }
+ATLAS_VARIANT=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --variant) [ "$#" -ge 2 ] || usage; ATLAS_VARIANT="$2"; shift 2 ;;
+    --variant=*) ATLAS_VARIANT="${1#*=}"; shift ;;
+    *) usage ;;
+  esac
+done
+case "$ATLAS_VARIANT" in
+  exact)
+    MODEL_LABEL=EXACT
+    PATTERN_VARIANT=8cf
+    EXPECTED_NUM_PATTERNS=8
+    EXPECTED_N_PAT=$((531441 * 8))
+    ;;
+  gen2)
+    MODEL_LABEL=GEN2
+    PATTERN_VARIANT=v4
+    EXPECTED_NUM_PATTERNS=32
+    EXPECTED_N_PAT=$((531441 * 32))
+    ;;
+  *) usage ;;
+esac
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"
@@ -37,9 +69,11 @@ say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" > "$STAGE"; say "phase=$1"; }
 
-TURNOVER_TRAIN_PREFIX="${TURNOVER_TRAIN_PREFIX:-r2:jass-data/runs/home-0977-l3-pure-turnover1to1-train-v1/20260726T071254Z-336bb984}"
-EXPECTED_TURNOVER_TRAIN_JOB="${EXPECTED_TURNOVER_TRAIN_JOB:-home-0977-l3-pure-turnover1to1-train-v1}"
-TURNOVER_MODEL_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
+EXACT_REFIT_PREFIX="${EXACT_REFIT_PREFIX:-r2:jass-data/runs/cpx62-1117-l3-exact-fold-refit-v1/20260731T235446Z-970f14de}"
+EXPECTED_EXACT_REFIT_JOB="${EXPECTED_EXACT_REFIT_JOB:-cpx62-1117-l3-exact-fold-refit-v1}"
+EXACT_MODEL_SHA="d84a7fc7c3127d135d3cc150406055b9506daaa881af2959cd3721f6be66eb0a"
+GEN2_INPUT_PREFIX="${GEN2_INPUT_PREFIX:-${JASS_OBJSTORE_REMOTE%/}/inputs/t1bis-adj-g1/v1}"
+GEN2_GZ_SHA="01cc3ea59e9cc3ced1910d4d9054f88f92c1c4d9d220d5f28b0ebaaad33681a0"
 
 BUDGET_S="${BUDGET_S:-1500}"          # budget par shard (25 min par défaut)
 PLAY_DEPTH="${PLAY_DEPTH:-8}"
@@ -137,15 +171,16 @@ grep -q "warm_kings_endgame_bitbases" src/hub.cpp ||
 say "  garde-fou archi ✓"
 
 # ⚠️ GÉOMÉTRIE DU PATTERN — la marche sur laquelle cpx62-1113 est tombé.
-# `pattern.hpp` est CHECKÉ EN 32 patterns dans l'arbre, mais tous les modèles de
-# la campagne L3 (dont TURNOVER) sont en **8cf**. Sans cette régénération le
-# binaire attend 531441×32 = 17 006 112 buckets et refuse un fichier qui en porte
-# 531441×8 = 4 251 528. Les templates 1008/1040 le font ; le mien l'avait omis.
-python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1 ||
-  { restore_src; die "génération des patterns 8cf en échec"; }
-grep -q 'NUM_PATTERNS  = 8;' pattern_jass/src/pattern.hpp ||
-  { restore_src; die "pattern.hpp n'est pas en 8 patterns après génération"; }
-say "  patterns 8cf régénérés ✓ (TOTAL_BUCKETS = 531441×8)"
+# Le build 32cf est le même que dans `l3-succession-guards-v1.sh` : `v4` produit
+# 32 patterns. Le bras EXACT demande explicitement `8cf`. Le choix vient
+# UNIQUEMENT de `--variant`, puis le header du modèle le vérifie après fetch.
+python3 pattern_jass/tools/gen_patterns.py --emit --variant "$PATTERN_VARIANT" \
+  > "$W/gen-patterns.log" 2>&1 ||
+  { restore_src; die "génération des patterns $PATTERN_VARIANT en échec"; }
+grep -Eq "NUM_PATTERNS[[:space:]]*=[[:space:]]*$EXPECTED_NUM_PATTERNS;" \
+  pattern_jass/src/pattern.hpp ||
+  { restore_src; die "pattern.hpp n'est pas en $EXPECTED_NUM_PATTERNS patterns"; }
+say "  patterns $PATTERN_VARIANT régénérés ✓ (TOTAL_BUCKETS = 531441×$EXPECTED_NUM_PATTERNS)"
 
 # Mêmes extras que les portes de la campagne : ENDGAME_FEATURES(110) + KING_
 # MOBILITY(+4) + SCAN_PARITY(+6) = 120, exactement le `n_ext` des .pjtw L3.
@@ -162,31 +197,126 @@ JASS="$W/build/jass"
 [ -x "$JASS" ] || die "build sans binaire"
 restore_src
 
-stage fetch-champion
-python3 jobs/tools/fetch_result_files.py --prefix "$TURNOVER_TRAIN_PREFIX" \
-  --file artefacts/turnover1to1.pjtw.gz=TURNOVER.pjtw.gz \
-  --out-dir "$IN" --report "$ART/verified-turnover.json" \
-  > "$W/fetch-turnover.log" 2>&1 || die "fetch du champion en échec"
-python3 - "$ART/verified-turnover.json" "$EXPECTED_TURNOVER_TRAIN_JOB" <<'PY'
+stage fetch-model
+if [ "$ATLAS_VARIANT" = exact ]; then
+  python3 jobs/tools/fetch_result_files.py --prefix "$EXACT_REFIT_PREFIX" \
+    --file artefacts/exact.pjtw.gz=MODEL.pjtw.gz \
+    --out-dir "$IN" --report "$ART/verified-model.json" \
+    --expected-state completed > "$W/fetch-model.log" 2>&1 ||
+    die "fetch du champion EXACT en échec"
+  python3 - "$ART/verified-model.json" "$EXPECTED_EXACT_REFIT_JOB" <<'PY'
 import json, sys
 r = json.load(open(sys.argv[1]))
 if r.get("job_id") != sys.argv[2] or r.get("result_state") != "completed":
-    raise SystemExit("source identity/state mismatch")
+    raise SystemExit("EXACT source identity/state mismatch")
 PY
-gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
-[ "$(sha256sum "$W/TURNOVER.pjtw" | awk '{print $1}')" = "$TURNOVER_MODEL_SHA" ] ||
-  die "TURNOVER model hash drift"
-say "  champion TURNOVER ✓ hash conforme"
+  MODEL_SOURCE_PREFIX="$EXACT_REFIT_PREFIX"
+  EXPECTED_MODEL_JOB="$EXPECTED_EXACT_REFIT_JOB"
+else
+  # Réutilise le bundle figé et vérifié qui sert déjà Gen2 aux gardes de
+  # succession. Il télécharge plus que le seul modèle, mais protège manifeste,
+  # inventaire, checksums et identité de source sans nouveau chemin ad hoc.
+  python3 jobs/tools/fetch_t1bis_inputs.py --remote-prefix "$GEN2_INPUT_PREFIX" \
+    --out-dir "$IN" --report "$ART/verified-model.json" \
+    > "$W/fetch-model.log" 2>&1 || die "fetch du témoin Gen2 en échec"
+  cp "$IN/gen2.pjtw.gz" "$IN/MODEL.pjtw.gz"
+  [ "$(sha256sum "$IN/MODEL.pjtw.gz" | awk '{print $1}')" = "$GEN2_GZ_SHA" ] ||
+    die "Gen2 gzip hash drift"
+  MODEL_SOURCE_PREFIX="$GEN2_INPUT_PREFIX"
+  EXPECTED_MODEL_JOB="frozen-t1bis-gen2"
+fi
+gunzip -c "$IN/MODEL.pjtw.gz" > "$W/MODEL.pjtw"
+MODEL_SHA="$(sha256sum "$W/MODEL.pjtw" | awk '{print $1}')"
+MODEL_GZ_SHA="$(sha256sum "$IN/MODEL.pjtw.gz" | awk '{print $1}')"
+if [ "$ATLAS_VARIANT" = exact ] && [ "$MODEL_SHA" != "$EXACT_MODEL_SHA" ]; then
+  die "EXACT model hash drift"
+fi
+
+# Le modèle et le binaire doivent décrire la géométrie demandée, et les extras
+# doivent être strictement identiques. C'est le contrat scientifique du témoin :
+# n_ext=120 des deux côtés, seul n_pat passe de 8cf à 32cf.
+python3 - "$W/MODEL.pjtw" "$EXPECTED_N_PAT" "$MODEL_LABEL" <<'PY' | tee -a "$RES"
+import os, struct, sys
+path, want, label = sys.argv[1], int(sys.argv[2]), sys.argv[3]
+with open(path, "rb") as fh:
+    magic, version, scale, n_pat, n_ext = struct.unpack("<5I", fh.read(20))
+if magic != 0x57544A50 or (version & 0xFF) != 3:
+    raise SystemExit(f"{label}: header PJTW non supporté")
+if n_pat != want:
+    raise SystemExit(f"{label}: n_pat={n_pat}, attendu {want}")
+if n_ext != 120:
+    raise SystemExit(f"{label}: n_ext={n_ext}, attendu 120")
+expected_size = 20 + 4 * 2 * (n_pat + n_ext)
+if os.path.getsize(path) != expected_size:
+    raise SystemExit(f"{label}: taille PJTW incohérente")
+print(f"  {label} ✓ n_pat={n_pat:,} n_ext={n_ext} version={version} scale={scale}")
+PY
+say "  modèle $MODEL_LABEL ✓ sha256=$MODEL_SHA"
 
 # Le binaire sait-il seulement LIRE ce champion ? Deux secondes ici valent mieux
 # qu'un « collecteur en échec » cinq minutes plus loin : c'est exactement le
 # message qu'a rendu cpx62-1113, et il ne disait pas que la géométrie du pattern
 # était en cause.
-printf 'hello\nquit\n' | timeout 60 "$JASS" --pattern "$W/TURNOVER.pjtw" \
+printf 'hello\nquit\n' | timeout 60 "$JASS" --pattern "$W/MODEL.pjtw" \
   > "$W/pattern-load.log" 2>&1
 grep -q '^ready' "$W/pattern-load.log" ||
-  die "le binaire ne charge pas le champion : $(head -1 "$W/pattern-load.log")"
-say "  chargement du champion par le binaire ✓"
+  die "le binaire ne charge pas $MODEL_LABEL : $(head -1 "$W/pattern-load.log")"
+say "  chargement de $MODEL_LABEL par le binaire ✓"
+
+# Contrat machine-lisible consommé par le readout différentiel. Les deux atlas
+# sont descriptifs et suivent des trajectoires différentes ; on exige néanmoins
+# que l'instrument, le budget et la génération des seeds soient identiques.
+python3 - "$ART/protocol.json" "$ATLAS_VARIANT" "$MODEL_LABEL" \
+  "$MODEL_SHA" "$MODEL_GZ_SHA" "$MODEL_SOURCE_PREFIX" "$EXPECTED_MODEL_JOB" \
+  "$EXPECTED_CODE_SHA" "$EXPECTED_N_PAT" "$EXPECTED_NUM_PATTERNS" \
+  "$EXPECTED_SCAN_SHA256" "$EXPECTED_SCAN_EVAL_SHA256" "$BUDGET_S" \
+  "$PLAY_DEPTH" "$JUDGE_DEPTH" "$MAX_PLIES" "$GAMES_CAP" \
+  "$MIN_POSITIONS" "$SHARDS" <<'PY'
+import json, sys
+(out, variant, label, model_sha, model_gz_sha, source_prefix, source_job,
+ code_sha, n_pat, num_patterns, scan_sha, scan_eval_sha, budget_s, play_depth,
+ judge_depth, max_plies, games_cap, min_positions, shards) = sys.argv[1:20]
+payload = {
+    "schema": "l3_scan_blind_spot_atlas_protocol",
+    "version": 1,
+    "variant": variant,
+    "model": {
+        "label": label,
+        "sha256": model_sha,
+        "gzip_sha256": model_gz_sha,
+        "source_prefix": source_prefix,
+        "source_job": source_job,
+        "n_pat": int(n_pat),
+        "n_ext": 120,
+        "num_patterns": int(num_patterns),
+    },
+    "engine": {
+        "code_sha": code_sha,
+        "cmake_flags": ["JASS_ENDGAME_FEATURES=ON", "JASS_KING_MOBILITY=ON",
+                         "JASS_SCAN_PARITY=ON", "JASS_TEMPO_STAGE=ON"],
+        "egdb": False,
+    },
+    "scan": {"binary_sha256": scan_sha, "eval_sha256": scan_eval_sha,
+             "bb_size": 0, "book": False},
+    "collection": {
+        "budget_s_per_shard": int(budget_s),
+        "play_depth": int(play_depth),
+        "judge_depth": int(judge_depth),
+        "max_plies": int(max_plies),
+        "games_cap": int(games_cap),
+        "min_positions": int(min_positions),
+        "shards": int(shards),
+        "seed_policy": "one_based_shard_index",
+        "seeds": list(range(1, int(shards) + 1)),
+    },
+    "diagnostic_only": True,
+    "promotion_authorized": False,
+    "automatic_next_job": None,
+}
+with open(out, "w", encoding="utf-8") as fh:
+    json.dump(payload, fh, indent=2, sort_keys=True)
+    fh.write("\n")
+PY
 
 stage smoke-test-round-trip
 # Règle 3/9 : le parser doit lire ce que le job écrit, vérifié sur un
@@ -196,7 +326,7 @@ python3 -m pytest jobs/tests/test_scan_blind_spot_collector.py \
                   jobs/tests/test_scan_blind_spot_atlas.py -q \
   > "$W/selftest.log" 2>&1 || die "auto-tests en échec — voir selftest.log"
 timeout 600 python3 jobs/tools/scan_blind_spot_collector.py \
-  --jass "$JASS" --scan "$SCAN_BIN" --pattern "$W/TURNOVER.pjtw" \
+  --jass "$JASS" --scan "$SCAN_BIN" --pattern "$W/MODEL.pjtw" \
   --games 2 --play-depth 4 --judge-depth 6 --max-plies 40 --seed 999 \
   --out "$W/smoke.jsonl" --summary "$W/smoke-summary.json" \
   > "$W/smoke.log" 2>&1 || die "collecteur en échec au smoke — voir smoke.log"
@@ -207,7 +337,7 @@ say "  round-trip écriture→lecture ✓ ($(wc -l < "$W/smoke.jsonl") positions
 
 monitor
 stage collect
-say "  budget=${BUDGET_S}s/shard  play_depth=$PLAY_DEPTH  judge_depth=$JUDGE_DEPTH"
+say "  variant=$ATLAS_VARIANT modèle=$MODEL_LABEL budget=${BUDGET_S}s/shard  play_depth=$PLAY_DEPTH  judge_depth=$JUDGE_DEPTH"
 # timeout par shard = budget + 10 min (règle 6). PAS un facteur multiplicatif :
 # le collecteur ne teste son budget qu'ENTRE deux parties, donc il dépasse
 # toujours d'au plus une partie. Un ×1.3 laisse 30 % du budget en marge, ce qui
@@ -219,7 +349,7 @@ pids=()
 for s in $(seq 1 "$SHARDS"); do
   (
   timeout -k 60s "${SHARD_TIMEOUT}s" python3 jobs/tools/scan_blind_spot_collector.py \
-    --jass "$JASS" --scan "$SCAN_BIN" --pattern "$W/TURNOVER.pjtw" \
+    --jass "$JASS" --scan "$SCAN_BIN" --pattern "$W/MODEL.pjtw" \
     --games "$GAMES_CAP" --play-depth "$PLAY_DEPTH" --judge-depth "$JUDGE_DEPTH" \
     --max-plies "$MAX_PLIES" --seed "$s" --time-budget-s "$BUDGET_S" \
     --out "$W/samples-s$s.jsonl" --summary "$W/summary-s$s.json" \
@@ -282,6 +412,18 @@ PY
 python3 jobs/tools/scan_blind_spot_atlas.py --samples "$W/samples.jsonl" \
   --min-positions "$MIN_POSITIONS" --out "$ART/atlas.json" \
   > "$W/atlas.log" 2>&1 || die "agrégation en échec (rc=$?) — voir atlas.log"
+# Enrichissement sans recalcul : l'atlas reste au schéma v2, avec le contrat de
+# run ajouté pour qu'un lecteur isolé sache quel modèle et quelle géométrie il
+# décrit. `protocol.json` reste publié séparément pour le readout fail-closed.
+python3 - "$ART/atlas.json" "$ART/protocol.json" <<'PY'
+import json, sys
+atlas = json.load(open(sys.argv[1], encoding="utf-8"))
+protocol = json.load(open(sys.argv[2], encoding="utf-8"))
+atlas["run_protocol"] = protocol
+with open(sys.argv[1], "w", encoding="utf-8") as fh:
+    json.dump(atlas, fh, indent=2, sort_keys=True, ensure_ascii=False)
+    fh.write("\n")
+PY
 gzip -c "$W/samples.jsonl" > "$ART/samples.jsonl.gz"
 
 stage report
@@ -303,8 +445,8 @@ if d["conversion_family"]:
 print(f"  buckets sous le plancher (non classés) : {len(d['buckets_below_floor'])}")
 PY
 cp "$ART/atlas.json" "$ART/JASS_CONTROL_SUMMARY.json"
-VERDICT=L3_SCAN_BLIND_SPOT_ATLAS_MEASURED
+VERDICT="L3_SCAN_BLIND_SPOT_ATLAS_${MODEL_LABEL}_MEASURED"
 : > "$ART/VERDICT__$VERDICT"
 printf 'PROMOTION_AUTHORIZED__FALSE\n' > "$ART/PROMOTION_AUTHORIZED__FALSE"
 printf 'AUTOMATIC_NEXT_JOB__NULL\n'    > "$ART/AUTOMATIC_NEXT_JOB__NULL"
-say "$VERDICT positions=$NPOS promotion=false automatic_next_job=null"
+say "$VERDICT variant=$ATLAS_VARIANT positions=$NPOS promotion=false automatic_next_job=null"
