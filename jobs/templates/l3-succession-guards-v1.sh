@@ -54,6 +54,7 @@ GEN2_GZ_SHA="01cc3ea59e9cc3ced1910d4d9054f88f92c1c4d9d220d5f28b0ebaaad33681a0"
 P3_GAUGE_SHA="cd92710fec7934d113ccade22180d4cddf029b084dd20c8fa9e30ca686767c91"
 P4_GAUGE_SHA="0d925c4fbd7e7928bf6d86bd2cd40f796ee6805e0010e51d5d6483986da2a1ac"
 FIXED_DEFENDER_CODE_SHA="9c1d1e8eaaa5b9bbd86105f7f9807a3033784186"
+GAUGE_PREFIX="${GAUGE_PREFIX:-r2:jass-data/runs/home-0954-l3-pure-m1-abextras-validation-v5/20260724T234944Z-8efd1c45}"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 MON=""
@@ -127,9 +128,19 @@ python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
   --file "artefacts/$PREFLIGHT_FILE=open-eval.fen" \
   --out-dir "$IN" --report "$ART/verified-openings.json" \
   --expected-state completed > "$W/fetch-openings.log" 2>&1 || die "fetch ouvertures KO"
+# `fetch_t1bis_inputs.py` sert le bundle figé, dont Gen2 — mais PAS les jauges
+# P3/P4. Vérifié dans son manifeste : il écrit parent/fixed/gen2.pjtw.gz,
+# seeds.jnnw.gz, g1_pool.fen et gauge.fen, et rien d'autre. Les deux corpus de
+# conversion viennent d'un préfixe distinct, exactement comme dans la porte de
+# succession TURNOVER. Avoir supposé le contraire a tué cpx62-1136 au fetch.
 python3 jobs/tools/fetch_t1bis_inputs.py --out-dir "$IN" \
   --report "$ART/verified-fixed-inputs.json" > "$W/fetch-fixed.log" 2>&1 ||
-  die "fetch des entrées figées (gen2 + jauges) KO"
+  die "fetch du bundle figé (gen2) KO"
+python3 jobs/tools/fetch_result_files.py --prefix "$GAUGE_PREFIX" \
+  --file artefacts/p3_mince-stable.jnnw.gz=p3.jnnw.gz \
+  --file artefacts/p4_egal-stable.jnnw.gz=p4.jnnw.gz \
+  --out-dir "$IN" --report "$ART/verified-gauge.json" \
+  --expected-state completed > "$W/fetch-gauge.log" 2>&1 || die "fetch des jauges P3/P4 KO"
 
 gunzip -c "$IN/challenger.pjtw.gz" > "$W/$CHALLENGER_LABEL.pjtw"
 gunzip -c "$IN/gen2.pjtw.gz"       > "$W/GEN2.pjtw"
