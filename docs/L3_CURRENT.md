@@ -28,7 +28,8 @@
 > turnover50_promoted_general_champion;
 > exact_fold_promoted_general_champion;
 > onpolicy_single_factor_flat_coverage_is_the_binding_constraint;
-> coverage_knob_is_random_open_plies_plateau_at_24`.
+> coverage_knob_is_random_open_plies_plateau_at_24;
+> coverage_is_not_the_lever_refuted_by_gate`.
 
 ## 1. Architecture du programme
 
@@ -107,6 +108,7 @@ une configuration héritée par les nouveaux bras.
 | champion général | succession fold exact, avec EGDB | `cpx62-1129` | **EXACT promu champion général** : `+15,12 Elo` sur `n=6000`, deux vues positives ; gardes Gen2/conversion NON jouées |
 | autojeu on-policy | un seul facteur, ratio 1:1 tenu, avec EGDB | `cpx62-1127` / `cpx62-1130` | **PLAT** : `−4,05 Elo`, IC95 `[−12,6 ; +4,5]` — pas de régression, pas de gain ; couverture `−3,9 %` à volume égal |
 | couverture | sondes de boutons + dose-réponse, aucune partie de porte | `cpx62-1131` / `cpx62-1132` | **`--random-open-plies` est le bouton** : `+7,11 %` de buckets à `rop=24`, plateau au-delà ; top-k **négatif** (`−2,14 %`) ; aucun Elo établi |
+| couverture → force | corpus complet à `rop=24`, un seul facteur, porte avec EGDB | `cpx62-1133` / `cpx62-1134` | ⛔ **RÉFUTÉ** : `+2,83 %` de buckets et **`−9,27 Elo`** IC95 `[−17,9 ; −0,7]` — régression établie. **La couverture n'est pas un proxy de qualité** |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -683,10 +685,44 @@ n'a pas de sens, et la perte ne prédit pas la force — quatre fois mesuré. Ne
 en attendre avant la porte.
 
 **Ce que ces sondes n'établissent pas : rien en Elo.** `+7,11 %` de couverture
-peut valoir quelques Elo ou zéro. Repère : les `−3,9 %` de `cpx62-1130`
-accompagnaient `−4,05 Elo`, donc l'ordre de grandeur plausible est **~+7 Elo**,
-sous le seuil de détection d'une porte à `n=6000`. **C'est une porte qui
-tranchera, pas une sonde de couverture.**
+peut valoir quelques Elo ou zéro. **C'est une porte qui tranche, pas une sonde de
+couverture** — et elle a tranché contre.
+
+### ⛔ La couverture N'EST PAS le levier — `cpx62-1134`, 1er août
+
+Porte `ROP24` contre `EXACT`, avec EGDB, `n=6000`, même pool et même adversaire
+que `cpx62-1130` :
+
+| vue | n | score | Elo |
+|---|---:|---:|---:|
+| `q00` | 3000 | 49,27 % | −5,10 |
+| `native` | 3000 | 48,07 % | −13,44 |
+| **sommé** | **6000** | **48,67 %** | **−9,27**, IC95 `[−17,9 ; −0,7]` |
+
+`A_BELOW_B`. **La borne haute est sous zéro : régression ÉTABLIE.** Et la
+comparaison qui compte est celle-ci, à adversaire, pool et taille identiques :
+
+```text
+rop = 8   (cpx62-1130)   −4,05 Elo   couverture 124 948
+rop = 24  (cpx62-1134)   −9,27 Elo   couverture 128 482   (+2,83 %)
+```
+
+**La couverture monte, la force descend.** Des buckets atteints depuis des
+ouvertures aléatoires profondes ne sont visités par **aucune partie réelle** :
+on gonfle un compteur en diluant la masse sur la distribution réellement jouée.
+
+⚠️ **Correction d'une inférence à moi.** À `cpx62-1130` j'ai écrit que la
+couverture était « le mécanisme mesuré » du plat on-policy. Le `−3,9 %` était
+mesuré ; **son rôle causal ne l'était pas** — c'était un corrélat promu en cause.
+La chaîne `1131`→`1134` a testé l'inférence directement, dans le sens qu'elle
+prédisait, et l'a **falsifiée**. Le plat on-policy reste un fait ; son
+explication est rouverte.
+
+**Conséquence de méthode** : le compte de buckets rejoint la loss holdout au rang
+de **diagnostic** — il décrit un corpus, il ne le sélectionne pas. Trois familles
+ont maintenant été fermées par le même motif (hard-replay v1 `−648 Elo`,
+VOL8M `−14,95`, et celle-ci) : **plus de données/de couverture n'achète pas de la
+force**, et c'est la troisième fois que le projet le paie pour le réapprendre.
 
 **Contre le champion réel** (`cpx62-1121`) : EXACT bat **TURNOVER** de
 **+13,32 Elo**, IC95 `[+5,5 ; +21,2]`, n=6000 — borne basse au-dessus de zéro,
