@@ -415,6 +415,37 @@ différences au sein d'un protocole apparié portent une causalité.
 | optimisations eval 2026-07 | +13–15 %, puis +4,8–9,9 % NPS selon phase | bakées, byte-identiques |
 | MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
 | EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
+| **fold sur la symétrie exacte du damier** | **+17,10 Elo**, IC95 `[+9,2 ; +25,0]`, n=6000 (`cpx62-1118`) | **acquis fit**, non baké ; EGDB absent de la porte donc Elo non comparable en absolu |
+
+## 4.3 Symétries imposées au fit — la vraie plutôt que l'approximative
+
+Le damier a une symétrie **exacte** : `rot180 ∘ colour-swap`. Tourner le plateau
+de 180° et échanger les couleurs rend une position strictement équivalente,
+d'évaluation opposée. `colour-swap` seule et `rot180` seule sont
+**approximatives** — les pions ont une direction — et `symmetry.py` le dit dans
+son propre docstring depuis toujours.
+
+Or jusqu'au 1er août la campagne fittait avec `--color-fold`, qui impose la
+contrainte **approximative**. Mesuré sur TURNOVER : `cs` seule satisfaite à
+**0,0000 %** près, `rot180∘cs` violée à **25,8 %**. La contrainte fausse était
+imposée structurellement ; la vraie était laissée à l'apprentissage, et mal
+apprise.
+
+Corrigé par `--exact-fold` (groupe `{id, rot180∘cs}`), mesuré à **+17,10 Elo**
+contre son propre contrôle, corpus et parent identiques.
+
+**Ce n'est pas une question de capacité** : les deux folds mutualisent le même
+nombre de configurations par poids (`TB ≈ 2 125 76x`). Seul change **ce qui est
+mutualisé**. À retenir pour tout fold futur : *mutualiser des positions qui ne
+sont pas équivalentes injecte un biais dans chaque bucket, et ce biais ne se voit
+ni dans la perte ni dans la convergence.*
+
+Reste vrai et non encore exploité : la réflexion gauche-droite est **exacte**
+(signe +1). Un fold `{id, rot180∘cs, LR, LR∘rot180∘cs}` serait le prochain palier
+entièrement vrai. La translation entre patterns, elle, est approximative — même
+piège que `cs` seule.
+
+Détail : [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
 
 ## 5. Portes closes à protocole causal identique
 

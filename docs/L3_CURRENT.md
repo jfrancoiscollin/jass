@@ -515,6 +515,40 @@ cause et aucun ne demande d'être rejoué.** Procédure, mesures et
 rollback :
 [`experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md`](experiments/L3_MOVETIME_ENDGAME_BAKE_20260731.md).
 
+### 🟢 Fold exact — +17,1 Elo, premier gain établi de la campagne (`cpx62-1117/1118`, 1er août)
+
+**À corpus, parent, hyperparamètres, pile numérique et machine identiques**,
+plier le fit sur la symétrie **exacte** du damier au lieu d'une symétrie
+**approximative** vaut **+17,10 Elo**, IC95 `[+9,2 ; +25,0]` sur **6000 parties**
+(2546 W / 1203 D / 2251 L, taux 0,5246, IC95 `[0,5133 ; 0,5359]`).
+Aucun changement de moteur, aucune feature, aucun volume : la sortie reste un
+`.pjtw` 8cf standard.
+
+**Le défaut était à l'envers.** `symmetry.py` dit lui-même que la symétrie exacte
+est `rot180∘cs` et que `cs` seule est *approximative*. Mesuré sur TURNOVER,
+entraîné en `--color-fold` : `cs` seule satisfaite à **0,0000 %** près, `rot180∘cs`
+violée à **25,8 %**. On imposait structurellement la contrainte fausse et on
+laissait la vraie s'apprendre — un quart de l'énergie des poids affirmait qu'une
+configuration vaut différemment selon le bout du plateau d'où on la regarde.
+C'est exactement la signature diffuse que l'atlas `cpx62-1114` avait relevée.
+
+⚠️ **Ce n'est pas un gain de capacité** : `--color-fold` atteignait déjà
+`TB = 2 125 768`. Les deux folds mutualisent le même NOMBRE de configurations ;
+ce qui change est **ce qu'ils mutualisent**. `--exact-fold` plie sur
+`{id, rot180∘cs}` → 2 125 764 poids, exactement le compte de Scan (qui est
+**4 patterns**, vérifié dans son source, contre nos 8 — donc 2× sa capacité).
+
+⚠️ **Deux réserves sur le chiffre** : EGDB était absent de la box, donc cet Elo
+n'est **pas comparable en absolu** aux portes antérieures (la comparaison interne
+entre les deux bras, elle, tient — même binaire) ; et le holdout n'a pas servi
+d'arbitre (écart 0,0004, et la perte ne prédit pas la force ici).
+
+**Promotion non demandée** : le modèle exact bat son propre contrôle, pas
+TURNOVER. Une porte EXACT contre TURNOVER, avec EGDB, reste à faire.
+
+Détail complet, protocole et limites :
+[`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
+
 ### Atlas de points aveugles jugé par Scan — `cpx62-1114`, 1er août
 
 Première mesure de la campagne qui demande **où** la marge se perd, après quatre
