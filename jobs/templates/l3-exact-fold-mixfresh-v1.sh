@@ -42,6 +42,12 @@ EXPECTED_F2M_CORPUS_SHA256="15261c89bd6520e17c03bcf2843b226600ff334130656aab7b1a
 EXPECTED_F2M_META_SHA256="6b12a940128033652afe578c61e48c8570ba4db14cb4cde363d56d4bdcdf2d7f"
 PRODUCERS="${PRODUCERS:-12}"
 LABEL_DEPTH=4; PLAY_DEPTH=8; MAXPLIES=260; BASE_SEED=1618033
+# `--random-open-plies` est le SEUL bouton qui achète de la couverture
+# (`cpx62-1131`), et sa courbe plafonne à 24 (`cpx62-1132`, +7,11 % de buckets ;
+# le pas 24->32 est sous le bruit). Paramétré pour qu'une cellule puisse le
+# bouger SEUL : tout le reste de la recette reste celui de TURNOVER.
+ROP="${ROP:-8}"
+MODEL_NAME="${MODEL_NAME:-mixfresh}"
 HOLDOUT_MOD=10; SPLIT_SEED=577215
 L2=3e-5; MAXIT=1000; LBFGS_MAXCOR=20; LBFGS_GTOL=1e-3; CHUNK=20000
 GEN_TIMEOUT="${GEN_TIMEOUT:-5400}"; FIT_TIMEOUT="${FIT_TIMEOUT:-3600}"
@@ -184,7 +190,7 @@ for shard in $(seq 0 $((PRODUCERS-1))); do
   ( timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" "$data" \
       "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" $((BASE_SEED+shard)) \
       --nnue "$W/PARENT.pjtw" --search-params-play "$Q00" --wdl-zero-score \
-      --random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 \
+      --random-open-plies "$ROP" --explore-eps 8 --explore-decay-plies 60 \
       --pair-openings --drop-plycap --sample-meta-out "$meta" \
       > "$W/gen-s$shard.log" 2>&1 < /dev/null
     echo "$?" > "$W/done-s$shard" ) &
@@ -260,31 +266,31 @@ env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" \
   pattern_jass/tools/test_exact_fold.py -v > "$W/selftest.log" 2>&1 ||
   die "auto-tests du fold exact en échec"
 
-stage fit-mixfresh-exact
+stage fit-corpus-exact
 set +e
 env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
   timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
-    --data "$W/fit.jnnw" --feat "$W/corpus.feat" --out "$W/mixfresh.pjtw" \
+    --data "$W/fit.jnnw" --feat "$W/corpus.feat" --out "$W/$MODEL_NAME.pjtw" \
     --target wdl --loss logistic --exact-fold --tempo-stage \
     --warm-start "$W/PARENT.pjtw" --holdout-count "$HOLDOUT" \
     --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
     --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" --prune \
-    --optimizer-report "$ART/mixfresh-optimizer.json" \
+    --optimizer-report "$ART/$MODEL_NAME-optimizer.json" \
     > "$W/fit.log" 2> "$W/fit-time.log"
 fit_rc=$?
 set -e
 [ "$fit_rc" -eq 0 ] || die "fit rc=$fit_rc — voir fit.log"
-[ -s "$W/mixfresh.pjtw" ] || die "fit sans modèle"
+[ -s "$W/$MODEL_NAME.pjtw" ] || die "fit sans modèle"
 python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("success") else 1)' \
-  "$ART/mixfresh-optimizer.json" || die "le fit n'a pas convergé"
-gzip -n -c "$W/mixfresh.pjtw" > "$ART/mixfresh.pjtw.gz"
-IT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["iterations"])' "$ART/mixfresh-optimizer.json")
+  "$ART/$MODEL_NAME-optimizer.json" || die "le fit n'a pas convergé"
+gzip -n -c "$W/$MODEL_NAME.pjtw" > "$ART/$MODEL_NAME.pjtw.gz"
+IT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["iterations"])' "$ART/$MODEL_NAME-optimizer.json")
 LL=$(grep -o 'HOLDOUT_LOGLOSS[= ][0-9.]*' "$W/fit.log" | tail -1)
 say "  fit ✓ $IT itérations, ${LL:-holdout n/a}"
 
 stage verify-symmetry
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
-  "$W/mixfresh.pjtw" "$ART/symmetry-report.json" <<'PY' | tee -a "$RES"
+  "$W/$MODEL_NAME.pjtw" "$ART/symmetry-report.json" "$MODEL_NAME" <<'PY' | tee -a "$RES"
 import json, struct, sys
 import numpy as np
 import patterns as P, symmetry as S
@@ -302,12 +308,13 @@ def viol(sig):
     return float(bad/(ok+bad)) if ok+bad else 0.0
 e = viol(lambda p: (rp[p], cs[S._reorder_all(rotperm[p])]))
 c = viol(lambda p: (p, cs))
-print(f"  mixfresh rot180∘cs (EXACTE) = {100*e:7.4f} %   cs seule (approx) = {100*c:7.4f} %")
-json.dump({"mixfresh": {"violation_rot180_cs_EXACT": round(e, 8),
-                        "violation_colourswap_approx": round(c, 8)}},
+name = sys.argv[3]
+print(f"  {name} rot180∘cs (EXACTE) = {100*e:7.4f} %   cs seule (approx) = {100*c:7.4f} %")
+json.dump({name: {"violation_rot180_cs_EXACT": round(e, 8),
+                  "violation_colourswap_approx": round(c, 8)}},
           open(sys.argv[2], "w"), indent=2, sort_keys=True)
 if e > 1e-9:
-    raise SystemExit("le modèle mixfresh n'est pas antisymétrique")
+    raise SystemExit(f"le modèle {name} n'est pas antisymétrique")
 PY
 
 stage report
