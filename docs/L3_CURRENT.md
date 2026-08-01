@@ -26,7 +26,8 @@
 > screens_underpowered_below_17_elo;
 > replay_dose_axis_closed_optimum_50;
 > turnover50_promoted_general_champion;
-> exact_fold_promoted_general_champion`.
+> exact_fold_promoted_general_champion;
+> onpolicy_single_factor_flat_coverage_is_the_binding_constraint`.
 
 ## 1. Architecture du programme
 
@@ -103,6 +104,7 @@ une configuration héritée par les nouveaux bras.
 | dose mémoire | dose 75 % + readout à vues additionnées, `n=5000` | `home-0991→0993` | **axe clos, optimum intérieur à 50 % ; `TURNOVER` bat F2M, `+13,8 Elo` établi** |
 | champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **TURNOVER promu champion général** : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes |
 | champion général | succession fold exact, avec EGDB | `cpx62-1129` | **EXACT promu champion général** : `+15,12 Elo` sur `n=6000`, deux vues positives ; gardes Gen2/conversion NON jouées |
+| autojeu on-policy | un seul facteur, ratio 1:1 tenu, avec EGDB | `cpx62-1127` / `cpx62-1130` | **PLAT** : `−4,05 Elo`, IC95 `[−12,6 ; +4,5]` — pas de régression, pas de gain ; couverture `−3,9 %` à volume égal |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -563,6 +565,54 @@ correct : *remplacer le mélange 50/50 par du frais pur d'un seul modèle coûte
 par mesure** (on-policy 18,06 % de nulles contre 21,41 % pour TURNOVER : plus
 décisif, pas moins). **Expérience correcte à faire** : 1M frais d'EXACT mélangé
 1:1 avec la moitié mémoire, un seul facteur qui bouge.
+
+### Self-play on-policy à un seul facteur : PLAT — `cpx62-1127`/`1130`, 1er août
+
+L'expérience corrigée a été faite. `cpx62-1127` reconstruit le corpus de
+TURNOVER en ne changeant **qu'une chose** : le générateur de la moitié fraîche.
+Moitié mémoire **byte-identique et vérifiée par hash**, `label_depth=4`,
+`play_depth=8`, `max_plies=260`, graine `1618033`, ratio **1:1 asserté depuis le
+manifeste de mélange** (1 000 000 / 1 000 000). `cpx62-1130` porte le modèle
+obtenu contre son parent EXACT, avec EGDB :
+
+| vue | n | score | Elo |
+|---|---:|---:|---:|
+| `q00` | 3000 | 48,75 % | −8,69 |
+| `native` | 3000 | 50,08 % | +0,58 |
+| **sommé** | **6000** | **49,42 %** | **−4,05**, IC95 `[−12,6 ; +4,5]` |
+
+`A_FLAT_VS_B_NO_ESTABLISHED_GAIN`. **Deux lectures, toutes deux importantes :**
+
+1. **La régression de `1120` ne se reproduit pas.** À un seul facteur, l'intervalle
+   contient zéro. « L'on-policy dégrade » était bien un artefact du protocole à
+   deux facteurs, et l'intuition de JFC — *au pire on devrait être aussi bons* —
+   est **vérifiée**.
+2. **Mais il n'y a aucun gain non plus.** La borne haute est `+4,5 Elo` : un gain
+   de l'ordre de celui du fold (`+15`) est **exclu**. Une génération d'autojeu
+   par un champion plus fort ne fait pas monter le modèle suivant.
+
+**Mécanisme mesuré, pas supposé.** Les deux fits sont comparables ligne à ligne
+(même volume, même recette, même fold) :
+
+| | EXACT (corpus TURNOVER) | MIXFRESH (moitié fraîche on-policy) |
+|---|---:|---:|
+| records | 2 000 000 | 2 000 000 |
+| **buckets visités (≥1)** | **130 086** | **124 948** |
+| nulles | 21,4 % | 19,2 % |
+
+À volume strictement égal, le corpus on-policy visite **5 138 buckets de moins
+(−3,9 %)**. Le générateur plus fort joue **plus étroit** : il échange de la
+couverture contre de la qualité d'étiquette — et à ce stade de la campagne, **la
+couverture est précisément la ressource rare** (~4,3 observations par paramètre
+libre). Cela explique le plat sans invoquer quoi que ce soit d'invérifié.
+
+Le mécanisme « plus fort → plus de nulles → moins de signal » est **réfuté une
+seconde fois** : 19,2 % de nulles contre 21,4 %, donc **plus** décisif.
+
+**Conséquence de programme** : faire tourner l'autojeu à recette constante
+n'est pas une voie de progression tant que la couverture est le facteur
+limitant. Ce qui a payé ce jour-là, c'est le fold — une correction de méthode à
+données constantes, pas un tour de manège supplémentaire.
 
 **Contre le champion réel** (`cpx62-1121`) : EXACT bat **TURNOVER** de
 **+13,32 Elo**, IC95 `[+5,5 ; +21,2]`, n=6000 — borne basse au-dessus de zéro,
