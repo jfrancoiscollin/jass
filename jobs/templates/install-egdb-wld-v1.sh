@@ -83,32 +83,33 @@ if [ "$(find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | wc -l)" -eq 0 ]; 
 fi
 
 stage megatools
-# `set +e` sur toute la découverte d'outils : une absence est une réponse, pas
-# une erreur, et sous pipefail un `command -v` qui échoue tuerait le job.
-set +e
-MT="$(command -v megatools)"
+# ⚠️ `set +e` NE SUFFIT PAS : en bash le trap ERR se déclenche indépendamment de
+# `errexit`, et le nôtre finit par `exit`. Un `command -v` qui ne trouve rien
+# rend 1, déclenche le trap, et tue le job — c'est exactement ce qui a fait
+# échouer cpx62-1126 en trente secondes. Toute la découverte d'outils doit donc
+# ABSORBER l'échec (`|| true`), pas seulement désactiver errexit.
+MT="$(command -v megatools || true)"
 if [ -z "$MT" ]; then
-  say "  megatools absent, installation via apt"
-  apt-get update -qq  > "$W/apt.log" 2>&1
-  apt-get install -y -qq megatools >> "$W/apt.log" 2>&1
-  MT="$(command -v megatools)"
+  say "  megatools absent — installation via apt"
+  apt-get update -qq  > "$W/apt.log" 2>&1 || say "  (apt-get update non concluant, on continue)"
+  apt-get install -y -qq megatools >> "$W/apt.log" 2>&1 || say "  (apt-get install KO)"
+  MT="$(command -v megatools || true)"
 fi
 if [ -z "$MT" ]; then
-  say "  apt-get install KO, repli sur apt-get download + dpkg-deb"
+  say "  repli : apt-get download + dpkg-deb"
   rm -rf "$W/mt"; mkdir -p "$W/mt"
-  ( cd "$W/mt" && apt-get download megatools >> "$W/apt.log" 2>&1
-    D=$(ls megatools_*.deb 2>/dev/null | head -1)
-    [ -n "$D" ] && dpkg-deb -x "$D" "$W/mt/x" )
-  MT=$(find "$W/mt" -path '*/usr/bin/megatools' -type f 2>/dev/null | head -1)
+  ( cd "$W/mt" && apt-get download megatools >> "$W/apt.log" 2>&1 || true
+    D=$(ls megatools_*.deb 2>/dev/null | head -1 || true)
+    [ -n "$D" ] && dpkg-deb -x "$D" "$W/mt/x" || true ) || true
+  MT="$(find "$W/mt" -path '*/usr/bin/megatools' -type f 2>/dev/null | head -1 || true)"
 fi
-set -e
-[ -n "$MT" ] || die "megatools introuvable — voir apt.log"
+[ -n "$MT" ] || die "megatools introuvable après apt et repli dpkg — voir apt.log ; la box a-t-elle accès au réseau ?"
 chmod +x "$MT" 2>/dev/null || true
 "$MT" dl --help > /dev/null 2>&1 || die "megatools présent mais inutilisable ($MT)"
 say "  megatools ✓ ($MT)"
 
 stage download-wld
-if find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | grep -q .; then
+if find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | grep -q . ; then
   say "  base déjà extraite — téléchargement sauté"
 elif find "$DBDIR" -maxdepth 1 -iname '*Setup*.exe' 2>/dev/null | grep -q .; then
   say "  installeur déjà présent — téléchargement sauté"
@@ -122,21 +123,23 @@ fi
 
 stage extract
 if ! find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | grep -q .; then
-  SETUP=$(find "$DBDIR" -maxdepth 1 -iname '*Setup*.exe' 2>/dev/null | head -1)
+  SETUP="$(find "$DBDIR" -maxdepth 1 -iname '*Setup*.exe' 2>/dev/null | head -1 || true)"
   [ -n "$SETUP" ] || die "aucun installeur trouvé — le téléchargement a échoué silencieusement"
   rm -rf "$W/ie"; mkdir -p "$W/ie"
   curl -sL --max-time 180 "$INNO_URL" -o "$W/ie/ie.tar.xz" || die "innoextract : téléchargement KO"
   ( cd "$W/ie" && tar xJf ie.tar.xz )
-  IE=$(find "$W/ie" -path '*/bin/amd64/innoextract' -type f 2>/dev/null | head -1)
+  IE="$(find "$W/ie" -path '*/bin/amd64/innoextract' -type f 2>/dev/null | head -1 || true)"
   [ -n "$IE" ] || die "innoextract introuvable dans l'archive"
   chmod +x "$IE"
   rm -rf "$EXDIR"; mkdir -p "$EXDIR"
   ( cd "$DBDIR" && "$IE" --extract --output-dir "$EXDIR" "$SETUP" ) > "$W/inno.log" 2>&1 ||
     die "innoextract en échec — voir inno.log"
   # L'installeur ne sert plus une fois la base extraite : ~3,5 Go rendus au disque.
-  find "$APP" -maxdepth 1 -name 'db2.idx1' | grep -q . && { rm -rf "$DBDIR"; say "  installeur supprimé, espace récupéré"; }
+  if find "$APP" -maxdepth 1 -name 'db2.idx1' | grep -q .; then
+    rm -rf "$DBDIR"; say "  installeur supprimé, ~3,5 Go rendus au disque"
+  fi
 fi
-NFILES=$(find "$APP" -maxdepth 1 -type f 2>/dev/null | wc -l)
+NFILES="$(find "$APP" -maxdepth 1 -type f 2>/dev/null | wc -l || echo 0)"
 find "$APP" -maxdepth 1 -name 'db2.idx1' | grep -q . || die "base incomplète : db2.idx1 manquant"
 find "$APP" -maxdepth 1 -name 'db5.idx1' | grep -q . || die "base incomplète : db5.idx1 manquant"
 say "  base ✓ $NFILES fichiers, $(du -sh "$APP" 2>/dev/null | cut -f1)"
