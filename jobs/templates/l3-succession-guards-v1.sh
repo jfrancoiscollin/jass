@@ -55,6 +55,13 @@ P3_GAUGE_SHA="cd92710fec7934d113ccade22180d4cddf029b084dd20c8fa9e30ca686767c91"
 P4_GAUGE_SHA="0d925c4fbd7e7928bf6d86bd2cd40f796ee6805e0010e51d5d6483986da2a1ac"
 FIXED_DEFENDER_CODE_SHA="9c1d1e8eaaa5b9bbd86105f7f9807a3033784186"
 GAUGE_PREFIX="${GAUGE_PREFIX:-r2:jass-data/runs/home-0954-l3-pure-m1-abextras-validation-v5/20260724T234944Z-8efd1c45}"
+# Par défaut l'attaquant est construit depuis l'arbre du job — on veut tester le
+# modèle tel qu'il sera utilisé. Mais cela rend un chiffre de conversion
+# comparable UNIQUEMENT à un autre mesuré avec le même moteur attaquant : la
+# règle du défenseur figé protégeait la moitié de la mesure et laissait l'autre
+# dériver. `ATTACKER_CODE_SHA` permet de figer aussi l'attaquant, et donc de
+# rejouer une mesure ancienne avec son moteur d'époque.
+ATTACKER_CODE_SHA="${ATTACKER_CODE_SHA:-}"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 MON=""
@@ -188,11 +195,26 @@ done
 export JASS_EGDB_PATH="$EGDIR" JASS_EGDB_CACHE_MB="$CACHE_MB"
 grep -q "g_emasks"        src/scan_eval.cpp || { restore_src; die "archi: scan_eval sans g_emasks"; }
 grep -q "has_any_capture" src/search.cpp    || { restore_src; die "archi: search sans has_any_capture"; }
+# Ces trois assertions portent sur l'ARBRE DU JOB, donc sur le binaire Gen2 et,
+# par défaut, sur l'attaquant. Avec `ATTACKER_CODE_SHA` l'attaquant peut être
+# LÉGITIMEMENT antérieur au correctif racine-nulle — c'est précisément l'objet
+# d'une mesure d'archéologie, et le `say` ci-dessous le dit dans le rapport.
 grep -q "root_is_drawn"   src/search.cpp    || { restore_src; die "moteur antérieur au correctif racine-nulle"; }
 
-python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1
-cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
-cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
+if [ -n "$ATTACKER_CODE_SHA" ]; then
+  ATK_SRC="$W/attacker-code"; mkdir -p "$ATK_SRC"
+  git archive "$ATTACKER_CODE_SHA" | tar -x -C "$ATK_SRC"
+  ( cd "$ATK_SRC" && python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf ) \
+    > "$W/gen8.log" 2>&1
+  cp "$ATK_SRC/pattern_jass/tools/patterns.py" "$GEOM/patterns.py"
+  cmake -S "$ATK_SRC" -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
+  say "  ⚠️ attaquant FIGÉ au SHA $ATTACKER_CODE_SHA (mesure d'archéologie, pas le moteur courant)"
+else
+  ATK_SRC="."
+  python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1
+  cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
+  cmake -S . -B "$W/build8" $FLAGS > "$W/cmake8.log" 2>&1
+fi
 cmake --build "$W/build8" -j"$NCPU" --target jass > "$W/build8.log" 2>&1
 J8="$W/build8/jass"
 
