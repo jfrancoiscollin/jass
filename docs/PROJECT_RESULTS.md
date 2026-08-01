@@ -415,7 +415,7 @@ différences au sein d'un protocole apparié portent une causalité.
 | optimisations eval 2026-07 | +13–15 %, puis +4,8–9,9 % NPS selon phase | bakées, byte-identiques |
 | MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
 | EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
-| **fold sur la symétrie exacte du damier** | **+17,10 Elo**, IC95 `[+9,2 ; +25,0]`, n=6000 (`cpx62-1118`) | **acquis fit**, non baké ; EGDB absent de la porte donc Elo non comparable en absolu |
+| **fold sur la symétrie exacte du damier** | **+17,10 Elo** vs son contrôle IC95 `[+9,2 ; +25,0]` ; **+13,32 Elo** vs le champion TURNOVER IC95 `[+5,5 ; +21,2]`, n=6000 chacune (`cpx62-1118`/`1121`) | **acquis fit**, candidat à promotion non baké ; EGDB absent des portes donc Elo non comparable en absolu |
 
 ## 4.3 Symétries imposées au fit — la vraie plutôt que l'approximative
 

@@ -143,12 +143,36 @@ justesse**, pas d'un tour de données de plus. Ce qui ne dit pas qu'aucune boucl
 on-policy ne peut marcher — seulement que celle-ci, à ce volume et à ce
 paramétrage, coûte.
 
+## Contre le champion réel — `cpx62-1121`
+
+La porte `1118` isole le fold proprement mais ne dit rien de ce qu'on expédie.
+EXACT contre **TURNOVER**, le champion courant, même binaire, même forme :
+
+| | |
+|---|---:|
+| n | 6 000 |
+| EXACT | 2487 W / 1256 D / 2257 L |
+| taux | 0,5192 — IC95 `[0,5079 ; 0,5304]` |
+| **Elo** | **+13,32** — IC95 `[+5,5 ; +21,2]` |
+
+Verdict `A_BEATS_B_HUMAN_REVIEW`. Borne basse au-dessus de zéro : **gain établi
+contre le champion**, pas seulement contre un bras de contrôle.
+
+Les trois mesures sont cohérentes entre elles : +17,1 contre CONTROL, +13,3
+contre TURNOVER. L'écart de ~4 Elo entre les deux références est ce qu'on attend
+si CONTROL est marginalement plus faible que TURNOVER — pile numérique
+différente, et 95 itérations contre 204 à l'origine.
+
+⚠️ Ce n'est **pas** une porte de succession : EGDB était absent, donc l'Elo n'est
+pas comparable en absolu aux portes de promotion antérieures, qui tournaient avec
+la base de finales. **Candidat à promotion, promotion non demandée** — c'est un
+go explicite de JFC, et il se prendrait sur une porte avec EGDB.
+
 ## Ce qui reste ouvert
 
-- **Promotion non demandée.** Le modèle exact bat son contrôle, pas le champion
-  courant : TURNOVER a été ajusté sous une autre pile numérique et joue avec
-  EGDB dans les portes de succession. Une porte EXACT contre TURNOVER, avec
-  EGDB, reste à faire avant toute question de champion.
+- **Promotion : candidat, non demandée.** EXACT bat TURNOVER de +13,3, mais sans
+  EGDB. Rejouer la porte **avec EGDB** est le préalable à toute question de
+  succession — et la décision reste un go explicite de JFC.
 - **4cf en dur dans le moteur** : purement une optimisation mémoire/cache
   maintenant que le point statistique est acquis. Rien ne l'exige.
 - **Les autres folds** : `--full-fold` existe et ajoute translation et
@@ -159,4 +183,7 @@ paramétrage, coûte.
 ## Artefacts
 
 - refit deux bras : `r2:jass-data/runs/cpx62-1117-l3-exact-fold-refit-v1/20260731T235446Z-970f14de`
-- porte : `r2:jass-data/runs/cpx62-1118-l3-exact-fold-gate-v1/`
+- porte fold : `r2:jass-data/runs/cpx62-1118-l3-exact-fold-gate-v1/`
+- passe on-policy : `r2:jass-data/runs/cpx62-1119-l3-exact-fold-onpolicy-v1/20260801T010633Z-c0069d00`
+- porte on-policy : `r2:jass-data/runs/cpx62-1120-l3-onpolicy-gate-v1/`
+- porte contre champion : `r2:jass-data/runs/cpx62-1121-l3-exact-vs-turnover-gate-v1/`

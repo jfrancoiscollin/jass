@@ -551,8 +551,14 @@ Un tour de données de plus dégrade ; le gain venait de la correction de justes
 pas du réengendrement. Cinquième échec d'affilée d'un axe de mise en forme des
 données.
 
-**Promotion non demandée** : le modèle exact bat son propre contrôle, pas
-TURNOVER.
+**Contre le champion réel** (`cpx62-1121`) : EXACT bat **TURNOVER** de
+**+13,32 Elo**, IC95 `[+5,5 ; +21,2]`, n=6000 — borne basse au-dessus de zéro,
+gain établi. Les trois mesures sont cohérentes (+17,1 vs CONTROL, +13,3 vs
+TURNOVER, l'écart correspondant à un CONTROL marginalement plus faible).
+
+**Promotion : CANDIDAT, non demandée.** EGDB était absent des portes, donc l'Elo
+n'est pas comparable aux portes de succession. Rejouer **avec EGDB** est le
+préalable, et la décision est un go explicite de JFC.
 
 Détail complet, protocole et limites :
 [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
