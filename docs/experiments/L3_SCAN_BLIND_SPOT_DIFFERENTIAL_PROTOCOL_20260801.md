@@ -80,13 +80,14 @@ Lectures préenregistrées :
 
 ## Sizing et autorisation
 
-`cpx62-1114` a produit 4,99 M positions en 27 minutes avec 16 shards et le même
-budget de 25 minutes. Les deux passes sont attendues à environ 27–35 minutes
-chacune, puis moins de 5 minutes pour le readout, soit **60–75 minutes
-séquentielles**. Le budget par passe reste borné même si le build 32cf donne un
-débit différent.
+Le run est placé sur HOME, où `nproc=16`, le disque et le runtime Scan ont été
+revérifiés avant soumission. Chaque passe reste bornée à 1 500 secondes par
+shard, en parallèle : un débit différent de cpx62 changera le volume observé,
+pas la durée scientifique. Avec build/fetch, compter environ 30–40 minutes par
+passe puis moins de 5 minutes pour le readout, soit **65–85 minutes
+séquentielles**.
 
-Jobs préparés sous
+Jobs HOME préparés sous
 `jobs/prepared/l3-scan-blind-spot-differential-20260801/`. Ils ne sont pas
-soumis par ce commit. Soumission seulement après validation du sizing et go
-explicite JFC ; aucune continuation automatique.
+soumis par ce commit. Go HOME explicite donné par JFC le 1er août ; aucune
+continuation automatique.

@@ -260,15 +260,15 @@ class PreparedJobsContract(unittest.TestCase):
         prepared = (ROOT / "jobs/prepared" /
                     "l3-scan-blind-spot-differential-20260801")
         cls.exact = (prepared /
-                     "cpx62-1142-l3-scan-blind-spot-atlas-exact-v1.sh").read_text(
+                     "home-1143-l3-scan-blind-spot-atlas-exact-v1.sh").read_text(
                          encoding="utf-8"
                      )
         cls.gen2 = (prepared /
-                    "cpx62-1143-l3-scan-blind-spot-atlas-gen2-v1.sh").read_text(
+                    "home-1144-l3-scan-blind-spot-atlas-gen2-v1.sh").read_text(
                         encoding="utf-8"
                     )
         cls.readout = (prepared /
-                       "cpx62-1144-l3-scan-blind-spot-differential-v1.sh").read_text(
+                       "home-1145-l3-scan-blind-spot-differential-v1.sh").read_text(
                            encoding="utf-8"
                        )
         cls.readout_template = (
@@ -295,11 +295,11 @@ class PreparedJobsContract(unittest.TestCase):
 
     def test_readout_is_wired_to_both_completed_arms(self):
         self.assertIn(
-            'EXPECTED_EXACT_ATLAS_JOB="cpx62-1142-l3-scan-blind-spot-atlas-exact-v1"',
+            'EXPECTED_EXACT_ATLAS_JOB="home-1143-l3-scan-blind-spot-atlas-exact-v1"',
             self.readout,
         )
         self.assertIn(
-            'EXPECTED_GEN2_ATLAS_JOB="cpx62-1143-l3-scan-blind-spot-atlas-gen2-v1"',
+            'EXPECTED_GEN2_ATLAS_JOB="home-1144-l3-scan-blind-spot-atlas-gen2-v1"',
             self.readout,
         )
         self.assertIn("EXACT_ATLAS_PREFIX", self.readout)

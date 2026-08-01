@@ -880,7 +880,7 @@ sous-alimenté ») a été falsifiée par `home-1004` : cet atlas est le premier
 Détail, tableaux et limites :
 [`experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md).
 
-**Témoin préparé, non lancé — `cpx62-1142/1143/1144`.** Le protocole suivant
+**Témoin autorisé sur HOME — `home-1143/1144/1145`.** Le protocole suivant
 remplace le témoin TURNOVER envisagé ci-dessus par le champion **EXACT (8cf)**,
 puis rejoue exactement le même atlas avec **Gen2 (32cf)** avant un readout
 différentiel descriptif. Les deux bras gardent `n_ext = 120`, le même binaire
@@ -889,8 +889,8 @@ build (`8 * 3^12` contre `32 * 3^12`). Ce différentiel peut donc comparer la
 géométrie des profils d'erreur sous les deux représentations. Il ne permet ni
 une attribution aux features (constantes), ni une comparaison de classe
 linéaire/non-linéaire (deux bras linéaires), ni une ablation pure des poids
-(trajectoires d'entraînement différentes). Aucun job n'est soumis avant le go
-compute explicite de JFC.
+(trajectoires d'entraînement différentes). Go compute HOME donné par JFC le
+1er août ; exécution strictement séquentielle, sans continuation automatique.
 
 Préréglage, invariants et limites :
 [`experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md).
