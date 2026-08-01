@@ -11,6 +11,15 @@ Bucket reconstruction reuses the training path verbatim: `train_stream.Folder`
 in colour-fold mode on the men bitboards (`cols_signs(bm, wm)`), exactly what
 the L3 fit consumes (no --king-patterns). Must run with PYTHONPATH pointing at
 the frozen 8cf geometry so `patterns` is the 8cf variant.
+
+`--fold exact` measures the same corpus in the space the fit now actually
+optimises. Since 1 August 2026 every L3 fit runs under `--exact-fold`, which
+folds on `rot180 o colour-swap` — the only exact symmetry of the board —
+instead of `cs` alone, which is not one. Coverage is a count of *distinct
+canonical buckets reached*, so it is defined by the fold: the same corpus
+scores differently under the two, and the two numbers must never be compared
+to each other. The report states which fold produced it, and the denominator
+is the fold's own parameter space.
 """
 from __future__ import annotations
 
@@ -88,11 +97,44 @@ class ColorFolder:
         return canonical + offsets[None, :]
 
 
-def compute(data_paths, chunk: int, top_k: int) -> dict:
-    folder = ColorFolder()
+class ExactFolder:
+    """Fold on `rot180 o colour-swap`, the only exact symmetry of the board.
+
+    Shares `build_exact_canon` with the trainer rather than re-deriving the
+    orbit here: a coverage audit that disagreed with the fit about which
+    buckets are the same bucket would measure nothing useful.
+
+    `canon_col[p, i]` is a canonical id drawn from the *unfolded* space
+    `[0, NUM_PATTERNS * 3**12)`, of which exactly half are reachable. Ids are
+    therefore remapped to a dense range so the visit array stays the size of
+    the real parameter space and `coverage_fraction` keeps its meaning.
+    """
+
+    def __init__(self) -> None:
+        import symmetry  # noqa: PLC0415 — needs the 8cf `patterns` already bound
+
+        canon_col, _sign = symmetry.build_exact_canon()
+        dense = np.full(canon_col.max() + 1, -1, dtype=np.int64)
+        reachable = np.unique(canon_col)
+        dense[reachable] = np.arange(reachable.size, dtype=np.int64)
+        self.canon_dense = dense[canon_col]          # (NP, 3**12) -> [0, TB)
+        self.PAT_BUCKETS = int(reachable.size // patterns.NUM_PATTERNS)
+        self.TB = int(reachable.size)
+
+    def columns(self, black_men: np.ndarray, white_men: np.ndarray) -> np.ndarray:
+        indices = patterns.extract_indices(black_men, white_men)
+        pattern_ids = np.arange(patterns.NUM_PATTERNS, dtype=np.int64)
+        return self.canon_dense[pattern_ids[None, :], indices]
+
+
+FOLDERS = {"color": ColorFolder, "exact": ExactFolder}
+
+
+def compute(data_paths, chunk: int, top_k: int, fold: str = "color") -> dict:
+    folder = FOLDERS[fold]()
     NP = patterns.NUM_PATTERNS
-    CFB = folder.PAT_BUCKETS            # colour-folded buckets per pattern
-    TB = folder.TB                      # NP * CFB = trained parameter space
+    CFB = folder.PAT_BUCKETS            # folded buckets per pattern
+    TB = folder.TB                      # trained parameter space under this fold
     visits = np.zeros(TB, dtype=np.int64)
     total_records = 0
     for path in data_paths:
@@ -111,16 +153,23 @@ def compute(data_paths, chunk: int, top_k: int) -> dict:
     visited = int((visits > 0).sum())
     thresholds = {f"ge_{k}": int((visits >= k).sum()) for k in (1, 10, 100, 1000)}
 
-    per_pattern = []
-    for p in range(NP):
-        seg = visits[p * CFB:(p + 1) * CFB]
-        per_pattern.append({
-            "pattern": p,
-            "buckets": int(CFB),
-            "visited": int((seg > 0).sum()),
-            "coverage": round(float((seg > 0).mean()), 6),
-            "visit_sum": int(seg.sum()),
-        })
+    # Only the colour fold keeps one contiguous block of buckets per pattern.
+    # `rot180 o cs` maps pattern p onto pattern rp[p], so a canonical id can
+    # live under a different pattern than the one that reached it and the
+    # blocks are neither contiguous nor equal-sized. Slicing them anyway would
+    # produce a per-pattern table that reads plausibly and means nothing.
+    per_pattern = None
+    if fold == "color":
+        per_pattern = []
+        for p in range(NP):
+            seg = visits[p * CFB:(p + 1) * CFB]
+            per_pattern.append({
+                "pattern": p,
+                "buckets": int(CFB),
+                "visited": int((seg > 0).sum()),
+                "coverage": round(float((seg > 0).mean()), 6),
+                "visit_sum": int(seg.sum()),
+            })
 
     nz = np.sort(visits[visits > 0])[::-1]
     topk_mass = float(nz[:top_k].sum()) / total_visits if total_visits else 0.0
@@ -143,10 +192,12 @@ def compute(data_paths, chunk: int, top_k: int) -> dict:
     return {
         "schema": 1,
         "stage": "l3_bucket_visits",
+        "fold": fold,
         "geometry": {
             "num_patterns": int(NP),
-            "buckets_per_pattern_colorfold": int(CFB),
+            "buckets_per_pattern": int(CFB),
             "trained_buckets_total": int(TB),
+            "per_pattern_blocks_are_contiguous": fold == "color",
         },
         "corpus": {
             "files": [str(p) for p in data_paths],
@@ -168,6 +219,8 @@ def compute(data_paths, chunk: int, top_k: int) -> dict:
         "per_pattern": per_pattern,
         "capacity_heuristic": heuristic,
         "note": "heuristic is diagnostic; 32cf go/no-go is a human decision on coverage + cumulative volume",
+        "comparability": "coverage is defined by the fold; never compare a "
+                         "color-fold count with an exact-fold one",
     }
 
 
@@ -177,8 +230,11 @@ def main(argv=None) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--chunk", type=int, default=500000)
     ap.add_argument("--top-k", type=int, default=100)
+    ap.add_argument("--fold", choices=sorted(FOLDERS), default="color",
+                    help="bucket space to count in; 'exact' is what the fit "
+                         "has optimised since 1 August 2026")
     args = ap.parse_args(argv)
-    report = compute([Path(p) for p in args.data], args.chunk, args.top_k)
+    report = compute([Path(p) for p in args.data], args.chunk, args.top_k, args.fold)
     Path(args.out).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({k: report[k] for k in ("corpus", "coverage", "concentration", "capacity_heuristic")}, sort_keys=True))
     return 0
