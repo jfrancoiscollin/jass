@@ -60,7 +60,11 @@ L2=3e-5
 # exacte. Défaut = --color-fold, donc comportement historique inchangé pour
 # tout appelant qui ne le définit pas.
 FOLD_FLAG="${FOLD_FLAG:---color-fold}"
-case "$FOLD_FLAG" in --color-fold|--exact-fold|--full-fold) ;; *)
+# `--full-fold` n'est PAS dans la liste : il plie sur `translate` (approximatif)
+# et sur `LR`, dont on a mesuré qu'elle n'est pas une symétrie du tout (36 des 81
+# adjacences diagonales cassées). Aucun job de production ne l'a jamais utilisé —
+# vérifié sur tout l'historique — et ce n'est pas ici qu'il faut commencer.
+case "$FOLD_FLAG" in --color-fold|--exact-fold) ;; *)
   echo "FOLD_FLAG invalide : $FOLD_FLAG" >&2; exit 2;; esac
 MAXIT=1000
 LBFGS_MAXCOR=20
