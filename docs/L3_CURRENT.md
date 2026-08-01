@@ -543,8 +543,16 @@ n'est **pas comparable en absolu** aux portes antérieures (la comparaison inter
 entre les deux bras, elle, tient — même binaire) ; et le holdout n'a pas servi
 d'arbitre (écart 0,0004, et la perte ne prédit pas la force ici).
 
+**Passe on-policy : NÉGATIVE.** `cpx62-1119` a fermé la boucle (le modèle exact
+joue ses propres 2M positions, refit sous `--exact-fold`, sortie exactement
+antisymétrique). La porte `cpx62-1120` contre son propre parent donne
+**−9,15 Elo**, IC95 `[−16,9 ; −1,4]` — **perte établie**, borne haute sous zéro.
+Un tour de données de plus dégrade ; le gain venait de la correction de justesse,
+pas du réengendrement. Cinquième échec d'affilée d'un axe de mise en forme des
+données.
+
 **Promotion non demandée** : le modèle exact bat son propre contrôle, pas
-TURNOVER. Une porte EXACT contre TURNOVER, avec EGDB, reste à faire.
+TURNOVER.
 
 Détail complet, protocole et limites :
 [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).

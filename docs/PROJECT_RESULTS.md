@@ -445,6 +445,12 @@ Reste vrai et non encore exploité : la réflexion gauche-droite est **exacte**
 entièrement vrai. La translation entre patterns, elle, est approximative — même
 piège que `cs` seule.
 
+**Corollaire mesuré le même jour** : un tour **on-policy** depuis le modèle exact
+(2M positions rejouées par lui, refit sous le même fold) rend **−9,15 Elo**,
+IC95 `[−16,9 ; −1,4]`, n=6000 (`cpx62-1119`/`1120`). Perte établie. Le gain vient
+de la **justesse de la contrainte**, pas d'un réengendrement des données —
+cinquième axe de mise en forme des données à échouer.
+
 Détail : [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
 
 ## 5. Portes closes à protocole causal identique

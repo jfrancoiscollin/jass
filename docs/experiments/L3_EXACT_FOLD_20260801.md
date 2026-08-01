@@ -112,15 +112,43 @@ absolu** aux portes antérieures qui tournaient avec la base de finales.
 ⚠️ Le holdout n'a **pas** servi d'arbitre. L'écart y est de 0,0004, et ce projet
 a mesuré quatre fois que la perte en holdout ne prédit pas la force.
 
+## La passe on-policy — négative (`cpx62-1119` / `cpx62-1120`)
+
+Le corpus refitté avait été engendré par l'ancienne politique. `cpx62-1119` a
+fermé la boucle : le modèle exact a joué ses propres 2 000 000 de positions
+(12 producteurs, d8, mêmes paramètres de génération que `l3-pure-m2-train-v1`),
+puis a été refitté dessus sous `--exact-fold` — sortie exactement antisymétrique,
+481 itérations, holdout 0,450177.
+
+Porte `cpx62-1120`, ONPOLICY contre son propre parent EXACT, même forme deux
+vues :
+
+| | |
+|---|---:|
+| n | 6 000 |
+| ONPOLICY | 2261 W / 1320 D / 2419 L |
+| taux | 0,4868 — IC95 `[0,4757 ; 0,4980]` |
+| **Elo** | **−9,15** — IC95 `[−16,9 ; −1,4]` |
+
+Verdict `A_BELOW_B`. **Perte établie, pas un plat** : la borne haute est sous
+zéro.
+
+Le holdout de la passe on-policy (0,450177) n'est **pas** comparable à celui du
+refit (0,442898) — corpus différents, distributions différentes.
+
+Un seul tour on-policy depuis le modèle exact **dégrade**. Ce résultat s'aligne
+sur l'histoire de la campagne : les axes de *mise en forme des données* échouent
+les uns après les autres, et le seul gain acquis vient d'une **correction de
+justesse**, pas d'un tour de données de plus. Ce qui ne dit pas qu'aucune boucle
+on-policy ne peut marcher — seulement que celle-ci, à ce volume et à ce
+paramétrage, coûte.
+
 ## Ce qui reste ouvert
 
 - **Promotion non demandée.** Le modèle exact bat son contrôle, pas le champion
   courant : TURNOVER a été ajusté sous une autre pile numérique et joue avec
   EGDB dans les portes de succession. Une porte EXACT contre TURNOVER, avec
   EGDB, reste à faire avant toute question de champion.
-- **Passe on-policy** (`cpx62-1119`) : le corpus refitté avait été engendré par
-  l'ancienne politique. Le modèle exact rejoue son propre self-play et est
-  refitté dessus.
 - **4cf en dur dans le moteur** : purement une optimisation mémoire/cache
   maintenant que le point statistique est acquis. Rien ne l'exige.
 - **Les autres folds** : `--full-fold` existe et ajoute translation et
