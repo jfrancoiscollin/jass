@@ -322,8 +322,8 @@ stage smoke-test-round-trip
 # Règle 3/9 : le parser doit lire ce que le job écrit, vérifié sur un
 # échantillon minuscule AVANT d'engager le budget complet. Un round-trip cassé
 # découvert au finalize, c'est le budget entier perdu.
-python3 -m pytest jobs/tests/test_scan_blind_spot_collector.py \
-                  jobs/tests/test_scan_blind_spot_atlas.py -q \
+python3 -m unittest jobs.tests.test_scan_blind_spot_collector \
+                    jobs.tests.test_scan_blind_spot_atlas \
   > "$W/selftest.log" 2>&1 || die "auto-tests en échec — voir selftest.log"
 timeout 600 python3 jobs/tools/scan_blind_spot_collector.py \
   --jass "$JASS" --scan "$SCAN_BIN" --pattern "$W/MODEL.pjtw" \
