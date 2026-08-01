@@ -43,7 +43,10 @@ monitor(){
         printf 'elapsed_min=%d\n' "$(( ($(date +%s) - t0) / 60 ))"
         printf 'disk_free_mb=%s\n' "$(df -Pm /root | awk 'NR==2{print $4}')"
         printf 'dbdir_mb=%s\n' "$(du -sm "$DBDIR" 2>/dev/null | cut -f1 || echo 0)"
-        printf 'app_files=%s\n' "$(find "$APP" -maxdepth 1 -type f 2>/dev/null | wc -l)"
+        # `2>/dev/null` masque le message, pas le code de retour : tant que $APP
+        # n'existe pas, `find` rend 1, `pipefail` propage, et le trap ERR écrit
+        # dans RESULTS. C'est ce qui a sali le rapport de cpx62-1128.
+        printf 'app_files=%s\n' "$(find "$APP" -maxdepth 1 -type f 2>/dev/null | wc -l || true)"
       } > "$PROG.tmp"
       mv "$PROG.tmp" "$PROG"; cp "$PROG" "$ART/PROGRESS.txt"
       sleep 60
@@ -77,7 +80,7 @@ monitor
 stage disk-guard
 AVAIL_MB=$(df -Pm /root | awk 'NR==2{print $4}')
 say "  /root libre = ${AVAIL_MB} Mo (besoin ~${NEED_GB} Go)"
-if [ "$(find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | wc -l)" -eq 0 ]; then
+if [ "$(find "$APP" -maxdepth 1 -name 'db2.idx1' 2>/dev/null | wc -l || true)" -eq 0 ]; then
   [ "${AVAIL_MB:-0}" -ge $((NEED_GB * 1024)) ] ||
     die "moins de ${NEED_GB} Go libres — le téléchargement + extraction en demande autant"
 fi
