@@ -63,6 +63,14 @@ sont pas des facteurs de DoE.
    `+13,73 Elo`, IC95 `[50,72 ; 53,23]`, avec cinq garde-fous sur cinq verts.
    Consolidé sur quatre pools indépendants, l'écart vaut `+11,24 Elo` sur
    17 000 parties. F2M devient le champion précédent, archivé et restaurable.
+   Depuis la porte `cpx62-1129` du 1er août 2026, **EXACT remplace TURNOVER** :
+   `52,175 %` sur `n=6000` à vues additionnées, `+15,12 Elo`, IC95
+   `[50,95 ; 53,40]`, **avec la base de finales**, les deux vues positives. Le
+   gain ne vient d'aucune donnée neuve ni d'aucune capacité neuve : le fit
+   imposait `cs` seule, qui n'est pas une symétrie du damier, pendant que la
+   seule exacte — `rot180 ∘ cs` — était violée à `25,8 %` ; `--exact-fold`
+   échange l'une contre l'autre à `TB` constant. ⚠️ Succession **moins garnie**
+   que celle de TURNOVER : ni garde Gen2, ni conversion P3/P4, ni second pool.
 5. Le problème de conversion est maintenant séparé de la simple détection :
    Jass trouve souvent les premières idées comme Scan, mais réalise mal
    l'avantage. Sur le thermomètre PC Blues, la conversion mesurée était

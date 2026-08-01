@@ -95,8 +95,12 @@ Deux étapes consécutives sans pente de force positive ferment la continuation 
 
 - F2M a passé le gate de force réparé `home-0965` dans les deux vues et a été
   champion général jusqu'au 27 juillet 2026. **TURNOVER l'a remplacé** après la
-  porte de succession `home-0996` ; F2M devient le champion précédent, archivé
-  et restaurable. `gen2-mmto` reste le champion historique figé et un garde-fou
-  externe.
+  porte de succession `home-0996`, puis a été champion jusqu'au 1er août 2026.
+  **EXACT l'a remplacé à son tour** après la porte `cpx62-1129` (`+15,12 Elo`,
+  `n=6000`, avec EGDB) : même corpus, même recette, seule change la contrainte
+  de symétrie imposée au fit — `rot180 ∘ cs`, la seule exacte, au lieu de `cs`
+  seule qui ne l'est pas. Les champions précédents restent archivés et
+  restaurables. `gen2-mmto` reste le champion historique figé et un garde-fou
+  externe — **non rejoué contre EXACT**.
 - `L3-PURE` est la voie générale et mérite une expérience de maturité contrôlée.
 - `L3-IMBALANCE2` reste un laboratoire spécialiste indépendant ; son éventuelle valeur future réside dans une combinaison bornée avec `L3-PURE`, pas dans son remplacement.

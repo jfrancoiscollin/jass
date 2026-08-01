@@ -25,7 +25,8 @@
 > l2_factor_closed_on_3e5; views_agree_no_view_effect;
 > screens_underpowered_below_17_elo;
 > replay_dose_axis_closed_optimum_50;
-> turnover50_promoted_general_champion`.
+> turnover50_promoted_general_champion;
+> exact_fold_promoted_general_champion`.
 
 ## 1. Architecture du programme
 
@@ -101,6 +102,7 @@ une configuration héritée par les nouveaux bras.
 | méthodologie | accord des vues + puissance, 65 cellules déjà publiées | analyse locale, aucune partie neuve | **vues équivalentes (`p≈0,88`) ; écrans `n=1000` aveugles sous ~17 Elo** |
 | dose mémoire | dose 75 % + readout à vues additionnées, `n=5000` | `home-0991→0993` | **axe clos, optimum intérieur à 50 % ; `TURNOVER` bat F2M, `+13,8 Elo` établi** |
 | champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **TURNOVER promu champion général** : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes |
+| champion général | succession fold exact, avec EGDB | `cpx62-1129` | **EXACT promu champion général** : `+15,12 Elo` sur `n=6000`, deux vues positives ; gardes Gen2/conversion NON jouées |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -334,10 +336,16 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. champion général courant : **TURNOVER**, promu le 27 juillet 2026 après la
-   porte `home-0996` ; F2M devient le champion précédent, archivé dans
-   l'object store et restaurable ; Gen2-mmto reste la référence historique
-   figée ;
+1. champion général courant : **EXACT**, promu le 1er août 2026 après la porte
+   `cpx62-1129` (`+15,12 Elo` sur `n=6000`, **avec EGDB**) ; TURNOVER — champion
+   du 27 juillet au 1er août après `home-0996` — devient le champion précédent,
+   archivé dans l'object store et restaurable ; F2M reste le champion d'avant ;
+   Gen2-mmto reste la référence historique figée. ⚠️ Cette succession est **moins
+   garnie** que celle de TURNOVER : garde Gen2, conversion P3/P4 et second pool
+   indépendant n'ont **pas** été jouées. Bornes explicites :
+   [`experiments/L3_EXACT_PROMOTION_20260801.md`](experiments/L3_EXACT_PROMOTION_20260801.md) ;
+1bis. **tout nouveau fit L3 utilise `--exact-fold`** : `--color-fold` impose une
+   contrainte fausse (`cs` seule) et perd le gain ;
 2. facteur L2 **clos** : `1e-4` rejeté, `1e-5` non répliqué, `L2=3e-5` retenu ;
 3. croisement replay `0/25 %` au L2 retenu : c'est le prochain bras à
    préenregistrer ;
@@ -561,9 +569,18 @@ décisif, pas moins). **Expérience correcte à faire** : 1M frais d'EXACT méla
 gain établi. Les trois mesures sont cohérentes (+17,1 vs CONTROL, +13,3 vs
 TURNOVER, l'écart correspondant à un CONTROL marginalement plus faible).
 
-**Promotion : CANDIDAT, non demandée.** EGDB était absent des portes, donc l'Elo
-n'est pas comparable aux portes de succession. Rejouer **avec EGDB** est le
-préalable, et la décision est un go explicite de JFC.
+**Objection EGDB levée** (`cpx62-1129`, 1er août). `cpx62-1128` a posé la base
+WLD 2-7 sur cpx62 (158 fichiers, 4,8 Go, `max_pieces=7`, invariant du self-check
+vert), et la porte rejouée **avec** la base rend **+15,12 Elo**, IC95
+`[+6,6 ; +23,7]`, `n=6000` — `q00` `52,60 %` et `native` `51,75 %`, **les deux
+bornes basses au-dessus de 50 %**. Le gain n'était donc pas un artefact du
+réglage sans tablebase.
+
+**PROMU CHAMPION GÉNÉRAL le 1er août 2026**, sur go explicite de JFC. La
+promotion est purement documentaire et réversible par `git revert`. Elle est
+**moins garnie** que celle de TURNOVER — ni garde Gen2, ni conversion P3/P4, ni
+second pool indépendant — et l'enregistrement le borne nommément :
+[`experiments/L3_EXACT_PROMOTION_20260801.md`](experiments/L3_EXACT_PROMOTION_20260801.md).
 
 Détail complet, protocole et limites :
 [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
