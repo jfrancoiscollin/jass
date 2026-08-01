@@ -76,13 +76,26 @@ artefact du réglage sans tablebase.
 **Cette promotion est moins garnie que celle de TURNOVER**, qui exigeait cinq
 garde-fous sur cinq. Ce qui manque, nommément :
 
-- **Aucune garde Gen2.** EXACT n'a pas été mesuré contre `gen2-mmto`. Rien
-  n'exclut une régression contre la référence historique figée.
-- **Aucune cellule de conversion P3/P4.** Le plancher de conversion à défenseur
-  figé n'a pas été rejoué.
-- **Un seul pool.** `1121` et `1129` partagent le pool `home-1004` ; ils
-  diffèrent par la présence d'EGDB, pas par les ouvertures. Il n'y a donc pas de
-  consolidation multi-pools comme les quatre pools de TURNOVER.
+- ~~**Aucune garde Gen2.**~~ **LEVÉE** (`cpx62-1137`) : `59,69 %`, `+68,21 Elo`,
+  IC95 `[0,5845 ; 0,6093]`, les deux vues positives — **au-dessus des `+62,03`
+  de TURNOVER**. Aucune régression contre la référence historique figée.
+- ~~**Aucune cellule de conversion P3/P4.**~~ **JOUÉE, et elle a révélé autre
+  chose que ce qu'elle cherchait** (`cpx62-1137`/`1138`). EXACT rend `0,7733` et
+  `0,7133` là où `home-0996` mesurait `0,98`/`0,99` — mais le contrôle
+  contemporain montre que **l'effondrement n'appartient pas à EXACT** :
+  **TURNOVER, le modèle identique, rend `0,7633`/`0,7600` aujourd'hui**, soit
+  `−22,3 pp` sur lui-même. Comparés l'un à l'autre sur les mêmes 600 positions
+  appariées, EXACT et TURNOVER sont **indistinguables** : `−1,83 pp`, IC95
+  `[−5,51 ; +1,85]`, McNemar `z = −0,98`. La garde ne dit donc rien contre
+  EXACT ; le plancher `0,95` était calibré sur un repère périmé.
+  ⛔ **En revanche elle ouvre une question réelle sur le MOTEUR** — voir plus bas.
+- ~~**Un seul pool.**~~ **LEVÉ le 1er août** (`cpx62-1135`) : rejoué sur le pool
+  `eb129db1…` de `home-0995`, disjoint de quinze autres, EXACT gagne
+  `+11,06 Elo` IC95 `[+2,5 ; +19,7]` — point compris dans l'IC de `1129`, donc
+  réplication. **Cumul deux pools : `+13,09 Elo` IC95 `[+6,9 ; +19,3]`,
+  `n = 12 000`** (`5917W 618D 5465L`). ⚠️ Sur le pool 2 la vue `native` seule ne
+  conclut pas (borne basse `0,4912`) ; c'est `q00` qui porte et l'estimateur
+  sommé qui tranche.
 - **Aucune couverture par bucket recomptée.** Le fold change ce qui est
   mutualisé, donc l'ancien chiffre de couverture ne se transporte pas tel quel.
 - **Rien sur Scan.** Le déficit connu de la lignée au movetime n'est pas adressé.
@@ -90,6 +103,40 @@ garde-fous sur cinq. Ce qui manque, nommément :
 
 Ces cellules restent jouables après coup : elles confirmeraient ou infirmeraient
 la promotion sans rien avoir à re-générer.
+
+## ⛔ Ce que la garde de conversion a réellement trouvé
+
+Neuf commits ont touché `src/` entre `home-0996` (27 juillet) et aujourd'hui.
+Le défenseur est figé (`9c1d1e8e`) des deux côtés, les jauges et le pool sont
+épinglés par hash, la mesure est déterministe à profondeur fixe. **La seule
+chose qui a bougé, à modèle constant, est le moteur de l'attaquant** — et il
+coûte `−22,3 pp` de conversion.
+
+| | `n_win` | `n_draw` | `n_loss` |
+|---|---:|---:|---:|
+| TURNOVER, moteur du 27 juillet | 591/600 | **0** | 9 |
+| TURNOVER, moteur d'aujourd'hui | 457/600 | 33 | 110 |
+
+**Zéro nulle sur 600 positions en juillet n'est pas plausible** et porte la
+signature du bug corrigé par `9c1d1e8e` : avant lui, `search()` rendait un coup
+nul sur **toute** racine nulle par répétition ou horloge. Deux hypothèses
+restent ouvertes, et elles ont des conséquences opposées :
+
+1. **le moteur d'aujourd'hui a régressé** → régression réelle, qui dégrade le
+   jeu et qu'**aucune porte de la journée ne pouvait voir**, puisqu'une porte
+   appariée annule ce qui frappe ses deux bras ;
+2. **le chiffre de juillet était gonflé par le bug** → il n'y a pas de bug neuf,
+   et c'est le registre qui doit cesser de citer `0,98`/`0,99` comme plancher.
+
+**Trancher demande une seule mesure** : rejouer TURNOVER avec l'attaquant figé
+au SHA de juillet (`ATTACKER_CODE_SHA=e913d66d`, ajouté au template le 1er août).
+S'il rend `0,98`, la cause est le moteur et un bisect sur les neuf commits
+désigne le coupable.
+
+**Leçon de méthode, à graver** : la cellule figeait le défenseur et laissait
+l'attaquant suivre `develop`. Les deux choix se défendent séparément ; ensemble
+ils rendent tout chiffre de conversion incomparable dans le temps. **Protéger la
+moitié d'un instrument ne protège rien.**
 
 ## Conséquence pour la suite
 
