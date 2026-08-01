@@ -184,15 +184,22 @@ K=$(python3 -c 'import struct,sys;f=open(sys.argv[1],"rb");assert f.read(4)==b"F
   die "extras K=$K attendu $EXPECTED_EXTRAS — géométrie différente de TURNOVER, comparaison invalide"
 say "  extras ✓ K=$K (identique à TURNOVER)"
 
-fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold
-  local arm="$1" foldflag="$2"
+# `$3` = mode de CONTINUATION. `--warm-start` ne touche que le point de départ
+# de l'optimiseur : l'objectif garde un L2 **centré sur zéro**, ce qui affirme
+# qu'en l'absence de données un bucket vaut 0. C'est faux quand on continue une
+# lignée — la meilleure estimation est celle du parent — et ça décide du sort de
+# la majorité des buckets, qui ne sont vus que quelques fois. `--prior-mean`
+# déplace le centre du ridge sur le champion ; avec `--prior-decay 0` la
+# précision reste uniformément `l2`, donc SEUL le centre bouge.
+fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold, $3... = continuation
+  local arm="$1" foldflag="$2"; shift 2
   stage "fit-$arm"
   set +e
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
     timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
       --data "$IN/corpus.jnnw" --feat "$W/corpus.feat" --out "$W/$arm.pjtw" \
       --target wdl --loss logistic "$foldflag" --tempo-stage \
-      --warm-start "$IN/parent.pjtw" --holdout-count "$HOLDOUT" \
+      "$@" --holdout-count "$HOLDOUT" \
       --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
       --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
       --prune \
@@ -213,12 +220,24 @@ fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold
 
 # Le bras B est paramétrable : `--exact-fold` (rot180∘cs seul) par défaut, ou
 # `--exact-lr-fold` pour y ajouter la réflexion gauche-droite, elle aussi exacte.
+ARM_A_FOLD="${ARM_A_FOLD:---color-fold}"
 ARM_B_FOLD="${ARM_B_FOLD:---exact-fold}"
-case "$ARM_B_FOLD" in --exact-fold|--exact-lr-fold) ;; *)
-  die "ARM_B_FOLD invalide : $ARM_B_FOLD";; esac
-say "  bras B : $ARM_B_FOLD"
-fit_arm control --color-fold
-fit_arm exact   "$ARM_B_FOLD"
+for f in "$ARM_A_FOLD" "$ARM_B_FOLD"; do
+  case "$f" in --color-fold|--exact-fold) ;; *) die "fold invalide : $f";; esac
+done
+# Continuations, en mots pour éviter les guillemets imbriqués dans un job.
+# `warm` = recette courante (L2 centré 0) ; `prior` = ridge centré sur le parent.
+cont_args(){ case "$1" in
+  warm)  printf '%s\n%s\n' --warm-start "$IN/parent.pjtw" ;;
+  prior) printf '%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" --prior-decay 0 ;;
+  *) die "continuation invalide : $1" ;; esac; }
+ARM_A_CONT="${ARM_A_CONT:-warm}"; ARM_B_CONT="${ARM_B_CONT:-warm}"
+say "  bras A : $ARM_A_FOLD / $ARM_A_CONT"
+say "  bras B : $ARM_B_FOLD / $ARM_B_CONT"
+mapfile -t A_ARGS < <(cont_args "$ARM_A_CONT")
+mapfile -t B_ARGS < <(cont_args "$ARM_B_CONT")
+fit_arm control "$ARM_A_FOLD" "${A_ARGS[@]}"
+fit_arm exact   "$ARM_B_FOLD" "${B_ARGS[@]}"
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
