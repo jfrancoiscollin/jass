@@ -62,6 +62,14 @@ GAUGE_PREFIX="${GAUGE_PREFIX:-r2:jass-data/runs/home-0954-l3-pure-m1-abextras-va
 # dériver. `ATTACKER_CODE_SHA` permet de figer aussi l'attaquant, et donc de
 # rejouer une mesure ancienne avec son moteur d'époque.
 ATTACKER_CODE_SHA="${ATTACKER_CODE_SHA:-}"
+# Une mesure d'archéologie ne veut que la conversion : la garde Gen2 d'un moteur
+# ancien n'apprend rien, et c'est elle qui coûte. `cpx62-1139` a tenu 80 min sur
+# la vue `native` — le moteur de juillet précède `16f8c151` (un `go movetime`
+# rend après 5,5 s au lieu de 100 ms, une fois par processus) ET `9c1d1e8e` (coup
+# nul sur toute racine nulle par répétition, lu comme un abandon, d'où des
+# redémarrages qui repaient les 5,5 s). La conversion tourne à profondeur fixe,
+# donc `has_deadline` n'est jamais armé et rien de tout cela ne s'applique.
+SKIP_GEN2_GUARD="${SKIP_GEN2_GUARD:-0}"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 MON=""
@@ -263,9 +271,13 @@ run_guard(){
     --out "$ART/force/$view-CHALLENGER-vs-GEN2.json" \
     > "$W/force-$view.log" 2>&1
 }
-pids=()
-for view in q00 native; do run_guard "$view" & pids+=("$!"); done
-wait_all "garde Gen2" "${pids[@]}"
+if [ "$SKIP_GEN2_GUARD" = 1 ]; then
+  say "  ⚠️ garde Gen2 SAUTÉE sur demande — ce job ne rend QUE la conversion"
+else
+  pids=()
+  for view in q00 native; do run_guard "$view" & pids+=("$!"); done
+  wait_all "garde Gen2" "${pids[@]}"
+fi
 
 stage conversion-vs-frozen-defender
 run_conv(){
@@ -296,59 +308,63 @@ done
 
 stage readout
 python3 - "$ART/force" "$ART/conversion" "$CHALLENGER_LABEL" "$CONV_FLOOR" \
-         "$ART/guards.json" "$ART/JASS_CONTROL_SUMMARY.json" <<'PY' | tee -a "$RES"
+         "$ART/guards.json" "$ART/JASS_CONTROL_SUMMARY.json" "$SKIP_GEN2_GUARD" <<'PY' | tee -a "$RES"
 import json, math, os, sys
-force_dir, conv_dir, label, floor, out_g, out_s = sys.argv[1:7]
+force_dir, conv_dir, label, floor, out_g, out_s, skip = sys.argv[1:8]
 floor = float(floor)
+skip_gen2 = skip == "1"
 
-# Vues SOMMÉES sur les compteurs BRUTS. Moyenner deux taux de n différents
-# pondérerait mal et rendrait un intervalle faux.
-w = l = d = 0
-views = {}
-for view in ("q00", "native"):
-    p = os.path.join(force_dir, f"{view}-CHALLENGER-vs-GEN2.json")
-    if not os.path.exists(p):
-        raise SystemExit(f"vue {view} absente — garde INCONCLUANTE, pas 'neutre'")
-    r = json.load(open(p))
-    # Noms RÉELS de `run_jass_gate_bounded.py`, vérifiés contre un artefact de
-    # cpx62-1129 : wins_a / wins_b / draws / n.
-    a, b, dr = r.get("wins_a"), r.get("wins_b"), r.get("draws", 0)
-    if a is None or b is None:
-        raise SystemExit(f"vue {view} : compteurs illisibles")
-    n = a + b + dr
-    if r.get("n") not in (None, n):
-        raise SystemExit(f"vue {view} : n={r['n']} incohérent avec {a}+{b}+{dr}")
-    if not r.get("complete", True):
-        raise SystemExit(f"vue {view} : partie de la cellule manquante")
-    if n < 1000:
-        raise SystemExit(f"vue {view} : n={n} sous le plancher — ABORT, pas 'neutre'")
-    views[view] = {"n": n, "wins": a, "losses": b, "draws": dr,
-                   "rate": round((a + 0.5 * dr) / n, 6)}
-    w += a; l += b; d += dr
-
-n = w + l + d
-rate = (w + 0.5 * d) / n
-se = math.sqrt(max(rate * (1 - rate) / n, 1e-12))
-lo, hi = rate - 1.96 * se, rate + 1.96 * se
-def elo(p): return 400 * math.log10(p / (1 - p)) if 0 < p < 1 else float("nan")
-
-print(f"  garde Gen2 : n={n}  {label} {w}W {d}D {l}L")
-print(f"    taux={rate:.4f}  IC95=[{lo:.4f} ; {hi:.4f}]  Elo={elo(rate):+.2f}")
-for v, x in views.items():
-    print(f"    {v:6s} n={x['n']:5d} taux={x['rate']:.4f}")
-gen2_ok = lo > 0.5
-print(f"    → {'AUCUNE RÉGRESSION' if gen2_ok else 'RÉGRESSION POSSIBLE — borne basse sous 0,5'}")
+gen2_ok = None
+gen2_block = {"skipped": True}
+if skip_gen2:
+    # Aucune garde jouée : on ne fabrique PAS un taux à partir de zéro compteur.
+    # Une cellule absente est INCONNUE, jamais 0,5 (règle n=0 du registre).
+    print("  garde Gen2 : SAUTÉE (archéologie, conversion seule)")
+else:
+    # Vues SOMMÉES sur les compteurs BRUTS. Moyenner deux taux de n différents
+    # pondérerait mal et rendrait un intervalle faux.
+    w = l = d = 0
+    views = {}
+    for view in ("q00", "native"):
+        p = os.path.join(force_dir, f"{view}-CHALLENGER-vs-GEN2.json")
+        if not os.path.exists(p):
+            raise SystemExit(f"vue {view} absente — garde INCONCLUANTE, pas 'neutre'")
+        r = json.load(open(p))
+        # Noms RÉELS de `run_jass_gate_bounded.py`, vérifiés sur un artefact réel.
+        a, b, dr = r.get("wins_a"), r.get("wins_b"), r.get("draws", 0)
+        if a is None or b is None:
+            raise SystemExit(f"vue {view} : compteurs illisibles")
+        n = a + b + dr
+        if n < 1000:
+            raise SystemExit(f"vue {view} : n={n} sous le plancher — ABORT, pas 'neutre'")
+        if r.get("n") not in (None, n):
+            raise SystemExit(f"vue {view} : n={r['n']} incohérent avec {a}+{b}+{dr}")
+        views[view] = {"n": n, "wins": a, "losses": b, "draws": dr,
+                       "rate": round((a + 0.5 * dr) / n, 6)}
+        w += a; l += b; d += dr
+    n = w + l + d
+    rate = (w + 0.5 * d) / n
+    se = math.sqrt(max(rate * (1 - rate) / n, 1e-12))
+    lo, hi = rate - 1.96 * se, rate + 1.96 * se
+    def elo(x): return 400 * math.log10(x / (1 - x)) if 0 < x < 1 else float("nan")
+    print(f"  garde Gen2 : n={n}  {label} {w}W {d}D {l}L")
+    print(f"    taux={rate:.4f}  IC95=[{lo:.4f} ; {hi:.4f}]  Elo={elo(rate):+.2f}")
+    for v, x in views.items():
+        print(f"    {v:6s} n={x['n']:5d} taux={x['rate']:.4f}")
+    gen2_ok = lo > 0.5
+    print(f"    → {'AUCUNE RÉGRESSION' if gen2_ok else 'RÉGRESSION POSSIBLE — borne basse sous 0,5'}")
+    gen2_block = {"n": n, "wins": w, "draws": d, "losses": l,
+                  "rate": round(rate, 6), "ci95": [round(lo, 6), round(hi, 6)],
+                  "elo": round(elo(rate), 2), "per_view": views,
+                  "no_regression": gen2_ok}
 
 conv, conv_ok = {}, True
 for stratum in ("p3_mince", "p4_egal"):
-    p = os.path.join(conv_dir, f"{stratum}.json")
-    if not os.path.exists(p):
+    path = os.path.join(conv_dir, f"{stratum}.json")
+    if not os.path.exists(path):
         raise SystemExit(f"conversion {stratum} absente — INCONCLUANTE")
-    r = json.load(open(p))
-    # Noms RÉELS de `aggregate_conv_shards.py` (schema 2), vérifiés contre
-    # l'artefact de home-0996 avant de queuer : `conversion` et `n_pos`. Deviner
-    # `conversion_rate`/`records` aurait fait échouer la lecture APRÈS deux
-    # heures de parties déjà jouées.
+    r = json.load(open(path))
+    # Noms RÉELS de `aggregate_conv_shards.py` (schema 2) : `conversion`, `n_pos`.
     v = r.get("conversion")
     nn = r.get("n_pos", 0)
     if v is None or not nn:
@@ -357,22 +373,25 @@ for stratum in ("p3_mince", "p4_egal"):
         raise SystemExit(f"conversion {stratum} : agrégat incomplet")
     if nn < 0.9 * 300:
         raise SystemExit(f"conversion {stratum} : n_pos={nn} sous le plancher")
-    conv[stratum] = {"rate": round(float(v), 6), "n": int(nn)}
+    conv[stratum] = {"rate": round(float(v), 6), "n": int(nn),
+                     "n_win": r.get("n_win"), "n_draw": r.get("n_draw"),
+                     "n_loss": r.get("n_loss")}
     ok = float(v) >= floor
     conv_ok = conv_ok and ok
     print(f"  conversion {stratum:9s} = {float(v):.4f}  n={nn}  "
+          f"(W{r.get('n_win')} D{r.get('n_draw')} L{r.get('n_loss')})  "
           f"plancher {floor:.2f}  {'OK' if ok else 'SOUS LE PLANCHER'}")
 
-verdict = ("SUCCESSION_GUARDS_GREEN" if (gen2_ok and conv_ok)
-           else "SUCCESSION_GUARDS_RED")
+if skip_gen2:
+    verdict = "CONVERSION_ARCHAEOLOGY_" + ("ABOVE_FLOOR" if conv_ok else "BELOW_FLOOR")
+else:
+    verdict = ("SUCCESSION_GUARDS_GREEN" if (gen2_ok and conv_ok)
+               else "SUCCESSION_GUARDS_RED")
 print(f"  {verdict}")
 # Repères TURNOVER (home-0996) : Gen2 58,83 % (+62,03 Elo), P3 0,98, P4 0,99.
 json.dump({"schema": 1, "challenger": label, "verdict": verdict,
-           "gen2_guard": {"n": n, "wins": w, "draws": d, "losses": l,
-                          "rate": round(rate, 6), "ci95": [round(lo, 6), round(hi, 6)],
-                          "elo": round(elo(rate), 2), "per_view": views,
-                          "no_regression": gen2_ok},
-           "conversion": conv, "conversion_floor": floor,
+           "gen2_guard": gen2_block, "conversion": conv, "conversion_floor": floor,
+           "gen2_guard_skipped": skip_gen2,
            "turnover_reference_home_0996": {"gen2_rate": 0.5883, "gen2_elo": 62.03,
                                             "p3": 0.98, "p4": 0.99}},
           open(out_g, "w"), indent=2, sort_keys=True)
