@@ -543,13 +543,18 @@ n'est **pas comparable en absolu** aux portes antérieures (la comparaison inter
 entre les deux bras, elle, tient — même binaire) ; et le holdout n'a pas servi
 d'arbitre (écart 0,0004, et la perte ne prédit pas la force ici).
 
-**Passe on-policy : NÉGATIVE.** `cpx62-1119` a fermé la boucle (le modèle exact
-joue ses propres 2M positions, refit sous `--exact-fold`, sortie exactement
-antisymétrique). La porte `cpx62-1120` contre son propre parent donne
-**−9,15 Elo**, IC95 `[−16,9 ; −1,4]` — **perte établie**, borne haute sous zéro.
-Un tour de données de plus dégrade ; le gain venait de la correction de justesse,
-pas du réengendrement. Cinquième échec d'affilée d'un axe de mise en forme des
-données.
+**Passe on-policy : −9,15 Elo, MAIS le protocole change DEUX facteurs.**
+`cpx62-1119`/`1120` : le modèle exact rejoue 2M positions, refit sous
+`--exact-fold`, porte contre son parent → **−9,15 Elo**, IC95 `[−16,9 ; −1,4]`.
+⚠️ **Ne pas lire « l'on-policy dégrade »** : le corpus de TURNOVER est un
+**mélange 1:1 mémoire/frais** (c'est le sens de « turnover »), et ma passe est
+passée à **100 % frais**. J'ai donc changé le générateur *et* la composition —
+exactement l'écart « frais/mémoire » que §5.2 reproche déjà à VOL8M. Énoncé
+correct : *remplacer le mélange 50/50 par du frais pur d'un seul modèle coûte
+9,15 Elo*. Le mécanisme « plus fort → plus de nulles » est en revanche **réfuté
+par mesure** (on-policy 18,06 % de nulles contre 21,41 % pour TURNOVER : plus
+décisif, pas moins). **Expérience correcte à faire** : 1M frais d'EXACT mélangé
+1:1 avec la moitié mémoire, un seul facteur qui bouge.
 
 **Contre le champion réel** (`cpx62-1121`) : EXACT bat **TURNOVER** de
 **+13,32 Elo**, IC95 `[+5,5 ; +21,2]`, n=6000 — borne basse au-dessus de zéro,

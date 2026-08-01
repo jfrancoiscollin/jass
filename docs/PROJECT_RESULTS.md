@@ -445,11 +445,13 @@ Reste vrai et non encore exploité : la réflexion gauche-droite est **exacte**
 entièrement vrai. La translation entre patterns, elle, est approximative — même
 piège que `cs` seule.
 
-**Corollaire mesuré le même jour** : un tour **on-policy** depuis le modèle exact
-(2M positions rejouées par lui, refit sous le même fold) rend **−9,15 Elo**,
-IC95 `[−16,9 ; −1,4]`, n=6000 (`cpx62-1119`/`1120`). Perte établie. Le gain vient
-de la **justesse de la contrainte**, pas d'un réengendrement des données —
-cinquième axe de mise en forme des données à échouer.
+**Corollaire du même jour, à lire avec sa limite** : un tour **on-policy** depuis
+le modèle exact rend **−9,15 Elo**, IC95 `[−16,9 ; −1,4]`, n=6000
+(`cpx62-1119`/`1120`). ⚠️ **Ce n'est PAS « l'on-policy dégrade »** : le corpus de
+TURNOVER est un mélange 1:1 mémoire/frais, la passe est passée à 100 % frais,
+donc deux facteurs ont bougé — le même écart « frais/mémoire » que cette section
+reproche déjà à VOL8M. Le mécanisme « plus fort → plus de nulles » est réfuté par
+mesure (18,06 % de nulles contre 21,41 %). Question ouverte, pas close.
 
 Détail : [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
 

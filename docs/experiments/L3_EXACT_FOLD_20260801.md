@@ -136,12 +136,51 @@ zéro.
 Le holdout de la passe on-policy (0,450177) n'est **pas** comparable à celui du
 refit (0,442898) — corpus différents, distributions différentes.
 
-Un seul tour on-policy depuis le modèle exact **dégrade**. Ce résultat s'aligne
-sur l'histoire de la campagne : les axes de *mise en forme des données* échouent
-les uns après les autres, et le seul gain acquis vient d'une **correction de
-justesse**, pas d'un tour de données de plus. Ce qui ne dit pas qu'aucune boucle
-on-policy ne peut marcher — seulement que celle-ci, à ce volume et à ce
-paramétrage, coûte.
+### ⚠️ CE RÉSULTAT NE DIT PAS « l'on-policy dégrade » — j'ai changé DEUX facteurs
+
+Question de JFC : *un meilleur générateur devrait au pire produire des données
+aussi bonnes, pas pires.* En vérifiant, le protocole ne tient pas.
+
+Le corpus de TURNOVER n'est **pas** du self-play frais. C'est un **mélange 1:1**
+(`selfplay_frontier mix --source PARENT f2m 1 --source FRESH m2-d8 1`), soit
+**50 % mémoire / 50 % frais** — c'est l'identité même du champion, « turnover »
+désignant ce roulement temporel, et il a été promu *parce que* ce mélange battait
+les alternatives.
+
+Ma passe on-policy est passée à **100 % frais, 0 % mémoire**. Deux facteurs ont
+donc changé : le modèle générateur (ce que je voulais mesurer) **et** la
+composition du corpus (ce que je n'ai pas vu changer).
+
+Ce second facteur est connu et documenté : la fiche VOL8M de
+`PROJECT_RESULTS` §5.2 liste explicitement « frais/mémoire 67/33 vs 50/50 » parmi
+les quatre écarts qui rendent SON résultat non concluant. Même faute, en plus
+extrême.
+
+**Énoncé correct** : remplacer le mélange 50/50 par du frais pur issu d'un seul
+modèle coûte **−9,15 Elo**. L'hypothèse « un générateur plus fort aide » reste
+**non testée**.
+
+### Ce que la mesure écarte quand même
+
+Le mécanisme le plus intuitif — jeu plus fort → plus de nulles → moins de signal
+— est **réfuté par les données** :
+
+| corpus | loss | nulles | win |
+|---|---:|---:|---:|
+| TURNOVER (mélange 50/50) | 39,33 % | **21,41 %** | 39,26 % |
+| on-policy (100 % frais, EXACT) | 40,75 % | **18,06 %** | 41,20 % |
+
+Le corpus on-policy est **plus décisif**, pas plus nul. L'explication restante la
+plus plausible est la **diversité** : un mélange de deux générations couvre des
+régions qu'un modèle seul, plus déterministe, ne visite plus — et l'éval sert aux
+**feuilles de la recherche**, donc sur une distribution bien plus large que la
+trajectoire jouée.
+
+### L'expérience qui testerait vraiment la question
+
+Garder la recette turnover **et** ne changer que le générateur : 1 M frais issu
+d'EXACT mélangé 1:1 avec la moitié mémoire existante, fit sous `--exact-fold`,
+porte contre EXACT. Un seul facteur bouge.
 
 ## Contre le champion réel — `cpx62-1121`
 
