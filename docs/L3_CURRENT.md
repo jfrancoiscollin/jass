@@ -27,7 +27,8 @@
 > replay_dose_axis_closed_optimum_50;
 > turnover50_promoted_general_champion;
 > exact_fold_promoted_general_champion;
-> onpolicy_single_factor_flat_coverage_is_the_binding_constraint`.
+> onpolicy_single_factor_flat_coverage_is_the_binding_constraint;
+> coverage_knob_is_random_open_plies_plateau_at_24`.
 
 ## 1. Architecture du programme
 
@@ -105,6 +106,7 @@ une configuration héritée par les nouveaux bras.
 | champion général | porte de succession, garde Gen2, conversion P3/P4 | `home-0995` / `home-0996` | **TURNOVER promu champion général** : `+13,73 Elo` sur `n=6000`, 5/5 gardes vertes |
 | champion général | succession fold exact, avec EGDB | `cpx62-1129` | **EXACT promu champion général** : `+15,12 Elo` sur `n=6000`, deux vues positives ; gardes Gen2/conversion NON jouées |
 | autojeu on-policy | un seul facteur, ratio 1:1 tenu, avec EGDB | `cpx62-1127` / `cpx62-1130` | **PLAT** : `−4,05 Elo`, IC95 `[−12,6 ; +4,5]` — pas de régression, pas de gain ; couverture `−3,9 %` à volume égal |
+| couverture | sondes de boutons + dose-réponse, aucune partie de porte | `cpx62-1131` / `cpx62-1132` | **`--random-open-plies` est le bouton** : `+7,11 %` de buckets à `rop=24`, plateau au-delà ; top-k **négatif** (`−2,14 %`) ; aucun Elo établi |
 | spécialiste | imbalance2 V1 | `ccx33-0847` | P1 near-flat |
 | spécialiste | role-aware V2 | `ccx33-0852` | crédit plus propre, pas de lead établi |
 | spécialiste | comparaison V1/V2 | `0853→0857` | `V2_NO_CLEAR_LEAD_AT_P1` |
@@ -613,6 +615,62 @@ seconde fois** : 19,2 % de nulles contre 21,4 %, donc **plus** décisif.
 n'est pas une voie de progression tant que la couverture est le facteur
 limitant. Ce qui a payé ce jour-là, c'est le fold — une correction de méthode à
 données constantes, pas un tour de manège supplémentaire.
+
+### La couverture s'achète par les OUVERTURES — `cpx62-1131`/`1132`, 1er août
+
+Deux sondes qui ne jouent **aucune partie de porte** et ne fittent **rien** :
+même volume (500 000 records par cellule), on compte les buckets atteints dans
+le fold exact. Bruit graine-à-graine mesuré par une cellule réplique :
+**0,16 %**, donc seuil de significativité **0,32 %**.
+
+`cpx62-1131` — cinq réglages contre la recette courante :
+
+| cellule | buckets | Δ | nulles | Δ nulles |
+|---|---:|---:|---:|---:|
+| `ROP16` (`--random-open-plies 16`) | 86 778 | **+4,72 %** | 0,164 | −5,9 % |
+| `NODECAY` (eps sans décroissance) | 85 068 | +2,66 % | **0,024** | **−86,4 %** ⚠️ |
+| `EPS16` (`--explore-eps 16`) | 84 126 | +1,52 % | 0,152 | −13,0 % |
+| `BASE` / `BASEBIS` | 82 867 / 82 999 | 0 / +0,16 % | 0,174 | — |
+| `TOPK` (top-3, marge 30) | 81 093 | **−2,14 %** | 0,203 | +16,4 % |
+
+**L'exploration structurée fait l'inverse de l'intuition** : rester près du
+meilleur coup **rétrécit** la distribution (−2,14 % de couverture, +16,4 % de
+nulles). Piste fermée.
+
+⚠️ **Trou de garde trouvé et bouché.** `NODECAY` a effondré les nulles d'un
+facteur 7 **et est passé** : le canari du registre surveille `|win − loss|`, or
+des bourdes aléatoires se répartissent des deux côtés (skew 0,0048, aussi propre
+que BASE). **Un corpus peut être détruit symétriquement.** Une garde de
+distribution sur le taux de nulles a été ajoutée (`d8a4182e`) ; rejouée sur ces
+chiffres elle marque `NODECAY` à −86,4 % et laisse tout le reste propre.
+
+`cpx62-1132` — dose-réponse sur `--random-open-plies`, **et contrôle de
+déterminisme** : `ROP16` rejoué à graine identique **reproduit 86 778 buckets à
+l'unité**, comme `BASE` et `BASEBIS`. La sonde est déterministe.
+
+| `rop` | buckets | Δ vs 8 | pas | `ge_100` | ouvertures |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 82 867 | — | — | 6 807 | 8 226 |
+| 16 | 86 778 | +4,72 % | +4,72 % | 7 135 | 8 985 |
+| **24** | **88 760** | **+7,11 %** | +2,28 % | **7 280** | 9 906 |
+| 32 | 88 999 | +7,40 % | **+0,27 %** | 7 274 | 11 245 |
+
+**La courbe plafonne à 24.** Le pas 24→32 vaut `+0,27 %`, **sous le seuil de
+0,32 %** : `ROP32` n'est pas distinguable de `ROP24`. Le verdict automatique dit
+`COVERAGE_KNOB_FOUND_ROP32` parce qu'il classe chaque cellule contre `BASE`, pas
+contre sa voisine ; **la lecture actionnable est `rop=24`**, et le choix est
+argumenté ici plutôt que subi. Deux confirmations : `ge_10` et `ge_100` sont
+**plus hauts** à 24 qu'à 32 (34 018 / 7 280 contre 33 972 / 7 274), donc au-delà
+de 24 les ouvertures supplémentaires (9 906 → 11 245) ne touchent plus de
+nouveaux buckets — elles dupliquent ; et la longueur des parties baisse
+(2 206 611 → 2 112 305 plies), signe que l'on démarre de plus en plus loin dans
+des ouvertures artificielles.
+
+**Ce que ces sondes n'établissent pas : rien en Elo.** `+7,11 %` de couverture
+peut valoir quelques Elo ou zéro. Repère : les `−3,9 %` de `cpx62-1130`
+accompagnaient `−4,05 Elo`, donc l'ordre de grandeur plausible est **~+7 Elo**,
+sous le seuil de détection d'une porte à `n=6000`. **C'est une porte qui
+tranchera, pas une sonde de couverture.**
 
 **Contre le champion réel** (`cpx62-1121`) : EXACT bat **TURNOVER** de
 **+13,32 Elo**, IC95 `[+5,5 ; +21,2]`, n=6000 — borne basse au-dessus de zéro,
