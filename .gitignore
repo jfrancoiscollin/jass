@@ -53,9 +53,13 @@ emscripten_temp/
 *.log
 /tmp/
 /scratch/
+/.worktrees/
+/artefacts/
+/metadata.json
 
 # Python
 __pycache__/
+.pytest_cache/
 *.pyc
 
 
