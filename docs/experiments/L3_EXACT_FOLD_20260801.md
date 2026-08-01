@@ -175,10 +175,19 @@ go explicite de JFC, et il se prendrait sur une porte avec EGDB.
   succession — et la décision reste un go explicite de JFC.
 - **4cf en dur dans le moteur** : purement une optimisation mémoire/cache
   maintenant que le point statistique est acquis. Rien ne l'exige.
-- **Les autres folds** : `--full-fold` existe et ajoute translation et
-  réflexion. La réflexion gauche-droite est **exacte** (signe +1 d'après le
-  docstring) ; la translation ne l'est pas. Un fold `{id, rot180∘cs, LR,
-  LR∘rot180∘cs}` serait le prochain palier entièrement vrai.
+- **Pas de palier suivant par symétrie.** J'avais annoncé un fold
+  `{id, rot180∘cs, LR, LR∘rot180∘cs}` sur la foi du docstring de `symmetry.py`,
+  qui qualifiait la réflexion gauche-droite d'« exacte, signe +1 ». **C'est faux.**
+  Un miroir gauche-droite d'un damier 10×10 envoie les cases sombres sur les
+  claires : la surface de jeu n'est pas conservée. **Mesuré : LR casse 36 des 81
+  adjacences diagonales**, là où `rot180` les préserve toutes. `rot180∘cs` est donc
+  la **seule** symétrie exacte disponible, et le fold exact l'épuise déjà.
+  `test_symmetry_geometry.py` verrouille le critère : toute transformation ajoutée
+  doit d'abord préserver l'adjacence.
+
+  C'est une question de JFC qui l'a attrapé — *si LR donnait la moitié des poids
+  gratuitement, pourquoi Scan ne le ferait-il pas ?* Réponse : parce que ce n'est
+  pas disponible. `cpx62-1122` a été tué en vol sur cette base.
 
 ## Artefacts
 

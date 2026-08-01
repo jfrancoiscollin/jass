@@ -6,6 +6,13 @@ The board's exact symmetry is rot180 ∘ colour-swap (rotate 180° + swap colour
 same position from the other side → eval NEGATES). Pure colour-swap and pure rot180
 are approximate (men have a direction) but pool data and empirically help.
 
+⚠️ LR (left-right reflection) is NOT a symmetry, despite what an earlier version of
+this docstring claimed. A left-right mirror of a 10x10 board maps dark squares to
+light ones, so the playing surface is not preserved: MEASURED, LR breaks 36 of the
+81 diagonal adjacencies (rot180 preserves all 81). `test_symmetry_geometry.py`
+pins this. It is left in `build_canon` only because --full-fold has always used it
+and its Elo was measured with it in; nothing new should adopt it.
+
 This builds, for every (pattern p, config c), a CANONICAL column + a sign so that all
 orbit members under the group G = {id, cs, rot, rot∘cs} SHARE one antisymmetric weight:
     W_full[p][c] = sign[p][c] · w_canon[canon_col[p][c]]
@@ -155,7 +162,7 @@ def build_canon(translate=False, reflect=False):
     return canon_col, sign
 
 
-def build_exact_canon(reflect=False):
+def build_exact_canon():
     """Fold sur la SEULE symétrie exacte : le groupe à deux éléments {id, rot∘cs}.
 
     Même contrat que `build_canon` — (canon_col, sign) en espace 17M global, avec
@@ -175,19 +182,17 @@ def build_exact_canon(reflect=False):
     la géométrie 8cf (8 patterns × 531441 / 2) — exactement celui de Scan, qui
     obtient la même chose en n'ayant que 4 tables et des contributions ±1.
 
-    `reflect=True` ajoute la réflexion gauche-droite, que ce module qualifie
-    lui-même d'EXACTE avec le signe +1 : c'est un miroir spatial pur, sans échange
-    de couleurs, et les pions gardent leur direction. Le groupe passe alors à
-    quatre éléments `{id, rot180∘cs, LR, LR∘rot180∘cs}` → 1 062 882 poids en 8cf,
-    la moitié du compte de Scan, toutes contraintes toujours vraies. `translate`
-    n'est PAS repris : il est approximatif, comme `cs` seule.
+    Ni `translate` ni `LR` ne sont repris. `translate` est approximatif (la position
+    absolue sur le plateau compte). `LR` n'est PAS une symétrie du tout : un miroir
+    gauche-droite envoie les cases sombres sur les claires, et casse 36 des 81
+    adjacences diagonales — mesuré, cf `test_symmetry_geometry.py`. L'ajouter aurait
+    réintroduit exactement le défaut que ce fold corrige.
 
     Les patterns orphelins d'une opération ne sont pas pliés par elle : leur
     orbite se réduit d'autant, ce qui est correct, simplement moins économe.
     """
     cs = colorswap_map()
     rp, rotperm = rot_structure()
-    lp, lrperm = lr_structure()
     NP = P.NUM_PATTERNS
     canon_col = np.empty((NP, NB), dtype=np.int64)
     sign = np.empty((NP, NB), dtype=np.int8)
@@ -196,14 +201,6 @@ def build_exact_canon(reflect=False):
         cand = [(p, c, 1)]
         if rp[p] >= 0:
             cand.append((rp[p], cs[_reorder_all(rotperm[p])], -1))
-        if reflect and lp[p] >= 0:
-            # LR SEULE est exacte, signe +1 : c'est un miroir spatial pur, sans
-            # échange de couleurs et sans changer la direction des pions. C'est
-            # la seule opération de ce module qu'on ajoute SANS composer avec cs.
-            cand.append((lp[p], _reorder_all(lrperm[p]), 1))
-        if reflect and rp[p] >= 0 and lp[rp[p]] >= 0:
-            rc = _reorder_all(rotperm[p])
-            cand.append((lp[rp[p]], cs[_reorder_all(lrperm[rp[p]])[rc]], -1))
         g = [pp * NB + cc for (pp, cc, s) in cand]
         best = g[0].copy()
         best_s = np.full(NB, cand[0][2], dtype=np.int64)

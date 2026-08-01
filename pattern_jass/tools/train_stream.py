@@ -500,13 +500,12 @@ class Folder:
             self.rf_canon, self.rf_sign = symmetry.build_canon(translate=True,
                                                                reflect=True)
             self.PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN   # canonical = 17M index space
-        elif mode in ('exact', 'exact-lr'):
+        elif mode == 'exact':
             import symmetry
-            # SEULES les symétries vraies du damier : rot180∘colour-swap, plus la
-            # réflexion gauche-droite en mode 'exact-lr'. Voir
-            # symmetry.build_exact_canon pour pourquoi ce n'est pas build_canon.
-            self.rf_canon, self.rf_sign = symmetry.build_exact_canon(
-                reflect=(mode == 'exact-lr'))
+            # SEULE la symétrie vraie du damier : rot180∘colour-swap. Voir
+            # symmetry.build_exact_canon pour pourquoi ce n'est ni build_canon
+            # ni une variante avec LR.
+            self.rf_canon, self.rf_sign = symmetry.build_exact_canon()
             self.PAT_BUCKETS = patterns.BUCKETS_PER_PATTERN   # espace 17M, comprimé par --prune
         elif mode == 'color':
             self.cf_U2C, self.cf_U2S = colorfold_maps()
@@ -599,7 +598,7 @@ def project_champion_mean(path, folder, keep, PAT_N, E):
         srb = U2S[rep_b].astype(np.float64)
         canon_mg = (cm_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
         canon_eg = (ce_full.reshape(NP, NB)[:, rep_b] * srb[None, :]).reshape(NP * CF_BUCKETS)
-    elif folder.mode in ('exact', 'exact-lr'):
+    elif folder.mode == 'exact':
         # Le champion précédent a été ajusté SANS cette contrainte : ses deux
         # membres d'orbite ne coïncident pas. Prendre un représentant (comme le
         # fait la branche 'color', légitime là où la contrainte est déjà
@@ -653,7 +652,6 @@ def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
 def train_stream(args):
     t_start = time.time()
     fold_mode = ('full' if args.full_fold else
-                 'exact-lr' if args.exact_lr_fold else
                  'exact' if args.exact_fold else
                  'color' if args.color_fold else 'none')
     folder = Folder(fold_mode)
@@ -899,11 +897,6 @@ def main(argv=None):
     fold.add_argument('--full-fold', action='store_true',
                       help='FULL symmetry fold (colour+rot180+translation+reflection); '
                            'expanded back to the standard 17M v3 .pjtw.')
-    fold.add_argument('--exact-lr-fold', action='store_true',
-                      help="EXACT + réflexion gauche-droite : groupe {id, rot180∘cs, "
-                           "LR, LR∘rot180∘cs}. 8cf -> 1 062 882 poids, moitié du compte "
-                           "de Scan. LR seule est EXACTE (miroir spatial pur, signe +1) ; "
-                           "translate reste exclu, il est approximatif.")
     fold.add_argument('--exact-fold', action='store_true',
                       help="EXACT-only fold : groupe {id, rot180∘colour-swap}, la seule "
                            "symétrie que les règles garantissent. 8cf -> 2 125 764 poids, "
