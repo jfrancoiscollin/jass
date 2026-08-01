@@ -155,7 +155,7 @@ def build_canon(translate=False, reflect=False):
     return canon_col, sign
 
 
-def build_exact_canon():
+def build_exact_canon(reflect=False):
     """Fold sur la SEULE symétrie exacte : le groupe à deux éléments {id, rot∘cs}.
 
     Même contrat que `build_canon` — (canon_col, sign) en espace 17M global, avec
@@ -175,12 +175,19 @@ def build_exact_canon():
     la géométrie 8cf (8 patterns × 531441 / 2) — exactement celui de Scan, qui
     obtient la même chose en n'ayant que 4 tables et des contributions ±1.
 
-    Les patterns orphelins de rot180 (aucun dans 8cf, possibles dans d'autres
-    variantes) ne sont pas pliés : leur orbite se réduit à l'identité, ce qui est
-    correct, simplement moins économe.
+    `reflect=True` ajoute la réflexion gauche-droite, que ce module qualifie
+    lui-même d'EXACTE avec le signe +1 : c'est un miroir spatial pur, sans échange
+    de couleurs, et les pions gardent leur direction. Le groupe passe alors à
+    quatre éléments `{id, rot180∘cs, LR, LR∘rot180∘cs}` → 1 062 882 poids en 8cf,
+    la moitié du compte de Scan, toutes contraintes toujours vraies. `translate`
+    n'est PAS repris : il est approximatif, comme `cs` seule.
+
+    Les patterns orphelins d'une opération ne sont pas pliés par elle : leur
+    orbite se réduit d'autant, ce qui est correct, simplement moins économe.
     """
     cs = colorswap_map()
     rp, rotperm = rot_structure()
+    lp, lrperm = lr_structure()
     NP = P.NUM_PATTERNS
     canon_col = np.empty((NP, NB), dtype=np.int64)
     sign = np.empty((NP, NB), dtype=np.int8)
@@ -189,6 +196,14 @@ def build_exact_canon():
         cand = [(p, c, 1)]
         if rp[p] >= 0:
             cand.append((rp[p], cs[_reorder_all(rotperm[p])], -1))
+        if reflect and lp[p] >= 0:
+            # LR SEULE est exacte, signe +1 : c'est un miroir spatial pur, sans
+            # échange de couleurs et sans changer la direction des pions. C'est
+            # la seule opération de ce module qu'on ajoute SANS composer avec cs.
+            cand.append((lp[p], _reorder_all(lrperm[p]), 1))
+        if reflect and rp[p] >= 0 and lp[rp[p]] >= 0:
+            rc = _reorder_all(rotperm[p])
+            cand.append((lp[rp[p]], cs[_reorder_all(lrperm[rp[p]])[rc]], -1))
         g = [pp * NB + cc for (pp, cc, s) in cand]
         best = g[0].copy()
         best_s = np.full(NB, cand[0][2], dtype=np.int64)

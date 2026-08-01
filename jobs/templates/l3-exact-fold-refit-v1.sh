@@ -173,7 +173,7 @@ say "  pile numérique : $PINSTACK (numpy/scipy $NPV)"
 printf '{"stack":"%s","numpy_scipy":"%s"}\n' "$PINSTACK" "$NPV" > "$ART/numeric-stack.json"
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" \
   pattern_jass/tools/test_exact_fold.py -v > "$W/selftest.log" 2>&1 ||
-  die "auto-tests du fold exact en échec — voir selftest.log"
+  die "auto-tests des folds exacts en échec — voir selftest.log"
 say "  venv + auto-tests du fold ✓"
 
 stage dump-eval-features
@@ -211,8 +211,14 @@ fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold
   say "  $arm : convergé, $it itérations, ${ll:-holdout n/a}"
 }
 
+# Le bras B est paramétrable : `--exact-fold` (rot180∘cs seul) par défaut, ou
+# `--exact-lr-fold` pour y ajouter la réflexion gauche-droite, elle aussi exacte.
+ARM_B_FOLD="${ARM_B_FOLD:---exact-fold}"
+case "$ARM_B_FOLD" in --exact-fold|--exact-lr-fold) ;; *)
+  die "ARM_B_FOLD invalide : $ARM_B_FOLD";; esac
+say "  bras B : $ARM_B_FOLD"
 fit_arm control --color-fold
-fit_arm exact   --exact-fold
+fit_arm exact   "$ARM_B_FOLD"
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
