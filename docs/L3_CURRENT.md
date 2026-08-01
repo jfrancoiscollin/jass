@@ -29,7 +29,105 @@
 > exact_fold_promoted_general_champion;
 > onpolicy_single_factor_flat_coverage_is_the_binding_constraint;
 > coverage_knob_is_random_open_plies_plateau_at_24;
-> coverage_is_not_the_lever_refuted_by_gate`.
+> coverage_is_not_the_lever_refuted_by_gate;
+> conversion_benchmark_of_july_is_unusable`.
+
+## 0. État au soir du 1er août 2026
+
+Résumé de journée. Un seul gain, trois familles fermées, une question ouverte
+sur le moteur.
+
+### 0.1 Le champion, et il est solide
+
+**EXACT est le champion général courant**, promu le 1er août sur go explicite de
+JFC après `cpx62-1129`, puis **solidifié 3/3** dans la soirée :
+
+| garde | résultat | repère |
+|---|---|---|
+| primaire, deux pools disjoints | **`+13,09 Elo`** IC95 `[+6,9 ; +19,3]`, `n = 12 000` | `1129` + `1135` |
+| non-régression Gen2 | **`+68,21 Elo`**, `59,69 %`, deux vues positives | TURNOVER : `+62,03` |
+| conversion P3/P4 | **à égalité avec TURNOVER** : `−1,83 pp`, IC95 `[−5,51 ; +1,85]`, McNemar `z = −0,98`, 600 positions appariées | repère de juillet **invalide**, cf. §0.4 |
+
+Les trois « ce que cette promotion n'établit pas » de l'enregistrement du matin
+sont donc **levés**. Détail : [`experiments/L3_EXACT_PROMOTION_20260801.md`](experiments/L3_EXACT_PROMOTION_20260801.md).
+
+### 0.2 Le seul gain de la journée ne vient d'aucune donnée neuve
+
+`--exact-fold` vaut `+15,12 Elo` contre TURNOVER avec EGDB, et `+17,10` contre
+son propre contrôle. **Aucune donnée neuve, aucune capacité neuve** : même
+corpus, même recette, `TB` identique. La campagne imposait exactement `cs`
+seule — qui n'est **pas** une symétrie du damier — pendant que la seule exacte,
+`rot180 ∘ cs`, était violée à `25,8 %`. Le gain est une **correction de
+méthode à corpus constant**, et c'est la seule chose qui a payé aujourd'hui.
+
+### 0.3 Trois familles fermées, toutes du côté « produire plus »
+
+| famille | mesure | verdict |
+|---|---|---|
+| autojeu on-policy à recette constante | `1127`/`1130` : `−4,05 Elo` IC95 `[−12,6 ; +4,5]` | **PLAT** — pas de régression, mais borne haute excluant un gain de l'ordre du fold |
+| couverture achetée par les ouvertures | `1131`→`1134` : `+2,83 %` de buckets, **`−9,27 Elo`** IC95 `[−17,9 ; −0,7]` | **RÉGRESSION ÉTABLIE** — couverture et force en sens opposé |
+| exploration structurée (top-k) | `1131` : `−2,14 %` de couverture, `+16,4 %` de nulles | **fermée**, négative des deux côtés |
+
+⚠️ **Correction d'une inférence à moi** : à `1130` j'ai inscrit la couverture
+comme « le mécanisme mesuré » du plat on-policy. Le `−3,9 %` était mesuré ; son
+**rôle causal ne l'était pas**. La chaîne `1131`→`1134` l'a testé dans le sens
+qu'il prédisait et l'a **falsifié**. Le plat on-policy reste un fait ; son
+explication est **rouverte**.
+
+⛔ **Un compte de buckets est un diagnostic, pas un critère de sélection** — au
+même rang que la loss holdout. Trois familles ont fermé sur ce motif
+(hard-replay v1 `−648 Elo`, VOL8M `−14,95`, celle-ci).
+
+### 0.4 La question ouverte, et elle peut être la plus importante
+
+La cellule de conversion a trouvé autre chose que ce qu'elle cherchait. À
+**modèle constant** (TURNOVER inchangé), défenseur figé des deux côtés, jauges
+et pool épinglés par hash, mesure déterministe à profondeur fixe :
+
+```text
+                                  n_win   n_draw   n_loss
+TURNOVER, moteur du 27 juillet      591       0        9      -> 0,98 / 0,99
+TURNOVER, moteur d'aujourd'hui      457      33      110      -> 0,7633 / 0,7600
+```
+
+**`−22,3 pp` sur le même modèle.** La seule chose qui a bougé est le moteur de
+l'attaquant — neuf commits sur `src/`.
+
+**Zéro nulle sur 600 positions n'est pas un résultat plausible** : c'est
+l'empreinte du bug corrigé par `9c1d1e8e` (avant lui, `search()` rendait un coup
+nul sur **toute** racine nulle par répétition ou horloge). ⛔ **Le repère
+`0,98`/`0,99` de `home-0996` ne doit plus être cité comme plancher.** Ce qui
+reste indécidé est *combien* des 110 défaites d'aujourd'hui sont réelles.
+
+L'archéologie (`1139`→`1141`, attaquant figé au SHA de juillet) devait trancher.
+⚠️ **Elle se heurte au bug lui-même** : `1139` a tenu 80 min sur la vue movetime
+sans rendre, et j'avais affirmé à tort que la conversion y échappait — c'est vrai
+du bug movetime, **faux du bug racine-nulle**, qui ne dépend pas de la
+profondeur. Un moteur qui ne sait pas jouer une racine nulle ne peut pas
+reproduire sa propre mesure.
+
+### 0.5 Deux leçons de méthode, à garder
+
+1. **Une porte appariée ne peut pas voir ce qui frappe ses deux bras.** Toutes
+   les portes de la journée partageaient un binaire : leurs verdicts tiennent,
+   et tiendraient tout autant si le moteur avait perdu 20 points dans l'absolu.
+   La cellule à défenseur figé est le seul instrument qui voit une dérive
+   **absolue**.
+2. **Protéger la moitié d'un instrument ne protège rien.** La cellule figeait le
+   défenseur et laissait l'attaquant suivre `develop`. Chaque choix se défend
+   seul ; ensemble ils rendent tout chiffre de conversion incomparable dans le
+   temps. `ATTACKER_CODE_SHA` existe désormais, mais la règle est antérieure au
+   correctif : **une série temporelle exige que TOUT l'instrument soit épinglé.**
+
+### 0.6 Outillage produit aujourd'hui
+
+- `l3-succession-guards-v1.sh` — les deux gardes de succession pour un
+  challengeur quelconque (binaire 32cf pour Gen2, défenseur figé, mode
+  conversion seule) ;
+- `l3-coverage-knob-probe-v1.sh` — sonde de couverture, aucune partie de porte ;
+- `l3_bucket_visits.py --fold exact` — la couverture comptée dans l'espace que
+  le fit optimise réellement ;
+- `install-egdb-wld-v1.sh` — base WLD 2-7 posée sur cpx62 (`/root/egdb_extracted/app`).
 
 ## 1. Architecture du programme
 
