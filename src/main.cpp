@@ -149,8 +149,9 @@ inline int phase_index_of(int pieces) noexcept {
 // trains on WDL, so what fixes endgame labels is playing them deeper, not a
 // deeper label search or row-weighting). `flag` names the option in warnings.
 // Unknown phase names are reported and ignored; whitespace is tolerated.
-std::array<int, NUM_PHASES> parse_depth_by_phase(const std::string& spec,
-                                                 const char* flag) {
+std::array<int, NUM_PHASES> parse_positive_by_phase(const std::string& spec,
+                                                    const char* flag,
+                                                    const char* value_name) {
     std::array<int, NUM_PHASES> out{};   // all 0 = "use base depth"
     std::size_t i = 0;
     while (i < spec.size()) {
@@ -174,14 +175,17 @@ std::array<int, NUM_PHASES> parse_depth_by_phase(const std::string& spec,
             std::cerr << "warning: " << flag << ": unknown phase '"
                       << name << "' ignored\n";
         } else if (d <= 0) {
-            // A non-positive depth silently means "use base depth" downstream;
-            // warn so a sign typo (endgame=-16) doesn't quietly disable the
-            // intended deeper search for that phase.
             std::cerr << "warning: " << flag << ": " << name
-                      << " depth " << d << " <= 0 → using base depth for it\n";
+                      << ' ' << value_name << ' ' << d
+                      << " <= 0; using the default for it\n";
         }
     }
     return out;
+}
+
+std::array<int, NUM_PHASES> parse_depth_by_phase(const std::string& spec,
+                                                 const char* flag) {
+    return parse_positive_by_phase(spec, flag, "depth");
 }
 
 // -----------------------------------------------------------------------------
@@ -346,6 +350,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     const char*  seed_path        = nullptr; // --seed-file : JNNW of seed positions
     int          seed_frac        = 0;       // --seed-frac : % of games started from a
                                             //      random seed (endgame COVERAGE / famine)
+    const char*  opening_pool_path = nullptr; // --opening-pool : unique quiet Hub FENs
+    int          opening_pool_frac = 0;       // --opening-pool-frac : % of games starting
+                                             //      from a uniformly sampled pool leaf
+    int          opening_pool_post_plies = 0; // optional random legal diversification
+                                             //      after a sampled pool leaf
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
@@ -363,6 +372,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      drop a piece, and top-k without a margin
                                             //      would play them two times out of three.
                                             //      M=0 disables the filter.
+    int          explore_temperature_cp = 0; // --explore-temperature-cp T : with
+                                            //      --explore-topk, weight eligible moves
+                                            //      by exp((score-best)/T). T=0 preserves
+                                            //      the historical uniform Top-K draw.
     bool         split_selfplay_rngs = false; // --split-selfplay-rngs : draw openings,
                                             //      sampling, exploration and role from
                                             //      SEPARATE streams derived from the same
@@ -408,6 +421,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     std::string  search_spec_play;
     std::string  search_spec_label;
     std::string  search_spec_punisher;
+    std::string  sample_rate_spec;           // --sample-rate-by-phase SPEC :
+                                            //      sampling denominators per phase.
+                                            //      Missing phases retain historical 1/4.
 
     // Scan for `--nnue PATH`, `--quiet-only` and `--pv-extract N` anywhere
     // in the args; consume them and keep the rest as the historical
@@ -446,6 +462,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             seed_path = argv[++i];
         } else if (a == "--seed-frac" && i + 1 < argc) {
             seed_frac = parse_int_or(argv[++i], 0);
+        } else if (a == "--opening-pool" && i + 1 < argc) {
+            opening_pool_path = argv[++i];
+        } else if (a == "--opening-pool-frac" && i + 1 < argc) {
+            opening_pool_frac = parse_int_or(argv[++i], -1);
+        } else if (a == "--opening-pool-post-plies" && i + 1 < argc) {
+            opening_pool_post_plies = parse_int_or(argv[++i], -1);
         } else if (a == "--random-open-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) random_open_plies = v;
@@ -458,8 +480,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--explore-margin" && i + 1 < argc) {
             const int v = std::atoi(argv[++i]);
             if (v >= 0) explore_margin = v;
+        } else if (a == "--explore-temperature-cp" && i + 1 < argc) {
+            const int v = parse_int_or(argv[++i], -1);
+            if (v >= 0) explore_temperature_cp = v;
         } else if (a == "--split-selfplay-rngs") {
             split_selfplay_rngs = true;
+        } else if (a == "--sample-rate-by-phase" && i + 1 < argc) {
+            sample_rate_spec = argv[++i];
         } else if (a == "--explore-decay-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) explore_decay_plies = v;
@@ -495,10 +522,34 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::cerr << "error: --wdl-zero-score is incompatible with --pv-extract\n";
         return 2;
     }
+    if (explore_temperature_cp > 0 && explore_topk <= 0) {
+        std::cerr << "error: --explore-temperature-cp requires --explore-topk K>0\n";
+        return 2;
+    }
+    if (seed_frac < 0 || seed_frac > 100
+        || opening_pool_frac < 0 || opening_pool_frac > 100
+        || opening_pool_post_plies < 0) {
+        std::cerr << "error: seed/opening fractions must be in [0,100] "
+                     "and post plies non-negative\n";
+        return 2;
+    }
+    if ((opening_pool_path == nullptr) != (opening_pool_frac == 0)) {
+        std::cerr << "error: --opening-pool and a positive "
+                     "--opening-pool-frac must be supplied together\n";
+        return 2;
+    }
+    if (seed_path && opening_pool_path) {
+        std::cerr << "error: --seed-file and --opening-pool are mutually "
+                     "exclusive; test one starting-state factor at a time\n";
+        return 2;
+    }
     const std::array<int, NUM_PHASES> label_depth =
         parse_depth_by_phase(label_depth_spec, "--label-depth-by-phase");
     const std::array<int, NUM_PHASES> play_depth_by_phase =
         parse_depth_by_phase(play_depth_spec, "--play-depth-by-phase");
+    const std::array<int, NUM_PHASES> sample_rate_by_phase =
+        parse_positive_by_phase(
+            sample_rate_spec, "--sample-rate-by-phase", "denominator");
     const SearchParams gen_params = jass::parse_search_params(search_spec);  // PLAY+LABEL fallback
     // Per-slot params (forcing-ext SPEC) : empty falls back to gen_params (back-compatible).
     const SearchParams play_params  = search_spec_play.empty()
@@ -640,6 +691,60 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         if (seeds.empty()) seed_frac = 0;
     }
 
+    // Stochastic opening pool: one legal quiet Hub FEN per row. Comments after
+    // '#' are ignored. Duplicate canonical positions are rejected so uniform
+    // sampling means uniform over distinct leaves, not over raw game frequency.
+    std::vector<Position> opening_pool;
+    if (opening_pool_path) {
+        std::ifstream pool_file(opening_pool_path);
+        if (!pool_file) {
+            std::cerr << "error: cannot open --opening-pool "
+                      << opening_pool_path << "\n";
+            return 1;
+        }
+        std::unordered_set<std::string> unique;
+        std::string line;
+        int line_number = 0;
+        while (std::getline(pool_file, line)) {
+            ++line_number;
+            if (const auto comment = line.find('#'); comment != std::string::npos) {
+                line.erase(comment);
+            }
+            const auto first = line.find_first_not_of(" \t\r\n");
+            if (first == std::string::npos) continue;
+            const auto last = line.find_last_not_of(" \t\r\n");
+            const std::string fen = line.substr(first, last - first + 1);
+            const auto parsed = Position::from_fen(fen);
+            if (!parsed) {
+                std::cerr << "error: --opening-pool bad FEN at line "
+                          << line_number << "\n";
+                return 1;
+            }
+            MoveList legal;
+            generate_legal_moves(*parsed, legal);
+            if (legal.empty() || legal[0].is_capture()) {
+                std::cerr << "error: --opening-pool line " << line_number
+                          << " is terminal or has a mandatory capture\n";
+                return 1;
+            }
+            const std::string canonical = parsed->to_fen();
+            if (!unique.insert(canonical).second) {
+                std::cerr << "error: --opening-pool duplicate position at line "
+                          << line_number << "\n";
+                return 1;
+            }
+            opening_pool.push_back(*parsed);
+        }
+        if (opening_pool.empty()) {
+            std::cerr << "error: --opening-pool contains no usable positions\n";
+            return 1;
+        }
+        std::cout << "opening-pool: " << opening_pool.size()
+                  << " unique legal quiet positions, opening_pool_frac="
+                  << opening_pool_frac << "% post_plies="
+                  << opening_pool_post_plies << "\n";
+    }
+
     // Load the user-supplied NNUE if any; keep the unique_ptr alive
     // across the whole function so the Engine can borrow the pointer.
     std::unique_ptr<INetwork> custom_nnue;
@@ -672,6 +777,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::uint8_t  stm;
         std::int32_t  score;
         int           ply;     // ply at which this position was sampled (label-hygiene instrumentation)
+        int           phase;   // fixed piece-count phase used by sampling diagnostics
     };
     std::vector<Sample> game_samples;
     game_samples.reserve(64);
@@ -685,7 +791,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               stat_eps_events = 0, stat_eps_changed_best = 0,
               stat_games_with_eps = 0, stat_topk_ranked_plies = 0,
               stat_margin_singleton = 0,
-              stat_topk_duplicates = 0;
+              stat_topk_duplicates = 0, stat_topk_softmax_plies = 0,
+              stat_topk_selected_alternative = 0,
+              stat_topk_selected_rank_sum = 0,
+              stat_seed_games = 0, stat_opening_pool_games = 0;
+    std::array<long long, NUM_PHASES> stat_sampled_phase{};
+    std::array<long long, NUM_PHASES> stat_emitted_phase{};
     // Profondeur EFFECTIVE du classement, relevée depuis le helper plutôt que
     // recalculée ici : le certificat d'un job doit pouvoir asserter
     // `play_depth - 1` sur ce que le binaire a vraiment fait.
@@ -719,11 +830,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         e.new_game();
         ++opening_count;
         bool opening_from_seed = false;
+        bool opening_from_pool = false;
 
-        // Endgame seeding : start this game from a random seed position instead
-        // of the FMJD start (then the random opening plies add diversity around it).
-        if (!seeds.empty() && static_cast<int>(rng() % 100) < seed_frac) {
+        // Opening-pool seeding is a separate causal lever from generic JNNW
+        // restarts. Pool leaves are sampled uniformly; their master labels and
+        // moves are absent, and the continuation earns a fresh self-play WDL.
+        if (!opening_pool.empty()
+            && static_cast<int>(rng() % 100) < opening_pool_frac) {
+            opening_from_pool = true;
+            ++stat_opening_pool_games;
+            e.set_position(opening_pool[rng() % opening_pool.size()]);
+        } else if (!seeds.empty() && static_cast<int>(rng() % 100) < seed_frac) {
+            // Generic frontier/endgame restart. Historical behaviour is kept:
+            // random_open_plies are applied around the selected JNNW position.
             opening_from_seed = true;
+            ++stat_seed_games;
             const SeedPos& sp = seeds[rng() % seeds.size()];
             Position p{};
             p.set_side_to_move(sp.stm ? Color::Black : Color::White);
@@ -734,7 +855,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             e.set_position(p);
         }
 
-        for (int i = 0; i < random_open_plies; ++i) {
+        const int opening_plies = opening_from_pool
+            ? opening_pool_post_plies : random_open_plies;
+        for (int i = 0; i < opening_plies; ++i) {
             MoveList ml;
             generate_legal_moves(e.position(), ml);
             if (ml.empty()) break;
@@ -830,8 +953,17 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // moves (never a mix), so `ml[0].is_capture()` is the
             // single-check tactical-position signal.
             const bool position_quiet = !ml[0].is_capture();
+            const int sample_phase =
+                phase_index_of(popcount(e.position().occupied()));
+            const int sample_denominator =
+                sample_rate_by_phase[sample_phase] > 0
+                    ? sample_rate_by_phase[sample_phase]
+                    : 4;
             const bool selected_for_sample = (sample_initial && ply == 0)
-                                          || ((streams.sampling()() & 3) == 0);
+                || (sample_rate_spec.empty()
+                        ? ((streams.sampling()() & 3) == 0)
+                        : (streams.sampling()()
+                           % static_cast<std::uint64_t>(sample_denominator) == 0));
             const bool sample_now = selected_for_sample
                                  && generated + static_cast<int>(game_samples.size()) < n
                                  && (!quiet_only || position_quiet);
@@ -859,7 +991,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 s.stm    = (pos.side_to_move() == Color::White) ? 0 : 1;
                 s.score  = wdl_zero_score ? 0 : static_cast<std::int32_t>(label_result.score);
                 s.ply    = ply;
+                s.phase  = sample_phase;
                 game_samples.push_back(s);
+                ++stat_sampled_phase[sample_phase];
 
                 // L1 multi-extraction (Stockfish `gensfen`-style). Amortize
                 // the depth-`eval_depth` search over multiple labels by
@@ -915,7 +1049,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                       ? -static_cast<std::int32_t>(label_result.score)
                                       :  static_cast<std::int32_t>(label_result.score);
                         ps.ply    = ply;   // meme ply-racine (PV extraite du sample racine)
+                        ps.phase  = phase_index_of(popcount(pv_pos.occupied()));
                         game_samples.push_back(ps);
+                        ++stat_sampled_phase[ps.phase];
                         ++taken;
                     }
                 }
@@ -983,7 +1119,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                     const jass::selfplay::TopKChoice choice =
                         jass::selfplay::select_topk_exploration_move(
                             e, ml, lim, explore_topk, explore_margin,
-                            rank_tt, streams.exploration());
+                            rank_tt, streams.exploration(),
+                            static_cast<double>(explore_temperature_cp));
                     play_mv = choice.move;
                     stat_topk_duplicates +=
                         static_cast<long long>(choice.duplicate_candidates);
@@ -992,6 +1129,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         stat_topk_rank_depth = choice.child_search_depth;
                     }
                     if (choice.margin_singleton) ++stat_margin_singleton;
+                    if (choice.softmax_sampled) ++stat_topk_softmax_plies;
+                    stat_topk_selected_rank_sum +=
+                        static_cast<long long>(choice.selected_rank);
+                    if (choice.selected_rank > 0) {
+                        ++stat_topk_selected_alternative;
+                    }
                 } else {
                     play_mv = ml[streams.exploration()() % ml.size()];
                 }
@@ -1053,6 +1196,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             if      (wdl_byte < 0) ++stat_wdl_loss;
             else if (wdl_byte > 0) ++stat_wdl_win;
             else                   ++stat_wdl_draw;
+            ++stat_emitted_phase[static_cast<std::size_t>(s.phase)];
 
             f.write(reinterpret_cast<const char*>(s.bbs), 32);
             f.write(reinterpret_cast<const char*>(&s.stm), 1);
@@ -1060,7 +1204,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             f.write(reinterpret_cast<const char*>(&wdl_byte), 1);
             if (sample_meta.is_open()) {
                 const std::uint64_t game_id = static_cast<std::uint64_t>(game_count);
-                const std::uint8_t seeded = opening_from_seed ? 1u : 0u;
+                const std::uint8_t seeded =
+                    (opening_from_seed || opening_from_pool) ? 1u : 0u;
                 sample_meta.write(reinterpret_cast<const char*>(&game_id), 8);
                 sample_meta.write(reinterpret_cast<const char*>(&opening_count), 8);
                 sample_meta.write(reinterpret_cast<const char*>(&seeded), 1);
@@ -1121,7 +1266,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " explore_eps=" << explore_eps
               << " explore_topk=" << explore_topk
               << " explore_margin=" << explore_margin
+              << " explore_temperature_cp=" << explore_temperature_cp
               << " topk_ranked_plies=" << stat_topk_ranked_plies
+              << " topk_softmax_plies=" << stat_topk_softmax_plies
+              << " topk_selected_alternative=" << stat_topk_selected_alternative
+              << " topk_selected_rank_sum=" << stat_topk_selected_rank_sum
               << " margin_singleton_plies=" << stat_margin_singleton
               << " topk_duplicate_candidates=" << stat_topk_duplicates
               << " topk_rank_depth=" << stat_topk_rank_depth
@@ -1134,6 +1283,27 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " eps_events=" << stat_eps_events
               << " eps_changed_best=" << stat_eps_changed_best
               << " games_with_eps=" << stat_games_with_eps << "\n";
+    std::cout << "OPENING_SOURCE"
+              << " pool_size=" << opening_pool.size()
+              << " pool_frac=" << opening_pool_frac
+              << " pool_post_plies=" << opening_pool_post_plies
+              << " pool_games=" << stat_opening_pool_games
+              << " seed_games=" << stat_seed_games
+              << " standard_games="
+              << (static_cast<long long>(opening_count)
+                  - stat_opening_pool_games - stat_seed_games)
+              << "\n";
+    std::cout << "SAMPLEPHASE";
+    for (int phase = 0; phase < NUM_PHASES; ++phase) {
+        const int denominator =
+            sample_rate_by_phase[phase] > 0 ? sample_rate_by_phase[phase] : 4;
+        std::cout << ' ' << PHASE_NAMES[phase] << "_denom=" << denominator
+                  << ' ' << PHASE_NAMES[phase] << "_selected="
+                  << stat_sampled_phase[phase]
+                  << ' ' << PHASE_NAMES[phase] << "_emitted="
+                  << stat_emitted_phase[phase];
+    }
+    std::cout << "\n";
     return 0;
 }
 
@@ -5020,7 +5190,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--opening-pool F --opening-pool-frac P --opening-pool-post-plies K] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--explore-temperature-cp T] [--sample-rate-by-phase SPEC] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"

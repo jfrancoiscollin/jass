@@ -18,6 +18,7 @@
 #include "zobrist.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <random>
@@ -105,9 +106,52 @@ struct TopKChoice {
     std::size_t eligible_candidates{0};
     std::size_t duplicate_candidates{0};
     int         child_search_depth{0};
+    std::size_t selected_rank{0};
     bool        ranked{false};
     bool        margin_singleton{false};
+    bool        softmax_sampled{false};
 };
+
+template <class URBG>
+std::size_t sample_ranked_index(const std::vector<int>& scores,
+                                double temperature_cp,
+                                URBG& rng) {
+    if (scores.empty()) return 0;
+    if (!(temperature_cp > 0.0) || !std::isfinite(temperature_cp)) {
+        // Preserve the historical Top-K stream exactly, including the draw
+        // consumed by `rng() % 1` when the margin collapses to one move.
+        return static_cast<std::size_t>(rng() % scores.size());
+    }
+    if (scores.size() == 1) return 0;
+
+    // Scores are sorted best-first. Subtracting the best makes every exponent
+    // non-positive, avoiding overflow even when an unbounded Top-K includes a
+    // catastrophically bad move.
+    const double best = static_cast<double>(scores.front());
+    std::vector<double> weights;
+    weights.reserve(scores.size());
+    double total = 0.0;
+    for (const int score : scores) {
+        const double weight =
+            std::exp((static_cast<double>(score) - best) / temperature_cp);
+        weights.push_back(weight);
+        total += weight;
+    }
+
+    // Construct a deterministic [0,1) variate directly from the top 53 bits.
+    // This avoids implementation-defined details of standard distributions and
+    // makes smoke-test sequences portable across libstdc++/libc++.
+    constexpr double INV_2_POW_53 = 1.0 / 9007199254740992.0;
+    const double target =
+        static_cast<double>(static_cast<std::uint64_t>(rng()) >> 11)
+        * INV_2_POW_53 * total;
+    double cumulative = 0.0;
+    for (std::size_t i = 0; i < weights.size(); ++i) {
+        cumulative += weights[i];
+        if (target < cumulative) return i;
+    }
+    return weights.size() - 1;
+}
 
 template <class URBG, class SearchFn>
 TopKChoice select_topk_exploration_move_with(
@@ -118,7 +162,8 @@ TopKChoice select_topk_exploration_move_with(
     int                       margin,
     TranspositionTable&       rank_tt,
     URBG&                     rng,
-    SearchFn&&                search_fn
+    SearchFn&&                search_fn,
+    double                    softmax_temperature_cp = 0.0
 ) {
     TopKChoice choice;
     choice.legal_candidates = legal.size();
@@ -170,9 +215,17 @@ TopKChoice select_topk_exploration_move_with(
         choice.margin_singleton = (eligible == 1);
     }
 
-    choice.move = ranked[static_cast<std::size_t>(rng() % eligible)].second;
+    std::vector<int> eligible_scores;
+    eligible_scores.reserve(eligible);
+    for (std::size_t i = 0; i < eligible; ++i) {
+        eligible_scores.push_back(ranked[i].first);
+    }
+    choice.selected_rank =
+        sample_ranked_index(eligible_scores, softmax_temperature_cp, rng);
+    choice.move = ranked[choice.selected_rank].second;
     choice.eligible_candidates = eligible;
     choice.ranked = true;
+    choice.softmax_sampled = softmax_temperature_cp > 0.0 && eligible > 1;
     return choice;
 }
 
@@ -184,7 +237,8 @@ TopKChoice select_topk_exploration_move(
     int                 topk,
     int                 margin,
     TranspositionTable& rank_tt,
-    URBG&               rng
+    URBG&               rng,
+    double              softmax_temperature_cp = 0.0
 ) {
     auto run_search = [](
         const Position&                  position,
@@ -195,7 +249,8 @@ TopKChoice select_topk_exploration_move(
         return search(position, limits, tt, history);
     };
     return select_topk_exploration_move_with(
-        engine, legal, play_limits, topk, margin, rank_tt, rng, run_search);
+        engine, legal, play_limits, topk, margin, rank_tt, rng, run_search,
+        softmax_temperature_cp);
 }
 
 }  // namespace jass::selfplay

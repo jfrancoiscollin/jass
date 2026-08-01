@@ -48,6 +48,7 @@ class SelfplayFrontierTests(unittest.TestCase):
             rc = SF.do_merge(Namespace(
                 pair=[[str(a[0]), str(a[1])], [str(b[0]), str(b[1])]],
                 out_data=str(out_data), out_meta=str(out_meta), manifest=None,
+                no_wdl_check=True,
             ))
             self.assertEqual(rc, 0)
             records, rows = SF.read_pair(out_data, out_meta)
@@ -129,6 +130,11 @@ class SelfplayFrontierTests(unittest.TestCase):
                     [source["selected_records"] for source in payload["sources"]],
                     [5, 1],
                 )
+                self.assertTrue(all(
+                    len(source["selected_data_sha256"]) == 64
+                    and len(source["selected_meta_sha256"]) == 64
+                    for source in payload["sources"]
+                ))
                 self.assertEqual(
                     payload["opening_id_policy"],
                     "preserved_across_sources_for_common_holdout_fold",
@@ -260,6 +266,81 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertTrue(payload["labels_used_for_selection_only"])
             self.assertEqual(payload["external_teacher_inputs"], 0)
             self.assertEqual(payload["selected_kind"]["failed_conversion"], 1)
+
+    def test_mine_regret_selects_one_worst_parent_error_per_game(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            positions = [
+                record(wm=bits(31, 32), bm=bits(10), stm=0, score=0, wdl=1),
+                record(wm=bits(33, 34), bm=bits(11), stm=0, score=0, wdl=1),
+                record(wm=bits(35), bm=bits(12, 13), stm=1, score=0, wdl=-1),
+                record(wm=bits(36), bm=bits(14, 15), stm=1, score=0, wdl=-1),
+            ]
+            rows = [
+                SF.Meta(1, 10, 0), SF.Meta(1, 10, 0),
+                SF.Meta(2, 20, 1), SF.Meta(2, 20, 1),
+            ]
+            data, meta = self.write_pair(root, "raw", positions, rows)
+            # For game 1, a large negative score contradicts a win. For game 2,
+            # a large positive score contradicts a loss. The other position in
+            # each game is confidently correct and must not be selected.
+            scored = [
+                positions[0][:33] + struct.pack("<i", -400) + struct.pack("<b", 1),
+                positions[1][:33] + struct.pack("<i", 400) + struct.pack("<b", 1),
+                positions[2][:33] + struct.pack("<i", 300) + struct.pack("<b", -1),
+                positions[3][:33] + struct.pack("<i", -300) + struct.pack("<b", -1),
+            ]
+            scored_path = root / "scored.jnnw"
+            scored_path.write_bytes(
+                SF.JNNW_MAGIC + struct.pack("<I", len(scored)) + b"".join(scored)
+            )
+            out, manifest = root / "regret.jnnw", root / "regret.json"
+            rc = SF.do_mine_regret(Namespace(
+                data=str(data), meta=str(meta), scored_data=str(scored_path),
+                out=str(out), manifest=str(manifest), max_positions=4,
+                score_scale_cp=100.0, min_regret=0.0, seed=23,
+            ))
+            self.assertEqual(rc, 0)
+            output = SF.read_jnnw(out)
+            self.assertEqual(len(output), 4)
+            selected_positions = {row[:33] for row in output}
+            self.assertIn(positions[0][:33], selected_positions)
+            self.assertIn(positions[2][:33], selected_positions)
+            self.assertNotIn(positions[1][:33], selected_positions)
+            self.assertNotIn(positions[3][:33], selected_positions)
+            self.assertTrue(
+                all(struct.unpack_from("<i", row, 33)[0] == 0 for row in output)
+            )
+            self.assertTrue(
+                all(struct.unpack_from("<b", row, 37)[0] == 0 for row in output)
+            )
+            payload = json.loads(manifest.read_text())
+            self.assertEqual(payload["candidate_games"], 2)
+            self.assertEqual(
+                payload["selection_unit"],
+                "one_highest_regret_position_per_game",
+            )
+            self.assertTrue(payload["labels_used_for_selection_only"])
+            self.assertEqual(payload["external_teacher_inputs"], 0)
+
+    def test_mine_regret_rejects_misaligned_scored_corpus(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = record(wm=bits(31), bm=bits(10), wdl=1)
+            data, meta = self.write_pair(
+                root, "raw", [source], [SF.Meta(1, 1, 0)],
+            )
+            scored = record(wm=bits(32), bm=bits(10), score=-300, wdl=1)
+            scored_path = root / "scored.jnnw"
+            scored_path.write_bytes(
+                SF.JNNW_MAGIC + struct.pack("<I", 1) + scored
+            )
+            with self.assertRaisesRegex(ValueError, "position mismatch"):
+                SF.do_mine_regret(Namespace(
+                    data=str(data), meta=str(meta), scored_data=str(scored_path),
+                    out=str(root / "out.jnnw"), manifest=None, max_positions=2,
+                    score_scale_cp=100.0, min_regret=0.0, seed=1,
+                ))
 
     def test_profile_reports_diversity_and_material_coverage(self):
         with tempfile.TemporaryDirectory() as td:

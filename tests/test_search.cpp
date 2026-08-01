@@ -269,6 +269,31 @@ void test_topk_wide_margin_keeps_the_whole_cap() {
     JASS_CHECK(choice.child_search_depth == 5);
 }
 
+struct FixedRng {
+    std::uint64_t value;
+    std::uint64_t operator()() noexcept { return value; }
+};
+
+void test_topk_zero_temperature_preserves_uniform_rank_draw() {
+    FixedRng rng{5};
+    const std::vector<int> scores{100, 80, 60};
+    JASS_CHECK(jass::selfplay::sample_ranked_index(scores, 0.0, rng) == 2);
+}
+
+void test_topk_softmax_prefers_a_clearly_better_move() {
+    // Even the largest possible variate must remain in the best move's mass
+    // when the second candidate is 100 temperatures behind.
+    FixedRng rng{~std::uint64_t{0}};
+    const std::vector<int> scores{0, -1000};
+    JASS_CHECK(jass::selfplay::sample_ranked_index(scores, 10.0, rng) == 0);
+}
+
+void test_topk_softmax_can_sample_alternatives_when_scores_are_equal() {
+    FixedRng rng{~std::uint64_t{0}};
+    const std::vector<int> scores{0, 0, 0};
+    JASS_CHECK(jass::selfplay::sample_ranked_index(scores, 50.0, rng) == 2);
+}
+
 void test_split_rngs_keep_openings_independent_of_exploration() {
     // The point of the split, and the reason a paired A/B needs it: one arm
     // ranks (consuming exploration draws) and the other does not. On a shared
@@ -537,6 +562,9 @@ void run_search_tests() {
     test_topk_child_history_includes_the_current_root();
     test_topk_margin_collapses_to_the_best_move();
     test_topk_wide_margin_keeps_the_whole_cap();
+    test_topk_zero_temperature_preserves_uniform_rank_draw();
+    test_topk_softmax_prefers_a_clearly_better_move();
+    test_topk_softmax_can_sample_alternatives_when_scores_are_equal();
     test_split_rngs_keep_openings_independent_of_exploration();
     test_repeated_root_returns_a_legal_move();
     test_fifty_move_root_returns_a_legal_move();

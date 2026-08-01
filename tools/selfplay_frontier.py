@@ -3,7 +3,7 @@
 """Game-aware dataset utilities for the autonomous L3-PURE self-play loop.
 
 The tool consumes only Jass self-play records and the aligned ``JSM1`` sidecar
-emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has five operations:
+emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has six operations:
 
 ``merge``
     Merge independent shards while namespacing game/opening identifiers.
@@ -26,6 +26,12 @@ emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has five operations:
     in JNNW.  Output seed records have score and WDL zeroed, so no target can
     leak into the next game; their continuations must earn a fresh terminal WDL.
 
+``mine-regret``
+    Build a restart archive from positions where the parent model's static
+    probability disagrees most with the terminal WDL.  Selection is limited to
+    one position per game, stratified by phase and WDL, then colour-mirrored.
+    As with ``mine``, score and WDL are zeroed before reuse.
+
 ``profile``
     Publish distribution diagnostics for one merged self-play corpus: realised
     opening/game diversity, unique positions, phase/material coverage and a
@@ -41,6 +47,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import struct
 import sys
 from collections import Counter, defaultdict
@@ -104,6 +111,16 @@ class Candidate:
     pieces: int
 
 
+@dataclass(frozen=True)
+class RegretCandidate:
+    record: bytes
+    meta: Meta
+    regret: float
+    parent_score_cp: int
+    wdl: int
+    pieces: int
+
+
 def _read_counted(path: Path, magic: bytes, record_size: int) -> tuple[int, bytes]:
     raw = path.read_bytes()
     if len(raw) < 8 or raw[:4] != magic:
@@ -126,6 +143,11 @@ def read_pair(data_path: Path, meta_path: Path) -> tuple[list[bytes], list[Meta]
         for i in range(n_meta)
     ]
     return records, rows
+
+
+def read_jnnw(data_path: Path) -> list[bytes]:
+    count, data = _read_counted(data_path, JNNW_MAGIC, JNNW_REC)
+    return [data[i * JNNW_REC:(i + 1) * JNNW_REC] for i in range(count)]
 
 
 def write_pair(data_path: Path, meta_path: Path,
@@ -342,6 +364,8 @@ def do_mix(args: argparse.Namespace) -> int:
                 sampled_are_included = quota <= count - quota
                 data_hash = hashlib.sha256()
                 meta_hash = hashlib.sha256()
+                selected_data_hash = hashlib.sha256()
+                selected_meta_hash = hashlib.sha256()
                 source_openings: set[int] = set()
                 selected_openings: set[int] = set()
                 game_namespace: dict[int, int] = {}
@@ -387,6 +411,8 @@ def do_mix(args: argparse.Namespace) -> int:
                         meta_out.write(output_meta)
                         output_data_hash.update(record)
                         output_meta_hash.update(output_meta)
+                        selected_data_hash.update(record)
+                        selected_meta_hash.update(output_meta)
                         selected_openings.add(opening_id)
                         selected += 1
                 if selected != quota:
@@ -405,6 +431,8 @@ def do_mix(args: argparse.Namespace) -> int:
                     "selected_fraction": selected / count if count else 0.0,
                     "input_data_sha256": data_hash.hexdigest(),
                     "input_meta_sha256": meta_hash.hexdigest(),
+                    "selected_data_sha256": selected_data_hash.hexdigest(),
+                    "selected_meta_sha256": selected_meta_hash.hexdigest(),
                     "input_openings": len(source_openings),
                     "selected_openings": len(selected_openings),
                     "output_games": len(game_namespace),
@@ -515,6 +543,14 @@ def _winner(record: bytes) -> str | None:
 
 
 def _candidate_hash(candidate: Candidate, seed: int) -> bytes:
+    return hashlib.blake2b(
+        candidate.record[:33]
+        + struct.pack("<QQQ", candidate.meta.game_id, candidate.meta.opening_id, seed),
+        digest_size=16,
+    ).digest()
+
+
+def _regret_candidate_hash(candidate: RegretCandidate, seed: int) -> bytes:
     return hashlib.blake2b(
         candidate.record[:33]
         + struct.pack("<QQQ", candidate.meta.game_id, candidate.meta.opening_id, seed),
@@ -769,6 +805,167 @@ def do_mine(args: argparse.Namespace) -> int:
     return 0 if output_records else 2
 
 
+def _binary_cross_entropy_from_logit(logit: float, target: float) -> float:
+    """Numerically stable BCE, with target 0, 0.5 or 1 for terminal WDL."""
+    return max(logit, 0.0) - target * logit + math.log1p(math.exp(-abs(logit)))
+
+
+def _regret_summary(values: list[float]) -> dict:
+    if not values:
+        return {"min": None, "p50": None, "p90": None, "max": None, "mean": None}
+    ordered = sorted(values)
+
+    def percentile(fraction: float) -> float:
+        return ordered[round((len(ordered) - 1) * fraction)]
+
+    return {
+        "min": ordered[0],
+        "p50": percentile(0.50),
+        "p90": percentile(0.90),
+        "max": ordered[-1],
+        "mean": sum(ordered) / len(ordered),
+    }
+
+
+def _round_robin_regret(
+    candidates: list[RegretCandidate], limit: int, seed: int,
+) -> list[RegretCandidate]:
+    buckets: dict[tuple[str, int], list[RegretCandidate]] = defaultdict(list)
+    for candidate in candidates:
+        buckets[(_phase_band(candidate.pieces), candidate.wdl)].append(candidate)
+    for values in buckets.values():
+        values.sort(key=lambda row: (-row.regret, _regret_candidate_hash(row, seed)))
+
+    selected: list[RegretCandidate] = []
+    offsets: Counter = Counter()
+    keys = sorted(buckets)
+    while len(selected) < limit:
+        progressed = False
+        for key in keys:
+            offset = offsets[key]
+            values = buckets[key]
+            if offset < len(values):
+                selected.append(values[offset])
+                offsets[key] += 1
+                progressed = True
+                if len(selected) >= limit:
+                    break
+        if not progressed:
+            break
+    return selected
+
+
+def do_mine_regret(args: argparse.Namespace) -> int:
+    if args.max_positions < 2:
+        raise ValueError("--max-positions must be >= 2")
+    if args.score_scale_cp <= 0.0:
+        raise ValueError("--score-scale-cp must be > 0")
+    if args.min_regret < 0.0:
+        raise ValueError("--min-regret must be >= 0")
+
+    data_path = Path(args.data)
+    meta_path = Path(args.meta)
+    scored_path = Path(args.scored_data)
+    records, rows = read_pair(data_path, meta_path)
+    scored_records = read_jnnw(scored_path)
+    if len(records) != len(scored_records):
+        raise ValueError(
+            f"data/scored count mismatch: {len(records)} != {len(scored_records)}"
+        )
+
+    best_by_game: dict[int, RegretCandidate] = {}
+    eligible_records = 0
+    for index, (record, scored, row) in enumerate(zip(records, scored_records, rows)):
+        if record[:33] != scored[:33]:
+            raise ValueError(f"record {index}: scored corpus position mismatch")
+        wdl = struct.unpack_from("<b", record, 37)[0]
+        scored_wdl = struct.unpack_from("<b", scored, 37)[0]
+        if wdl not in (-1, 0, 1) or scored_wdl != wdl:
+            raise ValueError(f"record {index}: scored corpus WDL mismatch")
+        parent_score_cp = struct.unpack_from("<i", scored, 33)[0]
+        logit = parent_score_cp / args.score_scale_cp
+        target = (wdl + 1.0) / 2.0
+        regret = _binary_cross_entropy_from_logit(logit, target)
+        if regret < args.min_regret:
+            continue
+        eligible_records += 1
+        _, _, pieces = _material(record)
+        candidate = RegretCandidate(
+            record, row, regret, parent_score_cp, wdl, pieces,
+        )
+        previous = best_by_game.get(row.game_id)
+        if (
+            previous is None
+            or candidate.regret > previous.regret
+            or (
+                candidate.regret == previous.regret
+                and _regret_candidate_hash(candidate, args.seed)
+                < _regret_candidate_hash(previous, args.seed)
+            )
+        ):
+            best_by_game[row.game_id] = candidate
+
+    base_limit = args.max_positions // 2
+    selected = _round_robin_regret(
+        list(best_by_game.values()), base_limit, args.seed,
+    )
+    output_records: list[bytes] = []
+    seen_positions: set[bytes] = set()
+    for candidate in selected:
+        original = _zero_targets(candidate.record)
+        for paired in (original, mirror_record(original)):
+            position = paired[:33]
+            if position in seen_positions or len(output_records) >= args.max_positions:
+                continue
+            seen_positions.add(position)
+            output_records.append(paired)
+
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(
+        JNNW_MAGIC
+        + struct.pack("<I", len(output_records))
+        + b"".join(output_records)
+    )
+    phase_counts = Counter(_phase_band(row.pieces) for row in selected)
+    wdl_counts = Counter({-1: "loss", 0: "draw", 1: "win"}[row.wdl] for row in selected)
+    source_counts = Counter(
+        "frontier" if row.meta.seeded else "standard" for row in selected
+    )
+    _manifest(args.manifest, {
+        "schema": 1,
+        "operation": "mine_regret_archive",
+        "input": {
+            "data": str(data_path),
+            "meta": str(meta_path),
+            "scored_data": str(scored_path),
+            "data_sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+            "meta_sha256": hashlib.sha256(meta_path.read_bytes()).hexdigest(),
+            "scored_data_sha256": hashlib.sha256(scored_path.read_bytes()).hexdigest(),
+        },
+        "input_records": len(records),
+        "eligible_records": eligible_records,
+        "candidate_games": len(best_by_game),
+        "selected_base_positions": len(selected),
+        "output_positions_with_colour_mirrors": len(output_records),
+        "selected_phase": dict(sorted(phase_counts.items())),
+        "selected_wdl_stm": dict(sorted(wdl_counts.items())),
+        "selected_source": dict(sorted(source_counts.items())),
+        "selected_regret": _regret_summary([row.regret for row in selected]),
+        "score_scale_cp": args.score_scale_cp,
+        "min_regret": args.min_regret,
+        "selection_unit": "one_highest_regret_position_per_game",
+        "selection_priority": (
+            "terminal_wdl_binary_cross_entropy_of_parent_static_eval"
+        ),
+        "selection_strata": ["phase", "terminal_wdl_stm"],
+        "labels_used_for_selection_only": True,
+        "output_score_and_wdl_zeroed": True,
+        "external_teacher_inputs": 0,
+    })
+    return 0 if output_records else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -847,6 +1044,34 @@ def build_parser() -> argparse.ArgumentParser:
                       help="calibration share of successfully converted positions")
     mine.add_argument("--seed", type=int, default=1)
     mine.set_defaults(func=do_mine)
+
+    regret = sub.add_parser(
+        "mine-regret",
+        help="mine a parent-regret restart archive, one position per game",
+    )
+    regret.add_argument("--data", required=True)
+    regret.add_argument("--meta", required=True)
+    regret.add_argument(
+        "--scored-data",
+        required=True,
+        help="same JNNW corpus after --rewrite-scores-with-nnue using the parent",
+    )
+    regret.add_argument("--out", required=True)
+    regret.add_argument("--manifest")
+    regret.add_argument(
+        "--max-positions", type=int, default=4000,
+        help="total output count including colour mirrors",
+    )
+    regret.add_argument(
+        "--score-scale-cp", type=float, default=100.0,
+        help="centipawns per probability logit in the runtime evaluator",
+    )
+    regret.add_argument(
+        "--min-regret", type=float, default=0.0,
+        help="minimum terminal-WDL binary cross-entropy",
+    )
+    regret.add_argument("--seed", type=int, default=1)
+    regret.set_defaults(func=do_mine_regret)
 
     profile = sub.add_parser("profile", help="profile self-play coverage and diversity")
     profile.add_argument("--data", required=True)
