@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 26 juillet 2026**
+> **Mis à jour : 2 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -30,7 +30,8 @@
 > onpolicy_single_factor_flat_coverage_is_the_binding_constraint;
 > coverage_knob_is_random_open_plies_plateau_at_24;
 > coverage_is_not_the_lever_refuted_by_gate;
-> conversion_benchmark_of_july_is_unusable`.
+> conversion_benchmark_of_july_is_unusable;
+> scan_blind_spot_exact_gen2_differential_measured`.
 
 ## 0. État au soir du 1er août 2026
 
@@ -904,17 +905,52 @@ sous-alimenté ») a été falsifiée par `home-1004` : cet atlas est le premier
 Détail, tableaux et limites :
 [`experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_ATLAS_20260801.md).
 
-**Témoin autorisé sur HOME — `home-1143/1144/1145`.** Le protocole suivant
-remplace le témoin TURNOVER envisagé ci-dessus par le champion **EXACT (8cf)**,
-puis rejoue exactement le même atlas avec **Gen2 (32cf)** avant un readout
-différentiel descriptif. Les deux bras gardent `n_ext = 120`, le même binaire
-Scan, les mêmes profondeurs, seeds et budgets ; seul `n_pat` change avec le
-build (`8 * 3^12` contre `32 * 3^12`). Ce différentiel peut donc comparer la
-géométrie des profils d'erreur sous les deux représentations. Il ne permet ni
-une attribution aux features (constantes), ni une comparaison de classe
-linéaire/non-linéaire (deux bras linéaires), ni une ablation pure des poids
-(trajectoires d'entraînement différentes). Go compute HOME donné par JFC le
-1er août ; exécution strictement séquentielle, sans continuation automatique.
+**Témoin EXACT/Gen2 terminé sur HOME — `home-1143quater/1144bis/1145`.** Les
+deux atlas et le différentiel ont été mesurés au SHA moteur
+`31dc371cb027bc83e25c8bedcd02fa7891775454`, avec le même binaire Scan, les
+mêmes profondeurs, seeds et budgets. `n_ext = 120` reste constant ; seul
+`n_pat` passe de `4 251 528` (EXACT, 8cf) à `17 006 112` (Gen2, 32cf).
+
+| bras | positions (ordinaires) | désaccords jugés | taux de désaccord | coût ordinaire / position | conversions ratées |
+|---|---:|---:|---:|---:|---:|
+| EXACT | 1 108 434 (1 075 109) | 513 784 | 0,463522 | **0,069273** | 0 / 33 325 |
+| Gen2 | 776 034 (748 785) | 376 820 | 0,485572 | 0,073977 | 0 / 27 249 |
+| Δ EXACT − Gen2 | — | — | **−0,022050** | **−0,004704** | 0 |
+
+Le volume diffère parce que le protocole dimensionne chaque shard en **temps**,
+pas en nombre de parties ; les comparaisons portent donc sur des taux. EXACT a
+un coût ordinaire inférieur de `0,004704` par position, soit `−6,36 %` relatif
+à Gen2, et désaccorde Scan `−2,205 pp` moins souvent.
+
+Le profil n'est toutefois pas une domination uniforme. EXACT est meilleur en
+ouverture (`Δ coût/position = −0,014957`) et sans dame (`−0,016277`), mais plus
+cher dans les finales 7–12 pièces (`+0,014960`) et lorsque des dames subsistent
+(un seul côté `+0,029604`, deux côtés `+0,088758`). Le jeu calme concentre
+toujours presque toute la masse de coût dans les deux bras ; EXACT y réduit
+néanmoins le coût par position de `0,005652`. Les extrêmes clairsemés — notamment
+`en_avance_3+`, seulement 865 positions ordinaires côté Gen2 — ne doivent pas
+porter une décision seuls. Aucun bras ne rate une conversion dans cet
+instrument ; cela ne remplace pas le benchmark P3/P4 corrigé du §0.4.
+
+**Portée du résultat :** géométrie/profil **oui** ; attribution aux features
+**non** (tenues constantes) ; classe linéaire/non-linéaire **non** (deux bras
+linéaires) ; ablation causale des poids **non** (poids et trajectoires propres à
+chaque modèle). C'est un différentiel descriptif, pas un échantillon iid et pas
+une autorisation de promotion.
+
+Incident d'exécution sans résultat scientifique : `home-1144` a été arrêté
+après que 5 des 16 arbitres 32cf ont dépassé le timeout d'initialisation de 60 s
+sous contention. `home-1144bis` a conservé exactement le même SHA et le même
+protocole, avec les seuls démarrages espacés de 10 s ; les 16 shards ont alors
+terminé sans `ABORT`.
+
+Résultats immuables :
+
+- EXACT : `r2:jass-data/runs/home-1143quater-l3-scan-blind-spot-atlas-exact-v1/20260801T211028Z-31dc371c` ;
+- Gen2 : `r2:jass-data/runs/home-1144bis-l3-scan-blind-spot-atlas-gen2-v1/20260801T215804Z-05949b14` ;
+- différentiel : `r2:jass-data/runs/home-1145-l3-scan-blind-spot-differential-v1/20260801T223342Z-05949b14`
+  (`differential.json` SHA-256
+  `332bfebccec36c9c06e2b80590d1128a10a66dd097414bad5accf8cc685d8590`).
 
 Préréglage, invariants et limites :
 [`experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md`](experiments/L3_SCAN_BLIND_SPOT_DIFFERENTIAL_PROTOCOL_20260801.md).
