@@ -666,6 +666,22 @@ nouveaux buckets — elles dupliquent ; et la longueur des parties baisse
 (2 206 611 → 2 112 305 plies), signe que l'on démarre de plus en plus loin dans
 des ouvertures artificielles.
 
+**Le corpus qui en découle** (`cpx62-1133`) : recette TURNOVER figée, moitié
+mémoire byte-identique, mélange 1:1 vérifié, **seul `rop` passe de 8 à 24**.
+Ouvertures de la moitié fraîche **19 853 contre 16 396** (`+21 %`), et couverture
+du corpus 2 M complet **128 482 buckets contre 124 948** pour MIXFRESH — soit
+`+2,83 %`, pas `+7,11 %` : le gain se dilue parce que la moitié mémoire, qui est
+la moitié du corpus, ne bouge pas. On reste **sous** les `130 086` du corpus
+TURNOVER d'origine.
+
+⚠️ **Le holdout de `1133` tombe à `0,400335`** contre `0,449827` (MIXFRESH) et
+`0,442898` (EXACT). **Ce chiffre ne veut rien dire ici** : le holdout est tiré du
+corpus lui-même, et un corpus dont les parties démarrent 24 plies plus loin dans
+une ouverture aléatoire est intrinsèquement moins entropique (nulles `18,1 %`
+contre `19,2 %` et `21,4 %`). Comparer des holdouts **entre corpus différents**
+n'a pas de sens, et la perte ne prédit pas la force — quatre fois mesuré. Ne rien
+en attendre avant la porte.
+
 **Ce que ces sondes n'établissent pas : rien en Elo.** `+7,11 %` de couverture
 peut valoir quelques Elo ou zéro. Repère : les `−3,9 %` de `cpx62-1130`
 accompagnaient `−4,05 Elo`, donc l'ordre de grandeur plausible est **~+7 Elo**,
