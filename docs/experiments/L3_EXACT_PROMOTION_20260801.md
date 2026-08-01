@@ -128,10 +128,15 @@ restent ouvertes, et elles ont des conséquences opposées :
 2. **le chiffre de juillet était gonflé par le bug** → il n'y a pas de bug neuf,
    et c'est le registre qui doit cesser de citer `0,98`/`0,99` comme plancher.
 
-**Trancher demande une seule mesure** : rejouer TURNOVER avec l'attaquant figé
-au SHA de juillet (`ATTACKER_CODE_SHA=e913d66d`, ajouté au template le 1er août).
-S'il rend `0,98`, la cause est le moteur et un bisect sur les neuf commits
-désigne le coupable.
+**TRANCHÉ** (`cpx62-1142`) : c'est l'hypothèse 2. Rejoué avec l'attaquant figé à
+**`9c1d1e8e`** — le correctif lui-même, premier commit capable de jouer le test —
+TURNOVER rend `0,7633` et `0,7600`, avec `W229 D19 L52` et `W228 D14 L58` :
+**identiques à la position près** aux chiffres du moteur d'aujourd'hui. Les huit
+commits suivants sont donc prouvés neutres, bit à bit, et la totalité de l'écart
+vient de la **correction** du bug. ⛔ **`0,98`/`0,99` est un artefact ; le plancher
+honnête vaut ~`0,76`.** *(L'archéologie à `e913d66d` était une impasse : ce
+moteur ne sait pas jouer une racine nulle, donc il ne peut pas reproduire sa
+propre mesure.)*
 
 **Leçon de méthode, à graver** : la cellule figeait le défenseur et laissait
 l'attaquant suivre `develop`. Les deux choix se défendent séparément ; ensemble

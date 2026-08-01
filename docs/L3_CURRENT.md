@@ -99,12 +99,36 @@ nul sur **toute** racine nulle par répétition ou horloge). ⛔ **Le repère
 `0,98`/`0,99` de `home-0996` ne doit plus être cité comme plancher.** Ce qui
 reste indécidé est *combien* des 110 défaites d'aujourd'hui sont réelles.
 
-L'archéologie (`1139`→`1141`, attaquant figé au SHA de juillet) devait trancher.
-⚠️ **Elle se heurte au bug lui-même** : `1139` a tenu 80 min sur la vue movetime
-sans rendre, et j'avais affirmé à tort que la conversion y échappait — c'est vrai
-du bug movetime, **faux du bug racine-nulle**, qui ne dépend pas de la
-profondeur. Un moteur qui ne sait pas jouer une racine nulle ne peut pas
-reproduire sa propre mesure.
+**TRANCHÉ le 1er août au soir (`cpx62-1142`) : aucune régression du moteur.**
+L'archéologie à `e913d66d` était une impasse — ce moteur ne sait pas jouer une
+racine nulle, donc il ne peut pas reproduire sa propre mesure, et `1139` a tenu
+80 min sans rendre. *(J'avais affirmé à tort que la conversion échappait aux deux
+bugs : c'est vrai du bug movetime, **faux du bug racine-nulle**, qui ne dépend
+pas de la profondeur.)* Le bisect est donc reparti de **`9c1d1e8e` lui-même**, le
+premier commit qui sait jouer le test :
+
+```text
+TURNOVER, attaquant figé à 9c1d1e8e   p3 = 0,7633 (W229 D19 L52)   p4 = 0,7600 (W228 D14 L58)
+TURNOVER, moteur d'aujourd'hui        p3 = 0,7633 (W229 D19 L52)   p4 = 0,7600 (W228 D14 L58)
+```
+
+**Identiques à la position près.** Les huit commits postérieurs à `9c1d1e8e` sont
+donc **prouvés neutres** pour cette mesure — bit à bit, pas « probablement ». La
+totalité des `−22,3 pp` s'explique par `9c1d1e8e` lui-même, c'est-à-dire **par la
+CORRECTION du bug**, pas par une régression.
+
+⛔ **Le `0,98`/`0,99` de `home-0996` est un ARTEFACT et ne doit plus jamais être
+cité comme plancher.** Le moteur d'alors rendait un coup nul sur toute racine
+nulle par répétition : les nulles n'étaient pas enregistrables (`0` sur 600) et
+se retrouvaient comptées gagnées. **Le plancher honnête vaut ~`0,76`** pour
+TURNOVER comme pour EXACT, lesquels restent indistinguables entre eux. Tout
+`CONV_FLOOR` doit être recalibré là-dessus ; celui de `1137` (`0,95`) était hérité
+du chiffre faux, ce qui rendait son verdict `RED` mécanique et sans contenu.
+
+✅ **Bénéfice collatéral : le harnais de conversion est parfaitement
+déterministe.** Deux builds distincts à cinq semaines d'écart, deux exécutions
+séparées, compteurs identiques à l'unité. Toute mesure future sur cette cellule
+part d'une base sûre.
 
 ### 0.5 Deux leçons de méthode, à garder
 
