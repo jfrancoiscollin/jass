@@ -34,6 +34,11 @@ die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" > "$STAGE"; say "phase=$1"; }
 
 PREFLIGHT_PREFIX="${PREFLIGHT_PREFIX:-r2:jass-data/runs/home-1004-l3-pure-volume8m-preflight-v2/20260727T211936Z-90d3aad1}"
+# Le pool d'ouvertures est paramétré parce qu'une mesure répétée sur LE MÊME
+# pool n'est pas une réplication indépendante : elle rejoue les mêmes positions
+# de départ. Une confirmation sur un second pool disjoint demande donc de
+# pointer un autre préflight, et son artefact ne porte pas le même nom.
+PREFLIGHT_FILE="${PREFLIGHT_FILE:-vol8m-eval-openings.fen}"
 EXPECTED_PREFLIGHT_JOB="${EXPECTED_PREFLIGHT_JOB:-home-1004-l3-pure-volume8m-preflight-v2}"
 NSH_GATE="${NSH_GATE:-12}"; PAR_GATE="${PAR_GATE:-12}"
 FORCE_DEPTH=9; MOVETIME=0.1; CACHE_MB=128
@@ -105,7 +110,7 @@ fetch_arm B "$B_PREFIX" "$B_JOB" "$B_FILE"
 # Deux modèles identiques rendraient un verdict qui ne veut rien dire.
 cmp -s "$W/A.pjtw" "$W/B.pjtw" && die "les deux bras sont le MÊME modèle — porte sans objet"
 python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
-  --file artefacts/vol8m-eval-openings.fen=open-eval.fen \
+  --file "artefacts/$PREFLIGHT_FILE=open-eval.fen" \
   --out-dir "$IN" --report "$ART/verified-openings.json" \
   --expected-state completed > "$W/fetch-openings.log" 2>&1 || die "fetch des ouvertures en échec"
 cp "$IN/open-eval.fen" "$W/open-eval.fen"
