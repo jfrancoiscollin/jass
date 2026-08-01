@@ -277,6 +277,19 @@ if "BASE" not in by or "BASEBIS" not in by:
 
 base = by["BASE"]["visited"]
 noise = abs(by["BASEBIS"]["visited"] - base) / base      # écart graine-à-graine
+
+# Garde de DISTRIBUTION, ajoutée après cpx62-1131. Le canari `skew` du registre
+# surveille |win-loss| et laisse donc passer un corpus dont les nulles se sont
+# effondrées symétriquement : `NODECAY` y est tombé à 2,4 % de nulles contre
+# 17,4 % pour BASE — de l'exploration soutenue toute la partie qui la rend
+# décisive au hasard — et il a franchi la garde en rangeant 2ᵉ. S'il avait rangé
+# 1ᵉʳ il aurait été élu. Un déplacement du taux de nulles change la cible WDL
+# elle-même, donc la cellule n'entraîne plus sur la même quantité.
+base_draws = by["BASE"]["draws"]
+MAX_DRAW_SHIFT = 0.30                                    # relatif, ~35x le bruit réplique
+for r in rows:
+    if base_draws > 0 and abs(r["draws"] - base_draws) / base_draws > MAX_DRAW_SHIFT:
+        r["guard"] = "DRAW_SHIFT" if r["guard"] == "OK" else r["guard"] + "+DRAW_SHIFT"
 print(f"  bruit graine-à-graine (BASE vs BASEBIS) = {noise*100:.2f} %")
 print(f"  {'cellule':8s} {'buckets':>9s} {'Δ vs BASE':>10s} {'gini':>6s} {'nulles':>7s} {'garde':>9s}")
 ranked = sorted(rows, key=lambda r: -r["visited"])
