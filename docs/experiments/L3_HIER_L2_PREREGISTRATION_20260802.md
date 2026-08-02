@@ -28,6 +28,30 @@ la force ?
 | `hier_l2` | `0` | **`3e-5`** |
 | L-BFGS | maxiter `1000`, maxcor `20`, gtol `1e-4` | identique |
 
+### Amendement de validité de convergence — toujours avant tout chiffre HIER
+
+`cpx62-1155` a montré que « même `gtol` » et `success=True` ne suffisent pas :
+le bras men-only a fini à `||grad||∞ = 5,48e-4` en 141 itérations, tandis que le
+bras king-aware s'est arrêté à `9,13e-4` en 12 itérations. Le changement de
+paramétrisation avait donc changé la proximité effective du point d'arrêt.
+
+HIER ne remplace pas le ridge vers zéro dans l'implémentation actuelle — il lui
+ajoute un recul vers la moyenne du pattern — mais il change lui aussi la
+géométrie de l'objectif. En conséquence :
+
+- les deux commandes demandent `gtol = 1e-4` ;
+- le job relit la valeur **écrite** par l'optimiseur et exige pour chaque bras
+  `success=True`, `status=0`, une norme finie et **`gradient_inf_norm <= 1e-4`** ;
+- une terminaison annoncée réussie mais au-dessus de cette borne invalide le
+  refit ; aucun modèle n'est envoyé à la porte ;
+- itérations, évaluations de fonction, message de terminaison et normes des deux
+  bras restent publiés. Le holdout ne peut pas excuser une convergence invalide.
+
+`cpx62-1156`, lancé à `gtol=1e-4`, sert de calibration de coût et de robustesse
+sur le facteur king-aware. Si ses diagnostics justifient une borne plus serrée,
+la règle HIER sera resserrée **avant son dépôt** ; elle ne pourra jamais être
+relâchée après avoir vu une mesure HIER.
+
 Le coefficient historique de `cpx62-0517` n'est pas repris : ses trois cellules
 utilisaient `hier_l2 = 1e-3`, `3e-3` ou `1e-2` (33 à 333 fois le ridge) et deux
 d'entre elles changeaient aussi `l2`. Leur résultat négatif ne répond donc pas à
@@ -67,9 +91,9 @@ créerait que des doublons déterministes.
    `PRIOR`. **Aucune promotion**, aucune continuation et aucun job de succession
    ne sont autorisés par cette porte.
 
-Le holdout, le nombre d'itérations et la norme du gradient sont des contrôles de
-validité du fit. Ils ne remplacent pas la porte de force et ne peuvent pas
-renverser sa règle.
+Le holdout et le nombre d'itérations sont des diagnostics. La norme du gradient
+est un **prérequis de validité** : si elle ne franchit pas la borne ci-dessus,
+la porte n'existe pas. Aucun de ces éléments ne peut renverser la règle de force.
 
 ## Séquencement et coordination
 

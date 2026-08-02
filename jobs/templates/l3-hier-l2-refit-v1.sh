@@ -26,6 +26,7 @@ EXPECTED_RECORDS=2000000; EXPECTED_HOLDOUT=199204; EXPECTED_EXTRAS=120
 # sont pas paramétrables afin qu'un wrapper ne puisse pas ajouter un facteur.
 L2=3e-5; HIER_CONTROL=0; HIER_CANDIDATE=3e-5
 MAXIT=1000; LBFGS_MAXCOR=20; LBFGS_GTOL=1e-4; CHUNK=20000
+MAX_GRAD_INF=1e-4
 FIT_TIMEOUT=10800
 
 MON=""
@@ -149,7 +150,8 @@ common = {
     "fold": "exact", "geometry": "8cf", "n_ext": 120, "target": "wdl",
     "loss": "logistic", "tempo_stage": True, "l2": 3e-5,
     "holdout_count": 199204, "max_iter": 1000, "lbfgs_maxcor": 20,
-    "lbfgs_gtol": 1e-4, "chunk": 20000, "prune": True,
+    "lbfgs_gtol": 1e-4, "gradient_inf_norm_max": 1e-4,
+    "chunk": 20000, "prune": True,
 }
 arms = {"control": {**common, "hier_l2": 0.0},
         "hier": {**common, "hier_l2": 3e-5}}
@@ -177,12 +179,23 @@ fit_arm(){
   rc=$?; set -e
   [ "$rc" -eq 0 ] || die "fit $arm rc=$rc"
   [ -s "$W/$arm.pjtw" ] || die "fit $arm sans modèle"
-  python3 - "$ART/$arm-optimizer.json" <<'PY'
-import json, sys
+  python3 - "$ART/$arm-optimizer.json" "$MAX_GRAD_INF" <<'PY'
+import json, math, sys
 o = json.load(open(sys.argv[1]))
-required = {"success", "iterations", "gradient_inf_norm", "gtol"}
-if not required <= set(o) or not o["success"] or o["gtol"] != 1e-4:
-    raise SystemExit("optimizer contract failed")
+limit = float(sys.argv[2])
+required = {"success", "status", "message", "iterations",
+            "function_evaluations", "gradient_inf_norm", "gtol"}
+missing = required - set(o)
+if missing:
+    raise SystemExit(f"optimizer report missing keys: {sorted(missing)}")
+grad = o["gradient_inf_norm"]
+if (o["success"] is not True or o["status"] != 0 or o["gtol"] != 1e-4
+        or not isinstance(grad, (int, float)) or not math.isfinite(grad)
+        or grad > limit):
+    raise SystemExit(
+        f"optimizer convergence invalid: success={o['success']} status={o['status']} "
+        f"grad_inf={grad} limit={limit} gtol={o['gtol']} message={o['message']!r}"
+    )
 PY
   gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
   say "  $arm ✓ hier_l2=$hier"
@@ -216,12 +229,15 @@ art = sys.argv[1]
 fits = {}
 for arm in ("control", "hier"):
     o = json.load(open(os.path.join(art, f"{arm}-optimizer.json")))
-    fits[arm] = {k: o[k] for k in ("success", "iterations", "gradient_inf_norm", "gtol")}
+    fits[arm] = {k: o[k] for k in ("success", "status", "message", "iterations",
+                                            "function_evaluations", "gradient_inf_norm", "gtol")}
 payload = {
     "schema": 1, "verdict": "L3_HIER_L2_REFIT_READY",
     "fit_contract": json.load(open(os.path.join(art, "fit-contract.json"))),
     "models": json.load(open(os.path.join(art, "model-contract.json")))["models"],
-    "optimizer": fits, "promotion_authorized": False, "automatic_next_job": None,
+    "optimizer": fits, "convergence_requirement": {"gradient_inf_norm_max": 1e-4,
+                                                       "all_arms_pass": True},
+    "promotion_authorized": False, "automatic_next_job": None,
 }
 json.dump(payload, open(os.path.join(art, "JASS_CONTROL_SUMMARY.json"), "w"),
           indent=2, sort_keys=True)

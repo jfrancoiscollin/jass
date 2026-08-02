@@ -12,6 +12,9 @@ class HierL2RefitTemplateTest(unittest.TestCase):
         self.assertIn("HIER_CONTROL=0; HIER_CANDIDATE=3e-5", REFIT)
         self.assertIn('L2=3e-5', REFIT)
         self.assertIn('LBFGS_GTOL=1e-4', REFIT)
+        self.assertIn('MAX_GRAD_INF=1e-4', REFIT)
+        self.assertIn('grad > limit', REFIT)
+        self.assertIn('"all_arms_pass": True', REFIT)
         self.assertIn('diff != ["hier_l2"]', REFIT)
         self.assertEqual(REFIT.count('fit_arm control "$HIER_CONTROL"'), 1)
         self.assertEqual(REFIT.count('fit_arm hier "$HIER_CANDIDATE"'), 1)
@@ -27,7 +30,10 @@ class HierL2RefitTemplateTest(unittest.TestCase):
 
     def test_optimizer_keys_are_written_by_tool_and_read_by_template(self):
         trainer = (ROOT / "pattern_jass/tools/train.py").read_text(encoding="utf-8")
-        for key in ("success", "iterations", "gradient_inf_norm", "gtol"):
+        for key in (
+            "success", "status", "message", "iterations",
+            "function_evaluations", "gradient_inf_norm", "gtol",
+        ):
             self.assertIn(f'"{key}"', trainer)
             self.assertIn(f'"{key}"', REFIT)
 

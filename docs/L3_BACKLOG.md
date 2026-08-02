@@ -35,7 +35,9 @@ mais pas le bouton unique actuel.
 
 **Préenregistré, pas lancé** : CONTROL `hier_l2=0` contre HIER `hier_l2=3e-5`,
 `l2=3e-5`, EXACT et tous les autres facteurs identiques ; porte sur le pool 3000,
-`n=12000`. Règle :
+`n=12000`. Après l'artefact de convergence de `cpx62-1155`, le refit est
+fail-closed : `success=True` ne suffit pas, chaque bras doit publier
+`||grad||∞ <= 1e-4` avant toute porte. Règle :
 [`experiments/L3_HIER_L2_PREREGISTRATION_20260802.md`](experiments/L3_HIER_L2_PREREGISTRATION_20260802.md).
 **Déclencheur scientifique satisfait** (PRIOR est promu) ; dépôt en attente du
 verdict king-aware et du go de JFC. Un succès rouvre seulement `PRIOR+HIER` contre
