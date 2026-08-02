@@ -229,7 +229,14 @@ done
 # `warm` = recette courante (L2 centré 0) ; `prior` = ridge centré sur le parent.
 cont_args(){ case "$1" in
   warm)  printf '%s\n%s\n' --warm-start "$IN/parent.pjtw" ;;
+  # `--king-patterns` n'agrandit PAS l'espace : il OR les dames dans
+  # l'occupation (`pb = bm|bk`), donc `n_pat` est inchangé et le warm-start
+  # depuis un parent men-only reste structurellement valide. Ce qui change est
+  # le SENS d'une case occupée — les poids du parent servent d'initialisation,
+  # pas de vérité, ce qui est exactement ce que `--warm-start` promet.
+  warmking) printf '%s\n%s\n%s\n' --warm-start "$IN/parent.pjtw" --king-patterns ;;
   prior) printf '%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" --prior-decay 0 ;;
+  priorking) printf '%s\n%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" --prior-decay 0 --king-patterns ;;
   *) die "continuation invalide : $1" ;; esac; }
 ARM_A_CONT="${ARM_A_CONT:-warm}"; ARM_B_CONT="${ARM_B_CONT:-warm}"
 say "  bras A : $ARM_A_FOLD / $ARM_A_CONT"
