@@ -241,7 +241,8 @@ fit_arm exact   "$ARM_B_FOLD" "${B_ARGS[@]}"
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
-  "$W/control.pjtw" "$W/exact.pjtw" "$ART/symmetry-report.json" <<'PY' | tee -a "$RES"
+  "$W/control.pjtw" "$W/exact.pjtw" "$ART/symmetry-report.json" \
+  "$ARM_A_FOLD" "$ARM_B_FOLD" <<'PY' | tee -a "$RES"
 import json, struct, sys
 import numpy as np
 import patterns as P, symmetry as S
@@ -266,11 +267,26 @@ for name, path in (("control", sys.argv[1]), ("exact", sys.argv[2])):
                  "violation_colourswap_approx": round(c, 8)}
     print(f"  {name:<8} rot180∘cs (EXACTE) = {100*e:7.4f} %   cs seule (approx) = {100*c:7.4f} %")
 json.dump(out, open(sys.argv[3], "w"), indent=2, sort_keys=True)
-if out["exact"]["violation_rot180_cs_EXACT"] > 1e-9:
-    raise SystemExit("le bras exact ne satisfait PAS la symétrie qu'il impose")
-if out["control"]["violation_rot180_cs_EXACT"] < 1e-3:
-    raise SystemExit("le bras control satisfait déjà la symétrie exacte — "
-                     "les deux bras ne diffèrent pas, l'expérience est vide")
+# Chaque bras doit satisfaire la symétrie que SON fold impose — pas celle du
+# voisin. La version précédente exigeait que `control` VIOLE `rot180∘cs`, ce qui
+# n'avait de sens que tant que le bras A était forcément `--color-fold`. Depuis
+# que les folds sont paramétrables, deux bras `--exact-fold` (comparés sur un
+# autre facteur, le prior par exemple) faisaient échouer cette assertion APRÈS
+# que les deux modèles aient été produits — bug de cpx62-1145.
+folds = {"control": sys.argv[4], "exact": sys.argv[5]}
+for name, fold in folds.items():
+    key = ("violation_rot180_cs_EXACT" if fold == "--exact-fold"
+           else "violation_colourswap_approx")
+    if out[name][key] > 1e-9:
+        raise SystemExit(f"le bras {name} ({fold}) ne satisfait PAS la symétrie "
+                         f"qu'il impose : {key}={out[name][key]}")
+# Le vrai garde-fou « l'expérience n'est pas vide » ne porte pas sur une symétrie
+# mais sur les modèles eux-mêmes : deux bras identiques rendraient une porte sans
+# objet, quel que soit le facteur qu'on croyait faire varier.
+a = open(sys.argv[1], "rb").read(); b = open(sys.argv[2], "rb").read()
+if a == b:
+    raise SystemExit("les deux bras sont le MÊME modèle — l'expérience est vide")
+print(f"  bras distincts ✓ ({len(a)} vs {len(b)} octets, contenus différents)")
 PY
 
 stage report
