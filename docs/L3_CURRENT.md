@@ -465,7 +465,14 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. champion général courant : **EXACT**, promu le 1er août 2026 après la porte
+1. champion général courant : **PRIOR**, promu le 2 août 2026 — `--prior-mean
+   <parent> --prior-decay 0`, consolidé `+6,66 Elo` IC95 `[+0,44 ; +12,88]` sur
+   `n=12 000` et deux pools disjoints, trois gardes vertes (`+70,01` contre Gen2).
+   ⚠️ Chiffre **biaisé vers le haut** (découverte + réplication), effet vrai
+   plutôt `~+4` ; borne basse `+0,44`. Bornes :
+   [`experiments/L3_PRIOR_PROMOTION_20260802.md`](experiments/L3_PRIOR_PROMOTION_20260802.md).
+   **Tout nouveau fit L3 utilise donc `--exact-fold` ET `--prior-mean … --prior-decay 0`** ;
+1bis. champion précédent : **EXACT**, promu le 1er août 2026 après la porte
    `cpx62-1129` (`+15,12 Elo` sur `n=6000`, **avec EGDB**) ; TURNOVER — champion
    du 27 juillet au 1er août après `home-0996` — devient le champion précédent,
    archivé dans l'object store et restaurable ; F2M reste le champion d'avant ;
