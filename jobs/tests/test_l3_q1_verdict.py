@@ -127,10 +127,18 @@ class VerdictFixture:
 
 class L3Q1VerdictTests(unittest.TestCase):
     def test_verdict_fingerprint_keys_track_the_engine_parser(self):
-        source = (Path(__file__).resolve().parents[2] / "src/search_params.hpp").read_text()
+        source = (Path(__file__).resolve().parents[2] / "src/search_params.hpp").read_text(
+            encoding="utf-8"
+        )
         parser_keys = re.findall(r'key == "([^"]+)"', source)
-        self.assertEqual(len(parser_keys), 63)
-        self.assertEqual(set(V.REQUIRED_SEARCH_KEYS), set(parser_keys))
+        # The 0812 verdict is intentionally frozen to its historical 63-key
+        # contract.  Later Scan-semantic diagnostics are additive parser keys,
+        # not inherited inputs that should silently rewrite that old verdict.
+        self.assertTrue(set(V.REQUIRED_SEARCH_KEYS).issubset(parser_keys))
+        self.assertEqual(
+            set(parser_keys) - set(V.REQUIRED_SEARCH_KEYS),
+            {"scan_verify_pruning", "scan_threat_reentry"},
+        )
 
     def test_complete_contract_selects_one_lead_and_classifies_search_gain(self):
         with tempfile.TemporaryDirectory() as tmp:
