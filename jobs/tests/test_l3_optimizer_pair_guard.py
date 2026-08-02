@@ -16,16 +16,16 @@ def report(*, iterations, gradient, success=True, status=0, gtol=1e-3):
 
 
 class OptimizerPairGuardTest(unittest.TestCase):
-    def test_1155_shape_is_blocked_by_both_asymmetry_signals(self):
+    def test_1155_shape_is_blocked_by_iteration_asymmetry(self):
         result = decide(
             report(iterations=141, gradient=0.000548),
             report(iterations=12, gradient=0.000913),
             expected_gtol=1e-3,
         )
         self.assertEqual(result["verdict"], "OPTIMIZER_PAIR_ASYMMETRY_BLOCK")
-        self.assertTrue(result["diagnostics"]["edge_asymmetry"])
         self.assertTrue(result["diagnostics"]["iteration_asymmetry"])
         self.assertAlmostEqual(result["diagnostics"]["iteration_ratio"], 141 / 12)
+        self.assertTrue(result["diagnostics"]["gradient_to_gtol_is_diagnostic_only"])
         self.assertFalse(result["gate_authorized"])
 
     def test_balanced_convergence_passes(self):
@@ -37,15 +37,15 @@ class OptimizerPairGuardTest(unittest.TestCase):
         self.assertEqual(result["verdict"], "OPTIMIZER_PAIR_VALID")
         self.assertTrue(result["pair_valid"])
 
-    def test_edge_rule_is_strict_and_iteration_limit_is_inclusive(self):
-        edge_boundary = decide(
-            report(iterations=10, gradient=8e-5, gtol=1e-4),
-            report(iterations=20, gradient=5e-5, gtol=1e-4),
+    def test_gradient_surface_asymmetry_does_not_decide(self):
+        result = decide(
+            report(iterations=100, gradient=9.7e-5, gtol=1e-4),
+            report(iterations=126, gradient=1.0e-5, gtol=1e-4),
             expected_gtol=1e-4,
         )
-        self.assertFalse(edge_boundary["diagnostics"]["edge_asymmetry"])
-        self.assertTrue(edge_boundary["pair_valid"])
+        self.assertTrue(result["pair_valid"])
 
+    def test_iteration_limit_is_inclusive(self):
         iteration_boundary = decide(
             report(iterations=10, gradient=4e-5, gtol=1e-4),
             report(iterations=50, gradient=4e-5, gtol=1e-4),

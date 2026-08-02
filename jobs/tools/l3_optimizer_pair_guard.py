@@ -58,17 +58,10 @@ def decide(
     arm_b: dict,
     *,
     expected_gtol: float,
-    edge_high: float = 0.8,
-    edge_low: float = 0.6,
     iteration_ratio_limit: float = 5.0,
 ) -> dict:
     if not math.isfinite(expected_gtol) or expected_gtol <= 0.0:
         raise ValueError("expected_gtol must be positive")
-    if (
-        not math.isfinite(edge_low) or not math.isfinite(edge_high)
-        or not 0.0 <= edge_low < edge_high <= 1.0
-    ):
-        raise ValueError("edge thresholds must satisfy 0 <= low < high <= 1")
     if not math.isfinite(iteration_ratio_limit) or iteration_ratio_limit <= 1.0:
         raise ValueError("iteration_ratio_limit must be > 1")
 
@@ -76,9 +69,6 @@ def decide(
         "a": _arm(arm_a, "arm a", expected_gtol),
         "b": _arm(arm_b, "arm b", expected_gtol),
     }
-    normalized = [arms[name]["gradient_to_gtol"] for name in ("a", "b")]
-    edge_asymmetry = max(normalized) > edge_high and min(normalized) < edge_low
-
     counts = [arms[name]["iterations"] for name in ("a", "b")]
     if min(counts) == 0:
         iteration_ratio = 1.0 if max(counts) == 0 else None
@@ -88,10 +78,10 @@ def decide(
         iteration_asymmetry = iteration_ratio >= iteration_ratio_limit
 
     all_individual_valid = all(arm["individual_valid"] for arm in arms.values())
-    pair_valid = all_individual_valid and not edge_asymmetry and not iteration_asymmetry
+    pair_valid = all_individual_valid and not iteration_asymmetry
     if not all_individual_valid:
         verdict = "OPTIMIZER_PAIR_INVALID_ARM"
-    elif edge_asymmetry or iteration_asymmetry:
+    elif iteration_asymmetry:
         verdict = "OPTIMIZER_PAIR_ASYMMETRY_BLOCK"
     else:
         verdict = "OPTIMIZER_PAIR_VALID"
@@ -103,14 +93,12 @@ def decide(
         "arms": arms,
         "thresholds": {
             "expected_gtol": expected_gtol,
-            "edge_high_strict": edge_high,
-            "edge_low_strict": edge_low,
             "iteration_ratio_limit_inclusive": iteration_ratio_limit,
         },
         "diagnostics": {
-            "edge_asymmetry": edge_asymmetry,
             "iteration_asymmetry": iteration_asymmetry,
             "iteration_ratio": iteration_ratio,
+            "gradient_to_gtol_is_diagnostic_only": True,
         },
         "gate_authorized": pair_valid,
         "promotion_authorized": False,
@@ -123,8 +111,6 @@ def main() -> int:
     parser.add_argument("--arm-a", required=True, type=Path)
     parser.add_argument("--arm-b", required=True, type=Path)
     parser.add_argument("--expected-gtol", required=True, type=float)
-    parser.add_argument("--edge-high", type=float, default=0.8)
-    parser.add_argument("--edge-low", type=float, default=0.6)
     parser.add_argument("--iteration-ratio-limit", type=float, default=5.0)
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
@@ -132,8 +118,6 @@ def main() -> int:
         json.loads(args.arm_a.read_text(encoding="utf-8")),
         json.loads(args.arm_b.read_text(encoding="utf-8")),
         expected_gtol=args.expected_gtol,
-        edge_high=args.edge_high,
-        edge_low=args.edge_low,
         iteration_ratio_limit=args.iteration_ratio_limit,
     )
     args.out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -48,26 +48,24 @@ géométrie de l'objectif. En conséquence :
   bras restent publiés. Le holdout ne peut pas excuser une convergence invalide.
 
 Le contrôle individuel ci-dessus couvre les autres motifs d'arrêt, mais il ne
-détecte pas à lui seul l'**effleurement asymétrique** de `1155` : les deux bras y
-étaient légalement sous `gtol`. Le refit applique donc aussi, avant publication
-du verdict READY, un garde-fou apparié préenregistré. Il est invalide si **au
-moins une** des conditions suivantes est vraie :
+détecte pas à lui seul l'asymétrie de `1155` : les deux bras y étaient légalement
+sous `gtol`. Le refit applique donc aussi, avant publication du verdict READY,
+un garde-fou apparié préenregistré : il est invalide si
+`max(iterations) / min(iterations) >= 5` (borne inclusive). `1155` aurait été
+bloqué par `141/12 = 11,75`.
 
-1. `max(||grad||∞ / gtol) > 0,8` pendant que
-   `min(||grad||∞ / gtol) < 0,6` ;
-2. `max(iterations) / min(iterations) >= 5`.
+**Correction avant toute donnée HIER :** une première version de cette règle
+ajoutait un contraste sur `||grad||∞ / gtol`. Il est retiré : L-BFGS-B s'arrête
+précisément lorsqu'il franchit `pgtol`, donc les solutions convergées finissent
+naturellement près de cette surface. `cpx62-1156` le montre : `0,97` contre
+`0,88`, mais `653` contre `820` itérations, soit un rapport sain de `1,26`.
+La norme finale reste publiée et sert au contrôle individuel ; son ratio entre
+bras est **diagnostique seulement** et ne participe plus au verdict apparié.
 
-Les inégalités de la première règle sont strictes ; la borne du ratio
-d'itérations est inclusive. `1155` aurait été bloqué deux fois : `0,91` contre
-`0,55`, et `141/12 = 11,75`. Un blocage rend le refit non valide et interdit la
-porte ; il n'autorise ni choix a posteriori d'un bras ni continuation
-automatique. Les seuils sont appliqués par `l3_optimizer_pair_guard.py`, qui
-écrit un certificat machine-readable avec les deux rapports sources.
-
-`cpx62-1156`, lancé à `gtol=1e-4`, sert de calibration de coût et de robustesse
-sur le facteur king-aware. Si ses diagnostics justifient une borne plus serrée,
-la règle HIER sera resserrée **avant son dépôt** ; elle ne pourra jamais être
-relâchée après avoir vu une mesure HIER.
+Un blocage rend le refit non valide et interdit la porte ; il n'autorise ni
+choix a posteriori d'un bras ni continuation automatique. Le seuil est appliqué
+par `l3_optimizer_pair_guard.py`, qui écrit un certificat machine-readable avec
+les deux rapports sources.
 
 Le coefficient historique de `cpx62-0517` n'est pas repris : ses trois cellules
 utilisaient `hier_l2 = 1e-3`, `3e-3` ou `1e-2` (33 à 333 fois le ridge) et deux

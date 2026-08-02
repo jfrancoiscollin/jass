@@ -207,8 +207,8 @@ fit_arm hier "$HIER_CANDIDATE"
 stage verify-optimizer-pair
 python3 jobs/tools/l3_optimizer_pair_guard.py \
   --arm-a "$ART/control-optimizer.json" --arm-b "$ART/hier-optimizer.json" \
-  --expected-gtol "$LBFGS_GTOL" --edge-high 0.8 --edge-low 0.6 \
-  --iteration-ratio-limit 5 --out "$ART/optimizer-pair-guard.json" ||
+  --expected-gtol "$LBFGS_GTOL" --iteration-ratio-limit 5 \
+  --out "$ART/optimizer-pair-guard.json" ||
   die "asymétrie de convergence entre les bras — porte interdite"
 
 stage verify-outputs
