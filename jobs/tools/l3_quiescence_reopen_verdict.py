@@ -360,7 +360,7 @@ def build_report(
         "experiment": "L3-QUIESCENCE-Q01-REOPEN",
         "technical_status": "inconclusive" if issues else "complete",
         "scientific_verdict": verdict,
-        "code_scope": "current job SHA for both EXACT arms; fixed 9c1d1e8e defender",
+        "code_scope": "source measurement job SHA for both EXACT arms; fixed 9c1d1e8e defender",
         "historical_bug_is_hypothesis_not_cause": True,
         "arm_contract": arm_contract,
         "sizing": {

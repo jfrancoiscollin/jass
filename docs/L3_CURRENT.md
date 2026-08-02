@@ -31,7 +31,8 @@
 > coverage_knob_is_random_open_plies_plateau_at_24;
 > coverage_is_not_the_lever_refuted_by_gate;
 > conversion_benchmark_of_july_is_unusable;
-> scan_blind_spot_exact_gen2_differential_measured`.
+> scan_blind_spot_exact_gen2_differential_measured;
+> quiescence_q01_reopen_closed_current_engine`.
 
 ## 0. État au soir du 1er août 2026
 
@@ -131,7 +132,34 @@ déterministe.** Deux builds distincts à cinq semaines d'écart, deux exécutio
 séparées, compteurs identiques à l'unité. Toute mesure future sur cette cellule
 part d'une base sûre.
 
-### 0.5 Deux leçons de méthode, à garder
+### 0.5 Quiescence Q01 rejouée : porte refermée
+
+La cellule décisive `Q01_SACS` de `home-0812` a été rejouée seule contre `Q00`
+avec le moteur courant et le champion EXACT, selon la règle préenregistrée dans
+[`experiments/L3_QUIESCENCE_REOPEN_PREREGISTRATION_20260802.md`](experiments/L3_QUIESCENCE_REOPEN_PREREGISTRATION_20260802.md).
+Le bug racine-nulle antérieur à `9c1d1e8e` constituait le motif de réouverture,
+**pas une cause tenue pour acquise**.
+
+| vue | mesure Q01 vs Q00 | décision préenregistrée |
+|---|---|---|
+| force native, co-primaire | `0,508333`, IC97,5 `[0,488435 ; 0,528231]`, `n = 3000` | **plate** |
+| conversion P3/P4 appariée, co-primaire | `+1,1667 pp`, IC97,5 `[−1,0000 ; +3,3333]`, `n = 600` | **plate** |
+| profondeur 9, diagnostic seul | `0,529333`, IC97,5 `[0,509398 ; 0,549268]`, `n = 3000` | mouvement positif, **non décisif** |
+
+Les deux co-primaires franchissent leur nul ; conformément au contrat,
+**`QUIESCENCE_CLOSE_CONFIRMED`**. Le signal à profondeur 9 ne peut pas rouvrir
+`0812`, puisqu'il avait été explicitement relégué au rang diagnostique avant de
+voir les chiffres. Aucune promotion et aucune continuation automatique.
+
+Les `7200` observations de
+`home-1200-l3-quiescence-q01-reopen-v1` étaient complètes ; ce job a échoué
+après calcul sur la seule sérialisation JSON d'un `numpy.bool_`. Le readout
+`home-1202-codex-quiescence-q01-readout-at-ddec2fc6-v2` les a relues depuis le
+`result_uri` immuable, vérifié leurs checksums et publié le verdict sans rejouer
+une partie :
+`r2:jass-data/runs/home-1202-codex-quiescence-q01-readout-at-ddec2fc6-v2/20260802T125117Z-ddec2fc6`.
+
+### 0.6 Deux leçons de méthode, à garder
 
 1. **Une porte appariée ne peut pas voir ce qui frappe ses deux bras.** Toutes
    les portes de la journée partageaient un binaire : leurs verdicts tiennent,
@@ -144,7 +172,7 @@ part d'une base sûre.
    temps. `ATTACKER_CODE_SHA` existe désormais, mais la règle est antérieure au
    correctif : **une série temporelle exige que TOUT l'instrument soit épinglé.**
 
-### 0.6 Outillage produit aujourd'hui
+### 0.7 Outillage produit aujourd'hui
 
 - `l3-succession-guards-v1.sh` — les deux gardes de succession pour un
   challengeur quelconque (binaire 32cf pour Gen2, défenseur figé, mode

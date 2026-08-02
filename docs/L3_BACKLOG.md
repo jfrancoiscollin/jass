@@ -50,6 +50,16 @@ le pool de 3000 (piste C) : à `n=6000` un balayage n'aurait pas la puissance de
 séparer ses cellules.
 
 ### 3.3 Réouverture de la quiescence
+**FERMÉE le 2 août (`home-1200` + readout immuable `home-1202`)** : la cellule
+décisive `Q01_SACS` reste plate sur les deux co-primaires préenregistrés avec le
+moteur courant et EXACT. Force native `0,508333`, IC97,5
+`[0,488435 ; 0,528231]`, `n=3000` ; conversion P3/P4 appariée `+1,1667 pp`,
+IC97,5 `[−1,0000 ; +3,3333]`, `n=600`. Le mouvement positif à profondeur 9
+est diagnostique seulement et ne satisfait pas la règle de réouverture.
+**Verdict : `QUIESCENCE_CLOSE_CONFIRMED` ; ne pas rejouer les 63 cellules.**
+Readout immuable :
+`r2:jass-data/runs/home-1202-codex-quiescence-q01-readout-at-ddec2fc6-v2/20260802T125117Z-ddec2fc6`.
+
 Le registre la ferme deux fois (`−92 à −231 Elo` sur le forcing profond ;
 `q1_no_lead` contract-grade sur `0812`, 63 clés, IC franchissant tous zéro).
 **L'argument de réouverture n'est pas « on est plus forts » mais « l'instrument
@@ -58,11 +68,10 @@ moteur qui rendait un coup nul sur toute racine nulle par répétition — et la
 quiescence résout précisément des séquences tactiques qui débouchent sur des
 répétitions. On a **établi le 1er août, chiffres à l'appui**, que ce bug a
 fabriqué un repère faux de 22 points sur la conversion.
-⚠️ **Hypothèse, pas cause** : rien n'est mesuré, et promouvoir un mécanisme
-plausible en cause est l'erreur commise sur la couverture le matin même.
-**Coût** : rejouer **la cellule décisive seule** avec le moteur d'aujourd'hui et
-EXACT, pas les 63 cellules de `0812`. Plat → la porte se referme pour de bon ;
-mouvement → `0812` entier redevient justifié.
+⚠️ **Hypothèse, pas cause** : le replay mesure désormais la conséquence utile
+pour la décision, mais n'établit toujours pas que le bug expliquait les anciens
+résultats de `0812`. Le test préenregistré est resté plat ; la porte est donc
+refermée sans promouvoir ce mécanisme plausible en cause.
 
 ### 3.4 Attribution causale du différentiel d'atlas
 Le témoin EXACT/Gen2 (`home-1143quater`/`1144bis`/`1145`) compare deux bras qui
