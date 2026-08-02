@@ -94,7 +94,10 @@ for f in pool-vol8m pool-succession; do
   [ "$COMMON" -eq 0 ] || die "chevauchement de $COMMON ouvertures avec $f"
 done
 python3 jobs/tools/validate_opening_pool.py --pool "$ART/big3000-openings.fen" \
-  > "$W/validate.log" 2>&1 || die "pool invalide — voir validate.log"
+  --expected "$NOPEN" --generator-seed "$OPENING_SEED" \
+  --exclude "$IN/pool-vol8m.fen" --exclude "$IN/pool-succession.fen" \
+  --out "$ART/big3000-provenance.json" > "$W/validate.log" 2>&1 ||
+  die "pool invalide — voir validate.log"
 SHA=$(sha256sum "$ART/big3000-openings.fen" | awk '{print $1}')
 say "  pool ✓ $N ouvertures, disjoint des 2 pools de porte, sha256=$SHA"
 say "  porte future : $N × 2 couleurs × 2 vues = $((N * 4)) parties"
