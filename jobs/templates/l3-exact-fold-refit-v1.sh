@@ -52,7 +52,16 @@ EXPECTED_EXTRAS=120
 
 # Hyperparamètres de home-0977, à l'identique. Les changer casserait la seule
 # chose que ce job mesure.
-L2=3e-5; MAXIT=1000; LBFGS_MAXCOR=20; LBFGS_GTOL=1e-3; CHUNK=20000
+L2=3e-5; MAXIT=1000; LBFGS_MAXCOR=20; CHUNK=20000
+# `gtol` est un critere d'ARRET, pas un parametre du modele — et il n'est pas
+# neutre entre parametrisations. `cpx62-1155` : le bras men-only descend a
+# 0,000548 en 141 iterations, le bras king-aware s'arrete a 0,000913 en 12, avec
+# 20 % de parametres libres EN PLUS. Les deux rapportent `success=True` ; l'un a
+# convergé, l'autre a effleuré le seuil. Un A/B dont un bras est sous-ajuste ne
+# mesure pas le facteur annonce. Exposé ici, defaut inchange pour que tous les
+# jobs anterieurs reproduisent a l'identique. Les DEUX bras le partagent
+# toujours : un gtol par bras introduirait un second facteur.
+LBFGS_GTOL="${LBFGS_GTOL:-1e-3}"
 FIT_TIMEOUT="${FIT_TIMEOUT:-3600}"   # home-0977 : 1933 s pour le fit color
 
 MON=""
