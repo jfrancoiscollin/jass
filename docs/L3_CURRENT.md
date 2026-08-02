@@ -938,6 +938,22 @@ linéaires) ; ablation causale des poids **non** (poids et trajectoires propres 
 chaque modèle). C'est un différentiel descriptif, pas un échantillon iid et pas
 une autorisation de promotion.
 
+**Décision de programme.** Ce témoin ferme le soupçon opérationnel selon lequel
+le passage à 8cf aurait créé un point aveugle global qui justifierait un retour
+à Gen2/32cf : sur leurs trajectoires respectives, EXACT est meilleur sur les
+deux métriques globales. **Aucun retour 32cf, aucune nouvelle feature et aucune
+repondération des buckets de l'atlas n'en découlent.** Les finales avec dames
+restent un jeu d'audit, pas une cible d'entraînement établie. Une attribution
+causale à la géométrie exigerait un corpus de positions fixe et apparié ; elle
+n'est pas nécessaire pour la décision courante.
+
+La suite prioritaire reste le facteur unique de régularisation déjà engagé :
+centrer le ridge sur le parent avec `--prior-mean <parent> --prior-decay 0`, à
+géométrie, features et corpus constants. La force contre EXACT décide d'abord ;
+l'atlas ne sert qu'en audit secondaire si le bras paie, notamment dans les
+finales avec dames. `--hier-l2` appartient à la même famille mais ne vient
+qu'ensuite, dans une expérience séparée.
+
 Incident d'exécution sans résultat scientifique : `home-1144` a été arrêté
 après que 5 des 16 arbitres 32cf ont dépassé le timeout d'initialisation de 60 s
 sous contention. `home-1144bis` a conservé exactement le même SHA et le même
