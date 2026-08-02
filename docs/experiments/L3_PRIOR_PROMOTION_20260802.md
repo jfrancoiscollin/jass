@@ -92,3 +92,28 @@ modifié ; EXACT reste immuable et restaurable. `git revert` suffit.
 - découverte : `r2:jass-data/runs/cpx62-1148-l3-prior-vs-control-gate-v2`
 - réplication : `r2:jass-data/runs/cpx62-1149-l3-prior-gate-pool2-v1`
 - gardes : `r2:jass-data/runs/cpx62-1153-l3-prior-succession-guards-v1`
+
+## Amendement du 3 août — ce que la nuit suivante a appris sur ce fit
+
+⚠️ **PRIOR était SOUS-CONVERGÉ.** Le fit de `cpx62-1147` s'est arrêté à **169
+itérations** sous `--lbfgs-gtol 1e-3` ; la même recette, sur les mêmes données,
+en prend **904** sous `1e-4`. L-BFGS-B rendait `success=True` dans les deux cas,
+ce qui a masqué le problème — il rapporte le succès aussi bien sur convergence du
+gradient que sur `max_iter`. Le même défaut frappait EXACT (141 itérations).
+
+Deux conséquences, et aucune n'annule cet enregistrement :
+
+1. **Le prior tient**, mesuré une seconde fois dans un régime où le solveur va au
+   bout : `+8,48 Elo` IC95 `[+3,5 ; +13,4]` sur `n = 18 000`, deux pools
+   disjoints (`cpx62-1160` + `cpx62-1161`), contre `+6,66` ici. Les intervalles
+   se recouvrent largement — rien ne prouve que le prior vaille davantage une
+   fois convergé, seulement que le resserrement de la tolérance ne le mange pas.
+2. **Le `+6,66` de cet enregistrement mesure le prior tel qu'il se comporte à
+   169 itérations**, pas tel qu'il se comporte. Ne pas le citer comme la valeur
+   du prior ; citer `+8,48`.
+
+PRIOR est resté champion moins de vingt-quatre heures. Sa succession est
+préparée dans
+[`L3_PRIORTIGHT_PROMOTION_20260803.md`](L3_PRIORTIGHT_PROMOTION_20260803.md) —
+même recette, même corpus, même parent, tolérance `1e-4` : `+18,05 Elo` IC95
+`[+12,0 ; +24,1]` sur `n = 12 000`, à un seul facteur.

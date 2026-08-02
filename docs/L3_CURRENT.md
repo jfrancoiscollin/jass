@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 2 août 2026**
+> **Mis à jour : 3 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -32,7 +32,55 @@
 > coverage_is_not_the_lever_refuted_by_gate;
 > conversion_benchmark_of_july_is_unusable;
 > scan_blind_spot_exact_gen2_differential_measured;
-> quiescence_q01_reopen_closed_current_engine`.
+> quiescence_q01_reopen_closed_current_engine;
+> lbfgs_gtol_1e3_was_stopping_short_exact_and_prior_underconverged;
+> priortight_succession_green_awaiting_bake_go;
+> king_aware_gate_blocked_on_per_arm_build`.
+
+## 0bis. Nuit du 2 au 3 août 2026 — la tolérance du solveur
+
+Travail mené en autonomie sur mandat de JFC. **Le résultat de la nuit n'est pas
+un gain de méthode d'évaluation : c'est la découverte que le solveur s'arrêtait
+trop tôt depuis le début de la campagne.**
+
+Sous `--lbfgs-gtol 1e-3` — la valeur de toute la campagne — L-BFGS s'arrêtait à
+**141** itérations pour la recette EXACT et **169** pour la recette PRIOR. Les
+mêmes recettes, sur les mêmes données, en prennent **653** et **904** sous
+`1e-4`. `success=True` était rendu dans les deux cas : `scipy` rapporte le succès
+aussi bien sur convergence du gradient que sur `max_iter`, ce qui a masqué le
+problème pendant des semaines. **Le signal fiable est l'asymétrie du compte
+d'itérations entre bras appariés, pas le rapport `‖∇‖∞/gtol`** — les bras
+convergés atterrissent à `0,88` et `0,97` de cette surface, parce que le solveur
+s'arrête naturellement juste après le seuil.
+
+| ce qui change | cellule | pool | n | Elo | IC95 |
+|---|---|---|---:|---:|---|
+| tolérance, sur `warm` | `cpx62-1157` | `home-1004` | 6000 | `+15,99` | `[+7,4 ; +24,6]` |
+| tolérance, sur `prior` | `cpx62-1163` | `big3000` | 12000 | `+18,05` | `[+12,0 ; +24,1]` |
+| prior à `1e-4`, consolidé | deux pools | 18 000 | `+8,48` | `[+3,5 ; +13,4]` |
+
+Deux mesures indépendantes de la tolérance, sur deux recettes et deux pools,
+tombent à `+15,99` et `+18,05`. Le prior survit au resserrement (`+8,48` contre
+`+6,66` à `1e-3`, intervalles recouvrants) : les deux corrections sont
+**distinctes et cumulatives**.
+
+⚠️ `cpx62-1158` (`+12,05`) opposait **deux facteurs à la fois** (continuation
+`warm`→`prior` ET tolérance) ; il ne doit pas être lu comme la mesure d'un
+bouton. `cpx62-1163` le remplace, à un facteur et à double puissance.
+
+⚠️ **`1e-4` est le meilleur point connu, pas un optimum** : `home-1210` mesure
+`1e-5` et n'a pas rendu.
+
+**Contrôle non prévu qui tient** : TIGHT produit par `cpx62-1156` et le bras
+`control` de `cpx62-1159` — deux jobs, deux dates, même recette — sont
+**byte-identiques** (`9c550a9b…`).
+
+⛔ **La porte king-aware n'est pas jouable telle quelle** : un modèle
+`--king-patterns` exige un moteur compilé `-DJASS_KING_PATTERNS`, et
+`l3-model-gate-v1.sh` ne produit **qu'un seul build** pour les deux bras. Il faut
+un build **par bras**, comme `l3-succession-guards-v1.sh` le fait déjà pour
+opposer 8cf et 32cf. ✅ Aucun risque silencieux : `scan_eval.cpp:370` refuse un
+modèle dont le bit king de l'en-tête contredit le build.
 
 ## 0. État au soir du 1er août 2026
 
@@ -493,13 +541,26 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
+0. ⏳ **succession PRÉPARÉE, en attente du go de JFC : PRIORTIGHT** — même
+   recette que PRIOR, tolérance du solveur portée de `1e-3` à `1e-4`. Porte de
+   succession contre le champion assis, **un seul facteur**, pool `big3000`
+   disjoint, `n=12 000` : **`+18,05 Elo`** IC95 `[+12,0 ; +24,1]`
+   (`cpx62-1163`). Trois gardes vertes et **au-dessus des trois champions
+   précédents** : Gen2 `+86,09`, conversion `0,8067` / `0,7800` (`cpx62-1162`).
+   ⛔ **EXACT et PRIOR étaient SOUS-CONVERGÉS** : `141` et `169` itérations sous
+   `gtol=1e-3` là où les mêmes recettes en prennent `653` et `904` sous `1e-4`,
+   avec `success=True` rendu dans les deux cas. Bornes :
+   [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) ;
 1. champion général courant : **PRIOR**, promu le 2 août 2026 — `--prior-mean
    <parent> --prior-decay 0`, consolidé `+6,66 Elo` IC95 `[+0,44 ; +12,88]` sur
    `n=12 000` et deux pools disjoints, trois gardes vertes (`+70,01` contre Gen2).
    ⚠️ Chiffre **biaisé vers le haut** (découverte + réplication), effet vrai
-   plutôt `~+4` ; borne basse `+0,44`. Bornes :
+   plutôt `~+4` ; borne basse `+0,44`. ⚠️ **Et mesuré sur un fit sous-convergé** :
+   le prior re-mesuré à `1e-4` vaut `+8,48` IC95 `[+3,5 ; +13,4]` sur
+   `n = 18 000`. Bornes :
    [`experiments/L3_PRIOR_PROMOTION_20260802.md`](experiments/L3_PRIOR_PROMOTION_20260802.md).
-   **Tout nouveau fit L3 utilise donc `--exact-fold` ET `--prior-mean … --prior-decay 0`** ;
+   **Tout nouveau fit L3 utilise donc `--exact-fold` ET `--prior-mean … --prior-decay 0`
+   ET `--lbfgs-gtol 1e-4`** ;
 1bis. champion précédent : **EXACT**, promu le 1er août 2026 après la porte
    `cpx62-1129` (`+15,12 Elo` sur `n=6000`, **avec EGDB**) ; TURNOVER — champion
    du 27 juillet au 1er août après `home-0996` — devient le champion précédent,
