@@ -915,9 +915,9 @@ def main(argv=None):
                          '-DJASS_PHASE_HI. Ignored under --tempo-stage.')
     ap.add_argument('--l2', type=float, default=1e-4)
     ap.add_argument('--hier-l2', type=float, default=0.0,
-                    help='Hierarchical shrinkage (backoff) : penalise each pattern bucket toward its '
-                         'PARENT pattern mean (λ·Σ(w_b−μ_p)²) instead of 0. Rare buckets inherit the '
-                         'pattern mean, not neutral. 0 = off (legacy L2→0). Pairs with a small --l2.')
+                    help='Hierarchical shrinkage (backoff) : ADD λ·Σ(w_b−μ_p)² toward the PARENT '
+                         'pattern mean on top of the ordinary ridge/prior term. 0 = off (legacy '
+                         'objective). Pairs with a small --l2.')
     continuation = ap.add_mutually_exclusive_group()
     continuation.add_argument('--prior-mean', type=str, default=None,
                     help='SEQUENTIAL-BAYESIAN prior : PJTW v3 of the PREVIOUS champion. When set, the '

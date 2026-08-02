@@ -28,11 +28,20 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 ### 3.1 `--hier-l2` — reculer vers la moyenne du pattern, pas vers zéro
 **Même famille que le prior** : le régulariseur affirme qu'un bucket sans données
 vaut `0`, alors que la meilleure estimation est soit le parent (`--prior-mean`,
-piste A), soit **la moyenne de son pattern**. Implémenté, jamais utilisé
-(`0 = off (legacy L2→0)`).
-**Déclencheur** : après la conclusion de A, quelle qu'elle soit — les deux
-mécanismes se combinent et il faut savoir ce que chacun vaut seul.
-**Coût** : refit deux bras ~30 min + porte ~35 min.
+piste A), soit **la moyenne de son pattern**. Le code ajoute HIER au ridge
+ordinaire ; il ne le remplace pas. `cpx62-0517` l'a essayé avant EXACT, avec des
+doses de 33 à 333 fois `l2` et deux cellules qui changeaient aussi `l2` : négatif,
+mais pas le bouton unique actuel.
+
+**Préenregistré, pas lancé** : CONTROL `hier_l2=0` contre HIER `hier_l2=3e-5`,
+`l2=3e-5`, EXACT et tous les autres facteurs identiques ; porte sur le pool 3000,
+`n=12000`. Règle :
+[`experiments/L3_HIER_L2_PREREGISTRATION_20260802.md`](experiments/L3_HIER_L2_PREREGISTRATION_20260802.md).
+**Déclencheur scientifique satisfait** (PRIOR est promu) ; dépôt en attente du
+verdict king-aware et du go de JFC. Un succès rouvre seulement `PRIOR+HIER` contre
+`PRIOR`, sans promotion directe.
+**Coût** : refit deux bras, puis porte deux vues ; sizing/ETA à confirmer sur HOME
+juste avant le dépôt.
 
 ### 3.2 Dose-réponse sur la force du prior
 **La question de JFC, et elle est plus fine que le test binaire de A.** Le prior

@@ -456,9 +456,10 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
         raise ValueError("initial_mean and prior_mean/prior_prec are mutually exclusive")
     if initial_mean is not None and len(initial_mean) != n_cols:
         raise ValueError(f"initial_mean has {len(initial_mean)} weights, expected {n_cols}")
-    # --- Hierarchical shrinkage (backoff) : penalise each pattern bucket's DEVIATION
-    #     from its parent pattern mean (λ_h·Σ(w_b−μ_p)²) instead of toward 0, so rare
-    #     buckets inherit the pattern mean rather than collapsing to "neutral". The
+    # --- Hierarchical shrinkage (backoff) : ADD a penalty on each pattern bucket's
+    #     DEVIATION from its parent pattern mean (λ_h·Σ(w_b−μ_p)²), on top of the
+    #     ordinary ridge/prior term. Rare buckets are pulled toward the pattern mean
+    #     as well as toward the base ridge target. The
     #     μ_p-dependence of the gradient vanishes (Σ(w−μ)=0) → grad += λ_h·(w_b−μ_p).
     _hier = hier_l2 > 0.0 and slot_pattern is not None and pat_n > 0
     if _hier:
