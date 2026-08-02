@@ -204,6 +204,13 @@ PY
 fit_arm control "$HIER_CONTROL"
 fit_arm hier "$HIER_CANDIDATE"
 
+stage verify-optimizer-pair
+python3 jobs/tools/l3_optimizer_pair_guard.py \
+  --arm-a "$ART/control-optimizer.json" --arm-b "$ART/hier-optimizer.json" \
+  --expected-gtol "$LBFGS_GTOL" --edge-high 0.8 --edge-low 0.6 \
+  --iteration-ratio-limit 5 --out "$ART/optimizer-pair-guard.json" ||
+  die "asymétrie de convergence entre les bras — porte interdite"
+
 stage verify-outputs
 cmp -s "$W/control.pjtw" "$W/hier.pjtw" && die "expérience vide: modèles identiques"
 python3 - "$W/control.pjtw" "$W/hier.pjtw" "$ART/model-contract.json" <<'PY'
@@ -235,8 +242,11 @@ payload = {
     "schema": 1, "verdict": "L3_HIER_L2_REFIT_READY",
     "fit_contract": json.load(open(os.path.join(art, "fit-contract.json"))),
     "models": json.load(open(os.path.join(art, "model-contract.json")))["models"],
-    "optimizer": fits, "convergence_requirement": {"gradient_inf_norm_max": 1e-4,
-                                                       "all_arms_pass": True},
+    "optimizer": fits,
+    "convergence_requirement": {"gradient_inf_norm_max": 1e-4,
+                                  "all_arms_pass": True,
+                                  "pair_guard": json.load(open(os.path.join(
+                                      art, "optimizer-pair-guard.json")))},
     "promotion_authorized": False, "automatic_next_job": None,
 }
 json.dump(payload, open(os.path.join(art, "JASS_CONTROL_SUMMARY.json"), "w"),

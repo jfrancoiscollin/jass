@@ -47,6 +47,23 @@ géométrie de l'objectif. En conséquence :
 - itérations, évaluations de fonction, message de terminaison et normes des deux
   bras restent publiés. Le holdout ne peut pas excuser une convergence invalide.
 
+Le contrôle individuel ci-dessus couvre les autres motifs d'arrêt, mais il ne
+détecte pas à lui seul l'**effleurement asymétrique** de `1155` : les deux bras y
+étaient légalement sous `gtol`. Le refit applique donc aussi, avant publication
+du verdict READY, un garde-fou apparié préenregistré. Il est invalide si **au
+moins une** des conditions suivantes est vraie :
+
+1. `max(||grad||∞ / gtol) > 0,8` pendant que
+   `min(||grad||∞ / gtol) < 0,6` ;
+2. `max(iterations) / min(iterations) >= 5`.
+
+Les inégalités de la première règle sont strictes ; la borne du ratio
+d'itérations est inclusive. `1155` aurait été bloqué deux fois : `0,91` contre
+`0,55`, et `141/12 = 11,75`. Un blocage rend le refit non valide et interdit la
+porte ; il n'autorise ni choix a posteriori d'un bras ni continuation
+automatique. Les seuils sont appliqués par `l3_optimizer_pair_guard.py`, qui
+écrit un certificat machine-readable avec les deux rapports sources.
+
 `cpx62-1156`, lancé à `gtol=1e-4`, sert de calibration de coût et de robustesse
 sur le facteur king-aware. Si ses diagnostics justifient une borne plus serrée,
 la règle HIER sera resserrée **avant son dépôt** ; elle ne pourra jamais être
