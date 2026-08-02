@@ -82,12 +82,34 @@ déjà coûté des jobs le 1-2 août :
   checkout **le tip de `develop` au claim**, et `EXPECTED_CODE_SHA` est une
   assertion — donc un pin périme dès que l'autre agent pousse, **même quand le
   commit intercalé ne touche rien du job**.
-  → **Laisser un tick (~6 min) entre le push et le queue**, et **vérifier que le
-  pin est bien le tip** (`git rev-parse origin/develop`) juste avant de committer
-  le job. Ne pas inventer la fin d'un SHA : `cpx62-1131` l'a failli.
+  `cpx62-1151`, `cpx62-1152` et `home-1150` ont confirmé le même défaut le
+  2 août : une discipline temporelle seule ne ferme pas la course.
 - **Deux `1143`** ont coexisté (`home-1143quater` et `cpx62-1143`).
   → **Plages disjointes** : `home-*` à Codex, `cpx62-*` à moi.
 - **Rebaser avant de pousser** sur `develop`, systématiquement.
+
+### Nomenclature et pin immuable
+
+Pour tout nouveau job :
+
+```text
+<runner>-<num>-<auteur>-<piste>-<étape>-at-<sha8>-v<n>
+```
+
+Par exemple :
+`home-1200-codex-quiescence-q01-at-9b57e0aa-v1` et
+`cpx62-1153-claude-prior-guards-at-9b57e0aa-v1`.
+
+- `home-12xx` est la plage Codex ; Claude conserve `cpx62-*` ;
+- `codex` / `claude` nomme le déposant, pas la machine ;
+- `at-<sha8>` rend l'époque de code visible ; le script porte obligatoirement
+  le SHA complet et littéral dans `EXPECTED_CODE_SHA` ;
+- le runner vérifie la concordance du SHA visible, vérifie que le commit est
+  dans l'historique de `origin/develop`, puis crée le worktree détaché **sur ce
+  pin**. Un push ultérieur sur `develop` ne périme donc plus le job ;
+- pendant la transition d'un runner encore ancien, aucun push sur `develop`
+  tant qu'un job adverse reste dans `queue/pending`. Un job déjà claimé est
+  hors course : son worktree est détaché et immuable.
 
 **Répartition proposée** : Codex écrit du code et les jobs `home-*` ; je revois
 et je tiens les jobs `cpx62-*`. Toute revue porte d'abord sur trois points, parce

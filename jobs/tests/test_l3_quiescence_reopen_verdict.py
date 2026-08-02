@@ -122,6 +122,7 @@ class QuiescenceReopenVerdictTest(unittest.TestCase):
         self.assertEqual(report["scientific_verdict"], "QUIESCENCE_CLOSE_CONFIRMED")
         self.assertEqual(report["technical_status"], "complete")
         self.assertEqual(report["conversion"]["pooled_p3_p4"]["n_common"], 600)
+        json.dumps(report)
 
     def test_native_movement_reopens_full_0812(self):
         self.write_gate(self.native, wins=1600, losses=1400, native=True)

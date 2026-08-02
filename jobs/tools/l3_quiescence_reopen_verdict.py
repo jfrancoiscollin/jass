@@ -277,7 +277,7 @@ def paired_conversion(
         "delta_q01_minus_q00": round(delta, 6),
         "ci97_5": [round(float(low), 6), round(float(high), 6)],
         "null": 0.0,
-        "established_movement": low > 0 or high < 0,
+        "established_movement": bool(low > 0 or high < 0),
         "direction": "positive" if low > 0 else "negative" if high < 0 else "flat",
         "q00_win_to_q01_nonwin": int(counts[0]),
         "same_conversion_status": int(counts[1]),

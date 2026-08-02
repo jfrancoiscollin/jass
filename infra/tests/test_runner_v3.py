@@ -129,6 +129,30 @@ class LayoutTests(unittest.TestCase):
             script.write_text('cd "$JASS_CODE_DIR"\necho ok > "$JASS_ARTEFACT_DIR/x"\n')
             R.validate_job_script(c, script)
 
+    def test_literal_expected_code_sha_and_visible_filename_pin(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            sha = "a" * 40
+            script = root / f"home-1200-codex-smoke-at-{sha[:8]}-v1.sh"
+            script.write_text(f'export EXPECTED_CODE_SHA="{sha}"\necho ok\n')
+            self.assertEqual(R.expected_code_sha(script), sha)
+
+    def test_visible_filename_pin_must_match_expected_code_sha(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            script = root / "home-1200-codex-smoke-at-bbbbbbbb-v1.sh"
+            sha = "a" * 40
+            script.write_text(f'export EXPECTED_CODE_SHA="{sha}"\n')
+            with self.assertRaisesRegex(RuntimeError, "filename pin"):
+                R.expected_code_sha(script)
+
+    def test_missing_literal_expected_code_sha_is_rejected(self):
+        with tempfile.TemporaryDirectory() as td:
+            script = Path(td) / "job.sh"
+            script.write_text('echo "$EXPECTED_CODE_SHA"\n')
+            with self.assertRaisesRegex(RuntimeError, "missing literal"):
+                R.expected_code_sha(script)
+
     def test_job_env_forwards_only_rclone_configuration_and_is_private(self):
         with tempfile.TemporaryDirectory() as td, mock.patch.dict(
             os.environ,
@@ -281,8 +305,10 @@ class EndToEndFilesystemTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             code = self.seed_repo(root, "code", "develop", {"README.md": "code\n"})
+            pinned_sha = self.git(code, "rev-parse", "HEAD").stdout.strip()
             job = (
                 "#!/usr/bin/env bash\nset -euo pipefail\n"
+                f'export EXPECTED_CODE_SHA="{pinned_sha}"\n'
                 'cd "$JASS_CODE_DIR"\n'
                 'echo ok > "$JASS_ARTEFACT_DIR/result.txt"\n'
                 'echo \'{"scientific_status":"complete_probe"}\' '
@@ -300,6 +326,12 @@ class EndToEndFilesystemTests(unittest.TestCase):
                     "state/.gitkeep": "",
                 },
             )
+            # Moving develop after queueing must not change the checkout used
+            # by the job: the wrapper's immutable pin wins over the branch tip.
+            (code / "later.txt").write_text("later\n")
+            self.git(code, "add", "later.txt")
+            self.git(code, "commit", "-m", "advance develop")
+            self.git(code, "push", "origin", "develop")
             c = Config(
                 code_repo_dir=code,
                 code_remote="origin",
@@ -326,6 +358,7 @@ class EndToEndFilesystemTests(unittest.TestCase):
             R.bootstrap_dirs(c)
             claimed = R.claim_job(c, R.candidate_jobs(c)[0])
             info = R.start_job(c, claimed)
+            self.assertEqual(info["code_sha"], pinned_sha)
             deadline = time.time() + 10
             while R.alive(R.wrapper_pid(info)) and time.time() < deadline:
                 time.sleep(0.05)

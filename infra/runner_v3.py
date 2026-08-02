@@ -39,6 +39,7 @@ from runner_v3_git import (
     git_sync_code,
     git_sync_control,
     remove_worktree,
+    resolve_pinned_code_sha,
 )
 from runner_v3_store import prepare_run_dir, result_store
 
@@ -67,6 +68,13 @@ STATUS_SUMMARY_NAMES = frozenset({
 })
 STATUS_SUMMARY_MAX_FILE_BYTES = 64 * 1024
 STATUS_SUMMARY_MAX_TOTAL_BYTES = 256 * 1024
+
+EXPECTED_CODE_SHA_RE = re.compile(
+    r"^[ \t]*(?:export[ \t]+)?EXPECTED_CODE_SHA="
+    r"(?P<quote>['\"]?)(?P<sha>[0-9a-f]{40})(?P=quote)[ \t]*(?:#.*)?$",
+    re.MULTILINE,
+)
+JOB_NAME_SHA_RE = re.compile(r"(?:^|-)at-([0-9a-f]{8,40})(?:-|$)")
 
 
 def bootstrap_dirs(cfg: Config) -> None:
@@ -120,6 +128,26 @@ def validate_job_script(cfg: Config, script: Path) -> None:
         raise RuntimeError(f"{script.name}: forbidden legacy references: {', '.join(forbidden)}")
 
 
+def expected_code_sha(script: Path) -> str:
+    """Read the literal immutable code pin without executing the job script."""
+    text = script.read_text(encoding="utf-8", errors="replace")
+    matches = {match.group("sha") for match in EXPECTED_CODE_SHA_RE.finditer(text)}
+    if not matches:
+        raise RuntimeError(
+            f"{script.name}: missing literal full EXPECTED_CODE_SHA assignment"
+        )
+    if len(matches) != 1:
+        raise RuntimeError(f"{script.name}: conflicting EXPECTED_CODE_SHA assignments")
+    code_sha = matches.pop()
+    visible_pin = JOB_NAME_SHA_RE.search(script.stem)
+    if visible_pin and not code_sha.startswith(visible_pin.group(1)):
+        raise RuntimeError(
+            f"{script.name}: filename pin {visible_pin.group(1)} "
+            f"does not match EXPECTED_CODE_SHA {code_sha}"
+        )
+    return code_sha
+
+
 RCLONE_JOB_ENV_NAMES = frozenset({
     "RCLONE_BIN",
     "RCLONE_CONF_B64",
@@ -153,7 +181,7 @@ def write_job_env(path: Path, values: dict[str, str]) -> None:
 def start_job(cfg: Config, script: Path) -> dict:
     validate_job_script(cfg, script)
     job_id = script.stem
-    code_sha = git_sha(cfg.code_repo_dir, f"{cfg.code_remote}/{cfg.code_ref}")
+    code_sha = resolve_pinned_code_sha(cfg, expected_code_sha(script))
     attempt_id = f"{compact_utc()}-{code_sha[:8]}"
     workspace = create_worktree(cfg, job_id, attempt_id, code_sha)
     run_dir = cfg.spool_root / "runs" / job_id / attempt_id

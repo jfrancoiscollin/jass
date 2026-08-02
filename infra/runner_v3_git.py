@@ -41,6 +41,63 @@ def git_sha(path: Path, ref: str = "HEAD") -> str:
     return run(["git", "rev-parse", ref], cwd=path).stdout.strip()
 
 
+def resolve_pinned_code_sha(cfg: Config, requested_sha: str) -> str:
+    """Resolve an immutable job pin and require it to belong to develop.
+
+    The control-plane job is allowed to target an older develop commit.  This
+    is what makes an already queued job immune to an unrelated later push.
+    """
+    if len(requested_sha) != 40 or any(
+        ch not in "0123456789abcdef" for ch in requested_sha
+    ):
+        raise RuntimeError("EXPECTED_CODE_SHA must be a full lowercase 40-hex SHA")
+
+    commit_ref = f"{requested_sha}^{{commit}}"
+    resolved = run(
+        ["git", "rev-parse", "--verify", commit_ref],
+        cwd=cfg.code_repo_dir,
+        check=False,
+    )
+    if resolved.returncode != 0:
+        # The control repository can move after the code sync at the beginning
+        # of a tick.  Refresh develop once before declaring a valid new pin
+        # unavailable locally.
+        run(
+            ["git", "fetch", "--prune", cfg.code_remote, cfg.code_ref],
+            cwd=cfg.code_repo_dir,
+        )
+        resolved = run(
+            ["git", "rev-parse", "--verify", commit_ref],
+            cwd=cfg.code_repo_dir,
+            check=False,
+        )
+    if resolved.returncode != 0:
+        raise RuntimeError(f"pinned code SHA is unavailable: {requested_sha}")
+
+    canonical = resolved.stdout.strip()
+    if canonical != requested_sha:
+        raise RuntimeError(
+            f"pinned code SHA resolved unexpectedly: {requested_sha} -> {canonical}"
+        )
+    ancestor = run(
+        [
+            "git",
+            "merge-base",
+            "--is-ancestor",
+            requested_sha,
+            f"{cfg.code_remote}/{cfg.code_ref}",
+        ],
+        cwd=cfg.code_repo_dir,
+        check=False,
+    )
+    if ancestor.returncode != 0:
+        raise RuntimeError(
+            f"pinned code SHA is not on {cfg.code_remote}/{cfg.code_ref}: "
+            f"{requested_sha}"
+        )
+    return canonical
+
+
 def control_commit_push(cfg: Config, message: str, paths: Iterable[Path]) -> bool:
     paths = list(paths)
     if not paths:
