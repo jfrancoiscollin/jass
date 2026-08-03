@@ -18,10 +18,12 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 
 | # | piste | job | état |
 |---|---|---|---|
-| A | prior centré sur le parent — réplication | `cpx62-1149` | règle de décision **préenregistrée** : [`experiments/L3_PRIOR_MEAN_PREREGISTRATION_20260802.md`](experiments/L3_PRIOR_MEAN_PREREGISTRATION_20260802.md) |
+| A | prior centré sur le parent — réplication | `cpx62-1149` | ✅ **clos**, PRIOR promu le 2 août ; re-mesuré à `1e-4` : `+8,48` IC95 `[+3,5 ; +13,4]`, `n=18 000` |
 | B | reproductibilité machine/build | `home-1150` | **hors consolidation** (même pool que la découverte) |
-| C | pool de 3000 ouvertures | `cpx62-1151` | lève le plafond `n` : `n=12000`, puissance `56 % → 84 %` sur `+9 Elo` |
-| D | `--king-patterns` A/B au scale | `cpx62-1152` | condition de réouverture de la porte `0409`, jamais jouée |
+| C | pool de 3000 ouvertures | `cpx62-1154` | ✅ **livré et utilisé** par `1161` et `1163` : `n=12 000` par porte |
+| D | `--king-patterns` A/B au scale | `cpx62-1156` | ⛔ **modèles prêts, porte BLOQUÉE** — voir §3.5 |
+| E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ✅ **PRIORTIGHT promu champion général le 3 août** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
+| F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
 
 ## 3. En file, par ordre de valeur attendue
 
@@ -57,10 +59,15 @@ l'autre. En 100 % frais le prior était le **seul** porteur du passé ; avec un
 mélange 1:1, **la moitié mémoire EST le parent réinjecté comme donnée**, donc un
 prior centré sur le parent risque de le **compter deux fois**. Le λ calibré à
 l'ère 100 % frais **ne se transporte pas**.
-**Déclencheur** : A conclut positivement.
-**Coût** : 3-4 bras (`--prior-visit-scale` / `--prior-decay`) + portes. Attendre
-le pool de 3000 (piste C) : à `n=6000` un balayage n'aurait pas la puissance de
-séparer ses cellules.
+**Déclencheur : SATISFAIT deux fois.** A conclut positivement (PRIOR promu le
+2 août), et le prior survit au resserrement de la tolérance (`+8,48` à `1e-4`
+contre `+6,66` à `1e-3`). ⚠️ **Tout balayage doit désormais tourner à
+`--lbfgs-gtol 1e-4`** : un balayage de λ sous `1e-3` mesurerait pour partie
+jusqu'où chaque cellule a convergé, pas ce que chaque λ vaut.
+**Coût** : 3-4 bras (`--prior-visit-scale` / `--prior-decay`) + portes. Le pool
+de 3000 (piste C) est livré, donc `n=12 000` par cellule. ⚠️ Les fits à `1e-4`
+prennent `~5×` plus d'itérations qu'à `1e-3` (`904` contre `169`) : re-sizer
+l'ETA avant de proposer, ne pas transporter l'ancre des refits du 2 août matin.
 
 ### 3.3 Réouverture de la quiescence
 **FERMÉE le 2 août (`home-1200` + readout immuable `home-1202`)** : la cellule
@@ -94,6 +101,29 @@ contraste contrôlé. Une attribution causale exigerait **un corpus de positions
 fixe et apparié**.
 **Déclencheur** : seulement si une décision en dépend. Ce n'est pas le cas
 aujourd'hui — le témoin a fermé le soupçon 32cf, ce qu'on lui demandait.
+### 3.5 ⛔ Porte king-aware — bloquée sur un build PAR BRAS
+**Les deux modèles existent** depuis `cpx62-1156` : `control` = TIGHT,
+`exact` = TIGHT + `--king-patterns`, un seul facteur, tous deux convergés à
+`1e-4` (`653` et `820` itérations). Leurs pertes en holdout sont **à égalité
+au millionième** (`0,441695` contre `0,441699`), ce qui ne tranche rien — la
+porte est le seul juge.
+
+**Ce qui bloque** : un modèle king-aware exige un moteur compilé
+`-DJASS_KING_PATTERNS` (`CMakeLists.txt:109`, et l'occupancy devient `men|kings`
+dans `scan_eval.hpp:61`). Or `l3-model-gate-v1.sh` ne produit **qu'un seul
+build** pour les deux bras. Il faut donc un build **par bras**, exactement comme
+`l3-succession-guards-v1.sh` le fait déjà pour opposer du 8cf à du 32cf.
+
+✅ **Aucun risque de mesure silencieuse** : `scan_eval.cpp:370` compare le bit
+king de l'en-tête auto-descriptif au `KING_AWARE_PATTERNS` du build et **refuse
+le modèle**. Une porte naïve échouerait bruyamment à « modèles chargeables ».
+
+**Déclencheur** : travail de template (une variante `l3-model-gate-2build-v1.sh`,
+ou un `PER_ARM_CMAKE_FLAGS` dans le template existant). C'est du code : candidat
+naturel pour Codex, revue par moi.
+**Coût** : template + une porte deux vues. Le pool 3000 est disponible, donc
+`n=12 000` d'emblée — nécessaire, vu que les holdouts n'écartent rien.
+
 
 ## 4. Orchestration à deux agents
 

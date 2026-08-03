@@ -52,7 +52,13 @@ EXPECTED_EXTRAS=120
 
 # Hyperparamètres de home-0977, à l'identique. Les changer casserait la seule
 # chose que ce job mesure.
-L2=3e-5; MAXIT=1000; LBFGS_MAXCOR=20; CHUNK=20000
+L2="${L2:-3e-5}"; LBFGS_MAXCOR=20; CHUNK=20000
+# `l2` est per-bras depuis le 3 aout. Motif : sous `--prior-mean`, `l2` N'EST
+# PLUS une force de retrecissement vers zero, c'est la force du rappel VERS LE
+# PARENT — le meme nombre, un autre sens. Sa valeur `3e-5` a ete close en
+# juillet (`l2_factor_closed_on_3e5`) sur un ridge centre sur ZERO ; cette
+# fermeture ne se transporte donc pas a la recette courante.
+ARM_A_L2="${ARM_A_L2:-$L2}"; ARM_B_L2="${ARM_B_L2:-$L2}"
 # `gtol` est un critere d'ARRET, pas un parametre du modele — et il n'est pas
 # neutre entre parametrisations. `cpx62-1155` : le bras men-only descend a
 # 0,000548 en 141 iterations, le bras king-aware s'arrete a 0,000913 en 12, avec
@@ -62,6 +68,14 @@ L2=3e-5; MAXIT=1000; LBFGS_MAXCOR=20; CHUNK=20000
 # jobs anterieurs reproduisent a l'identique. Les DEUX bras le partagent
 # toujours : un gtol par bras introduirait un second facteur.
 LBFGS_GTOL="${LBFGS_GTOL:-1e-3}"
+# Par bras, quand la TOLERANCE elle-meme est le facteur mesure. Defaut = la
+# valeur partagee, donc rien ne change pour les jobs qui comparent autre chose.
+ARM_A_GTOL="${ARM_A_GTOL:-$LBFGS_GTOL}"; ARM_B_GTOL="${ARM_B_GTOL:-$LBFGS_GTOL}"
+# `max_iter` etait code en dur a 1000. cpx62-1159 a converge en 904 : a une
+# tolerance plus serree on depasserait le plafond, et L-BFGS s'arreterait sur
+# `max_iter` en rapportant quand meme success=True. Le readout verifie donc
+# aussi le MESSAGE, pas seulement le drapeau.
+MAXIT="${MAXIT:-1000}"
 FIT_TIMEOUT="${FIT_TIMEOUT:-3600}"   # home-0977 : 1933 s pour le fit color
 
 MON=""
@@ -200,8 +214,8 @@ say "  extras ✓ K=$K (identique à TURNOVER)"
 # la majorité des buckets, qui ne sont vus que quelques fois. `--prior-mean`
 # déplace le centre du ridge sur le champion ; avec `--prior-decay 0` la
 # précision reste uniformément `l2`, donc SEUL le centre bouge.
-fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold, $3... = continuation
-  local arm="$1" foldflag="$2"; shift 2
+fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
+  local arm="$1" foldflag="$2" gtol="$3" l2v="$4"; shift 4
   stage "fit-$arm"
   set +e
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
@@ -209,8 +223,8 @@ fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold, $3... = continuation
       --data "$IN/corpus.jnnw" --feat "$W/corpus.feat" --out "$W/$arm.pjtw" \
       --target wdl --loss logistic "$foldflag" --tempo-stage \
       "$@" --holdout-count "$HOLDOUT" \
-      --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
-      --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
+      --l2 "$l2v" --max-iter "$MAXIT" --chunk "$CHUNK" \
+      --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$gtol" \
       --prune \
       --optimizer-report "$ART/$arm-optimizer.json" \
       > "$W/fit-$arm.log" 2> "$W/fit-$arm-time.log"
@@ -218,8 +232,16 @@ fit_arm(){   # $1 = nom du bras, $2 = drapeau de fold, $3... = continuation
   set -e
   [ "$rc" -eq 0 ] || die "fit $arm rc=$rc — voir fit-$arm.log"
   [ -s "$W/$arm.pjtw" ] || die "fit $arm sans modèle"
-  python3 -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("success") else 1)' \
-    "$ART/$arm-optimizer.json" || die "fit $arm n'a pas convergé"
+  # `success` seul ne suffit pas : un arret sur `max_iter` le rapporte vrai.
+  python3 - "$ART/$arm-optimizer.json" "$arm" <<'PYCHK' || die "fit $arm : arret non concluant"
+import json, sys
+d = json.load(open(sys.argv[1]))
+msg = str(d.get("message", ""))
+if not d.get("success"):
+    raise SystemExit(f"{sys.argv[2]}: success=False")
+if "PGTOL" not in msg.upper():
+    raise SystemExit(f"{sys.argv[2]}: arret sur '{msg}' et non sur le gradient")
+PYCHK
   gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
   local ll; ll=$(grep -o 'HOLDOUT_LOGLOSS[= ][0-9.]*' "$W/fit-$arm.log" | tail -1)
   local it; it=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["iterations"])' \
@@ -246,14 +268,27 @@ cont_args(){ case "$1" in
   warmking) printf '%s\n%s\n%s\n' --warm-start "$IN/parent.pjtw" --king-patterns ;;
   prior) printf '%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" --prior-decay 0 ;;
   priorking) printf '%s\n%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" --prior-decay 0 --king-patterns ;;
+  # `priorvisit` = le prior sequentiel-bayesien PONDERE PAR LES VISITES, celui de
+  # l'ere gen1/gen2. La precision devient `l2 + decay*lam*(visites_j/N)`, donc le
+  # rappel vers le parent est le PLUS FORT la ou les donnees sont les PLUS
+  # abondantes — l'inverse du motif qui justifiait le prior. `--prior-decay 0`
+  # (la recette championne) annule ce terme et rend le rappel uniforme.
+  # ⚠️ A `decay=0`, `lam` est INERTE : `dec*lam = 0`. Ne pas balayer lam a
+  # decay 0 en croyant balayer une dose.
+  priorvisit) printf '%s\n%s\n%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" \
+                --prior-decay "$PRIOR_DECAY" --prior-visit-scale "$PRIOR_LAM" ;;
   *) die "continuation invalide : $1" ;; esac; }
+PRIOR_DECAY="${PRIOR_DECAY:-1.0}"; PRIOR_LAM="${PRIOR_LAM:-0.25}"
 ARM_A_CONT="${ARM_A_CONT:-warm}"; ARM_B_CONT="${ARM_B_CONT:-warm}"
 say "  bras A : $ARM_A_FOLD / $ARM_A_CONT"
 say "  bras B : $ARM_B_FOLD / $ARM_B_CONT"
 mapfile -t A_ARGS < <(cont_args "$ARM_A_CONT")
 mapfile -t B_ARGS < <(cont_args "$ARM_B_CONT")
-fit_arm control "$ARM_A_FOLD" "${A_ARGS[@]}"
-fit_arm exact   "$ARM_B_FOLD" "${B_ARGS[@]}"
+say "  gtol : A=$ARM_A_GTOL  B=$ARM_B_GTOL  max_iter=$MAXIT"
+say "  l2   : A=$ARM_A_L2  B=$ARM_B_L2"
+case "$ARM_A_CONT$ARM_B_CONT" in *priorvisit*) say "  prior pondere : decay=$PRIOR_DECAY lam=$PRIOR_LAM";; esac
+fit_arm control "$ARM_A_FOLD" "$ARM_A_GTOL" "$ARM_A_L2" "${A_ARGS[@]}"
+fit_arm exact   "$ARM_B_FOLD" "$ARM_B_GTOL" "$ARM_B_L2" "${B_ARGS[@]}"
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
