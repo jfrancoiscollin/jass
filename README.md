@@ -184,6 +184,11 @@ binary portable to older CPUs.
 
 ### Training & book pipelines
 
+Fixed depth remains the self-play default. The experimental deterministic
+fixed/weighted node-budget mode, its JSONL telemetry and reproducibility smoke
+are documented in
+[`docs/SELFPLAY_NODE_BUDGET.md`](docs/SELFPLAY_NODE_BUDGET.md).
+
 ```sh
 # --- Cycle-1 onwards: WDL-labelled data (recommended for new training) ---
 # Generate a self-play dataset, each record carrying both a deep-search

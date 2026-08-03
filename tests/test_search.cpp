@@ -17,11 +17,14 @@
 #include "position.hpp"
 #include "search.hpp"
 #include "selfplay_exploration.hpp"
+#include "selfplay_node_budget.hpp"
 #include "tt.hpp"
 #include "types.hpp"
 #include "zobrist.hpp"
 
 #include <algorithm>
+#include <limits>
+#include <stdexcept>
 #include <string_view>
 
 using namespace jass;
@@ -36,6 +39,16 @@ Position parse(std::string_view fen) {
 
 bool list_contains(const MoveList& ml, const Move& m) {
     for (const auto& x : ml) if (x == m) return true;
+    return false;
+}
+
+template <class Fn>
+bool throws_invalid_argument(Fn&& fn) {
+    try {
+        fn();
+    } catch (const std::invalid_argument&) {
+        return true;
+    }
     return false;
 }
 
@@ -437,6 +450,166 @@ void test_search_depth_increases() {
     JASS_CHECK(r_hi.nodes > r_lo.nodes);
 }
 
+void test_node_budget_policy_parsing_and_validation() {
+    using namespace jass::selfplay;
+
+    const auto choices = parse_weighted_node_budgets(
+        "5000:10, 20000:25,80000:35");
+    JASS_CHECK_EQ(choices.size(), 3U);
+    JASS_CHECK_EQ(choices[1].nodes, 20000U);
+    JASS_CHECK_EQ(choices[1].weight, 25U);
+
+    const NodeBudgetPolicy fixed = NodeBudgetPolicy::fixed(
+        80'000, SamplingGranularity::Move);
+    JASS_CHECK_EQ(fixed.sample(1, 2, 3, 0), 80'000U);
+    JASS_CHECK_EQ(fixed.min_nodes(), 80'000U);
+    JASS_CHECK_EQ(fixed.max_nodes(), 80'000U);
+
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)NodeBudgetPolicy::fixed(0, SamplingGranularity::Move);
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)NodeBudgetPolicy::fixed(999, SamplingGranularity::Move);
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)NodeBudgetPolicy::weighted({}, SamplingGranularity::Move);
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)NodeBudgetPolicy::weighted(
+            {{5'000, 0}, {20'000, 0}}, SamplingGranularity::Move);
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)NodeBudgetPolicy::weighted(
+            {{5'000, std::numeric_limits<std::uint64_t>::max()},
+             {20'000, 1}}, SamplingGranularity::Move);
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)parse_weighted_node_budgets("");
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)parse_weighted_node_budgets("5000:-1");
+    }));
+    JASS_CHECK(throws_invalid_argument([] {
+        (void)parse_weighted_node_budgets("5000:10,");
+    }));
+}
+
+void test_node_budget_sampler_is_deterministic_and_isolated() {
+    using namespace jass::selfplay;
+    const NodeBudgetPolicy move_policy = NodeBudgetPolicy::weighted(
+        {{5'000, 2}, {20'000, 5}, {80'000, 7}, {300'000, 4}},
+        SamplingGranularity::Move);
+    const std::uint64_t seed = 0x123456789ABCDEF0ULL;
+
+    const auto first = move_policy.sample(seed, 17, 9, 1);
+    JASS_CHECK_EQ(first, move_policy.sample(seed, 17, 9, 1));
+    JASS_CHECK(first == 5'000 || first == 20'000
+               || first == 80'000 || first == 300'000);
+
+    bool ply_changed = false;
+    for (std::uint32_t ply = 1; ply < 32; ++ply) {
+        if (move_policy.sample(seed, 17, ply, ply & 1u)
+            != move_policy.sample(seed, 17, 0, 0)) {
+            ply_changed = true;
+            break;
+        }
+    }
+    JASS_CHECK(ply_changed);
+
+    bool game_changed = false;
+    for (std::uint64_t game = 18; game < 48; ++game) {
+        if (move_policy.sample(seed, game, 9, 1) != first) {
+            game_changed = true;
+            break;
+        }
+    }
+    JASS_CHECK(game_changed);
+
+    const NodeBudgetPolicy game_policy = NodeBudgetPolicy::weighted(
+        {{5'000, 1}, {20'000, 1}}, SamplingGranularity::Game);
+    const auto per_game = game_policy.sample(seed, 99, 0, 0);
+    for (std::uint32_t ply = 1; ply < 40; ++ply) {
+        JASS_CHECK_EQ(game_policy.sample(seed, 99, ply, ply & 1u), per_game);
+    }
+
+    // Consuming Top-K's dedicated RNG stream cannot change the pure budget
+    // hash. This pins the independence contract even as exploration evolves.
+    SelfplayRngStreams streams(seed, true);
+    for (int i = 0; i < 100; ++i) (void)streams.exploration()();
+    JASS_CHECK_EQ(move_policy.sample(seed, 17, 9, 1), first);
+}
+
+void test_weighted_node_budget_frequencies() {
+    using namespace jass::selfplay;
+    const NodeBudgetPolicy policy = NodeBudgetPolicy::weighted(
+        {{5'000, 1}, {20'000, 3}}, SamplingGranularity::Move);
+    int low = 0;
+    constexpr int samples = 20'000;
+    for (int i = 0; i < samples; ++i) {
+        const auto budget = policy.sample(
+            1234, static_cast<std::uint64_t>(i / 100),
+            static_cast<std::uint32_t>(i % 100),
+            static_cast<std::uint8_t>(i & 1));
+        JASS_CHECK(budget == 5'000 || budget == 20'000);
+        if (budget == 5'000) ++low;
+    }
+    const double low_fraction = static_cast<double>(low) / samples;
+    JASS_CHECK(low_fraction > 0.22);
+    JASS_CHECK(low_fraction < 0.28);
+}
+
+void test_search_node_budget_stops_exactly_and_returns_legal_move() {
+    const Position p = Position::start_position();
+    MoveList legal;
+    generate_legal_moves(p, legal);
+
+    SearchLimits tiny;
+    tiny.max_depth = MAX_PLY;
+    tiny.max_nodes = 1;
+    const SearchResult r_tiny = search(p, tiny);
+    JASS_CHECK_EQ(r_tiny.nodes, 1U);
+    JASS_CHECK(list_contains(legal, r_tiny.best_move));
+    JASS_CHECK_EQ(r_tiny.completed_depth, 0);
+    JASS_CHECK(r_tiny.aborted_iteration);
+    JASS_CHECK(r_tiny.stop_reason == SearchStopReason::Nodes);
+
+    SearchLimits low;
+    low.max_depth = MAX_PLY;
+    low.max_nodes = 1'000;
+    const SearchResult r_low = search(p, low);
+    JASS_CHECK_EQ(r_low.nodes, low.max_nodes);
+    JASS_CHECK(list_contains(legal, r_low.best_move));
+    JASS_CHECK(r_low.completed_depth == r_low.depth);
+    JASS_CHECK(r_low.effective_depth > r_low.completed_depth);
+    JASS_CHECK(r_low.aborted_iteration);
+
+    SearchLimits high = low;
+    high.max_nodes = 4'000;
+    const SearchResult r_high = search(p, high);
+    JASS_CHECK_EQ(r_high.nodes, high.max_nodes);
+    JASS_CHECK(r_high.nodes > r_low.nodes);
+    JASS_CHECK(list_contains(legal, r_high.best_move));
+}
+
+void test_unlimited_depth_search_keeps_historical_result() {
+    const Position p = Position::start_position();
+    SearchLimits historical;
+    historical.max_depth = 4;
+    const SearchResult before = search(p, historical);
+
+    SearchLimits explicit_unlimited = historical;
+    explicit_unlimited.max_nodes = 0;
+    const SearchResult after = search(p, explicit_unlimited);
+    JASS_CHECK(before.best_move == after.best_move);
+    JASS_CHECK_EQ(before.score, after.score);
+    JASS_CHECK_EQ(before.depth, after.depth);
+    JASS_CHECK_EQ(before.nodes, after.nodes);
+    JASS_CHECK_EQ(after.completed_depth, after.depth);
+    JASS_CHECK_EQ(after.effective_depth, after.depth);
+    JASS_CHECK(!after.aborted_iteration);
+    JASS_CHECK(after.stop_reason == SearchStopReason::None);
+}
+
 void test_root_order_schedule_applies_and_fails_closed() {
     const Position p = parse("W:W31:B20");
 
@@ -545,6 +718,11 @@ void run_search_tests() {
     test_search_returns_pv_starting_with_best_move();
     test_search_with_multiple_threads();
     test_search_depth_increases();
+    test_node_budget_policy_parsing_and_validation();
+    test_node_budget_sampler_is_deterministic_and_isolated();
+    test_weighted_node_budget_frequencies();
+    test_search_node_budget_stops_exactly_and_returns_legal_move();
+    test_unlimited_depth_search_keeps_historical_result();
     test_root_order_schedule_applies_and_fails_closed();
     test_explicit_default_params_match_searchlimits_default();
     test_1b_each_feature_searches_correctly();

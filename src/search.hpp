@@ -45,7 +45,8 @@ struct SearchLimits {
     // no endgame movetime-overshoot) — the right bound for a flat/near-zero eval
     // where alpha-beta pruning collapses and a fixed-depth search would explode
     // (e.g. from-scratch self-play with a zero-weights eval). Polled by
-    // check_stop() every 1024 nodes, so it fires within ~1024 nodes of the cap.
+    // The non-atomic counter is checked at every node, so the reported search
+    // never exceeds this cap. Time and external-stop checks remain throttled.
     std::uint64_t max_nodes = 0;
     // External stop signal. If non-null and set to true while the search is
     // running, the current iteration is abandoned and the result of the
@@ -69,10 +70,34 @@ struct SearchLimits {
     std::string root_order_schedule;
 };
 
+enum class SearchStopReason : std::uint8_t {
+    None,
+    Nodes,
+    Time,
+    External,
+};
+
+inline const char* search_stop_reason_name(SearchStopReason reason) noexcept {
+    switch (reason) {
+        case SearchStopReason::Nodes:    return "nodes";
+        case SearchStopReason::Time:     return "time";
+        case SearchStopReason::External: return "external";
+        case SearchStopReason::None:     return "none";
+    }
+    return "none";
+}
+
 struct SearchResult {
     Move              best_move{};
     int               score{0};
     int               depth{0};
+    // `depth` keeps its historical meaning: last fully completed iterative
+    // depth. `effective_depth` is the deepest iteration started, including an
+    // iteration interrupted by a node/time/external limit.
+    int               effective_depth{0};
+    int               completed_depth{0};
+    bool              aborted_iteration{false};
+    SearchStopReason  stop_reason{SearchStopReason::None};
     std::uint64_t     nodes{0};
     std::uint64_t     cutoffs{0};            // DIAG #1
     std::uint64_t     first_move_cutoffs{0}; // DIAG #1

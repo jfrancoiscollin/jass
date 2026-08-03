@@ -51,7 +51,7 @@ public:
     // depth. The persistent TT is reused.
     SearchResult search(int max_depth);
 
-    // Search the current position with full SearchLimits — depth, time
+    // Search the current position with full SearchLimits — depth, node/time
     // budget, external stop signal — using the persistent TT and game
     // history.
     SearchResult search(const SearchLimits& limits);

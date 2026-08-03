@@ -28,6 +28,7 @@
 #include "scan_sacs.hpp"
 #include "search.hpp"
 #include "selfplay_exploration.hpp"
+#include "selfplay_node_budget.hpp"
 #include "tournament.hpp"
 
 #include <algorithm>
@@ -39,8 +40,11 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <optional>
 #include <random>
 #include <string>
 #include <thread>
@@ -52,6 +56,111 @@
 using namespace jass;
 
 namespace {
+
+enum class SelfplaySearchLimitType : std::uint8_t {
+    Depth,
+    Nodes,
+};
+
+struct NodeBudgetRunStats {
+    std::uint64_t searches{0};
+    std::uint64_t aborted_searches{0};
+    long double   budget_sum{0};
+    long double   nodes_sum{0};
+    long double   ratio_sum{0};
+    long double   effective_depth_sum{0};
+    std::uint64_t elapsed_us_sum{0};
+    std::map<std::uint64_t, std::uint64_t> budget_counts;
+
+    void record(std::uint64_t budget, const SearchResult& result,
+                std::uint64_t elapsed_us) {
+        ++searches;
+        if (result.aborted_iteration) ++aborted_searches;
+        budget_sum += static_cast<long double>(budget);
+        nodes_sum += static_cast<long double>(result.nodes);
+        ratio_sum += static_cast<long double>(result.nodes)
+                   / static_cast<long double>(budget);
+        effective_depth_sum += result.effective_depth;
+        elapsed_us_sum += elapsed_us;
+        ++budget_counts[budget];
+    }
+
+    std::uint64_t quantile(unsigned numerator, unsigned denominator) const {
+        if (searches == 0 || denominator == 0) return 0;
+        const std::uint64_t rank = std::max<std::uint64_t>(
+            1, (searches * numerator + denominator - 1) / denominator);
+        std::uint64_t cumulative = 0;
+        for (const auto& [budget, count] : budget_counts) {
+            cumulative += count;
+            if (cumulative >= rank) return budget;
+        }
+        return budget_counts.empty() ? 0 : budget_counts.rbegin()->first;
+    }
+};
+
+void write_node_budget_manifest(
+    std::ostream& out,
+    const jass::selfplay::NodeBudgetPolicy& policy,
+    std::uint64_t cli_seed,
+    std::uint64_t sampler_seed) {
+    out << "{\"event\":\"node_budget_manifest\""
+        << ",\"search_limit_type\":\"nodes\""
+        << ",\"distribution\":\""
+        << jass::selfplay::node_budget_distribution_name(policy.distribution())
+        << "\",\"sample_per\":\""
+        << jass::selfplay::sampling_granularity_name(policy.granularity())
+        << "\",\"min_budget\":" << policy.min_nodes()
+        << ",\"max_budget\":" << policy.max_nodes()
+        << ",\"sampler_version\":"
+        << jass::selfplay::NODE_BUDGET_SAMPLER_VERSION
+        << ",\"global_seed\":" << cli_seed
+        << ",\"sampler_seed\":" << sampler_seed
+        << ",\"values\":[";
+    for (std::size_t i = 0; i < policy.choices().size(); ++i) {
+        if (i) out << ',';
+        const auto& choice = policy.choices()[i];
+        out << "{\"nodes\":" << choice.nodes
+            << ",\"weight\":" << choice.weight << '}';
+    }
+    out << "]}\n";
+}
+
+void write_node_budget_summary(std::ostream& out,
+                               const NodeBudgetRunStats& stats) {
+    const long double count = stats.searches > 0
+        ? static_cast<long double>(stats.searches) : 1.0L;
+    const long double aggregate_ratio = stats.budget_sum > 0
+        ? stats.nodes_sum / stats.budget_sum : 0.0L;
+    const long double aggregate_nps = stats.elapsed_us_sum > 0
+        ? stats.nodes_sum * 1'000'000.0L / stats.elapsed_us_sum : 0.0L;
+    out << std::fixed << std::setprecision(3)
+        << "{\"event\":\"node_budget_summary\""
+        << ",\"searches\":" << stats.searches
+        << ",\"budget_mean\":" << static_cast<double>(stats.budget_sum / count)
+        << ",\"budget_p10\":" << stats.quantile(1, 10)
+        << ",\"budget_p50\":" << stats.quantile(1, 2)
+        << ",\"budget_median\":" << stats.quantile(1, 2)
+        << ",\"budget_p90\":" << stats.quantile(9, 10)
+        << ",\"nodes_used_total\":"
+        << static_cast<std::uint64_t>(stats.nodes_sum)
+        << ",\"nodes_used_mean\":" << static_cast<double>(stats.nodes_sum / count)
+        << ",\"nodes_used_over_budget\":" << static_cast<double>(aggregate_ratio)
+        << ",\"mean_search_ratio\":" << static_cast<double>(stats.ratio_sum / count)
+        << ",\"effective_depth_mean\":"
+        << static_cast<double>(stats.effective_depth_sum / count)
+        << ",\"search_time_ms_mean\":"
+        << static_cast<double>(stats.elapsed_us_sum / count / 1'000.0L)
+        << ",\"nps\":" << static_cast<double>(aggregate_nps)
+        << ",\"aborted_iterations\":" << stats.aborted_searches
+        << ",\"buckets\":{";
+    bool first = true;
+    for (const auto& [budget, bucket_count] : stats.budget_counts) {
+        if (!first) out << ',';
+        first = false;
+        out << '\"' << budget << "\":" << bucket_count;
+    }
+    out << "}}\n";
+}
 
 const char* dir_name(Dir d) {
     switch (d) {
@@ -339,6 +448,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      on the PLAY+LABEL search (0 = unlimited). Bounds a
                                             //      flat/near-zero eval where alpha-beta collapses and a
                                             //      fixed-depth search would explode (from-scratch tour-0).
+    SelfplaySearchLimitType search_limit_type = SelfplaySearchLimitType::Depth;
+    const char*  node_budget_fixed_spec = nullptr;
+    const char*  node_budget_weighted_spec = nullptr;
+    const char*  node_budget_log_path = nullptr;
+    jass::selfplay::SamplingGranularity node_budget_sample_per =
+        jass::selfplay::SamplingGranularity::Move;
+    bool         node_budget_sample_per_set = false;
     std::string  label_depth_spec;          // "endgame=16,deep-eg=20" → deeper LABEL
                                             //      search by phase (empty = eval_depth)
     std::string  play_depth_spec;           // "endgame=12,deep-eg=14" → deeper PLAY
@@ -438,6 +554,35 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         } else if (a == "--play-max-nodes" && i + 1 < argc) {
             const long long v = std::atoll(argv[++i]);
             if (v > 0) play_max_nodes = static_cast<std::uint64_t>(v);
+        } else if (a == "--search-limit" && i + 1 < argc) {
+            const std::string_view value{argv[++i]};
+            if (value == "depth") {
+                search_limit_type = SelfplaySearchLimitType::Depth;
+            } else if (value == "nodes") {
+                search_limit_type = SelfplaySearchLimitType::Nodes;
+            } else {
+                std::cerr << "error: --search-limit must be depth or nodes\n";
+                return 2;
+            }
+        } else if (a == "--node-budget-fixed" && i + 1 < argc) {
+            node_budget_fixed_spec = argv[++i];
+        } else if (a == "--node-budget-weighted" && i + 1 < argc) {
+            node_budget_weighted_spec = argv[++i];
+        } else if (a == "--node-budget-sample-per" && i + 1 < argc) {
+            const std::string_view value{argv[++i]};
+            if (value == "move") {
+                node_budget_sample_per =
+                    jass::selfplay::SamplingGranularity::Move;
+            } else if (value == "game") {
+                node_budget_sample_per =
+                    jass::selfplay::SamplingGranularity::Game;
+            } else {
+                std::cerr << "error: --node-budget-sample-per must be move or game\n";
+                return 2;
+            }
+            node_budget_sample_per_set = true;
+        } else if (a == "--node-budget-log" && i + 1 < argc) {
+            node_budget_log_path = argv[++i];
         } else if (a == "--label-depth-by-phase" && i + 1 < argc) {
             label_depth_spec = argv[++i];
         } else if (a == "--play-depth-by-phase" && i + 1 < argc) {
@@ -503,6 +648,59 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         std::cerr << "error: --seed-frac requires --seed-file\n";
         return 2;
     }
+    std::optional<jass::selfplay::NodeBudgetPolicy> node_budget_policy;
+    const bool has_node_budget_config = node_budget_fixed_spec != nullptr
+                                     || node_budget_weighted_spec != nullptr
+                                     || node_budget_sample_per_set
+                                     || node_budget_log_path != nullptr;
+    if (search_limit_type == SelfplaySearchLimitType::Depth) {
+        if (has_node_budget_config) {
+            std::cerr << "error: node-budget options require --search-limit nodes\n";
+            return 2;
+        }
+    } else {
+        if ((node_budget_fixed_spec == nullptr)
+            == (node_budget_weighted_spec == nullptr)) {
+            std::cerr << "error: --search-limit nodes requires exactly one of "
+                         "--node-budget-fixed or --node-budget-weighted\n";
+            return 2;
+        }
+        if (node_budget_log_path == nullptr) {
+            std::cerr << "error: --search-limit nodes requires --node-budget-log PATH\n";
+            return 2;
+        }
+        if (movetime_ms > 0) {
+            std::cerr << "error: --search-limit nodes is incompatible with --movetime\n";
+            return 2;
+        }
+        if (play_max_nodes > 0) {
+            std::cerr << "error: --search-limit nodes is incompatible with the legacy "
+                         "--play-max-nodes safety cap\n";
+            return 2;
+        }
+        if (!play_depth_spec.empty()) {
+            std::cerr << "error: --play-depth-by-phase is incompatible with "
+                         "--search-limit nodes\n";
+            return 2;
+        }
+        try {
+            if (node_budget_fixed_spec != nullptr) {
+                const std::uint64_t nodes =
+                    jass::selfplay::parse_node_budget_integer(
+                        node_budget_fixed_spec, "fixed value");
+                node_budget_policy = jass::selfplay::NodeBudgetPolicy::fixed(
+                    nodes, node_budget_sample_per);
+            } else {
+                node_budget_policy = jass::selfplay::NodeBudgetPolicy::weighted(
+                    jass::selfplay::parse_weighted_node_budgets(
+                        node_budget_weighted_spec),
+                    node_budget_sample_per);
+            }
+        } catch (const std::invalid_argument& error) {
+            std::cerr << "error: " << error.what() << '\n';
+            return 2;
+        }
+    }
     const std::array<int, NUM_PHASES> label_depth =
         parse_depth_by_phase(label_depth_spec, "--label-depth-by-phase");
     const std::array<int, NUM_PHASES> play_depth_by_phase =
@@ -540,6 +738,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int v = parse_int_or(p_argv[7], -1);
         if (v > 0) random_seed = v;
     }
+    if (node_budget_policy
+        && (std::string_view{node_budget_log_path} == std::string_view{out_path}
+            || (sample_meta_path != nullptr
+                && std::string_view{node_budget_log_path}
+                    == std::string_view{sample_meta_path}))) {
+        std::cerr << "error: --node-budget-log must differ from JNNW and JSM1 outputs\n";
+        return 2;
+    }
 
     std::cout << "gen-data-wdl: n=" << n
               << " out=" << out_path
@@ -555,6 +761,20 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " movetime_ms=" << movetime_ms
               << " drop_plycap=" << (drop_plycap ? "true" : "false")
               << " sample_meta=" << (sample_meta_path ? sample_meta_path : "(off)");
+    if (node_budget_policy) {
+        std::cout << " search_limit=nodes"
+                  << " node_budget_distribution="
+                  << jass::selfplay::node_budget_distribution_name(
+                         node_budget_policy->distribution())
+                  << " node_budget_sample_per="
+                  << jass::selfplay::sampling_granularity_name(
+                         node_budget_policy->granularity())
+                  << " node_budget_min=" << node_budget_policy->min_nodes()
+                  << " node_budget_max=" << node_budget_policy->max_nodes()
+                  << " node_budget_sampler_version="
+                  << jass::selfplay::NODE_BUDGET_SAMPLER_VERSION
+                  << " node_budget_log=" << node_budget_log_path;
+    }
     {
         bool any = false;
         for (int p = 0; p < NUM_PHASES; ++p) {
@@ -642,6 +862,16 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                   << " positions, seed_frac=" << seed_frac << "%\n";
     }
 
+    std::ofstream node_budget_log;
+    if (node_budget_policy) {
+        node_budget_log.open(node_budget_log_path);
+        if (!node_budget_log) {
+            std::cerr << "error: cannot open " << node_budget_log_path
+                      << " for writing\n";
+            return 1;
+        }
+    }
+
     std::ofstream f(out_path, std::ios::binary);
     if (!f) {
         std::cerr << "error: cannot open " << out_path << " for writing\n";
@@ -678,6 +908,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         ? static_cast<std::uint64_t>(static_cast<std::uint32_t>(random_seed))
               * std::uint64_t{0x9E3779B97F4A7C15}
         : std::uint64_t{0x5eed5eed5eed5eed};
+    if (node_budget_policy) {
+        write_node_budget_manifest(
+            node_budget_log, *node_budget_policy,
+            random_seed > 0 ? static_cast<std::uint64_t>(random_seed) : 0,
+            seed_value);
+    }
     // Un seul flux par défaut (`rng` est un alias du flux legacy), quatre flux
     // indépendants sous --split-selfplay-rngs. Les usages sont routés par rôle
     // ci-dessous : `streams.opening()`, `.sampling()`, `.exploration()`,
@@ -744,6 +980,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // fusion. Ne bloque rien — il rend le symptôme impossible à manquer.
     long long stat_wdl_loss = 0, stat_wdl_draw = 0, stat_wdl_win = 0;
     long long stat_seeded_openings = 0, stat_standard_openings = 0;
+    NodeBudgetRunStats node_budget_stats;
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
     // évite que la passe de classement pollue l'ordonnancement de la partie.
@@ -809,6 +1046,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         bool game_had_eps = false;   // au moins un tirage epsilon dans cette partie
         bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move/adjud) le remet a false
         int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
+        int  game_play_plies = 0;
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
         // punisher_params (e.g. ext_forcing=1, sees shots) ; the "victim" colour plays play_params
         // (blind → stumbles into shots). FIX#3 : si --pair-openings, punisher=white au rep 0, black au rep 1
@@ -978,15 +1216,40 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             // (few pieces) so the extra depth there costs little.
             const int phase_pd =
                 play_depth_by_phase[phase_index_of(popcount(e.position().occupied()))];
-            lim.max_depth = (phase_pd > 0) ? phase_pd : play_depth;
+            lim.max_depth = node_budget_policy
+                ? MAX_PLY
+                : ((phase_pd > 0) ? phase_pd : play_depth);
             // gen-play slot. In asymmetric mode the side-to-move uses punisher_params when it is the
             // game's punisher colour, else play_params (the blind "victim"). Non-asym = play_params.
             const bool stm_is_punisher =
                 (e.position().side_to_move() == Color::White) == punisher_is_white;
             lim.params    = (asym_mode && stm_is_punisher) ? punisher_params : play_params;
             if (movetime_ms > 0) lim.movetime_ms = movetime_ms;
-            lim.max_nodes = play_max_nodes;   // deterministic bound (flat-eval safety)
-            const SearchResult r = e.search(lim);
+            const bool search_side_white =
+                e.position().side_to_move() == Color::White;
+            std::uint64_t sampled_node_budget = 0;
+            std::uint64_t search_elapsed_us = 0;
+            if (node_budget_policy) {
+                sampled_node_budget = node_budget_policy->sample(
+                    seed_value, static_cast<std::uint64_t>(game_count),
+                    static_cast<std::uint32_t>(ply),
+                    static_cast<std::uint8_t>(search_side_white ? 0 : 1));
+                lim.max_nodes = sampled_node_budget;
+            } else {
+                // Historical deterministic safety cap. This remains a hybrid
+                // depth+nodes guard and is intentionally not the new nodes mode.
+                lim.max_nodes = play_max_nodes;
+            }
+            SearchResult r;
+            if (node_budget_policy) {
+                const auto search_started_at = std::chrono::steady_clock::now();
+                r = e.search(lim);
+                search_elapsed_us = static_cast<std::uint64_t>(
+                    std::chrono::duration_cast<std::chrono::microseconds>(
+                        std::chrono::steady_clock::now() - search_started_at).count());
+            } else {
+                r = e.search(lim);
+            }
             ++stat_play_plies;
             // Epsilon-random exploration : with probability explore_eps%, play a
             // uniform-random legal move instead of the search best. Visits states
@@ -1049,7 +1312,48 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 if (play_mv != r.best_move) ++stat_eps_changed_best;
                 last_eps_ply = ply;   // dernier coup d'exploration de la partie (FIX#1 filtre + instrumentation)
             }
+            if (node_budget_policy) {
+                node_budget_stats.record(sampled_node_budget, r, search_elapsed_us);
+                const double search_time_ms =
+                    static_cast<double>(search_elapsed_us) / 1'000.0;
+                const double nps = search_elapsed_us > 0
+                    ? static_cast<double>(r.nodes) * 1'000'000.0
+                        / static_cast<double>(search_elapsed_us)
+                    : 0.0;
+                node_budget_log << std::fixed << std::setprecision(3)
+                    << "{\"event\":\"selfplay_search\""
+                    << ",\"game_id\":" << game_count
+                    << ",\"ply\":" << ply
+                    << ",\"side_to_move\":\""
+                    << (search_side_white ? "white" : "black") << "\""
+                    << ",\"search_limit_type\":\"nodes\""
+                    << ",\"nodes_budget\":" << sampled_node_budget
+                    << ",\"nodes_used\":" << r.nodes
+                    << ",\"effective_depth\":" << r.effective_depth
+                    << ",\"completed_depth\":" << r.completed_depth
+                    << ",\"search_time_ms\":" << search_time_ms
+                    << ",\"nps\":" << nps
+                    << ",\"aborted_iteration\":"
+                    << (r.aborted_iteration ? "true" : "false")
+                    << ",\"stop_reason\":\""
+                    << search_stop_reason_name(r.stop_reason) << "\""
+                    << ",\"search_best_move\":\""
+                    << format_move(r.best_move) << "\""
+                    << ",\"move_selected\":\""
+                    << format_move(play_mv) << "\"}\n";
+            }
             if (!e.apply_move(play_mv)) break;
+            ++game_play_plies;
+        }
+        if (node_budget_policy) {
+            node_budget_log << "{\"event\":\"selfplay_game\""
+                            << ",\"game_id\":" << game_count
+                            << ",\"plies\":" << game_play_plies
+                            << ",\"result_white\":" << outcome_white
+                            << ",\"resolved\":"
+                            << (!hit_ply_cap ? "true" : "false")
+                            << ",\"ply_cap\":"
+                            << (hit_ply_cap ? "true" : "false") << "}\n";
         }
         if (game_had_eps) ++stat_games_with_eps;
         if (hit_ply_cap) ++stat_plycap_games;   // partie terminee par max_plies (issue=nulle par defaut)
@@ -1187,6 +1491,16 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " eps_events=" << stat_eps_events
               << " eps_changed_best=" << stat_eps_changed_best
               << " games_with_eps=" << stat_games_with_eps << "\n";
+    if (node_budget_policy) {
+        write_node_budget_summary(node_budget_log, node_budget_stats);
+        write_node_budget_summary(std::cout, node_budget_stats);
+        node_budget_log.flush();
+        if (!node_budget_log) {
+            std::cerr << "error: failed while writing " << node_budget_log_path
+                      << '\n';
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -5073,7 +5387,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
@@ -5088,6 +5402,10 @@ int main(int argc, char** argv) {
                 "                                   games unresolved at max_plies instead of\n"
                 "                                   fabricating a DRAW label. --sample-meta-out\n"
                 "                                   writes aligned JSM1 game/opening provenance.\n"
+                "                                   --search-limit nodes requires exactly one\n"
+                "                                   fixed/weighted budget plus --node-budget-log.\n"
+                "                                   Weighted syntax is NODES:WEIGHT,...; the\n"
+                "                                   deterministic default granularity is move.\n"
                 "                                   --play-depth-by-phase\n"
                 "                                   \"endgame=12,deep-eg=14\" PLAYS\n"
                 "                                   those phases at a DEEPER search\n"

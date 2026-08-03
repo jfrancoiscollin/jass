@@ -338,6 +338,13 @@ add_executable(jass_tests
 target_link_libraries(jass_tests PRIVATE jass_lib jass_warnings)
 target_include_directories(jass_tests PRIVATE tests)
 add_test(NAME jass_tests COMMAND jass_tests)
+add_test(
+    NAME node_budget_selfplay_smoke
+    COMMAND ${CMAKE_COMMAND}
+        -DJASS_EXE=$<TARGET_FILE:jass>
+        -DSMOKE_DIR=${CMAKE_CURRENT_BINARY_DIR}/node-budget-smoke
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/node_budget_selfplay_smoke.cmake
+)
 
 # -----------------------------------------------------------------------------
 # Emscripten / WASM specifics

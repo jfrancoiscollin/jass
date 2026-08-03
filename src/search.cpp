@@ -302,6 +302,7 @@ struct Searcher {
     bool                                  has_deadline{false};
     const std::atomic<bool>*              stop_flag{nullptr};
     bool                                  stopped{false};
+    SearchStopReason                      stop_reason{SearchStopReason::None};
     // Deterministic hard node cap (0 = unlimited), copied from SearchLimits.
     std::uint64_t                         max_nodes{0};
 
@@ -445,14 +446,29 @@ struct Searcher {
         if (stopped) return true;
         if (stop_flag && stop_flag->load(std::memory_order_relaxed)) {
             stopped = true;
+            stop_reason = SearchStopReason::External;
             return true;
         }
         if (has_deadline && std::chrono::steady_clock::now() >= deadline) {
             stopped = true;
+            stop_reason = SearchStopReason::Time;
             return true;
         }
         if (max_nodes && nodes >= max_nodes) {
             stopped = true;
+            stop_reason = SearchStopReason::Nodes;
+            return true;
+        }
+        return false;
+    }
+
+    // Node budgets are deterministic and local to this Searcher, so checking
+    // the plain integer at every node adds no synchronisation. This keeps the
+    // overshoot at zero while time/external probes stay amortised.
+    bool check_node_budget() noexcept {
+        if (max_nodes && nodes >= max_nodes) {
+            stopped = true;
+            stop_reason = SearchStopReason::Nodes;
             return true;
         }
         return false;
@@ -555,6 +571,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                          int forcing_left, int promo_left, int threat_left, int sac_left) {
     if (stopped) return 0;
     ++nodes;
+    if (check_node_budget()) return 0;
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
     MoveList moves;
@@ -668,6 +685,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // killers / hash_path arrays.
     if (ply >= MAX_PLY) return eval_leaf(pos, ply);
     ++nodes;
+    if (check_node_budget()) return 0;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
     // here because `nodes` was just bumped from 0 → 1 the very first time.
@@ -1645,6 +1663,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
             if (last_iter > 0 && projected > remaining) break;
         }
         s.iter_started_at = std::chrono::steady_clock::now();
+        res.effective_depth = depth;
 
         if (depth > 1) hoist_move(root_moves, best_overall);
 
@@ -1692,11 +1711,15 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
         // Discard any iteration that didn't finish; the previous
         // `best_overall` / `best_score` / `res.depth` remain in effect.
-        if (s.stopped && depth > 1) break;
+        if (s.stopped
+            && (s.stop_reason == SearchStopReason::Nodes || depth > 1)) {
+            break;
+        }
 
         best_overall = iter_best;
         best_score   = iter_score;
         res.depth    = depth;
+        res.completed_depth = depth;
 
         tt.store(root_hash, pack_move(iter_best),
                  score_to_tt(iter_score, /*ply=*/0),
@@ -1713,9 +1736,19 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     stop_helpers();
 
     res.best_move = best_overall;
+    // A tiny node budget can interrupt depth 1 before any complete result is
+    // available. Return the legal root fallback with a neutral score instead
+    // of leaking a partial iteration. Time/external limits retain their
+    // historical first-iteration convention for backward compatibility.
+    if (res.completed_depth == 0 && s.stop_reason == SearchStopReason::Nodes) {
+        best_score = 0;
+    }
     // The move comes from the search; the score comes from the rules.
     res.score     = root_is_drawn ? 0 : best_score;
     res.nodes     = s.nodes;
+    res.aborted_iteration = s.stopped
+                         && res.effective_depth > res.completed_depth;
+    res.stop_reason = s.stop_reason;
     res.cutoffs            = s.cutoffs;
     res.first_move_cutoffs = s.first_move_cutoffs;
     res.pvs_researches     = s.pvs_researches;
