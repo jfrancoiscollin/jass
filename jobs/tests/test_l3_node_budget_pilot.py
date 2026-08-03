@@ -29,6 +29,7 @@ class NodeBudgetPilotTemplateTests(unittest.TestCase):
             "LBFGS_GTOL=1e-4",
             "--exact-fold --tempo-stage --prior-mean",
             "--prior-decay 0",
+            "PYTHONUNBUFFERED=1",
         ):
             self.assertIn(literal, self.text)
 

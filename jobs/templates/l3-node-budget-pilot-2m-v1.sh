@@ -523,6 +523,7 @@ fit_arm(){
   stage "fit-$arm"
   set +e
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
+    PYTHONUNBUFFERED=1 \
     timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
       --data "$W/$arm.fit.jnnw" --feat "$W/$arm.feat" \
       --out "$W/$arm.pjtw" --target wdl --loss logistic \
