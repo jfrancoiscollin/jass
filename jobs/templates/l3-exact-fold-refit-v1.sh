@@ -215,7 +215,7 @@ say "  extras ✓ K=$K (identique à TURNOVER)"
 # déplace le centre du ridge sur le champion ; avec `--prior-decay 0` la
 # précision reste uniformément `l2`, donc SEUL le centre bouge.
 fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
-  local arm="$1" foldflag="$2" gtol="$3" L2="$4"; shift 4
+  local arm="$1" foldflag="$2" gtol="$3" l2v="$4"; shift 4
   stage "fit-$arm"
   set +e
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
@@ -223,7 +223,7 @@ fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
       --data "$IN/corpus.jnnw" --feat "$W/corpus.feat" --out "$W/$arm.pjtw" \
       --target wdl --loss logistic "$foldflag" --tempo-stage \
       "$@" --holdout-count "$HOLDOUT" \
-      --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
+      --l2 "$l2v" --max-iter "$MAXIT" --chunk "$CHUNK" \
       --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$gtol" \
       --prune \
       --optimizer-report "$ART/$arm-optimizer.json" \
