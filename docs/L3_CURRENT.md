@@ -34,7 +34,8 @@
 > scan_blind_spot_exact_gen2_differential_measured;
 > quiescence_q01_reopen_closed_current_engine;
 > lbfgs_gtol_1e3_was_stopping_short_exact_and_prior_underconverged;
-> priortight_succession_green_awaiting_bake_go;
+> lbfgs_gtol_axis_closed_1e5_unreachable;
+> priortight_promoted_general_champion;
 > king_aware_gate_blocked_on_per_arm_build`.
 
 ## 0bis. Nuit du 2 au 3 août 2026 — la tolérance du solveur
@@ -567,26 +568,27 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-0. ⏳ **succession PRÉPARÉE, en attente du go de JFC : PRIORTIGHT** — même
-   recette que PRIOR, tolérance du solveur portée de `1e-3` à `1e-4`. Porte de
-   succession contre le champion assis, **un seul facteur**, pool `big3000`
-   disjoint, `n=12 000` : **`+18,05 Elo`** IC95 `[+12,0 ; +24,1]`
-   (`cpx62-1163`). Trois gardes vertes et **au-dessus des trois champions
-   précédents** : Gen2 `+86,09`, conversion `0,8067` / `0,7800` (`cpx62-1162`).
-   ⛔ **EXACT et PRIOR étaient SOUS-CONVERGÉS** : `141` et `169` itérations sous
-   `gtol=1e-3` là où les mêmes recettes en prennent `653` et `904` sous `1e-4`,
-   avec `success=True` rendu dans les deux cas. Bornes :
-   [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) ;
-1. champion général courant : **PRIOR**, promu le 2 août 2026 — `--prior-mean
-   <parent> --prior-decay 0`, consolidé `+6,66 Elo` IC95 `[+0,44 ; +12,88]` sur
-   `n=12 000` et deux pools disjoints, trois gardes vertes (`+70,01` contre Gen2).
-   ⚠️ Chiffre **biaisé vers le haut** (découverte + réplication), effet vrai
-   plutôt `~+4` ; borne basse `+0,44`. ⚠️ **Et mesuré sur un fit sous-convergé** :
-   le prior re-mesuré à `1e-4` vaut `+8,48` IC95 `[+3,5 ; +13,4]` sur
-   `n = 18 000`. Bornes :
-   [`experiments/L3_PRIOR_PROMOTION_20260802.md`](experiments/L3_PRIOR_PROMOTION_20260802.md).
+1. champion général courant : **PRIORTIGHT**, promu le 3 août 2026 sur go
+   explicite de JFC — même recette que PRIOR, tolérance du solveur portée de
+   `1e-3` à `1e-4`. Porte de succession contre le champion assis, **un seul
+   facteur**, pool `big3000` disjoint, `n=12 000` : **`+18,05 Elo`** IC95
+   `[+12,0 ; +24,1]` (`cpx62-1163`). Trois gardes vertes et **au-dessus des trois
+   champions précédents** : Gen2 `+86,09`, conversion `0,8067` / `0,7800`
+   (`cpx62-1162`). ⛔ **EXACT et PRIOR étaient SOUS-CONVERGÉS** : `141` et `169`
+   itérations sous `gtol=1e-3` là où les mêmes recettes en prennent `653` et
+   `904` sous `1e-4`, avec `success=True` rendu dans les deux cas. Bornes :
+   [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md).
    **Tout nouveau fit L3 utilise donc `--exact-fold` ET `--prior-mean … --prior-decay 0`
    ET `--lbfgs-gtol 1e-4`** ;
+1bis. champion précédent : **PRIOR**, promu le 2 août 2026 et resté champion
+   moins de vingt-quatre heures — `--prior-mean <parent> --prior-decay 0`,
+   consolidé `+6,66 Elo` IC95 `[+0,44 ; +12,88]` sur `n=12 000` et deux pools
+   disjoints, trois gardes vertes (`+70,01` contre Gen2). ⚠️ Chiffre **biaisé
+   vers le haut** (découverte + réplication) ; borne basse `+0,44`. ⚠️ **Et
+   mesuré sur un fit sous-convergé** : le prior re-mesuré à `1e-4` vaut `+8,48`
+   IC95 `[+3,5 ; +13,4]` sur `n = 18 000` — c'est ce chiffre-là qu'il faut citer.
+   Bornes :
+   [`experiments/L3_PRIOR_PROMOTION_20260802.md`](experiments/L3_PRIOR_PROMOTION_20260802.md) ;
 1bis. champion précédent : **EXACT**, promu le 1er août 2026 après la porte
    `cpx62-1129` (`+15,12 Elo` sur `n=6000`, **avec EGDB**) ; TURNOVER — champion
    du 27 juillet au 1er août après `home-0996` — devient le champion précédent,

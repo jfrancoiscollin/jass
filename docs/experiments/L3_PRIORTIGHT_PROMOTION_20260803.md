@@ -1,10 +1,10 @@
 # PRIORTIGHT — promotion au rang de champion général
 
-⚠️ **ENREGISTREMENT PRÉPARÉ, PAS ENCORE BAKÉ.** Toutes les portes et toutes les
-gardes sont rendues et vertes ; il ne manque que le **go explicite de JFC**, que
-la règle du projet réserve à l'acte de promotion lui-même. Les jobs ont été
-menés en autonomie la nuit du 2 au 3 août sur mandat de JFC ; la décision, non.
-**Fusionner ce commit dans `develop` EST le bake.**
+Enregistrement immuable. Promotion décidée par revue humaine de JFC le
+3 août 2026, après les portes `cpx62-1161` et `cpx62-1163` et les gardes
+`cpx62-1162`. Les jobs ont été menés en autonomie la nuit du 2 au 3 août sur
+mandat de JFC ; la décision de promouvoir est la sienne, prise au réveil sur
+enregistrement complet.
 
 ## Identités
 

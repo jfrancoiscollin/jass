@@ -22,7 +22,7 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 | B | reproductibilité machine/build | `home-1150` | **hors consolidation** (même pool que la découverte) |
 | C | pool de 3000 ouvertures | `cpx62-1154` | ✅ **livré et utilisé** par `1161` et `1163` : `n=12 000` par porte |
 | D | `--king-patterns` A/B au scale | `cpx62-1156` | ⛔ **modèles prêts, porte BLOQUÉE** — voir §3.5 |
-| E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ⏳ **succession PRIORTIGHT verte, en attente du go de bake** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
+| E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ✅ **PRIORTIGHT promu champion général le 3 août** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
 | F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
 
 ## 3. En file, par ordre de valeur attendue
@@ -93,6 +93,14 @@ pour la décision, mais n'établit toujours pas que le bug expliquait les ancien
 résultats de `0812`. Le test préenregistré est resté plat ; la porte est donc
 refermée sans promouvoir ce mécanisme plausible en cause.
 
+### 3.4 Attribution causale du différentiel d'atlas
+Le témoin EXACT/Gen2 (`home-1143quater`/`1144bis`/`1145`) compare deux bras qui
+ont visité **des positions différentes** (shards dimensionnés en temps, `1 108 434`
+contre `776 034`). Un « coût par position » entre deux distributions n'est pas un
+contraste contrôlé. Une attribution causale exigerait **un corpus de positions
+fixe et apparié**.
+**Déclencheur** : seulement si une décision en dépend. Ce n'est pas le cas
+aujourd'hui — le témoin a fermé le soupçon 32cf, ce qu'on lui demandait.
 ### 3.5 ⛔ Porte king-aware — bloquée sur un build PAR BRAS
 **Les deux modèles existent** depuis `cpx62-1156` : `control` = TIGHT,
 `exact` = TIGHT + `--king-patterns`, un seul facteur, tous deux convergés à
@@ -116,14 +124,6 @@ naturel pour Codex, revue par moi.
 **Coût** : template + une porte deux vues. Le pool 3000 est disponible, donc
 `n=12 000` d'emblée — nécessaire, vu que les holdouts n'écartent rien.
 
-### 3.4 Attribution causale du différentiel d'atlas
-Le témoin EXACT/Gen2 (`home-1143quater`/`1144bis`/`1145`) compare deux bras qui
-ont visité **des positions différentes** (shards dimensionnés en temps, `1 108 434`
-contre `776 034`). Un « coût par position » entre deux distributions n'est pas un
-contraste contrôlé. Une attribution causale exigerait **un corpus de positions
-fixe et apparié**.
-**Déclencheur** : seulement si une décision en dépend. Ce n'est pas le cas
-aujourd'hui — le témoin a fermé le soupçon 32cf, ce qu'on lui demandait.
 
 ## 4. Orchestration à deux agents
 
