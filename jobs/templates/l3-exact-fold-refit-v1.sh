@@ -218,7 +218,15 @@ fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
   local arm="$1" foldflag="$2" gtol="$3" l2v="$4"; shift 4
   stage "fit-$arm"
   set +e
+  # PYTHONUNBUFFERED : sans lui, la sortie du trainer est bufferisee par blocs
+  # des qu'elle est redirigee vers un fichier, et un fit tue par `timeout` ne
+  # laisse RIEN — cpx62-1167 a brule 4h30 sur `l2=1e-6` en rendant un
+  # `fit-control.log` de 0 octet, donc aucun compte d'iterations, alors que
+  # c'est precisement le chiffre qui aurait dit a quelle distance on etait.
+  # Le monitor compte les lignes de ce log : bufferise, il affichait `0` en
+  # permanence, ce qui etait indiscernable de « rien ne se passe ».
   env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
+    PYTHONUNBUFFERED=1 \
     timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
       --data "$IN/corpus.jnnw" --feat "$W/corpus.feat" --out "$W/$arm.pjtw" \
       --target wdl --loss logistic "$foldflag" --tempo-stage \
