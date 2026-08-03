@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
-# L3 — matrice de calibration TURNOVER contre Scan, sur le harnais réparé.
+# L3 — matrice de calibration d'un modèle contre Scan, sur le harnais réparé.
+#
+# Le modèle est paramétré depuis le 3 août (`MODEL_LABEL`/`MODEL_FILE`/
+# `MODEL_SHA256`) : le template ne savait lire que TURNOVER, et comparer un
+# nouveau champion à la matrice de juillet aurait remis le défenseur d'un
+# instrument dans le passé pendant que l'attaquant suit `develop` — la faute
+# exacte qui a fabriqué le faux repère de conversion (cf.
+# L3_EXACT_PROMOTION_20260801.md). Un contrôle contemporain se joue donc en
+# relançant CE template sur l'ancien modèle, le même jour et le même build.
+#
+# ⚠️ Les rangées A et B sont à PROFONDEUR FIXE, donc insensibles au correctif
+# `16f8c151` (`has_deadline` n'est armé que si `movetime_ms > 0`) : elles se
+# comparent à juillet. La rangée C est au MOVETIME et ne s'y compare PAS.
 #
 # Débloquée par `home-1001` (`SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR`).
 # Trois questions, une par rangée :
@@ -91,7 +103,15 @@ CACHE_MB=128
 TIMEOUT_A=2400
 TIMEOUT_B=5400
 TIMEOUT_C=3600
-TURNOVER_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
+MODEL_LABEL="${MODEL_LABEL:-TURNOVER}"
+MODEL_FILE="${MODEL_FILE:-turnover1to1.pjtw.gz}"
+MODEL_SHA256="${MODEL_SHA256:-b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16}"
+# Grilles Scan par rangée. Défauts = la matrice de home-1002, à l'identique,
+# pour que toute cellule ajoutée n'en déplace aucune. Les cellules à bras
+# égaux (A d9/d9, B d11/d11, C mt0.2/mt0.2) DOIVENT rester dans la grille.
+ROW_A_SCAN_DEPTHS="${ROW_A_SCAN_DEPTHS:-3 5 6 7 9}"
+ROW_B_SCAN_DEPTHS="${ROW_B_SCAN_DEPTHS:-5 7 9 11}"
+ROW_C_SCAN_MOVETIMES="${ROW_C_SCAN_MOVETIMES:-0.02 0.05 0.1 0.2}"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
@@ -119,9 +139,9 @@ say "  runtime Scan ✓ figé : $EXPECTED_SCAN_SHA256"
 
 stage fetch-champion
 python3 jobs/tools/fetch_result_files.py --prefix "$CHAMPION_TRAIN_PREFIX" \
-  --file artefacts/turnover1to1.pjtw.gz=TURNOVER.pjtw.gz \
+  --file "artefacts/$MODEL_FILE=model.pjtw.gz" \
   --out-dir "$IN" --report "$ART/verified-champion-train.json" \
-  > "$W/fetch-turnover.log" 2>&1
+  > "$W/fetch-model.log" 2>&1
 python3 - "$ART/verified-champion-train.json" "$EXPECTED_CHAMPION_TRAIN_JOB" <<'PY'
 import json
 import sys
@@ -129,10 +149,10 @@ report = json.load(open(sys.argv[1]))
 if report.get("job_id") != sys.argv[2] or report.get("result_state") != "completed":
     raise SystemExit(f"{sys.argv[1]}: source identity/state mismatch")
 PY
-gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
-[ "$(sha256sum "$W/TURNOVER.pjtw" | awk '{print $1}')" = "$TURNOVER_SHA" ] ||
-  die "TURNOVER model hash drift"
-say "  champion ✓ : TURNOVER $TURNOVER_SHA"
+gunzip -c "$IN/model.pjtw.gz" > "$W/model.pjtw"
+[ "$(sha256sum "$W/model.pjtw" | awk '{print $1}')" = "$MODEL_SHA256" ] ||
+  die "$MODEL_LABEL model hash drift"
+say "  champion ✓ : $MODEL_LABEL $MODEL_SHA256"
 
 stage build-engine
 FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
@@ -144,8 +164,8 @@ ctest --test-dir "$W/build8" --output-on-failure > "$W/ctest8.log" 2>&1
 J8="$W/build8/jass"
 [ "$("$J8" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "king-capture witness failed"
-"$J8" --eval-position "$W/TURNOVER.pjtw" 'W:W31,32,33:B18,19,20' >/dev/null 2>&1 ||
-  die "8cf engine cannot load TURNOVER"
+"$J8" --eval-position "$W/model.pjtw" 'W:W31,32,33:B18,19,20' >/dev/null 2>&1 ||
+  die "8cf engine cannot load $MODEL_LABEL"
 say "  moteur ✓ : 8cf, correctif racine-nulle présent"
 
 stage build-pools
@@ -167,7 +187,7 @@ run_cell(){
   local start end rc
   start=$(date +%s)
   timeout "$tmo" python3 jobs/tools/calibrate_vs_scan.py \
-    --jass "$J8" --scan "$SCAN_BIN" --jass-pattern "$W/TURNOVER.pjtw" \
+    --jass "$J8" --scan "$SCAN_BIN" --jass-pattern "$W/model.pjtw" \
     --jass-search-params "$Q00" --jass-threads 1 \
     --scan-book off --scan-bb-size 0 \
     --openings-file "$W/open-$pool.fen" --pairs "$PAIRS" \
@@ -181,30 +201,30 @@ run_cell(){
 # 18 processus sur 16 CPU, mais la rangée d9 libère sa moitié en ~10 min.
 stage wave-1-d9-row-and-movetime-row
 pids=()
-for sd in 3 5 6 7 9; do
+for sd in $ROW_A_SCAN_DEPTHS; do
   run_cell "A-d9-vs-scan-d$sd" depth "$TIMEOUT_A" \
     --jass-depth 9 --scan-depth "$sd" & pids+=("$!")
 done
-for sm in 0.02 0.05 0.1 0.2; do
+for sm in $ROW_C_SCAN_MOVETIMES; do
   run_cell "C-mt020-vs-scan-mt$sm" time "$TIMEOUT_C" \
     --jass-movetime 0.2 --scan-movetime "$sm" & pids+=("$!")
 done
 for pid in "${pids[@]}"; do wait "$pid" || true; done
-say "  vague 1 terminée (9 cellules)"
+say "  vague 1 terminée ($(( $(echo $ROW_A_SCAN_DEPTHS|wc -w) + $(echo $ROW_C_SCAN_MOVETIMES|wc -w) )) cellules)"
 
 # Vague 2 : la rangée d11, ~4x le coût de d9, seule sur la machine.
 stage wave-2-d11-row
 pids=()
-for sd in 5 7 9 11; do
+for sd in $ROW_B_SCAN_DEPTHS; do
   run_cell "B-d11-vs-scan-d$sd" depth "$TIMEOUT_B" \
     --jass-depth 11 --scan-depth "$sd" & pids+=("$!")
 done
 for pid in "${pids[@]}"; do wait "$pid" || true; done
-say "  vague 2 terminée (4 cellules)"
+say "  vague 2 terminée ($(echo $ROW_B_SCAN_DEPTHS|wc -w) cellules)"
 
 stage publish-matrix
 python3 - "$W" "$ART" "$EXPECTED_CODE_SHA" "$N_DEPTH" "$N_TIME" \
-  "$MIN_FRACTION_PCT" "$TURNOVER_SHA" <<'PY'
+  "$MIN_FRACTION_PCT" "$MODEL_SHA256" "$MODEL_LABEL" <<'PY'
 import json
 import math
 import pathlib
@@ -216,15 +236,16 @@ code_sha = sys.argv[3]
 n_depth, n_time = int(sys.argv[4]), int(sys.argv[5])
 min_fraction = int(sys.argv[6]) / 100.0
 model_sha = sys.argv[7]
+model_label = sys.argv[8]
 
 # nom de cellule -> (rangée, abscisse Scan, n visé). L'abscisse est la force de
 # Scan dans le régime de la rangée : profondeur en plies, cadence en secondes.
 ROWS = {
-    "A": {"label": "TURNOVER d9 vs Scan à profondeur variable",
+    "A": {"label": f"{model_label} d9 vs Scan à profondeur variable",
           "axis": "scan_depth", "unit": "plies", "target": n_depth},
-    "B": {"label": "TURNOVER d11 vs Scan à profondeur variable",
+    "B": {"label": f"{model_label} d11 vs Scan à profondeur variable",
           "axis": "scan_depth", "unit": "plies", "target": n_depth},
-    "C": {"label": "TURNOVER mt0.2 vs Scan à cadence variable",
+    "C": {"label": f"{model_label} mt0.2 vs Scan à cadence variable",
           "axis": "scan_movetime", "unit": "s", "target": n_time},
 }
 EQUAL_ARMS = {"A": "A-d9-vs-scan-d9", "B": "B-d11-vs-scan-d11",
@@ -334,7 +355,7 @@ payload = {
     "schema": 1,
     "verdict": verdict,
     "code_sha": code_sha,
-    "model": {"name": "TURNOVER", "sha256": model_sha, "geometry": "8cf",
+    "model": {"name": model_label, "sha256": model_sha, "geometry": "8cf",
               "search_params": "Q00"},
     "protocol": {
         "unblocked_by": "home-1001 SCAN_HARNESS_SOUND_ANCHOR_AT_OR_ABOVE_FLOOR",
