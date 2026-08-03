@@ -68,8 +68,34 @@ tombent à `+15,99` et `+18,05`. Le prior survit au resserrement (`+8,48` contre
 `warm`→`prior` ET tolérance) ; il ne doit pas être lu comme la mesure d'un
 bouton. `cpx62-1163` le remplace, à un facteur et à double puissance.
 
-⚠️ **`1e-4` est le meilleur point connu, pas un optimum** : `home-1210` mesure
-`1e-5` et n'a pas rendu.
+✅ **`1e-5` N'EST PAS ATTEIGNABLE — l'axe de tolérance est CLOS à `1e-4`**
+(`home-1210`, 3 août). Le bras `1e-5` s'arrête sur le critère de **fonction**, pas
+de gradient : `CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH` après **1048**
+itérations, à `‖∇‖∞ = 1,448e-4` — soit **pire** que les `8,68e-5` que le bras
+`1e-4` atteint en `801` itérations. L-BFGS-B bute sur le plancher de réduction
+relative de `f` avant de pouvoir satisfaire le test de gradient. Le seul bouton
+qui irait plus loin est `ftol` (défaut scipy `2,22e-9`), **non exposé** par
+`train_stream.py` ; à ce stade on poursuivrait du bruit numérique.
+
+✅ **Le garde fail-closed a fonctionné du premier coup** : le job a refusé de
+publier et n'a lancé aucune porte sur un fit qui ne s'était pas arrêté sur le
+gradient. `success=True` était pourtant rendu — c'est exactement le piège que le
+durcissement visait.
+
+⚠️ **LES FITS NE SONT PAS COMPARABLES D'UNE BOX À L'AUTRE.** Le bras `1e-4` de
+`home-1210` **ne reproduit pas** le contrôle de `cpx62-1159` : `801` itérations,
+`‖∇‖∞ 8,683e-5`, holdout `0,441615` contre `653`, `9,711e-5`, `0,441695`. La
+cause est imprimée dans le log — HOME a tourné la pile **`historical`**
+(numpy 1.26.4 / scipy 1.14.1), cpx62 la pile **`current`** (numpy 2.5.1 /
+scipy 1.18.0). **Ce n'est pas du non-déterminisme**, mais cela veut dire qu'un
+bras fitté sur une box ne se compare pas à un bras fitté sur l'autre. Toutes les
+conclusions de la nuit reposent sur des **bras appariés dans un même job**, ce
+qui est la bonne conception ; il faut qu'elle le reste.
+
+⚠️ Le fit du champion candidat (`cpx62-1159`, bras `exact`) a convergé sur le
+gradient à **904 itérations sous un plafond de 1000** — 9,6 % de marge. Le
+plafond a été porté à 5000 depuis (`7025b63f`), mais le modèle lui-même a été
+produit sous l'ancien. Il est convergé ; la marge était mince.
 
 **Contrôle non prévu qui tient** : TIGHT produit par `cpx62-1156` et le bras
 `control` de `cpx62-1159` — deux jobs, deux dates, même recette — sont

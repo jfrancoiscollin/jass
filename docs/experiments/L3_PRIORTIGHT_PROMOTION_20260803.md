@@ -154,9 +154,24 @@ porte ne l'ait départagé.
   correction d'un arrêt prématuré du solveur. Il ne se re-gagnera pas : une fois
   `1e-4` adopté, il est encaissé. **Tout nouveau fit L3 doit porter
   `--lbfgs-gtol 1e-4` ET `--exact-fold` ET `--prior-mean/--prior-decay 0`.**
-- **`1e-4` n'est pas montré optimal.** `home-1210` mesure `1e-5` en ce moment ;
-  il se peut qu'il reste du gain, ou que `1e-4` soit déjà le plateau. Tant que ce
-  job n'a pas rendu, `1e-4` est **le meilleur point connu, pas un optimum**.
+- ~~**`1e-4` n'est pas montré optimal.**~~ **TRANCHÉ** (`home-1210`, 3 août) :
+  `1e-5` est **inatteignable**. Le bras s'arrête sur le critère de fonction —
+  `REL_REDUCTION_OF_F_<=_FACTR*EPSMCH`, 1048 itérations, `‖∇‖∞ = 1,448e-4`, donc
+  **pire** que les `8,68e-5` du bras `1e-4` en 801 itérations. L-BFGS-B bute sur
+  le plancher de réduction relative de `f` avant de pouvoir satisfaire le test de
+  gradient. `1e-4` est le **plancher pratique** du solveur sur cet objectif, pas
+  simplement le meilleur point connu. Le seul bouton qui irait plus loin est
+  `ftol` (défaut scipy `2,22e-9`), non exposé par `train_stream.py`.
+- ⚠️ **Le fit du champion candidat avait 9,6 % de marge sous le plafond
+  d'itérations** : 904 itérations sous `max_iter=1000`. Il s'est bien arrêté sur
+  le gradient (`PGTOL`, `‖∇‖∞ = 9,840e-5`), donc il est convergé — mais la marge
+  était mince, et le plafond n'a été porté à 5000 qu'après (`7025b63f`).
+- ⚠️ **Un fit d'une box ne se compare pas à un fit de l'autre.** `home-1210` a
+  tourné la pile numérique `historical` (numpy 1.26.4 / scipy 1.14.1) là où
+  `cpx62-1159` tournait `current` (2.5.1 / 1.18.0) : la même recette à `1e-4`
+  rend 801 itérations et un holdout de `0,441615` sur HOME contre 653 et
+  `0,441695` sur cpx62. Toutes les mesures de cet enregistrement viennent de
+  **bras appariés dans un même job** ; c'est nécessaire, pas seulement propre.
 - **Le pas « tolérance » de la succession repose sur un seul pool.**
   `cpx62-1163` est à `n=12 000` sur `big3000`, ce qui est puissant, mais c'est
   une seule mesure. Le pas « prior », lui, en a deux.

@@ -23,7 +23,7 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 | C | pool de 3000 ouvertures | `cpx62-1154` | ✅ **livré et utilisé** par `1161` et `1163` : `n=12 000` par porte |
 | D | `--king-patterns` A/B au scale | `cpx62-1156` | ⛔ **modèles prêts, porte BLOQUÉE** — voir §3.5 |
 | E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ⏳ **succession PRIORTIGHT verte, en attente du go de bake** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
-| F | dose de tolérance `1e-5` | `home-1210` | en vol au 3 août 01h — dit si `1e-4` est un plateau ou une étape |
+| F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
 
 ## 3. En file, par ordre de valeur attendue
 
