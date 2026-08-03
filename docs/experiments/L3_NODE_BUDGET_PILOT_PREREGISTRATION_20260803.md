@@ -17,8 +17,10 @@ total** :
 - `DEPTH` : 1 000 000 de records ;
 - `NODES` : 1 000 000 de records.
 
-Les trois cellules de calibration de 6 000 records sont jetées et ajoutent au
-plus 18 000 records de travail ; elles n'entrent dans aucun corpus ni fit.
+Les trois cellules de calibration de 6 000 records sont jetées. Une quatrième
+cellule de confirmation est autorisée uniquement si la quantification rate la
+fenêtre de coût au premier essai. Elles ajoutent donc au plus 24 000 records de
+travail et n'entrent dans aucun corpus ni fit.
 
 Le parent des deux bras est le champion PRIORTIGHT :
 
@@ -68,11 +70,18 @@ l'échelle sans calibration :
    fusionnés ;
 4. le facteur doit rester dans `[0,005 ; 5,00]` ;
 5. un second canari nodes de 6 000 records doit coûter entre `0,75×` et
-   `1,35×` le témoin depth.
+   `1,35×` le témoin depth ;
+6. si ce canari rate la fenêtre, un unique redimensionnement de feedback est
+   calculé à partir de son ratio de temps, puis un dernier canari de 6 000
+   records doit satisfaire la même fenêtre. Un second échec arrête le job.
 
-La calibration ne lit ni WDL, ni holdout, ni force. Si un garde échoue, le job
-s'arrête **avant** les deux bras de 1 M. La distribution réellement utilisée,
-les temps, le ratio et la version du sampler sont publiés dans les artefacts.
+La calibration et son éventuel feedback ne lisent ni WDL, ni holdout, ni
+force. Le feedback a été ajouté après qu'un premier canari purement technique a
+mesuré `1,409×`, juste hors de la fenêtre, à cause du plancher à 1 000 et de
+l'arrondi par millier ; aucun bras scientifique n'avait alors démarré. Si un
+garde échoue, le job s'arrête **avant** les deux bras de 1 M. La distribution
+réellement utilisée, les temps, le ratio et la version du sampler sont publiés
+dans les artefacts.
 
 ## Readout
 

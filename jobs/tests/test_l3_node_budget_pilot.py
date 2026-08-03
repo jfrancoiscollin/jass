@@ -53,6 +53,15 @@ class NodeBudgetPilotTemplateTests(unittest.TestCase):
             '"accepted_interval": [0.75, 1.35]',
             self.text,
         )
+        self.assertIn("stage refine-calibrated-cost-once", self.text)
+        self.assertIn(
+            'die "feedback-calibrated cost remains outside [0.75, 1.35]"',
+            self.text,
+        )
+        self.assertEqual(
+            self.text.count("gen_arm cal-nodes-refined"),
+            1,
+        )
         calibration_prefix = self.text[raw:depth]
         self.assertNotIn("HOLDOUT_LOGLOSS", calibration_prefix)
         self.assertNotIn("fit_arm", calibration_prefix)

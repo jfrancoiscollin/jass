@@ -4,12 +4,14 @@
 # The two decision arms are bounded to 2 M fresh records in total:
 #   - DEPTH: 1 M records, historical d8 play search;
 #   - NODES: 1 M records, deterministic weighted budgets sampled per move.
-# Three discarded 6 k canaries add at most 18 k calibration records.
+# Three discarded 6 k canaries, plus at most one feedback confirmation, add
+# at most 24 k calibration records.
 #
 # Both arms use the same PRIORTIGHT parent, seeds, openings, exploration,
 # training recipe and hardware. A target-box calibration rescales the proposed
-# node distribution using wall time only, then a second canary must land within
-# the preregistered cost window before either 1 M arm is generated.
+# node distribution using wall time only. A confirmation must land within the
+# preregistered cost window before either 1 M arm is generated; if coarse
+# quantization misses once, one measured feedback rescale is allowed.
 #
 # The job produces two authenticated models. It does not play the strength gate,
 # promote either model or schedule a continuation.
@@ -359,15 +361,14 @@ gen_arm cal-nodes-raw "$CAL_RECORDS" "$CAL_SHARDS" "$CAL_TIMEOUT" \
 CAL_RAW_MS="$LAST_ELAPSED_MS"
 summarize_node_logs cal-nodes-raw "$ART/calibration-raw-node-summary.json"
 
-SCALED_NODE_SPEC=$(python3 - "$CAL_DEPTH_MS" "$CAL_RAW_MS" \
-  "$RAW_NODE_SPEC" "$RAW_NODE_MEAN" "$ART/calibration-scale.json" <<'PY'
+scale_node_spec(){
+python3 - "$1" "$2" "$3" "$4" <<'PY'
 from decimal import Decimal, ROUND_HALF_UP
 import json
 import sys
 depth_ms, node_ms = map(int, sys.argv[1:3])
 raw_spec = sys.argv[3]
-raw_mean = int(sys.argv[4])
-out = sys.argv[5]
+out = sys.argv[4]
 if depth_ms <= 0 or node_ms <= 0:
     raise SystemExit("non-positive calibration duration")
 scale = Decimal(depth_ms) / Decimal(node_ms)
@@ -377,6 +378,8 @@ merged = {}
 for token in raw_spec.split(","):
     nodes_s, weight_s = token.split(":")
     raw_nodes, weight = int(nodes_s), int(weight_s)
+    if raw_nodes <= 0 or weight <= 0:
+        raise SystemExit("node spec must contain positive nodes and weights")
     scaled = int(
         (Decimal(raw_nodes) * scale / Decimal(1000)).quantize(
             Decimal(1), rounding=ROUND_HALF_UP
@@ -385,6 +388,10 @@ for token in raw_spec.split(","):
     scaled = max(1000, scaled)
     merged[scaled] = merged.get(scaled, 0) + weight
 spec = ",".join(f"{nodes}:{weight}" for nodes, weight in sorted(merged.items()))
+raw_mean = sum(
+    int(token.split(":")[0]) * int(token.split(":")[1])
+    for token in raw_spec.split(",")
+) / sum(int(token.split(":")[1]) for token in raw_spec.split(","))
 mean = sum(nodes * weight for nodes, weight in merged.items()) / sum(merged.values())
 payload = {
     "schema": 1,
@@ -405,20 +412,14 @@ with open(out, "w", encoding="utf-8") as handle:
     handle.write("\n")
 print(spec)
 PY
-) || die "raw calibration cannot be safely rescaled"
-[ -n "$SCALED_NODE_SPEC" ] || die "scaled node distribution is empty"
-say "  calibrated node distribution: $SCALED_NODE_SPEC"
+}
 
-stage confirm-calibrated-cost
-gen_arm cal-nodes-confirm "$CAL_RECORDS" "$CAL_SHARDS" "$CAL_TIMEOUT" \
-  "$CAL_BASE_SEED" nodes "$SCALED_NODE_SPEC"
-CAL_CONFIRM_MS="$LAST_ELAPSED_MS"
-summarize_node_logs cal-nodes-confirm "$ART/calibration-confirm-node-summary.json"
-python3 - "$CAL_DEPTH_MS" "$CAL_RAW_MS" "$CAL_CONFIRM_MS" \
-  "$CAL_RECORDS" "$ART/calibration-cost.json" <<'PY'
+write_calibration_cost(){
+python3 - "$1" "$2" "$3" "$4" "$5" "$6" <<'PY'
 import json
 import sys
 depth_ms, raw_ms, confirm_ms, records = map(int, sys.argv[1:5])
+node_spec, out = sys.argv[5:7]
 ratio = confirm_ms / depth_ms
 payload = {
     "schema": 1,
@@ -428,15 +429,56 @@ payload = {
     "confirmed_nodes_elapsed_ms": confirm_ms,
     "raw_nodes_over_depth_time": raw_ms / depth_ms,
     "confirmed_nodes_over_depth_time": ratio,
+    "confirmed_node_spec": node_spec,
     "accepted_interval": [0.75, 1.35],
     "accepted": 0.75 <= ratio <= 1.35,
 }
-with open(sys.argv[5], "w", encoding="utf-8") as handle:
+with open(out, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, indent=2, sort_keys=True)
     handle.write("\n")
-if not payload["accepted"]:
-    raise SystemExit(f"confirmed cost ratio {ratio:.3f} outside [0.75, 1.35]")
+print(1 if payload["accepted"] else 0)
 PY
+}
+
+SCALED_NODE_SPEC=$(scale_node_spec "$CAL_DEPTH_MS" "$CAL_RAW_MS" \
+  "$RAW_NODE_SPEC" "$ART/calibration-scale-initial.json") ||
+  die "raw calibration cannot be safely rescaled"
+[ -n "$SCALED_NODE_SPEC" ] || die "scaled node distribution is empty"
+say "  calibrated node distribution: $SCALED_NODE_SPEC"
+
+stage confirm-calibrated-cost
+gen_arm cal-nodes-confirm "$CAL_RECORDS" "$CAL_SHARDS" "$CAL_TIMEOUT" \
+  "$CAL_BASE_SEED" nodes "$SCALED_NODE_SPEC"
+CAL_CONFIRM_MS="$LAST_ELAPSED_MS"
+summarize_node_logs cal-nodes-confirm "$ART/calibration-confirm-node-summary.json"
+CONFIRM_ACCEPTED=$(write_calibration_cost "$CAL_DEPTH_MS" "$CAL_RAW_MS" \
+  "$CAL_CONFIRM_MS" "$CAL_RECORDS" "$SCALED_NODE_SPEC" \
+  "$ART/calibration-cost-initial.json")
+
+if [ "$CONFIRM_ACCEPTED" = 1 ]; then
+  cp "$ART/calibration-scale-initial.json" "$ART/calibration-scale.json"
+  cp "$ART/calibration-cost-initial.json" "$ART/calibration-cost.json"
+else
+  stage refine-calibrated-cost-once
+  REFINED_NODE_SPEC=$(scale_node_spec "$CAL_DEPTH_MS" "$CAL_CONFIRM_MS" \
+    "$SCALED_NODE_SPEC" "$ART/calibration-scale.json") ||
+    die "feedback calibration cannot be safely rescaled"
+  [ -n "$REFINED_NODE_SPEC" ] || die "refined node distribution is empty"
+  [ "$REFINED_NODE_SPEC" != "$SCALED_NODE_SPEC" ] ||
+    die "feedback calibration cannot change the quantized distribution"
+  SCALED_NODE_SPEC="$REFINED_NODE_SPEC"
+  say "  feedback-calibrated node distribution: $SCALED_NODE_SPEC"
+  gen_arm cal-nodes-refined "$CAL_RECORDS" "$CAL_SHARDS" "$CAL_TIMEOUT" \
+    "$CAL_BASE_SEED" nodes "$SCALED_NODE_SPEC"
+  CAL_CONFIRM_MS="$LAST_ELAPSED_MS"
+  summarize_node_logs cal-nodes-refined \
+    "$ART/calibration-refined-node-summary.json"
+  CONFIRM_ACCEPTED=$(write_calibration_cost "$CAL_DEPTH_MS" "$CAL_RAW_MS" \
+    "$CAL_CONFIRM_MS" "$CAL_RECORDS" "$SCALED_NODE_SPEC" \
+    "$ART/calibration-cost.json")
+  [ "$CONFIRM_ACCEPTED" = 1 ] ||
+    die "feedback-calibrated cost remains outside [0.75, 1.35]"
+fi
 say "  target-box cost confirmation passed"
 rm -f "$W"/cal-*.jnnw "$W"/cal-*.jsm "$W"/cal-*.jsonl
 
