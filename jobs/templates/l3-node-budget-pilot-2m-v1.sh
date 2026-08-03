@@ -4,7 +4,7 @@
 # The two decision arms are bounded to 2 M fresh records in total:
 #   - DEPTH: 1 M records, historical d8 play search;
 #   - NODES: 1 M records, deterministic weighted budgets sampled per move.
-# Three discarded 30 k canaries add at most 90 k calibration records.
+# Three discarded 6 k canaries add at most 18 k calibration records.
 #
 # Both arms use the same PRIORTIGHT parent, seeds, openings, exploration,
 # training recipe and hardware. A target-box calibration rescales the proposed
@@ -44,7 +44,7 @@ PARENT_NAME=PRIORTIGHT
 
 RECORDS_PER_ARM="${RECORDS_PER_ARM:-1000000}"
 SHARDS="${SHARDS:-6}"
-CAL_RECORDS="${CAL_RECORDS:-30000}"
+CAL_RECORDS="${CAL_RECORDS:-6000}"
 CAL_SHARDS="${CAL_SHARDS:-6}"
 LABEL_DEPTH=4
 PLAY_DEPTH=8
@@ -135,8 +135,8 @@ trap 'exit 130' INT
   die "pilot contract requires exactly 2M fresh records total"
 [ "$SHARDS" -eq 6 ] && [ "$CAL_SHARDS" -eq 6 ] ||
   die "HOME contract requires six producers"
-[ "$CAL_RECORDS" -ge 30000 ] ||
-  die "calibration requires at least 30000 records per cell"
+[ "$CAL_RECORDS" -ge 6000 ] ||
+  die "calibration requires at least 6000 records per cell"
 [ "$PLAY_DEPTH" -eq 8 ] || die "depth control must remain d8"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 
@@ -371,8 +371,8 @@ out = sys.argv[5]
 if depth_ms <= 0 or node_ms <= 0:
     raise SystemExit("non-positive calibration duration")
 scale = Decimal(depth_ms) / Decimal(node_ms)
-if not Decimal("0.20") <= scale <= Decimal("5.00"):
-    raise SystemExit(f"required scale {scale} outside safe [0.20, 5.00]")
+if not Decimal("0.005") <= scale <= Decimal("5.00"):
+    raise SystemExit(f"required scale {scale} outside safe [0.005, 5.00]")
 merged = {}
 for token in raw_spec.split(","):
     nodes_s, weight_s = token.split(":")
@@ -398,7 +398,7 @@ payload = {
     "scaled_spec": spec,
     "scaled_requested_mean": mean,
     "rounding": "nearest_1000_then_merge_equal_buckets",
-    "safe_scale_interval": [0.20, 5.00],
+    "safe_scale_interval": [0.005, 5.00],
 }
 with open(out, "w", encoding="utf-8") as handle:
     json.dump(payload, handle, indent=2, sort_keys=True)

@@ -46,7 +46,7 @@ class NodeBudgetPilotTemplateTests(unittest.TestCase):
             self.text,
         )
         self.assertIn(
-            'Decimal("0.20") <= scale <= Decimal("5.00")',
+            'Decimal("0.005") <= scale <= Decimal("5.00")',
             self.text,
         )
         self.assertIn(

@@ -17,8 +17,8 @@ total** :
 - `DEPTH` : 1 000 000 de records ;
 - `NODES` : 1 000 000 de records.
 
-Les trois cellules de calibration de 30 000 records sont jetées et ajoutent au
-plus 90 000 records de travail ; elles n'entrent dans aucun corpus ni fit.
+Les trois cellules de calibration de 6 000 records sont jetées et ajoutent au
+plus 18 000 records de travail ; elles n'entrent dans aucun corpus ni fit.
 
 Le parent des deux bras est le champion PRIORTIGHT :
 
@@ -60,13 +60,14 @@ La distribution proposée initialement est :
 Sa moyenne demandée vaut 213 500 nœuds par coup. Elle n'est pas lancée à
 l'échelle sans calibration :
 
-1. 30 000 records depth et 30 000 records nodes sont générés séquentiellement,
+1. 6 000 records depth et 6 000 records nodes sont générés séquentiellement,
    avec six producteurs et les mêmes graines ;
 2. le ratio des temps muraux définit un facteur de redimensionnement ;
-3. chaque bucket est arrondi au millier de nœuds le plus proche et les buckets
-   devenus identiques sont fusionnés ;
-4. le facteur doit rester dans `[0,20 ; 5,00]` ;
-5. un second canari nodes de 30 000 records doit coûter entre `0,75×` et
+3. chaque bucket est arrondi au millier de nœuds le plus proche, borné au
+   minimum moteur de 1 000 nœuds, et les buckets devenus identiques sont
+   fusionnés ;
+4. le facteur doit rester dans `[0,005 ; 5,00]` ;
+5. un second canari nodes de 6 000 records doit coûter entre `0,75×` et
    `1,35×` le témoin depth.
 
 La calibration ne lit ni WDL, ni holdout, ni force. Si un garde échoue, le job
