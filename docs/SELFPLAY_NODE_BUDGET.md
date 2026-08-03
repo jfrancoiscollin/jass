@@ -65,7 +65,9 @@ pipelines should keep using `--wdl-zero-score` when that score is unused.
 
 `--play-max-nodes` predates this feature. It remains a historical safety cap
 combined with fixed depth and is deliberately distinct from
-`--search-limit nodes`.
+`--search-limit nodes`. Its periodic polling and first-iteration behavior are
+preserved for replay compatibility. Only the explicit node-budget mode enables
+the exact per-node check and last-complete-iteration contract.
 
 The initial implementation supports `fixed` and integer `weighted` policies.
 Weights need not sum to 100. Every choice must contain at least 1,000 nodes,
@@ -86,10 +88,14 @@ role RNG streams. Worker timing therefore cannot reorder budget draws. The
 current `--gen-data-wdl` play search is single-threaded; reproducibility claims
 do not extend to generic Lazy SMP searches.
 
-If `--explore-topk` is enabled, ranking each candidate remains a separate
-search and currently reuses the sampled cap per candidate. Those extra ranking
-nodes are not part of the primary `nodes_used` field. Keep Top-K off for the
-initial cost calibration, or account for that additional work explicitly.
+`--explore-topk` is rejected in node-budget mode. Ranking every candidate with
+a fresh root-sized budget would both hide substantial work from `nodes_used`
+and evaluate candidates more strongly than the played root policy. A derived
+child-budget convention is intentionally left to a later experiment.
+
+The positional seed should be explicit and distinct for every shard. Omitting
+it selects the historical fixed seed, so independently launched unseeded shards
+repeat the same budget sequence as well as the same legacy RNG streams.
 
 ## What `nodes_used` counts
 
@@ -124,8 +130,10 @@ containing the limit type, policy, granularity, min/max, choices, seed and
 
 A `selfplay_game` record preserves result-level reproducibility. The final
 summary contains total searches, mean and p10/p50/median/p90 budgets, bucket
-counts, total/mean nodes, used/requested ratios, mean effective depth, mean
-search time, aggregate NPS and interrupted-iteration count.
+counts, total/mean nodes, `aggregate_nodes_used_over_budget` (total used divided
+by total requested), `mean_nodes_used_over_budget` (the unweighted mean of each
+search's used/requested ratio), mean effective depth, mean search time,
+aggregate NPS and interrupted-iteration count.
 
 The JSONL sidecar is separate from JNNW/JSM1, so existing training readers and
 historical datasets remain compatible. Fixed-depth runs do not create or emit
@@ -157,6 +165,12 @@ cmp repro-a.jnnw repro-b.jnnw
 The verifier compares game/ply, requested and used nodes, completed/effective
 depths, search and selected moves, and game results. It intentionally excludes
 wall-clock time and NPS.
+
+This reproduces a run only with the same model, code and deterministic runtime
+environment. The sampler's budget sequence is stable across builds, but search
+results are not: changing move ordering, pruning, tablebase contents or TT
+behavior changes where the same node count is spent. Record and pin the code
+SHA and model hash for every experimental corpus.
 
 ## Smoke and calibration
 

@@ -144,8 +144,10 @@ void write_node_budget_summary(std::ostream& out,
         << ",\"nodes_used_total\":"
         << static_cast<std::uint64_t>(stats.nodes_sum)
         << ",\"nodes_used_mean\":" << static_cast<double>(stats.nodes_sum / count)
-        << ",\"nodes_used_over_budget\":" << static_cast<double>(aggregate_ratio)
-        << ",\"mean_search_ratio\":" << static_cast<double>(stats.ratio_sum / count)
+        << ",\"aggregate_nodes_used_over_budget\":"
+        << static_cast<double>(aggregate_ratio)
+        << ",\"mean_nodes_used_over_budget\":"
+        << static_cast<double>(stats.ratio_sum / count)
         << ",\"effective_depth_mean\":"
         << static_cast<double>(stats.effective_depth_sum / count)
         << ",\"search_time_ms_mean\":"
@@ -680,6 +682,11 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         }
         if (!play_depth_spec.empty()) {
             std::cerr << "error: --play-depth-by-phase is incompatible with "
+                         "--search-limit nodes\n";
+            return 2;
+        }
+        if (explore_topk > 0) {
+            std::cerr << "error: --explore-topk is incompatible with "
                          "--search-limit nodes\n";
             return 2;
         }
@@ -1235,6 +1242,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                     static_cast<std::uint32_t>(ply),
                     static_cast<std::uint8_t>(search_side_white ? 0 : 1));
                 lim.max_nodes = sampled_node_budget;
+                lim.node_limit_mode = NodeLimitMode::Exact;
             } else {
                 // Historical deterministic safety cap. This remains a hybrid
                 // depth+nodes guard and is intentionally not the new nodes mode.

@@ -36,6 +36,15 @@ constexpr bool is_mate_score(int s) noexcept {
     return s > (MATE_SCORE - MAX_PLY) || s < -(MATE_SCORE - MAX_PLY);
 }
 
+enum class NodeLimitMode : std::uint8_t {
+    // Historical SearchLimits::max_nodes semantics: poll with the existing
+    // time/external-stop cadence (every 1024 nodes) and at iteration bounds.
+    Periodic,
+    // Experimental self-play contract: check the authoritative counter at
+    // every node and never expose a partially searched root iteration.
+    Exact,
+};
+
 struct SearchLimits {
     int         max_depth   = 6;
     std::size_t tt_mb       = 1;     // transposition table size in megabytes
@@ -44,10 +53,11 @@ struct SearchLimits {
     // 0 = unlimited. Unlike `movetime_ms` this is DETERMINISTIC (no wall-clock,
     // no endgame movetime-overshoot) — the right bound for a flat/near-zero eval
     // where alpha-beta pruning collapses and a fixed-depth search would explode
-    // (e.g. from-scratch self-play with a zero-weights eval). Polled by
-    // The non-atomic counter is checked at every node, so the reported search
-    // never exceeds this cap. Time and external-stop checks remain throttled.
+    // (e.g. from-scratch self-play with a zero-weights eval).
+    // Periodic is the historical ~1024-node polling contract. Callers that
+    // need a zero-overshoot cap must opt into Exact explicitly.
     std::uint64_t max_nodes = 0;
+    NodeLimitMode node_limit_mode = NodeLimitMode::Periodic;
     // External stop signal. If non-null and set to true while the search is
     // running, the current iteration is abandoned and the result of the
     // last completed iteration is returned.

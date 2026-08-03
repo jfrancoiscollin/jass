@@ -305,6 +305,7 @@ struct Searcher {
     SearchStopReason                      stop_reason{SearchStopReason::None};
     // Deterministic hard node cap (0 = unlimited), copied from SearchLimits.
     std::uint64_t                         max_nodes{0};
+    NodeLimitMode                         node_limit_mode{NodeLimitMode::Periodic};
 
     // Wall time at which the current root iteration started, used by the
     // iterative-deepening loop to decide whether to skip the next iteration
@@ -462,11 +463,12 @@ struct Searcher {
         return false;
     }
 
-    // Node budgets are deterministic and local to this Searcher, so checking
-    // the plain integer at every node adds no synchronisation. This keeps the
-    // overshoot at zero while time/external probes stay amortised.
-    bool check_node_budget() noexcept {
-        if (max_nodes && nodes >= max_nodes) {
+    // Exact node budgets are deterministic and local to this Searcher, so
+    // checking the plain integer at every node adds no synchronisation. Legacy
+    // max_nodes callers keep the periodic check_stop() cadence above.
+    bool check_exact_node_budget() noexcept {
+        if (node_limit_mode == NodeLimitMode::Exact
+            && max_nodes && nodes >= max_nodes) {
             stopped = true;
             stop_reason = SearchStopReason::Nodes;
             return true;
@@ -571,7 +573,7 @@ int Searcher::quiescence(const Position& pos, int ply, int alpha, int beta,
                          int forcing_left, int promo_left, int threat_left, int sac_left) {
     if (stopped) return 0;
     ++nodes;
-    if (check_node_budget()) return 0;
+    if (check_exact_node_budget()) return 0;
     if ((nodes & 0x3FF) == 0 && check_stop()) return 0;
 
     MoveList moves;
@@ -685,7 +687,7 @@ int Searcher::negamax(const Position& pos, int depth, int ply,
     // killers / hash_path arrays.
     if (ply >= MAX_PLY) return eval_leaf(pos, ply);
     ++nodes;
-    if (check_node_budget()) return 0;
+    if (check_exact_node_budget()) return 0;
     // Polling time / external-stop is not free; throttle to once every
     // 1024 nodes. The first probe of every iteration also runs through
     // here because `nodes` was just bumped from 0 → 1 the very first time.
@@ -1511,6 +1513,7 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
                    + std::chrono::milliseconds(limits.movetime_ms);
     }
     s.max_nodes = limits.max_nodes;
+    s.node_limit_mode = limits.node_limit_mode;
 
     // ---------------------------------------------------------------------
     // Lazy SMP fan-out
@@ -1531,10 +1534,12 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
             helpers.emplace_back([&pos, &game_history, &tt, &helper_stop,
                                   max_depth = limits.max_depth,
                                   max_nodes = limits.max_nodes,
+                                  node_limit_mode = limits.node_limit_mode,
                                   nnue_for_helpers, params_for_helpers]() {
                 SearchLimits hlim;
                 hlim.max_depth = max_depth;
                 hlim.max_nodes = max_nodes;  // helpers respect the same node cap
+                hlim.node_limit_mode = node_limit_mode;
                 hlim.stop_flag = &helper_stop;
                 hlim.threads   = 1;  // critical: helpers must not fork further
                 hlim.nnue      = nnue_for_helpers;
@@ -1711,8 +1716,10 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
 
         // Discard any iteration that didn't finish; the previous
         // `best_overall` / `best_score` / `res.depth` remain in effect.
-        if (s.stopped
-            && (s.stop_reason == SearchStopReason::Nodes || depth > 1)) {
+        const bool discard_exact_node_iteration =
+            s.stop_reason == SearchStopReason::Nodes
+            && s.node_limit_mode == NodeLimitMode::Exact;
+        if (s.stopped && (discard_exact_node_iteration || depth > 1)) {
             break;
         }
 
@@ -1740,7 +1747,9 @@ SearchResult search(const Position& pos, const SearchLimits& limits,
     // available. Return the legal root fallback with a neutral score instead
     // of leaking a partial iteration. Time/external limits retain their
     // historical first-iteration convention for backward compatibility.
-    if (res.completed_depth == 0 && s.stop_reason == SearchStopReason::Nodes) {
+    if (res.completed_depth == 0
+        && s.stop_reason == SearchStopReason::Nodes
+        && s.node_limit_mode == NodeLimitMode::Exact) {
         best_score = 0;
     }
     // The move comes from the search; the score comes from the rules.

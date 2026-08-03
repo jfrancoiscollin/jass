@@ -37,6 +37,18 @@ if(invalid_rc EQUAL 0 OR NOT invalid_err MATCHES "require --search-limit nodes")
     message(FATAL_ERROR "partial node-budget configuration was not rejected")
 endif()
 
+# Top-K child ranking has no depth-equivalent policy under a root node budget:
+# fail closed instead of giving every candidate a fresh full root budget.
+run_jass(topk_rc topk_out topk_err
+    --gen-data-wdl 1 "${SMOKE_DIR}/topk-invalid.jnnw" 1 1 8 4242
+    --wdl-zero-score --explore-eps 10 --explore-topk 3
+    --search-limit nodes --node-budget-fixed 1000
+    --node-budget-log "${SMOKE_DIR}/topk-invalid.jsonl"
+)
+if(topk_rc EQUAL 0 OR NOT topk_err MATCHES "--explore-topk is incompatible")
+    message(FATAL_ERROR "Top-K with node-budget search was not rejected")
+endif()
+
 # Fixed policy: one complete mini-game and exact node caps.
 run_jass(fixed_rc fixed_out fixed_err
     --gen-data-wdl 1 "${SMOKE_DIR}/fixed.jnnw" 1 1 8 4242
@@ -57,6 +69,12 @@ if(NOT fixed_log MATCHES "\"nodes_budget\":1000,\"nodes_used\":1000")
 endif()
 if(NOT fixed_log MATCHES "\"event\":\"node_budget_summary\"")
     message(FATAL_ERROR "fixed log has no summary")
+endif()
+if(NOT fixed_log MATCHES "\"aggregate_nodes_used_over_budget\"")
+    message(FATAL_ERROR "fixed summary has no aggregate ratio")
+endif()
+if(NOT fixed_log MATCHES "\"mean_nodes_used_over_budget\"")
+    message(FATAL_ERROR "fixed summary has no mean per-search ratio")
 endif()
 
 # Weighted policy: two identical runs must reproduce all deterministic search

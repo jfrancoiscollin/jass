@@ -566,6 +566,7 @@ void test_search_node_budget_stops_exactly_and_returns_legal_move() {
     SearchLimits tiny;
     tiny.max_depth = MAX_PLY;
     tiny.max_nodes = 1;
+    tiny.node_limit_mode = NodeLimitMode::Exact;
     const SearchResult r_tiny = search(p, tiny);
     JASS_CHECK_EQ(r_tiny.nodes, 1U);
     JASS_CHECK(list_contains(legal, r_tiny.best_move));
@@ -576,6 +577,7 @@ void test_search_node_budget_stops_exactly_and_returns_legal_move() {
     SearchLimits low;
     low.max_depth = MAX_PLY;
     low.max_nodes = 1'000;
+    low.node_limit_mode = NodeLimitMode::Exact;
     const SearchResult r_low = search(p, low);
     JASS_CHECK_EQ(r_low.nodes, low.max_nodes);
     JASS_CHECK(list_contains(legal, r_low.best_move));
@@ -589,6 +591,24 @@ void test_search_node_budget_stops_exactly_and_returns_legal_move() {
     JASS_CHECK_EQ(r_high.nodes, high.max_nodes);
     JASS_CHECK(r_high.nodes > r_low.nodes);
     JASS_CHECK(list_contains(legal, r_high.best_move));
+}
+
+void test_legacy_node_cap_keeps_periodic_semantics() {
+    const Position p = Position::start_position();
+    MoveList legal;
+    generate_legal_moves(p, legal);
+
+    SearchLimits legacy;
+    legacy.max_depth = MAX_PLY;
+    legacy.max_nodes = 1;
+    const SearchResult result = search(p, legacy);
+
+    // The historical cap is checked at iteration boundaries and every 1024
+    // recursive nodes. It must not silently acquire the new exact semantics.
+    JASS_CHECK(result.nodes > legacy.max_nodes);
+    JASS_CHECK(result.depth >= 1);
+    JASS_CHECK(result.completed_depth == result.depth);
+    JASS_CHECK(list_contains(legal, result.best_move));
 }
 
 void test_unlimited_depth_search_keeps_historical_result() {
@@ -722,6 +742,7 @@ void run_search_tests() {
     test_node_budget_sampler_is_deterministic_and_isolated();
     test_weighted_node_budget_frequencies();
     test_search_node_budget_stops_exactly_and_returns_legal_move();
+    test_legacy_node_cap_keeps_periodic_semantics();
     test_unlimited_depth_search_keeps_historical_result();
     test_root_order_schedule_applies_and_fails_closed();
     test_explicit_default_params_match_searchlimits_default();
