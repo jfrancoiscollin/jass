@@ -30,8 +30,12 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"; : "${EXPECTED_CODE_SHA:?}"
 : "${EXPECTED_JOB_ID:?}"
 : "${TURNOVER_TRAIN_PREFIX:?}"; : "${EXPECTED_TURNOVER_TRAIN_JOB:?}"
-: "${M1_PREFIX:?}"; : "${EXPECTED_M1_JOB:?}"
-: "${M2_PREFIX:?}"; : "${EXPECTED_M2_JOB:?}"
+# M1/M2 ne servent qu'a la moitie memoire : requis seulement si elle existe.
+if [ "${MEMORY_RECORDS:-4000000}" -gt 0 ]; then
+  : "${M1_PREFIX:?}"; : "${EXPECTED_M1_JOB:?}"
+  : "${M2_PREFIX:?}"; : "${EXPECTED_M2_JOB:?}"
+fi
+EXPECTED_PLAYER_JOB="${EXPECTED_PLAYER_JOB:-$EXPECTED_TURNOVER_TRAIN_JOB}"
 
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"
@@ -96,16 +100,21 @@ trap 'rc=$?; set +e; echo "ABORT line=$LINENO rc=$rc cmd=$BASH_COMMAND" | tee -a
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
-FRESH_RECORDS=8000000
-MEMORY_RECORDS=4000000
-TOTAL_RECORDS=12000000
+# Sizing parametre le 4 aout. Defauts = le corpus de juillet a l'identique.
+# MEMORY_RECORDS=0 produit un corpus 100 % FRAIS : la moitie mémoire de la
+# recette TURNOVER date d'avant le prior centre sur le parent, qui est devenu le
+# mecanisme de memoire (+11 Elo) — et cette moitie est justement celle qui porte
+# l'etiquetage casse des nulles.
+FRESH_RECORDS="${FRESH_RECORDS:-8000000}"
+MEMORY_RECORDS="${MEMORY_RECORDS:-4000000}"
+TOTAL_RECORDS="${TOTAL_RECORDS:-12000000}"
 FRESH_WEIGHT=2
 MEMORY_WEIGHT=1
-PRODUCERS=12
-LABEL_DEPTH=4
-PLAY_DEPTH=9
+PRODUCERS="${PRODUCERS:-12}"
+LABEL_DEPTH="${LABEL_DEPTH:-4}"
+PLAY_DEPTH="${PLAY_DEPTH:-9}"
 MAXPLIES=260
-BASE_SEED=6180339
+BASE_SEED="${BASE_SEED:-6180339}"
 MIX_SEED=1732050
 SPLIT_SEED=577215
 HOLDOUT_MOD=10
@@ -144,11 +153,19 @@ grep -q "root_is_drawn" src/search.cpp ||
 monitor
 
 phase fetch-and-authenticate-immutable-inputs
-python3 jobs/tools/fetch_result_files.py --prefix "$TURNOVER_TRAIN_PREFIX" \
-  --file artefacts/turnover1to1.pjtw.gz=TURNOVER.pjtw.gz \
+# Joueur parametrable. Defaut = TURNOVER depuis TURNOVER_TRAIN_PREFIX, donc
+# home-1004 reproduit a l'identique ; un corpus neuf se genere par le champion
+# courant, qui vit ailleurs.
+PLAYER_PREFIX="${PLAYER_PREFIX:-$TURNOVER_TRAIN_PREFIX}"
+PLAYER_FILE="${PLAYER_FILE:-turnover1to1.pjtw.gz}"
+PLAYER_LABEL="${PLAYER_LABEL:-TURNOVER}"
+PLAYER_SHA="${PLAYER_SHA:-$TURNOVER_MODEL_SHA}"
+python3 jobs/tools/fetch_result_files.py --prefix "$PLAYER_PREFIX" \
+  --file "artefacts/$PLAYER_FILE=PLAYER.pjtw.gz" \
   --file artefacts/JASS_CONTROL_SUMMARY.json=turnover-training.json \
   --out-dir "$IN" --report "$ART/verified-turnover-training.json" \
   > "$W/fetch-turnover.log" 2>&1
+if [ "$MEMORY_RECORDS" -gt 0 ]; then
 python3 jobs/tools/fetch_result_files.py --prefix "$M1_PREFIX" \
   --file artefacts/common-fresh-500k.jnnw.gz=mem-a.jnnw.gz \
   --file artefacts/common-fresh-500k.jsm.gz=mem-a.jsm.gz \
@@ -161,10 +178,12 @@ python3 jobs/tools/fetch_result_files.py --prefix "$M2_PREFIX" \
   --file artefacts/m2-fresh-2m.jsm.gz=mem-c.jsm.gz \
   --out-dir "$IN" --report "$ART/verified-m2-corpus.json" \
   > "$W/fetch-m2.log" 2>&1
-for spec in \
-  "verified-turnover-training.json:$EXPECTED_TURNOVER_TRAIN_JOB" \
-  "verified-m1-corpora.json:$EXPECTED_M1_JOB" \
-  "verified-m2-corpus.json:$EXPECTED_M2_JOB"; do
+fi   # fin des fetch memoire
+SPECS=("verified-turnover-training.json:$EXPECTED_PLAYER_JOB")
+[ "$MEMORY_RECORDS" -gt 0 ] && SPECS+=(
+  "verified-m1-corpora.json:$EXPECTED_M1_JOB"
+  "verified-m2-corpus.json:$EXPECTED_M2_JOB")
+for spec in "${SPECS[@]}"; do
   python3 - "$ART/${spec%%:*}" "${spec#*:}" <<'PY'
 import json
 import sys
@@ -173,14 +192,18 @@ if report.get("job_id") != sys.argv[2] or report.get("result_state") != "complet
     raise SystemExit(f"{sys.argv[1]}: source identity/state mismatch")
 PY
 done
-gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
-[ "$(sha256sum "$W/TURNOVER.pjtw" | awk '{print $1}')" = "$TURNOVER_MODEL_SHA" ] ||
-  die "TURNOVER model hash drift"
-for part in a b c; do
-  gunzip -c "$IN/mem-$part.jnnw.gz" > "$W/mem-$part.jnnw"
-  gunzip -c "$IN/mem-$part.jsm.gz"  > "$W/mem-$part.jsm"
-done
-say "  entrées ✓ : TURNOVER + trois corpus mémoire authentifiés"
+gunzip -c "$IN/PLAYER.pjtw.gz" > "$W/PLAYER.pjtw"
+[ "$(sha256sum "$W/PLAYER.pjtw" | awk '{print $1}')" = "$PLAYER_SHA" ] ||
+  die "$PLAYER_LABEL model hash drift"
+if [ "$MEMORY_RECORDS" -gt 0 ]; then
+  for part in a b c; do
+    gunzip -c "$IN/mem-$part.jnnw.gz" > "$W/mem-$part.jnnw"
+    gunzip -c "$IN/mem-$part.jsm.gz"  > "$W/mem-$part.jsm"
+  done
+  say "  entrées ✓ : $PLAYER_LABEL + trois corpus mémoire authentifiés"
+else
+  say "  entrées ✓ : $PLAYER_LABEL seul (corpus 100 % frais, aucune mémoire)"
+fi
 
 phase build-8cf-engine
 FLAGS="-DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON"
@@ -204,7 +227,7 @@ for shard in $(seq 0 $((PRODUCERS - 1))); do
   data="$W/fresh-s$shard.jnnw"; meta="$W/fresh-s$shard.jsm"
   timeout "$GEN_TIMEOUT" "$J" --gen-data-wdl "$count" "$data" \
     "$LABEL_DEPTH" "$PLAY_DEPTH" "$MAXPLIES" $((BASE_SEED + shard)) \
-    --nnue "$W/TURNOVER.pjtw" --search-params-play "$Q00" --wdl-zero-score \
+    --nnue "$W/PLAYER.pjtw" --search-params-play "$Q00" --wdl-zero-score \
     --random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 \
     --pair-openings --drop-plycap --sample-meta-out "$meta" \
     > "$W/fresh-s$shard.log" 2>&1 &
@@ -220,9 +243,22 @@ done
 python3 tools/selfplay_frontier.py merge "${pairs[@]}" --renamespace-nested \
   --out-data "$W/fresh.jnnw" --out-meta "$W/fresh.jsm" \
   --manifest "$ART/fresh-merge.json" > "$W/fresh-merge.log" 2>&1
-say "  frais ✓ : $FRESH_RECORDS records à d$PLAY_DEPTH depuis TURNOVER"
+# Canari SUR LES DONNEES, pas sur le code. Le defaut d'etiquetage des nulles
+# (4,8 % au lieu de 20,3 %) a traverse toute la lignee sans qu'aucune garde de
+# code ne le voie : elles verifiaient une cause connue. Celui-ci refuse un
+# corpus dont la distribution des resultats est aberrante, quelle qu'en soit la
+# cause.
+for _sd in "$W"/fresh-s*.jnnw; do
+  python3 jobs/tools/assert_corpus_wdl.py --data "$_sd" ||
+    die "canari WDL : distribution des resultats aberrante dans $_sd"
+done
+say "  canari WDL ✓ sur les $PRODUCERS shards"
+say "  frais ✓ : $FRESH_RECORDS records à d$PLAY_DEPTH depuis $PLAYER_LABEL"
 
 phase assemble-memory-corpus
+if [ "$MEMORY_RECORDS" -eq 0 ]; then
+  say "  mémoire ⊘ : corpus 100 % frais (MEMORY_RECORDS=0)"
+else
 python3 tools/selfplay_frontier.py merge \
   --pair "$W/mem-a.jnnw" "$W/mem-a.jsm" \
   --pair "$W/mem-b.jnnw" "$W/mem-b.jsm" \
@@ -231,14 +267,17 @@ python3 tools/selfplay_frontier.py merge \
   --out-data "$W/memory.jnnw" --out-meta "$W/memory.jsm" \
   --manifest "$ART/memory-merge.json" > "$W/memory-merge.log" 2>&1
 say "  mémoire ✓ : $MEMORY_RECORDS records (époques F2M et M2 réunies)"
+fi
 
 phase mix-twice-and-compare
+MIX_SOURCES=(--source FRESH "$W/fresh.jnnw" "$W/fresh.jsm" "$FRESH_WEIGHT")
+[ "$MEMORY_RECORDS" -eq 0 ] ||
+  MIX_SOURCES+=(--source MEMORY "$W/memory.jnnw" "$W/memory.jsm" "$MEMORY_WEIGHT")
 for pass in 1 2; do
   out="$W/vol8m.raw"; man="$ART/vol8m-mix.json"
   [ "$pass" = 2 ] && { out="$W/vol8m-repeat"; man="$W/vol8m-repeat-mix.json"; }
   python3 tools/selfplay_frontier.py mix \
-    --source FRESH  "$W/fresh.jnnw"  "$W/fresh.jsm"  "$FRESH_WEIGHT" \
-    --source MEMORY "$W/memory.jnnw" "$W/memory.jsm" "$MEMORY_WEIGHT" \
+    "${MIX_SOURCES[@]}" \
     --target-records "$TOTAL_RECORDS" --seed "$MIX_SEED" --namespace-openings \
     --out-data "$out.jnnw" --out-meta "$out.jsm" --manifest "$man" \
     > "$W/vol8m-mix-$pass.log" 2>&1
@@ -259,7 +298,8 @@ if (
     or manifest.get("seed") != seed
     or manifest.get("records") != total
     or sources.get("FRESH", {}).get("selected_records") != fresh
-    or sources.get("MEMORY", {}).get("selected_records") != memory
+    or (memory and sources.get("MEMORY", {}).get("selected_records") != memory)
+    or (not memory and "MEMORY" in sources)
     or manifest.get("opening_id_policy")
     != "source_namespaced_for_independent_temporal_corpora"
     or manifest.get("external_teacher_inputs") != 0
