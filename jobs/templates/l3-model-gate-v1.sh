@@ -41,8 +41,13 @@ PREFLIGHT_PREFIX="${PREFLIGHT_PREFIX:-r2:jass-data/runs/home-1004-l3-pure-volume
 PREFLIGHT_FILE="${PREFLIGHT_FILE:-vol8m-eval-openings.fen}"
 EXPECTED_PREFLIGHT_JOB="${EXPECTED_PREFLIGHT_JOB:-home-1004-l3-pure-volume8m-preflight-v2}"
 NSH_GATE="${NSH_GATE:-12}"; PAR_GATE="${PAR_GATE:-12}"
+VIEWS="${VIEWS:-q00 native}"
 FORCE_DEPTH=9; MOVETIME=0.1; CACHE_MB=128
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
+# Parametres de recherche par bras. Defaut = Q00 des deux cotes, donc toutes
+# les portes de modele restent inchangees ; un A/B de recherche pose le meme
+# modele des deux cotes et fait varier CECI.
+SEARCH_PARAMS_A="${SEARCH_PARAMS_A:-$Q00}"; SEARCH_PARAMS_B="${SEARCH_PARAMS_B:-$Q00}"
 
 MON=""
 monitor(){
@@ -107,8 +112,15 @@ PY
 }
 fetch_arm A "$A_PREFIX" "$A_JOB" "$A_FILE"
 fetch_arm B "$B_PREFIX" "$B_JOB" "$B_FILE"
-# Deux modèles identiques rendraient un verdict qui ne veut rien dire.
-cmp -s "$W/A.pjtw" "$W/B.pjtw" && die "les deux bras sont le MÊME modèle — porte sans objet"
+# Deux bras STRICTEMENT identiques rendraient un verdict qui ne veut rien dire.
+# ⚠️ Mais un A/B de PARAMETRES DE RECHERCHE pose deliberement le meme modele des
+# deux cotes : la garde doit donc porter sur le couple (modele, parametres), pas
+# sur le modele seul, sinon elle tue exactement le montage qu'elle devrait
+# laisser passer.
+if cmp -s "$W/A.pjtw" "$W/B.pjtw" &&
+   [ "${SEARCH_PARAMS_A:-$Q00}" = "${SEARCH_PARAMS_B:-$Q00}" ]; then
+  die "les deux bras sont le MÊME modèle ET les mêmes paramètres — porte sans objet"
+fi
 python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
   --file "artefacts/$PREFLIGHT_FILE=open-eval.fen" \
   --out-dir "$IN" --report "$ART/verified-openings.json" \
@@ -119,7 +131,7 @@ NOPEN=$(awk '{sub(/#.*/,""); gsub(/^[ \t]+|[ \t]+$/,""); if (length) n++} END {p
 GAMES_PER_VIEW=$((NOPEN * 2))
 say "  A=$A_LABEL ($A_JOB)"
 say "  B=$B_LABEL ($B_JOB)"
-say "  $NOPEN ouvertures → $GAMES_PER_VIEW parties/vue, 2 vues"
+say "  $NOPEN ouvertures → $GAMES_PER_VIEW parties/vue, vues : $VIEWS"
 
 stage build
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf > "$W/gen8.log" 2>&1 ||
@@ -205,7 +217,7 @@ run_view(){
   timeout 10800 python3 jobs/tools/run_jass_gate_bounded.py \
     --jass-a "$JA" --jass-b "$JB" \
     --pattern-a "$W/A.pjtw" --pattern-b "$W/B.pjtw" \
-    --search-params-a "$Q00" --search-params-b "$Q00" \
+    --search-params-a "$SEARCH_PARAMS_A" --search-params-b "$SEARCH_PARAMS_B" \
     --openings-file "$W/open-eval.fen" "${args[@]}" --pairs 1 \
     --max-plies 160 --nshards "$NSH_GATE" --max-parallel "$PAR_GATE" \
     --timeout 9000 --game-timeout 180 \
@@ -214,21 +226,26 @@ run_view(){
     > "$W/gate-$view.log" 2>&1
 }
 
+# Les vues jouees. Defaut = les deux, comme toutes les portes anterieures.
+# ⚠️ A/B DE PARAMETRES DE RECHERCHE : mettre VIEWS="native". La vue `q00` est a
+# PROFONDEUR FIXE, donc un bras qui elague moins y explore plus d'arbre pour la
+# meme profondeur nominale — il gagne presque par construction, et l'estimateur
+# somme melangerait cette vue biaisee a la seule qui mesure le compromis reel.
 stage play-both-views
 # Une vue qui tombe ne tue pas le job : le bloc de lecture rend INCONCLUANT sur
 # vue manquante, et ce verdict vaut mieux qu'un abort muet.
-for view in q00 native; do
+for view in $VIEWS; do
   stage "view-$view"
   if run_view "$view"; then say "  vue $view jouée"; else say "  vue $view ÉCHOUÉE (rc=$?)"; fi
 done
 
 stage readout
-python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" <<'PY' | tee -a "$RES"
+python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" "$VIEWS" <<'PY' | tee -a "$RES"
 import json, math, pathlib, sys
 art = pathlib.Path(sys.argv[1]); per_view = int(sys.argv[2])
 code_sha = sys.argv[3]; A_LABEL, B_LABEL = sys.argv[4], sys.argv[5]
 views = {}
-for v in ("q00", "native"):
+for v in sys.argv[6].split():
     p = art / "force" / f"{v}-A-vs-B.json"
     views[v] = json.load(open(p)) if p.exists() else None
 missing = [v for v, d in views.items() if d is None]
