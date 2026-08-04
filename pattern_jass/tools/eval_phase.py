@@ -1,4 +1,4 @@
-"""Dependency-light phase helpers shared by the streaming fit and diagnostics."""
+"""Dependency-light phase helpers shared by all fit paths and diagnostics."""
 
 from __future__ import annotations
 

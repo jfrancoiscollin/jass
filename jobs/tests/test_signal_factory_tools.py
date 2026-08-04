@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import struct
@@ -31,6 +32,22 @@ def load(name: str, relative: str):
 
 FILTER = load("corpus_filter_test", "jobs/tools/corpus_filter.py")
 REPORT = load("corpus_signal_report_test", "jobs/tools/corpus_signal_report.py")
+
+import eval_phase as EVAL_PHASE  # noqa: E402
+
+
+def load_function(relative: str, name: str):
+    """Load one function without importing its module's optional dependencies."""
+    source = (ROOT / relative).read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=relative)
+    function = next(
+        node for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name
+    )
+    module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
+    namespace = {"np": np, "eval_phase": EVAL_PHASE}
+    exec(compile(module, relative, "exec"), namespace)
+    return namespace[name]
 
 
 def bits(*squares: int) -> int:
@@ -82,11 +99,39 @@ class SignalFactoryToolTests(unittest.TestCase):
             self.assertEqual(payload["positions_par_partie"]["mean"], 4 / 3)
             self.assertEqual(payload["wdl"]["win"]["count"], 2)
             self.assertEqual(payload["contamination"]["positions"], 1)
+            self.assertEqual(
+                payload["contamination"]["denominator"], "records_in_corpus"
+            )
             self.assertEqual(payload["plycap"]["games"], 1)
             self.assertEqual(payload["positions"]["with_queens"], 1)
             self.assertEqual(payload["positions"]["piece_count_histogram"], {"2": 1, "3": 3})
             self.assertEqual(payload["sign_convention"]["records_checked_without_tb_relabel"], 4)
             self.assertNotIn("fisher", payload)
+
+    def test_tempo_phase_surfaces_are_exactly_legacy_equivalent(self):
+        squares = range(50)
+        wm = np.array([1 << bit for bit in squares] + [0] * 50, dtype=np.uint64)
+        bm = np.array([0] * 50 + [1 << bit for bit in squares], dtype=np.uint64)
+        expected = np.array(
+            [bit // 5 / 300.0 for bit in squares]
+            + [(9 - bit // 5) / 300.0 for bit in squares],
+            dtype=np.float64,
+        )
+        dataset = Namespace(white_men=wm, black_men=bm, n_records=len(wm))
+        train_tempo_wmg = load_function("pattern_jass/tools/train.py", "tempo_wmg")
+        stream_tempo_wmg = load_function(
+            "pattern_jass/tools/train_stream.py", "_tempo_wmg_bb"
+        )
+
+        shared = EVAL_PHASE.tempo_wmg_bb(wm, bm)
+        np.testing.assert_array_equal(shared, expected)
+        np.testing.assert_array_equal(train_tempo_wmg(dataset), expected)
+        np.testing.assert_array_equal(stream_tempo_wmg(wm, bm), expected)
+
+    def test_no_exploration_sentinel_has_one_shared_definition(self):
+        self.assertEqual(SF.NO_EXPLORATION, 0xFFFF)
+        self.assertIs(REPORT.frontier, SF)
+        self.assertIs(FILTER.frontier, SF)
 
     def test_report_empty_corpus_fails_cleanly(self):
         with tempfile.TemporaryDirectory() as td:

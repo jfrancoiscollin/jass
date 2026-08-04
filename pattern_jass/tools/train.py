@@ -49,6 +49,7 @@ _pgd = os.environ.get("JASS_PATTERNS_DIR")
 if _pgd:
     sys.path.insert(0, _pgd)
 import patterns
+import eval_phase
 
 WEIGHTS_MAGIC   = 0x57544A50  # "PJTW" little-endian
 WEIGHTS_VERSION = 1
@@ -146,31 +147,10 @@ def phase_wmg(pc: np.ndarray, lo: float, hi: float) -> np.ndarray:
     return np.clip((pc - lo) / denom, 0.0, 1.0)
 
 
-def _tempo_weights():
-    """Per-array-index men row-weights matching np.unpackbits(uint64.view(uint8))
-    order, so the trainer's tempo equals the C++ scan_eval::tempo_wmg. Array index
-    j ↔ actual bit (j//8)*8 + (7 − j%8) ; square=bit+1 ; row=bit//5 (5 sq/row)."""
-    ww = np.zeros(64, dtype=np.float64)   # white man contributes its row
-    bw = np.zeros(64, dtype=np.float64)   # black man contributes 9 − row
-    for j in range(64):
-        bit = (j // 8) * 8 + (7 - j % 8)
-        if bit < 50:
-            row = bit // 5
-            ww[j] = row
-            bw[j] = 9 - row
-    return ww, bw
-
-
-_TEMPO_WW, _TEMPO_BW = _tempo_weights()
-
-
 def tempo_wmg(ds) -> np.ndarray:
     """Scan's tempo-based midgame weight = clip(tempo/300). tempo = Σ white-men row
     + Σ black-men (9−row). Must match C++ scan_eval::tempo_wmg EXACTLY (men only)."""
-    wm = np.unpackbits(ds.white_men.view(np.uint8)).reshape(ds.n_records, 64).astype(np.float64)
-    bm = np.unpackbits(ds.black_men.view(np.uint8)).reshape(ds.n_records, 64).astype(np.float64)
-    tempo = wm.dot(_TEMPO_WW) + bm.dot(_TEMPO_BW)
-    return np.clip(tempo / 300.0, 0.0, 1.0)
+    return eval_phase.tempo_wmg_bb(ds.white_men, ds.black_men)
 
 
 # Phase boundaries by piece count, IDENTICAL to tools/game_autopsy.py and

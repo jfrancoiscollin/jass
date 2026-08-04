@@ -136,7 +136,10 @@ def _scan_corpus(data_path: Path, meta_path: Path) -> tuple[dict, np.memmap, int
             if previous != context:
                 raise ValueError(f"record {index}: inconsistent context within game {row.game_id}")
             records_by_game[row.game_id] += 1
-            if row.last_eps_ply != 0xFFFF and row.ply <= row.last_eps_ply:
+            if (
+                row.last_eps_ply != frontier.NO_EXPLORATION
+                and row.ply <= row.last_eps_ply
+            ):
                 contaminated += 1
             if row.flags & 0x01:
                 plycap_positions += 1
@@ -180,6 +183,7 @@ def _scan_corpus(data_path: Path, meta_path: Path) -> tuple[dict, np.memmap, int
             "positions": contaminated,
             "share": _share(contaminated, total),
             "definition": "ply <= last_eps_ply, excluding last_eps_ply=0xFFFF",
+            "denominator": "records_in_corpus",
         },
         "plycap": {
             "games": len(plycap_games),

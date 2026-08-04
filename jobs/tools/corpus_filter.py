@@ -162,7 +162,7 @@ def _position_values(record: bytes, row: frontier.Meta) -> dict[str, object]:
     has_context = row.ply is not None
     contaminated = (
         has_context
-        and row.last_eps_ply != 0xFFFF
+        and row.last_eps_ply != frontier.NO_EXPLORATION
         and row.ply <= row.last_eps_ply
     )
     return {
@@ -176,7 +176,9 @@ def _position_values(record: bytes, row: frontier.Meta) -> dict[str, object]:
         "last_eps_ply": row.last_eps_ply,
         "game_result": row.game_result,
         "has_game_context": has_context,
-        "has_exploration": has_context and row.last_eps_ply != 0xFFFF,
+        "has_exploration": (
+            has_context and row.last_eps_ply != frontier.NO_EXPLORATION
+        ),
         "contaminated": bool(contaminated),
         "plycap": bool(flags & 0x01),
         "adjudicated": bool(flags & 0x02),

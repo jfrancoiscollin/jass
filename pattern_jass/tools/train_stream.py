@@ -463,8 +463,8 @@ def _holdout_logloss(build_fn, y_all, model_weights, train_n, n_records, chunk):
 
 
 # --------------------------------------------------------------------------- #
-#  Per-chunk popcount helpers (replicate train.py's piece_count / tempo_wmg but
-#  on raw bitboard arrays rather than a MasterDataset, so they work on a slice).
+#  Per-chunk adapters to the shared phase helpers.  These retain the historical
+#  train_stream surface for rank/wdl finetune callers without duplicating math.
 # --------------------------------------------------------------------------- #
 def _piece_count_bb(wm, wk, bm, bk):
     """Total pieces (men+kings, both sides) per row : popcount(OR of 4 boards)."""

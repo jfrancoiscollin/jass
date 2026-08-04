@@ -58,6 +58,8 @@ JSM1_STRUCT = struct.Struct("<QQB")
 JSM2_STRUCT = struct.Struct("<QQBHHHbB")
 META_MAGIC = JSM1_MAGIC  # Backward-compatible aliases used by older callers.
 META_REC = JSM1_STRUCT.size
+U16_MAX = 0xFFFF
+NO_EXPLORATION = U16_MAX
 
 
 @dataclass(frozen=True)
@@ -155,9 +157,9 @@ def _validate_meta(row: Meta, schema: MetaSchema, *, context: str = "metadata") 
     assert row.ply is not None and row.game_plies is not None
     assert row.last_eps_ply is not None and row.game_result is not None
     assert row.flags is not None
-    if not (0 <= row.ply <= 0xFFFF and 0 <= row.game_plies <= 0xFFFF):
+    if not (0 <= row.ply <= U16_MAX and 0 <= row.game_plies <= U16_MAX):
         raise ValueError(f"{context}: ply fields outside u16")
-    if not (0 <= row.last_eps_ply <= 0xFFFF):
+    if not (0 <= row.last_eps_ply <= U16_MAX):
         raise ValueError(f"{context}: last_eps_ply outside u16")
     if row.game_result not in (-1, 0, 1):
         raise ValueError(f"{context}: game_result outside {{-1,0,1}}")

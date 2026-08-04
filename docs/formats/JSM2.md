@@ -81,3 +81,16 @@ Les lecteurs dispatchent sur le magic. JSM1 reste `"JSM1" + u32 count +
 count * 17` et conserve exactement son comportement historique. `merge`, `mix`
 et `split` préservent le schéma d'entrée ; mélanger JSM1 et JSM2 dans une même
 opération échoue au lieu d'inventer les champs absents.
+
+## Conséquence opérationnelle pour M1/M3
+
+Au 5 août 2026, les corpus historiques du projet, y compris le corpus 12 M de
+`home-1310`, ont un sidecar JSM1. `corpus_signal_report.py` exige JSM2 parce que
+les champs de contexte n'existent pas dans JSM1 et ne peuvent pas être
+reconstitués. Ce refus est attendu ; ce n'est pas une erreur de lecture.
+
+Comme `merge` et `mix` refusent aussi de mélanger JSM1 et JSM2, le pool de M3
+doit être régénéré **100 % frais en JSM2**. Le sizing de référence est donc
+environ 3 h de génération pour 12 M positions à d8, puis environ 12 h pour les
+quatre cellules et leurs portes : **M3 ≈ 15 h**, et non 12 h. La dégradation
+JSM2 → JSM1 n'est pas automatique ; aucune promotion JSM1 → JSM2 n'est valide.

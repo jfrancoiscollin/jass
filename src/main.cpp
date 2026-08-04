@@ -1413,6 +1413,24 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             continue;
         }
 
+        // Validate the extended sidecar before writing any record from this
+        // game.  In particular, an unexpected apply_move() failure leaves the
+        // last buffered sample at game_play_plies; emitting it would create a
+        // JSM2 record that every reader must reject (ply >= game_plies).
+        if (sample_meta_v2) {
+            for (const Sample& s : game_samples) {
+                if (s.ply < 0 || s.ply >= game_play_plies) {
+                    std::cerr
+                        << "error: refusing invalid JSM2 game context before write: "
+                        << "game_id=" << game_count
+                        << " sample_ply=" << s.ply
+                        << " game_plies=" << game_play_plies
+                        << " (required 0 <= ply < game_plies)\n";
+                    return 1;
+                }
+            }
+        }
+
         // Flush this game's samples with the resolved WDL label. WDL is
         // computed from each sample's STM perspective: +1 means "the side
         // to move at sample time eventually won".
