@@ -24,6 +24,7 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 | D | `--king-patterns` A/B au scale | `cpx62-1156` | ⛔ **modèles prêts, porte BLOQUÉE** — voir §3.5 |
 | E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ✅ **PRIORTIGHT promu champion général le 3 août** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
 | F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
+| G | dose du prior = dose de `l2` | `cpx62-1164`→`1171` | ✅ **L2LOW promu champion général le 4 août** : axe clos par plateau — voir §3.2 |
 
 ## 3. En file, par ordre de valeur attendue
 
@@ -59,7 +60,15 @@ l'autre. En 100 % frais le prior était le **seul** porteur du passé ; avec un
 mélange 1:1, **la moitié mémoire EST le parent réinjecté comme donnée**, donc un
 prior centré sur le parent risque de le **compter deux fois**. Le λ calibré à
 l'ère 100 % frais **ne se transporte pas**.
-**Déclencheur : SATISFAIT deux fois.** A conclut positivement (PRIOR promu le
+✅ **CLOS le 4 août : L2LOW (`l2=1e-5`) promu champion général.** La dose
+n'était pas sur `λ` — inerte à `decay 0` — mais sur `l2`, qui sous
+`--prior-mean` est la force du rappel vers le parent. Quatre points, courbe
+monotone bornée des deux côtés (`1e-4 : −15,65` · `1e-5 : +12,54` ·
+`3e-6 : +14,25`), axe fermé par **plateau** (`1e-5` ≡ `3e-6`, `z = 0,39`).
+Consolidé `+11,31 Elo` IC95 `[+6,4 ; +16,3]`, `n = 18 000`, gardes vertes.
+Enregistrement : [`experiments/L3_L2LOW_PROMOTION_20260804.md`](experiments/L3_L2LOW_PROMOTION_20260804.md).
+
+**Déclencheur historique : SATISFAIT deux fois.** A conclut positivement (PRIOR promu le
 2 août), et le prior survit au resserrement de la tolérance (`+8,48` à `1e-4`
 contre `+6,66` à `1e-3`). ⚠️ **Tout balayage doit désormais tourner à
 `--lbfgs-gtol 1e-4`** : un balayage de λ sous `1e-3` mesurerait pour partie
@@ -101,6 +110,7 @@ contraste contrôlé. Une attribution causale exigerait **un corpus de positions
 fixe et apparié**.
 **Déclencheur** : seulement si une décision en dépend. Ce n'est pas le cas
 aujourd'hui — le témoin a fermé le soupçon 32cf, ce qu'on lui demandait.
+
 ### 3.5 ⛔ Porte king-aware — bloquée sur un build PAR BRAS
 **Les deux modèles existent** depuis `cpx62-1156` : `control` = TIGHT,
 `exact` = TIGHT + `--king-patterns`, un seul facteur, tous deux convergés à

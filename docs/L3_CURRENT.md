@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 3 août 2026**
+> **Mis à jour : 4 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -36,6 +36,8 @@
 > lbfgs_gtol_1e3_was_stopping_short_exact_and_prior_underconverged;
 > lbfgs_gtol_axis_closed_1e5_unreachable;
 > priortight_promoted_general_champion;
+> l2low_promoted_general_champion;
+> l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
 > king_aware_gate_blocked_on_per_arm_build`.
 
 ## 0bis. Nuit du 2 au 3 août 2026 — la tolérance du solveur
@@ -568,7 +570,24 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. champion général courant : **PRIORTIGHT**, promu le 3 août 2026 sur go
+1. champion général courant : **L2LOW**, promu le 4 août 2026 sur go explicite
+   de JFC — même recette que PRIORTIGHT, `--l2` porté de `3e-5` à **`1e-5`**.
+   Consolidé **`+11,31 Elo`** IC95 `[+6,4 ; +16,3]` sur `n = 18 000` et deux
+   pools disjoints (`cpx62-1165` + `cpx62-1170`), trois gardes vertes
+   (`cpx62-1171` : Gen2 `+84,31`, conversion `0,7500` / `0,7667`).
+   ⛔ **`l2` n'est plus un rétrécissement vers zéro depuis qu'il y a un prior :
+   c'est la force du rappel VERS LE PARENT.** `3e-5` n'était pas un mauvais
+   réglage, c'était un **bon réglage transporté hors de son domaine** — clos en
+   juillet sur un ridge centré sur zéro, réutilisé tel quel une fois le ridge
+   recentré sur le parent, où il sur-pondère le parent que la moitié mémoire du
+   mélange 1:1 réinjecte déjà comme donnée. ✅ **Axe clos par PLATEAU** :
+   `1e-5` et `3e-6` sont indiscernables (`z = 0,39`), bornes de la dose
+   `1e-4 : −15,65` et `3e-6 : +14,25`. ⚠️ Chiffre **biaisé vers le haut**, la
+   réplication tombant de `+12,54` à `+8,86` — troisième fois d'affilée. Bornes :
+   [`experiments/L3_L2LOW_PROMOTION_20260804.md`](experiments/L3_L2LOW_PROMOTION_20260804.md).
+   **Tout nouveau fit L3 utilise donc `--exact-fold` ET `--prior-mean … --prior-decay 0`
+   ET `--lbfgs-gtol 1e-4` ET `--l2 1e-5`** ;
+1ter. champion précédent : **PRIORTIGHT**, promu le 3 août 2026 sur go
    explicite de JFC — même recette que PRIOR, tolérance du solveur portée de
    `1e-3` à `1e-4`. Porte de succession contre le champion assis, **un seul
    facteur**, pool `big3000` disjoint, `n=12 000` : **`+18,05 Elo`** IC95
