@@ -382,6 +382,16 @@ class JassEngine(EngineProc):
                  movetime: float | None = None) -> Move | None:
         """Either depth (plies) or movetime (seconds) — exactly one.
         Jass's HUB takes ms internally, we convert from seconds here."""
+        return self.go_verbose(depth=depth, movetime=movetime)[0]
+
+    def go_verbose(self, depth: int | None = None,
+                   movetime: float | None = None) -> tuple[Move | None, list[str]]:
+        """Comme `go`, mais rend AUSSI les lignes brutes.
+
+        Le profilage de cadence a besoin de `depth=` et `nodes=`, que Jass met
+        sur sa ligne `bestmove` et que `go` jetait. Même raison que
+        `go_from_verbose` côté Scan : exposer les lignes ici plutôt que
+        redupliquer le protocole HUB dans un second outil qui dériverait."""
         self._drain()  # re-align: discard any stale buffered output first
         if movetime is not None:
             self._send(f"go movetime {int(round(movetime * 1000))}")
@@ -397,7 +407,7 @@ class JassEngine(EngineProc):
         last = lines[-1]
         if last.startswith("error"):
             raise EngineFailure(f"{self.label}: {last}")
-        return parse_jass_bestmove(last)
+        return parse_jass_bestmove(last), lines
 
 
 class ScanEngine(EngineProc):
