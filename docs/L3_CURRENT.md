@@ -38,6 +38,7 @@
 > priortight_promoted_general_champion;
 > l2low_promoted_general_champion;
 > l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
+> king_patterns_gate_played_flat_upper_bound_8_8_elo;
 > king_aware_gate_blocked_on_per_arm_build`.
 
 ## 0bis. Nuit du 2 au 3 août 2026 — la tolérance du solveur

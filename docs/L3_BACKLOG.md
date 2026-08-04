@@ -21,7 +21,7 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 | A | prior centré sur le parent — réplication | `cpx62-1149` | ✅ **clos**, PRIOR promu le 2 août ; re-mesuré à `1e-4` : `+8,48` IC95 `[+3,5 ; +13,4]`, `n=18 000` |
 | B | reproductibilité machine/build | `home-1150` | **hors consolidation** (même pool que la découverte) |
 | C | pool de 3000 ouvertures | `cpx62-1154` | ✅ **livré et utilisé** par `1161` et `1163` : `n=12 000` par porte |
-| D | `--king-patterns` A/B au scale | `cpx62-1156` | ⛔ **modèles prêts, porte BLOQUÉE** — voir §3.5 |
+| D | `--king-patterns` A/B au scale | `cpx62-1156`/`1172` | ✅ **PORTE JOUÉE, AXE CLOS** : `+2,75 Elo` IC95 `[−3,3 ; +8,8]`, `n=12 000` — voir §3.5 |
 | E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ✅ **PRIORTIGHT promu champion général le 3 août** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
 | F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
 | G | dose du prior = dose de `l2` | `cpx62-1164`→`1171` | ✅ **L2LOW promu champion général le 4 août** : axe clos par plateau — voir §3.2 |
@@ -44,8 +44,11 @@ fail-closed : `success=True` ne suffit pas, chaque bras doit publier
 ratio d'itérations `>=5` ; le ratio `grad/gtol` est diagnostique, car L-BFGS-B
 termine naturellement près de cette surface. Règle :
 [`experiments/L3_HIER_L2_PREREGISTRATION_20260802.md`](experiments/L3_HIER_L2_PREREGISTRATION_20260802.md).
-**Déclencheur scientifique satisfait** (PRIOR est promu) ; dépôt en attente du
-verdict king-aware et du go de JFC. Un succès rouvre seulement `PRIOR+HIER` contre
+✅ **DÉBLOQUÉ le 4 août** : le verdict king-aware est tombé (plat, axe clos), et
+le déclencheur scientifique était déjà satisfait. Dépôt en attente du seul go de
+JFC et d'un sizing HOME.
+⚠️ La règle préenregistrée fixe `l2=3e-5` des deux côtés ; **à re-viser sur
+`l2=1e-5`**, le champion ayant changé le 4 août. Un succès rouvre seulement `PRIOR+HIER` contre
 `PRIOR`, sans promotion directe.
 **Coût** : refit deux bras, puis porte deux vues ; sizing/ETA à confirmer sur HOME
 juste avant le dépôt.
@@ -111,28 +114,26 @@ fixe et apparié**.
 **Déclencheur** : seulement si une décision en dépend. Ce n'est pas le cas
 aujourd'hui — le témoin a fermé le soupçon 32cf, ce qu'on lui demandait.
 
-### 3.5 ⛔ Porte king-aware — bloquée sur un build PAR BRAS
-**Les deux modèles existent** depuis `cpx62-1156` : `control` = TIGHT,
-`exact` = TIGHT + `--king-patterns`, un seul facteur, tous deux convergés à
-`1e-4` (`653` et `820` itérations). Leurs pertes en holdout sont **à égalité
-au millionième** (`0,441695` contre `0,441699`), ce qui ne tranche rien — la
-porte est le seul juge.
+### 3.5 ✅ Porte king-aware — JOUÉE le 4 août, axe CLOS
+`cpx62-1172` : **`+2,75 Elo` IC95 `[−3,3 ; +8,8]`**, `n = 12 000`, pool
+`big3000`, un seul facteur. L'intervalle contient zéro.
 
-**Ce qui bloque** : un modèle king-aware exige un moteur compilé
-`-DJASS_KING_PATTERNS` (`CMakeLists.txt:109`, et l'occupancy devient `men|kings`
-dans `scan_eval.hpp:61`). Or `l3-model-gate-v1.sh` ne produit **qu'un seul
-build** pour les deux bras. Il faut donc un build **par bras**, exactement comme
-`l3-succession-guards-v1.sh` le fait déjà pour opposer du 8cf à du 32cf.
+✅ **Ce n'est pas un manque de puissance, c'est une borne** : la borne haute
+`+8,8` exclut un gain de l'ordre du fold (`+15,12`), de la tolérance (`+18,05`)
+ou de la dose `l2` (`+11,31`). Et les holdouts étaient déjà à égalité au
+millionième (`0,441695` contre `0,441699`) — deux instruments indépendants
+concordent.
 
-✅ **Aucun risque de mesure silencieuse** : `scan_eval.cpp:370` compare le bit
-king de l'en-tête auto-descriptif au `KING_AWARE_PATTERNS` du build et **refuse
-le modèle**. Une porte naïve échouerait bruyamment à « modèles chargeables ».
+Le blocage n'était pas la mesure mais le template : un modèle `--king-patterns`
+exige un moteur `-DJASS_KING_PATTERNS`. Levé par `ARM_A_CMAKE_EXTRA` /
+`ARM_B_CMAKE_EXTRA`, avec un garde qui **vérifie** que chaque binaire refuse le
+modèle de l'autre plutôt que de croire la distinction sur parole — il a tiré
+correctement sur ce run.
 
-**Déclencheur** : travail de template (une variante `l3-model-gate-2build-v1.sh`,
-ou un `PER_ARM_CMAKE_FLAGS` dans le template existant). C'est du code : candidat
-naturel pour Codex, revue par moi.
-**Coût** : template + une porte deux vues. Le pool 3000 est disponible, donc
-`n=12 000` d'emblée — nécessaire, vu que les holdouts n'écartent rien.
+⛔ **Ne pas rejouer sur 8cf sans argument neuf.** La condition de réouverture de
+`0409` est consommée. ⚠️ Mesuré sur la recette du 2 août (`warm`, `l2=3e-5`),
+pas sur L2LOW ; une réouverture devrait rejouer sur la recette courante.
+Détail : [`experiments/L3_KING_PATTERNS_GATE_20260804.md`](experiments/L3_KING_PATTERNS_GATE_20260804.md).
 
 
 ## 4. Orchestration à deux agents
