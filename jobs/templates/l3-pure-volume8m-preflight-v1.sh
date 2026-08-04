@@ -215,8 +215,8 @@ ctest --test-dir "$W/build" --output-on-failure > "$W/ctest.log" 2>&1
 J="$W/build/jass"
 [ "$("$J" --perft 1 'W:W40,43,K2:B8,18,29,30' | awk '{print $3}')" = 9 ] ||
   die "king-capture witness failed"
-"$J" --eval-position "$W/TURNOVER.pjtw" 'W:W31,32,33:B18,19,20' >/dev/null 2>&1 ||
-  die "8cf engine cannot load TURNOVER"
+"$J" --eval-position "$W/PLAYER.pjtw" 'W:W31,32,33:B18,19,20' >/dev/null 2>&1 ||
+  die "8cf engine cannot load $PLAYER_LABEL"
 say "  moteur ✓ : 8cf réparé"
 
 phase generate-8m-fresh-from-turnover-d9
