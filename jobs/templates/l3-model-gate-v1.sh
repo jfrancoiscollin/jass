@@ -69,7 +69,7 @@ finalize(){
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   (cd "$W" && find . -type f -name '*.log' -print0 |
     tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null || true
-  rm -rf "$W/build" "$IN" "$W"/gate-* 2>/dev/null || true
+  rm -rf "$W"/build* "$IN" "$W"/gate-* 2>/dev/null || true
   exit "$rc"
 }
 trap finalize EXIT
