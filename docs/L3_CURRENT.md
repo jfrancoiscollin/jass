@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 4 août 2026**
+> **Mis à jour : 5 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -39,7 +39,85 @@
 > l2low_promoted_general_champion;
 > l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
 > king_patterns_gate_played_flat_upper_bound_8_8_elo;
-> king_aware_gate_blocked_on_per_arm_build`.
+> king_aware_gate_blocked_on_per_arm_build;
+> fresh12m_corpus_generated_draw_labelling_repaired;
+> post_epsilon_contamination_measured_19_75_percent;
+> signal_factory_charter_opened`.
+
+## 0ter. Nuit du 4 au 5 août 2026 — le premier corpus du moteur réparé
+
+### Le corpus `home-1310` — 12 M de positions, 100 % fraîches, jouées par L2LOW à d8
+
+Terminé le 4 août à **22h30 FR**, `exit 0`, **3h06**. Publié sous
+`r2:jass-data/runs/home-1310-claude-fresh12m-l2low-gen-at-c7f27ff9-v1/20260804T172424Z-c7f27ff9`.
+C'est le premier corpus de la campagne généré par le moteur d'après `9c1d1e8e`,
+et à ce volume.
+
+**⚠️ Deux facteurs bougent d'un coup, et c'est assumé** : le volume (12 M contre
+2 M) *et* l'étiquetage des nulles. Aucun verdict de force ne pourra donc
+attribuer un écart à l'un plutôt qu'à l'autre — ce corpus sert à **nourrir**,
+pas à **trancher**.
+
+**1. L'étiquetage est réparé, et c'est mesuré sur les DONNÉES, pas sur le code**
+
+| | ancienne lignée (F2M→L2LOW) | `home-1310` | vrai taux attendu |
+|---|---|---|---|
+| nulles | **4,8 %** | **18,26 %** | ~20,3 % |
+| gains | — | 41,09 % | |
+| pertes | — | 40,65 % | |
+| biais de camp | — | **0,44 %** | ~0 |
+
+Facteur **3,8×** récupéré. Canari WDL (`assert_corpus_wdl.py`) vert sur les
+**12 shards** — la garde surveille désormais les données, pas le code, ce qui
+est précisément ce qui a manqué en juillet quand le défaut a traversé la lignée
+entière.
+
+**2. Volume et couverture**
+
+| | TURNOVER (2 M) | `home-1310` (12 M) |
+|---|---|---|
+| buckets visités | 208 914 (**9,8 %**) | **284 771 (13,40 %)** |
+| buckets ≥ 100 visites | — | 66 625 |
+| **observations / paramètre libre** | **4,3** | **42,14** |
+| gini de concentration | — | 0,916 |
+| heuristique de capacité | — | `data_limited_more_capacity_not_justified` |
+
+**×9,8 sur les observations par paramètre libre.** Noter que la couverture ne
+progresse que de 9,8 à 13,4 % pour **6× le volume** : cohérent avec l'acquis du
+1er août, la couverture n'est pas le levier et ne doit pas être lue comme un
+progrès.
+
+**3. Hygiène d'étiquetage — les compteurs du générateur, agrégés sur 12 shards**
+
+| compteur | valeur | lecture |
+|---|---|---|
+| échantillons candidats | 13 226 109 | → 12 000 000 gardés |
+| **contaminés (post-epsilon)** | **2 611 826 = 19,75 %** | cible de `--drop-post-eps`, **toujours off** |
+| parties au plafond de plies | 18 879 / 393 304 = **4,80 %** | coûtent 1 226 109 échantillons (**9,27 %**) |
+| `dropped_post_eps` / `tb_relabel` / `adjudicated` | **0 / 0 / 0** | tous les boutons d'hygiène sont fermés |
+| événements epsilon | 960 103 / 52 894 174 plies = 1,82 % | dont **694 589 (72,3 %) ont changé le meilleur coup** |
+| parties contenant ≥ 1 epsilon | 361 490 / 393 304 = **91,9 %** | |
+
+⚠️ **Un cinquième du corpus porte une étiquette qui parle d'une partie détournée
+après lui.** C'est le plus gros chiffre du tableau, et c'est la cellule C1 du
+jalon M3 de [`L3_SIGNAL_FACTORY_CHARTER_20260804.md`](experiments/L3_SIGNAL_FACTORY_CHARTER_20260804.md).
+
+### ⏱️ Ancre de débit ré-ancrée sur HOME — l'ancienne était optimiste de 37 %
+
+ETA annoncée **1h30**, réalisée **3h06 = 2,07×**. Cause unique : **ancre de
+débit transportée sans être re-mesurée** — check-list point 2, la faute même de
+0665.
+
+- ancre utilisée : 9 804 pos/min/shard (`home-1003`/`1004`)
+- **mesuré : 6 210 pos/min/shard**, 74 500/min au total sur 12 producteurs — **−37 %**
+- génération 17h46 → 20h27 UTC = **2h41** ; le reste (build, fetch, mix, split,
+  couverture, pool d'éval) = 25 min
+- dispersion des shards : **5 minutes sur 12**, aucun traînard
+
+> **✅ NOUVELLE ANCRE HOME À UTILISER** : `--gen-data-wdl` **d8**, étiquetage d4,
+> joueur L2LOW, 12 producteurs → **6 210 pos KEPT/min/shard**, **74 500/min au
+> total**. L'ancre `home-1003`/`1004` à 9 804 pos/min/shard date d'un autre
+> modèle et ne doit plus servir à sizer.
 
 ## 0bis. Nuit du 2 au 3 août 2026 — la tolérance du solveur
 
