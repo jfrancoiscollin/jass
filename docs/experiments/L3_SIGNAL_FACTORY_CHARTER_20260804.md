@@ -226,6 +226,21 @@ pas interprétable.
 `n=12 000` ≈ **1h**. Soit **~3h par cellule**, **~12h pour quatre**, hors
 génération du pool.
 
+> ⛔ **LE POOL DE M3 DOIT ÊTRE REGÉNÉRÉ EN JSM2 — constat de la revue de la PR
+> 417, 5 août.** `corpus_signal_report.py` refuse explicitement un sidecar JSM1
+> (`"requires JSM2 game context; JSM1 is insufficient"`), et c'est correct : les
+> champs de contexte n'existent nulle part dans un JSM1, il n'y a rien à
+> reconstituer. Or **aucun corpus de l'historique n'est en JSM2**, y compris le
+> 12 M de `home-1310` (`magic = JSM1`, vérifié sur l'artefact). Et `merge`/`mix`
+> **refusent les schémas mélangés** (`"mix inputs must all use the same sidecar
+> schema"`), donc la recette 1:1 mémoire + frais casse net dès qu'une moitié est
+> en JSM2 — comportement fail-closed voulu, pas un défaut.
+> ✅ **Conséquence sur le sizing** : les quatre cellules partent d'un corpus
+> **100 % frais en JSM2**, ce que le chemin all-fresh de
+> `l3-pure-volume8m-preflight-v1.sh` sait déjà produire. Compter **~3h de
+> génération** (12 M à d8, ancre re-mesurée du 4 août : 6 210 pos/min/shard sur
+> 12 producteurs) **AVANT** les ~12h de portes. **M3 ≈ 15h**, pas 12.
+
 ### M4 — L'usine
 
 Composition d'un corpus par la métrique **validée** en M3, puis génération à
@@ -265,6 +280,20 @@ Pour chaque jalon, dans cet ordre :
 6. les compteurs de la fiche M1 **concordent** avec ceux que le moteur imprime
    déjà (`LABELHYG`, `WDLDIST`) sur le même corpus — deux implémentations qui
    divergent, c'est un bug, pas deux chiffres.
+   ⚠️ **CORRECTION DU 5 AOÛT — ce critère était insatisfaisable tel qu'écrit, et
+   l'erreur est de moi, pas de l'implémentation.** Les deux comptes n'ont pas le
+   même dénominateur : le moteur compte sur les échantillons **candidats**,
+   AVANT le rejet des parties plafonnées, la fiche divise par les records
+   **présents dans le corpus**, APRÈS. Sur `home-1310` : contamination
+   `2 611 826 / 13 226 109 = 19,75 %` côté moteur, contre un rapport sur
+   `12 000 000` côté fiche. Pire, sous `--drop-plycap` — la recette courante —
+   les parties plafonnées n'émettent AUCUN échantillon, donc la fiche annonce
+   `plycap.games = 0` là où le moteur annonce `4,80 %`, et les deux ont raison.
+   ✅ **Critère corrigé** : la fiche doit exposer, pour la contamination et le
+   ply-cap, **le compte brut ET le dénominateur qu'elle utilise** ; la
+   concordance se vérifie alors sur `WDLDIST` (mêmes records des deux côtés) et
+   sur les comptes bruts, jamais sur les parts. Une part qui diffère n'est un
+   bug que si le dénominateur est le même.
 
 ---
 
