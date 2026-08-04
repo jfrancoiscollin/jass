@@ -59,6 +59,12 @@ L2="${L2:-3e-5}"; LBFGS_MAXCOR=20; CHUNK=20000
 # juillet (`l2_factor_closed_on_3e5`) sur un ridge centre sur ZERO ; cette
 # fermeture ne se transporte donc pas a la recette courante.
 ARM_A_L2="${ARM_A_L2:-$L2}"; ARM_B_L2="${ARM_B_L2:-$L2}"
+# `hier_l2` : recul vers la MOYENNE DU PATTERN, en plus du ridge — il ne le
+# remplace pas (train.py : `loss += 0.5*hier_l2*|w-mu_p|^2` et le gradient
+# correspondant, tous deux ajoutes APRES le terme prior/ridge). A 0, le drapeau
+# n'est meme pas passe, donc tous les jobs anterieurs restent byte-identiques.
+ARM_A_HIER_L2="${ARM_A_HIER_L2:-0}"; ARM_B_HIER_L2="${ARM_B_HIER_L2:-0}"
+hier_args(){ case "$1" in 0|0.0|"") : ;; *) printf '%s\n%s\n' --hier-l2 "$1" ;; esac; }
 # `gtol` est un critere d'ARRET, pas un parametre du modele — et il n'est pas
 # neutre entre parametrisations. `cpx62-1155` : le bras men-only descend a
 # 0,000548 en 141 iterations, le bras king-aware s'arrete a 0,000913 en 12, avec
@@ -214,8 +220,9 @@ say "  extras ✓ K=$K (identique à TURNOVER)"
 # la majorité des buckets, qui ne sont vus que quelques fois. `--prior-mean`
 # déplace le centre du ridge sur le champion ; avec `--prior-decay 0` la
 # précision reste uniformément `l2`, donc SEUL le centre bouge.
-fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
-  local arm="$1" foldflag="$2" gtol="$3" l2v="$4"; shift 4
+fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5 = hier_l2, $6... = continuation
+  local arm="$1" foldflag="$2" gtol="$3" l2v="$4" hierv="$5"; shift 5
+  local hier=(); mapfile -t hier < <(hier_args "$hierv")
   stage "fit-$arm"
   set +e
   # PYTHONUNBUFFERED : sans lui, la sortie du trainer est bufferisee par blocs
@@ -230,7 +237,7 @@ fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5... = continuation
     timeout "$FIT_TIMEOUT" "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
       --data "$IN/corpus.jnnw" --feat "$W/corpus.feat" --out "$W/$arm.pjtw" \
       --target wdl --loss logistic "$foldflag" --tempo-stage \
-      "$@" --holdout-count "$HOLDOUT" \
+      "$@" ${hier[@]+"${hier[@]}"} --holdout-count "$HOLDOUT" \
       --l2 "$l2v" --max-iter "$MAXIT" --chunk "$CHUNK" \
       --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$gtol" \
       --prune \
@@ -294,9 +301,10 @@ mapfile -t A_ARGS < <(cont_args "$ARM_A_CONT")
 mapfile -t B_ARGS < <(cont_args "$ARM_B_CONT")
 say "  gtol : A=$ARM_A_GTOL  B=$ARM_B_GTOL  max_iter=$MAXIT"
 say "  l2   : A=$ARM_A_L2  B=$ARM_B_L2"
+say "  hier : A=$ARM_A_HIER_L2  B=$ARM_B_HIER_L2"
 case "$ARM_A_CONT$ARM_B_CONT" in *priorvisit*) say "  prior pondere : decay=$PRIOR_DECAY lam=$PRIOR_LAM";; esac
-fit_arm control "$ARM_A_FOLD" "$ARM_A_GTOL" "$ARM_A_L2" "${A_ARGS[@]}"
-fit_arm exact   "$ARM_B_FOLD" "$ARM_B_GTOL" "$ARM_B_L2" "${B_ARGS[@]}"
+fit_arm control "$ARM_A_FOLD" "$ARM_A_GTOL" "$ARM_A_L2" "$ARM_A_HIER_L2" "${A_ARGS[@]}"
+fit_arm exact   "$ARM_B_FOLD" "$ARM_B_GTOL" "$ARM_B_L2" "$ARM_B_HIER_L2" "${B_ARGS[@]}"
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
