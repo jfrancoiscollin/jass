@@ -2680,6 +2680,81 @@ int run_gen_siblings_mode(int argc, char** argv) {
     return 0;
 }
 
+// --egdb-audit <in.jnnw> <db_dir> [cache_mb]
+//
+// LECTURE SEULE. Ne relabellise rien, ne cherche rien, n'ecrit aucun corpus :
+// pour chaque record tombant dans la tablebase, il compare l'etiquette PORTEE
+// PAR LE CORPUS a la VERITE de jeu, et rend la matrice de confusion 3x3.
+//
+// Motif : le corpus WDL etiquette chaque position par le RESULTAT DE LA PARTIE.
+// Sur les positions ou la tablebase sait, ce resultat peut etre faux — une
+// position theoriquement nulle gagnee par une bourde ulterieure porte
+// l'etiquette « gain ». Le taux de desaccord est donc une mesure DIRECTE et
+// ABSOLUE du bruit d'etiquetage, pas un proxy.
+//
+// ⚠️ Il ne couvre que les positions a <= 7 pieces, la ou le resultat de partie
+// est justement le PLUS fiable : c'est une borne OPTIMISTE du bruit reel.
+int run_egdb_audit_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: --egdb-audit <in.jnnw> <db_dir> [cache_mb]\n";
+        return 2;
+    }
+    const std::string in_path = argv[2];
+    const std::string db_dir  = argv[3];
+    const int cache_mb = (argc > 4) ? parse_int_or(argv[4], 1024) : 1024;
+
+    if (!jass::egdb::init(db_dir, cache_mb)) {
+        std::cerr << "error: egdb::init failed for '" << db_dir
+                  << "' (built without -DJASS_EGDB, or no DB there)\n";
+        return 1;
+    }
+    std::ifstream f(in_path, std::ios::binary);
+    if (!f) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char hdr[8];
+    if (!f.read(hdr, 8) || std::memcmp(hdr, "JNNW", 4) != 0) {
+        std::cerr << "error: " << in_path << " is not JNNW\n"; return 1;
+    }
+    std::vector<char> buf((std::istreambuf_iterator<char>(f)),
+                          std::istreambuf_iterator<char>());
+    f.close();
+    const std::size_t nrec = buf.size() / 38;
+
+    // conf[label+1][truth+1], indices 0=perte 1=nulle 2=gain, POV trait.
+    long long conf[3][3] = {};
+    long long in_range = 0;
+    for (std::size_t i = 0; i < nrec; ++i) {
+        const char* rec = buf.data() + i * 38;
+        const jass::Position p = position_from_record(rec);
+        const jass::EndgameResult tb = jass::egdb::probe(p);
+        if (tb == jass::EndgameResult::Unknown) continue;
+        const std::uint8_t stm = static_cast<std::uint8_t>(rec[32]);
+        const int truth = wdl_from_result(tb, stm);
+        const int label = static_cast<int>(static_cast<std::int8_t>(rec[37]));
+        if (label < -1 || label > 1) continue;   // record hors contrat
+        ++conf[label + 1][truth + 1];
+        ++in_range;
+    }
+    long long agree = conf[0][0] + conf[1][1] + conf[2][2];
+    // Une inversion gain<->perte est bien plus grave qu'un gain<->nulle.
+    long long inverted = conf[0][2] + conf[2][0];
+    const double dis = in_range > 0
+        ? 100.0 * static_cast<double>(in_range - agree) / static_cast<double>(in_range) : 0.0;
+    const double inv = in_range > 0
+        ? 100.0 * static_cast<double>(inverted) / static_cast<double>(in_range) : 0.0;
+    std::cout << "EGDBAUDIT records=" << nrec << " in_range=" << in_range
+              << " (" << (nrec ? 100.0 * static_cast<double>(in_range) / static_cast<double>(nrec) : 0.0)
+              << "%)  agree=" << agree
+              << "  disagree=" << (in_range - agree) << " (" << dis << "%)"
+              << "  inverted=" << inverted << " (" << inv << "%)\n";
+    static const char* nm[3] = {"perte", "nulle", "gain"};
+    for (int l = 0; l < 3; ++l) {
+        std::cout << "EGDBCONF label=" << nm[l];
+        for (int t = 0; t < 3; ++t) std::cout << "  verite_" << nm[t] << "=" << conf[l][t];
+        std::cout << '\n';
+    }
+    return 0;
+}
+
 int run_egdb_relabel_mode(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "usage: --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n";
@@ -5340,6 +5415,7 @@ int main(int argc, char** argv) {
         else if (a == "--dump-children")            return run_dump_children_mode(argc, argv);
         else if (a == "--replay-moves")             return run_replay_moves_mode(argc, argv);
         else if (a == "--egdb-selfcheck")           return run_egdb_selfcheck_mode(argc, argv);
+        else if (a == "--egdb-audit")               return run_egdb_audit_mode(argc, argv);
         else if (a == "--egdb-relabel")             return run_egdb_relabel_mode(argc, argv);
         else if (a == "--deep-relabel")             return run_deep_relabel_mode(argc, argv);
         else if (a == "--gen-siblings")             return run_gen_siblings_mode(argc, argv);
@@ -5382,6 +5458,7 @@ int main(int argc, char** argv) {
                 "  --no-nnue                        HUB mode only — disable the\n"
                 "                                   embedded default NNUE and use\n"
                 "                                   the handcrafted eval instead.\n"
+                "  --egdb-audit <in.jnnw> <db_dir> [cache_mb]   (lecture seule)\n"
                 "  --egdb-relabel <in.jnnw> <db_dir> [out.jnnw] [cache_mb]\n"
                 "                                   rewrite WDL labels of <=7-piece\n"
                 "                                   positions with the EXACT egdb result.\n"
