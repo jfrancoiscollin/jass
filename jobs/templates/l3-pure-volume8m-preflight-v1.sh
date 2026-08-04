@@ -111,6 +111,20 @@ TOTAL_RECORDS="${TOTAL_RECORDS:-12000000}"
 FRESH_WEIGHT=2
 MEMORY_WEIGHT=1
 PRODUCERS="${PRODUCERS:-12}"
+# Schéma du sidecar. JSM1 = défaut historique, byte-compatible avec tous les
+# corpus existants. JSM2 = contexte de partie (ply, game_plies, last_eps_ply,
+# game_result POV BLANC, flags) — INDISPENSABLE à corpus_signal_report.py, qui
+# refuse explicitement un JSM1 parce que ces champs ne s'y reconstituent pas.
+# ⚠️ merge/mix REFUSENT de mélanger les deux schémas : un pool destiné à M1/M2/M3
+# doit être 100 % JSM2, donc 100 % frais (aucune mémoire, qui est en JSM1).
+SAMPLE_META_FORMAT="${SAMPLE_META_FORMAT:-jsm1}"
+case "$SAMPLE_META_FORMAT" in
+  jsm1) META_FMT_ARGS=() ;;
+  jsm2) META_FMT_ARGS=(--sample-meta-format jsm2)
+        [ "${MEMORY_RECORDS:-0}" -eq 0 ] ||
+          die "SAMPLE_META_FORMAT=jsm2 exige MEMORY_RECORDS=0 : la moitié mémoire est en JSM1 et le mix refuse les schémas mélangés" ;;
+  *)    die "SAMPLE_META_FORMAT doit valoir jsm1 ou jsm2 (reçu: $SAMPLE_META_FORMAT)" ;;
+esac
 LABEL_DEPTH="${LABEL_DEPTH:-4}"
 PLAY_DEPTH="${PLAY_DEPTH:-9}"
 MAXPLIES=260
@@ -230,6 +244,7 @@ for shard in $(seq 0 $((PRODUCERS - 1))); do
     --nnue "$W/PLAYER.pjtw" --search-params-play "$Q00" --wdl-zero-score \
     --random-open-plies 8 --explore-eps 8 --explore-decay-plies 60 \
     --pair-openings --drop-plycap --sample-meta-out "$meta" \
+    ${META_FMT_ARGS[@]+"${META_FMT_ARGS[@]}"} \
     > "$W/fresh-s$shard.log" 2>&1 &
   ACTIVE+=("$!"); pairs+=(--pair "$data" "$meta")
 done
@@ -253,6 +268,17 @@ for _sd in "$W"/fresh-s*.jnnw; do
     die "canari WDL : distribution des resultats aberrante dans $_sd"
 done
 say "  canari WDL ✓ sur les $PRODUCERS shards"
+# Round-trip écriture→lecture du schéma demandé (règle 9). Le moteur accepte
+# --sample-meta-format en silence ; sans cette garde, un pool destiné à M1
+# pourrait sortir en JSM1 et n'être refusé qu'à la lecture, des heures plus tard.
+meta_magic_of(){ head -c4 "$1" 2>/dev/null; }
+_want=$(printf '%s' "$SAMPLE_META_FORMAT" | tr '[:lower:]' '[:upper:]')
+for _sm in "$W"/fresh-s*.jsm "$W/fresh.jsm"; do
+  _got=$(meta_magic_of "$_sm")
+  [ "$_got" = "$_want" ] ||
+    die "sidecar $_sm en '$_got' alors que SAMPLE_META_FORMAT=$SAMPLE_META_FORMAT attendait '$_want'"
+done
+say "  sidecar ✓ : $_want sur les $PRODUCERS shards + le merge"
 say "  frais ✓ : $FRESH_RECORDS records à d$PLAY_DEPTH depuis $PLAYER_LABEL"
 
 phase assemble-memory-corpus
