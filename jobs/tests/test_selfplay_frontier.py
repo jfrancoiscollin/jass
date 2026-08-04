@@ -57,6 +57,48 @@ class SelfplayFrontierTests(unittest.TestCase):
             self.assertNotEqual(rows[0].game_id, rows[1].game_id)
             self.assertEqual([row.seeded for row in rows], [0, 1])
 
+    def test_jsm2_round_trip_preserves_every_field(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31), bm=bits(10), stm=0, wdl=1),
+                record(wm=bits(32), bm=bits(11), stm=1, wdl=-1),
+            ]
+            rows = [
+                SF.Meta(7, 9, 0, 1, 12, 4, 1, 0),
+                SF.Meta(7, 9, 0, 8, 12, 4, 1, 4),
+            ]
+            data, meta = self.write_pair(root, "v2", records, rows)
+            self.assertEqual(meta.read_bytes()[:4], b"JSM2")
+            read_records, read_rows = SF.read_pair(data, meta)
+            self.assertEqual(read_records, records)
+            self.assertEqual(read_rows, rows)
+
+    def test_merge_jsm2_preserves_context_while_namespacing_ids(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            rec_a = record(wm=bits(31), bm=bits(10), stm=0, wdl=1)
+            rec_b = record(wm=bits(30), bm=bits(9), stm=1, wdl=-1)
+            row_a = SF.Meta(1, 3, 0, 2, 10, 5, 1, 0)
+            row_b = SF.Meta(1, 3, 1, 7, 11, 0xFFFF, 1, 2)
+            a = self.write_pair(root, "a2", [rec_a], [row_a])
+            b = self.write_pair(root, "b2", [rec_b], [row_b])
+            out_data, out_meta = root / "all2.jnnw", root / "all2.jsm"
+            manifest = root / "merge2.json"
+            self.assertEqual(SF.do_merge(Namespace(
+                pair=[[str(a[0]), str(a[1])], [str(b[0]), str(b[1])]],
+                out_data=str(out_data), out_meta=str(out_meta),
+                manifest=str(manifest), no_wdl_check=True,
+            )), 0)
+            _, rows = SF.read_pair(out_data, out_meta)
+            self.assertNotEqual(rows[0].game_id, rows[1].game_id)
+            self.assertEqual(
+                [(r.ply, r.game_plies, r.last_eps_ply, r.game_result, r.flags) for r in rows],
+                [(2, 10, 5, 1, 0), (7, 11, 0xFFFF, 1, 2)],
+            )
+            payload = json.loads(manifest.read_text())
+            self.assertEqual(payload["sidecar_schema"], {"magic": "JSM2", "record_size": 25})
+
     def test_nested_merge_remaps_ids_but_preserves_opening_groups(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -141,6 +183,38 @@ class SelfplayFrontierTests(unittest.TestCase):
                 self.assertTrue(all(row.opening_id in {100, 101, 102} for row in rows_out))
                 self.assertEqual(len({row.game_id >> 56 for row in rows_out}), 2)
             self.assertEqual(outputs[0], outputs[1])
+
+    def test_mix_jsm2_preserves_context_and_declares_schema(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            records = [
+                record(wm=bits(31 + index), bm=bits(10), stm=index % 2,
+                       wdl=1 if index % 2 == 0 else -1)
+                for index in range(4)
+            ]
+            rows = [
+                SF.Meta(index + 1, index + 10, 0, index, 8, 2, 1, index & 1)
+                for index in range(4)
+            ]
+            source = self.write_pair(root, "source2", records, rows)
+            out_data, out_meta = root / "mix2.jnnw", root / "mix2.jsm"
+            manifest = root / "mix2.json"
+            self.assertEqual(SF.do_mix(Namespace(
+                source=[["ONLY", str(source[0]), str(source[1]), "1"]],
+                target_records=4, seed=5, out_data=str(out_data),
+                out_meta=str(out_meta), manifest=str(manifest),
+            )), 0)
+            output_records, output_rows = SF.read_pair(out_data, out_meta)
+            self.assertEqual(output_records, records)
+            self.assertEqual(
+                [(r.ply, r.game_plies, r.last_eps_ply, r.game_result, r.flags)
+                 for r in output_rows],
+                [(r.ply, r.game_plies, r.last_eps_ply, r.game_result, r.flags)
+                 for r in rows],
+            )
+            self.assertEqual(
+                json.loads(manifest.read_text())["sidecar_schema"]["magic"], "JSM2"
+            )
 
     def test_mix_rejects_a_quota_larger_than_its_source(self):
         with tempfile.TemporaryDirectory() as td:

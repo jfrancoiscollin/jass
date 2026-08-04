@@ -43,12 +43,13 @@ if _pgd:
     sys.path.insert(0, _pgd)
 import patterns                                    # noqa: E402
 import train                                       # noqa: E402  (reuse builders/expand/writer)
+import eval_phase                                  # noqa: E402  (shared fit/report phase path)
 from train import (                                # noqa: E402
     CF_BUCKETS, colorfold_maps,
     build_sparse_X_phased, build_extras_phased,
     train_lbfgs_chunked, write_weights_v3,
     load_v3_weights_float,
-    phase_wmg, _TEMPO_WW, _TEMPO_BW,
+    phase_wmg,
 )
 
 # JNNW / FEAT on-disk geometry.
@@ -462,22 +463,17 @@ def _holdout_logloss(build_fn, y_all, model_weights, train_n, n_records, chunk):
 
 
 # --------------------------------------------------------------------------- #
-#  Per-chunk popcount helpers (replicate train.py's piece_count / tempo_wmg but
-#  on raw bitboard arrays rather than a MasterDataset, so they work on a slice).
+#  Per-chunk adapters to the shared phase helpers.  These retain the historical
+#  train_stream surface for rank/wdl finetune callers without duplicating math.
 # --------------------------------------------------------------------------- #
 def _piece_count_bb(wm, wk, bm, bk):
     """Total pieces (men+kings, both sides) per row : popcount(OR of 4 boards)."""
-    allbb = (wm | wk | bm | bk)
-    bits = np.unpackbits(allbb.view(np.uint8)).reshape(len(allbb), 64)
-    return bits.sum(axis=1)
+    return eval_phase.piece_count_bb(wm, wk, bm, bk)
 
 
 def _tempo_wmg_bb(wm, bm):
     """Scan tempo midgame weight = clip(tempo/300), men only. Matches train.py."""
-    w = np.unpackbits(wm.view(np.uint8)).reshape(len(wm), 64).astype(np.float64)
-    b = np.unpackbits(bm.view(np.uint8)).reshape(len(bm), 64).astype(np.float64)
-    tempo = w.dot(_TEMPO_WW) + b.dot(_TEMPO_BW)
-    return np.clip(tempo / 300.0, 0.0, 1.0)
+    return eval_phase.tempo_wmg_bb(wm, bm)
 
 
 # --------------------------------------------------------------------------- #
