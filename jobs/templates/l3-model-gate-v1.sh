@@ -154,21 +154,56 @@ elif [ "${REQUIRE_EGDB:-0}" = 1 ]; then
 else
   say "  ⚠️ EGDB ABSENT — comparaison interne valide, Elo non comparable aux portes antérieures"
 fi
-cmake -S . -B "$W/build" $FLAGS > "$W/cmake.log" 2>&1
-cmake --build "$W/build" -j"$NCPU" --target jass > "$W/build.log" 2>&1
-J8="$W/build/jass"; [ -x "$J8" ] || { restore_src; die "build sans binaire"; }
+# Un build PAR BRAS quand les deux bras n'ont pas la même géométrie de features.
+# Motif : un modèle `--king-patterns` exige un moteur compilé
+# `-DJASS_KING_PATTERNS` (CMakeLists.txt), l'occupation devenant `men|kings`.
+# Tant que les deux extras sont vides — le cas de TOUTES les portes antérieures —
+# un SEUL build est produit et les deux bras partagent le binaire, exactement
+# comme avant. `run_jass_gate_bounded.py` accepte déjà deux binaires distincts
+# (`--jass-a` / `--jass-b`), donc rien à changer côté harnais.
+ARM_A_CMAKE_EXTRA="${ARM_A_CMAKE_EXTRA:-}"; ARM_B_CMAKE_EXTRA="${ARM_B_CMAKE_EXTRA:-}"
+build_engine(){   # $1 = suffixe de repertoire, $2... = flags supplementaires
+  local tag="$1"; shift
+  cmake -S . -B "$W/build$tag" $FLAGS "$@" > "$W/cmake$tag.log" 2>&1
+  cmake --build "$W/build$tag" -j"$NCPU" --target jass > "$W/build$tag.log" 2>&1
+  [ -x "$W/build$tag/jass" ] || { restore_src; die "build$tag sans binaire"; }
+}
+if [ "$ARM_A_CMAKE_EXTRA" = "$ARM_B_CMAKE_EXTRA" ]; then
+  build_engine "" $ARM_A_CMAKE_EXTRA
+  JA="$W/build/jass"; JB="$JA"
+  say "  build unique partagé par les deux bras${ARM_A_CMAKE_EXTRA:+ ($ARM_A_CMAKE_EXTRA)}"
+else
+  build_engine "-A" $ARM_A_CMAKE_EXTRA
+  build_engine "-B" $ARM_B_CMAKE_EXTRA
+  JA="$W/build-A/jass"; JB="$W/build-B/jass"
+  # ⚠️ Deux binaires = un second facteur POTENTIEL. Il n'est legitime que parce
+  # que le modele d'un bras est INCHARGEABLE par le build de l'autre : le
+  # chargeur refuse un modele dont le bit king de l'en-tete contredit le build
+  # (scan_eval.cpp). C'est verifie juste en dessous, bras par bras.
+  say "  builds PAR BRAS : A [$ARM_A_CMAKE_EXTRA] · B [$ARM_B_CMAKE_EXTRA]"
+fi
 restore_src
-for arm in A B; do
-  printf 'hello\nquit\n' | timeout 60 "$J8" --pattern "$W/$arm.pjtw" > "$W/load-$arm.log" 2>&1
-  grep -q '^ready' "$W/load-$arm.log" || die "le binaire ne charge pas le modèle $arm"
-done
+load_ok(){ printf 'hello\nquit\n' | timeout 60 "$1" --pattern "$2" > "$3" 2>&1; grep -q '^ready' "$3"; }
+load_ok "$JA" "$W/A.pjtw" "$W/load-A.log" || die "le binaire du bras A ne charge pas le modèle A"
+load_ok "$JB" "$W/B.pjtw" "$W/load-B.log" || die "le binaire du bras B ne charge pas le modèle B"
+# Garde-fou du build par bras : si les deux builds differaient mais que chaque
+# binaire chargeait AUSSI le modele de l'autre, c'est que la distinction annoncee
+# n'existe pas dans les artefacts et que la porte mesurerait deux fois la meme
+# geometrie sous deux binaires — un second facteur GRATUIT, donc illegitime.
+if [ "$JA" != "$JB" ]; then
+  if load_ok "$JA" "$W/B.pjtw" "$W/crossload-AB.log" &&
+     load_ok "$JB" "$W/A.pjtw" "$W/crossload-BA.log"; then
+    die "builds par bras demandés mais les deux modèles se chargent des deux côtés : la distinction n'est pas dans les modèles"
+  fi
+  say "  distinction par bras ✓ (chaque binaire refuse le modèle de l'autre)"
+fi
 say "  build ✓, modèles chargeables"
 
 run_view(){
   local view="$1"; local args=()
   [ "$view" = q00 ] && args=(--depth "$FORCE_DEPTH") || args=(--movetime "$MOVETIME")
   timeout 10800 python3 jobs/tools/run_jass_gate_bounded.py \
-    --jass-a "$J8" --jass-b "$J8" \
+    --jass-a "$JA" --jass-b "$JB" \
     --pattern-a "$W/A.pjtw" --pattern-b "$W/B.pjtw" \
     --search-params-a "$Q00" --search-params-b "$Q00" \
     --openings-file "$W/open-eval.fen" "${args[@]}" --pairs 1 \
