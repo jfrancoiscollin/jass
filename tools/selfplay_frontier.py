@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Game-aware dataset utilities for the autonomous L3-PURE self-play loop.
 
-The tool consumes only Jass self-play records and the aligned ``JSM1`` sidecar
+The tool consumes only Jass self-play records and an aligned ``JSM1`` or
+``JSM2`` sidecar
 emitted by ``jass --gen-data-wdl --sample-meta-out``.  It has five operations:
 
 ``merge``
     Merge independent shards while namespacing game/opening identifiers.
 
 ``mix``
-    Build an exact-size, deterministic weighted mixture of aligned JNNW/JSM1
+    Build an exact-size, deterministic weighted mixture of aligned JNNW/metadata
     corpora.  Sampling is uniform at record level, while opening identifiers
     are preserved across sources so a subsequent ``split`` still assigns every
     occurrence of a paired opening to the same fold.
@@ -46,13 +47,32 @@ import shutil
 import struct
 import sys
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 JNNW_MAGIC = b"JNNW"
 JNNW_REC = 38
-META_MAGIC = b"JSM1"
-META_REC = 17  # game_id:u64, opening_id:u64, seeded:u8
+JSM1_MAGIC = b"JSM1"
+JSM2_MAGIC = b"JSM2"
+JSM1_STRUCT = struct.Struct("<QQB")
+JSM2_STRUCT = struct.Struct("<QQBHHHbB")
+META_MAGIC = JSM1_MAGIC  # Backward-compatible aliases used by older callers.
+META_REC = JSM1_STRUCT.size
+
+
+@dataclass(frozen=True)
+class MetaSchema:
+    magic: bytes
+    record: struct.Struct
+
+    @property
+    def name(self) -> str:
+        return self.magic.decode("ascii")
+
+
+JSM1_SCHEMA = MetaSchema(JSM1_MAGIC, JSM1_STRUCT)
+JSM2_SCHEMA = MetaSchema(JSM2_MAGIC, JSM2_STRUCT)
+META_SCHEMAS = {schema.magic: schema for schema in (JSM1_SCHEMA, JSM2_SCHEMA)}
 
 
 
@@ -104,6 +124,84 @@ class Meta:
     game_id: int
     opening_id: int
     seeded: int
+    ply: int | None = None
+    game_plies: int | None = None
+    last_eps_ply: int | None = None
+    game_result: int | None = None  # WHITE POV; JNNW WDL is side-to-move POV.
+    flags: int | None = None
+
+
+def _meta_schema_for_rows(rows: list[Meta]) -> MetaSchema:
+    extended = [row.ply is not None for row in rows]
+    if any(extended) and not all(extended):
+        raise ValueError("cannot mix JSM1 and JSM2 metadata rows")
+    return JSM2_SCHEMA if any(extended) else JSM1_SCHEMA
+
+
+def _validate_meta(row: Meta, schema: MetaSchema, *, context: str = "metadata") -> None:
+    if row.seeded not in (0, 1):
+        raise ValueError(f"{context}: seeded {row.seeded} outside {{0,1}}")
+    if not (0 <= row.game_id < (1 << 64) and 0 <= row.opening_id < (1 << 64)):
+        raise ValueError(f"{context}: game/opening id outside u64")
+    if schema is JSM1_SCHEMA:
+        if any(value is not None for value in (
+            row.ply, row.game_plies, row.last_eps_ply, row.game_result, row.flags
+        )):
+            raise ValueError(f"{context}: extended fields cannot be encoded as JSM1")
+        return
+    values = (row.ply, row.game_plies, row.last_eps_ply, row.game_result, row.flags)
+    if any(value is None for value in values):
+        raise ValueError(f"{context}: incomplete JSM2 record")
+    assert row.ply is not None and row.game_plies is not None
+    assert row.last_eps_ply is not None and row.game_result is not None
+    assert row.flags is not None
+    if not (0 <= row.ply <= 0xFFFF and 0 <= row.game_plies <= 0xFFFF):
+        raise ValueError(f"{context}: ply fields outside u16")
+    if not (0 <= row.last_eps_ply <= 0xFFFF):
+        raise ValueError(f"{context}: last_eps_ply outside u16")
+    if row.game_result not in (-1, 0, 1):
+        raise ValueError(f"{context}: game_result outside {{-1,0,1}}")
+    if not (0 <= row.flags <= 0xFF) or row.flags & ~0x07:
+        raise ValueError(f"{context}: flags use reserved bits")
+    if row.ply >= row.game_plies:
+        raise ValueError(f"{context}: ply {row.ply} is not below game_plies {row.game_plies}")
+
+
+def _decode_meta(raw: bytes, schema: MetaSchema, *, context: str = "metadata") -> Meta:
+    row = Meta(*schema.record.unpack(raw))
+    _validate_meta(row, schema, context=context)
+    return row
+
+
+def _encode_meta(row: Meta, schema: MetaSchema, *, context: str = "metadata") -> bytes:
+    _validate_meta(row, schema, context=context)
+    if schema is JSM1_SCHEMA:
+        return schema.record.pack(row.game_id, row.opening_id, row.seeded)
+    return schema.record.pack(
+        row.game_id,
+        row.opening_id,
+        row.seeded,
+        row.ply,
+        row.game_plies,
+        row.last_eps_ply,
+        row.game_result,
+        row.flags,
+    )
+
+
+def _meta_file_info(path: Path) -> tuple[MetaSchema, int]:
+    with path.open("rb") as stream:
+        header = stream.read(8)
+    if len(header) != 8 or header[:4] not in META_SCHEMAS:
+        found = header[:4] if len(header) >= 4 else header
+        raise ValueError(f"{path}: expected JSM1 or JSM2 header, found {found!r}")
+    schema = META_SCHEMAS[header[:4]]
+    count = struct.unpack_from("<I", header, 4)[0]
+    expected = 8 + count * schema.record.size
+    actual = path.stat().st_size
+    if actual != expected:
+        raise ValueError(f"{path}: size {actual} != {expected} for {count} {schema.name} records")
+    return schema, count
 
 
 @dataclass(frozen=True)
@@ -128,21 +226,26 @@ def _read_counted(path: Path, magic: bytes, record_size: int) -> tuple[int, byte
 
 def read_pair(data_path: Path, meta_path: Path) -> tuple[list[bytes], list[Meta]]:
     n_data, data = _read_counted(data_path, JNNW_MAGIC, JNNW_REC)
-    n_meta, meta = _read_counted(meta_path, META_MAGIC, META_REC)
+    schema, n_meta = _meta_file_info(meta_path)
     if n_data != n_meta:
         raise ValueError(f"data/meta count mismatch: {n_data} != {n_meta}")
     records = [data[i * JNNW_REC:(i + 1) * JNNW_REC] for i in range(n_data)]
-    rows = [
-        Meta(*struct.unpack_from("<QQB", meta, i * META_REC))
-        for i in range(n_meta)
-    ]
+    with meta_path.open("rb") as stream:
+        stream.seek(8)
+        rows = [
+            _decode_meta(
+                stream.read(schema.record.size), schema,
+                context=f"{meta_path}: record {index}",
+            )
+            for index in range(n_meta)
+        ]
     return records, rows
 
 
 def iter_pair(data_path: Path, meta_path: Path):
-    """Iterate an aligned JNNW/JSM1 pair without materialising it in memory."""
+    """Iterate an aligned JNNW/JSM1-or-JSM2 pair without materialising it."""
     n_data = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
-    n_meta = _counted_file_count(meta_path, META_MAGIC, META_REC)
+    schema, n_meta = _meta_file_info(meta_path)
     if n_data != n_meta:
         raise ValueError(f"data/meta count mismatch: {n_data} != {n_meta}")
     with data_path.open("rb") as data_in, meta_path.open("rb") as meta_in:
@@ -150,10 +253,12 @@ def iter_pair(data_path: Path, meta_path: Path):
         meta_in.seek(8)
         for index in range(n_data):
             record = data_in.read(JNNW_REC)
-            meta_raw = meta_in.read(META_REC)
-            if len(record) != JNNW_REC or len(meta_raw) != META_REC:
+            meta_raw = meta_in.read(schema.record.size)
+            if len(record) != JNNW_REC or len(meta_raw) != schema.record.size:
                 raise ValueError(f"aligned pair truncated at record {index}")
-            yield index, record, Meta(*struct.unpack("<QQB", meta_raw))
+            yield index, record, _decode_meta(
+                meta_raw, schema, context=f"{meta_path}: record {index}"
+            )
 
 
 def write_pair(data_path: Path, meta_path: Path,
@@ -163,12 +268,13 @@ def write_pair(data_path: Path, meta_path: Path,
     data_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path.parent.mkdir(parents=True, exist_ok=True)
     count = len(records)
+    schema = _meta_schema_for_rows(rows)
     data_path.write_bytes(JNNW_MAGIC + struct.pack("<I", count) + b"".join(records))
     meta_body = b"".join(
-        struct.pack("<QQB", row.game_id, row.opening_id, row.seeded)
-        for row in rows
+        _encode_meta(row, schema, context=f"output metadata record {index}")
+        for index, row in enumerate(rows)
     )
-    meta_path.write_bytes(META_MAGIC + struct.pack("<I", count) + meta_body)
+    meta_path.write_bytes(schema.magic + struct.pack("<I", count) + meta_body)
 
 
 def _atomic_write_bytes(path: Path, payload: bytes) -> None:
@@ -202,14 +308,15 @@ def _write_pair_atomic(
     if len(records) != len(rows):
         raise ValueError("data/meta output count mismatch")
     count = len(records)
+    schema = _meta_schema_for_rows(rows)
     data_payload = JNNW_MAGIC + struct.pack("<I", count) + b"".join(records)
     meta_body = b"".join(
-        struct.pack("<QQB", row.game_id, row.opening_id, row.seeded)
-        for row in rows
+        _encode_meta(row, schema, context=f"output metadata record {index}")
+        for index, row in enumerate(rows)
     )
     _atomic_write_bytes(data_path, data_payload)
     _atomic_write_bytes(
-        meta_path, META_MAGIC + struct.pack("<I", count) + meta_body
+        meta_path, schema.magic + struct.pack("<I", count) + meta_body
     )
 
 
@@ -228,16 +335,23 @@ def do_merge(args: argparse.Namespace) -> int:
     shard_rows = []
     renamespace_nested = bool(getattr(args, "renamespace_nested", False))
     sources = []
+    meta_schema: MetaSchema | None = None
     total = 0
     for shard_index, (data_name, meta_name) in enumerate(args.pair, start=1):
         if shard_index >= (1 << 16):
             raise ValueError("too many shards for 16-bit namespace")
         data_path, meta_path = Path(data_name), Path(meta_name)
         count = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
-        if _counted_file_count(meta_path, META_MAGIC, META_REC) != count:
+        source_schema, meta_count = _meta_file_info(meta_path)
+        if meta_count != count:
             raise ValueError(f"{data_name}: data/meta count mismatch")
+        if meta_schema is None:
+            meta_schema = source_schema
+        elif source_schema is not meta_schema:
+            raise ValueError("merge inputs must all use the same sidecar schema")
         sources.append((shard_index, data_name, meta_name, data_path, meta_path, count))
         total += count
+    assert meta_schema is not None
 
     out_data, out_meta = Path(args.out_data), Path(args.out_meta)
     out_data.parent.mkdir(parents=True, exist_ok=True)
@@ -247,7 +361,7 @@ def do_merge(args: argparse.Namespace) -> int:
     try:
         with data_tmp.open("wb") as data_out, meta_tmp.open("wb") as meta_out:
             data_out.write(JNNW_MAGIC + struct.pack("<I", total))
-            meta_out.write(META_MAGIC + struct.pack("<I", total))
+            meta_out.write(meta_schema.magic + struct.pack("<I", total))
             for (
                 shard_index,
                 data_name,
@@ -275,14 +389,15 @@ def do_merge(args: argparse.Namespace) -> int:
                             "local game/opening id exceeds 48-bit namespace"
                         )
                     data_out.write(record)
-                    meta_out.write(
-                        struct.pack(
-                            "<QQB",
-                            prefix | game_id,
-                            prefix | opening_id,
-                            row.seeded,
-                        )
-                    )
+                    meta_out.write(_encode_meta(
+                        replace(
+                            row,
+                            game_id=prefix | game_id,
+                            opening_id=prefix | opening_id,
+                        ),
+                        meta_schema,
+                        context=f"merge output record from {meta_name}",
+                    ))
                     wdl_counts[struct.unpack_from("<b", record, 37)[0]] += 1
                     source_counts[
                         "frontier" if row.seeded else "standard"
@@ -315,6 +430,10 @@ def do_merge(args: argparse.Namespace) -> int:
         "schema": 1,
         "operation": "merge",
         "records": total,
+        "sidecar_schema": {
+            "magic": meta_schema.name,
+            "record_size": meta_schema.record.size,
+        },
         "shards": shard_rows,
         "source_records": dict(sorted(source_counts.items())),
         "wdl_canary": wdl,
@@ -399,6 +518,7 @@ def do_mix(args: argparse.Namespace) -> int:
     """Create a memory-bounded exact weighted mix while preserving JSM alignment."""
     namespace_openings = bool(getattr(args, "namespace_openings", False))
     sources = []
+    meta_schema: MetaSchema | None = None
     labels: set[str] = set()
     for source_index, spec in enumerate(args.source, start=1):
         label, data_name, meta_name, weight_text = spec
@@ -411,9 +531,13 @@ def do_mix(args: argparse.Namespace) -> int:
             raise ValueError(f"{label}: invalid integer weight {weight_text!r}") from exc
         data_path, meta_path = Path(data_name), Path(meta_name)
         data_count = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
-        meta_count = _counted_file_count(meta_path, META_MAGIC, META_REC)
+        source_schema, meta_count = _meta_file_info(meta_path)
         if data_count != meta_count:
             raise ValueError(f"{label}: data/meta count mismatch: {data_count} != {meta_count}")
+        if meta_schema is None:
+            meta_schema = source_schema
+        elif source_schema is not meta_schema:
+            raise ValueError("mix inputs must all use the same sidecar schema")
         sources.append({
             "index": source_index,
             "label": label,
@@ -422,6 +546,7 @@ def do_mix(args: argparse.Namespace) -> int:
             "weight": weight,
             "records": data_count,
         })
+    assert meta_schema is not None
 
     target = args.target_records
     quotas = _weighted_quotas(target, [source["weight"] for source in sources])
@@ -438,7 +563,7 @@ def do_mix(args: argparse.Namespace) -> int:
     data_tmp = out_data.with_name(out_data.name + ".tmp")
     meta_tmp = out_meta.with_name(out_meta.name + ".tmp")
     data_header = JNNW_MAGIC + struct.pack("<I", target)
-    meta_header = META_MAGIC + struct.pack("<I", target)
+    meta_header = meta_schema.magic + struct.pack("<I", target)
     output_data_hash = hashlib.sha256(data_header)
     output_meta_hash = hashlib.sha256(meta_header)
     source_manifests = []
@@ -472,12 +597,17 @@ def do_mix(args: argparse.Namespace) -> int:
                     meta_hash.update(meta_source_header)
                     for row_index in range(count):
                         record = data_in.read(JNNW_REC)
-                        meta_raw = meta_in.read(META_REC)
-                        if len(record) != JNNW_REC or len(meta_raw) != META_REC:
+                        meta_raw = meta_in.read(meta_schema.record.size)
+                        if len(record) != JNNW_REC or len(meta_raw) != meta_schema.record.size:
                             raise ValueError(f"{source['label']}: truncated aligned pair")
                         data_hash.update(record)
                         meta_hash.update(meta_raw)
-                        game_id, opening_id, seeded = struct.unpack("<QQB", meta_raw)
+                        row = _decode_meta(
+                            meta_raw,
+                            meta_schema,
+                            context=f"{source['meta']}: record {row_index}",
+                        )
+                        game_id, opening_id = row.game_id, row.opening_id
                         source_openings.add(opening_id)
                         chosen = row_index in sampled
                         if not sampled_are_included:
@@ -498,8 +628,14 @@ def do_mix(args: argparse.Namespace) -> int:
                                     f"{source['label']}: too many openings to namespace"
                                 )
                             output_opening = source["index"] << 56 | local_opening
-                        output_meta = struct.pack(
-                            "<QQB", namespaced_game, output_opening, seeded
+                        output_meta = _encode_meta(
+                            replace(
+                                row,
+                                game_id=namespaced_game,
+                                opening_id=output_opening,
+                            ),
+                            meta_schema,
+                            context=f"mix output record from {source['label']}",
                         )
                         data_out.write(record)
                         meta_out.write(output_meta)
@@ -549,6 +685,10 @@ def do_mix(args: argparse.Namespace) -> int:
         "seed": args.seed,
         "target_records": target,
         "records": selected_total,
+        "sidecar_schema": {
+            "magic": meta_schema.name,
+            "record_size": meta_schema.record.size,
+        },
         "sources": source_manifests,
         "opening_id_policy": (
             "source_namespaced_for_independent_temporal_corpora"
@@ -575,7 +715,8 @@ def do_split(args: argparse.Namespace) -> int:
         raise ValueError("--holdout-mod must be >= 2")
     data_path, meta_path = Path(args.data), Path(args.meta)
     total = _counted_file_count(data_path, JNNW_MAGIC, JNNW_REC)
-    if _counted_file_count(meta_path, META_MAGIC, META_REC) != total:
+    meta_schema, meta_count = _meta_file_info(meta_path)
+    if meta_count != total:
         raise ValueError("data/meta count mismatch")
 
     # First pass: determine the fold of every opening and exact output counts.
@@ -587,10 +728,12 @@ def do_split(args: argparse.Namespace) -> int:
     with meta_path.open("rb") as meta_in:
         meta_in.seek(8)
         for index in range(total):
-            raw = meta_in.read(META_REC)
-            if len(raw) != META_REC:
+            raw = meta_in.read(meta_schema.record.size)
+            if len(raw) != meta_schema.record.size:
                 raise ValueError(f"metadata truncated at record {index}")
-            _, opening_id, _ = struct.unpack("<QQB", raw)
+            opening_id = _decode_meta(
+                raw, meta_schema, context=f"{meta_path}: record {index}"
+            ).opening_id
             hold = fold_by_opening.setdefault(
                 opening_id,
                 _opening_fold(opening_id, args.seed, args.holdout_mod) == 0,
@@ -617,11 +760,9 @@ def do_split(args: argparse.Namespace) -> int:
             hold_meta_tmp.open("wb") as hold_meta,
         ):
             train_data.write(JNNW_MAGIC + struct.pack("<I", total))
-            train_meta.write(META_MAGIC + struct.pack("<I", total))
+            train_meta.write(meta_schema.magic + struct.pack("<I", total))
             for _, record, row in iter_pair(data_path, meta_path):
-                raw_meta = struct.pack(
-                    "<QQB", row.game_id, row.opening_id, row.seeded
-                )
+                raw_meta = _encode_meta(row, meta_schema)
                 if fold_by_opening[row.opening_id]:
                     hold_data.write(record)
                     hold_meta.write(raw_meta)
@@ -649,6 +790,10 @@ def do_split(args: argparse.Namespace) -> int:
         "holdout_mod": args.holdout_mod,
         "seed": args.seed,
         "records": total,
+        "sidecar_schema": {
+            "magic": meta_schema.name,
+            "record_size": meta_schema.record.size,
+        },
         "train_records": train_count,
         "holdout_records": holdout_count,
         "train_openings": len(fold_by_opening) - hold_openings,
@@ -893,21 +1038,22 @@ def _split_opening_sets(
     split_path: Path, meta_path: Path, total: int, train_count: int
 ) -> tuple[set[int], set[int]]:
     """Validate train/holdout opening isolation with bounded memory."""
-    if _counted_file_count(meta_path, META_MAGIC, META_REC) != total:
+    meta_schema, meta_count = _meta_file_info(meta_path)
+    if meta_count != total:
         raise ValueError("data/meta count mismatch")
     train_openings: set[int] = set()
     holdout_openings: set[int] = set()
     with meta_path.open("rb") as stream:
         stream.seek(8)
         for index in range(total):
-            raw = stream.read(META_REC)
-            if len(raw) != META_REC:
+            raw = stream.read(meta_schema.record.size)
+            if len(raw) != meta_schema.record.size:
                 raise ValueError(f"metadata truncated at record {index}")
-            _, opening_id, seeded = struct.unpack("<QQB", raw)
-            if seeded not in (0, 1):
-                raise ValueError(f"meta record {index}: invalid seeded flag")
+            row = _decode_meta(
+                raw, meta_schema, context=f"{meta_path}: record {index}"
+            )
             target = train_openings if index < train_count else holdout_openings
-            target.add(opening_id)
+            target.add(row.opening_id)
     overlap = train_openings & holdout_openings
     if overlap:
         raise ValueError(
@@ -1027,8 +1173,14 @@ def do_mine_hard(args: argparse.Namespace) -> int:
             raise ValueError(f"refusing to overwrite existing output: {paths[name]}")
 
     total = _counted_file_count(paths["data"], JNNW_MAGIC, JNNW_REC)
-    if _counted_file_count(paths["meta"], META_MAGIC, META_REC) != total:
+    input_meta_schema, meta_count = _meta_file_info(paths["meta"])
+    if meta_count != total:
         raise ValueError("data/meta count mismatch")
+    if input_meta_schema is JSM2_SCHEMA:
+        raise ValueError(
+            "mine-hard does not accept JSM2: colour-mirrored replay records "
+            "do not belong to the original played trajectory"
+        )
     split, train_count = _load_split_manifest(paths["split_manifest"], total)
     train_openings, holdout_openings = _split_opening_sets(
         paths["split_manifest"], paths["meta"], total, train_count
@@ -1360,7 +1512,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    merge = sub.add_parser("merge", help="merge JNNW/JSM1 shards")
+    merge = sub.add_parser("merge", help="merge aligned JNNW/JSM1-or-JSM2 shards")
     merge.add_argument("--pair", nargs=2, action="append", required=True,
                        metavar=("DATA", "META"))
     merge.add_argument("--out-data", required=True)
@@ -1386,7 +1538,7 @@ def build_parser() -> argparse.ArgumentParser:
                             "un corpus historique déjà connu comme défectueux")
     merge.set_defaults(func=do_merge)
 
-    mix = sub.add_parser("mix", help="build an exact weighted aligned JNNW/JSM1 mix")
+    mix = sub.add_parser("mix", help="build an exact weighted aligned JNNW/JSM1-or-JSM2 mix")
     mix.add_argument(
         "--source",
         nargs=4,

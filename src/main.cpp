@@ -499,8 +499,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      ply<=last_eps_ply (label contamine par un eps posterieur).
     bool         drop_plycap       = false;  // --drop-plycap : n'emet AUCUN sample d'une partie
                                             //      non resolue a max_plies (jamais de faux label DRAW).
-    const char*  sample_meta_path  = nullptr; // --sample-meta-out : sidecar JSM1 aligne 1:1,
-                                             //      (game_id, opening_id, seeded) par record.
+    const char*  sample_meta_path  = nullptr; // --sample-meta-out : sidecar aligne 1:1.
+    bool         sample_meta_v2    = false;   // --sample-meta-format jsm2 : contexte de partie
+                                             //      JSM2. Le defaut JSM1 reste byte-compatible.
     int          adjud_material    = 0;      // --adjud-material M : FIX#2. avance materielle NETTE (men-equiv,
                                             //      dame=3) >= M tenue adjud_hold_plies => win (0 = off).
     int          adjud_hold_plies  = 10;     // --adjud-hold-plies H : plies consecutifs d'avance requis.
@@ -614,8 +615,26 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             drop_post_eps = true;
         } else if (a == "--drop-plycap") {
             drop_plycap = true;
-        } else if (a == "--sample-meta-out" && i + 1 < argc) {
+        } else if (a == "--sample-meta-out") {
+            if (i + 1 >= argc) {
+                std::cerr << "error: --sample-meta-out requires PATH\n";
+                return 2;
+            }
             sample_meta_path = argv[++i];
+        } else if (a == "--sample-meta-format") {
+            if (i + 1 >= argc) {
+                std::cerr << "error: --sample-meta-format requires jsm1 or jsm2\n";
+                return 2;
+            }
+            const std::string_view value{argv[++i]};
+            if (value == "jsm1") {
+                sample_meta_v2 = false;
+            } else if (value == "jsm2") {
+                sample_meta_v2 = true;
+            } else {
+                std::cerr << "error: --sample-meta-format must be jsm1 or jsm2\n";
+                return 2;
+            }
         } else if (a == "--adjud-material" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) adjud_material = v;
@@ -745,12 +764,25 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int v = parse_int_or(p_argv[7], -1);
         if (v > 0) random_seed = v;
     }
+    if (sample_meta_v2 && sample_meta_path == nullptr) {
+        std::cerr << "error: --sample-meta-format jsm2 requires --sample-meta-out PATH\n";
+        return 2;
+    }
+    if (sample_meta_v2 && pv_extract > 0) {
+        std::cerr << "error: JSM2 cannot describe --pv-extract records because they are "
+                     "not positions from the played trajectory\n";
+        return 2;
+    }
+    if (sample_meta_v2 && max_plies > 0xFFFF) {
+        std::cerr << "error: JSM2 requires max_plies <= 65535\n";
+        return 2;
+    }
     if (node_budget_policy
         && (std::string_view{node_budget_log_path} == std::string_view{out_path}
             || (sample_meta_path != nullptr
                 && std::string_view{node_budget_log_path}
                     == std::string_view{sample_meta_path}))) {
-        std::cerr << "error: --node-budget-log must differ from JNNW and JSM1 outputs\n";
+        std::cerr << "error: --node-budget-log must differ from JNNW and sample-metadata outputs\n";
         return 2;
     }
 
@@ -767,7 +799,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " pv_extract=" << pv_extract
               << " movetime_ms=" << movetime_ms
               << " drop_plycap=" << (drop_plycap ? "true" : "false")
-              << " sample_meta=" << (sample_meta_path ? sample_meta_path : "(off)");
+              << " sample_meta=" << (sample_meta_path ? sample_meta_path : "(off)")
+              << " sample_meta_format=" << (sample_meta_v2 ? "JSM2" : "JSM1");
     if (node_budget_policy) {
         std::cout << " search_limit=nodes"
                   << " node_budget_distribution="
@@ -890,9 +923,12 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     std::uint32_t count_placeholder = 0;
     f.write(reinterpret_cast<const char*>(&count_placeholder), 4);
 
-    // Optional aligned metadata.  JSM1 is intentionally tiny and independent
-    // from JNNW so all existing readers remain byte-compatible:
-    //   4B magic + u32 count + count * (u64 game_id, u64 opening_id, u8 seeded).
+    // Optional aligned metadata, independent from JNNW so enabling either
+    // sidecar never changes the corpus bytes.
+    //   JSM1: (u64 game_id, u64 opening_id, u8 seeded), 17 bytes/record.
+    //   JSM2: the JSM1 prefix followed by (u16 ply, u16 game_plies,
+    //         u16 last_eps_ply, i8 game_result_white, u8 flags), 25 bytes/record.
+    // IMPORTANT: game_result is WHITE POV while the aligned JNNW WDL is STM POV.
     // `opening_id` groups the two repetitions created by --pair-openings, which
     // lets the Python splitter keep colour/role pairs in the same holdout fold.
     std::ofstream sample_meta;
@@ -902,7 +938,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             std::cerr << "error: cannot open " << sample_meta_path << " for writing\n";
             return 1;
         }
-        const char meta_magic[4] = {'J', 'S', 'M', '1'};
+        const char meta_magic[4] = {'J', 'S', 'M', sample_meta_v2 ? '2' : '1'};
         sample_meta.write(meta_magic, 4);
         sample_meta.write(reinterpret_cast<const char*>(&count_placeholder), 4);
     }
@@ -1052,6 +1088,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         int  last_eps_ply = -1;     // ply du dernier coup d'exploration eps de cette partie (instrumentation FIX #1)
         bool game_had_eps = false;   // au moins un tirage epsilon dans cette partie
         bool hit_ply_cap  = true;   // suppose ply-cap ; tout break (perte/TB/25-move/adjud) le remet a false
+        bool game_adjudicated = false;
         int  adjud_counter = 0;     // FIX#2 : plies consecutifs ou l'avance materielle >= adjud_material
         int  game_play_plies = 0;
         // Asymmetric self-play (forcing-ext §4) : the "punisher" colour for THIS game plays the
@@ -1098,6 +1135,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                         outcome_white = (net > 0) ? +1 : -1;
                         game_ended_by_loss = true;   // resolu (decisif) — chemin de flush WDL standard
                         hit_ply_cap = false;
+                        game_adjudicated = true;
                         ++stat_adjudicated;
                         break;
                     }
@@ -1380,6 +1418,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         // to move at sample time eventually won".
         for (const Sample& s : game_samples) {
             int wdl = 0;
+            bool sample_tb_relabelled = false;
             if (game_ended_by_loss) {
                 const int sample_stm_sign = (s.stm == 0) ? +1 : -1;
                 wdl = outcome_white * sample_stm_sign;
@@ -1395,9 +1434,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 for (Bitboard b = static_cast<Bitboard>(s.bbs[2]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackMan);
                 for (Bitboard b = static_cast<Bitboard>(s.bbs[3]); b; ) sp.add_piece(pop_lsb(b), Piece::BlackKing);
                 const jass::EndgameResult tb = jass::egdb::probe(sp);
-                if      (tb == jass::EndgameResult::WhiteWin) { wdl = (s.stm == 0) ? +1 : -1; ++stat_tb_relabel; }
-                else if (tb == jass::EndgameResult::BlackWin) { wdl = (s.stm == 0) ? -1 : +1; ++stat_tb_relabel; }
-                else if (tb == jass::EndgameResult::Draw)     { wdl = 0;                       ++stat_tb_relabel; }
+                if      (tb == jass::EndgameResult::WhiteWin) { wdl = (s.stm == 0) ? +1 : -1; sample_tb_relabelled = true; ++stat_tb_relabel; }
+                else if (tb == jass::EndgameResult::BlackWin) { wdl = (s.stm == 0) ? -1 : +1; sample_tb_relabelled = true; ++stat_tb_relabel; }
+                else if (tb == jass::EndgameResult::Draw)     { wdl = 0;                       sample_tb_relabelled = true; ++stat_tb_relabel; }
                 // Unknown => on garde le wdl de la partie
             }
             const std::int8_t wdl_byte = static_cast<std::int8_t>(wdl);
@@ -1425,6 +1464,25 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 sample_meta.write(reinterpret_cast<const char*>(&game_id), 8);
                 sample_meta.write(reinterpret_cast<const char*>(&opening_count), 8);
                 sample_meta.write(reinterpret_cast<const char*>(&seeded), 1);
+                if (sample_meta_v2) {
+                    const std::uint16_t sample_ply = static_cast<std::uint16_t>(s.ply);
+                    const std::uint16_t game_plies = static_cast<std::uint16_t>(game_play_plies);
+                    const std::uint16_t last_eps = last_eps_ply < 0
+                        ? std::uint16_t{0xFFFF}
+                        : static_cast<std::uint16_t>(last_eps_ply);
+                    // JSM2 game_result is WHITE POV {-1,0,+1}. This deliberately
+                    // differs from JNNW's side-to-move POV WDL byte above.
+                    const std::int8_t game_result = static_cast<std::int8_t>(outcome_white);
+                    const std::uint8_t flags = static_cast<std::uint8_t>(
+                          (hit_ply_cap ? 0x01u : 0u)
+                        | (game_adjudicated ? 0x02u : 0u)
+                        | (sample_tb_relabelled ? 0x04u : 0u));
+                    sample_meta.write(reinterpret_cast<const char*>(&sample_ply), 2);
+                    sample_meta.write(reinterpret_cast<const char*>(&game_plies), 2);
+                    sample_meta.write(reinterpret_cast<const char*>(&last_eps), 2);
+                    sample_meta.write(reinterpret_cast<const char*>(&game_result), 1);
+                    sample_meta.write(reinterpret_cast<const char*>(&flags), 1);
+                }
             }
             ++generated;
             if (generated >= n) break;
@@ -5472,7 +5530,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH] [--sample-meta-format jsm1|jsm2]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
@@ -5486,7 +5544,8 @@ int main(int argc, char** argv) {
                 "                                   --drop-plycap excludes every sample from\n"
                 "                                   games unresolved at max_plies instead of\n"
                 "                                   fabricating a DRAW label. --sample-meta-out\n"
-                "                                   writes aligned JSM1 game/opening provenance.\n"
+                "                                   writes aligned metadata; JSM1 is the compatible\n"
+                "                                   default, JSM2 adds ply/game context and flags.\n"
                 "                                   --search-limit nodes requires exactly one\n"
                 "                                   fixed/weighted budget plus --node-budget-log.\n"
                 "                                   Weighted syntax is NODES:WEIGHT,...; the\n"
