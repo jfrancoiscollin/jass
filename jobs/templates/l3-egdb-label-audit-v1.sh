@@ -26,6 +26,7 @@ say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" > "$STAGE"; say "phase=$1"; }
 CACHE_MB="${CACHE_MB:-2048}"
+PER_CORPUS_TIMEOUT="${PER_CORPUS_TIMEOUT:-2700s}"
 
 MON=""
 monitor(){ ( t0=$(date +%s); while true; do
@@ -86,14 +87,31 @@ while IFS='|' read -r LBL PFX PATHR; do
   src="$IN/$base"
   case "$base" in *.gz) gunzip -c "$src" > "$W/$LBL.jnnw"; src="$W/$LBL.jnnw";; esac
   say "  --- corpus $LBL ---"
-  "$J" --egdb-audit "$src" "$EGDIR" "$CACHE_MB" > "$W/audit-$LBL.log" 2>&1 ||
-    die "audit $LBL rc!=0 — voir audit-$LBL.log"
-  grep -E '^EGDBAUDIT|^EGDBCONF' "$W/audit-$LBL.log" | sed 's/^/  /' | tee -a "$RES"
+  # Point 5 de la check-list : un corpus qui traîne ne doit JAMAIS geler le job.
+  # Un dépassement est rapporté INCOMPLET et on passe au suivant ; le compte
+  # `n_ok` ne monte que sur un audit qui a rendu ses compteurs (point 10).
+  t0=$(date +%s); arc=0
+  timeout -k 60s "$PER_CORPUS_TIMEOUT" \
+    "$J" --egdb-audit "$src" "$EGDIR" "$CACHE_MB" > "$W/audit-$LBL.log" 2>&1 || arc=$?
+  dt=$(( $(date +%s) - t0 ))
   cp "$W/audit-$LBL.log" "$ART/audit-$LBL.txt"
   rm -f "$W/$LBL.jnnw" "$IN/$base"
+  if [ "$arc" -eq 124 ] || [ "$arc" -eq 137 ]; then
+    say "  ⚠️ $LBL INCOMPLET : timeout après ${dt}s (PER_CORPUS_TIMEOUT=$PER_CORPUS_TIMEOUT)"
+    continue
+  fi
+  [ "$arc" -eq 0 ] || { say "  ⚠️ $LBL ÉCHEC rc=$arc — voir audit-$LBL.txt"; continue; }
+  line=$(grep -m1 '^EGDBAUDIT' "$W/audit-$LBL.log" || true)
+  [ -n "$line" ] || { say "  ⚠️ $LBL SANS COMPTEURS — voir audit-$LBL.txt"; continue; }
+  inr=$(sed -n 's/.*\bin_range=\([0-9]\+\).*/\1/p' <<< "$line")
+  # n=0 est un ÉCHEC, pas un « neutre » (point 10) : un corpus sans une seule
+  # position dans la portée de la base ne mesure rien du tout.
+  [ "${inr:-0}" -gt 0 ] || { say "  ⚠️ $LBL in_range=0 — RIEN MESURÉ, cellule rejetée"; continue; }
+  grep -E '^EGDBAUDIT|^EGDBCONF' "$W/audit-$LBL.log" | sed 's/^/  /' | tee -a "$RES"
+  say "  $LBL ✓ en ${dt}s"
   n_ok=$((n_ok + 1))
 done <<< "$AUDIT_SPECS"
-[ "$n_ok" -gt 0 ] || die "aucun corpus audité"
+[ "$n_ok" -gt 0 ] || die "aucun corpus audité avec des compteurs exploitables"
 
 stage report
 say "EGDB_LABEL_AUDIT_READY corpus=$n_ok promotion=false automatic_next_job=null"
