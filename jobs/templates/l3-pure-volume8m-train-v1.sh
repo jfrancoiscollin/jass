@@ -79,12 +79,24 @@ trap 'exit 130' INT
 TOTAL_RECORDS=12000000
 HOLDOUT_MOD=10
 SPLIT_SEED=577215
-L2=3e-5
-MAXIT=1000
+# Recette du fit, parametree le 4 aout. Defauts = la recette de juillet a
+# l'identique, donc home-1006 reproduit au bit pres. Motif : le verdict
+# VOL8M (-14,95 Elo) a ete rendu sous CETTE recette, dont on a depuis mesure
+# qu'elle vaut ~45 Elo de moins que celle du champion (fold exact, prior centre
+# sur le parent, gtol 1e-4, l2 1e-5). Un corpus 6x plus dense juge par un fit
+# mal specifie pour cause de famine de donnees ne tranche pas l'axe volume.
+L2="${L2:-3e-5}"
+MAXIT="${MAXIT:-1000}"
 LBFGS_MAXCOR=20
-LBFGS_GTOL=1e-3
+LBFGS_GTOL="${LBFGS_GTOL:-1e-3}"
+FOLD_FLAG="${FOLD_FLAG:---color-fold}"
+# `warm` = warm-start depuis TURNOVER (juillet) ; `prior` = ridge centre sur le
+# parent F2M, la recette du champion L2LOW. Le parent doit etre le MEME que
+# celui de L2LOW, sinon la porte compare deux choses a la fois.
+CONT_MODE="${CONT_MODE:-warm}"
+PARENT_MODEL_SHA="be675b6c1c6360a0a9aa5977ed492284bc8dcc1861ee47bc2e3139046ed769f2"
 CHUNK=20000
-FIT_TIMEOUT=36000
+FIT_TIMEOUT="${FIT_TIMEOUT:-36000}"
 TURNOVER_MODEL_SHA="b2c79b3617c41087191fee04d9aee0e1929ea63ad621c2efeaebc14ae53a7c16"
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
@@ -110,7 +122,10 @@ python3 jobs/tools/fetch_result_files.py --prefix "$PREFLIGHT_PREFIX" \
   --file artefacts/vol8m-coverage.json=vol8m-coverage.json \
   --out-dir "$IN" --report "$ART/verified-preflight.json" \
   > "$W/fetch-preflight.log" 2>&1
+PARENT_FETCH=()
+[ "$CONT_MODE" = prior ] && PARENT_FETCH=(--file work/parent-f2m.pjtw=parent.pjtw)
 python3 jobs/tools/fetch_result_files.py --prefix "$TURNOVER_TRAIN_PREFIX" \
+  ${PARENT_FETCH[@]+"${PARENT_FETCH[@]}"} \
   --file artefacts/turnover1to1.pjtw.gz=TURNOVER.pjtw.gz \
   --out-dir "$IN" --report "$ART/verified-turnover.json" \
   > "$W/fetch-turnover.log" 2>&1
@@ -145,6 +160,17 @@ PY
 gunzip -c "$IN/vol8m.jnnw.gz" > "$W/vol8m.raw.jnnw"
 gunzip -c "$IN/vol8m.jsm.gz"  > "$W/vol8m.raw.jsm"
 gunzip -c "$IN/TURNOVER.pjtw.gz" > "$W/TURNOVER.pjtw"
+CONT_ARGS=(--warm-start "$W/TURNOVER.pjtw")
+if [ "$CONT_MODE" = prior ]; then
+  cp "$IN/parent.pjtw" "$W/parent.pjtw"
+  [ "$(sha256sum "$W/parent.pjtw" | awk '{print $1}')" = "$PARENT_MODEL_SHA" ] ||
+    die "parent F2M hash drift"
+  CONT_ARGS=(--prior-mean "$W/parent.pjtw" --prior-decay 0)
+  say "  continuation : prior centre sur F2M (recette L2LOW)"
+else
+  say "  continuation : warm-start TURNOVER (recette juillet)"
+fi
+say "  fold=$FOLD_FLAG  l2=$L2  gtol=$LBFGS_GTOL  max_iter=$MAXIT"
 [ "$(sha256sum "$W/TURNOVER.pjtw" | awk '{print $1}')" = "$TURNOVER_MODEL_SHA" ] ||
   die "TURNOVER model hash drift"
 say "  corpus ✓ : $TOTAL_RECORDS records authentifiés par le certificat"
@@ -200,13 +226,17 @@ phase full-feature-dump-and-converged-fit
 "$J" --dump-eval-features "$W/vol8m.fit.jnnw" "$W/vol8m.feat" \
   > "$W/features.log" 2>&1
 set +e
+# PYTHONUNBUFFERED : cpx62-1167 a brule 4h30 et rendu un log de 0 octet parce
+# que la sortie etait bufferisee et que SIGTERM ne flushe pas. Un fit de cette
+# longueur DOIT dire ou il en est s'il est tue.
 env JASS_PATTERNS_DIR="$GEOM" PYTHONPATH="$GEOM:pattern_jass/tools" \
+  PYTHONUNBUFFERED=1 \
   timeout "$FIT_TIMEOUT" \
   "$W/venv/bin/python" pattern_jass/tools/train_stream.py \
   --data "$W/vol8m.fit.jnnw" --feat "$W/vol8m.feat" \
   --out "$W/vol8m.pjtw" \
-  --target wdl --loss logistic --color-fold --tempo-stage \
-  --warm-start "$W/TURNOVER.pjtw" --holdout-count "$HOLDOUT" \
+  --target wdl --loss logistic "$FOLD_FLAG" --tempo-stage \
+  "${CONT_ARGS[@]}" --holdout-count "$HOLDOUT" \
   --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
   --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" \
   --optimizer-report "$ART/vol8m-optimizer.json" \
