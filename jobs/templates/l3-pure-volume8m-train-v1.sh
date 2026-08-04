@@ -177,8 +177,31 @@ say "  corpus ✓ : $TOTAL_RECORDS records authentifiés par le certificat"
 
 phase isolated-runtime-and-architecture-guard
 python3 -m venv "$W/venv"
-"$W/venv/bin/python" -m pip install --disable-pip-version-check \
-  --only-binary=:all: numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1
+# L'epinglage historique (numpy 1.26.4 / scipy 1.14.1) n'est plus servi en roue
+# pour le Python de cpx62 : cpx62-1176 est mort la-dessus en cinq minutes, comme
+# cpx62-1115 avant lui. On tente l'epinglage puis on retombe sur les versions
+# courantes, et on ECRIT laquelle a servi.
+# ⚠️ Ce n'est pas cosmetique : home-1210 a montre qu'un fit ne se compare PAS
+# d'une pile a l'autre — meme recette, 801 iterations et holdout 0,441615 sur la
+# pile historique contre 653 et 0,441695 sur la courante. Un modele destine a
+# etre porte contre un champion doit donc etre fitte sur la MEME pile que lui.
+if "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
+     numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1; then
+  PINSTACK=historical
+else
+  "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
+    numpy scipy >> "$W/pip.log" 2>&1 || die "pip en echec — voir pip.log"
+  PINSTACK=current
+fi
+NPV=$("$W/venv/bin/python" -c 'import numpy,scipy;print(numpy.__version__,scipy.__version__)')
+say "  pile numerique : $PINSTACK (numpy/scipy $NPV)"
+printf '{"stack":"%s","numpy_scipy":"%s"}\n' "$PINSTACK" "$NPV" > "$ART/numeric-stack.json"
+# Fail-closed : un job qui doit produire un challengeur pour une porte declare la
+# pile qu'il exige, et meurt si la box ne la sert pas, plutot que de fabriquer un
+# modele incomparable en silence.
+if [ -n "${REQUIRE_STACK:-}" ] && [ "$PINSTACK" != "$REQUIRE_STACK" ]; then
+  die "REQUIRE_STACK=$REQUIRE_STACK mais la pile resolue est $PINSTACK"
+fi
 for source in src/scan_eval.cpp src/scan_eval.hpp src/search.cpp \
   src/movegen.cpp src/movegen.hpp; do
   git show "${EXPECTED_CODE_SHA}:$source" > "$source"
