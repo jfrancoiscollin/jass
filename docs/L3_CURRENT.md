@@ -44,8 +44,9 @@
 > draw_labelling_defect_not_visible_in_published_corpora_claim_retracted;
 > post_epsilon_contamination_measured_19_75_percent;
 > signal_factory_charter_opened;
-> volume_axis_flat_12m_vs_2m_upper_bound_9_5_elo;
-> data_starvation_hypothesis_refuted_by_gate;
+> volume_axis_small_positive_p_gt_0_is_87_percent_axis_NOT_closed;
+> volume_effect_bounded_p_elo_gt_10_is_1_7_percent;
+> gates_now_report_a_flat_prior_posterior_alongside_the_ci;
 > label_noise_24_percent_against_tablebase_replicated_two_corpora;
 > m1_signal_report_validated_against_engine_counters_exactly`.
 
@@ -78,12 +79,45 @@ ne rende. **Deux leviers ont bougé ensemble** : le volume (2 M → 12 M, soit
 (0,52 % → 12,19 %, **23×**). **Les deux ensemble ne rendent rien.** La
 confusion ne sauve rien ici : elle élargit le négatif.
 
-⛔ **LA FAMINE DE DONNÉES EST RÉFUTÉE COMME HYPOTHÈSE DOMINANTE.** « 4,3
-observations par paramètre libre, 94 % de la table qui n'existe que par le
-régulariseur » a longtemps servi d'explication à la stagnation. Multiplier les
-observations par **10** ne bouge pas l'aiguille. **Ne plus proposer « plus de
-données » comme levier sans un mécanisme neuf qui explique pourquoi ce
-verdict-ci ne s'appliquerait pas.**
+⚠️ **RECTIFICATIF DU 5 AOÛT — j'avais écrit « la famine de données est RÉFUTÉE »
+et « axe clos ». C'est une sur-lecture du cadre fréquentiste, et JFC a eu raison
+de la refuser.** « L'IC contient zéro » jette l'information que porte la
+**position de la masse**. Lecture bayésienne du même jeu de parties, prior plat
+sur le taux :
+
+| seuil | `P(Elo > seuil)` |
+|---|---:|
+| **0** | **86,8 %** |
+| 3 | 55,8 % |
+| 5 | 30,7 % |
+| 10 | **1,7 %** |
+| 17 | 0,0 % |
+
+✅ **Ce que les données disent vraiment : un effet POSITIF est probable (87 %),
+un effet GRAND est presque exclu (1,7 % au-delà de +10).** C'est une borne
+supérieure, pas une porte close.
+
+⛔ **L'AXE DU VOLUME N'EST DONC PAS CLOS**, et le mécanisme avancé par JFC tient
+debout : à 8-13 % de buckets visités et avec une éval encore faible, le
+générateur ne produit peut-être pas encore des parties assez informatives pour
+que le volume rende ce qu'il pourrait. **Préchauffage**, pas plafond. Le chiffre
+honnête à retenir est : *au niveau d'éval ACTUEL et avec le générateur ACTUEL,
+6× de données valent ~+3,5 Elo, avec 87 % de chances d'être positif et moins de
+2 % d'être au-delà de +10.*
+
+⚠️ **Sur la comparaison des deux vues** : `q00` et `native` **ne sont pas deux
+pools indépendants**. Elles partagent les 3 000 ouvertures **et** les deux
+modèles ; seule la cadence change. Leur concordance dit que l'effet est robuste
+au contrôle de temps, elle **ne double pas** l'évidence. La vraie réplication
+indépendante est celle que `home-1312` rendra possible.
+
+✅ **DÉCISION DE MÉTHODE, appliquée à partir du 5 août** : toute porte rapporte
+désormais **`P(Elo > 0/3/5/10/17)` sous prior plat, À CÔTÉ de l'IC95**. Le
+verdict reste fréquentiste pour ne pas casser la comparabilité avec les portes
+antérieures, mais le posterior est ce qu'on lit. Et pour un second pool disjoint,
+**le posterior du premier devient le prior du second** — c'est exactement la mise
+à jour séquentielle, et elle donne un `P(>0)` courant au lieu de deux verdicts
+qu'il faudrait recoller à la main.
 
 ### ✅ `cpx62-1180` — M1 est validé contre les compteurs du moteur, à l'unité près
 

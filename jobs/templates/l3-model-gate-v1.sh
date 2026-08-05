@@ -263,6 +263,21 @@ if n:
     lo, hi = max(0.0, rate - 1.96 * se), min(1.0, rate + 1.96 * se)
 def elo(r):
     return -400 * math.log10(1 / r - 1) if r and 0 < r < 1 else None
+def rate_of_elo(e):
+    return 1.0 / (1.0 + 10 ** (-e / 400.0))
+def _phi(z):
+    return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+# Lecture BAYESIENNE, demandee par JFC le 5 aout et c'est la bonne demande :
+# « la borne basse contient zero » jette l'information que porte la POSITION de
+# la masse. Avec un prior plat sur le taux, la vraisemblance normale donne
+# directement P(Elo > seuil), qui est ce qu'on veut vraiment savoir. Rapporte
+# EN PLUS de l'IC, jamais a la place : le verdict reste frequentiste pour ne pas
+# casser la comparabilite avec toutes les portes anterieures.
+POSTERIOR_THRESHOLDS = (0, 3, 5, 10, 17)
+posterior = None
+if n and se and se > 0:
+    posterior = {f"p_elo_gt_{e}": round(1.0 - _phi((rate_of_elo(e) - rate) / se), 4)
+                 for e in POSTERIOR_THRESHOLDS}
 if missing or short or not n:
     verdict = "L3_MODEL_GATE_INCONCLUSIVE"
 elif lo > 0.5:
@@ -280,7 +295,8 @@ payload = {
         "ci95": [round(lo, 6), round(hi, 6)] if rate else None,
         "elo": round(elo(rate), 2) if elo(rate) is not None else None,
         "elo_ci95": ([round(elo(lo), 1), round(elo(hi), 1)]
-                     if elo(lo) is not None and elo(hi) is not None else None)},
+                     if elo(lo) is not None and elo(hi) is not None else None),
+        "posterior_flat_prior": posterior},
     "per_view": {v: d for v, d in views.items()},
     "arms": {"a": A_LABEL, "b": B_LABEL},
     "holdout_is_not_the_arbiter": (
@@ -295,6 +311,9 @@ print(f"  n={n}  {A_LABEL} {wins}W {draws}D {losses}L contre {B_LABEL}")
 if rate:
     print(f"  taux={rate:.4f}  IC95=[{lo:.4f} ; {hi:.4f}]")
     print(f"  Elo={elo(rate):+.2f}  IC95=[{elo(lo):+.1f} ; {elo(hi):+.1f}]")
+if posterior:
+    print("  posterieur (prior plat) : " + "  ".join(
+        f"P(Elo>{e})={100*posterior[f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
 print(f"  VERDICT {verdict}")
 PY
 VERDICT="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")"
