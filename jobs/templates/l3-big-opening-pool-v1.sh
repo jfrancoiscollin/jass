@@ -29,6 +29,12 @@ stage(){ say "phase=$1"; }
 NOPEN="${NOPEN:-3000}"
 CANDIDATES="${CANDIDATES:-24000}"     # marge x8, comme le précédent (6000 pour 1500)
 OPENING_SEED="${OPENING_SEED:-2718281}"
+OUT_NAME="${OUT_NAME:-big3000-openings}"
+# ⚠️ LES POOLS A EXCLURE SONT DESORMAIS PARAMETRES, et ce n'est pas cosmetique :
+# tant qu'ils etaient codes en dur, un second pool "independant" ne pouvait pas
+# exclure le premier. Une ligne par source, "label|prefix_r2|chemin_distant".
+EXCLUDE_SPECS="${EXCLUDE_SPECS:-pool-vol8m|r2:jass-data/runs/home-1004-l3-pure-volume8m-preflight-v2/20260727T211936Z-90d3aad1|artefacts/vol8m-eval-openings.fen
+pool-succession|r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0|artefacts/turnover-succession-openings.fen}"
 finalize(){ rc=$?; trap - EXIT ERR; set +e
   cp "$RES" "$ART/RESULTS.txt" 2>/dev/null
   (cd "$W" && find . -type f -name '*.log' -print0 | tar --null -czf "$ART/logs.tar.gz" -T -) 2>/dev/null
@@ -50,21 +56,18 @@ git checkout -- src/ pattern_jass/ 2>/dev/null || true
 J="$W/build/jass"; [ -x "$J" ] || die "build sans binaire"
 
 stage fetch-pools-to-exclude
-# ⚠️ On exclut les pools RÉELLEMENT utilisés par les portes courantes. Le
-# préflight de juillet en excluait seize ; ici deux suffisent pour l'usage visé,
-# et c'est écrit plutôt que sous-entendu — un futur lecteur doit savoir que la
-# disjonction n'est PAS prouvée contre toute la série historique.
-python3 jobs/tools/fetch_result_files.py \
-  --prefix "r2:jass-data/runs/home-1004-l3-pure-volume8m-preflight-v2/20260727T211936Z-90d3aad1" \
-  --file artefacts/vol8m-eval-openings.fen=pool-vol8m.fen \
-  --out-dir "$IN" --report "$ART/verified-pool-a.json" --expected-state completed \
-  > "$W/fetch-a.log" 2>&1 || die "fetch pool vol8m KO"
-python3 jobs/tools/fetch_result_files.py \
-  --prefix "r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0" \
-  --file artefacts/turnover-succession-openings.fen=pool-succession.fen \
-  --out-dir "$IN" --report "$ART/verified-pool-b.json" --expected-state completed \
-  > "$W/fetch-b.log" 2>&1 || die "fetch pool succession KO"
-say "  2 pools de porte récupérés pour exclusion"
+# ⚠️ La disjonction n'est prouvee QUE contre les pools listes ici. Un futur
+# lecteur doit savoir lesquels : ils sont nommes dans le manifeste de provenance.
+EXCL_ARGS=(); EXCL_NAMES=()
+while IFS='|' read -r LBL PFX PATHR; do
+  [ -n "${LBL:-}" ] || continue
+  python3 jobs/tools/fetch_result_files.py --prefix "$PFX" \
+    --file "$PATHR=$LBL.fen" --out-dir "$IN" --report "$ART/verified-$LBL.json" \
+    --expected-state completed > "$W/fetch-$LBL.log" 2>&1 || die "fetch $LBL KO"
+  EXCL_ARGS+=(--exclude "$IN/$LBL.fen"); EXCL_NAMES+=("$LBL")
+done <<< "$EXCLUDE_SPECS"
+[ "${#EXCL_NAMES[@]}" -gt 0 ] || die "aucun pool a exclure : un pool sans exclusion n'est pas independant"
+say "  ${#EXCL_NAMES[@]} pools récupérés pour exclusion : ${EXCL_NAMES[*]}"
 
 stage generate-and-select
 # Deux passes identiques : un pool d'ouvertures non reproductible ne serait pas
@@ -78,37 +81,37 @@ NC=$(grep -c . "$W/cand-a.fen" || true); say "  candidats ✓ $NC (déterministe
 [ "$NC" -ge "$NOPEN" ] || die "moins de candidats ($NC) que d'ouvertures visées ($NOPEN)"
 
 sel(){ python3 jobs/tools/select_independent_opening_pool.py \
-  --candidates "$1" --expected "$NOPEN" \
-  --exclude "$IN/pool-vol8m.fen" --exclude "$IN/pool-succession.fen" \
+  --candidates "$1" --expected "$NOPEN" "${EXCL_ARGS[@]}" \
   --generator-seed "$OPENING_SEED" --out "$2" --manifest "$3" > "$4" 2>&1; }
-sel "$W/cand-a.fen" "$ART/big3000-openings.fen" "$ART/big3000-openings.json" "$W/sel-a.log" ||
+sel "$W/cand-a.fen" "$ART/$OUT_NAME.fen" "$ART/$OUT_NAME.json" "$W/sel-a.log" ||
   die "sélection KO — voir sel-a.log"
 sel "$W/cand-b.fen" "$W/repeat.fen" "$W/repeat.json" "$W/sel-b.log" || die "sélection (répétition) KO"
-cmp -s "$ART/big3000-openings.fen" "$W/repeat.fen" || die "sélection non reproductible"
+cmp -s "$ART/$OUT_NAME.fen" "$W/repeat.fen" || die "sélection non reproductible"
 
 stage verify
-N=$(grep -c . "$ART/big3000-openings.fen" || true)
+N=$(grep -c . "$ART/$OUT_NAME.fen" || true)
 [ "$N" -eq "$NOPEN" ] || die "pool à $N ouvertures, attendu $NOPEN"
-for f in pool-vol8m pool-succession; do
-  COMMON=$(grep -Fx -f "$IN/$f.fen" "$ART/big3000-openings.fen" | grep -c . || true)
+for f in "${EXCL_NAMES[@]}"; do
+  COMMON=$(grep -Fx -f "$IN/$f.fen" "$ART/$OUT_NAME.fen" | grep -c . || true)
   [ "$COMMON" -eq 0 ] || die "chevauchement de $COMMON ouvertures avec $f"
+  say "  disjoint de $f ✓"
 done
-python3 jobs/tools/validate_opening_pool.py --pool "$ART/big3000-openings.fen" \
-  --expected "$NOPEN" --generator-seed "$OPENING_SEED" \
-  --exclude "$IN/pool-vol8m.fen" --exclude "$IN/pool-succession.fen" \
-  --out "$ART/big3000-provenance.json" > "$W/validate.log" 2>&1 ||
+python3 jobs/tools/validate_opening_pool.py --pool "$ART/$OUT_NAME.fen" \
+  --expected "$NOPEN" --generator-seed "$OPENING_SEED" "${EXCL_ARGS[@]}" \
+  --out "$ART/$OUT_NAME-provenance.json" > "$W/validate.log" 2>&1 ||
   die "pool invalide — voir validate.log"
-SHA=$(sha256sum "$ART/big3000-openings.fen" | awk '{print $1}')
-say "  pool ✓ $N ouvertures, disjoint des 2 pools de porte, sha256=$SHA"
+SHA=$(sha256sum "$ART/$OUT_NAME.fen" | awk '{print $1}')
+say "  pool ✓ $N ouvertures, disjoint de ${#EXCL_NAMES[@]} pools, sha256=$SHA"
 say "  porte future : $N × 2 couleurs × 2 vues = $((N * 4)) parties"
 
 stage report
-python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$N" "$SHA" <<'PY'
+python3 - "$ART/JASS_CONTROL_SUMMARY.json" "$N" "$SHA" "$OUT_NAME" "${EXCL_NAMES[@]}" <<'PY'
 import json, sys
-out, n, sha = sys.argv[1:4]
+out, n, sha, name = sys.argv[1:5]
 json.dump({"schema": 1, "verdict": f"BIG_OPENING_POOL_READY_{n}", "openings": int(n),
+           "pool_name": name,
            "sha256": sha, "gate_n_at_two_views": int(n) * 4,
-           "disjoint_from": ["home-1004 vol8m", "home-0995 succession"],
+           "disjoint_from": sys.argv[5:],
            "diagnostic_only": True, "promotion_authorized": False,
            "automatic_next_job": None}, open(out, "w"), indent=2, sort_keys=True)
 open(out, "a").write("\n")

@@ -134,7 +134,14 @@ SPLIT_SEED=577215
 HOLDOUT_MOD=10
 NOPEN=1500
 OPENING_CANDIDATES=6000
-OPENING_SEED=2236068
+# ⛔ CODE EN DUR JUSQU'AU 5 AOUT, ET CA A FABRIQUE QUATRE POOLS IDENTIQUES.
+# home-1004, home-1310, home-1311 et home-1312 ont chacun publie un pool
+# d'evaluation « independant » de 1500 ouvertures : les quatre fichiers sont
+# BYTE-IDENTIQUES (sha256 94cb6a15e278deeb...), parce que la graine ne bougeait
+# pas. Un second pool cense repliquer rejouait donc les memes positions de
+# depart. Parametre : toute generation qui veut un pool NEUF doit passer une
+# graine neuve, et le chainage bayesien des portes refuse deux pools identiques.
+OPENING_SEED="${OPENING_SEED:-2236068}"
 # Taux MESURÉ sur cette box en home-1003 : 2 519 positions/min/shard à d9
 # (le shard 0 avait produit 377 782 positions en 9 000 s avant d'être tué).
 # Un shard sain doit donc écrire ses 666 667 positions en ~265 min ; plafond à
