@@ -198,48 +198,89 @@ concordent avec la fiche M1 recalculée sur la sortie.
 
 ### M3 — ⚖️ Validation contre l'Elo *(le seul juge)*
 
-**Un seul pool généré**, `K` variantes qui ne diffèrent **que par un filtre**,
-`K` fits sous la recette championne, `K` portes contre L2LOW.
+> **♻️ REDESSINÉ LE 5 AOÛT, autour de C2.** Deux verdicts de la nuit ont changé
+> ce qu'il faut tester **et** ce que ça coûte. La version antérieure — quatre
+> cellules contre L2LOW, ~15 h — est remplacée ; ce qui suit la périme.
 
-Cellules de départ, par force de mécanisme décroissante :
+#### Ce qui a changé, et pourquoi ça redessine tout
 
-| # | variante | mécanisme |
+**1. Le volume ne bride pas** (`cpx62-1179`) : `+3,45 Elo` `IC95 [−2,6 ; +9,5]`
+sur `n=12 000`, avec **6× de données ET 23× de finales** bougés ensemble. La
+famine de données est réfutée comme hypothèse dominante.
+
+**2. Les étiquettes, si** (`cpx62-1178`, `cpx62-1180`) : **24,23 %** puis
+**24,12 %** de désaccord contre la tablebase, sur **deux corpus indépendants**.
+Décomposition : **90,2 % du désaccord est une étiquette DÉCISIVE sur une
+position THÉORIQUEMENT NULLE**. Les inversions gain↔perte sont à **0,51 %** —
+le bruit n'est pas du hasard, c'est **un biais directionnel unique**.
+
+**3. Le verdict du volume PAIE le protocole.** Puisque `6×` de données valent
+`≤ +9,5 Elo`, on peut tester l'hypothèse d'étiquetage **à 2 M au lieu de 12 M**
+sans se priver de rien — et un fit passe de **12h14** (mesuré, `cpx62-1177`) à
+**~1h30** (mesuré, `cpx62-1173`/`1164`). **Facteur 8 sur le coût**, justifié par
+une mesure et non par une commodité.
+
+**4. Et il RELÂCHE le confondant de volume des cellules filtrantes.** `C1` et
+`C3` retirent des records ; on exigeait une normalisation exacte du compte. Ce
+n'est plus une exigence aveugle : perdre `21,8 %` de records coûte désormais
+**bien moins** que la borne `+9,5` mesurée sur un facteur `6×`. La normalisation
+reste un contrôle, elle n'est plus le verrou.
+
+#### La cellule décisive : `C2`, et elle est SANS confondant par construction
+
+`--egdb-relabel <in.jnnw> <db> <out.jnnw>` ne réécrit que **l'octet 37** de
+chaque record dans la portée de la base. Le fichier de sortie a **le même compte,
+le même ordre, les mêmes positions** ; le sidecar JSM2 n'est pas touché, donc le
+split par ouverture est **identique des deux côtés**.
+
+| # | corpus | ce qui change contre `C0` |
 |---|---|---|
-| C0 | pool brut | contrôle |
-| C1 | `--drop-post-eps` | retire les étiquettes qui parlent d'une autre partie |
-| C2 | `--tb-relabel` | remplace du faux par du vrai |
-| C3 | sans les parties jetées au ply-cap | teste le biais de sélection |
+| **C0** | 2 M sous-échantillonnés du pool JSM2, bruts | *(contrôle)* |
+| **C2** | **les mêmes 2 M**, étiquettes réécrites par la tablebase | **l'octet WDL de ~4 % des records. Rien d'autre.** |
 
-⚠️ **`C1` et `C3` réduisent le volume.** Une cellule qui gagne en ayant moins de
-données confond filtre et volume. **Chaque variante doit être ramenée au même
-compte de records** que `C0` par troncature déterministe, ou le résultat n'est
-pas interprétable.
+⚠️ **C'est la cellule la plus propre que la campagne ait jamais eue.** Aucune
+normalisation à faire, aucun volume à égaliser, aucune ouverture qui diffère :
+même pool, même split, même recette, même pile numérique. Un écart d'Elo ne peut
+venir **que** des étiquettes.
 
-**Règle de décision, à figer AVANT de lancer** :
-- une cellule « gagne » si son IC95 contre L2LOW exclut zéro ;
-- **l'ordre des métriques M1 doit reproduire l'ordre des Elo** — c'est ça qui
-  valide l'instrument, pas le gain d'une cellule ;
-- si aucune cellule ne gagne **et** que les métriques ne s'ordonnent pas comme
-  les Elo, **l'instrument est invalide** et M4 ne se lance pas.
+Bonus gratuit : le mode imprime `stalls` = « la base dit gagné/perdu, la partie a
+enregistré nulle » — le compteur d'échec de conversion, à relever au passage.
 
-**Coût** : ancres mesurées — fit `2 M` à `gtol 1e-4` ≈ **1h34** ; porte
-`n=12 000` ≈ **1h**. Soit **~3h par cellule**, **~12h pour quatre**, hors
-génération du pool.
+#### Étages, à ne franchir que sur victoire de l'étage précédent
 
-> ⛔ **LE POOL DE M3 DOIT ÊTRE REGÉNÉRÉ EN JSM2 — constat de la revue de la PR
-> 417, 5 août.** `corpus_signal_report.py` refuse explicitement un sidecar JSM1
-> (`"requires JSM2 game context; JSM1 is insufficient"`), et c'est correct : les
-> champs de contexte n'existent nulle part dans un JSM1, il n'y a rien à
-> reconstituer. Or **aucun corpus de l'historique n'est en JSM2**, y compris le
-> 12 M de `home-1310` (`magic = JSM1`, vérifié sur l'artefact). Et `merge`/`mix`
-> **refusent les schémas mélangés** (`"mix inputs must all use the same sidecar
-> schema"`), donc la recette 1:1 mémoire + frais casse net dès qu'une moitié est
-> en JSM2 — comportement fail-closed voulu, pas un défaut.
-> ✅ **Conséquence sur le sizing** : les quatre cellules partent d'un corpus
-> **100 % frais en JSM2**, ce que le chemin all-fresh de
-> `l3-pure-volume8m-preflight-v1.sh` sait déjà produire. Compter **~3h de
-> génération** (12 M à d8, ancre re-mesurée du 4 août : 6 210 pos/min/shard sur
-> 12 producteurs) **AVANT** les ~12h de portes. **M3 ≈ 15h**, pas 12.
+| étage | contenu | coût | ancre |
+|---|---|---|---|
+| **1** | `C0` + `C2` à 2 M, puis porte `C2` vs `C0`, `n=12 000` | **~4h20** | 2 fits × 1h30 (`cpx62-1173`) + porte 1h05 (`cpx62-1179` = 66 min) + ~15 min de préparation |
+| **2** | le même couple sur le **second pool** (`home-1312`) — réplication sur des parties sans aucune ouverture commune | **~4h20** | idem |
+| **3** | confirmation à **12 M**, si et seulement si l'étage 1 gagne | **~25h35** | 2 fits × 12h14 (`cpx62-1177`) + porte 1h05 |
+| **4** | `C1` (`--drop-post-eps`, **21,8 %** des records) puis `C3` (ply-cap) | ~4h20 chacun | idem étage 1 |
+
+**L'étage 2 est le vrai apport de la nuit** : la succession EXACT → PRIOR →
+PRIORTIGHT → L2LOW n'a **jamais** eu de second pool disjoint, chaque verdict
+reposant sur un seul tirage de parties. Ici il est disponible pour le prix d'un
+étage.
+
+#### Règle de décision, figée AVANT de lancer
+
+- `C2` **gagne** si son `IC95` contre `C0` exclut zéro **et** que l'étage 2
+  reproduit le signe.
+- ⚠️ **Puissance honnête** : `n=12 000` donne une demi-largeur d'`IC95` de
+  **±6 Elo** (mesuré sur `cpx62-1179` : `[−2,6 ; +9,5]` autour de `+3,45`). La
+  porte peut établir un gain **≥ ~7 Elo**, pas moins. Un vrai `+4` sortirait
+  indistinguable de zéro et ne doit pas être lu comme une réfutation.
+- Si `C2` est **plat des deux côtés**, l'hypothèse « qualité des étiquettes » est
+  réfutée **à cette dose** (≈ 4 % des records, finales seulement) — pas en
+  général. La suite serait alors `C1`, qui touche **5,5× plus de records**.
+- ⛔ **`M4` ne part pas tant qu'aucune cellule n'a bougé l'Elo.** Une métrique de
+  signal non montrée prédictive ne vaut rien (§0), et cette règle-là ne bouge
+  pas.
+
+#### Ce qui ne change pas
+
+Le pool reste **100 % frais en JSM2** : `corpus_signal_report.py` refuse un
+sidecar JSM1 (les champs de contexte n'y existent pas), et `merge`/`mix`
+refusent les schémas mélangés. Les deux pools sont générés : `home-1311`
+(graine 1618034) et `home-1312` (graine 2718281).
 
 ### M4 — L'usine
 
