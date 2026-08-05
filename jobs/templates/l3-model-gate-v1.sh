@@ -341,8 +341,16 @@ if prior_path and posterior:
     wp, wl = 1.0 / (pse * pse), 1.0 / (se * se)
     cmu = (prate * wp + rate * wl) / (wp + wl)
     csd = math.sqrt(1.0 / (wp + wl))
+    # ⚠️ GARDE D'HETEROGENEITE. Le chainage suppose le MEME effet dans les deux
+    # pools. Sans ce test, un pool a +8 et un pool a -2 peuvent rendre un
+    # P(>0) confortable alors que le DESACCORD est le vrai resultat. On teste
+    # donc la difference des deux taux avant de combiner quoi que ce soit.
+    dz = (rate - prate) / math.sqrt(se * se + pse * pse)
+    pools_agree = bool(abs(dz) < 1.96 and (rate - 0.5) * (prate - 0.5) >= 0)
     chained = {
         "prior_job": prior.get("job_id") or prior.get("code_sha"),
+        "between_pool_z": round(dz, 3),
+        "pools_agree": pools_agree,
         "prior_n": pn, "prior_rate": round(prate, 6),
         "prior_elo": round(elo(prate), 2) if elo(prate) is not None else None,
         "combined_n": pn + n, "combined_rate": round(cmu, 6),
@@ -352,6 +360,25 @@ if prior_path and posterior:
         "posterior": posterior_of(cmu, csd),
         "assumes_same_effect_in_both_pools": True,
     }
+
+# ⚖️ CRITERE DE BAKE — fixe par JFC le 5 aout 2026 :
+#   P(Elo > 0) > 95 % SUR POOLS CHAINES.
+# C'est une PRE-CONDITION, jamais une autorisation : un bake reste une decision
+# explicite de JFC. Le drapeau ci-dessous ne fait que dire si la condition est
+# remplie, et il exige DEUX pools disjoints qui ne se contredisent pas.
+BAKE_P_THRESHOLD = 0.95
+bake = {"criterion": "P(elo>0) > 0.95 sur pools chaines",
+        "threshold": BAKE_P_THRESHOLD, "met": False, "why": None}
+if chained is None:
+    bake["why"] = "un seul pool : le critere exige un chainage sur deux pools disjoints"
+elif not chained["pools_agree"]:
+    bake["why"] = (f"les deux pools se contredisent (z={chained['between_pool_z']}) : "
+                   "le desaccord est le resultat, pas la moyenne")
+elif chained["posterior"]["p_elo_gt_0"] <= BAKE_P_THRESHOLD:
+    bake["why"] = f"P(elo>0)={chained['posterior']['p_elo_gt_0']} <= {BAKE_P_THRESHOLD}"
+else:
+    bake["met"] = True
+    bake["why"] = f"P(elo>0)={chained['posterior']['p_elo_gt_0']} sur n={chained['combined_n']}"
 if missing or short or not n:
     verdict = "L3_MODEL_GATE_INCONCLUSIVE"
 elif lo > 0.5:
@@ -373,6 +400,7 @@ payload = {
         "posterior_flat_prior": posterior},
     "openings_prefix": openings_prefix,
     "chained_with_prior_gate": chained,
+    "bake_criterion": bake,
     "per_view": {v: d for v, d in views.items()},
     "arms": {"a": A_LABEL, "b": B_LABEL},
     "holdout_is_not_the_arbiter": (
@@ -395,8 +423,12 @@ if chained:
     print(f"  ⛓️ chaine avec {c['prior_job']} : prior n={c['prior_n']} Elo={c['prior_elo']:+.2f}")
     print(f"     combine n={c['combined_n']}  Elo={c['combined_elo']:+.2f}"
           f"  IC95=[{c['combined_ci95'][0]:+.1f} ; {c['combined_ci95'][1]:+.1f}]")
+    print(f"     accord des pools : z={c['between_pool_z']:+.2f} -> "
+          f"{'COHERENTS' if c['pools_agree'] else 'CONTRADICTOIRES'}")
     print("     posterieur combine : " + "  ".join(
         f"P(Elo>{e})={100*c['posterior'][f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
+print(f"  critere de bake (P(Elo>0)>95 % sur pools chaines) : "
+      f"{'REMPLI' if bake['met'] else 'NON REMPLI'} — {bake['why']}")
 print(f"  VERDICT {verdict}")
 PY
 VERDICT="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")"
