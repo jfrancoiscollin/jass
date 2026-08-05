@@ -43,7 +43,93 @@
 > fresh12m_corpus_generated_endgame_content_34x_higher;
 > draw_labelling_defect_not_visible_in_published_corpora_claim_retracted;
 > post_epsilon_contamination_measured_19_75_percent;
-> signal_factory_charter_opened`.
+> signal_factory_charter_opened;
+> volume_axis_flat_12m_vs_2m_upper_bound_9_5_elo;
+> data_starvation_hypothesis_refuted_by_gate;
+> label_noise_24_percent_against_tablebase_replicated_two_corpora;
+> m1_signal_report_validated_against_engine_counters_exactly`.
+
+## 0quater. 5 août 2026 — ⛔ LE VOLUME NE BRIDE PAS, ET LES ÉTIQUETTES SI
+
+### ⚖️ `cpx62-1179` — la porte du volume est PLATE
+
+```
+n=12000   VOL12M 5718W 683D 5599L contre L2LOW
+taux = 0,5050   Elo = +3,45   IC95 = [−2,6 ; +9,5]
+VERDICT  A_FLAT_VS_B_NO_ESTABLISHED_GAIN
+```
+
+Les deux vues concordent, ce qui écarte un artefact de cadence :
+
+| vue | n | W-D-L | Elo | IC95 |
+|---|---:|---|---:|---|
+| q00 (d9 fixe) | 6 000 | 2854-340-2806 | +2,78 | [−5,8 ; +11,3] |
+| native (mt 0,1) | 6 000 | 2864-343-2793 | +4,11 | [−4,4 ; +12,7] |
+| **total** | **12 000** | 5718-683-5599 | **+3,45** | **[−2,6 ; +9,5]** |
+
+⛔ **La borne haute `+9,5` est SOUS TOUS les gains encaissés** : fold exact
+`+17,10` `[+9,2 ; +25,0]`, PRIORTIGHT `+18,05` `[+12,0 ; +24,1]`, L2LOW
+`+11,31` `[+6,4 ; +16,3]`. Un gain de l'ordre de ceux qu'on sait produire est
+exclu.
+
+⚠️ **Et ce n'était PAS un test à un seul facteur** — corrigé avant que le job
+ne rende. **Deux leviers ont bougé ensemble** : le volume (2 M → 12 M, soit
+**4,3 → 42,14 observations par paramètre libre**) *et* la teneur en finales
+(0,52 % → 12,19 %, **23×**). **Les deux ensemble ne rendent rien.** La
+confusion ne sauve rien ici : elle élargit le négatif.
+
+⛔ **LA FAMINE DE DONNÉES EST RÉFUTÉE COMME HYPOTHÈSE DOMINANTE.** « 4,3
+observations par paramètre libre, 94 % de la table qui n'existe que par le
+régulariseur » a longtemps servi d'explication à la stagnation. Multiplier les
+observations par **10** ne bouge pas l'aiguille. **Ne plus proposer « plus de
+données » comme levier sans un mécanisme neuf qui explique pourquoi ce
+verdict-ci ne s'appliquerait pas.**
+
+### ✅ `cpx62-1180` — M1 est validé contre les compteurs du moteur, à l'unité près
+
+Première fiche signalétique du projet, sur le pool JSM2 de `home-1311`.
+Confrontation avec `LABELHYG`/`WDLDIST` agrégés sur les 12 shards **du même
+corpus** :
+
+| | moteur | M1 |
+|---|---:|---:|
+| records | 12 000 000 | **12 000 000** ✓ |
+| nulles | 2 181 722 (18,18 %) | **2 181 722 (18,18 %)** ✓ |
+| gains / pertes | 4 929 463 / 4 888 815 | **identiques** ✓ |
+| contamination, compte brut | 2 615 928 | **2 615 928** ✓ |
+| contamination, part | 19,75 % *(dénom. candidats)* | 21,80 % *(dénom. records gardés)* |
+
+Concordance **exacte sur chaque compte brut**, et l'écart de part est
+précisément celui pour lequel la charte a été corrigée : même numérateur, deux
+dénominateurs. Réconciliation des parties, non anticipée et pourtant exacte :
+
+```
+393 959 parties jouées − 19 141 au ply-cap = 374 818 = parties vues par M1   (écart : 0)
+```
+
+Le **contrôle croisé des POV a passé sur les 12 000 000 de records** — pas un
+échantillon, tous.
+
+⚠️ **Piège de lecture** : la couverture de M1 sort à **8,117 %** contre 13,396 %
+au certificat de `home-1310`. **Ce n'est pas une régression** : M1 mesure en
+**fold exact**, le certificat en **fold couleur**. Le rapport porte lui-même
+l'avertissement. Ces deux chiffres ne se comparent jamais.
+
+### 🎯 Le bruit d'étiquetage réplique sur deux corpus indépendants
+
+| corpus | in_range | **désaccord** | inversions |
+|---|---:|---:|---:|
+| `home-1310` (12 M) | 1 971 484 | **24,23 %** | 0,51 % |
+| `home-1311` (12 M, graine distincte) | 1 967 602 | **24,12 %** | 0,52 % |
+
+Décomposition sur `home-1310` : **90,2 % de tout le désaccord est une étiquette
+DÉCISIVE posée sur une position THÉORIQUEMENT NULLE** (431 032 positions). Les
+vraies inversions gain↔perte sont à **0,51 %** : le bruit n'est pas du hasard,
+c'est **un biais directionnel unique**. `--tb-relabel` corrigerait **477 627
+étiquettes = 3,98 % du corpus entier**, et il est **à zéro depuis toujours**.
+
+**Par élimination, la qualité des étiquettes devient l'hypothèse principale**,
+et la cellule C2 de M3 (`--tb-relabel`) cesse d'être une cellule parmi quatre.
 
 ## 0ter. Nuit du 4 au 5 août 2026 — le premier corpus du moteur réparé
 
