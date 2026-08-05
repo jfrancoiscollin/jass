@@ -191,6 +191,23 @@ def _encode_meta(row: Meta, schema: MetaSchema, *, context: str = "metadata") ->
     )
 
 
+def _downgrade_meta(row: Meta, target: MetaSchema) -> Meta:
+    """Ramene une ligne au schema `target` en LACHANT les champs qu'il ignore.
+
+    ⛔ Jamais automatique. La degradation JSM2 -> JSM1 detruit le contexte de
+    partie (ply, longueur, dernier epsilon, resultat POV blanc, flags), donc
+    tout filtrage post-hoc devient impossible sur le corpus produit. Elle
+    n'existe que pour un cas precis et legitime : melanger une moitie FRAICHE
+    en JSM2 avec une moitie MEMOIRE historique qui n'a jamais eu de contexte et
+    ne peut pas en acquerir. Dans ce cas le contexte de la moitie fraiche a
+    deja servi (filtrage, relabel) AVANT le melange.
+    """
+    if target is JSM1_SCHEMA:
+        return replace(row, ply=None, game_plies=None, last_eps_ply=None,
+                       game_result=None, flags=None)
+    return row
+
+
 def _meta_file_info(path: Path) -> tuple[MetaSchema, int]:
     with path.open("rb") as stream:
         header = stream.read(8)
@@ -519,6 +536,10 @@ def _source_mix_seed(seed: int, label: str, index: int) -> int:
 def do_mix(args: argparse.Namespace) -> int:
     """Create a memory-bounded exact weighted mix while preserving JSM alignment."""
     namespace_openings = bool(getattr(args, "namespace_openings", False))
+    # ⛔ Degradation EXPLICITE seulement. Sans ce drapeau, melanger JSM1 et JSM2
+    # reste une erreur : un melange silencieux perdrait le contexte de partie
+    # sans que personne ne le voie.
+    downgrade_to = JSM1_SCHEMA if getattr(args, "downgrade_meta", None) == "jsm1" else None
     sources = []
     meta_schema: MetaSchema | None = None
     labels: set[str] = set()
@@ -538,8 +559,11 @@ def do_mix(args: argparse.Namespace) -> int:
             raise ValueError(f"{label}: data/meta count mismatch: {data_count} != {meta_count}")
         if meta_schema is None:
             meta_schema = source_schema
-        elif source_schema is not meta_schema:
-            raise ValueError("mix inputs must all use the same sidecar schema")
+        elif source_schema is not meta_schema and downgrade_to is None:
+            raise ValueError(
+                "mix inputs must all use the same sidecar schema "
+                "(--downgrade-meta jsm1 pour melanger une moitie JSM2 avec une "
+                "moitie memoire JSM1 : le contexte de la moitie JSM2 est PERDU)")
         sources.append({
             "index": source_index,
             "label": label,
@@ -547,8 +571,16 @@ def do_mix(args: argparse.Namespace) -> int:
             "meta": meta_path,
             "weight": weight,
             "records": data_count,
+            "schema": source_schema,
         })
     assert meta_schema is not None
+    out_schema = downgrade_to or meta_schema
+    for source in sources:
+        if source["schema"] is not out_schema and out_schema is not JSM1_SCHEMA:
+            raise ValueError(
+                f"{source['label']}: schema {source['schema'].name} ne peut pas "
+                f"etre PROMU en {out_schema.name} — les champs manquants "
+                "n'existent nulle part")
 
     target = args.target_records
     quotas = _weighted_quotas(target, [source["weight"] for source in sources])
@@ -565,7 +597,7 @@ def do_mix(args: argparse.Namespace) -> int:
     data_tmp = out_data.with_name(out_data.name + ".tmp")
     meta_tmp = out_meta.with_name(out_meta.name + ".tmp")
     data_header = JNNW_MAGIC + struct.pack("<I", target)
-    meta_header = meta_schema.magic + struct.pack("<I", target)
+    meta_header = out_schema.magic + struct.pack("<I", target)
     output_data_hash = hashlib.sha256(data_header)
     output_meta_hash = hashlib.sha256(meta_header)
     source_manifests = []
@@ -599,14 +631,14 @@ def do_mix(args: argparse.Namespace) -> int:
                     meta_hash.update(meta_source_header)
                     for row_index in range(count):
                         record = data_in.read(JNNW_REC)
-                        meta_raw = meta_in.read(meta_schema.record.size)
-                        if len(record) != JNNW_REC or len(meta_raw) != meta_schema.record.size:
+                        meta_raw = meta_in.read(source["schema"].record.size)
+                        if len(record) != JNNW_REC or len(meta_raw) != source["schema"].record.size:
                             raise ValueError(f"{source['label']}: truncated aligned pair")
                         data_hash.update(record)
                         meta_hash.update(meta_raw)
                         row = _decode_meta(
                             meta_raw,
-                            meta_schema,
+                            source["schema"],
                             context=f"{source['meta']}: record {row_index}",
                         )
                         game_id, opening_id = row.game_id, row.opening_id
@@ -631,12 +663,15 @@ def do_mix(args: argparse.Namespace) -> int:
                                 )
                             output_opening = source["index"] << 56 | local_opening
                         output_meta = _encode_meta(
-                            replace(
-                                row,
-                                game_id=namespaced_game,
-                                opening_id=output_opening,
+                            _downgrade_meta(
+                                replace(
+                                    row,
+                                    game_id=namespaced_game,
+                                    opening_id=output_opening,
+                                ),
+                                out_schema,
                             ),
-                            meta_schema,
+                            out_schema,
                             context=f"mix output record from {source['label']}",
                         )
                         data_out.write(record)
@@ -683,13 +718,15 @@ def do_mix(args: argparse.Namespace) -> int:
     _manifest(args.manifest, {
         "schema": 1,
         "operation": "weighted_aligned_mix",
+        "sidecar_downgraded": bool(downgrade_to),
+        "sidecar_downgrade_drops_game_context": bool(downgrade_to),
         "selection": "exact_uniform_record_sample_splitmix64_floyd",
         "seed": args.seed,
         "target_records": target,
         "records": selected_total,
         "sidecar_schema": {
-            "magic": meta_schema.name,
-            "record_size": meta_schema.record.size,
+            "magic": out_schema.name,
+            "record_size": out_schema.record.size,
         },
         "sources": source_manifests,
         "opening_id_policy": (
@@ -1553,6 +1590,17 @@ def build_parser() -> argparse.ArgumentParser:
     mix.add_argument("--out-data", required=True)
     mix.add_argument("--out-meta", required=True)
     mix.add_argument("--manifest")
+    mix.add_argument(
+        "--downgrade-meta",
+        choices=("jsm1",),
+        help=(
+            "ecrire le sidecar de sortie dans un schema PLUS PAUVRE que "
+            "l'entree. Seul cas legitime : melanger une moitie fraiche JSM2 "
+            "avec une moitie memoire historique en JSM1, qui n'a jamais eu de "
+            "contexte et ne peut pas en acquerir. Le contexte de la moitie "
+            "JSM2 est PERDU dans la sortie : filtrer AVANT de melanger."
+        ),
+    )
     mix.add_argument(
         "--namespace-openings",
         action="store_true",
