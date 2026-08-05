@@ -268,12 +268,13 @@ fi
 
 stage readout
 python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" "$VIEWS" \
-  "$PREFLIGHT_PREFIX" "$PRIOR_JSON" <<'PY' | tee -a "$RES"
+  "$PREFLIGHT_PREFIX" "$PRIOR_JSON" "${PRIOR_OPENINGS_PREFIX:-}" <<'PY' | tee -a "$RES"
 import json, math, pathlib, sys
 art = pathlib.Path(sys.argv[1]); per_view = int(sys.argv[2])
 code_sha = sys.argv[3]; A_LABEL, B_LABEL = sys.argv[4], sys.argv[5]
 openings_prefix = sys.argv[7]
 prior_path = sys.argv[8] if len(sys.argv) > 8 and sys.argv[8] else None
+legacy_prior_openings = sys.argv[9] if len(sys.argv) > 9 and sys.argv[9] else None
 views = {}
 for v in sys.argv[6].split():
     p = art / "force" / f"{v}-A-vs-B.json"
@@ -323,7 +324,18 @@ if prior_path and posterior:
     pv = prior.get("views_summed") or {}
     if prior.get("matchup") != f"{A_LABEL} vs {B_LABEL}":
         raise SystemExit(f"prior d'un autre appariement : {prior.get('matchup')!r}")
-    if prior.get("openings_prefix") and prior["openings_prefix"] == openings_prefix:
+    # ⛔ FAIL-CLOSED. Les portes anterieures a 2026-08-05 n'ecrivaient pas
+    # `openings_prefix` : sans ce garde-fou, chainer l'une d'elles SAUTERAIT
+    # silencieusement le seul controle qui distingue une replication d'un
+    # doublon. Un prior sans le champ exige donc que l'operateur declare son
+    # pool via PRIOR_OPENINGS_PREFIX, et le declarer faux se voit dans le job.
+    prior_openings = prior.get("openings_prefix") or legacy_prior_openings
+    if not prior_openings:
+        raise SystemExit(
+            "le prior ne declare pas son pool d'ouvertures (porte anterieure au "
+            "5 aout) : passer PRIOR_OPENINGS_PREFIX pour l'attester, sinon la "
+            "disjonction des pools n'est pas verifiable et le chainage est refuse")
+    if prior_openings == openings_prefix:
         raise SystemExit("le prior vient du MEME pool d'ouvertures : ce n'est pas "
                          "une replication independante, chainage refuse")
     pw, pd, pl = pv.get("wins_a"), pv.get("draws"), pv.get("wins_b")
@@ -349,6 +361,8 @@ if prior_path and posterior:
     pools_agree = bool(abs(dz) < 1.96 and (rate - 0.5) * (prate - 0.5) >= 0)
     chained = {
         "prior_job": prior.get("job_id") or prior.get("code_sha"),
+        "prior_openings_prefix": prior_openings,
+        "prior_openings_attested_by_operator": not prior.get("openings_prefix"),
         "between_pool_z": round(dz, 3),
         "pools_agree": pools_agree,
         "prior_n": pn, "prior_rate": round(prate, 6),
