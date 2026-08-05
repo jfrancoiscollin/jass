@@ -55,6 +55,21 @@ FILTER_SELECT="${FILTER_SELECT:-}"
 # Bras a fitter. "c0 c2" = le couple controle/relabel ; "c2" seul quand le
 # controle est un modele exterieur (le champion) et que la porte le fournit.
 FIT_ARMS="${FIT_ARMS:-c0 c2}"
+# PHASE_REWEIGHT=1 : rendre au fit la distribution de phase du pool AVANT
+# filtrage, via --sample-weights. Un filtre n'est jamais neutre — « not
+# contaminated » retire 57 % de l'OUVERTURE et rien ailleurs, donc sans
+# ponderation le fit est biaise vers les finales, ce qui est un SECOND facteur
+# non voulu. La ponderation corrige le BIAIS de composition ; elle ne recree
+# pas l'echantillon perdu, et la variance sur l'ouverture augmente.
+# ⚠️ Supprimer les PARTIES touchees plutot que les positions n'est pas une
+# option : 92,0 % des parties portent au moins un epsilon (mesure home-1311),
+# il ne resterait que 8,4 % des records.
+PHASE_REWEIGHT="${PHASE_REWEIGHT:-0}"
+WEIGHT_MIN="${WEIGHT_MIN:-0.25}"; WEIGHT_MAX="${WEIGHT_MAX:-4.0}"
+# Garde de bon sens sur les poids REELLEMENT calcules, plus serree que les
+# bornes de validation du trainer : un poids hors de cette plage signale que la
+# composition a bouge bien plus que prevu, et le job doit crier.
+WEIGHT_SANE_LO="${WEIGHT_SANE_LO:-0.5}"; WEIGHT_SANE_HI="${WEIGHT_SANE_HI:-2.5}"
 SPLIT_SEED="${SPLIT_SEED:-577215}"
 HOLDOUT_MOD="${HOLDOUT_MOD:-10}"
 EXPECTED_EXTRAS="${EXPECTED_EXTRAS:-120}"
@@ -277,6 +292,67 @@ K=$(python3 -c 'import struct,sys;f=open(sys.argv[1],"rb");assert f.read(4)==b"F
 [ "$K" = "$EXPECTED_EXTRAS" ] || die "extras K=$K attendu $EXPECTED_EXTRAS"
 say "  extras ✓ K=$K, dump PARTAGÉ par les deux bras"
 
+WEIGHT_ARGS=()
+if [ "$PHASE_REWEIGHT" = 1 ]; then
+  stage phase-reweight
+  [ -n "$FILTER_SELECT" ] || die "PHASE_REWEIGHT=1 sans filtre : rien a rendre"
+  env PYTHONUNBUFFERED=1 python3 - "$W/pool.jnnw" "$W/c0.jnnw" "$W/weights.npy" \
+    "$ART/phase-reweight.json" "$WEIGHT_SANE_LO" "$WEIGHT_SANE_HI" <<'PYW' | tee -a "$RES"
+import json, sys
+import numpy as np
+DT = np.dtype([("wm","<u8"),("wk","<u8"),("bm","<u8"),("bk","<u8"),
+               ("stm","u1"),("score","<i4"),("wdl","i1")])
+BANDS = ((25,40,"ouverture_25_40"),(15,24,"milieu_15_24"),
+         (8,14,"fin_de_milieu_8_14"),(3,7,"finale_3_7"),(0,2,"deux_ou_moins"))
+def pieces(path):
+    a = np.fromfile(path, dtype=DT, offset=8)
+    def pop(x):
+        x = np.ascontiguousarray(x)
+        return np.unpackbits(x.view(np.uint8)).reshape(len(x), 64).sum(axis=1)
+    return pop(a["wm"]) + pop(a["wk"]) + pop(a["bm"]) + pop(a["bk"])
+raw, cur = pieces(sys.argv[1]), pieces(sys.argv[2])
+lo_ok, hi_ok = float(sys.argv[5]), float(sys.argv[6])
+w = np.ones(len(cur), dtype=np.float32)
+rows = []
+for lo, hi, name in BANDS:
+    s_raw = float(((raw>=lo)&(raw<=hi)).mean())
+    m = (cur>=lo)&(cur<=hi)
+    s_cur = float(m.mean())
+    if s_cur == 0.0:
+        if s_raw > 0:
+            raise SystemExit(f"{name}: present dans le brut ({100*s_raw:.2f} %) "
+                             "et ABSENT apres filtrage — reponderation impossible")
+        continue
+    ratio = s_raw / s_cur
+    w[m] = np.float32(ratio)
+    rows.append({"band": name, "share_raw": round(s_raw,6),
+                 "share_filtered": round(s_cur,6), "weight": round(ratio,6)})
+    print(f"  {name:20s} brut {100*s_raw:6.2f} %  filtre {100*s_cur:6.2f} %  poids {ratio:6.4f}")
+wmin, wmax = float(w.min()), float(w.max())
+if not (lo_ok <= wmin and wmax <= hi_ok):
+    raise SystemExit(f"poids hors plage de bon sens [{lo_ok}, {hi_ok}] : "
+                     f"min={wmin:.4f} max={wmax:.4f}")
+# Controle : la masse reponderee doit reproduire les parts BRUTES.
+tot = float(w.sum())
+for lo, hi, name in BANDS:
+    m = (cur>=lo)&(cur<=hi)
+    if not m.any(): continue
+    got = float(w[m].sum())/tot
+    want = float(((raw>=lo)&(raw<=hi)).mean())
+    if abs(got-want) > 1e-6:
+        raise SystemExit(f"{name}: masse reponderee {got:.6f} != part brute {want:.6f}")
+np.save(sys.argv[3], w)
+json.dump({"schema": 1, "rows": len(w), "weight_min": wmin, "weight_max": wmax,
+           "bands": rows, "restores": "phase distribution of the unfiltered pool"},
+          open(sys.argv[4], "w"), indent=2, sort_keys=True)
+print(f"  ponderation ✓ : {len(w)} poids, plage [{wmin:.4f} ; {wmax:.4f}], masses conformes")
+PYW
+  [ -s "$W/weights.npy" ] || die "vecteur de poids absent"
+  WEIGHT_ARGS=(--sample-weights "$W/weights.npy"
+               --weight-normalization mean-train-1
+               --weight-min "$WEIGHT_MIN" --weight-max "$WEIGHT_MAX")
+fi
+
 fit_arm(){   # $1 = nom d'arme, $2 = corpus
   local arm="$1" data="$2"
   stage "fit-$arm"
@@ -288,6 +364,8 @@ fit_arm(){   # $1 = nom d'arme, $2 = corpus
       --prior-mean "$IN/parent.pjtw" --prior-decay 0 \
       --holdout-count "$HOLDOUT" --l2 "$L2" --max-iter "$MAXIT" --chunk "$CHUNK" \
       --lbfgs-maxcor "$LBFGS_MAXCOR" --lbfgs-gtol "$LBFGS_GTOL" --prune \
+      ${WEIGHT_ARGS[@]+"${WEIGHT_ARGS[@]}"} \
+      ${WEIGHT_ARGS:+--weights-report "$ART/$arm-weights.json"} \
       --optimizer-report "$ART/$arm-optimizer.json" \
       > "$W/fit-$arm.log" 2> "$W/fit-$arm-time.log"
   local rc=$?
