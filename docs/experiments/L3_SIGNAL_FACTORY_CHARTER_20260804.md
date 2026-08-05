@@ -288,6 +288,15 @@ Composition d'un corpus par la métrique **validée** en M3, puis génération �
 grande échelle. **Ne pas spécifier davantage avant le verdict M3** : le dessin
 dépend de ce que M3 aura retenu.
 
+Un axe candidat est néanmoins enregistré, sans autorisation de lancement :
+l'[allocation variable et adaptative du budget-nœuds](L3_SIGNAL_FACTORY_ADAPTIVE_NODE_BUDGET_EXTENSION_20260806.md).
+L'extension sépare quatre questions causales — profondeur fixe contre budgets
+variables, tirage par partie contre tirage par coup, allocation par phase, puis
+allocation par complexité de position — et exige un coût total apparié. Elle
+reste **inactive tant que M3 n'a pas rendu** ; ni le score de complexité, ni une
+distribution de production, ni un job scientifique ne sont figés par cette
+référence.
+
 ---
 
 ## 4. Hors périmètre
