@@ -44,8 +44,9 @@
 > draw_labelling_defect_not_visible_in_published_corpora_claim_retracted;
 > post_epsilon_contamination_measured_19_75_percent;
 > signal_factory_charter_opened;
-> volume_axis_small_positive_p_gt_0_is_87_percent_axis_NOT_closed;
-> volume_effect_bounded_p_elo_gt_10_is_1_7_percent;
+> volume_axis_did_NOT_replicate_on_a_second_pool_chained_p_gt_0_is_80_6_percent;
+> single_pool_posteriors_are_inflated_by_the_pool_draw_measured_3_45_to_0_32;
+> bake_criterion_p_gt_0_over_95_percent_on_chained_pools_first_application_REFUSED;
 > gates_now_report_a_flat_prior_posterior_alongside_the_ci;
 > label_noise_24_percent_against_tablebase_replicated_two_corpora;
 > m1_signal_report_validated_against_engine_counters_exactly`.
@@ -118,6 +119,44 @@ antérieures, mais le posterior est ce qu'on lit. Et pour un second pool disjoin
 **le posterior du premier devient le prior du second** — c'est exactement la mise
 à jour séquentielle, et elle donne un `P(>0)` courant au lieu de deux verdicts
 qu'il faudrait recoller à la main.
+
+### ⛓️ `cpx62-1184` — LE VOLUME NE RÉPLIQUE PAS, et le critère de bake REFUSE
+
+Première application de bout en bout du critère fixé par JFC (`P(Elo>0) > 95 %`
+sur pools chaînés). Le même couple VOL12M vs L2LOW, rejoué sur le pool
+d'ouvertures **neuf et disjoint** `big3000b` (`cpx62-1183`), avec le posterior
+de `cpx62-1179` en prior :
+
+| | n | Elo | P(Elo>0) |
+|---|---:|---:|---:|
+| pool 1 (`big3000`) | 12 000 | **+3,45** | **86,8 %** |
+| pool 2 (`big3000b`) | 12 000 | **+0,32** | **54,1 %** |
+| **⛓️ combiné** | **24 000** | **+1,89** | **80,6 %** |
+
+`accord des pools : z = −0,72 → COHERENTS` — la garde d'hétérogénéité ne se
+déclenche pas, donc le chaînage est légitime et le combiné est la bonne
+estimation.
+
+```
+critere de bake (P(Elo>0)>95 % sur pools chaines) : NON REMPLI — P(elo>0)=0.8064
+```
+
+⛔ **LEÇON DE MÉTHODE, ET ELLE COÛTE CHER À OUBLIER : un posterior sur UN SEUL
+POOL est gonflé par le tirage du pool.** `+3,45` à 86,8 % s'est révélé être
+`+1,89` à 80,6 % une fois répliqué. Ce n'est pas une contradiction — les deux
+pools sont statistiquement compatibles — c'est la variance inter-pool qui
+n'était pas dans l'intervalle. **Aucun verdict à un seul pool ne doit plus être
+présenté comme une estimation de l'effet.**
+
+⚠️ **Et ça vaut pour `C2`** : son `+3,04` à 83,8 % (`cpx62-1182`) vient d'un seul
+pool, exactement comme le `+3,45` qui vient de se dégonfler de moitié. Rien ne
+dit qu'il y échappera.
+
+Par vue sur le pool 2 : `q00 +2,84` (74,2 %), `native −2,20` (30,7 %).
+
+**L'axe du volume n'est pas clos** — 80,6 % restent du bon côté — mais la
+meilleure estimation est désormais **~+2 Elo, incertitude couvrant zéro**, et
+`P(Elo>10) = 0,0 %`.
 
 ### ✅ `cpx62-1180` — M1 est validé contre les compteurs du moteur, à l'unité près
 
