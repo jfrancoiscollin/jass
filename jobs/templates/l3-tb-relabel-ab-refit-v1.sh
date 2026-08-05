@@ -41,8 +41,20 @@ say(){ echo "$*" | tee -a "$RES"; }
 die(){ say "ABORT: $*"; exit 1; }
 stage(){ echo "$1" > "$STAGE"; say "phase=$1"; }
 
+# TARGET_RECORDS=0 => AUCUN sous-echantillonnage, on prend le pool entier.
 TARGET_RECORDS="${TARGET_RECORDS:-2000000}"
 SUBSAMPLE_SEED="${SUBSAMPLE_SEED:-3141592}"
+# FILTER_SELECT : expression passee a corpus_filter.py (M2), appliquee AVANT le
+# split. Vide = aucun filtre. Exemple : "not contaminated" retire les positions
+# dont l'etiquette parle d'une partie deraillee APRES elles.
+# ⚠️ Un filtre n'est jamais neutre : "not contaminated" retire 57 % des
+# positions d'OUVERTURE et quasiment rien ailleurs (mesure sur home-1311), donc
+# il repondere le corpus vers les finales. C'est un second facteur, et le job
+# imprime la distribution de phase avant/apres pour qu'il soit lisible.
+FILTER_SELECT="${FILTER_SELECT:-}"
+# Bras a fitter. "c0 c2" = le couple controle/relabel ; "c2" seul quand le
+# controle est un modele exterieur (le champion) et que la porte le fournit.
+FIT_ARMS="${FIT_ARMS:-c0 c2}"
 SPLIT_SEED="${SPLIT_SEED:-577215}"
 HOLDOUT_MOD="${HOLDOUT_MOD:-10}"
 EXPECTED_EXTRAS="${EXPECTED_EXTRAS:-120}"
@@ -115,14 +127,52 @@ gunzip -c "$IN/pool.jsm.gz"  > "$W/pool.jsm"
 [ "$(head -c4 "$W/pool.jsm")" = "JSM2" ] || die "sidecar du pool en JSM1 : contexte absent"
 say "  pool ✓ (sidecar JSM2) + parent ✓ hash conforme"
 
-stage subsample-and-split
-# Sous-échantillonnage UNE SEULE FOIS, puis split par ouverture. C0 et C2
-# partagent donc EXACTEMENT le même ordre et la même frontière de holdout.
-python3 tools/selfplay_frontier.py mix \
-  --source POOL "$W/pool.jnnw" "$W/pool.jsm" 1 \
-  --target-records "$TARGET_RECORDS" --seed "$SUBSAMPLE_SEED" \
-  --out-data "$W/sub.jnnw" --out-meta "$W/sub.jsm" \
-  --manifest "$ART/subsample.json" > "$W/mix.log" 2>&1 || die "sous-échantillonnage en échec"
+stage filter-and-split
+SRC_DATA="$W/pool.jnnw"; SRC_META="$W/pool.jsm"
+if [ -n "$FILTER_SELECT" ]; then
+  stage filter-c1
+  python3 jobs/tools/corpus_filter.py --data "$SRC_DATA" --meta "$SRC_META" \
+    --select "$FILTER_SELECT" --out-data "$W/filt.jnnw" --out-meta "$W/filt.jsm" \
+    --manifest "$ART/filter.json" > "$W/filter.log" 2>&1 || die "filtrage en échec"
+  KEPT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["output"]["records"])' "$ART/filter.json")
+  BEFORE=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["input"]["records"])' "$ART/filter.json")
+  [ "${KEPT:-0}" -gt 0 ] || die "le filtre ne garde AUCUN record"
+  [ "$KEPT" -lt "$BEFORE" ] || die "le filtre n'a rien retire : cellule sans objet"
+  say "  filtre « $FILTER_SELECT » : $KEPT / $BEFORE gardés"
+  # La distribution de phase AVANT/APRES, parce qu'un filtre repondere le corpus
+  # et que ce second facteur doit etre lisible dans le rapport, pas devine.
+  python3 - "$SRC_DATA" "$W/filt.jnnw" <<'PYPH' | tee -a "$RES"
+import numpy as np, sys
+DT = np.dtype([("wm","<u8"),("wk","<u8"),("bm","<u8"),("bk","<u8"),
+               ("stm","u1"),("score","<i4"),("wdl","i1")])
+def phases(path):
+    a = np.fromfile(path, dtype=DT, offset=8)
+    def pop(x):
+        x = np.ascontiguousarray(x)
+        return np.unpackbits(x.view(np.uint8)).reshape(len(x), 64).sum(axis=1)
+    pc = pop(a["wm"]) + pop(a["wk"]) + pop(a["bm"]) + pop(a["bk"])
+    return pc, len(a)
+pa, na = phases(sys.argv[1]); pb, nb = phases(sys.argv[2])
+print("  phase                avant       apres    part avant   part apres")
+for lo, hi, lbl in ((25,40,"ouverture 25-40"),(15,24,"milieu 15-24"),
+                    (8,14,"fin de milieu 8-14"),(3,7,"finale 3-7")):
+    ca = int(((pa>=lo)&(pa<=hi)).sum()); cb = int(((pb>=lo)&(pb<=hi)).sum())
+    print(f"  {lbl:20s} {ca:>10,} {cb:>11,} {100*ca/na:>11.2f}% {100*cb/nb:>11.2f}%")
+PYPH
+  SRC_DATA="$W/filt.jnnw"; SRC_META="$W/filt.jsm"
+fi
+# Sous-échantillonnage OPTIONNEL, puis split par ouverture. C0 et C2 partagent
+# donc EXACTEMENT le même ordre et la même frontière de holdout.
+if [ "$TARGET_RECORDS" -gt 0 ]; then
+  python3 tools/selfplay_frontier.py mix \
+    --source POOL "$SRC_DATA" "$SRC_META" 1 \
+    --target-records "$TARGET_RECORDS" --seed "$SUBSAMPLE_SEED" \
+    --out-data "$W/sub.jnnw" --out-meta "$W/sub.jsm" \
+    --manifest "$ART/subsample.json" > "$W/mix.log" 2>&1 || die "sous-échantillonnage en échec"
+else
+  say "  pool entier conservé (TARGET_RECORDS=0)"
+  mv "$SRC_DATA" "$W/sub.jnnw"; mv "$SRC_META" "$W/sub.jsm"
+fi
 python3 tools/selfplay_frontier.py split \
   --data "$W/sub.jnnw" --meta "$W/sub.jsm" \
   --holdout-mod "$HOLDOUT_MOD" --seed "$SPLIT_SEED" \
@@ -130,7 +180,9 @@ python3 tools/selfplay_frontier.py split \
   --manifest "$ART/split.json" > "$W/split.log" 2>&1 || die "split en échec"
 HOLDOUT=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["holdout_records"])' "$ART/split.json")
 RECORDS=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["records"])' "$ART/split.json")
-[ "$RECORDS" = "$TARGET_RECORDS" ] || die "records=$RECORDS attendu $TARGET_RECORDS"
+if [ "$TARGET_RECORDS" -gt 0 ]; then
+  [ "$RECORDS" = "$TARGET_RECORDS" ] || die "records=$RECORDS attendu $TARGET_RECORDS"
+fi
 [ "${HOLDOUT:-0}" -gt 0 ] || die "holdout vide"
 say "  C0 ✓ : $RECORDS records, holdout $HOLDOUT (1/$HOLDOUT_MOD par ouverture)"
 
@@ -259,13 +311,19 @@ PYCHK
 
 say "  recette (IDENTIQUE sur les deux bras) : $FOLD_FLAG, prior sur le parent,"
 say "    decay 0, gtol $LBFGS_GTOL, l2 $L2, max_iter $MAXIT"
-fit_arm c0 "$W/c0.jnnw"
-fit_arm c2 "$W/c2.jnnw"
+say "  bras fittés : $FIT_ARMS"
+for arm in $FIT_ARMS; do
+  case "$arm" in c0|c2) fit_arm "$arm" "$W/$arm.jnnw" ;; *) die "bras inconnu : $arm" ;; esac
+done
 
 stage verify-arms-differ
-cmp -s "$W/c0.pjtw" "$W/c2.pjtw" &&
-  die "les deux modèles sont IDENTIQUES — le relabel n'a rien changé au fit"
-say "  bras distincts ✓ ($(stat -c%s "$W/c0.pjtw") octets chacun, contenus différents)"
+if [ -f "$W/c0.pjtw" ] && [ -f "$W/c2.pjtw" ]; then
+  cmp -s "$W/c0.pjtw" "$W/c2.pjtw" &&
+    die "les deux modèles sont IDENTIQUES — le relabel n'a rien changé au fit"
+  say "  bras distincts ✓ ($(stat -c%s "$W/c0.pjtw") octets chacun, contenus différents)"
+else
+  say "  un seul bras fitté — le contrôle est fourni par la porte"
+fi
 
 stage report
 say "L3_TB_RELABEL_AB_REFIT_READY changed=$CHANGED records=$RECORDS promotion=false automatic_next_job=null"
