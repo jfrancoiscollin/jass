@@ -79,6 +79,16 @@ FOLD_FLAG="${FOLD_FLAG:---exact-fold}"
 L2="${L2:-1e-5}"; LBFGS_GTOL="${LBFGS_GTOL:-1e-4}"
 MAXIT="${MAXIT:-4000}"; CHUNK="${CHUNK:-20000}"; LBFGS_MAXCOR=20
 FIT_TIMEOUT="${FIT_TIMEOUT:-14400}"
+# NUMERIC_STACK : auto (defaut, comportement historique — on tente l'epinglage
+# de juillet puis on retombe sur les versions courantes), historical ou current
+# pour EXIGER l'un des deux et abandonner sinon.
+# ⚠️ Ce n'est pas cosmetique : deux bras sur des piles differentes ne sont pas
+# comparables, et deux ETAGES sur des piles differentes ajoutent un facteur
+# parasite au chainage. home-1313 a mesure que la pile "historical" sur HOME
+# ne finit pas un fit 2 M en 4 h la ou "current" sur cpx62 le fait en ~2h05.
+NUMERIC_STACK="${NUMERIC_STACK:-auto}"
+case "$NUMERIC_STACK" in auto|historical|current) ;; *)
+  die "NUMERIC_STACK doit valoir auto, historical ou current (recu: $NUMERIC_STACK)" ;; esac
 CACHE_MB="${CACHE_MB:-4096}"
 
 MON=""
@@ -276,10 +286,21 @@ PY
 
 stage python-runtime
 python3 -m venv "$W/venv"
-if "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
-     numpy==1.26.4 scipy==1.14.1 > "$W/pip.log" 2>&1; then PINSTACK=historical
-else "$W/venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
-    numpy scipy >> "$W/pip.log" 2>&1 || die "pip en échec"; PINSTACK=current; fi
+pip_hist(){ "$W/venv/bin/python" -m pip install --disable-pip-version-check \
+  --only-binary=:all: numpy==1.26.4 scipy==1.14.1 >> "$W/pip.log" 2>&1; }
+pip_curr(){ "$W/venv/bin/python" -m pip install --disable-pip-version-check \
+  --only-binary=:all: numpy scipy >> "$W/pip.log" 2>&1; }
+: > "$W/pip.log"
+case "$NUMERIC_STACK" in
+  historical) pip_hist || die "pile historical exigée mais indisponible — voir pip.log"
+              PINSTACK=historical ;;
+  current)    pip_curr || die "pile current exigée mais indisponible — voir pip.log"
+              PINSTACK=current ;;
+  auto)       if pip_hist; then PINSTACK=historical
+              else pip_curr || die "pip en échec — voir pip.log"; PINSTACK=current; fi ;;
+esac
+[ "$NUMERIC_STACK" = auto ] || [ "$PINSTACK" = "$NUMERIC_STACK" ] ||
+  die "pile résolue $PINSTACK != $NUMERIC_STACK exigée"
 NPV=$("$W/venv/bin/python" -c 'import numpy,scipy;print(numpy.__version__,scipy.__version__)')
 say "  pile numérique : $PINSTACK (numpy/scipy $NPV) — PARTAGÉE par les deux bras"
 printf '{"stack":"%s","numpy_scipy":"%s"}\n' "$PINSTACK" "$NPV" > "$ART/numeric-stack.json"
