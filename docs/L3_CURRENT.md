@@ -40,7 +40,8 @@
 > l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
 > king_patterns_gate_played_flat_upper_bound_8_8_elo;
 > king_aware_gate_blocked_on_per_arm_build;
-> fresh12m_corpus_generated_draw_labelling_repaired;
+> fresh12m_corpus_generated_endgame_content_34x_higher;
+> draw_labelling_defect_not_visible_in_published_corpora_claim_retracted;
 > post_epsilon_contamination_measured_19_75_percent;
 > signal_factory_charter_opened`.
 
@@ -54,23 +55,47 @@ C'est le premier corpus de la campagne généré par le moteur d'après `9c1d1e8
 et à ce volume.
 
 **⚠️ Deux facteurs bougent d'un coup, et c'est assumé** : le volume (12 M contre
-2 M) *et* l'étiquetage des nulles. Aucun verdict de force ne pourra donc
+2 M) *et* la **teneur en finales**. Aucun verdict de force ne pourra donc
 attribuer un écart à l'un plutôt qu'à l'autre — ce corpus sert à **nourrir**,
 pas à **trancher**.
 
-**1. L'étiquetage est réparé, et c'est mesuré sur les DONNÉES, pas sur le code**
+**1. ⛔ RECTIFICATIF DU 5 AOÛT — « l'étiquetage des nulles est réparé » ÉTAIT FAUX**
 
-| | ancienne lignée (F2M→L2LOW) | `home-1310` | vrai taux attendu |
-|---|---|---|---|
-| nulles | **4,8 %** | **18,26 %** | ~20,3 % |
-| gains | — | 41,09 % | |
-| pertes | — | 40,65 % | |
-| biais de camp | — | **0,44 %** | ~0 |
+> Cette section affirmait que `home-1310` faisait passer les nulles de **4,8 %**
+> à **18,26 %**, « facteur 3,8× récupéré ». **La mesure directe sur les fichiers
+> réfute la prémisse** : TURNOVER **et ses trois sources** sont déjà à ~21 % de
+> nulles. Il n'y avait rien à réparer sur ces corpus, et le nouveau en a
+> légèrement **moins**, pas plus.
 
-Facteur **3,8×** récupéré. Canari WDL (`assert_corpus_wdl.py`) vert sur les
-**12 shards** — la garde surveille désormais les données, pas le code, ce qui
-est précisément ce qui a manqué en juillet quand le défaut a traversé la lignée
-entière.
+| corpus | n | **nulles** | 3-7 pièces |
+|---|---:|---:|---:|
+| TURNOVER 2 M *(parent de L2LOW)* | 2 000 000 | **21,41 %** | 0,52 % |
+| ↳ source `f2m-common` | 500 000 | 21,17 % | 0,50 % |
+| ↳ source `f2m-extra` | 1 500 000 | 20,88 % | 0,51 % |
+| ↳ source `m2-d8` | 2 000 000 | 21,85 % | 0,51 % |
+| VOL8M 12 M *(home-1004)* | 12 000 000 | 18,67 % | 12,19 % |
+| `home-1310` 12 M | 12 000 000 | **18,24 %** | **17,51 %** |
+
+Méthode contrôlée : sur `home-1310` la mesure indépendante donne **18,24 %** là
+où le canari du job avait imprimé **18,2586 %** — même chiffre, donc le lecteur
+est bon.
+
+✅ **Ce que `home-1310` change RÉELLEMENT, et c'est plus intéressant : la TENEUR
+EN FINALES.** `0,52 % → 12,19 % → 17,51 %` de positions à 3-7 pièces, soit un
+**facteur 34** entre TURNOVER et `home-1310`. **Toute la lignée jusqu'à L2LOW
+s'est entraînée sur un corpus quasi dépourvu de finales**, pendant qu'on mesure
+par ailleurs que Scan nous bat par la qualité d'évaluation.
+
+Signature qui désigne le mécanisme : les 10 320 positions basses de TURNOVER
+sont **toutes exactement à 7 pièces**, aucune en dessous — un plancher net, là
+où `home-1310` s'étale sur 3, 4, 5, 6, 7. C'est la marque du `terminate-at-TB`,
+qui coupe la partie dès l'entrée dans la base. Hypothèse cohérente avec tout ce
+qu'on mesure, pas encore prouvée : TURNOVER a été généré **avec** une base qui
+répond jusqu'à 6 pièces, `home-1310` **sans**.
+
+Les autres compteurs de `home-1310` restent valides : gains 41,09 %, pertes
+40,65 %, **biais de camp 0,44 %** (harnais symétrique), canari WDL vert sur les
+12 shards.
 
 **2. Volume et couverture**
 
