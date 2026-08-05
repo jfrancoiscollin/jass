@@ -239,11 +239,41 @@ for view in $VIEWS; do
   if run_view "$view"; then say "  vue $view jouée"; else say "  vue $view ÉCHOUÉE (rc=$?)"; fi
 done
 
+# ⛓️ PRIOR CHAINE (facultatif) — le posterieur d'une porte ANTERIEURE sur un
+# SECOND POOL DISJOINT devient le prior de celle-ci. Demande par JFC le 5 aout :
+# deux verdicts separes qu'il faut recoller a la main valent moins qu'un P(>0)
+# courant. Les compteurs BRUTS de la porte precedente sont relus et recombines
+# par precision ; on ne fait pas confiance aux arrondis stockes.
+PRIOR_GATE_PREFIX="${PRIOR_GATE_PREFIX:-}"
+PRIOR_GATE_JOB="${PRIOR_GATE_JOB:-}"
+PRIOR_JSON=""
+if [ -n "$PRIOR_GATE_PREFIX" ]; then
+  stage fetch-prior-gate
+  : "${PRIOR_GATE_JOB:?PRIOR_GATE_PREFIX fourni sans PRIOR_GATE_JOB}"
+  python3 jobs/tools/fetch_result_files.py --prefix "$PRIOR_GATE_PREFIX" \
+    --file "artefacts/JASS_CONTROL_SUMMARY.json=prior-gate.json" \
+    --out-dir "$IN" --report "$ART/verified-prior-gate.json" \
+    --expected-state completed > "$W/fetch-prior.log" 2>&1 ||
+    die "fetch de la porte anterieure en echec"
+  python3 - "$ART/verified-prior-gate.json" "$PRIOR_GATE_JOB" <<'PYP'
+import json, sys
+r = json.load(open(sys.argv[1]))
+if r.get("job_id") != sys.argv[2] or r.get("result_state") != "completed":
+    raise SystemExit("identite/etat de la porte anterieure non conforme")
+PYP
+  PRIOR_JSON="$IN/prior-gate.json"
+  cp "$PRIOR_JSON" "$ART/prior-gate.json"
+  say "  prior chaine ✓ : $PRIOR_GATE_JOB"
+fi
+
 stage readout
-python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" "$VIEWS" <<'PY' | tee -a "$RES"
+python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" "$VIEWS" \
+  "$PREFLIGHT_PREFIX" "$PRIOR_JSON" <<'PY' | tee -a "$RES"
 import json, math, pathlib, sys
 art = pathlib.Path(sys.argv[1]); per_view = int(sys.argv[2])
 code_sha = sys.argv[3]; A_LABEL, B_LABEL = sys.argv[4], sys.argv[5]
+openings_prefix = sys.argv[7]
+prior_path = sys.argv[8] if len(sys.argv) > 8 and sys.argv[8] else None
 views = {}
 for v in sys.argv[6].split():
     p = art / "force" / f"{v}-A-vs-B.json"
@@ -274,10 +304,54 @@ def _phi(z):
 # EN PLUS de l'IC, jamais a la place : le verdict reste frequentiste pour ne pas
 # casser la comparabilite avec toutes les portes anterieures.
 POSTERIOR_THRESHOLDS = (0, 3, 5, 10, 17)
-posterior = None
-if n and se and se > 0:
-    posterior = {f"p_elo_gt_{e}": round(1.0 - _phi((rate_of_elo(e) - rate) / se), 4)
-                 for e in POSTERIOR_THRESHOLDS}
+def posterior_of(mu, sd):
+    return {f"p_elo_gt_{e}": round(1.0 - _phi((rate_of_elo(e) - mu) / sd), 4)
+            for e in POSTERIOR_THRESHOLDS}
+posterior = posterior_of(rate, se) if (n and se and se > 0) else None
+
+# ⛓️ Chainage. Les deux portes mesurent LE MEME estimand — l'effet de
+# l'intervention — sur des pools d'ouvertures DISJOINTS. On recombine par
+# precision, ce qui revient a une mise a jour bayesienne sequentielle avec prior
+# plat au depart.
+# ⚠️ CE QUE LE CHAINAGE SUPPOSE, et il faut le dire : que l'effet est LE MEME
+# dans les deux pools. Avec deux replicats on ne peut pas estimer la variance
+# inter-pool ; si les deux portes se contredisent franchement, c'est cette
+# hypothese-la qui casse, et le DESACCORD est alors le resultat, pas la moyenne.
+chained = None
+if prior_path and posterior:
+    prior = json.load(open(prior_path))
+    pv = prior.get("views_summed") or {}
+    if prior.get("matchup") != f"{A_LABEL} vs {B_LABEL}":
+        raise SystemExit(f"prior d'un autre appariement : {prior.get('matchup')!r}")
+    if prior.get("openings_prefix") and prior["openings_prefix"] == openings_prefix:
+        raise SystemExit("le prior vient du MEME pool d'ouvertures : ce n'est pas "
+                         "une replication independante, chainage refuse")
+    pw, pd, pl = pv.get("wins_a"), pv.get("draws"), pv.get("wins_b")
+    if None in (pw, pd, pl):
+        raise SystemExit("compteurs bruts absents du prior")
+    pn = pw + pd + pl
+    if pn <= 0:
+        raise SystemExit("prior a n=0")
+    # Recalcul depuis les compteurs BRUTS : on ne reprend pas les arrondis.
+    prate = (pw + 0.5 * pd) / pn
+    pvar = max(0.0, (pw + 0.25 * pd) / pn - prate * prate)
+    pse = math.sqrt(pvar / pn)
+    if pse <= 0:
+        raise SystemExit("prior de variance nulle")
+    wp, wl = 1.0 / (pse * pse), 1.0 / (se * se)
+    cmu = (prate * wp + rate * wl) / (wp + wl)
+    csd = math.sqrt(1.0 / (wp + wl))
+    chained = {
+        "prior_job": prior.get("job_id") or prior.get("code_sha"),
+        "prior_n": pn, "prior_rate": round(prate, 6),
+        "prior_elo": round(elo(prate), 2) if elo(prate) is not None else None,
+        "combined_n": pn + n, "combined_rate": round(cmu, 6),
+        "combined_elo": round(elo(cmu), 2) if elo(cmu) is not None else None,
+        "combined_ci95": [round(elo(max(1e-9, cmu - 1.96 * csd)), 1),
+                          round(elo(min(1 - 1e-9, cmu + 1.96 * csd)), 1)],
+        "posterior": posterior_of(cmu, csd),
+        "assumes_same_effect_in_both_pools": True,
+    }
 if missing or short or not n:
     verdict = "L3_MODEL_GATE_INCONCLUSIVE"
 elif lo > 0.5:
@@ -297,6 +371,8 @@ payload = {
         "elo_ci95": ([round(elo(lo), 1), round(elo(hi), 1)]
                      if elo(lo) is not None and elo(hi) is not None else None),
         "posterior_flat_prior": posterior},
+    "openings_prefix": openings_prefix,
+    "chained_with_prior_gate": chained,
     "per_view": {v: d for v, d in views.items()},
     "arms": {"a": A_LABEL, "b": B_LABEL},
     "holdout_is_not_the_arbiter": (
@@ -314,6 +390,13 @@ if rate:
 if posterior:
     print("  posterieur (prior plat) : " + "  ".join(
         f"P(Elo>{e})={100*posterior[f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
+if chained:
+    c = chained
+    print(f"  ⛓️ chaine avec {c['prior_job']} : prior n={c['prior_n']} Elo={c['prior_elo']:+.2f}")
+    print(f"     combine n={c['combined_n']}  Elo={c['combined_elo']:+.2f}"
+          f"  IC95=[{c['combined_ci95'][0]:+.1f} ; {c['combined_ci95'][1]:+.1f}]")
+    print("     posterieur combine : " + "  ".join(
+        f"P(Elo>{e})={100*c['posterior'][f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
 print(f"  VERDICT {verdict}")
 PY
 VERDICT="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")"
