@@ -282,6 +282,31 @@ sidecar JSM1 (les champs de contexte n'y existent pas), et `merge`/`mix`
 refusent les schémas mélangés. Les deux pools sont générés : `home-1311`
 (graine 1618034) et `home-1312` (graine 2718281).
 
+#### Extension M3 du 6 août — `TRAJ-EQUAL`, une partie égale une masse
+
+Le JSM2 a rendu testable un facteur que le plan L3 laissait explicitement
+ouvert : le générateur échantillonne environ un ply sur quatre, puis la loss
+traite chaque record à poids égal. Une partie longue apporte donc davantage de
+gradient qu'une courte, alors que ses records partagent le même résultat
+terminal après conversion dans un POV commun.
+
+`TRAJ-EQUAL` conserve le même JNNW, le même JSM2, le même ordre, le même split
+et le même dump FEAT. Il change uniquement la masse TRAIN : chaque record d'une
+partie représentée reçoit `1/m_g`, puis les poids sont renormalisés à moyenne 1.
+La likelihood totale et l'échelle relative du L2/prior restent appariées.
+
+Cette cellule appartient à M3, pas M4 : elle valide contre l'Elo une propriété
+de structure du corpus sans générer ni composer un nouveau corpus. Elle est
+ouverte après les verdicts plats de C2 sur deux pools, de C1+C2 et de NB0 : elle
+teste si le fit compte mal les trajectoires existantes, pas une nouvelle façon
+de les produire. Deux réplications, sur `home-1311` et `home-1312`, sont figées
+avant lecture. Détail, gardes et règle de décision :
+[`L3_TRAJECTORY_EQUAL_WEIGHT_PREREGISTRATION_20260806.md`](L3_TRAJECTORY_EQUAL_WEIGHT_PREREGISTRATION_20260806.md).
+
+Elle n'autorise ni exposant intermédiaire, ni modification du sampler, ni
+promotion. Elle ne rouvre ni C2/C1, ni NB0 ; changer le professeur reste une
+hypothèse séparée.
+
 ### M4 — L'usine
 
 Composition d'un corpus par la métrique **validée** en M3, puis génération à
