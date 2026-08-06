@@ -51,9 +51,39 @@
 > label_noise_24_percent_against_tablebase_replicated_two_corpora;
 > m1_signal_report_validated_against_engine_counters_exactly;
 > exact_fold_REPLICATES_on_a_disjoint_second_pool_chained_14_66_elo_n18000;
-> winners_curse_hits_the_marginal_axes_not_the_mechanical_one`.
+> priortight_REPLICATES_on_a_disjoint_second_pool_chained_15_85_elo_n24000;
+> winners_curse_deflation_decreases_with_effect_size_selection_not_bias;
+> fit_recipe_axes_replicate_corpus_axes_do_not_three_against_three;
+> c1c2_weighted_12m_package_flat_negative_second_pool_declined;
+> m3_produced_no_elo_m4_stays_blocked_by_charter`.
 
-## 0quinquies. 6 août 2026 — ✅ LE FOLD EXACT RÉPLIQUE, LUI
+## 0quinquies. 6 août 2026 — ✅ LA RECETTE DE FIT RÉPLIQUE, LE CORPUS NON
+
+### ⚖️ `cpx62-1188` — le paquet C1+C2 sur le 12 M ne donne rien
+
+Dernière cellule de l'usine à signal : corpus 12 M filtré `--drop-post-eps`
+avec repondération de phase (C1) **et** ré-étiqueté par tablebase (C2),
+refité à la recette L2LOW, contre le champion **L2LOW** lui-même.
+
+```
+n=12000   C1C2W 5645W 619D 5736L contre L2LOW
+taux = 0,4962   Elo = −2,63   IC95 = [−8,7 ; +3,4]
+P(>0)=19,7 %  P(>3)=3,4 %  P(>5)=0,7 %
+VERDICT A_FLAT_VS_B_NO_ESTABLISHED_GAIN   promotion=false
+```
+
+**Second pool non joué, délibérément.** Pour que le chaînage atteigne
+`P(>0) > 95 %`, le pool 2 devrait sortir au-dessus de **+9,8 Elo**, soit
+~4 σ au-dessus de l'estimation courante. La règle de réplication départage
+un gain d'un tirage ; elle ne ressuscite pas un point estimé sous zéro.
+
+Le bruit d'étiquetage à 24 % est réel et répliqué quatre fois — ce n'est pas
+lui qui est en cause. Ce qui est réfuté, c'est l'hypothèse implicite qui
+reliait les deux : *corriger les étiquettes doit améliorer le modèle*.
+
+⛔ **M4 reste bloqué par la charte** : aucune cellule M3 n'a bougé l'Elo.
+
+### ⛓️ `home-1316` — EXACT re-gaté sur un second pool disjoint
 
 ### ⛓️ `home-1316` — EXACT re-gaté sur un second pool disjoint
 
@@ -85,32 +115,72 @@ porte d'origine a joué sur les 1500 ouvertures de `home-1004`
 **0 ouverture commune**. La garde de chaînage ne compare que des préfixes ;
 l'intersection réelle a été recalculée indépendamment.
 
+### ⛓️ `cpx62-1189` — PRIORTIGHT re-gaté, il réplique aussi
+
+Même protocole, sur l'autre maillon non répliqué de la succession :
+PRIORTIGHT contre PRIOR, pool 2 = `big3000b` (`cpx62-1183`).
+
+| | n | W-D-L | taux | Elo | IC95 |
+|---|---:|---|---:|---:|---|
+| pool 1 — `cpx62-1163` (3 août) | 12 000 | — | 0,5260 | **+18,05** | [+12,0 ; +24,1] |
+| pool 2 — `cpx62-1189` (6 août) | 12 000 | 5917-637-5446 | 0,5196 | **+13,64** | [+7,6 ; +19,7] |
+| **chaîné** | **24 000** | | 0,5228 | **+15,85** | **[+11,6 ; +20,1]** |
+
+```
+accord des pools : z = −1,01  →  COMPATIBLES   (same_sign true)
+posterieur chaine : P(>0)=100 %  P(>5)=100 %  P(>10)=99,6 %  P(>17)=29,9 %
+critere de bake : REMPLI — P(elo>0)=1,0 sur n=24000
+VERDICT A_BEATS_B_HUMAN_REVIEW   promotion=false
+```
+
+Disjonction re-vérifiée sur les fichiers : `big3000 ∩ big3000b = 0`, et
+`big3000b ∩ vol8m = 0`. Les trois pools d'évaluation en service sont deux à
+deux disjoints.
+
 ### 🎯 La malédiction du vainqueur ne frappe pas au hasard
 
 C'est le résultat de méthode, et il corrige ma propre lecture du 5 août. Je
 tenais la déflation au second pool pour un phénomène **général**, pesant sur
-tout ce qui a été promu sur une première mesure. Le facteur observé sur
-quatre axes dit autre chose :
+tout ce qui a été promu sur une première mesure. Le facteur observé sur six
+axes dit autre chose :
 
-| axe | pool 1 | pool 2 | facteur |
-|---|---:|---:|---:|
-| volume 12 M | +3,45 | +0,32 | **0,09** |
-| C2 (relabel tablebase) | +3,04 | −1,01 | **< 0** |
-| PRIOR | +9,15 | +4,17 | **0,46** |
-| **fold exact** | **+15,12** | **+14,43** | **0,95** |
+| axe | pool 1 | pool 2 | facteur | ce qu'il change |
+|---|---:|---:|---:|---|
+| volume 12 M | +3,45 | +0,32 | **0,09** | corpus |
+| C2 (relabel tablebase) | +3,04 | −1,01 | **< 0** | corpus |
+| C1+C2 repondéré | −2,63 | — | — | corpus |
+| PRIOR | +9,15 | +4,17 | **0,46** | recette de fit |
+| PRIORTIGHT | +18,05 | +13,64 | **0,76** | recette de fit |
+| **fold exact** | **+15,12** | **+14,43** | **0,95** | recette de fit |
 
-La déflation est d'autant plus violente que la première mesure était
-**marginale**. C'est exactement ce que prédit un effet de sélection : on ne
-va chercher un second pool que sur les axes dont le premier tirage a paru
-prometteur, et plus l'effet vrai est petit devant l'erreur-type, plus ce
-premier tirage devait être chanceux pour franchir le seuil d'attention.
-Un effet vrai et large — le fold exact mutualise une contrainte
-géométriquement exacte — ne doit rien au tirage et ne perd donc rien.
+Deux régularités, et la seconde est la plus utile.
+
+**1. La déflation décroît monotonement avec la taille de l'effet.** C'est
+exactement ce que prédit un effet de sélection : on ne va chercher un second
+pool que sur les axes dont le premier tirage a paru prometteur, et plus
+l'effet vrai est petit devant l'erreur-type, plus ce premier tirage devait
+être chanceux pour franchir le seuil d'attention. Un effet vrai et large ne
+doit rien au tirage et ne perd donc rien. **Ce n'est pas un biais
+d'estimateur** — chaque mesure prise isolément est non biaisée ; c'est le
+choix de *quoi* re-mesurer qui l'est.
+
+**2. La coupure sépare la RECETTE DE FIT du CORPUS.** Les trois axes qui
+répliquent touchent tous la façon dont on ajuste ; les trois qui s'effondrent
+touchent tous les données qu'on lui donne. Ce n'est plus une coïncidence à
+trois contre trois : **c'est la direction de travail**. Sur un modèle
+linéaire dont la capacité sature bien avant 2 M de positions, améliorer le
+corpus ne déplace pas l'optimum — le fit moyennait déjà ce bruit — alors que
+contraindre l'espace de solutions (fold exact, rappel au parent, tolérance
+du solveur) le déplace franchement.
 
 ⛔ **Corollaire opératoire : la réplication n'est pas une formalité de
 conformité, c'est le seul discriminateur entre un gain et un tirage.** Elle
 est bon marché sur les axes déjà entraînés (les modèles existent, ~1h05 de
 parties) et ne doit plus jamais être sautée avant un bake.
+
+⚠️ **Aucun débake.** Les trois maillons de la succession sont mesurés
+positifs sur pools disjoints ; le plus faible est PRIOR (×0,46). La chaîne
+EXACT → PRIOR → PRIORTIGHT → L2LOW tient.
 
 ## 0quater. 5 août 2026 — ⛔ LE VOLUME NE BRIDE PAS, ET LES ÉTIQUETTES SI
 
