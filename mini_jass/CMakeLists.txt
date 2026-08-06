@@ -11,6 +11,7 @@ add_library(mini_jass_core STATIC
     src/movegen.cpp
     src/reference_movegen.cpp
     src/rules.cpp
+    src/solver.cpp
 )
 
 target_include_directories(mini_jass_core
@@ -52,19 +53,31 @@ if(MINI_JASS_BUILD_TESTS)
     )
     target_link_libraries(mini_jass_enumerate_tests PRIVATE mini_jass_core)
 
+    add_executable(mini_jass_solver_tests
+        tests/test_solver.cpp
+    )
+    target_link_libraries(mini_jass_solver_tests PRIVATE mini_jass_core)
+
     if(MSVC)
         target_compile_options(mini_jass_rules_tests PRIVATE /W4 /permissive-)
         target_compile_options(mini_jass_movegen_tests PRIVATE /W4 /permissive-)
         target_compile_options(mini_jass_enumerate_tests PRIVATE /W4 /permissive-)
+        target_compile_options(mini_jass_solver_tests PRIVATE /W4 /permissive-)
     else()
         target_compile_options(mini_jass_rules_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(mini_jass_movegen_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(mini_jass_enumerate_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(mini_jass_solver_tests PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     add_test(NAME mini_jass_rules COMMAND mini_jass_rules_tests)
     add_test(NAME mini_jass_movegen COMMAND mini_jass_movegen_tests)
     add_test(NAME mini_jass_enumerate COMMAND mini_jass_enumerate_tests)
+    add_test(
+        NAME mini_jass_solver
+        COMMAND mini_jass_solver_tests
+            ${CMAKE_CURRENT_SOURCE_DIR}/artefacts/solver_manifest.v1.json
+    )
     add_test(
         NAME mini_jass_isolation
         COMMAND ${CMAKE_COMMAND}

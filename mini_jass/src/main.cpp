@@ -1,6 +1,7 @@
 #include "mini_jass/enumerate.hpp"
 #include "mini_jass/move.hpp"
 #include "mini_jass/rules.hpp"
+#include "mini_jass/solver.hpp"
 
 #include <cstdint>
 #include <iostream>
@@ -10,7 +11,7 @@ namespace {
 
 void print_help() {
     std::cout << "Mini-Jass learning laboratory\n"
-              << "usage: mini_jass_cli <rules|actions|enumerate>\n";
+              << "usage: mini_jass_cli <rules|actions|enumerate|solve>\n";
 }
 
 void print_rules() {
@@ -50,6 +51,11 @@ void print_enumeration() {
               << "}\n";
 }
 
+void print_solver_manifest() {
+    const mini_jass::ExactOracle oracle = mini_jass::solve_exact_oracle();
+    std::cout << mini_jass::solver_manifest_json(oracle.manifest);
+}
+
 }  // namespace
 
 int main(const int argc, const char* const argv[]) {
@@ -68,6 +74,10 @@ int main(const int argc, const char* const argv[]) {
     }
     if (argc == 2 && std::string_view{argv[1]} == "enumerate") {
         print_enumeration();
+        return 0;
+    }
+    if (argc == 2 && std::string_view{argv[1]} == "solve") {
+        print_solver_manifest();
         return 0;
     }
 

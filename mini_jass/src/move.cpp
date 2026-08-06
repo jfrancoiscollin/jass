@@ -83,6 +83,22 @@ bool is_capture_move(const Move& move) noexcept {
     return move.landing_count >= 1 && is_jump_step(move.from, move.landings[0]);
 }
 
+Move rotate180_move(const Move& move) noexcept {
+    Move rotated = move;
+    if (move.from < kPlayableSquareCount) {
+        rotated.from = static_cast<std::uint8_t>(kPlayableSquareCount - 1 - move.from);
+    }
+    const std::size_t landing_count = std::min<std::size_t>(
+        move.landing_count, move.landings.size());
+    for (std::size_t index = 0; index < landing_count; ++index) {
+        if (move.landings[index] < kPlayableSquareCount) {
+            rotated.landings[index] = static_cast<std::uint8_t>(
+                kPlayableSquareCount - 1 - move.landings[index]);
+        }
+    }
+    return rotated;
+}
+
 const std::array<Move, kActionCount>& action_vocabulary() {
     static const std::array<Move, kActionCount> vocabulary = [] {
         std::vector<Move> paths;
