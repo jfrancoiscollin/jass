@@ -1,0 +1,7 @@
+/build/
+/artefacts/*
+!/artefacts/.gitkeep
+/.venv/
+/.pytest_cache/
+__pycache__/
+*.pyc
