@@ -65,7 +65,7 @@
 > the_premise_blocking_nnue_was_measured_under_the_false_color_fold;
 > capacity_x_data_interaction_never_tested_32cf_only_at_2m;
 > corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied;
-> trajectory_equal_m3_preregistered_implementation_ready_not_run`.
+> trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0sexies. 6 août 2026 — TRAJ-EQUAL : changer l'unité statistique, pas le corpus
 
@@ -110,6 +110,14 @@ pools compatibles et `P(Elo>0)>95 %`.
   sur `PGTOL` et interdit promotion/enchaînement ;
 - le contrat est fail-closed sur le schéma, l'alignement, le split, les poids,
   la convergence et l'authentification du vecteur lu par le trainer.
+
+Le code est mergé par la PR `#419` au SHA
+`97ff25abc4ed0c8fefc1ae85bb77ef1a99a84e13`. Après validation explicite par
+JFC du sizing HOME ré-ancré à **~17 h 30** pour les deux pools et leurs gates,
+`home-1317` (pool A) et `home-1318` (pool B) ont été mis en file sur HOME. Les
+deux refits doivent tourner indépendamment du résultat du pool A. Leurs gates
+seront des jobs séparés, mis en file seulement lorsque les URI immuables des
+artefacts de refit seront connues.
 
 ⛔ **Aucune lecture de force n'existe encore.** TRAJ-EQUAL reste une cellule
 M3 et n'autorise ni M4, ni exposant intermédiaire, ni modification du sampler,

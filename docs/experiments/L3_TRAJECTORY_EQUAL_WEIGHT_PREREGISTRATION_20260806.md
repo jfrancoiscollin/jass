@@ -1,9 +1,9 @@
 # L3 — TRAJ-EQUAL : une partie, une masse de gradient
 
 > Date : 6 août 2026
-> Statut : préenregistré avant exécution ; mise en œuvre autorisée par JFC le
-> 6 août 2026 ; mise en file suspendue à la validation du sizing ré-ancré ;
-> aucun résultat TRAJ-EQUAL consulté.
+> Statut : préenregistré avant exécution ; go HOME explicite de JFC le 6 août
+> 2026 après sizing ré-ancré ; `home-1317` et `home-1318` en file ; aucun
+> résultat TRAJ-EQUAL consulté.
 > Promotion : interdite ; aucun enchaînement automatique.
 
 ## 1. Question
