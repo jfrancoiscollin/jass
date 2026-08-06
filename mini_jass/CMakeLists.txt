@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.24)
 project(mini_jass VERSION 0.1.0 LANGUAGES CXX)
 
 option(MINI_JASS_BUILD_TESTS "Build the standalone Mini-Jass tests" ON)
+set(MINI_JASS_PYTHON_EXECUTABLE "" CACHE FILEPATH
+    "Optional Python with Mini-Jass M3 dependencies for pytest")
 
 add_library(mini_jass_core STATIC
     src/enumerate.cpp
@@ -84,4 +86,14 @@ if(MINI_JASS_BUILD_TESTS)
             -DMINI_JASS_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_isolation.cmake
     )
+    if(MINI_JASS_PYTHON_EXECUTABLE)
+        add_test(
+            NAME mini_jass_python
+            COMMAND ${MINI_JASS_PYTHON_EXECUTABLE} -m pytest
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
+        )
+        set_tests_properties(mini_jass_python PROPERTIES
+            ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/python"
+        )
+    endif()
 endif()
