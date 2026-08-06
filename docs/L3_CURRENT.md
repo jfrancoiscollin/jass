@@ -64,7 +64,57 @@
 > scan_structural_feature_parity_is_DONE_k120_kingmob_and_scanparity_on;
 > the_premise_blocking_nnue_was_measured_under_the_false_color_fold;
 > capacity_x_data_interaction_never_tested_32cf_only_at_2m;
-> corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied`.
+> corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied;
+> trajectory_equal_m3_preregistered_implementation_ready_not_run`.
+
+## 0sexies. 6 août 2026 — TRAJ-EQUAL : changer l'unité statistique, pas le corpus
+
+Le prochain contraste ne change **ni les positions, ni les étiquettes, ni la
+géométrie**. Il teste le facteur laissé ouvert dans `L3_PURE_PLAN.md` : la
+masse de loss donnée à chaque trajectoire.
+
+Sur `home-1311`, M1 compte 12 000 000 records pour 374 818 parties, soit
+**32,02 records par partie**. Après passage au POV noir dans le trainer, tous
+les records d'une même partie portent le même résultat terminal. La loss
+historique `ROW` donne donc à une partie une masse proportionnelle au nombre de
+ses lignes retenues. Le traitement `GAME` conserve exactement les mêmes lignes
+mais leur donne :
+
+```text
+w_raw(g, i) = 1 / m_g
+```
+
+où `m_g` est le nombre de records TRAIN retenus pour `game_id=g`. Le trainer
+renormalise ensuite à moyenne TRAIN 1 : la somme totale de la likelihood et la
+force relative du L2/prior restent inchangées, tandis que chaque partie
+représentée reçoit la même masse totale.
+
+Ce contraste vient **après** trois résultats nuls sur le raffinement des
+trajectoires fraîches : C2 réplique `+3,04 → −1,01`, le paquet C1+C2 vaut
+`−2,63` et NB0 vaut `−2,17`. Il ne fabrique donc pas un corpus supplémentaire :
+il vérifie si le fit compte correctement ceux qui existent déjà, avant de
+conclure que le seul levier restant est de changer le professeur.
+
+✅ **Préenregistrement figé avant exécution** :
+[`L3_TRAJECTORY_EQUAL_WEIGHT_PREREGISTRATION_20260806.md`](experiments/L3_TRAJECTORY_EQUAL_WEIGHT_PREREGISTRATION_20260806.md).
+Les deux réplications `home-1311` et `home-1312` sont décidées avant le premier
+readout ; aucun arrêt ni sélection après le pool A. Le verdict chaîné exige des
+pools compatibles et `P(Elo>0)>95 %`.
+
+✅ **Implémentation prête, résultat scientifique encore ABSENT** :
+
+- `jobs/tools/l3_trajectory_equal_weights.py` construit les poids et publie le
+  diagnostic de masse ;
+- `jobs/templates/l3-trajectory-equal-ab-refit-v1.sh` partage physiquement le
+  JNNW, le JSM2 et le dump FEAT entre `ROW` et `GAME`, exige deux fits arrêtés
+  sur `PGTOL` et interdit promotion/enchaînement ;
+- le contrat est fail-closed sur le schéma, l'alignement, le split, les poids,
+  la convergence et l'authentification du vecteur lu par le trainer.
+
+⛔ **Aucune lecture de force n'existe encore.** TRAJ-EQUAL reste une cellule
+M3 et n'autorise ni M4, ni exposant intermédiaire, ni modification du sampler,
+ni promotion. Un changement de professeur Scan/self-play demeure une
+hypothèse distincte et plus coûteuse.
 
 ## 0quinquies. 6 août 2026 — ✅ LA RECETTE DE FIT RÉPLIQUE, LE CORPUS NON
 
