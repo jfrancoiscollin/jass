@@ -55,9 +55,56 @@
 > winners_curse_deflation_decreases_with_effect_size_selection_not_bias;
 > fit_recipe_axes_replicate_corpus_axes_do_not_three_against_three;
 > c1c2_weighted_12m_package_flat_negative_second_pool_declined;
-> m3_produced_no_elo_m4_stays_blocked_by_charter`.
+> m3_produced_no_elo_m4_stays_blocked_by_charter;
+> replay50_still_beats_fresh100_under_the_prior_regime_11_1_elo_one_pool;
+> what_pays_is_anchoring_to_the_past_not_refining_fresh_data;
+> prior_visit_weighting_never_ran_decay_was_zero_in_all_eight_prior_jobs;
+> shared_decay_hits_extras_9853x_harder_than_the_mean_pattern_bucket;
+> scan_gap_is_241_elo_and_recipe_tuning_has_produced_at_most_48;
+> scan_structural_feature_parity_is_DONE_k120_kingmob_and_scanparity_on;
+> the_premise_blocking_nnue_was_measured_under_the_false_color_fold;
+> capacity_x_data_interaction_never_tested_32cf_only_at_2m;
+> corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied`.
 
 ## 0quinquies. 6 août 2026 — ✅ LA RECETTE DE FIT RÉPLIQUE, LE CORPUS NON
+
+### ✅ `cpx62-1190` — le replay tient sous le prior, et il corrige la dichotomie
+
+REPLAY50 contre FRESH100, à budget constant, les deux bras fittés sous le
+régime prior. Trois lectures étaient posées avant le run : le prior rend le
+replay redondant, le rend nuisible, ou ne l'entame pas.
+
+```
+n=12000   REPLAY50 5862W 660D 5478L contre FRESH100
+taux = 0,5160   Elo = +11,12   IC95 = [+5,1 ; +17,2]
+P(>0)=100 %  P(>3)=99,6 %  P(>5)=97,7 %  P(>10)=64,2 %
+VERDICT A_BEATS_B_HUMAN_REVIEW   (un seul pool : critère de bake non rempli)
+```
+
+C'est la troisième lecture, et largement. La moitié mémoire n'est pas
+doublonnée par le rappel au parent.
+
+⚠️ **Ceci invalide la coupure « recette de fit contre corpus » que j'avais
+tracée deux heures plus tôt.** Le replay est une composition de corpus et il
+donne `+11,12`. La ligne de partage réelle, sur les sept mesures :
+
+| ce qui marche — **s'ancrer sur le passé** | Elo |
+|---|---:|
+| fold exact | +14,66 |
+| PRIORTIGHT (tolérance du solveur) | +15,85 |
+| replay 50 % sous prior | +11,12 |
+| PRIOR (rappel au parent) | +6,66 |
+
+| ce qui ne marche pas — **raffiner la donnée fraîche** | Elo |
+|---|---:|
+| volume 12 M | +1,89 |
+| relabel tablebase | +1,02 |
+| budget-nœuds variable (NB0) | −2,17 |
+| filtrage C1+C2 repondéré | −2,63 |
+
+**Ce qui paie, c'est de contraindre le modèle à ne pas s'éloigner de ce qu'il
+savait déjà** — par la géométrie, par le prior, par la mémoire du corpus. **Ce
+qui ne paie pas, c'est de raffiner la donnée neuve.**
 
 ### ⚖️ `cpx62-1188` — le paquet C1+C2 sur le 12 M ne donne rien
 
@@ -181,6 +228,113 @@ parties) et ne doit plus jamais être sautée avant un bake.
 ⚠️ **Aucun débake.** Les trois maillons de la succession sont mesurés
 positifs sur pools disjoints ; le plus faible est PRIOR (×0,46). La chaîne
 EXACT → PRIOR → PRIORTIGHT → L2LOW tient.
+
+### 🔧 `--prior-decay-ext` — le dernier bouton de la recette était mort
+
+Constat de code, avant tout run. `build_sequential_prior` calcule
+`prec_pat = l2 + decay·λ·(visites/N)`. Les **huit** jobs prior de la campagne
+(`1143`, `1145`, `1146`, `1147`, `1148`, `1149`, `1164`, `home-1150`) passent
+`--prior-decay 0`, ce qui annule le terme. Le log de `cpx62-1164` l'imprime :
+`decay=0.0  prec[pat] med=1.000e-05 max=1.000e-05`. **Le rétrécissement
+pondéré par les visites n'a jamais tourné**, et `λ` n'a jamais rien modulé.
+
+Mais le knob brut n'est pas testable tel quel. Les extras sont facturés
+`visites/N = 1` par construction, donc `prec_ext = l2 + decay·λ` sans
+dépendance aux visites. Sur ce corpus (`TB = 8 × 531 441`, 130 086 buckets
+retenus, 2 M records → **123 visites au bucket moyen**) :
+
+| bloc | précision à `decay 1` | rapport à `l2 = 1e-5` |
+|---|---:|---:|
+| bucket pattern moyen | 2,537e-5 | 2,54× |
+| **extras** | **2,500e-1** | **25 001×** |
+
+Rapport extras / bucket moyen = **9 853×**, et il est **structurel, pas
+dosable** : il vaut `1 + λ·decay/l2` à toute dose — même à `decay 0,001` les
+extras sont à 26× `l2` pendant que les patterns bougent de 0,1 %. Opposer
+`priorvisit` à `prior` aurait donc mesuré surtout « épingler les extras sur le
+parent », et un verdict — positif **ou** négatif — aurait été inattribuable.
+
+`--prior-decay-ext` (develop `6d222bbac`) sépare les deux blocs ; son défaut
+est la valeur de `--prior-decay`, donc l'omettre reste **byte-identique** et
+aucun résultat publié ne bouge. Mode de continuation `priorvisitpat`
+(`b68728000`). Cellule `cpx62-1191` en vol : bras A = recette L2LOW exacte,
+bras B = visites sur les patterns seuls, tout le reste partagé.
+
+## 0sexies. 6 août 2026 — ⛔ L'ÉCART À SCAN NE SE FERME PAS PAR LA RECETTE
+
+Constat de JFC, et il est quantitativement juste. À mettre au registre parce
+que c'est la question qui gouverne la suite.
+
+### L'arithmétique de l'écart
+
+| repère | valeur | source |
+|---|---:|---|
+| TURNOVER contre Scan, `mt0.3` | `0,200` = **−241 Elo** | `home-1001` |
+| gen2-mmto contre Scan, `mt0.3` | `0,188` = **−255 Elo** | `home-1001` |
+| toute la succession EXACT → L2LOW, **si elle s'empile** | **≈ +48 Elo** | somme des maillons, **non vérifiée** |
+
+Le réglage de fit a produit ~48 Elo dans le meilleur des cas, contre un écart
+de ~241. **Il n'y a pas de dose de `l2`, de `gtol` ou de `decay` qui ferme un
+facteur cinq.** Et le versant corpus est mesuré plat quatre fois.
+
+### Ce qui N'EST PAS le trou — vérifié, pas supposé
+
+⛔ **La parité structurelle avec Scan est FAITE.** Le champion est fitté sur
+`k = 120` extras, build `KING-MOBILITY ENABLED (+4)` et
+`SCAN-PARITY ENABLED (+6)`. Nous avons donc les termes de Scan — matériel,
+PST de dames, mobilité de dames *safe/denied*, skew absolu, matériel de dames
+explicite — **et davantage** : PST de dames sur 100 vars là où Scan en a 50,
+plus centralisation et proximité des dames (`JASS_ENDGAME_FEATURES`, ON par
+défaut) que Scan n'a pas. Ce n'est pas une feature manquante.
+
+⛔ **Ce n'est pas non plus la profondeur** (d8, d10, d12 clos), **ni le
+volume** (2 M → 12 M plat), **ni la couverture** (réfutée directement), **ni
+les étiquettes** (24 % de bruit corrigé, plat).
+
+### Les trois candidats qui restent, et le premier est une remise en cause
+
+**1. ⚠️ LA PRÉMISSE QUI BLOQUE NNUE A ÉTÉ MESURÉE SOUS UN FOLD FAUX.** La
+règle gravée dit : *« on a 8,5 M poids vs 2,1 M (Scan) et on ne l'a pas égalé
+→ classe linéaire PAS épuisée, c'est notre FIT qui est moins bon »*. Cette
+mesure date de juin et a été faite **en `--color-fold`** — le repli dont on a
+prouvé le 1er août qu'il impose une symétrie **fausse**, violée à 25,8 %, et
+dont la correction vaut à elle seule `+17,1 Elo`. La capacité de 8,5 M citée
+est d'ailleurs `32 + color-fold`. **La prémisse fondatrice n'a jamais été
+re-mesurée sous `--exact-fold`.** Tant qu'elle ne l'est pas, « c'est notre fit
+qui est moins bon » est une conclusion tirée d'un instrument dont on sait
+qu'il était biaisé.
+
+**2. CAPACITÉ × DONNÉES N'A JAMAIS ÉTÉ TESTÉ EN INTERACTION.** `32cf` est clos
+par une règle **conditionnelle** — *« ne pas passer à 32cf tant que la
+couverture 8cf reste insuffisante »* — écrite quand on avait 1,5 M records
+(couverture 9,0 % des buckets, 1,0 % au-dessus de 100 visites, Gini 0,85). Le
+volume 12 M n'a été testé que sur `8cf` ; `32cf` n'a été testé qu'à 2 M. **Les
+deux facteurs sont plats séparément — c'est la signature de facteurs
+complémentaires testés un à un.** Un modèle qui sature bien avant 2 M ne fait
+rien de 12 M ; une capacité 4× affamée à 2 M ne rend rien non plus.
+
+**3. LE PROFESSEUR — et c'est le candidat que je retiens.** Notre corpus est
+à **100 % du self-play jass**. TURNOVER = mémoire jass + frais jass. Aucun job
+L3 récent n'appelle `scan_selfplay_gen` (derniers appelants : `cpx62-0784`,
+un smoke). Or la règle permanente du document d'écart dit exactement
+l'inverse : *« Ni 100 % Scan-self-play (fort mais quiet/peu de contraste), ni
+100 % jass-self-play (divers mais **faible, covariate-shift**). MIXER : un
+pool avec un % garanti de qualité forte (Scan-self-play) ET de la
+diversité. »* Et la règle 2 énonce le mécanisme : *« l'eval apprend la
+value-function d'un faible »*.
+
+**Toutes nos expériences de corpus ont fait varier la QUANTITÉ ou la PROPRETÉ
+de trajectoires produites par un joueur à −241 Elo de Scan. Aucune n'a changé
+QUI JOUE.** C'est le seul levier de qualité de corpus qu'on n'a pas touché, et
+il est écrit noir sur blanc dans les règles permanentes comme non optionnel.
+
+### ⚖️ L'ÉNONCÉ DE JFC — LE VOLET NNUE EST HORS PÉRIMÈTRE ICI
+
+La règle §0 (« aucun NNUE / changement de classe tant que le linéaire n'est
+pas poussé à fond ») **reste en vigueur** ; rien de ce qui précède ne
+l'autorise à sauter. Le point 1 ci-dessus ne demande pas d'aller au NNUE : il
+demande de **re-mesurer proprement la prémisse** qui justifie de ne pas y
+aller. Les trois candidats sont des cellules linéaires.
 
 ## 0quater. 5 août 2026 — ⛔ LE VOLUME NE BRIDE PAS, ET LES ÉTIQUETTES SI
 
