@@ -292,6 +292,18 @@ cont_args(){ case "$1" in
   # decay 0 en croyant balayer une dose.
   priorvisit) printf '%s\n%s\n%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" \
                 --prior-decay "$PRIOR_DECAY" --prior-visit-scale "$PRIOR_LAM" ;;
+  # `priorvisitpat` = la pondération par visites sur les PATTERNS SEULS, extras
+  # rendus au ridge nu (`--prior-decay-ext 0`). Raison : les extras sont facturés
+  # `visites/N = 1` par construction, donc sous un amortissement PARTAGÉ leur
+  # précision vaut `l2 + decay*lam` sans dépendance aux visites — ~9 850× celle du
+  # bucket de pattern moyen sur un corpus 2 M (123 visites/bucket), et ce rapport
+  # est STRUCTUREL, pas dosable : il vaut `1 + lam*decay/l2` à toute dose. Opposer
+  # `priorvisit` à `prior` mesurerait donc surtout « épingler les extras sur le
+  # parent », pas le rétrécissement adaptatif aux visites. Ce mode-ci isole le
+  # second ; « épingler les extras » reste une cellule séparée.
+  priorvisitpat) printf '%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n' --prior-mean "$IN/parent.pjtw" \
+                --prior-decay "$PRIOR_DECAY" --prior-visit-scale "$PRIOR_LAM" \
+                --prior-decay-ext 0 ;;
   *) die "continuation invalide : $1" ;; esac; }
 PRIOR_DECAY="${PRIOR_DECAY:-1.0}"; PRIOR_LAM="${PRIOR_LAM:-0.25}"
 ARM_A_CONT="${ARM_A_CONT:-warm}"; ARM_B_CONT="${ARM_B_CONT:-warm}"
