@@ -100,4 +100,14 @@ State rotate180_and_swap_colours(const State& state) noexcept {
     return transformed;
 }
 
+std::uint64_t state_key(const State& state) noexcept {
+    std::uint64_t key = state.white_men;
+    key |= static_cast<std::uint64_t>(state.black_men) << 13;
+    key |= static_cast<std::uint64_t>(state.white_kings) << 26;
+    key |= static_cast<std::uint64_t>(state.black_kings) << 39;
+    key |= static_cast<std::uint64_t>(state.side_to_move == Side::Black) << 52;
+    key |= static_cast<std::uint64_t>(state.reversible_plies) << 53;
+    return key;
+}
+
 }  // namespace mini_jass

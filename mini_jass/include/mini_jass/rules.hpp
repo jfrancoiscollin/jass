@@ -74,5 +74,6 @@ enum class StateError : std::uint8_t {
 [[nodiscard]] std::string_view to_string(StateError error) noexcept;
 [[nodiscard]] Bitboard rotate180(Bitboard bits) noexcept;
 [[nodiscard]] State rotate180_and_swap_colours(const State& state) noexcept;
+[[nodiscard]] std::uint64_t state_key(const State& state) noexcept;
 
 }  // namespace mini_jass

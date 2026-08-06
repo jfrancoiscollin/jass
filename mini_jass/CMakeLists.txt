@@ -5,6 +5,11 @@ project(mini_jass VERSION 0.1.0 LANGUAGES CXX)
 option(MINI_JASS_BUILD_TESTS "Build the standalone Mini-Jass tests" ON)
 
 add_library(mini_jass_core STATIC
+    src/enumerate.cpp
+    src/game.cpp
+    src/move.cpp
+    src/movegen.cpp
+    src/reference_movegen.cpp
     src/rules.cpp
 )
 
@@ -35,16 +40,31 @@ if(MINI_JASS_BUILD_TESTS)
     add_executable(mini_jass_rules_tests
         tests/test_rules.cpp
     )
-
     target_link_libraries(mini_jass_rules_tests PRIVATE mini_jass_core)
+
+    add_executable(mini_jass_movegen_tests
+        tests/test_movegen.cpp
+    )
+    target_link_libraries(mini_jass_movegen_tests PRIVATE mini_jass_core)
+
+    add_executable(mini_jass_enumerate_tests
+        tests/test_enumerate.cpp
+    )
+    target_link_libraries(mini_jass_enumerate_tests PRIVATE mini_jass_core)
 
     if(MSVC)
         target_compile_options(mini_jass_rules_tests PRIVATE /W4 /permissive-)
+        target_compile_options(mini_jass_movegen_tests PRIVATE /W4 /permissive-)
+        target_compile_options(mini_jass_enumerate_tests PRIVATE /W4 /permissive-)
     else()
         target_compile_options(mini_jass_rules_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(mini_jass_movegen_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(mini_jass_enumerate_tests PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     add_test(NAME mini_jass_rules COMMAND mini_jass_rules_tests)
+    add_test(NAME mini_jass_movegen COMMAND mini_jass_movegen_tests)
+    add_test(NAME mini_jass_enumerate COMMAND mini_jass_enumerate_tests)
     add_test(
         NAME mini_jass_isolation
         COMMAND ${CMAKE_COMMAND}

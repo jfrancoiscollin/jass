@@ -1,6 +1,6 @@
 # Mini-Jass
 
-Mini-Jass is a standalone learning laboratory for exactly solvable 5×5 short-king draughts. It lives inside the Jass repository for source control only; it does not participate in the production Jass build or runtime.
+Mini-Jass is a standalone learning laboratory for exactly solvable 5x5 short-king draughts. It lives inside the Jass repository for source control only; it does not participate in the production Jass build or runtime.
 
 ## Isolation
 
@@ -24,14 +24,18 @@ ctest --test-dir build -C Debug --output-on-failure
 
 The generated `build/` directory is local and ignored. These commands neither configure nor build production Jass.
 
-## Foundation status
+## M1 game core
 
-The foundation currently provides:
+The first implementation milestone provides:
 
-- the standalone CMake project;
-- the normative 5×5 square mapping and initial state;
-- state validation and the 180° colour-swapping symmetry;
-- rule and isolation tests;
-- a small `mini_jass_cli rules` command for inspecting the compiled rule constants.
+- a standalone CMake project and strict isolation test;
+- the normative 5x5 mapping, initial state, validation, and 180-degree colour symmetry;
+- immutable IDs for the 72 complete move paths;
+- independent production and reference move generators;
+- mandatory and multi-capture handling, promotion, reversible-ply draws, and terminal rules;
+- exhaustive comparison over all 104,794 structural states and 258,632 legal moves;
+- deterministic enumeration of 263,829 reachable states and 645,620 transitions.
 
-The next implementation slice adds the production and independent reference move generators, complete-move encoding, exhaustive domain comparison, and reachable-state enumeration.
+The frozen v1 action-vocabulary hash is `11242579555617580249`. The frozen v1 graph hash is `3347327730907747976`.
+
+Use `mini_jass_cli rules`, `mini_jass_cli actions`, or `mini_jass_cli enumerate` to inspect the compiled contracts.
