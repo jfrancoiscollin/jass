@@ -627,22 +627,58 @@ def project_champion_mean(path, folder, keep, PAT_N, E):
 #  Sequential-Bayesian prior : project the previous champion as a Gaussian
 #  prior.  This is stronger than --warm-start because it changes the objective.
 # --------------------------------------------------------------------------- #
+# Valeur par defaut de --prior-decay. Nommee pour que la garde de
+# --prior-alpha-cap puisse distinguer « laisse au defaut » de « passe
+# explicitement ». Passer --prior-decay 1.0 a la main est indiscernable du
+# defaut, et c'est acceptable : c'est la valeur qui ne change rien.
+PRIOR_DECAY_DEFAULT = 1.0
+
+
 def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
     mu, scale_c = project_champion_mean(
         args.prior_mean, folder, keep, PAT_N, E)
     lam = float(args.prior_visit_scale); dec = float(args.prior_decay)
-    # The extras are charged visits/N = 1, so a shared decay hits them ~16000x
+    # The extras are charged visits/N = 1, so a shared decay hits them ~9850x
     # harder than the mean pattern bucket. Keeping them on the same knob would
     # confound visit-adaptive pattern shrinkage with pinning the extras to the
     # parent; defaulting to `dec` keeps every historical run byte-identical.
     dec_ext = dec if args.prior_decay_ext is None else float(args.prior_decay_ext)
+    visits = kept_counts.astype(np.float64) / max(N, 1)
     prec_pat = np.full(PAT_N, l2, dtype=np.float64)
-    prec_pat[1:] = l2 + dec * lam * (kept_counts.astype(np.float64) / max(N, 1))
-    prec_ext_val = l2 + dec_ext * lam                        # extras active every row (visits/N=1)
+    if args.prior_alpha_cap is None:
+        prec_pat[1:] = l2 + dec * lam * visits
+        prec_ext_val = l2 + dec_ext * lam                    # extras active every row (visits/N=1)
+    else:
+        # BOUNDED-INFLUENCE prior : cap the parent's SHARE of each bucket.
+        # The posterior mean is a convex blend  w = a*mu + (1-a)*w_data  with
+        #     a_j = prec_j / (prec_j + lam*visits_j/N)
+        # because lam*visits/N is the logistic data-Fisher scale — that is
+        # exactly what --prior-visit-scale documents. At a CONSTANT prec = l2,
+        # `a` tends to 1 on thin buckets: the champion carries buckets that are
+        # ~100 % parent, and nothing bounds it. Solving a_j <= cap gives
+        #     prec_j <= cap/(1-cap) * lam * visits_j/N
+        # keeping l2 as the ceiling, so the cap can only ever RELAX the pull.
+        # This interpolates continuously between the two poles: cap -> 1
+        # restores the constant-l2 champion, cap -> 0 approaches a scratch fit.
+        # NB the extras carry visits/N = 1, so their cap term is cap/(1-cap)*lam
+        # — far above l2 at any sane cap — hence they simply stay at l2. The cap
+        # does NOT reintroduce the extras asymmetry.
+        # NB slot 0 is the un-pruned fallback, not a visited bucket: left at l2.
+        k = args.prior_alpha_cap / (1.0 - args.prior_alpha_cap)
+        prec_pat[1:] = np.minimum(l2, k * lam * visits)
+        prec_ext_val = min(l2, k * lam)
     prec = np.concatenate([prec_pat, prec_pat,
                            np.full(E, prec_ext_val), np.full(E, prec_ext_val)])
-    print(f'prior : champion={args.prior_mean} (scale={scale_c})  λ={lam} decay={dec} '
-          f'decay_ext={dec_ext}  '
+    if args.prior_alpha_cap is None:
+        mode = f'decay={dec} decay_ext={dec_ext}'
+    else:
+        # Realised share, not the requested cap: buckets sitting at the l2
+        # ceiling are BELOW the cap, so the max is the number that matters.
+        a = prec_pat[1:] / (prec_pat[1:] + lam * visits)
+        mode = (f'alpha_cap={args.prior_alpha_cap} '
+                f'alpha med={np.median(a):.3f} max={a.max():.3f} '
+                f'at_l2_ceiling={100.0 * np.mean(prec_pat[1:] >= l2):.1f}%')
+    print(f'prior : champion={args.prior_mean} (scale={scale_c})  λ={lam} {mode}  '
           f'prec[pat] med={np.median(prec_pat[1:]):.3e} max={prec_pat[1:].max():.3e} '
           f'prec[ext]={prec_ext_val:.3e}  warm-start at μ')
     return mu, prec
@@ -877,6 +913,30 @@ def train_stream(args):
     return 0
 
 
+def validate_prior_alpha_cap(args):
+    """Refuse toute combinaison ambigue AVANT de toucher au corpus.
+
+    Placee au parse et non dans `train_stream` : les gardes tardives ne
+    tiraient qu'apres la passe de prune, donc un job mal configure brulait un
+    scan complet du corpus avant de mourir.
+    """
+    if args.prior_alpha_cap is None:
+        return
+    if not args.prior_mean:
+        raise SystemExit('--prior-alpha-cap requires --prior-mean (it bounds the parent '
+                         'share; without a parent there is nothing to bound)')
+    if not 0.0 < args.prior_alpha_cap < 1.0:
+        raise SystemExit(f'--prior-alpha-cap must lie strictly in (0,1), got '
+                         f'{args.prior_alpha_cap} (0 = no parent, so pass no --prior-mean ; '
+                         f'1 = unbounded, that is the plain --prior-decay 0 recipe)')
+    # The cap REPLACES the decay formula: honouring both would silently drop one.
+    for flag, val in (('--prior-decay', args.prior_decay),
+                      ('--prior-decay-ext', args.prior_decay_ext)):
+        if val not in (None, PRIOR_DECAY_DEFAULT):
+            raise SystemExit(f'--prior-alpha-cap replaces the decay formula and cannot be '
+                             f'combined with an explicit {flag}={val}')
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -936,16 +996,26 @@ def main(argv=None):
     ap.add_argument('--prior-visit-scale', type=float, default=0.25,
                     help='λ : prior evidence per accumulated visit (dimensionless ; ~0.25 balances the '
                          'prior against the logistic data-Fisher). Only with --prior-mean.')
-    ap.add_argument('--prior-decay', type=float, default=1.0,
+    ap.add_argument('--prior-decay', type=float, default=PRIOR_DECAY_DEFAULT,
                     help='discount on the prior precision (0..1). 1 = full visit-weighting ; 0 = plain '
                          'ridge toward the champion (uniform l2, μ=champion). Only with --prior-mean.')
     ap.add_argument('--prior-decay-ext', type=float, default=None,
                     help='separate discount for the EXTRAS block. Defaults to --prior-decay, which '
                          'reproduces the historical behaviour byte-identically. Split it out because '
                          'the extras are charged visits/N=1 by construction, so at a shared decay '
-                         'their prior precision is l2+decay·λ — ~16000x that of the mean pattern '
-                         'bucket on a 2M corpus. A single knob therefore confounds visit-adaptive '
+                         'their prior precision is l2+decay·λ — ~9850x that of the mean pattern '
+                         'bucket on a 2M corpus (123 visits/bucket). A single knob confounds visit-adaptive '
                          'pattern shrinkage with pinning the extras to the parent. Only with '
+                         '--prior-mean.')
+    ap.add_argument('--prior-alpha-cap', type=float, default=None,
+                    help='BOUNDED-INFLUENCE prior: cap the parent share a_j = prec/(prec + '
+                         'λ·visits/N) of EVERY pattern bucket at this value, in (0,1). Sets '
+                         'prec_j = min(l2, cap/(1-cap)·λ·visits_j/N), so the parent can only be '
+                         'RELAXED, never strengthened. At a constant prec=l2 the share tends to 1 '
+                         'on thin buckets — the model carries buckets that are ~100%% parent with '
+                         'nothing bounding it. Interpolates continuously between the poles: '
+                         'cap->1 is the constant-l2 recipe, cap->0 approaches a scratch fit. '
+                         'Mutually exclusive with --prior-decay/--prior-decay-ext. Only with '
                          '--prior-mean.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
@@ -992,6 +1062,7 @@ def main(argv=None):
                          'Records king=True in the PJTW v3 marker (rejected by a '
                          'men-only binary). Default OFF = men-only occupancy.')
     args = ap.parse_args(argv)
+    validate_prior_alpha_cap(args)
     return train_stream(args)
 
 

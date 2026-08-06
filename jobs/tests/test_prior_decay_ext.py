@@ -32,7 +32,8 @@ KEPT = np.array([400_000, 1_000, 246, 10, 1], dtype=np.int64)
 
 def _args(decay, decay_ext=None):
     return SimpleNamespace(prior_mean='/champion.pjtw', prior_visit_scale=LAM,
-                           prior_decay=decay, prior_decay_ext=decay_ext)
+                           prior_decay=decay, prior_decay_ext=decay_ext,
+                           prior_alpha_cap=None)
 
 
 def _prior(decay, decay_ext=None):
