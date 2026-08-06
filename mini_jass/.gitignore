@@ -1,6 +1,7 @@
 /build/
 /artefacts/*
 !/artefacts/.gitkeep
+!/artefacts/solver_manifest.v1.json
 /.venv/
 /.pytest_cache/
 __pycache__/

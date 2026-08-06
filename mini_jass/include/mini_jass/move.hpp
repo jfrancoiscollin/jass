@@ -36,6 +36,7 @@ struct MoveLess {
     std::uint8_t from,
     std::uint8_t to) noexcept;
 [[nodiscard]] bool is_capture_move(const Move& move) noexcept;
+[[nodiscard]] Move rotate180_move(const Move& move) noexcept;
 
 [[nodiscard]] const std::array<Move, kActionCount>& action_vocabulary();
 [[nodiscard]] std::optional<std::uint8_t> action_id(const Move& move);
