@@ -358,13 +358,23 @@ if prior_path and posterior:
     # P(>0) confortable alors que le DESACCORD est le vrai resultat. On teste
     # donc la difference des deux taux avant de combiner quoi que ce soit.
     dz = (rate - prate) / math.sqrt(se * se + pse * pse)
-    pools_agree = bool(abs(dz) < 1.96 and (rate - 0.5) * (prate - 0.5) >= 0)
+    # ⚠️ CORRECTION DU 6 AOUT. La garde testait AUSSI que les deux pools soient
+    # de meme signe. C'etait trop agressif et le message qui en sortait etait
+    # faux : home-1315 a rendu +3,04 et -1,01 avec |z| = 0,93, donc des pools
+    # parfaitement COMPATIBLES, et la garde imprimait « se contredisent
+    # (z=-0.928) ». Un effet vrai proche de zero produit des signes opposes une
+    # fois sur deux ; refuser le chainage sur ce motif, c'est refuser
+    # precisement quand la bonne reponse est « l'effet est nul ».
+    # Le desaccord se teste STATISTIQUEMENT, pas au signe. Le signe reste
+    # rapporte, comme information, jamais comme critere.
+    pools_agree = bool(abs(dz) < 1.96)
     chained = {
         "prior_job": prior.get("job_id") or prior.get("code_sha"),
         "prior_openings_prefix": prior_openings,
         "prior_openings_attested_by_operator": not prior.get("openings_prefix"),
         "between_pool_z": round(dz, 3),
         "pools_agree": pools_agree,
+        "same_sign": bool((rate - 0.5) * (prate - 0.5) >= 0),
         "prior_n": pn, "prior_rate": round(prate, 6),
         "prior_elo": round(elo(prate), 2) if elo(prate) is not None else None,
         "combined_n": pn + n, "combined_rate": round(cmu, 6),
@@ -386,7 +396,8 @@ bake = {"criterion": "P(elo>0) > 0.95 sur pools chaines",
 if chained is None:
     bake["why"] = "un seul pool : le critere exige un chainage sur deux pools disjoints"
 elif not chained["pools_agree"]:
-    bake["why"] = (f"les deux pools se contredisent (z={chained['between_pool_z']}) : "
+    bake["why"] = (f"les deux pools se contredisent STATISTIQUEMENT "
+                   f"(|z|={abs(chained['between_pool_z'])} >= 1.96) : "
                    "le desaccord est le resultat, pas la moyenne")
 elif chained["posterior"]["p_elo_gt_0"] <= BAKE_P_THRESHOLD:
     bake["why"] = f"P(elo>0)={chained['posterior']['p_elo_gt_0']} <= {BAKE_P_THRESHOLD}"
@@ -438,7 +449,8 @@ if chained:
     print(f"     combine n={c['combined_n']}  Elo={c['combined_elo']:+.2f}"
           f"  IC95=[{c['combined_ci95'][0]:+.1f} ; {c['combined_ci95'][1]:+.1f}]")
     print(f"     accord des pools : z={c['between_pool_z']:+.2f} -> "
-          f"{'COHERENTS' if c['pools_agree'] else 'CONTRADICTOIRES'}")
+          f"{'COMPATIBLES' if c['pools_agree'] else 'CONTRADICTOIRES'}"
+          f"{'' if c['same_sign'] else '  (signes opposes, ce qui est ATTENDU pres de zero)'}")
     print("     posterieur combine : " + "  ".join(
         f"P(Elo>{e})={100*c['posterior'][f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
 print(f"  critere de bake (P(Elo>0)>95 % sur pools chaines) : "
