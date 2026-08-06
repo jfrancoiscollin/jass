@@ -631,12 +631,18 @@ def build_sequential_prior(args, folder, keep, kept_counts, PAT_N, E, N, l2):
     mu, scale_c = project_champion_mean(
         args.prior_mean, folder, keep, PAT_N, E)
     lam = float(args.prior_visit_scale); dec = float(args.prior_decay)
+    # The extras are charged visits/N = 1, so a shared decay hits them ~16000x
+    # harder than the mean pattern bucket. Keeping them on the same knob would
+    # confound visit-adaptive pattern shrinkage with pinning the extras to the
+    # parent; defaulting to `dec` keeps every historical run byte-identical.
+    dec_ext = dec if args.prior_decay_ext is None else float(args.prior_decay_ext)
     prec_pat = np.full(PAT_N, l2, dtype=np.float64)
     prec_pat[1:] = l2 + dec * lam * (kept_counts.astype(np.float64) / max(N, 1))
-    prec_ext_val = l2 + dec * lam                            # extras active every row (visits/N=1)
+    prec_ext_val = l2 + dec_ext * lam                        # extras active every row (visits/N=1)
     prec = np.concatenate([prec_pat, prec_pat,
                            np.full(E, prec_ext_val), np.full(E, prec_ext_val)])
-    print(f'prior : champion={args.prior_mean} (scale={scale_c})  λ={lam} decay={dec}  '
+    print(f'prior : champion={args.prior_mean} (scale={scale_c})  λ={lam} decay={dec} '
+          f'decay_ext={dec_ext}  '
           f'prec[pat] med={np.median(prec_pat[1:]):.3e} max={prec_pat[1:].max():.3e} '
           f'prec[ext]={prec_ext_val:.3e}  warm-start at μ')
     return mu, prec
@@ -933,6 +939,14 @@ def main(argv=None):
     ap.add_argument('--prior-decay', type=float, default=1.0,
                     help='discount on the prior precision (0..1). 1 = full visit-weighting ; 0 = plain '
                          'ridge toward the champion (uniform l2, μ=champion). Only with --prior-mean.')
+    ap.add_argument('--prior-decay-ext', type=float, default=None,
+                    help='separate discount for the EXTRAS block. Defaults to --prior-decay, which '
+                         'reproduces the historical behaviour byte-identically. Split it out because '
+                         'the extras are charged visits/N=1 by construction, so at a shared decay '
+                         'their prior precision is l2+decay·λ — ~16000x that of the mean pattern '
+                         'bucket on a 2M corpus. A single knob therefore confounds visit-adaptive '
+                         'pattern shrinkage with pinning the extras to the parent. Only with '
+                         '--prior-mean.')
     ap.add_argument('--max-iter', type=int, default=25,
                     help='L-BFGS iters; EACH is ~one disk pass over data+feat. Keep small.')
     ap.add_argument('--optimizer-report', type=str, default=None,
