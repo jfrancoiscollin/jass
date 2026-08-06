@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 5 août 2026**
+> **Mis à jour : 6 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -49,7 +49,68 @@
 > bake_criterion_p_gt_0_over_95_percent_on_chained_pools_first_application_REFUSED;
 > gates_now_report_a_flat_prior_posterior_alongside_the_ci;
 > label_noise_24_percent_against_tablebase_replicated_two_corpora;
-> m1_signal_report_validated_against_engine_counters_exactly`.
+> m1_signal_report_validated_against_engine_counters_exactly;
+> exact_fold_REPLICATES_on_a_disjoint_second_pool_chained_14_66_elo_n18000;
+> winners_curse_hits_the_marginal_axes_not_the_mechanical_one`.
+
+## 0quinquies. 6 août 2026 — ✅ LE FOLD EXACT RÉPLIQUE, LUI
+
+### ⛓️ `home-1316` — EXACT re-gaté sur un second pool disjoint
+
+EXACT avait été baké le 1er août sur **un seul** tirage de parties. Sous le
+critère de bake du 5 août (`P(Elo>0) > 95 %` sur pools chaînés), cette
+promotion n'était plus attestable : elle n'avait pas de réplication. Et les
+trois axes re-mesurés jusque-là s'étaient tous dégonflés au second pool. La
+question posée était donc : **de combien EXACT perd-il ?**
+
+Réponse : **de rien.**
+
+| | n | W-D-L | taux | Elo | IC95 |
+|---|---:|---|---:|---:|---|
+| pool 1 — `cpx62-1129` (1er août, EGDB) | 6 000 | — | — | **+15,12** | [+6,6 ; +23,7] |
+| pool 2 — `home-1316` (6 août, EGDB) | 12 000 | 5942-614-5444 | 0,5208 | **+14,43** | [+8,4 ; +20,5] |
+| **chaîné** | **18 000** | | | **+14,66** | **[+9,7 ; +19,6]** |
+
+```
+accord des pools : z = −0,13  →  COMPATIBLES
+posterieur chaine : P(>0)=100 %  P(>3)=100 %  P(>5)=100 %  P(>10)=96,8 %  P(>17)=17,7 %
+critere de bake : REMPLI — P(elo>0)=1,0 sur n=18000
+VERDICT A_BEATS_B_HUMAN_REVIEW   promotion=false
+```
+
+**Disjonction des pools vérifiée à la main, pas seulement par la garde.** La
+porte d'origine a joué sur les 1500 ouvertures de `home-1004`
+(`vol8m-eval-openings.fen`), celle-ci sur les 3000 de `big3000`
+(`cpx62-1154`) — intersection des ensembles de FEN relus depuis R2 :
+**0 ouverture commune**. La garde de chaînage ne compare que des préfixes ;
+l'intersection réelle a été recalculée indépendamment.
+
+### 🎯 La malédiction du vainqueur ne frappe pas au hasard
+
+C'est le résultat de méthode, et il corrige ma propre lecture du 5 août. Je
+tenais la déflation au second pool pour un phénomène **général**, pesant sur
+tout ce qui a été promu sur une première mesure. Le facteur observé sur
+quatre axes dit autre chose :
+
+| axe | pool 1 | pool 2 | facteur |
+|---|---:|---:|---:|
+| volume 12 M | +3,45 | +0,32 | **0,09** |
+| C2 (relabel tablebase) | +3,04 | −1,01 | **< 0** |
+| PRIOR | +9,15 | +4,17 | **0,46** |
+| **fold exact** | **+15,12** | **+14,43** | **0,95** |
+
+La déflation est d'autant plus violente que la première mesure était
+**marginale**. C'est exactement ce que prédit un effet de sélection : on ne
+va chercher un second pool que sur les axes dont le premier tirage a paru
+prometteur, et plus l'effet vrai est petit devant l'erreur-type, plus ce
+premier tirage devait être chanceux pour franchir le seuil d'attention.
+Un effet vrai et large — le fold exact mutualise une contrainte
+géométriquement exacte — ne doit rien au tirage et ne perd donc rien.
+
+⛔ **Corollaire opératoire : la réplication n'est pas une formalité de
+conformité, c'est le seul discriminateur entre un gain et un tirage.** Elle
+est bon marché sur les axes déjà entraînés (les modèles existent, ~1h05 de
+parties) et ne doit plus jamais être sautée avant un bake.
 
 ## 0quater. 5 août 2026 — ⛔ LE VOLUME NE BRIDE PAS, ET LES ÉTIQUETTES SI
 
