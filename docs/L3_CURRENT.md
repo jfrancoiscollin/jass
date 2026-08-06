@@ -65,6 +65,8 @@
 > the_premise_blocking_nnue_was_measured_under_the_false_color_fold;
 > capacity_x_data_interaction_never_tested_32cf_only_at_2m;
 > corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied;
+> prior_visit_weighting_is_a_REGRESSION_minus_21_elo_axis_CLOSED;
+> the_SHAPE_of_the_prior_matters_more_than_its_dose;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0sexies. 6 août 2026 — TRAJ-EQUAL : changer l'unité statistique, pas le corpus
@@ -317,6 +319,52 @@ est la valeur de `--prior-decay`, donc l'omettre reste **byte-identique** et
 aucun résultat publié ne bouge. Mode de continuation `priorvisitpat`
 (`b68728000`). Cellule `cpx62-1191` en vol : bras A = recette L2LOW exacte,
 bras B = visites sur les patterns seuls, tout le reste partagé.
+
+### ⛔ `cpx62-1191` + `cpx62-1193` — la pondération par visites est une RÉGRESSION
+
+Le dernier bouton non testé de la recette de fit est mesuré, et il est fermé.
+
+```
+n=12000   PRIORVISIT 5313W 642D 6045L contre DECAY0
+taux = 0,4695   Elo = −21,22   IC95 = [−27,3 ; −15,2]
+P(>0) = 0,0 %
+VERDICT A_BELOW_B   promotion=false
+```
+
+Cellule à un seul facteur : les deux bras sortent du **même job** `cpx62-1191`
+— même corpus TURNOVER 2 M, même parent, même fold exact, même `l2 1e-5`,
+même `gtol 1e-4`, même pile numérique, même box, même build, mêmes `K=120`
+extras. Seul `--prior-decay 1.0 --prior-decay-ext 0` contre `--prior-decay 0`
+les sépare.
+
+| bras | itérations | holdout | Elo |
+|---|---:|---:|---:|
+| DECAY0 (recette L2LOW) | 1519 | 0,438816 | référence |
+| PRIORVISIT | 1270 | 0,440675 | **−21,22** |
+
+**Le mécanisme était prévisible et il a été annoncé avant le run.**
+`prec = l2 + decay·λ·(visites/N)` rend le rappel au parent le **plus fort là
+où les données sont les plus abondantes** — le commentaire du template le
+disait déjà : « l'inverse du motif qui justifiait le prior ». À `decay 0` la
+bonne dynamique est obtenue **gratuitement**, parce que la Fisher des données
+croît elle aussi avec les visites : les buckets rares sont donc déjà davantage
+rétrécis vers le parent, sans qu'on ait rien à régler. Ajouter `decay > 0`
+ne fait qu'écraser les buckets bien mesurés contre le parent.
+
+⚠️ **Un axe fermé sur UN pool, et c'est suffisant ICI.** La borne haute est à
+`−15,2` : la question n'est pas de savoir si le gain se réplique, il n'y a pas
+de gain. **Fermer un axe ne demande pas de réplication ; promouvoir si.**
+
+📌 **Ordre de grandeur à retenir : `−21,22` est le plus gros effet à un seul
+facteur de toute la campagne**, plus grand en valeur absolue que le fold exact
+(`+14,66`). La FORME du prior compte donc davantage que sa dose — l'axe `l2`
+(sa dose) était plat entre `1e-5` et `3e-6`.
+
+Outillage produit au passage : `--prior-decay-ext` sépare le bloc extras du
+bloc patterns (les extras sont facturés `visites/N = 1`, donc sous un
+amortissement partagé leur précision vaut **9 853×** celle du bucket moyen —
+rapport structurel, non dosable). Sans cette séparation le verdict aurait été
+inattribuable entre « pondérer par les visites » et « épingler les extras ».
 
 ## 0sexies. 6 août 2026 — ⛔ L'ÉCART À SCAN NE SE FERME PAS PAR LA RECETTE
 
