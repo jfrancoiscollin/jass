@@ -248,15 +248,31 @@ fit_arm(){   # $1 = nom, $2 = fold, $3 = gtol, $4 = l2, $5 = hier_l2, $6... = co
   [ "$rc" -eq 0 ] || die "fit $arm rc=$rc — voir fit-$arm.log"
   [ -s "$W/$arm.pjtw" ] || die "fit $arm sans modèle"
   # `success` seul ne suffit pas : un arret sur `max_iter` le rapporte vrai.
-  python3 - "$ART/$arm-optimizer.json" "$arm" <<'PYCHK' || die "fit $arm : arret non concluant"
+  # ALLOW_NON_PGTOL_STOP (defaut 0, donc AUCUN job existant ne change) degrade
+  # l'arret non-gradient en AVERTISSEMENT CONSIGNE au lieu de tuer le job. Utile
+  # au seul cas ou l'arret EST une donnee : un fit depuis zero n'a pas d'init
+  # utile et peut buter sur REL_REDUCTION_OF_F comme `gtol=1e-5` l'a fait sur
+  # home-1210 — tuer le job perdrait 4h ET le modele, alors que le fait
+  # « scratch ne converge pas sur le gradient » est precisement un resultat.
+  # `success=False` reste FATAL dans tous les cas.
+  local stopchk; stopchk=0
+  python3 - "$ART/$arm-optimizer.json" "$arm" <<'PYCHK' || stopchk=$?
 import json, sys
 d = json.load(open(sys.argv[1]))
 msg = str(d.get("message", ""))
 if not d.get("success"):
-    raise SystemExit(f"{sys.argv[2]}: success=False")
+    raise SystemExit(2)                       # 2 = fatal partout
 if "PGTOL" not in msg.upper():
-    raise SystemExit(f"{sys.argv[2]}: arret sur '{msg}' et non sur le gradient")
+    print(f"{sys.argv[2]}: arret sur '{msg}' et non sur le gradient")
+    raise SystemExit(3)                       # 3 = tolerable si opt-in
 PYCHK
+  case "$stopchk" in
+    0) ;;
+    3) if [ "${ALLOW_NON_PGTOL_STOP:-0}" = "1" ]; then
+         say "  ⚠️ $arm : arret NON-gradient TOLERE (ALLOW_NON_PGTOL_STOP=1) — sous-convergence a lire dans $arm-optimizer.json"
+       else die "fit $arm : arret non concluant"; fi ;;
+    *) die "fit $arm : arret non concluant (success=False)" ;;
+  esac
   gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
   local ll; ll=$(grep -o 'HOLDOUT_LOGLOSS[= ][0-9.]*' "$W/fit-$arm.log" | tail -1)
   local it; it=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["iterations"])' \
@@ -274,6 +290,15 @@ done
 # Continuations, en mots pour éviter les guillemets imbriqués dans un job.
 # `warm` = recette courante (L2 centré 0) ; `prior` = ridge centré sur le parent.
 cont_args(){ case "$1" in
+  # `scratch` = AUCUNE continuation : init aleatoire, ridge centre sur ZERO, le
+  # parent n'est ni lu ni projete. C'est la methode Scan (poids initialises
+  # aleatoirement a chaque cycle) et c'est le SEUL mode qui mesure ce que le
+  # CORPUS porte, independamment de la chaine d'heritage. Tous les autres modes
+  # passent le parent, donc aucun fit de la campagne n'a jamais teste cela.
+  # ⚠️ `l2` n'a PAS le meme sens ici : sans `--prior-mean` il redevient un
+  # retrecissement vers zero, et sa valeur championne (1e-5) est calibree comme
+  # force du rappel VERS LE PARENT. La balayer est obligatoire, pas optionnel.
+  scratch) : ;;
   warm)  printf '%s\n%s\n' --warm-start "$IN/parent.pjtw" ;;
   # `--king-patterns` n'agrandit PAS l'espace : il OR les dames dans
   # l'occupation (`pb = bm|bk`), donc `n_pat` est inchangé et le warm-start
@@ -309,14 +334,31 @@ PRIOR_DECAY="${PRIOR_DECAY:-1.0}"; PRIOR_LAM="${PRIOR_LAM:-0.25}"
 ARM_A_CONT="${ARM_A_CONT:-warm}"; ARM_B_CONT="${ARM_B_CONT:-warm}"
 say "  bras A : $ARM_A_FOLD / $ARM_A_CONT"
 say "  bras B : $ARM_B_FOLD / $ARM_B_CONT"
+# ⚠️ `cont_args` meurt dans une SUBSTITUTION DE PROCESSUS : son `die` tue le
+# sous-shell, pas celui-ci, et `mapfile` rend simplement zero ligne. Un mode mal
+# orthographie donnait donc deja une liste d'arguments VIDE en silence — ce qui
+# est desormais un fit DEPUIS ZERO valide (mode `scratch`), donc silencieusement
+# une tout autre experience que celle annoncee. La validation doit se faire ICI.
+for m in "$ARM_A_CONT" "$ARM_B_CONT"; do
+  case "$m" in
+    scratch|warm|warmking|prior|priorking|priorvisit|priorvisitpat) ;;
+    *) die "continuation invalide : $m" ;;
+  esac
+done
 mapfile -t A_ARGS < <(cont_args "$ARM_A_CONT")
 mapfile -t B_ARGS < <(cont_args "$ARM_B_CONT")
+# Ceinture-bretelles : seul `scratch` a le droit d'etre vide.
+[ "${#A_ARGS[@]}" -gt 0 ] || [ "$ARM_A_CONT" = scratch ] || die "bras A : continuation vide hors scratch"
+[ "${#B_ARGS[@]}" -gt 0 ] || [ "$ARM_B_CONT" = scratch ] || die "bras B : continuation vide hors scratch"
 say "  gtol : A=$ARM_A_GTOL  B=$ARM_B_GTOL  max_iter=$MAXIT"
 say "  l2   : A=$ARM_A_L2  B=$ARM_B_L2"
 say "  hier : A=$ARM_A_HIER_L2  B=$ARM_B_HIER_L2"
 case "$ARM_A_CONT$ARM_B_CONT" in *priorvisit*) say "  prior pondere : decay=$PRIOR_DECAY lam=$PRIOR_LAM";; esac
-fit_arm control "$ARM_A_FOLD" "$ARM_A_GTOL" "$ARM_A_L2" "$ARM_A_HIER_L2" "${A_ARGS[@]}"
-fit_arm exact   "$ARM_B_FOLD" "$ARM_B_GTOL" "$ARM_B_L2" "$ARM_B_HIER_L2" "${B_ARGS[@]}"
+# ⚠️ Expansion protegee : `scratch` rend un tableau VIDE, et sous `set -u` un
+# bash < 4.4 traite `"${A_ARGS[@]}"` vide comme une variable non liee. Meme forme
+# que `hier` dans `fit_arm`, pour la meme raison.
+fit_arm control "$ARM_A_FOLD" "$ARM_A_GTOL" "$ARM_A_L2" "$ARM_A_HIER_L2" ${A_ARGS[@]+"${A_ARGS[@]}"}
+fit_arm exact   "$ARM_B_FOLD" "$ARM_B_GTOL" "$ARM_B_L2" "$ARM_B_HIER_L2" ${B_ARGS[@]+"${B_ARGS[@]}"}
 
 stage verify-symmetries
 env PYTHONPATH="$GEOM:pattern_jass/tools" "$W/venv/bin/python" - \
