@@ -73,7 +73,10 @@
 > exploration_policy_never_swept_eps_8_decay_60_topk_used_once_margin_never;
 > uniform_epsilon_is_the_random_open_plies_pathology_spread_through_the_game;
 > maxit_must_be_reachable_within_fit_timeout_else_kill_instead_of_clean_stop;
-> home_fit_rate_anchor_8_03_s_per_iteration_2m_exact_fold_gtol_1e4;
+> home_fit_rate_anchor_8_58_s_per_iteration_and_17_53_for_a_sample_weighted_arm;
+> trajectory_equal_is_FLAT_minus_3_71_elo_second_pool_declined;
+> ALL_post_hoc_corpus_transforms_are_exhausted_seven_cells_none_move_elo;
+> only_untested_lever_is_what_the_selfplay_PLAYS;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0septies. 7 août 2026 — ⚖️ L'HÉRITAGE NE VAUT RIEN, ET LE LEVIER RESTANT EST LA DISTRIBUTION
@@ -182,6 +185,65 @@ il touche **19,75 %** de nos records. `--explore-topk K` est le correctif déjà
 Une cellule = ~30 min de génération + ~4h07 de fit + ~1h05 de porte ≈ **5h45** ;
 à un seul facteur (deux corpus, deux fits) ≈ **10h**. ⚠️ Ancre **HOME** : la
 re-mesurer sur cpx62 avant toute ETA là-bas (bourde `0665`).
+
+### ⚖️ `home-1319` + `cpx62-1195` — TRAJ-EQUAL est PLAT
+
+Changer l'unité statistique — masse égale par **partie** au lieu de poids égal
+par **record** — ne déplace pas la force.
+
+| bras | poids | itérations | holdout | rythme |
+|---|---|---:|---:|---:|
+| ROW | 1 par record (recette actuelle) | 1842 | 0,442496 | 8,58 s/it |
+| GAME | `1/m_g`, masse égale par partie | 1599 | 0,444451 | **17,53 s/it** |
+
+```
+n=12000   GAME 5607W 658D 5735L contre ROW
+taux = 0,4947   Elo = −3,71   IC95 = [−9,8 ; +2,3]
+P(>0) = 11,5 %   P(>3) = 1,5 %   P(>5) = 0,2 %
+VERDICT A_FLAT_VS_B_NO_ESTABLISHED_GAIN
+```
+
+Les deux bras du **même job**, facteur unique prouvé, et **tous deux convergés
+sur le gradient** (`grad_inf` `9,69e-5` et `8,48e-5` pour `gtol 1e-4`) : la
+cellule n'oppose pas un bras sous-convergé à un bras convergé.
+
+**Le déséquilibre corrigé était réel** — les 10 % de parties les plus longues
+portaient **20,67 %** de la loss ROW. La cellule a donc bien fait ce qu'elle
+annonçait ; c'est l'effet sur la force qui est absent.
+
+⛔ **Second pool non joué, délibérément.** Il faudrait que le pool 2 sorte
+au-dessus de **`+10,9 Elo`** (~4,7 σ) pour que le chaînage atteigne
+`P(>0) > 95 %`. Même arbitrage que pour le paquet C1+C2. `home-1318` n'a donc
+plus de raison d'être re-queué.
+
+### 🎯 TOUTES LES TRANSFORMATIONS POST-HOC DU CORPUS SONT ÉPUISÉES
+
+C'est la lecture qui compte, et elle est maintenant complète. Sept cellules ont
+transformé un corpus déjà généré — plus de volume, étiquettes corrigées,
+contamination filtrée, repondération par phase, repondération par partie,
+budget de recherche variable, ouvertures élargies :
+
+| cellule | ce qu'elle change | Elo |
+|---|---|---:|
+| volume 12 M | quantité | +1,89 |
+| relabel tablebase (C2) | étiquettes | +1,02 |
+| paquet C1+C2 repondéré | filtrage + phase | −2,63 |
+| budget-nœuds (NB0) | effort de recherche | −2,17 |
+| autojeu on-policy | générateur, recette constante | −4,05 |
+| **TRAJ-EQUAL** | **unité statistique** | **−3,71** |
+| `--random-open-plies` | ouvertures | −9,27 |
+
+**Aucune ne bouge l'Elo, et les seules qui sortent nettement du bruit sont
+négatives.** Face à elles, les quatre cellules qui paient — fold exact
+`+14,66`, PRIORTIGHT `+15,85`, replay `+11,12`, PRIOR `+6,66` — ne touchent
+**jamais** aux données produites : elles contraignent le fit ou réinjectent le
+passé.
+
+📌 **Conséquence opératoire : ne plus proposer de transformation post-hoc du
+corpus.** Le seul levier non testé est **ce que le self-play JOUE** — la
+politique d'exploration, l'asymétrie des adversaires, la sélection des
+positions dans la partie, la politique de fin de partie. Inventaire et audit
+dans la section « leviers sur la distribution » ci-dessus.
 
 ### 💥 `home-1317` / `home-1318` — un sizing impossible par construction
 
