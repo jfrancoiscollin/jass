@@ -1,0 +1,45 @@
+schema: mini_jass.seed_variance_replication.v1
+paired_seeds:
+  - 132001
+  - 132002
+  - 132003
+  - 132004
+  - 132005
+  - 132006
+  - 132007
+  - 132008
+  - 132009
+  - 132010
+  - 132011
+  - 132012
+  - 132013
+  - 132014
+  - 132015
+  - 132016
+  - 132017
+  - 132018
+  - 132019
+  - 132020
+expected_execution_host: cpx62
+primary_inference: independent_m13_only_no_pooling_with_m12
+m12_config: configs/l2_greedy_replication.yaml
+m12_evidence: artefacts/m12_greedy_l2_replication.v1.json
+expected_m12_result_hash: d8bd43b22160b747df775741a54e900eea5447836df416010e39a535b3a7ee37
+expected_m12_protocol_hash: de0f1c1dadd2fcb6cf47b5b037ef5000521e25c9df61dd8c79fe2a4cdcec940e
+nested_split:
+  seed: 20260810
+  train_fraction: 0.70
+  development_fraction: 0.15
+  confirmation_fraction: 0.15
+power_design:
+  source_seed_count: 5
+  fixed_replication_seed_count: 20
+  m12_confidence_critical_95: 2.7764451051977987
+  m13_confidence_critical_95: 2.093024054408263
+  minimum_anticipated_power: 0.80
+  approximation: two_sided_normal_approximation_with_t19_critical
+scientific_gate:
+  minimum_mean_value_sign_delta: 0.0
+  minimum_mean_optimal_mass_delta: 0.0
+  minimum_target_value_exact_rate: 0.70
+  minimum_target_optimal_mass: 0.85

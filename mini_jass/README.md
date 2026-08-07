@@ -315,3 +315,27 @@ Run the frozen replication with:
 ```text
 PYTHONPATH=python .venv/bin/python tools/run_greedy_l2_replication.py --config configs/l2_greedy_replication.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m12-greedy-l2-replication-v1 --compact-output artefacts/m12_greedy_l2_replication.v1.json
 ```
+
+## M13 powered seed-variance replication
+
+M13 preregisters an independent, powered answer to the two confidence failures
+retained by M12. Twenty entirely new paired seeds give approximately 83.1%
+power against the more conservative of M12's two observed standardized
+selection-score effects. M12 outcomes are used only to fix that sample size;
+they are never pooled into M13's primary inference.
+
+The new 70/15/15 train, development, and sealed-confirmation split is nested
+strictly inside the M12 train cohort. It therefore excludes the M12
+development and confirmation cohorts, the M11 holdout, and every historical
+non-train class. The greedy mechanism and all M9/M12 scientific thresholds are
+unchanged. Execution is additionally locked to host `cpx62` and records that
+host in the protocol, execution gate, and compact result.
+
+Even a passing M13 can authorize only preparation of a new isolated contract
+under `mini_jass/`. Production Jass changes and direct 10x10 transfer remain
+forbidden. The CPX entrypoint is `jobs/run_m13_seed_variance_cpx.sh`; its
+scientific command is equivalent to:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_seed_variance_replication.py --config configs/l2_seed_variance_replication.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m13-seed-variance-cpx --compact-output artefacts/m13_seed_variance_replication.v1.json --execution-host cpx62
+```
