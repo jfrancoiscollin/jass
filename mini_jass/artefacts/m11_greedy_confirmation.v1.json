@@ -1,0 +1,145 @@
+{
+  "aggregate": {
+    "arms": {
+      "baseline_top2": {
+        "mean_exact_rate": 0.6461871592051496,
+        "mean_policy_optimal_argmax_rate": 0.896043234091324,
+        "mean_policy_optimal_mass": 0.8901132709436238,
+        "mean_safety_draw_game_rate": 0.00078125,
+        "mean_unique_states": 1997.8,
+        "run_count": 5
+      },
+      "greedy_behavior": {
+        "mean_exact_rate": 0.7667798991340554,
+        "mean_policy_optimal_argmax_rate": 0.910152158765214,
+        "mean_policy_optimal_mass": 0.9035650459163325,
+        "mean_safety_draw_game_rate": 0.00078125,
+        "mean_unique_states": 1831.6,
+        "run_count": 5
+      }
+    },
+    "historical_train_holdout_only": true,
+    "m9_frozen_test_reads": 0,
+    "paired_exact_rate_delta": {
+      "by_seed": [
+        0.14341251804660216,
+        0.1769127421361294,
+        0.08382377389858686,
+        0.12356179948140755,
+        0.0752528660818036
+      ],
+      "confidence_95": [
+        0.0682467670079979,
+        0.17293871284981394
+      ],
+      "mean": 0.12059273992890591
+    },
+    "paired_initial_weights": true,
+    "paired_safety_draw_game_rate_delta": {
+      "by_seed": [
+        -0.00390625,
+        0.0,
+        0.00390625,
+        0.0,
+        0.0
+      ],
+      "confidence_95": [
+        -0.003429644660488611,
+        0.003429644660488611
+      ],
+      "mean": 0.0
+    },
+    "paired_start_sequences": true,
+    "run_count": 10,
+    "successful_run_count": 10
+  },
+  "confirmation_holdout": {
+    "algorithm": "sha256_ordered_train_canonical_holdout_v1",
+    "assignment_hash": "7e0b34ee384ba9dbb3c06d21eb78473137989c1ec9119733fd71fbb1238f1cf3",
+    "fraction": 0.2,
+    "holdout_canonical_count": 6603,
+    "holdout_canonical_value_counts": {
+      "-1": 1381,
+      "0": 2870,
+      "1": 2352
+    },
+    "holdout_nonterminal_raw_count": 6487,
+    "holdout_raw_value_counts": {
+      "-1": 1362,
+      "0": 2698,
+      "1": 2427
+    },
+    "manifest_hash": "3327f78f55dd29bf4519dc24abdefeb3f9e47bbbc49251ec4ef8401cca610a46",
+    "schema": "mini_jass.confirmation_holdout.l2.v1",
+    "seed": 20260808,
+    "solver_hash": 4061279344067907157,
+    "source_cohort": "historical_train_only",
+    "source_split_manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e",
+    "state_ids_hash": "0934fc342f36e9fef922650acb13f1feb94d9299642fe941676bd31f59539d0e",
+    "train_canonical_count": 33015
+  },
+  "contracts": {
+    "confirmation_holdout_manifest_hash": "3327f78f55dd29bf4519dc24abdefeb3f9e47bbbc49251ec4ef8401cca610a46",
+    "jass_production_paths_modified": false,
+    "m10_evidence_sha256": "13d8c408c99ad77cde83645711bd56f8a261332237eceed2db2cb91fd7ec3218",
+    "m10_result_hash": "e2a78a50200cc70faba713f4f359a606d87cc5ee3e16c30aa09f854a87e0275a",
+    "python_package_sha256": "585707874cab4767d917d8b568bf21377570b5ac83a6842e7d5e143006f88455",
+    "solver_hash": 4061279344067907157,
+    "solver_manifest_hash": 3750885099149748467,
+    "split_manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e"
+  },
+  "execution_gate": {
+    "criteria": {
+      "all_ten_runs_successful": true,
+      "historical_train_holdout_only": true,
+      "m9_frozen_test_untouched": true,
+      "paired_initial_weights": true,
+      "paired_start_sequences": true
+    },
+    "status": "PASS"
+  },
+  "milestone": "M11",
+  "protocol_hash": "34ff80d6e7ace75685f25dee24a7fe3cad8590c50d3983b5a4184a1ac736f302",
+  "recommendation": {
+    "decision": "rerun_l2_replication_with_confirmed_greedy_behavior",
+    "direct_10x10_transfer_authorized": false,
+    "exploration_outcome_noise_confirmed": true,
+    "gate": {
+      "criteria": {
+        "all_ten_runs_successful": true,
+        "exact_rate_delta_confidence_above_zero": true,
+        "historical_train_holdout_only": true,
+        "m9_frozen_test_untouched": true,
+        "maximum_safety_draw_rate_increase": true,
+        "minimum_greedy_exact_rate": true,
+        "minimum_greedy_policy_optimal_mass": true,
+        "minimum_mean_exact_rate_delta": true,
+        "paired_initial_weights": true,
+        "paired_start_sequences": true
+      },
+      "status": "PASS"
+    },
+    "implementation_preparation_authorized": false,
+    "l2_replication_rerun_authorized": true,
+    "l2_transfer_confirmed": false,
+    "next_gate": "Rerun the full L2 learning replication with greedy behavior on fresh train-derived data."
+  },
+  "result_hash": "9e2eba389aa9c384e1f33e262707a624f20c18b75beb5afe04509f88b5359e87",
+  "schema": "mini_jass.m11_greedy_confirmation.v1",
+  "scientific_gate": {
+    "criteria": {
+      "all_ten_runs_successful": true,
+      "exact_rate_delta_confidence_above_zero": true,
+      "historical_train_holdout_only": true,
+      "m9_frozen_test_untouched": true,
+      "maximum_safety_draw_rate_increase": true,
+      "minimum_greedy_exact_rate": true,
+      "minimum_greedy_policy_optimal_mass": true,
+      "minimum_mean_exact_rate_delta": true,
+      "paired_initial_weights": true,
+      "paired_start_sequences": true
+    },
+    "status": "PASS"
+  },
+  "status": "PASS"
+}

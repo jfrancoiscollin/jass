@@ -1,0 +1,24 @@
+schema: mini_jass.greedy_confirmation.v1
+paired_seeds: [112001, 112002, 112003, 112004, 112005]
+m10_evidence: artefacts/m10_wdl_diagnosis.v1.json
+expected_m10_result_hash: e2a78a50200cc70faba713f4f359a606d87cc5ee3e16c30aa09f854a87e0275a
+loop_config: configs/l2_score_softmax_selfplay.yaml
+split_seed: 20260807
+split_manifest: artefacts/split_manifest.l2.v1.json
+games_per_arm: 256
+confirmation_holdout:
+  seed: 20260808
+  fraction: 0.20
+arms:
+  baseline_top2:
+    causal_factor: reference_top2_behavior
+    overrides: {}
+  greedy_behavior:
+    causal_factor: exploration_strategy_only
+    overrides:
+      self_play.exploration.strategy: greedy
+scientific_gate:
+  minimum_greedy_exact_rate: 0.70
+  minimum_mean_exact_rate_delta: 0.03
+  minimum_greedy_policy_optimal_mass: 0.85
+  maximum_safety_draw_rate_increase: 0.01
