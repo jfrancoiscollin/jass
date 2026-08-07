@@ -88,3 +88,28 @@ PYTHONPATH=python .venv/bin/python tools/train.py --config configs/l1_exact_supe
 ```
 
 The 93 MB oracle export, checkpoints, run metrics, and reports remain ignored under `mini_jass/artefacts/`. Only compact versioned manifests are committed.
+
+## M4 deterministic self-play loop
+
+M4 adds a complete, isolated learning loop:
+
+- outcome-only self-play with final WDL targets and search-improved self-play with visit-policy targets;
+- deterministic negamax alpha-beta search with strict node budgets, depth, branching, terminal, leaf-evaluation, selected-move, root-score, and per-action telemetry;
+- fixed, uniform, log-uniform, curriculum, complexity, and mixed budget policies;
+- greedy, epsilon-greedy, top-k uniform, and top-k softmax exploration;
+- bounded FIFO replay with uniform, recency, and generation-mix sampling;
+- replay-only value/policy training, paired candidate-versus-parent arenas, development-only oracle gates, and reproducibility-blocked promotion;
+- resolved configuration, seeds, environment, rule/solver/split manifests, JSONL metrics, coverage, arena, checkpoints, summary, and reproducibility outputs.
+
+The rule-only `GameGraph` deliberately has no exact values, DTW, or optimal-action fields. Those labels are available only inside the development promotion gate. The frozen test cohort is never read by M4 generation, training, arena, or promotion.
+
+The frozen smoke baseline runs two generations and repeats the entire seeded execution. All six deterministic artefact hashes match, so the M4 reproducibility gate passes. Its compact record is `artefacts/m4_baseline.v1.json`. Both smoke candidates were correctly rejected rather than promoted because they failed the development and arena thresholds.
+
+Run either learning mode after exporting the M3 oracle:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_selfplay.py --config configs/l1_search_selfplay.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/search-v1
+PYTHONPATH=python .venv/bin/python tools/run_selfplay.py --config configs/l1_outcome_selfplay.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/outcome-v1
+```
+
+Each command independently replays the seeded run before returning success. Large replay, checkpoint, trace, and report files remain ignored below `mini_jass/artefacts/`; only the compact M4 baseline manifest is committed.

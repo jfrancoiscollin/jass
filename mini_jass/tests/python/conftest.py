@@ -46,6 +46,7 @@ def synthetic_oracle() -> OracleArrays:
         bitboards=bitboards,
         sides=(np.arange(count) % 2).astype(np.uint8),
         reversible_plies=(np.arange(count) % 21).astype(np.uint8),
+        terminal_status=np.zeros(count, dtype=np.uint8),
         canonical_ids=canonical_ids,
         canonical_transforms=(np.arange(count) % 2 == 1),
         canonical_parent_counts=np.full(count, 2, dtype=np.uint8),

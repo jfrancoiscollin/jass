@@ -1,7 +1,9 @@
-"""Mini-Jass exact-supervised learning laboratory."""
+"""Standalone Mini-Jass learning laboratory."""
 
 from .model import ACTION_COUNT, INPUT_COUNT, MiniJassMLP, ModelConfig
 from .oracle import OracleArrays, encode_features, load_oracle
+from .game_graph import GameGraph
+from .loop import run_selfplay_loop
 from .split import SplitDefinition, build_split
 
 __all__ = [
@@ -10,8 +12,10 @@ __all__ = [
     "MiniJassMLP",
     "ModelConfig",
     "OracleArrays",
+    "GameGraph",
     "SplitDefinition",
     "build_split",
     "encode_features",
     "load_oracle",
+    "run_selfplay_loop",
 ]
