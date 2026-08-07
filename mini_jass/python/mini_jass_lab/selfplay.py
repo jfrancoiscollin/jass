@@ -24,12 +24,16 @@ class ExplorationConfig:
     epsilon: float = 0.10
     top_k: int = 3
     temperature: float = 1.0
+    warmup_games: int = 0
+    warmup_epsilon: float = 0.25
 
     def __post_init__(self) -> None:
         if not 0.0 <= self.epsilon <= 1.0:
             raise ValueError("epsilon must be in [0, 1]")
         if self.top_k < 1 or self.temperature <= 0:
             raise ValueError("top_k and temperature must be positive")
+        if self.warmup_games < 0 or not 0.0 <= self.warmup_epsilon <= 1.0:
+            raise ValueError("warm-up games and epsilon are invalid")
 
 
 @dataclass(frozen=True)
@@ -40,6 +44,8 @@ class SelfPlayConfig:
     search_depth: int = 4
     budget_policy: str = "fixed"
     node_budgets: tuple[int, ...] = (16,)
+    search_enabled: bool | None = None
+    game_schedule: tuple[int, ...] | None = None
     exploration: ExplorationConfig = field(default_factory=ExplorationConfig)
 
     def __post_init__(self) -> None:
@@ -47,6 +53,25 @@ class SelfPlayConfig:
             raise ValueError("self-play mode must be outcome_only or search_improved")
         if self.games < 1 or self.max_plies < 1:
             raise ValueError("games and max_plies must be positive")
+        if self.mode == "search_improved" and self.search_enabled is False:
+            raise ValueError("search-improved targets require search")
+        if self.game_schedule is not None and (
+            not self.game_schedule or any(games < 1 for games in self.game_schedule)
+        ):
+            raise ValueError("game schedule must contain positive game counts")
+
+    @property
+    def uses_search(self) -> bool:
+        if self.search_enabled is not None:
+            return self.search_enabled
+        return self.mode == "search_improved"
+
+    def games_for_generation(self, generation: int) -> int:
+        if self.game_schedule is None:
+            return self.games
+        if generation < 1 or generation > len(self.game_schedule):
+            raise ValueError("generation is outside the configured game schedule")
+        return self.game_schedule[generation - 1]
 
 
 @dataclass(frozen=True)
@@ -116,8 +141,9 @@ def generate_self_play(
     }
     search_trace: list[dict[str, Any]] = []
     safety_draws = 0
+    game_count = config.games_for_generation(generation)
 
-    for game_id in range(config.games):
+    for game_id in range(game_count):
         rng = np.random.default_rng(seed + game_id)
         state_id = 0
         trajectory: list[tuple[int, np.ndarray, int]] = []
@@ -127,7 +153,7 @@ def generate_self_play(
             if terminal_value is not None:
                 break
             legal = graph.legal_actions(state_id)
-            if config.mode == "search_improved":
+            if config.uses_search:
                 budget = resolve_node_budget(
                     config.budget_policy,
                     list(config.node_budgets),
@@ -142,8 +168,13 @@ def generate_self_play(
                     SearchConfig(config.search_depth, budget),
                     inference,
                 )
-                target_policy = result.visit_policy()
-                preferences = _search_preferences(target_policy)
+                search_policy = result.visit_policy()
+                preferences = _search_preferences(search_policy)
+                target_policy = (
+                    search_policy
+                    if config.mode == "search_improved"
+                    else np.zeros(72, dtype=np.float32)
+                )
                 for key in (
                     "requested_nodes",
                     "consumed_nodes",
@@ -176,7 +207,15 @@ def generate_self_play(
                 preferences = logits
                 target_policy = np.zeros(72, dtype=np.float32)
 
-            action = select_action(legal, preferences, config.exploration, rng)
+            exploration = config.exploration
+            if game_id < exploration.warmup_games:
+                exploration = ExplorationConfig(
+                    strategy="epsilon_greedy",
+                    epsilon=exploration.warmup_epsilon,
+                    top_k=exploration.top_k,
+                    temperature=exploration.temperature,
+                )
+            action = select_action(legal, preferences, exploration, rng)
             if config.mode == "outcome_only":
                 target_policy[action] = 1.0
             trajectory.append((state_id, target_policy, ply))
@@ -209,7 +248,7 @@ def generate_self_play(
     metrics: dict[str, Any] = {
         "generation": generation,
         "mode": config.mode,
-        "games": config.games,
+        "games": game_count,
         "positions": len(samples),
         "mean_game_length": float(np.mean(lengths)),
         "max_game_length": max(lengths),

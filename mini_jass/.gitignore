@@ -5,6 +5,7 @@
 !/artefacts/split_manifest.v1.json
 !/artefacts/m3_baseline.v1.json
 !/artefacts/m4_baseline.v1.json
+!/artefacts/m5_experiment_pack.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/

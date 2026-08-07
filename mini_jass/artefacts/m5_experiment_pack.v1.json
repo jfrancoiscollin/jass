@@ -1,0 +1,65 @@
+{
+  "schema": "mini_jass.m5_experiment_pack.v1",
+  "milestone": "M5",
+  "status": "PASS",
+  "protocol_hash": "a083ed318ef36de86ba1e97c6f47b3d3f58164cd3e45a3f8cffead634a4eb11a",
+  "result_hash": "bc8a95c25159be2ce0ec7803bacb450fea100be83998d6fcc07bdeed3e0e27bf",
+  "pack": {
+    "experiments": ["E1", "E2", "E3", "E4"],
+    "arm_count": 11,
+    "paired_seeds": [51001, 51002, 51003, 51004, 51005],
+    "run_count": 55,
+    "successful_run_count": 55,
+    "python_tests": 24
+  },
+  "gate": {
+    "all_runs_reported": true,
+    "all_runs_successful": true,
+    "paired_initial_weights": true,
+    "minimum_five_paired_seeds": true,
+    "frozen_test_unsealed_after_protocol_fixed": true,
+    "consumed_node_balance": true,
+    "maximum_consumed_node_imbalance": 0.35
+  },
+  "consumed_node_imbalance": {
+    "E2": 0.04211277658815127,
+    "E3": 0.22532502708559043,
+    "E4": 0.15535328602283238
+  },
+  "contracts": {
+    "rule_schema": "mini_jass.rules.l1.v1",
+    "action_schema": "mini_jass.actions.v1",
+    "action_vocabulary_hash": 11242579555617580249,
+    "raw_graph_hash": 3347327730907747976,
+    "canonical_graph_hash": 3712505811235282327,
+    "solver_hash": 10671205679107391448,
+    "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524",
+    "oracle_export_sha256": "eb35afc28b6e8a39d7151d894517d2a9442521e9723f4be19d266bcf3128b8eb",
+    "python_package_sha256": "6106bec23dc77b19f72afd7aba17bef3531fdf41eb035429c5fa3d4741c4bfd0"
+  },
+  "evidence": {
+    "e1_mean_value_sign_delta": 0.0,
+    "e1_mean_optimal_mass_delta": -0.00008130073547363281,
+    "e1_mean_zero_sample_frozen_count": 39679.2,
+    "best_e3_budget_arm": "log_uniform_4_128",
+    "best_e4_exploration_arm": "top_2_uniform",
+    "e4_greedy_mean_unique_states": 31.8,
+    "e4_top2_mean_unique_states": 73.4,
+    "e4_top2_mean_oracle_regret": 0.27996469540663443
+  },
+  "recommendation": {
+    "decision": "continue_L1",
+    "direct_10x10_transfer_authorized": false,
+    "reason": "E1 did not improve value-sign accuracy and slightly reduced development optimal-move mass. Coverage gains are not yet learning gains.",
+    "next_gate": "Strengthen L1 learning, then replicate selected mechanisms on L2 before Jass 10x10."
+  },
+  "artifact_hashes": {
+    "config.resolved.yaml": "2c6f37b5ba6634d790ac825faaae09bbb3c91e289785f9e2334e12eeef5bdd99",
+    "arm_results.jsonl": "708fbaa7856ba66f51b90b3ccc3957feacd05b3909bae6531b80fe6d8da8df84",
+    "comparison.json": "e6c526ebb038eb0685d29d399d0424823675ad51068f0d6cdcd92fb9c3b632cd",
+    "recommendation.json": "5be18adda4387332bef5a5a87f2d44f7756637b9bbe913e11d2b94f558cc2759",
+    "result.json": "937880c6617a7eabeb1a24e3a62b0147d61ce4cdced6652be1f4b25a4624f2bc",
+    "summary.md": "19521a767a5d72405692e8be248995e523aa47fc4fcf0c7496e9fbcf739273be",
+    "executable_manifest.json": "cfcac356bb4179e474ccdb8ef7fcfa08c7e28fa61ed4b3e7beec852ce49ee830"
+  }
+}

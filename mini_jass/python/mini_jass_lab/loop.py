@@ -31,6 +31,7 @@ class LoopExecution:
     core: dict[str, Any]
     candidate_states: list[dict[str, torch.Tensor]]
     final_state: dict[str, torch.Tensor]
+    state_sample_counts: np.ndarray
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -76,6 +77,12 @@ def _parse_self_play(config: dict[str, Any]) -> SelfPlayConfig:
         search_depth=int(config["search_depth"]),
         budget_policy=config["budget_policy"],
         node_budgets=tuple(int(value) for value in config["node_budgets"]),
+        search_enabled=config.get("search_enabled"),
+        game_schedule=(
+            tuple(int(value) for value in config["game_schedule"])
+            if config.get("game_schedule") is not None
+            else None
+        ),
         exploration=exploration,
     )
 
@@ -103,6 +110,7 @@ def execute_loop(
     promotion = config["promotion"]
     generation_records: list[dict[str, Any]] = []
     candidate_states: list[dict[str, torch.Tensor]] = []
+    state_sample_counts = np.zeros(graph.state_count, dtype=np.uint32)
 
     for generation in range(1, int(config["generations"]) + 1):
         generated = generate_self_play(
@@ -113,6 +121,12 @@ def execute_loop(
             seed + generation * 10_000,
         )
         replay.extend(generated.samples)
+        if generated.samples:
+            np.add.at(
+                state_sample_counts,
+                np.asarray([sample.state_id for sample in generated.samples], dtype=np.int64),
+                1,
+            )
         replay_rng = np.random.default_rng(seed + generation * 15_000)
         if replay_config["strategy"] == "disabled":
             training_pool = generated.samples
@@ -215,7 +229,12 @@ def execute_loop(
         },
     }
     core["execution_hash"] = _digest(core)
-    return LoopExecution(core, candidate_states, deepcopy(parent.state_dict()))
+    return LoopExecution(
+        core,
+        candidate_states,
+        deepcopy(parent.state_dict()),
+        state_sample_counts,
+    )
 
 
 def _deterministic_payloads(config: dict[str, Any], execution: LoopExecution) -> dict[str, bytes]:

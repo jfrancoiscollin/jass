@@ -113,3 +113,25 @@ PYTHONPATH=python .venv/bin/python tools/run_selfplay.py --config configs/l1_out
 ```
 
 Each command independently replays the seeded run before returning success. Large replay, checkpoint, trace, and report files remain ignored below `mini_jass/artefacts/`; only the compact M4 baseline manifest is committed.
+
+## M5 first causal experiment pack
+
+M5 adds the preregistered E1–E4 pack:
+
+- E1 combines outcome-only WDL/policy targets with fixed 16-node search, no replay, and a short exploration warm-up;
+- E2 compares fixed-depth and fixed-node stopping rules at matched measured node consumption;
+- E3 compares fixed 32, uniform 8/16/32/64, log-uniform 4–128, and curriculum 8→128 budgets;
+- E4 compares greedy, epsilon-greedy, top-2 uniform, and top-3 softmax exploration;
+- every arm uses five paired seeds and identical initial weights per seed;
+- the report preserves failed arms, raw counts, paired differences, 95% confidence intervals, training-sample-count strata, zero-sample populations, oracle regret, and coverage;
+- the protocol and executable contracts are hashed before all fixed candidates are evaluated on frozen test.
+
+The first pack contains 11 arms and 55 successful runs. Actual consumed-node imbalance is 4.2% for E2, 22.5% for E3, and 15.5% for E4, below the preregistered 35% limit. Top-2 uniform more than doubles mean unique-state coverage versus greedy in this smoke pack, but E1 does not improve value-sign accuracy and slightly reduces optimal-move mass. The automatic recommendation is therefore `continue_L1`; direct L2 or Jass 10×10 transfer is not authorized. The compact evidence record is `artefacts/m5_experiment_pack.v1.json`.
+
+Run the pack after exporting the M3/M4 oracle:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_experiments.py --config configs/l1_first_experiment_pack.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/m5-pack-v1
+```
+
+The ignored run directory contains resolved per-arm configs, all candidate checkpoints, raw arm results, the comparison report, rule/solver/split/executable manifests, and the transfer recommendation. Only the compact M5 evidence manifest is committed.
