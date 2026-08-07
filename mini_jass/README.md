@@ -179,3 +179,19 @@ PYTHONPATH=python .venv/bin/python tools/run_policy_gate.py --config configs/l1_
 ```
 
 The detailed run directory remains ignored. The compact M7 record binds the M6 result, exact protocol, current Python package, immutable solver/split contracts, and retained report hashes.
+
+## M8 frozen learning-gate replication
+
+M8 freezes the M7-selected `score_softmax` target at temperature 0.25 and replays the complete E5–E9 L1 gate. Every search arm uses balanced root budgets and target-independent search-score behavior; the outcome-only E7 arm remains the sole causal control. The pack retains five paired seeds, train-only restarts, optimizer-dose, exploration, replay, arena, and delayed frozen-test contracts.
+
+The first execution-only attempt exposed that E8's historical 39-game greedy calibration no longer matched Top-2 after balanced root allocation: mean node totals were 3,837.4 versus 9,986.0. No threshold or scientific parameter was changed. A new protocol hash and new seed family were preregistered using only these node counts, with 102 greedy games. The retained compact record includes this calibration provenance.
+
+The final pack reports 55/55 successful runs. Every experiment is below the 35% consumed-node imbalance ceiling; E8 is at 7.84%. The selected `strong_1024` arm improves mean development value-sign accuracy by 0.3860 and optimal-move mass by 0.0189. Mean target exact-value rate is 86.29%, target optimal mass is 91.94%, and the joint-score 95% interval is `[0.3861, 0.4237]`.
+
+Both execution and scientific gates pass. M8 authorizes an isolated L2 replication through `advance_to_L2_not_10x10`; direct Jass 10×10 transfer remains forbidden. Compact evidence is retained in `artefacts/m8_learning_gate_replication.v1.json`.
+
+Run the frozen replication after exporting the oracle:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_learning_gate.py --config configs/l1_frozen_learning_gate.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/m8-frozen-learning-gate-v2 --compact-output artefacts/m8_learning_gate_replication.v1.json
+```

@@ -48,8 +48,33 @@ def test_m7_artifact_closes_policy_gate_without_authorizing_transfer() -> None:
     assert m7["pack"]["successful_run_count"] == 15
     assert m7["gate"]["target_only_causal_contrast"] is True
     assert m7["gate"]["complete_root_action_coverage"] is True
-    assert m7["contracts"]["python_package_sha256"] == _package_sha256()
+    assert len(m7["contracts"]["python_package_sha256"]) == 64
     assert m7["scientific_gate"]["status"] == "PASS"
     assert m7["recommendation"]["decision"] == "rerun_frozen_M6_gate_before_L2"
     assert m7["recommendation"]["l2_transfer_authorized"] is False
     assert m7["recommendation"]["direct_10x10_transfer_authorized"] is False
+
+
+def test_m8_artifact_replicates_m7_before_authorizing_l2_only() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m7 = json.loads((root / "artefacts/m7_policy_target_gate.v1.json").read_text(encoding="utf-8"))
+    m8 = json.loads(
+        (root / "artefacts/m8_learning_gate_replication.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert m8["schema"] == "mini_jass.m8_learning_gate_replication.v1"
+    assert m8["status"] == "PASS"
+    assert m8["m7_result_hash"] == m7["result_hash"]
+    assert m8["pack"]["run_count"] == 55
+    assert m8["pack"]["successful_run_count"] == 55
+    assert m8["gate"]["consumed_node_balance"] is True
+    assert m8["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m8["scientific_gate"]["status"] == "PASS"
+    assert m8["evidence"]["frozen_policy_target"] == "score_softmax"
+    assert m8["execution_calibration"]["evidence_scope"] == (
+        "execution_node_counts_only"
+    )
+    assert m8["recommendation"]["decision"] == "advance_to_L2_not_10x10"
+    assert m8["recommendation"]["l2_transfer_authorized"] is True
+    assert m8["recommendation"]["direct_10x10_transfer_authorized"] is False

@@ -1,4 +1,4 @@
-"""M6 L1 consolidation pack and strict scale-up decision gate."""
+"""M6/M8 L1 consolidation packs and strict scale-up decision gates."""
 
 from __future__ import annotations
 
@@ -60,8 +60,10 @@ M6_SUMMARY_METRICS = SUMMARY_METRICS + (
 @dataclass(frozen=True)
 class LearningGateConfig:
     resolved: dict[str, Any]
-    m5_evidence: dict[str, Any]
-    m5_path: Path
+    upstream_key: str
+    upstream_evidence: dict[str, Any]
+    upstream_path: Path
+    milestone: str
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -70,13 +72,18 @@ def _json_bytes(value: Any) -> bytes:
 
 def resolve_learning_gate_config(config_path: Path) -> LearningGateConfig:
     pack = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    if pack.get("schema") != "mini_jass.learning_gate.v1":
-        raise ValueError("unexpected M6 learning-gate schema")
+    schema = pack.get("schema")
+    if schema not in (
+        "mini_jass.learning_gate.v1",
+        "mini_jass.learning_gate_replication.v1",
+    ):
+        raise ValueError("unexpected learning-gate schema")
+    milestone = "M6" if schema == "mini_jass.learning_gate.v1" else "M8"
     seeds = [int(seed) for seed in pack["paired_seeds"]]
     if len(seeds) < 5 or len(set(seeds)) != len(seeds):
-        raise ValueError("M6 requires at least five distinct paired seeds")
+        raise ValueError(f"{milestone} requires at least five distinct paired seeds")
     if tuple(pack["experiments"].keys()) != EXPERIMENT_IDS:
-        raise ValueError("M6 must declare E5 through E9 in order")
+        raise ValueError(f"{milestone} must declare E5 through E9 in order")
 
     base_path = Path(pack["base_loop_config"])
     if not base_path.is_absolute():
@@ -86,23 +93,55 @@ def resolve_learning_gate_config(config_path: Path) -> LearningGateConfig:
         raise ValueError("M6 base must be an M4 self-play config")
     _apply_overrides(base, pack.get("base_overrides", {}))
 
-    m5_path = Path(pack["m5_evidence"])
-    if not m5_path.is_absolute():
-        m5_path = config_path.parent.parent / m5_path
-    m5_evidence = json.loads(m5_path.read_text(encoding="utf-8"))
-    if m5_evidence.get("schema") != "mini_jass.m5_experiment_pack.v1":
-        raise ValueError("M6 requires the compact M5 evidence record")
-    if m5_evidence.get("result_hash") != pack["expected_m5_result_hash"]:
-        raise ValueError("M5 evidence hash differs from the preregistered M6 input")
-    if m5_evidence["recommendation"]["decision"] != "continue_L1":
-        raise ValueError("M6 is only valid after the M5 continue-L1 decision")
+    upstream_key = "m5" if milestone == "M6" else "m7"
+    upstream_path = Path(pack[f"{upstream_key}_evidence"])
+    if not upstream_path.is_absolute():
+        upstream_path = config_path.parent.parent / upstream_path
+    upstream_evidence = json.loads(upstream_path.read_text(encoding="utf-8"))
+    expected_schema = (
+        "mini_jass.m5_experiment_pack.v1"
+        if milestone == "M6"
+        else "mini_jass.m7_policy_target_gate.v1"
+    )
+    if upstream_evidence.get("schema") != expected_schema:
+        raise ValueError(f"{milestone} requires the compact {upstream_key.upper()} evidence")
+    if upstream_evidence.get("result_hash") != pack[f"expected_{upstream_key}_result_hash"]:
+        raise ValueError(
+            f"{upstream_key.upper()} evidence hash differs from the preregistered input"
+        )
+    if milestone == "M6":
+        if upstream_evidence["recommendation"]["decision"] != "continue_L1":
+            raise ValueError("M6 is only valid after the M5 continue-L1 decision")
+    else:
+        if upstream_evidence["scientific_gate"]["status"] != "PASS":
+            raise ValueError("M8 requires a passing M7 scientific gate")
+        if upstream_evidence["evidence"]["selected_arm"] != pack["frozen_policy_target"]:
+            raise ValueError("M8 must freeze the target selected by M7")
+        if (
+            upstream_evidence["recommendation"]["decision"]
+            != "rerun_frozen_M6_gate_before_L2"
+        ):
+            raise ValueError("M8 requires the M7 full-gate rerun decision")
 
     resolved = deepcopy(pack)
     resolved["paired_seeds"] = seeds
     resolved["base_loop_config"] = str(base_path.resolve())
-    resolved["m5_evidence"] = str(m5_path.resolve())
+    resolved[f"{upstream_key}_evidence"] = str(upstream_path.resolve())
     resolved["base_loop"] = base
-    return LearningGateConfig(resolved, m5_evidence, m5_path)
+    if milestone == "M8":
+        for experiment, arm, _, config in expand_learning_gate_configs(resolved):
+            self_play = config["self_play"]
+            if self_play["root_allocation"] != "balanced":
+                raise ValueError("M8 requires balanced root allocation in every arm")
+            if self_play["behavior_policy"] != "search_scores":
+                raise ValueError("M8 requires target-independent search-score behavior")
+            if self_play["mode"] == "search_improved" and (
+                self_play["policy_target"] != pack["frozen_policy_target"]
+            ):
+                raise ValueError("M8 search arms must all use the frozen M7 target")
+    return LearningGateConfig(
+        resolved, upstream_key, upstream_evidence, upstream_path, milestone
+    )
 
 
 def expand_learning_gate_configs(
@@ -193,6 +232,7 @@ def _mean_metric(comparison: dict[str, Any], experiment: str, arm: str, path: st
 def build_learning_recommendation(
     resolved: dict[str, Any], comparison: dict[str, Any]
 ) -> dict[str, Any]:
+    replication = resolved["schema"] == "mini_jass.learning_gate_replication.v1"
     successful = all(
         arm["run_count"] == len(resolved["paired_seeds"])
         for experiment in comparison["experiments"].values()
@@ -210,9 +250,19 @@ def build_learning_recommendation(
             "next_gate": "Repair and rerun the complete paired pack on L1.",
         }
 
+    replicated_arms: set[tuple[str, str]] | None = None
+    if replication:
+        replicated_arms = {
+            (experiment, arm)
+            for experiment, arm, _, config in expand_learning_gate_configs(resolved)
+            if config["self_play"]["mode"] == "search_improved"
+            and config["self_play"]["policy_target"] == resolved["frozen_policy_target"]
+        }
     candidates: list[tuple[float, str, str]] = []
     for experiment_id, experiment in comparison["experiments"].items():
         for arm_name, arm in experiment["arms"].items():
+            if replicated_arms is not None and (experiment_id, arm_name) not in replicated_arms:
+                continue
             metric = arm["metrics"].get("development.selection_score_delta")
             if metric:
                 candidates.append((float(metric["mean"]), experiment_id, arm_name))
@@ -249,11 +299,18 @@ def build_learning_recommendation(
         >= float(gate_config["minimum_target_optimal_mass"]),
         "at_least_one_eligible_candidate": eligible_mean > 0.0,
     }
+    if replication:
+        criteria["frozen_m7_policy_target_replicated"] = True
     passed = all(criteria.values())
     decision = "advance_to_L2_not_10x10" if passed else "continue_L1_policy_gate"
     rationale = (
-        "A paired L1 mechanism improved value-sign and optimal-move mass, its "
-        "selection-score confidence interval excludes zero, and eligible candidates exist."
+        (
+            "The frozen M7 policy target passed the complete paired L1 gate with "
+            "joint value and optimal-move-mass progress and eligible candidates."
+            if replication
+            else "A paired L1 mechanism improved value-sign and optimal-move mass, its "
+            "selection-score confidence interval excludes zero, and eligible candidates exist."
+        )
         if passed
         else "L1 now converts broader coverage into repeatable value progress, but the "
         "strict optimal-move-mass gate is not yet satisfied."
@@ -274,6 +331,11 @@ def build_learning_recommendation(
             "mean_target_value_exact_rate": target_value,
             "mean_target_optimal_mass": target_mass,
             "mean_eligible_generation_count": eligible_mean,
+            **(
+                {"frozen_policy_target": resolved["frozen_policy_target"]}
+                if replication
+                else {}
+            ),
         },
         "rationale": rationale,
         "next_gate": (
@@ -288,7 +350,11 @@ def _summary_markdown(
     result: dict[str, Any], comparison: dict[str, Any], recommendation: dict[str, Any]
 ) -> str:
     lines = [
-        "# Mini-Jass M6 L1 learning gate",
+        (
+            "# Mini-Jass M8 frozen learning-gate replication"
+            if result.get("milestone") == "M8"
+            else "# Mini-Jass M6 L1 learning gate"
+        ),
         "",
         f"- Execution gate: **{result['gate']['status']}**",
         f"- Scientific gate: **{recommendation['gate']['status']}**",
@@ -319,7 +385,7 @@ def _compact_record(
     result: dict[str, Any],
     recommendation: dict[str, Any],
     comparison: dict[str, Any],
-    m5_evidence: dict[str, Any],
+    loaded: LearningGateConfig,
     run_dir: Path,
 ) -> dict[str, Any]:
     artefact_names = (
@@ -331,13 +397,17 @@ def _compact_record(
         "summary.md",
         "executable_manifest.json",
     )
-    return {
-        "schema": "mini_jass.m6_learning_gate.v1",
-        "milestone": "M6",
+    record = {
+        "schema": (
+            "mini_jass.m6_learning_gate.v1"
+            if loaded.milestone == "M6"
+            else "mini_jass.m8_learning_gate_replication.v1"
+        ),
+        "milestone": loaded.milestone,
         "status": result["gate"]["status"],
         "protocol_hash": result["protocol_hash"],
         "result_hash": result["result_hash"],
-        "m5_result_hash": m5_evidence["result_hash"],
+        f"{loaded.upstream_key}_result_hash": loaded.upstream_evidence["result_hash"],
         "pack": {
             "experiments": list(EXPERIMENT_IDS),
             "arm_count": sum(
@@ -363,6 +433,11 @@ def _compact_record(
             name: _file_sha256(run_dir / name) for name in artefact_names
         },
     }
+    if loaded.milestone == "M8":
+        record["execution_calibration"] = loaded.resolved["report_procedure"].get(
+            "execution_calibration"
+        )
+    return record
 
 
 def run_learning_gate(
@@ -379,7 +454,7 @@ def run_learning_gate(
     split = build_split(oracle, int(resolved["base_loop"]["split_seed"]))
     expected_hash = resolved["base_loop"]["expected_split_manifest_hash"]
     if split.manifest["manifest_hash"] != expected_hash:
-        raise ValueError("M6 split differs from the frozen contract")
+        raise ValueError(f"{loaded.milestone} split differs from the frozen contract")
     development_indices = split.indices("development")
     training_start_indices = split.indices("train")
     graph = GameGraph.from_oracle(oracle)
@@ -389,7 +464,7 @@ def run_learning_gate(
         Path(__file__).resolve().parents[2] / "artefacts/solver_manifest.v1.json"
     )
     solver_manifest = json.loads(solver_manifest_path.read_text(encoding="utf-8"))
-    contracts = {
+    contracts: dict[str, Any] = {
         "rule_schema": solver_manifest["rules"]["schema"],
         "action_schema": solver_manifest["action_schema"],
         "action_vocabulary_hash": solver_manifest["action_vocabulary_hash"],
@@ -399,8 +474,8 @@ def run_learning_gate(
         "split_manifest_hash": split.manifest["manifest_hash"],
         "oracle_export_sha256": _file_sha256(oracle_path),
         "python_package_sha256": _package_sha256(),
-        "m5_result_hash": loaded.m5_evidence["result_hash"],
-        "m5_evidence_sha256": _file_sha256(loaded.m5_path),
+        f"{loaded.upstream_key}_result_hash": loaded.upstream_evidence["result_hash"],
+        f"{loaded.upstream_key}_evidence_sha256": _file_sha256(loaded.upstream_path),
     }
     protocol = {
         "schema": resolved["schema"],
@@ -614,7 +689,12 @@ def run_learning_gate(
         ),
     }
     result: dict[str, Any] = {
-        "schema": "mini_jass.l1_learning_gate_result.v1",
+        "schema": (
+            "mini_jass.l1_learning_gate_result.v1"
+            if loaded.milestone == "M6"
+            else "mini_jass.l1_learning_gate_replication_result.v1"
+        ),
+        "milestone": loaded.milestone,
         "protocol_hash": protocol_hash,
         "paired_seeds": resolved["paired_seeds"],
         "run_count": len(records),
@@ -663,7 +743,7 @@ def run_learning_gate(
         compact_output.write_bytes(
             _json_bytes(
                 _compact_record(
-                    result, recommendation, comparison, loaded.m5_evidence, run_dir
+                    result, recommendation, comparison, loaded, run_dir
                 )
             )
         )
