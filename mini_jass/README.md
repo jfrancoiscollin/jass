@@ -157,3 +157,25 @@ PYTHONPATH=python .venv/bin/python tools/run_learning_gate.py --config configs/l
 ```
 
 The detailed run directory remains ignored. The compact M6 record hashes the protocol, result, M5 input, Python package, rule/action/graph/solver/split contracts, and every retained report artefact.
+
+## M7 balanced policy-target gate
+
+M7 repairs the policy-target mechanism identified by M6 while remaining entirely on L1:
+
+- root actions receive balanced per-action search budgets, differing by at most one node;
+- every legal root action is searched before a policy target is built;
+- self-play behavior uses search scores and is therefore independent of the training-target encoding;
+- E10 compares visit distribution, best-action one-hot, and score-softmax targets as a target-only causal contrast;
+- all three arms use the same 16-node budget, 1,024 optimizer steps, train-cohort starts, and five paired seeds.
+
+All 15 runs succeed. The execution gate records 100% root-action coverage, balanced allocations, paired initial weights, and delayed frozen-test access. `score_softmax` wins the preregistered joint development score: mean value-sign accuracy improves by 0.4033 and mean optimal-move mass by 0.0256. Its targets carry 92.14% optimal mass and a 92.56% optimal argmax rate; the joint score 95% interval is `[0.4208, 0.4369]`.
+
+The M7 scientific gate therefore passes, but M7 deliberately authorizes neither L2 nor Jass 10×10 transfer. Its decision is `rerun_frozen_M6_gate_before_L2`: freeze `score_softmax`, then rerun the complete M6 L1 gate before any scale-up. Compact evidence is retained in `artefacts/m7_policy_target_gate.v1.json`.
+
+Run the frozen M7 pack after exporting the oracle:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_policy_gate.py --config configs/l1_policy_target_gate.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/m7-policy-target-v1 --compact-output artefacts/m7_policy_target_gate.v1.json
+```
+
+The detailed run directory remains ignored. The compact M7 record binds the M6 result, exact protocol, current Python package, immutable solver/split contracts, and retained report hashes.

@@ -85,6 +85,10 @@ def _parse_self_play(config: dict[str, Any]) -> SelfPlayConfig:
             else None
         ),
         start_state_source=config.get("start_state_source", "initial"),
+        root_allocation=config.get("root_allocation", "sequential"),
+        policy_target=config.get("policy_target", "visit_distribution"),
+        policy_target_temperature=float(config.get("policy_target_temperature", 1.0)),
+        behavior_policy=config.get("behavior_policy", "visit_distribution"),
         exploration=exploration,
     )
 
@@ -244,7 +248,9 @@ def execute_loop(
         },
         "training_target_contract": {
             "value": "final_self_play_wdl",
-            "policy": "selected_move_or_search_visit_distribution",
+            "policy": self_play_config.policy_target,
+            "search_root_allocation": self_play_config.root_allocation,
+            "self_play_behavior": self_play_config.behavior_policy,
             "start_states": self_play_config.start_state_source,
             "forbidden_fields": ["oracle_value", "dtw", "optimal_actions"],
         },

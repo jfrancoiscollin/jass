@@ -7,6 +7,7 @@
 !/artefacts/m4_baseline.v1.json
 !/artefacts/m5_experiment_pack.v1.json
 !/artefacts/m6_learning_gate.v1.json
+!/artefacts/m7_policy_target_gate.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/

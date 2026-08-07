@@ -17,12 +17,15 @@ from .model import MiniJassMLP
 class SearchConfig:
     max_depth: int = 4
     node_budget: int = 16
+    root_allocation: str = "sequential"
 
     def __post_init__(self) -> None:
         if self.max_depth < 1:
             raise ValueError("max_depth must be positive")
         if self.node_budget < 1:
             raise ValueError("node_budget must be positive")
+        if self.root_allocation not in ("sequential", "balanced"):
+            raise ValueError("root allocation must be sequential or balanced")
 
 
 @dataclass
@@ -35,11 +38,32 @@ class SearchStats:
     terminal_hits: int = 0
     leaf_model_evaluations: int = 0
     alpha_beta_cutoffs: int = 0
+    root_legal_actions: int = 0
+    root_searched_actions: int = 0
+    root_minimum_nodes: int = 0
+    root_maximum_nodes: int = 0
+    root_minimum_budget: int = 0
+    root_maximum_budget: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
         result["mean_branching_factor"] = (
             self.generated_children / self.expanded_nodes if self.expanded_nodes else 0.0
+        )
+        result["root_action_coverage"] = (
+            self.root_searched_actions / self.root_legal_actions
+            if self.root_legal_actions
+            else 0.0
+        )
+        result["root_node_imbalance"] = (
+            self.root_maximum_nodes - self.root_minimum_nodes
+            if self.root_searched_actions
+            else 0
+        )
+        result["root_budget_imbalance"] = (
+            self.root_maximum_budget - self.root_minimum_budget
+            if self.root_searched_actions
+            else 0
         )
         return result
 
@@ -60,6 +84,27 @@ class SearchResult:
                 policy[action] = visits / total
         else:
             policy[self.selected_action] = 1.0
+        return policy
+
+    def best_action_policy(self) -> np.ndarray:
+        policy = np.zeros(72, dtype=np.float32)
+        policy[self.selected_action] = 1.0
+        return policy
+
+    def score_policy(self, temperature: float = 1.0) -> np.ndarray:
+        if temperature <= 0:
+            raise ValueError("score-policy temperature must be positive")
+        if not self.action_scores:
+            return self.best_action_policy()
+        actions = np.asarray(sorted(self.action_scores), dtype=np.int64)
+        scores = np.asarray(
+            [self.action_scores[int(action)] for action in actions], dtype=np.float64
+        )
+        scores = (scores - scores.max()) / temperature
+        probabilities = np.exp(scores)
+        probabilities /= probabilities.sum()
+        policy = np.zeros(72, dtype=np.float32)
+        policy[actions] = probabilities.astype(np.float32)
         return policy
 
 
@@ -108,17 +153,25 @@ def bounded_negamax(
         stats.leaf_model_evaluations += 1
     legal = graph.legal_actions(state_id)
     ordered = _ordered_actions(legal, root_logits)
+    stats.root_legal_actions = int(legal.size)
     action_scores: dict[int, float] = {}
     visit_counts: dict[int, int] = {}
 
-    def negamax(node: int, depth: int, alpha: float, beta: float, ply: int) -> float:
+    def negamax(
+        node: int,
+        depth: int,
+        alpha: float,
+        beta: float,
+        ply: int,
+        node_limit: int,
+    ) -> float:
         stats.consumed_nodes += 1
         stats.reached_depth = max(stats.reached_depth, ply)
         outcome = graph.terminal_value(node)
         if outcome is not None:
             stats.terminal_hits += 1
             return outcome
-        if depth == 0 or stats.consumed_nodes >= config.node_budget:
+        if depth == 0 or stats.consumed_nodes >= node_limit:
             value, _, was_cached = inference.predict(model, graph, node)
             if not was_cached:
                 stats.leaf_model_evaluations += 1
@@ -133,10 +186,12 @@ def bounded_negamax(
         best = -math.inf
         searched_child = False
         for action in _ordered_actions(actions, logits):
-            if stats.consumed_nodes >= config.node_budget:
+            if stats.consumed_nodes >= node_limit:
                 break
             searched_child = True
-            score = -negamax(graph.child(node, action), depth - 1, -beta, -alpha, ply + 1)
+            score = -negamax(
+                graph.child(node, action), depth - 1, -beta, -alpha, ply + 1, node_limit
+            )
             best = max(best, score)
             alpha = max(alpha, score)
             if alpha >= beta:
@@ -146,12 +201,28 @@ def bounded_negamax(
 
     stats.expanded_nodes += 1
     stats.generated_children += int(legal.size)
-    for action in ordered:
-        if stats.consumed_nodes >= config.node_budget:
+    if config.root_allocation == "balanced":
+        child_budget = config.node_budget - stats.consumed_nodes
+        quotient, remainder = divmod(child_budget, len(ordered))
+        quotas = [quotient + (index < remainder) for index in range(len(ordered))]
+    else:
+        quotas = [config.node_budget] * len(ordered)
+    for action, quota in zip(ordered, quotas, strict=True):
+        if stats.consumed_nodes >= config.node_budget or quota < 1:
             break
         before = stats.consumed_nodes
+        node_limit = (
+            min(config.node_budget, before + int(quota))
+            if config.root_allocation == "balanced"
+            else config.node_budget
+        )
         score = -negamax(
-            graph.child(state_id, action), config.max_depth - 1, -math.inf, math.inf, 1
+            graph.child(state_id, action),
+            config.max_depth - 1,
+            -math.inf,
+            math.inf,
+            1,
+            node_limit,
         )
         action_scores[action] = score
         visit_counts[action] = stats.consumed_nodes - before
@@ -163,6 +234,13 @@ def bounded_negamax(
         selected = ordered[0]
         root_score = root_value
         visit_counts[selected] = 1
+    root_nodes = list(visit_counts.values())
+    allocated_budgets = [int(quota) for quota in quotas if quota > 0]
+    stats.root_searched_actions = len(action_scores)
+    stats.root_minimum_nodes = min(root_nodes) if root_nodes else 0
+    stats.root_maximum_nodes = max(root_nodes) if root_nodes else 0
+    stats.root_minimum_budget = min(allocated_budgets) if allocated_budgets else 0
+    stats.root_maximum_budget = max(allocated_budgets) if allocated_budgets else 0
     return SearchResult(selected, float(root_score), action_scores, visit_counts, stats)
 
 
