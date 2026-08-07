@@ -226,3 +226,31 @@ cmake -S . -B build && cmake --build build
 PYTHONPATH=python .venv/bin/python tools/export_oracle.py --level l2 --executable build/mini_jass_cli --output artefacts/oracle.l2.v1.jsonl
 PYTHONPATH=python .venv/bin/python tools/run_l2_transfer_gate.py --config configs/l2_frozen_transfer_gate.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m9-l2-transfer-v1 --compact-output artefacts/m9_l2_transfer_gate.v1.json
 ```
+
+## M10 W/D/L target diagnosis
+
+M10 explains the single failed M9 criterion without reopening its frozen-test
+cohort. It runs four causal self-play arms on train starts only, using five
+paired initial models: the M9 baseline, a 128-ply horizon, a 64-node search
+budget, and greedy behavior. No model is trained, and the M9 frozen test is
+read zero times.
+
+All 20 runs complete. The baseline exact W/D/L target rate is 63.64%. No
+baseline game reaches the 64-ply safety cutoff, and extending the horizon to 128
+changes no position or label: horizon truncation is ruled out. A 64-node budget
+adds 3.82 percentage points, but its paired 95% interval
+`[-3.66, +11.31]` crosses zero. Greedy behavior is the identified factor: it
+raises exact target rate by 12.04 points to 75.68%, with paired 95% interval
+`[+3.60, +20.49]`.
+
+The retained finding is `exploration_outcome_noise`. This is a diagnosis, not a
+transfer authorization: L2 replication and direct Jass 10x10 integration both
+remain forbidden. The next gate must confirm greedy behavior with fresh seeds
+and a newly derived L2 holdout. Compact evidence is stored in
+`artefacts/m10_wdl_diagnosis.v1.json`.
+
+Run the frozen diagnostic with:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_wdl_diagnosis.py --config configs/l2_wdl_diagnosis.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m10-wdl-diagnosis-v1 --compact-output artefacts/m10_wdl_diagnosis.v1.json
+```

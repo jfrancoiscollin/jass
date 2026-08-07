@@ -1,0 +1,24 @@
+schema: mini_jass.wdl_diagnosis.v1
+paired_seeds: [102001, 102002, 102003, 102004, 102005]
+m9_evidence: artefacts/m9_l2_transfer_gate.v1.json
+expected_m9_result_hash: cac265562dc1185b8abb4836f0fadb1ecb3bd5924c57d28f73b25b98354c84ad
+loop_config: configs/l2_score_softmax_selfplay.yaml
+split_seed: 20260807
+split_manifest: artefacts/split_manifest.l2.v1.json
+meaningful_exact_rate_delta: 0.03
+arms:
+  baseline_64:
+    causal_factor: reference
+    overrides: {}
+  horizon_128:
+    causal_factor: maximum_episode_horizon
+    overrides:
+      self_play.max_plies: 128
+  budget_64:
+    causal_factor: search_node_budget
+    overrides:
+      self_play.node_budgets: [64]
+  greedy_behavior:
+    causal_factor: exploration_strategy
+    overrides:
+      self_play.exploration.strategy: greedy

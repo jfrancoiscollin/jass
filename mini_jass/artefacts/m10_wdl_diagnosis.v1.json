@@ -1,0 +1,120 @@
+{
+  "aggregate": {
+    "arms": {
+      "baseline_64": {
+        "mean_exact_rate": 0.6363860804404491,
+        "mean_mismatch_attributed_to_safety_draws": 0.0,
+        "mean_rule_terminated_exact_rate": 0.6363860804404491,
+        "mean_safety_draw_game_rate": 0.0,
+        "mean_unique_states": 962.8,
+        "run_count": 5
+      },
+      "budget_64": {
+        "mean_exact_rate": 0.6746060985440343,
+        "mean_mismatch_attributed_to_safety_draws": 0.0,
+        "mean_rule_terminated_exact_rate": 0.6746060985440343,
+        "mean_safety_draw_game_rate": 0.0,
+        "mean_unique_states": 975.0,
+        "run_count": 5
+      },
+      "greedy_behavior": {
+        "mean_exact_rate": 0.7568307208935448,
+        "mean_mismatch_attributed_to_safety_draws": 0.022982885085574573,
+        "mean_rule_terminated_exact_rate": 0.7588123731690384,
+        "mean_safety_draw_game_rate": 0.003125,
+        "mean_unique_states": 1081.0,
+        "run_count": 5
+      },
+      "horizon_128": {
+        "mean_exact_rate": 0.6363860804404491,
+        "mean_mismatch_attributed_to_safety_draws": 0.0,
+        "mean_rule_terminated_exact_rate": 0.6363860804404491,
+        "mean_safety_draw_game_rate": 0.0,
+        "mean_unique_states": 962.8,
+        "run_count": 5
+      }
+    },
+    "cohort": "train_only",
+    "m9_frozen_test_reads": 0,
+    "paired_exact_rate_deltas": {
+      "budget_64": {
+        "by_seed": [
+          0.10390365654776201,
+          -0.014491590938926713,
+          -0.018345514988986844,
+          0.019396430198009074,
+          0.10063710970006878
+        ],
+        "confidence_95": [
+          -0.03664813670588314,
+          0.11308817291305366
+        ],
+        "mean": 0.03822001810358526
+      },
+      "greedy_behavior": {
+        "by_seed": [
+          0.12535886583597244,
+          0.03198560166290654,
+          0.09371252296280896,
+          0.13167912105212842,
+          0.21948709075166217
+        ],
+        "confidence_95": [
+          0.03600377925332131,
+          0.20488550165287012
+        ],
+        "mean": 0.1204446404530957
+      },
+      "horizon_128": {
+        "by_seed": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "mean": 0.0
+      }
+    },
+    "paired_initial_weights": true,
+    "run_count": 20,
+    "successful_run_count": 20
+  },
+  "contracts": {
+    "jass_production_paths_modified": false,
+    "m9_evidence_sha256": "3afe0ab0eebcabced7b46af41850806e289ae3e444dc5256023ddc5afc2d4bd1",
+    "m9_result_hash": "cac265562dc1185b8abb4836f0fadb1ecb3bd5924c57d28f73b25b98354c84ad",
+    "python_package_sha256": "3fca769a221bbda4e64057e580f995dd81c6a68edb259b47fab174c08c48e1a3",
+    "solver_hash": 4061279344067907157,
+    "solver_manifest_hash": 3750885099149748467,
+    "split_manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e"
+  },
+  "execution_gate": {
+    "criteria": {
+      "all_twenty_runs_successful": true,
+      "m9_frozen_test_untouched": true,
+      "paired_initial_weights": true,
+      "train_cohort_only": true
+    },
+    "status": "PASS"
+  },
+  "milestone": "M10",
+  "protocol_hash": "d824f8f740b7b556519baab9eafdd5d36da6f2e828bbf6b3c045f45f572dea85",
+  "recommendation": {
+    "decision": "confirm_exploration_outcome_noise_on_fresh_l2_holdout",
+    "direct_10x10_transfer_authorized": false,
+    "finding": "exploration_outcome_noise",
+    "implementation_preparation_authorized": false,
+    "l2_replication_authorized": false,
+    "meaningful_delta": 0.03,
+    "next_gate": "Confirm the identified factor with fresh seeds and a newly derived L2 holdout.",
+    "primary_arm": "greedy_behavior"
+  },
+  "result_hash": "e2a78a50200cc70faba713f4f359a606d87cc5ee3e16c30aa09f854a87e0275a",
+  "schema": "mini_jass.m10_wdl_diagnosis.v1",
+  "status": "PASS"
+}

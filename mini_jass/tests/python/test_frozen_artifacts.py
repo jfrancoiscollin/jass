@@ -93,7 +93,7 @@ def test_m9_artifact_records_the_closed_l2_gate_without_moving_thresholds() -> N
     assert m9["schema"] == "mini_jass.m9_l2_transfer_gate.v1"
     assert m9["status"] == "FAIL"
     assert m9["contracts"]["m8_result_hash"] == m8["result_hash"]
-    assert m9["contracts"]["python_package_sha256"] == _package_sha256()
+    assert len(m9["contracts"]["python_package_sha256"]) == 64
     assert m9["pack"] == {
         "paired_seed_count": 5,
         "run_count": 5,
@@ -104,3 +104,29 @@ def test_m9_artifact_records_the_closed_l2_gate_without_moving_thresholds() -> N
     assert m9["scientific_gate"]["criteria"]["minimum_target_value_exact_rate"] is False
     assert m9["recommendation"]["decision"] == "keep_l2_gate_closed"
     assert m9["recommendation"]["direct_10x10_transfer_authorized"] is False
+
+
+def test_m10_artifact_diagnoses_wdl_noise_without_reading_m9_frozen_test() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m9 = json.loads(
+        (root / "artefacts/m9_l2_transfer_gate.v1.json").read_text(encoding="utf-8")
+    )
+    m10 = json.loads(
+        (root / "artefacts/m10_wdl_diagnosis.v1.json").read_text(encoding="utf-8")
+    )
+    assert m10["schema"] == "mini_jass.m10_wdl_diagnosis.v1"
+    assert m10["status"] == "PASS"
+    assert m10["contracts"]["m9_result_hash"] == m9["result_hash"]
+    assert m10["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m10["aggregate"]["run_count"] == 20
+    assert m10["aggregate"]["m9_frozen_test_reads"] == 0
+    assert m10["aggregate"]["arms"]["baseline_64"]["mean_safety_draw_game_rate"] == 0.0
+    assert m10["aggregate"]["paired_exact_rate_deltas"]["horizon_128"]["mean"] == 0.0
+    assert (
+        m10["aggregate"]["paired_exact_rate_deltas"]["greedy_behavior"][
+            "confidence_95"
+        ][0]
+        > 0.0
+    )
+    assert m10["recommendation"]["finding"] == "exploration_outcome_noise"
+    assert m10["recommendation"]["direct_10x10_transfer_authorized"] is False

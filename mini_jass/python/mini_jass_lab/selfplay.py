@@ -183,6 +183,7 @@ def generate_self_play(
     safety_draws = 0
     game_count = config.games_for_generation(generation)
     selected_starts: list[int] = []
+    safety_draw_game_ids: list[int] = []
     initial_starts = np.asarray(
         [0] if graph.root_state_ids is None else graph.root_state_ids,
         dtype=np.int64,
@@ -293,6 +294,7 @@ def generate_self_play(
         else:
             terminal_value = 0.0
             safety_draws += 1
+            safety_draw_game_ids.append(game_id)
 
         if terminal_value is None:
             raise RuntimeError("self-play game ended without a rule outcome")
@@ -322,6 +324,7 @@ def generate_self_play(
         "max_game_length": max(lengths),
         "outcomes_from_initial_side": outcomes,
         "safety_draws": safety_draws,
+        "safety_draw_game_ids": safety_draw_game_ids,
         "start_states": {
             "source": config.start_state_source,
             "unique": len(set(selected_starts)),
