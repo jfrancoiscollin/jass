@@ -9,6 +9,12 @@ set(MINI_JASS_PYTHON_EXECUTABLE "" CACHE FILEPATH
 add_library(mini_jass_core STATIC
     src/enumerate.cpp
     src/game.cpp
+    src/l2_game.cpp
+    src/l2_move.cpp
+    src/l2_movegen.cpp
+    src/l2_reference_movegen.cpp
+    src/l2_rules.cpp
+    src/l2_solver.cpp
     src/move.cpp
     src/movegen.cpp
     src/reference_movegen.cpp
@@ -60,16 +66,23 @@ if(MINI_JASS_BUILD_TESTS)
     )
     target_link_libraries(mini_jass_solver_tests PRIVATE mini_jass_core)
 
+    add_executable(mini_jass_l2_tests
+        tests/test_l2.cpp
+    )
+    target_link_libraries(mini_jass_l2_tests PRIVATE mini_jass_core)
+
     if(MSVC)
         target_compile_options(mini_jass_rules_tests PRIVATE /W4 /permissive-)
         target_compile_options(mini_jass_movegen_tests PRIVATE /W4 /permissive-)
         target_compile_options(mini_jass_enumerate_tests PRIVATE /W4 /permissive-)
         target_compile_options(mini_jass_solver_tests PRIVATE /W4 /permissive-)
+        target_compile_options(mini_jass_l2_tests PRIVATE /W4 /permissive-)
     else()
         target_compile_options(mini_jass_rules_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(mini_jass_movegen_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(mini_jass_enumerate_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(mini_jass_solver_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(mini_jass_l2_tests PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     add_test(NAME mini_jass_rules COMMAND mini_jass_rules_tests)
@@ -80,6 +93,7 @@ if(MINI_JASS_BUILD_TESTS)
         COMMAND mini_jass_solver_tests
             ${CMAKE_CURRENT_SOURCE_DIR}/artefacts/solver_manifest.v1.json
     )
+    add_test(NAME mini_jass_l2 COMMAND mini_jass_l2_tests)
     add_test(
         NAME mini_jass_isolation
         COMMAND ${CMAKE_COMMAND}

@@ -1,4 +1,5 @@
 /build/
+/build*/
 /artefacts/*
 !/artefacts/.gitkeep
 !/artefacts/solver_manifest.v1.json
@@ -9,6 +10,9 @@
 !/artefacts/m6_learning_gate.v1.json
 !/artefacts/m7_policy_target_gate.v1.json
 !/artefacts/m8_learning_gate_replication.v1.json
+!/artefacts/solver_manifest.l2.v1.json
+!/artefacts/split_manifest.l2.v1.json
+!/artefacts/m9_l2_transfer_gate.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/

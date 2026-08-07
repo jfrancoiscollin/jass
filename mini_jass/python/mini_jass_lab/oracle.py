@@ -17,6 +17,8 @@ PLAYABLE_SQUARES = 13
 REVERSIBLE_PLY_LIMIT = 20
 EXPECTED_SOLVER_HASH = 10671205679107391448
 EXPECTED_MANIFEST_HASH = 16484585856267539683
+L2_EXPECTED_SOLVER_HASH = 4061279344067907157
+L2_EXPECTED_MANIFEST_HASH = 3750885099149748467
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,26 @@ class OracleArrays:
     def state_count(self) -> int:
         return int(self.state_keys.shape[0])
 
+    @property
+    def action_count(self) -> int:
+        return int(self.manifest.get("action_count", ACTION_COUNT))
+
+    @property
+    def playable_squares(self) -> int:
+        return int(self.manifest.get("playable_squares", PLAYABLE_SQUARES))
+
+    @property
+    def feature_count(self) -> int:
+        return int(self.manifest.get("feature_count", 4 * self.playable_squares + 2))
+
+    @property
+    def reversible_ply_limit(self) -> int:
+        return int(self.manifest.get("reversible_ply_limit", REVERSIBLE_PLY_LIMIT))
+
+    @property
+    def root_state_ids(self) -> tuple[int, ...]:
+        return tuple(int(value) for value in self.manifest.get("root_state_ids", [0]))
+
 
 def mini_jass_root() -> Path:
     return Path(__file__).resolve().parents[2]
@@ -53,15 +75,18 @@ def ensure_artefact_path(path: Path) -> Path:
     return resolved
 
 
-def export_oracle(executable: Path, output: Path) -> str:
+def export_oracle(executable: Path, output: Path, level: str = "l1") -> str:
     """Run the C++ oracle exporter atomically and return its SHA-256."""
     executable = executable.resolve()
     output = ensure_artefact_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = output.with_suffix(output.suffix + ".tmp")
     with temporary.open("wb") as stream:
+        command = "export-oracle" if level == "l1" else "l2-export-oracle"
+        if level not in ("l1", "l2"):
+            raise ValueError("oracle level must be l1 or l2")
         subprocess.run(
-            [str(executable), "export-oracle"],
+            [str(executable), command],
             stdout=stream,
             check=True,
         )
@@ -76,27 +101,42 @@ def load_oracle(path: Path) -> OracleArrays:
         if not first_line:
             raise ValueError("oracle export is empty")
         manifest = json.loads(first_line)
-        if manifest.get("type") != "manifest" or manifest.get("schema") != "mini_jass.oracle_dataset.v1":
+        schema = manifest.get("schema")
+        if manifest.get("type") != "manifest" or schema not in (
+            "mini_jass.oracle_dataset.v1",
+            "mini_jass.oracle_dataset.l2.v1",
+        ):
             raise ValueError("unexpected oracle dataset schema")
-        if manifest.get("solver_hash") != EXPECTED_SOLVER_HASH:
-            raise ValueError("oracle solver hash does not match Mini-Jass M2")
-        if manifest.get("manifest_hash") != EXPECTED_MANIFEST_HASH:
-            raise ValueError("oracle manifest hash does not match Mini-Jass M2")
+        expected_solver = (
+            EXPECTED_SOLVER_HASH
+            if schema == "mini_jass.oracle_dataset.v1"
+            else L2_EXPECTED_SOLVER_HASH
+        )
+        expected_manifest = (
+            EXPECTED_MANIFEST_HASH
+            if schema == "mini_jass.oracle_dataset.v1"
+            else L2_EXPECTED_MANIFEST_HASH
+        )
+        if manifest.get("solver_hash") != expected_solver:
+            raise ValueError("oracle solver hash does not match the frozen Mini-Jass level")
+        if manifest.get("manifest_hash") != expected_manifest:
+            raise ValueError("oracle manifest hash does not match the frozen Mini-Jass level")
 
         count = int(manifest["state_count"])
+        action_count = int(manifest.get("action_count", ACTION_COUNT))
         state_keys = np.empty(count, dtype=np.uint64)
-        bitboards = np.empty((count, 4), dtype=np.uint16)
+        bitboards = np.empty((count, 4), dtype=np.uint32)
         sides = np.empty(count, dtype=np.uint8)
         reversible = np.empty(count, dtype=np.uint8)
         terminal_status = np.empty(count, dtype=np.uint8)
         canonical_ids = np.empty(count, dtype=np.uint32)
         canonical_transforms = np.empty(count, dtype=np.bool_)
-        parent_counts = np.empty(count, dtype=np.uint8)
+        parent_counts = np.empty(count, dtype=np.uint16)
         values = np.empty(count, dtype=np.int8)
         dtw = np.full(count, -1, dtype=np.int16)
-        legal_mask = np.zeros((count, ACTION_COUNT), dtype=np.bool_)
-        optimal_mask = np.zeros((count, ACTION_COUNT), dtype=np.bool_)
-        action_children = np.full((count, ACTION_COUNT), -1, dtype=np.int32)
+        legal_mask = np.zeros((count, action_count), dtype=np.bool_)
+        optimal_mask = np.zeros((count, action_count), dtype=np.bool_)
+        action_children = np.full((count, action_count), -1, dtype=np.int32)
 
         loaded = 0
         for loaded, line in enumerate(stream, start=1):
@@ -129,8 +169,8 @@ def load_oracle(path: Path) -> OracleArrays:
             optimal = record["optimal_actions"]
             if len(legal) != len(children):
                 raise ValueError("legal actions and child IDs are not aligned")
-            if any(action < 0 or action >= ACTION_COUNT for action in legal + optimal):
-                raise ValueError("oracle action is outside the v1 vocabulary")
+            if any(action < 0 or action >= action_count for action in legal + optimal):
+                raise ValueError("oracle action is outside its frozen vocabulary")
             legal_mask[index, legal] = True
             optimal_mask[index, optimal] = True
             action_children[index, legal] = children
@@ -167,13 +207,16 @@ def load_oracle(path: Path) -> OracleArrays:
 
 
 def encode_features(oracle: OracleArrays) -> np.ndarray:
-    """Encode the normative 54 raw-state inputs in bitboard-major order."""
-    shifts = np.arange(PLAYABLE_SQUARES, dtype=np.uint16)
+    """Encode the level-specific raw state in bitboard-major order."""
+    shifts = np.arange(oracle.playable_squares, dtype=np.uint32)
     planes = ((oracle.bitboards[:, :, None] >> shifts) & 1).astype(np.float32)
-    features = np.empty((oracle.state_count, 54), dtype=np.float32)
-    features[:, :52] = planes.reshape(oracle.state_count, 52)
-    features[:, 52] = oracle.sides.astype(np.float32)
-    features[:, 53] = oracle.reversible_plies.astype(np.float32) / REVERSIBLE_PLY_LIMIT
+    plane_count = 4 * oracle.playable_squares
+    features = np.empty((oracle.state_count, oracle.feature_count), dtype=np.float32)
+    features[:, :plane_count] = planes.reshape(oracle.state_count, plane_count)
+    features[:, plane_count] = oracle.sides.astype(np.float32)
+    features[:, plane_count + 1] = (
+        oracle.reversible_plies.astype(np.float32) / oracle.reversible_ply_limit
+    )
     return features
 
 

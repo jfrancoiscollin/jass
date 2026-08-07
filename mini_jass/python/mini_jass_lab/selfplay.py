@@ -128,7 +128,7 @@ def select_action(
 
 
 def _search_preferences(policy: np.ndarray) -> np.ndarray:
-    preferences = np.full(72, -1.0e9, dtype=np.float32)
+    preferences = np.full(policy.shape, -1.0e9, dtype=np.float32)
     selected = policy > 0
     preferences[selected] = policy[selected]
     return preferences
@@ -183,13 +183,17 @@ def generate_self_play(
     safety_draws = 0
     game_count = config.games_for_generation(generation)
     selected_starts: list[int] = []
+    initial_starts = np.asarray(
+        [0] if graph.root_state_ids is None else graph.root_state_ids,
+        dtype=np.int64,
+    )
 
     for game_id in range(game_count):
         rng = np.random.default_rng(seed + game_id)
         state_id = (
             int(rng.choice(available_starts))
             if available_starts is not None
-            else 0
+            else int(initial_starts[game_id % initial_starts.size])
         )
         selected_starts.append(state_id)
         trajectory: list[tuple[int, np.ndarray, int]] = []
@@ -224,7 +228,7 @@ def generate_self_play(
                 target_policy = (
                     _target_policy(result, config)
                     if config.mode == "search_improved"
-                    else np.zeros(72, dtype=np.float32)
+                    else np.zeros(graph.action_count, dtype=np.float32)
                 )
                 for key in (
                     "requested_nodes",
@@ -269,7 +273,7 @@ def generate_self_play(
             else:
                 _, logits, _ = inference.predict(model, graph, state_id)
                 preferences = logits
-                target_policy = np.zeros(72, dtype=np.float32)
+                target_policy = np.zeros(graph.action_count, dtype=np.float32)
 
             exploration = config.exploration
             if game_id < exploration.warmup_games:
@@ -336,7 +340,7 @@ def generate_self_play(
         "unique_states": len(visited_states),
         "state_coverage": len(visited_states) / graph.state_count,
         "unique_actions": len(visited_actions),
-        "action_coverage": len(visited_actions) / 72,
+        "action_coverage": len(visited_actions) / graph.action_count,
         "duplicate_position_rate": 1.0 - len(visited_states) / len(samples) if samples else 0.0,
     }
     return GenerationResult(samples=samples, metrics=metrics, coverage=coverage)

@@ -1,0 +1,17 @@
+schema: mini_jass.l2_transfer_gate.v1
+paired_seeds: [92001, 92002, 92003, 92004, 92005]
+m8_evidence: artefacts/m8_learning_gate_replication.v1.json
+expected_m8_result_hash: bbda1a55b42638242749d44b6e1355e6fece3e35346d0445794b9e26a68438db
+loop_config: configs/l2_score_softmax_selfplay.yaml
+split_seed: 20260807
+split_manifest: artefacts/split_manifest.l2.v1.json
+frozen_mechanism:
+  source_milestone: M8
+  policy_target: score_softmax
+  dose_arm: strong_1024
+  optimizer_steps: 1024
+scientific_gate:
+  minimum_mean_value_sign_delta: 0.0
+  minimum_mean_optimal_mass_delta: 0.0
+  minimum_target_value_exact_rate: 0.70
+  minimum_target_optimal_mass: 0.85

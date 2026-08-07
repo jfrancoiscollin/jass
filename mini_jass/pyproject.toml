@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mini-jass-lab"
-version = "0.8.0"
-description = "Standalone exact, self-play, causal, policy-target, and replicated learning-gate laboratory for Mini-Jass"
+version = "0.9.0"
+description = "Standalone exact and replicated L1/L2 learning laboratory for Mini-Jass"
 requires-python = ">=3.11"
 dependencies = [
   "numpy>=1.26,<3",

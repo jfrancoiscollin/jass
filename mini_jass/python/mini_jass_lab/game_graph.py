@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .oracle import ACTION_COUNT, OracleArrays, encode_features
+from .oracle import OracleArrays, encode_features
 
 
 @dataclass(frozen=True)
@@ -20,6 +20,7 @@ class GameGraph:
     legal_mask: np.ndarray
     action_children: np.ndarray
     terminal_status: np.ndarray
+    root_state_ids: np.ndarray | None = None
 
     @classmethod
     def from_oracle(cls, oracle: OracleArrays) -> "GameGraph":
@@ -29,17 +30,26 @@ class GameGraph:
             legal_mask=oracle.legal_mask,
             action_children=oracle.action_children,
             terminal_status=oracle.terminal_status,
+            root_state_ids=np.asarray(oracle.root_state_ids, dtype=np.int64),
         )
 
     @property
     def state_count(self) -> int:
         return int(self.features.shape[0])
 
+    @property
+    def feature_count(self) -> int:
+        return int(self.features.shape[1])
+
+    @property
+    def action_count(self) -> int:
+        return int(self.legal_mask.shape[1])
+
     def validate(self) -> None:
-        if self.features.shape != (self.state_count, 54):
-            raise ValueError("Mini-Jass features must have shape [states, 54]")
-        if self.legal_mask.shape != (self.state_count, ACTION_COUNT):
-            raise ValueError("Mini-Jass legal mask must have 72 actions")
+        if self.features.ndim != 2 or self.features.shape[0] != self.state_count:
+            raise ValueError("Mini-Jass features must have shape [states, features]")
+        if self.legal_mask.ndim != 2 or self.legal_mask.shape[0] != self.state_count:
+            raise ValueError("Mini-Jass legal mask must have shape [states, actions]")
         if self.action_children.shape != self.legal_mask.shape:
             raise ValueError("child table must align with legal actions")
         if self.terminal_status.shape != (self.state_count,):
@@ -52,6 +62,9 @@ class GameGraph:
             raise ValueError("every legal action must have a child")
         if np.any(self.action_children[~self.legal_mask] != -1):
             raise ValueError("illegal actions must not have children")
+        roots = np.asarray([0] if self.root_state_ids is None else self.root_state_ids)
+        if roots.ndim != 1 or not roots.size or np.any(roots < 0) or np.any(roots >= self.state_count):
+            raise ValueError("root state IDs must name at least one graph state")
 
     def legal_actions(self, state_id: int) -> np.ndarray:
         return np.flatnonzero(self.legal_mask[state_id]).astype(np.int16, copy=False)

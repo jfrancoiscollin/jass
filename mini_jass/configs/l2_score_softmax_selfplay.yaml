@@ -1,0 +1,60 @@
+schema: mini_jass.selfplay.v1
+mode: search_improved
+seed: 92001
+deterministic: true
+generations: 1
+split_seed: 20260807
+frozen_split_manifest: artefacts/split_manifest.l2.v1.json
+expected_split_manifest_hash: 4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e
+model:
+  hidden_size: 32
+  linear: false
+  input_count: 74
+  action_count: 122
+  enforce_baseline_limit: true
+  parameter_limit: 8000
+self_play:
+  mode: search_improved
+  games: 128
+  max_plies: 64
+  search_enabled: true
+  search_depth: 32
+  budget_policy: fixed
+  node_budgets: [16]
+  start_state_source: train_split
+  root_allocation: balanced
+  policy_target: score_softmax
+  policy_target_temperature: 0.25
+  behavior_policy: search_scores
+  exploration:
+    strategy: top_k_uniform
+    epsilon: 0.0
+    top_k: 2
+    temperature: 1.0
+    warmup_games: 0
+    warmup_epsilon: 0.0
+replay:
+  capacity: 8192
+  strategy: disabled
+  training_samples: 1024
+training:
+  steps: 1024
+  batch_size: 128
+  learning_rate: 0.002
+  weight_decay: 0.0001
+  value_weight: 1.0
+  policy_weight: 1.0
+arena:
+  pairs: 4
+  max_plies: 64
+  search_depth: 2
+  node_budget: 4
+  epsilon: 0.0
+  confidence_z: 1.96
+development:
+  batch_size: 8192
+promotion:
+  minimum_development_improvement: 0.0
+  minimum_arena_lower_bound: 0.40
+runtime:
+  threads: 1

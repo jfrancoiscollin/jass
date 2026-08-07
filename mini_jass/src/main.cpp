@@ -1,4 +1,5 @@
 #include "mini_jass/enumerate.hpp"
+#include "mini_jass/l2_solver.hpp"
 #include "mini_jass/move.hpp"
 #include "mini_jass/rules.hpp"
 #include "mini_jass/solver.hpp"
@@ -12,7 +13,8 @@ namespace {
 
 void print_help() {
     std::cout << "Mini-Jass learning laboratory\n"
-              << "usage: mini_jass_cli <rules|actions|enumerate|solve|export-oracle>\n";
+              << "usage: mini_jass_cli <rules|actions|enumerate|solve|export-oracle|"
+                 "l2-rules|l2-actions|l2-solve|l2-export-oracle>\n";
 }
 
 void print_rules() {
@@ -132,6 +134,71 @@ void print_oracle_jsonl() {
     }
 }
 
+void print_l2_rules() {
+    const mini_jass::l2::State initial = mini_jass::l2::initial_state();
+    std::cout << "{\n  \"schema\": \"mini_jass.rules.l2.selected_2v1.v1\",\n"
+              << "  \"board_size\": 6,\n  \"playable_squares\": 18,\n"
+              << "  \"max_pieces_per_side\": 2,\n"
+              << "  \"reversible_ply_limit\": 20,\n"
+              << "  \"initial_white_men\": " << initial.white_men << ",\n"
+              << "  \"initial_black_men\": " << initial.black_men << ",\n"
+              << "  \"exact_material_scope\": \"forced_capture_to_selected_2v1_closure\"\n}\n";
+}
+
+void print_l2_actions() {
+    std::cout << "{\n  \"schema\": \"mini_jass.actions.l2.v1\",\n"
+              << "  \"action_count\": " << mini_jass::l2::action_vocabulary().size() << ",\n"
+              << "  \"action_hash\": " << mini_jass::l2::action_vocabulary_hash() << "\n}\n";
+}
+
+void print_l2_solver_manifest() {
+    const mini_jass::l2::ExactOracle oracle = mini_jass::l2::solve_exact_oracle();
+    std::cout << mini_jass::l2::solver_manifest_json(oracle.manifest);
+}
+
+void print_l2_oracle_jsonl() {
+    const mini_jass::l2::ExactOracle oracle = mini_jass::l2::solve_exact_oracle();
+    std::vector<std::uint32_t> parent_counts(oracle.manifest.canonical_state_count, 0);
+    for (const mini_jass::l2::OracleState& node : oracle.states)
+        ++parent_counts[node.canonical_state_id];
+    std::cout << "{\"type\":\"manifest\",\"schema\":\"mini_jass.oracle_dataset.l2.v1\","
+              << "\"solver_hash\":" << oracle.manifest.solver_hash << ','
+              << "\"manifest_hash\":" << oracle.manifest.manifest_hash << ','
+              << "\"state_count\":" << oracle.states.size() << ','
+              << "\"canonical_state_count\":" << oracle.manifest.canonical_state_count << ','
+              << "\"action_count\":122,\"playable_squares\":18,\"feature_count\":74,"
+              << "\"reversible_ply_limit\":20,\"root_state_ids\":[0]}\n";
+    for (std::size_t state_id = 0; state_id < oracle.states.size(); ++state_id) {
+        const mini_jass::l2::OracleState& node = oracle.states[state_id];
+        std::vector<std::uint8_t> legal;
+        for (const auto& edge : node.transitions) legal.push_back(edge.action);
+        std::cout << "{\"type\":\"state\",\"raw_state_id\":" << state_id
+                  << ",\"state_key\":" << mini_jass::l2::state_key(node.state)
+                  << ",\"white_men\":" << node.state.white_men
+                  << ",\"black_men\":" << node.state.black_men
+                  << ",\"white_kings\":" << node.state.white_kings
+                  << ",\"black_kings\":" << node.state.black_kings
+                  << ",\"side_to_move\":" << static_cast<unsigned>(node.state.side_to_move)
+                  << ",\"reversible_plies\":" << static_cast<unsigned>(node.state.reversible_plies)
+                  << ",\"terminal_status\":" << static_cast<unsigned>(node.terminal)
+                  << ",\"canonical_state_id\":" << node.canonical_state_id
+                  << ",\"canonical_transform\":" << (node.canonical_transform ? "true" : "false")
+                  << ",\"canonical_parent_count\":" << parent_counts[node.canonical_state_id]
+                  << ",\"value\":" << static_cast<int>(node.value) << ",\"dtw\":";
+        if (node.dtw.has_value()) std::cout << *node.dtw; else std::cout << "null";
+        std::cout << ",\"legal_actions\":";
+        print_action_list(legal);
+        std::cout << ",\"child_ids\":[";
+        for (std::size_t i = 0; i < node.transitions.size(); ++i) {
+            if (i != 0) std::cout << ',';
+            std::cout << node.transitions[i].child_id;
+        }
+        std::cout << "],\"optimal_actions\":";
+        print_action_list(node.optimal_actions);
+        std::cout << "}\n";
+    }
+}
+
 }  // namespace
 
 int main(const int argc, const char* const argv[]) {
@@ -158,6 +225,22 @@ int main(const int argc, const char* const argv[]) {
     }
     if (argc == 2 && std::string_view{argv[1]} == "export-oracle") {
         print_oracle_jsonl();
+        return 0;
+    }
+    if (argc == 2 && std::string_view{argv[1]} == "l2-rules") {
+        print_l2_rules();
+        return 0;
+    }
+    if (argc == 2 && std::string_view{argv[1]} == "l2-actions") {
+        print_l2_actions();
+        return 0;
+    }
+    if (argc == 2 && std::string_view{argv[1]} == "l2-solve") {
+        print_l2_solver_manifest();
+        return 0;
+    }
+    if (argc == 2 && std::string_view{argv[1]} == "l2-export-oracle") {
+        print_l2_oracle_jsonl();
         return 0;
     }
 

@@ -10,6 +10,7 @@ from .oracle import export_oracle, load_oracle
 from .loop import run_selfplay_loop
 from .experiment import run_experiment_pack
 from .learning_gate import run_learning_gate
+from .l2_transfer_gate import run_l2_transfer_gate
 from .policy_gate import run_policy_gate
 from .split import build_split, write_split_manifest
 from .train import run_training
@@ -22,6 +23,7 @@ def main() -> int:
     export_parser = subparsers.add_parser("export-oracle")
     export_parser.add_argument("--executable", type=Path, required=True)
     export_parser.add_argument("--output", type=Path, required=True)
+    export_parser.add_argument("--level", choices=("l1", "l2"), default="l1")
 
     split_parser = subparsers.add_parser("split")
     split_parser.add_argument("--oracle", type=Path, required=True)
@@ -55,9 +57,15 @@ def main() -> int:
     policy_parser.add_argument("--run-dir", type=Path, required=True)
     policy_parser.add_argument("--compact-output", type=Path)
 
+    l2_parser = subparsers.add_parser("l2-transfer-gate")
+    l2_parser.add_argument("--config", type=Path, required=True)
+    l2_parser.add_argument("--oracle", type=Path, required=True)
+    l2_parser.add_argument("--run-dir", type=Path, required=True)
+    l2_parser.add_argument("--compact-output", type=Path)
+
     arguments = parser.parse_args()
     if arguments.command == "export-oracle":
-        digest = export_oracle(arguments.executable, arguments.output)
+        digest = export_oracle(arguments.executable, arguments.output, arguments.level)
         print(json.dumps({"output": str(arguments.output), "sha256": digest}))
         return 0
     if arguments.command == "split":
@@ -97,6 +105,15 @@ def main() -> int:
         )
         print(json.dumps(result, sort_keys=True))
         return 0 if result["gate"]["status"] == "PASS" else 1
+    if arguments.command == "l2-transfer-gate":
+        result = run_l2_transfer_gate(
+            arguments.config,
+            arguments.oracle,
+            arguments.run_dir,
+            arguments.compact_output,
+        )
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result["scientific_gate"]["status"] == "PASS" else 1
     raise AssertionError("unreachable")
 
 
