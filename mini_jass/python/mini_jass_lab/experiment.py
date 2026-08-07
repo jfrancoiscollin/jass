@@ -257,7 +257,10 @@ SUMMARY_METRICS = (
 
 
 def build_comparison(
-    resolved: dict[str, Any], records: list[dict[str, Any]]
+    resolved: dict[str, Any],
+    records: list[dict[str, Any]],
+    metric_paths: tuple[str, ...] = SUMMARY_METRICS,
+    schema: str = "mini_jass.experiment_comparison.v1",
 ) -> dict[str, Any]:
     successful = [record for record in records if record["status"] == "PASS"]
     experiments: dict[str, Any] = {}
@@ -272,8 +275,14 @@ def build_comparison(
             ]
             arm_records[arm_name] = selected
             metrics: dict[str, Any] = {}
-            for path in SUMMARY_METRICS:
-                values = [_get_metric(record, path) for record in selected]
+            for path in metric_paths:
+                values: list[float] = []
+                for record in selected:
+                    try:
+                        value = _get_metric(record, path)
+                    except (KeyError, TypeError, ValueError):
+                        continue
+                    values.append(value)
                 if values and all(math.isfinite(value) for value in values):
                     metrics[path] = summarize_values(values)
             arms[arm_name] = {"run_count": len(selected), "metrics": metrics}
@@ -286,16 +295,18 @@ def build_comparison(
                 continue
             arm_by_seed = {record["seed"]: record for record in selected}
             paired_metrics: dict[str, Any] = {}
-            for path in SUMMARY_METRICS:
-                differences = [
-                    _get_metric(arm_by_seed[seed], path)
-                    - _get_metric(reference_by_seed[seed], path)
-                    for seed in resolved["paired_seeds"]
-                    if seed in arm_by_seed
-                    and seed in reference_by_seed
-                    and math.isfinite(_get_metric(arm_by_seed[seed], path))
-                    and math.isfinite(_get_metric(reference_by_seed[seed], path))
-                ]
+            for path in metric_paths:
+                differences: list[float] = []
+                for seed in resolved["paired_seeds"]:
+                    if seed not in arm_by_seed or seed not in reference_by_seed:
+                        continue
+                    try:
+                        arm_value = _get_metric(arm_by_seed[seed], path)
+                        reference_value = _get_metric(reference_by_seed[seed], path)
+                    except (KeyError, TypeError, ValueError):
+                        continue
+                    if math.isfinite(arm_value) and math.isfinite(reference_value):
+                        differences.append(arm_value - reference_value)
                 if differences:
                     paired_metrics[path] = summarize_values(differences)
             paired[arm_name] = {
@@ -322,7 +333,7 @@ def build_comparison(
             "consumed_node_imbalance": node_imbalance,
         }
     return {
-        "schema": "mini_jass.experiment_comparison.v1",
+        "schema": schema,
         "paired_seeds": resolved["paired_seeds"],
         "experiments": experiments,
     }

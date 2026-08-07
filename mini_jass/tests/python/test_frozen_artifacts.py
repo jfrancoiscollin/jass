@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from mini_jass_lab.experiment import _package_sha256
+
 
 def test_frozen_m3_artifacts_are_internally_consistent() -> None:
     root = Path(__file__).resolve().parents[2]
@@ -17,3 +19,20 @@ def test_frozen_m3_artifacts_are_internally_consistent() -> None:
     assert baseline["exact_supervised"]["gate"] == "PASS"
     assert baseline["all_state_fit"]["gate"] == "PASS"
     assert baseline["all_state_fit"]["failed_runs"][0]["gate"] == "FAIL"
+
+
+def test_m6_artifact_preserves_m5_provenance_and_transfer_gate() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m5 = json.loads((root / "artefacts/m5_experiment_pack.v1.json").read_text(encoding="utf-8"))
+    m6 = json.loads((root / "artefacts/m6_learning_gate.v1.json").read_text(encoding="utf-8"))
+    assert m6["schema"] == "mini_jass.m6_learning_gate.v1"
+    assert m6["status"] == "PASS"
+    assert m6["m5_result_hash"] == m5["result_hash"]
+    assert m6["pack"]["run_count"] == 55
+    assert m6["pack"]["successful_run_count"] == 55
+    assert m6["gate"]["train_split_start_contract"] is True
+    assert m6["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m6["scientific_gate"]["status"] == "FAIL"
+    assert m6["recommendation"]["decision"] == "continue_L1_policy_gate"
+    assert m6["recommendation"]["l2_transfer_authorized"] is False
+    assert m6["recommendation"]["direct_10x10_transfer_authorized"] is False

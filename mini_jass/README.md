@@ -135,3 +135,25 @@ PYTHONPATH=python .venv/bin/python tools/run_experiments.py --config configs/l1_
 ```
 
 The ignored run directory contains resolved per-arm configs, all candidate checkpoints, raw arm results, the comparison report, rule/solver/split/executable manifests, and the transfer recommendation. Only the compact M5 evidence manifest is committed.
+
+## M6 L1 learning gate
+
+M6 keeps the laboratory on L1 and adds the preregistered E5–E9 consolidation pack:
+
+- deterministic restarts sampled only from non-terminal states in the immutable train cohort;
+- optimizer-dose, outcome-versus-search target, greedy-versus-Top-2, and replay ablations;
+- exact target-quality diagnostics materialized only after every candidate and the protocol hash are fixed;
+- development metrics for the complete cohort and for states actually encountered during generation;
+- a strict scientific gate that requires simultaneous value-sign and optimal-move-mass progress before L2.
+
+The pack contains 11 arms and 55 successful paired-seed runs. Its execution gate passes: all arms are reported, initial weights are paired, train-only restarts are enforced, frozen-test access is delayed, and every experiment remains below the 35% consumed-node imbalance limit. Train-cohort restarts multiply mean coverage by 4.34, and the selected `strong_1024` dose improves development value-sign accuracy by 0.3620 with a 95% selection-score interval of `[0.3433, 0.3770]`. Two of five candidates satisfy both development and arena promotion checks.
+
+The strict scientific gate nevertheless remains closed because mean development optimal-move mass changes by -0.0018. Search targets themselves carry 88.25% mean optimal mass, so the remaining problem is policy-target generalization rather than target availability. The automatic decision is `continue_L1_policy_gate`; neither L2 nor Jass 10×10 transfer is authorized. The compact evidence record is `artefacts/m6_learning_gate.v1.json`.
+
+Run the frozen gate after exporting the M3/M4 oracle:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_learning_gate.py --config configs/l1_learning_gate.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/m6-learning-gate-v1 --compact-output artefacts/m6_learning_gate.v1.json
+```
+
+The detailed run directory remains ignored. The compact M6 record hashes the protocol, result, M5 input, Python package, rule/action/graph/solver/split contracts, and every retained report artefact.

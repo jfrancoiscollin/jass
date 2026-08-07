@@ -7,9 +7,9 @@ endif()
 get_filename_component(MINI_JASS_SOURCE_DIR "${MINI_JASS_SOURCE_DIR}" ABSOLUTE)
 get_filename_component(REPOSITORY_ROOT "${MINI_JASS_SOURCE_DIR}/.." ABSOLUTE)
 
-set(repository_root_for_git "${REPOSITORY_ROOT}")
 set(worktree_git_file "${REPOSITORY_ROOT}/.git")
 set(use_windows_git_from_wsl FALSE)
+set(git_scope_arguments -C "${REPOSITORY_ROOT}")
 
 if(NOT WIN32 AND EXISTS "${worktree_git_file}" AND NOT IS_DIRECTORY "${worktree_git_file}")
     file(READ "${worktree_git_file}" worktree_git_contents)
@@ -20,33 +20,47 @@ endif()
 
 if(use_windows_git_from_wsl)
     find_program(MINI_JASS_GIT_EXECUTABLE
-        NAMES git.exe
-        HINTS "/mnt/c/Program Files/Git/cmd"
+        NAMES git
+        PATHS /usr/bin /bin
+        NO_DEFAULT_PATH
         REQUIRED
     )
     find_program(MINI_JASS_WSLPATH_EXECUTABLE wslpath REQUIRED)
+    string(REGEX REPLACE "^gitdir: ([^\r\n]+).*$" "\\1"
+        worktree_git_dir_windows "${worktree_git_contents}")
     execute_process(
-        COMMAND "${MINI_JASS_WSLPATH_EXECUTABLE}" -w "${REPOSITORY_ROOT}"
+        COMMAND "${MINI_JASS_WSLPATH_EXECUTABLE}" -u "${worktree_git_dir_windows}"
         RESULT_VARIABLE wslpath_result
-        OUTPUT_VARIABLE repository_root_for_git
+        OUTPUT_VARIABLE worktree_git_dir
         ERROR_VARIABLE wslpath_error
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     if(NOT wslpath_result EQUAL 0)
-        message(FATAL_ERROR "Unable to translate repository path for git.exe: ${wslpath_error}")
+        message(FATAL_ERROR "Unable to translate worktree gitdir: ${wslpath_error}")
     endif()
+    set(git_scope_arguments
+        --git-dir "${worktree_git_dir}"
+        --work-tree "${REPOSITORY_ROOT}"
+    )
 else()
     find_program(MINI_JASS_GIT_EXECUTABLE git REQUIRED)
 endif()
 
-execute_process(
-    COMMAND "${MINI_JASS_GIT_EXECUTABLE}" -C "${repository_root_for_git}"
-            status --porcelain=v1 --untracked-files=all
-    RESULT_VARIABLE status_result
-    OUTPUT_VARIABLE status_output
-    ERROR_VARIABLE status_error
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+if(DEFINED ENV{MINI_JASS_STATUS_OVERRIDE})
+    set(status_result 0)
+    set(status_output "$ENV{MINI_JASS_STATUS_OVERRIDE}")
+    string(REPLACE "\\n" "\n" status_output "${status_output}")
+    set(status_error "")
+else()
+    execute_process(
+        COMMAND "${MINI_JASS_GIT_EXECUTABLE}" ${git_scope_arguments}
+                status --porcelain=v1 --untracked-files=normal
+        RESULT_VARIABLE status_result
+        OUTPUT_VARIABLE status_output
+        ERROR_VARIABLE status_error
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
 
 if(NOT status_result EQUAL 0)
     message(FATAL_ERROR "Unable to inspect repository scope: ${status_error}")

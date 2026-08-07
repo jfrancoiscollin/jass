@@ -67,3 +67,21 @@ def test_outcome_targets_can_use_search_for_move_selection() -> None:
 def test_generation_game_schedule_is_explicit() -> None:
     config = SelfPlayConfig(games=9, game_schedule=(3, 2, 1))
     assert [config.games_for_generation(index) for index in (1, 2, 3)] == [3, 2, 1]
+
+
+def test_train_split_start_states_are_explicit_and_deterministic() -> None:
+    config = SelfPlayConfig(
+        mode="outcome_only",
+        games=2,
+        max_plies=1,
+        search_enabled=False,
+        start_state_source="train_split",
+        exploration=ExplorationConfig(strategy="greedy"),
+    )
+    starts = np.asarray([0], dtype=np.int64)
+    first = generate_self_play(tiny_graph(), FixedModel(0), config, 1, 400, starts)
+    second = generate_self_play(tiny_graph(), FixedModel(0), config, 1, 400, starts)
+    assert first.metrics["start_states"] == {"source": "train_split", "unique": 1}
+    assert [sample.state_id for sample in first.samples] == [
+        sample.state_id for sample in second.samples
+    ]
