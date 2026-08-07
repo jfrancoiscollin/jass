@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import hashlib
 import json
 from pathlib import Path
@@ -93,14 +93,34 @@ def _parse_self_play(config: dict[str, Any]) -> SelfPlayConfig:
     )
 
 
+VALUE_TARGET_SOURCES = ("selfplay_outcome", "exact_oracle")
+
+
 def execute_loop(
     config: dict[str, Any],
     oracle: OracleArrays,
     development_indices: np.ndarray,
     training_start_indices: np.ndarray | None = None,
     training_state_mask: np.ndarray | None = None,
+    value_target_source: str = "selfplay_outcome",
 ) -> LoopExecution:
-    """Execute once without filesystem writes, enabling an independent replay."""
+    """Execute once without filesystem writes, enabling an independent replay.
+
+    `value_target_source` is a DIAGNOSTIC boundary crossing and defaults to the
+    honest loop. Under `exact_oracle` the VALUE target of every training sample
+    is replaced by the solved label, AFTER the train-cohort mask has filtered
+    the batch -- so no development or confirmation label can reach the
+    optimizer. `generate_self_play` itself stays oracle-blind, and the policy
+    target is never touched: the contrast isolates value-target NOISE.
+
+    An `exact_oracle` arm is an upper bound, never a promotable candidate: it
+    consumes labels no self-play loop can produce.
+    """
+    if value_target_source not in VALUE_TARGET_SOURCES:
+        raise ValueError(
+            f"unknown value-target source {value_target_source!r}; "
+            f"expected one of {VALUE_TARGET_SOURCES}"
+        )
     threads = int(config["runtime"]["threads"])
     seed = int(config["seed"])
     seed_everything(seed, threads)
@@ -120,6 +140,8 @@ def execute_loop(
     candidate_states: list[dict[str, torch.Tensor]] = []
     state_sample_counts = np.zeros(graph.state_count, dtype=np.uint32)
     all_samples: list[ReplaySample] = []
+    relabelled_total = 0
+    relabelled_changed = 0
     allowed_training_states: np.ndarray | None = None
     if training_state_mask is not None:
         allowed_training_states = np.asarray(training_state_mask, dtype=np.bool_)
@@ -161,6 +183,20 @@ def execute_loop(
         )
         if not training_samples:
             raise ValueError("training-state mask rejected every generated sample")
+        if value_target_source == "exact_oracle":
+            # `all_samples` keeps the ORIGINAL self-play labels on purpose: the
+            # target-quality diagnostics must keep measuring what the GENERATOR
+            # produced, otherwise this arm would trivially report a 100 % exact
+            # rate and the contrast would lose its control.
+            exact_values = oracle.values
+            rebuilt: list[ReplaySample] = []
+            for sample in training_samples:
+                exact = float(exact_values[sample.state_id])
+                if exact != sample.value_target:
+                    relabelled_changed += 1
+                rebuilt.append(replace(sample, value_target=exact))
+            relabelled_total += len(rebuilt)
+            training_samples = rebuilt
         replay.extend(training_samples)
         if generated.samples:
             np.add.at(
@@ -272,6 +308,24 @@ def execute_loop(
             "forbidden_fields": ["oracle_value", "dtw", "optimal_actions"],
         },
     }
+    if value_target_source != "selfplay_outcome":
+        # An `exact_oracle` arm READS solved labels into the optimizer. The
+        # contract must say so -- it is the difference between a promotable
+        # candidate and a diagnostic upper bound -- and the divergent hash is
+        # then WANTED: these runs must never collide with honest ones.
+        core["oracle_contract"]["usage"] = (
+            "development_promotion_gate_and_value_target_relabel"
+        )
+        core["training_target_contract"]["value"] = "exact_oracle_wdl"
+        core["value_target_source"] = value_target_source
+        core["value_target_relabel"] = {
+            "training_samples_relabelled": relabelled_total,
+            "training_samples_changed": relabelled_changed,
+            "changed_fraction": (
+                relabelled_changed / relabelled_total if relabelled_total else 0.0
+            ),
+            "promotable": False,
+        }
     core["execution_hash"] = _digest(core)
     return LoopExecution(
         core,
