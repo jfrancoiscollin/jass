@@ -11,6 +11,7 @@ Ignored runtime paths are limited to:
 - `mini_jass/build/`;
 - `mini_jass/artefacts/`;
 - `mini_jass/.venv/`;
+- `mini_jass/.venv_wsl/`;
 - language-local caches under `mini_jass/`.
 
 ## Build boundary

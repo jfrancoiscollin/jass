@@ -227,13 +227,16 @@ int main(const int argc, const char* const argv[]) {
     expect(argc == 2, "the frozen solver manifest path is supplied by CTest");
     if (argc == 2) {
         std::ifstream manifest_file{argv[1], std::ios::binary};
-        const std::string frozen_manifest{
+        std::string frozen_manifest{
             std::istreambuf_iterator<char>{manifest_file},
             std::istreambuf_iterator<char>{}};
+        frozen_manifest.erase(
+            std::remove(frozen_manifest.begin(), frozen_manifest.end(), '\r'),
+            frozen_manifest.end());
         expect(manifest_file.good() || manifest_file.eof(),
                "the frozen solver manifest is readable");
         expect(manifest_json == frozen_manifest,
-               "generated solver manifest matches the frozen JSON artefact byte-for-byte");
+               "generated solver manifest matches the frozen JSON artefact after newline normalization");
     }
 
     std::cout << manifest_json;

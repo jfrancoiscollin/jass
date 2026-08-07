@@ -1,0 +1,59 @@
+{
+  "schema": "mini_jass.m3_baseline.v1",
+  "solver_hash": 10671205679107391448,
+  "solver_manifest_hash": 16484585856267539683,
+  "oracle_dataset_sha256": "f1d00ffbd60d6f23d2d80e26e203c91a9baf43cef38546119e11bc3a64c3a611",
+  "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524",
+  "split_assignment_hash": "62d3ed3ec052bf84255c63c214573804010ce944ab5a933bfdf2070c07417b69",
+  "model": {
+    "inputs": 54,
+    "actions": 72,
+    "hidden_size": 32,
+    "parameter_count": 5225,
+    "parameter_ceiling": 5500
+  },
+  "exact_supervised": {
+    "seed": 31001,
+    "epochs": 12,
+    "best_epoch": 12,
+    "gate": "PASS",
+    "model_hash": "8c155a0198bc2dd13a2fe3fbd56ac1c49cdc32887a658cd171d6c8f012799f9c",
+    "result_hash": "43183f0ad2e2dd3ecfb16117006593e2c33ca7d170970518cf3f8543d92c41ab",
+    "development": {
+      "value_sign_accuracy": 0.7459723311161132,
+      "value_mae": 0.3749079704284668,
+      "optimal_top1_accuracy": 0.9456897244315899,
+      "optimal_probability_mass": 0.8698660731315613,
+      "mean_selected_regret": 0.0780375458611178
+    },
+    "frozen_test": {
+      "value_sign_accuracy": 0.7509574682523684,
+      "value_mae": 0.3729209303855896,
+      "optimal_top1_accuracy": 0.9461236270343943,
+      "optimal_probability_mass": 0.8713716864585876,
+      "mean_selected_regret": 0.07803522274780192
+    }
+  },
+  "all_state_fit": {
+    "seed": 31002,
+    "failed_runs": [
+      {
+        "epochs": 12,
+        "gate": "FAIL",
+        "value_sign_accuracy": 0.7809603948011781,
+        "optimal_probability_mass": 0.8764669895172119,
+        "result_hash": "412d24bf8a5fe9930ea8315119d96e5040eb45eb4472bd2988b338edf8c0d877"
+      }
+    ],
+    "epochs": 20,
+    "best_epoch": 20,
+    "gate": "PASS",
+    "model_hash": "464acc48d1e144a0fa534228ac2317c281c811193e70dce7c7c4012f25d1d2d5",
+    "result_hash": "69e6323c6d3917b1605997def66170ccf8c46a418db877e5190f4c0f40854b32",
+    "value_sign_accuracy": 0.8041837705483476,
+    "value_mae": 0.2821294665336609,
+    "optimal_top1_accuracy": 0.9610019239961279,
+    "optimal_probability_mass": 0.8869980573654175,
+    "mean_selected_regret": 0.053831724647635575
+  }
+}

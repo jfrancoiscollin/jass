@@ -1,0 +1,22 @@
+schema: mini_jass.training.v1
+mode: exact_supervised
+seed: 31001
+split_seed: 20260806
+frozen_split_manifest: artefacts/split_manifest.v1.json
+model:
+  hidden_size: 32
+  linear: false
+  action_count: 72
+  enforce_baseline_limit: true
+training:
+  epochs: 12
+  batch_size: 8192
+  learning_rate: 0.004
+  weight_decay: 0.0001
+  value_weight: 1.0
+  policy_weight: 1.0
+runtime:
+  threads: 4
+gate:
+  minimum_value_sign_accuracy: 0.72
+  minimum_optimal_probability_mass: 0.35

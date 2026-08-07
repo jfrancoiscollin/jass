@@ -2,7 +2,10 @@
 /artefacts/*
 !/artefacts/.gitkeep
 !/artefacts/solver_manifest.v1.json
+!/artefacts/split_manifest.v1.json
+!/artefacts/m3_baseline.v1.json
 /.venv/
+/.venv_wsl/
 /.pytest_cache/
 __pycache__/
 *.pyc
