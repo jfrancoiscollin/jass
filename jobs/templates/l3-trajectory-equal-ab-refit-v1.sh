@@ -237,19 +237,39 @@ fit_arm(){  # $1 = row|game
   set -e
   [ "$rc" -eq 0 ] || die "fit $arm rc=$rc — voir fit-$arm.log"
   [ -s "$W/$arm.pjtw" ] || die "fit $arm sans modèle"
-  python3 - "$ART/$arm-optimizer.json" "$arm" <<'PYCHK' || die "fit $arm : arrêt non concluant"
+  # ALLOW_NON_PGTOL_STOP (défaut 0, donc aucun job existant ne change) dégrade
+  # l'arrêt non-gradient en AVERTISSEMENT CONSIGNÉ au lieu de tuer le job.
+  # Motif : home-1317 a perdu 9h55 ET les deux modèles parce que le bras `game`
+  # n'a pas convergé. Or « le bras game ne converge pas en N itérations » EST un
+  # résultat — mais seulement si on garde le modèle et le compte d'itérations
+  # pour le lire. `success=False` reste FATAL dans tous les cas.
+  # ⚠️ Tolérer l'arrêt N'AUTORISE PAS à gater un bras sous-convergé contre un
+  # bras convergé : ce serait une cellule à deux facteurs (cf. la leçon
+  # PRIORTIGHT). La porte est un job séparé, décidé après lecture.
+  local stopchk; stopchk=0
+  python3 - "$ART/$arm-optimizer.json" "$arm" <<'PYCHK' || stopchk=$?
 import json, sys
 d = json.load(open(sys.argv[1]))
 if not d.get("success"):
-    raise SystemExit(f"{sys.argv[2]}: success=False")
+    raise SystemExit(2)                       # 2 = fatal partout
 if "PGTOL" not in str(d.get("message", "")).upper():
-    raise SystemExit(f"{sys.argv[2]}: arrêt sur {d.get('message')!r}, pas PGTOL")
+    print(f"{sys.argv[2]}: arrêt sur {d.get('message')!r}, pas PGTOL")
+    raise SystemExit(3)                       # 3 = tolérable si opt-in
 PYCHK
+  case "$stopchk" in
+    0) ;;
+    3) if [ "${ALLOW_NON_PGTOL_STOP:-0}" = "1" ]; then
+         say "  ⚠️ $arm : arrêt NON-gradient TOLÉRÉ (ALLOW_NON_PGTOL_STOP=1) — bras SOUS-CONVERGÉ, ne pas gater tel quel"
+       else die "fit $arm : arrêt non concluant"; fi ;;
+    *) die "fit $arm : arrêt non concluant (success=False)" ;;
+  esac
   gzip -n -c "$W/$arm.pjtw" > "$ART/$arm.pjtw.gz"
   local ll it
   ll=$(grep -o 'HOLDOUT_LOGLOSS[= ][0-9.]*' "$W/fit-$arm.log" | tail -1)
   it=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["iterations"])' "$ART/$arm-optimizer.json")
-  say "  $arm : convergé, $it itérations, ${ll:-holdout n/a}"
+  if [ "$stopchk" = 3 ]; then
+    say "  $arm : SOUS-CONVERGÉ (arrêt non-gradient), $it itérations, ${ll:-holdout n/a}"
+  else say "  $arm : convergé, $it itérations, ${ll:-holdout n/a}"; fi
 }
 
 say "  facteur unique : ROW poids 1 ; GAME poids 1/m_g, moyenne TRAIN renormalisée à 1"
