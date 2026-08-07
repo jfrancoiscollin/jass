@@ -1,0 +1,90 @@
+{
+  "artifact_hashes": {
+    "arm_results.jsonl": "d7dd69aff13b4f31812108f5f2ce49eae70c91b1ac8b89d78a63429b9927309a",
+    "comparison.json": "76080813f741b0cbee7ec2a6cc87bbb01eb37958164853f61e41e00110b074e9",
+    "config.resolved.yaml": "46a4719f69134e69defaa02229cd447e16c59535c2f0f0f32a0d646f999480f1",
+    "executable_manifest.json": "cbd749c428dae013db8c62bf7373690353a338e02e3d55925e6b5f72c4670231",
+    "recommendation.json": "6455a53136331f81d43421500534b8241f32d787d165ea8bed41b47fe3280103",
+    "result.json": "5d90983f65380c3ef857b91117461f43755ed625bff96aecc2cff3c03dcd3fe4",
+    "summary.md": "bdfc640284e8523556317a0db6a7a207c8e5ff80bf0ca1ea18af2ee5727615c8"
+  },
+  "contracts": {
+    "action_schema": "mini_jass.actions.v1",
+    "action_vocabulary_hash": 11242579555617580249,
+    "canonical_graph_hash": 3712505811235282327,
+    "m6_evidence_sha256": "05ac11161cd31a9e850843715e788584c9319bbed4cc3c76b255dfb57e4d19d4",
+    "m6_result_hash": "18347e743dc50972cf1107442a1a5a7e9c67d55fda3beb77a3e0db6c7934b1f9",
+    "oracle_export_sha256": "eb35afc28b6e8a39d7151d894517d2a9442521e9723f4be19d266bcf3128b8eb",
+    "python_package_sha256": "224b653fbbf59e230bf527a55860258bf8e5fff36c69e51067ba53b4dd126824",
+    "raw_graph_hash": 3347327730907747976,
+    "rule_schema": "mini_jass.rules.l1.v1",
+    "solver_hash": 10671205679107391448,
+    "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524"
+  },
+  "evidence": {
+    "maximum_root_node_imbalance": 1.0,
+    "mean_development_optimal_mass_delta": 0.025617158412933348,
+    "mean_development_value_sign_delta": 0.4032524848883381,
+    "mean_eligible_generation_count": 0.2,
+    "mean_root_action_coverage": 1.0,
+    "mean_target_argmax_optimal_rate": 0.9255965263502224,
+    "mean_target_optimal_mass": 0.9213820338249207,
+    "selected_arm": "score_softmax",
+    "selection_score_confidence_95": [
+      0.42081990803855085,
+      0.436919378563992
+    ]
+  },
+  "gate": {
+    "all_runs_reported": true,
+    "all_runs_successful": true,
+    "balanced_root_node_allocation": true,
+    "complete_root_action_coverage": true,
+    "frozen_test_unsealed_after_protocol_fixed": true,
+    "minimum_five_paired_seeds": true,
+    "paired_initial_weights": true,
+    "status": "PASS",
+    "target_only_causal_contrast": true
+  },
+  "m6_result_hash": "18347e743dc50972cf1107442a1a5a7e9c67d55fda3beb77a3e0db6c7934b1f9",
+  "milestone": "M7",
+  "pack": {
+    "arm_count": 3,
+    "experiments": [
+      "E10"
+    ],
+    "paired_seeds": [
+      71001,
+      71002,
+      71003,
+      71004,
+      71005
+    ],
+    "run_count": 15,
+    "successful_run_count": 15
+  },
+  "protocol_hash": "08697f4c4d73b34e08328be4402e72c3b557019fe2e529ee6b474b079ba9e887",
+  "recommendation": {
+    "decision": "rerun_frozen_M6_gate_before_L2",
+    "direct_10x10_transfer_authorized": false,
+    "l2_transfer_authorized": false,
+    "next_gate": "Freeze the selected target and rerun the full M6 L1 gate before L2.",
+    "reason": "A target encoding now improves value and optimal-move mass with a positive joint confidence interval under fair root allocation."
+  },
+  "result_hash": "faab28726f32463d146da82354778bf0651f2f4c532c3d4c1e2b12b350225272",
+  "schema": "mini_jass.m7_policy_target_gate.v1",
+  "scientific_gate": {
+    "criteria": {
+      "at_least_one_eligible_candidate": true,
+      "complete_root_action_coverage": true,
+      "maximum_root_node_imbalance": true,
+      "mean_development_optimal_mass_delta": true,
+      "mean_development_value_sign_delta": true,
+      "minimum_target_argmax_optimal_rate": true,
+      "minimum_target_optimal_mass": true,
+      "selection_confidence_interval_above_zero": true
+    },
+    "status": "PASS"
+  },
+  "status": "PASS"
+}

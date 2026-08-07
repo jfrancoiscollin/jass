@@ -13,6 +13,7 @@ from .replay import ReplaySample
 from .search import (
     InferenceCache,
     SearchConfig,
+    SearchResult,
     bounded_negamax,
     resolve_node_budget,
 )
@@ -47,6 +48,10 @@ class SelfPlayConfig:
     search_enabled: bool | None = None
     game_schedule: tuple[int, ...] | None = None
     start_state_source: str = "initial"
+    root_allocation: str = "sequential"
+    policy_target: str = "visit_distribution"
+    policy_target_temperature: float = 1.0
+    behavior_policy: str = "visit_distribution"
     exploration: ExplorationConfig = field(default_factory=ExplorationConfig)
 
     def __post_init__(self) -> None:
@@ -58,6 +63,18 @@ class SelfPlayConfig:
             raise ValueError("search-improved targets require search")
         if self.start_state_source not in ("initial", "train_split"):
             raise ValueError("start-state source must be initial or train_split")
+        if self.root_allocation not in ("sequential", "balanced"):
+            raise ValueError("root allocation must be sequential or balanced")
+        if self.policy_target not in (
+            "visit_distribution",
+            "best_action",
+            "score_softmax",
+        ):
+            raise ValueError("unknown policy-target encoding")
+        if self.policy_target_temperature <= 0:
+            raise ValueError("policy-target temperature must be positive")
+        if self.behavior_policy not in ("visit_distribution", "search_scores"):
+            raise ValueError("behavior policy must use visits or search scores")
         if self.game_schedule is not None and (
             not self.game_schedule or any(games < 1 for games in self.game_schedule)
         ):
@@ -117,6 +134,14 @@ def _search_preferences(policy: np.ndarray) -> np.ndarray:
     return preferences
 
 
+def _target_policy(result: SearchResult, config: SelfPlayConfig) -> np.ndarray:
+    if config.policy_target == "visit_distribution":
+        return result.visit_policy()
+    if config.policy_target == "best_action":
+        return result.best_action_policy()
+    return result.score_policy(config.policy_target_temperature)
+
+
 def generate_self_play(
     graph: GameGraph,
     model: MiniJassMLP,
@@ -148,6 +173,11 @@ def generate_self_play(
         "leaf_model_evaluations": 0,
         "alpha_beta_cutoffs": 0,
         "maximum_reached_depth": 0,
+        "root_legal_actions": 0,
+        "root_searched_actions": 0,
+        "root_coverage_failures": 0,
+        "root_maximum_node_imbalance": 0,
+        "root_maximum_budget_imbalance": 0,
     }
     search_trace: list[dict[str, Any]] = []
     safety_draws = 0
@@ -181,13 +211,18 @@ def generate_self_play(
                     graph,
                     model,
                     state_id,
-                    SearchConfig(config.search_depth, budget),
+                    SearchConfig(config.search_depth, budget, config.root_allocation),
                     inference,
                 )
                 search_policy = result.visit_policy()
-                preferences = _search_preferences(search_policy)
-                target_policy = (
+                score_policy = result.score_policy(config.policy_target_temperature)
+                preferences = _search_preferences(
                     search_policy
+                    if config.behavior_policy == "visit_distribution"
+                    else score_policy
+                )
+                target_policy = (
+                    _target_policy(result, config)
                     if config.mode == "search_improved"
                     else np.zeros(72, dtype=np.float32)
                 )
@@ -202,6 +237,19 @@ def generate_self_play(
                 ):
                     search_totals[key] += int(getattr(result.stats, key))
                 search_totals["decisions"] += 1
+                search_totals["root_legal_actions"] += result.stats.root_legal_actions
+                search_totals["root_searched_actions"] += result.stats.root_searched_actions
+                search_totals["root_coverage_failures"] += int(
+                    result.stats.root_searched_actions < result.stats.root_legal_actions
+                )
+                search_totals["root_maximum_node_imbalance"] = max(
+                    search_totals["root_maximum_node_imbalance"],
+                    result.stats.root_maximum_nodes - result.stats.root_minimum_nodes,
+                )
+                search_totals["root_maximum_budget_imbalance"] = max(
+                    search_totals["root_maximum_budget_imbalance"],
+                    result.stats.root_maximum_budget - result.stats.root_minimum_budget,
+                )
                 search_totals["maximum_reached_depth"] = max(
                     search_totals["maximum_reached_depth"], result.stats.reached_depth
                 )
@@ -273,6 +321,12 @@ def generate_self_play(
         "start_states": {
             "source": config.start_state_source,
             "unique": len(set(selected_starts)),
+        },
+        "target_contract": {
+            "root_allocation": config.root_allocation,
+            "policy_target": config.policy_target,
+            "policy_target_temperature": config.policy_target_temperature,
+            "behavior_policy": config.behavior_policy,
         },
         "search": search_totals,
         "search_trace": search_trace,

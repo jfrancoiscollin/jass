@@ -1,0 +1,63 @@
+schema: mini_jass.policy_target_gate.v1
+paired_seeds: [71001, 71002, 71003, 71004, 71005]
+m6_evidence: artefacts/m6_learning_gate.v1.json
+expected_m6_result_hash: 18347e743dc50972cf1107442a1a5a7e9c67d55fda3beb77a3e0db6c7934b1f9
+base_loop_config: configs/l1_search_selfplay.yaml
+base_overrides:
+  deterministic: true
+  generations: 1
+  self_play.games: 128
+  self_play.max_plies: 64
+  self_play.start_state_source: train_split
+  self_play.search_enabled: true
+  self_play.search_depth: 32
+  self_play.budget_policy: fixed
+  self_play.node_budgets: [16]
+  self_play.root_allocation: balanced
+  self_play.behavior_policy: search_scores
+  self_play.policy_target_temperature: 0.25
+  self_play.exploration.strategy: top_k_uniform
+  self_play.exploration.epsilon: 0.0
+  self_play.exploration.top_k: 2
+  self_play.exploration.temperature: 1.0
+  replay.capacity: 8192
+  replay.strategy: disabled
+  replay.training_samples: 1024
+  training.steps: 1024
+  training.batch_size: 128
+  training.learning_rate: 0.002
+  training.value_weight: 1.0
+  training.policy_weight: 1.0
+  arena.pairs: 4
+  arena.max_plies: 64
+  arena.search_depth: 2
+  arena.node_budget: 4
+  promotion.minimum_development_improvement: 0.0
+  promotion.minimum_arena_lower_bound: 0.40
+  runtime.threads: 1
+report_procedure:
+  confidence: 0.95
+  paired_differences: arm_minus_visit_distribution
+  primary_selection_cohort: development
+  frozen_test_unseal: after_all_candidates_and_protocol_hash
+  target_behavior_decoupled: true
+policy_gate:
+  minimum_mean_value_sign_delta: 0.0
+  minimum_mean_optimal_mass_delta: 0.0
+  minimum_target_optimal_mass: 0.85
+  minimum_target_argmax_optimal_rate: 0.85
+  maximum_root_node_imbalance: 1
+experiments:
+  E10:
+    causal_factor: policy_target_encoding
+    reference_arm: visit_distribution
+    arms:
+      visit_distribution:
+        overrides:
+          self_play.policy_target: visit_distribution
+      best_action:
+        overrides:
+          self_play.policy_target: best_action
+      score_softmax:
+        overrides:
+          self_play.policy_target: score_softmax

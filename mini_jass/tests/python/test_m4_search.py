@@ -47,6 +47,27 @@ def test_one_node_budget_has_deterministic_policy_fallback() -> None:
     assert result.visit_counts == {1: 1}
 
 
+def test_balanced_root_allocation_searches_every_action_fairly() -> None:
+    result = bounded_negamax(
+        tiny_graph(), FixedModel(1), 0, SearchConfig(4, 3, "balanced")
+    )
+    assert result.action_scores.keys() == {0, 1}
+    assert result.visit_counts == {1: 1, 0: 1}
+    assert result.stats.root_searched_actions == result.stats.root_legal_actions == 2
+    assert result.stats.root_maximum_nodes - result.stats.root_minimum_nodes == 0
+
+
+def test_policy_target_encodings_are_normalized() -> None:
+    result = bounded_negamax(
+        tiny_graph(), FixedModel(1), 0, SearchConfig(4, 3, "balanced")
+    )
+    assert np.isclose(result.best_action_policy().sum(), 1.0)
+    assert result.best_action_policy()[0] == 1.0
+    score_policy = result.score_policy(0.25)
+    assert np.isclose(score_policy.sum(), 1.0)
+    assert score_policy[0] > score_policy[1]
+
+
 def test_all_budget_policies_are_supported() -> None:
     budgets = [1, 2, 4, 8, 16, 32, 64, 128, 256]
     for policy in ("fixed", "uniform", "log_uniform", "curriculum", "complexity", "mixed"):

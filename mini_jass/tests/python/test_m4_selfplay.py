@@ -49,6 +49,39 @@ def test_search_improved_uses_visit_policy() -> None:
     assert result.samples[0].value_target == 1.0
 
 
+def test_policy_target_is_decoupled_from_search_behavior() -> None:
+    common = dict(
+        mode="search_improved",
+        games=1,
+        max_plies=4,
+        search_depth=2,
+        node_budgets=(3,),
+        root_allocation="balanced",
+        behavior_policy="search_scores",
+        exploration=ExplorationConfig(strategy="greedy"),
+    )
+    visits = generate_self_play(
+        tiny_graph(),
+        FixedModel(1),
+        SelfPlayConfig(**common, policy_target="visit_distribution"),
+        1,
+        250,
+    )
+    best = generate_self_play(
+        tiny_graph(),
+        FixedModel(1),
+        SelfPlayConfig(**common, policy_target="best_action"),
+        1,
+        250,
+    )
+    assert [sample.state_id for sample in visits.samples] == [
+        sample.state_id for sample in best.samples
+    ]
+    assert visits.samples[0].policy_target[0] == 0.5
+    assert best.samples[0].policy_target[0] == 1.0
+    assert visits.metrics["search"]["root_coverage_failures"] == 0
+
+
 def test_outcome_targets_can_use_search_for_move_selection() -> None:
     config = SelfPlayConfig(
         mode="outcome_only",
