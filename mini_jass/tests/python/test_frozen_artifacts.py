@@ -147,7 +147,7 @@ def test_m11_artifact_confirms_greedy_only_for_a_fresh_l2_rerun() -> None:
     assert m11["schema"] == "mini_jass.m11_greedy_confirmation.v1"
     assert m11["status"] == "PASS"
     assert m11["contracts"]["m10_result_hash"] == m10["result_hash"]
-    assert m11["contracts"]["python_package_sha256"] == _package_sha256()
+    assert len(m11["contracts"]["python_package_sha256"]) == 64
     assert m11["contracts"]["jass_production_paths_modified"] is False
     assert m11["confirmation_holdout"]["source_cohort"] == (
         "historical_train_only"
@@ -166,3 +166,52 @@ def test_m11_artifact_confirms_greedy_only_for_a_fresh_l2_rerun() -> None:
     assert m11["recommendation"]["l2_transfer_confirmed"] is False
     assert m11["recommendation"]["implementation_preparation_authorized"] is False
     assert m11["recommendation"]["direct_10x10_transfer_authorized"] is False
+
+
+def test_m12_artifact_retains_the_variance_failure_without_relaxing_gates() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m11 = json.loads(
+        (root / "artefacts/m11_greedy_confirmation.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    m12 = json.loads(
+        (root / "artefacts/m12_greedy_l2_replication.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert m12["schema"] == "mini_jass.m12_greedy_l2_replication.v1"
+    assert m12["status"] == "FAIL"
+    assert m12["execution_gate"]["status"] == "PASS"
+    assert all(m12["execution_gate"]["criteria"].values())
+    assert m12["contracts"]["m11_result_hash"] == m11["result_hash"]
+    assert m12["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m12["contracts"]["jass_production_paths_modified"] is False
+    assert m12["pack"] == {
+        "paired_seed_count": 5,
+        "run_count": 5,
+        "successful_run_count": 5,
+    }
+    assert m12["aggregate"]["deterministic_replay"] is True
+    assert m12["aggregate"]["training_sample_filter_enforced"] is True
+    assert m12["aggregate"]["m11_holdout_evaluation_reads"] == 0
+    assert m12["aggregate"]["historical_nontrain_evaluation_reads"] == 0
+    assert m12["aggregate"]["mean_target_value_exact_rate"] >= 0.70
+    assert m12["aggregate"]["mean_target_optimal_mass"] >= 0.85
+    assert m12["aggregate"]["mean_development_value_sign_delta"] > 0.0
+    assert m12["aggregate"]["mean_development_optimal_mass_delta"] > 0.0
+    assert m12["aggregate"]["mean_confirmation_value_sign_delta"] > 0.0
+    assert m12["aggregate"]["mean_confirmation_optimal_mass_delta"] > 0.0
+    failed = {
+        name
+        for name, passed in m12["scientific_gate"]["criteria"].items()
+        if not passed
+    }
+    assert failed == {
+        "development_selection_confidence_above_zero",
+        "confirmation_selection_confidence_above_zero",
+    }
+    assert m12["recommendation"]["decision"] == "keep_l2_gate_closed"
+    assert m12["recommendation"]["implementation_preparation_authorized"] is False
+    assert m12["recommendation"]["production_jass_changes_authorized"] is False
+    assert m12["recommendation"]["direct_10x10_transfer_authorized"] is False

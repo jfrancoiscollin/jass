@@ -1,0 +1,597 @@
+{
+  "aggregate": {
+    "confirmation_selection_score_confidence_95": [
+      -0.028163500739776928,
+      0.09689794478647788
+    ],
+    "deterministic_replay": true,
+    "development_selection_score_confidence_95": [
+      -0.02509461797019006,
+      0.10141731161036865
+    ],
+    "eligible_candidate_count": 1,
+    "greedy_behavior_only": true,
+    "historical_nontrain_evaluation_reads": 0,
+    "historical_train_only": true,
+    "m11_holdout_evaluation_reads": 0,
+    "mean_confirmation_optimal_mass_delta": 0.02252417802810669,
+    "mean_confirmation_value_sign_delta": 0.011843043995243784,
+    "mean_development_optimal_mass_delta": 0.023205828666687012,
+    "mean_development_value_sign_delta": 0.014955518153402281,
+    "mean_excluded_generated_sample_count": 767.0,
+    "mean_target_optimal_mass": 0.9054828643798828,
+    "mean_target_value_exact_rate": 0.7561081310198062,
+    "mean_training_sample_count": 653.8,
+    "mean_unique_state_coverage": 0.020925739585429665,
+    "successful_run_count": 5,
+    "training_sample_filter_enforced": true
+  },
+  "confirmation_usage": "unsealed_after_protocol_and_all_five_candidates_fixed",
+  "contracts": {
+    "historical_split_manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e",
+    "jass_production_paths_modified": false,
+    "m11_evidence_sha256": "1ddd8e91cba3c0d91bb68d474b5ea6ed83f9f3d669d760a3c88b79d3657a842a",
+    "m11_holdout_manifest_hash": "3327f78f55dd29bf4519dc24abdefeb3f9e47bbbc49251ec4ef8401cca610a46",
+    "m11_result_hash": "9e2eba389aa9c384e1f33e262707a624f20c18b75beb5afe04509f88b5359e87",
+    "oracle_export_sha256": "8fc43c261dc41caa9e5d485d24a1f92fb711956216eaa98ac4256a3e6ac02ff4",
+    "python_package_sha256": "1eace4ab3a9b0ce11e7248e4e6e5a9a3444351bee711e14b3ac1a72e93fc2e63",
+    "replication_split_manifest_hash": "3b3bf99958c47f05da87007ab24231b846f22faecdf0a05cec419246e196dbaa",
+    "solver_hash": 4061279344067907157,
+    "solver_manifest_hash": 3750885099149748467
+  },
+  "execution_gate": {
+    "criteria": {
+      "all_five_runs_successful": true,
+      "deterministic_replay": true,
+      "greedy_behavior_only": true,
+      "historical_nontrain_untouched": true,
+      "historical_train_only": true,
+      "m11_holdout_excluded": true,
+      "training_sample_filter_enforced": true
+    },
+    "status": "PASS"
+  },
+  "milestone": "M12",
+  "pack": {
+    "paired_seed_count": 5,
+    "run_count": 5,
+    "successful_run_count": 5
+  },
+  "protocol_hash": "de0f1c1dadd2fcb6cf47b5b037ef5000521e25c9df61dd8c79fe2a4cdcec940e",
+  "recommendation": {
+    "decision": "keep_l2_gate_closed",
+    "direct_10x10_transfer_authorized": false,
+    "implementation_preparation_authorized": false,
+    "l2_replication_confirmed": false,
+    "next_gate": "Diagnose the failed fresh L2 replication without opening historical non-train cohorts.",
+    "production_jass_changes_authorized": false
+  },
+  "replication_split": {
+    "algorithm": "sha256_ordered_exact_70_15_15_within_value_material_after_m11_exclusion_v1",
+    "assignment_hash": "48a6e62ec7cd5365ed463442493a63973cd1590e0b5ffe47885dbada8b4759e4",
+    "canonical_counts": {
+      "confirmation": 3994,
+      "development": 3946,
+      "excluded_m11": 6603,
+      "historical_nontrain": 14172,
+      "train": 18472
+    },
+    "canonical_state_count": 47187,
+    "manifest_hash": "3b3bf99958c47f05da87007ab24231b846f22faecdf0a05cec419246e196dbaa",
+    "raw_counts": {
+      "confirmation": 4205,
+      "development": 4159,
+      "excluded_m11": 6948,
+      "historical_nontrain": 14930,
+      "train": 19448
+    },
+    "raw_state_count": 49690,
+    "schema": "mini_jass.greedy_replication_split.l2.v1",
+    "seed": 20260809,
+    "solver_hash": 4061279344067907157,
+    "source_cohort": "historical_train_after_m11_exclusion",
+    "source_split_manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e",
+    "strata": [
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 1,
+          "train": 6
+        },
+        "material": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 9,
+          "development": 8,
+          "train": 37
+        },
+        "material": [
+          0,
+          0,
+          0,
+          2
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 32,
+          "development": 30,
+          "train": 144
+        },
+        "material": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 239,
+          "development": 237,
+          "train": 1109
+        },
+        "material": [
+          0,
+          0,
+          1,
+          2
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 0,
+          "train": 4
+        },
+        "material": [
+          0,
+          1,
+          0,
+          0
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 12,
+          "development": 11,
+          "train": 51
+        },
+        "material": [
+          0,
+          1,
+          0,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 0,
+          "train": 2
+        },
+        "material": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 537,
+          "development": 535,
+          "train": 2499
+        },
+        "material": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 4,
+          "development": 3,
+          "train": 15
+        },
+        "material": [
+          1,
+          0,
+          0,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 0,
+          "train": 4
+        },
+        "material": [
+          1,
+          0,
+          1,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 0,
+          "train": 3
+        },
+        "material": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 6,
+          "development": 5,
+          "train": 25
+        },
+        "material": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 1,
+          "development": 0,
+          "train": 0
+        },
+        "material": [
+          1,
+          2,
+          0,
+          0
+        ],
+        "value": -1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 245,
+          "development": 244,
+          "train": 1138
+        },
+        "material": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 644,
+          "development": 643,
+          "train": 3002
+        },
+        "material": [
+          0,
+          0,
+          1,
+          2
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 360,
+          "development": 358,
+          "train": 1674
+        },
+        "material": [
+          0,
+          0,
+          2,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 7,
+          "development": 5,
+          "train": 26
+        },
+        "material": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 330,
+          "development": 330,
+          "train": 1540
+        },
+        "material": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 13,
+          "development": 11,
+          "train": 55
+        },
+        "material": [
+          1,
+          0,
+          0,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 128,
+          "development": 126,
+          "train": 590
+        },
+        "material": [
+          1,
+          0,
+          1,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 3,
+          "development": 2,
+          "train": 9
+        },
+        "material": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 1,
+          "development": 0,
+          "train": 2
+        },
+        "material": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 1,
+          "development": 0,
+          "train": 0
+        },
+        "material": [
+          1,
+          2,
+          0,
+          0
+        ],
+        "value": 0
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 85,
+          "development": 83,
+          "train": 391
+        },
+        "material": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 33,
+          "development": 32,
+          "train": 149
+        },
+        "material": [
+          0,
+          0,
+          1,
+          2
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 448,
+          "development": 446,
+          "train": 2085
+        },
+        "material": [
+          0,
+          0,
+          2,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 4,
+          "development": 3,
+          "train": 16
+        },
+        "material": [
+          0,
+          1,
+          1,
+          0
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 43,
+          "development": 42,
+          "train": 197
+        },
+        "material": [
+          0,
+          1,
+          1,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 4,
+          "development": 2,
+          "train": 13
+        },
+        "material": [
+          1,
+          0,
+          0,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 787,
+          "development": 786,
+          "train": 3670
+        },
+        "material": [
+          1,
+          0,
+          1,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 2,
+          "development": 1,
+          "train": 4
+        },
+        "material": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 1,
+          "development": 0,
+          "train": 0
+        },
+        "material": [
+          1,
+          1,
+          0,
+          1
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 4,
+          "development": 2,
+          "train": 11
+        },
+        "material": [
+          1,
+          1,
+          1,
+          0
+        ],
+        "value": 1
+      },
+      {
+        "canonical_counts": {
+          "confirmation": 1,
+          "development": 0,
+          "train": 1
+        },
+        "material": [
+          2,
+          1,
+          0,
+          0
+        ],
+        "value": 1
+      }
+    ]
+  },
+  "result_hash": "d8bd43b22160b747df775741a54e900eea5447836df416010e39a535b3a7ee37",
+  "schema": "mini_jass.m12_greedy_l2_replication.v1",
+  "scientific_gate": {
+    "criteria": {
+      "at_least_one_eligible_candidate": true,
+      "confirmation_selection_confidence_above_zero": false,
+      "deterministic_replay": true,
+      "development_selection_confidence_above_zero": false,
+      "exactly_five_successful_runs": true,
+      "greedy_behavior_only": true,
+      "historical_nontrain_untouched": true,
+      "historical_train_only": true,
+      "m11_holdout_excluded": true,
+      "mean_confirmation_optimal_mass_delta": true,
+      "mean_confirmation_value_sign_delta": true,
+      "mean_development_optimal_mass_delta": true,
+      "mean_development_value_sign_delta": true,
+      "minimum_target_optimal_mass": true,
+      "minimum_target_value_exact_rate": true,
+      "training_sample_filter_enforced": true
+    },
+    "status": "FAIL"
+  },
+  "status": "FAIL"
+}

@@ -98,6 +98,7 @@ def execute_loop(
     oracle: OracleArrays,
     development_indices: np.ndarray,
     training_start_indices: np.ndarray | None = None,
+    training_state_mask: np.ndarray | None = None,
 ) -> LoopExecution:
     """Execute once without filesystem writes, enabling an independent replay."""
     threads = int(config["runtime"]["threads"])
@@ -119,6 +120,11 @@ def execute_loop(
     candidate_states: list[dict[str, torch.Tensor]] = []
     state_sample_counts = np.zeros(graph.state_count, dtype=np.uint32)
     all_samples: list[ReplaySample] = []
+    allowed_training_states: np.ndarray | None = None
+    if training_state_mask is not None:
+        allowed_training_states = np.asarray(training_state_mask, dtype=np.bool_)
+        if allowed_training_states.shape != (graph.state_count,):
+            raise ValueError("training-state mask must cover the complete graph")
     start_state_ids: np.ndarray | None = None
     if self_play_config.start_state_source == "train_split":
         if training_start_indices is None:
@@ -144,7 +150,18 @@ def execute_loop(
             start_state_ids,
         )
         all_samples.extend(generated.samples)
-        replay.extend(generated.samples)
+        training_samples = (
+            generated.samples
+            if allowed_training_states is None
+            else [
+                sample
+                for sample in generated.samples
+                if bool(allowed_training_states[sample.state_id])
+            ]
+        )
+        if not training_samples:
+            raise ValueError("training-state mask rejected every generated sample")
+        replay.extend(training_samples)
         if generated.samples:
             np.add.at(
                 state_sample_counts,
@@ -153,7 +170,7 @@ def execute_loop(
             )
         replay_rng = np.random.default_rng(seed + generation * 15_000)
         if replay_config["strategy"] == "disabled":
-            training_pool = generated.samples
+            training_pool = training_samples
         else:
             training_pool = replay.sample(
                 int(replay_config["training_samples"]),

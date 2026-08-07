@@ -1,0 +1,19 @@
+schema: mini_jass.greedy_l2_replication.v1
+paired_seeds: [122001, 122002, 122003, 122004, 122005]
+m11_evidence: artefacts/m11_greedy_confirmation.v1.json
+expected_m11_result_hash: 9e2eba389aa9c384e1f33e262707a624f20c18b75beb5afe04509f88b5359e87
+loop_config: configs/l2_score_softmax_selfplay.yaml
+historical_split_seed: 20260807
+historical_split_manifest: artefacts/split_manifest.l2.v1.json
+replication_split:
+  seed: 20260809
+  train_fraction: 0.70
+  development_fraction: 0.15
+  confirmation_fraction: 0.15
+mechanism_overrides:
+  self_play.exploration.strategy: greedy
+scientific_gate:
+  minimum_mean_value_sign_delta: 0.0
+  minimum_mean_optimal_mass_delta: 0.0
+  minimum_target_value_exact_rate: 0.70
+  minimum_target_optimal_mass: 0.85

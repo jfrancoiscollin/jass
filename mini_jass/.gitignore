@@ -15,6 +15,7 @@
 !/artefacts/m9_l2_transfer_gate.v1.json
 !/artefacts/m10_wdl_diagnosis.v1.json
 !/artefacts/m11_greedy_confirmation.v1.json
+!/artefacts/m12_greedy_l2_replication.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/

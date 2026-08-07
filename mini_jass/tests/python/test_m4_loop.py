@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import numpy as np
+
 from mini_jass_lab.loop import execute_loop
 from mini_jass_lab.split import build_split
 
@@ -72,3 +74,23 @@ def test_complete_loop_repeats_with_identical_hashes(synthetic_oracle) -> None:
         "dtw",
         "optimal_actions",
     ]
+
+
+def test_training_state_mask_excludes_holdout_positions_from_replay(
+    synthetic_oracle,
+) -> None:
+    split = build_split(synthetic_oracle, 20260806)
+    config = tiny_config(split.manifest["manifest_hash"])
+    config["replay"]["strategy"] = "disabled"
+    mask = np.zeros(synthetic_oracle.state_count, dtype=np.bool_)
+    mask[:2] = True
+    execution = execute_loop(
+        config,
+        synthetic_oracle,
+        split.indices("development"),
+        training_state_mask=mask,
+    )
+    eligible = sum(bool(mask[sample.state_id]) for sample in execution.samples)
+    assert eligible > 0
+    assert eligible < len(execution.samples)
+    assert execution.core["generations"][0]["training"]["sample_pool"] == eligible

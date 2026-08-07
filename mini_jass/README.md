@@ -281,3 +281,37 @@ Run the frozen confirmation with:
 ```text
 PYTHONPATH=python .venv/bin/python tools/run_greedy_confirmation.py --config configs/l2_greedy_confirmation.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m11-greedy-confirmation-v1 --compact-output artefacts/m11_greedy_confirmation.v1.json
 ```
+
+## M12 contamination-controlled greedy L2 replication
+
+M12 performs the full five-seed L2 learning rerun authorized by M11. It first
+removes the complete M11 holdout from the historical train cohort, then derives
+new 70/15/15 train, development, and sealed confirmation partitions. Replay
+training is explicitly filtered to the new train partition, so generated
+positions belonging to either holdout cannot enter optimizer batches. The M9
+development and frozen-test cohorts are neither evaluated nor used for starts.
+
+Execution passes: all five trainings complete, the first seed replays
+deterministically, one candidate satisfies development plus arena eligibility,
+and every isolation/read-boundary contract holds. Greedy targets reach 75.61%
+exact W/D/L accuracy and 90.55% optimal-action mass, above the unchanged M9
+floors of 70% and 85%.
+
+The scientific gate nevertheless remains closed. Mean development value-sign
+accuracy improves by 1.50 points and optimal mass by 2.32 points, but the joint
+selection-score 95% interval is `[-2.51, +10.14]` points. On the sealed
+confirmation cohort the corresponding gains are 1.18 and 2.25 points, with
+interval `[-2.82, +9.69]`. These two confidence criteria are the only failures;
+the seed variance is retained rather than changing thresholds after execution.
+
+The decision remains `keep_l2_gate_closed`. Implementation preparation,
+production Jass changes, and direct 10x10 transfer are all forbidden. The next
+gate must diagnose or independently replicate the seed variance using only
+fresh train-derived data. Compact evidence is stored in
+`artefacts/m12_greedy_l2_replication.v1.json`.
+
+Run the frozen replication with:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_greedy_l2_replication.py --config configs/l2_greedy_replication.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m12-greedy-l2-replication-v1 --compact-output artefacts/m12_greedy_l2_replication.v1.json
+```
