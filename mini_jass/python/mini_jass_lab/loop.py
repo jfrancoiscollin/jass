@@ -19,7 +19,7 @@ from .arena import ArenaConfig, run_arena
 from .game_graph import GameGraph
 from .model import MiniJassMLP, ModelConfig, model_hash, parameter_count
 from .oracle import OracleArrays, ensure_artefact_path, load_oracle, uniform_optimal_targets
-from .replay import ReplayBuffer
+from .replay import ReplayBuffer, ReplaySample
 from .selfplay import ExplorationConfig, SelfPlayConfig, generate_self_play
 from .selfplay_train import train_from_replay
 from .split import build_split
@@ -32,6 +32,7 @@ class LoopExecution:
     candidate_states: list[dict[str, torch.Tensor]]
     final_state: dict[str, torch.Tensor]
     state_sample_counts: np.ndarray
+    samples: list[ReplaySample]
 
 
 def _json_bytes(value: Any) -> bytes:
@@ -83,6 +84,7 @@ def _parse_self_play(config: dict[str, Any]) -> SelfPlayConfig:
             if config.get("game_schedule") is not None
             else None
         ),
+        start_state_source=config.get("start_state_source", "initial"),
         exploration=exploration,
     )
 
@@ -91,6 +93,7 @@ def execute_loop(
     config: dict[str, Any],
     oracle: OracleArrays,
     development_indices: np.ndarray,
+    training_start_indices: np.ndarray | None = None,
 ) -> LoopExecution:
     """Execute once without filesystem writes, enabling an independent replay."""
     threads = int(config["runtime"]["threads"])
@@ -111,6 +114,21 @@ def execute_loop(
     generation_records: list[dict[str, Any]] = []
     candidate_states: list[dict[str, torch.Tensor]] = []
     state_sample_counts = np.zeros(graph.state_count, dtype=np.uint32)
+    all_samples: list[ReplaySample] = []
+    start_state_ids: np.ndarray | None = None
+    if self_play_config.start_state_source == "train_split":
+        if training_start_indices is None:
+            raise ValueError("train-split starts require the immutable train cohort")
+        start_state_ids = np.asarray(
+            [
+                int(state_id)
+                for state_id in training_start_indices
+                if graph.terminal_value(int(state_id)) is None
+            ],
+            dtype=np.int64,
+        )
+        if not start_state_ids.size:
+            raise ValueError("the train cohort has no non-terminal start state")
 
     for generation in range(1, int(config["generations"]) + 1):
         generated = generate_self_play(
@@ -119,7 +137,9 @@ def execute_loop(
             self_play_config,
             generation,
             seed + generation * 10_000,
+            start_state_ids,
         )
+        all_samples.extend(generated.samples)
         replay.extend(generated.samples)
         if generated.samples:
             np.add.at(
@@ -225,6 +245,7 @@ def execute_loop(
         "training_target_contract": {
             "value": "final_self_play_wdl",
             "policy": "selected_move_or_search_visit_distribution",
+            "start_states": self_play_config.start_state_source,
             "forbidden_fields": ["oracle_value", "dtw", "optimal_actions"],
         },
     }
@@ -234,6 +255,7 @@ def execute_loop(
         candidate_states,
         deepcopy(parent.state_dict()),
         state_sample_counts,
+        all_samples,
     )
 
 

@@ -46,6 +46,7 @@ class SelfPlayConfig:
     node_budgets: tuple[int, ...] = (16,)
     search_enabled: bool | None = None
     game_schedule: tuple[int, ...] | None = None
+    start_state_source: str = "initial"
     exploration: ExplorationConfig = field(default_factory=ExplorationConfig)
 
     def __post_init__(self) -> None:
@@ -55,6 +56,8 @@ class SelfPlayConfig:
             raise ValueError("games and max_plies must be positive")
         if self.mode == "search_improved" and self.search_enabled is False:
             raise ValueError("search-improved targets require search")
+        if self.start_state_source not in ("initial", "train_split"):
+            raise ValueError("start-state source must be initial or train_split")
         if self.game_schedule is not None and (
             not self.game_schedule or any(games < 1 for games in self.game_schedule)
         ):
@@ -120,8 +123,15 @@ def generate_self_play(
     config: SelfPlayConfig,
     generation: int,
     seed: int,
+    start_state_ids: np.ndarray | None = None,
 ) -> GenerationResult:
     """Generate replay targets without reading solved oracle labels."""
+    if config.start_state_source == "train_split":
+        if start_state_ids is None or not len(start_state_ids):
+            raise ValueError("train-split starts require non-terminal state ids")
+        available_starts = np.asarray(start_state_ids, dtype=np.int64)
+    else:
+        available_starts = None
     inference = InferenceCache()
     samples: list[ReplaySample] = []
     visited_states: set[int] = set()
@@ -142,10 +152,16 @@ def generate_self_play(
     search_trace: list[dict[str, Any]] = []
     safety_draws = 0
     game_count = config.games_for_generation(generation)
+    selected_starts: list[int] = []
 
     for game_id in range(game_count):
         rng = np.random.default_rng(seed + game_id)
-        state_id = 0
+        state_id = (
+            int(rng.choice(available_starts))
+            if available_starts is not None
+            else 0
+        )
+        selected_starts.append(state_id)
         trajectory: list[tuple[int, np.ndarray, int]] = []
         terminal_value: float | None = None
         for ply in range(config.max_plies):
@@ -254,6 +270,10 @@ def generate_self_play(
         "max_game_length": max(lengths),
         "outcomes_from_initial_side": outcomes,
         "safety_draws": safety_draws,
+        "start_states": {
+            "source": config.start_state_source,
+            "unique": len(set(selected_starts)),
+        },
         "search": search_totals,
         "search_trace": search_trace,
     }

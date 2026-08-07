@@ -1,0 +1,93 @@
+{
+  "artifact_hashes": {
+    "arm_results.jsonl": "276fedc53c9bf4f73eab0a4422bfa9a454cb41df4d11d0fa411ebcf0212ef59a",
+    "comparison.json": "aadd3efd4eaa9bccd572b87da4938f506ba404fe129c0f8684917d2e6febf0cd",
+    "config.resolved.yaml": "9a2931a39cedfe7746ec0a116e8ca4fa1f56616b697e5ca75332d8ad6e4be847",
+    "executable_manifest.json": "2e0174d1d5971c3fb01b4f18112e0251d328b17f1dbf7975fa89b9f69456aa00",
+    "recommendation.json": "8a16218a9f6d4ef36ae460081198bb0cee750f8ee6274e55fc1286ff4aa5e9fd",
+    "result.json": "f3329eaebc2e27b95c61be4b55ca0e7cdc39719a05e642d58a8d768a53e7e33c",
+    "summary.md": "6dee6d3e8f682a39d16bf5e20855ba35bc660c19e4fe9d255ba2d6dad0c669de"
+  },
+  "contracts": {
+    "action_schema": "mini_jass.actions.v1",
+    "action_vocabulary_hash": 11242579555617580249,
+    "canonical_graph_hash": 3712505811235282327,
+    "m5_evidence_sha256": "cc50039047ab40c9572d530549c70f2cc271876e07ed338dc2a610aa19bfb89d",
+    "m5_result_hash": "bc8a95c25159be2ce0ec7803bacb450fea100be83998d6fcc07bdeed3e0e27bf",
+    "oracle_export_sha256": "eb35afc28b6e8a39d7151d894517d2a9442521e9723f4be19d266bcf3128b8eb",
+    "python_package_sha256": "7f9790884985c6c888fd5a305ee3a2f7e9b1dad0f3ad0b38fc8b0717b2cb38df",
+    "raw_graph_hash": 3347327730907747976,
+    "rule_schema": "mini_jass.rules.l1.v1",
+    "solver_hash": 10671205679107391448,
+    "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524"
+  },
+  "evidence": {
+    "coverage_multiplier": 4.3409542743538765,
+    "mean_development_optimal_mass_delta": -0.0018139123916625977,
+    "mean_development_value_sign_delta": 0.36199195730797445,
+    "mean_eligible_generation_count": 0.4,
+    "mean_target_optimal_mass": 0.8824544191360474,
+    "mean_target_value_exact_rate": 0.7743697167593272,
+    "selected_arm": "strong_1024",
+    "selected_experiment": "E6",
+    "selection_score_confidence_95": [
+      0.34334709054103074,
+      0.37700899929159293
+    ]
+  },
+  "gate": {
+    "all_runs_reported": true,
+    "all_runs_successful": true,
+    "consumed_node_balance": true,
+    "frozen_test_unsealed_after_protocol_fixed": true,
+    "maximum_consumed_node_imbalance": 0.35,
+    "minimum_five_paired_seeds": true,
+    "paired_initial_weights": true,
+    "status": "PASS",
+    "train_split_start_contract": true
+  },
+  "m5_result_hash": "bc8a95c25159be2ce0ec7803bacb450fea100be83998d6fcc07bdeed3e0e27bf",
+  "milestone": "M6",
+  "pack": {
+    "arm_count": 11,
+    "experiments": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+    ],
+    "paired_seeds": [
+      61001,
+      61002,
+      61003,
+      61004,
+      61005
+    ],
+    "run_count": 55,
+    "successful_run_count": 55
+  },
+  "protocol_hash": "8bbd91d1a9bb2a6cc4884a3917b43d9db8f549c7f8f25492bcc8109c2f80ac51",
+  "recommendation": {
+    "decision": "continue_L1_policy_gate",
+    "direct_10x10_transfer_authorized": false,
+    "l2_transfer_authorized": false,
+    "next_gate": "Repair search-policy target generalization on L1, then rerun this frozen gate.",
+    "reason": "L1 now converts broader coverage into repeatable value progress, but the strict optimal-move-mass gate is not yet satisfied."
+  },
+  "result_hash": "18347e743dc50972cf1107442a1a5a7e9c67d55fda3beb77a3e0db6c7934b1f9",
+  "schema": "mini_jass.m6_learning_gate.v1",
+  "scientific_gate": {
+    "criteria": {
+      "at_least_one_eligible_candidate": true,
+      "coverage_multiplier": true,
+      "mean_development_optimal_mass_delta": false,
+      "mean_development_value_sign_delta": true,
+      "minimum_target_optimal_mass": true,
+      "minimum_target_value_exact_rate": true,
+      "selection_confidence_interval_above_zero": true
+    },
+    "status": "FAIL"
+  },
+  "status": "PASS"
+}

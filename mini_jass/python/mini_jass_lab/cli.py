@@ -9,6 +9,7 @@ from pathlib import Path
 from .oracle import export_oracle, load_oracle
 from .loop import run_selfplay_loop
 from .experiment import run_experiment_pack
+from .learning_gate import run_learning_gate
 from .split import build_split, write_split_manifest
 from .train import run_training
 
@@ -41,6 +42,12 @@ def main() -> int:
     experiment_parser.add_argument("--oracle", type=Path, required=True)
     experiment_parser.add_argument("--run-dir", type=Path, required=True)
 
+    learning_parser = subparsers.add_parser("learning-gate")
+    learning_parser.add_argument("--config", type=Path, required=True)
+    learning_parser.add_argument("--oracle", type=Path, required=True)
+    learning_parser.add_argument("--run-dir", type=Path, required=True)
+    learning_parser.add_argument("--compact-output", type=Path)
+
     arguments = parser.parse_args()
     if arguments.command == "export-oracle":
         digest = export_oracle(arguments.executable, arguments.output)
@@ -62,6 +69,15 @@ def main() -> int:
     if arguments.command == "experiment-pack":
         result = run_experiment_pack(
             arguments.config, arguments.oracle, arguments.run_dir
+        )
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result["gate"]["status"] == "PASS" else 1
+    if arguments.command == "learning-gate":
+        result = run_learning_gate(
+            arguments.config,
+            arguments.oracle,
+            arguments.run_dir,
+            arguments.compact_output,
         )
         print(json.dumps(result, sort_keys=True))
         return 0 if result["gate"]["status"] == "PASS" else 1
