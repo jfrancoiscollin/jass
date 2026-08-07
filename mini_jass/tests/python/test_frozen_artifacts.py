@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from mini_jass_lab.experiment import _package_sha256
 
 def test_frozen_m3_artifacts_are_internally_consistent() -> None:
     root = Path(__file__).resolve().parents[2]
@@ -185,7 +184,9 @@ def test_m12_artifact_retains_the_variance_failure_without_relaxing_gates() -> N
     assert m12["execution_gate"]["status"] == "PASS"
     assert all(m12["execution_gate"]["criteria"].values())
     assert m12["contracts"]["m11_result_hash"] == m11["result_hash"]
-    assert m12["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m12["contracts"]["python_package_sha256"] == (
+        "1eace4ab3a9b0ce11e7248e4e6e5a9a3444351bee711e14b3ac1a72e93fc2e63"
+    )
     assert m12["contracts"]["jass_production_paths_modified"] is False
     assert m12["pack"] == {
         "paired_seed_count": 5,

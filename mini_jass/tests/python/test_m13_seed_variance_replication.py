@@ -78,6 +78,18 @@ def test_m13_config_freezes_power_fresh_data_cpx_and_unchanged_thresholds() -> N
     assert resolved["power_analysis"]["fixed_replication_seed_count"] == 20
 
 
+def test_m13_cpx_job_uses_cpu_torch_without_mutating_production_jass() -> None:
+    root = Path(__file__).resolve().parents[2]
+    script = (root / "jobs/run_m13_seed_variance_cpx.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "https://download.pytorch.org/whl/cpu" in script
+    assert "torch==2.13.0" in script
+    assert "pip install -r" not in script
+    assert 'cmake -S "$repo/mini_jass"' in script
+    assert "jass_production" not in script.lower()
+
+
 def test_m13_gate_can_prepare_isolated_contract_but_never_modify_jass() -> None:
     aggregate = {
         "successful_run_count": 20,

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mini-jass-lab"
-version = "0.13.0"
+version = "0.13.1"
 description = "Standalone exact and contamination-controlled L1/L2 Mini-Jass learning laboratory"
 requires-python = ">=3.11"
 dependencies = [
