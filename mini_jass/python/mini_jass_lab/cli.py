@@ -12,6 +12,7 @@ from .experiment import run_experiment_pack
 from .learning_gate import run_learning_gate
 from .l2_transfer_gate import run_l2_transfer_gate
 from .greedy_confirmation import run_greedy_confirmation
+from .greedy_l2_replication import run_greedy_l2_replication
 from .wdl_diagnosis import run_wdl_diagnosis
 from .policy_gate import run_policy_gate
 from .split import build_split, write_split_manifest
@@ -77,6 +78,12 @@ def main() -> int:
     confirmation_parser.add_argument("--run-dir", type=Path, required=True)
     confirmation_parser.add_argument("--compact-output", type=Path)
 
+    greedy_l2_parser = subparsers.add_parser("greedy-l2-replication")
+    greedy_l2_parser.add_argument("--config", type=Path, required=True)
+    greedy_l2_parser.add_argument("--oracle", type=Path, required=True)
+    greedy_l2_parser.add_argument("--run-dir", type=Path, required=True)
+    greedy_l2_parser.add_argument("--compact-output", type=Path)
+
     arguments = parser.parse_args()
     if arguments.command == "export-oracle":
         digest = export_oracle(arguments.executable, arguments.output, arguments.level)
@@ -139,6 +146,15 @@ def main() -> int:
         return 0 if result["execution_gate"]["status"] == "PASS" else 1
     if arguments.command == "greedy-confirmation":
         result = run_greedy_confirmation(
+            arguments.config,
+            arguments.oracle,
+            arguments.run_dir,
+            arguments.compact_output,
+        )
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result["execution_gate"]["status"] == "PASS" else 1
+    if arguments.command == "greedy-l2-replication":
+        result = run_greedy_l2_replication(
             arguments.config,
             arguments.oracle,
             arguments.run_dir,
