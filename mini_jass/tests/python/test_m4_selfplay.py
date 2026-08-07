@@ -47,3 +47,23 @@ def test_search_improved_uses_visit_policy() -> None:
     assert np.isclose(policy.sum(), 1.0)
     assert policy[0] == policy[1] == 0.5
     assert result.samples[0].value_target == 1.0
+
+
+def test_outcome_targets_can_use_search_for_move_selection() -> None:
+    config = SelfPlayConfig(
+        mode="outcome_only",
+        games=1,
+        max_plies=4,
+        search_depth=2,
+        node_budgets=(3,),
+        search_enabled=True,
+        exploration=ExplorationConfig(strategy="greedy"),
+    )
+    result = generate_self_play(tiny_graph(), FixedModel(1), config, 1, 300)
+    assert result.samples[0].policy_target[0] == 1.0
+    assert result.metrics["search"]["decisions"] == 1
+
+
+def test_generation_game_schedule_is_explicit() -> None:
+    config = SelfPlayConfig(games=9, game_schedule=(3, 2, 1))
+    assert [config.games_for_generation(index) for index in (1, 2, 3)] == [3, 2, 1]

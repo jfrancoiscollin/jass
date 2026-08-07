@@ -1,0 +1,141 @@
+schema: mini_jass.experiment_pack.v1
+paired_seeds: [51001, 51002, 51003, 51004, 51005]
+base_loop_config: configs/l1_search_selfplay.yaml
+base_overrides:
+  deterministic: true
+  generations: 1
+  self_play.games: 3
+  self_play.max_plies: 64
+  self_play.search_depth: 4
+  self_play.budget_policy: fixed
+  self_play.node_budgets: [16]
+  self_play.exploration.strategy: greedy
+  self_play.exploration.epsilon: 0.0
+  replay.capacity: 4096
+  replay.strategy: disabled
+  replay.training_samples: 256
+  training.steps: 2
+  training.batch_size: 32
+  training.learning_rate: 0.002
+  arena.pairs: 1
+  arena.max_plies: 64
+  arena.search_depth: 2
+  arena.node_budget: 4
+  development.batch_size: 8192
+  promotion.minimum_development_improvement: 1.0
+  promotion.minimum_arena_lower_bound: 1.0
+  runtime.threads: 1
+report_procedure:
+  confidence: 0.95
+  paired_differences: arm_minus_reference
+  primary_value_metric: frozen_test_value_error
+  frozen_test_unseal: after_all_candidates_and_protocol_hash
+  zero_sample_stratum: required
+  maximum_consumed_node_imbalance: 0.35
+experiments:
+  E1:
+    causal_factor: outcome_only_self_play
+    reference_arm: outcome_fixed16
+    overrides:
+      mode: outcome_only
+      self_play.mode: outcome_only
+      self_play.search_enabled: true
+      self_play.search_depth: 16
+      self_play.budget_policy: fixed
+      self_play.node_budgets: [16]
+      self_play.exploration.strategy: greedy
+      self_play.exploration.warmup_games: 1
+      self_play.exploration.warmup_epsilon: 0.25
+      replay.strategy: disabled
+    arms:
+      outcome_fixed16:
+        overrides: {}
+  E2:
+    causal_factor: search_stopping_rule
+    reference_arm: fixed_depth_3
+    overrides:
+      mode: search_improved
+      self_play.mode: search_improved
+      self_play.search_enabled: true
+      self_play.exploration.strategy: greedy
+      replay.strategy: disabled
+    arms:
+      fixed_depth_3:
+        overrides:
+          self_play.games: 1
+          self_play.search_depth: 3
+          self_play.budget_policy: fixed
+          self_play.node_budgets: [256]
+      fixed_nodes_8:
+        overrides:
+          self_play.games: 15
+          self_play.search_depth: 64
+          self_play.budget_policy: fixed
+          self_play.node_budgets: [8]
+  E3:
+    causal_factor: node_budget_distribution
+    reference_arm: fixed_32
+    overrides:
+      generations: 5
+      mode: search_improved
+      self_play.mode: search_improved
+      self_play.search_enabled: true
+      self_play.exploration.strategy: epsilon_greedy
+      self_play.exploration.epsilon: 0.10
+      replay.strategy: disabled
+    arms:
+      fixed_32:
+        overrides:
+          self_play.games: 2
+          self_play.search_depth: 16
+          self_play.budget_policy: fixed
+          self_play.node_budgets: [32]
+      uniform_8_16_32_64:
+        overrides:
+          self_play.games: 3
+          self_play.search_depth: 16
+          self_play.budget_policy: uniform
+          self_play.node_budgets: [8, 16, 32, 64]
+      log_uniform_4_128:
+        overrides:
+          self_play.games: 3
+          self_play.search_depth: 16
+          self_play.budget_policy: log_uniform
+          self_play.node_budgets: [4, 8, 16, 32, 64, 128]
+      curriculum_8_128:
+        overrides:
+          self_play.games: 2
+          self_play.game_schedule: [3, 3, 2, 1, 1]
+          self_play.search_depth: 16
+          self_play.budget_policy: curriculum
+          self_play.node_budgets: [8, 16, 32, 64, 128]
+  E4:
+    causal_factor: exploration_policy
+    reference_arm: greedy
+    overrides:
+      mode: search_improved
+      self_play.mode: search_improved
+      self_play.search_enabled: true
+      self_play.search_depth: 8
+      self_play.budget_policy: fixed
+      self_play.node_budgets: [16]
+      replay.strategy: disabled
+    arms:
+      greedy:
+        overrides:
+          self_play.exploration.strategy: greedy
+      epsilon_greedy:
+        overrides:
+          self_play.exploration.strategy: epsilon_greedy
+          self_play.exploration.epsilon: 0.10
+      top_2_uniform:
+        overrides:
+          self_play.games: 10
+          self_play.exploration.strategy: top_k_uniform
+          self_play.exploration.top_k: 2
+      top_3_softmax:
+        overrides:
+          self_play.games: 6
+          self_play.exploration.strategy: top_k_softmax
+          self_play.exploration.top_k: 3
+          self_play.exploration.temperature: 1.0
