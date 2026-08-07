@@ -130,3 +130,39 @@ def test_m10_artifact_diagnoses_wdl_noise_without_reading_m9_frozen_test() -> No
     )
     assert m10["recommendation"]["finding"] == "exploration_outcome_noise"
     assert m10["recommendation"]["direct_10x10_transfer_authorized"] is False
+
+
+def test_m11_artifact_confirms_greedy_only_for_a_fresh_l2_rerun() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m10 = json.loads(
+        (root / "artefacts/m10_wdl_diagnosis.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    m11 = json.loads(
+        (root / "artefacts/m11_greedy_confirmation.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert m11["schema"] == "mini_jass.m11_greedy_confirmation.v1"
+    assert m11["status"] == "PASS"
+    assert m11["contracts"]["m10_result_hash"] == m10["result_hash"]
+    assert m11["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m11["contracts"]["jass_production_paths_modified"] is False
+    assert m11["confirmation_holdout"]["source_cohort"] == (
+        "historical_train_only"
+    )
+    assert m11["aggregate"]["successful_run_count"] == 10
+    assert m11["aggregate"]["paired_initial_weights"] is True
+    assert m11["aggregate"]["paired_start_sequences"] is True
+    assert m11["aggregate"]["m9_frozen_test_reads"] == 0
+    assert m11["aggregate"]["paired_exact_rate_delta"]["confidence_95"][0] > 0.0
+    assert m11["scientific_gate"]["status"] == "PASS"
+    assert all(m11["scientific_gate"]["criteria"].values())
+    assert m11["recommendation"]["decision"] == (
+        "rerun_l2_replication_with_confirmed_greedy_behavior"
+    )
+    assert m11["recommendation"]["l2_replication_rerun_authorized"] is True
+    assert m11["recommendation"]["l2_transfer_confirmed"] is False
+    assert m11["recommendation"]["implementation_preparation_authorized"] is False
+    assert m11["recommendation"]["direct_10x10_transfer_authorized"] is False

@@ -254,3 +254,30 @@ Run the frozen diagnostic with:
 ```text
 PYTHONPATH=python .venv/bin/python tools/run_wdl_diagnosis.py --config configs/l2_wdl_diagnosis.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m10-wdl-diagnosis-v1 --compact-output artefacts/m10_wdl_diagnosis.v1.json
 ```
+
+## M11 independent greedy confirmation
+
+M11 confirms the M10 diagnosis on a new deterministic holdout derived strictly
+inside the historical L2 train cohort. The holdout contains 6,603 canonical
+classes and 6,487 non-terminal raw starts. It never evaluates, selects, or
+tunes on the M9 development or frozen-test cohorts. Five new paired seeds run
+256 games per arm with identical initial weights and start sequences; the only
+causal change is Top-2 uniform versus greedy behavior.
+
+All 10 runs complete and every preregistered criterion passes. Mean exact W/D/L
+target accuracy rises from 64.62% to 76.68%, a paired gain of 12.06 percentage
+points with 95% interval `[+6.82, +17.29]`. Greedy policy targets retain 90.36%
+optimal-action mass, and the mean safety-draw game rate does not increase.
+
+The retained decision is
+`rerun_l2_replication_with_confirmed_greedy_behavior`. This authorizes only a
+fresh full L2 learning-gate rerun. L2 transfer is not yet confirmed, and neither
+implementation preparation nor direct Jass 10x10 integration is authorized.
+Compact evidence is stored in
+`artefacts/m11_greedy_confirmation.v1.json`.
+
+Run the frozen confirmation with:
+
+```text
+PYTHONPATH=python .venv/bin/python tools/run_greedy_confirmation.py --config configs/l2_greedy_confirmation.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m11-greedy-confirmation-v1 --compact-output artefacts/m11_greedy_confirmation.v1.json
+```
