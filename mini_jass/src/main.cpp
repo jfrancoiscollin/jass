@@ -103,6 +103,8 @@ void print_oracle_jsonl() {
                   << static_cast<unsigned>(node.state.side_to_move) << ','
                   << "\"reversible_plies\":"
                   << static_cast<unsigned>(node.state.reversible_plies) << ','
+                  << "\"terminal_status\":"
+                  << static_cast<unsigned>(mini_jass::terminal_status(node.state)) << ','
                   << "\"canonical_state_id\":" << node.canonical_state_id << ','
                   << "\"canonical_transform\":"
                   << (node.canonical_transform ? "true" : "false") << ','

@@ -1,0 +1,75 @@
+{
+  "schema": "mini_jass.m4_baseline.v1",
+  "milestone": "M4",
+  "status": "PASS",
+  "mode": "search_improved",
+  "seed": 41001,
+  "deterministic_gate": {
+    "name": "repeated_seeded_artifact_hashes",
+    "status": "PASS",
+    "matching_artifact_count": 6,
+    "artifact_count": 6,
+    "execution_hash": "1b0f668bdebd6584a829390158d0754934d0282cce4fb157617c59d9be24bacd"
+  },
+  "contracts": {
+    "solver_hash": 10671205679107391448,
+    "oracle_export_sha256": "eb35afc28b6e8a39d7151d894517d2a9442521e9723f4be19d266bcf3128b8eb",
+    "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524",
+    "oracle_usage": "development_promotion_gate_only",
+    "frozen_test_used": false,
+    "value_target": "final_self_play_wdl",
+    "policy_target": "search_visit_distribution",
+    "forbidden_generation_fields": [
+      "oracle_value",
+      "dtw",
+      "optimal_actions"
+    ]
+  },
+  "model": {
+    "parameter_count": 5225,
+    "initial_hash": "e742d2d2b00cf5f8c19c234c1375a83af76de0bf65d0bb489f86d4dec8fd70ba",
+    "candidate_hashes": [
+      "2a2f5a1e023aeaa92cf5dab4d5e726208c5c18b2f99170efbe476d2253f010b7",
+      "61f7a5b8ce42d464af62caa016a93f5c2cc3ae3f9bd9ec1a6aac9d318d0cd0a6"
+    ],
+    "final_hash": "e742d2d2b00cf5f8c19c234c1375a83af76de0bf65d0bb489f86d4dec8fd70ba"
+  },
+  "generations": [
+    {
+      "generation": 1,
+      "games": 8,
+      "positions": 61,
+      "unique_states": 14,
+      "requested_nodes": 244,
+      "consumed_nodes": 223,
+      "development_score_improvement": -0.0010385513305664062,
+      "arena_lower_confidence_bound": 0.15351767721859172,
+      "promoted": false
+    },
+    {
+      "generation": 2,
+      "games": 8,
+      "positions": 82,
+      "unique_states": 32,
+      "requested_nodes": 656,
+      "consumed_nodes": 545,
+      "development_score_improvement": -0.0015191435813903809,
+      "arena_lower_confidence_bound": 0.15351767721859172,
+      "promoted": false
+    }
+  ],
+  "deterministic_artifact_hashes": {
+    "arena.json": "6b798c89d71e2dbe866470b99a1d4d6b0d99c27ad31763a851db7acace6e9c11",
+    "config.resolved.yaml": "9528427bff94a49a2e4ac6ccf07155248cc90a63af5c6f00fc8b1f5b153d80a2",
+    "coverage.json": "8f6b2f0f0da20ca499ff8c1b0e2851ac305c1d98ff18ac30bd28ff8c5f9f7bea",
+    "execution.json": "c4caa383a7e9118ffa864e06cf898100229af83145413088f0bb89f23426914c",
+    "metrics.jsonl": "842449bf2b696b0e1a518fe09f5b6f5ddc53f17cd4b2c60ca6e30fa9aa63dad2",
+    "seeds.json": "7cae38312ffdab93ac01986a02dea58f5664a7cd4bcc126f6eca730287d0c356"
+  },
+  "validation": {
+    "python_tests": 19,
+    "python_status": "PASS",
+    "promotion_count": 0,
+    "promotion_note": "Both candidates were correctly rejected by development and arena gates."
+  }
+}

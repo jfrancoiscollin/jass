@@ -26,6 +26,7 @@ class OracleArrays:
     bitboards: np.ndarray
     sides: np.ndarray
     reversible_plies: np.ndarray
+    terminal_status: np.ndarray
     canonical_ids: np.ndarray
     canonical_transforms: np.ndarray
     canonical_parent_counts: np.ndarray
@@ -87,6 +88,7 @@ def load_oracle(path: Path) -> OracleArrays:
         bitboards = np.empty((count, 4), dtype=np.uint16)
         sides = np.empty(count, dtype=np.uint8)
         reversible = np.empty(count, dtype=np.uint8)
+        terminal_status = np.empty(count, dtype=np.uint8)
         canonical_ids = np.empty(count, dtype=np.uint32)
         canonical_transforms = np.empty(count, dtype=np.bool_)
         parent_counts = np.empty(count, dtype=np.uint8)
@@ -114,6 +116,7 @@ def load_oracle(path: Path) -> OracleArrays:
             )
             sides[index] = record["side_to_move"]
             reversible[index] = record["reversible_plies"]
+            terminal_status[index] = record["terminal_status"]
             canonical_ids[index] = record["canonical_state_id"]
             canonical_transforms[index] = record["canonical_transform"]
             parent_counts[index] = record["canonical_parent_count"]
@@ -133,6 +136,10 @@ def load_oracle(path: Path) -> OracleArrays:
             action_children[index, legal] = children
             if not set(optimal).issubset(legal):
                 raise ValueError("optimal actions must be legal")
+            if terminal_status[index] not in (0, 1, 2):
+                raise ValueError("terminal status is outside the rule vocabulary")
+            if (terminal_status[index] == 0) != bool(legal):
+                raise ValueError("terminal status and legal-action set disagree")
 
     if loaded != count:
         raise ValueError(f"oracle expected {count} states but loaded {loaded}")
@@ -147,6 +154,7 @@ def load_oracle(path: Path) -> OracleArrays:
         bitboards=bitboards,
         sides=sides,
         reversible_plies=reversible,
+        terminal_status=terminal_status,
         canonical_ids=canonical_ids,
         canonical_transforms=canonical_transforms,
         canonical_parent_counts=parent_counts,
