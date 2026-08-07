@@ -13,6 +13,7 @@ from .learning_gate import run_learning_gate
 from .l2_transfer_gate import run_l2_transfer_gate
 from .greedy_confirmation import run_greedy_confirmation
 from .greedy_l2_replication import run_greedy_l2_replication
+from .seed_variance_replication import run_seed_variance_replication
 from .wdl_diagnosis import run_wdl_diagnosis
 from .policy_gate import run_policy_gate
 from .split import build_split, write_split_manifest
@@ -83,6 +84,13 @@ def main() -> int:
     greedy_l2_parser.add_argument("--oracle", type=Path, required=True)
     greedy_l2_parser.add_argument("--run-dir", type=Path, required=True)
     greedy_l2_parser.add_argument("--compact-output", type=Path)
+
+    variance_parser = subparsers.add_parser("seed-variance-replication")
+    variance_parser.add_argument("--config", type=Path, required=True)
+    variance_parser.add_argument("--oracle", type=Path, required=True)
+    variance_parser.add_argument("--run-dir", type=Path, required=True)
+    variance_parser.add_argument("--compact-output", type=Path)
+    variance_parser.add_argument("--execution-host")
 
     arguments = parser.parse_args()
     if arguments.command == "export-oracle":
@@ -159,6 +167,16 @@ def main() -> int:
             arguments.oracle,
             arguments.run_dir,
             arguments.compact_output,
+        )
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result["execution_gate"]["status"] == "PASS" else 1
+    if arguments.command == "seed-variance-replication":
+        result = run_seed_variance_replication(
+            arguments.config,
+            arguments.oracle,
+            arguments.run_dir,
+            arguments.compact_output,
+            arguments.execution_host,
         )
         print(json.dumps(result, sort_keys=True))
         return 0 if result["execution_gate"]["status"] == "PASS" else 1

@@ -16,6 +16,7 @@
 !/artefacts/m10_wdl_diagnosis.v1.json
 !/artefacts/m11_greedy_confirmation.v1.json
 !/artefacts/m12_greedy_l2_replication.v1.json
+!/artefacts/m13_seed_variance_replication.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/
