@@ -1,0 +1,527 @@
+{
+  "algorithm": "sha256_ordered_exact_70_15_15_within_value_material_v1",
+  "assignment_hash": "9d8c22d591ad244df25769a24ade42058fe40418e6640a093d778f233687a9f6",
+  "canonical_counts": {
+    "development": 7059,
+    "frozen_test": 7113,
+    "train": 33015
+  },
+  "canonical_state_count": 47187,
+  "manifest_hash": "4819eb79fd063fbc7b45b1c4d0852dd765fb557b7b34927b7b9aa1434567bb6e",
+  "raw_counts": {
+    "development": 7427,
+    "frozen_test": 7503,
+    "train": 34760
+  },
+  "raw_state_count": 49690,
+  "schema": "mini_jass.split_manifest.v1",
+  "seed": 20260807,
+  "solver_hash": 4061279344067907157,
+  "solver_manifest_hash": 3750885099149748467,
+  "strata": [
+    {
+      "canonical_counts": {
+        "development": 2,
+        "frozen_test": 4,
+        "train": 12
+      },
+      "material": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 16,
+        "frozen_test": 18,
+        "train": 79
+      },
+      "material": [
+        0,
+        0,
+        0,
+        2
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 55,
+        "frozen_test": 57,
+        "train": 261
+      },
+      "material": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 420,
+        "frozen_test": 422,
+        "train": 1962
+      },
+      "material": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 1,
+        "frozen_test": 3,
+        "train": 9
+      },
+      "material": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 19,
+        "frozen_test": 21,
+        "train": 93
+      },
+      "material": [
+        0,
+        1,
+        0,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 1,
+        "frozen_test": 2,
+        "train": 4
+      },
+      "material": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 954,
+        "frozen_test": 954,
+        "train": 4452
+      },
+      "material": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 1,
+        "train": 0
+      },
+      "material": [
+        0,
+        2,
+        0,
+        0
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 6,
+        "frozen_test": 7,
+        "train": 29
+      },
+      "material": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 1,
+        "frozen_test": 2,
+        "train": 7
+      },
+      "material": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 1,
+        "frozen_test": 2,
+        "train": 5
+      },
+      "material": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 9,
+        "frozen_test": 11,
+        "train": 45
+      },
+      "material": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 2,
+        "train": 2
+      },
+      "material": [
+        1,
+        2,
+        0,
+        0
+      ],
+      "value": -1
+    },
+    {
+      "canonical_counts": {
+        "development": 432,
+        "frozen_test": 433,
+        "train": 2018
+      },
+      "material": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 1153,
+        "frozen_test": 1154,
+        "train": 5381
+      },
+      "material": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 637,
+        "frozen_test": 639,
+        "train": 2976
+      },
+      "material": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 10,
+        "frozen_test": 12,
+        "train": 51
+      },
+      "material": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 586,
+        "frozen_test": 587,
+        "train": 2734
+      },
+      "material": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 20,
+        "frozen_test": 22,
+        "train": 95
+      },
+      "material": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 231,
+        "frozen_test": 233,
+        "train": 1080
+      },
+      "material": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 3,
+        "frozen_test": 5,
+        "train": 18
+      },
+      "material": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 2,
+        "train": 3
+      },
+      "material": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 1,
+        "train": 1
+      },
+      "material": [
+        1,
+        2,
+        0,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "canonical_counts": {
+        "development": 146,
+        "frozen_test": 147,
+        "train": 681
+      },
+      "material": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 57,
+        "frozen_test": 59,
+        "train": 270
+      },
+      "material": [
+        0,
+        0,
+        1,
+        2
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 794,
+        "frozen_test": 796,
+        "train": 3708
+      },
+      "material": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 6,
+        "frozen_test": 7,
+        "train": 30
+      },
+      "material": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 79,
+        "frozen_test": 81,
+        "train": 372
+      },
+      "material": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 5,
+        "frozen_test": 6,
+        "train": 25
+      },
+      "material": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 1409,
+        "frozen_test": 1410,
+        "train": 6575
+      },
+      "material": [
+        1,
+        0,
+        1,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 1,
+        "frozen_test": 3,
+        "train": 9
+      },
+      "material": [
+        1,
+        1,
+        0,
+        0
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 1,
+        "train": 1
+      },
+      "material": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 5,
+        "frozen_test": 6,
+        "train": 24
+      },
+      "material": [
+        1,
+        1,
+        1,
+        0
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 2,
+        "train": 3
+      },
+      "material": [
+        2,
+        1,
+        0,
+        0
+      ],
+      "value": 1
+    },
+    {
+      "canonical_counts": {
+        "development": 0,
+        "frozen_test": 1,
+        "train": 0
+      },
+      "material": [
+        2,
+        2,
+        0,
+        0
+      ],
+      "value": 1
+    }
+  ]
+}

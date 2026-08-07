@@ -195,3 +195,34 @@ Run the frozen replication after exporting the oracle:
 ```text
 PYTHONPATH=python .venv/bin/python tools/run_learning_gate.py --config configs/l1_frozen_learning_gate.yaml --oracle artefacts/oracle.v1.jsonl --run-dir artefacts/runs/m8-frozen-learning-gate-v2 --compact-output artefacts/m8_learning_gate_replication.v1.json
 ```
+
+## M9 exact L2 transfer gate
+
+M9 adds an independent 6x6 ruleset under `mini_jass::l2`; the frozen 5x5 L1
+interfaces, constants, manifests, and commands remain unchanged. The selected
+exact scope starts from a 2v2 tactical position whose mandatory first capture
+enters a closed 2v1 material class. It contains 49,690 raw states, 137,763
+transitions, short kings, complete mandatory capture paths, and a separate
+122-action vocabulary. The 74-input/122-output model has 7,515 parameters under
+an explicit 8,000-parameter L2 ceiling.
+
+The preregistered M9 pack transfers only the M8-selected mechanism:
+`score_softmax` targets, balanced 16-node roots, search-score behavior, train
+starts, and the `strong_1024` optimizer dose. Five independent paired seeds and
+one deterministic replay complete successfully. Mean development value-sign
+accuracy improves by 0.0271 and optimal-move mass by 0.0224; the joint-score
+95% interval is `[0.0105, 0.0886]`, and target optimal mass is 87.76%.
+
+The scientific gate nevertheless remains closed because mean exact W/D/L target
+accuracy is 59.96%, below the preregistered 70% floor. No threshold was changed
+after frozen-test access. The retained decision is `keep_l2_gate_closed`, and
+direct Jass 10x10 transfer remains forbidden. Compact evidence is stored in
+`artefacts/m9_l2_transfer_gate.v1.json`.
+
+Build and reproduce M9 with:
+
+```text
+cmake -S . -B build && cmake --build build
+PYTHONPATH=python .venv/bin/python tools/export_oracle.py --level l2 --executable build/mini_jass_cli --output artefacts/oracle.l2.v1.jsonl
+PYTHONPATH=python .venv/bin/python tools/run_l2_transfer_gate.py --config configs/l2_frozen_transfer_gate.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m9-l2-transfer-v1 --compact-output artefacts/m9_l2_transfer_gate.v1.json
+```

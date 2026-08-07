@@ -75,9 +75,10 @@ class SearchResult:
     action_scores: dict[int, float]
     visit_counts: dict[int, int]
     stats: SearchStats
+    action_count: int
 
     def visit_policy(self) -> np.ndarray:
-        policy = np.zeros(72, dtype=np.float32)
+        policy = np.zeros(self.action_count, dtype=np.float32)
         total = sum(self.visit_counts.values())
         if total:
             for action, visits in self.visit_counts.items():
@@ -87,7 +88,7 @@ class SearchResult:
         return policy
 
     def best_action_policy(self) -> np.ndarray:
-        policy = np.zeros(72, dtype=np.float32)
+        policy = np.zeros(self.action_count, dtype=np.float32)
         policy[self.selected_action] = 1.0
         return policy
 
@@ -103,7 +104,7 @@ class SearchResult:
         scores = (scores - scores.max()) / temperature
         probabilities = np.exp(scores)
         probabilities /= probabilities.sum()
-        policy = np.zeros(72, dtype=np.float32)
+        policy = np.zeros(self.action_count, dtype=np.float32)
         policy[actions] = probabilities.astype(np.float32)
         return policy
 
@@ -241,7 +242,9 @@ def bounded_negamax(
     stats.root_maximum_nodes = max(root_nodes) if root_nodes else 0
     stats.root_minimum_budget = min(allocated_budgets) if allocated_budgets else 0
     stats.root_maximum_budget = max(allocated_budgets) if allocated_budgets else 0
-    return SearchResult(selected, float(root_score), action_scores, visit_counts, stats)
+    return SearchResult(
+        selected, float(root_score), action_scores, visit_counts, stats, graph.action_count
+    )
 
 
 def resolve_node_budget(

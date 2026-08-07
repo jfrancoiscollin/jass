@@ -19,38 +19,51 @@ BASELINE_PARAMETER_COUNT = 5225
 class ModelConfig:
     hidden_size: int = BASELINE_HIDDEN
     linear: bool = False
+    input_count: int = INPUT_COUNT
     action_count: int = ACTION_COUNT
     enforce_baseline_limit: bool = True
+    parameter_limit: int | None = None
 
 
 class MiniJassMLP(nn.Module):
     def __init__(self, config: ModelConfig = ModelConfig()) -> None:
         super().__init__()
-        if config.action_count != ACTION_COUNT:
-            raise ValueError("Mini-Jass action vocabulary v1 must contain 72 actions")
+        if config.input_count < 1 or config.action_count < 1:
+            raise ValueError("input and action counts must be positive")
+        if config.input_count == INPUT_COUNT and config.action_count != ACTION_COUNT:
+            raise ValueError("Mini-Jass L1 action vocabulary must contain 72 actions")
         self.config = config
         if config.linear:
             self.backbone = nn.Identity()
-            output_size = INPUT_COUNT
+            output_size = config.input_count
         else:
             if config.hidden_size <= 0:
                 raise ValueError("hidden_size must be positive")
             self.backbone = nn.Sequential(
-                nn.Linear(INPUT_COUNT, config.hidden_size),
+                nn.Linear(config.input_count, config.hidden_size),
                 nn.ReLU(),
                 nn.Linear(config.hidden_size, config.hidden_size),
                 nn.ReLU(),
             )
             output_size = config.hidden_size
         self.value_head = nn.Linear(output_size, 1)
-        self.policy_head = nn.Linear(output_size, ACTION_COUNT)
+        self.policy_head = nn.Linear(output_size, config.action_count)
 
         count = parameter_count(self)
-        if not config.linear and config.hidden_size == BASELINE_HIDDEN:
+        is_l1_baseline = (
+            not config.linear
+            and config.hidden_size == BASELINE_HIDDEN
+            and config.input_count == INPUT_COUNT
+            and config.action_count == ACTION_COUNT
+        )
+        if is_l1_baseline:
             if count != BASELINE_PARAMETER_COUNT:
                 raise RuntimeError(f"baseline parameter count changed: {count}")
-            if config.enforce_baseline_limit and count > BASELINE_PARAMETER_LIMIT:
-                raise ValueError("baseline exceeds the 5,500-parameter ceiling")
+        limit = config.parameter_limit
+        if limit is None and is_l1_baseline:
+            limit = BASELINE_PARAMETER_LIMIT
+        if config.enforce_baseline_limit and limit is not None and count > int(limit):
+            raise ValueError(f"model exceeds the {limit}-parameter ceiling")
 
     def forward(self, features: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         hidden = self.backbone(features)

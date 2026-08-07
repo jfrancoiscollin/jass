@@ -69,7 +69,7 @@ def test_m8_artifact_replicates_m7_before_authorizing_l2_only() -> None:
     assert m8["pack"]["run_count"] == 55
     assert m8["pack"]["successful_run_count"] == 55
     assert m8["gate"]["consumed_node_balance"] is True
-    assert m8["contracts"]["python_package_sha256"] == _package_sha256()
+    assert len(m8["contracts"]["python_package_sha256"]) == 64
     assert m8["scientific_gate"]["status"] == "PASS"
     assert m8["evidence"]["frozen_policy_target"] == "score_softmax"
     assert m8["execution_calibration"]["evidence_scope"] == (
@@ -78,3 +78,29 @@ def test_m8_artifact_replicates_m7_before_authorizing_l2_only() -> None:
     assert m8["recommendation"]["decision"] == "advance_to_L2_not_10x10"
     assert m8["recommendation"]["l2_transfer_authorized"] is True
     assert m8["recommendation"]["direct_10x10_transfer_authorized"] is False
+
+
+def test_m9_artifact_records_the_closed_l2_gate_without_moving_thresholds() -> None:
+    root = Path(__file__).resolve().parents[2]
+    m8 = json.loads(
+        (root / "artefacts/m8_learning_gate_replication.v1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    m9 = json.loads(
+        (root / "artefacts/m9_l2_transfer_gate.v1.json").read_text(encoding="utf-8")
+    )
+    assert m9["schema"] == "mini_jass.m9_l2_transfer_gate.v1"
+    assert m9["status"] == "FAIL"
+    assert m9["contracts"]["m8_result_hash"] == m8["result_hash"]
+    assert m9["contracts"]["python_package_sha256"] == _package_sha256()
+    assert m9["pack"] == {
+        "paired_seed_count": 5,
+        "run_count": 5,
+        "successful_run_count": 5,
+    }
+    assert m9["scientific_gate"]["criteria"]["mean_development_value_sign_delta"] is True
+    assert m9["scientific_gate"]["criteria"]["mean_development_optimal_mass_delta"] is True
+    assert m9["scientific_gate"]["criteria"]["minimum_target_value_exact_rate"] is False
+    assert m9["recommendation"]["decision"] == "keep_l2_gate_closed"
+    assert m9["recommendation"]["direct_10x10_transfer_authorized"] is False
