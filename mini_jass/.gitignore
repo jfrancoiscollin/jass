@@ -13,6 +13,7 @@
 !/artefacts/solver_manifest.l2.v1.json
 !/artefacts/split_manifest.l2.v1.json
 !/artefacts/m9_l2_transfer_gate.v1.json
+!/artefacts/m10_wdl_diagnosis.v1.json
 /.venv/
 /.venv_wsl/
 /.pytest_cache/
