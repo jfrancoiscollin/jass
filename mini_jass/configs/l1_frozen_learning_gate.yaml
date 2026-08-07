@@ -1,0 +1,123 @@
+schema: mini_jass.learning_gate_replication.v1
+paired_seeds: [82001, 82002, 82003, 82004, 82005]
+m7_evidence: artefacts/m7_policy_target_gate.v1.json
+expected_m7_result_hash: faab28726f32463d146da82354778bf0651f2f4c532c3d4c1e2b12b350225272
+frozen_policy_target: score_softmax
+base_loop_config: configs/l1_search_selfplay.yaml
+base_overrides:
+  deterministic: true
+  generations: 1
+  self_play.games: 128
+  self_play.max_plies: 64
+  self_play.start_state_source: train_split
+  self_play.search_enabled: true
+  self_play.search_depth: 32
+  self_play.budget_policy: fixed
+  self_play.node_budgets: [16]
+  self_play.root_allocation: balanced
+  self_play.behavior_policy: search_scores
+  self_play.policy_target: score_softmax
+  self_play.policy_target_temperature: 0.25
+  self_play.exploration.strategy: top_k_uniform
+  self_play.exploration.epsilon: 0.0
+  self_play.exploration.top_k: 2
+  self_play.exploration.temperature: 1.0
+  replay.capacity: 8192
+  replay.strategy: disabled
+  replay.training_samples: 1024
+  training.steps: 256
+  training.batch_size: 128
+  training.learning_rate: 0.002
+  training.value_weight: 1.0
+  training.policy_weight: 1.0
+  arena.pairs: 4
+  arena.max_plies: 64
+  arena.search_depth: 2
+  arena.node_budget: 4
+  promotion.minimum_development_improvement: 0.0
+  promotion.minimum_arena_lower_bound: 0.40
+  runtime.threads: 1
+report_procedure:
+  confidence: 0.95
+  paired_differences: arm_minus_reference
+  primary_selection_cohort: development
+  frozen_test_unseal: after_all_candidates_and_protocol_hash
+  report_training_sample_strata: true
+  maximum_consumed_node_imbalance: 0.35
+  execution_calibration:
+    prior_protocol_hash: 0919cdb0a6bf491f62cb51d71b0c4dc4b1a4345eed51817219ad32cdf722c455
+    failed_criterion: consumed_node_balance
+    affected_experiment: E8
+    evidence_scope: execution_node_counts_only
+    prior_mean_consumed_nodes:
+      greedy_39_games: 3837.4
+      top_2_uniform_128_games: 9986.0
+    adjustment: greedy_games_39_to_102
+    new_paired_seed_family: 82000
+learning_gate:
+  minimum_coverage_multiplier: 3.0
+  minimum_mean_value_sign_delta: 0.0
+  minimum_mean_optimal_mass_delta: 0.0
+  minimum_target_value_exact_rate: 0.70
+  minimum_target_optimal_mass: 0.85
+experiments:
+  E5:
+    causal_factor: train_cohort_restart_curriculum
+    reference_arm: initial_state
+    arms:
+      initial_state:
+        overrides:
+          self_play.games: 64
+          self_play.start_state_source: initial
+      train_restarts:
+        overrides: {}
+  E6:
+    causal_factor: optimizer_step_dose
+    reference_arm: short_32
+    arms:
+      short_32:
+        overrides:
+          training.steps: 32
+      medium_256:
+        overrides:
+          training.steps: 256
+      strong_1024:
+        overrides:
+          training.steps: 1024
+  E7:
+    causal_factor: policy_target_source
+    reference_arm: outcome_selected_action
+    arms:
+      outcome_selected_action:
+        overrides:
+          mode: outcome_only
+          self_play.mode: outcome_only
+      search_score_softmax:
+        overrides: {}
+  E8:
+    causal_factor: exploration_policy
+    reference_arm: greedy
+    arms:
+      greedy:
+        overrides:
+          self_play.games: 102
+          self_play.exploration.strategy: greedy
+      top_2_uniform:
+        overrides:
+          self_play.exploration.strategy: top_k_uniform
+          self_play.exploration.top_k: 2
+  E9:
+    causal_factor: replay_sampling
+    reference_arm: no_replay
+    overrides:
+      generations: 3
+      self_play.games: 48
+      training.steps: 128
+    arms:
+      no_replay:
+        overrides:
+          replay.strategy: disabled
+      generation_mix:
+        overrides:
+          replay.strategy: generation_mix
+          replay.training_samples: 1024

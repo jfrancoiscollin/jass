@@ -1,0 +1,107 @@
+{
+  "artifact_hashes": {
+    "arm_results.jsonl": "c102d948277b83ba3c3c27093ee55ae354593c8b947c9dc97734bcf4d76486de",
+    "comparison.json": "d2455952d24bc28725630b583f5bdb91ca99868de6cfb84055513954a46fdba9",
+    "config.resolved.yaml": "0805bd4136ef77c9f3712d1833aaed775e3d60a11594928c1b0129fc706a1aed",
+    "executable_manifest.json": "dba8b18bfb75708caa2aad81bbc84b30fbb29b630be13846a247037062b51bb5",
+    "recommendation.json": "f2b913107a638c16cff82913113d38b459fcddc94bf824164d1327d0410f6b0d",
+    "result.json": "bffdfe2d5c35010bb8a3e1512dac5be280299883c78af617813f3e9bfd699642",
+    "summary.md": "b1c006642ab41bd4a5ef23681593ab8d4e6fc32c52c927effb036976d7fe344b"
+  },
+  "contracts": {
+    "action_schema": "mini_jass.actions.v1",
+    "action_vocabulary_hash": 11242579555617580249,
+    "canonical_graph_hash": 3712505811235282327,
+    "m7_evidence_sha256": "6c109f35267344ea5899d7adf1b7b87ac5b5c5789230758e42d3f347d99ce9d1",
+    "m7_result_hash": "faab28726f32463d146da82354778bf0651f2f4c532c3d4c1e2b12b350225272",
+    "oracle_export_sha256": "eb35afc28b6e8a39d7151d894517d2a9442521e9723f4be19d266bcf3128b8eb",
+    "python_package_sha256": "52d301cee1fef485877d16c0462e4fdfc6ba8c8e51bb6b4a589a5ef7132e3c96",
+    "raw_graph_hash": 3347327730907747976,
+    "rule_schema": "mini_jass.rules.l1.v1",
+    "solver_hash": 10671205679107391448,
+    "split_manifest_hash": "9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524"
+  },
+  "evidence": {
+    "coverage_multiplier": 3.4079173838209984,
+    "frozen_policy_target": "score_softmax",
+    "mean_development_optimal_mass_delta": 0.018901455402374267,
+    "mean_development_value_sign_delta": 0.3860188674473305,
+    "mean_eligible_generation_count": 0.4,
+    "mean_target_optimal_mass": 0.9194094777107239,
+    "mean_target_value_exact_rate": 0.8628914586893057,
+    "selected_arm": "strong_1024",
+    "selected_experiment": "E6",
+    "selection_score_confidence_95": [
+      0.3861040163741668,
+      0.4237366293252427
+    ]
+  },
+  "execution_calibration": {
+    "adjustment": "greedy_games_39_to_102",
+    "affected_experiment": "E8",
+    "evidence_scope": "execution_node_counts_only",
+    "failed_criterion": "consumed_node_balance",
+    "new_paired_seed_family": 82000,
+    "prior_mean_consumed_nodes": {
+      "greedy_39_games": 3837.4,
+      "top_2_uniform_128_games": 9986.0
+    },
+    "prior_protocol_hash": "0919cdb0a6bf491f62cb51d71b0c4dc4b1a4345eed51817219ad32cdf722c455"
+  },
+  "gate": {
+    "all_runs_reported": true,
+    "all_runs_successful": true,
+    "consumed_node_balance": true,
+    "frozen_test_unsealed_after_protocol_fixed": true,
+    "maximum_consumed_node_imbalance": 0.35,
+    "minimum_five_paired_seeds": true,
+    "paired_initial_weights": true,
+    "status": "PASS",
+    "train_split_start_contract": true
+  },
+  "m7_result_hash": "faab28726f32463d146da82354778bf0651f2f4c532c3d4c1e2b12b350225272",
+  "milestone": "M8",
+  "pack": {
+    "arm_count": 11,
+    "experiments": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+    ],
+    "paired_seeds": [
+      82001,
+      82002,
+      82003,
+      82004,
+      82005
+    ],
+    "run_count": 55,
+    "successful_run_count": 55
+  },
+  "protocol_hash": "2c3b3ae196d50f78ddae98eb77b4db4771ac07913c439996f91b925c5232b3ea",
+  "recommendation": {
+    "decision": "advance_to_L2_not_10x10",
+    "direct_10x10_transfer_authorized": false,
+    "l2_transfer_authorized": true,
+    "next_gate": "Replicate only the selected mechanism on L2 before any Jass 10x10 work.",
+    "reason": "The frozen M7 policy target passed the complete paired L1 gate with joint value and optimal-move-mass progress and eligible candidates."
+  },
+  "result_hash": "bbda1a55b42638242749d44b6e1355e6fece3e35346d0445794b9e26a68438db",
+  "schema": "mini_jass.m8_learning_gate_replication.v1",
+  "scientific_gate": {
+    "criteria": {
+      "at_least_one_eligible_candidate": true,
+      "coverage_multiplier": true,
+      "frozen_m7_policy_target_replicated": true,
+      "mean_development_optimal_mass_delta": true,
+      "mean_development_value_sign_delta": true,
+      "minimum_target_optimal_mass": true,
+      "minimum_target_value_exact_rate": true,
+      "selection_confidence_interval_above_zero": true
+    },
+    "status": "PASS"
+  },
+  "status": "PASS"
+}
