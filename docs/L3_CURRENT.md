@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 6 août 2026**
+> **Mis à jour : 7 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -67,7 +67,153 @@
 > corpus_is_100_percent_jass_selfplay_the_mixing_rule_is_unapplied;
 > prior_visit_weighting_is_a_REGRESSION_minus_21_elo_axis_CLOSED;
 > the_SHAPE_of_the_prior_matters_more_than_its_dose;
+> scratch_fit_MATCHES_the_heir_corpus_carries_the_champion_heritage_worth_zero;
+> no_scratch_fit_mode_existed_the_last_four_champions_are_one_fit_four_recipes;
+> ceiling_is_the_selfplay_DISTRIBUTION_by_elimination_not_by_measurement;
+> exploration_policy_never_swept_eps_8_decay_60_topk_used_once_margin_never;
+> uniform_epsilon_is_the_random_open_plies_pathology_spread_through_the_game;
+> maxit_must_be_reachable_within_fit_timeout_else_kill_instead_of_clean_stop;
+> home_fit_rate_anchor_8_03_s_per_iteration_2m_exact_fold_gtol_1e4;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
+
+## 0septies. 7 août 2026 — ⚖️ L'HÉRITAGE NE VAUT RIEN, ET LE LEVIER RESTANT EST LA DISTRIBUTION
+
+### ⚖️ `cpx62-1192` + `cpx62-1194` — le corpus RECONSTRUIT le champion
+
+Question posée : notre corpus porte-t-il notre champion, ou chaque génération
+roule-t-elle sur son héritage ? Constat qui l'a motivée — **l'outillage n'avait
+aucun mode de fit depuis zéro** : tous les modes de continuation passaient le
+parent (`warm` en initialisation, `prior` en centre du ridge). `cpx62-1147`,
+`1159` et `1164` sont tous en `warm` ou `prior`, sur **le même corpus TURNOVER
+2 M et le même parent** : les quatre derniers « champions » ne sont pas quatre
+générations, ce sont **quatre variantes de recette d'un seul fit**.
+
+Mode `scratch` ajouté (`d5085e330`), puis porte à un seul facteur — la présence
+du parent.
+
+| bras | continuation | itérations | holdout |
+|---|---|---:|---:|
+| SCRATCH (`l2 1e-5`) | **aucun parent** | 1645 | 0,439443 |
+| SCRATCH (`l2 1e-4`) | aucun parent | 544 | 0,444747 |
+| HÉRITIER | recette L2LOW | 1519 | 0,438816 |
+
+```
+n=12000   SCRATCH 5608W 660D 5732L contre HERITIER
+taux = 0,4948   Elo = −3,59   IC95 = [−9,6 ; +2,5]
+P(>0) = 12,2 %
+VERDICT A_FLAT_VS_B_NO_ESTABLISHED_GAIN
+```
+
+⚠️ **L'hypothèse que je défendais est RÉFUTÉE.** Je prédisais `scratch ≪
+héritier`. **L'héritage vaut 3,6 Elo en estimation ponctuelle, au plus ~9,6 à
+97,5 %, et zéro est confortablement dans l'intervalle.** La chaîne de
+générations n'est pas ce qui nous porte.
+
+Le second bras justifie d'avoir doublé la cellule : à `l2 1e-4` le scratch
+s'effondre (544 itérations, sur-régularisé vers zéro). Sans lui, un bras unique
+mal dosé aurait donné un faux « scratch est mauvais ». **`1e-5` est la bonne
+dose des deux côtés.**
+
+### 🎯 CE QUE ÇA RESSERRE — ET CE QUE ÇA NE PROUVE PAS
+
+**Notre champion est exactement ce que 2 M de notre self-play supportent.** Ni
+plus, ni moins. Et comme le volume, les étiquettes, le filtrage, le
+budget-nœuds et la couverture sont **tous** mesurés plats ou négatifs, il
+reste que le plafond est dans **la distribution que notre self-play produit** —
+pas dans sa quantité, sa propreté, ni la lignée.
+
+⚠️ **C'est une inférence par élimination, pas une mesure.** Elle est bien
+étayée, mais c'est exactement la forme de raisonnement qui m'a fait défendre
+l'héritage la veille. À traiter comme une hypothèse de travail, pas comme un
+acquis.
+
+### 🔬 LEVIERS SUR LA DISTRIBUTION — INVENTAIRE, ET IL EST ACCABLANT
+
+Le seul mécanisme qui écarte notre self-play du jeu glouton, donc **le seul qui
+produit la distribution**, est l'exploration epsilon (`main.cpp:1300`) :
+
+```
+eps(ply) = explore_eps % × max(0, 1 − ply/D)   puis coup UNIFORME parmi TOUS les légaux
+```
+
+Audit de tous les jobs jamais queués :
+
+| bouton | jobs | valeurs employées |
+|---|---:|---|
+| `--explore-eps` | 5 | **`8`, et rien d'autre** |
+| `--explore-decay-plies` | 5 | **`60`, et rien d'autre** |
+| `--explore-topk` | **1** | production = tirage **uniforme** |
+| `--explore-margin` | **0** | jamais |
+
+**Le levier n'a jamais été bougé.** Une dose, un schéma, depuis le début.
+
+⛔ **Et nos propres sources décrivent le réglage de production comme
+pathologique** (`main.cpp:1317`) : *« Un tirage uniforme parmi ~8-10 coups
+légaux est une gaffe neuf fois sur dix, donc il élargit la distribution d'états
+vers les positions-après-erreur — des états qu'un adversaire fort n'atteint
+jamais, et pas là où la marge d'évaluation se perd. »*
+
+📌 **Ce mécanisme est DÉJÀ MESURÉ EN NÉGATIF chez nous.**
+`--random-open-plies` achetait `+7,11 %` de buckets et perdait **`−9,27 Elo`**.
+On en avait tiré « la couverture n'est pas le levier » ; la lecture juste est
+plus fine — **on achetait de la couverture au mauvais endroit**. L'epsilon
+uniforme fait la même chose, réparti dans la partie au lieu de l'ouverture, et
+il touche **19,75 %** de nos records. `--explore-topk K` est le correctif déjà
+écrit, testé côté code, et jamais mis en production.
+
+**Autres leviers de distribution, tous à usage nul en L3 :**
+
+1. **Self-play asymétrique** — champion contre lui-même affaibli
+   (`--search-params-play` distinct de `--search-params-label`,
+   `--play-depth-by-phase`, `--asym-punisher-params`). Parties décisives **sans
+   jouer mal des deux côtés**, ce qui est la distinction *décisif ≠ véridique*
+   de la règle 2. **Interne : aucun professeur externe**, donc hors du périmètre
+   fermé par JFC.
+2. **Sélection des positions dans la partie** — on retient **5,4 records par
+   partie** (médiane 5) sur ~100 coups. La règle de sélection est un levier de
+   plein droit, **distinct de TRAJ-EQUAL** qui pèse les parties une fois les
+   records choisis. `--quiet-only`, `--draw-band`, `--ws-margin`,
+   `--sample-initial` : zéro usage.
+3. **Politique de fin de partie** — `--adjud-material`, `--adjud-hold-plies`
+   (zéro usage), ply-cap. Change l'équilibre W/D/L et le contenu de finales.
+
+💰 **Coût d'une cellule, contre mon intuition première** : l'ancre HOME est de
+**74 500 pos/min** sur 12 producteurs, donc régénérer 2 M prend **~30 min**.
+Une cellule = ~30 min de génération + ~4h07 de fit + ~1h05 de porte ≈ **5h45** ;
+à un seul facteur (deux corpus, deux fits) ≈ **10h**. ⚠️ Ancre **HOME** : la
+re-mesurer sur cpx62 avant toute ETA là-bas (bourde `0665`).
+
+### 💥 `home-1317` / `home-1318` — un sizing impossible par construction
+
+TRAJ-EQUAL pool 1 est mort en `exit 124` après **9h55**, sans publier un seul
+modèle. Chiffré sur ses propres logs :
+
+| | mesuré |
+|---|---|
+| bras `row` | 14 791 s = **4h07** pour 1842 itérations, convergé |
+| **rythme HOME** | **8,03 s/itération** (2 M records, `exact-fold`, `gtol 1e-4`) |
+| bras `game` | tué à `FIT_TIMEOUT` 21 600 s ≈ **2 689 itérations**, sans converger |
+
+À 8,03 s/it, un `FIT_TIMEOUT` de 6h plafonne à **~2 690 itérations** alors que
+`MAXIT` valait **4000** (8h55). **Le bras `game` ne pouvait QUE finir en
+`rc=124`.** Et le template tuait aussi sur un arrêt `max_iter`, donc les deux
+issues perdaient les modèles. `home-1318`, paramètres identiques, a été **tué à
+la demande** avant de reperdre 6h.
+
+📌 **RÈGLE GÉNÉRALE À RETENIR : `MAXIT` doit être ATTEIGNABLE dans
+`FIT_TIMEOUT`.** Sinon on récolte un kill (aucun artefact) au lieu d'un arrêt
+propre sur `max_iter` (modèle conservé, compte d'itérations lisible). Le même
+défaut avait été attrapé la veille sur `cpx62-1192` avant lancement.
+
+Re-sizé en `home-1319` — **science strictement inchangée**, les 14 paramètres
+scientifiques vérifiés identiques un à un ; seul le budget bouge :
+`MAXIT 4000→5000`, `FIT_TIMEOUT 6h→12h` (donc `5000 × 8,03 = 40 150 s <
+43 200` : `MAXIT` devient atteignable), timeout externe `12h→18h`, et
+`ALLOW_NON_PGTOL_STOP=1` (template patché, défaut `0`).
+
+⚠️ **Tolérer l'arrêt n'autorise pas à gater un bras sous-convergé** contre un
+bras convergé : cellule à deux facteurs, leçon PRIORTIGHT. Le drapeau sert à ne
+pas reperdre 15h et à **lire** ce que le bras `game` demande vraiment.
 
 ## 0sexies. 6 août 2026 — TRAJ-EQUAL : changer l'unité statistique, pas le corpus
 
@@ -366,7 +512,7 @@ amortissement partagé leur précision vaut **9 853×** celle du bucket moyen �
 rapport structurel, non dosable). Sans cette séparation le verdict aurait été
 inattribuable entre « pondérer par les visites » et « épingler les extras ».
 
-## 0sexies. 6 août 2026 — ⛔ L'ÉCART À SCAN NE SE FERME PAS PAR LA RECETTE
+## 0sexies-bis. 6 août 2026 — ⛔ L'ÉCART À SCAN NE SE FERME PAS PAR LA RECETTE
 
 Constat de JFC, et il est quantitativement juste. À mettre au registre parce
 que c'est la question qui gouverne la suite.
