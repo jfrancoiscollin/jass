@@ -25,11 +25,26 @@ run_dir="$local_artefacts/runs/m18-wdl-policy-iteration-microscope-cpx"
 summary="$local_artefacts/m18_wdl_policy_iteration_microscope.cpx.json"
 mkdir -p "$work" "$artefact_root"
 
+# Le partage setup/science n'a JAMAIS ete isole sur aucun jalon mini-jass : les
+# ETA de M13 a M17 reposent toutes sur « le cout est domine par cmake+ctest+venv »
+# sans que personne l'ait mesure. On l'ancre ici, une fois pour toutes.
+phase_log="$artefact_root/PHASE_TIMINGS.txt"
+: >"$phase_log"
+t_job_start=$(date +%s)
+phase() {
+  local now
+  now=$(date +%s)
+  echo "$1_seconds=$((now - t_phase))" >>"$phase_log"
+  t_phase=$now
+}
+t_phase=$t_job_start
+
 cmake -S "$repo/mini_jass" -B "$build" \
   -DCMAKE_BUILD_TYPE=Release \
   -DMINI_JASS_BUILD_TESTS=ON
 cmake --build "$build" --parallel 16
 ctest --test-dir "$build" --output-on-failure
+phase build_and_ctest
 
 python3 -m venv --system-site-packages "$venv"
 python_bin="$venv/bin/python"
@@ -43,18 +58,24 @@ if ! "$python_bin" -c 'import numpy, pytest, yaml' >/dev/null 2>&1; then
     'numpy>=1.26,<3' 'PyYAML>=6,<7' 'pytest>=8,<10'
 fi
 
+phase venv_and_pip
+
 export PYTHONPATH="$repo/mini_jass/python"
 "$python_bin" -m pytest "$repo/mini_jass/tests/python"
+phase pytest
 "$python_bin" "$repo/mini_jass/tools/export_oracle.py" \
   --level l1 \
   --executable "$build/mini_jass_cli" \
   --output "$oracle"
+phase oracle_export_l1
 "$python_bin" "$repo/mini_jass/tools/run_wdl_policy_iteration_microscope.py" \
   --config "$repo/mini_jass/configs/l1_wdl_policy_iteration_microscope.yaml" \
   --oracle "$oracle" \
   --run-dir "$run_dir" \
   --compact-output "$summary" \
   --execution-host "$host"
+phase science_20_runs_of_8_generations
+echo "total_seconds=$(( $(date +%s) - t_job_start ))" >>"$phase_log"
 
 cp "$summary" "$artefact_root/scientific-summary.json"
 cp -R "$run_dir" "$artefact_root/m18-wdl-policy-iteration-microscope-run"
