@@ -98,6 +98,14 @@
 > minijass_science_is_6_6_s_per_run_of_8_generations_measured_twice;
 > the_fixed_cost_is_RUNNER_worktree_per_attempt_NOT_cmake_or_venv_34_s;
 > batch_the_science_do_not_multiply_the_jobs;
+> minijass_m21_MIXING_generations_makes_a_STRONGER_model_arena_plus_0_2375_ci_excludes_zero;
+> and_it_is_NOT_volume_G1_WIDE_control_flat_minus_0_0875_ci_spans_zero;
+> recency_alone_HURTS_G8_ONLY_arena_minus_0_2125_ci_below_zero;
+> label_strength_anticorrelation_DOES_hold_on_the_recency_factor_both_CIs_exclude_zero;
+> m20_refuted_its_TWO_pairs_not_the_general_claim_correction_to_my_own_reading;
+> my_m21_gate_keyed_on_the_LEARNING_score_and_printed_FAIL_on_a_positive_arena;
+> single_pool_no_replication_rerun_M21_on_fresh_seeds_with_the_gate_rewired;
+> cpx62_is_3_3x_faster_than_the_dev_box_divide_local_estimates_by_three;
 > power_is_nearly_free_at_lab_scale_20_seeds_by_default_from_now_on;
 > a_fixture_must_reproduce_the_VARIATION_of_reality_not_only_its_shape;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
@@ -415,6 +423,79 @@ moins un critère indécidable par manque de puissance — dont M18 avec une moy
 **au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
 à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
 « setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### ✅⚠️ M21 (`cpx62-1211`) — LE MÉLANGE DE GÉNÉRATIONS PRODUIT UN MODÈLE PLUS FORT, ET MA PORTE A DIT L'INVERSE
+
+`status=FAIL` **imprimé par la porte — et la porte a regardé le mauvais
+critère.** `result_hash=b3b4b27fe…`, 20 graines, six bras.
+
+| contraste | apprentissage | arena (contre le modèle initial) |
+|---|---|---|
+| **`MIX − G1_WIDE`** (identité de génération, à volume unique ÉGAL) | +0,0141 `[−0,004 ; +0,032]` | **+0,2375 `[+0,088 ; +0,387]`** |
+| `G1_WIDE − G1_ONLY` (volume unique, seul) | +0,0042 `[−0,009 ; +0,018]` | −0,0875 `[−0,286 ; +0,111]` |
+| `MIX − G1_ONLY` (la somme des deux) | +0,0184 `[+0,003 ; +0,034]` | +0,1500 `[−0,004 ; +0,304]` |
+| `G8_ONLY − G1_ONLY` (la récence, seule) | **+0,0266 `[+0,013 ; +0,040]`** | **−0,2125 `[−0,414 ; −0,011]`** |
+| `NOVEL_LATE − G1_ONLY` | +0,0041 `[−0,007 ; +0,015]` | −0,0875 `[−0,245 ; +0,070]` |
+| `NOVEL_LATE − MATCHED_LATE` | −0,0056 `[−0,014 ; +0,003]` | −0,0375 `[−0,195 ; +0,120]` |
+
+⛔ **MA PORTE EST MAL CÂBLÉE, ET C'EST À CORRIGER AVANT DE LIRE QUOI QUE CE
+SOIT.** `build_recommendation` exige que le **score d'apprentissage** passe
+*avant* de regarder l'arena ; le score étant non concluant (`+0,0141`, IC qui
+traverse zéro), la cellule sort `FAIL` **sans jamais considérer que l'arena est
+positive et exclut zéro**. Or toute la campagne du 8 août dit que le score
+d'apprentissage n'est pas ce qui nous intéresse — c'est précisément pour ça que
+JFC a imposé l'arena en co-primaire. **Le verdict de la porte est à ignorer ; la
+mesure, elle, est bonne.**
+
+📌 **CE QUE LES CHIFFRES DISENT, EN LISANT LES DEUX CRITÈRES.**
+
+1. **À volume de données uniques ÉGAL (5 472 contre 5 472, garde fail-closed
+   verte), mélanger les huit générations produit un modèle plus fort :
+   `+0,2375` d'arena, IC95 `[+0,088 ; +0,387]`, borne basse au-dessus de zéro.**
+   C'est le premier effet de la journée dont l'IC exclut zéro.
+2. **Et ce n'est PAS le volume** : `G1_WIDE − G1_ONLY` rend `−0,0875` avec un IC
+   qui traverse zéro. Le bras de contrôle a fait exactement son travail — sans
+   lui, `MIX − G1_ONLY` (`+0,1500`) aurait été attribué à l'accumulation alors
+   qu'il vaut la somme d'un effet de génération et d'un effet de volume nul.
+3. **La récence seule NUIT** : `G8_ONLY − G1_ONLY` perd `−0,2125` d'arena, IC au
+   complet sous zéro. Ce n'est donc ni « le meilleur générateur », ni la
+   profondeur, ni la précision WDL — c'est bien le **mélange**.
+4. **La nouveauté ne paie pas** : `NOVEL_LATE − MATCHED_LATE` est plat sur les
+   deux critères. ✅ Le verdict L3 sur la couverture n'est **pas** contredit.
+
+⚠️ **ET L'ANTICORRÉLATION ÉTIQUETTES/FORCE RÉAPPARAÎT — CETTE FOIS AVEC LES DEUX
+IC HORS DE ZÉRO.** `G8_ONLY − G1_ONLY` : apprentissage `+0,0266`
+`[+0,013 ; +0,040]` et arena `−0,2125` `[−0,414 ; −0,011]`. C'est **exactement
+le critère de M20** — signes opposés, deux IC excluant zéro — rempli ici sur un
+facteur que M20 ne testait pas (quelle génération alimente le pool). M20 n'avait
+donc pas réfuté l'anticorrélation *en général* : il avait réfuté les **deux
+paires qu'il testait** (règle de promotion, profondeur). Sur la récence, elle
+tient.
+
+✅ **Cohérence interne vérifiée** : `(MIX − G1_WIDE) + (G1_WIDE − G1_ONLY) =
++0,2375 − 0,0875 = +0,1500 = (MIX − G1_ONLY)`, exactement.
+
+⛔ **CE QU'IL NE FAUT PAS EN FAIRE.** Un seul pool de 20 graines, **aucune
+réplication**, et le résultat est arrivé par un critère que ma porte
+n'interrogeait pas — donc avec un risque de lecture *a posteriori* dont M20
+vient de montrer le coût (rétrécissement ×0,04 à ×0,30). **Prochaine étape
+obligatoire : rejouer M21 à graines fraîches avec la porte recâblée sur
+l'arena**, et rien d'autre ne change. Si `MIX − G1_WIDE` réplique sur l'arena,
+c'est le premier mécanisme identifié de toute la campagne labo.
+
+### ⏱️ Timings
+
+```
+build_and_ctest   9 s    science (20 graines x 6 bras)   250 s
+venv_and_pip     18 s    total mesuré par le job         283 s
+pytest + oracle   6 s    mural réel                    29 min
+```
+
+**12,5 s par graine sur cpx62 contre 41 s mesurées en local : cpx62 est
+`3,3×` plus rapide que la box de développement.** Ancre à retenir pour les
+prochaines ETA — mes estimations locales doivent être divisées par ~3. Le coût
+fixe du runner se confirme une troisième fois à **~24 min**, indépendant du
+volume scientifique.
 
 ### ⛔ M20 (`cpx62-1210`) — L'ANTICORRÉLATION ÉTIQUETTES/FORCE NE SURVIT PAS À UN TEST APPARIÉ
 
