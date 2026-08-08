@@ -83,6 +83,9 @@
 > minijass_m16_temporal_lambda_returns_are_WORSE_than_the_same_state_blend;
 > lambda_curve_is_non_monotone_interior_optimum_near_0_8_pure_bootstrap_HURTS;
 > every_l2_milestone_M9_to_M16_runs_a_SINGLE_generation_never_iterated;
+> minijass_m17_iteration_DOES_compound_on_L1_plus_2_5_points_rung_1_to_8;
+> but_only_1_0_advancing_generation_of_8_and_2_of_5_seeds_never_promoted;
+> minijass_m18_causal_microscope_in_flight_cpx62_1206;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
@@ -201,6 +204,59 @@ inconditionnellement aurait cassé la reproductibilité de
 `expected_m12_result_hash` ; et `all_samples` garde les labels du générateur,
 sinon le bras oracle rapporterait trivialement 100 % de qualité de cible et le
 contraste perdrait son contrôle. M14 a été bâti sur ce mécanisme.
+
+### ✅⚠️ M17 (`cpx62-1205`) — la boucle N'AVAIT JAMAIS ITÉRÉ, et quand elle itère elle monte
+
+**La prémisse qui manquait à tous nos verdicts plats, y compris L3.**
+`l1_policy_target_gate`, `l1_frozen_learning_gate` et
+`l2_score_softmax_selfplay` — dont héritent M9 à M16 — tournent tous
+`generations: 1`. Les huit jalons L2 sont donc des mesures à **un seul tour**
+d'une boucle dont la méthode de référence (Scan : « itération, quelques
+cycles ») suppose qu'elle en fasse plusieurs. Côté L3, la succession
+EXACT → PRIOR → PRIORTIGHT → L2LOW est **quatre recettes sur un corpus et un
+parent** ; le seul vrai tour de manivelle (`home-1310`, 12 M frais générés par
+L2LOW) a rendu `+1,89 Elo` chaîné. **Un mécanisme qui ne paie qu'en COMPOSANT
+sur les générations est structurellement invisible à chacune de ces mesures.**
+
+Recette M8 gelée sur L1, seul facteur = le nombre de générations, un run par
+graine à `ladder_max: 8` (la boucle est causalement en avant, donc tronquer au
+barreau `k` redonne exactement le run `generations: k` — appariement parfait) :
+
+| barreau | 1 | 2 | 4 | 8 |
+|---|---:|---:|---:|---:|
+| signe de valeur, delta | 0,3709 | 0,3650 | 0,3694 | **0,3963** |
+| masse optimale, delta | 0,0155 | 0,0156 | 0,0160 | **0,0185** |
+
+`status=PASS`, `finding=iteration_compounds_across_generations`,
+`decision=replicate_ladder_on_fresh_seeds`, `promotable=false`.
+
+⚠️ **ET LE CONTRÔLE MODÈRE FORTEMENT LA LECTURE.**
+`mean_advancing_generations = 1,0` et `seeds_with_zero_advance = 2` : sur cinq
+graines, **deux n'ont jamais promu du tout**, et les autres promeuvent **une
+fois sur huit générations**. Le contrôle a rempli son office — il existait
+précisément pour empêcher de lire un plateau sans promotion comme « l'itération
+ne compose pas » — mais il coupe dans les deux sens : **l'itération est à peine
+engagée**, donc la montée de `+2,5 points` entre le barreau 1 et le barreau 8
+ne distingue pas encore « la boucle compose » de « cinq graines bruitées ».
+
+**Ce qu'on retient malgré la réserve** : la prémisse est établie, notre
+protocole à un coup est bien un choix subi et non mesuré, et l'axe est ouvert.
+
+### 🔬 M18 (`cpx62-1206`, en vol) — pourquoi, plutôt que combien
+
+M18 ne redemande pas « ça monte ? » : il casse **un mécanisme à la fois** sur
+les mêmes graines appariées — générateur gelé au modèle initial (isole le
+feedback), recherche à profondeur 1 (isole le cliquet de recherche), promotion
+toujours forcée (isole ce que le gate arena protège) — avec une sonde fixe hors
+entraînement pour ne pas confondre « les étiquettes s'améliorent » et « la
+distribution visitée a changé ».
+
+L'oracle y est observateur **vérifié par exécution, pas par déclaration** :
+chaque ligne (bras × graine) porte `oracle_causal_reads`, et une seule lecture
+causale fait échouer la cellule entière. ⚠️ Réserve posée avant le run : le
+bras `shallow_search` baisse la profondeur en gardant le budget de nœuds, donc
+son contraste n'est **pas à compute égalisé** — le `RESULTS` imprime la
+profondeur déclarée par bras pour que la réserve se lise avec le chiffre.
 
 ## 0septies. 7 août 2026 — ⚖️ L'HÉRITAGE NE VAUT RIEN, ET LE LEVIER RESTANT EST LA DISTRIBUTION
 
