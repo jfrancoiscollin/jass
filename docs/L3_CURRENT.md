@@ -85,7 +85,11 @@
 > every_l2_milestone_M9_to_M16_runs_a_SINGLE_generation_never_iterated;
 > minijass_m17_iteration_DOES_compound_on_L1_plus_2_5_points_rung_1_to_8;
 > but_only_1_0_advancing_generation_of_8_and_2_of_5_seeds_never_promoted;
-> minijass_m18_causal_microscope_in_flight_cpx62_1206;
+> minijass_m18_FAIL_freezing_the_generator_costs_exactly_zero_ci_plus_minus_0_027;
+> minijass_m18_loop_gain_plus_0_0437_above_practical_bar_but_underpowered_at_5_seeds;
+> arena_gate_trades_label_quality_for_strength_forced_advance_best_labels_worst_model;
+> m18_shallow_arm_contrast_confounded_by_its_own_starting_level_redefine_on_LEVEL;
+> a_write_read_roundtrip_must_cover_TRANSPORT_not_only_format_64kib_status_cap;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
@@ -242,21 +246,98 @@ ne distingue pas encore « la boucle compose » de « cinq graines bruitées ».
 **Ce qu'on retient malgré la réserve** : la prémisse est établie, notre
 protocole à un coup est bien un choix subi et non mesuré, et l'axe est ouvert.
 
-### 🔬 M18 (`cpx62-1206`, en vol) — pourquoi, plutôt que combien
+### ⛔ M18 (`cpx62-1206`, verdict republié par `cpx62-1207`) — LE FEEDBACK DU GÉNÉRATEUR NE PAIE RIEN
 
-M18 ne redemande pas « ça monte ? » : il casse **un mécanisme à la fois** sur
-les mêmes graines appariées — générateur gelé au modèle initial (isole le
-feedback), recherche à profondeur 1 (isole le cliquet de recherche), promotion
-toujours forcée (isole ce que le gate arena protège) — avec une sonde fixe hors
-entraînement pour ne pas confondre « les étiquettes s'améliorent » et « la
-distribution visitée a changé ».
+`status=FAIL`, `finding=WDL_iteration_did_not_pass_all_causal_controls`,
+`result_hash=a6a8e48ac…`, `promotable=false`. M18 ne redemandait pas « ça
+monte ? » : il cassait **un mécanisme à la fois** sur les mêmes graines
+appariées, avec une sonde fixe hors entraînement (64 parties, mêmes positions
+de départ à chaque barreau et dans chaque bras) pour ne pas confondre « les
+étiquettes s'améliorent » et « la distribution visitée a changé ».
 
-L'oracle y est observateur **vérifié par exécution, pas par déclaration** :
-chaque ligne (bras × graine) porte `oracle_causal_reads`, et une seule lecture
-causale fait échouer la cellule entière. ⚠️ Réserve posée avant le run : le
-bras `shallow_search` baisse la profondeur en gardant le budget de nœuds, donc
-son contraste n'est **pas à compute égalisé** — le `RESULTS` imprime la
-profondeur déclarée par bras pour que la réserve se lise avec le chiffre.
+| contraste (qualité des étiquettes de la sonde) | moyenne | IC95 | seuil pratique |
+|---|---:|---|---:|
+| `evolving_g8 − g0` — la boucle monte-t-elle ? | +0,0437 | [−0,033 ; +0,121] | 0,03 |
+| `evolving − frozen` — **le feedback du générateur** | **+0,0000** | **[−0,027 ; +0,027]** | 0,02 |
+| `evolving − shallow` — le cliquet de recherche | −0,0219 | [−0,144 ; +0,101] | 0,02 |
+| `evolving − forced` — ce que le gate protège | −0,0344 | [−0,105 ; +0,036] | — |
+
+Les cinq autres critères sont verts, dont **`oracle_has_no_causal_role`** :
+zéro lecture causale sur les 20 lignes bras × graine, vérifié par exécution.
+
+📌 **LE SEUL CONTRASTE BIEN MESURÉ EST UN ZÉRO SERRÉ : GELER LE GÉNÉRATEUR NE
+COÛTE RIEN.** `±0,027` sur cinq graines appariées, et **ce n'est pas un
+artefact** — les écarts par graine existent (SD ≈ 0,022), ils s'annulent. Les
+deux courbes sont quasi superposées :
+
+```
+evolving   0,7469 → 0,7750 → 0,8000 → 0,7937 → 0,7906
+frozen     0,7469 → 0,7750 → 0,8000 → 0,8000 → 0,7906
+```
+
+**L'hypothèse Scan « le générateur qui s'améliore fabrique de meilleures
+étiquettes » est réfutée telle que testée sur L1.** Le générateur évolue bien
+(`loop.py:166` passe le `parent`, `loop.py:261` l'avance à la promotion, 2,2
+promotions sur 8) : le mécanisme tourne, il ne produit simplement rien.
+
+⚠️ **La montée de la boucle, elle, n'est PAS tranchée** : `+0,0437` dépasse le
+seuil pratique `0,03` mais l'IC traverse zéro. **La cellule est sous-puissante
+à cinq graines** — ce critère échoue par manque de puissance, pas par petitesse
+de l'effet.
+
+### 📊 Le gate arena arbitre FORCE contre ÉTIQUETTES, et dans le sens inverse de l'intuition
+
+| bras | promotions/8 | arena finale vs initial | étiquettes à g8 | dev value_sign |
+|---|---:|---:|---:|---:|
+| `evolving_arena_gate` | 2,2 | 0,70 | 0,7906 | 0,4056 |
+| `frozen_generator` | 1,6 | **0,90** | 0,7906 | 0,3710 |
+| `forced_advance` | 8,0 | **0,45** | **0,8250** | 0,4675 |
+| `shallow_search` | 2,6 | 0,55 | 0,7594 | 0,4161 |
+
+**Promouvoir toujours donne les meilleures étiquettes et le pire modèle.** Le
+gate protège la force en payant en qualité d'étiquetage — c'est un arbitrage,
+pas une garde gratuite.
+
+⚠️ **DEUX RÉSERVES QUE JE POSE MOI-MÊME, ET QUI LIMITENT LA LECTURE.**
+
+1. **`shallow_search` est mal contrasté par construction.** Il part de `0,6937`
+   au lieu de `0,7469` — la profondeur 1 dégrade les étiquettes immédiatement —
+   donc son *gain* est mécaniquement plus grand (`+0,0657` contre `+0,0437`)
+   alors que son *niveau* reste inférieur partout. Le contraste est défini sur
+   le **gain** : il est confondu par le point de départ. **À redéfinir sur le
+   niveau avant de conclure quoi que ce soit sur la recherche.** (S'ajoute à la
+   réserve posée avant le run : compute non égalisé, la profondeur baisse mais
+   le budget de nœuds reste.)
+2. **`arena` et `development` se contredisent entre `evolving` et `frozen`** :
+   dev delta `0,4056` contre `0,3710` (avantage evolving), arena `0,70` contre
+   `0,90` (avantage frozen). **Non tranché.**
+
+### 🐛 LE VERDICT A FAILLI NE JAMAIS ARRIVER — ET LA LEÇON N'EST PAS CELLE QU'ON CROIT
+
+`cpx62-1206` a fini propre (`exit 0`, 36 min 48 s, 24 artefacts) avec un
+`scientific_summaries` **VIDE**. Le runner n'inline un summary dans le statut
+GitOps que **sous 64 KiB** (`STATUS_SUMMARY_MAX_FILE_BYTES`, `runner_v3.py:69`)
+et **saute le fichier EN SILENCE** au-delà ; M18 a rendu **530 163 octets**,
+et son `--compact-output` n'avait de compact que le nom (il écrivait le dict
+complet, `seed_results` inclus).
+
+📌 **La check-list (point 9) a été respectée à la lettre et ratée sur le fond.**
+Le round-trip write→read vérifiait que **le parseur lit ce que le job écrit**.
+Il ne vérifiait pas que **le verdict me PARVIENT**. Le test s'arrêtait au
+fichier alors que le chemin réel va jusqu'au statut — et c'est la dernière
+étape, la seule jamais testée, qui a sauté. **Un round-trip doit couvrir le
+transport, pas seulement le format.**
+
+Réparé sur `develop` (`56b23c3a6`) : `compact_result()` omet `seed_results` en
+disant où les retrouver ; le job **ABORT (exit 6)** au-dessus de 65 536 octets
+— un dépassement crie au lieu de disparaître ; deux tests verrouillent les deux
+moitiés. `cpx62-1207` a republié le verdict depuis le stockage objet **sans
+rejouer une seconde de science** (hashes de 1206 transportés tels quels).
+
+⚠️ **Reste ouvert** : `PHASE_TIMINGS.txt` est publié mais **pas inliné non plus**
+(seul `scientific-summary.json` est sur la liste blanche du runner), donc le
+partage setup/science que 1206 devait ancrer **n'est toujours pas connu**. Le
+fix propre est d'écrire les timings **dans** le summary.
 
 ## 0septies. 7 août 2026 — ⚖️ L'HÉRITAGE NE VAUT RIEN, ET LE LEVIER RESTANT EST LA DISTRIBUTION
 
