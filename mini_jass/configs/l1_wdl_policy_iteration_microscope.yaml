@@ -1,0 +1,84 @@
+schema: mini_jass.wdl_policy_iteration_microscope.v1
+milestone: M18
+
+# M18 — microscope causal de la boucle WDL auto-améliorante.
+#
+# M17 demande si plusieurs générations composent. M18 demande POURQUOI :
+# l'amélioration vient-elle du feedback du générateur, de la recherche, et le
+# gate arena protège-t-il la boucle contre les régressions ?
+base_ladder_config: configs/l1_generation_ladder.yaml
+expected_execution_host: cpx62
+ladder_max: 8
+report_rungs: [0, 1, 2, 4, 8]
+paired_seeds: [180001, 180002, 180003, 180004, 180005]
+
+arms:
+  evolving_arena_gate:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: arena_only
+  frozen_generator:
+    generator_source: initial_model
+    search_depth: frozen_m17
+    promotion_rule: arena_only
+  shallow_search:
+    generator_source: evolving_parent
+    search_depth: 1
+    promotion_rule: arena_only
+  forced_advance:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: always
+
+# Le gate historique development+arena lit l'oracle. M18 neutralise le premier
+# terme par un seuil mathématiquement toujours vrai (selection-score ∈ [-2,2])
+# et vérifie ex post que la promotion est exactement égale au verdict arena.
+promotion_contract:
+  forced_development_floor: -3.0
+  arena_only_threshold_source: frozen_m17
+  always_advance_arena_floor: -1.0
+
+# Probe fixe, hors entraînement : mêmes positions de départ et mêmes graines à
+# chaque barreau et dans chaque bras. C'est la mesure primaire de la qualité des
+# étiquettes, sans confondre amélioration et changement de distribution visitée.
+fixed_probe:
+  games: 64
+  seed_base: 918000
+  arena_pairs: 32
+  arena_seed_base: 919000
+
+primary_contrasts:
+  - evolving_g8_minus_g0
+  - evolving_gain_minus_frozen_gain
+  - evolving_gain_minus_shallow_gain
+secondary_contrasts:
+  - evolving_gain_minus_forced_gain
+
+scientific_gate:
+  paired_confidence_critical_95: 2.7764451051977987
+  minimum_mean_advancing_generations: 1.0
+  minimum_practical_loop_gain: 0.03
+  minimum_practical_feedback_gain: 0.02
+  minimum_practical_search_gain: 0.02
+  require_paired_confidence_95_above_zero: true
+  minimum_final_development_value_sign_delta: 0.0
+  minimum_final_development_optimal_mass_delta: 0.0
+  minimum_final_arena_score_vs_initial: 0.50
+
+observer_contract:
+  oracle_reads_allowed_for:
+    - posthoc_wdl_exactness
+    - posthoc_wdl_confusion
+    - posthoc_development_metrics
+  oracle_reads_forbidden_for:
+    - training_targets
+    - selfplay_generation
+    - promotion_decision
+  fixed_probe_start_schedule_paired: true
+  training_start_schedule_paired_by_generation: true
+
+boundaries:
+  promotable: false
+  selected_mechanism_requires_fresh_seed_replication: true
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
