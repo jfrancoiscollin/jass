@@ -1,0 +1,33 @@
+schema: mini_jass.m14_value_target_ablation.v1
+milestone: M14
+base_replication_config: l2_seed_variance_replication.yaml
+expected_execution_host: cpx62
+paired_seeds:
+  - 132001
+  - 132002
+  - 132003
+  - 132004
+  - 132005
+  - 132006
+  - 132007
+  - 132008
+  - 132009
+  - 132010
+  - 132011
+  - 132012
+  - 132013
+  - 132014
+  - 132015
+  - 132016
+  - 132017
+  - 132018
+  - 132019
+  - 132020
+arms:
+  baseline:
+    value_target_source: selfplay_outcome
+  oracle:
+    value_target_source: exact_oracle
+primary_contrast: exact_oracle_minus_selfplay_outcome
+scientific_scope: diagnostic_value_target_noise_ablation_only
+promotion_policy: oracle_arm_never_promotable
