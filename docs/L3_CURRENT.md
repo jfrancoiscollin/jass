@@ -80,6 +80,9 @@
 > minijass_m14_exact_labels_make_the_value_head_learn_plus_9_4_points;
 > minijass_m15_no_deployable_mechanism_recovers_it_best_is_41_8_percent;
 > our_egdb_relabel_only_covers_the_7_piece_endgame_slice_not_the_corpus;
+> minijass_m16_temporal_lambda_returns_are_WORSE_than_the_same_state_blend;
+> lambda_curve_is_non_monotone_interior_optimum_near_0_8_pure_bootstrap_HURTS;
+> every_l2_milestone_M9_to_M16_runs_a_SINGLE_generation_never_iterated;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
@@ -127,6 +130,37 @@ promouvable.
 d'exécution reste entier.** Le meilleur mécanisme sans solveur en récupère
 42 % et ne passe pas la barre. M16 (PR #437) teste si l'information manquante
 est **temporelle** plutôt qu'un autre scalaire même-état.
+
+### ⛔ M16 (`cpx62-1204`) — l'information manquante n'est PAS temporelle
+
+Cibles de valeur en λ-retour, cinq bras appariés sur les 20 graines gelées.
+
+| bras | récupération du gain oracle | gain confirmation | IC95 |
+|---|---:|---:|---|
+| `next_search` (λ=0, amorçage pur) | **−13,0 %** | −0,0123 | [−0,030 ; +0,005] |
+| `lambda_50` | +16,9 % | +0,0159 | [+0,000 ; +0,032] |
+| `lambda_80` | **+24,9 %** | +0,0235 | [+0,008 ; +0,039] |
+| *M15 `blend`, pour mémoire* | *41,8 %* | | |
+
+`status=FAIL`, `selected_mechanism=None`, seuil gelé à 50 %.
+
+**Le meilleur bras temporel fait MOINS BIEN que le mélange même-état de M15.**
+L'hypothèse « l'information manquante est temporelle » est donc réfutée telle
+que testée.
+
+📌 **La courbe est NON MONOTONE, et c'est le résultat le plus informatif.**
+`−13 %` → `+16,9 %` → `+24,9 %`, puis nécessairement `0 %` à `λ = 1` puisque
+c'est le baseline par construction. Il existe donc un **optimum intérieur vers
+`λ ≈ 0,8-0,9`** : un peu d'amorçage aide, l'amorçage **pur** nuit.
+
+⚠️ **ET L'ÉCHEC EST EN PARTIE UN ARTEFACT DU PROTOCOLE À UN COUP — réserve
+posée AVANT le run, en revue de la PR #437.** Le protocole L2 gelé n'a qu'une
+génération, donc le `root_score` qui sert d'amorçage vient du search 16 nœuds
+d'un réseau **initialisé aléatoirement**. `λ = 0` amorce sur du quasi-bruit —
+et sort effectivement négatif, comme annoncé. À la génération 2 ou 3, `V_search`
+viendrait d'un réseau qui a appris. **La conclusion à retenir est donc « CE
+bootstrap-là ne capte pas l'information temporelle », pas « elle est
+absente ».** M17 (`cpx62-1205`) teste exactement la prémisse qui manque.
 
 ### ⚠️ LA TENSION AVEC NOTRE PROPRE RELABEL, ET COMMENT LA TRANCHER
 
