@@ -238,6 +238,24 @@ def _temporal_targeted_generation(
     return wrapped
 
 
+def _mark_temporal_execution(execution: Any, lambda_value: float) -> Any:
+    """Make the execution contract and hash state the temporal target honestly."""
+
+    core = execution.core
+    core.pop("execution_hash", None)
+    core["training_target_contract"]["value"] = "temporal_lambda_return"
+    core["value_target_source"] = "temporal_lambda_return"
+    core["temporal_value_target"] = {
+        "lambda": float(lambda_value),
+        "bootstrap": "negated_successor_root_score",
+        "terminal_fallback": "selfplay_outcome",
+        "uses_oracle": False,
+        "promotable": False,
+    }
+    core["execution_hash"] = _digest(core)
+    return execution
+
+
 def _run_arm(
     *,
     arm: str,
@@ -261,10 +279,19 @@ def _run_arm(
 
             m13.execute_loop = execute_with_oracle
         elif source == "temporal_lambda_return":
+            lambda_value = float(spec["lambda"])
             loop_module.generate_self_play = _temporal_targeted_generation(
                 original_generate,
-                float(spec["lambda"]),
+                lambda_value,
             )
+
+            def execute_with_temporal(*args: Any, **kwargs: Any) -> Any:
+                if "value_target_source" in kwargs:
+                    raise ValueError("M16 owns the temporal target source")
+                execution = original_execute(*args, **kwargs)
+                return _mark_temporal_execution(execution, lambda_value)
+
+            m13.execute_loop = execute_with_temporal
         elif source != "selfplay_outcome":
             raise ValueError(f"unknown M16 arm source: {source}")
 
