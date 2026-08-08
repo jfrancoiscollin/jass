@@ -87,6 +87,23 @@ lines = [
     f"search_gain_ci95={c['evolving_gain_minus_shallow_gain']['confidence_95']}",
     f"gate_gain={c['evolving_gain_minus_forced_gain']['mean']}",
     f"final_arena_score_vs_initial={e['mean_final_arena_score_vs_initial']}",
+]
+# Par bras : sans ca, un contraste plat est inattribuable entre « le mecanisme
+# ne paie pas » et « ce bras-la n'a jamais promu, donc n'a jamais itere ».
+for arm in sorted(a["arms"]):
+    arm_row = a["arms"][arm]
+    lines.append(f"arm_{arm}_advancing_generations={arm_row['mean_advancing_generations']}")
+    lines.append(f"arm_{arm}_seeds_with_zero_advance={arm_row['seeds_with_zero_advance']}")
+    lines.append(
+        f"arm_{arm}_final_arena_score_vs_initial="
+        f"{arm_row['mean_final_arena_score_vs_initial']}"
+    )
+    # Le bras shallow_search baisse la PROFONDEUR mais garde le budget de
+    # noeuds : le contraste « recherche » est donc a compute NON egalise. On
+    # sort la profondeur declaree pour que la mise en garde soit lisible dans
+    # le RESULTS, pas seulement dans le protocole.
+    lines.append(f"arm_{arm}_declared_search_depth={s['protocol']['arms'][arm]['search_depth']}")
+lines.extend([
     f"loop_is_virtuous={r['loop_is_virtuous']}",
     f"generator_feedback_is_causal={r['generator_feedback_is_causal']}",
     f"search_is_cliquet={r['search_is_cliquet']}",
@@ -95,6 +112,6 @@ lines = [
     "oracle_used_for_promotion=false",
     "m18_promotable=false",
     "direct_10x10_transfer_authorized=false",
-]
+])
 Path(sys.argv[2]).write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY

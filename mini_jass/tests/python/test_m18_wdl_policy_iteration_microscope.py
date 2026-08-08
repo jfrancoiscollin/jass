@@ -109,7 +109,7 @@ def test_paired_confidence_interval_above_zero():
 
 
 def _aggregate(advances=3.0, loop=0.05, feedback=0.04, search=0.03,
-               final_v=0.10, final_p=0.02, arena=0.60):
+               final_v=0.10, final_p=0.02, arena=0.60, oracle_clean=True):
     return {
         "arms": {
             "evolving_arena_gate": {
@@ -125,7 +125,15 @@ def _aggregate(advances=3.0, loop=0.05, feedback=0.04, search=0.03,
             "evolving_gain_minus_shallow_gain": {"mean": search, "confidence_95": [search - 0.01, search + 0.01]},
             "evolving_gain_minus_forced_gain": {"mean": 0.01, "confidence_95": [-0.01, 0.03]},
         },
-        "execution": {"all_runs_completed": True, "start_schedules_paired": True},
+        # `oracle_has_no_causal_role` est derive par le runner de
+        # `oracle_causal_reads == 0` sur CHAQUE ligne (bras x graine). C'est un
+        # critere de la porte au meme titre que les autres : la fixture doit le
+        # porter, sinon les tests ne testent pas ce que le job execute.
+        "execution": {
+            "all_runs_completed": True,
+            "start_schedules_paired": True,
+            "oracle_has_no_causal_role": oracle_clean,
+        },
     }
 
 
@@ -155,6 +163,18 @@ def test_all_causal_criteria_pass_the_microscope():
     assert rec["generator_feedback_is_causal"] is True
     assert rec["search_is_cliquet"] is True
     assert rec["promotable"] is False
+
+
+def test_a_single_causal_oracle_read_fails_the_microscope():
+    """Une seule lecture causale de l'oracle invalide TOUTE la cellule.
+
+    Le reste de la porte peut etre parfait : si un bras a lu l'oracle pour
+    generer, entrainer ou promouvoir, la boucle mesuree n'est plus la boucle
+    Scan-like qu'on pretend mesurer.
+    """
+    rec = M18.build_recommendation(_aggregate(oracle_clean=False), _gate())
+    assert rec["status"] == "FAIL"
+    assert rec["criteria"]["oracle_has_no_causal_role"] is False
 
 
 def test_rising_loop_without_feedback_does_not_claim_virtuous_generator():
