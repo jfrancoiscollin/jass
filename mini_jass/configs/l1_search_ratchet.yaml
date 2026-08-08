@@ -1,0 +1,92 @@
+schema: mini_jass.search_ratchet.v1
+milestone: M19
+
+# M19 — LE CLIQUET DE RECHERCHE, MESURE SUR UNE SONDE A PROFONDEUR COMMUNE.
+#
+# CE QUE M18 A RATE SUR CE BRAS. Le contraste `evolving − shallow` de M18 est
+# sorti a −0,0219, IC95 [−0,144 ; +0,101] : ininterpretable pour DEUX raisons
+# independantes, et la seconde n'avait pas ete vue avant le run.
+#   1. La sonde heritait de la profondeur DU BRAS. Le bras `shallow_search`
+#      mesurait donc 0,6937 au barreau 0 contre 0,7469 — AVANT tout
+#      entrainement, simplement parce que la sonde jouait moins profond. Les
+#      niveaux n'etaient pas comparables, le contraste devait se rabattre sur
+#      les GAINS, et le bras parti le plus bas gagne mecaniquement plus
+#      (0,0657 contre 0,0437). Le contraste etait BIAISE CONTRE la profondeur.
+#   2. La reserve posee avant le run — profondeur baissee, budget de noeuds
+#      inchange — est restee un commentaire, jamais un chiffre.
+#
+# CE QUE M19 CORRIGE, ET RIEN D'AUTRE. Meme recette, memes graines (180001-5,
+# donc les MEMES boucles a l'octet pres que M18), deux bras seulement. Le seul
+# facteur change est la SONDE : profondeur commune imposee aux deux bras, donc
+# barreau 0 identique par construction et contraste porte sur le NIVEAU. Les
+# noeuds consommes par la boucle sont comptes et rapportes par bras.
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_execution_host: cpx62
+ladder_max: 8
+report_rungs: [0, 1, 2, 4, 8]
+paired_seeds: [180001, 180002, 180003, 180004, 180005]
+
+# La profondeur de la sonde, IDENTIQUE dans les deux bras. C'est celle de la
+# recette M8 gelee : le bras de reference n'est donc sonde ni plus ni moins
+# profond que ce qu'il joue, et c'est le bras shallow qui est sonde au-dela de
+# sa propre profondeur de jeu — exactement ce qu'on veut mesurer (« le modele
+# entraine sur des etiquettes peu profondes est-il moins bon ? »), et non
+# « les etiquettes peu profondes sont-elles peu profondes ? ».
+common_probe_search_depth: 32
+
+arms:
+  reference_depth32:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: arena_only
+  shallow_depth1:
+    generator_source: evolving_parent
+    search_depth: 1
+    promotion_rule: arena_only
+
+promotion_contract:
+  forced_development_floor: -3.0
+  arena_only_threshold_source: frozen_m17
+
+fixed_probe:
+  games: 64
+  seed_base: 918000
+  arena_pairs: 32
+  arena_seed_base: 919000
+
+# ⚠️ LE CONTRASTE PRIMAIRE EST UN NIVEAU, PAS UN GAIN. Le gain reste rapporte
+# en secondaire, pour rester comparable au −0,0219 de M18 — mais il ne decide
+# pas : c'est lui qui portait le biais.
+primary_contrasts:
+  - reference_minus_shallow_level_g8
+secondary_contrasts:
+  - reference_minus_shallow_gain
+  - reference_minus_shallow_level_g0
+
+scientific_gate:
+  paired_confidence_critical_95: 2.7764451051977987
+  minimum_mean_advancing_generations: 1.0
+  minimum_practical_level_gap: 0.02
+  require_paired_confidence_95_above_zero: true
+  # Le controle qui rend le verdict attribuable : au barreau 0 les deux bras
+  # deploient le MEME modele initial et sont sondes a la MEME profondeur. Leur
+  # niveau doit donc etre identique. S'il ne l'est pas, la sonde n'est pas
+  # commune et le contraste de niveau ne vaut rien — INCONCLUANT, pas negatif.
+  maximum_rung0_level_gap: 0.0001
+  # Precedent M8 (`report_procedure.maximum_consumed_node_imbalance`).
+  maximum_consumed_node_imbalance: 0.35
+
+observer_contract:
+  oracle_reads_allowed_for:
+    - posthoc_wdl_exactness
+    - posthoc_development_metrics
+  oracle_reads_forbidden_for:
+    - training_targets
+    - selfplay_generation
+    - promotion_decision
+  fixed_probe_start_schedule_paired: true
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

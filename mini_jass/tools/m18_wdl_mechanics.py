@@ -163,10 +163,25 @@ def _model_metrics(
     }
 
 
-def _probe_config(loop_config: dict[str, Any], games: int) -> SelfPlayConfig:
+def _probe_config(
+    loop_config: dict[str, Any], games: int, search_depth: int | None = None
+) -> SelfPlayConfig:
+    """La sonde. `search_depth` la rend COMMUNE a tous les bras.
+
+    Sans override, la sonde herite de la profondeur DU BRAS -- ce qui etait le
+    defaut de M18 : le bras `shallow_search` mesurait deja `0,6937` au barreau 0
+    contre `0,7469`, avant tout entrainement, parce que la sonde elle-meme
+    jouait moins profond. Les niveaux n'etaient donc pas comparables entre bras,
+    et le contraste devait se rabattre sur les GAINS -- ou le bras parti le plus
+    bas gagne mecaniquement plus. En forcant une profondeur commune, le barreau
+    0 devient identique par construction (meme modele initial, memes positions,
+    memes graines, meme profondeur) et le contraste peut porter sur le NIVEAU.
+    """
     payload = deepcopy(loop_config["self_play"])
     payload["games"] = int(games)
     payload["game_schedule"] = None
+    if search_depth is not None:
+        payload["search_depth"] = int(search_depth)
     return loop_module._parse_self_play(payload)
 
 

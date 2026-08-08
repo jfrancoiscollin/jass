@@ -41,6 +41,7 @@ def _run_arm_seed(
     tensors: dict[str, Any],
     config: dict[str, Any],
     run_dir: Path,
+    probe_depth_override: int | None = None,
 ) -> dict[str, Any]:
     loop_config = deepcopy(base_loop)
     loop_config["seed"] = int(seed)
@@ -89,7 +90,9 @@ def _run_arm_seed(
         dtype=np.int64,
     )
     probe = config["fixed_probe"]
-    probe_config = _probe_config(loop_config, int(probe["games"]))
+    probe_config = _probe_config(
+        loop_config, int(probe["games"]), probe_depth_override
+    )
     probe_seed = int(probe["seed_base"]) + int(seed)
     batch = int(loop_config["development"]["batch_size"])
     before = _model_metrics(initial, tensors, oracle, development_indices, batch)
@@ -173,6 +176,18 @@ def _run_arm_seed(
         "initial_model_hash": execution.core["initial_model_hash"],
         "oracle_causal_reads": 0,
     }
+    if probe_depth_override is not None:
+        # Ecrit SOUS GARDE : `result_hash` de M18 couvre `seed_results`, donc un
+        # champ ajoute inconditionnellement casserait la reproductibilite du
+        # verdict `cpx62-1206`. Meme raison que la garde de `value_target_source`.
+        row["probe_search_depth"] = int(probe_depth_override)
+        # Le compute du bras, mesure et non postule : la reserve « la profondeur
+        # baisse mais le budget de noeuds reste » se teste ici, elle ne se
+        # commente plus. Precedent : `maximum_consumed_node_imbalance` de M8.
+        row["loop_consumed_nodes"] = sum(
+            int(record["self_play"]["search"]["consumed_nodes"])
+            for record in execution.core["generations"]
+        )
     seed_dir = run_dir / arm
     seed_dir.mkdir(parents=True, exist_ok=True)
     (seed_dir / f"seed-{seed}.json").write_text(
