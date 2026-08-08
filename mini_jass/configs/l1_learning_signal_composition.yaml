@@ -1,0 +1,72 @@
+schema: mini_jass.learning_signal_composition.v1
+milestone: M21
+
+# M21 — QUELLE INFORMATION S'ACCUMULE ENTRE LES GENERATIONS ?
+#
+# Preinscription : mini_jass/docs/M21_LEARNING_SIGNAL_COMPOSITION.md
+#
+# Les deux canaux de l'hypothese Scan sont morts sur L1 (M18 feedback du
+# generateur : +0,0000 IC95 ±0,027 ; M19 profondeur : −0,0219 IC95
+# [−0,064 ; +0,021]) et le motif de repli etiquettes-contre-force n'a pas
+# survecu au test apparie (M20). Reste la question que la boucle pose
+# d'elle-meme : qu'est-ce qui s'accumule quand elle tourne ?
+#
+# La cellule SEPARE la generation des donnees de leur consommation. Un pack de
+# huit generations est produit une fois par graine ; tous les bras entrainent
+# ensuite le MEME modele initial sur des sous-ensembles controles de ce pack, a
+# budget d'updates et de tirages egal (garanti par construction :
+# `train_from_replay` tire steps x batch_size indices dans le pool, quel que
+# soit le pool).
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_execution_host: cpx62
+
+paired_seeds: [210001, 210002, 210003, 210004, 210005, 210006, 210007, 210008,
+               210009, 210010, 210011, 210012, 210013, 210014, 210015, 210016,
+               210017, 210018, 210019, 210020]
+
+# G1_WIDE : generation 1 seule, huit fois plus de parties que les 128 de la
+# recette M8. Meme generateur (le modele initial), meme configuration, seul
+# `games` change. Tirage INDEPENDANT de la meme distribution, pas un
+# sur-ensemble de G1 — et le pool est ensuite ramene au compte unique EXACT de
+# MIX, verifie fail-closed avant tout contraste.
+wide_games: 1024
+wide_seed_offset: 770000
+
+arms:
+  - G1_ONLY
+  - G8_ONLY
+  - G1_TO_G8_MIX
+  - G1_WIDE
+  - G1_PLUS_NOVEL_LATE
+  - G1_PLUS_MATCHED_LATE
+
+# ⛔ LE PREMIER CONTRASTE EST LE PRIMAIRE, ET IL N'EST PAS `MIX − G1_ONLY`.
+# `G1_ONLY` tire avec remise dans un petit ensemble ; `MIX` dispose de huit fois
+# plus d'echantillons UNIQUES. `MIX − G1_ONLY` melange donc identite de
+# generation et volume de donnees uniques, et le second suffit a produire un
+# positif. `G8_ONLY` ne controle rien : il tire lui aussi dans UNE generation.
+# Seul `MIX − G1_WIDE` isole l'identite de generation.
+contrasts:
+  - [G1_TO_G8_MIX, G1_WIDE]              # PRIMAIRE : identite de generation, seule
+  - [G1_WIDE, G1_ONLY]                   # le volume de donnees uniques, chiffre
+  - [G1_TO_G8_MIX, G1_ONLY]              # le cadrage historique, desormais secondaire
+  - [G8_ONLY, G1_ONLY]                   # la recence seule suffit-elle ?
+  - [G1_PLUS_NOVEL_LATE, G1_ONLY]        # la nouvelle couverture paie-t-elle ?
+  - [G1_PLUS_NOVEL_LATE, G1_PLUS_MATCHED_LATE]  # nouveaute ou repondération ?
+
+# Arena APPARIEE contre le meme modele initial, et co-primaire : un protocole
+# qui selectionnerait sur le score d'apprentissage seul pourrait choisir le
+# modele le plus faible.
+arena:
+  pairs: 64
+  seed_base: 921000
+
+scientific_gate:
+  paired_confidence_critical_95: 2.093024054408263   # t(0,975 ; 19)
+  minimum_practical_learning_gain: 0.010
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
