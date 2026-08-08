@@ -1,0 +1,38 @@
+{
+  "candidates": {
+    "blend": {
+      "confirmation_optimal_mass_shift": 0.00047211,
+      "confirmation_value_sign_gain": 0.03942828,
+      "development_optimal_mass_shift": 0.0009171,
+      "development_value_sign_gain": 0.03786357,
+      "oracle_gain_recovery_fraction": 0.41759226,
+      "scientific_pass": false,
+      "target_value_mae_shift": 0.02329367
+    },
+    "search": {
+      "confirmation_optimal_mass_shift": -0.00018364,
+      "confirmation_value_sign_gain": 0.02824763,
+      "development_optimal_mass_shift": 0.00033572,
+      "development_value_sign_gain": 0.02434211,
+      "oracle_gain_recovery_fraction": 0.29917592,
+      "scientific_pass": false,
+      "target_value_mae_shift": 0.05632014
+    }
+  },
+  "contracts": {
+    "direct_10x10_transfer_authorized": false,
+    "m15_arms_promotable": false,
+    "production_jass_changes_authorized": false
+  },
+  "milestone": "M15",
+  "oracle_upper_bound_gain": {
+    "confirmation_value_sign": 0.09441813,
+    "development_value_sign": 0.09407895
+  },
+  "result_hash": "03f15b12a22ca27536efae5342dcc5d862f64a769c2a5afbf77e15a4c99d69b8",
+  "schema": "mini_jass.m15_search_value_target_screen.readout.v1",
+  "selected_mechanism": null,
+  "source_attempt_id": "20260808T121955Z-c5a9a514",
+  "source_job_id": "cpx62-1203-mini-jass-m15-readable-readout-v1",
+  "status": "FAIL"
+}
