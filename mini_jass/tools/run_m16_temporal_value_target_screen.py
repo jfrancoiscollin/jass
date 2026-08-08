@@ -242,10 +242,43 @@ def _mark_temporal_execution(execution: Any, lambda_value: float) -> Any:
     """Make the execution contract and hash state the temporal target honestly."""
 
     core = execution.core
+    # ⛔ Le patch de generation a-t-il REELLEMENT tire ? Sans cette garde, un
+    # patch inoperant (refactor du style d'import, chemin d'appel different)
+    # produirait un bras entraine sur les cibles HONNETES tout en s'estampillant
+    # `temporal_lambda_return` avec son lambda et un execution_hash divergent.
+    # Il serait indiscernable d'un vrai bras temporel et vaudrait exactement le
+    # baseline -- c'est-a-dire precisement la conclusion « l'information
+    # temporelle n'apporte rien ». Le seul mode de panne qui fabrique un faux
+    # negatif credible, et le marqueur pour le fermer existait deja.
+    markers = [
+        record["self_play"]["m16_value_target"]
+        for record in core.get("generations", [])
+        if isinstance(record.get("self_play"), dict)
+        and "m16_value_target" in record["self_play"]
+    ]
+    if not markers:
+        raise ValueError(
+            "M16: marqueur de generation temporelle absent — le patch de "
+            "generate_self_play n'a pas tire, ce bras est un BASELINE et ne "
+            "doit pas etre estampille temporel"
+        )
+    mismatched = [
+        float(marker["lambda"])
+        for marker in markers
+        if float(marker["lambda"]) != float(lambda_value)
+    ]
+    if mismatched:
+        raise ValueError(
+            f"M16: lambda du marqueur {mismatched} != lambda du bras "
+            f"{float(lambda_value)}"
+        )
+    if any(bool(marker["uses_oracle"]) for marker in markers):
+        raise ValueError("M16: un bras temporel ne doit jamais lire l'oracle")
     core.pop("execution_hash", None)
     core["training_target_contract"]["value"] = "temporal_lambda_return"
     core["value_target_source"] = "temporal_lambda_return"
     core["temporal_value_target"] = {
+        "marked_generations": len(markers),
         "lambda": float(lambda_value),
         "bootstrap": "negated_successor_root_score",
         "terminal_fallback": "selfplay_outcome",

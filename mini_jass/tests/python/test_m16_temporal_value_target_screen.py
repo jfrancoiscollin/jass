@@ -214,3 +214,57 @@ def test_m16_success_gate_requires_paired_confidence_and_half_oracle_gain() -> N
     assert rule["paired_confidence_critical_95"] == pytest.approx(
         2.093024054408263
     )
+
+
+# --------------------------------------------------------------------------- #
+#  Le marqueur de generation : sans lui, un bras BASELINE pourrait s'estampiller
+#  temporel. C'est le seul mode de panne qui fabrique un faux negatif credible.
+# --------------------------------------------------------------------------- #
+def _execution(markers):
+    class _Exec:
+        def __init__(self, core):
+            self.core = core
+
+    generations = []
+    for marker in markers:
+        generations.append(
+            {"self_play": ({} if marker is None else {"m16_value_target": marker})}
+        )
+    return _Exec(
+        {
+            "generations": generations,
+            "training_target_contract": {"value": "final_self_play_wdl"},
+            "execution_hash": "stale",
+        }
+    )
+
+
+def _marker(lam=0.8, uses_oracle=False):
+    return {"lambda": lam, "uses_oracle": uses_oracle, "source": "temporal_lambda_return"}
+
+
+def test_missing_marker_refuses_to_stamp_a_baseline_as_temporal():
+    """Le patch n'a pas tire : le bras est un baseline, il doit CRIER."""
+    with pytest.raises(ValueError, match="marqueur de generation temporelle absent"):
+        M16._mark_temporal_execution(_execution([None]), 0.8)
+
+
+def test_marker_lambda_must_match_the_arm_lambda():
+    """Un bras lambda_50 portant un marqueur a 0,8 serait mal etiquete."""
+    with pytest.raises(ValueError, match="lambda du marqueur"):
+        M16._mark_temporal_execution(_execution([_marker(lam=0.8)]), 0.5)
+
+
+def test_a_temporal_arm_that_read_the_oracle_is_refused():
+    with pytest.raises(ValueError, match="ne doit jamais lire l'oracle"):
+        M16._mark_temporal_execution(_execution([_marker(uses_oracle=True)]), 0.8)
+
+
+def test_present_marker_stamps_and_rehashes():
+    execution = M16._mark_temporal_execution(_execution([_marker(lam=0.8)]), 0.8)
+    core = execution.core
+    assert core["value_target_source"] == "temporal_lambda_return"
+    assert core["training_target_contract"]["value"] == "temporal_lambda_return"
+    assert core["temporal_value_target"]["promotable"] is False
+    assert core["temporal_value_target"]["marked_generations"] == 1
+    assert core["execution_hash"] != "stale"
