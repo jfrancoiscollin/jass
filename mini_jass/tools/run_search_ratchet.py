@@ -154,6 +154,33 @@ def build_recommendation(
     }
 
 
+def assert_paired_probe_schedules(arm_rows: dict[str, list[dict[str, Any]]]) -> None:
+    """La sonde doit etre appariee ENTRE BRAS, a graine egale.
+
+    ⚠️ Et surtout PAS uniforme d'une graine a l'autre : `probe_seed` vaut
+    `seed_base + seed`, donc chaque graine tire son propre calendrier de departs
+    PAR CONSTRUCTION. Ce qui doit tenir, c'est l'APPARIEMENT entre les deux bras
+    d'une meme graine -- c'est lui qui rend le barreau 0 comparable.
+
+    Exiger une signature unique sur TOUTES les lignes a fait echouer
+    `cpx62-1208` a l'assertion finale, APRES 28 minutes de science : une garde
+    fausse qui rejetait un run parfaitement valide. Elle avait survecu au
+    round-trip parce que la fixture donnait la meme signature a toutes les
+    lignes -- plus uniforme que la realite, donc aveugle a l'erreur.
+    """
+    for seed in EXPECTED_SEEDS:
+        per_seed = {
+            row["probe_start_signature"]
+            for rows in arm_rows.values()
+            for row in rows
+            if int(row["seed"]) == seed
+        }
+        if len(per_seed) != 1:
+            raise ValueError(
+                f"M19 fixed probe start schedule diverged across arms at seed={seed}"
+            )
+
+
 def _aggregate_arm(rows: list[dict[str, Any]], rungs: list[int]) -> dict[str, Any]:
     return {
         "successful_run_count": len(rows),
@@ -251,11 +278,7 @@ def run_m19(
                 )
             )
 
-    # La sonde doit avoir joue les MEMES positions de depart partout, sinon le
-    # « barreau 0 identique » ne prouve rien.
-    signatures = {row["probe_start_signature"] for rows in arm_rows.values() for row in rows}
-    if len(signatures) != 1:
-        raise ValueError("M19 fixed probe start schedule differed across arms or seeds")
+    assert_paired_probe_schedules(arm_rows)
 
     critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
     arms = {arm: _aggregate_arm(rows, rungs) for arm, rows in arm_rows.items()}

@@ -34,6 +34,22 @@ mkdir -p "$work" "$artefact_root"
 # donc la mesure existait sans jamais parvenir. Ici elle est fusionnee dans le
 # summary APRES coup, hors du `result_hash` : le temps mural n'appartient pas
 # au protocole scientifique et ne doit pas en perturber l'identite.
+# cpx62-1208 est mort a `exit 1` en ne publiant QUE `runner-launch.json` : tout
+# ce qui ecrit dans $ART se trouve apres la science, donc un plantage ne laisse
+# aucune trace exploitable et il faut un job de plus rien que pour lire le log.
+# Le trap rend le diagnostic disponible dans les artefacts du run qui echoue.
+on_failure() {
+  local rc=$?
+  [[ $rc -eq 0 ]] && return 0
+  {
+    echo "exit_code=$rc"
+    echo "failed_after_phases:"
+    cat "$phase_log" 2>/dev/null || echo "  (aucune phase terminee)"
+  } >"$artefact_root/FAILURE.txt" 2>/dev/null || true
+  return $rc
+}
+trap on_failure EXIT
+
 phase_log="$work/phase_timings.txt"
 : >"$phase_log"
 t_job_start=$(date +%s)

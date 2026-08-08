@@ -169,6 +169,56 @@ def test_no_outcome_is_ever_promotable():
 
 
 # --------------------------------------------------------------------------- #
+#  L'appariement de la sonde -- la garde qui a tue cpx62-1208.
+#
+#  La premiere version exigeait UNE signature sur toutes les lignes. Or
+#  `probe_seed = seed_base + seed` : chaque graine tire son propre calendrier de
+#  departs PAR CONSTRUCTION. La garde rejetait donc un run valide, a la derniere
+#  assertion, apres 28 minutes de science. Elle avait survecu au round-trip
+#  parce que la fixture donnait la meme signature partout -- PLUS UNIFORME QUE
+#  LA REALITE, donc structurellement aveugle a l'erreur.
+# --------------------------------------------------------------------------- #
+def _schedule_rows(per_seed_signature, arm_offset=""):
+    """Fixture REALISTE : une signature par graine, partagee par les deux bras."""
+    return {
+        arm: [
+            {
+                "seed": seed,
+                "probe_start_signature": per_seed_signature(seed)
+                + (arm_offset if arm == "shallow_depth1" else ""),
+            }
+            for seed in M19.EXPECTED_SEEDS
+        ]
+        for arm in M19.ARM_ORDER
+    }
+
+
+def test_a_signature_that_differs_per_seed_is_NORMAL_and_must_pass():
+    """Le cas exact que cpx62-1208 a rejete a tort."""
+    rows = _schedule_rows(lambda seed: f"sig-{seed}")
+    M19.assert_paired_probe_schedules(rows)
+
+
+def test_a_signature_that_differs_BETWEEN_ARMS_at_one_seed_must_fail():
+    """Le vrai defaut : la sonde n'est plus appariee, le barreau 0 ne prouve rien."""
+    rows = _schedule_rows(lambda seed: f"sig-{seed}", arm_offset="-DIVERGED")
+    with pytest.raises(ValueError, match="diverged across arms at seed="):
+        M19.assert_paired_probe_schedules(rows)
+
+
+def test_the_failure_names_the_offending_seed():
+    rows = _schedule_rows(lambda seed: f"sig-{seed}")
+    rows["shallow_depth1"][2]["probe_start_signature"] = "sig-OTHER"
+    with pytest.raises(ValueError, match=f"seed={M19.EXPECTED_SEEDS[2]}"):
+        M19.assert_paired_probe_schedules(rows)
+
+
+def test_a_uniform_signature_everywhere_also_passes():
+    """Uniforme n'est pas interdit -- c'est simplement pas ce qu'on exige."""
+    M19.assert_paired_probe_schedules(_schedule_rows(lambda seed: "sig"))
+
+
+# --------------------------------------------------------------------------- #
 #  Le contrat de la config, et le contrat du job.
 # --------------------------------------------------------------------------- #
 def _config():
