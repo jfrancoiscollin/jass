@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -135,6 +136,44 @@ def _aggregate(advances=3.0, loop=0.05, feedback=0.04, search=0.03,
             "oracle_has_no_causal_role": oracle_clean,
         },
     }
+
+
+def test_compact_output_drops_the_seed_rows_and_fits_the_status_cap():
+    """cpx62-1206 : 530 KiB de summary, saute EN SILENCE, verdict invisible.
+
+    Le poids venait entierement des lignes par graine (20 lignes, chacune avec
+    ses matrices de confusion WDL par barreau). Le compact doit donc les omettre
+    -- en disant ou les retrouver -- et tout ce qui DECIDE doit rester.
+    """
+    heavy = {
+        "milestone": "M18",
+        "status": "PASS",
+        "result_hash": "r",
+        "protocol_hash": "p",
+        "aggregate": _aggregate(),
+        "recommendation": {"finding": "x"},
+        "seed_results": {arm: [{"blob": "z" * 40_000}] for arm in ("a", "b")},
+    }
+    compact = M18.compact_result(heavy, row_count=20)
+    assert compact["seed_results"]["omitted_from_compact_output"] is True
+    assert compact["seed_results"]["row_count"] == 20
+    for key in ("aggregate", "recommendation", "result_hash", "protocol_hash", "status"):
+        assert compact[key] == heavy[key]
+    size = len(json.dumps(compact, indent=2, sort_keys=True).encode("utf-8"))
+    assert size < M18.STATUS_SUMMARY_MAX_FILE_BYTES
+    assert len(json.dumps(heavy).encode("utf-8")) > M18.STATUS_SUMMARY_MAX_FILE_BYTES
+
+
+def test_the_job_refuses_a_summary_the_runner_would_silently_drop():
+    """Le seuil de 64 KiB est cable dans le job, pas seulement dans un commentaire.
+
+    cpx62-1206 a rendu un summary de 530 KiB : le runner l'a saute EN SILENCE
+    et le verdict n'a existe que dans le stockage objet. La garde doit etre
+    dans le script, et elle doit ABORT -- pas prevenir.
+    """
+    job = (_ROOT / "jobs" / "run_m18_wdl_policy_iteration_microscope_cpx.sh").read_text()
+    assert "65536" in job
+    assert "ABORT reporting" in job
 
 
 def _gate():

@@ -77,7 +77,17 @@ phase oracle_export_l1
 phase science_20_runs_of_8_generations
 echo "total_seconds=$(( $(date +%s) - t_job_start ))" >>"$phase_log"
 
+# Le runner n'inline un summary dans le statut GitOps que sous 64 KiB, et il
+# saute le fichier EN SILENCE au-dela : cpx62-1206 a rendu 530 KiB et son
+# verdict n'a existe que dans le stockage objet. Un depassement doit crier.
 cp "$summary" "$artefact_root/scientific-summary.json"
+summary_bytes=$(stat -c %s "$artefact_root/scientific-summary.json")
+echo "summary_bytes=$summary_bytes" >>"$phase_log"
+if [[ "$summary_bytes" -gt 65536 ]]; then
+  echo "ABORT reporting: scientific-summary.json = $summary_bytes o > 65536," \
+       "le runner ne l'inlinera pas et le verdict sera invisible" >&2
+  exit 6
+fi
 cp -R "$run_dir" "$artefact_root/m18-wdl-policy-iteration-microscope-run"
 
 "$python_bin" - "$artefact_root/scientific-summary.json" \

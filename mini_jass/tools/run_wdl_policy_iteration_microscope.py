@@ -41,6 +41,30 @@ from m18_wdl_mechanics import (  # noqa: E402,F401
 )
 
 
+STATUS_SUMMARY_MAX_FILE_BYTES = 64 * 1024
+
+
+def compact_result(result: dict[str, Any], row_count: int) -> dict[str, Any]:
+    """Le summary que le plan de controle peut reellement inliner.
+
+    Le runner n'inline un summary dans le statut GitOps que sous 64 KiB, et il
+    saute le fichier EN SILENCE au-dela : `cpx62-1206` a rendu 530 KiB -- 20
+    lignes bras x graine, chacune avec ses matrices de confusion par barreau --
+    et son verdict n'a existe que dans le stockage objet. On garde donc
+    l'agregat, les contrastes, la recommandation et les hashes (tout ce qui
+    decide) et on renvoie au `run_dir` pour les lignes par graine, qui partent
+    de toute facon en artefacts.
+    """
+    compact = {key: value for key, value in result.items() if key != "seed_results"}
+    compact["seed_results"] = {
+        "omitted_from_compact_output": True,
+        "reason": "runner inlines a status summary only under 64 KiB",
+        "full_record": "result.json (run_dir, published as an artefact)",
+        "row_count": row_count,
+    }
+    return compact
+
+
 def run_m18(
     config_path: Path,
     oracle_path: Path,
@@ -145,12 +169,13 @@ def run_m18(
     result["result_hash"] = _digest(
         {key: value for key, value in result.items() if key != "result_hash"}
     )
-    compact_output.parent.mkdir(parents=True, exist_ok=True)
-    compact_output.write_text(
-        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
     (run_dir / "result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    compact = compact_result(result, sum(len(rows) for rows in arm_rows.values()))
+    compact_output.parent.mkdir(parents=True, exist_ok=True)
+    compact_output.write_text(
+        json.dumps(compact, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return result
 
