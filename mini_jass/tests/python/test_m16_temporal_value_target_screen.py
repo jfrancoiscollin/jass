@@ -101,8 +101,22 @@ def test_lambda_eighty_keeps_more_terminal_outcome_mass() -> None:
 
 
 def test_temporal_execution_contract_is_honest_and_non_promotable() -> None:
+    """L'estampille exige desormais la PREUVE que la generation temporelle a
+    tire : le marqueur ci-dessous n'est pas decoratif, sans lui la fonction
+    refuse d'estampiller (cf. test_missing_marker_... plus bas)."""
     execution = SimpleNamespace(
         core={
+            "generations": [
+                {
+                    "self_play": {
+                        "m16_value_target": {
+                            "source": "temporal_lambda_return",
+                            "lambda": 0.5,
+                            "uses_oracle": False,
+                        }
+                    }
+                }
+            ],
             "training_target_contract": {"value": "final_self_play_wdl"},
             "execution_hash": "historical-hash",
         }
@@ -114,6 +128,7 @@ def test_temporal_execution_contract_is_honest_and_non_promotable() -> None:
     )
     assert execution.core["value_target_source"] == "temporal_lambda_return"
     assert execution.core["temporal_value_target"] == {
+        "marked_generations": 1,
         "lambda": 0.5,
         "bootstrap": "negated_successor_root_score",
         "terminal_fallback": "selfplay_outcome",
