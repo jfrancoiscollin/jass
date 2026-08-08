@@ -92,8 +92,12 @@
 > a_write_read_roundtrip_must_cover_TRANSPORT_not_only_format_64kib_status_cap;
 > minijass_m19_search_depth_is_NOT_a_ratchet_either_and_the_sign_goes_the_other_way;
 > BOTH_scan_channels_are_dead_on_L1_generator_feedback_AND_search_depth;
-> label_exactness_and_model_strength_move_in_OPPOSITE_directions_three_arms;
-> minijass_setup_is_26_to_34_min_and_the_SCIENCE_is_106_seconds_MEASURED;
+> label_strength_anticorrelation_REFUTED_at_20_seeds_it_was_an_n5_artefact;
+> winners_curse_again_effects_shrank_x0_04_to_x0_30_from_n5_to_n20;
+> a_table_of_between_arm_means_without_CIs_is_NOT_a_result_third_time_learned;
+> minijass_science_is_6_6_s_per_run_of_8_generations_measured_twice;
+> the_fixed_cost_is_RUNNER_worktree_per_attempt_NOT_cmake_or_venv_34_s;
+> batch_the_science_do_not_multiply_the_jobs;
 > power_is_nearly_free_at_lab_scale_20_seeds_by_default_from_now_on;
 > a_fixture_must_reproduce_the_VARIATION_of_reality_not_only_its_shape;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
@@ -411,6 +415,78 @@ moins un critère indécidable par manque de puissance — dont M18 avec une moy
 **au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
 à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
 « setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### ⛔ M20 (`cpx62-1210`) — L'ANTICORRÉLATION ÉTIQUETTES/FORCE NE SURVIT PAS À UN TEST APPARIÉ
+
+`status=FAIL`, `finding=the_anti_correlation_pattern_did_not_survive_a_paired_test`,
+`result_hash=8f1485b8e…`, **20 graines fraîches**, `promotable=false`.
+
+⚠️ **CE VERDICT RÉTRACTE CE QUE J'AI ÉCRIT PLUS HAUT.** Le « motif étiquettes
+contre force » consigné comme *le vrai résultat de la soirée* était un **artefact
+entre bras à `n=5`**. Testé proprement — deux paires à un seul facteur, les deux
+critères appariés avec IC, 20 graines fraîches — il **disparaît**.
+
+| paire (facteur unique) | Δ étiquettes | Δ arena |
+|---|---|---|
+| `forced_advance − gate_arena` (règle de promotion) | +0,0102 `[−0,014 ; +0,035]` | −0,0750 `[−0,190 ; +0,040]` |
+| `depth1 − depth32` (profondeur d'autojeu) | +0,0008 `[−0,021 ; +0,023]` | −0,0375 `[−0,195 ; +0,120]` |
+
+**Aucun des quatre effets n'exclut zéro.** Les trois contrôles sont verts :
+`worst_rung0_label_gap = 0,0` (sonde commune), `oracle_has_no_causal_role`, et
+surtout `reference_arm_divergence = 0,0` — `gate_arena` et `depth32`, qui
+partagent la même spécification, rendent des résultats **strictement
+identiques** (`0,8187 / 0,8125 / 2,10 promotions / 77 996 nœuds`). Le harnais est
+déterministe, donc le rétrécissement est réel et non du bruit d'exécution.
+
+📌 **RÉTRÉCISSEMENT MESURÉ, ET IL EST BRUTAL :**
+
+| | `n=5` | `n=20` | facteur |
+|---|---:|---:|---:|
+| promotion, étiquettes | +0,0344 | +0,0102 | **×0,30** |
+| promotion, arena | −0,2500 | −0,0750 | **×0,30** |
+| profondeur, étiquettes | +0,0219 | +0,0008 | **×0,04** |
+| profondeur, arena | −0,1500 | −0,0375 | **×0,25** |
+
+C'est exactement la **malédiction du vainqueur** documentée à L3 : un motif
+sélectionné *a posteriori* dans du bruit à faible `n` se dégonfle d'un facteur 3
+à 25 quand on le retire proprement. Le dessin à quatre bras de M18/M19 (arena de
+`0,45` à `0,90`) était une **dispersion de bruit** ; à 20 graines les quatre bras
+tiennent dans `0,7375`-`0,8125`.
+
+⚠️ **Ce qui subsiste, et qu'il faut dire sans le survendre** : les quatre signes
+vont dans le sens annoncé (étiquettes ↑, arena ↓), et les corrélations
+intra-paire sont légèrement négatives (`−0,05`, `−0,066`). **Si** un effet existe
+il est **petit** : trancher l'arena de la paire promotion demanderait `n ≈ 47`
+graines, celle de la paire profondeur `n ≈ 354`. La première est accessible
+(~20 min de science) ; la seconde dit que ce canal-là est mort.
+
+⛔ **CONSÉQUENCE DE MÉTHODE, PLUS IMPORTANTE QUE LE VERDICT.** J'ai construit
+tout le récit de la soirée sur un tableau de quatre bras **sans un seul IC**, et
+je l'ai qualifié de signal le plus fort de la campagne. Il a fallu la cellule
+appariée pour voir qu'il n'y avait rien. **Un tableau de moyennes entre bras
+n'est pas un résultat, quelle que soit la netteté du dessin** — et c'est la
+troisième fois que la campagne l'apprend (couverture à L3, `−9,27 Elo` ;
+volume ; ici).
+
+### ⏱️ ET MA LECTURE DU PARTAGE SETUP/SCIENCE ÉTAIT FAUSSE
+
+```
+build_and_ctest   10 s     science (80 runs de 8 générations)   530 s
+venv_and_pip      18 s     TOTAL mesuré par le job              564 s
+pytest + oracle    6 s     mural réel du job                  32 min
+```
+
+⚠️ **Le setup interne au job n'est PAS de 26-34 min : il est de 34 secondes**,
+sur un répertoire de scratch **neuf**. Ce que j'ai attribué à `cmake` + `venv` +
+torch après `cpx62-1209` était une inférence, et elle est fausse. Les ~23-30 min
+qui manquent sont **en amont du script** — création du worktree par attempt à la
+SHA épinglée, côté runner — donc hors de la mesure et hors de notre contrôle.
+
+✅ **Ce qui reste solide et utilisable** : la science coûte **6,6 s par run de
+8 générations** (`530 s / 80`), mesuré deux fois de façon cohérente (7,2 s sur
+`cpx62-1209`). Le coût fixe par attempt ne dépend **pas** du volume scientifique.
+**Conclusion inchangée mais pour la bonne raison : plus de graines et plus de
+bras sont quasi gratuits — il faut BATCHER la science, pas multiplier les jobs.**
 
 ### 🐛 ET UNE GARDE FAUSSE A COÛTÉ 28 MINUTES (`cpx62-1208`)
 
