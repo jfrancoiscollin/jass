@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -97,6 +98,29 @@ def test_lambda_eighty_keeps_more_terminal_outcome_mass() -> None:
     assert [sample.value_target for sample in result.samples] == pytest.approx(
         [-0.536, +0.72, -1.0]
     )
+
+
+def test_temporal_execution_contract_is_honest_and_non_promotable() -> None:
+    execution = SimpleNamespace(
+        core={
+            "training_target_contract": {"value": "final_self_play_wdl"},
+            "execution_hash": "historical-hash",
+        }
+    )
+    marked = M16._mark_temporal_execution(execution, 0.5)
+    assert marked is execution
+    assert execution.core["training_target_contract"]["value"] == (
+        "temporal_lambda_return"
+    )
+    assert execution.core["value_target_source"] == "temporal_lambda_return"
+    assert execution.core["temporal_value_target"] == {
+        "lambda": 0.5,
+        "bootstrap": "negated_successor_root_score",
+        "terminal_fallback": "selfplay_outcome",
+        "uses_oracle": False,
+        "promotable": False,
+    }
+    assert execution.core["execution_hash"] != "historical-hash"
 
 
 def test_single_sample_game_uses_terminal_outcome() -> None:
