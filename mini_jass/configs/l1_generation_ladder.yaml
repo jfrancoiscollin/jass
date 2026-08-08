@@ -1,0 +1,58 @@
+schema: mini_jass.generation_ladder.v1
+
+# M17 — l'echelle de generations. La boucle A-T-ELLE JAMAIS ITERE ?
+#
+# Constat qui motive la cellule : `l1_policy_target_gate` et
+# `l1_frozen_learning_gate` tournent `generations: 1`, et
+# `l2_score_softmax_selfplay` -- dont heritent M9 a M16 -- aussi. Les huit
+# jalons L2 sont donc des mesures a UN SEUL TOUR de boucle, alors que la
+# methode de reference (Scan : « iteration, quelques cycles ») suppose qu'elle
+# en fasse plusieurs. Un mecanisme qui ne paie qu'en COMPOSANT sur les
+# generations est structurellement invisible a chacun de nos verdicts plats.
+#
+# Choix de niveau : L1, pas L2. L1 est le seul niveau ou la boucle apprend de
+# facon etablie (M8 passe ses deux portes), donc le seul ou une composition
+# peut se voir plutot que se noyer dans un signal deja nul.
+#
+# Recette : celle de M8, GELEE, y compris `score_softmax` a temperature 0,25 et
+# la dose `strong_1024`. Le SEUL facteur est le nombre de generations.
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_m8_evidence: artefacts/m8_learning_gate_replication.v1.json
+
+# Une seule execution par graine a `ladder_max`, et non une execution par
+# barreau. La boucle est causalement en avant -- la generation k ne depend que
+# de 1..k-1, et les graines par generation valent `seed + g*K`, independantes
+# du total. TRONQUER un run a `ladder_max` au barreau k redonne donc EXACTEMENT
+# le run `generations: k`. Un run par graine suffit pour toute l'echelle, et
+# les barreaux partagent tout leur passe commun : appariement parfait.
+ladder_max: 8
+report_rungs: [1, 2, 4, 8]
+
+paired_seeds: [170001, 170002, 170003, 170004, 170005]
+
+# ⚠️ CONTROLE SANS LEQUEL LA CELLULE EST ININTERPRETABLE.
+# `loop.py` n'avance le parent que si `development_pass AND arena_pass`
+# (`provisional_advance`). M6 et M8 rapportent 2 candidats eligibles sur 5,
+# soit ~40 %. Donc `generations: 8` peut etre NOMINAL et non reel : si le
+# parent n'est jamais promu, on mesure huit fois la meme generation. Un
+# plateau sans promotion et un plateau avec promotion disent des choses
+# OPPOSEES. Le taux de promotion par generation est donc rapporte, et une
+# echelle qui ne promeut jamais est declaree INCONCLUANTE, pas negative.
+promotion_control:
+  report_per_generation: true
+  minimum_advancing_generations: 1
+
+# Diagnostic uniquement : aucun barreau n'est un candidat champion, et une
+# montee n'autoriserait qu'un jalon de replication a graines fraiches.
+scientific_gate:
+  minimum_monotone_rungs: 3
+  minimum_final_value_sign_delta: 0.0
+  minimum_final_optimal_mass_delta: 0.0
+
+boundaries:
+  cohorts_read: [development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
