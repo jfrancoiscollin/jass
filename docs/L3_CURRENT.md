@@ -90,6 +90,12 @@
 > arena_gate_trades_label_quality_for_strength_forced_advance_best_labels_worst_model;
 > m18_shallow_arm_contrast_confounded_by_its_own_starting_level_redefine_on_LEVEL;
 > a_write_read_roundtrip_must_cover_TRANSPORT_not_only_format_64kib_status_cap;
+> minijass_m19_search_depth_is_NOT_a_ratchet_either_and_the_sign_goes_the_other_way;
+> BOTH_scan_channels_are_dead_on_L1_generator_feedback_AND_search_depth;
+> label_exactness_and_model_strength_move_in_OPPOSITE_directions_three_arms;
+> minijass_setup_is_26_to_34_min_and_the_SCIENCE_is_106_seconds_MEASURED;
+> power_is_nearly_free_at_lab_scale_20_seeds_by_default_from_now_on;
+> a_fixture_must_reproduce_the_VARIATION_of_reality_not_only_its_shape;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
@@ -311,6 +317,125 @@ pas une garde gratuite.
 2. **`arena` et `development` se contredisent entre `evolving` et `frozen`** :
    dev delta `0,4056` contre `0,3710` (avantage evolving), arena `0,70` contre
    `0,90` (avantage frozen). **Non tranché.**
+
+### ⛔ M19 (`cpx62-1209`) — LA PROFONDEUR NON PLUS. LES DEUX CANAUX DE L'HYPOTHÈSE SCAN SONT MORTS SUR L1
+
+`status=FAIL`, `finding=search_depth_did_not_change_the_model_measurably`,
+`result_hash=1f73555de…`, `promotable=false`.
+
+M19 rejoue le bras `shallow` de M18, dont le contraste était **biaisé contre la
+profondeur — la chose même qu'il testait**. La sonde héritait de la profondeur
+du bras, donc le bras shallow démarrait à `0,6937` contre `0,7469` *avant tout
+entraînement* ; les niveaux n'étant pas comparables, le contraste se rabattait
+sur les gains, où le bras parti le plus bas gagne mécaniquement plus. Seul
+facteur changé : **sonde à profondeur commune (32)**. Mêmes graines, donc mêmes
+boucles.
+
+| contraste | moyenne | IC95 |
+|---|---:|---|
+| `reference − shallow` **niveau à g8** (primaire) | **−0,0219** | [−0,064 ; +0,021] |
+| `reference − shallow` gain (secondaire) | −0,0219 | [−0,064 ; +0,021] |
+| `reference − shallow` niveau à **g0** (contrôle) | **+0,0000** | [0 ; 0] |
+
+**Le contrôle est vert** (`rung0_level_gap = 0,0`) : la sonde était bien commune,
+donc le contraste de niveau mesure ce qu'il prétend. Niveau et gain coïncident
+exactement — mécaniquement obligé une fois `g0` identique, et c'est le sanity
+check de la cellule.
+
+📌 **Pas de cliquet, et le signe est même CONTRE la profondeur.** À profondeur 1
+les étiquettes finissent *meilleures* (`0,8125` contre `0,7906`), avec une
+montée monotone là où la référence plafonne :
+
+```
+reference_depth32   0,7469 → 0,7750 → 0,8000 → 0,7937 → 0,7906
+shallow_depth1      0,7469 → 0,7625 → 0,7719 → 0,7937 → 0,8125
+```
+
+⚠️ **L'IC traverse zéro : rien n'est établi dans ce sens-là non plus.** Encore
+la sous-puissance à cinq graines. Ce qui est acquis, c'est l'absence de cliquet
+dans le sens attendu.
+
+Le déséquilibre de compute est **`0,695`** (76 587 nœuds contre 23 342),
+au-dessus de la tolérance M8 de `0,35` — rapporté, jamais transformé en critère,
+comme préinscrit. Et il coupe dans le bon sens : **le bras qui consomme 3× moins
+fait mieux sur les étiquettes.**
+
+⚠️ *`−0,0219` est numériquement identique au chiffre de M18. Coïncidence : les
+deux viennent de quantités différentes et valent `7/320` à cette granularité.
+Noté pour que personne n'y lise une confirmation.*
+
+### 📌 CE QUE M18 + M19 ÉTABLISSENT ENSEMBLE — ÉTIQUETTES ET FORCE VONT EN SENS OPPOSÉ
+
+| bras | étiquettes à g8 | arena vs initial |
+|---|---:|---:|
+| `forced_advance` (M18) | **0,8250** | **0,45** |
+| `shallow_depth1` (M19) | **0,8125** | **0,55** |
+| `reference` / `evolving_arena_gate` | 0,7906 | 0,70 |
+| `frozen_generator` (M18) | 0,7906 | **0,90** |
+
+**Optimiser l'exactitude WDL n'est pas rendre le modèle plus fort, et semble
+l'anticorréler** — trois occurrences indépendantes. C'est l'écho exact du
+verdict L3 sur la couverture (`+2,83 %` de buckets → `−9,27 Elo`) : **une
+quantité intermédiaire plausible bouge en sens inverse de la force.**
+
+⚠️ **Réserve : l'arena ne porte aucun IC dans ces cellules** (160 parties par
+bras). C'est un **motif entre bras, pas un contraste testé** — à transformer en
+contraste apparié avant d'en faire un résultat.
+
+**Les deux canaux de l'hypothèse Scan sont donc morts sur L1** : feedback du
+générateur `+0,0000` IC95 `±0,027` (zéro serré), profondeur de recherche
+`−0,0219` IC95 `[−0,064 ; +0,021]` (non établi, signe inverse). Aucun des deux
+ne paie.
+
+### ⏱️ LE PARTAGE SETUP/SCIENCE, ENFIN MESURÉ — ET IL CHANGE LE SIZING DE TOUT LE LABO
+
+Objectif « C », livré par le canal qui arrive (les timings passent désormais
+*dans* `scientific-summary.json`, fusionnés **après** le `result_hash`) :
+
+```
+build_and_ctest        9 s     science_10_runs_of_8_gen    72 s
+venv_and_pip          18 s     TOTAL                      106 s
+pytest + oracle        6 s
+```
+
+📌 **106 secondes de travail réel, contre 32 minutes de mural.** Le scratch
+`$work` avait survécu de `cpx62-1208`, donc build et torch étaient déjà là.
+Recoupement sur trois jalons : M17 (5 runs) `33 min`, M18 (20 runs) `37 min`,
+M19 (10 runs) `106 s à chaud` → **setup ≈ 26-34 min, science ≈ 4 s par run de
+8 générations.**
+
+⛔ **CONSÉQUENCE : LA PUISSANCE NE COÛTE QUASIMENT RIEN, ET ON A SOUS-DIMENSIONNÉ
+TROIS CELLULES DE SUITE.** Passer de 5 à 20 graines coûte **~4 minutes de
+science**, pas quatre fois trente minutes. M17, M18 et M19 ont tous rendu au
+moins un critère indécidable par manque de puissance — dont M18 avec une moyenne
+**au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
+à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
+« setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### 🐛 ET UNE GARDE FAUSSE A COÛTÉ 28 MINUTES (`cpx62-1208`)
+
+`cpx62-1208` a tourné 27 min 55 s puis `exit 1`, en ne publiant que
+`runner-launch.json`. Cause : **ma** garde d'appariement exigeait une signature
+de départ unique sur **toutes** les lignes (bras × graine), alors que
+`probe_seed = seed_base + seed` — chaque graine tire son propre calendrier de
+départs **par construction**. Avec cinq graines la garde était certaine de
+tirer, et elle a tiré à la **dernière assertion**, après toute la science, sur
+un run parfaitement valide. M18 faisait déjà la bonne chose
+(`_assert_paired_start_schedules` compare **par graine, entre bras**) : le bon
+patron était sous les yeux et n'a pas été repris.
+
+📌 **Et le round-trip ne l'a pas vue parce que sa fixture donnait la même
+signature à toutes les lignes — PLUS UNIFORME QUE LA RÉALITÉ, donc
+structurellement aveugle à une garde qui teste l'uniformité.** Leçon plus large
+que ce bug : **une fixture doit reproduire la VARIATION du réel, pas seulement
+sa forme.** Le round-trip avait été élargi au transport le matin même ; il
+restait faux sur les données.
+
+Réparé (`33de90d0d`) : garde extraite en `assert_paired_probe_schedules`,
+comparaison par graine, message qui nomme la graine fautive, quatre tests dont
+le cas rejeté à tort. Plus un **trap de sortie** qui publie `FAILURE.txt` — 1208
+n'avait rien laissé parce que toutes les écritures dans `$ART` sont après la
+science.
 
 ### 🐛 LE VERDICT A FAILLI NE JAMAIS ARRIVER — ET LA LEÇON N'EST PAS CELLE QU'ON CROIT
 
