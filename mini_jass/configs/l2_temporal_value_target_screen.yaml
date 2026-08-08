@@ -1,0 +1,74 @@
+schema: mini_jass.m16_temporal_value_target_screen.v1
+milestone: M16
+base_replication_config: l2_seed_variance_replication.yaml
+m15_evidence: artefacts/m15_search_value_target_screen.readout.v1.json
+expected_m15_evidence_sha256: 6ebbcbac5de7b92770e4c34cce52240a8ae2ef00fe27a4be478a3faaa6412b43
+expected_m15_result_hash: 03f15b12a22ca27536efae5342dcc5d862f64a769c2a5afbf77e15a4c99d69b8
+expected_execution_host: cpx62
+paired_seeds:
+  - 132001
+  - 132002
+  - 132003
+  - 132004
+  - 132005
+  - 132006
+  - 132007
+  - 132008
+  - 132009
+  - 132010
+  - 132011
+  - 132012
+  - 132013
+  - 132014
+  - 132015
+  - 132016
+  - 132017
+  - 132018
+  - 132019
+  - 132020
+arms:
+  baseline:
+    value_target_source: selfplay_outcome
+  next_search:
+    value_target_source: temporal_lambda_return
+    lambda: 0.0
+  lambda_50:
+    value_target_source: temporal_lambda_return
+    lambda: 0.5
+  lambda_80:
+    value_target_source: temporal_lambda_return
+    lambda: 0.8
+  oracle:
+    value_target_source: exact_oracle
+primary_metric: mean_confirmation_value_sign_delta
+secondary_metrics:
+  - mean_development_value_sign_delta
+  - mean_confirmation_optimal_mass_delta
+  - mean_development_optimal_mass_delta
+  - paired_confirmation_value_gain_confidence_95
+  - paired_development_value_gain_confidence_95
+  - mean_target_value_mae
+primary_contrasts:
+  - next_search_minus_selfplay_outcome
+  - lambda_50_minus_selfplay_outcome
+  - lambda_80_minus_selfplay_outcome
+oracle_role: diagnostic_upper_bound_only
+promotion_policy: no_m16_arm_promotable
+scientific_scope: test_temporal_bootstrap_targets_after_m15_same_state_blend_failed
+success_rule:
+  minimum_oracle_gain_recovery_fraction: 0.50
+  require_confirmation_and_development_positive: true
+  require_paired_value_gain_confidence_95_above_zero: true
+  require_policy_mass_not_materially_degraded: true
+  maximum_absolute_policy_mass_delta: 0.005
+  paired_confidence_critical_95: 2.093024054408263
+contracts:
+  same_generated_positions_per_seed: true
+  same_search_trace_per_seed: true
+  same_policy_targets_per_seed: true
+  successor_search_score_reprojected_to_current_stm: true
+  terminal_fallback_uses_selfplay_outcome: true
+  one_generation_only: true
+  temporal_targets_use_oracle: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
