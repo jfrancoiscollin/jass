@@ -1,0 +1,104 @@
+schema: mini_jass.label_quality_vs_strength.v1
+milestone: M20
+
+# M20 — LA QUALITE DES ETIQUETTES ET LA FORCE VONT-ELLES VRAIMENT EN SENS OPPOSE ?
+#
+# LE MOTIF A TESTER. M18 et M19 laissent le meme dessin sur quatre bras :
+#   forced_advance   etiquettes 0,8250   arena 0,45
+#   shallow_depth1   etiquettes 0,8125   arena 0,55
+#   reference/gate   etiquettes 0,7906   arena 0,70
+#   frozen_generator etiquettes 0,7906   arena 0,90
+# C'est le signal le plus fort de la campagne labo -- et il n'est PAS teste :
+# quatre bras qui different par des choses differentes, et des scores d'arena
+# SANS AUCUN IC. Un motif entre bras n'est pas un contraste.
+#
+# CE QUE M20 EN FAIT. Deux PAIRES a un seul facteur, et sur chaque paire les
+# DEUX critères mesures en apparie, avec IC :
+#   paire PROMOTION : gate_arena vs forced_advance  (facteur = regle de promotion)
+#   paire PROFONDEUR: depth32    vs depth1          (facteur = profondeur d'autojeu)
+# La revendication n'est prouvee que si, DANS UNE MEME PAIRE, l'ecart
+# d'etiquettes et l'ecart de force sont de signes OPPOSES avec les DEUX IC
+# excluant zero. Un seul des deux ne suffit pas : c'est l'opposition qui est le
+# resultat, pas chacun des cotes.
+#
+# ⚠️ SONDE A PROFONDEUR COMMUNE (acquis M19). Sans elle, le bras depth1 mesure
+# 0,6937 au barreau 0 contre 0,7469 avant tout entrainement et les niveaux ne
+# sont pas comparables. Controle bloquant sur l'egalite au barreau 0.
+#
+# 📌 20 GRAINES, ET C'EST NON NEGOCIABLE. Le partage setup/science mesure par
+# cpx62-1209 : 106 s de science pour 32 min de mural (setup 26-34 min, ~7 s par
+# run de huit generations). La puissance ne coute QUASIMENT RIEN -- et M17, M18
+# et M19 ont tous rendu un critere indecidable par sous-puissance, dont M18 avec
+# une moyenne AU-DESSUS du seuil pratique. Il n'y a plus d'excuse a 5 graines.
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_execution_host: cpx62
+ladder_max: 8
+report_rungs: [0, 8]
+
+# Famille FRAICHE : M18/M19 ont use 180001-5. On ne rejoue pas le motif sur les
+# graines qui l'ont suggere -- ce serait le confirmer sur son propre tirage.
+paired_seeds: [200001, 200002, 200003, 200004, 200005, 200006, 200007, 200008,
+               200009, 200010, 200011, 200012, 200013, 200014, 200015, 200016,
+               200017, 200018, 200019, 200020]
+
+common_probe_search_depth: 32
+
+arms:
+  gate_arena:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: arena_only
+  forced_advance:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: always
+  depth32:
+    generator_source: evolving_parent
+    search_depth: frozen_m17
+    promotion_rule: arena_only
+  depth1:
+    generator_source: evolving_parent
+    search_depth: 1
+    promotion_rule: arena_only
+
+# ⚠️ `gate_arena` et `depth32` ont la MEME specification. C'est VOULU : chaque
+# paire porte son propre controle, et les deux bras de reference sont executes
+# separement avec leurs propres graines de sonde. S'ils divergeaient, le harnais
+# serait non deterministe -- une garde le verifie et fait echouer la cellule.
+pairs:
+  promotion:
+    high_label_arm: forced_advance
+    reference_arm: gate_arena
+    single_factor: promotion_rule
+  depth:
+    high_label_arm: depth1
+    reference_arm: depth32
+    single_factor: selfplay_search_depth
+
+promotion_contract:
+  forced_development_floor: -3.0
+  arena_only_threshold_source: frozen_m17
+  always_advance_arena_floor: -1.0
+
+# Arena doublee par rapport a M18/M19 (32 -> 64 paires) : c'est desormais un
+# critere apparie avec IC, plus un chiffre d'ambiance. 20 graines x 64 paires =
+# 1280 parties par bras.
+fixed_probe:
+  games: 64
+  seed_base: 918000
+  arena_pairs: 64
+  arena_seed_base: 919000
+
+scientific_gate:
+  # t de Student a 19 degres de liberte (20 graines appariees).
+  paired_confidence_critical_95: 2.093024054408263
+  minimum_practical_label_gap: 0.010
+  minimum_practical_arena_gap: 0.050
+  maximum_rung0_level_gap: 0.0001
+  maximum_reference_arm_divergence: 0.0
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
