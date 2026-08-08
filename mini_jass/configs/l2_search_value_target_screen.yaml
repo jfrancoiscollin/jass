@@ -1,0 +1,60 @@
+schema: mini_jass.m15_search_value_target_screen.v1
+milestone: M15
+base_replication_config: l2_seed_variance_replication.yaml
+expected_execution_host: cpx62
+paired_seeds:
+  - 132001
+  - 132002
+  - 132003
+  - 132004
+  - 132005
+  - 132006
+  - 132007
+  - 132008
+  - 132009
+  - 132010
+  - 132011
+  - 132012
+  - 132013
+  - 132014
+  - 132015
+  - 132016
+  - 132017
+  - 132018
+  - 132019
+  - 132020
+arms:
+  baseline:
+    value_target_source: selfplay_outcome
+  search:
+    value_target_source: search_root_score
+  blend:
+    value_target_source: outcome_search_blend
+    search_weight: 0.50
+  oracle:
+    value_target_source: exact_oracle
+primary_metric: mean_confirmation_value_sign_delta
+secondary_metrics:
+  - mean_development_value_sign_delta
+  - mean_confirmation_optimal_mass_delta
+  - mean_development_optimal_mass_delta
+  - mean_target_value_mae
+primary_contrasts:
+  - search_root_score_minus_selfplay_outcome
+  - outcome_search_blend_minus_selfplay_outcome
+oracle_role: diagnostic_upper_bound_only
+promotion_policy: no_m15_arm_promotable
+scientific_scope: find_non_oracle_value_target_that_recovers_m14_oracle_gain
+success_rule:
+  minimum_positive_value_gain_over_baseline: 0.0
+  minimum_oracle_gain_recovery_fraction: 0.50
+  require_confirmation_and_development_positive: true
+  require_policy_mass_not_materially_degraded: true
+  maximum_absolute_policy_mass_delta: 0.005
+contracts:
+  same_generated_positions_per_seed: true
+  same_search_trace_per_seed: true
+  same_policy_targets_per_seed: true
+  one_generation_only: true
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
