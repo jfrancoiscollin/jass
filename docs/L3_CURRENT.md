@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 7 août 2026**
+> **Mis à jour : 8 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -77,7 +77,96 @@
 > trajectory_equal_is_FLAT_minus_3_71_elo_second_pool_declined;
 > ALL_post_hoc_corpus_transforms_are_exhausted_seven_cells_none_move_elo;
 > only_untested_lever_is_what_the_selfplay_PLAYS;
+> minijass_m14_exact_labels_make_the_value_head_learn_plus_9_4_points;
+> minijass_m15_no_deployable_mechanism_recovers_it_best_is_41_8_percent;
+> our_egdb_relabel_only_covers_the_7_piece_endgame_slice_not_the_corpus;
 > trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
+
+## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
+
+Le laboratoire a répondu à la question qu'il était fait pour répondre, et que
+10×10 ne peut pas poser faute d'oracle exact.
+
+### ✅ M14 (`cpx62-1198`/`1201`) — avec des étiquettes EXACTES, la valeur apprend
+
+Cellule à un seul facteur : la cible de **valeur** de chaque échantillon
+d'entraînement est remplacée par le label du solveur, **après** le filtre de
+cohorte ; le générateur reste aveugle et la cible de **politique** n'est pas
+touchée.
+
+| | delta |
+|---|---:|
+| signe de valeur, développement | **+0,0941** |
+| signe de valeur, confirmation | **+0,0944** |
+| masse optimale (politique) | −0,0002 / +0,0002 |
+| qualité de cible du GÉNÉRATEUR, écart entre bras | **0,0000** |
+
+`status=PASS`, `oracle_arm_promotable=false`. Là où M13 donnait **`−0,0051`**,
+des étiquettes exactes donnent **`+9,4 points`**.
+
+Les deux contrôles tiennent : la politique ne bouge pas (le facteur unique a
+tenu), et l'écart de qualité de cible du générateur entre bras est
+**exactement nul** — les deux bras ont donc bien partagé les mêmes
+trajectoires, les mêmes poids initiaux et les mêmes cibles de politique, et ne
+diffèrent que par les labels envoyés à l'optimiseur.
+
+⛔ **Ce bras n'est pas promouvable** : il consomme des labels qu'aucune boucle
+de self-play ne peut produire. C'est une **borne supérieure**, pas un candidat.
+
+### ⚖️ M15 (`cpx62-1202`/`1203`) — aucun mécanisme déployable ne la récupère
+
+| bras | gain de valeur (confirmation) | fraction du gain oracle |
+|---|---:|---:|
+| `search` (labels de recherche même-état) | +0,0282 | **29,9 %** |
+| `blend` (50/50 résultat/recherche) | +0,0394 | **41,8 %** |
+
+`status=FAIL`, `selected_mechanism=None`, seuil gelé à 50 %, rien de
+promouvable.
+
+**Lecture combinée : le plafond est réel et large (`+9,4 pts`), et l'écart
+d'exécution reste entier.** Le meilleur mécanisme sans solveur en récupère
+42 % et ne passe pas la barre. M16 (PR #437) teste si l'information manquante
+est **temporelle** plutôt qu'un autre scalaire même-état.
+
+### ⚠️ LA TENSION AVEC NOTRE PROPRE RELABEL, ET COMMENT LA TRANCHER
+
+| | bruit corrigé | effet mesuré |
+|---|---|---:|
+| L3 (`--egdb-relabel`) | 24 % d'étiquettes fausses | **+1,02 Elo — plat** |
+| Mini-Jass L2 (M14) | ~29 % d'étiquettes fausses | **+9,4 pts de signe de valeur** |
+
+Deux corrections de bruit d'étiquetage comparables en ampleur, deux effets
+opposés. **Ce ne sont pas la même expérience**, et l'explication la plus
+probable est de couverture :
+
+⛔ **Notre tablebase s'arrête à 7 pièces.** `--egdb-relabel` ne corrige donc
+que la **tranche finale** du corpus — au mieux les ~17,5 % de records en
+finale — pendant que l'oracle du laboratoire corrige **100 %** des états.
+Notre cellule n'a jamais testé « corriger le bruit d'étiquetage » : elle a
+testé « corriger le bruit d'étiquetage **des finales** ».
+
+📌 **C'est testable et ça fait une prédiction** : si la couverture est
+l'explication, l'effet du relabel doit croître avec la fraction du corpus
+atteinte. À défaut d'un oracle 10×10, la mesure accessible est le **gain
+conditionné à la tranche corrigée** — comparer l'effet sur les positions
+effectivement ré-étiquetées à celui sur le reste.
+
+⚠️ **Et la réserve de transport reste entière** : L2 est un 6×6 à 7 515
+paramètres, 494 échantillons d'entraînement moyens et 2,2 % de couverture
+d'états. Aucun transport numérique vers 2 M de records et 2,13 M de poids —
+seulement un **mécanisme**, et Codex verrouille de toute façon toute retombée
+production (`production_jass_changes_authorized: false`).
+
+### 🔧 Outillage produit
+
+`value_target_source` (`71d10c19c`) dans `execute_loop` : `selfplay_outcome`
+(défaut, **byte-identique**) ou `exact_oracle`. Deux invariants verrouillés par
+test — les champs de l'ablation ne sont écrits que **sous la garde**, car
+`execution_hash = _digest(core)` couvre tout le dict et les ajouter
+inconditionnellement aurait cassé la reproductibilité de
+`expected_m12_result_hash` ; et `all_samples` garde les labels du générateur,
+sinon le bras oracle rapporterait trivialement 100 % de qualité de cible et le
+contraste perdrait son contrôle. M14 a été bâti sur ce mécanisme.
 
 ## 0septies. 7 août 2026 — ⚖️ L'HÉRITAGE NE VAUT RIEN, ET LE LEVIER RESTANT EST LA DISTRIBUTION
 
