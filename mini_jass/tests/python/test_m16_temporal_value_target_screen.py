@@ -142,7 +142,7 @@ def test_duplicate_trace_row_fails_closed() -> None:
 
 def test_non_contiguous_samples_fail_closed() -> None:
     generated = _fake_generation()
-    generated.samples = [generated.samples[0], generated.samples[2]]
+    generated.samples.pop(1)
 
     with pytest.raises(ValueError, match="contiguous"):
         M16._temporal_targeted_generation(lambda: generated, 0.5)()
