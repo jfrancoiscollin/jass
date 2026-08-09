@@ -99,6 +99,14 @@ publishes the development improvement, arena counts/bound, both pass bits and
 the resulting advance decision so that a second zero-advance result identifies
 the blocking component instead of being opaque.
 
+M17-P2 completed on `cpx62-1219` with 131/160 promotions and a monotone mean
+development zero-regret gain from +0.08053 at G1 to +0.10516 at G8. This is a
+selected discovery result, not its own replication. The preregistered readout
+therefore treats paired `G8 - G1` zero-regret as primary, audits every arena
+start/confidence contract, computes a Student 95% interval across the 20 seeds,
+and sizes a fresh replication on a minimum practical gain of 0.01 rather than
+only on the observed +0.02463.
+
 ## Conditional continuation
 
 After M24-P/M14-P/M17-P:

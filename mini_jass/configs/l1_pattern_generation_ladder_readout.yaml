@@ -1,0 +1,29 @@
+schema: mini_jass.pattern_generation_ladder_readout.v1
+milestone: M17-P2-READOUT
+
+source_result:
+  schema: mini_jass.pattern_generation_ladder.v2
+  milestone: M17-P2
+  job_id: cpx62-1219-mini-jass-pattern-m17p2-v1
+  attempt_id: 20260809T180915Z-4ca0953c
+  protocol_hash: 691f3fb9153d7ba6890160391cfdb149373ebaa2db5df63b834a92aaa8f3dca0
+  result_hash: e280ff50d2b2c8c3163b4deb541ca545088c46b8a815c08ef555b37bfe998d0c
+
+expected_seed_count: 20
+ladder_max: 8
+report_rungs: [1, 2, 4, 8]
+primary_endpoint: paired_zero_regret_delta_g8_minus_g1
+paired_confidence_critical_95: 2.093024054408263
+
+# A one-point zero-regret gain is the smallest effect worth allocating another
+# full causal ladder to. Replication is sized on this value, never only on the
+# selected +0.02463 observed in M17-P2.
+minimum_practical_compounding_gain: 0.01
+replication_target_power: 0.80
+
+boundaries:
+  cohorts_read: [development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
