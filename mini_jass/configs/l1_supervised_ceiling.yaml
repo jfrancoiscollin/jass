@@ -1,0 +1,76 @@
+schema: mini_jass.supervised_ceiling.v1
+milestone: M24
+
+# M24 — LE PLAFOND REPRESENTATIONNEL DU 5x5.
+#
+# POURQUOI, ET QUAND LE LIRE. JFC veut boucler des generations d'autojeu a
+# recette figee sur le 5x5 jusqu'a l'optimum -- ou jusqu'a un plateau -- et
+# estimer combien de generations il faut. ⛔ Un plateau SEUL est ININTERPRETABLE :
+# il peut venir de la BOUCLE qui sature ou du MODELE qui ne peut pas representer
+# l'optimum. Cette cellule mesure la seconde branche, une fois pour toutes, pour
+# que la courbe de convergence se lise CONTRE un trait.
+#
+#   plateau AU plafond      → la boucle a fait tout ce que le modele permet
+#   plateau SOUS le plafond → c'est la BOUCLE qui sature, l'ecart est le gisement
+#   plafond loin de l'oracle → il faut de la capacite avant toute conclusion
+#
+# ⛔ CE N'EST PAS UN CANDIDAT. L'oracle est ici le SIGNAL D'ENTRAINEMENT : aucune
+# boucle d'autojeu ne peut produire ces etiquettes. Meme statut que le bras
+# `exact_oracle` de M14 — une BORNE SUPERIEURE, declaree comme telle.
+
+expected_execution_host: cpx62
+split_seed: 20260806
+
+# La recette gelee, celle dont on veut le plafond. `hidden_size: 32` est la
+# valeur de `l1_exact_supervised.yaml` et de la recette M8 qui porte M17-M23.
+model:
+  hidden_size: 32
+  linear: false
+  action_count: 72
+  enforce_baseline_limit: true
+
+training:
+  batch_size: 8192
+  learning_rate: 0.004
+  weight_decay: 0.0001
+  value_weight: 1.0
+  policy_weight: 1.0
+  threads: 4
+
+# ⛔ L'ECHELLE DE DOSE EXISTE POUR PROUVER LA SATURATION. Sans elle, « le
+# plafond » ne serait que « la duree qu'on a bien voulu payer » — exactement la
+# faute d'`EXACT` et `PRIOR` sous-convergees a L3, ou le solveur s'arretait a 141
+# iterations en rendant `success=True`. La porte REFUSE de publier un plafond si
+# la derniere marche progresse encore.
+dose_ladder: [12, 48, 192, 768]
+
+# Diagnostic : l'architecture est-elle ce qui borne ? Mesure a la dose la plus
+# longue seulement. `32` est la recette gelee et sert de reference.
+capacity_ladder: [32, 64, 128]
+
+# Trois graines suffisent : on mesure un plafond, pas un contraste apparie.
+seeds: [240101, 240102, 240103]
+
+scientific_gate:
+  # Progres residuel tolere sur la derniere marche de dose, sur `zero_regret_rate`
+  # en cohorte scellee. Au-dela, la cellule sort CEILING_NOT_SATURATED.
+  saturation_tolerance: 0.005
+  frozen_recipe_hidden_size: 32
+  # Au-dela de ce gain, on dira que l'architecture borne — et il faudra le
+  # regler AVANT de conclure quoi que ce soit sur la boucle.
+  capacity_relevance_threshold: 0.02
+
+# ⚠️ LES TROIS COHORTES SONT RAPPORTEES, ET ELLES NE DISENT PAS LA MEME CHOSE.
+#   train        — capacite pure : ce modele peut-il seulement FITTER l'oracle ?
+#   development  — comparable a TOUS les jalons M17-M23, qui l'ont utilisee
+#   frozen_test  — le seul chiffre de generalisation honnete
+# ⛔ `frozen_test` n'est lu ICI QUE POUR DECRIRE. Aucune selection, aucun
+# reglage, aucun choix de bras ne s'y appuie — un plafond est un nombre, pas une
+# decision, et cette cohorte doit rester utilisable pour la meme lecture
+# descriptive dans l'etude de convergence a venir.
+
+boundaries:
+  oracle_is_the_training_signal: true
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

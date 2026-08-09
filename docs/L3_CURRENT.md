@@ -109,6 +109,12 @@
 > my_gate_used_the_OLD_single_pool_criterion_not_the_house_chained_one_second_misspec;
 > NOT_re_reading_the_verdict_post_hoc_the_answer_is_a_THIRD_disjoint_pool;
 > m21t_third_pool_PASS_CHAINED_ONLY_chained_plus_0_1417_P_gt_0_99_88_over_three_pools;
+> m23a_mixing_does_NOT_beat_a_VOLUME_MATCHED_current_generation_minus_0_0125;
+> underpowered_null_ci_spans_the_m21_effect_needs_n_34_redo_at_35_to_40_seeds;
+> the_M21_chain_only_beats_a_GENERATION_1_baseline_not_a_generation_8_one;
+> accumulation_across_generations_is_therefore_NOT_established_as_a_mechanism;
+> no_mix_law_separates_seven_arms_within_0_625_to_0_7375;
+> what_matters_is_ENOUGH_UNIQUE_DATA_not_where_it_sits_in_time;
 > FIRST_identified_mechanism_of_the_lab_campaign_mixing_generations_beats_equal_volume;
 > but_NO_single_pool_ever_carried_it_and_the_three_are_MONOTONE_DECREASING_1_0_42_0_21;
 > size_every_next_cell_on_plus_0_14_not_on_the_plus_0_2375_headline;
@@ -434,6 +440,62 @@ moins un critère indécidable par manque de puissance — dont M18 avec une moy
 **au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
 à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
 « setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### ⛔ M23-A (`cpx62-1214`) — LE MELANGE NE BAT PAS LA GENERATION COURANTE, UNE FOIS CELLE-CI VOLUME-APPARIEE
+
+`status=FAIL`, `finding=mixing_history_did_not_beat_current_only_at_equal_unique_volume`,
+`result_hash=8d915d6e3…`, 20 graines fraîches `240001-240020`, sept bras à
+**1 392 uniques chacun** (garde fail-closed verte).
+
+| contraste primaire, nommé d'avance | arena | IC95 |
+|---|---:|---|
+| `UNIFORM_HISTORY_50 − CURRENT_ONLY_WIDE` | **−0,0125** | `[−0,196 ; +0,171]` |
+
+| bras | arena vs initial |
+|---|---:|
+| `CURRENT_ONLY_WIDE` | **0,7375** |
+| `EXP_DECAY_50` | 0,7375 |
+| `UNIFORM_HISTORY_50` | 0,7250 |
+| `RECENT_WINDOW_50` | 0,7125 |
+| `RESERVOIR_50` | 0,6625 |
+| `UNIFORM_ALL` | 0,6500 |
+| `ANCHOR_50` | 0,6250 |
+
+⚠️ **C'EST UN NUL SOUS-PUISSANT, PAS UN NUL PROPRE.** L'IC du primaire n'exclut
+ni `−0,196` ni `+0,171` : il ne peut donc pas écarter l'effet chaîné de `+0,1417`
+de M21. `se = 0,0879` à `n=20` ; il faudrait **`n ≈ 34`** pour que l'IC exclue
+zéro à `+0,1417`, soit quelques minutes de science de plus. **À refaire à 35-40
+graines avant d'en tirer une conclusion ferme.**
+
+📌 **MAIS LE RÉSULTAT NARROWS SÉVÈREMENT L'INTERPRÉTATION DE LA CHAÎNE M21.**
+Les deux cellules ne diffèrent que par **la génération dont vient la ligne de
+base élargie** :
+
+| cellule | ligne de base à volume égal | effet du mélange |
+|---|---|---:|
+| M21/M21R/M21T | `G1_WIDE` — **génération 1** élargie | **+0,1417** chaîné, `P(>0)=99,88 %` |
+| M23-A | `CURRENT_ONLY_WIDE` — **génération 8** élargie | **−0,0125** |
+
+Le mélange bat une base tirée du **générateur initial** ; il ne bat pas une base
+tirée du **générateur final**, à volume identique. ⛔ **Donc « l'accumulation
+entre générations » n'est pas établie comme mécanisme** : ce que M21 a mesuré
+est compatible avec « des données d'un meilleur générateur valent mieux que des
+données du générateur initial », ce qui est une affirmation bien plus faible et
+n'implique aucune composition.
+
+⚠️ Réserve symétrique, à ne pas oublier : `G8_ONLY − G1_ONLY` était **négatif
+dans les trois pools de M21** (`−0,2125`, `−0,0875`, `−0,1750`) — à volume
+NATUREL, la génération 8 est pire que la génération 1. Les deux observations ne
+se contredisent pas mécaniquement (volumes différents), mais **aucune lecture
+simple ne les couvre encore**. Le seul énoncé sûr aujourd'hui : **ce qui compte
+est d'avoir assez de données uniques ; d'où elles viennent temporellement n'a pas
+d'effet détectable à cette puissance.**
+
+✅ **Et c'est une bonne nouvelle pour la feuille de route.** Si aucune loi de
+mélange ne se détache, la recette à figer pour l'étude de convergence est la plus
+simple : **génération courante, volume unique suffisant.** Les sept lois tiennent
+dans `0,625`-`0,7375` — l'écran ne désigne aucun gagnant, et il était préinscrit
+pour ne jamais conclure sur la forme (`shape_candidate.is_a_result = false`).
 
 ### ✅⚠️ M21T (`cpx62-1213`) — `PASS_CHAINED_ONLY` : LE CRITÈRE MAISON EST REMPLI, AUCUN POOL NE LE PORTE SEUL
 
