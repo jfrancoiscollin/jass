@@ -1,0 +1,27 @@
+schema: mini_jass.pattern_generation_ladder.v1
+milestone: M17-P
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+ladder_max: 8
+report_rungs: [1, 2, 4, 8]
+paired_seeds:
+  [262001, 262002, 262003, 262004, 262005,
+   262006, 262007, 262008, 262009, 262010,
+   262011, 262012, 262013, 262014, 262015,
+   262016, 262017, 262018, 262019, 262020]
+
+promotion_control:
+  report_per_generation: true
+  minimum_advancing_generations: 1
+
+scientific_gate:
+  minimum_monotone_rungs: 3
+  minimum_final_zero_regret_delta: 0.0
+
+boundaries:
+  cohorts_read: [development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
