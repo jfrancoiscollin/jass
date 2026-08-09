@@ -24,6 +24,7 @@ def train_from_replay(
     value_weight: float,
     policy_weight: float,
     seed: int,
+    batch_indices: np.ndarray | None = None,
 ) -> dict[str, float | int | bool | str]:
     if not samples:
         raise ValueError("replay training requires samples")
@@ -52,10 +53,24 @@ def train_from_replay(
         model.parameters(), learning_rate, weight_decay=weight_decay
     )
     generator = torch.Generator().manual_seed(seed)
+    explicit_batches: np.ndarray | None = None
+    if batch_indices is not None:
+        explicit_batches = np.asarray(batch_indices, dtype=np.int64)
+        if explicit_batches.shape != (steps, batch_size):
+            raise ValueError(
+                "explicit replay batch schedule must have shape "
+                f"({steps}, {batch_size})"
+            )
+        if np.any(explicit_batches < 0) or np.any(explicit_batches >= len(samples)):
+            raise ValueError("explicit replay batch schedule contains an invalid index")
     totals = {"loss": 0.0, "value_loss": 0.0, "policy_loss": 0.0}
     model.train()
-    for _ in range(steps):
-        batch = torch.randint(0, len(samples), (batch_size,), generator=generator)
+    for step in range(steps):
+        batch = (
+            torch.from_numpy(explicit_batches[step])
+            if explicit_batches is not None
+            else torch.randint(0, len(samples), (batch_size,), generator=generator)
+        )
         predicted, logits = model(features[batch])
         value_loss = functional.mse_loss(predicted, values[batch])
         if value_only:
@@ -80,6 +95,7 @@ def train_from_replay(
         "value_only": value_only,
         "policy_trained": not value_only,
         "action_source": "search" if value_only else "policy_head",
+        "explicit_batch_schedule": explicit_batches is not None,
         **{key: value / steps for key, value in totals.items()},
     }
     # ⚠️ `None`, PAS `0.0` : une perte de politique a zero se lit comme une
