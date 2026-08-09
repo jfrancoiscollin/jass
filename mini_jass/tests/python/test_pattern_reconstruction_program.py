@@ -84,6 +84,26 @@ def test_m17p_no_deployed_advance_is_inconclusive() -> None:
     )
     assert result["iteration_compounds"] is None
     assert result["decision"].startswith("INCONCLUSIVE")
+    assert result["status"] == "INCONCLUSIVE"
+
+
+def test_m17p_diagnoses_the_blocking_gate_when_diagnostics_are_available() -> None:
+    aggregate = {
+        "rungs": [1, 2, 4, 8],
+        "mean_zero_regret_delta_by_rung": {
+            "1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0
+        },
+        "mean_advancing_generations": 0.0,
+        "development_pass_count": 7,
+        "arena_pass_count": 0,
+    }
+    result = M17P.build_recommendation(
+        aggregate,
+        {"minimum_monotone_rungs": 3, "minimum_final_zero_regret_delta": 0.0},
+        {"minimum_advancing_generations": 1},
+    )
+    assert result["blocked_component"] == "arena"
+    assert result["finding"] == "ladder_did_not_advance_arena_gate_blocked"
 
 
 def test_m17p_reads_zero_regret_as_primary_response() -> None:
@@ -100,6 +120,7 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
         {"minimum_advancing_generations": 1},
     )
     assert result["iteration_compounds"] is True
+    assert result["status"] == "PASS"
 
 
 @pytest.mark.parametrize(
@@ -108,6 +129,7 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
         ("l1_pattern_supervised_ceiling.yaml", M24P.SCHEMA, "M24-P"),
         ("l1_pattern_value_target_ablation.yaml", M14P.SCHEMA, "M14-P"),
         ("l1_pattern_generation_ladder.yaml", M17P.SCHEMA, "M17-P"),
+        ("l1_pattern_generation_ladder_v2.yaml", M17P.SCHEMA_V2, "M17-P2"),
     ],
 )
 def test_new_evidence_namespaces_do_not_collide_with_historical_results(
@@ -130,3 +152,38 @@ def test_m14p_uses_fresh_paired_seeds_and_keeps_frozen_test_sealed() -> None:
     assert len(set(config["paired_seeds"])) == 20
     assert config["boundaries"]["cohorts_sealed"] == ["frozen_test"]
     assert config["boundaries"]["promotable"] is False
+
+
+def test_m17p2_repairs_arena_power_without_duplicating_v1_games() -> None:
+    v1_config, v1_loop = M17P._resolve(
+        ROOT / "configs" / "l1_pattern_generation_ladder.yaml"
+    )
+    v2_config, v2_loop = M17P._resolve(
+        ROOT / "configs" / "l1_pattern_generation_ladder_v2.yaml"
+    )
+    threshold = float(v1_loop["promotion"]["minimum_arena_lower_bound"])
+    assert v1_loop["arena"]["pairs"] == 4
+    assert v1_loop["arena"]["epsilon"] == 0.0
+    assert v2_loop["arena"]["pairs"] == 128
+    assert v2_loop["arena"]["epsilon"] == 0.0
+    assert v2_loop["arena"]["confidence_unit"] == "pairs"
+    assert v2_loop["arena"]["start_state_source"] == "provided"
+    assert M17P.arena_score_lower_bound(0.5, 4, 1.96) < threshold
+    assert M17P.arena_score_lower_bound(0.5, 128, 1.96, "pairs") >= threshold
+    assert len(v2_config["paired_seeds"]) == 20
+    assert len(set(v2_config["paired_seeds"])) == 20
+    assert set(v2_config["paired_seeds"]).isdisjoint(v1_config["paired_seeds"])
+    assert v2_config["boundaries"]["cohorts_sealed"] == ["frozen_test"]
+
+
+def test_m17p2_rejects_the_fixed_initial_start(tmp_path: Path) -> None:
+    source = ROOT / "configs" / "l1_pattern_generation_ladder_v2.yaml"
+    config = yaml.safe_load(source.read_text(encoding="utf-8"))
+    config["base_loop_config"] = str(
+        (ROOT / "configs" / "l1_pattern_reconstruction_loop.yaml").resolve()
+    )
+    config["promotion_control"]["arena_start_state_source"] = "initial"
+    path = tmp_path / "underpowered.yaml"
+    path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    with pytest.raises(ValueError, match="varied development start states"):
+        M17P._resolve(path)

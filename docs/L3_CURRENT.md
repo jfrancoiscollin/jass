@@ -166,8 +166,9 @@
 ## 0novies. 9 août 2026 — ⛔ TOUT LE LABORATOIRE MESURAIT UNE ARCHITECTURE QUE LA PRODUCTION NE PEUT PAS REPRODUIRE
 
 > **Statut : reconstruction en cours.** `cpx62-1216` (câblage), `cpx62-1217`
-> (M24-P, plafond) sont finalisés ; `cpx62-1218` (M14-P + M17-P) tourne, M14-P
-> publiée. Cette section est tenue à jour au fil des finalisations.
+> (M24-P, plafond) et `cpx62-1218` (M14-P + M17-P) sont finalisés. M17-P est
+> inconclusive : son arène rejouait les deux mêmes parties depuis l'état initial.
+> M17-P2 est la correction préenregistrée, pas encore une preuve scientifique.
 
 ### ⛔ La faute de fond, et pourquoi elle vidait la campagne de son sens
 
@@ -364,29 +365,34 @@ Sous la bande la recherche est trop affamée pour que l'évaluation compte ; au
 dessus elle trouve la même ligne des deux côtés et le résultat est décidé par
 le départ. **Le réglage préenregistré (`2 / 4`) est pile dans un trou.**
 
-🔧 **CORRECTIF : faire varier les départs dans `run_arena`** (liste passée en
-argument, échantillonnée par paire) avant toute autre cellule d'arène. Tant que
-l'arène rejoue deux parties, aucun dimensionnement ne peut sauver l'endpoint.
-Revoir aussi le `LCB` et le seuil `minimum_arena_lower_bound: 0.40`.
+🔧 **CORRECTIF M17-P2 :** 128 états de développement non terminaux tirés sans
+remise, 128 paires/256 parties, même jeu glouton, même seuil `0,40`, même
+modèle/fit/ladder et 20 graines fraîches. Chaque paire échange candidat et
+parent depuis le même état. La borne compte 128 paires, pas 256 parties
+corrélées ; à score `0,50`, elle vaut `0,41338`. Le programme refuse de démarrer
+si les départs ne varient pas ou si ce contrôle de puissance échoue.
 
-⚠️ **Défaut de rapport à corriger aussi** : la cellule sort `status: PASS` avec
+⚠️ **Défaut de rapport corrigé dans M17-P2** : la cellule v1 sort `status: PASS` avec
 `mean_advancing_generations = 0,0` alors que sa propre config exige
 `minimum_advancing_generations: 1`. C'est la règle 10 du CLAUDE.md sous une
 autre forme — **zéro génération avançante n'est pas un PASS**. Le champ
 `decision` dit bien `INCONCLUSIVE_promotion_gate_blocked_iteration`, mais les
-deux se contredisent.
+deux se contredisent. La v2 publie `status: INCONCLUSIVE` sous ce minimum, ainsi
+que les passes développement/arène, les départs et la matrice d'échec par
+graine et génération.
 
 ⏱️ Ancre de coût : batch de 1h05 bout en bout, M14-P publiée à ~9 min. ETA
 annoncée 1h15-1h30 — tenue.
 
 ### Reste ouvert
 
-⛔ **Rien de nouveau sur l'itération tant que l'arène n'est pas réparée** — et
-c'est le prochain travail, pas une cellule de science. Ensuite : la
-décomposition état/étiquette (le canal **distribution**, jamais mesuré, là où
-vivent ~95 % du gisement), puis M17-P **rejouée** sur une arène qui voit
-quelque chose. Ensuite seulement M15/M16, M18/M19/M21/M23, l'étude de
-convergence à recette figée demandée par JFC, et le 6×6 en dernier.
+Le correctif d'arène M17-P2 est une étape d'ingénierie, pas encore une preuve.
+Son rerun doit d'abord vérifier que l'endpoint varie et que la porte peut
+s'ouvrir. Ensuite : la décomposition état/étiquette (le canal **distribution**,
+jamais mesuré, là où vivent ~95 % du gisement), puis l'interprétation de la
+composition à travers les générations. Ensuite seulement M15/M16,
+M18/M19/M21/M23, l'étude de convergence à recette figée demandée par JFC, et le
+6×6 en dernier.
 
 ⚠️ La PR #441 (supervision contextuelle) déclare
 `primary_endpoint: common_search_paired_arena_score_minus_half` sur
