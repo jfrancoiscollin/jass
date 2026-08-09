@@ -108,6 +108,12 @@
 > but_the_two_pools_AGREE_z_minus_1_16_and_the_CHAINED_estimate_is_plus_0_1879_P_gt_0_99_95;
 > my_gate_used_the_OLD_single_pool_criterion_not_the_house_chained_one_second_misspec;
 > NOT_re_reading_the_verdict_post_hoc_the_answer_is_a_THIRD_disjoint_pool;
+> m21t_third_pool_PASS_CHAINED_ONLY_chained_plus_0_1417_P_gt_0_99_88_over_three_pools;
+> FIRST_identified_mechanism_of_the_lab_campaign_mixing_generations_beats_equal_volume;
+> but_NO_single_pool_ever_carried_it_and_the_three_are_MONOTONE_DECREASING_1_0_42_0_21;
+> size_every_next_cell_on_plus_0_14_not_on_the_plus_0_2375_headline;
+> heterogeneity_green_worst_pairwise_z_1_746_and_cochran_Q_3_30_df2_p_0_19;
+> the_two_criterion_gate_declared_BEFORE_the_run_is_what_made_this_readable;
 > recency_anticorrelation_replicates_on_LEARNING_only_not_on_arena_claim_withdrawn;
 > unique_volume_and_novelty_both_fail_to_pay_in_BOTH_pools_L3_coverage_verdict_intact;
 > cpx62_is_3_3x_faster_than_the_dev_box_divide_local_estimates_by_three;
@@ -428,6 +434,60 @@ moins un critère indécidable par manque de puissance — dont M18 avec une moy
 **au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
 à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
 « setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### ✅⚠️ M21T (`cpx62-1213`) — `PASS_CHAINED_ONLY` : LE CRITÈRE MAISON EST REMPLI, AUCUN POOL NE LE PORTE SEUL
+
+`status=PASS_CHAINED_ONLY`, `result_hash=f9d4de335…`, 20 graines
+`230001-230020` disjointes des deux familles antérieures. **Les deux critères
+étaient préinscrits dans la config avant le run** — c'est ce qui rend ce verdict
+lisible.
+
+| | |
+|---|---|
+| `single_pool_criterion_met` | **False** — arena `+0,0500`, IC95 `[−0,118 ; +0,218]` |
+| `chained_criterion_met` | **True** — `P(>0) = 99,88 %` |
+| `criteria_agree` | False |
+
+**La chaîne à trois pools :**
+
+| pool | `MIX − G1_WIDE` arena | se |
+|---|---:|---:|
+| `cpx62-1211` (M21) | +0,2375 | 0,07133 |
+| `cpx62-1212` (M21R) | +0,1000 | 0,09493 |
+| `cpx62-1213` (M21T) | +0,0500 | 0,08030 |
+| **chaîné** | **+0,1417** | **0,0465** → `z = 3,05`, `P(>0) = 99,88 %` |
+
+**Garde d'hétérogénéité verte** : pire paire `|z| = 1,746` (`1211` contre `1213`),
+sous le seuil de `1,96`, et **Cochran `Q = 3,30`, `df = 2`, `p ≈ 0,19`** — la
+supposition d'effet commun tient formellement. Les trois pools sont de même
+signe.
+
+📌 **CE QUI EST ÉTABLI, ET AU BON NIVEAU.** Sous le critère adopté le 5 août
+(`P(Elo>0) > 95 %` sur pools chaînés, garde d'hétérogénéité verte), **mélanger
+les générations produit un modèle plus fort à volume de données uniques égal**.
+C'est **le premier mécanisme identifié de la campagne labo**, après trois
+fermetures (M18 générateur, M19 profondeur, M20 le motif étiquettes/force).
+
+⛔ **ET IL FAUT LE DIRE AVEC SA VRAIE TAILLE : `+0,1417`, PAS `+0,2375`.**
+La séquence des trois pools est **monotone décroissante** — `1,00 → 0,42 →
+0,21` du pool 1 — et **aucun pool n'a jamais porté l'effet tout seul.** Un
+ordonnancement décroissant de trois pools a une probabilité de `1/6` sous
+échangeabilité : ce n'est **pas** une preuve de dérive, et `Q` ne la détecte
+pas. Mais c'est le profil d'un premier pool inflaté, et **toute cellule suivante
+doit être dimensionnée sur `+0,14`** — sizer sur `+0,2375` garantirait d'être
+sous-puissant.
+
+✅ **La porte à deux critères a fait exactement son travail.** `PASS_CHAINED_ONLY`
+existe parce que ce cas ne devait ni sortir `FAIL` — ce serait jeter trois pools
+concordants — ni se confondre avec un pass franc. Les deux critères étant
+déclarés **avant** le run, il n'y a pas eu de choix *a posteriori*.
+
+**Acquis latéraux, sur les trois pools :**
+- **le volume de données uniques ne paie pas** (`G1_WIDE − G1_ONLY` : arena
+  `−0,0875`, `−0,0625`, `+0,0625` — jamais concluant) ;
+- **la récence seule nuit**, systématiquement (`−0,2125`, `−0,0875`, `−0,1750`) ;
+  ⚠️ non chaîné formellement — c'est un **candidat**, pas un résultat ;
+- **la nouveauté ne paie pas** → le verdict L3 sur la couverture reste intact.
 
 ### ⚖️ M21R (`cpx62-1212`) — LA RÉPLICATION ÉCHOUE SUR SON POOL, LE CHAÎNAGE PASSE LARGEMENT, ET MA PORTE TRANCHE MAL LES DEUX
 
