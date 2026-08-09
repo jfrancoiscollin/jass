@@ -339,3 +339,29 @@ scientific command is equivalent to:
 ```text
 PYTHONPATH=python .venv/bin/python tools/run_seed_variance_replication.py --config configs/l2_seed_variance_replication.yaml --oracle artefacts/oracle.l2.v1.jsonl --run-dir artefacts/runs/m13-seed-variance-cpx --compact-output artefacts/m13_seed_variance_replication.v1.json --execution-host cpx62
 ```
+
+## Production-like folded pattern baseline
+
+The production-like path is separate from the frozen historical MLP recipes.
+It uses a linear `PatternEval` over overlapping pattern buckets, and folds the
+complete `(side-to-move, bucket)` space by the exact 180-degree rotation plus
+colour/turn swap. This preserves the exact symmetry without making the model
+blind to which player moves on an otherwise identical board.
+
+`PatternEval` has no policy head. Replay and exact-supervised training consume
+value targets only (`policy_weight: 0`), move selection is required to go
+through bounded search, and oracle response metrics score the move returned by
+search rather than dummy policy logits. Legacy configs still default to the
+unchanged `MiniJassMLP` so their frozen hashes and scientific meaning remain
+intact.
+
+The two end-to-end wiring configs are:
+
+- `configs/l1_pattern_exact_supervised.yaml` for a non-promotable capacity
+  baseline;
+- `configs/l1_pattern_outcome_selfplay.yaml` for deterministic WDL-only replay
+  with search-supplied actions.
+
+They prepare the architecture for a separately preregistered ceiling and
+self-play comparison; they do not themselves authorize a scientific claim or
+production Jass transfer.

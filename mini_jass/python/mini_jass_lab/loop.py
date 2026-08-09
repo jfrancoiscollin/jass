@@ -17,13 +17,14 @@ import yaml
 
 from .arena import ArenaConfig, run_arena
 from .game_graph import GameGraph
-from .model import MiniJassMLP, ModelConfig, model_hash, parameter_count
+from .model import model_hash, parameter_count
+from .model_factory import build_model, is_value_only, model_descriptor
 from .oracle import OracleArrays, ensure_artefact_path, load_oracle, uniform_optimal_targets
 from .replay import ReplayBuffer, ReplaySample
 from .selfplay import ExplorationConfig, SelfPlayConfig, generate_self_play
 from .selfplay_train import train_from_replay
 from .split import build_split
-from .train import evaluate, seed_everything
+from .train import evaluate, seed_everything, selection_score
 
 
 @dataclass(frozen=True)
@@ -66,7 +67,7 @@ def _development_tensors(oracle: OracleArrays, graph: GameGraph) -> dict[str, to
 
 
 def _selection_score(metrics: dict[str, Any]) -> float:
-    return float(metrics["value_sign_accuracy"]) + float(metrics["optimal_probability_mass"])
+    return selection_score(metrics)
 
 
 def _parse_self_play(config: dict[str, Any]) -> SelfPlayConfig:
@@ -126,8 +127,7 @@ def execute_loop(
     seed_everything(seed, threads)
     graph = GameGraph.from_oracle(oracle)
     graph.validate()
-    model_config = ModelConfig(**config["model"])
-    parent = MiniJassMLP(model_config)
+    parent = build_model(config["model"])
     initial_hash = model_hash(parent)
     replay_config = config["replay"]
     replay = ReplayBuffer(int(replay_config["capacity"]))
@@ -136,6 +136,12 @@ def execute_loop(
     arena_config = ArenaConfig(**config["arena"])
     training = config["training"]
     promotion = config["promotion"]
+    value_only = is_value_only(parent)
+    if value_only:
+        if float(training["policy_weight"]) != 0.0:
+            raise ValueError("the value-only loop requires policy_weight=0")
+        if not self_play_config.uses_search:
+            raise ValueError("a value-only model requires search for move selection")
     generation_records: list[dict[str, Any]] = []
     candidate_states: list[dict[str, torch.Tensor]] = []
     state_sample_counts = np.zeros(graph.state_count, dtype=np.uint32)
@@ -233,6 +239,7 @@ def execute_loop(
             oracle,
             development_indices,
             int(config["development"]["batch_size"]),
+            graph,
         )
         candidate_development = evaluate(
             candidate,
@@ -240,6 +247,7 @@ def execute_loop(
             oracle,
             development_indices,
             int(config["development"]["batch_size"]),
+            graph,
         )
         improvement = _selection_score(candidate_development) - _selection_score(parent_development)
         arena = run_arena(
@@ -291,6 +299,7 @@ def execute_loop(
         "seed": seed,
         "deterministic": bool(config["deterministic"]),
         "parameter_count": parameter_count(parent),
+        "model": model_descriptor(parent),
         "initial_model_hash": initial_hash,
         "final_model_hash": model_hash(parent),
         "generations": generation_records,
@@ -301,7 +310,12 @@ def execute_loop(
         },
         "training_target_contract": {
             "value": "final_self_play_wdl",
-            "policy": self_play_config.policy_target,
+            "policy": (
+                "none_value_only_search_supplies_actions"
+                if value_only
+                else self_play_config.policy_target
+            ),
+            "replay_policy_field_consumed": not value_only,
             "search_root_allocation": self_play_config.root_allocation,
             "self_play_behavior": self_play_config.behavior_policy,
             "start_states": self_play_config.start_state_source,

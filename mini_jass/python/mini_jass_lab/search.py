@@ -8,9 +8,9 @@ from typing import Any
 
 import numpy as np
 import torch
+from torch import nn
 
 from .game_graph import GameGraph
-from .model import MiniJassMLP
 
 
 @dataclass(frozen=True)
@@ -117,7 +117,7 @@ class InferenceCache:
 
     @torch.no_grad()
     def predict(
-        self, model: MiniJassMLP, graph: GameGraph, state_id: int
+        self, model: nn.Module, graph: GameGraph, state_id: int
     ) -> tuple[float, np.ndarray, bool]:
         cached = self._predictions.get(state_id)
         if cached is not None:
@@ -136,7 +136,7 @@ def _ordered_actions(actions: np.ndarray, logits: np.ndarray) -> list[int]:
 
 def bounded_negamax(
     graph: GameGraph,
-    model: MiniJassMLP,
+    model: nn.Module,
     state_id: int,
     config: SearchConfig,
     cache: InferenceCache | None = None,

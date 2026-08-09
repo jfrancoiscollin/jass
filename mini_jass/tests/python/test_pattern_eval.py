@@ -22,7 +22,7 @@ from mini_jass_lab.patterns import (
     SQUARE_ROT180,
     PatternSet,
     bucket_indices,
-    folded_class_count,
+    perspective_folded_class_count,
     square_states,
 )
 
@@ -48,9 +48,10 @@ def test_the_parameter_count_is_the_folded_one_not_the_bucket_one():
     """
     pattern_set = PatternSet.from_window(3)
     model = PatternEval(pattern_set)
-    assert model.class_count == folded_class_count(pattern_set)
-    assert model.class_count < pattern_set.bucket_count
-    assert model.parameter_total() == model.class_count + 2 + 1
+    assert model.class_count == perspective_folded_class_count(pattern_set)
+    assert model.class_count == pattern_set.bucket_count
+    assert model.class_count < 2 * pattern_set.bucket_count
+    assert model.parameter_total() == model.class_count + 1 + 1
     assert sum(p.numel() for p in model.parameters()) == model.parameter_total()
 
 
@@ -58,7 +59,7 @@ def test_the_value_only_model_is_two_orders_below_a_policy_headed_one():
     """La tete policy pesait 98,6 % du modele : c'est ELLE qu'on retire."""
     pattern_set = PatternSet.from_window(3)
     value_only = PatternEval(pattern_set).parameter_total()
-    inputs = pattern_set.bucket_count + 2
+    inputs = 2 * pattern_set.bucket_count + 1
     with_policy = inputs + 1 + inputs * 72 + 72
     assert with_policy > 100 * value_only
 
@@ -105,10 +106,9 @@ def test_the_value_is_the_sum_of_one_weight_per_pattern_plus_the_extras():
         # Un poids de 1 sur chaque classe active : la somme vaut le nombre de
         # CLASSES DISTINCTES touchees, deux patterns pouvant partager la leur.
         model.bucket_weight[classes] = 1.0
-        model.extra_weight[0] = 0.25
-        model.extra_weight[1] = 0.5
+        model.extra_weight[0] = 0.5
         model.bias.fill_(-0.125)
-        total = float(len(set(classes.tolist()))) + 0.25 * 1.0 + 0.5 * 0.5 - 0.125
+        total = float(len(set(classes.tolist()))) + 0.5 * 0.5 - 0.125
         value, _ = model(raw)
     assert float(value[0]) == pytest.approx(np.tanh(total), abs=1e-6)
 
@@ -125,9 +125,27 @@ def test_a_position_and_its_rot180_colour_swap_image_share_their_weights():
     with torch.no_grad():
         torch.manual_seed(20260809)
         model.bucket_weight.copy_(torch.randn(model.class_count))
-        direct, _ = model(torch.from_numpy(_raw(pieces)))
-        mirrored, _ = model(torch.from_numpy(_raw(image)))
+        model.extra_weight.copy_(torch.randn_like(model.extra_weight))
+        model.bias.copy_(torch.randn_like(model.bias))
+        direct, _ = model(
+            torch.from_numpy(_raw(pieces, side=0.0, reversible=0.4))
+        )
+        mirrored, _ = model(
+            torch.from_numpy(_raw(image, side=1.0, reversible=0.4))
+        )
     assert float(direct[0]) == pytest.approx(float(mirrored[0]), abs=1e-6)
+
+
+def test_same_board_with_the_other_player_to_move_is_not_forced_equal():
+    """Le fold inclut le trait sans rendre le modele aveugle au joueur."""
+    model = PatternEval(PatternSet.from_window(2))
+    pieces = {0: 0, 6: 1, 9: 2}
+    with torch.no_grad():
+        torch.manual_seed(20260810)
+        model.bucket_weight.copy_(torch.randn(model.class_count))
+        white, _ = model(torch.from_numpy(_raw(pieces, side=0.0)))
+        black, _ = model(torch.from_numpy(_raw(pieces, side=1.0)))
+    assert float(white[0]) != pytest.approx(float(black[0]), abs=1e-6)
 
 
 # --------------------------------------------------------------------------- #
