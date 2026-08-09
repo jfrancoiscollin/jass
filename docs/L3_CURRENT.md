@@ -146,7 +146,22 @@
 > the_cpx62_speed_ratio_is_a_property_of_the_WORKLOAD_not_of_the_box_and_it_FLIPS;
 > x3_3_FASTER_on_search_heavy_loops_but_x2_6_SLOWER_on_BLAS_heavy_supervised_fits;
 > a_background_monitor_inheriting_job_stdout_holds_the_runner_pipe_open_forever;
-> found_by_TESTING_the_failure_path_not_by_re_reading_the_script`.
+> found_by_TESTING_the_failure_path_not_by_re_reading_the_script;
+> ⛔_minijass_M17P_ZERO_advancing_generations_20_of_20_seeds_160_generations;
+> the_candidate_is_plus_0_45_on_development_while_the_arena_returns_EXACTLY_0_500;
+> ⛔_run_arena_HARDCODES_state_id_0_and_the_per_pair_seed_only_feeds_epsilon;
+> at_epsilon_0_there_are_only_TWO_distinct_games_pairs_N_replays_them_N_times;
+> effective_arena_sample_is_2_games_NOT_2_x_pairs_measured_all_8_pairs_identical;
+> the_promotion_LCB_shrinks_as_1_over_sqrt_pairs_on_REPLICATED_data_it_is_fabricated;
+> the_loop_gate_needs_LCB_ge_0_40_but_a_locked_0_500_score_gives_0_154_forever;
+> pairs_64_in_M21_and_M23_was_64x_the_compute_for_ZERO_extra_information;
+> ✅_but_M21_M21R_M21T_M23A_VERDICTS_STAND_they_t_test_across_SEEDS_which_are_independent;
+> per_seed_arena_takes_only_FIVE_values_0_0_25_0_5_0_75_1_M23A_raw_values_confirm;
+> a_five_valued_endpoint_explains_much_of_the_x0_04_to_x0_42_replication_shrinkage;
+> the_arena_is_informative_only_in_a_NARROW_search_band_and_2_slash_4_sits_in_a_hole;
+> FIX_vary_the_start_states_in_run_arena_before_any_further_arena_cell;
+> zero_advancing_generations_reported_as_PASS_is_rule_10_under_another_name;
+> my_own_MDE_table_on_PR441_assumed_binomial_variance_that_does_not_exist_retracted`.
 
 ## 0novies. 9 août 2026 — ⛔ TOUT LE LABORATOIRE MESURAIT UNE ARCHITECTURE QUE LA PRODUCTION NE PEUT PAS REPRODUIRE
 
@@ -281,14 +296,105 @@ l'échec de la seconde cellule. Rediriger la sortie du monitor vers des
 fichiers. 📌 **Trouvé en TESTANT le chemin d'échec, pas en relisant le script**
 — la relecture avait laissé passer un hang de la famille 0665/0657.
 
+### ⛔ `cpx62-1218` cellule 2 — M17-P : L'ARÈNE EST AVEUGLE, LA BOUCLE N'A JAMAIS PU SE DÉPLOYER
+
+`mean_advancing_generations = 0,0`. **20 graines sur 20, 160 générations, zéro
+promotion.** Tous les deltas de rung valent exactement `0,0` : le parent déployé
+n'a jamais quitté le modèle initial à poids nuls. La cellule rend
+`iteration_compounds: null` — elle n'a **rien mesuré sur l'itération**, et c'est
+la bonne réponse.
+
+Diagnostic local, 16 générations sur 2 graines :
+
+```
+gen  improvement  dev_pass  arena    LCB  ar_pass  promu
+  1     +0.45638      True  0.500  0.154    False  False
+  ...   identique aux 16 generations, sur les deux graines
+```
+
+Le candidat est **massivement** meilleur en développement (`+0,45` de score de
+sélection) pendant que l'arène rend **exactement `0,500`** à chaque fois. Une
+valeur exacte répétée n'est pas du bruit : c'est structurel.
+
+⛔ **CAUSE RACINE — `run_arena` REJOUE DEUX PARTIES.** Dans `arena.py`,
+`_play_game` code en dur `state_id = 0`, et le `seed` par paire ne sert **qu'à
+l'exploration epsilon**. À `epsilon: 0.0`, le RNG n'est jamais consommé et le
+départ est toujours l'état initial : il n'existe que **deux parties distinctes**
+(candidat aux blancs, candidat aux noirs). `pairs: N` en fait `N` copies
+identiques. Mesuré, `pairs=8` :
+
+```
+paire 0: blanc=-1 noir=+1  somme=+0
+...     les 8 paires identiques
+```
+
+**L'effectif réel de l'arène est de 2 parties, pas `2 × pairs`.**
+
+Trois conséquences, à ne pas confondre :
+
+1. **La porte de promotion est cassée.** `score_lower_confidence_bound` calcule
+   une erreur-type sur `games = 2 × pairs` comme si les parties étaient
+   indépendantes : la borne rétrécit en `1/√pairs` sur des données **répliquées**.
+   La boucle exige `LCB ≥ 0,40` ; à score verrouillé sur `0,500` la borne vaut
+   `0,154` et n'y arrivera **jamais**.
+2. **`pairs: 64` de M21/M23 était 64× le calcul pour zéro information.**
+3. ✅ **Mais les verdicts M21/M21R/M21T/M23-A ne sont PAS invalidés.** Ces jalons
+   n'utilisent que `arena["score"]` et refont leur propre test apparié **entre
+   graines** — et la graine, elle, est bien une unité indépendante (modèle
+   différent, donc paire de parties différente). Ce qui est faux, c'est la
+   borne interne, que seule la boucle consomme.
+
+📌 **Et ça éclaire le rétrécissement en réplication.** Avec deux parties, le
+score par graine ne prend que **cinq valeurs** — `{0 ; 0,25 ; 0,5 ; 0,75 ; 1}`.
+Les valeurs brutes de M23-A sont toutes des multiples de `0,25` : signature
+confirmée. Un endpoint à cinq valeurs explique une bonne part des
+rétrécissements `×0,04` à `×0,42` mesurés sur ce banc.
+
+⚠️ **Et l'arène n'est informative que dans une bande étroite de force de
+recherche**, mesurée sur un vrai candidat contre le parent à poids nuls :
+
+| `search_depth` / `node_budget` | score |
+|---|---:|
+| 2 / 4 *(config de la boucle)* | **0,500** |
+| 2 / 6 → 2 / 32 | 1,000 |
+| 3 / 32, 4 / 32, 4 / 64 | 0,500 |
+| 6 / 128 | 1,000 |
+
+Sous la bande la recherche est trop affamée pour que l'évaluation compte ; au
+dessus elle trouve la même ligne des deux côtés et le résultat est décidé par
+le départ. **Le réglage préenregistré (`2 / 4`) est pile dans un trou.**
+
+🔧 **CORRECTIF : faire varier les départs dans `run_arena`** (liste passée en
+argument, échantillonnée par paire) avant toute autre cellule d'arène. Tant que
+l'arène rejoue deux parties, aucun dimensionnement ne peut sauver l'endpoint.
+Revoir aussi le `LCB` et le seuil `minimum_arena_lower_bound: 0.40`.
+
+⚠️ **Défaut de rapport à corriger aussi** : la cellule sort `status: PASS` avec
+`mean_advancing_generations = 0,0` alors que sa propre config exige
+`minimum_advancing_generations: 1`. C'est la règle 10 du CLAUDE.md sous une
+autre forme — **zéro génération avançante n'est pas un PASS**. Le champ
+`decision` dit bien `INCONCLUSIVE_promotion_gate_blocked_iteration`, mais les
+deux se contredisent.
+
+⏱️ Ancre de coût : batch de 1h05 bout en bout, M14-P publiée à ~9 min. ETA
+annoncée 1h15-1h30 — tenue.
+
 ### Reste ouvert
 
-`M17-P` (échelle causale de générations à 8, 20 graines) tourne : c'est elle
-qui porte la question de fond, **l'autojeu accumule-t-il à travers les
-générations**. Ensuite seulement : reconstruction de M15/M16 si M14-P le
-justifie, puis M18/M19/M21/M23, puis l'étude de convergence à recette figée
-demandée par JFC, et le 6×6 en dernier. **Aucune de ces cellules n'est
-promouvable et aucune n'autorise un transfert direct au 10×10.**
+⛔ **Rien de nouveau sur l'itération tant que l'arène n'est pas réparée** — et
+c'est le prochain travail, pas une cellule de science. Ensuite : la
+décomposition état/étiquette (le canal **distribution**, jamais mesuré, là où
+vivent ~95 % du gisement), puis M17-P **rejouée** sur une arène qui voit
+quelque chose. Ensuite seulement M15/M16, M18/M19/M21/M23, l'étude de
+convergence à recette figée demandée par JFC, et le 6×6 en dernier.
+
+⚠️ La PR #441 (supervision contextuelle) déclare
+`primary_endpoint: common_search_paired_arena_score_minus_half` sur
+`configs/l1_pattern_reconstruction_loop.yaml#arena` : **elle hérite du défaut**
+et ne doit pas partir avant le correctif. Revue et correction postées sur la PR.
+
+**Aucune de ces cellules n'est promouvable et aucune n'autorise un transfert
+direct au 10×10.**
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
 
