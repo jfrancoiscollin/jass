@@ -1,0 +1,193 @@
+schema: mini_jass.selfplay_optimization_program.v1
+program: SELFPLAY_OPT
+entry_milestone: M23
+
+principles:
+  primary_endpoint: paired_common_search_arena
+  default_seed_count: 20
+  oracle_role: posthoc_diagnostics_only
+  optimization_method: screening_then_local_response_surface_then_fresh_replication
+  cartesian_grid_forbidden: true
+  batch_arms_per_cpx_attempt: true
+
+factor_families:
+  opponent_population:
+    priority: high
+    levels:
+      - mirror_current
+      - current_vs_previous
+      - current_vs_historical_sample
+      - current_vs_weaker_historical
+      - mixed_population
+    numeric_followup:
+      - opponent_strength_gap
+      - historical_age
+
+  temporal_mix:
+    priority: highest
+    entry_config: configs/l1_mix_strategy_screen.yaml
+    levels:
+      - uniform_history
+      - recent_window
+      - exponential_age
+      - reservoir
+      - anchored
+    numeric_followup:
+      - current_fraction
+      - history_horizon
+      - exponential_half_life
+
+  node_budget:
+    priority: high
+    levels: [4, 8, 16, 32, 64, 128]
+    scale: log2
+    variants:
+      - fixed
+      - variable_per_game
+      - variable_per_position
+
+  depth:
+    priority: high
+    variants:
+      - fixed_shallow
+      - fixed_medium
+      - fixed_deep
+      - uncapped_node_limited
+      - variable
+    guard: common_arena_search_depth
+
+  move_time:
+    priority: high
+    variants:
+      - fixed_per_move
+      - variable_per_game
+      - total_clock_plus_increment
+      - phase_dependent
+      - mixed_time_controls
+    required_diagnostics:
+      - realized_ms
+      - realized_nodes
+      - nps
+      - timeout_count
+    required_control: realized_node_matched
+
+  behavior_policy:
+    priority: highest
+    levels:
+      - greedy_top1
+      - top2_uniform
+      - top3_uniform
+      - top4_uniform
+      - epsilon_greedy
+      - score_softmax
+      - visit_distribution
+      - margin_conditioned
+      - opening_explore_then_greedy
+    negative_control: full_legal_uniform
+    numeric_followup:
+      - epsilon
+      - temperature
+      - exploration_horizon
+      - margin_threshold
+
+  root_allocation:
+    priority: medium
+    levels:
+      - balanced
+      - score_proportional
+      - best_first
+      - uncertainty_aware
+      - floor_plus_adaptive
+
+  start_state_distribution:
+    priority: high
+    levels:
+      - initial_only
+      - train_split_restart
+      - opening_randomized
+      - phase_stratified
+      - natural_plus_restart_mix
+      - curriculum
+
+  termination:
+    priority: low
+    levels:
+      - frozen_reference
+      - longer_horizon
+      - exact_terminal_early_stop
+      - adjudication
+    note: reopen only if truncation_or_conversion_diagnostics_show_need
+
+  heterogeneous_regime:
+    priority: high_after_single_factor_screen
+    levels:
+      - best_fixed
+      - mixed_node_budgets
+      - mixed_depths
+      - mixed_move_times
+      - mixed_opponents
+      - mixed_exploration
+      - mixed_all_safe
+
+preselected_interactions:
+  - [node_budget, behavior_policy]
+  - [node_budget, opponent_population]
+  - [depth, node_budget]
+  - [behavior_policy, root_allocation]
+  - [opponent_population, temporal_mix]
+  - [start_state_distribution, behavior_policy]
+  - [move_time, behavior_policy]
+  - [move_time, opponent_population]
+
+stages:
+  S1:
+    purpose: broad_main_effect_and_large_interaction_screen
+    design: orthogonal_or_fractional_factorial
+    required_families:
+      - opponent_population
+      - node_budget
+      - depth
+      - behavior_policy
+      - root_allocation
+      - start_state_distribution
+  S2:
+    purpose: numerical_local_optimization
+    design: response_surface_or_focused_grid
+  S3:
+    purpose: heterogeneous_regime_test
+    design: paired_multiarm
+  S4:
+    purpose: final_recipe_fresh_seed_replication
+    design: frozen_recipe_vs_reference
+    minimum_seeds: 20
+
+mandatory_metrics:
+  - paired_arena_score
+  - value_sign_delta
+  - policy_optimal_mass_delta
+  - wdl_exactness_posthoc
+  - target_value_mae_posthoc
+  - state_coverage
+  - trajectory_diversity
+  - draw_rate
+  - decisive_conversion
+  - realized_nodes
+  - realized_depth
+  - realized_time_ms
+  - nps
+  - color_role_asymmetry
+  - training_sample_count
+  - unique_sample_count
+
+guards:
+  common_arena_search_across_arms: true
+  no_oracle_driven_selection: true
+  fresh_seed_replication_required: true
+  exact_config_hash_required: true
+  compact_summary_under_gitops_limit: true
+  phase_timings_inside_summary: true
+  transport_failure_is_experiment_failure: true
+
+boundaries:
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
