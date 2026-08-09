@@ -1,0 +1,132 @@
+"""Contracts of the PatternEval reconstruction program (M24-P/M14-P/M17-P)."""
+
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+
+import numpy as np
+import pytest
+import yaml
+
+from mini_jass_lab.pattern_reconstruction import replay_fingerprint
+from mini_jass_lab.replay import ReplaySample
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _tool(name: str):
+    path = ROOT / "tools" / name
+    spec = importlib.util.spec_from_file_location(name.removesuffix(".py"), path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+M24P = _tool("run_pattern_supervised_ceiling.py")
+M14P = _tool("run_pattern_value_target_ablation.py")
+M17P = _tool("run_pattern_generation_ladder.py")
+
+
+def _sample(value: float = 1.0, policy_action: int = 3) -> ReplaySample:
+    policy = np.zeros(72, dtype=np.float32)
+    policy[policy_action] = 1.0
+    return ReplaySample(7, value, policy, 1, 2, 4)
+
+
+def test_replay_fingerprint_covers_value_and_policy_targets() -> None:
+    original = replay_fingerprint([_sample()])
+    assert original == replay_fingerprint([_sample()])
+    assert original != replay_fingerprint([_sample(value=-1.0)])
+    assert original != replay_fingerprint([_sample(policy_action=8)])
+
+
+def test_m24p_saturation_is_selected_on_development_not_frozen_test() -> None:
+    by_dose = {
+        "12": {"development": {"zero_regret_rate": 0.80}},
+        "48": {"development": {"zero_regret_rate": 0.90}},
+        "192": {"development": {"zero_regret_rate": 0.903}},
+    }
+    result = M24P.build_recommendation(
+        by_dose, {"saturation_tolerance": 0.005}
+    )
+    assert result["status"] == "PASS"
+    assert result["selection_cohort"] == "development"
+    assert result["frozen_test_may_be_read"] is True
+
+
+def test_m24p_keeps_frozen_test_closed_while_ladder_moves() -> None:
+    by_dose = {
+        "12": {"development": {"zero_regret_rate": 0.80}},
+        "48": {"development": {"zero_regret_rate": 0.90}},
+        "192": {"development": {"zero_regret_rate": 0.92}},
+    }
+    result = M24P.build_recommendation(
+        by_dose, {"saturation_tolerance": 0.005}
+    )
+    assert result["status"] == "CEILING_NOT_SATURATED"
+    assert result["frozen_test_may_be_read"] is False
+
+
+def test_m17p_no_deployed_advance_is_inconclusive() -> None:
+    aggregate = {
+        "rungs": [1, 2, 4, 8],
+        "mean_zero_regret_delta_by_rung": {
+            "1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0
+        },
+        "mean_advancing_generations": 0.0,
+    }
+    result = M17P.build_recommendation(
+        aggregate,
+        {"minimum_monotone_rungs": 3, "minimum_final_zero_regret_delta": 0.0},
+        {"minimum_advancing_generations": 1},
+    )
+    assert result["iteration_compounds"] is None
+    assert result["decision"].startswith("INCONCLUSIVE")
+
+
+def test_m17p_reads_zero_regret_as_primary_response() -> None:
+    aggregate = {
+        "rungs": [1, 2, 4, 8],
+        "mean_zero_regret_delta_by_rung": {
+            "1": 0.01, "2": 0.02, "4": 0.03, "8": 0.04
+        },
+        "mean_advancing_generations": 4.0,
+    }
+    result = M17P.build_recommendation(
+        aggregate,
+        {"minimum_monotone_rungs": 3, "minimum_final_zero_regret_delta": 0.0},
+        {"minimum_advancing_generations": 1},
+    )
+    assert result["iteration_compounds"] is True
+
+
+@pytest.mark.parametrize(
+    "name,schema,milestone",
+    [
+        ("l1_pattern_supervised_ceiling.yaml", M24P.SCHEMA, "M24-P"),
+        ("l1_pattern_value_target_ablation.yaml", M14P.SCHEMA, "M14-P"),
+        ("l1_pattern_generation_ladder.yaml", M17P.SCHEMA, "M17-P"),
+    ],
+)
+def test_new_evidence_namespaces_do_not_collide_with_historical_results(
+    name: str, schema: str, milestone: str
+) -> None:
+    config = yaml.safe_load((ROOT / "configs" / name).read_text(encoding="utf-8"))
+    assert config["schema"] == schema
+    assert config["milestone"] == milestone
+    assert schema not in {
+        "mini_jass.supervised_ceiling.v1",
+        "mini_jass.m14_value_target_ablation.v1",
+        "mini_jass.generation_ladder.v1",
+    }
+
+
+def test_m14p_uses_fresh_paired_seeds_and_keeps_frozen_test_sealed() -> None:
+    path = ROOT / "configs" / "l1_pattern_value_target_ablation.yaml"
+    config = M14P._resolve(path)
+    assert len(config["paired_seeds"]) == 20
+    assert len(set(config["paired_seeds"])) == 20
+    assert config["boundaries"]["cohorts_sealed"] == ["frozen_test"]
+    assert config["boundaries"]["promotable"] is False

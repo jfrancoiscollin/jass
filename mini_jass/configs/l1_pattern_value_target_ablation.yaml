@@ -1,0 +1,25 @@
+schema: mini_jass.pattern_value_target_ablation.v1
+milestone: M14-P
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+paired_seeds:
+  [261001, 261002, 261003, 261004, 261005,
+   261006, 261007, 261008, 261009, 261010,
+   261011, 261012, 261013, 261014, 261015,
+   261016, 261017, 261018, 261019, 261020]
+
+primary_contrast: exact_oracle_minus_selfplay_outcome
+promotion_policy: oracle_arm_never_promotable
+
+scientific_gate:
+  # La borne inferieure de l'IC95 du gain de reponse doit etre strictement
+  # positive pour attribuer la limite au bruit de cible valeur.
+  minimum_response_gain: 0.0
+
+boundaries:
+  cohorts_read: [development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

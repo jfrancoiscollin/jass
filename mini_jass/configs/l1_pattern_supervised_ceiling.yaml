@@ -1,0 +1,36 @@
+schema: mini_jass.pattern_supervised_ceiling.v1
+milestone: M24-P
+expected_execution_host: cpx62
+split_seed: 20260806
+expected_split_manifest_hash: 9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524
+
+model:
+  architecture: folded_pattern_value
+  pattern_window: 3
+  include_reversible_plies: true
+
+# Architecture seule : la loss MSE et AdamW restent celles du laboratoire.
+# La recette logistic/L-BFGS/ridge de production sera un facteur ulterieur.
+training:
+  batch_size: 8192
+  learning_rate: 0.004
+  weight_decay: 0.0001
+  value_weight: 1.0
+  policy_weight: 0.0
+  threads: 4
+
+# Le run 1216 a mesure 11 s pour 12 epoques, export/evaluation inclus, et
+# zero_regret=0.96294 sur development. L'echelle est donc abordable et doit
+# trancher plafond deja atteint vs sous-entrainement. Si 192 -> 768 bouge
+# encore sur development, le test gele reste ferme.
+dose_ladder: [12, 48, 192, 768]
+seeds: [260901, 260902]
+
+scientific_gate:
+  saturation_tolerance: 0.005
+
+boundaries:
+  oracle_is_the_training_signal: true
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

@@ -365,3 +365,10 @@ The two end-to-end wiring configs are:
 They prepare the architecture for a separately preregistered ceiling and
 self-play comparison; they do not themselves authorize a scientific claim or
 production Jass transfer.
+
+The architecture-correct reconstruction is specified in
+`docs/PATTERN_RECONSTRUCTION_PROGRAM.md`. It introduces separate M24-P, M14-P,
+and M17-P schemas, keeps the historical MLP evidence immutable, scores every
+response through value search, and leaves frozen test sealed except for the
+development-saturated M24-P ceiling read. The CPX scripts are prepared but are
+not queued by the reconstruction branch.
