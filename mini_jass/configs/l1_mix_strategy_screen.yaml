@@ -1,0 +1,79 @@
+schema: mini_jass.mix_strategy_screen.v1
+milestone: M23
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+entry_evidence: docs/L3_CURRENT.md
+expected_execution_host: cpx62
+
+paired_seeds: [230001, 230002, 230003, 230004, 230005, 230006, 230007, 230008,
+               230009, 230010, 230011, 230012, 230013, 230014, 230015, 230016,
+               230017, 230018, 230019, 230020]
+
+generations: 8
+current_generation: 8
+history_generations: [1, 2, 3, 4, 5, 6, 7]
+
+# All non-control arms have 50% current / 50% history.
+# Sample count, unique count target, and optimizer updates must be exactly matched.
+arms:
+  UNIFORM_HISTORY_50:
+    current_fraction: 0.50
+    history_policy: uniform_generation
+  RECENT_WINDOW_50:
+    current_fraction: 0.50
+    history_policy: recent_window
+    recent_window_generations: [5, 6, 7]
+  EXP_DECAY_50:
+    current_fraction: 0.50
+    history_policy: exponential_age
+    half_life_generations: 2.0
+  RESERVOIR_50:
+    current_fraction: 0.50
+    history_policy: unbiased_sample_reservoir
+  ANCHOR_50:
+    current_fraction: 0.50
+    history_policy: anchored
+    anchor_generations: [1, 2]
+    anchor_fraction_of_total: 0.25
+    rolling_history_generations: [3, 4, 5, 6, 7]
+    rolling_fraction_of_total: 0.25
+  UNIFORM_ALL:
+    current_fraction: 0.125
+    history_policy: uniform_generation_all_eight
+  CURRENT_ONLY:
+    current_fraction: 1.0
+    history_policy: none
+
+arena:
+  primary: true
+  pairs: 64
+  seed_base: 923000
+  common_evaluation_search: true
+
+secondary_metrics:
+  - learning_score
+  - value_sign_delta
+  - optimal_policy_mass_delta
+  - oracle_wdl_exactness_posthoc
+  - unique_state_count
+  - trajectory_entropy
+  - realized_nodes
+  - realized_depth
+
+scientific_gate:
+  paired_confidence_critical_95: 2.093024054408263
+  minimum_practical_arena_gain: 0.05
+  require_primary_ci_above_zero: true
+  exact_sample_budget_match: true
+  exact_optimizer_update_match: true
+  oracle_selection_reads_allowed: false
+
+followup_current_fraction_screen:
+  enabled_only_after_mix_shape_replication: true
+  current_fractions: [0.25, 0.50, 0.75, 1.00]
+
+boundaries:
+  promotable: false
+  selected_mix_requires_fresh_seed_replication: true
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
