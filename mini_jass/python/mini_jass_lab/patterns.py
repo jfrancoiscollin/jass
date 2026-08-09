@@ -22,11 +22,17 @@ l'indicatrice creuse des buckets actifs. Un modele lineaire sur ces buckets a
 donc exactement la forme de l'evaluation de production : une somme de poids
 lus dans des tables indexees par des conjonctions locales.
 
-⚠️ CE QUI N'EST PAS ENCORE FIDELE, et qu'il faut savoir avant de lire un
-chiffre : la production plie ses buckets par la symetrie EXACTE `rot180 ∘
-colour-swap` (+17,1 Elo mesures a L3, et c'est le plus gros gain de recette de
-la campagne). Ce module ne plie pas encore. Un plafond mesure ici est donc le
-plafond d'un modele de patterns NON PLIE.
+LE PLI EXACT EST FAIT. La production plie ses buckets par `rot180 ∘
+colour-swap` (+17,1 Elo mesures a L3, le plus gros gain de recette de la
+campagne) ; `fold_map` fait de meme ici, apres avoir VERIFIE que la
+transformation preserve l'adjacence diagonale — le critere non negociable.
+Mesure : 49,9 % des buckets sont mutualises, ce qu'on attend d'une involution a
+peu de points fixes.
+
+⚠️ CE QUI N'EST PAS ENCORE FIDELE : la couche 3, l'evaluation VALEUR SEULE avec
+la politique derivee de la recherche. Tant qu'un modele porte une tete policy,
+il ne peut pas avoir la taille d'un modele de patterns (elle multiplie tout par
+les 72 actions : 1 323 344 parametres contre 18 128 en valeur seule).
 """
 from __future__ import annotations
 
@@ -100,7 +106,11 @@ class PatternSet:
             "pattern_sizes": [len(p) for p in self.patterns],
             "bucket_count": self.bucket_count,
             "states_per_square": STATES_PER_SQUARE,
-            "symmetry_folded": False,
+            # Le pli n'est pas une propriete du JEU de patterns mais de la
+            # facon dont un modele partage ses poids : `fold_map` le calcule, et
+            # `folded_class_count` dit ce qu'il reste de parametres libres.
+            "folded_class_count": folded_class_count(self),
+            "fold": "rot180_colour_swap",
         }
 
 
@@ -157,3 +167,114 @@ def pattern_features(
             [dense, raw_features[:, 4 * PLAYABLE : 4 * PLAYABLE + extras]], axis=1
         )
     return dense
+
+
+# --------------------------------------------------------------------------- #
+#  LE PLI EXACT — `rot180 ∘ colour-swap`.
+#
+#  A L3 ce pli vaut +17,1 Elo, le plus gros gain de recette de la campagne, et
+#  la lecon associee est de n'imposer QUE ce qui est vrai : `cs` seule et
+#  `rot180` seule sont approximatives (les pions ont une direction), seule leur
+#  COMPOSITION est une symetrie exacte. Le 5x5 la porte deja — le README
+#  documente « an independently solved canonical graph using 180-degree rotation
+#  plus colour/turn swap ».
+#
+#  ⛔ CRITERE NON NEGOCIABLE avant de plier quoi que ce soit : la transformation
+#  doit PRESERVER L'ADJACENCE DIAGONALE. C'est ce qui disqualifie le miroir
+#  gauche-droite a L3 (il casse 36 des 81 adjacences), et c'est verifie ici sur
+#  la geometrie 5x5 par `rot180_preserves_diagonal_adjacency()`.
+# --------------------------------------------------------------------------- #
+
+# Plans dans l'ordre de `oracle.py` : white_men, black_men, white_kings,
+# black_kings. L'etat d'une case vaut 0 (vide) ou plan+1.
+STATE_COLOUR_SWAP: tuple[int, ...] = (0, 2, 1, 4, 3)
+
+
+def _rot180_square_map() -> tuple[int, ...]:
+    index = {coord: i for i, coord in enumerate(SQUARE_COORDINATES)}
+    mapped = []
+    for row, column in SQUARE_COORDINATES:
+        image = (4 - row, 4 - column)
+        if image not in index:
+            raise ValueError(f"rot180 sends {(row, column)} off the playable set")
+        mapped.append(index[image])
+    return tuple(mapped)
+
+
+SQUARE_ROT180: tuple[int, ...] = _rot180_square_map()
+
+
+def rot180_preserves_diagonal_adjacency() -> bool:
+    """Le critere de L3, applique a la geometrie 5x5.
+
+    Deux cases jouables voisines en diagonale doivent le rester apres la
+    transformation. Un miroir gauche-droite echoue ce test a 10x10 ; `rot180`
+    doit le passer, sinon plier les buckets melangerait des positions qui ne se
+    correspondent pas.
+    """
+    def adjacent(a: int, b: int) -> bool:
+        (ra, ca), (rb, cb) = SQUARE_COORDINATES[a], SQUARE_COORDINATES[b]
+        return abs(ra - rb) == 1 and abs(ca - cb) == 1
+
+    for a in range(PLAYABLE):
+        for b in range(a + 1, PLAYABLE):
+            if adjacent(a, b) != adjacent(SQUARE_ROT180[a], SQUARE_ROT180[b]):
+                return False
+    return True
+
+
+def fold_map(pattern_set: PatternSet) -> np.ndarray:
+    """Bucket global → representant canonique de sa classe de symetrie.
+
+    Deux buckets lies par `rot180 ∘ colour-swap` decrivent la MEME position a la
+    couleur pres : ils doivent partager un seul poids. La fonction rend un
+    tableau `classe[bucket]`, et un modele lineaire somme ses poids par classe.
+
+    ⚠️ Le jeu de patterns doit etre CLOS par `rot180` — l'image d'un pattern doit
+    etre un pattern du jeu — sinon la classe d'un bucket sortirait de l'espace
+    represente. C'est verifie, et refuse si faux.
+    """
+    if not rot180_preserves_diagonal_adjacency():
+        raise ValueError("rot180 does not preserve diagonal adjacency on this board")
+    lookup = {squares: i for i, squares in enumerate(pattern_set.patterns)}
+    images: list[int] = []
+    for squares in pattern_set.patterns:
+        image = tuple(sorted(SQUARE_ROT180[s] for s in squares))
+        if image not in lookup:
+            raise ValueError(
+                "pattern set is not closed under rot180; folding would send a "
+                f"bucket of {squares} outside the represented space"
+            )
+        images.append(lookup[image])
+
+    classes = np.arange(pattern_set.bucket_count, dtype=np.int64)
+    for source, squares in enumerate(pattern_set.patterns):
+        target = images[source]
+        target_squares = pattern_set.patterns[target]
+        # Ou chaque case du pattern source atterrit dans le pattern image.
+        position = {square: i for i, square in enumerate(target_squares)}
+        order = [position[SQUARE_ROT180[s]] for s in squares]
+        size = len(squares)
+        for bucket in range(STATES_PER_SQUARE ** size):
+            digits, rest = [], bucket
+            for _ in range(size):
+                digits.append(rest % STATES_PER_SQUARE)
+                rest //= STATES_PER_SQUARE
+            digits.reverse()                     # digits[i] = etat de squares[i]
+            swapped = [STATE_COLOUR_SWAP[d] for d in digits]
+            image_digits = [0] * size
+            for i, slot in enumerate(order):
+                image_digits[slot] = swapped[i]
+            image_bucket = 0
+            for digit in image_digits:
+                image_bucket = image_bucket * STATES_PER_SQUARE + digit
+            a = pattern_set.offsets[source] + bucket
+            b = pattern_set.offsets[target] + image_bucket
+            representative = min(a, b)
+            classes[a] = representative
+            classes[b] = representative
+    return classes
+
+
+def folded_class_count(pattern_set: PatternSet) -> int:
+    return int(np.unique(fold_map(pattern_set)).size)

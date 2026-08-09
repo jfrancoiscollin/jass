@@ -13,8 +13,13 @@ import pytest
 
 from mini_jass_lab.patterns import (
     PLAYABLE,
+    SQUARE_ROT180,
+    STATE_COLOUR_SWAP,
     STATES_PER_SQUARE,
     PatternSet,
+    fold_map,
+    folded_class_count,
+    rot180_preserves_diagonal_adjacency,
     bucket_indices,
     pattern_features,
     square_states,
@@ -117,6 +122,54 @@ def test_the_value_only_size_is_what_makes_the_production_shape_reachable():
     assert with_policy > 50 * value_only
 
 
-def test_the_missing_symmetry_fold_is_declared_not_hidden():
-    """A L3 le pli exact vaut +17,1 Elo. Ici il n'est pas fait, et ca se dit."""
-    assert PatternSet.from_window(2).describe()["symmetry_folded"] is False
+# --------------------------------------------------------------------------- #
+#  LE PLI EXACT `rot180 ∘ colour-swap`.
+# --------------------------------------------------------------------------- #
+def test_rot180_preserves_diagonal_adjacency_before_anything_is_folded():
+    """Le critere non negociable de L3, ou le pli melangerait des positions
+    qui ne se correspondent pas. Le miroir gauche-droite y echoue a 10x10."""
+    assert rot180_preserves_diagonal_adjacency() is True
+
+
+def test_rot180_is_an_involution_on_the_playable_squares():
+    for square in range(PLAYABLE):
+        assert SQUARE_ROT180[SQUARE_ROT180[square]] == square
+
+
+def test_the_colour_swap_exchanges_men_and_kings_by_colour():
+    """Plans : white_men, black_men, white_kings, black_kings -> etats 1..4."""
+    assert STATE_COLOUR_SWAP == (0, 2, 1, 4, 3)
+    for state in range(STATES_PER_SQUARE):
+        assert STATE_COLOUR_SWAP[STATE_COLOUR_SWAP[state]] == state
+
+
+def test_the_fold_is_idempotent_and_halves_the_free_parameters():
+    """Une involution a peu de points fixes doit mutualiser environ la moitie."""
+    for window in (2, 3):
+        pattern_set = PatternSet.from_window(window)
+        classes = fold_map(pattern_set)
+        assert np.array_equal(classes[classes], classes)   # idempotent
+        share = folded_class_count(pattern_set) / pattern_set.bucket_count
+        assert 0.45 < share < 0.55
+
+
+def test_folding_only_ever_merges_buckets_never_invents_one():
+    pattern_set = PatternSet.from_window(2)
+    classes = fold_map(pattern_set)
+    assert classes.max() < pattern_set.bucket_count
+    assert folded_class_count(pattern_set) < pattern_set.bucket_count
+
+
+def test_a_pattern_set_not_closed_under_rot180_is_refused():
+    """Plier hors de l'espace represente enverrait un bucket nulle part."""
+    base = PatternSet.from_window(2)
+    truncated = PatternSet(base.patterns[:1], (0,),
+                           STATES_PER_SQUARE ** len(base.patterns[0]))
+    with pytest.raises(ValueError, match="not closed under rot180"):
+        fold_map(truncated)
+
+
+def test_the_describe_block_reports_the_fold_rather_than_claiming_none():
+    described = PatternSet.from_window(2).describe()
+    assert described["fold"] == "rot180_colour_swap"
+    assert described["folded_class_count"] < described["bucket_count"]
