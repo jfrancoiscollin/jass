@@ -56,27 +56,53 @@ factor_families:
       - variable
     guard: common_arena_search_depth
 
-  # ⛔ FAMILLE `move_time` RETIREE — ce n'etait pas une reserve a border.
+  # ⏱️ TEMPS REEL ET CONTROLES DE TEMPS. Famille demandee par JFC, avec sa
+  # mitigation : « on impose un controle par noeuds effectivement consommes afin
+  # de ne pas confondre "meilleure gestion du temps" et simplement "plus de
+  # calcul" ». C'est la bonne operationnalisation, et elle est cablee ci-dessous
+  # comme une EXIGENCE, pas comme un diagnostic optionnel.
   #
-  # 1. Elle casse ce qui fait la valeur du banc. Tout mini-Jass repose sur le
-  #    determinisme : `execution_hash` couvre le dict complet, les packs sont
-  #    octet-identiques a graine egale, et M20 a pu poser un CONTROLE DE
-  #    DETERMINISME (`gate_arena` et `depth32`, meme specification -> divergence
-  #    exactement `0,0`) qui a valide le harnais. Au temps mural ce controle
-  #    devient impossible et deux runs du meme protocole cessent d'etre
-  #    comparables par hash.
-  # 2. Le facteur scientifique est deja couvert par `node_budget`, de facon
-  #    deterministe -- et `required_control: realized_node_matched` l'admettait :
-  #    on egalise sur les noeuds, donc on mesure les noeuds.
-  # 3. Le precedent L3 est cher : `go movetime` a masque un facteur 55x pendant
-  #    des semaines (bitbase 3-dames-contre-1 construite sous un `call_once` que
-  #    la sonde de deadline ne peut pas interrompre ; moteur rendant
-  #    `depth=3 score=164` la ou la version prechauffee atteint `depth=20`).
+  # ⛔ AUCUN BRAS AU TEMPS NE CONCLUT SEUL. Chaque bras `move_time` doit etre
+  # apparie a un bras a BUDGET DE NOEUDS FIXE, cale sur ses noeuds REELLEMENT
+  # consommes. La revendication « gestion du temps » est la DIFFERENCE entre les
+  # deux ; le bras au temps pris isolement ne mesure que du compute.
   #
-  # Si une cellule « contrainte de temps » redevient necessaire, elle sera
-  # EXPLICITEMENT hors du programme deterministe, sur un hote verrouille, et ne
-  # servira jamais a selectionner une recette.
-
+  # ⚠️ RESERVE ASSUMEE, ecrite pour etre lue avec les chiffres, pas pour bloquer.
+  # Le temps mural rend le resultat dependant de l'hote et de sa charge : les
+  # cellules `move_time` ne sont donc PAS comparables par `execution_hash` d'un
+  # run a l'autre, et le controle de determinisme entre bras de meme
+  # specification (celui que M20 a pose a `divergence = 0,0`) n'y est pas
+  # disponible. D'ou l'hote verrouille et le doublement systematique par le bras
+  # a noeuds cales.
+  # ⚠️ Et le precedent L3 reste la raison de compter les noeuds REALISES et pas
+  # seulement demandes : `go movetime` a masque un facteur **55x** pendant des
+  # semaines (bitbase 3-dames-contre-1 construite sous un `call_once` que la
+  # sonde de deadline ne peut pas interrompre). Ce bug n'etait detectable qu'en
+  # comparant le temps et les noeuds REALISES a ce qui avait ete demande.
+  move_time:
+    priority: high
+    variants:
+      - fixed_per_move
+      - variable_per_game
+      - total_clock_plus_increment
+      - phase_dependent
+      - mixed_time_controls
+    required_diagnostics:
+      - requested_ms
+      - realized_ms
+      - realized_nodes
+      - nps
+      - timeout_count
+      - deadline_overrun_ratio
+    # ⛔ Non negociable : sans ce bras jumeau, un gain de temps n'est pas
+    # distinguable d'un gain de calcul.
+    required_control: realized_node_matched
+    control_contract:
+      paired_fixed_node_arm_required: true
+      node_match_tolerance: 0.05
+      claim_is_the_difference_not_the_arm: true
+      host_locked: true
+      excluded_from_cross_run_hash_comparison: true
   behavior_policy:
     priority: highest
     levels:
@@ -156,6 +182,9 @@ stages:
       - behavior_policy
       - root_allocation
       - start_state_distribution
+      # Presente des S1 : sans elle, les deux interactions `move_time x ...`
+      # preselectionnees n'auraient aucun facteur a croiser.
+      - move_time
   S2:
     purpose: numerical_local_optimization
     design: response_surface_or_focused_grid
