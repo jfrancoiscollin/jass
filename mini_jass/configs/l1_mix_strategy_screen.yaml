@@ -1,20 +1,47 @@
 schema: mini_jass.mix_strategy_screen.v1
 milestone: M23
 
+# M23-A — QUELLE LOI DE MEMOIRE TEMPORELLE, A VOLUME UNIQUE EGAL ?
+#
+# CE QUI FONDE CETTE CELLULE, ET A QUELLE TAILLE. M21 → M21R → M21T ont etabli
+# sur TROIS pools chaines que melanger les generations produit un modele plus
+# fort a volume de donnees UNIQUES egal :
+#     +0,2375 / +0,1000 / +0,0500  →  chaine +0,1417  se 0,0465  P(>0) = 99,88 %
+#     heterogeneite verte : pire paire |z| = 1,746 ; Cochran Q = 3,30 df=2 p≈0,19
+# ⛔ La sequence est MONOTONE DECROISSANTE (1,00 → 0,42 → 0,21) et AUCUN pool n'a
+# jamais porte l'effet seul. On dimensionne donc sur +0,14, jamais sur +0,2375.
+
 base_gate_config: configs/l1_frozen_learning_gate.yaml
 entry_evidence: docs/L3_CURRENT.md
 expected_execution_host: cpx62
 
-paired_seeds: [230001, 230002, 230003, 230004, 230005, 230006, 230007, 230008,
-               230009, 230010, 230011, 230012, 230013, 230014, 230015, 230016,
-               230017, 230018, 230019, 230020]
+# ⛔ GRAINES FRAICHES. 210001-20 (M21), 220001-20 (M21R) et 230001-20 (M21T) sont
+# CONSOMMEES — la recette M8 etant gelee et deterministe par graine, les reutiliser
+# donnerait des packs octet-identiques et ferait de cette cellule une re-analyse
+# des pools qui ont produit l'effet, pas une mesure neuve. Garde cablee.
+paired_seeds: [240001, 240002, 240003, 240004, 240005, 240006, 240007, 240008,
+               240009, 240010, 240011, 240012, 240013, 240014, 240015, 240016,
+               240017, 240018, 240019, 240020]
 
 generations: 8
 current_generation: 8
 history_generations: [1, 2, 3, 4, 5, 6, 7]
 
-# All non-control arms have 50% current / 50% history.
-# Sample count, unique count target, and optimizer updates must be exactly matched.
+# ⛔ TOUS LES BRAS PORTENT EXACTEMENT LE MEME NOMBRE D'ECHANTILLONS UNIQUES,
+# verifie FAIL-CLOSED avant tout contraste. La cible est `2 x unit`, ou `unit`
+# est la plus petite generation : elle laisse un bras « 50 % courant » prendre
+# TOUTE la generation 8 sans jamais demander a une generation plus d'uniques
+# qu'elle n'en contient.
+#
+# ⚠️ `CURRENT_ONLY` NAIF SERAIT UN PIEGE. La generation 8 seule ne contient
+# qu'un `unit` d'echantillons uniques, la ou un melange en a deux : le contraste
+# confondrait « loi temporelle » et « volume de donnees uniques » — exactement ce
+# que `G1_WIDE` a servi a lever dans M21. D'ou `CURRENT_ONLY_WIDE` : MEME
+# generateur (le parent DEPLOYE apres sept generations, celui qui produit la
+# generation 8 du pack), simplement plus de parties.
+current_only_wide_games: 512
+current_only_wide_seed_offset: 880000
+
 arms:
   UNIFORM_HISTORY_50:
     current_fraction: 0.50
@@ -29,51 +56,62 @@ arms:
     half_life_generations: 2.0
   RESERVOIR_50:
     current_fraction: 0.50
+    # Uniforme sur les ECHANTILLONS de tout l'historique, pas sur les
+    # generations : c'est ce qui le distingue de UNIFORM_HISTORY, les
+    # generations n'ayant pas toutes la meme taille.
     history_policy: unbiased_sample_reservoir
   ANCHOR_50:
     current_fraction: 0.50
     history_policy: anchored
     anchor_generations: [1, 2]
-    anchor_fraction_of_total: 0.25
     rolling_history_generations: [3, 4, 5, 6, 7]
-    rolling_fraction_of_total: 0.25
   UNIFORM_ALL:
     current_fraction: 0.125
     history_policy: uniform_generation_all_eight
-  CURRENT_ONLY:
+  CURRENT_ONLY_WIDE:
     current_fraction: 1.0
     history_policy: none
+    volume_matched_by: wider_generation_8
+
+# ⛔ UN SEUL CONTRASTE PEUT CONCLURE, ET IL EST NOMME ICI.
+# `UNIFORM_HISTORY_50 − CURRENT_ONLY_WIDE` est le seul a porter une histoire
+# mecanique deja etayee : `MIX − G8_ONLY` vaut +0,3625 / +0,1250 / +0,2875 sur
+# les trois pools de M21.
+# Les CINQ autres bras sont des contrastes de FORME, explicitement exploratoires.
+# Garder le maximum de six contrastes ferait passer la probabilite qu'au moins un
+# IC95 exclue zero de 5 % a ~26 % sous H0 — et la campagne a mesure TROIS FOIS ce
+# que coute la selection : x0,30, x0,04, x0,42 entre selection et replication.
+# L'ecran ne conclut donc JAMAIS sur la forme : il produit un CANDIDAT.
+primary_contrast: [UNIFORM_HISTORY_50, CURRENT_ONLY_WIDE]
+shape_contrasts_are_exploratory: true
 
 arena:
   primary: true
   pairs: 64
-  seed_base: 923000
+  seed_base: 924000
   common_evaluation_search: true
 
 secondary_metrics:
   - learning_score
-  - value_sign_delta
-  - optimal_policy_mass_delta
-  - oracle_wdl_exactness_posthoc
   - unique_state_count
-  - trajectory_entropy
-  - realized_nodes
-  - realized_depth
 
 scientific_gate:
-  paired_confidence_critical_95: 2.093024054408263
+  paired_confidence_critical_95: 2.093024054408263   # t(0,975 ; 19)
   minimum_practical_arena_gain: 0.05
   require_primary_ci_above_zero: true
-  exact_sample_budget_match: true
-  exact_optimizer_update_match: true
+  exact_unique_sample_match: true          # fail-closed dans le runner
+  exact_optimizer_update_match: true       # par construction de train_from_replay
   oracle_selection_reads_allowed: false
 
-followup_current_fraction_screen:
-  enabled_only_after_mix_shape_replication: true
-  current_fractions: [0.25, 0.50, 0.75, 1.00]
+# ⛔ Le bras de forme retenu par l'ecran est un CANDIDAT, jamais un resultat, et
+# sa replication doit etre dimensionnee sur son effet REPLIQUE — sizer sur un
+# maximum selectionne garantit d'etre sous-puissant.
+followup:
+  selected_shape_requires_fresh_seed_replication: true
+  size_replication_on_replicated_effect_not_on_screen_maximum: true
+  current_fraction_screen_only_after_shape_replication: [0.25, 0.50, 0.75, 1.00]
 
 boundaries:
   promotable: false
-  selected_mix_requires_fresh_seed_replication: true
   production_jass_changes_authorized: false
   direct_10x10_transfer_authorized: false

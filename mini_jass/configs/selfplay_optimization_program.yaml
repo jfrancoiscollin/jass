@@ -56,20 +56,26 @@ factor_families:
       - variable
     guard: common_arena_search_depth
 
-  move_time:
-    priority: high
-    variants:
-      - fixed_per_move
-      - variable_per_game
-      - total_clock_plus_increment
-      - phase_dependent
-      - mixed_time_controls
-    required_diagnostics:
-      - realized_ms
-      - realized_nodes
-      - nps
-      - timeout_count
-    required_control: realized_node_matched
+  # ⛔ FAMILLE `move_time` RETIREE — ce n'etait pas une reserve a border.
+  #
+  # 1. Elle casse ce qui fait la valeur du banc. Tout mini-Jass repose sur le
+  #    determinisme : `execution_hash` couvre le dict complet, les packs sont
+  #    octet-identiques a graine egale, et M20 a pu poser un CONTROLE DE
+  #    DETERMINISME (`gate_arena` et `depth32`, meme specification -> divergence
+  #    exactement `0,0`) qui a valide le harnais. Au temps mural ce controle
+  #    devient impossible et deux runs du meme protocole cessent d'etre
+  #    comparables par hash.
+  # 2. Le facteur scientifique est deja couvert par `node_budget`, de facon
+  #    deterministe -- et `required_control: realized_node_matched` l'admettait :
+  #    on egalise sur les noeuds, donc on mesure les noeuds.
+  # 3. Le precedent L3 est cher : `go movetime` a masque un facteur 55x pendant
+  #    des semaines (bitbase 3-dames-contre-1 construite sous un `call_once` que
+  #    la sonde de deadline ne peut pas interrompre ; moteur rendant
+  #    `depth=3 score=164` la ou la version prechauffee atteint `depth=20`).
+  #
+  # Si une cellule « contrainte de temps » redevient necessaire, elle sera
+  # EXPLICITEMENT hors du programme deterministe, sur un hote verrouille, et ne
+  # servira jamais a selectionner une recette.
 
   behavior_policy:
     priority: highest
