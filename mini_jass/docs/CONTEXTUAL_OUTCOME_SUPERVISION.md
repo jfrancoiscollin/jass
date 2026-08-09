@@ -1,244 +1,285 @@
-# Contextual outcome supervision — WDL + deterministic state context
+# Contextual outcome supervision v2
 
 ## Status
 
-Design/preregistration for the rebuilt Mini-Jass laboratory using the **production-like Jass architecture**: folded pattern-bucket, value-only evaluation whose move choice comes from search. This proposal must not be implemented on the retired MLP/two-head architecture.
+Design/preregistration for Mini-Jass L1 on the architecture merged as
+`folded_pattern_value`: exact side-aware folded pattern buckets, one scalar
+value and moves supplied by search.
+
+This protocol is not runnable until M24-P
+`cpx62-1217-mini-jass-pattern-m24p-v1` has returned `PASS` and its result hash
+has been frozen into the implementation config. No production Jass change or
+direct 10x10 transfer is authorized.
+
+## Question
+
+Terminal W/D/L is the game truth, but copying it unchanged onto every state is
+a low-bandwidth credit signal. A draw saved from a losing position and a draw
+thrown away from a winning position both receive `0`.
+
+The experiment asks whether deterministic board context can improve the
+learned scalar evaluator while the main target remains terminal WDL and while
+the deployed model remains exactly `scalar PatternEval -> search`.
+
+## Architectural constraint: where the gradient must go
+
+The original draft proposed independent linear readouts over active buckets.
+That cannot affect `PatternEval`: active bucket IDs are fixed indices, not a
+learned representation. An independent context table receives its own
+gradients; the scalar `bucket_weight` receives none of them. Discarding that
+readout would therefore recover the WDL-only model exactly.
+
+V2 uses one frozen train-time scaffold for every arm, including WDL_ONLY.
+
+For each folded bucket class `j`, learn an embedding `E_j` in `R^10`. The ten
+axes reserve one value axis plus one axis per context component. With
+active classes `A(s)`, reversible-plies feature `r(s)`, shared reversible
+embedding `E_r` and shared bias `b_h`:
+
+```text
+h(s) = sum(j in A(s)) E_j + r(s) E_r + b_h
+z_v(s) = q_v . h(s) + b_v
+V(s) = tanh(z_v(s))
+```
 
-No production Jass change or direct 10x10 transfer is authorized by this document.
+Training-only linear heads predict context, transition context and residual
+from the same `h(s)`. Their losses therefore update `E_j`, which also changes
+the scalar value. Separate context tables with no shared parameter path are
+forbidden.
+
+After training, export an ordinary scalar PatternEval table:
+
+```text
+bucket_weight[j] = q_v . E_j
+extra_weight = q_v . E_r
+bias = q_v . b_h + b_v
+```
+
+The auxiliary heads and embeddings are then discarded. The exported evaluator
+must match pre-export scalar values within `1e-6` on every oracle state and
+must choose the same common-search action on 100% of playable states. Failure
+of either invariant invalidates the arm.
+
+The factorized scaffold changes optimization, so it is not compared with the
+old direct-table WDL checkpoint. Every C1 arm uses the same rank, parameter
+initialization schedule, replay, batches, optimizer and export. The only
+non-oracle factor is which frozen auxiliary loss is active.
+
+Initialization is also preregistered: SHA-256 counter-normal v1 keyed by the
+paired seed, embedding standard deviation `0.01`, zero shared/value biases,
+value head equal to the first basis vector, and auxiliary-head standard
+deviation `1/sqrt(10)`. Every head is initialized in every arm, including the
+control, before the initial exportable-value hash is recorded.
 
-## Motivation
+## Records and targets
 
-Terminal W/D/L is a correct statement about the game result, but it is a very low-bandwidth credit signal when copied unchanged onto every preceding state.
+For a sampled pre-move state `s_t` and its recorded selected move:
 
-Example: a side that is materially and positionally disadvantaged may save a draw through a sequence of strong moves. A plain draw target assigns the same neutral terminal outcome to those states as to an equal, uneventful draw. Conversely, a side that starts from a strongly favourable situation and throws the win away also receives a draw target.
+1. `Z_t`: terminal WDL from the side-to-move POV, unchanged.
+2. `C(s_t)`: deterministic context vector from the board/rule record.
+3. `DeltaC_t`: context change after the recorded move, with both vectors
+   represented from the mover POV.
+4. `B(C(s_t))`: frozen deterministic scalar baseline.
+5. `Rctx_t = clip(Z_t - B(C(s_t)), -1.5, +1.5)`.
 
-The proposal keeps terminal WDL semantically pure and adds **context-conditioned auxiliary supervision**. It must never redefine a draw into a win or a loss.
+The main value loss always targets `Z_t` in deployable arms. `DeltaC` and
+`Rctx` never select moves, weight samples or alter replay generation in C0-C3.
 
-## Core separation
+## Deterministic context v1
 
-For each sampled state `s_t`:
+Components remain separate and approximately normalized to `[-1,+1]`:
 
-1. `Z_t` — terminal outcome from the side-to-move POV, unchanged historical WDL target.
-2. `C(s_t)` — deterministic context vector computed from the board only.
-3. `DeltaC_t` — deterministic change in context caused by the selected move, reoriented to the mover POV.
-4. `B(C(s_t))` — frozen deterministic baseline mapping context to an expected scalar outcome.
-5. `Rctx_t = Z_t - B(C(s_t))` — contextual outcome residual / outcome surprise.
+- man material difference;
+- king material difference;
+- legal-action count difference;
+- legal capturing-action count difference after mandatory/max-capture
+  filtering;
+- promotion-distance pressure;
+- blocked-man count difference;
+- normalized man advancement difference;
+- occupancy difference on a hashed central-region mask;
+- exact terminal flag.
+
+Every difference is own minus opponent from the requested POV. Opponent
+mobility is computed by the rule move generator on the same board with the
+queried side to move; it is not inferred from the current side's actions.
+Material normalizers, promotion rows, the central mask and move-count
+normalizers come from frozen rule/geometry constants and are included in the
+feature-definition hash.
 
-The main value evaluator continues to learn the ordinary WDL objective. Context is auxiliary supervision only.
+For a move `s_t -> s_{t+1}`:
 
-## Deterministic context vector v1
+```text
+DeltaC_t = C_mover(s_{t+1}) - C_mover(s_t)
+```
 
-The first implementation must keep dimensions separate; do not collapse them into one handcrafted score before measurement.
+Subtracting two uncorrected side-to-move vectors is forbidden. Determinism,
+rotation/colour symmetry and terminal behavior are exact test invariants.
 
-All components are normalized to approximately `[-1, +1]` from side-to-move POV and must satisfy the exact `rot180 + colour-swap` symmetry used by the rebuilt pattern evaluator.
+## Frozen contextual baseline
 
-Required v1 components:
+The residual baseline is fixed before C0:
 
-- `material_man_delta`: own men minus opponent men, normalized by initial material.
-- `material_king_delta`: own kings minus opponent kings, with a **separate field**, not a hardcoded conversion into men.
-- `legal_move_delta`: normalized own mobility minus opponent mobility, using legal move generation.
-- `capture_option_delta`: normalized number/quality of currently available capture continuations; must respect mandatory/max-capture rules.
-- `promotion_pressure_delta`: deterministic distance-to-promotion pressure for men, orientation-aware.
-- `blocked_man_delta`: own blocked men versus opponent blocked men.
-- `advanced_man_delta`: deterministic advancement statistic, orientation-aware.
-- `center_presence_delta`: occupancy of a preregistered central region, if and only if the geometry definition is exact and symmetry-safe.
-- `terminal_flag`: exact terminal status encoded separately; context must never override it.
+```text
+raw = sum_i w_i C_i
+B(C) = tanh(raw / 1.50)
+```
 
-Optional components such as tempo, structural formations or king activity must be added only in later ablations after an exact definition and symmetry tests. Avoid smuggling expert intuition into v1 through opaque composite features.
+Weights are, in component order:
 
-## Context transition
+```text
+men=1.00, kings=1.50, mobility=0.20, capture_options=0.15,
+promotion_pressure=0.20, blocked_men=-0.15, advancement=0.10,
+center=0.05, terminal=0.00
+```
 
-For a legal move `a_t: s_t -> s_{t+1}`:
+These coefficients are not tuned in C0. Fitting or changing them after any
+development/frozen-test read is forbidden.
 
-`DeltaC_t = C_mover(s_{t+1}) - C_mover(s_t)`
+## C0: preregistered protocol-validity gate
 
-where both vectors are explicitly represented from the POV of the player who selected `a_t`. The implementation must not subtract two side-to-move vectors without correcting the POV flip.
+C0 may read exact values only on the `train` cohort. It does not choose among
+models or remove individual arms. It applies the decision frozen here:
 
-This vector is descriptive. It is not itself a reward and is never used by self-play to select a move in the first experiment.
+- deterministic repeats must be byte-identical;
+- POV symmetry maximum absolute error must be `0`;
+- terminal exactness must be `1.0`;
+- Spearman correlation of `B(C)` with exact value must be at least `0.10`;
+- pairwise ordering rate against exact value must be at least `0.55`.
 
-## Frozen scalar baseline B(C)
+Pairwise ordering is computed on train-state pairs with unequal exact values;
+a baseline tie counts as one half. Eligible pairs are ordered by
+`sha256(split_manifest_hash || min_state_id || max_state_id)` and the first
+`100000` are used. This rule is included in the protocol hash.
 
-We need a scalar only to construct the residual `Rctx`. It must be transparent and deterministic.
+If any threshold fails, the result is
+`ABORT_C1_AND_REVISE_PREREGISTRATION`. C1 does not run, no coefficient changes,
+and no residual/full arm is silently downgraded to exploratory. A revised
+baseline requires a new schema/version and fresh C0 evidence.
 
-V1 baseline:
+## Losses and frozen C1 arms
 
-`raw = sum_i w_i * C_i`
+All component-vector losses use mean squared error reduced first over
+components, then over the batch. No auxiliary-weight screen is permitted.
 
-`B(C) = tanh(raw / tau)`
+```text
+WDL_ONLY:
+  L = L_wdl
 
-Initial weights are preregistered, simple and deliberately conservative. Material-related terms may dominate v1, but kings remain a separate coefficient. No coefficient may be fitted on confirmation/frozen-test outcomes.
+WDL_PLUS_CONTEXT:
+  L = L_wdl + 0.25 L_context
 
-The first scientific stage MUST include baseline calibration diagnostics against the exact Mini-Jass oracle. If the handcrafted baseline is badly ordered or anti-correlated with exact value, the residual arm is diagnostic-only and cannot be selected.
+WDL_PLUS_DELTA_CONTEXT:
+  L = L_wdl + 0.25 L_delta_context
 
-Later stages may fit `B(C)` on a train-only solved cohort, but that is a distinct experiment and must be compared with the deterministic v1 baseline.
+WDL_PLUS_RESIDUAL:
+  L = L_wdl + 0.25 L_residual
 
-## Targets
+WDL_PLUS_FULL_CONTEXT:
+  L = L_wdl + (1/12) L_context
+            + (1/12) L_delta_context
+            + (1/12) L_residual
+```
 
-### Main target — unchanged
+The full arm retains total auxiliary weight `0.25`, matching each single-channel
+arm instead of receiving three times the auxiliary dose.
 
-`value_target = Z_t`
+`ORACLE_VALUE_DIAGNOSTIC` replaces the main target with the exact train-cohort
+value. It is an explicitly declared diagnostic training-signal boundary
+crossing, is excluded from the primary hypothesis and is never promotable.
 
-Use the same WDL convention as the production-like trainer. Do not replace WDL with context-adjusted WDL.
+## C1 pairing
 
-### Auxiliary context target
+The complete replay pack is generated once and frozen before any arm trains.
+Every non-oracle arm must prove:
 
-Predict `C(s_t)` from the shared pattern representation.
+- identical replay fingerprint, sample IDs and terminal WDL values;
+- identical exportable-value initial-state hash;
+- identical rank-10 scaffold initialization schedule;
+- identical batch indices and order;
+- identical optimizer hyperparameters and step count;
+- identical common-search arena starts, colours and seeds.
 
-Because production Jass is a value-only linear pattern evaluator, do **not** permanently attach a large neural head. For Mini-Jass experiments, auxiliary predictions should be implemented as either:
+The gradients cannot be identical because the losses intentionally differ;
+the old phrase `same_optimizer_updates` is therefore replaced by the exact
+schedule/batch invariants above.
 
-- additional small linear readouts from the same active folded pattern buckets, used only during training; or
-- an equivalent multi-task linear objective whose auxiliary parameters can be discarded after training.
+The paired seeds are fixed to `270501..270520` (inclusive). Each seed uses the
+four paired arena starts from `configs/l1_pattern_reconstruction_loop.yaml`,
+with both candidate colours and identical search settings. The single
+confirmatory contrast is:
 
-The deployed/evaluated candidate must still answer positions through the normal scalar value evaluator + search path.
+```text
+WDL_PLUS_FULL_CONTEXT minus WDL_ONLY
+```
 
-### Auxiliary transition target
+The primary endpoint is paired common-search arena score minus `0.5`. PASS
+requires the lower bound of a paired-seed Student-t 95% confidence interval to
+be strictly greater than zero. The three single-channel arms are mechanistic
+and exploratory; they cannot independently support a multiplicity-unadjusted
+PASS claim.
 
-Predict `DeltaC_t` from the state/action-derived training record, or use it to weight an auxiliary consistency loss. This arm must remain separate from the context-state arm so we can identify whether absolute context or improvement along the trajectory carries signal.
+Static exact-value sign/order/regret, WDL calibration and context strata are
+secondary development diagnostics. Search arena remains primary.
 
-### Contextual residual target
+## Cohorts and the one sealed read
 
-`Rctx_t = clip(Z_t - B(C(s_t)), -rmax, +rmax)`
+The immutable L1 split is:
 
-This residual is an auxiliary target only. It expresses whether the eventual result was better or worse than the deterministic context baseline predicted.
+```text
+train / development / frozen_test
+split_seed = 20260806
+manifest_hash = 9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524
+```
 
-Examples under `[-1,0,+1]` WDL:
+There is no `confirmation` cohort. C0 oracle characterization uses `train`.
+Development diagnostics may not change weights or arms because all recipes are
+already fixed. After every C1 checkpoint, replay hash, export proof and protocol
+hash are frozen, `frozen_test` is read once for WDL_ONLY and
+WDL_PLUS_FULL_CONTEXT together. It is descriptive and cannot select a model.
 
-- context baseline `-0.55`, terminal draw `0` -> residual `+0.55`;
-- context baseline `+0.70`, terminal draw `0` -> residual `-0.70`;
-- context baseline `-0.20`, terminal win `+1` -> residual `+1.20` before clipping.
+## Oracle boundary
 
-## Loss family
+Oracle access is scoped, not globally described as observer-only:
 
-Baseline:
+- C0: train-cohort observer for the frozen validity gate;
+- C1 ORACLE_VALUE_DIAGNOSTIC: train-only diagnostic training signal;
+- C3: train-only diagnostic target for fitting `B(C)`;
+- deployable arms: forbidden in generation, target construction, sample
+  selection, loss weighting and promotion.
 
-`L0 = L_wdl`
+Diagnostic checkpoints and summaries are stored under distinct schemas and
+cannot enter a deployable checkpoint path.
 
-Context arm:
+## Later stages
 
-`L = L_wdl + beta * L_context`
+C2 opens only after a C1 confirmatory PASS. It repeats the full-vs-WDL contrast
+on fresh seeds before interpreting the single-channel diagnostics. C3 may then
+compare the frozen handcrafted baseline with a train-only fitted baseline; it
+is a new experiment and cannot reuse C1's sealed test read.
 
-Transition arm:
-
-`L = L_wdl + gamma * L_delta_context`
-
-Residual arm:
-
-`L = L_wdl + eta * L_residual`
-
-Full arm:
-
-`L = L_wdl + beta * L_context + gamma * L_delta_context + eta * L_residual`
-
-Weights must be preregistered and screened on development only. Confirmation is read once after the candidate recipe is frozen.
-
-## Scientific sequence
-
-### C0 — invariants and oracle characterization
-
-Before training:
-
-- prove every context feature is deterministic;
-- prove colour/rotation POV symmetry;
-- prove terminal states are handled exactly;
-- measure correlation/ordering of each context component with exact oracle value;
-- measure `DeltaC` against exact one-ply oracle value change;
-- measure residual distribution by W/D/L and by context strata;
-- report redundancy/correlation between context dimensions.
-
-This stage selects no model. Its purpose is to catch bad handcrafted rules before they influence training.
-
-### C1 — isolated auxiliary ablation
-
-Use the rebuilt production-like architecture and a frozen self-play dataset/trajectory pack so targets cannot change behaviour.
-
-Paired arms:
-
-1. `WDL_ONLY`.
-2. `WDL_PLUS_CONTEXT`.
-3. `WDL_PLUS_DELTA_CONTEXT`.
-4. `WDL_PLUS_RESIDUAL`.
-5. `WDL_PLUS_FULL_CONTEXT`.
-6. `ORACLE_VALUE` diagnostic upper bound, never promotable.
-
-Same active pattern representation, initialization family, replay records, sample counts and optimizer updates across non-oracle arms.
-
-Primary endpoint: common-search paired arena strength.
-
-Secondary endpoints: exact value ordering/sign/regret under oracle, WDL calibration, and performance stratified by material/mobility/context disadvantage.
-
-The contextual hypothesis is especially supported if disadvantaged-state strata improve without degrading neutral/favourable strata.
-
-### C2 — credit assignment localization
-
-If C1 passes, test where the gain comes from:
-
-- absolute context only;
-- transition/delta only;
-- residual only;
-- context + residual;
-- full combination.
-
-Also test whether auxiliary readouts can be discarded after training with no loss in arena strength. This is required for production parity.
-
-### C3 — baseline sophistication
-
-Only after deterministic v1 is validated:
-
-- deterministic hand baseline;
-- train-only calibrated linear/logistic baseline `B(C)`;
-- optional context-conditional WDL baseline `P(W,D,L | C)` trained only on train solved states.
-
-The oracle can evaluate these baselines but cannot provide targets to the deployable arm.
-
-## Reward-shaping boundary
-
-Do not feed `DeltaC`, `Rctx` or any handcrafted context score back into self-play action selection in C0-C3. Doing so would change the policy and confound supervision with behaviour.
-
-A later, separately preregistered experiment may test potential-based shaping. If done, the shaping term must have the potential-difference form and must be compared against an unshaped behaviour control. It is not part of this PR.
-
-## Interaction with search
-
-The rebuilt Mini-Jass architecture has no policy head; actions come from search over the scalar value evaluator. Therefore all final candidate comparisons must use the **same common arena search**. Auxiliary training heads/readouts cannot participate in move selection.
-
-Report both static evaluator quality and search-amplified arena quality. A contextual objective that improves static metrics but loses in common-search arena is rejected.
+Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
+context scores back into behavior would change the replay distribution and
+requires a separate preregistration.
 
 ## Required implementation objects
 
-Suggested isolated modules under `mini_jass/python/mini_jass_lab/`:
+- `context.py`: exact feature definitions and POV/symmetry tests;
+- `context_targets.py`: delta, baseline and residual construction;
+- `context_scaffold.py`: shared rank-10 training scaffold and exact scalar
+  export;
+- `run_contextual_outcome_supervision.py`: C0/C1 contracts and reporting;
+- focused tests for leakage, replay identity, gradient coupling and export
+  parity.
 
-- `context.py`: deterministic feature extraction and POV/symmetry helpers.
-- `context_targets.py`: `DeltaC`, baseline `B`, residual construction.
-- `context_train.py`: auxiliary linear readouts / multi-task loss without changing production-like inference.
-
-Suggested experiment tooling:
-
-- `mini_jass/configs/contextual_outcome_supervision.yaml`;
-- `mini_jass/tools/run_contextual_outcome_supervision.py`;
-- focused tests for context invariants, leakage and training isolation;
-- CPX wrapper only after the architecture-rebuild baseline is frozen.
-
-## Fail-closed requirements
-
-- no oracle read in self-play generation, target construction for deployable arms, sample selection, loss weighting or promotion;
-- exact same replay sample IDs across C1 paired arms;
-- exact same WDL targets across C1 non-oracle arms;
-- context targets derived only from the board/move record;
-- context feature definitions hashed into the result contract;
-- baseline coefficients/tau hashed into the result contract;
-- common arena starts/search/seeds across arms;
-- 20 seeds minimum by default, increased by preregistered power analysis;
-- compact summary under GitOps inline limit with phase timings;
-- no post-hoc winner advances without fresh-seed replication.
-
-## Interpretation
-
-A PASS would not mean that WDL was wrong. It would mean that WDL alone is an insufficiently dense supervision signal for the production-like representation, and deterministic context provides useful credit assignment while preserving the terminal game objective.
-
-A FAIL would be equally useful: it would reject the hypothesis that handcrafted material/mobility/position context is the missing supervision channel, preventing us from embedding subjective heuristics into Jass without evidence.
+The implementation must prove that an auxiliary loss changes at least one
+exported scalar bucket weight while holding WDL batches fixed. This catches the
+original no-gradient-path failure directly.
 
 ## Boundaries
 
-- `promotable: false`
-- `production_jass_changes_authorized: false`
-- `direct_10x10_transfer_authorized: false`
-- implementation must wait for the rebuilt production-like Mini-Jass baseline/ceiling to be frozen enough that the comparison is interpretable.
+- `promotable: false`;
+- `production_jass_changes_authorized: false`;
+- `direct_10x10_transfer_authorized: false`;
+- no C1 launch before a frozen M24-P PASS result hash;
+- any protocol change after C0 requires a new version and fresh evidence.

@@ -1,17 +1,69 @@
-schema: mini_jass.contextual_outcome_supervision.v1
+schema: mini_jass.contextual_outcome_supervision.v2
 experiment: contextual_outcome_supervision
+status: design_preregistration_not_runnable
 
 architecture_contract:
-  required_family: folded_pattern_value_only
+  required_architecture: folded_pattern_value
+  value_only: true
   move_selection: search
   policy_head_forbidden: true
   retired_mlp_forbidden: true
+  final_inference_path: scalar_value_plus_search
   require_architecture_baseline_frozen: true
+
+# PatternEval n'a pas de representation apprise partagee : ses buckets sont des
+# indices fixes. Des tetes lineaires independantes n'enverraient donc aucun
+# gradient vers la table scalaire. Le scaffold ci-dessous est le SEUL couplage
+# autorise en v2. Tous les bras, y compris WDL_ONLY, paient le meme scaffold.
+training_scaffold_v1:
+  family: shared_bucket_embedding_exact_scalar_export
+  # Un axe pour la valeur et neuf axes pour les neuf composantes de contexte.
+  shared_rank: 10
+  aggregation: sum_active_folded_bucket_embeddings
+  reversible_feature_embedding: true
+  value_head: linear_then_tanh
+  auxiliary_heads: linear_training_only
+  control_uses_identical_scaffold: true
+  initialization:
+    algorithm: sha256_counter_normal_v1
+    seed_source: paired_seed
+    bucket_embedding_standard_deviation: 0.01
+    reversible_embedding_standard_deviation: 0.01
+    shared_bias: zero
+    value_head: first_basis_vector
+    value_bias: zero
+    auxiliary_head_standard_deviation: 0.31622776601683794
+    auxiliary_bias: zero
+    initialize_every_head_in_every_arm: true
+  export:
+    target_architecture: folded_pattern_value
+    bucket_weight: dot_value_head_with_each_bucket_embedding
+    extra_weight: dot_value_head_with_reversible_embedding
+    bias: folded_shared_and_value_bias
+    auxiliary_parameters_discarded: true
+    maximum_absolute_value_error: 1.0e-6
+    required_common_search_action_match_rate: 1.0
+
+data_contract:
+  level: l1
+  split_seed: 20260806
+  split_manifest_hash: 9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524
+  cohorts:
+    training: train
+    selection: development
+    sealed_test: frozen_test
+  base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+  same_immutable_replay_pack_all_non_oracle_arms: true
+  prerequisite:
+    job_id: cpx62-1217-mini-jass-pattern-m24p-v1
+    acceptable_status: PASS
+    result_hash_must_be_frozen_before_C1: true
 
 context_v1:
   pov: side_to_move
   range: approximately_minus1_plus1
   symmetry: rot180_plus_colour_swap
+  loss_reduction: mean_over_components
   components:
     - material_man_delta
     - material_king_delta
@@ -25,8 +77,7 @@ context_v1:
 
 baseline_v1:
   family: deterministic_linear_tanh
-  # Deliberately explicit. These are starting coefficients for implementation
-  # review, not claimed optimal values. C0 must characterize them before C1.
+  frozen_before_C0: true
   weights:
     material_man_delta: 1.00
     material_king_delta: 1.50
@@ -39,76 +90,153 @@ baseline_v1:
     terminal_flag: 0.00
   tau: 1.50
   residual_clip: 1.50
-  fitted_from_confirmation_forbidden: true
+  fitted_from_development_or_frozen_test_forbidden: true
 
-stages:
-  C0:
-    purpose: characterize_context_without_training
-    model_selection: false
-    required_diagnostics:
-      - deterministic_repeatability
-      - pov_symmetry
-      - terminal_exactness
-      - component_vs_oracle_value
-      - delta_component_vs_oracle_one_ply_change
-      - component_redundancy
-      - residual_distribution_by_wdl_and_context
-  C1:
-    purpose: isolated_auxiliary_supervision_ablation
-    shared_replay_pack: true
-    arms:
+# C0 est une porte de validite de protocole, pas une selection d'arm. Si elle
+# echoue, C1 entier s'arrete : aucun coefficient ni bras n'est ajuste a chaud.
+c0_gate:
+  oracle_characterization_cohort: train
+  decision_frozen_before_oracle_read: true
+  pairwise_ordering:
+    eligible_pairs: unequal_exact_value
+    order: "sha256(split_manifest_hash || min_state_id || max_state_id)"
+    maximum_pairs: 100000
+    baseline_tie_credit: 0.5
+  required:
+    deterministic_repeatability_exact: true
+    pov_symmetry_maximum_absolute_error: 0.0
+    terminal_exactness_rate: 1.0
+    minimum_baseline_spearman_vs_exact_value: 0.10
+    minimum_baseline_pairwise_ordering_rate: 0.55
+  on_failure: ABORT_C1_AND_REVISE_PREREGISTRATION
+  posthoc_coefficient_change_forbidden: true
+  posthoc_arm_removal_forbidden: true
+
+# Pas de screen : les poids sont figes. Dans le bras FULL, leur somme reste
+# 0.25 afin de ne pas tripler la dose auxiliaire par rapport aux bras simples.
+c1_arms:
+  WDL_ONLY:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.25
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_DELTA_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.25
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_RESIDUAL:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.25
+    oracle_training_signal: false
+  WDL_PLUS_FULL_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.08333333333333333
+    gamma_delta_context: 0.08333333333333333
+    eta_residual: 0.08333333333333333
+    oracle_training_signal: false
+  ORACLE_VALUE_DIAGNOSTIC:
+    value_target: exact_oracle
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: true
+    promotable: false
+    excluded_from_primary_hypothesis: true
+
+c1_decision:
+  paired_seeds:
+    - 270501
+    - 270502
+    - 270503
+    - 270504
+    - 270505
+    - 270506
+    - 270507
+    - 270508
+    - 270509
+    - 270510
+    - 270511
+    - 270512
+    - 270513
+    - 270514
+    - 270515
+    - 270516
+    - 270517
+    - 270518
+    - 270519
+    - 270520
+  confirmatory_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+  primary_endpoint: common_search_paired_arena_score_minus_half
+  confidence_interval: paired_seed_student_t_95
+  arena_contract:
+    source: configs/l1_pattern_reconstruction_loop.yaml#arena
+    pairs_per_seed: 4
+    candidate_colours_paired: true
+    starts_and_search_identical_within_seed: true
+  pass_rule:
+    lower_confidence_bound_strictly_greater_than: 0.0
+  exploratory_arms:
+    - WDL_PLUS_CONTEXT
+    - WDL_PLUS_DELTA_CONTEXT
+    - WDL_PLUS_RESIDUAL
+  multiple_comparison_claims_from_exploratory_arms_forbidden: true
+  frozen_test:
+    read_once_after_all_training_and_protocol_hashes_are_frozen: true
+    arms_read_together:
       - WDL_ONLY
-      - WDL_PLUS_CONTEXT
-      - WDL_PLUS_DELTA_CONTEXT
-      - WDL_PLUS_RESIDUAL
       - WDL_PLUS_FULL_CONTEXT
-      - ORACLE_VALUE_DIAGNOSTIC
-    primary_endpoint: common_search_paired_arena
-    secondary_endpoints:
-      - exact_value_sign
-      - exact_value_ordering
-      - exact_regret
-      - wdl_calibration
-      - disadvantaged_context_strata
-      - neutral_context_strata
-      - favourable_context_strata
-    auxiliary_weight_screen_development_only: true
-    confirmation_read_once_after_freeze: true
-  C2:
-    purpose: localize_credit_assignment_channel
-  C3:
-    purpose: compare_deterministic_vs_train_only_calibrated_context_baseline
-
-training_contract:
-  main_value_target: terminal_wdl_unchanged
-  context_is_auxiliary_only: true
-  context_may_select_selfplay_move: false
-  context_may_weight_selfplay_move: false
-  auxiliary_readouts_must_be_discardable: true
-  final_inference_path: scalar_value_plus_search
+    may_select_model: false
 
 pairing:
-  minimum_seeds: 20
-  same_replay_sample_ids: true
+  same_complete_replay_fingerprint: true
   same_wdl_targets_non_oracle: true
-  same_optimizer_updates: true
+  same_exportable_value_initial_state_hash: true
+  same_scaffold_initialization_schedule: true
+  same_batch_indices_and_order: true
+  same_optimizer_hyperparameters_and_step_count: true
   same_common_arena_search: true
-  same_arena_starts: true
+  same_arena_starts_colours_and_seeds: true
+  same_gradient_updates: false
 
 oracle_boundary:
-  observer_only: true
-  forbidden_in:
+  policy: explicitly_scoped
+  allowed:
+    C0_train_cohort_protocol_validation: observer
+    C1_ORACLE_VALUE_DIAGNOSTIC: diagnostic_training_signal
+    C3_train_only_context_baseline: diagnostic_training_signal
+  forbidden_for_every_deployable_arm:
     - selfplay_generation
-    - deployable_target_construction
+    - target_construction
     - sample_selection
     - loss_weighting
     - promotion
+  diagnostic_outputs_isolated_from_deployable_checkpoints: true
+
+stages:
+  C0: validate_context_and_baseline_or_abort
+  C1: fixed_weight_isolated_auxiliary_supervision_ablation
+  C2: fresh_seed_replication_and_credit_channel_localization
+  C3: compare_deterministic_vs_train_only_calibrated_context_baseline
 
 reporting:
   compact_gitops_summary: true
   phase_timings_in_summary: true
   report_realized_compute: true
   stratify_by_context_disadvantage: true
+  hash_context_definitions: true
+  hash_baseline_coefficients_and_tau: true
+  hash_training_scaffold_and_export: true
 
 boundaries:
   promotable: false
