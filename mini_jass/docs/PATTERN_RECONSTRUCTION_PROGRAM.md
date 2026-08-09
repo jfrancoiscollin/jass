@@ -1,7 +1,8 @@
 # Mini-Jass PatternEval reconstruction program
 
-Status: prepared, not queued. Wiring batch `cpx62-1216` completed successfully
-on merge SHA `17a35596366d2448917d2ffaebeaeebf226cc081`.
+Status: M24-P and M14-P completed; M17-P v1 completed operationally but was
+scientifically inconclusive because its arena gate was underpowered. M17-P2
+is the preregistered repair and is not yet scientific evidence.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -75,6 +76,29 @@ Twenty fresh seeds run one causal ladder to generation 8 and report rungs 1,
 decision, not a rejected candidate. A ladder with fewer than one mean advancing
 generation is inconclusive. Frozen test is not read.
 
+The first execution (`cpx62-1218`) advanced zero of 160 candidate generations.
+This was not evidence that iteration fails: with 4 arena pairs (8 games), a
+neutral candidate scoring 0.5 has a 95% lower bound of only 0.1535 against the
+0.40 promotion threshold. Even a 0.625 score fails. The cell therefore mostly
+measured an underpowered promotion gate.
+
+### 4. M17-P2 — promotion-gate repair
+
+M17-P2 preserves the model, training, development threshold, ladder and sealed
+cohorts. It changes the arena control from 4 to 128 pairs (256 games), for which
+a neutral 0.5 score has lower bound 0.41338 and can pass the unchanged 0.40
+non-regression threshold. Because an arena from one fixed start merely
+duplicates the same two deterministic games, the repaired control samples 128
+distinct non-terminal development states without replacement. Candidate and
+parent swap roles from each common start; action selection remains greedy.
+Confidence uses each paired two-game block as one effective observation, never
+the 256 correlated games. The runner recomputes the bound and fails closed if
+the gate is underpowered or starts are not varied. Twenty fresh seeds are
+disjoint from v1. Every generation
+publishes the development improvement, arena counts/bound, both pass bits and
+the resulting advance decision so that a second zero-advance result identifies
+the blocking component instead of being opaque.
+
 ## Conditional continuation
 
 After M24-P/M14-P/M17-P:
@@ -103,6 +127,7 @@ One job is prepared per cell:
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 ```
 
 The entrypoint builds the C++ oracle, runs CTest and the full Python suite,

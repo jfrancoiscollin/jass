@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import json
+import math
 from pathlib import Path
 import platform
 import sys
@@ -28,9 +29,29 @@ from mini_jass_lab.pattern_reconstruction import (  # noqa: E402
     solved_tensors,
 )
 from mini_jass_lab.split import build_split  # noqa: E402
-from mini_jass_lab.train import seed_everything  # noqa: E402
+from mini_jass_lab.train import seed_everything, selection_score  # noqa: E402
 
 SCHEMA = "mini_jass.pattern_generation_ladder.v1"
+SCHEMA_V2 = "mini_jass.pattern_generation_ladder.v2"
+
+
+def arena_score_lower_bound(
+    score: float,
+    pairs: int,
+    confidence_z: float,
+    confidence_unit: str = "games",
+) -> float:
+    """Return the same normal-approximation bound used by the live arena."""
+    pairs = int(pairs)
+    if pairs < 1:
+        raise ValueError("arena lower bound requires at least one pair")
+    if confidence_unit not in {"games", "pairs"}:
+        raise ValueError("arena confidence_unit must be games or pairs")
+    effective_observations = 2 * pairs if confidence_unit == "games" else pairs
+    standard_error = math.sqrt(
+        max(score * (1.0 - score), 0.0) / effective_observations
+    )
+    return max(0.0, float(score) - float(confidence_z) * standard_error)
 
 
 def build_recommendation(
@@ -39,8 +60,24 @@ def build_recommendation(
     if aggregate["mean_advancing_generations"] < float(
         control["minimum_advancing_generations"]
     ):
+        development_passes = aggregate.get("development_pass_count")
+        arena_passes = aggregate.get("arena_pass_count")
+        if development_passes == 0 and arena_passes == 0:
+            blocked_component = "development_and_arena"
+        elif development_passes == 0:
+            blocked_component = "development"
+        elif arena_passes == 0:
+            blocked_component = "arena"
+        else:
+            blocked_component = "combined_or_stochastic"
         return {
-            "finding": "ladder_did_not_advance_enough_deployed_parents",
+            "status": "INCONCLUSIVE",
+            "finding": (
+                "ladder_did_not_advance_enough_deployed_parents"
+                if development_passes is None or arena_passes is None
+                else f"ladder_did_not_advance_{blocked_component}_gate_blocked"
+            ),
+            "blocked_component": blocked_component,
             "iteration_compounds": None,
             "decision": "INCONCLUSIVE_promotion_gate_blocked_iteration",
             "promotable": False,
@@ -58,6 +95,7 @@ def build_recommendation(
         and final > float(deltas[str(rungs[0])])
     )
     return {
+        "status": "PASS",
         "finding": (
             "pattern_iteration_compounds_across_generations"
             if compounds
@@ -76,7 +114,8 @@ def build_recommendation(
 
 def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if config.get("schema") != SCHEMA or config.get("milestone") != "M17-P":
+    identity = (config.get("schema"), config.get("milestone"))
+    if identity not in {(SCHEMA, "M17-P"), (SCHEMA_V2, "M17-P2")}:
         raise ValueError("unexpected M17-P schema")
     rungs = [int(value) for value in config["report_rungs"]]
     if not rungs or rungs != sorted(rungs) or max(rungs) != int(config["ladder_max"]):
@@ -98,6 +137,31 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         raise ValueError("M17-P base loop must use PatternEval")
     if float(loop["training"]["policy_weight"]) != 0.0:
         raise ValueError("M17-P cannot train a policy head")
+    if config["schema"] == SCHEMA_V2:
+        control = config["promotion_control"]
+        pairs = int(control["arena_pairs"])
+        loop["arena"]["pairs"] = pairs
+        epsilon = float(control["arena_epsilon"])
+        loop["arena"]["epsilon"] = epsilon
+        start_state_source = str(control["arena_start_state_source"])
+        if start_state_source != "development":
+            raise ValueError("M17-P2 requires varied development start states")
+        loop["arena"]["start_state_source"] = "provided"
+        confidence_unit = str(control["arena_confidence_unit"])
+        loop["arena"]["confidence_unit"] = confidence_unit
+        neutral_score = float(control["neutral_arena_score"])
+        lower_bound = arena_score_lower_bound(
+            neutral_score,
+            pairs,
+            float(loop["arena"]["confidence_z"]),
+            confidence_unit,
+        )
+        declared_lower_bound = float(control["neutral_score_lower_bound"])
+        if not math.isclose(lower_bound, declared_lower_bound, abs_tol=1e-12):
+            raise ValueError("M17-P2 declared neutral arena bound is incorrect")
+        required_lower_bound = float(loop["promotion"]["minimum_arena_lower_bound"])
+        if lower_bound < required_lower_bound:
+            raise ValueError("M17-P2 arena is underpowered at the neutral score")
     return deepcopy(config), loop
 
 
@@ -140,11 +204,74 @@ def run_m17p(
         deployed_state = deepcopy(initial.state_dict())
         by_rung: dict[str, Any] = {}
         advance_flags: list[bool] = []
+        promotion_diagnostics: list[dict[str, Any]] = []
         for generation, (candidate_state, record) in enumerate(
             zip(execution.candidate_states, execution.core["generations"]), start=1
         ):
             advanced = bool(record["promotion"]["provisional_advance"])
             advance_flags.append(advanced)
+            parent_development = record["development"]["parent"]
+            candidate_development = record["development"]["candidate"]
+            arena = record["arena"]
+            promotion = record["promotion"]
+            promotion_diagnostics.append(
+                {
+                    "generation": generation,
+                    "development": {
+                        "parent_selection_score": selection_score(parent_development),
+                        "candidate_selection_score": selection_score(
+                            candidate_development
+                        ),
+                        "selection_score_improvement": float(
+                            record["development"]["selection_score_improvement"]
+                        ),
+                        "parent_zero_regret_rate": float(
+                            parent_development["zero_regret_rate"]
+                        ),
+                        "candidate_zero_regret_rate": float(
+                            candidate_development["zero_regret_rate"]
+                        ),
+                        "parent_value_sign_accuracy": float(
+                            parent_development["value_sign_accuracy"]
+                        ),
+                        "candidate_value_sign_accuracy": float(
+                            candidate_development["value_sign_accuracy"]
+                        ),
+                        "pass": bool(promotion["development_pass"]),
+                    },
+                    "arena": {
+                        "pairs": int(arena["pairs"]),
+                        "games": int(arena["games"]),
+                        "wins": int(arena["wins"]),
+                        "draws": int(arena["draws"]),
+                        "losses": int(arena["losses"]),
+                        "score": float(arena["score"]),
+                        "score_lower_confidence_bound": float(
+                            arena["score_lower_confidence_bound"]
+                        ),
+                        "confidence_z": float(arena["confidence_z"]),
+                        "confidence_unit": str(arena["confidence_unit"]),
+                        "effective_observations": int(
+                            arena["effective_observations"]
+                        ),
+                        "start_state_source": str(arena["start_state_source"]),
+                        "unique_start_state_count": int(
+                            arena["unique_start_state_count"]
+                        ),
+                        "start_state_ids": [
+                            int(state_id) for state_id in arena["start_state_ids"]
+                        ],
+                        "pair_score_histogram": dict(
+                            arena["pair_score_histogram"]
+                        ),
+                        "pass": bool(promotion["arena_pass"]),
+                    },
+                    "eligible_after_development_and_arena": bool(
+                        promotion["eligible_after_development_and_arena"]
+                    ),
+                    "provisional_advance": advanced,
+                }
+            )
             if advanced:
                 deployed_state = deepcopy(candidate_state)
             if generation in rungs:
@@ -169,9 +296,23 @@ def run_m17p(
                 "by_rung": by_rung,
                 "advancing_generations": int(sum(advance_flags)),
                 "advance_flags": advance_flags,
+                "promotion_diagnostics": promotion_diagnostics,
             }
         )
 
+    diagnostics = [
+        diagnostic
+        for row in rows
+        for diagnostic in row["promotion_diagnostics"]
+    ]
+    development_pass_count = sum(
+        diagnostic["development"]["pass"] for diagnostic in diagnostics
+    )
+    arena_pass_count = sum(diagnostic["arena"]["pass"] for diagnostic in diagnostics)
+    eligible_count = sum(
+        diagnostic["eligible_after_development_and_arena"]
+        for diagnostic in diagnostics
+    )
     aggregate = {
         "rungs": rungs,
         "paired_seed_count": len(rows),
@@ -193,13 +334,48 @@ def run_m17p(
         "seeds_with_zero_advance": sum(
             row["advancing_generations"] == 0 for row in rows
         ),
+        "total_generation_count": len(diagnostics),
+        "development_pass_count": development_pass_count,
+        "arena_pass_count": arena_pass_count,
+        "eligible_count": eligible_count,
+        "promotion_failure_matrix": {
+            "fail_development_only": sum(
+                not diagnostic["development"]["pass"]
+                and diagnostic["arena"]["pass"]
+                for diagnostic in diagnostics
+            ),
+            "fail_arena_only": sum(
+                diagnostic["development"]["pass"]
+                and not diagnostic["arena"]["pass"]
+                for diagnostic in diagnostics
+            ),
+            "fail_both": sum(
+                not diagnostic["development"]["pass"]
+                and not diagnostic["arena"]["pass"]
+                for diagnostic in diagnostics
+            ),
+        },
+        "mean_development_selection_score_improvement": mean(
+            diagnostic["development"]["selection_score_improvement"]
+            for diagnostic in diagnostics
+        ),
+        "mean_arena_score": mean(
+            diagnostic["arena"]["score"] for diagnostic in diagnostics
+        ),
+        "mean_arena_score_lower_confidence_bound": mean(
+            diagnostic["arena"]["score_lower_confidence_bound"]
+            for diagnostic in diagnostics
+        ),
     }
     recommendation = build_recommendation(
         aggregate, config["scientific_gate"], config["promotion_control"]
     )
+    neutral_score = float(
+        config["promotion_control"].get("neutral_arena_score", 0.5)
+    )
     protocol = {
-        "schema": SCHEMA,
-        "milestone": "M17-P",
+        "schema": config["schema"],
+        "milestone": config["milestone"],
         "base_loop_config": config["base_loop_config"],
         "resolved_model": model_descriptor(build_model(base_loop["model"])),
         "ladder_max": config["ladder_max"],
@@ -208,13 +384,46 @@ def run_m17p(
         "response_contract": "one_ply_value_search",
         "rung_state": "deployed_parent_after_promotion_decision",
         "single_factor": "generations",
+        "resolved_promotion_gate": {
+            "arena_pairs": int(base_loop["arena"]["pairs"]),
+            "arena_games": 2 * int(base_loop["arena"]["pairs"]),
+            "confidence_unit": str(
+                base_loop["arena"].get("confidence_unit", "games")
+            ),
+            "effective_observations": (
+                2 * int(base_loop["arena"]["pairs"])
+                if base_loop["arena"].get("confidence_unit", "games") == "games"
+                else int(base_loop["arena"]["pairs"])
+            ),
+            "confidence_z": float(base_loop["arena"]["confidence_z"]),
+            "epsilon": float(base_loop["arena"]["epsilon"]),
+            "start_state_source": str(
+                base_loop["arena"].get("start_state_source", "initial")
+            ),
+            "start_state_cohort": (
+                "development"
+                if base_loop["arena"].get("start_state_source") == "provided"
+                else None
+            ),
+            "minimum_arena_lower_bound": float(
+                base_loop["promotion"]["minimum_arena_lower_bound"]
+            ),
+            "neutral_arena_score": neutral_score,
+            "neutral_score_lower_bound": arena_score_lower_bound(
+                neutral_score,
+                int(base_loop["arena"]["pairs"]),
+                float(base_loop["arena"]["confidence_z"]),
+                str(base_loop["arena"].get("confidence_unit", "games")),
+            ),
+        },
+        "source_iteration": config.get("source_iteration"),
         "boundaries": config["boundaries"],
         "execution_host": host,
     }
     result = {
-        "schema": SCHEMA,
-        "milestone": "M17-P",
-        "status": "PASS",
+        "schema": config["schema"],
+        "milestone": config["milestone"],
+        "status": recommendation.get("status", "PASS"),
         "protocol_hash": digest(protocol),
         "protocol": protocol,
         "aggregate": aggregate,

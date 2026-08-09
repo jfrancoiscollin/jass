@@ -256,6 +256,11 @@ def execute_loop(
             parent,
             arena_config,
             seed + generation * 20_000,
+            (
+                development_indices
+                if arena_config.start_state_source == "provided"
+                else None
+            ),
         )
         development_pass = improvement >= float(promotion["minimum_development_improvement"])
         arena_pass = arena["score_lower_confidence_bound"] >= float(
