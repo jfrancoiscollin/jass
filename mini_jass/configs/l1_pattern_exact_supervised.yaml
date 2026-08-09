@@ -1,0 +1,27 @@
+schema: mini_jass.training.v1
+mode: exact_supervised
+seed: 31003
+split_seed: 20260806
+frozen_split_manifest: artefacts/split_manifest.v1.json
+
+# Baseline production-like : lineaire, buckets de patterns, pli exact incluant
+# le joueur au trait, valeur seule. Les coups sont notes par la reponse de
+# recherche a un pli ; aucune policy head n'est entrainee.
+model:
+  architecture: folded_pattern_value
+  pattern_window: 3
+  include_reversible_plies: true
+training:
+  epochs: 12
+  batch_size: 8192
+  learning_rate: 0.004
+  weight_decay: 0.0001
+  value_weight: 1.0
+  policy_weight: 0.0
+runtime:
+  threads: 4
+gate:
+  # Gate de cablage seulement. Le plafond scientifique doit fixer ses seuils
+  # apres une echelle de dose preenregistree, pas les inventer ici.
+  minimum_value_sign_accuracy: 0.0
+  minimum_zero_regret_rate: 0.0

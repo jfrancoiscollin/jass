@@ -6,9 +6,9 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from torch import nn
 
 from .game_graph import GameGraph
-from .model import MiniJassMLP
 from .replay import ReplaySample
 from .search import (
     InferenceCache,
@@ -144,7 +144,7 @@ def _target_policy(result: SearchResult, config: SelfPlayConfig) -> np.ndarray:
 
 def generate_self_play(
     graph: GameGraph,
-    model: MiniJassMLP,
+    model: nn.Module,
     config: SelfPlayConfig,
     generation: int,
     seed: int,

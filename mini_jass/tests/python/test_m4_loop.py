@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from mini_jass_lab.loop import execute_loop
 from mini_jass_lab.split import build_split
@@ -94,3 +95,54 @@ def test_training_state_mask_excludes_holdout_positions_from_replay(
     assert eligible > 0
     assert eligible < len(execution.samples)
     assert execution.core["generations"][0]["training"]["sample_pool"] == eligible
+
+
+def test_folded_pattern_value_loop_is_wired_end_to_end(synthetic_oracle) -> None:
+    split = build_split(synthetic_oracle, 20260806)
+    config = tiny_config(split.manifest["manifest_hash"])
+    config["model"] = {
+        "architecture": "folded_pattern_value",
+        "pattern_window": 2,
+        "include_reversible_plies": True,
+    }
+    config["self_play"]["search_enabled"] = True
+    config["self_play"]["node_budgets"] = [2]
+    config["training"]["policy_weight"] = 0.0
+    development = split.indices("development")
+    first = execute_loop(config, synthetic_oracle, development)
+    second = execute_loop(config, synthetic_oracle, development)
+    assert first.core["execution_hash"] == second.core["execution_hash"]
+    assert first.core["model"]["architecture"] == "folded_pattern_value"
+    assert first.core["model"]["value_only"] is True
+    contract = first.core["training_target_contract"]
+    assert contract["policy"] == "none_value_only_search_supplies_actions"
+    assert contract["replay_policy_field_consumed"] is False
+    training = first.core["generations"][0]["training"]
+    assert training["policy_trained"] is False
+    # ⚠️ `None` et non `0.0` : une perte a zero se lirait comme une politique
+    # parfaitement apprise, alors qu'il n'y en a aucune.
+    assert training["policy_loss"] is None
+    development_metrics = first.core["generations"][0]["development"]["candidate"]
+    assert development_metrics["action_source"] == "search_one_ply"
+    assert development_metrics["optimal_probability_mass"] is None
+    # `policy_count` reste litteralement le nombre d'etats ou une TETE a
+    # repondu -- zero ici. Les taux de regret ont donc besoin de LEUR
+    # denominateur, sinon ils se lisent comme portant sur rien.
+    assert development_metrics["policy_count"] == 0
+    assert development_metrics["response_count"] > 0
+    assert development_metrics["zero_regret_rate"] is not None
+
+
+def test_folded_pattern_value_loop_refuses_to_play_without_search(
+    synthetic_oracle,
+) -> None:
+    split = build_split(synthetic_oracle, 20260806)
+    config = tiny_config(split.manifest["manifest_hash"])
+    config["model"] = {
+        "architecture": "folded_pattern_value",
+        "pattern_window": 2,
+    }
+    config["training"]["policy_weight"] = 0.0
+    config["self_play"]["search_enabled"] = False
+    with pytest.raises(ValueError, match="requires search"):
+        execute_loop(config, synthetic_oracle, split.indices("development"))

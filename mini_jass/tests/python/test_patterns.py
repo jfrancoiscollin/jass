@@ -17,8 +17,11 @@ from mini_jass_lab.patterns import (
     STATE_COLOUR_SWAP,
     STATES_PER_SQUARE,
     PatternSet,
+    fold_image_map,
     fold_map,
     folded_class_count,
+    perspective_fold_map,
+    perspective_folded_class_count,
     rot180_preserves_diagonal_adjacency,
     bucket_indices,
     pattern_features,
@@ -143,6 +146,19 @@ def test_the_colour_swap_exchanges_men_and_kings_by_colour():
         assert STATE_COLOUR_SWAP[STATE_COLOUR_SWAP[state]] == state
 
 
+def test_the_complete_bucket_image_is_an_involution():
+    pattern_set = PatternSet.from_window(3)
+    images = fold_image_map(pattern_set)
+    assert np.array_equal(images[images], np.arange(pattern_set.bucket_count))
+
+
+def test_the_side_aware_fold_pairs_opposite_turns_without_losing_turn_information():
+    pattern_set = PatternSet.from_window(3)
+    classes = perspective_fold_map(pattern_set)
+    assert classes.shape == (2 * pattern_set.bucket_count,)
+    assert perspective_folded_class_count(pattern_set) == pattern_set.bucket_count
+
+
 def test_the_fold_is_idempotent_and_halves_the_free_parameters():
     """Une involution a peu de points fixes doit mutualiser environ la moitie."""
     for window in (2, 3):
@@ -173,3 +189,4 @@ def test_the_describe_block_reports_the_fold_rather_than_claiming_none():
     described = PatternSet.from_window(2).describe()
     assert described["fold"] == "rot180_colour_swap"
     assert described["folded_class_count"] < described["bucket_count"]
+    assert described["side_aware_folded_class_count"] == described["bucket_count"]
