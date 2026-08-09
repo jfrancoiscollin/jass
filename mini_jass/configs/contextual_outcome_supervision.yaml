@@ -1,0 +1,117 @@
+schema: mini_jass.contextual_outcome_supervision.v1
+experiment: contextual_outcome_supervision
+
+architecture_contract:
+  required_family: folded_pattern_value_only
+  move_selection: search
+  policy_head_forbidden: true
+  retired_mlp_forbidden: true
+  require_architecture_baseline_frozen: true
+
+context_v1:
+  pov: side_to_move
+  range: approximately_minus1_plus1
+  symmetry: rot180_plus_colour_swap
+  components:
+    - material_man_delta
+    - material_king_delta
+    - legal_move_delta
+    - capture_option_delta
+    - promotion_pressure_delta
+    - blocked_man_delta
+    - advanced_man_delta
+    - center_presence_delta
+    - terminal_flag
+
+baseline_v1:
+  family: deterministic_linear_tanh
+  # Deliberately explicit. These are starting coefficients for implementation
+  # review, not claimed optimal values. C0 must characterize them before C1.
+  weights:
+    material_man_delta: 1.00
+    material_king_delta: 1.50
+    legal_move_delta: 0.20
+    capture_option_delta: 0.15
+    promotion_pressure_delta: 0.20
+    blocked_man_delta: -0.15
+    advanced_man_delta: 0.10
+    center_presence_delta: 0.05
+    terminal_flag: 0.00
+  tau: 1.50
+  residual_clip: 1.50
+  fitted_from_confirmation_forbidden: true
+
+stages:
+  C0:
+    purpose: characterize_context_without_training
+    model_selection: false
+    required_diagnostics:
+      - deterministic_repeatability
+      - pov_symmetry
+      - terminal_exactness
+      - component_vs_oracle_value
+      - delta_component_vs_oracle_one_ply_change
+      - component_redundancy
+      - residual_distribution_by_wdl_and_context
+  C1:
+    purpose: isolated_auxiliary_supervision_ablation
+    shared_replay_pack: true
+    arms:
+      - WDL_ONLY
+      - WDL_PLUS_CONTEXT
+      - WDL_PLUS_DELTA_CONTEXT
+      - WDL_PLUS_RESIDUAL
+      - WDL_PLUS_FULL_CONTEXT
+      - ORACLE_VALUE_DIAGNOSTIC
+    primary_endpoint: common_search_paired_arena
+    secondary_endpoints:
+      - exact_value_sign
+      - exact_value_ordering
+      - exact_regret
+      - wdl_calibration
+      - disadvantaged_context_strata
+      - neutral_context_strata
+      - favourable_context_strata
+    auxiliary_weight_screen_development_only: true
+    confirmation_read_once_after_freeze: true
+  C2:
+    purpose: localize_credit_assignment_channel
+  C3:
+    purpose: compare_deterministic_vs_train_only_calibrated_context_baseline
+
+training_contract:
+  main_value_target: terminal_wdl_unchanged
+  context_is_auxiliary_only: true
+  context_may_select_selfplay_move: false
+  context_may_weight_selfplay_move: false
+  auxiliary_readouts_must_be_discardable: true
+  final_inference_path: scalar_value_plus_search
+
+pairing:
+  minimum_seeds: 20
+  same_replay_sample_ids: true
+  same_wdl_targets_non_oracle: true
+  same_optimizer_updates: true
+  same_common_arena_search: true
+  same_arena_starts: true
+
+oracle_boundary:
+  observer_only: true
+  forbidden_in:
+    - selfplay_generation
+    - deployable_target_construction
+    - sample_selection
+    - loss_weighting
+    - promotion
+
+reporting:
+  compact_gitops_summary: true
+  phase_timings_in_summary: true
+  report_realized_compute: true
+  stratify_by_context_disadvantage: true
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  fresh_seed_replication_required_before_any_transfer: true
