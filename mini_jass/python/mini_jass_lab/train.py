@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict
 import hashlib
 import json
 import os
@@ -16,10 +15,14 @@ from typing import Any
 import numpy as np
 import torch
 import torch.nn.functional as functional
+from torch import nn
 import yaml
 
-from .model import MiniJassMLP, ModelConfig, masked_policy_logits, model_hash, parameter_count
+from .game_graph import GameGraph
+from .model import masked_policy_logits, model_hash, parameter_count
+from .model_factory import build_model, is_value_only, model_descriptor
 from .oracle import OracleArrays, encode_features, ensure_artefact_path, load_oracle, uniform_optimal_targets
+from .pattern_eval import greedy_metrics
 from .split import SPLIT_NAMES, SplitDefinition, build_split
 
 
@@ -41,7 +44,7 @@ def _tensor_data(oracle: OracleArrays) -> dict[str, torch.Tensor]:
 
 
 def train_epoch(
-    model: MiniJassMLP,
+    model: nn.Module,
     optimizer: torch.optim.Optimizer,
     tensors: dict[str, torch.Tensor],
     indices: np.ndarray,
@@ -50,6 +53,9 @@ def train_epoch(
     value_weight: float = 1.0,
     policy_weight: float = 1.0,
 ) -> dict[str, float]:
+    value_only = is_value_only(model)
+    if value_only and float(policy_weight) != 0.0:
+        raise ValueError("a value-only model requires policy_weight=0")
     model.train()
     generator = torch.Generator().manual_seed(seed)
     order = torch.from_numpy(indices.astype(np.int64, copy=False))
@@ -63,18 +69,23 @@ def train_epoch(
         batch = order[start : start + batch_size]
         features = tensors["features"][batch]
         targets = tensors["values"][batch]
-        legal = tensors["legal"][batch]
-        optimal = tensors["optimal"][batch]
         predicted_values, logits = model(features)
         value_loss = functional.mse_loss(predicted_values, targets)
 
-        policy_rows = optimal.sum(dim=1) > 0
-        if torch.any(policy_rows):
-            masked = masked_policy_logits(logits[policy_rows], legal[policy_rows])
-            log_probabilities = functional.log_softmax(masked, dim=1)
-            policy_loss = -(optimal[policy_rows] * log_probabilities).sum(dim=1).mean()
+        if value_only:
+            policy_loss = predicted_values.sum() * 0.0
         else:
-            policy_loss = logits.sum() * 0.0
+            legal = tensors["legal"][batch]
+            optimal = tensors["optimal"][batch]
+            policy_rows = optimal.sum(dim=1) > 0
+            if torch.any(policy_rows):
+                masked = masked_policy_logits(logits[policy_rows], legal[policy_rows])
+                log_probabilities = functional.log_softmax(masked, dim=1)
+                policy_loss = -(
+                    optimal[policy_rows] * log_probabilities
+                ).sum(dim=1).mean()
+            else:
+                policy_loss = logits.sum() * 0.0
         loss = value_weight * value_loss + policy_weight * policy_loss
 
         optimizer.zero_grad(set_to_none=True)
@@ -115,13 +126,15 @@ def _value_calibration(predictions: np.ndarray, targets: np.ndarray) -> list[dic
 
 @torch.no_grad()
 def evaluate(
-    model: MiniJassMLP,
+    model: nn.Module,
     tensors: dict[str, torch.Tensor],
     oracle: OracleArrays,
     indices: np.ndarray,
     batch_size: int,
+    graph: GameGraph | None = None,
 ) -> dict[str, Any]:
     model.eval()
+    value_only = is_value_only(model)
     predictions = np.empty(indices.size, dtype=np.float32)
     top_actions = np.full(indices.size, -1, dtype=np.int16)
     optimal_mass = np.zeros(indices.size, dtype=np.float32)
@@ -133,45 +146,85 @@ def evaluate(
         batch = torch.from_numpy(raw_batch.astype(np.int64, copy=False))
         values, logits = model(tensors["features"][batch])
         predictions[start : start + batch.numel()] = values.numpy()
-        legal = tensors["legal"][batch]
-        optimal = tensors["optimal"][batch]
-        policy_rows = optimal.sum(dim=1) > 0
-        if torch.any(policy_rows):
-            local_rows = torch.nonzero(policy_rows, as_tuple=False).squeeze(1)
-            masked = masked_policy_logits(logits[policy_rows], legal[policy_rows])
-            probabilities = functional.softmax(masked, dim=1)
-            targets = optimal[policy_rows]
-            positions = start + local_rows.numpy()
-            top_actions[positions] = probabilities.argmax(dim=1).numpy()
-            optimal_mass[positions] = (probabilities * (targets > 0)).sum(dim=1).numpy()
-            cross_entropy[positions] = -(
-                targets * functional.log_softmax(masked, dim=1)
-            ).sum(dim=1).numpy()
-            has_policy[positions] = True
+        if not value_only:
+            legal = tensors["legal"][batch]
+            optimal = tensors["optimal"][batch]
+            policy_rows = optimal.sum(dim=1) > 0
+            if torch.any(policy_rows):
+                local_rows = torch.nonzero(policy_rows, as_tuple=False).squeeze(1)
+                masked = masked_policy_logits(logits[policy_rows], legal[policy_rows])
+                probabilities = functional.softmax(masked, dim=1)
+                targets = optimal[policy_rows]
+                positions = start + local_rows.numpy()
+                top_actions[positions] = probabilities.argmax(dim=1).numpy()
+                optimal_mass[positions] = (
+                    probabilities * (targets > 0)
+                ).sum(dim=1).numpy()
+                cross_entropy[positions] = -(
+                    targets * functional.log_softmax(masked, dim=1)
+                ).sum(dim=1).numpy()
+                has_policy[positions] = True
 
     targets = oracle.values[indices].astype(np.float32)
     predicted_classes = np.where(predictions > 1.0 / 3.0, 1, np.where(predictions < -1.0 / 3.0, -1, 0))
-    policy_positions = np.flatnonzero(has_policy)
-    raw_policy_indices = indices[policy_positions]
-    selected_actions = top_actions[policy_positions]
-    top1_optimal = oracle.optimal_mask[raw_policy_indices, selected_actions]
-    child_ids = oracle.action_children[raw_policy_indices, selected_actions]
-    selected_scores = -oracle.values[child_ids]
-    regret = oracle.values[raw_policy_indices].astype(np.int16) - selected_scores.astype(np.int16)
+    if value_only:
+        if graph is None:
+            raise ValueError("value-only evaluation requires the rule graph")
+        response = greedy_metrics(model, graph, oracle, tensors, indices, batch_size)
+        policy_count = 0
+        optimal_top1 = response["top1_optimal_rate"]
+        optimal_probability_mass = None
+        policy_cross_entropy = None
+        mean_selected_regret = response["mean_regret"]
+        zero_regret_rate = response["zero_regret_rate"]
+        action_source = "search_one_ply"
+    else:
+        policy_positions = np.flatnonzero(has_policy)
+        raw_policy_indices = indices[policy_positions]
+        selected_actions = top_actions[policy_positions]
+        top1_optimal = oracle.optimal_mask[raw_policy_indices, selected_actions]
+        child_ids = oracle.action_children[raw_policy_indices, selected_actions]
+        selected_scores = -oracle.values[child_ids]
+        regret = (
+            oracle.values[raw_policy_indices].astype(np.int16)
+            - selected_scores.astype(np.int16)
+        )
+        policy_count = int(policy_positions.size)
+        optimal_top1 = float(top1_optimal.mean()) if policy_positions.size else None
+        optimal_probability_mass = (
+            float(optimal_mass[has_policy].mean()) if policy_positions.size else None
+        )
+        policy_cross_entropy = (
+            float(cross_entropy[has_policy].mean()) if policy_positions.size else None
+        )
+        mean_selected_regret = float(regret.mean()) if policy_positions.size else None
+        zero_regret_rate = float((regret == 0).mean()) if policy_positions.size else None
+        action_source = "policy_head_argmax"
 
     return {
         "count": int(indices.size),
         "value_mae": float(np.abs(predictions - targets).mean()),
         "value_mse": float(np.square(predictions - targets).mean()),
         "value_sign_accuracy": float((predicted_classes == targets).mean()),
-        "policy_count": int(policy_positions.size),
-        "optimal_top1_accuracy": float(top1_optimal.mean()) if policy_positions.size else None,
-        "optimal_probability_mass": float(optimal_mass[has_policy].mean()) if policy_positions.size else None,
-        "policy_cross_entropy": float(cross_entropy[has_policy].mean()) if policy_positions.size else None,
-        "mean_selected_regret": float(regret.mean()) if policy_positions.size else None,
-        "zero_regret_rate": float((regret == 0).mean()) if policy_positions.size else None,
+        "policy_count": policy_count,
+        "optimal_top1_accuracy": optimal_top1,
+        "optimal_probability_mass": optimal_probability_mass,
+        "policy_cross_entropy": policy_cross_entropy,
+        "mean_selected_regret": mean_selected_regret,
+        "zero_regret_rate": zero_regret_rate,
+        "action_source": action_source,
         "calibration": _value_calibration(predictions, targets),
     }
+
+
+def selection_score(metrics: dict[str, Any]) -> float:
+    """Common development score without inventing a policy for value-only evals."""
+    response = metrics.get("optimal_probability_mass")
+    if response is None:
+        response = metrics.get("zero_regret_rate")
+    if response is None:
+        raise ValueError("development metrics have no playable response score")
+    return float(metrics["value_sign_accuracy"]) + float(response)
 
 
 def _write_json(path: Path, value: Any) -> None:
@@ -179,6 +232,9 @@ def _write_json(path: Path, value: Any) -> None:
 
 
 def _summary_markdown(result: dict[str, Any]) -> str:
+    def number(value: Any) -> str:
+        return "n/a" if value is None else f"{float(value):.4f}"
+
     lines = [
         "# Mini-Jass M3 exact-supervised report",
         "",
@@ -194,8 +250,8 @@ def _summary_markdown(result: dict[str, Any]) -> str:
     for cohort, metrics in result["final_metrics"].items():
         lines.append(
             f"| {cohort} | {metrics['count']} | {metrics['value_sign_accuracy']:.4f} | "
-            f"{metrics['value_mae']:.4f} | {metrics['optimal_top1_accuracy']:.4f} | "
-            f"{metrics['optimal_probability_mass']:.4f} |"
+            f"{metrics['value_mae']:.4f} | {number(metrics['optimal_top1_accuracy'])} | "
+            f"{number(metrics['optimal_probability_mass'])} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -226,9 +282,11 @@ def run_training(
     threads = int(config["runtime"]["threads"])
     seed = int(config["seed"])
     seed_everything(seed, threads)
-    model_config = ModelConfig(**config["model"])
-    model = MiniJassMLP(model_config)
+    model = build_model(config["model"])
     tensors = _tensor_data(oracle)
+    graph = GameGraph.from_oracle(oracle) if is_value_only(model) else None
+    if graph is not None:
+        graph.validate()
 
     training = config["training"]
     optimizer = torch.optim.AdamW(
@@ -259,8 +317,10 @@ def run_training(
             float(training["value_weight"]),
             float(training["policy_weight"]),
         )
-        development = evaluate(model, tensors, oracle, development_indices, batch_size)
-        score = development["value_sign_accuracy"] + development["optimal_probability_mass"]
+        development = evaluate(
+            model, tensors, oracle, development_indices, batch_size, graph
+        )
+        score = selection_score(development)
         epoch_metrics = {
             "epoch": epoch,
             "train": train_losses,
@@ -277,8 +337,14 @@ def run_training(
     if best_state is None:
         raise RuntimeError("training produced no checkpoint")
     final_state = deepcopy(model.state_dict())
-    torch.save({"model": best_state, "config": asdict(model_config)}, run_dir / "checkpoint_best.pt")
-    torch.save({"model": final_state, "config": asdict(model_config)}, run_dir / "checkpoint_final.pt")
+    torch.save(
+        {"model": best_state, "config": config["model"]},
+        run_dir / "checkpoint_best.pt",
+    )
+    torch.save(
+        {"model": final_state, "config": config["model"]},
+        run_dir / "checkpoint_final.pt",
+    )
     model.load_state_dict(best_state)
 
     if mode == "exact_supervised":
@@ -290,7 +356,7 @@ def run_training(
     else:
         cohorts = {"all_state_fit": np.arange(oracle.state_count, dtype=np.int64)}
     final_metrics = {
-        name: evaluate(model, tensors, oracle, indices, batch_size)
+        name: evaluate(model, tensors, oracle, indices, batch_size, graph)
         for name, indices in cohorts.items()
     }
 
@@ -300,12 +366,27 @@ def run_training(
     gate = {
         "cohort": gate_cohort,
         "minimum_value_sign_accuracy": float(gate_config["minimum_value_sign_accuracy"]),
-        "minimum_optimal_probability_mass": float(gate_config["minimum_optimal_probability_mass"]),
     }
+    if is_value_only(model):
+        gate["minimum_zero_regret_rate"] = float(
+            gate_config["minimum_zero_regret_rate"]
+        )
+        response_pass = (
+            gate_metrics["zero_regret_rate"] is not None
+            and gate_metrics["zero_regret_rate"] >= gate["minimum_zero_regret_rate"]
+        )
+    else:
+        gate["minimum_optimal_probability_mass"] = float(
+            gate_config["minimum_optimal_probability_mass"]
+        )
+        response_pass = (
+            gate_metrics["optimal_probability_mass"]
+            >= gate["minimum_optimal_probability_mass"]
+        )
     gate["status"] = (
         "PASS"
         if gate_metrics["value_sign_accuracy"] >= gate["minimum_value_sign_accuracy"]
-        and gate_metrics["optimal_probability_mass"] >= gate["minimum_optimal_probability_mass"]
+        and response_pass
         else "FAIL"
     )
 
@@ -314,6 +395,7 @@ def run_training(
         "mode": mode,
         "seed": seed,
         "parameter_count": parameter_count(model),
+        "model": model_descriptor(model),
         "model_hash": model_hash(model),
         "solver_hash": int(oracle.manifest["solver_hash"]),
         "split_manifest_hash": split.manifest["manifest_hash"],

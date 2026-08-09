@@ -7,9 +7,9 @@ import math
 from typing import Any
 
 import numpy as np
+from torch import nn
 
 from .game_graph import GameGraph
-from .model import MiniJassMLP
 from .search import InferenceCache, SearchConfig, bounded_negamax
 
 
@@ -25,8 +25,8 @@ class ArenaConfig:
 
 def _play_game(
     graph: GameGraph,
-    candidate: MiniJassMLP,
-    parent: MiniJassMLP,
+    candidate: nn.Module,
+    parent: nn.Module,
     candidate_starts: bool,
     config: ArenaConfig,
     seed: int,
@@ -68,8 +68,8 @@ def _play_game(
 
 def run_arena(
     graph: GameGraph,
-    candidate: MiniJassMLP,
-    parent: MiniJassMLP,
+    candidate: nn.Module,
+    parent: nn.Module,
     config: ArenaConfig,
     seed: int,
 ) -> dict[str, Any]:

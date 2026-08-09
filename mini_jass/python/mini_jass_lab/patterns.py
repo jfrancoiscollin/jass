@@ -110,6 +110,7 @@ class PatternSet:
             # facon dont un modele partage ses poids : `fold_map` le calcule, et
             # `folded_class_count` dit ce qu'il reste de parametres libres.
             "folded_class_count": folded_class_count(self),
+            "side_aware_folded_class_count": perspective_folded_class_count(self),
             "fold": "rot180_colour_swap",
         }
 
@@ -223,6 +224,55 @@ def rot180_preserves_diagonal_adjacency() -> bool:
     return True
 
 
+def fold_image_map(pattern_set: PatternSet) -> np.ndarray:
+    """Bucket global → son image exacte par ``rot180 ∘ colour-swap``.
+
+    Le tableau est une involution. Il est volontairement distinct d'une table
+    de classes : les modeles qui encodent aussi le joueur au trait doivent
+    plier ``(trait, bucket)`` avec ``(trait oppose, image(bucket))``. Partager
+    seulement ``bucket`` et laisser le trait comme poids libre casserait la
+    symetrie exacte.
+    """
+    if not rot180_preserves_diagonal_adjacency():
+        raise ValueError("rot180 does not preserve diagonal adjacency on this board")
+    lookup = {squares: i for i, squares in enumerate(pattern_set.patterns)}
+    pattern_images: list[int] = []
+    for squares in pattern_set.patterns:
+        image = tuple(sorted(SQUARE_ROT180[s] for s in squares))
+        if image not in lookup:
+            raise ValueError(
+                "pattern set is not closed under rot180; folding would send a "
+                f"bucket of {squares} outside the represented space"
+            )
+        pattern_images.append(lookup[image])
+
+    images = np.empty(pattern_set.bucket_count, dtype=np.int64)
+    for source, squares in enumerate(pattern_set.patterns):
+        target = pattern_images[source]
+        target_squares = pattern_set.patterns[target]
+        position = {square: i for i, square in enumerate(target_squares)}
+        order = [position[SQUARE_ROT180[s]] for s in squares]
+        size = len(squares)
+        for bucket in range(STATES_PER_SQUARE ** size):
+            digits, rest = [], bucket
+            for _ in range(size):
+                digits.append(rest % STATES_PER_SQUARE)
+                rest //= STATES_PER_SQUARE
+            digits.reverse()
+            swapped = [STATE_COLOUR_SWAP[d] for d in digits]
+            image_digits = [0] * size
+            for i, slot in enumerate(order):
+                image_digits[slot] = swapped[i]
+            image_bucket = 0
+            for digit in image_digits:
+                image_bucket = image_bucket * STATES_PER_SQUARE + digit
+            source_bucket = pattern_set.offsets[source] + bucket
+            images[source_bucket] = pattern_set.offsets[target] + image_bucket
+    if not np.array_equal(images[images], np.arange(pattern_set.bucket_count)):
+        raise ValueError("rot180 colour-swap bucket map is not an involution")
+    return images
+
+
 def fold_map(pattern_set: PatternSet) -> np.ndarray:
     """Bucket global → representant canonique de sa classe de symetrie.
 
@@ -234,47 +284,31 @@ def fold_map(pattern_set: PatternSet) -> np.ndarray:
     etre un pattern du jeu — sinon la classe d'un bucket sortirait de l'espace
     represente. C'est verifie, et refuse si faux.
     """
-    if not rot180_preserves_diagonal_adjacency():
-        raise ValueError("rot180 does not preserve diagonal adjacency on this board")
-    lookup = {squares: i for i, squares in enumerate(pattern_set.patterns)}
-    images: list[int] = []
-    for squares in pattern_set.patterns:
-        image = tuple(sorted(SQUARE_ROT180[s] for s in squares))
-        if image not in lookup:
-            raise ValueError(
-                "pattern set is not closed under rot180; folding would send a "
-                f"bucket of {squares} outside the represented space"
-            )
-        images.append(lookup[image])
+    images = fold_image_map(pattern_set)
+    return np.minimum(np.arange(pattern_set.bucket_count, dtype=np.int64), images)
 
-    classes = np.arange(pattern_set.bucket_count, dtype=np.int64)
-    for source, squares in enumerate(pattern_set.patterns):
-        target = images[source]
-        target_squares = pattern_set.patterns[target]
-        # Ou chaque case du pattern source atterrit dans le pattern image.
-        position = {square: i for i, square in enumerate(target_squares)}
-        order = [position[SQUARE_ROT180[s]] for s in squares]
-        size = len(squares)
-        for bucket in range(STATES_PER_SQUARE ** size):
-            digits, rest = [], bucket
-            for _ in range(size):
-                digits.append(rest % STATES_PER_SQUARE)
-                rest //= STATES_PER_SQUARE
-            digits.reverse()                     # digits[i] = etat de squares[i]
-            swapped = [STATE_COLOUR_SWAP[d] for d in digits]
-            image_digits = [0] * size
-            for i, slot in enumerate(order):
-                image_digits[slot] = swapped[i]
-            image_bucket = 0
-            for digit in image_digits:
-                image_bucket = image_bucket * STATES_PER_SQUARE + digit
-            a = pattern_set.offsets[source] + bucket
-            b = pattern_set.offsets[target] + image_bucket
-            representative = min(a, b)
-            classes[a] = representative
-            classes[b] = representative
+
+def perspective_fold_map(pattern_set: PatternSet) -> np.ndarray:
+    """Classe exacte de chaque couple ``(side_to_move, bucket)``.
+
+    La symetrie du jeu est ``(board, side) -> (T(board), 1-side)``. Cette table
+    encode cette transformation complete. Elle mutualise exactement la moitie
+    des ``2 * bucket_count`` poids d'un modele side-aware sans rendre le modele
+    aveugle au joueur au trait.
+    """
+    images = fold_image_map(pattern_set)
+    count = pattern_set.bucket_count
+    indices = np.arange(2 * count, dtype=np.int64)
+    partners = np.concatenate((count + images, images))
+    classes = np.minimum(indices, partners)
+    if not np.array_equal(partners[partners], indices):
+        raise ValueError("side-aware exact fold is not an involution")
     return classes
 
 
 def folded_class_count(pattern_set: PatternSet) -> int:
     return int(np.unique(fold_map(pattern_set)).size)
+
+
+def perspective_folded_class_count(pattern_set: PatternSet) -> int:
+    return int(np.unique(perspective_fold_map(pattern_set)).size)

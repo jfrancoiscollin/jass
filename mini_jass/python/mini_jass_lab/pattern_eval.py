@@ -7,10 +7,11 @@ multiplie tout par les 72 actions (mesure : 1 323 344 parametres contre 18 128
 en valeur seule, soit 98,6 % du modele).
 
 CE QUE FAIT CE MODULE.
-  - `PatternEval` : une valeur, lineaire sur les classes de buckets PLIEES, plus
-    un petit bloc d'extras (trait, plies reversibles) exactement comme en
-    production. Aucune couche cachee, aucune non-linearite hors du `tanh` final
-    de sortie -- qui borne la valeur dans [-1, 1] et ne cree pas de capacite.
+  - `PatternEval` : une valeur, lineaire sur les classes de buckets PLIEES. Le
+    joueur au trait fait partie de l'index plie exact ; les plies reversibles
+    restent un extra invariant. Aucune couche cachee, aucune non-linearite hors
+    du `tanh` final de sortie -- qui borne la valeur dans [-1, 1] et ne cree pas
+    de capacite.
   - `greedy_answer` : la « reponse » du modele au sens de la production, c'est
     le coup obtenu en evaluant les ENFANTS et en prenant le meilleur. Pas
     l'argmax d'une tete auxiliaire.
@@ -28,20 +29,28 @@ import torch
 from torch import nn
 
 from .game_graph import GameGraph
-from .patterns import PLAYABLE, PatternSet, STATES_PER_SQUARE, fold_map
+from .patterns import (
+    PLAYABLE,
+    PatternSet,
+    STATES_PER_SQUARE,
+    perspective_fold_map,
+)
 
 
 class PatternEval(nn.Module):
     """Valeur = somme de poids lus dans des tables indexees par conjonctions."""
 
-    def __init__(self, pattern_set: PatternSet, extras: int = 2) -> None:
+    def __init__(
+        self, pattern_set: PatternSet, include_reversible_plies: bool = True
+    ) -> None:
         super().__init__()
         self.pattern_set = pattern_set
-        self.extras = int(extras)
-        classes = fold_map(pattern_set)
-        # Renumerotation compacte : `fold_map` rend le representant de chaque
-        # classe, pas un indice dense. Sans ca on allouerait un poids par bucket
-        # et le pli ne ferait economiser aucun parametre.
+        self.include_reversible_plies = bool(include_reversible_plies)
+        self.extras = int(self.include_reversible_plies)
+        classes = perspective_fold_map(pattern_set)
+        # Renumerotation compacte : `perspective_fold_map` rend le representant
+        # de chaque classe, pas un indice dense. Sans ca on allouerait un poids
+        # par couple (trait, bucket) et le pli n'economiserait aucun parametre.
         unique, compact = np.unique(classes, return_inverse=True)
         self.class_count = int(unique.size)
         self.register_buffer(
@@ -66,6 +75,7 @@ class PatternEval(nn.Module):
             "pattern_offset",
             torch.tensor(list(pattern_set.offsets), dtype=torch.long),
         )
+        self.bucket_count = pattern_set.bucket_count
         self.bucket_weight = nn.Parameter(torch.zeros(self.class_count))
         self.extra_weight = nn.Parameter(torch.zeros(self.extras))
         self.bias = nn.Parameter(torch.zeros(1))
@@ -100,10 +110,16 @@ class PatternEval(nn.Module):
 
     def forward(self, features: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         buckets = self._buckets(features)
-        classes = self.bucket_class[buckets]                    # (N, P)
+        side = features[:, 4 * PLAYABLE]
+        if torch.any((side != 0) & (side != 1)):
+            raise ValueError("side-to-move feature must be exactly zero or one")
+        augmented = buckets + side.long().unsqueeze(1) * self.bucket_count
+        classes = self.bucket_class[augmented]                  # (N, P)
         total = self.bucket_weight[classes].sum(dim=1)
-        extras = features[:, 4 * PLAYABLE : 4 * PLAYABLE + self.extras]
-        total = total + extras @ self.extra_weight + self.bias
+        if self.include_reversible_plies:
+            reversible = features[:, 4 * PLAYABLE + 1 : 4 * PLAYABLE + 2]
+            total = total + reversible @ self.extra_weight
+        total = total + self.bias
         value = torch.tanh(total)
         # Les appelants historiques attendent `(value, logits)`. Une evaluation
         # n'a pas de logits : on rend des zeros, ce qui donne une politique
