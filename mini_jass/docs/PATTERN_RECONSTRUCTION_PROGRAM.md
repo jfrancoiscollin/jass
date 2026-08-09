@@ -2,7 +2,8 @@
 
 Status: M24-P and M14-P completed; M17-P v1 completed operationally but was
 scientifically inconclusive because its arena gate was underpowered. M17-P2
-is the preregistered repair and is not yet scientific evidence.
+completed as a discovery result. Its fresh-seed replication M17-P2R is
+preregistered below.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -107,6 +108,26 @@ start/confidence contract, computes a Student 95% interval across the 20 seeds,
 and sizes a fresh replication on a minimum practical gain of 0.01 rather than
 only on the observed +0.02463.
 
+The independent `cpx62-1220` readout verified the source manifest, inventory
+and checksums and passed all 160 arena audits. Every arena used 128 distinct
+development starts and pair-level confidence; its scores covered 30 distinct
+values from 0.48633 to 0.56836. The paired primary `G8 - G1` was +0.02463
+(Student 95% CI +0.02220 to +0.02706), positive for all 20/20 seeds. Mean
+advances were 6.55/8 and no seed had zero advances. The readout hash is
+`829a92835da8a00f2d4e34d4316baf60187cbfed52445a9beb7df8ac8a90bfbe`.
+
+### 5. M17-P2R — fresh-seed confirmatory replication
+
+M17-P2R freezes the M17-P2 model, training, ladder, repaired arena and all
+scientific boundaries. It changes only the cohort to 20 fresh paired seeds
+(`264001` through `264020`), disjoint from M17-P and M17-P2. The confirmatory
+endpoint and decision rule are frozen before execution: paired development
+zero-regret `G8 - G1` must have a Student 95% lower bound strictly above zero
+and a mean of at least +0.01. If the ladder averages fewer than one deployed
+advance, the result is inconclusive regardless of the endpoint. Secondary
+rungs and arena diagnostics remain descriptive. Frozen test stays sealed and
+the cell is never promotable.
+
 ## Conditional continuation
 
 After M24-P/M14-P/M17-P:
@@ -136,6 +157,7 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r
 ```
 
 The entrypoint builds the C++ oracle, runs CTest and the full Python suite,

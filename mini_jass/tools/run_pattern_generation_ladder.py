@@ -25,6 +25,7 @@ from mini_jass_lab.pattern_reconstruction import (  # noqa: E402
     assert_pattern_value_model,
     digest,
     mean,
+    paired_interval,
     response_metrics,
     solved_tensors,
 )
@@ -33,6 +34,7 @@ from mini_jass_lab.train import seed_everything, selection_score  # noqa: E402
 
 SCHEMA = "mini_jass.pattern_generation_ladder.v1"
 SCHEMA_V2 = "mini_jass.pattern_generation_ladder.v2"
+SCHEMA_REPLICATION = "mini_jass.pattern_generation_ladder_replication.v1"
 
 
 def arena_score_lower_bound(
@@ -112,10 +114,63 @@ def build_recommendation(
     }
 
 
+def build_replication_recommendation(
+    aggregate: dict[str, Any], gate: dict[str, Any], control: dict[str, Any]
+) -> dict[str, Any]:
+    """Apply the preregistered M17-P2R confirmatory decision rule."""
+    if aggregate["mean_advancing_generations"] < float(
+        control["minimum_advancing_generations"]
+    ):
+        return {
+            "status": "INCONCLUSIVE",
+            "finding": "replication_ladder_did_not_advance_enough_deployed_parents",
+            "replication_confirms": None,
+            "iteration_compounds": None,
+            "decision": "INCONCLUSIVE_promotion_gate_blocked_replication",
+            "promotable": False,
+        }
+
+    primary = aggregate["paired_zero_regret_g8_minus_g1"]
+    confidence_pass = (
+        not bool(gate["require_primary_ci_above_zero"])
+        or float(primary["lower"]) > 0.0
+    )
+    practical_pass = float(primary["mean"]) >= float(
+        gate["minimum_practical_compounding_gain"]
+    )
+    confirms = confidence_pass and practical_pass
+    if confirms:
+        finding = "pattern_iteration_compounding_replicates"
+        decision = "proceed_to_state_distribution_decomposition"
+    elif confidence_pass:
+        finding = "compounding_detected_below_practical_threshold"
+        decision = "do_not_advance_iteration_claim"
+    else:
+        finding = "pattern_iteration_compounding_does_not_replicate"
+        decision = "do_not_advance_iteration_claim"
+    return {
+        "status": "PASS",
+        "finding": finding,
+        "replication_confirms": confirms,
+        "iteration_compounds": confirms,
+        "primary_confidence_pass": confidence_pass,
+        "primary_practical_pass": practical_pass,
+        "minimum_practical_compounding_gain": float(
+            gate["minimum_practical_compounding_gain"]
+        ),
+        "decision": decision,
+        "promotable": False,
+    }
+
+
 def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = yaml.safe_load(path.read_text(encoding="utf-8"))
     identity = (config.get("schema"), config.get("milestone"))
-    if identity not in {(SCHEMA, "M17-P"), (SCHEMA_V2, "M17-P2")}:
+    if identity not in {
+        (SCHEMA, "M17-P"),
+        (SCHEMA_V2, "M17-P2"),
+        (SCHEMA_REPLICATION, "M17-P2R"),
+    }:
         raise ValueError("unexpected M17-P schema")
     rungs = [int(value) for value in config["report_rungs"]]
     if not rungs or rungs != sorted(rungs) or max(rungs) != int(config["ladder_max"]):
@@ -137,7 +192,7 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         raise ValueError("M17-P base loop must use PatternEval")
     if float(loop["training"]["policy_weight"]) != 0.0:
         raise ValueError("M17-P cannot train a policy head")
-    if config["schema"] == SCHEMA_V2:
+    if config["schema"] in {SCHEMA_V2, SCHEMA_REPLICATION}:
         control = config["promotion_control"]
         pairs = int(control["arena_pairs"])
         loop["arena"]["pairs"] = pairs
@@ -162,6 +217,14 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         required_lower_bound = float(loop["promotion"]["minimum_arena_lower_bound"])
         if lower_bound < required_lower_bound:
             raise ValueError("M17-P2 arena is underpowered at the neutral score")
+    if config["schema"] == SCHEMA_REPLICATION:
+        if len(config["paired_seeds"]) != 20 or len(set(config["paired_seeds"])) != 20:
+            raise ValueError("M17-P2R requires 20 unique paired seeds")
+        gate = config["scientific_gate"]
+        if gate.get("primary_endpoint") != "paired_zero_regret_delta_g8_minus_g1":
+            raise ValueError("M17-P2R primary endpoint is not preregistered")
+        if float(gate["minimum_practical_compounding_gain"]) <= 0.0:
+            raise ValueError("M17-P2R practical compounding gain must be positive")
     return deepcopy(config), loop
 
 
@@ -367,9 +430,34 @@ def run_m17p(
             for diagnostic in diagnostics
         ),
     }
-    recommendation = build_recommendation(
-        aggregate, config["scientific_gate"], config["promotion_control"]
-    )
+    if config["schema"] == SCHEMA_REPLICATION:
+        primary_values = [
+            float(row["by_rung"]["8"]["zero_regret_delta"])
+            - float(row["by_rung"]["1"]["zero_regret_delta"])
+            for row in rows
+        ]
+        primary = paired_interval(
+            primary_values,
+            float(config["scientific_gate"]["paired_confidence_critical_95"]),
+        )
+        primary["standard_deviation"] = float(
+            primary["standard_error"] * math.sqrt(primary["count"])
+        )
+        primary["positive_seed_count"] = sum(value > 0.0 for value in primary_values)
+        primary["zero_seed_count"] = sum(value == 0.0 for value in primary_values)
+        primary["negative_seed_count"] = sum(value < 0.0 for value in primary_values)
+        primary["by_seed"] = [
+            {"seed": int(row["seed"]), "delta": float(value)}
+            for row, value in zip(rows, primary_values)
+        ]
+        aggregate["paired_zero_regret_g8_minus_g1"] = primary
+        recommendation = build_replication_recommendation(
+            aggregate, config["scientific_gate"], config["promotion_control"]
+        )
+    else:
+        recommendation = build_recommendation(
+            aggregate, config["scientific_gate"], config["promotion_control"]
+        )
     neutral_score = float(
         config["promotion_control"].get("neutral_arena_score", 0.5)
     )
@@ -384,6 +472,11 @@ def run_m17p(
         "response_contract": "one_ply_value_search",
         "rung_state": "deployed_parent_after_promotion_decision",
         "single_factor": "generations",
+        "analysis_role": (
+            "fresh_seed_confirmatory_replication"
+            if config["schema"] == SCHEMA_REPLICATION
+            else "discovery"
+        ),
         "resolved_promotion_gate": {
             "arena_pairs": int(base_loop["arena"]["pairs"]),
             "arena_games": 2 * int(base_loop["arena"]["pairs"]),

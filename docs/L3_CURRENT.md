@@ -384,11 +384,28 @@ graine et génération.
 ⏱️ Ancre de coût : batch de 1h05 bout en bout, M14-P publiée à ~9 min. ETA
 annoncée 1h15-1h30 — tenue.
 
+### ✅ M17-P2 exécutée et readout indépendant validé
+
+`cpx62-1219` a ouvert la porte sur **131/160 générations**. Le gain moyen de
+zéro-regret développement monte de `+0,08053` à G1 à `+0,10516` à G8. Le
+readout indépendant `cpx62-1220` a vérifié le manifeste, l'inventaire et les
+checksums, puis les 160 contrats d'arène : 128 départs de développement
+distincts, confiance comptée par paire, 30 scores distincts entre `0,48633` et
+`0,56836`. L'endpoint primaire apparié `G8-G1` vaut `+0,02463`, IC95 Student
+`[+0,02220 ; +0,02706]`, avec 20/20 graines positives. Il n'y a aucune graine
+sans avance et la moyenne est de 6,55 avances sur 8.
+
+Ce signal reste une découverte sélectionnée. **M17-P2R** est donc figée avant
+calcul sur 20 nouvelles graines (`264001–264020`), avec le contrôle M17-P2
+inchangé. La réplication ne confirme la composition que si l'IC95 de `G8-G1`
+est strictement au-dessus de zéro **et** si sa moyenne atteint le seuil
+pratique préenregistré de `+0,01`. Le frozen test reste scellé et le résultat
+n'est jamais promouvable.
+
 ### Reste ouvert
 
-Le correctif d'arène M17-P2 est une étape d'ingénierie, pas encore une preuve.
-Son rerun doit d'abord vérifier que l'endpoint varie et que la porte peut
-s'ouvrir. Ensuite : la décomposition état/étiquette (le canal **distribution**,
+La réplication M17-P2R doit maintenant déterminer si la composition se maintient
+hors de la cohorte de découverte. Ensuite : la décomposition état/étiquette (le canal **distribution**,
 jamais mesuré, là où vivent ~95 % du gisement), puis l'interprétation de la
 composition à travers les générations. Ensuite seulement M15/M16,
 M18/M19/M21/M23, l'étude de convergence à recette figée demandée par JFC, et le
