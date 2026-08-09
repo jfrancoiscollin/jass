@@ -6,20 +6,30 @@ Design/preregistration for Mini-Jass L1 on the architecture merged as
 `folded_pattern_value`: exact side-aware folded pattern buckets, one scalar
 value and moves supplied by search.
 
-This protocol is not runnable until M24-P
-`cpx62-1217-mini-jass-pattern-m24p-v1` has returned `PASS` and its result hash
-has been frozen into the implementation config. No production Jass change or
-direct 10x10 transfer is authorized.
+M24-P `cpx62-1217-mini-jass-pattern-m24p-v1` has returned `PASS`; its frozen
+result hash is
+`9447d1ea86ca2492c84aead6eedd0bbdb4bf2fbe1c7e9f3323d6d0879545cd67`.
+This protocol is still not runnable until the M17-P cell of `cpx62-1218` has
+published its per-seed final-rung variance and the preregistered power sizing
+below has produced a frozen PASS. No production Jass change or direct 10x10
+transfer is authorized.
+
+This remains a later factor in the PatternEval reconstruction program. A merge
+of this design never queues C1 automatically and cannot displace the baseline
+reconstruction cells or their post-M17-P decision record.
 
 ## Question
 
 Terminal W/D/L is the game truth, but copying it unchanged onto every state is
-a low-bandwidth credit signal. A draw saved from a losing position and a draw
-thrown away from a winning position both receive `0`.
+a low-bandwidth optimization target. A draw saved from a losing position and a
+draw thrown away from a winning position both receive `0`.
 
-The experiment asks whether deterministic board context can improve the
-learned scalar evaluator while the main target remains terminal WDL and while
-the deployed model remains exactly `scalar PatternEval -> search`.
+The pattern table already observes the full board information needed to derive
+material, mobility, blocked men, advancement and central presence. Context
+therefore adds no information at inference. The experiment asks whether an
+auxiliary objective supplies a useful **inductive bias** by orienting gradients
+toward those deterministic factors, while the main target remains terminal WDL
+and the deployed model remains exactly `scalar PatternEval -> search`.
 
 ## Architectural constraint: where the gradient must go
 
@@ -136,6 +146,12 @@ center=0.05, terminal=0.00
 These coefficients are not tuned in C0. Fitting or changing them after any
 development/frozen-test read is forbidden.
 
+The `terminal_flag` context component must be exact, but its baseline weight is
+deliberately `0`. `B(C)` is a non-oracle positional expectation, not a second
+encoding of the game outcome. Residual targets are built only for non-terminal
+pre-move training states. The C0 terminal gate validates feature extraction;
+it does not require the contextual baseline to predict terminal WDL exactly.
+
 ## C0: preregistered protocol-validity gate
 
 C0 may read exact values only on the `train` cohort. It does not choose among
@@ -143,8 +159,8 @@ models or remove individual arms. It applies the decision frozen here:
 
 - deterministic repeats must be byte-identical;
 - POV symmetry maximum absolute error must be `0`;
-- terminal exactness must be `1.0`;
-- Spearman correlation of `B(C)` with exact value must be at least `0.10`;
+- context `terminal_flag` exactness must be `1.0`;
+- Spearman correlation of `B(C)` with exact value must be at least `0.30`;
 - pairwise ordering rate against exact value must be at least `0.55`.
 
 Pairwise ordering is computed on train-state pairs with unequal exact values;
@@ -188,6 +204,36 @@ arm instead of receiving three times the auxiliary dose.
 value. It is an explicitly declared diagnostic training-signal boundary
 crossing, is excluded from the primary hypothesis and is never promotable.
 
+## Power sizing before C1
+
+The original four arena pairs per seed had a minimum detectable score effect
+around `0.229` at 80% power, larger than the effects this laboratory normally
+needs to distinguish. That design is retired.
+
+The M17-P result was not published when this rule was frozen. Contrary to an
+assumption made during review, its v1 schema does not publish per-seed arena
+games: it publishes final-rung `zero_regret_delta` per seed. The Bessel-corrected
+sample standard deviation of that available statistic is therefore the sole
+measured variance input. To avoid treating a static metric as an optimistic
+arena estimate, the between-seed standard deviation used for sizing is
+`max(measured_sd, 0.10)`, and game variance uses its worst-case `0.25` bound.
+That conservative value is fed to the frozen
+`m17p_random_effects_parametric_v1` simulation (`100000` repetitions, seed
+`44120260809`). The implementation selects the smallest number of pairs per
+seed in:
+
+```text
+64 / 128 / 256
+```
+
+that provides at least 80% power for a true score delta of `+0.10` under the
+C1 provisional Student-t rule. Sixty-four is an unconditional floor. Missing
+per-seed data, fewer than one mean advancing M17-P generation, an invalid
+variance estimate, or failure of all three candidates produces
+`ABORT_AND_REVISE_PREREGISTRATION`; it cannot silently choose a sample size.
+The M17-P result hash, variance input, selected pair count, estimated power and
+power-report hash are frozen before any C1 model trains.
+
 ## C1 pairing
 
 The complete replay pack is generated once and frozen before any arm trains.
@@ -204,20 +250,75 @@ The gradients cannot be identical because the losses intentionally differ;
 the old phrase `same_optimizer_updates` is therefore replaced by the exact
 schedule/batch invariants above.
 
-The paired seeds are fixed to `270501..270520` (inclusive). Each seed uses the
-four paired arena starts from `configs/l1_pattern_reconstruction_loop.yaml`,
-with both candidate colours and identical search settings. The single
-confirmatory contrast is:
+Pool A seeds are fixed to `270501..270520` (inclusive). Each seed uses the
+power-selected number of colour-paired starts, with identical search settings
+between arms. The single registered contrast is:
 
 ```text
 WDL_PLUS_FULL_CONTEXT minus WDL_ONLY
 ```
 
-The primary endpoint is paired common-search arena score minus `0.5`. PASS
-requires the lower bound of a paired-seed Student-t 95% confidence interval to
-be strictly greater than zero. The three single-channel arms are mechanistic
-and exploratory; they cannot independently support a multiplicity-unadjusted
-PASS claim.
+The primary endpoint is paired common-search arena score minus `0.5`. A lower
+bound of the paired-seed Student-t 95% interval strictly above zero is labelled
+`PROVISIONAL_POSITIVE_REQUIRES_C2`; every other result is
+`PROVISIONAL_NO_SIGNAL_REQUIRES_C2`. C1 can issue neither PASS nor FAIL. The
+three single-channel arms are mechanistic and exploratory; they cannot support
+a multiplicity-unadjusted claim.
+
+## Mandatory C2 replication and the only final decision
+
+C2 runs regardless of whether C1 is positive, flat or negative. It repeats
+only WDL_ONLY and WDL_PLUS_FULL_CONTEXT with fresh seeds `270601..270620`, a
+training replay disjoint from C1 and disjoint arena starts. The recipe and the
+power-selected pair count remain unchanged.
+
+Pool A and pool B are reported separately before they are chained. The flat
+prior for C1 is updated by pool A, and that posterior becomes the prior for C2.
+The pools must pass both hard disjointness and the heterogeneity guard:
+
+```text
+z = abs(delta_A - delta_B) / sqrt(se_A^2 + se_B^2) <= 1.96
+```
+
+Only the chained result may establish a force signal: compatible pools and
+`P(score_delta > 0) > 0.95`. A non-positive combined effect or contradictory
+pools is a rejection; every other result is inconclusive. Posterior
+probabilities above score deltas `0`, `0.03`, `0.05`, `0.10` and `0.14`, plus
+the 95% interval, are always published. No result promotes a model
+automatically.
+
+## Registered calibration mechanism
+
+The force endpoint remains the common-search arena. Calibration is a separate
+mechanism readout, not a substitute PASS criterion. The registered development
+metric is paired `value_mae(FULL) - value_mae(WDL)`, chained over the same two
+disjoint pools. A calibration mechanism signal requires compatible pools and
+`P(delta_value_mae < 0) > 0.95`.
+
+`value_sign_accuracy`, value Spearman, mean selected regret and static
+zero-regret are descriptive. They may explain a result but cannot select a
+model, change a weight or rescue a failed force claim. The report must classify
+the outcome as exactly one of:
+
+- calibration and force improve: the inductive bias pays in play;
+- calibration improves without force: the channel moves values but not play;
+- force improves without calibration: the gain is not explained by the
+  registered mechanism;
+- neither improves: no evidence for the mechanism or force.
+
+This makes an arena-null/calibration-positive result informative rather than a
+generic experimental failure.
+
+## Descriptive cost of the scaffold family
+
+The rank-10 scaffold has about 181k train-time parameters before export, versus
+18,127 scalar PatternEval parameters. All causal C1/C2 arms pay that capacity,
+so their contrast remains clean. Separately, every WDL_ONLY export is compared
+descriptively with a direct-table WDL fit starting from the same scalar state
+and using the same replay, batches and optimizer schedule. Common-search arena,
+static zero-regret and value MAE are reported. This comparison cannot enter
+C1, C2, model selection or promotion; it only reveals whether the scaffold
+family itself carries a cost.
 
 Static exact-value sign/order/regret, WDL calibration and context strata are
 secondary development diagnostics. Search arena remains primary.
@@ -234,9 +335,10 @@ manifest_hash = 9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524
 
 There is no `confirmation` cohort. C0 oracle characterization uses `train`.
 Development diagnostics may not change weights or arms because all recipes are
-already fixed. After every C1 checkpoint, replay hash, export proof and protocol
-hash are frozen, `frozen_test` is read once for WDL_ONLY and
-WDL_PLUS_FULL_CONTEXT together. It is descriptive and cannot select a model.
+already fixed. After C1 and C2 checkpoints, replay hashes, export proofs,
+disjointness proof and protocol hash are frozen; `frozen_test` is then read once
+for WDL_ONLY and WDL_PLUS_FULL_CONTEXT together. It is descriptive and cannot
+select a model.
 
 ## Oracle boundary
 
@@ -253,10 +355,11 @@ cannot enter a deployable checkpoint path.
 
 ## Later stages
 
-C2 opens only after a C1 confirmatory PASS. It repeats the full-vs-WDL contrast
-on fresh seeds before interpreting the single-channel diagnostics. C3 may then
-compare the frozen handcrafted baseline with a train-only fitted baseline; it
-is a new experiment and cannot reuse C1's sealed test read.
+C2 is mandatory and was fixed before C1; it is not opened by a favourable C1
+read. Only after the chained C1+C2 decision may the single-channel diagnostics
+be interpreted. C3 may then compare the frozen handcrafted baseline with a
+train-only fitted baseline; it is a new experiment and cannot reuse the sealed
+test read.
 
 Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and
@@ -268,9 +371,11 @@ requires a separate preregistration.
 - `context_targets.py`: delta, baseline and residual construction;
 - `context_scaffold.py`: shared rank-10 training scaffold and exact scalar
   export;
+- `context_power.py`: M17-P variance validation, frozen sizing simulation and
+  fail-closed selection of arena pairs;
 - `run_contextual_outcome_supervision.py`: C0/C1 contracts and reporting;
-- focused tests for leakage, replay identity, gradient coupling and export
-  parity.
+- focused tests for leakage, replay/pool disjointness, power sizing, chained
+  decision, gradient coupling and export parity.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the
@@ -281,5 +386,6 @@ original no-gradient-path failure directly.
 - `promotable: false`;
 - `production_jass_changes_authorized: false`;
 - `direct_10x10_transfer_authorized: false`;
-- no C1 launch before a frozen M24-P PASS result hash;
+- no C1 launch before the frozen M24-P PASS hash and a frozen M17-P-derived
+  power-sizing PASS;
 - any protocol change after C0 requires a new version and fresh evidence.

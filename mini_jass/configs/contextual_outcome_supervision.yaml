@@ -53,11 +53,57 @@ data_contract:
     selection: development
     sealed_test: frozen_test
   base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
-  same_immutable_replay_pack_all_non_oracle_arms: true
-  prerequisite:
-    job_id: cpx62-1217-mini-jass-pattern-m24p-v1
-    acceptable_status: PASS
-    result_hash_must_be_frozen_before_C1: true
+  same_immutable_replay_pack_within_each_evidence_pool_all_non_oracle_arms: true
+  prerequisites:
+    M24_P:
+      job_id: cpx62-1217-mini-jass-pattern-m24p-v1
+      required_status: PASS
+      result_hash: 9447d1ea86ca2492c84aead6eedd0bbdb4bf2fbe1c7e9f3323d6d0879545cd67
+    M17_P_power_source:
+      job_id: cpx62-1218-mini-jass-pattern-m14p-m17p-v1
+      required_runner_state: completed
+      required_exit_code: 0
+      m17_result_hash_must_be_frozen_before_sizing: true
+      final_rung_per_seed_zero_regret_delta_required: true
+      minimum_mean_advancing_generations: 1
+
+# Le resultat M17-P n'etait pas publie lorsque cette regle a ete gelee. Le
+# nombre de paires ne peut donc pas etre choisi apres lecture. On retient le
+# plus petit barreau conservateur qui atteint le MDE/power ci-dessous avec la
+# variance inter-modele mesuree, ou on arrete le protocole.
+power_sizing_v1:
+  decision_frozen_before_M17_P_result_read: true
+  variance_source:
+    milestone: M17-P
+    # M17-P v1 publie ce delta par seed, mais pas ses parties d'arene.
+    statistic: final_rung_per_seed_zero_regret_delta
+    estimator: sample_standard_deviation_ddof_1
+    transfer_to_arena_score: conservative_same_scale_upper_bound
+    minimum_between_seed_standard_deviation: 0.10
+  target:
+    true_score_delta: 0.10
+    minimum_power: 0.80
+    provisional_rule: paired_seed_student_t_95_lower_bound_gt_zero
+  simulation:
+    algorithm: m17p_random_effects_parametric_v1
+    replicates: 100000
+    seed: 44120260809
+    within_game_variance_upper_bound: 0.25
+  candidate_pairs_per_seed:
+    - 64
+    - 128
+    - 256
+  select: smallest_candidate_meeting_target
+  minimum_pairs_per_seed: 64
+  on_missing_or_invalid_variance: ABORT_AND_REVISE_PREREGISTRATION
+  on_no_candidate_meeting_target: ABORT_AND_REVISE_PREREGISTRATION
+  selected_pairs_and_power_report_hash_must_be_frozen_before_C1: true
+
+program_order:
+  phase: later_factor_after_pattern_reconstruction_diagnosis
+  requires_M17_P_result_and_reconstruction_decision_record: true
+  automatic_queue_from_PR_merge: false
+  may_displace_baseline_reconstruction_cells: false
 
 context_v1:
   pov: side_to_move
@@ -91,6 +137,11 @@ baseline_v1:
   tau: 1.50
   residual_clip: 1.50
   fitted_from_development_or_frozen_test_forbidden: true
+  terminal_flag_contract:
+    weight_deliberately_zero: true
+    reason: prevent_terminal_outcome_leakage_into_context_baseline
+    residual_training_states_must_be_nonterminal_pre_move: true
+    exactness_gate_applies_to_context_feature_not_baseline_prediction: true
 
 # C0 est une porte de validite de protocole, pas une selection d'arm. Si elle
 # echoue, C1 entier s'arrete : aucun coefficient ni bras n'est ajuste a chaud.
@@ -105,8 +156,8 @@ c0_gate:
   required:
     deterministic_repeatability_exact: true
     pov_symmetry_maximum_absolute_error: 0.0
-    terminal_exactness_rate: 1.0
-    minimum_baseline_spearman_vs_exact_value: 0.10
+    context_terminal_flag_exactness_rate: 1.0
+    minimum_baseline_spearman_vs_exact_value: 0.30
     minimum_baseline_pairwise_ordering_rate: 0.55
   on_failure: ABORT_C1_AND_REVISE_PREREGISTRATION
   posthoc_coefficient_change_forbidden: true
@@ -176,29 +227,125 @@ c1_decision:
     - 270518
     - 270519
     - 270520
-  confirmatory_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+  registered_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
   primary_endpoint: common_search_paired_arena_score_minus_half
   confidence_interval: paired_seed_student_t_95
   arena_contract:
     source: configs/l1_pattern_reconstruction_loop.yaml#arena
-    pairs_per_seed: 4
+    pairs_per_seed: power_sizing_v1.selected_pairs_per_seed
     candidate_colours_paired: true
     starts_and_search_identical_within_seed: true
-  pass_rule:
+  provisional_readout:
     lower_confidence_bound_strictly_greater_than: 0.0
+    positive_label: PROVISIONAL_POSITIVE_REQUIRES_C2
+    otherwise_label: PROVISIONAL_NO_SIGNAL_REQUIRES_C2
+    terminal_PASS_or_FAIL_forbidden: true
+    C2_runs_regardless_of_C1_result: true
   exploratory_arms:
     - WDL_PLUS_CONTEXT
     - WDL_PLUS_DELTA_CONTEXT
     - WDL_PLUS_RESIDUAL
   multiple_comparison_claims_from_exploratory_arms_forbidden: true
-  frozen_test:
-    read_once_after_all_training_and_protocol_hashes_are_frozen: true
-    arms_read_together:
-      - WDL_ONLY
-      - WDL_PLUS_FULL_CONTEXT
-    may_select_model: false
 
-pairing:
+c2_disjoint_replication:
+  required_even_if_C1_is_flat_or_negative: true
+  arms:
+    - WDL_ONLY
+    - WDL_PLUS_FULL_CONTEXT
+  paired_seeds:
+    - 270601
+    - 270602
+    - 270603
+    - 270604
+    - 270605
+    - 270606
+    - 270607
+    - 270608
+    - 270609
+    - 270610
+    - 270611
+    - 270612
+    - 270613
+    - 270614
+    - 270615
+    - 270616
+    - 270617
+    - 270618
+    - 270619
+    - 270620
+  pairs_per_seed: power_sizing_v1.selected_pairs_per_seed
+  training_replay_disjoint_from_C1: true
+  arena_starts_disjoint_from_C1: true
+  same_frozen_recipe_as_C1: true
+
+final_chained_decision:
+  evidence_pools:
+    - C1
+    - C2
+  pool_disjointness_required: true
+  estimator: sequential_flat_prior_paired_score_v1
+  C1_posterior_becomes_C2_prior: true
+  heterogeneity_guard:
+    statistic: absolute_pool_difference_over_joint_standard_error
+    maximum_z: 1.96
+  signal_established:
+    posterior_probability_score_delta_gt_zero_strictly_greater_than: 0.95
+    heterogeneous_pools_forbidden: true
+  rejection:
+    combined_effect_nonpositive_or_pool_contradiction: true
+  otherwise: INCONCLUSIVE
+  publish_posterior_probability_above_score_delta:
+    - 0.00
+    - 0.03
+    - 0.05
+    - 0.10
+    - 0.14
+  automatic_promotion_forbidden: true
+
+sealed_test_read:
+  after_C1_and_C2_training_and_all_protocol_hashes_are_frozen: true
+  arms_read_together:
+    - WDL_ONLY
+    - WDL_PLUS_FULL_CONTEXT
+  all_paired_seeds_read_together: true
+  may_select_model: false
+
+mechanism_readout:
+  cohort: development
+  registered_metric: value_mae
+  contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+  improvement_direction: negative
+  evidence_pools:
+    - C1
+    - C2
+  estimator: sequential_flat_prior_paired_delta_v1
+  signal_rule:
+    posterior_probability_delta_lt_zero_strictly_greater_than: 0.95
+    same_heterogeneity_guard_as_final_decision: true
+  descriptive_metrics:
+    - value_sign_accuracy
+    - value_spearman
+    - mean_selected_regret
+    - zero_regret_rate
+  interpretation:
+    force_and_calibration: inductive_bias_improves_calibration_and_play
+    calibration_without_force: mechanism_moves_value_but_not_playing_strength
+    force_without_calibration: force_gain_not_explained_by_registered_mechanism
+    neither: no_evidence_for_registered_mechanism_or_force
+  may_select_model_or_change_weights: false
+
+scaffold_cost_descriptive_control:
+  comparison: WDL_ONLY_export_minus_WDL_DIRECT_TABLE
+  direct_table_architecture: folded_pattern_value
+  same_replay_batches_optimizer_schedule_and_scalar_initial_state: true
+  primary_descriptive_metric: common_search_paired_arena_score_minus_half
+  secondary_descriptive_metrics:
+    - zero_regret_rate
+    - value_mae
+  excluded_from_C1_C2_and_final_decisions: true
+  may_select_model: false
+
+pairing_within_each_pool:
   same_complete_replay_fingerprint: true
   same_wdl_targets_non_oracle: true
   same_exportable_value_initial_state_hash: true
@@ -225,8 +372,8 @@ oracle_boundary:
 
 stages:
   C0: validate_context_and_baseline_or_abort
-  C1: fixed_weight_isolated_auxiliary_supervision_ablation
-  C2: fresh_seed_replication_and_credit_channel_localization
+  C1: fixed_weight_pool_A_with_provisional_readout_only
+  C2: mandatory_disjoint_pool_B_and_final_chained_decision
   C3: compare_deterministic_vs_train_only_calibrated_context_baseline
 
 reporting:
@@ -237,6 +384,9 @@ reporting:
   hash_context_definitions: true
   hash_baseline_coefficients_and_tau: true
   hash_training_scaffold_and_export: true
+  hash_power_sizing_input_result_and_selected_pairs: true
+  report_C1_and_C2_separately_before_chaining: true
+  report_mechanism_categories: true
 
 boundaries:
   promotable: false
