@@ -45,7 +45,7 @@ def test_value_only_replay_updates_value_and_ignores_policy_targets() -> None:
     right_metrics = _train(right, policy_right)
     assert model_hash(left) == model_hash(right)
     assert model_hash(left) != model_hash(initial)
-    assert left_metrics["policy_loss"] == 0.0
+    assert left_metrics["policy_loss"] is None
     assert left_metrics["policy_trained"] is False
     assert left_metrics["action_source"] == "search"
 

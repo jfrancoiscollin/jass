@@ -101,7 +101,9 @@ def train_epoch(
     return {
         "loss": total_loss / total_examples,
         "value_loss": total_value / total_examples,
-        "policy_loss": total_policy / total_examples,
+        # ⚠️ `None`, PAS `0.0` : une perte de politique a zero se lit comme une
+        # politique parfaitement apprise. Une evaluation n'en a aucune.
+        "policy_loss": None if value_only else total_policy / total_examples,
     }
 
 
@@ -172,6 +174,7 @@ def evaluate(
             raise ValueError("value-only evaluation requires the rule graph")
         response = greedy_metrics(model, graph, oracle, tensors, indices, batch_size)
         policy_count = 0
+        response_count = int(response["count"])
         optimal_top1 = response["top1_optimal_rate"]
         optimal_probability_mass = None
         policy_cross_entropy = None
@@ -190,6 +193,7 @@ def evaluate(
             - selected_scores.astype(np.int16)
         )
         policy_count = int(policy_positions.size)
+        response_count = policy_count
         optimal_top1 = float(top1_optimal.mean()) if policy_positions.size else None
         optimal_probability_mass = (
             float(optimal_mass[has_policy].mean()) if policy_positions.size else None
@@ -206,7 +210,13 @@ def evaluate(
         "value_mae": float(np.abs(predictions - targets).mean()),
         "value_mse": float(np.square(predictions - targets).mean()),
         "value_sign_accuracy": float((predicted_classes == targets).mean()),
+        # `policy_count` reste litteralement le nombre d'etats ou une TETE de
+        # politique a repondu : zero pour une evaluation, qui n'en a pas.
+        # `response_count` est le DENOMINATEUR des taux ci-dessous -- sans lui,
+        # une evaluation publierait `zero_regret_rate` a cote d'un compte nul,
+        # et un lecteur en conclurait que le taux porte sur rien.
         "policy_count": policy_count,
+        "response_count": response_count,
         "optimal_top1_accuracy": optimal_top1,
         "optimal_probability_mass": optimal_probability_mass,
         "policy_cross_entropy": policy_cross_entropy,

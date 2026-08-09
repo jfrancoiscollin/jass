@@ -73,7 +73,7 @@ def train_from_replay(
         totals["loss"] += float(loss.detach())
         totals["value_loss"] += float(value_loss.detach())
         totals["policy_loss"] += float(policy_loss.detach())
-    return {
+    metrics: dict[str, float | int | bool | str | None] = {
         "steps": steps,
         "batch_size": batch_size,
         "sample_pool": len(samples),
@@ -82,3 +82,8 @@ def train_from_replay(
         "action_source": "search" if value_only else "policy_head",
         **{key: value / steps for key, value in totals.items()},
     }
+    # ⚠️ `None`, PAS `0.0` : une perte de politique a zero se lit comme une
+    # politique parfaitement apprise. Une evaluation n'en a aucune.
+    if value_only:
+        metrics["policy_loss"] = None
+    return metrics
