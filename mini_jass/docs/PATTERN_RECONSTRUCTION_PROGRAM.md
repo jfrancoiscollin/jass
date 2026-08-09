@@ -2,8 +2,8 @@
 
 Status: M24-P and M14-P completed; M17-P v1 completed operationally but was
 scientifically inconclusive because its arena gate was underpowered. M17-P2
-completed as a discovery result. Its fresh-seed replication M17-P2R is
-preregistered below.
+completed as a discovery result and M17-P2R confirmed its generation-composition
+effect. M18-P is the preregistered causal decomposition below.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -128,6 +128,37 @@ advance, the result is inconclusive regardless of the endpoint. Secondary
 rungs and arena diagnostics remain descriptive. Frozen test stays sealed and
 the cell is never promotable.
 
+M17-P2R completed on `cpx62-1221`. Paired development zero-regret `G8 - G1`
+was +0.03917 (Student 95% CI +0.03776 to +0.04058), positive for all 20/20
+fresh seeds and above the +0.01 practical gate. The ladder averaged 6.4
+advances and no seed was blocked. Result hash:
+`c868949d2f1027889e6e76fd081e763aedcac7840f6105e1f18175e5c66685ea`.
+
+### 6. M18-P — state, label and optimizer-path decomposition
+
+M18-P generates one repaired eight-generation M17-P2 pack per fresh seed and
+then trains every scientific arm from the same zero-initialized PatternEval.
+It never regenerates data per arm. Seven paired arms separate three channels:
+
+- `MIX_EXACT - G1_WIDE_EXACT` isolates late-generation state distribution at
+  equal row volume under deterministic exact train labels;
+- `MIX_OUTCOME - G1_WIDE_OUTCOME` asks whether that distribution remains useful
+  with honest self-play outcomes;
+- exact-minus-outcome contrasts quantify label noise within each distribution;
+- `MIX_SEQUENTIAL_OUTCOME - MIX_OUTCOME` compares eight optimizer cycles with
+  one monolithic fit using the exact same sample-draw multiset;
+- G1-wide-minus-G1-only and G8-minus-G1 controls report unique-row volume and
+  recency without confusing either with the primary distribution contrast.
+
+The exact-label arms are diagnostic boundary crossings restricted to train
+states and are never promotable. Generation and sample selection stay
+oracle-blind. The primary response remains development `zero_regret_rate` from
+one-ply value search; frozen test remains sealed. A mechanism requires a paired
+Student 95% lower bound above zero and a mean gain of at least +0.01 across 20
+fresh seeds (`265001` through `265020`). A state-distribution attribution
+requires both the exact-label and honest-outcome distribution contrasts to
+pass; otherwise M18-P reports the label interaction rather than overclaiming.
+
 ## Conditional continuation
 
 After M24-P/M14-P/M17-P:
@@ -158,6 +189,7 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m18p
 ```
 
 The entrypoint builds the C++ oracle, runs CTest and the full Python suite,

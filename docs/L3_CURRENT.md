@@ -404,10 +404,14 @@ n'est jamais promouvable.
 
 ### Reste ouvert
 
-La réplication M17-P2R doit maintenant déterminer si la composition se maintient
-hors de la cohorte de découverte. Ensuite : la décomposition état/étiquette (le canal **distribution**,
-jamais mesuré, là où vivent ~95 % du gisement), puis l'interprétation de la
-composition à travers les générations. Ensuite seulement M15/M16,
+M17-P2R confirme la composition hors de la cohorte de découverte : `G8-G1`
+`+0,03917`, IC95 `[+0,03776 ; +0,04058]`, 20/20 graines positives. La cellule
+M18-P décompose maintenant état/étiquette/chemin d'optimisation avec un pack
+multi-générations unique par graine, budgets égaux et labels exacts limités à
+deux bras diagnostiques sur le train. Son verdict décidera si le premier
+mécanisme à répliquer est la **distribution d'états**, le chemin d'optimisation,
+ou une interaction avec les labels ; aucun axe n'est choisi après observation.
+Ensuite seulement M15/M16,
 M18/M19/M21/M23, l'étude de convergence à recette figée demandée par JFC, et le
 6×6 en dernier.
 

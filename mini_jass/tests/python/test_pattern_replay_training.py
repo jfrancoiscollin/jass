@@ -67,3 +67,68 @@ def test_value_only_replay_refuses_a_silent_policy_loss() -> None:
             policy_weight=1.0,
             seed=91,
         )
+
+
+def test_explicit_batch_schedule_controls_draws_independently_of_seed() -> None:
+    policy = np.zeros(72, dtype=np.float32)
+    policy[0] = 1.0
+    initial = PatternEval(PatternSet.from_window(2))
+    left = deepcopy(initial)
+    right = deepcopy(initial)
+    schedule = np.zeros((3, 1), dtype=np.int64)
+    left_metrics = train_from_replay(
+        left,
+        tiny_graph(),
+        [_sample(policy)],
+        steps=3,
+        batch_size=1,
+        learning_rate=0.01,
+        weight_decay=0.0,
+        value_weight=1.0,
+        policy_weight=0.0,
+        seed=1,
+        batch_indices=schedule,
+    )
+    train_from_replay(
+        right,
+        tiny_graph(),
+        [_sample(policy)],
+        steps=3,
+        batch_size=1,
+        learning_rate=0.01,
+        weight_decay=0.0,
+        value_weight=1.0,
+        policy_weight=0.0,
+        seed=999,
+        batch_indices=schedule,
+    )
+    assert model_hash(left) == model_hash(right)
+    assert left_metrics["explicit_batch_schedule"] is True
+
+
+@pytest.mark.parametrize(
+    "schedule,match",
+    [
+        (np.zeros((2, 1), dtype=np.int64), "must have shape"),
+        (np.ones((3, 1), dtype=np.int64), "invalid index"),
+    ],
+)
+def test_explicit_batch_schedule_fails_closed(
+    schedule: np.ndarray, match: str
+) -> None:
+    policy = np.zeros(72, dtype=np.float32)
+    policy[0] = 1.0
+    with pytest.raises(ValueError, match=match):
+        train_from_replay(
+            PatternEval(PatternSet.from_window(2)),
+            tiny_graph(),
+            [_sample(policy)],
+            steps=3,
+            batch_size=1,
+            learning_rate=0.01,
+            weight_decay=0.0,
+            value_weight=1.0,
+            policy_weight=0.0,
+            seed=91,
+            batch_indices=schedule,
+        )
