@@ -118,23 +118,93 @@ def _prior(mean=0.2375, se=0.07133):
     return {"label": "cpx62-1211", "mean": mean, "standard_error": se, "n": 20}
 
 
-def test_a_consistent_replication_is_reported_as_REPLICATED():
+def _handmade(primary_arena, primary_arena_se, critical=CRITICAL):
+    """Contrastes construits a la main : controle exact des moyennes ET des IC.
+
+    Les fixtures a bruit fin donnent des IC tres serres, ce qui rend impossible
+    de fabriquer le cas « ce pool seul ne conclut pas, le chainage oui ». Ici on
+    pose directement la moyenne et son ecart-type.
+    """
+    half = critical * primary_arena_se
+    flat = {"mean": 0.0, "confidence_95": [-0.01, 0.01], "count": 20, "values": []}
+    return {
+        "contrasts": {
+            "G1_TO_G8_MIX_minus_G1_WIDE": {
+                "learning": flat,
+                "arena": {
+                    "mean": primary_arena,
+                    "confidence_95": [primary_arena - half, primary_arena + half],
+                    "count": 20,
+                    "values": [],
+                },
+            },
+            "G1_WIDE_minus_G1_ONLY": {"learning": flat, "arena": flat},
+            "G8_ONLY_minus_G1_ONLY": {"learning": flat, "arena": flat},
+            "G1_PLUS_NOVEL_LATE_minus_G1_PLUS_MATCHED_LATE": {
+                "learning": flat, "arena": flat},
+        }
+    }
+
+
+def test_both_criteria_met_is_the_full_pass():
     gate = {**_gate(), "replication_of": _prior()}
-    rec = M21.build_recommendation(
-        _aggregate(mix_arena=0.7875, wide_arena=0.5500), gate)
-    assert rec["status"] == "PASS_REPLICATED"
-    assert rec["replication"]["pools_disagree"] is False
-    assert "first_identified_mechanism" in rec["next_step"]
+    rec = M21.build_recommendation(_handmade(0.2375, 0.07133), gate)
+    assert rec["status"] == "PASS_BOTH_CRITERIA"
+    assert rec["single_pool_criterion_met"] is True
+    assert rec["chained_criterion_met"] is True
+    assert rec["criteria_agree"] is True
 
 
-def test_two_pools_that_disagree_statistically_are_INCONCLUSIVE_not_chained():
-    """Le desaccord EST le resultat ; chainer fabriquerait une fausse confiance."""
+def test_the_M21R_case_the_house_chained_criterion_alone_gets_its_own_name():
+    """Pool seul non concluant, chainage franc. C'est exactement cpx62-1212.
+
+    Ce cas ne doit ni sortir FAIL -- ce serait jeter l'information des pools
+    anterieurs -- ni sortir un PASS indistinct : il repose SUR le chainage, et
+    le nom du statut doit le dire.
+    """
+    gate = {**_gate(), "replication_of": _prior()}
+    rec = M21.build_recommendation(_handmade(0.1000, 0.09493), gate)
+    assert rec["status"] == "PASS_CHAINED_ONLY"
+    assert rec["single_pool_criterion_met"] is False
+    assert rec["chained_criterion_met"] is True
+    assert rec["criteria_agree"] is False
+    assert rec["chained_probability_above_zero"] > 0.95
+
+
+def test_a_pool_that_passes_alone_against_a_dead_chain_is_distrusted():
+    gate = {**_gate(), "replication_of": _prior(mean=-0.05, se=0.02)}
+    rec = M21.build_recommendation(_handmade(0.08, 0.01), gate)
+    # Des pools aussi eloignes se contredisent : l'heterogeneite passe d'abord.
+    assert rec["status"] == "INCONCLUSIVE"
+
+
+def test_neither_criterion_met_is_a_clean_fail():
+    gate = {**_gate(), "replication_of": _prior(mean=0.01, se=0.09)}
+    rec = M21.build_recommendation(_handmade(0.00, 0.09), gate)
+    assert rec["status"] == "FAIL"
+    assert rec["chained_criterion_met"] is False
+    assert "inflated" in rec["next_step"]
+
+
+def test_heterogeneous_pools_are_checked_BEFORE_either_criterion():
     gate = {**_gate(), "replication_of": _prior(mean=1.20, se=0.05)}
-    rec = M21.build_recommendation(
-        _aggregate(mix_arena=0.7875, wide_arena=0.5500), gate)
+    rec = M21.build_recommendation(_handmade(0.10, 0.05), gate)
     assert rec["status"] == "INCONCLUSIVE"
     assert rec["replication"]["pools_disagree"] is True
     assert rec["composition_is_the_mechanism"] is None
+
+
+def test_three_pools_chain_and_are_checked_pairwise():
+    gate = {**_gate(), "replication_of": [
+        {"label": "cpx62-1211", "mean": 0.2375, "standard_error": 0.07133},
+        {"label": "cpx62-1212", "mean": 0.1000, "standard_error": 0.09493},
+    ]}
+    rec = M21.build_recommendation(_handmade(0.15, 0.09), gate)
+    check = rec["replication"]
+    assert check["pool_count"] == 3
+    assert len(check["pairwise_z"]) == 3        # toutes les paires, pas seulement
+    assert check["pools_disagree"] is False     # la premiere
+    assert check["chained_probability_above_zero"] > 0.95
 
 
 def test_opposite_signs_alone_never_block_the_chaining():
@@ -270,13 +340,21 @@ def test_the_job_carries_the_64kib_guard_and_merges_phase_timings():
     assert "phase_timings_seconds" in job
 
 
-def test_a_failed_replication_says_so_instead_of_claiming_an_independent_null():
-    """« pas d'effet ici » et « l'effet d'origine ne se reproduit pas » different."""
+def test_a_flat_pool_far_from_a_strong_prior_is_HETEROGENEITY_not_a_clean_null():
+    """Un pool plat, mesure serre, contre un prior a +0,2375 : les deux se
+    contredisent statistiquement. Sortir FAIL affirmerait « pas d'effet » en
+    jetant le pool anterieur ; sortir INCONCLUSIVE dit la verite -- le desaccord
+    EST le resultat, et il faut l'expliquer avant de chainer quoi que ce soit."""
     gate = {**_gate(), "replication_of": _prior()}
     rec = M21.build_recommendation(
         _aggregate(mix_arena=0.70, wide_arena=0.70), gate)
-    assert rec["status"] == "FAIL"
-    assert rec["finding"] == "did_not_replicate_the_prior_pool"
-    assert "inflated" in rec["next_step"]
-    # Le pool anterieur reste rapporte, jamais jete en silence.
+    assert rec["status"] == "INCONCLUSIVE"
+    assert rec["finding"] == "the_pools_disagree_statistically"
     assert rec["replication"]["prior_mean"] == pytest.approx(0.2375)
+
+
+def test_without_any_prior_the_cell_still_judges_on_its_own_pool():
+    """Une cellule d'origine, sans pool anterieur, garde le verdict simple."""
+    rec = M21.build_recommendation(_handmade(0.2375, 0.07133), _gate())
+    assert rec["status"] == "PASS"
+    assert "single_pool_criterion_met" not in rec

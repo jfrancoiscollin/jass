@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import json
+import math
 from pathlib import Path
 import platform
 import sys
@@ -239,33 +240,81 @@ def _standard_error(row: dict[str, Any], critical: float) -> float:
 
 
 def replication_check(
-    row: dict[str, Any], prior: dict[str, Any], critical: float
+    row: dict[str, Any], priors: Any, critical: float
 ) -> dict[str, Any]:
-    """Compare ce pool au precedent, avec la discipline de chainage de L3.
+    """Chaine ce pool aux precedents, avec la discipline adoptee a L3.
 
-    ⛔ LE SIGNE N'EST PAS UN CRITERE (correction du 6 aout, cote L3) : un effet
-    vrai proche de zero produit des signes opposes une fois sur deux. Le
-    desaccord se teste STATISTIQUEMENT. `same_sign` est rapporte, jamais gatant.
+    `priors` accepte un dict (un seul pool anterieur) ou une liste. Chaque pool
+    porte `mean` et `standard_error`, l'ecart-type etant REDERIVE de l'IC publie
+    -- jamais un arrondi stocke.
+
+    ⛔ LE SIGNE N'EST PAS UN CRITERE (correction L3 du 6 aout) : un effet vrai
+    proche de zero produit des signes opposes une fois sur deux, donc refuser
+    sur ce motif reviendrait a refuser precisement quand la bonne reponse est
+    « l'effet est nul ». `same_sign` est rapporte, jamais gatant.
+
+    ⚠️ La garde d'heterogeneite est PAIRWISE et refuse des qu'UNE paire depasse
+    `|z| >= 1,96` : chainer des pools qui se contredisent fabriquerait une
+    confiance que les donnees ne portent pas -- le desaccord EST alors le
+    resultat.
     """
+    if isinstance(priors, dict):
+        priors = [priors]
     se_new = _standard_error(row, critical)
-    se_old = float(prior["standard_error"])
-    mean_new, mean_old = float(row["mean"]), float(prior["mean"])
-    spread = (se_new**2 + se_old**2) ** 0.5
-    between = (mean_new - mean_old) / spread if spread > 0.0 else 0.0
-    weight_new = 1.0 / se_new**2 if se_new > 0 else 0.0
-    weight_old = 1.0 / se_old**2 if se_old > 0 else 0.0
-    total = weight_new + weight_old
-    chained = (mean_new * weight_new + mean_old * weight_old) / total if total else 0.0
+    pools = [
+        {"label": "this_pool", "mean": float(row["mean"]), "standard_error": se_new}
+    ] + [
+        {
+            "label": prior.get("label"),
+            "mean": float(prior["mean"]),
+            "standard_error": float(prior["standard_error"]),
+        }
+        for prior in priors
+    ]
+    pairwise = []
+    worst = 0.0
+    for first in range(len(pools)):
+        for second in range(first + 1, len(pools)):
+            a, b = pools[first], pools[second]
+            spread = (a["standard_error"] ** 2 + b["standard_error"] ** 2) ** 0.5
+            z = (a["mean"] - b["mean"]) / spread if spread > 0.0 else 0.0
+            pairwise.append(
+                {"pools": [a["label"], b["label"]], "z": z, "disagree": abs(z) >= 1.96}
+            )
+            worst = max(worst, abs(z))
+    weights = [
+        1.0 / pool["standard_error"] ** 2 if pool["standard_error"] > 0 else 0.0
+        for pool in pools
+    ]
+    total = sum(weights)
+    chained = (
+        sum(pool["mean"] * weight for pool, weight in zip(pools, weights)) / total
+        if total
+        else 0.0
+    )
+    chained_se = (1.0 / total**0.5) if total else 0.0
+    chained_z = chained / chained_se if chained_se > 0 else 0.0
+    probability_above_zero = 0.5 * (1.0 + math.erf(chained_z / math.sqrt(2.0)))
+    signs = {pool["mean"] > 0 for pool in pools}
     return {
-        "prior_pool": prior.get("label"),
-        "prior_mean": mean_old,
-        "replication_mean": mean_new,
-        "between_pool_z": between,
-        "pools_disagree": abs(between) >= 1.96,
-        "same_sign": (mean_new > 0) == (mean_old > 0),
+        "pools": pools,
+        "pool_count": len(pools),
+        "pairwise_z": pairwise,
+        "worst_absolute_z": worst,
+        "pools_disagree": any(pair["disagree"] for pair in pairwise),
+        "same_sign": len(signs) == 1,
         "chained_mean": chained,
-        "chained_standard_error": (1.0 / total**0.5) if total else 0.0,
-        "shrinkage_vs_prior": (mean_new / mean_old) if mean_old else None,
+        "chained_standard_error": chained_se,
+        "chained_z": chained_z,
+        "chained_probability_above_zero": probability_above_zero,
+        "prior_mean": float(priors[0]["mean"]) if priors else None,
+        "prior_pool": priors[0].get("label") if priors else None,
+        "replication_mean": float(row["mean"]),
+        "shrinkage_vs_prior": (
+            float(row["mean"]) / float(priors[0]["mean"])
+            if priors and float(priors[0]["mean"])
+            else None
+        ),
     }
 
 
@@ -327,6 +376,75 @@ def build_recommendation(
     if prior:
         replication = replication_check(primary["arena"], prior, critical)
         common["replication"] = replication
+
+    # ⛔ LES DEUX CRITERES SONT PREINSCRITS, ET C'EST LE POINT.
+    # M21R a expose une incoherence : ma porte jugeait sur « ce pool exclut zero
+    # tout seul » -- l'ANCIEN critere frequentiste -- alors que le projet a
+    # adopte le 5 aout `P(Elo>0) > 95 %` SUR POOLS CHAINES avec garde
+    # d'heterogeneite. Les deux ne disaient pas la meme chose : pool 2 seul
+    # `+0,1000` IC traversant zero, chaine `+0,1879` `P(>0)=99,95 %`.
+    # Trancher APRES avoir vu les chiffres serait exactement la faute que la
+    # replication existait pour eviter. Les deux verdicts sont donc declares
+    # AVANT le run, et rapportes cote a cote quoi qu'il arrive.
+    chained_ok = None
+    if replication is not None:
+        chained_ok = (
+            not replication["pools_disagree"]
+            and replication["chained_probability_above_zero"]
+            > float(gate.get("minimum_chained_probability_above_zero", 0.95))
+        )
+        common["single_pool_criterion_met"] = arena_ok
+        common["chained_criterion_met"] = chained_ok
+        common["chained_probability_above_zero"] = replication[
+            "chained_probability_above_zero"
+        ]
+        common["criteria_agree"] = arena_ok == chained_ok
+
+    if replication is not None and replication["pools_disagree"]:
+        # Verifie AVANT les deux criteres : un chainage sur des pools
+        # heterogenes n'a pas de sens, et le desaccord EST le resultat.
+        return {
+            **common,
+            "status": "INCONCLUSIVE",
+            "finding": "the_pools_disagree_statistically",
+            "composition_is_the_mechanism": None,
+            "next_step": "explain_the_between_pool_heterogeneity_before_chaining",
+        }
+    if chained_ok is not None:
+        if arena_ok and chained_ok:
+            return {
+                **common,
+                "status": "PASS_BOTH_CRITERIA",
+                "finding": "mixing_generations_makes_a_STRONGER_model_at_equal_unique_volume",
+                "composition_is_the_mechanism": True,
+                "next_step": "first_identified_mechanism_of_the_lab_campaign_design_an_L2_transfer_cell",
+            }
+        if chained_ok:
+            # Le standard MAISON est rempli, le pool seul non. C'est le cas
+            # exact de M21R, et il merite son propre nom plutot qu'un FAIL qui
+            # jetterait l'information des pools anterieurs.
+            return {
+                **common,
+                "status": "PASS_CHAINED_ONLY",
+                "finding": "the_house_chained_criterion_is_met_but_no_single_pool_carries_it",
+                "composition_is_the_mechanism": True,
+                "next_step": "mechanism_rests_on_chaining_report_it_as_such_and_size_the_next_cell_on_the_chained_effect",
+            }
+        if arena_ok:
+            return {
+                **common,
+                "status": "PASS_SINGLE_POOL_ONLY",
+                "finding": "this_pool_alone_is_positive_but_the_chain_is_not",
+                "composition_is_the_mechanism": False,
+                "next_step": "distrust_this_pool_the_chain_carries_more_information",
+            }
+        return {
+            **common,
+            "status": "FAIL",
+            "finding": "neither_the_single_pool_nor_the_chained_criterion_is_met",
+            "composition_is_the_mechanism": False,
+            "next_step": "treat_the_prior_estimates_as_inflated_and_stop_this_axis",
+        }
 
     if not arena_ok:
         # Sur une cellule de REPLICATION, « pas d'effet ici » et « l'effet
@@ -603,17 +721,22 @@ def run_m21(
 
 def _resolve(path: Path) -> dict[str, Any]:
     config = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if config.get("schema") != SCHEMA or config.get("milestone") not in ("M21", "M21R"):
+    if config.get("schema") != SCHEMA or config.get("milestone") not in ("M21", "M21R", "M21T"):
         raise ValueError("unexpected M21 schema")
     if tuple(config.get("arms", [])) != ARM_ORDER:
         raise ValueError("M21 arm definitions changed after preregistration")
     seeds = [int(seed) for seed in config["paired_seeds"]]
     if len(seeds) != 20 or len(set(seeds)) != 20:
         raise ValueError("M21 requires 20 distinct seeds — power is nearly free here")
-    if config["milestone"] == "M21R" and set(seeds) & set(range(210001, 210021)):
-        # Rejouer une replication sur les graines du pool d'origine, ce n'est pas
-        # une replication : c'est le meme tirage.
-        raise ValueError("M21R must not reuse the M21 seed family")
+    # Rejouer une replication sur les graines d'un pool anterieur, ce n'est pas
+    # une replication : c'est le meme tirage. La garde grandit avec la chaine.
+    used = {"M21R": (range(210001, 210021),),
+            "M21T": (range(210001, 210021), range(220001, 220021))}
+    for family in used.get(config["milestone"], ()):
+        if set(seeds) & set(family):
+            raise ValueError(
+                f"{config['milestone']} must not reuse an earlier pool's seed family"
+            )
     boundaries = config.get("boundaries", {})
     if (
         boundaries.get("promotable") is not False

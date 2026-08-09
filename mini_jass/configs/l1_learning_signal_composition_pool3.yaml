@@ -1,0 +1,102 @@
+schema: mini_jass.learning_signal_composition.v1
+milestone: M21T
+
+# M21T — TROISIEME POOL DISJOINT. LES DEUX CRITERES SONT PREINSCRITS ICI.
+#
+# OU EN EST LA CHAINE.
+#   cpx62-1211 (M21,  graines 210001-20)  MIX − G1_WIDE arena  +0,2375  se 0,07133
+#   cpx62-1212 (M21R, graines 220001-20)  MIX − G1_WIDE arena  +0,1000  se 0,09493
+#   between_pool_z = −1,158  → les deux pools sont COMPATIBLES
+#   chaine a deux : +0,1879  se 0,0570  →  P(>0) = 99,95 %
+#
+# ⛔ POURQUOI CE POOL EXISTE, ET CE QU'IL TRANCHE. M21R a mis a nu une
+# incoherence de MA porte : elle jugeait sur « ce pool exclut zero tout seul »
+# — l'ANCIEN critere frequentiste — alors que le projet a adopte le 5 aout
+# `P(Elo>0) > 95 %` SUR POOLS CHAINES avec garde d'heterogeneite. Les deux ne
+# disaient pas la meme chose : le pool 2 seul echoue, le chainage passe
+# largement. Choisir le critere APRES avoir vu les chiffres serait exactement la
+# faute que la replication existait pour eviter (M20 l'a chiffree : x0,04 a
+# x0,30).
+#
+# ⛔ LES DEUX CRITERES SONT DONC DECLARES ICI, AVANT LE RUN, ET RAPPORTES COTE A
+# COTE QUOI QU'IL ARRIVE :
+#     single_pool  : ce pool seul, arena > 0,050 ET IC95 excluant zero
+#     chained      : P(>0) > 95 % sur les TROIS pools, garde d'heterogeneite verte
+# Statuts possibles, tous nommes d'avance : PASS_BOTH_CRITERIA,
+# PASS_CHAINED_ONLY, PASS_SINGLE_POOL_ONLY, FAIL, INCONCLUSIVE (heterogeneite).
+#
+# La garde d'heterogeneite est PAIRWISE sur les trois pools et refuse le
+# chainage des qu'UNE paire depasse |z| >= 1,96. ⛔ Le SIGNE n'est pas un critere
+# (correction L3 du 6 aout) : same_sign est rapporte, jamais gatant.
+#
+# Les ecarts-types des pools anterieurs sont REDERIVES de leurs IC publies,
+# jamais des arrondis stockes. Verifie : 0,07133 reconstruit [+0,0882 ; +0,3868]
+# et 0,09493 reconstruit [−0,0987 ; +0,2987].
+#
+# CE QUI CHANGE PAR RAPPORT A M21R : les graines (230001-230020, disjointes des
+# deux familles anterieures, garde cablee) et l'ajout du second pool a la
+# chaine. RIEN D'AUTRE.
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_execution_host: cpx62
+
+paired_seeds: [230001, 230002, 230003, 230004, 230005, 230006, 230007, 230008,
+               230009, 230010, 230011, 230012, 230013, 230014, 230015, 230016,
+               230017, 230018, 230019, 230020]
+
+wide_games: 1024
+wide_seed_offset: 770000
+
+arms:
+  - G1_ONLY
+  - G8_ONLY
+  - G1_TO_G8_MIX
+  - G1_WIDE
+  - G1_PLUS_NOVEL_LATE
+  - G1_PLUS_MATCHED_LATE
+
+contrasts:
+  - [G1_TO_G8_MIX, G1_WIDE]              # PRIMAIRE : identite de generation, seule
+  - [G1_WIDE, G1_ONLY]                   # le volume de donnees uniques, chiffre
+  - [G1_TO_G8_MIX, G1_ONLY]              # la somme des deux, secondaire
+  - [G8_ONLY, G1_ONLY]                   # la recence seule
+  - [G1_PLUS_NOVEL_LATE, G1_ONLY]        # la nouvelle couverture
+  - [G1_PLUS_NOVEL_LATE, G1_PLUS_MATCHED_LATE]  # nouveaute ou repondération
+
+arena:
+  pairs: 64
+  seed_base: 923000
+
+scientific_gate:
+  paired_confidence_critical_95: 2.093024054408263   # t(0,975 ; 19)
+  # ⛔ L'ARENA DECIDE. Le score d'apprentissage reste rapporte -- et un score
+  # confidemment negatif sous une arena positive est SIGNALE -- mais il ne gate
+  # plus rien : M18, M19 et M20 ont etabli que la qualite d'etiquetage n'est pas
+  # la force, et c'est exactement pour ca que l'arena est co-primaire.
+  minimum_practical_arena_gain: 0.050
+  minimum_practical_learning_gain: 0.010
+
+  # LE POOL ANTERIEUR, pour la garde d'heterogeneite et le chainage.
+  # `standard_error` est REDERIVE de l'IC publie : (0,3868 − 0,0882) / (2 x t),
+  # t = 2,093024054408263 a 19 degres de liberte. Verifie : la reconstruction
+  # rend [+0,0882 ; +0,3868], l'IC exact de cpx62-1211.
+  # ⛔ Le SIGNE n'est pas un critere (correction L3 du 6 aout) : un effet vrai
+  # proche de zero produit des signes opposes une fois sur deux. Le desaccord se
+  # teste statistiquement ; `same_sign` est rapporte, jamais gatant.
+  minimum_chained_probability_above_zero: 0.95
+
+  # LES DEUX POOLS ANTERIEURS. Ecarts-types REDERIVES des IC publies.
+  replication_of:
+    - label: cpx62-1211 (M21, seeds 210001-210020)
+      mean: 0.2375
+      standard_error: 0.07133
+      n: 20
+    - label: cpx62-1212 (M21R, seeds 220001-220020)
+      mean: 0.1000
+      standard_error: 0.09493
+      n: 20
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
