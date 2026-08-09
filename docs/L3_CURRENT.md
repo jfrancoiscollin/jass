@@ -104,7 +104,12 @@
 > label_strength_anticorrelation_DOES_hold_on_the_recency_factor_both_CIs_exclude_zero;
 > m20_refuted_its_TWO_pairs_not_the_general_claim_correction_to_my_own_reading;
 > my_m21_gate_keyed_on_the_LEARNING_score_and_printed_FAIL_on_a_positive_arena;
-> single_pool_no_replication_rerun_M21_on_fresh_seeds_with_the_gate_rewired;
+> m21r_did_NOT_replicate_on_its_own_pool_plus_0_1000_ci_spans_zero_shrink_x0_42;
+> but_the_two_pools_AGREE_z_minus_1_16_and_the_CHAINED_estimate_is_plus_0_1879_P_gt_0_99_95;
+> my_gate_used_the_OLD_single_pool_criterion_not_the_house_chained_one_second_misspec;
+> NOT_re_reading_the_verdict_post_hoc_the_answer_is_a_THIRD_disjoint_pool;
+> recency_anticorrelation_replicates_on_LEARNING_only_not_on_arena_claim_withdrawn;
+> unique_volume_and_novelty_both_fail_to_pay_in_BOTH_pools_L3_coverage_verdict_intact;
 > cpx62_is_3_3x_faster_than_the_dev_box_divide_local_estimates_by_three;
 > power_is_nearly_free_at_lab_scale_20_seeds_by_default_from_now_on;
 > a_fixture_must_reproduce_the_VARIATION_of_reality_not_only_its_shape;
@@ -423,6 +428,69 @@ moins un critère indécidable par manque de puissance — dont M18 avec une moy
 **au-dessus** du seuil pratique. **Tout jalon mini-jass doit désormais être sizé
 à 20 graines par défaut**, et une ETA mini-jass doit être annoncée comme
 « setup + ε », pas comme un coût proportionnel au nombre de bras.
+
+### ⚖️ M21R (`cpx62-1212`) — LA RÉPLICATION ÉCHOUE SUR SON POOL, LE CHAÎNAGE PASSE LARGEMENT, ET MA PORTE TRANCHE MAL LES DEUX
+
+`status=FAIL`, `finding=did_not_replicate_the_prior_pool`,
+`result_hash=04d7f18fc…`, 20 graines **fraîches** (`220001-220020`, garde
+refusant la famille de M21), porte recâblée sur l'arena.
+
+| contraste | apprentissage | arena |
+|---|---|---|
+| **`MIX − G1_WIDE`** (primaire) | +0,0115 `[−0,004 ; +0,027]` | **+0,1000 `[−0,099 ; +0,299]`** |
+| `G1_WIDE − G1_ONLY` (volume) | −0,0146 `[−0,026 ; −0,003]` | −0,0625 `[−0,218 ; +0,093]` |
+| `MIX − G1_ONLY` | −0,0031 `[−0,014 ; +0,008]` | +0,0375 `[−0,106 ; +0,181]` |
+| `G8_ONLY − G1_ONLY` (récence) | **+0,0233 `[+0,013 ; +0,034]`** | −0,0875 `[−0,245 ; +0,070]` |
+| `NOVEL_LATE − G1_ONLY` | −0,0092 `[−0,017 ; −0,001]` | −0,1125 `[−0,276 ; +0,051]` |
+| `NOVEL_LATE − MATCHED_LATE` | −0,0038 `[−0,013 ; +0,006]` | +0,0000 `[−0,211 ; +0,211]` |
+
+**Sur son propre pool, l'effet ne réplique pas** : `+0,1000` contre `+0,2375`,
+IC qui traverse zéro. **Rétrécissement ×0,42.**
+
+📌 **MAIS LES DEUX POOLS SONT STATISTIQUEMENT COMPATIBLES, ET LE CHAÎNAGE EST
+FRANC.**
+
+```
+between_pool_z = −1,158   →  pools_disagree = False   (garde verte)
+same_sign      = True     (rapporté, jamais gatant)
+chaîné         = +0,1879  se 0,0570  →  z = 3,29  →  P(>0) = 99,95 %
+               IC95 chaîné ≈ [+0,076 ; +0,300]
+```
+
+Et `×0,42` tombe **au milieu de la bande de déflation documentée à L3** (volume
+`×0,09`, PRIOR `×0,46`, PRIORTIGHT `×0,76`, fold exact `×0,95`) : c'est le
+profil d'un **effet réel mais plus petit**, pas celui du bruit pur.
+
+⛔ **ET MA PORTE EST À NOUVEAU MAL SPÉCIFIÉE — DEUXIÈME FOIS SUR LA MÊME
+CELLULE.** J'ai préinscrit le verdict sur « le pool 2 exclut zéro tout seul »,
+c'est-à-dire l'**ancien** critère fréquentiste, alors que le projet a adopté le
+5 août `P(Elo>0) > 95 %` **sur pools chaînés** avec garde d'hétérogénéité —
+critère que cette cellule **calcule** et qu'elle **remplit largement**. Le gate
+et le standard maison ne disent pas la même chose.
+
+⛔ **CE QUE JE NE FAIS PAS : re-lire le verdict maintenant.** Choisir le critère
+après avoir vu les chiffres, c'est exactement la faute que M20 a chiffrée
+(`×0,04` à `×0,30`) et que cette réplication existait pour éviter. **Le verdict
+préinscrit est FAIL.** Le chaînage est rapporté parce qu'il était préinscrit
+pour être calculé — pas parce qu'il arrange.
+
+**La sortie n'est pas une relecture, c'est un troisième pool disjoint.** Il
+coûte ~250 s de science plus le coût fixe du runner, et il tranche pour de bon :
+si le chaînage à trois pools tient au-dessus de `95 %`, le mécanisme est établi
+sous le standard maison ; s'il s'effondre, `+0,2375` était bien une inflation de
+sélection.
+
+⚠️ **CORRECTION À CE QUE J'AI ÉCRIT HIER SUR L'ANTICORRÉLATION.** J'avais retenu
+de M21 qu'elle « tient sur la récence ». **Elle ne réplique qu'à moitié** : le
+côté apprentissage tient (`+0,0233` contre `+0,0266`, IC excluant zéro dans les
+deux pools), **le côté arena ne tient pas** (`−0,0875`, IC traversant zéro, là
+où M21 donnait `−0,2125` excluant zéro). `recency_shows_label_strength_anticorrelation
+= False`. **L'anticorrélation étiquettes/force n'est établie nulle part.**
+
+✅ Deux acquis latéraux qui répliquent, eux : **le volume de données uniques ne
+paie pas** (`G1_WIDE − G1_ONLY` négatif sur l'apprentissage, plat sur l'arena
+dans les deux pools) et **la nouveauté ne paie pas** (`NOVEL_LATE − G1_ONLY`
+négatif sur l'apprentissage) — le verdict L3 sur la couverture reste intact.
 
 ### ✅⚠️ M21 (`cpx62-1211`) — LE MÉLANGE DE GÉNÉRATIONS PRODUIT UN MODÈLE PLUS FORT, ET MA PORTE A DIT L'INVERSE
 
