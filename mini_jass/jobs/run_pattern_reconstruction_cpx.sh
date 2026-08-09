@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Architecture-correct reconstruction cells. Prepare one CPX job per cell:
-#   run_pattern_reconstruction_cpx.sh m24p|m14p|m17p|m17p2
+#   run_pattern_reconstruction_cpx.sh m24p|m14p|m17p|m17p2|m17p2r
 #
 # This entrypoint deliberately does not choose the order.  M24-P is the first
 # scientific read; M14-P and M17-P are launched only after its interpretation.
 set -Eeuo pipefail
 
-cell=${1:?expected one of: m24p, m14p, m17p, m17p2}
+cell=${1:?expected one of: m24p, m14p, m17p, m17p2, m17p2r}
 repo=${JASS_CODE_DIR:?JASS_CODE_DIR is required}
 job_id=${JASS_JOB_ID:?JASS_JOB_ID is required}
 result_root=${JASS_RESULT_DIR:?JASS_RESULT_DIR is required}
@@ -37,6 +37,11 @@ case "$cell" in
   m17p2)
     tool=run_pattern_generation_ladder.py
     config=l1_pattern_generation_ladder_v2.yaml
+    timeout_seconds=43200
+    ;;
+  m17p2r)
+    tool=run_pattern_generation_ladder.py
+    config=l1_pattern_generation_ladder_replication.yaml
     timeout_seconds=43200
     ;;
   *)

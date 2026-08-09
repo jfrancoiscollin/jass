@@ -130,6 +130,11 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
         ("l1_pattern_value_target_ablation.yaml", M14P.SCHEMA, "M14-P"),
         ("l1_pattern_generation_ladder.yaml", M17P.SCHEMA, "M17-P"),
         ("l1_pattern_generation_ladder_v2.yaml", M17P.SCHEMA_V2, "M17-P2"),
+        (
+            "l1_pattern_generation_ladder_replication.yaml",
+            M17P.SCHEMA_REPLICATION,
+            "M17-P2R",
+        ),
     ],
 )
 def test_new_evidence_namespaces_do_not_collide_with_historical_results(
@@ -187,3 +192,80 @@ def test_m17p2_rejects_the_fixed_initial_start(tmp_path: Path) -> None:
     path.write_text(yaml.safe_dump(config), encoding="utf-8")
     with pytest.raises(ValueError, match="varied development start states"):
         M17P._resolve(path)
+
+
+def test_m17p2r_reuses_control_with_fresh_preregistered_seeds() -> None:
+    v1_config, _ = M17P._resolve(
+        ROOT / "configs" / "l1_pattern_generation_ladder.yaml"
+    )
+    v2_config, v2_loop = M17P._resolve(
+        ROOT / "configs" / "l1_pattern_generation_ladder_v2.yaml"
+    )
+    replication, replication_loop = M17P._resolve(
+        ROOT / "configs" / "l1_pattern_generation_ladder_replication.yaml"
+    )
+    assert replication["paired_seeds"] == list(range(264001, 264021))
+    assert set(replication["paired_seeds"]).isdisjoint(v1_config["paired_seeds"])
+    assert set(replication["paired_seeds"]).isdisjoint(v2_config["paired_seeds"])
+    assert replication["promotion_control"] == v2_config["promotion_control"]
+    assert replication_loop["arena"] == v2_loop["arena"]
+    assert replication["boundaries"]["cohorts_sealed"] == ["frozen_test"]
+
+
+@pytest.mark.parametrize(
+    "primary,expected_finding",
+    [
+        (
+            {"mean": 0.012, "lower": 0.004, "upper": 0.020},
+            "pattern_iteration_compounding_replicates",
+        ),
+        (
+            {"mean": 0.008, "lower": 0.002, "upper": 0.014},
+            "compounding_detected_below_practical_threshold",
+        ),
+        (
+            {"mean": 0.012, "lower": -0.001, "upper": 0.025},
+            "pattern_iteration_compounding_does_not_replicate",
+        ),
+    ],
+)
+def test_m17p2r_applies_confidence_and_practical_gates(
+    primary: dict[str, float], expected_finding: str
+) -> None:
+    result = M17P.build_replication_recommendation(
+        {
+            "mean_advancing_generations": 6.0,
+            "paired_zero_regret_g8_minus_g1": primary,
+        },
+        {
+            "require_primary_ci_above_zero": True,
+            "minimum_practical_compounding_gain": 0.01,
+        },
+        {"minimum_advancing_generations": 1},
+    )
+    assert result["status"] == "PASS"
+    assert result["finding"] == expected_finding
+    assert result["replication_confirms"] is (
+        expected_finding == "pattern_iteration_compounding_replicates"
+    )
+    assert result["promotable"] is False
+
+
+def test_m17p2r_is_inconclusive_when_the_ladder_does_not_advance() -> None:
+    result = M17P.build_replication_recommendation(
+        {
+            "mean_advancing_generations": 0.0,
+            "paired_zero_regret_g8_minus_g1": {
+                "mean": 0.02,
+                "lower": 0.01,
+                "upper": 0.03,
+            },
+        },
+        {
+            "require_primary_ci_above_zero": True,
+            "minimum_practical_compounding_gain": 0.01,
+        },
+        {"minimum_advancing_generations": 1},
+    )
+    assert result["status"] == "INCONCLUSIVE"
+    assert result["replication_confirms"] is None
