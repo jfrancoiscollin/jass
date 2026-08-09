@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 8 août 2026**
+> **Mis à jour : 9 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -125,7 +125,170 @@
 > cpx62_is_3_3x_faster_than_the_dev_box_divide_local_estimates_by_three;
 > power_is_nearly_free_at_lab_scale_20_seeds_by_default_from_now_on;
 > a_fixture_must_reproduce_the_VARIATION_of_reality_not_only_its_shape;
-> trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result`.
+> trajectory_equal_m3_preregistered_home_1317_1318_queued_no_result;
+> ⛔_THE_WHOLE_LAB_RAN_ON_AN_MLP_WHILE_PRODUCTION_IS_LINEAR_OVER_PATTERNS;
+> the_policy_head_was_98_6_percent_of_the_model_1_323_344_params_vs_18_128;
+> M3_to_M24_measured_a_loop_production_CANNOT_reproduce_transposition_argument_void;
+> my_first_PatternEval_folded_the_BOARD_but_left_side_to_move_a_free_weight;
+> the_exact_symmetry_is_board_AND_side_together_perspective_fold_18127_params;
+> my_own_test_missed_it_because_both_positions_had_side_equal_zero;
+> minijass_1216_zero_weight_eval_plus_one_ply_plus_rules_ALREADY_plays_0_8089;
+> the_band_self_play_must_climb_is_0_809_to_0_969_NOT_zero_to_0_969;
+> minijass_M24P_ceiling_0_96900_frozen_test_saturated_last_step_plus_0_00007;
+> the_production_architecture_costs_only_0_0079_of_ceiling_vs_the_MLP_0_97694;
+> transposability_to_10x10_is_therefore_CHEAP_in_representational_capacity;
+> minijass_M14P_exact_labels_buy_plus_0_00783_zero_regret_ci_excludes_zero_n20;
+> that_is_an_UPPER_BOUND_the_oracle_is_the_best_label_possible_5_percent_of_band;
+> label_quality_is_NOT_the_main_lever_17_percent_wrong_labels_buy_0_8_of_16_points;
+> 📌_CALIBRATION_KEEPS_IMPROVING_LONG_AFTER_RANKING_STOPS_three_independent_cells;
+> value_sign_gain_is_8x_the_zero_regret_gain_on_the_label_factor_0_061_vs_0_0078;
+> READ_zero_regret_NEVER_the_value_loss_a_better_MSE_can_buy_zero_strength;
+> the_cpx62_speed_ratio_is_a_property_of_the_WORKLOAD_not_of_the_box_and_it_FLIPS;
+> x3_3_FASTER_on_search_heavy_loops_but_x2_6_SLOWER_on_BLAS_heavy_supervised_fits;
+> a_background_monitor_inheriting_job_stdout_holds_the_runner_pipe_open_forever;
+> found_by_TESTING_the_failure_path_not_by_re_reading_the_script`.
+
+## 0novies. 9 août 2026 — ⛔ TOUT LE LABORATOIRE MESURAIT UNE ARCHITECTURE QUE LA PRODUCTION NE PEUT PAS REPRODUIRE
+
+> **Statut : reconstruction en cours.** `cpx62-1216` (câblage), `cpx62-1217`
+> (M24-P, plafond) sont finalisés ; `cpx62-1218` (M14-P + M17-P) tourne, M14-P
+> publiée. Cette section est tenue à jour au fil des finalisations.
+
+### ⛔ La faute de fond, et pourquoi elle vidait la campagne de son sens
+
+Le banc mini-jass tournait depuis M3 sur un **`MiniJassMLP`** : deux couches
+cachées de 32, ReLU, **5 225 paramètres**, `linear: false` dans les **six**
+configs. La production est un modèle **LINÉAIRE sur des buckets de patterns**
+(~2,13 M poids, `method="linear"`), et la règle gravée interdit d'en changer de
+classe. **Le laboratoire mesurait donc une boucle que la production ne peut pas
+reproduire** — ce qui vide l'argument de transposition au 10×10, seule raison
+d'être du banc. JFC : « l'idée c'est de pouvoir transposer les résultats sur
+10 10 donc la même archi est obligatoire ».
+
+⚠️ **« Même archi » a TROIS couches, et elles ne coûtent pas la même chose.**
+1. linéaire plutôt que MLP — **un drapeau** (`ModelConfig.linear`) ;
+2. features de **patterns** plutôt que brutes — un module ;
+3. **évaluation VALEUR SEULE, politique dérivée de la recherche** — la chirurgie.
+
+📌 **C'est la couche 3 qui était décisive, et elle est contre-intuitive :
+la tête de politique pesait `98,6 %` du modèle.** Patterns 3×3 avec tête policy
+= **1 323 344** paramètres ; valeur seule = **18 128**. Tant qu'un modèle porte
+deux têtes, un modèle de patterns de taille raisonnable est hors d'atteinte —
+la tête multiplie tout par les 72 actions.
+
+### ⚠️ Mon premier `PatternEval` pliait à moitié — corrigé
+
+J'ai plié le **plateau** par `rot180 ∘ colour-swap` en laissant le **trait** en
+poids libre à côté. C'est incohérent : la symétrie exacte est
+`(plateau, trait) → (T(plateau), 1−trait)`. **Mon propre test ne l'a pas vu
+parce qu'il comparait deux positions à `trait = 0`** — le seul cas où
+l'incohérence est invisible. Corrigé par `perspective_fold_map`, qui plie les
+couples `(trait, bucket)`. Vérifié : image complète → écart `0,0` ; image du
+plateau seul à trait inchangé → écart `0,84` (correct, ce n'est pas une
+symétrie).
+
+Coût : **18 127 paramètres** au lieu de 9 078 — soit la moitié des 36 250 d'un
+modèle side-aware non plié, en imposant la **vraie** contrainte au lieu d'une
+fausse. Même leçon qu'au L3 le 1er août : **n'imposer QUE ce qui est vrai**.
+
+### 📌 `cpx62-1216` — le plancher, qui recadre toutes les courbes à venir
+
+Une évaluation **à poids nuls**, avec la recherche à un pli et les terminaux
+lus dans les règles, joue déjà le coup optimal **`0,8089`** du temps.
+
+⛔ **La marge que l'autojeu doit gravir est donc `0,809 → 0,969`, pas
+`0 → 0,969`.** Toute courbe de convergence L1 doit se lire contre ces deux
+lignes, sous peine de prendre pour un apprentissage ce que les règles donnent
+gratuitement.
+
+### ✅ `cpx62-1217` — M24-P : le plafond de l'architecture de production
+
+| dose (époques) | dev `zero_regret` |
+|---:|---:|
+| 12 | 0,96314 |
+| 48 | 0,96718 |
+| 192 | 0,96789 |
+| 768 | 0,96796 |
+
+**Saturé** — dernière marche `+0,00007` contre une tolérance de `0,005`.
+Frozen test lu sous contrat scellé, deux graines : **`zero_regret = 0,96900`**,
+distance à l'oracle `0,0310`.
+
+📌 **Contre le plafond du MLP historique (M24, `cpx62-1215`) : `0,97694`.
+L'architecture correcte coûte `0,0079`, soit 0,79 point.** Passer à l'archi
+transposable au 10×10 ne coûte donc presque rien en capacité
+représentationnelle — **l'argument de transposition tient**, et c'est la
+justification rétrospective de toute la reconstruction.
+
+### ✅ `cpx62-1218` cellule 1 — M14-P : le bruit d'étiquetage est réel mais PETIT
+
+20 graines appariées, replay **immuable** (empreintes des deux bras identiques,
+asserties) ; seul le `value_target` diffère.
+
+| contraste (oracle exact − résultat d'autojeu) | moyenne | IC95 |
+|---|---:|---|
+| **`zero_regret`** | **+0,00783** | `[+0,00693 ; +0,00873]` |
+| `value_sign` | +0,0612 | `[+0,0590 ; +0,0633]` |
+
+`mean_generated_target_exact_rate = 0,830` : **17 % des étiquettes d'autojeu
+contredisent la valeur exacte.**
+
+⛔ **Et c'est une BORNE SUPÉRIEURE, pas un coût.** L'oracle exact est la
+meilleure étiquette possible — aucune boucle ne peut faire mieux. Corriger
+`17 %` d'étiquettes fausses achète `0,8` point sur les `16` disponibles, soit
+**~5 % du gisement**. L'IC est serré (`se = 0,00046`, grâce à l'appariement
+byte-exact) : ce n'est pas un manque de puissance, l'effet est bien mesuré et
+il est petit. **La qualité des étiquettes n'est PAS le levier principal sur L1.**
+
+⚠️ **Ceci CORRIGE la lecture de M14 (ancienne archi, `0octies`)**, qui portait
+sur `+9,4 points de signe de valeur`. Sur la bonne architecture et sur la
+métrique qui décide — le coup joué — le même facteur vaut `+0,8 point`. Le
+`+9,4` n'était pas faux, il portait sur la **calibration**, pas sur la force.
+
+### 📌 LE MOTIF QUI SE DURCIT EN RÈGLE DE LECTURE
+
+Deux facteurs indépendants, même signature — le gain de **calibration** est un
+ordre de grandeur au-dessus du gain de **force** :
+
+| facteur | Δ `value_sign` | Δ `value_mae` | Δ `zero_regret` | rapport |
+|---|---:|---:|---:|---:|
+| M24-P — dose, 12 → 768 époques | **+0,11112** | −0,2061 | **+0,00482** | **23×** |
+| M14-P — étiquette, autojeu → oracle | **+0,06117** | — | **+0,00783** | **8×** |
+
+⛔ **LA CALIBRATION CONTINUE DE S'AMÉLIORER LONGTEMPS APRÈS QUE LE CLASSEMENT A
+CESSÉ DE PROGRESSER.** Entre les doses 192 et 768, `value_mae` gagne encore
+`0,029` et `value_sign` `0,012` pendant que `zero_regret` gagne `0,00007` — la
+valeur devient nettement plus juste **sans que le modèle joue mieux**. Pour
+jouer, seul l'**ordre des enfants** compte, pas le niveau de la valeur.
+
+**Conséquence opérationnelle, non négociable : lire `zero_regret_rate`, JAMAIS
+la perte de valeur.** Une boucle qui améliore sa MSE peut ne rien gagner en
+force. C'est le pendant mini-jass de la leçon L3 « la couverture n'est pas le
+levier » — un proxy plausible qui bouge dans le vide.
+
+### 🔧 Deux leçons d'outillage payées aujourd'hui
+
+⛔ **Le rapport de vitesse cpx62 / box de dev est une propriété de la CHARGE,
+pas de la box, et il CHANGE DE SENS.** `×3,3 plus rapide` sur les boucles
+search-heavy (ancre déjà au registre) mais **`×2,6 plus LENT`** sur les fits
+supervisés BLAS-heavy, mesuré sur les timings de phase de 1216. Transporter
+l'un sur l'autre est la bourde 0665 sous une autre forme — j'y suis déjà tombé
+une fois sur `cpx62-1215`. **Re-mesurer par famille de charge.**
+
+⛔ **Un monitor de fond qui hérite de `stdout` du job retient l'extrémité
+d'écriture du tuyau que le runner lit : le job PEND indéfiniment**, ici après
+l'échec de la seconde cellule. Rediriger la sortie du monitor vers des
+fichiers. 📌 **Trouvé en TESTANT le chemin d'échec, pas en relisant le script**
+— la relecture avait laissé passer un hang de la famille 0665/0657.
+
+### Reste ouvert
+
+`M17-P` (échelle causale de générations à 8, 20 graines) tourne : c'est elle
+qui porte la question de fond, **l'autojeu accumule-t-il à travers les
+générations**. Ensuite seulement : reconstruction de M15/M16 si M14-P le
+justifie, puis M18/M19/M21/M23, puis l'étude de convergence à recette figée
+demandée par JFC, et le 6×6 en dernier. **Aucune de ces cellules n'est
+promouvable et aucune n'autorise un transfert direct au 10×10.**
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
 
