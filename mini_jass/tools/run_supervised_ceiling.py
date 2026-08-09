@@ -163,8 +163,15 @@ def build_recommendation(
         if int(size) > frozen_size
     ]
     reference = float(ceiling["frozen_test"][PRIMARY_METRIC])
-    capacity_gain = max((v - reference for _, v in bigger), default=0.0)
-    architecture_binds = capacity_gain > float(gate["capacity_relevance_threshold"])
+    # ⚠️ Sans echelle de capacite, la question « l'architecture borne-t-elle ? »
+    # n'a pas ete POSEE. Rendre `False` la ferait passer pour repondue par la
+    # negative -- c'est `None`, et le lecteur doit le voir.
+    if not bigger:
+        capacity_gain = None
+        architecture_binds = None
+    else:
+        capacity_gain = max(v - reference for _, v in bigger)
+        architecture_binds = capacity_gain > float(gate["capacity_relevance_threshold"])
     return {
         **common,
         "status": "PASS",
@@ -245,7 +252,15 @@ def run_m24(
     # 2. LA CAPACITE, a la dose la plus longue : l'architecture borne-t-elle ?
     by_capacity: dict[str, Any] = {}
     top_dose = int(config["dose_ladder"][-1])
+    frozen_size = int(config["model"]["hidden_size"])
     for size in config["capacity_ladder"]:
+        if int(size) == frozen_size:
+            # La taille gelee a DEJA ete fittee au barreau superieur de l'echelle
+            # de dose : la recalculer serait payer deux fois exactement le meme
+            # travail, et laisser deux chiffres diverger si une graine derive.
+            by_capacity[str(int(size))] = deepcopy(by_dose[str(top_dose)])
+            by_capacity[str(int(size))]["reused_from_dose_ladder"] = True
+            continue
         model_config = deepcopy(config["model"])
         model_config["hidden_size"] = int(size)
         runs = [

@@ -288,11 +288,11 @@ def _resolve(path: Path) -> dict[str, Any]:
     if tuple(config.get("arms", {})) != ARM_ORDER:
         raise ValueError("M23 arm definitions changed after preregistration")
     seeds = [int(seed) for seed in config["paired_seeds"]]
-    if len(seeds) != 20 or len(set(seeds)) != 20:
-        raise ValueError("M23 requires 20 distinct seeds")
+    if len(seeds) < 20 or len(set(seeds)) != len(seeds):
+        raise ValueError("M23 requires at least 20 distinct seeds")
     # La garde de disjonction grandit avec la chaine : 210001-20 (M21),
-    # 220001-20 (M21R) et 230001-20 (M21T) sont consommees.
-    for lower in (210001, 220001, 230001):
+    # 220001-20 (M21R), 230001-20 (M21T) et 240001-20 (M23-A v1) sont consommees.
+    for lower in (210001, 220001, 230001, 240001):
         if set(seeds) & set(range(lower, lower + 20)):
             raise ValueError("M23 must not reuse an earlier pool's seed family")
     boundaries = config.get("boundaries", {})

@@ -42,14 +42,20 @@ training:
 # faute d'`EXACT` et `PRIOR` sous-convergees a L3, ou le solveur s'arretait a 141
 # iterations en rendant `success=True`. La porte REFUSE de publier un plafond si
 # la derniere marche progresse encore.
-dose_ladder: [12, 48, 192, 768]
+dose_ladder: [48, 192, 768, 3072]
 
-# Diagnostic : l'architecture est-elle ce qui borne ? Mesure a la dose la plus
-# longue seulement. `32` est la recette gelee et sert de reference.
-capacity_ladder: [32, 64, 128]
+# ⛔ ECHELLE DE CAPACITE VIDE, DELIBEREMENT. La question « l'architecture
+# borne-t-elle ? » coutait les deux tiers du budget de cette cellule, et elle ne
+# devient actionnable QUE si le plafond s'avere nettement sous 1,0. La poser
+# maintenant serait balayer un facteur « parce qu'on peut » — exactement ce que
+# j'ai reproche au programme de la PR #440. Elle sera posee apres, si le chiffre
+# la rend utile. La cellule rapporte alors `architecture_is_the_binding_constraint:
+# null` : NON TESTEE, et surtout pas « repondue par la negative ».
+capacity_ladder: []
 
-# Trois graines suffisent : on mesure un plafond, pas un contraste apparie.
-seeds: [240101, 240102, 240103]
+# Deux graines : on mesure un PLAFOND, pas un contraste apparie. L'ecart entre
+# graines est rapporte pour que le lecteur juge de la stabilite.
+seeds: [240101, 240102]
 
 scientific_gate:
   # Progres residuel tolere sur la derniere marche de dose, sur `zero_regret_rate`
