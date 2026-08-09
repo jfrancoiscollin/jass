@@ -233,60 +233,142 @@ def _confidently_negative(row: dict[str, Any]) -> bool:
     return float(row["confidence_95"][1]) < 0.0
 
 
+def _standard_error(row: dict[str, Any], critical: float) -> float:
+    low, high = row["confidence_95"]
+    return (float(high) - float(low)) / (2.0 * critical)
+
+
+def replication_check(
+    row: dict[str, Any], prior: dict[str, Any], critical: float
+) -> dict[str, Any]:
+    """Compare ce pool au precedent, avec la discipline de chainage de L3.
+
+    ⛔ LE SIGNE N'EST PAS UN CRITERE (correction du 6 aout, cote L3) : un effet
+    vrai proche de zero produit des signes opposes une fois sur deux. Le
+    desaccord se teste STATISTIQUEMENT. `same_sign` est rapporte, jamais gatant.
+    """
+    se_new = _standard_error(row, critical)
+    se_old = float(prior["standard_error"])
+    mean_new, mean_old = float(row["mean"]), float(prior["mean"])
+    spread = (se_new**2 + se_old**2) ** 0.5
+    between = (mean_new - mean_old) / spread if spread > 0.0 else 0.0
+    weight_new = 1.0 / se_new**2 if se_new > 0 else 0.0
+    weight_old = 1.0 / se_old**2 if se_old > 0 else 0.0
+    total = weight_new + weight_old
+    chained = (mean_new * weight_new + mean_old * weight_old) / total if total else 0.0
+    return {
+        "prior_pool": prior.get("label"),
+        "prior_mean": mean_old,
+        "replication_mean": mean_new,
+        "between_pool_z": between,
+        "pools_disagree": abs(between) >= 1.96,
+        "same_sign": (mean_new > 0) == (mean_old > 0),
+        "chained_mean": chained,
+        "chained_standard_error": (1.0 / total**0.5) if total else 0.0,
+        "shrinkage_vs_prior": (mean_new / mean_old) if mean_old else None,
+    }
+
+
 def build_recommendation(
     aggregate: dict[str, Any], gate: dict[str, Any]
 ) -> dict[str, Any]:
-    """`MIX − G1_WIDE` decide ; l'arena a un droit de veto."""
+    """⛔ L'ARENA DECIDE. Le score d'apprentissage est rapporte, jamais gatant.
+
+    La v1 de cette porte exigeait que le score d'apprentissage passe AVANT de
+    regarder l'arena. Sur `cpx62-1211` le score etait non concluant (`+0,0141`,
+    IC traversant zero) et l'arena valait `+0,2375` IC95 `[+0,088 ; +0,387]` :
+    la porte a imprime FAIL sur le seul effet de la journee dont l'IC excluait
+    zero. C'est l'inverse de ce que la campagne a etabli -- M18, M19 et M20 ont
+    montre que la qualite d'etiquetage n'est pas la force -- et l'inverse de ce
+    que l'arena co-primaire etait censee garantir.
+
+    La force du modele est donc le critere primaire. Le score d'apprentissage
+    reste rapporte, et un score CONFIDEMMENT NEGATIF sous une arena positive est
+    signale plutot qu'ignore : ce serait une divergence a comprendre, pas un
+    detail.
+    """
     contrasts = aggregate["contrasts"]
     primary = contrasts["G1_TO_G8_MIX_minus_G1_WIDE"]
     volume = contrasts["G1_WIDE_minus_G1_ONLY"]
     recency = contrasts["G8_ONLY_minus_G1_ONLY"]
     novelty = contrasts["G1_PLUS_NOVEL_LATE_minus_G1_PLUS_MATCHED_LATE"]
+    critical = float(gate["paired_confidence_critical_95"])
 
-    learning_ok = (
-        float(primary["learning"]["mean"]) > float(gate["minimum_practical_learning_gain"])
-        and _excludes_zero_above(primary["learning"])
+    arena_ok = (
+        float(primary["arena"]["mean"]) > float(gate["minimum_practical_arena_gain"])
+        and _excludes_zero_above(primary["arena"])
     )
-    arena_hostile = _confidently_negative(primary["arena"])
     common = {
         "primary_contrast": "G1_TO_G8_MIX_minus_G1_WIDE",
-        "volume_effect_learning": volume["learning"]["mean"],
-        "recency_effect_learning": recency["learning"]["mean"],
-        "novelty_minus_matched_learning": novelty["learning"]["mean"],
+        "primary_endpoint": "arena_vs_initial",
+        "primary_arena_mean": float(primary["arena"]["mean"]),
+        "primary_learning_mean": float(primary["learning"]["mean"]),
+        "learning_confidently_negative": _confidently_negative(primary["learning"]),
+        # Le controle de volume : diagnostic, jamais gatant. `MIX − G1_WIDE` est
+        # DEJA a volume egal, donc un effet de volume ne peut pas l'expliquer ;
+        # on le chiffre pour dire ce que `MIX − G1_ONLY` aurait confondu.
+        "volume_effect_arena": float(volume["arena"]["mean"]),
+        "volume_effect_learning": float(volume["learning"]["mean"]),
+        "recency_effect_arena": float(recency["arena"]["mean"]),
+        "recency_effect_learning": float(recency["learning"]["mean"]),
+        "novelty_minus_matched_arena": float(novelty["arena"]["mean"]),
+        "novelty_minus_matched_learning": float(novelty["learning"]["mean"]),
+        # L'anticorrelation etiquettes/force, testee sur CE facteur : signes
+        # opposes ET les deux IC hors de zero, le critere de M20.
+        "recency_shows_label_strength_anticorrelation": bool(
+            _excludes_zero_above(recency["learning"])
+            and _confidently_negative(recency["arena"])
+        ),
         "promotable": False,
     }
-    if learning_ok and arena_hostile:
-        # Preinscrit AVANT tout chiffre : si les deux criteres se contredisent,
-        # le mecanisme n'est pas valide. Choisir apres coup le critere qui
-        # flatte l'hypothese serait le biais que cette cellule existe pour eviter.
-        return {
-            **common,
-            "status": "PASS_LEARNING_BUT_WEAKER_MODEL",
-            "finding": "generation_identity_helps_the_score_and_HURTS_the_model",
-            "composition_is_the_mechanism": False,
-            "next_step": "do_not_endorse_the_mechanism_investigate_the_endpoint_conflict",
-        }
-    if not learning_ok:
+
+    replication = None
+    prior = gate.get("replication_of")
+    if prior:
+        replication = replication_check(primary["arena"], prior, critical)
+        common["replication"] = replication
+
+    if not arena_ok:
+        # Sur une cellule de REPLICATION, « pas d'effet ici » et « l'effet
+        # d'origine ne se reproduit pas » ne sont pas la meme phrase. Nommer la
+        # seconde evite qu'un echec de replication soit lu comme une mesure
+        # independante -- et evite aussi de jeter le pool anterieur en silence.
         return {
             **common,
             "status": "FAIL",
-            "finding": "generation_identity_adds_nothing_once_unique_volume_is_held_equal",
+            "finding": (
+                "did_not_replicate_the_prior_pool"
+                if replication is not None
+                else "generation_identity_did_not_make_a_stronger_model_at_equal_volume"
+            ),
             "composition_is_the_mechanism": False,
-            "next_step": "M22_isolate_the_sequential_optimizer_path",
+            "next_step": (
+                "treat_the_prior_estimate_as_inflated_and_stop_this_axis"
+                if replication is not None
+                else "M22_isolate_the_sequential_optimizer_path"
+            ),
         }
-    # Attribution : le volume est-il l'explication, et la nouveaute paie-t-elle ?
-    resolved = _excludes_zero_above(novelty["learning"]) or _confidently_negative(
-        novelty["learning"]
-    )
+    if replication is not None and replication["pools_disagree"]:
+        # Le desaccord EST le resultat : un chainage sur deux pools
+        # heterogenes fabriquerait une confiance que les donnees ne portent pas.
+        return {
+            **common,
+            "status": "INCONCLUSIVE",
+            "finding": "the_two_pools_disagree_statistically",
+            "composition_is_the_mechanism": None,
+            "next_step": "explain_the_between_pool_heterogeneity_before_chaining",
+        }
+    replicated = replication is not None and not replication["pools_disagree"]
     return {
         **common,
-        "status": "PASS" if resolved else "PASS_COMPOSITION_MECHANISM_UNRESOLVED",
-        "finding": (
-            "complementary_information_accumulates_across_generations"
-        ),
+        "status": "PASS_REPLICATED" if replicated else "PASS",
+        "finding": "mixing_generations_makes_a_STRONGER_model_at_equal_unique_volume",
         "composition_is_the_mechanism": True,
-        "mechanism_attributed": bool(resolved),
-        "next_step": "replicate_on_fresh_seeds_before_any_scale_transfer",
+        "next_step": (
+            "first_identified_mechanism_of_the_lab_campaign_design_an_L2_transfer_cell"
+            if replicated
+            else "replicate_on_fresh_seeds_before_any_scale_transfer"
+        ),
     }
 
 
@@ -465,7 +547,7 @@ def run_m21(
     recommendation = build_recommendation(aggregate, config["scientific_gate"])
     protocol = {
         "schema": SCHEMA,
-        "milestone": "M21",
+        "milestone": config["milestone"],
         "base_gate_config": config["base_gate_config"],
         "paired_seeds": seeds,
         "arms": list(ARM_ORDER),
@@ -477,7 +559,7 @@ def run_m21(
     }
     result: dict[str, Any] = {
         "schema": SCHEMA,
-        "milestone": "M21",
+        "milestone": config["milestone"],
         "status": recommendation["status"],
         "protocol_hash": _digest(protocol),
         "protocol": protocol,
@@ -521,13 +603,17 @@ def run_m21(
 
 def _resolve(path: Path) -> dict[str, Any]:
     config = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if config.get("schema") != SCHEMA or config.get("milestone") != "M21":
+    if config.get("schema") != SCHEMA or config.get("milestone") not in ("M21", "M21R"):
         raise ValueError("unexpected M21 schema")
     if tuple(config.get("arms", [])) != ARM_ORDER:
         raise ValueError("M21 arm definitions changed after preregistration")
     seeds = [int(seed) for seed in config["paired_seeds"]]
     if len(seeds) != 20 or len(set(seeds)) != 20:
         raise ValueError("M21 requires 20 distinct seeds — power is nearly free here")
+    if config["milestone"] == "M21R" and set(seeds) & set(range(210001, 210021)):
+        # Rejouer une replication sur les graines du pool d'origine, ce n'est pas
+        # une replication : c'est le meme tirage.
+        raise ValueError("M21R must not reuse the M21 seed family")
     boundaries = config.get("boundaries", {})
     if (
         boundaries.get("promotable") is not False

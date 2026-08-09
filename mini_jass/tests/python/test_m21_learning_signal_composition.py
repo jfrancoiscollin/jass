@@ -36,6 +36,7 @@ CONTRASTS = [
 def _gate():
     return {
         "paired_confidence_critical_95": CRITICAL,
+        "minimum_practical_arena_gain": 0.050,
         "minimum_practical_learning_gain": 0.010,
     }
 
@@ -71,68 +72,123 @@ def _aggregate(**kwargs):
 
 
 # --------------------------------------------------------------------------- #
-#  Le primaire, et le piege qu'il evite.
+#  ⛔ L'ARENA DECIDE. La v1 de cette porte exigeait que le score
+#  d'apprentissage passe D'ABORD ; sur cpx62-1211 le score etait non concluant
+#  (+0,0141, IC traversant zero) et l'arena valait +0,2375 IC95 [+0,088 ;
+#  +0,387] -- la porte a imprime FAIL sur le seul effet de la journee dont l'IC
+#  excluait zero. Ces tests verrouillent la correction.
 # --------------------------------------------------------------------------- #
-def test_generation_identity_beating_equal_volume_is_the_mechanism():
-    rec = M21.build_recommendation(_aggregate(), _gate())
-    assert rec["status"].startswith("PASS")
-    assert rec["composition_is_the_mechanism"] is True
-    assert rec["primary_contrast"] == "G1_TO_G8_MIX_minus_G1_WIDE"
-
-
-def test_a_gain_that_G1_WIDE_reproduces_is_VOLUME_not_generations():
-    """Le scenario que la cellule existe pour distinguer : MIX > G1_ONLY, mais
-    G1_WIDE fait aussi bien que MIX. Ce n'est pas l'identite de generation."""
+def test_a_positive_arena_passes_even_when_the_learning_score_is_inconclusive():
+    """Reproduit cpx62-1211 : arena franche, apprentissage non concluant."""
     rec = M21.build_recommendation(
-        _aggregate(mix_learning=0.10, wide_learning=0.10), _gate())
-    assert rec["status"] == "FAIL"
-    assert rec["composition_is_the_mechanism"] is False
-    assert rec["next_step"] == "M22_isolate_the_sequential_optimizer_path"
-    # Et le volume est chiffre, pas seulement ecarte.
-    assert rec["volume_effect_learning"] > 0.0
-
-
-def test_the_arena_has_a_veto_over_the_learning_score():
-    """Preinscrit : si les deux criteres se contredisent, rien n'est valide."""
-    rec = M21.build_recommendation(
-        _aggregate(mix_arena=0.55, wide_arena=0.75), _gate())
-    assert rec["status"] == "PASS_LEARNING_BUT_WEAKER_MODEL"
-    assert rec["composition_is_the_mechanism"] is False
-    assert "do_not_endorse" in rec["next_step"]
-
-
-def test_a_gain_below_the_practical_bar_does_not_pass():
-    rec = M21.build_recommendation(
-        _aggregate(mix_learning=0.055, wide_learning=0.05), _gate())
-    assert rec["status"] == "FAIL"
-
-
-def test_an_unresolved_novelty_contrast_downgrades_the_pass():
-    """MIX gagne, mais nouveaute et appariement sont indiscernables."""
-    rec = M21.build_recommendation(
-        _aggregate(novel_learning=0.06, matched_learning=0.06), _gate())
-    assert rec["status"] == "PASS_COMPOSITION_MECHANISM_UNRESOLVED"
-    assert rec["mechanism_attributed"] is False
-
-
-def test_a_resolved_novelty_contrast_gives_a_full_pass():
-    rec = M21.build_recommendation(
-        _aggregate(novel_learning=0.09, matched_learning=0.04), _gate())
+        _aggregate(mix_learning=0.041, wide_learning=0.038,
+                   mix_arena=0.7875, wide_arena=0.5500), _gate())
     assert rec["status"] == "PASS"
-    assert rec["mechanism_attributed"] is True
+    assert rec["composition_is_the_mechanism"] is True
+    assert rec["primary_endpoint"] == "arena_vs_initial"
+
+
+def test_a_flat_arena_fails_whatever_the_learning_score_says():
+    rec = M21.build_recommendation(
+        _aggregate(mix_learning=0.20, wide_learning=0.02,
+                   mix_arena=0.70, wide_arena=0.70), _gate())
+    assert rec["status"] == "FAIL"
+    assert rec["composition_is_the_mechanism"] is False
+
+
+def test_a_confidently_negative_learning_score_is_FLAGGED_not_swallowed():
+    """L'arena decide, mais une divergence doit rester visible."""
+    rec = M21.build_recommendation(
+        _aggregate(mix_learning=0.00, wide_learning=0.08,
+                   mix_arena=0.7875, wide_arena=0.5500), _gate())
+    assert rec["learning_confidently_negative"] is True
+    assert rec["status"] == "PASS"
+
+
+def test_an_arena_gain_below_the_practical_bar_does_not_pass():
+    rec = M21.build_recommendation(
+        _aggregate(mix_arena=0.72, wide_arena=0.70), _gate())
+    assert rec["status"] == "FAIL"
+
+
+# --------------------------------------------------------------------------- #
+#  La replication : garde d'heterogeneite et chainage par precision.
+# --------------------------------------------------------------------------- #
+def _prior(mean=0.2375, se=0.07133):
+    return {"label": "cpx62-1211", "mean": mean, "standard_error": se, "n": 20}
+
+
+def test_a_consistent_replication_is_reported_as_REPLICATED():
+    gate = {**_gate(), "replication_of": _prior()}
+    rec = M21.build_recommendation(
+        _aggregate(mix_arena=0.7875, wide_arena=0.5500), gate)
+    assert rec["status"] == "PASS_REPLICATED"
+    assert rec["replication"]["pools_disagree"] is False
+    assert "first_identified_mechanism" in rec["next_step"]
+
+
+def test_two_pools_that_disagree_statistically_are_INCONCLUSIVE_not_chained():
+    """Le desaccord EST le resultat ; chainer fabriquerait une fausse confiance."""
+    gate = {**_gate(), "replication_of": _prior(mean=1.20, se=0.05)}
+    rec = M21.build_recommendation(
+        _aggregate(mix_arena=0.7875, wide_arena=0.5500), gate)
+    assert rec["status"] == "INCONCLUSIVE"
+    assert rec["replication"]["pools_disagree"] is True
+    assert rec["composition_is_the_mechanism"] is None
+
+
+def test_opposite_signs_alone_never_block_the_chaining():
+    """Correction L3 du 6 aout : le SIGNE n'est pas un critere.
+
+    Un effet vrai proche de zero produit des signes opposes une fois sur deux ;
+    refuser sur ce motif, c'est refuser precisement quand la bonne reponse est
+    « l'effet est nul ».
+    """
+    check = M21.replication_check(
+        {"mean": 0.06, "confidence_95": [0.055, 0.065]},
+        _prior(mean=-0.02, se=0.30), 2.093024054408263)
+    assert check["same_sign"] is False          # rapporte...
+    assert check["pools_disagree"] is False     # ...mais ne bloque pas
+
+
+def test_the_chained_mean_is_precision_weighted():
+    critical = 2.093024054408263
+    check = M21.replication_check(
+        {"mean": 0.10, "confidence_95": [0.10 - critical * 0.05,
+                                         0.10 + critical * 0.05]},
+        _prior(mean=0.30, se=0.05), critical)
+    assert check["chained_mean"] == pytest.approx(0.20, abs=1e-6)
+    assert check["shrinkage_vs_prior"] == pytest.approx(1.0 / 3.0, abs=1e-6)
+
+
+def test_the_anticorrelation_on_recency_is_reported():
+    """M21 l'a vue sur G8_ONLY : apprentissage +, arena -, les deux IC hors de zero."""
+    rows = _rows()
+    for index, seed in enumerate(SEEDS):
+        rows["G8_ONLY"][seed]["arena_vs_initial"] = 0.40 + 0.004 * ((index % 5) - 2)
+        rows["G8_ONLY"][seed]["learning_delta"] = 0.05 + 0.001 * ((index % 5) - 2)
+    aggregate = {"contrasts": M21.build_contrasts(rows, CONTRASTS, SEEDS, CRITICAL)}
+    rec = M21.build_recommendation(aggregate, _gate())
+    assert rec["recency_shows_label_strength_anticorrelation"] is True
 
 
 def test_no_outcome_is_ever_promotable():
-    for kwargs in ({}, {"wide_learning": 0.10}, {"mix_arena": 0.55, "wide_arena": 0.75}):
-        assert M21.build_recommendation(_aggregate(**kwargs), _gate())["promotable"] is False
+    gate = {**_gate(), "replication_of": _prior()}
+    for kwargs in ({}, {"mix_arena": 0.70, "wide_arena": 0.70},
+                   {"mix_arena": 0.7875, "wide_arena": 0.5500}):
+        assert M21.build_recommendation(_aggregate(**kwargs), gate)["promotable"] is False
 
 
 def test_every_outcome_carries_the_keys_the_results_parser_reads():
-    for kwargs in ({}, {"wide_learning": 0.10}, {"mix_arena": 0.55, "wide_arena": 0.75},
-                   {"novel_learning": 0.06, "matched_learning": 0.06}):
-        rec = M21.build_recommendation(_aggregate(**kwargs), _gate())
-        for key in ("status", "finding", "primary_contrast", "volume_effect_learning",
-                    "recency_effect_learning", "novelty_minus_matched_learning",
+    gate = {**_gate(), "replication_of": _prior()}
+    for kwargs in ({}, {"mix_arena": 0.70, "wide_arena": 0.70},
+                   {"mix_arena": 0.7875, "wide_arena": 0.5500}):
+        rec = M21.build_recommendation(_aggregate(**kwargs), gate)
+        for key in ("status", "finding", "primary_contrast", "primary_endpoint",
+                    "primary_arena_mean", "primary_learning_mean",
+                    "learning_confidently_negative", "volume_effect_arena",
+                    "recency_effect_arena", "novelty_minus_matched_arena",
+                    "recency_shows_label_strength_anticorrelation",
                     "composition_is_the_mechanism", "next_step", "promotable"):
             assert key in rec, key
 
@@ -142,7 +198,6 @@ def test_both_endpoints_are_reported_for_every_contrast():
     assert len(contrasts) == len(CONTRASTS)
     for row in contrasts.values():
         assert set(row) == {"learning", "arena"}
-        assert "confidence_95" in row["learning"] and "confidence_95" in row["arena"]
 
 
 # --------------------------------------------------------------------------- #
@@ -213,3 +268,15 @@ def test_the_job_carries_the_64kib_guard_and_merges_phase_timings():
     job = (_ROOT / "jobs" / "run_m21_learning_signal_composition_cpx.sh").read_text()
     assert "65536" in job and "ABORT reporting" in job
     assert "phase_timings_seconds" in job
+
+
+def test_a_failed_replication_says_so_instead_of_claiming_an_independent_null():
+    """« pas d'effet ici » et « l'effet d'origine ne se reproduit pas » different."""
+    gate = {**_gate(), "replication_of": _prior()}
+    rec = M21.build_recommendation(
+        _aggregate(mix_arena=0.70, wide_arena=0.70), gate)
+    assert rec["status"] == "FAIL"
+    assert rec["finding"] == "did_not_replicate_the_prior_pool"
+    assert "inflated" in rec["next_step"]
+    # Le pool anterieur reste rapporte, jamais jete en silence.
+    assert rec["replication"]["prior_mean"] == pytest.approx(0.2375)

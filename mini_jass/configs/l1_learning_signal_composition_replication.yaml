@@ -1,0 +1,81 @@
+schema: mini_jass.learning_signal_composition.v1
+milestone: M21R
+
+# M21R — REPLICATION A GRAINES FRAICHES, PORTE RECABLEE SUR L'ARENA.
+#
+# CE QUE M21 A TROUVE, ET POURQUOI IL FAUT LE REJOUER. `cpx62-1211` a rendu, a
+# volume de donnees UNIQUES egal (5 472 contre 5 472, garde fail-closed verte) :
+#     MIX − G1_WIDE   arena  +0,2375   IC95 [+0,088 ; +0,387]
+#     G1_WIDE − G1_ONLY arena −0,0875  IC95 [−0,286 ; +0,111]   (le volume : rien)
+#     G8_ONLY − G1_ONLY arena −0,2125  IC95 [−0,414 ; −0,011]   (la recence : nuit)
+# Premier effet de la campagne labo dont l'IC exclut zero. MAIS il est arrive
+# par un critere que la porte v1 n'interrogeait pas : elle exigeait que le SCORE
+# D'APPRENTISSAGE passe d'abord, il etait non concluant, et elle a imprime FAIL
+# sur une arena positive. Un resultat lu par un canal que la porte ignorait
+# porte exactement le risque de lecture a posteriori que M20 vient de chiffrer
+# (retrecissement x0,04 a x0,30 de n=5 a n=20). Il doit donc etre REPLIQUE.
+#
+# CE QUI CHANGE PAR RAPPORT A M21 : les graines, et RIEN D'AUTRE.
+#   - graines fraiches 220001-220020 (M21 : 210001-210020) ;
+#   - porte recablee : l'ARENA decide, le score d'apprentissage est rapporte ;
+#   - garde d'heterogeneite contre le pool de M21, avec chainage par precision.
+# Memes bras, memes contrastes, meme recette M8 gelee, meme sonde.
+
+base_gate_config: configs/l1_frozen_learning_gate.yaml
+expected_execution_host: cpx62
+
+paired_seeds: [220001, 220002, 220003, 220004, 220005, 220006, 220007, 220008,
+               220009, 220010, 220011, 220012, 220013, 220014, 220015, 220016,
+               220017, 220018, 220019, 220020]
+
+wide_games: 1024
+wide_seed_offset: 770000
+
+arms:
+  - G1_ONLY
+  - G8_ONLY
+  - G1_TO_G8_MIX
+  - G1_WIDE
+  - G1_PLUS_NOVEL_LATE
+  - G1_PLUS_MATCHED_LATE
+
+contrasts:
+  - [G1_TO_G8_MIX, G1_WIDE]              # PRIMAIRE : identite de generation, seule
+  - [G1_WIDE, G1_ONLY]                   # le volume de donnees uniques, chiffre
+  - [G1_TO_G8_MIX, G1_ONLY]              # la somme des deux, secondaire
+  - [G8_ONLY, G1_ONLY]                   # la recence seule
+  - [G1_PLUS_NOVEL_LATE, G1_ONLY]        # la nouvelle couverture
+  - [G1_PLUS_NOVEL_LATE, G1_PLUS_MATCHED_LATE]  # nouveaute ou repondération
+
+arena:
+  pairs: 64
+  seed_base: 922000
+
+scientific_gate:
+  paired_confidence_critical_95: 2.093024054408263   # t(0,975 ; 19)
+  # ⛔ L'ARENA DECIDE. Le score d'apprentissage reste rapporte -- et un score
+  # confidemment negatif sous une arena positive est SIGNALE -- mais il ne gate
+  # plus rien : M18, M19 et M20 ont etabli que la qualite d'etiquetage n'est pas
+  # la force, et c'est exactement pour ca que l'arena est co-primaire.
+  minimum_practical_arena_gain: 0.050
+  minimum_practical_learning_gain: 0.010
+
+  # LE POOL ANTERIEUR, pour la garde d'heterogeneite et le chainage.
+  # `standard_error` est REDERIVE de l'IC publie : (0,3868 − 0,0882) / (2 x t),
+  # t = 2,093024054408263 a 19 degres de liberte. Verifie : la reconstruction
+  # rend [+0,0882 ; +0,3868], l'IC exact de cpx62-1211.
+  # ⛔ Le SIGNE n'est pas un critere (correction L3 du 6 aout) : un effet vrai
+  # proche de zero produit des signes opposes une fois sur deux. Le desaccord se
+  # teste statistiquement ; `same_sign` est rapporte, jamais gatant.
+  replication_of:
+    label: cpx62-1211 (M21, seeds 210001-210020)
+    endpoint: arena_vs_initial
+    contrast: G1_TO_G8_MIX_minus_G1_WIDE
+    mean: 0.2375
+    standard_error: 0.07133
+    n: 20
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
