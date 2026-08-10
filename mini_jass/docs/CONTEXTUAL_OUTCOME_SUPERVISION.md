@@ -514,6 +514,54 @@ be interpreted. C3 may then compare the frozen handcrafted baseline with a
 train-only fitted baseline; it is a new experiment and cannot reuse the sealed
 test read.
 
+### C3 diagnostic contract
+
+C3 is now specified as a five-fold, canonical-grouped cross-validation over
+non-terminal `train` states only. Raw colour/rotation views of one canonical
+state always remain in the same fold. It compares three mappings from the same
+nine frozen context features to exact train-only value:
+
+- the original handcrafted `baseline_v1`;
+- an odd, no-intercept tanh-linear mapping fitted by deterministic weighted
+  Gauss-Newton with fixed ridge and optimizer controls;
+- a fold-trained exact-context conditional-mean lookup, used only to reveal a
+  possible nonlinear mapping gap.
+
+The diagnostic reports out-of-fold MAE, RMSE, Spearman and exact pairwise
+ordering. A mapping gap requires both at least `+0.02` Spearman and `0.01` MAE
+reduction versus the handcrafted baseline. Linear success is reported as
+`LINEAR_CALIBRATION_GAP_OBSERVED`; lookup-only success as
+`NONLINEAR_MAPPING_GAP_OBSERVED`; otherwise the result is
+`NO_MATERIAL_TRAIN_ONLY_CONTEXT_GAIN`.
+
+C3 reads neither `development` nor `frozen_test`, does not train any C1/C2 arm,
+cannot reopen their rejection, and cannot select, promote or transfer a model.
+Its protocol hash is
+`1ec2f8e510137714fc95635b11c7ae98400d1ba9ccf0efa2ac37bc0ae20769da`.
+
+C3 `cpx62-1235-mini-jass-contextual-c3-v2` completed on 174,201 non-terminal
+train states (144,275 canonical classes). The handcrafted baseline obtained
+Spearman `0.40687870785203495`, MAE `0.8216837965714316` and pairwise ordering
+`0.7234129771095114`. The canonical-grouped out-of-fold tanh-linear fit reached
+Spearman `0.5728855160076164`, MAE `0.661842558653182` and ordering
+`0.8168700340403888`: gains of `+0.16600680815558144` Spearman and
+`0.15984123791824967` MAE reduction. The context lookup reached Spearman
+`0.7331005017886004` and MAE `0.3764197387335693`.
+
+The preregistered interpretation is therefore
+`LINEAR_CALIBRATION_GAP_OBSERVED`: the handcrafted coefficients were a material
+source of misspecification, and the frozen context vector also supports useful
+nonlinear structure on train. This does **not** rescue the tested auxiliary,
+whose C1/C2 and sealed playing-strength decision remains rejected. A follow-up
+using the fitted baseline would be a new experiment and requires a new untouched
+evaluation cohort; the consumed `frozen_test` cannot be reused.
+
+Readout `cpx62-1236-mini-jass-contextual-c3-freeze-readout-v1` independently
+verified the R2 inventory, result/protocol content hashes, metric deltas,
+five-fold accounting and interpretation rule. It returned
+`PASS_C3_FREEZE_DIAGNOSTIC_FROZEN`, report hash
+`3c4c795ce336b535c3c9d0ef98d99cd0c967719805848e6002914ad254f47cd4`.
+
 Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and
 requires a separate preregistration.
@@ -538,6 +586,9 @@ requires a separate preregistration.
 - completed sealed confirmation: both arms and all 20 paired seeds were read
   together exactly once; no training, decision reopening, model selection or
   promotion occurred. The result does not alter the already frozen rejection.
+- prepared C3 diagnostic: canonical-grouped train-only calibration and mapping
+  checks, now completed and independently frozen with explicit zero reads of
+  development and frozen test.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the

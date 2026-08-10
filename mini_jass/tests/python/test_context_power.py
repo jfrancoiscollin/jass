@@ -86,7 +86,7 @@ def test_context_config_freezes_prerequisites_c0_and_c1_pass() -> None:
     report = config["power_sizing_v1"]["frozen_report_v1"]
     c0_report = config["c0_gate"]["frozen_report_v1"]
     assert config["schema"] == "mini_jass.contextual_outcome_supervision.v3"
-    assert config["status"] == "SEALED_TEST_DESCRIPTIVE_READ_COMPLETE"
+    assert config["status"] == "C3_COMPLETE_DIAGNOSTIC_ONLY"
     assert prereq["result_hash"] == FROZEN_M21P_HASH
     assert prereq["verdict"] == "FAIL"
     assert config["replay_source_decision_v1"]["selected_source"] == "G1_WIDE_OUTCOME"
@@ -126,6 +126,17 @@ def test_context_config_freezes_prerequisites_c0_and_c1_pass() -> None:
     assert sealed_report["paired_all_state_metric_deltas_FULL_minus_WDL"][
         "value_mae"
     ]["mean"] == 0.00286865234375
+    c3_report = config["c3_diagnostic_v1"]["frozen_report_v1"]
+    assert c3_report["freeze_status"] == "PASS_C3_FREEZE_DIAGNOSTIC_FROZEN"
+    assert c3_report["interpretation"] == "LINEAR_CALIBRATION_GAP_OBSERVED"
+    assert c3_report["cohort_reads"] == {
+        "train": 1,
+        "development": 0,
+        "frozen_test": 0,
+    }
+    assert c3_report["sealed_test_read_count_added"] == 0
+    assert c3_report["decision_reopened"] is False
+    assert c3_report["promotable"] is False
     assert c0_report["implementation_proof"]["common_search_action_match_rate"] == 1.0
     execution = config["c1_execution_v1"]
     assert execution["replay"]["source"] == "G1_WIDE_OUTCOME"

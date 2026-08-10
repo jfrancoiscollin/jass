@@ -10,6 +10,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 import torch
+import yaml
 
 from mini_jass_lab.context import ContextState, WHITE, terminal_status
 from mini_jass_lab.context_replay import (
@@ -316,13 +317,16 @@ def test_c2_runner_and_cpx_entrypoint_are_fail_closed() -> None:
 def test_sealed_runner_checkpoint_roundtrip_and_entrypoint_are_fail_closed(
     tmp_path: Path,
 ) -> None:
-    config, loop = SEALED._resolve(
-        ROOT / "configs" / "contextual_outcome_supervision.yaml"
-    )
-    assert loop["model"]["architecture"] == "folded_pattern_value"
+    config_path = ROOT / "configs" / "contextual_outcome_supervision.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    with pytest.raises(ValueError, match="independently frozen C2"):
+        SEALED._resolve(config_path)
     assert config["c2_disjoint_replication"]["frozen_report_v1"][
         "sealed_test_read_authorized"
     ] is True
+    assert config["sealed_test_read"]["frozen_report_v1"][
+        "sealed_test_read_count"
+    ] == 1
     model = ContextualPatternScaffold(
         PatternSet.from_window(3), seed=270601
     ).export_pattern_eval()
