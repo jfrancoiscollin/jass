@@ -42,6 +42,37 @@ phase() {
   phase_start=$now
 }
 
+publish_failure_diagnostics() {
+  local rc=$?
+  local progress_present=false
+  trap - ERR
+  set +e
+  if [[ -f "$progress" ]]; then
+    progress_present=true
+    cp "$progress" "$artefact_root/PROGRESS.partial.json"
+  fi
+  cp "$phase_log" "$artefact_root/PHASE_TIMINGS.partial.txt"
+  for name in replay-start-manifest.json arena-start-manifest.json; do
+    if [[ -f "$run_dir/$name" ]]; then
+      cp "$run_dir/$name" "$artefact_root/$name"
+    fi
+  done
+  printf '%s\n' "$implementation_sha" >"$artefact_root/IMPLEMENTATION_SHA.txt"
+  cat >"$artefact_root/attempt-diagnostic.json" <<EOF
+{
+  "schema": "mini_jass.contextual_c1_attempt_diagnostic.v1",
+  "job_id": "$job_id",
+  "implementation_sha": "$implementation_sha",
+  "exit_code": $rc,
+  "partial_progress_published": $progress_present,
+  "scientific_result_published": false,
+  "sealed_test_read": false
+}
+EOF
+  exit "$rc"
+}
+trap publish_failure_diagnostics ERR
+
 cmake -S "$repo/mini_jass" -B "$build" \
   -DCMAKE_BUILD_TYPE=Release -DMINI_JASS_BUILD_TESTS=ON
 cmake --build "$build" --parallel "$(nproc)"

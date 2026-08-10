@@ -484,7 +484,10 @@ def run_c1(
             exported = scaffold.export_pattern_eval()
             proof = prove_scalar_export(scaffold, oracle)
             if not proof["value_error_pass"] or not proof["action_match_pass"]:
-                raise RuntimeError("C1 scalar export proof failed")
+                raise RuntimeError(
+                    "C1 scalar export proof failed: "
+                    f"seed={seed} arm={arm} proof={json.dumps(proof, sort_keys=True)}"
+                )
             development_metrics = response_metrics(
                 exported,
                 graph,

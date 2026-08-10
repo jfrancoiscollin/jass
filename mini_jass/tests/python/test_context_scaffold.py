@@ -25,6 +25,17 @@ def _features() -> torch.Tensor:
     return torch.from_numpy(rows)
 
 
+def _large_legal_feature_batch(count: int = 4096) -> torch.Tensor:
+    rng = np.random.default_rng(270518)
+    states = rng.integers(0, 5, size=(count, PLAYABLE), dtype=np.int8)
+    rows = np.zeros((count, 4 * PLAYABLE + 2), dtype=np.float32)
+    for plane in range(4):
+        rows[:, plane * PLAYABLE : (plane + 1) * PLAYABLE] = states == plane + 1
+    rows[:, 4 * PLAYABLE] = rng.integers(0, 2, size=count)
+    rows[:, 4 * PLAYABLE + 1] = rng.integers(0, 81, size=count) / 80.0
+    return torch.from_numpy(rows)
+
+
 def test_initialization_is_seeded_and_initializes_every_training_head() -> None:
     patterns = PatternSet.from_window(2)
     first = ContextualPatternScaffold(patterns, seed=270501)
@@ -55,9 +66,23 @@ def test_scalar_export_matches_the_scaffold_value_path() -> None:
         expected = scaffold(features)["value"]
         exported = scaffold.export_pattern_eval()
         actual, logits = exported(features)
-    assert torch.max(torch.abs(expected - actual)).item() <= 1.0e-6
+    # Exact equality is required: sub-micro float error can still flip the
+    # deterministic action when two child values are tied after training.
+    assert torch.equal(expected, actual)
     assert torch.count_nonzero(logits) == 0
     assert exported.value_only is True
+
+
+def test_trained_like_scalar_path_is_bit_exact_on_large_batch() -> None:
+    scaffold = ContextualPatternScaffold(PatternSet.from_window(3), seed=270518)
+    features = _large_legal_feature_batch()
+    with torch.no_grad():
+        scaffold.value_head.copy_(torch.linspace(-0.75, 0.65, 10))
+        scaffold.shared_bias.copy_(torch.linspace(0.2, -0.3, 10))
+        scaffold.value_bias.fill_(0.03125)
+        expected = scaffold(features)["value"]
+        actual = scaffold.export_pattern_eval()(features)[0]
+    assert torch.equal(expected, actual)
 
 
 def test_auxiliary_gradient_changes_an_exported_scalar_bucket() -> None:

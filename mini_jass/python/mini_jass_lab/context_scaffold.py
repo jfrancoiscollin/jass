@@ -189,8 +189,28 @@ class ContextualPatternScaffold(nn.Module):
         return hidden
 
     def forward(self, features: torch.Tensor) -> dict[str, torch.Tensor]:
-        hidden = self.hidden(features)
-        pre_value = hidden @ self.value_head + self.value_bias
+        classes = self._classes(features)
+        hidden = self.bucket_embedding[classes].sum(dim=1) + self.shared_bias
+        if self.include_reversible_plies:
+            reversible = features[:, 4 * PLAYABLE + 1].unsqueeze(1)
+            hidden = hidden + reversible * self.reversible_embedding
+
+        # Realise the scalar branch in the exact same floating-point order as
+        # PatternEval.  ``hidden @ value_head`` is algebraically equivalent to
+        # projecting every bucket before summation, but the two expressions are
+        # not bitwise equivalent in float32.  A trained checkpoint can contain a
+        # near-tied pair of child values for which that rounding difference
+        # changes the deterministic action even though value error is < 1e-6.
+        # The exported evaluator sums projected bucket weights first, then adds
+        # the reversible term and bias; keep the live scaffold identical.
+        bucket_weight = self.bucket_embedding @ self.value_head
+        pre_value = bucket_weight[classes].sum(dim=1)
+        if self.include_reversible_plies:
+            reversible = features[:, 4 * PLAYABLE + 1 : 4 * PLAYABLE + 2]
+            extra_weight = (self.reversible_embedding @ self.value_head).reshape(1)
+            pre_value = pre_value + reversible @ extra_weight
+        bias = self.shared_bias @ self.value_head + self.value_bias
+        pre_value = pre_value + bias
         return {
             "value": torch.tanh(pre_value),
             "context": hidden @ self.context_head.T + self.context_bias,

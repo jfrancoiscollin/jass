@@ -37,10 +37,20 @@ playable oracle states, with maximum value error
 The report explicitly records `sealed_test_read: false` and
 `c1_training_authorized: true`.
 
-C1 is therefore scientifically authorized. This branch now contains its
-replay construction, paired training, disjoint start manifests, scalar export
-proofs and CPX entrypoint, but that new layer still requires code review and a
-pinned CPX execution. No C1 job is queued automatically. No production Jass
+C1 is therefore scientifically authorized. Its first pinned execution,
+`cpx62-1226-mini-jass-contextual-c1-v1`, completed 17 of 20 seed rows before
+aborting on the per-checkpoint scalar-export proof. Read-only diagnosis
+`cpx62-1227-mini-jass-contextual-c1-failure-readout-v1` established that no
+scientific summary was published and that the failure was a float32 evaluation
+order mismatch: the live scaffold summed embeddings before projection while
+the exported `PatternEval` projected buckets before summation. Values remained
+within the registered tolerance, but a near-tied child pair changed one action.
+
+The implementation now evaluates the live scalar branch in exactly the same
+floating-point order as its export and regression-tests bit-exact value parity
+on the failing seed. The scientific protocol, replay, targets, weights, seeds,
+arena and decision rule are unchanged; the next execution must restart all 20
+seeds from scratch. No C1 scientific result exists yet. No production Jass
 change or direct 10x10 transfer is authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
