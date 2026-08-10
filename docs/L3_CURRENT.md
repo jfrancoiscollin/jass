@@ -417,28 +417,28 @@ La supervision contextuelle de la PR #441 a été exécutée puis fermée par C1
 linéaire** du baseline manuel, mais n'a établi aucun gain de force et ne rouvre
 pas la décision.
 
-📌 **JALON EN COURS : M15-P.** Sur 20 graines fraîches et un replay
-`G1_WIDE_OUTCOME` immuable, comparer WDL, score de recherche même état, mélange
-50/50 et borne exacte diagnostique. Le primaire unique est `BLEND_50 − OUTCOME`
-en zero-regret développement ; la recherche seule ne peut pas sauver le
-primaire. Aucun nouveau read de `frozen_test` n'est autorisé. Si le mélange
-exclut précisément la récupération pratique gelée, M16-P temporel vient
-ensuite ; sinon réplication de force du mélange. Puis seulement les mécaniques
-M19-P encore vivantes, l'étude de convergence à recette figée et le 6×6.
+📌 **M15-P TERMINÉ.** Sur `cpx62-1237`, `BLEND_50 − OUTCOME` vaut
+`+0,001322`, IC95 `[+0,000861 ; +0,001783]` : petit gain réel, mais exclusion
+précise de la récupération pratique gelée `+0,006145`. L'écart exact reste
+`+0,012291` et la cible recherche seule est nocive. Cette voie de récupération
+par score racine est donc close dans ce protocole.
 
-**Aucune de ces cellules n'est promouvable et aucune n'autorise un transfert
-direct au 10×10.**
+📌 **M15-C TERMINÉ : MÉCANISME CONDITIONNEL CONFIRMÉ, ANCIEN SEUIL MANQUÉ.**
+Sur `cpx62-1238`, le mélange conditionnel 50% bat le contrôle conditionnel
+permuté de `+0,016016`, IC95 `[+0,014584 ; +0,017448]`, et WDL brut de
+`+0,003093`, IC95 `[+0,002464 ; +0,003722]`, avec 20/20 graines positives. Le
+statut formel reste `FAIL` car la moyenne manque le seuil pratique historique
+`+0,003916`. Le verdict scientifique correct est donc
+`MECHANISM_CONFIRMED_PRACTICAL_GATE_MISSED`, pas « absence de signal ».
 
-📌 **M15-C PRÉENREGISTRÉ, PAS EN FILE.** C1/C2 ont rejeté les têtes
-contextuelles auxiliaires ensuite jetées, pas l'injection directe du contexte
-dans la cible scalaire. M15-C compare donc, sur 20 nouvelles graines, un
-mélange WDL + prédiction conditionnelle apprise hors partie au même mélange
-avec ces prédictions permutées dans chaque fold : distribution identique, mais
-association à l'état détruite. Le primaire exige à la fois un gain sur ce
-contrôle causal et sur WDL, en zero-regret
-développement. Aucune valeur oracle n'entre dans une cible, aucun nouveau read
-de `frozen_test` n'est autorisé et le protocole ne dépend pas du résultat de
-M15-P.
+📌 **M15-C2 PRÉENREGISTRÉ, PAS EN FILE.** Comme la dose 50% aide mais que la
+cible conditionnelle seule nuit (`−0,018970` contre WDL), M15-C2 teste
+20/30/40%, avec 30% comme seul primaire et un contrôle permuté apparié à chaque
+dose. Le gate statique demande seulement des IC95 strictement positifs contre
+le contrôle causal et WDL ; l'arène 512 paires produit un verdict de force
+séparé. Les doses exploratoires ne peuvent pas sauver le primaire. Aucun
+nouveau read de `frozen_test` n'est autorisé, aucun bras n'est promouvable et
+aucun transfert direct au 10×10 n'est autorisé.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
 

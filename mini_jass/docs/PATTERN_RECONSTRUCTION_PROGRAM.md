@@ -5,8 +5,10 @@ response, M18-P decomposed its static development response, and M21-P rejected
 generation-history mixing for strength at equal unique volume. Contextual
 supervision was then rejected by disjoint C1/C2 pools; its train-only C3
 diagnostic found a calibration gap but no authority to reopen that decision.
-M15-P is executing outside this code PR. M15-C is independently preregistered
-and implemented, without reading or depending on the M15-P result.
+M15-P precisely excluded its preregistered practical recovery target. M15-C
+then confirmed a smaller direct conditional-target signal while missing its
+old practical threshold. M15-C2 is preregistered and implemented to test the
+interior conditional dose; it is not queued by this code PR.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -179,6 +181,12 @@ zero-regret. Search-only is mechanistic and cannot rescue the primary; exact
 labels are a train-only diagnostic upper bound. See
 [`PATTERN_M15P_VALUE_TARGET_SCREEN.md`](PATTERN_M15P_VALUE_TARGET_SCREEN.md).
 
+M15-P completed on `cpx62-1237`. `BLEND_50 - OUTCOME` was `+0.0013216`
+(Student 95% CI `[+0.0008605, +0.0017827]`), precisely below the frozen
+practical target `+0.0061454`. The exact-label diagnostic retained a much
+larger `+0.0122908` gap, while search-only targets were harmful. Result hash:
+`443129d7b523b4c1ea94bd76c887a8defbeb1ce3f70c115dd85b81ab7869d645`.
+
 ### 9. M15-C — direct conditional-target injection
 
 M15-C resolves a narrower question that C1/C2 did not test. It fits a
@@ -192,6 +200,25 @@ targets are oracle-blind, `frozen_test`
 remains consumed and unread, and no arm is promotable. See
 [`PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`](PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md).
 
+M15-C completed on `cpx62-1238`. The aligned conditional blend beat its
+shuffled control by `+0.0160159` (95% CI `[+0.0145843, +0.0174476]`) and raw
+outcome by `+0.0030931` (`[+0.0024638, +0.0037224]`), both positive on 20/20
+seeds. It formally missed the old `+0.0039159` practical floor, so the frozen
+status is `FAIL`, but the result confirms the conditional mechanism rather
+than refuting it. Context-only training was harmful (`-0.0189698` versus
+outcome), locating the useful regime inside the 0-to-50% interval.
+
+### 10. M15-C2 — interior conditional-target dose
+
+M15-C2 freezes alpha `0.30` as its sole confirmatory dose and surrounds it with
+exploratory `0.20` and `0.40` arms. Every aligned dose has a within-fold,
+marginal-matched shuffled control. The primary static gate has no positive
+effect floor: both `CONTEXT_30 - SHUFFLED_CONTEXT_30` and
+`CONTEXT_30 - OUTCOME` must have Student 95% lower bounds above zero. The
+512-pair strength gate is reported separately and cannot rewrite the static
+verdict. See
+[`PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`](PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -199,16 +226,18 @@ The original conditional ordering has now resolved as follows:
 - If M24-P is unsaturated, extend only its dose ladder.
 - If M24-P is saturated but far from the oracle response, test pattern-window
   capacity before interpreting self-play failures.
-- M14-P supported a small target-noise effect, so M15-P is next. M16-P is
-  prepared only if M15-P precisely excludes the preregistered recovery target.
+- M14-P supported a target-noise effect and M15-P precisely excluded recovery
+  by the frozen root-search target. M15-C confirmed a smaller conditional
+  signal. M15-C2 now tests its interior dose before deciding whether to proceed
+  to the already prepared M16-P temporal factor.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
   M19-P mechanics only where a live hypothesis remains; M21-P already closes
   an unguided M23-P mix-shape screen.
-- The discarded-head C1/C2 mechanism remains closed. M15-C is the separate
-  preregistration required to test direct conditional-target injection; it has
-  no scientific dependency on the M15-P result.
+- The discarded-head C1/C2 mechanism remains closed. M15-C independently
+  confirmed that direct conditional-target injection is a distinct live
+  mechanism; M15-C2 tests its dose without reopening the auxiliary-head result.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -229,6 +258,7 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r

@@ -1,7 +1,7 @@
 # Jass — synthèse consolidée des résultats du projet
 
 > **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
-> **Mis à jour :** 2026-07-26
+> **Mis à jour :** 2026-08-10
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)
@@ -462,6 +462,30 @@ reproche déjà à VOL8M. Le mécanisme « plus fort → plus de nulles » est r
 mesure (18,06 % de nulles contre 21,41 %). Question ouverte, pas close.
 
 Détail : [`experiments/L3_EXACT_FOLD_20260801.md`](experiments/L3_EXACT_FOLD_20260801.md).
+
+### 4.4 Mini-Jass PatternEval — signal de cible conditionnelle
+
+La reconstruction Mini-Jass avec l'architecture scalaire `PatternEval` a
+séparé deux voies de correction du bruit de cible :
+
+- **M15-P (`cpx62-1237`)** : le mélange score-racine/WDL apporte seulement
+  `+0,001322` de zero-regret développement, IC95
+  `[+0,000861 ; +0,001783]`, et exclut précisément la récupération pratique
+  gelée `+0,006145`. La cible recherche seule est nocive ; ne pas relancer ce
+  protocole à l'identique.
+- **M15-C (`cpx62-1238`)** : le mélange WDL/prédiction conditionnelle 50% bat
+  le même mélange dont les prédictions sont permutées dans chaque fold de
+  `+0,016016`, IC95 `[+0,014584 ; +0,017448]`, et WDL brut de `+0,003093`,
+  IC95 `[+0,002464 ; +0,003722]`, 20/20 graines positives. Il manque l'ancien
+  seuil pratique `+0,003916`, mais confirme causalement l'information
+  conditionnelle dans la cible scalaire.
+
+La dose conditionnelle pure nuit (`−0,018970` contre WDL), donc la piste active
+n'est pas « plus de contexte », mais un optimum intérieur. **M15-C2** est
+préenregistré sur 20/30/40%, avec 30% comme seul primaire, contrôles permutés
+appariés et verdict de force séparé sur 512 paires. Aucun nouveau read du
+`frozen_test`, aucune promotion et aucun transfert direct au 10×10 ne sont
+autorisés.
 
 ## 5. Portes closes à protocole causal identique
 

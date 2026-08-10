@@ -369,10 +369,13 @@ production Jass transfer.
 The architecture-correct reconstruction is specified in
 `docs/PATTERN_RECONSTRUCTION_PROGRAM.md`. It keeps the historical MLP evidence
 immutable, scores every response through value search, and records the ordered
-PatternEval cells through M21-P. M15-P screens root-search-derived targets.
-The independently prepared M15-C cell, specified in
+PatternEval cells through M21-P. M15-P precisely excluded practical recovery
+from root-search-derived targets. M15-C, specified in
 `docs/PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`, tests direct conditional
-target injection against a marginal-matched shuffled-context control without depending on
-the M15-P result. The historical frozen-test read is exhausted, so both cells
-read train and development only. CPX scripts are prepared but are not queued
-by code PRs.
+target injection against a marginal-matched shuffled-context control and found
+a smaller precise static signal. M15-C2, specified in
+`docs/PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`, preregisters the 20/30/40%
+dose screen with alpha 0.30 as the sole primary and strength reported
+separately. The historical frozen-test read is exhausted, so these cells read
+train and development only. CPX scripts are prepared but are not queued by
+code PRs.

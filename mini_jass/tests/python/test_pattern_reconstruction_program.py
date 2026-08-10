@@ -28,6 +28,7 @@ M24P = _tool("run_pattern_supervised_ceiling.py")
 M14P = _tool("run_pattern_value_target_ablation.py")
 M15P = _tool("run_pattern_value_target_screen.py")
 M15C = _tool("run_pattern_conditional_target_screen.py")
+M15C2 = _tool("run_pattern_conditional_dose_screen.py")
 M17P = _tool("run_pattern_generation_ladder.py")
 M18P = _tool("run_pattern_state_distribution_decomposition.py")
 M21P = _tool("run_pattern_learning_signal_composition.py")
@@ -129,6 +130,11 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
         ("l1_pattern_value_target_ablation.yaml", M14P.SCHEMA, "M14-P"),
         ("l1_pattern_value_target_screen.yaml", M15P.SCHEMA, "M15-P"),
         ("l1_pattern_conditional_target_screen.yaml", M15C.SCHEMA, "M15-C"),
+        (
+            "l1_pattern_conditional_dose_screen.yaml",
+            M15C2.SCHEMA,
+            "M15-C2",
+        ),
         ("l1_pattern_generation_ladder.yaml", M17P.SCHEMA, "M17-P"),
         ("l1_pattern_generation_ladder_v2.yaml", M17P.SCHEMA_V2, "M17-P2"),
         (
