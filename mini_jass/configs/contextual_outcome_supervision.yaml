@@ -611,6 +611,54 @@ sealed_test_read:
         lower: -0.001622438280572859
         upper: -0.0007346530366723711
 
+c3_diagnostic_v1:
+  status: implementation_ready_for_verification
+  protocol:
+    prerequisite_status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
+    prerequisite_sealed_result_hash: bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c
+    prerequisite_final_decision: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    cohort: train
+    nonterminal_only: true
+    exact_oracle_role: diagnostic_training_signal
+    context_features: context_v1
+    handcrafted_baseline: baseline_v1
+    cross_validation:
+      family: canonical_grouped_hash_folds_v1
+      fold_count: 5
+      namespace: contextual_c3_train_only_folds_v1
+      raw_views_of_one_canonical_class_share_fold: true
+    fitted_tanh_linear:
+      family: odd_tanh_linear_no_intercept
+      initialization: baseline_v1_weights_divided_by_tau
+      optimizer: deterministic_weighted_gauss_newton_v1
+      ridge: 0.0001
+      max_iterations: 64
+      tolerance: 1.0e-10
+      line_search_steps: 24
+    context_lookup:
+      family: train_fold_exact_context_conditional_mean
+      unseen_context_fallback: 0.0
+      descriptive_upper_mapping_check_only: true
+    metrics:
+      - mae
+      - rmse
+      - spearman
+      - pairwise_ordering_rate
+    interpretation_rule:
+      minimum_spearman_gain: 0.02
+      minimum_mae_reduction: 0.01
+      fitted_linear_both_thresholds: LINEAR_CALIBRATION_GAP_OBSERVED
+      lookup_only_both_thresholds: NONLINEAR_MAPPING_GAP_OBSERVED
+      otherwise: NO_MATERIAL_TRAIN_ONLY_CONTEXT_GAIN
+    forbidden:
+      development_read: true
+      frozen_test_read: true
+      c1_or_c2_arm_training: true
+      decision_reopening: true
+      model_selection_or_promotion: true
+      production_transfer: true
+  protocol_hash: 1ec2f8e510137714fc95635b11c7ae98400d1ba9ccf0efa2ac37bc0ae20769da
+
 mechanism_readout:
   cohort: development
   registered_metric: value_mae

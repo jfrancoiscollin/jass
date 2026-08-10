@@ -514,6 +514,31 @@ be interpreted. C3 may then compare the frozen handcrafted baseline with a
 train-only fitted baseline; it is a new experiment and cannot reuse the sealed
 test read.
 
+### C3 diagnostic contract
+
+C3 is now specified as a five-fold, canonical-grouped cross-validation over
+non-terminal `train` states only. Raw colour/rotation views of one canonical
+state always remain in the same fold. It compares three mappings from the same
+nine frozen context features to exact train-only value:
+
+- the original handcrafted `baseline_v1`;
+- an odd, no-intercept tanh-linear mapping fitted by deterministic weighted
+  Gauss-Newton with fixed ridge and optimizer controls;
+- a fold-trained exact-context conditional-mean lookup, used only to reveal a
+  possible nonlinear mapping gap.
+
+The diagnostic reports out-of-fold MAE, RMSE, Spearman and exact pairwise
+ordering. A mapping gap requires both at least `+0.02` Spearman and `0.01` MAE
+reduction versus the handcrafted baseline. Linear success is reported as
+`LINEAR_CALIBRATION_GAP_OBSERVED`; lookup-only success as
+`NONLINEAR_MAPPING_GAP_OBSERVED`; otherwise the result is
+`NO_MATERIAL_TRAIN_ONLY_CONTEXT_GAIN`.
+
+C3 reads neither `development` nor `frozen_test`, does not train any C1/C2 arm,
+cannot reopen their rejection, and cannot select, promote or transfer a model.
+Its protocol hash is
+`1ec2f8e510137714fc95635b11c7ae98400d1ba9ccf0efa2ac37bc0ae20769da`.
+
 Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and
 requires a separate preregistration.
@@ -538,6 +563,8 @@ requires a separate preregistration.
 - completed sealed confirmation: both arms and all 20 paired seeds were read
   together exactly once; no training, decision reopening, model selection or
   promotion occurred. The result does not alter the already frozen rejection.
+- prepared C3 diagnostic: canonical-grouped train-only calibration and mapping
+  checks, with explicit zero reads of development and frozen test.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the
