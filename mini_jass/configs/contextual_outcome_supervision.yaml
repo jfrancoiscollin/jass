@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: implementation_blocked_on_frozen_M21P_result
+status: preregistration_frozen_C0_implementation_pending
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -70,7 +70,10 @@ data_contract:
       code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
       required_runner_state: completed
       required_exit_code: 0
-      result_hash: PENDING_M21P_RESULT_MUST_BE_REPLACED_BEFORE_C0
+      result_uri: r2:jass-data/runs/cpx62-1223-mini-jass-pattern-m21p-v1/20260810T055825Z-fe188c93
+      result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+      protocol_hash: 4b229db8ef9b8247948f0940b7f9c9e60f7277487e1598f8ef30cec5b1970520
+      verdict: FAIL
       per_seed_common_search_primary_contrast_required: true
       minimum_mean_advancing_generations: 1
 
@@ -80,7 +83,7 @@ replay_source_decision_v1:
   on_M21_P_FAIL: G1_WIDE_OUTCOME
   on_M21_P_INCONCLUSIVE: ABORT_AND_RESOLVE_M21P
   on_invalid_or_failed_M21_P: ABORT_AND_RESOLVE_M21P
-  selected_source: PENDING_M21P_RESULT_MUST_BE_REPLACED_BEFORE_C0
+  selected_source: G1_WIDE_OUTCOME
   same_selected_pack_for_every_non_oracle_arm: true
   selected_source_and_M21P_hash_frozen_across_C1_C2: true
 
@@ -114,6 +117,26 @@ power_sizing_v1:
   on_missing_or_invalid_variance: ABORT_AND_REVISE_PREREGISTRATION
   on_no_candidate_meeting_target: ABORT_AND_REVISE_PREREGISTRATION
   selected_pairs_and_power_report_hash_must_be_frozen_before_C1: true
+  selected_pairs_per_seed: 64
+  frozen_report_v1:
+    readout_job_id: cpx62-1224-mini-jass-m21p-freeze-readout-v1
+    readout_attempt_id: 20260810T071233Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1224-mini-jass-m21p-freeze-readout-v1/20260810T071233Z-fe188c93
+    report_hash: db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c
+    source_result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+    source_verdict: FAIL
+    selected_replay_source: G1_WIDE_OUTCOME
+    measured_primary_delta_sd: 0.004319942195275082
+    used_random_effect_sd: 0.10
+    candidates:
+      - pairs_per_seed: 64
+        estimated_power: 0.88898
+      - pairs_per_seed: 128
+        estimated_power: 0.94967
+      - pairs_per_seed: 256
+        estimated_power: 0.97226
+    selected_pairs_per_seed: 64
+    c0_or_training_authorized: false
 
 program_order:
   phase: later_factor_after_pattern_reconstruction_diagnosis
@@ -121,6 +144,7 @@ program_order:
   automatic_queue_from_PR_merge: false
   may_displace_baseline_reconstruction_cells: false
   C0_or_C1_launch_while_M21P_running_forbidden: true
+  M21P_completed_before_C0: true
 
 context_v1:
   pov: side_to_move

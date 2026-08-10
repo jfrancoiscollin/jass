@@ -49,11 +49,20 @@ def validate_m21p_evidence(
         or status.get("state") != "completed"
         or status.get("exit_code") != 0
         or not status.get("result_uri")
+        or (
+            prereq.get("result_uri") is not None
+            and status.get("result_uri") != prereq["result_uri"]
+        )
     ):
         raise ValueError("M21-P runner evidence is incomplete or incompatible")
     if result.get("schema") != M21P_SCHEMA or result.get("milestone") != "M21-P":
         raise ValueError("unexpected M21-P scientific schema")
     _validate_result_hash(result)
+    if (
+        prereq.get("protocol_hash") is not None
+        and result.get("protocol_hash") != prereq["protocol_hash"]
+    ):
+        raise ValueError("M21-P protocol differs from the frozen contextual pin")
     if result.get("promotable") is not False:
         raise ValueError("M21-P evidence unexpectedly authorizes promotion")
     aggregate = result.get("aggregate", {})
@@ -67,6 +76,8 @@ def validate_m21p_evidence(
     verdict = str(result.get("recommendation", {}).get("status", result.get("status")))
     if result.get("status") != verdict:
         raise ValueError("M21-P top-level and recommendation verdicts disagree")
+    if prereq.get("verdict") is not None and verdict != prereq["verdict"]:
+        raise ValueError("M21-P verdict differs from the frozen contextual pin")
     decision = config["replay_source_decision_v1"]
     if verdict == "PASS":
         selected = decision["on_M21_P_PASS"]

@@ -13,11 +13,19 @@ M18-P `cpx62-1222-mini-jass-pattern-m18p-v1` then isolated a static label gap
 on PatternEval; its result hash is
 `2680f52319b7be31c5cb6d44c229b78c545eb21b4dc4c8be2e3f17c125da5554`.
 
-This protocol is still not runnable. M21-P
-`cpx62-1223-mini-jass-pattern-m21p-v1` is currently measuring the missing
-common-search strength effect at equal replay volume. Its result hash, replay
-source decision and power-sizing report must be frozen in a follow-up commit
-before C0 or any contextual model may train. No production Jass change or
+M21-P `cpx62-1223-mini-jass-pattern-m21p-v1` completed with `FAIL`: the unique
+`MIX_OUTCOME - G1_WIDE_OUTCOME` common-search effect was `-0.00107421875`, with
+a 95% interval spanning zero. Its frozen result hash is
+`2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745`.
+The preregistered rule therefore selects the equal-volume
+`G1_WIDE_OUTCOME` replay source for every non-oracle arm.
+
+Readout `cpx62-1224-mini-jass-m21p-freeze-readout-v1` independently fetched
+and verified that result, then froze 64 arena pairs per seed. Its report hash
+is `db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c`.
+This protocol is still not runnable: the report explicitly carries
+`c0_or_training_authorized: false`, and the C0 feature/scaffold/runner objects
+and their tests must be implemented before C0. No production Jass change or
 direct 10x10 transfer is authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
@@ -30,12 +38,12 @@ the architecture-correct M21-P paired common-search contrast, the endpoint that
 C1 itself will use. No C0 evidence has been read, so this preregistration repair
 does not condition on contextual results.
 
-The v3 preparation tool is executable but deliberately non-training. Given the
-completed runner status and full M21-P result, it recomputes the scientific
-hash, validates all 20 per-seed arena deltas, applies the replay-source rule,
-runs the frozen power simulation and writes a round-tripped freeze report. The
-report always carries `c0_or_training_authorized: false`; a reviewed follow-up
-commit must replace both pending sentinels with its source, pair count and hash.
+The v3 preparation tool is executable but deliberately non-training. It
+recomputed the scientific hash, validated all 20 per-seed arena deltas, applied
+the replay-source rule, ran the frozen power simulation and wrote a
+round-tripped freeze report. The source, pair count and report hash above are
+now pinned in the configuration; the report's
+`c0_or_training_authorized: false` remains binding.
 
 ## Question
 
@@ -267,6 +275,11 @@ estimate, or failure of all three candidates produces
 `ABORT_AND_REVISE_PREREGISTRATION`; it cannot silently choose a sample size.
 The M21-P result hash, variance input, selected pair count, estimated power and
 power-report hash are frozen before any C1 model trains.
+
+The frozen M21-P standard deviation is `0.004319942195275082`; the conservative
+floor therefore sets the random-effect standard deviation to `0.10`. Estimated
+powers for 64, 128 and 256 pairs per seed are respectively `0.88898`,
+`0.94967` and `0.97226`, so the registered smallest qualifying size is 64.
 
 ## C1 pairing
 
