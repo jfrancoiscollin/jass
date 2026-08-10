@@ -23,12 +23,24 @@ The preregistered rule therefore selects the equal-volume
 Readout `cpx62-1224-mini-jass-m21p-freeze-readout-v1` independently fetched
 and verified that result, then froze 64 arena pairs per seed. Its report hash
 is `db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c`.
-The upstream report explicitly carries `c0_or_training_authorized: false`.
-This branch now contains the C0 feature extractor, target builder, shared
-scaffold, scalar-export proof and fail-closed C0 runner, but they must pass the
-pinned CPX verification before C0 evidence is accepted. C1 training remains
-unimplemented and unauthorized. No production Jass change or direct 10x10
-transfer is authorized.
+That upstream report carried `c0_or_training_authorized: false`, as required
+before the separate C0 gate ran.
+
+C0 `cpx62-1225b-mini-jass-contextual-c0-v2` then completed `PASS` on `cpx62`
+with attempt `20260810T092246Z-fe188c93`. The train-only baseline reached
+Spearman `0.4012712056139121` and exact all-pairs ordering rate
+`0.7111186846747267`; repeatability, POV symmetry and terminal exactness all
+passed. The scalar export matched common-search actions on all `248961`
+playable oracle states, with maximum value error
+`1.4901161193847656e-08`. The frozen C0 report hash is
+`ca0c9cb3d9f99ed9984947fe046e85b7f060ad49d10948e892d608bc99ad19f4`.
+The report explicitly records `sealed_test_read: false` and
+`c1_training_authorized: true`.
+
+C1 is therefore scientifically authorized, but its replay construction,
+training and disjoint-pool enforcement remain unimplemented and no C1 job is
+queued by this branch. No production Jass change or direct 10x10 transfer is
+authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
 of this design never queues C1 automatically and cannot displace M21-P or its

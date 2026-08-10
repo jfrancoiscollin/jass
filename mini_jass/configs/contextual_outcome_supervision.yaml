@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: C0_implementation_ready_for_verification
+status: C0_PASS_C1_implementation_pending
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -212,6 +212,33 @@ c0_gate:
   on_failure: ABORT_C1_AND_REVISE_PREREGISTRATION
   posthoc_coefficient_change_forbidden: true
   posthoc_arm_removal_forbidden: true
+  frozen_report_v1:
+    job_id: cpx62-1225b-mini-jass-contextual-c0-v2
+    attempt_id: 20260810T092246Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1225b-mini-jass-contextual-c0-v2/20260810T092246Z-fe188c93
+    report_hash: ca0c9cb3d9f99ed9984947fe046e85b7f060ad49d10948e892d608bc99ad19f4
+    runner_code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+    implementation_sha: c2837877ce93fe43c0887217f055590f82df810d
+    control_claim_sha: 4e5ba8de8ac1207cecf718a3194a7b7cdfc6eb62
+    execution_host: cpx62
+    ended_at: 2026-08-10T09:51:23+00:00
+    status: PASS
+    c1_training_authorized: true
+    sealed_test_read: false
+    train_state_count: 184602
+    checks:
+      deterministic_repeatability_exact: true
+      pov_symmetry_maximum_absolute_error: 0.0
+      context_terminal_flag_exactness_rate: 1.0
+      baseline_spearman_vs_exact_value: 0.4012712056139121
+      baseline_pairwise_ordering_rate: 0.7111186846747267
+    implementation_proof:
+      state_count: 263829
+      playable_state_count: 248961
+      maximum_absolute_value_error: 1.4901161193847656e-08
+      common_search_action_match_rate: 1.0
+      value_error_pass: true
+      action_match_pass: true
 
 # Pas de screen : les poids sont figes. Dans le bras FULL, leur somme reste
 # 0.25 afin de ne pas tripler la dose auxiliaire par rapport aux bras simples.

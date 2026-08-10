@@ -19,6 +19,7 @@ from mini_jass_lab.context_power import (
 ROOT = Path(__file__).resolve().parents[2]
 FROZEN_M21P_HASH = "2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745"
 FROZEN_POWER_HASH = "db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c"
+FROZEN_C0_HASH = "ca0c9cb3d9f99ed9984947fe046e85b7f060ad49d10948e892d608bc99ad19f4"
 
 
 def _config() -> dict:
@@ -80,18 +81,27 @@ def _status() -> dict:
     }
 
 
-def test_context_config_freezes_m21p_without_authorizing_c0() -> None:
+def test_context_config_freezes_prerequisites_and_c0_pass() -> None:
     config = _config()
     prereq = config["data_contract"]["prerequisites"]["M21_P_strength_source"]
     report = config["power_sizing_v1"]["frozen_report_v1"]
+    c0_report = config["c0_gate"]["frozen_report_v1"]
     assert config["schema"] == "mini_jass.contextual_outcome_supervision.v3"
-    assert config["status"] == "C0_implementation_ready_for_verification"
+    assert config["status"] == "C0_PASS_C1_implementation_pending"
     assert prereq["result_hash"] == FROZEN_M21P_HASH
     assert prereq["verdict"] == "FAIL"
     assert config["replay_source_decision_v1"]["selected_source"] == "G1_WIDE_OUTCOME"
     assert config["power_sizing_v1"]["selected_pairs_per_seed"] == 64
     assert report["report_hash"] == FROZEN_POWER_HASH
     assert report["c0_or_training_authorized"] is False
+    assert c0_report["report_hash"] == FROZEN_C0_HASH
+    assert c0_report["implementation_sha"] == (
+        "c2837877ce93fe43c0887217f055590f82df810d"
+    )
+    assert c0_report["status"] == "PASS"
+    assert c0_report["c1_training_authorized"] is True
+    assert c0_report["sealed_test_read"] is False
+    assert c0_report["implementation_proof"]["common_search_action_match_rate"] == 1.0
     assert config["program_order"]["C0_or_C1_launch_while_M21P_running_forbidden"]
 
 
