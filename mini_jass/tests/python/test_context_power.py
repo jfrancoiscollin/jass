@@ -85,7 +85,7 @@ def test_context_config_freezes_m21p_without_authorizing_c0() -> None:
     prereq = config["data_contract"]["prerequisites"]["M21_P_strength_source"]
     report = config["power_sizing_v1"]["frozen_report_v1"]
     assert config["schema"] == "mini_jass.contextual_outcome_supervision.v3"
-    assert config["status"] == "preregistration_frozen_C0_implementation_pending"
+    assert config["status"] == "C0_implementation_ready_for_verification"
     assert prereq["result_hash"] == FROZEN_M21P_HASH
     assert prereq["verdict"] == "FAIL"
     assert config["replay_source_decision_v1"]["selected_source"] == "G1_WIDE_OUTCOME"

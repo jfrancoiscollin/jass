@@ -23,10 +23,12 @@ The preregistered rule therefore selects the equal-volume
 Readout `cpx62-1224-mini-jass-m21p-freeze-readout-v1` independently fetched
 and verified that result, then froze 64 arena pairs per seed. Its report hash
 is `db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c`.
-This protocol is still not runnable: the report explicitly carries
-`c0_or_training_authorized: false`, and the C0 feature/scaffold/runner objects
-and their tests must be implemented before C0. No production Jass change or
-direct 10x10 transfer is authorized.
+The upstream report explicitly carries `c0_or_training_authorized: false`.
+This branch now contains the C0 feature extractor, target builder, shared
+scaffold, scalar-export proof and fail-closed C0 runner, but they must pass the
+pinned CPX verification before C0 evidence is accepted. C1 training remains
+unimplemented and unauthorized. No production Jass change or direct 10x10
+transfer is authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
 of this design never queues C1 automatically and cannot displace M21-P or its
@@ -144,6 +146,14 @@ Material normalizers, promotion rows, the central mask and move-count
 normalizers come from frozen rule/geometry constants and are included in the
 feature-definition hash.
 
+For L1, men and kings are divided by the two-piece-per-side bound, legal moves
+by the exhaustive maximum `8`, and capture options by the exhaustive maximum
+`4`. Promotion pressure is summed normalized progress toward the promotion row
+and divided by two; an advanced man has progressed strictly beyond the middle
+row. Blocked men have no empty forward quiet destination. The central mask is
+the five playable squares `[3, 4, 6, 8, 9]`. The complete definition is frozen
+as `c036cdc3677d094fd9bfaf46e0042ee6c43b60ba2816219deecfb52d1b395e03`.
+
 For a move `s_t -> s_{t+1}`:
 
 ```text
@@ -190,15 +200,22 @@ models or remove individual arms. It applies the decision frozen here:
 - Spearman correlation of `B(C)` with exact value must be at least `0.30`;
 - pairwise ordering rate against exact value must be at least `0.55`.
 
-Pairwise ordering is computed on train-state pairs with unequal exact values;
-a baseline tie counts as one half. Eligible pairs are ordered by
-`sha256(split_manifest_hash || min_state_id || max_state_id)` and the first
-`100000` are used. This rule is included in the protocol hash.
+Pairwise ordering is computed exactly over every train-state pair with unequal
+exact values; a baseline tie counts as one half. The implementation uses
+sorted rank counts, so it obtains the all-pairs statistic without materializing
+the quadratic pair table. This deterministic estimator is included in the
+protocol hash.
 
 If any threshold fails, the result is
 `ABORT_C1_AND_REVISE_PREREGISTRATION`. C1 does not run, no coefficient changes,
 and no residual/full arm is silently downgraded to exploratory. A revised
 baseline requires a new schema/version and fresh C0 evidence.
+
+The same run also instantiates the rank-10 scaffold deterministically, exports
+it to scalar PatternEval, and compares both value and one-ply common-search
+actions on every oracle state. Maximum value error must be at most `1e-6` and
+the action match rate exactly `1.0`; otherwise the same fail-closed result is
+issued. This proof reads rule state/transition data, not sealed exact labels.
 
 ## Losses and frozen C1 arms
 
@@ -412,19 +429,17 @@ Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and
 requires a separate preregistration.
 
-## Required implementation objects
+## Implementation boundary
 
-- `context.py`: exact feature definitions and POV/symmetry tests;
-- `context_targets.py`: delta, baseline and residual construction;
-- `context_scaffold.py`: shared rank-10 training scaffold and exact scalar
-  export;
-- `context_power.py`: M21-P arena-variance validation, frozen sizing simulation and
-  fail-closed selection of arena pairs;
-- `prepare_contextual_outcome_supervision.py`: runner/science validation and
-  non-training freeze-report writer;
-- `run_contextual_outcome_supervision.py`: C0/C1 contracts and reporting;
-- focused tests for leakage, replay/pool disjointness, power sizing, chained
-  decision, gradient coupling and export parity.
+- implemented here: `context.py`, `context_targets.py`,
+  `context_scaffold.py`, `context_power.py`, the non-training M21-P preparation
+  tool, and the fail-closed C0-only runner;
+- implemented tests: rule equivalence, POV/symmetry, leakage rejection, exact
+  rank metrics, deterministic scaffold initialization, gradient coupling and
+  scalar export parity;
+- still required before C1: replay construction for the selected
+  `G1_WIDE_OUTCOME` pack, arm training, C1/C2 pool-disjointness enforcement,
+  chained decision reporting and per-checkpoint full-oracle export proofs.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the

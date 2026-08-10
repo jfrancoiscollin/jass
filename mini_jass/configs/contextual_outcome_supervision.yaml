@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: preregistration_frozen_C0_implementation_pending
+status: C0_implementation_ready_for_verification
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -17,6 +17,8 @@ architecture_contract:
 # autorise en v3. Tous les bras, y compris WDL_ONLY, paient le meme scaffold.
 training_scaffold_v1:
   family: shared_bucket_embedding_exact_scalar_export
+  pattern_window: 3
+  include_reversible_plies: true
   # Un axe pour la valeur et neuf axes pour les neuf composantes de contexte.
   shared_rank: 10
   aggregation: sum_active_folded_bucket_embeddings
@@ -151,6 +153,12 @@ context_v1:
   range: approximately_minus1_plus1
   symmetry: rot180_plus_colour_swap
   loss_reduction: mean_over_components
+  feature_definition_hash: c036cdc3677d094fd9bfaf46e0042ee6c43b60ba2816219deecfb52d1b395e03
+  frozen_geometry:
+    square_coordinates: [[0, 0], [0, 2], [0, 4], [1, 1], [1, 3], [2, 0], [2, 2], [2, 4], [3, 1], [3, 3], [4, 0], [4, 2], [4, 4]]
+    center_squares: [3, 4, 6, 8, 9]
+    legal_move_normalizer: 8
+    capture_option_normalizer: 4
   components:
     - material_man_delta
     - material_king_delta
@@ -165,6 +173,7 @@ context_v1:
 baseline_v1:
   family: deterministic_linear_tanh
   frozen_before_C0: true
+  definition_hash: 276d1ad969886d0bdb4f81218a488b1905af63f2fca3e68ffc0fc725758a6820
   weights:
     material_man_delta: 1.00
     material_king_delta: 1.50
@@ -191,8 +200,8 @@ c0_gate:
   decision_frozen_before_oracle_read: true
   pairwise_ordering:
     eligible_pairs: unequal_exact_value
-    order: "sha256(split_manifest_hash || min_state_id || max_state_id)"
-    maximum_pairs: 100000
+    estimator: exact_all_eligible_pairs_rank_count_v1
+    maximum_pairs: null
     baseline_tie_credit: 0.5
   required:
     deterministic_repeatability_exact: true
