@@ -1,0 +1,134 @@
+schema: mini_jass.pattern_temporal_value_target_screen.v1
+milestone: M16-P
+expected_execution_host: User
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M15-P (271001-271020), M15-C (272001-272020), and the
+# independently prepared M15-C2 pool (273001-273020).
+paired_seeds:
+  [274001, 274002, 274003, 274004, 274005,
+   274006, 274007, 274008, 274009, 274010,
+   274011, 274012, 274013, 274014, 274015,
+   274016, 274017, 274018, 274019, 274020]
+
+arms:
+  - OUTCOME
+  - NEXT_SEARCH
+  - LAMBDA_50
+  - LAMBDA_80
+  - EXACT_ORACLE
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 980000
+  row_selection: all_generated_train_rows
+  temporal_returns_built_before_train_row_filter: true
+  immutable_structure_across_arms: true
+
+targets:
+  OUTCOME:
+    source: terminal_selfplay_wdl
+    oracle_training_signal: false
+  NEXT_SEARCH:
+    source: temporal_lambda_return
+    lambda: 0.0
+    oracle_training_signal: false
+  LAMBDA_50:
+    source: temporal_lambda_return
+    lambda: 0.5
+    oracle_training_signal: false
+    confirmatory_primary: true
+  LAMBDA_80:
+    source: temporal_lambda_return
+    lambda: 0.8
+    oracle_training_signal: false
+  EXACT_ORACLE:
+    source: exact_train_value
+    oracle_training_signal: true
+    diagnostic_only: true
+    promotable: false
+
+temporal_contract:
+  successor_bootstrap: negated_successor_root_score
+  recurrence: "-((1-lambda)*successor_search+lambda*successor_return)"
+  terminal_or_last_sample_fallback: terminal_selfplay_wdl
+  search_score_clip: [-1.0, 1.0]
+  complete_trajectory_grouping: true
+  contiguous_ply_required: true
+  full_generated_trace_used_before_train_filter: true
+  oracle_training_signal: false
+
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 990000
+  explicit_identical_batch_schedule_all_arms: true
+
+descriptive_strength_arena:
+  pairs: 128
+  seed_base: 981000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+
+power_sizing:
+  estimator: normal_paired_difference_monte_carlo_v1
+  repetitions: 100000
+  seed: 44120260814
+  paired_seed_count: 20
+  conservative_paired_sd: 0.005
+  minimum_effect: 0.00614538978602609
+  paired_confidence_critical_95: 2.093024054408263
+  estimated_power_ci_above_zero: 0.99944
+  minimum_required_power: 0.80
+
+scientific_gate:
+  primary_contrast: LAMBDA_50_minus_OUTCOME
+  primary_endpoint: development_zero_regret_gain
+  paired_confidence_critical_95: 2.093024054408263
+  require_primary_ci_above_zero: true
+  minimum_oracle_gain_recovery_fraction: 0.50
+  minimum_absolute_response_gain: 0.00614538978602609
+  oracle_gap_must_replicate_with_ci_above_zero: true
+  exploratory_arms: [NEXT_SEARCH, LAMBDA_80]
+  exploratory_arms_cannot_rescue_primary: true
+  automatic_promotion: false
+
+source_evidence:
+  m15p:
+    job_id: cpx62-1237-mini-jass-pattern-m15p-v1
+    attempt_id: 20260810T183156Z-042f4483
+    implementation_sha: 042f44838aebc4a567c89a4d0b3d26499b2e07d1
+    protocol_hash: e9ac2e5e34b3dceb0cf3830f3aa2fd10ae70ea56a9b360ed87eb21185e55ce3a
+    result_hash: 443129d7b523b4c1ea94bd76c887a8defbeb1ce3f70c115dd85b81ab7869d645
+    status: FAIL
+    finding: blend_does_not_recover_practical_fraction_of_pattern_oracle_gap
+    decision: prepare_M16P_temporal_targets
+    blend_zero_regret_mean: 0.0013216035992608787
+    blend_zero_regret_ci95: [0.0008605312781805707, 0.0017826759203411868]
+    oracle_gap_zero_regret_mean: 0.01229077957205218
+    oracle_gap_zero_regret_ci95: [0.011651272628596008, 0.012930286515508352]
+    required_primary_mean: 0.00614538978602609
+
+probe:
+  seed: 274000
+  overlaps_scientific_seeds: false
+  purpose: home_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  oracle_training_signal_isolated_to: [EXACT_ORACLE]
+  deployable_arms_oracle_blind: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
