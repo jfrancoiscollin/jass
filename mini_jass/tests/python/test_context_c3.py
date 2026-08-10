@@ -101,6 +101,8 @@ def test_c3_runner_and_cpx_entrypoint_are_fail_closed() -> None:
     assert "sealed_test_read_count_added" in module
     assert "CONTEXTUAL_C3_IMPLEMENTATION_SHA" in job
     assert "CONTEXTUAL_SEALED_RESULT_PATH" in job
+    assert "https://download.pytorch.org/whl/cpu" in job
+    assert "torch==2.13.0" in job
     assert "scientific-summary.json exceeds 64 KiB" in job
     assert "run_c3_diagnostic" in runner
     assert "EXPECTED_PROTOCOL_HASH" in runner

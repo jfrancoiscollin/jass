@@ -53,6 +53,10 @@ phase build_and_ctest
 
 python3 -m venv --system-site-packages "$venv"
 python_bin="$venv/bin/python"
+if ! "$python_bin" -c 'import torch' >/dev/null 2>&1; then
+  "$python_bin" -m pip install --index-url https://download.pytorch.org/whl/cpu \
+    'torch==2.13.0'
+fi
 if ! "$python_bin" -c 'import numpy, pytest, yaml' >/dev/null 2>&1; then
   "$python_bin" -m pip install 'numpy>=1.26,<3' 'PyYAML>=6,<7' 'pytest>=8,<10'
 fi
