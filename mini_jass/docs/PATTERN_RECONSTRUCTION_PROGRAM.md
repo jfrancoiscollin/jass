@@ -1,9 +1,8 @@
 # Mini-Jass PatternEval reconstruction program
 
-Status: M24-P and M14-P completed; M17-P v1 completed operationally but was
-scientifically inconclusive because its arena gate was underpowered. M17-P2
-completed as a discovery result and M17-P2R confirmed its generation-composition
-effect. M18-P is the preregistered causal decomposition below.
+Status: M24-P through M18-P completed. M17-P2R confirmed the generation-8
+response, and M18-P decomposed its static development response. M21-P is the
+prepared, not-yet-queued strength reconstruction below.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -176,6 +175,13 @@ After M24-P/M14-P/M17-P:
 - Contextual supervision from draft PR #441 is a later factor. It must not be
   mixed into the baseline architecture reconstruction.
 
+M18-P cannot settle playing strength because its causal endpoint is static
+development zero-regret. The historical M21 arena evidence cannot settle it
+either because it used the retired MLP/policy-head architecture. M21-P therefore
+reconstructs `MIX - G1_WIDE` with scalar PatternEval, equal unique replay rows,
+an explicit shared batch schedule, and paired common-search arenas. See
+[`PATTERN_M21P_SIGNAL_COMPOSITION.md`](PATTERN_M21P_SIGNAL_COMPOSITION.md).
+
 No result in this program authorizes a production Jass change or a direct
 10x10 transfer.
 
@@ -190,6 +196,7 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m18p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m21p
 ```
 
 The entrypoint builds the C++ oracle, runs CTest and the full Python suite,
