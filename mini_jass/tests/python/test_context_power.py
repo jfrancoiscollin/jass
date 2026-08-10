@@ -15,7 +15,6 @@ from mini_jass_lab.context_power import (
     validate_m21p_evidence,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 FROZEN_M21P_HASH = "2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745"
 FROZEN_POWER_HASH = "db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c"
@@ -87,7 +86,7 @@ def test_context_config_freezes_prerequisites_and_c0_pass() -> None:
     report = config["power_sizing_v1"]["frozen_report_v1"]
     c0_report = config["c0_gate"]["frozen_report_v1"]
     assert config["schema"] == "mini_jass.contextual_outcome_supervision.v3"
-    assert config["status"] == "C0_PASS_C1_implementation_pending"
+    assert config["status"] == "C0_PASS_C1_implementation_ready_for_verification"
     assert prereq["result_hash"] == FROZEN_M21P_HASH
     assert prereq["verdict"] == "FAIL"
     assert config["replay_source_decision_v1"]["selected_source"] == "G1_WIDE_OUTCOME"
@@ -102,6 +101,14 @@ def test_context_config_freezes_prerequisites_and_c0_pass() -> None:
     assert c0_report["c1_training_authorized"] is True
     assert c0_report["sealed_test_read"] is False
     assert c0_report["implementation_proof"]["common_search_action_match_rate"] == 1.0
+    execution = config["c1_execution_v1"]
+    assert execution["replay"]["source"] == "G1_WIDE_OUTCOME"
+    assert execution["replay"]["recorded_selected_action_required"] is True
+    assert execution["training"]["explicit_identical_batch_schedule_all_arms"] is True
+    assert execution["arena"]["pairs_per_seed"] == 64
+    assert execution["arena"]["start_state_source"] == ("development_provided_unique")
+    assert execution["arena"]["C1_C2_start_state_disjointness_required"] is True
+    assert execution["export_proof"]["every_deployable_checkpoint"] is True
     assert config["program_order"]["C0_or_C1_launch_while_M21P_running_forbidden"]
 
 

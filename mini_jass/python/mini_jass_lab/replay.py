@@ -15,6 +15,10 @@ class ReplaySample:
     generation: int
     game_id: int
     ply: int
+    # The behavior action is part of the training record.  Historical callers
+    # did not need it because value/policy targets were sufficient; contextual
+    # transition supervision must reconstruct the exact observed s -> s'.
+    selected_action: int | None = None
 
 
 class ReplayBuffer:

@@ -43,9 +43,7 @@ def digest(value: Any) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def solved_tensors(
-    oracle: OracleArrays, graph: GameGraph
-) -> dict[str, torch.Tensor]:
+def solved_tensors(oracle: OracleArrays, graph: GameGraph) -> dict[str, torch.Tensor]:
     """Solved labels used only by explicitly declared evaluation/training cells."""
     return {
         "features": torch.from_numpy(graph.features),
@@ -78,7 +76,9 @@ def response_metrics(
     if raw["action_source"] != "search_one_ply":
         raise RuntimeError("PatternEval response was not supplied by value search")
     if raw["optimal_probability_mass"] is not None:
-        raise RuntimeError("a value-only response cannot expose policy probability mass")
+        raise RuntimeError(
+            "a value-only response cannot expose policy probability mass"
+        )
     return {
         "count": int(raw["count"]),
         "playable_count": int(raw["response_count"]),
@@ -97,6 +97,10 @@ def replay_fingerprint(samples: Iterable[ReplaySample]) -> str:
         ).encode("ascii")
         policy = np.asarray(sample.policy_target, dtype=np.float32)
         hasher.update(header)
+        if sample.selected_action is not None:
+            hasher.update(
+                f"selected_action={int(sample.selected_action)}|".encode("ascii")
+            )
         hasher.update(policy.shape[0].to_bytes(4, "little", signed=False))
         hasher.update(policy.tobytes(order="C"))
         hasher.update(b"\n")

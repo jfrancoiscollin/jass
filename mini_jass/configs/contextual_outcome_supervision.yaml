@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: C0_PASS_C1_implementation_pending
+status: C0_PASS_C1_implementation_ready_for_verification
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -282,6 +282,57 @@ c1_arms:
     promotable: false
     excluded_from_primary_hypothesis: true
 
+# Realisation executable du source G1_WIDE choisi avant C0. Le generateur est
+# l'export scalaire initial du scaffold partage; le replay est produit UNE fois
+# par graine puis reutilise byte-pour-byte par tous les bras deployables.
+c1_execution_v1:
+  replay:
+    source: G1_WIDE_OUTCOME
+    recipe: m21p_g1_wide_outcome_generator_v1
+    base_self_play_config: configs/l1_pattern_reconstruction_loop.yaml#self_play
+    generator_model: initial_shared_scaffold_scalar_export
+    generation: 1
+    games_per_seed: 1024
+    seed_offset: 820000
+    row_selection: all_generated_train_rows
+    recorded_selected_action_required: true
+    state_cohort: train
+    start_state_source: train_split
+    reserved_start_states_per_seed: 1024
+    start_manifest_namespace: contextual_c1_c2_replay_starts_v1
+  training:
+    steps: 1024
+    batch_size: 128
+    learning_rate: 0.002
+    weight_decay: 0.0001
+    value_weight: 1.0
+    policy_weight: 0.0
+    schedule_seed_offset: 830000
+    explicit_identical_batch_schedule_all_arms: true
+  arena:
+    start_state_source: development_provided_unique
+    start_manifest_namespace: contextual_c1_c2_arena_starts_v1
+    pairs_per_seed: 64
+    max_plies: 64
+    search_depth: 2
+    node_budget: 4
+    epsilon: 0.0
+    confidence_z: 1.96
+    confidence_unit: pairs
+    seed_offset: 840000
+    C1_C2_start_state_disjointness_required: true
+  export_proof:
+    every_deployable_checkpoint: true
+    maximum_absolute_value_error: 1.0e-6
+    required_common_search_action_match_rate: 1.0
+  scaffold_cost_control:
+    direct_table_WDL_fit_required: true
+    same_replay_batch_schedule_and_initial_scalar_state: true
+    descriptive_only: true
+  diagnostic_oracle_arm:
+    executed_in_primary_C1_runner: false
+    reason: keep_train_oracle_diagnostic_isolated_from_deployable_checkpoints
+
 c1_decision:
   paired_seeds:
     - 270501
@@ -313,6 +364,7 @@ c1_decision:
     candidate_colours_paired: true
     starts_and_search_identical_within_seed: true
   provisional_readout:
+    paired_confidence_critical_95: 2.093024054408263
     lower_confidence_bound_strictly_greater_than: 0.0
     positive_label: PROVISIONAL_POSITIVE_REQUIRES_C2
     otherwise_label: PROVISIONAL_NO_SIGNAL_REQUIRES_C2
