@@ -367,8 +367,10 @@ self-play comparison; they do not themselves authorize a scientific claim or
 production Jass transfer.
 
 The architecture-correct reconstruction is specified in
-`docs/PATTERN_RECONSTRUCTION_PROGRAM.md`. It introduces separate M24-P, M14-P,
-and M17-P schemas, keeps the historical MLP evidence immutable, scores every
-response through value search, and leaves frozen test sealed except for the
-development-saturated M24-P ceiling read. The CPX scripts are prepared but are
-not queued by the reconstruction branch.
+`docs/PATTERN_RECONSTRUCTION_PROGRAM.md`. It keeps the historical MLP evidence
+immutable, scores every response through value search, and records the ordered
+PatternEval cells through M21-P. The next prepared cell is M15-P, specified in
+`docs/PATTERN_M15P_VALUE_TARGET_SCREEN.md`; it compares outcome, root-search,
+50/50 blend and a train-only exact diagnostic on one immutable wide replay.
+The historical frozen-test read is exhausted, so M15-P reads train and
+development only. CPX scripts are prepared but are not queued by code PRs.

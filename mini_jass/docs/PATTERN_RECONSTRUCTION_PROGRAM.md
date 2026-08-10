@@ -1,8 +1,11 @@
 # Mini-Jass PatternEval reconstruction program
 
-Status: M24-P through M18-P completed. M17-P2R confirmed the generation-8
-response, and M18-P decomposed its static development response. M21-P is the
-prepared, not-yet-queued strength reconstruction below.
+Status: M24-P through M21-P completed. M17-P2R confirmed the generation-8
+response, M18-P decomposed its static development response, and M21-P rejected
+generation-history mixing for strength at equal unique volume. Contextual
+supervision was then rejected by disjoint C1/C2 pools; its train-only C3
+diagnostic found a calibration gap but no authority to reopen that decision.
+M15-P is now the prepared, not-yet-queued reconstruction cell.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -158,22 +161,39 @@ fresh seeds (`265001` through `265020`). A state-distribution attribution
 requires both the exact-label and honest-outcome distribution contrasts to
 pass; otherwise M18-P reports the label interaction rather than overclaiming.
 
+### 7. M21-P — generation composition strength
+
+M21-P reconstructed `MIX_OUTCOME - G1_WIDE_OUTCOME` with scalar PatternEval,
+equal unique replay rows, an explicit shared batch schedule and paired
+common-search arenas. It returned `FAIL`: the arena mean was `-0.0010742`, with
+95% interval `[-0.0030960, +0.0009476]`. The frozen downstream rule therefore
+selects the simpler equal-volume `G1_WIDE_OUTCOME` source.
+
+### 8. M15-P — deployable value-target recovery
+
+M15-P generates one selected `G1_WIDE_OUTCOME` replay per fresh paired seed and
+fits outcome, root-search, 50/50 blend and exact-oracle targets on identical
+rows and batch schedules. The sole primary is `BLEND_50 - OUTCOME` development
+zero-regret. Search-only is mechanistic and cannot rescue the primary; exact
+labels are a train-only diagnostic upper bound. See
+[`PATTERN_M15P_VALUE_TARGET_SCREEN.md`](PATTERN_M15P_VALUE_TARGET_SCREEN.md).
+
 ## Conditional continuation
 
-After M24-P/M14-P/M17-P:
+The original conditional ordering has now resolved as follows:
 
 - If M24-P is unsaturated, extend only its dose ladder.
 - If M24-P is saturated but far from the oracle response, test pattern-window
   capacity before interpreting self-play failures.
-- If M14-P supports target noise, reconstruct M15/M16 target mechanisms on the
-  same immutable-replay/common-search contract.
+- M14-P supported a small target-noise effect, so M15-P is next. M16-P is
+  prepared only if M15-P precisely excludes the preregistered recovery target.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
-- Only then reconstruct M18/M19 (iteration mechanics), M21/M23 (signal mixes),
-  and the L2 level after PatternEval gains a separately validated L2 pattern
-  geometry/action contract.
-- Contextual supervision from draft PR #441 is a later factor. It must not be
-  mixed into the baseline architecture reconstruction.
+- M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
+  M19-P mechanics only where a live hypothesis remains; M21-P already closes
+  an unguided M23-P mix-shape screen.
+- Contextual supervision remains a closed later factor and must not be mixed
+  into the baseline reconstruction without a new preregistration.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -192,6 +212,7 @@ One job is prepared per cell:
 ```text
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r

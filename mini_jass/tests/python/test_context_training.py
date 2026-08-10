@@ -288,6 +288,7 @@ def test_contextual_arms_share_batches_and_auxiliary_loss_changes_export() -> No
 
 def test_c1_runner_and_cpx_entrypoint_are_fail_closed() -> None:
     config, loop = C1._resolve(ROOT / "configs" / "contextual_outcome_supervision.yaml")
+    assert config["status"] == "C3_COMPLETE_DIAGNOSTIC_ONLY"
     assert loop["model"]["architecture"] == "folded_pattern_value"
     assert config["c1_execution_v1"]["replay"]["source"] == "G1_WIDE_OUTCOME"
     runner = (ROOT / "tools" / "run_contextual_c1.py").read_text(encoding="utf-8")
@@ -301,6 +302,7 @@ def test_c1_runner_and_cpx_entrypoint_are_fail_closed() -> None:
 
 def test_c2_runner_and_cpx_entrypoint_are_fail_closed() -> None:
     config, loop = C2._resolve(ROOT / "configs" / "contextual_outcome_supervision.yaml")
+    assert config["status"] == "C3_COMPLETE_DIAGNOSTIC_ONLY"
     assert loop["model"]["architecture"] == "folded_pattern_value"
     assert config["c1_decision"]["frozen_report_v1"]["c2_authorized"] is True
     runner = (ROOT / "tools" / "run_contextual_c2.py").read_text(encoding="utf-8")

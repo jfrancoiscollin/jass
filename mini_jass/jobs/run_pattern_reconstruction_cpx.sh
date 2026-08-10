@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Architecture-correct reconstruction cells. Prepare one CPX job per cell:
-#   run_pattern_reconstruction_cpx.sh m24p|m14p|m17p|m17p2|m17p2r|m18p|m21p
+#   run_pattern_reconstruction_cpx.sh m24p|m14p|m15p|m17p|m17p2|m17p2r|m18p|m21p
 #
 # This entrypoint deliberately does not choose the order.  M24-P is the first
 # scientific read; M14-P and M17-P are launched only after its interpretation.
 set -Eeuo pipefail
 
-cell=${1:?expected one of: m24p, m14p, m17p, m17p2, m17p2r, m18p, m21p}
+cell=${1:?expected one of: m24p, m14p, m15p, m17p, m17p2, m17p2r, m18p, m21p}
 repo=${JASS_CODE_DIR:?JASS_CODE_DIR is required}
 job_id=${JASS_JOB_ID:?JASS_JOB_ID is required}
 result_root=${JASS_RESULT_DIR:?JASS_RESULT_DIR is required}
@@ -27,6 +27,11 @@ case "$cell" in
   m14p)
     tool=run_pattern_value_target_ablation.py
     config=l1_pattern_value_target_ablation.yaml
+    timeout_seconds=21600
+    ;;
+  m15p)
+    tool=run_pattern_value_target_screen.py
+    config=l1_pattern_value_target_screen.yaml
     timeout_seconds=21600
     ;;
   m17p)
@@ -104,7 +109,7 @@ phase pytest
 phase oracle_export_l1
 
 extra_args=()
-if [[ "$cell" == "m18p" || "$cell" == "m21p" ]]; then
+if [[ "$cell" == "m15p" || "$cell" == "m18p" || "$cell" == "m21p" ]]; then
   extra_args+=(--progress-output "$artefact_root/PROGRESS.json")
 fi
 timeout -k 60s "${timeout_seconds}s" \
