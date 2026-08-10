@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
+status: C3_COMPLETE_DIAGNOSTIC_ONLY
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -612,7 +612,7 @@ sealed_test_read:
         upper: -0.0007346530366723711
 
 c3_diagnostic_v1:
-  status: implementation_ready_for_verification
+  status: PASS_C3_FREEZE_DIAGNOSTIC_FROZEN
   protocol:
     prerequisite_status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
     prerequisite_sealed_result_hash: bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c
@@ -658,6 +658,55 @@ c3_diagnostic_v1:
       model_selection_or_promotion: true
       production_transfer: true
   protocol_hash: 1ec2f8e510137714fc95635b11c7ae98400d1ba9ccf0efa2ac37bc0ae20769da
+  frozen_report_v1:
+    source_job_id: cpx62-1235-mini-jass-contextual-c3-v2
+    source_attempt_id: 20260810T164022Z-fe188c93
+    source_result_uri: r2:jass-data/runs/cpx62-1235-mini-jass-contextual-c3-v2/20260810T164022Z-fe188c93
+    source_implementation_sha: 8c4a4ec42d5b8b0c490043ccbdba6afc1f8bb612
+    source_protocol_hash: 1ec2f8e510137714fc95635b11c7ae98400d1ba9ccf0efa2ac37bc0ae20769da
+    source_result_hash: 15c4457809e73ef9e8db8f379433a3ac62c136c7e8ad02b62e3ca91707488ee3
+    source_status: C3_COMPLETE_DIAGNOSTIC_ONLY
+    failed_preflight_job_id: cpx62-1233-mini-jass-contextual-c3-v1
+    failure_readout_job_id: cpx62-1234-mini-jass-contextual-c3-failure-readout-v1
+    failure_classification: missing_torch_before_oracle_export
+    failed_preflight_scientific_result_present: false
+    freeze_job_id: cpx62-1236-mini-jass-contextual-c3-freeze-readout-v1
+    freeze_attempt_id: 20260810T171456Z-fe188c93
+    freeze_result_uri: r2:jass-data/runs/cpx62-1236-mini-jass-contextual-c3-freeze-readout-v1/20260810T171456Z-fe188c93
+    freeze_report_hash: 3c4c795ce336b535c3c9d0ef98d99cd0c967719805848e6002914ad254f47cd4
+    freeze_status: PASS_C3_FREEZE_DIAGNOSTIC_FROZEN
+    eligible_state_count: 174201
+    eligible_canonical_count: 144275
+    metrics:
+      handcrafted:
+        mae: 0.8216837965714316
+        rmse: 0.8830064708099795
+        spearman: 0.40687870785203495
+        pairwise_ordering_rate: 0.7234129771095114
+      fitted_tanh_linear_oof:
+        mae: 0.661842558653182
+        rmse: 0.7947631783818223
+        spearman: 0.5728855160076164
+        pairwise_ordering_rate: 0.8168700340403888
+      context_lookup_oof:
+        mae: 0.3764197387335693
+        rmse: 0.5756271069318433
+        spearman: 0.7331005017886004
+        pairwise_ordering_rate: 0.9070184877001815
+    fitted_gain:
+      mae_reduction: 0.15984123791824967
+      spearman_gain: 0.16600680815558144
+    lookup_gain:
+      mae_reduction: 0.4452640578378623
+      spearman_gain: 0.3262217939365655
+    interpretation: LINEAR_CALIBRATION_GAP_OBSERVED
+    cohort_reads:
+      train: 1
+      development: 0
+      frozen_test: 0
+    sealed_test_read_count_added: 0
+    decision_reopened: false
+    promotable: false
 
 mechanism_readout:
   cohort: development

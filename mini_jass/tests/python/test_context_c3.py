@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import yaml
 
 from mini_jass_lab.context import COMPONENTS
 from mini_jass_lab.context_c3 import canonical_fold_ids, fit_tanh_linear
@@ -72,8 +73,19 @@ def test_c3_resolver_requires_the_frozen_sealed_result(tmp_path: Path) -> None:
     }
     path = tmp_path / "sealed.json"
     path.write_text(json.dumps(sealed), encoding="utf-8")
+    config_path = ROOT / "configs" / "contextual_outcome_supervision.yaml"
+    with pytest.raises(ValueError, match="completed single sealed read"):
+        C3._resolve(config_path, path)
+    ready_config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    ready_config["status"] = "SEALED_TEST_DESCRIPTIVE_READ_COMPLETE"
+    ready_config["c3_diagnostic_v1"]["status"] = (
+        "implementation_ready_for_verification"
+    )
+    ready_config["c3_diagnostic_v1"].pop("frozen_report_v1", None)
+    ready_path = tmp_path / "ready-config.yaml"
+    ready_path.write_text(yaml.safe_dump(ready_config), encoding="utf-8")
     config = C3._resolve(
-        ROOT / "configs" / "contextual_outcome_supervision.yaml", path
+        ready_path, path
     )
     protocol = config["c3_diagnostic_v1"]["protocol"]
     assert protocol["cohort"] == "train"
@@ -82,7 +94,7 @@ def test_c3_resolver_requires_the_frozen_sealed_result(tmp_path: Path) -> None:
     sealed["sealed_test_read_count"] = 2
     path.write_text(json.dumps(sealed), encoding="utf-8")
     with pytest.raises(ValueError, match="sealed-result prerequisite"):
-        C3._resolve(ROOT / "configs" / "contextual_outcome_supervision.yaml", path)
+        C3._resolve(ready_path, path)
 
 
 def test_c3_runner_and_cpx_entrypoint_are_fail_closed() -> None:
