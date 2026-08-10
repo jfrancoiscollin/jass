@@ -110,7 +110,10 @@ def select_action(
     actions = np.asarray(legal_actions, dtype=np.int64)
     if actions.size == 0:
         raise ValueError("cannot select from an empty action set")
-    ranked = sorted((int(action) for action in actions), key=lambda action: (-float(preferences[action]), action))
+    ranked = sorted(
+        (int(action) for action in actions),
+        key=lambda action: (-float(preferences[action]), action),
+    )
     if config.strategy == "greedy":
         return ranked[0]
     if config.strategy == "epsilon_greedy":
@@ -197,7 +200,7 @@ def generate_self_play(
             else int(initial_starts[game_id % initial_starts.size])
         )
         selected_starts.append(state_id)
-        trajectory: list[tuple[int, np.ndarray, int]] = []
+        trajectory: list[tuple[int, np.ndarray, int, int]] = []
         terminal_value: float | None = None
         for ply in range(config.max_plies):
             terminal_value = graph.terminal_value(state_id)
@@ -243,7 +246,9 @@ def generate_self_play(
                     search_totals[key] += int(getattr(result.stats, key))
                 search_totals["decisions"] += 1
                 search_totals["root_legal_actions"] += result.stats.root_legal_actions
-                search_totals["root_searched_actions"] += result.stats.root_searched_actions
+                search_totals[
+                    "root_searched_actions"
+                ] += result.stats.root_searched_actions
                 search_totals["root_coverage_failures"] += int(
                     result.stats.root_searched_actions < result.stats.root_legal_actions
                 )
@@ -287,7 +292,7 @@ def generate_self_play(
             action = select_action(legal, preferences, exploration, rng)
             if config.mode == "outcome_only":
                 target_policy[action] = 1.0
-            trajectory.append((state_id, target_policy, ply))
+            trajectory.append((state_id, target_policy, ply, action))
             visited_states.add(state_id)
             visited_actions.add(action)
             state_id = graph.child(state_id, action)
@@ -298,10 +303,16 @@ def generate_self_play(
 
         if terminal_value is None:
             raise RuntimeError("self-play game ended without a rule outcome")
-        initial_outcome = terminal_value if len(trajectory) % 2 == 0 else -terminal_value
-        outcomes["win" if initial_outcome > 0 else "loss" if initial_outcome < 0 else "draw"] += 1
+        initial_outcome = (
+            terminal_value if len(trajectory) % 2 == 0 else -terminal_value
+        )
+        outcomes[
+            "win" if initial_outcome > 0 else "loss" if initial_outcome < 0 else "draw"
+        ] += 1
         lengths.append(len(trajectory))
-        for index, (sample_state, policy, ply) in enumerate(trajectory):
+        for index, (sample_state, policy, ply, selected_action) in enumerate(
+            trajectory
+        ):
             remaining = len(trajectory) - index
             value_target = terminal_value if remaining % 2 == 0 else -terminal_value
             samples.append(
@@ -312,6 +323,7 @@ def generate_self_play(
                     generation=generation,
                     game_id=game_id,
                     ply=ply,
+                    selected_action=selected_action,
                 )
             )
 
@@ -344,6 +356,8 @@ def generate_self_play(
         "state_coverage": len(visited_states) / graph.state_count,
         "unique_actions": len(visited_actions),
         "action_coverage": len(visited_actions) / graph.action_count,
-        "duplicate_position_rate": 1.0 - len(visited_states) / len(samples) if samples else 0.0,
+        "duplicate_position_rate": (
+            1.0 - len(visited_states) / len(samples) if samples else 0.0
+        ),
     }
     return GenerationResult(samples=samples, metrics=metrics, coverage=coverage)

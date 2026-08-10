@@ -1,0 +1,697 @@
+schema: mini_jass.contextual_outcome_supervision.v3
+experiment: contextual_outcome_supervision
+status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
+
+architecture_contract:
+  required_architecture: folded_pattern_value
+  value_only: true
+  move_selection: search
+  policy_head_forbidden: true
+  retired_mlp_forbidden: true
+  final_inference_path: scalar_value_plus_search
+  require_architecture_baseline_frozen: true
+
+# PatternEval n'a pas de representation apprise partagee : ses buckets sont des
+# indices fixes. Des tetes lineaires independantes n'enverraient donc aucun
+# gradient vers la table scalaire. Le scaffold ci-dessous est le SEUL couplage
+# autorise en v3. Tous les bras, y compris WDL_ONLY, paient le meme scaffold.
+training_scaffold_v1:
+  family: shared_bucket_embedding_exact_scalar_export
+  pattern_window: 3
+  include_reversible_plies: true
+  # Un axe pour la valeur et neuf axes pour les neuf composantes de contexte.
+  shared_rank: 10
+  aggregation: sum_active_folded_bucket_embeddings
+  reversible_feature_embedding: true
+  value_head: linear_then_tanh
+  auxiliary_heads: linear_training_only
+  control_uses_identical_scaffold: true
+  initialization:
+    algorithm: sha256_counter_normal_v1
+    seed_source: paired_seed
+    bucket_embedding_standard_deviation: 0.01
+    reversible_embedding_standard_deviation: 0.01
+    shared_bias: zero
+    value_head: first_basis_vector
+    value_bias: zero
+    auxiliary_head_standard_deviation: 0.31622776601683794
+    auxiliary_bias: zero
+    initialize_every_head_in_every_arm: true
+  export:
+    target_architecture: folded_pattern_value
+    bucket_weight: dot_value_head_with_each_bucket_embedding
+    extra_weight: dot_value_head_with_reversible_embedding
+    bias: folded_shared_and_value_bias
+    auxiliary_parameters_discarded: true
+    maximum_absolute_value_error: 1.0e-6
+    required_common_search_action_match_rate: 1.0
+
+data_contract:
+  level: l1
+  split_seed: 20260806
+  split_manifest_hash: 9e4021da3331bc6ed4976f0ef9baa3c8721a4458c092420749588fbe84e35524
+  cohorts:
+    training: train
+    selection: development
+    sealed_test: frozen_test
+  base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+  same_immutable_replay_pack_within_each_evidence_pool_all_non_oracle_arms: true
+  prerequisites:
+    M24_P:
+      job_id: cpx62-1217-mini-jass-pattern-m24p-v1
+      required_status: PASS
+      result_hash: 9447d1ea86ca2492c84aead6eedd0bbdb4bf2fbe1c7e9f3323d6d0879545cd67
+    M18_P:
+      job_id: cpx62-1222-mini-jass-pattern-m18p-v1
+      required_status: completed
+      result_hash: 2680f52319b7be31c5cb6d44c229b78c545eb21b4dc4c8be2e3f17c125da5554
+      protocol_hash: 13ea66db6c483ce79028bee7f1c51c33c068507b70cc6b8f95171e018db41aa5
+    M21_P_strength_source:
+      job_id: cpx62-1223-mini-jass-pattern-m21p-v1
+      attempt_id: 20260810T055825Z-fe188c93
+      code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+      required_runner_state: completed
+      required_exit_code: 0
+      result_uri: r2:jass-data/runs/cpx62-1223-mini-jass-pattern-m21p-v1/20260810T055825Z-fe188c93
+      result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+      protocol_hash: 4b229db8ef9b8247948f0940b7f9c9e60f7277487e1598f8ef30cec5b1970520
+      verdict: FAIL
+      per_seed_common_search_primary_contrast_required: true
+      minimum_mean_advancing_generations: 1
+
+replay_source_decision_v1:
+  decision_frozen_before_M21_P_result_read: true
+  on_M21_P_PASS: MIX_OUTCOME
+  on_M21_P_FAIL: G1_WIDE_OUTCOME
+  on_M21_P_INCONCLUSIVE: ABORT_AND_RESOLVE_M21P
+  on_invalid_or_failed_M21_P: ABORT_AND_RESOLVE_M21P
+  selected_source: G1_WIDE_OUTCOME
+  same_selected_pack_for_every_non_oracle_arm: true
+  selected_source_and_M21P_hash_frozen_across_C1_C2: true
+
+# M21-P publie le contraste d'arene commun par seed. Le nombre de paires ne
+# peut pas etre choisi d'apres sa moyenne : seule sa variance alimente la regle
+# gelee ci-dessous. On retient le plus petit barreau conservateur qui atteint
+# le MDE/power, ou on arrete le protocole.
+power_sizing_v1:
+  decision_frozen_before_M21_P_result_read: true
+  variance_source:
+    milestone: M21-P
+    statistic: per_seed_MIX_OUTCOME_minus_G1_WIDE_OUTCOME_common_search_arena_score
+    estimator: sample_standard_deviation_ddof_1
+    measured_sd_used_as_random_effect_without_noise_deconvolution: true
+    minimum_between_seed_standard_deviation: 0.10
+  target:
+    true_score_delta: 0.10
+    minimum_power: 0.80
+    provisional_rule: paired_seed_student_t_95_lower_bound_gt_zero
+  simulation:
+    algorithm: m21p_common_search_random_effects_v1
+    replicates: 100000
+    seed: 44120260810
+    within_game_variance_upper_bound: 0.25
+  candidate_pairs_per_seed:
+    - 64
+    - 128
+    - 256
+  select: smallest_candidate_meeting_target
+  minimum_pairs_per_seed: 64
+  on_missing_or_invalid_variance: ABORT_AND_REVISE_PREREGISTRATION
+  on_no_candidate_meeting_target: ABORT_AND_REVISE_PREREGISTRATION
+  selected_pairs_and_power_report_hash_must_be_frozen_before_C1: true
+  selected_pairs_per_seed: 64
+  frozen_report_v1:
+    readout_job_id: cpx62-1224-mini-jass-m21p-freeze-readout-v1
+    readout_attempt_id: 20260810T071233Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1224-mini-jass-m21p-freeze-readout-v1/20260810T071233Z-fe188c93
+    report_hash: db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c
+    source_result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+    source_verdict: FAIL
+    selected_replay_source: G1_WIDE_OUTCOME
+    measured_primary_delta_sd: 0.004319942195275082
+    used_random_effect_sd: 0.10
+    candidates:
+      - pairs_per_seed: 64
+        estimated_power: 0.88898
+      - pairs_per_seed: 128
+        estimated_power: 0.94967
+      - pairs_per_seed: 256
+        estimated_power: 0.97226
+    selected_pairs_per_seed: 64
+    c0_or_training_authorized: false
+
+program_order:
+  phase: later_factor_after_pattern_reconstruction_diagnosis
+  requires_M21_P_result_and_reconstruction_decision_record: true
+  automatic_queue_from_PR_merge: false
+  may_displace_baseline_reconstruction_cells: false
+  C0_or_C1_launch_while_M21P_running_forbidden: true
+  M21P_completed_before_C0: true
+
+context_v1:
+  pov: side_to_move
+  range: approximately_minus1_plus1
+  symmetry: rot180_plus_colour_swap
+  loss_reduction: mean_over_components
+  feature_definition_hash: c036cdc3677d094fd9bfaf46e0042ee6c43b60ba2816219deecfb52d1b395e03
+  frozen_geometry:
+    square_coordinates: [[0, 0], [0, 2], [0, 4], [1, 1], [1, 3], [2, 0], [2, 2], [2, 4], [3, 1], [3, 3], [4, 0], [4, 2], [4, 4]]
+    center_squares: [3, 4, 6, 8, 9]
+    legal_move_normalizer: 8
+    capture_option_normalizer: 4
+  components:
+    - material_man_delta
+    - material_king_delta
+    - legal_move_delta
+    - capture_option_delta
+    - promotion_pressure_delta
+    - blocked_man_delta
+    - advanced_man_delta
+    - center_presence_delta
+    - terminal_flag
+
+baseline_v1:
+  family: deterministic_linear_tanh
+  frozen_before_C0: true
+  definition_hash: 276d1ad969886d0bdb4f81218a488b1905af63f2fca3e68ffc0fc725758a6820
+  weights:
+    material_man_delta: 1.00
+    material_king_delta: 1.50
+    legal_move_delta: 0.20
+    capture_option_delta: 0.15
+    promotion_pressure_delta: 0.20
+    blocked_man_delta: -0.15
+    advanced_man_delta: 0.10
+    center_presence_delta: 0.05
+    terminal_flag: 0.00
+  tau: 1.50
+  residual_clip: 1.50
+  fitted_from_development_or_frozen_test_forbidden: true
+  terminal_flag_contract:
+    weight_deliberately_zero: true
+    reason: prevent_terminal_outcome_leakage_into_context_baseline
+    residual_training_states_must_be_nonterminal_pre_move: true
+    exactness_gate_applies_to_context_feature_not_baseline_prediction: true
+
+# C0 est une porte de validite de protocole, pas une selection d'arm. Si elle
+# echoue, C1 entier s'arrete : aucun coefficient ni bras n'est ajuste a chaud.
+c0_gate:
+  oracle_characterization_cohort: train
+  decision_frozen_before_oracle_read: true
+  pairwise_ordering:
+    eligible_pairs: unequal_exact_value
+    estimator: exact_all_eligible_pairs_rank_count_v1
+    maximum_pairs: null
+    baseline_tie_credit: 0.5
+  required:
+    deterministic_repeatability_exact: true
+    pov_symmetry_maximum_absolute_error: 0.0
+    context_terminal_flag_exactness_rate: 1.0
+    minimum_baseline_spearman_vs_exact_value: 0.30
+    minimum_baseline_pairwise_ordering_rate: 0.55
+  on_failure: ABORT_C1_AND_REVISE_PREREGISTRATION
+  posthoc_coefficient_change_forbidden: true
+  posthoc_arm_removal_forbidden: true
+  frozen_report_v1:
+    job_id: cpx62-1225b-mini-jass-contextual-c0-v2
+    attempt_id: 20260810T092246Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1225b-mini-jass-contextual-c0-v2/20260810T092246Z-fe188c93
+    report_hash: ca0c9cb3d9f99ed9984947fe046e85b7f060ad49d10948e892d608bc99ad19f4
+    runner_code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+    implementation_sha: c2837877ce93fe43c0887217f055590f82df810d
+    control_claim_sha: 4e5ba8de8ac1207cecf718a3194a7b7cdfc6eb62
+    execution_host: cpx62
+    ended_at: 2026-08-10T09:51:23+00:00
+    status: PASS
+    c1_training_authorized: true
+    sealed_test_read: false
+    train_state_count: 184602
+    checks:
+      deterministic_repeatability_exact: true
+      pov_symmetry_maximum_absolute_error: 0.0
+      context_terminal_flag_exactness_rate: 1.0
+      baseline_spearman_vs_exact_value: 0.4012712056139121
+      baseline_pairwise_ordering_rate: 0.7111186846747267
+    implementation_proof:
+      state_count: 263829
+      playable_state_count: 248961
+      maximum_absolute_value_error: 1.4901161193847656e-08
+      common_search_action_match_rate: 1.0
+      value_error_pass: true
+      action_match_pass: true
+
+# Pas de screen : les poids sont figes. Dans le bras FULL, leur somme reste
+# 0.25 afin de ne pas tripler la dose auxiliaire par rapport aux bras simples.
+c1_arms:
+  WDL_ONLY:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.25
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_DELTA_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.25
+    eta_residual: 0.0
+    oracle_training_signal: false
+  WDL_PLUS_RESIDUAL:
+    value_target: terminal_wdl
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.25
+    oracle_training_signal: false
+  WDL_PLUS_FULL_CONTEXT:
+    value_target: terminal_wdl
+    beta_context: 0.08333333333333333
+    gamma_delta_context: 0.08333333333333333
+    eta_residual: 0.08333333333333333
+    oracle_training_signal: false
+  ORACLE_VALUE_DIAGNOSTIC:
+    value_target: exact_oracle
+    beta_context: 0.0
+    gamma_delta_context: 0.0
+    eta_residual: 0.0
+    oracle_training_signal: true
+    promotable: false
+    excluded_from_primary_hypothesis: true
+
+# Realisation executable du source G1_WIDE choisi avant C0. Le generateur est
+# l'export scalaire initial du scaffold partage; le replay est produit UNE fois
+# par graine puis reutilise byte-pour-byte par tous les bras deployables.
+c1_execution_v1:
+  replay:
+    source: G1_WIDE_OUTCOME
+    recipe: m21p_g1_wide_outcome_generator_v1
+    base_self_play_config: configs/l1_pattern_reconstruction_loop.yaml#self_play
+    generator_model: initial_shared_scaffold_scalar_export
+    generation: 1
+    games_per_seed: 1024
+    seed_offset: 820000
+    row_selection: all_generated_train_rows
+    recorded_selected_action_required: true
+    state_cohort: train
+    start_state_source: train_split
+    reserved_start_states_per_seed: 1024
+    start_manifest_namespace: contextual_c1_c2_replay_starts_v1
+  training:
+    steps: 1024
+    batch_size: 128
+    learning_rate: 0.002
+    weight_decay: 0.0001
+    value_weight: 1.0
+    policy_weight: 0.0
+    schedule_seed_offset: 830000
+    explicit_identical_batch_schedule_all_arms: true
+  arena:
+    start_state_source: development_provided_unique
+    start_manifest_namespace: contextual_c1_c2_arena_starts_v1
+    pairs_per_seed: 64
+    max_plies: 64
+    search_depth: 2
+    node_budget: 4
+    epsilon: 0.0
+    confidence_z: 1.96
+    confidence_unit: pairs
+    seed_offset: 840000
+    C1_C2_start_state_disjointness_required: true
+  export_proof:
+    every_deployable_checkpoint: true
+    maximum_absolute_value_error: 1.0e-6
+    required_common_search_action_match_rate: 1.0
+  scaffold_cost_control:
+    direct_table_WDL_fit_required: true
+    same_replay_batch_schedule_and_initial_scalar_state: true
+    descriptive_only: true
+  diagnostic_oracle_arm:
+    executed_in_primary_C1_runner: false
+    reason: keep_train_oracle_diagnostic_isolated_from_deployable_checkpoints
+
+c1_decision:
+  paired_seeds:
+    - 270501
+    - 270502
+    - 270503
+    - 270504
+    - 270505
+    - 270506
+    - 270507
+    - 270508
+    - 270509
+    - 270510
+    - 270511
+    - 270512
+    - 270513
+    - 270514
+    - 270515
+    - 270516
+    - 270517
+    - 270518
+    - 270519
+    - 270520
+  registered_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+  primary_endpoint: common_search_paired_arena_score_minus_half
+  confidence_interval: paired_seed_student_t_95
+  arena_contract:
+    source: configs/l1_pattern_reconstruction_loop.yaml#arena
+    pairs_per_seed: power_sizing_v1.selected_pairs_per_seed
+    candidate_colours_paired: true
+    starts_and_search_identical_within_seed: true
+  provisional_readout:
+    paired_confidence_critical_95: 2.093024054408263
+    lower_confidence_bound_strictly_greater_than: 0.0
+    positive_label: PROVISIONAL_POSITIVE_REQUIRES_C2
+    otherwise_label: PROVISIONAL_NO_SIGNAL_REQUIRES_C2
+    terminal_PASS_or_FAIL_forbidden: true
+    C2_runs_regardless_of_C1_result: true
+  exploratory_arms:
+    - WDL_PLUS_CONTEXT
+    - WDL_PLUS_DELTA_CONTEXT
+    - WDL_PLUS_RESIDUAL
+  multiple_comparison_claims_from_exploratory_arms_forbidden: true
+  frozen_report_v1:
+    source_job_id: cpx62-1228-mini-jass-contextual-c1-v2
+    source_attempt_id: 20260810T120939Z-fe188c93
+    source_result_uri: r2:jass-data/runs/cpx62-1228-mini-jass-contextual-c1-v2/20260810T120939Z-fe188c93
+    source_implementation_sha: 0b7eecd080f79f7d609c4ab4c2df3d42560b5ab9
+    source_protocol_hash: 0d09e6a54c3c601a25abdec897c03da402f7d138bb59cf616af63dcf30c249c6
+    source_result_hash: 5d3bbf6490e9d1eb6bf3a73b82bb2ab4a53099ec9799db08cd6815cc0fb28f28
+    source_status: PROVISIONAL_NO_SIGNAL_REQUIRES_C2
+    freeze_job_id: cpx62-1229-mini-jass-contextual-c1-freeze-readout-v1
+    freeze_attempt_id: 20260810T134000Z-fe188c93
+    freeze_result_uri: r2:jass-data/runs/cpx62-1229-mini-jass-contextual-c1-freeze-readout-v1/20260810T134000Z-fe188c93
+    freeze_report_hash: 1d0c02385103d6bdd31e9d070e468c450ecbf0e4a763d7ea19fff9d0c5dc192c
+    freeze_status: PASS_C1_FREEZE_C2_AUTHORIZED
+    replay_start_manifest_hash: 4b6e492d1c8a682f21a0adc825c9652e51de2df078af251967b6add70a6a67fd
+    arena_start_manifest_hash: 6a1f91f1e63c57dee7c82d447be2b065d0b280b68674c2049eaacb05c8490a5f
+    replay_manifest_hashes:
+      - 3ac4792d8c2b3545da24414cc0b822608c94f452095497f50b40589e8903f2ca
+      - 9b0ad256b1ff325b5f46b682f5cf8f14ec7b9d0624076ca2d23575e627bbe68c
+      - 8325ee34ffa49cb73ee2e134aa83ef1f24443020b92711a196edc942a269c216
+      - 7b091e05e055697070349795c6961ef8559b473819f1e9ce9aa79d3c129a145c
+      - 15b1dfb78d6773fb670d021d18073c7df5c48e7580b577daa7c87741c1fc318e
+      - ec6446acd0c551a351e88bf13c5c0daa32fbfc7fbb2fa084656f78e04ed282ff
+      - 25c0b4901f7ccdade5219119061208578615b5cc8ee34a26105e11ac9081940e
+      - 02f86ff80d08de5667a4a1ae72b8e2d8eef66666c0e012f02a2e1732c2dce65f
+      - 97cab230c2fb6d25c917fb171eaab4159b5f1b33ab99c2ebe6030240e783223e
+      - ffcaa9b3b9d1f105a9fe476c0df6aef8992bfaa6676e639874eb08326a973d30
+      - c374e33bb8387b2dcbd7d753b4405954a863064c8f3aa775a37f9a3e17d5bf81
+      - 7cd1c9113d0cdd5f0463efad42ef363675faa9b884fbce37c5732300321083ff
+      - 3aae6e1dce004a64f22a59546b42ab9dc2f2804a8e8eb10484285d42b2d3a381
+      - c7315d4fc187f3e76ed32fc64db2da8b1fa6c884598264d400c1cdf31e826e38
+      - e2b504a76519807113399a19bc31e46bad3efa756076eaacc4317e865d2f5a66
+      - b19dc203ff72c104156d754da18be21fd65bc5823889658b19123309bc8fd3c9
+      - 9bb57e89ddc3a631bfafa80d89101fcf129e7f7684a97bffc72e3368441e32af
+      - 53f8e427f476d7a7d586413cbc4a307aed646e340ef49054d3f676245d1f08c6
+      - f46c61abc9f46846753222ad46cf75760c1774b7b303d5109bd282ecc0979225
+      - e384a43c76d2ea15e7820955e8659593d2ba7cf71091c86e86a112dd907086bc
+    primary_common_search_arena_score:
+      mean: 0.0
+      standard_error: 0.0008961552104318817
+      lower: -0.0018756744119172272
+      upper: 0.0018756744119172272
+      positive_seed_count: 1
+      zero_seed_count: 15
+    registered_mechanism_value_mae:
+      mean: 0.0032687276601791383
+      lower: 0.00268127807964276
+      upper: 0.0038561772407155167
+    c2_authorized: true
+    sealed_test_read: false
+
+c2_disjoint_replication:
+  required_even_if_C1_is_flat_or_negative: true
+  arms:
+    - WDL_ONLY
+    - WDL_PLUS_FULL_CONTEXT
+  paired_seeds:
+    - 270601
+    - 270602
+    - 270603
+    - 270604
+    - 270605
+    - 270606
+    - 270607
+    - 270608
+    - 270609
+    - 270610
+    - 270611
+    - 270612
+    - 270613
+    - 270614
+    - 270615
+    - 270616
+    - 270617
+    - 270618
+    - 270619
+    - 270620
+  pairs_per_seed: power_sizing_v1.selected_pairs_per_seed
+  training_replay_disjoint_from_C1: true
+  arena_starts_disjoint_from_C1: true
+  same_frozen_recipe_as_C1: true
+  frozen_report_v1:
+    source_job_id: cpx62-1230-mini-jass-contextual-c2-v1
+    source_attempt_id: 20260810T140638Z-fe188c93
+    source_result_uri: r2:jass-data/runs/cpx62-1230-mini-jass-contextual-c2-v1/20260810T140638Z-fe188c93
+    source_implementation_sha: 64f7ced2b9f552bc3fc53d3f3894dc863b96a444
+    source_protocol_hash: 1cce1c16e130be72a4db52dc6331a58607cc93bca48713f77e3ae76196974509
+    source_result_hash: 5bce01343ca2385485484ba6f46b7c0cf8c9d7bedc857010e9762de63abff9bd
+    source_status: C2_COMPLETE_REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    replay_disjointness_report_hash: 25517072ab4ca00dcd267b5c7e46856faf5a0eb0765d787950a08c79602e374f
+    freeze_job_id: cpx62-1231-mini-jass-contextual-c2-freeze-readout-v1
+    freeze_attempt_id: 20260810T144645Z-fe188c93
+    freeze_result_uri: r2:jass-data/runs/cpx62-1231-mini-jass-contextual-c2-freeze-readout-v1/20260810T144645Z-fe188c93
+    freeze_report_hash: b9cd48bf1469aa53765a3cf8fee5419b83ad772a3c42972b6c39d29f51a306eb
+    freeze_status: PASS_C2_FREEZE_CHAINED_DECISION_FROZEN
+    c2_primary_common_search_arena_score:
+      mean: -0.0009765625
+      standard_error: 0.0008905366270790931
+      lower: -0.002840477081808143
+      upper: 0.0008873520818081428
+    final_chained_decision:
+      decision: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+      posterior_mean: -0.0004913522012578616
+      posterior_standard_error: 0.0006316815869210118
+      posterior_probability_score_delta_gt_zero: 0.21832934032972762
+      heterogeneity_z: 0.772971071081939
+    registered_mechanism_decision:
+      posterior_mean_value_mae_delta: 0.003090641609070154
+      posterior_standard_error: 0.00021206096730298424
+      posterior_probability_delta_lt_zero: 2.0462767617133767e-48
+      heterogeneity_z: 0.968575395258669
+      signal: false
+    mechanism_force_interpretation: neither
+    sealed_test_read: false
+    sealed_test_read_authorized: true
+    promotable: false
+
+final_chained_decision:
+  evidence_pools:
+    - C1
+    - C2
+  pool_disjointness_required: true
+  estimator: sequential_flat_prior_paired_score_v1
+  C1_posterior_becomes_C2_prior: true
+  estimator_definition:
+    initial_prior: improper_flat_on_score_delta
+    pool_likelihood: normal_pool_mean_with_plugin_paired_standard_error_v1
+    pool_standard_error: sample_standard_deviation_ddof_1_over_sqrt_seed_count
+    sequential_update: inverse_variance_normal_C1_then_C2
+    zero_standard_error: exact_point_mass
+    posterior_probability: normal_survival_function_strict_threshold
+  heterogeneity_guard:
+    statistic: absolute_pool_difference_over_joint_standard_error
+    maximum_z: 1.96
+  signal_established:
+    posterior_probability_score_delta_gt_zero_strictly_greater_than: 0.95
+    heterogeneous_pools_forbidden: true
+  rejection:
+    combined_effect_nonpositive_or_pool_contradiction: true
+    combined_effect_nonpositive: posterior_mean_less_than_or_equal_to_zero
+    pool_contradiction: heterogeneity_z_strictly_greater_than_1.96
+  otherwise: INCONCLUSIVE
+  publish_posterior_probability_above_score_delta:
+    - 0.00
+    - 0.03
+    - 0.05
+    - 0.10
+    - 0.14
+  automatic_promotion_forbidden: true
+
+sealed_test_read:
+  after_C1_and_C2_training_and_all_protocol_hashes_are_frozen: true
+  arms_read_together:
+    - WDL_ONLY
+    - WDL_PLUS_FULL_CONTEXT
+  all_paired_seeds_read_together: true
+  may_select_model: false
+  execution_v1:
+    cohort: frozen_test
+    source_checkpoints: c2_disjoint_replication.frozen_report_v1
+    paired_seeds: c2_disjoint_replication.paired_seeds
+    all_state_response_metrics:
+      - value_mae
+      - value_sign_accuracy
+      - mean_selected_regret
+      - zero_regret_rate
+      - optimal_top1_accuracy
+    common_search_arena:
+      comparison: per_arm_minus_initial_shared_scaffold_export
+      reported_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+      start_state_source: frozen_test_provided_unique
+      start_manifest_namespace: contextual_sealed_test_arena_starts_v1
+      pairs_per_seed: 64
+      max_plies: 64
+      search_depth: 2
+      node_budget: 4
+      epsilon: 0.0
+      confidence_z: 1.96
+      confidence_unit: pairs
+      seed_offset: 850000
+    paired_interval_critical_95: 2.093024054408263
+    one_read_only: true
+    no_training: true
+    no_decision_reopening: true
+    descriptive_only: true
+  frozen_report_v1:
+    job_id: cpx62-1232-mini-jass-contextual-sealed-read-v1
+    attempt_id: 20260810T152905Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1232-mini-jass-contextual-sealed-read-v1/20260810T152905Z-fe188c93
+    runner_code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+    implementation_sha: 69524abc0345dab7a81f076182126e3d75daa641
+    protocol_hash: f80065e1c506422779c22ef557485d2886752b86c9c75a73506b69d319f6dbb2
+    result_hash: bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c
+    status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
+    sealed_test_read_count: 1
+    frozen_test_state_count: 39688
+    paired_seed_count: 20
+    all_arms_read_together: true
+    all_paired_seeds_read_together: true
+    all_arena_starts_paired: true
+    training_performed: false
+    decision_reopened: false
+    descriptive_only: true
+    promotable: false
+    final_chained_decision_unchanged: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    primary_common_search_arena_score:
+      mean: 0.000390625
+      standard_error: 0.0006883498784039148
+      lower: -0.0010501078533483965
+      upper: 0.0018313578533483968
+    paired_all_state_metric_deltas_FULL_minus_WDL:
+      value_mae:
+        mean: 0.00286865234375
+        standard_error: 0.0003125675342642253
+        lower: 0.0022144409759078977
+        upper: 0.0035228637115921023
+      value_sign_accuracy:
+        mean: -0.0022336726466438083
+        standard_error: 0.00028066765699944743
+        lower: -0.0028211168040380595
+        upper: -0.0016462284892495571
+      mean_selected_regret:
+        mean: 0.0020337261818862114
+        standard_error: 0.00039002435056731654
+        lower: 0.0012173958343438568
+        upper: 0.002850056529428566
+      zero_regret_rate:
+        mean: -0.001178545658622615
+        standard_error: 0.0002120819495673406
+        lower: -0.001622438280572859
+        upper: -0.0007346530366723711
+      optimal_top1_accuracy:
+        mean: -0.001178545658622615
+        standard_error: 0.0002120819495673406
+        lower: -0.001622438280572859
+        upper: -0.0007346530366723711
+
+mechanism_readout:
+  cohort: development
+  registered_metric: value_mae
+  contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+  improvement_direction: negative
+  evidence_pools:
+    - C1
+    - C2
+  estimator: sequential_flat_prior_paired_delta_v1
+  signal_rule:
+    posterior_probability_delta_lt_zero_strictly_greater_than: 0.95
+    same_heterogeneity_guard_as_final_decision: true
+  descriptive_metrics:
+    - value_sign_accuracy
+    - value_spearman
+    - mean_selected_regret
+    - zero_regret_rate
+  interpretation:
+    force_and_calibration: inductive_bias_improves_calibration_and_play
+    calibration_without_force: mechanism_moves_value_but_not_playing_strength
+    force_without_calibration: force_gain_not_explained_by_registered_mechanism
+    neither: no_evidence_for_registered_mechanism_or_force
+  may_select_model_or_change_weights: false
+
+scaffold_cost_descriptive_control:
+  comparison: WDL_ONLY_export_minus_WDL_DIRECT_TABLE
+  direct_table_architecture: folded_pattern_value
+  same_replay_batches_optimizer_schedule_and_scalar_initial_state: true
+  primary_descriptive_metric: common_search_paired_arena_score_minus_half
+  secondary_descriptive_metrics:
+    - zero_regret_rate
+    - value_mae
+  excluded_from_C1_C2_and_final_decisions: true
+  may_select_model: false
+
+pairing_within_each_pool:
+  same_complete_replay_fingerprint: true
+  same_wdl_targets_non_oracle: true
+  same_exportable_value_initial_state_hash: true
+  same_scaffold_initialization_schedule: true
+  same_batch_indices_and_order: true
+  same_optimizer_hyperparameters_and_step_count: true
+  same_common_arena_search: true
+  same_arena_starts_colours_and_seeds: true
+  same_gradient_updates: false
+
+oracle_boundary:
+  policy: explicitly_scoped
+  allowed:
+    C0_train_cohort_protocol_validation: observer
+    C1_ORACLE_VALUE_DIAGNOSTIC: diagnostic_training_signal
+    C3_train_only_context_baseline: diagnostic_training_signal
+  forbidden_for_every_deployable_arm:
+    - selfplay_generation
+    - target_construction
+    - sample_selection
+    - loss_weighting
+    - promotion
+  diagnostic_outputs_isolated_from_deployable_checkpoints: true
+
+stages:
+  C0: validate_context_and_baseline_or_abort
+  C1: fixed_weight_pool_A_with_provisional_readout_only
+  C2: mandatory_disjoint_pool_B_and_final_chained_decision
+  C3: compare_deterministic_vs_train_only_calibrated_context_baseline
+
+reporting:
+  compact_gitops_summary: true
+  phase_timings_in_summary: true
+  report_realized_compute: true
+  stratify_by_context_disadvantage: true
+  hash_context_definitions: true
+  hash_baseline_coefficients_and_tau: true
+  hash_training_scaffold_and_export: true
+  hash_power_sizing_input_result_and_selected_pairs: true
+  hash_M21P_replay_source_decision: true
+  report_C1_and_C2_separately_before_chaining: true
+  report_mechanism_categories: true
+
+boundaries:
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  fresh_seed_replication_required_before_any_transfer: true

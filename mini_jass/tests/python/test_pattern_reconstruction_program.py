@@ -31,10 +31,14 @@ M18P = _tool("run_pattern_state_distribution_decomposition.py")
 M21P = _tool("run_pattern_learning_signal_composition.py")
 
 
-def _sample(value: float = 1.0, policy_action: int = 3) -> ReplaySample:
+def _sample(
+    value: float = 1.0,
+    policy_action: int = 3,
+    selected_action: int | None = 3,
+) -> ReplaySample:
     policy = np.zeros(72, dtype=np.float32)
     policy[policy_action] = 1.0
-    return ReplaySample(7, value, policy, 1, 2, 4)
+    return ReplaySample(7, value, policy, 1, 2, 4, selected_action)
 
 
 def test_replay_fingerprint_covers_value_and_policy_targets() -> None:
@@ -42,6 +46,7 @@ def test_replay_fingerprint_covers_value_and_policy_targets() -> None:
     assert original == replay_fingerprint([_sample()])
     assert original != replay_fingerprint([_sample(value=-1.0)])
     assert original != replay_fingerprint([_sample(policy_action=8)])
+    assert original != replay_fingerprint([_sample(selected_action=8)])
 
 
 def test_m24p_saturation_is_selected_on_development_not_frozen_test() -> None:
@@ -50,9 +55,7 @@ def test_m24p_saturation_is_selected_on_development_not_frozen_test() -> None:
         "48": {"development": {"zero_regret_rate": 0.90}},
         "192": {"development": {"zero_regret_rate": 0.903}},
     }
-    result = M24P.build_recommendation(
-        by_dose, {"saturation_tolerance": 0.005}
-    )
+    result = M24P.build_recommendation(by_dose, {"saturation_tolerance": 0.005})
     assert result["status"] == "PASS"
     assert result["selection_cohort"] == "development"
     assert result["frozen_test_may_be_read"] is True
@@ -64,9 +67,7 @@ def test_m24p_keeps_frozen_test_closed_while_ladder_moves() -> None:
         "48": {"development": {"zero_regret_rate": 0.90}},
         "192": {"development": {"zero_regret_rate": 0.92}},
     }
-    result = M24P.build_recommendation(
-        by_dose, {"saturation_tolerance": 0.005}
-    )
+    result = M24P.build_recommendation(by_dose, {"saturation_tolerance": 0.005})
     assert result["status"] == "CEILING_NOT_SATURATED"
     assert result["frozen_test_may_be_read"] is False
 
@@ -74,9 +75,7 @@ def test_m24p_keeps_frozen_test_closed_while_ladder_moves() -> None:
 def test_m17p_no_deployed_advance_is_inconclusive() -> None:
     aggregate = {
         "rungs": [1, 2, 4, 8],
-        "mean_zero_regret_delta_by_rung": {
-            "1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0
-        },
+        "mean_zero_regret_delta_by_rung": {"1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0},
         "mean_advancing_generations": 0.0,
     }
     result = M17P.build_recommendation(
@@ -92,9 +91,7 @@ def test_m17p_no_deployed_advance_is_inconclusive() -> None:
 def test_m17p_diagnoses_the_blocking_gate_when_diagnostics_are_available() -> None:
     aggregate = {
         "rungs": [1, 2, 4, 8],
-        "mean_zero_regret_delta_by_rung": {
-            "1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0
-        },
+        "mean_zero_regret_delta_by_rung": {"1": 0.0, "2": 0.0, "4": 0.0, "8": 0.0},
         "mean_advancing_generations": 0.0,
         "development_pass_count": 7,
         "arena_pass_count": 0,
@@ -111,9 +108,7 @@ def test_m17p_diagnoses_the_blocking_gate_when_diagnostics_are_available() -> No
 def test_m17p_reads_zero_regret_as_primary_response() -> None:
     aggregate = {
         "rungs": [1, 2, 4, 8],
-        "mean_zero_regret_delta_by_rung": {
-            "1": 0.01, "2": 0.02, "4": 0.03, "8": 0.04
-        },
+        "mean_zero_regret_delta_by_rung": {"1": 0.01, "2": 0.02, "4": 0.03, "8": 0.04},
         "mean_advancing_generations": 4.0,
     }
     result = M17P.build_recommendation(
@@ -207,9 +202,7 @@ def test_m17p2_rejects_the_fixed_initial_start(tmp_path: Path) -> None:
 
 
 def test_m17p2r_reuses_control_with_fresh_preregistered_seeds() -> None:
-    v1_config, _ = M17P._resolve(
-        ROOT / "configs" / "l1_pattern_generation_ladder.yaml"
-    )
+    v1_config, _ = M17P._resolve(ROOT / "configs" / "l1_pattern_generation_ladder.yaml")
     v2_config, v2_loop = M17P._resolve(
         ROOT / "configs" / "l1_pattern_generation_ladder_v2.yaml"
     )
