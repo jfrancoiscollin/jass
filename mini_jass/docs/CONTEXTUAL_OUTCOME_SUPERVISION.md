@@ -565,10 +565,21 @@ five-fold accounting and interpretation rule. It returned
 The scope of the negative result is now explicit. C1/C2 tested auxiliary
 context heads whose outputs were discarded at scalar export; they did not test
 injecting a cross-fitted conditional estimate directly into the scalar WDL
-target. M15-C preregisters that distinct mechanism with a within-fold,
-marginal-matched shuffled-context control. It does not reopen or reinterpret the frozen C1/C2 decision,
-reuse `frozen_test`, or import C3's exact-value fitted coefficients. See
+target. M15-C tested that distinct mechanism with a within-fold,
+marginal-matched shuffled-context control. The aligned 50% blend beat the
+shuffled control by `+0.0160159` development zero-regret (95% CI
+`[+0.0145843, +0.0174476]`) and outcome by `+0.0030931`
+(`[+0.0024638, +0.0037224]`). This confirms direct target injection while
+missing the old practical threshold; it does not reopen the frozen auxiliary-
+head decision. See
 [`PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`](PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md).
+
+M15-C2 preregisters a 20/30/40% dose screen because context-only training was
+harmful while the 50% blend was positive. Alpha 0.30 is the sole confirmatory
+dose, each dose has a marginal-matched shuffled control, and strength is a
+separate 512-pair verdict. It does not reuse `frozen_test` or import C3's
+exact-value fitted coefficients. See
+[`PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`](PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md).
 
 Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and

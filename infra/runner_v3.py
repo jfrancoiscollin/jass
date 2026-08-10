@@ -178,6 +178,27 @@ def write_job_env(path: Path, values: dict[str, str]) -> None:
     path.chmod(0o600)
 
 
+def build_job_wrapper(
+    exit_code: Path,
+    raw_log: Path,
+    wrapper_pid: Path,
+    env_file: Path,
+    workspace: Path,
+    script_copy: Path,
+) -> str:
+    """Build a wrapper that records catchable signals as terminal failures."""
+    return (
+        "set +e; "
+        f"exit_file={shlex.quote(str(exit_code))}; "
+        "trap 'rc=$?; printf \"%s\\n\" \"$rc\" > \"$exit_file\"' EXIT; "
+        "trap 'exit 143' TERM; trap 'exit 130' INT; "
+        f"exec >{shlex.quote(str(raw_log))} 2>&1; "
+        f"echo $$ > {shlex.quote(str(wrapper_pid))}; "
+        f"source {shlex.quote(str(env_file))}; cd {shlex.quote(str(workspace))}; "
+        f"bash {shlex.quote(str(script_copy))}"
+    )
+
+
 def start_job(cfg: Config, script: Path) -> dict:
     validate_job_script(cfg, script)
     job_id = script.stem
@@ -228,14 +249,13 @@ def start_job(cfg: Config, script: Path) -> dict:
     # early or receives a catchable signal.  A genuinely absent file now means
     # that the wrapper itself vanished (SIGKILL, host loss, cgroup kill, ...),
     # which is surfaced as a diagnostic instead of an opaque ``-1``.
-    wrapper = (
-        "set +e; "
-        f"exit_file={shlex.quote(str(exit_code))}; "
-        "trap 'rc=$?; printf \"%s\\n\" \"$rc\" > \"$exit_file\"' EXIT; "
-        f"exec >{shlex.quote(str(raw_log))} 2>&1; "
-        f"echo $$ > {shlex.quote(str(wrapper_pid))}; "
-        f"source {shlex.quote(str(env_file))}; cd {shlex.quote(str(workspace))}; "
-        f"bash {shlex.quote(str(script_copy))}"
+    wrapper = build_job_wrapper(
+        exit_code,
+        raw_log,
+        wrapper_pid,
+        env_file,
+        workspace,
+        script_copy,
     )
     proc = subprocess.Popen(
         ["bash", "-c", wrapper], cwd=workspace,

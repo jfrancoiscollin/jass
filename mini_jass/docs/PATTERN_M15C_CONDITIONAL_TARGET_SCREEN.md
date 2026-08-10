@@ -1,7 +1,26 @@
 # M15-C — direct conditional information in the PatternEval target
 
-Status: preregistered and implemented, not queued. This protocol was frozen
-without reading or depending on the M15-P result.
+Status: completed on `cpx62-1238-mini-jass-pattern-m15c-v1`. This protocol was
+frozen without reading or depending on the M15-P result.
+
+## Result and corrected interpretation
+
+The aligned 50% conditional blend beat the marginal-matched shuffled control
+by `+0.0160159` development zero-regret (Student 95% CI
+`[+0.0145843, +0.0174476]`) and raw outcome by `+0.0030931`
+(`[+0.0024638, +0.0037224]`), with 20/20 positive seeds for both contrasts.
+It also beat the global-smoothing control by `+0.0127260`. Correct state-context
+alignment therefore carries a precise learning signal.
+
+The formal frozen status remains `FAIL` because the operational mean did not
+reach the preregistered practical threshold `+0.0039159`. The scientific
+interpretation is narrower:
+`MECHANISM_CONFIRMED_PRACTICAL_GATE_MISSED`, not absence of signal. Replacing
+outcome completely was harmful (`CONTEXT_ONLY - OUTCOME = -0.0189698`), which
+motivates the independently preregistered interior dose test
+[`PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`](PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md).
+M15-C result hash:
+`b63008f3e685c5cf20ae18af4e389fa8f7308ae31aa6525e549244f6f80e499d`.
 
 ## Why this is a new experiment
 
