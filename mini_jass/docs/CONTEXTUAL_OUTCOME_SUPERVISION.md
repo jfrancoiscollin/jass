@@ -1,4 +1,4 @@
-# Contextual outcome supervision v2
+# Contextual outcome supervision v3
 
 ## Status
 
@@ -9,14 +9,33 @@ value and moves supplied by search.
 M24-P `cpx62-1217-mini-jass-pattern-m24p-v1` has returned `PASS`; its frozen
 result hash is
 `9447d1ea86ca2492c84aead6eedd0bbdb4bf2fbe1c7e9f3323d6d0879545cd67`.
-This protocol is still not runnable until the M17-P cell of `cpx62-1218` has
-published its per-seed final-rung variance and the preregistered power sizing
-below has produced a frozen PASS. No production Jass change or direct 10x10
-transfer is authorized.
+M18-P `cpx62-1222-mini-jass-pattern-m18p-v1` then isolated a static label gap
+on PatternEval; its result hash is
+`2680f52319b7be31c5cb6d44c229b78c545eb21b4dc4c8be2e3f17c125da5554`.
+
+This protocol is still not runnable. M21-P
+`cpx62-1223-mini-jass-pattern-m21p-v1` is currently measuring the missing
+common-search strength effect at equal replay volume. Its result hash, replay
+source decision and power-sizing report must be frozen in a follow-up commit
+before C0 or any contextual model may train. No production Jass change or
+direct 10x10 transfer is authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
-of this design never queues C1 automatically and cannot displace the baseline
-reconstruction cells or their post-M17-P decision record.
+of this design never queues C1 automatically and cannot displace M21-P or its
+decision record.
+
+V3 changes only the upstream evidence contract. V2 incorrectly sized from the
+failed M17-P promotion cell's static zero-regret variance. V3 instead consumes
+the architecture-correct M21-P paired common-search contrast, the endpoint that
+C1 itself will use. No C0 evidence has been read, so this preregistration repair
+does not condition on contextual results.
+
+The v3 preparation tool is executable but deliberately non-training. Given the
+completed runner status and full M21-P result, it recomputes the scientific
+hash, validates all 20 per-seed arena deltas, applies the replay-source rule,
+runs the frozen power simulation and writes a round-tripped freeze report. The
+report always carries `c0_or_training_authorized: false`; a reviewed follow-up
+commit must replace both pending sentinels with its source, pair count and hash.
 
 ## Question
 
@@ -204,22 +223,37 @@ arm instead of receiving three times the auxiliary dose.
 value. It is an explicitly declared diagnostic training-signal boundary
 crossing, is excluded from the primary hypothesis and is never promotable.
 
+## M21-P replay-source decision
+
+The replay source used by every C1 arm is selected by one rule frozen before
+the M21-P result is read:
+
+- M21-P `PASS`: use the architecture-correct `MIX_OUTCOME` pack;
+- M21-P `FAIL`: use the equal-volume `G1_WIDE_OUTCOME` pack;
+- M21-P `INCONCLUSIVE`, failed runner state or fewer than one mean advancing
+  generation: `ABORT_AND_RESOLVE_M21P`.
+
+This is upstream model-family selection, not arm-specific sample selection.
+Once chosen, the same immutable pack, IDs and WDL targets feed every non-oracle
+context arm. The M21-P result hash and chosen source are part of the C1 protocol
+hash and cannot change between C1 and C2.
+
 ## Power sizing before C1
 
 The original four arena pairs per seed had a minimum detectable score effect
 around `0.229` at 80% power, larger than the effects this laboratory normally
 needs to distinguish. That design is retired.
 
-The M17-P result was not published when this rule was frozen. Contrary to an
-assumption made during review, its v1 schema does not publish per-seed arena
-games: it publishes final-rung `zero_regret_delta` per seed. The Bessel-corrected
-sample standard deviation of that available statistic is therefore the sole
-measured variance input. To avoid treating a static metric as an optimistic
-arena estimate, the between-seed standard deviation used for sizing is
-`max(measured_sd, 0.10)`, and game variance uses its worst-case `0.25` bound.
-That conservative value is fed to the frozen
-`m17p_random_effects_parametric_v1` simulation (`100000` repetitions, seed
-`44120260809`). The implementation selects the smallest number of pairs per
+The Bessel-corrected standard deviation of M21-P's 20 per-seed
+`MIX_OUTCOME - G1_WIDE_OUTCOME` common-search arena-score differences is the
+measured variance input. The value used for sizing is
+`max(measured_sd, 0.10)`, and within-arm game variance keeps its worst-case
+`0.25` bound. The observed M21-P standard deviation is not deconvolved to
+remove its existing arena noise before being used as the random-effect term;
+adding prospective game noise therefore remains deliberately conservative.
+That value is fed to the frozen
+`m21p_common_search_random_effects_v1` simulation (`100000` repetitions, seed
+`44120260810`). The implementation selects the smallest number of pairs per
 seed in:
 
 ```text
@@ -228,10 +262,10 @@ seed in:
 
 that provides at least 80% power for a true score delta of `+0.10` under the
 C1 provisional Student-t rule. Sixty-four is an unconditional floor. Missing
-per-seed data, fewer than one mean advancing M17-P generation, an invalid
-variance estimate, or failure of all three candidates produces
+per-seed common-search data, an unfrozen M21-P result hash, an invalid variance
+estimate, or failure of all three candidates produces
 `ABORT_AND_REVISE_PREREGISTRATION`; it cannot silently choose a sample size.
-The M17-P result hash, variance input, selected pair count, estimated power and
+The M21-P result hash, variance input, selected pair count, estimated power and
 power-report hash are frozen before any C1 model trains.
 
 ## C1 pairing
@@ -371,8 +405,10 @@ requires a separate preregistration.
 - `context_targets.py`: delta, baseline and residual construction;
 - `context_scaffold.py`: shared rank-10 training scaffold and exact scalar
   export;
-- `context_power.py`: M17-P variance validation, frozen sizing simulation and
+- `context_power.py`: M21-P arena-variance validation, frozen sizing simulation and
   fail-closed selection of arena pairs;
+- `prepare_contextual_outcome_supervision.py`: runner/science validation and
+  non-training freeze-report writer;
 - `run_contextual_outcome_supervision.py`: C0/C1 contracts and reporting;
 - focused tests for leakage, replay/pool disjointness, power sizing, chained
   decision, gradient coupling and export parity.
@@ -386,6 +422,6 @@ original no-gradient-path failure directly.
 - `promotable: false`;
 - `production_jass_changes_authorized: false`;
 - `direct_10x10_transfer_authorized: false`;
-- no C1 launch before the frozen M24-P PASS hash and a frozen M17-P-derived
-  power-sizing PASS;
+- no C0/C1 launch before the frozen M24-P and M18-P hashes, the completed M21-P
+  result, a frozen replay-source decision and an M21-P-derived power-sizing PASS;
 - any protocol change after C0 requires a new version and fresh evidence.

@@ -1,6 +1,6 @@
-schema: mini_jass.contextual_outcome_supervision.v2
+schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: design_preregistration_not_runnable
+status: implementation_blocked_on_frozen_M21P_result
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -14,7 +14,7 @@ architecture_contract:
 # PatternEval n'a pas de representation apprise partagee : ses buckets sont des
 # indices fixes. Des tetes lineaires independantes n'enverraient donc aucun
 # gradient vers la table scalaire. Le scaffold ci-dessous est le SEUL couplage
-# autorise en v2. Tous les bras, y compris WDL_ONLY, paient le meme scaffold.
+# autorise en v3. Tous les bras, y compris WDL_ONLY, paient le meme scaffold.
 training_scaffold_v1:
   family: shared_bucket_embedding_exact_scalar_export
   # Un axe pour la valeur et neuf axes pour les neuf composantes de contexte.
@@ -59,35 +59,51 @@ data_contract:
       job_id: cpx62-1217-mini-jass-pattern-m24p-v1
       required_status: PASS
       result_hash: 9447d1ea86ca2492c84aead6eedd0bbdb4bf2fbe1c7e9f3323d6d0879545cd67
-    M17_P_power_source:
-      job_id: cpx62-1218-mini-jass-pattern-m14p-m17p-v1
+    M18_P:
+      job_id: cpx62-1222-mini-jass-pattern-m18p-v1
+      required_status: completed
+      result_hash: 2680f52319b7be31c5cb6d44c229b78c545eb21b4dc4c8be2e3f17c125da5554
+      protocol_hash: 13ea66db6c483ce79028bee7f1c51c33c068507b70cc6b8f95171e018db41aa5
+    M21_P_strength_source:
+      job_id: cpx62-1223-mini-jass-pattern-m21p-v1
+      attempt_id: 20260810T055825Z-fe188c93
+      code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
       required_runner_state: completed
       required_exit_code: 0
-      m17_result_hash_must_be_frozen_before_sizing: true
-      final_rung_per_seed_zero_regret_delta_required: true
+      result_hash: PENDING_M21P_RESULT_MUST_BE_REPLACED_BEFORE_C0
+      per_seed_common_search_primary_contrast_required: true
       minimum_mean_advancing_generations: 1
 
-# Le resultat M17-P n'etait pas publie lorsque cette regle a ete gelee. Le
-# nombre de paires ne peut donc pas etre choisi apres lecture. On retient le
-# plus petit barreau conservateur qui atteint le MDE/power ci-dessous avec la
-# variance inter-modele mesuree, ou on arrete le protocole.
+replay_source_decision_v1:
+  decision_frozen_before_M21_P_result_read: true
+  on_M21_P_PASS: MIX_OUTCOME
+  on_M21_P_FAIL: G1_WIDE_OUTCOME
+  on_M21_P_INCONCLUSIVE: ABORT_AND_RESOLVE_M21P
+  on_invalid_or_failed_M21_P: ABORT_AND_RESOLVE_M21P
+  selected_source: PENDING_M21P_RESULT_MUST_BE_REPLACED_BEFORE_C0
+  same_selected_pack_for_every_non_oracle_arm: true
+  selected_source_and_M21P_hash_frozen_across_C1_C2: true
+
+# M21-P publie le contraste d'arene commun par seed. Le nombre de paires ne
+# peut pas etre choisi d'apres sa moyenne : seule sa variance alimente la regle
+# gelee ci-dessous. On retient le plus petit barreau conservateur qui atteint
+# le MDE/power, ou on arrete le protocole.
 power_sizing_v1:
-  decision_frozen_before_M17_P_result_read: true
+  decision_frozen_before_M21_P_result_read: true
   variance_source:
-    milestone: M17-P
-    # M17-P v1 publie ce delta par seed, mais pas ses parties d'arene.
-    statistic: final_rung_per_seed_zero_regret_delta
+    milestone: M21-P
+    statistic: per_seed_MIX_OUTCOME_minus_G1_WIDE_OUTCOME_common_search_arena_score
     estimator: sample_standard_deviation_ddof_1
-    transfer_to_arena_score: conservative_same_scale_upper_bound
+    measured_sd_used_as_random_effect_without_noise_deconvolution: true
     minimum_between_seed_standard_deviation: 0.10
   target:
     true_score_delta: 0.10
     minimum_power: 0.80
     provisional_rule: paired_seed_student_t_95_lower_bound_gt_zero
   simulation:
-    algorithm: m17p_random_effects_parametric_v1
+    algorithm: m21p_common_search_random_effects_v1
     replicates: 100000
-    seed: 44120260809
+    seed: 44120260810
     within_game_variance_upper_bound: 0.25
   candidate_pairs_per_seed:
     - 64
@@ -101,9 +117,10 @@ power_sizing_v1:
 
 program_order:
   phase: later_factor_after_pattern_reconstruction_diagnosis
-  requires_M17_P_result_and_reconstruction_decision_record: true
+  requires_M21_P_result_and_reconstruction_decision_record: true
   automatic_queue_from_PR_merge: false
   may_displace_baseline_reconstruction_cells: false
+  C0_or_C1_launch_while_M21P_running_forbidden: true
 
 context_v1:
   pov: side_to_move
@@ -385,6 +402,7 @@ reporting:
   hash_baseline_coefficients_and_tau: true
   hash_training_scaffold_and_export: true
   hash_power_sizing_input_result_and_selected_pairs: true
+  hash_M21P_replay_source_decision: true
   report_C1_and_C2_separately_before_chaining: true
   report_mechanism_categories: true
 
