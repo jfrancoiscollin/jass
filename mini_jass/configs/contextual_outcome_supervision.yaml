@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: C0_PASS_C1_implementation_ready_for_verification
+status: C1_FROZEN_C2_implementation_ready_for_verification
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -375,6 +375,55 @@ c1_decision:
     - WDL_PLUS_DELTA_CONTEXT
     - WDL_PLUS_RESIDUAL
   multiple_comparison_claims_from_exploratory_arms_forbidden: true
+  frozen_report_v1:
+    source_job_id: cpx62-1228-mini-jass-contextual-c1-v2
+    source_attempt_id: 20260810T120939Z-fe188c93
+    source_result_uri: r2:jass-data/runs/cpx62-1228-mini-jass-contextual-c1-v2/20260810T120939Z-fe188c93
+    source_implementation_sha: 0b7eecd080f79f7d609c4ab4c2df3d42560b5ab9
+    source_protocol_hash: 0d09e6a54c3c601a25abdec897c03da402f7d138bb59cf616af63dcf30c249c6
+    source_result_hash: 5d3bbf6490e9d1eb6bf3a73b82bb2ab4a53099ec9799db08cd6815cc0fb28f28
+    source_status: PROVISIONAL_NO_SIGNAL_REQUIRES_C2
+    freeze_job_id: cpx62-1229-mini-jass-contextual-c1-freeze-readout-v1
+    freeze_attempt_id: 20260810T134000Z-fe188c93
+    freeze_result_uri: r2:jass-data/runs/cpx62-1229-mini-jass-contextual-c1-freeze-readout-v1/20260810T134000Z-fe188c93
+    freeze_report_hash: 1d0c02385103d6bdd31e9d070e468c450ecbf0e4a763d7ea19fff9d0c5dc192c
+    freeze_status: PASS_C1_FREEZE_C2_AUTHORIZED
+    replay_start_manifest_hash: 4b6e492d1c8a682f21a0adc825c9652e51de2df078af251967b6add70a6a67fd
+    arena_start_manifest_hash: 6a1f91f1e63c57dee7c82d447be2b065d0b280b68674c2049eaacb05c8490a5f
+    replay_manifest_hashes:
+      - 3ac4792d8c2b3545da24414cc0b822608c94f452095497f50b40589e8903f2ca
+      - 9b0ad256b1ff325b5f46b682f5cf8f14ec7b9d0624076ca2d23575e627bbe68c
+      - 8325ee34ffa49cb73ee2e134aa83ef1f24443020b92711a196edc942a269c216
+      - 7b091e05e055697070349795c6961ef8559b473819f1e9ce9aa79d3c129a145c
+      - 15b1dfb78d6773fb670d021d18073c7df5c48e7580b577daa7c87741c1fc318e
+      - ec6446acd0c551a351e88bf13c5c0daa32fbfc7fbb2fa084656f78e04ed282ff
+      - 25c0b4901f7ccdade5219119061208578615b5cc8ee34a26105e11ac9081940e
+      - 02f86ff80d08de5667a4a1ae72b8e2d8eef66666c0e012f02a2e1732c2dce65f
+      - 97cab230c2fb6d25c917fb171eaab4159b5f1b33ab99c2ebe6030240e783223e
+      - ffcaa9b3b9d1f105a9fe476c0df6aef8992bfaa6676e639874eb08326a973d30
+      - c374e33bb8387b2dcbd7d753b4405954a863064c8f3aa775a37f9a3e17d5bf81
+      - 7cd1c9113d0cdd5f0463efad42ef363675faa9b884fbce37c5732300321083ff
+      - 3aae6e1dce004a64f22a59546b42ab9dc2f2804a8e8eb10484285d42b2d3a381
+      - c7315d4fc187f3e76ed32fc64db2da8b1fa6c884598264d400c1cdf31e826e38
+      - e2b504a76519807113399a19bc31e46bad3efa756076eaacc4317e865d2f5a66
+      - b19dc203ff72c104156d754da18be21fd65bc5823889658b19123309bc8fd3c9
+      - 9bb57e89ddc3a631bfafa80d89101fcf129e7f7684a97bffc72e3368441e32af
+      - 53f8e427f476d7a7d586413cbc4a307aed646e340ef49054d3f676245d1f08c6
+      - f46c61abc9f46846753222ad46cf75760c1774b7b303d5109bd282ecc0979225
+      - e384a43c76d2ea15e7820955e8659593d2ba7cf71091c86e86a112dd907086bc
+    primary_common_search_arena_score:
+      mean: 0.0
+      standard_error: 0.0008961552104318817
+      lower: -0.0018756744119172272
+      upper: 0.0018756744119172272
+      positive_seed_count: 1
+      zero_seed_count: 15
+    registered_mechanism_value_mae:
+      mean: 0.0032687276601791383
+      lower: 0.00268127807964276
+      upper: 0.0038561772407155167
+    c2_authorized: true
+    sealed_test_read: false
 
 c2_disjoint_replication:
   required_even_if_C1_is_flat_or_negative: true
@@ -414,6 +463,13 @@ final_chained_decision:
   pool_disjointness_required: true
   estimator: sequential_flat_prior_paired_score_v1
   C1_posterior_becomes_C2_prior: true
+  estimator_definition:
+    initial_prior: improper_flat_on_score_delta
+    pool_likelihood: normal_pool_mean_with_plugin_paired_standard_error_v1
+    pool_standard_error: sample_standard_deviation_ddof_1_over_sqrt_seed_count
+    sequential_update: inverse_variance_normal_C1_then_C2
+    zero_standard_error: exact_point_mass
+    posterior_probability: normal_survival_function_strict_threshold
   heterogeneity_guard:
     statistic: absolute_pool_difference_over_joint_standard_error
     maximum_z: 1.96
@@ -422,6 +478,8 @@ final_chained_decision:
     heterogeneous_pools_forbidden: true
   rejection:
     combined_effect_nonpositive_or_pool_contradiction: true
+    combined_effect_nonpositive: posterior_mean_less_than_or_equal_to_zero
+    pool_contradiction: heterogeneity_z_strictly_greater_than_1.96
   otherwise: INCONCLUSIVE
   publish_posterior_probability_above_score_delta:
     - 0.00

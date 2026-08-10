@@ -14,6 +14,7 @@ import torch
 from mini_jass_lab.context import ContextState, WHITE, terminal_status
 from mini_jass_lab.context_replay import (
     allocate_disjoint_state_manifests,
+    assert_replay_pool_disjointness,
     assigned_states,
     freeze_replay_manifest,
 )
@@ -40,6 +41,7 @@ def _tool(name: str):
 
 
 C1 = _tool("run_contextual_c1.py")
+C2 = _tool("run_contextual_c2.py")
 
 
 def _fixture() -> tuple[SimpleNamespace, GameGraph, list[ReplaySample]]:
@@ -189,6 +191,44 @@ def test_replay_manifest_and_targets_require_the_recorded_legal_action() -> None
         )
 
 
+def test_replay_disjointness_verifies_hashes_and_rejects_reuse() -> None:
+    _, _, samples = _fixture()
+    c1 = freeze_replay_manifest(
+        samples,
+        pool="C1",
+        seed=270501,
+        source="G1_WIDE_OUTCOME",
+        start_state_ids=(1,),
+    )
+    c2_samples = [
+        ReplaySample(
+            sample.state_id,
+            sample.value_target,
+            sample.policy_target,
+            sample.generation,
+            sample.game_id + 10,
+            sample.ply,
+            sample.selected_action,
+        )
+        for sample in samples
+    ]
+    c2 = freeze_replay_manifest(
+        c2_samples,
+        pool="C2",
+        seed=270601,
+        source="G1_WIDE_OUTCOME",
+        start_state_ids=(2,),
+    )
+    report = assert_replay_pool_disjointness((c1, c2))
+    assert report["seed_disjoint"] is True
+    assert report["replay_fingerprint_disjoint"] is True
+    corrupted = deepcopy(c2)
+    corrupted["replay_fingerprint"] = c1["replay_fingerprint"]
+    corrupted["manifest_hash"] = c1["manifest_hash"]
+    with pytest.raises(ValueError, match="hash mismatch|reuse"):
+        assert_replay_pool_disjointness((c1, corrupted))
+
+
 def test_contextual_arms_share_batches_and_auxiliary_loss_changes_export() -> None:
     oracle, graph, samples = _fixture()
     targets = contextual_replay_targets(
@@ -253,4 +293,19 @@ def test_c1_runner_and_cpx_entrypoint_are_fail_closed() -> None:
     job = (ROOT / "jobs" / "run_contextual_c1_cpx.sh").read_text(encoding="utf-8")
     assert "CONTEXTUAL_C1_IMPLEMENTATION_SHA" in job
     assert 'actual_sha=$(git -C "$repo" rev-parse HEAD)' in job
+    assert "scientific-summary.json exceeds 64 KiB" in job
+
+
+def test_c2_runner_and_cpx_entrypoint_are_fail_closed() -> None:
+    config, loop = C2._resolve(ROOT / "configs" / "contextual_outcome_supervision.yaml")
+    assert loop["model"]["architecture"] == "folded_pattern_value"
+    assert config["c1_decision"]["frozen_report_v1"]["c2_authorized"] is True
+    runner = (ROOT / "tools" / "run_contextual_c2.py").read_text(encoding="utf-8")
+    assert 'split.indices("frozen_test")' not in runner
+    assert "assert_replay_pool_disjointness" in runner
+    assert "sequential_flat_prior_paired_score" in runner
+    job = (ROOT / "jobs" / "run_contextual_c2_cpx.sh").read_text(encoding="utf-8")
+    assert "CONTEXTUAL_C2_IMPLEMENTATION_SHA" in job
+    assert "CONTEXTUAL_C1_RESULT_PATH" in job
+    assert "CONTEXTUAL_C1_FREEZE_REPORT_PATH" in job
     assert "scientific-summary.json exceeds 64 KiB" in job

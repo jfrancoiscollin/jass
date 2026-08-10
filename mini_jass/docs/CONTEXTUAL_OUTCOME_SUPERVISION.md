@@ -37,7 +37,7 @@ playable oracle states, with maximum value error
 The report explicitly records `sealed_test_read: false` and
 `c1_training_authorized: true`.
 
-C1 is therefore scientifically authorized. Its first pinned execution,
+C1 was therefore scientifically authorized. Its first pinned execution,
 `cpx62-1226-mini-jass-contextual-c1-v1`, completed 17 of 20 seed rows before
 aborting on the per-checkpoint scalar-export proof. Read-only diagnosis
 `cpx62-1227-mini-jass-contextual-c1-failure-readout-v1` established that no
@@ -46,12 +46,23 @@ order mismatch: the live scaffold summed embeddings before projection while
 the exported `PatternEval` projected buckets before summation. Values remained
 within the registered tolerance, but a near-tied child pair changed one action.
 
-The implementation now evaluates the live scalar branch in exactly the same
-floating-point order as its export and regression-tests bit-exact value parity
-on the failing seed. The scientific protocol, replay, targets, weights, seeds,
-arena and decision rule are unchanged; the next execution must restart all 20
-seeds from scratch. No C1 scientific result exists yet. No production Jass
-change or direct 10x10 transfer is authorized.
+The corrected implementation evaluates the live scalar branch in exactly the
+same floating-point order as its export and regression-tests bit-exact value
+parity on the failing seed. The scientific protocol, replay, targets, weights, seeds,
+arena and decision rule were unchanged. The fresh execution
+`cpx62-1228-mini-jass-contextual-c1-v2` completed all 20 seeds from scratch.
+Its registered arena contrast is exactly `0.0`, with 95% interval
+`[-0.0018756744119172272, 0.0018756744119172272]`, so its provisional status is
+`PROVISIONAL_NO_SIGNAL_REQUIRES_C2`. The registered FULL-minus-WDL development
+MAE contrast is `+0.0032687276601791383`, also in the wrong direction.
+
+Independent readout `cpx62-1229-mini-jass-contextual-c1-freeze-readout-v1`
+verified the R2 inventory, result/protocol hashes, all 20 replay manifests,
+both globally allocated start manifests, pairing and export proofs. It returned
+`PASS_C1_FREEZE_C2_AUTHORIZED`, report hash
+`1d0c02385103d6bdd31e9d070e468c450ecbf0e4a763d7ea19fff9d0c5dc192c`.
+C2 is now authorized and remains mandatory. The sealed cohort is still unread;
+no production Jass change or direct 10x10 transfer is authorized.
 
 This remains a later factor in the PatternEval reconstruction program. A merge
 of this design never queues C1 automatically and cannot displace M21-P or its
@@ -377,6 +388,12 @@ power-selected pair count remain unchanged.
 
 Pool A and pool B are reported separately before they are chained. The flat
 prior for C1 is updated by pool A, and that posterior becomes the prior for C2.
+The frozen estimator treats each pool's paired mean as normal with its plug-in
+paired standard error (`sd(ddof=1) / sqrt(20)`). Starting from an improper flat
+prior, C1 then C2 are combined by the algebraically equivalent inverse-variance
+normal update. A zero-SE pool is an exact point mass. Strict-threshold
+probabilities use the normal survival function; this definition is frozen
+before any C2 data exist.
 The pools must pass both hard disjointness and the heterogeneity guard:
 
 ```text
@@ -473,18 +490,19 @@ requires a separate preregistration.
 - implemented here: `context.py`, `context_targets.py`,
   `context_scaffold.py`, `context_power.py`, the non-training M21-P preparation
   tool, the fail-closed C0-only runner, `context_replay.py`,
-  `context_training.py` and the C1-only runner;
+  `context_training.py`, the C1-only runner, the C2-only runner and the frozen
+  sequential decision estimator;
 - implemented tests: rule equivalence, POV/symmetry, leakage rejection, exact
   rank metrics, deterministic scaffold initialization, gradient coupling and
   scalar export parity, transition identity, replay/start manifests, paired
   schedules and auxiliary-to-export coupling;
-- implemented for C1 but still requiring CI/CPX verification: the selected
-  `G1_WIDE_OUTCOME` generator, all five deployable arms, direct-table
-  descriptive control, C1/C2 start reservation, provisional C1 reporting and
-  per-checkpoint full-oracle export proofs;
-- still required after C1: the fresh C2 execution, hard replay-manifest
-  disjointness verification against C1, chained final decision and the single
-  sealed read.
+- completed and independently frozen for C1: the selected `G1_WIDE_OUTCOME`
+  generator, all five deployable arms, direct-table descriptive control,
+  global C1/C2 start reservation, provisional reporting and per-checkpoint
+  full-oracle export proofs;
+- still required: CI verification of C2, the fresh C2 execution, hard
+  replay-manifest disjointness verification, independent freeze of the chained
+  decision and then the single sealed read.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the

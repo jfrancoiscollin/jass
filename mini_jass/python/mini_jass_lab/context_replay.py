@@ -136,6 +136,20 @@ def assert_replay_pool_disjointness(
 ) -> dict[str, object]:
     if not manifests:
         raise ValueError("replay disjointness requires manifests")
+    for manifest in manifests:
+        if manifest.get("schema") != REPLAY_MANIFEST_SCHEMA:
+            raise ValueError("unexpected contextual replay manifest schema")
+        expected_hash = digest(
+            {key: value for key, value in manifest.items() if key != "manifest_hash"}
+        )
+        if manifest.get("manifest_hash") != expected_hash:
+            raise ValueError("contextual replay manifest hash mismatch")
+        if manifest.get("selected_action_complete") is not True:
+            raise ValueError("contextual replay manifest omits selected actions")
+        if int(manifest["reserved_start_state_count"]) != int(
+            manifest["unique_reserved_start_state_count"]
+        ):
+            raise ValueError("contextual replay reserved starts are not unique")
     keys = [(str(manifest["pool"]), int(manifest["seed"])) for manifest in manifests]
     if len(keys) != len(set(keys)):
         raise ValueError("duplicate contextual replay pool/seed manifest")
@@ -144,12 +158,28 @@ def assert_replay_pool_disjointness(
     disjoint = c1.isdisjoint(c2)
     if not disjoint:
         raise ValueError("C1 and C2 replay seeds overlap")
+    if not c1 or not c2:
+        raise ValueError("replay disjointness proof requires both C1 and C2")
+    unique_fields = (
+        "manifest_hash",
+        "sample_identity_hash",
+        "replay_fingerprint",
+        "reserved_start_state_hash",
+    )
+    for field in unique_fields:
+        values = [str(manifest[field]) for manifest in manifests]
+        if len(values) != len(set(values)):
+            raise ValueError(f"C1/C2 replay manifests reuse {field}")
     report: dict[str, object] = {
         "schema": "mini_jass.contextual_replay_disjointness.v1",
         "manifest_count": len(manifests),
         "c1_seed_count": len(c1),
         "c2_seed_count": len(c2),
         "seed_disjoint": True,
+        "sample_identity_hash_disjoint": True,
+        "replay_fingerprint_disjoint": True,
+        "reserved_start_state_hash_disjoint": True,
+        "selected_action_complete": True,
         "manifest_hashes": sorted(
             str(manifest["manifest_hash"]) for manifest in manifests
         ),
