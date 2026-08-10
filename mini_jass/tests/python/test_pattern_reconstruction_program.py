@@ -1,4 +1,4 @@
-"""Contracts of the PatternEval reconstruction program (M24-P/M14-P/M17-P)."""
+"""Contracts of the architecture-correct PatternEval reconstruction program."""
 
 from __future__ import annotations
 
@@ -28,6 +28,7 @@ M24P = _tool("run_pattern_supervised_ceiling.py")
 M14P = _tool("run_pattern_value_target_ablation.py")
 M17P = _tool("run_pattern_generation_ladder.py")
 M18P = _tool("run_pattern_state_distribution_decomposition.py")
+M21P = _tool("run_pattern_learning_signal_composition.py")
 
 
 def _sample(value: float = 1.0, policy_action: int = 3) -> ReplaySample:
@@ -140,6 +141,11 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
             "l1_pattern_state_distribution_decomposition.yaml",
             M18P.SCHEMA,
             "M18-P",
+        ),
+        (
+            "l1_pattern_learning_signal_composition.yaml",
+            M21P.SCHEMA,
+            "M21-P",
         ),
     ],
 )

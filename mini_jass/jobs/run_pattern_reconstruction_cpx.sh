@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Architecture-correct reconstruction cells. Prepare one CPX job per cell:
-#   run_pattern_reconstruction_cpx.sh m24p|m14p|m17p|m17p2|m17p2r|m18p
+#   run_pattern_reconstruction_cpx.sh m24p|m14p|m17p|m17p2|m17p2r|m18p|m21p
 #
 # This entrypoint deliberately does not choose the order.  M24-P is the first
 # scientific read; M14-P and M17-P are launched only after its interpretation.
 set -Eeuo pipefail
 
-cell=${1:?expected one of: m24p, m14p, m17p, m17p2, m17p2r, m18p}
+cell=${1:?expected one of: m24p, m14p, m17p, m17p2, m17p2r, m18p, m21p}
 repo=${JASS_CODE_DIR:?JASS_CODE_DIR is required}
 job_id=${JASS_JOB_ID:?JASS_JOB_ID is required}
 result_root=${JASS_RESULT_DIR:?JASS_RESULT_DIR is required}
@@ -47,6 +47,11 @@ case "$cell" in
   m18p)
     tool=run_pattern_state_distribution_decomposition.py
     config=l1_pattern_state_distribution_decomposition.yaml
+    timeout_seconds=43200
+    ;;
+  m21p)
+    tool=run_pattern_learning_signal_composition.py
+    config=l1_pattern_learning_signal_composition.yaml
     timeout_seconds=43200
     ;;
   *)
@@ -99,7 +104,7 @@ phase pytest
 phase oracle_export_l1
 
 extra_args=()
-if [[ "$cell" == "m18p" ]]; then
+if [[ "$cell" == "m18p" || "$cell" == "m21p" ]]; then
   extra_args+=(--progress-output "$artefact_root/PROGRESS.json")
 fi
 timeout -k 60s "${timeout_seconds}s" \
