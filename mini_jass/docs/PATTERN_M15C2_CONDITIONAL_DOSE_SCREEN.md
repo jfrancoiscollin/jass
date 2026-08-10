@@ -89,9 +89,16 @@ The configuration pins the M15-C protocol hash
 result hash `b63008f3e685c5cf20ae18af4e389fa8f7308ae31aa6525e549244f6f80e499d`.
 It fails closed if the observations used to select the interior dose change.
 
+Reserve seed `273000` is excluded from those scientific seeds and may be used
+once on cpx62 for runtime calibration. Its output contains workload counts and
+timing only: no response metric, contrast, recommendation or promotion signal.
+
 - train and development are the only readable cohorts;
 - the historical `frozen_test` read count remains one, with zero new reads;
 - all training targets and replay generation are oracle-blind;
 - no model is promotable and there is no automatic selection;
 - no production Jass change or direct 10×10 transfer is authorized;
+- CPX reuses one host-persistent mini-jass Python environment outside the
+  per-attempt result tree, so torch is neither reinstalled nor uploaded for
+  every cell after the one-time bootstrap;
 - this PR prepares the runner and CPX route but creates no queue job.

@@ -122,6 +122,13 @@ source_evidence:
     context_only_minus_outcome_mean: -0.018969765137516404
     interpretation_for_followup: MECHANISM_CONFIRMED_PRACTICAL_GATE_MISSED
 
+probe:
+  seed: 273000
+  overlaps_scientific_seeds: false
+  purpose: cpx62_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
 boundaries:
   cohorts_read: [train, development]
   cohorts_never_read_by_this_cell: [frozen_test]

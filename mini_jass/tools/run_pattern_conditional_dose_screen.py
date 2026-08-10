@@ -55,6 +55,7 @@ from run_pattern_conditional_target_screen import (  # noqa: E402
 )
 
 SCHEMA = "mini_jass.pattern_conditional_dose_screen.v1"
+PROBE_SCHEMA = "mini_jass.pattern_conditional_dose_screen_probe.v1"
 ARM_ORDER = (
     "OUTCOME",
     "SHUFFLED_CONTEXT_20",
@@ -99,6 +100,15 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     seeds = [int(seed) for seed in config.get("paired_seeds", [])]
     if seeds != list(range(273001, 273021)):
         raise ValueError("M15-C2 paired seeds changed or overlap prior evidence")
+    probe = config.get("probe", {})
+    if (
+        int(probe.get("seed", -1)) != 273000
+        or probe.get("overlaps_scientific_seeds") is not False
+        or probe.get("purpose") != "cpx62_runtime_calibration_only"
+        or probe.get("reporting") != "timing_and_contract_only"
+        or probe.get("scientific_metrics_must_not_be_published") is not True
+    ):
+        raise ValueError("M15-C2 probe contract changed")
 
     evidence = config.get("source_evidence", {}).get("m15c", {})
     if (
@@ -440,6 +450,26 @@ def _write_outputs(result: dict[str, Any], run_dir: Path, compact_output: Path) 
             raise RuntimeError(f"M15-C2 reporting round-trip failed: {path}")
 
 
+def _write_probe_outputs(
+    result: dict[str, Any], run_dir: Path, compact_output: Path
+) -> None:
+    payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "probe.json").write_text(payload, encoding="utf-8")
+    compact_output.parent.mkdir(parents=True, exist_ok=True)
+    compact_output.write_text(payload, encoding="utf-8")
+    for path in (run_dir / "probe.json", compact_output):
+        replayed = json.loads(path.read_text(encoding="utf-8"))
+        if (
+            replayed.get("schema") != PROBE_SCHEMA
+            or replayed.get("status") != "PROBE_COMPLETE"
+            or replayed.get("result_hash") != result.get("result_hash")
+            or replayed.get("scientific_metrics_published") is not False
+            or replayed.get("promotable") is not False
+        ):
+            raise RuntimeError(f"M15-C2 probe reporting round-trip failed: {path}")
+
+
 def _write_progress(
     path: Path | None, completed: int, total: int, last_seed: int, started: float
 ) -> None:
@@ -469,6 +499,7 @@ def run_m15c2(
     compact_output: Path,
     execution_host: str | None = None,
     progress_output: Path | None = None,
+    probe_only: bool = False,
 ) -> dict[str, Any]:
     config, base_loop = _resolve(config_path)
     host = execution_host or platform.node()
@@ -511,7 +542,12 @@ def run_m15c2(
     run_dir.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
 
-    for raw_seed in config["paired_seeds"]:
+    run_seeds = (
+        [int(config["probe"]["seed"])]
+        if probe_only
+        else [int(seed) for seed in config["paired_seeds"]]
+    )
+    for raw_seed in run_seeds:
         seed = int(raw_seed)
         fit_seed = seed + schedule_offset
         seed_everything(fit_seed, int(base_loop["runtime"]["threads"]))
@@ -650,10 +686,38 @@ def run_m15c2(
             "arms": arm_rows,
         }
         rows.append(row)
-        (run_dir / f"seed-{seed}.json").write_text(
-            json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        if not probe_only:
+            (run_dir / f"seed-{seed}.json").write_text(
+                json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
+            _write_progress(progress_output, len(rows), len(run_seeds), seed, started)
+
+    if probe_only:
+        elapsed = time.monotonic() - started
+        result = {
+            "schema": PROBE_SCHEMA,
+            "milestone": "M15-C2-PROBE",
+            "status": "PROBE_COMPLETE",
+            "seed": int(run_seeds[0]),
+            "timing": {"total_seconds": elapsed},
+            "workload": {
+                "selfplay_games": int(config["replay"]["games_per_seed"]),
+                "training_arms": len(ARM_ORDER),
+                "training_steps": len(ARM_ORDER) * steps,
+                "arena_arms": len(ARENA_ARMS),
+                "arena_pairs": len(ARENA_ARMS) * int(arena_spec["pairs"]),
+                "arena_games": 2 * len(ARENA_ARMS) * int(arena_spec["pairs"]),
+                "train_sample_count": int(rows[0]["replay"]["train_sample_count"]),
+            },
+            "reporting": "timing_and_contract_only",
+            "scientific_metrics_published": False,
+            "promotable": False,
+        }
+        result["result_hash"] = digest(
+            {key: value for key, value in result.items() if key != "result_hash"}
         )
-        _write_progress(progress_output, len(rows), len(config["paired_seeds"]), seed, started)
+        _write_probe_outputs(result, run_dir, compact_output)
+        return result
 
     critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
     contrasts = build_contrasts(rows, critical)
@@ -766,6 +830,7 @@ def main() -> int:
     parser.add_argument("--compact-output", type=Path, required=True)
     parser.add_argument("--execution-host")
     parser.add_argument("--progress-output", type=Path)
+    parser.add_argument("--probe-only", action="store_true")
     args = parser.parse_args()
     result = run_m15c2(
         args.config,
@@ -774,6 +839,7 @@ def main() -> int:
         args.compact_output,
         args.execution_host,
         args.progress_output,
+        args.probe_only,
     )
     print(json.dumps({"status": result["status"], "result_hash": result["result_hash"]}))
     return 0

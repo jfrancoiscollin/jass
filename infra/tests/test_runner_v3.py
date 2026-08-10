@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import stat
+import subprocess
 import sys
 import tempfile
 import time
@@ -179,6 +181,39 @@ class LayoutTests(unittest.TestCase):
 
 
 class ResultTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "posix", "POSIX process groups required")
+    def test_job_wrapper_records_sigterm_as_failure(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = root / "work"
+            workspace.mkdir()
+            exit_code = root / "exit_code"
+            raw_log = root / "output.log.raw"
+            wrapper_pid = root / "wrapper.pid"
+            env_file = root / "job.env"
+            script = root / "job.sh"
+            env_file.write_text("", encoding="utf-8")
+            script.write_text("sleep 30\n", encoding="utf-8")
+            wrapper = R.build_job_wrapper(
+                exit_code, raw_log, wrapper_pid, env_file, workspace, script
+            )
+            proc = subprocess.Popen(
+                ["bash", "-c", wrapper],
+                start_new_session=True,
+            )
+            try:
+                deadline = time.time() + 5
+                while not wrapper_pid.exists() and time.time() < deadline:
+                    time.sleep(0.01)
+                self.assertTrue(wrapper_pid.exists())
+                os.killpg(proc.pid, signal.SIGTERM)
+                proc.wait(timeout=5)
+                self.assertEqual(exit_code.read_text().strip(), "143")
+            finally:
+                if proc.poll() is None:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                    proc.wait(timeout=5)
+
     def test_inventory_and_checksums(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

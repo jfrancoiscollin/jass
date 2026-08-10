@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Architecture-correct reconstruction cells. Prepare one CPX job per cell:
-#   run_pattern_reconstruction_cpx.sh m24p|m14p|m15p|m15c|m15c2|m17p|m17p2|m17p2r|m18p|m21p
+#   run_pattern_reconstruction_cpx.sh m24p|m14p|m15p|m15c|m15c2probe|m15c2|m17p|m17p2|m17p2r|m18p|m21p
 #
 # This entrypoint deliberately does not choose the order.  M24-P is the first
 # scientific read; M14-P and M17-P are launched only after its interpretation.
 set -Eeuo pipefail
 
-cell=${1:?expected one of: m24p, m14p, m15p, m15c, m15c2, m17p, m17p2, m17p2r, m18p, m21p}
+cell=${1:?expected one of: m24p, m14p, m15p, m15c, m15c2probe, m15c2, m17p, m17p2, m17p2r, m18p, m21p}
 repo=${JASS_CODE_DIR:?JASS_CODE_DIR is required}
 job_id=${JASS_JOB_ID:?JASS_JOB_ID is required}
 result_root=${JASS_RESULT_DIR:?JASS_RESULT_DIR is required}
@@ -44,6 +44,11 @@ case "$cell" in
     config=l1_pattern_conditional_dose_screen.yaml
     timeout_seconds=43200
     ;;
+  m15c2probe)
+    tool=run_pattern_conditional_dose_screen.py
+    config=l1_pattern_conditional_dose_screen.yaml
+    timeout_seconds=1800
+    ;;
   m17p)
     tool=run_pattern_generation_ladder.py
     config=l1_pattern_generation_ladder.yaml
@@ -77,7 +82,11 @@ esac
 
 work="$result_root/mini-jass-pattern-reconstruction-$cell"
 build="$work/build"
-venv="$work/venv"
+# Keep the Python stack outside the per-attempt result tree.  The old location
+# uploaded nearly 1 GiB of torch with every job and then deleted it, forcing the
+# next cell to reinstall the same wheel.  This host-scoped venv is bootstrapped
+# once and reused by later mini-jass cells.
+venv="${MINI_JASS_PATTERN_VENV:-/root/.cache/mini-jass-pattern-venv}"
 run_dir="$work/run"
 full_result="$work/result.full.json"
 oracle="$repo/mini_jass/artefacts/oracle.l1.pattern-reconstruction-$job_id.jsonl"
@@ -99,7 +108,10 @@ cmake --build "$build" --parallel "$(nproc)"
 ctest --test-dir "$build" --output-on-failure
 phase build_and_ctest
 
-python3 -m venv --system-site-packages "$venv"
+if [[ ! -x "$venv/bin/python" ]]; then
+  mkdir -p "$(dirname "$venv")"
+  python3 -m venv --system-site-packages "$venv"
+fi
 python_bin="$venv/bin/python"
 if ! "$python_bin" -c 'import torch' >/dev/null 2>&1; then
   "$python_bin" -m pip install --index-url https://download.pytorch.org/whl/cpu \
@@ -122,6 +134,9 @@ extra_args=()
 if [[ "$cell" == "m15p" || "$cell" == "m15c" || "$cell" == "m15c2" || "$cell" == "m18p" || "$cell" == "m21p" ]]; then
   extra_args+=(--progress-output "$artefact_root/PROGRESS.json")
 fi
+if [[ "$cell" == "m15c2probe" ]]; then
+  extra_args+=(--probe-only)
+fi
 timeout -k 60s "${timeout_seconds}s" \
   "$python_bin" "$repo/mini_jass/tools/$tool" \
     --config "$repo/mini_jass/configs/$config" \
@@ -143,29 +158,43 @@ import sys
 full = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 out = Path(sys.argv[2])
 cell = sys.argv[3]
-summary = {
-    "schema": full["schema"],
-    "milestone": full["milestone"],
-    "status": full["status"],
-    "protocol_hash": full["protocol_hash"],
-    "result_hash": full["result_hash"],
-    "aggregate": full["aggregate"],
-    "recommendation": full["recommendation"],
-    "sealed_cohort_contract": full["sealed_cohort_contract"],
-    "promotable": False,
-}
+if cell == "m15c2probe":
+    summary = full
+else:
+    summary = {
+        "schema": full["schema"],
+        "milestone": full["milestone"],
+        "status": full["status"],
+        "protocol_hash": full["protocol_hash"],
+        "result_hash": full["result_hash"],
+        "aggregate": full["aggregate"],
+        "recommendation": full["recommendation"],
+        "sealed_cohort_contract": full["sealed_cohort_contract"],
+        "promotable": False,
+    }
 (out / "scientific-summary.json").write_text(
     json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
 )
-lines = [
-    f"cell={cell}",
-    f"milestone={summary['milestone']}",
-    f"status={summary['status']}",
-    f"protocol_hash={summary['protocol_hash']}",
-    f"result_hash={summary['result_hash']}",
-    f"finding={summary['recommendation']['finding']}",
-    f"promotable={str(summary['promotable']).lower()}",
-]
+if cell == "m15c2probe":
+    lines = [
+        f"cell={cell}",
+        f"status={summary['status']}",
+        f"result_hash={summary['result_hash']}",
+        f"seed={summary['seed']}",
+        f"total_seconds={summary['timing']['total_seconds']}",
+        "scientific_metrics_published=false",
+        "promotable=false",
+    ]
+else:
+    lines = [
+        f"cell={cell}",
+        f"milestone={summary['milestone']}",
+        f"status={summary['status']}",
+        f"protocol_hash={summary['protocol_hash']}",
+        f"result_hash={summary['result_hash']}",
+        f"finding={summary['recommendation']['finding']}",
+        f"promotable={str(summary['promotable']).lower()}",
+    ]
 (out / "RESULTS.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 PY
 

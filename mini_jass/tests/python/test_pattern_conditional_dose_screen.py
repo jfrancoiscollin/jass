@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 import numpy as np
@@ -62,6 +63,18 @@ def test_m15c2_config_freezes_primary_dose_fresh_seeds_and_no_test_read() -> Non
     assert M15C2.estimate_power(config["power_sizing"]) == pytest.approx(0.92325)
     assert config["boundaries"]["additional_frozen_test_reads_authorized"] == 0
     assert config["boundaries"]["execution_is_not_queued_by_this_pr"] is True
+    assert config["probe"]["seed"] == 273000
+    assert config["probe"]["scientific_metrics_must_not_be_published"] is True
+
+
+def test_cpx_wrapper_reuses_a_host_persistent_venv_outside_results() -> None:
+    wrapper = (ROOT / "jobs" / "run_pattern_reconstruction_cpx.sh").read_text(
+        encoding="utf-8"
+    )
+    assert 'venv="$work/venv"' not in wrapper
+    assert "/root/.cache/mini-jass-pattern-venv" in wrapper
+    assert 'if [[ ! -x "$venv/bin/python" ]]' in wrapper
+    assert "python3 -m venv --system-site-packages" in wrapper
 
 
 def test_m15c2_changes_only_value_target_at_each_frozen_dose() -> None:
@@ -148,3 +161,26 @@ def test_m15c2_result_write_read_round_trip_preserves_verdict(tmp_path: Path) ->
     compact = tmp_path / "result.full.json"
     M15C2._write_outputs(result, run_dir, compact)
     assert (run_dir / "result.json").read_bytes() == compact.read_bytes()
+
+
+def test_m15c2_probe_round_trip_publishes_timing_only(tmp_path: Path) -> None:
+    result = {
+        "schema": M15C2.PROBE_SCHEMA,
+        "milestone": "M15-C2-PROBE",
+        "status": "PROBE_COMPLETE",
+        "seed": 273000,
+        "timing": {"total_seconds": 42.0},
+        "workload": {"selfplay_games": 1024},
+        "reporting": "timing_and_contract_only",
+        "scientific_metrics_published": False,
+        "promotable": False,
+        "result_hash": "probe-fixture-hash",
+    }
+    run_dir = tmp_path / "run"
+    compact = tmp_path / "probe.full.json"
+    M15C2._write_probe_outputs(result, run_dir, compact)
+    replayed = json.loads(compact.read_text(encoding="utf-8"))
+    assert replayed["seed"] == 273000
+    assert replayed["scientific_metrics_published"] is False
+    assert "aggregate" not in replayed
+    assert "recommendation" not in replayed
