@@ -88,7 +88,12 @@ def patterns() -> dict[str, re.Pattern[str]]:
     primary = "".join(("ma", "in"))
     root_clone = "/" + "/".join(("root", "jass"))
     return {
-        "hardcoded_legacy_clone": re.compile(re.escape(root_clone)),
+        # Match the retired clone itself and its children, but not independent
+        # paths that merely share the prefix (for example /root/jass-scan or
+        # /root/jass-control).
+        "hardcoded_legacy_clone": re.compile(
+            re.escape(root_clone) + r"(?![A-Za-z0-9_.-])"
+        ),
         "legacy_remote_ref": re.compile(re.escape("origin/" + primary)),
         "legacy_push_ref": re.compile(re.escape("HEAD:" + primary)),
         "legacy_full_ref": re.compile(re.escape("refs/heads/" + primary)),
