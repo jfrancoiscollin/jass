@@ -19,7 +19,11 @@ if "mini_jass_lab" not in sys.modules:
     sys.modules["mini_jass_lab"] = package
 sys.path.insert(0, str(PYTHON_ROOT))
 
-from mini_jass_lab.context_gate import attach_export_proof, evaluate_c0  # noqa: E402
+from mini_jass_lab.context_gate import (  # noqa: E402
+    attach_export_proof,
+    digest,
+    evaluate_c0,
+)
 from mini_jass_lab.context_scaffold import (  # noqa: E402
     ContextualPatternScaffold,
     prove_scalar_export,
@@ -34,6 +38,8 @@ def main() -> int:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--oracle", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--implementation-sha", required=True)
+    parser.add_argument("--execution-host", required=True)
     args = parser.parse_args()
 
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
@@ -65,6 +71,14 @@ def main() -> int:
     )
     proof = prove_scalar_export(scaffold, oracle)
     report = attach_export_proof(report, proof, config)
+    if len(args.implementation_sha) != 40 or any(
+        character not in "0123456789abcdef" for character in args.implementation_sha
+    ):
+        raise ValueError("implementation SHA must be a lowercase full Git SHA")
+    report.pop("report_hash", None)
+    report["implementation_sha"] = args.implementation_sha
+    report["execution_host"] = args.execution_host
+    report["report_hash"] = digest(report)
     payload = json.dumps(report, indent=2, sort_keys=True) + "\n"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(payload, encoding="utf-8")

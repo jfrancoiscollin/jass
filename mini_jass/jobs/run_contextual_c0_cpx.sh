@@ -6,6 +6,7 @@ repo=${JASS_CODE_DIR:?JASS_CODE_DIR is required}
 job_id=${JASS_JOB_ID:?JASS_JOB_ID is required}
 result_root=${JASS_RESULT_DIR:?JASS_RESULT_DIR is required}
 artefact_root=${JASS_ARTEFACT_DIR:?JASS_ARTEFACT_DIR is required}
+implementation_sha=${CONTEXTUAL_IMPLEMENTATION_SHA:?CONTEXTUAL_IMPLEMENTATION_SHA is required}
 host=$(hostname)
 
 if [[ "$job_id" != cpx62-* || "$host" != cpx62 ]]; then
@@ -61,7 +62,8 @@ phase oracle_export_l1
 timeout -k 60s 3600s \
   "$python_bin" "$repo/mini_jass/tools/run_contextual_outcome_supervision.py" \
     --config "$repo/mini_jass/configs/contextual_outcome_supervision.yaml" \
-    --oracle "$oracle" --output "$report"
+    --oracle "$oracle" --output "$report" \
+    --implementation-sha "$implementation_sha" --execution-host "$host"
 phase contextual_c0
 
 cp "$report" "$artefact_root/scientific-summary.json"

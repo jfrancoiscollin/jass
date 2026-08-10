@@ -20,7 +20,7 @@ from .context import (
 from .context_targets import baseline_values
 
 
-def _digest(value: Any) -> str:
+def digest(value: Any) -> str:
     payload = json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
     ).encode("utf-8")
@@ -169,7 +169,7 @@ def evaluate_c0(
         "tau": float(baseline_config["tau"]),
         "residual_clip": float(baseline_config["residual_clip"]),
     }
-    baseline_hash = _digest(baseline_definition)
+    baseline_hash = digest(baseline_definition)
     if baseline_config.get("definition_hash") != baseline_hash:
         raise ValueError("C0 baseline definition differs from the frozen pin")
     report: dict[str, Any] = {
@@ -185,7 +185,7 @@ def evaluate_c0(
         "sealed_test_read": False,
         "c1_training_authorized": bool(passed),
     }
-    report["report_hash"] = _digest(report)
+    report["report_hash"] = digest(report)
     return report
 
 
@@ -210,5 +210,5 @@ def attach_export_proof(
     if not proof_pass:
         updated["status"] = config["c0_gate"]["on_failure"]
         updated["c1_training_authorized"] = False
-    updated["report_hash"] = _digest(updated)
+    updated["report_hash"] = digest(updated)
     return updated
