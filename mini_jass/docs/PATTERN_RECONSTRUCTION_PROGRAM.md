@@ -1,7 +1,8 @@
 # Mini-Jass PatternEval reconstruction program
 
-Status: prepared, not queued. Wiring batch `cpx62-1216` completed successfully
-on merge SHA `17a35596366d2448917d2ffaebeaeebf226cc081`.
+Status: M24-P through M18-P completed. M17-P2R confirmed the generation-8
+response, and M18-P decomposed its static development response. M21-P is the
+prepared, not-yet-queued strength reconstruction below.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -75,6 +76,88 @@ Twenty fresh seeds run one causal ladder to generation 8 and report rungs 1,
 decision, not a rejected candidate. A ladder with fewer than one mean advancing
 generation is inconclusive. Frozen test is not read.
 
+The first execution (`cpx62-1218`) advanced zero of 160 candidate generations.
+This was not evidence that iteration fails: with 4 arena pairs (8 games), a
+neutral candidate scoring 0.5 has a 95% lower bound of only 0.1535 against the
+0.40 promotion threshold. Even a 0.625 score fails. The cell therefore mostly
+measured an underpowered promotion gate.
+
+### 4. M17-P2 — promotion-gate repair
+
+M17-P2 preserves the model, training, development threshold, ladder and sealed
+cohorts. It changes the arena control from 4 to 128 pairs (256 games), for which
+a neutral 0.5 score has lower bound 0.41338 and can pass the unchanged 0.40
+non-regression threshold. Because an arena from one fixed start merely
+duplicates the same two deterministic games, the repaired control samples 128
+distinct non-terminal development states without replacement. Candidate and
+parent swap roles from each common start; action selection remains greedy.
+Confidence uses each paired two-game block as one effective observation, never
+the 256 correlated games. The runner recomputes the bound and fails closed if
+the gate is underpowered or starts are not varied. Twenty fresh seeds are
+disjoint from v1. Every generation
+publishes the development improvement, arena counts/bound, both pass bits and
+the resulting advance decision so that a second zero-advance result identifies
+the blocking component instead of being opaque.
+
+M17-P2 completed on `cpx62-1219` with 131/160 promotions and a monotone mean
+development zero-regret gain from +0.08053 at G1 to +0.10516 at G8. This is a
+selected discovery result, not its own replication. The preregistered readout
+therefore treats paired `G8 - G1` zero-regret as primary, audits every arena
+start/confidence contract, computes a Student 95% interval across the 20 seeds,
+and sizes a fresh replication on a minimum practical gain of 0.01 rather than
+only on the observed +0.02463.
+
+The independent `cpx62-1220` readout verified the source manifest, inventory
+and checksums and passed all 160 arena audits. Every arena used 128 distinct
+development starts and pair-level confidence; its scores covered 30 distinct
+values from 0.48633 to 0.56836. The paired primary `G8 - G1` was +0.02463
+(Student 95% CI +0.02220 to +0.02706), positive for all 20/20 seeds. Mean
+advances were 6.55/8 and no seed had zero advances. The readout hash is
+`829a92835da8a00f2d4e34d4316baf60187cbfed52445a9beb7df8ac8a90bfbe`.
+
+### 5. M17-P2R — fresh-seed confirmatory replication
+
+M17-P2R freezes the M17-P2 model, training, ladder, repaired arena and all
+scientific boundaries. It changes only the cohort to 20 fresh paired seeds
+(`264001` through `264020`), disjoint from M17-P and M17-P2. The confirmatory
+endpoint and decision rule are frozen before execution: paired development
+zero-regret `G8 - G1` must have a Student 95% lower bound strictly above zero
+and a mean of at least +0.01. If the ladder averages fewer than one deployed
+advance, the result is inconclusive regardless of the endpoint. Secondary
+rungs and arena diagnostics remain descriptive. Frozen test stays sealed and
+the cell is never promotable.
+
+M17-P2R completed on `cpx62-1221`. Paired development zero-regret `G8 - G1`
+was +0.03917 (Student 95% CI +0.03776 to +0.04058), positive for all 20/20
+fresh seeds and above the +0.01 practical gate. The ladder averaged 6.4
+advances and no seed was blocked. Result hash:
+`c868949d2f1027889e6e76fd081e763aedcac7840f6105e1f18175e5c66685ea`.
+
+### 6. M18-P — state, label and optimizer-path decomposition
+
+M18-P generates one repaired eight-generation M17-P2 pack per fresh seed and
+then trains every scientific arm from the same zero-initialized PatternEval.
+It never regenerates data per arm. Seven paired arms separate three channels:
+
+- `MIX_EXACT - G1_WIDE_EXACT` isolates late-generation state distribution at
+  equal row volume under deterministic exact train labels;
+- `MIX_OUTCOME - G1_WIDE_OUTCOME` asks whether that distribution remains useful
+  with honest self-play outcomes;
+- exact-minus-outcome contrasts quantify label noise within each distribution;
+- `MIX_SEQUENTIAL_OUTCOME - MIX_OUTCOME` compares eight optimizer cycles with
+  one monolithic fit using the exact same sample-draw multiset;
+- G1-wide-minus-G1-only and G8-minus-G1 controls report unique-row volume and
+  recency without confusing either with the primary distribution contrast.
+
+The exact-label arms are diagnostic boundary crossings restricted to train
+states and are never promotable. Generation and sample selection stay
+oracle-blind. The primary response remains development `zero_regret_rate` from
+one-ply value search; frozen test remains sealed. A mechanism requires a paired
+Student 95% lower bound above zero and a mean gain of at least +0.01 across 20
+fresh seeds (`265001` through `265020`). A state-distribution attribution
+requires both the exact-label and honest-outcome distribution contrasts to
+pass; otherwise M18-P reports the label interaction rather than overclaiming.
+
 ## Conditional continuation
 
 After M24-P/M14-P/M17-P:
@@ -92,6 +175,13 @@ After M24-P/M14-P/M17-P:
 - Contextual supervision from draft PR #441 is a later factor. It must not be
   mixed into the baseline architecture reconstruction.
 
+M18-P cannot settle playing strength because its causal endpoint is static
+development zero-regret. The historical M21 arena evidence cannot settle it
+either because it used the retired MLP/policy-head architecture. M21-P therefore
+reconstructs `MIX - G1_WIDE` with scalar PatternEval, equal unique replay rows,
+an explicit shared batch schedule, and paired common-search arenas. See
+[`PATTERN_M21P_SIGNAL_COMPOSITION.md`](PATTERN_M21P_SIGNAL_COMPOSITION.md).
+
 No result in this program authorizes a production Jass change or a direct
 10x10 transfer.
 
@@ -103,6 +193,10 @@ One job is prepared per cell:
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m18p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m21p
 ```
 
 The entrypoint builds the C++ oracle, runs CTest and the full Python suite,

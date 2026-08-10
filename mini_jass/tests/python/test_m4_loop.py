@@ -77,6 +77,27 @@ def test_complete_loop_repeats_with_identical_hashes(synthetic_oracle) -> None:
     ]
 
 
+def test_arena_uses_distinct_provided_start_states_by_pair(synthetic_oracle) -> None:
+    split = build_split(synthetic_oracle, 20260806)
+    config = tiny_config(split.manifest["manifest_hash"])
+    config["arena"].update(
+        {
+            "pairs": 3,
+            "confidence_unit": "pairs",
+            "start_state_source": "provided",
+        }
+    )
+    development = split.indices("development")
+    execution = execute_loop(config, synthetic_oracle, development)
+    arena = execution.core["generations"][0]["arena"]
+    assert arena["start_state_source"] == "provided"
+    assert arena["unique_start_state_count"] == 3
+    assert arena["effective_observations"] == 3
+    assert len(arena["start_state_ids"]) == 3
+    assert set(arena["start_state_ids"]).issubset(set(development.tolist()))
+    assert sum(arena["pair_score_histogram"].values()) == 3
+
+
 def test_training_state_mask_excludes_holdout_positions_from_replay(
     synthetic_oracle,
 ) -> None:

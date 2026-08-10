@@ -1,0 +1,75 @@
+schema: mini_jass.pattern_learning_signal_composition.v1
+milestone: M21-P
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M17-P (262001-20), M17-P2 (263001-20), M17-P2R
+# (264001-20), and M18-P (265001-20).
+paired_seeds:
+  [266001, 266002, 266003, 266004, 266005,
+   266006, 266007, 266008, 266009, 266010,
+   266011, 266012, 266013, 266014, 266015,
+   266016, 266017, 266018, 266019, 266020]
+
+arms:
+  - G1_ONLY_OUTCOME
+  - G8_ONLY_OUTCOME
+  - MIX_OUTCOME
+  - G1_WIDE_OUTCOME
+  - G1_PLUS_NOVEL_LATE_OUTCOME
+  - G1_PLUS_MATCHED_LATE_OUTCOME
+
+# G1_WIDE uses the initial generator and eight times the normal G1 games.
+# Its selected row count is forced to equal MIX exactly.
+wide_games: 1024
+wide_seed_offset: 800000
+
+# Every unit-dose arm shares one explicit batch-index schedule. MIX and
+# G1_WIDE share a second explicit schedule over their equal-size pools.
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 810000
+
+# The causal pack uses the repaired promotion control that produced M17-P2R
+# and M18-P. It is separate from the final strength arena below.
+promotion_control:
+  minimum_advancing_generations: 1
+  arena_pairs: 128
+  arena_epsilon: 0.0
+  arena_start_state_source: development
+  arena_confidence_unit: pairs
+
+# All candidates play the same initial PatternEval from identical development
+# starts and colours. Arena strength decides; static oracle metrics diagnose.
+strength_arena:
+  pairs: 128
+  seed_base: 931000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+
+source_evidence:
+  m17p2r_job_id: cpx62-1221-mini-jass-pattern-m17p2r-v1
+  m17p2r_attempt_id: 20260809T195656Z-77311b3d
+  m17p2r_result_hash: c868949d2f1027889e6e76fd081e763aedcac7840f6105e1f18175e5c66685ea
+  m18p_job_id: cpx62-1222-mini-jass-pattern-m18p-v1
+  m18p_attempt_id: 20260809T220250Z-e5af9789
+  m18p_protocol_hash: 13ea66db6c483ce79028bee7f1c51c33c068507b70cc6b8f95171e018db41aa5
+  m18p_result_hash: 2680f52319b7be31c5cb6d44c229b78c545eb21b4dc4c8be2e3f17c125da5554
+
+scientific_gate:
+  primary_endpoint: paired_common_search_arena_score
+  paired_confidence_critical_95: 2.093024054408263
+  minimum_practical_arena_gain: 0.05
+  require_ci_above_zero: true
+
+boundaries:
+  oracle_training_signal: false
+  sample_selection_reads_oracle_labels: false
+  cohorts_read: [train, development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

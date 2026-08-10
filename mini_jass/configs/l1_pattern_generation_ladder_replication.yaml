@@ -1,0 +1,50 @@
+schema: mini_jass.pattern_generation_ladder_replication.v1
+milestone: M17-P2R
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+ladder_max: 8
+report_rungs: [1, 2, 4, 8]
+paired_seeds:
+  [264001, 264002, 264003, 264004, 264005,
+   264006, 264007, 264008, 264009, 264010,
+   264011, 264012, 264013, 264014, 264015,
+   264016, 264017, 264018, 264019, 264020]
+
+# Exact M17-P2 execution control. Only the fresh paired seed cohort changes.
+promotion_control:
+  report_per_generation: true
+  minimum_advancing_generations: 1
+  arena_pairs: 128
+  arena_epsilon: 0.0
+  arena_start_state_source: development
+  arena_confidence_unit: pairs
+  neutral_arena_score: 0.5
+  neutral_score_lower_bound: 0.41337941930464794
+
+source_iteration:
+  schema: mini_jass.pattern_generation_ladder.v2
+  milestone: M17-P2
+  job_id: cpx62-1219-mini-jass-pattern-m17p2-v1
+  attempt_id: 20260809T180915Z-4ca0953c
+  protocol_hash: 691f3fb9153d7ba6890160391cfdb149373ebaa2db5df63b834a92aaa8f3dca0
+  result_hash: e280ff50d2b2c8c3163b4deb541ca545088c46b8a815c08ef555b37bfe998d0c
+  readout:
+    job_id: cpx62-1220-mini-jass-m17p2-readout-v1
+    attempt_id: 20260809T193556Z-8281ba84
+    readout_hash: 829a92835da8a00f2d4e34d4316baf60187cbfed52445a9beb7df8ac8a90bfbe
+
+# Frozen before the fresh cohort is computed. Both statistical evidence and
+# a minimum practically relevant gain are required to confirm composition.
+scientific_gate:
+  primary_endpoint: paired_zero_regret_delta_g8_minus_g1
+  paired_confidence_critical_95: 2.093024054408263
+  require_primary_ci_above_zero: true
+  minimum_practical_compounding_gain: 0.01
+
+boundaries:
+  cohorts_read: [development]
+  cohorts_sealed: [frozen_test]
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
