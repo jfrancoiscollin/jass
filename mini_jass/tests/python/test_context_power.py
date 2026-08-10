@@ -86,7 +86,9 @@ def test_context_config_freezes_prerequisites_c0_and_c1_pass() -> None:
     report = config["power_sizing_v1"]["frozen_report_v1"]
     c0_report = config["c0_gate"]["frozen_report_v1"]
     assert config["schema"] == "mini_jass.contextual_outcome_supervision.v3"
-    assert config["status"] == "C1_FROZEN_C2_implementation_ready_for_verification"
+    assert config["status"] == (
+        "C2_FROZEN_SEALED_READ_implementation_ready_for_verification"
+    )
     assert prereq["result_hash"] == FROZEN_M21P_HASH
     assert prereq["verdict"] == "FAIL"
     assert config["replay_source_decision_v1"]["selected_source"] == "G1_WIDE_OUTCOME"
@@ -104,6 +106,12 @@ def test_context_config_freezes_prerequisites_c0_and_c1_pass() -> None:
     assert c1_report["freeze_status"] == "PASS_C1_FREEZE_C2_AUTHORIZED"
     assert c1_report["c2_authorized"] is True
     assert c1_report["sealed_test_read"] is False
+    c2_report = config["c2_disjoint_replication"]["frozen_report_v1"]
+    assert c2_report["freeze_status"] == (
+        "PASS_C2_FREEZE_CHAINED_DECISION_FROZEN"
+    )
+    assert c2_report["sealed_test_read_authorized"] is True
+    assert c2_report["sealed_test_read"] is False
     assert c0_report["implementation_proof"]["common_search_action_match_rate"] == 1.0
     execution = config["c1_execution_v1"]
     assert execution["replay"]["source"] == "G1_WIDE_OUTCOME"

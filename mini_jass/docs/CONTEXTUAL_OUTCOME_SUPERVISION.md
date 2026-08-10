@@ -64,6 +64,27 @@ both globally allocated start manifests, pairing and export proofs. It returned
 C2 is now authorized and remains mandatory. The sealed cohort is still unread;
 no production Jass change or direct 10x10 transfer is authorized.
 
+C2 `cpx62-1230-mini-jass-contextual-c2-v1` then completed all 20 fresh seeds
+with exit code zero. Its FULL-minus-WDL arena mean is `-0.0009765625`, with
+95% interval `[-0.002840477081808143, 0.0008873520818081428]`. Chaining C1 and
+C2 gives posterior mean `-0.0004913522012578616`, 95% interval
+`[-0.0017294481116230448, 0.0007467437091073216]` and
+`P(score_delta > 0) = 0.21832934032972762`. The pools are compatible
+(`z = 0.772971071081939`), so the frozen decision is
+`REJECTED_COMBINED_EFFECT_NONPOSITIVE`, not an inconclusive heterogeneity case.
+The combined value-MAE delta is also adverse (`+0.003090641609070154`) with
+`P(delta < 0) = 2.0462767617133767e-48`; the registered interpretation is
+therefore `neither`.
+
+Independent readout `cpx62-1231-mini-jass-contextual-c2-freeze-readout-v1`
+recomputed both full-result hashes, all 40 replay manifests, hard disjointness,
+pool statistics, posterior probabilities and both heterogeneity guards without
+importing the PR implementation. It returned
+`PASS_C2_FREEZE_CHAINED_DECISION_FROZEN`, report hash
+`b9cd48bf1469aa53765a3cf8fee5419b83ad772a3c42972b6c39d29f51a306eb`.
+The single descriptive `frozen_test` read is now authorized; it cannot reopen
+the decision or select a model.
+
 This remains a later factor in the PatternEval reconstruction program. A merge
 of this design never queues C1 automatically and cannot displace M21-P or its
 decision record.
@@ -490,8 +511,8 @@ requires a separate preregistration.
 - implemented here: `context.py`, `context_targets.py`,
   `context_scaffold.py`, `context_power.py`, the non-training M21-P preparation
   tool, the fail-closed C0-only runner, `context_replay.py`,
-  `context_training.py`, the C1-only runner, the C2-only runner and the frozen
-  sequential decision estimator;
+  `context_training.py`, the C1-only runner, the C2-only runner, the frozen
+  sequential decision estimator and the single descriptive sealed-read runner;
 - implemented tests: rule equivalence, POV/symmetry, leakage rejection, exact
   rank metrics, deterministic scaffold initialization, gradient coupling and
   scalar export parity, transition identity, replay/start manifests, paired
@@ -500,9 +521,10 @@ requires a separate preregistration.
   generator, all five deployable arms, direct-table descriptive control,
   global C1/C2 start reservation, provisional reporting and per-checkpoint
   full-oracle export proofs;
-- still required: CI verification of C2, the fresh C2 execution, hard
-  replay-manifest disjointness verification, independent freeze of the chained
-  decision and then the single sealed read.
+- completed and independently frozen for C2: fresh pool-B execution, all 40
+  replay-manifest disjointness checks and the chained force/mechanism decision;
+- still required: CI verification and execution of the single descriptive
+  sealed read. It cannot alter the already frozen rejection.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the

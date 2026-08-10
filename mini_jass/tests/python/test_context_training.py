@@ -22,6 +22,7 @@ from mini_jass_lab.context_scaffold import ContextualPatternScaffold
 from mini_jass_lab.context_training import (
     batch_schedule,
     contextual_replay_targets,
+    tensor_state_hash,
     train_contextual_from_replay,
 )
 from mini_jass_lab.game_graph import GameGraph
@@ -42,6 +43,7 @@ def _tool(name: str):
 
 C1 = _tool("run_contextual_c1.py")
 C2 = _tool("run_contextual_c2.py")
+SEALED = _tool("run_contextual_sealed_read.py")
 
 
 def _fixture() -> tuple[SimpleNamespace, GameGraph, list[ReplaySample]]:
@@ -308,4 +310,42 @@ def test_c2_runner_and_cpx_entrypoint_are_fail_closed() -> None:
     assert "CONTEXTUAL_C2_IMPLEMENTATION_SHA" in job
     assert "CONTEXTUAL_C1_RESULT_PATH" in job
     assert "CONTEXTUAL_C1_FREEZE_REPORT_PATH" in job
+    assert "scientific-summary.json exceeds 64 KiB" in job
+
+
+def test_sealed_runner_checkpoint_roundtrip_and_entrypoint_are_fail_closed(
+    tmp_path: Path,
+) -> None:
+    config, loop = SEALED._resolve(
+        ROOT / "configs" / "contextual_outcome_supervision.yaml"
+    )
+    assert loop["model"]["architecture"] == "folded_pattern_value"
+    assert config["c2_disjoint_replication"]["frozen_report_v1"][
+        "sealed_test_read_authorized"
+    ] is True
+    model = ContextualPatternScaffold(
+        PatternSet.from_window(3), seed=270601
+    ).export_pattern_eval()
+    checkpoint = tmp_path / "checkpoint.npz"
+    np.savez_compressed(
+        checkpoint,
+        bucket_weight=model.bucket_weight.detach().cpu().numpy(),
+        extra_weight=model.extra_weight.detach().cpu().numpy(),
+        bias=model.bias.detach().cpu().numpy(),
+        bucket_class=model.bucket_class.detach().cpu().numpy(),
+    )
+    loaded = SEALED._load_checkpoint(checkpoint, config)
+    assert tensor_state_hash(loaded) == tensor_state_hash(model)
+    runner = (ROOT / "tools" / "run_contextual_sealed_read.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'split.indices("frozen_test")' in runner
+    assert "protocol_hash_frozen_before_metric_read" in runner
+    assert "SEALED_READ_STARTED.json" in runner
+    assert "train_contextual_from_replay" not in runner
+    job = (ROOT / "jobs" / "run_contextual_sealed_read_cpx.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "CONTEXTUAL_SEALED_IMPLEMENTATION_SHA" in job
+    assert "retry_without_protocol_review_forbidden_if_read_started" in job
     assert "scientific-summary.json exceeds 64 KiB" in job

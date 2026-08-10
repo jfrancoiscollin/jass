@@ -73,7 +73,10 @@ FROZEN_C1_FREEZE_HASH = (
 
 def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config, base_loop = _resolve_c1_contract(path)
-    if config.get("status") != "C1_FROZEN_C2_implementation_ready_for_verification":
+    if config.get("status") not in (
+        "C1_FROZEN_C2_implementation_ready_for_verification",
+        "C2_FROZEN_SEALED_READ_implementation_ready_for_verification",
+    ):
         raise ValueError("C2 requires the independently frozen C1 evidence")
     frozen = config["c1_decision"]["frozen_report_v1"]
     if (

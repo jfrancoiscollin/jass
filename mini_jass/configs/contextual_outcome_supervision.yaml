@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: C1_FROZEN_C2_implementation_ready_for_verification
+status: C2_FROZEN_SEALED_READ_implementation_ready_for_verification
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -455,6 +455,41 @@ c2_disjoint_replication:
   training_replay_disjoint_from_C1: true
   arena_starts_disjoint_from_C1: true
   same_frozen_recipe_as_C1: true
+  frozen_report_v1:
+    source_job_id: cpx62-1230-mini-jass-contextual-c2-v1
+    source_attempt_id: 20260810T140638Z-fe188c93
+    source_result_uri: r2:jass-data/runs/cpx62-1230-mini-jass-contextual-c2-v1/20260810T140638Z-fe188c93
+    source_implementation_sha: 64f7ced2b9f552bc3fc53d3f3894dc863b96a444
+    source_protocol_hash: 1cce1c16e130be72a4db52dc6331a58607cc93bca48713f77e3ae76196974509
+    source_result_hash: 5bce01343ca2385485484ba6f46b7c0cf8c9d7bedc857010e9762de63abff9bd
+    source_status: C2_COMPLETE_REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    replay_disjointness_report_hash: 25517072ab4ca00dcd267b5c7e46856faf5a0eb0765d787950a08c79602e374f
+    freeze_job_id: cpx62-1231-mini-jass-contextual-c2-freeze-readout-v1
+    freeze_attempt_id: 20260810T144645Z-fe188c93
+    freeze_result_uri: r2:jass-data/runs/cpx62-1231-mini-jass-contextual-c2-freeze-readout-v1/20260810T144645Z-fe188c93
+    freeze_report_hash: b9cd48bf1469aa53765a3cf8fee5419b83ad772a3c42972b6c39d29f51a306eb
+    freeze_status: PASS_C2_FREEZE_CHAINED_DECISION_FROZEN
+    c2_primary_common_search_arena_score:
+      mean: -0.0009765625
+      standard_error: 0.0008905366270790931
+      lower: -0.002840477081808143
+      upper: 0.0008873520818081428
+    final_chained_decision:
+      decision: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+      posterior_mean: -0.0004913522012578616
+      posterior_standard_error: 0.0006316815869210118
+      posterior_probability_score_delta_gt_zero: 0.21832934032972762
+      heterogeneity_z: 0.772971071081939
+    registered_mechanism_decision:
+      posterior_mean_value_mae_delta: 0.003090641609070154
+      posterior_standard_error: 0.00021206096730298424
+      posterior_probability_delta_lt_zero: 2.0462767617133767e-48
+      heterogeneity_z: 0.968575395258669
+      signal: false
+    mechanism_force_interpretation: neither
+    sealed_test_read: false
+    sealed_test_read_authorized: true
+    promotable: false
 
 final_chained_decision:
   evidence_pools:
@@ -496,6 +531,34 @@ sealed_test_read:
     - WDL_PLUS_FULL_CONTEXT
   all_paired_seeds_read_together: true
   may_select_model: false
+  execution_v1:
+    cohort: frozen_test
+    source_checkpoints: c2_disjoint_replication.frozen_report_v1
+    paired_seeds: c2_disjoint_replication.paired_seeds
+    all_state_response_metrics:
+      - value_mae
+      - value_sign_accuracy
+      - mean_selected_regret
+      - zero_regret_rate
+      - optimal_top1_accuracy
+    common_search_arena:
+      comparison: per_arm_minus_initial_shared_scaffold_export
+      reported_contrast: WDL_PLUS_FULL_CONTEXT_minus_WDL_ONLY
+      start_state_source: frozen_test_provided_unique
+      start_manifest_namespace: contextual_sealed_test_arena_starts_v1
+      pairs_per_seed: 64
+      max_plies: 64
+      search_depth: 2
+      node_budget: 4
+      epsilon: 0.0
+      confidence_z: 1.96
+      confidence_unit: pairs
+      seed_offset: 850000
+    paired_interval_critical_95: 2.093024054408263
+    one_read_only: true
+    no_training: true
+    no_decision_reopening: true
+    descriptive_only: true
 
 mechanism_readout:
   cohort: development
