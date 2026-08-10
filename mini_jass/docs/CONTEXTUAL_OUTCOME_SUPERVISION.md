@@ -85,6 +85,18 @@ importing the PR implementation. It returned
 The single descriptive `frozen_test` read is now authorized; it cannot reopen
 the decision or select a model.
 
+That unique read, `cpx62-1232-mini-jass-contextual-sealed-read-v1`, completed
+successfully on all 39,688 frozen states and all 20 paired seeds. The registered
+common-search FULL-minus-WDL contrast is `+0.000390625`, with 95% interval
+`[-0.0010501078533483965, 0.0018313578533483968]`: no robust playing-strength
+effect. The all-state response diagnostics are consistently adverse for FULL:
+value MAE `+0.00286865234375`, sign accuracy `-0.0022336726466438083`, selected
+regret `+0.0020337261818862114`, and optimal-top1/zero-regret rate
+`-0.001178545658622615`. The run records `sealed_test_read_count: 1`, performed
+no training or selection, and leaves the frozen decision unchanged as
+`REJECTED_COMBINED_EFFECT_NONPOSITIVE`. Its result hash is
+`bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c`.
+
 This remains a later factor in the PatternEval reconstruction program. A merge
 of this design never queues C1 automatically and cannot displace M21-P or its
 decision record.
@@ -523,8 +535,9 @@ requires a separate preregistration.
   full-oracle export proofs;
 - completed and independently frozen for C2: fresh pool-B execution, all 40
   replay-manifest disjointness checks and the chained force/mechanism decision;
-- still required: CI verification and execution of the single descriptive
-  sealed read. It cannot alter the already frozen rejection.
+- completed sealed confirmation: both arms and all 20 paired seeds were read
+  together exactly once; no training, decision reopening, model selection or
+  promotion occurred. The result does not alter the already frozen rejection.
 
 The implementation must prove that an auxiliary loss changes at least one
 exported scalar bucket weight while holding WDL batches fixed. This catches the

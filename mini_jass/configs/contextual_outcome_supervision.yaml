@@ -1,6 +1,6 @@
 schema: mini_jass.contextual_outcome_supervision.v3
 experiment: contextual_outcome_supervision
-status: C2_FROZEN_SEALED_READ_implementation_ready_for_verification
+status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
 
 architecture_contract:
   required_architecture: folded_pattern_value
@@ -559,6 +559,57 @@ sealed_test_read:
     no_training: true
     no_decision_reopening: true
     descriptive_only: true
+  frozen_report_v1:
+    job_id: cpx62-1232-mini-jass-contextual-sealed-read-v1
+    attempt_id: 20260810T152905Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1232-mini-jass-contextual-sealed-read-v1/20260810T152905Z-fe188c93
+    runner_code_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+    implementation_sha: 69524abc0345dab7a81f076182126e3d75daa641
+    protocol_hash: f80065e1c506422779c22ef557485d2886752b86c9c75a73506b69d319f6dbb2
+    result_hash: bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c
+    status: SEALED_TEST_DESCRIPTIVE_READ_COMPLETE
+    sealed_test_read_count: 1
+    frozen_test_state_count: 39688
+    paired_seed_count: 20
+    all_arms_read_together: true
+    all_paired_seeds_read_together: true
+    all_arena_starts_paired: true
+    training_performed: false
+    decision_reopened: false
+    descriptive_only: true
+    promotable: false
+    final_chained_decision_unchanged: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    primary_common_search_arena_score:
+      mean: 0.000390625
+      standard_error: 0.0006883498784039148
+      lower: -0.0010501078533483965
+      upper: 0.0018313578533483968
+    paired_all_state_metric_deltas_FULL_minus_WDL:
+      value_mae:
+        mean: 0.00286865234375
+        standard_error: 0.0003125675342642253
+        lower: 0.0022144409759078977
+        upper: 0.0035228637115921023
+      value_sign_accuracy:
+        mean: -0.0022336726466438083
+        standard_error: 0.00028066765699944743
+        lower: -0.0028211168040380595
+        upper: -0.0016462284892495571
+      mean_selected_regret:
+        mean: 0.0020337261818862114
+        standard_error: 0.00039002435056731654
+        lower: 0.0012173958343438568
+        upper: 0.002850056529428566
+      zero_regret_rate:
+        mean: -0.001178545658622615
+        standard_error: 0.0002120819495673406
+        lower: -0.001622438280572859
+        upper: -0.0007346530366723711
+      optimal_top1_accuracy:
+        mean: -0.001178545658622615
+        standard_error: 0.0002120819495673406
+        lower: -0.001622438280572859
+        upper: -0.0007346530366723711
 
 mechanism_readout:
   cohort: development
