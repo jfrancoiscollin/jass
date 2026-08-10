@@ -4,15 +4,27 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 
 import yaml  # noqa: E402
 
-from mini_jass_lab.context_power import build_power_freeze_report  # noqa: E402
+
+CONTEXT_POWER_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "python"
+    / "mini_jass_lab"
+    / "context_power.py"
+)
+SPEC = importlib.util.spec_from_file_location(
+    "context_power_standalone", CONTEXT_POWER_PATH
+)
+if SPEC is None or SPEC.loader is None:
+    raise RuntimeError("cannot load the standalone contextual power module")
+CONTEXT_POWER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(CONTEXT_POWER)
+build_power_freeze_report = CONTEXT_POWER.build_power_freeze_report
 
 
 def main() -> int:
