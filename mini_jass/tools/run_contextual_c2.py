@@ -76,6 +76,7 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     if config.get("status") not in (
         "C1_FROZEN_C2_implementation_ready_for_verification",
         "C2_FROZEN_SEALED_READ_implementation_ready_for_verification",
+        "C3_COMPLETE_DIAGNOSTIC_ONLY",
     ):
         raise ValueError("C2 requires the independently frozen C1 evidence")
     frozen = config["c1_decision"]["frozen_report_v1"]

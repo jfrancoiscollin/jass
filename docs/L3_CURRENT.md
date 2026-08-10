@@ -405,20 +405,26 @@ n'est jamais promouvable.
 ### Reste ouvert
 
 M17-P2R confirme la composition hors de la cohorte de découverte : `G8-G1`
-`+0,03917`, IC95 `[+0,03776 ; +0,04058]`, 20/20 graines positives. La cellule
-M18-P décompose maintenant état/étiquette/chemin d'optimisation avec un pack
-multi-générations unique par graine, budgets égaux et labels exacts limités à
-deux bras diagnostiques sur le train. Son verdict décidera si le premier
-mécanisme à répliquer est la **distribution d'états**, le chemin d'optimisation,
-ou une interaction avec les labels ; aucun axe n'est choisi après observation.
-Ensuite seulement M15/M16,
-M18/M19/M21/M23, l'étude de convergence à recette figée demandée par JFC, et le
-6×6 en dernier.
+`+0,03917`, IC95 `[+0,03776 ; +0,04058]`, 20/20 graines positives. M18-P a
+ensuite isolé un écart statique lié aux labels, mais M21-P a rejeté le mélange
+inter-générations en force à volume unique égal : `MIX_OUTCOME −
+G1_WIDE_OUTCOME = −0,00107`, IC95 `[−0,00310 ; +0,00095]`. La règle gelée
+retient donc le replay simple `G1_WIDE_OUTCOME` pour les facteurs suivants.
 
-⚠️ La PR #441 (supervision contextuelle) déclare
-`primary_endpoint: common_search_paired_arena_score_minus_half` sur
-`configs/l1_pattern_reconstruction_loop.yaml#arena` : **elle hérite du défaut**
-et ne doit pas partir avant le correctif. Revue et correction postées sur la PR.
+La supervision contextuelle de la PR #441 a été exécutée puis fermée par C1/C2 :
+`REJECTED_COMBINED_EFFECT_NONPOSITIVE`. La lecture descriptive unique du
+`frozen_test` est consommée. C3 a montré sur train un **écart de calibration
+linéaire** du baseline manuel, mais n'a établi aucun gain de force et ne rouvre
+pas la décision.
+
+📌 **PROCHAIN JALON : M15-P.** Sur 20 graines fraîches et un replay
+`G1_WIDE_OUTCOME` immuable, comparer WDL, score de recherche même état, mélange
+50/50 et borne exacte diagnostique. Le primaire unique est `BLEND_50 − OUTCOME`
+en zero-regret développement ; la recherche seule ne peut pas sauver le
+primaire. Aucun nouveau read de `frozen_test` n'est autorisé. Si le mélange
+exclut précisément la récupération pratique gelée, M16-P temporel vient
+ensuite ; sinon réplication de force du mélange. Puis seulement les mécaniques
+M19-P encore vivantes, l'étude de convergence à recette figée et le 6×6.
 
 **Aucune de ces cellules n'est promouvable et aucune n'autorise un transfert
 direct au 10×10.**

@@ -68,8 +68,9 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         "C0_PASS_C1_implementation_ready_for_verification",
         "C1_FROZEN_C2_implementation_ready_for_verification",
         "C2_FROZEN_SEALED_READ_implementation_ready_for_verification",
+        "C3_COMPLETE_DIAGNOSTIC_ONLY",
     ):
-        raise ValueError("C1 requires a frozen C0 PASS or frozen C1 evidence")
+        raise ValueError("C1 requires frozen contextual evidence")
     c0 = config["c0_gate"]["frozen_report_v1"]
     if (
         c0.get("report_hash") != FROZEN_C0_HASH

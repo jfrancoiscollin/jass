@@ -1,0 +1,119 @@
+schema: mini_jass.pattern_value_target_screen.v1
+milestone: M15-P
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after the PatternEval reconstruction pools (261001-266020) and the
+# contextual C1/C2 pools (270501-270620).
+paired_seeds:
+  [271001, 271002, 271003, 271004, 271005,
+   271006, 271007, 271008, 271009, 271010,
+   271011, 271012, 271013, 271014, 271015,
+   271016, 271017, 271018, 271019, 271020]
+
+arms:
+  - OUTCOME
+  - SEARCH_ROOT
+  - BLEND_50
+  - EXACT_ORACLE
+
+# M21-P failed its generation-composition strength gate. Its frozen rule
+# therefore selects the equal-volume generation-1 source for later factors.
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 860000
+  row_selection: all_generated_train_rows
+  immutable_structure_across_arms: true
+
+targets:
+  OUTCOME:
+    source: terminal_selfplay_wdl
+    oracle_training_signal: false
+  SEARCH_ROOT:
+    source: bounded_negamax_root_score
+    clip: [-1.0, 1.0]
+    oracle_training_signal: false
+  BLEND_50:
+    source: outcome_search_blend
+    search_weight: 0.50
+    oracle_training_signal: false
+  EXACT_ORACLE:
+    source: exact_train_value
+    oracle_training_signal: true
+    diagnostic_only: true
+    promotable: false
+
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 870000
+  explicit_identical_batch_schedule_all_arms: true
+
+# Direct candidate-versus-OUTCOME arenas are descriptive in M15-P. A passing
+# static response must be replicated for strength on fresh seeds before any
+# mechanism can move further down the roadmap.
+descriptive_strength_arena:
+  pairs: 128
+  seed_base: 941000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+
+power_sizing:
+  estimator: normal_paired_difference_monte_carlo_v1
+  repetitions: 100000
+  seed: 44120260811
+  paired_seed_count: 20
+  conservative_paired_sd: 0.005
+  minimum_effect: 0.003915936905813988
+  paired_confidence_critical_95: 2.093024054408263
+  estimated_power_ci_above_zero: 0.91212
+  minimum_required_power: 0.80
+
+scientific_gate:
+  primary_contrast: BLEND_50_minus_OUTCOME
+  primary_endpoint: development_zero_regret_gain
+  paired_confidence_critical_95: 2.093024054408263
+  require_primary_ci_above_zero: true
+  minimum_oracle_gain_recovery_fraction: 0.50
+  minimum_absolute_response_gain: 0.003915936905813988
+  oracle_gap_must_replicate_with_ci_above_zero: true
+  SEARCH_ROOT_is_mechanistic_only: true
+  exploratory_arm_cannot_rescue_primary: true
+
+source_evidence:
+  m14p:
+    job_id: cpx62-1218-mini-jass-pattern-m14p-m17p-v1
+    attempt_id: 20260809T151607Z-32e18a51
+    result_uri: r2:jass-data/runs/cpx62-1218-mini-jass-pattern-m14p-m17p-v1/20260809T151607Z-32e18a51
+    implementation_sha: 32e18a512eaafa0deeab6b9cdf436f0c993789fb
+    protocol_hash: 21852e60c76aae0478f69b81018b316af17ed7c088404f9bb07a73d8ef2321a6
+    result_hash: 80b3240be0fbaa20506d60d65f26619cfe188b11f5a1fd56273de1e19f1d8380
+    zero_regret_exact_minus_outcome_mean: 0.007831873811627976
+    zero_regret_exact_minus_outcome_standard_error: 0.000459729198426518
+  m21p:
+    job_id: cpx62-1223-mini-jass-pattern-m21p-v1
+    attempt_id: 20260810T055825Z-fe188c93
+    result_uri: r2:jass-data/runs/cpx62-1223-mini-jass-pattern-m21p-v1/20260810T055825Z-fe188c93
+    implementation_sha: fe188c93648100b6e6d31c8335e669dea28aa5bb
+    protocol_hash: 4b229db8ef9b8247948f0940b7f9c9e60f7277487e1598f8ef30cec5b1970520
+    result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+    freeze_report_hash: db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c
+    status: FAIL
+    selected_replay_source: G1_WIDE_OUTCOME
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  oracle_training_signal_isolated_to: [EXACT_ORACLE]
+  deployable_arms_oracle_blind: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
