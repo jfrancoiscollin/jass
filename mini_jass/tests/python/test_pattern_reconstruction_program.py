@@ -32,6 +32,7 @@ M15C2 = _tool("run_pattern_conditional_dose_screen.py")
 M17P = _tool("run_pattern_generation_ladder.py")
 M18P = _tool("run_pattern_state_distribution_decomposition.py")
 M21P = _tool("run_pattern_learning_signal_composition.py")
+M16P = _tool("run_pattern_temporal_value_target_screen.py")
 
 
 def _sample(
@@ -151,6 +152,11 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
             "l1_pattern_learning_signal_composition.yaml",
             M21P.SCHEMA,
             "M21-P",
+        ),
+        (
+            "l1_pattern_temporal_value_target_screen.yaml",
+            M16P.SCHEMA,
+            "M16-P",
         ),
     ],
 )
