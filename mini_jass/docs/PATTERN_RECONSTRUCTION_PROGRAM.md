@@ -5,7 +5,8 @@ response, M18-P decomposed its static development response, and M21-P rejected
 generation-history mixing for strength at equal unique volume. Contextual
 supervision was then rejected by disjoint C1/C2 pools; its train-only C3
 diagnostic found a calibration gap but no authority to reopen that decision.
-M15-P is now the prepared, not-yet-queued reconstruction cell.
+M15-P is executing outside this code PR. M15-C is independently preregistered
+and implemented, without reading or depending on the M15-P result.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -178,6 +179,19 @@ zero-regret. Search-only is mechanistic and cannot rescue the primary; exact
 labels are a train-only diagnostic upper bound. See
 [`PATTERN_M15P_VALUE_TARGET_SCREEN.md`](PATTERN_M15P_VALUE_TARGET_SCREEN.md).
 
+### 9. M15-C — direct conditional-target injection
+
+M15-C resolves a narrower question that C1/C2 did not test. It fits a
+five-fold, complete-game-held-out conditional WDL estimate and injects it
+directly into the scalar training target. The causal primary compares a 50/50
+conditional blend with an equal-weight, within-fold permutation of the exact
+same conditional predictions before also requiring improvement over raw
+outcome. A global-mean blend remains a secondary shrinkage control. This
+separates correct state-context alignment from target distribution effects. All
+targets are oracle-blind, `frozen_test`
+remains consumed and unread, and no arm is promotable. See
+[`PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`](PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -192,8 +206,9 @@ The original conditional ordering has now resolved as follows:
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
   M19-P mechanics only where a live hypothesis remains; M21-P already closes
   an unguided M23-P mix-shape screen.
-- Contextual supervision remains a closed later factor and must not be mixed
-  into the baseline reconstruction without a new preregistration.
+- The discarded-head C1/C2 mechanism remains closed. M15-C is the separate
+  preregistration required to test direct conditional-target injection; it has
+  no scientific dependency on the M15-P result.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -213,6 +228,7 @@ One job is prepared per cell:
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m24p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15p
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r

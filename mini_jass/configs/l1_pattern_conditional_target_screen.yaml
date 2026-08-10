@@ -1,0 +1,161 @@
+schema: mini_jass.pattern_conditional_target_screen.v1
+milestone: M15-C
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh and disjoint from PatternEval reconstruction (261001-266020),
+# contextual C1/C2 (270501-270620) and M15-P (271001-271020).
+paired_seeds:
+  [272001, 272002, 272003, 272004, 272005,
+   272006, 272007, 272008, 272009, 272010,
+   272011, 272012, 272013, 272014, 272015,
+   272016, 272017, 272018, 272019, 272020]
+
+arms:
+  - OUTCOME
+  - GLOBAL_BLEND_50
+  - SHUFFLED_CONTEXT_BLEND_50
+  - CONTEXT_BLEND_50
+  - CONTEXT_ONLY
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 880000
+  row_selection: all_generated_train_rows
+  immutable_structure_across_arms: true
+
+# The mapping sees terminal WDL only. Each replay game is held out in full;
+# therefore no row is labelled by a fit that consumed the outcome of its game.
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c_conditional_wdl_game_folds_v1
+  shuffle_control: within_fold_hash_order_rotate_one_v1
+  shuffle_namespace: m15c_conditional_shuffle_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+targets:
+  OUTCOME:
+    source: terminal_selfplay_wdl
+    oracle_training_signal: false
+  GLOBAL_BLEND_50:
+    source: outcome_global_oof_blend
+    smoothing_weight: 0.50
+    control_role: matched_state_blind_shrinkage
+    oracle_training_signal: false
+  SHUFFLED_CONTEXT_BLEND_50:
+    source: outcome_shuffled_conditional_oof_blend
+    smoothing_weight: 0.50
+    control_role: marginal_matched_broken_state_alignment
+    oracle_training_signal: false
+  CONTEXT_BLEND_50:
+    source: outcome_conditional_oof_blend
+    smoothing_weight: 0.50
+    candidate_role: direct_conditional_target_injection
+    oracle_training_signal: false
+  CONTEXT_ONLY:
+    source: conditional_oof_prediction
+    mechanistic_only: true
+    oracle_training_signal: false
+
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 890000
+  explicit_identical_batch_schedule_all_arms: true
+
+# Descriptive only. The decision uses paired development response metrics.
+descriptive_strength_arena:
+  pairs: 128
+  seed_base: 951000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+
+power_sizing:
+  estimator: normal_paired_difference_monte_carlo_v1
+  contrasts_sized:
+    - CONTEXT_BLEND_50_minus_SHUFFLED_CONTEXT_BLEND_50
+    - CONTEXT_BLEND_50_minus_OUTCOME
+  repetitions: 100000
+  seed: 44120260812
+  paired_seed_count: 20
+  conservative_paired_sd: 0.005
+  minimum_effect: 0.003915936905813988
+  paired_confidence_critical_95: 2.093024054408263
+  estimated_power_ci_above_zero: 0.91149
+  minimum_required_power: 0.80
+
+# Attribution and operational usefulness are conjunctive. The shuffled arm
+# preserves each fold's conditional-prediction marginal while breaking
+# alignment to state. CONTEXT_ONLY and OOF prediction MSE cannot rescue the gate.
+scientific_gate:
+  attribution_contrast: CONTEXT_BLEND_50_minus_SHUFFLED_CONTEXT_BLEND_50
+  operational_contrast: CONTEXT_BLEND_50_minus_OUTCOME
+  primary_endpoint: development_zero_regret_gain
+  paired_confidence_critical_95: 2.093024054408263
+  require_both_contrasts_ci_above_zero: true
+  minimum_operational_gain: 0.003915936905813988
+  CONTEXT_ONLY_can_rescue_primary: false
+  mapping_oof_mse_can_rescue_primary: false
+  automatic_promotion: false
+
+source_evidence:
+  m14p:
+    job_id: cpx62-1218-mini-jass-pattern-m14p-m17p-v1
+    result_hash: 80b3240be0fbaa20506d60d65f26619cfe188b11f5a1fd56273de1e19f1d8380
+    zero_regret_exact_minus_outcome_mean: 0.007831873811627976
+  m21p:
+    job_id: cpx62-1223-mini-jass-pattern-m21p-v1
+    result_hash: 2a376c7215212777e466fe41c7bf30a1af1d700f706ee7ca882c0fe2b3ac2745
+    freeze_report_hash: db870aec453cf8876191b1624edd13045be50cf589aca33184d6175f67bae86c
+    selected_replay_source: G1_WIDE_OUTCOME
+  context_c2:
+    job_id: cpx62-1230-mini-jass-contextual-c2-v1
+    result_hash: 5bce01343ca2385485484ba6f46b7c0cf8c9d7bedc857010e9762de63abff9bd
+    freeze_report_hash: b9cd48bf1469aa53765a3cf8fee5419b83ad772a3c42972b6c39d29f51a306eb
+    decision: REJECTED_COMBINED_EFFECT_NONPOSITIVE
+    tested_mechanism: discarded_auxiliary_context_heads
+  contextual_sealed_read:
+    job_id: cpx62-1232-mini-jass-contextual-sealed-read-v1
+    result_hash: bcacf5dca4ea2509da91ab3c0aceaea5de057a3197b3b31599a2d36e91d3783c
+    frozen_test_read_count_after_job: 1
+  context_c3:
+    job_id: cpx62-1235-mini-jass-contextual-c3-v2
+    result_hash: 15c4457809e73ef9e8db8f379433a3ac62c136c7e8ad02b62e3ca91707488ee3
+    freeze_report_hash: 3c4c795ce336b535c3c9d0ef98d99cd0c967719805848e6002914ad254f47cd4
+    interpretation: LINEAR_CALIBRATION_GAP_OBSERVED
+    fitted_linear_oof_spearman: 0.5728855160076164
+    fitted_linear_oof_mae: 0.661842558653182
+
+coordination:
+  prepared_while_job_was_running: cpx62-1237-mini-jass-pattern-m15p-v1
+  m15p_result_read_or_used_for_this_protocol: false
+  execution_is_not_queued_by_this_pr: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  exact_oracle_used_only_for_train_and_development_response_diagnostics: true
+  scientific_dependency_on_m15p_result: none
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false

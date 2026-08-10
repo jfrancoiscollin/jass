@@ -562,6 +562,14 @@ five-fold accounting and interpretation rule. It returned
 `PASS_C3_FREEZE_DIAGNOSTIC_FROZEN`, report hash
 `3c4c795ce336b535c3c9d0ef98d99cd0c967719805848e6002914ad254f47cd4`.
 
+The scope of the negative result is now explicit. C1/C2 tested auxiliary
+context heads whose outputs were discarded at scalar export; they did not test
+injecting a cross-fitted conditional estimate directly into the scalar WDL
+target. M15-C preregisters that distinct mechanism with a within-fold,
+marginal-matched shuffled-context control. It does not reopen or reinterpret the frozen C1/C2 decision,
+reuse `frozen_test`, or import C3's exact-value fitted coefficients. See
+[`PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`](PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md).
+
 Potential-based reward shaping is outside C0-C3. Feeding `DeltaC`, `Rctx` or
 context scores back into behavior would change the replay distribution and
 requires a separate preregistration.

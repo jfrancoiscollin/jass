@@ -417,7 +417,7 @@ La supervision contextuelle de la PR #441 a été exécutée puis fermée par C1
 linéaire** du baseline manuel, mais n'a établi aucun gain de force et ne rouvre
 pas la décision.
 
-📌 **PROCHAIN JALON : M15-P.** Sur 20 graines fraîches et un replay
+📌 **JALON EN COURS : M15-P.** Sur 20 graines fraîches et un replay
 `G1_WIDE_OUTCOME` immuable, comparer WDL, score de recherche même état, mélange
 50/50 et borne exacte diagnostique. Le primaire unique est `BLEND_50 − OUTCOME`
 en zero-regret développement ; la recherche seule ne peut pas sauver le
@@ -428,6 +428,17 @@ M19-P encore vivantes, l'étude de convergence à recette figée et le 6×6.
 
 **Aucune de ces cellules n'est promouvable et aucune n'autorise un transfert
 direct au 10×10.**
+
+📌 **M15-C PRÉENREGISTRÉ, PAS EN FILE.** C1/C2 ont rejeté les têtes
+contextuelles auxiliaires ensuite jetées, pas l'injection directe du contexte
+dans la cible scalaire. M15-C compare donc, sur 20 nouvelles graines, un
+mélange WDL + prédiction conditionnelle apprise hors partie au même mélange
+avec ces prédictions permutées dans chaque fold : distribution identique, mais
+association à l'état détruite. Le primaire exige à la fois un gain sur ce
+contrôle causal et sur WDL, en zero-regret
+développement. Aucune valeur oracle n'entre dans une cible, aucun nouveau read
+de `frozen_test` n'est autorisé et le protocole ne dépend pas du résultat de
+M15-P.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
 
