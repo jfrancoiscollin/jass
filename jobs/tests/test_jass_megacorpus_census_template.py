@@ -33,8 +33,15 @@ class MegaCorpusCensusTemplateTest(unittest.TestCase):
         self.assertIn("paths.jsonl.gz", joined)
 
     def test_operational_guards_are_bounded(self) -> None:
-        self.assertIn("timeout 1800 rclone lsjson", TEXT)
-        self.assertIn("timeout 1800 rclone copy", TEXT)
+        self.assertIn('R2_LIST_TIMEOUT_SECONDS="${R2_LIST_TIMEOUT_SECONDS:-1800}"', TEXT)
+        self.assertIn(
+            'R2_METADATA_TIMEOUT_SECONDS="${R2_METADATA_TIMEOUT_SECONDS:-1800}"',
+            TEXT,
+        )
+        self.assertIn('timeout "${R2_LIST_TIMEOUT_SECONDS}s" rclone lsjson', TEXT)
+        self.assertIn('timeout "${R2_METADATA_TIMEOUT_SECONDS}s" rclone copy', TEXT)
+        self.assertIn("R2 list timeout outside 60..21600 s", TEXT)
+        self.assertIn("R2 metadata timeout outside 60..21600 s", TEXT)
         self.assertIn("sleep 30", TEXT)
         self.assertIn("need 2 GiB free", TEXT)
         self.assertIn("n=0 corpus candidates", TEXT)
