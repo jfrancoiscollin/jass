@@ -462,15 +462,24 @@ composition est positive en statique (`+0,005982`,
 la formule `0,70*LAMBDA_50 + 0,30*contexte` ne préserve pas simultanément leurs
 effets incrémentaux. Cette formule est close et `CONTEXT_30` reste retenu.
 
-📌 **M15-C4 PRÉENREGISTRÉ, PAS EN FILE.** Le nouveau facteur conserve
-`LAMBDA_50` entier et ajoute la correction
-`0,30*(contexte−WDL)`. À cible finale identique, il compare un fit direct de
-2 048 pas à une base temporelle de 1 024 pas gelée puis un résidu conditionnel
-de 1 024 pas. Un contrôle mélangé attribue l'information conditionnelle. Les
-deux tables sont fusionnées avant l'arène en un seul `PatternEval`, sans
-paramètre d'inférence supplémentaire. Vingt-quatre graines fraîches donnent
-au moins 83,6% de puissance par axe ; aucun effet de puissance n'est un seuil
-de décision. Le probe `277000` reste soumis à un GO post-sizing séparé.
+📌 **M15-C4 TERMINÉ : LE SIGNAL CONDITIONNEL SURVIT, LA VOIE RÉSIDUELLE
+SÉPARÉE ÉCHOUE.** Sur `cpx62-1250`, 24 graines fraîches, la comparaison primaire
+`RESIDUAL_30 − ADDITIVE_30` est négative en statique (`−0,000349`, IC95
+`[−0,000668 ; −0,000031]`) et indécise en force (`−0,000041`, IC95
+`[−0,000400 ; +0,000319]`) : optimiser séparément la base temporelle et le
+résidu conditionnel ne préserve pas mieux les deux signaux que le fit direct.
+L'attribution conditionnelle reste pourtant nette en statique :
+`RESIDUAL_30 − SHUFFLED_RESIDUAL_30 = +0,007049`, IC95
+`[+0,006165 ; +0,007933]`, 24/24 graines positives ; sa force est indécise
+(`−0,000671`, IC95 `[−0,001599 ; +0,000256]`). Le contrôle direct confirme le
+même signal statique (`ADDITIVE_30 − SHUFFLED_ADDITIVE_30 = +0,007203`, IC95
+`[+0,006221 ; +0,008185]`). En sélection, `RESIDUAL_30` est nettement inférieur
+à `CONTEXT_30` en statique (`−0,010979`) et à `LAMBDA_50` en statique
+(`−0,008988`) comme en force (`−0,001017`, IC95 entièrement négatif). La fusion
+en un seul `PatternEval` est numériquement valide (erreur maximale
+`3,87e−7 < 1,91e−6`, zéro paramètre d'inférence ajouté). Décision : conserver
+`CONTEXT_30`, fermer cette formule résiduelle et ne pas relancer M15-C4 à
+l'identique. Aucun `frozen_test` n'a été lu.
 
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de
