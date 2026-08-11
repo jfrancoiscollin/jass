@@ -442,6 +442,169 @@ def _load_sample_weights(
     return optimizer_sw_all, report
 
 
+def _validate_targets_report_target(args, targets_path: Path, report_path: str) -> Path:
+    target = Path(report_path)
+    target_resolved = target.resolve(strict=False)
+    protected = (
+        ("--target-values", targets_path),
+        ("--sample-weights", getattr(args, "sample_weights", None)),
+        ("--weights-report", getattr(args, "weights_report", None)),
+        ("--optimizer-report", getattr(args, "optimizer_report", None)),
+        ("--data", getattr(args, "data", None)),
+        ("--feat", getattr(args, "feat", None)),
+        ("--out", getattr(args, "out", None)),
+    )
+    for flag, protected_path in protected:
+        if protected_path is None:
+            continue
+        if target_resolved == Path(protected_path).resolve(strict=False):
+            raise SystemExit(
+                f"--targets-report must be distinct from {flag}: {target}"
+            )
+    if target.exists():
+        raise SystemExit(f"{target}: targets report already exists (no-clobber)")
+    return target
+
+
+def _atomic_write_targets_report(path: Path, payload: dict) -> None:
+    serialized = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(
+        f".{path.name}.tmp-{os.getpid()}-{time.time_ns()}"
+    )
+    try:
+        with temporary.open("x", encoding="utf-8", newline="\n") as handle:
+            handle.write(serialized)
+            handle.flush()
+            os.fsync(handle.fileno())
+        # Publish without a race that could overwrite a target created after
+        # validation. Same-directory hard-linking is atomic and no-clobber.
+        os.link(temporary, path)
+    except FileExistsError as exc:
+        if path.exists():
+            raise SystemExit(
+                f"{path}: targets report already exists (no-clobber)"
+            ) from exc
+        raise SystemExit(
+            f"{path}: cannot create atomic targets-report temporary"
+        ) from exc
+    except OSError as exc:
+        raise SystemExit(
+            f"{path}: cannot atomically publish targets report: {exc}"
+        ) from exc
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _load_target_values(
+    args,
+    n_records: int,
+    train_n: int,
+    hold_count: int,
+) -> tuple[np.ndarray | None, dict | None]:
+    """Load an immutable black-POV probability target sidecar.
+
+    The opt-in path is deliberately separate from ``wdl`` and ``value`` so an
+    omitted or misspelled flag can never silently change the historical fit.
+    Values are validated but never clipped or normalised; the holdout tail uses
+    the aligned sidecar labels for the same objective as the train prefix.
+    """
+    values_path = getattr(args, "target_values", None)
+    report_path = getattr(args, "targets_report", None)
+    if getattr(args, "target", "wdl") != "external":
+        if values_path is not None or report_path is not None:
+            raise SystemExit(
+                "--target-values/--targets-report require --target external"
+            )
+        return None, None
+    if values_path is None or report_path is None:
+        raise SystemExit(
+            "--target external requires --target-values and --targets-report"
+        )
+
+    path = Path(values_path)
+    report_target = _validate_targets_report_target(args, path, report_path)
+    try:
+        raw = np.load(path, allow_pickle=False, mmap_mode="r")
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"{path}: cannot load target values: {exc}") from exc
+    if not isinstance(raw, np.ndarray) or raw.ndim != 1:
+        raise SystemExit(
+            f"{path}: target values must be a 1-D NumPy array, "
+            f"got shape={getattr(raw, 'shape', None)}"
+        )
+    if raw.dtype != np.dtype(np.float32):
+        raise SystemExit(
+            f"{path}: target values dtype must be float32 exactly, got {raw.dtype}"
+        )
+    if raw.shape != (n_records,):
+        raise SystemExit(
+            f"{path}: target values length {len(raw)} != data records {n_records}"
+        )
+    if not bool(np.all(np.isfinite(raw))):
+        raise SystemExit(f"{path}: target values contain NaN or infinity")
+    observed_min = float(np.min(raw))
+    observed_max = float(np.max(raw))
+    if observed_min < 0.0 or observed_max > 1.0:
+        raise SystemExit(
+            f"{path}: target values range [{observed_min}, {observed_max}] "
+            "outside black-POV probability interval [0,1]; values are never clipped"
+        )
+
+    report = {
+        "schema": 1,
+        "operation": "train_stream_external_targets",
+        "source": {
+            "path": str(path),
+            "sha256": _sha256_file(path),
+            "dtype": str(raw.dtype),
+            "shape": [int(value) for value in raw.shape],
+            "pov": "black",
+            "range": "win_probability_[0,1]",
+        },
+        "aligned_inputs": {
+            "data_path": str(args.data),
+            "data_sha256": _sha256_file(args.data),
+            "feat_path": str(args.feat),
+            "feat_sha256": _sha256_file(args.feat),
+        },
+        "split": {
+            "records": int(n_records),
+            "train_records": int(train_n),
+            "holdout_records": int(hold_count),
+            "holdout_uses_external_targets": bool(hold_count),
+        },
+        "validation": {
+            "finite": True,
+            "clipping_applied": False,
+            "observed_min": observed_min,
+            "observed_max": observed_max,
+        },
+        "train": {
+            "mean": float(np.mean(raw[:train_n], dtype=np.float64)),
+            "standard_deviation": float(np.std(raw[:train_n], dtype=np.float64)),
+        },
+    }
+    _atomic_write_targets_report(report_target, report)
+    print(
+        "EXTERNAL_TARGETS "
+        + json.dumps(
+            {
+                "report": str(report_target),
+                "sha256": report["source"]["sha256"],
+                "min": observed_min,
+                "max": observed_max,
+                "holdout_uses_external_targets": bool(hold_count),
+            },
+            sort_keys=True,
+        )
+    )
+    return raw, report
+
+
 def _holdout_logloss(build_fn, y_all, model_weights, train_n, n_records, chunk):
     """Unweighted tail cross-entropy; sample weights deliberately cannot enter."""
     eps = 1e-12
@@ -709,6 +872,9 @@ def train_stream(args):
     sample_weights, _weights_report = _load_sample_weights(
         args, N, train_N, hold_count
     )
+    external_targets, _targets_report = _load_target_values(
+        args, N, train_N, hold_count
+    )
 
     # --- Pass A : stream once to build the tiny per-row arrays (wdl/stm/phase) and
     #     the prune visit-count remap. Bitboards + extras are NOT kept; only O(N)
@@ -728,7 +894,9 @@ def train_stream(args):
         bm = np.ascontiguousarray(rec['bm']); bk = np.ascontiguousarray(rec['bk'])
         stm = np.ascontiguousarray(rec['stm'])
         wdl = np.ascontiguousarray(rec['wdl']).astype(np.float64)
-        if args.target == 'value':
+        if args.target == 'external':
+            y_all[i:j] = np.asarray(external_targets[i:j], dtype=np.float64)
+        elif args.target == 'value':
             # Independent value-target distillation (option B) : regress on the
             # DEEP-search value stored in `score` (STM-POV), mapped to a black-POV
             # win-prob via a sigmoid so it stays in the same [0,1] regime as the
@@ -755,7 +923,10 @@ def train_stream(args):
             pw = (wm | wk) if args.king_patterns else wm
             cols, _ = folder.cols_signs(pb, pw)
             ccounts += np.bincount(cols.ravel(), minlength=TB)
-    if args.target == 'value':
+    if args.target == 'external':
+        print(f'  target=EXTERNAL (black-POV probability sidecar)  '
+              f'y mean={y_all.mean():.3f} std={y_all.std():.3f}  ({time.time()-tA:.1f}s)')
+    elif args.target == 'value':
         print(f'  target=VALUE (deep-search score, scale={args.value_scale})  '
               f'y mean={y_all.mean():.3f} std={y_all.std():.3f}  ({time.time()-tA:.1f}s)')
     else:
@@ -947,11 +1118,16 @@ def main(argv=None):
     ap.add_argument('--loss', choices=['logistic', 'ls'], default='logistic',
                     help="logistic regression on WDL outcomes (Scan's objective, "
                          "default) or least-squares on the WDL target.")
-    ap.add_argument('--target', choices=['wdl', 'value'], default='wdl',
+    ap.add_argument('--target', choices=['wdl', 'value', 'external'], default='wdl',
                     help="wdl (default) = train on the game/egdb outcome label. "
                          "value = independent value-target distillation : train on the "
                          "DEEP-search value in the `score` field (via --deep-relabel), "
-                         "mapped to a win-prob with --value-scale.")
+                         "mapped to a win-prob with --value-scale. external = aligned "
+                         "black-POV probability labels from --target-values.")
+    ap.add_argument('--target-values', type=str, default=None,
+                    help='with --target external: aligned float32 .npy vector in [0,1]')
+    ap.add_argument('--targets-report', type=str, default=None,
+                    help='with --target external: atomic JSON provenance report')
     ap.add_argument('--value-scale', type=float, default=200.0,
                     help="sigmoid scale (eval units) mapping deep-search score → win-prob "
                          "when --target value. Larger = softer targets. Default 200.")
