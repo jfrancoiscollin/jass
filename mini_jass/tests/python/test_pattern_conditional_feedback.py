@@ -133,6 +133,11 @@ def test_home_wrapper_reuses_persistent_torch_and_has_job_guards() -> None:
     assert "PROGRESS.json" in wrapper
     assert "n=0 is a hard failure" in wrapper
     assert "scientific-summary.json exceeds 64 KiB" in wrapper
+    assert (
+        'oracle="$repo/mini_jass/artefacts/'
+        'oracle.l1.pattern-m15c5-$job_id.jsonl"' in wrapper
+    )
+    assert 'oracle="$work/oracle.l1.jsonl"' not in wrapper
 
 
 def test_yaml_declares_probe_timing_only() -> None:
