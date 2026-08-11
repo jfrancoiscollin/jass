@@ -108,7 +108,13 @@ class PatternEval(nn.Module):
             )
         return index + self.pattern_offset.unsqueeze(0)
 
-    def forward(self, features: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def raw_score(self, features: torch.Tensor) -> torch.Tensor:
+        """Return the additive score before the final bounding ``tanh``.
+
+        Keeping this operation explicit lets training-only experiments split a
+        PatternEval into independently optimised additive components, then fold
+        those components back into one ordinary production-shaped evaluator.
+        """
         buckets = self._buckets(features)
         side = features[:, 4 * PLAYABLE]
         if torch.any((side != 0) & (side != 1)):
@@ -120,7 +126,10 @@ class PatternEval(nn.Module):
             reversible = features[:, 4 * PLAYABLE + 1 : 4 * PLAYABLE + 2]
             total = total + reversible @ self.extra_weight
         total = total + self.bias
-        value = torch.tanh(total)
+        return total
+
+    def forward(self, features: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        value = torch.tanh(self.raw_score(features))
         # Les appelants historiques attendent `(value, logits)`. Une evaluation
         # n'a pas de logits : on rend des zeros, ce qui donne une politique
         # UNIFORME sur les coups legaux si quelqu'un s'en sert -- et les

@@ -9,8 +9,10 @@ M15-P precisely excluded its preregistered practical recovery target. M15-C
 then confirmed a smaller direct conditional-target signal while missing its
 old practical threshold. M15-C2 confirmed the interior alpha-0.30 dose on both
 static response and paired strength. M15-C2R independently replicated all four
-alpha-0.30 axes and retained that dose. M15-C3 is preregistered and implemented
-to compose it with M16-P `LAMBDA_50`; it is not queued by this code PR.
+alpha-0.30 axes and retained that dose. M15-C3 then rejected its naive convex
+composition with M16-P `LAMBDA_50`: two of four primary axes failed. M15-C4 is
+preregistered and implemented to test a separate collapsible residual path; it
+is not queued by this code PR.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -275,6 +277,20 @@ pass, composition replaces the incumbent only if it also beats `LAMBDA_50`
 and `OUTCOME` directly in static response and strength. See
 [`PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md`](PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md).
 
+M15-C3 completed on `cpx62-1244` with two of four primary axes passing. Static
+temporal increment and strength conditional attribution were significantly
+negative, so `CONTEXT_30` remains retained and that convex formula is closed.
+
+### 13. M15-C4 — separate conditional residual path
+
+M15-C4 holds the final additive target fixed while comparing a direct 2,048-step
+fit with a 1,024-step temporal base plus a 1,024-step conditional residual. The
+residual base is frozen, the aligned arm is controlled by a within-fold shuffled
+residual, and the two linear tables collapse before evaluation into one standard
+`PatternEval` with zero extra inference parameters. Four static/strength axes
+must pass; descriptive direct and singleton arms cannot rescue them. See
+[`PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md`](PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -287,8 +303,10 @@ The original conditional ordering has now resolved as follows:
   conditional signal. M16-P independently confirmed a small temporal signal;
   `LAMBDA_50` is retained for composition even though it missed the 50%
   major-recovery gate. M15-C2 confirmed the interior conditional dose;
-  M15-C2R independently replicated it; M15-C3 now tests the preregistered
-  conditional-temporal composition.
+  M15-C2R independently replicated it; M15-C3 closed its naive convex
+  conditional-temporal formula. M15-C4 now tests whether a separate residual
+  optimisation path avoids that interference without changing inference
+  capacity.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
@@ -297,8 +315,9 @@ The original conditional ordering has now resolved as follows:
 - The discarded-head C1/C2 mechanism remains closed. M15-C independently
   confirmed that direct conditional-target injection is a distinct live
   mechanism; M15-C2 confirmed its dose without reopening the auxiliary-head
-  result, M15-C2R replicated that result, and M15-C3 composes it with the
-  retained temporal signal without reopening the discarded-head mechanism.
+  result, M15-C2R replicated that result, M15-C3 rejected the first composition
+  formula, and M15-C4 tests a training-only residual decomposition without
+  reopening the discarded runtime-head mechanism.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -323,6 +342,8 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c2r
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3probe
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c4probe
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c4
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r

@@ -381,6 +381,11 @@ alpha 0.30; alpha 0.40 improved static response but not direct strength, so
 0.30 remains retained. M15-C3, specified in
 `docs/PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md`, preregisters a
 six-arm causal composition of retained conditional alpha 0.30 and temporal
-`LAMBDA_50` on 24 fresh seeds.
+`LAMBDA_50` on 24 fresh seeds. It completed with two of four primary axes
+passing, so that convex formula is closed and `CONTEXT_30` remains retained.
+M15-C4, specified in `docs/PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md`, holds
+an additive target fixed while testing whether separate temporal and
+conditional optimisation paths preserve both signals. They collapse back into
+one ordinary `PatternEval` with no inference-capacity increase.
 The historical frozen-test read is exhausted, so these cells read train and
 development only. CPX scripts are prepared but are not queued by code PRs.
