@@ -503,11 +503,22 @@ négatif en statique (`−0,007067`) malgré un gain de force (`+0,002380`), tan
 que l'attribution conditionnelle est positive en statique (`+0,005982`) mais
 négative en force (`−0,001017`) ; les quatre IC95 excluent zéro dans ces sens.
 La formule dilue donc un signal en tentant d'ajouter l'autre et `CONTEXT_30`
-reste retenu. M15-C4 est le test causal suivant : même cible additive finale,
-mais base temporelle et résidu conditionnel optimisés séparément puis fusionnés
-algébriquement en un unique `PatternEval` sans capacité supplémentaire.
-Aucun nouveau read du `frozen_test`, aucune promotion et aucun transfert direct
-au 10×10 ne sont autorisés.
+reste retenu. **M15-C4 (`cpx62-1250`) ferme aussi la décomposition
+résiduelle** : `RESIDUAL_30 − ADDITIVE_30` est légèrement négatif en statique
+(`−0,000349`, IC95 `[−0,000668 ; −0,000031]`) et indécis en force
+(`−0,000041`, IC95 `[−0,000400 ; +0,000319]`). L'information conditionnelle
+n'est pas réfutée : contre son contrôle mélangé, le résidu gagne `+0,007049`
+en statique, IC95 `[+0,006165 ; +0,007933]`, avec 24/24 graines positives ; le
+fit additif direct donne lui aussi `+0,007203`, IC95
+`[+0,006221 ; +0,008185]`. Mais l'attribution de force résiduelle reste indécise
+(`−0,000671`, IC95 `[−0,001599 ; +0,000256]`) et `RESIDUAL_30` perd nettement
+contre `CONTEXT_30` en statique (`−0,010979`). La fusion en un unique
+`PatternEval` est exacte à l'arrondi FP32 près (`3,87e−7`, zéro paramètre
+d'inférence ajouté) : l'échec est scientifique, pas architectural. Conclusion :
+le signal conditionnel est réel, mais ni la composition convexe ni la voie
+résiduelle séparée ne rendent ses gains additifs avec le signal temporel.
+Conserver `CONTEXT_30` et fermer ces deux formules. Aucun `frozen_test` n'a été
+lu, aucune promotion ni transfert direct au 10×10 n'est autorisé.
 
 ## 5. Portes closes à protocole causal identique
 
@@ -548,6 +559,7 @@ marqués co-adaptatifs peuvent être revus une fois dans le DoE L3 décrit au
 | dose/calendrier d'exploration (écran C2-X1) | verdict `0824` (`l3_x1_verdict.py`, 5 cellules, n appariés 860, bootstrap 10 000) : effets A −0,002 / B +0,002 / C +0,001 / courbure +0,004, tous IC franchissant 0 ; aucun coin Δconv ≥ +0,02 ; gates ≈ 0,5 | `x1_no_lead` — plies d'ouverture, epsilon et décroissance ne déplacent pas la conversion ; plateau ~0,67 | nouveau facteur de trajectoire causalement différent, ou signal sur une lignée plus mûre |
 | tête de conversion statique P3 gen2 (CVH1) | offline +0,016 ; screen `0813` +0,022 (n=180) prometteur ; confirmation haut-N `0815` A 0,478 vs C10 0,490 → **Δ +0,012 (n=1255) < +0,020** ; bootstrap apparié IC recouvrant 0 | `not_confirmed_flat` / `better_fit_no_play_signal` — un meilleur fit offline de la correction ne se traduit pas en conversion jouée ; le head statique gelé sur gen2 est un levier mort | canal de correction P3 non-statique (décision réelle), nouveau gate indépendant |
 | décisions-sibling P3 gen2 (autopsie D0) | `0822` `no_actionable_sibling_signal` : recovery 37,4 % < 50 %, Δ pairé +0,035 IC [−0,022 ; +0,093] straddle 0, n=339 | rejouer un meilleur sibling au leader P3 ne récupère pas assez de failures ; cohérent avec l'échec du head statique CVH1 (`better_fit_no_play_signal`) | mécanisme de décision P3 causalement différent, gate indépendant |
+| composition scalaire des signaux Mini-Jass conditionnel et temporel | M15-C3 (`1244`) : composition convexe, statique temporel `−0,007067` mais force `+0,002380` ; M15-C4 (`1250`) : résidu séparé contre fit direct `−0,000349` statique et force indécise, tandis que le signal conditionnel statique reste `+0,007049` contre permutation | les deux informations existent mais leurs gains ne s'additionnent pas via les deux algèbres de cible testées ; refaire une dose ou davantage de graines ne change pas le mécanisme | canal d'apprentissage causalement différent qui ne combine pas les signaux dans une cible scalaire unique, avec attribution statique **et** force préenregistrées |
 
 ### 5.2 bis Défaut d'étiquetage pré-`9c1d1e8e` — les nulles supprimées du corpus
 
