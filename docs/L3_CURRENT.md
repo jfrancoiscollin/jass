@@ -481,6 +481,28 @@ en un seul `PatternEval` est numériquement valide (erreur maximale
 `CONTEXT_30`, fermer cette formule résiduelle et ne pas relancer M15-C4 à
 l'identique. Aucun `frozen_test` n'a été lu.
 
+📌 **M15-C5 TERMINÉ : LE GAIN STATIQUE CONDITIONNEL NE SURVIT PAS AU FEEDBACK
+ON-POLICY.** Sur `home-1256`, 24 graines fraîches, G1 réplique encore
+`CONTEXT_30 − OUTCOME` en zero-regret (`+0,005142`, IC95
+`[+0,004643 ; +0,005641]`) et en force (`+0,001994`, IC95
+`[+0,001072 ; +0,002916]`). Après une seconde génération produite par chaque
+bras, le contraste primaire garde un petit gain de force (`+0,001668`, IC95
+`[+0,000437 ; +0,002899]`) mais inverse nettement le zero-regret
+(`−0,002349`, IC95 `[−0,003352 ; −0,001346]`, 21/24 graines négatives). Le
+changement de distribution seul n'explique pas cette érosion : replay propre
+moins replay OUTCOME vaut `−0,000973` en zero-regret avec un IC qui touche zéro.
+Décision : conserver la preuve statique `CONTEXT_30`, fermer sa répétition
+scalaire on-policy et changer le canal causal.
+
+🔬 **M15-C6 PRÉENREGISTRÉ POUR HOME : CONTEXTE SÉPARÉ JUSQU'À LA DÉCISION.**
+`LAMBDA_50` reste l'unique valeur de recherche. Deux tables linéaires séparées
+apprennent la prédiction conditionnelle OOF alignée ou sa permutation, et ne
+peuvent départager les actions que dans une bande d'incertitude temporelle
+calibrée sur train. Les deux gates de force sont `aligné − shuffled` et
+`aligné − LAMBDA_50`; leurs bornes basses doivent toutes deux dépasser zéro,
+sans seuil d'effet. Les diagnostics statiques ne peuvent pas sauver la porte.
+Le probe `279000` doit mesurer le runtime HOME avant la cellule de 24 graines.
+
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de
 `+0,001549`, IC95 `[+0,000928 ; +0,002170]`, et l'arène descriptive appariée
