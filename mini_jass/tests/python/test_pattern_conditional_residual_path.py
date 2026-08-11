@@ -113,7 +113,7 @@ def test_m15c4_primary_cannot_be_rescued_by_descriptive_direct_arm() -> None:
     contrasts = {
         name: {
             "zero_regret_gain": _interval(
-                -0.001 if name == "pathway_attribution" else 0.001
+                -0.003 if name == "pathway_attribution" else 0.001
             )
         }
         for name in names
