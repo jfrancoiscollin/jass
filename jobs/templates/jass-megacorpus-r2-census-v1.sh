@@ -15,6 +15,8 @@ mkdir -p "$W" "$ART" "$META" "$CAT"
 RES="$W/RESULTS.txt"
 PROG="$W/PROGRESS.txt"
 STAGE="$W/stage.txt"
+R2_LIST_TIMEOUT_SECONDS="${R2_LIST_TIMEOUT_SECONDS:-1800}"
+R2_METADATA_TIMEOUT_SECONDS="${R2_METADATA_TIMEOUT_SECONDS:-1800}"
 : >"$RES"
 echo preflight >"$STAGE"
 MON=""
@@ -62,6 +64,10 @@ trap 'exit 130' INT
 [ "${CENSUS_ONLY_APPROVED:-0}" = 1 ] || die "census-only authorization missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "automatic continuation guard missing"
 [ "${NO_PAYLOAD_DOWNLOADS:-0}" = 1 ] || die "payload download guard missing"
+[[ "$R2_LIST_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || die "invalid R2 list timeout"
+[[ "$R2_METADATA_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || die "invalid R2 metadata timeout"
+[ "$R2_LIST_TIMEOUT_SECONDS" -ge 60 ] && [ "$R2_LIST_TIMEOUT_SECONDS" -le 21600 ] || die "R2 list timeout outside 60..21600 s"
+[ "$R2_METADATA_TIMEOUT_SECONDS" -ge 60 ] && [ "$R2_METADATA_TIMEOUT_SECONDS" -le 21600 ] || die "R2 metadata timeout outside 60..21600 s"
 [ "$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')" -ge 2048 ] || die "need 2 GiB free"
 command -v rclone >/dev/null || die "rclone missing"
 python3 -m py_compile jobs/tools/jass_megacorpus_catalog.py
@@ -71,12 +77,12 @@ python3 -m unittest jobs.tests.test_jass_megacorpus_catalog \
 monitor
 
 phase list-all-r2-objects
-timeout 1800 rclone lsjson "$JASS_OBJSTORE_REMOTE" --recursive --files-only \
+timeout "${R2_LIST_TIMEOUT_SECONDS}s" rclone lsjson "$JASS_OBJSTORE_REMOTE" --recursive --files-only \
   >"$W/r2-objects.json" 2>"$W/rclone-lsjson.log"
 [ -s "$W/r2-objects.json" ] || die "R2 object census is empty"
 
 phase fetch-control-metadata-only
-timeout 1800 rclone copy "$JASS_OBJSTORE_REMOTE" "$META" \
+timeout "${R2_METADATA_TIMEOUT_SECONDS}s" rclone copy "$JASS_OBJSTORE_REMOTE" "$META" \
   --filter '+ /runs/**/manifest.json' \
   --filter '+ /runs/**/inventory.json' \
   --filter '+ /runs/**/checksums.sha256' \
