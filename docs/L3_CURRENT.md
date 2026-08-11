@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 9 août 2026**
+> **Mis à jour : 11 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -79,6 +79,7 @@
 > only_untested_lever_is_what_the_selfplay_PLAYS;
 > minijass_m14_exact_labels_make_the_value_head_learn_plus_9_4_points;
 > minijass_m15_no_deployable_mechanism_recovers_it_best_is_41_8_percent;
+> minijass_m16p_temporal_signal_confirmed_major_recovery_gate_not_met;
 > our_egdb_relabel_only_covers_the_7_piece_endgame_slice_not_the_corpus;
 > minijass_m16_temporal_lambda_returns_are_WORSE_than_the_same_state_blend;
 > lambda_curve_is_non_monotone_interior_optimum_near_0_8_pure_bootstrap_HURTS;
@@ -431,14 +432,24 @@ statut formel reste `FAIL` car la moyenne manque le seuil pratique historique
 `+0,003916`. Le verdict scientifique correct est donc
 `MECHANISM_CONFIRMED_PRACTICAL_GATE_MISSED`, pas « absence de signal ».
 
-📌 **M15-C2 PRÉENREGISTRÉ, PAS EN FILE.** Comme la dose 50% aide mais que la
+📌 **M15-C2 PRÉENREGISTRÉ ET EN COURS SUR `cpx62-1240`.** Comme la dose 50% aide mais que la
 cible conditionnelle seule nuit (`−0,018970` contre WDL), M15-C2 teste
 20/30/40%, avec 30% comme seul primaire et un contrôle permuté apparié à chaque
 dose. Le gate statique demande seulement des IC95 strictement positifs contre
 le contrôle causal et WDL ; l'arène 512 paires produit un verdict de force
 séparé. Les doses exploratoires ne peuvent pas sauver le primaire. Aucun
 nouveau read de `frozen_test` n'est autorisé, aucun bras n'est promouvable et
-aucun transfert direct au 10×10 n'est autorisé.
+aucun transfert direct au 10×10 n'est autorisé. Verdict en attente.
+
+📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
+`home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de
+`+0,001549`, IC95 `[+0,000928 ; +0,002170]`, et l'arène descriptive appariée
+de `+0,005664`, IC95 `[+0,003722 ; +0,007607]`. Il récupère `10,25 %` de
+l'écart exact : le seuil préenregistré de récupération majoritaire à 50% n'est
+pas atteint, mais le mécanisme n'est pas réfuté. `LAMBDA_50` est conservé comme
+composant candidat pour composition et confirmation de force sur graines
+fraîches. Le statut brut historique du gate et son hash restent immuables pour
+l'audit ; le statut d'expérience retenu est `POSITIVE`.
 
 ## 0octies. 8 août 2026 — 🔬 MINI-JASS TRANCHE : LE BRUIT D'ÉTIQUETAGE EST BIEN LE FACTEUR, MAIS ON NE SAIT PAS LE RÉCUPÉRER
 

@@ -18,6 +18,25 @@ M16P = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(M16P)
 
 
+def test_m16p_retained_interpretation_preserves_positive_signal_and_raw_report() -> None:
+    path = (
+        ROOT
+        / "artefacts"
+        / "m16p_temporal_value_target_screen.interpretation.v1.json"
+    )
+    interpretation = M16P.json.loads(path.read_text(encoding="utf-8"))
+    effect = interpretation["lambda_50_minus_outcome"]["zero_regret_gain"]
+
+    assert interpretation["experience_status"] == "POSITIVE"
+    assert interpretation["interpretation"]["mechanism_status"] == "CONFIRMED"
+    assert effect["ci95"][0] > 0.0
+    assert interpretation["interpretation"]["major_recovery_gate_status"] == "NOT_MET"
+    assert interpretation["immutable_source"]["preregistered_report_status"] == "FAIL"
+    assert interpretation["immutable_source"]["result_hash"] == (
+        "23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385"
+    )
+
+
 def _sample(game: int, ply: int, state: int, outcome: float) -> ReplaySample:
     policy = np.zeros(72, dtype=np.float32)
     policy[3] = 1.0

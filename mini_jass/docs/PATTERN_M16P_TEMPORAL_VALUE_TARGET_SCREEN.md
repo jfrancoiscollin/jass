@@ -1,6 +1,13 @@
 # M16-P — temporal value targets on PatternEval
 
-Status: preregistered and implemented for `home`, not yet scientifically run.
+Status: **POSITIVE — temporal signal confirmed; major-recovery gate not met.**
+
+M16-P completed as
+`home-1321-mini-jass-pattern-m16p-retry-v1`, attempt
+`20260810T225346Z-9c7722b4`. The immutable preregistered report and its result
+hash are preserved. Its old `FAIL` field answers only the narrower question
+"did lambda 0.50 recover at least half of the oracle gap?"; it is not the
+retained experience status.
 
 ## Question
 
@@ -40,7 +47,7 @@ WDL. Root scores are clipped to `[-1, 1]`. Returns are built over complete,
 contiguous generated trajectories before retaining the immutable train-cohort
 rows. No exact value enters any deployable target.
 
-## Decision
+## Preregistered major-recovery gate
 
 The sole confirmatory contrast is `LAMBDA_50 - OUTCOME` on development
 zero-regret. A pass requires:
@@ -53,6 +60,31 @@ zero-regret. A pass requires:
 `NEXT_SEARCH` and `LAMBDA_80` are descriptive and cannot rescue the primary.
 All 128-pair common-start arenas are descriptive; a static pass authorizes only
 a fresh-seed strength replication, never promotion.
+
+## Result and retained interpretation
+
+`LAMBDA_50 - OUTCOME` produced a development zero-regret gain of
+`+0.00154924`, with paired Student 95% interval
+`[+0.00092823, +0.00217024]`. The signal is therefore positive and precise.
+It recovered `10.25%` of the replicated exact-label gap (`+0.01510940`), below
+the preregistered 50% major-recovery target (`+0.00755470`).
+
+The descriptive paired arena also moved positively by `+0.00566406`, with 95%
+interval `[+0.00372158, +0.00760654]`, 17 positive seeds, three ties and no
+negative seed. General value MAE and value-sign diagnostics worsened, so this
+is a narrow decision-quality signal rather than a general value-calibration
+solution.
+
+The retained scientific classification is therefore:
+
+- experience: `POSITIVE`;
+- mechanism: `CONFIRMED`;
+- 50% major-recovery gate: `NOT_MET`;
+- downstream decision: retain `LAMBDA_50` for controlled composition and a
+  fresh-seed strength confirmation, without rerunning M16-P identically.
+
+The machine-readable interpretation is frozen in
+[`../artefacts/m16p_temporal_value_target_screen.interpretation.v1.json`](../artefacts/m16p_temporal_value_target_screen.interpretation.v1.json).
 
 ## HOME calibration
 
