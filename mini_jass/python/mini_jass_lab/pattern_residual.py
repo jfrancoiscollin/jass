@@ -19,6 +19,14 @@ from .pattern_eval import PatternEval
 from .replay import ReplaySample
 
 
+# Collapsing two linear paths changes the order of float32 additions: the two
+# independently reduced scores become one reduction over elementwise-summed
+# weights. The expressions are algebraically identical but can differ by a
+# handful of ULPs. PatternEval window-3 evaluates nine buckets plus its extra
+# and bias, so 16 float32 epsilons are a conservative absolute roundoff guard.
+FLOAT32_COLLAPSE_ATOL = 16.0 * float(torch.finfo(torch.float32).eps)
+
+
 def zero_pattern_eval_like(model: PatternEval) -> PatternEval:
     """Clone a compatible evaluator and reset only its trainable parameters."""
 

@@ -45,6 +45,7 @@ from mini_jass_lab.pattern_reconstruction import (  # noqa: E402
     solved_tensors,
 )
 from mini_jass_lab.pattern_residual import (  # noqa: E402
+    FLOAT32_COLLAPSE_ATOL,
     collapse_pattern_evals,
     combined_values,
     train_residual_path,
@@ -2128,9 +2129,10 @@ def run_m15c2(
                     collapse_error = float(
                         torch.max(torch.abs(combined - collapsed_values)).item()
                     )
-                if collapse_error > 1.0e-7:
+                if collapse_error > FLOAT32_COLLAPSE_ATOL:
                     raise RuntimeError(
-                        f"M15-C4 PatternEval collapse error {collapse_error}"
+                        "M15-C4 PatternEval collapse error "
+                        f"{collapse_error} exceeds {FLOAT32_COLLAPSE_ATOL}"
                     )
                 record_arm(
                     arm,
@@ -2155,6 +2157,7 @@ def run_m15c2(
                         "residual_initial_model_hash": residual_initial_hash,
                         "residual_trained_model_hash": _model_state_hash(residual),
                         "collapse_max_abs_error_all_states": collapse_error,
+                        "collapse_absolute_tolerance": FLOAT32_COLLAPSE_ATOL,
                         "collapsed_architecture": "folded_pattern_value",
                         "extra_inference_parameters": 0,
                     },

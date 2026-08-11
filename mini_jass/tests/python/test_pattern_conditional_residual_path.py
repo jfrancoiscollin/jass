@@ -12,7 +12,11 @@ import torch
 
 from mini_jass_lab.model_factory import build_model
 from mini_jass_lab.pattern_eval import PatternEval
-from mini_jass_lab.pattern_residual import collapse_pattern_evals, combined_values
+from mini_jass_lab.pattern_residual import (
+    FLOAT32_COLLAPSE_ATOL,
+    collapse_pattern_evals,
+    combined_values,
+)
 from mini_jass_lab.patterns import PLAYABLE
 from mini_jass_lab.replay import ReplaySample
 
@@ -84,7 +88,7 @@ def test_m15c4_additive_target_preserves_temporal_and_matches_residual() -> None
     assert contract["all_targets_oracle_blind"] is True
 
 
-def test_pattern_eval_additive_paths_collapse_to_one_exact_model() -> None:
+def test_pattern_eval_additive_paths_collapse_within_float32_roundoff() -> None:
     _, loop = M15C4._resolve(
         ROOT / "configs" / "l1_pattern_conditional_residual_path.yaml"
     )
@@ -96,15 +100,24 @@ def test_pattern_eval_additive_paths_collapse_to_one_exact_model() -> None:
         for model in (base, residual):
             for parameter in model.parameters():
                 parameter.copy_(
-                    torch.randn(parameter.shape, generator=generator) * 0.01
+                    torch.randn(parameter.shape, generator=generator) * 0.5
                 )
-    features = torch.zeros((9, 4 * PLAYABLE + 2), dtype=torch.float32)
-    features[::2, 4 * PLAYABLE] = 1.0
-    features[:, 4 * PLAYABLE + 1] = torch.linspace(0.0, 1.0, 9)
+    rng = np.random.default_rng(441)
+    states = rng.integers(0, 5, size=(1024, PLAYABLE), dtype=np.int8)
+    rows = np.zeros((len(states), 4 * PLAYABLE + 2), dtype=np.float32)
+    for plane in range(4):
+        rows[:, plane * PLAYABLE : (plane + 1) * PLAYABLE] = states == plane + 1
+    rows[:, 4 * PLAYABLE] = rng.integers(0, 2, size=len(states))
+    rows[:, 4 * PLAYABLE + 1] = rng.random(len(states))
+    features = torch.from_numpy(rows)
     collapsed = collapse_pattern_evals(base, residual)
     before = combined_values(base, residual, features)
     after, _ = collapsed(features)
-    assert torch.allclose(before, after, rtol=0.0, atol=1.0e-7)
+    maximum_error = float(torch.max(torch.abs(before - after)).item())
+    assert maximum_error > 1.0e-7
+    assert maximum_error <= FLOAT32_COLLAPSE_ATOL
+    assert torch.allclose(before, after, rtol=0.0, atol=FLOAT32_COLLAPSE_ATOL)
+    assert M15C4.FLOAT32_COLLAPSE_ATOL == FLOAT32_COLLAPSE_ATOL
     assert collapsed.parameter_total() == base.parameter_total()
 
 
