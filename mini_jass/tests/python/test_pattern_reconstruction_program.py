@@ -136,6 +136,11 @@ def test_m17p_reads_zero_regret_as_primary_response() -> None:
             M15C2.SCHEMA,
             "M15-C2",
         ),
+        (
+            "l1_pattern_conditional_dose_replication.yaml",
+            M15C2.REPLICATION_SCHEMA,
+            "M15-C2R",
+        ),
         ("l1_pattern_generation_ladder.yaml", M17P.SCHEMA, "M17-P"),
         ("l1_pattern_generation_ladder_v2.yaml", M17P.SCHEMA_V2, "M17-P2"),
         (
