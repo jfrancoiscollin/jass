@@ -488,9 +488,13 @@ séparé deux voies de correction du bruit de cible :
   force ; ne pas relancer M16-P à l'identique.
 
 La dose conditionnelle pure nuit (`−0,018970` contre WDL), donc la piste active
-n'est pas « plus de contexte », mais un optimum intérieur. **M15-C2** est en
-cours sur `cpx62-1240` avec 20/30/40%, 30% comme seul primaire, contrôles permutés
-appariés et verdict de force séparé sur 512 paires. Aucun nouveau read du
+n'est pas « plus de contexte », mais une dose intérieure. **M15-C2
+(`cpx62-1240`)** confirme alpha 30% : zero-regret `+0,008803` contre contrôle
+permuté, IC95 `[+0,008094 ; +0,009511]`, et `+0,004816` contre WDL, IC95
+`[+0,004211 ; +0,005421]`. Les contrastes de force sont eux aussi positifs
+contre permutation (`+0,001172`) et WDL (`+0,001147`), avec IC95 au-dessus de
+zéro. M15-C2R réplique maintenant 30% sur graines fraîches et teste 40% comme
+secondaire incapable de sauver le primaire. Aucun nouveau read du
 `frozen_test`, aucune promotion et aucun transfert direct au 10×10 ne sont
 autorisés.
 

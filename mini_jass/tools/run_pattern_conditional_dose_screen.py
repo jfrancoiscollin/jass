@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M15-C2: screen the preregistered interior conditional-target dose."""
+"""M15-C2/M15-C2R: screen and replicate conditional-target doses."""
 
 from __future__ import annotations
 
@@ -56,6 +56,8 @@ from run_pattern_conditional_target_screen import (  # noqa: E402
 
 SCHEMA = "mini_jass.pattern_conditional_dose_screen.v1"
 PROBE_SCHEMA = "mini_jass.pattern_conditional_dose_screen_probe.v1"
+REPLICATION_SCHEMA = "mini_jass.pattern_conditional_dose_replication.v1"
+REPLICATION_PROBE_SCHEMA = "mini_jass.pattern_conditional_dose_replication_probe.v1"
 ARM_ORDER = (
     "OUTCOME",
     "SHUFFLED_CONTEXT_20",
@@ -87,11 +89,41 @@ ARENA_CONTRASTS = {
     "operational_30": ("CONTEXT_30", "OUTCOME"),
 }
 
+REPLICATION_ARM_ORDER = (
+    "OUTCOME",
+    "SHUFFLED_CONTEXT_30",
+    "CONTEXT_30",
+    "SHUFFLED_CONTEXT_40",
+    "CONTEXT_40",
+)
+REPLICATION_DOSES = (0.30, 0.40)
+REPLICATION_ARENA_ARMS = REPLICATION_ARM_ORDER
+REPLICATION_CONTRASTS = {
+    "attribution_30": ("CONTEXT_30", "SHUFFLED_CONTEXT_30"),
+    "operational_30": ("CONTEXT_30", "OUTCOME"),
+    "attribution_40": ("CONTEXT_40", "SHUFFLED_CONTEXT_40"),
+    "operational_40": ("CONTEXT_40", "OUTCOME"),
+    "dose_40_minus_30": ("CONTEXT_40", "CONTEXT_30"),
+}
+REPLICATION_ARENA_CONTRASTS = REPLICATION_CONTRASTS
+
 EXPECTED_M15C_PROTOCOL = "74dc555948e0191c09814098918c35e2e23935cf6ff44801c6c09165ad97502d"
 EXPECTED_M15C_RESULT = "b63008f3e685c5cf20ae18af4e389fa8f7308ae31aa6525e549244f6f80e499d"
+EXPECTED_M15C2_PROTOCOL = "b561f1feab4b21012a80f1e3c5e402bacfccded37ccc738020c47e065a0662bf"
+EXPECTED_M15C2_RESULT = "2f839078622bc8c5393fc16a46060ef20a47d0c3545b95caedcad1ae0f927b0d"
 
 
 def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    config = yaml.safe_load(path.read_text(encoding="utf-8"))
+    identity = (config.get("schema"), config.get("milestone"))
+    if identity == (SCHEMA, "M15-C2"):
+        return _resolve_m15c2(path)
+    if identity == (REPLICATION_SCHEMA, "M15-C2R"):
+        return _resolve_replication(path, config)
+    raise ValueError("unexpected M15-C2/M15-C2R schema")
+
+
+def _resolve_m15c2(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config = yaml.safe_load(path.read_text(encoding="utf-8"))
     if config.get("schema") != SCHEMA or config.get("milestone") != "M15-C2":
         raise ValueError("unexpected M15-C2 schema")
@@ -259,11 +291,232 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
     return deepcopy(config), loop
 
 
+def _resolve_replication(
+    path: Path, config: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if tuple(config.get("arms", [])) != REPLICATION_ARM_ORDER:
+        raise ValueError("M15-C2R arms changed after preregistration")
+    seeds = [int(seed) for seed in config.get("paired_seeds", [])]
+    if seeds != list(range(275001, 275021)):
+        raise ValueError("M15-C2R paired seeds changed or overlap prior evidence")
+    probe = config.get("probe", {})
+    if (
+        int(probe.get("seed", -1)) != 275000
+        or probe.get("overlaps_scientific_seeds") is not False
+        or probe.get("purpose") != "cpx62_runtime_calibration_only"
+        or probe.get("reporting") != "timing_and_contract_only"
+        or probe.get("scientific_metrics_must_not_be_published") is not True
+    ):
+        raise ValueError("M15-C2R probe contract changed")
+
+    evidence = config.get("source_evidence", {}).get("m15c2", {})
+    if (
+        evidence.get("protocol_hash") != EXPECTED_M15C2_PROTOCOL
+        or evidence.get("result_hash") != EXPECTED_M15C2_RESULT
+        or evidence.get("status") != "PASS"
+        or evidence.get("finding")
+        != "interior_conditional_dose_confirms_positive_static_signal"
+        or evidence.get("mechanism_status") != "PASS"
+        or evidence.get("operational_status") != "PASS"
+        or evidence.get("strength_status") != "PASS"
+        or float(evidence.get("attribution_ci95", [0.0])[0]) <= 0.0
+        or float(evidence.get("operational_ci95", [0.0])[0]) <= 0.0
+        or float(evidence.get("arena_attribution_ci95", [0.0])[0]) <= 0.0
+        or float(evidence.get("arena_operational_ci95", [0.0])[0]) <= 0.0
+        or float(
+            evidence.get(
+                "exploratory_CONTEXT_40_minus_CONTEXT_30_static_ci95", [0.0]
+            )[0]
+        )
+        <= 0.0
+        or int(
+            evidence.get(
+                "exploratory_CONTEXT_40_minus_CONTEXT_30_positive_seed_count", 0
+            )
+        )
+        != 20
+        or evidence.get("alpha_40_strength_was_not_measured") is not True
+        or evidence.get("interpretation_for_replication")
+        != "ALPHA30_CONFIRMED_DISCOVERY_ALPHA40_STATIC_SUPERIORITY_NEEDS_FRESH_REPLICATION"
+    ):
+        raise ValueError("M15-C2R source evidence is not frozen")
+
+    replay = config.get("replay", {})
+    if (
+        replay.get("source") != "G1_WIDE_OUTCOME"
+        or int(replay.get("games_per_seed", 0)) != 1024
+        or int(replay.get("generation", 0)) != 1
+        or int(replay.get("seed_offset", 0)) != 1000000
+        or replay.get("row_selection") != "all_generated_train_rows"
+        or replay.get("immutable_structure_across_arms") is not True
+    ):
+        raise ValueError("M15-C2R replay contract changed")
+
+    mapping = config.get("conditional_mapping", {})
+    if (
+        mapping.get("family") != "odd_tanh_linear_wdl_oof_v1"
+        or int(mapping.get("fold_count", 0)) != 5
+        or mapping.get("fold_unit") != "complete_game"
+        or mapping.get("fold_assignment") != "sha256_rank_round_robin_v1"
+        or mapping.get("fold_namespace") != "m15c2r_conditional_wdl_game_folds_v1"
+        or mapping.get("shuffle_control") != "within_fold_hash_order_rotate_one_v1"
+        or mapping.get("shuffle_namespace") != "m15c2r_conditional_shuffle_v1"
+        or mapping.get("initialization") != "zero"
+        or mapping.get("training_label") != "terminal_selfplay_wdl"
+        or mapping.get("oracle_training_signal") is not False
+        or mapping.get("manual_coefficients_used") is not False
+        or float(mapping.get("ridge", -1.0)) != 1.0e-4
+        or int(mapping.get("max_iterations", 0)) != 64
+        or float(mapping.get("tolerance", -1.0)) != 1.0e-10
+        or int(mapping.get("line_search_steps", 0)) != 24
+    ):
+        raise ValueError("M15-C2R conditional mapping changed")
+
+    dose = config.get("dose_replication", {})
+    if (
+        dose.get("target_formula")
+        != "(1-alpha)*outcome+alpha*conditional_prediction"
+        or float(dose.get("primary_alpha", -1.0)) != 0.30
+        or float(dose.get("secondary_alpha", -1.0)) != 0.40
+        or dose.get("secondary_cannot_rescue_primary") is not True
+        or dose.get(
+            "secondary_selection_requires_direct_static_and_strength_superiority"
+        )
+        is not True
+        or dose.get("every_target_oracle_blind") is not True
+    ):
+        raise ValueError("M15-C2R dose contract changed")
+
+    gate = config.get("scientific_gate", {})
+    if (
+        float(gate.get("primary_alpha", -1.0)) != 0.30
+        or gate.get("primary_endpoint") != "development_zero_regret_gain"
+        or float(gate.get("paired_confidence_critical_95", -1.0))
+        != 2.093024054408263
+        or gate.get("primary_replication_requires_static_attribution_ci_above_zero")
+        is not True
+        or gate.get("primary_replication_requires_static_operational_ci_above_zero")
+        is not True
+        or gate.get("primary_replication_requires_strength_attribution_ci_above_zero")
+        is not True
+        or gate.get("primary_replication_requires_strength_operational_ci_above_zero")
+        is not True
+        or float(gate.get("minimum_effect_floor", -1.0)) != 0.0
+        or float(gate.get("secondary_alpha", -1.0)) != 0.40
+        or gate.get("secondary_cannot_rescue_primary") is not True
+        or gate.get("secondary_requires_own_static_and_strength_controls") is not True
+        or gate.get(
+            "select_secondary_requires_CONTEXT_40_minus_CONTEXT_30_static_ci_above_zero"
+        )
+        is not True
+        or gate.get(
+            "select_secondary_requires_CONTEXT_40_minus_CONTEXT_30_strength_ci_above_zero"
+        )
+        is not True
+        or gate.get("otherwise_retain_primary_alpha") is not True
+        or gate.get("automatic_promotion") is not False
+    ):
+        raise ValueError("M15-C2R scientific gate changed")
+
+    power = config.get("power_sizing", {})
+    expected_power = {
+        "primary_replication": {
+            "contrasts": [
+                "CONTEXT_30_minus_SHUFFLED_CONTEXT_30",
+                "CONTEXT_30_minus_OUTCOME",
+            ],
+            "seed": 44120260816,
+            "sd": 0.0025,
+            "effect": 0.002,
+            "estimate": 0.92362,
+        },
+        "secondary_40_minus_30": {
+            "contrasts": ["CONTEXT_40_minus_CONTEXT_30"],
+            "seed": 44120260817,
+            "sd": 0.001,
+            "effect": 0.0007,
+            "estimate": 0.8442,
+        },
+    }
+    for name, expected in expected_power.items():
+        cell = power.get(name, {})
+        if (
+            cell.get("contrasts_sized") != expected["contrasts"]
+            or int(cell.get("repetitions", 0)) != 100000
+            or int(cell.get("seed", 0)) != expected["seed"]
+            or int(cell.get("paired_seed_count", 0)) != len(seeds)
+            or float(cell.get("conservative_paired_sd", -1.0)) != expected["sd"]
+            or float(cell.get("minimum_effect_for_power_only", -1.0))
+            != expected["effect"]
+            or float(cell.get("minimum_effect", -1.0)) != expected["effect"]
+            or float(cell.get("paired_confidence_critical_95", -1.0))
+            != 2.093024054408263
+            or cell.get("gate_has_no_minimum_effect_floor") is not True
+        ):
+            raise ValueError(f"M15-C2R {name} power contract changed")
+        observed_power = estimate_power(cell)
+        if not math.isclose(
+            observed_power,
+            float(cell.get("estimated_power_ci_above_zero", -1.0)),
+            rel_tol=0.0,
+            abs_tol=5.0e-6,
+        ):
+            raise ValueError(f"M15-C2R {name} frozen power did not reproduce")
+        if observed_power < float(cell.get("minimum_required_power", 1.0)):
+            raise ValueError(f"M15-C2R {name} is underpowered before training")
+
+    boundaries = config.get("boundaries", {})
+    if (
+        boundaries.get("cohorts_read") != ["train", "development"]
+        or boundaries.get("cohorts_never_read_by_this_cell") != ["frozen_test"]
+        or int(boundaries.get("existing_frozen_test_read_count", -1)) != 1
+        or int(boundaries.get("additional_frozen_test_reads_authorized", -1)) != 0
+        or boundaries.get("all_training_targets_oracle_blind") is not True
+        or boundaries.get("automatic_selection_or_promotion") is not False
+        or boundaries.get("promotable") is not False
+        or boundaries.get("production_jass_changes_authorized") is not False
+        or boundaries.get("direct_10x10_transfer_authorized") is not False
+        or boundaries.get("execution_is_not_queued_by_this_pr") is not True
+    ):
+        raise ValueError("M15-C2R crossed a scientific boundary")
+
+    root = path.resolve().parent.parent
+    loop = yaml.safe_load((root / config["base_loop_config"]).read_text(encoding="utf-8"))
+    if loop.get("schema") != "mini_jass.selfplay.v1":
+        raise ValueError("M15-C2R requires the frozen PatternEval loop")
+    if loop["model"].get("architecture") != "folded_pattern_value":
+        raise ValueError("M15-C2R requires folded PatternEval")
+    if float(loop["training"]["policy_weight"]) != 0.0:
+        raise ValueError("M15-C2R cannot train a policy head")
+    schedule = config["training_schedule"]
+    if (
+        int(schedule["total_steps"]) != int(loop["training"]["steps"])
+        or int(schedule["batch_size"]) != int(loop["training"]["batch_size"])
+        or int(schedule.get("seed_offset", 0)) != 1010000
+        or schedule.get("explicit_identical_batch_schedule_all_arms") is not True
+    ):
+        raise ValueError("M15-C2R training schedule changed")
+    arena = config["strength_arena"]
+    if (
+        tuple(arena.get("arms", [])) != REPLICATION_ARENA_ARMS
+        or int(arena.get("pairs", 0)) != 512
+        or int(arena.get("seed_base", 0)) != 1020000
+        or float(arena.get("epsilon", -1.0)) != 0.0
+        or arena.get("confidence_unit") != "pairs"
+        or arena.get("start_state_source") != "development"
+        or arena.get("role") != "confirmatory_strength_replication"
+    ):
+        raise ValueError("M15-C2R strength arena changed")
+    return deepcopy(config), loop
+
+
 def build_target_arms(
     samples: list[ReplaySample],
     conditional_predictions: np.ndarray,
     shuffled_predictions: np.ndarray,
     exact_values: np.ndarray,
+    doses: tuple[float, ...] = DOSES,
+    arm_order: tuple[str, ...] = ARM_ORDER,
 ) -> tuple[dict[str, list[ReplaySample]], dict[str, Any]]:
     conditional = np.asarray(conditional_predictions, dtype=np.float64)
     shuffled = np.asarray(shuffled_predictions, dtype=np.float64)
@@ -276,7 +529,7 @@ def build_target_arms(
 
     outcomes = np.asarray([sample.value_target for sample in samples], dtype=np.float64)
     values: dict[str, np.ndarray] = {"OUTCOME": outcomes}
-    for alpha in DOSES:
+    for alpha in doses:
         suffix = int(round(100 * alpha))
         values[f"SHUFFLED_CONTEXT_{suffix}"] = (1.0 - alpha) * outcomes + alpha * shuffled
         values[f"CONTEXT_{suffix}"] = (1.0 - alpha) * outcomes + alpha * conditional
@@ -285,7 +538,7 @@ def build_target_arms(
             replace(sample, value_target=float(value))
             for sample, value in zip(samples, values[arm], strict=True)
         ]
-        for arm in ARM_ORDER
+        for arm in arm_order
     }
     structures = {arm: _sample_structure_fingerprint(rows) for arm, rows in arms.items()}
     if len(set(structures.values())) != 1:
@@ -301,7 +554,7 @@ def build_target_arms(
             "target_mean": float(values[arm].mean()),
             "target_standard_deviation": float(values[arm].std(ddof=0)),
         }
-        for arm in ARM_ORDER
+        for arm in arm_order
     }
     return arms, {
         "shared_structure_fingerprint": next(iter(structures.values())),
@@ -321,9 +574,13 @@ def _interval(values: list[float], critical: float) -> dict[str, Any]:
     return result
 
 
-def build_contrasts(rows: list[dict[str, Any]], critical: float) -> dict[str, Any]:
+def build_contrasts(
+    rows: list[dict[str, Any]],
+    critical: float,
+    contrast_spec: dict[str, tuple[str, str]] = CONTRASTS,
+) -> dict[str, Any]:
     output: dict[str, Any] = {}
-    for name, (high, low) in CONTRASTS.items():
+    for name, (high, low) in contrast_spec.items():
         result: dict[str, Any] = {"high": high, "low": low}
         for endpoint in STATIC_ENDPOINTS:
             result[endpoint] = _interval(
@@ -339,7 +596,9 @@ def build_contrasts(rows: list[dict[str, Any]], critical: float) -> dict[str, An
 
 
 def build_arena_contrasts(
-    rows: list[dict[str, Any]], critical: float
+    rows: list[dict[str, Any]],
+    critical: float,
+    contrast_spec: dict[str, tuple[str, str]] = ARENA_CONTRASTS,
 ) -> dict[str, Any]:
     return {
         name: {
@@ -354,7 +613,7 @@ def build_arena_contrasts(
                 critical,
             ),
         }
-        for name, (high, low) in ARENA_CONTRASTS.items()
+        for name, (high, low) in contrast_spec.items()
     }
 
 
@@ -432,7 +691,129 @@ def build_recommendation(
     }
 
 
-def _write_outputs(result: dict[str, Any], run_dir: Path, compact_output: Path) -> None:
+def _group_status(intervals: list[dict[str, Any]]) -> str:
+    if all(float(interval["lower"]) > 0.0 for interval in intervals):
+        return "PASS"
+    if any(float(interval["upper"]) <= 0.0 for interval in intervals):
+        return "FAIL"
+    return "INCONCLUSIVE"
+
+
+def build_replication_recommendation(
+    contrasts: dict[str, Any], arena_contrasts: dict[str, Any]
+) -> dict[str, Any]:
+    def static(name: str) -> dict[str, Any]:
+        return contrasts[name]["zero_regret_gain"]
+
+    def strength(name: str) -> dict[str, Any]:
+        return arena_contrasts[name]["arena_score_minus_half"]
+
+    primary_axes = [
+        static("attribution_30"),
+        static("operational_30"),
+        strength("attribution_30"),
+        strength("operational_30"),
+    ]
+    secondary_control_axes = [
+        static("attribution_40"),
+        static("operational_40"),
+        strength("attribution_40"),
+        strength("operational_40"),
+    ]
+    dose_superiority_axes = [
+        static("dose_40_minus_30"),
+        strength("dose_40_minus_30"),
+    ]
+    primary_status = _group_status(primary_axes)
+    secondary_control_status = _group_status(secondary_control_axes)
+    dose_superiority_status = _group_status(dose_superiority_axes)
+
+    common = {
+        "primary_alpha": 0.30,
+        "secondary_alpha": 0.40,
+        "primary_replication_status": primary_status,
+        "secondary_control_status": secondary_control_status,
+        "dose_40_minus_30_status": dose_superiority_status,
+        "primary_static_attribution": static("attribution_30"),
+        "primary_static_operational": static("operational_30"),
+        "primary_strength_attribution": strength("attribution_30"),
+        "primary_strength_operational": strength("operational_30"),
+        "secondary_static_attribution": static("attribution_40"),
+        "secondary_static_operational": static("operational_40"),
+        "secondary_strength_attribution": strength("attribution_40"),
+        "secondary_strength_operational": strength("operational_40"),
+        "dose_40_minus_30_static": static("dose_40_minus_30"),
+        "dose_40_minus_30_strength": strength("dose_40_minus_30"),
+        "secondary_can_rescue_primary": False,
+        "minimum_effect_floor": 0.0,
+        "promotable": False,
+    }
+    if primary_status == "FAIL":
+        return {
+            **common,
+            "status": "FAIL",
+            "retained_alpha": None,
+            "finding": "alpha_30_conditional_signal_does_not_replicate",
+            "decision": "do_not_compose_unreplicated_conditional_target",
+        }
+    if primary_status == "INCONCLUSIVE":
+        return {
+            **common,
+            "status": "INCONCLUSIVE",
+            "retained_alpha": None,
+            "finding": "alpha_30_conditional_replication_is_not_precise",
+            "decision": "power_size_fresh_alpha_30_replication",
+        }
+    if secondary_control_status == "PASS" and dose_superiority_status == "PASS":
+        return {
+            **common,
+            "status": "PASS",
+            "retained_alpha": 0.40,
+            "finding": "alpha_30_replicates_and_alpha_40_is_superior",
+            "decision": "prepare_alpha_40_temporal_composition",
+        }
+    return {
+        **common,
+        "status": "PASS",
+        "retained_alpha": 0.30,
+        "finding": "alpha_30_conditional_signal_replicates",
+        "decision": "prepare_alpha_30_temporal_composition",
+    }
+
+
+def _experiment_spec(config: dict[str, Any]) -> dict[str, Any]:
+    if config["milestone"] == "M15-C2R":
+        return {
+            "schema": REPLICATION_SCHEMA,
+            "probe_schema": REPLICATION_PROBE_SCHEMA,
+            "milestone": "M15-C2R",
+            "probe_milestone": "M15-C2R-PROBE",
+            "arm_order": REPLICATION_ARM_ORDER,
+            "doses": REPLICATION_DOSES,
+            "arena_arms": REPLICATION_ARENA_ARMS,
+            "contrasts": REPLICATION_CONTRASTS,
+            "arena_contrasts": REPLICATION_ARENA_CONTRASTS,
+        }
+    return {
+        "schema": SCHEMA,
+        "probe_schema": PROBE_SCHEMA,
+        "milestone": "M15-C2",
+        "probe_milestone": "M15-C2-PROBE",
+        "arm_order": ARM_ORDER,
+        "doses": DOSES,
+        "arena_arms": ARENA_ARMS,
+        "contrasts": CONTRASTS,
+        "arena_contrasts": ARENA_CONTRASTS,
+    }
+
+
+def _write_outputs(
+    result: dict[str, Any],
+    run_dir: Path,
+    compact_output: Path,
+    schema: str = SCHEMA,
+    milestone: str = "M15-C2",
+) -> None:
     payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "result.json").write_text(payload, encoding="utf-8")
@@ -441,8 +822,8 @@ def _write_outputs(result: dict[str, Any], run_dir: Path, compact_output: Path) 
     for path in (run_dir / "result.json", compact_output):
         replayed = json.loads(path.read_text(encoding="utf-8"))
         if (
-            replayed.get("schema") != SCHEMA
-            or replayed.get("milestone") != "M15-C2"
+            replayed.get("schema") != schema
+            or replayed.get("milestone") != milestone
             or replayed.get("result_hash") != result.get("result_hash")
             or replayed.get("recommendation", {}).get("finding")
             != result.get("recommendation", {}).get("finding")
@@ -451,7 +832,10 @@ def _write_outputs(result: dict[str, Any], run_dir: Path, compact_output: Path) 
 
 
 def _write_probe_outputs(
-    result: dict[str, Any], run_dir: Path, compact_output: Path
+    result: dict[str, Any],
+    run_dir: Path,
+    compact_output: Path,
+    probe_schema: str = PROBE_SCHEMA,
 ) -> None:
     payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -461,7 +845,7 @@ def _write_probe_outputs(
     for path in (run_dir / "probe.json", compact_output):
         replayed = json.loads(path.read_text(encoding="utf-8"))
         if (
-            replayed.get("schema") != PROBE_SCHEMA
+            replayed.get("schema") != probe_schema
             or replayed.get("status") != "PROBE_COMPLETE"
             or replayed.get("result_hash") != result.get("result_hash")
             or replayed.get("scientific_metrics_published") is not False
@@ -471,15 +855,24 @@ def _write_probe_outputs(
 
 
 def _write_progress(
-    path: Path | None, completed: int, total: int, last_seed: int, started: float
+    path: Path | None,
+    completed: int,
+    total: int,
+    last_seed: int,
+    started: float,
+    milestone: str = "M15-C2",
 ) -> None:
     if path is None:
         return
     elapsed = max(time.monotonic() - started, 1.0e-9)
     rate = completed / (elapsed / 60.0)
     payload = {
-        "schema": "mini_jass.pattern_conditional_dose_screen_progress.v1",
-        "milestone": "M15-C2",
+        "schema": (
+            "mini_jass.pattern_conditional_dose_replication_progress.v1"
+            if milestone == "M15-C2R"
+            else "mini_jass.pattern_conditional_dose_screen_progress.v1"
+        ),
+        "milestone": milestone,
         "completed_seeds": completed,
         "total_seeds": total,
         "last_completed_seed": last_seed,
@@ -502,15 +895,20 @@ def run_m15c2(
     probe_only: bool = False,
 ) -> dict[str, Any]:
     config, base_loop = _resolve(config_path)
+    spec = _experiment_spec(config)
+    milestone = str(spec["milestone"])
+    arm_order = tuple(spec["arm_order"])
+    doses = tuple(spec["doses"])
+    arena_arms = tuple(spec["arena_arms"])
     host = execution_host or platform.node()
     if host != config["expected_execution_host"]:
-        raise ValueError(f"M15-C2 requires cpx62, got {host}")
+        raise ValueError(f"{milestone} requires cpx62, got {host}")
     oracle = load_oracle(oracle_path)
     graph = GameGraph.from_oracle(oracle)
     graph.validate()
     split = build_split(oracle, int(base_loop["split_seed"]))
     if split.manifest["manifest_hash"] != base_loop["expected_split_manifest_hash"]:
-        raise ValueError("M15-C2 split differs from the frozen L1 contract")
+        raise ValueError(f"{milestone} split differs from the frozen L1 contract")
     train = split.indices("train")
     development = split.indices("development")
     train_mask = np.zeros(graph.state_count, dtype=np.bool_)
@@ -602,12 +1000,14 @@ def run_m15c2(
             cross_fit["conditional_predictions"],
             shuffled["predictions"],
             oracle.values,
+            doses,
+            arm_order,
         )
         schedule = _random_schedule(len(train_samples), steps, batch_size, fit_seed + 15)
 
         models: dict[str, Any] = {}
         arm_rows: dict[str, Any] = {}
-        for arm in ARM_ORDER:
+        for arm in arm_order:
             model, training, arm_initial_hash = _fit(
                 base_loop, graph, arms[arm], schedule, fit_seed
             )
@@ -638,7 +1038,7 @@ def run_m15c2(
         arena_seed = int(arena_spec["seed_base"]) + seed
         arena_start_hash: str | None = None
         outcome_model = models["OUTCOME"]
-        for arm in ARENA_ARMS:
+        for arm in arena_arms:
             arena = run_arena(
                 graph, models[arm], outcome_model, arena_config, arena_seed, development
             )
@@ -690,23 +1090,30 @@ def run_m15c2(
             (run_dir / f"seed-{seed}.json").write_text(
                 json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8"
             )
-            _write_progress(progress_output, len(rows), len(run_seeds), seed, started)
+            _write_progress(
+                progress_output,
+                len(rows),
+                len(run_seeds),
+                seed,
+                started,
+                milestone,
+            )
 
     if probe_only:
         elapsed = time.monotonic() - started
         result = {
-            "schema": PROBE_SCHEMA,
-            "milestone": "M15-C2-PROBE",
+            "schema": spec["probe_schema"],
+            "milestone": spec["probe_milestone"],
             "status": "PROBE_COMPLETE",
             "seed": int(run_seeds[0]),
             "timing": {"total_seconds": elapsed},
             "workload": {
                 "selfplay_games": int(config["replay"]["games_per_seed"]),
-                "training_arms": len(ARM_ORDER),
-                "training_steps": len(ARM_ORDER) * steps,
-                "arena_arms": len(ARENA_ARMS),
-                "arena_pairs": len(ARENA_ARMS) * int(arena_spec["pairs"]),
-                "arena_games": 2 * len(ARENA_ARMS) * int(arena_spec["pairs"]),
+                "training_arms": len(arm_order),
+                "training_steps": len(arm_order) * steps,
+                "arena_arms": len(arena_arms),
+                "arena_pairs": len(arena_arms) * int(arena_spec["pairs"]),
+                "arena_games": 2 * len(arena_arms) * int(arena_spec["pairs"]),
                 "train_sample_count": int(rows[0]["replay"]["train_sample_count"]),
             },
             "reporting": "timing_and_contract_only",
@@ -716,12 +1123,14 @@ def run_m15c2(
         result["result_hash"] = digest(
             {key: value for key, value in result.items() if key != "result_hash"}
         )
-        _write_probe_outputs(result, run_dir, compact_output)
+        _write_probe_outputs(
+            result, run_dir, compact_output, str(spec["probe_schema"])
+        )
         return result
 
     critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
-    contrasts = build_contrasts(rows, critical)
-    arena_contrasts = build_arena_contrasts(rows, critical)
+    contrasts = build_contrasts(rows, critical, spec["contrasts"])
+    arena_contrasts = build_arena_contrasts(rows, critical, spec["arena_contrasts"])
     aggregate = {
         "paired_seed_count": len(rows),
         "arms": {
@@ -743,11 +1152,11 @@ def run_m15c2(
                             row["arms"][arm]["arena_score_minus_half"] for row in rows
                         )
                     }
-                    if arm in ARENA_ARMS
+                    if arm in arena_arms
                     else {}
                 ),
             }
-            for arm in ARM_ORDER
+            for arm in arm_order
         },
         "contrasts": contrasts,
         "arena_contrasts": arena_contrasts,
@@ -775,31 +1184,42 @@ def run_m15c2(
         "all_arena_starts_paired_within_seed": True,
         "additional_frozen_test_reads": 0,
     }
-    recommendation = build_recommendation(contrasts, arena_contrasts)
+    recommendation = (
+        build_replication_recommendation(contrasts, arena_contrasts)
+        if milestone == "M15-C2R"
+        else build_recommendation(contrasts, arena_contrasts)
+    )
+    power_sizing = deepcopy(config["power_sizing"])
+    if milestone == "M15-C2R":
+        for cell in power_sizing.values():
+            cell["recomputed_power"] = estimate_power(cell)
+    else:
+        power_sizing["recomputed_power"] = estimate_power(config["power_sizing"])
     protocol = {
-        "schema": SCHEMA,
-        "milestone": "M15-C2",
+        "schema": spec["schema"],
+        "milestone": milestone,
         "base_loop_config": config["base_loop_config"],
         "resolved_model": model_descriptor(build_model(base_loop["model"])),
         "paired_seeds": [int(seed) for seed in config["paired_seeds"]],
-        "arms": list(ARM_ORDER),
+        "arms": list(arm_order),
         "replay": config["replay"],
         "conditional_mapping": config["conditional_mapping"],
-        "dose_screen": config["dose_screen"],
+        (
+            "dose_replication" if milestone == "M15-C2R" else "dose_screen"
+        ): config[
+            "dose_replication" if milestone == "M15-C2R" else "dose_screen"
+        ],
         "training_schedule": config["training_schedule"],
         "strength_arena": config["strength_arena"],
-        "power_sizing": {
-            **config["power_sizing"],
-            "recomputed_power": estimate_power(config["power_sizing"]),
-        },
+        "power_sizing": power_sizing,
         "scientific_gate": config["scientific_gate"],
         "source_evidence": config["source_evidence"],
         "boundaries": config["boundaries"],
         "execution_host": host,
     }
     result: dict[str, Any] = {
-        "schema": SCHEMA,
-        "milestone": "M15-C2",
+        "schema": spec["schema"],
+        "milestone": milestone,
         "status": recommendation["status"],
         "protocol_hash": digest(protocol),
         "protocol": protocol,
@@ -818,7 +1238,9 @@ def run_m15c2(
     result["result_hash"] = digest(
         {key: value for key, value in result.items() if key != "result_hash"}
     )
-    _write_outputs(result, run_dir, compact_output)
+    _write_outputs(
+        result, run_dir, compact_output, str(spec["schema"]), milestone
+    )
     return result
 
 

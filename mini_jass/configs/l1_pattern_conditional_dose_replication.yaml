@@ -1,0 +1,166 @@
+schema: mini_jass.pattern_conditional_dose_replication.v1
+milestone: M15-C2R
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M15-C2 (273001-273020) and M16-P (274001-274020).
+paired_seeds:
+  [275001, 275002, 275003, 275004, 275005,
+   275006, 275007, 275008, 275009, 275010,
+   275011, 275012, 275013, 275014, 275015,
+   275016, 275017, 275018, 275019, 275020]
+
+arms:
+  - OUTCOME
+  - SHUFFLED_CONTEXT_30
+  - CONTEXT_30
+  - SHUFFLED_CONTEXT_40
+  - CONTEXT_40
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 1000000
+  row_selection: all_generated_train_rows
+  immutable_structure_across_arms: true
+
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c2r_conditional_wdl_game_folds_v1
+  shuffle_control: within_fold_hash_order_rotate_one_v1
+  shuffle_namespace: m15c2r_conditional_shuffle_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+dose_replication:
+  target_formula: (1-alpha)*outcome+alpha*conditional_prediction
+  primary_alpha: 0.30
+  secondary_alpha: 0.40
+  secondary_cannot_rescue_primary: true
+  secondary_selection_requires_direct_static_and_strength_superiority: true
+  every_target_oracle_blind: true
+
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 1010000
+  explicit_identical_batch_schedule_all_arms: true
+
+# Both doses and both shuffled controls receive the same paired arena starts.
+strength_arena:
+  arms: [OUTCOME, SHUFFLED_CONTEXT_30, CONTEXT_30, SHUFFLED_CONTEXT_40, CONTEXT_40]
+  pairs: 512
+  seed_base: 1020000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+  role: confirmatory_strength_replication
+
+power_sizing:
+  primary_replication:
+    contrasts_sized:
+      - CONTEXT_30_minus_SHUFFLED_CONTEXT_30
+      - CONTEXT_30_minus_OUTCOME
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260816
+    paired_seed_count: 20
+    conservative_paired_sd: 0.0025
+    minimum_effect_for_power_only: 0.002
+    minimum_effect: 0.002
+    paired_confidence_critical_95: 2.093024054408263
+    estimated_power_ci_above_zero: 0.92362
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  secondary_40_minus_30:
+    contrasts_sized:
+      - CONTEXT_40_minus_CONTEXT_30
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260817
+    paired_seed_count: 20
+    conservative_paired_sd: 0.001
+    minimum_effect_for_power_only: 0.0007
+    minimum_effect: 0.0007
+    paired_confidence_critical_95: 2.093024054408263
+    estimated_power_ci_above_zero: 0.8442
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+
+scientific_gate:
+  primary_alpha: 0.30
+  primary_endpoint: development_zero_regret_gain
+  paired_confidence_critical_95: 2.093024054408263
+  primary_replication_requires_static_attribution_ci_above_zero: true
+  primary_replication_requires_static_operational_ci_above_zero: true
+  primary_replication_requires_strength_attribution_ci_above_zero: true
+  primary_replication_requires_strength_operational_ci_above_zero: true
+  minimum_effect_floor: 0.0
+  secondary_alpha: 0.40
+  secondary_cannot_rescue_primary: true
+  secondary_requires_own_static_and_strength_controls: true
+  select_secondary_requires_CONTEXT_40_minus_CONTEXT_30_static_ci_above_zero: true
+  select_secondary_requires_CONTEXT_40_minus_CONTEXT_30_strength_ci_above_zero: true
+  otherwise_retain_primary_alpha: true
+  automatic_promotion: false
+
+source_evidence:
+  m15c2:
+    job_id: cpx62-1240-mini-jass-pattern-m15c2-v1
+    attempt_id: 20260811T001354Z-9c7722b4
+    implementation_sha: 9c7722b445382184408eb5040b94a63e2d6a0869
+    protocol_hash: b561f1feab4b21012a80f1e3c5e402bacfccded37ccc738020c47e065a0662bf
+    result_hash: 2f839078622bc8c5393fc16a46060ef20a47d0c3545b95caedcad1ae0f927b0d
+    status: PASS
+    finding: interior_conditional_dose_confirms_positive_static_signal
+    mechanism_status: PASS
+    operational_status: PASS
+    strength_status: PASS
+    primary_alpha: 0.30
+    attribution_mean: 0.00880265659730593
+    attribution_ci95: [0.008093850383235148, 0.00951146281137671]
+    operational_mean: 0.0048164216277014615
+    operational_ci95: [0.00421143729826453, 0.005421405957138393]
+    arena_attribution_mean: 0.001171875
+    arena_attribution_ci95: [0.00033830705816478, 0.0020054429418352197]
+    arena_operational_mean: 0.0011474609375
+    arena_operational_ci95: [0.00040872808243250453, 0.0018861937925674956]
+    exploratory_CONTEXT_40_minus_CONTEXT_30_static_mean: 0.0012854503093114923
+    exploratory_CONTEXT_40_minus_CONTEXT_30_static_ci95:
+      [0.0010116082698928565, 0.001559292348730128]
+    exploratory_CONTEXT_40_minus_CONTEXT_30_positive_seed_count: 20
+    alpha_40_strength_was_not_measured: true
+    interpretation_for_replication: ALPHA30_CONFIRMED_DISCOVERY_ALPHA40_STATIC_SUPERIORITY_NEEDS_FRESH_REPLICATION
+
+probe:
+  seed: 275000
+  overlaps_scientific_seeds: false
+  purpose: cpx62_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  exact_oracle_used_only_for_train_and_development_response_diagnostics: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  execution_is_not_queued_by_this_pr: true

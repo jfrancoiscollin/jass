@@ -374,8 +374,9 @@ from root-search-derived targets. M15-C, specified in
 `docs/PATTERN_M15C_CONDITIONAL_TARGET_SCREEN.md`, tests direct conditional
 target injection against a marginal-matched shuffled-context control and found
 a smaller precise static signal. M15-C2, specified in
-`docs/PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`, preregisters the 20/30/40%
-dose screen with alpha 0.30 as the sole primary and strength reported
-separately. The historical frozen-test read is exhausted, so these cells read
-train and development only. CPX scripts are prepared but are not queued by
-code PRs.
+`docs/PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`, confirmed alpha 0.30 on static
+response and paired strength. M15-C2R, specified in
+`docs/PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md`, independently replicates
+alpha 0.30 and preregisters alpha 0.40 as a secondary direct dose comparison.
+The historical frozen-test read is exhausted, so these cells read train and
+development only. CPX scripts are prepared but are not queued by code PRs.

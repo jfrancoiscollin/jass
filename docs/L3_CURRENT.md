@@ -80,6 +80,8 @@
 > minijass_m14_exact_labels_make_the_value_head_learn_plus_9_4_points;
 > minijass_m15_no_deployable_mechanism_recovers_it_best_is_41_8_percent;
 > minijass_m16p_temporal_signal_confirmed_major_recovery_gate_not_met;
+> minijass_m15c2_conditional_alpha30_static_and_strength_pass;
+> minijass_m15c2r_independent_replication_preregistered;
 > our_egdb_relabel_only_covers_the_7_piece_endgame_slice_not_the_corpus;
 > minijass_m16_temporal_lambda_returns_are_WORSE_than_the_same_state_blend;
 > lambda_curve_is_non_monotone_interior_optimum_near_0_8_pure_bootstrap_HURTS;
@@ -432,14 +434,21 @@ statut formel reste `FAIL` car la moyenne manque le seuil pratique historique
 `+0,003916`. Le verdict scientifique correct est donc
 `MECHANISM_CONFIRMED_PRACTICAL_GATE_MISSED`, pas « absence de signal ».
 
-📌 **M15-C2 PRÉENREGISTRÉ ET EN COURS SUR `cpx62-1240`.** Comme la dose 50% aide mais que la
-cible conditionnelle seule nuit (`−0,018970` contre WDL), M15-C2 teste
-20/30/40%, avec 30% comme seul primaire et un contrôle permuté apparié à chaque
-dose. Le gate statique demande seulement des IC95 strictement positifs contre
-le contrôle causal et WDL ; l'arène 512 paires produit un verdict de force
-séparé. Les doses exploratoires ne peuvent pas sauver le primaire. Aucun
-nouveau read de `frozen_test` n'est autorisé, aucun bras n'est promouvable et
-aucun transfert direct au 10×10 n'est autorisé. Verdict en attente.
+📌 **M15-C2 TERMINÉ : PASS STATIQUE ET FORCE.** Sur `cpx62-1240`, alpha 30%
+bat le contrôle permuté de `+0,008803`, IC95
+`[+0,008094 ; +0,009511]`, et WDL brut de `+0,004816`, IC95
+`[+0,004211 ; +0,005421]`, 20/20 graines positives. Les deux contrastes de
+force sont également positifs : `+0,001172` contre permutation, IC95
+`[+0,000338 ; +0,002005]`, et `+0,001147` contre WDL, IC95
+`[+0,000409 ; +0,001886]`. L'alignement de l'information conditionnelle avec
+l'état améliore donc causalement l'apprentissage et la force.
+
+📌 **M15-C2R PRÉENREGISTRÉ, PAS EN FILE.** Vingt graines fraîches répliquent
+alpha 30% sur quatre portes statiques/force sans plancher d'effet. Alpha 40% est
+secondaire et ne peut pas sauver le primaire ; il ne remplace 30% que si ses
+propres contrôles passent et s'il bat directement 30% en statique et en force.
+Aucun nouveau read de `frozen_test`, aucune promotion et aucun transfert direct
+au 10×10 ne sont autorisés.
 
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de

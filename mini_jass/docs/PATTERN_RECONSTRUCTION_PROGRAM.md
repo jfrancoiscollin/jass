@@ -7,8 +7,9 @@ supervision was then rejected by disjoint C1/C2 pools; its train-only C3
 diagnostic found a calibration gap but no authority to reopen that decision.
 M15-P precisely excluded its preregistered practical recovery target. M15-C
 then confirmed a smaller direct conditional-target signal while missing its
-old practical threshold. M15-C2 is preregistered and implemented to test the
-interior conditional dose; it is not queued by this code PR.
+old practical threshold. M15-C2 confirmed the interior alpha-0.30 dose on both
+static response and paired strength. M15-C2R is preregistered and implemented
+for independent replication; it is not queued by this code PR.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -234,6 +235,24 @@ effect floor: both `CONTEXT_30 - SHUFFLED_CONTEXT_30` and
 verdict. See
 [`PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`](PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md).
 
+M15-C2 completed on `cpx62-1240`. The alpha-0.30 target beat its shuffled
+control by `+0.0088027` (95% CI `[+0.0080939, +0.0095115]`) and OUTCOME by
+`+0.0048164` (`[+0.0042114, +0.0054214]`) in development zero-regret, positive
+on all 20 seeds. Both paired strength contrasts were also positive:
+`+0.0011719` versus shuffled (`[+0.0003383, +0.0020054]`) and `+0.0011475`
+versus OUTCOME (`[+0.0004087, +0.0018862]`). Result hash:
+`2f839078622bc8c5393fc16a46060ef20a47d0c3545b95caedcad1ae0f927b0d`.
+
+### 11. M15-C2R — independent dose replication
+
+M15-C2R freezes 20 fresh seeds, alpha `0.30` as the sole primary replication
+and alpha `0.40` as a secondary dose that cannot rescue it. Alpha 30 must
+replicate all four static/strength attribution and operational intervals above
+zero. Alpha 40 replaces it only if its own four controls pass and direct paired
+`CONTEXT_40 - CONTEXT_30` intervals are positive for both zero-regret and
+strength. There is no decision effect floor. See
+[`PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md`](PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -245,7 +264,8 @@ The original conditional ordering has now resolved as follows:
   recovery by the frozen root-search target. M15-C confirmed a smaller
   conditional signal. M16-P independently confirmed a small temporal signal;
   `LAMBDA_50` is retained for composition even though it missed the 50%
-  major-recovery gate. M15-C2 tests the interior conditional dose.
+  major-recovery gate. M15-C2 confirmed the interior conditional dose;
+  M15-C2R now independently replicates it before composition.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
@@ -253,7 +273,8 @@ The original conditional ordering has now resolved as follows:
   an unguided M23-P mix-shape screen.
 - The discarded-head C1/C2 mechanism remains closed. M15-C independently
   confirmed that direct conditional-target injection is a distinct live
-  mechanism; M15-C2 tests its dose without reopening the auxiliary-head result.
+  mechanism; M15-C2 confirmed its dose without reopening the auxiliary-head
+  result, and M15-C2R replicates that result.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it

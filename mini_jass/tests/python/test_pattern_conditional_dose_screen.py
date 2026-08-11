@@ -49,6 +49,25 @@ def _arena(
     }
 
 
+def _replication_inputs(
+    primary: tuple[float, float, float] = (0.004, 0.002, 0.006),
+    secondary: tuple[float, float, float] = (0.005, 0.003, 0.007),
+    dose: tuple[float, float, float] = (0.001, 0.0002, 0.0018),
+) -> tuple[dict[str, object], dict[str, object]]:
+    contrasts = {
+        "attribution_30": {"zero_regret_gain": _interval(*primary)},
+        "operational_30": {"zero_regret_gain": _interval(*primary)},
+        "attribution_40": {"zero_regret_gain": _interval(*secondary)},
+        "operational_40": {"zero_regret_gain": _interval(*secondary)},
+        "dose_40_minus_30": {"zero_regret_gain": _interval(*dose)},
+    }
+    arena = {
+        name: {"arena_score_minus_half": value["zero_regret_gain"]}
+        for name, value in contrasts.items()
+    }
+    return contrasts, arena
+
+
 def test_m15c2_config_freezes_primary_dose_fresh_seeds_and_no_test_read() -> None:
     config, loop = M15C2._resolve(
         ROOT / "configs" / "l1_pattern_conditional_dose_screen.yaml"
@@ -67,6 +86,33 @@ def test_m15c2_config_freezes_primary_dose_fresh_seeds_and_no_test_read() -> Non
     assert config["probe"]["scientific_metrics_must_not_be_published"] is True
 
 
+def test_m15c2_replication_refactor_preserves_frozen_discovery_protocol_hash() -> None:
+    config, loop = M15C2._resolve(
+        ROOT / "configs" / "l1_pattern_conditional_dose_screen.yaml"
+    )
+    power = M15C2.deepcopy(config["power_sizing"])
+    power["recomputed_power"] = M15C2.estimate_power(config["power_sizing"])
+    protocol = {
+        "schema": M15C2.SCHEMA,
+        "milestone": "M15-C2",
+        "base_loop_config": config["base_loop_config"],
+        "resolved_model": M15C2.model_descriptor(M15C2.build_model(loop["model"])),
+        "paired_seeds": config["paired_seeds"],
+        "arms": list(M15C2.ARM_ORDER),
+        "replay": config["replay"],
+        "conditional_mapping": config["conditional_mapping"],
+        "dose_screen": config["dose_screen"],
+        "training_schedule": config["training_schedule"],
+        "strength_arena": config["strength_arena"],
+        "power_sizing": power,
+        "scientific_gate": config["scientific_gate"],
+        "source_evidence": config["source_evidence"],
+        "boundaries": config["boundaries"],
+        "execution_host": "cpx62",
+    }
+    assert M15C2.digest(protocol) == M15C2.EXPECTED_M15C2_PROTOCOL
+
+
 def test_cpx_wrapper_reuses_a_host_persistent_venv_outside_results() -> None:
     wrapper = (ROOT / "jobs" / "run_pattern_reconstruction_cpx.sh").read_text(
         encoding="utf-8"
@@ -75,6 +121,31 @@ def test_cpx_wrapper_reuses_a_host_persistent_venv_outside_results() -> None:
     assert "/root/.cache/mini-jass-pattern-venv" in wrapper
     assert 'if [[ ! -x "$venv/bin/python" ]]' in wrapper
     assert "python3 -m venv --system-site-packages" in wrapper
+    assert "m15c2r)" in wrapper
+    assert "m15c2rprobe)" in wrapper
+    assert "l1_pattern_conditional_dose_replication.yaml" in wrapper
+
+
+def test_m15c2r_config_freezes_fresh_primary_secondary_and_power_only_effects() -> None:
+    config, loop = M15C2._resolve(
+        ROOT / "configs" / "l1_pattern_conditional_dose_replication.yaml"
+    )
+    assert config["paired_seeds"] == list(range(275001, 275021))
+    assert config["probe"]["seed"] == 275000
+    assert config["arms"] == list(M15C2.REPLICATION_ARM_ORDER)
+    assert config["dose_replication"]["primary_alpha"] == pytest.approx(0.30)
+    assert config["dose_replication"]["secondary_alpha"] == pytest.approx(0.40)
+    assert config["dose_replication"]["secondary_cannot_rescue_primary"] is True
+    assert config["scientific_gate"]["minimum_effect_floor"] == 0.0
+    assert config["strength_arena"]["arms"] == list(M15C2.REPLICATION_ARENA_ARMS)
+    assert M15C2.estimate_power(
+        config["power_sizing"]["primary_replication"]
+    ) == pytest.approx(0.92362)
+    assert M15C2.estimate_power(
+        config["power_sizing"]["secondary_40_minus_30"]
+    ) == pytest.approx(0.8442)
+    assert config["boundaries"]["additional_frozen_test_reads_authorized"] == 0
+    assert loop["model"]["architecture"] == "folded_pattern_value"
 
 
 def test_m15c2_changes_only_value_target_at_each_frozen_dose() -> None:
@@ -104,6 +175,25 @@ def test_m15c2_changes_only_value_target_at_each_frozen_dose() -> None:
     for arm in M15C2.ARM_ORDER:
         assert arms[arm][0].policy_target is samples[0].policy_target
         assert arms[arm][0].selected_action == samples[0].selected_action
+
+
+def test_m15c2r_builds_only_preregistered_replication_arms() -> None:
+    samples = [_sample(1, 1.0), _sample(2, -1.0)]
+    exact = np.zeros(3, dtype=np.float32)
+    arms, contract = M15C2.build_target_arms(
+        samples,
+        conditional_predictions=np.asarray([0.6, -0.2]),
+        shuffled_predictions=np.asarray([-0.2, 0.6]),
+        exact_values=exact,
+        doses=M15C2.REPLICATION_DOSES,
+        arm_order=M15C2.REPLICATION_ARM_ORDER,
+    )
+    assert tuple(arms) == M15C2.REPLICATION_ARM_ORDER
+    assert "CONTEXT_20" not in arms
+    assert [row.value_target for row in arms["CONTEXT_40"]] == pytest.approx(
+        [0.84, -0.68]
+    )
+    assert len(set(contract["structure_fingerprints"].values())) == 1
 
 
 def test_m15c2_static_pass_is_not_overwritten_by_inconclusive_strength() -> None:
@@ -149,6 +239,35 @@ def test_m15c2_is_inconclusive_when_primary_interval_crosses_zero() -> None:
     assert result["decision"] == "power_size_fresh_M15C2_replication"
 
 
+def test_m15c2r_selects_alpha_40_only_after_primary_and_direct_superiority_pass() -> None:
+    contrasts, arena = _replication_inputs()
+    result = M15C2.build_replication_recommendation(contrasts, arena)
+    assert result["status"] == "PASS"
+    assert result["primary_replication_status"] == "PASS"
+    assert result["secondary_control_status"] == "PASS"
+    assert result["dose_40_minus_30_status"] == "PASS"
+    assert result["retained_alpha"] == pytest.approx(0.40)
+    assert result["decision"] == "prepare_alpha_40_temporal_composition"
+
+
+def test_m15c2r_retains_alpha_30_when_secondary_superiority_is_not_precise() -> None:
+    contrasts, arena = _replication_inputs(dose=(0.0005, -0.0002, 0.0012))
+    result = M15C2.build_replication_recommendation(contrasts, arena)
+    assert result["status"] == "PASS"
+    assert result["retained_alpha"] == pytest.approx(0.30)
+    assert result["dose_40_minus_30_status"] == "INCONCLUSIVE"
+    assert result["decision"] == "prepare_alpha_30_temporal_composition"
+
+
+def test_m15c2r_secondary_cannot_rescue_failed_alpha_30() -> None:
+    contrasts, arena = _replication_inputs(primary=(-0.001, -0.002, 0.0))
+    result = M15C2.build_replication_recommendation(contrasts, arena)
+    assert result["status"] == "FAIL"
+    assert result["retained_alpha"] is None
+    assert result["secondary_can_rescue_primary"] is False
+    assert result["decision"] == "do_not_compose_unreplicated_conditional_target"
+
+
 def test_m15c2_result_write_read_round_trip_preserves_verdict(tmp_path: Path) -> None:
     result = {
         "schema": M15C2.SCHEMA,
@@ -184,3 +303,38 @@ def test_m15c2_probe_round_trip_publishes_timing_only(tmp_path: Path) -> None:
     assert replayed["scientific_metrics_published"] is False
     assert "aggregate" not in replayed
     assert "recommendation" not in replayed
+
+
+def test_m15c2r_result_and_probe_round_trips_use_replication_schemas(
+    tmp_path: Path,
+) -> None:
+    result = {
+        "schema": M15C2.REPLICATION_SCHEMA,
+        "milestone": "M15-C2R",
+        "status": "PASS",
+        "result_hash": "replication-result-hash",
+        "recommendation": {"finding": "replication-fixture"},
+    }
+    run_dir = tmp_path / "run"
+    compact = tmp_path / "result.full.json"
+    M15C2._write_outputs(
+        result,
+        run_dir,
+        compact,
+        M15C2.REPLICATION_SCHEMA,
+        "M15-C2R",
+    )
+    probe = {
+        "schema": M15C2.REPLICATION_PROBE_SCHEMA,
+        "milestone": "M15-C2R-PROBE",
+        "status": "PROBE_COMPLETE",
+        "scientific_metrics_published": False,
+        "promotable": False,
+        "result_hash": "replication-probe-hash",
+    }
+    M15C2._write_probe_outputs(
+        probe,
+        tmp_path / "probe",
+        tmp_path / "probe.full.json",
+        M15C2.REPLICATION_PROBE_SCHEMA,
+    )
