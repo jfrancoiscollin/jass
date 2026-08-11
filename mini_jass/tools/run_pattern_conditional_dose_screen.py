@@ -53,11 +53,18 @@ from run_pattern_conditional_target_screen import (  # noqa: E402
     _sample_structure_fingerprint,
     estimate_power,
 )
+from run_pattern_temporal_value_target_screen import (  # noqa: E402
+    build_target_arms as build_temporal_target_arms,
+)
 
 SCHEMA = "mini_jass.pattern_conditional_dose_screen.v1"
 PROBE_SCHEMA = "mini_jass.pattern_conditional_dose_screen_probe.v1"
 REPLICATION_SCHEMA = "mini_jass.pattern_conditional_dose_replication.v1"
 REPLICATION_PROBE_SCHEMA = "mini_jass.pattern_conditional_dose_replication_probe.v1"
+COMPOSITION_SCHEMA = "mini_jass.pattern_conditional_temporal_composition.v1"
+COMPOSITION_PROBE_SCHEMA = (
+    "mini_jass.pattern_conditional_temporal_composition_probe.v1"
+)
 ARM_ORDER = (
     "OUTCOME",
     "SHUFFLED_CONTEXT_20",
@@ -107,6 +114,30 @@ REPLICATION_CONTRASTS = {
 }
 REPLICATION_ARENA_CONTRASTS = REPLICATION_CONTRASTS
 
+COMPOSITION_ARM_ORDER = (
+    "OUTCOME",
+    "LAMBDA_50",
+    "SHUFFLED_CONTEXT_30",
+    "CONTEXT_30",
+    "SHUFFLED_COMPOSED_30",
+    "COMPOSED_30",
+)
+COMPOSITION_ARENA_ARMS = COMPOSITION_ARM_ORDER
+COMPOSITION_CONTRASTS = {
+    "primary_temporal_increment": ("COMPOSED_30", "CONTEXT_30"),
+    "temporal_increment_control": (
+        "SHUFFLED_COMPOSED_30",
+        "SHUFFLED_CONTEXT_30",
+    ),
+    "composition_attribution": ("COMPOSED_30", "SHUFFLED_COMPOSED_30"),
+    "context_attribution": ("CONTEXT_30", "SHUFFLED_CONTEXT_30"),
+    "composition_operational": ("COMPOSED_30", "OUTCOME"),
+    "context_operational": ("CONTEXT_30", "OUTCOME"),
+    "temporal_operational": ("LAMBDA_50", "OUTCOME"),
+    "composition_vs_temporal": ("COMPOSED_30", "LAMBDA_50"),
+}
+COMPOSITION_ARENA_CONTRASTS = COMPOSITION_CONTRASTS
+
 EXPECTED_M15C_PROTOCOL = "74dc555948e0191c09814098918c35e2e23935cf6ff44801c6c09165ad97502d"
 EXPECTED_M15C_RESULT = "b63008f3e685c5cf20ae18af4e389fa8f7308ae31aa6525e549244f6f80e499d"
 EXPECTED_M15C2_PROTOCOL = "b561f1feab4b21012a80f1e3c5e402bacfccded37ccc738020c47e065a0662bf"
@@ -120,7 +151,9 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         return _resolve_m15c2(path)
     if identity == (REPLICATION_SCHEMA, "M15-C2R"):
         return _resolve_replication(path, config)
-    raise ValueError("unexpected M15-C2/M15-C2R schema")
+    if identity == (COMPOSITION_SCHEMA, "M15-C3"):
+        return _resolve_composition(path, config)
+    raise ValueError("unexpected M15-C2/M15-C2R/M15-C3 schema")
 
 
 def _resolve_m15c2(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -510,6 +543,247 @@ def _resolve_replication(
     return deepcopy(config), loop
 
 
+def _resolve_composition(
+    path: Path, config: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if tuple(config.get("arms", [])) != COMPOSITION_ARM_ORDER:
+        raise ValueError("M15-C3 arms changed after preregistration")
+    seeds = [int(seed) for seed in config.get("paired_seeds", [])]
+    if seeds != list(range(276001, 276025)):
+        raise ValueError("M15-C3 paired seeds changed or overlap prior evidence")
+    probe = config.get("probe", {})
+    if (
+        int(probe.get("seed", -1)) != 276000
+        or probe.get("overlaps_scientific_seeds") is not False
+        or probe.get("purpose") != "cpx62_runtime_calibration_only"
+        or probe.get("reporting") != "timing_and_contract_only"
+        or probe.get("scientific_metrics_must_not_be_published") is not True
+    ):
+        raise ValueError("M15-C3 probe contract changed")
+
+    evidence = config.get("source_evidence", {})
+    m15c2r = evidence.get("m15c2r", {})
+    if (
+        m15c2r.get("protocol_hash")
+        != "f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e"
+        or m15c2r.get("result_hash")
+        != "d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25"
+        or m15c2r.get("status") != "PASS"
+        or m15c2r.get("finding") != "alpha_30_conditional_signal_replicates"
+        or m15c2r.get("decision") != "prepare_alpha_30_temporal_composition"
+        or float(m15c2r.get("retained_alpha", -1.0)) != 0.30
+        or m15c2r.get("primary_replication_status") != "PASS"
+        or any(
+            float(m15c2r.get(name, [0.0])[0]) <= 0.0
+            for name in (
+                "primary_static_attribution_ci95",
+                "primary_static_operational_ci95",
+                "primary_strength_attribution_ci95",
+                "primary_strength_operational_ci95",
+            )
+        )
+        or float(m15c2r.get("alpha_40_static_superiority_ci95", [0.0])[0])
+        <= 0.0
+        or not (
+            float(m15c2r.get("alpha_40_strength_superiority_ci95", [1.0])[0])
+            < 0.0
+            < float(m15c2r.get("alpha_40_strength_superiority_ci95", [-1.0, -1.0])[1])
+        )
+    ):
+        raise ValueError("M15-C3 M15-C2R evidence is not frozen")
+    m16p = evidence.get("m16p", {})
+    if (
+        m16p.get("protocol_hash")
+        != "1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728"
+        or m16p.get("result_hash")
+        != "23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385"
+        or m16p.get("immutable_report_status") != "FAIL"
+        or m16p.get("retained_experience_status") != "POSITIVE"
+        or m16p.get("mechanism_status") != "CONFIRMED"
+        or m16p.get("major_recovery_gate_status") != "NOT_MET"
+        or m16p.get("downstream_decision")
+        != "retain_LAMBDA_50_for_composition_and_fresh_strength_confirmation"
+        or float(m16p.get("lambda_50_zero_regret_ci95", [0.0])[0]) <= 0.0
+        or float(m16p.get("lambda_50_strength_ci95", [0.0])[0]) <= 0.0
+    ):
+        raise ValueError("M15-C3 M16-P evidence is not frozen")
+
+    replay = config.get("replay", {})
+    if (
+        replay.get("source") != "G1_WIDE_OUTCOME"
+        or int(replay.get("games_per_seed", 0)) != 1024
+        or int(replay.get("generation", 0)) != 1
+        or int(replay.get("seed_offset", 0)) != 1030000
+        or replay.get("row_selection") != "all_generated_train_rows"
+        or replay.get("temporal_returns_built_before_train_row_filter") is not True
+        or replay.get("immutable_structure_across_arms") is not True
+    ):
+        raise ValueError("M15-C3 replay contract changed")
+
+    mapping = config.get("conditional_mapping", {})
+    if (
+        mapping.get("family") != "odd_tanh_linear_wdl_oof_v1"
+        or int(mapping.get("fold_count", 0)) != 5
+        or mapping.get("fold_unit") != "complete_game"
+        or mapping.get("fold_assignment") != "sha256_rank_round_robin_v1"
+        or mapping.get("fold_namespace") != "m15c3_conditional_wdl_game_folds_v1"
+        or mapping.get("shuffle_control") != "within_fold_hash_order_rotate_one_v1"
+        or mapping.get("shuffle_namespace") != "m15c3_conditional_shuffle_v1"
+        or mapping.get("initialization") != "zero"
+        or mapping.get("training_label") != "terminal_selfplay_wdl"
+        or mapping.get("oracle_training_signal") is not False
+        or mapping.get("manual_coefficients_used") is not False
+        or float(mapping.get("ridge", -1.0)) != 1.0e-4
+        or int(mapping.get("max_iterations", 0)) != 64
+        or float(mapping.get("tolerance", -1.0)) != 1.0e-10
+        or int(mapping.get("line_search_steps", 0)) != 24
+    ):
+        raise ValueError("M15-C3 conditional mapping changed")
+
+    temporal = config.get("temporal_target", {})
+    if (
+        temporal.get("source") != "temporal_lambda_return"
+        or float(temporal.get("lambda", -1.0)) != 0.50
+        or temporal.get("successor_bootstrap") != "negated_successor_root_score"
+        or temporal.get("recurrence")
+        != "-((1-lambda)*successor_search+lambda*successor_return)"
+        or temporal.get("terminal_or_last_sample_fallback")
+        != "terminal_selfplay_wdl"
+        or temporal.get("search_score_clip") != [-1.0, 1.0]
+        or temporal.get("complete_trajectory_grouping") is not True
+        or temporal.get("contiguous_ply_required") is not True
+        or temporal.get("full_generated_trace_used_before_train_filter") is not True
+        or temporal.get("oracle_training_signal") is not False
+    ):
+        raise ValueError("M15-C3 temporal target changed")
+
+    composition = config.get("composition", {})
+    if (
+        float(composition.get("alpha", -1.0)) != 0.30
+        or composition.get("outcome_context_formula")
+        != "0.70*outcome+0.30*conditional_prediction"
+        or composition.get("temporal_context_formula")
+        != "0.70*lambda_50+0.30*conditional_prediction"
+        or composition.get("shuffled_controls_use_same_formula") is not True
+        or composition.get("every_target_convex_and_bounded") is not True
+        or composition.get("every_target_oracle_blind") is not True
+    ):
+        raise ValueError("M15-C3 composition formula changed")
+
+    gate = config.get("scientific_gate", {})
+    if (
+        gate.get("primary_question")
+        != "temporal_increment_and_conditional_attribution_survive_composition"
+        or gate.get("primary_endpoint")
+        != "development_zero_regret_gain_and_paired_strength"
+        or float(gate.get("paired_confidence_critical_95", -1.0))
+        != 2.0686576104190406
+        or gate.get("require_COMPOSED_30_minus_CONTEXT_30_static_ci_above_zero")
+        is not True
+        or gate.get("require_COMPOSED_30_minus_CONTEXT_30_strength_ci_above_zero")
+        is not True
+        or gate.get(
+            "require_COMPOSED_30_minus_SHUFFLED_COMPOSED_30_static_ci_above_zero"
+        )
+        is not True
+        or gate.get(
+            "require_COMPOSED_30_minus_SHUFFLED_COMPOSED_30_strength_ci_above_zero"
+        )
+        is not True
+        or float(gate.get("minimum_effect_floor", -1.0)) != 0.0
+        or gate.get("singleton_confirmation_cannot_rescue_primary") is not True
+        or gate.get(
+            "selection_requires_COMPOSED_30_minus_LAMBDA_50_static_ci_above_zero"
+        )
+        is not True
+        or gate.get(
+            "selection_requires_COMPOSED_30_minus_LAMBDA_50_strength_ci_above_zero"
+        )
+        is not True
+        or gate.get(
+            "selection_requires_COMPOSED_30_minus_OUTCOME_static_ci_above_zero"
+        )
+        is not True
+        or gate.get(
+            "selection_requires_COMPOSED_30_minus_OUTCOME_strength_ci_above_zero"
+        )
+        is not True
+        or gate.get("otherwise_retain_incumbent_CONTEXT_30") is not True
+        or gate.get("automatic_promotion") is not False
+    ):
+        raise ValueError("M15-C3 scientific gate changed")
+
+    expected_power = {
+        "temporal_increment_static": (44120260818, 0.0025, 0.0015, 0.80433),
+        "temporal_increment_strength": (44120260819, 0.005, 0.0035, 0.90648),
+        "conditional_attribution_static": (44120260820, 0.0025, 0.002, 0.96424),
+        "conditional_attribution_strength": (44120260821, 0.0025, 0.0015, 0.80359),
+    }
+    for name, (power_seed, sd, effect, estimate) in expected_power.items():
+        cell = config.get("power_sizing", {}).get(name, {})
+        if (
+            int(cell.get("repetitions", 0)) != 100000
+            or int(cell.get("seed", 0)) != power_seed
+            or int(cell.get("paired_seed_count", 0)) != len(seeds)
+            or float(cell.get("conservative_paired_sd", -1.0)) != sd
+            or float(cell.get("minimum_effect_for_power_only", -1.0)) != effect
+            or float(cell.get("minimum_effect", -1.0)) != effect
+            or float(cell.get("paired_confidence_critical_95", -1.0))
+            != 2.0686576104190406
+            or cell.get("gate_has_no_minimum_effect_floor") is not True
+        ):
+            raise ValueError(f"M15-C3 {name} power contract changed")
+        observed_power = estimate_power(cell)
+        if not math.isclose(observed_power, estimate, rel_tol=0.0, abs_tol=5.0e-6):
+            raise ValueError(f"M15-C3 {name} frozen power did not reproduce")
+        if observed_power < float(cell.get("minimum_required_power", 1.0)):
+            raise ValueError(f"M15-C3 {name} is underpowered before training")
+
+    boundaries = config.get("boundaries", {})
+    if (
+        boundaries.get("cohorts_read") != ["train", "development"]
+        or boundaries.get("cohorts_never_read_by_this_cell") != ["frozen_test"]
+        or int(boundaries.get("existing_frozen_test_read_count", -1)) != 1
+        or int(boundaries.get("additional_frozen_test_reads_authorized", -1)) != 0
+        or boundaries.get("all_training_targets_oracle_blind") is not True
+        or boundaries.get("automatic_selection_or_promotion") is not False
+        or boundaries.get("promotable") is not False
+        or boundaries.get("production_jass_changes_authorized") is not False
+        or boundaries.get("direct_10x10_transfer_authorized") is not False
+        or boundaries.get("execution_is_not_queued_by_this_pr") is not True
+    ):
+        raise ValueError("M15-C3 crossed a scientific boundary")
+
+    root = path.resolve().parent.parent
+    loop = yaml.safe_load((root / config["base_loop_config"]).read_text(encoding="utf-8"))
+    if loop.get("schema") != "mini_jass.selfplay.v1":
+        raise ValueError("M15-C3 requires the frozen PatternEval loop")
+    if loop["model"].get("architecture") != "folded_pattern_value":
+        raise ValueError("M15-C3 requires folded PatternEval")
+    if float(loop["training"]["policy_weight"]) != 0.0:
+        raise ValueError("M15-C3 cannot train a policy head")
+    schedule = config["training_schedule"]
+    if (
+        int(schedule["total_steps"]) != int(loop["training"]["steps"])
+        or int(schedule["batch_size"]) != int(loop["training"]["batch_size"])
+        or int(schedule.get("seed_offset", 0)) != 1040000
+        or schedule.get("explicit_identical_batch_schedule_all_arms") is not True
+    ):
+        raise ValueError("M15-C3 training schedule changed")
+    arena = config["strength_arena"]
+    if (
+        tuple(arena.get("arms", [])) != COMPOSITION_ARENA_ARMS
+        or int(arena.get("pairs", 0)) != 512
+        or int(arena.get("seed_base", 0)) != 1050000
+        or float(arena.get("epsilon", -1.0)) != 0.0
+        or arena.get("confidence_unit") != "pairs"
+        or arena.get("start_state_source") != "development"
+        or arena.get("role") != "confirmatory_composition_strength"
+    ):
+        raise ValueError("M15-C3 strength arena changed")
+    return deepcopy(config), loop
+
+
 def build_target_arms(
     samples: list[ReplaySample],
     conditional_predictions: np.ndarray,
@@ -560,6 +834,93 @@ def build_target_arms(
         "shared_structure_fingerprint": next(iter(structures.values())),
         "structure_fingerprints": structures,
         "targets": target_metrics,
+    }
+
+
+def build_composition_target_arms(
+    samples: list[ReplaySample],
+    temporal_samples: list[ReplaySample],
+    conditional_predictions: np.ndarray,
+    shuffled_predictions: np.ndarray,
+    exact_values: np.ndarray,
+) -> tuple[dict[str, list[ReplaySample]], dict[str, Any]]:
+    if len(samples) != len(temporal_samples) or not samples:
+        raise ValueError("M15-C3 temporal and conditional rows must align")
+    for outcome_row, temporal_row in zip(samples, temporal_samples, strict=True):
+        if (
+            int(outcome_row.state_id) != int(temporal_row.state_id)
+            or int(outcome_row.game_id) != int(temporal_row.game_id)
+            or int(outcome_row.ply) != int(temporal_row.ply)
+        ):
+            raise ValueError("M15-C3 temporal row identity diverged")
+
+    conditional = np.asarray(conditional_predictions, dtype=np.float64)
+    shuffled = np.asarray(shuffled_predictions, dtype=np.float64)
+    temporal = np.asarray(
+        [sample.value_target for sample in temporal_samples], dtype=np.float64
+    )
+    outcomes = np.asarray(
+        [sample.value_target for sample in samples], dtype=np.float64
+    )
+    expected_shape = (len(samples),)
+    if any(
+        values.shape != expected_shape
+        for values in (conditional, shuffled, temporal, outcomes)
+    ):
+        raise ValueError("M15-C3 target components must align with replay rows")
+    if not all(
+        np.all(np.isfinite(values))
+        for values in (conditional, shuffled, temporal, outcomes)
+    ):
+        raise ValueError("M15-C3 target components must be finite")
+    if any(
+        np.any(np.abs(values) > 1.0)
+        for values in (conditional, shuffled, temporal, outcomes)
+    ):
+        raise ValueError("M15-C3 target component left the WDL range")
+
+    values: dict[str, np.ndarray] = {
+        "OUTCOME": outcomes,
+        "LAMBDA_50": temporal,
+        "SHUFFLED_CONTEXT_30": 0.70 * outcomes + 0.30 * shuffled,
+        "CONTEXT_30": 0.70 * outcomes + 0.30 * conditional,
+        "SHUFFLED_COMPOSED_30": 0.70 * temporal + 0.30 * shuffled,
+        "COMPOSED_30": 0.70 * temporal + 0.30 * conditional,
+    }
+    if any(np.any(np.abs(target) > 1.0) for target in values.values()):
+        raise RuntimeError("M15-C3 convex target left the WDL range")
+    arms = {
+        arm: [
+            replace(sample, value_target=float(value))
+            for sample, value in zip(samples, values[arm], strict=True)
+        ]
+        for arm in COMPOSITION_ARM_ORDER
+    }
+    structures = {arm: _sample_structure_fingerprint(rows) for arm, rows in arms.items()}
+    if len(set(structures.values())) != 1:
+        raise RuntimeError("M15-C3 target arms changed replay structure")
+
+    state_ids = np.asarray([sample.state_id for sample in samples], dtype=np.int64)
+    exact = np.asarray(exact_values)[state_ids].astype(np.float64)
+    target_metrics = {
+        arm: {
+            "sample_count": len(samples),
+            "value_mae_vs_exact_train": float(np.mean(np.abs(values[arm] - exact))),
+            "value_exact_rate_vs_exact_train": float(np.mean(values[arm] == exact)),
+            "changed_from_outcome_fraction": float(
+                np.mean(values[arm] != outcomes)
+            ),
+            "target_mean": float(values[arm].mean()),
+            "target_standard_deviation": float(values[arm].std(ddof=0)),
+        }
+        for arm in COMPOSITION_ARM_ORDER
+    }
+    return arms, {
+        "shared_structure_fingerprint": next(iter(structures.values())),
+        "structure_fingerprints": structures,
+        "targets": target_metrics,
+        "all_targets_convex_and_bounded": True,
+        "all_targets_oracle_blind": True,
     }
 
 
@@ -781,7 +1142,169 @@ def build_replication_recommendation(
     }
 
 
+def build_composition_interactions(
+    rows: list[dict[str, Any]], critical: float
+) -> dict[str, Any]:
+    static: dict[str, Any] = {}
+    for endpoint in STATIC_ENDPOINTS:
+        static[endpoint] = _interval(
+            [
+                (
+                    float(row["arms"]["COMPOSED_30"][endpoint])
+                    - float(row["arms"]["SHUFFLED_COMPOSED_30"][endpoint])
+                )
+                - (
+                    float(row["arms"]["CONTEXT_30"][endpoint])
+                    - float(row["arms"]["SHUFFLED_CONTEXT_30"][endpoint])
+                )
+                for row in rows
+            ],
+            critical,
+        )
+    strength = _interval(
+        [
+            (
+                float(row["arms"]["COMPOSED_30"]["arena_score_minus_half"])
+                - float(
+                    row["arms"]["SHUFFLED_COMPOSED_30"][
+                        "arena_score_minus_half"
+                    ]
+                )
+            )
+            - (
+                float(row["arms"]["CONTEXT_30"]["arena_score_minus_half"])
+                - float(
+                    row["arms"]["SHUFFLED_CONTEXT_30"][
+                        "arena_score_minus_half"
+                    ]
+                )
+            )
+            for row in rows
+        ],
+        critical,
+    )
+    return {
+        "conditional_by_temporal_difference_in_differences": {
+            "static": static,
+            "strength": strength,
+            "role": "descriptive_interaction_not_a_primary_rescue",
+        }
+    }
+
+
+def build_composition_recommendation(
+    contrasts: dict[str, Any],
+    arena_contrasts: dict[str, Any],
+    interactions: dict[str, Any],
+) -> dict[str, Any]:
+    def static(name: str) -> dict[str, Any]:
+        return contrasts[name]["zero_regret_gain"]
+
+    def strength(name: str) -> dict[str, Any]:
+        return arena_contrasts[name]["arena_score_minus_half"]
+
+    temporal_increment_axes = [
+        static("primary_temporal_increment"),
+        strength("primary_temporal_increment"),
+    ]
+    conditional_attribution_axes = [
+        static("composition_attribution"),
+        strength("composition_attribution"),
+    ]
+    primary_axes = temporal_increment_axes + conditional_attribution_axes
+    selection_axes = [
+        static("composition_vs_temporal"),
+        strength("composition_vs_temporal"),
+        static("composition_operational"),
+        strength("composition_operational"),
+    ]
+    temporal_confirmation_axes = [
+        static("temporal_operational"),
+        strength("temporal_operational"),
+    ]
+    context_confirmation_axes = [
+        static("context_attribution"),
+        strength("context_attribution"),
+        static("context_operational"),
+        strength("context_operational"),
+    ]
+    primary_status = _group_status(primary_axes)
+    temporal_increment_status = _group_status(temporal_increment_axes)
+    conditional_attribution_status = _group_status(conditional_attribution_axes)
+    selection_status = _group_status(selection_axes)
+    temporal_confirmation_status = _group_status(temporal_confirmation_axes)
+    context_confirmation_status = _group_status(context_confirmation_axes)
+
+    common = {
+        "primary_status": primary_status,
+        "temporal_increment_status": temporal_increment_status,
+        "conditional_attribution_status": conditional_attribution_status,
+        "selection_status": selection_status,
+        "fresh_temporal_confirmation_status": temporal_confirmation_status,
+        "fresh_context_confirmation_status": context_confirmation_status,
+        "temporal_increment_static": static("primary_temporal_increment"),
+        "temporal_increment_strength": strength("primary_temporal_increment"),
+        "conditional_attribution_static": static("composition_attribution"),
+        "conditional_attribution_strength": strength("composition_attribution"),
+        "composition_vs_temporal_static": static("composition_vs_temporal"),
+        "composition_vs_temporal_strength": strength("composition_vs_temporal"),
+        "composition_operational_static": static("composition_operational"),
+        "composition_operational_strength": strength("composition_operational"),
+        "temporal_operational_static": static("temporal_operational"),
+        "temporal_operational_strength": strength("temporal_operational"),
+        "interaction": interactions[
+            "conditional_by_temporal_difference_in_differences"
+        ],
+        "minimum_effect_floor": 0.0,
+        "singleton_confirmation_can_rescue_primary": False,
+        "promotable": False,
+    }
+    if primary_status == "FAIL":
+        return {
+            **common,
+            "status": "FAIL",
+            "retained_target": "CONTEXT_30",
+            "finding": "composition_does_not_preserve_both_incremental_signals",
+            "decision": "retain_CONTEXT_30_and_close_this_composition_formula",
+        }
+    if primary_status == "INCONCLUSIVE":
+        return {
+            **common,
+            "status": "INCONCLUSIVE",
+            "retained_target": "CONTEXT_30",
+            "finding": "composition_primary_is_not_precise",
+            "decision": "power_size_only_the_unresolved_primary_axis",
+        }
+    if selection_status == "PASS":
+        return {
+            **common,
+            "status": "PASS",
+            "retained_target": "COMPOSED_30",
+            "finding": "conditional_and_temporal_signals_compose_and_dominate_singletons",
+            "decision": "prepare_independent_COMPOSED_30_replication",
+        }
+    return {
+        **common,
+        "status": "PASS",
+        "retained_target": "CONTEXT_30",
+        "finding": "both_signals_survive_composition_without_full_singleton_dominance",
+        "decision": "retain_CONTEXT_30_without_automatic_composition_selection",
+    }
+
+
 def _experiment_spec(config: dict[str, Any]) -> dict[str, Any]:
+    if config["milestone"] == "M15-C3":
+        return {
+            "schema": COMPOSITION_SCHEMA,
+            "probe_schema": COMPOSITION_PROBE_SCHEMA,
+            "milestone": "M15-C3",
+            "probe_milestone": "M15-C3-PROBE",
+            "arm_order": COMPOSITION_ARM_ORDER,
+            "doses": (),
+            "arena_arms": COMPOSITION_ARENA_ARMS,
+            "contrasts": COMPOSITION_CONTRASTS,
+            "arena_contrasts": COMPOSITION_ARENA_CONTRASTS,
+        }
     if config["milestone"] == "M15-C2R":
         return {
             "schema": REPLICATION_SCHEMA,
@@ -868,9 +1391,13 @@ def _write_progress(
     rate = completed / (elapsed / 60.0)
     payload = {
         "schema": (
-            "mini_jass.pattern_conditional_dose_replication_progress.v1"
-            if milestone == "M15-C2R"
-            else "mini_jass.pattern_conditional_dose_screen_progress.v1"
+            "mini_jass.pattern_conditional_temporal_composition_progress.v1"
+            if milestone == "M15-C3"
+            else (
+                "mini_jass.pattern_conditional_dose_replication_progress.v1"
+                if milestone == "M15-C2R"
+                else "mini_jass.pattern_conditional_dose_screen_progress.v1"
+            )
         ),
         "milestone": milestone,
         "completed_seeds": completed,
@@ -995,14 +1522,42 @@ def run_m15c2(
             train_samples,
             namespace=str(mapping_spec["shuffle_namespace"]),
         )
-        arms, replay_contract = build_target_arms(
-            train_samples,
-            cross_fit["conditional_predictions"],
-            shuffled["predictions"],
-            oracle.values,
-            doses,
-            arm_order,
-        )
+        temporal_contract: dict[str, Any] | None = None
+        if milestone == "M15-C3":
+            temporal_arms, raw_temporal_contract = build_temporal_target_arms(
+                generated.samples,
+                generated.metrics["search_trace"],
+                oracle.values,
+                train_mask,
+            )
+            if len(temporal_arms["LAMBDA_50"]) != len(train_samples):
+                raise RuntimeError("M15-C3 temporal train-row filter diverged")
+            arms, replay_contract = build_composition_target_arms(
+                train_samples,
+                temporal_arms["LAMBDA_50"],
+                cross_fit["conditional_predictions"],
+                shuffled["predictions"],
+                oracle.values,
+            )
+            temporal_contract = {
+                key: value
+                for key, value in raw_temporal_contract.items()
+                if key
+                not in {
+                    "targets",
+                    "structure_fingerprints",
+                    "shared_structure_fingerprint",
+                }
+            }
+        else:
+            arms, replay_contract = build_target_arms(
+                train_samples,
+                cross_fit["conditional_predictions"],
+                shuffled["predictions"],
+                oracle.values,
+                doses,
+                arm_order,
+            )
         schedule = _random_schedule(len(train_samples), steps, batch_size, fit_seed + 15)
 
         models: dict[str, Any] = {}
@@ -1012,7 +1567,9 @@ def run_m15c2(
                 base_loop, graph, arms[arm], schedule, fit_seed
             )
             if arm_initial_hash != initial_hash:
-                raise RuntimeError("M15-C2 arms did not share the initial PatternEval")
+                raise RuntimeError(
+                    f"{milestone} arms did not share the initial PatternEval"
+                )
             after = response_metrics(model, graph, tensors, oracle, development, response_batch)
             models[arm] = model
             arm_rows[arm] = {
@@ -1046,11 +1603,13 @@ def run_m15c2(
             if arena_start_hash is None:
                 arena_start_hash = start_hash
             elif start_hash != arena_start_hash:
-                raise RuntimeError("M15-C2 arena starts diverged across arms")
+                raise RuntimeError(f"{milestone} arena starts diverged across arms")
             arm_rows[arm]["arena_score_minus_half"] = float(arena["score"]) - 0.5
             arm_rows[arm]["arena_vs_outcome"] = arena
         if arm_rows["OUTCOME"]["arena_score_minus_half"] != 0.0:
-            raise RuntimeError("M15-C2 symmetric OUTCOME arena did not score 0.5")
+            raise RuntimeError(
+                f"{milestone} symmetric OUTCOME arena did not score 0.5"
+            )
 
         row = {
             "seed": seed,
@@ -1068,6 +1627,11 @@ def run_m15c2(
                 "shared_arena_start_hash": arena_start_hash,
                 "all_rows_train_only": True,
                 **replay_contract,
+                **(
+                    {"temporal_contract": temporal_contract}
+                    if temporal_contract is not None
+                    else {}
+                ),
             },
             "conditional_mapping": {
                 key: value
@@ -1131,6 +1695,11 @@ def run_m15c2(
     critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
     contrasts = build_contrasts(rows, critical, spec["contrasts"])
     arena_contrasts = build_arena_contrasts(rows, critical, spec["arena_contrasts"])
+    interactions = (
+        build_composition_interactions(rows, critical)
+        if milestone == "M15-C3"
+        else {}
+    )
     aggregate = {
         "paired_seed_count": len(rows),
         "arms": {
@@ -1160,6 +1729,7 @@ def run_m15c2(
         },
         "contrasts": contrasts,
         "arena_contrasts": arena_contrasts,
+        **({"interactions": interactions} if interactions else {}),
         "conditional_mapping_oof_mse_gain_vs_state_blind": paired_interval(
             [
                 float(row["conditional_mapping"]["conditional_mse_gain_vs_state_blind"])
@@ -1182,19 +1752,62 @@ def run_m15c2(
         "all_batch_schedules_paired_within_seed": True,
         "all_initial_models_paired_within_seed": True,
         "all_arena_starts_paired_within_seed": True,
+        **(
+            {
+                "all_temporal_returns_built_before_train_filter": all(
+                    bool(
+                        row["replay"]["temporal_contract"][
+                            "temporal_returns_built_before_train_row_filter"
+                        ]
+                    )
+                    for row in rows
+                ),
+                "all_composition_targets_convex_and_bounded": all(
+                    bool(row["replay"]["all_targets_convex_and_bounded"])
+                    for row in rows
+                ),
+                "all_composition_targets_oracle_blind": all(
+                    bool(row["replay"]["all_targets_oracle_blind"])
+                    for row in rows
+                ),
+            }
+            if milestone == "M15-C3"
+            else {}
+        ),
         "additional_frozen_test_reads": 0,
     }
-    recommendation = (
-        build_replication_recommendation(contrasts, arena_contrasts)
-        if milestone == "M15-C2R"
-        else build_recommendation(contrasts, arena_contrasts)
-    )
+    if milestone == "M15-C3":
+        recommendation = build_composition_recommendation(
+            contrasts, arena_contrasts, interactions
+        )
+    elif milestone == "M15-C2R":
+        recommendation = build_replication_recommendation(
+            contrasts, arena_contrasts
+        )
+    else:
+        recommendation = build_recommendation(contrasts, arena_contrasts)
     power_sizing = deepcopy(config["power_sizing"])
-    if milestone == "M15-C2R":
+    if milestone in {"M15-C2R", "M15-C3"}:
         for cell in power_sizing.values():
             cell["recomputed_power"] = estimate_power(cell)
     else:
         power_sizing["recomputed_power"] = estimate_power(config["power_sizing"])
+    if milestone == "M15-C3":
+        target_protocol = {
+            "conditional_mapping": config["conditional_mapping"],
+            "temporal_target": config["temporal_target"],
+            "composition": config["composition"],
+        }
+    elif milestone == "M15-C2R":
+        target_protocol = {
+            "conditional_mapping": config["conditional_mapping"],
+            "dose_replication": config["dose_replication"],
+        }
+    else:
+        target_protocol = {
+            "conditional_mapping": config["conditional_mapping"],
+            "dose_screen": config["dose_screen"],
+        }
     protocol = {
         "schema": spec["schema"],
         "milestone": milestone,
@@ -1203,12 +1816,7 @@ def run_m15c2(
         "paired_seeds": [int(seed) for seed in config["paired_seeds"]],
         "arms": list(arm_order),
         "replay": config["replay"],
-        "conditional_mapping": config["conditional_mapping"],
-        (
-            "dose_replication" if milestone == "M15-C2R" else "dose_screen"
-        ): config[
-            "dose_replication" if milestone == "M15-C2R" else "dose_screen"
-        ],
+        **target_protocol,
         "training_schedule": config["training_schedule"],
         "strength_arena": config["strength_arena"],
         "power_sizing": power_sizing,

@@ -1,6 +1,6 @@
 # M15-C2R — independent conditional-dose replication
 
-Status: preregistered and implemented, not queued by this PR.
+Status: **PASS — alpha 0.30 independently replicated and retained.**
 
 ## Frozen question
 
@@ -66,3 +66,26 @@ model and reuse identical development starts within a seed. No new
 `frozen_test` read, automatic promotion, production change or direct 10×10
 transfer is authorized. A positive result selects only the dose for a later
 controlled composition experiment.
+
+## Result
+
+M15-C2R completed as `cpx62-1242-mini-jass-pattern-m15c2r-v1`, attempt
+`20260811T063640Z-c7d2e378`. Alpha 30 passed all four primary intervals:
+
+- static attribution `+0.00637905`, 95% CI
+  `[+0.00562358, +0.00713451]`;
+- static operational `+0.00289494`,
+  `[+0.00239577, +0.00339412]`;
+- strength attribution `+0.00153809`,
+  `[+0.00043769, +0.00263848]`;
+- strength operational `+0.00205078`,
+  `[+0.00101385, +0.00308772]`.
+
+Alpha 40 passed its own controls and beat 30 in static response by
+`+0.00150639` (`[+0.00114956, +0.00186321]`), but its direct strength advantage
+was only `+0.00009766` (`[-0.00041922, +0.00061453]`). It therefore cannot
+replace alpha 30. Result hash:
+`d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25`.
+
+The retained decision is to compose alpha 30 with M16-P `LAMBDA_50` under the
+separate M15-C3 preregistration. No model is promoted by this result.

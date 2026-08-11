@@ -443,12 +443,22 @@ force sont également positifs : `+0,001172` contre permutation, IC95
 `[+0,000409 ; +0,001886]`. L'alignement de l'information conditionnelle avec
 l'état améliore donc causalement l'apprentissage et la force.
 
-📌 **M15-C2R PRÉENREGISTRÉ, PAS EN FILE.** Vingt graines fraîches répliquent
-alpha 30% sur quatre portes statiques/force sans plancher d'effet. Alpha 40% est
-secondaire et ne peut pas sauver le primaire ; il ne remplace 30% que si ses
-propres contrôles passent et s'il bat directement 30% en statique et en force.
-Aucun nouveau read de `frozen_test`, aucune promotion et aucun transfert direct
-au 10×10 ne sont autorisés.
+📌 **M15-C2R TERMINÉ : RÉPLICATION INDÉPENDANTE PASS.** Sur `cpx62-1242`, alpha
+30% réplique les quatre axes préenregistrés. En statique, il gagne `+0,006379`
+contre permutation, IC95 `[+0,005624 ; +0,007135]`, et `+0,002895` contre WDL,
+IC95 `[+0,002396 ; +0,003394]`. En force, les gains sont `+0,001538`, IC95
+`[+0,000438 ; +0,002638]`, et `+0,002051`, IC95
+`[+0,001014 ; +0,003088]`. Alpha 40% est supérieur en statique mais pas en
+force directe contre 30% (`+0,000098`, IC95
+`[-0,000419 ; +0,000615]`) : la dose retenue reste donc **30%**.
+
+📌 **M15-C3 PRÉENREGISTRÉ, PAS EN FILE.** Vingt-quatre graines fraîches testent
+la composition `0,70*LAMBDA_50 + 0,30*contexte` dans un plan à six bras. La
+porte primaire exige à la fois que le temporel ajoute au conditionnel 30% et
+que l'alignement conditionnel reste causal sous fond temporel, en statique et
+en force. Les effets de puissance ne sont pas des planchers de décision. Aucun
+nouveau read de `frozen_test`, aucune promotion et aucun transfert direct au
+10×10 ne sont autorisés.
 
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de

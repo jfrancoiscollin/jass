@@ -493,10 +493,14 @@ n'est pas « plus de contexte », mais une dose intérieure. **M15-C2
 permuté, IC95 `[+0,008094 ; +0,009511]`, et `+0,004816` contre WDL, IC95
 `[+0,004211 ; +0,005421]`. Les contrastes de force sont eux aussi positifs
 contre permutation (`+0,001172`) et WDL (`+0,001147`), avec IC95 au-dessus de
-zéro. M15-C2R réplique maintenant 30% sur graines fraîches et teste 40% comme
-secondaire incapable de sauver le primaire. Aucun nouveau read du
-`frozen_test`, aucune promotion et aucun transfert direct au 10×10 ne sont
-autorisés.
+zéro. **M15-C2R (`cpx62-1242`) réplique indépendamment 30%** sur les quatre
+axes : statique `+0,006379` contre permutation et `+0,002895` contre WDL ;
+force `+0,001538` et `+0,002051`, avec les quatre IC95 strictement positifs.
+Alpha 40% bat 30% en statique (`+0,001506`) mais pas en force (`+0,000098`,
+IC95 `[-0,000419 ; +0,000615]`) ; 30% reste la dose retenue. M15-C3 compose
+désormais ce 30% avec `LAMBDA_50` dans un plan factoriel causal à six bras.
+Aucun nouveau read du `frozen_test`, aucune promotion et aucun transfert direct
+au 10×10 ne sont autorisés.
 
 ## 5. Portes closes à protocole causal identique
 
