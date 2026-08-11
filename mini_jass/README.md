@@ -377,6 +377,10 @@ a smaller precise static signal. M15-C2, specified in
 `docs/PATTERN_M15C2_CONDITIONAL_DOSE_SCREEN.md`, confirmed alpha 0.30 on static
 response and paired strength. M15-C2R, specified in
 `docs/PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md`, independently replicates
-alpha 0.30 and preregisters alpha 0.40 as a secondary direct dose comparison.
+alpha 0.30; alpha 0.40 improved static response but not direct strength, so
+0.30 remains retained. M15-C3, specified in
+`docs/PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md`, preregisters a
+six-arm causal composition of retained conditional alpha 0.30 and temporal
+`LAMBDA_50` on 24 fresh seeds.
 The historical frozen-test read is exhausted, so these cells read train and
 development only. CPX scripts are prepared but are not queued by code PRs.

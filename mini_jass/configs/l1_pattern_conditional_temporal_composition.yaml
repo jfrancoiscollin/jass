@@ -1,0 +1,212 @@
+schema: mini_jass.pattern_conditional_temporal_composition.v1
+milestone: M15-C3
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M15-C2R (275001-275020); four extra seeds restore >=80% power
+# for the smallest preregistered composition axis without adding an effect floor.
+paired_seeds:
+  [276001, 276002, 276003, 276004, 276005, 276006,
+   276007, 276008, 276009, 276010, 276011, 276012,
+   276013, 276014, 276015, 276016, 276017, 276018,
+   276019, 276020, 276021, 276022, 276023, 276024]
+
+arms:
+  - OUTCOME
+  - LAMBDA_50
+  - SHUFFLED_CONTEXT_30
+  - CONTEXT_30
+  - SHUFFLED_COMPOSED_30
+  - COMPOSED_30
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 1030000
+  row_selection: all_generated_train_rows
+  temporal_returns_built_before_train_row_filter: true
+  immutable_structure_across_arms: true
+
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c3_conditional_wdl_game_folds_v1
+  shuffle_control: within_fold_hash_order_rotate_one_v1
+  shuffle_namespace: m15c3_conditional_shuffle_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+temporal_target:
+  source: temporal_lambda_return
+  lambda: 0.50
+  successor_bootstrap: negated_successor_root_score
+  recurrence: "-((1-lambda)*successor_search+lambda*successor_return)"
+  terminal_or_last_sample_fallback: terminal_selfplay_wdl
+  search_score_clip: [-1.0, 1.0]
+  complete_trajectory_grouping: true
+  contiguous_ply_required: true
+  full_generated_trace_used_before_train_filter: true
+  oracle_training_signal: false
+
+composition:
+  alpha: 0.30
+  outcome_context_formula: 0.70*outcome+0.30*conditional_prediction
+  temporal_context_formula: 0.70*lambda_50+0.30*conditional_prediction
+  shuffled_controls_use_same_formula: true
+  every_target_convex_and_bounded: true
+  every_target_oracle_blind: true
+
+training_schedule:
+  total_steps: 1024
+  batch_size: 128
+  seed_offset: 1040000
+  explicit_identical_batch_schedule_all_arms: true
+
+strength_arena:
+  arms:
+    [OUTCOME, LAMBDA_50, SHUFFLED_CONTEXT_30, CONTEXT_30,
+     SHUFFLED_COMPOSED_30, COMPOSED_30]
+  pairs: 512
+  seed_base: 1050000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+  role: confirmatory_composition_strength
+
+power_sizing:
+  temporal_increment_static:
+    contrasts_sized: [COMPOSED_30_minus_CONTEXT_30]
+    endpoint: development_zero_regret_gain
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260818
+    paired_seed_count: 24
+    conservative_paired_sd: 0.0025
+    minimum_effect_for_power_only: 0.0015
+    minimum_effect: 0.0015
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.80433
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  temporal_increment_strength:
+    contrasts_sized: [COMPOSED_30_minus_CONTEXT_30]
+    endpoint: paired_arena_score
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260819
+    paired_seed_count: 24
+    conservative_paired_sd: 0.005
+    minimum_effect_for_power_only: 0.0035
+    minimum_effect: 0.0035
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.90648
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  conditional_attribution_static:
+    contrasts_sized: [COMPOSED_30_minus_SHUFFLED_COMPOSED_30]
+    endpoint: development_zero_regret_gain
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260820
+    paired_seed_count: 24
+    conservative_paired_sd: 0.0025
+    minimum_effect_for_power_only: 0.002
+    minimum_effect: 0.002
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.96424
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  conditional_attribution_strength:
+    contrasts_sized: [COMPOSED_30_minus_SHUFFLED_COMPOSED_30]
+    endpoint: paired_arena_score
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260821
+    paired_seed_count: 24
+    conservative_paired_sd: 0.0025
+    minimum_effect_for_power_only: 0.0015
+    minimum_effect: 0.0015
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.80359
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+
+scientific_gate:
+  primary_question: temporal_increment_and_conditional_attribution_survive_composition
+  primary_endpoint: development_zero_regret_gain_and_paired_strength
+  paired_confidence_critical_95: 2.0686576104190406
+  require_COMPOSED_30_minus_CONTEXT_30_static_ci_above_zero: true
+  require_COMPOSED_30_minus_CONTEXT_30_strength_ci_above_zero: true
+  require_COMPOSED_30_minus_SHUFFLED_COMPOSED_30_static_ci_above_zero: true
+  require_COMPOSED_30_minus_SHUFFLED_COMPOSED_30_strength_ci_above_zero: true
+  minimum_effect_floor: 0.0
+  singleton_confirmation_cannot_rescue_primary: true
+  selection_requires_COMPOSED_30_minus_LAMBDA_50_static_ci_above_zero: true
+  selection_requires_COMPOSED_30_minus_LAMBDA_50_strength_ci_above_zero: true
+  selection_requires_COMPOSED_30_minus_OUTCOME_static_ci_above_zero: true
+  selection_requires_COMPOSED_30_minus_OUTCOME_strength_ci_above_zero: true
+  otherwise_retain_incumbent_CONTEXT_30: true
+  automatic_promotion: false
+
+source_evidence:
+  m15c2r:
+    job_id: cpx62-1242-mini-jass-pattern-m15c2r-v1
+    attempt_id: 20260811T063640Z-c7d2e378
+    implementation_sha: c7d2e378cd6e2416c7d8f2ffeeacd1b1e7d7a33b
+    protocol_hash: f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e
+    result_hash: d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25
+    status: PASS
+    finding: alpha_30_conditional_signal_replicates
+    decision: prepare_alpha_30_temporal_composition
+    retained_alpha: 0.30
+    primary_replication_status: PASS
+    primary_static_attribution_ci95: [0.005623584684981331, 0.0071345096349351034]
+    primary_static_operational_ci95: [0.0023957668799046944, 0.0033941155549524573]
+    primary_strength_attribution_ci95: [0.0004376872296573066, 0.0026384846453426933]
+    primary_strength_operational_ci95: [0.0010138453942615093, 0.003087717105738491]
+    alpha_40_static_superiority_ci95: [0.0011495636934066768, 0.001863210469042107]
+    alpha_40_strength_superiority_ci95: [-0.00041921883868911334, 0.0006145313386891133]
+  m16p:
+    job_id: home-1321-mini-jass-pattern-m16p-retry-v1
+    attempt_id: 20260810T225346Z-9c7722b4
+    implementation_sha: 9c7722b445382184408eb5040b94a63e2d6a0869
+    protocol_hash: 1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728
+    result_hash: 23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385
+    immutable_report_status: FAIL
+    retained_experience_status: POSITIVE
+    mechanism_status: CONFIRMED
+    major_recovery_gate_status: NOT_MET
+    downstream_decision: retain_LAMBDA_50_for_composition_and_fresh_strength_confirmation
+    lambda_50_zero_regret_ci95: [0.0009282278025463404, 0.0021702430471899166]
+    lambda_50_strength_ci95: [0.003721584520527308, 0.007606540479472692]
+
+probe:
+  seed: 276000
+  overlaps_scientific_seeds: false
+  purpose: cpx62_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  execution_is_not_queued_by_this_pr: true

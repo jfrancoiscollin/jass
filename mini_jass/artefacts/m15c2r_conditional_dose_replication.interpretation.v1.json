@@ -1,0 +1,55 @@
+{
+  "boundaries": {
+    "additional_frozen_test_reads": 0,
+    "automatic_promotion": false,
+    "direct_10x10_transfer_authorized": false,
+    "promotable": false
+  },
+  "immutable_source": {
+    "attempt_id": "20260811T063640Z-c7d2e378",
+    "code_sha": "c7d2e378cd6e2416c7d8f2ffeeacd1b1e7d7a33b",
+    "job_id": "cpx62-1242-mini-jass-pattern-m15c2r-v1",
+    "protocol_hash": "f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e",
+    "result_hash": "d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25"
+  },
+  "milestone": "M15-C2R",
+  "primary_alpha_30": {
+    "replication_status": "PASS",
+    "static_attribution": {
+      "ci95": [0.005623584684981331, 0.0071345096349351034],
+      "mean": 0.006379047159958217
+    },
+    "static_operational": {
+      "ci95": [0.0023957668799046944, 0.0033941155549524573],
+      "mean": 0.002894941217428576
+    },
+    "strength_attribution": {
+      "ci95": [0.0004376872296573066, 0.0026384846453426933],
+      "mean": 0.0015380859375
+    },
+    "strength_operational": {
+      "ci95": [0.0010138453942615093, 0.003087717105738491],
+      "mean": 0.00205078125
+    }
+  },
+  "schema": "mini_jass.pattern_conditional_dose_replication_interpretation.v1",
+  "secondary_alpha_40": {
+    "own_control_status": "PASS",
+    "static_minus_alpha_30": {
+      "ci95": [0.0011495636934066768, 0.001863210469042107],
+      "mean": 0.0015063870812243919,
+      "status": "PASS"
+    },
+    "strength_minus_alpha_30": {
+      "ci95": [-0.00041921883868911334, 0.0006145313386891133],
+      "mean": 0.00009765625,
+      "status": "INCONCLUSIVE"
+    }
+  },
+  "verdict": {
+    "decision": "prepare_alpha_30_temporal_composition",
+    "finding": "alpha_30_conditional_signal_replicates",
+    "retained_alpha": 0.3,
+    "status": "PASS"
+  }
+}

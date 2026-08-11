@@ -8,8 +8,9 @@ diagnostic found a calibration gap but no authority to reopen that decision.
 M15-P precisely excluded its preregistered practical recovery target. M15-C
 then confirmed a smaller direct conditional-target signal while missing its
 old practical threshold. M15-C2 confirmed the interior alpha-0.30 dose on both
-static response and paired strength. M15-C2R is preregistered and implemented
-for independent replication; it is not queued by this code PR.
+static response and paired strength. M15-C2R independently replicated all four
+alpha-0.30 axes and retained that dose. M15-C3 is preregistered and implemented
+to compose it with M16-P `LAMBDA_50`; it is not queued by this code PR.
 
 The wiring evidence is intentionally not a scientific reconstruction result.
 It established that the architecture is executable and deterministic:
@@ -253,6 +254,27 @@ zero. Alpha 40 replaces it only if its own four controls pass and direct paired
 strength. There is no decision effect floor. See
 [`PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md`](PATTERN_M15C2R_CONDITIONAL_DOSE_REPLICATION.md).
 
+M15-C2R completed on `cpx62-1242`. Alpha 30 passed all four fresh-seed static
+and strength intervals and remains retained. Alpha 40 beat 30 in static
+response (`+0.0015064`, 95% CI `[+0.0011496, +0.0018632]`) but not in direct
+strength (`+0.0000977`, `[-0.0004192, +0.0006145]`). Result hash:
+`d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25`.
+
+### 12. M15-C3 — conditional-temporal composition
+
+M15-C3 freezes alpha `0.30`, temporal `LAMBDA_50`, 24 fresh seeds and six
+paired arms. It compares `0.70*OUTCOME + 0.30*context` with
+`0.70*LAMBDA_50 + 0.30*context`, using the same aligned and within-fold
+shuffled conditional predictions under both bases.
+
+The primary requires positive static and strength intervals both for
+`COMPOSED_30 - CONTEXT_30` and for
+`COMPOSED_30 - SHUFFLED_COMPOSED_30`. Singleton confirmations and the
+difference-in-differences interaction cannot rescue it. Even after a primary
+pass, composition replaces the incumbent only if it also beats `LAMBDA_50`
+and `OUTCOME` directly in static response and strength. See
+[`PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md`](PATTERN_M15C3_CONDITIONAL_TEMPORAL_COMPOSITION.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -265,7 +287,8 @@ The original conditional ordering has now resolved as follows:
   conditional signal. M16-P independently confirmed a small temporal signal;
   `LAMBDA_50` is retained for composition even though it missed the 50%
   major-recovery gate. M15-C2 confirmed the interior conditional dose;
-  M15-C2R now independently replicates it before composition.
+  M15-C2R independently replicated it; M15-C3 now tests the preregistered
+  conditional-temporal composition.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
@@ -274,7 +297,8 @@ The original conditional ordering has now resolved as follows:
 - The discarded-head C1/C2 mechanism remains closed. M15-C independently
   confirmed that direct conditional-target injection is a distinct live
   mechanism; M15-C2 confirmed its dose without reopening the auxiliary-head
-  result, and M15-C2R replicates that result.
+  result, M15-C2R replicated that result, and M15-C3 composes it with the
+  retained temporal signal without reopening the discarded-head mechanism.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -296,6 +320,9 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m14p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c2
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c2r
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3probe
+mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r

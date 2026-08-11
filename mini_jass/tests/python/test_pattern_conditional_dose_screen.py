@@ -68,6 +68,39 @@ def _replication_inputs(
     return contrasts, arena
 
 
+def _composition_inputs(
+    temporal_increment: tuple[float, float, float] = (0.003, 0.001, 0.005),
+    attribution: tuple[float, float, float] = (0.004, 0.002, 0.006),
+    versus_temporal: tuple[float, float, float] = (0.002, 0.0005, 0.0035),
+) -> tuple[dict[str, object], dict[str, object], dict[str, object]]:
+    values = {
+        "primary_temporal_increment": temporal_increment,
+        "temporal_increment_control": (0.002, 0.0005, 0.0035),
+        "composition_attribution": attribution,
+        "context_attribution": (0.003, 0.001, 0.005),
+        "composition_operational": (0.006, 0.004, 0.008),
+        "context_operational": (0.003, 0.001, 0.005),
+        "temporal_operational": (0.002, 0.0005, 0.0035),
+        "composition_vs_temporal": versus_temporal,
+    }
+    contrasts = {
+        name: {"zero_regret_gain": _interval(*value)}
+        for name, value in values.items()
+    }
+    arena = {
+        name: {"arena_score_minus_half": _interval(*value)}
+        for name, value in values.items()
+    }
+    interactions = {
+        "conditional_by_temporal_difference_in_differences": {
+            "static": {"zero_regret_gain": _interval(0.001, -0.001, 0.003)},
+            "strength": _interval(0.001, -0.001, 0.003),
+            "role": "descriptive_interaction_not_a_primary_rescue",
+        }
+    }
+    return contrasts, arena, interactions
+
+
 def test_m15c2_config_freezes_primary_dose_fresh_seeds_and_no_test_read() -> None:
     config, loop = M15C2._resolve(
         ROOT / "configs" / "l1_pattern_conditional_dose_screen.yaml"
@@ -113,6 +146,36 @@ def test_m15c2_replication_refactor_preserves_frozen_discovery_protocol_hash() -
     assert M15C2.digest(protocol) == M15C2.EXPECTED_M15C2_PROTOCOL
 
 
+def test_m15c3_extension_preserves_completed_m15c2r_protocol_hash() -> None:
+    config, loop = M15C2._resolve(
+        ROOT / "configs" / "l1_pattern_conditional_dose_replication.yaml"
+    )
+    power = M15C2.deepcopy(config["power_sizing"])
+    for cell in power.values():
+        cell["recomputed_power"] = M15C2.estimate_power(cell)
+    protocol = {
+        "schema": M15C2.REPLICATION_SCHEMA,
+        "milestone": "M15-C2R",
+        "base_loop_config": config["base_loop_config"],
+        "resolved_model": M15C2.model_descriptor(M15C2.build_model(loop["model"])),
+        "paired_seeds": config["paired_seeds"],
+        "arms": list(M15C2.REPLICATION_ARM_ORDER),
+        "replay": config["replay"],
+        "conditional_mapping": config["conditional_mapping"],
+        "dose_replication": config["dose_replication"],
+        "training_schedule": config["training_schedule"],
+        "strength_arena": config["strength_arena"],
+        "power_sizing": power,
+        "scientific_gate": config["scientific_gate"],
+        "source_evidence": config["source_evidence"],
+        "boundaries": config["boundaries"],
+        "execution_host": "cpx62",
+    }
+    assert M15C2.digest(protocol) == (
+        "f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e"
+    )
+
+
 def test_cpx_wrapper_reuses_a_host_persistent_venv_outside_results() -> None:
     wrapper = (ROOT / "jobs" / "run_pattern_reconstruction_cpx.sh").read_text(
         encoding="utf-8"
@@ -124,6 +187,9 @@ def test_cpx_wrapper_reuses_a_host_persistent_venv_outside_results() -> None:
     assert "m15c2r)" in wrapper
     assert "m15c2rprobe)" in wrapper
     assert "l1_pattern_conditional_dose_replication.yaml" in wrapper
+    assert "m15c3)" in wrapper
+    assert "m15c3probe)" in wrapper
+    assert "l1_pattern_conditional_temporal_composition.yaml" in wrapper
 
 
 def test_m15c2r_config_freezes_fresh_primary_secondary_and_power_only_effects() -> None:
@@ -146,6 +212,24 @@ def test_m15c2r_config_freezes_fresh_primary_secondary_and_power_only_effects() 
     ) == pytest.approx(0.8442)
     assert config["boundaries"]["additional_frozen_test_reads_authorized"] == 0
     assert loop["model"]["architecture"] == "folded_pattern_value"
+
+
+def test_m15c3_config_freezes_fresh_factorial_composition_and_no_test_read() -> None:
+    config, loop = M15C2._resolve(
+        ROOT / "configs" / "l1_pattern_conditional_temporal_composition.yaml"
+    )
+    assert config["paired_seeds"] == list(range(276001, 276025))
+    assert config["probe"]["seed"] == 276000
+    assert config["arms"] == list(M15C2.COMPOSITION_ARM_ORDER)
+    assert config["composition"]["alpha"] == pytest.approx(0.30)
+    assert config["temporal_target"]["lambda"] == pytest.approx(0.50)
+    assert config["scientific_gate"]["minimum_effect_floor"] == 0.0
+    assert config["boundaries"]["additional_frozen_test_reads_authorized"] == 0
+    assert config["boundaries"]["execution_is_not_queued_by_this_pr"] is True
+    assert loop["model"]["architecture"] == "folded_pattern_value"
+    for cell in config["power_sizing"].values():
+        assert M15C2.estimate_power(cell) >= 0.80
+        assert cell["gate_has_no_minimum_effect_floor"] is True
 
 
 def test_m15c2_changes_only_value_target_at_each_frozen_dose() -> None:
@@ -194,6 +278,59 @@ def test_m15c2r_builds_only_preregistered_replication_arms() -> None:
         [0.84, -0.68]
     )
     assert len(set(contract["structure_fingerprints"].values())) == 1
+
+
+def test_m15c3_builds_bounded_factorial_targets_without_oracle_signal() -> None:
+    samples = [_sample(1, 1.0), _sample(2, -1.0)]
+    temporal = [
+        ReplaySample(1, 0.2, samples[0].policy_target, 1, 1, 0, 3),
+        ReplaySample(2, -0.4, samples[1].policy_target, 1, 2, 0, 3),
+    ]
+    exact = np.zeros(3, dtype=np.float32)
+    arms, contract = M15C2.build_composition_target_arms(
+        samples,
+        temporal,
+        conditional_predictions=np.asarray([0.6, -0.2]),
+        shuffled_predictions=np.asarray([-0.2, 0.6]),
+        exact_values=exact,
+    )
+    assert tuple(arms) == M15C2.COMPOSITION_ARM_ORDER
+    assert [row.value_target for row in arms["CONTEXT_30"]] == pytest.approx(
+        [0.88, -0.76]
+    )
+    assert [
+        row.value_target for row in arms["SHUFFLED_COMPOSED_30"]
+    ] == pytest.approx([0.08, -0.10])
+    assert [row.value_target for row in arms["COMPOSED_30"]] == pytest.approx(
+        [0.32, -0.34]
+    )
+    assert len(set(contract["structure_fingerprints"].values())) == 1
+    assert contract["all_targets_convex_and_bounded"] is True
+    assert contract["all_targets_oracle_blind"] is True
+
+
+def test_m15c3_difference_in_differences_is_paired_within_seed() -> None:
+    rows = []
+    for delta in (0.01, 0.02, 0.03):
+        arms = {}
+        for arm, multiplier in {
+            "COMPOSED_30": 2.0,
+            "SHUFFLED_COMPOSED_30": 0.0,
+            "CONTEXT_30": 1.0,
+            "SHUFFLED_CONTEXT_30": 0.0,
+        }.items():
+            arms[arm] = {
+                endpoint: multiplier * delta for endpoint in M15C2.STATIC_ENDPOINTS
+            }
+            arms[arm]["arena_score_minus_half"] = multiplier * delta
+        rows.append({"arms": arms})
+    interaction = M15C2.build_composition_interactions(rows, 2.0)[
+        "conditional_by_temporal_difference_in_differences"
+    ]
+    assert interaction["static"]["zero_regret_gain"]["mean"] == pytest.approx(
+        0.02
+    )
+    assert interaction["strength"]["mean"] == pytest.approx(0.02)
 
 
 def test_m15c2_static_pass_is_not_overwritten_by_inconclusive_strength() -> None:
@@ -268,6 +405,45 @@ def test_m15c2r_secondary_cannot_rescue_failed_alpha_30() -> None:
     assert result["decision"] == "do_not_compose_unreplicated_conditional_target"
 
 
+def test_m15c3_selects_composition_only_when_both_signals_and_singletons_pass() -> None:
+    contrasts, arena, interactions = _composition_inputs()
+    result = M15C2.build_composition_recommendation(
+        contrasts, arena, interactions
+    )
+    assert result["status"] == "PASS"
+    assert result["primary_status"] == "PASS"
+    assert result["selection_status"] == "PASS"
+    assert result["retained_target"] == "COMPOSED_30"
+    assert result["decision"] == "prepare_independent_COMPOSED_30_replication"
+
+
+def test_m15c3_retains_incumbent_when_composition_does_not_beat_temporal() -> None:
+    contrasts, arena, interactions = _composition_inputs(
+        versus_temporal=(0.0003, -0.0005, 0.0011)
+    )
+    result = M15C2.build_composition_recommendation(
+        contrasts, arena, interactions
+    )
+    assert result["status"] == "PASS"
+    assert result["primary_status"] == "PASS"
+    assert result["selection_status"] == "INCONCLUSIVE"
+    assert result["retained_target"] == "CONTEXT_30"
+
+
+def test_m15c3_singletons_cannot_rescue_failed_temporal_increment() -> None:
+    contrasts, arena, interactions = _composition_inputs(
+        temporal_increment=(-0.001, -0.002, 0.0)
+    )
+    result = M15C2.build_composition_recommendation(
+        contrasts, arena, interactions
+    )
+    assert result["status"] == "FAIL"
+    assert result["primary_status"] == "FAIL"
+    assert result["fresh_temporal_confirmation_status"] == "PASS"
+    assert result["singleton_confirmation_can_rescue_primary"] is False
+    assert result["retained_target"] == "CONTEXT_30"
+
+
 def test_m15c2_result_write_read_round_trip_preserves_verdict(tmp_path: Path) -> None:
     result = {
         "schema": M15C2.SCHEMA,
@@ -337,4 +513,37 @@ def test_m15c2r_result_and_probe_round_trips_use_replication_schemas(
         tmp_path / "probe",
         tmp_path / "probe.full.json",
         M15C2.REPLICATION_PROBE_SCHEMA,
+    )
+
+
+def test_m15c3_result_and_probe_round_trips_use_composition_schemas(
+    tmp_path: Path,
+) -> None:
+    result = {
+        "schema": M15C2.COMPOSITION_SCHEMA,
+        "milestone": "M15-C3",
+        "status": "PASS",
+        "result_hash": "composition-result-hash",
+        "recommendation": {"finding": "composition-fixture"},
+    }
+    M15C2._write_outputs(
+        result,
+        tmp_path / "run",
+        tmp_path / "result.full.json",
+        M15C2.COMPOSITION_SCHEMA,
+        "M15-C3",
+    )
+    probe = {
+        "schema": M15C2.COMPOSITION_PROBE_SCHEMA,
+        "milestone": "M15-C3-PROBE",
+        "status": "PROBE_COMPLETE",
+        "scientific_metrics_published": False,
+        "promotable": False,
+        "result_hash": "composition-probe-hash",
+    }
+    M15C2._write_probe_outputs(
+        probe,
+        tmp_path / "probe",
+        tmp_path / "probe.full.json",
+        M15C2.COMPOSITION_PROBE_SCHEMA,
     )
