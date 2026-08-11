@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import math
 from typing import Any
 
@@ -76,6 +76,7 @@ class SearchResult:
     visit_counts: dict[int, int]
     stats: SearchStats
     action_count: int
+    contextual_tiebreak: dict[str, Any] | None = None
 
     def visit_policy(self) -> np.ndarray:
         policy = np.zeros(self.action_count, dtype=np.float32)
@@ -244,6 +245,120 @@ def bounded_negamax(
     stats.root_maximum_budget = max(allocated_budgets) if allocated_budgets else 0
     return SearchResult(
         selected, float(root_score), action_scores, visit_counts, stats, graph.action_count
+    )
+
+
+def apply_contextual_tiebreak(
+    graph: GameGraph,
+    context_model: nn.Module,
+    state_id: int,
+    temporal_result: SearchResult,
+    delta: float,
+    cache: InferenceCache | None = None,
+) -> SearchResult:
+    """Use a second value channel only inside a temporal uncertainty band.
+
+    The temporal search is left byte-for-byte untouched: its scores, visits and
+    node accounting are reused.  The context model can only choose between root
+    actions whose temporal score is within ``delta`` of the temporal winner.
+    This is intentionally a decision rule, not a scalar blend of two targets.
+    """
+
+    if not math.isfinite(delta) or delta < 0.0:
+        raise ValueError("contextual tie-break delta must be finite and non-negative")
+    if not temporal_result.action_scores:
+        return replace(
+            temporal_result,
+            contextual_tiebreak={
+                "activated": False,
+                "changed_action": False,
+                "delta": float(delta),
+                "eligible_actions": [int(temporal_result.selected_action)],
+                "context_scores": {},
+                "reason": "no_searched_root_scores",
+            },
+        )
+
+    best_temporal = max(float(value) for value in temporal_result.action_scores.values())
+    eligible = sorted(
+        int(action)
+        for action, value in temporal_result.action_scores.items()
+        if best_temporal - float(value) <= delta
+    )
+    if len(eligible) < 2:
+        return replace(
+            temporal_result,
+            contextual_tiebreak={
+                "activated": False,
+                "changed_action": False,
+                "delta": float(delta),
+                "best_temporal_score": best_temporal,
+                "eligible_actions": eligible,
+                "context_scores": {},
+                "reason": "single_temporal_candidate",
+            },
+        )
+
+    inference = cache if cache is not None else InferenceCache()
+    context_scores: dict[int, float] = {}
+    for action in eligible:
+        child = graph.child(state_id, action)
+        terminal = graph.terminal_value(child)
+        if terminal is None:
+            child_value, _, _ = inference.predict(context_model, graph, child)
+        else:
+            child_value = float(terminal)
+        context_scores[action] = -float(child_value)
+    selected = min(
+        eligible,
+        key=lambda action: (-context_scores[action], action),
+    )
+    changed = selected != int(temporal_result.selected_action)
+    ordered_context = sorted(context_scores.values(), reverse=True)
+    context_margin = (
+        float(ordered_context[0] - ordered_context[1])
+        if len(ordered_context) > 1
+        else 0.0
+    )
+    return replace(
+        temporal_result,
+        selected_action=selected,
+        root_score=float(temporal_result.action_scores[selected]),
+        contextual_tiebreak={
+            "activated": True,
+            "changed_action": changed,
+            "delta": float(delta),
+            "best_temporal_score": best_temporal,
+            "selected_temporal_score": float(temporal_result.action_scores[selected]),
+            "temporal_sacrifice": best_temporal
+            - float(temporal_result.action_scores[selected]),
+            "eligible_actions": eligible,
+            "context_scores": {
+                str(action): float(context_scores[action]) for action in eligible
+            },
+            "context_margin": context_margin,
+            "reason": "contextual_tiebreak",
+        },
+    )
+
+
+def bounded_negamax_with_context(
+    graph: GameGraph,
+    temporal_model: nn.Module,
+    context_model: nn.Module,
+    state_id: int,
+    config: SearchConfig,
+    delta: float,
+    temporal_cache: InferenceCache | None = None,
+    context_cache: InferenceCache | None = None,
+) -> SearchResult:
+    """Run the ordinary temporal search, then apply the separate context channel."""
+
+    temporal = bounded_negamax(
+        graph, temporal_model, state_id, config, temporal_cache
+    )
+    return apply_contextual_tiebreak(
+        graph, context_model, state_id, temporal, delta, context_cache
     )
 
 

@@ -387,5 +387,11 @@ M15-C4, specified in `docs/PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md`, holds
 an additive target fixed while testing whether separate temporal and
 conditional optimisation paths preserve both signals. They collapse back into
 one ordinary `PatternEval` with no inference-capacity increase.
+M15-C5, specified in `docs/PATTERN_M15C5_CONDITIONAL_FEEDBACK.md`, found that
+the conditional static gain does not survive one on-policy feedback step even
+though a tiny playing-strength gain remains. M15-C6, specified in
+`docs/PATTERN_M15C6_CONTEXTUAL_DECISION_CHANNEL.md`, therefore keeps
+`LAMBDA_50` and conditional OOF predictions in separate linear tables until a
+preregistered root tie-break, with an aligned-versus-shuffled strength gate.
 The historical frozen-test read is exhausted, so these cells read train and
 development only. CPX scripts are prepared but are not queued by code PRs.

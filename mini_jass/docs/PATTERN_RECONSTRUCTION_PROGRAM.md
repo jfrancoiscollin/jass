@@ -304,6 +304,22 @@ term. The primary requires positive static and strength intervals for the
 on-policy G2 contrast, with no effect floor. See
 [`PATTERN_M15C5_CONDITIONAL_FEEDBACK.md`](PATTERN_M15C5_CONDITIONAL_FEEDBACK.md).
 
+M15-C5 completed on `home-1256`: G1 replicated the conditional static and
+strength gains, but G2 reversed development zero-regret (`-0.002349`, 95% CI
+`[-0.003352, -0.001346]`) while retaining a tiny positive arena effect
+(`+0.001668`, 95% CI `[+0.000437, +0.002899]`). The exact repeated-target
+feedback recipe is closed; the static `CONTEXT_30` evidence remains retained.
+
+### 15. M15-C6 — separate contextual decision channel
+
+M15-C6 keeps `LAMBDA_50` as the sole search value and fits aligned and shuffled
+conditional OOF predictions into separate linear `PatternEval` tables. Context
+can only choose among root actions inside a temporal uncertainty band calibrated
+on train replay. The decisive playing-strength contrasts are aligned minus
+shuffled and aligned minus `LAMBDA_50`; both confidence intervals must be above
+zero, and static diagnostics cannot rescue them. See
+[`PATTERN_M15C6_CONTEXTUAL_DECISION_CHANNEL.md`](PATTERN_M15C6_CONTEXTUAL_DECISION_CHANNEL.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -318,8 +334,10 @@ The original conditional ordering has now resolved as follows:
   major-recovery gate. M15-C2 confirmed the interior conditional dose;
   M15-C2R independently replicated it; M15-C3 closed its naive convex
   conditional-temporal formula; M15-C4 rejected a separate residual path.
-  M15-C5 now tests whether retained `CONTEXT_30` survives the state-distribution
-  feedback it creates at the next generation.
+  M15-C5 showed that the static conditional gain does not survive one on-policy
+  feedback step. M15-C6 therefore changes the causal channel: temporal value and
+  context stay separate until the root decision, with a shuffled context table
+  as the causal control.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
@@ -330,8 +348,10 @@ The original conditional ordering has now resolved as follows:
   mechanism; M15-C2 confirmed its dose without reopening the auxiliary-head
   result, M15-C2R replicated that result, M15-C3 rejected the first composition
   formula, and M15-C4 rejected a training-only residual decomposition without
-  reopening the discarded runtime-head mechanism. M15-C5 likewise changes
-  targets and replay distribution only; it adds no runtime head.
+  reopening the discarded training-only head mechanism. M15-C5 closed repeated
+  scalar conditional feedback. M15-C6 is deliberately different: it tests a
+  second runtime decision channel, leaves the temporal search value unchanged,
+  and is non-promotable even if its scientific gate passes.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it

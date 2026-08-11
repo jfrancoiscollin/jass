@@ -1,0 +1,176 @@
+schema: mini_jass.pattern_contextual_decision_channel.v1
+milestone: M15-C6
+expected_execution_host: User
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M15-C5 (278001-278024). Probe 279000 is timing-only.
+paired_seeds:
+  [279001, 279002, 279003, 279004, 279005, 279006,
+   279007, 279008, 279009, 279010, 279011, 279012,
+   279013, 279014, 279015, 279016, 279017, 279018,
+   279019, 279020, 279021, 279022, 279023, 279024]
+
+arms:
+  - OUTCOME
+  - LAMBDA_50
+  - CONTEXT_30
+  - ALIGNED_CONTEXT_CHANNEL
+  - SHUFFLED_CONTEXT_CHANNEL
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 1130000
+  row_selection: all_generated_train_rows
+  temporal_returns_built_before_train_filter: true
+  immutable_structure_across_training_targets: true
+
+temporal_target:
+  retained_arm: LAMBDA_50
+  lambda: 0.50
+  successor_bootstrap: negated_successor_root_score
+  recurrence: "-((1-lambda)*successor_search+lambda*successor_return)"
+  terminal_or_last_sample_fallback: terminal_selfplay_wdl
+  search_score_clip: [-1.0, 1.0]
+  oracle_training_signal: false
+
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c6_conditional_wdl_game_folds_v1
+  shuffle_namespace: m15c6_conditional_decision_shuffle_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+training_targets:
+  OUTCOME: terminal_selfplay_wdl
+  LAMBDA_50: temporal_lambda_return_0_50
+  CONTEXT_30: "0.70*terminal_selfplay_wdl+0.30*conditional_oof_prediction"
+  ALIGNED_CONTEXT_HEAD: conditional_oof_prediction
+  SHUFFLED_CONTEXT_HEAD: within_fold_permuted_conditional_oof_prediction
+  scalar_temporal_context_blend_for_candidate: false
+  separate_context_parameter_table_at_inference: true
+
+training_schedule:
+  total_steps_per_table: 1024
+  batch_size: 128
+  seed_offset: 1140000
+  explicit_identical_batch_schedule_all_tables: true
+  shared_zero_initialization: true
+
+contextual_tiebreak:
+  temporal_value_model: LAMBDA_50
+  aligned_context_model: ALIGNED_CONTEXT_HEAD
+  shuffled_context_model: SHUFFLED_CONTEXT_HEAD
+  rule: choose_max_context_among_actions_within_delta_of_best_temporal_score
+  temporal_search_scores_unchanged: true
+  context_never_changes_internal_search: true
+  calibration_cohort: train_replay_unique_nonterminal_states
+  calibration_state_count: 512
+  calibration_seed_offset: 1150000
+  calibration_quantile: 0.25
+  calibration_quantile_method: higher_order_statistic
+  minimum_valid_calibration_states: 128
+  same_delta_for_aligned_and_shuffled: true
+  terminal_children_read_from_rules: true
+  deterministic_smallest_action_final_tiebreak: true
+
+strength_arena:
+  pairs: 512
+  seed_base: 1160000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+  paired_starts_across_all_matchups: true
+  matchups:
+    - LAMBDA_50_SELF
+    - LAMBDA_50_VS_OUTCOME
+    - CONTEXT_30_VS_OUTCOME
+    - ALIGNED_VS_SHUFFLED
+    - ALIGNED_VS_LAMBDA_50
+    - SHUFFLED_VS_LAMBDA_50
+
+power_sizing:
+  estimator: normal_paired_difference_monte_carlo_v1
+  repetitions: 100000
+  seed: 44120260828
+  paired_seed_count: 24
+  conservative_paired_sd: 0.0025
+  minimum_effect_for_power_only: 0.0015
+  minimum_effect: 0.0015
+  paired_confidence_critical_95: 2.0686576104190406
+  estimated_power_ci_above_zero: 0.80341
+  minimum_required_power: 0.80
+  gate_has_no_minimum_effect_floor: true
+
+scientific_gate:
+  primary_question: can_separate_context_survive_until_decision_without_scalar_compression
+  primary_endpoint: independent_paired_playing_strength
+  primary_contrasts:
+    - ALIGNED_CONTEXT_CHANNEL_minus_SHUFFLED_CONTEXT_CHANNEL
+    - ALIGNED_CONTEXT_CHANNEL_minus_LAMBDA_50
+  paired_confidence_critical_95: 2.0686576104190406
+  require_both_strength_ci95_lower_bounds_above_zero: true
+  minimum_effect_floor: 0.0
+  static_diagnostics_cannot_rescue_strength_failure: true
+  automatic_promotion: false
+
+source_evidence:
+  m16p:
+    protocol_hash: 1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728
+    result_hash: 23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385
+    retained_experience_status: POSITIVE
+    retained_target: LAMBDA_50
+  m15c2r:
+    result_hash: d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25
+    status: PASS
+    finding: alpha_30_conditional_signal_replicates
+    retained_target: CONTEXT_30
+  m15c3:
+    result_hash: be36b212e495c004dcc44e31a98f1968bce68ed32264cd9660a27cb0761aed87
+    status: FAIL
+    finding: composition_does_not_preserve_both_incremental_signals
+  m15c4:
+    job_id: cpx62-1250-mini-jass-pattern-m15c4-v1
+    status: FAIL
+    finding: separate_residual_path_fails_while_conditional_static_signal_survives
+  m15c5:
+    job_id: home-1256-mini-jass-pattern-m15c5-full-v1
+    result_hash: bc75242ffceab3b04706c54ca37aa0ad5fdfc7488405e07dd90d4538cc4f4f40
+    status: FAIL
+    finding: conditional_target_gain_does_not_survive_on_policy_feedback
+    retained_static_context_evidence: true
+
+probe:
+  seed: 279000
+  expected_nproc: 16
+  overlaps_scientific_seeds: false
+  purpose: HOME_runtime_calibration_only
+  reporting: timing_contract_and_activation_count_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  exact_oracle_used_only_for_train_and_development_response_diagnostics: true
+  no_new_10x10_selfplay: true
+  megacorpus_not_consumed: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
