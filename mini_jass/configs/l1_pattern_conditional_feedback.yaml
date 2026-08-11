@@ -1,0 +1,130 @@
+schema: mini_jass.pattern_conditional_feedback.v1
+milestone: M15-C5
+expected_execution_host: User
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+# Fresh after M15-C4 (277001-277024). Probe 278000 is timing-only.
+paired_seeds:
+  [278001, 278002, 278003, 278004, 278005, 278006,
+   278007, 278008, 278009, 278010, 278011, 278012,
+   278013, 278014, 278015, 278016, 278017, 278018,
+   278019, 278020, 278021, 278022, 278023, 278024]
+
+arms:
+  - OUTCOME_G1
+  - CONTEXT_30_G1
+  - OUTCOME_G2
+  - CONTEXT_30_G2_OWN_REPLAY
+  - CONTEXT_30_G2_ON_OUTCOME_REPLAY
+
+feedback:
+  generations: 2
+  games_per_generation: 1024
+  alpha: 0.30
+  target_formula: (1-alpha)*terminal_outcome+alpha*conditional_prediction
+  g1_shared_replay: true
+  g1_shared_initial_model: true
+  g1_shared_explicit_batch_schedule: true
+  g2_each_primary_arm_generates_own_replay: true
+  g2_generation_seed_paired_between_primary_arms: true
+  decomposition_starts_from_context_g1: true
+  decomposition_uses_outcome_g2_replay: true
+  decomposition_and_outcome_share_explicit_batch_schedule: true
+  extra_inference_parameters: 0
+  g1_seed_offset: 1090000
+  g2_seed_offset: 1100000
+
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c5_conditional_wdl_game_folds_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+training_schedule:
+  steps_per_generation: 1024
+  batch_size: 128
+  seed_offset: 1110000
+  g1_explicit_schedule_identical_between_arms: true
+  g2_equal_optimizer_steps: true
+
+strength_arena:
+  pairs: 512
+  seed_base: 1120000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+  paired_starts_across_g1_g2_and_decomposition: true
+
+power_sizing:
+  paired_seed_count: 24
+  estimator: normal_paired_difference_monte_carlo_v1
+  conservative_paired_sd: 0.003
+  minimum_effect_for_power_only: 0.0019
+  estimated_power_ci_above_zero: 0.84
+  minimum_required_power: 0.80
+  gate_has_no_minimum_effect_floor: true
+  rationale: reused_conservative_M15C4_conditional_axis_sizing
+
+scientific_gate:
+  primary_question: does_CONTEXT_30_survive_one_on_policy_feedback_step
+  primary_contrast: CONTEXT_30_G2_OWN_REPLAY_minus_OUTCOME_G2
+  primary_endpoint: development_zero_regret_and_paired_strength
+  paired_confidence_critical_95: 2.0686576104190406
+  require_static_ci_above_zero: true
+  require_strength_ci_above_zero: true
+  minimum_effect_floor: 0.0
+  g1_effect_is_replication_sanity_check: true
+  feedback_distribution_effect_is_mechanistic_decomposition: true
+  automatic_promotion: false
+
+source_evidence:
+  m15c2r:
+    result_hash: d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25
+    status: PASS
+    finding: alpha_30_conditional_signal_replicates
+    retained_target: CONTEXT_30
+    static_operational_ci95: [0.00421143730, 0.00542140596]
+    strength_operational_ci95: [0.00040872808, 0.00188619379]
+  m15c4:
+    job_id: cpx62-1250-mini-jass-pattern-m15c4-v1
+    status: FAIL
+    finding: separate_residual_path_fails_while_conditional_static_signal_survives
+    retained_target: CONTEXT_30
+    conditional_static_ci95: [0.006165, 0.007933]
+    conditional_strength_ci95: [-0.001599, 0.000256]
+  interpretation:
+    auxiliary_head_path_already_rejected: true
+    scalar_conditional_target_is_the_retained_positive_recipe: true
+    missing_question: on_policy_feedback_persistence
+
+probe:
+  seed: 278000
+  expected_nproc: 16
+  overlaps_scientific_seeds: false
+  purpose: HOME_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  exact_oracle_used_only_for_train_and_development_response_diagnostics: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  execution_is_not_queued_by_this_pr: true

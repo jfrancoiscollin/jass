@@ -291,6 +291,19 @@ residual, and the two linear tables collapse before evaluation into one standard
 must pass; descriptive direct and singleton arms cannot rescue them. See
 [`PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md`](PATTERN_M15C4_CONDITIONAL_RESIDUAL_PATH.md).
 
+M15-C4 completed on `cpx62-1250`: the separate residual path failed while the
+conditional static signal survived. `CONTEXT_30` remains the retained recipe.
+
+### 14. M15-C5 — conditional on-policy feedback
+
+M15-C5 follows `OUTCOME` and retained `CONTEXT_30` through two paired
+generations. G1 is a strictly shared-replay comparison; G2 lets each arm
+generate its own replay. A third G2 continuation starts from the context G1
+model but consumes the outcome replay, isolating the distribution-feedback
+term. The primary requires positive static and strength intervals for the
+on-policy G2 contrast, with no effect floor. See
+[`PATTERN_M15C5_CONDITIONAL_FEEDBACK.md`](PATTERN_M15C5_CONDITIONAL_FEEDBACK.md).
+
 ## Conditional continuation
 
 The original conditional ordering has now resolved as follows:
@@ -304,9 +317,9 @@ The original conditional ordering has now resolved as follows:
   `LAMBDA_50` is retained for composition even though it missed the 50%
   major-recovery gate. M15-C2 confirmed the interior conditional dose;
   M15-C2R independently replicated it; M15-C3 closed its naive convex
-  conditional-temporal formula. M15-C4 now tests whether a separate residual
-  optimisation path avoids that interference without changing inference
-  capacity.
+  conditional-temporal formula; M15-C4 rejected a separate residual path.
+  M15-C5 now tests whether retained `CONTEXT_30` survives the state-distribution
+  feedback it creates at the next generation.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining
@@ -316,8 +329,9 @@ The original conditional ordering has now resolved as follows:
   confirmed that direct conditional-target injection is a distinct live
   mechanism; M15-C2 confirmed its dose without reopening the auxiliary-head
   result, M15-C2R replicated that result, M15-C3 rejected the first composition
-  formula, and M15-C4 tests a training-only residual decomposition without
-  reopening the discarded runtime-head mechanism.
+  formula, and M15-C4 rejected a training-only residual decomposition without
+  reopening the discarded runtime-head mechanism. M15-C5 likewise changes
+  targets and replay distribution only; it adds no runtime head.
 
 M18-P cannot settle playing strength because its causal endpoint is static
 development zero-regret. The historical M21 arena evidence cannot settle it
@@ -344,6 +358,8 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3probe
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c3
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c4probe
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m15c4
+mini_jass/jobs/run_pattern_conditional_feedback_home.sh probe
+mini_jass/jobs/run_pattern_conditional_feedback_home.sh full
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m17p2r
@@ -351,6 +367,8 @@ mini_jass/jobs/run_pattern_reconstruction_cpx.sh m18p
 mini_jass/jobs/run_pattern_reconstruction_cpx.sh m21p
 ```
 
-The entrypoint builds the C++ oracle, runs CTest and the full Python suite,
+The entrypoints build the C++ oracle, run CTest and the full Python suite,
 exports an L1 oracle, enforces host `cpx62`, retains the full audit result, and
-publishes a bounded runner summary. No queue file is created by this branch.
+publishes a bounded runner summary. M15-C5 instead enforces HOME hostname
+`User`, `nproc=16` and persistent-venv reuse. No queue file is created by this
+branch.
