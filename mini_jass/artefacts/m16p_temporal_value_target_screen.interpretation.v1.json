@@ -1,0 +1,59 @@
+{
+  "boundaries": {
+    "additional_frozen_test_reads": 0,
+    "automatic_promotion": false,
+    "direct_10x10_transfer_authorized": false,
+    "promotable": false
+  },
+  "experience_status": "POSITIVE",
+  "immutable_source": {
+    "attempt_id": "20260810T225346Z-9c7722b4",
+    "code_sha": "9c7722b445382184408eb5040b94a63e2d6a0869",
+    "job_id": "home-1321-mini-jass-pattern-m16p-retry-v1",
+    "preregistered_finding": "lambda_50_excludes_practical_temporal_recovery",
+    "preregistered_report_status": "FAIL",
+    "protocol_hash": "1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728",
+    "result_hash": "23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385"
+  },
+  "interpretation": {
+    "downstream_decision": "retain_LAMBDA_50_for_composition_and_fresh_strength_confirmation",
+    "finding": "temporal_signal_confirmed_major_recovery_gate_not_met",
+    "major_recovery_gate_status": "NOT_MET",
+    "mechanism_status": "CONFIRMED",
+    "rerun_identically": false
+  },
+  "lambda_50_minus_outcome": {
+    "arena_score_gain": {
+      "ci95": [
+        0.003721584520527308,
+        0.007606540479472692
+      ],
+      "mean": 0.0056640625,
+      "negative_seed_count": 0,
+      "positive_seed_count": 17,
+      "zero_seed_count": 3
+    },
+    "oracle_gain_recovery_fraction": 0.10253456221198287,
+    "required_zero_regret_mean_for_major_recovery": 0.007554698588682687,
+    "value_mae_shift": 0.025707894563674928,
+    "value_sign_gain_shift": -0.04033106553023598,
+    "zero_regret_gain": {
+      "ci95": [
+        0.0009282278025463404,
+        0.0021702430471899166
+      ],
+      "mean": 0.0015492354248681285,
+      "negative_seed_count": 5,
+      "positive_seed_count": 15
+    }
+  },
+  "milestone": "M16-P",
+  "oracle_gap": {
+    "ci95": [
+      0.014240500744453858,
+      0.01597829361027689
+    ],
+    "mean": 0.015109397177365374
+  },
+  "schema": "mini_jass.pattern_temporal_value_target_screen_interpretation.v1"
+}

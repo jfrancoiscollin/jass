@@ -208,6 +208,21 @@ status is `FAIL`, but the result confirms the conditional mechanism rather
 than refuting it. Context-only training was harmful (`-0.0189698` versus
 outcome), locating the useful regime inside the 0-to-50% interval.
 
+### 9bis. M16-P — retained temporal signal
+
+M16-P completed on `home-1321`. `LAMBDA_50 - OUTCOME` improved development
+zero-regret by `+0.0015492` (Student 95% CI
+`[+0.0009282, +0.0021702]`) and its descriptive paired arena by `+0.0056641`
+(`[+0.0037216, +0.0076065]`). It recovered `10.25%` of the replicated exact
+gap, below the preregistered 50% major-recovery target `+0.0075547`.
+
+The experiment is retained as `POSITIVE`: the temporal mechanism is confirmed
+but is not the dominant explanation of the target-noise gap. The immutable
+source report keeps its original gate status and result hash; downstream work
+retains `LAMBDA_50` as a composition candidate requiring fresh-seed strength
+confirmation. It must not be described as an absence of temporal signal or
+rerun identically.
+
 ### 10. M15-C2 — interior conditional-target dose
 
 M15-C2 freezes alpha `0.30` as its sole confirmatory dose and surrounds it with
@@ -226,10 +241,11 @@ The original conditional ordering has now resolved as follows:
 - If M24-P is unsaturated, extend only its dose ladder.
 - If M24-P is saturated but far from the oracle response, test pattern-window
   capacity before interpreting self-play failures.
-- M14-P supported a target-noise effect and M15-P precisely excluded recovery
-  by the frozen root-search target. M15-C confirmed a smaller conditional
-  signal. M15-C2 now tests its interior dose before deciding whether to proceed
-  to the already prepared M16-P temporal factor.
+- M14-P supported a target-noise effect and M15-P precisely excluded major
+  recovery by the frozen root-search target. M15-C confirmed a smaller
+  conditional signal. M16-P independently confirmed a small temporal signal;
+  `LAMBDA_50` is retained for composition even though it missed the 50%
+  major-recovery gate. M15-C2 tests the interior conditional dose.
 - If M17-P advances and compounds, replicate with fresh seeds before extending
   the ladder; if it cannot advance, diagnose the promotion gate first.
 - M18-P and M21-P are complete. After M15-P/M16-P, reconstruct the remaining

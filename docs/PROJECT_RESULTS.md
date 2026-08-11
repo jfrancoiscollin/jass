@@ -479,10 +479,17 @@ séparé deux voies de correction du bruit de cible :
   IC95 `[+0,002464 ; +0,003722]`, 20/20 graines positives. Il manque l'ancien
   seuil pratique `+0,003916`, mais confirme causalement l'information
   conditionnelle dans la cible scalaire.
+- **M16-P (`home-1321`)** : `LAMBDA_50 − OUTCOME` apporte `+0,001549` de
+  zero-regret développement, IC95 `[+0,000928 ; +0,002170]`, et `+0,005664`
+  dans l'arène descriptive appariée, IC95 `[+0,003722 ; +0,007607]`. La piste
+  est conservée comme **expérience positive** : elle confirme un petit signal
+  temporel (`10,25 %` de l'écart oracle) sans atteindre le gate de récupération
+  majoritaire à 50%. Conserver `LAMBDA_50` pour composition et confirmation de
+  force ; ne pas relancer M16-P à l'identique.
 
 La dose conditionnelle pure nuit (`−0,018970` contre WDL), donc la piste active
-n'est pas « plus de contexte », mais un optimum intérieur. **M15-C2** est
-préenregistré sur 20/30/40%, avec 30% comme seul primaire, contrôles permutés
+n'est pas « plus de contexte », mais un optimum intérieur. **M15-C2** est en
+cours sur `cpx62-1240` avec 20/30/40%, 30% comme seul primaire, contrôles permutés
 appariés et verdict de force séparé sur 512 paires. Aucun nouveau read du
 `frozen_test`, aucune promotion et aucun transfert direct au 10×10 ne sont
 autorisés.
