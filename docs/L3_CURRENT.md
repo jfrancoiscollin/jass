@@ -452,13 +452,25 @@ IC95 `[+0,002396 ; +0,003394]`. En force, les gains sont `+0,001538`, IC95
 force directe contre 30% (`+0,000098`, IC95
 `[-0,000419 ; +0,000615]`) : la dose retenue reste donc **30%**.
 
-📌 **M15-C3 PRÉENREGISTRÉ, PAS EN FILE.** Vingt-quatre graines fraîches testent
-la composition `0,70*LAMBDA_50 + 0,30*contexte` dans un plan à six bras. La
-porte primaire exige à la fois que le temporel ajoute au conditionnel 30% et
-que l'alignement conditionnel reste causal sous fond temporel, en statique et
-en force. Les effets de puissance ne sont pas des planchers de décision. Aucun
-nouveau read de `frozen_test`, aucune promotion et aucun transfert direct au
-10×10 ne sont autorisés.
+📌 **M15-C3 TERMINÉ : LA COMPOSITION CONVEXE INTERFÈRE.** Sur `cpx62-1244`, la
+porte primaire passe 2 axes sur 4. `COMPOSED_30 − CONTEXT_30` est négatif en
+statique (`−0,007067`, IC95 `[−0,007661 ; −0,006472]`) mais positif en force
+(`+0,002380`, `[+0,001337 ; +0,003423]`). L'attribution conditionnelle sous
+composition est positive en statique (`+0,005982`,
+`[+0,004857 ; +0,007107]`) mais négative en force (`−0,001017`,
+`[−0,001965 ; −0,000070]`). Les deux informations restent donc actives, mais
+la formule `0,70*LAMBDA_50 + 0,30*contexte` ne préserve pas simultanément leurs
+effets incrémentaux. Cette formule est close et `CONTEXT_30` reste retenu.
+
+📌 **M15-C4 PRÉENREGISTRÉ, PAS EN FILE.** Le nouveau facteur conserve
+`LAMBDA_50` entier et ajoute la correction
+`0,30*(contexte−WDL)`. À cible finale identique, il compare un fit direct de
+2 048 pas à une base temporelle de 1 024 pas gelée puis un résidu conditionnel
+de 1 024 pas. Un contrôle mélangé attribue l'information conditionnelle. Les
+deux tables sont fusionnées avant l'arène en un seul `PatternEval`, sans
+paramètre d'inférence supplémentaire. Vingt-quatre graines fraîches donnent
+au moins 83,6% de puissance par axe ; aucun effet de puissance n'est un seuil
+de décision. Le probe `277000` reste soumis à un GO post-sizing séparé.
 
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de

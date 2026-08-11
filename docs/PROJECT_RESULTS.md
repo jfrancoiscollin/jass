@@ -497,8 +497,15 @@ zéro. **M15-C2R (`cpx62-1242`) réplique indépendamment 30%** sur les quatre
 axes : statique `+0,006379` contre permutation et `+0,002895` contre WDL ;
 force `+0,001538` et `+0,002051`, avec les quatre IC95 strictement positifs.
 Alpha 40% bat 30% en statique (`+0,001506`) mais pas en force (`+0,000098`,
-IC95 `[-0,000419 ; +0,000615]`) ; 30% reste la dose retenue. M15-C3 compose
-désormais ce 30% avec `LAMBDA_50` dans un plan factoriel causal à six bras.
+IC95 `[-0,000419 ; +0,000615]`) ; 30% reste la dose retenue. **M15-C3
+(`cpx62-1244`) ferme sa composition convexe** : l'incrément temporel est
+négatif en statique (`−0,007067`) malgré un gain de force (`+0,002380`), tandis
+que l'attribution conditionnelle est positive en statique (`+0,005982`) mais
+négative en force (`−0,001017`) ; les quatre IC95 excluent zéro dans ces sens.
+La formule dilue donc un signal en tentant d'ajouter l'autre et `CONTEXT_30`
+reste retenu. M15-C4 est le test causal suivant : même cible additive finale,
+mais base temporelle et résidu conditionnel optimisés séparément puis fusionnés
+algébriquement en un unique `PatternEval` sans capacité supplémentaire.
 Aucun nouveau read du `frozen_test`, aucune promotion et aucun transfert direct
 au 10×10 ne sont autorisés.
 

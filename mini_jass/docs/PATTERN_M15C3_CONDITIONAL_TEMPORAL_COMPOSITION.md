@@ -1,6 +1,6 @@
 # M15-C3 — conditional and temporal target composition
 
-Status: preregistered and implemented; not queued by this PR.
+Status: completed on `cpx62-1244`; primary FAIL, `CONTEXT_30` retained.
 
 ## Frozen question
 
@@ -69,3 +69,18 @@ deviations. All six arms receive 512 paired common-start arenas per seed.
 The probe seed `276000` is timing-only and cannot publish scientific metrics.
 M15-C3 reads train and development only. It authorizes no additional
 `frozen_test` read, automatic promotion or direct 10x10 transfer.
+
+## Result
+
+The primary passed two axes and failed two. The temporal increment was negative
+in static response (`-0.007067`, 95% CI `[-0.007661, -0.006472]`) but positive
+in strength (`+0.002380`, `[+0.001337, +0.003423]`). Conditional attribution
+was positive in static response (`+0.005982`, `[+0.004857, +0.007107]`) but
+negative in strength (`-0.001017`, `[-0.001965, -0.000070]`).
+
+Thus both sources still carry signal, but this convex formula does not preserve
+both incremental effects simultaneously. The formula is closed and
+`CONTEXT_30` remains incumbent. Result hash
+`be36b212e495c004dcc44e31a98f1968bce68ed32264cd9660a27cb0761aed87`.
+M15-C4 tests a different factor: a whole temporal target plus a separately
+optimised conditional residual that collapses back into one `PatternEval`.

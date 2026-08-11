@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M15-C2/M15-C2R: screen and replicate conditional-target doses."""
+"""M15-C2 through M15-C4: conditional-target causal screens."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ sys.path.insert(0, str(TOOLS))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "python"))
 
 import numpy as np  # noqa: E402
+import torch  # noqa: E402
 import yaml  # noqa: E402
 
 import mini_jass_lab.loop as loop_module  # noqa: E402
@@ -33,6 +34,7 @@ from mini_jass_lab.context import context_matrix  # noqa: E402
 from mini_jass_lab.game_graph import GameGraph  # noqa: E402
 from mini_jass_lab.model_factory import build_model, model_descriptor  # noqa: E402
 from mini_jass_lab.oracle import load_oracle  # noqa: E402
+from mini_jass_lab.pattern_eval import PatternEval  # noqa: E402
 from mini_jass_lab.pattern_reconstruction import (  # noqa: E402
     assert_pattern_value_model,
     digest,
@@ -41,6 +43,12 @@ from mini_jass_lab.pattern_reconstruction import (  # noqa: E402
     replay_fingerprint,
     response_metrics,
     solved_tensors,
+)
+from mini_jass_lab.pattern_residual import (  # noqa: E402
+    collapse_pattern_evals,
+    combined_values,
+    train_residual_path,
+    zero_pattern_eval_like,
 )
 from mini_jass_lab.replay import ReplaySample  # noqa: E402
 from mini_jass_lab.selfplay import generate_self_play  # noqa: E402
@@ -65,6 +73,8 @@ COMPOSITION_SCHEMA = "mini_jass.pattern_conditional_temporal_composition.v1"
 COMPOSITION_PROBE_SCHEMA = (
     "mini_jass.pattern_conditional_temporal_composition_probe.v1"
 )
+RESIDUAL_SCHEMA = "mini_jass.pattern_conditional_residual_path.v1"
+RESIDUAL_PROBE_SCHEMA = "mini_jass.pattern_conditional_residual_path_probe.v1"
 ARM_ORDER = (
     "OUTCOME",
     "SHUFFLED_CONTEXT_20",
@@ -138,6 +148,36 @@ COMPOSITION_CONTRASTS = {
 }
 COMPOSITION_ARENA_CONTRASTS = COMPOSITION_CONTRASTS
 
+RESIDUAL_ARM_ORDER = (
+    "OUTCOME",
+    "LAMBDA_50",
+    "CONTEXT_30",
+    "SHUFFLED_ADDITIVE_30",
+    "ADDITIVE_30",
+    "SHUFFLED_RESIDUAL_30",
+    "RESIDUAL_30",
+)
+RESIDUAL_DIRECT_ARMS = (
+    "OUTCOME",
+    "LAMBDA_50",
+    "CONTEXT_30",
+    "SHUFFLED_ADDITIVE_30",
+    "ADDITIVE_30",
+)
+RESIDUAL_PATH_ARMS = ("SHUFFLED_RESIDUAL_30", "RESIDUAL_30")
+RESIDUAL_ARENA_ARMS = RESIDUAL_ARM_ORDER
+RESIDUAL_CONTRASTS = {
+    "pathway_attribution": ("RESIDUAL_30", "ADDITIVE_30"),
+    "conditional_attribution": ("RESIDUAL_30", "SHUFFLED_RESIDUAL_30"),
+    "direct_conditional_attribution": ("ADDITIVE_30", "SHUFFLED_ADDITIVE_30"),
+    "residual_vs_context": ("RESIDUAL_30", "CONTEXT_30"),
+    "residual_vs_temporal": ("RESIDUAL_30", "LAMBDA_50"),
+    "residual_vs_outcome": ("RESIDUAL_30", "OUTCOME"),
+    "context_operational": ("CONTEXT_30", "OUTCOME"),
+    "temporal_operational": ("LAMBDA_50", "OUTCOME"),
+}
+RESIDUAL_ARENA_CONTRASTS = RESIDUAL_CONTRASTS
+
 EXPECTED_M15C_PROTOCOL = "74dc555948e0191c09814098918c35e2e23935cf6ff44801c6c09165ad97502d"
 EXPECTED_M15C_RESULT = "b63008f3e685c5cf20ae18af4e389fa8f7308ae31aa6525e549244f6f80e499d"
 EXPECTED_M15C2_PROTOCOL = "b561f1feab4b21012a80f1e3c5e402bacfccded37ccc738020c47e065a0662bf"
@@ -153,7 +193,9 @@ def _resolve(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         return _resolve_replication(path, config)
     if identity == (COMPOSITION_SCHEMA, "M15-C3"):
         return _resolve_composition(path, config)
-    raise ValueError("unexpected M15-C2/M15-C2R/M15-C3 schema")
+    if identity == (RESIDUAL_SCHEMA, "M15-C4"):
+        return _resolve_residual(path, config)
+    raise ValueError("unexpected M15-C2/M15-C2R/M15-C3/M15-C4 schema")
 
 
 def _resolve_m15c2(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -784,6 +826,234 @@ def _resolve_composition(
     return deepcopy(config), loop
 
 
+def _resolve_residual(
+    path: Path, config: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Fail closed on the preregistered M15-C4 causal contrast."""
+
+    if tuple(config.get("arms", [])) != RESIDUAL_ARM_ORDER:
+        raise ValueError("M15-C4 arms changed after preregistration")
+    seeds = [int(seed) for seed in config.get("paired_seeds", [])]
+    if seeds != list(range(277001, 277025)):
+        raise ValueError("M15-C4 paired seeds changed or overlap prior evidence")
+    probe = config.get("probe", {})
+    if (
+        int(probe.get("seed", -1)) != 277000
+        or probe.get("overlaps_scientific_seeds") is not False
+        or probe.get("purpose") != "cpx62_runtime_calibration_only"
+        or probe.get("reporting") != "timing_and_contract_only"
+        or probe.get("scientific_metrics_must_not_be_published") is not True
+    ):
+        raise ValueError("M15-C4 probe contract changed")
+
+    evidence = config.get("source_evidence", {})
+    m15c2r = evidence.get("m15c2r", {})
+    m16p = evidence.get("m16p", {})
+    m15c3 = evidence.get("m15c3", {})
+    if (
+        m15c2r.get("protocol_hash")
+        != "f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e"
+        or m15c2r.get("result_hash")
+        != "d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25"
+        or m15c2r.get("status") != "PASS"
+        or float(m15c2r.get("retained_alpha", -1.0)) != 0.30
+        or m16p.get("protocol_hash")
+        != "1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728"
+        or m16p.get("result_hash")
+        != "23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385"
+        or m16p.get("retained_experience_status") != "POSITIVE"
+        or m16p.get("retained_target") != "LAMBDA_50"
+        or m15c3.get("protocol_hash")
+        != "dcce0fb1a6798c8bc57273b616d6f5299211b86ac1421fb02875e0d71da83702"
+        or m15c3.get("result_hash")
+        != "be36b212e495c004dcc44e31a98f1968bce68ed32264cd9660a27cb0761aed87"
+        or m15c3.get("status") != "FAIL"
+        or m15c3.get("finding")
+        != "composition_does_not_preserve_both_incremental_signals"
+        or m15c3.get("decision")
+        != "retain_CONTEXT_30_and_close_this_composition_formula"
+        or m15c3.get("retained_target") != "CONTEXT_30"
+        or m15c3.get("fresh_context_confirmation_status") != "PASS"
+        or m15c3.get("fresh_temporal_confirmation_status") != "FAIL"
+    ):
+        raise ValueError("M15-C4 source evidence is not frozen")
+
+    replay = config.get("replay", {})
+    if (
+        replay.get("source") != "G1_WIDE_OUTCOME"
+        or int(replay.get("games_per_seed", 0)) != 1024
+        or int(replay.get("generation", 0)) != 1
+        or int(replay.get("seed_offset", 0)) != 1060000
+        or replay.get("row_selection") != "all_generated_train_rows"
+        or replay.get("temporal_returns_built_before_train_row_filter") is not True
+        or replay.get("immutable_structure_across_arms") is not True
+    ):
+        raise ValueError("M15-C4 replay contract changed")
+    mapping = config.get("conditional_mapping", {})
+    if (
+        mapping.get("family") != "odd_tanh_linear_wdl_oof_v1"
+        or int(mapping.get("fold_count", 0)) != 5
+        or mapping.get("fold_unit") != "complete_game"
+        or mapping.get("fold_assignment") != "sha256_rank_round_robin_v1"
+        or mapping.get("fold_namespace") != "m15c4_conditional_wdl_game_folds_v1"
+        or mapping.get("shuffle_control")
+        != "within_fold_hash_order_rotate_one_v1"
+        or mapping.get("shuffle_namespace") != "m15c4_conditional_shuffle_v1"
+        or mapping.get("initialization") != "zero"
+        or mapping.get("training_label") != "terminal_selfplay_wdl"
+        or mapping.get("oracle_training_signal") is not False
+        or mapping.get("manual_coefficients_used") is not False
+        or float(mapping.get("ridge", -1.0)) != 1.0e-4
+        or int(mapping.get("max_iterations", 0)) != 64
+        or float(mapping.get("tolerance", -1.0)) != 1.0e-10
+        or int(mapping.get("line_search_steps", 0)) != 24
+    ):
+        raise ValueError("M15-C4 conditional mapping changed")
+    temporal = config.get("temporal_target", {})
+    if (
+        temporal.get("source") != "temporal_lambda_return"
+        or float(temporal.get("lambda", -1.0)) != 0.50
+        or temporal.get("successor_bootstrap") != "negated_successor_root_score"
+        or temporal.get("recurrence")
+        != "-((1-lambda)*successor_search+lambda*successor_return)"
+        or temporal.get("terminal_or_last_sample_fallback")
+        != "terminal_selfplay_wdl"
+        or temporal.get("search_score_clip") != [-1.0, 1.0]
+        or temporal.get("complete_trajectory_grouping") is not True
+        or temporal.get("contiguous_ply_required") is not True
+        or temporal.get("full_generated_trace_used_before_train_filter") is not True
+        or temporal.get("oracle_training_signal") is not False
+    ):
+        raise ValueError("M15-C4 temporal target changed")
+    residual = config.get("conditional_residual_path", {})
+    if (
+        float(residual.get("alpha", -1.0)) != 0.30
+        or residual.get("context_formula")
+        != "0.70*outcome+0.30*conditional_prediction"
+        or residual.get("additive_formula")
+        != "clip(lambda_50+0.30*(conditional_prediction-outcome),-1,1)"
+        or residual.get("shuffled_control_uses_same_formula") is not True
+        or residual.get("direct_and_residual_targets_identical") is not True
+        or residual.get("base_target") != "LAMBDA_50"
+        or residual.get("base_frozen_during_residual_stage") is not True
+        or residual.get("residual_initialization") != "zero"
+        or residual.get("collapse_rule")
+        != "add_linear_weights_and_bias_before_inference"
+        or residual.get("collapsed_inference_architecture")
+        != "folded_pattern_value"
+        or int(residual.get("extra_inference_parameters", -1)) != 0
+        or residual.get("every_target_bounded") is not True
+        or residual.get("every_target_oracle_blind") is not True
+    ):
+        raise ValueError("M15-C4 residual path changed")
+
+    gate = config.get("scientific_gate", {})
+    required_gate_flags = (
+        "require_RESIDUAL_30_minus_ADDITIVE_30_static_ci_above_zero",
+        "require_RESIDUAL_30_minus_ADDITIVE_30_strength_ci_above_zero",
+        "require_RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30_static_ci_above_zero",
+        "require_RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30_strength_ci_above_zero",
+        "direct_additive_and_singletons_cannot_rescue_primary",
+        "selection_requires_RESIDUAL_30_minus_CONTEXT_30_static_ci_above_zero",
+        "selection_requires_RESIDUAL_30_minus_CONTEXT_30_strength_ci_above_zero",
+        "selection_requires_RESIDUAL_30_minus_LAMBDA_50_static_ci_above_zero",
+        "selection_requires_RESIDUAL_30_minus_LAMBDA_50_strength_ci_above_zero",
+        "selection_requires_RESIDUAL_30_minus_OUTCOME_static_ci_above_zero",
+        "selection_requires_RESIDUAL_30_minus_OUTCOME_strength_ci_above_zero",
+        "otherwise_retain_incumbent_CONTEXT_30",
+    )
+    if (
+        gate.get("primary_question")
+        != "separate_residual_path_preserves_conditional_and_temporal_signals"
+        or gate.get("primary_endpoint")
+        != "development_zero_regret_gain_and_paired_strength"
+        or float(gate.get("paired_confidence_critical_95", -1.0))
+        != 2.0686576104190406
+        or float(gate.get("minimum_effect_floor", -1.0)) != 0.0
+        or any(gate.get(name) is not True for name in required_gate_flags)
+        or gate.get("automatic_promotion") is not False
+    ):
+        raise ValueError("M15-C4 scientific gate changed")
+
+    expected_power = {
+        "pathway_attribution_static": (44120260822, 0.0035, 0.0022, 0.83753),
+        "pathway_attribution_strength": (44120260823, 0.0035, 0.0022, 0.83698),
+        "conditional_attribution_static": (44120260824, 0.003, 0.0019, 0.84394),
+        "conditional_attribution_strength": (44120260825, 0.003, 0.0019, 0.84403),
+    }
+    for name, (power_seed, sd, effect, estimate) in expected_power.items():
+        cell = config.get("power_sizing", {}).get(name, {})
+        if (
+            int(cell.get("repetitions", 0)) != 100000
+            or int(cell.get("seed", 0)) != power_seed
+            or int(cell.get("paired_seed_count", 0)) != len(seeds)
+            or float(cell.get("conservative_paired_sd", -1.0)) != sd
+            or float(cell.get("minimum_effect_for_power_only", -1.0)) != effect
+            or float(cell.get("minimum_effect", -1.0)) != effect
+            or float(cell.get("paired_confidence_critical_95", -1.0))
+            != 2.0686576104190406
+            or cell.get("gate_has_no_minimum_effect_floor") is not True
+        ):
+            raise ValueError(f"M15-C4 {name} power contract changed")
+        observed = estimate_power(cell)
+        if not math.isclose(observed, estimate, rel_tol=0.0, abs_tol=5.0e-6):
+            raise ValueError(f"M15-C4 {name} frozen power did not reproduce")
+        if observed < float(cell.get("minimum_required_power", 1.0)):
+            raise ValueError(f"M15-C4 {name} is underpowered before training")
+
+    boundaries = config.get("boundaries", {})
+    if (
+        boundaries.get("cohorts_read") != ["train", "development"]
+        or boundaries.get("cohorts_never_read_by_this_cell") != ["frozen_test"]
+        or int(boundaries.get("existing_frozen_test_read_count", -1)) != 1
+        or int(boundaries.get("additional_frozen_test_reads_authorized", -1)) != 0
+        or boundaries.get("all_training_targets_oracle_blind") is not True
+        or boundaries.get("automatic_selection_or_promotion") is not False
+        or boundaries.get("promotable") is not False
+        or boundaries.get("production_jass_changes_authorized") is not False
+        or boundaries.get("direct_10x10_transfer_authorized") is not False
+        or boundaries.get("execution_is_not_queued_by_this_pr") is not True
+    ):
+        raise ValueError("M15-C4 crossed a scientific boundary")
+
+    root = path.resolve().parent.parent
+    loop = yaml.safe_load((root / config["base_loop_config"]).read_text(encoding="utf-8"))
+    schedule = config.get("training_schedule", {})
+    if (
+        loop.get("schema") != "mini_jass.selfplay.v1"
+        or loop["model"].get("architecture") != "folded_pattern_value"
+        or float(loop["training"]["policy_weight"]) != 0.0
+        or int(schedule.get("total_steps_per_arm", 0)) != 2048
+        or int(schedule.get("direct_steps", 0)) != 2048
+        or int(schedule.get("residual_base_steps", 0)) != 1024
+        or int(schedule.get("residual_correction_steps", 0)) != 1024
+        or int(schedule.get("batch_size", 0)) != int(loop["training"]["batch_size"])
+        or int(schedule.get("seed_offset", 0)) != 1070000
+        or any(
+            schedule.get(name) is not True
+            for name in (
+                "explicit_shared_schedule",
+                "residual_stages_partition_shared_schedule",
+                "residual_base_shared_between_aligned_and_shuffled",
+                "equal_effective_optimizer_steps_per_arm",
+            )
+        )
+    ):
+        raise ValueError("M15-C4 training schedule changed")
+    arena = config.get("strength_arena", {})
+    if (
+        tuple(arena.get("arms", [])) != RESIDUAL_ARENA_ARMS
+        or int(arena.get("pairs", 0)) != 512
+        or int(arena.get("seed_base", 0)) != 1080000
+        or float(arena.get("epsilon", -1.0)) != 0.0
+        or arena.get("confidence_unit") != "pairs"
+        or arena.get("start_state_source") != "development"
+        or arena.get("role") != "confirmatory_conditional_residual_path"
+    ):
+        raise ValueError("M15-C4 strength arena changed")
+    return deepcopy(config), loop
+
+
 def build_target_arms(
     samples: list[ReplaySample],
     conditional_predictions: np.ndarray,
@@ -920,6 +1190,103 @@ def build_composition_target_arms(
         "structure_fingerprints": structures,
         "targets": target_metrics,
         "all_targets_convex_and_bounded": True,
+        "all_targets_oracle_blind": True,
+    }
+
+
+def build_residual_target_arms(
+    samples: list[ReplaySample],
+    temporal_samples: list[ReplaySample],
+    conditional_predictions: np.ndarray,
+    shuffled_predictions: np.ndarray,
+    exact_values: np.ndarray,
+) -> tuple[dict[str, list[ReplaySample]], dict[str, Any]]:
+    """Keep the temporal target whole and add only the conditional correction."""
+
+    if len(samples) != len(temporal_samples) or not samples:
+        raise ValueError("M15-C4 temporal and outcome rows must align")
+    for outcome_row, temporal_row in zip(samples, temporal_samples, strict=True):
+        if (
+            int(outcome_row.state_id) != int(temporal_row.state_id)
+            or int(outcome_row.game_id) != int(temporal_row.game_id)
+            or int(outcome_row.ply) != int(temporal_row.ply)
+        ):
+            raise ValueError("M15-C4 temporal row identity diverged")
+
+    outcomes = np.asarray(
+        [sample.value_target for sample in samples], dtype=np.float64
+    )
+    temporal = np.asarray(
+        [sample.value_target for sample in temporal_samples], dtype=np.float64
+    )
+    conditional = np.asarray(conditional_predictions, dtype=np.float64)
+    shuffled = np.asarray(shuffled_predictions, dtype=np.float64)
+    expected_shape = (len(samples),)
+    components = (outcomes, temporal, conditional, shuffled)
+    if any(component.shape != expected_shape for component in components):
+        raise ValueError("M15-C4 target components must align with replay rows")
+    if any(not np.all(np.isfinite(component)) for component in components):
+        raise ValueError("M15-C4 target components must be finite")
+    if any(np.any(np.abs(component) > 1.0) for component in components):
+        raise ValueError("M15-C4 target component left the WDL range")
+
+    additive = np.clip(temporal + 0.30 * (conditional - outcomes), -1.0, 1.0)
+    shuffled_additive = np.clip(
+        temporal + 0.30 * (shuffled - outcomes), -1.0, 1.0
+    )
+    values: dict[str, np.ndarray] = {
+        "OUTCOME": outcomes,
+        "LAMBDA_50": temporal,
+        "CONTEXT_30": 0.70 * outcomes + 0.30 * conditional,
+        "SHUFFLED_ADDITIVE_30": shuffled_additive,
+        "ADDITIVE_30": additive,
+        "SHUFFLED_RESIDUAL_30": shuffled_additive,
+        "RESIDUAL_30": additive,
+    }
+    if any(np.any(np.abs(target) > 1.0) for target in values.values()):
+        raise RuntimeError("M15-C4 bounded target left the WDL range")
+    arms = {
+        arm: [
+            replace(sample, value_target=float(value))
+            for sample, value in zip(samples, values[arm], strict=True)
+        ]
+        for arm in RESIDUAL_ARM_ORDER
+    }
+    structures = {arm: _sample_structure_fingerprint(rows) for arm, rows in arms.items()}
+    if len(set(structures.values())) != 1:
+        raise RuntimeError("M15-C4 target arms changed replay structure")
+    if replay_fingerprint(arms["ADDITIVE_30"]) != replay_fingerprint(
+        arms["RESIDUAL_30"]
+    ) or replay_fingerprint(arms["SHUFFLED_ADDITIVE_30"]) != replay_fingerprint(
+        arms["SHUFFLED_RESIDUAL_30"]
+    ):
+        raise RuntimeError("M15-C4 direct and residual targets diverged")
+
+    state_ids = np.asarray([sample.state_id for sample in samples], dtype=np.int64)
+    exact = np.asarray(exact_values)[state_ids].astype(np.float64)
+    target_metrics = {
+        arm: {
+            "sample_count": len(samples),
+            "value_mae_vs_exact_train": float(np.mean(np.abs(values[arm] - exact))),
+            "value_exact_rate_vs_exact_train": float(np.mean(values[arm] == exact)),
+            "changed_from_outcome_fraction": float(np.mean(values[arm] != outcomes)),
+            "target_mean": float(values[arm].mean()),
+            "target_standard_deviation": float(values[arm].std(ddof=0)),
+        }
+        for arm in RESIDUAL_ARM_ORDER
+    }
+    return arms, {
+        "shared_structure_fingerprint": next(iter(structures.values())),
+        "structure_fingerprints": structures,
+        "targets": target_metrics,
+        "direct_and_residual_targets_identical": True,
+        "aligned_clip_fraction": float(
+            np.mean(additive != temporal + 0.30 * (conditional - outcomes))
+        ),
+        "shuffled_clip_fraction": float(
+            np.mean(shuffled_additive != temporal + 0.30 * (shuffled - outcomes))
+        ),
+        "all_targets_bounded": True,
         "all_targets_oracle_blind": True,
     }
 
@@ -1292,7 +1659,103 @@ def build_composition_recommendation(
     }
 
 
+def build_residual_recommendation(
+    contrasts: dict[str, Any], arena_contrasts: dict[str, Any]
+) -> dict[str, Any]:
+    def static(name: str) -> dict[str, Any]:
+        return contrasts[name]["zero_regret_gain"]
+
+    def strength(name: str) -> dict[str, Any]:
+        return arena_contrasts[name]["arena_score_minus_half"]
+
+    pathway_axes = [static("pathway_attribution"), strength("pathway_attribution")]
+    conditional_axes = [
+        static("conditional_attribution"),
+        strength("conditional_attribution"),
+    ]
+    primary_status = _group_status(pathway_axes + conditional_axes)
+    selection_axes = [
+        static("residual_vs_context"),
+        strength("residual_vs_context"),
+        static("residual_vs_temporal"),
+        strength("residual_vs_temporal"),
+        static("residual_vs_outcome"),
+        strength("residual_vs_outcome"),
+    ]
+    selection_status = _group_status(selection_axes)
+    common = {
+        "primary_status": primary_status,
+        "pathway_attribution_status": _group_status(pathway_axes),
+        "conditional_attribution_status": _group_status(conditional_axes),
+        "selection_status": selection_status,
+        "pathway_attribution_static": static("pathway_attribution"),
+        "pathway_attribution_strength": strength("pathway_attribution"),
+        "conditional_attribution_static": static("conditional_attribution"),
+        "conditional_attribution_strength": strength("conditional_attribution"),
+        "direct_conditional_attribution_static": static(
+            "direct_conditional_attribution"
+        ),
+        "direct_conditional_attribution_strength": strength(
+            "direct_conditional_attribution"
+        ),
+        "residual_vs_context_static": static("residual_vs_context"),
+        "residual_vs_context_strength": strength("residual_vs_context"),
+        "residual_vs_temporal_static": static("residual_vs_temporal"),
+        "residual_vs_temporal_strength": strength("residual_vs_temporal"),
+        "residual_vs_outcome_static": static("residual_vs_outcome"),
+        "residual_vs_outcome_strength": strength("residual_vs_outcome"),
+        "minimum_effect_floor": 0.0,
+        "direct_additive_and_singletons_can_rescue_primary": False,
+        "collapsed_inference_architecture": "folded_pattern_value",
+        "extra_inference_parameters": 0,
+        "promotable": False,
+    }
+    if primary_status == "FAIL":
+        return {
+            **common,
+            "status": "FAIL",
+            "retained_target": "CONTEXT_30",
+            "finding": "separate_residual_path_does_not_preserve_both_signals",
+            "decision": "retain_CONTEXT_30_and_close_this_residual_formula",
+        }
+    if primary_status == "INCONCLUSIVE":
+        return {
+            **common,
+            "status": "INCONCLUSIVE",
+            "retained_target": "CONTEXT_30",
+            "finding": "separate_residual_path_is_not_precise",
+            "decision": "power_size_only_the_unresolved_primary_axis",
+        }
+    if selection_status == "PASS":
+        return {
+            **common,
+            "status": "PASS",
+            "retained_target": "RESIDUAL_30",
+            "finding": "separate_residual_path_preserves_and_combines_both_signals",
+            "decision": "prepare_independent_RESIDUAL_30_replication",
+        }
+    return {
+        **common,
+        "status": "PASS",
+        "retained_target": "CONTEXT_30",
+        "finding": "residual_mechanism_passes_without_full_singleton_dominance",
+        "decision": "retain_CONTEXT_30_without_automatic_residual_selection",
+    }
+
+
 def _experiment_spec(config: dict[str, Any]) -> dict[str, Any]:
+    if config["milestone"] == "M15-C4":
+        return {
+            "schema": RESIDUAL_SCHEMA,
+            "probe_schema": RESIDUAL_PROBE_SCHEMA,
+            "milestone": "M15-C4",
+            "probe_milestone": "M15-C4-PROBE",
+            "arm_order": RESIDUAL_ARM_ORDER,
+            "doses": (),
+            "arena_arms": RESIDUAL_ARENA_ARMS,
+            "contrasts": RESIDUAL_CONTRASTS,
+            "arena_contrasts": RESIDUAL_ARENA_CONTRASTS,
+        }
     if config["milestone"] == "M15-C3":
         return {
             "schema": COMPOSITION_SCHEMA,
@@ -1391,12 +1854,16 @@ def _write_progress(
     rate = completed / (elapsed / 60.0)
     payload = {
         "schema": (
-            "mini_jass.pattern_conditional_temporal_composition_progress.v1"
-            if milestone == "M15-C3"
+            "mini_jass.pattern_conditional_residual_path_progress.v1"
+            if milestone == "M15-C4"
             else (
-                "mini_jass.pattern_conditional_dose_replication_progress.v1"
-                if milestone == "M15-C2R"
-                else "mini_jass.pattern_conditional_dose_screen_progress.v1"
+                "mini_jass.pattern_conditional_temporal_composition_progress.v1"
+                if milestone == "M15-C3"
+                else (
+                    "mini_jass.pattern_conditional_dose_replication_progress.v1"
+                    if milestone == "M15-C2R"
+                    else "mini_jass.pattern_conditional_dose_screen_progress.v1"
+                )
             )
         ),
         "milestone": milestone,
@@ -1448,7 +1915,11 @@ def run_m15c2(
     response_batch = int(base_loop["development"]["batch_size"])
 
     schedule_config = config["training_schedule"]
-    steps = int(schedule_config["total_steps"])
+    steps = int(
+        schedule_config[
+            "total_steps_per_arm" if milestone == "M15-C4" else "total_steps"
+        ]
+    )
     batch_size = int(schedule_config["batch_size"])
     schedule_offset = int(schedule_config["seed_offset"])
     arena_spec = config["strength_arena"]
@@ -1523,7 +1994,7 @@ def run_m15c2(
             namespace=str(mapping_spec["shuffle_namespace"]),
         )
         temporal_contract: dict[str, Any] | None = None
-        if milestone == "M15-C3":
+        if milestone in {"M15-C3", "M15-C4"}:
             temporal_arms, raw_temporal_contract = build_temporal_target_arms(
                 generated.samples,
                 generated.metrics["search_trace"],
@@ -1531,14 +2002,23 @@ def run_m15c2(
                 train_mask,
             )
             if len(temporal_arms["LAMBDA_50"]) != len(train_samples):
-                raise RuntimeError("M15-C3 temporal train-row filter diverged")
-            arms, replay_contract = build_composition_target_arms(
-                train_samples,
-                temporal_arms["LAMBDA_50"],
-                cross_fit["conditional_predictions"],
-                shuffled["predictions"],
-                oracle.values,
-            )
+                raise RuntimeError(f"{milestone} temporal train-row filter diverged")
+            if milestone == "M15-C4":
+                arms, replay_contract = build_residual_target_arms(
+                    train_samples,
+                    temporal_arms["LAMBDA_50"],
+                    cross_fit["conditional_predictions"],
+                    shuffled["predictions"],
+                    oracle.values,
+                )
+            else:
+                arms, replay_contract = build_composition_target_arms(
+                    train_samples,
+                    temporal_arms["LAMBDA_50"],
+                    cross_fit["conditional_predictions"],
+                    shuffled["predictions"],
+                    oracle.values,
+                )
             temporal_contract = {
                 key: value
                 for key, value in raw_temporal_contract.items()
@@ -1562,10 +2042,13 @@ def run_m15c2(
 
         models: dict[str, Any] = {}
         arm_rows: dict[str, Any] = {}
-        for arm in arm_order:
-            model, training, arm_initial_hash = _fit(
-                base_loop, graph, arms[arm], schedule, fit_seed
-            )
+        def record_arm(
+            arm: str,
+            model: Any,
+            training: dict[str, Any],
+            arm_initial_hash: str,
+            path_contract: dict[str, Any] | None = None,
+        ) -> None:
             if arm_initial_hash != initial_hash:
                 raise RuntimeError(
                     f"{milestone} arms did not share the initial PatternEval"
@@ -1590,7 +2073,98 @@ def run_m15c2(
                 "trained_model_hash": _model_state_hash(model),
                 "oracle_training_signal": False,
                 "promotable": False,
+                **({"path_contract": path_contract} if path_contract else {}),
             }
+
+        if milestone == "M15-C4":
+            for arm in RESIDUAL_DIRECT_ARMS:
+                model, training, arm_initial_hash = _fit(
+                    base_loop, graph, arms[arm], schedule, fit_seed
+                )
+                record_arm(arm, model, training, arm_initial_hash)
+
+            base_steps = int(schedule_config["residual_base_steps"])
+            correction_steps = int(schedule_config["residual_correction_steps"])
+            if base_steps + correction_steps != steps:
+                raise RuntimeError("M15-C4 residual stages do not partition the schedule")
+            residual_base, base_training, base_initial_hash = _fit(
+                base_loop,
+                graph,
+                arms["LAMBDA_50"],
+                schedule[:base_steps],
+                fit_seed,
+            )
+            if not isinstance(residual_base, PatternEval):
+                raise RuntimeError("M15-C4 residual base is not PatternEval")
+            if base_initial_hash != initial_hash:
+                raise RuntimeError("M15-C4 residual base initialization diverged")
+            residual_base_hash = _model_state_hash(residual_base)
+            collapse_features = tensors["features"]
+            for arm in RESIDUAL_PATH_ARMS:
+                seed_everything(fit_seed, int(base_loop["runtime"]["threads"]))
+                residual = zero_pattern_eval_like(initial)
+                residual_initial_hash = _model_state_hash(residual)
+                if residual_initial_hash != initial_hash:
+                    raise RuntimeError("M15-C4 residual initialization is not zero-paired")
+                correction_training = train_residual_path(
+                    residual_base,
+                    residual,
+                    graph,
+                    arms[arm],
+                    schedule[base_steps:],
+                    float(base_loop["training"]["learning_rate"]),
+                    float(base_loop["training"]["weight_decay"]),
+                )
+                if int(correction_training["steps"]) != correction_steps:
+                    raise RuntimeError("M15-C4 residual correction step count changed")
+                if _model_state_hash(residual_base) != residual_base_hash:
+                    raise RuntimeError("M15-C4 residual stage mutated the frozen base")
+                collapsed = collapse_pattern_evals(residual_base, residual)
+                with torch.no_grad():
+                    combined = combined_values(
+                        residual_base, residual, collapse_features
+                    )
+                    collapsed_values, _ = collapsed(collapse_features)
+                    collapse_error = float(
+                        torch.max(torch.abs(combined - collapsed_values)).item()
+                    )
+                if collapse_error > 1.0e-7:
+                    raise RuntimeError(
+                        f"M15-C4 PatternEval collapse error {collapse_error}"
+                    )
+                record_arm(
+                    arm,
+                    collapsed,
+                    {
+                        "steps": steps,
+                        "batch_size": batch_size,
+                        "sample_pool": len(arms[arm]),
+                        "value_only": True,
+                        "policy_trained": False,
+                        "action_source": "search",
+                        "explicit_batch_schedule": True,
+                        "base_stage": base_training,
+                        "correction_stage": correction_training,
+                    },
+                    residual_initial_hash,
+                    {
+                        "base_target": "LAMBDA_50",
+                        "base_model_hash": residual_base_hash,
+                        "base_frozen": True,
+                        "base_shared_between_residual_arms": True,
+                        "residual_initial_model_hash": residual_initial_hash,
+                        "residual_trained_model_hash": _model_state_hash(residual),
+                        "collapse_max_abs_error_all_states": collapse_error,
+                        "collapsed_architecture": "folded_pattern_value",
+                        "extra_inference_parameters": 0,
+                    },
+                )
+        else:
+            for arm in arm_order:
+                model, training, arm_initial_hash = _fit(
+                    base_loop, graph, arms[arm], schedule, fit_seed
+                )
+                record_arm(arm, model, training, arm_initial_hash)
 
         arena_seed = int(arena_spec["seed_base"]) + seed
         arena_start_hash: str | None = None
@@ -1665,6 +2239,14 @@ def run_m15c2(
 
     if probe_only:
         elapsed = time.monotonic() - started
+        actual_training_steps = (
+            len(RESIDUAL_DIRECT_ARMS) * steps
+            + int(schedule_config["residual_base_steps"])
+            + len(RESIDUAL_PATH_ARMS)
+            * int(schedule_config["residual_correction_steps"])
+            if milestone == "M15-C4"
+            else len(arm_order) * steps
+        )
         result = {
             "schema": spec["probe_schema"],
             "milestone": spec["probe_milestone"],
@@ -1674,7 +2256,8 @@ def run_m15c2(
             "workload": {
                 "selfplay_games": int(config["replay"]["games_per_seed"]),
                 "training_arms": len(arm_order),
-                "training_steps": len(arm_order) * steps,
+                "training_steps": actual_training_steps,
+                "effective_arm_training_steps": len(arm_order) * steps,
                 "arena_arms": len(arena_arms),
                 "arena_pairs": len(arena_arms) * int(arena_spec["pairs"]),
                 "arena_games": 2 * len(arena_arms) * int(arena_spec["pairs"]),
@@ -1774,9 +2357,54 @@ def run_m15c2(
             if milestone == "M15-C3"
             else {}
         ),
+        **(
+            {
+                "all_temporal_returns_built_before_train_filter": all(
+                    bool(
+                        row["replay"]["temporal_contract"][
+                            "temporal_returns_built_before_train_row_filter"
+                        ]
+                    )
+                    for row in rows
+                ),
+                "all_targets_bounded": all(
+                    bool(row["replay"]["all_targets_bounded"]) for row in rows
+                ),
+                "all_targets_oracle_blind": all(
+                    bool(row["replay"]["all_targets_oracle_blind"])
+                    for row in rows
+                ),
+                "all_direct_and_residual_targets_identical": all(
+                    bool(row["replay"]["direct_and_residual_targets_identical"])
+                    for row in rows
+                ),
+                "all_residual_bases_frozen": all(
+                    bool(row["arms"][arm]["path_contract"]["base_frozen"])
+                    for row in rows
+                    for arm in RESIDUAL_PATH_ARMS
+                ),
+                "maximum_collapse_abs_error_all_states": max(
+                    float(
+                        row["arms"][arm]["path_contract"][
+                            "collapse_max_abs_error_all_states"
+                        ]
+                    )
+                    for row in rows
+                    for arm in RESIDUAL_PATH_ARMS
+                ),
+                "collapsed_inference_architecture": "folded_pattern_value",
+                "extra_inference_parameters": 0,
+            }
+            if milestone == "M15-C4"
+            else {}
+        ),
         "additional_frozen_test_reads": 0,
     }
-    if milestone == "M15-C3":
+    if milestone == "M15-C4":
+        recommendation = build_residual_recommendation(
+            contrasts, arena_contrasts
+        )
+    elif milestone == "M15-C3":
         recommendation = build_composition_recommendation(
             contrasts, arena_contrasts, interactions
         )
@@ -1787,12 +2415,18 @@ def run_m15c2(
     else:
         recommendation = build_recommendation(contrasts, arena_contrasts)
     power_sizing = deepcopy(config["power_sizing"])
-    if milestone in {"M15-C2R", "M15-C3"}:
+    if milestone in {"M15-C2R", "M15-C3", "M15-C4"}:
         for cell in power_sizing.values():
             cell["recomputed_power"] = estimate_power(cell)
     else:
         power_sizing["recomputed_power"] = estimate_power(config["power_sizing"])
-    if milestone == "M15-C3":
+    if milestone == "M15-C4":
+        target_protocol = {
+            "conditional_mapping": config["conditional_mapping"],
+            "temporal_target": config["temporal_target"],
+            "conditional_residual_path": config["conditional_residual_path"],
+        }
+    elif milestone == "M15-C3":
         target_protocol = {
             "conditional_mapping": config["conditional_mapping"],
             "temporal_target": config["temporal_target"],

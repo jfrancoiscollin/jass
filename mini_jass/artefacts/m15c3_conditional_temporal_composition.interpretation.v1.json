@@ -1,0 +1,43 @@
+{
+  "schema": "mini_jass.pattern_conditional_temporal_composition.interpretation.v1",
+  "milestone": "M15-C3",
+  "job_id": "cpx62-1244-mini-jass-pattern-m15c3-v1",
+  "attempt_id": "20260811T082602Z-d168955e",
+  "implementation_sha": "d168955e87ce36ebeed5bca8a9a4197b0d97f710",
+  "result_uri": "r2:jass-data/runs/cpx62-1244-mini-jass-pattern-m15c3-v1/20260811T082602Z-d168955e",
+  "protocol_hash": "dcce0fb1a6798c8bc57273b616d6f5299211b86ac1421fb02875e0d71da83702",
+  "result_hash": "be36b212e495c004dcc44e31a98f1968bce68ed32264cd9660a27cb0761aed87",
+  "execution_status": "COMPLETED",
+  "scientific_status": "FAIL",
+  "primary_passed_axes": 2,
+  "primary_total_axes": 4,
+  "axes": {
+    "temporal_increment_static": {
+      "mean": -0.00706662917,
+      "ci95": [-0.00766115155, -0.00647210680],
+      "status": "FAIL"
+    },
+    "temporal_increment_strength": {
+      "mean": 0.00238037109,
+      "ci95": [0.00133731305, 0.00342342914],
+      "status": "PASS"
+    },
+    "conditional_attribution_static": {
+      "mean": 0.00598203048,
+      "ci95": [0.00485742404, 0.00710663691],
+      "status": "PASS"
+    },
+    "conditional_attribution_strength": {
+      "mean": -0.00101725260,
+      "ci95": [-0.00196486946, -0.00006963575],
+      "status": "FAIL"
+    }
+  },
+  "fresh_context_confirmation_status": "PASS",
+  "fresh_temporal_confirmation_status": "FAIL",
+  "retained_target": "CONTEXT_30",
+  "finding": "composition_does_not_preserve_both_incremental_signals",
+  "decision": "retain_CONTEXT_30_and_close_this_composition_formula",
+  "additional_frozen_test_reads": 0,
+  "promotable": false
+}

@@ -1,0 +1,224 @@
+schema: mini_jass.pattern_conditional_residual_path.v1
+milestone: M15-C4
+expected_execution_host: cpx62
+base_loop_config: configs/l1_pattern_reconstruction_loop.yaml
+
+paired_seeds:
+  [277001, 277002, 277003, 277004, 277005, 277006,
+   277007, 277008, 277009, 277010, 277011, 277012,
+   277013, 277014, 277015, 277016, 277017, 277018,
+   277019, 277020, 277021, 277022, 277023, 277024]
+
+arms:
+  - OUTCOME
+  - LAMBDA_50
+  - CONTEXT_30
+  - SHUFFLED_ADDITIVE_30
+  - ADDITIVE_30
+  - SHUFFLED_RESIDUAL_30
+  - RESIDUAL_30
+
+replay:
+  source: G1_WIDE_OUTCOME
+  games_per_seed: 1024
+  generation: 1
+  generator_model: shared_initial_pattern_eval
+  seed_offset: 1060000
+  row_selection: all_generated_train_rows
+  temporal_returns_built_before_train_row_filter: true
+  immutable_structure_across_arms: true
+
+conditional_mapping:
+  family: odd_tanh_linear_wdl_oof_v1
+  features: contextual_outcome_supervision_v3_components
+  training_label: terminal_selfplay_wdl
+  fold_count: 5
+  fold_unit: complete_game
+  fold_assignment: sha256_rank_round_robin_v1
+  fold_namespace: m15c4_conditional_wdl_game_folds_v1
+  shuffle_control: within_fold_hash_order_rotate_one_v1
+  shuffle_namespace: m15c4_conditional_shuffle_v1
+  initialization: zero
+  ridge: 0.0001
+  max_iterations: 64
+  tolerance: 1.0e-10
+  line_search_steps: 24
+  oracle_training_signal: false
+  manual_coefficients_used: false
+
+temporal_target:
+  source: temporal_lambda_return
+  lambda: 0.50
+  successor_bootstrap: negated_successor_root_score
+  recurrence: "-((1-lambda)*successor_search+lambda*successor_return)"
+  terminal_or_last_sample_fallback: terminal_selfplay_wdl
+  search_score_clip: [-1.0, 1.0]
+  complete_trajectory_grouping: true
+  contiguous_ply_required: true
+  full_generated_trace_used_before_train_filter: true
+  oracle_training_signal: false
+
+conditional_residual_path:
+  alpha: 0.30
+  context_formula: 0.70*outcome+0.30*conditional_prediction
+  additive_formula: clip(lambda_50+0.30*(conditional_prediction-outcome),-1,1)
+  shuffled_control_uses_same_formula: true
+  direct_and_residual_targets_identical: true
+  base_target: LAMBDA_50
+  base_frozen_during_residual_stage: true
+  residual_initialization: zero
+  combined_training_value: tanh(base_raw_score+residual_raw_score)
+  collapse_rule: add_linear_weights_and_bias_before_inference
+  collapsed_inference_architecture: folded_pattern_value
+  extra_inference_parameters: 0
+  every_target_bounded: true
+  every_target_oracle_blind: true
+
+training_schedule:
+  total_steps_per_arm: 2048
+  direct_steps: 2048
+  residual_base_steps: 1024
+  residual_correction_steps: 1024
+  batch_size: 128
+  seed_offset: 1070000
+  explicit_shared_schedule: true
+  residual_stages_partition_shared_schedule: true
+  residual_base_shared_between_aligned_and_shuffled: true
+  equal_effective_optimizer_steps_per_arm: true
+
+strength_arena:
+  arms:
+    [OUTCOME, LAMBDA_50, CONTEXT_30, SHUFFLED_ADDITIVE_30,
+     ADDITIVE_30, SHUFFLED_RESIDUAL_30, RESIDUAL_30]
+  pairs: 512
+  seed_base: 1080000
+  epsilon: 0.0
+  confidence_z: 1.96
+  confidence_unit: pairs
+  start_state_source: development
+  role: confirmatory_conditional_residual_path
+
+power_sizing:
+  pathway_attribution_static:
+    contrasts_sized: [RESIDUAL_30_minus_ADDITIVE_30]
+    endpoint: development_zero_regret_gain
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260822
+    paired_seed_count: 24
+    conservative_paired_sd: 0.0035
+    minimum_effect_for_power_only: 0.0022
+    minimum_effect: 0.0022
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.83753
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  pathway_attribution_strength:
+    contrasts_sized: [RESIDUAL_30_minus_ADDITIVE_30]
+    endpoint: paired_arena_score
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260823
+    paired_seed_count: 24
+    conservative_paired_sd: 0.0035
+    minimum_effect_for_power_only: 0.0022
+    minimum_effect: 0.0022
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.83698
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  conditional_attribution_static:
+    contrasts_sized: [RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30]
+    endpoint: development_zero_regret_gain
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260824
+    paired_seed_count: 24
+    conservative_paired_sd: 0.003
+    minimum_effect_for_power_only: 0.0019
+    minimum_effect: 0.0019
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.84394
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+  conditional_attribution_strength:
+    contrasts_sized: [RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30]
+    endpoint: paired_arena_score
+    estimator: normal_paired_difference_monte_carlo_v1
+    repetitions: 100000
+    seed: 44120260825
+    paired_seed_count: 24
+    conservative_paired_sd: 0.003
+    minimum_effect_for_power_only: 0.0019
+    minimum_effect: 0.0019
+    paired_confidence_critical_95: 2.0686576104190406
+    estimated_power_ci_above_zero: 0.84403
+    minimum_required_power: 0.80
+    gate_has_no_minimum_effect_floor: true
+
+scientific_gate:
+  primary_question: separate_residual_path_preserves_conditional_and_temporal_signals
+  primary_endpoint: development_zero_regret_gain_and_paired_strength
+  paired_confidence_critical_95: 2.0686576104190406
+  require_RESIDUAL_30_minus_ADDITIVE_30_static_ci_above_zero: true
+  require_RESIDUAL_30_minus_ADDITIVE_30_strength_ci_above_zero: true
+  require_RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30_static_ci_above_zero: true
+  require_RESIDUAL_30_minus_SHUFFLED_RESIDUAL_30_strength_ci_above_zero: true
+  minimum_effect_floor: 0.0
+  direct_additive_and_singletons_cannot_rescue_primary: true
+  selection_requires_RESIDUAL_30_minus_CONTEXT_30_static_ci_above_zero: true
+  selection_requires_RESIDUAL_30_minus_CONTEXT_30_strength_ci_above_zero: true
+  selection_requires_RESIDUAL_30_minus_LAMBDA_50_static_ci_above_zero: true
+  selection_requires_RESIDUAL_30_minus_LAMBDA_50_strength_ci_above_zero: true
+  selection_requires_RESIDUAL_30_minus_OUTCOME_static_ci_above_zero: true
+  selection_requires_RESIDUAL_30_minus_OUTCOME_strength_ci_above_zero: true
+  otherwise_retain_incumbent_CONTEXT_30: true
+  automatic_promotion: false
+
+source_evidence:
+  m15c2r:
+    protocol_hash: f355c6a1fccebd01f4b67d9b7cf59e239ebe3ab127cb38f4efedcf7e5b44ce8e
+    result_hash: d240e5c006b9e7463221bbae4e639d80dbc8773840c2310b64ed9df1bd45ae25
+    status: PASS
+    finding: alpha_30_conditional_signal_replicates
+    retained_alpha: 0.30
+  m16p:
+    protocol_hash: 1b27d35edef11ff945f574cb807d6a6fee6fe4f4f41a045681bbbd223fc8c728
+    result_hash: 23eeaf1d310dc95a1aa8eb0d7937125d4304d641a843b9261cf7b154dfd2b385
+    retained_experience_status: POSITIVE
+    retained_target: LAMBDA_50
+  m15c3:
+    job_id: cpx62-1244-mini-jass-pattern-m15c3-v1
+    attempt_id: 20260811T082602Z-d168955e
+    implementation_sha: d168955e87ce36ebeed5bca8a9a4197b0d97f710
+    protocol_hash: dcce0fb1a6798c8bc57273b616d6f5299211b86ac1421fb02875e0d71da83702
+    result_hash: be36b212e495c004dcc44e31a98f1968bce68ed32264cd9660a27cb0761aed87
+    status: FAIL
+    finding: composition_does_not_preserve_both_incremental_signals
+    decision: retain_CONTEXT_30_and_close_this_composition_formula
+    retained_target: CONTEXT_30
+    fresh_context_confirmation_status: PASS
+    fresh_temporal_confirmation_status: FAIL
+    temporal_increment_static_ci95: [-0.00766115155, -0.00647210680]
+    temporal_increment_strength_ci95: [0.00133731305, 0.00342342914]
+    conditional_attribution_static_ci95: [0.00485742404, 0.00710663691]
+    conditional_attribution_strength_ci95: [-0.00196486946, -0.00006963575]
+
+probe:
+  seed: 277000
+  overlaps_scientific_seeds: false
+  purpose: cpx62_runtime_calibration_only
+  reporting: timing_and_contract_only
+  scientific_metrics_must_not_be_published: true
+
+boundaries:
+  cohorts_read: [train, development]
+  cohorts_never_read_by_this_cell: [frozen_test]
+  existing_frozen_test_read_count: 1
+  additional_frozen_test_reads_authorized: 0
+  all_training_targets_oracle_blind: true
+  automatic_selection_or_promotion: false
+  promotable: false
+  production_jass_changes_authorized: false
+  direct_10x10_transfer_authorized: false
+  execution_is_not_queued_by_this_pr: true
