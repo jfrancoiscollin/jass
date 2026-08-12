@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+import json
+import hashlib
 import sys
 from types import SimpleNamespace
 
@@ -17,6 +19,7 @@ from mini_jass_lab.replay import ReplaySample  # noqa: E402
 from run_pattern_contextual_decision_channel import (  # noqa: E402
     ARM_ORDER,
     MATCHUPS,
+    _build_aggregate,
     _recommendation,
     _resolve,
     _write_json_roundtrip,
@@ -159,6 +162,136 @@ def test_strength_gate_requires_both_primary_contrasts() -> None:
     assert _recommendation(failing)["status"] == "FAIL"
 
 
+def _aggregate_row(seed: int, value: float) -> dict:
+    endpoints = {
+        "zero_regret_rate": value,
+        "value_sign_accuracy": value,
+        "value_mae": value,
+        "mean_selected_regret": value,
+    }
+    zeros = {name: 0.0 for name in endpoints}
+    return {
+        "seed": seed,
+        "arenas": {
+            matchup: {"score_minus_half": value} for matchup in MATCHUPS
+        },
+        "arms": {
+            "OUTCOME": {"after": zeros},
+            "LAMBDA_50": {"after": endpoints},
+            "CONTEXT_30": {"after": endpoints},
+        },
+        "decision_diagnostics": {
+            "aligned_minus_shuffled_zero_regret": value,
+            "aligned_minus_lambda_zero_regret": value,
+            "activation_rate": 0.25,
+            "aligned_changed_action_rate": 0.10,
+            "shuffled_changed_action_rate": 0.12,
+        },
+        "delta_calibration": {"delta": 0.2},
+        "conditional_mapping": {
+            "conditional_mse_gain_vs_state_blind": 0.01,
+            "all_games_fold_disjoint": True,
+        },
+        "replay": {
+            "all_rows_train_only": True,
+            "all_training_targets_oracle_blind": True,
+        },
+        "shuffle_control": {"all_fold_marginals_preserved": True},
+    }
+
+
+def test_aggregate_passes_frozen_critical_to_every_interval() -> None:
+    rows = [
+        _aggregate_row(279001, -0.1),
+        _aggregate_row(279002, 0.0),
+        _aggregate_row(279003, 0.1),
+    ]
+    aggregate = _build_aggregate(rows, critical=2.0)
+    expected_half_width = 2.0 * 0.1 / np.sqrt(3.0)
+    arena = aggregate["arena_strength"]["ALIGNED_VS_SHUFFLED"]
+    static = aggregate["static_diagnostics"]["LAMBDA_50_minus_OUTCOME"][
+        "zero_regret_rate"
+    ]
+    decision = aggregate["decision_diagnostics"][
+        "aligned_minus_shuffled_zero_regret"
+    ]
+    for interval in (arena, static, decision):
+        assert interval["mean"] == pytest.approx(0.0)
+        assert interval["lower"] == pytest.approx(-expected_half_width)
+        assert interval["upper"] == pytest.approx(expected_half_width)
+
+
+def test_recovery_authenticates_all_preregistered_seed_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "source"
+    row_root = source / "mini-jass-pattern-m15c6-full" / "run"
+    row_root.mkdir(parents=True)
+    source_job = "home-1260-mini-jass-pattern-m15c6-full-v2"
+    source_attempt = "20260812T061436Z-85e428bb"
+    source_sha = "8" * 40
+    manifest = {
+        "job_id": source_job,
+        "attempt_id": source_attempt,
+        "code_sha": source_sha,
+        "state": "failed",
+        "exit_code": 1,
+    }
+    (source / "manifest.json").write_text(json.dumps(manifest) + "\n")
+    inventory_rows = []
+    checksums = {}
+
+    def register(relative: str) -> None:
+        path = source / relative
+        raw = path.read_bytes()
+        digest_value = hashlib.sha256(raw).hexdigest()
+        inventory_rows.append({
+            "path": relative,
+            "size_bytes": len(raw),
+            "sha256": digest_value,
+        })
+        checksums[relative] = digest_value
+
+    register("manifest.json")
+    for seed in range(279001, 279025):
+        relative = f"mini-jass-pattern-m15c6-full/run/seed-{seed}.json"
+        (source / relative).write_text(json.dumps(_aggregate_row(seed, 0.001)) + "\n")
+        register(relative)
+    (source / "inventory.json").write_text(
+        json.dumps({"files": inventory_rows}) + "\n"
+    )
+    checksums["inventory.json"] = hashlib.sha256(
+        (source / "inventory.json").read_bytes()
+    ).hexdigest()
+    (source / "checksums.sha256").write_text(
+        "".join(f"{digest_value}  {relative}\n" for relative, digest_value in checksums.items())
+    )
+
+    captured = {}
+    monkeypatch.setattr(
+        m15c6,
+        "_build_result",
+        lambda config, base, seeds, rows, timings, host, run_dir, compact, recovery: captured.update(
+            seeds=seeds, rows=rows, timings=timings, recovery=recovery
+        ) or {"status": "PASS", "result_hash": "x"},
+    )
+    root = Path(__file__).resolve().parents[2]
+    result = m15c6.recover_m15c6(
+        root / "configs" / "l1_pattern_contextual_decision_channel.yaml",
+        source,
+        tmp_path / "run",
+        tmp_path / "result.json",
+        source_job,
+        source_attempt,
+        source_sha,
+        "User",
+    )
+    assert result["status"] == "PASS"
+    assert len(captured["rows"]) == 24
+    assert captured["timings"] == []
+    assert captured["recovery"]["scientific_compute_repeated"] is False
+
+
 def test_reporting_roundtrip_reads_what_it_writes(tmp_path: Path) -> None:
     payload = {"schema": "test", "n": 24, "status": "PASS"}
     output = tmp_path / "summary.json"
@@ -178,3 +311,17 @@ def test_home_wrapper_reuses_persistent_torch_and_fails_closed() -> None:
     assert "n=0 is a hard failure" in script
     assert "scientific-summary.json exceeds 64 KiB" in script
     assert ") >/dev/null 2>&1 &" in script
+
+
+def test_home_recovery_reads_only_authenticated_seed_results() -> None:
+    root = Path(__file__).resolve().parents[2]
+    script = (
+        root / "jobs" / "recover_pattern_contextual_decision_channel_home.sh"
+    ).read_text(encoding="utf-8")
+    assert "home-1260-mini-jass-pattern-m15c6-full-v2" in script
+    assert "--files-from-raw" in script
+    assert "--no-traverse" in script
+    assert "seed-*.json" in script
+    assert "scientific_compute_repeated=false" in script
+    assert "additional_frozen_test_reads=0" in script
+    assert "pip install" not in script
