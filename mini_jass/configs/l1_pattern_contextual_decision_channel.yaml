@@ -76,7 +76,7 @@ contextual_tiebreak:
   rule: choose_max_context_among_actions_within_delta_of_best_temporal_score
   temporal_search_scores_unchanged: true
   context_never_changes_internal_search: true
-  calibration_cohort: train_replay_unique_nonterminal_states
+  calibration_cohort: train_replay_unique_nonterminal_states_with_at_least_two_legal_actions
   calibration_state_count: 512
   calibration_seed_offset: 1150000
   calibration_quantile: 0.25
@@ -154,12 +154,14 @@ source_evidence:
     retained_static_context_evidence: true
 
 probe:
-  seed: 279000
+  seed: 279025
   expected_nproc: 16
   overlaps_scientific_seeds: false
   purpose: HOME_runtime_calibration_only
   reporting: timing_contract_and_activation_count_only
   scientific_metrics_must_not_be_published: true
+  supersedes_timing_probe_seed: 279000
+  technical_reason: calibration_candidate_selection_now_filters_structural_single_action_states_before_sampling
 
 boundaries:
   cohorts_read: [train, development]

@@ -5,8 +5,10 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 TOOLS = Path(__file__).resolve().parents[2] / "tools"
 sys.path.insert(0, str(TOOLS))
@@ -19,7 +21,9 @@ from run_pattern_contextual_decision_channel import (  # noqa: E402
     _resolve,
     _write_json_roundtrip,
     build_training_targets,
+    calibrate_delta,
 )
+import run_pattern_contextual_decision_channel as m15c6  # noqa: E402
 
 
 def _sample(state: int, value: float, ply: int) -> ReplaySample:
@@ -82,6 +86,45 @@ def test_context_heads_remain_separate_from_temporal_value() -> None:
     )
     assert contract["scalar_temporal_context_blend_for_candidate"] is False
     assert len(set(contract["structure_fingerprints"].values())) == 1
+
+
+def test_delta_calibration_filters_single_action_states_before_sampling(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Graph:
+        @staticmethod
+        def terminal_value(state: int) -> None:
+            return None
+
+        @staticmethod
+        def legal_actions(state: int) -> list[int]:
+            return [0] if state in {0, 2, 4} else [0, 1]
+
+    seen: list[int] = []
+
+    def fake_search(graph, model, state, config, cache):
+        seen.append(state)
+        return SimpleNamespace(action_scores={0: 0.5, 1: 0.25})
+
+    monkeypatch.setattr(m15c6, "bounded_negamax", fake_search)
+    samples = [_sample(state, 1.0, state) for state in range(6)]
+    result = calibrate_delta(
+        Graph(),
+        object(),
+        samples,
+        object(),
+        seed=17,
+        spec={
+            "calibration_state_count": 3,
+            "calibration_seed_offset": 100,
+            "minimum_valid_calibration_states": 3,
+            "calibration_quantile": 0.25,
+        },
+    )
+
+    assert sorted(seen) == [1, 3, 5]
+    assert result["valid_gap_count"] == 3
+    assert result["cohort"].endswith("with_at_least_two_legal_actions")
 
 
 def test_strength_gate_requires_both_primary_contrasts() -> None:

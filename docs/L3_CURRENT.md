@@ -503,6 +503,15 @@ calibrée sur train. Les deux gates de force sont `aligné − shuffled` et
 sans seuil d'effet. Les diagnostics statiques ne peuvent pas sauver la porte.
 Le probe `279000` doit mesurer le runtime HOME avant la cellule de 24 graines.
 
+⚙️ **M15-C6 `home-1258` : ÉCHEC TECHNIQUE AVANT ARÈNE, AUCUN VERDICT.** La
+première graine a produit 126 recherches à deux actions contre un plancher de
+128, car des positions à une seule action avaient été tirées avant le filtre.
+La correction sélectionne désormais les 512 positions train-replay parmi les
+états ayant structurellement au moins deux actions légales. Le plancher, le
+quantile, les cibles, les graines scientifiques et les deux gates de force ne
+changent pas. Un nouveau probe non scientifique `279025` est requis avant la
+relance.
+
 📌 **M16-P TERMINÉ : EXPÉRIENCE POSITIVE, SIGNAL TEMPOREL CONFIRMÉ.** Sur
 `home-1321`, `LAMBDA_50 − OUTCOME` améliore le zero-regret développement de
 `+0,001549`, IC95 `[+0,000928 ; +0,002170]`, et l'arène descriptive appariée
