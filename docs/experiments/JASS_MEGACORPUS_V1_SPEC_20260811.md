@@ -163,7 +163,7 @@ la puissance et les gardes préenregistrées.
 
 ## 6. Ordre rationnel d'exécution
 
-1. census P0 sur HOME, en parallèle du petit probe Mini-Jass M15-C5 ;
+1. census P0 sur CPX, en parallèle des expériences Mini-Jass sur HOME ;
 2. revue humaine du catalogue et publication de la politique d'inclusion ;
 3. matérialisation d'un échantillon par strate, validation des formats et mesure
    du débit de reconstruction FEAT/context30 ;
@@ -173,3 +173,26 @@ la puissance et les gardes préenregistrées.
 
 Le probe full-Jass `context30` à 2 M reste une précondition de sûreté avant de
 payer la reconstruction massive, mais il ne bloque pas le census métadonnées.
+
+## 7. Correction opérationnelle P0 — census v4
+
+Le job `cpx62-1255-jass-megacorpus-r2-census-v3` a expiré après deux heures
+pendant l'unique `rclone lsjson --recursive`. Il n'a téléchargé aucun payload,
+n'a lu aucun frozen set et n'a produit aucun résultat scientifique. Cet échec
+invalide la forme monolithique du census, pas l'hypothèse MegaCorpus.
+
+La v4 remplace cette opération par un index adaptativement shardé :
+
+- séparation initiale à profondeur 2, puis lecture récursive indépendante de
+  chaque préfixe ;
+- subdivision d'un préfixe qui dépasse son timeout, jusqu'à profondeur 6 ;
+- checkpoint atomique après chaque shard, avec contenu compressé et SHA-256 ;
+- reprise possible depuis un précédent checkpoint de métadonnées uniquement ;
+- fusion exhaustive, triée et sans doublon avant construction du catalogue ;
+- téléchargement exact, par listes de 500 chemins et `--no-traverse`, des
+  seuls manifests, inventaires, checksums et marqueurs autorisés.
+
+Les checkpoints sont des artefacts du runner même si la tentative s'interrompt.
+Une relance reprend les préfixes terminés au lieu de relire tout R2. La v4 garde
+les mêmes barrières P0 : aucun corpus/modèle, aucune lecture frozen, aucun fit,
+aucune promotion et aucune continuation automatique.
