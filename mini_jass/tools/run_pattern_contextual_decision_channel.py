@@ -649,7 +649,8 @@ def _matchup_agents(models: dict[str, Any], name: str) -> dict[str, Any]:
 def _build_aggregate(rows: list[dict[str, Any]], critical: float) -> dict[str, Any]:
     arena_contrasts = {
         matchup: _interval(
-            row["arenas"][matchup]["score_minus_half"] for row in rows
+            (row["arenas"][matchup]["score_minus_half"] for row in rows),
+            critical,
         )
         for matchup in MATCHUPS
     }
@@ -660,9 +661,12 @@ def _build_aggregate(rows: list[dict[str, Any]], critical: float) -> dict[str, A
     ):
         static_contrasts[name] = {
             endpoint: _interval(
-                float(row["arms"][high]["after"][endpoint])
-                - float(row["arms"][low]["after"][endpoint])
-                for row in rows
+                (
+                    float(row["arms"][high]["after"][endpoint])
+                    - float(row["arms"][low]["after"][endpoint])
+                    for row in rows
+                ),
+                critical,
             )
             for endpoint in (
                 "zero_regret_rate",
@@ -673,12 +677,18 @@ def _build_aggregate(rows: list[dict[str, Any]], critical: float) -> dict[str, A
         }
     decision = {
         "aligned_minus_shuffled_zero_regret": _interval(
-            row["decision_diagnostics"]["aligned_minus_shuffled_zero_regret"]
-            for row in rows
+            (
+                row["decision_diagnostics"]["aligned_minus_shuffled_zero_regret"]
+                for row in rows
+            ),
+            critical,
         ),
         "aligned_minus_lambda_zero_regret": _interval(
-            row["decision_diagnostics"]["aligned_minus_lambda_zero_regret"]
-            for row in rows
+            (
+                row["decision_diagnostics"]["aligned_minus_lambda_zero_regret"]
+                for row in rows
+            ),
+            critical,
         ),
         "mean_activation_rate": mean(
             row["decision_diagnostics"]["activation_rate"] for row in rows
@@ -771,6 +781,204 @@ def _recommendation(aggregate: dict[str, Any]) -> dict[str, Any]:
         "finding": "separate_context_channel_not_established_on_both_strength_contrasts",
         "decision": "do_not_promote_or_add_feedback",
     }
+
+
+def _build_result(
+    config: dict[str, Any],
+    base_loop: dict[str, Any],
+    seeds: list[int],
+    rows: list[dict[str, Any]],
+    timings: list[dict[str, Any]],
+    host: str,
+    run_dir: Path,
+    compact_output: Path,
+    recovery_contract: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if [int(row.get("seed", -1)) for row in rows] != seeds:
+        raise ValueError("M15-C6 result rows do not match the preregistered seeds")
+    if recovery_contract is None and len(timings) != len(rows):
+        raise ValueError("M15-C6 normal execution requires one timing per seed")
+    if recovery_contract is not None and timings:
+        raise ValueError("M15-C6 recovery cannot invent unavailable seed timings")
+
+    critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
+    aggregate = _build_aggregate(rows, critical)
+    recommendation = _recommendation(aggregate)
+    protocol = {
+        "schema": SCHEMA,
+        "milestone": MILESTONE,
+        "base_loop_config": config["base_loop_config"],
+        "resolved_model": model_descriptor(build_model(base_loop["model"])),
+        "paired_seeds": seeds,
+        "arms": list(ARM_ORDER),
+        "trained_tables": list(TRAINED_TABLES),
+        "replay": config["replay"],
+        "temporal_target": config["temporal_target"],
+        "conditional_mapping": config["conditional_mapping"],
+        "training_targets": config["training_targets"],
+        "training_schedule": config["training_schedule"],
+        "contextual_tiebreak": config["contextual_tiebreak"],
+        "strength_arena": config["strength_arena"],
+        "power_sizing": {
+            **config["power_sizing"],
+            "recomputed_power": estimate_power(config["power_sizing"]),
+        },
+        "scientific_gate": config["scientific_gate"],
+        "source_evidence": config["source_evidence"],
+        "boundaries": config["boundaries"],
+        "execution_host": host,
+    }
+    result: dict[str, Any] = {
+        "schema": SCHEMA,
+        "milestone": MILESTONE,
+        "status": recommendation["status"],
+        "protocol_hash": digest(protocol),
+        "protocol": protocol,
+        "aggregate": aggregate,
+        "seed_results": rows,
+        "timings": timings,
+        "recommendation": recommendation,
+        "sealed_cohort_contract": {
+            "cohorts_read": ["train", "development"],
+            "cohorts_not_read": ["frozen_test"],
+            "existing_frozen_test_read_count": 1,
+            "additional_frozen_test_reads": 0,
+            "all_training_targets_oracle_blind": True,
+        },
+        "promotable": False,
+    }
+    if recovery_contract is not None:
+        result["recovery_contract"] = recovery_contract
+    result["result_hash"] = digest(
+        {key: value for key, value in result.items() if key != "result_hash"}
+    )
+    _write_json_roundtrip(result, [run_dir / "result.json", compact_output])
+    return result
+
+
+def _sha256_file(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _parse_checksum_file(path: Path) -> dict[str, str]:
+    rows: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        digest_value, separator, relative = line.partition("  ")
+        if (
+            not separator
+            or len(digest_value) != 64
+            or any(character not in "0123456789abcdef" for character in digest_value)
+            or not relative
+            or relative.startswith("/")
+            or ".." in Path(relative).parts
+            or relative in rows
+        ):
+            raise ValueError("invalid M15-C6 recovery checksums.sha256")
+        rows[relative] = digest_value
+    if not rows:
+        raise ValueError("empty M15-C6 recovery checksums.sha256")
+    return rows
+
+
+def recover_m15c6(
+    config_path: Path,
+    source_root: Path,
+    run_dir: Path,
+    compact_output: Path,
+    source_job: str,
+    source_attempt: str,
+    source_code_sha: str,
+    execution_host: str | None = None,
+) -> dict[str, Any]:
+    config, base_loop = _resolve(config_path)
+    host = execution_host or platform.node()
+    if host != config["expected_execution_host"]:
+        raise ValueError(f"M15-C6 recovery requires User, got {host}")
+    seeds = [int(seed) for seed in config["paired_seeds"]]
+    if not source_job.startswith("home-") or len(source_code_sha) != 40:
+        raise ValueError("invalid M15-C6 recovery source identity")
+
+    manifest_path = source_root / "manifest.json"
+    inventory_path = source_root / "inventory.json"
+    checksums_path = source_root / "checksums.sha256"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    inventory_payload = json.loads(inventory_path.read_text(encoding="utf-8"))
+    checksums = _parse_checksum_file(checksums_path)
+    if (
+        manifest.get("job_id") != source_job
+        or manifest.get("attempt_id") != source_attempt
+        or manifest.get("code_sha") != source_code_sha
+        or manifest.get("state") != "failed"
+        or int(manifest.get("exit_code", 0)) != 1
+    ):
+        raise ValueError("M15-C6 recovery source is not the expected failed attempt")
+    inventory_rows = inventory_payload.get("files")
+    if not isinstance(inventory_rows, list):
+        raise ValueError("M15-C6 recovery inventory has no files list")
+    inventory: dict[str, dict[str, Any]] = {}
+    for item in inventory_rows:
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+            raise ValueError("invalid M15-C6 recovery inventory row")
+        relative = item["path"]
+        if relative in inventory:
+            raise ValueError("duplicate M15-C6 recovery inventory row")
+        inventory[relative] = item
+
+    if checksums.get("inventory.json") != _sha256_file(inventory_path):
+        raise ValueError("M15-C6 recovery inventory digest mismatch")
+    manifest_item = inventory.get("manifest.json")
+    if (
+        manifest_item is None
+        or int(manifest_item.get("size_bytes", -1)) != manifest_path.stat().st_size
+        or manifest_item.get("sha256") != _sha256_file(manifest_path)
+        or checksums.get("manifest.json") != _sha256_file(manifest_path)
+    ):
+        raise ValueError("M15-C6 recovery manifest authentication failed")
+
+    relative_root = "mini-jass-pattern-m15c6-full/run"
+    rows: list[dict[str, Any]] = []
+    row_hashes: dict[str, str] = {}
+    for seed in seeds:
+        relative = f"{relative_root}/seed-{seed}.json"
+        path = source_root / relative
+        item = inventory.get(relative)
+        digest_value = _sha256_file(path)
+        if (
+            item is None
+            or int(item.get("size_bytes", -1)) != path.stat().st_size
+            or item.get("sha256") != digest_value
+            or checksums.get(relative) != digest_value
+        ):
+            raise ValueError(f"M15-C6 recovery seed authentication failed: {seed}")
+        row = json.loads(path.read_text(encoding="utf-8"))
+        if int(row.get("seed", -1)) != seed:
+            raise ValueError(f"M15-C6 recovery seed identity mismatch: {seed}")
+        rows.append(row)
+        row_hashes[str(seed)] = digest_value
+
+    recovery_contract = {
+        "schema": "mini_jass.pattern_contextual_decision_recovery.v1",
+        "source_job": source_job,
+        "source_attempt": source_attempt,
+        "source_code_sha": source_code_sha,
+        "source_manifest_sha256": _sha256_file(manifest_path),
+        "authenticated_seed_result_sha256": row_hashes,
+        "authenticated_seed_count": len(rows),
+        "source_failure_phase": "post_seed_aggregation",
+        "source_failure_cause": "paired_interval_missing_critical_argument",
+        "scientific_compute_repeated": False,
+        "seed_timings_recoverable": False,
+        "payload_objects_read": 0,
+        "additional_frozen_test_reads": 0,
+    }
+    return _build_result(
+        config, base_loop, seeds, rows, [], host, run_dir, compact_output,
+        recovery_contract,
+    )
 
 
 def run_m15c6(
@@ -1114,80 +1322,55 @@ def run_m15c6(
         _write_json_roundtrip(probe, [run_dir / "probe.json", compact_output])
         return probe
 
-    critical = float(config["scientific_gate"]["paired_confidence_critical_95"])
-    aggregate = _build_aggregate(rows, critical)
-    recommendation = _recommendation(aggregate)
-    protocol = {
-        "schema": SCHEMA,
-        "milestone": MILESTONE,
-        "base_loop_config": config["base_loop_config"],
-        "resolved_model": model_descriptor(build_model(base_loop["model"])),
-        "paired_seeds": seeds,
-        "arms": list(ARM_ORDER),
-        "trained_tables": list(TRAINED_TABLES),
-        "replay": config["replay"],
-        "temporal_target": config["temporal_target"],
-        "conditional_mapping": config["conditional_mapping"],
-        "training_targets": config["training_targets"],
-        "training_schedule": config["training_schedule"],
-        "contextual_tiebreak": config["contextual_tiebreak"],
-        "strength_arena": config["strength_arena"],
-        "power_sizing": {
-            **config["power_sizing"],
-            "recomputed_power": estimate_power(config["power_sizing"]),
-        },
-        "scientific_gate": config["scientific_gate"],
-        "source_evidence": config["source_evidence"],
-        "boundaries": config["boundaries"],
-        "execution_host": host,
-    }
-    result: dict[str, Any] = {
-        "schema": SCHEMA,
-        "milestone": MILESTONE,
-        "status": recommendation["status"],
-        "protocol_hash": digest(protocol),
-        "protocol": protocol,
-        "aggregate": aggregate,
-        "seed_results": rows,
-        "timings": timings,
-        "recommendation": recommendation,
-        "sealed_cohort_contract": {
-            "cohorts_read": ["train", "development"],
-            "cohorts_not_read": ["frozen_test"],
-            "existing_frozen_test_read_count": 1,
-            "additional_frozen_test_reads": 0,
-            "all_training_targets_oracle_blind": True,
-        },
-        "promotable": False,
-    }
-    result["result_hash"] = digest(
-        {key: value for key, value in result.items() if key != "result_hash"}
+    return _build_result(
+        config, base_loop, seeds, rows, timings, host, run_dir, compact_output
     )
-    _write_json_roundtrip(
-        result, [run_dir / "result.json", compact_output]
-    )
-    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--oracle", type=Path, required=True)
+    parser.add_argument("--oracle", type=Path)
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--compact-output", type=Path, required=True)
     parser.add_argument("--execution-host")
     parser.add_argument("--progress-output", type=Path)
     parser.add_argument("--probe-only", action="store_true")
+    parser.add_argument("--recover-source-root", type=Path)
+    parser.add_argument("--recovery-source-job")
+    parser.add_argument("--recovery-source-attempt")
+    parser.add_argument("--recovery-source-code-sha")
     args = parser.parse_args()
-    result = run_m15c6(
-        args.config,
-        args.oracle,
-        args.run_dir,
-        args.compact_output,
-        args.execution_host,
-        args.progress_output,
-        args.probe_only,
-    )
+    if args.recover_source_root is not None:
+        if args.probe_only or args.oracle is not None or args.progress_output is not None:
+            parser.error("recovery cannot use probe, oracle, or progress inputs")
+        if not all(
+            (args.recovery_source_job, args.recovery_source_attempt,
+             args.recovery_source_code_sha)
+        ):
+            parser.error("recovery source identity is incomplete")
+        result = recover_m15c6(
+            args.config,
+            args.recover_source_root,
+            args.run_dir,
+            args.compact_output,
+            args.recovery_source_job,
+            args.recovery_source_attempt,
+            args.recovery_source_code_sha,
+            args.execution_host,
+        )
+    else:
+        if args.oracle is None:
+            parser.error("--oracle is required outside recovery")
+        result = run_m15c6(
+            args.config,
+            args.oracle,
+            args.run_dir,
+            args.compact_output,
+            args.execution_host,
+            args.progress_output,
+            args.probe_only,
+        )
     print(json.dumps({"status": result["status"], "result_hash": result["result_hash"]}))
     return 0
 
