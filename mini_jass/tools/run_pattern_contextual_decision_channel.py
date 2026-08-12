@@ -194,6 +194,8 @@ def _resolve(config_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         or int(tiebreak.get("calibration_state_count", 0)) != 512
         or int(tiebreak.get("calibration_seed_offset", 0)) != 1150000
         or float(tiebreak.get("calibration_quantile", -1.0)) != 0.25
+        or tiebreak.get("calibration_cohort")
+        != "train_replay_unique_nonterminal_states_with_at_least_two_legal_actions"
         or int(tiebreak.get("minimum_valid_calibration_states", 0)) != 128
         or tiebreak.get("same_delta_for_aligned_and_shuffled") is not True
         or tiebreak.get("temporal_search_scores_unchanged") is not True
@@ -396,11 +398,15 @@ def calibrate_delta(
             int(sample.state_id)
             for sample in samples
             if graph.terminal_value(int(sample.state_id)) is None
+            and len(graph.legal_actions(int(sample.state_id))) >= 2
         }
     )
     requested = int(spec["calibration_state_count"])
     if len(states) < requested:
-        raise RuntimeError("M15-C6 has too few unique train states for calibration")
+        raise RuntimeError(
+            "M15-C6 has too few unique train states with at least two legal "
+            "actions for calibration"
+        )
     rng = np.random.default_rng(seed + int(spec["calibration_seed_offset"]))
     selected = sorted(
         int(value)
@@ -449,7 +455,9 @@ def calibrate_delta(
             "q75": q(0.75),
             "q90": q(0.90),
         },
-        "cohort": "train_replay_unique_nonterminal_states",
+        "cohort": (
+            "train_replay_unique_nonterminal_states_with_at_least_two_legal_actions"
+        ),
         "oracle_consulted": False,
     }
 

@@ -48,8 +48,18 @@ temporal scores or visits.
 
 `delta` is not tuned on development. For each seed it is the preregistered 25th
 percentile (higher order statistic) of the top-two temporal score gaps on 512
-unique non-terminal **train-replay** positions. D and E use the same `delta`.
-At least 128 valid two-action searches are mandatory.
+unique non-terminal **train-replay** positions that structurally have at least
+two legal actions. This eligibility filter is applied before random sampling.
+D and E use the same `delta`. At least 128 valid two-action searches remain
+mandatory.
+
+The initial full attempt `home-1258` stopped before any arena because its first
+seed sampled 126 eligible searches after single-action positions had already
+consumed part of the 512-state draw. The corrected cohort does not inspect a
+model score, target, context value or oracle response; it only uses the legal
+action count. No scientific result from `1258` exists. A fresh timing-only
+probe seed `279025` validates the corrected execution path before retrying the
+unchanged 24 scientific seeds.
 
 ## Playing-strength gate
 
