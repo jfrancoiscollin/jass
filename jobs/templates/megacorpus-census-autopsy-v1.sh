@@ -61,6 +61,37 @@ else
     >"$artefact_root/scientific-summary.json"
 fi
 
+# ⛔ LE MESSAGE D'ABORT DOIT ENTRER DANS LE RESUME INLINE, PAS SEULEMENT DANS UN
+# FICHIER A COTE. Le runner n'inline QUE `scientific-summary.json` ; `AUTOPSY.txt`
+# part sur R2 et reste illisible depuis la session. C'est exactement la lecon de
+# cpx62-1206 -- « un round-trip write->read doit couvrir le TRANSPORT, pas
+# seulement le format » -- et je l'ai re-commise en lisant les compteurs de
+# l'autopsie de 1267 sans jamais lire son AUTOPSY.txt, puis en presentant une
+# INFERENCE sur l'etat comme une cause etablie.
+python3 - "$artefact_root/scientific-summary.json" "$artefact_root/AUTOPSY.txt" <<'PY'
+import json
+import sys
+
+summary_path, autopsy_path = sys.argv[1], sys.argv[2]
+summary = json.loads(open(summary_path, encoding="utf-8").read())
+text = open(autopsy_path, encoding="utf-8").read()
+# Borne dure : le resume complet doit rester sous les 64 KiB du transport.
+budget = 40000
+summary["autopsy_tail"] = text[-budget:] if len(text) > budget else text
+summary["autopsy_bytes"] = len(text.encode("utf-8"))
+summary["autopsy_truncated"] = len(text) > budget
+# Les lignes qui portent le verdict, extraites pour etre lisibles d'un coup.
+summary["abort_lines"] = [
+    line.strip() for line in text.splitlines()
+    if "ABORT" in line or "Error" in line or "error" in line
+    or "Traceback" in line or "failed" in line
+][-20:]
+with open(summary_path, "w", encoding="utf-8") as handle:
+    json.dump(summary, handle, indent=2, sort_keys=True)
+    handle.write("\n")
+print("abort_lines:", len(summary["abort_lines"]))
+PY
+
 # ⛔ Le runner n'inline que <= 64 KiB et SAUTE le reste EN SILENCE (cpx62-1206).
 for f in AUTOPSY.txt scientific-summary.json; do
   size=$(stat -c %s "$artefact_root/$f")
