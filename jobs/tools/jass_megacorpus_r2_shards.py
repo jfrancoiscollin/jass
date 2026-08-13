@@ -101,6 +101,30 @@ def read_shard(root: Path, descriptor: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+# ⛔ SCRATCH DE JOB, PAS CANDIDAT CORPUS. Les jobs publient leur repertoire de
+# travail sur R2 : `work/`, `mini-jass-m13-work/`, `mini-jass-m18-work/`... Ce
+# sont des fichiers intermediaires que rien ne consommera jamais, et ce sont eux
+# qui faisaient expirer le listing recursif des repertoires de tentative
+# (mesure `cpx62-1264` : 34 splits a la profondeur 2, 17 a la profondeur 3, a
+# 900 s chacun). Les exclure est une decision de PERIMETRE, pas une optimisation.
+SCRATCH_EXCLUDES: tuple[str, ...] = (
+    "work/**", "**/work/**", "*-work/**", "**/*-work/**",
+)
+
+
+def is_job_scratch(path: str) -> bool:
+    """Le chemin traverse-t-il un repertoire de travail de job ?
+
+    On teste les segments de REPERTOIRE uniquement (`parts[:-1]`) : un fichier
+    nomme `work` n'est pas un repertoire de scratch, et le confondre retirerait
+    un objet legitime du catalogue.
+    """
+    for part in PurePosixPath(path).parts[:-1]:
+        if part == "work" or part.endswith("-work"):
+            return True
+    return False
+
+
 def rclone_json(
     remote: str,
     prefix: str,
@@ -109,6 +133,7 @@ def rclone_json(
     files_only: bool,
     dirs_only: bool,
     timeout_seconds: int,
+    excludes: tuple[str, ...] = (),
 ) -> list[dict[str, Any]]:
     target = remote.rstrip("/") + (f"/{prefix}" if prefix else "")
     command = ["rclone", "lsjson", target, "--no-mimetype"]
@@ -118,6 +143,8 @@ def rclone_json(
         command.append("--files-only")
     if dirs_only:
         command.append("--dirs-only")
+    for pattern in excludes:
+        command.extend(["--exclude", pattern])
     last_error = ""
     for attempt in range(1, 4):
         completed = subprocess.run(
@@ -167,14 +194,15 @@ def split_prefix(
     root: Path,
     prefix: str,
     timeout_seconds: int,
+    excludes: tuple[str, ...] = (),
 ) -> tuple[list[str], dict[str, Any]]:
     files = rclone_json(
         remote, prefix, recursive=False, files_only=True, dirs_only=False,
-        timeout_seconds=timeout_seconds,
+        timeout_seconds=timeout_seconds, excludes=excludes,
     )
     dirs = rclone_json(
         remote, prefix, recursive=False, files_only=False, dirs_only=True,
-        timeout_seconds=timeout_seconds,
+        timeout_seconds=timeout_seconds, excludes=excludes,
     )
     children = sorted({joined(prefix, str(item["Path"]).rstrip("/")) for item in dirs})
     direct = write_shard(root, prefix, "direct", files)
@@ -185,6 +213,16 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
     checkpoint = Path(args.checkpoint_dir)
     checkpoint.mkdir(parents=True, exist_ok=True)
     state = load_state(checkpoint, args.remote, args.split_depth, args.max_depth)
+    # ⚠️ Les excludes ne font PAS partie du contrat de reprise verifie par
+    # `load_state`. C'est deliberé : les 603 prefixes deja indexes par
+    # `cpx62-1264` l'ont ete SANS exclusion, et refuser la reprise jetterait ce
+    # travail. La coherence du catalogue est assuree ailleurs -- `merge_checkpoint`
+    # filtre TOUS les shards, anciens comme nouveaux. L'exclusion au listing
+    # n'est qu'une economie de cout ; le filtre au merge est la garantie.
+    excludes = SCRATCH_EXCLUDES if getattr(args, "exclude_job_scratch", False) else ()
+    state["job_scratch_excluded_at_listing"] = bool(
+        getattr(args, "exclude_job_scratch", False)
+    )
     queue = [""]
     while queue:
         prefix = queue.pop(0)
@@ -201,6 +239,7 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
                 items = rclone_json(
                     args.remote, prefix, recursive=True, files_only=True,
                     dirs_only=False, timeout_seconds=args.shard_timeout_seconds,
+                    excludes=excludes,
                 )
                 descriptor = write_shard(checkpoint, prefix, "recursive", items)
                 state["prefixes"][prefix] = {
@@ -216,7 +255,8 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
                     ) from exc
                 print(f"split-after-failure prefix={prefix or '/'} reason={exc}", flush=True)
         children, direct = split_prefix(
-            args.remote, checkpoint, prefix, args.discovery_timeout_seconds
+            args.remote, checkpoint, prefix, args.discovery_timeout_seconds,
+            excludes=excludes,
         )
         if children:
             state["prefixes"][prefix] = {
@@ -234,7 +274,10 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
             f"direct={direct['object_count']} children={len(children)}",
             flush=True,
         )
-    return merge_checkpoint(checkpoint, Path(args.object_index), Path(args.metadata_files))
+    return merge_checkpoint(
+        checkpoint, Path(args.object_index), Path(args.metadata_files),
+        exclude_job_scratch=bool(getattr(args, "exclude_job_scratch", False)),
+    )
 
 
 def is_control_metadata(path: str) -> bool:
@@ -247,7 +290,10 @@ def is_control_metadata(path: str) -> bool:
     return False
 
 
-def merge_checkpoint(root: Path, object_index: Path, metadata_files: Path) -> dict[str, Any]:
+def merge_checkpoint(
+    root: Path, object_index: Path, metadata_files: Path,
+    exclude_job_scratch: bool = False,
+) -> dict[str, Any]:
     state = json.loads((root / "state.json").read_text(encoding="utf-8"))
     rows: list[dict[str, Any]] = []
     seen_shards: set[str] = set()
@@ -257,6 +303,15 @@ def merge_checkpoint(root: Path, object_index: Path, metadata_files: Path) -> di
             continue
         seen_shards.add(descriptor["file"])
         rows.extend(read_shard(root, descriptor))
+    # ⛔ LE FILTRE PORTE SUR TOUS LES SHARDS, pas seulement ceux listes apres
+    # l'ajout des excludes. Sans ca le catalogue melangerait des shards anciens
+    # CONTENANT le scratch et des shards recents SANS lui -- une incoherence
+    # invisible qui polluerait la liste des candidats corpus.
+    scratch = 0
+    if exclude_job_scratch:
+        kept = [row for row in rows if not is_job_scratch(row["Path"])]
+        scratch = len(rows) - len(kept)
+        rows = kept
     rows.sort(key=lambda row: row["Path"])
     paths = [row["Path"] for row in rows]
     if len(paths) != len(set(paths)):
@@ -271,6 +326,8 @@ def merge_checkpoint(root: Path, object_index: Path, metadata_files: Path) -> di
         "object_bytes": sum(row["Size"] for row in rows),
         "checkpoint_shard_count": len(seen_shards),
         "metadata_object_count": len(controls),
+        "job_scratch_objects_excluded": scratch,
+        "job_scratch_filter_applied": bool(exclude_job_scratch),
         "completed_prefix_count": sum(
             entry["state"] == "done" for entry in state["prefixes"].values()
         ),
@@ -292,6 +349,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-depth", type=int, default=6)
     parser.add_argument("--shard-timeout-seconds", type=int, default=900)
     parser.add_argument("--discovery-timeout-seconds", type=int, default=300)
+    parser.add_argument(
+        "--exclude-job-scratch", action="store_true",
+        help="ignore job work directories at listing AND at merge",
+    )
     args = parser.parse_args(argv)
     if not (1 <= args.split_depth < args.max_depth <= 12):
         parser.error("require 1 <= split-depth < max-depth <= 12")

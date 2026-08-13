@@ -71,8 +71,9 @@ class MegaCorpusR2ShardsTest(unittest.TestCase):
                 discovery_timeout_seconds=60,
             )
 
-            def listing(remote, prefix, *, recursive, files_only, dirs_only, timeout_seconds):
-                del remote, timeout_seconds
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes
                 if prefix == "" and files_only:
                     return [{"Path": "root.json", "Size": 1, "ModTime": None}]
                 if prefix == "" and dirs_only:
@@ -112,8 +113,9 @@ class MegaCorpusR2ShardsTest(unittest.TestCase):
                 max_depth=3, shard_timeout_seconds=60, discovery_timeout_seconds=60,
             )
 
-            def listing(remote, prefix, *, recursive, files_only, dirs_only, timeout_seconds):
-                del remote, timeout_seconds
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes
                 if prefix == "" and files_only:
                     return []
                 if prefix == "" and dirs_only:
@@ -130,6 +132,73 @@ class MegaCorpusR2ShardsTest(unittest.TestCase):
                 summary = SHARDS.census(args)
             self.assertEqual(summary["object_count"], 1)
             self.assertEqual(summary["completed_prefix_count"], 1)
+
+    def test_job_scratch_is_a_directory_rule_not_a_name_rule(self) -> None:
+        """Un REPERTOIRE `work/` est du scratch ; un FICHIER `work` ne l'est pas.
+
+        Confondre les deux retirerait du catalogue un objet legitime, ce qu'aucun
+        compteur ne signalerait ensuite.
+        """
+        for path in ("runs/j/a/work/tmp.bin", "runs/j/a/mini-jass-m13-work/x.json",
+                     "runs/j/a/b/work/deep/y.npy"):
+            with self.subTest(path=path):
+                self.assertTrue(SHARDS.is_job_scratch(path))
+        for path in ("runs/j/a/artefacts/result.json", "runs/j/a/geom/mesh.bin",
+                     "runs/j/a/artefacts/work", "runs/j/a/network/model.bin",
+                     "runs/j/a/homework/x", "corpora/jnnw/shard-0001.jnnw"):
+            with self.subTest(path=path):
+                self.assertFalse(SHARDS.is_job_scratch(path))
+
+    def test_merge_filters_scratch_from_shards_listed_BEFORE_the_exclusion(self) -> None:
+        """La coherence du catalogue ne peut pas dependre de la date du shard.
+
+        `cpx62-1264` a indexe 603 prefixes SANS exclusion ; la reprise en ajoute
+        avec. Si le filtre ne portait que sur les nouveaux shards, le catalogue
+        melangerait les deux regimes sans que rien ne le dise.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            old = SHARDS.write_shard(root, "runs/j/a", "recursive", [
+                {"Path": "work/tmp.bin", "Size": 10, "ModTime": None},
+                {"Path": "artefacts/manifest.json", "Size": 10, "ModTime": None},
+            ])
+            new = SHARDS.write_shard(root, "runs/k/b", "recursive", [
+                {"Path": "artefacts/inventory.json", "Size": 20, "ModTime": None},
+            ])
+            SHARDS.atomic_json(root / "state.json", {
+                "schema": SHARDS.SCHEMA, "remote": "r2:jass-data",
+                "split_depth": 2, "max_depth": 6,
+                "prefixes": {"runs/j/a": {"state": "done", "shard": old},
+                             "runs/k/b": {"state": "done", "shard": new}},
+            })
+            summary = SHARDS.merge_checkpoint(
+                root, root / "index.json", root / "metadata.txt",
+                exclude_job_scratch=True,
+            )
+            paths = [row["Path"] for row in json.loads((root / "index.json").read_text())]
+            self.assertNotIn("runs/j/a/work/tmp.bin", paths)
+            self.assertEqual(summary["object_count"], 2)
+            self.assertEqual(summary["job_scratch_objects_excluded"], 1)
+            self.assertIs(summary["job_scratch_filter_applied"], True)
+
+    def test_without_the_flag_the_catalogue_is_unchanged(self) -> None:
+        """Le defaut reste le comportement historique : aucun retrait silencieux."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shard = SHARDS.write_shard(root, "runs/j/a", "recursive", [
+                {"Path": "work/tmp.bin", "Size": 10, "ModTime": None},
+                {"Path": "artefacts/manifest.json", "Size": 10, "ModTime": None},
+            ])
+            SHARDS.atomic_json(root / "state.json", {
+                "schema": SHARDS.SCHEMA, "remote": "r2:jass-data",
+                "split_depth": 2, "max_depth": 6,
+                "prefixes": {"runs/j/a": {"state": "done", "shard": shard}},
+            })
+            summary = SHARDS.merge_checkpoint(
+                root, root / "index.json", root / "metadata.txt")
+            self.assertEqual(summary["object_count"], 2)
+            self.assertEqual(summary["job_scratch_objects_excluded"], 0)
+            self.assertIs(summary["job_scratch_filter_applied"], False)
 
 
 if __name__ == "__main__":

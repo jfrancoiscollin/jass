@@ -75,6 +75,7 @@ python3 jobs/tools/jass_megacorpus_r2_shards.py \
   --split-depth 2 --max-depth 6 \
   --shard-timeout-seconds "$SHARD_TIMEOUT_SECONDS" \
   --discovery-timeout-seconds "$DISCOVERY_TIMEOUT_SECONDS" \
+  ${EXCLUDE_JOB_SCRATCH:+--exclude-job-scratch} \
   >"$W/sharded-index.log" 2>&1
 [ -s "$INDEX" ] || die "sharded R2 object census is empty"
 [ -s "$METADATA_FILES" ] || die "metadata object list is empty"
