@@ -281,6 +281,95 @@ class MegaCorpusR2ShardsTest(unittest.TestCase):
                 summary = SHARDS.census(args)
             self.assertEqual(summary["object_count"], 1)
 
+    def test_scratch_rule_is_about_WHAT_not_about_the_job_name(self) -> None:
+        """Ma premiere regle ne connaissait que `work`/`*-work`, calquee sur les
+        40 prefixes que j'avais sous les yeux. Le tueur reel de cpx62-1269 etait
+        `.../mini-jass-pattern-baselines/venv/lib` : un scratch nomme d'apres le
+        JOB. Le nommage n'est pas normalise, donc la regle porte desormais sur des
+        noms UNIVERSELS."""
+        for prefix in ("runs/j/a/venv", "runs/j/a/x/venv/lib",
+                       "runs/j/a/venv/lib/python3.11/site-packages",
+                       "runs/j/a/build", "runs/j/a/node_modules",
+                       "runs/j/a/__pycache__", "runs/j/a/.git",
+                       "runs/j/a/work", "runs/j/a/mini-jass-m13-work"):
+            with self.subTest(prefix=prefix):
+                self.assertTrue(SHARDS.is_scratch_prefix(prefix))
+        for prefix in ("", "corpora", "runs/j/a/artefacts", "runs/j/a/geom",
+                       "runs/j/a/network", "runs/j/a/homework", "runs/j/a/rebuild"):
+            with self.subTest(prefix=prefix):
+                self.assertFalse(SHARDS.is_scratch_prefix(prefix))
+
+    def test_an_unsplittable_prefix_is_PARTIAL_and_declared_not_fatal(self) -> None:
+        """⛔ Un seul repertoire recalcitrant detruisait des heures acquises
+        (cpx62-1267 : 2h24 et +195 shards perdus). Il doit desormais etre
+        enregistre, compte, et surtout DECLARE -- un inventaire tronque ne doit
+        jamais pouvoir se lire comme exhaustif."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            args = SHARDS.argparse.Namespace(
+                checkpoint_dir=str(root / "checkpoint"), remote="r2:jass-data",
+                object_index=str(root / "index.json"),
+                metadata_files=str(root / "metadata.txt"), split_depth=1,
+                max_depth=1, shard_timeout_seconds=60, discovery_timeout_seconds=60,
+            )
+
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes
+                if prefix == "" and files_only:
+                    return []
+                if prefix == "" and dirs_only:
+                    return [{"Path": "stubborn", "IsDir": True}]
+                # A max_depth le recursif expire, mais le listing PLAT passe.
+                if prefix == "stubborn" and recursive:
+                    raise SHARDS.subprocess.TimeoutExpired("rclone", 60)
+                if prefix == "stubborn" and files_only:
+                    return [{"Path": "manifest.json", "Size": 7, "ModTime": None}]
+                if prefix == "stubborn" and dirs_only:
+                    return [{"Path": "deeper", "IsDir": True}]
+                raise AssertionError((prefix, recursive, files_only, dirs_only))
+
+            with mock.patch.object(SHARDS, "rclone_json", side_effect=listing):
+                summary = SHARDS.census(args)
+
+            # Le census SURVIT, garde ce qui etait lisible, et le declare.
+            self.assertEqual(summary["partial_prefix_count"], 1)
+            self.assertEqual(summary["unindexed_child_count"], 1)
+            self.assertIs(summary["census_is_exhaustive"], False)
+            self.assertEqual(summary["object_count"], 1)
+            self.assertEqual(
+                json.loads((root / "index.json").read_text())[0]["Path"],
+                "stubborn/manifest.json",
+            )
+
+    def test_a_complete_census_declares_itself_exhaustive(self) -> None:
+        """Le pendant du test precedent : sans partiel, le drapeau doit dire OUI,
+        sinon `census_is_exhaustive` ne vaudrait rien comme information."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            args = SHARDS.argparse.Namespace(
+                checkpoint_dir=str(root / "checkpoint"), remote="r2:jass-data",
+                object_index=str(root / "index.json"),
+                metadata_files=str(root / "metadata.txt"), split_depth=1,
+                max_depth=3, shard_timeout_seconds=60, discovery_timeout_seconds=60,
+            )
+
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes
+                if prefix == "" and files_only:
+                    return []
+                if prefix == "" and dirs_only:
+                    return [{"Path": "runs", "IsDir": True}]
+                if prefix == "runs" and recursive:
+                    return [{"Path": "a/manifest.json", "Size": 3, "ModTime": None}]
+                raise AssertionError(prefix)
+
+            with mock.patch.object(SHARDS, "rclone_json", side_effect=listing):
+                summary = SHARDS.census(args)
+            self.assertEqual(summary["partial_prefix_count"], 0)
+            self.assertIs(summary["census_is_exhaustive"], True)
+
 
 if __name__ == "__main__":
     unittest.main()

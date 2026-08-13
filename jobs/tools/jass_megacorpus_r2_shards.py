@@ -111,6 +111,22 @@ SCRATCH_EXCLUDES: tuple[str, ...] = (
     "work/**", "**/work/**", "*-work/**", "**/*-work/**",
 )
 
+# ⛔ ELAGUER SUR CE QUE CES REPERTOIRES SONT, PAS SUR LE NOM DU JOB. Ma premiere
+# regle ne connaissait que `work` et `*-work` -- calquee sur les 40 prefixes que
+# j'avais sous les yeux. Le tueur reel etait
+# `.../mini-jass-pattern-baselines/venv/lib`, dont le scratch porte le nom du JOB
+# et pas `work` (mesure : `cpx62-1269`, abort a depth 6 sur un `lsjson` de
+# virtualenv expire a 90 s -- site-packages, donc des dizaines de milliers de
+# fichiers).
+#
+# Le nommage des scratch n'est pas normalise, donc filtrer par nom de job est une
+# course perdue : il y aura toujours un nom non vu. Ces noms-ci sont UNIVERSELS
+# et ne sont candidats corpus dans aucun cas de figure.
+SCRATCH_SEGMENTS: frozenset[str] = frozenset({
+    "work", "venv", ".venv", "site-packages", "node_modules",
+    "__pycache__", ".git", "build", ".tox", ".mypy_cache", ".pytest_cache",
+})
+
 
 def is_scratch_prefix(prefix: str) -> bool:
     """Le prefixe EST-IL, ou traverse-t-il, un repertoire de travail de job ?
@@ -128,10 +144,12 @@ def is_scratch_prefix(prefix: str) -> bool:
     On elague donc dans la FILE, en Python, ou la semantique est exacte et
     testable, au lieu de la deleguer a des motifs dont la racine bouge.
     """
+    if not prefix:
+        return False
     return any(
-        part == "work" or part.endswith("-work")
+        part in SCRATCH_SEGMENTS or part.endswith("-work")
         for part in PurePosixPath(prefix).parts
-    ) if prefix else False
+    )
 
 
 def is_job_scratch(path: str) -> bool:
@@ -142,7 +160,7 @@ def is_job_scratch(path: str) -> bool:
     un objet legitime du catalogue.
     """
     for part in PurePosixPath(path).parts[:-1]:
-        if part == "work" or part.endswith("-work"):
+        if part in SCRATCH_SEGMENTS or part.endswith("-work"):
             return True
     return False
 
@@ -279,9 +297,38 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
                 continue
             except (RuntimeError, subprocess.TimeoutExpired) as exc:
                 if depth >= args.max_depth:
-                    raise RuntimeError(
-                        f"unsplittable census shard failed at depth {depth}: {prefix}: {exc}"
-                    ) from exc
+                    # ⛔ NE PLUS LEVER. Un seul repertoire recalcitrant detruisait
+                    # jusqu'ici des heures de travail acquis (cpx62-1267 : 2h24 et
+                    # +195 shards perdus sur un `venv/lib`). On enregistre ce qui
+                    # est LISIBLE a ce niveau et on DECLARE le reste comme non
+                    # indexe -- un inventaire tronque ne doit jamais pouvoir se
+                    # lire comme exhaustif.
+                    try:
+                        children, direct = split_prefix(
+                            args.remote, checkpoint, prefix,
+                            args.discovery_timeout_seconds, excludes=excludes,
+                        )
+                    except (RuntimeError, subprocess.TimeoutExpired) as inner:
+                        state["prefixes"][prefix] = {
+                            "state": "partial", "mode": "none",
+                            "shard": write_shard(checkpoint, prefix, "partial", []),
+                            "unindexed_children": [],
+                            "reason": f"max-depth listing failed: {inner}",
+                        }
+                    else:
+                        state["prefixes"][prefix] = {
+                            "state": "partial", "mode": "direct", "shard": direct,
+                            "unindexed_children": children,
+                            "reason": f"max-depth recursive listing failed: {exc}",
+                        }
+                    atomic_json(checkpoint / "state.json", state)
+                    print(
+                        f"partial prefix={prefix or '/'} depth={depth} "
+                        f"unindexed_children="
+                        f"{len(state['prefixes'][prefix]['unindexed_children'])}",
+                        flush=True,
+                    )
+                    continue
                 print(f"split-after-failure prefix={prefix or '/'} reason={exc}", flush=True)
         children, direct = split_prefix(
             args.remote, checkpoint, prefix, args.discovery_timeout_seconds,
@@ -365,6 +412,18 @@ def merge_checkpoint(
         ),
         "split_prefix_count": sum(
             entry["state"] == "split" for entry in state["prefixes"].values()
+        ),
+        # ⛔ SANS CE COMPTEUR, UN INVENTAIRE TRONQUE SE LIT COMME EXHAUSTIF.
+        "partial_prefix_count": sum(
+            entry["state"] == "partial" for entry in state["prefixes"].values()
+        ),
+        "unindexed_child_count": sum(
+            len(entry.get("unindexed_children", []))
+            for entry in state["prefixes"].values()
+            if entry["state"] == "partial"
+        ),
+        "census_is_exhaustive": not any(
+            entry["state"] == "partial" for entry in state["prefixes"].values()
         ),
     }
     atomic_json(root / "summary.json", summary)
