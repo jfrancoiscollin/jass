@@ -112,6 +112,28 @@ SCRATCH_EXCLUDES: tuple[str, ...] = (
 )
 
 
+def is_scratch_prefix(prefix: str) -> bool:
+    """Le prefixe EST-IL, ou traverse-t-il, un repertoire de travail de job ?
+
+    ⛔ POURQUOI CETTE FONCTION EXISTE EN PLUS DE `is_job_scratch`. Les motifs
+    `--exclude` de rclone sont relatifs a la RACINE DU LISTING. Tant qu'on liste
+    `runs/<job>/<attempt>/`, `work/**` matche. Mais le census met `work` en file
+    comme prefixe a part entiere, et liste ensuite `runs/<job>/<attempt>/work/` :
+    vu de cette racine, le contenu est `attacker-code/...` et PLUS AUCUN motif ne
+    matche. L'exclusion au listing etait donc inoperante des qu'on descendait
+    dedans -- mesure sur `cpx62-1267`, dont les 136 prefixes en attente etaient
+    TOUS sous `work/attacker-code/`, et tous a `max_depth`, ce qui a leve
+    `unsplittable census shard failed at depth 6`.
+
+    On elague donc dans la FILE, en Python, ou la semantique est exacte et
+    testable, au lieu de la deleguer a des motifs dont la racine bouge.
+    """
+    return any(
+        part == "work" or part.endswith("-work")
+        for part in PurePosixPath(prefix).parts
+    ) if prefix else False
+
+
 def is_job_scratch(path: str) -> bool:
     """Le chemin traverse-t-il un repertoire de travail de job ?
 
@@ -219,10 +241,10 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
     # travail. La coherence du catalogue est assuree ailleurs -- `merge_checkpoint`
     # filtre TOUS les shards, anciens comme nouveaux. L'exclusion au listing
     # n'est qu'une economie de cout ; le filtre au merge est la garantie.
-    excludes = SCRATCH_EXCLUDES if getattr(args, "exclude_job_scratch", False) else ()
-    state["job_scratch_excluded_at_listing"] = bool(
-        getattr(args, "exclude_job_scratch", False)
-    )
+    prune_scratch = bool(getattr(args, "exclude_job_scratch", False))
+    excludes = SCRATCH_EXCLUDES if prune_scratch else ()
+    state["job_scratch_excluded_at_listing"] = prune_scratch
+    state["job_scratch_pruned_from_queue"] = prune_scratch
     queue = [""]
     while queue:
         prefix = queue.pop(0)
@@ -230,7 +252,14 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
         if entry and entry["state"] == "done":
             continue
         if entry and entry["state"] == "split":
-            queue.extend(child for child in entry["children"] if child not in queue)
+            # ⚠️ Filtrer AUSSI ici : les enfants d'un prefixe deja `split` sont
+            # relus du checkpoint, donc un `work/` enregistre par une tentative
+            # precedente reviendrait dans la file sans ce test.
+            queue.extend(
+                child for child in entry["children"]
+                if child not in queue
+                and not (prune_scratch and is_scratch_prefix(child))
+            )
             continue
         depth = 0 if not prefix else len(PurePosixPath(prefix).parts)
         force_split = depth < args.split_depth
@@ -268,7 +297,10 @@ def census(args: argparse.Namespace) -> dict[str, Any]:
                 "state": "done", "mode": "direct", "shard": direct,
             }
         atomic_json(checkpoint / "state.json", state)
-        queue.extend(children)
+        queue.extend(
+            child for child in children
+            if not (prune_scratch and is_scratch_prefix(child))
+        )
         print(
             f"{'split' if children else 'done-direct'} prefix={prefix or '/'} "
             f"direct={direct['object_count']} children={len(children)}",

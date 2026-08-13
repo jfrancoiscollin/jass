@@ -200,6 +200,87 @@ class MegaCorpusR2ShardsTest(unittest.TestCase):
             self.assertEqual(summary["job_scratch_objects_excluded"], 0)
             self.assertIs(summary["job_scratch_filter_applied"], False)
 
+    def test_scratch_children_are_pruned_from_the_queue_not_just_excluded(self) -> None:
+        """⛔ Les motifs `--exclude` de rclone sont relatifs a la RACINE DU
+        LISTING. Une fois le census descendu DANS `work/`, plus aucun motif ne
+        matche -- mesure sur cpx62-1267, dont les 136 prefixes en attente etaient
+        tous sous `work/attacker-code/` et tous a `max_depth`, ce qui a leve
+        `unsplittable census shard failed at depth 6`. L'elagage doit donc se
+        faire dans la FILE, pas par motif.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            args = SHARDS.argparse.Namespace(
+                checkpoint_dir=str(root / "checkpoint"), remote="r2:jass-data",
+                object_index=str(root / "index.json"),
+                metadata_files=str(root / "metadata.txt"), split_depth=1,
+                max_depth=3, shard_timeout_seconds=60, discovery_timeout_seconds=60,
+                exclude_job_scratch=True,
+            )
+            visited: list[str] = []
+
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes
+                visited.append(prefix)
+                if prefix == "" and files_only:
+                    return []
+                if prefix == "" and dirs_only:
+                    return [{"Path": "runs", "IsDir": True}]
+                if prefix == "runs" and recursive:
+                    raise SHARDS.subprocess.TimeoutExpired("rclone", 60)
+                if prefix == "runs" and files_only:
+                    return []
+                if prefix == "runs" and dirs_only:
+                    return [{"Path": "work", "IsDir": True},
+                            {"Path": "artefacts", "IsDir": True}]
+                if prefix == "runs/artefacts" and recursive:
+                    return [{"Path": "manifest.json", "Size": 5, "ModTime": None}]
+                raise AssertionError(("le census a visite un prefixe elague", prefix))
+
+            with mock.patch.object(SHARDS, "rclone_json", side_effect=listing):
+                summary = SHARDS.census(args)
+            self.assertNotIn("runs/work", visited)
+            self.assertIn("runs/artefacts", visited)
+            self.assertEqual(summary["object_count"], 1)
+
+    def test_scratch_children_recorded_by_an_EARLIER_attempt_stay_pruned(self) -> None:
+        """Un `work/` enregistre dans les enfants d'un prefixe deja `split`
+        reviendrait dans la file a la reprise sans un second filtre."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "checkpoint"
+            root.mkdir(parents=True)
+            direct = SHARDS.write_shard(root, "runs", "direct", [])
+            SHARDS.atomic_json(root / "state.json", {
+                "schema": SHARDS.SCHEMA, "remote": "r2:jass-data",
+                "split_depth": 1, "max_depth": 3,
+                "prefixes": {
+                    "": {"state": "split", "mode": "direct",
+                         "shard": SHARDS.write_shard(root, "", "direct", []),
+                         "children": ["runs"]},
+                    "runs": {"state": "split", "mode": "direct", "shard": direct,
+                             "children": ["runs/work", "runs/artefacts"]},
+                },
+            })
+            args = SHARDS.argparse.Namespace(
+                checkpoint_dir=str(root), remote="r2:jass-data",
+                object_index=str(Path(td) / "index.json"),
+                metadata_files=str(Path(td) / "metadata.txt"), split_depth=1,
+                max_depth=3, shard_timeout_seconds=60, discovery_timeout_seconds=60,
+                exclude_job_scratch=True,
+            )
+
+            def listing(remote, prefix, *, recursive, files_only, dirs_only,
+                        timeout_seconds, excludes=()):
+                del remote, timeout_seconds, excludes, files_only, dirs_only
+                if prefix == "runs/artefacts" and recursive:
+                    return [{"Path": "manifest.json", "Size": 5, "ModTime": None}]
+                raise AssertionError(("prefixe elague revisite a la reprise", prefix))
+
+            with mock.patch.object(SHARDS, "rclone_json", side_effect=listing):
+                summary = SHARDS.census(args)
+            self.assertEqual(summary["object_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
