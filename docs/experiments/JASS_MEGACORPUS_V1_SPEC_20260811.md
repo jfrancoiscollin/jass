@@ -196,3 +196,27 @@ Les checkpoints sont des artefacts du runner même si la tentative s'interrompt.
 Une relance reprend les préfixes terminés au lieu de relire tout R2. La v4 garde
 les mêmes barrières P0 : aucun corpus/modèle, aucune lecture frozen, aucun fit,
 aucune promotion et aucune continuation automatique.
+
+## 8. Contrat d'exécution P1 — triage et lignage métadonnées
+
+Le census P0 achevé publie 1 264 candidats, dont 2 seulement en `review` et
+1 262 en quarantaine. P1 consomme exclusivement `catalog-summary.json`,
+`corpus-candidates.jsonl.gz` et `runner-attempts.jsonl.gz`. Les SHA des JSONL
+décompressés sont vérifiés contre le certificat P0 avant le triage. Aucun JNNW,
+JSM, modèle, frozen set ou résultat de force n'est lu.
+
+P1 produit :
+
+- la fiche complète et bornée des deux candidats à échantillonnage ;
+- les quarantaines groupées par combinaison exacte de motifs ;
+- une route de récupération déterministe par candidat ;
+- un graphe de lignage contenant uniquement les relations source → candidat,
+  les parents explicitement déclarés et les doublons partageant un SHA déclaré ;
+- une file `sample / quarantine / reject` où `sample` ne vaut jamais acceptation
+  pour entraînement et requiert encore une autorisation distincte de payload.
+
+Les ressemblances de noms, générations ou chemins ne créent aucune arête de
+lignage. Elles pourront servir plus tard de pistes de revue, mais jamais de
+preuve. P1 fixe `training_accept_count=0`, `payload_sample_authorized=false`,
+`training_authorized=false`, `promotion_authorized=false` et
+`automatic_next_job=null`.
