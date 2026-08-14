@@ -74,7 +74,8 @@ PY="$VENV/bin/python"
 monitor
 
 stage repository-contract-tests
-python3 -m py_compile jobs/tools/jass_megacorpus_static_readout.py
+python3 -m py_compile jobs/tools/jass_megacorpus_static_readout.py \
+  jobs/tools/verify_optimizer_convergence.py
 "$PY" -m unittest jobs.tests.test_jass_megacorpus_abcd >"$W/tests.log" 2>&1
 
 stage fetch-authenticated-abc-and-current-source
@@ -163,11 +164,10 @@ stage fit-D-C-prior-then-current
     --chunk "$CHUNK" --lbfgs-maxcor 20 --lbfgs-gtol 1e-4 --prune \
     --optimizer-report "$ART/D-optimizer.json" >"$W/fit-D.log" 2>&1
 [ -s "$W/D.pjtw" ] || die "D produced no PJTW"
-"$PY" - "$ART/D-optimizer.json" <<'PY'
-import json,sys
-d=json.load(open(sys.argv[1]))
-if not d.get('success') or int(d.get('iterations',0))<=0: raise SystemExit(f'D did not converge: {d}')
-PY
+"$PY" jobs/tools/verify_optimizer_convergence.py \
+  --report "$ART/D-optimizer.json" --label D \
+  --expected-max-iterations "$MAXIT" --expected-maxcor 20 \
+  --expected-gtol 1e-4 --receipt "$ART/D-convergence.json"
 gzip -n -c "$W/D.pjtw" >"$ART/D-c-prior-then-current.pjtw.gz"
 
 stage common-opening-disjoint-static-readout
