@@ -3,9 +3,9 @@
 # Checkpoints only: no frozen cohort, games, selection, child job or promotion.
 set -Eeuo pipefail
 
-: "$${JASS_CODE_DIR:?}"; : "$${JASS_RESULT_DIR:?}"; : "$${JASS_ARTEFACT_DIR:?}"
-: "$${JASS_JOB_ID:?}"; : "$${JASS_OBJSTORE_REMOTE:?}"
-: "$${EXPECTED_CODE_SHA:?}"; : "$${EXPECTED_JOB_ID:?}"
+: "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
+: "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"
+: "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_JOB_ID:?}"
 cd "$JASS_CODE_DIR"
 W="$JASS_RESULT_DIR/work"; IN="$JASS_RESULT_DIR/inputs"; ART="$JASS_ARTEFACT_DIR"
 GEOM="$JASS_RESULT_DIR/geom8"
@@ -32,7 +32,7 @@ L2LOW_SHA="ec47e4b37fc7e95dcb390c0a5eddf207e98c0818c1708636d2df9e85b1d149b4"
 UNIFORM_RECORDS=40000000; CURRENT_RECORDS=2000000; EXPECTED_EXTRAS=120
 SAMPLE_SEED=20260814; HOLDOUT_MOD=10; SPLIT_SEED=577215
 MAXIT=300; CHUNK=20000; TARGET_TIMEOUT=10800; FIT_TIMEOUT=14400
-VENV="$${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
+VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
 VENV_READY="$VENV/.jass-runtime-ready-v1"
 
 MON=""
@@ -75,15 +75,15 @@ trap 'exit 130' INT
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
 [[ "$JASS_JOB_ID" =~ ^cpx62-([0-9]+)-jass-megacorpus-comparative-fit-v1$ ]] ||
   die "invalid job nomenclature"
-[ "$${FULL_RUN_APPROVED:-0}" = 1 ] && [ "$${SCIENTIFIC_GO:-0}" = 1 ] ||
+[ "${FULL_RUN_APPROVED:-0}" = 1 ] && [ "${SCIENTIFIC_GO:-0}" = 1 ] ||
   die "explicit execution GO missing"
-[ "$${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "automatic continuation guard missing"
+[ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "automatic continuation guard missing"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
 [ -z "$(git branch --show-current)" ] || die "job worktree must be detached"
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"
 [ "$(hostname)" = cpx62 ] && [ "$(nproc)" -eq 16 ] || die "CPX 16-CPU contract mismatch"
 DFA=$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')
-[ "$${DFA:-0}" -gt 20480 ] || die "less than 20 GiB free ($DFA MiB)"
+[ "${DFA:-0}" -gt 20480 ] || die "less than 20 GiB free ($DFA MiB)"
 say "host=$(hostname) nproc=$(nproc) free_mb=$DFA mode=megacorpus_abc_fit"
 monitor
 
