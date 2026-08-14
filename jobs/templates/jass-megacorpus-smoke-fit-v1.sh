@@ -28,7 +28,7 @@ SOURCE_RECORDS=40000000; EXPECTED_EXTRAS=120
 SAMPLE_MOD=10; SAMPLE_RESIDUE=0; SAMPLE_SEED=20260814
 HOLDOUT_MOD=10; SPLIT_SEED=577215; MAXIT=25; CHUNK=20000
 TARGET_TIMEOUT=10800; FIT_TIMEOUT=10800
-VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-np1.26.4-sp1.14.1}"
+VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
 VENV_READY="$VENV/.jass-runtime-ready-v1"
 
 MON=""
@@ -94,18 +94,23 @@ if [ ! -f "$VENV_READY" ]; then
   # single versioned cache in place instead of trusting a partial environment.
   python3 -m venv --clear "$VENV"
   "$VENV/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
-    numpy==1.26.4 scipy==1.14.1 >"$W/pip-bootstrap-once.log" 2>&1
-  "$VENV/bin/python" -c 'import numpy, scipy; assert numpy.__version__ == "1.26.4"; assert scipy.__version__ == "1.14.1"'
-  printf 'numpy=1.26.4\nscipy=1.14.1\ncreated_by=%s\n' "$JASS_JOB_ID" >"$VENV_READY"
+    numpy scipy >"$W/pip-bootstrap-once.log" 2>&1
+  "$VENV/bin/python" - "$VENV_READY" "$JASS_JOB_ID" <<'PY'
+import json,numpy,scipy,sys
+open(sys.argv[1],'w').write(json.dumps({
+ 'schema':'jass.numeric_cache.v1','created_by':sys.argv[2],
+ 'numpy':numpy.__version__,'scipy':scipy.__version__,
+},indent=2,sort_keys=True)+'\n')
+PY
 fi
 PY="$VENV/bin/python"
-"$PY" -c 'import numpy, scipy; assert numpy.__version__ == "1.26.4"; assert scipy.__version__ == "1.14.1"' ||
+"$PY" -c 'import numpy, scipy; assert numpy.__version__; assert scipy.__version__' ||
   die "persistent numeric venv mismatch"
 "$PY" - "$ART/python-runtime.json" "$VENV" <<'PY'
 import json,numpy,scipy,sys
 open(sys.argv[1],'w').write(json.dumps({
  'schema':'jass.python_runtime.v1','venv':sys.argv[2],
- 'numpy':numpy.__version__,'scipy':scipy.__version__,
+ 'stack':'current-compatible-cpx','numpy':numpy.__version__,'scipy':scipy.__version__,
  'pytorch_installed_or_required':False,'persistent_cache':True,
 },indent=2,sort_keys=True)+'\n')
 PY

@@ -69,6 +69,11 @@ le prior et l'export PJTW ; la convergence n'est pas requise pour ce smoke. Le
 job publie le corpus, la provenance, `context30`, le modèle, les hashes et les
 rapports d'optimisation nécessaires pour rejouer le fit.
 
+CPX ne sert plus de wheel NumPy 1.26.4 pour sa version de Python. Le job utilise
+donc la pile NumPy/SciPy courante compatible, résolue une seule fois dans un
+cache `/var/tmp` versionné et marqué READY. Les versions exactes sont publiées
+avec le résultat ; PyTorch n'est ni installé ni requis par ce pipeline.
+
 Le verdict `JASS_MEGACORPUS_SMOKE_FIT_READY` signifie uniquement qu'un fit
 MegaCorpus reproductible est techniquement valide. Il ne constitue ni un gain
 de force, ni une promotion. Aucun frozen set n'est lu et aucune continuation ou
