@@ -81,6 +81,9 @@ python3 -m py_compile jobs/tools/jass_megacorpus_static_readout.py \
 stage fetch-authenticated-abc-and-current-source
 timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$ABC_PREFIX" \
   --file artefacts/JASS_CONTROL_SUMMARY.json=abc-summary.json \
+  --file artefacts/current_2m-optimizer.json=A-optimizer.json \
+  --file artefacts/mega_eq_2m-optimizer.json=B-optimizer.json \
+  --file artefacts/mega_full_4m-optimizer.json=C-optimizer.json \
   --file artefacts/current_2m.pjtw.gz=A.pjtw.gz \
   --file artefacts/mega_eq_2m.pjtw.gz=B.pjtw.gz \
   --file artefacts/mega_full_4m.pjtw.gz=C.pjtw.gz \
@@ -107,6 +110,21 @@ if (recipe.get('architecture'),recipe.get('target'),recipe.get('l2'),recipe.get(
    ('8cf_exact_fold_tempo_120_extras','CONTEXT_30_ALIGNED_alpha_0.30',1e-5,2000):
  raise SystemExit('ABC recipe drift')
 PY
+"$PY" - "$IN/abc-summary.json" "$IN/A-optimizer.json" \
+  "$IN/B-optimizer.json" "$IN/C-optimizer.json" <<'PY'
+import json,sys
+summary=json.load(open(sys.argv[1]))
+for label,path in zip(('CURRENT_2M','MEGA_EQ_2M','MEGA_FULL_4M'),sys.argv[2:]):
+ report=json.load(open(path))
+ if summary['arms'][label].get('optimizer') != report:
+  raise SystemExit(f'{label}: optimizer report differs from ABC certificate')
+PY
+for arm in A B C; do
+  "$PY" jobs/tools/verify_optimizer_convergence.py \
+    --report "$IN/$arm-optimizer.json" --label "source-$arm" \
+    --expected-max-iterations 2000 --expected-maxcor 20 \
+    --expected-gtol 1e-4 --receipt "$ART/source-$arm-convergence.json"
+done
 
 for arm in A B C; do gunzip -c "$IN/$arm.pjtw.gz" >"$W/$arm.pjtw"; done
 gunzip -c "$IN/current-context30.npy.gz" >"$W/current-context30.npy"

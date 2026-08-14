@@ -15,6 +15,23 @@ class MegaCorpusAbcdTemplatesTest(unittest.TestCase):
         self.assertIn("CE_Current + 0.5e-5*||w-C||^2", D_TEXT)
         self.assertIn("--contrast B:A --contrast C:B --contrast D:A --contrast D:C", D_TEXT)
 
+    def test_d_recertifies_all_source_optimizer_gradients_before_fit(self):
+        for source, label in (
+            ("current_2m", "A"),
+            ("mega_eq_2m", "B"),
+            ("mega_full_4m", "C"),
+        ):
+            self.assertIn(
+                f"artefacts/{source}-optimizer.json={label}-optimizer.json",
+                D_TEXT,
+            )
+        self.assertIn("source-$arm-convergence.json", D_TEXT)
+        self.assertIn("optimizer report differs from ABC certificate", D_TEXT)
+        self.assertLess(
+            D_TEXT.index("for arm in A B C; do\n  \"$PY\" jobs/tools/verify_optimizer_convergence.py"),
+            D_TEXT.index("stage fit-D-C-prior-then-current"),
+        )
+
     def test_strength_has_all_preregistered_contrasts_and_paired_bootstrap(self):
         self.assertIn("CONTRASTS=(B_vs_A C_vs_B D_vs_A D_vs_C C_vs_A D_vs_B)", S_TEXT)
         self.assertIn('--paired-bootstrap-samples "$BOOTSTRAP"', S_TEXT)
