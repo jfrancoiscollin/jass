@@ -46,6 +46,10 @@ class MegaCorpusComparativeTemplateTest(unittest.TestCase):
         self.assertIn("pytorch_installed_or_required':False", TEXT)
         self.assertNotIn("pip install torch", TEXT)
 
+    def test_shell_parameter_expansions_are_not_pid_prefixed(self):
+        self.assertNotIn("$${", TEXT)
+        self.assertIn("${SCIENTIFIC_GO:-0}", TEXT)
+
 
 if __name__ == "__main__":
     unittest.main()
