@@ -23,6 +23,13 @@ class MegaCorpusSmokeTemplateTest(unittest.TestCase):
         self.assertIn("--prior-mean \"$W/l2low.pjtw\" --prior-decay 0", TEXT)
         self.assertIn("--max-iter \"$MAXIT\"", TEXT)
 
+    def test_cpx_runtime_is_versioned_persistent_and_never_installs_torch(self):
+        self.assertIn("/var/tmp/jass-l3-numeric-venv-np1.26.4-sp1.14.1", TEXT)
+        self.assertIn(".jass-runtime-ready-v1", TEXT)
+        self.assertIn("python3 -m venv --clear", TEXT)
+        self.assertNotIn("pip install torch", TEXT)
+        self.assertIn("pytorch_installed_or_required':False", TEXT)
+
     def test_no_frozen_strength_or_automatic_promotion(self):
         lowered = TEXT.lower()
         self.assertNotIn("frozen_test", lowered)

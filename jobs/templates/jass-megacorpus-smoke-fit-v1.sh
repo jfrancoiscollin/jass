@@ -28,7 +28,8 @@ SOURCE_RECORDS=40000000; EXPECTED_EXTRAS=120
 SAMPLE_MOD=10; SAMPLE_RESIDUE=0; SAMPLE_SEED=20260814
 HOLDOUT_MOD=10; SPLIT_SEED=577215; MAXIT=25; CHUNK=20000
 TARGET_TIMEOUT=10800; FIT_TIMEOUT=10800
-VENV="${JASS_L3_NUMERIC_VENV:-/home/jf/.cache/jass-l3-numeric-venv}"
+VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-np1.26.4-sp1.14.1}"
+VENV_READY="$VENV/.jass-runtime-ready-v1"
 
 MON=""
 monitor(){
@@ -87,14 +88,27 @@ say "host=$(hostname) nproc=$(nproc) free_mb=$DFA mode=megacorpus_smoke_fit"
 monitor
 
 stage persistent-numeric-runtime
-if [ ! -x "$VENV/bin/python" ]; then
-  python3 -m venv "$VENV"
+if [ ! -f "$VENV_READY" ]; then
+  mkdir -p "$(dirname "$VENV")"
+  # A failed bootstrap leaves no READY marker.  The next attempt repairs this
+  # single versioned cache in place instead of trusting a partial environment.
+  python3 -m venv --clear "$VENV"
   "$VENV/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: \
     numpy==1.26.4 scipy==1.14.1 >"$W/pip-bootstrap-once.log" 2>&1
+  "$VENV/bin/python" -c 'import numpy, scipy; assert numpy.__version__ == "1.26.4"; assert scipy.__version__ == "1.14.1"'
+  printf 'numpy=1.26.4\nscipy=1.14.1\ncreated_by=%s\n' "$JASS_JOB_ID" >"$VENV_READY"
 fi
 PY="$VENV/bin/python"
 "$PY" -c 'import numpy, scipy; assert numpy.__version__ == "1.26.4"; assert scipy.__version__ == "1.14.1"' ||
   die "persistent numeric venv mismatch"
+"$PY" - "$ART/python-runtime.json" "$VENV" <<'PY'
+import json,numpy,scipy,sys
+open(sys.argv[1],'w').write(json.dumps({
+ 'schema':'jass.python_runtime.v1','venv':sys.argv[2],
+ 'numpy':numpy.__version__,'scipy':scipy.__version__,
+ 'pytorch_installed_or_required':False,'persistent_cache':True,
+},indent=2,sort_keys=True)+'\n')
+PY
 
 stage repository-contract-tests
 python3 -m py_compile jobs/tools/jass_megacorpus_materialize.py jobs/tools/l3_conditional_targets.py
