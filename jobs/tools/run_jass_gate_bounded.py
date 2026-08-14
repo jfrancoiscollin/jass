@@ -87,11 +87,85 @@ def command_for(args: argparse.Namespace, shard: int) -> list[str]:
     game_timeout = getattr(args, "game_timeout", None)
     if game_timeout is not None:
         command.extend(["--game-timeout", str(game_timeout)])
+    if getattr(args, "paired_bootstrap_samples", 0) > 0:
+        command.extend([
+            "--results-jsonl",
+            str(Path(args.work_dir) / f"games.{shard}.jsonl"),
+        ])
     if args.movetime is not None:
         command.extend(["--movetime", str(args.movetime)])
     else:
         command.extend(["--depth", str(args.depth)])
     return command
+
+
+def paired_opening_report(
+    paths: list[Path],
+    *,
+    expected_shards: int,
+    expected_openings: int,
+    pairs: int,
+    bootstrap_samples: int,
+    seed: int,
+) -> dict:
+    """Cluster bootstrap over openings after colour-swapped paired games."""
+    import numpy as np
+    if len(paths) != expected_shards:
+        raise ValueError("paired result shard count mismatch")
+    rows = []
+    for path in paths:
+        if not path.is_file() or path.stat().st_size == 0:
+            raise ValueError(f"missing/empty paired result file: {path}")
+        rows.extend(
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    expected_games = expected_openings * pairs * 2
+    if len(rows) != expected_games:
+        raise ValueError(f"paired results contain {len(rows)} games, expected {expected_games}")
+    indices = [int(row["game_index"]) for row in rows]
+    if len(set(indices)) != expected_games or set(indices) != set(range(expected_games)):
+        raise ValueError("paired game indices are not a complete unique range")
+    by_opening: dict[int, list[dict]] = {}
+    for row in rows:
+        opening = int(row["opening_index"])
+        score = float(row["score_a"])
+        if opening < 0 or opening >= expected_openings or score not in (0.0, 0.5, 1.0):
+            raise ValueError("paired result row outside contract")
+        by_opening.setdefault(opening, []).append(row)
+    if set(by_opening) != set(range(expected_openings)):
+        raise ValueError("paired results do not cover every opening")
+    per_opening = np.empty(expected_openings, dtype=np.float64)
+    errors = 0
+    for opening, opening_rows in by_opening.items():
+        if len(opening_rows) != pairs * 2:
+            raise ValueError(f"opening {opening} has {len(opening_rows)} games")
+        colours = [bool(row["a_is_white"]) for row in opening_rows]
+        if colours.count(True) != pairs or colours.count(False) != pairs:
+            raise ValueError(f"opening {opening} colour pairing drift")
+        per_opening[opening] = np.mean([float(row["score_a"]) for row in opening_rows])
+        errors += sum(row.get("error") is not None for row in opening_rows)
+    rng = np.random.default_rng(seed)
+    draws = np.empty(bootstrap_samples, dtype=np.float64)
+    batch = 4096
+    for start in range(0, bootstrap_samples, batch):
+        stop = min(start + batch, bootstrap_samples)
+        sampled = rng.integers(0, expected_openings, size=(stop - start, expected_openings))
+        draws[start:stop] = per_opening[sampled].mean(axis=1)
+    ci_low, ci_high = np.quantile(draws, [0.025, 0.975])
+    return {
+        "method": "paired_colour_opening_cluster_bootstrap",
+        "n_openings": expected_openings,
+        "games_per_opening": pairs * 2,
+        "bootstrap_samples": bootstrap_samples,
+        "seed": seed,
+        "rate": float(per_opening.mean()),
+        "ci_low": float(ci_low),
+        "ci_high": float(ci_high),
+        "positive_opening_fraction": float(np.mean(per_opening > 0.5)),
+        "error_draws": errors,
+    }
 
 
 def run_gate(args: argparse.Namespace) -> dict:
@@ -140,6 +214,22 @@ def run_gate(args: argparse.Namespace) -> dict:
 
     logs = [out_dir / f"gate.{shard}.log" for shard in range(args.nshards)]
     result = parse_result_files(logs, args.nshards)
+    if args.paired_bootstrap_samples > 0:
+        with open(args.openings_file, encoding="utf-8") as stream:
+            openings = [
+                line.split("#", 1)[0].strip()
+                for line in stream
+                if line.split("#", 1)[0].strip()
+            ]
+        paired_paths = [out_dir / f"games.{shard}.jsonl" for shard in range(args.nshards)]
+        result["paired_opening"] = paired_opening_report(
+            paired_paths,
+            expected_shards=args.nshards,
+            expected_openings=len(openings),
+            pairs=args.pairs,
+            bootstrap_samples=args.paired_bootstrap_samples,
+            seed=args.paired_bootstrap_seed,
+        )
     result.update({
         "jass_a": args.jass_a,
         "jass_b": args.jass_b,
@@ -185,6 +275,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--timeout", type=int, default=7000)
     parser.add_argument("--game-timeout", type=float, default=None,
                         help="forwarded to the harness: per-game wall-clock cap (s), exceeded → draw.")
+    parser.add_argument("--paired-bootstrap-samples", type=int, default=0,
+                        help="when positive, retain per-game results and cluster-bootstrap openings")
+    parser.add_argument("--paired-bootstrap-seed", type=int, default=20260814)
     parser.add_argument("--work-dir", required=True)
     parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
@@ -193,6 +286,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.jass_a or not args.jass_b:
         parser.error("provide --jass, or both --jass-a and --jass-b")
     resolve_search_params(args)
+    if args.paired_bootstrap_samples < 0:
+        parser.error("--paired-bootstrap-samples must be non-negative")
     try:
         result = run_gate(args)
         Path(args.out).write_text(json.dumps(result, indent=2), encoding="utf-8")
