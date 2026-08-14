@@ -24,9 +24,11 @@ class MegaCorpusSmokeTemplateTest(unittest.TestCase):
         self.assertIn("--max-iter \"$MAXIT\"", TEXT)
 
     def test_cpx_runtime_is_versioned_persistent_and_never_installs_torch(self):
-        self.assertIn("/var/tmp/jass-l3-numeric-venv-np1.26.4-sp1.14.1", TEXT)
+        self.assertIn("/var/tmp/jass-l3-numeric-venv-current-v1", TEXT)
         self.assertIn(".jass-runtime-ready-v1", TEXT)
         self.assertIn("python3 -m venv --clear", TEXT)
+        self.assertIn("numpy scipy >\"$W/pip-bootstrap-once.log\"", TEXT)
+        self.assertNotIn("numpy==1.26.4", TEXT)
         self.assertNotIn("pip install torch", TEXT)
         self.assertIn("pytorch_installed_or_required':False", TEXT)
 
