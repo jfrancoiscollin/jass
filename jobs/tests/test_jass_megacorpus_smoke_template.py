@@ -40,6 +40,13 @@ class MegaCorpusSmokeTemplateTest(unittest.TestCase):
         self.assertIn("promotion_authorized':False", TEXT)
         self.assertIn("automatic_next_job':None", TEXT)
 
+    def test_pjtw_guard_is_structural_not_an_arbitrary_file_size_floor(self):
+        self.assertNotIn("100_000_000", TEXT)
+        self.assertIn("struct.unpack('<5I',header)", TEXT)
+        self.assertIn("n_pat != 4251528", TEXT)
+        self.assertIn("n_ext != 120", TEXT)
+        self.assertIn("model.stat().st_size != expected_size", TEXT)
+
 
 if __name__ == "__main__":
     unittest.main()

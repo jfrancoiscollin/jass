@@ -260,7 +260,7 @@ gzip -n -c "$W/origin_record_index.npy" >"$ART/origin_record_index.npy.gz"
 gzip -n -c "$W/context30.npy" >"$ART/context30.npy.gz"
 gzip -n -c "$W/mega-context30-smoke.pjtw" >"$ART/mega-context30-smoke.pjtw.gz"
 python3 - "$W" "$ART" "$RECORDS" "$TRAIN_COUNT" "$HOLDOUT" "$EXPECTED_CODE_SHA" <<'PY'
-import hashlib,json,re,sys
+import hashlib,json,re,struct,sys
 from pathlib import Path
 w,art=Path(sys.argv[1]),Path(sys.argv[2])
 records,train,holdout=map(int,sys.argv[3:6]); code_sha=sys.argv[6]
@@ -284,8 +284,20 @@ if consumed['aligned_inputs']['data_sha256'] != material['files']['data']['sha25
 if int(optimizer.get('iterations',0)) <= 0:
  raise SystemExit('fit performed zero optimizer iterations')
 model=w/'mega-context30-smoke.pjtw'
-if model.stat().st_size < 100_000_000:
- raise SystemExit('PJTW export is unexpectedly small')
+with model.open('rb') as handle:
+ header=handle.read(20)
+if len(header) != 20:
+ raise SystemExit('PJTW export has a truncated header')
+magic,version,scale,n_pat,n_ext=struct.unpack('<5I',header)
+known_bits=0xFF|0x100|0x200
+expected_size=20+4*2*(n_pat+n_ext)
+if (magic != 0x57544A50 or (version & 0xFF) != 3 or version & ~known_bits
+        or scale <= 0 or n_pat != 4251528 or n_ext != 120
+        or model.stat().st_size != expected_size):
+ raise SystemExit(f'PJTW structural guard failed: header={(magic,version,scale,n_pat,n_ext)} size={model.stat().st_size} expected={expected_size}')
+model_header={'magic':'PJTW','version':version,'scale':scale,'n_pat':n_pat,
+              'n_ext':n_ext,'weight_count':2*(n_pat+n_ext),
+              'size_bytes':model.stat().st_size}
 fit_log=(w/'fit.log').read_text(errors='replace')
 holdout_match=re.search(r'HOLDOUT_LOGLOSS\s+([0-9.]+)',fit_log)
 train_match=re.search(r'train_loss=([0-9.]+)',fit_log)
@@ -306,6 +318,7 @@ payload={
  'train_loss':float(train_match.group(1)) if train_match else None,
  'holdout_logloss':float(holdout_match.group(1)) if holdout_match else None,
  'model_raw_sha256':sha(model),
+ 'model_header':model_header,
  'model_gz_sha256':sha(art/'mega-context30-smoke.pjtw.gz'),
  'fit_ready_bundle':{
    name:{'sha256':sha(art/name),'size_bytes':(art/name).stat().st_size}
