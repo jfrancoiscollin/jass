@@ -36,12 +36,18 @@ L2LOW parent.
 - L2: 1e-5;
 - L-BFGS maxcor: 20;
 - gtol: 1e-4;
-- maximum iterations: 300;
+- maximum iterations: 2000 (cap only; `gtol=1e-4` remains the stopping rule);
 - chunk: 20,000 rows.
 
 The three fits run sequentially inside one CPX job. This avoids cross-arm CPU
 and memory contention while sharing immutable downloads and a single compiled
 binary. The optimizer settings, not wall-clock time, define the fit budget.
+
+The first execution attempt `cpx62-1336` reached the former 300-iteration cap
+on A with `gradient_inf_norm=1.282e-3`, above `gtol=1e-4`. It produced no model
+and never started B or C. The cap was therefore raised before any cross-arm or
+strength result existed. This is a convergence repair, not a post-hoc change to
+the objective or a selection based on model quality.
 
 ## Interpretation guard
 

@@ -23,7 +23,7 @@ class MegaCorpusComparativeTemplateTest(unittest.TestCase):
         self.assertIn('--prior-mean "$W/l2low.pjtw" --prior-decay 0', TEXT)
         self.assertIn("--exact-fold --tempo-stage", TEXT)
         self.assertIn('--max-iter "$MAXIT"', TEXT)
-        self.assertIn("MAXIT=300", TEXT)
+        self.assertIn("MAXIT=2000", TEXT)
 
     def test_sources_are_immutable_and_authenticated(self):
         self.assertIn("home-0977-l3-pure-turnover1to1-train-v1", TEXT)

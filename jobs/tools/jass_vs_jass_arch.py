@@ -19,7 +19,7 @@ machine-readable `RESULT <a_wins> <draws> <b_wins>` lines.
       python3 tools/jass_vs_jass_arch.py ... --pairs 28 --shard $i --nshards $NCPU &
     done; wait     # then sum the RESULT lines
 """
-import argparse, sys, time
+import argparse, hashlib, json, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from calibrate_vs_scan import (JassEngine, Referee, play_game,
@@ -53,6 +53,9 @@ def main(argv):
                    help="write the running 'RESULT a d b' tally to this path after EVERY "
                         "game (overwrite+flush). Survives the runner's non-flush on jobs whose "
                         "result is only known at the end (point it under the committed artefacts dir).")
+    p.add_argument("--results-jsonl", default=None,
+                   help="optional per-game JSONL for paired opening-level inference; each shard "
+                        "must write a distinct path")
     p.add_argument("--openings-file", default=None,
                    help="play from custom opening FENs (one per line, '#' comments). With deterministic "
                         "search each (opening, colour) is ONE unique game, so the built-in 9-opening pool "
@@ -71,13 +74,23 @@ def main(argv):
         openings = opening_pool_via_jass(args.jass_a)
 
     # Full deterministic game list, then take this shard's disjoint slice.
-    specs = [(op, aw) for op in openings for _ in range(args.pairs) for aw in (True, False)]
+    specs = [
+        (game_index, opening_index, pair_index, opening, a_is_white)
+        for game_index, (opening_index, pair_index, opening, a_is_white) in enumerate(
+            (opening_index, pair_index, opening, a_is_white)
+            for opening_index, opening in enumerate(openings)
+            for pair_index in range(args.pairs)
+            for a_is_white in (True, False)
+        )
+    ]
     specs = specs[args.shard::args.nshards]
 
     a_wins = b_wins = draws = 0
     t0 = time.time()
-    for opening, a_is_white in specs:
+    results_handle = open(args.results_jsonl, "w", encoding="utf-8") if args.results_jsonl else None
+    for game_index, opening_index, pair_index, opening, a_is_white in specs:
         white, black = (a, b) if a_is_white else (b, a)
+        error = None
         try:
             r = play_game(white, black, referee, opening,
                           depth=(None if args.movetime else args.depth),
@@ -89,13 +102,32 @@ def main(argv):
             # Compter nulle + continuer. (Sinon un seul mauvais game fait chuter n / peut hang.)
             print(f"  game skipped ({exc})", file=sys.stderr, flush=True)
             draws += 1
-            continue
-        if r.outcome == "D":
-            draws += 1
-        elif (r.outcome == "W" and a_is_white) or (r.outcome == "L" and not a_is_white):
-            a_wins += 1
+            outcome = "D"
+            score_a = 0.5
+            error = str(exc)
         else:
-            b_wins += 1
+            outcome = r.outcome
+            if outcome == "D":
+                draws += 1
+                score_a = 0.5
+            elif (outcome == "W" and a_is_white) or (outcome == "L" and not a_is_white):
+                a_wins += 1
+                score_a = 1.0
+            else:
+                b_wins += 1
+                score_a = 0.0
+        if results_handle:
+            results_handle.write(json.dumps({
+                "game_index": game_index,
+                "opening_index": opening_index,
+                "opening_sha256": hashlib.sha256(opening.encode("utf-8")).hexdigest(),
+                "pair_index": pair_index,
+                "a_is_white": a_is_white,
+                "outcome_white": outcome,
+                "score_a": score_a,
+                "error": error,
+            }, sort_keys=True) + "\n")
+            results_handle.flush()
         # Incremental tally so the running result survives the runner's non-flush
         # (the final RESULT only lands at job end otherwise → lost if not committed).
         if args.progress_file:
@@ -112,6 +144,8 @@ def main(argv):
     for eng in (a, b, referee):
         try: eng.close()
         except Exception: pass
+    if results_handle:
+        results_handle.close()
     return 0
 
 
