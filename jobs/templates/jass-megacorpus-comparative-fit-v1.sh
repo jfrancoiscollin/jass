@@ -114,7 +114,8 @@ open(sys.argv[1],'w').write(json.dumps({
 PY
 
 stage repository-contract-tests
-python3 -m py_compile jobs/tools/jass_megacorpus_materialize.py jobs/tools/l3_conditional_targets.py
+python3 -m py_compile jobs/tools/jass_megacorpus_materialize.py \
+  jobs/tools/l3_conditional_targets.py jobs/tools/verify_optimizer_convergence.py
 "$PY" -m unittest jobs.tests.test_jass_megacorpus_materialize \
   jobs.tests.test_jass_megacorpus_smoke_template \
   jobs.tests.test_jass_megacorpus_comparative_template >"$W/tests.log" 2>&1
@@ -304,14 +305,10 @@ fit_arm(){
       --chunk "$CHUNK" --lbfgs-maxcor 20 --lbfgs-gtol 1e-4 --prune \
       --optimizer-report "$ART/$arm-optimizer.json" >"$W/fit-$arm.log" 2>&1
   [ -s "$W/$arm.pjtw" ] || die "$arm fit produced no PJTW"
-  "$PY" - "$ART/$arm-optimizer.json" "$arm" <<'PY'
-import json,sys
-d=json.load(open(sys.argv[1]))
-if not d.get('success'):
- raise SystemExit(f"{sys.argv[2]} did not converge: {d}")
-if int(d.get('iterations',0)) <= 0:
- raise SystemExit(f"{sys.argv[2]} performed zero iterations")
-PY
+  "$PY" jobs/tools/verify_optimizer_convergence.py \
+    --report "$ART/$arm-optimizer.json" --label "$arm" \
+    --expected-max-iterations "$MAXIT" --expected-maxcor 20 \
+    --expected-gtol 1e-4 --receipt "$ART/$arm-convergence.json"
   gzip -n -c "$W/$arm.pjtw" >"$ART/$arm.pjtw.gz"
   gzip -n -c "$W/$arm-context30.npy" >"$ART/$arm-context30.npy.gz"
 }

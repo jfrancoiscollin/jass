@@ -11,9 +11,37 @@ from jobs.tools.jass_megacorpus_static_readout import (
 )
 from jobs.tools.jass_megacorpus_abcd_verdict import summarize_contrast
 from jobs.tools.run_jass_gate_bounded import paired_opening_report
+from jobs.tools.verify_optimizer_convergence import verify_optimizer_report
 
 
 class MegaCorpusAbcdTest(unittest.TestCase):
+    def test_optimizer_certificate_requires_actual_gtol(self):
+        report = {
+            "success": True,
+            "status": 0,
+            "iterations": 412,
+            "gradient_inf_norm": 9.9e-5,
+            "max_iterations": 2000,
+            "maxcor": 20,
+            "gtol": 1e-4,
+            "message": "CONVERGENCE",
+        }
+        receipt = verify_optimizer_report(
+            report,
+            expected_max_iterations=2000,
+            expected_maxcor=20,
+            expected_gtol=1e-4,
+        )
+        self.assertEqual(receipt["iterations"], 412)
+        report["gradient_inf_norm"] = 1.01e-4
+        with self.assertRaisesRegex(ValueError, "stopped above gtol"):
+            verify_optimizer_report(
+                report,
+                expected_max_iterations=2000,
+                expected_maxcor=20,
+                expected_gtol=1e-4,
+            )
+
     def test_stable_sigmoid_extremes(self):
         values = stable_sigmoid(np.array([-1000.0, 0.0, 1000.0]))
         self.assertEqual(values[0], 0.0)
