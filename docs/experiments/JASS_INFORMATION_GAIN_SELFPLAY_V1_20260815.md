@@ -254,3 +254,49 @@ Ce résultat clôt **`H_POOL_10 vs SINGLE_10N`**, et lui seul. Il ne dit rien de
 ### Note d'outillage — `--sample-per-corpus` et la partition du null
 
 `null_screen` partitionne le null en `len(corpus)` tranches **par hachage** de l'index, donc de tailles multinomiales autour de `count/10`, et `deterministic_sample` **lève** si une tranche a moins de `sample_per_corpus` membres. Mesuré sur `2 000 000` : la plus petite tranche tombe à **`198 961`**, soit `1 039` **sous** le défaut de `200 000`. **Au réglage par défaut, un job dimensionné à `10N` exactement meurt dans le screen après avoir généré tout son corpus.** Le job a donc tourné à `--sample-per-corpus 190000` (marge `+8 961`, ~21 σ), ce qui préserve `SINGLE_10N` à exactement `10N` pour la Phase B et s'applique identiquement aux bras et au null. **Tout futur appel doit garder cette marge**, ou dimensionner le null au-dessus de `10 × sample_per_corpus`.
+
+---
+
+## 12. Suite prescrite au §4 — diversité **paramétrique** : mesurée, et l'instrument y est aveugle (2026-08-15)
+
+Le §4 prescrivait, en cas d'échec de Gate A, de « tester ensuite une diversité contrôlée de paramètres […] dans une expérience distincte ». Fait par [`cpx62-1358-param-diversity-map-v1`](r2:jass-data/runs/cpx62-1358-param-diversity-map-v1/20260815T191834Z-a4a2b2a1), 16 min, `rc=0` : dix bras de `200 000` records depuis le même `G0 = CURRICULUM`, variant profondeur (`6/8/10`), exploration (`eps 2/8/20`), décroissance (`20/60/150`) et trois clés de recherche (`lmr_min_depth`, `nmp_min_depth`, `qs_sacs`), le null de la Phase A étant **réutilisé** plutôt que régénéré.
+
+⛔ **`--random-open-plies` a été tenu constant à 8 sur tous les bras**, en application du §9 : c'est le seul bouton dont on sache qu'il achète de la couverture en **perdant** de l'Elo (`cpx62-1131`→`1134`). Le mettre dans la matrice aurait re-parcouru un axe réfuté.
+
+### Le résultat, et une prédiction fausse
+
+| | excès sur le null | Jaccard vs base |
+| --- | --- | --- |
+| `cpx62-1357` — graines seules | `+0,0113` | `0,0055` |
+| `cpx62-1358` — neuf paramètres | **`+0,0055`** | `0,0040`–`0,0071` |
+
+**L'en-tête du job préenregistrait que le screen PASSERAIT trivialement.** Il échoue, et plus bas que le changement de graine. Le raisonnement était : tout changement de paramètre déplace la distribution, donc le screen le verra. Le premier membre est vrai, le second faux.
+
+**La nouveauté par position exacte est SATURÉE.** À `190 000` échantillons dans cet espace, deux corpus quelconques sont à ~`99,5 %` disjoints, qu'ils diffèrent par la graine ou par la politique ; les neuf bras s'étalent entre `0,9929` et `0,9960`, soit un intervalle de `0,003`. La métrique n'a plus de marge pour exprimer « plus différent ». **Tout classement de bras par cette colonne est donc ininterprétable**, y compris celui que produit le job.
+
+### Le signal est dans le canal explicitement déclaré faible
+
+`state_js_bits` — pondéré `0,3`, décrit par le docstring de l'outil comme « un descripteur faible » qui « décrit ; il ne sélectionne pas » — est le **seul** à porter quelque chose. Contre une base de `0,0019` (Jaccard moyen d'état entre corpus seed-only en Phase A) :
+
+| bras | `state_js` vs base | rapport |
+| --- | --- | --- |
+| `A05_EPS_20` | `0,0144` | **`7,6×`** |
+| `A06_DECAY_20` | `0,0116` | `6,1×` |
+| `A07_DECAY_150` | `0,0113` | `5,9×` |
+| `A03_DEPTH_10` | `0,0088` | `4,6×` |
+| `A08_NO_LMR` | `0,0084` | `4,4×` |
+| `A10_QS_SACS` | `0,0069` | `3,6×` |
+
+**L'exploration déplace la distribution ; la forme de la recherche presque pas.** Et ce n'est pas du bruit : les deux bras qui recouvrent le **plus** la base — `A04_EPS_2` (`0,9929`) et `A06_DECAY_20` (`0,9930`) — sont exactement les deux qui *réduisent* l'exploration, donc rendent le jeu plus déterministe. Le mécanisme est cohérent avec le signe observé.
+
+### ⚠️ Défaut du preflight de ce job, à corriger avant tout réemploi
+
+Le job mesurait le rate par bras sur `300` records pour borner son budget. **Cette mesure est dominée par un coût FIXE** — démarrage du processus, préchauffage des bitbases — et non par un débit : les temps mesurés vont de `1 s` à `7 s`, à une résolution d'une seconde. Elle a projeté `44,4 min` de génération pour un job qui en a pris ~`8`-`10`. Conservatrice, donc sans dégât, et sa fonction première (valider les dix jeux de paramètres avant de s'engager sur le volume) a été remplie. Mais **la colonne `distance_per_minute` en hérite et ne doit pas servir de coût**. Correctif : mesurer à deux volumes et prendre la pente, ou échantillonner assez pour que le démarrage soit négligeable. *(Symétriquement, l'extrapolation de profondeur de l'en-tête était fausse dans l'autre sens : `d10` projeté à `7,6 min` contre les `19 min` qu'annonçait un facteur `×3,89` par niveau transporté de HOME.)*
+
+### Conclusion instrumentale
+
+L'échec de Gate A en Phase A restait informatif : le screen avait du pouvoir discriminant contre les graines et a répondu non. Ici il n'en a pas, et son `false` ne dit **rien** sur l'existence d'une diversité paramétrique — seulement que **cet instrument ne peut pas la voir**.
+
+**La position exacte n'est pas la bonne granularité** : le modèle ne voit pas des positions, il voit des **buckets de patterns**, et la campagne mesure déjà à cette échelle (`124 948` contre `130 086`, `cpx62-1127`/`1130`). Une mesure de diversité qui compte doit se faire dans l'espace que le fit consomme.
+
+⚠️ Mais cela reste une mesure de **couverture**, et le §9 vaut toujours : couverture et force bougent en sens opposé. La question qui décide quelque chose demeure une **porte de force** — pool paramétrique contre `SINGLE_10N` à volume égal. Les vingt corpus (dix de `cpx62-1357`, dix de `cpx62-1358`) sont publiés et consommables tels quels pour la poser, sans regénérer.
