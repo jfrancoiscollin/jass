@@ -42,6 +42,12 @@ PREFLIGHT_FILE="${PREFLIGHT_FILE:-vol8m-eval-openings.fen}"
 EXPECTED_PREFLIGHT_JOB="${EXPECTED_PREFLIGHT_JOB:-home-1004-l3-pure-volume8m-preflight-v2}"
 NSH_GATE="${NSH_GATE:-12}"; PAR_GATE="${PAR_GATE:-12}"
 VIEWS="${VIEWS:-q00 native}"
+PAIRED_BOOTSTRAP_SAMPLES="${PAIRED_BOOTSTRAP_SAMPLES:-0}"
+PAIRED_BOOTSTRAP_SEED="${PAIRED_BOOTSTRAP_SEED:-20260816}"
+# 1 = ancien comportement sans garde d'erreur explicite. Les protocoles causaux
+# modernes fixent 0.02 et activent obligatoirement le bootstrap apparié, seul
+# chemin qui conserve le nombre de parties rendues en erreur par le harness.
+MAX_ERROR_RATE="${MAX_ERROR_RATE:-1}"
 FORCE_DEPTH=9; MOVETIME=0.1; CACHE_MB=128
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 # Parametres de recherche par bras. Defaut = Q00 des deux cotes, donc toutes
@@ -213,7 +219,12 @@ say "  build ✓, modèles chargeables"
 
 run_view(){
   local view="$1"; local args=()
+  local bootstrap_args=()
   [ "$view" = q00 ] && args=(--depth "$FORCE_DEPTH") || args=(--movetime "$MOVETIME")
+  if [ "$PAIRED_BOOTSTRAP_SAMPLES" -gt 0 ]; then
+    bootstrap_args=(--paired-bootstrap-samples "$PAIRED_BOOTSTRAP_SAMPLES"
+      --paired-bootstrap-seed "$PAIRED_BOOTSTRAP_SEED")
+  fi
   timeout 10800 python3 jobs/tools/run_jass_gate_bounded.py \
     --jass-a "$JA" --jass-b "$JB" \
     --pattern-a "$W/A.pjtw" --pattern-b "$W/B.pjtw" \
@@ -221,6 +232,7 @@ run_view(){
     --openings-file "$W/open-eval.fen" "${args[@]}" --pairs 1 \
     --max-plies 160 --nshards "$NSH_GATE" --max-parallel "$PAR_GATE" \
     --timeout 9000 --game-timeout 180 \
+    "${bootstrap_args[@]}" \
     --work-dir "$W/gate-$view" \
     --out "$ART/force/$view-A-vs-B.json" \
     > "$W/gate-$view.log" 2>&1
@@ -268,19 +280,29 @@ fi
 
 stage readout
 python3 - "$ART" "$GAMES_PER_VIEW" "$EXPECTED_CODE_SHA" "$A_LABEL" "$B_LABEL" "$VIEWS" \
-  "$PREFLIGHT_PREFIX" "$PRIOR_JSON" "${PRIOR_OPENINGS_PREFIX:-}" <<'PY' | tee -a "$RES"
+  "$PREFLIGHT_PREFIX" "$PRIOR_JSON" "${PRIOR_OPENINGS_PREFIX:-}" \
+  "$MAX_ERROR_RATE" "$PAIRED_BOOTSTRAP_SAMPLES" "$PAIRED_BOOTSTRAP_SEED" <<'PY' | tee -a "$RES"
 import json, math, pathlib, sys
 art = pathlib.Path(sys.argv[1]); per_view = int(sys.argv[2])
 code_sha = sys.argv[3]; A_LABEL, B_LABEL = sys.argv[4], sys.argv[5]
 openings_prefix = sys.argv[7]
 prior_path = sys.argv[8] if len(sys.argv) > 8 and sys.argv[8] else None
 legacy_prior_openings = sys.argv[9] if len(sys.argv) > 9 and sys.argv[9] else None
+max_error_rate = float(sys.argv[10]); paired_samples = int(sys.argv[11]); paired_seed = int(sys.argv[12])
+if not 0 <= max_error_rate <= 1:
+    raise SystemExit(f"MAX_ERROR_RATE hors [0,1] : {max_error_rate}")
 views = {}
 for v in sys.argv[6].split():
     p = art / "force" / f"{v}-A-vs-B.json"
     views[v] = json.load(open(p)) if p.exists() else None
 missing = [v for v, d in views.items() if d is None]
 short = [v for v, d in views.items() if d and d.get("n", 0) < int(0.9 * per_view)]
+paired_missing = [v for v,d in views.items() if d and paired_samples > 0 and not d.get("paired_opening")]
+error_rows = {v:(d.get("paired_opening") or {}).get("error_draws")
+              for v,d in views.items() if d}
+error_guard_unobservable = bool(max_error_rate < 1 and paired_samples <= 0)
+excess_errors = [v for v,e in error_rows.items()
+                 if max_error_rate < 1 and (e is None or e > max_error_rate * per_view)]
 # Compteurs BRUTS sommés : moyenner deux taux de n différents pondérerait mal.
 wins = sum(d["wins_a"] for d in views.values() if d)
 draws = sum(d["draws"] for d in views.values() if d)
@@ -393,7 +415,12 @@ if prior_path and posterior:
 BAKE_P_THRESHOLD = 0.95
 bake = {"criterion": "P(elo>0) > 0.95 sur pools chaines",
         "threshold": BAKE_P_THRESHOLD, "met": False, "why": None}
-if chained is None:
+if missing or short or paired_missing or error_guard_unobservable or excess_errors or not n:
+    bake["why"] = ("gate incomplet ou garde d'erreur/bootstrap non satisfaite: "
+                   f"missing={missing} short={short} paired_missing={paired_missing} "
+                   f"error_guard_unobservable={error_guard_unobservable} "
+                   f"excess_errors={excess_errors}")
+elif chained is None:
     bake["why"] = "un seul pool : le critere exige un chainage sur deux pools disjoints"
 elif not chained["pools_agree"]:
     bake["why"] = (f"les deux pools se contredisent STATISTIQUEMENT "
@@ -404,7 +431,7 @@ elif chained["posterior"]["p_elo_gt_0"] <= BAKE_P_THRESHOLD:
 else:
     bake["met"] = True
     bake["why"] = f"P(elo>0)={chained['posterior']['p_elo_gt_0']} sur n={chained['combined_n']}"
-if missing or short or not n:
+if missing or short or paired_missing or error_guard_unobservable or excess_errors or not n:
     verdict = "L3_MODEL_GATE_INCONCLUSIVE"
 elif lo > 0.5:
     verdict = "A_BEATS_B_HUMAN_REVIEW"
@@ -424,6 +451,10 @@ payload = {
                      if elo(lo) is not None and elo(hi) is not None else None),
         "posterior_flat_prior": posterior},
     "openings_prefix": openings_prefix,
+    "paired_bootstrap": {"samples": paired_samples, "seed": paired_seed,
+                         "per_view": True, "error_draws": error_rows},
+    "max_error_rate": max_error_rate,
+    "error_guard_passed": not error_guard_unobservable and not excess_errors,
     "chained_with_prior_gate": chained,
     "bake_criterion": bake,
     "per_view": {v: d for v, d in views.items()},
@@ -455,6 +486,9 @@ if chained:
         f"P(Elo>{e})={100*c['posterior'][f'p_elo_gt_{e}']:.1f}%" for e in POSTERIOR_THRESHOLDS))
 print(f"  critere de bake (P(Elo>0)>95 % sur pools chaines) : "
       f"{'REMPLI' if bake['met'] else 'NON REMPLI'} — {bake['why']}")
+if paired_samples:
+    print(f"  bootstrap apparie/ouverture={paired_samples} seed={paired_seed} "
+          f"erreurs={error_rows} plafond={100*max_error_rate:.2f}%")
 print(f"  VERDICT {verdict}")
 PY
 VERDICT="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["verdict"])' "$ART/JASS_CONTROL_SUMMARY.json")"

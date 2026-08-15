@@ -25,7 +25,7 @@ cette leçon : d'abord ce que le fit impose à tort, ensuite le reste.
 | E | tolérance du solveur `1e-4` | `cpx62-1157`/`1159`/`1160`/`1161`/`1163` | ✅ **PRIORTIGHT promu champion général le 3 août** : [`experiments/L3_PRIORTIGHT_PROMOTION_20260803.md`](experiments/L3_PRIORTIGHT_PROMOTION_20260803.md) |
 | F | dose de tolérance `1e-5` | `home-1210` | ✅ **AXE CLOS** : `1e-5` inatteignable, L-BFGS-B bute sur `REL_REDUCTION_OF_F` avant le test de gradient. `1e-4` est le plancher pratique |
 | G | dose du prior = dose de `l2` | `cpx62-1164`→`1171` | ✅ **L2LOW promu champion général le 4 août** : axe clos par plateau — voir §3.2 |
-| H | transfert `CONTEXT_30` Mini-Jass vers 10×10 | HOME, non lancé | **préparé** : cible externe alignée vs permutation marginale sur TURNOVER 2M; probe de timing avant tout refit complet ou nouveau self-play |
+| H | attribution causale `CONTEXT_30` sur Jass 10×10 | CPX, non lancé | **préenregistré** : réutiliser `CURRENT_C30`, fitter SHUFFLED et OUTCOME strictement appariés, puis force hiérarchique sur deux pools neufs ; [protocole](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md) |
 | I | MegaCorpus : pré-entraînement historique puis recentrage CURRENT_2M | `cpx62-1341`→`1353` | ✅ **CURRICULUM promu champion général le 15 août** : D bat L2LOW sur deux pools frais disjoints, 24 000 parties, deux vues combinées positives — [enregistrement](experiments/L3_CURRICULUM_PROMOTION_20260815.md) |
 
 ## 3. En file, par ordre de valeur attendue

@@ -2573,15 +2573,19 @@ l’architecture linéaire ni au principe d’autojeu WDL.
    aucune garde Gen2 ou conversion n'a été rejouée spécifiquement pour elle.
    Bornes :
    [`experiments/L3_CURRICULUM_PROMOTION_20260815.md`](experiments/L3_CURRICULUM_PROMOTION_20260815.md).
-   ✅ **ATTRIBUTION MESURÉE LE JOUR MÊME, et elle referme en partie la réserve
-   ci-dessus** (`cpx62-1354`, lu par `cpx62-1355`). Le bras `A = CURRENT_C30` —
+   ✅ **DÉCOMPOSITION MESURÉE LE JOUR MÊME, avec une attribution encore ouverte
+   sur la cible** (`cpx62-1354`, lu par `cpx62-1355`). Le bras `A = CURRENT_C30` —
    corpus **courant**, `context30`, **sans une seule position du mégacorpus**,
    donc un seul facteur de différence avec D — rend **`+5,91 Elo`** IC95
    `[−0,15 ; +11,97]`, `P(Elo>0) = 97,2 %` sur `n = 12 000` et **le même pool
    que `cpx62-1349`**. Soit **~72 % du gain de D**. L'apport marginal du
    mégacorpus est **`+2,32 Elo`** IC95 `[−6,24 ; +10,88]`, `z = 0,53` : **ni
-   établi, ni réfuté**. ⛔ **Le ré-étiquetage `context30` porte l'essentiel du
-   gain, et il ne coûte aucune donnée nouvelle.** ⚠️ Le template rend
+   établi, ni réfuté**. Le candidat bon marché reproduit donc l'essentiel du
+   gain sans donnée nouvelle, mais `A−L2LOW` change aussi le fait de refitter :
+   il ne prouve pas encore que `CONTEXT_30` seul en est la cause. Le contrôle
+   ALIGNED/SHUFFLED-WDL-stratifié/OUTCOME est
+   [préenregistré](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md).
+   ⚠️ Le template rend
    `A_FLAT_VS_B_NO_ESTABLISHED_GAIN`, sur une borne basse à `−0,15` : **ce label
    induit en erreur lu seul**, et la première lecture en séance a bien conclu
    l'inverse des chiffres. C'est précisément le cas pour lequel le critère du
