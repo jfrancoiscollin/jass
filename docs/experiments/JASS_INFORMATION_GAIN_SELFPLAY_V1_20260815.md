@@ -213,3 +213,44 @@ python3 jobs/tools/selfplay_information_gain.py \
 ⚠️ **`--null-split` n'est pas optionnel en pratique** : sans lui l'outil rend `diversity_screen_pass: null` et Gate A ne peut pas être franchi. Le corpus passé doit contenir **au moins `10 × sample_per_corpus` records** — ici 2 M — puisque ses tranches doivent avoir la taille des corpus réels ; l'outil refuse un contrôle sous-dimensionné plutôt que de rendre un null flatteur.
 
 Le JSON produit est un artefact scientifique à conserver avec les manifests et seeds de génération. Il porte `schema: jass.selfplay_information_gain.v2`, `null_screen` et `summary.novelty_excess_over_null`.
+
+---
+
+## 11. Résultat de la Phase A — `SCREEN_FAIL`, Gate A non franchi (2026-08-15)
+
+Exécutée par [`cpx62-1357-infogain-phase-a-v1`](r2:jass-data/runs/cpx62-1357-infogain-phase-a-v1/20260815T165655Z-a4a2b2a1), 26 min, `rc=0`, sur `G0 = CURRICULUM`. Dix bras de `200 000` records (graines gelées `310 000 000 + i × 10⁶`), `SINGLE_10N` à exactement `2 000 000` (graines `390 000 000+`), donc volume strictement égal.
+
+| grandeur | valeur |
+| --- | --- |
+| nouveauté marginale observée (10ᵉ bras) | **0,9561** |
+| nouveauté marginale du null (un corpus, dix tranches) | **0,9448** |
+| **excès sur le null** | **+0,0113** (requis : `0,0500`) |
+| recouvrement moyen par paires (Jaccard) | 0,0055 |
+
+**Gate A échoue.** La règle gelée du §4 s'applique : *pas de gros fit multi-seed*, et la suite est une expérience distincte sur une diversité contrôlée de **paramètres**.
+
+### Ce que ces chiffres démontrent, et qui dépasse le verdict
+
+**Sans le bras null, cette expérience partait en Phase B.** Le dixième bras apporte **95,6 % de positions inédites** et les dix corpus ne se recouvrent quasiment pas (Jaccard `0,0055`). Tout seuil absolu « modeste » — l'ordre de `0,05` à `0,10` — aurait été franchi **d'un facteur dix à vingt**, et la lecture naturelle aurait été « diversité énorme, on industrialise ».
+
+Le null répond que **découper UN SEUL corpus en dix tranches en donne 94,5 %**. Les 95,6 % ne mesuraient pas l'apport des graines : ils mesuraient la taille de l'espace des positions devant un échantillon de `190 000`. Il reste `+1,1 %`, sous le plancher.
+
+C'est la démonstration empirique de l'argument du §4bis, sur de vraies données et à une amplitude que la simulation sous-estimait : la validation synthétique préalable, à support plus petit, rendait `0,1425` contre un null de `0,1452`. Sur corpus réels l'effet que le null corrige est **massif**.
+
+### Pourquoi l'issue était prévisible — et pourquoi le job a tourné quand même
+
+La prédiction `SCREEN_FAIL` a été **préenregistrée dans l'en-tête du job avant exécution** et le rapport porte `preregistered_prediction.held = true`. Le raisonnement, à retenir pour tout protocole futur qui parlerait de « seeds indépendantes » :
+
+Le protocole suppose *une* seed par corpus, mais la génération est **shardée sur douze producteurs ayant chacun sa graine**. Physiquement, un bras est l'union de `12` flux i.i.d., `SINGLE_10N` l'union de `12` autres, et `H_POOL_10` l'union de `120`. Une graine n'indexe qu'un flux indépendant de la **même** loi `self-play(G0, réglages)` : à volume égal, l'union de `120` flux de `16,7k` et l'union de `12` flux de `167k` sont **la même distribution**. `H_POOL_10 vs SINGLE_10N` ne différaient que par l'étiquetage des fichiers — **le contraste primaire n'avait pas de traitement**.
+
+Le job a néanmoins tourné, et ce n'est pas une concession : c'était un *raisonnement*, pas une mesure, et la campagne a déjà payé cher des inférences prises pour des mesures — la couverture comme levier, inférée d'un corrélat puis réfutée par `cpx62-1131`→`1134`. Le screen coûtait 40 minutes et il est construit pour répondre non quand la réponse est non.
+
+⚠️ **Une nuance, contre l'auto-satisfaction** : la prédiction était un excès *≈ 0*, il vaut `+0,0113`, positif. Sans barres d'erreur on ne peut pas trancher entre le bruit et une faible dépendance intra-run (un run long ne couvrant pas comme dix runs courts). C'est loin du seuil, mais ce n'est pas exactement zéro.
+
+### Portée exacte du verdict
+
+Ce résultat clôt **`H_POOL_10 vs SINGLE_10N`**, et lui seul. Il ne dit rien de **`H_POOL_10 vs VERTICAL_10xN`**, le seul contraste du protocole qui porte un vrai traitement : les corpus verticaux viennent de **modèles différents**, donc d'une autre distribution. Les onze corpus restent publiés et consommables tels quels si ce contraste-là est instruit.
+
+### Note d'outillage — `--sample-per-corpus` et la partition du null
+
+`null_screen` partitionne le null en `len(corpus)` tranches **par hachage** de l'index, donc de tailles multinomiales autour de `count/10`, et `deterministic_sample` **lève** si une tranche a moins de `sample_per_corpus` membres. Mesuré sur `2 000 000` : la plus petite tranche tombe à **`198 961`**, soit `1 039` **sous** le défaut de `200 000`. **Au réglage par défaut, un job dimensionné à `10N` exactement meurt dans le screen après avoir généré tout son corpus.** Le job a donc tourné à `--sample-per-corpus 190000` (marge `+8 961`, ~21 σ), ce qui préserve `SINGLE_10N` à exactement `10N` pour la Phase B et s'applique identiquement aux bras et au null. **Tout futur appel doit garder cette marge**, ou dimensionner le null au-dessus de `10 × sample_per_corpus`.
