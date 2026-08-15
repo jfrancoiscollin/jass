@@ -38,6 +38,8 @@
 > priortight_promoted_general_champion;
 > l2low_promoted_general_champion;
 > curriculum_promoted_general_champion_after_independent_replication;
+> curriculum_gain_attributed_mostly_to_context30_relabelling_not_megacorpus_volume;
+> megacorpus_marginal_value_2_32_elo_neither_established_nor_refuted_and_too_costly_to_settle;
 > l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
 > king_patterns_gate_played_flat_upper_bound_8_8_elo;
 > king_aware_gate_blocked_on_per_arm_build;
@@ -2568,9 +2570,26 @@ l’architecture linéaire ni au principe d’autojeu WDL.
    inter-pools compatibles (`z = −0,880` Q00 ; `+0,943` native). Estimations
    combinées : Q00 **51,1042 %** IC95 `[50,4265 ; 51,7818]`, native 0,1 s
    **51,2582 %** IC95 `[50,6263 ; 51,8902]`. ⚠️ La recette complète gagne ;
-   l'attribution à un facteur unique n'est pas établie, et aucune garde Gen2 ou
-   conversion n'a été rejouée spécifiquement pour elle. Bornes :
+   aucune garde Gen2 ou conversion n'a été rejouée spécifiquement pour elle.
+   Bornes :
    [`experiments/L3_CURRICULUM_PROMOTION_20260815.md`](experiments/L3_CURRICULUM_PROMOTION_20260815.md).
+   ✅ **ATTRIBUTION MESURÉE LE JOUR MÊME, et elle referme en partie la réserve
+   ci-dessus** (`cpx62-1354`, lu par `cpx62-1355`). Le bras `A = CURRENT_C30` —
+   corpus **courant**, `context30`, **sans une seule position du mégacorpus**,
+   donc un seul facteur de différence avec D — rend **`+5,91 Elo`** IC95
+   `[−0,15 ; +11,97]`, `P(Elo>0) = 97,2 %` sur `n = 12 000` et **le même pool
+   que `cpx62-1349`**. Soit **~72 % du gain de D**. L'apport marginal du
+   mégacorpus est **`+2,32 Elo`** IC95 `[−6,24 ; +10,88]`, `z = 0,53` : **ni
+   établi, ni réfuté**. ⛔ **Le ré-étiquetage `context30` porte l'essentiel du
+   gain, et il ne coûte aucune donnée nouvelle.** ⚠️ Le template rend
+   `A_FLAT_VS_B_NO_ESTABLISHED_GAIN`, sur une borne basse à `−0,15` : **ce label
+   induit en erreur lu seul**, et la première lecture en séance a bien conclu
+   l'inverse des chiffres. C'est précisément le cas pour lequel le critère du
+   5 août regarde la position de la masse. ⚠️ **Le test A−D ne peut pas trancher
+   à ce `n`** — vérifié par simulation AVANT lecture : même un A nul ne sortirait
+   qu'à `z = −1,88`. Établir `+2,32` à 95 % demanderait **163 800 parties par
+   bras (×13,7)**, ~29 h de cpx62 pour un seul pool : **hors de prix**. Bornes :
+   [`experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md`](experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md).
 1bis. champion précédent : **L2LOW**, promu le 4 août 2026 sur go explicite
    de JFC — même recette que PRIORTIGHT, `--l2` porté de `3e-5` à **`1e-5`**.
    Consolidé **`+11,31 Elo`** IC95 `[+6,4 ; +16,3]` sur `n = 18 000` et deux

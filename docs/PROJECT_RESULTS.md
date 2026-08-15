@@ -424,6 +424,47 @@ différences au sein d'un protocole apparié portent une causalité.
 | MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
 | EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
 | **fold sur la symétrie exacte du damier** | **+17,10 Elo** vs son contrôle IC95 `[+9,2 ; +25,0]` ; **+13,32 Elo** vs le champion TURNOVER IC95 `[+5,5 ; +21,2]`, n=6000 chacune (`cpx62-1118`/`1121`) | **acquis fit**, candidat à promotion non baké ; EGDB absent des portes donc Elo non comparable en absolu |
+| **ré-étiquetage `context30` de la cible WDL** | **+5,91 Elo** vs L2LOW IC95 `[−0,15 ; +11,97]`, `P(>0)=97,2 %`, n=12 000 (`cpx62-1354`) — **corpus courant, aucune donnée nouvelle** | **acquis cible** : porte l'essentiel du gain de CURRICULUM (`+8,22` sur le même pool), soit ~72 % ; levier **bon marché**, à préférer au volume |
+| apport marginal du **volume** (mégacorpus 4 M en pré-entraînement) | **+2,32 Elo** IC95 `[−6,24 ; +10,88]`, `z = 0,53` (`cpx62-1354` contre `cpx62-1349`, même pool) | ⚠️ **ni établi ni réfuté** ; le trancher à 95 % demanderait 163 800 parties/bras (×13,7) ≈ 29 h cpx62 pour un seul pool — **hors de prix** (§4.4) |
+
+## 4.4 Attribution du gain de CURRICULUM — la cible paie, le volume n'est pas démontré
+
+CURRICULUM, champion depuis le 15 août, est un **curriculum à deux étages** :
+pré-entraînement sur `MEGA_FULL_4M`, puis recentrage sur `CURRENT_2M` avec la
+cible alignée `CONTEXT_30`. Les deux étages coûtent des ordres de grandeur
+différents — le volume demande de générer et conserver 4 M de positions, le
+ré-étiquetage ne demande **aucune donnée nouvelle**.
+
+`cpx62-1354` sépare les deux à **un seul facteur** : le bras `A = CURRENT_C30`
+partage avec CURRICULUM l'étiquetage, la recette de fit, le volume de fit (2 M)
+et le fold exact, et n'en diffère que par le **corpus source**. Même pool que
+`cpx62-1349`, même budget, `n = 12 000`, zéro refit, zéro self-play.
+
+| | Elo | IC95 | `P(Elo>0)` |
+|---|---|---|---|
+| `A` = corpus courant + `context30`, **sans mégacorpus** | **+5,91** | `[−0,15 ; +11,97]` | **97,2 %** |
+| `D` = CURRICULUM, même pool | +8,22 | `[+2,18 ; +14,28]` | 99,6 % |
+| `D − A` = apport marginal du volume | **+2,32** | `[−6,24 ; +10,88]` | `z = 0,53` |
+
+⛔ **Leçon de méthode, plus durable que le chiffre : un verdict frequentiste lu
+seul peut renverser la conclusion.** Le template a rendu
+`A_FLAT_VS_B_NO_ESTABLISHED_GAIN` — sur une borne basse à `−0,15`, un cheveu
+sous zéro — et la première lecture en séance en a conclu « le mégacorpus n'est
+pas décoratif », soit l'inverse de ce que disent les chiffres. C'est exactement
+le cas de figure pour lequel le critère du 5 août regarde la **position de la
+masse**. Une étiquette n'est pas un résultat ; la magnitude l'est.
+
+⚠️ **Et le test de la différence ne pouvait pas trancher**, ce qui était su
+**avant** la lecture : par simulation sur trois scénarios, même un `A` nul ne
+sortirait qu'à `z = −1,88`. Un `|z| < 1,96` ici ne prouve pas l'égalité.
+
+Conséquence de campagne : la direction « volume + diversité + WDL conditionnel »
+se **sépare en trois**. Le WDL conditionnel paie et il est bon marché ; le volume
+n'est pas démontré et son plafond crédible est modeste. Le prochain
+investissement rentable est du côté de la **cible**, pas du corpus. Tout
+protocole visant un effet de l'ordre de `+2` doit publier son sizing **avant** sa
+phase de force. Bornes :
+[`experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md`](experiments/L3_CURRICULUM_ATTRIBUTION_20260815.md).
 
 ## 4.3 Symétries imposées au fit — la vraie plutôt que l'approximative
 
@@ -687,6 +728,12 @@ Une seule famille est active : `L3-PURE`.
    représentable supplémentaire ?
 5. Comment traiter P4 matériel-égal sans oracle externe ? La piste réservée est
    un ensemble de rollouts internes stochastiques.
+6. Le **volume** de corpus vaut-il quelque chose au-delà du ré-étiquetage ?
+   Borné, pas tranché : `+2,32 Elo` IC95 `[−6,24 ; +10,88]` (§4.4). ⚠️ La
+   question ne se réglera **pas** par une porte de plus sur ces deux modèles —
+   il y faudrait ×13,7 en parties. Elle demande soit un effet plus gros à
+   chercher ailleurs, soit un montage apparié partie par partie qui réduise la
+   variance au lieu d'augmenter le `n`.
 
 Ne sont pas des questions actives : « remettre du Scan », « refaire MMTO sur
 gen2 », « resserrer l'anchor », « grossir G4 », changer de géométrie au milieu
