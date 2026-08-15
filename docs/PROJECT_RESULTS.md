@@ -592,7 +592,8 @@ est invisible dans tous les compteurs publiés à l'époque.
 **Corpus touchés** — tout ce qui a été généré avant le 27 juillet 16h10 FR :
 `M1` (`home-0944`), `M2` (`home-0966bis`), et **TURNOVER lui-même**
 (`home-0977`, `new_generation_performed=false`, corpus = 1 M `fresh_m2` + 1 M
-`parent_f2m`). Le champion courant est donc entraîné à 100 % sur des données
+`parent_f2m`). L2LOW, champion courant au moment de ce diagnostic, était donc
+entraîné à 100 % sur des données
 d'où les nulles avaient été filtrées. VOL8M, à 67 % post-correctif, en a
 **moins** — c'est l'inverse de ce qui avait été écrit le 28 juillet au premier
 jet, et la correction vaut rectification de la ligne « plus de volume brut ».

@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 11 août 2026**
+> **Mis à jour : 15 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -37,6 +37,7 @@
 > lbfgs_gtol_axis_closed_1e5_unreachable;
 > priortight_promoted_general_champion;
 > l2low_promoted_general_champion;
+> curriculum_promoted_general_champion_after_independent_replication;
 > l2_reopened_under_prior_mean_and_closed_by_plateau_1e5_to_3e6;
 > king_patterns_gate_played_flat_upper_bound_8_8_elo;
 > king_aware_gate_blocked_on_per_arm_build;
@@ -2559,7 +2560,18 @@ l’architecture linéaire ni au principe d’autojeu WDL.
 
 ### Généraliste `L3-PURE`
 
-1. champion général courant : **L2LOW**, promu le 4 août 2026 sur go explicite
+1. champion général courant : **CURRICULUM**, promu le 15 août 2026 sur go
+   explicite de JFC. Il s'agit du bras D `C_PRIOR_THEN_CURRENT_2M` :
+   pré-entraînement `MEGA_FULL_4M`, puis recentrage sur `CURRENT_2M` avec cible
+   alignée `CONTEXT_30` et C comme moyenne du prior. Contre L2LOW, deux pools
+   frais disjoints totalisent **24 000 parties**, zéro erreur, avec effets
+   inter-pools compatibles (`z = −0,880` Q00 ; `+0,943` native). Estimations
+   combinées : Q00 **51,1042 %** IC95 `[50,4265 ; 51,7818]`, native 0,1 s
+   **51,2582 %** IC95 `[50,6263 ; 51,8902]`. ⚠️ La recette complète gagne ;
+   l'attribution à un facteur unique n'est pas établie, et aucune garde Gen2 ou
+   conversion n'a été rejouée spécifiquement pour elle. Bornes :
+   [`experiments/L3_CURRICULUM_PROMOTION_20260815.md`](experiments/L3_CURRICULUM_PROMOTION_20260815.md).
+1bis. champion précédent : **L2LOW**, promu le 4 août 2026 sur go explicite
    de JFC — même recette que PRIORTIGHT, `--l2` porté de `3e-5` à **`1e-5`**.
    Consolidé **`+11,31 Elo`** IC95 `[+6,4 ; +16,3]` sur `n = 18 000` et deux
    pools disjoints (`cpx62-1165` + `cpx62-1170`), trois gardes vertes
