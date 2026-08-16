@@ -195,15 +195,20 @@ python3 tools/selfplay_frontier.py split \
   --out-data "$W/current.jnnw" --out-meta "$W/current.jsm" \
   --holdout-mod "$HOLDOUT_MOD" --seed "$SPLIT_SEED" \
   --manifest "$ART/split.json" >"$W/split.log" 2>&1
-read -r RECORDS TRAIN HOLDOUT < <("$PY" - "$ART/split.json" "$IN/source-split.json" <<'PY'
-import json,sys
-a=json.load(open(sys.argv[1])); b=json.load(open(sys.argv[2]))
-for key in ('records','train_records','holdout_records'):
- if a.get(key) != b.get(key): raise SystemExit(f'split {key} drift')
-for key in ('data','meta'):
- if a['files'][key]['sha256'] != b['files'][key]['sha256']:
-  raise SystemExit(f'split {key} hash drift')
-print(a['records'],a['train_records'],a['holdout_records'])
+read -r RECORDS TRAIN HOLDOUT < <("$PY" - \
+  "$ART/split.json" "$IN/source-split.json" "$IN/source-targets.json" \
+  "$W/current.jnnw" "$W/current.jsm" <<'PY'
+import hashlib,json,sys
+from pathlib import Path
+current=json.load(open(sys.argv[1])); source=json.load(open(sys.argv[2]))
+if current != source:
+ raise SystemExit('split manifest drift')
+targets=json.load(open(sys.argv[3]))
+def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+for label,path,key in (('data',sys.argv[4],'data_sha256'),('meta',sys.argv[5],'meta_sha256')):
+ if sha(path) != targets['source'][key]:
+  raise SystemExit(f'split {label} hash drift')
+print(current['records'],current['train_records'],current['holdout_records'])
 PY
 )
 [ "$RECORDS" -eq "$EXPECTED_RECORDS" ] && [ "$HOLDOUT" -eq "$EXPECTED_HOLDOUT" ] || die "split sizing drift"

@@ -79,6 +79,16 @@ class Context30CausalFitTemplateTest(unittest.TestCase):
         self.assertIn("pytorch_installed_or_required':False", script)
         self.assertNotIn("jobs.tests.test_l3_conditional_targets", script)
 
+    def test_split_reproduction_uses_real_manifest_schema_and_source_hashes(self) -> None:
+        script = _script()
+        self.assertIn("if current != source:", script)
+        self.assertIn("split manifest drift", script)
+        self.assertIn('targets[\'source\'][key]', script)
+        self.assertIn("split {label} hash drift", script)
+        self.assertIn('"$IN/source-targets.json"', script)
+        self.assertIn('"$W/current.jnnw" "$W/current.jsm"', script)
+        self.assertNotIn("a['files'][key]", script)
+
     def test_fit_cannot_promote_or_continue_automatically(self) -> None:
         script = _script()
         self.assertIn("JASS_CONTEXT30_CAUSAL_MODELS_READY", script)
