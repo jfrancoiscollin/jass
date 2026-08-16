@@ -176,6 +176,48 @@ void compute_extras(const Position& pos,
 int game_stage(const Position& pos) noexcept;
 
 // ---------------------------------------------------------------------------
+// Conditional-label context v2.
+// ---------------------------------------------------------------------------
+// Fifteen black-minus-white, colour-antisymmetric signals are kept in two
+// separate phase banks driven by the exact production tempo phase.  The first
+// 15 entries are wmg * base, the next 15 are (1-wmg) * base.  Unlike the
+// production extras, the tactical entries use the complete legal move
+// generator (mandatory capture + FMJD maximum-capture rule).
+inline constexpr int CONDITIONAL_CONTEXT_V2_BASES = 15;
+inline constexpr int CONDITIONAL_CONTEXT_V2_WIDTH = 30;
+
+enum ConditionalContextV2Base : int {
+    CTX2_MEN_DELTA = 0,
+    CTX2_HAS_KING_DELTA,
+    CTX2_EXTRA_KING_DELTA,
+    CTX2_LEGAL_MOVE_COUNT_DELTA,
+    CTX2_LEGAL_CAPTURE_OPTION_DELTA,
+    CTX2_MAX_CAPTURE_LENGTH_DELTA,
+    CTX2_FORCED_MOVE_DELTA,
+    CTX2_PROMOTION_PRESSURE_DELTA,
+    CTX2_BLOCKED_MAN_DELTA,
+    CTX2_CENTER_PRESENCE_DELTA,
+    CTX2_WING_SKEW_ABS_DELTA,
+    CTX2_KING_CENTRALITY_DELTA,
+    CTX2_KING_PROXIMITY_DELTA,
+    CTX2_KING_SAFE_MOBILITY_DELTA,
+    CTX2_KING_DENIED_DELTA,
+};
+
+#if defined(JASS_ENDGAME_FEATURES) && defined(JASS_KING_MOBILITY) \
+    && defined(JASS_SCAN_PARITY) && defined(JASS_TEMPO_STAGE)
+inline constexpr bool CONDITIONAL_CONTEXT_V2_AVAILABLE = true;
+#else
+inline constexpr bool CONDITIONAL_CONTEXT_V2_AVAILABLE = false;
+#endif
+
+// Returns false (and zero-fills out) when the binary was not built with the
+// complete 120-extra exact-fold/tempo architecture required by the recipe.
+bool compute_conditional_context_v2(
+    const Position& pos,
+    std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH>& out) noexcept;
+
+// ---------------------------------------------------------------------------
 // PJTW v3 weights : full phase-split structured eval.
 // ---------------------------------------------------------------------------
 // File layout (little-endian) :
