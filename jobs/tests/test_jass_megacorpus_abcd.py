@@ -77,6 +77,8 @@ class MegaCorpusAbcdTest(unittest.TestCase):
             self.assertAlmostEqual(report["rate"], 2.0 / 3.0)
             self.assertEqual(report["n_openings"], 3)
             self.assertEqual(report["games_per_opening"], 2)
+            self.assertEqual(report["per_opening_scores"], [0.75, 0.25, 1.0])
+            self.assertAlmostEqual(report["probability_rate_gt_half"], 0.749)
 
     def test_verdict_retains_positive_point_without_calling_established(self):
         with tempfile.TemporaryDirectory() as directory:
