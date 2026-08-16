@@ -163,7 +163,9 @@ def paired_opening_report(
         "rate": float(per_opening.mean()),
         "ci_low": float(ci_low),
         "ci_high": float(ci_high),
+        "probability_rate_gt_half": float(np.mean(draws > 0.5)),
         "positive_opening_fraction": float(np.mean(per_opening > 0.5)),
+        "per_opening_scores": per_opening.tolist(),
         "error_draws": errors,
     }
 
