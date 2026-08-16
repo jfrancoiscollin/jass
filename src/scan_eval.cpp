@@ -5,6 +5,7 @@
 
 #include "bitboard.hpp"
 #include "board.hpp"
+#include "movegen.hpp"
 #include "pattern_jass_bridge.hpp"
 
 #include <algorithm>
@@ -193,6 +194,122 @@ int mobility(const Position& pos, Color c) noexcept {
 int game_stage(const Position& pos) noexcept {
     const int pieces = popcount(pos.occupied());
     return pieces < MAX_PIECES ? pieces : MAX_PIECES;
+}
+
+bool compute_conditional_context_v2(
+    const Position& pos,
+    std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH>& out) noexcept {
+    out.fill(0.0f);
+    if constexpr (!CONDITIONAL_CONTEXT_V2_AVAILABLE) {
+        static_cast<void>(pos);
+        return false;
+    } else {
+#if defined(JASS_ENDGAME_FEATURES) && defined(JASS_KING_MOBILITY) \
+    && defined(JASS_SCAN_PARITY) && defined(JASS_TEMPO_STAGE)
+        std::array<float, NUM_EXTRAS> extras{};
+        compute_extras(pos, extras);
+
+        auto legal_summary = [&](Color side) {
+            struct Summary {
+                int moves = 0;
+                int capture_options = 0;
+                int max_capture_length = 0;
+                int forced = 0;
+            } result;
+            Position for_side = pos;
+            for_side.set_side_to_move(side);
+            MoveList legal;
+            generate_legal_moves(for_side, legal);
+            result.moves = static_cast<int>(legal.size());
+            result.forced = legal.size() == 1 ? 1 : 0;
+            if (!legal.empty() && legal[0].is_capture()) {
+                result.capture_options = static_cast<int>(legal.size());
+                result.max_capture_length = legal[0].num_captures;
+            }
+            return result;
+        };
+        const auto black_legal = legal_summary(Color::Black);
+        const auto white_legal = legal_summary(Color::White);
+
+        auto promotion_pressure = [](Bitboard men, Color side) {
+            int pressure = 0;
+            for (Bitboard b = men; b; ) {
+                const int row = row_of(pop_lsb(b));
+                pressure += side == Color::Black ? row : 9 - row;
+            }
+            return pressure;
+        };
+        auto blocked_men = [&](Bitboard men, Color side) {
+            int blocked = 0;
+            const Bitboard empty = pos.empties();
+            for (Bitboard b = men; b; ) {
+                const Square square = pop_lsb(b);
+                bool can_step = false;
+                for (const Dir dir : man_forward_dirs(side)) {
+                    const Square target = neighbour(square, dir);
+                    if (target != NO_SQUARE && test(empty, target)) {
+                        can_step = true;
+                        break;
+                    }
+                }
+                blocked += can_step ? 0 : 1;
+            }
+            return blocked;
+        };
+        auto center_presence = [](Bitboard pieces) {
+            int count = 0;
+            for (Bitboard b = pieces; b; ) {
+                const Square square = pop_lsb(b);
+                const int row = row_of(square);
+                const int col = col_of(square);
+                count += (row >= 3 && row <= 6 && col >= 3 && col <= 6) ? 1 : 0;
+            }
+            return count;
+        };
+
+        std::array<float, CONDITIONAL_CONTEXT_V2_BASES> base{};
+        base[CTX2_MEN_DELTA] = extras[EXTRA_BLACK_MEN] - extras[EXTRA_WHITE_MEN];
+        base[CTX2_HAS_KING_DELTA] =
+            extras[EXTRA_BK_HASKING] - extras[EXTRA_WK_HASKING];
+        base[CTX2_EXTRA_KING_DELTA] =
+            extras[EXTRA_BK_EXTRAK] - extras[EXTRA_WK_EXTRAK];
+        base[CTX2_LEGAL_MOVE_COUNT_DELTA] = static_cast<float>(
+            black_legal.moves - white_legal.moves);
+        base[CTX2_LEGAL_CAPTURE_OPTION_DELTA] = static_cast<float>(
+            black_legal.capture_options - white_legal.capture_options);
+        base[CTX2_MAX_CAPTURE_LENGTH_DELTA] = static_cast<float>(
+            black_legal.max_capture_length - white_legal.max_capture_length);
+        base[CTX2_FORCED_MOVE_DELTA] = static_cast<float>(
+            black_legal.forced - white_legal.forced);
+        base[CTX2_PROMOTION_PRESSURE_DELTA] = static_cast<float>(
+            promotion_pressure(pos.black_men(), Color::Black)
+            - promotion_pressure(pos.white_men(), Color::White));
+        base[CTX2_BLOCKED_MAN_DELTA] = static_cast<float>(
+            blocked_men(pos.black_men(), Color::Black)
+            - blocked_men(pos.white_men(), Color::White));
+        base[CTX2_CENTER_PRESENCE_DELTA] = static_cast<float>(
+            center_presence(pos.blacks()) - center_presence(pos.whites()));
+        base[CTX2_WING_SKEW_ABS_DELTA] =
+            extras[EXTRA_BK_SKEWABS] - extras[EXTRA_WK_SKEWABS];
+        base[CTX2_KING_CENTRALITY_DELTA] =
+            extras[EXTRA_BK_CENTRAL] - extras[EXTRA_WK_CENTRAL];
+        base[CTX2_KING_PROXIMITY_DELTA] =
+            extras[EXTRA_BK_PROX] - extras[EXTRA_WK_PROX];
+        base[CTX2_KING_SAFE_MOBILITY_DELTA] =
+            extras[EXTRA_BK_SAFEMOB] - extras[EXTRA_WK_SAFEMOB];
+        base[CTX2_KING_DENIED_DELTA] =
+            extras[EXTRA_BK_DENIED] - extras[EXTRA_WK_DENIED];
+
+        const float wmg = static_cast<float>(tempo_wmg(pos));
+        const float weg = 1.0f - wmg;
+        for (int i = 0; i < CONDITIONAL_CONTEXT_V2_BASES; ++i) {
+            out[static_cast<std::size_t>(i)] = wmg * base[static_cast<std::size_t>(i)];
+            out[static_cast<std::size_t>(CONDITIONAL_CONTEXT_V2_BASES + i)] =
+                weg * base[static_cast<std::size_t>(i)];
+        }
+        return true;
+#endif
+    }
 }
 
 void compute_extras(const Position& pos,

@@ -3810,6 +3810,69 @@ int run_dump_eval_features_mode(int argc, char** argv) {
 }
 
 // -----------------------------------------------------------------------------
+// --dump-conditional-context-v2: exact 30-wide teacher context for CTX2.
+// The output is intentionally separate from the 120 production extras: these
+// richer tactical signals supervise the label mapper and do not alter the
+// student's inference architecture.  Format is the standard FEAT container.
+// -----------------------------------------------------------------------------
+int run_dump_conditional_context_v2_mode(int argc, char** argv) {
+    if (argc < 4) {
+        std::cerr << "usage: jass --dump-conditional-context-v2 <in.jnnw> <out.feat>\n";
+        return 1;
+    }
+    if (!jass::scan_eval::CONDITIONAL_CONTEXT_V2_AVAILABLE) {
+        std::cerr << "error: CTX2 requires ENDGAME_FEATURES, KING_MOBILITY, "
+                     "SCAN_PARITY and TEMPO_STAGE\n";
+        return 1;
+    }
+    const char* in_path = argv[2];
+    const char* out_path = argv[3];
+    std::ifstream in(in_path, std::ios::binary);
+    if (!in) { std::cerr << "error: cannot open " << in_path << "\n"; return 1; }
+    char magic[4]; in.read(magic, 4);
+    if (!in || std::string_view{magic, 4} != "JNNW") {
+        std::cerr << "error: " << in_path << " not a JNNW file\n"; return 1;
+    }
+    std::uint32_t count = 0;
+    in.read(reinterpret_cast<char*>(&count), 4);
+    if (!in) { std::cerr << "error: cannot read header\n"; return 1; }
+
+    std::ofstream out(out_path, std::ios::binary);
+    if (!out) { std::cerr << "error: cannot open " << out_path << "\n"; return 1; }
+    const std::uint32_t width = jass::scan_eval::CONDITIONAL_CONTEXT_V2_WIDTH;
+    out.write("FEAT", 4);
+    out.write(reinterpret_cast<const char*>(&count), 4);
+    out.write(reinterpret_cast<const char*>(&width), 4);
+
+    constexpr std::size_t RECORD_SZ = 38;
+    char record[RECORD_SZ];
+    std::array<float, jass::scan_eval::CONDITIONAL_CONTEXT_V2_WIDTH> context{};
+    for (std::uint32_t i = 0; i < count; ++i) {
+        in.read(record, RECORD_SZ);
+        if (in.gcount() != static_cast<std::streamsize>(RECORD_SZ)) {
+            std::cerr << "error: short read at record " << i << "\n";
+            return 1;
+        }
+        std::uint64_t bbs[4];
+        std::memcpy(bbs, record, 32);
+        Position p{};
+        for (Bitboard b = bbs[0]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
+        for (Bitboard b = bbs[1]; b; ) p.add_piece(pop_lsb(b), Piece::WhiteKing);
+        for (Bitboard b = bbs[2]; b; ) p.add_piece(pop_lsb(b), Piece::BlackMan);
+        for (Bitboard b = bbs[3]; b; ) p.add_piece(pop_lsb(b), Piece::BlackKing);
+        if (!jass::scan_eval::compute_conditional_context_v2(p, context)) {
+            std::cerr << "error: CTX2 architecture became unavailable at row " << i << "\n";
+            return 1;
+        }
+        out.write(reinterpret_cast<const char*>(context.data()),
+                  sizeof(float) * context.size());
+    }
+    std::cout << "wrote " << count << " x " << width
+              << " CTX2 phase-tactical features to " << out_path << "\n";
+    return 0;
+}
+
+// -----------------------------------------------------------------------------
 // --dump-quiet-flags: read a JNNW dataset and write, per position, ONE byte :
 // 1 if the position is quiet (the side to move has NO mandatory capture), 0 if
 // tactical. In draughts captures are forced, so a tactical position's static
@@ -5468,6 +5531,7 @@ int main(int argc, char** argv) {
         else if (a == "--rewrite-scores-with-handcrafted") return run_rewrite_scores_with_handcrafted_mode(argc, argv);
         else if (a == "--dump-features")            return run_dump_features_mode(argc, argv);
         else if (a == "--dump-eval-features")       return run_dump_eval_features_mode(argc, argv);
+        else if (a == "--dump-conditional-context-v2") return run_dump_conditional_context_v2_mode(argc, argv);
         else if (a == "--dump-quiet-flags")         return run_dump_quiet_flags_mode(argc, argv);
         else if (a == "--symmetry-augment")         return run_symmetry_augment_mode(argc, argv);
         else if (a == "--eval-position")            return run_eval_position_mode(argc, argv);

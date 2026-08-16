@@ -10,6 +10,7 @@
 
 #include "position.hpp"
 #include "scan_eval.hpp"
+#include "movegen.hpp"
 
 #include "../pattern_jass/src/pattern.hpp"
 
@@ -76,6 +77,77 @@ void test_extras_king_pst_one_hot() {
     // A centralised king has slide moves available.
     JASS_CHECK(e[EXTRA_BLACK_MOB] > 0.0f);
     JASS_CHECK(e[EXTRA_WHITE_MOB] > 0.0f);
+}
+
+Position conditional_symmetry(const Position& p) {
+    Position out{};
+    out.set_side_to_move(opposite(p.side_to_move()));
+    auto rotated = [](Square square) {
+        return static_cast<Square>(51 - static_cast<int>(square));
+    };
+    for (Bitboard b = p.black_men(); b; )
+        out.add_piece(rotated(pop_lsb(b)), Piece::WhiteMan);
+    for (Bitboard b = p.black_kings(); b; )
+        out.add_piece(rotated(pop_lsb(b)), Piece::WhiteKing);
+    for (Bitboard b = p.white_men(); b; )
+        out.add_piece(rotated(pop_lsb(b)), Piece::BlackMan);
+    for (Bitboard b = p.white_kings(); b; )
+        out.add_piece(rotated(pop_lsb(b)), Piece::BlackKing);
+    return out;
+}
+
+void test_conditional_context_v2_exact_tactics_and_symmetry() {
+    std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH> unavailable{};
+    if constexpr (!CONDITIONAL_CONTEXT_V2_AVAILABLE) {
+        unavailable.fill(1.0f);
+        JASS_CHECK(!compute_conditional_context_v2(Position::start_position(), unavailable));
+        for (const float value : unavailable) JASS_CHECK_EQ(value, 0.0f);
+        return;
+    }
+
+    const char* fens[] = {
+        "B:W26,31,32,37,K41:B12,16,21,K27",
+        "W:W18,23,K29:B7,12,14,K34",
+        "B:W31,32,36:B17,22,27",
+    };
+    for (const char* fen : fens) {
+        const Position p = parse(fen);
+        std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH> context{};
+        std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH> image{};
+        JASS_CHECK(compute_conditional_context_v2(p, context));
+        JASS_CHECK(compute_conditional_context_v2(conditional_symmetry(p), image));
+        for (int i = 0; i < CONDITIONAL_CONTEXT_V2_WIDTH; ++i)
+            JASS_CHECK(std::fabs(context[static_cast<std::size_t>(i)]
+                                 + image[static_cast<std::size_t>(i)]) < 1e-5f);
+
+        auto legal_summary = [&](Color side) {
+            Position q = p;
+            q.set_side_to_move(side);
+            MoveList moves;
+            generate_legal_moves(q, moves);
+            const int captures = (!moves.empty() && moves[0].is_capture())
+                ? static_cast<int>(moves.size()) : 0;
+            const int max_capture = captures ? moves[0].num_captures : 0;
+            return std::array<int, 4>{static_cast<int>(moves.size()), captures,
+                                      max_capture, moves.size() == 1 ? 1 : 0};
+        };
+        const auto black = legal_summary(Color::Black);
+        const auto white = legal_summary(Color::White);
+        for (int offset = 0; offset < 4; ++offset) {
+            const auto index = static_cast<std::size_t>(offset);
+            const int component = CTX2_LEGAL_MOVE_COUNT_DELTA + offset;
+            const float recovered = context[static_cast<std::size_t>(component)]
+                + context[static_cast<std::size_t>(CONDITIONAL_CONTEXT_V2_BASES
+                                                    + component)];
+            JASS_CHECK(std::fabs(recovered
+                                 - static_cast<float>(black[index] - white[index]))
+                       < 1e-5f);
+        }
+    }
+
+    std::array<float, CONDITIONAL_CONTEXT_V2_WIDTH> start{};
+    JASS_CHECK(compute_conditional_context_v2(Position::start_position(), start));
+    for (const float value : start) JASS_CHECK_EQ(value, 0.0f);
 }
 
 // --- evaluate : phase interpolation + sign -------------------------------
@@ -249,6 +321,7 @@ void run_scan_eval_tests() {
     test_evaluate_with_idx_matches_evaluate();
     test_extras_start_position();
     test_extras_king_pst_one_hot();
+    test_conditional_context_v2_exact_tactics_and_symmetry();
     test_evaluate_midgame_uses_mg_bank();
     test_evaluate_endgame_uses_eg_bank();
     test_evaluate_sign_flips_with_stm();
