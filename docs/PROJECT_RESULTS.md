@@ -424,10 +424,10 @@ différences au sein d'un protocole apparié portent une causalité.
 | MMTO à travers recherche | jusqu'à +52 Elo vs gen1 ; +34 d9-vs-Scan | bake `gen2-mmto` |
 | EGDB mix exact | +58 Elo dans `0454`, finale améliorée | preuve qu'une vérité exacte peut aider ; recette historique |
 | **fold sur la symétrie exacte du damier** | **+17,10 Elo** vs son contrôle IC95 `[+9,2 ; +25,0]` ; **+13,32 Elo** vs le champion TURNOVER IC95 `[+5,5 ; +21,2]`, n=6000 chacune (`cpx62-1118`/`1121`) | **acquis fit**, candidat à promotion non baké ; EGDB absent des portes donc Elo non comparable en absolu |
-| **ré-étiquetage `context30` de la cible WDL** | **+5,91 Elo** vs L2LOW IC95 `[−0,15 ; +11,97]`, `P(>0)=97,2 %`, n=12 000 (`cpx62-1354`) — **corpus courant, aucune donnée nouvelle** | **acquis cible** : porte l'essentiel du gain de CURRICULUM (`+8,22` sur le même pool), soit ~72 % ; levier **bon marché**, à préférer au volume |
+| **candidat `context30` sur corpus courant** | **+5,91 Elo** vs L2LOW IC95 `[−0,15 ; +11,97]`, `P(>0)=97,2 %`, n=12 000 (`cpx62-1354`) — aucune donnée nouvelle | **signal prometteur, attribution cible encore ouverte** : A est un refit supplémentaire de L2LOW ; le contrôle causal ALIGNED/SHUFFLED-WDL-stratifié/OUTCOME est [préenregistré](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md) |
 | apport marginal du **volume** (mégacorpus 4 M en pré-entraînement) | **+2,32 Elo** IC95 `[−6,24 ; +10,88]`, `z = 0,53` (`cpx62-1354` contre `cpx62-1349`, même pool) | ⚠️ **ni établi ni réfuté** ; le trancher à 95 % demanderait 163 800 parties/bras (×13,7) ≈ 29 h cpx62 pour un seul pool — **hors de prix** (§4.4) |
 
-## 4.4 Attribution du gain de CURRICULUM — la cible paie, le volume n'est pas démontré
+## 4.4 Décomposition du gain de CURRICULUM — signal cible candidat, volume non démontré
 
 CURRICULUM, champion depuis le 15 août, est un **curriculum à deux étages** :
 pré-entraînement sur `MEGA_FULL_4M`, puis recentrage sur `CURRENT_2M` avec la
@@ -435,10 +435,17 @@ cible alignée `CONTEXT_30`. Les deux étages coûtent des ordres de grandeur
 différents — le volume demande de générer et conserver 4 M de positions, le
 ré-étiquetage ne demande **aucune donnée nouvelle**.
 
-`cpx62-1354` sépare les deux à **un seul facteur** : le bras `A = CURRENT_C30`
-partage avec CURRICULUM l'étiquetage, la recette de fit, le volume de fit (2 M)
-et le fold exact, et n'en diffère que par le **corpus source**. Même pool que
-`cpx62-1349`, même budget, `n = 12 000`, zéro refit, zéro self-play.
+`cpx62-1354` sépare proprement le curriculum du corpus courant : le bras
+`A = CURRENT_C30` partage avec CURRICULUM l'étiquetage, la recette de fit, le
+volume de fit (2 M) et le fold exact, et n'en diffère que par le **prior issu du
+mégacorpus**. Même pool que `cpx62-1349`, même budget, `n = 12 000`, zéro refit
+au moment de la porte et zéro self-play.
+
+⚠️ Ce contraste attribue `D−A` au pré-entraînement Mega, mais **n'attribue pas
+`A−L2LOW` à `CONTEXT_30` seul** : A est lui-même un refit supplémentaire depuis
+L2LOW. Cette attribution exige les contrôles marginal-matched SHUFFLED et
+terminal OUTCOME, désormais
+[préenregistrés](experiments/L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md).
 
 | | Elo | IC95 | `P(Elo>0)` |
 |---|---|---|---|

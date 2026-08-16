@@ -7,6 +7,8 @@ inference time.  Terminal WDL is converted to black POV.  Train rows receive
 out-of-fold predictions grouped by complete JSM games; holdout rows receive a
 prediction from a mapper fitted on the train prefix only.  The shuffled control
 preserves each cohort/fold prediction multiset while breaking row alignment.
+Causal gates may additionally stratify this shuffle by terminal WDL, preserving
+the complete blended-target multiset as well.
 No oracle, EGDB label, search score, frozen cohort, or new self-play is read.
 """
 from __future__ import annotations
@@ -325,8 +327,12 @@ def shuffled_within_cohort_folds(
     folds: np.ndarray,
     train_count: int,
     seed: int,
+    strata: np.ndarray | None = None,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     values = np.asarray(predictions, dtype=np.float64)
+    groups = None if strata is None else np.asarray(strata)
+    if groups is not None and groups.shape != values.shape:
+        raise ValueError("shuffle strata must align one-to-one with predictions")
     shuffled = np.empty_like(values)
     sources = np.empty(len(values), dtype=np.int64)
     row_ids = np.arange(len(values), dtype=np.uint64)
@@ -335,27 +341,39 @@ def shuffled_within_cohort_folds(
         (train_count, len(values), "holdout"),
     ):
         for fold in sorted(int(value) for value in np.unique(folds[start:stop])):
-            members = np.flatnonzero(folds[start:stop] == fold) + start
-            if members.size < 2:
-                raise ValueError(f"{cohort} fold {fold} has fewer than two rows")
-            keys = _splitmix64(row_ids[members] ^ np.uint64(seed) ^ np.uint64(fold))
-            ordered = members[np.argsort(keys, kind="stable")]
-            rotated = np.roll(ordered, 1)
-            shuffled[ordered] = values[rotated]
-            sources[ordered] = rotated
-            if not np.array_equal(np.sort(shuffled[ordered]), np.sort(values[ordered])):
-                raise RuntimeError("shuffle changed a cohort/fold marginal")
+            fold_members = np.flatnonzero(folds[start:stop] == fold) + start
+            group_values = (None,) if groups is None else tuple(np.unique(groups[fold_members]))
+            for group in group_values:
+                members = fold_members if group is None else fold_members[groups[fold_members] == group]
+                if members.size < 2:
+                    suffix = "" if group is None else f" stratum {group}"
+                    raise ValueError(f"{cohort} fold {fold}{suffix} has fewer than two rows")
+                group_salt = 0 if group is None else int(group) + 2
+                keys = _splitmix64(
+                    row_ids[members] ^ np.uint64(seed) ^ np.uint64(fold)
+                    ^ (np.uint64(group_salt) << np.uint64(32))
+                )
+                ordered = members[np.argsort(keys, kind="stable")]
+                rotated = np.roll(ordered, 1)
+                shuffled[ordered] = values[rotated]
+                sources[ordered] = rotated
+                if not np.array_equal(np.sort(shuffled[ordered]), np.sort(values[ordered])):
+                    raise RuntimeError("shuffle changed a cohort/fold/stratum marginal")
     if np.any(sources == np.arange(len(values), dtype=np.int64)):
         raise RuntimeError("shuffle retained a source row")
     if np.any((sources < train_count) != (np.arange(len(values)) < train_count)):
         raise RuntimeError("shuffle crossed train/holdout cohorts")
     if not np.array_equal(folds[sources], folds):
         raise RuntimeError("shuffle crossed conditional folds")
+    if groups is not None and not np.array_equal(groups[sources], groups):
+        raise RuntimeError("shuffle crossed causal strata")
     return shuffled, {
         "seed": seed,
         "fixed_point_count": 0,
         "all_sources_within_same_cohort": True,
         "all_sources_within_same_fold": True,
+        "stratification": "none" if groups is None else "terminal_wdl_black",
+        "all_sources_within_same_stratum": groups is not None,
         "all_cohort_fold_marginals_preserved": True,
         "permutation_hash": hashlib.sha256(sources.tobytes(order="C")).hexdigest(),
     }
@@ -443,7 +461,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         line_search_steps=int(args.line_search_steps),
     )
     shuffled, shuffle_report = shuffled_within_cohort_folds(
-        predictions, folds, train_count, int(args.shuffle_seed)
+        predictions,
+        folds,
+        train_count,
+        int(args.shuffle_seed),
+        outcomes if getattr(args, "shuffle_within_wdl", False) else None,
     )
     alpha = float(args.alpha)
     if not 0.0 < alpha < 1.0:
@@ -459,6 +481,27 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         and np.all((0.0 <= shuffled_targets) & (shuffled_targets <= 1.0))
     ):
         raise RuntimeError("blended target left black-POV probability range")
+    stratified_shuffle = getattr(args, "shuffle_within_wdl", False)
+    final_marginals_preserved = None
+    if stratified_shuffle:
+        final_marginals_preserved = True
+        for start, stop in ((0, train_count), (train_count, len(outcomes))):
+            for fold in np.unique(folds[start:stop]):
+                for outcome in np.unique(outcomes[start:stop]):
+                    members = np.flatnonzero(
+                        (folds[start:stop] == fold)
+                        & (outcomes[start:stop] == outcome)
+                    ) + start
+                    if not np.array_equal(
+                        np.sort(aligned[members]), np.sort(shuffled_targets[members])
+                    ):
+                        final_marginals_preserved = False
+                        break
+    shuffle_report["all_final_target_marginals_preserved"] = (
+        final_marginals_preserved
+    )
+    if stratified_shuffle and not final_marginals_preserved:
+        raise RuntimeError("WDL-stratified shuffle changed a final target marginal")
     _atomic_save_npy(aligned_path, aligned)
     _atomic_save_npy(shuffled_path, shuffled_targets)
     report = {
@@ -515,6 +558,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--fold-count", type=int, default=5)
     parser.add_argument("--fold-seed", type=int, default=20260811)
     parser.add_argument("--shuffle-seed", type=int, default=20260812)
+    parser.add_argument(
+        "--shuffle-within-wdl",
+        action="store_true",
+        help=(
+            "shuffle predictions within cohort/fold/terminal-WDL so the "
+            "complete blended-target marginal is preserved"
+        ),
+    )
     parser.add_argument("--ridge", type=float, default=1e-4)
     parser.add_argument("--max-iterations", type=int, default=50)
     parser.add_argument("--tolerance", type=float, default=1e-8)

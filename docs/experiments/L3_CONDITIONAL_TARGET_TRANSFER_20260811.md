@@ -1,8 +1,10 @@
 # L3 — transfer of Mini-Jass conditional targets to full Jass
 
-Status: external-target support, conditional target builder and HOME timing
-probe implemented. No job is queued by this PR. No new full-size self-play is
-generated in the first stage.
+Status: superseded operationally on 16 August by the full causal
+pre-registration in
+[`L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md`](L3_CONTEXT30_CAUSAL_GATE_PREREGISTRATION_20260816.md).
+The original timing probe remains historical and was never a strength verdict.
+No new full-size self-play is generated in the causal stage.
 
 ## Question and cheapest causal ordering
 
@@ -20,7 +22,7 @@ The order is intentionally cheap:
    parent under the current champion recipe.
 4. Play an independent same-pool causal gate.
 5. Generate new full-size on-policy self-play only if the offline aligned arm
-   beats both the marginal-matched shuffle and L2LOW.
+   beats both the conditional-channel-marginal-matched shuffle and L2LOW.
 
 This prevents an expensive generation from confounding target quality with a
 new position distribution.
@@ -73,10 +75,12 @@ ALIGNED  = (0.70 * terminal_WDL + 0.30 * conditional_prediction + 1) / 2
 SHUFFLED = (0.70 * terminal_WDL + 0.30 * within_fold_permutation + 1) / 2
 ```
 
-The permutation stays within cohort and fold, has no fixed row and preserves
-every prediction multiset exactly. Thus the arms have the same target marginal;
-only state alignment changes. No oracle, EGDB label or search score enters the
-target.
+The historical permutation stays within cohort and fold, has no fixed row and
+preserves every **conditional-prediction** multiset exactly. It does not by
+itself prove equality of the final blended-target marginal. The 16 August
+causal protocol strengthens it by also stratifying on terminal WDL, which does
+preserve the complete target multiset; only fine state alignment then changes.
+No oracle, EGDB label or search score enters the target.
 
 `train_stream --target external` loads a strict aligned float32 `.npy` vector in
 `[0,1]`, validates but never clips or normalises it, and emits an atomic
