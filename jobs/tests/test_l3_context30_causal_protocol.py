@@ -37,6 +37,15 @@ class Context30CausalProtocolTest(unittest.TestCase):
         self.assertIn("error_draws", text)
         self.assertIn("error_guard_passed", text)
 
+    def test_gate_exposes_validated_budget_overrides(self) -> None:
+        text = GATE.read_text(encoding="utf-8")
+        self.assertIn('FORCE_DEPTH="${FORCE_DEPTH:-9}"', text)
+        self.assertIn('MOVETIME="${MOVETIME:-0.1}"', text)
+        self.assertIn('FORCE_DEPTH must be an integer in [1,64]', text)
+        self.assertIn('MOVETIME must be finite and in (0,30] seconds', text)
+        self.assertIn('--depth "$FORCE_DEPTH"', text)
+        self.assertIn('--movetime "$MOVETIME"', text)
+
     def test_no_automatic_science_transition(self) -> None:
         text = DOC.read_text(encoding="utf-8")
         self.assertIn("Aucun job enfant", text)
