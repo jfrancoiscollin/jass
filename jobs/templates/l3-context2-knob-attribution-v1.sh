@@ -24,6 +24,11 @@ RECORDS_PER_CELL="${RECORDS_PER_CELL:-250000}"; PRODUCERS="${PRODUCERS:-8}"
 LABEL_DEPTH=4; MAXPLIES=260; BASE_SEED=1618033; REPLICATE_SEED=2718281
 VENV="${JASS_L3_NUMERIC_VENV:-/var/tmp/jass-l3-numeric-venv-current-v1}"
 VENV_READY="$VENV/.jass-runtime-ready-v1"
+REUSE_PREFIX="${REUSE_PREFIX:-}"
+REUSE_CELLS="${REUSE_CELLS:-}"
+REUSE_EXPECTED_JOB="${REUSE_EXPECTED_JOB:-}"
+REUSE_EXPECTED_ATTEMPT="${REUSE_EXPECTED_ATTEMPT:-}"
+REUSE_EXPECTED_CODE_SHA="${REUSE_EXPECTED_CODE_SHA:-}"
 Q00="rfp_max_depth=5,rfp_margin=100,nmp_min_depth=4,nmp_min_pieces=6,nmp_r_base=2,nmp_r_div=4,singular_min_depth=8,singular_margin=2,lmr_min_depth=3,lmr_first_full_moves=4,lmr_first_full_pv=4,lmr_first_full_nonpv=2,lmr_base=0,lmr_depth_div=6,lmr_idx_div=8,lmr_hist_div=0,lmr_formula=0,lmr_log_base=0,lmr_log_mul=40,lmr_bc_ld=100,lmr_bc_lidx=100,lmp_d1=4,lmp_d2=8,lmp_d3=14,lmp_max_depth=3,history_max=16384,hist_malus=0,hist_mode=1,prob_shift=5,hist_pure=1,hist_order_captures=0,aspiration_initial=50,use_pvs=1,razor_max_depth=4,razor_margin=200,probcut_min_depth=5,probcut_margin=150,probcut_reduction=4,ext_promotion=0,ext_forcing=0,forcing_ext_cap=0,ext_single_reply=0,use_improving=1,use_conthist=1,iid_min_depth=0,iid_reduction=2,no_reduce_forcing=0,qs_forcing_depth=0,qs_promo_depth=0,qs_threat_ext=0,qs_sacs=0,qs_sacs_depth0_only=1,multicut_min_depth=4,multicut_reduction=4,multicut_moves=8,multicut_cuts=2,tm_next_iter_pct=200,tm_min_depth=5,drawish_scaling=0,eg_pieces=40,eg_no_nmp=0,eg_no_lmp=0,eg_no_lmr=0"
 
 # name       rop eps decay topk margin depth seed
@@ -105,6 +110,39 @@ PY
 gunzip -c "$IN/curriculum.pjtw.gz" >"$W/curriculum.pjtw"
 [ "$(sha256sum "$W/curriculum.pjtw" | awk '{print $1}')" = "$CURRICULUM_SHA" ] || die "CURRICULUM hash drift"
 
+if [ -n "$REUSE_PREFIX" ]; then
+  stage fetch-authenticated-completed-cells
+  [ -n "$REUSE_CELLS" ] && [ -n "$REUSE_EXPECTED_JOB" ] && \
+    [ -n "$REUSE_EXPECTED_ATTEMPT" ] && [ -n "$REUSE_EXPECTED_CODE_SHA" ] ||
+    die "incomplete reused-cell identity contract"
+  reuse_args=()
+  for NAME in $REUSE_CELLS; do
+    reuse_args+=(--file "artefacts/cells/$NAME-activation.json=$NAME-activation.json")
+    reuse_args+=(--file "artefacts/cells/$NAME-activation.csv=$NAME-activation.csv")
+    reuse_args+=(--file "artefacts/cells/$NAME-activation.md=$NAME-activation.md")
+    reuse_args+=(--file "artefacts/cells/$NAME-merge.json=$NAME-merge.json")
+  done
+  timeout 1800s python3 jobs/tools/fetch_result_files.py --prefix "$REUSE_PREFIX" \
+    "${reuse_args[@]}" --out-dir "$IN/reused-cells" \
+    --expected-state failed \
+    --report "$ART/verified-reused-cells.json" >"$W/fetch-reused-cells.log" 2>&1
+  "$PY" - "$ART/verified-reused-cells.json" "$REUSE_EXPECTED_JOB" \
+    "$REUSE_EXPECTED_ATTEMPT" "$REUSE_EXPECTED_CODE_SHA" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1]))
+if (r.get('job_id'),r.get('attempt_id'),r.get('code_sha')) != tuple(sys.argv[2:5]):
+ raise SystemExit('reused-cell source identity drift')
+if r.get('result_state')!='failed' or r.get('exit_code')!=6:
+ raise SystemExit('reused-cell source state drift')
+PY
+  for NAME in $REUSE_CELLS; do
+    cp "$IN/reused-cells/$NAME-activation.json" "$ART/cells/$NAME-activation.json"
+    cp "$IN/reused-cells/$NAME-activation.csv" "$ART/cells/$NAME-activation.csv"
+    cp "$IN/reused-cells/$NAME-activation.md" "$ART/cells/$NAME-activation.md"
+    cp "$IN/reused-cells/$NAME-merge.json" "$ART/cells/$NAME-merge.json"
+  done
+fi
+
 stage build-identical-exact-fold-tempo-engine
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf >"$W/gen8.log" 2>&1
 cp pattern_jass/tools/patterns.py "$GEOM/patterns.py"
@@ -123,6 +161,18 @@ mkdir -p "$W/cells"
 while read -r NAME ROP EPS DECAY TOPK MARGIN DEPTH SEED; do
   [ -n "${NAME:-}" ] || continue
   echo "cell-$NAME" >"$STAGE"
+  if [ -f "$ART/cells/$NAME-activation.json" ]; then
+    "$PY" - "$ART/cells/$NAME-activation.json" "$RECORDS_PER_CELL" <<'PY'
+import json,sys
+r=json.load(open(sys.argv[1])); expected=int(sys.argv[2])
+if r['population']['positions']!=expected: raise SystemExit('reused cell record count drift')
+if r['phase']['recomposition_max_absolute_error']>1e-5: raise SystemExit('reused phase recomposition drift')
+PY
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$NAME" "$ROP" "$EPS" "$DECAY" "$TOPK" "$MARGIN" "$DEPTH" "$SEED" >>"$W/cell-specs.tsv"
+    say "cell=$NAME reused from authenticated failed source before its NODECAY abort"
+    continue
+  fi
   CELL="$W/cells/$NAME"; mkdir -p "$CELL"
   base=$((RECORDS_PER_CELL / PRODUCERS)); rem=$((RECORDS_PER_CELL % PRODUCERS))
   pids=(); pairs=()
@@ -146,6 +196,7 @@ while read -r NAME ROP EPS DECAY TOPK MARGIN DEPTH SEED; do
     grep -q 'split_selfplay_rngs=1' "$log" || die "$NAME: split RNGs inactive in $log"
   done
   "$PY" tools/selfplay_frontier.py merge "${pairs[@]}" --renamespace-nested \
+    --no-wdl-check \
     --out-data "$CELL/cell.jnnw" --out-meta "$CELL/cell.jsm" \
     --manifest "$ART/cells/$NAME-merge.json" >"$CELL/merge.log" 2>&1
   timeout 3600s "$J" --dump-conditional-context-v2 \
@@ -175,7 +226,7 @@ while read -r NAME _; do args+=(--cell "$NAME=$ART/cells/$NAME-activation.json")
   "${args[@]}" --baseline BASE --replicate BASEBIS \
   --report "$ART/context2-knob-attribution.json" >"$W/compare.log" 2>&1
 
-"$PY" - "$ART" "$W/cell-specs.tsv" "$EXPECTED_CODE_SHA" "$RECORDS_PER_CELL" <<'PY'
+"$PY" - "$ART" "$W/cell-specs.tsv" "$EXPECTED_CODE_SHA" "$RECORDS_PER_CELL" "$REUSE_CELLS" <<'PY'
 import json,sys
 from pathlib import Path
 art=Path(sys.argv[1]); specs=Path(sys.argv[2]); code=sys.argv[3]; records=int(sys.argv[4])
@@ -187,8 +238,11 @@ guards={}
 for name,row in cells.items():
  rates=row['population']['wdl_stm_rates']; skew=abs(rates['1']-rates['-1'])
  draw_shift=abs(rates['0']-base_draw)/base_draw if base_draw else 0.0
+ absolute_wdl_pass=0.10<=rates['0']<=0.60 and skew<=0.10
+ relative_draw_pass=name in ('BASE','BASEBIS') or draw_shift<=0.30
  guards[name]={'wdl_side_skew':skew,'draw_rate':rates['0'],'relative_draw_shift_vs_base':draw_shift,
-  'passed':skew<=0.10 and (name in ('BASE','BASEBIS') or draw_shift<=0.30)}
+  'absolute_wdl_band_passed':absolute_wdl_pass,'relative_draw_shift_passed':relative_draw_pass,
+  'passed':absolute_wdl_pass and relative_draw_pass}
 effects=[]
 for row in attribution['effects']:
  noise=row['baseline_replicate_noise_percentage_points']; delta=row['activation_delta_percentage_points']
@@ -200,6 +254,7 @@ payload={'schema':'jass.l3_context2_knob_attribution_job.v1',
  'verdict':'JASS_CONTEXT2_KNOB_ATTRIBUTION_READY','code_sha':code,
  'parent':{'label':'CURRICULUM','raw_sha256':'319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1'},
  'records_per_cell':records,'cells':list(cells),'guards':guards,'effects':effects,
+ 'reused_cells':sys.argv[5].split() if len(sys.argv)>5 else [],
  'established_parameter_component_effects':established,
  'primary_output':'parameter_x_base_signal_activation_effect_matrix',
  'diagnostic_only':True,'fits_run':0,'force_games_played':0,'frozen_read':False,
