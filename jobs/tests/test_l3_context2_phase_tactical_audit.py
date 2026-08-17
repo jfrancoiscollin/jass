@@ -34,6 +34,9 @@ class Context2PhaseTacticalAuditTemplateTest(unittest.TestCase):
         self.assertIn("promotion_authorized':False", self.text)
         self.assertIn("automatic_next_job':None", self.text)
 
+    def test_builds_every_binary_used_by_ctest(self) -> None:
+        self.assertIn('--target jass jass_tests', self.text)
+
 
 if __name__ == "__main__":
     unittest.main()

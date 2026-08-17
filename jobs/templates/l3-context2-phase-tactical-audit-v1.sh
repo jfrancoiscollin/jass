@@ -48,7 +48,9 @@ python3 -m unittest jobs.tests.test_l3_context2_phase_tactical_protocol \
 python3 pattern_jass/tools/gen_patterns.py --emit --variant 8cf >"$W/gen8.log" 2>&1
 cmake -S . -B "$W/build" -DCMAKE_BUILD_TYPE=Release -DJASS_ENDGAME_FEATURES=ON \
   -DJASS_KING_MOBILITY=ON -DJASS_SCAN_PARITY=ON -DJASS_TEMPO_STAGE=ON >"$W/cmake.log" 2>&1
-cmake --build "$W/build" -j8 --target jass_tests >"$W/build.log" 2>&1
+# The CTest registry also contains smoke tests that invoke the engine binary;
+# building only jass_tests makes those tests appear as missing executables.
+cmake --build "$W/build" -j8 --target jass jass_tests >"$W/build.log" 2>&1
 ctest --test-dir "$W/build" --output-on-failure >"$W/ctest.log" 2>&1
 
 stage fetch-immutable-fit-and-ctx1-arm
