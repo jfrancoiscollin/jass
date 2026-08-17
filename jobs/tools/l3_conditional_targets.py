@@ -748,8 +748,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         strata_name,
     )
     alpha = float(args.alpha)
-    if not 0.0 < alpha < 1.0:
-        raise ValueError("--alpha must be strictly between 0 and 1")
+    if not 0.0 < alpha <= 1.0:
+        raise ValueError("--alpha must be greater than 0 and at most 1")
     aligned_wdl = (1.0 - alpha) * outcomes + alpha * predictions
     shuffled_wdl = (1.0 - alpha) * outcomes + alpha * shuffled
     aligned = np.asarray((aligned_wdl + 1.0) * 0.5, dtype=np.float32)
