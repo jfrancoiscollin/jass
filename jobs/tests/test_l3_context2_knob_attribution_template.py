@@ -62,6 +62,29 @@ class Context2KnobAttributionTemplateTests(unittest.TestCase):
         ):
             self.assertIn(token, self.script)
 
+    def test_invalid_extreme_cells_are_measured_not_allowed_to_abort_matrix(self) -> None:
+        for token in (
+            "--no-wdl-check",
+            "0.10<=rates['0']<=0.60",
+            "absolute_wdl_band_passed",
+            "relative_draw_shift_passed",
+            "absolute_wdl_pass and relative_draw_pass",
+        ):
+            self.assertIn(token, self.script)
+
+    def test_completed_cells_can_be_reused_with_failed_source_identity(self) -> None:
+        for token in (
+            "REUSE_PREFIX",
+            "REUSE_CELLS",
+            "verified-reused-cells.json",
+            "--expected-state failed",
+            "reused-cell source identity drift",
+            "r.get('result_state')!='failed' or r.get('exit_code')!=6",
+            "reused cell record count drift",
+            "reused_cells",
+        ):
+            self.assertIn(token, self.script)
+
     def test_persistent_numpy_is_reused(self) -> None:
         self.assertIn("persistent numeric runtime absent; do not reinstall", self.script)
         self.assertNotIn("pip install", self.script)
