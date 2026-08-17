@@ -273,6 +273,59 @@ def test_ctx2_strict_protocol_runs_end_to_end(tmp_path: Path) -> None:
     assert report["shuffle_control"]["all_final_target_marginals_preserved"] is True
 
 
+def test_alpha_one_is_a_complete_conditional_relabel(tmp_path: Path) -> None:
+    data, meta, feat, train_count = _write_ctx2_fixture(tmp_path)
+    common = dict(
+        data=str(data),
+        meta=str(meta),
+        feat=str(feat),
+        context_schema="ctx2-phase-tactical-30",
+        group_by="opening_id",
+        row_weighting="game_equal",
+        require_convergence=True,
+        train_count=train_count,
+        fold_count=2,
+        fold_seed=81,
+        shuffle_seed=82,
+        shuffle_within_wdl=True,
+        shuffle_phase_bins=4,
+        ridge=1e-4,
+        max_iterations=100,
+        tolerance=1e-8,
+        line_search_steps=20,
+    )
+    full_args = argparse.Namespace(
+        **common,
+        aligned_out=str(tmp_path / "full-aligned.npy"),
+        shuffled_out=str(tmp_path / "full-shuffled.npy"),
+        report=str(tmp_path / "full-report.json"),
+        alpha=1.0,
+    )
+    mixed_args = argparse.Namespace(
+        **common,
+        aligned_out=str(tmp_path / "mixed-aligned.npy"),
+        shuffled_out=str(tmp_path / "mixed-shuffled.npy"),
+        report=str(tmp_path / "mixed-report.json"),
+        alpha=0.5,
+    )
+    full = TARGETS.run(full_args)
+    TARGETS.run(mixed_args)
+    full_values = np.load(full_args.aligned_out, allow_pickle=False)
+    mixed_values = np.load(mixed_args.aligned_out, allow_pickle=False)
+    records = TARGETS._open_counted(data, b"JNNW", TARGETS.JNNW_DTYPE)
+    black_wdl = np.where(records["stm"] == 1, records["wdl"], -records["wdl"])
+    outcomes = (black_wdl + 1.0) * 0.5
+    # At alpha=.5: mixed=.5*outcome+.5*prediction.  Therefore the alpha=1
+    # target must recover prediction=2*mixed-outcome exactly up to float32.
+    np.testing.assert_allclose(
+        full_values,
+        2.0 * mixed_values - outcomes,
+        atol=2e-7,
+        rtol=0.0,
+    )
+    assert full["target"]["alpha"] == 1.0
+
+
 def test_train_holdout_game_overlap_is_rejected() -> None:
     matrix = np.asarray([[1.0], [1.0], [-1.0], [-1.0]])
     outcomes = np.asarray([1.0, 1.0, -1.0, -1.0])
