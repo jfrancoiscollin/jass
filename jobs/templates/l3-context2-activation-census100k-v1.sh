@@ -163,7 +163,7 @@ stage publish-audited-census
 gzip -n -c "$W/sample100k.jnnw" >"$ART/sample100k.jnnw.gz"
 gzip -n -c "$W/sample100k.jsm" >"$ART/sample100k.jsm.gz"
 gzip -n -c "$W/sample100k.ctx2.feat" >"$ART/sample100k.ctx2.feat.gz"
-"$PY" - "$ART" "$EXPECTED_CODE_SHA" "$SOURCE_JOB" "$SOURCE_ATTEMPT" <<'PY'
+"$PY" - "$ART" "$EXPECTED_CODE_SHA" "$SOURCE_JOB" "$SOURCE_ATTEMPT" "$DATA_SHA" "$META_SHA" <<'PY'
 import hashlib,json,sys
 from pathlib import Path
 art=Path(sys.argv[1]); census=json.load(open(art/'context2-activation-census.json'))
@@ -181,7 +181,8 @@ if census['phase']['recomposition_max_absolute_error']>1e-5:
  raise SystemExit('CTX2 phase/base recomposition mismatch')
 payload={'schema':'jass.l3_context2_activation_census_job.v1',
  'verdict':'JASS_CONTEXT2_ACTIVATION_CENSUS100K_READY','code_sha':sys.argv[2],
- 'source':{'job_id':sys.argv[3],'attempt_id':sys.argv[4]},
+ 'source':{'job_id':sys.argv[3],'attempt_id':sys.argv[4],
+  'data_raw_sha256':sys.argv[5],'meta_raw_sha256':sys.argv[6]},
  'sample':sample['sample'],'census_verdict':census['verdict'],
  'all_30_channels_materially_active':census['diagnostics']['all_30_channels_materially_active'],
  'all_15_base_signals_materially_active':census['diagnostics']['all_15_base_signals_materially_active'],
