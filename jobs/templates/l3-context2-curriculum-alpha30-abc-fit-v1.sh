@@ -366,9 +366,18 @@ def structure(path):
      or n_ext!=120 or path.stat().st_size!=expected): raise SystemExit(f'{path}: PJTW drift')
  return {'version':version,'scale':scale,'n_patterns':n_pat,'n_extras':n_ext,'size_bytes':path.stat().st_size}
 def rms(path):
- values=np.fromfile(path,dtype='<f4',offset=20).astype(np.float64)
- if values.size!=2*(4251528+120): raise SystemExit(f'{path}: weight count drift')
- return float(np.sqrt(np.mean(values*values)))
+ path=Path(path)
+ magic,version,scale,n_pat,n_ext=struct.unpack('<5I',path.read_bytes()[:20])
+ if (magic!=0x57544A50 or (version&0xff)!=3 or scale<=0
+     or n_pat!=4251528 or n_ext!=120):
+  raise SystemExit(f'{path}: RMS header drift')
+ count=2*(n_pat+n_ext)
+ weights=np.memmap(path,dtype='<i4',mode='r',offset=20,shape=(count,))
+ sum2=0.0
+ for start in range(0,count,1<<20):
+  chunk=np.asarray(weights[start:start+(1<<20)],dtype=np.float64)/scale
+  sum2+=float(np.dot(chunk,chunk))
+ return float(np.sqrt(sum2/count))
 champion=w/'curriculum.pjtw'
 if sha(champion)!=champion_sha: raise SystemExit('Curriculum hash drift at publication')
 champion_rms=rms(champion)

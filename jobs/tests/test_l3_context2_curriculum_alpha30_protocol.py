@@ -66,6 +66,8 @@ class Context2CurriculumAlpha30ProtocolTests(unittest.TestCase):
             "0.95 <= ref[key] <= 1.05",
             "0.80 <= ratio <= 1.20",
             "validate-current-target-recomposition-against-original-alpha30-fit",
+            "dtype='<i4'",
+            "dtype=np.float64)/scale",
         ):
             self.assertIn(token, self.script)
 
