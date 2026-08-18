@@ -151,6 +151,31 @@ class ContributionSeedMinerTests(unittest.TestCase):
         # and one from game 12 already owned by the current pool.
         self.assertEqual(capacity, 2)
 
+    def test_global_rank_protects_opening_that_would_break_pending_request(self):
+        metadata = np.zeros(
+            3,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 11, 12]
+        metadata["opening_id"] = [100, 101, 102]
+        ranked = miner._rank_global_candidates(
+            np.arange(3, dtype=np.int64),
+            metadata,
+            pool="king_centrality",
+            opening_owner={},
+            opening_masks={100: 0b01001, 101: 0b01001, 102: 0b01000},
+            seed=2026081806,
+            salt=0,
+            pending_requests={0, 1},
+            request_order=[(0, 0, 0, 4), (3, 0, 0, 2)],
+            feasible_capacity=np.asarray([5, 10], dtype=np.int64),
+            remaining_required=np.asarray([4, 2], dtype=np.int64),
+            opening_request_capacities={100: [(0, 2)], 101: [(0, 1)]},
+        )
+        self.assertEqual(int(ranked[0]), 2)  # exclusive to current pool
+        self.assertEqual(int(ranked[1]), 1)  # shared but non-critical
+        self.assertEqual(int(ranked[2]), 0)  # would make request 0 infeasible
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -249,7 +274,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_dynamic_global_scarcity_multistart_v3",
+                "deterministic_granular_pressure_multistart_v4",
             )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
