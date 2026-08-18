@@ -33,6 +33,21 @@ monitor(){
 finalize(){
   rc=$?; trap - EXIT ERR TERM INT; set +e
   [ -z "$MON" ] || { kill "$MON" 2>/dev/null; wait "$MON" 2>/dev/null; }
+  if [ "$rc" -ne 0 ] && [ -s "$W/miner.log" ]; then
+    python3 - "$W/miner.log" "$ART" <<'PY'
+import json,pathlib,re,sys
+log,art=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2])
+tail='\n'.join(log.read_text(errors='replace').splitlines()[-220:])
+lines=[line.strip() for line in tail.splitlines() if line.strip()]
+exceptions=[line for line in lines if re.match(r'^(?:[A-Za-z_][A-Za-z0-9_.]*(?:Error|Exception)|SystemExit):',line)]
+root=exceptions[-1] if exceptions else (lines[-1] if lines else 'EMPTY_MINER_LOG')
+payload={'schema':1,'verdict':'JASS_CONTEXT2_CONTRIBUTION_SEED_MINER_ROOT_CAUSE_READY',
+ 'root_cause':root,'miner_log_tail':tail}
+(art/'root-cause.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+safe=re.sub(r'[^A-Za-z0-9]+','_',root).strip('_')[:200]
+(art/f'ROOT_CAUSE__{safe}').touch()
+PY
+  fi
   cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
   (cd "$W" && find . -maxdepth 1 -type f -name '*.log' -print0 |
