@@ -81,6 +81,58 @@ class ContributionSeedMinerTests(unittest.TestCase):
         self.assertEqual(len(set(first)), 120)
         self.assertEqual(set(first), set(__import__("itertools").permutations(range(5))))
 
+    def test_global_rank_prefers_owned_then_exclusive_openings(self):
+        metadata = np.zeros(
+            4,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 11, 12, 13]
+        metadata["opening_id"] = [100, 101, 102, 103]
+        ranked = miner._rank_global_candidates(
+            np.arange(4, dtype=np.int64),
+            metadata,
+            pool="king_centrality",
+            opening_owner={100: "king_centrality", 103: "blocked_man"},
+            opening_masks={100: 0b11000, 101: 0b01000, 102: 0b11000, 103: 0b01000},
+            seed=2026081806,
+            salt=0,
+        )
+        self.assertEqual(int(ranked[0]), 0)  # already owned by this pool
+        self.assertEqual(int(ranked[1]), 1)  # unowned and exclusive
+        self.assertEqual(int(ranked[2]), 2)  # unowned but shared
+        self.assertEqual(int(ranked[3]), 3)  # owned by another pool
+
+    def test_global_request_order_prioritizes_shared_only_bucket(self):
+        metadata = np.zeros(
+            14,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["opening_id"] = np.arange(14, dtype=np.uint64)
+        eligible = {
+            (component, sign, stratum): np.asarray([], dtype=np.int64)
+            for component in range(5)
+            for sign in range(2)
+            for stratum in range(60)
+        }
+        # Component 0 has two exclusive openings.  Component 1 can only use
+        # two openings shared with component 0, so it must be served first.
+        eligible[(0, 0, 0)] = np.asarray([0, 1, 2, 3], dtype=np.int64)
+        eligible[(1, 0, 0)] = np.asarray([2, 3], dtype=np.int64)
+        eligible[(2, 0, 0)] = np.asarray([4, 5, 6, 7], dtype=np.int64)
+        eligible[(3, 0, 0)] = np.asarray([8, 9, 10, 11], dtype=np.int64)
+        eligible[(4, 0, 0)] = np.asarray([12, 13, 4, 5], dtype=np.int64)
+        quotas = np.zeros((2, 60), dtype=np.int64)
+        quotas[0, 0] = 2
+        masks = miner._opening_pool_masks(eligible, metadata)
+        order = miner._global_request_order(
+            eligible_by_bucket=eligible,
+            common_sign_quotas=quotas,
+            metadata=metadata,
+            opening_masks=masks,
+            seed=2026081806,
+        )
+        self.assertEqual(order[0][:3], (1, 0, 0))
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -179,7 +231,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_multistart_exact_v1",
+                "deterministic_global_scarcity_multistart_v2",
             )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
