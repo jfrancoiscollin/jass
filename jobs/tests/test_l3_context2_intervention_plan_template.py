@@ -63,6 +63,15 @@ class Context2InterventionPlanTemplateTests(unittest.TestCase):
         ):
             self.assertIn(token, self.script)
 
+    def test_publishes_failure_logs_and_status_visible_trace(self) -> None:
+        for token in (
+            'cp "$log" "$ART/$(basename "$log")"',
+            'if [ "$rc" -ne 0 ]',
+            'FAILTRACE__{log.stem}',
+            'lines[-20:]',
+        ):
+            self.assertIn(token, self.script)
+
 
 if __name__ == "__main__":
     unittest.main()

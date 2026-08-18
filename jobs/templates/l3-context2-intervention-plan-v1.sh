@@ -19,6 +19,27 @@ finalize(){
   rc=$?; trap - EXIT ERR TERM INT; set +e
   cp "$RES" "$ART/RESULTS.txt" 2>/dev/null || true
   [ -f "$PROG" ] && cp "$PROG" "$ART/PROGRESS.txt"
+  for log in "$W"/*.log; do
+    [ -f "$log" ] && cp "$log" "$ART/$(basename "$log")"
+  done
+  if [ "$rc" -ne 0 ]; then
+    python3 - "$ART" <<'PY' || true
+import re
+import sys
+from pathlib import Path
+
+artefacts = Path(sys.argv[1])
+for log in sorted(artefacts.glob("*.log")):
+    lines = [
+        line.strip()
+        for line in log.read_text(encoding="utf-8", errors="replace").splitlines()
+        if line.strip()
+    ]
+    for index, line in enumerate(lines[-20:]):
+        slug = re.sub(r"[^A-Za-z0-9_.-]+", "_", line).strip("_")[:160] or "EMPTY"
+        (artefacts / f"FAILTRACE__{log.stem}__{index:02d}__{slug}").touch()
+PY
+  fi
   rm -rf "$IN" "$W" 2>/dev/null || true
   exit "$rc"
 }
