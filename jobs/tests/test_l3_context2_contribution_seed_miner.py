@@ -71,6 +71,16 @@ class ContributionSeedMinerTests(unittest.TestCase):
         )
         self.assertEqual(miner.DOMINANT_COMPONENT, "men_delta")
 
+    def test_allocation_orders_are_deterministic_exhaustive_and_base_first(self):
+        base = [4, 1, 3, 0, 2]
+        first = miner._allocation_orders(base, 2026081806)
+        second = miner._allocation_orders(base, 2026081806)
+        self.assertEqual(first, second)
+        self.assertEqual(first[0], tuple(base))
+        self.assertEqual(len(first), 120)
+        self.assertEqual(len(set(first)), 120)
+        self.assertEqual(set(first), set(__import__("itertools").permutations(range(5))))
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -167,6 +177,10 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertEqual(payload["guards"]["exact_records_total"], 24)
             self.assertTrue(payload["guards"]["all_stratum_histograms_identical"])
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
+            self.assertEqual(
+                payload["selection"]["allocation_algorithm"],
+                "deterministic_multistart_exact_v1",
+            )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
 
