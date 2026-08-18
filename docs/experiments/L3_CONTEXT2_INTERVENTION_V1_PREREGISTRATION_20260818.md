@@ -35,6 +35,14 @@ figées avant lecture du résultat :
 Le corpus cible contient exactement 2 000 000 de positions. Avec un pas de
 5 %, chaque quota est un multiple entier de 100 000 positions.
 
+L'écran d'activation réalisé compare le corpus unifié au bras `BASE` apparié
+de `home-1395`. Il recalcule les 30 canaux avec le dumper de production sur les
+2 M positions, exige l'activation matérielle des 30 canaux et 15 signaux de
+base, puis reconstruit les covariances à partir des moments et corrélations.
+Le gain de log-déterminant réalisé contre `BASE` doit être strictement positif.
+Cet écran ne peut pas autoriser un fit PatternEval : s'il passe, l'étape
+suivante reste l'audit de concentration du mapper aligned sur ce corpus.
+
 ### Corrigendum avant génération
 
 Les attempts de planification `1404` et `1407` n'ont généré aucune donnée et
