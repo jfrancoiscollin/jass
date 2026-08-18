@@ -295,6 +295,119 @@ def _rank_indices(
     return indices[np.lexsort((indices, keys))]
 
 
+def _opening_pool_masks(
+    eligible_by_bucket: dict[tuple[int, int, int], np.ndarray],
+    metadata: np.ndarray,
+) -> dict[int, int]:
+    """Map each eligible opening to every target pool that can use it.
+
+    The previous allocator only discovered cross-pool contention after an
+    earlier pool had claimed an opening.  Recording the contention graph up
+    front lets every pool consume its exclusive openings before touching the
+    shared openings needed by a scarcer pool.
+    """
+    masks: dict[int, int] = defaultdict(int)
+    for (component, _sign_index, _stratum), indices in eligible_by_bucket.items():
+        if not len(indices):
+            continue
+        bit = 1 << component
+        for raw_opening in np.unique(metadata["opening_id"][indices]):
+            masks[int(raw_opening)] |= bit
+    return dict(masks)
+
+
+def _global_request_order(
+    *,
+    eligible_by_bucket: dict[tuple[int, int, int], np.ndarray],
+    common_sign_quotas: np.ndarray,
+    metadata: np.ndarray,
+    opening_masks: dict[int, int],
+    seed: int,
+) -> list[tuple[int, int, int, int]]:
+    """Order exact target buckets by global scarcity, not by whole pool.
+
+    A request with few openings exclusive to its pool must claim shared
+    openings before requests that can be satisfied from abundant exclusive
+    supply.  Integer cross-products keep ordering deterministic and avoid
+    floating-point drift.
+    """
+    requests: list[tuple[int, int, int, int]] = []
+    sort_keys: dict[tuple[int, int, int, int], tuple[int, ...]] = {}
+    for component in range(len(TARGET_COMPONENTS)):
+        bit = 1 << component
+        for sign_index in range(2):
+            for stratum in range(60):
+                required = int(common_sign_quotas[sign_index, stratum])
+                if not required:
+                    continue
+                candidates = eligible_by_bucket[(component, sign_index, stratum)]
+                openings = np.unique(metadata["opening_id"][candidates])
+                exclusive = sum(
+                    opening_masks.get(int(raw_opening), 0) == bit
+                    for raw_opening in openings
+                )
+                request = (component, sign_index, stratum, required)
+                requests.append(request)
+                # First: lowest exclusive supply per requested row.  Second:
+                # lowest total candidate supply.  The hash is only a stable
+                # tie-breaker and never overrides either scarcity measure.
+                tie = int.from_bytes(
+                    hashlib.sha256(
+                        struct.pack("<QBBBB", int(seed), component, sign_index, stratum, 0)
+                    ).digest()[:8],
+                    "little",
+                )
+                sort_keys[request] = (
+                    exclusive * 1_000_000 // required,
+                    len(candidates) * 1_000_000 // required,
+                    tie,
+                    component,
+                    sign_index,
+                    stratum,
+                )
+    return sorted(requests, key=sort_keys.__getitem__)
+
+
+def _rank_global_candidates(
+    indices: np.ndarray,
+    metadata: np.ndarray,
+    *,
+    pool: str,
+    opening_owner: dict[int, str],
+    opening_masks: dict[int, int],
+    seed: int,
+    salt: int,
+) -> np.ndarray:
+    """Prefer reusable/exclusive openings, then the deterministic hash rank."""
+    if not len(indices):
+        return indices
+    openings = np.asarray(metadata["opening_id"][indices], dtype=np.uint64)
+    owner_rank = np.fromiter(
+        (
+            0 if opening_owner.get(int(raw_opening)) == pool
+            else 1 if int(raw_opening) not in opening_owner
+            else 2
+            for raw_opening in openings
+        ),
+        dtype=np.uint8,
+        count=len(indices),
+    )
+    competition = np.fromiter(
+        (opening_masks.get(int(raw_opening), 0).bit_count() for raw_opening in openings),
+        dtype=np.uint8,
+        count=len(indices),
+    )
+    values = (
+        np.asarray(indices, dtype=np.uint64)
+        ^ openings
+        ^ np.asarray(metadata["game_id"][indices], dtype=np.uint64)
+        ^ np.uint64(seed)
+        ^ np.uint64(salt)
+    )
+    hashes = _splitmix64(values)
+    return indices[np.lexsort((indices, hashes, competition, owner_rank))]
+
+
 def _record_bytes(records: np.ndarray, index: int) -> bytes:
     value = records[index].tobytes()
     if len(value) != RECORD_SIZE:
@@ -450,10 +563,13 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     )
     common_total_quotas = common_sign_quotas.sum(axis=0)
 
-    total_capacity = target_capacity.sum(axis=(1, 2))
-    base_allocation_order = sorted(
-        range(len(TARGET_COMPONENTS)),
-        key=lambda index: (int(total_capacity[index]), TARGET_COMPONENTS[index]),
+    opening_masks = _opening_pool_masks(eligible_by_bucket, metadata)
+    request_order = _global_request_order(
+        eligible_by_bucket=eligible_by_bucket,
+        common_sign_quotas=common_sign_quotas,
+        metadata=metadata,
+        opening_masks=opening_masks,
+        seed=args.seed,
     )
     neutral_by_stratum = {
         stratum: np.flatnonzero(strata == stratum) for stratum in range(60)
@@ -463,61 +579,60 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     opening_owner: dict[int, str] = {}
     game_counts: Counter[int] = Counter()
     canonical_used: set[bytes] = set()
-    allocation_order: tuple[int, ...] = tuple(base_allocation_order)
     allocation_attempt = -1
 
-    for allocation_attempt, allocation_order in enumerate(
-        _allocation_orders(base_allocation_order, args.seed)
-    ):
+    for allocation_attempt in range(MAX_ALLOCATION_ATTEMPTS):
         opening_owner = {}
         game_counts = Counter()
         canonical_used = set()
-        attempt_selection: dict[str, list[int]] = {}
+        attempt_selection: dict[str, list[int]] = {
+            POOL_NAMES[component]: [] for component in TARGET_COMPONENTS
+        }
         attempt_salt = allocation_attempt * 1_000_000
         try:
-            for component in allocation_order:
+            for component, sign_index, stratum, required in request_order:
                 name = POOL_NAMES[TARGET_COMPONENTS[component]]
-                chosen: list[int] = []
-                for sign_index in range(2):
-                    for stratum in range(60):
-                        required = int(common_sign_quotas[sign_index, stratum])
-                        if not required:
-                            continue
-                        candidates = _rank_indices(
-                            eligible_by_bucket[(component, sign_index, stratum)],
-                            metadata,
-                            seed=args.seed,
-                            salt=(
-                                attempt_salt
-                                + component * 1000
-                                + sign_index * 100
-                                + stratum
-                            ),
-                        )
-                        chosen.extend(
-                            _select_bucket(
-                                candidates=candidates,
-                                required=required,
-                                pool=name,
-                                records=records,
-                                metadata=metadata,
-                                opening_owner=opening_owner,
-                                game_counts=game_counts,
-                                canonical_used=canonical_used,
-                            )
-                        )
-                if len(chosen) != args.per_pool:
+                candidates = _rank_global_candidates(
+                    eligible_by_bucket[(component, sign_index, stratum)],
+                    metadata,
+                    pool=name,
+                    opening_owner=opening_owner,
+                    opening_masks=opening_masks,
+                    seed=args.seed,
+                    salt=(
+                        attempt_salt
+                        + component * 1000
+                        + sign_index * 100
+                        + stratum
+                    ),
+                )
+                attempt_selection[name].extend(
+                    _select_bucket(
+                        candidates=candidates,
+                        required=required,
+                        pool=name,
+                        records=records,
+                        metadata=metadata,
+                        opening_owner=opening_owner,
+                        game_counts=game_counts,
+                        canonical_used=canonical_used,
+                    )
+                )
+            for name in POOL_NAMES.values():
+                if len(attempt_selection[name]) != args.per_pool:
                     raise ValueError(f"pool {name}: exact quota drift")
-                attempt_selection[name] = chosen
 
             neutral: list[int] = []
             for stratum in range(60):
                 required = int(common_total_quotas[stratum])
                 if not required:
                     continue
-                candidates = _rank_indices(
+                candidates = _rank_global_candidates(
                     neutral_by_stratum[stratum],
                     metadata,
+                    pool="neutral",
+                    opening_owner=opening_owner,
+                    opening_masks=opening_masks,
                     seed=args.seed,
                     salt=attempt_salt + 900_000 + stratum,
                 )
@@ -624,13 +739,11 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             "maximum_positions_per_source_game": 2,
             "canonical_position_dedup_across_pools": True,
             "score_and_wdl_zeroed": True,
-            "allocation_order_initial_rarest_first": [
-                TARGET_COMPONENTS[index] for index in base_allocation_order
-            ],
-            "allocation_order_selected": [
-                TARGET_COMPONENTS[index] for index in allocation_order
-            ],
-            "allocation_algorithm": "deterministic_multistart_exact_v1",
+            "allocation_request_count": len(request_order),
+            "allocation_request_order_sha256": hashlib.sha256(
+                json.dumps(request_order, separators=(",", ":")).encode("ascii")
+            ).hexdigest(),
+            "allocation_algorithm": "deterministic_global_scarcity_multistart_v2",
             "allocation_attempt_zero_based": allocation_attempt,
             "allocation_failed_attempts": len(allocation_errors),
             "allocation_max_attempts": MAX_ALLOCATION_ATTEMPTS,
