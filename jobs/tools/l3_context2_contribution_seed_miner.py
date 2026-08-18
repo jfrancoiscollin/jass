@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import hashlib
+import heapq
 import itertools
 import json
 import math
@@ -408,6 +409,51 @@ def _rank_global_candidates(
     return indices[np.lexsort((indices, hashes, competition, owner_rank))]
 
 
+def _opening_request_capacities(
+    requests: list[tuple[int, int, int, int]],
+    eligible_by_bucket: dict[tuple[int, int, int], np.ndarray],
+    metadata: np.ndarray,
+) -> tuple[dict[int, list[tuple[int, int]]], np.ndarray]:
+    """Index request capacity by opening, respecting the two-row game cap."""
+    by_opening: dict[int, list[tuple[int, int]]] = defaultdict(list)
+    totals = np.zeros(len(requests), dtype=np.int64)
+    for request_index, (component, sign_index, stratum, _required) in enumerate(requests):
+        indices = eligible_by_bucket[(component, sign_index, stratum)]
+        pairs = np.empty((len(indices), 2), dtype=np.uint64)
+        pairs[:, 0] = metadata["opening_id"][indices]
+        pairs[:, 1] = metadata["game_id"][indices]
+        unique_pairs, counts = np.unique(pairs, axis=0, return_counts=True)
+        opening_capacity: Counter[int] = Counter()
+        for pair, count in zip(unique_pairs, counts, strict=True):
+            opening_capacity[int(pair[0])] += min(int(count), 2)
+        for opening, capacity in opening_capacity.items():
+            by_opening[opening].append((request_index, capacity))
+            totals[request_index] += capacity
+    return dict(by_opening), totals
+
+
+def _current_request_capacity(
+    *,
+    candidates: np.ndarray,
+    pool: str,
+    metadata: np.ndarray,
+    opening_owner: dict[int, str],
+    game_counts: Counter[int],
+) -> int:
+    """Return exact remaining row capacity under opening and game guards."""
+    by_game: Counter[int] = Counter()
+    for raw_index in candidates:
+        index = int(raw_index)
+        opening = int(metadata["opening_id"][index])
+        owner = opening_owner.get(opening)
+        if owner is not None and owner != pool:
+            continue
+        game = int(metadata["game_id"][index])
+        if game_counts[game] < 2:
+            by_game[game] += 1
+    return sum(min(count, 2 - game_counts[game]) for game, count in by_game.items())
+
+
 def _record_bytes(records: np.ndarray, index: int) -> bytes:
     value = records[index].tobytes()
     if len(value) != RECORD_SIZE:
@@ -425,6 +471,7 @@ def _select_bucket(
     opening_owner: dict[int, str],
     game_counts: Counter[int],
     canonical_used: set[bytes],
+    claimed_openings: set[int] | None = None,
 ) -> list[int]:
     selected: list[int] = []
     for raw_index in candidates:
@@ -440,6 +487,8 @@ def _select_bucket(
         canonical = canonical_position(record)
         if canonical in canonical_used:
             continue
+        if owner is None and claimed_openings is not None:
+            claimed_openings.add(opening)
         opening_owner[opening] = pool
         game_counts[game] += 1
         canonical_used.add(canonical)
@@ -571,6 +620,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
         opening_masks=opening_masks,
         seed=args.seed,
     )
+    opening_request_capacities, initial_request_capacities = _opening_request_capacities(
+        request_order, eligible_by_bucket, metadata
+    )
     neutral_by_stratum = {
         stratum: np.flatnonzero(strata == stratum) for stratum in range(60)
     }
@@ -580,6 +632,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     game_counts: Counter[int] = Counter()
     canonical_used: set[bytes] = set()
     allocation_attempt = -1
+    selected_request_order: list[int] = []
 
     for allocation_attempt in range(MAX_ALLOCATION_ATTEMPTS):
         opening_owner = {}
@@ -589,11 +642,52 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             POOL_NAMES[component]: [] for component in TARGET_COMPONENTS
         }
         attempt_salt = allocation_attempt * 1_000_000
+        feasible_capacity = initial_request_capacities.copy()
+        versions = np.zeros(len(request_order), dtype=np.int64)
+        pending = set(range(len(request_order)))
+        queue: list[tuple[int, int, int]] = []
+
+        def push_request(request_index: int) -> None:
+            required = request_order[request_index][3]
+            ratio = int(feasible_capacity[request_index]) * 1_000_000 // required
+            heapq.heappush(
+                queue, (ratio, request_index, int(versions[request_index]))
+            )
+
+        for request_index in pending:
+            push_request(request_index)
+        attempt_request_order: list[int] = []
         try:
-            for component, sign_index, stratum, required in request_order:
+            while pending:
+                while True:
+                    _ratio, request_index, version = heapq.heappop(queue)
+                    if (
+                        request_index in pending
+                        and version == int(versions[request_index])
+                    ):
+                        break
+                component, sign_index, stratum, required = request_order[request_index]
                 name = POOL_NAMES[TARGET_COMPONENTS[component]]
+                raw_candidates = eligible_by_bucket[(component, sign_index, stratum)]
+                exact_capacity = _current_request_capacity(
+                    candidates=raw_candidates,
+                    pool=name,
+                    metadata=metadata,
+                    opening_owner=opening_owner,
+                    game_counts=game_counts,
+                )
+                if exact_capacity != int(feasible_capacity[request_index]):
+                    feasible_capacity[request_index] = exact_capacity
+                    versions[request_index] += 1
+                    push_request(request_index)
+                    continue
+                if exact_capacity < required:
+                    raise AllocationShortfall(
+                        f"pool {name} sign_index={sign_index} stratum={stratum}: "
+                        f"remaining capacity {exact_capacity} below required {required}"
+                    )
                 candidates = _rank_global_candidates(
-                    eligible_by_bucket[(component, sign_index, stratum)],
+                    raw_candidates,
                     metadata,
                     pool=name,
                     opening_owner=opening_owner,
@@ -606,8 +700,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         + stratum
                     ),
                 )
-                attempt_selection[name].extend(
-                    _select_bucket(
+                claimed_openings: set[int] = set()
+                try:
+                    chosen = _select_bucket(
                         candidates=candidates,
                         required=required,
                         pool=name,
@@ -616,8 +711,26 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         opening_owner=opening_owner,
                         game_counts=game_counts,
                         canonical_used=canonical_used,
+                        claimed_openings=claimed_openings,
                     )
-                )
+                except AllocationShortfall as error:
+                    raise AllocationShortfall(
+                        f"{error}; sign_index={sign_index} stratum={stratum} "
+                        f"tracked_capacity={exact_capacity}"
+                    ) from error
+                attempt_selection[name].extend(chosen)
+                pending.remove(request_index)
+                attempt_request_order.append(request_index)
+                for opening in claimed_openings:
+                    for other_index, capacity in opening_request_capacities.get(opening, []):
+                        if other_index not in pending:
+                            continue
+                        other_component = request_order[other_index][0]
+                        if other_component == component:
+                            continue
+                        feasible_capacity[other_index] -= capacity
+                        versions[other_index] += 1
+                        push_request(other_index)
             for name in POOL_NAMES.values():
                 if len(attempt_selection[name]) != args.per_pool:
                     raise ValueError(f"pool {name}: exact quota drift")
@@ -655,6 +768,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             allocation_errors.append(str(error))
             continue
         selected_by_pool = attempt_selection
+        selected_request_order = attempt_request_order
         break
 
     if selected_by_pool is None:
@@ -743,7 +857,10 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             "allocation_request_order_sha256": hashlib.sha256(
                 json.dumps(request_order, separators=(",", ":")).encode("ascii")
             ).hexdigest(),
-            "allocation_algorithm": "deterministic_global_scarcity_multistart_v2",
+            "allocation_dynamic_order_sha256": hashlib.sha256(
+                np.asarray(selected_request_order, dtype="<u2").tobytes()
+            ).hexdigest(),
+            "allocation_algorithm": "deterministic_dynamic_global_scarcity_multistart_v3",
             "allocation_attempt_zero_based": allocation_attempt,
             "allocation_failed_attempts": len(allocation_errors),
             "allocation_max_attempts": MAX_ALLOCATION_ATTEMPTS,

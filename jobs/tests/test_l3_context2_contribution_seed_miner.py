@@ -133,6 +133,24 @@ class ContributionSeedMinerTests(unittest.TestCase):
         )
         self.assertEqual(order[0][:3], (1, 0, 0))
 
+    def test_current_capacity_respects_opening_ownership_and_game_cap(self):
+        metadata = np.zeros(
+            6,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 10, 10, 11, 11, 12]
+        metadata["opening_id"] = [100, 100, 100, 101, 101, 102]
+        capacity = miner._current_request_capacity(
+            candidates=np.arange(6, dtype=np.int64),
+            pool="king_centrality",
+            metadata=metadata,
+            opening_owner={101: "blocked_man", 102: "king_centrality"},
+            game_counts=__import__("collections").Counter({10: 1}),
+        )
+        # One remaining row from game 10, none from the foreign opening 101,
+        # and one from game 12 already owned by the current pool.
+        self.assertEqual(capacity, 2)
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -231,7 +249,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_global_scarcity_multistart_v2",
+                "deterministic_dynamic_global_scarcity_multistart_v3",
             )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
