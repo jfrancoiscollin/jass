@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import hashlib
+import itertools
 import json
 import math
 from pathlib import Path
@@ -61,6 +62,11 @@ TARGET_COMPONENTS = (
 DOMINANT_COMPONENT = "men_delta"
 PIECE_EDGES = np.asarray([0, 8, 15, 22, 30, 41], dtype=np.int16)
 POOL_NAMES = {component: component.removesuffix("_delta") for component in TARGET_COMPONENTS}
+MAX_ALLOCATION_ATTEMPTS = math.factorial(len(TARGET_COMPONENTS))
+
+
+class AllocationShortfall(ValueError):
+    """A greedy allocation path exhausted a bucket under the exact guards."""
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -328,10 +334,28 @@ def _select_bucket(
         if len(selected) == required:
             break
     if len(selected) != required:
-        raise ValueError(
+        raise AllocationShortfall(
             f"pool {pool}: selected {len(selected)} of {required} after disjointness guards"
         )
     return selected
+
+
+def _allocation_orders(
+    base_order: list[int], seed: int
+) -> list[tuple[int, ...]]:
+    """Return every component order once, deterministically, base order first."""
+    base = tuple(base_order)
+    remaining = [
+        order
+        for order in itertools.permutations(range(len(base)))
+        if order != base
+    ]
+    remaining.sort(
+        key=lambda order: hashlib.sha256(
+            struct.pack("<Q", int(seed)) + bytes(order)
+        ).digest()
+    )
+    return [base, *remaining]
 
 
 def _write_pool(path: Path, records: np.ndarray, indices: list[int]) -> str:
@@ -406,15 +430,16 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
 
     capacities = np.zeros((2, 60), dtype=np.int64)
     target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
+    eligible_by_bucket: dict[tuple[int, int, int], np.ndarray] = {}
     for component in range(len(TARGET_COMPONENTS)):
         for sign_index, sign in enumerate((-1, 1)):
             for stratum in range(60):
-                target_capacity[component, sign_index, stratum] = len(
-                    _eligible(
-                        scores, signs, strata, p90, men_median,
-                        component, sign, stratum,
-                    )
+                candidates = _eligible(
+                    scores, signs, strata, p90, men_median,
+                    component, sign, stratum,
                 )
+                eligible_by_bucket[(component, sign_index, stratum)] = candidates
+                target_capacity[component, sign_index, stratum] = len(candidates)
     capacities[:] = target_capacity.min(axis=0)
     half = args.per_pool // 2
     common_sign_quotas = np.stack(
@@ -426,38 +451,81 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     common_total_quotas = common_sign_quotas.sum(axis=0)
 
     total_capacity = target_capacity.sum(axis=(1, 2))
-    allocation_order = sorted(
+    base_allocation_order = sorted(
         range(len(TARGET_COMPONENTS)),
         key=lambda index: (int(total_capacity[index]), TARGET_COMPONENTS[index]),
     )
+    neutral_by_stratum = {
+        stratum: np.flatnonzero(strata == stratum) for stratum in range(60)
+    }
+    allocation_errors: list[str] = []
+    selected_by_pool: dict[str, list[int]] | None = None
     opening_owner: dict[int, str] = {}
     game_counts: Counter[int] = Counter()
     canonical_used: set[bytes] = set()
-    selected_by_pool: dict[str, list[int]] = {}
+    allocation_order: tuple[int, ...] = tuple(base_allocation_order)
+    allocation_attempt = -1
 
-    for component in allocation_order:
-        name = POOL_NAMES[TARGET_COMPONENTS[component]]
-        chosen: list[int] = []
-        for sign_index, sign in enumerate((-1, 1)):
+    for allocation_attempt, allocation_order in enumerate(
+        _allocation_orders(base_allocation_order, args.seed)
+    ):
+        opening_owner = {}
+        game_counts = Counter()
+        canonical_used = set()
+        attempt_selection: dict[str, list[int]] = {}
+        attempt_salt = allocation_attempt * 1_000_000
+        try:
+            for component in allocation_order:
+                name = POOL_NAMES[TARGET_COMPONENTS[component]]
+                chosen: list[int] = []
+                for sign_index in range(2):
+                    for stratum in range(60):
+                        required = int(common_sign_quotas[sign_index, stratum])
+                        if not required:
+                            continue
+                        candidates = _rank_indices(
+                            eligible_by_bucket[(component, sign_index, stratum)],
+                            metadata,
+                            seed=args.seed,
+                            salt=(
+                                attempt_salt
+                                + component * 1000
+                                + sign_index * 100
+                                + stratum
+                            ),
+                        )
+                        chosen.extend(
+                            _select_bucket(
+                                candidates=candidates,
+                                required=required,
+                                pool=name,
+                                records=records,
+                                metadata=metadata,
+                                opening_owner=opening_owner,
+                                game_counts=game_counts,
+                                canonical_used=canonical_used,
+                            )
+                        )
+                if len(chosen) != args.per_pool:
+                    raise ValueError(f"pool {name}: exact quota drift")
+                attempt_selection[name] = chosen
+
+            neutral: list[int] = []
             for stratum in range(60):
-                required = int(common_sign_quotas[sign_index, stratum])
+                required = int(common_total_quotas[stratum])
                 if not required:
                     continue
-                candidates = _eligible(
-                    scores, signs, strata, p90, men_median,
-                    component, sign, stratum,
-                )
                 candidates = _rank_indices(
-                    candidates,
+                    neutral_by_stratum[stratum],
                     metadata,
                     seed=args.seed,
-                    salt=component * 1000 + sign_index * 100 + stratum,
+                    salt=attempt_salt + 900_000 + stratum,
                 )
-                chosen.extend(
+                neutral.extend(
                     _select_bucket(
                         candidates=candidates,
                         required=required,
-                        pool=name,
+                        pool="neutral",
                         records=records,
                         metadata=metadata,
                         opening_owner=opening_owner,
@@ -465,34 +533,21 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         canonical_used=canonical_used,
                     )
                 )
-        if len(chosen) != args.per_pool:
-            raise ValueError(f"pool {name}: exact quota drift")
-        selected_by_pool[name] = chosen
-
-    neutral: list[int] = []
-    for stratum in range(60):
-        required = int(common_total_quotas[stratum])
-        if not required:
+            if len(neutral) != args.per_pool:
+                raise ValueError("neutral exact quota drift")
+            attempt_selection["neutral"] = neutral
+        except AllocationShortfall as error:
+            allocation_errors.append(str(error))
             continue
-        candidates = np.flatnonzero(strata == stratum)
-        candidates = _rank_indices(
-            candidates, metadata, seed=args.seed, salt=900_000 + stratum
+        selected_by_pool = attempt_selection
+        break
+
+    if selected_by_pool is None:
+        last_error = allocation_errors[-1] if allocation_errors else "unknown shortfall"
+        raise ValueError(
+            f"exact allocation infeasible after {MAX_ALLOCATION_ATTEMPTS} deterministic attempts; "
+            f"last={last_error}"
         )
-        neutral.extend(
-            _select_bucket(
-                candidates=candidates,
-                required=required,
-                pool="neutral",
-                records=records,
-                metadata=metadata,
-                opening_owner=opening_owner,
-                game_counts=game_counts,
-                canonical_used=canonical_used,
-            )
-        )
-    if len(neutral) != args.per_pool:
-        raise ValueError("neutral exact quota drift")
-    selected_by_pool["neutral"] = neutral
 
     out_dir.mkdir(parents=True)
     pool_reports: dict[str, Any] = {}
@@ -569,7 +624,16 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             "maximum_positions_per_source_game": 2,
             "canonical_position_dedup_across_pools": True,
             "score_and_wdl_zeroed": True,
-            "allocation_order_rarest_first": [TARGET_COMPONENTS[index] for index in allocation_order],
+            "allocation_order_initial_rarest_first": [
+                TARGET_COMPONENTS[index] for index in base_allocation_order
+            ],
+            "allocation_order_selected": [
+                TARGET_COMPONENTS[index] for index in allocation_order
+            ],
+            "allocation_algorithm": "deterministic_multistart_exact_v1",
+            "allocation_attempt_zero_based": allocation_attempt,
+            "allocation_failed_attempts": len(allocation_errors),
+            "allocation_max_attempts": MAX_ALLOCATION_ATTEMPTS,
             "common_sign_stratum_quotas": {
                 label: {str(i): int(value) for i, value in enumerate(common_sign_quotas[row]) if value}
                 for row, label in enumerate(("negative", "positive"))
