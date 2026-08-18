@@ -32,6 +32,7 @@ class Context2InterventionPlanTemplateTests(unittest.TestCase):
             "--max-cell-weight 0.30",
             "--max-relative-draw-shift 0.15",
             "--max-wdl-side-skew 0.02",
+            "--max-relative-tempo-mid-shift 0.15",
             "'NODECAY' in corpus['weights']",
             "predicted['logdet_gain_vs_base']<=0",
         ):

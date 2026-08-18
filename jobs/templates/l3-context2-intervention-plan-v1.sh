@@ -126,7 +126,7 @@ timeout 600s "$PY" jobs/tools/l3_context2_intervention_plan.py \
   --total-records 2000000 --weight-step 0.05 \
   --min-base-weight 0.15 --min-intervention-weight 0.05 --max-cell-weight 0.30 \
   --max-relative-draw-shift 0.15 --max-wdl-side-skew 0.02 \
-  --tempo-mid-min 0.45 --tempo-mid-max 0.55 \
+  --max-relative-tempo-mid-shift 0.15 \
   --output "$ART/context2-intervention-plan.json" >"$W/plan.log" 2>&1
 
 stage publish-plan-certificate
@@ -148,6 +148,8 @@ if predicted['relative_draw_shift_vs_base']>constraints['maximum_relative_draw_s
  raise SystemExit('draw shift guard drift')
 if predicted['wdl_side_skew']>constraints['maximum_wdl_side_skew']:
  raise SystemExit('WDL side skew guard drift')
+if predicted['relative_tempo_mid_shift_vs_base']>constraints['maximum_relative_tempo_mid_shift_vs_base']:
+ raise SystemExit('tempo-mid relative shift guard drift')
 payload={'schema':'jass.l3_context2_intervention_plan_job.v1',
  'verdict':'JASS_CONTEXT2_INTERVENTION_PLAN_READY','code_sha':code,
  'plan':plan,'sources':{
@@ -167,6 +169,7 @@ for cell,weight in sorted(corpus['weights'].items()):
 (art/f'MAX_ABS_PAIR_CORRELATION__PPM_{ppm(predicted["maximum_absolute_pair_correlation"])}').touch()
 (art/f'RELATIVE_DRAW_SHIFT__PPM_{ppm(predicted["relative_draw_shift_vs_base"])}').touch()
 (art/f'WDL_SIDE_SKEW__PPM_{ppm(predicted["wdl_side_skew"])}').touch()
+(art/f'RELATIVE_TEMPO_MID_SHIFT__PPM_{ppm(predicted["relative_tempo_mid_shift_vs_base"])}').touch()
 for name in ('SELFPLAY_GENERATED__FALSE','FITS_RUN__0','FORCE_GAMES_PLAYED__0',
              'FROZEN_READ__FALSE','PROMOTION_AUTHORIZED__FALSE','AUTOMATIC_NEXT_JOB__NULL'):
  (art/name).touch()
