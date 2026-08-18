@@ -59,6 +59,26 @@ l'audit `CURRENT_2M`, les trois diagnostics de concentration :
 
 Un échec d'écran renvoie à la génération ; il n'est pas sauvé par un fit.
 
+## Génération fraîche préenregistrée
+
+Le plan certifié par `cpx62-1408` fixe le corpus de 2 000 000 de positions :
+
+- `BASE` : 300 000 ;
+- `ROP16` : 600 000 ;
+- `EPS16` : 500 000 ;
+- `DECAY120` : 100 000 ;
+- `TOPK3M30` : 100 000 ;
+- `DEPTH10` : 400 000.
+
+La génération utilise CURRICULUM, 12 producteurs sur cpx62 (16 CPU), des
+graines fraîches appariées entre cellules et le même binaire exact-fold/tempo.
+Un préflight de 300 positions par cellule mesure le débit réel avant volume,
+calibre chaque timeout à 1,3 fois le temps sain projeté plus une minute et
+abandonne si la projection totale dépasse 75 minutes. Le job publie les six
+corpus séparés, leur provenance, ainsi que leur union exacte de 2 M. Il ne
+fitte aucun modèle : l'activation/covariance CTX2 du corpus réel reste une
+porte obligatoire avant étiquetage et fit.
+
 ## Contraste causal ultérieur
 
 À volume, parent, architecture, alpha `.30`, folds et recette constants :
