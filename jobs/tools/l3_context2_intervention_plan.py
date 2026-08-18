@@ -180,8 +180,7 @@ def build_plan(
     max_cell_weight: float,
     max_relative_draw_shift: float,
     max_wdl_side_skew: float,
-    tempo_mid_min: float,
-    tempo_mid_max: float,
+    max_relative_tempo_mid_shift: float,
 ) -> dict[str, Any]:
     if attribution_summary.get("schema") != "jass.l3_context2_knob_attribution_job.v1":
         raise ValueError("attribution summary schema drift")
@@ -233,28 +232,46 @@ def build_plan(
         raise ValueError("infeasible lattice weight bounds")
     ranges = [range(lo, hi + 1) for lo, hi in zip(minimum, maximum)]
     base_draw = float(base["wdl"][1])
+    base_tempo_mid = float(base["tempo_mid"])
     feasible: list[tuple[float, float, tuple[int, ...], dict[str, Any]]] = []
     evaluated = 0
+    lattice_candidates = 0
+    rejected = {"draw_shift": 0, "wdl_side_skew": 0, "tempo_mid_shift": 0}
     for units in itertools.product(*ranges):
         if sum(units) != units_total:
             continue
+        lattice_candidates += 1
         weights = np.asarray(units, dtype=np.float64) * step
         wdl = sum((weight * cell["wdl"] for weight, cell in zip(weights, ordered)), np.zeros(3))
         draw_shift = abs(float(wdl[1]) - base_draw) / base_draw if base_draw else math.inf
         side_skew = abs(float(wdl[2]) - float(wdl[0]))
         tempo_mid = float(sum(weight * cell["tempo_mid"] for weight, cell in zip(weights, ordered)))
-        if (
-            draw_shift > max_relative_draw_shift + 1e-12
-            or side_skew > max_wdl_side_skew + 1e-12
-            or not tempo_mid_min - 1e-12 <= tempo_mid <= tempo_mid_max + 1e-12
-        ):
+        tempo_mid_shift = (
+            abs(tempo_mid - base_tempo_mid) / abs(base_tempo_mid)
+            if base_tempo_mid
+            else (0.0 if tempo_mid == 0.0 else math.inf)
+        )
+        rejected["draw_shift"] += int(draw_shift > max_relative_draw_shift + 1e-12)
+        rejected["wdl_side_skew"] += int(side_skew > max_wdl_side_skew + 1e-12)
+        rejected["tempo_mid_shift"] += int(
+            tempo_mid_shift > max_relative_tempo_mid_shift + 1e-12
+        )
+        if any((
+            draw_shift > max_relative_draw_shift + 1e-12,
+            side_skew > max_wdl_side_skew + 1e-12,
+            tempo_mid_shift > max_relative_tempo_mid_shift + 1e-12,
+        )):
             continue
         evaluated += 1
         metrics = _mixture(weights, ordered, ridge)
         entropy = -float(np.sum(weights * np.log(weights))) / math.log(len(weights))
         feasible.append((metrics["logdet"], entropy, units, metrics))
     if not feasible:
-        raise ValueError("no feasible intervention mixture")
+        raise ValueError(
+            "no feasible intervention mixture: "
+            f"lattice={lattice_candidates} rejected={rejected} "
+            f"base_draw={base_draw:.9g} base_tempo_mid={base_tempo_mid:.9g}"
+        )
     feasible.sort(key=lambda row: (-row[0], -row[1], row[2]))
     _, entropy, selected_units, selected = feasible[0]
     selected_weights = np.asarray(selected_units, dtype=np.float64) * step
@@ -264,6 +281,11 @@ def build_plan(
     logdet_gain_equal = selected["logdet"] - equal_metrics["logdet"]
     draw_shift = abs(float(selected["wdl_rates"][1]) - base_draw) / base_draw
     side_skew = abs(float(selected["wdl_rates"][2]) - float(selected["wdl_rates"][0]))
+    tempo_mid_shift = (
+        abs(float(selected["tempo_mid_weight_mean"]) - base_tempo_mid) / abs(base_tempo_mid)
+        if base_tempo_mid
+        else (0.0 if selected["tempo_mid_weight_mean"] == 0.0 else math.inf)
+    )
     weights = {name: float(weight) for name, weight in zip(GENERATOR_CELLS, selected_weights)}
     quotas = {name: int(round(total_records * weight)) for name, weight in weights.items()}
     if sum(quotas.values()) != total_records:
@@ -284,6 +306,7 @@ def build_plan(
             "name": "lattice_D_optimal_pooled_base15_covariance",
             "criterion": "maximize_regularized_log_determinant",
             "weight_step": step,
+            "lattice_candidates_total": lattice_candidates,
             "lattice_candidates_feasible": evaluated,
             "regularization": ridge,
             "tie_breaker": "maximum_normalized_cell_entropy_then_lexicographic_units",
@@ -294,7 +317,7 @@ def build_plan(
             "maximum_each_cell_weight": max_cell_weight,
             "maximum_relative_draw_shift_vs_base": max_relative_draw_shift,
             "maximum_wdl_side_skew": max_wdl_side_skew,
-            "tempo_mid_weight_range": [tempo_mid_min, tempo_mid_max],
+            "maximum_relative_tempo_mid_shift_vs_base": max_relative_tempo_mid_shift,
             "same_parent_and_paired_generation_required": True,
             "excluded_cells": {
                 "BASEBIS": "independent-seed noise control, not an intervention",
@@ -335,6 +358,8 @@ def build_plan(
             "relative_draw_shift_vs_base": draw_shift,
             "wdl_side_skew": side_skew,
             "tempo_mid_weight_mean": selected["tempo_mid_weight_mean"],
+            "base_tempo_mid_weight_mean": base_tempo_mid,
+            "relative_tempo_mid_shift_vs_base": tempo_mid_shift,
             "phase_strata_rates": [float(value) for value in selected["phase_strata_rates"]],
         },
         "current_corpus_diagnosis": {
@@ -347,7 +372,7 @@ def build_plan(
                 "all_15_base_signals_materially_active": True,
                 "relative_draw_shift_vs_BASE_at_most": max_relative_draw_shift,
                 "wdl_side_skew_at_most": max_wdl_side_skew,
-                "tempo_mid_weight_range": [tempo_mid_min, tempo_mid_max],
+                "relative_tempo_mid_shift_vs_BASE_at_most": max_relative_tempo_mid_shift,
                 "actual_logdet_gain_vs_BASE_strictly_positive": True,
             },
             "after_aligned_mapper_before_patterneval_fit": {
@@ -385,8 +410,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-cell-weight", type=float, default=0.30)
     parser.add_argument("--max-relative-draw-shift", type=float, default=0.15)
     parser.add_argument("--max-wdl-side-skew", type=float, default=0.02)
-    parser.add_argument("--tempo-mid-min", type=float, default=0.45)
-    parser.add_argument("--tempo-mid-max", type=float, default=0.55)
+    parser.add_argument("--max-relative-tempo-mid-shift", type=float, default=0.15)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     plan = build_plan(
@@ -400,8 +424,7 @@ def main(argv: list[str] | None = None) -> int:
         max_cell_weight=args.max_cell_weight,
         max_relative_draw_shift=args.max_relative_draw_shift,
         max_wdl_side_skew=args.max_wdl_side_skew,
-        tempo_mid_min=args.tempo_mid_min,
-        tempo_mid_max=args.tempo_mid_max,
+        max_relative_tempo_mid_shift=args.max_relative_tempo_mid_shift,
     )
     if args.output.exists():
         raise ValueError(f"{args.output}: output exists (no-clobber)")

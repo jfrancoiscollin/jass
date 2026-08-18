@@ -29,11 +29,22 @@ figées avant lecture du résultat :
 - chaque cellule `<= 30 %` ;
 - déplacement relatif du taux de nulles contre `BASE <= 15 %` ;
 - asymétrie W/L `<= 2 %` ;
-- poids moyen de phase médiane dans `[45 %, 55 %]` ;
+- dérive relative du tempo Scan moyen contre `BASE <= 15 %` ;
 - `BASEBIS` reste un contrôle de bruit et `NODECAY` reste exclu.
 
 Le corpus cible contient exactement 2 000 000 de positions. Avec un pas de
 5 %, chaque quota est un multiple entier de 100 000 positions.
+
+### Corrigendum avant génération
+
+Les attempts de planification `1404` et `1407` n'ont généré aucune donnée et
+ont révélé que la borne absolue `[45 %, 55 %]` appliquait une sémantique
+erronée à `tempo_mid_weight_mean`. Cette quantité est le tempo Scan normalisé
+par 300, pas une probabilité de phase centrée sur 0,5. La garde est donc
+corrigée, avant toute génération et sans lecture d'un résultat de force, en
+une dérive relative au régime `BASE <= 15 %`. Cela conserve l'intention
+préenregistrée — empêcher un déplacement de phase — sur l'échelle réelle de
+la variable.
 
 ## Écrans avant fit
 

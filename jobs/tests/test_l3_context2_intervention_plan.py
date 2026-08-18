@@ -40,7 +40,7 @@ def cell_report(index: int) -> dict:
             "wdl_stm_rates": {"-1": 0.42, "0": 0.16 + index * 0.003, "1": 0.42 - index * 0.003},
         },
         "phase": {
-            "tempo_mid_weight_mean": 0.49 + index * 0.002,
+            "tempo_mid_weight_mean": 0.12 + index * 0.001,
             "strata": [
                 {"position_rate": value}
                 for value in (0.12, 0.18, 0.24, 0.25, 0.21)
@@ -93,8 +93,7 @@ class Context2InterventionPlanTests(unittest.TestCase):
             max_cell_weight=0.30,
             max_relative_draw_shift=0.15,
             max_wdl_side_skew=0.04,
-            tempo_mid_min=0.45,
-            tempo_mid_max=0.55,
+            max_relative_tempo_mid_shift=0.15,
         )
         first = build_plan(**kwargs)
         second = build_plan(**kwargs)
@@ -106,6 +105,9 @@ class Context2InterventionPlanTests(unittest.TestCase):
         self.assertTrue(all(value >= 0.05 for value in first["corpus"]["weights"].values()))
         self.assertTrue(first["generation_authorized_by_design"])
         self.assertGreater(first["predicted_design"]["logdet_gain_vs_base"], 0.0)
+        self.assertLessEqual(
+            first["predicted_design"]["relative_tempo_mid_shift_vs_base"], 0.15
+        )
         self.assertFalse(first["selfplay_generated"])
         self.assertFalse(first["promotion_authorized"])
 
@@ -124,8 +126,7 @@ class Context2InterventionPlanTests(unittest.TestCase):
                 max_cell_weight=0.30,
                 max_relative_draw_shift=0.15,
                 max_wdl_side_skew=0.04,
-                tempo_mid_min=0.45,
-                tempo_mid_max=0.55,
+                max_relative_tempo_mid_shift=0.15,
             )
 
     def test_cell_cli_parser_requires_exact_audited_set(self) -> None:
