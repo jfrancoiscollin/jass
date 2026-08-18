@@ -64,6 +64,7 @@ DOMINANT_COMPONENT = "men_delta"
 PIECE_EDGES = np.asarray([0, 8, 15, 22, 30, 41], dtype=np.int16)
 POOL_NAMES = {component: component.removesuffix("_delta") for component in TARGET_COMPONENTS}
 MAX_ALLOCATION_ATTEMPTS = math.factorial(len(TARGET_COMPONENTS))
+ALLOCATION_CHUNK_SIZE = 8
 
 
 class AllocationShortfall(ValueError):
@@ -378,6 +379,11 @@ def _rank_global_candidates(
     opening_masks: dict[int, int],
     seed: int,
     salt: int,
+    pending_requests: set[int] | None = None,
+    request_order: list[tuple[int, int, int, int]] | None = None,
+    feasible_capacity: np.ndarray | None = None,
+    remaining_required: np.ndarray | None = None,
+    opening_request_capacities: dict[int, list[tuple[int, int]]] | None = None,
 ) -> np.ndarray:
     """Prefer reusable/exclusive openings, then the deterministic hash rank."""
     if not len(indices):
@@ -398,6 +404,57 @@ def _rank_global_candidates(
         dtype=np.uint8,
         count=len(indices),
     )
+    critical_by_opening: dict[int, int] = {}
+    pressure_by_opening: dict[int, int] = {}
+    if pending_requests is not None:
+        if any(
+            value is None
+            for value in (
+                request_order,
+                feasible_capacity,
+                remaining_required,
+                opening_request_capacities,
+            )
+        ):
+            raise ValueError("incomplete dynamic pressure inputs")
+        pool_component = next(
+            index
+            for index, component in enumerate(TARGET_COMPONENTS)
+            if POOL_NAMES[component] == pool
+        )
+        for raw_opening in np.unique(openings):
+            opening = int(raw_opening)
+            if opening_owner.get(opening) == pool:
+                critical_by_opening[opening] = 0
+                pressure_by_opening[opening] = 0
+                continue
+            critical = 0
+            pressure = 0
+            for request_index, capacity in opening_request_capacities.get(opening, []):
+                if request_index not in pending_requests:
+                    continue
+                if request_order[request_index][0] == pool_component:
+                    continue
+                slack = max(
+                    0,
+                    int(feasible_capacity[request_index])
+                    - int(remaining_required[request_index]),
+                )
+                if capacity > slack:
+                    critical += 1
+                pressure += capacity * 1_000_000 // max(1, slack)
+            critical_by_opening[opening] = critical
+            pressure_by_opening[opening] = pressure
+    critical = np.fromiter(
+        (critical_by_opening.get(int(raw_opening), 0) for raw_opening in openings),
+        dtype=np.uint16,
+        count=len(indices),
+    )
+    pressure = np.fromiter(
+        (pressure_by_opening.get(int(raw_opening), 0) for raw_opening in openings),
+        dtype=np.uint64,
+        count=len(indices),
+    )
     values = (
         np.asarray(indices, dtype=np.uint64)
         ^ openings
@@ -406,7 +463,9 @@ def _rank_global_candidates(
         ^ np.uint64(salt)
     )
     hashes = _splitmix64(values)
-    return indices[np.lexsort((indices, hashes, competition, owner_rank))]
+    return indices[
+        np.lexsort((indices, hashes, competition, pressure, critical, owner_rank))
+    ]
 
 
 def _opening_request_capacities(
@@ -439,9 +498,13 @@ def _current_request_capacity(
     metadata: np.ndarray,
     opening_owner: dict[int, str],
     game_counts: Counter[int],
+    records: np.ndarray | None = None,
+    canonical_used: set[bytes] | None = None,
+    canonical_cache: dict[int, bytes] | None = None,
 ) -> int:
     """Return exact remaining row capacity under opening and game guards."""
-    by_game: Counter[int] = Counter()
+    by_game: dict[int, set[bytes] | int] = {}
+    all_canonicals: set[bytes] = set()
     for raw_index in candidates:
         index = int(raw_index)
         opening = int(metadata["opening_id"][index])
@@ -449,9 +512,29 @@ def _current_request_capacity(
         if owner is not None and owner != pool:
             continue
         game = int(metadata["game_id"][index])
-        if game_counts[game] < 2:
-            by_game[game] += 1
-    return sum(min(count, 2 - game_counts[game]) for game, count in by_game.items())
+        if game_counts[game] >= 2:
+            continue
+        if records is None:
+            by_game[game] = int(by_game.get(game, 0)) + 1
+            continue
+        if canonical_used is None or canonical_cache is None:
+            raise ValueError("canonical capacity inputs incomplete")
+        canonical = canonical_cache.get(index)
+        if canonical is None:
+            canonical = canonical_position(_record_bytes(records, index))
+            canonical_cache[index] = canonical
+        if canonical in canonical_used:
+            continue
+        bucket = by_game.setdefault(game, set())
+        if not isinstance(bucket, set):
+            raise AssertionError("mixed capacity mode")
+        bucket.add(canonical)
+        all_canonicals.add(canonical)
+    game_capacity = sum(
+        min(len(value) if isinstance(value, set) else value, 2 - game_counts[game])
+        for game, value in by_game.items()
+    )
+    return min(game_capacity, len(all_canonicals)) if records is not None else game_capacity
 
 
 def _record_bytes(records: np.ndarray, index: int) -> bytes:
@@ -472,6 +555,7 @@ def _select_bucket(
     game_counts: Counter[int],
     canonical_used: set[bytes],
     claimed_openings: set[int] | None = None,
+    canonical_cache: dict[int, bytes] | None = None,
 ) -> list[int]:
     selected: list[int] = []
     for raw_index in candidates:
@@ -483,8 +567,11 @@ def _select_bucket(
         game = int(metadata["game_id"][index])
         if game_counts[game] >= 2:
             continue
-        record = _record_bytes(records, index)
-        canonical = canonical_position(record)
+        canonical = canonical_cache.get(index) if canonical_cache is not None else None
+        if canonical is None:
+            canonical = canonical_position(_record_bytes(records, index))
+            if canonical_cache is not None:
+                canonical_cache[index] = canonical
         if canonical in canonical_used:
             continue
         if owner is None and claimed_openings is not None:
@@ -631,6 +718,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     opening_owner: dict[int, str] = {}
     game_counts: Counter[int] = Counter()
     canonical_used: set[bytes] = set()
+    canonical_cache: dict[int, bytes] = {}
     allocation_attempt = -1
     selected_request_order: list[int] = []
 
@@ -643,12 +731,15 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
         }
         attempt_salt = allocation_attempt * 1_000_000
         feasible_capacity = initial_request_capacities.copy()
+        remaining_required = np.asarray(
+            [request[3] for request in request_order], dtype=np.int64
+        )
         versions = np.zeros(len(request_order), dtype=np.int64)
         pending = set(range(len(request_order)))
         queue: list[tuple[int, int, int]] = []
 
         def push_request(request_index: int) -> None:
-            required = request_order[request_index][3]
+            required = int(remaining_required[request_index])
             ratio = int(feasible_capacity[request_index]) * 1_000_000 // required
             heapq.heappush(
                 queue, (ratio, request_index, int(versions[request_index]))
@@ -667,6 +758,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                     ):
                         break
                 component, sign_index, stratum, required = request_order[request_index]
+                required = int(remaining_required[request_index])
                 name = POOL_NAMES[TARGET_COMPONENTS[component]]
                 raw_candidates = eligible_by_bucket[(component, sign_index, stratum)]
                 exact_capacity = _current_request_capacity(
@@ -675,6 +767,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                     metadata=metadata,
                     opening_owner=opening_owner,
                     game_counts=game_counts,
+                    records=records,
+                    canonical_used=canonical_used,
+                    canonical_cache=canonical_cache,
                 )
                 if exact_capacity != int(feasible_capacity[request_index]):
                     feasible_capacity[request_index] = exact_capacity
@@ -699,12 +794,18 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         + sign_index * 100
                         + stratum
                     ),
+                    pending_requests=pending,
+                    request_order=request_order,
+                    feasible_capacity=feasible_capacity,
+                    remaining_required=remaining_required,
+                    opening_request_capacities=opening_request_capacities,
                 )
                 claimed_openings: set[int] = set()
+                chunk = min(required, ALLOCATION_CHUNK_SIZE)
                 try:
                     chosen = _select_bucket(
                         candidates=candidates,
-                        required=required,
+                        required=chunk,
                         pool=name,
                         records=records,
                         metadata=metadata,
@@ -712,6 +813,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         game_counts=game_counts,
                         canonical_used=canonical_used,
                         claimed_openings=claimed_openings,
+                        canonical_cache=canonical_cache,
                     )
                 except AllocationShortfall as error:
                     raise AllocationShortfall(
@@ -719,8 +821,13 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         f"tracked_capacity={exact_capacity}"
                     ) from error
                 attempt_selection[name].extend(chosen)
-                pending.remove(request_index)
                 attempt_request_order.append(request_index)
+                remaining_required[request_index] -= chunk
+                if remaining_required[request_index] == 0:
+                    pending.remove(request_index)
+                else:
+                    versions[request_index] += 1
+                    push_request(request_index)
                 for opening in claimed_openings:
                     for other_index, capacity in opening_request_capacities.get(opening, []):
                         if other_index not in pending:
@@ -759,6 +866,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         opening_owner=opening_owner,
                         game_counts=game_counts,
                         canonical_used=canonical_used,
+                        canonical_cache=canonical_cache,
                     )
                 )
             if len(neutral) != args.per_pool:
@@ -860,7 +968,8 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             "allocation_dynamic_order_sha256": hashlib.sha256(
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
-            "allocation_algorithm": "deterministic_dynamic_global_scarcity_multistart_v3",
+            "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
+            "allocation_algorithm": "deterministic_granular_pressure_multistart_v4",
             "allocation_attempt_zero_based": allocation_attempt,
             "allocation_failed_attempts": len(allocation_errors),
             "allocation_max_attempts": MAX_ALLOCATION_ATTEMPTS,
