@@ -1,7 +1,7 @@
 # CTX2 contribution-balanced seed pilot — preregistration
 
 Date: 18 August 2026  
-Status: prepared, not authorized to launch
+Status: authorized for autonomous staged execution on 18 August 2026
 
 ## Audited starting point
 
@@ -106,7 +106,13 @@ Strata are the Cartesian product of:
 
 - the four registered CTX2 phase bins;
 - side-to-move W/D/L;
-- men/kings piece-count buckets used by the activation audit.
+- five total-piece buckets `[0,8)`, `[8,15)`, `[15,22)`, `[22,30)`,
+  `[30,41)`.
+
+The common target quota is allocated separately for positive and negative
+contributions from the minimum eligible capacity across all five components.
+Consequently, all six pools have exactly the same 60-stratum histogram and
+every target pool contains exactly 2,048 positive and 2,048 negative seeds.
 
 The neutral anchor is sampled from the same stratum counts and the same
 source-game cap, but without conditioning on component contribution. It is
@@ -188,7 +194,7 @@ Only that result may authorize preparation of a PatternEval A/B/C experiment:
 Even then, B-vs-C native strength on two fresh disjoint pools remains primary;
 B-vs-A is secondary and no promotion is automatic.
 
-## Proposed job sequence — not launched
+## Authorized staged job sequence
 
 - `cpx62-1414-l3-context2-contribution-seed-miner-v1`: read-only seed mining
   and pool certification.
@@ -199,8 +205,9 @@ B-vs-A is secondary and no promotion is automatic.
 - `cpx62-1417-l3-context2-contribution-balanced-mapper-v1`: mapper-only fit,
   conditional on 1416 PASS.
 
-These identifiers reserve the causal order; this document does not queue any
-of them.
+Each job may be merged and queued autonomously after the preceding certificate
+passes. A failed scientific gate closes the downstream sequence; a technical
+failure may be corrected and relaunched without changing sources or gates.
 
 ## Forbidden actions
 
