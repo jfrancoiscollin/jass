@@ -48,7 +48,7 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 [ "$JASS_JOB_ID" = "$EXPECTED_JOB_ID" ] || die "job id mismatch"
-[[ "$JASS_JOB_ID" =~ ^cpx62-([0-9]+)-l3-context2-contribution-seed-miner-v1$ ]] || die "invalid job nomenclature"
+[[ "$JASS_JOB_ID" =~ ^cpx62-([0-9]+[a-z]?)-l3-context2-contribution-seed-miner-v[0-9]+$ ]] || die "invalid job nomenclature"
 [ "${FULL_RUN_APPROVED:-0}" = 1 ] && [ "${SCIENTIFIC_GO:-0}" = 1 ] || die "explicit execution GO missing"
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "automatic continuation guard missing"
 [ "$(git rev-parse HEAD)" = "$EXPECTED_CODE_SHA" ] || die "code SHA mismatch"
