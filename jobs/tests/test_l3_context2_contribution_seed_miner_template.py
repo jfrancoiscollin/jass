@@ -23,6 +23,8 @@ class ContributionSeedMinerTemplateTests(unittest.TestCase):
         self.assertIn('"$(hostname)" = cpx62', self.text)
         self.assertIn('"$(nproc)" -eq 16', self.text)
         self.assertIn("--dump-conditional-context-v2", self.text)
+        self.assertIn("([0-9]+[a-z]?)", self.text)
+        self.assertIn("seed-miner-v[0-9]+", self.text)
 
     def test_forbidden_actions_are_absent(self):
         for forbidden in (
