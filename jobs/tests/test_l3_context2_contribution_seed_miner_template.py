@@ -49,6 +49,11 @@ class ContributionSeedMinerTemplateTests(unittest.TestCase):
         self.assertIn("AUTOMATIC_NEXT_JOB__NULL", self.text)
         self.assertIn("SELFPLAY_GENERATED__FALSE", self.text)
 
+    def test_failed_miner_is_self_diagnosing(self):
+        self.assertIn("JASS_CONTEXT2_CONTRIBUTION_SEED_MINER_ROOT_CAUSE_READY", self.text)
+        self.assertIn("root-cause.json", self.text)
+        self.assertIn("ROOT_CAUSE__", self.text)
+
 
 if __name__ == "__main__":
     unittest.main()

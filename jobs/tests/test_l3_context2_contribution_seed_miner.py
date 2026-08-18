@@ -176,6 +176,66 @@ class ContributionSeedMinerTests(unittest.TestCase):
         self.assertEqual(int(ranked[1]), 1)  # shared but non-critical
         self.assertEqual(int(ranked[2]), 0)  # would make request 0 infeasible
 
+    def test_opening_repair_replaces_displaced_row_and_frees_capacity(self):
+        records = np.zeros(3, dtype=miner.JNNW_DTYPE)
+        records[0]["wm"], records[0]["bm"] = 1, 2
+        records[1]["wm"], records[1]["bm"] = 4, 8
+        records[2]["wm"], records[2]["bm"] = 16, 32
+        metadata = np.zeros(
+            3,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 11, 12]
+        metadata["opening_id"] = [100, 100, 200]
+        request_order = [(0, 0, 0, 1), (1, 0, 0, 1)]
+        eligible = {
+            (0, 0, 0): np.asarray([1], dtype=np.int64),
+            (1, 0, 0): np.asarray([0, 2], dtype=np.int64),
+        }
+        selected = {1: [0]}
+        cache: dict[int, bytes] = {}
+        owners, games, canonicals = miner._rebuild_target_selection_state(
+            selected_by_request=selected,
+            request_order=request_order,
+            records=records,
+            metadata=metadata,
+            canonical_cache=cache,
+        )
+        repaired = miner._repair_blocked_request(
+            request_index=0,
+            required=1,
+            selected_by_request=selected,
+            request_order=request_order,
+            eligible_by_bucket=eligible,
+            records=records,
+            metadata=metadata,
+            opening_owner=owners,
+            game_counts=games,
+            canonical_used=canonicals,
+            canonical_cache=cache,
+            opening_masks={100: 0b11, 200: 0b10},
+            seed=2026081806,
+            salt=0,
+        )
+        self.assertIsNotNone(repaired)
+        selection, owners, games, canonicals, freed = repaired
+        self.assertEqual(selection[1], [2])
+        self.assertEqual(owners[100], miner.POOL_NAMES[miner.TARGET_COMPONENTS[0]])
+        self.assertEqual(freed, [100])
+        self.assertEqual(
+            miner._current_request_capacity(
+                candidates=eligible[(0, 0, 0)],
+                pool=miner.POOL_NAMES[miner.TARGET_COMPONENTS[0]],
+                metadata=metadata,
+                opening_owner=owners,
+                game_counts=games,
+                records=records,
+                canonical_used=canonicals,
+                canonical_cache=cache,
+            ),
+            1,
+        )
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -274,7 +334,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_granular_pressure_multistart_v4",
+                "deterministic_opening_augmenting_repair_v5",
             )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
