@@ -43,6 +43,12 @@ Le gain de log-déterminant réalisé contre `BASE` doit être strictement posit
 Cet écran ne peut pas autoriser un fit PatternEval : s'il passe, l'étape
 suivante reste l'audit de concentration du mapper aligned sur ce corpus.
 
+Cet audit mapper conserve `alpha=.30`, cinq folds par `opening_id`, le RMS local
+à chaque fold et la pondération `game_equal`. Il ne fitte aucun PatternEval.
+Les trois gardes sont conjointes : part maximale au plus égale à 90 % de
+`CURRENT_2M`, part top-3 au plus égale à 95 %, et nombre effectif de composantes
+au moins égal à 125 %. Deux gardes sur trois ne suffisent pas.
+
 ### Corrigendum avant génération
 
 Les attempts de planification `1404` et `1407` n'ont généré aucune donnée et
