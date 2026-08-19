@@ -1438,10 +1438,27 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         canonical_cache=capacity_canonical_cache,
                     )
                 )
+    neutral_guard_capacity = np.asarray(
+        [
+            _exact_bucket_guard_capacity(
+                candidates=isolated_candidates[(neutral_owner, 0, stratum)],
+                records=records,
+                metadata=metadata,
+                canonical_cache=capacity_canonical_cache,
+            )
+            for stratum in range(60)
+        ],
+        dtype=np.int64,
+    )
     # Quotas must be bounded by positions that can coexist under the guards,
     # not by raw row counts.  1414o proved the old 91-row quota could contain
     # only 87 admissible states before opening ownership was even considered.
-    capacities[:] = guard_target_capacity.min(axis=0)
+    # The common histogram also applies to neutral.  1414s proved that target-
+    # only caps can request a neutral-empty stratum, so reserve half of every
+    # neutral stratum for each target sign before allocating the 2048+2048.
+    capacities[:] = np.minimum(
+        guard_target_capacity.min(axis=0), neutral_guard_capacity[None, :] // 2
+    )
     half = args.per_pool // 2
     common_sign_quotas = np.stack(
         [
@@ -1884,7 +1901,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "partitioned_openings_guard_isolated_frontier_v11",
+            "allocation_algorithm": "partitioned_openings_guard_frontier_neutral_caps_v12",
             "opening_partition": opening_partition_report,
             "guard_isolated_frontier": guard_frontier_report,
             "prefrontier_target_capacity_total": int(
@@ -1892,6 +1909,10 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
             ),
             "raw_target_capacity_total": int(raw_target_capacity.sum()),
             "guard_target_capacity_total": int(guard_target_capacity.sum()),
+            "neutral_guard_capacity_total": int(neutral_guard_capacity.sum()),
+            "neutral_guard_capacity_sha256": hashlib.sha256(
+                neutral_guard_capacity.astype("<i8", copy=False).tobytes()
+            ).hexdigest(),
             "guard_capacity_method": "hopcroft_karp_canonical_to_two_game_slots",
             "guard_capacity_reduction_total": int(
                 raw_target_capacity.sum() - guard_target_capacity.sum()

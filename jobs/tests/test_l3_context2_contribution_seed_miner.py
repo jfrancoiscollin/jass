@@ -526,8 +526,9 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "partitioned_openings_guard_isolated_frontier_v11",
+                "partitioned_openings_guard_frontier_neutral_caps_v12",
             )
+            self.assertGreater(payload["selection"]["neutral_guard_capacity_total"], 0)
             partition = payload["selection"]["opening_partition"]
             self.assertEqual(partition["pool_order"], list(miner.PARTITION_POOLS))
             self.assertEqual(
