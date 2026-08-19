@@ -54,6 +54,10 @@ class ContributionSeedMinerTemplateTests(unittest.TestCase):
         self.assertIn("root-cause.json", self.text)
         self.assertIn("ROOT_CAUSE__", self.text)
 
+    def test_persistent_numeric_runtime_provides_exact_solver(self):
+        self.assertIn("import numpy,scipy", self.text)
+        self.assertIn("from scipy.optimize import milp", self.text)
+
 
 if __name__ == "__main__":
     unittest.main()
