@@ -341,6 +341,113 @@ def _opening_partition(
     }
 
 
+def _isolate_guard_frontier(
+    candidates_by_request: dict[tuple[int, ...], np.ndarray],
+    *,
+    records: np.ndarray,
+    metadata: np.ndarray,
+    canonical_cache: dict[int, bytes],
+    seed: int,
+    salt: int,
+) -> tuple[dict[tuple[int, ...], np.ndarray], dict[str, Any]]:
+    """Make canonical and per-game guards independent across requests.
+
+    Exact capacity inside each sign/stratum bucket is insufficient when two
+    otherwise-feasible buckets rely on more than two states from the same
+    source game (1414r).  First assign every canonical state to one request,
+    then expose at most two canonical states per game across all requests.
+    Any later per-request selection is therefore jointly guard-feasible.
+    Scarce requests win ties; hashes only make equal-scarcity choices stable.
+    """
+    keys = sorted(candidates_by_request)
+    raw_counts = {key: int(len(candidates_by_request[key])) for key in keys}
+    canonical_occurrences: dict[bytes, list[tuple[tuple[int, ...], int]]] = (
+        defaultdict(list)
+    )
+    for key in keys:
+        for raw_index in candidates_by_request[key]:
+            index = int(raw_index)
+            canonical = canonical_cache.get(index)
+            if canonical is None:
+                canonical = canonical_position(_record_bytes(records, index))
+                canonical_cache[index] = canonical
+            canonical_occurrences[canonical].append((key, index))
+
+    assigned: dict[tuple[int, ...], list[tuple[int, bytes]]] = {
+        key: [] for key in keys
+    }
+    multi_request_canonicals = 0
+    canonical_rows_removed = 0
+    prefix = struct.pack("<QQ", int(seed), int(salt))
+    for canonical, occurrences in canonical_occurrences.items():
+        request_keys = sorted({key for key, _index in occurrences})
+        if len(request_keys) > 1:
+            multi_request_canonicals += 1
+        owner = min(
+            request_keys,
+            key=lambda key: (
+                raw_counts[key],
+                hashlib.sha256(prefix + canonical + repr(key).encode("ascii")).digest(),
+                key,
+            ),
+        )
+        for key, index in occurrences:
+            if key == owner:
+                assigned[key].append((index, canonical))
+            else:
+                canonical_rows_removed += 1
+
+    assigned_counts = {key: len(assigned[key]) for key in keys}
+    by_game: dict[int, dict[bytes, list[tuple[tuple[int, ...], int]]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for key in keys:
+        for index, canonical in assigned[key]:
+            by_game[int(metadata["game_id"][index])][canonical].append((key, index))
+
+    retained: dict[tuple[int, ...], list[int]] = {key: [] for key in keys}
+    games_trimmed = 0
+    canonical_groups_removed_by_game_cap = 0
+    for game, canonical_groups in by_game.items():
+        canonicals = list(canonical_groups)
+        if len(canonicals) > 2:
+            games_trimmed += 1
+        canonicals.sort(
+            key=lambda canonical: (
+                min(assigned_counts[key] for key, _index in canonical_groups[canonical]),
+                hashlib.sha256(
+                    prefix + struct.pack("<Q", game) + canonical
+                ).digest(),
+                canonical,
+            )
+        )
+        keep = set(canonicals[:2])
+        canonical_groups_removed_by_game_cap += max(0, len(canonicals) - 2)
+        for canonical in keep:
+            for key, index in canonical_groups[canonical]:
+                retained[key].append(index)
+
+    result = {
+        key: np.asarray(sorted(retained[key]), dtype=np.int64) for key in keys
+    }
+    digest = hashlib.sha256()
+    for key in keys:
+        digest.update(repr(key).encode("ascii"))
+        digest.update(result[key].astype("<i8", copy=False).tobytes())
+    return result, {
+        "method": "canonical_owner_then_two_canonicals_per_game_v1",
+        "request_count": len(keys),
+        "raw_candidate_rows": sum(raw_counts.values()),
+        "retained_candidate_rows": sum(len(rows) for rows in result.values()),
+        "multi_request_canonicals": multi_request_canonicals,
+        "canonical_rows_removed": canonical_rows_removed,
+        "games_seen": len(by_game),
+        "games_trimmed": games_trimmed,
+        "canonical_groups_removed_by_game_cap": canonical_groups_removed_by_game_cap,
+        "retained_candidates_sha256": digest.hexdigest(),
+    }
+
+
 def _opening_pool_masks(
     eligible_by_bucket: dict[tuple[int, int, int], np.ndarray],
     metadata: np.ndarray,
@@ -1282,10 +1389,14 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     )
 
     capacities = np.zeros((2, 60), dtype=np.int64)
+    prefrontier_target_capacity = np.zeros(
+        (len(TARGET_COMPONENTS), 2, 60), dtype=np.int64
+    )
     raw_target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
     guard_target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
     eligible_by_bucket: dict[tuple[int, int, int], np.ndarray] = {}
     capacity_canonical_cache: dict[int, bytes] = {}
+    prefrontier_candidates: dict[tuple[int, ...], np.ndarray] = {}
     for component in range(len(TARGET_COMPONENTS)):
         for sign_index, sign in enumerate((-1, 1)):
             for stratum in range(60):
@@ -1296,6 +1407,27 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 candidates = candidates[
                     opening_partition[candidates] == component
                 ]
+                prefrontier_candidates[(component, sign_index, stratum)] = candidates
+                prefrontier_target_capacity[component, sign_index, stratum] = len(
+                    candidates
+                )
+    neutral_owner = len(PARTITION_POOLS) - 1
+    for stratum in range(60):
+        prefrontier_candidates[(neutral_owner, 0, stratum)] = np.flatnonzero(
+            (strata == stratum) & (opening_partition == neutral_owner)
+        )
+    isolated_candidates, guard_frontier_report = _isolate_guard_frontier(
+        prefrontier_candidates,
+        records=records,
+        metadata=metadata,
+        canonical_cache=capacity_canonical_cache,
+        seed=args.seed,
+        salt=10_000,
+    )
+    for component in range(len(TARGET_COMPONENTS)):
+        for sign_index in range(2):
+            for stratum in range(60):
+                candidates = isolated_candidates[(component, sign_index, stratum)]
                 eligible_by_bucket[(component, sign_index, stratum)] = candidates
                 raw_target_capacity[component, sign_index, stratum] = len(candidates)
                 guard_target_capacity[component, sign_index, stratum] = (
@@ -1330,11 +1462,8 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     opening_request_capacities, initial_request_capacities = _opening_request_capacities(
         request_order, eligible_by_bucket, metadata
     )
-    neutral_owner = len(PARTITION_POOLS) - 1
     neutral_by_stratum = {
-        stratum: np.flatnonzero(
-            (strata == stratum) & (opening_partition == neutral_owner)
-        )
+        stratum: isolated_candidates[(neutral_owner, 0, stratum)]
         for stratum in range(60)
     }
     allocation_errors: list[str] = []
@@ -1755,8 +1884,12 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "partitioned_openings_exact_guard_recursive_repair_milp_v10",
+            "allocation_algorithm": "partitioned_openings_guard_isolated_frontier_v11",
             "opening_partition": opening_partition_report,
+            "guard_isolated_frontier": guard_frontier_report,
+            "prefrontier_target_capacity_total": int(
+                prefrontier_target_capacity.sum()
+            ),
             "raw_target_capacity_total": int(raw_target_capacity.sum()),
             "guard_target_capacity_total": int(guard_target_capacity.sum()),
             "guard_capacity_method": "hopcroft_karp_canonical_to_two_game_slots",

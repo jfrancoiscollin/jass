@@ -99,6 +99,57 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertEqual(len(owners), 1)
         self.assertEqual(sum(report["unique_openings_by_pool"].values()), 7)
 
+    def test_guard_frontier_isolates_canonicals_and_two_states_per_game(self):
+        records = np.zeros(6, dtype=miner.JNNW_DTYPE)
+        for index in range(6):
+            records[index]["wm"] = 1 << (index * 2)
+            records[index]["bm"] = 1 << (index * 2 + 1)
+        records[4] = records[0]
+        metadata = np.zeros(
+            6,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 10, 10, 11, 11, 10]
+        metadata["opening_id"] = [100, 100, 100, 101, 101, 100]
+        first, report = miner._isolate_guard_frontier(
+            {
+                (0,): np.asarray([0, 1, 3, 5], dtype=np.int64),
+                (1,): np.asarray([2, 4], dtype=np.int64),
+            },
+            records=records,
+            metadata=metadata,
+            canonical_cache={},
+            seed=2026081806,
+            salt=17,
+        )
+        second, repeated_report = miner._isolate_guard_frontier(
+            {
+                (0,): np.asarray([0, 1, 3, 5], dtype=np.int64),
+                (1,): np.asarray([2, 4], dtype=np.int64),
+            },
+            records=records,
+            metadata=metadata,
+            canonical_cache={},
+            seed=2026081806,
+            salt=17,
+        )
+        for key in first:
+            np.testing.assert_array_equal(first[key], second[key])
+        self.assertEqual(report, repeated_report)
+        self.assertEqual(report["multi_request_canonicals"], 1)
+        self.assertEqual(report["games_trimmed"], 1)
+        owners = {}
+        game_canonicals = {}
+        for key, rows in first.items():
+            for index in rows:
+                canonical = miner.canonical_position(records[int(index)].tobytes())
+                if canonical in owners:
+                    self.assertEqual(owners[canonical], key)
+                else:
+                    owners[canonical] = key
+                game_canonicals.setdefault(int(metadata["game_id"][index]), set()).add(canonical)
+        self.assertTrue(all(len(values) <= 2 for values in game_canonicals.values()))
+
     def test_global_rank_prefers_owned_then_exclusive_openings(self):
         metadata = np.zeros(
             4,
@@ -475,7 +526,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "partitioned_openings_exact_guard_recursive_repair_milp_v10",
+                "partitioned_openings_guard_isolated_frontier_v11",
             )
             partition = payload["selection"]["opening_partition"]
             self.assertEqual(partition["pool_order"], list(miner.PARTITION_POOLS))
