@@ -63,6 +63,10 @@ TARGET_COMPONENTS = (
 DOMINANT_COMPONENT = "men_delta"
 PIECE_EDGES = np.asarray([0, 8, 15, 22, 30, 41], dtype=np.int16)
 POOL_NAMES = {component: component.removesuffix("_delta") for component in TARGET_COMPONENTS}
+PARTITION_POOLS = tuple(POOL_NAMES[component] for component in TARGET_COMPONENTS) + (
+    "neutral",
+)
+OPENING_PARTITION_SALT = 0x43545832504F4F4C
 MAX_ALLOCATION_ATTEMPTS = math.factorial(len(TARGET_COMPONENTS))
 ALLOCATION_CHUNK_SIZE = 8
 MAX_OPENING_REPAIR_BRANCH = 24
@@ -300,6 +304,41 @@ def _rank_indices(
     )
     keys = _splitmix64(values)
     return indices[np.lexsort((indices, keys))]
+
+
+def _opening_partition(
+    metadata: np.ndarray, *, seed: int
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Assign every opening to exactly one output pool before allocation.
+
+    Opening ownership is a hard cross-pool constraint.  Computing independent
+    per-bucket capacities cannot see Hall deficits created when several pools
+    all rely on the same scarce openings (1414q).  A deterministic, content-
+    independent partition removes that coupling while preserving an unbiased
+    sample for every pool.  The downstream canonical and two-rows-per-game
+    guards remain authoritative within each partition.
+    """
+    openings = np.asarray(metadata["opening_id"], dtype=np.uint64)
+    hashes = _splitmix64(
+        openings ^ np.uint64(seed) ^ np.uint64(OPENING_PARTITION_SALT)
+    )
+    owners = np.asarray(hashes % np.uint64(len(PARTITION_POOLS)), dtype=np.uint8)
+    unique_openings, first = np.unique(openings, return_index=True)
+    unique_owners = owners[first]
+    counts = np.bincount(unique_owners, minlength=len(PARTITION_POOLS))
+    digest = hashlib.sha256()
+    digest.update(np.asarray(unique_openings, dtype="<u8").tobytes())
+    digest.update(np.asarray(unique_owners, dtype="u1").tobytes())
+    return owners, {
+        "method": "splitmix64_opening_id_mod_six_v1",
+        "salt": OPENING_PARTITION_SALT,
+        "pool_order": list(PARTITION_POOLS),
+        "unique_openings": int(len(unique_openings)),
+        "unique_openings_by_pool": {
+            pool: int(counts[index]) for index, pool in enumerate(PARTITION_POOLS)
+        },
+        "assignment_sha256": digest.hexdigest(),
+    }
 
 
 def _opening_pool_masks(
@@ -1238,6 +1277,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     )
     strata, stratum_definition = _strata(records)
     p90, men_median, stratum_counts = _thresholds(scores, strata)
+    opening_partition, opening_partition_report = _opening_partition(
+        metadata, seed=args.seed
+    )
 
     capacities = np.zeros((2, 60), dtype=np.int64)
     raw_target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
@@ -1251,6 +1293,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                     scores, signs, strata, p90, men_median,
                     component, sign, stratum,
                 )
+                candidates = candidates[
+                    opening_partition[candidates] == component
+                ]
                 eligible_by_bucket[(component, sign_index, stratum)] = candidates
                 raw_target_capacity[component, sign_index, stratum] = len(candidates)
                 guard_target_capacity[component, sign_index, stratum] = (
@@ -1285,8 +1330,12 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     opening_request_capacities, initial_request_capacities = _opening_request_capacities(
         request_order, eligible_by_bucket, metadata
     )
+    neutral_owner = len(PARTITION_POOLS) - 1
     neutral_by_stratum = {
-        stratum: np.flatnonzero(strata == stratum) for stratum in range(60)
+        stratum: np.flatnonzero(
+            (strata == stratum) & (opening_partition == neutral_owner)
+        )
+        for stratum in range(60)
     }
     allocation_errors: list[str] = []
     selected_by_pool: dict[str, list[int]] | None = None
@@ -1624,6 +1673,9 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     pool_reports: dict[str, Any] = {}
     for name in sorted(selected_by_pool):
         indices = selected_by_pool[name]
+        expected_partition = PARTITION_POOLS.index(name)
+        if any(int(opening_partition[index]) != expected_partition for index in indices):
+            raise ValueError(f"pool {name}: opening partition drift")
         output = out_dir / f"{name}.jnnw"
         digest = _write_pool(output, records, indices)
         source_wdl = Counter(int(records["wdl"][index]) for index in indices)
@@ -1703,7 +1755,8 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "exact_guard_quota_recursive_repair_exact_milp_v9",
+            "allocation_algorithm": "partitioned_openings_exact_guard_recursive_repair_milp_v10",
+            "opening_partition": opening_partition_report,
             "raw_target_capacity_total": int(raw_target_capacity.sum()),
             "guard_target_capacity_total": int(guard_target_capacity.sum()),
             "guard_capacity_method": "hopcroft_karp_canonical_to_two_game_slots",

@@ -82,6 +82,23 @@ class ContributionSeedMinerTests(unittest.TestCase):
         self.assertEqual(len(set(first)), 120)
         self.assertEqual(set(first), set(__import__("itertools").permutations(range(5))))
 
+    def test_opening_partition_is_deterministic_and_never_splits_an_opening(self):
+        metadata = np.zeros(
+            12,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["opening_id"] = [10, 10, 11, 11, 11, 12, 13, 13, 14, 15, 16, 16]
+        first, report = miner._opening_partition(metadata, seed=2026081806)
+        second, repeated_report = miner._opening_partition(metadata, seed=2026081806)
+        np.testing.assert_array_equal(first, second)
+        self.assertEqual(report, repeated_report)
+        self.assertEqual(report["pool_order"], list(miner.PARTITION_POOLS))
+        self.assertEqual(report["unique_openings"], 7)
+        for opening in np.unique(metadata["opening_id"]):
+            owners = np.unique(first[metadata["opening_id"] == opening])
+            self.assertEqual(len(owners), 1)
+        self.assertEqual(sum(report["unique_openings_by_pool"].values()), 7)
+
     def test_global_rank_prefers_owned_then_exclusive_openings(self):
         metadata = np.zeros(
             4,
@@ -458,7 +475,13 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "exact_guard_quota_recursive_repair_exact_milp_v9",
+                "partitioned_openings_exact_guard_recursive_repair_milp_v10",
+            )
+            partition = payload["selection"]["opening_partition"]
+            self.assertEqual(partition["pool_order"], list(miner.PARTITION_POOLS))
+            self.assertEqual(
+                sum(partition["unique_openings_by_pool"].values()),
+                partition["unique_openings"],
             )
             self.assertEqual(
                 payload["selection"]["raw_target_capacity_total"],
