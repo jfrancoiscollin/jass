@@ -144,6 +144,20 @@ require(summary.get('verdict')=='JASS_CONTEXT3_PAIRED_PATTERNEVAL_MODELS_READY',
 require(summary.get('primary_contrast')=='ALIGNED_vs_SHUFFLED_on_two_fresh_disjoint_opening_pools','1418 contrast drift')
 require(summary.get('strength_games_played')==0 and summary.get('frozen_cohorts_read')==0,'1418 scope drift')
 require(summary.get('promotion_authorized') is False and summary.get('automatic_next_job') is None,'1418 promotion drift')
+require(summary.get('corpus')=='CTX2_INTERVENTION_1409_2M' and summary.get('records')==2_000_000,'1418 corpus/cardinality drift')
+require(summary.get('alpha')==0.30,'1418 alpha drift')
+parent=summary.get('parent') or {}
+require(parent.get('label')=='CURRICULUM' and parent.get('reused_without_refit') is True,'1418 parent drift')
+recipe=summary.get('recipe') or {}
+require(recipe=={'architecture':'8cf_exact_fold_tempo_120_extras','prior_mean':'CURRICULUM',
+ 'prior_decay':0,'l2':1e-5,'gtol':1e-4,'max_iterations':2000,'lbfgs_maxcor':20},'1418 fit recipe drift')
+targets=load(src/'context3-paired-targets.json')
+require(targets==summary.get('target_certificate'),'1418 embedded/standalone target certificate mismatch')
+require(targets.get('verdict')=='JASS_CONTEXT3_PAIRED_TARGETS_READY' and targets.get('records')==2_000_000,'paired target verdict/cardinality drift')
+require(targets.get('target',{}).get('alpha')==0.30 and targets.get('frozen_read') is False,'paired target scope drift')
+shuffle=targets.get('shuffle_control') or {}
+require(shuffle.get('fixed_point_count')==0 and shuffle.get('all_final_target_marginals_preserved') is True,'paired target shuffle/marginal drift')
+require(shuffle.get('all_sources_within_same_cohort') is True and shuffle.get('all_sources_within_same_fold') is True and shuffle.get('all_sources_within_same_stratum') is True,'paired target causal boundary drift')
 models={}
 for label,name in [('ALIGNED','aligned'),('SHUFFLED','shuffled')]:
  arm=summary['arms'][label]; conv=load(src/f'{name}-convergence.json')

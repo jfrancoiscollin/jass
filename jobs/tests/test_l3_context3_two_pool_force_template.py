@@ -22,6 +22,10 @@ class Context3TwoPoolForceTemplateTests(unittest.TestCase):
             "JASS_CONTEXT3_FORCE_MODELS_AUTHENTICATED",
             "models unexpectedly identical",
             "'reused_without_refit':True",
+            "CTX2_INTERVENTION_1409_2M",
+            "1418 fit recipe drift",
+            "paired target shuffle/marginal drift",
+            "paired target causal boundary drift",
         ):
             self.assertIn(token, self.text)
 
