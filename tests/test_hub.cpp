@@ -8,6 +8,7 @@
 
 #include "hub.hpp"
 #include "movegen.hpp"
+#include "nnue.hpp"
 #include "position.hpp"
 #include "timemgr.hpp"
 #include "types.hpp"
@@ -116,6 +117,21 @@ std::string drive_session(std::string_view script) {
     HubFrontEnd hub(in, out);
     hub.run();
     return out.str();
+}
+
+class ConstantNetwork final : public INetwork {
+public:
+    int evaluate(const Position&) const noexcept override { return 314; }
+};
+
+void test_hub_neteval_uses_installed_network() {
+    std::istringstream in{"position fen W:W31-50:B1-20\nneteval\n"};
+    std::ostringstream out;
+    HubFrontEnd hub(in, out);
+    ConstantNetwork network;
+    hub.set_nnue(&network);
+    hub.run();
+    JASS_CHECK(contains(out.str(), "neteval 314"));
 }
 
 void test_hub_hello_emits_id_and_ready() {
@@ -249,6 +265,7 @@ void run_hub_tests() {
 
     test_hub_hello_emits_id_and_ready();
     test_hub_position_fen_then_fen_round_trip();
+    test_hub_neteval_uses_installed_network();
     test_hub_apply_then_go_yields_bestmove();
     test_hub_unknown_command_reports_error();
     test_hub_quit_terminates_loop();
