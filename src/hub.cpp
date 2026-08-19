@@ -191,6 +191,7 @@ void HubFrontEnd::dispatch(std::string_view line) {
     else if (cmd == "stop")      cmd_stop();
     else if (cmd == "setoption") cmd_setoption(args);
     else if (cmd == "eval")      cmd_eval();
+    else if (cmd == "neteval")   cmd_neteval();
     else if (cmd == "fen")       cmd_fen();
     else                         emit_error("unknown command");
 }
@@ -450,6 +451,17 @@ void HubFrontEnd::cmd_eval() {
     wait_for_worker();
     std::lock_guard lk{out_mutex_};
     out_ << "eval " << evaluate(engine_.position()) << '\n';
+    out_.flush();
+}
+
+void HubFrontEnd::cmd_neteval() {
+    wait_for_worker();
+    const INetwork* network = engine_.nnue();
+    const int value = network
+        ? network->evaluate(engine_.position())
+        : evaluate(engine_.position());
+    std::lock_guard lk{out_mutex_};
+    out_ << "neteval " << value << '\n';
     out_.flush();
 }
 

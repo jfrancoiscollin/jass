@@ -24,7 +24,8 @@
 //      [movestogo <N>]             the side-to-move's remaining time.
 //   stop                           interrupt the current search
 //   setoption threads <N>          set the number of search threads (>=1)
-//   eval                           emit the static eval (white POV)
+//   eval                           emit the handcrafted static eval
+//   neteval                        emit the installed network eval (STM POV)
 //   fen                            emit the current FEN
 //   quit                           exit
 //
@@ -116,6 +117,7 @@ private:
     void cmd_stop      ();
     void cmd_setoption (std::string_view args);
     void cmd_eval      ();
+    void cmd_neteval   ();
     void cmd_fen       ();
 
     void emit_ok();
