@@ -71,7 +71,7 @@ trap 'exit 130' INT
 [ -z "$(git status --porcelain)" ] || die "job worktree must start clean"
 [ "$(hostname)" = cpx62 ] && [ "$(nproc)" -eq 16 ] || die "CPX 16-CPU contract mismatch"
 [ -f "$VENV/.jass-runtime-ready-v1" ] || die "persistent numeric runtime absent; do not reinstall"
-PY="$VENV/bin/python"; "$PY" -c 'import numpy; assert numpy.__version__' || die "numeric runtime invalid"
+PY="$VENV/bin/python"; "$PY" -c 'import numpy,scipy; from scipy.optimize import milp; assert numpy.__version__ and scipy.__version__' || die "numeric runtime invalid"
 DFA=$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')
 [ "${DFA:-0}" -gt 10240 ] || die "less than 10 GiB free ($DFA MiB)"
 say "host=cpx62 nproc=16 mode=ctx2_contribution_seed_miner eta_minutes=5-12"

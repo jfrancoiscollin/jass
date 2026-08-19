@@ -68,6 +68,8 @@ ALLOCATION_CHUNK_SIZE = 8
 MAX_OPENING_REPAIR_BRANCH = 24
 MAX_OPENING_REPAIR_DEPTH = 10
 MAX_OPENING_REPAIR_STATES = 2048
+EXACT_REALLOCATION_CANDIDATES_PER_REQUEST = 768
+EXACT_REALLOCATION_TIME_LIMIT_SECONDS = 900.0
 
 
 class AllocationShortfall(ValueError):
@@ -842,6 +844,232 @@ def _repair_blocked_request(
     return selection, owners, games, canonicals, sorted(reservations)
 
 
+def _exact_reallocate_selected_requests(
+    *,
+    request_index: int,
+    required: int,
+    selected_by_request: dict[int, list[int]],
+    request_order: list[tuple[int, int, int, int]],
+    eligible_by_bucket: dict[tuple[int, int, int], np.ndarray],
+    records: np.ndarray,
+    metadata: np.ndarray,
+    opening_masks: dict[int, int],
+    canonical_cache: dict[int, bytes],
+    seed: int,
+    salt: int,
+) -> tuple[
+    dict[int, list[int]], dict[int, str], Counter[int], set[bytes], dict[str, Any]
+]:
+    """Exactly reallocate the selected frontier with a sparse binary MILP.
+
+    The model preserves every already-filled request count and additionally
+    fills the blocked request.  It enforces request quotas, one position per
+    canonical state, at most two positions per source game, and a single pool
+    owner per opening.  Candidate truncation is deterministic and generous;
+    failure is terminal and explicitly reported rather than being mistaken
+    for scientific infeasibility of the full corpus.
+    """
+    try:
+        from scipy.optimize import Bounds, LinearConstraint, milp
+        from scipy.sparse import coo_matrix
+    except ImportError as error:  # pragma: no cover - CPX runtime contract
+        raise ValueError("exact reallocation requires certified scipy runtime") from error
+
+    active_requests = sorted(
+        set(selected_by_request) | {request_index}
+    )
+    quotas = {
+        index: len(selected_by_request.get(index, ()))
+        + (required if index == request_index else 0)
+        for index in active_requests
+    }
+    edge_requests: list[int] = []
+    edge_indices: list[int] = []
+    edge_pools: list[str] = []
+    existing_edges: set[tuple[int, int]] = {
+        (index, row)
+        for index, rows in selected_by_request.items()
+        for row in rows
+    }
+    for active_request in active_requests:
+        component, sign_index, stratum, _ = request_order[active_request]
+        pool = POOL_NAMES[TARGET_COMPONENTS[component]]
+        raw = eligible_by_bucket[(component, sign_index, stratum)]
+        ranked = _rank_global_candidates(
+            raw,
+            metadata,
+            pool=pool,
+            opening_owner={},
+            opening_masks=opening_masks,
+            seed=seed,
+            salt=salt + active_request,
+        )
+        limit = max(
+            EXACT_REALLOCATION_CANDIDATES_PER_REQUEST,
+            quotas[active_request] * 8,
+        )
+        chosen: list[int] = []
+        seen: set[int] = set()
+        for raw_index in (*selected_by_request.get(active_request, ()), *ranked[:limit]):
+            index = int(raw_index)
+            if index in seen:
+                continue
+            seen.add(index)
+            chosen.append(index)
+        if len(chosen) < quotas[active_request]:
+            raise ValueError(
+                f"exact reallocation request {active_request}: candidate truncation short"
+            )
+        edge_requests.extend([active_request] * len(chosen))
+        edge_indices.extend(chosen)
+        edge_pools.extend([pool] * len(chosen))
+
+    edge_count = len(edge_indices)
+    opening_pool_edges: dict[tuple[int, str], list[int]] = defaultdict(list)
+    opening_pools: dict[int, set[str]] = defaultdict(set)
+    canonical_edges: dict[bytes, list[int]] = defaultdict(list)
+    game_edges: dict[int, list[int]] = defaultdict(list)
+    request_edges: dict[int, list[int]] = defaultdict(list)
+    for edge, (active_request, index, pool) in enumerate(
+        zip(edge_requests, edge_indices, edge_pools, strict=True)
+    ):
+        opening = int(metadata["opening_id"][index])
+        game = int(metadata["game_id"][index])
+        canonical = canonical_cache.get(index)
+        if canonical is None:
+            canonical = canonical_position(_record_bytes(records, index))
+            canonical_cache[index] = canonical
+        opening_pool_edges[(opening, pool)].append(edge)
+        opening_pools[opening].add(pool)
+        canonical_edges[canonical].append(edge)
+        game_edges[game].append(edge)
+        request_edges[active_request].append(edge)
+
+    shared_openings = {
+        opening for opening, pools in opening_pools.items() if len(pools) > 1
+    }
+    ownership_pairs = sorted(
+        pair for pair in opening_pool_edges if pair[0] in shared_openings
+    )
+    ownership_variable = {
+        pair: edge_count + offset for offset, pair in enumerate(ownership_pairs)
+    }
+    variable_count = edge_count + len(ownership_pairs)
+    row_indices: list[int] = []
+    column_indices: list[int] = []
+    coefficients: list[float] = []
+    lower: list[float] = []
+    upper: list[float] = []
+
+    def add_constraint(entries: list[tuple[int, float]], lb: float, ub: float) -> None:
+        row = len(lower)
+        for column, value in entries:
+            row_indices.append(row)
+            column_indices.append(column)
+            coefficients.append(value)
+        lower.append(lb)
+        upper.append(ub)
+
+    for active_request in active_requests:
+        quota = float(quotas[active_request])
+        add_constraint(
+            [(edge, 1.0) for edge in request_edges[active_request]], quota, quota
+        )
+    for edges in canonical_edges.values():
+        if len(edges) > 1:
+            add_constraint([(edge, 1.0) for edge in edges], -np.inf, 1.0)
+    for edges in game_edges.values():
+        if len(edges) > 2:
+            add_constraint([(edge, 1.0) for edge in edges], -np.inf, 2.0)
+    for pair, edges in opening_pool_edges.items():
+        if pair[0] not in shared_openings:
+            continue
+        add_constraint(
+            [(edge, 1.0) for edge in edges]
+            + [(ownership_variable[pair], -float(len(edges)))],
+            -np.inf,
+            0.0,
+        )
+    for opening, pools in opening_pools.items():
+        if opening not in shared_openings:
+            continue
+        add_constraint(
+            [(ownership_variable[(opening, pool)], 1.0) for pool in sorted(pools)],
+            -np.inf,
+            1.0,
+        )
+
+    matrix = coo_matrix(
+        (coefficients, (row_indices, column_indices)),
+        shape=(len(lower), variable_count),
+    ).tocsr()
+    objective = np.zeros(variable_count, dtype=np.float64)
+    for edge, (active_request, index) in enumerate(
+        zip(edge_requests, edge_indices, strict=True)
+    ):
+        retained = (active_request, index) in existing_edges
+        tie = int.from_bytes(
+            hashlib.sha256(
+                struct.pack("<QQQ", int(seed) ^ int(salt), active_request, index)
+            ).digest()[:8],
+            "little",
+        ) / float(1 << 64)
+        objective[edge] = (-1.0 if retained else 0.0) + tie * 1e-6
+    result = milp(
+        c=objective,
+        integrality=np.ones(variable_count, dtype=np.uint8),
+        bounds=Bounds(np.zeros(variable_count), np.ones(variable_count)),
+        constraints=LinearConstraint(
+            matrix,
+            np.asarray(lower, dtype=np.float64),
+            np.asarray(upper, dtype=np.float64),
+        ),
+        options={
+            "disp": False,
+            "mip_rel_gap": 0.0,
+            "presolve": True,
+            "time_limit": EXACT_REALLOCATION_TIME_LIMIT_SECONDS,
+        },
+    )
+    if not result.success or result.x is None:
+        raise ValueError(
+            "exact reallocation failed "
+            f"status={result.status} message={result.message!s} "
+            f"variables={variable_count} constraints={len(lower)}"
+        )
+    selection: dict[int, list[int]] = defaultdict(list)
+    for edge, value in enumerate(result.x[:edge_count]):
+        if value > 0.5:
+            selection[edge_requests[edge]].append(edge_indices[edge])
+    for active_request in active_requests:
+        if len(selection[active_request]) != quotas[active_request]:
+            raise AssertionError("exact reallocation request quota drift")
+    owners, games, canonicals = _rebuild_target_selection_state(
+        selected_by_request=selection,
+        request_order=request_order,
+        records=records,
+        metadata=metadata,
+        canonical_cache=canonical_cache,
+    )
+    diagnostics = {
+        "solver": "scipy.optimize.milp_highs",
+        "status": int(result.status),
+        "message": str(result.message),
+        "objective": float(result.fun),
+        "variables": variable_count,
+        "candidate_edges": edge_count,
+        "ownership_variables": len(ownership_pairs),
+        "constraints": len(lower),
+        "active_requests": len(active_requests),
+        "retained_rows": sum(
+            (active_request, index) in existing_edges
+            for active_request, rows in selection.items()
+            for index in rows
+        ),
+    }
+    return dict(selection), owners, games, canonicals, diagnostics
+
+
 def _allocation_orders(
     base_order: list[int], seed: int
 ) -> list[tuple[int, ...]]:
@@ -975,6 +1203,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     allocation_attempt = -1
     selected_request_order: list[int] = []
     repaired_openings: list[int] = []
+    exact_reallocation_report: dict[str, Any] | None = None
 
     for allocation_attempt in range(MAX_ALLOCATION_ATTEMPTS):
         opening_owner = {}
@@ -985,6 +1214,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
         }
         selected_by_request: dict[int, list[int]] = defaultdict(list)
         attempt_repaired_openings: list[int] = []
+        attempt_exact_reallocation: dict[str, Any] | None = None
         attempt_salt = allocation_attempt * 1_000_000
         feasible_capacity = initial_request_capacities.copy()
         remaining_required = np.asarray(
@@ -1051,11 +1281,64 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         salt=attempt_salt + 700_000 + len(attempt_repaired_openings),
                     )
                     if repair is None:
-                        raise AllocationShortfall(
-                            f"pool {name} sign_index={sign_index} stratum={stratum}: "
-                            f"remaining capacity {exact_capacity} below required {required}; "
-                            "opening repair exhausted"
+                        (
+                            selected_by_request,
+                            opening_owner,
+                            game_counts,
+                            canonical_used,
+                            attempt_exact_reallocation,
+                        ) = _exact_reallocate_selected_requests(
+                            request_index=request_index,
+                            required=required,
+                            selected_by_request=selected_by_request,
+                            request_order=request_order,
+                            eligible_by_bucket=eligible_by_bucket,
+                            records=records,
+                            metadata=metadata,
+                            opening_masks=opening_masks,
+                            canonical_cache=canonical_cache,
+                            seed=args.seed,
+                            salt=attempt_salt + 800_000,
                         )
+                        remaining_required[request_index] = 0
+                        pending.remove(request_index)
+                        attempt_request_order.append(request_index)
+                        attempt_selection = {
+                            POOL_NAMES[component_name]: []
+                            for component_name in TARGET_COMPONENTS
+                        }
+                        for selected_request, rows in selected_by_request.items():
+                            selected_component = request_order[selected_request][0]
+                            selected_pool = POOL_NAMES[
+                                TARGET_COMPONENTS[selected_component]
+                            ]
+                            attempt_selection[selected_pool].extend(rows)
+                        queue.clear()
+                        for pending_index in pending:
+                            (
+                                pending_component,
+                                pending_sign,
+                                pending_stratum,
+                                _,
+                            ) = request_order[pending_index]
+                            pending_pool = POOL_NAMES[
+                                TARGET_COMPONENTS[pending_component]
+                            ]
+                            feasible_capacity[pending_index] = _current_request_capacity(
+                                candidates=eligible_by_bucket[
+                                    (pending_component, pending_sign, pending_stratum)
+                                ],
+                                pool=pending_pool,
+                                metadata=metadata,
+                                opening_owner=opening_owner,
+                                game_counts=game_counts,
+                                records=records,
+                                canonical_used=canonical_used,
+                                canonical_cache=canonical_cache,
+                            )
+                            versions[pending_index] += 1
+                            push_request(pending_index)
+                        continue
                     (
                         selected_by_request,
                         opening_owner,
@@ -1233,6 +1516,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
         selected_by_pool = attempt_selection
         selected_request_order = attempt_request_order
         repaired_openings = attempt_repaired_openings
+        exact_reallocation_report = attempt_exact_reallocation
         break
 
     if selected_by_pool is None:
@@ -1325,11 +1609,12 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "deterministic_recursive_augmenting_repair_v6",
+            "allocation_algorithm": "deterministic_recursive_repair_exact_milp_v7",
             "allocation_repaired_openings": len(repaired_openings),
             "allocation_repaired_opening_sha256": hashlib.sha256(
                 np.asarray(repaired_openings, dtype="<u8").tobytes()
             ).hexdigest(),
+            "exact_reallocation": exact_reallocation_report,
             "allocation_attempt_zero_based": allocation_attempt,
             "allocation_failed_attempts": len(allocation_errors),
             "allocation_max_attempts": MAX_ALLOCATION_ATTEMPTS,
