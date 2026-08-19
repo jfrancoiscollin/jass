@@ -1,7 +1,7 @@
 # Jass — synthèse consolidée des résultats du projet
 
 > **Périmètre :** du bring-up initial aux verdicts C1-Q1 et C2-X1 (`x1_no_lead`) et à l'autopsie P3-sibling gen2 du 19 juillet 2026
-> **Mis à jour :** 2026-08-10
+> **Mis à jour :** 2026-08-19
 > **Rôle :** mémoire scientifique ; empêcher de rouvrir une piste close sans fait nouveau
 > **Plan actif :** [L3_PURE_PLAN.md](L3_PURE_PLAN.md)
 > **État vivant L3 :** [L3_CURRENT.md](L3_CURRENT.md)
@@ -675,6 +675,26 @@ Leçon transverse de ces quatre portes : **trois d'entre elles ont une couvertur
 égale ou meilleure que leur contrôle et jouent plus mal.** La couverture reste
 un diagnostic de corpus, jamais un prédicteur de force — au même titre que la
 loss holdout (§8).
+
+### 5.2 quater CTX2 shared-information — attribution réussie, covariance contractée
+
+Le screen `cpx62-1415` et son audit terminal `cpx62-1415a` ont testé si une
+sélection de 24 576 états pouvait rendre CTX2 réellement informatif sans changer
+les mappers. Le pool sélectionné passe toutes les gardes d'attribution et de
+distribution : top-1 `0,312513`, top-3 `0,721110`, `4,786` composantes
+effectives, aligned supérieur aux 10 000 réallocations nulles (`p = 1,000000`),
+TV des strates `0,000487` et skew WDL `0,003743`.
+
+La covariance du contexte échoue toutefois dans le sens opposé à l'objectif :
+dimension effective `8,668 → 6,812`, log-déterminant `−30,389070 → −40,002468`
+et corrélation maximale `0,972752 → 0,981899`. L'optimiseur a équilibré la masse
+des contributions existantes en concentrant les états sur une géométrie encore
+plus redondante ; il n'a pas ajouté de direction conditionnelle indépendante.
+
+**Porte close :** ne pas générer le pilote 600k et ne pas fitter ce pool. Une
+réouverture exige un mapper ou une représentation CTX2 modifiés qui améliorent
+le rang/covariance avant fit. Changer seulement les quotas, le sampler, la seed
+ou le volume répéterait le même mécanisme réfuté.
 
 
 ### 5.3 Recherche
