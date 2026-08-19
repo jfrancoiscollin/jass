@@ -1159,8 +1159,10 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
     p90, men_median, stratum_counts = _thresholds(scores, strata)
 
     capacities = np.zeros((2, 60), dtype=np.int64)
-    target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
+    raw_target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
+    guard_target_capacity = np.zeros((len(TARGET_COMPONENTS), 2, 60), dtype=np.int64)
     eligible_by_bucket: dict[tuple[int, int, int], np.ndarray] = {}
+    capacity_canonical_cache: dict[int, bytes] = {}
     for component in range(len(TARGET_COMPONENTS)):
         for sign_index, sign in enumerate((-1, 1)):
             for stratum in range(60):
@@ -1169,8 +1171,23 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                     component, sign, stratum,
                 )
                 eligible_by_bucket[(component, sign_index, stratum)] = candidates
-                target_capacity[component, sign_index, stratum] = len(candidates)
-    capacities[:] = target_capacity.min(axis=0)
+                raw_target_capacity[component, sign_index, stratum] = len(candidates)
+                guard_target_capacity[component, sign_index, stratum] = (
+                    _current_request_capacity(
+                        candidates=candidates,
+                        pool=POOL_NAMES[TARGET_COMPONENTS[component]],
+                        metadata=metadata,
+                        opening_owner={},
+                        game_counts=Counter(),
+                        records=records,
+                        canonical_used=set(),
+                        canonical_cache=capacity_canonical_cache,
+                    )
+                )
+    # Quotas must be bounded by positions that can coexist under the guards,
+    # not by raw row counts.  1414o proved the old 91-row quota could contain
+    # only 87 admissible states before opening ownership was even considered.
+    capacities[:] = guard_target_capacity.min(axis=0)
     half = args.per_pool // 2
     common_sign_quotas = np.stack(
         [
@@ -1609,7 +1626,15 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "deterministic_recursive_repair_exact_milp_v7",
+            "allocation_algorithm": "guard_aware_quota_recursive_repair_exact_milp_v8",
+            "raw_target_capacity_total": int(raw_target_capacity.sum()),
+            "guard_target_capacity_total": int(guard_target_capacity.sum()),
+            "guard_capacity_reduction_total": int(
+                raw_target_capacity.sum() - guard_target_capacity.sum()
+            ),
+            "guard_capacity_sha256": hashlib.sha256(
+                guard_target_capacity.astype("<i8", copy=False).tobytes()
+            ).hexdigest(),
             "allocation_repaired_openings": len(repaired_openings),
             "allocation_repaired_opening_sha256": hashlib.sha256(
                 np.asarray(repaired_openings, dtype="<u8").tobytes()

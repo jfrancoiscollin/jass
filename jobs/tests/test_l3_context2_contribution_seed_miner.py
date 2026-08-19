@@ -426,8 +426,13 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_recursive_repair_exact_milp_v7",
+                "guard_aware_quota_recursive_repair_exact_milp_v8",
             )
+            self.assertEqual(
+                payload["selection"]["raw_target_capacity_total"],
+                payload["selection"]["guard_target_capacity_total"],
+            )
+            self.assertEqual(payload["selection"]["guard_capacity_reduction_total"], 0)
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
 
