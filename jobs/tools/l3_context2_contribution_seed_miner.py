@@ -65,7 +65,9 @@ PIECE_EDGES = np.asarray([0, 8, 15, 22, 30, 41], dtype=np.int16)
 POOL_NAMES = {component: component.removesuffix("_delta") for component in TARGET_COMPONENTS}
 MAX_ALLOCATION_ATTEMPTS = math.factorial(len(TARGET_COMPONENTS))
 ALLOCATION_CHUNK_SIZE = 8
-MAX_OPENING_REPAIR_CANDIDATES = 128
+MAX_OPENING_REPAIR_BRANCH = 24
+MAX_OPENING_REPAIR_DEPTH = 10
+MAX_OPENING_REPAIR_STATES = 2048
 
 
 class AllocationShortfall(ValueError):
@@ -650,92 +652,141 @@ def _repair_blocked_request(
 ) -> tuple[
     dict[int, list[int]], dict[int, str], Counter[int], set[bytes], list[int]
 ] | None:
-    """Free contested openings by replacing their already-selected rows.
+    """Recover capacity through deterministic recursive opening transfers.
 
-    This is an augmenting-path step at opening granularity.  A foreign-owned
-    opening useful to the blocked request is tentatively transferred to the
-    blocked pool.  Every selected row displaced from its former owner is then
-    re-selected for its original request on already-owned or free openings.
-    Failed transfers are rolled back exactly.  Multiple successful transfers
-    can be chained until the blocked request regains its full capacity.
+    Each transfer removes every selected row on one contested opening and
+    recursively restores the displaced request buckets before the opening is
+    reserved for its new pool.  Every branch owns a complete copy of the small
+    selected set, so an unsuccessful chain rolls back ownership, per-game caps
+    and canonical deduplication exactly.
     """
-    component, sign_index, stratum, _ = request_order[request_index]
-    pool = POOL_NAMES[TARGET_COMPONENTS[component]]
-    raw_candidates = eligible_by_bucket[(component, sign_index, stratum)]
-    foreign_openings = {
-        int(metadata["opening_id"][index])
-        for index in raw_candidates
-        if (
-            opening_owner.get(int(metadata["opening_id"][index])) is not None
-            and opening_owner[int(metadata["opening_id"][index])] != pool
+    del opening_owner, game_counts, canonical_used  # rebuilt in every branch
+    explored = [0]
+
+    def build_state(
+        selection: dict[int, list[int]], reservations: dict[int, str]
+    ) -> tuple[dict[int, str], Counter[int], set[bytes]]:
+        owners, games, canonicals = _rebuild_target_selection_state(
+            selected_by_request=selection,
+            request_order=request_order,
+            records=records,
+            metadata=metadata,
+            canonical_cache=canonical_cache,
         )
-    }
-    if not foreign_openings:
-        return None
+        for opening, reserved_pool in reservations.items():
+            owner = owners.get(opening)
+            if owner is not None and owner != reserved_pool:
+                raise AssertionError("repair reservation ownership conflict")
+            owners[opening] = reserved_pool
+        return owners, games, canonicals
 
-    selected_opening_rows: dict[int, list[tuple[int, int]]] = defaultdict(list)
-    for other_request, indices in selected_by_request.items():
-        for index in indices:
-            opening = int(metadata["opening_id"][index])
-            if opening in foreign_openings:
-                selected_opening_rows[opening].append((other_request, index))
-
-    def opening_key(opening: int) -> tuple[int, int, int]:
-        displaced = len(selected_opening_rows.get(opening, ()))
-        useful = sum(
-            int(metadata["opening_id"][index]) == opening
-            for index in raw_candidates
-        )
-        tie = int.from_bytes(
-            hashlib.sha256(struct.pack("<QQ", int(seed) ^ int(salt), opening)).digest()[:8],
-            "little",
-        )
-        return displaced * 1_000_000 // max(1, useful), displaced, tie
-
-    working_selection = {
-        index: list(rows) for index, rows in selected_by_request.items()
-    }
-    repaired_openings: list[int] = []
-    working_owner = dict(opening_owner)
-    working_games = Counter(game_counts)
-    working_canonicals = set(canonical_used)
-
-    for opening in sorted(foreign_openings, key=opening_key)[
-        :MAX_OPENING_REPAIR_CANDIDATES
-    ]:
-        displaced = [
-            (other_request, index)
-            for other_request, indices in working_selection.items()
-            for index in indices
-            if int(metadata["opening_id"][index]) == opening
-        ]
-        if not displaced:
-            continue
-        trial_selection = {
-            index: list(rows) for index, rows in working_selection.items()
-        }
-        displaced_counts: Counter[int] = Counter()
-        for displaced_request, displaced_index in displaced:
-            if displaced_index not in trial_selection.get(displaced_request, []):
-                continue
-            trial_selection[displaced_request].remove(displaced_index)
-            displaced_counts[displaced_request] += 1
-        if not displaced_counts:
-            continue
+    def search(
+        target_request: int,
+        target_required: int,
+        selection: dict[int, list[int]],
+        reservations: dict[int, str],
+        used_openings: frozenset[int],
+        depth: int,
+    ) -> tuple[
+        dict[int, list[int]],
+        dict[int, str],
+        dict[int, str],
+        Counter[int],
+        set[bytes],
+    ] | None:
+        explored[0] += 1
+        if depth > MAX_OPENING_REPAIR_DEPTH or explored[0] > MAX_OPENING_REPAIR_STATES:
+            return None
         try:
-            trial_owner, trial_games, trial_canonicals = _rebuild_target_selection_state(
-                selected_by_request=trial_selection,
-                request_order=request_order,
-                records=records,
-                metadata=metadata,
-                canonical_cache=canonical_cache,
+            owners, games, canonicals = build_state(selection, reservations)
+        except AssertionError:
+            return None
+        component, sign_index, stratum, _ = request_order[target_request]
+        pool = POOL_NAMES[TARGET_COMPONENTS[component]]
+        raw_candidates = eligible_by_bucket[(component, sign_index, stratum)]
+        capacity = _current_request_capacity(
+            candidates=raw_candidates,
+            pool=pool,
+            metadata=metadata,
+            opening_owner=owners,
+            game_counts=games,
+            records=records,
+            canonical_used=canonicals,
+            canonical_cache=canonical_cache,
+        )
+        if capacity >= target_required:
+            return selection, reservations, owners, games, canonicals
+
+        foreign_openings = {
+            int(metadata["opening_id"][index])
+            for index in raw_candidates
+            if (
+                int(metadata["opening_id"][index]) not in reservations
+                and int(metadata["opening_id"][index]) not in used_openings
+                and owners.get(int(metadata["opening_id"][index])) is not None
+                and owners[int(metadata["opening_id"][index])] != pool
             )
-            # Reserve the released opening for the blocked pool while the old
-            # owner's displaced buckets find alternatives.
-            for repaired_opening in repaired_openings:
-                trial_owner[repaired_opening] = pool
-            trial_owner[opening] = pool
+        }
+
+        def opening_key(opening: int) -> tuple[int, int, int]:
+            displaced = sum(
+                int(metadata["opening_id"][index]) == opening
+                for indices in selection.values()
+                for index in indices
+            )
+            useful = sum(
+                int(metadata["opening_id"][index]) == opening
+                for index in raw_candidates
+            )
+            tie = int.from_bytes(
+                hashlib.sha256(
+                    struct.pack("<QQ", int(seed) ^ int(salt) ^ depth, opening)
+                ).digest()[:8],
+                "little",
+            )
+            return displaced * 1_000_000 // max(1, useful), displaced, tie
+
+        for opening in sorted(foreign_openings, key=opening_key)[
+            :MAX_OPENING_REPAIR_BRANCH
+        ]:
+            displaced = [
+                (other_request, index)
+                for other_request, indices in selection.items()
+                for index in indices
+                if int(metadata["opening_id"][index]) == opening
+            ]
+            if not displaced:
+                continue
+            trial_selection = {
+                index: list(rows) for index, rows in selection.items()
+            }
+            displaced_counts: Counter[int] = Counter()
+            for displaced_request, displaced_index in displaced:
+                trial_selection[displaced_request].remove(displaced_index)
+                displaced_counts[displaced_request] += 1
+            trial_reservations = dict(reservations)
+            trial_reservations[opening] = pool
+            branch_ok = True
             for displaced_request in sorted(displaced_counts):
+                needed = int(displaced_counts[displaced_request])
+                restored = search(
+                    displaced_request,
+                    needed,
+                    trial_selection,
+                    trial_reservations,
+                    used_openings | {opening},
+                    depth + 1,
+                )
+                if restored is None:
+                    branch_ok = False
+                    break
+                (
+                    trial_selection,
+                    trial_reservations,
+                    trial_owner,
+                    trial_games,
+                    trial_canonicals,
+                ) = restored
                 other_component, other_sign, other_stratum, _ = request_order[
                     displaced_request
                 ]
@@ -747,47 +798,48 @@ def _repair_blocked_request(
                     opening_owner=trial_owner,
                     opening_masks=opening_masks,
                     seed=seed,
-                    salt=salt + opening + displaced_request,
+                    salt=salt + opening + displaced_request + depth * 10_000,
                 )
-                replacements = _select_bucket(
-                    candidates=candidates,
-                    required=int(displaced_counts[displaced_request]),
-                    pool=other_pool,
-                    records=records,
-                    metadata=metadata,
-                    opening_owner=trial_owner,
-                    game_counts=trial_games,
-                    canonical_used=trial_canonicals,
-                    canonical_cache=canonical_cache,
-                )
+                try:
+                    replacements = _select_bucket(
+                        candidates=candidates,
+                        required=needed,
+                        pool=other_pool,
+                        records=records,
+                        metadata=metadata,
+                        opening_owner=trial_owner,
+                        game_counts=trial_games,
+                        canonical_used=trial_canonicals,
+                        canonical_cache=canonical_cache,
+                    )
+                except AllocationShortfall:
+                    branch_ok = False
+                    break
                 trial_selection.setdefault(displaced_request, []).extend(replacements)
-        except (AllocationShortfall, AssertionError):
-            continue
-
-        working_selection = trial_selection
-        working_owner = trial_owner
-        working_games = trial_games
-        working_canonicals = trial_canonicals
-        repaired_openings.append(opening)
-        capacity = _current_request_capacity(
-            candidates=raw_candidates,
-            pool=pool,
-            metadata=metadata,
-            opening_owner=working_owner,
-            game_counts=working_games,
-            records=records,
-            canonical_used=working_canonicals,
-            canonical_cache=canonical_cache,
-        )
-        if capacity >= required:
-            return (
-                working_selection,
-                working_owner,
-                working_games,
-                working_canonicals,
-                repaired_openings,
+            if not branch_ok:
+                continue
+            repaired = search(
+                target_request,
+                target_required,
+                trial_selection,
+                trial_reservations,
+                used_openings | {opening},
+                depth + 1,
             )
-    return None
+            if repaired is not None:
+                return repaired
+        return None
+
+    initial_selection = {
+        index: list(rows) for index, rows in selected_by_request.items()
+    }
+    repaired = search(
+        request_index, required, initial_selection, {}, frozenset(), 0
+    )
+    if repaired is None:
+        return None
+    selection, reservations, owners, games, canonicals = repaired
+    return selection, owners, games, canonicals, sorted(reservations)
 
 
 def _allocation_orders(
@@ -965,6 +1017,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 required = int(remaining_required[request_index])
                 name = POOL_NAMES[TARGET_COMPONENTS[component]]
                 raw_candidates = eligible_by_bucket[(component, sign_index, stratum)]
+                repair_applied = False
                 exact_capacity = _current_request_capacity(
                     candidates=raw_candidates,
                     pool=name,
@@ -1010,6 +1063,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                         canonical_used,
                         newly_repaired,
                     ) = repair
+                    repair_applied = True
                     attempt_repaired_openings.extend(newly_repaired)
                     attempt_selection = {
                         POOL_NAMES[component_name]: []
@@ -1066,7 +1120,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                     opening_request_capacities=opening_request_capacities,
                 )
                 claimed_openings: set[int] = set()
-                chunk = min(required, ALLOCATION_CHUNK_SIZE)
+                chunk = required if repair_applied else min(required, ALLOCATION_CHUNK_SIZE)
                 try:
                     chosen = _select_bucket(
                         candidates=candidates,
@@ -1094,16 +1148,51 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 else:
                     versions[request_index] += 1
                     push_request(request_index)
-                for opening in claimed_openings:
-                    for other_index, capacity in opening_request_capacities.get(opening, []):
-                        if other_index not in pending:
-                            continue
-                        other_component = request_order[other_index][0]
-                        if other_component == component:
-                            continue
-                        feasible_capacity[other_index] -= capacity
-                        versions[other_index] += 1
-                        push_request(other_index)
+                if repair_applied:
+                    # The repaired request is consumed in full.  Rebuild once
+                    # more to drop any transfer reservation that the exact row
+                    # selection did not ultimately use, then refresh all
+                    # pending capacities from the authoritative guards.
+                    opening_owner, game_counts, canonical_used = (
+                        _rebuild_target_selection_state(
+                            selected_by_request=selected_by_request,
+                            request_order=request_order,
+                            records=records,
+                            metadata=metadata,
+                            canonical_cache=canonical_cache,
+                        )
+                    )
+                    queue.clear()
+                    for pending_index in pending:
+                        pending_component, pending_sign, pending_stratum, _ = request_order[
+                            pending_index
+                        ]
+                        pending_pool = POOL_NAMES[TARGET_COMPONENTS[pending_component]]
+                        feasible_capacity[pending_index] = _current_request_capacity(
+                            candidates=eligible_by_bucket[
+                                (pending_component, pending_sign, pending_stratum)
+                            ],
+                            pool=pending_pool,
+                            metadata=metadata,
+                            opening_owner=opening_owner,
+                            game_counts=game_counts,
+                            records=records,
+                            canonical_used=canonical_used,
+                            canonical_cache=canonical_cache,
+                        )
+                        versions[pending_index] += 1
+                        push_request(pending_index)
+                else:
+                    for opening in claimed_openings:
+                        for other_index, capacity in opening_request_capacities.get(opening, []):
+                            if other_index not in pending:
+                                continue
+                            other_component = request_order[other_index][0]
+                            if other_component == component:
+                                continue
+                            feasible_capacity[other_index] -= capacity
+                            versions[other_index] += 1
+                            push_request(other_index)
             for name in POOL_NAMES.values():
                 if len(attempt_selection[name]) != args.per_pool:
                     raise ValueError(f"pool {name}: exact quota drift")
@@ -1236,7 +1325,7 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "deterministic_opening_augmenting_repair_v5",
+            "allocation_algorithm": "deterministic_recursive_augmenting_repair_v6",
             "allocation_repaired_openings": len(repaired_openings),
             "allocation_repaired_opening_sha256": hashlib.sha256(
                 np.asarray(repaired_openings, dtype="<u8").tobytes()

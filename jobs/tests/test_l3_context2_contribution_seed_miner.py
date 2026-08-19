@@ -236,6 +236,56 @@ class ContributionSeedMinerTests(unittest.TestCase):
             1,
         )
 
+    def test_opening_repair_follows_recursive_augmenting_chain(self):
+        records = np.zeros(5, dtype=miner.JNNW_DTYPE)
+        for index in range(5):
+            records[index]["wm"] = 1 << (index * 2)
+            records[index]["bm"] = 1 << (index * 2 + 1)
+        metadata = np.zeros(
+            5,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = np.arange(20, 25, dtype=np.uint64)
+        metadata["opening_id"] = [100, 100, 200, 200, 300]
+        request_order = [(0, 0, 0, 1), (1, 0, 0, 1), (2, 0, 0, 1)]
+        eligible = {
+            (0, 0, 0): np.asarray([1], dtype=np.int64),
+            (1, 0, 0): np.asarray([0, 3], dtype=np.int64),
+            (2, 0, 0): np.asarray([2, 4], dtype=np.int64),
+        }
+        selected = {1: [0], 2: [2]}
+        cache: dict[int, bytes] = {}
+        owners, games, canonicals = miner._rebuild_target_selection_state(
+            selected_by_request=selected,
+            request_order=request_order,
+            records=records,
+            metadata=metadata,
+            canonical_cache=cache,
+        )
+        repaired = miner._repair_blocked_request(
+            request_index=0,
+            required=1,
+            selected_by_request=selected,
+            request_order=request_order,
+            eligible_by_bucket=eligible,
+            records=records,
+            metadata=metadata,
+            opening_owner=owners,
+            game_counts=games,
+            canonical_used=canonicals,
+            canonical_cache=cache,
+            opening_masks={100: 0b011, 200: 0b110, 300: 0b100},
+            seed=2026081806,
+            salt=0,
+        )
+        self.assertIsNotNone(repaired)
+        selection, owners, _games, _canonicals, transferred = repaired
+        self.assertEqual(selection[1], [3])
+        self.assertEqual(selection[2], [4])
+        self.assertEqual(transferred, [100, 200])
+        self.assertEqual(owners[100], miner.POOL_NAMES[miner.TARGET_COMPONENTS[0]])
+        self.assertEqual(owners[200], miner.POOL_NAMES[miner.TARGET_COMPONENTS[1]])
+
     def test_small_end_to_end_mining_contract(self):
         count = 3000
         train_count = 2700
@@ -334,7 +384,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "deterministic_opening_augmenting_repair_v5",
+                "deterministic_recursive_augmenting_repair_v6",
             )
             for row in payload["pools"].values():
                 self.assertEqual(row["records"], 4)
