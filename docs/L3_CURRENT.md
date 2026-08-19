@@ -1,6 +1,6 @@
 # L3 — état courant et registre de décision
 
-> **Mis à jour : 15 août 2026**
+> **Mis à jour : 19 août 2026**
 > **Source de vérité active : ce document.** L’historique consolidé reste dans
 > [`PROJECT_RESULTS.md`](PROJECT_RESULTS.md), les verdicts immuables sous
 > [`archives/l3/`](archives/l3/), le contrat généraliste dans
@@ -167,7 +167,39 @@
 > the_arena_is_informative_only_in_a_NARROW_search_band_and_2_slash_4_sits_in_a_hole;
 > FIX_vary_the_start_states_in_run_arena_before_any_further_arena_cell;
 > zero_advancing_generations_reported_as_PASS_is_rule_10_under_another_name;
-> my_own_MDE_table_on_PR441_assumed_binomial_variance_that_does_not_exist_retracted`.
+> my_own_MDE_table_on_PR441_assumed_binomial_variance_that_does_not_exist_retracted;
+> ctx2_shared_information_pool_balances_fixed_mapper_contributions_but_contracts_context_geometry;
+> ctx2_corpus_engineering_CLOSED_until_mapper_or_context_representation_changes`.
+
+## 0decies. 19 août 2026 — CTX2 : contributions équilibrées, information indépendante contractée
+
+Le screen read-only `cpx62-1415-l3-context2-shared-information-pool-v1`,
+attempt `20260819T050856Z-136bafca`, a optimisé 24 576 états communs avec les
+mappers CTX2 figés, sous quotas phase × WDL × matériel, unicité canonique et
+maximum deux positions par partie source. L'audit terminal `cpx62-1415a`,
+attempt `20260819T051956Z-136bafca`, confirme le verdict
+`JASS_CONTEXT2_SHARED_INFORMATION_POOL_FAILURE_AUDITED`.
+
+L'optimisation a réellement redistribué l'attribution conditionnelle : top-1
+`0,312513` (garde `≤ 0,516116`), top-3 `0,721110` (garde `≤ 0,728343`) et
+`4,786` composantes effectives (garde `≥ 3,504`). L'association aligned bat les
+10 000 réallocations nulles stratifiées, probabilité empirique `1,000000`.
+Les distributions restent comparables : TV des strates `0,000487`, skew WDL
+`0,003743`, déplacement relatif des nulles `0,000488`.
+
+Mais la géométrie CTX2 se contracte précisément là où le protocole exigeait une
+information indépendante supplémentaire : dimension effective de covariance
+`8,668 → 6,812`, log-déterminant `−30,389070 → −40,002468` (`Δ = −9,613397`),
+et corrélation absolue maximale `0,972752 → 0,981899`. Les deux gardes de
+covariance échouent donc malgré le succès de tous les écrans d'attribution.
+
+**Verdict :** sélectionner les états peut équilibrer la masse de contribution
+des mappers figés, mais ne crée pas de nouvelles directions d'information. La
+branche **CTX2 corpus-engineering est close** : aucune génération 600k, aucun
+fit aligned/shuffled et aucune promotion ne sont autorisés sur ce mécanisme.
+La condition de réouverture est un changement du mapper ou de la représentation
+du contexte qui augmente effectivement le rang/covariance ; une autre seed, un
+nouveau quota ou un autre sampler ne constitue pas un fait nouveau.
 
 ## 0novies. 9 août 2026 — ⛔ TOUT LE LABORATOIRE MESURAIT UNE ARCHITECTURE QUE LA PRODUCTION NE PEUT PAS REPRODUIRE
 
