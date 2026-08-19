@@ -169,7 +169,71 @@
 > zero_advancing_generations_reported_as_PASS_is_rule_10_under_another_name;
 > my_own_MDE_table_on_PR441_assumed_binomial_variance_that_does_not_exist_retracted;
 > ctx2_shared_information_pool_balances_fixed_mapper_contributions_but_contracts_context_geometry;
-> ctx2_corpus_engineering_CLOSED_until_mapper_or_context_representation_changes`.
+> ctx2_corpus_engineering_CLOSED_until_mapper_or_context_representation_changes;
+> ctx3_independent_information_screen_passed;
+> ctx3_exact_mapper_causal_screen_passed;
+> ctx3_paired_patterneval_models_ready;
+> ctx3_aligned_vs_shuffled_force_regression_established_two_pools;
+> ctx3_scalar_target_family_closed_for_deployment`.
+
+## 0undecies. 19 août 2026 — CTX3 : information statique réelle, régression causale de force établie
+
+La chaîne CTX3 est terminée de bout en bout, sur le corpus immuable
+`CTX2_INTERVENTION_1409_2M` (2 000 000 positions) et sans lecture frozen.
+
+Les trois portes préalables ont passé :
+
+- `cpx62-1416b-l3-context3-independent-information-screen-v1`, attempt
+  `20260819T070756Z-95059c8e` : écran d'information indépendante **9/9 PASS** ;
+- `cpx62-1417-l3-context3-exact-tanh-mapper-screen-v1`, attempt
+  `20260819T072356Z-999091b3` : mapper causal exact **11/11 PASS**, 18/18 fits
+  convergés. Le gain MSE aligned contre CTX2 vaut `+0,001587` OOF, IC95
+  `[+0,001448 ; +0,001731]`, et `+0,002204` holdout, IC95
+  `[+0,001783 ; +0,002622]` ; aligned bat aussi son contrôle shuffled ;
+- `cpx62-1418-l3-context3-paired-patterneval-fit-v1`, attempt
+  `20260819T074026Z-1e718553` : modèles `aligned.pjtw.gz` et
+  `shuffled.pjtw.gz` authentifiés, même architecture, même corpus, même recette,
+  targets appariés, zéro partie de force et zéro refit ultérieur.
+
+La porte terminale `cpx62-1419-l3-context3-two-pool-force-v1`, attempt
+`20260819T112556Z-8adc506a`, a ensuite joué 24 000 parties sur deux pools frais
+de 3 000 ouvertures, couleurs inversées, mutuellement disjoints et disjoints de
+15 pools historiques. Natif 0,1 s est primaire ; Q00 d9 reste diagnostic.
+
+| Vue | Pool | W-D-L aligned | Taux aligned | IC95 apparié |
+|---|---:|---:|---:|---:|
+| natif 0,1 s | 1 | 2703-344-2953 | **47,9167 %** | [47,0167 ; 48,8167] |
+| natif 0,1 s | 2 | 2778-330-2892 | **49,0500 %** | [48,1750 ; 49,9167] |
+| Q00 d9 | 1 | 2802-295-2903 | **49,1583 %** | [48,1917 ; 50,1250] |
+| Q00 d9 | 2 | 2802-292-2906 | **49,1333 %** | [48,1667 ; 50,0917] |
+
+Agrégation préenregistrée :
+
+- **natif combiné : 48,4833 %**, IC95 `[47,8583 ; 49,1042]`,
+  `P(taux > 50 %) = 0,000005`, soit environ **−10,54 Elo**
+  (IC95 approximatif `[−14,89 ; −6,23]`) ;
+- effets natifs compatibles entre pools, `z = −1,779522` ; les deux points et
+  même les deux bornes hautes par pool sont sous 50 % ;
+- **Q00 combiné : 49,1458 %**, IC95 `[48,4708 ; 49,8250]`,
+  `P(taux > 50 %) = 0,006535`, soit environ **−5,94 Elo** ; `z = +0,036026`.
+
+L'audit read-only `cpx62-1420-l3-context3-terminal-audit-v1`, attempt
+`20260819T134046Z-69170897`, a retéléchargé les quatre JSON bruts, vérifié les
+hashes/WDL/budgets/identités et recalculé les deux agrégations à 200 000
+bootstraps : égalité JSON exacte avec 1419, zéro partie rejouée, zéro refit,
+zéro self-play, zéro frozen et zéro promotion.
+
+**Verdict durable :** CTX3 contient bien une information conditionnelle
+indépendante et améliore la prédiction statique, mais l'injecter dans la cible
+scalaire PatternEval rend le modèle **causalement plus faible** que le contrôle
+shuffled, de façon répliquée. La famille exacte « contexte aligné → target
+scalaire → PatternEval » est **close pour le déploiement**. Ce résultat ne
+réfute pas l'information CTX3 ; il réfute sa conversion en force par ce canal.
+Une réouverture devra changer le canal causal (par exemple signal de décision
+séparé), pas seulement alpha, volume, seed ou nombre d'itérations.
+
+Artefacts terminaux :
+`r2:jass-data/runs/cpx62-1420-l3-context3-terminal-audit-v1/20260819T134046Z-69170897`.
 
 ## 0decies. 19 août 2026 — CTX2 : contributions équilibrées, information indépendante contractée
 

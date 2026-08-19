@@ -95,6 +95,41 @@ sont pas des facteurs de DoE.
    recherche native sans convertir. Q00 devient la baseline, Q2 n'est pas
    déclenché. Le bloc suivant pré-enregistré est C2-X1 sur la distribution
    d'exploration autonome.
+9. **CTX3 sépare désormais clairement information prédictive et force.** Sur le
+   même corpus immuable de 2 M positions, l'écran d'information indépendante
+   (1416b) et le mapper causal exact (1417) passent, puis les deux PatternEval
+   aligned/shuffled sont fités à recette identique (1418). Pourtant, sur deux
+   pools frais disjoints, l'aligned obtient seulement **48,4833 %** au natif,
+   IC95 `[47,8583 ; 49,1042]`, environ **−10,54 Elo**, avec les deux pools sous
+   50 % et compatibles. Q00 confirme la direction : **49,1458 %**, IC95
+   `[48,4708 ; 49,8250]`. L'audit 1420 reproduit exactement le readout brut.
+   **La cible scalaire CTX3 est close pour le déploiement** : le contexte est
+   informatif, mais ce canal d'injection convertit ce signal en régression de
+   jeu. Aucun modèle CTX3 n'est promu.
+
+### 2.1 CTX3 — chaîne terminale et portée de la fermeture
+
+| Étape | Job | Preuve | Verdict |
+|---|---|---|---|
+| information indépendante | `cpx62-1416b` | 9/9 gardes | PASS |
+| mapper aligned vs CTX2/shuffled | `cpx62-1417` | 11/11, 18/18 convergés | PASS statique |
+| fits appariés | `cpx62-1418` | même 2 M, architecture et recette | modèles authentifiés |
+| force deux pools | `cpx62-1419` | 24 000 parties, natif primaire | régression établie |
+| audit terminal | `cpx62-1420` | hashes + recomputation exacte 200k | `JASS_CONTEXT3_TERMINAL_AUDIT_READY` |
+
+Les résultats natifs par pool sont `2703-344-2953` (47,9167 %, IC95
+`[47,0167 ; 48,8167]`) et `2778-330-2892` (49,0500 %, IC95
+`[48,1750 ; 49,9167]`). Le combiné est 48,4833 %, IC95
+`[47,8583 ; 49,1042]`, `P(>50 %) = 0,000005`; les effets sont compatibles
+(`z = −1,779522`). Le diagnostic Q00 est lui aussi négatif : 49,1458 %, IC95
+`[48,4708 ; 49,8250]`, `P(>50 %) = 0,006535`.
+
+La fermeture porte précisément sur la compression du contexte aligné dans une
+cible scalaire PatternEval. Elle ne permet pas de conclure que CTX3 ne contient
+rien : les écrans préalables prouvent le contraire. Une future expérience doit
+conserver le contexte dans un canal de décision séparé ou changer de mécanisme,
+et non relancer la même recette avec plus de volume, d'itérations ou une autre
+seed.
 
 ## 3. Chronologie scientifique condensée
 
