@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Technical-only launcher for the preregistered CTX3 decision-flip autopsy.
-# Removes only transport-corruption '+' argv tokens and, on failure, exposes a
-# sanitized diagnostic marker through the normal certified artefact manifest.
+# Removes only transport-corruption '+' argv tokens, repairs one certified-summary
+# schema lookup, and on failure exposes a sanitized diagnostic marker.
 # Scientific constants, identities, depths, seeds, bootstrap and criteria stay untouched.
 set -Eeuo pipefail
 
@@ -27,8 +27,13 @@ for line in lines:
         in_heredoc = False
     out.append(line)
 fixed = "".join(out)
+old = "force.get('frozen_cohorts_read')==0"
+new = "(force.get('protocol') or {}).get('frozen_cohorts_read')==0"
+if fixed.count(old) != 1:
+    raise SystemExit(f"runtimefix: expected one 1419 frozen schema lookup, found {fixed.count(old)}")
+fixed = fixed.replace(old, new, 1)
 if fixed == text:
-    raise SystemExit("runtimefix: expected shell corruption pattern not found")
+    raise SystemExit("runtimefix: expected technical repair pattern not found")
 if re.search(r"(?m)(?<!\S)\+\s{2,}", fixed):
     raise SystemExit("runtimefix: standalone plus transport artefact remains")
 dst.write_text(fixed, encoding="utf-8")
