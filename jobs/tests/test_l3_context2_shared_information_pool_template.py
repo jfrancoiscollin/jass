@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+import unittest
+from pathlib import Path
+
+
+TEMPLATE = Path("jobs/templates/l3-context2-shared-information-pool-v1.sh")
+
+
+class SharedInformationPoolTemplateTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = TEMPLATE.read_text(encoding="utf-8")
+
+    def test_is_read_only_and_preregistered(self):
+        self.assertIn("POOL_SIZE=24576", self.text)
+        self.assertIn("SHUFFLES=10000", self.text)
+        self.assertIn("NO_AUTOMATIC_CONTINUATION", self.text)
+        self.assertNotIn("--gen-data-wdl", self.text)
+        self.assertNotIn("jass_vs_jass", self.text)
+        self.assertNotIn("rank_finetune", self.text)
+        self.assertIn("'selfplay_generated':False", self.text)
+        self.assertIn("'mapper_fits_run':0", self.text)
+        self.assertIn("'patterneval_fits_run':0", self.text)
+        self.assertIn("'frozen_read':False", self.text)
+        self.assertIn("'promotion_authorized':False", self.text)
+
+    def test_authenticates_all_three_sources(self):
+        for job in (
+            "cpx62-1409-l3-context2-intervention-corpus-v1",
+            "cpx62-1411-l3-context2-intervention-mapper-screen-v1",
+            "home-1397-l3-context2-fixed-contribution-audit-v1",
+        ):
+            self.assertIn(job, self.text)
+        self.assertEqual(self.text.count("--expected-state completed"), 3)
+
+    def test_runtime_and_roundtrip_guards_are_present(self):
+        self.assertIn('"$(nproc)" -eq 16', self.text)
+        self.assertIn("persistent numeric runtime absent; do not reinstall", self.text)
+        self.assertIn("eta_minutes=15-35", self.text)
+        self.assertIn("production-parser-roundtrip", self.text)
+        self.assertIn("non-zero target in shared pool", self.text)
+        self.assertIn("git show \"$EXPECTED_CODE_SHA:$file\" | cmp", self.text)
+        self.assertIn("sleep 120", self.text)
+
+
+if __name__ == "__main__":
+    unittest.main()
