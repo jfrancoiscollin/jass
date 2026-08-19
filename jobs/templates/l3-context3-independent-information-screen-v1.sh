@@ -174,7 +174,7 @@ if r['source']['records']!=records or r['source']['train_records']!=train or r['
  raise SystemExit('report sizing drift')
 if r['selected_candidate'] not in ('odd_curvature','tactical_magnitude_gates','combined'):
  raise SystemExit('candidate drift')
-if r['protocol']['bootstrap_replicates']!=5000 or len(r['guards'])!=8:
+if r['protocol']['bootstrap_replicates']!=5000 or len(r['guards'])!=9:
  raise SystemExit('protocol/report roundtrip drift')
 PY
 
