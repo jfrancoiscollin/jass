@@ -36,6 +36,7 @@ class Context3IndependentInformationTemplateTests(unittest.TestCase):
         self.assertIn("persistent numeric runtime absent; do not reinstall", self.text)
         self.assertIn("eta_minutes=15-35", self.text)
         self.assertIn("reporting-roundtrip", self.text)
+        self.assertIn("len(r['guards'])!=9", self.text)
         self.assertIn("git show \"$EXPECTED_CODE_SHA:$file\" | cmp", self.text)
         self.assertIn("timeout 4500s", self.text)
 
