@@ -542,6 +542,87 @@ def _current_request_capacity(
     return min(game_capacity, len(all_canonicals)) if records is not None else game_capacity
 
 
+def _exact_bucket_guard_capacity(
+    *,
+    candidates: np.ndarray,
+    records: np.ndarray,
+    metadata: np.ndarray,
+    canonical_cache: dict[int, bytes],
+) -> int:
+    """Maximum coexisting rows under canonical=1 and source-game=2.
+
+    ``min(sum(game caps), unique canonicals)`` is only an upper bound because
+    both resources can be concentrated on the same subset.  Model each game
+    as two slots and compute the exact canonical-to-slot maximum matching with
+    deterministic Hopcroft-Karp.
+    """
+    adjacency_by_canonical: dict[bytes, set[int]] = defaultdict(set)
+    for raw_index in candidates:
+        index = int(raw_index)
+        canonical = canonical_cache.get(index)
+        if canonical is None:
+            canonical = canonical_position(_record_bytes(records, index))
+            canonical_cache[index] = canonical
+        adjacency_by_canonical[canonical].add(int(metadata["game_id"][index]))
+    if not adjacency_by_canonical:
+        return 0
+    games = sorted(
+        {game for adjacent in adjacency_by_canonical.values() for game in adjacent}
+    )
+    game_slot = {game: offset * 2 for offset, game in enumerate(games)}
+    canonicals = sorted(adjacency_by_canonical)
+    adjacency = [
+        [slot for game in sorted(adjacency_by_canonical[canonical])
+         for slot in (game_slot[game], game_slot[game] + 1)]
+        for canonical in canonicals
+    ]
+    pair_left = [-1] * len(adjacency)
+    pair_right = [-1] * (2 * len(games))
+    distance = [0] * len(adjacency)
+    infinity = len(adjacency) + 1
+
+    def bfs() -> bool:
+        queue: list[int] = []
+        head = 0
+        found = False
+        for left in range(len(adjacency)):
+            if pair_left[left] == -1:
+                distance[left] = 0
+                queue.append(left)
+            else:
+                distance[left] = infinity
+        while head < len(queue):
+            left = queue[head]
+            head += 1
+            for right in adjacency[left]:
+                matched = pair_right[right]
+                if matched == -1:
+                    found = True
+                elif distance[matched] == infinity:
+                    distance[matched] = distance[left] + 1
+                    queue.append(matched)
+        return found
+
+    def dfs(left: int) -> bool:
+        for right in adjacency[left]:
+            matched = pair_right[right]
+            if matched == -1 or (
+                distance[matched] == distance[left] + 1 and dfs(matched)
+            ):
+                pair_left[left] = right
+                pair_right[right] = left
+                return True
+        distance[left] = infinity
+        return False
+
+    matched = 0
+    while bfs():
+        for left in range(len(adjacency)):
+            if pair_left[left] == -1 and dfs(left):
+                matched += 1
+    return matched
+
+
 def _record_bytes(records: np.ndarray, index: int) -> bytes:
     value = records[index].tobytes()
     if len(value) != RECORD_SIZE:
@@ -1173,14 +1254,10 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 eligible_by_bucket[(component, sign_index, stratum)] = candidates
                 raw_target_capacity[component, sign_index, stratum] = len(candidates)
                 guard_target_capacity[component, sign_index, stratum] = (
-                    _current_request_capacity(
+                    _exact_bucket_guard_capacity(
                         candidates=candidates,
-                        pool=POOL_NAMES[TARGET_COMPONENTS[component]],
-                        metadata=metadata,
-                        opening_owner={},
-                        game_counts=Counter(),
                         records=records,
-                        canonical_used=set(),
+                        metadata=metadata,
                         canonical_cache=capacity_canonical_cache,
                     )
                 )
@@ -1626,9 +1703,10 @@ def mine(args: argparse.Namespace) -> dict[str, Any]:
                 np.asarray(selected_request_order, dtype="<u2").tobytes()
             ).hexdigest(),
             "allocation_chunk_size": ALLOCATION_CHUNK_SIZE,
-            "allocation_algorithm": "guard_aware_quota_recursive_repair_exact_milp_v8",
+            "allocation_algorithm": "exact_guard_quota_recursive_repair_exact_milp_v9",
             "raw_target_capacity_total": int(raw_target_capacity.sum()),
             "guard_target_capacity_total": int(guard_target_capacity.sum()),
+            "guard_capacity_method": "hopcroft_karp_canonical_to_two_game_slots",
             "guard_capacity_reduction_total": int(
                 raw_target_capacity.sum() - guard_target_capacity.sum()
             ),

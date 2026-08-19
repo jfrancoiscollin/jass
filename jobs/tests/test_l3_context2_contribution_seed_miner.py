@@ -152,6 +152,38 @@ class ContributionSeedMinerTests(unittest.TestCase):
         # and one from game 12 already owned by the current pool.
         self.assertEqual(capacity, 2)
 
+    def test_exact_guard_capacity_detects_joint_hall_deficit(self):
+        records = np.zeros(5, dtype=miner.JNNW_DTYPE)
+        for index, (wm, bm) in enumerate(((1, 2), (4, 8), (16, 32), (64, 128))):
+            records[index]["wm"], records[index]["bm"] = wm, bm
+        records[4] = records[3]  # same canonical state in another game
+        metadata = np.zeros(
+            5,
+            dtype=np.dtype([("game_id", "<u8"), ("opening_id", "<u8")]),
+        )
+        metadata["game_id"] = [10, 10, 10, 11, 12]
+        metadata["opening_id"] = np.arange(100, 105, dtype=np.uint64)
+        candidates = np.arange(5, dtype=np.int64)
+        cache: dict[int, bytes] = {}
+        upper_bound = miner._current_request_capacity(
+            candidates=candidates,
+            pool="king_safe_mobility",
+            metadata=metadata,
+            opening_owner={},
+            game_counts=__import__("collections").Counter(),
+            records=records,
+            canonical_used=set(),
+            canonical_cache=cache,
+        )
+        exact = miner._exact_bucket_guard_capacity(
+            candidates=candidates,
+            records=records,
+            metadata=metadata,
+            canonical_cache=cache,
+        )
+        self.assertEqual(upper_bound, 4)
+        self.assertEqual(exact, 3)
+
     def test_global_rank_protects_opening_that_would_break_pending_request(self):
         metadata = np.zeros(
             3,
@@ -426,7 +458,7 @@ class ContributionSeedMinerTests(unittest.TestCase):
             self.assertTrue(payload["guards"]["all_target_signs_balanced_50_50"])
             self.assertEqual(
                 payload["selection"]["allocation_algorithm"],
-                "guard_aware_quota_recursive_repair_exact_milp_v8",
+                "exact_guard_quota_recursive_repair_exact_milp_v9",
             )
             self.assertEqual(
                 payload["selection"]["raw_target_capacity_total"],
