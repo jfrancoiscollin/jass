@@ -14,6 +14,15 @@ set -Eeuo pipefail
 : "${JASS_JOB_ID:?}"; : "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_JOB_ID:?}"
 cd "$JASS_CODE_DIR"
 
+[ "${NO_FROZEN_READ:-0}" = 1 ] || {
+  echo "frozen-read guard missing" >&2
+  exit 1
+}
+[ "${NO_AUTOMATIC_PROMOTION:-0}" = 1 ] || {
+  echo "automatic-promotion guard missing" >&2
+  exit 1
+}
+
 BASE="jobs/templates/l3-context2-intervention-corpus-v1.sh"
 PATCHED="$JASS_RESULT_DIR/l3-context2-intervention-corpus-fresh2m-exploratory-v2.generated.sh"
 PATCHLOG="$JASS_ARTEFACT_DIR/exploratory-fresh2m-substitutions.json"
