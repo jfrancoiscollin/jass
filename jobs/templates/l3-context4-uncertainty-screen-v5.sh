@@ -5,8 +5,8 @@
 # and the copy embedded by authenticated 1430 are canonically identical:
 # RAW_EQUAL=true, DIFF_COUNT=0 and identical canonical SHA-256.  The v4 abort
 # therefore came from relying on a fragile raw Python object-equality boundary,
-# not from scientific pool drift.  V5 replaces only that boundary with the
-# tested scientific fingerprint contract; every CTX4 scientific parameter is
+# not from scientific pool drift.  V5 replaces only that boundary with a
+# canonical full-certificate fingerprint; every CTX4 scientific parameter is
 # unchanged.
 set -Eeuo pipefail
 
@@ -70,12 +70,12 @@ one(
 )
 
 # 1440 authenticated both immutable pool objects and proved canonical equality.
-# Cross-authenticate on the locked scientific fingerprint rather than fragile
-# raw Python object equality.  Both inputs are independently validated first.
+# Cross-authenticate the entire validated certificate canonically rather than
+# relying on raw Python object equality. No field is dropped or normalized.
 one(
     "if not pools.get('mutually_disjoint') or int(pools.get('historical_exclusion_count',-1))!=17:\n    raise SystemExit('1428 pool certificate drift')",
     "published_pool=readout.get('pool_certificate')\ntry:\n    validate_1428_pool_certificate(published_pool)\n    validate_equivalent_1428_pool_certificates(pools, published_pool)\nexcept ValueError as exc:\n    raise SystemExit(str(exc)) from exc",
-    "cross_authenticate_1428_pool_certificate_by_scientific_fingerprint",
+    "cross_authenticate_1428_pool_certificate_by_canonical_fingerprint",
 )
 
 locked = {
@@ -131,7 +131,7 @@ log.write_text(
                 "canonical_sha256": "57ba665ebffde24e27c825a4f6a762068a9e4c579102d5915654843c3bbce290",
                 "scientific_projection_equal": True,
             },
-            "technical_repair": "replace_raw_dict_equality_with_tested_scientific_pool_fingerprint",
+            "technical_repair": "replace_raw_dict_equality_with_full_canonical_pool_fingerprint",
         },
         indent=2,
         sort_keys=True,
