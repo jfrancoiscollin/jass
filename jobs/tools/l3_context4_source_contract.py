@@ -67,15 +67,7 @@ def validate_1428_force_readout(readout: dict[str, Any]) -> None:
 
 
 def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
-    """Validate the certified 1428 fresh-pool contract used by CTX4.
-
-    The immutable 1430 publisher already authenticated the direct 1428
-    ``pool-certificate.json`` and embedded that exact JSON object in
-    ``CTX3_1428_READOUT.json``.  CTX4 therefore validates the published copy and
-    separately requires object equality with the directly fetched 1428 copy.
-    This removes a redundant schema-boundary ambiguity without weakening any
-    pool freshness, exclusion, cardinality or seed guard.
-    """
+    """Validate the certified 1428 fresh-pool contract used by CTX4."""
     if not isinstance(pool, dict):
         raise ValueError("1428 pool certificate missing")
     if pool.get("schema") != "jass.context3.two_fresh_pools.v1":
@@ -110,3 +102,71 @@ def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
         raise ValueError("1428 fresh pool seed drift")
     if any(item.get("openings") != 3000 for item in pools):
         raise ValueError("1428 fresh pool cardinality drift")
+
+
+_POOL_TRANSPORT_KEYS = frozenset(
+    {
+        "created_at",
+        "generated_at",
+        "timestamp",
+        "path",
+        "filepath",
+        "file_path",
+        "source_path",
+        "result_uri",
+        "uri",
+        "local_path",
+    }
+)
+
+
+def pool_certificate_scientific_projection(pool: dict[str, Any]) -> dict[str, Any]:
+    """Return the locked scientific identity of a certified 1428 pool receipt.
+
+    1440 proved the immutable direct 1428 certificate and the copy embedded by
+    authenticated 1430 have identical canonical JSON and no structural/value
+    differences.  CTX4 nevertheless must not rely on Python raw-object equality
+    at this schema boundary.  This projection preserves every top-level
+    scientific receipt, every historical exclusion receipt, and every fresh-pool
+    field except explicitly transport/location metadata.  Consequently seed,
+    cardinality, hashes/IDs, overlap/disjointness and exclusions remain
+    fail-closed while harmless location metadata may differ.
+    """
+    validate_1428_pool_certificate(pool)
+    top_keys = (
+        "schema",
+        "verdict",
+        "mutually_disjoint",
+        "mutual_overlap",
+        "all_historical_overlaps_zero",
+        "historical_exclusion_count",
+        "deterministic_generation_repeated",
+        "promotion_authorized",
+        "historical_exclusions",
+    )
+    projected: dict[str, Any] = {key: pool.get(key) for key in top_keys}
+    projected["pools"] = [
+        {key: value for key, value in item.items() if key not in _POOL_TRANSPORT_KEYS}
+        for item in pool["pools"]
+    ]
+    return projected
+
+
+def pool_certificate_scientific_fingerprint(pool: dict[str, Any]) -> str:
+    """Canonical JSON fingerprint used only for cross-authentication."""
+    return json.dumps(
+        pool_certificate_scientific_projection(pool),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+
+
+def validate_equivalent_1428_pool_certificates(
+    direct: dict[str, Any], embedded: dict[str, Any]
+) -> None:
+    """Fail closed if two certified receipts differ scientifically."""
+    direct_fp = pool_certificate_scientific_fingerprint(direct)
+    embedded_fp = pool_certificate_scientific_fingerprint(embedded)
+    if direct_fp != embedded_fp:
+        raise ValueError("1428 pool scientific fingerprint drift")
