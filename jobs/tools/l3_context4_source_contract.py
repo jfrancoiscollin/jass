@@ -104,58 +104,20 @@ def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
         raise ValueError("1428 fresh pool cardinality drift")
 
 
-_POOL_TRANSPORT_KEYS = frozenset(
-    {
-        "created_at",
-        "generated_at",
-        "timestamp",
-        "path",
-        "filepath",
-        "file_path",
-        "source_path",
-        "result_uri",
-        "uri",
-        "local_path",
-    }
-)
+def pool_certificate_canonical_fingerprint(pool: dict[str, Any]) -> str:
+    """Canonical full-certificate fingerprint used for cross-authentication.
 
-
-def pool_certificate_scientific_projection(pool: dict[str, Any]) -> dict[str, Any]:
-    """Return the locked scientific identity of a certified 1428 pool receipt.
-
-    1440 proved the immutable direct 1428 certificate and the copy embedded by
-    authenticated 1430 have identical canonical JSON and no structural/value
-    differences.  CTX4 nevertheless must not rely on Python raw-object equality
-    at this schema boundary.  This projection preserves every top-level
-    scientific receipt, every historical exclusion receipt, and every fresh-pool
-    field except explicitly transport/location metadata.  Consequently seed,
-    cardinality, hashes/IDs, overlap/disjointness and exclusions remain
-    fail-closed while harmless location metadata may differ.
+    Read-only diagnostic 1440 proved the direct immutable 1428 certificate and
+    the copy embedded by authenticated 1430 have zero structural/value
+    differences and the same canonical SHA-256 source representation.  We
+    therefore canonicalize the *entire* validated certificate rather than
+    dropping or normalizing any field.  This preserves every pool ID/hash,
+    exclusion receipt, overlap guard and metadata field fail-closed while
+    avoiding dependence on Python mapping insertion order or raw object identity.
     """
     validate_1428_pool_certificate(pool)
-    top_keys = (
-        "schema",
-        "verdict",
-        "mutually_disjoint",
-        "mutual_overlap",
-        "all_historical_overlaps_zero",
-        "historical_exclusion_count",
-        "deterministic_generation_repeated",
-        "promotion_authorized",
-        "historical_exclusions",
-    )
-    projected: dict[str, Any] = {key: pool.get(key) for key in top_keys}
-    projected["pools"] = [
-        {key: value for key, value in item.items() if key not in _POOL_TRANSPORT_KEYS}
-        for item in pool["pools"]
-    ]
-    return projected
-
-
-def pool_certificate_scientific_fingerprint(pool: dict[str, Any]) -> str:
-    """Canonical JSON fingerprint used only for cross-authentication."""
     return json.dumps(
-        pool_certificate_scientific_projection(pool),
+        pool,
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
@@ -165,8 +127,8 @@ def pool_certificate_scientific_fingerprint(pool: dict[str, Any]) -> str:
 def validate_equivalent_1428_pool_certificates(
     direct: dict[str, Any], embedded: dict[str, Any]
 ) -> None:
-    """Fail closed if two certified receipts differ scientifically."""
-    direct_fp = pool_certificate_scientific_fingerprint(direct)
-    embedded_fp = pool_certificate_scientific_fingerprint(embedded)
+    """Fail closed unless both certified receipts are canonically identical."""
+    direct_fp = pool_certificate_canonical_fingerprint(direct)
+    embedded_fp = pool_certificate_canonical_fingerprint(embedded)
     if direct_fp != embedded_fp:
-        raise ValueError("1428 pool scientific fingerprint drift")
+        raise ValueError("1428 pool canonical fingerprint drift")
