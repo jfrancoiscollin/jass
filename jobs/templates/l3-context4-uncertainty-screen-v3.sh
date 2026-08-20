@@ -85,8 +85,8 @@ locked = {
     "MIN_ALIGNED_FLIPS": "12",
 }
 for key, expected in locked.items():
-    before = re.findall(rf"(?m)^{re.escape(key)}=(\\S+)$", original)
-    after = re.findall(rf"(?m)^{re.escape(key)}=(\\S+)$", text)
+    before = re.findall(rf"(?m)^{re.escape(key)}=(\S+)$", original)
+    after = re.findall(rf"(?m)^{re.escape(key)}=(\S+)$", text)
     if before != [expected] or after != [expected]:
         raise SystemExit(f"scientific parameter drift: {key} before={before} after={after}")
 
