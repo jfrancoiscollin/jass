@@ -77,7 +77,7 @@ changes.append({'label':'exact_extras_zero_guard','count':1})
 
 # Explicitly exclude both immutable 1419 force pools in addition to all prior exclusions.
 tail='pool-succession|r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0|artefacts/turnover-succession-openings.fen"'
-newtail='pool-succession|r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0|artefacts/turnover-succession-openings.fen\\npool-context3-1419-force-pool1|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool1-openings.fen\\npool-context3-1419-force-pool2|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool2-openings.fen"'
+newtail='pool-succession|r2:jass-data/runs/home-0995-l3-pure-turnover-succession-preflight-v2/20260727T054246Z-f20e59d0|artefacts/turnover-succession-openings.fen\npool-context3-1419-force-pool1|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool1-openings.fen\npool-context3-1419-force-pool2|r2:jass-data/runs/cpx62-1419-l3-context3-two-pool-force-v1/20260819T112556Z-8adc506a|artefacts/ctx3-force-pool2-openings.fen"'
 one(tail,newtail,'exclude_1419_pools')
 one('[ "${#EXCL_NAMES[@]}" -eq 15 ]','[ "${#EXCL_NAMES[@]}" -eq 17 ]','exclusion_count')
 
