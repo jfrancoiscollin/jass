@@ -67,15 +67,7 @@ def validate_1428_force_readout(readout: dict[str, Any]) -> None:
 
 
 def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
-    """Validate the certified 1428 fresh-pool contract used by CTX4.
-
-    The immutable 1430 publisher already authenticated the direct 1428
-    ``pool-certificate.json`` and embedded that exact JSON object in
-    ``CTX3_1428_READOUT.json``.  CTX4 therefore validates the published copy and
-    separately requires object equality with the directly fetched 1428 copy.
-    This removes a redundant schema-boundary ambiguity without weakening any
-    pool freshness, exclusion, cardinality or seed guard.
-    """
+    """Validate the certified 1428 fresh-pool contract used by CTX4."""
     if not isinstance(pool, dict):
         raise ValueError("1428 pool certificate missing")
     if pool.get("schema") != "jass.context3.two_fresh_pools.v1":
@@ -110,3 +102,33 @@ def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
         raise ValueError("1428 fresh pool seed drift")
     if any(item.get("openings") != 3000 for item in pools):
         raise ValueError("1428 fresh pool cardinality drift")
+
+
+def pool_certificate_canonical_fingerprint(pool: dict[str, Any]) -> str:
+    """Canonical full-certificate fingerprint used for cross-authentication.
+
+    Read-only diagnostic 1440 proved the direct immutable 1428 certificate and
+    the copy embedded by authenticated 1430 have zero structural/value
+    differences and the same canonical SHA-256 source representation.  We
+    therefore canonicalize the *entire* validated certificate rather than
+    dropping or normalizing any field.  This preserves every pool ID/hash,
+    exclusion receipt, overlap guard and metadata field fail-closed while
+    avoiding dependence on Python mapping insertion order or raw object identity.
+    """
+    validate_1428_pool_certificate(pool)
+    return json.dumps(
+        pool,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
+
+
+def validate_equivalent_1428_pool_certificates(
+    direct: dict[str, Any], embedded: dict[str, Any]
+) -> None:
+    """Fail closed unless both certified receipts are canonically identical."""
+    direct_fp = pool_certificate_canonical_fingerprint(direct)
+    embedded_fp = pool_certificate_canonical_fingerprint(embedded)
+    if direct_fp != embedded_fp:
+        raise ValueError("1428 pool canonical fingerprint drift")
