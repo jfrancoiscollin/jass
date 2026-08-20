@@ -56,17 +56,25 @@ class Context4UncertaintyScreenV3TemplateTests(unittest.TestCase):
         ):
             with self.subTest(required=required):
                 self.assertIn(required, wrapper)
-        for forbidden in (
-            "PER_POOL=",
-            "CHOICE_DEPTH=",
-            "JUDGE_DEPTH=",
-            "UNCERTAINTY_CP=",
-            "SELECTION_SEED=",
-            "SHUFFLE_SEED=",
-            "BOOTSTRAP_SEED=",
-        ):
-            with self.subTest(forbidden=forbidden):
-                self.assertNotIn(forbidden, wrapper)
+
+        # The wrapper may mention locked values inside its fail-closed checks, but
+        # it must not assign/override any scientific shell parameter itself.
+        forbidden_assignments = (
+            "PER_POOL",
+            "CHOICE_DEPTH",
+            "JUDGE_DEPTH",
+            "UNCERTAINTY_CP",
+            "SELECTION_SEED",
+            "SHUFFLE_SEED",
+            "BOOTSTRAP_SEED",
+            "BOOTSTRAP",
+            "MIN_TOTAL",
+            "MIN_PER_POOL",
+            "MIN_ALIGNED_FLIPS",
+        )
+        for key in forbidden_assignments:
+            with self.subTest(key=key):
+                self.assertIsNone(re.search(rf"(?m)^{re.escape(key)}=", wrapper))
 
 
 if __name__ == "__main__":
