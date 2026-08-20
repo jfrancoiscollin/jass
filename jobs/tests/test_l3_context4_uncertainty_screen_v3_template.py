@@ -51,7 +51,7 @@ class Context4UncertaintyScreenV3TemplateTests(unittest.TestCase):
         for required in (
             "context3-two-pool-force-readout.json=force-readout.json",
             "validate_1428_force_readout(force_readout)",
-            "scientific_protocol_changed\": False",
+            '"scientific_protocol_changed": False',
             "runner_summary_missing_scientific_promotion_field",
         ):
             with self.subTest(required=required):
