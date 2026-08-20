@@ -9,40 +9,24 @@ from typing import Any
 
 
 def validate_1428_force_summary(force: dict[str, Any]) -> None:
-    """Validate the immutable 1428 runner-summary execution scope used by CTX4.
+    """Validate the immutable 1428 ``JASS_CONTROL_SUMMARY`` artefact.
 
-    The certified runner-controlled JASS_CONTROL_SUMMARY stores execution-scope
-    guards under ``protocol``.  This is intentionally separate from the
-    scientific force readout: runner post-processing can wrap/replace the
-    top-level scientific fields while preserving the execution-scope receipt.
+    The certified 1428 force template writes the scientific readout first and
+    then copies it byte-for-byte to ``JASS_CONTROL_SUMMARY.json``.  The summary
+    therefore carries the exact scientific readout schema; it is not a separate
+    runner wrapper with nested ``fits``/``new_selfplay``/``frozen_cohorts``
+    receipts.  Reuse the scientific validator so both immutable paths are held
+    to the same fail-closed execution, promotion and continuation contract.
     """
-    if force.get("verdict") != "JASS_CONTEXT3_ALIGNED_VS_SHUFFLED_NOT_ESTABLISHED":
-        raise ValueError("1428 verdict drift")
-
-    protocol = force.get("protocol")
-    if not isinstance(protocol, dict):
-        raise ValueError("1428 protocol scope missing")
-
-    fits = protocol.get("fits")
-    new_selfplay = protocol.get("new_selfplay")
-    frozen = protocol.get("frozen_cohorts")
-    if not isinstance(fits, dict) or fits.get("count") != 0:
-        raise ValueError("1428 unexpectedly refit")
-    if not isinstance(new_selfplay, dict) or new_selfplay.get("generated") != 0:
-        raise ValueError("1428 unexpectedly self-played")
-    if not isinstance(frozen, dict) or frozen.get("read") != 0:
-        raise ValueError("1428 violated frozen-read contract")
-    if protocol.get("models_reused") is not True:
-        raise ValueError("1428 violated model-reuse contract")
+    validate_1428_force_readout(force)
 
 
 def validate_1428_force_readout(readout: dict[str, Any]) -> None:
     """Validate the immutable scientific 1428 force readout and promotion scope.
 
     ``context3-two-pool-force-readout.json`` is the scientific artefact that
-    1430 independently authenticated.  Promotion/continuation guards live here,
-    not in the runner-controlled JASS_CONTROL_SUMMARY wrapper.  Keeping the two
-    schemas separate prevents the technical 1434 failure from recurring.
+    1430 independently authenticated.  The certified 1428 template also copies
+    this payload byte-for-byte to ``JASS_CONTROL_SUMMARY.json``.
     """
     if readout.get("schema") != "jass.l3_context3_two_pool_force_readout.v1":
         raise ValueError("1428 scientific readout schema drift")
