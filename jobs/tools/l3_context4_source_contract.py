@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -63,3 +64,49 @@ def validate_1428_force_readout(readout: dict[str, Any]) -> None:
         raise ValueError("1428 scientific readout promotion scope drift")
     if readout.get("automatic_next_job") is not None:
         raise ValueError("1428 scientific readout continuation scope drift")
+
+
+def validate_1428_pool_certificate(pool: dict[str, Any]) -> None:
+    """Validate the certified 1428 fresh-pool contract used by CTX4.
+
+    The immutable 1430 publisher already authenticated the direct 1428
+    ``pool-certificate.json`` and embedded that exact JSON object in
+    ``CTX3_1428_READOUT.json``.  CTX4 therefore validates the published copy and
+    separately requires object equality with the directly fetched 1428 copy.
+    This removes a redundant schema-boundary ambiguity without weakening any
+    pool freshness, exclusion, cardinality or seed guard.
+    """
+    if not isinstance(pool, dict):
+        raise ValueError("1428 pool certificate missing")
+    if pool.get("schema") != "jass.context3.two_fresh_pools.v1":
+        raise ValueError("1428 pool certificate schema drift")
+    if pool.get("verdict") != "JASS_CONTEXT3_TWO_FRESH_POOLS_READY":
+        raise ValueError("1428 pool certificate verdict drift")
+    if pool.get("mutually_disjoint") is not True or pool.get("mutual_overlap") != 0:
+        raise ValueError("1428 pool disjointness drift")
+    if pool.get("all_historical_overlaps_zero") is not True:
+        raise ValueError("1428 historical overlap drift")
+    if pool.get("historical_exclusion_count") != 17:
+        raise ValueError("1428 historical exclusion count drift")
+    if pool.get("deterministic_generation_repeated") is not True:
+        raise ValueError("1428 pool deterministic-generation drift")
+    if pool.get("promotion_authorized") is not False:
+        raise ValueError("1428 pool promotion scope drift")
+
+    exclusions = pool.get("historical_exclusions")
+    if not isinstance(exclusions, list) or len(exclusions) != 17:
+        raise ValueError("1428 historical exclusion receipt drift")
+    blob = json.dumps(exclusions, sort_keys=True)
+    if (
+        "pool-context3-1419-force-pool1" not in blob
+        or "pool-context3-1419-force-pool2" not in blob
+    ):
+        raise ValueError("1428 missing 1419 pool exclusions")
+
+    pools = pool.get("pools")
+    if not isinstance(pools, list) or len(pools) != 2:
+        raise ValueError("1428 fresh pool count drift")
+    if [item.get("seed") for item in pools] != [2026082001, 2026082002]:
+        raise ValueError("1428 fresh pool seed drift")
+    if any(item.get("openings") != 3000 for item in pools):
+        raise ValueError("1428 fresh pool cardinality drift")

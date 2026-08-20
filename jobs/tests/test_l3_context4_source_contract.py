@@ -4,6 +4,7 @@ import unittest
 from jobs.tools.l3_context4_source_contract import (
     validate_1428_force_readout,
     validate_1428_force_summary,
+    validate_1428_pool_certificate,
 )
 
 
@@ -111,6 +112,57 @@ class Context4SourceContractTests(unittest.TestCase):
             with self.subTest(key=key):
                 with self.assertRaisesRegex(ValueError, message):
                     validate_1428_force_readout(payload)
+
+    @staticmethod
+    def _pool_certificate():
+        exclusions = [
+            {"label": f"historical-{i}"} for i in range(15)
+        ] + [
+            {"label": "pool-context3-1419-force-pool1"},
+            {"label": "pool-context3-1419-force-pool2"},
+        ]
+        return {
+            "schema": "jass.context3.two_fresh_pools.v1",
+            "verdict": "JASS_CONTEXT3_TWO_FRESH_POOLS_READY",
+            "pools": [
+                {"seed": 2026082001, "openings": 3000},
+                {"seed": 2026082002, "openings": 3000},
+            ],
+            "mutually_disjoint": True,
+            "mutual_overlap": 0,
+            "historical_exclusions": exclusions,
+            "historical_exclusion_count": 17,
+            "all_historical_overlaps_zero": True,
+            "deterministic_generation_repeated": True,
+            "promotion_authorized": False,
+        }
+
+    def test_certified_pool_certificate_passes(self):
+        validate_1428_pool_certificate(self._pool_certificate())
+
+    def test_pool_certificate_fails_closed_on_contract_drift(self):
+        cases = (
+            ("historical_exclusion_count", 16, "exclusion count drift"),
+            ("mutually_disjoint", False, "disjointness drift"),
+            ("deterministic_generation_repeated", False, "deterministic-generation drift"),
+            ("promotion_authorized", True, "promotion scope drift"),
+        )
+        for key, value, message in cases:
+            payload = self._pool_certificate()
+            payload[key] = value
+            with self.subTest(key=key):
+                with self.assertRaisesRegex(ValueError, message):
+                    validate_1428_pool_certificate(payload)
+
+        payload = self._pool_certificate()
+        payload["pools"][1]["seed"] = 2026082003
+        with self.assertRaisesRegex(ValueError, "fresh pool seed drift"):
+            validate_1428_pool_certificate(payload)
+
+        payload = self._pool_certificate()
+        payload["historical_exclusions"][-1] = {"label": "wrong"}
+        with self.assertRaisesRegex(ValueError, "missing 1419 pool exclusions"):
+            validate_1428_pool_certificate(payload)
 
 
 if __name__ == "__main__":
