@@ -2,9 +2,11 @@
 import unittest
 
 from jobs.tools.l3_context4_source_contract import (
+    pool_certificate_scientific_fingerprint,
     validate_1428_force_readout,
     validate_1428_force_summary,
     validate_1428_pool_certificate,
+    validate_equivalent_1428_pool_certificates,
 )
 
 
@@ -163,6 +165,63 @@ class Context4SourceContractTests(unittest.TestCase):
         payload["historical_exclusions"][-1] = {"label": "wrong"}
         with self.assertRaisesRegex(ValueError, "missing 1419 pool exclusions"):
             validate_1428_pool_certificate(payload)
+
+    def test_pool_fingerprint_ignores_only_transport_location_metadata(self):
+        direct = self._pool_certificate()
+        embedded = self._pool_certificate()
+        direct["pools"][0].update(
+            {"sha256": "a" * 64, "pool_id": "fresh-1", "path": "/tmp/direct-1.fen"}
+        )
+        direct["pools"][1].update(
+            {"sha256": "b" * 64, "pool_id": "fresh-2", "result_uri": "r2:direct"}
+        )
+        embedded["pools"][0].update(
+            {"sha256": "a" * 64, "pool_id": "fresh-1", "path": "/other/embedded-1.fen"}
+        )
+        embedded["pools"][1].update(
+            {"sha256": "b" * 64, "pool_id": "fresh-2", "result_uri": "r2:embedded"}
+        )
+        self.assertEqual(
+            pool_certificate_scientific_fingerprint(direct),
+            pool_certificate_scientific_fingerprint(embedded),
+        )
+        validate_equivalent_1428_pool_certificates(direct, embedded)
+
+    def test_pool_fingerprint_fails_closed_on_hash_or_identity_drift(self):
+        direct = self._pool_certificate()
+        embedded = self._pool_certificate()
+        direct["pools"][0].update({"sha256": "a" * 64, "pool_id": "fresh-1"})
+        embedded["pools"][0].update({"sha256": "b" * 64, "pool_id": "fresh-1"})
+        with self.assertRaisesRegex(ValueError, "scientific fingerprint drift"):
+            validate_equivalent_1428_pool_certificates(direct, embedded)
+
+        embedded = self._pool_certificate()
+        direct = self._pool_certificate()
+        direct["pools"][0]["pool_id"] = "fresh-1"
+        embedded["pools"][0]["pool_id"] = "fresh-X"
+        with self.assertRaisesRegex(ValueError, "scientific fingerprint drift"):
+            validate_equivalent_1428_pool_certificates(direct, embedded)
+
+    def test_pool_fingerprint_fails_closed_on_exclusion_receipt_drift(self):
+        direct = self._pool_certificate()
+        embedded = self._pool_certificate()
+        embedded["historical_exclusions"][0] = {"label": "different-history"}
+        with self.assertRaisesRegex(ValueError, "scientific fingerprint drift"):
+            validate_equivalent_1428_pool_certificates(direct, embedded)
+
+    def test_pool_equivalence_still_rejects_seed_count_and_overlap_drift(self):
+        mutations = (
+            (lambda p: p["pools"][0].__setitem__("seed", 2026082999), "seed drift"),
+            (lambda p: p["pools"][0].__setitem__("openings", 2999), "cardinality drift"),
+            (lambda p: p.__setitem__("mutual_overlap", 1), "disjointness drift"),
+        )
+        for mutate, message in mutations:
+            direct = self._pool_certificate()
+            embedded = self._pool_certificate()
+            mutate(embedded)
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    validate_equivalent_1428_pool_certificates(direct, embedded)
 
 
 if __name__ == "__main__":
