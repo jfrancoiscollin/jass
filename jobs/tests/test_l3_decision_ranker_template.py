@@ -16,9 +16,12 @@ class DecisionRankerTemplateTest(unittest.TestCase):
     def test_preregistered_science_is_locked(self) -> None:
         text = TEMPLATE.read_text(encoding="utf-8")
         required = (
-            "SOURCE_1455_ROOT",
-            "EXPECTED_1455_ATTEMPT",
-            "EXPECTED_1455_CODE_SHA",
+            "SOURCE_CONTEXT30_ROOT",
+            "EXPECTED_CONTEXT30_JOB",
+            "EXPECTED_CONTEXT30_ATTEMPT",
+            "EXPECTED_CONTEXT30_CODE_SHA",
+            "PASS_VERDICT=\"JASS_DECISION_RANKER_MECHANISM_SCREEN_PASSED\"",
+            "FAIL_VERDICT=\"JASS_DECISION_RANKER_MECHANISM_SCREEN_FAILED\"",
             "PER_POOL=512",
             "CHOICE_DEPTH=9",
             "AUDIT_DEPTH=12",
@@ -39,7 +42,6 @@ class DecisionRankerTemplateTest(unittest.TestCase):
             "--dump-conditional-context-v2",
             "l3_decision_ranker_screen.py worker",
             "l3_decision_ranker_screen.py aggregate",
-            "JASS_DECISION_RANKER_MECHANISM_SCREEN",
             "PATTERNEVAL_FITS_RUN__0",
             "RANKER_FITS_RUN__6",
             "NEW_SELFPLAY__0",
@@ -68,7 +70,7 @@ class DecisionRankerTemplateTest(unittest.TestCase):
         self.assertIn("source_pool_results_used_as_labels':False", text)
         self.assertIn("automatic_next_job']=None", text)
 
-    def test_source_pools_are_1455_and_not_regenerated(self) -> None:
+    def test_source_pools_are_terminal_context30_and_not_regenerated(self) -> None:
         text = TEMPLATE.read_text(encoding="utf-8")
         self.assertIn(
             "replay-context30-target-pool1-openings.fen=pool1.fen", text
@@ -78,6 +80,8 @@ class DecisionRankerTemplateTest(unittest.TestCase):
         )
         self.assertNotIn("--gen-opening-pool", text)
         self.assertIn("historical_exclusion_count')!=23", text)
+        self.assertIn("source_job,attempt,code", text)
+        self.assertNotIn("EXPECTED_1455_ATTEMPT", text)
         doc = (
             ROOT
             / "docs"
