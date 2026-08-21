@@ -58,7 +58,7 @@ required = (
     'pool-replay-b-promotion-1454-pool2',
     '--target external',
     '--sample-weights',
-    '--prior-mean \\"$W/curriculum.pjtw\\"',
+    '--prior-mean "$W/curriculum.pjtw"',
     'REFITS__1',
     'NEW_SELFPLAY__0',
     'FROZEN_COHORTS_READ__0',
