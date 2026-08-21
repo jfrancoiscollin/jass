@@ -35,6 +35,20 @@ if text.count(old) != 1:
 text = text.replace(old, new)
 if "JASS_REPLAY25_B_VS_CURRICULUM" in text:
     raise SystemExit("obsolete broad self-check token survived")
+
+# Make the complete two-stage renderer executable in CI without launching the
+# scientific job. Runtime behaviour is unchanged unless the explicit test-only
+# environment flag is present.
+exec_anchor = 'exec bash "$PATCHED"'
+render_only = '''if [ "${JASS_PROMOTION_RENDER_ONLY:-0}" = 1 ]; then
+  cp "$PATCHED" "$JASS_ARTEFACT_DIR/promotion-rendered.sh"
+  exit 0
+fi
+exec bash "$PATCHED"'''
+if text.count(exec_anchor) != 1:
+    raise SystemExit(f"promotion v1 exec anchor drift: count={text.count(exec_anchor)}")
+text = text.replace(exec_anchor, render_only)
+
 required = (
     "EXPECTED_BASE_BLOB=\"ffec746c56930c6236017fe0742017969d27aa5b\"",
     "NOPEN=3000",
@@ -47,16 +61,18 @@ required = (
     "--pattern-a \"$W/B.pjtw\" --pattern-b \"$W/curriculum.pjtw\"",
     "promotion_review_recommended",
     "PROMOTION_AUTHORIZED__FALSE",
+    "for forbidden in (\"fit_arm A \", \"stage sequential-four-arm-fits\", \"--prior-mean\", \"--target wdl\")",
 )
 for token in required:
     if token not in text:
         raise SystemExit(f"promotion v2 scientific lock missing: {token}")
-for forbidden in ("fit_arm A ", "stage sequential-four-arm-fits", "--target wdl"):
-    if forbidden in text:
-        raise SystemExit(f"promotion v2 contains a forbidden refit path: {forbidden}")
+
+# Do not scan the renderer source for its own forbidden-token literals. The
+# inner v1 renderer performs that check on the final generated scientific
+# script, after the source-only control code has disappeared.
 dst.write_text(text, encoding="utf-8")
 report.write_text(json.dumps({
-    "schema": "jass.l3_replay_b_promotion_v2_normalization.v1",
+    "schema": "jass.l3_replay_b_promotion_v2_normalization.v2",
     "source_v1_blob": "a2691c7221bc9dd89b3835fda5007da37a914451",
     "technical_change_only": True,
     "scientific_protocol_changed": False,
@@ -65,11 +81,22 @@ report.write_text(json.dumps({
     "new_selfplay": 0,
     "frozen_read": False,
     "automatic_promotion": False,
-    "change": {
-        "kind": "self_check_token_specificity",
-        "old": "JASS_REPLAY25_B_VS_CURRICULUM",
-        "new": "l3_replay_b_promotion_readout.py"
-    }
+    "changes": [
+        {
+            "kind": "self_check_token_specificity",
+            "old": "JASS_REPLAY25_B_VS_CURRICULUM",
+            "new": "l3_replay_b_promotion_readout.py"
+        },
+        {
+            "kind": "test_only_render_mode",
+            "environment_flag": "JASS_PROMOTION_RENDER_ONLY",
+            "runtime_default_changed": False
+        },
+        {
+            "kind": "remove_self_referential_outer_forbidden_scan",
+            "inner_generated_script_scan_preserved": True
+        }
+    ]
 }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
 

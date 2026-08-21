@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,15 +48,10 @@ class PromotionTemplateContractTest(unittest.TestCase):
             "l3_replay_b_promotion_readout.py",
             "PROMOTION_AUTHORIZED__FALSE",
             "promotion_review_recommended",
+            'for forbidden in ("fit_arm A ", "stage sequential-four-arm-fits", "--prior-mean", "--target wdl")',
         )
         for token in required:
             self.assertIn(token, text)
-        for forbidden in (
-            "fit_arm A ",
-            "stage sequential-four-arm-fits",
-            'args+=(--prior-mean',
-        ):
-            self.assertNotIn(forbidden, text)
 
     def test_v2_is_only_a_pinned_technical_normalizer(self) -> None:
         text = V2.read_text(encoding="utf-8")
@@ -68,18 +65,66 @@ class PromotionTemplateContractTest(unittest.TestCase):
             '"scientific_protocol_changed": False',
             '"refits": 0',
             '"automatic_promotion": False',
+            "JASS_PROMOTION_RENDER_ONLY",
+            "remove_self_referential_outer_forbidden_scan",
+            "inner_generated_script_scan_preserved",
             "bash -n \"$PATCHED\"",
             "exec bash \"$PATCHED\"",
         ):
             self.assertIn(token, text)
-        self.assertIn(
-            'old = \'    "JASS_REPLAY25_B_VS_CURRICULUM", "historical_exclusion_count",\'',
+        self.assertNotIn(
+            'for forbidden in ("fit_arm A ", "stage sequential-four-arm-fits", "--target wdl"):',
             text,
         )
-        self.assertIn(
-            'new = \'    "l3_replay_b_promotion_readout.py", "historical_exclusion_count",\'',
-            text,
-        )
+
+    def test_complete_two_stage_renderer_produces_fit_free_script(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = root / "result"
+            artefacts = root / "artefacts"
+            result.mkdir()
+            artefacts.mkdir()
+            env = os.environ.copy()
+            env.update(
+                {
+                    "JASS_CODE_DIR": str(ROOT),
+                    "JASS_RESULT_DIR": str(result),
+                    "JASS_ARTEFACT_DIR": str(artefacts),
+                    "JASS_PROMOTION_RENDER_ONLY": "1",
+                }
+            )
+            subprocess.run(
+                ["bash", str(V2)],
+                cwd=ROOT,
+                env=env,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            rendered = artefacts / "promotion-rendered.sh"
+            self.assertTrue(rendered.is_file())
+            subprocess.run(["bash", "-n", str(rendered)], check=True)
+            text = rendered.read_text(encoding="utf-8")
+            for token in (
+                'NOPEN=3000',
+                'CANDIDATES=40000',
+                'BOOTSTRAP=200000',
+                'POOL_SEED_1=2026082201',
+                'POOL_SEED_2=2026082202',
+                '--pattern-a "$W/B.pjtw" --pattern-b "$W/curriculum.pjtw"',
+                'JASS_REPLAY_B_PROMOTION_TWO_FRESH_POOLS_READY',
+                'GAMES_TOTAL__24000',
+                'PROMOTION_AUTHORIZED__FALSE',
+            ):
+                self.assertIn(token, text)
+            for forbidden in (
+                "fit_arm A ",
+                "stage sequential-four-arm-fits",
+                "--prior-mean",
+                "--target wdl",
+            ):
+                self.assertNotIn(forbidden, text)
 
 
 if __name__ == "__main__":
