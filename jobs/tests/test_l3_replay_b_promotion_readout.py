@@ -8,8 +8,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-
-import numpy as np
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_PATH = ROOT / "jobs" / "tools" / "l3_replay_b_promotion_readout.py"
@@ -103,7 +102,29 @@ class PromotionReadoutTest(unittest.TestCase):
                     )))
                     args.extend([f"--pool{pool}-{view}", str(path)])
             args.extend(["--out", str(root / "out.json")])
-            self.assertEqual(mod.main(args), 0)
+
+            # The production combine routine deliberately performs 200,000
+            # paired bootstrap replicates. Unit tests exercise the surrounding
+            # schema/audit/classification contract without reproducing that
+            # expensive scientific computation in CI.
+            positive = {
+                "pool_rates": [0.75, 0.75],
+                "pool_standard_errors": [0.001, 0.001],
+                "inter_pool_z": 0.0,
+                "inter_pool_compatible_95": True,
+                "rate": 0.75,
+                "elo_indicative": 190.8485,
+                "ci_low": 0.74,
+                "ci_high": 0.76,
+                "probability_rate_gt_half": 1.0,
+                "bootstrap_samples": 200000,
+                "bootstrap_seed": 0,
+                "openings": 6000,
+                "games": 12000,
+            }
+            with mock.patch.object(mod, "combine", side_effect=[positive, positive]):
+                self.assertEqual(mod.main(args), 0)
+
             result = json.loads((root / "out.json").read_text())
             self.assertEqual(
                 result["verdict"],
