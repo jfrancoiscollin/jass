@@ -78,9 +78,14 @@ class DecisionRankerTemplateTest(unittest.TestCase):
         )
         self.assertNotIn("--gen-opening-pool", text)
         self.assertIn("historical_exclusion_count')!=23", text)
-        self.assertIn("selection ignores", (
-            ROOT / "docs" / "experiments" / "L3_DECISION_RANKER_MECHANISM_SCREEN_20260822.md"
-        ).read_text(encoding="utf-8").lower().replace("ignore", "ignores"))
+        doc = (
+            ROOT
+            / "docs"
+            / "experiments"
+            / "L3_DECISION_RANKER_MECHANISM_SCREEN_20260822.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("La sélection ignore tous les résultats", doc)
+        self.assertIn("définitivement interdits à tout futur gate de force", doc)
 
 
 if __name__ == "__main__":
