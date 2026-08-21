@@ -34,11 +34,10 @@ byte.
 
 La PR prépare uniquement la phase mécanistique. Son job ne doit être mis en
 queue qu'après le verdict terminal de `cpx62-1455-l3-replay-context30-target-gate-v1`.
-L'attempt immuable de 1455 sera alors fourni au launcher et ses deux pools seront
-ajoutés aux exclusions.
+L'attempt immuable de 1455 sera alors fourni au launcher.
 
-Le verdict de 1455 ne change aucun paramètre DCR1. La présente spécification est
-figée avant lecture des résultats DCR1.
+Le protocole DCR1 est figé avant lecture du résultat de 1455. Le verdict de 1455
+ne change donc aucun paramètre, seuil ou règle de sélection DCR1.
 
 ## 3. Sources et pools
 
@@ -48,17 +47,23 @@ Le modèle scalaire et le juge sont tous deux l'artefact immuable CURRICULUM :
 - attempt `20260814T191555Z-18c38a33` ;
 - SHA-256 brut `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1`.
 
-Deux pools DCR1 frais sont générés après authentification de 1455 :
+DCR1 réutilise comme **source mécanistique**, après leur gate terminé, les deux
+pools 1455 qui ont été générés avant tout résultat DCR1 :
 
-- 2 000 ouvertures par pool ;
-- 30 000 candidats par seed ;
-- seeds `2026082301` et `2026082302` ;
-- disjonction mutuelle ;
-- exclusion de tous les pools historiques déjà certifiés, y compris 1451,
-  1454 et les deux pools 1455.
+- 3 000 ouvertures par pool ;
+- seeds de génération 1455 `2026082211` et `2026082212` ;
+- disjonction mutuelle certifiée ;
+- exclusion de 23 pools historiques, dont 1451 et 1454 ;
+- aucun résultat de partie 1455 n'est une feature ou une étiquette DCR1.
+
+Cette réutilisation économise une nouvelle génération de pools et reste
+préenregistrée avant le verdict 1455. Les pools 1455 deviennent ensuite des
+données DCR1 et sont donc définitivement interdits à tout futur gate de force
+du ranker.
 
 Dans chaque pool, 512 racines sont sélectionnées déterministiquement avec la
-seed `2026082303`. La sélection ignore tous les résultats de recherche.
+seed `2026082303`. La sélection ignore tous les résultats de recherche et de
+partie.
 
 ## 4. Construction des paires
 
@@ -182,7 +187,8 @@ Un PASS autorise une nouvelle PR séparée :
 - contrôle `lambda=0`/canal désactivé byte-compatible ;
 - intervention uniquement dans la bande de 40 cp ;
 - ALIGNED et SHUFFLED exécutés par le même chemin runtime ;
-- deux nouveaux pools de force, exclus de toutes les données DCR1 ;
+- deux nouveaux pools de force excluant toutes les données DCR1, en particulier
+  les deux pools 1455 ;
 - native 0,1 s primaire et Q00 diagnostic ;
 - confrontation supplémentaire contre CURRICULUM si le contraste causal passe.
 
