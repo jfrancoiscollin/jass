@@ -1,14 +1,19 @@
 """Contracts for the REPLAY25 native-vs-context30 target experiment."""
 
 from importlib import util
+import os
 from pathlib import Path
+import subprocess
 import sys
+import tempfile
 import unittest
 
 import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[2]
+V1 = ROOT / "jobs/templates/l3-replay-context30-target-gate-v1.sh"
+V2 = ROOT / "jobs/templates/l3-replay-context30-target-gate-v2.sh"
 
 
 def _load(name: str, relative: str):
@@ -21,7 +26,7 @@ def _load(name: str, relative: str):
 
 BASE = _load("l3_conditional_targets_for_replay_test", "jobs/tools/l3_conditional_targets.py")
 # The train-only adapter deliberately imports the historical builder by its
-# runtime module name.  Register the already loaded test instance under that
+# runtime module name. Register the already loaded test instance under that
 # name so the unit test exercises the same dependency topology as the job.
 sys.modules["l3_conditional_targets"] = BASE
 TARGETS = _load("l3_replay_context30_targets_tested", "jobs/tools/l3_replay_context30_targets.py")
@@ -114,10 +119,8 @@ class ReplayContext30TargetTest(unittest.TestCase):
         self.assertEqual(READOUT.classify(negative), "ESTABLISHED_NEGATIVE")
         self.assertEqual(READOUT.classify(mixed), "NOT_ESTABLISHED")
 
-    def test_template_locks_target_only_scope(self) -> None:
-        text = (ROOT / "jobs/templates/l3-replay-context30-target-gate-v1.sh").read_text(
-            encoding="utf-8"
-        )
+    def test_v1_locks_target_only_scope(self) -> None:
+        text = V1.read_text(encoding="utf-8")
         required = (
             "B_REPLAY25_CONTEXT30",
             "B_REPLAY25_NATIVE",
@@ -139,6 +142,80 @@ class ReplayContext30TargetTest(unittest.TestCase):
         self.assertIn("if forbidden in text:", text)
         self.assertEqual(text.count('"--gen-selfplay"'), 1)
         self.assertEqual(text.count('"PROMOTION_AUTHORIZED__TRUE"'), 1)
+
+    def test_v2_is_only_a_pinned_render_validator(self) -> None:
+        text = V2.read_text(encoding="utf-8")
+        for token in (
+            'EXPECTED_V1_BLOB="b0f32aae0c4b8326568a694b981ef1abd300e82d"',
+            "JASS_REPLAY_CONTEXT30_RENDER_ONLY",
+            '"technical_change_only": True',
+            '"scientific_protocol_changed": False',
+            '"runtime_default_changed": False',
+            '"refits": 1',
+            '"new_selfplay": 0',
+            '"automatic_promotion": False',
+            "inner_generated_script_forbidden_scan_preserved",
+            'exec bash "$PATCHED"',
+        ):
+            self.assertIn(token, text)
+
+    def test_complete_two_stage_renderer_produces_locked_final_script(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = root / "result"
+            artefacts = root / "artefacts"
+            result.mkdir()
+            artefacts.mkdir()
+            env = os.environ.copy()
+            env.update(
+                {
+                    "JASS_CODE_DIR": str(ROOT),
+                    "JASS_RESULT_DIR": str(result),
+                    "JASS_ARTEFACT_DIR": str(artefacts),
+                    "JASS_REPLAY_CONTEXT30_RENDER_ONLY": "1",
+                }
+            )
+            subprocess.run(
+                ["bash", str(V2)],
+                cwd=ROOT,
+                env=env,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            rendered = artefacts / "replay-context30-rendered.sh"
+            self.assertTrue(rendered.is_file())
+            subprocess.run(["bash", "-n", str(rendered)], check=True)
+            text = rendered.read_text(encoding="utf-8")
+            for token in (
+                'NOPEN=3000',
+                'CANDIDATES=40000',
+                'BOOTSTRAP=200000',
+                'POOL_SEED_1=2026082211',
+                'POOL_SEED_2=2026082212',
+                'B_REPLAY25_CONTEXT30',
+                'B_REPLAY25_NATIVE',
+                'CONTEXT_30_ALIGNED_alpha_0.30',
+                '--target external',
+                '--sample-weights',
+                '--prior-mean "$W/curriculum.pjtw"',
+                '--pattern-a "$W/B_C30.pjtw" --pattern-b "$W/B_NATIVE.pjtw"',
+                'GAMES_TOTAL__24000',
+                'REFITS__1',
+                'NEW_SELFPLAY__0',
+                'FROZEN_COHORTS_READ__0',
+                'PROMOTION_AUTHORIZED__FALSE',
+            ):
+                self.assertIn(token, text)
+            self.assertEqual(text.count('pattern_jass/tools/train_stream_exact.py \\'), 1)
+            for forbidden in (
+                "stage sequential-four-arm-fits",
+                "fit_arm A ",
+                "--gen-selfplay",
+                "PROMOTION_AUTHORIZED__TRUE",
+            ):
+                self.assertNotIn(forbidden, text)
 
 
 if __name__ == "__main__":
