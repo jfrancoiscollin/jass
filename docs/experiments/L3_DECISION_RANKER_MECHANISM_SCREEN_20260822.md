@@ -33,11 +33,19 @@ byte.
 ## 2. Séquence et dépendance
 
 La PR prépare uniquement la phase mécanistique. Son job ne doit être mis en
-queue qu'après le verdict terminal de `cpx62-1455-l3-replay-context30-target-gate-v1`.
-L'attempt immuable de 1455 sera alors fourni au launcher.
+queue qu'après un résultat terminal propre du protocole
+`REPLAY25 native-vs-context30 target gate` lancé initialement sous 1455.
 
-Le protocole DCR1 est figé avant lecture du résultat de 1455. Le verdict de 1455
-ne change donc aucun paramètre, seuil ou règle de sélection DCR1.
+La première tentative 1455 s'est arrêtée techniquement avant la création de ses
+pools. DCR1 n'authentifie donc pas un numéro de job codé en dur : son launcher
+devra épingler le job réparé, l'attempt, le SHA de code et la racine R2 exacts.
+Le contrat scientifique du source reste néanmoins strict : verdict terminal de
+la même famille, 24 000 parties, un refit, zéro self-play/frozen/promotion et le
+certificat des deux pools `replay-context30-target`.
+
+Le protocole DCR1 est figé avant tout résultat DCR1. Le verdict du gate
+context30 source ne change donc aucun paramètre, seuil ou règle de sélection
+DCR1.
 
 ## 3. Sources et pools
 
@@ -47,19 +55,19 @@ Le modèle scalaire et le juge sont tous deux l'artefact immuable CURRICULUM :
 - attempt `20260814T191555Z-18c38a33` ;
 - SHA-256 brut `319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1`.
 
-DCR1 réutilise comme **source mécanistique**, après leur gate terminé, les deux
-pools 1455 qui ont été générés avant tout résultat DCR1 :
+DCR1 réutilise comme **source mécanistique**, après son gate terminal, les deux
+pools produits par le protocole context30 target-only :
 
 - 3 000 ouvertures par pool ;
-- seeds de génération 1455 `2026082211` et `2026082212` ;
+- seeds de génération `2026082211` et `2026082212` ;
 - disjonction mutuelle certifiée ;
 - exclusion de 23 pools historiques, dont 1451 et 1454 ;
-- aucun résultat de partie 1455 n'est une feature ou une étiquette DCR1.
+- aucun résultat de partie du gate source n'est une feature ou une étiquette
+  DCR1.
 
 Cette réutilisation économise une nouvelle génération de pools et reste
-préenregistrée avant le verdict 1455. Les pools 1455 deviennent ensuite des
-données DCR1 et sont donc définitivement interdits à tout futur gate de force
-du ranker.
+préenregistrée avant le verdict source. Ces pools deviennent ensuite des données
+DCR1 et sont donc définitivement interdits à tout futur gate de force du ranker.
 
 Dans chaque pool, 512 racines sont sélectionnées déterministiquement avec la
 seed `2026082303`. La sélection ignore tous les résultats de recherche et de
@@ -188,7 +196,7 @@ Un PASS autorise une nouvelle PR séparée :
 - intervention uniquement dans la bande de 40 cp ;
 - ALIGNED et SHUFFLED exécutés par le même chemin runtime ;
 - deux nouveaux pools de force excluant toutes les données DCR1, en particulier
-  les deux pools 1455 ;
+  les deux pools du gate context30 source ;
 - native 0,1 s primaire et Q00 diagnostic ;
 - confrontation supplémentaire contre CURRICULUM si le contraste causal passe.
 
