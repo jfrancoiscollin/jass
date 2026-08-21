@@ -2,17 +2,18 @@
 # Preregistered DCR1 mechanistic screen: learn the top-two move decision.
 #
 # CURRICULUM remains byte-identical and supplies both the depth-9 candidates and
-# the depth-12/depth-14 direct pairwise labels.  The only fitted object is a
-# small OOF audit ranker over child-context differences.  No PatternEval fit,
+# the depth-12/depth-14 direct pairwise labels. The only fitted object is a
+# small OOF audit ranker over child-context differences. No PatternEval fit,
 # self-play, strength game, frozen read, continuation or promotion occurs.
 set -Eeuo pipefail
 
 : "${JASS_CODE_DIR:?}"; : "${JASS_RESULT_DIR:?}"; : "${JASS_ARTEFACT_DIR:?}"
 : "${JASS_JOB_ID:?}"; : "${JASS_OBJSTORE_REMOTE:?}"
 : "${EXPECTED_CODE_SHA:?}"; : "${EXPECTED_JOB_ID:?}"
-: "${SOURCE_1455_ROOT:?immutable completed 1455 R2 root required}"
-: "${EXPECTED_1455_ATTEMPT:?immutable 1455 attempt required}"
-: "${EXPECTED_1455_CODE_SHA:?immutable 1455 code SHA required}"
+: "${SOURCE_CONTEXT30_ROOT:?immutable completed context30 target-gate R2 root required}"
+: "${EXPECTED_CONTEXT30_JOB:?immutable source job required}"
+: "${EXPECTED_CONTEXT30_ATTEMPT:?immutable source attempt required}"
+: "${EXPECTED_CONTEXT30_CODE_SHA:?immutable source code SHA required}"
 cd "$JASS_CODE_DIR"
 
 CURRICULUM_JOB="cpx62-1341-jass-megacorpus-arm-d-fit-v1"
@@ -20,7 +21,8 @@ CURRICULUM_ATTEMPT="20260814T191555Z-18c38a33"
 CURRICULUM_CODE="18c38a33ae78c9c2e8e2df62fca266da28dacead"
 CURRICULUM_ROOT="r2:jass-data/runs/$CURRICULUM_JOB/$CURRICULUM_ATTEMPT"
 CURRICULUM_SHA="319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1"
-SOURCE_1455_JOB="cpx62-1455-l3-replay-context30-target-gate-v1"
+PASS_VERDICT="JASS_DECISION_RANKER_MECHANISM_SCREEN_PASSED"
+FAIL_VERDICT="JASS_DECISION_RANKER_MECHANISM_SCREEN_FAILED"
 
 PER_POOL=512
 TOTAL=1024
@@ -103,7 +105,6 @@ trap 'exit 130' INT
 [ "${NO_AUTOMATIC_CONTINUATION:-0}" = 1 ] || die "automatic-continuation guard missing"
 [ "${NO_FROZEN_READ:-0}" = 1 ] || die "frozen-read guard missing"
 [ "${NO_AUTOMATIC_PROMOTION:-0}" = 1 ] || die "promotion guard missing"
-[ "$EXPECTED_1455_CODE_SHA" = "a232e45991fbc35a156eacaa9a0586f1dd947d76" ] || die "1455 code SHA drift"
 [ "$CHOICE_DEPTH" -lt "$AUDIT_DEPTH" ] && [ "$AUDIT_DEPTH" -lt "$JUDGE_DEPTH" ] || die "search-depth order drift"
 [ "$(tr ',' '\n' <<<"$Q00" | wc -l)" -eq 63 ] || die "Q00 drift"
 [ -f "$VENV_READY" ] || die "persistent numeric runtime absent"
@@ -113,7 +114,7 @@ DFA=$(df -Pm "$JASS_RESULT_DIR" | awk 'NR==2{print $4}')
 [ "${DFA:-0}" -gt 6144 ] || die "less than 6 GiB free"
 monitor
 say "experiment=DCR1 issue=555 learning_object=deep_judge_top2_vs_top1"
-say "source_pools=1455 per_pool=$PER_POOL choice=$CHOICE_DEPTH audit=$AUDIT_DEPTH judge=$JUDGE_DEPTH band_cp=$UNCERTAINTY_CP"
+say "source_pools=$EXPECTED_CONTEXT30_JOB per_pool=$PER_POOL choice=$CHOICE_DEPTH audit=$AUDIT_DEPTH judge=$JUDGE_DEPTH band_cp=$UNCERTAINTY_CP"
 
 stage repository-contract-tests
 python3 -m py_compile \
@@ -129,58 +130,58 @@ fetch(){
     --out-dir "$IN" --report "$ART/$report" --expected-state completed
 }
 
-stage fetch-authenticate-curriculum-and-preregistered-1455-pools
+stage fetch-authenticate-curriculum-and-preregistered-context30-pools
 fetch "$CURRICULUM_ROOT" verified-curriculum.json \
   --file artefacts/D-c-prior-then-current.pjtw.gz=curriculum.pjtw.gz \
   --file artefacts/JASS_CONTROL_SUMMARY.json=curriculum-summary.json \
   >"$W/fetch-curriculum.log" 2>&1
-fetch "$SOURCE_1455_ROOT" verified-1455.json \
-  --file artefacts/JASS_CONTROL_SUMMARY.json=source-1455-summary.json \
-  --file artefacts/pool-certificate.json=source-1455-pool-certificate.json \
+fetch "$SOURCE_CONTEXT30_ROOT" verified-context30-source.json \
+  --file artefacts/JASS_CONTROL_SUMMARY.json=source-context30-summary.json \
+  --file artefacts/pool-certificate.json=source-context30-pool-certificate.json \
   --file artefacts/replay-context30-target-pool1-openings.fen=pool1.fen \
   --file artefacts/replay-context30-target-pool2-openings.fen=pool2.fen \
-  >"$W/fetch-1455.log" 2>&1
+  >"$W/fetch-context30-source.log" 2>&1
 
 gunzip -t "$IN/curriculum.pjtw.gz"
 gunzip -c "$IN/curriculum.pjtw.gz" >"$W/curriculum.pjtw"
 [ "$(sha256sum "$W/curriculum.pjtw" | awk '{print $1}')" = "$CURRICULUM_SHA" ] || die "CURRICULUM raw hash drift"
 
-"$PY" - "$ART" "$IN" "$EXPECTED_1455_ATTEMPT" "$EXPECTED_1455_CODE_SHA" <<'PY_AUTH'
+"$PY" - "$ART" "$IN" "$EXPECTED_CONTEXT30_JOB" "$EXPECTED_CONTEXT30_ATTEMPT" "$EXPECTED_CONTEXT30_CODE_SHA" <<'PY_AUTH'
 import hashlib,json,sys
 from pathlib import Path
-art,src=map(Path,sys.argv[1:3]); attempt,code=sys.argv[3:5]
+art,src=map(Path,sys.argv[1:3]); source_job,attempt,code=sys.argv[3:6]
 def load(path): return json.load(open(path))
 def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 cur=load(art/'verified-curriculum.json')
 if (cur.get('job_id'),cur.get('attempt_id'),cur.get('code_sha'),cur.get('result_state'),cur.get('exit_code')) != (
  'cpx62-1341-jass-megacorpus-arm-d-fit-v1','20260814T191555Z-18c38a33','18c38a33ae78c9c2e8e2df62fca266da28dacead','completed',0):
  raise SystemExit('CURRICULUM source identity drift')
-receipt=load(art/'verified-1455.json')
+receipt=load(art/'verified-context30-source.json')
 if (receipt.get('job_id'),receipt.get('attempt_id'),receipt.get('code_sha'),receipt.get('result_state'),receipt.get('exit_code')) != (
- 'cpx62-1455-l3-replay-context30-target-gate-v1',attempt,code,'completed',0):
- raise SystemExit('1455 source identity/state drift')
-summary=load(src/'source-1455-summary.json')
+ source_job,attempt,code,'completed',0):
+ raise SystemExit('context30 source identity/state drift')
+summary=load(src/'source-context30-summary.json')
 allowed={
  'JASS_REPLAY_CONTEXT30_TARGET_ESTABLISHED_POSITIVE',
  'JASS_REPLAY_CONTEXT30_TARGET_ESTABLISHED_NEGATIVE',
  'JASS_REPLAY_CONTEXT30_TARGET_NOT_ESTABLISHED',
 }
-if summary.get('verdict') not in allowed: raise SystemExit('1455 is not terminal')
+if summary.get('verdict') not in allowed: raise SystemExit('context30 source is not terminal')
 if summary.get('games_total')!=24000 or summary.get('refits')!=1 or summary.get('new_selfplay')!=0 or summary.get('frozen_cohorts_read')!=0 or summary.get('promotion_authorized') is not False:
- raise SystemExit('1455 scientific scope drift')
-pools=load(src/'source-1455-pool-certificate.json')
+ raise SystemExit('context30 source scientific scope drift')
+pools=load(src/'source-context30-pool-certificate.json')
 if pools.get('verdict')!='JASS_REPLAY_CONTEXT30_TWO_FRESH_POOLS_READY' or pools.get('mutually_disjoint') is not True or pools.get('all_historical_overlaps_zero') is not True or pools.get('historical_exclusion_count')!=23:
- raise SystemExit('1455 pool certificate drift')
+ raise SystemExit('context30 pool certificate drift')
 rows=pools.get('pools') or []
-if len(rows)!=2 or any(row.get('openings')!=3000 for row in rows): raise SystemExit('1455 pool cardinality drift')
+if len(rows)!=2 or any(row.get('openings')!=3000 for row in rows): raise SystemExit('context30 pool cardinality drift')
 for index,row in enumerate(rows,1):
  path=src/f'pool{index}.fen'
- if row.get('sha256')!=sha(path): raise SystemExit(f'1455 pool{index} hash drift')
+ if row.get('sha256')!=sha(path): raise SystemExit(f'context30 pool{index} hash drift')
  lines=[x for raw in path.read_text().splitlines() if (x:=raw.split('#',1)[0].strip())]
- if len(lines)!=3000 or len(set(lines))!=3000: raise SystemExit(f'1455 pool{index} row drift')
+ if len(lines)!=3000 or len(set(lines))!=3000: raise SystemExit(f'context30 pool{index} row drift')
 left={x for raw in (src/'pool1.fen').read_text().splitlines() if (x:=raw.split('#',1)[0].strip())}
 right={x for raw in (src/'pool2.fen').read_text().splitlines() if (x:=raw.split('#',1)[0].strip())}
-if left & right: raise SystemExit('1455 pools overlap')
+if left & right: raise SystemExit('context30 pools overlap')
 PY_AUTH
 
 stage build-authentic-curriculum-engine
@@ -270,20 +271,24 @@ for shard in $(seq 0 $((NSH-1))); do args+=(--shard "$SHARDS/shard-$shard.json")
 
 stage publish-terminal-mechanistic-verdict
 "$PY" - "$ART/decision-ranker-mechanism-screen.json" "$ART/JASS_CONTROL_SUMMARY.json" \
-  "$ART" "$RES" "$EXPECTED_1455_ATTEMPT" "$EXPECTED_1455_CODE_SHA" \
+  "$ART" "$RES" "$EXPECTED_CONTEXT30_JOB" "$EXPECTED_CONTEXT30_ATTEMPT" \
+  "$EXPECTED_CONTEXT30_CODE_SHA" "$PASS_VERDICT" "$FAIL_VERDICT" \
   "$CHOICE_DEPTH" "$AUDIT_DEPTH" "$JUDGE_DEPTH" "$UNCERTAINTY_CP" \
   "$JUDGE_DEADBAND_CP" <<'PY_PUBLISH'
 import json,sys
 from pathlib import Path
 report,summary,art,res=map(Path,sys.argv[1:5])
+source_job,source_attempt,source_code,pass_verdict,fail_verdict=sys.argv[5:10]
 r=json.load(open(report))
+if r.get('verdict') not in {pass_verdict,fail_verdict}:
+ raise SystemExit(f"unexpected DCR1 verdict: {r.get('verdict')}")
 r['source_evidence']={
- 'source_pools':{'job':'cpx62-1455-l3-replay-context30-target-gate-v1','attempt':sys.argv[5],'code_sha':sys.argv[6]},
+ 'source_pools':{'job':source_job,'attempt':source_attempt,'code_sha':source_code},
  'scalar_and_teacher':{'label':'CURRICULUM','job':'cpx62-1341-jass-megacorpus-arm-d-fit-v1','attempt':'20260814T191555Z-18c38a33','raw_sha256':'319d174f4b548b1655aad4bb30d4c6dc86c08dd715c9c23f8b19ba1937dc0be1'},
 }
 r['protocol'].update({
- 'choice_depth':int(sys.argv[7]),'audit_depth':int(sys.argv[8]),'judge_depth':int(sys.argv[9]),
- 'uncertainty_band_cp':int(sys.argv[10]),'judge_deadband_cp':int(sys.argv[11]),
+ 'choice_depth':int(sys.argv[10]),'audit_depth':int(sys.argv[11]),'judge_depth':int(sys.argv[12]),
+ 'uncertainty_band_cp':int(sys.argv[13]),'judge_deadband_cp':int(sys.argv[14]),
  'source_pool_results_used_as_labels':False,
 })
 r['patterneval_fits_run']=0
