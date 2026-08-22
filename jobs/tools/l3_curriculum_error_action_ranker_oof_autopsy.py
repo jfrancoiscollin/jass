@@ -15,7 +15,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from jobs.tools import l3_curriculum_error_action_ranker as ranker
+try:
+    from jobs.tools import l3_curriculum_error_action_ranker as ranker
+except ModuleNotFoundError:  # pragma: no cover - direct CPX script execution
+    import l3_curriculum_error_action_ranker as ranker  # type: ignore
 
 
 SCHEMA = "jass.l3_curriculum_error_action_ranker_oof_autopsy.v1"
