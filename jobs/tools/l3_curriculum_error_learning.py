@@ -31,6 +31,7 @@ import math
 import os
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import tempfile
 from typing import Any, Iterable
@@ -218,6 +219,82 @@ def _exact_state_key(fen: str) -> str:
     return hashlib.sha256(_canonical(representative)).hexdigest()
 
 
+def _dump_legal_lines(jass_path: str, fens: list[str]) -> list[str]:
+    """Return lossless legal moves for each FEN without invoking search."""
+    if not fens:
+        return []
+    with tempfile.TemporaryDirectory(prefix="curriculum-error-legal-") as tmp:
+        root = Path(tmp)
+        source, target = root / "positions.fen", root / "legal.txt"
+        source.write_text("".join(f"{fen}\n" for fen in fens), encoding="utf-8")
+        proc = subprocess.run(
+            [jass_path, "--dump-legal", str(source), str(target)],
+            capture_output=True,
+            text=True,
+            timeout=max(60, len(fens) // 100),
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"--dump-legal failed rc={proc.returncode}: {proc.stderr.strip()}"
+            )
+        raw = target.read_text(encoding="utf-8")
+    # The C++ emitter writes exactly one newline-terminated row per FEN.  Using
+    # splitlines() would drop a final empty terminal row and silently misalign
+    # every later historical decision.
+    lines = raw.split("\n")
+    if not lines or lines[-1] != "":
+        raise ValueError("--dump-legal output is not newline terminated")
+    lines.pop()
+    if len(lines) != len(fens):
+        raise ValueError(
+            f"--dump-legal alignment drift: {len(lines)} rows for {len(fens)} FENs"
+        )
+    return lines
+
+
+def _resolve_historical_move(text: str, legal_line: str, cv: Any) -> Any:
+    """Restore captured-square identity lost by historical game dumps.
+
+    ``run_jass_gate_bounded`` historically persisted ``Move.jass_str()``.  A
+    capture therefore appears as only ``fromxto`` even though Jass's lossless
+    apply protocol also needs the captured-square set.  Resolve that endpoint
+    pair against eval-free ``--dump-legal`` output and fail closed if it is not
+    unique.  We must not guess: two legal capture paths with equal endpoints
+    can lead to different children.
+    """
+    separator = "-" if "-" in text else "x" if "x" in text else None
+    if separator is None:
+        raise ValueError(f"unparseable historical move: {text!r}")
+    parts = text.split(separator)
+    if len(parts) < 2 or any(not part.isdigit() for part in parts):
+        raise ValueError(f"unparseable historical move: {text!r}")
+    frm, to = int(parts[0]), int(parts[1])
+    supplied_captures = tuple(int(part) for part in parts[2:])
+    candidates: list[Any] = []
+    for raw_token in legal_line.split():
+        token = raw_token.removesuffix("+")
+        move_part, marker, capture_part = token.partition("*")
+        try:
+            legal_from, legal_to = map(int, move_part.split(">", 1))
+            captures = tuple(int(value) for value in capture_part.split(",")) if marker else ()
+        except ValueError as exc:
+            raise ValueError(f"malformed --dump-legal token: {raw_token!r}") from exc
+        if (legal_from, legal_to) != (frm, to):
+            continue
+        if separator == "-" and captures:
+            continue
+        if separator == "x" and not captures:
+            continue
+        if supplied_captures and set(captures) != set(supplied_captures):
+            continue
+        candidates.append(cv.Move(frm=frm, to=to, captures=captures))
+    if len(candidates) != 1:
+        raise ValueError(
+            f"historical move {text!r} resolves to {len(candidates)} legal moves: {legal_line!r}"
+        )
+    return candidates[0]
+
+
 def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, Any]:
     paths = sorted(path for root in game_dirs for path in root.glob("game-*.json"))
     if not paths:
@@ -320,6 +397,16 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
     search_params = search_params_path.read_text(encoding="utf-8").strip()
     if not search_params or "\n" in search_params:
         raise ValueError("search-params file must contain one non-empty fingerprint line")
+    source_rows = [
+        source
+        for source in selection["rows"]
+        if int(source["ordinal"]) % args.nshards == args.shard
+    ]
+    if args.max_rows:
+        source_rows = source_rows[: args.max_rows]
+    legal_lines = _dump_legal_lines(
+        args.jass, [str(source["fen"]) for source in source_rows]
+    )
     engine = cv.JassEngine(
         args.jass,
         label=f"curriculum-autopsy-s{args.shard}",
@@ -328,17 +415,15 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
     )
     referee = cv.Referee(args.jass)
     output: list[dict[str, Any]] = []
+    endpoint_only_captures = 0
     try:
-        selected_rows = 0
-        for source in selection["rows"]:
+        for source, legal_line in zip(source_rows, legal_lines, strict=True):
             ordinal = int(source["ordinal"])
-            if ordinal % args.nshards != args.shard:
-                continue
-            if args.max_rows and selected_rows >= args.max_rows:
-                break
-            selected_rows += 1
             fen = str(source["fen"])
-            actual = cv.parse_scan_move(str(source["actual_move"]))
+            historical_text = str(source["actual_move"])
+            actual = _resolve_historical_move(historical_text, legal_line, cv)
+            if "x" in historical_text and len(historical_text.split("x")) == 2:
+                endpoint_only_captures += 1
             best, best_root = ctx._search(engine, fen, args.teacher_depth)
             actual_apply = actual.jass_apply_str()
             differs = actual_apply != best_root["apply"]
@@ -396,6 +481,13 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
         "teacher_depth": args.teacher_depth,
         "judge_depth": args.judge_depth,
         "max_rows": args.max_rows,
+        "historical_move_resolution": {
+            "method": "dump_legal_unique_endpoints",
+            "rows": len(source_rows),
+            "endpoint_only_captures": endpoint_only_captures,
+            "ambiguous": 0,
+            "unresolved": 0,
+        },
         "rows": output,
     }
 
@@ -517,6 +609,19 @@ def aggregate(
     selection_sha = hashlib.sha256(_canonical(selection)).hexdigest()
     if any(shard.get("selection_sha256") != selection_sha for shard in shards):
         raise ValueError("shard selection hash mismatch")
+    resolution_rows = 0
+    endpoint_only_captures = 0
+    for shard in shards:
+        resolution = shard.get("historical_move_resolution", {})
+        if resolution.get("method") != "dump_legal_unique_endpoints":
+            raise ValueError("historical move resolution method drift")
+        if int(resolution.get("ambiguous", -1)) != 0 or int(resolution.get("unresolved", -1)) != 0:
+            raise ValueError("historical move resolution was not lossless")
+        shard_rows = len(shard.get("rows", []))
+        if int(resolution.get("rows", -1)) != shard_rows:
+            raise ValueError("historical move resolution row count drift")
+        resolution_rows += shard_rows
+        endpoint_only_captures += int(resolution.get("endpoint_only_captures", 0))
     rows = [row for shard in shards for row in shard.get("rows", [])]
     rows.sort(key=lambda row: int(row["ordinal"]))
     if [int(row["ordinal"]) for row in rows] != list(range(int(selection["decisions"]))):
@@ -673,6 +778,14 @@ def aggregate(
         "candidate_buckets": len(candidates),
         "confirmed_buckets": len(confirmed_columns),
         "seed_positions": len(error_seeds),
+        "historical_move_resolution": {
+            "method": "dump_legal_unique_endpoints",
+            "rows": resolution_rows,
+            "endpoint_only_captures": endpoint_only_captures,
+            "ambiguous": 0,
+            "unresolved": 0,
+            "passed": resolution_rows == len(rows),
+        },
         "perspective_guard": {
             "probes": len(symmetry),
             "max_abs_exact_symmetry_delta_cp": max(map(abs, symmetry), default=None),
