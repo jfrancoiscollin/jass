@@ -117,6 +117,18 @@ class AnnulusPreregistrationTests(unittest.TestCase):
         self.assertEqual(result["fixed_architecture"]["baseline_d9_margin_lower_open_cp"], 50.0)
         self.assertEqual(result["fixed_architecture"]["baseline_d9_margin_upper_closed_cp"], 100.0)
         self.assertIn("equivariant_by_construction", result["fixed_architecture"]["symmetry"])
+        self.assertEqual(
+            result["fixed_architecture"]["additional_search"]["operation"],
+            "one_exact_image_Q00_d9_root_trace",
+        )
+        self.assertIn(
+            "same_cost_shuffled_residual",
+            result["fixed_architecture"]["required_validation_controls"],
+        )
+        self.assertEqual(
+            result["fixed_architecture"]["abstention"],
+            "bit_identical_to_CURRICULUM_outside_annulus",
+        )
         self.assertEqual(result["validation_decision_payload_reads"], 0)
         self.assertEqual(result["outer_confirm_decision_payload_reads"], 0)
 
