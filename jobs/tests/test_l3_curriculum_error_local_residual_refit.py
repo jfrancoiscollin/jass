@@ -113,6 +113,21 @@ class CurriculumErrorLocalResidualRefitTests(unittest.TestCase):
             metrics[0]["objective"],
         )
 
+    def test_no_improving_step_returns_zero_for_scientific_rejection(self) -> None:
+        rows = [pair(index, "discovery", {0: -1.0}, {1: 0.0}) for index in range(20)]
+        ticks, metrics = refit._choose_step(
+            rows,
+            {0: 0.0, 1: 0.0},
+            {0: 1},
+            scale=64,
+            grid=[0, 1, 2, 4],
+            rank_scale=1.0,
+            control_anchor=0.25,
+            trust_anchor=0.01,
+        )
+        self.assertEqual(ticks, 0)
+        self.assertEqual(metrics[0]["ticks"], 0)
+
     def test_integer_update_freezes_outside_and_preserves_exact_orbits(self) -> None:
         folder = SimpleNamespace(
             rf_canon=np.asarray([[0, 1, 2], [2, 1, 0]], dtype=np.int64),

@@ -428,7 +428,7 @@ def _choose_step(
     chosen = min(metrics, key=lambda row: (row["objective"], row["ticks"]))
     baseline = metrics[0]
     if int(chosen["ticks"]) == 0 or chosen["objective"] >= baseline["objective"] - 1e-9:
-        raise ValueError("anchored discovery objective does not authorize a non-zero step")
+        return 0, metrics
     return int(chosen["ticks"]), metrics
 
 
@@ -546,15 +546,15 @@ def fit(args: argparse.Namespace) -> dict[str, Any]:
     }
     if region_canonical != {coordinate % total for coordinate in error_direction}:
         raise ValueError("atlas direction and authorized region differ")
+    discovery_fit, calibration = _calibration_split(rows, seed=args.split_seed)
     sham_direction, sham_matching = _match_sham_direction(
-        rows, error_direction, representatives, total=total,
+        discovery_fit, error_direction, representatives, total=total,
         buckets_per_pattern=int(patterns.BUCKETS_PER_PATTERN),
     )
     all_coordinates = set(error_direction) | set(sham_direction)
     canonical = _canonical_weights(
         model, all_coordinates, representatives, folder, total=total, scale=scale
     )
-    discovery_fit, calibration = _calibration_split(rows, seed=args.split_seed)
     grid = [int(value) for value in args.trust_grid.split(",")]
     ticks, grid_metrics = _choose_step(
         discovery_fit, canonical, error_direction, scale=scale, grid=grid,
@@ -576,7 +576,11 @@ def fit(args: argparse.Namespace) -> dict[str, Any]:
         rows, error_delta, sham_delta, bootstrap_samples=args.bootstrap_samples,
         seed=args.bootstrap_seed, control_tolerance=args.control_tolerance,
     )
-    gates = {**calibration_gates, **confirm_gates}
+    gates = {
+        "discovery_nonzero_step_authorized": ticks > 0,
+        **calibration_gates,
+        **confirm_gates,
+    }
     passed = all(gates.values())
     output: dict[str, Any] = {
         "schema": SCHEMA,
@@ -598,6 +602,8 @@ def fit(args: argparse.Namespace) -> dict[str, Any]:
             "seed": args.split_seed,
             "fit_pairs": len(discovery_fit),
             "calibration_pairs": len(calibration),
+            "sham_matching_pairs": len(discovery_fit),
+            "sham_matching_used_calibration": False,
             "confirm_pairs": sum(pair["split"] == "confirm" for pair in rows),
             "confirm_used_for_step_selection": False,
         },

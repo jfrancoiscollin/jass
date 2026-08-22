@@ -17,6 +17,8 @@ interdit le fit.
 - `SHAM_REGION` contient le même nombre de buckets et de coordonnées. Chaque
   bucket est apparié dans les contrôles discovery sur le pattern, les phases
   MG/EG et la fréquence d'activation. Il ne peut chevaucher la région d'erreur.
+  Le matching ne lit que le sous-split fit de discovery ; le sous-split
+  calibration reste scellé.
 - Les deux bras reçoivent le même pas entier.
 
 Le seul hyperparamètre appris est ce pas. La grille préenregistrée est
@@ -28,6 +30,9 @@ choisir le pas.
 Cette construction évite un refit haute dimension sur quelques centaines de
 décisions : la direction vient de l'atlas causal, le fit ne choisit que sa
 dose.
+
+Si aucune dose non nulle n'améliore l'objectif ancré, le job se termine avec
+un verdict scientifique `NOT_ESTABLISHED` et ne publie aucun modèle.
 
 ## Gel exact
 
@@ -75,3 +80,9 @@ automatique.
 
 Cette étape ne lit aucune cohorte frozen, ne génère aucun self-play, ne joue
 aucune partie de force et ne modifie jamais CURRICULUM en place.
+
+Le wrapper de production authentifie l'atlas immuable 1485, ses 16 shards et
+le CURRICULUM brut par SHA-256. Un verdict atlas autre que `CONFIRMED` avorte
+avant refit. Une science locale négative termine normalement mais ne publie
+aucun candidat; une science positive publie les deux bras ERROR et SHAM avec
+header identique et audit indépendant du gel hors région.
