@@ -156,6 +156,7 @@ void test_hub_apply_then_go_yields_bestmove() {
         "go depth 2\n");
     JASS_CHECK(contains(out, "bestmove"));
     JASS_CHECK(contains(out, "pv="));
+    JASS_CHECK(contains(out, "pvleaf="));
     JASS_CHECK(contains(out, "cutoffs="));
     JASS_CHECK(contains(out, "scanverify="));
     JASS_CHECK(contains(out, "scanverifycuts="));
