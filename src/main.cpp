@@ -471,6 +471,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      opening (two trajectories with
                                             //      --pair-openings). Historical sampling
                                             //      with replacement remains the default.
+    const char*  seed_usage_path  = nullptr; // --seed-usage-out : TSV sidecar mapping each
+                                            //      generated opening_id to its exact seed
+                                            //      record index (-1 for an unseeded opening).
+                                            //      It never changes corpus or JSM bytes.
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
@@ -603,6 +607,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             seed_frac = parse_int_or(argv[++i], -1);
         } else if (a == "--seed-without-replacement") {
             seed_without_replacement = true;
+        } else if (a == "--seed-usage-out" && i + 1 < argc) {
+            seed_usage_path = argv[++i];
         } else if (a == "--random-open-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) random_open_plies = v;
@@ -684,6 +690,10 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     }
     if (seed_without_replacement && seed_frac != 100) {
         std::cerr << "error: --seed-without-replacement requires --seed-frac 100\n";
+        return 2;
+    }
+    if (seed_usage_path != nullptr && seed_path == nullptr) {
+        std::cerr << "error: --seed-usage-out requires --seed-file\n";
         return 2;
     }
     std::optional<jass::selfplay::NodeBudgetPolicy> node_budget_policy;
@@ -798,8 +808,20 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         && (std::string_view{node_budget_log_path} == std::string_view{out_path}
             || (sample_meta_path != nullptr
                 && std::string_view{node_budget_log_path}
+                    == std::string_view{sample_meta_path})
+            || (seed_usage_path != nullptr
+                && std::string_view{node_budget_log_path}
+                    == std::string_view{seed_usage_path}))) {
+        std::cerr << "error: --node-budget-log must differ from JNNW and sidecar outputs\n";
+        return 2;
+    }
+    if (seed_usage_path != nullptr
+        && (std::string_view{seed_usage_path} == std::string_view{out_path}
+            || std::string_view{seed_usage_path} == std::string_view{seed_path}
+            || (sample_meta_path != nullptr
+                && std::string_view{seed_usage_path}
                     == std::string_view{sample_meta_path}))) {
-        std::cerr << "error: --node-budget-log must differ from JNNW and sample-metadata outputs\n";
+        std::cerr << "error: --seed-usage-out must differ from seed, JNNW and sample-metadata paths\n";
         return 2;
     }
 
@@ -817,7 +839,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " movetime_ms=" << movetime_ms
               << " drop_plycap=" << (drop_plycap ? "true" : "false")
               << " sample_meta=" << (sample_meta_path ? sample_meta_path : "(off)")
-              << " sample_meta_format=" << (sample_meta_v2 ? "JSM2" : "JSM1");
+              << " sample_meta_format=" << (sample_meta_v2 ? "JSM2" : "JSM1")
+              << " seed_usage=" << (seed_usage_path ? seed_usage_path : "(off)");
     if (node_budget_policy) {
         std::cout << " search_limit=nodes"
                   << " node_budget_distribution="
@@ -959,6 +982,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         sample_meta.write(meta_magic, 4);
         sample_meta.write(reinterpret_cast<const char*>(&count_placeholder), 4);
     }
+    std::ofstream seed_usage;
+    if (seed_usage_path) {
+        seed_usage.open(seed_usage_path);
+        if (!seed_usage) {
+            std::cerr << "error: cannot open " << seed_usage_path << " for writing\n";
+            return 1;
+        }
+        seed_usage << "JSSU1\topening_id\tseed_index\n";
+    }
 
     // Splitmix-style scrambling of the user-provided seed so two
     // shards launched with seeds 1 and 2 yield trajectories that are
@@ -1073,6 +1105,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         e.new_game();
         ++opening_count;
         bool opening_from_seed = false;
+        std::int64_t opening_seed_index = -1;
 
         // Endgame seeding : start this game from a random seed position instead
         // of the FMJD start (then the random opening plies add diversity around it).
@@ -1093,6 +1126,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                 seed_index = static_cast<std::size_t>(rng() % seeds.size());
             }
             const SeedPos& sp = seeds[seed_index];
+            opening_seed_index = static_cast<std::int64_t>(seed_index);
             Position p{};
             p.set_side_to_move(sp.stm ? Color::Black : Color::White);
             for (Bitboard b = static_cast<Bitboard>(sp.bbs[0]); b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
@@ -1103,6 +1137,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         }
         if (opening_from_seed) ++stat_seeded_openings;
         else                   ++stat_standard_openings;
+        if (seed_usage.is_open()) {
+            seed_usage << opening_count << '\t' << opening_seed_index << '\n';
+            if (!seed_usage) {
+                std::cerr << "error: failed while writing " << seed_usage_path << "\n";
+                return 1;
+            }
+        }
 
         for (int i = 0; i < random_open_plies; ++i) {
             MoveList ml;
@@ -1563,6 +1604,13 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         sample_meta.write(reinterpret_cast<const char*>(&count32), 4);
         sample_meta.close();
     }
+    if (seed_usage.is_open()) {
+        seed_usage.close();
+        if (!seed_usage) {
+            std::cerr << "error: failed while closing " << seed_usage_path << "\n";
+            return 1;
+        }
+    }
 
     std::cout << "wrote " << generated << " WDL records to " << out_path << "\n";
     // === LABEL-HYGIENE STATS (MEASURE-ONLY, briefing §7.0) ===
@@ -1613,6 +1661,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " seed_without_replacement=" << (seed_without_replacement ? 1 : 0)
               << " seed_unique_used=" << (seed_without_replacement ? stat_seed_unique_used : -1)
               << " seed_reuses=" << (seed_without_replacement ? 0 : -1)
+              << " seed_usage_rows=" << (seed_usage_path ? opening_count : 0)
               << " games=" << game_count
               << " random_open_moves=" << stat_random_open_moves
               << " play_plies=" << stat_play_plies
@@ -5656,7 +5705,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P [--seed-without-replacement]] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH] [--sample-meta-format jsm1|jsm2]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P [--seed-without-replacement] [--seed-usage-out PATH]] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH] [--sample-meta-format jsm1|jsm2]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"
