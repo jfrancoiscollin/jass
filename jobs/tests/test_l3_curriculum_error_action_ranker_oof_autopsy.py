@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from pathlib import Path
+import subprocess
+import sys
 import unittest
 
 from jobs.tools import l3_curriculum_error_action_ranker as ranker
@@ -85,6 +88,21 @@ def source_model() -> dict:
 
 
 class ActionRankerOOFAutopsyTests(unittest.TestCase):
+    def test_direct_script_execution_resolves_local_imports(self):
+        root = Path(__file__).resolve().parents[2]
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(root / "jobs" / "tools" / "l3_curriculum_error_action_ranker_oof_autopsy.py"),
+                "--help",
+            ],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     def test_audit_preserves_both_sealed_holdouts(self):
         result = autopsy.analyze(source_report(), source_model())
         self.assertEqual(result["candidate_count"], 27)
