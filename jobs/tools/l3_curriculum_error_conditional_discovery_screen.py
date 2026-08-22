@@ -278,13 +278,31 @@ def screen(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
     if total <= 0:
         raise ValueError("invalid active PatternEval geometry")
     candidates = []
+    candidate_preflight = []
     for index, name in enumerate(sorted(set(fit_groups) & set(validation_groups))):
         fit_group, validation_group = fit_groups[name], validation_groups[name]
         if len(fit_group) < args.min_fit_pairs or len(validation_group) < args.min_validation_pairs:
+            candidate_preflight.append({
+                "population": name, "fit_pairs": len(fit_group),
+                "validation_pairs": len(validation_group),
+                "stage": "insufficient_population_support",
+                "required_fit_pairs": args.min_fit_pairs,
+                "required_validation_pairs": args.min_validation_pairs,
+            })
             continue
         min_hits = max(args.min_coordinate_hits, math.ceil(args.min_coordinate_fraction * len(fit_group)))
         direction, selected = _direction(fit_group, total=total, min_hits=min_hits, max_buckets=args.max_buckets)
-        if len({row["bucket"] for row in selected}) < args.min_buckets:
+        selected_buckets = len({row["bucket"] for row in selected})
+        if selected_buckets < args.min_buckets:
+            candidate_preflight.append({
+                "population": name, "fit_pairs": len(fit_group),
+                "validation_pairs": len(validation_group),
+                "stage": "insufficient_stable_coordinate_direction",
+                "min_coordinate_hits": min_hits,
+                "selected_canonical_buckets": selected_buckets,
+                "selected_coordinates": len(selected),
+                "required_canonical_buckets": args.min_buckets,
+            })
             continue
         metrics = _evaluate(validation_group, direction, selected, samples=args.bootstrap_samples,
                             seed=args.bootstrap_seed + 10 * index)
@@ -300,6 +318,13 @@ def screen(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
             + metrics["coordinate_replication_fraction"]
             - 0.002 * len(selected)
         )
+        candidate_preflight.append({
+            "population": name, "fit_pairs": len(fit_group),
+            "validation_pairs": len(validation_group), "stage": "evaluated",
+            "min_coordinate_hits": min_hits,
+            "selected_canonical_buckets": selected_buckets,
+            "selected_coordinates": len(selected),
+        })
         candidates.append({"population": name, "fit_pairs": len(fit_group),
                            "validation_pairs": len(validation_group), "min_coordinate_hits": min_hits,
                            "selected_canonical_buckets": len({row["bucket"] for row in selected}),
@@ -323,6 +348,7 @@ def screen(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, Any]]:
         "candidate_family": "ALL+phase+tactical+kings+phase_tactical+phase_kings+full_stratum",
         "pattern_total_buckets": total,
         "multiple_candidate_screen_is_exploratory_only": True,
+        "candidate_preflight": candidate_preflight,
         "candidate_results": candidates, "selected_population": chosen,
         "fresh_campaign_authorized": bool(chosen), "fit_authorized": False,
         "strength_games": 0, "selfplay_games": 0, "fits": 0, "frozen_reads": 0,

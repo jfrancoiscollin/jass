@@ -21,6 +21,7 @@ class CurriculumErrorConditionalDiscoveryTemplateTests(unittest.TestCase):
             '--bootstrap-samples 10000', '--total-buckets "$TOTAL_BUCKETS"',
             'JASS_CURRICULUM_ERROR_CONDITIONAL_DISCOVERY_SCREEN_READY',
             'FIT_AUTHORIZED__FALSE', 'OUTER_CONFIRM_READS__0',
+            'CANDIDATE_POPULATIONS_CONSIDERED__', 'candidate_preflight',
         ):
             self.assertIn(needle, text)
 
