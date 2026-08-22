@@ -167,6 +167,196 @@ def _atomic_write_json(path: str | Path, payload: dict) -> None:
             pass
 
 
+ERROR_REGION_SCHEMA = "jass.l3_curriculum_error_region.v1"
+
+
+def _prepare_trainable_region(
+    args,
+    folder,
+    remap: np.ndarray | None,
+    pat_n: int,
+    extras_n: int,
+) -> tuple[np.ndarray | None, dict | None]:
+    """Map an audited full-table error region into the current pruned layout.
+
+    The region deliberately names *unfolded* full pattern columns.  This keeps
+    the scientific artefact independent of the trainer's visit-order remap.
+    Under exact fold both members of a true rot180+colour-swap orbit resolve to
+    the same trainable coordinate.
+    """
+    region_path = getattr(args, "trainable_region", None)
+    report_path = getattr(args, "trainable_region_report", None)
+    if region_path is None:
+        if report_path is not None:
+            raise SystemExit("--trainable-region-report requires --trainable-region")
+        return None, None
+    if report_path is None:
+        raise SystemExit("--trainable-region requires --trainable-region-report")
+    if not getattr(args, "prior_mean", None):
+        raise SystemExit("--trainable-region requires --prior-mean as the frozen champion")
+    if folder.mode != "exact":
+        raise SystemExit("--trainable-region v1 requires --exact-fold")
+    if remap is None:
+        raise SystemExit("--trainable-region requires the default lossless --prune path")
+    if int(getattr(args, "prune_min_visits", 1)) != 1:
+        raise SystemExit("--trainable-region requires --prune-min-visits 1")
+
+    source = Path(region_path)
+    try:
+        region = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"{source}: cannot read trainable region: {exc}") from exc
+    if not isinstance(region, dict) or region.get("schema") != ERROR_REGION_SCHEMA:
+        raise SystemExit(f"{source}: expected schema {ERROR_REGION_SCHEMA}")
+    if region.get("fold") != "exact_rot180_colour_swap":
+        raise SystemExit(f"{source}: error region fold is not exact")
+    if region.get("fit_authorized") is not True:
+        raise SystemExit(f"{source}: error region did not authorize a fit")
+    if region.get("promotion_authorized") is not False:
+        raise SystemExit(f"{source}: error region promotion guard is not false")
+    champion_sha256 = region.get("champion_sha256")
+    if not isinstance(champion_sha256, str) or len(champion_sha256) != 64:
+        raise SystemExit(f"{source}: missing authenticated champion_sha256")
+    actual_champion_sha256 = _sha256_file(args.prior_mean)
+    if champion_sha256 != actual_champion_sha256:
+        raise SystemExit(
+            f"{source}: champion hash mismatch: region={champion_sha256} "
+            f"prior={actual_champion_sha256}"
+        )
+    contract = region.get("strict_fit_contract")
+    if (
+        not isinstance(contract, dict)
+        or contract.get("freeze_everything_else_at_champion") is not True
+    ):
+        raise SystemExit(f"{source}: strict frozen-region contract is absent")
+    if contract.get("train_dense_extras") is not False:
+        raise SystemExit(f"{source}: v1 requires all dense extras to remain frozen")
+
+    full_tb = patterns.TOTAL_BUCKETS
+    raw_columns = region.get("pattern_columns_full")
+    if (
+        not isinstance(raw_columns, list)
+        or not raw_columns
+        or any(type(value) is not int for value in raw_columns)
+    ):
+        raise SystemExit(f"{source}: pattern_columns_full must be a non-empty int list")
+    if len(raw_columns) != len(set(raw_columns)):
+        raise SystemExit(f"{source}: duplicate full pattern column")
+    confirmation = region.get("confirmation")
+    if not isinstance(confirmation, list) or any(
+        not isinstance(item, dict) or type(item.get("full_pattern_column")) is not int
+        for item in confirmation
+    ):
+        raise SystemExit(f"{source}: malformed bucket confirmation evidence")
+    confirmed = {int(item["full_pattern_column"]) for item in confirmation}
+    if confirmed != set(raw_columns):
+        raise SystemExit(f"{source}: selected buckets differ from confirmation evidence")
+    raw = np.asarray(raw_columns, dtype=np.int64)
+    if int(raw.min()) < 0 or int(raw.max()) >= full_tb:
+        raise SystemExit(f"{source}: full pattern column outside [0,{full_tb})")
+    pattern_id = raw // patterns.BUCKETS_PER_PATTERN
+    bucket_id = raw % patterns.BUCKETS_PER_PATTERN
+    canonical = folder.rf_canon[pattern_id, bucket_id].astype(np.int64)
+    canonical = np.unique(canonical)
+    dense = remap[canonical]
+    missing = canonical[dense == 0]
+    if len(missing):
+        raise SystemExit(
+            f"{source}: {len(missing)} confirmed canonical buckets are absent "
+            "from the fit corpus; the error repair corpus is incomplete"
+        )
+    dense = np.unique(dense.astype(np.int64))
+    if bool(np.any(dense <= 0)) or bool(np.any(dense >= pat_n)):
+        raise SystemExit(f"{source}: internal dense bucket mapping failure")
+
+    extras = region.get("extras", [])
+    if not isinstance(extras, list) or any(type(value) is not int for value in extras):
+        raise SystemExit(f"{source}: extras must be an integer list")
+    if extras:
+        raise SystemExit(f"{source}: v1 freezes all extras; extras must be empty")
+    if len(extras) != len(set(extras)):
+        raise SystemExit(f"{source}: duplicate extra coordinate")
+    if extras and (min(extras) < 0 or max(extras) >= extras_n):
+        raise SystemExit(f"{source}: extra coordinate outside [0,{extras_n})")
+
+    mask = np.zeros(2 * pat_n + 2 * extras_n, dtype=bool)
+    mask[dense] = True
+    mask[pat_n + dense] = True
+    if extras:
+        ext = np.asarray(extras, dtype=np.int64)
+        mask[2 * pat_n + ext] = True
+        mask[2 * pat_n + extras_n + ext] = True
+    prepared = {
+        "schema": "jass.train_stream_trainable_region.v1",
+        "source": {
+            "path": str(source),
+            "sha256": _sha256_file(source),
+            "schema": ERROR_REGION_SCHEMA,
+            "champion_sha256": champion_sha256,
+        },
+        "fold": folder.mode,
+        "full_pattern_columns": len(raw_columns),
+        "canonical_pattern_buckets": int(len(canonical)),
+        "dense_pattern_slots": int(len(dense)),
+        "extra_coordinates": len(extras),
+        "trainable_coordinates": int(np.count_nonzero(mask)),
+        "frozen_coordinates": int(len(mask) - np.count_nonzero(mask)),
+        "canonical_pattern_buckets_list": [int(value) for value in canonical],
+        "extra_coordinates_list": list(extras),
+        "outside_region_contract": "byte_identical_to_prior_mean_after_serialization",
+    }
+    target = Path(report_path)
+    protected = [source, Path(args.data), Path(args.feat), Path(args.out), Path(args.prior_mean)]
+    if target.resolve(strict=False) in {
+        path.resolve(strict=False) for path in protected
+    }:
+        raise SystemExit("--trainable-region-report must be distinct from every input/output")
+    if target.exists():
+        raise SystemExit(f"{target}: trainable region report already exists (no-clobber)")
+    return mask, prepared
+
+
+def _audit_frozen_region(
+    args,
+    folder,
+    prepared: dict,
+) -> dict:
+    """Prove that serialization changed no coefficient outside the region."""
+    parent, parent_scale, parent_pat_n, parent_ext_n = load_v3_weights_float(
+        args.prior_mean
+    )
+    output, output_scale, output_pat_n, output_ext_n = load_v3_weights_float(args.out)
+    if (parent_scale, parent_pat_n, parent_ext_n) != (
+        output_scale,
+        output_pat_n,
+        output_ext_n,
+    ):
+        raise SystemExit("local refit output geometry/scale differs from frozen champion")
+    canonical_active = np.zeros(patterns.TOTAL_BUCKETS, dtype=bool)
+    canonical_active[np.asarray(
+        prepared["canonical_pattern_buckets_list"], dtype=np.int64
+    )] = True
+    full_active = canonical_active[folder.rf_canon.ravel()]
+    extra_active = np.zeros(parent_ext_n, dtype=bool)
+    extra_active[np.asarray(prepared["extra_coordinates_list"], dtype=np.int64)] = True
+    allowed = np.concatenate([full_active, full_active, extra_active, extra_active])
+    changed = parent != output
+    changed_outside = int(np.count_nonzero(changed & ~allowed))
+    changed_inside = int(np.count_nonzero(changed & allowed))
+    if changed_outside:
+        raise SystemExit(
+            f"strict local refit violated frozen region: {changed_outside} coefficients drifted"
+        )
+    return {
+        **prepared,
+        "parent": {"path": str(args.prior_mean), "sha256": _sha256_file(args.prior_mean)},
+        "output": {"path": str(args.out), "sha256": _sha256_file(args.out)},
+        "changed_inside_region": changed_inside,
+        "changed_outside_region": changed_outside,
+        "frozen_region_exact": True,
+    }
+
+
 def _validate_weights_report_target(args, weights_path: Path, report_path: str) -> Path:
     target = Path(report_path)
     target_resolved = target.resolve(strict=False)
@@ -961,6 +1151,16 @@ def train_stream(args):
 
     n_cols = 2 * PAT_N + 2 * EVAL_NUM_EXTRAS
     print(f'design : {n_cols:,} columns (2x{PAT_N:,} pat + 2x{EVAL_NUM_EXTRAS} ext)')
+    trainable_mask, trainable_region = _prepare_trainable_region(
+        args, folder, remap, PAT_N, EVAL_NUM_EXTRAS
+    )
+    if trainable_region is not None:
+        print(
+            "trainable-region : "
+            f"{trainable_region['dense_pattern_slots']:,} pattern slots + "
+            f"{trainable_region['extra_coordinates']} extras; "
+            f"{trainable_region['frozen_coordinates']:,} coordinates strictly frozen"
+        )
 
     # --- Disk-backed build_fn : sel is a CONTIGUOUS row range produced by
     #     train_lbfgs_chunked's tr_idx[i:i+batch]. We require contiguity so we can
@@ -1031,7 +1231,7 @@ def train_stream(args):
         pat_n=PAT_N, n_patterns=patterns.NUM_PATTERNS,
         prior_mean=prior_mean, prior_prec=prior_prec, initial_mean=initial_mean,
         optimizer_diagnostics=optimizer_diagnostics, maxcor=args.lbfgs_maxcor,
-        gtol=args.lbfgs_gtol)
+        gtol=args.lbfgs_gtol, trainable_mask=trainable_mask)
     print(f'  train_loss={train_loss:.6f}  iters={n_iter}  ({time.time()-t0:.1f}s)')
     print('OPTIMIZER ' + json.dumps(optimizer_diagnostics, sort_keys=True))
     if args.optimizer_report:
@@ -1078,6 +1278,22 @@ def train_stream(args):
 
     write_weights_v3(Path(args.out), pat_mg, pat_eg, ext_mg, ext_eg, args.scale,
                      king=args.king_patterns)
+    if trainable_region is not None:
+        frozen_audit = _audit_frozen_region(args, folder, trainable_region)
+        _atomic_write_json(args.trainable_region_report, frozen_audit)
+        print(
+            "TRAINABLE_REGION "
+            + json.dumps(
+                {
+                    "changed_inside_region": frozen_audit["changed_inside_region"],
+                    "changed_outside_region": 0,
+                    "frozen_region_exact": True,
+                    "report": str(args.trainable_region_report),
+                    "source_sha256": trainable_region["source"]["sha256"],
+                },
+                sort_keys=True,
+            )
+        )
     total = 2 * (len(pat_mg) + E)
     print(f'wrote {args.out}  (v3, {total:,} weights, {20 + 4 * total:,} bytes)  '
           f'[total {time.time()-t_start:.1f}s]')
@@ -1221,6 +1437,13 @@ def main(argv=None):
                     help='required with --sample-weights: inclusive upper validation bound')
     ap.add_argument('--weights-report', type=str, default=None,
                     help='required with --sample-weights: atomic JSON provenance/statistics report')
+    ap.add_argument('--trainable-region', type=str, default=None,
+                    help='audited jass.l3_curriculum_error_region.v1 JSON; with --exact-fold '
+                         'and --prior-mean, optimise only its confirmed buckets and freeze every '
+                         'other coefficient exactly at the champion')
+    ap.add_argument('--trainable-region-report', type=str, default=None,
+                    help='required with --trainable-region: atomic post-serialization proof that '
+                         'no coefficient outside the region changed')
     ap.add_argument('--chunk', type=int, default=500000,
                     help='rows/chunk read from disk per gradient sub-step.')
     ap.add_argument('--prune', dest='prune', action='store_true', default=True,

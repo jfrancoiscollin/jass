@@ -408,7 +408,8 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
                         logistic, n_cols, batch, sw_all=None,
                         hier_l2=0.0, slot_pattern=None, pat_n=0, n_patterns=0,
                         prior_mean=None, prior_prec=None, initial_mean=None,
-                        optimizer_diagnostics=None, maxcor=5, gtol=None):
+                        optimizer_diagnostics=None, maxcor=5, gtol=None,
+                        trainable_mask=None):
     """Memory-bounded L-BFGS : the SAME full-batch gradient as train_lbfgs, but
     the design is rebuilt per `batch`-row chunk inside the objective so the dense
     phased extras (the peak allocation, ~2GB/M rows) never materialise for the
@@ -429,6 +430,12 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     point.  The objective remains the ordinary zero-centred L2 objective.  This is
     useful for autonomous lineages that want continuity between generations without
     turning the previous evaluator into a teacher or a ridge target.
+
+    `trainable_mask` is an opt-in strict local-refit contract.  When supplied, it is
+    a boolean vector of length ``n_cols``.  L-BFGS sees only the selected coordinates;
+    every other coordinate is held exactly at the chosen continuation point (the
+    prior mean or warm start).  This is stronger than a large ridge coefficient:
+    frozen coordinates cannot drift through the data term or hierarchical coupling.
     """
     N = len(tr_idx); eps = 1e-12
     use_prior = prior_mean is not None and prior_prec is not None
@@ -436,6 +443,21 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
         raise ValueError("initial_mean and prior_mean/prior_prec are mutually exclusive")
     if initial_mean is not None and len(initial_mean) != n_cols:
         raise ValueError(f"initial_mean has {len(initial_mean)} weights, expected {n_cols}")
+    local_refit = trainable_mask is not None
+    if local_refit:
+        trainable_mask = np.asarray(trainable_mask)
+        if trainable_mask.dtype != np.dtype(bool) or trainable_mask.shape != (n_cols,):
+            raise ValueError(
+                "trainable_mask must be a boolean vector of length "
+                f"{n_cols}, got dtype={trainable_mask.dtype} shape={trainable_mask.shape}"
+            )
+        if not bool(np.any(trainable_mask)):
+            raise ValueError("trainable_mask selects zero coordinates")
+        if not use_prior and initial_mean is None:
+            raise ValueError(
+                "trainable_mask requires prior_mean/prior_prec or initial_mean; "
+                "zero is not an admissible implicit frozen model"
+            )
     # --- Hierarchical shrinkage (backoff) : ADD a penalty on each pattern bucket's
     #     DEVIATION from its parent pattern mean (λ_h·Σ(w_b−μ_p)²), on top of the
     #     ordinary ridge/prior term. Rare buckets are pulled toward the pattern mean
@@ -499,7 +521,27 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
     options = {'maxiter': max_iter, 'maxcor': maxcor}
     if gtol is not None:
         options['gtol'] = float(gtol)
-    res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B', options=options)
+    if local_refit:
+        frozen_point = w0.copy()
+
+        def local_loss_and_grad(active):
+            full = frozen_point.copy()
+            full[trainable_mask] = active
+            loss, grad = loss_and_grad(full)
+            return loss, grad[trainable_mask]
+
+        res = minimize(
+            local_loss_and_grad,
+            w0[trainable_mask],
+            jac=True,
+            method='L-BFGS-B',
+            options=options,
+        )
+        fitted = frozen_point.copy()
+        fitted[trainable_mask] = res.x
+    else:
+        res = minimize(loss_and_grad, w0, jac=True, method='L-BFGS-B', options=options)
+        fitted = res.x
     if optimizer_diagnostics is not None:
         optimizer_diagnostics.update({
             "success": bool(res.success),
@@ -511,8 +553,15 @@ def train_lbfgs_chunked(build_fn, tr_idx, y_all, l2, max_iter,
             "max_iterations": int(max_iter),
             "maxcor": int(maxcor),
             "gtol": float(gtol) if gtol is not None else None,
+            "local_refit": bool(local_refit),
+            "trainable_coordinates": (
+                int(np.count_nonzero(trainable_mask)) if local_refit else int(n_cols)
+            ),
+            "frozen_coordinates": (
+                int(n_cols - np.count_nonzero(trainable_mask)) if local_refit else 0
+            ),
         })
-    return res.x, float(res.fun), int(res.nit)
+    return fitted, float(res.fun), int(res.nit)
 
 
 def lowmem_z(Xpat, extras, wmg, weg, w, PAT_N, E):
