@@ -24,6 +24,7 @@ import numpy as np
 BEST_FIELDS_RE = re.compile(
     r"^bestmove\s+\S+\s+score=(-?\d+)\s+depth=(\d+)\s+nodes=(\d+)"
 )
+PV_LEAF_RE = re.compile(r"(?:^|\s)pvleaf=([^\s]+)")
 
 
 def sha256(path: Path) -> str:
@@ -125,15 +126,19 @@ def exact_image_move(move: str) -> str:
     return f"{51-int(match.group(1))}{match.group(2)}{51-int(match.group(3))}"
 
 
-def parse_best_line(line: str) -> dict[str, int]:
+def parse_best_line(line: str) -> dict[str, Any]:
     match = BEST_FIELDS_RE.search(line)
     if not match:
         raise ValueError(f"missing score/depth/nodes in {line!r}")
-    return {
+    parsed: dict[str, Any] = {
         "score": int(match.group(1)),
         "depth": int(match.group(2)),
         "nodes": int(match.group(3)),
     }
+    leaf = PV_LEAF_RE.search(line)
+    if leaf:
+        parsed["pv_leaf_fen"] = leaf.group(1)
+    return parsed
 
 
 def _search(engine: Any, fen: str, depth: int) -> tuple[Any, dict[str, Any]]:

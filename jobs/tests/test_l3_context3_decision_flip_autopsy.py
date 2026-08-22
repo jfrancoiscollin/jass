@@ -26,6 +26,13 @@ class DecisionFlipAutopsyTests(unittest.TestCase):
             parse_best_line("bestmove 31-27 score=-19 depth=9 nodes=1234 pv=31-27"),
             {"score": -19, "depth": 9, "nodes": 1234},
         )
+        self.assertEqual(
+            parse_best_line(
+                "bestmove 31-27 score=-19 depth=9 nodes=1234 "
+                "pv=31-27,17-22 pvleaf=B:W27,32:B1,2"
+            )["pv_leaf_fen"],
+            "B:W27,32:B1,2",
+        )
 
     def test_selection_is_deterministic_and_balanced(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

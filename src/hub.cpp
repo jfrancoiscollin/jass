@@ -243,6 +243,16 @@ void HubFrontEnd::emit_bestmove(const SearchResult& r) {
             if (i) out_ << ',';
             out_ << format_move(r.pv[i]);
         }
+        // Expose the exact position reached by the reported PV.  Scientific
+        // rank/attribution harnesses need the feature vector actually read at
+        // the search frontier; replaying endpoint-only capture spellings in a
+        // client is not lossless when two multi-captures share endpoints.
+        // The SearchResult retains the full Move identities, including the
+        // captured-piece bitboards, so reconstruct the leaf here while that
+        // information is still available.
+        Position pv_leaf = engine_.position();
+        for (const auto& move : r.pv) pv_leaf = pv_leaf.after(move);
+        out_ << " pvleaf=" << pv_leaf.to_fen();
     }
     out_ << '\n';
     out_.flush();
