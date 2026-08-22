@@ -150,7 +150,8 @@ readout={'schema':'jass.curriculum_error_conditional_discovery_terminal.v1',
  'outer_confirm_pairs_read_for_selection_or_evaluation':0,
  'eligible_exact_symmetry_stable_pairs':report['eligible_exact_symmetry_stable_pairs'],
  'exclusions':report['exclusions'],'inner_split':report['inner_split'],
- 'candidate_family':report['candidate_family'],'candidate_results':report['candidate_results'],
+ 'candidate_family':report['candidate_family'],'candidate_preflight':report['candidate_preflight'],
+ 'candidate_results':report['candidate_results'],
  'selected_population':selected,'hypothesis_sha256':hashlib.sha256(Path(sys.argv[2]).read_bytes()).hexdigest(),
  'fresh_campaign_authorized':report['fresh_campaign_authorized'],'fit_authorized':False,
  'selfplay_games':0,'fits':0,'strength_games':0,'frozen_reads':0,
@@ -159,6 +160,7 @@ out.write_text(json.dumps(readout,indent=2,sort_keys=True)+'\n')
 clean=lambda value: re.sub(r'[^A-Za-z0-9.+-]+','_',str(value)).strip('_')
 markers={report['verdict'],'JASS_CURRICULUM_ERROR_CONDITIONAL_DISCOVERY_SCREEN_READY',
  f"ELIGIBLE_SYMMETRY_STABLE_PAIRS__{report['eligible_exact_symmetry_stable_pairs']}",
+ f"CANDIDATE_POPULATIONS_CONSIDERED__{len(report['candidate_preflight'])}",
  f"CANDIDATES_EVALUATED__{len(report['candidate_results'])}",'OUTER_CONFIRM_READS__0',
  'FIT_AUTHORIZED__FALSE','NEW_SELFPLAY__0','FITS__0','STRENGTH_GAMES__0','FROZEN_READS__0',
  'PROMOTION_AUTHORIZED__FALSE','AUTOMATIC_CONTINUATION__FALSE',
@@ -166,6 +168,10 @@ markers={report['verdict'],'JASS_CURRICULUM_ERROR_CONDITIONAL_DISCOVERY_SCREEN_R
 if selected:
  markers.add('SELECTED_POPULATION__'+clean(selected['population']))
  markers.add('SELECTED_BUCKETS__'+str(selected['selected_canonical_buckets']))
+for row in report['candidate_preflight']:
+ markers.add('PREFLIGHT__'+clean(row['population'])+'__'+clean(row['stage'])+
+             '__FIT_'+str(row['fit_pairs'])+'__VALIDATION_'+str(row['validation_pairs'])+
+             '__BUCKETS_'+str(row.get('selected_canonical_buckets','NA')))
 for marker in markers: (out.parent/marker).touch()
 PY
 cp "$ART/JASS_CONTROL_SUMMARY.json" "$ART/JASS_CURRICULUM_ERROR_CONDITIONAL_DISCOVERY_SCREEN_READY.json"
