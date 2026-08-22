@@ -45,7 +45,9 @@ pool-replay-b-promotion-1454-pool2|r2:jass-data/runs/cpx62-1454-l3-replay-b-vs-c
 pool-replay-context30-1464-pool1|r2:jass-data/runs/cpx62-1464-l3-replay-context30-target-gate-v1/20260822T080732Z-cfd7b7b2|artefacts/replay-context30-target-pool1-openings.fen
 pool-replay-context30-1464-pool2|r2:jass-data/runs/cpx62-1464-l3-replay-context30-target-gate-v1/20260822T080732Z-cfd7b7b2|artefacts/replay-context30-target-pool2-openings.fen
 pool-curriculum-error-1468-pool1|r2:jass-data/runs/cpx62-1468-l3-curriculum-error-autopsy-v1/20260822T134756Z-746421c7|artefacts/curriculum-error-pool1-openings.fen|failed
-pool-curriculum-error-1468-pool2|r2:jass-data/runs/cpx62-1468-l3-curriculum-error-autopsy-v1/20260822T134756Z-746421c7|artefacts/curriculum-error-pool2-openings.fen|failed"
+pool-curriculum-error-1468-pool2|r2:jass-data/runs/cpx62-1468-l3-curriculum-error-autopsy-v1/20260822T134756Z-746421c7|artefacts/curriculum-error-pool2-openings.fen|failed
+pool-curriculum-error-1492-pool1|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool1-openings.fen
+pool-curriculum-error-1492-pool2|r2:jass-data/runs/cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862|artefacts/curriculum-error-pool2-openings.fen"
 
 MON=""
 monitor(){
@@ -153,7 +155,7 @@ while IFS='|' read -r label prefix remote_path expected_state; do
     >"$W/fetch-$label.log" 2>&1 || die "historical pool fetch failed: $label"
   EXCL_ARGS+=(--exclude "$IN/$label.fen"); EXCL_NAMES+=("$label")
 done <<<"$EXCLUDE_SPECS"
-[ "${#EXCL_NAMES[@]}" -eq 7 ] || die "exclusion count drift"
+[ "${#EXCL_NAMES[@]}" -eq 9 ] || die "exclusion count drift"
 
 generate_pool(){
   local index="$1" seed="$2" out="curriculum-error-pool${1}-openings"
