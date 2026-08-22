@@ -16,6 +16,17 @@ ALT = "W:W26,31-49:B1-19,25"
 
 
 class CurriculumErrorLearningTests(unittest.TestCase):
+    def test_historical_capture_resolves_losslessly_from_legal_moves(self) -> None:
+        cv = learning._cv_module()
+        capture = learning._resolve_historical_move(
+            "21x32", "21>32*27 21>43*27,38", cv
+        )
+        self.assertEqual((capture.frm, capture.to, capture.captures), (21, 32, (27,)))
+        quiet = learning._resolve_historical_move("31-26", "31>26 31>27", cv)
+        self.assertEqual((quiet.frm, quiet.to, quiet.captures), (31, 26, ()))
+        with self.assertRaisesRegex(ValueError, "resolves to 2 legal moves"):
+            learning._resolve_historical_move("21x32", "21>32*27 21>32*28", cv)
+
     def test_prepare_rejects_a_copied_game(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -163,6 +174,13 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "teacher_depth": 10,
             "judge_depth": 12,
             "max_rows": 0,
+            "historical_move_resolution": {
+                "method": "dump_legal_unique_endpoints",
+                "rows": len(rows),
+                "endpoint_only_captures": 0,
+                "ambiguous": 0,
+                "unresolved": 0,
+            },
             "rows": rows,
         }
         report, region, seeds = learning.aggregate(
@@ -235,6 +253,13 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "teacher_depth": 10,
             "judge_depth": 12,
             "max_rows": 0,
+            "historical_move_resolution": {
+                "method": "dump_legal_unique_endpoints",
+                "rows": len(rows),
+                "endpoint_only_captures": 0,
+                "ambiguous": 0,
+                "unresolved": 0,
+            },
             "rows": rows,
         }
         report, region, _seeds = learning.aggregate(
@@ -288,6 +313,13 @@ class CurriculumErrorLearningTests(unittest.TestCase):
             "teacher_depth": 10,
             "judge_depth": 12,
             "max_rows": 0,
+            "historical_move_resolution": {
+                "method": "dump_legal_unique_endpoints",
+                "rows": len(rows),
+                "endpoint_only_captures": 0,
+                "ambiguous": 0,
+                "unresolved": 0,
+            },
             "rows": rows,
         }
         region = {
