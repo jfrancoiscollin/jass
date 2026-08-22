@@ -463,7 +463,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
                                             //      search by phase → accurate endgame WDL
     const char*  seed_path        = nullptr; // --seed-file : JNNW of seed positions
     int          seed_frac        = 0;       // --seed-frac : % of games started from a
-                                            //      random seed (endgame COVERAGE / famine)
+                                             //      random seed (endgame COVERAGE / famine)
+    bool         seed_without_replacement = false;
+                                            // --seed-without-replacement : consume a
+                                            //      deterministic permutation of the seed
+                                            //      catalogue. Each seed starts at most one
+                                            //      opening (two trajectories with
+                                            //      --pair-openings). Historical sampling
+                                            //      with replacement remains the default.
     int          explore_eps      = 0;       // --explore-eps : % of plies played as a
                                             //      uniform-random legal move instead of
                                             //      the search best (off-policy μ widening)
@@ -594,6 +601,8 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
             seed_path = argv[++i];
         } else if (a == "--seed-frac" && i + 1 < argc) {
             seed_frac = parse_int_or(argv[++i], -1);
+        } else if (a == "--seed-without-replacement") {
+            seed_without_replacement = true;
         } else if (a == "--random-open-plies" && i + 1 < argc) {
             const int v = parse_int_or(argv[++i], -1);
             if (v >= 0) random_open_plies = v;
@@ -667,6 +676,14 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     }
     if (seed_frac > 0 && seed_path == nullptr) {
         std::cerr << "error: --seed-frac requires --seed-file\n";
+        return 2;
+    }
+    if (seed_without_replacement && seed_path == nullptr) {
+        std::cerr << "error: --seed-without-replacement requires --seed-file\n";
+        return 2;
+    }
+    if (seed_without_replacement && seed_frac != 100) {
+        std::cerr << "error: --seed-without-replacement requires --seed-frac 100\n";
         return 2;
     }
     std::optional<jass::selfplay::NodeBudgetPolicy> node_budget_policy;
@@ -964,6 +981,15 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // la séquence historique est reproduite au bit près.
     jass::selfplay::SelfplayRngStreams streams(seed_value, split_selfplay_rngs);
     std::mt19937_64& rng = streams.opening();
+    std::vector<std::size_t> seed_schedule;
+    std::size_t seed_schedule_cursor = 0;
+    if (seed_without_replacement) {
+        seed_schedule.reserve(seeds.size());
+        for (std::size_t index = 0; index < seeds.size(); ++index) {
+            seed_schedule.push_back(index);
+        }
+        std::shuffle(seed_schedule.begin(), seed_schedule.end(), rng);
+    }
 
     // Load the user-supplied NNUE if any; keep the unique_ptr alive
     // across the whole function so the Engine can borrow the pointer.
@@ -1023,6 +1049,7 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
     // fusion. Ne bloque rien — il rend le symptôme impossible à manquer.
     long long stat_wdl_loss = 0, stat_wdl_draw = 0, stat_wdl_win = 0;
     long long stat_seeded_openings = 0, stat_standard_openings = 0;
+    long long stat_seed_unique_used = 0;
     NodeBudgetRunStats node_budget_stats;
 
     // Table dédiée au classement top-k : la garder hors de celle du moteur
@@ -1051,7 +1078,21 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
         // of the FMJD start (then the random opening plies add diversity around it).
         if (!seeds.empty() && static_cast<int>(rng() % 100) < seed_frac) {
             opening_from_seed = true;
-            const SeedPos& sp = seeds[rng() % seeds.size()];
+            std::size_t seed_index = 0;
+            if (seed_without_replacement) {
+                if (seed_schedule_cursor >= seed_schedule.size()) {
+                    std::cerr << "error: --seed-without-replacement exhausted "
+                              << seed_schedule.size() << " seeds after "
+                              << stat_seeded_openings << " seeded openings before reaching "
+                              << n << " output positions\n";
+                    return 1;
+                }
+                seed_index = seed_schedule[seed_schedule_cursor++];
+                ++stat_seed_unique_used;
+            } else {
+                seed_index = static_cast<std::size_t>(rng() % seeds.size());
+            }
+            const SeedPos& sp = seeds[seed_index];
             Position p{};
             p.set_side_to_move(sp.stm ? Color::Black : Color::White);
             for (Bitboard b = static_cast<Bitboard>(sp.bbs[0]); b; ) p.add_piece(pop_lsb(b), Piece::WhiteMan);
@@ -1569,6 +1610,9 @@ int run_gen_data_wdl_mode(int argc, char** argv) {
               << " standard_openings=" << stat_standard_openings
               << " seed_catalogue_positions=" << seeds.size()
               << " seed_frac=" << seed_frac
+              << " seed_without_replacement=" << (seed_without_replacement ? 1 : 0)
+              << " seed_unique_used=" << (seed_without_replacement ? stat_seed_unique_used : -1)
+              << " seed_reuses=" << (seed_without_replacement ? 0 : -1)
               << " games=" << game_count
               << " random_open_moves=" << stat_random_open_moves
               << " play_plies=" << stat_play_plies
@@ -5612,7 +5656,7 @@ int main(int argc, char** argv) {
                 "  --gen-opening-pool <N> <out.fen> [min_ply=8] [max_ply=32] [min_pieces=20] [seed=0]\n"
                 "                                   emit deterministic unique legal quiet\n"
                 "                                   midgame positions reached from startpos.\n"
-                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH] [--sample-meta-format jsm1|jsm2]\n"
+                "  --gen-data-wdl <N> <path> [eval_depth=12] [play_depth=4] [max_plies=200] [seed=0] [--nnue PATH] [--movetime MS] [--play-depth-by-phase SPEC] [--search-limit depth|nodes] [--node-budget-fixed N | --node-budget-weighted N:W,...] [--node-budget-sample-per move|game] [--node-budget-log PATH] [--seed-file F --seed-frac P [--seed-without-replacement]] [--random-open-plies K] [--explore-eps E] [--explore-topk K] [--explore-margin M] [--quiet-only] [--sample-initial] [--wdl-zero-score] [--drop-plycap] [--sample-meta-out PATH] [--sample-meta-format jsm1|jsm2]\n"
                 "                                   write N records with the\n"
                 "                                   game outcome label (WDL).\n"
                 "                                   --wdl-zero-score skips the\n"

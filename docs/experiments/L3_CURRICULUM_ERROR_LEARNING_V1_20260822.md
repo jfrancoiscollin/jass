@@ -120,6 +120,13 @@ Seulement après PASS de A :
 - holdout par opening avant toute pondération ;
 - garder au plus deux trajectoires par graine et contrôler la concentration.
 
+Le générateur doit donc utiliser `--seed-frac 100`,
+`--seed-without-replacement` et `--pair-openings`. Le mode sans remise parcourt
+une permutation déterministe du catalogue et avorte si les graines sont
+épuisées avant 500 000 lignes ; il ne
+retombe jamais sur une graine déjà consommée. Les compteurs
+`seed_unique_used` et `seed_reuses=0` font partie du certificat.
+
 Le corpus de réparation n'est pas la partie perdue répétée. C'est une nouvelle
 distribution de continuations à partir de l'état où l'erreur a été mesurée.
 
