@@ -51,6 +51,15 @@ class CurriculumErrorAutopsyTemplateTests(unittest.TestCase):
         self.assertIn("openings.fen|failed", TEMPLATE)
         self.assertIn('--expected-state "$expected_state"', TEMPLATE)
 
+    def test_fresh_cycle_excludes_the_complete_1492_campaign(self):
+        self.assertIn("pool-curriculum-error-1492-pool1", TEMPLATE)
+        self.assertIn("pool-curriculum-error-1492-pool2", TEMPLATE)
+        self.assertIn(
+            "cpx62-1492-l3-curriculum-error-autopsy-v1/20260822T212256Z-454b3862",
+            TEMPLATE,
+        )
+        self.assertIn('[ "${#EXCL_NAMES[@]}" -eq 9 ]', TEMPLATE)
+
 
 if __name__ == "__main__":
     unittest.main()
