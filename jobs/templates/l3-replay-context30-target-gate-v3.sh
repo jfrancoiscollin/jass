@@ -14,6 +14,7 @@ cd "$JASS_CODE_DIR"
 EXPECTED_V2_BLOB="24dbb03bb9f1827b4777decc06c8d19f2ca013db"
 V2_SOURCE="jobs/templates/l3-replay-context30-target-gate-v2.sh"
 V2_COPY="$JASS_RESULT_DIR/l3-replay-context30-target-gate-v2.certified.sh"
+GENERATED_FINAL="$JASS_RESULT_DIR/l3-replay-context30-target-gate-v1.generated.sh"
 FINAL="$JASS_ARTEFACT_DIR/replay-context30-rendered.sh"
 RENDER_LOG="$JASS_ARTEFACT_DIR/replay-context30-v3-render.log"
 EXECUTION_LOG="$JASS_ARTEFACT_DIR/replay-context30-v3-execution.log"
@@ -36,11 +37,21 @@ JASS_REPLAY_CONTEXT30_RENDER_ONLY=1 \
 RENDER_RC=$?
 set -e
 
+# On CPX the pinned renderer has been observed to write the complete valid final
+# script and then return 1 in its outer copy layer. Recover only that exact
+# generated output; the full syntax/token/fit-count audit below remains fatal.
+RECOVERED_FROM_GENERATED=0
+if [ ! -f "$FINAL" ] && [ -f "$GENERATED_FINAL" ]; then
+  cp "$GENERATED_FINAL" "$FINAL"
+  RECOVERED_FROM_GENERATED=1
+fi
+
 python3 - "$FINAL" "$RENDER_LOG" "$RENDER_RECEIPT" "$RENDER_RC" \
-  "$EXPECTED_V2_BLOB" <<'PY_RENDER_AUDIT'
+  "$EXPECTED_V2_BLOB" "$RECOVERED_FROM_GENERATED" <<'PY_RENDER_AUDIT'
 import hashlib,json,sys
 from pathlib import Path
 final,log,out=map(Path,sys.argv[1:4]); rc=int(sys.argv[4]); v2=sys.argv[5]
+recovered=bool(int(sys.argv[6]))
 def sha(path):
  h=hashlib.sha256(); h.update(path.read_bytes()); return h.hexdigest()
 text=final.read_text(encoding='utf-8') if final.is_file() else ''
@@ -66,10 +77,13 @@ syntax_ok=False
 if final.is_file():
  import subprocess
  syntax_ok=subprocess.run(['bash','-n',str(final)],capture_output=True).returncode==0
+renderer_state_ok=(rc==0) or (rc!=0 and recovered)
 payload={
- 'schema':'jass.l3_replay_context30_v3_render_receipt.v1',
+ 'schema':'jass.l3_replay_context30_v3_render_receipt.v2',
  'source_v2_blob':v2,
  'render_exit_code':rc,
+ 'renderer_nonzero_recovered_from_generated_final':bool(rc!=0 and recovered),
+ 'recovered_from_generated_final':recovered,
  'final_script_present':final.is_file(),
  'final_script_sha256':sha(final) if final.is_file() else None,
  'final_script_size_bytes':final.stat().st_size if final.is_file() else None,
@@ -82,7 +96,7 @@ payload={
  'log_sha256':sha(log),
 }
 out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
-if rc!=0 or not final.is_file() or not syntax_ok or missing or surviving or fit_count!=1:
+if not renderer_state_ok or not final.is_file() or not syntax_ok or missing or surviving or fit_count!=1:
  raise SystemExit('final context30 scientific script failed v3 render audit')
 PY_RENDER_AUDIT
 
