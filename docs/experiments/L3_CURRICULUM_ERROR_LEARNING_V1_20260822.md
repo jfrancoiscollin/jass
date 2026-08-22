@@ -105,7 +105,7 @@ les contrôles. Le screen passe seulement si :
 Le certificat `JASS_CURRICULUM_ERROR_REGION_CONFIRMED` publie alors :
 
 - `jass.l3_curriculum_error_region.v1` ;
-- un JNNW de graines neutres, une par ouverture erronée confirmée ;
+- un JNNW d'ancrage neutre, une graine par ouverture erronée confirmée ;
 - toutes les décisions et statistiques discovery/confirm.
 
 Un screen négatif interdit la génération et le fit. Il ne déclenche pas un
@@ -114,6 +114,14 @@ abaissement post-hoc des seuils.
 ## Étape B — petit corpus de réparation
 
 Seulement après PASS de A :
+
+- construire un catalogue de génération distinct du vote statistique : toutes
+  les décisions perdues de regret ≥50 cp qui touchent un bucket confirmé sont
+  éligibles, avec au plus 64 états par `opening_id`, un écart minimal de deux
+  plies dans une même partie et unicité canonique globale ;
+- exiger au moins 64 ouvertures sources, au plus 2 % des graines dans une même
+  ouverture et une capacité théorique suffisante pour 500 000 positions ;
+- publier la filiation exacte `record_index → opening_id/game_uid/ply/regret` ;
 
 - démarrer 100 % des parties depuis les graines d'erreur confirmées ;
 - générer exactement 500 000 nouvelles positions avec CURRICULUM comme parent ;
@@ -129,6 +137,13 @@ une permutation déterministe du catalogue et avorte si les graines sont
 épuisées avant 500 000 lignes ; il ne
 retombe jamais sur une graine déjà consommée. Les compteurs
 `seed_unique_used` et `seed_reuses=0` font partie du certificat.
+
+Cette expansion ne donne pas plusieurs votes à une ouverture pendant la
+découverte/confirmation : le vote causal reste strictement un par
+`opening_id`. Elle fournit seulement plusieurs points de départ distincts,
+non adjacents et traçables après que la région a déjà passé son écran. Si le
+catalogue ne satisfait pas les gardes de capacité ou de concentration, la
+branche s'arrête avant toute génération.
 
 Le corpus de réparation n'est pas la partie perdue répétée. C'est une nouvelle
 distribution de continuations à partir de l'état où l'erreur a été mesurée.
