@@ -20,8 +20,11 @@ class CurriculumErrorResidualTemplateTests(unittest.TestCase):
             'NO_AUTOMATIC_PROMOTION', 'NO_AUTOMATIC_CONTINUATION',
             '--bootstrap-samples 100000', '--permutation-samples 10000',
             '--seed 2026082222', '--max-region-buckets 128',
+            '--expected-informative-errors 290',
             'WORKERS=4', 'worker-root-cause.json',
+            'terminal_exception', 'WORKER_EXCEPTION_COUNT_',
             'JASS_CURRICULUM_ERROR_RESIDUAL_WORKER_FAILURE_READY',
+            'RECLASSIFIED_EXACT_NON_ERRORS__',
         ):
             self.assertIn(needle, text)
 

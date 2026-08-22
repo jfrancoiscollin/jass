@@ -43,6 +43,7 @@ SCHEMA_SOURCE = "jass.l3_curriculum_search_error_atlas_shard.v1"
 SCHEMA_SHARD = "jass.l3_curriculum_error_residual_leaf_shard.v1"
 SCHEMA_REPORT = "jass.l3_curriculum_error_residual_atlas.v1"
 SCHEMA_REGION = "jass.l3_curriculum_error_region.v1"
+EXACT_ERROR_THRESHOLD_CP = 50.0
 
 
 def _patterns_module() -> Any:
@@ -141,9 +142,17 @@ def _ranked_actions(decision: dict[str, Any]) -> list[str]:
 def _rival(decision: dict[str, Any], *, label: str) -> tuple[str | None, str]:
     teacher = str(decision["exact_teacher_action"])
     historical = str(decision["historical_action"])
-    if label == "error" or historical != teacher:
+    if label == "error" and float(decision["historical_regret_cp"]) < EXACT_ERROR_THRESHOLD_CP:
+        mode = (
+            "exact_reclassified_historical_optimal"
+            if historical == teacher else "exact_reclassified_below_50cp"
+        )
+        return None, mode
+    if historical != teacher:
         rival = historical
         mode = "historical_action"
+    elif label == "error":
+        raise ValueError("exact error above threshold cannot equal its teacher")
     else:
         rival = next((action for action in _ranked_actions(decision) if action != teacher), "")
         mode = "exact_runner_up" if rival else "forced_single_legal_action"
@@ -230,6 +239,36 @@ def analyse_decision(
     rival, rival_mode = _rival(decision, label=label)
     fen = str(decision["source"]["fen"])
     if rival is None:
+        if label == "error":
+            if rival_mode not in {
+                "exact_reclassified_historical_optimal",
+                "exact_reclassified_below_50cp",
+            }:
+                raise ValueError("non-rival error has an unexpected reclassification mode")
+            regret = float(decision["historical_regret_cp"])
+            if not 0.0 <= regret < EXACT_ERROR_THRESHOLD_CP:
+                raise ValueError("reclassified exact error is not below 50 cp")
+            historical_equal = teacher == str(decision["historical_action"])
+            if historical_equal != (rival_mode == "exact_reclassified_historical_optimal"):
+                raise ValueError("reclassified error reason/action identity drift")
+            if historical_equal and regret != 0.0:
+                raise ValueError("historical-optimal exact row has non-zero regret")
+            return {
+                "label": label,
+                "source": decision["source"],
+                "teacher_action": teacher,
+                "rival_action": None,
+                "rival_mode": rival_mode,
+                "reclassification_reason": rival_mode,
+                "informative_ranking": False,
+                "reclassified_exact_non_error": True,
+                "forced_single_action": False,
+                "historical_regret_cp": regret,
+                "orientation_cosine": None,
+                "original": None,
+                "exact_image": None,
+                "gradient": [],
+            }
         # A single-legal-action control has no ranking that a coefficient
         # update can damage.  It remains authenticated in the population but
         # contributes neither a fabricated zero margin nor an observation to
@@ -246,6 +285,9 @@ def analyse_decision(
             "teacher_action": teacher,
             "rival_action": None,
             "rival_mode": rival_mode,
+            "reclassification_reason": None,
+            "informative_ranking": False,
+            "reclassified_exact_non_error": False,
             "forced_single_action": True,
             "historical_regret_cp": float(decision["historical_regret_cp"]),
             "orientation_cosine": None,
@@ -280,6 +322,9 @@ def analyse_decision(
         "teacher_action": teacher,
         "rival_action": rival,
         "rival_mode": rival_mode,
+        "reclassification_reason": None,
+        "informative_ranking": True,
+        "reclassified_exact_non_error": False,
         "forced_single_action": False,
         "historical_regret_cp": float(decision["historical_regret_cp"]),
         "orientation_cosine": _cosine(original["gradient"], exact_image["gradient"]),
@@ -403,6 +448,7 @@ def aggregate(
     bootstrap_samples: int,
     permutation_samples: int,
     seed: int,
+    expected_informative_errors: int,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     if not shards or {int(row.get("shard",-1)) for row in shards} != set(range(len(shards))):
         raise ValueError("residual shards are incomplete")
@@ -422,16 +468,45 @@ def aggregate(
     rows.sort(key=lambda row: int(row["pair_id"]))
     if [int(row["pair_id"]) for row in rows] != list(range(len(rows))):
         raise ValueError("residual shards do not cover contiguous matched pairs")
-    by_split = {split:[row for row in rows if row["split"]==split] for split in ("discovery","confirm")}
+    all_by_split = {
+        split:[row for row in rows if row["split"]==split]
+        for split in ("discovery","confirm")
+    }
+    reclassified_rows = [
+        row for row in rows
+        if bool(row["error"].get("reclassified_exact_non_error",False))
+    ]
+    reclassified_ids = {int(row["pair_id"]) for row in reclassified_rows}
+    eligible_rows = [row for row in rows if int(row["pair_id"]) not in reclassified_ids]
+    by_split = {
+        split:[row for row in eligible_rows if row["split"]==split]
+        for split in ("discovery","confirm")
+    }
     if any(not by_split[split] for split in by_split):
-        raise ValueError("sealed split is empty")
+        raise ValueError("eligible exact-error split is empty")
 
     vectors: dict[tuple[int,str],dict[int,float]] = {}
     representatives: dict[int,int] = {}
     cosines: dict[str,list[float]] = defaultdict(list)
     forced_controls: dict[str,int] = defaultdict(int)
+    reclassified_by_split: dict[str,int] = defaultdict(int)
     total_buckets = int(_patterns_module().TOTAL_BUCKETS)
     for pair in rows:
+        error_reclassified = int(pair["pair_id"]) in reclassified_ids
+        if error_reclassified:
+            error = pair["error"]
+            if (
+                error.get("rival_mode") not in {
+                    "exact_reclassified_historical_optimal",
+                    "exact_reclassified_below_50cp",
+                }
+                or error.get("rival_action") is not None
+                or error.get("informative_ranking") is not False
+                or error.get("gradient") != []
+                or not 0.0 <= float(error.get("historical_regret_cp",-1.0)) < EXACT_ERROR_THRESHOLD_CP
+            ):
+                raise ValueError("reclassified exact non-error contract drift")
+            reclassified_by_split[str(pair["split"])] += 1
         for label in ("error","control"):
             decision=pair[label]
             vectors[(int(pair["pair_id"]),label)] = _gradient(decision)
@@ -439,13 +514,22 @@ def aggregate(
             if forced:
                 if label != "control" or decision.get("rival_mode") != "forced_single_legal_action":
                     raise ValueError("forced-action marker outside a certified control")
-                forced_controls[str(pair["split"])] += 1
+                if not error_reclassified:
+                    forced_controls[str(pair["split"])] += 1
+            elif label == "error" and error_reclassified:
+                pass
             else:
-                cosines[f"{pair['split']}:{label}"].append(float(decision["orientation_cosine"]))
-            for item in decision["gradient"]:
-                bucket=int(item["coordinate"]) % total_buckets
-                rep=int(item["representative_full_column"])
-                representatives[bucket]=min(representatives.get(bucket,rep),rep)
+                if decision.get("informative_ranking") is not True:
+                    raise ValueError("non-forced ranking lacks informative marker")
+                if not error_reclassified:
+                    cosines[f"{pair['split']}:{label}"].append(float(decision["orientation_cosine"]))
+            if not error_reclassified:
+                for item in decision["gradient"]:
+                    bucket=int(item["coordinate"]) % total_buckets
+                    rep=int(item["representative_full_column"])
+                    representatives[bucket]=min(representatives.get(bucket,rep),rep)
+        if not error_reclassified and float(pair["error"].get("historical_regret_cp",-1.0)) < EXACT_ERROR_THRESHOLD_CP:
+            raise ValueError("informative error fell below the preregistered 50 cp threshold")
 
     discovery_errors=[vectors[(int(row["pair_id"]),"error")] for row in by_split["discovery"]]
     sums: dict[int,float]=defaultdict(float); hits: dict[int,int]=defaultdict(int)
@@ -513,7 +597,7 @@ def aggregate(
     symmetry_fraction=(sum(value>=min_orientation_cosine for value in all_cosines)/len(all_cosines)
                        if all_cosines else 0.0)
     forced_total=sum(forced_controls.values())
-    forced_fraction=forced_total/len(rows) if rows else 1.0
+    forced_fraction=forced_total/len(eligible_rows) if eligible_rows else 1.0
     informative_confirm_fraction=len(informative_confirm)/len(confirm_rows)
     full_columns=sorted({representatives[int(item["bucket"])] for item in selected})
 
@@ -527,6 +611,7 @@ def aggregate(
         "paired_sign_flip_p_le_0_025": pvalue <= 0.025,
         "forced_control_fraction_le_0_05": forced_fraction <= 0.05,
         "informative_confirm_pair_fraction_ge_0_95": informative_confirm_fraction >= 0.95,
+        "informative_exact_error_pairs_match_preregistered_290": len(eligible_rows) == expected_informative_errors,
     }
     passed=all(gates.values())
     region={
@@ -551,6 +636,15 @@ def aggregate(
         "verdict":("JASS_CURRICULUM_ERROR_RESIDUAL_REGION_CONFIRMED" if passed
                    else "JASS_CURRICULUM_ERROR_RESIDUAL_REGION_NOT_ESTABLISHED"),
         "passed":passed,**identities,"pairs":len(rows),
+        "informative_error_pairs":len(eligible_rows),
+        "reclassified_exact_non_errors":{
+            "total":len(reclassified_rows),
+            "fraction":len(reclassified_rows)/len(rows),
+            "by_split":{split:int(reclassified_by_split.get(split,0)) for split in all_by_split},
+            "excluded_with_their_controls_from_fit_statistics":True,
+            "zero_vectors_used_as_observations":False,
+        },
+        "all_splits":{split:len(values) for split,values in all_by_split.items()},
         "splits":{split:len(values) for split,values in by_split.items()},
         "selected_coordinates":coordinate_evidence,
         "selected_canonical_buckets":len(selected_buckets),
@@ -606,6 +700,7 @@ def parser() -> argparse.ArgumentParser:
     combine.add_argument("--bootstrap-samples",type=int,default=100000)
     combine.add_argument("--permutation-samples",type=int,default=10000)
     combine.add_argument("--seed",type=int,default=2026082222)
+    combine.add_argument("--expected-informative-errors",type=int,required=True)
     combine.add_argument("--report",type=Path,required=True); combine.add_argument("--region",type=Path,required=True)
     return root
 
@@ -623,7 +718,7 @@ def main() -> int:
             min_orientation_cosine=args.min_orientation_cosine,
             min_coordinate_replication=args.min_coordinate_replication,
             bootstrap_samples=args.bootstrap_samples,permutation_samples=args.permutation_samples,
-            seed=args.seed,
+            seed=args.seed,expected_informative_errors=args.expected_informative_errors,
         )
         _publish(args.report,report); _publish(args.region,region)
         print(json.dumps({"verdict":report["verdict"],"failed_gates":report["failed_gates"]},sort_keys=True))

@@ -184,7 +184,7 @@ for batch_start in $(seq 0 "$WORKERS" $((NSH-1))); do
 done
 if [ "$failed" -ne 0 ]; then
   python3 - "$W" "$SHARDS" "$ART/worker-root-cause.json" "$WORKERS" <<'PY_WORKERS'
-import json,re,sys
+import collections,json,re,sys
 from pathlib import Path
 w,shards,out=map(Path,sys.argv[1:4]); workers=int(sys.argv[4]); failures=[]
 for line in (w/'worker-failures.txt').read_text().splitlines():
@@ -192,13 +192,22 @@ for line in (w/'worker-failures.txt').read_text().splitlines():
  if not match: raise SystemExit(f'malformed worker failure line: {line!r}')
  shard,rc=map(int,match.groups()); path=w/f'worker-{shard}.log'
  lines=path.read_text(errors='replace').splitlines() if path.exists() else []
- failures.append({'shard':shard,'returncode':rc,'log_tail':lines[-40:]})
+ tail=lines[-40:]
+ terminal=[value.strip() for value in tail if re.match(r'^(?:[A-Za-z_][A-Za-z0-9_.]*(?:Error|Exception)|SystemExit|AssertionError):\s*.+$',value.strip())]
+ failures.append({'shard':shard,'returncode':rc,'log_tail':tail,
+                  'terminal_exception':terminal[-1] if terminal else None})
 payload={'schema':'jass.curriculum_error_residual_worker_failure.v1',
  'verdict':'JASS_CURRICULUM_ERROR_RESIDUAL_WORKER_FAILURE_READY',
  'workers':workers,'failures':failures,'failed_shards':[row['shard'] for row in failures],
  'completed_shards':len(list(shards.glob('shard-*.json'))),
  'fits':0,'strength_games':0,'selfplay_games':0,'frozen_reads':0,'promotion_authorized':False}
 out.write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+clean=lambda value: re.sub(r'[^A-Za-z0-9.+-]+','_',str(value)).strip('_')
+counts=collections.Counter(row['terminal_exception'] or 'UNCLASSIFIED' for row in failures)
+for value,count in counts.items():
+ marker=f'WORKER_EXCEPTION_COUNT_{count}__{clean(value)[:180]}'
+ if len(marker.encode())>240: raise SystemExit(f'worker exception marker too long: {marker}')
+ (out.parent/marker).touch()
 PY_WORKERS
   : >"$ART/JASS_CURRICULUM_ERROR_RESIDUAL_WORKER_FAILURE_READY"
   die "one or more residual workers failed; see worker-root-cause.json"
@@ -211,6 +220,7 @@ python3 jobs/tools/l3_curriculum_error_residual_atlas.py aggregate "${args[@]}" 
   --min-discovery-hits 6 --min-region-buckets 8 --max-region-buckets 128 \
   --min-orientation-cosine 0.0 --min-coordinate-replication 0.70 \
   --bootstrap-samples 100000 --permutation-samples 10000 --seed 2026082222 \
+  --expected-informative-errors 290 \
   --report "$ART/residual-atlas.json" --region "$ART/error-residual-region.json" \
   >"$W/aggregate.log" 2>&1
 
@@ -222,6 +232,9 @@ report=json.load(open(sys.argv[1])); region=json.load(open(sys.argv[2])); out=Pa
 champion=sys.argv[4]; pairs=int(sys.argv[5])
 allowed={'JASS_CURRICULUM_ERROR_RESIDUAL_REGION_CONFIRMED','JASS_CURRICULUM_ERROR_RESIDUAL_REGION_NOT_ESTABLISHED'}
 if report.get('verdict') not in allowed or report.get('pairs')!=pairs: raise SystemExit('terminal report drift')
+if report.get('informative_error_pairs')!=290: raise SystemExit('1476 exact-error cardinality drift')
+if report.get('reclassified_exact_non_errors',{}).get('total')!=pairs-290:
+ raise SystemExit('exact non-error reclassification cardinality drift')
 if report.get('champion_sha256')!=champion: raise SystemExit('champion identity drift')
 if any(int(report.get(key,-1))!=0 for key in ('fits','strength_games','selfplay_games','frozen_reads')):
  raise SystemExit('forbidden action counter drift')
@@ -231,6 +244,8 @@ if bool(region.get('fit_authorized')) != bool(report.get('passed')): raise Syste
 readout={'schema':'jass.curriculum_error_residual_terminal.v1','verdict':report['verdict'],
  'source_job':'cpx62-1476-l3-curriculum-search-error-atlas-v1','source_attempt':'20260822T170608Z-92a7f393',
  'champion_sha256':champion,'pairs':pairs,'splits':report['splits'],
+ 'all_splits':report['all_splits'],'informative_error_pairs':report['informative_error_pairs'],
+ 'reclassified_exact_non_errors':report['reclassified_exact_non_errors'],
  'selected_canonical_buckets':report['selected_canonical_buckets'],
  'selected_full_columns':report['selected_full_columns'],
  'orientation_symmetry_fraction':report['orientation_symmetry_fraction'],
@@ -249,6 +264,8 @@ markers={report['verdict'],'JASS_CURRICULUM_ERROR_RESIDUAL_ATLAS_READY',
  f"FORCED_CONTROLS__{report['forced_controls']['total']}",
  f"FORCED_CONTROL_FRACTION__{clean(report['forced_controls']['fraction'])}",
  f"INFORMATIVE_CONFIRM_PAIRS__{report['forced_controls']['informative_confirm_pairs']}",
+ f"INFORMATIVE_ERROR_PAIRS__{report['informative_error_pairs']}",
+ f"RECLASSIFIED_EXACT_NON_ERRORS__{report['reclassified_exact_non_errors']['total']}",
  'WEIGHTS_BIT_IDENTICAL__TRUE','NEW_SELFPLAY__0','FITS__0','STRENGTH_GAMES__0',
  'FROZEN_READS__0','PROMOTION_AUTHORIZED__FALSE',
  ('NEXT_STAGE_RECOMMENDED__LOCAL_RESIDUAL_REFIT' if report['passed'] else 'NEXT_STAGE__NONE'),
