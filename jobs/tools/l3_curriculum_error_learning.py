@@ -39,6 +39,7 @@ from typing import Any, Iterable
 import numpy as np
 
 SCHEMA_SELECTION = "jass.l3_curriculum_error_selection.v1"
+SCHEMA_TRANSITIONS = "jass.l3_curriculum_error_transitions.v1"
 SCHEMA_SHARD = "jass.l3_curriculum_error_shard.v1"
 SCHEMA_REPORT = "jass.l3_curriculum_error_autopsy.v1"
 SCHEMA_REGION = "jass.l3_curriculum_error_region.v1"
@@ -46,6 +47,7 @@ SCHEMA_SHAM_REPORT = "jass.l3_curriculum_sham_region.v1"
 SCHEMA_REPAIR_SEEDS = "jass.l3_curriculum_repair_seeds.v1"
 JNNW_RECORD = struct.Struct("<QQQQBi b".replace(" ", ""))
 JNNW_MAGIC = b"JNNW"
+RESOLUTION_METHOD = "dump_legal_endpoints_and_authenticated_successor_state"
 
 
 def _cv_module() -> Any:
@@ -119,6 +121,22 @@ def _opening_id(game: dict[str, Any]) -> str:
     if not opening:
         raise ValueError("game lacks opening/opening_id")
     return hashlib.sha256(opening.encode("utf-8")).hexdigest()[:16]
+
+
+def _game_uid(game: dict[str, Any]) -> str:
+    """Content identity used by the sealed selection and transition replay."""
+    score = float(game.get("jass_score", -1.0))
+    return hashlib.sha256(
+        _canonical(
+            {
+                "opening_id": _opening_id(game),
+                "jass_is_white": bool(game.get("jass_is_white")),
+                "jass_score": score,
+                "fens": list(game.get("fens", [])),
+                "moves": list(game.get("moves", [])),
+            }
+        )
+    ).hexdigest()[:24]
 
 
 def _split(opening_id: str, seed: int) -> str:
@@ -252,16 +270,7 @@ def _dump_legal_lines(jass_path: str, fens: list[str]) -> list[str]:
     return lines
 
 
-def _resolve_historical_move(text: str, legal_line: str, cv: Any) -> Any:
-    """Restore captured-square identity lost by historical game dumps.
-
-    ``run_jass_gate_bounded`` historically persisted ``Move.jass_str()``.  A
-    capture therefore appears as only ``fromxto`` even though Jass's lossless
-    apply protocol also needs the captured-square set.  Resolve that endpoint
-    pair against eval-free ``--dump-legal`` output and fail closed if it is not
-    unique.  We must not guess: two legal capture paths with equal endpoints
-    can lead to different children.
-    """
+def _historical_move_candidates(text: str, legal_line: str, cv: Any) -> list[Any]:
     separator = "-" if "-" in text else "x" if "x" in text else None
     if separator is None:
         raise ValueError(f"unparseable historical move: {text!r}")
@@ -288,11 +297,49 @@ def _resolve_historical_move(text: str, legal_line: str, cv: Any) -> Any:
         if supplied_captures and set(captures) != set(supplied_captures):
             continue
         candidates.append(cv.Move(frm=frm, to=to, captures=captures))
+    return candidates
+
+
+def _resolve_historical_move(text: str, legal_line: str, cv: Any) -> Any:
+    """Resolve a historical endpoint-only move when its legal image is unique."""
+    candidates = _historical_move_candidates(text, legal_line, cv)
     if len(candidates) != 1:
         raise ValueError(
             f"historical move {text!r} resolves to {len(candidates)} legal moves: {legal_line!r}"
         )
     return candidates[0]
+
+
+def _resolve_historical_transition(
+    text: str,
+    legal_line: str,
+    cv: Any,
+    *,
+    fen: str,
+    next_fen: str,
+    referee: Any,
+) -> tuple[Any, bool]:
+    """Resolve and validate a move against its authenticated successor state.
+
+    Even a unique endpoint candidate is applied and compared with ``next_fen``.
+    Ambiguous endpoints are accepted only when exactly one legal candidate
+    reproduces the historical successor.  This cannot guess or import a search
+    label: both states predate the autopsy and come from the same sealed game.
+    """
+    candidates = _historical_move_candidates(text, legal_line, cv)
+    target = _fen_bits(next_fen)
+    matches = []
+    ctx = _ctx_module()
+    for candidate in candidates:
+        child = ctx._child_fen(referee, fen, candidate)
+        if _fen_bits(child) == target:
+            matches.append(candidate)
+    if len(matches) != 1:
+        raise ValueError(
+            f"historical transition {text!r} resolves to {len(matches)} of "
+            f"{len(candidates)} legal moves for successor {next_fen!r}: {legal_line!r}"
+        )
+    return matches[0], len(candidates) > 1
 
 
 def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, Any]:
@@ -315,17 +362,7 @@ def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, An
         opening_id = _opening_id(game)
         # Content identity deliberately excludes the source path: copying the
         # same game into a second input directory must not double its weight.
-        uid = hashlib.sha256(
-            _canonical(
-                {
-                    "opening_id": opening_id,
-                    "jass_is_white": bool(game.get("jass_is_white")),
-                    "jass_score": score,
-                    "fens": fens,
-                    "moves": moves,
-                }
-            )
-        ).hexdigest()[:24]
+        uid = _game_uid(game)
         if uid in games_seen:
             raise ValueError(f"duplicate game identity {uid}")
         games_seen.add(uid)
@@ -382,11 +419,113 @@ def prepare_games(game_dirs: Iterable[Path], *, split_seed: int) -> dict[str, An
     }
 
 
+def _source_relative_key(path: str | Path) -> str:
+    parts = Path(path).parts
+    for index, part in enumerate(parts):
+        if part in {"games-pool1", "games-pool2"}:
+            return "/".join(parts[index:])
+    if len(parts) >= 2:
+        return "/".join(parts[-2:])
+    raise ValueError(f"game source path lacks a stable relative key: {path}")
+
+
+def build_transition_sidecar(
+    selection: dict[str, Any], game_dirs: Iterable[Path]
+) -> dict[str, Any]:
+    """Recover every historical successor from byte-authenticated game dumps."""
+    if selection.get("schema") != SCHEMA_SELECTION:
+        raise ValueError("selection schema drift")
+    expected_sources: dict[str, str] = {}
+    for source in selection.get("sources", []):
+        key = _source_relative_key(str(source.get("path", "")))
+        digest = str(source.get("sha256", ""))
+        if len(digest) != 64 or key in expected_sources:
+            raise ValueError("selection source manifest is not canonical")
+        expected_sources[key] = digest
+    paths = sorted(path for root in game_dirs for path in root.glob("game-*.json"))
+    actual_by_key = {_source_relative_key(path): path for path in paths}
+    if set(actual_by_key) != set(expected_sources):
+        missing = sorted(set(expected_sources) - set(actual_by_key))[:5]
+        extra = sorted(set(actual_by_key) - set(expected_sources))[:5]
+        raise ValueError(f"game source set drift: missing={missing} extra={extra}")
+
+    games_by_uid: dict[str, dict[str, Any]] = {}
+    source_rows = []
+    for key in sorted(expected_sources):
+        path = actual_by_key[key]
+        digest = sha256(path)
+        if digest != expected_sources[key]:
+            raise ValueError(f"game source hash drift for {key}: {digest}")
+        game = json.loads(path.read_text(encoding="utf-8"))
+        fens = list(game.get("fens", []))
+        moves = list(game.get("moves", []))
+        if not moves or len(fens) != len(moves) + 1:
+            raise ValueError(f"{key}: expected len(fens)=len(moves)+1")
+        uid = _game_uid(game)
+        if uid in games_by_uid:
+            raise ValueError(f"duplicate game identity in transitions: {uid}")
+        games_by_uid[uid] = game
+        source_rows.append({"path": key, "sha256": digest, "game_uid": uid})
+
+    transitions = []
+    rows = list(selection.get("rows", []))
+    if len(rows) != int(selection.get("decisions", -1)):
+        raise ValueError("selection decision cardinality drift")
+    for index, row in enumerate(rows):
+        if int(row.get("ordinal", -1)) != index:
+            raise ValueError("selection ordinals are not contiguous")
+        uid, ply = str(row.get("game_uid", "")), int(row.get("ply", -1))
+        game = games_by_uid.get(uid)
+        if game is None:
+            raise ValueError(f"selection row {index} references unknown game {uid}")
+        fens, moves = list(game["fens"]), list(game["moves"])
+        if not 0 <= ply < len(moves):
+            raise ValueError(f"selection row {index} has invalid ply {ply}")
+        if str(row.get("fen")) != str(fens[ply]) or str(row.get("actual_move")) != str(moves[ply]):
+            raise ValueError(f"selection row {index} does not match authenticated game")
+        transitions.append(
+            {
+                "ordinal": index,
+                "game_uid": uid,
+                "ply": ply,
+                "next_fen": str(fens[ply + 1]),
+            }
+        )
+    return {
+        "schema": SCHEMA_TRANSITIONS,
+        "selection_sha256": hashlib.sha256(_canonical(selection)).hexdigest(),
+        "games": len(games_by_uid),
+        "decisions": len(transitions),
+        "sources": source_rows,
+        "sources_sha256": hashlib.sha256(_canonical(source_rows)).hexdigest(),
+        "transitions": transitions,
+        "external_teacher_inputs": 0,
+        "fit_count": 0,
+        "strength_games": 0,
+        "promotion_authorized": False,
+    }
+
+
 def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
     selection_path = Path(args.selection)
     selection = json.loads(selection_path.read_text(encoding="utf-8"))
     if selection.get("schema") != SCHEMA_SELECTION:
         raise ValueError("selection schema drift")
+    transitions_path = Path(args.transitions)
+    transitions = json.loads(transitions_path.read_text(encoding="utf-8"))
+    if transitions.get("schema") != SCHEMA_TRANSITIONS:
+        raise ValueError("transition sidecar schema drift")
+    selection_digest = sha256(selection_path)
+    if transitions.get("selection_sha256") != selection_digest:
+        raise ValueError("transition sidecar selection hash mismatch")
+    transition_rows = list(transitions.get("transitions", []))
+    if len(transition_rows) != int(selection.get("decisions", -1)):
+        raise ValueError("transition sidecar cardinality drift")
+    next_fens: dict[int, str] = {}
+    for index, transition in enumerate(transition_rows):
+        if int(transition.get("ordinal", -1)) != index:
+            raise ValueError("transition sidecar ordinals are not contiguous")
+        next_fens[index] = str(transition.get("next_fen", ""))
     if not 0 <= args.shard < args.nshards:
         raise ValueError("invalid shard")
     if args.teacher_depth <= 0 or args.judge_depth <= args.teacher_depth:
@@ -416,12 +555,21 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
     referee = cv.Referee(args.jass)
     output: list[dict[str, Any]] = []
     endpoint_only_captures = 0
+    successor_state_disambiguations = 0
     try:
         for source, legal_line in zip(source_rows, legal_lines, strict=True):
             ordinal = int(source["ordinal"])
             fen = str(source["fen"])
             historical_text = str(source["actual_move"])
-            actual = _resolve_historical_move(historical_text, legal_line, cv)
+            actual, disambiguated = _resolve_historical_transition(
+                historical_text,
+                legal_line,
+                cv,
+                fen=fen,
+                next_fen=next_fens[ordinal],
+                referee=referee,
+            )
+            successor_state_disambiguations += int(disambiguated)
             if "x" in historical_text and len(historical_text.split("x")) == 2:
                 endpoint_only_captures += 1
             best, best_root = ctx._search(engine, fen, args.teacher_depth)
@@ -472,7 +620,7 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
         engine.close()
     return {
         "schema": SCHEMA_SHARD,
-        "selection_sha256": sha256(selection_path),
+        "selection_sha256": selection_digest,
         "champion_sha256": sha256(Path(args.champion)),
         "jass_sha256": sha256(Path(args.jass)),
         "search_params_sha256": sha256(search_params_path),
@@ -482,9 +630,12 @@ def analyse_shard(args: argparse.Namespace) -> dict[str, Any]:
         "judge_depth": args.judge_depth,
         "max_rows": args.max_rows,
         "historical_move_resolution": {
-            "method": "dump_legal_unique_endpoints",
+            "method": RESOLUTION_METHOD,
             "rows": len(source_rows),
             "endpoint_only_captures": endpoint_only_captures,
+            "successor_state_validated": len(source_rows),
+            "successor_state_disambiguations": successor_state_disambiguations,
+            "transition_sidecar_sha256": sha256(transitions_path),
             "ambiguous": 0,
             "unresolved": 0,
         },
@@ -611,9 +762,12 @@ def aggregate(
         raise ValueError("shard selection hash mismatch")
     resolution_rows = 0
     endpoint_only_captures = 0
+    successor_state_validated = 0
+    successor_state_disambiguations = 0
+    transition_sidecar_hashes: set[str] = set()
     for shard in shards:
         resolution = shard.get("historical_move_resolution", {})
-        if resolution.get("method") != "dump_legal_unique_endpoints":
+        if resolution.get("method") != RESOLUTION_METHOD:
             raise ValueError("historical move resolution method drift")
         if int(resolution.get("ambiguous", -1)) != 0 or int(resolution.get("unresolved", -1)) != 0:
             raise ValueError("historical move resolution was not lossless")
@@ -622,6 +776,16 @@ def aggregate(
             raise ValueError("historical move resolution row count drift")
         resolution_rows += shard_rows
         endpoint_only_captures += int(resolution.get("endpoint_only_captures", 0))
+        successor_state_validated += int(resolution.get("successor_state_validated", -1))
+        successor_state_disambiguations += int(
+            resolution.get("successor_state_disambiguations", -1)
+        )
+        transition_sidecar_hashes.add(str(resolution.get("transition_sidecar_sha256", "")))
+    if successor_state_validated != resolution_rows:
+        raise ValueError("historical successor-state validation row count drift")
+    if len(transition_sidecar_hashes) != 1 or not next(iter(transition_sidecar_hashes)):
+        raise ValueError("shards do not authenticate one transition sidecar")
+    transition_sidecar_sha256 = next(iter(transition_sidecar_hashes))
     rows = [row for shard in shards for row in shard.get("rows", [])]
     rows.sort(key=lambda row: int(row["ordinal"]))
     if [int(row["ordinal"]) for row in rows] != list(range(int(selection["decisions"]))):
@@ -779,9 +943,12 @@ def aggregate(
         "confirmed_buckets": len(confirmed_columns),
         "seed_positions": len(error_seeds),
         "historical_move_resolution": {
-            "method": "dump_legal_unique_endpoints",
+            "method": RESOLUTION_METHOD,
             "rows": resolution_rows,
             "endpoint_only_captures": endpoint_only_captures,
+            "successor_state_validated": successor_state_validated,
+            "successor_state_disambiguations": successor_state_disambiguations,
+            "transition_sidecar_sha256": transition_sidecar_sha256,
             "ambiguous": 0,
             "unresolved": 0,
             "passed": resolution_rows == len(rows),
@@ -1197,8 +1364,13 @@ def main(argv: list[str] | None = None) -> int:
     prepare.add_argument("--games-dir", action="append", type=Path, required=True)
     prepare.add_argument("--split-seed", type=int, default=2026082209)
     prepare.add_argument("--out", type=Path, required=True)
+    transitions = sub.add_parser("transitions")
+    transitions.add_argument("--selection", type=Path, required=True)
+    transitions.add_argument("--games-dir", action="append", type=Path, required=True)
+    transitions.add_argument("--out", type=Path, required=True)
     worker = sub.add_parser("worker")
     worker.add_argument("--selection", required=True)
+    worker.add_argument("--transitions", required=True)
     worker.add_argument("--jass", required=True)
     worker.add_argument("--champion", required=True)
     worker.add_argument("--search-params", required=True)
@@ -1255,6 +1427,15 @@ def main(argv: list[str] | None = None) -> int:
         payload = prepare_games(args.games_dir, split_seed=args.split_seed)
         _publish([(args.out, _canonical(payload))])
         summary = {"schema": payload["schema"], "decisions": payload["decisions"]}
+    elif args.command == "transitions":
+        selection = json.loads(args.selection.read_text(encoding="utf-8"))
+        payload = build_transition_sidecar(selection, args.games_dir)
+        _publish([(args.out, _canonical(payload))])
+        summary = {
+            "schema": payload["schema"],
+            "games": payload["games"],
+            "decisions": payload["decisions"],
+        }
     elif args.command == "worker":
         payload = analyse_shard(args)
         _publish([(args.out, _canonical(payload))])

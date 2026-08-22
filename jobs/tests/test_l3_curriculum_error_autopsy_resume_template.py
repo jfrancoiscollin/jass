@@ -30,6 +30,10 @@ class CurriculumErrorAutopsyResumeTemplateTests(unittest.TestCase):
             "--min-error-openings 64",
             "--min-confirmed-buckets 8",
             "historical_endpoint_only_captures_resolved",
+            "successor_state_validated",
+            "dump_legal_endpoints_and_authenticated_successor_state",
+            '--transitions "$ART/error-transitions.json"',
+            'GAME_SPECS',
             "resolution.get('ambiguous')!=0",
             "JASS_CURRICULUM_ERROR_REGION_CONFIRMED",
         ):
