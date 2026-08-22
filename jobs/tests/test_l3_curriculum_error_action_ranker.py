@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 import importlib.util
 import unittest
 
@@ -74,6 +75,63 @@ def pair(index: int) -> dict:
 
 
 class ActionRankerTests(unittest.TestCase):
+    def test_source_loader_counts_only_sealed_splits(self):
+        pairs = {
+            "schema": R.source.SCHEMA_PAIRS,
+            "matching_passed": True,
+            "matched_pairs": 2,
+            "pairs": [
+                {"pair_id": 0, "split": "discovery"},
+                {"pair_id": 1, "split": "confirm"},
+            ],
+        }
+        digest = hashlib.sha256(R._canonical(pairs)).hexdigest()
+        shards = []
+        for shard in range(16):
+            shards.append(
+                {
+                    "schema": R.source.SCHEMA_ATLAS_SHARD,
+                    "shard": shard,
+                    "nshards": 16,
+                    "max_pairs": 0,
+                    "pairs_sha256": digest,
+                    "champion_sha256": "champion",
+                    "jass_sha256": "jass",
+                    "search_params_sha256": "search",
+                    "rows": ([{"pair_id": shard}] if shard < 2 else []),
+                }
+            )
+
+        _, _, _, counts = R._load_source(pairs, shards)
+
+        self.assertEqual(counts["pairs_by_split"], {"discovery": 1, "confirm": 1})
+
+    def test_source_loader_rejects_unsealed_split(self):
+        pairs = {
+            "schema": R.source.SCHEMA_PAIRS,
+            "matching_passed": True,
+            "matched_pairs": 1,
+            "pairs": [{"pair_id": 0, "split": "peek"}],
+        }
+        digest = hashlib.sha256(R._canonical(pairs)).hexdigest()
+        shards = [
+            {
+                "schema": R.source.SCHEMA_ATLAS_SHARD,
+                "shard": shard,
+                "nshards": 16,
+                "max_pairs": 0,
+                "pairs_sha256": digest,
+                "champion_sha256": "champion",
+                "jass_sha256": "jass",
+                "search_params_sha256": "search",
+                "rows": ([{"pair_id": 0}] if shard == 0 else []),
+            }
+            for shard in range(16)
+        ]
+
+        with self.assertRaisesRegex(ValueError, "split drift"):
+            R._load_source(pairs, shards)
+
     def test_feature_contract_and_exact_image_equivariance(self):
         raw, scores = R._raw_features(profile(0, error=True), image=False)
         transformed, image_scores = R._raw_features(profile(0, error=True), image=True)
